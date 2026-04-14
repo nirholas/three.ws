@@ -1,0 +1,17 @@
+{
+	"spec": "skill/0.1",
+	"name": "wave",
+	"version": "0.1.0",
+	"description": "Wave at the user with context-appropriate enthusiasm.",
+	"license": "MIT",
+	"tags": ["greeting", "gesture", "mixamo-compatible"],
+	"requires": {
+		"rig": ["mixamo", "any"],
+		"runtime": ">=0.1.0",
+		"tools": []
+	},
+	"provides": {
+		"tools": ["wave"],
+		"triggers": ["greeting", "farewell", "introduction"]
+	}
+}

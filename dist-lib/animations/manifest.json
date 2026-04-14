@@ -1,0 +1,51 @@
+[
+	{
+		"name": "idle",
+		"url": "/animations/idle.glb",
+		"label": "Idle",
+		"icon": "🧍",
+		"loop": true
+	},
+	{
+		"name": "walking",
+		"url": "/animations/walking.glb",
+		"label": "Walking",
+		"icon": "🚶",
+		"loop": true
+	},
+	{
+		"name": "running",
+		"url": "/animations/running.glb",
+		"label": "Running",
+		"icon": "🏃",
+		"loop": true
+	},
+	{
+		"name": "waving",
+		"url": "/animations/waving.glb",
+		"label": "Waving",
+		"icon": "👋",
+		"loop": false
+	},
+	{
+		"name": "dancing",
+		"url": "/animations/dancing.glb",
+		"label": "Dancing",
+		"icon": "💃",
+		"loop": true
+	},
+	{
+		"name": "sitting",
+		"url": "/animations/sitting.glb",
+		"label": "Sitting",
+		"icon": "🪑",
+		"loop": true
+	},
+	{
+		"name": "jumping",
+		"url": "/animations/jumping.glb",
+		"label": "Jumping",
+		"icon": "🦘",
+		"loop": false
+	}
+]

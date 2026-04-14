@@ -1,13 +1,13 @@
 /**
- * @speraxos/agent-kit
+ * @nirholas/agent-kit
  *
  * Ship an ERC-8004 agent with on-chain identity, a chat panel,
  * and discoverable .well-known endpoints in minutes.
  *
  * Quick start:
  *
- *   import { AgentKit } from '@speraxos/agent-kit';
- *   import '@speraxos/agent-kit/styles';
+ *   import { AgentKit } from '@nirholas/agent-kit';
+ *   import '@nirholas/agent-kit/styles';
  *
  *   const agent = new AgentKit({
  *     name: 'My Agent',

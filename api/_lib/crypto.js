@@ -32,6 +32,18 @@ export function constantTimeEquals(a, b) {
 	return r === 0;
 }
 
+export async function hmacSha256(secret, message) {
+	const key = await subtle.importKey(
+		'raw',
+		new TextEncoder().encode(secret),
+		{ name: 'HMAC', hash: 'SHA-256' },
+		false,
+		['sign'],
+	);
+	const sig = await subtle.sign('HMAC', key, new TextEncoder().encode(message));
+	return base64url(new Uint8Array(sig));
+}
+
 function hex(u8) {
 	return Array.from(u8, (b) => b.toString(16).padStart(2, '0')).join('');
 }

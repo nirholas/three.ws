@@ -5,7 +5,7 @@
 // PKCE is mandatory (S256). No implicit flow. No password grant.
 
 import { sql } from '../_lib/db.js';
-import { getSessionUser } from '../_lib/auth.js';
+import { getSessionUser, csrfTokenFor, verifyCsrfToken, isSameSiteOrigin } from '../_lib/auth.js';
 import { randomToken } from '../_lib/crypto.js';
 import { cors, method, wrap, error, redirect, readForm } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
@@ -50,10 +50,15 @@ export default wrap(async (req, res) => {
 
 	if (req.method === 'GET') {
 		// Render a simple consent page. Kept server-side to avoid shipping extra JS.
-		return renderConsent(res, { client, user, params });
+		const csrf = await csrfTokenFor(req);
+		return renderConsent(res, { client, user, params, csrf });
 	}
 
-	// POST — user confirmed consent.
+	// POST — user confirmed consent. Reject cross-site POSTs (Origin check) and
+	// forged submissions (CSRF token bound to the session cookie).
+	if (!isSameSiteOrigin(req)) return error(res, 403, 'forbidden', 'cross-site request blocked');
+	if (!(await verifyCsrfToken(req, params.csrf))) return error(res, 403, 'forbidden', 'invalid csrf token');
+
 	if (params.decision !== 'allow') {
 		const denied = new URL(redirect_uri);
 		denied.searchParams.set('error', 'access_denied');
@@ -85,10 +90,18 @@ function intersectScopes(requested, allowed) {
 	return requested.split(/\s+/).filter((s) => a.has(s)).join(' ') || allowed;
 }
 
-function renderConsent(res, { client, user, params }) {
+function renderConsent(res, { client, user, params, csrf }) {
 	res.statusCode = 200;
 	res.setHeader('content-type', 'text/html; charset=utf-8');
 	res.setHeader('cache-control', 'no-store');
+	// Harden the consent page against clickjacking, mixed content, and
+	// extension/CDN script injection. form-action restricts where the form
+	// can POST; frame-ancestors blocks iframing of the consent UI.
+	res.setHeader('content-security-policy', "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'");
+	res.setHeader('x-frame-options', 'DENY');
+	res.setHeader('x-content-type-options', 'nosniff');
+	res.setHeader('referrer-policy', 'strict-origin-when-cross-origin');
+	res.setHeader('strict-transport-security', 'max-age=63072000; includeSubDomains; preload');
 	const scope = params.scope || client.scope;
 	const scopeList = scope.split(/\s+/).filter(Boolean);
 	res.end(`<!doctype html>
@@ -120,7 +133,8 @@ function renderConsent(res, { client, user, params }) {
 	<div class="who"><div class="dot">${esc((user.display_name || user.email)[0].toUpperCase())}</div><div><div>${esc(user.display_name || user.email)}</div><div style="color:#888;font-size:13px">${esc(user.email)}</div></div></div>
 	<p style="margin:0 0 4px"><b>${esc(client.name)}</b> will be able to:</p>
 	<ul>${scopeList.map((s) => `<li>${scopeLabel(s)}</li>`).join('')}</ul>
-	${Object.entries(params).map(([k, v]) => `<input type="hidden" name="${esc(k)}" value="${esc(v)}">`).join('')}
+	<input type="hidden" name="csrf" value="${esc(csrf || '')}">
+	${Object.entries(params).filter(([k]) => k !== 'csrf' && k !== 'decision').map(([k, v]) => `<input type="hidden" name="${esc(k)}" value="${esc(v)}">`).join('')}
 	<div class="actions">
 		<button class="deny"  type="submit" name="decision" value="deny">Cancel</button>
 		<button class="allow" type="submit" name="decision" value="allow">Authorize</button>

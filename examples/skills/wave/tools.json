@@ -1,0 +1,25 @@
+{
+	"tools": [
+		{
+			"name": "wave",
+			"description": "Wave at the user.",
+			"input_schema": {
+				"type": "object",
+				"properties": {
+					"style": {
+						"type": "string",
+						"enum": ["casual", "enthusiastic", "subtle"],
+						"default": "casual"
+					},
+					"duration_ms": {
+						"type": "integer",
+						"minimum": 500,
+						"maximum": 5000,
+						"default": 1500
+					}
+				},
+				"required": []
+			}
+		}
+	]
+}

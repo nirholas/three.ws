@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 import { SignJWT, jwtVerify } from 'jose';
 import { env } from './env.js';
 import { sql } from './db.js';
-import { randomToken, sha256 } from './crypto.js';
+import { randomToken, sha256, hmacSha256, constantTimeEquals } from './crypto.js';
 
 const ACCESS_TTL_SEC = 60 * 60;              // 1h access tokens
 const REFRESH_TTL_SEC = 60 * 60 * 24 * 30;   // 30d refresh tokens
@@ -39,6 +39,7 @@ export async function verifyAccessToken(token, { audience } = {}) {
 	const { payload } = await jwtVerify(token, jwtKey, {
 		issuer: env.ISSUER,
 		audience: audience || env.MCP_RESOURCE,
+		algorithms: ['HS256'],
 	});
 	return payload;
 }
@@ -55,7 +56,7 @@ export async function issueRefreshToken({ userId, clientId, scope, resource }) {
 	return { token: secret, id: row.id };
 }
 
-export async function rotateRefreshToken({ oldSecret, clientId }) {
+export async function rotateRefreshToken({ oldSecret, clientId, narrowScope }) {
 	const hash = await sha256(oldSecret);
 	const rows = await sql`
 		select id, user_id, scope, resource, expires_at, revoked_at
@@ -74,10 +75,14 @@ export async function rotateRefreshToken({ oldSecret, clientId }) {
 	if (new Date(row.expires_at) < new Date()) {
 		throw Object.assign(new Error('invalid_grant'), { status: 400, code: 'refresh_expired' });
 	}
-	const next = await issueRefreshToken({ userId: row.user_id, clientId, scope: row.scope, resource: row.resource });
+	// Bind the rotated refresh token to the narrowed scope (RFC 6749 §6 allows a
+	// subset). Without this, a caller could re-widen back to the full scope on
+	// the next rotation by omitting `scope`.
+	const effectiveScope = typeof narrowScope === 'function' ? narrowScope(row.scope) : row.scope;
+	const next = await issueRefreshToken({ userId: row.user_id, clientId, scope: effectiveScope, resource: row.resource });
 	await sql`update oauth_refresh_tokens set revoked_at = now(), replaced_by = ${next.id}, last_used_at = now()
 	          where id = ${row.id}`;
-	return { next, userId: row.user_id, scope: row.scope, resource: row.resource };
+	return { next, userId: row.user_id, scope: effectiveScope, resource: row.resource };
 }
 
 export async function revokeRefreshToken(secret, clientId) {
@@ -87,7 +92,19 @@ export async function revokeRefreshToken(secret, clientId) {
 }
 
 // ── browser sessions (cookie auth for the site itself) ──────────────────────
-const SESSION_COOKIE = 'sid';
+// __Host- prefix requires Path=/; Secure; no Domain — browser enforces cookie
+// can't be set by any subdomain, eliminating subdomain cookie injection.
+const SESSION_COOKIE = '__Host-sid';
+// Tolerate cookies from the legacy name for a single deploy cycle so existing
+// sessions survive the cutover. Read-only — never re-issue under this name.
+const LEGACY_COOKIE = 'sid';
+
+function readSessionCookie(req) {
+	const cookie = req.headers.cookie || '';
+	const m = cookie.match(/(?:^|;\s*)__Host-sid=([^;]+)/)
+		|| cookie.match(/(?:^|;\s*)sid=([^;]+)/);
+	return m ? decodeURIComponent(m[1]) : null;
+}
 
 export async function createSession({ userId, userAgent, ip }) {
 	const secret = randomToken(32);
@@ -100,15 +117,20 @@ export async function createSession({ userId, userAgent, ip }) {
 }
 
 export function sessionCookie(token, { clear = false } = {}) {
-	if (clear) return `${SESSION_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`;
+	if (clear) {
+		// Clear both the current and legacy cookie names so logout fully drops session.
+		return [
+			`${SESSION_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`,
+			`${LEGACY_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`,
+		];
+	}
 	return `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${SESSION_TTL_SEC}`;
 }
 
 export async function getSessionUser(req) {
-	const cookie = req.headers.cookie || '';
-	const m = cookie.match(/(?:^|;\s*)sid=([^;]+)/);
-	if (!m) return null;
-	const hash = await sha256(decodeURIComponent(m[1]));
+	const token = readSessionCookie(req);
+	if (!token) return null;
+	const hash = await sha256(token);
 	const rows = await sql`
 		select s.id as sid, u.id, u.email, u.display_name, u.plan, u.avatar_url
 		from sessions s join users u on u.id = s.user_id
@@ -116,18 +138,42 @@ export async function getSessionUser(req) {
 		limit 1
 	`;
 	if (!rows[0]) return null;
-	// Touch last_seen (best-effort, fire-and-forget at the handler level if needed).
-	await sql`update sessions set last_seen_at = now() where id = ${rows[0].sid}`;
+	// Touch last_seen best-effort; don't block the request on a write.
+	sql`update sessions set last_seen_at = now() where id = ${rows[0].sid}`.catch(() => {});
 	const { sid: _sid, ...user } = rows[0];
 	return user;
 }
 
 export async function destroySession(req) {
-	const cookie = req.headers.cookie || '';
-	const m = cookie.match(/(?:^|;\s*)sid=([^;]+)/);
-	if (!m) return;
-	const hash = await sha256(decodeURIComponent(m[1]));
+	const token = readSessionCookie(req);
+	if (!token) return;
+	const hash = await sha256(token);
 	await sql`update sessions set revoked_at = now() where token_hash = ${hash}`;
+}
+
+// CSRF token bound to the session cookie value. Because the cookie is HttpOnly,
+// an attacker's JS can't read it and therefore can't forge a matching token.
+export async function csrfTokenFor(req) {
+	const token = readSessionCookie(req);
+	if (!token) return null;
+	return hmacSha256(env.JWT_SECRET, `csrf:${token}`);
+}
+
+export async function verifyCsrfToken(req, submitted) {
+	if (!submitted) return false;
+	const expected = await csrfTokenFor(req);
+	if (!expected) return false;
+	return constantTimeEquals(expected, String(submitted));
+}
+
+// Reject cross-site POSTs by requiring Origin (preferred) or Referer to match
+// the configured APP_ORIGIN. Call before honoring state-changing form posts.
+export function isSameSiteOrigin(req) {
+	const origin = req.headers.origin;
+	if (origin) return origin === env.APP_ORIGIN;
+	const referer = req.headers.referer;
+	if (!referer) return false;
+	try { return new URL(referer).origin === env.APP_ORIGIN; } catch { return false; }
 }
 
 // ── bearer extraction (OAuth access tokens OR API keys) ─────────────────────

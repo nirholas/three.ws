@@ -41,6 +41,11 @@ export default wrap(async (req, res) => {
 
 	const body = await readJson(req, 2_000_000);
 	const batch = Array.isArray(body) ? body : [body];
+	// Per-request batch cap — each message can trigger DB queries, so an
+	// unbounded batch multiplies rate-limited work by N against the user's budget.
+	if (batch.length > 32) {
+		return sendJsonRpcError(res, null, -32600, 'batch too large (max 32)');
+	}
 	const responses = [];
 	for (const msg of batch) {
 		const r = await dispatch(msg, auth, req);
@@ -293,13 +298,13 @@ const TOOLS = {
 			const html = renderModelViewerHtml({
 				src: urlInfo.url,
 				name: avatar.name,
-				poster: args.poster,
-				background: args.background || 'transparent',
-				height: args.height || '480px',
-				width: args.width || '100%',
+				poster: safeHttpsUrl(args.poster),
+				background: safeCssValue(args.background, 'transparent'),
+				height: safeCssLength(args.height, '480px'),
+				width: safeCssLength(args.width, '100%'),
 				autoRotate: args.auto_rotate !== false,
 				ar: args.ar !== false,
-				cameraOrbit: args.camera_orbit,
+				cameraOrbit: safeCssValue(args.camera_orbit, ''),
 			});
 			return {
 				content: [
@@ -414,4 +419,32 @@ function esc(s) {
 }
 function attr(s) {
 	return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+}
+
+// CSS inputs land inside a <style> declaration (`background: <value>`), where
+// HTML attribute-escaping does not defend against `;}body{…}` breakouts. Only
+// allow a strict character class that cannot terminate the declaration/rule.
+function safeCssValue(s, fallback) {
+	if (!s) return fallback;
+	const str = String(s).trim();
+	if (!/^[a-zA-Z0-9 .,%#()\-_/+]+$/.test(str)) return fallback;
+	if (str.length > 120) return fallback;
+	return str;
+}
+
+function safeCssLength(s, fallback) {
+	if (!s) return fallback;
+	const str = String(s).trim();
+	if (!/^[0-9]+(?:\.[0-9]+)?(?:px|em|rem|vh|vw|%)$|^auto$|^100%$/.test(str)) return fallback;
+	return str;
+}
+
+// Posters are rendered as an attribute value that the browser fetches; restrict
+// to https(:) to block `javascript:` and `data:` URLs that could execute code.
+function safeHttpsUrl(s) {
+	if (!s) return undefined;
+	try {
+		const u = new URL(String(s));
+		return u.protocol === 'https:' ? u.toString() : undefined;
+	} catch { return undefined; }
 }

@@ -2,7 +2,17 @@ import { defineConfig } from 'vite';
 import { resolve } from 'path';
 import { VitePWA } from 'vite-plugin-pwa';
 
-export default defineConfig({
+// The build emits two targets controlled by the TARGET env var:
+//
+//   TARGET=lib    → builds dist-lib/agent-3d.js (ES module + UMD) for CDN use
+//   TARGET=app    → (default) builds the editor/app site into dist/
+//
+//   npm run build        → app
+//   npm run build:lib    → lib
+//   npm run build:all    → both
+const TARGET = process.env.TARGET || 'app';
+
+const appConfig = {
 	esbuild: {
 		jsx: 'transform',
 		jsxFactory: 'vhtml',
@@ -14,6 +24,7 @@ export default defineConfig({
 			input: {
 				main: resolve(__dirname, 'index.html'),
 				features: resolve(__dirname, 'features.html'),
+				embed: resolve(__dirname, 'embed.html'),
 			},
 		},
 	},
@@ -31,22 +42,9 @@ export default defineConfig({
 				scope: '/',
 				start_url: '/',
 				icons: [
-					{
-						src: 'pwa-192x192.png',
-						sizes: '192x192',
-						type: 'image/png',
-					},
-					{
-						src: 'pwa-512x512.png',
-						sizes: '512x512',
-						type: 'image/png',
-					},
-					{
-						src: 'pwa-512x512.png',
-						sizes: '512x512',
-						type: 'image/png',
-						purpose: 'any maskable',
-					},
+					{ src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
+					{ src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
+					{ src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
 				],
 			},
 			workbox: {
@@ -57,13 +55,8 @@ export default defineConfig({
 						handler: 'CacheFirst',
 						options: {
 							cacheName: 'google-fonts-cache',
-							expiration: {
-								maxEntries: 10,
-								maxAgeSeconds: 60 * 60 * 24 * 365,
-							},
-							cacheableResponse: {
-								statuses: [0, 200],
-							},
+							expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
+							cacheableResponse: { statuses: [0, 200] },
 						},
 					},
 					{
@@ -71,17 +64,38 @@ export default defineConfig({
 						handler: 'CacheFirst',
 						options: {
 							cacheName: 'gstatic-fonts-cache',
-							expiration: {
-								maxEntries: 10,
-								maxAgeSeconds: 60 * 60 * 24 * 365,
-							},
-							cacheableResponse: {
-								statuses: [0, 200],
-							},
+							expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
+							cacheableResponse: { statuses: [0, 200] },
 						},
 					},
 				],
 			},
 		}),
 	],
-});
+};
+
+// Library build — the web component + public API, for CDN drop-in:
+//   <script type="module" src="https://cdn.example.com/agent-3d.js"></script>
+//
+// Three.js and ethers stay bundled (the element must be self-contained for a
+// zero-install embed). Size will be ~600-900KB gzipped; split via dynamic
+// imports in a later pass.
+const libConfig = {
+	build: {
+		outDir: 'dist-lib',
+		emptyOutDir: true,
+		chunkSizeWarningLimit: 2000,
+		lib: {
+			entry: resolve(__dirname, 'src/lib.js'),
+			name: 'Agent3D',
+			formats: ['es', 'umd'],
+			fileName: (format) => format === 'es' ? 'agent-3d.js' : 'agent-3d.umd.cjs',
+		},
+		rollupOptions: {
+			// No externals — we want a self-contained drop-in embed.
+			output: { inlineDynamicImports: false },
+		},
+	},
+};
+
+export default defineConfig(TARGET === 'lib' ? libConfig : appConfig);

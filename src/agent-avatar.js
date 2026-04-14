@@ -20,7 +20,7 @@
  */
 
 import { ACTION_TYPES } from './agent-protocol.js';
-import { Vector3, MathUtils } from 'three';
+import { Vector3, Box3, MathUtils } from 'three';
 
 const DEG2RAD = Math.PI / 180;
 
@@ -190,7 +190,7 @@ export class AgentAvatar {
 		const target = action.payload?.target;
 		if (target === 'model' && this.viewer?.content) {
 			// Look at the bounding box center of the loaded model
-			const box    = new (await import('three').then(m => m.Box3))();
+			const box    = new Box3();
 			const center = new Vector3();
 			box.setFromObject(this.viewer.content).getCenter(center);
 			this._lookTarget = center;

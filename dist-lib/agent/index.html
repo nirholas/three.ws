@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<title>Agent Home — 3D Agent</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta name="description" content="An embodied 3D AI agent — body, place, identity, memory." />
+	<meta name="theme-color" content="#000000" />
+
+	<link rel="shortcut icon" href="/favicon.ico" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link rel="stylesheet" href="/style.css" />
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+
+	<style>
+		body {
+			overflow: auto;
+			display: flex;
+			flex-direction: column;
+		}
+
+		.agent-page-header {
+			display: flex;
+			align-items: center;
+			gap: 1rem;
+			padding: 1rem 1.618rem;
+			border-bottom: 1px solid rgba(255,255,255,0.06);
+		}
+
+		.agent-page-header a {
+			color: rgba(255,255,255,0.4);
+			text-decoration: none;
+			font-size: 0.764rem;
+		}
+
+		.agent-page-header a:hover {
+			color: rgba(255,255,255,0.8);
+		}
+
+		.agent-page-hero {
+			max-width: 520px;
+			margin: 4rem auto 2rem;
+			padding: 0 1rem;
+			text-align: center;
+		}
+
+		.agent-page-title {
+			font-size: 1.618rem;
+			font-weight: 300;
+			color: #e5e5e5;
+			letter-spacing: -0.02em;
+			margin: 0 0 0.618rem;
+		}
+
+		.agent-page-subtitle {
+			font-size: 0.764rem;
+			color: rgba(255,255,255,0.35);
+			line-height: 1.618;
+		}
+
+		.agent-page-card-wrap {
+			max-width: 420px;
+			margin: 0 auto;
+			padding: 0 1rem 4rem;
+		}
+
+		/* Expand the timeline on standalone page */
+		.agent-page-card-wrap .agent-home-timeline {
+			max-height: 320px;
+		}
+
+		/* Expand the panel to fill the card */
+		.agent-page-card-wrap .agent-home-panel {
+			background: rgba(12, 12, 18, 0.98);
+			border: 1px solid rgba(255,255,255,0.08);
+			border-radius: 12px;
+		}
+
+		.agent-embed-hint {
+			max-width: 420px;
+			margin: 1.618rem auto 0;
+			padding: 0 1rem;
+		}
+
+		.agent-embed-code {
+			background: rgba(255,255,255,0.04);
+			border: 1px solid rgba(255,255,255,0.08);
+			border-radius: 8px;
+			padding: 0.618rem 1rem;
+			font-family: monospace;
+			font-size: 0.618rem;
+			color: rgba(255,255,255,0.4);
+			word-break: break-all;
+		}
+
+		.agent-embed-label {
+			font-size: 0.618rem;
+			color: rgba(255,255,255,0.25);
+			margin-bottom: 0.382rem;
+		}
+
+		.agent-skills-full {
+			max-width: 420px;
+			margin: 1.618rem auto 0;
+			padding: 0 1rem;
+		}
+
+		.agent-skills-title {
+			font-size: 0.618rem;
+			color: rgba(255,255,255,0.25);
+			margin-bottom: 0.618rem;
+			text-transform: uppercase;
+			letter-spacing: 0.08em;
+		}
+
+		.agent-skills-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+			gap: 0.618rem;
+		}
+
+		.agent-skill-card {
+			background: rgba(255,255,255,0.04);
+			border: 1px solid rgba(255,255,255,0.07);
+			border-radius: 8px;
+			padding: 0.618rem;
+		}
+
+		.agent-skill-card-name {
+			font-size: 0.764rem;
+			font-weight: 500;
+			color: rgba(255,255,255,0.7);
+			margin-bottom: 0.236rem;
+		}
+
+		.agent-skill-card-desc {
+			font-size: 0.618rem;
+			color: rgba(255,255,255,0.3);
+			line-height: 1.382;
+		}
+
+		.loading-placeholder {
+			color: rgba(255,255,255,0.2);
+			font-size: 0.764rem;
+			text-align: center;
+			padding: 2rem;
+		}
+	</style>
+</head>
+<body>
+	<div class="agent-page-header">
+		<a href="/">← 3D Agent</a>
+	</div>
+
+	<div class="agent-page-hero">
+		<h1 class="agent-page-title" id="page-agent-name">Agent</h1>
+		<p class="agent-page-subtitle" id="page-agent-desc">
+			Embodied. Present. Persistent.
+		</p>
+	</div>
+
+	<!-- Agent home card rendered by AgentHome -->
+	<div class="agent-page-card-wrap">
+		<div id="agent-home-container">
+			<div class="loading-placeholder">Loading agent…</div>
+		</div>
+	</div>
+
+	<!-- Skills catalog -->
+	<div class="agent-skills-full" id="agent-skills-section" style="display:none">
+		<div class="agent-skills-title">Skills</div>
+		<div class="agent-skills-grid" id="agent-skills-grid"></div>
+	</div>
+
+	<!-- Embed code -->
+	<div class="agent-embed-hint" id="agent-embed-section" style="display:none">
+		<div class="agent-embed-label">Embed this agent</div>
+		<div class="agent-embed-code" id="agent-embed-code"></div>
+	</div>
+
+	<script type="module">
+		import { AgentIdentity } from '/src/agent-identity.js';
+		import { AgentMemory }   from '/src/agent-memory.js';
+		import { AgentSkills }   from '/src/agent-skills.js';
+		import { AgentHome }     from '/src/agent-home.js';
+		import { protocol }      from '/src/agent-protocol.js';
+
+		// Pull agent id from URL: /agent/:id
+		const agentId = location.pathname.split('/').filter(Boolean).pop();
+
+		async function main() {
+			const identity = new AgentIdentity({ agentId: agentId || undefined, autoLoad: false });
+			await identity.load();
+
+			// Update hero
+			document.getElementById('page-agent-name').textContent = identity.name;
+			if (identity.description) {
+				document.getElementById('page-agent-desc').textContent = identity.description;
+			}
+
+			// Render the agent home card
+			const container = document.getElementById('agent-home-container');
+			container.innerHTML = '';
+			const home = new AgentHome(container, identity, protocol, null);
+			await home.render();
+
+			// Render skills catalog
+			if (identity.skills?.length) {
+				const skills    = new AgentSkills(protocol, identity.memory);
+				const section   = document.getElementById('agent-skills-section');
+				const grid      = document.getElementById('agent-skills-grid');
+				section.style.display = '';
+				skills.list().filter(s => identity.skills.includes(s.name)).forEach(skill => {
+					const card = document.createElement('div');
+					card.className = 'agent-skill-card';
+					card.innerHTML = `
+						<div class="agent-skill-card-name">${skill.name}</div>
+						<div class="agent-skill-card-desc">${skill.description}</div>
+					`;
+					grid.appendChild(card);
+				});
+			}
+
+			// Embed code
+			const embedSection = document.getElementById('agent-embed-section');
+			const embedCode    = document.getElementById('agent-embed-code');
+			const embedUrl     = `${location.origin}/agent/${identity.id}`;
+			embedSection.style.display = '';
+			embedCode.textContent = `<iframe src="${embedUrl}" width="420" height="520" frameborder="0" style="border-radius:12px;border:none;"></iframe>`;
+		}
+
+		main().catch(err => {
+			document.getElementById('agent-home-container').innerHTML =
+				`<div class="loading-placeholder">Could not load agent: ${err.message}</div>`;
+		});
+	</script>
+</body>
+</html>

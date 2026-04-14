@@ -3,7 +3,7 @@
 // DELETE /api/avatars/:id  — soft-delete (owner only)
 
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
-import { getAvatar, updateAvatar, deleteAvatar, resolveAvatarUrl } from '../_lib/avatars.js';
+import { getAvatar, updateAvatar, deleteAvatar, resolveAvatarUrl, stripOwnerFor } from '../_lib/avatars.js';
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
 import { recordEvent } from '../_lib/usage.js';
 import { z } from 'zod';
@@ -30,7 +30,7 @@ export default wrap(async (req, res) => {
 		if (!avatar) return error(res, 404, 'not_found', 'avatar not found');
 		const urlInfo = await resolveAvatarUrl(avatar);
 		recordEvent({ userId: auth?.userId, clientId: auth?.clientId, apiKeyId: auth?.apiKeyId, avatarId: id, kind: 'avatar_fetch' });
-		return json(res, 200, { avatar: { ...avatar, ...urlInfo } });
+		return json(res, 200, { avatar: stripOwnerFor({ ...avatar, ...urlInfo }, auth?.userId) });
 	}
 
 	if (!auth?.userId) return error(res, 401, 'unauthorized', 'authentication required');

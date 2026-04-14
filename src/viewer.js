@@ -1,19 +1,13 @@
 import {
-	AmbientLight,
-	AnimationMixer,
 	AxesHelper,
 	Box3,
 	Cache,
 	Color,
-	DirectionalLight,
 	GridHelper,
-	HemisphereLight,
 	LoaderUtils,
-	LoadingManager,
 	PMREMGenerator,
 	PerspectiveCamera,
 	PointsMaterial,
-	REVISION,
 	Scene,
 	SkeletonHelper,
 	Vector3,
@@ -23,11 +17,8 @@ import {
 } from 'three';
 import Stats from 'three/addons/libs/stats.module.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
-import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 import { GUI } from 'dat.gui';
@@ -35,19 +26,19 @@ import { GUI } from 'dat.gui';
 import { environments } from './environments.js';
 import { createModelInfo } from './model-info.js';
 import { buildAnnotations, renderAnnotationCanvas } from './annotations.js';
-
-const DEFAULT_CAMERA = '[default]';
-
-const MANAGER = new LoadingManager();
-const THREE_PATH = `https://unpkg.com/three@0.${REVISION}.x`;
-const DRACO_LOADER = new DRACOLoader(MANAGER).setDecoderPath(
-	`${THREE_PATH}/examples/jsm/libs/draco/gltf/`,
-);
-const KTX2_LOADER = new KTX2Loader(MANAGER).setTranscoderPath(
-	`${THREE_PATH}/examples/jsm/libs/basis/`,
-);
-
-const Preset = { ASSET_GENERATOR: 'assetgenerator' };
+import {
+	DEFAULT_CAMERA,
+	Preset,
+	MANAGER,
+	DRACO_LOADER,
+	KTX2_LOADER,
+	traverseMaterials,
+} from './viewer/internal.js';
+import { addLights, removeLights } from './viewer/lights.js';
+import { getCubeMapTexture } from './viewer/environment.js';
+import { takeScreenshot } from './viewer/screenshot.js';
+import { setClips, playAllClips } from './viewer/animation.js';
+import { AnimationManager } from './animation-manager.js';
 
 Cache.enabled = true;
 
@@ -61,6 +52,10 @@ export class Viewer {
 		this.mixer = null;
 		this.clips = [];
 		this.gui = null;
+
+		// External animation system (Mixamo-style)
+		this.animationManager = new AnimationManager();
+		this._animPanelEl = null;
 
 		this.state = {
 			environment:
@@ -203,6 +198,10 @@ export class Viewer {
 				}
 			}
 		}
+		// External animation manager also drives the render loop
+		if (!animating && this.animationManager.currentAction) {
+			animating = true;
+		}
 		this._animating = animating;
 	}
 
@@ -228,6 +227,7 @@ export class Viewer {
 		this.controls.update();
 		this.stats.update();
 		if (this.mixer) this.mixer.update(dt);
+		this.animationManager.update(dt);
 
 		// Extension point for the AgentAvatar empathy tick and any other per-frame hooks
 		if (this._afterAnimateHooks) {
@@ -262,26 +262,7 @@ export class Viewer {
 	}
 
 	takeScreenshot() {
-		// Render a fresh frame then capture via toBlob (avoids preserveDrawingBuffer overhead).
-		this.renderer.render(this.scene, this.activeCamera);
-		this.renderer.domElement.toBlob((blob) => {
-			if (!blob) return;
-			const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-			const url = URL.createObjectURL(blob);
-			const link = document.createElement('a');
-			link.download = `3d-screenshot-${timestamp}.png`;
-			link.href = url;
-			link.click();
-			URL.revokeObjectURL(url);
-		}, 'image/png');
-		this.flashScreenshotFeedback();
-	}
-
-	flashScreenshotFeedback() {
-		const overlay = document.createElement('div');
-		overlay.className = 'screenshot-flash';
-		this.el.appendChild(overlay);
-		overlay.addEventListener('animationend', () => overlay.remove());
+		takeScreenshot(this);
 	}
 
 	resize() {
@@ -423,6 +404,10 @@ export class Viewer {
 
 		this.setClips(clips);
 
+		// Attach external animation manager to the new content
+		this.animationManager.attach(this.content);
+		this._setupAnimationPanel();
+
 		this.updateLights();
 		this.updateGUI();
 		this.updateEnvironment();
@@ -443,28 +428,12 @@ export class Viewer {
 		console.groupEnd();
 	}
 
-	/**
-	 * @param {Array<THREE.AnimationClip} clips
-	 */
 	setClips(clips) {
-		if (this.mixer) {
-			this.mixer.stopAllAction();
-			this.mixer.uncacheRoot(this.mixer.getRoot());
-			this.mixer = null;
-		}
-
-		this.clips = clips;
-		if (!clips.length) return;
-
-		this.mixer = new AnimationMixer(this.content);
+		setClips(this, clips);
 	}
 
 	playAllClips() {
-		this.clips.forEach((clip) => {
-			this.mixer.clipAction(clip).reset().play();
-			this.state.actionStates[clip.name] = true;
-		});
-		this.invalidate();
+		playAllClips(this);
 	}
 
 	/**
@@ -490,9 +459,9 @@ export class Viewer {
 		const lights = this.lights;
 
 		if (state.punctualLights && !lights.length) {
-			this.addLights();
+			addLights(this);
 		} else if (!state.punctualLights && lights.length) {
-			this.removeLights();
+			removeLights(this);
 		}
 
 		this.renderer.toneMapping = Number(state.toneMapping);
@@ -508,79 +477,18 @@ export class Viewer {
 		this.invalidate();
 	}
 
-	addLights() {
-		const state = this.state;
-
-		if (this.options.preset === Preset.ASSET_GENERATOR) {
-			const hemiLight = new HemisphereLight();
-			hemiLight.name = 'hemi_light';
-			this.scene.add(hemiLight);
-			this.lights.push(hemiLight);
-			return;
-		}
-
-		const light1 = new AmbientLight(state.ambientColor, state.ambientIntensity);
-		light1.name = 'ambient_light';
-		this.defaultCamera.add(light1);
-
-		const light2 = new DirectionalLight(state.directColor, state.directIntensity);
-		light2.position.set(0.5, 0, 0.866); // ~60º
-		light2.name = 'main_light';
-		this.defaultCamera.add(light2);
-
-		this.lights.push(light1, light2);
-	}
-
-	removeLights() {
-		this.lights.forEach((light) => light.parent.remove(light));
-		this.lights.length = 0;
-	}
-
 	updateEnvironment() {
 		const environment = environments.filter(
 			(entry) => entry.name === this.state.environment,
 		)[0];
 
-		this.getCubeMapTexture(environment).then(({ envMap }) => {
+		getCubeMapTexture(this, environment).then(({ envMap }) => {
 			if (this._disposed || !this.scene) return;
 			this.scene.environment = envMap;
 			this.scene.background = this.state.transparentBg
 				? null
 				: this.state.background ? envMap : this.backgroundColor;
 			this.invalidate();
-		});
-	}
-
-	getCubeMapTexture(environment) {
-		const { id, path } = environment;
-
-		// neutral (THREE.RoomEnvironment)
-		if (id === 'neutral') {
-			return Promise.resolve({ envMap: this.neutralEnvironment });
-		}
-
-		// none
-		if (id === '') {
-			return Promise.resolve({ envMap: null });
-		}
-
-		return new Promise((resolve, reject) => {
-			new EXRLoader().load(
-				path,
-				(texture) => {
-					const envMap = this.pmremGenerator.fromEquirectangular(texture).texture;
-					texture.dispose();
-
-					if (this._loadedEnvironment && this._loadedEnvironment !== envMap) {
-						this._loadedEnvironment.dispose();
-					}
-					this._loadedEnvironment = envMap;
-
-					resolve({ envMap });
-				},
-				undefined,
-				reject,
-			);
 		});
 	}
 
@@ -900,8 +808,147 @@ export class Viewer {
 		}
 	}
 
+	// ── External Animation Panel (Mixamo-style) ─────────────────────────────
+
+	/**
+	 * Register a list of external animation definitions (name + URL).
+	 * @param {Array<{name: string, url: string, label?: string, icon?: string, loop?: boolean}>} defs
+	 */
+	setAnimationDefs(defs) {
+		this.animationManager.setAnimationDefs(defs);
+		if (this.content) this._setupAnimationPanel();
+	}
+
+	/**
+	 * Create / rebuild the animation selector panel.
+	 * @private
+	 */
+	_setupAnimationPanel() {
+		// Remove existing panel
+		if (this._animPanelEl) {
+			this._animPanelEl.remove();
+			this._animPanelEl = null;
+		}
+
+		const defs = this.animationManager.getAnimationDefs();
+		if (defs.length === 0) return;
+
+		// Check model has a skeleton (no point showing anim panel for static meshes)
+		let hasSkeleton = false;
+		this.content.traverse((node) => {
+			if (node.isSkinnedMesh) hasSkeleton = true;
+		});
+		if (!hasSkeleton) return;
+
+		// Create panel container
+		const panel = document.createElement('div');
+		panel.className = 'anim-panel';
+		panel.innerHTML =
+			'<div class="anim-panel__header">' +
+			'<span class="anim-panel__title">Animations</span>' +
+			'<button class="anim-panel__stop" title="Stop all">⏹</button>' +
+			'</div>' +
+			'<div class="anim-panel__grid"></div>';
+		this.el.appendChild(panel);
+		this._animPanelEl = panel;
+
+		// Render buttons
+		this._renderAnimButtons();
+
+		// Load all animations in background
+		this.animationManager.loadAll().then(() => {
+			this._renderAnimButtons();
+			// Auto-play the first animation if nothing is playing
+			if (!this.animationManager.currentName && defs.length > 0) {
+				const firstName = defs[0].name;
+				if (this.animationManager.isLoaded(firstName)) {
+					this.animationManager.play(firstName);
+					this._renderAnimButtons();
+					this.invalidate();
+					this._recomputeAnimating();
+					this._updateRenderLoop();
+				}
+			}
+		});
+
+		// Stop button
+		panel.querySelector('.anim-panel__stop').addEventListener('click', () => {
+			this.animationManager.stopAll();
+			this._renderAnimButtons();
+			this.invalidate();
+		});
+
+		// Listen for changes from AnimationManager
+		this.animationManager.onChange = () => {
+			this._renderAnimButtons();
+		};
+	}
+
+	/**
+	 * Render / re-render animation buttons in the panel.
+	 * @private
+	 */
+	_renderAnimButtons() {
+		if (!this._animPanelEl) return;
+
+		const grid = this._animPanelEl.querySelector('.anim-panel__grid');
+		const defs = this.animationManager.getAnimationDefs();
+		const activeName = this.animationManager.currentName;
+
+		const ICONS = {
+			idle: '🧍', breathing: '🧍', standing: '🧍',
+			walking: '🚶', walk: '🚶',
+			running: '🏃', run: '🏃',
+			waving: '👋', wave: '👋',
+			dancing: '💃', dance: '💃',
+			sitting: '🪑', sit: '🪑',
+			jumping: '🦘', jump: '🦘',
+			talking: '🗣️', talk: '🗣️',
+			clapping: '👏', clap: '👏',
+			punching: '👊', punch: '👊',
+			kicking: '🦵', kick: '🦵',
+		};
+
+		grid.innerHTML = defs.map((def) => {
+			const loaded = this.animationManager.isLoaded(def.name);
+			const isActive = activeName === def.name;
+			const icon = def.icon || ICONS[def.name.toLowerCase()] || '▶';
+			const label = def.label || def.name.charAt(0).toUpperCase() + def.name.slice(1);
+			return (
+				'<button class="anim-btn' +
+				(isActive ? ' anim-btn--active' : '') +
+				(loaded ? '' : ' anim-btn--loading') +
+				'" data-anim="' + def.name + '"' +
+				' title="' + label + '"' +
+				(loaded ? '' : ' disabled') +
+				'>' +
+				'<span class="anim-btn__icon">' + icon + '</span>' +
+				'<span class="anim-btn__label">' + label + '</span>' +
+				'</button>'
+			);
+		}).join('');
+
+		// Bind click events
+		grid.querySelectorAll('.anim-btn:not([disabled])').forEach((btn) => {
+			btn.addEventListener('click', () => {
+				const name = btn.dataset.anim;
+				this.animationManager.crossfadeTo(name);
+				this.invalidate();
+				this._recomputeAnimating();
+				this._updateRenderLoop();
+			});
+		});
+	}
+
 	clear() {
 		if (!this.content) return;
+
+		// Detach external animation manager
+		this.animationManager.detach();
+		if (this._animPanelEl) {
+			this._animPanelEl.remove();
+			this._animPanelEl = null;
+		}
 
 		if (this.modelInfo) {
 			this.modelInfo.remove();
@@ -960,6 +1007,13 @@ export class Viewer {
 			this.mixer = null;
 		}
 		this.clips = [];
+
+		// Dispose external animation system
+		this.animationManager.dispose();
+		if (this._animPanelEl) {
+			this._animPanelEl.remove();
+			this._animPanelEl = null;
+		}
 
 		if (this.skeletonHelpers.length) {
 			this.skeletonHelpers.forEach((helper) => {
@@ -1059,18 +1113,4 @@ export class Viewer {
 		this.defaultCamera = null;
 		this._afterAnimateHooks = null;
 	}
-}
-
-function traverseMaterials(object, callback) {
-	const seen = new Set();
-	object.traverse((node) => {
-		if (!node.geometry) return;
-		const materials = Array.isArray(node.material) ? node.material : [node.material];
-		materials.forEach((mat) => {
-			if (mat && !seen.has(mat.uuid)) {
-				seen.add(mat.uuid);
-				callback(mat);
-			}
-		});
-	});
 }

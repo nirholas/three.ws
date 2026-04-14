@@ -9,21 +9,21 @@
 		content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
 	/>
 	<meta name="author" content="nirholas" />
-	<meta name="description" content="AI-powered 3D model viewer. Drag and drop glTF, GLB, and 3D files to preview instantly in your browser." />
-	<meta name="keywords" content="3D viewer, glTF viewer, GLB viewer, 3D model viewer, online 3D viewer, WebGL, three.js, drag and drop 3D" />
+	<meta name="description" content="The first embodied 3D AI agent. Not a chatbot. A presence — with a body, a place, an identity, and memory." />
+	<meta name="keywords" content="3D agent, AI agent, embodied AI, glTF viewer, GLB viewer, 3D model viewer, WebGL, three.js, ERC-8004, agent identity" />
 	<meta name="theme-color" content="#000000" />
 
 	<!-- Open Graph -->
 	<meta property="og:type" content="website" />
-	<meta property="og:title" content="3D Agent — AI-Powered 3D Model Viewer" />
-	<meta property="og:description" content="Drag and drop glTF, GLB, and 3D files to preview instantly in your browser." />
+	<meta property="og:title" content="3D Agent — The First Embodied AI Agent" />
+	<meta property="og:description" content="Agents have always been imagined as present. We made that real." />
 	<meta property="og:url" content="https://3d.irish/" />
 	<meta property="og:site_name" content="3D Agent" />
 
 	<!-- Twitter / X -->
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="3D Agent — AI-Powered 3D Model Viewer" />
-	<meta name="twitter:description" content="Drag and drop glTF, GLB, and 3D files to preview instantly in your browser." />
+	<meta name="twitter:title" content="3D Agent — Embodied AI" />
+	<meta name="twitter:description" content="The first 3D agent with a body, a place, an identity, and memory." />
 	<meta name="twitter:creator" content="@nichxbt" />
 
 	<link rel="canonical" href="https://3d.irish/" />
@@ -42,10 +42,20 @@
 			<a href="/" class="active">Viewer</a>
 			<a href="/features">Features</a>
 			<a href="/#register">Register Agent</a>
+			<a href="/dashboard" class="nav-dashboard">Dashboard</a>
 		</nav>
 	</header>
+
 	<main class="wrap">
+		<!-- Agent presence panel — rendered by AgentHome -->
+		<div class="agent-presence-sidebar" id="agent-presence-sidebar">
+			<div id="agent-home-container"></div>
+		</div>
+
+		<!-- 3D Viewer -->
 		<div class="viewer-container" id="viewer-container"></div>
+
+		<!-- Bottom bar -->
 		<div class="dropzone">
 			<div class="upload-btn">
 				<input type="file" name="file-input[]" id="file-input" multiple="" />
