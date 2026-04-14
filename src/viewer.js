@@ -123,6 +123,8 @@ export class Viewer {
 
 		this.controls = new OrbitControls(this.defaultCamera, this.renderer.domElement);
 		this.controls.screenSpacePanning = true;
+		this._onControlsChange = () => this.invalidate();
+		this.controls.addEventListener('change', this._onControlsChange);
 
 		this.el.appendChild(this.renderer.domElement);
 
@@ -147,9 +149,16 @@ export class Viewer {
 		this._rafId = null;
 		this._visible = true;
 		this._tabVisible = !document.hidden;
+		this._disposed = false;
+		this._loadedEnvironment = null;
+		this._guiWrap = null;
+		this._needsRender = true;
+		this._animating = false;
 
 		this._onVisibilityChange = () => {
+			const wasHidden = !this._tabVisible;
 			this._tabVisible = !document.hidden;
+			if (wasHidden && this._tabVisible) this._needsRender = true;
 			this._updateRenderLoop();
 		};
 		document.addEventListener('visibilitychange', this._onVisibilityChange);
@@ -157,7 +166,9 @@ export class Viewer {
 		if (typeof IntersectionObserver !== 'undefined') {
 			this._intersectionObserver = new IntersectionObserver(
 				(entries) => {
+					const wasHidden = !this._visible;
 					this._visible = entries[entries.length - 1].isIntersecting;
+					if (wasHidden && this._visible) this._needsRender = true;
 					this._updateRenderLoop();
 				},
 				{ threshold: 0 },
@@ -165,35 +176,74 @@ export class Viewer {
 			this._intersectionObserver.observe(this.el);
 		}
 
-		this._updateRenderLoop();
-		window.addEventListener('resize', this.resize.bind(this), false);
-		window.addEventListener('keydown', (e) => {
+		this._onResize = this.resize.bind(this);
+		this._onKeyDown = (e) => {
 			if ((e.key === 'p' || e.key === 'P') && !this.isInputFocused()) this.takeScreenshot();
-		});
+		};
+
+		this._updateRenderLoop();
+		window.addEventListener('resize', this._onResize, false);
+		window.addEventListener('keydown', this._onKeyDown);
+	}
+
+	invalidate() {
+		if (this._disposed) return;
+		this._needsRender = true;
+		this._updateRenderLoop();
+	}
+
+	_recomputeAnimating() {
+		let animating = false;
+		if (this.state && this.state.autoRotate) animating = true;
+		if (!animating && this.mixer && this.state) {
+			for (const key in this.state.actionStates) {
+				if (this.state.actionStates[key]) {
+					animating = true;
+					break;
+				}
+			}
+		}
+		this._animating = animating;
 	}
 
 	_updateRenderLoop() {
-		const shouldRun = this._visible && this._tabVisible;
+		if (this._disposed) return;
+		const canRun = this._visible && this._tabVisible;
+		const shouldRun = canRun && (this._needsRender || this._animating);
 		if (shouldRun && this._rafId === null) {
 			this.prevTime = performance.now();
 			this._rafId = requestAnimationFrame(this.animate);
-		} else if (!shouldRun && this._rafId !== null) {
+		} else if (!canRun && this._rafId !== null) {
 			cancelAnimationFrame(this._rafId);
 			this._rafId = null;
 		}
 	}
 
 	animate(time) {
-		this._rafId = requestAnimationFrame(this.animate);
-
 		const dt = (time - this.prevTime) / 1000;
+		this.prevTime = time;
+
+		this._recomputeAnimating();
 
 		this.controls.update();
 		this.stats.update();
-		this.mixer && this.mixer.update(dt);
-		this.render();
+		if (this.mixer) this.mixer.update(dt);
 
-		this.prevTime = time;
+		// Extension point for the AgentAvatar empathy tick and any other per-frame hooks
+		if (this._afterAnimateHooks) {
+			for (let i = 0; i < this._afterAnimateHooks.length; i++) {
+				this._afterAnimateHooks[i](dt);
+			}
+		}
+
+		this.render();
+		this._needsRender = false;
+
+		if (this._animating && this._visible && this._tabVisible && !this._disposed) {
+			this._rafId = requestAnimationFrame(this.animate);
+		} else {
+			this._rafId = null;
+		}
 	}
 
 	isInputFocused() {
@@ -244,6 +294,8 @@ export class Viewer {
 		this.axesCamera.aspect = this.axesDiv.clientWidth / this.axesDiv.clientHeight;
 		this.axesCamera.updateProjectionMatrix();
 		this.axesRenderer.setSize(this.axesDiv.clientWidth, this.axesDiv.clientHeight);
+
+		this.invalidate();
 	}
 
 	load(url, rootPath, assetMap) {
@@ -381,6 +433,8 @@ export class Viewer {
 		window.VIEWER.scene = this.content;
 
 		this.printGraph(this.content);
+
+		this.invalidate();
 	}
 
 	printGraph(node) {
@@ -509,6 +563,12 @@ export class Viewer {
 				path,
 				(texture) => {
 					const envMap = this.pmremGenerator.fromEquirectangular(texture).texture;
+					texture.dispose();
+
+					if (this._loadedEnvironment && this._loadedEnvironment !== envMap) {
+						this._loadedEnvironment.dispose();
+					}
+					this._loadedEnvironment = envMap;
 
 					resolve({ envMap });
 				},
@@ -739,6 +799,7 @@ export class Viewer {
 		this.el.appendChild(guiWrap);
 		guiWrap.classList.add('gui-wrap');
 		guiWrap.appendChild(gui.domElement);
+		this._guiWrap = guiWrap;
 		if (isMobile) {
 			gui.close();
 		} else {
@@ -855,6 +916,133 @@ export class Viewer {
 				}
 			}
 		});
+	}
+
+	dispose() {
+		if (this._disposed) return;
+		this._disposed = true;
+
+		if (this._rafId !== null) {
+			cancelAnimationFrame(this._rafId);
+			this._rafId = null;
+		}
+
+		document.removeEventListener('visibilitychange', this._onVisibilityChange);
+		window.removeEventListener('resize', this._onResize, false);
+		window.removeEventListener('keydown', this._onKeyDown);
+
+		if (this._intersectionObserver) {
+			this._intersectionObserver.disconnect();
+			this._intersectionObserver = null;
+		}
+
+		this.clear();
+
+		if (this.mixer) {
+			this.mixer.stopAllAction();
+			const root = this.mixer.getRoot();
+			if (root) this.mixer.uncacheRoot(root);
+			this.mixer = null;
+		}
+		this.clips = [];
+
+		if (this.skeletonHelpers.length) {
+			this.skeletonHelpers.forEach((helper) => {
+				this.scene.remove(helper);
+				helper.dispose?.();
+			});
+			this.skeletonHelpers.length = 0;
+		}
+
+		if (this.gridHelper) {
+			this.scene.remove(this.gridHelper);
+			this.gridHelper.geometry?.dispose();
+			this.gridHelper.material?.dispose();
+			this.gridHelper = null;
+		}
+		if (this.axesHelper) {
+			this.scene.remove(this.axesHelper);
+			this.axesHelper.geometry?.dispose();
+			this.axesHelper.material?.dispose();
+			this.axesHelper = null;
+		}
+		if (this.axesCorner) {
+			this.axesScene?.remove(this.axesCorner);
+			this.axesCorner.geometry?.dispose();
+			this.axesCorner.material?.dispose();
+			this.axesCorner = null;
+		}
+
+		this.lights.forEach((light) => light.parent?.remove(light));
+		this.lights = [];
+
+		if (this.annotationEls.length) {
+			this.annotationEls.forEach((a) => a.el.remove());
+			this.annotationEls = [];
+		}
+		if (this.modelInfo) {
+			this.modelInfo.remove();
+			this.modelInfo = null;
+		}
+
+		if (this.gui) {
+			this.gui.destroy();
+			this.gui = null;
+		}
+		if (this._guiWrap) {
+			this._guiWrap.remove();
+			this._guiWrap = null;
+		}
+
+		if (this.stats?.dom) this.stats.dom.remove();
+
+		this.controls?.dispose();
+		this.controls = null;
+
+		if (this._loadedEnvironment) {
+			this._loadedEnvironment.dispose();
+			this._loadedEnvironment = null;
+		}
+		if (this.neutralEnvironment) {
+			this.neutralEnvironment.dispose();
+			this.neutralEnvironment = null;
+		}
+		if (this.scene) {
+			this.scene.environment = null;
+			this.scene.background = null;
+		}
+
+		if (this.pmremGenerator) {
+			this.pmremGenerator.dispose();
+			this.pmremGenerator = null;
+		}
+
+		if (this.axesRenderer) {
+			this.axesRenderer.dispose();
+			this.axesRenderer.forceContextLoss?.();
+			this.axesRenderer.domElement?.remove();
+			this.axesRenderer = null;
+		}
+		if (this.axesDiv) {
+			this.axesDiv.remove();
+			this.axesDiv = null;
+		}
+		this.axesScene = null;
+		this.axesCamera = null;
+
+		if (this.renderer) {
+			this.renderer.dispose();
+			this.renderer.forceContextLoss?.();
+			this.renderer.domElement?.remove();
+			if (window.renderer === this.renderer) window.renderer = null;
+			this.renderer = null;
+		}
+
+		this.scene = null;
+		this.content = null;
+		this.activeCamera = null;
+		this.defaultCamera = null;
+		this._afterAnimateHooks = null;
 	}
 }
 

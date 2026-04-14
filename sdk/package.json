@@ -1,0 +1,34 @@
+{
+  "name": "@speraxos/agent-kit",
+  "version": "0.1.0",
+  "description": "Ship an ERC-8004 agent with on-chain identity, a chat panel, and discoverable .well-known endpoints in minutes.",
+  "type": "module",
+  "main": "./src/index.js",
+  "module": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./styles": "./src/styles.css"
+  },
+  "files": [
+    "src"
+  ],
+  "keywords": [
+    "erc-8004",
+    "agent",
+    "blockchain",
+    "a2a",
+    "mcp",
+    "ethereum",
+    "web3",
+    "identity"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "ethers": "^6.0.0"
+  },
+  "peerDependenciesMeta": {
+    "ethers": {
+      "optional": true
+    }
+  }
+}
