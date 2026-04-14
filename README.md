@@ -4,7 +4,7 @@ description: 3D Agent** is an open-source, browser-native 3D model viewer built 
 ---
 
 <p align="center">
-    <img src="public/ddd.png" width="500" height="500">
+    <img src="public/3d.png" width="500" height="500">
 </p>
 
 <p align="center">

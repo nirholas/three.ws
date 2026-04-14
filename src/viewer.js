@@ -34,6 +34,7 @@ import { GUI } from 'dat.gui';
 
 import { environments } from './environments.js';
 import { createModelInfo } from './model-info.js';
+import { buildAnnotations, renderAnnotationCanvas } from './annotations.js';
 
 const DEFAULT_CAMERA = '[default]';
 
@@ -91,6 +92,7 @@ export class Viewer {
 
 			// Info overlay
 			showInfo: true,
+			showLabels: false,
 		};
 
 		this.prevTime = 0;
@@ -135,6 +137,7 @@ export class Viewer {
 		this.gridHelper = null;
 		this.axesHelper = null;
 		this.modelInfo = null;
+		this.annotationEls = [];
 
 		this.addAxesHelper();
 		this.addGUI();
@@ -173,6 +176,7 @@ export class Viewer {
 			this.axesCamera.lookAt(this.axesScene.position);
 			this.axesRenderer.render(this.axesScene, this.axesCamera);
 		}
+		this.projectAnnotations();
 	}
 
 	takeScreenshot() {
@@ -340,6 +344,7 @@ export class Viewer {
 		this.updateEnvironment();
 		this.updateDisplay();
 		this.updateModelInfo(object, clips);
+		this.updateAnnotations();
 
 		window.VIEWER.scene = this.content;
 
@@ -541,6 +546,53 @@ export class Viewer {
 		}
 	}
 
+	updateAnnotations() {
+		// Clear existing
+		this.annotationEls.forEach((a) => a.el.remove());
+		this.annotationEls = [];
+
+		if (!this.state.showLabels || !this.content) return;
+
+		const annotations = buildAnnotations(this.content);
+
+		annotations.forEach((ann) => {
+			const canvas = renderAnnotationCanvas(ann);
+			const el = document.createElement('div');
+			el.classList.add('annotation-label');
+			el.appendChild(canvas);
+			this.el.appendChild(el);
+			this.annotationEls.push({ el, position: ann.position });
+		});
+	}
+
+	projectAnnotations() {
+		if (this.annotationEls.length === 0) return;
+
+		const width = this.el.clientWidth;
+		const height = this.el.clientHeight;
+		const halfW = width / 2;
+		const halfH = height / 2;
+		const tempVec = new Vector3();
+
+		this.annotationEls.forEach(({ el, position }) => {
+			tempVec.copy(position);
+			tempVec.project(this.activeCamera);
+
+			// Behind camera check
+			if (tempVec.z > 1) {
+				el.style.display = 'none';
+				return;
+			}
+
+			const x = (tempVec.x * halfW) + halfW;
+			const y = -(tempVec.y * halfH) + halfH;
+
+			el.style.display = '';
+			el.style.left = x + 'px';
+			el.style.top = y + 'px';
+		});
+	}
+
 	addAxesHelper() {
 		this.axesDiv = document.createElement('div');
 		this.el.appendChild(this.axesDiv);
@@ -591,6 +643,8 @@ export class Viewer {
 		dispFolder.add({ screenshot: () => this.takeScreenshot() }, 'screenshot').name('Screenshot [P]');
 		const infoCtrl = dispFolder.add(this.state, 'showInfo').name('model info');
 		infoCtrl.onChange(() => this.updateModelInfo(this.content, this.clips));
+		const labelsCtrl = dispFolder.add(this.state, 'showLabels').name('mesh labels');
+		labelsCtrl.onChange(() => this.updateAnnotations());
 
 		// Lighting controls.
 		const lightFolder = gui.addFolder('Lighting');
@@ -737,6 +791,9 @@ export class Viewer {
 			this.modelInfo.remove();
 			this.modelInfo = null;
 		}
+
+		this.annotationEls.forEach((a) => a.el.remove());
+		this.annotationEls = [];
 
 		this.scene.remove(this.content);
 
