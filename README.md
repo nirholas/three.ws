@@ -1,0 +1,640 @@
+PLACEHOLDER_REPLACE_FULL_README
+    <defs>
+      <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#0d0d0d"/>
+        <stop offset="100%" style="stop-color:#1a1a2e"/>
+      </linearGradient>
+      <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" style="stop-color:#00d2ff"/>
+        <stop offset="50%" style="stop-color:#7b2ff7"/>
+        <stop offset="100%" style="stop-color:#ff0080"/>
+      </linearGradient>
+      <linearGradient id="sub" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" style="stop-color:#aaa"/>
+        <stop offset="100%" style="stop-color:#666"/>
+      </linearGradient>
+    </defs>
+    <rect width="720" height="140" rx="16" fill="url(#bg)"/>
+    <rect x="0" y="130" width="720" height="4" rx="2" fill="url(#accent)" opacity="0.8"/>
+    <text x="360" y="62" text-anchor="middle" font-family="SF Pro Display, Inter, Segoe UI, sans-serif" font-size="48" font-weight="700" fill="url(#accent)" letter-spacing="4">
+      3D AGENT
+    </text>
+    <text x="360" y="100" text-anchor="middle" font-family="SF Pro Display, Inter, Segoe UI, sans-serif" font-size="16" font-weight="400" fill="url(#sub)" letter-spacing="2">
+      BROWSER-NATIVE 3D MODEL VIEWER &amp; VALIDATOR
+    </text>
+  </svg>
+</p>
+
+<p align="center">
+  <a href="https://3d.irish"><strong>🌐 Live at 3d.irish</strong></a>&nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="#-quickstart"><strong>Get Started</strong></a>&nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="#-features"><strong>Features</strong></a>&nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="#-tutorials"><strong>Tutorials</strong></a>&nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="#-documentation"><strong>Docs</strong></a>&nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="https://github.com/nirholas/3D/issues/new"><strong>Feedback</strong></a>
+</p>
+
+---
+
+<br/>
+
+<p align="center">
+  <svg xmlns="http://www.w3.org/2000/svg" width="650" height="56" viewBox="0 0 650 56">
+    <defs>
+      <linearGradient id="hg1" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" style="stop-color:#00d2ff"/>
+        <stop offset="100%" style="stop-color:#7b2ff7"/>
+      </linearGradient>
+    </defs>
+    <rect width="650" height="56" rx="12" fill="#111119"/>
+    <text x="325" y="35" text-anchor="middle" font-family="SF Pro Display, Inter, sans-serif" font-size="13" fill="#ccc" letter-spacing="1">
+      DRAG &amp; DROP · REAL-TIME LIGHTING · ANIMATION PLAYBACK · GLTF VALIDATION · ZERO UPLOADS
+    </text>
+    <rect x="0" y="0" width="650" height="3" rx="1.5" fill="url(#hg1)" opacity="0.6"/>
+  </svg>
+</p>
+
+<br/>
+
+## 🧠 What is 3D Agent?
+
+**3D Agent** is an open-source, browser-native 3D model viewer built on [three.js](https://threejs.org/) (r176). It renders **glTF 2.0** and **GLB** files directly in WebGL — no plugins, no server uploads, no installs. Just open [3d.irish](https://3d.irish), drop a file, and inspect your model instantly.
+
+It's built for **3D artists** previewing exports, **game developers** debugging assets, **web developers** integrating models, and **anyone curious** about 3D on the web.
+
+<br/>
+
+---
+
+<br/>
+
+## ✨ Features
+
+<br/>
+
+<p align="center">
+  <svg xmlns="http://www.w3.org/2000/svg" width="650" height="320" viewBox="0 0 650 320">
+    <defs>
+      <linearGradient id="c1" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#00d2ff;stop-opacity:0.15"/>
+        <stop offset="100%" style="stop-color:#00d2ff;stop-opacity:0.03"/>
+      </linearGradient>
+      <linearGradient id="c2" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#7b2ff7;stop-opacity:0.15"/>
+        <stop offset="100%" style="stop-color:#7b2ff7;stop-opacity:0.03"/>
+      </linearGradient>
+      <linearGradient id="c3" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#ff0080;stop-opacity:0.15"/>
+        <stop offset="100%" style="stop-color:#ff0080;stop-opacity:0.03"/>
+      </linearGradient>
+      <linearGradient id="c4" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#00ff88;stop-opacity:0.15"/>
+        <stop offset="100%" style="stop-color:#00ff88;stop-opacity:0.03"/>
+      </linearGradient>
+      <linearGradient id="c5" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#ff6b35;stop-opacity:0.15"/>
+        <stop offset="100%" style="stop-color:#ff6b35;stop-opacity:0.03"/>
+      </linearGradient>
+      <linearGradient id="c6" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#ffe66d;stop-opacity:0.15"/>
+        <stop offset="100%" style="stop-color:#ffe66d;stop-opacity:0.03"/>
+      </linearGradient>
+    </defs>
+    <rect width="650" height="320" rx="14" fill="#0d0d14"/>
+    <!-- Row 1 -->
+    <rect x="20" y="20" width="195" height="130" rx="10" fill="url(#c1)" stroke="#00d2ff" stroke-opacity="0.2"/>
+    <text x="117" y="60" text-anchor="middle" font-size="24">📂</text>
+    <text x="117" y="84" text-anchor="middle" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#00d2ff">DRAG &amp; DROP</text>
+    <text x="117" y="104" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">Load .glTF / .GLB files</text>
+    <text x="117" y="118" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">instantly from disk</text>
+
+    <rect x="227" y="20" width="195" height="130" rx="10" fill="url(#c2)" stroke="#7b2ff7" stroke-opacity="0.2"/>
+    <text x="324" y="60" text-anchor="middle" font-size="24">💡</text>
+    <text x="324" y="84" text-anchor="middle" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#7b2ff7">LIGHTING ENGINE</text>
+    <text x="324" y="104" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">HDR environments, tone</text>
+    <text x="324" y="118" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">mapping &amp; exposure ctrl</text>
+
+    <rect x="434" y="20" width="195" height="130" rx="10" fill="url(#c3)" stroke="#ff0080" stroke-opacity="0.2"/>
+    <text x="531" y="60" text-anchor="middle" font-size="24">🎬</text>
+    <text x="531" y="84" text-anchor="middle" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#ff0080">ANIMATIONS</text>
+    <text x="531" y="104" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">Play, pause &amp; scrub</text>
+    <text x="531" y="118" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">all animation clips</text>
+
+    <!-- Row 2 -->
+    <rect x="20" y="168" width="195" height="130" rx="10" fill="url(#c4)" stroke="#00ff88" stroke-opacity="0.2"/>
+    <text x="117" y="208" text-anchor="middle" font-size="24">🔍</text>
+    <text x="117" y="232" text-anchor="middle" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#00ff88">VALIDATION</text>
+    <text x="117" y="252" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">Full glTF spec validator</text>
+    <text x="117" y="266" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">with error reports</text>
+
+    <rect x="227" y="168" width="195" height="130" rx="10" fill="url(#c5)" stroke="#ff6b35" stroke-opacity="0.2"/>
+    <text x="324" y="208" text-anchor="middle" font-size="24">🦴</text>
+    <text x="324" y="232" text-anchor="middle" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#ff6b35">INSPECTION</text>
+    <text x="324" y="252" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">Wireframe, skeleton,</text>
+    <text x="324" y="266" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">morph targets &amp; grid</text>
+
+    <rect x="434" y="168" width="195" height="130" rx="10" fill="url(#c6)" stroke="#ffe66d" stroke-opacity="0.2"/>
+    <text x="531" y="208" text-anchor="middle" font-size="24">📱</text>
+    <text x="531" y="232" text-anchor="middle" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#ffe66d">RESPONSIVE</text>
+    <text x="531" y="252" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">Desktop, tablet &amp;</text>
+    <text x="531" y="266" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">mobile optimized</text>
+  </svg>
+</p>
+
+<br/>
+
+### Full Feature Breakdown
+
+| Category | What You Get |
+|:---------|:-------------|
+| **File Support** | `.glTF` and `.GLB` (glTF 2.0), with multi-file drag-and-drop (textures, bins) |
+| **Compression** | Draco mesh compression, KTX2 texture compression, Meshopt decoder |
+| **Lighting** | Ambient + directional lights, HDR environment maps (Venice Sunset, Footprint Court), neutral room environment, exposure & tone mapping (Linear / ACES Filmic) |
+| **Display** | Wireframe overlay, skeleton visualization, grid + axes helpers, background color picker, auto-rotate, point size control |
+| **Animation** | Full clip playback with per-clip toggle, playback speed control, play-all |
+| **Morph Targets** | Real-time slider control for every morph target on every mesh |
+| **Cameras** | Switch between default orbit camera and any cameras embedded in the glTF |
+| **Validation** | Integrated [glTF-Validator](https://github.com/KhronosGroup/gltf-validator) — errors, warnings, hints, and info-level messages in a structured report |
+| **Performance** | Live FPS/MS/MB stats panel via `stats.js` |
+| **Deep Linking** | Load models via URL hash: `#model=url&preset=...&cameraPosition=x,y,z` |
+| **Privacy** | 100% client-side — your files never leave your browser |
+
+<br/>
+
+---
+
+<br/>
+
+## 🚀 Quickstart
+
+<br/>
+
+<p align="center">
+  <svg xmlns="http://www.w3.org/2000/svg" width="520" height="200" viewBox="0 0 520 200">
+    <defs>
+      <linearGradient id="step" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" style="stop-color:#00d2ff"/>
+        <stop offset="100%" style="stop-color:#7b2ff7"/>
+      </linearGradient>
+    </defs>
+    <rect width="520" height="200" rx="14" fill="#0d0d14"/>
+    <!-- Step 1 -->
+    <circle cx="60" cy="50" r="20" fill="none" stroke="#00d2ff" stroke-width="2"/>
+    <text x="60" y="56" text-anchor="middle" font-family="Inter, sans-serif" font-size="16" font-weight="700" fill="#00d2ff">1</text>
+    <text x="100" y="46" font-family="SF Mono, Fira Code, monospace" font-size="13" fill="#e0e0e0">git clone https://github.com/nirholas/3D.git</text>
+    <text x="100" y="64" font-family="SF Mono, Fira Code, monospace" font-size="13" fill="#666">cd 3D</text>
+    <!-- Step 2 -->
+    <circle cx="60" cy="110" r="20" fill="none" stroke="#7b2ff7" stroke-width="2"/>
+    <text x="60" y="116" text-anchor="middle" font-family="Inter, sans-serif" font-size="16" font-weight="700" fill="#7b2ff7">2</text>
+    <text x="100" y="116" font-family="SF Mono, Fira Code, monospace" font-size="13" fill="#e0e0e0">npm install</text>
+    <!-- Step 3 -->
+    <circle cx="60" cy="165" r="20" fill="none" stroke="#ff0080" stroke-width="2"/>
+    <text x="60" y="171" text-anchor="middle" font-family="Inter, sans-serif" font-size="16" font-weight="700" fill="#ff0080">3</text>
+    <text x="100" y="162" font-family="SF Mono, Fira Code, monospace" font-size="13" fill="#e0e0e0">npm run dev</text>
+    <text x="100" y="180" font-family="SF Mono, Fira Code, monospace" font-size="13" fill="#666">→ http://localhost:3000</text>
+  </svg>
+</p>
+
+```bash
+git clone https://github.com/nirholas/3D.git
+cd 3D
+npm install
+npm run dev
+```
+
+Open **http://localhost:3000** and drop any `.glb` or `.gltf` file onto the page.
+
+<br/>
+
+### Available Scripts
+
+| Command | What It Does |
+|:--------|:-------------|
+| `npm run dev` | Starts Vite dev server on port 3000 with hot reload |
+| `npm run build` | Production build to `dist/` |
+| `npm run deploy` | Build + deploy to Vercel |
+| `npm run clean` | Wipe the `dist/` directory |
+
+<br/>
+
+---
+
+<br/>
+
+## 🏗️ Architecture
+
+<br/>
+
+<p align="center">
+  <svg xmlns="http://www.w3.org/2000/svg" width="650" height="340" viewBox="0 0 650 340">
+    <defs>
+      <linearGradient id="ab" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#0d0d14"/>
+        <stop offset="100%" style="stop-color:#12121f"/>
+      </linearGradient>
+    </defs>
+    <rect width="650" height="340" rx="14" fill="url(#ab)"/>
+
+    <!-- App -->
+    <rect x="240" y="20" width="170" height="50" rx="8" fill="#111" stroke="#00d2ff" stroke-width="1.5"/>
+    <text x="325" y="50" text-anchor="middle" font-family="SF Mono, monospace" font-size="14" font-weight="600" fill="#00d2ff">app.js</text>
+    <text x="325" y="62" text-anchor="middle" font-family="Inter, sans-serif" font-size="9" fill="#666">Entry point &amp; dropzone</text>
+
+    <!-- Lines from App -->
+    <line x1="280" y1="70" x2="140" y2="120" stroke="#333" stroke-width="1"/>
+    <line x1="325" y1="70" x2="325" y2="120" stroke="#333" stroke-width="1"/>
+    <line x1="370" y1="70" x2="510" y2="120" stroke="#333" stroke-width="1"/>
+
+    <!-- Viewer -->
+    <rect x="55" y="120" width="170" height="50" rx="8" fill="#111" stroke="#7b2ff7" stroke-width="1.5"/>
+    <text x="140" y="150" text-anchor="middle" font-family="SF Mono, monospace" font-size="14" font-weight="600" fill="#7b2ff7">viewer.js</text>
+    <text x="140" y="162" text-anchor="middle" font-family="Inter, sans-serif" font-size="9" fill="#666">Three.js scene &amp; GUI</text>
+
+    <!-- Validator -->
+    <rect x="240" y="120" width="170" height="50" rx="8" fill="#111" stroke="#ff0080" stroke-width="1.5"/>
+    <text x="325" y="150" text-anchor="middle" font-family="SF Mono, monospace" font-size="14" font-weight="600" fill="#ff0080">validator.js</text>
+    <text x="325" y="162" text-anchor="middle" font-family="Inter, sans-serif" font-size="9" fill="#666">glTF spec validation</text>
+
+    <!-- Environments -->
+    <rect x="425" y="120" width="170" height="50" rx="8" fill="#111" stroke="#ff6b35" stroke-width="1.5"/>
+    <text x="510" y="150" text-anchor="middle" font-family="SF Mono, monospace" font-size="14" font-weight="600" fill="#ff6b35">environments.js</text>
+    <text x="510" y="162" text-anchor="middle" font-family="Inter, sans-serif" font-size="9" fill="#666">HDR env map registry</text>
+
+    <!-- Lines to Components -->
+    <line x1="325" y1="170" x2="325" y2="220" stroke="#333" stroke-width="1"/>
+
+    <!-- Components header -->
+    <rect x="140" y="220" width="370" height="36" rx="8" fill="#111" stroke="#00ff88" stroke-width="1.5"/>
+    <text x="325" y="244" text-anchor="middle" font-family="SF Mono, monospace" font-size="13" font-weight="600" fill="#00ff88">components/</text>
+
+    <!-- Component boxes -->
+    <rect x="55" y="276" width="130" height="40" rx="6" fill="#0a0a12" stroke="#444" stroke-width="1"/>
+    <text x="120" y="300" text-anchor="middle" font-family="SF Mono, monospace" font-size="10" fill="#aaa">footer.jsx</text>
+
+    <rect x="200" y="276" width="130" height="40" rx="6" fill="#0a0a12" stroke="#444" stroke-width="1"/>
+    <text x="265" y="300" text-anchor="middle" font-family="SF Mono, monospace" font-size="10" fill="#aaa">validator-report</text>
+
+    <rect x="345" y="276" width="130" height="40" rx="6" fill="#0a0a12" stroke="#444" stroke-width="1"/>
+    <text x="410" y="300" text-anchor="middle" font-family="SF Mono, monospace" font-size="10" fill="#aaa">validator-table</text>
+
+    <rect x="490" y="276" width="130" height="40" rx="6" fill="#0a0a12" stroke="#444" stroke-width="1"/>
+    <text x="555" y="300" text-anchor="middle" font-family="SF Mono, monospace" font-size="10" fill="#aaa">validator-toggle</text>
+
+    <line x1="200" y1="256" x2="120" y2="276" stroke="#333" stroke-width="1"/>
+    <line x1="280" y1="256" x2="265" y2="276" stroke="#333" stroke-width="1"/>
+    <line x1="370" y1="256" x2="410" y2="276" stroke="#333" stroke-width="1"/>
+    <line x1="450" y1="256" x2="555" y2="276" stroke="#333" stroke-width="1"/>
+  </svg>
+</p>
+
+```
+3D/
+├── index.html              → Single-page app shell
+├── style.css               → Dark theme + responsive layout
+├── src/
+│   ├── app.js              → Entry: dropzone, URL parsing, orchestration
+│   ├── viewer.js           → Three.js renderer, scene, camera, GUI (dat.gui)
+│   ├── validator.js        → glTF-Validator integration & report generation
+│   ├── environments.js     → HDR environment map definitions
+│   └── components/
+│       ├── footer.jsx      → Social links (X, GitHub)
+│       ├── validator-report.jsx   → Full validation report view
+│       ├── validator-table.jsx    → Error/warning/hint tables
+│       └── validator-toggle.jsx   → Collapsible validation summary bar
+├── public/avatars/         → Default model assets
+├── vercel.json             → Deployment + routing config
+└── package.json            → Dependencies & scripts
+```
+
+<br/>
+
+### Tech Stack
+
+| Layer | Technology |
+|:------|:-----------|
+| **Rendering** | [three.js](https://threejs.org/) r176 — WebGL 2.0 |
+| **Model Loading** | `GLTFLoader` + `DRACOLoader` + `KTX2Loader` + `MeshoptDecoder` |
+| **Controls** | `OrbitControls` — pan, zoom, rotate |
+| **GUI** | [dat.gui](https://github.com/dataarts/dat.gui) — real-time parameter tweaking |
+| **Validation** | [gltf-validator](https://github.com/KhronosGroup/gltf-validator) — Khronos spec compliance |
+| **Templating** | [vhtml](https://github.com/developit/vhtml) — JSX → HTML string rendering |
+| **Drag & Drop** | [simple-dropzone](https://github.com/donmccurdy/simple-dropzone) |
+| **Build** | [Vite](https://vitejs.dev/) 5 — sub-second HMR |
+| **Hosting** | [Vercel](https://vercel.com/) — edge CDN |
+
+<br/>
+
+---
+
+<br/>
+
+## 🔗 URL Parameters
+
+Load models and configure the viewer directly via URL hash parameters. This is useful for embedding, sharing specific views, or automated testing.
+
+```
+https://3d.irish/#model=URL&kiosk=true&preset=assetgenerator&cameraPosition=1,2,3
+```
+
+| Parameter | Type | Description |
+|:----------|:-----|:------------|
+| `model` | `string` | URL to a `.glb` or `.gltf` file to load on page open |
+| `kiosk` | `boolean` | Hides the header and validation UI for clean embedding |
+| `preset` | `string` | Set to `assetgenerator` for glTF asset generator testing mode |
+| `cameraPosition` | `x,y,z` | Initial camera position as comma-separated floats |
+
+**Example — embed a model in kiosk mode:**
+```
+https://3d.irish/#model=https://example.com/model.glb&kiosk=true
+```
+
+<br/>
+
+---
+
+<br/>
+
+## 📖 Tutorials
+
+<br/>
+
+### 1. Preview a Local Model
+
+<p align="center">
+  <svg xmlns="http://www.w3.org/2000/svg" width="500" height="80" viewBox="0 0 500 80">
+    <rect width="500" height="80" rx="10" fill="#0d0d14"/>
+    <text x="30" y="36" font-family="Inter, sans-serif" font-size="22" fill="#00d2ff">①</text>
+    <text x="60" y="36" font-family="Inter, sans-serif" font-size="13" fill="#ccc">Open 3d.irish</text>
+    <text x="200" y="36" font-family="Inter, sans-serif" font-size="22" fill="#7b2ff7">②</text>
+    <text x="230" y="36" font-family="Inter, sans-serif" font-size="13" fill="#ccc">Drop .glb file</text>
+    <text x="370" y="36" font-family="Inter, sans-serif" font-size="22" fill="#ff0080">③</text>
+    <text x="400" y="36" font-family="Inter, sans-serif" font-size="13" fill="#ccc">Inspect</text>
+    <text x="30" y="62" font-family="Inter, sans-serif" font-size="10" fill="#666">Works with multi-file drops — textures and .bin files are auto-resolved.</text>
+  </svg>
+</p>
+
+Just drag any `.glb` or `.gltf` file (along with its textures and `.bin` if separate) onto the page. The viewer auto-detects the root glTF file and resolves all relative resource URIs.
+
+**Multi-file glTF?** Select _all_ the files (`.gltf` + `.bin` + textures) and drop them together. The viewer maps them by relative path, so your model loads correctly even with external resources.
+
+<br/>
+
+### 2. Tweak Lighting & Environment
+
+The **Lighting** panel in the GUI sidebar gives you full control:
+
+1. **Environment Map** — choose between `None`, `Neutral` (studio), `Venice Sunset` (warm), or `Footprint Court` (outdoor daylight)
+2. **Tone Mapping** — switch between `Linear` (raw) and `ACES Filmic` (cinematic)
+3. **Exposure** — slide from –10 to +10 to simulate camera exposure
+4. **Ambient / Direct** — independently control intensity and color of ambient fill and key directional light
+5. **Background** — toggle the environment map as the scene background, or pick a solid color
+
+<br/>
+
+### 3. Play & Control Animations
+
+If your model has animation clips, the **Animation** panel appears automatically:
+
+- Each clip gets its own checkbox — toggle individual animations on/off
+- **Playback Speed** — slow down to 0 for freeze-frame or study
+- **Play All** — fire every clip simultaneously
+
+<br/>
+
+### 4. Debug with Wireframe & Skeleton
+
+Open the **Display** panel:
+
+- **Wireframe** — see the mesh topology and triangle density
+- **Skeleton** — visualize bones and joint hierarchy (great for rigging QA)
+- **Grid** — ground plane + axes helper for spatial reference
+- **Point Size** — if your model uses point clouds, control the render size
+
+<br/>
+
+### 5. Validate Your Model
+
+Every model you load is automatically validated against the [glTF 2.0 specification](https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html). Click the validation bar at the bottom to expand a full report:
+
+- **Errors** — spec violations that will likely cause rendering issues
+- **Warnings** — non-fatal issues that may affect portability
+- **Hints** — optimization suggestions
+- **Info** — metadata (vertex count, draw calls, materials, extensions used)
+
+<br/>
+
+### 6. Embed in Your Own Site
+
+Use an `<iframe>` with kiosk mode for clean embedding:
+
+```html
+<iframe
+  src="https://3d.irish/#model=https://your-cdn.com/model.glb&kiosk=true"
+  width="800"
+  height="600"
+  frameborder="0"
+  allow="autoplay; fullscreen"
+></iframe>
+```
+
+> **CORS note:** The model URL must allow cross-origin requests. If you hit CORS errors, serve the model from the same domain or configure your CDN to allow `https://3d.irish` as an origin.
+
+<br/>
+
+---
+
+<br/>
+
+## 💡 Ideas & Roadmap
+
+<br/>
+
+<p align="center">
+  <svg xmlns="http://www.w3.org/2000/svg" width="650" height="260" viewBox="0 0 650 260">
+    <rect width="650" height="260" rx="14" fill="#0d0d14"/>
+    <text x="325" y="30" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#666" letter-spacing="3">WHAT'S NEXT</text>
+
+    <rect x="20" y="50" width="295" height="38" rx="6" fill="#111" stroke="#00d2ff" stroke-opacity="0.3"/>
+    <text x="35" y="74" font-family="Inter, sans-serif" font-size="12" fill="#00d2ff">◆</text>
+    <text x="55" y="74" font-family="Inter, sans-serif" font-size="11" fill="#ccc">AI-powered model analysis &amp; suggestions</text>
+
+    <rect x="335" y="50" width="295" height="38" rx="6" fill="#111" stroke="#7b2ff7" stroke-opacity="0.3"/>
+    <text x="350" y="74" font-family="Inter, sans-serif" font-size="12" fill="#7b2ff7">◆</text>
+    <text x="370" y="74" font-family="Inter, sans-serif" font-size="11" fill="#ccc">Screenshot &amp; video export</text>
+
+    <rect x="20" y="100" width="295" height="38" rx="6" fill="#111" stroke="#ff0080" stroke-opacity="0.3"/>
+    <text x="35" y="124" font-family="Inter, sans-serif" font-size="12" fill="#ff0080">◆</text>
+    <text x="55" y="124" font-family="Inter, sans-serif" font-size="11" fill="#ccc">Measurement tools (distances, angles)</text>
+
+    <rect x="335" y="100" width="295" height="38" rx="6" fill="#111" stroke="#ff6b35" stroke-opacity="0.3"/>
+    <text x="350" y="124" font-family="Inter, sans-serif" font-size="12" fill="#ff6b35">◆</text>
+    <text x="370" y="124" font-family="Inter, sans-serif" font-size="11" fill="#ccc">Texture channel inspector (normal, AO, etc.)</text>
+
+    <rect x="20" y="150" width="295" height="38" rx="6" fill="#111" stroke="#00ff88" stroke-opacity="0.3"/>
+    <text x="35" y="174" font-family="Inter, sans-serif" font-size="12" fill="#00ff88">◆</text>
+    <text x="55" y="174" font-family="Inter, sans-serif" font-size="11" fill="#ccc">Side-by-side model comparison</text>
+
+    <rect x="335" y="150" width="295" height="38" rx="6" fill="#111" stroke="#ffe66d" stroke-opacity="0.3"/>
+    <text x="350" y="174" font-family="Inter, sans-serif" font-size="12" fill="#ffe66d">◆</text>
+    <text x="370" y="174" font-family="Inter, sans-serif" font-size="11" fill="#ccc">AR mode (WebXR quick-look)</text>
+
+    <rect x="20" y="200" width="295" height="38" rx="6" fill="#111" stroke="#00d2ff" stroke-opacity="0.3"/>
+    <text x="35" y="224" font-family="Inter, sans-serif" font-size="12" fill="#00d2ff">◆</text>
+    <text x="55" y="224" font-family="Inter, sans-serif" font-size="11" fill="#ccc">Scene graph tree explorer</text>
+
+    <rect x="335" y="200" width="295" height="38" rx="6" fill="#111" stroke="#7b2ff7" stroke-opacity="0.3"/>
+    <text x="350" y="224" font-family="Inter, sans-serif" font-size="12" fill="#7b2ff7">◆</text>
+    <text x="370" y="224" font-family="Inter, sans-serif" font-size="11" fill="#ccc">Material editor with live PBR preview</text>
+  </svg>
+</p>
+
+- **AI Model Analysis** — describe meshes, materials, and suggest optimizations
+- **Screenshot / Video Export** — capture PNGs or record animated WebM walkthroughs
+- **Measurement Tools** — click two points to measure distances, angles, bounding boxes
+- **Texture Inspector** — view individual texture channels (baseColor, normal, metallic-roughness, AO, emissive)
+- **Side-by-Side Diff** — compare two versions of the same model
+- **AR Quick Look** — launch your model in WebXR on supported devices
+- **Scene Graph Explorer** — visual tree of all nodes, meshes, materials, and their properties
+- **Material Editor** — tweak PBR params (roughness, metalness, colors) live in the viewport
+- **Annotation System** — pin notes to specific vertices or mesh regions
+- **File Format Expansion** — `.fbx`, `.obj`, `.usdz` import support
+- **CLI Tool** — `npx 3d-agent inspect model.glb` for headless validation in CI/CD pipelines
+
+<br/>
+
+---
+
+<br/>
+
+## 🧪 Examples
+
+<br/>
+
+### Load the Khronos Sample Models
+
+The glTF working group maintains a library of test models. Try these:
+
+```
+https://3d.irish/#model=https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/DamagedHelmet/glTF-Binary/DamagedHelmet.glb
+```
+
+```
+https://3d.irish/#model=https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/FlightHelmet/glTF/FlightHelmet.gltf
+```
+
+```
+https://3d.irish/#model=https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/Fox/glTF-Binary/Fox.glb
+```
+
+### Use the JavaScript API (Advanced)
+
+The viewer exposes its internals on `window.VIEWER` for debugging:
+
+```javascript
+// Access the loaded glTF JSON
+console.log(window.VIEWER.json);
+
+// Access the Three.js scene graph
+console.log(window.VIEWER.scene);
+
+// Traverse all meshes
+window.VIEWER.scene.traverse((node) => {
+  if (node.isMesh) {
+    console.log(node.name, node.geometry.attributes);
+  }
+});
+```
+
+### Custom Environment Maps
+
+Add your own HDR environments by editing `src/environments.js`:
+
+```javascript
+{
+  id: 'my-studio',
+  name: 'My Studio',
+  path: 'https://your-cdn.com/studio_1k.exr',
+  format: '.exr',
+}
+```
+
+The viewer uses `EXRLoader` + `PMREMGenerator` to process equirectangular HDR maps into prefiltered environment cubemaps.
+
+<br/>
+
+---
+
+<br/>
+
+## 🤝 Contributing
+
+1. Fork the repo
+2. Create a feature branch: `git checkout -b feat/my-feature`
+3. Make your changes and test locally with `npm run dev`
+4. Submit a pull request
+
+File issues and feature requests at [github.com/nirholas/3D/issues](https://github.com/nirholas/3D/issues).
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide.
+
+<br/>
+
+---
+
+<br/>
+
+## 📖 Documentation
+
+For deeper technical detail, see the `docs/` directory:
+
+| Document | Description |
+|:---------|:------------|
+| **[Architecture](docs/ARCHITECTURE.md)** | Data flow, module responsibilities, Three.js setup, validation pipeline, GUI structure, styling architecture, and security considerations |
+| **[API Reference](docs/API.md)** | Complete reference for all classes (`App`, `Viewer`, `Validator`), methods, properties, state objects, components, and the `window.VIEWER` debugging API |
+| **[Deployment](docs/DEPLOYMENT.md)** | Build pipeline, Vercel deploy, routing, CORS config, custom domains, iframe embedding, self-hosting (nginx, Docker), CDN strategy, and troubleshooting |
+| **[Development](docs/DEVELOPMENT.md)** | Local setup, code style, how-things-work guide, common tasks (new GUI controls, components, environments), debugging techniques, browser compatibility, and performance notes |
+| **[Contributing](CONTRIBUTING.md)** | Bug reporting, feature requests, PR workflow, commit conventions, code guidelines, and testing checklist |
+
+<br/>
+
+---
+
+<br/>
+
+## 📚 Resources
+
+| Resource | Link |
+|:---------|:-----|
+| **glTF 2.0 Spec** | [registry.khronos.org/glTF](https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html) |
+| **Sample Models** | [KhronosGroup/glTF-Sample-Assets](https://github.com/KhronosGroup/glTF-Sample-Assets) |
+| **three.js Docs** | [threejs.org/docs](https://threejs.org/docs/) |
+| **GLTFLoader** | [three.js GLTFLoader](https://threejs.org/docs/#examples/en/loaders/GLTFLoader) |
+| **glTF Validator** | [KhronosGroup/gltf-validator](https://github.com/KhronosGroup/gltf-validator) |
+| **Sketchfab** | [sketchfab.com](https://sketchfab.com/) — download free glTF models |
+| **Mixamo** | [mixamo.com](https://www.mixamo.com/) — free rigged & animated characters |
+| **Poly Haven** | [polyhaven.com](https://polyhaven.com/) — free HDRIs, textures, and 3D models |
+
+<br/>
+
+---
+
+<br/>
+
+<p align="center">
+  <svg xmlns="http://www.w3.org/2000/svg" width="400" height="60" viewBox="0 0 400 60">
+    <defs>
+      <linearGradient id="ft" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" style="stop-color:#00d2ff"/>
+        <stop offset="50%" style="stop-color:#7b2ff7"/>
+        <stop offset="100%" style="stop-color:#ff0080"/>
+      </linearGradient>
+    </defs>
+    <rect width="400" height="60" rx="10" fill="#0d0d14"/>
+    <text x="200" y="28" text-anchor="middle" font-family="Inter, sans-serif" font-size="11" fill="#888">Built by</text>
+    <text x="200" y="48" text-anchor="middle" font-family="Inter, sans-serif" font-size="14" font-weight="600" fill="url(#ft)">nirholas</text>
+  </svg>
+</p>
+
+<p align="center">
+  <sub>MIT License · Made with three.js · Hosted on Vercel</sub>
+</p>
