@@ -1,6 +1,6 @@
 import { LoaderUtils } from 'three';
 import { validateBytes } from 'gltf-validator';
-import { ValidatorToggle } from './components/validator-toggle';
+
 import { ValidatorReport } from './components/validator-report';
 
 const SEVERITY_MAP = ['Errors', 'Warnings', 'Infos', 'Hints'];
@@ -13,9 +13,7 @@ export class Validator {
 		this.el = el;
 		this.report = null;
 
-		this.toggleEl = document.createElement('div');
-		this.toggleEl.classList.add('report-toggle-wrap', 'hidden');
-		this.el.appendChild(this.toggleEl);
+
 	}
 
 	/**
@@ -27,10 +25,19 @@ export class Validator {
 	 * @return {Promise}
 	 */
 	validate(rootFile, rootPath, assetMap, response) {
-		// TODO: This duplicates a request of the three.js loader, and could
-		// take advantage of THREE.Cache after r90.
-		return fetch(rootFile)
-			.then((response) => response.arrayBuffer())
+		// Use Three.js Cache to avoid re-downloading the model.
+		// Cache.enabled is set to true in viewer.js.
+		const fetchBuffer = window.THREE && window.THREE.Cache && window.THREE.Cache.get(rootFile)
+			? Promise.resolve(window.THREE.Cache.get(rootFile))
+				.then((data) => {
+					if (data instanceof ArrayBuffer) return data;
+					// Cache may hold string for .gltf; convert
+					if (typeof data === 'string') return new TextEncoder().encode(data).buffer;
+					return fetch(rootFile).then((r) => r.arrayBuffer());
+				})
+			: fetch(rootFile).then((r) => r.arrayBuffer());
+
+		return fetchBuffer
 			.then((buffer) =>
 				validateBytes(new Uint8Array(buffer), {
 					externalResourceFunction: (uri) =>
@@ -93,9 +100,7 @@ export class Validator {
 
 		this.setResponse(response);
 
-		this.toggleEl.innerHTML = ValidatorToggle(report);
-		this.showToggle();
-		this.bindListeners();
+
 
 		function groupMessages(report) {
 			const CODES = {
@@ -168,29 +173,8 @@ export class Validator {
 	 */
 	setReportException(e) {
 		this.report = null;
-		this.toggleEl.innerHTML = this.toggleTpl({ reportError: e, level: 0 });
-		this.showToggle();
-		this.bindListeners();
 	}
 
-	bindListeners() {
-		const reportToggleBtn = this.toggleEl.querySelector('.report-toggle');
-		reportToggleBtn.addEventListener('click', () => this.showLightbox());
-
-		const reportToggleCloseBtn = this.toggleEl.querySelector('.report-toggle-close');
-		reportToggleCloseBtn.addEventListener('click', (e) => {
-			this.hideToggle();
-			e.stopPropagation();
-		});
-	}
-
-	showToggle() {
-		this.toggleEl.classList.remove('hidden');
-	}
-
-	hideToggle() {
-		this.toggleEl.classList.add('hidden');
-	}
 
 	showLightbox() {
 		if (!this.report) return;

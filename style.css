@@ -537,46 +537,6 @@ footer .separator {
 }
 
 /******************************************************************************
- * Validation toggle
- */
-
-.report-toggle-wrap.hidden { display: none; }
-
-.report-toggle {
-  cursor: pointer;
-  display: flex;
-  position: absolute;
-  bottom: 0;
-  left: 20px;
-  height: 30px;
-  box-shadow: 0px 0px 5px 0 rgba(0, 0, 0, 0.25);
-  background: #FFF;
-  box-sizing: border-box;
-
-  color: #f0f0f0;
-  background: #000;
-  border-left: 6px solid #000;
-}
-
-.report-toggle.level-1 { color: #444; background: #ffeda0; border-left-color: #feb24c; }
-.report-toggle.level-0 { color: #444; background: #f4c2be; border-left-color: #b10026; }
-
-.report-toggle-text {
-  line-height: 32px;
-  padding: 0 var(--space-xs);
-  font-weight: 300;
-  font-size: var(--text-sm);
-}
-
-.report-toggle-close {
-  width: 30px;
-  height: 30px;
-  line-height: 30px;
-  font-size: 1.5em;
-  text-align: center;
-}
-
-/******************************************************************************
  * CSS Spinner
  *
  * http://tobiasahlin.com/spinkit/

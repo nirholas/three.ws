@@ -114,7 +114,7 @@ export class Viewer {
 
 		this.renderer = window.renderer = new WebGLRenderer({ antialias: true });
 		this.renderer.setClearColor(0xcccccc);
-		this.renderer.setPixelRatio(window.devicePixelRatio);
+		this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 		this.renderer.setSize(el.clientWidth, el.clientHeight);
 
 		this.pmremGenerator = new PMREMGenerator(this.renderer);
@@ -138,6 +138,7 @@ export class Viewer {
 		this.axesHelper = null;
 		this.modelInfo = null;
 		this.annotationEls = [];
+		this._tempVec = new Vector3();
 
 		this.addAxesHelper();
 		this.addGUI();
@@ -475,7 +476,6 @@ export class Viewer {
 				path,
 				(texture) => {
 					const envMap = this.pmremGenerator.fromEquirectangular(texture).texture;
-					this.pmremGenerator.dispose();
 
 					resolve({ envMap });
 				},
@@ -572,7 +572,7 @@ export class Viewer {
 		const height = this.el.clientHeight;
 		const halfW = width / 2;
 		const halfH = height / 2;
-		const tempVec = new Vector3();
+		const tempVec = this._tempVec;
 
 		this.annotationEls.forEach(({ el, position }) => {
 			tempVec.copy(position);
@@ -816,10 +816,16 @@ export class Viewer {
 }
 
 function traverseMaterials(object, callback) {
+	const seen = new Set();
 	object.traverse((node) => {
 		if (!node.geometry) return;
 		const materials = Array.isArray(node.material) ? node.material : [node.material];
-		materials.forEach(callback);
+		materials.forEach((mat) => {
+			if (mat && !seen.has(mat.uuid)) {
+				seen.add(mat.uuid);
+				callback(mat);
+			}
+		});
 	});
 }
 
