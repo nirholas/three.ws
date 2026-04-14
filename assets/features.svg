@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="650" height="320" viewBox="0 0 650 320">
+  <defs>
+    <!-- shared card gradient: white glow top-left fading to near-black -->
+    <linearGradient id="card" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.12"/>
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0.02"/>
+    </linearGradient>
+    <!-- radial sheen that makes white "shine" -->
+    <radialGradient id="sheen" cx="30%" cy="30%" r="60%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.18"/>
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0"/>
+    </radialGradient>
+    <filter id="glow">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- background -->
+  <rect width="650" height="320" rx="14" fill="#0a0a0a"/>
+  <!-- subtle grid lines -->
+  <line x1="215" y1="0" x2="215" y2="320" stroke="#ffffff" stroke-opacity="0.04"/>
+  <line x1="422" y1="0" x2="422" y2="320" stroke="#ffffff" stroke-opacity="0.04"/>
+  <line x1="0" y1="160" x2="650" y2="160" stroke="#ffffff" stroke-opacity="0.04"/>
+
+  <!-- Row 1 -->
+  <rect x="20" y="20" width="195" height="130" rx="10" fill="url(#card)"/>
+  <rect x="20" y="20" width="195" height="130" rx="10" fill="url(#sheen)"/>
+  <rect x="20" y="20" width="195" height="130" rx="10" fill="none" stroke="#ffffff" stroke-opacity="0.25" stroke-width="0.75"/>
+  <text x="117" y="60" text-anchor="middle" font-size="24">📂</text>
+  <text x="117" y="84" text-anchor="middle" font-family="Inter, sans-serif" font-size="12" font-weight="700" fill="#ffffff" filter="url(#glow)">DRAG &amp; DROP</text>
+  <text x="117" y="104" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">Load .glTF / .GLB files</text>
+  <text x="117" y="118" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">instantly from disk</text>
+
+  <rect x="227" y="20" width="195" height="130" rx="10" fill="url(#card)"/>
+  <rect x="227" y="20" width="195" height="130" rx="10" fill="url(#sheen)"/>
+  <rect x="227" y="20" width="195" height="130" rx="10" fill="none" stroke="#ffffff" stroke-opacity="0.25" stroke-width="0.75"/>
+  <text x="324" y="60" text-anchor="middle" font-size="24">💡</text>
+  <text x="324" y="84" text-anchor="middle" font-family="Inter, sans-serif" font-size="12" font-weight="700" fill="#ffffff" filter="url(#glow)">LIGHTING ENGINE</text>
+  <text x="324" y="104" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">HDR environments, tone</text>
+  <text x="324" y="118" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">mapping &amp; exposure ctrl</text>
+
+  <rect x="434" y="20" width="195" height="130" rx="10" fill="url(#card)"/>
+  <rect x="434" y="20" width="195" height="130" rx="10" fill="url(#sheen)"/>
+  <rect x="434" y="20" width="195" height="130" rx="10" fill="none" stroke="#ffffff" stroke-opacity="0.25" stroke-width="0.75"/>
+  <text x="531" y="60" text-anchor="middle" font-size="24">🎬</text>
+  <text x="531" y="84" text-anchor="middle" font-family="Inter, sans-serif" font-size="12" font-weight="700" fill="#ffffff" filter="url(#glow)">ANIMATIONS</text>
+  <text x="531" y="104" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">Play, pause &amp; scrub</text>
+  <text x="531" y="118" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">all animation clips</text>
+
+  <!-- Row 2 -->
+  <rect x="20" y="168" width="195" height="130" rx="10" fill="url(#card)"/>
+  <rect x="20" y="168" width="195" height="130" rx="10" fill="url(#sheen)"/>
+  <rect x="20" y="168" width="195" height="130" rx="10" fill="none" stroke="#ffffff" stroke-opacity="0.25" stroke-width="0.75"/>
+  <text x="117" y="208" text-anchor="middle" font-size="24">🔍</text>
+  <text x="117" y="232" text-anchor="middle" font-family="Inter, sans-serif" font-size="12" font-weight="700" fill="#ffffff" filter="url(#glow)">VALIDATION</text>
+  <text x="117" y="252" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">Full glTF spec validator</text>
+  <text x="117" y="266" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">with error reports</text>
+
+  <rect x="227" y="168" width="195" height="130" rx="10" fill="url(#card)"/>
+  <rect x="227" y="168" width="195" height="130" rx="10" fill="url(#sheen)"/>
+  <rect x="227" y="168" width="195" height="130" rx="10" fill="none" stroke="#ffffff" stroke-opacity="0.25" stroke-width="0.75"/>
+  <text x="324" y="208" text-anchor="middle" font-size="24">🦴</text>
+  <text x="324" y="232" text-anchor="middle" font-family="Inter, sans-serif" font-size="12" font-weight="700" fill="#ffffff" filter="url(#glow)">INSPECTION</text>
+  <text x="324" y="252" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">Wireframe, skeleton,</text>
+  <text x="324" y="266" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">morph targets &amp; grid</text>
+
+  <rect x="434" y="168" width="195" height="130" rx="10" fill="url(#card)"/>
+  <rect x="434" y="168" width="195" height="130" rx="10" fill="url(#sheen)"/>
+  <rect x="434" y="168" width="195" height="130" rx="10" fill="none" stroke="#ffffff" stroke-opacity="0.25" stroke-width="0.75"/>
+  <text x="531" y="208" text-anchor="middle" font-size="24">📱</text>
+  <text x="531" y="232" text-anchor="middle" font-family="Inter, sans-serif" font-size="12" font-weight="700" fill="#ffffff" filter="url(#glow)">RESPONSIVE</text>
+  <text x="531" y="252" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">Desktop, tablet &amp;</text>
+  <text x="531" y="266" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">mobile optimized</text>
+</svg>

@@ -7,7 +7,7 @@ Thanks for your interest in contributing! This guide covers everything you need 
 ## Quick Start
 
 ```bash
-git clone https://github.com/nirholas/3D.git
+git clone https://github.com/nirholas/3d-agent.git
 cd 3D
 npm install
 npm run dev
@@ -21,8 +21,8 @@ Open [http://localhost:3000](http://localhost:3000) and verify the default model
 
 ### Report a Bug
 
-1. Check [existing issues](https://github.com/nirholas/3D/issues) to avoid duplicates
-2. Open a [new issue](https://github.com/nirholas/3D/issues/new) with:
+1. Check [existing issues](https://github.com/nirholas/3d-agent/issues) to avoid duplicates
+2. Open a [new issue](https://github.com/nirholas/3d-agent/issues/new) with:
    - Browser and OS
    - Steps to reproduce
    - Expected vs. actual behavior
@@ -133,7 +133,7 @@ Use the [Khronos glTF Sample Assets](https://github.com/KhronosGroup/glTF-Sample
 
 Looking for something to work on? Here are areas that welcome contributions:
 
-- **Bug fixes** — check the [issues page](https://github.com/nirholas/3D/issues)
+- **Bug fixes** — check the [issues page](https://github.com/nirholas/3d-agent/issues)
 - **New environment maps** — add more HDR options
 - **Accessibility** — improve keyboard navigation and screen reader support
 - **Performance** — reduce re-renders, optimize disposal, add lazy loading

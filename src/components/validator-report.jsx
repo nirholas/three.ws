@@ -73,7 +73,7 @@ export function ValidatorReport({
 								below refer only to extensions that could not be scanned by the
 								validation suite, and may still have rendered correctly. See:{' '}
 								<a
-									href="https://github.com/nirholas/3D/issues/122"
+									href="https://github.com/nirholas/3d-agent/issues/122"
 									target="_blank"
 								>
 									3D-Agent#122

@@ -219,7 +219,7 @@ export class Viewer {
 			MANAGER.setURLModifier((url, path) => {
 				// URIs in a glTF file may be escaped, or not. Assume that assetMap is
 				// from an un-escaped source, and decode all URIs before lookups.
-				// See: https://github.com/nirholas/3D/issues/146
+				// See: https://github.com/nirholas/3d-agent/issues/146
 				const normalizedURL =
 					rootPath +
 					decodeURI(url)
@@ -282,7 +282,7 @@ export class Viewer {
 	setContent(object, clips) {
 		this.clear();
 
-		object.updateMatrixWorld(); // nirholas/3D#330
+		object.updateMatrixWorld(); // nirholas/3d-agent#330
 
 		const box = new Box3().setFromObject(object);
 		const size = box.getSize(new Vector3()).length();

@@ -4,7 +4,7 @@ description: 3D Agent** is an open-source, browser-native 3D model viewer built 
 ---
 
 <p align="center">
-    <img src="public/3DAgent.png" width="500" height="500">
+    <img src="public/ddd.png" width="500" height="500">
 </p>
 
 <p align="center">
@@ -13,7 +13,7 @@ description: 3D Agent** is an open-source, browser-native 3D model viewer built 
   <a href="#-features"><strong>Features</strong></a>&nbsp;&nbsp;·&nbsp;&nbsp;
   <a href="#-tutorials"><strong>Tutorials</strong></a>&nbsp;&nbsp;·&nbsp;&nbsp;
   <a href="#-documentation"><strong>Docs</strong></a>&nbsp;&nbsp;·&nbsp;&nbsp;
-  <a href="https://github.com/nirholas/3D/issues/new"><strong>Feedback</strong></a>
+  <a href="https://github.com/nirholas/3d-agent/issues/new"><strong>Feedback</strong></a>
 </p>
 
 ---
@@ -55,72 +55,7 @@ It's built for **3D artists** previewing exports, **game developers** debugging 
 <br/>
 
 <p align="center">
-  <svg xmlns="http://www.w3.org/2000/svg" width="650" height="320" viewBox="0 0 650 320">
-    <defs>
-      <linearGradient id="c1" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" style="stop-color:#00d2ff;stop-opacity:0.15"/>
-        <stop offset="100%" style="stop-color:#00d2ff;stop-opacity:0.03"/>
-      </linearGradient>
-      <linearGradient id="c2" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" style="stop-color:#7b2ff7;stop-opacity:0.15"/>
-        <stop offset="100%" style="stop-color:#7b2ff7;stop-opacity:0.03"/>
-      </linearGradient>
-      <linearGradient id="c3" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" style="stop-color:#ff0080;stop-opacity:0.15"/>
-        <stop offset="100%" style="stop-color:#ff0080;stop-opacity:0.03"/>
-      </linearGradient>
-      <linearGradient id="c4" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" style="stop-color:#00ff88;stop-opacity:0.15"/>
-        <stop offset="100%" style="stop-color:#00ff88;stop-opacity:0.03"/>
-      </linearGradient>
-      <linearGradient id="c5" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" style="stop-color:#ff6b35;stop-opacity:0.15"/>
-        <stop offset="100%" style="stop-color:#ff6b35;stop-opacity:0.03"/>
-      </linearGradient>
-      <linearGradient id="c6" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" style="stop-color:#ffe66d;stop-opacity:0.15"/>
-        <stop offset="100%" style="stop-color:#ffe66d;stop-opacity:0.03"/>
-      </linearGradient>
-    </defs>
-    <rect width="650" height="320" rx="14" fill="#0d0d14"/>
-    <!-- Row 1 -->
-    <rect x="20" y="20" width="195" height="130" rx="10" fill="url(#c1)" stroke="#00d2ff" stroke-opacity="0.2"/>
-    <text x="117" y="60" text-anchor="middle" font-size="24">📂</text>
-    <text x="117" y="84" text-anchor="middle" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#00d2ff">DRAG &amp; DROP</text>
-    <text x="117" y="104" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">Load .glTF / .GLB files</text>
-    <text x="117" y="118" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">instantly from disk</text>
-
-    <rect x="227" y="20" width="195" height="130" rx="10" fill="url(#c2)" stroke="#7b2ff7" stroke-opacity="0.2"/>
-    <text x="324" y="60" text-anchor="middle" font-size="24">💡</text>
-    <text x="324" y="84" text-anchor="middle" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#7b2ff7">LIGHTING ENGINE</text>
-    <text x="324" y="104" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">HDR environments, tone</text>
-    <text x="324" y="118" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">mapping &amp; exposure ctrl</text>
-
-    <rect x="434" y="20" width="195" height="130" rx="10" fill="url(#c3)" stroke="#ff0080" stroke-opacity="0.2"/>
-    <text x="531" y="60" text-anchor="middle" font-size="24">🎬</text>
-    <text x="531" y="84" text-anchor="middle" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#ff0080">ANIMATIONS</text>
-    <text x="531" y="104" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">Play, pause &amp; scrub</text>
-    <text x="531" y="118" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">all animation clips</text>
-
-    <!-- Row 2 -->
-    <rect x="20" y="168" width="195" height="130" rx="10" fill="url(#c4)" stroke="#00ff88" stroke-opacity="0.2"/>
-    <text x="117" y="208" text-anchor="middle" font-size="24">🔍</text>
-    <text x="117" y="232" text-anchor="middle" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#00ff88">VALIDATION</text>
-    <text x="117" y="252" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">Full glTF spec validator</text>
-    <text x="117" y="266" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">with error reports</text>
-
-    <rect x="227" y="168" width="195" height="130" rx="10" fill="url(#c5)" stroke="#ff6b35" stroke-opacity="0.2"/>
-    <text x="324" y="208" text-anchor="middle" font-size="24">🦴</text>
-    <text x="324" y="232" text-anchor="middle" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#ff6b35">INSPECTION</text>
-    <text x="324" y="252" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">Wireframe, skeleton,</text>
-    <text x="324" y="266" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">morph targets &amp; grid</text>
-
-    <rect x="434" y="168" width="195" height="130" rx="10" fill="url(#c6)" stroke="#ffe66d" stroke-opacity="0.2"/>
-    <text x="531" y="208" text-anchor="middle" font-size="24">📱</text>
-    <text x="531" y="232" text-anchor="middle" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#ffe66d">RESPONSIVE</text>
-    <text x="531" y="252" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">Desktop, tablet &amp;</text>
-    <text x="531" y="266" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#888">mobile optimized</text>
-  </svg>
+  <img src="assets/features.svg" width="650" height="320" alt="Features overview"/>
 </p>
 
 <br/>
@@ -163,7 +98,7 @@ It's built for **3D artists** previewing exports, **game developers** debugging 
     <!-- Step 1 -->
     <circle cx="60" cy="50" r="20" fill="none" stroke="#00d2ff" stroke-width="2"/>
     <text x="60" y="56" text-anchor="middle" font-family="Inter, sans-serif" font-size="16" font-weight="700" fill="#00d2ff">1</text>
-    <text x="100" y="46" font-family="SF Mono, Fira Code, monospace" font-size="13" fill="#e0e0e0">git clone https://github.com/nirholas/3D.git</text>
+    <text x="100" y="46" font-family="SF Mono, Fira Code, monospace" font-size="13" fill="#e0e0e0">git clone https://github.com/nirholas/3d-agent.git</text>
     <text x="100" y="64" font-family="SF Mono, Fira Code, monospace" font-size="13" fill="#666">cd 3D</text>
     <!-- Step 2 -->
     <circle cx="60" cy="110" r="20" fill="none" stroke="#7b2ff7" stroke-width="2"/>
@@ -178,7 +113,7 @@ It's built for **3D artists** previewing exports, **game developers** debugging 
 </p>
 
 ```bash
-git clone https://github.com/nirholas/3D.git
+git clone https://github.com/nirholas/3d-agent.git
 cd 3D
 npm install
 npm run dev
@@ -555,7 +490,7 @@ The viewer uses `EXRLoader` + `PMREMGenerator` to process equirectangular HDR ma
 3. Make your changes and test locally with `npm run dev`
 4. Submit a pull request
 
-File issues and feature requests at [github.com/nirholas/3D/issues](https://github.com/nirholas/3D/issues).
+File issues and feature requests at [github.com/nirholas/3d-agent/issues](https://github.com/nirholas/3d-agent/issues).
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide.
 
