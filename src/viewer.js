@@ -464,6 +464,7 @@ export class Viewer {
 			this.mixer.clipAction(clip).reset().play();
 			this.state.actionStates[clip.name] = true;
 		});
+		this.invalidate();
 	}
 
 	/**
@@ -481,6 +482,7 @@ export class Viewer {
 				}
 			});
 		}
+		this.invalidate();
 	}
 
 	updateLights() {
@@ -502,6 +504,8 @@ export class Viewer {
 			lights[1].intensity = state.directIntensity;
 			lights[1].color.set(state.directColor);
 		}
+
+		this.invalidate();
 	}
 
 	addLights() {
@@ -538,10 +542,12 @@ export class Viewer {
 		)[0];
 
 		this.getCubeMapTexture(environment).then(({ envMap }) => {
+			if (this._disposed || !this.scene) return;
 			this.scene.environment = envMap;
 			this.scene.background = this.state.transparentBg
 				? null
 				: this.state.background ? envMap : this.backgroundColor;
+			this.invalidate();
 		});
 	}
 
@@ -618,6 +624,8 @@ export class Viewer {
 		}
 
 		this.controls.autoRotate = this.state.autoRotate;
+
+		this.invalidate();
 	}
 
 	updateBackground() {
@@ -630,6 +638,7 @@ export class Viewer {
 			this.renderer.setClearColor(0x000000, 1);
 			this.updateEnvironment();
 		}
+		this.invalidate();
 	}
 
 	/**
@@ -664,6 +673,8 @@ export class Viewer {
 			this.el.appendChild(el);
 			this.annotationEls.push({ el, position: ann.position });
 		});
+
+		this.invalidate();
 	}
 
 	projectAnnotations() {
@@ -882,6 +893,7 @@ export class Viewer {
 					action = action || this.mixer.clipAction(clip);
 					action.setEffectiveTimeScale(1);
 					playAnimation ? action.play() : action.stop();
+					this.invalidate();
 				});
 				this.animCtrls.push(ctrl);
 			});
@@ -916,6 +928,9 @@ export class Viewer {
 				}
 			}
 		});
+
+		this.content = null;
+		if (!this._disposed) this.invalidate();
 	}
 
 	dispose() {

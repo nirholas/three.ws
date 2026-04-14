@@ -60,19 +60,23 @@
 
 .hero {
   position: relative;
-  display: flex;
+  display: grid;
+  /* Golden-ratio split: text (1) : avatar (φ ≈ 1.618) */
+  grid-template-columns: 1fr 1.618fr;
   align-items: center;
-  justify-content: center;
+  gap: var(--space-2xl);
   min-height: 100vh;
+  max-width: 1200px;
+  margin: 0 auto;
   padding: var(--space-2xl) var(--space-lg);
-  text-align: center;
   overflow: hidden;
 }
 
 .hero-content {
-  max-width: 720px;
   position: relative;
   z-index: 1;
+  max-width: 34em;
+  text-align: left;
 }
 
 .hero-eyebrow {
@@ -85,12 +89,12 @@
 }
 
 .hero-title {
-  font-size: clamp(2rem, 6vw, var(--text-2xl));
+  font-size: clamp(2rem, 5.2vw, var(--text-2xl));
   font-weight: 600;
   color: #fff;
   line-height: var(--leading-tight);
   margin: 0 0 var(--space-lg);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
 }
 
 .hero-subtitle {
@@ -99,26 +103,64 @@
   font-weight: 300;
   line-height: var(--leading-normal);
   max-width: 38.2em; /* phi-proportioned line length */
-  margin: 0 auto var(--space-xl);
+  margin: 0 0 var(--space-xl);
 }
 
 .hero-cta {
   display: flex;
   gap: var(--space-md);
-  justify-content: center;
+  justify-content: flex-start;
   flex-wrap: wrap;
+}
+
+/* ── Hero Avatar (right column) ─────────────────────────────────────────── */
+
+.hero-avatar {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  max-width: 520px;
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-avatar-viewer {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  --poster-color: transparent;
+  border-radius: 50%;
+  outline: none;
+}
+
+.hero-avatar-ring {
+  position: absolute;
+  inset: 6%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(255, 215, 0, 0.12) 0%, rgba(255, 215, 0, 0.04) 40%, transparent 70%),
+    radial-gradient(circle at 50% 60%, rgba(255, 255, 255, 0.04) 0%, transparent 60%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 30px 80px -20px rgba(255, 215, 0, 0.12);
+  pointer-events: none;
 }
 
 .hero-glow {
   position: absolute;
-  width: 600px;
-  height: 600px;
+  width: 700px;
+  height: 700px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 215, 0, 0.06) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.07) 0%, transparent 70%);
   top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  right: -10%;
+  transform: translateY(-50%);
   pointer-events: none;
+  z-index: 0;
 }
 
 /* ── Buttons ─────────────────────────────────────────────────────────────── */
@@ -450,10 +492,49 @@
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 
+/* Tablet — keep two columns but tighten the split */
+@media screen and (max-width: 1024px) {
+  .hero {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-xl);
+  }
+
+  .hero-avatar {
+    max-width: 420px;
+  }
+}
+
 @media screen and (max-width: 768px) {
   .hero {
-    min-height: 80vh;
+    grid-template-columns: 1fr;
+    gap: var(--space-xl);
+    min-height: auto;
     padding: var(--space-xl) var(--space-md);
+    text-align: center;
+  }
+
+  .hero-content {
+    max-width: 100%;
+    text-align: center;
+    order: 2;
+  }
+
+  .hero-avatar {
+    order: 1;
+    max-width: 320px;
+    margin: 0 auto;
+    justify-self: center;
+  }
+
+  .hero-cta {
+    justify-content: center;
+  }
+
+  .hero-glow {
+    right: 50%;
+    transform: translate(50%, -50%);
+    width: 500px;
+    height: 500px;
   }
 
   .hero-title {
