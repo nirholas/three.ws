@@ -3,6 +3,23 @@
  * φ = 1.618 — all spacing and type follow a phi-based scale
  */
 
+.save-toast {
+	position: fixed;
+	bottom: 20px;
+	left: 50%;
+	transform: translateX(-50%);
+	background: #14141c;
+	color: #eee;
+	border: 1px solid #2a2a36;
+	border-radius: 10px;
+	padding: 10px 16px;
+	font-size: 14px;
+	box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+	z-index: 9999;
+}
+.save-toast a { color: #9a8cff; }
+
+
 :root {
   /* Phi ratio */
   --phi: 1.618;

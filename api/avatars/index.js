@@ -1,0 +1,73 @@
+// GET /api/avatars        — list caller's avatars (+ optional public)
+// POST /api/avatars       — create avatar metadata after upload
+
+import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
+import { listAvatars, createAvatar } from '../_lib/avatars.js';
+import { headObject } from '../_lib/r2.js';
+import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
+import { parse, createAvatarBody } from '../_lib/validate.js';
+import { recordEvent } from '../_lib/usage.js';
+import { z } from 'zod';
+
+const createWithStorage = createAvatarBody.extend({
+	storage_key: z.string().min(1).max(512),
+});
+
+export default wrap(async (req, res) => {
+	if (cors(req, res, { methods: 'GET,POST,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['GET', 'POST'])) return;
+
+	if (req.method === 'GET') return handleList(req, res);
+	return handleCreate(req, res);
+});
+
+async function handleList(req, res) {
+	const auth = await resolveAuth(req, 'avatars:read');
+	if (!auth) return error(res, 401, 'unauthorized', 'sign in or provide a valid bearer token');
+	const url = new URL(req.url, 'http://x');
+	const result = await listAvatars({
+		userId: auth.userId,
+		limit: Number(url.searchParams.get('limit')) || 50,
+		cursor: url.searchParams.get('cursor'),
+		visibility: url.searchParams.get('visibility'),
+		includePublic: url.searchParams.get('include_public') === 'true',
+	});
+	return json(res, 200, result);
+}
+
+async function handleCreate(req, res) {
+	const auth = await resolveAuth(req, 'avatars:write');
+	if (!auth) return error(res, 401, 'unauthorized', 'avatars:write scope required');
+	const body = parse(createWithStorage, await readJson(req));
+
+	// Verify the object actually exists in R2 and matches the claimed size.
+	const head = await headObject(body.storage_key);
+	if (!head) return error(res, 400, 'upload_missing', 'no object at storage_key; upload first');
+	if (Number(head.ContentLength) !== body.size_bytes) {
+		return error(res, 400, 'size_mismatch', 'size_bytes does not match uploaded object');
+	}
+
+	const avatar = await createAvatar({
+		userId: auth.userId,
+		input: body,
+		storageKey: body.storage_key,
+	});
+	recordEvent({
+		userId: auth.userId,
+		apiKeyId: auth.apiKeyId,
+		clientId: auth.clientId,
+		avatarId: avatar.id,
+		kind: 'upload',
+		bytes: avatar.size_bytes,
+	});
+	return json(res, 201, { avatar });
+}
+
+async function resolveAuth(req, requiredScope) {
+	const session = await getSessionUser(req);
+	if (session) return { userId: session.id, source: 'session' };
+	const bearer = await authenticateBearer(extractBearer(req));
+	if (!bearer) return null;
+	if (!hasScope(bearer.scope, requiredScope)) return null;
+	return bearer;
+}

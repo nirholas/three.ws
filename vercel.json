@@ -1,35 +1,38 @@
 {
     "public": true,
     "routes": [
-        {
-            "src": "/api/(.*)",
-            "dest": "/api/$1"
-        },
+        { "src": "/\\.well-known/oauth-authorization-server", "dest": "/api/.well-known/oauth-authorization-server" },
+        { "src": "/\\.well-known/oauth-protected-resource",  "dest": "/api/.well-known/oauth-protected-resource" },
+        { "src": "/api/mcp/\\.well-known/oauth-protected-resource", "dest": "/api/mcp/.well-known/oauth-protected-resource" },
+
+        { "src": "/oauth/authorize",     "dest": "/api/oauth/authorize" },
+        { "src": "/oauth/consent",       "dest": "/api/oauth/authorize" },
+        { "src": "/oauth/token",         "dest": "/api/oauth/token" },
+        { "src": "/oauth/register",      "dest": "/api/oauth/register" },
+        { "src": "/oauth/revoke",        "dest": "/api/oauth/revoke" },
+        { "src": "/oauth/introspect",    "dest": "/api/oauth/introspect" },
+
+        { "src": "/login",               "dest": "/public/login.html" },
+        { "src": "/register",            "dest": "/public/register.html" },
+        { "src": "/dashboard",           "dest": "/public/dashboard/index.html" },
+        { "src": "/dashboard/",          "dest": "/public/dashboard/index.html" },
+        { "src": "/dashboard/(.*)",      "dest": "/public/dashboard/$1" },
+
+        { "src": "/api/(.*)",            "dest": "/api/$1" },
+
         {
             "src": "/assets/(.*)",
             "headers": { "cache-control": "max-age=604800, public" },
             "dest": "/assets/$1"
         },
         {
-            "src": "/.well-known/(.*)",
+            "src": "/\\.well-known/(.*)",
             "headers": { "cache-control": "max-age=86400, public" },
             "dest": "/public/.well-known/$1"
         },
-        {
-            "src": "/robots.txt",
-            "dest": "/public/robots.txt"
-        },
-        {
-            "src": "/sitemap.xml",
-            "dest": "/public/sitemap.xml"
-        },
-        {
-            "src": "/features",
-            "dest": "/features.html"
-        },
-        {
-            "src": "/(.*)",
-            "dest": "/public/$1"
-        }
+        { "src": "/robots.txt",          "dest": "/public/robots.txt" },
+        { "src": "/sitemap.xml",         "dest": "/public/sitemap.xml" },
+        { "src": "/features",            "dest": "/features.html" },
+        { "src": "/(.*)",                "dest": "/public/$1" }
     ]
 }
