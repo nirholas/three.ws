@@ -19,14 +19,6 @@ description: 3D Agent is an open-source, browser-native 3D model viewer built on
 
 ---
 
-<br/>
-
-<p align="center">
-  <img src="assets/header-banner.svg" width="650" height="56" alt="DRAG &amp; DROP · REAL-TIME LIGHTING · ANIMATION PLAYBACK · GLTF VALIDATION · ZERO UPLOADS"/>
-</p>
-
-<br/>
-
 ## 🧠 What is 3D Agent?
 
 **3D Agent** is an open-source, browser-native 3D model viewer built on [three.js](https://threejs.org/) (r176). It renders **glTF 2.0** and **GLB** files directly in WebGL — no plugins, no server uploads, no installs. Just open [3d.irish](https://3d.irish), drop a file, and inspect your model instantly.
