@@ -1,3 +1,11 @@
-export { IDENTITY_REGISTRY_ABI, REGISTRY_DEPLOYMENTS, agentRegistryId } from './abi.js';
+export {
+	IDENTITY_REGISTRY_ABI,
+	REPUTATION_REGISTRY_ABI,
+	VALIDATION_REGISTRY_ABI,
+	REGISTRY_DEPLOYMENTS,
+	agentRegistryId,
+} from './abi.js';
 export { connectWallet, registerAgent, buildRegistrationJSON, pinToIPFS } from './agent-registry.js';
 export { RegisterUI } from './register-ui.js';
+export { submitFeedback, getReputation, getFeedbackRange, hasReviewed } from './reputation.js';
+export { recordValidation, getLatestValidation, reportPassed, hashReport } from './validation-recorder.js';
