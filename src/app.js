@@ -4,7 +4,7 @@ import { Viewer } from './viewer.js';
 import { SimpleDropzone } from 'simple-dropzone';
 import { Validator } from './validator.js';
 import { Footer } from './components/footer';
-import { AvaturnAgent } from './avaturn-agent.js';
+import { NichAgent } from './nich-agent.js';
 import { AvatarCreator } from './avatar-creator.js';
 import { resolveURI, isDecentralizedURI } from './ipfs.js';
 import queryString from 'query-string';
@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	window.VIEWER.app = app;
 
 	// Initialize Avaturn Agent
-	const agent = new AvaturnAgent(document.body);
+	const agent = new NichAgent(document.body);
 	window.VIEWER.agent = agent;
 
 	console.info('[3D Agent] Debugging data exported as `window.VIEWER`.');

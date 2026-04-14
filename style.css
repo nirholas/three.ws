@@ -704,10 +704,10 @@ footer .separator {
 }
 
 /******************************************************************************
- * Avaturn Agent Panel
+ * Nich Agent Panel
  */
 
-.avaturn-toggle {
+.nich-toggle {
   position: fixed;
   bottom: var(--space-lg);
   left: var(--space-lg);
@@ -727,19 +727,19 @@ footer .separator {
   z-index: 50;
 }
 
-.avaturn-toggle:hover {
+.nich-toggle:hover {
   background: rgba(255, 255, 255, 0.08);
   color: #fff;
   border-color: rgba(255, 255, 255, 0.25);
   transform: scale(1.05);
 }
 
-.avaturn-toggle.active {
+.nich-toggle.active {
   color: #fff;
   border-color: rgba(255, 255, 255, 0.3);
 }
 
-.avaturn-panel {
+.nich-panel {
   position: fixed;
   bottom: 5em;
   left: var(--space-lg);
@@ -757,7 +757,7 @@ footer .separator {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
-.avaturn-header {
+.nich-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -765,14 +765,14 @@ footer .separator {
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.avaturn-title {
+.nich-title {
   font-size: var(--text-sm);
   font-weight: 500;
   color: rgba(255, 255, 255, 0.8);
   letter-spacing: 0.03em;
 }
 
-.avaturn-close {
+.nich-close {
   background: none;
   border: none;
   color: rgba(255, 255, 255, 0.4);
@@ -783,11 +783,11 @@ footer .separator {
   transition: color 0.2s ease;
 }
 
-.avaturn-close:hover {
+.nich-close:hover {
   color: #fff;
 }
 
-.avaturn-messages {
+.nich-messages {
   flex: 1;
   overflow-y: auto;
   padding: var(--space-sm);
@@ -798,7 +798,7 @@ footer .separator {
   max-height: 300px;
 }
 
-.avaturn-message {
+.nich-message {
   font-size: var(--text-sm);
   line-height: var(--leading-normal);
   padding: var(--space-xs) var(--space-sm);
@@ -807,28 +807,28 @@ footer .separator {
   word-wrap: break-word;
 }
 
-.avaturn-message.agent {
+.nich-message.agent {
   background: rgba(255, 255, 255, 0.06);
   color: rgba(255, 255, 255, 0.7);
   align-self: flex-start;
   border-bottom-left-radius: var(--radius-sm);
 }
 
-.avaturn-message.user {
+.nich-message.user {
   background: rgba(255, 255, 255, 0.12);
   color: #fff;
   align-self: flex-end;
   border-bottom-right-radius: var(--radius-sm);
 }
 
-.avaturn-controls {
+.nich-controls {
   display: flex;
   gap: var(--space-xs);
   padding: var(--space-sm);
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.avaturn-input {
+.nich-input {
   flex: 1;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -841,15 +841,15 @@ footer .separator {
   transition: border-color 0.2s ease;
 }
 
-.avaturn-input::placeholder {
+.nich-input::placeholder {
   color: rgba(255, 255, 255, 0.25);
 }
 
-.avaturn-input:focus {
+.nich-input:focus {
   border-color: rgba(255, 255, 255, 0.2);
 }
 
-.avaturn-send {
+.nich-send {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-lg);
@@ -861,18 +861,18 @@ footer .separator {
   transition: all 0.2s ease;
 }
 
-.avaturn-send:hover {
+.nich-send:hover {
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
 }
 
-.avaturn-mic-row {
+.nich-mic-row {
   display: flex;
   justify-content: center;
   padding: 0 var(--space-sm) var(--space-sm);
 }
 
-.avaturn-mic {
+.nich-mic {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 50%;
@@ -886,26 +886,26 @@ footer .separator {
   transition: all 0.2s ease;
 }
 
-.avaturn-mic:hover {
+.nich-mic:hover {
   background: rgba(255, 255, 255, 0.08);
   color: rgba(255, 255, 255, 0.7);
 }
 
-.avaturn-mic.active {
+.nich-mic.active {
   background: rgba(255, 80, 80, 0.15);
   border-color: rgba(255, 80, 80, 0.3);
   color: #ff5050;
 }
 
 @media screen and (max-width: 700px) {
-  .avaturn-toggle {
+  .nich-toggle {
     bottom: var(--space-md);
     left: var(--space-md);
     width: 42px;
     height: 42px;
   }
 
-  .avaturn-panel {
+  .nich-panel {
     bottom: 4em;
     left: var(--space-sm);
     right: var(--space-sm);
