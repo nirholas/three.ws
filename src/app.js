@@ -7,6 +7,7 @@ import { Footer } from './components/footer';
 import { NichAgent } from './nich-agent.js';
 import { AvatarCreator } from './avatar-creator.js';
 import { resolveURI, isDecentralizedURI } from './ipfs.js';
+import { saveRemoteGlbToAccount } from './account.js';
 import queryString from 'query-string';
 
 window.THREE = THREE;
@@ -79,14 +80,32 @@ class App {
 	 * Sets up the Create Avatar button and AvatarCreator instance.
 	 */
 	setupAvatarCreator() {
-		this.avatarCreator = new AvatarCreator(document.body, (glbUrl) => {
+		this.avatarCreator = new AvatarCreator(document.body, async (glbUrl) => {
 			this.view(glbUrl, '', new Map());
+			// Best-effort: if the user is signed in, persist the exported avatar
+			// into their account so it's immediately available via the MCP server.
+			try {
+				const avatar = await saveRemoteGlbToAccount(glbUrl, { source: 'avaturn' });
+				this._flashSaved(avatar);
+			} catch (err) {
+				if (err.code !== 'not_signed_in') {
+					console.warn('[3d-agent] save to account failed:', err.message);
+				}
+			}
 		});
 
 		const btn = document.getElementById('create-avatar-btn');
 		if (btn) {
 			btn.addEventListener('click', () => this.avatarCreator.open());
 		}
+	}
+
+	_flashSaved(avatar) {
+		const el = document.createElement('div');
+		el.className = 'save-toast';
+		el.innerHTML = `Saved to your account · <a href="/dashboard/#avatars">${avatar.name}</a>`;
+		document.body.appendChild(el);
+		setTimeout(() => el.remove(), 5000);
 	}
 
 	/**

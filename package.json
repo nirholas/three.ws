@@ -44,14 +44,22 @@
 	"dependencies": {
 		"@avaturn-live/web-sdk": "^0.4.0",
 		"@avaturn/sdk": "^0.7.0",
+		"@aws-sdk/client-s3": "^3.651.0",
+		"@aws-sdk/s3-request-presigner": "^3.651.0",
 		"@chenglou/pretext": "^0.0.5",
+		"@neondatabase/serverless": "^0.10.1",
+		"@upstash/ratelimit": "^2.0.5",
+		"@upstash/redis": "^1.34.3",
+		"bcryptjs": "^2.4.3",
 		"dat.gui": "^0.7.9",
 		"ethers": "^6.16.0",
 		"gltf-validator": "^2.0.0-dev.3.10",
+		"jose": "^5.9.6",
 		"query-string": "^8.1.0",
 		"simple-dropzone": "^0.8.3",
 		"three": "^0.176.0",
-		"vhtml": "^2.2.0"
+		"vhtml": "^2.2.0",
+		"zod": "^3.23.8"
 	},
 	"devDependencies": {
 		"prettier": "^3.2.5",
