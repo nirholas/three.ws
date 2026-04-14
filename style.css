@@ -1,0 +1,709 @@
+/******************************************************************************
+ * Golden Ratio Design System
+ * φ = 1.618 — all spacing and type follow a phi-based scale
+ */
+
+:root {
+  /* Phi ratio */
+  --phi: 1.618;
+
+  /* Spacing scale (each step × φ) */
+  --space-3xs: 0.146rem;  /* ~2.3px  */
+  --space-2xs: 0.236rem;  /* ~3.8px  */
+  --space-xs:  0.382rem;  /* ~6.1px  */
+  --space-sm:  0.618rem;  /* ~9.9px  */
+  --space-md:  1rem;      /* 16px    */
+  --space-lg:  1.618rem;  /* ~25.9px */
+  --space-xl:  2.618rem;  /* ~41.9px */
+  --space-2xl: 4.236rem;  /* ~67.8px */
+
+  /* Typography scale (minor third adjusted to phi) */
+  --text-xs:   0.618rem;  /* ~9.9px  */
+  --text-sm:   0.764rem;  /* ~12.2px */
+  --text-base: 1rem;      /* 16px    */
+  --text-lg:   1.236rem;  /* ~19.8px */
+  --text-xl:   1.618rem;  /* ~25.9px */
+  --text-2xl:  2.618rem;  /* ~41.9px */
+
+  /* Line heights — golden ratio */
+  --leading-tight:  1.382;
+  --leading-normal: 1.618;
+  --leading-loose:  2.058;
+
+  /* Radii — phi-based */
+  --radius-sm: 3px;       /* ~5/φ   */
+  --radius-md: 5px;       /* base   */
+  --radius-lg: 8px;       /* ~5×φ   */
+
+  /* Header height */
+  --header-h: 3.5rem;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', 'Raleway', sans-serif;
+  background: #000;
+  height: 100%;
+  overflow: hidden;
+  color: #e0e0e0;
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  flex-grow: 1;
+  position: relative;
+}
+
+.viewer-container {
+  flex-grow: 1;
+  position: relative;
+  min-height: 0;
+}
+
+.dropzone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-lg);
+  padding-bottom: max(var(--space-sm), env(safe-area-inset-bottom, 0));
+  padding-left: max(var(--space-lg), env(safe-area-inset-left, 0));
+  padding-right: max(var(--space-lg), env(safe-area-inset-right, 0));
+  background: rgba(255, 255, 255, 0.03);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  z-index: 1;
+}
+
+.placeholder {
+  display: none;
+}
+
+.placeholder:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.placeholder p {
+  font-size: var(--text-lg);
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 300;
+  letter-spacing: 0.02em;
+}
+
+.viewer {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+}
+
+.model-info {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(8px);
+  animation: fadeInUp 0.4s ease 0.3s forwards;
+}
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.axes {
+    width: 100px;
+    height: 100px;
+    margin: 20px;
+    padding: 0px;
+    position: absolute;
+    left: 0px;
+    bottom: 0px;
+    z-index: 10;
+    pointer-events: none;
+}
+
+/******************************************************************************
+ * Header
+ */
+
+header {
+  display: flex;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 0 var(--space-lg);
+  padding-top: env(safe-area-inset-top, 0);
+  padding-left: max(var(--space-lg), env(safe-area-inset-left, 0));
+  padding-right: max(var(--space-lg), env(safe-area-inset-right, 0));
+  height: calc(var(--header-h) + env(safe-area-inset-top, 0));
+  line-height: var(--header-h);
+  align-items: center;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  z-index: 1;
+
+  -webkit-app-region: drag;
+}
+
+header h1 {
+  color: #fff;
+  font-size: var(--text-lg);
+  font-weight: 400;
+  line-height: var(--header-h);
+  margin: 0;
+  letter-spacing: 0.04em;
+}
+
+header h1 > a {
+  color: inherit;
+  font-size: inherit;
+  text-decoration: inherit;
+}
+
+.gui-wrap {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.gui-wrap > .main {
+  pointer-events: all;
+  max-height: 100%;
+  overflow: auto;
+}
+
+.dg li.gui-stats:not(.folder) {
+  height: auto;
+}
+
+/******************************************************************************
+ * dat.gui dark theme overrides
+ */
+
+.dg.ac {
+  z-index: 10 !important;
+}
+
+.dg.main .close-button.close-bottom {
+  background-color: #111 !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+.dg.main .close-button.close-bottom:hover {
+  background-color: #1a1a1a !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.dg.a {
+  margin-right: 0 !important;
+}
+
+.dg li:not(.folder) {
+  background: #0a0a0a !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+}
+
+.dg li.folder {
+  border-bottom: 0 !important;
+}
+
+.dg li.title {
+  background: #111 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+.dg .cr.function .property-name {
+  width: 100% !important;
+}
+
+.dg .c select {
+  background: #1a1a1a !important;
+  color: #ccc !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: var(--radius-sm) !important;
+}
+
+.dg .c input[type="text"] {
+  background: #1a1a1a !important;
+  color: #ccc !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: var(--radius-sm) !important;
+}
+
+@media screen and (max-width: 700px) {
+  header {
+    padding: 0 1em;
+    height: 3rem;
+    line-height: 3rem;
+  }
+
+  header h1 {
+    font-size: 1em;
+    line-height: 3rem;
+  }
+
+  .placeholder {
+    display: none;
+  }
+
+  .placeholder p {
+    font-size: 1rem;
+  }
+
+  .upload-btn label {
+    padding: var(--space-xs) var(--space-md);
+    font-size: var(--text-sm);
+  }
+
+  .dropzone {
+    flex-direction: column;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-md);
+  }
+
+  footer {
+    bottom: auto;
+    top: calc(3rem + 0.5em);
+    left: 0.5em;
+    right: auto;
+  }
+
+  .gui-wrap {
+    max-width: 65vw;
+  }
+
+  .axes {
+    width: 60px;
+    height: 60px;
+    margin: 10px;
+    bottom: 0;
+  }
+
+  .model-info {
+    bottom: 10px;
+    left: 10px;
+    transform: scale(0.85) translateY(8px);
+    transform-origin: bottom left;
+  }
+
+  @keyframes fadeInUp {
+    to {
+      opacity: 1;
+      transform: scale(0.85) translateY(0);
+    }
+  }
+
+  .report {
+    padding: var(--space-md);
+    max-width: 100vw;
+  }
+
+  .report-table th,
+  .report-table td {
+    padding: var(--space-2xs) var(--space-xs);
+    font-size: var(--text-sm);
+  }
+
+  .report-toggle {
+    left: 10px;
+    height: 36px;
+  }
+
+  .report-toggle-text {
+    line-height: 36px;
+    font-size: 0.75em;
+  }
+
+  .report-toggle-close {
+    width: 36px;
+    height: 36px;
+    line-height: 36px;
+  }
+}
+
+/******************************************************************************
+ * Footer
+ */
+
+footer {
+  position: absolute;
+  bottom: calc(var(--space-sm) + env(safe-area-inset-bottom, 0));
+  right: calc(var(--space-sm) + env(safe-area-inset-right, 0));
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: var(--text-sm);
+  color: #fff;
+  z-index: 2;
+  pointer-events: none;
+}
+
+footer a {
+  pointer-events: all;
+}
+
+footer a {
+  color: inherit;
+  opacity: 0.3;
+  text-decoration: inherit;
+  transition: opacity 0.2s ease;
+}
+
+footer a:hover {
+  opacity: 0.8;
+  text-decoration: none;
+}
+
+footer a svg {
+  vertical-align: middle;
+}
+
+footer .separator {
+  margin: 0 var(--space-xs);
+  opacity: 0.2;
+}
+
+/******************************************************************************
+ * Upload Button
+ *
+ * https://tympanus.net/Tutorials/CustomFileInputs/
+ */
+
+.upload-btn {
+  margin: 0;
+}
+
+.upload-btn input {
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  position: absolute;
+  z-index: -1;
+}
+
+.upload-btn label {
+  color: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
+  transition: all 0.25s ease;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  display: inline-block;
+  overflow: hidden;
+  padding: var(--space-sm) var(--space-lg);
+  letter-spacing: 0.02em;
+}
+
+.upload-btn label:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.upload-btn label:active {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.35);
+  transform: scale(0.97);
+}
+
+.drop-hint {
+  color: rgba(255, 255, 255, 0.25);
+  font-size: var(--text-sm);
+  font-weight: 300;
+  letter-spacing: 0.02em;
+}
+
+@media screen and (max-width: 700px) {
+  .drop-hint {
+    display: none;
+  }
+}
+
+.upload-btn svg {
+  width: 1em;
+  height: 1em;
+  vertical-align: middle;
+  fill: currentColor;
+  margin-top: -0.25em;
+  margin-right: 0.25em;
+}
+
+
+/******************************************************************************
+ * Validation report
+ */
+
+.report {
+  padding: var(--space-lg);
+  max-width: 860px;
+}
+
+.report h1 {
+  margin-top: 0;
+}
+
+.report p,
+.report ul {
+  line-height: var(--leading-normal);
+}
+
+.report-table {
+  text-align: left;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.report-table thead tr {
+  background: #1a1a1a;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.report-table th,
+.report-table td {
+  padding: var(--space-xs) var(--space-md);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.report-table tr:nth-child(2n) {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.report-table tr:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/******************************************************************************
+ * Validation toggle
+ */
+
+.report-toggle-wrap.hidden { display: none; }
+
+.report-toggle {
+  cursor: pointer;
+  display: flex;
+  position: absolute;
+  bottom: 0;
+  left: 20px;
+  height: 30px;
+  box-shadow: 0px 0px 5px 0 rgba(0, 0, 0, 0.25);
+  background: #FFF;
+  box-sizing: border-box;
+
+  color: #f0f0f0;
+  background: #000;
+  border-left: 6px solid #000;
+}
+
+.report-toggle.level-1 { color: #444; background: #ffeda0; border-left-color: #feb24c; }
+.report-toggle.level-0 { color: #444; background: #f4c2be; border-left-color: #b10026; }
+
+.report-toggle-text {
+  line-height: 32px;
+  padding: 0 var(--space-xs);
+  font-weight: 300;
+  font-size: var(--text-sm);
+}
+
+.report-toggle-close {
+  width: 30px;
+  height: 30px;
+  line-height: 30px;
+  font-size: 1.5em;
+  text-align: center;
+}
+
+/******************************************************************************
+ * CSS Spinner
+ *
+ * http://tobiasahlin.com/spinkit/
+ */
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin: -20px;
+
+  background-color: rgba(255, 255, 255, 0.15);
+
+  border-radius: 100%;
+  -webkit-animation: sk-scaleout 1.0s infinite ease-in-out;
+  animation: sk-scaleout 1.0s infinite ease-in-out;
+}
+
+@-webkit-keyframes sk-scaleout {
+  0% { -webkit-transform: scale(0) }
+  100% {
+    -webkit-transform: scale(1.0);
+    opacity: 0;
+  }
+}
+
+@keyframes sk-scaleout {
+  0% {
+    -webkit-transform: scale(0);
+    transform: scale(0);
+  } 100% {
+    -webkit-transform: scale(1.0);
+    transform: scale(1.0);
+    opacity: 0;
+  }
+}
+
+/******************************************************************************
+ * Screenshot flash feedback
+ */
+
+.screenshot-flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 100;
+  animation: screenshot-flash 0.3s ease-out forwards;
+}
+
+@keyframes screenshot-flash {
+  0%   { opacity: 0.5; }
+  100% { opacity: 0; }
+}
+
+/******************************************************************************
+ * Golden Ratio Dev Grid Overlay — toggle with Alt+G
+ *
+ * Horizontal: splits viewport at 38.2% / 61.8%
+ * Vertical:   splits viewport at 38.2% / 61.8%
+ * Plus rule-of-thirds (33.3% / 66.6%) for comparison
+ */
+
+.phi-grid {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  mix-blend-mode: difference;
+}
+
+.phi-grid.visible {
+  display: block;
+}
+
+/* Vertical golden split */
+.phi-grid::before,
+.phi-grid::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+}
+
+.phi-grid::before {
+  left: 38.2%;
+  background: rgba(255, 215, 0, 0.5);
+}
+
+.phi-grid::after {
+  left: 61.8%;
+  background: rgba(255, 215, 0, 0.5);
+}
+
+/* Horizontal golden split + thirds via inner spans */
+.phi-grid-h::before,
+.phi-grid-h::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+}
+
+.phi-grid-h::before {
+  top: 38.2%;
+  background: rgba(255, 215, 0, 0.5);
+}
+
+.phi-grid-h::after {
+  top: 61.8%;
+  background: rgba(255, 215, 0, 0.5);
+}
+
+/* Rule-of-thirds lines (dimmer) */
+.phi-grid-thirds::before,
+.phi-grid-thirds::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(0, 191, 255, 0.25);
+}
+
+.phi-grid-thirds::before { left: 33.333%; }
+.phi-grid-thirds::after  { left: 66.666%; }
+
+.phi-grid-thirds-h::before,
+.phi-grid-thirds-h::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(0, 191, 255, 0.25);
+}
+
+.phi-grid-thirds-h::before { top: 33.333%; }
+.phi-grid-thirds-h::after  { top: 66.666%; }
+
+.phi-grid-label {
+  position: fixed;
+  top: var(--space-xs);
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: var(--text-xs);
+  color: rgba(255, 215, 0, 0.7);
+  background: rgba(0, 0, 0, 0.7);
+  padding: var(--space-3xs) var(--space-xs);
+  border-radius: var(--radius-sm);
+  z-index: 10000;
+  pointer-events: none;
+  display: none;
+}
+
+.phi-grid.visible ~ .phi-grid-label {
+  display: block;
+}
