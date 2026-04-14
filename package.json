@@ -1,0 +1,54 @@
+{
+	"private": true,
+	"version": "1.5.1",
+	"name": "3d-agent",
+	"description": "AI-powered 3D model viewer — drag-and-drop glTF/GLB preview tool.",
+	"author": "nirholas",
+	"license": "MIT",
+	"keywords": [
+		"3d-viewer",
+		"gltf-viewer",
+		"glb-viewer",
+		"3d-model-viewer",
+		"webgl",
+		"threejs",
+		"drag-and-drop",
+		"3d-agent"
+	],
+	"main": "public/app.js",
+	"browserslist": [
+		">1%",
+		"not dead"
+	],
+	"staticFiles": {
+		"staticPath": [
+			{
+				"staticPath": "assets",
+				"staticOutDir": "assets"
+			}
+		]
+	},
+	"scripts": {
+		"dev": "vite --port 3000",
+		"build": "vite build",
+		"clean": "rm -rf dist/* || true",
+		"generate-icons": "node scripts/generate-pwa-icons.mjs",
+		"test": "node test/gen_test.js",
+		"deploy": "npm run build && vercel --local-config vercel.json --prod",
+		"postversion": "git push && git push --tags"
+	},
+	"dependencies": {
+		"@chenglou/pretext": "^0.0.5",
+		"dat.gui": "^0.7.9",
+		"gltf-validator": "^2.0.0-dev.3.10",
+		"query-string": "^8.1.0",
+		"simple-dropzone": "^0.8.3",
+		"three": "^0.176.0",
+		"vhtml": "^2.2.0"
+	},
+	"devDependencies": {
+		"prettier": "^3.2.5",
+		"vite": "^5.1.8",
+		"vite-plugin-pwa": "^1.2.0"
+	}
+}
