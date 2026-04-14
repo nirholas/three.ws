@@ -47,8 +47,6 @@ const KTX2_LOADER = new KTX2Loader(MANAGER).setTranscoderPath(
 	`${THREE_PATH}/examples/jsm/libs/basis/`,
 );
 
-const IS_IOS = isIOS();
-
 const Preset = { ASSET_GENERATOR: 'assetgenerator' };
 
 Cache.enabled = true;
@@ -872,15 +870,4 @@ function traverseMaterials(object, callback) {
 			}
 		});
 	});
-}
-
-// https://stackoverflow.com/a/9039885/1314762
-function isIOS() {
-	return (
-		['iPad Simulator', 'iPhone Simulator', 'iPod Simulator', 'iPad', 'iPhone', 'iPod'].includes(
-			navigator.platform,
-		) ||
-		// iPad on iOS 13 detection
-		(navigator.userAgent.includes('Mac') && 'ontouchend' in document)
-	);
 }

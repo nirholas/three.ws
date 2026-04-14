@@ -1,21 +1,1695 @@
 openapi: 3.0.0
 info:
   title: 3D Agent API
-  description: AI-powered 3D model viewer for glTF and GLB files.
+  description: >
+    AI-powered 3D avatar management platform. Supports OAuth 2.1 (with PKCE),
+    session cookies, and API keys for authentication. Avatars are stored as
+    glTF/GLB files on Cloudflare R2 and exposed via a Model Context Protocol
+    (MCP) JSON-RPC server for AI tool integrations.
   version: 1.5.1
   contact:
     email: hello@3d.irish
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
+
 servers:
   - url: https://3d.irish
+
+tags:
+  - name: Auth
+    description: Session-based authentication (register, login, logout)
+  - name: Avatars
+    description: Avatar CRUD and file upload
+  - name: Keys
+    description: API key management
+  - name: OAuth
+    description: OAuth 2.1 authorization server (RFC 6749, 7009, 7591, 7662, 8414)
+  - name: MCP
+    description: Model Context Protocol JSON-RPC tool server
+  - name: Usage
+    description: Account usage and quota statistics
+  - name: Discovery
+    description: Well-known discovery endpoints
+
+# ---------------------------------------------------------------------------
+# Security schemes
+# ---------------------------------------------------------------------------
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sid
+      description: HttpOnly session cookie set by /api/auth/login or /api/auth/register.
+
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        OAuth 2.1 access token (JWT, 1 h TTL) obtained from /api/oauth/token,
+        **or** an API key with prefix `sk_live_` / `sk_test_`.
+
+  # -------------------------------------------------------------------------
+  # Reusable schemas
+  # -------------------------------------------------------------------------
+  schemas:
+
+    # -- Users ---------------------------------------------------------------
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        display_name:
+          type: string
+          nullable: true
+        avatar_url:
+          type: string
+          format: uri
+          nullable: true
+        plan:
+          type: string
+          enum: [free, pro, team, enterprise]
+        created_at:
+          type: string
+          format: date-time
+      required: [id, email, plan]
+
+    # -- Avatars -------------------------------------------------------------
+    Avatar:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        owner_id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+          example: my-hero
+        name:
+          type: string
+          example: My Hero
+        description:
+          type: string
+          nullable: true
+        storage_key:
+          type: string
+          description: R2 object key
+        size_bytes:
+          type: integer
+        content_type:
+          type: string
+          example: model/gltf-binary
+        source:
+          type: string
+          enum: [upload, avaturn, import]
+        source_meta:
+          type: object
+          nullable: true
+          additionalProperties: true
+        thumbnail_key:
+          type: string
+          nullable: true
+        visibility:
+          type: string
+          enum: [private, unlisted, public]
+        tags:
+          type: array
+          items:
+            type: string
+        checksum_sha256:
+          type: string
+          nullable: true
+          description: 64-character hex SHA-256 of the file
+        version:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+      required: [id, owner_id, slug, name, visibility, version, created_at, updated_at]
+
+    AvatarWithUrl:
+      allOf:
+        - $ref: '#/components/schemas/Avatar'
+        - type: object
+          properties:
+            url:
+              type: string
+              format: uri
+              description: Presigned or public CDN URL for the GLB file
+            cdn:
+              type: boolean
+              description: True when the URL is a public CDN URL (no expiry)
+            expires_in:
+              type: integer
+              description: Seconds until the presigned URL expires (omitted for CDN URLs)
+
+    # -- API Keys ------------------------------------------------------------
+    ApiKey:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        prefix:
+          type: string
+          example: sk_live_Ab3d
+          description: First 12 chars of the key (safe to display)
+        scope:
+          type: string
+          example: avatars:read avatars:write
+        last_used_at:
+          type: string
+          format: date-time
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        revoked_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+      required: [id, name, prefix, scope, created_at]
+
+    # -- Usage ---------------------------------------------------------------
+    PlanQuota:
+      type: object
+      properties:
+        plan:
+          type: string
+          enum: [free, pro, team, enterprise]
+        max_avatars:
+          type: integer
+        max_bytes_per_avatar:
+          type: integer
+        max_total_bytes:
+          type: integer
+        mcp_calls_per_day:
+          type: integer
+      required: [plan, max_avatars, max_bytes_per_avatar, max_total_bytes, mcp_calls_per_day]
+
+    UsageCounts:
+      type: object
+      properties:
+        avatars:
+          type: integer
+        bytes:
+          type: integer
+        mcp_calls_24h:
+          type: integer
+        events_30d:
+          type: integer
+      required: [avatars, bytes, mcp_calls_24h, events_30d]
+
+    # -- Pagination ----------------------------------------------------------
+    Cursor:
+      type: string
+      format: date-time
+      description: ISO-8601 timestamp used as an opaque pagination cursor
+
+    # -- Errors --------------------------------------------------------------
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Machine-readable error code
+          example: validation_error
+        error_description:
+          type: string
+          description: Human-readable message
+          example: "email is required"
+      required: [error, error_description]
+
+    OAuthError:
+      type: object
+      description: RFC 6749 §5.2 error response
+      properties:
+        error:
+          type: string
+          example: invalid_grant
+        error_description:
+          type: string
+      required: [error]
+
+    # -- JSON-RPC ------------------------------------------------------------
+    JsonRpcRequest:
+      type: object
+      required: [jsonrpc, method]
+      properties:
+        jsonrpc:
+          type: string
+          enum: ["2.0"]
+        id:
+          oneOf:
+            - type: string
+            - type: integer
+          description: Omit for notifications
+        method:
+          type: string
+        params:
+          type: object
+          additionalProperties: true
+
+    JsonRpcResponse:
+      type: object
+      required: [jsonrpc, id]
+      properties:
+        jsonrpc:
+          type: string
+          enum: ["2.0"]
+        id:
+          oneOf:
+            - type: string
+            - type: integer
+            - type: "null"
+        result:
+          description: Present on success
+        error:
+          type: object
+          properties:
+            code:
+              type: integer
+            message:
+              type: string
+            data: {}
+
+  # -------------------------------------------------------------------------
+  # Reusable responses
+  # -------------------------------------------------------------------------
+  responses:
+    Unauthorized:
+      description: Missing or invalid credentials
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Forbidden:
+      description: Insufficient scope or ownership mismatch
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    TooManyRequests:
+      description: Rate limit exceeded
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: Seconds to wait before retrying
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalServerError:
+      description: Unexpected server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+# ==========================================================================
+# Paths
+# ==========================================================================
 paths:
+
+  # --------------------------------------------------------------------------
+  # Root
+  # --------------------------------------------------------------------------
   /:
     get:
       operationId: viewHomepage
       summary: Load the 3D model viewer interface
-      description: Returns the main viewer page where users can drag-and-drop glTF/GLB 3D models for instant preview.
+      description: >
+        Returns the main viewer page where users can drag-and-drop glTF/GLB
+        3D models for instant preview.
       responses:
         "200":
           description: The 3D viewer HTML page.
+
+  # --------------------------------------------------------------------------
+  # Auth
+  # --------------------------------------------------------------------------
+  /api/auth/register:
+    post:
+      operationId: registerUser
+      tags: [Auth]
+      summary: Register a new user account
+      description: >
+        Creates a user account, hashes the password, opens a session, and sets
+        the `sid` cookie. Rate-limited to **5 requests per IP per hour**.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  maxLength: 254
+                password:
+                  type: string
+                  minLength: 10
+                  maxLength: 200
+                display_name:
+                  type: string
+                  minLength: 1
+                  maxLength: 80
+      responses:
+        "201":
+          description: Account created
+          headers:
+            Set-Cookie:
+              description: HttpOnly session cookie (`sid`)
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "409":
+          description: Email already registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: email_taken
+                error_description: An account with that email already exists
+        "429":
+          $ref: '#/components/responses/TooManyRequests'
+
+  /api/auth/login:
+    post:
+      operationId: loginUser
+      tags: [Auth]
+      summary: Log in with email and password
+      description: >
+        Verifies credentials, creates a session, and sets the `sid` cookie.
+        Rate-limited to **30 requests per IP per 10 minutes**.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        "200":
+          description: Login successful
+          headers:
+            Set-Cookie:
+              description: HttpOnly session cookie (`sid`)
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "429":
+          $ref: '#/components/responses/TooManyRequests'
+
+  /api/auth/me:
+    get:
+      operationId: getCurrentUser
+      tags: [Auth]
+      summary: Get the currently authenticated user
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Authenticated user profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/auth/logout:
+    post:
+      operationId: logoutUser
+      tags: [Auth]
+      summary: Invalidate the current session
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Session revoked
+          headers:
+            Set-Cookie:
+              description: Clears the `sid` cookie
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  # --------------------------------------------------------------------------
+  # Avatars
+  # --------------------------------------------------------------------------
+  /api/avatars:
+    get:
+      operationId: listAvatars
+      tags: [Avatars]
+      summary: List avatars owned by the authenticated user
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+        - name: cursor
+          in: query
+          description: Pagination cursor (ISO-8601 timestamp from previous `next_cursor`)
+          schema:
+            $ref: '#/components/schemas/Cursor'
+        - name: visibility
+          in: query
+          schema:
+            type: string
+            enum: [private, unlisted, public]
+        - name: include_public
+          in: query
+          description: When `true`, also returns all public avatars
+          schema:
+            type: string
+            enum: ['true', 'false']
+      responses:
+        "200":
+          description: Paginated avatar list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  avatars:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Avatar'
+                  next_cursor:
+                    $ref: '#/components/schemas/Cursor'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      operationId: createAvatar
+      tags: [Avatars]
+      summary: Create an avatar record after uploading the file to R2
+      description: >
+        Call `POST /api/avatars/presign` first to get a presigned upload URL,
+        upload the GLB file directly to R2, then call this endpoint to register
+        the avatar.
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, storage_key, size_bytes]
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 120
+                slug:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                  pattern: '^[a-z0-9_-]+$'
+                description:
+                  type: string
+                  maxLength: 2000
+                visibility:
+                  type: string
+                  enum: [private, unlisted, public]
+                  default: private
+                tags:
+                  type: array
+                  maxItems: 20
+                  items:
+                    type: string
+                    maxLength: 40
+                source:
+                  type: string
+                  enum: [upload, avaturn, import]
+                  default: upload
+                source_meta:
+                  type: object
+                  additionalProperties: true
+                content_type:
+                  type: string
+                  default: model/gltf-binary
+                size_bytes:
+                  type: integer
+                  minimum: 1
+                  maximum: 524288000
+                  description: File size in bytes (max 500 MB)
+                checksum_sha256:
+                  type: string
+                  pattern: '^[0-9a-f]{64}$'
+                storage_key:
+                  type: string
+                  description: R2 object key returned by /api/avatars/presign
+      responses:
+        "201":
+          description: Avatar record created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  avatar:
+                    $ref: '#/components/schemas/Avatar'
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/avatars/public:
+    get:
+      operationId: searchPublicAvatars
+      tags: [Avatars]
+      summary: Search public avatars (no authentication required)
+      description: >
+        Full-text search over public avatars. Results are cached for 60 seconds.
+      parameters:
+        - name: q
+          in: query
+          description: Free-text search query
+          schema:
+            type: string
+        - name: tag
+          in: query
+          description: Filter by a single tag
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 24
+        - name: cursor
+          in: query
+          description: Pagination cursor (ISO-8601 timestamp from previous `next_cursor`)
+          schema:
+            $ref: '#/components/schemas/Cursor'
+      responses:
+        "200":
+          description: Paginated public avatar list
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: public, max-age=60
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  avatars:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Avatar'
+                  next_cursor:
+                    $ref: '#/components/schemas/Cursor'
+
+  /api/avatars/presign:
+    post:
+      operationId: presignAvatarUpload
+      tags: [Avatars]
+      summary: Get a presigned URL for uploading a GLB file directly to R2
+      description: >
+        Rate-limited to **60 requests per user per hour**. Use the returned
+        `upload_url` with an HTTP PUT request (include the `content-type`
+        header). After the upload succeeds, call `POST /api/avatars` with
+        the returned `storage_key`.
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [size_bytes]
+              properties:
+                size_bytes:
+                  type: integer
+                  minimum: 1
+                  maximum: 524288000
+                  description: File size in bytes (max 500 MB)
+                content_type:
+                  type: string
+                  default: model/gltf-binary
+                checksum_sha256:
+                  type: string
+                  pattern: '^[0-9a-f]{64}$'
+                slug:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                  pattern: '^[a-z0-9_-]+$'
+      responses:
+        "200":
+          description: Presigned upload details
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [storage_key, upload_url, method, headers, expires_in]
+                properties:
+                  storage_key:
+                    type: string
+                    description: R2 object key to pass to POST /api/avatars
+                  upload_url:
+                    type: string
+                    format: uri
+                    description: Presigned R2 PUT URL
+                  method:
+                    type: string
+                    enum: [PUT]
+                  headers:
+                    type: object
+                    description: Headers to include in the PUT request
+                    additionalProperties:
+                      type: string
+                    example:
+                      content-type: model/gltf-binary
+                  expires_in:
+                    type: integer
+                    example: 300
+                    description: Seconds until the presigned URL expires
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "429":
+          $ref: '#/components/responses/TooManyRequests'
+
+  /api/avatars/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      operationId: getAvatar
+      tags: [Avatars]
+      summary: Get a single avatar by ID
+      description: >
+        Returns metadata plus a time-limited (or permanent CDN) URL for the
+        GLB file. Private avatars are only accessible to their owner. Records a
+        `avatar_fetch` usage event.
+      security:
+        - {}
+        - cookieAuth: []
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Avatar details with download URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  avatar:
+                    $ref: '#/components/schemas/AvatarWithUrl'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      operationId: updateAvatar
+      tags: [Avatars]
+      summary: Update avatar metadata (partial update)
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 120
+                description:
+                  type: string
+                  maxLength: 2000
+                visibility:
+                  type: string
+                  enum: [private, unlisted, public]
+                tags:
+                  type: array
+                  maxItems: 20
+                  items:
+                    type: string
+                    maxLength: 40
+      responses:
+        "200":
+          description: Updated avatar
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  avatar:
+                    $ref: '#/components/schemas/Avatar'
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      operationId: deleteAvatar
+      tags: [Avatars]
+      summary: Delete an avatar (soft delete + queued R2 removal)
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Avatar deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  # --------------------------------------------------------------------------
+  # API Keys
+  # --------------------------------------------------------------------------
+  /api/keys:
+    get:
+      operationId: listApiKeys
+      tags: [Keys]
+      summary: List API keys for the authenticated user
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: List of API keys (secrets never returned after creation)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  keys:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ApiKey'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      operationId: createApiKey
+      tags: [Keys]
+      summary: Create a new API key
+      description: >
+        The `secret` field in the response is the only time the plaintext key
+        is returned — store it immediately.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 80
+                scope:
+                  type: string
+                  default: "avatars:read avatars:write"
+                  description: >
+                    Space-separated list of scopes. Valid values:
+                    `avatars:read`, `avatars:write`, `avatars:delete`, `profile`.
+                expires_in_days:
+                  type: integer
+                  minimum: 1
+                  maximum: 3650
+                  description: Key TTL in days (omit for no expiry)
+                environment:
+                  type: string
+                  enum: [live, test]
+                  default: live
+      responses:
+        "201":
+          description: API key created (secret visible only once)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  key:
+                    allOf:
+                      - $ref: '#/components/schemas/ApiKey'
+                      - type: object
+                        properties:
+                          secret:
+                            type: string
+                            description: >
+                              Full plaintext API key (e.g. `sk_live_…`).
+                              Only returned on creation.
+                            example: sk_live_Ab3dXYZ...
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/keys/{id}:
+    delete:
+      operationId: revokeApiKey
+      tags: [Keys]
+      summary: Revoke an API key by ID
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Key revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  # --------------------------------------------------------------------------
+  # OAuth 2.1
+  # --------------------------------------------------------------------------
+  /api/oauth/register:
+    post:
+      operationId: oauthDynamicClientRegistration
+      tags: [OAuth]
+      summary: Dynamic client registration (RFC 7591)
+      description: >
+        Registers a new OAuth client. Clients with `redirect_uris` pointing to
+        `localhost` or with `token_endpoint_auth_method: none` are treated as
+        **public** clients; all others are **confidential** and receive a
+        `client_secret`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [redirect_uris]
+              properties:
+                redirect_uris:
+                  type: array
+                  minItems: 1
+                  maxItems: 10
+                  items:
+                    type: string
+                    format: uri
+                client_name:
+                  type: string
+                client_uri:
+                  type: string
+                  format: uri
+                logo_uri:
+                  type: string
+                  format: uri
+                scope:
+                  type: string
+                  example: avatars:read avatars:write
+                grant_types:
+                  type: array
+                  items:
+                    type: string
+                    enum: [authorization_code, refresh_token]
+                response_types:
+                  type: array
+                  items:
+                    type: string
+                    enum: [code]
+                token_endpoint_auth_method:
+                  type: string
+                  enum: [none, client_secret_basic, client_secret_post]
+                software_id:
+                  type: string
+                software_version:
+                  type: string
+      responses:
+        "201":
+          description: Client registered
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [client_id, client_id_issued_at, redirect_uris, grant_types, response_types, scope, token_endpoint_auth_method]
+                properties:
+                  client_id:
+                    type: string
+                    example: mcp_Ab3dXYZ
+                  client_secret:
+                    type: string
+                    description: Only present for confidential clients
+                  client_id_issued_at:
+                    type: integer
+                    description: Unix timestamp
+                  token_endpoint_auth_method:
+                    type: string
+                  redirect_uris:
+                    type: array
+                    items:
+                      type: string
+                      format: uri
+                  grant_types:
+                    type: array
+                    items:
+                      type: string
+                  response_types:
+                    type: array
+                    items:
+                      type: string
+                  scope:
+                    type: string
+                  client_name:
+                    type: string
+        "400":
+          description: Invalid registration request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthError'
+
+  /api/oauth/authorize:
+    get:
+      operationId: oauthAuthorize
+      tags: [OAuth]
+      summary: Authorization endpoint — show consent screen
+      description: >
+        If the user is not authenticated they are redirected to the login page.
+        On success, displays an HTML consent form. Requires PKCE with
+        `code_challenge_method=S256`.
+      parameters:
+        - name: response_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [code]
+        - name: client_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: redirect_uri
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uri
+        - name: scope
+          in: query
+          schema:
+            type: string
+            example: avatars:read avatars:write
+        - name: state
+          in: query
+          schema:
+            type: string
+        - name: code_challenge
+          in: query
+          required: true
+          schema:
+            type: string
+            description: Base64url-encoded SHA-256 of the code_verifier (PKCE)
+        - name: code_challenge_method
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [S256]
+        - name: resource
+          in: query
+          schema:
+            type: string
+            format: uri
+            description: RFC 8707 resource indicator
+      responses:
+        "200":
+          description: HTML consent form
+          content:
+            text/html:
+              schema:
+                type: string
+        "302":
+          description: Redirect to login (if unauthenticated) or error redirect
+          headers:
+            Location:
+              schema:
+                type: string
+        "400":
+          description: Invalid authorization request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthError'
+
+    post:
+      operationId: oauthAuthorizeDecision
+      tags: [OAuth]
+      summary: Submit consent form decision (allow or deny)
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [decision, client_id, redirect_uri, code_challenge, code_challenge_method]
+              properties:
+                decision:
+                  type: string
+                  enum: [allow, deny]
+                response_type:
+                  type: string
+                  enum: [code]
+                client_id:
+                  type: string
+                redirect_uri:
+                  type: string
+                  format: uri
+                scope:
+                  type: string
+                state:
+                  type: string
+                code_challenge:
+                  type: string
+                code_challenge_method:
+                  type: string
+                  enum: [S256]
+                resource:
+                  type: string
+      responses:
+        "302":
+          description: >
+            Redirect to `redirect_uri?code=CODE&state=STATE` (allow) or
+            `redirect_uri?error=access_denied&state=STATE` (deny)
+          headers:
+            Location:
+              schema:
+                type: string
+
+  /api/oauth/token:
+    post:
+      operationId: oauthToken
+      tags: [OAuth]
+      summary: Token endpoint — exchange code or refresh token
+      description: >
+        Supports `authorization_code` and `refresh_token` grant types.
+        Confidential clients authenticate via HTTP Basic (preferred) or
+        `client_id` + `client_secret` form fields.
+        Rate-limited to **120 requests per client per minute**.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [grant_type]
+              properties:
+                grant_type:
+                  type: string
+                  enum: [authorization_code, refresh_token]
+                code:
+                  type: string
+                  description: Required for authorization_code grant
+                redirect_uri:
+                  type: string
+                  format: uri
+                  description: Required for authorization_code grant; must match the authorization request
+                code_verifier:
+                  type: string
+                  description: PKCE verifier; required for authorization_code grant
+                refresh_token:
+                  type: string
+                  description: Required for refresh_token grant
+                scope:
+                  type: string
+                  description: Optional subset scope for refresh_token grant
+                client_id:
+                  type: string
+                client_secret:
+                  type: string
+                  description: Required for confidential clients not using HTTP Basic
+      responses:
+        "200":
+          description: Token response
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [access_token, token_type, expires_in, scope]
+                properties:
+                  access_token:
+                    type: string
+                    description: JWT access token (1 h TTL)
+                  token_type:
+                    type: string
+                    enum: [Bearer]
+                  expires_in:
+                    type: integer
+                    example: 3600
+                  scope:
+                    type: string
+                  refresh_token:
+                    type: string
+                    description: Opaque refresh token (30 d TTL, rotated on use)
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthError'
+        "401":
+          description: Invalid client credentials or grant
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthError'
+        "429":
+          $ref: '#/components/responses/TooManyRequests'
+
+  /api/oauth/revoke:
+    post:
+      operationId: oauthRevoke
+      tags: [OAuth]
+      summary: Token revocation endpoint (RFC 7009)
+      description: >
+        Revokes an access token or refresh token. Always returns 200 per the
+        RFC, even if the token is unknown or already revoked.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+                token_type_hint:
+                  type: string
+                  enum: [access_token, refresh_token]
+                client_id:
+                  type: string
+                client_secret:
+                  type: string
+      responses:
+        "200":
+          description: Revocation accepted (per RFC 7009, always 200)
+          content:
+            application/json:
+              schema:
+                type: object
+                example: {}
+
+  /api/oauth/introspect:
+    post:
+      operationId: oauthIntrospect
+      tags: [OAuth]
+      summary: Token introspection endpoint (RFC 7662)
+      description: >
+        Returns metadata about a token. Confidential clients authenticate via
+        HTTP Basic or `client_id`/`client_secret` form fields.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+                client_id:
+                  type: string
+                client_secret:
+                  type: string
+      responses:
+        "200":
+          description: Token metadata
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [active]
+                properties:
+                  active:
+                    type: boolean
+                  scope:
+                    type: string
+                  client_id:
+                    type: string
+                  sub:
+                    type: string
+                    format: uuid
+                    description: User ID
+                  token_type:
+                    type: string
+                    enum: [Bearer, refresh_token]
+                  aud:
+                    type: string
+                  iss:
+                    type: string
+                    format: uri
+                  exp:
+                    type: integer
+                    description: Unix expiry timestamp
+                  iat:
+                    type: integer
+                    description: Unix issued-at timestamp
+
+  # --------------------------------------------------------------------------
+  # MCP (Model Context Protocol)
+  # --------------------------------------------------------------------------
+  /api/mcp:
+    post:
+      operationId: mcpJsonRpc
+      tags: [MCP]
+      summary: MCP JSON-RPC 2.0 endpoint
+      description: >
+        Stateless JSON-RPC 2.0 endpoint implementing the [Model Context
+        Protocol](https://modelcontextprotocol.io). Accepts single or batched
+        requests. Authenticated with an OAuth 2.1 access token **or** an API
+        key in the `Authorization: Bearer …` header.
+
+
+        **Supported methods:**
+        `initialize`, `tools/list`, `tools/call`, `ping`,
+        `notifications/initialized`, `resources/list`,
+        `resources/templates/list`, `prompts/list`, `logging/setLevel`.
+
+
+        **Built-in tools** (via `tools/call`):
+        `list_my_avatars`, `get_avatar`, `search_public_avatars`,
+        `render_avatar`, `delete_avatar`.
+
+
+        Rate limits: **600 req/min per IP**, **1 200 req/min per user**.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/JsonRpcRequest'
+                - type: array
+                  items:
+                    $ref: '#/components/schemas/JsonRpcRequest'
+            examples:
+              initialize:
+                summary: initialize
+                value:
+                  jsonrpc: "2.0"
+                  id: 1
+                  method: initialize
+                  params:
+                    protocolVersion: "2024-11-05"
+                    capabilities: {}
+                    clientInfo:
+                      name: my-client
+                      version: "1.0"
+              toolsList:
+                summary: tools/list
+                value:
+                  jsonrpc: "2.0"
+                  id: 2
+                  method: tools/list
+              toolCall:
+                summary: tools/call — render_avatar
+                value:
+                  jsonrpc: "2.0"
+                  id: 3
+                  method: tools/call
+                  params:
+                    name: render_avatar
+                    arguments:
+                      id: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        "200":
+          description: JSON-RPC response (single or batch)
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/JsonRpcResponse'
+                  - type: array
+                    items:
+                      $ref: '#/components/schemas/JsonRpcResponse'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "429":
+          $ref: '#/components/responses/TooManyRequests'
+
+    get:
+      operationId: mcpSseStream
+      tags: [MCP]
+      summary: MCP SSE stream (reserved — not yet implemented)
+      security:
+        - bearerAuth: []
+      responses:
+        "405":
+          description: Not yet implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      operationId: mcpTerminateSession
+      tags: [MCP]
+      summary: Terminate MCP session (no-op — server is stateless)
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Session terminated (stateless; nothing to tear down)
+
+  # --------------------------------------------------------------------------
+  # Usage
+  # --------------------------------------------------------------------------
+  /api/usage/summary:
+    get:
+      operationId: getUsageSummary
+      tags: [Usage]
+      summary: Get usage statistics and quota limits for the current account
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Usage summary
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [plan, counts]
+                properties:
+                  plan:
+                    $ref: '#/components/schemas/PlanQuota'
+                  counts:
+                    $ref: '#/components/schemas/UsageCounts'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  # --------------------------------------------------------------------------
+  # Discovery — well-known endpoints
+  # --------------------------------------------------------------------------
+  /.well-known/oauth-authorization-server:
+    get:
+      operationId: oauthAuthorizationServerMetadata
+      tags: [Discovery]
+      summary: OAuth 2.0 Authorization Server Metadata (RFC 8414)
+      description: Cached for 300 seconds.
+      responses:
+        "200":
+          description: Authorization server metadata
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: public, max-age=300
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  issuer:
+                    type: string
+                    format: uri
+                  authorization_endpoint:
+                    type: string
+                    format: uri
+                  token_endpoint:
+                    type: string
+                    format: uri
+                  registration_endpoint:
+                    type: string
+                    format: uri
+                  revocation_endpoint:
+                    type: string
+                    format: uri
+                  introspection_endpoint:
+                    type: string
+                    format: uri
+                  response_types_supported:
+                    type: array
+                    items:
+                      type: string
+                  grant_types_supported:
+                    type: array
+                    items:
+                      type: string
+                  code_challenge_methods_supported:
+                    type: array
+                    items:
+                      type: string
+                  token_endpoint_auth_methods_supported:
+                    type: array
+                    items:
+                      type: string
+                  scopes_supported:
+                    type: array
+                    items:
+                      type: string
+                  service_documentation:
+                    type: string
+                    format: uri
+                  ui_locales_supported:
+                    type: array
+                    items:
+                      type: string
+
+  /.well-known/oauth-protected-resource:
+    get:
+      operationId: oauthProtectedResourceMetadata
+      tags: [Discovery]
+      summary: OAuth 2.0 Protected Resource Metadata (RFC 9728)
+      description: Cached for 300 seconds.
+      responses:
+        "200":
+          description: Protected resource metadata
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: public, max-age=300
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  resource:
+                    type: string
+                    format: uri
+                  authorization_servers:
+                    type: array
+                    items:
+                      type: string
+                      format: uri
+                  bearer_methods_supported:
+                    type: array
+                    items:
+                      type: string
+                  resource_documentation:
+                    type: string
+                    format: uri
+                  scopes_supported:
+                    type: array
+                    items:
+                      type: string
+
+  /.well-known/agent-card.json:
+    get:
+      operationId: getAgentCard
+      tags: [Discovery]
+      summary: Agent Card — A2A protocol agent description
+      responses:
+        "200":
+          description: Agent card JSON
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /.well-known/agent-registration.json:
+    get:
+      operationId: getAgentRegistration
+      tags: [Discovery]
+      summary: Agent registration manifest
+      responses:
+        "200":
+          description: Agent registration JSON
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /.well-known/ai-plugin.json:
+    get:
+      operationId: getAiPlugin
+      tags: [Discovery]
+      summary: AI plugin manifest (ChatGPT / OpenAI plugin format)
+      responses:
+        "200":
+          description: Plugin manifest JSON
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /.well-known/openapi.yaml:
+    get:
+      operationId: getOpenApiSpec
+      tags: [Discovery]
+      summary: This OpenAPI specification
+      responses:
+        "200":
+          description: OpenAPI 3.0 YAML document
+          content:
+            application/yaml:
+              schema:
+                type: string

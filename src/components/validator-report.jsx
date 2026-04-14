@@ -25,7 +25,7 @@ export function ValidatorReport({
 				{info?.extras?.title && (
 					<li>
 						<b>Title:</b>{' '}
-						<span dangerouslySetInnerHTML={{ __html: info.extras.title }} />
+						<span>{info.extras.title}</span>
 					</li>
 				)}
 				{info?.extras?.author && (

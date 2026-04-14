@@ -163,7 +163,7 @@ export class Validator {
 				this.report.info.extras.source = linkify(escapeHTML(extras.source));
 			}
 			if (extras.title) {
-				this.report.info.extras.title = extras.title;
+				this.report.info.extras.title = escapeHTML(extras.title);
 			}
 		}
 	}
@@ -183,7 +183,7 @@ export class Validator {
 			<!DOCTYPE html>
 			<title>glTF 2.0 validation report</title>
 			<link href="https://fonts.googleapis.com/css?family=Raleway:300,400" rel="stylesheet">
-			<link rel="stylesheet" href="{{location.protocol}}//{{location.host}}/style.css">
+			<link rel="stylesheet" href="${location.protocol}//${location.host}/style.css">
 			<style>
 				body { overflow-y: auto; }
 				html, body { background: #FFFFFF; }
