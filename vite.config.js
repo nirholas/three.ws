@@ -9,17 +9,11 @@ export default defineConfig({
 		jsxFragment: '"div"',
 	},
 	build: {
+		chunkSizeWarningLimit: 1000,
 		rollupOptions: {
 			input: {
 				main: resolve(__dirname, 'index.html'),
 				features: resolve(__dirname, 'features.html'),
-			},
-		},
-		rolldownOptions: {
-			jsx: {
-				mode: 'classic',
-				factory: 'vhtml',
-				fragment: '"div"',
 			},
 		},
 	},

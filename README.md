@@ -4,7 +4,7 @@ description: 3D Agent is an open-source, browser-native 3D model viewer built on
 ---
 
 <video width="100%" height="auto" autoplay loop muted playsinline>
-  <source src="public/skills.mp4" type="video/mp4">
+  <source src="https://github.com/nirholas/3D-Agent/raw/refs/heads/main/public/skills.mp4" type="video/mp4">
   Your browser does not support the video tag.
 </video>
 
@@ -137,7 +137,7 @@ Open **http://localhost:3000** and drop any `.glb` or `.gltf` file onto the page
 | **Validation** | [gltf-validator](https://github.com/KhronosGroup/gltf-validator) — Khronos spec compliance |
 | **Templating** | [vhtml](https://github.com/developit/vhtml) — JSX → HTML string rendering |
 | **Drag & Drop** | [simple-dropzone](https://github.com/donmccurdy/simple-dropzone) |
-| **Build** | [Vite](https://vitejs.dev/) 5 — sub-second HMR |
+| **Build** | [Vite](https://vitejs.dev/) 8 — sub-second HMR |
 | **Hosting** | [Vercel](https://vercel.com/) — edge CDN |
 
 <br/>
@@ -396,6 +396,10 @@ For deeper technical detail, see the `docs/` directory:
 
 <p align="center">
   <img src="assets/footer-banner.svg" width="400" height="60" alt="Built by nirholas"/>
+</p>
+
+<p align="center">
+  <sub>MIT License · Made with three.js · Hosted on Vercel</sub>
 </p>
 
 <p align="center">

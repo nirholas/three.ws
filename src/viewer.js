@@ -86,7 +86,8 @@ export class Viewer {
 			ambientColor: '#FFFFFF',
 			directIntensity: 0.8 * Math.PI, // TODO(#116)
 			directColor: '#FFFFFF',
-			bgColor: '#191919',
+			bgColor: '#000000',
+			transparentBg: false,
 
 			pointSize: 1.0,
 
@@ -112,8 +113,8 @@ export class Viewer {
 		this.activeCamera = this.defaultCamera;
 		this.scene.add(this.defaultCamera);
 
-		this.renderer = window.renderer = new WebGLRenderer({ antialias: true });
-		this.renderer.setClearColor(0xcccccc);
+		this.renderer = window.renderer = new WebGLRenderer({ antialias: true, alpha: true });
+		this.renderer.setClearColor(0x000000, 1);
 		this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 		this.renderer.setSize(el.clientWidth, el.clientHeight);
 
@@ -145,15 +146,47 @@ export class Viewer {
 		if (options.kiosk) this.gui.close();
 
 		this.animate = this.animate.bind(this);
-		requestAnimationFrame(this.animate);
+		this._rafId = null;
+		this._visible = true;
+		this._tabVisible = !document.hidden;
+
+		this._onVisibilityChange = () => {
+			this._tabVisible = !document.hidden;
+			this._updateRenderLoop();
+		};
+		document.addEventListener('visibilitychange', this._onVisibilityChange);
+
+		if (typeof IntersectionObserver !== 'undefined') {
+			this._intersectionObserver = new IntersectionObserver(
+				(entries) => {
+					this._visible = entries[entries.length - 1].isIntersecting;
+					this._updateRenderLoop();
+				},
+				{ threshold: 0 },
+			);
+			this._intersectionObserver.observe(this.el);
+		}
+
+		this._updateRenderLoop();
 		window.addEventListener('resize', this.resize.bind(this), false);
 		window.addEventListener('keydown', (e) => {
 			if ((e.key === 'p' || e.key === 'P') && !this.isInputFocused()) this.takeScreenshot();
 		});
 	}
 
+	_updateRenderLoop() {
+		const shouldRun = this._visible && this._tabVisible;
+		if (shouldRun && this._rafId === null) {
+			this.prevTime = performance.now();
+			this._rafId = requestAnimationFrame(this.animate);
+		} else if (!shouldRun && this._rafId !== null) {
+			cancelAnimationFrame(this._rafId);
+			this._rafId = null;
+		}
+	}
+
 	animate(time) {
-		requestAnimationFrame(this.animate);
+		this._rafId = requestAnimationFrame(this.animate);
 
 		const dt = (time - this.prevTime) / 1000;
 
@@ -454,7 +487,9 @@ export class Viewer {
 
 		this.getCubeMapTexture(environment).then(({ envMap }) => {
 			this.scene.environment = envMap;
-			this.scene.background = this.state.background ? envMap : this.backgroundColor;
+			this.scene.background = this.state.transparentBg
+				? null
+				: this.state.background ? envMap : this.backgroundColor;
 		});
 	}
 
@@ -529,6 +564,14 @@ export class Viewer {
 
 	updateBackground() {
 		this.backgroundColor.set(this.state.bgColor);
+		if (this.state.transparentBg) {
+			this.scene.background = null;
+			this.renderer.setClearColor(0x000000, 0);
+		} else {
+			this.scene.background = this.backgroundColor;
+			this.renderer.setClearColor(0x000000, 1);
+			this.updateEnvironment();
+		}
 	}
 
 	/**
@@ -638,6 +681,8 @@ export class Viewer {
 		dispFolder.add(this.controls, 'screenSpacePanning');
 		const pointSizeCtrl = dispFolder.add(this.state, 'pointSize', 1, 16);
 		pointSizeCtrl.onChange(() => this.updateDisplay());
+		const transparentCtrl = dispFolder.add(this.state, 'transparentBg').name('transparent bg');
+		transparentCtrl.onChange(() => this.updateBackground());
 		const bgColorCtrl = dispFolder.addColor(this.state, 'bgColor');
 		bgColorCtrl.onChange(() => this.updateBackground());
 		dispFolder.add({ screenshot: () => this.takeScreenshot() }, 'screenshot').name('Screenshot [P]');

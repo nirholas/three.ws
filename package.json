@@ -1,5 +1,6 @@
 {
 	"private": true,
+	"type": "module",
 	"version": "1.5.1",
 	"name": "3d-agent",
 	"description": "AI-powered 3D model viewer — drag-and-drop glTF/GLB preview tool.",
