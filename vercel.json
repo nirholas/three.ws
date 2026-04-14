@@ -18,6 +18,15 @@
         { "src": "/dashboard/",          "dest": "/public/dashboard/index.html" },
         { "src": "/dashboard/(.*)",      "dest": "/public/dashboard/$1" },
 
+        { "src": "/api/agents/me",        "dest": "/api/agents" },
+        { "src": "/api/agents/([^/]+)/wallet", "dest": "/api/agents/[id]" },
+        { "src": "/api/agents/([^/]+)",  "dest": "/api/agents/[id]" },
+        { "src": "/api/agents",          "dest": "/api/agents" },
+        { "src": "/api/agent-actions",   "dest": "/api/agent-actions" },
+        { "src": "/api/agent-memory/([^/]+)", "dest": "/api/agent-memory" },
+        { "src": "/api/agent-memory",    "dest": "/api/agent-memory" },
+        { "src": "/agent/([^/]+)",       "dest": "/public/agent/index.html" },
+        { "src": "/agent",               "dest": "/public/agent/index.html" },
         { "src": "/api/(.*)",            "dest": "/api/$1" },
 
         {

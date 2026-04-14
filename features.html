@@ -224,5 +224,25 @@
 			});
 		})();
 	</script>
+
+	<script type="module">
+		// ?pretext=N opts into experimental hero behaviours. Default visitors see no change.
+		(async function () {
+			try {
+				const flag = new URLSearchParams(location.search).get('pretext');
+				if (!['1', '2', '3', '4'].includes(flag)) return;
+
+				const hero = document.querySelector('.hero');
+				if (!hero) return;
+
+				const { default: PretextHero } = await import('/src/features/hero-pretext.js');
+				const instance = new PretextHero(hero, { flag });
+				await instance.init();
+				window.__pretextHero = instance;
+			} catch (err) {
+				console.warn('[pretext-hero] init failed:', err);
+			}
+		})();
+	</script>
 </body>
 </html>

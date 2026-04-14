@@ -4,6 +4,7 @@
 import { sql } from '../_lib/db.js';
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
 import { randomToken, sha256 } from '../_lib/crypto.js';
+import { limits, clientIp } from '../_lib/rate-limit.js';
 import { z } from 'zod';
 import { parse } from '../_lib/validate.js';
 
@@ -23,6 +24,11 @@ const registerSchema = z.object({
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
 	if (!method(req, res, ['POST'])) return;
+
+	// RFC 7591 dynamic registration is unauthenticated by design, so cap per-IP
+	// to deter DB flooding and mass minting of throwaway clients for CSRF / abuse.
+	const rl = await limits.oauthRegisterIp(clientIp(req));
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many registrations from this IP');
 
 	const body = parse(registerSchema, await readJson(req));
 

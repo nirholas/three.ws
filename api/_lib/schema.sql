@@ -201,3 +201,67 @@ do $$ begin
     create trigger oauth_clients_set_updated_at before update on oauth_clients
         for each row execute function set_updated_at();
 exception when duplicate_object then null; end $$;
+
+-- ── agent_identities — every agent gets a body, a place, an identity ─────────
+create table if not exists agent_identities (
+    id               uuid primary key default gen_random_uuid(),
+    user_id          uuid not null references users(id) on delete cascade,
+    name             text not null,
+    description      text,
+    avatar_id        uuid references avatars(id) on delete set null,
+    home_url         text,                           -- /agent/:id
+    wallet_address   text,
+    chain_id         int,
+    erc8004_agent_id bigint,
+    erc8004_registry text,
+    registration_cid text,
+    skills           text[] not null default '{}',
+    meta             jsonb not null default '{}'::jsonb,
+    created_at       timestamptz not null default now(),
+    updated_at       timestamptz not null default now(),
+    deleted_at       timestamptz
+);
+
+create index if not exists agent_identities_user
+    on agent_identities(user_id) where deleted_at is null;
+create index if not exists agent_identities_wallet
+    on agent_identities(wallet_address) where wallet_address is not null;
+
+-- ── agent_memories — the agent's persistent context ──────────────────────────
+create table if not exists agent_memories (
+    id          uuid primary key default gen_random_uuid(),
+    agent_id    uuid not null references agent_identities(id) on delete cascade,
+    type        text not null check (type in ('user','feedback','project','reference')),
+    content     text not null,
+    tags        text[] not null default '{}',
+    context     jsonb not null default '{}'::jsonb,
+    salience    real not null default 0.5,
+    created_at  timestamptz not null default now(),
+    expires_at  timestamptz
+);
+
+create index if not exists agent_memories_agent_type
+    on agent_memories(agent_id, type, created_at desc)
+    where expires_at is null or expires_at > now();
+
+-- ── agent_actions — append-only signed history ───────────────────────────────
+create table if not exists agent_actions (
+    id             bigserial primary key,
+    agent_id       uuid not null references agent_identities(id) on delete cascade,
+    type           text not null,
+    payload        jsonb not null default '{}'::jsonb,
+    source_skill   text,
+    signature      text,
+    signer_address text,
+    created_at     timestamptz not null default now()
+);
+
+create index if not exists agent_actions_agent_time
+    on agent_actions(agent_id, created_at desc);
+create index if not exists agent_actions_type_time
+    on agent_actions(type, created_at desc);
+
+do $$ begin
+    create trigger agent_identities_set_updated_at before update on agent_identities
+        for each row execute function set_updated_at();
+exception when duplicate_object then null; end $$;

@@ -182,6 +182,16 @@ function decorate(row) {
 	};
 }
 
+// Hide owner_id from callers who don't own the row. The raw user UUID is the
+// primary segment of R2 storage keys, so leaking it helps an attacker guess
+// object paths in other users' namespaces.
+export function stripOwnerFor(avatar, requesterId) {
+	if (!avatar) return avatar;
+	if (requesterId && avatar.owner_id === requesterId) return avatar;
+	const { owner_id: _o, ...rest } = avatar;
+	return rest;
+}
+
 async function generateSlug(userId, name) {
 	const base = name
 		.toLowerCase()

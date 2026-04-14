@@ -1,5 +1,5 @@
 import { sql } from '../_lib/db.js';
-import { hashPassword, createSession, sessionCookie } from '../_lib/auth.js';
+import { hashPassword, createSession, sessionCookie, destroySession } from '../_lib/auth.js';
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { parse, registerBody } from '../_lib/validate.js';
@@ -23,6 +23,9 @@ export default wrap(async (req, res) => {
 		values (${body.email}, ${hash}, ${body.display_name ?? null})
 		returning id, email, display_name, plan, created_at
 	`;
+
+	// Kill any pre-existing planted session cookie before issuing the real one.
+	await destroySession(req);
 
 	const token = await createSession({
 		userId: user.id,

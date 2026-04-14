@@ -61,17 +61,21 @@ function parseWindowMs(w) {
 export const limits = {
 	authIp: (ip) => getLimiter('auth:ip', { limit: 30, window: '10 m' }).limit(ip),
 	registerIp: (ip) => getLimiter('register:ip', { limit: 5, window: '1 h' }).limit(ip),
+	oauthRegisterIp: (ip) => getLimiter('oauth:register:ip', { limit: 10, window: '1 h' }).limit(ip),
 	mcpUser: (userId) => getLimiter('mcp:user', { limit: 1200, window: '1 m' }).limit(userId),
 	mcpIp: (ip) => getLimiter('mcp:ip', { limit: 600, window: '1 m' }).limit(ip),
 	oauthToken: (clientId) => getLimiter('oauth:token', { limit: 120, window: '1 m' }).limit(clientId),
 	upload: (userId) => getLimiter('upload', { limit: 60, window: '1 h' }).limit(userId),
 };
 
+// Trust only proxy headers that Vercel itself sets and signs. Naively reading
+// X-Forwarded-For lets clients supply it directly on direct invocations, which
+// trivially bypasses per-IP rate limits by rotating the claimed address.
 export function clientIp(req) {
-	return (
-		(req.headers['x-forwarded-for'] || '').split(',')[0].trim() ||
-		req.headers['x-real-ip'] ||
-		req.socket?.remoteAddress ||
-		'0.0.0.0'
-	);
+	const vercel = req.headers['x-vercel-forwarded-for'];
+	if (vercel) return String(vercel).split(',')[0].trim();
+	const real = req.headers['x-real-ip'];
+	if (real) return String(real).trim();
+	// Last resort — socket address (only meaningful on direct connections).
+	return req.socket?.remoteAddress || '0.0.0.0';
 }

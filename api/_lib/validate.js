@@ -14,6 +14,14 @@ export const slug = z
 
 export const avatarVisibility = z.enum(['private', 'unlisted', 'public']);
 
+// Avatars are GLB/GLTF models. Lock the content-type allowlist here so both
+// the presign URL and the stored object can only ever be model binaries —
+// prevents an attacker uploading HTML/SVG to the public CDN for stored XSS.
+export const avatarContentType = z.enum([
+	'model/gltf-binary',
+	'model/gltf+json',
+]);
+
 export const registerBody = z.object({
 	email,
 	password,
@@ -33,14 +41,14 @@ export const createAvatarBody = z.object({
 	tags: z.array(z.string().trim().min(1).max(40)).max(20).default([]),
 	source: z.enum(['upload', 'avaturn', 'import']).default('upload'),
 	source_meta: z.record(z.any()).default({}),
-	content_type: z.string().default('model/gltf-binary'),
+	content_type: avatarContentType.default('model/gltf-binary'),
 	size_bytes: z.number().int().positive().max(500 * 1024 * 1024),
 	checksum_sha256: z.string().regex(/^[a-f0-9]{64}$/).optional(),
 });
 
 export const presignUploadBody = z.object({
 	size_bytes: z.number().int().positive().max(500 * 1024 * 1024),
-	content_type: z.string().default('model/gltf-binary'),
+	content_type: avatarContentType.default('model/gltf-binary'),
 	checksum_sha256: z.string().regex(/^[a-f0-9]{64}$/).optional(),
 });
 

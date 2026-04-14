@@ -40,6 +40,14 @@ async function handleCreate(req, res) {
 	if (!auth) return error(res, 401, 'unauthorized', 'avatars:write scope required');
 	const body = parse(createWithStorage, await readJson(req));
 
+	// Storage keys are scoped by userId (see storageKeyFor). Enforce that the
+	// caller can only register objects under their own prefix — otherwise a
+	// user could claim another user's freshly uploaded object.
+	const expectedPrefix = `u/${auth.userId}/`;
+	if (!body.storage_key.startsWith(expectedPrefix) || body.storage_key.includes('..')) {
+		return error(res, 400, 'invalid_storage_key', 'storage_key not owned by caller');
+	}
+
 	// Verify the object actually exists in R2 and matches the claimed size.
 	const head = await headObject(body.storage_key);
 	if (!head) return error(res, 400, 'upload_missing', 'no object at storage_key; upload first');

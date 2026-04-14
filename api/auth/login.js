@@ -1,5 +1,5 @@
 import { sql } from '../_lib/db.js';
-import { verifyPassword, createSession, sessionCookie } from '../_lib/auth.js';
+import { verifyPassword, createSession, sessionCookie, destroySession } from '../_lib/auth.js';
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { parse, loginBody } from '../_lib/validate.js';
@@ -21,6 +21,10 @@ export default wrap(async (req, res) => {
 	const user = rows[0];
 	const ok = user && (await verifyPassword(body.password, user.password_hash));
 	if (!ok) return error(res, 401, 'invalid_credentials', 'invalid email or password');
+
+	// Invalidate any pre-existing session tied to the incoming cookie before
+	// minting a new one. Defends against session fixation via planted cookies.
+	await destroySession(req);
 
 	const token = await createSession({
 		userId: user.id,

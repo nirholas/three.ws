@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import WebGL from 'three/addons/capabilities/WebGL.js';
 import { Viewer }        from './viewer.js';
+import { Editor }        from './editor/index.js';
 import { SimpleDropzone } from 'simple-dropzone';
 import { Validator }     from './validator.js';
 import { Footer }        from './components/footer';
@@ -16,6 +17,12 @@ import { AgentIdentity }          from './agent-identity.js';
 import { AgentSkills }            from './agent-skills.js';
 import { AgentAvatar }            from './agent-avatar.js';
 import { AgentHome }              from './agent-home.js';
+
+// Runtime — LLM brain, scene control, file-based memory, skill bundles
+import { SceneController }        from './runtime/scene.js';
+import { Runtime }                from './runtime/index.js';
+import { Memory }                 from './memory/index.js';
+import { SkillRegistry }          from './skills/index.js';
 
 window.THREE   = THREE;
 window.VIEWER  = {};
@@ -38,10 +45,13 @@ class App {
 			model:          hash.model || '',
 			preset:         hash.preset || '',
 			cameraPosition: hash.cameraPosition ? hash.cameraPosition.split(',').map(Number) : null,
+			brain:          hash.brain    || 'none',
+			proxyURL:       hash.proxyURL || '',
 		};
 
 		this.el              = el;
 		this.viewer          = null;
+		this.editor          = null;
 		this.viewerEl        = null;
 		this.spinnerEl       = el.querySelector('.spinner');
 		this.dropEl          = el.querySelector('.wrap');
@@ -54,6 +64,10 @@ class App {
 		this.skills   = null;  // initialised after identity loads
 		this.avatar   = null;  // initialised after viewer + content load
 		this.agentHome = null;
+		this.sceneCtrl = null; // SceneController — created when viewer is ready
+		this.runtime   = null; // LLM Runtime — created after identity + memory load
+		this.fileMemory = null; // file-based Memory for LLM context
+		this.skillRegistry = null; // external skill bundle loader
 
 		// Wire validator results into the protocol
 		this._hookValidator();
@@ -94,10 +108,52 @@ class App {
 			// Skills need identity + memory
 			this.skills = new AgentSkills(protocol, this.identity.memory);
 
+			// File-based memory for LLM context injection
+			this.fileMemory = await Memory.load({
+				mode: 'local',
+				namespace: this.identity.id,
+			});
+
+			// External skill bundle loader (empty initially — skills load on demand)
+			this.skillRegistry = new SkillRegistry({ trust: 'owned-only' });
+
+			// LLM Runtime — the agent's brain. Defaults to 'none' provider
+			// (NichAgent pattern matching). Configure with #brain=anthropic&proxyURL=...
+			this.runtime = new Runtime({
+				manifest: {
+					name: this.identity.name || 'Agent',
+					instructions: [
+						`You are ${this.identity.name || 'Agent'}, an AI agent embedded in a 3D model viewer at 3d.irish.`,
+						'You can control the 3D scene, remember things, and help users with their 3D work.',
+						'Be concise, clear, and helpful. You are present and embodied — act like it.',
+					].join(' '),
+					brain: {
+						provider: this.options.brain,
+						proxyURL: this.options.proxyURL || undefined,
+					},
+					tools: ['wave', 'lookAt', 'play_clip', 'setExpression', 'speak', 'remember'],
+				},
+				viewer: this.sceneCtrl, // null until viewer loads
+				memory: this.fileMemory,
+				skills: this.skillRegistry,
+			});
+
+			// Bridge Runtime assistant messages to the protocol bus
+			this.runtime.addEventListener('brain:message', (e) => {
+				if (e.detail.role === 'assistant' && e.detail.content) {
+					protocol.emit({
+						type:    ACTION_TYPES.SPEAK,
+						payload: { text: e.detail.content, sentiment: 0 },
+						agentId: this.identity.id,
+					});
+				}
+			});
+
 			// Expose agent on window for debugging
 			window.VIEWER.agent_protocol  = protocol;
 			window.VIEWER.agent_identity  = this.identity;
 			window.VIEWER.agent_skills    = this.skills;
+			window.VIEWER.agent_runtime   = this.runtime;
 
 			// Announce presence
 			protocol.emit({
@@ -113,7 +169,7 @@ class App {
 				await this.agentHome.render();
 			}
 
-			// Boot the voice/chat agent with skills wired in
+			// Boot the voice/chat agent with skills and runtime wired in
 			this._initNichAgent();
 
 			// Log all significant actions to identity history (fire-and-forget)
@@ -136,7 +192,7 @@ class App {
 	}
 
 	_initNichAgent() {
-		const agent = new NichAgent(document.body, protocol, this.skills, this.identity);
+		const agent = new NichAgent(document.body, protocol, this.skills, this.identity, this.runtime);
 		window.VIEWER.agent = agent;
 		// Greet on first open
 		agent.onFirstOpen = () => {
@@ -153,6 +209,9 @@ class App {
 	createViewer() {
 		this.viewerEl = this.viewerContainerEl;
 		this.viewer   = new Viewer(this.viewerEl, this.options);
+		this.editor   = new Editor(this.viewer);
+		this.editor.attach();
+		window.VIEWER.editor = this.editor;
 		return this.viewer;
 	}
 
@@ -254,6 +313,18 @@ class App {
 				// Attach the avatar empathy system to the newly loaded content
 				this._attachAvatar(viewer);
 
+				// Notify the editor of the new model so it can rebuild panels
+				if (this.editor) {
+					this.editor.onContentChanged({
+						url: typeof rootFile === 'string' ? rootFile : null,
+						file: typeof rootFile === 'object' ? rootFile : null,
+						name: typeof rootFile === 'string' ? rootFile : rootFile.name,
+					});
+				}
+
+				// Configure external animations (Mixamo-style) for skinned models
+				this._configureAnimations(viewer);
+
 				if (!this.options.kiosk) {
 					this.validator.validate(fileURL, rootPath, fileMap, gltf);
 				}
@@ -267,15 +338,75 @@ class App {
 		this.avatar = new AgentAvatar(viewer, protocol, this.identity);
 		this.avatar.attach();
 
+		// Create (or replace) the SceneController for agent scene operations
+		this.sceneCtrl = new SceneController(viewer);
+		if (this.runtime) this.runtime.viewer = this.sceneCtrl;
+
 		// Update agent-home with the live avatar reference
 		if (this.agentHome) this.agentHome.avatar = this.avatar;
 
 		window.VIEWER.agent_avatar = this.avatar;
+		window.VIEWER.scene_ctrl   = this.sceneCtrl;
 
 		// Let the skills system access the viewer
 		if (this.skills) {
 			window.VIEWER.agent_skills = this.skills;
 		}
+	}
+
+	/**
+	 * Configure Mixamo-style external animations for the viewer.
+	 * Looks for animation GLBs in /animations/ and registers them.
+	 * Each GLB should contain a single animation clip exported from Mixamo
+	 * (downloaded as GLB with "Without Skin" checked).
+	 */
+	_configureAnimations(viewer) {
+		// Check if model has a skeleton
+		let hasSkeleton = false;
+		if (viewer.content) {
+			viewer.content.traverse((node) => {
+				if (node.isSkinnedMesh) hasSkeleton = true;
+			});
+		}
+		if (!hasSkeleton) return;
+
+		// Fetch the animation manifest
+		fetch('/animations/manifest.json')
+			.then((r) => {
+				if (!r.ok) throw new Error('No animation manifest');
+				return r.json();
+			})
+			.then((manifest) => {
+				if (Array.isArray(manifest) && manifest.length > 0) {
+					viewer.setAnimationDefs(manifest);
+				}
+			})
+			.catch(() => {
+				// No manifest — use sensible defaults if files exist
+				const defaults = [
+					{ name: 'idle',    url: '/animations/idle.glb',    label: 'Idle' },
+					{ name: 'walking', url: '/animations/walking.glb', label: 'Walking' },
+					{ name: 'running', url: '/animations/running.glb', label: 'Running' },
+					{ name: 'waving',  url: '/animations/waving.glb',  label: 'Waving' },
+					{ name: 'dancing', url: '/animations/dancing.glb', label: 'Dancing' },
+					{ name: 'sitting', url: '/animations/sitting.glb', label: 'Sitting' },
+					{ name: 'jumping', url: '/animations/jumping.glb', label: 'Jumping' },
+				];
+
+				// Probe which files actually exist (HEAD requests)
+				Promise.all(
+					defaults.map((def) =>
+						fetch(def.url, { method: 'HEAD' })
+							.then((r) => (r.ok ? def : null))
+							.catch(() => null),
+					),
+				).then((results) => {
+					const available = results.filter(Boolean);
+					if (available.length > 0) {
+						viewer.setAnimationDefs(available);
+					}
+				});
+			});
 	}
 
 	// ── Validator hook ────────────────────────────────────────────────────────

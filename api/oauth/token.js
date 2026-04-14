@@ -91,16 +91,21 @@ async function handleRefresh(res, client, form) {
 
 	let result;
 	try {
-		result = await rotateRefreshToken({ oldSecret: refresh_token, clientId: client.client_id });
+		result = await rotateRefreshToken({
+			oldSecret: refresh_token,
+			clientId: client.client_id,
+			// Narrow the rotated refresh token to the requested subset so a caller
+			// can't re-widen back to the full grant on a later refresh.
+			narrowScope: (stored) => (scope ? intersect(scope, stored) : stored),
+		});
 	} catch (err) {
 		return error(res, err.status || 400, err.code || 'invalid_grant', err.message);
 	}
 
-	const finalScope = scope ? intersect(scope, result.scope) : result.scope;
 	const accessToken = await mintAccessToken({
 		userId: result.userId,
 		clientId: client.client_id,
-		scope: finalScope,
+		scope: result.scope,
 		resource: result.resource || env.MCP_RESOURCE,
 	});
 
@@ -108,7 +113,7 @@ async function handleRefresh(res, client, form) {
 		access_token: accessToken,
 		token_type: 'Bearer',
 		expires_in: 3600,
-		scope: finalScope,
+		scope: result.scope,
 		refresh_token: result.next.token,
 	});
 }

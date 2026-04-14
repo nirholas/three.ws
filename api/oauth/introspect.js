@@ -27,6 +27,12 @@ export default wrap(async (req, res) => {
 
 	try {
 		const payload = await verifyAccessToken(token);
+		// Only the issuing client can introspect its own access tokens. Prevents
+		// any registered client from probing arbitrary tokens for user identity
+		// or scope (especially relevant given open dynamic registration).
+		if (payload.client_id && payload.client_id !== client_id) {
+			return json(res, 200, { active: false });
+		}
 		return json(res, 200, {
 			active: true,
 			scope: payload.scope,
