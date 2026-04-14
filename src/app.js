@@ -5,6 +5,7 @@ import { SimpleDropzone } from 'simple-dropzone';
 import { Validator } from './validator.js';
 import { Footer } from './components/footer';
 import { AvaturnAgent } from './avaturn-agent.js';
+import { AvatarCreator } from './avatar-creator.js';
 import { resolveURI, isDecentralizedURI } from './ipfs.js';
 import queryString from 'query-string';
 
@@ -41,6 +42,7 @@ class App {
 		this.validator = new Validator(el);
 
 		this.createDropzone();
+		this.setupAvatarCreator();
 		this.hideSpinner();
 
 		const options = this.options;
@@ -71,6 +73,20 @@ class App {
 		dropCtrl.on('drop', ({ files }) => this.load(files));
 		dropCtrl.on('dropstart', () => this.showSpinner());
 		dropCtrl.on('droperror', () => this.hideSpinner());
+	}
+
+	/**
+	 * Sets up the Create Avatar button and AvatarCreator instance.
+	 */
+	setupAvatarCreator() {
+		this.avatarCreator = new AvatarCreator(document.body, (glbUrl) => {
+			this.view(glbUrl, '', new Map());
+		});
+
+		const btn = document.getElementById('create-avatar-btn');
+		if (btn) {
+			btn.addEventListener('click', () => this.avatarCreator.open());
+		}
 	}
 
 	/**
