@@ -1,10 +1,10 @@
 {
   "name": "3D Agent",
   "description": "AI-powered 3D model viewer and validation agent. Load glTF/GLB models, run validation, inspect materials, and manage avatar assets.",
-  "url": "https://3d.irish",
+  "url": "https://3dagent.vercel.app",
   "provider": {
     "organization": "3D Agent",
-    "url": "https://3d.irish"
+    "url": "https://3dagent.vercel.app"
   },
   "version": "1.5.1",
   "capabilities": {
@@ -53,6 +53,39 @@
       "description": "Delete an avatar owned by the authenticated user",
       "tags": ["avatar", "delete"],
       "examples": ["Delete my old avatar", "Remove avatar abc123"]
+    },
+    {
+      "id": "validate-model",
+      "name": "Validate glTF/GLB Model",
+      "description": "Run the Khronos glTF-Validator against a remote model URL and return a structured error/warning/info/hint report",
+      "tags": ["model", "validation", "gltf", "glb"],
+      "examples": [
+        "Validate https://example.com/model.glb",
+        "Is this GLB spec-compliant?",
+        "Check my model for errors"
+      ]
+    },
+    {
+      "id": "inspect-model",
+      "name": "Inspect glTF/GLB Model",
+      "description": "Parse a remote model and return structural stats: scene/node/mesh counts, vertex and triangle totals, material and texture summaries, extensions used",
+      "tags": ["model", "inspect", "stats", "gltf", "glb"],
+      "examples": [
+        "How many triangles are in this model?",
+        "Inspect https://example.com/scene.glb",
+        "Show texture stats for this GLB"
+      ]
+    },
+    {
+      "id": "optimize-model",
+      "name": "Suggest Optimizations",
+      "description": "Inspect a remote model and return actionable suggestions for reducing size and draw-call overhead (Draco/Meshopt, KTX2, texture resize, reindexing, material merging)",
+      "tags": ["model", "optimize", "suggestions", "performance"],
+      "examples": [
+        "How can I make this model smaller?",
+        "Optimize this GLB for web delivery",
+        "Suggest compression for https://example.com/avatar.glb"
+      ]
     }
   ]
 }
