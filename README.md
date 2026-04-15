@@ -9,7 +9,7 @@ description: 3D Agent is an open-source, browser-native 3D model viewer built on
 </video>
 
 <p align="center">
-  <a href="https://3d.irish"><strong>🌐 Live at 3d.irish</strong></a>&nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="https://3dagent.vercel.app"><strong>🌐 Live at 3dagent.vercel.app</strong></a>&nbsp;&nbsp;·&nbsp;&nbsp;
   <a href="#-quickstart"><strong>Get Started</strong></a>&nbsp;&nbsp;·&nbsp;&nbsp;
   <a href="#-features"><strong>Features</strong></a>&nbsp;&nbsp;·&nbsp;&nbsp;
   <a href="#-tutorials"><strong>Tutorials</strong></a>&nbsp;&nbsp;·&nbsp;&nbsp;
@@ -21,7 +21,7 @@ description: 3D Agent is an open-source, browser-native 3D model viewer built on
 
 ## 🧠 What is 3D Agent?
 
-**3D Agent** is an open-source, browser-native 3D model viewer built on [three.js](https://threejs.org/) (r176). It renders **glTF 2.0** and **GLB** files directly in WebGL — no plugins, no server uploads, no installs. Just open [3d.irish](https://3d.irish), drop a file, and inspect your model instantly.
+**3D Agent** is an open-source, browser-native 3D model viewer built on [three.js](https://threejs.org/) (r176). It renders **glTF 2.0** and **GLB** files directly in WebGL — no plugins, no server uploads, no installs. Just open [3dagent.vercel.app](https://3dagent.vercel.app), drop a file, and inspect your model instantly.
 
 It's built for **3D artists** previewing exports, **game developers** debugging assets, **web developers** integrating models, and **anyone curious** about 3D on the web.
 
@@ -151,7 +151,7 @@ Open **http://localhost:3000** and drop any `.glb` or `.gltf` file onto the page
 Load models and configure the viewer directly via URL hash parameters. This is useful for embedding, sharing specific views, or automated testing.
 
 ```
-https://3d.irish/#model=URL&kiosk=true&preset=assetgenerator&cameraPosition=1,2,3
+https://3dagent.vercel.app/#model=URL&kiosk=true&preset=assetgenerator&cameraPosition=1,2,3
 ```
 
 | Parameter | Type | Description |
@@ -163,7 +163,7 @@ https://3d.irish/#model=URL&kiosk=true&preset=assetgenerator&cameraPosition=1,2,
 
 **Example — embed a model in kiosk mode:**
 ```
-https://3d.irish/#model=https://example.com/model.glb&kiosk=true
+https://3dagent.vercel.app/#model=https://example.com/model.glb&kiosk=true
 ```
 
 <br/>
@@ -179,7 +179,7 @@ https://3d.irish/#model=https://example.com/model.glb&kiosk=true
 ### 1. Preview a Local Model
 
 <p align="center">
-  <img src="assets/tutorial-steps.svg" width="500" height="80" alt="Step 1: Open 3d.irish · Step 2: Drop .glb file · Step 3: Inspect"/>
+  <img src="assets/tutorial-steps.svg" width="500" height="80" alt="Step 1: Open 3dagent.vercel.app · Step 2: Drop .glb file · Step 3: Inspect"/>
 </p>
 
 Just drag any `.glb` or `.gltf` file (along with its textures and `.bin` if separate) onto the page. The viewer auto-detects the root glTF file and resolves all relative resource URIs.
@@ -238,7 +238,7 @@ Use an `<iframe>` with kiosk mode for clean embedding:
 
 ```html
 <iframe
-  src="https://3d.irish/#model=https://your-cdn.com/model.glb&kiosk=true"
+  src="https://3dagent.vercel.app/#model=https://your-cdn.com/model.glb&kiosk=true"
   width="800"
   height="600"
   frameborder="0"
@@ -246,7 +246,7 @@ Use an `<iframe>` with kiosk mode for clean embedding:
 ></iframe>
 ```
 
-> **CORS note:** The model URL must allow cross-origin requests. If you hit CORS errors, serve the model from the same domain or configure your CDN to allow `https://3d.irish` as an origin.
+> **CORS note:** The model URL must allow cross-origin requests. If you hit CORS errors, serve the model from the same domain or configure your CDN to allow `https://3dagent.vercel.app` as an origin.
 
 <br/>
 
@@ -289,15 +289,15 @@ Use an `<iframe>` with kiosk mode for clean embedding:
 The glTF working group maintains a library of test models. Try these:
 
 ```
-https://3d.irish/#model=https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/DamagedHelmet/glTF-Binary/DamagedHelmet.glb
+https://3dagent.vercel.app/#model=https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/DamagedHelmet/glTF-Binary/DamagedHelmet.glb
 ```
 
 ```
-https://3d.irish/#model=https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/FlightHelmet/glTF/FlightHelmet.gltf
+https://3dagent.vercel.app/#model=https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/FlightHelmet/glTF/FlightHelmet.gltf
 ```
 
 ```
-https://3d.irish/#model=https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/Fox/glTF-Binary/Fox.glb
+https://3dagent.vercel.app/#model=https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/Fox/glTF-Binary/Fox.glb
 ```
 
 ### Use the JavaScript API (Advanced)

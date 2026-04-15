@@ -4,10 +4,10 @@ The 3D Agent MCP server lets any Model Context Protocol client — Claude Deskto
 Claude Code, custom agents built on the Claude Agent SDK, or any other
 MCP-compatible app — list, render, and manage a user's 3D avatars.
 
-- **URL:** `https://3d.irish/api/mcp`
+- **URL:** `https://3dagent.vercel.app/api/mcp`
 - **Transport:** Streamable HTTP (MCP spec `2025-06-18`)
 - **Auth:** OAuth 2.1 (end-user) or API key (server-to-server)
-- **Docs:** <https://3d.irish/docs/mcp>
+- **Docs:** <https://3dagent.vercel.app/docs/mcp>
 
 ## Tools
 
@@ -23,10 +23,10 @@ MCP-compatible app — list, render, and manage a user's 3D avatars.
 
 Claude handles the handshake automatically via dynamic client registration:
 
-1. Client POSTs to `https://3d.irish/oauth/register` (RFC 7591).
-2. User is redirected to `https://3d.irish/oauth/authorize?...` to sign in + consent.
-3. Client exchanges the code at `https://3d.irish/oauth/token` with PKCE.
-4. Resulting access token is a short-lived JWT with `aud=https://3d.irish/api/mcp`.
+1. Client POSTs to `https://3dagent.vercel.app/oauth/register` (RFC 7591).
+2. User is redirected to `https://3dagent.vercel.app/oauth/authorize?...` to sign in + consent.
+3. Client exchanges the code at `https://3dagent.vercel.app/oauth/token` with PKCE.
+4. Resulting access token is a short-lived JWT with `aud=https://3dagent.vercel.app/api/mcp`.
 
 Metadata discovery:
 
@@ -42,7 +42,7 @@ For server-to-server usage (scripts, agents, CI), create a key in the dashboard
 under *API keys* and pass it as a bearer token:
 
 ```bash
-curl -X POST https://3d.irish/api/mcp \
+curl -X POST https://3dagent.vercel.app/api/mcp \
   -H "authorization: Bearer sk_live_…" \
   -H "content-type: application/json" \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'

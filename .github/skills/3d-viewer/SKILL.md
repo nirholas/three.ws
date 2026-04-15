@@ -8,7 +8,7 @@ argument-hint: "Describe what you want to do with the 3D viewer app"
 
 ## Overview
 
-3D Agent is a browser-based glTF 2.0 / GLB viewer built with Three.js. Users drag-and-drop 3D model files to preview them with interactive controls for lighting, animation, and display. Deployed at [3d.irish](https://3d.irish/).
+3D Agent is a browser-based glTF 2.0 / GLB viewer built with Three.js. Users drag-and-drop 3D model files to preview them with interactive controls for lighting, animation, and display. Deployed at [3dagent.vercel.app](https://3dagent.vercel.app/).
 
 ## Architecture
 

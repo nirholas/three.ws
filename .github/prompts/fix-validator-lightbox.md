@@ -13,7 +13,7 @@ In `src/validator.js`, the `showLightbox()` method uses Mustache-style `{{` doub
 <link rel="stylesheet" href="{{location.protocol}}//{{location.host}}/style.css">
 ```
 
-This renders as literal text `{{location.protocol}}//{{location.host}}/style.css` instead of resolving to the actual URL like `https://3d.irish/style.css`.
+This renders as literal text `{{location.protocol}}//{{location.host}}/style.css` instead of resolving to the actual URL like `https://3dagent.vercel.app/style.css`.
 
 ## Fix
 

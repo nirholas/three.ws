@@ -51,7 +51,7 @@ Same as above but with `$BASE_RPC_URL`, and update the `8453` entry in `abi.js`.
 ## After deploy: register the 3D Agent itself
 
 ```js
-// Browser console on 3d.irish with wallet connected to Base Sepolia:
+// Browser console on 3dagent.vercel.app with wallet connected to Base Sepolia:
 import { registerAgent } from './src/erc8004/index.js';
 const r = await registerAgent({
     glbFile: /* your GLB File */,

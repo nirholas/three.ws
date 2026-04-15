@@ -70,6 +70,7 @@ export class AgentHome {
 
 	_buildPanel() {
 		const id     = this.identity;
+		const skills = id.skills || [];
 		const panel  = document.createElement('div');
 		panel.className  = 'agent-home-panel';
 		panel.innerHTML  = `
@@ -80,37 +81,48 @@ export class AgentHome {
 					</div>
 				</div>
 				<div class="agent-home-info">
-					<div class="agent-home-name" id="agent-home-name">${_esc(id.name)}</div>
+					<div class="agent-home-name-row">
+						<span class="agent-home-name" id="agent-home-name">${_esc(id.name)}</span>
+						${id.isRegistered ? `
+						<span class="agent-home-badge erc8004" title="Registered on-chain (ERC-8004)">
+							<svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+						</span>` : ''}
+					</div>
 					<div class="agent-home-status" id="agent-home-status">
 						<span class="agent-home-dot online"></span>
 						<span id="agent-home-emotion-label">present</span>
-					</div>
-					<div class="agent-home-address" id="agent-home-address">
-						${id.walletAddress ? _shortAddr(id.walletAddress) : 'no wallet linked'}
+						<span class="agent-home-status-sep" aria-hidden="true">·</span>
+						<span class="agent-home-address" id="agent-home-address">${id.walletAddress ? _shortAddr(id.walletAddress) : 'no wallet'}</span>
 					</div>
 				</div>
-				<div class="agent-home-actions">
-					<button class="agent-home-btn" id="agent-copy-link" title="Copy agent link">
-						<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
-					</button>
-					${id.isRegistered ? `
-					<span class="agent-home-badge erc8004" title="Registered on-chain (ERC-8004)">
-						<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-						on-chain
-					</span>` : ''}
-				</div>
+				<button class="agent-home-btn" id="agent-copy-link" title="Copy agent link">
+					<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+				</button>
 			</div>
 
-			<div class="agent-home-skills-strip" id="agent-skills-strip">
-				${(id.skills || []).map(s => `<span class="agent-skill-chip">${_esc(s)}</span>`).join('')}
-			</div>
+			${skills.length ? `
+			<details class="agent-home-skills" id="agent-skills-details">
+				<summary class="agent-home-skills-summary">
+					<span class="agent-home-skills-label">Skills</span>
+					<span class="agent-home-skills-count">${skills.length}</span>
+					<svg class="agent-home-chevron" width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+				</summary>
+				<div class="agent-home-skills-strip" id="agent-skills-strip">
+					${skills.map(s => `<span class="agent-skill-chip">${_esc(s)}</span>`).join('')}
+				</div>
+			</details>
+			` : ''}
 
 			<div class="agent-home-memory-bar" id="agent-memory-bar">
 				${this._renderMemoryBar()}
 			</div>
 
 			<div class="agent-home-timeline" id="agent-timeline">
-				<div class="agent-timeline-empty">Actions will appear here as the agent works.</div>
+				<div class="agent-timeline-empty">
+					<svg class="agent-timeline-empty-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a6 6 0 0 0-4 10.5V15a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.5A6 6 0 0 0 12 2z"/><path d="M10 20h4"/><path d="M11 23h2"/></svg>
+					<span class="agent-timeline-empty-title">Waiting for activity</span>
+					<span class="agent-timeline-empty-sub">Your agent's actions will log here once it starts working</span>
+				</div>
 			</div>
 		`;
 
@@ -121,7 +133,7 @@ export class AgentHome {
 		panel.querySelector('#agent-copy-link')?.addEventListener('click', () => {
 			const url = `${location.origin}${id.homeUrl || `/agent/${id.id}`}`;
 			navigator.clipboard?.writeText(url).catch(() => {});
-			this._flashBtn(panel.querySelector('#agent-copy-link'), 'copied');
+			this._flashBtn(panel.querySelector('#agent-copy-link'), '✓');
 		});
 	}
 

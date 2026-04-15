@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="500" height="80" viewBox="0 0 500 80">
   <rect width="500" height="80" rx="10" fill="#0d0d14"/>
   <text x="30" y="36" font-family="Inter, sans-serif" font-size="22" fill="#00d2ff">①</text>
-  <text x="60" y="36" font-family="Inter, sans-serif" font-size="13" fill="#ccc">Open 3d.irish</text>
+  <text x="60" y="36" font-family="Inter, sans-serif" font-size="13" fill="#ccc">Open 3dagent.vercel.app</text>
   <text x="200" y="36" font-family="Inter, sans-serif" font-size="22" fill="#7b2ff7">②</text>
   <text x="230" y="36" font-family="Inter, sans-serif" font-size="13" fill="#ccc">Drop .glb file</text>
   <text x="370" y="36" font-family="Inter, sans-serif" font-size="22" fill="#ff0080">③</text>

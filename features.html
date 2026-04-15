@@ -12,9 +12,9 @@
 	<meta property="og:type" content="website" />
 	<meta property="og:title" content="Features — 3D Agent" />
 	<meta property="og:description" content="ERC-8004 trustless identity, on-chain agent discovery, 3D model validation, and AI-powered rendering." />
-	<meta property="og:url" content="https://3d.irish/features" />
+	<meta property="og:url" content="https://3dagent.vercel.app/features" />
 
-	<link rel="canonical" href="https://3d.irish/features" />
+	<link rel="canonical" href="https://3dagent.vercel.app/features" />
 	<link rel="shortcut icon" href="/favicon.ico" />
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -35,17 +35,42 @@
 	<main class="features-main">
 		<!-- Hero -->
 		<section class="hero" id="hero">
+			<div class="hero-bg" aria-hidden="true">
+				<div class="hero-mesh"></div>
+				<div class="hero-grid"></div>
+				<div class="hero-glow hero-glow-gold"></div>
+				<div class="hero-glow hero-glow-cyan"></div>
+			</div>
 			<div class="hero-content">
-				<p class="hero-eyebrow scroll-reveal">ERC-8004 · Trustless Agents</p>
-				<h2 class="hero-title scroll-reveal">On-Chain Identity<br/>for AI Agents</h2>
-				<p class="hero-subtitle scroll-reveal">3D Agent uses Ethereum's trustless agent standard to give every avatar a verifiable, portable identity — discoverable by any agent, anywhere.</p>
-				<div class="hero-cta scroll-reveal">
-					<a href="/" class="btn-primary">Launch Viewer</a>
-					<a href="https://eips.ethereum.org/EIPS/eip-8004" target="_blank" rel="noopener" class="btn-ghost">Read ERC-8004 →</a>
+				<div class="hero-chip scroll-reveal">
+					<span class="hero-chip-dot"></span>
+					<span>Live on Ethereum</span>
+					<span class="hero-chip-divider"></span>
+					<span class="hero-chip-spec">ERC-8004</span>
 				</div>
+				<h2 class="hero-title scroll-reveal">
+					Every agent<br/>
+					deserves a <em>passport</em>.
+				</h2>
+				<p class="hero-subtitle scroll-reveal">A verifiable, portable identity for every AI avatar — discoverable by any agent, on any chain, anywhere.</p>
+				<div class="hero-cta scroll-reveal">
+					<a href="/" class="btn-primary">
+						<span>Launch Viewer</span>
+						<span class="btn-arrow">→</span>
+					</a>
+					<a href="https://eips.ethereum.org/EIPS/eip-8004" target="_blank" rel="noopener" class="btn-ghost">Read the spec</a>
+				</div>
+				<ul class="hero-proof scroll-reveal" aria-label="Supported standards">
+					<li>ERC-721</li>
+					<li>A2A</li>
+					<li>MCP</li>
+					<li>ENS</li>
+					<li>zkML</li>
+				</ul>
 			</div>
 			<div class="hero-avatar scroll-reveal" aria-hidden="true">
 				<div class="hero-avatar-ring"></div>
+				<div class="hero-avatar-pulse"></div>
 				<model-viewer
 					class="hero-avatar-viewer"
 					src="/avatars/cz.glb"
@@ -61,12 +86,19 @@
 					exposure="1.05"
 					tone-mapping="aces"
 					environment-image="neutral"
-				camera-orbit="20deg 68deg 3.6m"
-				field-of-view="30deg"
+				camera-orbit="20deg 68deg 3.4m"
+				field-of-view="28deg"
 					loading="eager"
 				></model-viewer>
+				<div class="hero-avatar-tag" aria-hidden="true">
+					<span class="hero-avatar-tag-label">agentId</span>
+					<span class="hero-avatar-tag-value">0x3d…a9f</span>
+				</div>
 			</div>
-			<div class="hero-glow"></div>
+			<div class="hero-scroll-hint scroll-reveal" aria-hidden="true">
+				<span>scroll</span>
+				<span class="hero-scroll-line"></span>
+			</div>
 		</section>
 
 		<!-- How it works -->
@@ -106,12 +138,12 @@
   <span class="json-key">"type"</span>: <span class="json-str">"https://eips.ethereum.org/EIPS/eip-8004#registration-v1"</span>,
   <span class="json-key">"name"</span>: <span class="json-str">"3D Agent"</span>,
   <span class="json-key">"description"</span>: <span class="json-str">"AI-powered 3D model viewer and validation agent"</span>,
-  <span class="json-key">"image"</span>: <span class="json-str">"https://3d.irish/og-image.png"</span>,
+  <span class="json-key">"image"</span>: <span class="json-str">"https://3dagent.vercel.app/og-image.png"</span>,
   <span class="json-key">"active"</span>: <span class="json-bool">true</span>,
   <span class="json-key">"services"</span>: [
-    { <span class="json-key">"name"</span>: <span class="json-str">"web"</span>,  <span class="json-key">"endpoint"</span>: <span class="json-str">"https://3d.irish/"</span> },
-    { <span class="json-key">"name"</span>: <span class="json-str">"A2A"</span>,  <span class="json-key">"endpoint"</span>: <span class="json-str">"https://3d.irish/.well-known/agent-card.json"</span> },
-    { <span class="json-key">"name"</span>: <span class="json-str">"MCP"</span>,  <span class="json-key">"endpoint"</span>: <span class="json-str">"https://3d.irish/.well-known/openapi.yaml"</span> }
+    { <span class="json-key">"name"</span>: <span class="json-str">"web"</span>,  <span class="json-key">"endpoint"</span>: <span class="json-str">"https://3dagent.vercel.app/"</span> },
+    { <span class="json-key">"name"</span>: <span class="json-str">"A2A"</span>,  <span class="json-key">"endpoint"</span>: <span class="json-str">"https://3dagent.vercel.app/.well-known/agent-card.json"</span> },
+    { <span class="json-key">"name"</span>: <span class="json-str">"MCP"</span>,  <span class="json-key">"endpoint"</span>: <span class="json-str">"https://3dagent.vercel.app/.well-known/openapi.yaml"</span> }
   ],
   <span class="json-key">"supportedTrust"</span>: [<span class="json-str">"reputation"</span>]
 }</code></pre>

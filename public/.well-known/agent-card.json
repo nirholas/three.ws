@@ -1,10 +1,10 @@
 {
   "name": "3D Agent",
   "description": "AI-powered 3D model viewer and validation agent. Load glTF/GLB models, run validation, inspect materials, and manage avatar assets.",
-  "url": "https://3d.irish",
+  "url": "https://3dagent.vercel.app",
   "provider": {
     "organization": "3D Agent",
-    "url": "https://3d.irish"
+    "url": "https://3dagent.vercel.app"
   },
   "version": "1.5.1",
   "capabilities": {

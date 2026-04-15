@@ -114,7 +114,7 @@ async function onInitialize(_params, _auth) {
 			logging: {},
 		},
 		instructions: [
-			'Render 3D avatars stored on 3d.irish as <model-viewer> HTML artifacts.',
+			'Render 3D avatars stored on 3dagent.vercel.app as <model-viewer> HTML artifacts.',
 			'Use list_my_avatars to see the user\'s avatars and render_avatar to get embeddable viewer HTML.',
 			'Public avatars can be discovered via search_public_avatars.',
 		].join(' '),

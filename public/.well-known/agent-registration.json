@@ -2,21 +2,21 @@
 	"type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
 	"name": "3D Agent",
 	"description": "AI-powered 3D model viewer and validation agent. Drag and drop glTF, GLB, and 3D files to preview instantly in your browser. Supports real-time rendering, model validation, environment maps, and animation playback via Three.js and WebGL.",
-	"image": "https://3d.irish/og-image.png",
+	"image": "https://3dagent.vercel.app/og-image.png",
 	"active": true,
 	"services": [
 		{
 			"name": "web",
-			"endpoint": "https://3d.irish/"
+			"endpoint": "https://3dagent.vercel.app/"
 		},
 		{
 			"name": "A2A",
-			"endpoint": "https://3d.irish/.well-known/agent-card.json",
+			"endpoint": "https://3dagent.vercel.app/.well-known/agent-card.json",
 			"version": "0.3.0"
 		},
 		{
 			"name": "MCP",
-			"endpoint": "https://3d.irish/.well-known/openapi.yaml",
+			"endpoint": "https://3dagent.vercel.app/.well-known/openapi.yaml",
 			"version": "2025-06-18"
 		}
 	],

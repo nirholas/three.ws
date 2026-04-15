@@ -115,7 +115,7 @@ export async function fetchModel(rawUrl, opts = {}) {
 				redirect: 'manual',
 				signal: controller.signal,
 				headers: {
-					'user-agent': '3d-agent-mcp/1.0 (+https://3d.irish)',
+					'user-agent': '3d-agent-mcp/1.0 (+https://3dagent.vercel.app)',
 					accept: 'model/gltf-binary, model/gltf+json, application/octet-stream, */*;q=0.5',
 				},
 			});

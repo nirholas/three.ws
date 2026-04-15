@@ -115,5 +115,5 @@
   <text x="544" y="210" text-anchor="middle" font-family="SF Mono, Fira Code, monospace" font-size="8" fill="#2d3748" letter-spacing="2">dat.gui · three.js</text>
 
   <!-- Bottom label -->
-  <text x="360" y="214" text-anchor="middle" font-family="SF Pro Text, Inter, sans-serif" font-size="9" fill="#2d3748" letter-spacing="1">live at 3d.irish · 100% client-side · your files never leave your browser</text>
+  <text x="360" y="214" text-anchor="middle" font-family="SF Pro Text, Inter, sans-serif" font-size="9" fill="#2d3748" letter-spacing="1">live at 3dagent.vercel.app · 100% client-side · your files never leave your browser</text>
 </svg>

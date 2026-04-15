@@ -137,7 +137,7 @@ export function buildRegistrationJSON({
 		services: [
 			{
 				name: '3D',
-				endpoint: `https://3d.irish/#model=ipfs://${imageCID}`,
+				endpoint: `https://3dagent.vercel.app/#model=ipfs://${imageCID}`,
 				version: '1.0',
 			},
 			...services,

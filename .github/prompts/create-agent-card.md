@@ -7,7 +7,7 @@ description: "Create the missing A2A agent-card.json for agent discovery"
 
 ## Problem
 
-Both `features.html` (line 90) and `public/.well-known/agent-registration.json` reference `https://3d.irish/.well-known/agent-card.json` as the A2A discovery endpoint, but **no such file exists**. This is a dead link and breaks the A2A (Agent-to-Agent) protocol integration.
+Both `features.html` (line 90) and `public/.well-known/agent-registration.json` reference `https://3dagent.vercel.app/.well-known/agent-card.json` as the A2A discovery endpoint, but **no such file exists**. This is a dead link and breaks the A2A (Agent-to-Agent) protocol integration.
 
 ## What is agent-card.json?
 
@@ -23,10 +23,10 @@ Create `public/.well-known/agent-card.json` with the full A2A agent card spec:
 {
   "name": "3D Agent",
   "description": "AI-powered 3D model viewer and validation agent. Load glTF/GLB models, run validation, inspect materials, and manage avatar assets.",
-  "url": "https://3d.irish",
+  "url": "https://3dagent.vercel.app",
   "provider": {
     "organization": "3D Agent",
-    "url": "https://3d.irish"
+    "url": "https://3dagent.vercel.app"
   },
   "version": "1.5.1",
   "capabilities": {
@@ -95,6 +95,6 @@ Create `public/.well-known/agent-card.json` with the full A2A agent card spec:
 
 ## Validation
 
-- `curl https://3d.irish/.well-known/agent-card.json` returns valid JSON
+- `curl https://3dagent.vercel.app/.well-known/agent-card.json` returns valid JSON
 - Skills listed match the tools defined in `api/mcp.js`
 - The `agent-registration.json` A2A service endpoint resolves

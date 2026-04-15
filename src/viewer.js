@@ -717,8 +717,28 @@ export class Viewer {
 		const guiWrap = document.createElement('div');
 		this.el.appendChild(guiWrap);
 		guiWrap.classList.add('gui-wrap');
+		guiWrap.classList.add('gui-wrap--hidden');
 		guiWrap.appendChild(gui.domElement);
 		this._guiWrap = guiWrap;
+
+		// Toggle button — hides dat.GUI behind an "Advanced" control
+		const toggle = document.createElement('button');
+		toggle.className = 'gui-toggle';
+		toggle.setAttribute('title', 'Toggle advanced controls');
+		toggle.setAttribute('aria-label', 'Toggle advanced controls');
+		toggle.innerHTML =
+			'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+			'<circle cx="12" cy="12" r="3"></circle>' +
+			'<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>' +
+			'</svg>' +
+			'<span class="gui-toggle__label">Controls</span>';
+		toggle.addEventListener('click', () => {
+			const shown = guiWrap.classList.toggle('gui-wrap--hidden');
+			toggle.classList.toggle('gui-toggle--active', !shown);
+		});
+		this.el.appendChild(toggle);
+		this._guiToggle = toggle;
+
 		if (isMobile) {
 			gui.close();
 		} else {
@@ -909,19 +929,21 @@ export class Viewer {
 			kicking: '🦵', kick: '🦵',
 		};
 
-		grid.innerHTML = defs.map((def) => {
+		grid.innerHTML = defs.map((def, i) => {
 			const loaded = this.animationManager.isLoaded(def.name);
 			const isActive = activeName === def.name;
 			const icon = def.icon || ICONS[def.name.toLowerCase()] || '▶';
 			const label = def.label || def.name.charAt(0).toUpperCase() + def.name.slice(1);
+			const keyHint = i < 9 ? (i + 1) : '';
 			return (
 				'<button class="anim-btn' +
 				(isActive ? ' anim-btn--active' : '') +
 				(loaded ? '' : ' anim-btn--loading') +
 				'" data-anim="' + def.name + '"' +
-				' title="' + label + '"' +
+				' title="' + label + (keyHint ? ' — press ' + keyHint : '') + '"' +
 				(loaded ? '' : ' disabled') +
 				'>' +
+				(keyHint ? '<span class="anim-btn__key">' + keyHint + '</span>' : '') +
 				'<span class="anim-btn__icon">' + icon + '</span>' +
 				'<span class="anim-btn__label">' + label + '</span>' +
 				'</button>'
@@ -938,6 +960,24 @@ export class Viewer {
 				this._updateRenderLoop();
 			});
 		});
+
+		// Bind keyboard shortcuts (1-9) — only once
+		if (!this._animKeyBound) {
+			this._animKeyBound = true;
+			document.addEventListener('keydown', (e) => {
+				if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+				if (e.metaKey || e.ctrlKey || e.altKey) return;
+				const n = parseInt(e.key, 10);
+				if (!n || n < 1 || n > 9) return;
+				const currentDefs = this.animationManager.getAnimationDefs();
+				const def = currentDefs[n - 1];
+				if (!def || !this.animationManager.isLoaded(def.name)) return;
+				this.animationManager.crossfadeTo(def.name);
+				this.invalidate();
+				this._recomputeAnimating();
+				this._updateRenderLoop();
+			});
+		}
 	}
 
 	clear() {

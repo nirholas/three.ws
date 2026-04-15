@@ -14,7 +14,7 @@ info:
     url: https://opensource.org/licenses/MIT
 
 servers:
-  - url: https://3d.irish
+  - url: https://3dagent.vercel.app
 
 tags:
   - name: Auth

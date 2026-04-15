@@ -48,7 +48,7 @@ aws s3api put-bucket-cors \
   --endpoint-url https://<account-id>.r2.cloudflarestorage.com
 ```
 
-At minimum, `claude.ai` and `https://3d.irish` must be allowed origins for GET
+At minimum, `claude.ai` and `https://3dagent.vercel.app` must be allowed origins for GET
 so the MCP `render_avatar` artifact can fetch the GLBs.
 
 ## 5. Deploy
@@ -59,8 +59,8 @@ npm run deploy
 
 ## 6. Verify
 
-- Authorization server metadata: `https://3d.irish/.well-known/oauth-authorization-server`
-- MCP endpoint: `POST https://3d.irish/api/mcp` with
+- Authorization server metadata: `https://3dagent.vercel.app/.well-known/oauth-authorization-server`
+- MCP endpoint: `POST https://3dagent.vercel.app/api/mcp` with
   `{"jsonrpc":"2.0","id":1,"method":"tools/list"}` and a bearer API key.
 
 ## Scaling notes

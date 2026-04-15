@@ -1,7 +1,7 @@
 [
 	{
 		"method": ["GET"],
-		"origin": ["https://3d.irish", "https://*.3d.irish", "https://chat.sperax.io", "https://sperax-jam2emun9-moomsi.vercel.app", "https://sperax-iota.vercel.app", "http://localhost:*", "https://localhost:*"],
+		"origin": ["https://3dagent.vercel.app", "https://chat.sperax.io", "https://sperax-jam2emun9-moomsi.vercel.app", "https://sperax-iota.vercel.app", "http://localhost:*", "https://localhost:*"],
 		"responseHeader": ["Content-Type"],
 		"maxAgeSeconds": 3600
 	}

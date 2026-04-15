@@ -11,7 +11,7 @@ function optional(name, fallback = undefined) {
 }
 
 export const env = {
-	APP_ORIGIN: optional('PUBLIC_APP_ORIGIN', 'https://3d.irish').replace(/\/$/, ''),
+	APP_ORIGIN: optional('PUBLIC_APP_ORIGIN', 'https://3dagent.vercel.app').replace(/\/$/, ''),
 
 	DATABASE_URL: required('DATABASE_URL'),
 
