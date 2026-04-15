@@ -42,10 +42,64 @@
 		if (bg === 'light') document.body.classList.add('bg-light');
 
 		const plateOn   = params.get('name') !== '0';
+		const preview   = params.get('preview') === '1';
 		const parts     = location.pathname.split('/').filter(Boolean);
 		const agentId   = parts[parts.indexOf('agent') + 1];
 
+		function hostMatches(host, pattern) {
+			if (!host || !pattern) return false;
+			host = host.toLowerCase();
+			pattern = pattern.toLowerCase();
+			if (pattern.startsWith('*.')) {
+				const suffix = pattern.slice(2);
+				return host === suffix || host.endsWith('.' + suffix);
+			}
+			return host === pattern;
+		}
+
+		function embeddingHost() {
+			// Prefer ancestorOrigins (Chromium/Safari) for the true top-level origin;
+			// fall back to document.referrer which is the cross-browser signal for a
+			// first-party iframe's parent. Firefox has no ancestorOrigins today.
+			try {
+				const anc = window.location.ancestorOrigins;
+				if (anc && anc.length) return new URL(anc[0]).hostname;
+			} catch {}
+			try {
+				if (document.referrer) return new URL(document.referrer).hostname;
+			} catch {}
+			return null;
+		}
+
+		async function checkPolicy() {
+			if (preview) return true;
+			// Same-origin (top-level or iframed from ourselves) is always allowed.
+			const sameOrigin = !window.parent || window.parent === window
+				|| (() => { try { return window.parent.location.origin === location.origin; } catch { return false; } })();
+			let policy = null;
+			try {
+				const r = await fetch(`/api/agents/${agentId}/embed-policy`, { credentials: 'omit' });
+				if (r.ok) policy = (await r.json()).policy;
+			} catch {}
+			if (policy === null || policy === undefined) return true;
+			if (sameOrigin) return true;
+			const host = embeddingHost();
+			const hosts = Array.isArray(policy.hosts) ? policy.hosts : [];
+			const matched = host ? hosts.some((p) => hostMatches(host, p)) : false;
+			if (policy.mode === 'allowlist') return matched;
+			if (policy.mode === 'denylist')  return !matched;
+			return true;
+		}
+
 		async function main() {
+			if (!(await checkPolicy())) {
+				const el = document.getElementById('error');
+				el.textContent = 'This agent can only be embedded on approved sites.';
+				el.style.display = 'flex';
+				parent?.postMessage({ __agent: agentId, type: 'blocked' }, '*');
+				return;
+			}
+
 			const identity = new AgentIdentity({ agentId, autoLoad: false });
 			await identity.load();
 

@@ -417,15 +417,7 @@ export class Viewer {
 
 		window.VIEWER.scene = this.content;
 
-		this.printGraph(this.content);
-
 		this.invalidate();
-	}
-
-	printGraph(node) {
-		console.group(' <' + node.type + '> ' + node.name);
-		node.children.forEach((child) => this.printGraph(child));
-		console.groupEnd();
 	}
 
 	setClips(clips) {

@@ -10,8 +10,8 @@ export async function getMe() {
 	return (await res.json()).user;
 }
 
-// Fetches a GLB from a URL (e.g. the one Avaturn returns on export), uploads it
-// to our R2 bucket via presigned PUT, and creates the avatar record.
+// Fetches a GLB from a URL (e.g. the one the avatar creator returns on export),
+// uploads it to our R2 bucket via presigned PUT, and creates the avatar record.
 // Throws if the user isn't authenticated.
 export async function saveRemoteGlbToAccount(sourceUrl, meta = {}) {
 	const user = await getMe();
