@@ -1,5 +1,5 @@
 // Runtime — wires LLM + tool dispatch + speech + memory into a single agent brain.
-// Replaces the pattern-matched chatbot stub in avaturn-agent.js.
+// Replaces the pattern-matched chatbot stub in nich-agent.js.
 
 import { createProvider } from './providers.js';
 import { createTTS, createSTT } from './speech.js';

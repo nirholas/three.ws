@@ -71,6 +71,7 @@ and emit the returned HTML as an inline artifact.
 
 ## Credits
 
-The avatar creator is powered by [Avaturn](https://avaturn.me) via their official
-SDK. 3D Agent adds authentication, storage, MCP access, and multi-tenant
-infrastructure on top.
+3D Agent provides authentication, storage, MCP access, and multi-tenant
+infrastructure. The avatar creation engine is pluggable — the default
+build uses the Avaturn SDK under the hood, but the provider can be
+swapped at [src/avatar-creator.js](../src/avatar-creator.js).

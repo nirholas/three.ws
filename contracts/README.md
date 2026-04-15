@@ -1,4 +1,11 @@
-# ERC-8004 Contracts
+# ERC-8004 Contracts (optional / reference)
+
+> **You probably don't need to deploy these.** The canonical ERC-8004 reference
+> contracts are already live at the same addresses on every major EVM chain
+> (see [`../src/erc8004/abi.js`](../src/erc8004/abi.js)). Identity:
+> `0x8004A818...` (mainnet) / `0x8004A169...` (testnet). This directory is kept
+> as a local reference implementation — useful if you ever need to fork, audit,
+> or run a private deployment.
 
 Three registries implementing [ERC-8004](https://eips.ethereum.org/EIPS/eip-8004) for the `3d-agent` project:
 

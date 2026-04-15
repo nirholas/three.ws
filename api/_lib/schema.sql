@@ -122,6 +122,31 @@ create table if not exists api_keys (
 
 create index if not exists api_keys_user on api_keys(user_id) where revoked_at is null;
 
+-- ── SIWE (Sign-In with Ethereum) ────────────────────────────────────────────
+-- Short-lived nonces issued per client; burned on verify to prevent replay.
+create table if not exists siwe_nonces (
+    nonce        text primary key,
+    address      text,                       -- lowercased, set on verify attempt (audit only)
+    issued_at    timestamptz not null default now(),
+    expires_at   timestamptz not null,
+    consumed_at  timestamptz
+);
+
+create index if not exists siwe_nonces_expiry on siwe_nonces(expires_at);
+
+-- Link ethereum addresses to users. A user may have multiple wallets; address is unique.
+create table if not exists user_wallets (
+    id           uuid primary key default gen_random_uuid(),
+    user_id      uuid not null references users(id) on delete cascade,
+    address      text not null unique,       -- lowercased 0x-prefixed
+    chain_id     int,
+    is_primary   boolean not null default false,
+    created_at   timestamptz not null default now(),
+    last_used_at timestamptz
+);
+
+create index if not exists user_wallets_user on user_wallets(user_id);
+
 -- ── Sessions (browser cookie auth) ──────────────────────────────────────────
 create table if not exists sessions (
     id              uuid primary key default gen_random_uuid(),

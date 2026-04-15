@@ -1,7 +1,9 @@
 import { AvaturnSDK } from '@avaturn/sdk';
 
 /**
- * Avatar Creator — embeds the Avaturn SDK iframe for avatar customization.
+ * Avatar Creator — embeds the avatar customization iframe.
+ * Currently uses Avaturn's hosted engine under the hood; swap the provider
+ * here if you replace it with a self-hosted creator.
  * When the user exports an avatar, the GLB is loaded into the 3D viewer.
  */
 export class AvatarCreator {
@@ -18,9 +20,9 @@ export class AvatarCreator {
 	}
 
 	/**
-	 * Opens the avatar creator modal and initializes the Avaturn SDK.
+	 * Opens the avatar creator modal and initializes the creator SDK.
 	 * @param {string} [sessionUrl] - Optional session URL from your backend (POST /sessions/new).
-	 *                                 If omitted, uses Avaturn's default public editor.
+	 *                                 If omitted, uses the provider's default public editor.
 	 */
 	async open(sessionUrl) {
 		if (this.modal) return;
@@ -48,7 +50,7 @@ export class AvatarCreator {
 				this.close();
 			});
 		} catch (err) {
-			console.error('[AvatarCreator] Failed to initialize Avaturn SDK:', err);
+			console.error('[AvatarCreator] Failed to initialize creator SDK:', err);
 			this._showError('Failed to load avatar creator. Please try again.');
 		}
 	}

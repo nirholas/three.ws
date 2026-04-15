@@ -254,6 +254,7 @@
 			<button class="agent-embed-copy" id="agent-embed-copy">copy</button>
 		</div>
 		<a class="agent-embed-preview-link" id="agent-embed-preview" target="_blank" rel="noopener">preview embed →</a>
+		<a class="agent-embed-preview-link" id="agent-embed-settings" href="" target="_blank" rel="noopener">embed settings →</a>
 	</div>
 
 	<script type="module">
@@ -319,6 +320,7 @@
 			render();
 			embedSection.style.display = '';
 			embedPreview.href = embedUrl;
+			document.getElementById('agent-embed-settings').href = '/dashboard/embed-policy?agent=' + identity.id;
 
 			document.querySelectorAll('.agent-embed-tab').forEach(btn => {
 				btn.addEventListener('click', () => {

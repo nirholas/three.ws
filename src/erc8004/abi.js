@@ -1,107 +1,103 @@
 /**
- * ERC-8004 Registry ABIs.
+ * ERC-8004 Registry ABIs & canonical deployments.
  *
- * Only the functions needed for agent registration, reputation, and validation.
- * Full spec: https://eips.ethereum.org/EIPS/eip-8004
+ * Contract addresses below are the canonical ERC-8004 reference deployments
+ * shared across every EVM chain (deployed via CREATE2). Source:
+ * https://github.com/nirholas/erc8004-agents
+ *
+ * Validation Registry is only on testnets today — mainnet entry is null.
  */
 
 export const IDENTITY_REGISTRY_ABI = [
 	// --- Registration ---
+	'function register() external returns (uint256 agentId)',
 	'function register(string agentURI) external returns (uint256 agentId)',
 	'function register(string agentURI, tuple(string metadataKey, bytes metadataValue)[] metadata) external returns (uint256 agentId)',
-	'function register() external returns (uint256 agentId)',
 
 	// --- URI ---
 	'function setAgentURI(uint256 agentId, string newURI) external',
-	'function tokenURI(uint256 agentId) external view returns (string)',
-
-	// --- Wallet ---
-	'function setAgentWallet(uint256 agentId, address newWallet, uint256 deadline, bytes signature) external',
-	'function getAgentWallet(uint256 agentId) external view returns (address)',
-	'function unsetAgentWallet(uint256 agentId) external',
-	'function nonces(address owner) external view returns (uint256)',
-	'function DOMAIN_SEPARATOR() external view returns (bytes32)',
+	'function tokenURI(uint256 tokenId) external view returns (string)',
 
 	// --- Metadata ---
-	'function getMetadata(uint256 agentId, string metadataKey) external view returns (bytes)',
 	'function setMetadata(uint256 agentId, string metadataKey, bytes metadataValue) external',
+	'function getMetadata(uint256 agentId, string metadataKey) external view returns (bytes)',
+
+	// --- Wallet ---
+	'function getAgentWallet(uint256 agentId) external view returns (address)',
 
 	// --- ERC-721 basics ---
 	'function ownerOf(uint256 tokenId) external view returns (address)',
 	'function balanceOf(address owner) external view returns (uint256)',
-	'function totalSupply() external view returns (uint256)',
-	'function isAgent(uint256 agentId) external view returns (bool)',
+	'function name() external view returns (string)',
+	'function symbol() external view returns (string)',
+	'function getVersion() external pure returns (string)',
 
 	// --- Events ---
 	'event Registered(uint256 indexed agentId, string agentURI, address indexed owner)',
-	'event URIUpdated(uint256 indexed agentId, string newURI, address indexed updatedBy)',
-	'event WalletSet(uint256 indexed agentId, address indexed wallet)',
-	'event WalletUnset(uint256 indexed agentId)',
-	'event MetadataSet(uint256 indexed agentId, string indexed indexedMetadataKey, string metadataKey, bytes metadataValue)',
 	'event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)',
 ];
 
 export const REPUTATION_REGISTRY_ABI = [
-	// --- Submit ---
-	'function submitFeedback(uint256 agentId, int8 score, string uri) external',
-
-	// --- Query ---
-	'function getReputation(uint256 agentId) external view returns (int256 avgX100, uint256 count)',
-	'function getFeedbackCount(uint256 agentId) external view returns (uint256)',
-	'function getFeedback(uint256 agentId, uint256 index) external view returns (tuple(address from, int8 score, uint64 timestamp, string uri))',
-	'function getFeedbackRange(uint256 agentId, uint256 offset, uint256 limit) external view returns (tuple(address from, int8 score, uint64 timestamp, string uri)[])',
-	'function hasReviewed(uint256 agentId, address reviewer) external view returns (bool)',
-
-	// --- Events ---
-	'event FeedbackSubmitted(uint256 indexed agentId, address indexed from, int8 score, string uri)',
-];
-
-export const VALIDATION_REGISTRY_ABI = [
-	// --- Admin ---
-	'function addValidator(address v) external',
-	'function removeValidator(address v) external',
-	'function isValidator(address v) external view returns (bool)',
-	'function owner() external view returns (address)',
-	'function transferOwnership(address newOwner) external',
-
-	// --- Record ---
-	'function recordValidation(uint256 agentId, bool passed, bytes32 proofHash, string proofURI, string kind) external',
-
-	// --- Query ---
-	'function getValidationCount(uint256 agentId) external view returns (uint256)',
-	'function getValidation(uint256 agentId, uint256 index) external view returns (tuple(address validator, bool passed, bytes32 proofHash, string proofURI, uint64 timestamp, string kind))',
-	'function getLatestByKind(uint256 agentId, string kind) external view returns (tuple(address validator, bool passed, bytes32 proofHash, string proofURI, uint64 timestamp, string kind))',
-	'function getValidationRange(uint256 agentId, uint256 offset, uint256 limit) external view returns (tuple(address validator, bool passed, bytes32 proofHash, string proofURI, uint64 timestamp, string kind)[])',
-
-	// --- Events ---
-	'event ValidatorAdded(address indexed validator)',
-	'event ValidatorRemoved(address indexed validator)',
-	'event ValidationRecorded(uint256 indexed agentId, address indexed validator, bool passed, bytes32 proofHash, string kind)',
+	'function submitReputation(uint256 agentId, uint8 score, string comment) external',
+	'function getReputation(uint256 agentId) external view returns (uint256 totalScore, uint256 count)',
+	'event ReputationSubmitted(uint256 indexed agentId, address indexed submitter, uint8 score, string comment)',
 ];
 
 /**
- * Known deployments — add chain-specific addresses here.
- * Format follows agentRegistry spec: eip155:{chainId}:{address}
+ * Validation Registry ABI — best-effort; may need updating once the canonical
+ * interface is published. Mainnet has no Validation Registry deployed yet.
+ */
+export const VALIDATION_REGISTRY_ABI = [
+	'function recordValidation(uint256 agentId, bool passed, bytes32 proofHash, string proofURI, string kind) external',
+	'function getValidationCount(uint256 agentId) external view returns (uint256)',
+	'event ValidationRecorded(uint256 indexed agentId, address indexed validator, bool passed, bytes32 proofHash, string kind)',
+];
+
+// ---------------------------------------------------------------------------
+// Canonical deployments (same address on every chain)
+// ---------------------------------------------------------------------------
+
+const TESTNET = {
+	identityRegistry: '0x8004A818BFB912233c491871b3d84c89A494BD9e',
+	reputationRegistry: '0x8004B663056A597Dffe9eCcC1965A193B7388713',
+	validationRegistry: '0x8004Cb1BF31DAf7788923b405b754f57acEB4272',
+};
+
+const MAINNET = {
+	identityRegistry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432',
+	reputationRegistry: '0x8004BAa17C55a88189AE136b182e5fdA19dE9b63',
+	validationRegistry: '', // not yet deployed on mainnet
+};
+
+/**
+ * Known deployments keyed by chainId.
  */
 export const REGISTRY_DEPLOYMENTS = {
-	// Base mainnet (chain 8453)
-	8453: {
-		identityRegistry: '',   // TODO: fill once deployed
-		reputationRegistry: '', // TODO: fill once deployed
-		validationRegistry: '', // TODO: fill once deployed
-	},
-	// Base Sepolia testnet (chain 84532)
-	84532: {
-		identityRegistry: '',   // TODO: fill in from Deploy.s.sol broadcast output
-		reputationRegistry: '',
-		validationRegistry: '',
-	},
-	// Ethereum mainnet (chain 1) — if deployed
-	1: {
-		identityRegistry: '',
-		reputationRegistry: '',
-		validationRegistry: '',
-	},
+	// Mainnets
+	1: MAINNET,        // Ethereum
+	10: MAINNET,       // Optimism
+	56: MAINNET,       // BSC
+	100: MAINNET,      // Gnosis
+	137: MAINNET,      // Polygon
+	250: MAINNET,      // Fantom
+	324: MAINNET,      // zkSync Era
+	1284: MAINNET,     // Moonbeam
+	5000: MAINNET,     // Mantle
+	8453: MAINNET,     // Base
+	42161: MAINNET,    // Arbitrum One
+	42220: MAINNET,    // Celo
+	43114: MAINNET,    // Avalanche
+	59144: MAINNET,    // Linea
+	534352: MAINNET,   // Scroll
+
+	// Testnets
+	97: TESTNET,       // BSC Testnet
+	11155111: TESTNET, // Ethereum Sepolia
+	84532: TESTNET,    // Base Sepolia
+	421614: TESTNET,   // Arbitrum Sepolia
+	11155420: TESTNET, // Optimism Sepolia
+	80002: TESTNET,    // Polygon Amoy
+	43113: TESTNET,    // Avalanche Fuji
 };
 
 /**
