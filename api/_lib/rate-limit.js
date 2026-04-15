@@ -64,6 +64,9 @@ export const limits = {
 	oauthRegisterIp: (ip) => getLimiter('oauth:register:ip', { limit: 10, window: '1 h' }).limit(ip),
 	mcpUser: (userId) => getLimiter('mcp:user', { limit: 1200, window: '1 m' }).limit(userId),
 	mcpIp: (ip) => getLimiter('mcp:ip', { limit: 600, window: '1 m' }).limit(ip),
+	mcpValidate: (key) => getLimiter('mcp:validate', { limit: 10, window: '1 m' }).limit(key),
+	mcpInspect:  (key) => getLimiter('mcp:inspect',  { limit: 30, window: '1 m' }).limit(key),
+	mcpOptimize: (key) => getLimiter('mcp:optimize', { limit: 10, window: '1 m' }).limit(key),
 	oauthToken: (clientId) => getLimiter('oauth:token', { limit: 120, window: '1 m' }).limit(clientId),
 	upload: (userId) => getLimiter('upload', { limit: 60, window: '1 h' }).limit(userId),
 };
