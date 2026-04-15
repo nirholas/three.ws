@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>Widget Docs — 3D Agent</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+	<meta name="description" content="Embed 3D widgets on any site. URL params, iframe + script embeds, postMessage API, oEmbed, privacy.">
+	<meta name="theme-color" content="#0a0a0a">
+
+	<meta property="og:type" content="article">
+	<meta property="og:title" content="3D Agent — Widget Docs">
+	<meta property="og:description" content="Embed 3D widgets on any site. URL params, postMessage API, oEmbed, privacy.">
+	<meta property="og:url" content="https://3dagent.vercel.app/docs/widgets">
+
+	<link rel="canonical" href="https://3dagent.vercel.app/docs/widgets">
+	<link rel="shortcut icon" href="/favicon.ico">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="/style.css">
+	<link rel="stylesheet" href="/widgets-gallery/gallery.css">
+	<style>
+		.docs-main {
+			max-width: 760px;
+			margin: 0 auto;
+			padding: var(--space-2xl) var(--space-lg);
+			line-height: var(--leading-normal);
+		}
+		.docs-main h1 {
+			font-family: var(--font-display);
+			font-weight: 300;
+			font-size: var(--text-2xl);
+			letter-spacing: -1px;
+			margin: 0 0 var(--space-md);
+		}
+		.docs-main h2 {
+			font-family: var(--font-display);
+			font-weight: 400;
+			font-size: var(--text-xl);
+			margin: var(--space-2xl) 0 var(--space-sm);
+			padding-bottom: var(--space-xs);
+			border-bottom: 1px solid rgba(255,255,255,0.08);
+		}
+		.docs-main h3 {
+			font-weight: 500;
+			font-size: var(--text-lg);
+			margin: var(--space-xl) 0 var(--space-sm);
+		}
+		.docs-main p, .docs-main li { color: rgba(229,229,229,0.85); }
+		.docs-main ul, .docs-main ol { padding-left: var(--space-lg); }
+		.docs-main code {
+			font-family: var(--font-mono);
+			font-size: 0.92em;
+			background: rgba(255,255,255,0.06);
+			padding: 1px 5px;
+			border-radius: 3px;
+			color: #e5e5e5;
+		}
+		.docs-main pre {
+			background: #0a0a0a;
+			border: 1px solid rgba(255,255,255,0.08);
+			border-radius: var(--radius-md);
+			padding: var(--space-md);
+			overflow-x: auto;
+			line-height: 1.5;
+			font-family: var(--font-mono);
+			font-size: var(--text-sm);
+		}
+		.docs-main pre code {
+			background: transparent;
+			padding: 0;
+		}
+		.docs-main table {
+			width: 100%;
+			border-collapse: collapse;
+			margin: var(--space-md) 0;
+			font-size: var(--text-sm);
+		}
+		.docs-main th, .docs-main td {
+			text-align: left;
+			padding: var(--space-xs) var(--space-sm);
+			border-bottom: 1px solid rgba(255,255,255,0.06);
+		}
+		.docs-main th { color: rgba(229,229,229,0.6); font-weight: 500; }
+		.docs-main a { color: var(--accent); }
+		.docs-main hr { border: 0; border-top: 1px solid rgba(255,255,255,0.08); margin: var(--space-xl) 0; }
+		.docs-toc {
+			padding: var(--space-md);
+			background: rgba(255,255,255,0.025);
+			border: 1px solid rgba(255,255,255,0.06);
+			border-radius: var(--radius-md);
+			margin-bottom: var(--space-xl);
+		}
+		.docs-toc ul { margin: var(--space-xs) 0; padding-left: var(--space-md); }
+	</style>
+</head>
+<body class="gallery-body">
+	<header class="gallery-header">
+		<h1><a href="/"><span class="wordmark-dot" aria-hidden="true"></span>3D Agent</a></h1>
+		<nav class="features-nav">
+			<a href="/">Viewer</a>
+			<a href="/features">Features</a>
+			<a href="/widgets">Widgets</a>
+			<a href="/docs/widgets" class="active" aria-current="page">Docs</a>
+			<a href="/dashboard" class="nav-dashboard">Dashboard</a>
+		</nav>
+	</header>
+
+	<main class="docs-main">
+		<h1>Widgets</h1>
+		<p>Embeddable 3D — a configured, shareable view of an avatar that any site can drop in with one line of HTML.</p>
+		<p>A widget is a saved bundle of: an avatar (GLB stored in R2), a widget type (turntable, animation gallery, talking agent, ERC-8004 passport, hotspot tour), and brand config (background, accent, caption, controls, camera). Widgets are created in the <a href="/studio">Widget Studio</a> and shared via short URLs.</p>
+
+		<div class="docs-toc">
+			<strong>On this page:</strong>
+			<ul>
+				<li><a href="#quick-start">Quick start</a></li>
+				<li><a href="#widget-types">Widget types</a></li>
+				<li><a href="#urls">URLs</a></li>
+				<li><a href="#embedding">Embedding</a></li>
+				<li><a href="#postmessage-api">postMessage API</a></li>
+				<li><a href="#og-oembed">OG / oEmbed</a></li>
+				<li><a href="#csp-cors">CSP / CORS</a></li>
+				<li><a href="#privacy">Privacy &amp; analytics</a></li>
+				<li><a href="#faq">FAQ</a></li>
+			</ul>
+		</div>
+
+		<h2 id="quick-start">Quick start</h2>
+		<ol>
+			<li>Sign in at <a href="/">3dagent.vercel.app</a>.</li>
+			<li>Open the <a href="/studio">Studio</a>.</li>
+			<li>Pick an avatar, pick a widget type, tweak brand colors and controls, click <strong>Generate Embed</strong>.</li>
+			<li>Copy the iframe snippet into any HTML page, blog post, Notion doc, or CMS.</li>
+		</ol>
+
+		<h2 id="widget-types">Widget types</h2>
+		<table>
+			<thead><tr><th>Type</th><th>Best for</th><th>Default size</th></tr></thead>
+			<tbody>
+				<tr><td><code>turntable</code></td><td>Hero banners, product showcases. Auto-rotate, no UI.</td><td>600 × 600</td></tr>
+				<tr><td><code>animation-gallery</code></td><td>Showcasing a rigged avatar's animation library.</td><td>720 × 720</td></tr>
+				<tr><td><code>talking-agent</code></td><td>Embodied chat — your agent on your site.</td><td>420 × 600</td></tr>
+				<tr><td><code>passport</code></td><td>On-chain identity card backed by ERC-8004.</td><td>480 × 560</td></tr>
+				<tr><td><code>hotspot-tour</code></td><td>Annotated 3D scenes with clickable POIs.</td><td>800 × 600</td></tr>
+			</tbody>
+		</table>
+
+		<h2 id="urls">URLs</h2>
+		<p>Every widget has three canonical URLs.</p>
+		<table>
+			<thead><tr><th>URL</th><th>Use it for</th></tr></thead>
+			<tbody>
+				<tr><td><code>/w/&lt;id&gt;</code></td><td>Sharing in Slack/Discord/X — server-rendered with rich OG card.</td></tr>
+				<tr><td><code>/#widget=&lt;id&gt;</code></td><td>The SPA viewer with the widget config applied.</td></tr>
+				<tr><td><code>/api/widgets/&lt;id&gt;/og</code></td><td>The 1200×630 preview image.</td></tr>
+			</tbody>
+		</table>
+
+		<h3>Hash parameters</h3>
+		<table>
+			<thead><tr><th>Param</th><th>Type</th><th>Description</th></tr></thead>
+			<tbody>
+				<tr><td><code>widget</code></td><td>string</td><td>Loads a saved widget by id.</td></tr>
+				<tr><td><code>model</code></td><td>string</td><td>Loads a raw GLB by URL (mutually exclusive with <code>widget</code>).</td></tr>
+				<tr><td><code>kiosk</code></td><td>boolean</td><td>Hides the header chrome for clean iframe embeds.</td></tr>
+				<tr><td><code>cameraPosition</code></td><td>x,y,z</td><td>Comma-separated camera position override.</td></tr>
+				<tr><td><code>preset</code></td><td>string</td><td>HDR environment preset name.</td></tr>
+			</tbody>
+		</table>
+
+		<h2 id="embedding">Embedding</h2>
+		<h3>iframe (recommended)</h3>
+<pre><code>&lt;iframe
+  src="https://3dagent.vercel.app/#widget=wdgt_abc123def456&amp;kiosk=true"
+  width="600"
+  height="600"
+  style="border:0;border-radius:12px;max-width:100%"
+  allow="autoplay; xr-spatial-tracking; clipboard-write"
+  loading="lazy"&gt;&lt;/iframe&gt;</code></pre>
+
+		<h3>Script embed</h3>
+<pre><code>&lt;script async src="https://3dagent.vercel.app/embed.js" data-widget="wdgt_abc123def456"&gt;&lt;/script&gt;</code></pre>
+
+		<h3>oEmbed (WordPress, Ghost, Notion)</h3>
+		<p>Most CMSes auto-detect oEmbed. Paste a <code>/w/&lt;id&gt;</code> URL on its own line and the editor should turn it into a live embed automatically.</p>
+
+		<h2 id="postmessage-api">postMessage API</h2>
+		<p>Widgets communicate with the parent page via <code>window.postMessage</code>. <strong>Always check <code>event.origin</code> before trusting any message.</strong></p>
+
+		<h3>iframe → parent</h3>
+		<table>
+			<thead><tr><th>Event</th><th>Payload</th><th>When</th></tr></thead>
+			<tbody>
+				<tr><td><code>widget:ready</code></td><td><code>{ id, type }</code></td><td>Widget runtime has booted.</td></tr>
+				<tr><td><code>widget:load</code></td><td><code>{ id, model_url }</code></td><td>Underlying GLB loaded successfully.</td></tr>
+				<tr><td><code>widget:load:error</code></td><td><code>{ id, error }</code></td><td>GLB or config failed to load.</td></tr>
+				<tr><td><code>widget:chat:message</code></td><td><code>{ role, content }</code></td><td>Talking-agent only.</td></tr>
+				<tr><td><code>widget:hotspot:open</code></td><td><code>{ id, label }</code></td><td>Hotspot-tour only.</td></tr>
+				<tr><td><code>widget:resize</code></td><td><code>{ width, height }</code></td><td>Widget reports preferred size.</td></tr>
+			</tbody>
+		</table>
+
+<pre><code>window.addEventListener('message', (e) =&gt; {
+  if (e.origin !== 'https://3dagent.vercel.app') return;
+  if (e.data?.type === 'widget:ready') {
+    console.log('Widget mounted:', e.data.id);
+  }
+});</code></pre>
+
+		<h3>parent → iframe</h3>
+		<table>
+			<thead><tr><th>Event</th><th>Payload</th><th>Effect</th></tr></thead>
+			<tbody>
+				<tr><td><code>widget:config</code></td><td><code>{ background, accent, autoRotate, … }</code></td><td>Live-update brand config.</td></tr>
+				<tr><td><code>widget:command</code></td><td><code>{ command, args }</code></td><td>Trigger a runtime action.</td></tr>
+			</tbody>
+		</table>
+
+		<h2 id="og-oembed">OG / oEmbed</h2>
+		<p>Every widget URL serves rich-preview metadata. <code>/w/&lt;id&gt;</code> is server-rendered with Open Graph + Twitter card tags and a <code>&lt;link rel="alternate" type="application/json+oembed"&gt;</code> pointer.</p>
+<pre><code>GET /api/widgets/oembed?url=&lt;widget-url&gt;&amp;format=json</code></pre>
+		<p>Returns standard <a href="https://oembed.com">oEmbed v1.0</a> JSON, type <code>rich</code>. Accepts both <code>/w/&lt;id&gt;</code> and <code>/#widget=&lt;id&gt;</code> forms.</p>
+
+		<h2 id="csp-cors">CSP / CORS</h2>
+		<p>Widgets run in a sandboxed iframe with these <code>allow</code> flags: <code>autoplay</code>, <code>xr-spatial-tracking</code>, <code>clipboard-write</code>. If your site uses strict CSP, allow:</p>
+<pre><code>frame-src https://3dagent.vercel.app;
+img-src https://3dagent.vercel.app data:;</code></pre>
+
+		<h2 id="privacy">Privacy &amp; analytics</h2>
+		<p>We log a minimal first-party event per widget load: <code>widget_id</code>, <code>type</code>, <code>country</code> (Vercel edge header), <code>referer_host</code> (hostname only), <code>created_at</code>. No IPs. No cookies. No user agents. No chat content. No cross-widget tracking.</p>
+
+		<h2 id="faq">FAQ</h2>
+		<p><strong>Can I self-host?</strong> The runtime is open source. The Studio + saved-widgets API depends on Neon + R2; you'd need to wire those yourself. See <a href="/docs/deployment">deployment guide</a>.</p>
+		<p><strong>Why no WordPress plugin?</strong> The oEmbed endpoint already does what a plugin would.</p>
+		<p><strong>How big is the bundle?</strong> Cold load ~400KB JS + the GLB itself.</p>
+		<p><strong>Mobile?</strong> Yes — every widget type works on iOS Safari and Android Chrome.</p>
+
+		<hr>
+		<p><a href="/widgets">← Back to gallery</a> · <a href="/studio">Open the Studio →</a></p>
+	</main>
+
+	<footer class="gallery-footer">
+		<p>3D Agent · <a href="/">Viewer</a> · <a href="/widgets">Widgets</a> · <a href="/docs/widgets">Docs</a> · <a href="https://github.com/nirholas/3D">GitHub</a></p>
+	</footer>
+</body>
+</html>

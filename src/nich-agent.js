@@ -34,6 +34,9 @@ export class NichAgent {
 		this.messages   = [];
 		this.onFirstOpen = null;
 		this._hasOpened  = false;
+		this._apiDisabled = false;
+		this._storageKey = `nich-agent:history:${this.identity?.id || 'default'}`;
+		this._loadHistory();
 
 		this._buildUI();
 		this._initSpeechRecognition();
@@ -55,6 +58,9 @@ export class NichAgent {
 					this._addMessage('agent', `[performing: ${skill}]`, 'status');
 				}
 			});
+
+			// Clear chat history on model change so context stays relevant
+			this.protocol.on(ACTION_TYPES.LOAD_START, () => this._resetHistory());
 		}
 	}
 
@@ -181,14 +187,26 @@ export class NichAgent {
 			}
 		}
 
-		// Try Runtime LLM when a real provider is configured (not NullProvider)
+		// Preferred path: call the /api/chat LLM endpoint with viewer context.
+		if (!this._apiDisabled) {
+			const apiResult = await this._callChatAPI(text);
+			if (apiResult.ok) {
+				await this._applyApiReply(apiResult);
+				return;
+			}
+			if (apiResult.disable) this._apiDisabled = true;
+		}
+
+		// Secondary: the client-side Runtime (only meaningful if a provider
+		// was configured via #brain=anthropic&proxyURL=... — NullProvider returns '').
 		if (this.runtime) {
 			try {
 				const { text: reply } = await this.runtime.send(text);
 				if (reply) {
 					this._addMessage('agent', reply);
 					this._speak(reply);
-					// Runtime events are bridged to protocol in app.js — no double emit
+					this._pushHistory('user', text);
+					this._pushHistory('assistant', reply);
 					return;
 				}
 			} catch (err) {
@@ -196,7 +214,7 @@ export class NichAgent {
 			}
 		}
 
-		// Fallback: pattern-match response (no LLM needed)
+		// Final fallback: offline pattern match so the agent still responds.
 		const response = this._generateResponse(text);
 		this._addMessage('agent', response);
 		this._speak(response);
@@ -208,6 +226,199 @@ export class NichAgent {
 				agentId: this.identity?.id || 'default',
 			});
 		}
+	}
+
+	// ── Chat API ─────────────────────────────────────────────────────────────
+
+	async _callChatAPI(message) {
+		const typing = this._startTyping();
+		try {
+			const res = await fetch('/api/chat', {
+				method:      'POST',
+				credentials: 'include',
+				headers:     { 'content-type': 'application/json' },
+				body: JSON.stringify({
+					message,
+					context: this._buildContext(),
+					history: this._history.slice(-10),
+				}),
+			});
+
+			if (res.status === 401) return { ok: false, disable: true, reason: 'unauthorized' };
+			if (res.status === 503) return { ok: false, disable: true, reason: 'unconfigured' };
+			if (res.status === 429) {
+				const data = await res.json().catch(() => ({}));
+				return { ok: false, rateLimited: true, retryAfter: data.retry_after };
+			}
+			if (!res.ok) return { ok: false, reason: `http_${res.status}` };
+
+			const data = await res.json();
+			return { ok: true, message, reply: (data.reply || '').trim(), actions: data.actions || [] };
+		} catch (err) {
+			console.warn('[NichAgent] /api/chat failed:', err.message);
+			return { ok: false, reason: 'network' };
+		} finally {
+			typing();
+		}
+	}
+
+	async _applyApiReply({ message, reply, actions }) {
+		this._pushHistory('user', message);
+
+		if (reply) {
+			this._addMessage('agent', reply);
+			this._speak(reply);
+			this._pushHistory('assistant', reply);
+			if (this.protocol) {
+				this.protocol.emit({
+					type:    ACTION_TYPES.SPEAK,
+					payload: { text: reply, sentiment: 0 },
+					agentId: this.identity?.id || 'default',
+				});
+			}
+		}
+
+		for (const action of actions || []) {
+			try {
+				await this._executeAction(action);
+			} catch (err) {
+				console.warn('[NichAgent] action failed:', action?.type, err.message);
+			}
+		}
+	}
+
+	_buildContext() {
+		const viewer = window.VIEWER?.app?.viewer;
+		const validator = window.VIEWER?.app?.validator;
+		const state = viewer?.state || {};
+		const ctx = {
+			wireframe:     !!state.wireframe,
+			skeleton:      !!state.skeleton,
+			grid:          !!state.grid,
+			autoRotate:    !!state.autoRotate,
+			transparentBg: !!state.transparentBg,
+			bgColor:       state.bgColor,
+			currentEnvironment: state.environment,
+		};
+		if (viewer?.content) {
+			if (viewer.content.name) ctx.modelName = viewer.content.name;
+			const stats = this._countStats(viewer.content);
+			ctx.vertices  = stats.vertices;
+			ctx.triangles = stats.triangles;
+			ctx.materials = stats.materials;
+			ctx.animations = viewer.clips?.length || 0;
+		}
+		if (validator?.report) {
+			ctx.validationErrors   = validator.report.errors?.length   || 0;
+			ctx.validationWarnings = validator.report.warnings?.length || 0;
+		}
+		return ctx;
+	}
+
+	_countStats(root) {
+		let vertices = 0, triangles = 0;
+		const materials = new Set();
+		root.traverse((node) => {
+			if (node.isMesh || node.isPoints || node.isLine) {
+				const geo = node.geometry;
+				if (geo) {
+					if (geo.index) triangles += geo.index.count / 3;
+					else if (geo.attributes.position) triangles += geo.attributes.position.count / 3;
+					if (geo.attributes.position) vertices += geo.attributes.position.count;
+				}
+				const mats = Array.isArray(node.material) ? node.material : [node.material];
+				for (const m of mats) if (m) materials.add(m.uuid);
+			}
+		});
+		return { vertices, triangles: Math.round(triangles), materials: materials.size };
+	}
+
+	async _executeAction(action) {
+		const viewer = window.VIEWER?.app?.viewer;
+		const app    = window.VIEWER?.app;
+		if (!action || typeof action.type !== 'string') return;
+
+		switch (action.type) {
+			case 'setWireframe':
+				if (viewer) { viewer.state.wireframe = !!action.value; viewer.updateDisplay(); }
+				break;
+			case 'setSkeleton':
+				if (viewer) { viewer.state.skeleton = !!action.value; viewer.updateDisplay(); }
+				break;
+			case 'setGrid':
+				if (viewer) { viewer.state.grid = !!action.value; viewer.updateDisplay(); }
+				break;
+			case 'setAutoRotate':
+				if (viewer) { viewer.state.autoRotate = !!action.value; viewer.updateDisplay(); }
+				break;
+			case 'setBgColor':
+				if (viewer && typeof action.value === 'string') {
+					viewer.state.bgColor = action.value;
+					viewer.updateBackground();
+				}
+				break;
+			case 'setTransparentBg':
+				if (viewer) { viewer.state.transparentBg = !!action.value; viewer.updateBackground(); }
+				break;
+			case 'setEnvironment':
+				if (viewer && typeof action.value === 'string') {
+					viewer.state.environment = action.value;
+					viewer.updateEnvironment();
+				}
+				break;
+			case 'takeScreenshot':
+				viewer?.takeScreenshot?.();
+				break;
+			case 'loadModel':
+				if (typeof action.url === 'string' && app?.view) {
+					app.view(action.url, '', new Map());
+				}
+				break;
+			case 'runValidation':
+				// Open/focus the validation report panel so the user sees current results.
+				document.querySelector('.validator-toggle')?.click?.();
+				break;
+			case 'showMaterialEditor':
+				app?.editor?.sceneExplorer?.toggle?.();
+				break;
+			default:
+				console.warn('[NichAgent] unknown action:', action.type);
+		}
+	}
+
+	// ── Typing indicator ─────────────────────────────────────────────────────
+
+	_startTyping() {
+		const messagesEl = this.panel.querySelector('#agent-messages');
+		const el = document.createElement('div');
+		el.className = 'nich-message agent typing';
+		el.textContent = '…';
+		messagesEl.appendChild(el);
+		messagesEl.scrollTop = messagesEl.scrollHeight;
+		return () => el.remove();
+	}
+
+	// ── Conversation history (sessionStorage) ────────────────────────────────
+
+	_loadHistory() {
+		this._history = [];
+		try {
+			const raw = sessionStorage.getItem(this._storageKey);
+			if (raw) this._history = JSON.parse(raw).slice(-20);
+		} catch {
+			this._history = [];
+		}
+	}
+
+	_pushHistory(role, content) {
+		this._history.push({ role, content });
+		if (this._history.length > 20) this._history = this._history.slice(-20);
+		try { sessionStorage.setItem(this._storageKey, JSON.stringify(this._history)); } catch {}
+	}
+
+	_resetHistory() {
+		this._history = [];
+		try { sessionStorage.removeItem(this._storageKey); } catch {}
 	}
 
 	/**
