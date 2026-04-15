@@ -8,6 +8,7 @@ import { SkillRegistry } from './skills/index.js';
 import { Memory } from './memory/index.js';
 import { loadManifest, fetchRelative } from './manifest.js';
 import { resolveURI } from './ipfs.js';
+import { resolveAgentById, AgentResolveError } from './agent-resolver.js';
 
 const MODES = ['inline', 'floating', 'section', 'fullscreen'];
 
@@ -140,7 +141,7 @@ const BASE_STYLE = `
 
 class Agent3DElement extends HTMLElement {
 	static get observedAttributes() {
-		return ['src', 'manifest', 'body', 'mode', 'position', 'width', 'height', 'voice', 'api-key', 'key-proxy'];
+		return ['src', 'manifest', 'body', 'agent-id', 'mode', 'position', 'width', 'height', 'voice', 'api-key', 'key-proxy'];
 	}
 
 	constructor() {
@@ -172,7 +173,7 @@ class Agent3DElement extends HTMLElement {
 	attributeChangedCallback(name, oldVal, newVal) {
 		if (!this._mounted) return;
 		if (['mode', 'position', 'width', 'height'].includes(name)) this._applyLayout();
-		if (['src', 'manifest', 'body'].includes(name)) {
+		if (['src', 'manifest', 'body', 'agent-id'].includes(name)) {
 			// Source change — reboot
 			this._teardown();
 			this._boot();
@@ -389,7 +390,12 @@ class Agent3DElement extends HTMLElement {
 		const src = this.getAttribute('src');
 		const manifestAttr = this.getAttribute('manifest');
 		const body = this.getAttribute('body');
-		if (src) return loadManifest(src, { rpcURL: this.getAttribute('rpc-url'), registry: this.getAttribute('registry') });
+		const agentIdAttr = this.getAttribute('agent-id');
+		if (src) {
+			if (agentIdAttr) console.warn('[agent-3d] both src and agent-id provided; using src');
+			return loadManifest(src, { rpcURL: this.getAttribute('rpc-url'), registry: this.getAttribute('registry') });
+		}
+		if (agentIdAttr) return resolveAgentById(agentIdAttr);
 		if (manifestAttr) return loadManifest(manifestAttr);
 		if (body) {
 			// Ad-hoc agent from a bare GLB

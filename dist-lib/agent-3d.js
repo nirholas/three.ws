@@ -22648,7 +22648,7 @@ function W_(e) {
 //#region src/animation-manager.js
 var G_ = .35, K_ = class {
 	constructor() {
-		this.model = null, this.mixer = null, this.clips = /* @__PURE__ */ new Map(), this.actions = /* @__PURE__ */ new Map(), this.currentName = null, this.currentAction = null, this.loader = new fu(), this.onChange = null, this._animationDefs = [];
+		this.model = null, this.mixer = null, this.clips = /* @__PURE__ */ new Map(), this.actions = /* @__PURE__ */ new Map(), this.currentName = null, this.currentAction = null, this.loader = new fu(), this.onChange = null, this._gltfCache = /* @__PURE__ */ new Map(), this._animationDefs = [];
 	}
 	attach(e) {
 		this.detach(), this.model = e, this.mixer = new Xo(e), this.actions.clear(), this.currentAction = null, this.currentName = null;
@@ -22668,20 +22668,25 @@ var G_ = .35, K_ = class {
 	}
 	async loadAnimation(e, t, n = {}) {
 		if (this.clips.has(e)) return this.clips.get(e);
-		let r = (await new Promise((e, n) => {
+		let r;
+		this._gltfCache.has(t) ? r = this._gltfCache.get(t) : (r = await new Promise((e, n) => {
 			this.loader.load(t, e, void 0, n);
-		})).animations[0];
-		if (!r) throw Error(`No animation found in ${t}`);
-		if (r.name = e, this.clips.set(e, r), this.model && this.mixer) {
-			let t = this._retargetClip(r, e), i = this.mixer.clipAction(t);
-			i.enabled = !0, i.setLoop(n.loop === !1 ? Me : Ne), n.loop === !1 && (i.clampWhenFinished = !0), this.actions.set(e, i);
+		}), this._gltfCache.set(t, r));
+		let i;
+		if (n.clipName ? (i = r.animations.find((e) => e.name === n.clipName), i ||= (console.warn(`[AnimationManager] Clip "${n.clipName}" not found in ${t}, using first clip`), r.animations[0])) : i = r.animations[0], !i) throw Error(`No animation found in ${t}`);
+		if (i = i.clone(), i.name = e, this.clips.set(e, i), this.model && this.mixer) {
+			let t = this._retargetClip(i, e), r = this.mixer.clipAction(t);
+			r.enabled = !0, r.setLoop(n.loop === !1 ? Me : Ne), n.loop === !1 && (r.clampWhenFinished = !0), this.actions.set(e, r);
 		}
-		return r;
+		return i;
 	}
 	async loadAll() {
 		let e = this._animationDefs.map(async (e) => {
 			try {
-				await this.loadAnimation(e.name, e.url, { loop: e.loop !== !1 });
+				await this.loadAnimation(e.name, e.url, {
+					loop: e.loop !== !1,
+					clipName: e.clipName
+				});
 			} catch (t) {
 				console.warn(`[AnimationManager] Failed to load "${e.name}" from ${e.url}:`, t);
 			}
@@ -22752,7 +22757,7 @@ var G_ = .35, K_ = class {
 		return this.clips.has(e);
 	}
 	dispose() {
-		this.detach(), this.clips.clear(), this._animationDefs = [];
+		this.detach(), this.clips.clear(), this._gltfCache.clear(), this._animationDefs = [];
 	}
 };
 //#endregion
@@ -22950,7 +22955,12 @@ var q_ = class {
 		let i = t.addFolder("Performance"), a = document.createElement("li");
 		this.stats.dom.style.position = "static", a.appendChild(this.stats.dom), a.classList.add("gui-stats"), i.__ul.appendChild(a);
 		let o = document.createElement("div");
-		this.el.appendChild(o), o.classList.add("gui-wrap"), o.appendChild(t.domElement), this._guiWrap = o, e ? t.close() : t.open();
+		this.el.appendChild(o), o.classList.add("gui-wrap"), o.classList.add("gui-wrap--hidden"), o.appendChild(t.domElement), this._guiWrap = o;
+		let s = document.createElement("button");
+		s.className = "gui-toggle", s.setAttribute("title", "Toggle advanced controls"), s.setAttribute("aria-label", "Toggle advanced controls"), s.innerHTML = "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"3\"></circle><path d=\"M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z\"></path></svg><span class=\"gui-toggle__label\">Controls</span>", s.addEventListener("click", () => {
+			let e = o.classList.toggle("gui-wrap--hidden");
+			s.classList.toggle("gui-toggle--active", !e);
+		}), this.el.appendChild(s), this._guiToggle = s, e ? t.close() : t.open();
 	}
 	updateGUI() {
 		this.cameraFolder.domElement.style.display = "none", this.morphCtrls.forEach((e) => e.remove()), this.morphCtrls.length = 0, this.morphFolder.domElement.style.display = "none", this.animCtrls.forEach((e) => e.remove()), this.animCtrls.length = 0, this.animFolder.domElement.style.display = "none";
@@ -23037,15 +23047,21 @@ var q_ = class {
 			kicking: "🦵",
 			kick: "🦵"
 		};
-		e.innerHTML = t.map((e) => {
-			let t = this.animationManager.isLoaded(e.name), i = n === e.name, a = e.icon || r[e.name.toLowerCase()] || "▶", o = e.label || e.name.charAt(0).toUpperCase() + e.name.slice(1);
-			return "<button class=\"anim-btn" + (i ? " anim-btn--active" : "") + (t ? "" : " anim-btn--loading") + "\" data-anim=\"" + e.name + "\" title=\"" + o + "\"" + (t ? "" : " disabled") + "><span class=\"anim-btn__icon\">" + a + "</span><span class=\"anim-btn__label\">" + o + "</span></button>";
+		e.innerHTML = t.map((e, t) => {
+			let i = this.animationManager.isLoaded(e.name), a = n === e.name, o = e.icon || r[e.name.toLowerCase()] || "▶", s = e.label || e.name.charAt(0).toUpperCase() + e.name.slice(1), c = t < 9 ? t + 1 : "";
+			return "<button class=\"anim-btn" + (a ? " anim-btn--active" : "") + (i ? "" : " anim-btn--loading") + "\" data-anim=\"" + e.name + "\" title=\"" + s + (c ? " — press " + c : "") + "\"" + (i ? "" : " disabled") + ">" + (c ? "<span class=\"anim-btn__key\">" + c + "</span>" : "") + "<span class=\"anim-btn__icon\">" + o + "</span><span class=\"anim-btn__label\">" + s + "</span></button>";
 		}).join(""), e.querySelectorAll(".anim-btn:not([disabled])").forEach((e) => {
 			e.addEventListener("click", () => {
 				let t = e.dataset.anim;
 				this.animationManager.crossfadeTo(t), this.invalidate(), this._recomputeAnimating(), this._updateRenderLoop();
 			});
-		});
+		}), this._animKeyBound || (this._animKeyBound = !0, document.addEventListener("keydown", (e) => {
+			if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName) || e.metaKey || e.ctrlKey || e.altKey) return;
+			let t = parseInt(e.key, 10);
+			if (!t || t < 1 || t > 9) return;
+			let n = this.animationManager.getAnimationDefs()[t - 1];
+			!n || !this.animationManager.isLoaded(n.name) || (this.animationManager.crossfadeTo(n.name), this.invalidate(), this._recomputeAnimating(), this._updateRenderLoop());
+		}));
 	}
 	clear() {
 		this.content && (this.animationManager.detach(), this._animPanelEl &&= (this._animPanelEl.remove(), null), this.modelInfo &&= (this.modelInfo.remove(), null), this.annotationEls.forEach((e) => e.el.remove()), this.annotationEls = [], this.scene.remove(this.content), this.content.traverse((e) => {
@@ -34133,18 +34149,87 @@ async function wA(e, t) {
 	}
 }
 //#endregion
+//#region src/agent-resolver.js
+var TA = class extends Error {
+	constructor(e, t, { status: n } = {}) {
+		super(t), this.name = "AgentResolveError", this.code = e, n !== void 0 && (this.status = n);
+	}
+};
+async function EA(e, { fetchFn: t }) {
+	let n;
+	try {
+		n = await t(e, { credentials: "include" });
+	} catch (t) {
+		throw new TA("network", `network error fetching ${e}: ${t.message || t}`);
+	}
+	if (n.status === 401 || n.status === 403) throw new TA("unauthorized", `unauthorized fetching ${e} (${n.status})`, { status: n.status });
+	if (n.status === 404) throw new TA("not_found", `resource not found: ${e}`, { status: 404 });
+	if (!n.ok) throw new TA("network", `request failed: ${e} (${n.status})`, { status: n.status });
+	try {
+		return await n.json();
+	} catch (t) {
+		throw new TA("network", `invalid JSON from ${e}: ${t.message || t}`);
+	}
+}
+async function DA(e, { origin: t = typeof location < "u" ? location.origin : "", fetchFn: n = fetch } = {}) {
+	if (!e) throw new TA("not_found", "agentId required");
+	let r = n.bind(typeof globalThis < "u" ? globalThis : void 0), i = (await EA(`${t}/api/agents/${encodeURIComponent(e)}`, { fetchFn: r }))?.agent;
+	if (!i) throw new TA("not_found", `agent ${e} not found`);
+	if (!i.avatar_id) throw new TA("no_avatar", `agent ${e} has no avatar bound`);
+	let a = (await EA(`${t}/api/avatars/${encodeURIComponent(i.avatar_id)}`, { fetchFn: r }))?.avatar;
+	if (!a || !a.url) throw new TA("no_avatar", `avatar ${i.avatar_id} has no url`);
+	let o = Array.isArray(i.skills) ? i.skills.map((e) => typeof e == "string" ? { name: e } : e).filter(Boolean) : [];
+	return {
+		spec: "agent-manifest/0.1",
+		name: i.name || "Agent",
+		description: i.description || "",
+		id: {
+			agentId: i.id,
+			owner: i.wallet_address,
+			chainId: i.chain_id,
+			walletAddress: i.wallet_address
+		},
+		body: {
+			uri: a.url,
+			format: "gltf-binary"
+		},
+		brain: {},
+		voice: {
+			tts: { provider: "browser" },
+			stt: { provider: "browser" }
+		},
+		skills: o,
+		memory: {
+			mode: "remote",
+			namespace: i.id
+		},
+		tools: [
+			"wave",
+			"lookAt",
+			"play_clip",
+			"setExpression",
+			"speak",
+			"remember"
+		],
+		version: "0.1.0",
+		_baseURI: `${t}/agent/${i.id}/`,
+		_source: "agent-id"
+	};
+}
+//#endregion
 //#region src/element.js
-var TA = [
+var OA = [
 	"inline",
 	"floating",
 	"section",
 	"fullscreen"
-], EA = "\n	:host {\n		display: block;\n		position: relative;\n		width: 100%;\n		height: 480px;\n		--agent-bubble-radius: 16px;\n		--agent-accent: #3b82f6;\n		--agent-surface: rgba(17, 24, 39, 0.92);\n		--agent-on-surface: #f9fafb;\n		--agent-chat-font: system-ui, -apple-system, sans-serif;\n		--agent-mic-glow: #22c55e;\n		--agent-shadow: 0 20px 60px rgba(0,0,0,0.3);\n		contain: layout style;\n	}\n	:host([mode=\"floating\"]) {\n		position: fixed;\n		z-index: 2147483000;\n		width: var(--agent-width, 320px);\n		height: var(--agent-height, 420px);\n		border-radius: var(--agent-bubble-radius);\n		overflow: hidden;\n		box-shadow: var(--agent-shadow);\n	}\n	:host([mode=\"fullscreen\"]) {\n		position: fixed;\n		inset: 0;\n		width: 100vw;\n		height: 100vh;\n		z-index: 2147483000;\n	}\n	:host([hidden]) { display: none; }\n	.stage {\n		position: absolute;\n		inset: 0;\n		width: 100%;\n		height: 100%;\n	}\n	.stage canvas { display: block; }\n	.chrome {\n		position: absolute;\n		left: 12px;\n		right: 12px;\n		bottom: 12px;\n		display: flex;\n		gap: 8px;\n		align-items: flex-end;\n		pointer-events: none;\n	}\n	.chrome > * { pointer-events: auto; }\n	.chat {\n		flex: 1;\n		max-height: 40%;\n		overflow-y: auto;\n		background: var(--agent-surface);\n		color: var(--agent-on-surface);\n		font: 14px/1.4 var(--agent-chat-font);\n		border-radius: 12px;\n		padding: 10px 12px;\n		backdrop-filter: blur(12px);\n	}\n	.chat:empty { display: none; }\n	.msg { margin: 4px 0; }\n	.msg .role { opacity: 0.55; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }\n	.input-row {\n		display: flex;\n		gap: 6px;\n		background: var(--agent-surface);\n		border-radius: 999px;\n		padding: 4px 4px 4px 14px;\n		backdrop-filter: blur(12px);\n		flex: 1;\n	}\n	.input-row input {\n		flex: 1;\n		background: transparent;\n		border: 0;\n		color: var(--agent-on-surface);\n		font: 14px var(--agent-chat-font);\n		outline: none;\n	}\n	button.icon {\n		width: 36px;\n		height: 36px;\n		border-radius: 50%;\n		border: 0;\n		background: var(--agent-accent);\n		color: white;\n		cursor: pointer;\n		display: inline-flex;\n		align-items: center;\n		justify-content: center;\n	}\n	button.icon.mic[data-listening=\"true\"] { box-shadow: 0 0 0 4px var(--agent-mic-glow); }\n	.poster {\n		position: absolute;\n		inset: 0;\n		background-size: contain;\n		background-position: center;\n		background-repeat: no-repeat;\n		transition: opacity 0.4s;\n		pointer-events: none;\n	}\n	.loading {\n		position: absolute;\n		left: 50%;\n		top: 50%;\n		transform: translate(-50%, -50%);\n		color: var(--agent-on-surface);\n		font: 14px var(--agent-chat-font);\n		background: var(--agent-surface);\n		padding: 8px 14px;\n		border-radius: 999px;\n	}\n	.error {\n		position: absolute;\n		inset: 16px;\n		display: grid;\n		place-items: center;\n		color: var(--agent-on-surface);\n		background: var(--agent-surface);\n		border-radius: 12px;\n		padding: 16px;\n		font: 14px var(--agent-chat-font);\n	}\n", DA = class extends HTMLElement {
+], kA = "\n	:host {\n		display: block;\n		position: relative;\n		width: 100%;\n		height: 480px;\n		--agent-bubble-radius: 16px;\n		--agent-accent: #3b82f6;\n		--agent-surface: rgba(17, 24, 39, 0.92);\n		--agent-on-surface: #f9fafb;\n		--agent-chat-font: system-ui, -apple-system, sans-serif;\n		--agent-mic-glow: #22c55e;\n		--agent-shadow: 0 20px 60px rgba(0,0,0,0.3);\n		contain: layout style;\n	}\n	:host([mode=\"floating\"]) {\n		position: fixed;\n		z-index: 2147483000;\n		width: var(--agent-width, 320px);\n		height: var(--agent-height, 420px);\n		border-radius: var(--agent-bubble-radius);\n		overflow: hidden;\n		box-shadow: var(--agent-shadow);\n	}\n	:host([mode=\"fullscreen\"]) {\n		position: fixed;\n		inset: 0;\n		width: 100vw;\n		height: 100vh;\n		z-index: 2147483000;\n	}\n	:host([hidden]) { display: none; }\n	.stage {\n		position: absolute;\n		inset: 0;\n		width: 100%;\n		height: 100%;\n	}\n	.stage canvas { display: block; }\n	.chrome {\n		position: absolute;\n		left: 12px;\n		right: 12px;\n		bottom: 12px;\n		display: flex;\n		gap: 8px;\n		align-items: flex-end;\n		pointer-events: none;\n	}\n	.chrome > * { pointer-events: auto; }\n	.chat {\n		flex: 1;\n		max-height: 40%;\n		overflow-y: auto;\n		background: var(--agent-surface);\n		color: var(--agent-on-surface);\n		font: 14px/1.4 var(--agent-chat-font);\n		border-radius: 12px;\n		padding: 10px 12px;\n		backdrop-filter: blur(12px);\n	}\n	.chat:empty { display: none; }\n	.msg { margin: 4px 0; }\n	.msg .role { opacity: 0.55; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }\n	.input-row {\n		display: flex;\n		gap: 6px;\n		background: var(--agent-surface);\n		border-radius: 999px;\n		padding: 4px 4px 4px 14px;\n		backdrop-filter: blur(12px);\n		flex: 1;\n	}\n	.input-row input {\n		flex: 1;\n		background: transparent;\n		border: 0;\n		color: var(--agent-on-surface);\n		font: 14px var(--agent-chat-font);\n		outline: none;\n	}\n	button.icon {\n		width: 36px;\n		height: 36px;\n		border-radius: 50%;\n		border: 0;\n		background: var(--agent-accent);\n		color: white;\n		cursor: pointer;\n		display: inline-flex;\n		align-items: center;\n		justify-content: center;\n	}\n	button.icon.mic[data-listening=\"true\"] { box-shadow: 0 0 0 4px var(--agent-mic-glow); }\n	.poster {\n		position: absolute;\n		inset: 0;\n		background-size: contain;\n		background-position: center;\n		background-repeat: no-repeat;\n		transition: opacity 0.4s;\n		pointer-events: none;\n	}\n	.loading {\n		position: absolute;\n		left: 50%;\n		top: 50%;\n		transform: translate(-50%, -50%);\n		color: var(--agent-on-surface);\n		font: 14px var(--agent-chat-font);\n		background: var(--agent-surface);\n		padding: 8px 14px;\n		border-radius: 999px;\n	}\n	.error {\n		position: absolute;\n		inset: 16px;\n		display: grid;\n		place-items: center;\n		color: var(--agent-on-surface);\n		background: var(--agent-surface);\n		border-radius: 12px;\n		padding: 16px;\n		font: 14px var(--agent-chat-font);\n	}\n", AA = class extends HTMLElement {
 	static get observedAttributes() {
 		return [
 			"src",
 			"manifest",
 			"body",
+			"agent-id",
 			"mode",
 			"position",
 			"width",
@@ -34172,12 +34257,13 @@ var TA = [
 		].includes(e) && this._applyLayout(), [
 			"src",
 			"manifest",
-			"body"
+			"body",
+			"agent-id"
 		].includes(e) && (this._teardown(), this._boot()));
 	}
 	_renderShell() {
 		let e = document.createElement("style");
-		e.textContent = EA, this.shadowRoot.appendChild(e);
+		e.textContent = kA, this.shadowRoot.appendChild(e);
 		let t = document.createElement("div");
 		t.className = "stage", t.part = "stage", this.shadowRoot.appendChild(t), this._stageEl = t;
 		let n = document.createElement("div");
@@ -34203,7 +34289,7 @@ var TA = [
 	}
 	_applyLayout() {
 		let e = this.getAttribute("mode") || "inline";
-		if (!TA.includes(e)) return;
+		if (!OA.includes(e)) return;
 		if (e === "floating") {
 			let e = this.getAttribute("position") || "bottom-right", t = (this.getAttribute("offset") || "24px 24px").split(/\s+/), [n, r] = [t[0], t[1] || t[0]];
 			this.style.top = this.style.bottom = this.style.left = this.style.right = "", e.includes("top") ? this.style.top = n : this.style.bottom = n, e.includes("left") ? this.style.left = r : e.includes("right") ? this.style.right = r : e.includes("center") && (this.style.left = "50%", this.style.transform = "translateX(-50%)");
@@ -34236,7 +34322,7 @@ var TA = [
 					pct: .3
 				} })), typeof e.brain?.instructions == "string" && e.brain.instructions.endsWith(".md")) {
 					let t = await wA(e, e.brain.instructions);
-					t && (e.instructions = OA(t));
+					t && (e.instructions = jA(t));
 				} else e.brain?.instructions && (e.instructions = e.brain.instructions);
 				this.dispatchEvent(new CustomEvent("agent:load-progress", { detail: {
 					phase: "body",
@@ -34326,11 +34412,12 @@ var TA = [
 		}
 	}
 	async _resolveManifest() {
-		let e = this.getAttribute("src"), t = this.getAttribute("manifest"), n = this.getAttribute("body");
-		if (e) return yA(e, {
+		let e = this.getAttribute("src"), t = this.getAttribute("manifest"), n = this.getAttribute("body"), r = this.getAttribute("agent-id");
+		if (e) return r && console.warn("[agent-3d] both src and agent-id provided; using src"), yA(e, {
 			rpcURL: this.getAttribute("rpc-url"),
 			registry: this.getAttribute("registry")
 		});
+		if (r) return DA(r);
 		if (t) return yA(t);
 		if (n) {
 			let e = this.getAttribute("instructions");
@@ -34467,15 +34554,15 @@ var TA = [
 		});
 	}
 };
-function OA(e) {
+function jA(e) {
 	let t = e.match(/^---\n[\s\S]*?\n---\n?([\s\S]*)$/);
 	return t ? t[1] : e;
 }
-customElements.get("agent-3d") || customElements.define("agent-3d", DA);
+customElements.get("agent-3d") || customElements.define("agent-3d", AA);
 //#endregion
 //#region src/lib.js
-var kA = (e = "agent-3d") => {
-	customElements.get(e) || customElements.define(e, DA);
+var MA = (e = "agent-3d") => {
+	customElements.get(e) || customElements.define(e, AA);
 };
 //#endregion
-export { DA as Agent3DElement, _v as Memory, iv as Runtime, uv as SceneController, fv as Skill, pv as SkillRegistry, q_ as Viewer, kA as defineElement, wA as fetchRelative, cv as fetchWithFallback, yA as loadManifest, SA as normalize, sv as resolveURI };
+export { AA as Agent3DElement, _v as Memory, iv as Runtime, uv as SceneController, fv as Skill, pv as SkillRegistry, q_ as Viewer, MA as defineElement, wA as fetchRelative, cv as fetchWithFallback, yA as loadManifest, SA as normalize, sv as resolveURI };

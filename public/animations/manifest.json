@@ -1,51 +1,114 @@
 [
 	{
+		"name": "dance",
+		"url": "/animations/robotexpressive.glb",
+		"clipName": "Dance",
+		"label": "Dance",
+		"icon": "💃",
+		"loop": true
+	},
+	{
+		"name": "death",
+		"url": "/animations/robotexpressive.glb",
+		"clipName": "Death",
+		"label": "Death",
+		"icon": "💀",
+		"loop": false
+	},
+	{
 		"name": "idle",
-		"url": "/animations/idle.glb",
+		"url": "/animations/robotexpressive.glb",
+		"clipName": "Idle",
 		"label": "Idle",
 		"icon": "🧍",
 		"loop": true
 	},
 	{
-		"name": "walking",
-		"url": "/animations/walking.glb",
-		"label": "Walking",
-		"icon": "🚶",
-		"loop": true
+		"name": "jump",
+		"url": "/animations/robotexpressive.glb",
+		"clipName": "Jump",
+		"label": "Jump",
+		"icon": "🦘",
+		"loop": false
+	},
+	{
+		"name": "no",
+		"url": "/animations/robotexpressive.glb",
+		"clipName": "No",
+		"label": "No",
+		"icon": "🚫",
+		"loop": false
+	},
+	{
+		"name": "punch",
+		"url": "/animations/robotexpressive.glb",
+		"clipName": "Punch",
+		"label": "Punch",
+		"icon": "👊",
+		"loop": false
 	},
 	{
 		"name": "running",
-		"url": "/animations/running.glb",
+		"url": "/animations/robotexpressive.glb",
+		"clipName": "Running",
 		"label": "Running",
 		"icon": "🏃",
 		"loop": true
 	},
 	{
-		"name": "waving",
-		"url": "/animations/waving.glb",
-		"label": "Waving",
-		"icon": "👋",
-		"loop": false
-	},
-	{
-		"name": "dancing",
-		"url": "/animations/dancing.glb",
-		"label": "Dancing",
-		"icon": "💃",
-		"loop": true
-	},
-	{
 		"name": "sitting",
-		"url": "/animations/sitting.glb",
+		"url": "/animations/robotexpressive.glb",
+		"clipName": "Sitting",
 		"label": "Sitting",
 		"icon": "🪑",
 		"loop": true
 	},
 	{
-		"name": "jumping",
-		"url": "/animations/jumping.glb",
-		"label": "Jumping",
-		"icon": "🦘",
+		"name": "standing",
+		"url": "/animations/robotexpressive.glb",
+		"clipName": "Standing",
+		"label": "Standing",
+		"icon": "🧍",
+		"loop": true
+	},
+	{
+		"name": "thumbsup",
+		"url": "/animations/robotexpressive.glb",
+		"clipName": "ThumbsUp",
+		"label": "ThumbsUp",
+		"icon": "👍",
+		"loop": false
+	},
+	{
+		"name": "walking",
+		"url": "/animations/robotexpressive.glb",
+		"clipName": "Walking",
+		"label": "Walking",
+		"icon": "🚶",
+		"loop": true
+	},
+	{
+		"name": "walkjump",
+		"url": "/animations/robotexpressive.glb",
+		"clipName": "WalkJump",
+		"label": "WalkJump",
+		"icon": "▶",
+		"loop": false
+	},
+	{
+		"name": "wave",
+		"url": "/animations/robotexpressive.glb",
+		"clipName": "Wave",
+		"label": "Wave",
+		"icon": "👋",
+		"loop": false
+	},
+	{
+		"name": "yes",
+		"url": "/animations/robotexpressive.glb",
+		"clipName": "Yes",
+		"label": "Yes",
+		"icon": "✅",
 		"loop": false
 	}
 ]
