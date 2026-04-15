@@ -2,7 +2,7 @@
  * ERC-8004 Agent Registry — wallet + contract interaction layer.
  *
  * Handles:
- *  1. Wallet connection (MetaMask / injected provider)
+ *  1. Wallet connection (Privy multi-wallet, fallback to injected provider)
  *  2. Uploading GLB + registration JSON to IPFS via web3.storage or Filebase
  *  3. Calling register() on the Identity Registry
  *  4. Building the ERC-8004 registration JSON
@@ -10,6 +10,7 @@
 
 import { BrowserProvider, Contract } from 'ethers';
 import { IDENTITY_REGISTRY_ABI, REGISTRY_DEPLOYMENTS, agentRegistryId } from './abi.js';
+import { isPrivyConfigured, connectWithPrivy } from './privy.js';
 
 // ---------------------------------------------------------------------------
 // Wallet
@@ -19,12 +20,31 @@ let _provider = null;
 let _signer = null;
 
 /**
- * Connect to the user's injected wallet (MetaMask, Coinbase, etc.).
+ * Connect a wallet.
+ *
+ * Strategy:
+ *  1. If Privy is configured (VITE_PRIVY_APP_ID set), use Privy — gives users
+ *     MetaMask, WalletConnect, Coinbase, email-based embedded wallets, etc.
+ *  2. Otherwise fall back to window.ethereum (injected provider only).
+ *
  * @returns {Promise<{provider: BrowserProvider, signer: import('ethers').Signer, address: string, chainId: number}>}
  */
 export async function connectWallet() {
+	// Try Privy first — multi-wallet support, embedded wallets, social login
+	if (isPrivyConfigured()) {
+		try {
+			const result = await connectWithPrivy();
+			_provider = result.provider;
+			_signer = result.signer;
+			return result;
+		} catch (err) {
+			console.warn('[wallet] Privy connect failed, trying injected provider:', err.message);
+		}
+	}
+
+	// Fallback: raw injected provider (MetaMask, etc.)
 	if (!window.ethereum) {
-		throw new Error('No wallet detected. Install MetaMask or a compatible wallet.');
+		throw new Error('No wallet detected. Install MetaMask or configure Privy (VITE_PRIVY_APP_ID).');
 	}
 
 	_provider = new BrowserProvider(window.ethereum);
