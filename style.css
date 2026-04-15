@@ -2501,7 +2501,7 @@ footer .separator {
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: auto;
+  overflow: hidden;
   padding: var(--space-md);
   background:
     linear-gradient(45deg, #1a1a22 25%, transparent 25%),
@@ -2510,14 +2510,34 @@ footer .separator {
     linear-gradient(-45deg, transparent 75%, #1a1a22 75%);
   background-size: 20px 20px;
   background-position: 0 0, 0 10px, 10px -10px, 10px 0;
+  cursor: grab;
 }
-.texture-lightbox__canvas {
+.texture-lightbox__viewport {
+  position: relative;
   max-width: 100%;
   max-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.texture-lightbox__canvas {
+  max-width: min(90vw, 1200px);
+  max-height: calc(100vh - 160px);
   object-fit: contain;
   image-rendering: pixelated;
   border: 1px solid #2a2a36;
   background: #000;
+  transform-origin: center center;
+  transition: none;
+}
+.texture-lightbox__uv {
+  position: absolute;
+  inset: 0;
+  max-width: min(90vw, 1200px);
+  max-height: calc(100vh - 160px);
+  object-fit: contain;
+  pointer-events: none;
+  transform-origin: center center;
 }
 .texture-lightbox__footer {
   padding: var(--space-xs) var(--space-md);

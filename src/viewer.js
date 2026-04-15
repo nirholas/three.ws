@@ -542,6 +542,17 @@ export class Viewer {
 	}
 
 	/**
+	 * Public setter for the scene background color. Used by the widget runtime
+	 * + Studio postMessage bridge to apply brand config without touching dat.gui.
+	 * @param {string|number} color  CSS color string or hex int.
+	 */
+	setBackgroundColor(color) {
+		this.state.bgColor = typeof color === 'string' ? color : '#' + color.toString(16).padStart(6, '0');
+		this.state.transparentBg = false;
+		this.updateBackground();
+	}
+
+	/**
 	 * Adds AxesHelper.
 	 *
 	 * See: https://stackoverflow.com/q/16226693/1314762

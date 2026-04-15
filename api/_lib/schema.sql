@@ -295,3 +295,41 @@ do $$ begin
     create trigger agent_identities_set_updated_at before update on agent_identities
         for each row execute function set_updated_at();
 exception when duplicate_object then null; end $$;
+
+-- ── widgets — saved configurations of avatars rendered in a widget runtime ──
+create table if not exists widgets (
+    id              text primary key,                -- 'wdgt_' + 12 base64url chars
+    user_id         uuid not null references users(id) on delete cascade,
+    avatar_id       uuid references avatars(id) on delete set null,
+    type            text not null check (type in ('turntable','animation-gallery','talking-agent','passport','hotspot-tour')),
+    name            text not null,
+    config          jsonb not null default '{}'::jsonb,
+    is_public       boolean not null default true,
+    view_count      bigint not null default 0,
+    created_at      timestamptz not null default now(),
+    updated_at      timestamptz not null default now(),
+    deleted_at      timestamptz
+);
+
+create index if not exists widgets_user_idx
+    on widgets(user_id) where deleted_at is null;
+create index if not exists widgets_type_idx
+    on widgets(type) where deleted_at is null;
+
+do $$ begin
+    create trigger widgets_set_updated_at before update on widgets
+        for each row execute function set_updated_at();
+exception when duplicate_object then null; end $$;
+
+-- ── widget_views — anonymous load events for widget owner analytics ─────────
+-- No IPs, no UAs, no cookies. country from x-vercel-ip-country edge header.
+create table if not exists widget_views (
+    id            bigserial primary key,
+    widget_id     text not null references widgets(id) on delete cascade,
+    country       text,
+    referer_host  text,
+    created_at    timestamptz not null default now()
+);
+
+create index if not exists widget_views_widget_time
+    on widget_views(widget_id, created_at desc);

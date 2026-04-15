@@ -20,10 +20,12 @@ export default class PretextHero {
 		this.pretext = null;
 
 		this._gaze       = null;
+		this._dragon     = null;
 		this._overlay    = null;
 		this._onResize   = null;
 		this._resizeT    = null;
 		this._rafToken   = 0;
+		this._ctx        = null;
 	}
 
 	async init() {
@@ -41,8 +43,9 @@ export default class PretextHero {
 			}
 		}
 
-		// Flag-gated submodules. 2 and 4 are reserved for text-wrap + dragon mode.
-		if (this.flag === '3' || this.flag === '4') {
+		// Gaze follows the cursor with subtle head rotation. Dragon mode moves
+		// the avatar itself, so the two don't compose — flag 4 opts out of gaze.
+		if (this.flag === '3') {
 			try {
 				const { HeroGaze } = await import('./hero-gaze.js');
 				this._gaze = new HeroGaze(this);
@@ -52,11 +55,25 @@ export default class PretextHero {
 			}
 		}
 
+		if (this.flag === '4') {
+			try {
+				const { HeroDragon } = await import('./hero-dragon.js');
+				this._dragon = new HeroDragon(this);
+				this._dragon.attach();
+			} catch (err) {
+				console.warn('[pretext-hero] dragon unavailable:', err);
+			}
+		}
+
 		return this;
 	}
 
 	enableStaticWrap() {
 		if (!this.content || !this.subtitle || !this.avatar || !this.pretext) return;
+
+		// Keep the original subtitle accessible to screen readers even when
+		// visually hidden via .pretext-active; the overlay is aria-hidden.
+		this.subtitle.setAttribute('aria-hidden', 'false');
 
 		this._overlay = document.createElement('div');
 		this._overlay.className = 'hero-subtitle-pretext';
@@ -87,23 +104,38 @@ export default class PretextHero {
 	_paintStaticWrap() {
 		if (!this._overlay) return;
 
-		// Mobile: single-column layout, avatar stacks above text. A wrap around
-		// a circle that sits above the text would just mean empty short lines
-		// for no visual payoff. Fall back to plain subtitle.
 		if (window.matchMedia(MOBILE_MQ).matches) {
 			this.root.classList.remove('pretext-active');
 			this._overlay.replaceChildren();
 			this._overlay.style.display = 'none';
+			this._ctx = null;
 			return;
 		}
 		this._overlay.style.display = '';
 
-		// ── Read phase ───────────────────────────────────────────────────────
+		const ctx = this._computeLayoutContext();
+		if (!ctx) return;
+		this._ctx = ctx;
+
+		const { circleX, circleY, circleR } = this._avatarCircle(ctx);
+		const { lines, contentHeight } = this._layoutLinesAroundCircle(ctx, circleX, circleY, circleR);
+
+		const token = ++this._rafToken;
+		requestAnimationFrame(() => {
+			if (token !== this._rafToken || !this._overlay) return;
+			this._paintLines(ctx, lines, contentHeight);
+			this.root.classList.add('pretext-active');
+		});
+	}
+
+	// Reads rects + style once. Returned context is the input to
+	// _layoutLinesAroundCircle, which is pure math and reusable per-frame
+	// by dragon mode.
+	_computeLayoutContext() {
+		if (!this.content || !this.subtitle || !this.avatar || !this.pretext) return null;
+
 		const contentRect  = this.content.getBoundingClientRect();
 		const subtitleRect = this.subtitle.getBoundingClientRect();
-		// The avatar element's rect is what we want — the <model-viewer> canvas
-		// includes transparent padding, so its rect would overstate the visual
-		// silhouette.
 		const avatarRect   = this.avatar.getBoundingClientRect();
 
 		const style      = getComputedStyle(this.subtitle);
@@ -112,38 +144,47 @@ export default class PretextHero {
 		const lhRaw      = style.lineHeight;
 		const lineHeight = lhRaw === 'normal' ? fontSize * 1.5 : Number.parseFloat(lhRaw);
 
-		// Overlay lives inside .hero-content (position: relative). Local origin
-		// is the content box's top-left.
 		const overlayLeft = subtitleRect.left - contentRect.left;
 		const overlayTop  = subtitleRect.top  - contentRect.top;
 
-		// Extend the layout column past the subtitle's natural right edge,
-		// into the gutter and up to just shy of the avatar's right edge, so
-		// text visibly flows around the avatar circle. Keep a small breathing
-		// margin so the rightmost line doesn't kiss the avatar rect edge.
-		const overlayRightPage = Math.max(avatarRect.right - 24, subtitleRect.right);
-		const overlayWidth     = Math.max(subtitleRect.width, overlayRightPage - subtitleRect.left);
+		// Dragon mode stretches .hero-content to full hero width, so use the
+		// content box as the outer bound and let the subtitle flow wider.
+		const heroRect        = this.root.getBoundingClientRect();
+		const rightmostPage   = this.root.classList.contains('hero--dragon')
+			? heroRect.right - 32
+			: Math.max(avatarRect.right - 24, subtitleRect.right);
+		const overlayWidth    = Math.max(subtitleRect.width, rightmostPage - subtitleRect.left);
 
-		// Avatar bounding circle, projected into overlay-local coords.
-		const circleX = (avatarRect.left + avatarRect.width  / 2) - subtitleRect.left;
-		const circleY = (avatarRect.top  + avatarRect.height / 2) - subtitleRect.top;
-		// Slight inset so the wrap hugs the visible silhouette rather than the
-		// invisible square of the container.
-		const circleR = (Math.min(avatarRect.width, avatarRect.height) / 2) * 0.92;
-		const hPad    = 14;
-
-		const text = this.subtitle.textContent ?? '';
+		const text     = this.subtitle.textContent ?? '';
 		const prepared = this.pretext.prepareWithSegments(text, font);
 
+		const circleBaseR = (Math.min(avatarRect.width, avatarRect.height) / 2) * 0.92;
+
+		return {
+			font, lineHeight, prepared, text,
+			overlayLeft, overlayTop, overlayWidth,
+			subtitleRect, avatarRect, subtitleLeftPage: subtitleRect.left, subtitleTopPage: subtitleRect.top,
+			circleBaseR,
+			hPad: 14, maxLines: 32,
+		};
+	}
+
+	_avatarCircle(ctx) {
+		const r = ctx.avatarRect;
+		return {
+			circleX: (r.left + r.width  / 2) - ctx.subtitleLeftPage,
+			circleY: (r.top  + r.height / 2) - ctx.subtitleTopPage,
+			circleR: ctx.circleBaseR,
+		};
+	}
+
+	_layoutLinesAroundCircle(ctx, circleX, circleY, circleR) {
+		const { overlayWidth, lineHeight, hPad, prepared, maxLines } = ctx;
 		const lines = [];
 		let cursor = { segmentIndex: 0, graphemeIndex: 0 };
 		let lineTop = 0;
-		const maxLines = 32;
 
 		while (lines.length < maxLines) {
-			// Sample the circle at the line's vertical midpoint. A per-band
-			// min/max sweep would hug tighter, but for a single circle the
-			// midpoint sample is visually indistinguishable and half the work.
 			const bandMid = lineTop + lineHeight / 2;
 			const dy      = bandMid - circleY;
 			const effR    = circleR + hPad;
@@ -152,16 +193,10 @@ export default class PretextHero {
 			if (Math.abs(dy) < effR) {
 				const dx = Math.sqrt(effR * effR - dy * dy);
 				const blockedLeft = circleX - dx;
-				// Take the left slot only — the subtitle flows L→R and the
-				// avatar sits to its right, so right-of-circle slivers would
-				// read as disconnected floating phrases. Left-only is the
-				// readable choice.
 				if (blockedLeft < overlayWidth) {
 					if (blockedLeft > 24) {
 						slotWidth = blockedLeft;
 					} else {
-						// Circle fully covers the left side of this band —
-						// skip this row vertically, let text resume below.
 						lineTop += lineHeight;
 						continue;
 					}
@@ -172,34 +207,47 @@ export default class PretextHero {
 			if (line === null) break;
 
 			lines.push({ y: lineTop, text: line.text });
-
 			cursor = line.end;
 			lineTop += lineHeight;
 		}
 
-		// ── Write phase ─────────────────────────────────────────────────────
-		const token = ++this._rafToken;
-		requestAnimationFrame(() => {
-			if (token !== this._rafToken || !this._overlay) return;
+		return { lines, contentHeight: lineTop };
+	}
 
-			const overlay = this._overlay;
-			overlay.style.left   = `${overlayLeft}px`;
-			overlay.style.top    = `${overlayTop}px`;
-			overlay.style.width  = `${overlayWidth}px`;
-			overlay.style.height = `${Math.max(lineTop, subtitleRect.height)}px`;
+	_paintLines(ctx, lines, contentHeight) {
+		if (!this._overlay) return;
+		const overlay = this._overlay;
+		overlay.style.left   = `${ctx.overlayLeft}px`;
+		overlay.style.top    = `${ctx.overlayTop}px`;
+		overlay.style.width  = `${ctx.overlayWidth}px`;
+		overlay.style.height = `${Math.max(contentHeight, ctx.subtitleRect.height)}px`;
 
-			const frag = document.createDocumentFragment();
-			for (const { y, text } of lines) {
-				const span = document.createElement('span');
-				span.className = 'hero-subtitle-pretext-line';
-				span.style.top  = `${y}px`;
-				span.textContent = text;
-				frag.appendChild(span);
-			}
-			overlay.replaceChildren(frag);
+		const frag = document.createDocumentFragment();
+		for (const { y, text } of lines) {
+			const span = document.createElement('span');
+			span.className = 'hero-subtitle-pretext-line';
+			span.style.top  = `${y}px`;
+			span.textContent = text;
+			frag.appendChild(span);
+		}
+		overlay.replaceChildren(frag);
+	}
 
-			this.root.classList.add('pretext-active');
-		});
+	// Public for dragon mode — recompute rects after toggling .hero--dragon.
+	recomputeContext() {
+		this._ctx = this._computeLayoutContext();
+		return this._ctx;
+	}
+
+	// Public for dragon mode — reflow using the current cached context and
+	// the caller-supplied avatar circle (in overlay-local coordinates).
+	// Returns the measured layout cost in ms for the auto-downgrade budget.
+	paintCircle(circleX, circleY, circleR) {
+		if (!this._ctx || !this._overlay) return 0;
+		const t0 = performance.now();
+		const { lines, contentHeight } = this._layoutLinesAroundCircle(this._ctx, circleX, circleY, circleR);
+		this._paintLines(this._ctx, lines, contentHeight);
+		return performance.now() - t0;
 	}
 
 	dispose() {
@@ -215,11 +263,17 @@ export default class PretextHero {
 			this._overlay.remove();
 			this._overlay = null;
 		}
+		this.subtitle?.removeAttribute('aria-hidden');
 		this.root?.classList.remove('pretext-active');
 
 		if (this._gaze) {
 			this._gaze.detach();
 			this._gaze = null;
 		}
+		if (this._dragon) {
+			this._dragon.detach();
+			this._dragon = null;
+		}
+		this._ctx = null;
 	}
 }

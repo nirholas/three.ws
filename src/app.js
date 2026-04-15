@@ -9,6 +9,7 @@ import { NichAgent }     from './nich-agent.js';
 import { AvatarCreator } from './avatar-creator.js';
 import { resolveURI, isDecentralizedURI } from './ipfs.js';
 import { saveRemoteGlbToAccount, getMe }  from './account.js';
+import { getWidget }                      from './widgets.js';
 import queryString from 'query-string';
 
 // Agent system — the new primitive layer
@@ -48,6 +49,7 @@ class App {
 			brain:          hash.brain    || 'none',
 			proxyURL:       hash.proxyURL || '',
 			agent:          hash.agent || '',
+			widget:         hash.widget || '',
 		};
 
 		this.el              = el;
@@ -97,6 +99,14 @@ class App {
 			return;
 		}
 
+		// Load a saved widget by ID: /#widget=<wdgt_...>
+		if (options.widget) {
+			this._loadWidget(options.widget);
+			this._initAgentSystem();
+			this._initWidgetBridge();
+			return;
+		}
+
 		// Load specified model or default CZ avatar
 		const model = options.model || '/avatars/cz.glb';
 		const resolvedModel = isDecentralizedURI(model) ? resolveURI(model) : model;
@@ -104,6 +114,9 @@ class App {
 
 		// Boot the agent system once identity is ready
 		this._initAgentSystem();
+
+		// Studio preview iframes use postMessage to live-update brand config.
+		this._initWidgetBridge();
 	}
 
 	// ── Agent System Init ─────────────────────────────────────────────────────
@@ -234,6 +247,121 @@ class App {
 
 		this.view(glbUrl, '', new Map());
 		this._initAgentSystem();
+	}
+
+	async _loadWidget(widgetId) {
+		let widget;
+		try {
+			widget = await getWidget(widgetId);
+		} catch (err) {
+			this._showWidgetError(`Widget not found: ${widgetId}`);
+			return;
+		}
+		window.VIEWER.widget = widget;
+
+		const cfg     = widget.config || {};
+		const modelUrl = widget.avatar?.model_url || '/avatars/cz.glb';
+
+		// Apply config to options BEFORE creating the viewer so first frame is right.
+		if (Array.isArray(cfg.cameraPosition) && cfg.cameraPosition.length === 3) {
+			this.options.cameraPosition = cfg.cameraPosition;
+		}
+		if (cfg.envPreset && cfg.envPreset !== 'none') {
+			this.options.preset = cfg.envPreset;
+		}
+
+		// Kiosk + showControls drive the chrome.
+		if (cfg.showControls === false || this.options.kiosk) {
+			document.querySelector('header')?.style.setProperty('display', 'none');
+		}
+
+		const resolved = isDecentralizedURI(modelUrl) ? resolveURI(modelUrl) : modelUrl;
+		this.view(resolved, '', new Map());
+
+		// Apply post-create brand bits once viewer exists.
+		queueMicrotask(() => this._applyWidgetConfig(cfg));
+
+		// Caption overlay — render once, simple.
+		if (cfg.caption) this._renderWidgetCaption(cfg.caption);
+
+		// Notify parent (script embed / Studio) that we're up.
+		this._postToParent({ type: 'widget:ready', id: widget.id, widgetType: widget.type });
+	}
+
+	_applyWidgetConfig(cfg) {
+		if (!this.viewer) return;
+		try {
+			if (cfg.background)            this.viewer.setBackgroundColor(cfg.background);
+			if (typeof cfg.autoRotate === 'boolean' && this.viewer.controls) {
+				this.viewer.controls.autoRotate = cfg.autoRotate;
+				if (typeof cfg.rotationSpeed === 'number') {
+					this.viewer.controls.autoRotateSpeed = cfg.rotationSpeed;
+				}
+			}
+			if (cfg.envPreset && this.viewer.setEnvironment) {
+				this.viewer.setEnvironment(cfg.envPreset);
+			}
+		} catch (e) {
+			console.warn('[widget] applyConfig failed', e?.message);
+		}
+	}
+
+	_renderWidgetCaption(text) {
+		let el = document.getElementById('widget-caption');
+		if (!el) {
+			el = document.createElement('div');
+			el.id = 'widget-caption';
+			el.style.cssText = 'position:fixed;left:50%;bottom:20px;transform:translateX(-50%);padding:8px 18px;background:rgba(0,0,0,0.55);color:#fff;font-family:Inter,system-ui,sans-serif;font-size:14px;border-radius:999px;backdrop-filter:blur(8px);z-index:5;pointer-events:none;max-width:90vw;text-align:center';
+			document.body.appendChild(el);
+		}
+		el.textContent = text;
+	}
+
+	_showWidgetError(message) {
+		const el = document.createElement('div');
+		el.style.cssText = 'position:fixed;inset:0;display:grid;place-items:center;background:#0a0a0a;color:#e0e0e0;font-family:Inter,system-ui,sans-serif;text-align:center;padding:2rem;z-index:9999';
+		el.innerHTML = `<div><h1 style="font-weight:300;margin:0 0 0.5rem">Widget unavailable</h1><p style="opacity:0.7;margin:0">${message.replace(/[<>&"]/g, '')}</p><p style="margin-top:1.5rem"><a href="/" style="color:#8b5cf6">Open viewer</a> · <a href="/widgets" style="color:#8b5cf6">Browse gallery</a></p></div>`;
+		document.body.appendChild(el);
+	}
+
+	_initWidgetBridge() {
+		// Studio sends live config updates without a full reload. Also handles
+		// runtime commands (play_clip, wave) for parent-driven embeds.
+		window.addEventListener('message', (event) => {
+			if (event.origin !== location.origin) return;
+			const data = event.data;
+			if (!data || typeof data !== 'object') return;
+
+			if (data.type === 'widget:config' && data.config) {
+				this._applyWidgetConfig(data.config);
+				if (typeof data.config.caption === 'string') {
+					this._renderWidgetCaption(data.config.caption);
+				}
+				return;
+			}
+
+			if (data.type === 'widget:command' && data.command) {
+				this._handleWidgetCommand(data.command, data.args || {});
+			}
+		});
+	}
+
+	_handleWidgetCommand(command, args) {
+		const sceneCtrl = this.sceneCtrl || window.VIEWER?.scene_ctrl;
+		if (!sceneCtrl) return;
+		try {
+			switch (command) {
+				case 'play_clip':    sceneCtrl.playClipByName?.(args.name); break;
+				case 'lookAt':       sceneCtrl.lookAt?.(args.target); break;
+				case 'setExpression':sceneCtrl.setExpression?.(args.name, args.weight); break;
+			}
+		} catch (e) { console.warn('[widget] command failed', command, e?.message); }
+	}
+
+	_postToParent(msg) {
+		if (window.parent && window.parent !== window) {
+			window.parent.postMessage(msg, '*');
+		}
 	}
 
 	_initNichAgent() {

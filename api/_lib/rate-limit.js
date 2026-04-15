@@ -71,6 +71,8 @@ export const limits = {
 	upload: (userId) => getLimiter('upload', { limit: 60, window: '1 h' }).limit(userId),
 	chatUser: (userId) => getLimiter('chat:user', { limit: 20, window: '1 m' }).limit(userId),
 	chatIp: (ip) => getLimiter('chat:ip', { limit: 40, window: '1 m' }).limit(ip),
+	widgetWrite: (userId) => getLimiter('widget:write', { limit: 60, window: '1 m' }).limit(userId),
+	widgetRead: (ip) => getLimiter('widget:read', { limit: 600, window: '1 m' }).limit(ip),
 };
 
 // Trust only proxy headers that Vercel itself sets and signs. Naively reading

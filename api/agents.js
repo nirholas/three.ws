@@ -14,6 +14,7 @@
 import { getSessionUser, authenticateBearer, extractBearer } from './_lib/auth.js';
 import { sql }           from './_lib/db.js';
 import { cors, json, method, readJson, wrap, error } from './_lib/http.js';
+import { generateAgentWallet } from './_lib/agent-wallet.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS', credentials: true })) return;
@@ -63,9 +64,16 @@ async function handleGetOrCreateMe(req, res, auth) {
 		`;
 
 		if (!agent) {
+			const wallet = await generateAgentWallet();
 			[agent] = await sql`
-				INSERT INTO agent_identities (user_id, name, skills)
-				VALUES (${auth.userId}, ${'Agent'}, ${['greet', 'present-model', 'validate-model', 'remember', 'think']})
+				INSERT INTO agent_identities (user_id, name, skills, wallet_address, meta)
+				VALUES (
+					${auth.userId},
+					${'Agent'},
+					${['greet', 'present-model', 'validate-model', 'remember', 'think']},
+					${wallet.address},
+					${sql.json({ encrypted_wallet_key: wallet.encrypted_key })}
+				)
 				RETURNING *
 			`;
 		}
@@ -96,14 +104,18 @@ async function handleCreate(req, res) {
 
 	if (!name) return error(res, 400, 'validation_error', 'name is required');
 
+	const wallet = await generateAgentWallet();
+	const meta = { ...(body.meta || {}), encrypted_wallet_key: wallet.encrypted_key };
+
 	const [agent] = await sql`
-		INSERT INTO agent_identities (user_id, name, description, skills, meta)
+		INSERT INTO agent_identities (user_id, name, description, skills, wallet_address, meta)
 		VALUES (
 			${auth.userId},
 			${name},
 			${body.description ? String(body.description).slice(0, 500) : null},
 			${body.skills || ['greet', 'present-model', 'validate-model', 'remember', 'think']},
-			${body.meta   || {}}
+			${wallet.address},
+			${sql.json(meta)}
 		)
 		RETURNING *
 	`;
@@ -194,7 +206,11 @@ export async function handleWallet(req, res, id) {
 	if (existing.user_id !== auth.userId) return error(res, 403, 'forbidden', 'not your agent');
 
 	if (req.method === 'DELETE') {
-		await sql`UPDATE agent_identities SET wallet_address = null, chain_id = null WHERE id = ${id}`;
+		await sql`
+			UPDATE agent_identities
+			SET wallet_address = null, chain_id = null, erc8004_agent_id = null
+			WHERE id = ${id}
+		`;
 		return json(res, 200, { ok: true });
 	}
 
@@ -202,11 +218,15 @@ export async function handleWallet(req, res, id) {
 	const body    = await readJson(req);
 	const address = String(body.wallet_address || '').trim();
 	const chainId = Number(body.chain_id)      || null;
+	// Optional: post-mint, the client can patch in the minted ERC-8004 agent id.
+	const erc8004 = body.erc8004_agent_id != null ? BigInt(body.erc8004_agent_id).toString() : null;
 	if (!address) return error(res, 400, 'validation_error', 'wallet_address required');
 
 	const [updated] = await sql`
 		UPDATE agent_identities
-		SET wallet_address = ${address}, chain_id = ${chainId}
+		SET wallet_address   = ${address},
+		    chain_id         = ${chainId},
+		    erc8004_agent_id = COALESCE(${erc8004}::bigint, erc8004_agent_id)
 		WHERE id = ${id}
 		RETURNING *
 	`;
@@ -224,6 +244,10 @@ async function resolveAuth(req) {
 }
 
 function decorate(row, isOwner = true) {
+	// Strip encrypted_wallet_key from meta — never expose to the client.
+	const meta = { ...(row.meta || {}) };
+	delete meta.encrypted_wallet_key;
+
 	const base = {
 		id:           row.id,
 		name:         row.name,
@@ -231,7 +255,7 @@ function decorate(row, isOwner = true) {
 		avatar_id:    row.avatar_id,
 		home_url:     row.home_url || `/agent/${row.id}`,
 		skills:       row.skills  || [],
-		meta:         row.meta    || {},
+		meta,
 		is_registered: Boolean(row.erc8004_agent_id),
 		created_at:   row.created_at,
 	};

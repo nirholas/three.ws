@@ -154,14 +154,17 @@ export class HeroGaze {
 		}
 
 		const now = performance.now();
-		const idleFor = this._lastMoveAt > 0 ? now - this._lastMoveAt : Infinity;
+		const idleFor = this._lastMoveAt > 0 ? now - this._lastMoveAt : 0;
 		const settled =
 			Math.abs(this._currentTheta - BASE_THETA_DEG) < SETTLE_EPSILON &&
 			Math.abs(this._currentPhi   - BASE_PHI_DEG)   < SETTLE_EPSILON;
 
 		// Resume auto-rotate either after a quiet window (cursor still over the
 		// hero but idle) or after pointerleave once the avatar has eased home.
-		if (this._tracking && (idleFor > IDLE_MS || (this._lastMoveAt === 0 && settled))) {
+		const shouldResume = this._lastMoveAt === 0
+			? settled           // pointerleave: wait for ease-back to complete
+			: idleFor > IDLE_MS; // idle: cursor still in hero but stopped
+		if (this._tracking && shouldResume) {
 			this._tracking = false;
 			if (this._lastMoveAt === 0 && settled) {
 				// Snap to the canonical orbit so auto-rotate picks up cleanly.

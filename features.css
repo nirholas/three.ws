@@ -792,6 +792,47 @@
   visibility: hidden;
 }
 
+/* ── Dragon mode (?pretext=4) ────────────────────────────────────────────── */
+
+/*
+ * Activated by src/features/hero-dragon.js. The avatar detaches from its grid
+ * column and is positioned absolutely within .hero so it can chase the cursor
+ * via transform. The content column expands to full hero width so Pretext has
+ * more room to reflow the subtitle around the moving silhouette.
+ */
+.hero--dragon {
+  position: relative;
+}
+
+.hero--dragon .hero-content {
+  grid-column: 1 / -1;
+  max-width: none;
+  z-index: 2;
+}
+
+.hero--dragon .hero-subtitle-pretext {
+  max-width: none;
+}
+
+.hero--dragon .hero-avatar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 3;
+  justify-self: auto;
+  transform: translate3d(0, 0, 0);
+  transition: none;
+}
+
+/* The ring/pulse/tag decorations read as static UI chrome — hide them while
+ * the avatar roams so the silhouette reads as the hero of the composition. */
+.hero--dragon .hero-avatar-ring,
+.hero--dragon .hero-avatar-pulse,
+.hero--dragon .hero-avatar-tag {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 
 /* Tablet — keep two columns but tighten the split */

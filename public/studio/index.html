@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>Widget Studio · 3D Agent</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+	<meta name="description" content="Turn any avatar into an embeddable 3D widget. Five types, brand controls, one-line embed.">
+	<meta name="theme-color" content="#0a0a0a">
+	<meta name="robots" content="noindex">
+	<link rel="shortcut icon" href="/favicon.ico">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="/style.css">
+	<link rel="stylesheet" href="/studio/studio.css">
+</head>
+<body class="studio-body">
+	<header class="studio-header">
+		<h1><a href="/"><span class="wordmark-dot" aria-hidden="true"></span>3D Agent</a><span class="studio-tag">Studio</span></h1>
+		<nav>
+			<a href="/widgets">Gallery</a>
+			<a href="/docs/widgets">Docs</a>
+			<a href="/dashboard#widgets">My widgets</a>
+			<button class="btn-ghost" id="signout-btn" type="button">Sign out</button>
+		</nav>
+	</header>
+
+	<main class="studio-layout" id="studio-layout" hidden>
+		<section class="studio-col-left" aria-label="Pick avatar and widget type">
+			<div class="panel">
+				<h2>1. Pick avatar</h2>
+				<div class="avatar-list" id="avatar-list" aria-busy="true"></div>
+			</div>
+			<div class="panel">
+				<h2>2. Pick widget type</h2>
+				<div class="type-grid" id="type-grid"></div>
+			</div>
+		</section>
+
+		<section class="studio-col-mid" aria-label="Preview">
+			<div class="preview-shell">
+				<div class="preview-frame" id="preview-frame">
+					<iframe id="preview-iframe" title="Live widget preview" allow="autoplay; xr-spatial-tracking" loading="eager"></iframe>
+				</div>
+				<div class="preview-meta">
+					<span id="preview-status" class="muted">Pick an avatar to preview</span>
+					<button class="btn-ghost btn-sm" id="capture-camera-btn" type="button" disabled>Use current view</button>
+				</div>
+			</div>
+		</section>
+
+		<section class="studio-col-right" aria-label="Brand and config">
+			<div class="panel">
+				<h2>3. Brand</h2>
+				<form id="config-form" class="config-form" autocomplete="off" onsubmit="return false">
+					<label class="field">
+						<span>Name</span>
+						<input type="text" name="name" maxlength="120" required placeholder="My turntable widget">
+					</label>
+					<label class="field">
+						<span>Background</span>
+						<input type="color" name="background" value="#0a0a0a">
+					</label>
+					<label class="field">
+						<span>Accent</span>
+						<input type="color" name="accent" value="#8b5cf6">
+					</label>
+					<label class="field">
+						<span>Caption (optional)</span>
+						<input type="text" name="caption" maxlength="280" placeholder="Hello, world.">
+					</label>
+					<label class="field row">
+						<input type="checkbox" name="showControls" checked>
+						<span>Show controls</span>
+					</label>
+					<label class="field row">
+						<input type="checkbox" name="autoRotate" checked>
+						<span>Auto-rotate</span>
+					</label>
+					<label class="field">
+						<span>Environment</span>
+						<select name="envPreset">
+							<option value="none">None</option>
+							<option value="neutral" selected>Neutral</option>
+							<option value="venice-sunset">Venice sunset</option>
+							<option value="footprint-court">Footprint court</option>
+						</select>
+					</label>
+					<label class="field row">
+						<input type="checkbox" name="is_public" checked>
+						<span>Public widget (anyone with the URL can load it)</span>
+					</label>
+
+					<div id="type-fields" class="type-fields"></div>
+				</form>
+			</div>
+
+			<div class="action-row">
+				<button type="button" class="btn-ghost" id="save-draft-btn">Save draft</button>
+				<button type="button" class="btn-primary" id="generate-btn">Generate embed</button>
+			</div>
+			<p id="form-error" class="form-error" hidden></p>
+		</section>
+	</main>
+
+	<div class="auth-blocker" id="auth-blocker">
+		<div class="auth-blocker-card">
+			<p>Sign in to use the Studio.</p>
+			<a class="btn-primary" href="#" id="signin-link">Sign in →</a>
+		</div>
+	</div>
+
+	<div class="modal-overlay" id="embed-modal" hidden>
+		<div class="modal" role="dialog" aria-labelledby="embed-modal-title" aria-modal="true">
+			<button type="button" class="modal-close" id="embed-modal-close" aria-label="Close">×</button>
+			<h2 id="embed-modal-title">Your widget is live</h2>
+			<p class="muted">Share the URL or paste the snippet anywhere.</p>
+
+			<div class="embed-preview">
+				<iframe id="embed-preview-iframe" title="Embed preview" allow="autoplay; xr-spatial-tracking"></iframe>
+			</div>
+
+			<label class="field">
+				<span>Shareable URL</span>
+				<div class="copy-row">
+					<input type="text" id="embed-share-url" readonly>
+					<button type="button" class="btn-ghost btn-sm" data-copy="#embed-share-url">Copy</button>
+				</div>
+			</label>
+
+			<label class="field">
+				<span>iframe snippet</span>
+				<div class="copy-row">
+					<textarea id="embed-iframe-snippet" rows="3" readonly></textarea>
+					<button type="button" class="btn-ghost btn-sm" data-copy="#embed-iframe-snippet">Copy</button>
+				</div>
+			</label>
+
+			<details>
+				<summary>Script-tag embed</summary>
+				<div class="copy-row">
+					<textarea id="embed-script-snippet" rows="2" readonly></textarea>
+					<button type="button" class="btn-ghost btn-sm" data-copy="#embed-script-snippet">Copy</button>
+				</div>
+			</details>
+		</div>
+	</div>
+
+	<div class="toast" id="toast" hidden></div>
+
+	<script type="module" src="/studio/studio.js"></script>
+</body>
+</html>
