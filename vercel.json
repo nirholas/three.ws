@@ -31,6 +31,17 @@
         { "src": "/agent/([^/]+)/embed", "dest": "/agent-embed.html" },
         { "src": "/agent/([^/]+)",       "dest": "/agent-home.html" },
         { "src": "/agent",               "dest": "/agent-home.html" },
+
+        { "src": "/api/widgets/oembed",                    "dest": "/api/widgets/oembed" },
+        { "src": "/api/widgets/page",                      "dest": "/api/widgets/page" },
+        { "src": "/api/widgets/([A-Za-z0-9_-]+)/og",       "dest": "/api/widgets/og?id=$1" },
+        { "src": "/api/widgets/([A-Za-z0-9_-]+)/view",     "dest": "/api/widgets/view?id=$1" },
+        { "src": "/w/([A-Za-z0-9_-]+)",  "dest": "/api/widgets/page?id=$1" },
+        { "src": "/widgets",             "dest": "/public/widgets-gallery/index.html" },
+        { "src": "/widgets/",            "dest": "/public/widgets-gallery/index.html" },
+        { "src": "/widgets/(.*)",        "dest": "/public/widgets-gallery/$1" },
+        { "src": "/docs/widgets",        "dest": "/public/docs-widgets.html" },
+
         { "src": "/api/(.*)",            "dest": "/api/$1" },
 
         {

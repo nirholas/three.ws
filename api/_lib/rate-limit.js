@@ -69,6 +69,8 @@ export const limits = {
 	mcpOptimize: (key) => getLimiter('mcp:optimize', { limit: 10, window: '1 m' }).limit(key),
 	oauthToken: (clientId) => getLimiter('oauth:token', { limit: 120, window: '1 m' }).limit(clientId),
 	upload: (userId) => getLimiter('upload', { limit: 60, window: '1 h' }).limit(userId),
+	chatUser: (userId) => getLimiter('chat:user', { limit: 20, window: '1 m' }).limit(userId),
+	chatIp: (ip) => getLimiter('chat:ip', { limit: 40, window: '1 m' }).limit(ip),
 };
 
 // Trust only proxy headers that Vercel itself sets and signs. Naively reading

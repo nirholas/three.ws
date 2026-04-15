@@ -31,6 +31,26 @@ It's built for **3D artists** previewing exports, **game developers** debugging 
 
 <br/>
 
+## 🪟 Widget Studio — embeddable 3D, no code
+
+Save any avatar as a **widget** — a configured, shareable view that any site can drop in with one line of HTML. Five types: **Turntable** (auto-rotate hero banner), **Animation Gallery** (clip browser), **Talking Agent** (embodied chat), **ERC-8004 Passport** (on-chain identity card), **Hotspot Tour** (annotated 3D scene).
+
+```html
+<iframe src="https://3dagent.vercel.app/#widget=wdgt_abc123" width="600" height="600" style="border:0"></iframe>
+```
+
+- **[Open the Studio →](https://3dagent.vercel.app/studio)** — pick avatar, pick type, generate embed.
+- **[Browse the gallery →](https://3dagent.vercel.app/widgets)** — live demos of every widget type.
+- **[Read the docs →](https://3dagent.vercel.app/docs/widgets)** — URL params, postMessage API, oEmbed, privacy.
+
+Widget URLs (`/w/<id>`) get rich Open Graph cards in Slack/Discord/X and auto-embed via oEmbed in WordPress, Ghost, and Notion.
+
+<br/>
+
+---
+
+<br/>
+
 ## ✨ Features
 
 <br/>

@@ -8,7 +8,7 @@ import { Footer }        from './components/footer';
 import { NichAgent }     from './nich-agent.js';
 import { AvatarCreator } from './avatar-creator.js';
 import { resolveURI, isDecentralizedURI } from './ipfs.js';
-import { saveRemoteGlbToAccount }         from './account.js';
+import { saveRemoteGlbToAccount, getMe }  from './account.js';
 import queryString from 'query-string';
 
 // Agent system — the new primitive layer
@@ -47,6 +47,7 @@ class App {
 			cameraPosition: hash.cameraPosition ? hash.cameraPosition.split(',').map(Number) : null,
 			brain:          hash.brain    || 'none',
 			proxyURL:       hash.proxyURL || '',
+			agent:          hash.agent || '',
 		};
 
 		this.el              = el;
@@ -75,6 +76,7 @@ class App {
 		this.createDropzone();
 		this.setupAvatarCreator();
 		this.hideSpinner();
+		this._updateSignInLink();
 
 		const options = this.options;
 
@@ -86,6 +88,12 @@ class App {
 		// Check for register page
 		if (hash.register !== undefined) {
 			this._showRegisterPage();
+			return;
+		}
+
+		// Load a specific agent by ID: /#agent=<uuid>
+		if (options.agent) {
+			this._loadAgent(options.agent);
 			return;
 		}
 
@@ -191,6 +199,43 @@ class App {
 		}
 	}
 
+	async _updateSignInLink() {
+		const link = document.getElementById('nav-sign-in');
+		if (!link) return;
+		try {
+			const user = await getMe();
+			if (user) link.classList.add('signed-in');
+		} catch { /* leave sign-in visible */ }
+	}
+
+	_refreshMakeWidgetButton() {
+		const btn = document.getElementById('make-widget-btn');
+		if (!btn) return;
+		const url = this._currentModelUrl;
+		if (!url) { btn.hidden = true; return; }
+		btn.href = `/studio?model=${encodeURIComponent(url)}`;
+		btn.hidden = false;
+	}
+
+	async _loadAgent(agentId) {
+		this.identity = new AgentIdentity({ agentId, autoLoad: false });
+		await this.identity.load();
+
+		let glbUrl = '/avatars/cz.glb';
+		if (this.identity.avatarId) {
+			try {
+				const resp = await fetch(`/api/avatars/${this.identity.avatarId}`, { credentials: 'include' });
+				if (resp.ok) {
+					const { avatar } = await resp.json();
+					if (avatar?.url) glbUrl = avatar.url;
+				}
+			} catch { /* fall through to default */ }
+		}
+
+		this.view(glbUrl, '', new Map());
+		this._initAgentSystem();
+	}
+
 	_initNichAgent() {
 		const agent = new NichAgent(document.body, protocol, this.skills, this.identity, this.runtime);
 		window.VIEWER.agent = agent;
@@ -276,6 +321,9 @@ class App {
 
 		const viewer  = this.viewer || this.createViewer();
 		const fileURL = typeof rootFile === 'string' ? rootFile : URL.createObjectURL(rootFile);
+
+		this._currentModelUrl = typeof rootFile === 'string' ? rootFile : null;
+		this._refreshMakeWidgetButton();
 
 		// Emit load start
 		protocol.emit({

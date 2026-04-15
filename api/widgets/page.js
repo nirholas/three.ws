@@ -1,0 +1,160 @@
+/**
+ * Server-rendered widget metadata page
+ * ------------------------------------
+ * GET /api/widgets/page?id=<widget-id>
+ *
+ * Wired to /w/:id via vercel.json. Returns an HTML page with proper Open Graph
+ * + Twitter card + oEmbed link tags so social crawlers (Slack, Discord, X,
+ * WordPress, Ghost) get a rich preview. Real browsers run the inline script
+ * and replace into the SPA viewer at /#widget=<id>.
+ */
+
+import { sql }                from '../_lib/db.js';
+import { env }                from '../_lib/env.js';
+import { cors, wrap }         from '../_lib/http.js';
+
+const TYPE_LABEL = {
+	'turntable':         'Turntable Showcase',
+	'animation-gallery': 'Animation Gallery',
+	'talking-agent':     'Talking Agent',
+	'passport':          'ERC-8004 Passport',
+	'hotspot-tour':      'Hotspot Tour',
+};
+
+export default wrap(async (req, res) => {
+	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
+
+	const url      = new URL(req.url, 'http://x');
+	const widgetId = url.searchParams.get('id');
+	if (!widgetId) return notFound(res);
+
+	const widget = await loadWidget(widgetId);
+	if (!widget) return notFound(res);
+
+	const origin   = env.APP_ORIGIN;
+	const pageUrl  = `${origin}/w/${widget.id}`;
+	const embedUrl = `${origin}/#widget=${widget.id}&kiosk=true`;
+	const ogUrl    = `${origin}/api/widgets/${widget.id}/og`;
+	const oembedJs = `${origin}/api/widgets/oembed?url=${encodeURIComponent(pageUrl)}&format=json`;
+	const title    = widget.name || 'Widget';
+	const typeLbl  = TYPE_LABEL[widget.type] || 'Widget';
+	const desc     = `${typeLbl} · embeddable 3D, no code. Powered by 3D Agent.`;
+
+	res.statusCode = 200;
+	res.setHeader('content-type', 'text/html; charset=utf-8');
+	res.setHeader('cache-control', 'public, max-age=300, s-maxage=900');
+	res.end(renderHtml({ title, desc, pageUrl, embedUrl, ogUrl, oembedJs, widgetId: widget.id }));
+});
+
+async function loadWidget(id) {
+	try {
+		const [row] = await sql`
+			select id, name, type, avatar_id
+			from widgets
+			where id = ${id}
+			limit 1
+		`;
+		return row || null;
+	} catch (err) {
+		if (/relation .* does not exist/i.test(err?.message || '')) return null;
+		throw err;
+	}
+}
+
+function notFound(res) {
+	res.statusCode = 404;
+	res.setHeader('content-type', 'text/html; charset=utf-8');
+	res.setHeader('cache-control', 'public, max-age=60');
+	res.end(`<!doctype html><meta charset="utf-8"><title>Widget not found</title>
+<style>body{font-family:Inter,system-ui,sans-serif;background:#0a0a0a;color:#e0e0e0;display:grid;place-items:center;min-height:100vh;margin:0}main{text-align:center;padding:2rem}a{color:#8b5cf6}</style>
+<main><h1>Widget not found</h1><p>This widget may have been deleted, or the link is wrong.</p><p><a href="/widgets">Browse the gallery</a> · <a href="/">Open viewer</a></p></main>`);
+}
+
+function renderHtml({ title, desc, pageUrl, embedUrl, ogUrl, oembedJs, widgetId }) {
+	const t = escapeHtml(title);
+	const d = escapeHtml(desc);
+	return `<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>${t} — 3D Agent</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+	<meta name="description" content="${d}">
+	<meta name="theme-color" content="#0a0a0a">
+
+	<meta property="og:type" content="website">
+	<meta property="og:site_name" content="3D Agent">
+	<meta property="og:title" content="${t}">
+	<meta property="og:description" content="${d}">
+	<meta property="og:url" content="${escapeAttr(pageUrl)}">
+	<meta property="og:image" content="${escapeAttr(ogUrl)}">
+	<meta property="og:image:width" content="1200">
+	<meta property="og:image:height" content="630">
+
+	<meta name="twitter:card" content="summary_large_image">
+	<meta name="twitter:title" content="${t}">
+	<meta name="twitter:description" content="${d}">
+	<meta name="twitter:image" content="${escapeAttr(ogUrl)}">
+
+	<link rel="canonical" href="${escapeAttr(pageUrl)}">
+	<link rel="alternate" type="application/json+oembed" href="${escapeAttr(oembedJs)}" title="${t}">
+	<link rel="shortcut icon" href="/favicon.ico">
+
+	<style>
+		html,body{margin:0;padding:0;background:#0a0a0a;color:#e0e0e0;font-family:Inter,system-ui,sans-serif;height:100%;overflow:hidden}
+		.shell{display:grid;place-items:center;height:100vh;text-align:center;padding:2rem;gap:1rem}
+		.shell a{color:#8b5cf6;text-decoration:none}
+		.shell a:hover{text-decoration:underline}
+		.spinner{width:32px;height:32px;border:2px solid rgba(255,255,255,0.1);border-top-color:#8b5cf6;border-radius:50%;animation:spin 1s linear infinite}
+		@keyframes spin{to{transform:rotate(360deg)}}
+		@media(prefers-reduced-motion:reduce){.spinner{animation:none}}
+	</style>
+</head>
+<body>
+	<noscript>
+		<div class="shell">
+			<h1>${t}</h1>
+			<p>${d}</p>
+			<p><a href="${escapeAttr(embedUrl)}">Open viewer</a></p>
+		</div>
+	</noscript>
+	<div class="shell" id="loading" aria-live="polite">
+		<div class="spinner" aria-hidden="true"></div>
+		<p>Loading ${t}…</p>
+	</div>
+	<script>
+		// Real browsers: replace into the SPA so back-button doesn't loop.
+		// Crawlers / bots: ignored, they parse the OG tags above.
+		(function () {
+			var target = ${JSON.stringify(embedUrl)};
+			try {
+				var u = new URL(window.location.href);
+				if (u.searchParams.get('embed') === '0') return;  // escape hatch for debugging
+			} catch (e) {}
+			window.location.replace(target);
+		})();
+	</script>
+	<script type="application/ld+json">
+${escapeJsonLd({
+	'@context': 'https://schema.org',
+	'@type': 'CreativeWork',
+	name: title,
+	description: desc,
+	url: pageUrl,
+	image: ogUrl,
+	identifier: widgetId,
+	provider: { '@type': 'Organization', name: '3D Agent', url: 'https://3dagent.vercel.app' },
+})}
+	</script>
+</body>
+</html>`;
+}
+
+function escapeHtml(s) {
+	return String(s).replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+function escapeAttr(s) { return escapeHtml(s); }
+function escapeJsonLd(obj) {
+	return JSON.stringify(obj, null, 2).replace(/</g, '\\u003c');
+}
