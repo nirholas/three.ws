@@ -40,6 +40,7 @@
 		"build:all": "npm run build && npm run build:lib",
 		"clean": "rm -rf dist/* dist-lib/* || true",
 		"generate-icons": "node scripts/generate-pwa-icons.mjs",
+		"fetch-animations": "node scripts/download-animations.mjs",
 		"test": "echo 'No tests configured' && exit 0",
 		"deploy": "npm run build && vercel --local-config vercel.json --prod",
 		"postversion": "git push && git push --tags"
@@ -52,6 +53,7 @@
 		"@gltf-transform/core": "^4.3.0",
 		"@gltf-transform/extensions": "^4.3.0",
 		"@neondatabase/serverless": "^0.10.1",
+		"@privy-io/js-sdk-core": "latest",
 		"@upstash/ratelimit": "^2.0.5",
 		"@upstash/redis": "^1.34.3",
 		"bcryptjs": "^2.4.3",

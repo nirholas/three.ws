@@ -9,3 +9,4 @@ export { connectWallet, registerAgent, buildRegistrationJSON, pinToIPFS } from '
 export { RegisterUI } from './register-ui.js';
 export { submitFeedback, getReputation, getFeedbackRange, hasReviewed } from './reputation.js';
 export { recordValidation, getLatestValidation, reportPassed, hashReport } from './validation-recorder.js';
+export { initPrivy, loginWithPrivy, connectWithPrivy, logoutPrivy, isPrivyConfigured } from './privy.js';

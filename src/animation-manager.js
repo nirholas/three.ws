@@ -33,6 +33,8 @@ export class AnimationManager {
 		this.loader = new GLTFLoader();
 		/** @type {Function|null} */
 		this.onChange = null;
+		/** @type {Map<string, object>} - Cache of loaded GLTF objects by URL */
+		this._gltfCache = new Map();
 
 		this._animationDefs = [];
 	}
@@ -97,6 +99,7 @@ export class AnimationManager {
 	 * @param {string} url - URL of the GLB/glTF containing the animation
 	 * @param {object} [options]
 	 * @param {boolean} [options.loop=true] - Whether to loop the animation
+	 * @param {string} [options.clipName] - Name of a specific clip inside a multi-animation GLB
 	 * @returns {Promise<THREE.AnimationClip>}
 	 */
 	async loadAnimation(name, url, options = {}) {
@@ -105,15 +108,34 @@ export class AnimationManager {
 			return this.clips.get(name);
 		}
 
-		const gltf = await new Promise((resolve, reject) => {
-			this.loader.load(url, resolve, undefined, reject);
-		});
+		// Check if we already loaded this URL (multi-animation GLB reuse)
+		let gltf;
+		if (this._gltfCache.has(url)) {
+			gltf = this._gltfCache.get(url);
+		} else {
+			gltf = await new Promise((resolve, reject) => {
+				this.loader.load(url, resolve, undefined, reject);
+			});
+			this._gltfCache.set(url, gltf);
+		}
 
-		const clip = gltf.animations[0];
+		// Find the right clip: by clipName if specified, otherwise first clip
+		let clip;
+		if (options.clipName) {
+			clip = gltf.animations.find((a) => a.name === options.clipName);
+			if (!clip) {
+				console.warn(`[AnimationManager] Clip "${options.clipName}" not found in ${url}, using first clip`);
+				clip = gltf.animations[0];
+			}
+		} else {
+			clip = gltf.animations[0];
+		}
+
 		if (!clip) {
 			throw new Error(`No animation found in ${url}`);
 		}
 
+		clip = clip.clone();
 		clip.name = name;
 		this.clips.set(name, clip);
 
@@ -140,7 +162,10 @@ export class AnimationManager {
 	async loadAll() {
 		const promises = this._animationDefs.map(async (def) => {
 			try {
-				await this.loadAnimation(def.name, def.url, { loop: def.loop !== false });
+				await this.loadAnimation(def.name, def.url, {
+					loop: def.loop !== false,
+					clipName: def.clipName,
+				});
 			} catch (e) {
 				console.warn(`[AnimationManager] Failed to load "${def.name}" from ${def.url}:`, e);
 			}
@@ -350,6 +375,7 @@ export class AnimationManager {
 	dispose() {
 		this.detach();
 		this.clips.clear();
+		this._gltfCache.clear();
 		this._animationDefs = [];
 	}
 }

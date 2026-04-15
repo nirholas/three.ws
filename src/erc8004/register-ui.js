@@ -6,6 +6,7 @@
  */
 
 import { registerAgent, connectWallet } from './agent-registry.js';
+import { isPrivyConfigured } from './privy.js';
 
 export class RegisterUI {
 	/**
@@ -38,8 +39,9 @@ export class RegisterUI {
 				<div class="erc8004-section" data-step="wallet">
 					<button class="erc8004-btn erc8004-btn--connect" type="button">
 						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
-						Connect Wallet
+						${isPrivyConfigured() ? 'Connect Wallet' : 'Connect Wallet'}
 					</button>
+					<p class="erc8004-wallet-hint">${isPrivyConfigured() ? 'MetaMask, WalletConnect, Coinbase, or email' : 'Requires MetaMask or compatible wallet'}</p>
 					<span class="erc8004-wallet-addr"></span>
 				</div>
 
