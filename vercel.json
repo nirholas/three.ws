@@ -1,9 +1,9 @@
 {
     "public": true,
     "routes": [
-        { "src": "/\\.well-known/oauth-authorization-server", "dest": "/api/.well-known/oauth-authorization-server" },
-        { "src": "/\\.well-known/oauth-protected-resource",  "dest": "/api/.well-known/oauth-protected-resource" },
-        { "src": "/api/mcp/\\.well-known/oauth-protected-resource", "dest": "/api/mcp/.well-known/oauth-protected-resource" },
+        { "src": "/\\.well-known/oauth-authorization-server", "dest": "/api/wk-oauth-authorization-server" },
+        { "src": "/\\.well-known/oauth-protected-resource",  "dest": "/api/wk-oauth-protected-resource" },
+        { "src": "/api/mcp/\\.well-known/oauth-protected-resource", "dest": "/api/wk-oauth-protected-resource" },
 
         { "src": "/oauth/authorize",     "dest": "/api/oauth/authorize" },
         { "src": "/oauth/consent",       "dest": "/api/oauth/authorize" },
@@ -25,6 +25,7 @@
         { "src": "/api/agent-actions",   "dest": "/api/agent-actions" },
         { "src": "/api/agent-memory/([^/]+)", "dest": "/api/agent-memory" },
         { "src": "/api/agent-memory",    "dest": "/api/agent-memory" },
+        { "src": "/agent/([^/]+)/embed", "dest": "/public/agent/embed.html" },
         { "src": "/agent/([^/]+)",       "dest": "/public/agent/index.html" },
         { "src": "/agent",               "dest": "/public/agent/index.html" },
         { "src": "/api/(.*)",            "dest": "/api/$1" },

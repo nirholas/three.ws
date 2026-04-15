@@ -71,7 +71,7 @@
 		"prettier": "^3.2.5",
 		"sharp": "^0.34.5",
 		"vite": "^8.0.8",
-		"vite-plugin-pwa": "^1.5.0",
+		"vite-plugin-pwa": "^1.2.0",
 		"workbox-build": "^7.4.0",
 		"workbox-window": "^7.4.0"
 	}

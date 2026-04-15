@@ -10,7 +10,12 @@ const ACCESS_TTL_SEC = 60 * 60;              // 1h access tokens
 const REFRESH_TTL_SEC = 60 * 60 * 24 * 30;   // 30d refresh tokens
 const SESSION_TTL_SEC = 60 * 60 * 24 * 30;   // 30d browser sessions
 
-const jwtKey = new TextEncoder().encode(env.JWT_SECRET);
+// Lazy: env.JWT_SECRET throws if unset, so defer encoding until first use.
+let _jwtKey;
+function jwtKey() {
+	if (!_jwtKey) _jwtKey = new TextEncoder().encode(env.JWT_SECRET);
+	return _jwtKey;
+}
 
 // ── passwords ────────────────────────────────────────────────────────────────
 export async function hashPassword(plain) {
@@ -32,11 +37,11 @@ export async function mintAccessToken({ userId, clientId, scope, resource, token
 		.setIssuedAt(now)
 		.setExpirationTime(now + ACCESS_TTL_SEC)
 		.setJti(randomToken(16))
-		.sign(jwtKey);
+		.sign(jwtKey());
 }
 
 export async function verifyAccessToken(token, { audience } = {}) {
-	const { payload } = await jwtVerify(token, jwtKey, {
+	const { payload } = await jwtVerify(token, jwtKey(), {
 		issuer: env.ISSUER,
 		audience: audience || env.MCP_RESOURCE,
 		algorithms: ['HS256'],

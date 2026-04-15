@@ -1,8 +1,12 @@
 // RFC 8414 — OAuth 2.0 Authorization Server Metadata
 // https://datatracker.ietf.org/doc/html/rfc8414
+//
+// Served at /.well-known/oauth-authorization-server via vercel.json rewrite.
+// The file lives outside a dot-prefixed directory because Vercel's build
+// pipeline excludes `api/.well-known/**` from function deployment.
 
-import { env } from '../_lib/env.js';
-import { cors, json, method, wrap } from '../_lib/http.js';
+import { env } from './_lib/env.js';
+import { cors, json, method, wrap } from './_lib/http.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;

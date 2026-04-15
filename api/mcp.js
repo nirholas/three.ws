@@ -352,9 +352,13 @@ const TOOLS = {
 				ar: args.ar !== false,
 				cameraOrbit: safeCssValue(args.camera_orbit, ''),
 			});
+			// Keep chat text short so claude.ai doesn't dump the full HTML into the
+			// transcript. The HTML goes in the resource entry, which clients render
+			// as an inline artifact when mimeType is text/html.
+			const summary = `Rendered avatar "${avatar.name}". Display the attached text/html resource as an inline HTML artifact.`;
 			return {
 				content: [
-					{ type: 'text', text: html },
+					{ type: 'text', text: summary },
 					{
 						type: 'resource',
 						resource: {

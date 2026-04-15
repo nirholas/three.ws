@@ -4,13 +4,24 @@ import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, Head
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { env } from './env.js';
 
-export const r2 = new S3Client({
-	region: 'auto',
-	endpoint: `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-	credentials: {
-		accessKeyId: env.R2_ACCESS_KEY_ID,
-		secretAccessKey: env.R2_SECRET_ACCESS_KEY,
-	},
+// Lazy client — S3Client constructor reads env credentials eagerly, so defer
+// until first use to keep this module importable without R2 configured.
+let _r2;
+function getR2() {
+	if (!_r2) {
+		_r2 = new S3Client({
+			region: 'auto',
+			endpoint: `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+			credentials: {
+				accessKeyId: env.R2_ACCESS_KEY_ID,
+				secretAccessKey: env.R2_SECRET_ACCESS_KEY,
+			},
+		});
+	}
+	return _r2;
+}
+export const r2 = new Proxy({}, {
+	get(_t, prop) { return getR2()[prop]; },
 });
 
 // Short-lived signed URL for direct browser upload (PUT).

@@ -83,22 +83,78 @@
 			padding: 0 1rem;
 		}
 
+		.agent-embed-tabs {
+			display: flex;
+			gap: 0.382rem;
+			margin-bottom: 0.618rem;
+		}
+
+		.agent-embed-tab {
+			background: transparent;
+			border: 1px solid rgba(255,255,255,0.1);
+			color: rgba(255,255,255,0.5);
+			font-size: 0.618rem;
+			padding: 0.236rem 0.618rem;
+			border-radius: 999px;
+			cursor: pointer;
+			font-family: inherit;
+		}
+
+		.agent-embed-tab.active {
+			background: rgba(255,255,255,0.08);
+			color: rgba(255,255,255,0.9);
+			border-color: rgba(255,255,255,0.2);
+		}
+
+		.agent-embed-code-wrap {
+			position: relative;
+		}
+
 		.agent-embed-code {
 			background: rgba(255,255,255,0.04);
 			border: 1px solid rgba(255,255,255,0.08);
 			border-radius: 8px;
 			padding: 0.618rem 1rem;
+			padding-right: 3.8rem;
 			font-family: monospace;
 			font-size: 0.618rem;
-			color: rgba(255,255,255,0.4);
+			color: rgba(255,255,255,0.55);
 			word-break: break-all;
+			line-height: 1.5;
 		}
+
+		.agent-embed-copy {
+			position: absolute;
+			top: 0.382rem;
+			right: 0.382rem;
+			background: rgba(255,255,255,0.06);
+			border: 1px solid rgba(255,255,255,0.1);
+			color: rgba(255,255,255,0.6);
+			font-size: 0.618rem;
+			padding: 0.236rem 0.618rem;
+			border-radius: 6px;
+			cursor: pointer;
+			font-family: inherit;
+		}
+
+		.agent-embed-copy:hover { color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.1); }
+		.agent-embed-copy.copied { color: #86efac; border-color: rgba(134,239,172,0.3); }
 
 		.agent-embed-label {
 			font-size: 0.618rem;
 			color: rgba(255,255,255,0.25);
 			margin-bottom: 0.382rem;
 		}
+
+		.agent-embed-preview-link {
+			display: inline-block;
+			margin-top: 0.618rem;
+			font-size: 0.618rem;
+			color: rgba(255,255,255,0.35);
+			text-decoration: none;
+		}
+
+		.agent-embed-preview-link:hover { color: rgba(255,255,255,0.7); }
 
 		.agent-skills-full {
 			max-width: 420px;
@@ -175,8 +231,17 @@
 
 	<!-- Embed code -->
 	<div class="agent-embed-hint" id="agent-embed-section" style="display:none">
-		<div class="agent-embed-label">Embed this agent</div>
-		<div class="agent-embed-code" id="agent-embed-code"></div>
+		<div class="agent-embed-label">Share &amp; embed</div>
+		<div class="agent-embed-tabs" role="tablist">
+			<button class="agent-embed-tab active" data-tab="iframe">iframe</button>
+			<button class="agent-embed-tab" data-tab="link">link</button>
+			<button class="agent-embed-tab" data-tab="webcomponent">&lt;agent-3d&gt;</button>
+		</div>
+		<div class="agent-embed-code-wrap">
+			<div class="agent-embed-code" id="agent-embed-code"></div>
+			<button class="agent-embed-copy" id="agent-embed-copy">copy</button>
+		</div>
+		<a class="agent-embed-preview-link" id="agent-embed-preview" target="_blank" rel="noopener">preview embed →</a>
 	</div>
 
 	<script type="module">
@@ -225,9 +290,40 @@
 			// Embed code
 			const embedSection = document.getElementById('agent-embed-section');
 			const embedCode    = document.getElementById('agent-embed-code');
-			const embedUrl     = `${location.origin}/agent/${identity.id}`;
+			const embedCopy    = document.getElementById('agent-embed-copy');
+			const embedPreview = document.getElementById('agent-embed-preview');
+			const origin       = location.origin;
+			const embedUrl     = `${origin}/agent/${identity.id}/embed`;
+			const agentUrl     = `${origin}/agent/${identity.id}`;
+
+			const snippets = {
+				iframe:       `<iframe src="${embedUrl}" width="420" height="520" style="border:0;border-radius:12px" allow="autoplay; xr-spatial-tracking"></iframe>`,
+				link:         agentUrl,
+				webcomponent: `<script type="module" src="${origin}/dist-lib/agent-3d.js"><\/script>\n<agent-3d src="${agentUrl}/manifest.json" style="width:420px;height:520px"></agent-3d>`,
+			};
+
+			let current = 'iframe';
+			const render = () => { embedCode.textContent = snippets[current]; };
+			render();
 			embedSection.style.display = '';
-			embedCode.textContent = `<iframe src="${embedUrl}" width="420" height="520" frameborder="0" style="border-radius:12px;border:none;"></iframe>`;
+			embedPreview.href = embedUrl;
+
+			document.querySelectorAll('.agent-embed-tab').forEach(btn => {
+				btn.addEventListener('click', () => {
+					current = btn.dataset.tab;
+					document.querySelectorAll('.agent-embed-tab').forEach(b => b.classList.toggle('active', b === btn));
+					render();
+				});
+			});
+
+			embedCopy.addEventListener('click', async () => {
+				try {
+					await navigator.clipboard.writeText(snippets[current]);
+					embedCopy.textContent = 'copied';
+					embedCopy.classList.add('copied');
+					setTimeout(() => { embedCopy.textContent = 'copy'; embedCopy.classList.remove('copied'); }, 1400);
+				} catch {}
+			});
 		}
 
 		main().catch(err => {
