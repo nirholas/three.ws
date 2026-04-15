@@ -604,6 +604,23 @@ async function renderEmbed(root) {
 		"  }",
 		"});",
 	].join('\n');
+	const sdkSnippet = [
+		"<!-- Drop-in SDK around the postMessage Bridge v1. -->",
+		"<!-- See /agent/" + agent.id + "/embed for the wire contract. -->",
+		`<iframe id="agent" src="${embedUrl}" allow="camera; microphone"`,
+		"        style=\"width:320px;height:420px;border:0;border-radius:16px\"></iframe>",
+		`<script src="${origin}/embed-sdk.js"></script>`,
+		"<script>",
+		"  const bridge = Agent3D.connect(document.getElementById('agent'), {",
+		`    agentId: ${JSON.stringify(agent.id)},`,
+		"    onReady:  ({ version, capabilities }) => console.log('ready', version, capabilities),",
+		"    onAction: (action) => console.log('iframe emitted', action),",
+		"    onResize: (h)      => console.log('preferred height', h),",
+		"    onError:  (err)    => console.warn('bridge error', err.message),",
+		"  });",
+		"  bridge.ready.then(() => bridge.send({ type: 'speak', payload: { text: 'Hi from host' } }));",
+		"</script>",
+	].join('\n');
 
 	body.innerHTML = `
 		<div style="display:grid; grid-template-columns:minmax(260px,1fr) minmax(320px,1.4fr); gap:20px; align-items:start">
@@ -614,12 +631,20 @@ async function renderEmbed(root) {
 					<a href="${attr(homeUrl)}" target="_blank" class="muted">Home page →</a>
 				</div>
 				<p class="muted" style="padding:0 6px">Agent ID <code>${esc(agent.id)}</code></p>
+				${agent.wallet_address ? `
+					<p class="muted" style="padding:0 6px; margin-top:6px; line-height:1.4">
+						Agent wallet<br>
+						<code style="font-size:11px; word-break:break-all">${esc(agent.wallet_address)}</code><br>
+						<span style="font-size:11px">Server-held. Agents sign autonomously via <code style="font-size:11px">POST /api/agents/${esc(agent.id)}/sign</code>.</span>
+					</p>
+				` : ''}
 			</div>
 			<div>
 				${snippetBlock('Universal iframe (any site)', iframeSnippet, 'html')}
 				${snippetBlock('Lobehub React sidecar', lobehubSnippet, 'tsx')}
 				${snippetBlock('Claude Artifact', claudeSnippet, 'html')}
 				${snippetBlock('postMessage bridge (speak + listen)', postMessageSnippet, 'js')}
+				${snippetBlock('Custom embed (Agent3D SDK · Bridge v1)', sdkSnippet, 'html')}
 				<div class="card" style="margin-top:14px">
 					<h3 style="margin:0 0 6px">Who can embed?</h3>
 					<p class="muted" style="margin:0 0 10px">By default anyone. Lock it down to specific hosts (your Lobehub deploy, your Substack…) on the <a href="/dashboard/embed-policy?agent=${encodeURIComponent(agent.id)}">embed-policy page</a>.</p>

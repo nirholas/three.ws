@@ -1,55 +1,68 @@
-# 02-01 — Selfie capture UI
+---
+mode: agent
+description: "First-party camera capture page that emits a JPEG blob as selfie:ready"
+---
+
+# 02-01 · Selfie capture UI
 
 ## Why it matters
 
-The "magic moment" of the product is: take a photo, get a 3D avatar. This prompt builds the front-end capture step only — no 3D generation yet. We need a clean, on-brand camera-capture flow that produces a single high-quality selfie image ready to hand to the generator in `02-02`.
+Opening act of the magic moment. Today selfie capture is delegated to Ready Player Me's iframe ([public/dashboard/dashboard.js:186](../../public/dashboard/dashboard.js#L186)), which means we rely on a third-party UX for the single most emotional step in onboarding. A first-party page gives us control of the camera experience, a consistent look across providers (02-07 adapter), and the ability to run quality checks (02-05 consent/retry) before submitting to a generator.
 
-## Context
+This prompt is **capture only** — it emits a blob. Upload is 02-02, generation is 02-03, polling UI is 02-03b. Keep scope tight.
 
-- Dashboard entry: [public/dashboard/index.html](../../public/dashboard/index.html).
-- Existing "Create avatar" flow opens Avaturn via [src/avatar-creator.js](../../src/avatar-creator.js). Do **not** remove that path — add the selfie path as a second option.
-- Style baseline: match the dark theme + `--accent` purple gradient seen on [public/login.html](../../public/login.html).
+## Prerequisites
 
-## What to build
+- User is signed in (Layer 1 complete). Guest flow is 02-06, not here.
 
-### New page — `public/dashboard/selfie.html`
+## Read these first
 
-Reachable as `/dashboard/selfie`. Pure HTML + vanilla JS, no build-graph dependency (the dashboard is served from `public/`).
+| File | Why |
+|:---|:---|
+| [public/dashboard/dashboard.js](../../public/dashboard/dashboard.js) | Existing RPM iframe flow — to understand what we're replacing. |
+| [public/dashboard/index.html](../../public/dashboard/index.html) | Chrome + CSS to match. |
+| [src/features/](../../src/features/) | Pattern for feature-flagged modules. Follow it. |
+| [api/_lib/auth.js](../../api/_lib/auth.js) | Session requirement for downstream upload. |
 
-Flow:
+## Build this
 
-1. **Consent screen** — short copy: "We'll use one photo to build your avatar. Photo is processed on our servers, stored with your account, and never shared. You can delete it anytime." Continue button.
-2. **Camera preview** — `getUserMedia({ video: { facingMode: 'user', width: { ideal: 1024 }, height: { ideal: 1024 } }, audio: false })`. Show a square live preview with a subtle face-outline guide overlay (SVG).
-3. **Capture** — on click, draw the video frame to a `<canvas>`, downscale to max 1024×1024, export as JPEG at quality 0.92, store as a Blob in a module-scope variable.
-4. **Review** — show the captured image with "Use this photo" and "Retake" buttons.
-5. **Submit** — "Use this photo" POSTs the blob to `/api/avatars/from-selfie` (the endpoint is built in `02-02`; for now, just POST and display whatever response comes back, or a placeholder error if 404).
-6. On success, navigate to `/dashboard/` with a query string `?new=<avatar_id>`.
-
-### Dashboard entry
-
-On [public/dashboard/index.html](../../public/dashboard/index.html), add a "From selfie" button next to the existing "Create avatar" button. It links to `/dashboard/selfie`.
-
-### Graceful failure modes
-
-- No camera permission → show clear error + "Upload a photo instead" fallback (standard `<input type="file" accept="image/*">`).
-- No camera device → same fallback.
-- Browser doesn't support `getUserMedia` → same fallback.
+1. **New page** `public/selfie/index.html`:
+   - Full-viewport dark layout matching the dashboard chrome.
+   - Title, a one-sentence primer, a big centered `<video>` element (~640×640 square framing), shutter button, retake button, "Use this photo" button.
+   - Mobile-first — camera should be usable on a phone.
+2. **New module** `public/selfie/selfie.js`:
+   - `startCamera()` → calls `navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 1024, height: 1024 }, audio: false })`, pipes to `<video>`.
+   - Graceful error if permission denied: show a card with "Enable camera in your browser settings" and a text link to the upload path (there is already a file-upload path in the dashboard — link to it).
+   - `capture()` → draws the `<video>` frame to a hidden `<canvas>`, exports a JPEG blob at quality `0.92`. Stop the media tracks.
+   - Preview the captured JPEG, offer "Retake" (restarts camera) or "Use this photo" (dispatches a `CustomEvent('selfie:ready', { detail: { blob, width, height } })` on `document`).
+3. **Route** in [vercel.json](../../vercel.json): `/selfie` → `public/selfie/index.html`.
+4. **Redirect if unauthenticated**: on load, `fetch('/api/auth/me')`; if 401, `location.href = '/login?next=/selfie'`.
 
 ## Out of scope
 
-- Any 3D generation. This prompt ends at "POST a JPEG to the backend."
-- Face detection / quality scoring. Just take the photo.
-- Multi-angle capture. One photo only.
-- Video / animation capture.
-- Mobile-specific native camera integration beyond `facingMode: 'user'`.
+- Uploading the blob (02-02 consumes the event).
+- Generating the avatar (02-03).
+- Face-detection / quality scoring (could be added as 02-05).
+- Video/multi-angle capture — single frontal frame is the contract.
+- Any fallback to RPM's iframe. RPM is retired as the capture step; it may remain as an adapter option in 02-07 for *generation*.
+
+## Deliverables
+
+- `public/selfie/index.html`
+- `public/selfie/selfie.js`
+- Route in [vercel.json](../../vercel.json)
 
 ## Acceptance
 
-1. Visit `/dashboard/selfie` as a signed-in user.
-2. Grant camera permission → see live preview.
-3. Click capture → see still image + Retake / Use buttons.
-4. Retake returns to live preview.
-5. Use this photo → POST fires with a JPEG blob, `Content-Type: image/jpeg`.
-6. If camera denied → upload fallback input appears and works.
-7. No errors in console. No leaked camera tracks (`stream.getTracks().forEach(t => t.stop())` runs on unmount/retake).
-8. Page passes Lighthouse accessibility ≥ 90 (labels on all interactive elements, focus visible, no color-only signals).
+- [ ] `/selfie` loads in Chrome + Safari desktop + iOS Safari.
+- [ ] Camera permission prompt appears on first load; granting it shows the live preview.
+- [ ] Denying camera shows the "enable camera" card + link to upload.
+- [ ] Clicking the shutter freezes a preview; "Retake" restarts, "Use this photo" fires `selfie:ready` with a JPEG blob ≤ 2 MB.
+- [ ] Unauthenticated user redirects to `/login?next=/selfie`.
+- [ ] `npm run build` passes.
+
+## Reporting
+
+- Browsers tested + any iOS-specific quirks (the playsinline attribute, muted autoplay, orientation).
+- Final blob size at quality 0.92 for a typical capture.
+- Whether the page fits on a 360px-wide phone without horizontal scroll.

@@ -380,11 +380,13 @@ class App {
 	 * @return {Viewer}
 	 */
 	createViewer() {
+		if (this.viewer) this.viewer.dispose();
 		this.viewerEl = this.viewerContainerEl;
 		this.viewer   = new Viewer(this.viewerEl, this.options);
 		this.editor   = new Editor(this.viewer);
 		this.editor.attach();
 		window.VIEWER.editor = this.editor;
+		window.VIEWER.viewer = this.viewer;
 		return this.viewer;
 	}
 

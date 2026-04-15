@@ -964,10 +964,10 @@ export class Viewer {
 			});
 		});
 
-		// Bind keyboard shortcuts (1-9) — only once
-		if (!this._animKeyBound) {
-			this._animKeyBound = true;
-			document.addEventListener('keydown', (e) => {
+		// Bind keyboard shortcuts (1-9) — only once. Stored on `this` so
+		// dispose() can remove it; otherwise viewer recreations stack handlers.
+		if (!this._onAnimHotkey) {
+			this._onAnimHotkey = (e) => {
 				if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
 				if (e.metaKey || e.ctrlKey || e.altKey) return;
 				const n = parseInt(e.key, 10);
@@ -979,7 +979,8 @@ export class Viewer {
 				this.invalidate();
 				this._recomputeAnimating();
 				this._updateRenderLoop();
-			});
+			};
+			document.addEventListener('keydown', this._onAnimHotkey);
 		}
 	}
 
@@ -1035,6 +1036,10 @@ export class Viewer {
 		document.removeEventListener('visibilitychange', this._onVisibilityChange);
 		window.removeEventListener('resize', this._onResize, false);
 		window.removeEventListener('keydown', this._onKeyDown);
+		if (this._onAnimHotkey) {
+			document.removeEventListener('keydown', this._onAnimHotkey);
+			this._onAnimHotkey = null;
+		}
 
 		if (this._intersectionObserver) {
 			this._intersectionObserver.disconnect();
@@ -1105,11 +1110,21 @@ export class Viewer {
 			this._guiWrap.remove();
 			this._guiWrap = null;
 		}
+		if (this._guiToggle) {
+			this._guiToggle.remove();
+			this._guiToggle = null;
+		}
 
 		if (this.stats?.dom) this.stats.dom.remove();
 
-		this.controls?.dispose();
-		this.controls = null;
+		if (this.controls) {
+			if (this._onControlsChange) {
+				this.controls.removeEventListener('change', this._onControlsChange);
+				this._onControlsChange = null;
+			}
+			this.controls.dispose();
+			this.controls = null;
+		}
 
 		if (this._loadedEnvironment) {
 			this._loadedEnvironment.dispose();

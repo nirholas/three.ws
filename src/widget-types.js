@@ -23,7 +23,7 @@ export const WIDGET_TYPES = {
 	'talking-agent': {
 		label:  'Talking Agent',
 		desc:   'Embodied chat — your agent on your site.',
-		status: 'pending',
+		status: 'ready',
 		icon:   '◐',
 	},
 	'passport': {
@@ -55,7 +55,24 @@ export const BRAND_DEFAULTS = Object.freeze({
 const TYPE_DEFAULTS = {
 	'turntable':         { rotationSpeed: 0.5 },
 	'animation-gallery': { defaultClip: '', loopAll: false, showClipPicker: true },
-	'talking-agent':     { greeting: 'Hi! What would you like to know?', brain: 'none', proxyURL: '' },
+	'talking-agent':     {
+		agentName:       '',
+		agentTitle:      'AI Agent',
+		avatar:          'embedded',
+		brainProvider:   'anthropic',
+		proxyURL:        '',
+		systemPrompt:    '',
+		greeting:        'Hi! Ask me anything.',
+		temperature:     0.7,
+		maxTurns:        20,
+		skills:          { speak: true, wave: true, lookAt: true, playClip: true, remember: false },
+		showChatHistory: true,
+		voiceInput:      true,
+		voiceOutput:     true,
+		chatPosition:    'right',
+		poweredByBadge:  true,
+		visitorRateLimit: { msgsPerMinute: 8, msgsPerSession: 50 },
+	},
 	'passport':          {
 		chain:                'base-sepolia',
 		agentId:              null,
@@ -98,9 +115,39 @@ const TYPE_SCHEMAS = {
 		showClipPicker: z.boolean().default(true),
 	}),
 	'talking-agent': brandSchema.extend({
-		greeting: z.string().max(280).default('Hi! What would you like to know?'),
-		brain:    z.enum(['none', 'anthropic']).default('none'),
-		proxyURL: z.string().url().or(z.literal('')).default(''),
+		agentName:       z.string().max(80).default(''),
+		agentTitle:      z.string().max(80).default('AI Agent'),
+		avatar:          z.enum(['embedded', 'chat-only']).default('embedded'),
+		brainProvider:   z.enum(['none', 'anthropic', 'custom']).default('anthropic'),
+		proxyURL:        z.string().url().startsWith('https://').or(z.literal('')).default(''),
+		systemPrompt:    z.string().max(4000).default(''),
+		greeting:        z.string().max(280).default('Hi! Ask me anything.'),
+		temperature:     z.number().min(0).max(1).default(0.7),
+		maxTurns:        z.number().int().min(1).max(100).default(20),
+		skills: z.object({
+			speak:    z.boolean().default(true),
+			wave:     z.boolean().default(true),
+			lookAt:   z.boolean().default(true),
+			playClip: z.boolean().default(true),
+			remember: z.boolean().default(false),
+		}).default({ speak: true, wave: true, lookAt: true, playClip: true, remember: false }),
+		showChatHistory: z.boolean().default(true),
+		voiceInput:      z.boolean().default(true),
+		voiceOutput:     z.boolean().default(true),
+		chatPosition:    z.enum(['right', 'bottom', 'overlay']).default('right'),
+		poweredByBadge:  z.boolean().default(true),
+		visitorRateLimit: z.object({
+			msgsPerMinute:  z.number().int().min(1).max(60).default(8),
+			msgsPerSession: z.number().int().min(1).max(500).default(50),
+		}).default({ msgsPerMinute: 8, msgsPerSession: 50 }),
+	}).superRefine((cfg, ctx) => {
+		if (cfg.brainProvider === 'custom' && !cfg.proxyURL) {
+			ctx.addIssue({
+				path: ['proxyURL'],
+				code: z.ZodIssueCode.custom,
+				message: 'proxyURL is required when brainProvider is "custom"',
+			});
+		}
 	}),
 	'passport': brandSchema.extend({
 		chain:                z.string().min(1).default('base-sepolia'),

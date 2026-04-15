@@ -349,6 +349,12 @@ class Agent3DElement extends HTMLElement {
 				apiKey: this.getAttribute('api-key') || undefined,
 				proxyURL: this.getAttribute('key-proxy') || undefined,
 			};
+			// Apply tts="..." attribute shorthand on top of the manifest's voice config.
+			const ttsOverride = this._parseTTSAttribute();
+			if (ttsOverride) {
+				manifest.voice = manifest.voice || {};
+				manifest.voice.tts = { ...(manifest.voice.tts || {}), ...ttsOverride };
+			}
 			this._runtime = new Runtime({
 				manifest,
 				viewer: this._scene,

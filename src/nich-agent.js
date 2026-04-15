@@ -13,6 +13,25 @@ import { ACTION_TYPES } from './agent-protocol.js';
 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
+/**
+ * @typedef {Object} NichAgentOptions
+ * @property {'floating'|'embedded'} [layout]    'floating' (default) = legacy fixed-position toggle button + panel.
+ *                                                'embedded' = panel mounts directly inside containerEl, no toggle button.
+ * @property {'right'|'bottom'|'overlay'} [position]  Layout hint applied as a CSS class. Embedded only.
+ * @property {string}  [greeting]               First agent message shown on open / mount.
+ * @property {string}  [title]                  Override identity.name in the panel header.
+ * @property {{accent?:string, background?:string, caption?:string}} [theme]
+ *                                              CSS custom-property overrides (--nich-accent, --nich-bg, --nich-fg).
+ * @property {boolean} [showPoweredBy]          Show "powered by 3D Agent" footer link.
+ * @property {boolean} [voiceInput]             Enable mic button (default true).
+ * @property {boolean} [voiceOutput]            Speak replies via speechSynthesis (default true).
+ * @property {(text:string)=>Promise<{reply?:string,actions?:any[]}>} [onSend]
+ *                                              Override the default chat dispatch. Used by the talking-agent widget
+ *                                              to route through /api/widgets/:id/chat instead of /api/chat.
+ * @property {boolean} [skipDefaultListeners]   Skip wiring SPEAK / LOAD_START / PERFORM_SKILL bus handlers.
+ *                                              Widgets manage their own greeting + history.
+ */
+
 export class NichAgent {
 	/**
 	 * @param {HTMLElement}                                        containerEl
@@ -20,13 +39,19 @@ export class NichAgent {
 	 * @param {import('./agent-skills.js').AgentSkills}            [skills]
 	 * @param {import('./agent-identity.js').AgentIdentity}        [identity]
 	 * @param {import('./runtime/index.js').Runtime}               [runtime]
+	 * @param {NichAgentOptions}                                   [options]
 	 */
-	constructor(containerEl, protocol = null, skills = null, identity = null, runtime = null) {
+	constructor(containerEl, protocol = null, skills = null, identity = null, runtime = null, options = {}) {
 		this.container  = containerEl;
 		this.protocol   = protocol;
 		this.skills     = skills;
 		this.identity   = identity;
 		this.runtime    = runtime;
+		this.options    = options || {};
+		this.layout     = this.options.layout    || 'floating';
+		this.position   = this.options.position  || 'right';
+		this.voiceInput = this.options.voiceInput  !== false;
+		this.voiceOutput = this.options.voiceOutput !== false;
 		this.isSpeaking = false;
 		this.isListening = false;
 		this.recognition = null;
@@ -39,10 +64,10 @@ export class NichAgent {
 		this._loadHistory();
 
 		this._buildUI();
-		this._initSpeechRecognition();
+		if (this.voiceInput) this._initSpeechRecognition();
 
 		// Listen for SPEAK actions to render them in the chat
-		if (this.protocol) {
+		if (this.protocol && !this.options.skipDefaultListeners) {
 			this.protocol.on(ACTION_TYPES.SPEAK, (action) => {
 				const text = action.payload?.text;
 				if (text) {
@@ -94,55 +119,77 @@ export class NichAgent {
 	// ── UI ────────────────────────────────────────────────────────────────────
 
 	_buildUI() {
+		const titleText = this.options.title || this.identity?.name || 'Agent';
+		const greeting  = this.options.greeting
+			|| (this.layout === 'embedded' ? 'Hi! Ask me anything.' : `I'm here. Drop a model, ask me anything, or say "help".`);
+
 		this.panel = document.createElement('div');
-		this.panel.className  = 'nich-panel';
+		this.panel.className  = 'nich-panel'
+			+ (this.layout === 'embedded' ? ' nich-panel--embedded nich-position--' + this.position : '');
 		this.panel.innerHTML  = `
 			<div class="nich-header">
-				<span class="nich-title">${this.identity?.name || 'Agent'}</span>
+				<span class="nich-title">${_escapeHTML(titleText)}</span>
 				<div class="nich-header-right">
 					<span class="nich-emotion-dot" id="nich-emotion-dot" title="Agent emotional state"></span>
-					<button class="nich-close" aria-label="Close">&times;</button>
+					${this.layout === 'embedded' ? '' : '<button class="nich-close" aria-label="Close">&times;</button>'}
 				</div>
 			</div>
 			<div class="nich-messages" id="agent-messages">
-				<div class="nich-message agent">I'm here. Drop a model, ask me anything, or say "help".</div>
+				<div class="nich-message agent">${_escapeHTML(greeting)}</div>
 			</div>
 			<div class="nich-controls">
-				<input type="text" class="nich-input" placeholder="Ask the agent…" autocomplete="off" />
+				<input type="text" class="nich-input" placeholder="Ask the agent…" autocomplete="off" maxlength="4000" />
 				<button class="nich-send" aria-label="Send">
 					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
 				</button>
 			</div>
-			<div class="nich-mic-row">
-				<button class="nich-mic" aria-label="Toggle microphone">
-					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5zm6 6c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
-				</button>
-				<span class="nich-mic-hint">or press mic to speak</span>
-			</div>
+			${this.voiceInput ? `
+				<div class="nich-mic-row">
+					<button class="nich-mic" aria-label="Toggle microphone">
+						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5zm6 6c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+					</button>
+					<span class="nich-mic-hint">${SpeechRecognition ? 'or press mic to speak' : 'voice unavailable in this browser'}</span>
+				</div>
+			` : ''}
+			${this.options.showPoweredBy ? '<a class="nich-powered-by" href="https://3dagent.vercel.app" target="_blank" rel="noopener noreferrer">powered by 3dagent</a>' : ''}
 		`;
-		this.panel.style.display = 'none';
-		this.container.appendChild(this.panel);
 
-		this.toggleBtn = document.createElement('button');
-		this.toggleBtn.className = 'nich-toggle';
-		this.toggleBtn.setAttribute('aria-label', 'Talk to 3D Agent');
-		this.toggleBtn.title = 'Talk to Agent';
-		this.toggleBtn.innerHTML = `
-			<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-				<path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
-				<path d="M7 9h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2z"/>
-			</svg>
-			<span class="nich-toggle-label">Agent</span>
-		`;
-		this.container.appendChild(this.toggleBtn);
+		// Apply theme overrides via CSS custom properties scoped to the panel.
+		if (this.options.theme) {
+			const t = this.options.theme;
+			if (t.accent)     this.panel.style.setProperty('--nich-accent',     t.accent);
+			if (t.background) this.panel.style.setProperty('--nich-bg',         t.background);
+			if (t.caption)    this.panel.style.setProperty('--nich-fg',         t.caption);
+		}
 
-		this.toggleBtn.addEventListener('click',  () => this._togglePanel());
-		this.panel.querySelector('.nich-close').addEventListener('click', () => this._togglePanel());
+		if (this.layout === 'embedded') {
+			// Embedded: panel is always open inside its container, no toggle.
+			this.container.appendChild(this.panel);
+		} else {
+			// Floating: original behaviour — fixed-position panel + toggle button on body.
+			this.panel.style.display = 'none';
+			this.container.appendChild(this.panel);
+			this.toggleBtn = document.createElement('button');
+			this.toggleBtn.className = 'nich-toggle';
+			this.toggleBtn.setAttribute('aria-label', 'Talk to 3D Agent');
+			this.toggleBtn.title = 'Talk to Agent';
+			this.toggleBtn.innerHTML = `
+				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+					<path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+					<path d="M7 9h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2z"/>
+				</svg>
+				<span class="nich-toggle-label">Agent</span>
+			`;
+			this.container.appendChild(this.toggleBtn);
+			this.toggleBtn.addEventListener('click', () => this._togglePanel());
+			this.panel.querySelector('.nich-close')?.addEventListener('click', () => this._togglePanel());
+		}
+
 		this.panel.querySelector('.nich-send').addEventListener('click',  () => this._send());
 		this.panel.querySelector('.nich-input').addEventListener('keydown', (e) => {
 			if (e.key === 'Enter') this._send();
 		});
-		this.panel.querySelector('.nich-mic').addEventListener('click', () => this._toggleMic());
+		this.panel.querySelector('.nich-mic')?.addEventListener('click', () => this._toggleMic());
 	}
 
 	// ── Panel Toggle ──────────────────────────────────────────────────────────
@@ -176,6 +223,32 @@ export class NichAgent {
 	}
 
 	async _handleInput(text) {
+		// Custom dispatch (talking-agent widget routes through /api/widgets/:id/chat)
+		if (typeof this.options.onSend === 'function') {
+			const typing = this._startTyping();
+			try {
+				const result = await this.options.onSend(text);
+				if (result?.reply) {
+					this._addMessage('agent', result.reply);
+					this._speak(result.reply);
+					this._pushHistory('user', text);
+					this._pushHistory('assistant', result.reply);
+					if (this.protocol) {
+						this.protocol.emit({
+							type:    ACTION_TYPES.SPEAK,
+							payload: { text: result.reply, sentiment: 0 },
+							agentId: this.identity?.id || 'default',
+						});
+					}
+				} else if (result?.error) {
+					this._addMessage('agent', result.error, 'status');
+				}
+			} finally {
+				typing();
+			}
+			return;
+		}
+
 		const lower = text.toLowerCase();
 
 		// Route to skills first (high-precision pattern matching)
@@ -499,6 +572,7 @@ export class NichAgent {
 	// ── Speech Synthesis ─────────────────────────────────────────────────────
 
 	_speak(text) {
+		if (!this.voiceOutput) return;
 		if (!this.synth) return;
 		this.synth.cancel();
 
@@ -547,9 +621,20 @@ export class NichAgent {
 	// ── Dispose ───────────────────────────────────────────────────────────────
 
 	dispose() {
-		if (this.recognition) this.recognition.stop();
-		this.synth.cancel();
-		this.panel.remove();
-		this.toggleBtn.remove();
+		if (this.recognition) {
+			try { this.recognition.stop(); } catch {}
+		}
+		try { this.synth?.cancel(); } catch {}
+		this.panel?.remove();
+		this.toggleBtn?.remove();
 	}
+}
+
+function _escapeHTML(s) {
+	return String(s ?? '')
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#39;');
 }

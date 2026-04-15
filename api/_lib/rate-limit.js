@@ -73,6 +73,10 @@ export const limits = {
 	chatIp: (ip) => getLimiter('chat:ip', { limit: 40, window: '1 m' }).limit(ip),
 	widgetWrite: (userId) => getLimiter('widget:write', { limit: 60, window: '1 m' }).limit(userId),
 	widgetRead: (ip) => getLimiter('widget:read', { limit: 600, window: '1 m' }).limit(ip),
+	// Per-widget visitor chat. Limit is dynamic — one bucket per (widgetId, perMinute).
+	widgetChat: ({ ip, widgetId, perMinute }) =>
+		getLimiter('widget:chat', { limit: Math.max(1, Math.min(60, perMinute || 8)), window: '1 m' })
+			.limit(`${widgetId}:${ip}`),
 };
 
 // Trust only proxy headers that Vercel itself sets and signs. Naively reading

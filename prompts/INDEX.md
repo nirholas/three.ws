@@ -14,11 +14,13 @@ The **only** goal. Six bands, in order. Everything else is secondary until these
 Each band is a folder. Prompts inside a band can run in parallel unless they touch the same file.
 
 - [wallet-auth/](./wallet-auth/) — band 1
-- [selfie-onboarding/](./selfie-onboarding/) — band 2
-- [avatar-editing/](./avatar-editing/) — band 3
-- [portable-embed/](./portable-embed/) — band 4 (view + embed polish)
-- [claude-lobehub/](./claude-lobehub/) — band 5 (chat-surface integration)
+- [selfie-onboarding/](./selfie-onboarding/) + [selfie-agent/](./selfie-agent/) + [avatar-platform/](./avatar-platform/) — band 2
+- [avatar-editing/](./avatar-editing/) + [avatar-edit/](./avatar-edit/) — band 3
+- [portable-embed/](./portable-embed/) + [embed/](./embed/) — band 4 (view + embed polish)
+- [claude-lobehub/](./claude-lobehub/) + [lobehub-embed/](./lobehub-embed/) + [claude-artifact/](./claude-artifact/) — band 5 (chat-surface integration)
 - [onchain/](./onchain/) — band 6
+- [cz-demo/](./cz-demo/) — **the ship target.** Rolls up bands 1, 5, 6 into one live-demo flow. Work here last, after the bands above are green.
+- [build/](./build/) — master flat index (`NN-NN-*.md`) covering bands 1–5 in one place; use as an alternative dispatch list if the band-folder layout gets noisy.
 
 Don't skip bands. Band 2 depends on band 1 (we need to know *who* owns the agent before generating one). Band 5 depends on band 4 (embed must work on a regular page before it works inside Claude). Band 6 depends on band 1 (wallet = onchain identity).
 

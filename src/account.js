@@ -3,8 +3,38 @@
 
 const API = ''; // same origin
 
+// Wrapped fetch that handles expired sessions centrally. A 401 response is
+// treated as a session-expiry signal and redirects to /login?next=<current>
+// with the URL hash preserved (SPAs lose it on a naked location.href hop).
+// Pass allowAnonymous:true for endpoints where a 401 is a legitimate
+// "not signed in" answer the caller wants to inspect itself (e.g. /api/auth/me).
+export async function apiFetch(path, options = {}) {
+	const { allowAnonymous = false, ...init } = options;
+	const res = await fetch(path, {
+		credentials: 'include',
+		...init,
+	});
+	if (res.status === 401 && !allowAnonymous) {
+		redirectToLogin();
+		const err = new Error('session expired');
+		err.status = 401;
+		err.redirected = true;
+		throw err;
+	}
+	return res;
+}
+
+function redirectToLogin() {
+	if (typeof location === 'undefined') return;
+	// Don't loop if we're already on the login page.
+	if (/^\/login(\/|$|\?)/.test(location.pathname)) return;
+	const next = location.pathname + location.search + location.hash;
+	location.href = '/login?next=' + encodeURIComponent(next);
+}
+
 export async function getMe() {
-	const res = await fetch(`${API}/api/auth/me`, { credentials: 'include' });
+	// /api/auth/me 401s for anonymous visitors by design — handle in place.
+	const res = await apiFetch(`${API}/api/auth/me`, { allowAnonymous: true });
 	if (res.status === 401) return null;
 	if (!res.ok) throw new Error(`auth/me failed: ${res.status}`);
 	return (await res.json()).user;
@@ -57,9 +87,8 @@ export async function saveRemoteGlbToAccount(sourceUrl, meta = {}) {
 }
 
 async function postJson(path, body) {
-	const res = await fetch(`${API}${path}`, {
+	const res = await apiFetch(`${API}${path}`, {
 		method: 'POST',
-		credentials: 'include',
 		headers: { 'content-type': 'application/json' },
 		body: JSON.stringify(body),
 	});
