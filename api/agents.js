@@ -26,14 +26,20 @@ export default wrap(async (req, res) => {
 // ── List ───────────────────────────────────────────────────────────────────
 
 async function handleList(req, res) {
-	const auth = await resolveAuth(req);
-	if (!auth) return error(res, 401, 'unauthorized', 'sign in or provide a bearer token');
+	const url    = new URL(req.url, 'http://x');
+	const isMe   = url.pathname.endsWith('/me');
+	const auth   = await resolveAuth(req);
 
-	// /api/agents/me — get or create the default agent
-	const url = new URL(req.url, 'http://x');
-	if (url.pathname.endsWith('/me')) {
-		return handleGetOrCreateMe(req, res, auth);
+	// /api/agents/me is the identity bootstrap endpoint — the client calls it
+	// on every page load, including for anonymous visitors. Return null instead
+	// of 401 so the client can cleanly fall back to a local-only identity
+	// without a noisy console error on every unauthenticated page view.
+	if (!auth) {
+		if (isMe) return json(res, 200, { agent: null });
+		return error(res, 401, 'unauthorized', 'sign in or provide a bearer token');
 	}
+
+	if (isMe) return handleGetOrCreateMe(req, res, auth);
 
 	const rows = await sql`
 		SELECT * FROM agent_identities
@@ -47,23 +53,36 @@ async function handleList(req, res) {
 // ── Get-or-create default agent ───────────────────────────────────────────
 
 async function handleGetOrCreateMe(req, res, auth) {
-	let [agent] = await sql`
-		SELECT * FROM agent_identities
-		WHERE user_id  = ${auth.userId}
-		  AND deleted_at IS NULL
-		ORDER BY created_at ASC
-		LIMIT 1
-	`;
-
-	if (!agent) {
-		[agent] = await sql`
-			INSERT INTO agent_identities (user_id, name, skills)
-			VALUES (${auth.userId}, ${'Agent'}, ${['greet', 'present-model', 'validate-model', 'remember', 'think']})
-			RETURNING *
+	try {
+		let [agent] = await sql`
+			SELECT * FROM agent_identities
+			WHERE user_id  = ${auth.userId}
+			  AND deleted_at IS NULL
+			ORDER BY created_at ASC
+			LIMIT 1
 		`;
-	}
 
-	return json(res, 200, { agent: decorate(agent) });
+		if (!agent) {
+			[agent] = await sql`
+				INSERT INTO agent_identities (user_id, name, skills)
+				VALUES (${auth.userId}, ${'Agent'}, ${['greet', 'present-model', 'validate-model', 'remember', 'think']})
+				RETURNING *
+			`;
+		}
+
+		return json(res, 200, { agent: decorate(agent) });
+	} catch (err) {
+		// Missing table / bad migration shouldn't brick the client — surface a
+		// null agent and let the UI fall back to local-only identity.
+		const code = err?.code || '';
+		const msg  = String(err?.message || '');
+		const missing = code === '42P01' || /relation.*does not exist/i.test(msg);
+		if (missing) {
+			console.error('[agents/me] agent_identities table missing — run schema.sql', err);
+			return json(res, 200, { agent: null, warning: 'agents_table_missing' });
+		}
+		throw err;
+	}
 }
 
 // ── Create ────────────────────────────────────────────────────────────────

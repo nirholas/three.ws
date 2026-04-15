@@ -25,6 +25,8 @@ const appConfig = {
 				main: resolve(__dirname, 'index.html'),
 				features: resolve(__dirname, 'features.html'),
 				embed: resolve(__dirname, 'embed.html'),
+				'agent-home': resolve(__dirname, 'agent-home.html'),
+				'agent-embed': resolve(__dirname, 'agent-embed.html'),
 			},
 		},
 	},

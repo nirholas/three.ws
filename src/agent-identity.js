@@ -195,25 +195,29 @@ export class AgentIdentity {
 
 			if (resp.ok) {
 				const { agent } = await resp.json();
-				this._record  = _normalise(agent);
-				this._agentId = this._record.id;
-				this._loaded  = true;
-				this._persist();
-				if (!this.memory) {
-					this.memory = new AgentMemory(this._record.id, { backendSync: true });
-				}
-				return;
-			}
-
-			if (resp.status === 404 || resp.status === 401) {
-				// Not signed in or no agent yet — create a local-only identity
-				if (!this._record) {
-					this._record  = _makeDefault(this._agentId);
+				// Server returns { agent: null } for anonymous /me — treat as
+				// "no server identity" and fall through to local-only.
+				if (agent) {
+					this._record  = _normalise(agent);
 					this._agentId = this._record.id;
 					this._loaded  = true;
 					this._persist();
-					this.memory   = new AgentMemory(this._agentId, { backendSync: false });
+					if (!this.memory) {
+						this.memory = new AgentMemory(this._record.id, { backendSync: true });
+					}
+					return;
 				}
+			}
+
+			// Any non-2xx or a 2xx with null agent → use local record if we have
+			// one, otherwise synthesize a local-only identity. Tolerant of 5xx
+			// so a backend blip doesn't brick the avatar for the visitor.
+			if (!this._record) {
+				this._record  = _makeDefault(this._agentId);
+				this._agentId = this._record.id;
+				this._loaded  = true;
+				this._persist();
+				this.memory   = new AgentMemory(this._agentId, { backendSync: false });
 			}
 		} catch {
 			// Offline — use local record if we have one

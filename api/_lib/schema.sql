@@ -10,15 +10,20 @@ create extension if not exists "citext";
 create table if not exists users (
     id              uuid primary key default gen_random_uuid(),
     email           citext not null unique,
-    password_hash   text,                       -- null = oauth-only account
+    password_hash   text,                       -- null = oauth-only or wallet-only account
     display_name    text,
     avatar_url      text,
     plan            text not null default 'free' check (plan in ('free','pro','team','enterprise')),
     email_verified  boolean not null default false,
+    wallet_address  text,                       -- lowercased 0x… for wallet login
     created_at      timestamptz not null default now(),
     updated_at      timestamptz not null default now(),
     deleted_at      timestamptz
 );
+
+-- Additive migration for deployments that pre-date the wallet_address column.
+alter table users add column if not exists wallet_address text;
+create unique index if not exists users_wallet_unique on users(wallet_address) where wallet_address is not null;
 
 -- ── avatars (GLBs stored in R2) ─────────────────────────────────────────────
 create table if not exists avatars (

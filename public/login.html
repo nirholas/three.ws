@@ -21,6 +21,11 @@
 	.err { margin-top:14px; padding:10px 12px; background:rgba(255,92,92,.1); border:1px solid rgba(255,92,92,.3); border-radius:8px; color:#ffb3b3; font-size:13px; display:none; }
 	.foot { margin-top:20px; text-align:center; font-size:13px; color:#888; }
 	.brand { font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); margin:0 0 8px; }
+	.wallet-btn { background:#1c1c28; border:1px solid #2a2a36; color:#eee; font-weight:500; margin-top:12px; display:flex; align-items:center; justify-content:center; gap:8px; }
+	.wallet-btn:hover { background:#22222e; border-color:var(--accent); }
+	.divider { display:flex; align-items:center; gap:12px; margin:22px 0 4px; color:#555; font-size:12px; text-transform:uppercase; letter-spacing:.08em; }
+	.divider::before, .divider::after { content:''; flex:1; height:1px; background:#2a2a36; }
+	.wallet-icon { width:18px; height:18px; }
 </style>
 </head>
 <body>
@@ -33,9 +38,15 @@
 	<label for="password">Password</label>
 	<input id="password" type="password" autocomplete="current-password" required minlength="10">
 	<button id="submit" type="submit">Sign in</button>
+	<div class="divider">or</div>
+	<button id="wallet" type="button" class="wallet-btn">
+		<svg class="wallet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M16 12h2"/></svg>
+		Sign in with wallet
+	</button>
 	<div class="err" id="err"></div>
 	<p class="foot">No account? <a href="/register.html">Create one</a></p>
 </form>
+<script type="module" src="/wallet-login.js"></script>
 <script>
 const params = new URLSearchParams(location.search);
 const next = params.get('next') || '/dashboard/';

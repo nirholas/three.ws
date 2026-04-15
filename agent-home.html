@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<title>Agent Home — 3D Agent</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta name="description" content="An embodied 3D AI agent — body, place, identity, memory." />
+	<meta name="theme-color" content="#000000" />
+
+	<link rel="shortcut icon" href="/favicon.ico" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link rel="stylesheet" href="/style.css" />
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+
+	<meta property="og:type"         content="website" />
+	<meta property="og:title"        content="Agent"                   id="og-title" />
+	<meta property="og:description"  content="An embodied 3D agent."   id="og-description" />
+	<meta property="og:image"        content=""                        id="og-image" />
+	<meta property="og:url"          content=""                        id="og-url" />
+	<meta name="twitter:card"        content="summary_large_image" />
+	<meta name="twitter:title"       content="Agent"                   id="tw-title" />
+	<meta name="twitter:description" content=""                        id="tw-description" />
+	<meta name="twitter:image"       content=""                        id="tw-image" />
+	<link rel="alternate" type="application/json+oembed" href="" id="oembed-link" title="Agent oEmbed" />
+
+	<style>
+		body {
+			overflow: auto;
+			display: flex;
+			flex-direction: column;
+		}
+
+		.agent-page-header {
+			display: flex;
+			align-items: center;
+			gap: 1rem;
+			padding: 1rem 1.618rem;
+			border-bottom: 1px solid rgba(255,255,255,0.06);
+		}
+
+		.agent-page-header a {
+			color: rgba(255,255,255,0.4);
+			text-decoration: none;
+			font-size: 0.764rem;
+		}
+
+		.agent-page-header a:hover {
+			color: rgba(255,255,255,0.8);
+		}
+
+		.agent-page-hero {
+			max-width: 520px;
+			margin: 4rem auto 2rem;
+			padding: 0 1rem;
+			text-align: center;
+		}
+
+		.agent-page-title {
+			font-size: 1.618rem;
+			font-weight: 300;
+			color: #e5e5e5;
+			letter-spacing: -0.02em;
+			margin: 0 0 0.618rem;
+		}
+
+		.agent-page-subtitle {
+			font-size: 0.764rem;
+			color: rgba(255,255,255,0.35);
+			line-height: 1.618;
+		}
+
+		.agent-page-card-wrap {
+			max-width: 420px;
+			margin: 0 auto;
+			padding: 0 1rem 4rem;
+		}
+
+		.agent-page-card-wrap .agent-home-timeline {
+			max-height: 320px;
+		}
+
+		.agent-page-card-wrap .agent-home-panel {
+			background: rgba(12, 12, 18, 0.98);
+			border: 1px solid rgba(255,255,255,0.08);
+			border-radius: 12px;
+		}
+
+		.agent-embed-hint {
+			max-width: 420px;
+			margin: 1.618rem auto 0;
+			padding: 0 1rem;
+		}
+
+		.agent-embed-tabs {
+			display: flex;
+			gap: 0.382rem;
+			margin-bottom: 0.618rem;
+		}
+
+		.agent-embed-tab {
+			background: transparent;
+			border: 1px solid rgba(255,255,255,0.1);
+			color: rgba(255,255,255,0.5);
+			font-size: 0.618rem;
+			padding: 0.236rem 0.618rem;
+			border-radius: 999px;
+			cursor: pointer;
+			font-family: inherit;
+		}
+
+		.agent-embed-tab.active {
+			background: rgba(255,255,255,0.08);
+			color: rgba(255,255,255,0.9);
+			border-color: rgba(255,255,255,0.2);
+		}
+
+		.agent-embed-code-wrap {
+			position: relative;
+		}
+
+		.agent-embed-code {
+			background: rgba(255,255,255,0.04);
+			border: 1px solid rgba(255,255,255,0.08);
+			border-radius: 8px;
+			padding: 0.618rem 1rem;
+			padding-right: 3.8rem;
+			font-family: monospace;
+			font-size: 0.618rem;
+			color: rgba(255,255,255,0.55);
+			word-break: break-all;
+			line-height: 1.5;
+		}
+
+		.agent-embed-copy {
+			position: absolute;
+			top: 0.382rem;
+			right: 0.382rem;
+			background: rgba(255,255,255,0.06);
+			border: 1px solid rgba(255,255,255,0.1);
+			color: rgba(255,255,255,0.6);
+			font-size: 0.618rem;
+			padding: 0.236rem 0.618rem;
+			border-radius: 6px;
+			cursor: pointer;
+			font-family: inherit;
+		}
+
+		.agent-embed-copy:hover { color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.1); }
+		.agent-embed-copy.copied { color: #86efac; border-color: rgba(134,239,172,0.3); }
+
+		.agent-embed-label {
+			font-size: 0.618rem;
+			color: rgba(255,255,255,0.25);
+			margin-bottom: 0.382rem;
+		}
+
+		.agent-embed-preview-link {
+			display: inline-block;
+			margin-top: 0.618rem;
+			font-size: 0.618rem;
+			color: rgba(255,255,255,0.35);
+			text-decoration: none;
+		}
+
+		.agent-embed-preview-link:hover { color: rgba(255,255,255,0.7); }
+
+		.agent-skills-full {
+			max-width: 420px;
+			margin: 1.618rem auto 0;
+			padding: 0 1rem;
+		}
+
+		.agent-skills-title {
+			font-size: 0.618rem;
+			color: rgba(255,255,255,0.25);
+			margin-bottom: 0.618rem;
+			text-transform: uppercase;
+			letter-spacing: 0.08em;
+		}
+
+		.agent-skills-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+			gap: 0.618rem;
+		}
+
+		.agent-skill-card {
+			background: rgba(255,255,255,0.04);
+			border: 1px solid rgba(255,255,255,0.07);
+			border-radius: 8px;
+			padding: 0.618rem;
+		}
+
+		.agent-skill-card-name {
+			font-size: 0.764rem;
+			font-weight: 500;
+			color: rgba(255,255,255,0.7);
+			margin-bottom: 0.236rem;
+		}
+
+		.agent-skill-card-desc {
+			font-size: 0.618rem;
+			color: rgba(255,255,255,0.3);
+			line-height: 1.382;
+		}
+
+		.loading-placeholder {
+			color: rgba(255,255,255,0.2);
+			font-size: 0.764rem;
+			text-align: center;
+			padding: 2rem;
+		}
+	</style>
+</head>
+<body>
+	<div class="agent-page-header">
+		<a href="/">← 3D Agent</a>
+	</div>
+
+	<div class="agent-page-hero">
+		<h1 class="agent-page-title" id="page-agent-name">Agent</h1>
+		<p class="agent-page-subtitle" id="page-agent-desc">
+			Embodied. Present. Persistent.
+		</p>
+	</div>
+
+	<div class="agent-page-card-wrap">
+		<div id="agent-home-container">
+			<div class="loading-placeholder">Loading agent…</div>
+		</div>
+	</div>
+
+	<div class="agent-skills-full" id="agent-skills-section" style="display:none">
+		<div class="agent-skills-title">Skills</div>
+		<div class="agent-skills-grid" id="agent-skills-grid"></div>
+	</div>
+
+	<div class="agent-embed-hint" id="agent-embed-section" style="display:none">
+		<div class="agent-embed-label">Share &amp; embed</div>
+		<div class="agent-embed-tabs" role="tablist">
+			<button class="agent-embed-tab active" data-tab="iframe">iframe</button>
+			<button class="agent-embed-tab" data-tab="link">link</button>
+			<button class="agent-embed-tab" data-tab="webcomponent">&lt;agent-3d&gt;</button>
+		</div>
+		<div class="agent-embed-code-wrap">
+			<div class="agent-embed-code" id="agent-embed-code"></div>
+			<button class="agent-embed-copy" id="agent-embed-copy">copy</button>
+		</div>
+		<a class="agent-embed-preview-link" id="agent-embed-preview" target="_blank" rel="noopener">preview embed →</a>
+		<a class="agent-embed-preview-link" id="agent-embed-settings" href="" target="_blank" rel="noopener">embed settings →</a>
+	</div>
+
+	<script type="module">
+		import { AgentIdentity } from './src/agent-identity.js';
+		import { AgentMemory }   from './src/agent-memory.js';
+		import { AgentSkills }   from './src/agent-skills.js';
+		import { AgentHome }     from './src/agent-home.js';
+		import { protocol }      from './src/agent-protocol.js';
+
+		const agentId = location.pathname.split('/').filter(Boolean).pop();
+
+		async function main() {
+			const identity = new AgentIdentity({ agentId: agentId || undefined, autoLoad: false });
+			await identity.load();
+
+			document.getElementById('page-agent-name').textContent = identity.name;
+			if (identity.description) {
+				document.getElementById('page-agent-desc').textContent = identity.description;
+			}
+
+			const container = document.getElementById('agent-home-container');
+			container.innerHTML = '';
+			const home = new AgentHome(container, identity, protocol, null);
+			await home.render();
+
+			if (identity.skills?.length) {
+				const skills    = new AgentSkills(protocol, identity.memory);
+				const section   = document.getElementById('agent-skills-section');
+				const grid      = document.getElementById('agent-skills-grid');
+				section.style.display = '';
+				skills.list().filter(s => identity.skills.includes(s.name)).forEach(skill => {
+					const card = document.createElement('div');
+					card.className = 'agent-skill-card';
+					card.innerHTML = `
+						<div class="agent-skill-card-name">${skill.name}</div>
+						<div class="agent-skill-card-desc">${skill.description}</div>
+					`;
+					grid.appendChild(card);
+				});
+			}
+
+			const embedSection = document.getElementById('agent-embed-section');
+			const embedCode    = document.getElementById('agent-embed-code');
+			const embedCopy    = document.getElementById('agent-embed-copy');
+			const embedPreview = document.getElementById('agent-embed-preview');
+			const origin       = location.origin;
+			const embedUrl     = `${origin}/agent/${identity.id}/embed`;
+			const agentUrl     = `${origin}/agent/${identity.id}`;
+
+			const snippets = {
+				iframe:       `<iframe src="${embedUrl}" width="420" height="520" style="border:0;border-radius:12px" allow="autoplay; xr-spatial-tracking"></iframe>`,
+				link:         agentUrl,
+				webcomponent: `<script type="module" src="${origin}/dist-lib/agent-3d.js"><\/script>\n<agent-3d agent-id="${identity.id}" style="width:420px;height:520px"></agent-3d>`,
+			};
+
+			let current = 'iframe';
+			const render = () => { embedCode.textContent = snippets[current]; };
+			render();
+			embedSection.style.display = '';
+			embedPreview.href = embedUrl;
+			document.getElementById('agent-embed-settings').href = '/dashboard/embed-policy?agent=' + identity.id;
+
+			document.querySelectorAll('.agent-embed-tab').forEach(btn => {
+				btn.addEventListener('click', () => {
+					current = btn.dataset.tab;
+					document.querySelectorAll('.agent-embed-tab').forEach(b => b.classList.toggle('active', b === btn));
+					render();
+				});
+			});
+
+			embedCopy.addEventListener('click', async () => {
+				try {
+					await navigator.clipboard.writeText(snippets[current]);
+					embedCopy.textContent = 'copied';
+					embedCopy.classList.add('copied');
+					setTimeout(() => { embedCopy.textContent = 'copy'; embedCopy.classList.remove('copied'); }, 1400);
+				} catch {}
+			});
+
+			populateUnfurlMeta(identity);
+		}
+
+		function populateUnfurlMeta(identity) {
+			const id = identity?.id;
+			if (!id) return;
+			const origin   = location.origin;
+			const name     = identity.name        || 'Agent';
+			const desc     = identity.description || 'An embodied 3D agent.';
+			const agentUrl = `${origin}/agent/${id}`;
+			const img      = `${origin}/api/agent/${id}/og`;
+			const setAttr = (elId, attr, value) => {
+				const el = document.getElementById(elId);
+				if (el) el.setAttribute(attr, value);
+			};
+			setAttr('og-title',        'content', name);
+			setAttr('og-description',  'content', desc);
+			setAttr('og-image',        'content', img);
+			setAttr('og-url',          'content', agentUrl);
+			setAttr('tw-title',        'content', name);
+			setAttr('tw-description',  'content', desc);
+			setAttr('tw-image',        'content', img);
+			setAttr('oembed-link',     'href',    `${origin}/api/oembed?url=${encodeURIComponent(agentUrl)}`);
+			document.title = `${name} — 3D Agent`;
+		}
+
+		main().catch(err => {
+			document.getElementById('agent-home-container').innerHTML =
+				`<div class="loading-placeholder">Could not load agent: ${err.message}</div>`;
+		});
+	</script>
+</body>
+</html>

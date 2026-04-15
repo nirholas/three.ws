@@ -276,6 +276,15 @@ header h1 .wordmark-dot {
   background: linear-gradient(90deg, #a78bfa, #6366f1);
 }
 
+.nav-sign-in {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-md);
+}
+
+.nav-sign-in.signed-in {
+  display: none;
+}
+
 .gui-wrap {
   position: absolute;
   top: 0;

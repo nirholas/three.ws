@@ -758,6 +758,40 @@
   color: #fff;
 }
 
+/* ── Pretext overlay ─────────────────────────────────────────────────────── */
+
+/*
+ * Absolute overlay rendered by src/features/hero-pretext.js when ?pretext>=2.
+ * Typography mirrors .hero-subtitle so the swap is visually continuous.
+ * Only activates once .pretext-active lands on .hero — if the layout pass
+ * throws before painting, the class is never added and the original subtitle
+ * stays visible.
+ */
+.hero-subtitle-pretext {
+  position: absolute;
+  font-size: clamp(1.05rem, 1.35vw, 1.25rem);
+  color: rgba(255, 255, 255, 0.58);
+  font-weight: 300;
+  line-height: 1.5;
+  pointer-events: none;
+  display: none;
+}
+
+.pretext-active .hero-subtitle-pretext {
+  display: block;
+}
+
+.hero-subtitle-pretext-line {
+  position: absolute;
+  left: 0;
+  white-space: pre;
+}
+
+/* Reserve the original subtitle's space so the CTA stack doesn't jump. */
+.pretext-active .hero-subtitle {
+  visibility: hidden;
+}
+
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 
 /* Tablet — keep two columns but tighten the split */
@@ -773,6 +807,13 @@
 }
 
 @media screen and (max-width: 768px) {
+  /* Pretext overlay disables itself below this breakpoint; bring the
+     original subtitle back in case .pretext-active was set before the
+     resize into mobile. */
+  .pretext-active .hero-subtitle {
+    visibility: visible;
+  }
+
   .hero {
     grid-template-columns: 1fr;
     gap: var(--space-xl);
