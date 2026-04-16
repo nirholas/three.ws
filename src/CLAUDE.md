@@ -135,7 +135,7 @@ Z-rotation = `(curiosity*12 + empathy*9 + concern*4)` degrees. X-rotation (lean)
 - **SpeechRecognition** silently noops if unavailable. Check `window.SpeechRecognition || window.webkitSpeechRecognition` before relying.
 - **Morph traversal** iterates every mesh every frame. Cheap on Mixamo avatars, expensive on scene-scale models — don't add per-vertex work.
 - **Skill `owned-only` trust** compares `manifest.author` with `ownerAddress` from element attr or backend. Mismatch → skill load throws.
-- **`viewer.js` is large (~11k lines).** [prompts/scalability/03-module-split.md](../prompts/scalability/03-module-split.md) is the planned refactor. Don't start it ad-hoc.
+- **[viewer.js](viewer.js) is the biggest file in `src/` (~1.2k lines).** Further module split is tracked in [prompts/scalability/03-module-split.md](../prompts/scalability/03-module-split.md). Don't start that refactor ad-hoc.
 - **`memory.recall()` is substring search.** No embeddings yet.
 - **No rate limit on `protocol.emit()`.** A runaway skill loop will cascade.
 

@@ -28,9 +28,15 @@ argument-hint: "Describe the build or deploy task"
 
 ## Vite Configuration
 
-- Entry: `index.html` (default Vite behavior)
+**Config**: [`vite.config.js`](../../../vite.config.js)
+
+- Two build targets switched via `TARGET` env var:
+  - `TARGET=app` (default) → multi-page app in `dist/` (entries: `index.html`, `features.html`, `embed.html`, `agent-home.html`, `agent-embed.html`)
+  - `TARGET=lib` → self-contained `<agent-3d>` web component in `dist-lib/` (ESM + UMD, three.js bundled)
+- JSX configured for vhtml: `jsxFactory: 'vhtml'`, `jsxFragment: '"div"'`
+- Dev server has a `vercel-rewrites` middleware that mirrors Vercel routing for `/login`, `/register`, `/dashboard`, `/studio`, `/widgets`, `/docs/widgets`, `/agent`, `/agent/:id`, `/agent/:id/embed`
+- `vite-plugin-pwa` emits the service worker + manifest
 - Static assets: `public/` folder copied to build output
-- No custom `vite.config.js` — uses Vite defaults with `staticFiles` in package.json
 
 ## Vercel Deployment
 

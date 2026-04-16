@@ -1,68 +1,105 @@
 ---
 name: 3d-viewer
-description: "Full project workflow for the 3D Agent viewer app. Use when: developing features, debugging rendering, modifying UI, understanding architecture, running dev server, or making any code changes to this glTF/GLB viewer project."
-argument-hint: "Describe what you want to do with the 3D viewer app"
+description: "Full project workflow for the 3D Agent platform. Use when: developing features, debugging, modifying UI, understanding architecture, running dev server, or making code changes anywhere in the repo (viewer, agent runtime, API, contracts)."
+argument-hint: "Describe what you want to do"
 ---
 
 # 3D Agent — Project Workflow
 
 ## Overview
 
-3D Agent is a browser-based glTF 2.0 / GLB viewer built with Three.js. Users drag-and-drop 3D model files to preview them with interactive controls for lighting, animation, and display. Deployed at [3dagent.vercel.app](https://3dagent.vercel.app/).
+**3D Agent** started as a glTF 2.0 / GLB viewer and grew into a full embodied-agent platform. Live at [3dagent.vercel.app](https://3dagent.vercel.app/). Read [/CLAUDE.md](../../../CLAUDE.md) first — this skill is an index; the CLAUDE.md files are the source of truth.
 
-## Architecture
+## Two halves
 
-```
-index.html          → Entry point, loads app.js
-src/app.js          → App class: dropzone, file loading, URL params, orchestrates Viewer + Validator
-src/viewer.js       → Viewer class: Three.js scene, camera, lighting, dat.gui controls, animation
-src/validator.js    → Validator class: gltf-validator integration, report rendering
-src/environments.js → HDR/EXR environment map presets
-src/components/     → JSX components (vhtml): footer, validator-toggle, validator-report, validator-table
-style.css           → Global styles + dat.gui dark theme overrides
-public/avatars/     → Default 3D model assets
-```
+- **Viewer half** — pure three.js. GLB loading, lighting, animations, validation, dat.gui.
+- **Agent half** — persona (`agent-identity.js`), memory (`agent-memory.js`), skills (`agent-skills.js`), avatar emotion (`agent-avatar.js`), LLM runtime (`runtime/`), wallet identity (`erc8004/`), protocol bus (`agent-protocol.js`).
 
-## Key Classes
+The viewer never imports the agent half. The agent layer wraps the viewer through `runtime/scene.js` (`SceneController`).
 
-| Class | File | Responsibility |
-|-------|------|----------------|
-| `App` | `src/app.js` | File drop handling, URL param parsing, error UI, lifecycle |
-| `Viewer` | `src/viewer.js` | Three.js scene setup, model loading, GUI panels, animation playback |
-| `Validator` | `src/validator.js` | glTF validation, report generation, lightbox display |
+## Where code lives
 
-## Tech Stack
+| Area | Path | Scoped doc |
+|---|---|---|
+| Browser app (viewer + agent) | `src/` | [src/CLAUDE.md](../../../src/CLAUDE.md) |
+| Vercel serverless API | `api/` | [api/CLAUDE.md](../../../api/CLAUDE.md) |
+| ERC-8004 Solidity registries | `contracts/` | [contracts/CLAUDE.md](../../../contracts/CLAUDE.md) |
+| Format specs | `specs/` | — |
+| Priority-stack build prompts | `prompts/` | [prompts/INDEX.md](../../../prompts/INDEX.md) |
+| User-facing docs | `docs/` | — |
+| Static pages / assets | `public/` | — |
+| SDK package | `sdk/` | — |
 
-- **Three.js** v0.176 — WebGL rendering, GLTFLoader, DRACOLoader, KTX2Loader, OrbitControls
-- **dat.gui** — Interactive control panels
-- **simple-dropzone** — Drag-and-drop file input
-- **vhtml** — JSX-like component rendering
-- **gltf-validator** — KhronosGroup glTF 2.0 validation
-- **Vite** — Dev server and build tool
-- **Vercel** — Deployment
+Top-level HTML entries: `index.html`, `features.html`, `embed.html`, `agent-home.html`, `agent-embed.html`. Additional routes are rewritten by the `vercel-rewrites` middleware in [vite.config.js](../../../vite.config.js) and mirrored in [vercel.json](../../../vercel.json).
+
+## Tech stack
+
+- **three.js** r176 — WebGL2 rendering + `GLTFLoader`, `DRACOLoader`, `KTX2Loader`, `MeshoptDecoder`, `OrbitControls`
+- **dat.gui** + **tweakpane** — control panels
+- **simple-dropzone** — file drops
+- **vhtml** — JSX → HTML string rendering (no virtual DOM)
+- **gltf-validator** — KhronosGroup validation
+- **Vite 7** — dev server + build (two targets: `app` and `lib`)
+- **vite-plugin-pwa** — service worker + manifest
+- **ethers v6**, **viem**, **@privy-io/js-sdk-core** — wallet + on-chain
+- **Neon Postgres**, **Upstash Redis**, **Cloudflare R2**, **Vercel** — backend
+- **Foundry** + **OpenZeppelin** (contracts)
 
 ## Commands
 
 ```bash
-npm install          # Install dependencies
-npm run dev          # Start dev server on port 3000
-npm run build        # Production build with Vite
-npm run clean        # Remove dist/
-npm run deploy       # Build + deploy to Vercel
+npm install
+npm run dev         # app dev server on :3000
+npm run dev:lib     # library build watch
+npm run build       # app → dist/
+npm run build:lib   # web component → dist-lib/
+npm run build:all   # both
+npm run deploy      # build + vercel --prod
+npx prettier --write <file>
+node --check <file.js>
 ```
+
+No automated test suite (`npm test` exits 0). Verify with `node --check`, `npm run build`, and manual smoke at `localhost:3000`.
 
 ## Conventions
 
-- Components use **vhtml JSX** syntax (not React)
-- URL params: `?model=`, `?preset=`, `?cameraPosition=x,y,z`, `?kiosk=true`
-- Styles in a single `style.css` file (no CSS modules)
-- Code formatted with Prettier (tabs, single quotes, 100 print width)
+- ESM only (no CommonJS in `src/` or `api/`)
+- Prettier: **tabs**, 4-wide, single quotes, 100-col print width
+- No TypeScript in the main app (JSDoc for public APIs); `sdk/` may use TS
+- Components are **vhtml JSX**, not React — `.jsx` files, `jsxFactory: 'vhtml'`
+- URL hash params live in `src/app.js`: `model`, `widget`, `agent`, `kiosk`, `brain`, `proxyURL`, `preset`, `cameraPosition`, `register`
+- Tool result shape: `{ ok: true, ... }` or `{ ok: false, error: 'msg' }`
+- Naming: CamelCase classes, camelCase methods, UPPER_CASE constants, `_underscore` private
 
-## When Making Changes
+## Priority stack — before you start
 
-1. Check the architecture map above to find the right file
-2. `src/viewer.js` for anything Three.js / rendering / GUI controls
-3. `src/validator.js` for validation logic or report display
-4. `src/app.js` for file loading, URL params, or top-level orchestration
-5. `src/components/` for UI templates (vhtml JSX, not React)
-6. Run `npm run dev` to test changes at `http://localhost:3000`
+The order of work is fixed in [prompts/INDEX.md](../../../prompts/INDEX.md):
+
+1. Wallet auth (SIWE / Privy)
+2. Selfie → agent
+3. Edit avatars
+4. View + embed
+5. Portable embed (Claude.ai / LobeHub)
+6. On-chain deployment (ERC-8004)
+
+If a task isn't in a band, ask first. Side lanes (`pretext/`, `scalability/`, `widget-studio/` polish, CLI, AR, screenshot export) are explicitly deprioritized.
+
+## Where to change what
+
+- Rendering / GUI / display toggles → `src/viewer.js` and `src/viewer/*.js` (see [3d-features](../3d-features/SKILL.md))
+- Validation → `src/validator.js` + `src/components/validator-*.jsx` (see [model-validation](../model-validation/SKILL.md))
+- Build / deploy / Vercel routes → see [build-deploy](../build-deploy/SKILL.md)
+- Agent persona / memory / skills → `src/agent-*.js`, `src/runtime/`, `src/skills/`, `src/memory/` — read [src/CLAUDE.md](../../../src/CLAUDE.md)
+- Auth / avatars / OAuth / MCP / rate-limit / R2 → `api/` — read [api/CLAUDE.md](../../../api/CLAUDE.md)
+- ERC-8004 registries → `contracts/` — read [contracts/CLAUDE.md](../../../contracts/CLAUDE.md)
+- Top-level routing / URL hash params → `src/app.js` (don't create a new routing layer)
+
+## Ground rules
+
+- One task, one PR. Note unrelated bugs in the report — don't fix them inline.
+- Edit existing files before creating new ones. No new top-level `.md` files unless asked.
+- No new runtime deps without approval.
+- `node --check` every modified JS. `npm run build` before reporting done. Report both outputs.
+- Respect `Files off-limits` in prompt files — parallel work may touch them.
+- Never `forge script --broadcast` without explicit user approval. Deployed contract addresses are immutable.
+- Report what changed, what you skipped, what broke, and any surprises.
