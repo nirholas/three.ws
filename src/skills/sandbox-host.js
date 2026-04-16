@@ -88,11 +88,16 @@ function _onMessage({ data }) {
 			const { invocationId, requestId, method, args } = data;
 			const inv = _pending.get(invocationId);
 			if (!inv) {
-				_worker?.postMessage({ type: 'response', requestId, error: 'No active invocation' });
+				_worker?.postMessage({
+					type: 'response',
+					requestId,
+					error: 'No active invocation',
+				});
 				return;
 			}
 			_dispatchCtxRequest(method, args, inv.mainCtx).then(
-				(result) => _worker?.postMessage({ type: 'response', requestId, result: result ?? null }),
+				(result) =>
+					_worker?.postMessage({ type: 'response', requestId, result: result ?? null }),
 				(err) =>
 					_worker?.postMessage({
 						type: 'response',

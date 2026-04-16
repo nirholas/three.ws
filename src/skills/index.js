@@ -96,7 +96,7 @@ export class SkillRegistry {
 			manifest,
 			instructions,
 			tools: toolsJSON.tools || [],
-			handlers: isTrusted ? (handlersData || {}) : {},
+			handlers: isTrusted ? handlersData || {} : {},
 			handlersSrc: isTrusted ? null : handlersData,
 		});
 
@@ -131,7 +131,9 @@ export class SkillRegistry {
 		for (const skill of this.skills.values()) {
 			for (const tool of skill.tools) {
 				if (merged.has(tool.name)) {
-					console.warn(`[skills] tool "${tool.name}" overridden by skill "${skill.name}"`);
+					console.warn(
+						`[skills] tool "${tool.name}" overridden by skill "${skill.name}"`,
+					);
 				}
 				merged.set(tool.name, { ...tool, _skill: skill.name });
 			}
@@ -147,7 +149,9 @@ export class SkillRegistry {
 	}
 
 	systemPrompt() {
-		return this.all().map((s) => s.systemPromptFragment()).join('');
+		return this.all()
+			.map((s) => s.systemPromptFragment())
+			.join('');
 	}
 
 	_resolveBundleURI(uri, base) {
