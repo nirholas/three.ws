@@ -1,0 +1,92 @@
+[
+	{
+		"name": "idle",
+		"url": "/animations/robotexpressive.glb",
+		"clipName": "Idle",
+		"loop": true,
+		"source": "preset",
+		"label": "Idle",
+		"icon": "🧍"
+	},
+	{
+		"name": "wave",
+		"url": "/animations/robotexpressive.glb",
+		"clipName": "Wave",
+		"loop": false,
+		"source": "preset",
+		"label": "Wave",
+		"icon": "👋"
+	},
+	{
+		"name": "nod",
+		"url": "/animations/robotexpressive.glb",
+		"clipName": "Yes",
+		"loop": false,
+		"source": "preset",
+		"label": "Nod",
+		"icon": "✅"
+	},
+	{
+		"name": "shrug",
+		"url": "/animations/robotexpressive.glb",
+		"clipName": "No",
+		"loop": false,
+		"source": "preset",
+		"label": "Shrug",
+		"icon": "🚫"
+	},
+	{
+		"name": "thinking",
+		"url": "/animations/robotexpressive.glb",
+		"clipName": "Sitting",
+		"loop": true,
+		"source": "preset",
+		"label": "Thinking",
+		"icon": "🤔"
+	},
+	{
+		"name": "celebrate",
+		"url": "/animations/robotexpressive.glb",
+		"clipName": "ThumbsUp",
+		"loop": false,
+		"source": "preset",
+		"label": "Celebrate",
+		"icon": "🎉"
+	},
+	{
+		"name": "typing",
+		"url": "/animations/robotexpressive.glb",
+		"clipName": "Standing",
+		"loop": true,
+		"source": "preset",
+		"label": "Typing",
+		"icon": "⌨️"
+	},
+	{
+		"name": "walking",
+		"url": "/animations/robotexpressive.glb",
+		"clipName": "Walking",
+		"loop": true,
+		"source": "preset",
+		"label": "Walking",
+		"icon": "🚶"
+	},
+	{
+		"name": "running",
+		"url": "/animations/robotexpressive.glb",
+		"clipName": "Running",
+		"loop": true,
+		"source": "preset",
+		"label": "Running",
+		"icon": "🏃"
+	},
+	{
+		"name": "dance",
+		"url": "/animations/robotexpressive.glb",
+		"clipName": "Dance",
+		"loop": true,
+		"source": "preset",
+		"label": "Dance",
+		"icon": "💃"
+	}
+]

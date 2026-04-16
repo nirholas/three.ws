@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>&lt;agent-stage&gt; — two agents, one scene</title>
+		<style>
+			body { margin: 0; font-family: system-ui, sans-serif; background: #0f0f0f; color: #e9e9e9; padding: 24px; }
+			h1 { margin: 0 0 8px; font-weight: 500; }
+			p { color: #b0b0b0; margin: 4px 0 16px; }
+			agent-stage { display: block; width: 100%; height: 540px; background: #1a1a1a; border-radius: 8px; overflow: hidden; }
+			.row { display: flex; gap: 8px; margin-top: 16px; }
+			.row input { flex: 1; padding: 10px 14px; border-radius: 999px; border: 1px solid #333; background: #111; color: #eee; font: 14px system-ui; }
+			.row button { padding: 10px 18px; border-radius: 999px; border: 0; background: #3b82f6; color: white; font: 14px system-ui; cursor: pointer; }
+			.log { font: 12px/1.5 ui-monospace, Menlo, monospace; color: #8fd4a4; background: #111; border-radius: 6px; padding: 12px; margin-top: 16px; max-height: 180px; overflow-y: auto; }
+		</style>
+	</head>
+	<body>
+		<h1>&lt;agent-stage&gt; demo — two agents, one canvas</h1>
+		<p>Both agents render in a single WebGL context. Each keeps its own brain, memory, and chat chrome.</p>
+
+		<agent-stage id="stage" formation="row">
+			<agent-3d
+				id="leo"
+				name="Coach Leo"
+				body="/avatars/cz.glb"
+				instructions="You are Coach Leo. Friendly, short answers. When another agent says hi, wave and greet them back by name."
+				eager
+			></agent-3d>
+			<agent-3d
+				id="mira"
+				name="Mira"
+				body="/avatars/cz.glb"
+				brain="none"
+				instructions="You are Mira, a quiet observer who only speaks when spoken to."
+				eager
+			></agent-3d>
+		</agent-stage>
+
+		<div class="row">
+			<input id="prompt" placeholder="Ask Leo to say hi to Mira..." value="Say hi to Mira and ask her how she's doing." />
+			<button id="send">Send to Leo</button>
+			<button id="broadcast">Broadcast</button>
+		</div>
+		<div class="log" id="log"></div>
+
+		<script type="module">
+			import '../src/lib.js';
+
+			const log = document.getElementById('log');
+			const stage = document.getElementById('stage');
+			const leo = document.getElementById('leo');
+			const mira = document.getElementById('mira');
+
+			const line = (text) => {
+				const d = document.createElement('div');
+				d.textContent = text;
+				log.appendChild(d);
+				log.scrollTop = log.scrollHeight;
+			};
+
+			stage.addEventListener('stage:agent-joined', (e) => line(`joined: ${e.detail.agentId}`));
+			stage.addEventListener('stage:agent-left', (e) => line(`left: ${e.detail.agentId}`));
+			stage.addEventListener('stage:message', (e) => line(`stage msg from ${e.detail.from}: ${JSON.stringify(e.detail.event)}`));
+			for (const el of [leo, mira]) {
+				el.addEventListener('brain:message', (e) => line(`[${el.id}/${e.detail.role}] ${e.detail.content || ''}`));
+				el.addEventListener('skill:tool-called', (e) => line(`[${el.id}] tool ${e.detail.tool}(${JSON.stringify(e.detail.args)}) -> ${JSON.stringify(e.detail.result)}`));
+			}
+
+			document.getElementById('send').addEventListener('click', () => {
+				const text = document.getElementById('prompt').value.trim();
+				if (text) leo.say(text);
+			});
+
+			document.getElementById('broadcast').addEventListener('click', () => {
+				stage.broadcast('test-harness', { kind: 'hello', text: 'hello stage!' });
+			});
+
+			window.stage = stage;
+		</script>
+	</body>
+</html>

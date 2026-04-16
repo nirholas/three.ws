@@ -1,0 +1,79 @@
+[
+	{
+		"id": "outfit-casual",
+		"kind": "outfit",
+		"name": "Casual",
+		"morphBinding": { "Outfit_Casual": 1.0 },
+		"thumbnail": "/accessories/thumbs/outfit-casual.png"
+	},
+	{
+		"id": "outfit-formal",
+		"kind": "outfit",
+		"name": "Formal",
+		"morphBinding": { "Outfit_Formal": 1.0 },
+		"thumbnail": "/accessories/thumbs/outfit-formal.png"
+	},
+	{
+		"id": "outfit-sporty",
+		"kind": "outfit",
+		"name": "Sporty",
+		"morphBinding": { "Outfit_Sporty": 1.0 },
+		"thumbnail": "/accessories/thumbs/outfit-sporty.png"
+	},
+	{
+		"id": "hat-baseball",
+		"kind": "hat",
+		"name": "Baseball Cap",
+		"glbUrl": "/accessories/hat-baseball.glb",
+		"attachBone": "Head",
+		"thumbnail": "/accessories/thumbs/hat-baseball.png"
+	},
+	{
+		"id": "hat-beanie",
+		"kind": "hat",
+		"name": "Beanie",
+		"glbUrl": "/accessories/hat-beanie.glb",
+		"attachBone": "Head",
+		"thumbnail": "/accessories/thumbs/hat-beanie.png"
+	},
+	{
+		"id": "hat-cowboy",
+		"kind": "hat",
+		"name": "Cowboy Hat",
+		"glbUrl": "/accessories/hat-cowboy.glb",
+		"attachBone": "Head",
+		"thumbnail": "/accessories/thumbs/hat-cowboy.png"
+	},
+	{
+		"id": "glasses-round",
+		"kind": "glasses",
+		"name": "Round Glasses",
+		"glbUrl": "/accessories/glasses-round.glb",
+		"attachBone": "Head",
+		"thumbnail": "/accessories/thumbs/glasses-round.png"
+	},
+	{
+		"id": "glasses-shades",
+		"kind": "glasses",
+		"name": "Shades",
+		"glbUrl": "/accessories/glasses-shades.glb",
+		"attachBone": "Head",
+		"thumbnail": "/accessories/thumbs/glasses-shades.png"
+	},
+	{
+		"id": "earrings-hoops",
+		"kind": "earrings",
+		"name": "Hoop Earrings",
+		"glbUrl": "/accessories/earrings-hoops.glb",
+		"attachBone": "Head",
+		"thumbnail": "/accessories/thumbs/earrings-hoops.png"
+	},
+	{
+		"id": "earrings-studs",
+		"kind": "earrings",
+		"name": "Stud Earrings",
+		"glbUrl": "/accessories/earrings-studs.glb",
+		"attachBone": "Head",
+		"thumbnail": "/accessories/thumbs/earrings-studs.png"
+	}
+]

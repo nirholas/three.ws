@@ -15,6 +15,21 @@ import { getSessionUser, authenticateBearer, extractBearer } from './_lib/auth.j
 import { sql }           from './_lib/db.js';
 import { cors, json, method, readJson, wrap, error } from './_lib/http.js';
 import { generateAgentWallet } from './_lib/agent-wallet.js';
+import { z } from 'zod';
+
+const animationEntrySchema = z.object({
+	name:     z.string().trim().min(1).max(60),
+	url:      z.string().trim().min(1).max(2048).refine(
+		(u) => /^(https?|ipfs|ar):\/\//.test(u) || u.startsWith('/'),
+		'url must be http, https, ipfs, ar, or a root-relative path',
+	),
+	loop:     z.boolean().default(true),
+	clipName: z.string().trim().max(120).optional(),
+	source:   z.enum(['mixamo', 'preset', 'custom']),
+	addedAt:  z.string().optional(),
+});
+
+const animationsSchema = z.array(animationEntrySchema).max(30);
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS', credentials: true })) return;
@@ -126,8 +141,8 @@ async function handleCreate(req, res) {
 // ── Get One ───────────────────────────────────────────────────────────────
 
 export async function handleGetOne(req, res, id) {
-	if (cors(req, res, { methods: 'GET,PUT,DELETE,OPTIONS', credentials: true })) return;
-	if (!method(req, res, ['GET', 'PUT', 'DELETE'])) return;
+	if (cors(req, res, { methods: 'GET,PUT,PATCH,DELETE,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['GET', 'PUT', 'PATCH', 'DELETE'])) return;
 
 	if (req.method === 'GET') {
 		const auth  = await resolveAuth(req);
@@ -145,6 +160,12 @@ export async function handleGetOne(req, res, id) {
 		const auth = await resolveAuth(req);
 		if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
 		return handleUpdate(req, res, id, auth);
+	}
+
+	if (req.method === 'PATCH') {
+		const auth = await resolveAuth(req);
+		if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
+		return handlePatchEdits(req, res, id, auth);
 	}
 
 	if (req.method === 'DELETE') {

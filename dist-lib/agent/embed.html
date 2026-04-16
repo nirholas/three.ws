@@ -31,10 +31,48 @@
 	<div id="error"></div>
 
 	<script type="module">
+		/*
+		 * ─── Host ↔ agent postMessage bridge — v1 (FROZEN) ───────────────────
+		 *
+		 * Wire format. All payloads are JSON-serializable. All messages MUST
+		 * include `agentId` so a single host page with multiple iframes can
+		 * route deterministically. Unknown `type` values are ignored.
+		 *
+		 * Host  → iframe:
+		 *   { type: 'agent:hello',  agentId, host? }     Handshake. Iframe replies
+		 *                                                with agent:ready (now or
+		 *                                                when init completes).
+		 *   { type: 'agent:action', agentId, action }    Forward action onto the
+		 *                                                iframe's protocol bus.
+		 *                                                See src/agent-protocol.js
+		 *                                                for action.type vocabulary.
+		 *   { type: 'agent:ping',   agentId, id }        Liveness probe; iframe
+		 *                                                replies with agent:pong{id}.
+		 *
+		 * Iframe → host:
+		 *   { type: 'agent:ready',  agentId, version, capabilities: [string] }
+		 *                                                Sent once init succeeds and
+		 *                                                in response to agent:hello.
+		 *   { type: 'agent:action', agentId, action }    Echo of every protocol
+		 *                                                action the iframe emits.
+		 *   { type: 'agent:resize', agentId, height }    Preferred CSS pixel height
+		 *                                                of the iframe content box.
+		 *   { type: 'agent:pong',   agentId, id }        Reply to agent:ping.
+		 *
+		 * Legacy envelope `{ __agent, type: 'action'|'ready'|'blocked' }` is still
+		 * accepted on input and emitted on output for backwards compatibility with
+		 * pre-v1 hosts. New consumers SHOULD prefer the v1 envelope above.
+		 *
+		 * Future bumps go to v2 — DO NOT change v1 wire shapes in place.
+		 */
+
 		import { Viewer }         from '/src/viewer.js';
 		import { AgentIdentity }  from '/src/agent-identity.js';
 		import { AgentAvatar }    from '/src/agent-avatar.js';
 		import { protocol }       from '/src/agent-protocol.js';
+
+		const BRIDGE_VERSION = '1';
+		const CAPABILITIES   = ['speak', 'gesture', 'look-at', 'emote', 'present-model'];
 
 		const params    = new URL(location.href).searchParams;
 		const bg        = params.get('bg') || 'transparent';
@@ -42,12 +80,119 @@
 		if (bg === 'light') document.body.classList.add('bg-light');
 
 		const plateOn   = params.get('name') !== '0';
+		const preview   = params.get('preview') === '1';
 		const parts     = location.pathname.split('/').filter(Boolean);
 		const agentId   = parts[parts.indexOf('agent') + 1];
 
+		function hostMatches(host, pattern) {
+			if (!host || !pattern) return false;
+			host = host.toLowerCase();
+			pattern = pattern.toLowerCase();
+			if (pattern.startsWith('*.')) {
+				const suffix = pattern.slice(2);
+				return host === suffix || host.endsWith('.' + suffix);
+			}
+			return host === pattern;
+		}
+
+		function embeddingHost() {
+			// Prefer ancestorOrigins (Chromium/Safari) for the true top-level origin;
+			// fall back to document.referrer which is the cross-browser signal for a
+			// first-party iframe's parent. Firefox has no ancestorOrigins today.
+			try {
+				const anc = window.location.ancestorOrigins;
+				if (anc && anc.length) return new URL(anc[0]).hostname;
+			} catch {}
+			try {
+				if (document.referrer) return new URL(document.referrer).hostname;
+			} catch {}
+			return null;
+		}
+
+		async function checkPolicy() {
+			if (preview) return true;
+			// Same-origin (top-level or iframed from ourselves) is always allowed.
+			const sameOrigin = !window.parent || window.parent === window
+				|| (() => { try { return window.parent.location.origin === location.origin; } catch { return false; } })();
+			let policy = null;
+			try {
+				const r = await fetch(`/api/agents/${agentId}/embed-policy`, { credentials: 'omit' });
+				if (r.ok) policy = (await r.json()).policy;
+			} catch {}
+			if (policy === null || policy === undefined) return true;
+			if (sameOrigin) return true;
+			const host = embeddingHost();
+			const hosts = Array.isArray(policy.hosts) ? policy.hosts : [];
+			const matched = host ? hosts.some((p) => hostMatches(host, p)) : false;
+			if (policy.mode === 'allowlist') return matched;
+			if (policy.mode === 'denylist')  return !matched;
+			return true;
+		}
+
+		// ── Bridge state. The handshake handler is installed *before* main()
+		// runs so a host that sends agent:hello early gets a reply once we're
+		// ready, even if init takes a few seconds (network + GLB parse).
+		let bridgeReady   = false;
+		let identityName  = null;
+		const pendingHellos = [];
+
+		function postReady() {
+			parent?.postMessage({
+				type: 'agent:ready', agentId, version: BRIDGE_VERSION, capabilities: CAPABILITIES,
+				name: identityName,
+			}, '*');
+			// Legacy envelope for pre-v1 hosts.
+			parent?.postMessage({ __agent: agentId, type: 'ready', name: identityName }, '*');
+		}
+
+		function postResize(height) {
+			parent?.postMessage({ type: 'agent:resize', agentId, height }, '*');
+		}
+
+		function handleAction(action) {
+			if (!action || typeof action !== 'object') return;
+			protocol.emit(action);
+		}
+
+		// Installed eagerly so the host's hello during boot is captured.
+		window.addEventListener('message', (ev) => {
+			const msg = ev.data;
+			if (!msg || typeof msg !== 'object') return;
+
+			// v1 envelope
+			if (msg.agentId && msg.agentId === agentId && typeof msg.type === 'string') {
+				switch (msg.type) {
+					case 'agent:hello':
+						if (bridgeReady) postReady(); else pendingHellos.push(true);
+						return;
+					case 'agent:action':
+						if (bridgeReady) handleAction(msg.action);
+						return;
+					case 'agent:ping':
+						if (bridgeReady) parent?.postMessage({ type: 'agent:pong', agentId, id: msg.id }, '*');
+						return;
+				}
+			}
+
+			// Legacy envelope. Kept until all known hosts migrate.
+			if (msg.__agent === agentId) {
+				if (msg.type === 'action' && msg.action) handleAction(msg.action);
+			}
+		});
+
 		async function main() {
+			if (!(await checkPolicy())) {
+				const el = document.getElementById('error');
+				el.textContent = 'This agent can only be embedded on approved sites.';
+				el.style.display = 'flex';
+				parent?.postMessage({ type: 'agent:blocked', agentId }, '*');
+				parent?.postMessage({ __agent: agentId, type: 'blocked' }, '*');
+				return;
+			}
+
 			const identity = new AgentIdentity({ agentId, autoLoad: false });
 			await identity.load();
+			identityName = identity.name;
 
 			if (plateOn && identity.name) {
 				document.getElementById('name-plate').textContent = identity.name;
@@ -72,13 +217,32 @@
 			const avatarCtl = new AgentAvatar(viewer, protocol, identity);
 			avatarCtl.attach();
 
-			// Expose to host via postMessage bridge
-			window.addEventListener('message', (ev) => {
-				const msg = ev.data;
-				if (!msg || msg.__agent !== agentId) return;
-				if (msg.type === 'action' && msg.action) protocol.emit(msg.action);
+			// Echo every protocol action onto the bridge so hosts can mirror state
+			// (chat UIs, telemetry, host-side animation triggers).
+			protocol.on('*', (action) => {
+				parent?.postMessage({ type: 'agent:action', agentId, action }, '*');
 			});
-			parent?.postMessage({ __agent: agentId, type: 'ready', name: identity.name }, '*');
+
+			// Report content height to host so embed-sdk can auto-fit the iframe.
+			// Coalesce into rAF so a runaway resize observer can't flood the host.
+			let pendingPost = false;
+			const reportSize = () => {
+				if (pendingPost) return;
+				pendingPost = true;
+				requestAnimationFrame(() => {
+					pendingPost = false;
+					const h = Math.ceil(document.documentElement.scrollHeight || stage.clientHeight || 0);
+					if (h > 0) postResize(h);
+				});
+			};
+			if (typeof ResizeObserver !== 'undefined') {
+				new ResizeObserver(reportSize).observe(document.documentElement);
+			}
+			reportSize();
+
+			bridgeReady = true;
+			postReady();
+			while (pendingHellos.length) { pendingHellos.pop(); postReady(); }
 		}
 
 		main().catch(err => {

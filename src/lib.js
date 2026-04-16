@@ -2,8 +2,9 @@
 // Registers the custom element and exposes public API classes for programmatic use.
 
 import { Agent3DElement } from './element.js';
+import { AgentStageElement } from './stage-element.js';
 
-export { Agent3DElement };
+export { Agent3DElement, AgentStageElement };
 export { Viewer } from './viewer.js';
 export { Runtime } from './runtime/index.js';
 export { SceneController } from './runtime/scene.js';

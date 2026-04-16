@@ -42,6 +42,80 @@
 	.section { margin-top:34px; }
 	input, textarea, select { background:#0f0f17; border:1px solid var(--border); color:#eee; padding:9px 11px; border-radius:8px; font-size:14px; font-family:inherit; }
 	input:focus, textarea:focus, select:focus { outline:none; border-color:var(--accent); }
+
+	/* ── Widgets tab ─────────────────────────────────────────────────────── */
+	.btn-primary { display:inline-block; padding:9px 14px; border-radius:9px; border:0; font-size:13px; font-weight:600; cursor:pointer; background:var(--accent); color:#fff; text-decoration:none; }
+	.btn-primary:hover { filter:brightness(1.08); }
+	.btn-danger { background:#cc4040; }
+	.widgets-header { display:flex; justify-content:space-between; align-items:flex-start; gap:14px; margin-bottom:18px; flex-wrap:wrap; }
+	.widgets-header h1 { margin-bottom:6px; }
+	.widget-toolbar { display:flex; gap:10px; align-items:center; margin-bottom:18px; flex-wrap:wrap; }
+	.widget-toolbar input, .widget-toolbar select { padding:7px 10px; font-size:13px; }
+	.widget-toolbar input[type="search"] { min-width:200px; }
+	.widget-card { background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:10px; position:relative; transition:border-color .15s; }
+	.widget-card:hover { border-color:#2c2c40; }
+	.widget-card .frame { aspect-ratio:1/1; background:#0f0f17; border-radius:10px; overflow:hidden; position:relative; }
+	.widget-card .frame iframe { width:100%; height:100%; border:0; display:block; }
+	.widget-card .frame .placeholder { display:grid; place-items:center; height:100%; color:#555; font-size:12px; padding:10px; text-align:center; }
+	.widget-card .title { display:flex; align-items:baseline; gap:8px; min-height:22px; }
+	.widget-card .title h3 { margin:0; font-size:14px; cursor:text; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+	.widget-card .title input { flex:1; padding:3px 6px; font-size:14px; font-weight:600; }
+	.widget-card .pill { display:inline-flex; align-items:center; gap:6px; font-size:11px; padding:2px 8px; border-radius:99px; background:#20202c; color:#ccc; white-space:nowrap; }
+	.widget-card .pill .dot { width:7px; height:7px; border-radius:50%; }
+	.widget-card .meta { font-size:12px; color:#888; }
+	.widget-card .actions { display:flex; gap:6px; flex-wrap:wrap; margin-top:auto; }
+	.widget-card .actions button, .widget-card .actions a { padding:6px 10px; border-radius:7px; border:1px solid var(--border); background:#1a1a24; color:#ddd; font-size:12px; cursor:pointer; text-decoration:none; }
+	.widget-card .actions button:hover, .widget-card .actions a:hover { background:#22222e; }
+	.widget-card .actions .danger:hover { background:rgba(204,64,64,.18); border-color:rgba(204,64,64,.5); color:#ffb3b3; }
+	.toggle { position:relative; display:inline-flex; align-items:center; gap:6px; cursor:pointer; user-select:none; }
+	.toggle input { position:absolute; opacity:0; width:0; height:0; }
+	.toggle .track { width:30px; height:17px; background:#2a2a36; border-radius:99px; position:relative; transition:background .15s; }
+	.toggle .track::after { content:''; position:absolute; top:2px; left:2px; width:13px; height:13px; background:#aaa; border-radius:50%; transition:transform .15s, background .15s; }
+	.toggle input:checked + .track { background:rgba(106,92,255,.55); }
+	.toggle input:checked + .track::after { transform:translateX(13px); background:#fff; }
+	.toggle input:focus-visible + .track { outline:2px solid var(--accent); outline-offset:2px; }
+	.toggle .label { font-size:11px; color:#888; }
+
+	/* Drawer */
+	.drawer-overlay { position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:50; opacity:0; pointer-events:none; transition:opacity .18s; }
+	.drawer-overlay.open { opacity:1; pointer-events:auto; }
+	.drawer { position:fixed; right:0; top:0; bottom:0; width:min(560px, 100vw); background:#0e0e16; border-left:1px solid var(--border); transform:translateX(100%); transition:transform .22s cubic-bezier(.2,.8,.2,1); z-index:51; overflow-y:auto; }
+	.drawer.open { transform:none; }
+	.drawer header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border); position:sticky; top:0; background:#0e0e16; z-index:1; }
+	.drawer header h2 { margin:0; font-size:16px; }
+	.drawer .body { padding:20px; display:flex; flex-direction:column; gap:18px; }
+	.drawer .frame-lg { aspect-ratio:1/1; background:#0f0f17; border-radius:10px; overflow:hidden; }
+	.drawer .frame-lg iframe { width:100%; height:100%; border:0; }
+	.drawer .stat-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; }
+	.drawer .stat { background:#13131c; border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+	.drawer .stat .n { font-size:22px; font-weight:600; }
+	.drawer .stat .l { font-size:11px; color:#888; text-transform:uppercase; letter-spacing:.5px; }
+	.spark { width:100%; height:60px; }
+	.spark path.area { fill:rgba(106,92,255,.18); }
+	.spark path.line { fill:none; stroke:var(--accent); stroke-width:2; }
+	.spark .axis { stroke:#22222e; stroke-width:1; }
+	details summary { cursor:pointer; padding:6px 0; color:#aaa; font-size:13px; }
+	details[open] summary { color:#eee; }
+	.danger-zone { border:1px solid rgba(204,64,64,.4); border-radius:10px; padding:14px; background:rgba(204,64,64,.05); }
+	.danger-zone h3 { margin:0 0 6px; color:#ffb3b3; font-size:13px; }
+
+	/* Modal */
+	.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:60; display:grid; place-items:center; opacity:0; pointer-events:none; transition:opacity .15s; }
+	.modal-overlay.open { opacity:1; pointer-events:auto; }
+	.modal { background:#0e0e16; border:1px solid var(--border); border-radius:14px; padding:22px; width:min(560px, calc(100vw - 32px)); max-height:calc(100vh - 32px); overflow-y:auto; }
+	.modal h2 { margin:0 0 4px; font-size:17px; }
+	.modal .sub { margin:0 0 18px; }
+	.size-presets { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+	.size-presets button { padding:6px 12px; border-radius:99px; border:1px solid var(--border); background:#13131c; color:#ccc; font-size:12px; cursor:pointer; }
+	.size-presets button.active { border-color:var(--accent); color:#fff; background:rgba(106,92,255,.15); }
+	.size-inputs { display:flex; gap:8px; align-items:center; margin-bottom:14px; }
+	.size-inputs input { width:90px; }
+
+	.toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#1a1a24; border:1px solid var(--border); padding:10px 18px; border-radius:99px; font-size:13px; color:#ddd; z-index:70; box-shadow:0 4px 18px rgba(0,0,0,.4); animation:toast-in .2s; }
+	@keyframes toast-in { from { opacity:0; transform:translate(-50%, 8px); } to { opacity:1; transform:translateX(-50%); } }
+
+	/* visually-hidden utility for screen-reader-only labels */
+	.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0; }
 </style>
 <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
 </head>
@@ -56,7 +130,10 @@
 <div class="layout">
 	<aside>
 		<a href="#avatars" class="active" data-tab="avatars">Avatars</a>
+		<a href="#create" data-tab="create">Create from selfie</a>
 		<a href="#upload" data-tab="upload">Upload</a>
+		<a href="#widgets" data-tab="widgets">Widgets</a>
+		<a href="#embed" data-tab="embed">Embed</a>
 		<a href="#keys" data-tab="keys">API keys</a>
 		<a href="#mcp" data-tab="mcp">MCP</a>
 		<a href="#billing" data-tab="billing">Plan &amp; usage</a>
@@ -64,7 +141,7 @@
 	<main id="main"></main>
 </div>
 <script type="module">
-import { state, api, navigate, signOut } from './dashboard.js';
+import { state, api, navigate, signOut } from '/dashboard/dashboard.js';
 window.signOut = signOut;
 
 (async () => {
@@ -73,7 +150,7 @@ window.signOut = signOut;
 		state.user = me.user;
 		document.getElementById('user-email').textContent = me.user.email;
 	} catch {
-		location.href = '/login.html?next=' + encodeURIComponent(location.pathname + location.hash);
+		location.href = '/login?next=' + encodeURIComponent(location.pathname + location.hash);
 		return;
 	}
 	navigate(location.hash.slice(1) || 'avatars');

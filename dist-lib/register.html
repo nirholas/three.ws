@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Create account · 3D Agent</title>
 <link rel="icon" href="/favicon.ico">
+<meta name="privy-app-id" content="">
 <style>
 	:root { color-scheme: dark; --accent:#6a5cff; --accent2:#ff5ca8; }
 	* { box-sizing: border-box; }
@@ -22,6 +23,11 @@
 	.err { margin-top:14px; padding:10px 12px; background:rgba(255,92,92,.1); border:1px solid rgba(255,92,92,.3); border-radius:8px; color:#ffb3b3; font-size:13px; display:none; }
 	.foot { margin-top:20px; text-align:center; font-size:13px; color:#888; }
 	.brand { font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); margin:0 0 8px; }
+	.wallet-btn { background:#1c1c28; border:1px solid #2a2a36; color:#eee; font-weight:500; margin-top:12px; display:flex; align-items:center; justify-content:center; gap:8px; }
+	.wallet-btn:hover { background:#22222e; border-color:var(--accent); }
+	.divider { display:flex; align-items:center; gap:12px; margin:22px 0 4px; color:#555; font-size:12px; text-transform:uppercase; letter-spacing:.08em; }
+	.divider::before, .divider::after { content:''; flex:1; height:1px; background:#2a2a36; }
+	.wallet-icon { width:18px; height:18px; }
 </style>
 </head>
 <body>
@@ -37,9 +43,19 @@
 	<input id="password" type="password" autocomplete="new-password" required minlength="10">
 	<div class="hint">At least 10 characters.</div>
 	<button id="submit" type="submit">Create account</button>
+	<div class="divider">or</div>
+	<button id="privy" type="button" class="wallet-btn" style="background:linear-gradient(135deg,var(--accent),var(--accent2)); border-color:transparent; color:#fff">
+		<svg class="wallet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
+		Continue with Privy
+	</button>
+	<button id="wallet" type="button" class="wallet-btn">
+		<svg class="wallet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M16 12h2"/></svg>
+		Continue with MetaMask
+	</button>
 	<div class="err" id="err"></div>
-	<p class="foot">Already have one? <a href="/login.html">Sign in</a></p>
+	<p class="foot">Already have one? <a href="/login">Sign in</a></p>
 </form>
+<script type="module" src="/wallet-login.js"></script>
 <script>
 const params = new URLSearchParams(location.search);
 const next = params.get('next') || '/dashboard/';
@@ -63,6 +79,7 @@ form.addEventListener('submit', async (e) => {
 		});
 		const data = await res.json();
 		if (!res.ok) throw new Error(data.error_description || 'Sign-up failed');
+		try { localStorage.setItem('3dagent:auth-hint', JSON.stringify({ authed: true, ts: Date.now() })); } catch { /* ignore */ }
 		location.href = next;
 	} catch (e) {
 		err.textContent = e.message;

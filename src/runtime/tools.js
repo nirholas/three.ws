@@ -78,6 +78,29 @@ export const BUILTIN_TOOLS = [
 	},
 ];
 
+// Stage-scoped tools — appended to an agent's tool list only when Runtime is
+// attached to an <agent-stage>. See specs/STAGE_SPEC.md.
+export const STAGE_TOOLS = [
+	{
+		name: 'observe_agents',
+		description: 'List the other agents currently sharing this stage, with their names and positions.',
+		input_schema: { type: 'object', properties: {} },
+	},
+	{
+		name: 'say_to_agent',
+		description:
+			'Send a message to another agent on the same stage. The target agent will receive it as a user turn and reply in their own chat chrome.',
+		input_schema: {
+			type: 'object',
+			properties: {
+				agentId: { type: 'string', description: 'Target agent id as returned by observe_agents.' },
+				text: { type: 'string' },
+			},
+			required: ['agentId', 'text'],
+		},
+	},
+];
+
 export const BUILTIN_HANDLERS = {
 	async wave(args, ctx) {
 		const dur = args.duration_ms || 1500;
@@ -114,5 +137,23 @@ export const BUILTIN_HANDLERS = {
 		const { key, name, description, type, body } = args;
 		ctx.memory.write(key, { name, description, type, body });
 		return { ok: true, saved: key };
+	},
+
+	async observe_agents(args, ctx) {
+		if (!ctx.stage) return { ok: false, error: 'not on a stage' };
+		const others = ctx.stage
+			.getAgents()
+			.filter((a) => a.agentId !== ctx.agentId)
+			.map(({ agentId, name, position }) => ({ agentId, name, position }));
+		return { ok: true, agents: others };
+	},
+
+	async say_to_agent(args, ctx) {
+		if (!ctx.stage) return { ok: false, error: 'not on a stage' };
+		const { agentId, text } = args;
+		if (!agentId || !text) return { ok: false, error: 'agentId and text required' };
+		const from = ctx.agentId || 'anon';
+		ctx.stage.broadcast(from, { kind: 'direct', to: agentId, text });
+		return ctx.stage.routeMessage(from, agentId, text);
 	},
 };

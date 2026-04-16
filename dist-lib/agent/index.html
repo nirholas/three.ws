@@ -254,6 +254,7 @@
 			<button class="agent-embed-copy" id="agent-embed-copy">copy</button>
 		</div>
 		<a class="agent-embed-preview-link" id="agent-embed-preview" target="_blank" rel="noopener">preview embed →</a>
+		<a class="agent-embed-preview-link" id="agent-embed-settings" href="" target="_blank" rel="noopener">embed settings →</a>
 	</div>
 
 	<script type="module">
@@ -319,6 +320,7 @@
 			render();
 			embedSection.style.display = '';
 			embedPreview.href = embedUrl;
+			document.getElementById('agent-embed-settings').href = '/dashboard/embed-policy?agent=' + identity.id;
 
 			document.querySelectorAll('.agent-embed-tab').forEach(btn => {
 				btn.addEventListener('click', () => {
@@ -336,6 +338,31 @@
 					setTimeout(() => { embedCopy.textContent = 'copy'; embedCopy.classList.remove('copied'); }, 1400);
 				} catch {}
 			});
+
+			populateUnfurlMeta(identity);
+		}
+
+		function populateUnfurlMeta(identity) {
+			const id = identity?.id;
+			if (!id) return;
+			const origin   = location.origin;
+			const name     = identity.name        || 'Agent';
+			const desc     = identity.description || 'An embodied 3D agent.';
+			const agentUrl = `${origin}/agent/${id}`;
+			const img      = `${origin}/api/agent/${id}/og`;
+			const setAttr = (elId, attr, value) => {
+				const el = document.getElementById(elId);
+				if (el) el.setAttribute(attr, value);
+			};
+			setAttr('og-title',        'content', name);
+			setAttr('og-description',  'content', desc);
+			setAttr('og-image',        'content', img);
+			setAttr('og-url',          'content', agentUrl);
+			setAttr('tw-title',        'content', name);
+			setAttr('tw-description',  'content', desc);
+			setAttr('tw-image',        'content', img);
+			setAttr('oembed-link',     'href',    `${origin}/api/oembed?url=${encodeURIComponent(agentUrl)}`);
+			document.title = `${name} — 3D Agent`;
 		}
 
 		main().catch(err => {

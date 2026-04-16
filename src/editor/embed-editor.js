@@ -21,6 +21,18 @@ const MODES = [
 	{ id: 'fullscreen', label: 'Fullscreen', hint: 'Takes over the viewport' },
 ];
 
+const DEVICES = [
+	{ id: 'desktop', label: 'Desktop', w: 1440, h: 900 },
+	{ id: 'tablet', label: 'Tablet', w: 768, h: 1024 },
+	{ id: 'mobile', label: 'Mobile', w: 390, h: 844 },
+];
+
+const RESPONSIVE_PRESETS = [
+	{ id: 'fixed', label: 'Fixed', hint: 'Exact px — no scaling' },
+	{ id: 'mobile-first', label: 'Mobile-first', hint: 'Grows from mobile min' },
+	{ id: 'desktop-first', label: 'Desktop-first', hint: 'Shrinks from preferred size' },
+];
+
 const STYLE = `
 	.editor-root {
 		position: fixed;
@@ -202,6 +214,44 @@ const STYLE = `
 		border-radius: 6px;
 	}
 	.preview-url-row button { background: #3b82f6; color: white; border: 0; border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+
+	.stage-col { display: flex; flex-direction: column; overflow: hidden; }
+	.stage-wrap { flex: 1; position: relative; overflow: hidden; background: #1a1d21; }
+
+	.device-bar {
+		display: flex;
+		gap: 4px;
+		padding: 6px 16px;
+		background: #0b0d10;
+		border-bottom: 1px solid #1f2937;
+		align-items: center;
+	}
+	.device-bar span { font: 11px system-ui; color: #6b7280; margin-right: 4px; }
+	.device-btn {
+		padding: 3px 10px;
+		border-radius: 6px;
+		border: 1px solid #1f2937;
+		background: #111827;
+		color: #9ca3af;
+		cursor: pointer;
+		font: 12px system-ui;
+	}
+	.device-btn[aria-pressed="true"] { background: #3b82f6; color: white; border-color: #3b82f6; }
+
+	/* Device viewport frame — shown when simulating tablet/mobile */
+	.device-frame {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform-origin: top left;
+		background: white;
+		box-shadow: 0 0 0 2px #374151, 0 12px 40px rgba(0,0,0,0.5);
+		border-radius: 8px;
+		overflow: hidden;
+		transition: width 0.2s, height 0.2s;
+	}
+	.device-frame .placeholder-site,
+	.device-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 `;
 
 export function mountEmbedEditor(root, options = {}) {
@@ -212,6 +262,8 @@ export function mountEmbedEditor(root, options = {}) {
 		offset: options.offset || '24px 24px',
 		width: options.width || '320px',
 		height: options.height || '420px',
+		device: 'desktop',
+		responsivePreset: 'desktop-first',
 		...options,
 	};
 
@@ -228,6 +280,9 @@ export function mountEmbedEditor(root, options = {}) {
 					<input type="text" placeholder="Paste your site URL to preview in-place (optional)" id="url-input">
 					<button id="url-load">Load site</button>
 					<button id="url-clear">Reset</button>
+				</div>
+				<div class="device-bar" id="device-bar">
+					<span>Preview:</span>
 				</div>
 				<div class="stage-wrap" id="stage">
 					<div class="placeholder-site" id="placeholder">
@@ -279,6 +334,16 @@ export function mountEmbedEditor(root, options = {}) {
 						<input id="h-input" value="${state.height}">
 					</div>
 
+					<div class="section-title">Responsive</div>
+					<div class="field-row">
+						<label>Preset</label>
+						<select id="responsive-select">
+							<option value="fixed">Fixed (exact px)</option>
+							<option value="mobile-first">Mobile-first (clamp, grows)</option>
+							<option value="desktop-first">Desktop-first (clamp, shrinks)</option>
+						</select>
+					</div>
+
 					<div class="section-title">Options</div>
 					<div class="field-row">
 						<label>Voice</label>
@@ -315,6 +380,18 @@ export function mountEmbedEditor(root, options = {}) {
 
 	const $ = (sel) => shadow.querySelector(sel);
 	const $$ = (sel) => shadow.querySelectorAll(sel);
+
+	// Device preview buttons
+	const deviceBar = $('#device-bar');
+	for (const d of DEVICES) {
+		const btn = document.createElement('button');
+		btn.className = 'device-btn';
+		btn.dataset.device = d.id;
+		btn.setAttribute('aria-pressed', String(d.id === state.device));
+		btn.textContent = d.label;
+		btn.addEventListener('click', () => { state.device = d.id; syncDevice(); writeSnippet(); });
+		deviceBar.appendChild(btn);
+	}
 
 	const stage = $('#stage');
 	const agentWrap = $('#agent-wrap');
@@ -361,6 +438,7 @@ export function mountEmbedEditor(root, options = {}) {
 	$('#voice-select').addEventListener('change', (e) => { state.voice = e.target.value === 'off' ? false : true; sync(); });
 	$('#camera-select').addEventListener('change', (e) => { state.cameraControls = e.target.value === 'on'; sync(); });
 	$('#ar-select').addEventListener('change', (e) => { state.ar = e.target.value === 'on'; sync(); });
+	$('#responsive-select').addEventListener('change', (e) => { state.responsivePreset = e.target.value; writeSnippet(); });
 
 	// URL preview
 	const urlInput = $('#url-input');
@@ -475,6 +553,7 @@ export function mountEmbedEditor(root, options = {}) {
 		srcInput.value = state.src;
 		wInput.value = state.width;
 		hInput.value = state.height;
+		$('#responsive-select').value = state.responsivePreset;
 		sync();
 	});
 
@@ -532,25 +611,102 @@ export function mountEmbedEditor(root, options = {}) {
 			if (state.position !== 'bottom-right') attrs.push(`position="${state.position}"`);
 			if (state.offset && state.offset !== '24px 24px') attrs.push(`offset="${state.offset}"`);
 		}
-		if (state.width) attrs.push(`width="${state.width}"`);
-		if (state.height) attrs.push(`height="${state.height}"`);
+
+		const wPx = parsePx(state.width);
+		const hPx = parsePx(state.height);
+		const preset = state.responsivePreset;
+
+		if (preset !== 'fixed' && wPx && hPx) {
+			// Emit clamp() CSS custom properties on the style attribute
+			const wMin = Math.round(Math.max(160, wPx * 0.65));
+			const hMin = Math.round(Math.max(200, hPx * 0.65));
+			const wVw = Math.round((wPx / 1440) * 100);
+			const hVh = Math.round((hPx / 900) * 100);
+			const wClamp = `clamp(${wMin}px, ${wVw}vw, ${wPx}px)`;
+			const hClamp = `clamp(${hMin}px, ${hVh}vh, ${hPx}px)`;
+			attrs.push(`style="--agent-width: ${wClamp}; --agent-height: ${hClamp};"`);
+			attrs.push(`responsive`);
+		} else {
+			if (state.width) attrs.push(`width="${state.width}"`);
+			if (state.height) attrs.push(`height="${state.height}"`);
+			attrs.push(`responsive="false"`);
+		}
+
 		if (state.voice === false) attrs.push(`voice="off"`);
 		if (state.cameraControls) attrs.push(`camera-controls`);
 		if (state.ar) attrs.push(`ar`);
 
 		const script = `<script type="module" src="https://cdn.3d-agent.io/agent-3d.js"></script>`;
 		const element = `<agent-3d ${attrs.join(' ')}></agent-3d>`;
-		return `${script}\n${element}`;
+		let snippet = `${script}\n${element}`;
+
+		if (preset !== 'fixed') {
+			snippet = `<!-- generated responsive styles -->\n${snippet}`;
+		}
+		return snippet;
 	}
 
 	function writeSnippet() {
 		snippetEl.textContent = buildSnippet();
 	}
 
+	function syncDevice() {
+		const device = DEVICES.find((d) => d.id === state.device) || DEVICES[0];
+		for (const btn of $$('.device-btn')) {
+			btn.setAttribute('aria-pressed', String(btn.dataset.device === state.device));
+		}
+
+		const stageRect = stage.getBoundingClientRect();
+		const stageW = stageRect.width || stage.offsetWidth;
+		const stageH = stageRect.height || stage.offsetHeight;
+
+		if (state.device === 'desktop') {
+			// No frame — fills stage normally
+			$('#placeholder').style.cssText = '';
+			const iframe = $('#preview-frame');
+			if (iframe) iframe.style.cssText = '';
+			stage.removeAttribute('data-device');
+		} else {
+			// Show device frame scaled to fit the stage
+			const scaleX = stageW / device.w;
+			const scaleY = stageH / device.h;
+			const scale = Math.min(scaleX, scaleY, 1) * 0.9;
+			const frameW = device.w * scale;
+			const frameH = device.h * scale;
+			const offsetX = (stageW - frameW) / 2;
+			const offsetY = (stageH - frameH) / 2;
+
+			const placeholder = $('#placeholder');
+			placeholder.style.cssText = `
+				width: ${device.w}px; height: ${device.h}px;
+				transform: scale(${scale}); transform-origin: top left;
+				top: ${offsetY / scale}px; left: ${offsetX / scale}px;
+				position: absolute;
+			`;
+			const iframe = $('#preview-frame');
+			if (iframe && !iframe.hidden) {
+				iframe.style.cssText = `
+					width: ${device.w}px; height: ${device.h}px;
+					transform: scale(${scale}); transform-origin: top left;
+					top: ${offsetY / scale}px; left: ${offsetX / scale}px;
+					position: absolute; border: 0;
+				`;
+			}
+			stage.setAttribute('data-device', state.device);
+		}
+	}
+
+	function parsePx(val) {
+		if (!val) return 0;
+		const m = String(val).match(/^([\d.]+)px$/);
+		return m ? parseFloat(m[1]) : 0;
+	}
+
 	function sync() {
 		syncPositionButtons();
 		syncModeCards();
 		applyToPreview();
+		syncDevice();
 		writeSnippet();
 	}
 

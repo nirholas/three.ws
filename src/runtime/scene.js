@@ -122,7 +122,13 @@ export class SceneController {
 		if (target instanceof Vector3) return target;
 		if (target === 'camera') return this.viewer.activeCamera.position.clone();
 		if (target === 'center') return new Vector3(0, 1, 0);
-		if (target === 'user') return this._userTarget.clone();
+		if (target === 'user') {
+			// In WebXR, track the live XR camera position so lookAt('user') follows the wearer
+			if (this.viewer.renderer?.xr?.isPresenting) {
+				return this.viewer.renderer.xr.getCamera().position.clone();
+			}
+			return this._userTarget.clone();
+		}
 		return null;
 	}
 
