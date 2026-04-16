@@ -109,16 +109,70 @@ class App {
 			return;
 		}
 
-		// Load specified model or default CZ avatar
-		const model = options.model || '/avatars/cz.glb';
-		const resolvedModel = isDecentralizedURI(model) ? resolveURI(model) : model;
-		this.view(resolvedModel, '', new Map());
+		// Resume a stashed editor session (post-login round-trip), else
+		// load the model named in the URL or fall back to the CZ avatar.
+		this._maybeResumeOrLoad(options);
 
 		// Boot the agent system once identity is ready
 		this._initAgentSystem();
 
 		// Studio preview iframes use postMessage to live-update brand config.
 		this._initWidgetBridge();
+	}
+
+	/**
+	 * If the URL carries ?resume=<token>, restore the stashed editor session
+	 * (load source + replay edits + optionally auto-open Publish). Otherwise
+	 * load the model from #model= or the default CZ avatar.
+	 */
+	async _maybeResumeOrLoad(options) {
+		const params = new URLSearchParams(location.search);
+		const resumeToken = params.get('resume');
+
+		if (resumeToken) {
+			try {
+				const { restoreSession, clearStash } = await import(
+					'./editor/edit-persistence.js'
+				);
+				const stashed = await restoreSession(resumeToken);
+				if (stashed) {
+					if (stashed.source.url) {
+						await this.view(stashed.source.url, '', new Map());
+					} else if (stashed.source.file) {
+						const f = stashed.source.file;
+						await this.load(new Map([[f.name, f]]));
+					}
+
+					if (this.editor && this.editor.session) {
+						this.editor.session.restoreEdits(stashed.edits);
+						// Panels snapshotted the original material values before
+						// restoreEdits mutated them — rebuild so the GUI mirrors
+						// the restored state.
+						this.editor.materialEditor?.rebuild?.();
+						this.editor.textureInspector?.rebuild?.();
+						this.editor.sceneExplorer?.rebuild?.();
+					}
+
+					if (params.get('publish') === '1') {
+						this.editor?._openPublishModal?.();
+					}
+
+					await clearStash(resumeToken);
+
+					const clean = new URL(location.href);
+					clean.searchParams.delete('resume');
+					clean.searchParams.delete('publish');
+					history.replaceState(null, '', clean.toString());
+					return;
+				}
+			} catch (err) {
+				console.warn('[3d-agent] resume failed', err);
+			}
+		}
+
+		const model = options.model || '/avatars/cz.glb';
+		const resolvedModel = isDecentralizedURI(model) ? resolveURI(model) : model;
+		this.view(resolvedModel, '', new Map());
 	}
 
 	// ── Agent System Init ─────────────────────────────────────────────────────
@@ -486,7 +540,7 @@ class App {
 			this.onError('No .gltf or .glb asset found.');
 		}
 
-		this.view(rootFile, rootPath, fileMap);
+		return this.view(rootFile, rootPath, fileMap);
 	}
 
 	/**
@@ -515,7 +569,7 @@ class App {
 			if (typeof rootFile === 'object') URL.revokeObjectURL(fileURL);
 		};
 
-		viewer
+		return viewer
 			.load(fileURL, rootPath, fileMap)
 			.catch((e) => {
 				// Emit load error
