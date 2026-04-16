@@ -2,27 +2,35 @@
 
 Priority 5 in the [top-level stack](../README.md). One of two parallel host-integration series; the other is [claude-artifact/](../claude-artifact/).
 
+> **Before dispatching any 01–08 task, read [AUDIT.md](./AUDIT.md).** It flags stale paths, confusing numbering, two sub-stacks mixed in one folder, and spec unknowns that block plugin work.
+
+## Two parallel deliverables in this folder
+
+| Deliverable | Ships to | Tasks |
+|---|---|---|
+| **Fast path** — mount the avatar in your own LobeHub fork's right sidebar | your fork only, not public | [00-fork-sidebar-fastpath.md](./00-fork-sidebar-fastpath.md) |
+| **Plugin stack** — marketplace plugin so anyone's LobeHub can install | LobeHub plugin marketplace | [01](./01-plugin-manifest.md) → [05](./05-plugin-submission.md) |
+| **Host SDK + mention UX** — `@3dagent/embed` npm package + inline `@mentions` + autocomplete | npm + your fork | [06](./06-host-sdk-package.md) → [08](./08-mention-autocomplete.md) |
+
+Dispatch **task 00 first** — it ships the demo today. Then pick plugin, SDK, or both.
+
 ## Why this series matters
 
 LobeHub is the **primary** integration target for embodied-agent rendering inside a host chat. When a LobeHub chat talks to a 3D Agent, the agent should render **embodied** — a 3D avatar driven by the [Empathy Layer](../../src/agent-avatar.js) — inside the chat UI, not as invisible JSON.
 
-The user has a LobeHub fork. We are building a first-class plugin that:
+## Task index
 
-1. Declares a LobeHub plugin manifest pointing at our hosted [public/agent/embed.html](../../public/agent/embed.html).
-2. Handshakes with the LobeHub chat host via `postMessage`.
-3. Passes the chat model's tool calls and messages **into** our [agent-protocol](../../src/agent-protocol.js) so the avatar speaks, gestures, and reacts emotionally in real time.
-4. Passes signed agent actions **back out** to LobeHub so the chat history records what the avatar did.
-5. Ships to the LobeHub plugin marketplace.
-
-## Tasks — execute in order
-
-| # | File | Ships |
-|---|---|---|
-| 01 | [01-plugin-manifest.md](./01-plugin-manifest.md) | LobeHub plugin JSON manifest; hosted at a public URL; declares iframe + API surface |
-| 02 | [02-iframe-handshake.md](./02-iframe-handshake.md) | `postMessage` protocol between host and embed: init, agent-id resolution, action relay, resize, errors |
-| 03 | [03-host-auth-handoff.md](./03-host-auth-handoff.md) | Identify LobeHub viewer; optional wallet link via SIWE; graceful anon path |
-| 04 | [04-action-passthrough.md](./04-action-passthrough.md) | Chat → protocol relay (speak, gesture, emote); avatar-signed actions → chat |
-| 05 | [05-plugin-submission.md](./05-plugin-submission.md) | Package, local-test against LobeHub dev instance, marketplace submission PR |
+| # | File | What it ships | Blocks on |
+|---|---|---|---|
+| 00 | [00-fork-sidebar-fastpath.md](./00-fork-sidebar-fastpath.md) | Iframe mounted in the fork's right sidebar; persistent; reacts to chat stream | nothing |
+| 01 | [01-plugin-manifest.md](./01-plugin-manifest.md) | `.well-known/lobehub-plugin.json` manifest hosted publicly | resolving `TODO(lobehub-spec)` flags (see AUDIT.md §6) |
+| 02 | [02-iframe-handshake.md](./02-iframe-handshake.md) | Versioned `postMessage` bridge module `src/embed-host-bridge.js` | 01 |
+| 03 | [03-host-auth-handoff.md](./03-host-auth-handoff.md) | Anon / host-user / wallet-linked identity tiers with opt-in SIWE prompt | 02 |
+| 04 | [04-action-passthrough.md](./04-action-passthrough.md) | Bidirectional chat-tool ↔ protocol relay `src/embed-action-relay.js` | 02, 03 |
+| 05 | [05-plugin-submission.md](./05-plugin-submission.md) | Marketplace submission bundle + smoke test fixtures | 01–04 |
+| 06 | [06-host-sdk-package.md](./06-host-sdk-package.md) | `@3dagent/embed` npm package (`packages/embed/`) | nothing (can parallel 01–05) |
+| 07 | [07-message-renderer.md](./07-message-renderer.md) | Inline `<AgentMention>` React component for @-tokens in chat | 06 |
+| 08 | [08-mention-autocomplete.md](./08-mention-autocomplete.md) | `@`-trigger suggest menu + `GET /api/agents/suggest` endpoint | 07 |
 
 ## Rules that apply to every task in this series
 
@@ -31,7 +39,7 @@ The user has a LobeHub fork. We are building a first-class plugin that:
 - No new runtime dependencies unless the task file explicitly allows them.
 - No new docs files (README.md, CLAUDE.md) unless the task says so.
 - `node --check` every modified JS file.
-- `npx vite build` and report result. Pre-existing `@avaturn/sdk` warning is unrelated — ignore.
+- `npm run verify` (prettier + vite build) and report result. Pre-existing `@avaturn/sdk` warning is unrelated — ignore.
 - The [Empathy Layer](../../src/agent-avatar.js) is the novel selling point. **Every task must protect its behavior.** Do not disable, bypass, or flatten emotion blending for "embed mode". The embed context is where it shines.
 - `.well-known/agent-card.json` is an A2A card; LobeHub may or may not natively consume it. Treat as auxiliary, not primary.
 - [ERC-8004 identity](../../src/erc8004/) is wired but **must be optional** for the embed to work. Anon LobeHub users should get a functional avatar.
