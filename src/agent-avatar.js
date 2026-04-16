@@ -223,6 +223,72 @@ export class AgentAvatar {
 		this._triggerOneShot(name);
 	}
 
+	/**
+	 * Set the agent's animation slot override map (from meta.edits.animations).
+	 * @param {Object|null} map — { slotName: clipName, … }
+	 */
+	setAnimationMap(map) {
+		this._animationMap = map || {};
+	}
+
+	/** Resolve a slot name to the actual clip name via agent's override map. */
+	_resolveSlot(slot) {
+		return resolveSlot(slot, this._animationMap);
+	}
+
+	/**
+	 * Play a gesture by slot name, routing through the external animation manager.
+	 * Falls back to embedded clip search (_triggerOneShot) if the clip isn't in the library.
+	 * Warns once per missing clip name.
+	 * @param {string} slot — e.g. 'celebrate', 'think'
+	 * @param {number} [duration]
+	 */
+	_playSlot(slot, duration = 1.5) {
+		const clipName = this._resolveSlot(slot);
+		this._isPlayingOneShot = true;
+		this._oneShotAction = slot;
+		this._oneShotDuration = duration;
+		this._oneShotTimer = 0;
+
+		const am = this.viewer?.animationManager;
+		if (am) {
+			if (am.isLoaded(clipName)) {
+				this._playAmClip(am, clipName, duration);
+				return;
+			}
+			// Lazy-load from manifest definition
+			const def = am.getAnimationDefs().find((d) => d.name === clipName);
+			if (def) {
+				const prev = am.currentName;
+				am.loadAnimation(clipName, def.url, { loop: false, clipName: def.clipName }).then(() => {
+					this._playAmClip(am, clipName, duration, prev);
+				});
+				return;
+			}
+			// Clip not in library — warn once, try default slot fallback
+			if (!this._warnedSlots.has(clipName)) {
+				console.warn(`[AgentAvatar] slot "${slot}" → "${clipName}" not in animation library`);
+				this._warnedSlots.add(clipName);
+			}
+			const fallback = DEFAULT_ANIMATION_MAP[slot];
+			if (fallback && fallback !== clipName && am.isLoaded(fallback)) {
+				this._playAmClip(am, fallback, duration);
+				return;
+			}
+		}
+
+		// Final fallback: embedded clip search
+		this._triggerOneShot(clipName, duration);
+	}
+
+	_playAmClip(am, clipName, duration, prevName) {
+		const prev = prevName ?? am.currentName;
+		am.play(clipName);
+		if (prev && am.isLoaded(prev)) {
+			setTimeout(() => am.crossfadeTo(prev, 0.4), duration * 1000);
+		}
+	}
+
 	/** Set a world-space point for the avatar to look toward */
 	setLookTarget(worldPos) {
 		this._lookTarget = worldPos ? worldPos.clone() : null;
