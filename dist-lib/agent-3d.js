@@ -33544,8 +33544,8 @@ const fg = [
   }
 }, xT = 8;
 class ET extends EventTarget {
-  constructor({ manifest: e, viewer: t, memory: n, skills: s, providerConfig: r = {}, voiceConfig: a = {} } = {}) {
-    super(), this.manifest = e || {}, this.viewer = t, this.memory = n, this.skills = s, this.provider = dT({
+  constructor({ manifest: e, viewer: t, memory: n, skills: s, providerConfig: r = {}, voiceConfig: a = {}, stage: o = null, agentId: c = null } = {}) {
+    super(), this.manifest = e || {}, this.viewer = t, this.memory = n, this.skills = s, this.stage = o, this.agentId = c, this.provider = dT({
       ...this.manifest.brain,
       ...r
     }), this.tts = gT({ ...this.manifest.voice?.tts, ...a.tts }), this.stt = mT({ ...this.manifest.voice?.stt, ...a.stt }), this.messages = [], this._busy = !1;
@@ -33947,7 +33947,8 @@ function _makeCtx(invocationId, skillBaseURI) {
 		viewer: {
 			play: (clip, opts) => proxy('viewer.play', [clip, opts]),
 			stop: (clipName) => proxy('viewer.stop', [clipName]),
-			setExpression: (preset, intensity) => proxy('viewer.setExpression', [preset, intensity]),
+			setExpression: (preset, intensity) =>
+				proxy('viewer.setExpression', [preset, intensity]),
 			lookAt: (target) => proxy('viewer.lookAt', [target]),
 			moveTo: (position, opts) => proxy('viewer.moveTo', [position, opts]),
 			playAnimationByHint: (hint, opts) => proxy('viewer.playAnimationByHint', [hint, opts]),
@@ -33983,14 +33984,22 @@ async function _invoke({ invocationId, skillURI, toolName, args, skillBaseURI })
 		try {
 			await installPromise;
 		} catch (err) {
-			self.postMessage({ type: 'invoke-result', invocationId, error: \`Install failed: \${err.message}\` });
+			self.postMessage({
+				type: 'invoke-result',
+				invocationId,
+				error: \`Install failed: \${err.message}\`,
+			});
 			return;
 		}
 	}
 
 	const mod = _skillHandlers.get(skillURI);
 	if (!mod) {
-		self.postMessage({ type: 'invoke-result', invocationId, error: \`Skill not installed: \${skillURI}\` });
+		self.postMessage({
+			type: 'invoke-result',
+			invocationId,
+			error: \`Skill not installed: \${skillURI}\`,
+		});
 		return;
 	}
 
@@ -34009,7 +34018,11 @@ async function _invoke({ invocationId, skillURI, toolName, args, skillBaseURI })
 		const result = await fn(args, ctx);
 		self.postMessage({ type: 'invoke-result', invocationId, result: result ?? null });
 	} catch (err) {
-		self.postMessage({ type: 'invoke-result', invocationId, error: err.message || String(err) });
+		self.postMessage({
+			type: 'invoke-result',
+			invocationId,
+			error: err.message || String(err),
+		});
 	}
 }
 
@@ -34064,7 +34077,11 @@ function NT({ data: i }) {
     case "request": {
       const { invocationId: e, requestId: t, method: n, args: s } = i, r = ks.get(e);
       if (!r) {
-        ni?.postMessage({ type: "response", requestId: t, error: "No active invocation" });
+        ni?.postMessage({
+          type: "response",
+          requestId: t,
+          error: "No active invocation"
+        });
         return;
       }
       FT(n, s, r.mainCtx).then(
@@ -34235,7 +34252,9 @@ class QT {
     const e = /* @__PURE__ */ new Map();
     for (const t of this.skills.values())
       for (const n of t.tools)
-        e.has(n.name) && console.warn(`[skills] tool "${n.name}" overridden by skill "${t.name}"`), e.set(n.name, { ...n, _skill: t.name });
+        e.has(n.name) && console.warn(
+          `[skills] tool "${n.name}" overridden by skill "${t.name}"`
+        ), e.set(n.name, { ...n, _skill: t.name });
     return Array.from(e.values());
   }
   findSkillForTool(e) {

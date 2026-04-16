@@ -372,7 +372,7 @@ export class AgentAvatar {
 	_onLoadStart(_action) {
 		this._injectStimulus('patience', 0.6);
 		this._injectStimulus('curiosity', 0.3);
-		this._triggerOneShot('think', 2.0);
+		this._playSlot('think', 2.0);
 	}
 
 	_onLoadEnd(action) {
@@ -381,7 +381,7 @@ export class AgentAvatar {
 		} else {
 			this._injectStimulus('celebration', 0.7);
 			this._injectStimulus('curiosity', 0.5);
-			this._triggerOneShot('nod', 1.0);
+			this._playSlot('nod', 1.0);
 		}
 	}
 
@@ -395,7 +395,7 @@ export class AgentAvatar {
 			this._injectStimulus('concern', 0.3);
 		} else {
 			this._injectStimulus('celebration', 0.85);
-			this._triggerOneShot('celebrate', 1.5);
+			this._playSlot('celebrate', 1.5);
 		}
 	}
 
@@ -440,7 +440,19 @@ export class AgentAvatar {
 			}
 		}
 
-		// Stage 3: Apply emotion to avatar
+		// Stage 3: Emotion-threshold gesture triggers (routed through slot map)
+		if (!this._isPlayingOneShot) {
+			const w = this._emotion;
+			if (w.celebration > 0.6) {
+				this._playSlot('celebrate', 2.0);
+			} else if (w.concern > 0.6) {
+				this._playSlot('concern', 2.0);
+			} else if (w.curiosity > 0.6) {
+				this._playSlot('think', 1.5);
+			}
+		}
+
+		// Stage 4: Apply emotion to avatar
 		this._applyEmotionToAvatar(dt);
 	}
 

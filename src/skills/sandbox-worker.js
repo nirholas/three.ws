@@ -76,7 +76,8 @@ function _makeCtx(invocationId, skillBaseURI) {
 		viewer: {
 			play: (clip, opts) => proxy('viewer.play', [clip, opts]),
 			stop: (clipName) => proxy('viewer.stop', [clipName]),
-			setExpression: (preset, intensity) => proxy('viewer.setExpression', [preset, intensity]),
+			setExpression: (preset, intensity) =>
+				proxy('viewer.setExpression', [preset, intensity]),
 			lookAt: (target) => proxy('viewer.lookAt', [target]),
 			moveTo: (position, opts) => proxy('viewer.moveTo', [position, opts]),
 			playAnimationByHint: (hint, opts) => proxy('viewer.playAnimationByHint', [hint, opts]),
@@ -112,14 +113,22 @@ async function _invoke({ invocationId, skillURI, toolName, args, skillBaseURI })
 		try {
 			await installPromise;
 		} catch (err) {
-			self.postMessage({ type: 'invoke-result', invocationId, error: `Install failed: ${err.message}` });
+			self.postMessage({
+				type: 'invoke-result',
+				invocationId,
+				error: `Install failed: ${err.message}`,
+			});
 			return;
 		}
 	}
 
 	const mod = _skillHandlers.get(skillURI);
 	if (!mod) {
-		self.postMessage({ type: 'invoke-result', invocationId, error: `Skill not installed: ${skillURI}` });
+		self.postMessage({
+			type: 'invoke-result',
+			invocationId,
+			error: `Skill not installed: ${skillURI}`,
+		});
 		return;
 	}
 
@@ -138,7 +147,11 @@ async function _invoke({ invocationId, skillURI, toolName, args, skillBaseURI })
 		const result = await fn(args, ctx);
 		self.postMessage({ type: 'invoke-result', invocationId, result: result ?? null });
 	} catch (err) {
-		self.postMessage({ type: 'invoke-result', invocationId, error: err.message || String(err) });
+		self.postMessage({
+			type: 'invoke-result',
+			invocationId,
+			error: err.message || String(err),
+		});
 	}
 }
 

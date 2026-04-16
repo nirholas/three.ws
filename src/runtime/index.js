@@ -3,17 +3,19 @@
 
 import { createProvider } from './providers.js';
 import { createTTS, createSTT } from './speech.js';
-import { BUILTIN_TOOLS, BUILTIN_HANDLERS } from './tools.js';
+import { BUILTIN_TOOLS, BUILTIN_HANDLERS, STAGE_TOOLS } from './tools.js';
 
 const MAX_TOOL_ITERATIONS = 8;
 
 export class Runtime extends EventTarget {
-	constructor({ manifest, viewer, memory, skills, providerConfig = {}, voiceConfig = {} } = {}) {
+	constructor({ manifest, viewer, memory, skills, providerConfig = {}, voiceConfig = {}, stage = null, agentId = null } = {}) {
 		super();
 		this.manifest = manifest || {};
 		this.viewer = viewer;
 		this.memory = memory;
 		this.skills = skills;
+		this.stage = stage;
+		this.agentId = agentId;
 
 		this.provider = createProvider({
 			...this.manifest.brain,
@@ -42,7 +44,8 @@ export class Runtime extends EventTarget {
 		const builtinNames = new Set(this.manifest.tools || BUILTIN_TOOLS.map((t) => t.name));
 		const builtins = BUILTIN_TOOLS.filter((t) => builtinNames.has(t.name));
 		const skillTools = this.skills ? this.skills.allTools() : [];
-		return [...builtins, ...skillTools];
+		const stageTools = this.stage ? STAGE_TOOLS : [];
+		return [...builtins, ...stageTools, ...skillTools];
 	}
 
 	async send(userText, { voice = false } = {}) {
@@ -166,6 +169,8 @@ export class Runtime extends EventTarget {
 			loadClip: async (uri) => this.viewer.loadClip?.(uri),
 			loadJSON: async (uri) => (await fetch(uri)).json(),
 			call: async (toolName, args) => this._dispatchTool({ name: toolName, input: args }),
+			stage: this.stage,
+			agentId: this.agentId,
 		};
 	}
 
