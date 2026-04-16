@@ -22,6 +22,8 @@ export class Editor {
 		this.sceneExplorer = new SceneExplorer(viewer, this.session);
 		this.exportFolder = null;
 		this._exportCtrl = null;
+		this._publishCtrl = null;
+		this._publishInFlight = false;
 		this._attached = false;
 	}
 
@@ -56,6 +58,14 @@ export class Editor {
 				'download',
 			)
 			.name('💾 download GLB');
+		this._publishCtrl = folder
+			.add(
+				{
+					publish: () => this._openPublishModal(),
+				},
+				'publish',
+			)
+			.name('📤 publish as embed');
 		folder
 			.add(
 				{
