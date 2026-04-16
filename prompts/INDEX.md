@@ -16,6 +16,7 @@ Each band is a folder. Prompts inside a band can run in parallel unless they tou
 - [wallet-auth/](./wallet-auth/) — band 1
 - [selfie-onboarding/](./selfie-onboarding/) + [selfie-agent/](./selfie-agent/) + [avatar-platform/](./avatar-platform/) — band 2
 - [avatar-editing/](./avatar-editing/) + [avatar-edit/](./avatar-edit/) — band 3
+- [drop-edit-embed/](./drop-edit-embed/) — band 4 (anyone-can-drop-and-embed their own GLB; closes the seam between the viewer/editor and the widget flow)
 - [portable-embed/](./portable-embed/) + [embed/](./embed/) — band 4 (view + embed polish)
 - [claude-lobehub/](./claude-lobehub/) + [lobehub-embed/](./lobehub-embed/) + [claude-artifact/](./claude-artifact/) — band 5 (chat-surface integration)
 - [onchain/](./onchain/) — band 6
