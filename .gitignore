@@ -9,3 +9,8 @@ npm-debug.log*
 .env.*.local
 
 .env*.local
+
+# CharacterStudio — vendored fork
+character-studio/node_modules
+character-studio/build
+character-studio/public/loot-assets

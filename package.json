@@ -48,7 +48,6 @@
 		"postversion": "git push && git push --tags"
 	},
 	"dependencies": {
-		"@avaturn/sdk": "^0.7.0",
 		"@aws-sdk/client-s3": "^3.651.0",
 		"@aws-sdk/s3-request-presigner": "^3.651.0",
 		"@chenglou/pretext": "^0.0.5",

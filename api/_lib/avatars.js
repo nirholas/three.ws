@@ -166,6 +166,7 @@ function decorate(row) {
 		slug: row.slug,
 		name: row.name,
 		description: row.description,
+		storage_key: row.storage_key,
 		size_bytes: Number(row.size_bytes),
 		content_type: row.content_type,
 		source: row.source,
@@ -182,13 +183,13 @@ function decorate(row) {
 	};
 }
 
-// Hide owner_id from callers who don't own the row. The raw user UUID is the
-// primary segment of R2 storage keys, so leaking it helps an attacker guess
-// object paths in other users' namespaces.
+// Hide owner_id and storage_key from callers who don't own the row. The raw
+// user UUID is the primary segment of R2 storage keys, so leaking either helps
+// an attacker guess object paths in other users' namespaces.
 export function stripOwnerFor(avatar, requesterId) {
 	if (!avatar) return avatar;
 	if (requesterId && avatar.owner_id === requesterId) return avatar;
-	const { owner_id: _o, ...rest } = avatar;
+	const { owner_id: _o, storage_key: _sk, ...rest } = avatar;
 	return rest;
 }
 

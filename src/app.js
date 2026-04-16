@@ -1,32 +1,32 @@
 import * as THREE from 'three';
 import WebGL from 'three/addons/capabilities/WebGL.js';
-import { Viewer }        from './viewer.js';
-import { Editor }        from './editor/index.js';
+import { Viewer } from './viewer.js';
+import { Editor } from './editor/index.js';
 import { SimpleDropzone } from 'simple-dropzone';
-import { Validator }     from './validator.js';
-import { Footer }        from './components/footer';
-import { NichAgent }     from './nich-agent.js';
+import { Validator } from './validator.js';
+import { Footer } from './components/footer';
+import { NichAgent } from './nich-agent.js';
 import { AvatarCreator } from './avatar-creator.js';
 import { resolveURI, isDecentralizedURI } from './ipfs.js';
-import { saveRemoteGlbToAccount, getMe, readAuthHint }  from './account.js';
-import { getWidget }                      from './widgets.js';
+import { saveRemoteGlbToAccount, getMe, readAuthHint } from './account.js';
+import { getWidget } from './widgets.js';
 import queryString from 'query-string';
 
 // Agent system — the new primitive layer
 import { protocol, ACTION_TYPES } from './agent-protocol.js';
-import { AgentIdentity }          from './agent-identity.js';
-import { AgentSkills }            from './agent-skills.js';
-import { AgentAvatar }            from './agent-avatar.js';
-import { AgentHome }              from './agent-home.js';
+import { AgentIdentity } from './agent-identity.js';
+import { AgentSkills } from './agent-skills.js';
+import { AgentAvatar } from './agent-avatar.js';
+import { AgentHome } from './agent-home.js';
 
 // Runtime — LLM brain, scene control, file-based memory, skill bundles
-import { SceneController }        from './runtime/scene.js';
-import { Runtime }                from './runtime/index.js';
-import { Memory }                 from './memory/index.js';
-import { SkillRegistry }          from './skills/index.js';
+import { SceneController } from './runtime/scene.js';
+import { Runtime } from './runtime/index.js';
+import { Memory } from './memory/index.js';
+import { SkillRegistry } from './skills/index.js';
 
-window.THREE   = THREE;
-window.VIEWER  = {};
+window.THREE = THREE;
+window.VIEWER = {};
 
 if (!(window.File && window.FileReader && window.FileList && window.Blob)) {
 	console.error('The File APIs are not fully supported in this browser.');
@@ -42,34 +42,34 @@ class App {
 	constructor(el, location) {
 		const hash = location.hash ? queryString.parse(location.hash) : {};
 		this.options = {
-			kiosk:          Boolean(hash.kiosk),
-			model:          hash.model || '',
-			preset:         hash.preset || '',
+			kiosk: Boolean(hash.kiosk),
+			model: hash.model || '',
+			preset: hash.preset || '',
 			cameraPosition: hash.cameraPosition ? hash.cameraPosition.split(',').map(Number) : null,
-			brain:          hash.brain    || 'none',
-			proxyURL:       hash.proxyURL || '',
-			agent:          hash.agent || '',
-			widget:         hash.widget || '',
-			register:       hash.register !== undefined,
+			brain: hash.brain || 'none',
+			proxyURL: hash.proxyURL || '',
+			agent: hash.agent || '',
+			widget: hash.widget || '',
+			register: hash.register !== undefined,
 		};
 
-		this.el              = el;
-		this.viewer          = null;
-		this.editor          = null;
-		this.viewerEl        = null;
-		this.spinnerEl       = el.querySelector('.spinner');
-		this.dropEl          = el.querySelector('.wrap');
-		this.inputEl         = el.querySelector('#file-input');
+		this.el = el;
+		this.viewer = null;
+		this.editor = null;
+		this.viewerEl = null;
+		this.spinnerEl = el.querySelector('.spinner');
+		this.dropEl = el.querySelector('.wrap');
+		this.inputEl = el.querySelector('#file-input');
 		this.viewerContainerEl = el.querySelector('#viewer-container');
-		this.validator       = new Validator(el);
+		this.validator = new Validator(el);
 
 		// ── Agent System ──────────────────────────────────────────────────────
 		this.identity = new AgentIdentity({ autoLoad: true });
-		this.skills   = null;  // initialised after identity loads
-		this.avatar   = null;  // initialised after viewer + content load
+		this.skills = null; // initialised after identity loads
+		this.avatar = null; // initialised after viewer + content load
 		this.agentHome = null;
 		this.sceneCtrl = null; // SceneController — created when viewer is ready
-		this.runtime   = null; // LLM Runtime — created after identity + memory load
+		this.runtime = null; // LLM Runtime — created after identity + memory load
 		this.fileMemory = null; // file-based Memory for LLM context
 		this.skillRegistry = null; // external skill bundle loader
 
@@ -165,7 +165,7 @@ class App {
 			this.runtime.addEventListener('brain:message', (e) => {
 				if (e.detail.role === 'assistant' && e.detail.content) {
 					protocol.emit({
-						type:    ACTION_TYPES.SPEAK,
+						type: ACTION_TYPES.SPEAK,
 						payload: { text: e.detail.content, sentiment: 0 },
 						agentId: this.identity.id,
 					});
@@ -173,14 +173,14 @@ class App {
 			});
 
 			// Expose agent on window for debugging
-			window.VIEWER.agent_protocol  = protocol;
-			window.VIEWER.agent_identity  = this.identity;
-			window.VIEWER.agent_skills    = this.skills;
-			window.VIEWER.agent_runtime   = this.runtime;
+			window.VIEWER.agent_protocol = protocol;
+			window.VIEWER.agent_identity = this.identity;
+			window.VIEWER.agent_skills = this.skills;
+			window.VIEWER.agent_runtime = this.runtime;
 
 			// Announce presence
 			protocol.emit({
-				type:    ACTION_TYPES.PRESENCE,
+				type: ACTION_TYPES.PRESENCE,
 				payload: { status: 'online', agentId: this.identity.id },
 				agentId: this.identity.id,
 			});
@@ -197,18 +197,19 @@ class App {
 
 			// Log all significant actions to identity history (fire-and-forget)
 			protocol.on('*', (action) => {
-				if ([
-					ACTION_TYPES.SPEAK,
-					ACTION_TYPES.REMEMBER,
-					ACTION_TYPES.SIGN,
-					ACTION_TYPES.SKILL_DONE,
-					ACTION_TYPES.VALIDATE,
-					ACTION_TYPES.LOAD_END,
-				].includes(action.type)) {
+				if (
+					[
+						ACTION_TYPES.SPEAK,
+						ACTION_TYPES.REMEMBER,
+						ACTION_TYPES.SIGN,
+						ACTION_TYPES.SKILL_DONE,
+						ACTION_TYPES.VALIDATE,
+						ACTION_TYPES.LOAD_END,
+					].includes(action.type)
+				) {
 					this.identity.recordAction(action);
 				}
 			});
-
 		} catch (err) {
 			console.warn('[3d-agent] Agent system init failed:', err.message);
 		}
@@ -246,7 +247,10 @@ class App {
 		const btn = document.getElementById('make-widget-btn');
 		if (!btn) return;
 		const url = this._currentModelUrl;
-		if (!url) { btn.hidden = true; return; }
+		if (!url) {
+			btn.hidden = true;
+			return;
+		}
 		btn.href = `/studio?model=${encodeURIComponent(url)}`;
 		btn.hidden = false;
 	}
@@ -258,12 +262,16 @@ class App {
 		let glbUrl = '/avatars/cz.glb';
 		if (this.identity.avatarId) {
 			try {
-				const resp = await fetch(`/api/avatars/${this.identity.avatarId}`, { credentials: 'include' });
+				const resp = await fetch(`/api/avatars/${this.identity.avatarId}`, {
+					credentials: 'include',
+				});
 				if (resp.ok) {
 					const { avatar } = await resp.json();
 					if (avatar?.url) glbUrl = avatar.url;
 				}
-			} catch { /* fall through to default */ }
+			} catch {
+				/* fall through to default */
+			}
 		}
 
 		this.view(glbUrl, '', new Map());
@@ -280,7 +288,7 @@ class App {
 		}
 		window.VIEWER.widget = widget;
 
-		const cfg     = widget.config || {};
+		const cfg = widget.config || {};
 		const modelUrl = widget.avatar?.model_url || '/avatars/cz.glb';
 
 		// Apply config to options BEFORE creating the viewer so first frame is right.
@@ -312,7 +320,7 @@ class App {
 	_applyWidgetConfig(cfg) {
 		if (!this.viewer) return;
 		try {
-			if (cfg.background)            this.viewer.setBackgroundColor(cfg.background);
+			if (cfg.background) this.viewer.setBackgroundColor(cfg.background);
 			if (typeof cfg.autoRotate === 'boolean' && this.viewer.controls) {
 				this.viewer.controls.autoRotate = cfg.autoRotate;
 				if (typeof cfg.rotationSpeed === 'number') {
@@ -332,7 +340,8 @@ class App {
 		if (!el) {
 			el = document.createElement('div');
 			el.id = 'widget-caption';
-			el.style.cssText = 'position:fixed;left:50%;bottom:20px;transform:translateX(-50%);padding:8px 18px;background:rgba(0,0,0,0.55);color:#fff;font-family:Inter,system-ui,sans-serif;font-size:14px;border-radius:999px;backdrop-filter:blur(8px);z-index:5;pointer-events:none;max-width:90vw;text-align:center';
+			el.style.cssText =
+				'position:fixed;left:50%;bottom:20px;transform:translateX(-50%);padding:8px 18px;background:rgba(0,0,0,0.55);color:#fff;font-family:Inter,system-ui,sans-serif;font-size:14px;border-radius:999px;backdrop-filter:blur(8px);z-index:5;pointer-events:none;max-width:90vw;text-align:center';
 			document.body.appendChild(el);
 		}
 		el.textContent = text;
@@ -340,7 +349,8 @@ class App {
 
 	_showWidgetError(message) {
 		const el = document.createElement('div');
-		el.style.cssText = 'position:fixed;inset:0;display:grid;place-items:center;background:#0a0a0a;color:#e0e0e0;font-family:Inter,system-ui,sans-serif;text-align:center;padding:2rem;z-index:9999';
+		el.style.cssText =
+			'position:fixed;inset:0;display:grid;place-items:center;background:#0a0a0a;color:#e0e0e0;font-family:Inter,system-ui,sans-serif;text-align:center;padding:2rem;z-index:9999';
 		el.innerHTML = `<div><h1 style="font-weight:300;margin:0 0 0.5rem">Widget unavailable</h1><p style="opacity:0.7;margin:0">${message.replace(/[<>&"]/g, '')}</p><p style="margin-top:1.5rem"><a href="/" style="color:#8b5cf6">Open viewer</a> · <a href="/widgets" style="color:#8b5cf6">Browse gallery</a></p></div>`;
 		document.body.appendChild(el);
 	}
@@ -372,11 +382,19 @@ class App {
 		if (!sceneCtrl) return;
 		try {
 			switch (command) {
-				case 'play_clip':    sceneCtrl.playClipByName?.(args.name); break;
-				case 'lookAt':       sceneCtrl.lookAt?.(args.target); break;
-				case 'setExpression':sceneCtrl.setExpression?.(args.name, args.weight); break;
+				case 'play_clip':
+					sceneCtrl.playClipByName?.(args.name);
+					break;
+				case 'lookAt':
+					sceneCtrl.lookAt?.(args.target);
+					break;
+				case 'setExpression':
+					sceneCtrl.setExpression?.(args.name, args.weight);
+					break;
 			}
-		} catch (e) { console.warn('[widget] command failed', command, e?.message); }
+		} catch (e) {
+			console.warn('[widget] command failed', command, e?.message);
+		}
 	}
 
 	_postToParent(msg) {
@@ -386,7 +404,13 @@ class App {
 	}
 
 	_initNichAgent() {
-		const agent = new NichAgent(document.body, protocol, this.skills, this.identity, this.runtime);
+		const agent = new NichAgent(
+			document.body,
+			protocol,
+			this.skills,
+			this.identity,
+			this.runtime,
+		);
 		window.VIEWER.agent = agent;
 		// Greet on first open
 		agent.onFirstOpen = () => {
@@ -403,8 +427,8 @@ class App {
 	createViewer() {
 		if (this.viewer) this.viewer.dispose();
 		this.viewerEl = this.viewerContainerEl;
-		this.viewer   = new Viewer(this.viewerEl, this.options);
-		this.editor   = new Editor(this.viewer);
+		this.viewer = new Viewer(this.viewerEl, this.options);
+		this.editor = new Editor(this.viewer);
 		this.editor.attach();
 		window.VIEWER.editor = this.editor;
 		window.VIEWER.viewer = this.viewer;
@@ -415,7 +439,7 @@ class App {
 
 	createDropzone() {
 		const dropCtrl = new SimpleDropzone(this.dropEl, this.inputEl);
-		dropCtrl.on('drop',      ({ files }) => this.load(files));
+		dropCtrl.on('drop', ({ files }) => this.load(files));
 		dropCtrl.on('dropstart', () => this.showSpinner());
 		dropCtrl.on('droperror', () => this.hideSpinner());
 	}
@@ -423,13 +447,16 @@ class App {
 	// ── Avatar Creator ────────────────────────────────────────────────────────
 
 	setupAvatarCreator() {
-		// The creator instance stays wired so the selfie pipeline (task 4) can
-		// call `avatarCreator.open(sessionUrl)` once it has an Avaturn session.
-		// The "Create Avatar" button is now a link to /create — no click wiring here.
+		// Ready Player Me iframe builder. The creator stays mounted so downstream
+		// flows (selfie → agent) can reopen it. "Create Avatar" button is a link
+		// to /create — no click wiring here.
 		this.avatarCreator = new AvatarCreator(document.body, async (glbUrl) => {
 			this.view(glbUrl, '', new Map());
 			try {
-				const avatar = await saveRemoteGlbToAccount(glbUrl, { source: 'avaturn' });
+				const avatar = await saveRemoteGlbToAccount(glbUrl, {
+					source: 'import',
+					source_meta: { provider: 'readyplayerme', source_url: glbUrl },
+				});
 				this._flashSaved(avatar);
 			} catch (err) {
 				if (err.code !== 'not_signed_in') {
@@ -468,7 +495,7 @@ class App {
 	view(rootFile, rootPath, fileMap) {
 		if (this.viewer) this.viewer.clear();
 
-		const viewer  = this.viewer || this.createViewer();
+		const viewer = this.viewer || this.createViewer();
 		const fileURL = typeof rootFile === 'string' ? rootFile : URL.createObjectURL(rootFile);
 
 		this._currentModelUrl = typeof rootFile === 'string' ? rootFile : null;
@@ -476,7 +503,7 @@ class App {
 
 		// Emit load start
 		protocol.emit({
-			type:    ACTION_TYPES.LOAD_START,
+			type: ACTION_TYPES.LOAD_START,
 			payload: { url: typeof rootFile === 'string' ? rootFile : rootFile.name },
 			agentId: this.identity?.id || 'default',
 		});
@@ -491,7 +518,7 @@ class App {
 			.catch((e) => {
 				// Emit load error
 				protocol.emit({
-					type:    ACTION_TYPES.LOAD_END,
+					type: ACTION_TYPES.LOAD_END,
 					payload: { error: e.message },
 					agentId: this.identity?.id || 'default',
 				});
@@ -502,7 +529,7 @@ class App {
 
 				// Emit load success
 				protocol.emit({
-					type:    ACTION_TYPES.LOAD_END,
+					type: ACTION_TYPES.LOAD_END,
 					payload: { success: true },
 					agentId: this.identity?.id || 'default',
 				});
@@ -543,7 +570,7 @@ class App {
 		if (this.agentHome) this.agentHome.avatar = this.avatar;
 
 		window.VIEWER.agent_avatar = this.avatar;
-		window.VIEWER.scene_ctrl   = this.sceneCtrl;
+		window.VIEWER.scene_ctrl = this.sceneCtrl;
 
 		// Let the skills system access the viewer
 		if (this.skills) {
@@ -581,10 +608,10 @@ class App {
 			.catch(() => {
 				// No manifest — use sensible defaults if files exist
 				const defaults = [
-					{ name: 'idle',    url: '/animations/idle.glb',    label: 'Idle' },
+					{ name: 'idle', url: '/animations/idle.glb', label: 'Idle' },
 					{ name: 'walking', url: '/animations/walking.glb', label: 'Walking' },
 					{ name: 'running', url: '/animations/running.glb', label: 'Running' },
-					{ name: 'waving',  url: '/animations/waving.glb',  label: 'Waving' },
+					{ name: 'waving', url: '/animations/waving.glb', label: 'Waving' },
 					{ name: 'dancing', url: '/animations/dancing.glb', label: 'Dancing' },
 					{ name: 'sitting', url: '/animations/sitting.glb', label: 'Sitting' },
 					{ name: 'jumping', url: '/animations/jumping.glb', label: 'Jumping' },
@@ -614,12 +641,12 @@ class App {
 			const el = document.querySelector('.validator-toggle');
 			if (!el) return;
 
-			const errors   = parseInt(el.dataset.errors   || '0', 10);
+			const errors = parseInt(el.dataset.errors || '0', 10);
 			const warnings = parseInt(el.dataset.warnings || '0', 10);
-			const hints    = parseInt(el.dataset.hints    || '0', 10);
+			const hints = parseInt(el.dataset.hints || '0', 10);
 
 			protocol.emit({
-				type:    ACTION_TYPES.VALIDATE,
+				type: ACTION_TYPES.VALIDATE,
 				payload: { errors, warnings, hints },
 				agentId: this.identity?.id || 'default',
 			});
@@ -658,13 +685,20 @@ class App {
 		import('./erc8004/register-ui.js').then(({ RegisterUI }) => {
 			new RegisterUI(this.viewerContainerEl, (result) => {
 				console.info('[ERC-8004] Agent registered:', result);
-				this.identity.update({ isRegistered: true, meta: { ...this.identity.meta, erc8004: result } });
+				this.identity.update({
+					isRegistered: true,
+					meta: { ...this.identity.meta, erc8004: result },
+				});
 			});
 		});
 	}
 
-	showSpinner() { this.spinnerEl.style.display = ''; }
-	hideSpinner() { this.spinnerEl.style.display = 'none'; }
+	showSpinner() {
+		this.spinnerEl.style.display = '';
+	}
+	hideSpinner() {
+		this.spinnerEl.style.display = 'none';
+	}
 }
 
 document.body.innerHTML += Footer();

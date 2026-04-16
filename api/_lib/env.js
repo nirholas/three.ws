@@ -37,4 +37,9 @@ export const env = {
 
 	get ISSUER()       { return this.APP_ORIGIN; },
 	get MCP_RESOURCE() { return `${this.APP_ORIGIN}/api/mcp`; },
+
+	// Avaturn — photo-to-avatar pipeline. Only read when /api/onboarding/avaturn-session
+	// is hit; keeping these optional so unrelated endpoints still respond when unset.
+	get AVATURN_API_KEY() { return opt('AVATURN_API_KEY'); },
+	get AVATURN_API_URL() { return trimSlash(opt('AVATURN_API_URL', 'https://api.avaturn.me')); },
 };

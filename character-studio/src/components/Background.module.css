@@ -1,0 +1,37 @@
+.backgroundImg {
+  background: black;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-position: center center;
+  height: 100vh;
+  width: 100vw;
+  background-size: cover;
+  display: fixed;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  position: absolute;
+  z-index: -100;
+}
+.darkBackground {
+  background-color: #1e2530;
+  height: 100vh;
+  width: 100vw;
+  background-size: cover;
+  display: fixed;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  position: absolute;
+  z-index: -100;
+}
+
+.logo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: auto;
+  height: 100vh;
+  opacity: 0.3;
+}

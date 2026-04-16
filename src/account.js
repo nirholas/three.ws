@@ -72,10 +72,10 @@ export async function getMe() {
 	return user;
 }
 
-// Fetches a GLB from a URL (e.g. the one the avatar creator returns on export),
-// uploads it to our R2 bucket via presigned PUT, and creates the avatar record.
+// Uploads a GLB to our R2 bucket and creates the avatar record.
+// `source` may be a Blob (from CharacterStudio postMessage) or a URL string.
 // Throws if the user isn't authenticated.
-export async function saveRemoteGlbToAccount(sourceUrl, meta = {}) {
+export async function saveRemoteGlbToAccount(source, meta = {}) {
 	const user = await getMe();
 	if (!user) {
 		const err = new Error('not_signed_in');
@@ -83,9 +83,15 @@ export async function saveRemoteGlbToAccount(sourceUrl, meta = {}) {
 		throw err;
 	}
 
-	const resp = await fetch(sourceUrl, { mode: 'cors' });
-	if (!resp.ok) throw new Error(`failed to fetch source GLB: ${resp.status}`);
-	const blob = await resp.blob();
+	let blob;
+	if (source instanceof Blob) {
+		blob = source;
+	} else {
+		const resp = await fetch(source, { mode: 'cors' });
+		if (!resp.ok) throw new Error(`failed to fetch source GLB: ${resp.status}`);
+		blob = await resp.blob();
+	}
+
 	const size = blob.size;
 	const contentType = blob.type || 'model/gltf-binary';
 	const checksum = await sha256Hex(blob);
@@ -103,6 +109,10 @@ export async function saveRemoteGlbToAccount(sourceUrl, meta = {}) {
 	});
 	if (!putRes.ok) throw new Error(`R2 upload failed: ${putRes.status}`);
 
+	const sourceMeta =
+		meta.source_meta ||
+		(typeof source === 'string' ? { source_url: source } : { generator: 'characterstudio' });
+
 	const created = await postJson('/api/avatars', {
 		storage_key: presign.storage_key,
 		size_bytes: size,
@@ -112,8 +122,8 @@ export async function saveRemoteGlbToAccount(sourceUrl, meta = {}) {
 		description: meta.description,
 		visibility: meta.visibility || 'private',
 		tags: meta.tags || [],
-		source: meta.source || 'avaturn',
-		source_meta: meta.source_meta || { source_url: sourceUrl },
+		source: meta.source || 'upload',
+		source_meta: sourceMeta,
 	});
 	return created.avatar;
 }

@@ -1,58 +1,75 @@
-import { AvaturnSDK } from '@avaturn/sdk';
-
 /**
- * Avatar Creator — embeds the avatar customization iframe.
- * Currently uses Avaturn's hosted engine under the hood; swap the provider
- * here if you replace it with a self-hosted creator.
- * When the user exports an avatar, the GLB is loaded into the 3D viewer.
+ * Avatar Creator — embeds the self-hosted CharacterStudio builder in a modal.
+ *
+ * CharacterStudio runs in an iframe and communicates via postMessage. When the
+ * user clicks "Save Avatar", CharacterStudio posts a `characterstudio:export`
+ * message carrying the GLB as a transferred ArrayBuffer, which we convert to a
+ * Blob and hand to `onExport`.
+ *
+ * The class API is identical to the previous RPM implementation so callers
+ * (src/app.js, src/account.js) don't need to change.
  */
+
+function getStudioUrl() {
+	try {
+		if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_CHARACTER_STUDIO_URL) {
+			return String(import.meta.env.VITE_CHARACTER_STUDIO_URL).trim().replace(/\/$/, '');
+		}
+	} catch (_) {}
+	return 'http://localhost:5173';
+}
+
 export class AvatarCreator {
 	/**
 	 * @param {Element} containerEl - Parent element to mount the modal into
-	 * @param {function(string): void} onExport - Called with the exported GLB URL
+	 * @param {function(Blob): void} onExport - Called with the exported GLB Blob
+	 * @param {object} [opts]
+	 * @param {string} [opts.studioUrl] - Override the CharacterStudio URL
 	 */
-	constructor(containerEl, onExport) {
+	constructor(containerEl, onExport, opts = {}) {
 		this.container = containerEl;
 		this.onExport = onExport;
-		this.sdk = null;
+		this.studioUrl = opts.studioUrl || getStudioUrl();
+
 		this.modal = null;
-		this.iframeContainer = null;
+		this.iframe = null;
+		this._onMessage = null;
+		this._onKeyDown = null;
 	}
 
 	/**
-	 * Opens the avatar creator modal and initializes the creator SDK.
-	 * @param {string} [sessionUrl] - Optional session URL from your backend (POST /sessions/new).
-	 *                                 If omitted, uses the provider's default public editor.
+	 * Opens the avatar creator modal and mounts the CharacterStudio iframe.
 	 */
-	async open(sessionUrl) {
+	async open() {
 		if (this.modal) return;
-
 		this._buildModal();
+		this._onMessage = (event) => this._handleMessage(event);
+		window.addEventListener('message', this._onMessage);
+		this.iframe.src = this.studioUrl;
+	}
 
+	_handleMessage(event) {
+		// Only accept messages from the CharacterStudio origin.
 		try {
-			this.sdk = new AvaturnSDK();
-
-			const initOptions = {
-				iframeClassName: 'avatar-creator-iframe',
-			};
-
-			if (sessionUrl) {
-				initOptions.url = sessionUrl;
-			}
-
-			await this.sdk.init(this.iframeContainer, initOptions);
-
-			this.sdk.on('export', (data) => {
-				const glbUrl = typeof data === 'string' ? data : data?.url || data?.avatarUrl;
-				if (glbUrl && this.onExport) {
-					this.onExport(glbUrl);
-				}
-				this.close();
-			});
-		} catch (err) {
-			console.error('[AvatarCreator] Failed to initialize creator SDK:', err);
-			this._showError('Failed to load avatar creator. Please try again.');
+			const csOrigin = new URL(this.studioUrl).origin;
+			if (event.origin !== csOrigin) return;
+		} catch (_) {
+			return;
 		}
+
+		const msg = event.data;
+		if (!msg || msg.source !== 'characterstudio' || msg.type !== 'export') return;
+		if (!(msg.glb instanceof ArrayBuffer)) return;
+
+		const blob = new Blob([msg.glb], { type: 'model/gltf-binary' });
+		if (this.onExport) {
+			try {
+				this.onExport(blob);
+			} catch (err) {
+				console.error('[AvatarCreator] onExport handler threw:', err);
+			}
+		}
+		this.close();
 	}
 
 	_buildModal() {
@@ -66,7 +83,14 @@ export class AvatarCreator {
 					<button class="avatar-creator-close" aria-label="Close">&times;</button>
 				</div>
 				<div class="avatar-creator-body">
-					<div class="avatar-creator-container"></div>
+					<div class="avatar-creator-container">
+						<iframe
+							class="avatar-creator-iframe"
+							title="Avatar Creator"
+							allow="camera *; microphone *; clipboard-write"
+							sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+						></iframe>
+					</div>
 					<div class="avatar-creator-loading">
 						<div class="spinner"></div>
 						<span>Loading avatar creator...</span>
@@ -76,45 +100,38 @@ export class AvatarCreator {
 		`;
 
 		this.container.appendChild(this.modal);
-		this.iframeContainer = this.modal.querySelector('.avatar-creator-container');
+		this.iframe = this.modal.querySelector('.avatar-creator-iframe');
+
+		// Hide the loading spinner once the iframe fires its load event.
+		this.iframe.addEventListener('load', () => {
+			const loading = this.modal?.querySelector('.avatar-creator-loading');
+			if (loading) loading.style.display = 'none';
+		});
 
 		this.modal.querySelector('.avatar-creator-close').addEventListener('click', () => this.close());
-
 		this.modal.addEventListener('click', (e) => {
 			if (e.target === this.modal) this.close();
 		});
 
-		document.addEventListener('keydown', this._onKeyDown = (e) => {
+		this._onKeyDown = (e) => {
 			if (e.key === 'Escape') this.close();
-		});
-	}
-
-	_showError(message) {
-		const loading = this.modal?.querySelector('.avatar-creator-loading');
-		if (loading) {
-			loading.innerHTML = `<span class="avatar-creator-error">${message}</span>`;
-		}
+		};
+		document.addEventListener('keydown', this._onKeyDown);
 	}
 
 	close() {
-		if (this.sdk) {
-			try {
-				this.sdk.destroy();
-			} catch (_) {
-				// SDK may already be disposed
-			}
-			this.sdk = null;
+		if (this._onMessage) {
+			window.removeEventListener('message', this._onMessage);
+			this._onMessage = null;
 		}
-
 		if (this._onKeyDown) {
 			document.removeEventListener('keydown', this._onKeyDown);
 			this._onKeyDown = null;
 		}
-
 		if (this.modal) {
 			this.modal.remove();
 			this.modal = null;
-			this.iframeContainer = null;
+			this.iframe = null;
 		}
 	}
 

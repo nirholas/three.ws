@@ -1,0 +1,66 @@
+/* TASK: rewrite the above styled component to use CSS modules. instead of nesting classes, format them with CSS to be individual classes. use the default values instead of props */
+
+.LoadingStyleBox {
+    z-index: 10000000;
+    width: 100vw;
+    height: 100vh;
+    top: 0;
+    left: 0;
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    overflow: hidden;
+    background: #000000;
+}
+
+.loading-text {
+    font-family: Proxima;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 18px;
+    position: relative;
+    top: 1em;
+    line-height: 32px;
+    text-align: center;
+    color: #FFFFFF;
+    display: inline-block;
+}
+
+@keyframes spinner {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+  .loading-spinner {
+    width: 5em;
+    height: 5em;
+
+    border: 5px solid #860080; /* Light grey */
+    border-top: 5px solid #2c0026; /* Black */
+    border-radius: 50%;
+    animation: spinner 1.5s linear infinite;
+    display: inline-block;
+    float: right;
+  }
+
+
+.logo-container {
+    bottom: 0;
+    position: absolute;
+}
+
+.logo-gradient {
+    height: 20vh;
+    width: 100vw;
+    background: radial-gradient(49.5% 173.11% at 50.84% -79.89%, #95414E 30.36%, rgba(137, 61, 73, 0) 100%);
+    display: flex;
+    flex-direction: column;
+    transform: rotate(-180deg);
+    bottom: 0;
+}

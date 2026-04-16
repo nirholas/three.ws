@@ -26,26 +26,85 @@ const DEG2RAD = Math.PI / 180;
 
 // Emotion decay rates (units per second — larger = fades faster)
 const DECAY = {
-	concern:     0.08,   // half-life ~12s — lingers, builds empathy
-	celebration: 0.18,   // half-life ~6s  — bright but brief
-	patience:    0.035,  // half-life ~20s — sustained waiting state
-	curiosity:   0.12,   // half-life ~8s  — alert, engaged
-	empathy:     0.055,  // half-life ~13s — slow to fade, like real empathy
+	concern: 0.08, // half-life ~12s — lingers, builds empathy
+	celebration: 0.18, // half-life ~6s  — bright but brief
+	patience: 0.035, // half-life ~20s — sustained waiting state
+	curiosity: 0.12, // half-life ~8s  — alert, engaged
+	empathy: 0.055, // half-life ~13s — slow to fade, like real empathy
 };
 
 // Vocabulary scored for emotional valence
 // Keys map to emotion buckets; values are keyword lists
 const VOCAB = {
-	concern:     ['error', 'failed', 'fail', 'invalid', 'missing', 'broken', 'issue',
-	              'warning', 'problem', 'wrong', 'crash', 'undefined', 'null', 'corrupt'],
-	celebration: ['success', 'complete', 'valid', 'clean', 'done', 'great', 'loaded',
-	              'ready', 'perfect', 'excellent', 'nice', 'good', 'worked', 'saved'],
-	patience:    ['analyzing', 'checking', 'loading', 'processing', 'thinking',
-	              'please wait', 'just a moment', 'scanning', 'computing', 'fetching'],
-	curiosity:   ['interesting', 'wonder', 'what if', 'explore', 'curious', 'new',
-	              'never seen', 'unusual', 'rare', 'unique', 'unexpected'],
-	empathy:     ['sorry', 'understand', 'difficult', 'frustrating', 'try again',
-	              'my mistake', 'apologies', 'hard', 'oops', 'unfortunately'],
+	concern: [
+		'error',
+		'failed',
+		'fail',
+		'invalid',
+		'missing',
+		'broken',
+		'issue',
+		'warning',
+		'problem',
+		'wrong',
+		'crash',
+		'undefined',
+		'null',
+		'corrupt',
+	],
+	celebration: [
+		'success',
+		'complete',
+		'valid',
+		'clean',
+		'done',
+		'great',
+		'loaded',
+		'ready',
+		'perfect',
+		'excellent',
+		'nice',
+		'good',
+		'worked',
+		'saved',
+	],
+	patience: [
+		'analyzing',
+		'checking',
+		'loading',
+		'processing',
+		'thinking',
+		'please wait',
+		'just a moment',
+		'scanning',
+		'computing',
+		'fetching',
+	],
+	curiosity: [
+		'interesting',
+		'wonder',
+		'what if',
+		'explore',
+		'curious',
+		'new',
+		'never seen',
+		'unusual',
+		'rare',
+		'unique',
+		'unexpected',
+	],
+	empathy: [
+		'sorry',
+		'understand',
+		'difficult',
+		'frustrating',
+		'try again',
+		'my mistake',
+		'apologies',
+		'hard',
+		'oops',
+		'unfortunately',
+	],
 };
 
 export class AgentAvatar {
@@ -55,52 +114,52 @@ export class AgentAvatar {
 	 * @param {import('./agent-identity.js').AgentIdentity}    identity
 	 */
 	constructor(viewer, protocol, identity) {
-		this.viewer   = viewer;
+		this.viewer = viewer;
 		this.protocol = protocol;
 		this.identity = identity;
 
 		// Emotional state — continuous weighted blend, updated every frame
 		this._emotion = {
-			neutral:     1.0,
-			concern:     0.0,
+			neutral: 1.0,
+			concern: 0.0,
 			celebration: 0.0,
-			patience:    0.0,
-			curiosity:   0.0,
-			empathy:     0.0,
+			patience: 0.0,
+			curiosity: 0.0,
+			empathy: 0.0,
 		};
 
 		// Head look-at state
-		this._lookTarget   = null;   // Vector3 | null
-		this._currentTilt  = 0;      // radians
-		this._targetTilt   = 0;      // radians
-		this._currentLean  = 0;      // slight forward lean
-		this._targetLean   = 0;
-		this._currentYaw   = 0;      // horizontal gaze (follow mode)
+		this._lookTarget = null; // Vector3 | null
+		this._currentTilt = 0; // radians
+		this._targetTilt = 0; // radians
+		this._currentLean = 0; // slight forward lean
+		this._targetLean = 0;
+		this._currentYaw = 0; // horizontal gaze (follow mode)
 
 		// Follow mode state
-		this._mouseGaze      = { x: 0, y: 0 };  // normalised -1..1
-		this._keystrokePitch = 0;                // look-down impulse (radians, decays)
-		this._keystrokeYaw   = 0;                // lateral drift impulse (radians, decays)
+		this._mouseGaze = { x: 0, y: 0 }; // normalised -1..1
+		this._keystrokePitch = 0; // look-down impulse (radians, decays)
+		this._keystrokeYaw = 0; // lateral drift impulse (radians, decays)
 
 		// One-shot gesture tracking
-		this._oneShotAction   = null;
+		this._oneShotAction = null;
 		this._oneShotDuration = 0;
-		this._oneShotTimer    = 0;
+		this._oneShotTimer = 0;
 		this._isPlayingOneShot = false;
 
 		// Streak tracking for empathy injection
-		this._errorStreak    = 0;
+		this._errorStreak = 0;
 		this._firstEncounter = true;
 
 		// Morph target current values (lerped each frame)
 		this._morphCurrent = {};
-		this._morphTarget  = {};
+		this._morphTarget = {};
 
 		// Listeners stored so we can detach later
 		this._listeners = [];
 
-		this._tickBound      = this._tickEmotion.bind(this);
-		this._onMouseMove    = this._handleMouseMove.bind(this);
+		this._tickBound = this._tickEmotion.bind(this);
+		this._onMouseMove = this._handleMouseMove.bind(this);
 		this._onKeyFollowDown = this._handleKeyPress.bind(this);
 	}
 
@@ -117,16 +176,16 @@ export class AgentAvatar {
 		window.addEventListener('keydown', this._onKeyFollowDown);
 
 		// Subscribe to protocol events
-		this._sub(ACTION_TYPES.SPEAK,         this._onSpeak.bind(this));
-		this._sub(ACTION_TYPES.GESTURE,       this._onGesture.bind(this));
-		this._sub(ACTION_TYPES.EMOTE,         this._onEmote.bind(this));
-		this._sub(ACTION_TYPES.LOOK_AT,       this._onLookAt.bind(this));
+		this._sub(ACTION_TYPES.SPEAK, this._onSpeak.bind(this));
+		this._sub(ACTION_TYPES.GESTURE, this._onGesture.bind(this));
+		this._sub(ACTION_TYPES.EMOTE, this._onEmote.bind(this));
+		this._sub(ACTION_TYPES.LOOK_AT, this._onLookAt.bind(this));
 		this._sub(ACTION_TYPES.PERFORM_SKILL, this._onSkillStart.bind(this));
-		this._sub(ACTION_TYPES.SKILL_DONE,    this._onSkillDone.bind(this));
-		this._sub(ACTION_TYPES.SKILL_ERROR,   this._onSkillError.bind(this));
-		this._sub(ACTION_TYPES.LOAD_START,    this._onLoadStart.bind(this));
-		this._sub(ACTION_TYPES.LOAD_END,      this._onLoadEnd.bind(this));
-		this._sub(ACTION_TYPES.VALIDATE,      this._onValidate.bind(this));
+		this._sub(ACTION_TYPES.SKILL_DONE, this._onSkillDone.bind(this));
+		this._sub(ACTION_TYPES.SKILL_ERROR, this._onSkillError.bind(this));
+		this._sub(ACTION_TYPES.LOAD_START, this._onLoadStart.bind(this));
+		this._sub(ACTION_TYPES.LOAD_END, this._onLoadEnd.bind(this));
+		this._sub(ACTION_TYPES.VALIDATE, this._onValidate.bind(this));
 
 		// First-encounter curiosity burst
 		if (this._firstEncounter) {
@@ -176,11 +235,11 @@ export class AgentAvatar {
 		const { valence, arousal } = this._analyzeSentiment(text);
 
 		// Positive speech → celebration boost; negative → concern
-		if (valence > 0.3)       this._injectStimulus('celebration', valence * 0.7);
+		if (valence > 0.3) this._injectStimulus('celebration', valence * 0.7);
 		else if (valence < -0.2) this._injectStimulus('concern', Math.abs(valence) * 0.8);
 
 		// High-arousal text (questions, exclamations) → curiosity
-		if (arousal > 0.5)       this._injectStimulus('curiosity', arousal * 0.5);
+		if (arousal > 0.5) this._injectStimulus('curiosity', arousal * 0.5);
 
 		// Trigger mouth/talk animation hint
 		const duration = Math.max(1.5, text.split(' ').length * 0.3);
@@ -194,7 +253,7 @@ export class AgentAvatar {
 
 	_onEmote(action) {
 		const trigger = action.payload?.trigger;
-		const weight  = action.payload?.weight || 0.7;
+		const weight = action.payload?.weight || 0.7;
 		if (trigger && this._emotion.hasOwnProperty(trigger)) {
 			this._injectStimulus(trigger, weight);
 		}
@@ -204,7 +263,7 @@ export class AgentAvatar {
 		const target = action.payload?.target;
 		if (target === 'model' && this.viewer?.content) {
 			// Look at the bounding box center of the loaded model
-			const box    = new Box3();
+			const box = new Box3();
 			const center = new Vector3();
 			box.setFromObject(this.viewer.content).getCenter(center);
 			this._lookTarget = center;
@@ -223,8 +282,9 @@ export class AgentAvatar {
 	_onSkillDone(action) {
 		const result = action.payload?.result;
 		if (result?.sentiment !== undefined) {
-			if (result.sentiment > 0.3)       this._injectStimulus('celebration', result.sentiment * 0.8);
-			else if (result.sentiment < -0.2) this._injectStimulus('concern', Math.abs(result.sentiment) * 0.7);
+			if (result.sentiment > 0.3) this._injectStimulus('celebration', result.sentiment * 0.8);
+			else if (result.sentiment < -0.2)
+				this._injectStimulus('concern', Math.abs(result.sentiment) * 0.7);
 		} else {
 			this._injectStimulus('celebration', 0.4);
 		}
@@ -249,13 +309,13 @@ export class AgentAvatar {
 			this._injectStimulus('concern', 0.8);
 		} else {
 			this._injectStimulus('celebration', 0.7);
-			this._injectStimulus('curiosity',   0.5);
+			this._injectStimulus('curiosity', 0.5);
 			this._triggerOneShot('nod', 1.0);
 		}
 	}
 
 	_onValidate(action) {
-		const errors   = action.payload?.errors   || 0;
+		const errors = action.payload?.errors || 0;
 		const warnings = action.payload?.warnings || 0;
 		if (errors > 0) {
 			this._injectStimulus('concern', Math.min(0.4 + errors * 0.1, 0.95));
@@ -305,7 +365,7 @@ export class AgentAvatar {
 			this._oneShotTimer += dt;
 			if (this._oneShotTimer >= this._oneShotDuration) {
 				this._isPlayingOneShot = false;
-				this._oneShotTimer     = 0;
+				this._oneShotTimer = 0;
 			}
 		}
 
@@ -323,21 +383,25 @@ export class AgentAvatar {
 		// ── Morph target targets ──────────────────────────────────────────
 		// The Empathy Layer blends ALL emotions simultaneously —
 		// not a discrete switch, a continuous weighted blend.
-		this._setMorphTarget('mouthSmile',      w.celebration * 0.85);
-		this._setMorphTarget('mouthOpen',       w.celebration * 0.2 + (this._isPlayingOneShot && this._oneShotAction === 'talk' ? 0.4 : 0));
-		this._setMorphTarget('mouthFrown',      w.concern * 0.55);
-		this._setMorphTarget('browInnerUp',     (w.concern + w.empathy * 0.5) * 0.6);
+		this._setMorphTarget('mouthSmile', w.celebration * 0.85);
+		this._setMorphTarget(
+			'mouthOpen',
+			w.celebration * 0.2 +
+				(this._isPlayingOneShot && this._oneShotAction === 'talk' ? 0.4 : 0),
+		);
+		this._setMorphTarget('mouthFrown', w.concern * 0.55);
+		this._setMorphTarget('browInnerUp', (w.concern + w.empathy * 0.5) * 0.6);
 		this._setMorphTarget('browOuterUpLeft', w.curiosity * 0.7);
-		this._setMorphTarget('browOuterUpRight',w.curiosity * 0.5);
-		this._setMorphTarget('eyeSquintLeft',   w.empathy * 0.4);
-		this._setMorphTarget('eyeSquintRight',  w.empathy * 0.4);
-		this._setMorphTarget('eyesClosed',      w.patience * 0.15);  // slight, not full
-		this._setMorphTarget('cheekPuff',       w.celebration * 0.2);
-		this._setMorphTarget('noseSneerLeft',   w.concern * 0.15);
-		this._setMorphTarget('noseSneerRight',  w.concern * 0.15);
+		this._setMorphTarget('browOuterUpRight', w.curiosity * 0.5);
+		this._setMorphTarget('eyeSquintLeft', w.empathy * 0.4);
+		this._setMorphTarget('eyeSquintRight', w.empathy * 0.4);
+		this._setMorphTarget('eyesClosed', w.patience * 0.15); // slight, not full
+		this._setMorphTarget('cheekPuff', w.celebration * 0.2);
+		this._setMorphTarget('noseSneerLeft', w.concern * 0.15);
+		this._setMorphTarget('noseSneerRight', w.concern * 0.15);
 
 		// ── Lerp morph influences to targets ─────────────────────────────
-		const lerpSpeed = dt * 4.0;  // smooth interpolation, not snapping
+		const lerpSpeed = dt * 4.0; // smooth interpolation, not snapping
 		this._lerpMorphTargets(lerpSpeed);
 
 		// ── Head tilt (curiosity + empathy both tilt the head) ────────────
@@ -351,13 +415,13 @@ export class AgentAvatar {
 			// Mouse Y: -1 = top of canvas (look up), +1 = bottom (look down)
 			this._targetLean += this._mouseGaze.y * (12 * DEG2RAD);
 		} else if (_followMode === 'keystrokes') {
-			this._targetLean   += this._keystrokePitch;
+			this._targetLean += this._keystrokePitch;
 			this._keystrokePitch = Math.max(0, this._keystrokePitch - dt * 0.9);
-			this._keystrokeYaw   = _lerp(this._keystrokeYaw, 0, dt * 0.6);
+			this._keystrokeYaw = _lerp(this._keystrokeYaw, 0, dt * 0.6);
 		} else {
 			// Decay any residual follow-mode values if mode was switched off
 			this._keystrokePitch = 0;
-			this._keystrokeYaw   = _lerp(this._keystrokeYaw, 0, dt * 2.0);
+			this._keystrokeYaw = _lerp(this._keystrokeYaw, 0, dt * 2.0);
 		}
 		this._currentLean = _lerp(this._currentLean, this._targetLean, dt * 2.0);
 
@@ -379,24 +443,47 @@ export class AgentAvatar {
 	_lerpMorphTargets(speed) {
 		if (!this.viewer?.content) return;
 
-		this.viewer.content.traverse(node => {
+		this.viewer.content.traverse((node) => {
 			if (!node.isMesh || !node.morphTargetDictionary || !node.morphTargetInfluences) return;
 
 			for (const [name, target] of Object.entries(this._morphTarget)) {
 				const idx = node.morphTargetDictionary[name];
 				if (idx === undefined) continue;
-				const current  = node.morphTargetInfluences[idx] || 0;
-				const next     = _lerp(current, target, speed);
+				const current = node.morphTargetInfluences[idx] || 0;
+				const next = _lerp(current, target, speed);
 				node.morphTargetInfluences[idx] = next;
-				this._morphCurrent[name]        = next;
+				this._morphCurrent[name] = next;
 			}
 		});
 	}
 
 	// ── Head Transform ────────────────────────────────────────────────────────
 
+	// Safety clamps — keep the head within believable neck range.
+	// (Input signals are already bounded by design, but belt-and-braces.)
+	static HEAD_MAX_YAW = 45 * DEG2RAD;
+	static HEAD_MAX_TILT = 25 * DEG2RAD;
+	static HEAD_MAX_LEAN = 25 * DEG2RAD;
+
 	_applyHeadTransform() {
 		if (!this.viewer?.content) return;
+
+		// Resolve exactly one head bone (or fall back to neck) and snapshot its
+		// rest rotation. Any substring match over the whole skeleton would pick
+		// up Head + Neck + HeadTop_End simultaneously, and writing the same
+		// local rotation to all three stacks hierarchically → owl-style 360.
+		if (this._headBoneFor !== this.viewer.content) {
+			this._headBoneFor = this.viewer.content;
+			this._headBone = this._findHeadBone();
+			if (this._headBone) {
+				this._headRestRotation = {
+					x: this._headBone.rotation.x,
+					y: this._headBone.rotation.y,
+					z: this._headBone.rotation.z,
+				};
+			}
+		}
+		if (!this._headBone) return;
 
 		// Compute yaw target from follow mode
 		const followMode = this.viewer.state?.followMode;
@@ -408,38 +495,73 @@ export class AgentAvatar {
 		}
 		this._currentYaw = _lerp(this._currentYaw, targetYaw, 0.08);
 
-		this.viewer.content.traverse(node => {
+		const yaw = MathUtils.clamp(
+			this._currentYaw,
+			-AgentAvatar.HEAD_MAX_YAW,
+			AgentAvatar.HEAD_MAX_YAW,
+		);
+		const tilt = MathUtils.clamp(
+			this._currentTilt,
+			-AgentAvatar.HEAD_MAX_TILT,
+			AgentAvatar.HEAD_MAX_TILT,
+		);
+		const lean = MathUtils.clamp(
+			this._currentLean,
+			-AgentAvatar.HEAD_MAX_LEAN,
+			AgentAvatar.HEAD_MAX_LEAN,
+		);
+
+		// Apply as an offset from rest pose, not an absolute rotation — otherwise
+		// rigs with non-zero rest rotation on the head bone snap toward world zero.
+		const r = this._headRestRotation;
+		const b = this._headBone;
+		b.rotation.z = _lerp(b.rotation.z, r.z + tilt, 0.1);
+		b.rotation.x = _lerp(b.rotation.x, r.x + lean, 0.1);
+		b.rotation.y = _lerp(b.rotation.y, r.y + yaw, 0.1);
+	}
+
+	/**
+	 * Find the single head bone (or neck fallback). Canonicalises common
+	 * naming conventions: `Head`, `mixamorigHead`, `Armature:Head`, `rig_Head`,
+	 * `CC_Base_Head`. Returns null if neither exists.
+	 */
+	_findHeadBone() {
+		let head = null,
+			neck = null;
+		this.viewer.content.traverse((node) => {
 			if (!node.isBone) return;
-			const n = node.name.toLowerCase();
-			if (n.includes('head') || n.includes('neck')) {
-				node.rotation.z = _lerp(node.rotation.z, this._currentTilt,  0.1);
-				node.rotation.x = _lerp(node.rotation.x, this._currentLean,  0.1);
-				node.rotation.y = _lerp(node.rotation.y, this._currentYaw,   0.1);
-			}
+			const canon = node.name
+				.replace(/^mixamorig/i, '')
+				.replace(/^.*[:_]/, '')
+				.toLowerCase();
+			if (!head && canon === 'head') head = node;
+			else if (!neck && canon === 'neck') neck = node;
 		});
+		return head || neck || null;
 	}
 
 	// ── Follow Mode Handlers ──────────────────────────────────────────────────
 
 	_handleMouseMove(e) {
 		const rect = this.viewer.el.getBoundingClientRect();
-		this._mouseGaze.x = ((e.clientX - rect.left) / rect.width)  * 2 - 1;
-		this._mouseGaze.y = ((e.clientY - rect.top)  / rect.height) * 2 - 1;
+		this._mouseGaze.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+		this._mouseGaze.y = ((e.clientY - rect.top) / rect.height) * 2 - 1;
 	}
 
 	_handleKeyPress(e) {
 		if (this.viewer.state?.followMode !== 'keystrokes') return;
-		if (['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Tab', 'Escape'].includes(e.key)) return;
+		if (['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Tab', 'Escape'].includes(e.key))
+			return;
 
 		// Look down toward keyboard
 		this._keystrokePitch = 0.18;
 
 		// Lateral drift based on rough key column: left side → look left, right side → look right
-		const leftKeys  = 'qweasdzxc123`~!@#';
+		const leftKeys = 'qweasdzxc123`~!@#';
 		const rightKeys = 'yuiophjklnm7890-=';
 		const k = e.key.toLowerCase();
-		if (leftKeys.includes(k))       this._keystrokeYaw = -0.12;
-		else if (rightKeys.includes(k)) this._keystrokeYaw =  0.12;
+		if (leftKeys.includes(k)) this._keystrokeYaw = -0.12;
+		else if (rightKeys.includes(k)) this._keystrokeYaw = 0.12;
 
 		this._injectStimulus('curiosity', 0.07);
 	}
@@ -454,15 +576,15 @@ export class AgentAvatar {
 	 */
 	_triggerOneShot(clipName, duration = 1.5) {
 		this._isPlayingOneShot = true;
-		this._oneShotAction    = clipName;
-		this._oneShotDuration  = duration;
-		this._oneShotTimer     = 0;
+		this._oneShotAction = clipName;
+		this._oneShotDuration = duration;
+		this._oneShotTimer = 0;
 
 		if (!this.viewer?.mixer || !this.viewer?.clips?.length) return;
 
 		// Look for a clip matching the name (case-insensitive partial match)
-		const clip = this.viewer.clips.find(c =>
-			c.name.toLowerCase().includes(clipName.toLowerCase())
+		const clip = this.viewer.clips.find((c) =>
+			c.name.toLowerCase().includes(clipName.toLowerCase()),
 		);
 		if (!clip) return;
 
@@ -494,23 +616,23 @@ export class AgentAvatar {
 				if (lower.includes(kw)) hits++;
 			}
 			if (!hits) continue;
-			const score = Math.min(hits / total * 3.0, 1.0);
+			const score = Math.min((hits / total) * 3.0, 1.0);
 
-			if (emotion === 'celebration') valence  += score * 0.8;
-			if (emotion === 'concern')     valence  -= score * 0.7;
-			if (emotion === 'empathy')     valence  -= score * 0.3;  // empathy feels slightly negative (recognition of pain)
-			if (emotion === 'curiosity')   arousal  += score * 0.9;
-			if (emotion === 'patience')    arousal  += score * 0.3;
+			if (emotion === 'celebration') valence += score * 0.8;
+			if (emotion === 'concern') valence -= score * 0.7;
+			if (emotion === 'empathy') valence -= score * 0.3; // empathy feels slightly negative (recognition of pain)
+			if (emotion === 'curiosity') arousal += score * 0.9;
+			if (emotion === 'patience') arousal += score * 0.3;
 		}
 
 		// Punctuation arousal (exclamation = high arousal, question = moderate)
 		const exclamations = (text.match(/!/g) || []).length;
-		const questions    = (text.match(/\?/g) || []).length;
+		const questions = (text.match(/\?/g) || []).length;
 		arousal += Math.min(exclamations * 0.2 + questions * 0.1, 0.5);
 
 		return {
 			valence: Math.max(-1, Math.min(1, valence)),
-			arousal: Math.max(0,  Math.min(1, arousal)),
+			arousal: Math.max(0, Math.min(1, arousal)),
 		};
 	}
 
@@ -522,9 +644,13 @@ export class AgentAvatar {
 	}
 
 	_selectDominantEmotion() {
-		let max = 0, dominant = 'neutral';
+		let max = 0,
+			dominant = 'neutral';
 		for (const [key, val] of Object.entries(this._emotion)) {
-			if (val > max) { max = val; dominant = key; }
+			if (val > max) {
+				max = val;
+				dominant = key;
+			}
 		}
 		return dominant;
 	}

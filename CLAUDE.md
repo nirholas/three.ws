@@ -149,7 +149,7 @@ No test suite is configured (`npm test` exits 0). Verification = `node --check` 
 
 ## Common gotchas
 
-- **`@avaturn/sdk` resolution warning at build time** — pre-existing, ignore.
+- **Avatar creator** wraps the Ready Player Me iframe. Configure subdomain via `VITE_RPM_SUBDOMAIN`; defaults to `demo.readyplayer.me`. See [src/avatar-creator.js](src/avatar-creator.js).
 - **`npm run dev` port 3000** — if taken, kill the other process; don't silently change the port.
 - **SpeechRecognition** silently no-ops if unavailable — check `window.SpeechRecognition || window.webkitSpeechRecognition`.
 - **Morph traversal runs every frame, every mesh.** Cheap on Mixamo avatars, expensive on scene-scale models.

@@ -1,0 +1,126 @@
+import React, { useContext } from "react"
+import { SceneContext } from "../context/SceneContext"
+import CustomButton from "./custom-button"
+
+import { getAtlasSize } from "../library/utils"
+import { getGLBBlobData } from "../library/download-utils"
+
+import styles from "./ExportMenu.module.css"
+import { local } from "../library/store"
+import { LanguageContext } from "../context/LanguageContext"
+
+const defaultName = "Anon"
+
+export const ExportMenu = ({currentPrice, onPurchaseClick}) => {
+
+  // Translate hook
+  const { t } = useContext(LanguageContext);
+  const [name] = React.useState(localStorage.getItem("name") || defaultName)
+  const [saving, setSaving] = React.useState(false)
+  const { model, characterManager } = useContext(SceneContext)
+
+
+  const getOptions = () =>{
+    const currentOption = local["mergeOptions_sel_option"] || 0;
+    const createTextureAtlas = local["mergeOptions_create_atlas"] == null ? true:local["mergeOptions_create_atlas"] 
+    return {
+      createTextureAtlas : createTextureAtlas,
+      mToonAtlasSize:getAtlasSize(local["mergeOptions_atlas_mtoon_size"] || 6),
+      mToonAtlasSizeTransp:getAtlasSize(local["mergeOptions_atlas_mtoon_transp_size"] || 6),
+      stdAtlasSize:getAtlasSize(local["mergeOptions_atlas_std_size"] || 6),
+      stdAtlasSizeTransp:getAtlasSize(local["mergeOptions_atlas_std_transp_size"] || 6),
+      ktxCompression:local["merge_options_ktx_compression"],
+      exportStdAtlas:(currentOption === 0 || currentOption == 2),
+      exportMtoonAtlas:(currentOption === 1 || currentOption == 2),
+      twoSidedMaterial: (local["mergeOptions_two_sided_mat"] || false)
+    }
+  }
+
+  const downloadVRM = (version) =>{
+    const options = getOptions();
+    /**
+     * Blindly assume the whole avatar is VRM0 if the first vrm is VRM0
+     */
+    options.isVrm0 = Object.values(characterManager.avatar)[0].vrm.meta.metaVersion=='0'
+    options.outputVRM0 = !(version === 1)
+    characterManager.downloadVRM(name, options);
+  }
+  
+  const downloadGLB = () =>{
+    const options = getOptions();
+    characterManager.downloadGLB(name, options);
+  }
+
+  const purchaseAssets = () =>{
+    onPurchaseClick();
+  }
+
+  // When embedded in an iframe, send the GLB back to the parent app instead of downloading.
+  const saveToAccount = async () => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      const options = getOptions();
+      const blob = await getGLBBlobData(model, options);
+      const arrayBuffer = await blob.arrayBuffer();
+      window.parent.postMessage(
+        { source: 'characterstudio', type: 'export', format: 'glb', glb: arrayBuffer },
+        '*',
+        [arrayBuffer],
+      );
+    } catch (err) {
+      console.error('[CharacterStudio] saveToAccount failed:', err);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const isEmbedded = window.self !== window.top;
+
+  return (
+    <React.Fragment>
+      {currentPrice === 0 ? (
+        <>
+          {isEmbedded ? (
+            <CustomButton
+              theme="light"
+              text={saving ? "Saving…" : "Save Avatar"}
+              icon="download"
+              size={14}
+              className={styles.button}
+              onClick={saveToAccount}
+            />
+          ) : (
+            <>
+              <CustomButton
+                theme="light"
+                text="GLB"
+                icon="download"
+                size={14}
+                className={styles.button}
+                onClick={() => { downloadGLB(); }}
+              />
+              <CustomButton
+                theme="light"
+                text="VRM 0"
+                icon="download"
+                size={14}
+                className={styles.button}
+                onClick={() => downloadVRM(0)}
+              />
+            </>
+          )}
+        </>
+      ) : (
+        <CustomButton
+          theme="light"
+          text="Purchase Assets"
+          icon="purchase"
+          size={14}
+          className={styles.button}
+          onClick={() => purchaseAssets()}
+        />
+      )}
+    </React.Fragment>
+  );
+}

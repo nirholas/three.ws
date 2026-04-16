@@ -150,7 +150,7 @@ Z-rotation = `(curiosity*12 + empathy*9 + concern*4)` degrees. X-rotation (lean)
 - Runtime `thinking: 'auto'` — limited UX wiring
 - Privy integration — functions exist, no full auth flow in element.js
 - Avatar Creator save-to-account — may not persist in all flows
-- `@avaturn/sdk` resolution warning at build time — **pre-existing, ignore**
+- Avatar Creator now wraps the Ready Player Me iframe. Configure the subdomain via `VITE_RPM_SUBDOMAIN`; falls back to `demo.readyplayer.me`.
 
 ---
 

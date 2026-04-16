@@ -1,0 +1,122 @@
+{
+
+  "en": {
+    "translation": {
+      "pageTitles": {
+        "chooseClass": "Choose Character Class",
+        "chooseAppearance": "Choose Appearance",
+        "saveCharacter": "Save Your Character"
+      },
+      "callToAction": {
+        "next": "Next",
+        "back": "Back",
+        "randomize": "Randomize",
+        "send": "Send"
+      },
+      "editor": {
+        "title": "Appearance",
+        "head": "Head",
+        "body": "Body",
+        "eyes": "Eyes",
+        "outer": "Outer",
+        "chest": "Chest",
+        "legs": "Legs",
+        "feet": "Feet",
+        "accessories": "Accessories"
+      },
+      "labels": {
+        "name": "Name",
+        "voice": "Voice",
+        "favoriteColor": "Favorite Color",
+        "preferredGreeting": "Preferred Greeting",
+        "question": "Question",
+        "yourName": "Your Name",
+        "conversation": "Conversation"
+      },
+      "text": {
+        "unoptimized": "Unoptimized",
+        "apiUnderMaintnance": "Voice generation API is temporarily disabled for maintenance!"
+      }
+    }
+  },
+
+  "ru": {
+    "translation": {
+      "pageTitles": {
+        "chooseClass": "Выбрать Класс Персонажа",
+        "chooseAppearance": "Выбрать Внешность",
+        "saveCharacter": "Сохранить Персонажа"
+      },
+      "callToAction": {
+        "next": "Далее",
+        "back": "Назад",
+        "randomize": "Рандомизировать",
+        "send": "Отправить"
+      },
+      "editor": {
+        "title": "Внешность",
+        "head": "Голова",
+        "body": "Тело",
+        "eyes": "Глаза",
+        "outer": "Внешний",
+        "chest": "Грудь",
+        "legs": "Ноги",
+        "feet": "Стопы",
+        "accessories": "Аксессуары"
+      },
+      "labels": {
+        "name": "Имя",
+        "voice": "Голос",
+        "favoriteColor": "Любимый Цвет",
+        "preferredGreeting": "Предпочитаемое Приветствие",
+        "question": "Вопрос",
+        "yourName": "Ваше Имя",
+        "conversation": "Разговор"
+      },
+      "text": {
+        "unoptimized": "Неоптимизи­рованный",
+        "apiUnderMaintnance": "API генерации голоса временно отключен на техническое обслуживание."
+      }
+    }
+  },
+
+  "zh": {
+    "translation": {
+      "pageTitles": {
+        "chooseClass": "选择角色类型",
+        "chooseAppearance": "选择外观",
+        "saveCharacter": "保存角色"
+      },
+      "callToAction": {
+        "next": "下一步",
+        "back": "返回",
+        "randomize": "随机",
+        "send": "发送"
+      },
+      "editor": {
+        "title": "外观",
+        "head": "头部",
+        "body": "身体",
+        "eyes": "眼睛",
+        "outer": "外套",
+        "chest": "上身",
+        "legs": "腿部",
+        "feet": "脚部",
+        "accessories": "配件"
+      },
+      "labels": {
+        "name": "名字",
+        "voice": "语音",
+        "favoriteColor": "颜色偏好",
+        "preferredGreeting": "首选问候语",
+        "question": "问题",
+        "yourName": "你的名字",
+        "conversation": "对话"
+      },
+      "text": {
+        "unoptimized": "未优化",
+        "apiUnderMaintnance": "语音生成API暂时关闭进行维护!"
+      }
+    }
+  }
+}
