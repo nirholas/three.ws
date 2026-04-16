@@ -93,6 +93,80 @@ export class EditorSession {
 		);
 	}
 
+	/**
+	 * Replay previously-stashed edits onto the freshly loaded viewport.
+	 * UUIDs don't cross the reload boundary, so matching is by name — the
+	 * same strategy glb-export.js uses. After viewport mutation the three
+	 * maps are re-keyed by the new uuid so further edits update in place.
+	 *
+	 * @param {{materialEdits?: object, transformEdits?: object, visibilityEdits?: object}} edits
+	 */
+	restoreEdits({ materialEdits, transformEdits, visibilityEdits } = {}) {
+		this.materialEdits = { ...(materialEdits || {}) };
+		this.transformEdits = { ...(transformEdits || {}) };
+		this.visibilityEdits = { ...(visibilityEdits || {}) };
+		this._applyRestoredToViewport();
+		this._emit();
+	}
+
+	_applyRestoredToViewport() {
+		const content = this.viewer && this.viewer.content;
+		if (!content) return;
+
+		const matByName = new Map();
+		const nodeByName = new Map();
+		content.traverse((node) => {
+			if (node.name && !nodeByName.has(node.name)) nodeByName.set(node.name, node);
+			if (!node.geometry) return;
+			const mats = Array.isArray(node.material) ? node.material : [node.material];
+			for (const mat of mats) {
+				if (mat && mat.name && !matByName.has(mat.name)) matByName.set(mat.name, mat);
+			}
+		});
+
+		const rekey = (map, lookup, apply) => {
+			const rekeyed = {};
+			for (const k in map) {
+				const edit = map[k];
+				const target = lookup.get(edit.name);
+				if (!target) {
+					rekeyed[k] = edit;
+					continue;
+				}
+				apply(target, edit);
+				rekeyed[target.uuid] = { ...edit, uuid: target.uuid };
+			}
+			return rekeyed;
+		};
+
+		this.materialEdits = rekey(this.materialEdits, matByName, (mat, edit) => {
+			if (edit.baseColor && mat.color) mat.color.setRGB(...edit.baseColor);
+			if (edit.emissive && mat.emissive) mat.emissive.setRGB(...edit.emissive);
+			if (edit.metalness !== undefined) mat.metalness = edit.metalness;
+			if (edit.roughness !== undefined) mat.roughness = edit.roughness;
+			if (edit.opacity !== undefined) mat.opacity = edit.opacity;
+			if (edit.alphaMode !== undefined) {
+				mat.transparent = edit.alphaMode === 'BLEND';
+			}
+			if (edit.alphaCutoff !== undefined) mat.alphaTest = edit.alphaCutoff;
+			mat.needsUpdate = true;
+		});
+
+		this.transformEdits = rekey(this.transformEdits, nodeByName, (node, edit) => {
+			if (edit.position) node.position.fromArray(edit.position);
+			if (edit.rotation) {
+				node.rotation.set(edit.rotation[0], edit.rotation[1], edit.rotation[2]);
+			}
+			if (edit.scale) node.scale.fromArray(edit.scale);
+		});
+
+		this.visibilityEdits = rekey(this.visibilityEdits, nodeByName, (node, edit) => {
+			node.visible = edit.visible !== false;
+		});
+
+		if (this.viewer && this.viewer.invalidate) this.viewer.invalidate();
+	}
+
 	async getSourceBuffer() {
 		if (this.sourceBuffer) return this.sourceBuffer;
 

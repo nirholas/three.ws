@@ -97,7 +97,9 @@ export class PublishModal {
 
 		const values = rows.map((r) => r.value);
 		this.body.querySelectorAll('.publish-copy-btn').forEach((btn) => {
-			btn.addEventListener('click', () => this._copyValue(btn, values[Number(btn.dataset.idx)]));
+			btn.addEventListener('click', () =>
+				this._copyValue(btn, values[Number(btn.dataset.idx)]),
+			);
 		});
 		this.body.querySelectorAll('.publish-open-btn').forEach((btn) => {
 			btn.addEventListener('click', () => {
@@ -134,7 +136,9 @@ export class PublishModal {
 		this.body.querySelector('.publish-signin-btn').addEventListener('click', () => {
 			window.location.href = `/login?next=${next}`;
 		});
-		this.body.querySelector('.publish-cancel-btn').addEventListener('click', () => this.close());
+		this.body
+			.querySelector('.publish-cancel-btn')
+			.addEventListener('click', () => this.close());
 		const signIn = this.body.querySelector('.publish-signin-btn');
 		if (signIn) {
 			try {
@@ -163,7 +167,9 @@ export class PublishModal {
 			this.close();
 			if (typeof fn === 'function') fn();
 		});
-		this.body.querySelector('.publish-cancel-btn').addEventListener('click', () => this.close());
+		this.body
+			.querySelector('.publish-cancel-btn')
+			.addEventListener('click', () => this.close());
 		const retry = this.body.querySelector('.publish-retry-btn');
 		if (retry) {
 			try {

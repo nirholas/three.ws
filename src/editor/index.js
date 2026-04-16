@@ -124,6 +124,54 @@ export class Editor {
 		window.location.reload();
 	}
 
+	async _openPublishModal() {
+		if (this._publishInFlight) return;
+		this._publishInFlight = true;
+		this._setPublishEnabled(false);
+
+		let modal = null;
+		try {
+			const [publishMod, modalMod] = await Promise.all([
+				import('./publish.js'),
+				import('./publish-modal.js'),
+			]);
+			const { publishEditedGLB, AuthRequiredError } = publishMod;
+			const { PublishModal } = modalMod;
+
+			modal = new PublishModal(document.body);
+			modal.onRetry(() => this._openPublishModal());
+			modal.open();
+
+			try {
+				const result = await publishEditedGLB(this.session, { onStep: modal.onStep });
+				modal.showResult(result.urls);
+			} catch (err) {
+				if (err instanceof AuthRequiredError || err?.name === 'AuthRequiredError') {
+					modal.showAuthRequired();
+				} else {
+					modal.showError(err);
+				}
+				console.error('[editor] publish failed', err);
+			}
+		} catch (err) {
+			console.error('[editor] publish modal failed to load', err);
+			if (modal) modal.showError(err);
+			else window.alert('Publish failed: ' + (err.message || err));
+		} finally {
+			this._publishInFlight = false;
+			this._setPublishEnabled(true);
+		}
+	}
+
+	_setPublishEnabled(enabled) {
+		if (!this._publishCtrl) return;
+		const row = this._publishCtrl.__li || this._publishCtrl.domElement;
+		if (row) {
+			row.style.pointerEvents = enabled ? '' : 'none';
+			row.style.opacity = enabled ? '' : '0.4';
+		}
+	}
+
 	dispose() {
 		this.materialEditor.dispose();
 		this.textureInspector.dispose();
@@ -135,6 +183,7 @@ export class Editor {
 		}
 		this.exportFolder = null;
 		this._exportCtrl = null;
+		this._publishCtrl = null;
 		this._attached = false;
 	}
 }
