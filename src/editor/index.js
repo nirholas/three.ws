@@ -138,7 +138,7 @@ export class Editor {
 			const { publishEditedGLB, AuthRequiredError } = publishMod;
 			const { PublishModal } = modalMod;
 
-			modal = new PublishModal(document.body);
+			modal = new PublishModal(document.body, { session: this.session });
 			modal.onRetry(() => this._openPublishModal());
 			modal.open();
 
