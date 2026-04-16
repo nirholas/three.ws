@@ -42,6 +42,8 @@
 		"generate-icons": "node scripts/generate-pwa-icons.mjs",
 		"fetch-animations": "node scripts/download-animations.mjs",
 		"test": "echo 'No tests configured' && exit 0",
+		"verify": "prettier --check . && vite build",
+		"format": "prettier --write .",
 		"deploy": "npm run build && vercel --local-config vercel.json --prod",
 		"postversion": "git push && git push --tags"
 	},

@@ -4,6 +4,16 @@ Root guidance for agents working in this repo. Read this first. Then read the sc
 
 ---
 
+## How to work here
+
+1. **Move on your own.** You have broad permissions (see [.claude/settings.json](.claude/settings.json)). Don't ask before running builds, tests, formatters, git commits, or reads — just do them. Ask only before destructive ops, on-chain broadcasts, or production deploys.
+2. **Work hard, then verify.** Don't stop at "the build passed." Open the URL, click the thing, check the network tab, tail the log. If you can't actually test the change (e.g., no browser), say so — don't fake confidence.
+3. **Be intelligent about scope.** If a one-line fix needs a 200-line refactor to be safe, say so and ask. If the task is underspecified, pick the most useful interpretation and say which one.
+4. **Don't delete the user's work.** Unfamiliar files / branches / comments may be in-progress. Investigate before removing. Deny list in [.claude/settings.json](.claude/settings.json) blocks the worst footguns (`rm -rf`, `git reset --hard`, `git push --force`, `forge script --broadcast`, etc.) — don't try to bypass them.
+5. **One command to check yourself:** `npm run verify` (prettier + build). Run before reporting done.
+
+---
+
 ## What this repo is
 
 **3D Agent** is a browser-native glTF/GLB viewer that grew a full embodied-agent platform on top of it. Two halves, one codebase:
