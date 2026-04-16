@@ -1701,6 +1701,311 @@ function formatViewCount(n) {
 	return `${formatNum(v)} views`;
 }
 
+// ── Animations ───────────────────────────────────────────────────────────────
+async function renderAnimations(root) {
+	root.innerHTML = `
+		<div class="toolbar">
+			<div>
+				<h1>Animations</h1>
+				<p class="sub">Manage animation clips attached to your agent. Changes sync to the viewer automatically.</p>
+			</div>
+		</div>
+		<div id="anim-body"><div class="muted">Loading…</div></div>
+	`;
+	const body = root.querySelector('#anim-body');
+
+	let agent, avatarUrl;
+	try {
+		const res = await api.getAgentMe();
+		agent = res?.agent;
+		if (!agent) { body.innerHTML = `<div class="empty">No agent found. <a href="#create">Create one first.</a></div>`; return; }
+		if (agent.avatar_id) {
+			try {
+				const av = await api.getAvatar(agent.avatar_id);
+				avatarUrl = av?.avatar?.url || av?.avatar?.model_url;
+			} catch { /* no avatar URL */ }
+		}
+	} catch (e) {
+		body.innerHTML = `<div class="err">${esc(e.message)}</div>`; return;
+	}
+
+	let animations = Array.isArray(agent.meta?.animations) ? [...agent.meta.animations] : [];
+	let presets = [];
+	try { presets = await fetch('/animations/presets.json').then((r) => r.json()); } catch { /* presets unavailable */ }
+
+	let saveTimer;
+	const statusEl = document.createElement('p');
+	statusEl.className = 'muted';
+	statusEl.style.cssText = 'margin:4px 0 0;font-size:12px;min-height:18px;';
+
+	function debounceSync() {
+		clearTimeout(saveTimer);
+		saveTimer = setTimeout(async () => {
+			statusEl.style.color = '#888';
+			statusEl.textContent = 'Saving…';
+			try {
+				await api.patchAgentAnimations(agent.id, animations);
+				statusEl.style.color = '#9a8cff';
+				statusEl.textContent = 'Saved.';
+				setTimeout(() => { if (statusEl.textContent === 'Saved.') statusEl.textContent = ''; }, 2000);
+			} catch (err) {
+				statusEl.style.color = '#ffb3b3';
+				statusEl.textContent = err.message || 'Save failed.';
+			}
+		}, 500);
+	}
+
+	function isAttached(name) { return animations.some((a) => a.name.toLowerCase() === name.toLowerCase()); }
+
+	let listEl, presetGridEl;
+
+	function renderClipList() {
+		listEl.innerHTML = '';
+		if (!animations.length) {
+			listEl.innerHTML = '<div class="muted" style="padding:12px 0">No clips attached yet.</div>';
+			return;
+		}
+		for (const clip of animations) {
+			const row = document.createElement('div');
+			row.className = 'clip-row';
+			row.innerHTML = `
+				<span class="clip-name">${esc(clip.name)}</span>
+				<span class="clip-source">${esc(clip.source || 'custom')}</span>
+				<label class="loop-toggle" title="Toggle loop">
+					<input type="checkbox" ${clip.loop !== false ? 'checked' : ''}>
+					<span>Loop</span>
+				</label>
+				<div class="clip-actions">
+					<button class="preview-btn">Preview</button>
+					<button class="danger detach-btn">Remove</button>
+				</div>
+			`;
+			row.querySelector('.loop-toggle input').addEventListener('change', (e) => {
+				clip.loop = e.target.checked;
+				debounceSync();
+			});
+			row.querySelector('.detach-btn').addEventListener('click', () => {
+				animations = animations.filter((a) => a !== clip);
+				renderClipList();
+				renderPresetGrid();
+				debounceSync();
+			});
+			row.querySelector('.preview-btn').addEventListener('click', () => openAnimPreview(clip, avatarUrl));
+			listEl.appendChild(row);
+		}
+	}
+
+	function renderPresetGrid() {
+		if (!presetGridEl) return;
+		presetGridEl.innerHTML = '';
+		for (const p of presets) {
+			const tile = document.createElement('div');
+			const attached = isAttached(p.name);
+			tile.className = 'preset-tile' + (attached ? ' attached' : '');
+			tile.innerHTML = `<div class="icon">${esc(p.icon || '🎬')}</div><div class="label">${esc(p.label || p.name)}</div>`;
+			tile.title = attached ? 'Already attached' : `Add "${p.name}"`;
+			tile.addEventListener('click', () => {
+				if (isAttached(p.name)) { toast('Already attached'); return; }
+				animations.push({ name: p.name, url: p.url, loop: p.loop !== false, clipName: p.clipName || undefined, source: 'preset', addedAt: new Date().toISOString() });
+				renderClipList();
+				renderPresetGrid();
+				debounceSync();
+			});
+			presetGridEl.appendChild(tile);
+		}
+	}
+
+	body.innerHTML = '';
+
+	if (agent.is_registered) {
+		const warn = document.createElement('div');
+		warn.className = 'anim-notice';
+		warn.innerHTML = `<strong>On-chain notice:</strong> Your agent has an ERC-8004 registration. Animation changes won't be visible on-chain until you re-pin the manifest. <button class="btn sec" style="margin-left:8px;font-size:11px;padding:4px 10px;" disabled title="Re-pin not implemented — update your manifest manually">Re-pin manifest</button>`;
+		body.appendChild(warn);
+	}
+
+	const cols = document.createElement('div');
+	cols.className = 'anim-cols';
+
+	const leftCol = document.createElement('div');
+	const lh = document.createElement('h3');
+	lh.textContent = 'Attached clips';
+	leftCol.appendChild(lh);
+	listEl = document.createElement('div');
+	leftCol.appendChild(listEl);
+	leftCol.appendChild(statusEl);
+
+	const rightCol = document.createElement('div');
+	const rh = document.createElement('h3');
+	rh.textContent = 'Add clips';
+	rightCol.appendChild(rh);
+
+	if (presets.length) {
+		const pl = document.createElement('p');
+		pl.className = 'muted';
+		pl.style.margin = '0 0 8px';
+		pl.textContent = 'Presets';
+		rightCol.appendChild(pl);
+		presetGridEl = document.createElement('div');
+		presetGridEl.className = 'preset-grid';
+		rightCol.appendChild(presetGridEl);
+	}
+
+	const uploadDiv = document.createElement('div');
+	uploadDiv.innerHTML = `
+		<p class="muted" style="margin:16px 0 8px">Upload custom .glb</p>
+		<div class="anim-upload">
+			<label style="display:block">Name <input id="anim-name" type="text" placeholder="e.g. my-wave" maxlength="60" style="width:100%;margin-top:4px"></label>
+			<label style="display:block;margin-top:8px">File <input id="anim-file" type="file" accept=".glb,model/gltf-binary" style="width:100%;margin-top:4px"></label>
+			<div id="anim-progress" class="muted" style="font-size:12px;min-height:18px;margin-top:4px"></div>
+			<button class="btn" id="anim-upload-btn" style="align-self:flex-start;margin-top:6px">Upload &amp; attach</button>
+			<div id="anim-err" class="anim-inline-err"></div>
+		</div>
+	`;
+	rightCol.appendChild(uploadDiv);
+	cols.appendChild(leftCol);
+	cols.appendChild(rightCol);
+	body.appendChild(cols);
+
+	renderClipList();
+	renderPresetGrid();
+
+	const uploadBtn = body.querySelector('#anim-upload-btn');
+	const uploadProgress = body.querySelector('#anim-progress');
+	const uploadErr = body.querySelector('#anim-err');
+	uploadBtn.addEventListener('click', async () => {
+		const nameEl = body.querySelector('#anim-name');
+		const fileEl = body.querySelector('#anim-file');
+		const name = nameEl.value.trim();
+		const file = fileEl.files?.[0];
+		uploadErr.textContent = '';
+		if (!name) { uploadErr.textContent = 'Name is required.'; return; }
+		if (name.length > 60) { uploadErr.textContent = 'Name too long (max 60 chars).'; return; }
+		if (isAttached(name)) { uploadErr.textContent = `"${name}" is already attached.`; return; }
+		if (!file) { uploadErr.textContent = 'Select a .glb file.'; return; }
+		uploadBtn.disabled = true;
+		uploadProgress.textContent = 'Requesting upload URL…';
+		try {
+			const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'anim';
+			const { upload_url, storage_key } = await api.presignAnimation({ size_bytes: file.size, content_type: 'model/gltf-binary', slug });
+			uploadProgress.textContent = `Uploading ${fmtSize(file.size)}…`;
+			await _uploadXHR(upload_url, file, (pct) => { uploadProgress.textContent = `Uploading ${pct}%…`; });
+			animations.push({ name, url: storage_key, loop: true, source: 'custom', addedAt: new Date().toISOString() });
+			renderClipList();
+			renderPresetGrid();
+			debounceSync();
+			uploadProgress.textContent = 'Uploaded and attached.';
+			nameEl.value = '';
+			fileEl.value = '';
+		} catch (err) {
+			uploadErr.textContent = err.message || 'Upload failed.';
+			uploadProgress.textContent = '';
+		} finally {
+			uploadBtn.disabled = false;
+		}
+	});
+}
+
+function _uploadXHR(url, file, onProgress) {
+	return new Promise((resolve, reject) => {
+		const xhr = new XMLHttpRequest();
+		xhr.open('PUT', url);
+		xhr.setRequestHeader('content-type', 'model/gltf-binary');
+		xhr.upload.onprogress = (e) => e.lengthComputable && onProgress(Math.round((e.loaded / e.total) * 100));
+		xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`Upload failed (${xhr.status})`)));
+		xhr.onerror = () => reject(new Error('Network error'));
+		xhr.send(file);
+	});
+}
+
+let _animPreviewEl = null;
+
+async function _ensureAgent3DLib() {
+	if (customElements.get('agent-3d')) return true;
+	try { await import('/dist-lib/agent-3d.js'); return true; } catch { return false; }
+}
+
+async function openAnimPreview(clip, avatarUrl) {
+	if (!avatarUrl) { toast('No avatar URL available for preview', true); return; }
+
+	let overlay = document.getElementById('anim-preview-overlay');
+	if (!overlay) {
+		overlay = document.createElement('div');
+		overlay.id = 'anim-preview-overlay';
+		overlay.className = 'modal-overlay';
+		overlay.innerHTML = `
+			<div class="modal" style="width:min(400px,calc(100vw - 32px));padding:18px">
+				<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+					<h2 id="ap-title" style="margin:0;font-size:16px"></h2>
+					<button id="ap-close" class="btn sec" style="padding:4px 10px">✕</button>
+				</div>
+				<div class="preview-stage" id="ap-stage"></div>
+				<p id="ap-status" class="muted" style="margin:8px 0 0;font-size:12px">Loading…</p>
+			</div>
+		`;
+		document.body.appendChild(overlay);
+		overlay.querySelector('#ap-close').addEventListener('click', closeAnimPreview);
+		overlay.addEventListener('click', (e) => { if (e.target === overlay) closeAnimPreview(); });
+	}
+
+	closeAnimPreview();
+	overlay.classList.add('open');
+	overlay.querySelector('#ap-title').textContent = `Preview: "${clip.name}"`;
+	const stage = overlay.querySelector('#ap-stage');
+	const status = overlay.querySelector('#ap-status');
+	stage.innerHTML = '';
+	status.textContent = 'Loading library…';
+
+	const ok = await _ensureAgent3DLib();
+	if (!ok) { status.textContent = 'Could not load 3D viewer.'; return; }
+
+	const el = document.createElement('agent-3d');
+	el.setAttribute('body', avatarUrl);
+	el.setAttribute('kiosk', '');
+	el.setAttribute('eager', '');
+	el.style.cssText = 'width:100%;height:100%;display:block';
+	stage.appendChild(el);
+	_animPreviewEl = el;
+
+	status.textContent = 'Loading avatar…';
+	try {
+		await new Promise((resolve, reject) => {
+			const onReady = () => { el.removeEventListener('agent:ready', onReady); el.removeEventListener('agent:error', onErr); resolve(); };
+			const onErr = (e) => { el.removeEventListener('agent:ready', onReady); el.removeEventListener('agent:error', onErr); reject(new Error(e.detail?.error?.message || 'load failed')); };
+			el.addEventListener('agent:ready', onReady);
+			el.addEventListener('agent:error', onErr);
+		});
+	} catch (e) { status.textContent = `Error: ${e.message}`; return; }
+
+	let hasBones = false;
+	el._scene?.content?.traverse?.((n) => { if (n.isBone) hasBones = true; });
+	if (!hasBones) { status.textContent = 'This avatar has no skeleton — clips cannot be previewed.'; return; }
+
+	status.textContent = `Loading clip "${clip.name}"…`;
+	try {
+		const gltf = await el._scene.loadGLB(clip.url);
+		const clips = gltf?.animations || [];
+		const target = clip.clipName ? (clips.find((c) => c.name === clip.clipName) || clips[0]) : clips[0];
+		if (!target) { status.textContent = 'No animation found in clip file.'; return; }
+		await el._scene.play(target, { blend: 0.35 });
+		status.textContent = `Playing "${clip.name}"`;
+	} catch (e) {
+		status.textContent = `Preview error: ${e.message}`;
+	}
+}
+
+function closeAnimPreview() {
+	if (_animPreviewEl) {
+		try { _animPreviewEl.destroy?.(); } catch {}
+		try { _animPreviewEl.remove(); } catch {}
+		_animPreviewEl = null;
+	}
+	const stage = document.getElementById('ap-stage');
+	if (stage) stage.innerHTML = '';
+	const overlay = document.getElementById('anim-preview-overlay');
+	if (overlay) overlay.classList.remove('open');
+}
+
 // ── utils ───────────────────────────────────────────────────────────────────
 function fmtSize(b) { if (b < 1024) return b + ' B'; if (b < 1024*1024) return (b/1024).toFixed(1) + ' KB'; return (b/1024/1024).toFixed(1) + ' MB'; }
 function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
