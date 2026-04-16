@@ -30,7 +30,11 @@ export class Editor {
 		this._attached = true;
 		this.sceneExplorer.attach();
 		this._addExportFolder();
-		this.session.onChange(() => this._updateExportLabel());
+		this.session.onChange(() => {
+			this._updateExportLabel();
+			this._updateExportEnabled();
+		});
+		this._updateExportEnabled();
 	}
 
 	onContentChanged({ url = null, file = null, name = null } = {}) {
@@ -79,6 +83,16 @@ export class Editor {
 			Object.keys(this.session.visibilityEdits).length;
 		const base = '💾 download GLB';
 		this._exportCtrl.name(count > 0 ? `${base} (${count})` : base);
+	}
+
+	_updateExportEnabled() {
+		if (!this._exportCtrl) return;
+		const ready = this.session.isExportReady();
+		const row = this._exportCtrl.__li || this._exportCtrl.domElement;
+		if (row) {
+			row.style.pointerEvents = ready ? '' : 'none';
+			row.style.opacity = ready ? '' : '0.4';
+		}
 	}
 
 	async _exportGLB() {

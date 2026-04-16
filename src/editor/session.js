@@ -28,13 +28,18 @@ export class EditorSession {
 		this.sourceFile = file;
 		this.sourceBuffer = null;
 		this.sourceName =
-			name ||
-			(file && file.name) ||
-			(url ? url.split('/').pop().split('?')[0] : 'model');
+			name || (file && file.name) || (url ? url.split('/').pop().split('?')[0] : 'model');
 		this.materialEdits = {};
 		this.transformEdits = {};
 		this.visibilityEdits = {};
+		if (!url && !file) {
+			console.warn('[editor] no source — export disabled');
+		}
 		this._emit();
+	}
+
+	isExportReady() {
+		return !!(this.sourceURL || this.sourceFile || this.sourceBuffer);
 	}
 
 	onChange(fn) {

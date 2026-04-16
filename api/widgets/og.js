@@ -9,31 +9,39 @@
  * preview. Falls back to a server-rendered SVG card on miss.
  */
 
-import { sql }        from '../_lib/db.js';
-import { getAvatar }  from '../_lib/avatars.js';
+import { sql } from '../_lib/db.js';
+import { getAvatar } from '../_lib/avatars.js';
 import { cors, wrap } from '../_lib/http.js';
 
-const CACHE_CARD  = 'public, max-age=3600, s-maxage=86400';
+const CACHE_CARD = 'public, max-age=3600, s-maxage=86400';
 const CACHE_REDIR = 'public, max-age=3600';
 
 const TYPE_LABEL = {
-	'turntable':         'Turntable Showcase',
+	turntable: 'Turntable Showcase',
 	'animation-gallery': 'Animation Gallery',
-	'talking-agent':     'Talking Agent',
-	'passport':          'ERC-8004 Passport',
-	'hotspot-tour':      'Hotspot Tour',
+	'talking-agent': 'Talking Agent',
+	passport: 'ERC-8004 Passport',
+	'hotspot-tour': 'Hotspot Tour',
 };
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
 
-	const url      = new URL(req.url, 'http://x');
+	const url = new URL(req.url, 'http://x');
 	const widgetId = url.searchParams.get('id');
 
 	if (!widgetId) return sendNotFound(res);
 
 	const widget = await loadWidget(widgetId);
 	if (!widget) return sendNotFound(res);
+
+	if (widget.is_public === false) {
+		sendCardSvg(res, 200, CACHE_CARD, {
+			name: 'Private widget',
+			type: '3D Agent',
+		});
+		return;
+	}
 
 	if (widget.avatar_id) {
 		const avatar = await getAvatar({ id: widget.avatar_id });
@@ -55,9 +63,9 @@ export default wrap(async (req, res) => {
 async function loadWidget(id) {
 	try {
 		const [row] = await sql`
-			select id, name, type, avatar_id
+			select id, name, type, avatar_id, is_public
 			from widgets
-			where id = ${id} and is_public = true and deleted_at is null
+			where id = ${id} and deleted_at is null
 			limit 1
 		`;
 		return row || null;
@@ -104,9 +112,9 @@ function truncate(s, n) {
 
 function escapeXml(s) {
 	return String(s)
-		.replace(/&/g,  '&amp;')
-		.replace(/</g,  '&lt;')
-		.replace(/>/g,  '&gt;')
-		.replace(/"/g,  '&quot;')
-		.replace(/'/g,  '&apos;');
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&apos;');
 }

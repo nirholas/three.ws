@@ -9,36 +9,45 @@
  * and replace into the SPA viewer at /#widget=<id>.
  */
 
-import { sql }                from '../_lib/db.js';
-import { env }                from '../_lib/env.js';
-import { cors, wrap }         from '../_lib/http.js';
+import { sql } from '../_lib/db.js';
+import { env } from '../_lib/env.js';
+import { cors, wrap } from '../_lib/http.js';
 
 const TYPE_LABEL = {
-	'turntable':         'Turntable Showcase',
+	turntable: 'Turntable Showcase',
 	'animation-gallery': 'Animation Gallery',
-	'talking-agent':     'Talking Agent',
-	'passport':          'ERC-8004 Passport',
-	'hotspot-tour':      'Hotspot Tour',
+	'talking-agent': 'Talking Agent',
+	passport: 'ERC-8004 Passport',
+	'hotspot-tour': 'Hotspot Tour',
 };
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
 
-	const url      = new URL(req.url, 'http://x');
+	const url = new URL(req.url, 'http://x');
 	const widgetId = url.searchParams.get('id');
 	if (!widgetId) return notFound(res);
 
 	const widget = await loadWidget(widgetId);
 	if (!widget) return notFound(res);
 
-	const origin   = env.APP_ORIGIN;
-	const pageUrl  = `${origin}/w/${widget.id}`;
+	const origin = env.APP_ORIGIN;
+	const pageUrl = `${origin}/w/${widget.id}`;
+	const ogUrl = `${origin}/api/widgets/${widget.id}/og`;
+
+	if (widget.is_public === false) {
+		res.statusCode = 200;
+		res.setHeader('content-type', 'text/html; charset=utf-8');
+		res.setHeader('cache-control', 'private, max-age=60');
+		res.end(renderPrivateHtml({ pageUrl, ogUrl }));
+		return;
+	}
+
 	const embedUrl = `${origin}/#widget=${widget.id}&kiosk=true`;
-	const ogUrl    = `${origin}/api/widgets/${widget.id}/og`;
 	const oembedJs = `${origin}/api/widgets/oembed?url=${encodeURIComponent(pageUrl)}&format=json`;
-	const title    = widget.name || 'Widget';
-	const typeLbl  = TYPE_LABEL[widget.type] || 'Widget';
-	const desc     = `${typeLbl} · embeddable 3D, no code. Powered by 3D Agent.`;
+	const title = widget.name || 'Widget';
+	const typeLbl = TYPE_LABEL[widget.type] || 'Widget';
+	const desc = `${typeLbl} · embeddable 3D, no code. Powered by 3D Agent.`;
 
 	res.statusCode = 200;
 	res.setHeader('content-type', 'text/html; charset=utf-8');
@@ -49,9 +58,9 @@ export default wrap(async (req, res) => {
 async function loadWidget(id) {
 	try {
 		const [row] = await sql`
-			select id, name, type, avatar_id
+			select id, name, type, avatar_id, is_public
 			from widgets
-			where id = ${id} and is_public = true and deleted_at is null
+			where id = ${id} and deleted_at is null
 			limit 1
 		`;
 		return row || null;
@@ -151,10 +160,62 @@ ${escapeJsonLd({
 </html>`;
 }
 
-function escapeHtml(s) {
-	return String(s).replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+function renderPrivateHtml({ pageUrl, ogUrl }) {
+	const title = 'Private widget';
+	const desc = 'This widget is private.';
+	return `<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>${title} — 3D Agent</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="${desc}">
+	<meta name="robots" content="noindex, nofollow">
+	<meta name="theme-color" content="#0a0a0a">
+
+	<meta property="og:type" content="website">
+	<meta property="og:site_name" content="3D Agent">
+	<meta property="og:title" content="${title}">
+	<meta property="og:description" content="${desc}">
+	<meta property="og:url" content="${escapeAttr(pageUrl)}">
+	<meta property="og:image" content="${escapeAttr(ogUrl)}">
+	<meta property="og:image:width" content="1200">
+	<meta property="og:image:height" content="630">
+
+	<meta name="twitter:card" content="summary_large_image">
+	<meta name="twitter:title" content="${title}">
+	<meta name="twitter:description" content="${desc}">
+	<meta name="twitter:image" content="${escapeAttr(ogUrl)}">
+
+	<link rel="canonical" href="${escapeAttr(pageUrl)}">
+	<link rel="shortcut icon" href="/favicon.ico">
+
+	<style>
+		html,body{margin:0;padding:0;background:#0a0a0a;color:#e0e0e0;font-family:Inter,system-ui,sans-serif;height:100%}
+		main{display:grid;place-items:center;height:100vh;text-align:center;padding:2rem;gap:1rem}
+		a{color:#8b5cf6;text-decoration:none}
+		a:hover{text-decoration:underline}
+	</style>
+</head>
+<body>
+	<main>
+		<h1>${title}</h1>
+		<p>${desc} The owner hasn't shared it publicly.</p>
+		<p><a href="/">Open 3D Agent</a></p>
+	</main>
+</body>
+</html>`;
 }
-function escapeAttr(s) { return escapeHtml(s); }
+
+function escapeHtml(s) {
+	return String(s).replace(
+		/[&<>"']/g,
+		(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+	);
+}
+function escapeAttr(s) {
+	return escapeHtml(s);
+}
 function escapeJsonLd(obj) {
 	return JSON.stringify(obj, null, 2).replace(/</g, '\\u003c');
 }

@@ -9,31 +9,31 @@
  * Discord, Slack) can render the widget inline.
  */
 
-import { sql }                from '../_lib/db.js';
-import { env }                from '../_lib/env.js';
-import { cors, wrap, error }  from '../_lib/http.js';
+import { sql } from '../_lib/db.js';
+import { env } from '../_lib/env.js';
+import { cors, wrap, error } from '../_lib/http.js';
 
 const DEFAULT_W = 600;
 const DEFAULT_H = 600;
-const THUMB_W   = 1200;
-const THUMB_H   = 630;
+const THUMB_W = 1200;
+const THUMB_H = 630;
 
 const TYPE_DIMENSIONS = {
-	'turntable':         { width: 600,  height: 600 },
-	'animation-gallery': { width: 720,  height: 720 },
-	'talking-agent':     { width: 420,  height: 600 },
-	'passport':          { width: 480,  height: 560 },
-	'hotspot-tour':      { width: 800,  height: 600 },
+	turntable: { width: 600, height: 600 },
+	'animation-gallery': { width: 720, height: 720 },
+	'talking-agent': { width: 420, height: 600 },
+	passport: { width: 480, height: 560 },
+	'hotspot-tour': { width: 800, height: 600 },
 };
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
 
-	const url    = new URL(req.url, 'http://x');
+	const url = new URL(req.url, 'http://x');
 	const target = url.searchParams.get('url');
 	const format = (url.searchParams.get('format') || 'json').toLowerCase();
-	const maxW   = parseInt(url.searchParams.get('maxwidth')  || '0', 10) || null;
-	const maxH   = parseInt(url.searchParams.get('maxheight') || '0', 10) || null;
+	const maxW = parseInt(url.searchParams.get('maxwidth') || '0', 10) || null;
+	const maxH = parseInt(url.searchParams.get('maxheight') || '0', 10) || null;
 
 	if (!target) return error(res, 400, 'invalid_request', 'url parameter required');
 
@@ -43,32 +43,33 @@ export default wrap(async (req, res) => {
 	const widget = await loadWidget(widgetId);
 	if (!widget) return error(res, 404, 'not_found', 'widget not found');
 
-	const origin   = env.APP_ORIGIN;
+	const origin = env.APP_ORIGIN;
 	const embedUrl = `${origin}/#widget=${widget.id}&kiosk=true`;
-	const pageUrl  = `${origin}/w/${widget.id}`;
+	const pageUrl = `${origin}/w/${widget.id}`;
 	const thumbUrl = `${origin}/api/widgets/${widget.id}/og`;
-	const title    = widget.name || 'Widget';
+	const title = widget.name || 'Widget';
 
 	const dims = TYPE_DIMENSIONS[widget.type] || { width: DEFAULT_W, height: DEFAULT_H };
-	const width  = clamp(maxW || dims.width,  240, 1600);
+	const width = clamp(maxW || dims.width, 240, 1600);
 	const height = clamp(maxH || dims.height, 240, 1600);
 
 	const iframe = `<iframe src="${escapeAttr(embedUrl)}" width="${width}" height="${height}" style="border:0;border-radius:12px;max-width:100%" allow="autoplay; xr-spatial-tracking; clipboard-write" sandbox="allow-scripts allow-same-origin allow-popups allow-forms" loading="lazy"></iframe>`;
 
 	const payload = {
-		type:              'rich',
-		version:           '1.0',
-		provider_name:     '3D Agent',
-		provider_url:      origin,
+		type: 'rich',
+		version: '1.0',
+		provider_name: '3D Agent',
+		provider_url: origin,
 		title,
-		author_name:       title,
-		author_url:        pageUrl,
-		html:              iframe,
+		author_name: title,
+		author_url: pageUrl,
+		html: iframe,
 		width,
 		height,
-		thumbnail_url:     thumbUrl,
-		thumbnail_width:   THUMB_W,
-		thumbnail_height:  THUMB_H,
+		thumbnail_url: thumbUrl,
+		thumbnail_width: THUMB_W,
+		thumbnail_height: THUMB_H,
+		cache_age: 900,
 	};
 
 	res.setHeader('cache-control', 'public, max-age=900');
@@ -102,12 +103,17 @@ async function loadWidget(id) {
 
 function extractWidgetId(target) {
 	let parsed;
-	try { parsed = new URL(target); } catch { return null; }
+	try {
+		parsed = new URL(target);
+	} catch {
+		return null;
+	}
 
 	const originStr = `${parsed.protocol}//${parsed.host}`;
-	const okOrigin  = originStr === env.APP_ORIGIN
-		|| /^https?:\/\/localhost(:\d+)?$/.test(originStr)
-		|| /^https?:\/\/3d\.irish$/.test(originStr);
+	const okOrigin =
+		originStr === env.APP_ORIGIN ||
+		/^https?:\/\/localhost(:\d+)?$/.test(originStr) ||
+		/^https?:\/\/3d\.irish$/.test(originStr);
 	if (!okOrigin) return null;
 
 	const pathMatch = parsed.pathname.match(/^\/w\/([A-Za-z0-9_-]+)\/?$/);
@@ -125,25 +131,23 @@ function clamp(n, lo, hi) {
 }
 
 function toXml(payload) {
-	const lines = Object.entries(payload).map(([k, v]) =>
-		`  <${k}>${escapeXml(String(v))}</${k}>`
-	);
+	const lines = Object.entries(payload).map(([k, v]) => `  <${k}>${escapeXml(String(v))}</${k}>`);
 	return `<?xml version="1.0" encoding="utf-8" standalone="yes"?>\n<oembed>\n${lines.join('\n')}\n</oembed>`;
 }
 
 function escapeXml(s) {
 	return String(s)
-		.replace(/&/g,  '&amp;')
-		.replace(/</g,  '&lt;')
-		.replace(/>/g,  '&gt;')
-		.replace(/"/g,  '&quot;')
-		.replace(/'/g,  '&apos;');
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&apos;');
 }
 
 function escapeAttr(s) {
 	return String(s)
-		.replace(/&/g,  '&amp;')
-		.replace(/"/g,  '&quot;')
-		.replace(/</g,  '&lt;')
-		.replace(/>/g,  '&gt;');
+		.replace(/&/g, '&amp;')
+		.replace(/"/g, '&quot;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;');
 }

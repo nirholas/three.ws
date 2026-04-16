@@ -428,9 +428,11 @@ class App {
 		if (this.viewer) this.viewer.dispose();
 		this.viewerEl = this.viewerContainerEl;
 		this.viewer = new Viewer(this.viewerEl, this.options);
-		this.editor = new Editor(this.viewer);
-		this.editor.attach();
-		window.VIEWER.editor = this.editor;
+		if (!this.options.kiosk) {
+			this.editor = new Editor(this.viewer);
+			this.editor.attach();
+			window.VIEWER.editor = this.editor;
+		}
 		window.VIEWER.viewer = this.viewer;
 		return this.viewer;
 	}
@@ -539,10 +541,11 @@ class App {
 
 				// Notify the editor of the new model so it can rebuild panels
 				if (this.editor) {
+					const isString = typeof rootFile === 'string';
 					this.editor.onContentChanged({
-						url: typeof rootFile === 'string' ? rootFile : null,
-						file: typeof rootFile === 'object' ? rootFile : null,
-						name: typeof rootFile === 'string' ? rootFile : rootFile.name,
+						url: isString ? rootFile : null,
+						file: isString ? null : rootFile,
+						name: isString ? rootFile.split('/').pop().split('?')[0] : rootFile.name,
 					});
 				}
 
