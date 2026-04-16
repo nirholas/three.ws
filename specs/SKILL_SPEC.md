@@ -250,12 +250,41 @@ A skill without `handlers.js` is valid — it's pure prompt engineering + assets
 ## Security model
 
 - **Declarative skills** (no `handlers.js`) are always safe to load.
-- **Code skills** run in a realm-isolated scope with the `ctx` API as their only capability.
+- **Code skills** execute in a shared **Web Worker** (`src/skills/sandbox-worker.js`). The worker has no DOM, no `window`, no `document`, and no `localStorage` or `cookie` access. Handlers cannot read or write page state.
+- The worker receives handler source as text and loads it via a `blob:` URL dynamic `import()`. This prevents handlers from importing external modules at load time.
+- Each `ctx.*` method call from inside the worker becomes a structured-cloneable `postMessage` round-trip to the main thread. The main thread validates and dispatches the call, then returns the result. Non-serializable objects (e.g. `AnimationClip`, `GLTF`) are stored in a host-side handle registry and represented to the worker as opaque `"@h:N"` strings.
+- `ctx.fetch` and `ctx.loadJSON` use the worker's native `fetch` — no main-thread proxy is needed. Standard CORS rules apply (same-origin and credentialed-CORS requests work; cross-origin without CORS headers are blocked by the browser as usual).
+- Individual `ctx.*` calls time out after **30 seconds**. A timed-out or errored handler surfaces as `{ error: "..." }` to the runtime without crashing the worker.
 - Agent owners set a **skill trust policy** per agent: `trust: "any" | "whitelist" | "owned-only"`.
   - `owned-only` (default) — only run skills signed by the agent's owner wallet.
   - `whitelist` — allow a list of publisher wallets.
   - `any` — wild west, allowed for kiosks/demos.
 - Integrity hashes are verified before handlers execute.
+
+### Opt-out: `sandboxPolicy: "trusted-main-thread"`
+
+Owner-signed skills that require main-thread capabilities (Three.js direct access, `window.*` APIs, or performance-sensitive frame-tick work) can bypass the worker by setting in `manifest.json`:
+
+```jsonc
+{
+  "sandboxPolicy": "trusted-main-thread"
+}
+```
+
+When this flag is present, `handlers.js` is loaded via a direct `import()` in the main thread and called synchronously — the same as the pre-sandbox behavior. This opt-out is only meaningful for skills that pass the `owned-only` or `whitelist` trust check; `any`-trust skills should remain sandboxed.
+
+Rationale for the name: it describes where the code runs (`main-thread`) and the precondition (`trusted`), making the security trade-off explicit to manifest authors.
+
+### What sandboxed handlers cannot do
+
+- Read `document.cookie`, `window.localStorage`, `sessionStorage`, or any DOM API.
+- Access `window`, `navigator`, or `location` from handler code.
+- Import external modules (no `import` statements in handler source — the blob context has no base URL for relative imports).
+- Make arbitrary network calls outside `ctx.fetch` / `ctx.loadJSON` (CORS still applies).
+
+### What sandboxed handlers can still do
+
+All `ctx.*` capabilities listed in the API section above — animation, memory, speech, LLM, cross-skill calls — work identically via the postMessage proxy.
 
 ## Worked example: the `wave` skill
 
