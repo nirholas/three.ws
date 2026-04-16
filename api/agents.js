@@ -72,7 +72,7 @@ async function handleGetOrCreateMe(req, res, auth) {
 					${'Agent'},
 					${['greet', 'present-model', 'validate-model', 'remember', 'think']},
 					${wallet.address},
-					${sql.json({ encrypted_wallet_key: wallet.encrypted_key })}
+					${JSON.stringify({ encrypted_wallet_key: wallet.encrypted_key })}::jsonb
 				)
 				RETURNING *
 			`;
@@ -115,7 +115,7 @@ async function handleCreate(req, res) {
 			${body.description ? String(body.description).slice(0, 500) : null},
 			${body.skills || ['greet', 'present-model', 'validate-model', 'remember', 'think']},
 			${wallet.address},
-			${sql.json(meta)}
+			${JSON.stringify(meta)}::jsonb
 		)
 		RETURNING *
 	`;
@@ -170,7 +170,7 @@ async function handleUpdate(req, res, id, auth) {
 			description  = COALESCE(${body.description || null}, description),
 			avatar_id    = COALESCE(${body.avatar_id   || null}, avatar_id),
 			skills       = COALESCE(${body.skills      || null}, skills),
-			meta         = COALESCE(${body.meta        ? sql.json(body.meta) : null}, meta),
+			meta         = COALESCE(${body.meta        ? JSON.stringify(body.meta) : null}::jsonb, meta),
 			home_url     = COALESCE(${body.home_url    || null}, home_url)
 		WHERE id = ${id}
 		RETURNING *

@@ -423,6 +423,9 @@ class App {
 	// ── Avatar Creator ────────────────────────────────────────────────────────
 
 	setupAvatarCreator() {
+		// The creator instance stays wired so the selfie pipeline (task 4) can
+		// call `avatarCreator.open(sessionUrl)` once it has an Avaturn session.
+		// The "Create Avatar" button is now a link to /create — no click wiring here.
 		this.avatarCreator = new AvatarCreator(document.body, async (glbUrl) => {
 			this.view(glbUrl, '', new Map());
 			try {
@@ -434,11 +437,6 @@ class App {
 				}
 			}
 		});
-
-		const btn = document.getElementById('create-avatar-btn');
-		if (btn) {
-			btn.addEventListener('click', () => this.avatarCreator.open());
-		}
 	}
 
 	// ── File Loading ──────────────────────────────────────────────────────────

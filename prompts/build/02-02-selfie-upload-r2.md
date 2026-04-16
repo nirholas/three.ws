@@ -12,7 +12,7 @@ Second step of the magic moment. The selfie blob from 02-01 must land in R2 unde
 ## Prerequisites
 
 - 02-01 in place — `selfie:ready` event fires with a JPEG blob.
-- R2 env vars (`R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_URL`) set.
+- S3 env vars (`S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET`, `S3_PUBLIC_DOMAIN`) set.
 
 ## Read these first
 

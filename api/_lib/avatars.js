@@ -12,7 +12,7 @@ export async function listAvatars({ userId, limit = 50, cursor, visibility, incl
 	if (visibility) { params.push(visibility); conds.push(`visibility = $${params.length}`); }
 	if (cursor)     { params.push(new Date(cursor)); conds.push(`created_at < $${params.length}`); }
 	params.push(limit + 1);
-	const rows = await sql.query(
+	const rows = await sql(
 		`select id, owner_id, slug, name, description, storage_key, thumbnail_key, size_bytes,
 		        content_type, source, visibility, tags, version, created_at, updated_at
 		 from avatars where ${conds.join(' and ')}
@@ -113,7 +113,7 @@ export async function searchPublicAvatars({ q, tag, limit = 24, cursor }) {
 	if (tag)    { params.push(tag); conds.push(`$${params.length} = any(tags)`); }
 	if (cursor) { params.push(new Date(cursor)); conds.push(`created_at < $${params.length}`); }
 	params.push(limit + 1);
-	const rows = await sql.query(
+	const rows = await sql(
 		`select id, owner_id, slug, name, description, storage_key, thumbnail_key, size_bytes,
 		        content_type, source, visibility, tags, created_at
 		 from avatars where ${conds.join(' and ')}

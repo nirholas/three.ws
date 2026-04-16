@@ -90,7 +90,7 @@ async function loadWidget(id) {
 		const [row] = await sql`
 			select id, name, type, avatar_id
 			from widgets
-			where id = ${id}
+			where id = ${id} and is_public = true and deleted_at is null
 			limit 1
 		`;
 		return row || null;
