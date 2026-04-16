@@ -3,9 +3,9 @@
  * Routes to the appropriate handler in api/agents.js
  */
 import { handleGetOne, handleWallet } from '../agents.js';
-import { cors, error } from '../_lib/http.js';
+import { cors, error, wrap } from '../_lib/http.js';
 
-export default async function handler(req, res) {
+export default wrap(async function handler(req, res) {
 	const url   = new URL(req.url, 'http://x');
 	const parts = url.pathname.split('/').filter(Boolean);
 	// parts: ['api', 'agents', ':id'] or ['api', 'agents', ':id', 'wallet']
@@ -19,4 +19,4 @@ export default async function handler(req, res) {
 
 	if (sub === 'wallet') return handleWallet(req, res, id);
 	return handleGetOne(req, res, id);
-}
+})

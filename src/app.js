@@ -50,6 +50,7 @@ class App {
 			proxyURL:       hash.proxyURL || '',
 			agent:          hash.agent || '',
 			widget:         hash.widget || '',
+			register:       hash.register !== undefined,
 		};
 
 		this.el              = el;
@@ -78,6 +79,7 @@ class App {
 		this.createDropzone();
 		this.setupAvatarCreator();
 		this.hideSpinner();
+		this._applyViewerMode();
 		this._updateSignInLink();
 
 		const options = this.options;
@@ -212,13 +214,28 @@ class App {
 		}
 	}
 
+	_applyViewerMode() {
+		const { kiosk, widget, agent, register } = this.options;
+		let mode = 'main';
+		if (kiosk || widget || agent) mode = 'embed';
+		else if (register) mode = 'register';
+		document.body.dataset.viewerMode = mode;
+		if (mode === 'main') document.body.dataset.authed = 'pending';
+	}
+
 	async _updateSignInLink() {
 		const link = document.getElementById('nav-sign-in');
-		if (!link) return;
 		try {
 			const user = await getMe();
-			if (user) link.classList.add('signed-in');
-		} catch { /* leave sign-in visible */ }
+			if (link && user) link.classList.add('signed-in');
+			if (document.body.dataset.viewerMode === 'main') {
+				document.body.dataset.authed = user ? 'true' : 'false';
+			}
+		} catch {
+			if (document.body.dataset.viewerMode === 'main') {
+				document.body.dataset.authed = 'false';
+			}
+		}
 	}
 
 	_refreshMakeWidgetButton() {

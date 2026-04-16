@@ -75,6 +75,12 @@ export class AgentAvatar {
 		this._targetTilt   = 0;      // radians
 		this._currentLean  = 0;      // slight forward lean
 		this._targetLean   = 0;
+		this._currentYaw   = 0;      // horizontal gaze (follow mode)
+
+		// Follow mode state
+		this._mouseGaze      = { x: 0, y: 0 };  // normalised -1..1
+		this._keystrokePitch = 0;                // look-down impulse (radians, decays)
+		this._keystrokeYaw   = 0;                // lateral drift impulse (radians, decays)
 
 		// One-shot gesture tracking
 		this._oneShotAction   = null;
@@ -93,7 +99,9 @@ export class AgentAvatar {
 		// Listeners stored so we can detach later
 		this._listeners = [];
 
-		this._tickBound = this._tickEmotion.bind(this);
+		this._tickBound      = this._tickEmotion.bind(this);
+		this._onMouseMove    = this._handleMouseMove.bind(this);
+		this._onKeyFollowDown = this._handleKeyPress.bind(this);
 	}
 
 	// ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -103,6 +111,10 @@ export class AgentAvatar {
 		// Hook into the viewer's per-frame loop
 		if (!this.viewer._afterAnimateHooks) this.viewer._afterAnimateHooks = [];
 		this.viewer._afterAnimateHooks.push(this._tickBound);
+
+		// Follow mode input listeners
+		this.viewer.el.addEventListener('mousemove', this._onMouseMove);
+		window.addEventListener('keydown', this._onKeyFollowDown);
 
 		// Subscribe to protocol events
 		this._sub(ACTION_TYPES.SPEAK,         this._onSpeak.bind(this));
@@ -132,6 +144,8 @@ export class AgentAvatar {
 			const idx = this.viewer._afterAnimateHooks.indexOf(this._tickBound);
 			if (idx !== -1) this.viewer._afterAnimateHooks.splice(idx, 1);
 		}
+		this.viewer.el.removeEventListener('mousemove', this._onMouseMove);
+		window.removeEventListener('keydown', this._onKeyFollowDown);
 		for (const [type, handler] of this._listeners) {
 			this.protocol.off(type, handler);
 		}
@@ -331,7 +345,20 @@ export class AgentAvatar {
 		this._currentTilt = _lerp(this._currentTilt, this._targetTilt, dt * 3.0);
 
 		// ── Forward lean (curiosity leans in, patience leans back) ────────
-		this._targetLean  = w.curiosity * 0.03 - w.patience * 0.02;
+		this._targetLean = w.curiosity * 0.03 - w.patience * 0.02;
+		const _followMode = this.viewer.state?.followMode;
+		if (_followMode === 'mouse') {
+			// Mouse Y: -1 = top of canvas (look up), +1 = bottom (look down)
+			this._targetLean += this._mouseGaze.y * (12 * DEG2RAD);
+		} else if (_followMode === 'keystrokes') {
+			this._targetLean   += this._keystrokePitch;
+			this._keystrokePitch = Math.max(0, this._keystrokePitch - dt * 0.9);
+			this._keystrokeYaw   = _lerp(this._keystrokeYaw, 0, dt * 0.6);
+		} else {
+			// Decay any residual follow-mode values if mode was switched off
+			this._keystrokePitch = 0;
+			this._keystrokeYaw   = _lerp(this._keystrokeYaw, 0, dt * 2.0);
+		}
 		this._currentLean = _lerp(this._currentLean, this._targetLean, dt * 2.0);
 
 		this._applyHeadTransform();
@@ -371,16 +398,50 @@ export class AgentAvatar {
 	_applyHeadTransform() {
 		if (!this.viewer?.content) return;
 
-		// Find a head/neck bone or the root bone to tilt
+		// Compute yaw target from follow mode
+		const followMode = this.viewer.state?.followMode;
+		let targetYaw = 0;
+		if (followMode === 'mouse') {
+			targetYaw = this._mouseGaze.x * (25 * DEG2RAD);
+		} else if (followMode === 'keystrokes') {
+			targetYaw = this._keystrokeYaw;
+		}
+		this._currentYaw = _lerp(this._currentYaw, targetYaw, 0.08);
+
 		this.viewer.content.traverse(node => {
 			if (!node.isBone) return;
 			const n = node.name.toLowerCase();
 			if (n.includes('head') || n.includes('neck')) {
-				// Apply tilt (Z rotation) and lean (X rotation)
-				node.rotation.z = _lerp(node.rotation.z, this._currentTilt, 0.1);
-				node.rotation.x = _lerp(node.rotation.x, this._currentLean, 0.1);
+				node.rotation.z = _lerp(node.rotation.z, this._currentTilt,  0.1);
+				node.rotation.x = _lerp(node.rotation.x, this._currentLean,  0.1);
+				node.rotation.y = _lerp(node.rotation.y, this._currentYaw,   0.1);
 			}
 		});
+	}
+
+	// ── Follow Mode Handlers ──────────────────────────────────────────────────
+
+	_handleMouseMove(e) {
+		const rect = this.viewer.el.getBoundingClientRect();
+		this._mouseGaze.x = ((e.clientX - rect.left) / rect.width)  * 2 - 1;
+		this._mouseGaze.y = ((e.clientY - rect.top)  / rect.height) * 2 - 1;
+	}
+
+	_handleKeyPress(e) {
+		if (this.viewer.state?.followMode !== 'keystrokes') return;
+		if (['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Tab', 'Escape'].includes(e.key)) return;
+
+		// Look down toward keyboard
+		this._keystrokePitch = 0.18;
+
+		// Lateral drift based on rough key column: left side → look left, right side → look right
+		const leftKeys  = 'qweasdzxc123`~!@#';
+		const rightKeys = 'yuiophjklnm7890-=';
+		const k = e.key.toLowerCase();
+		if (leftKeys.includes(k))       this._keystrokeYaw = -0.12;
+		else if (rightKeys.includes(k)) this._keystrokeYaw =  0.12;
+
+		this._injectStimulus('curiosity', 0.07);
 	}
 
 	// ── Gesture / One-shot Animations ────────────────────────────────────────

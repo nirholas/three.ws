@@ -150,7 +150,7 @@ window.signOut = signOut;
 		state.user = me.user;
 		document.getElementById('user-email').textContent = me.user.email;
 	} catch {
-		location.href = '/login.html?next=' + encodeURIComponent(location.pathname + location.hash);
+		location.href = '/login?next=' + encodeURIComponent(location.pathname + location.hash);
 		return;
 	}
 	navigate(location.hash.slice(1) || 'avatars');

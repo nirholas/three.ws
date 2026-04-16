@@ -165,12 +165,17 @@ export class AgentIdentity {
 
 	/**
 	 * Register this agent on-chain via the ERC-8004 registry.
-	 * @param {File} glbFile
-	 * @param {string} apiToken
+	 * @param {{ glbFile: File, name?: string, description?: string, apiToken?: string, onStatus?: Function }} [opts]
 	 */
-	async register(glbFile, apiToken) {
+	async register({ glbFile, name, description, apiToken, onStatus } = {}) {
 		const { registerAgent } = await import('./erc8004/agent-registry.js');
-		const result = await registerAgent(glbFile, apiToken);
+		const result = await registerAgent({
+			glbFile,
+			name: name || this.name,
+			description: description || this.description,
+			apiToken,
+			onStatus,
+		});
 		await this.update({ isRegistered: true, meta: { ...this.meta, erc8004: result } });
 		return result;
 	}

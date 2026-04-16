@@ -198,10 +198,10 @@ create table if not exists plan_quotas (
 );
 
 insert into plan_quotas (plan, max_avatars, max_bytes_per_avatar, max_total_bytes, mcp_calls_per_day) values
-    ('free',         10,   25 * 1024 * 1024,   250 * 1024 * 1024,     1000),
-    ('pro',          500,  50 * 1024 * 1024,   25 * 1024 * 1024 * 1024, 50000),
-    ('team',         5000, 100 * 1024 * 1024,  500 * 1024 * 1024 * 1024, 500000),
-    ('enterprise',   100000, 500 * 1024 * 1024, 10 * 1024 * 1024 * 1024 * 1024, 10000000)
+    ('free',         10,   26214400,       262144000,          1000),
+    ('pro',          500,  52428800,       26843545600,        50000),
+    ('team',         5000, 104857600,      536870912000,       500000),
+    ('enterprise',   100000, 524288000,    10995116277760,     10000000)
 on conflict (plan) do update set
     max_avatars = excluded.max_avatars,
     max_bytes_per_avatar = excluded.max_bytes_per_avatar,
@@ -257,6 +257,14 @@ create index if not exists agent_identities_user
 create index if not exists agent_identities_wallet
     on agent_identities(wallet_address) where wallet_address is not null;
 
+-- Additive migrations for agent_identities columns added after initial deployment.
+alter table agent_identities add column if not exists wallet_address   text;
+alter table agent_identities add column if not exists chain_id         int;
+alter table agent_identities add column if not exists erc8004_agent_id bigint;
+alter table agent_identities add column if not exists erc8004_registry text;
+alter table agent_identities add column if not exists registration_cid text;
+alter table agent_identities add column if not exists home_url         text;
+
 -- ── agent_memories — the agent's persistent context ──────────────────────────
 create table if not exists agent_memories (
     id          uuid primary key default gen_random_uuid(),
@@ -272,7 +280,7 @@ create table if not exists agent_memories (
 
 create index if not exists agent_memories_agent_type
     on agent_memories(agent_id, type, created_at desc)
-    where expires_at is null or expires_at > now();
+    where expires_at is null;
 
 -- ── agent_actions — append-only signed history ───────────────────────────────
 create table if not exists agent_actions (

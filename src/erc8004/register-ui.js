@@ -5,7 +5,7 @@
  * Uses plain DOM (consistent with the rest of the project).
  */
 
-import { registerAgent, connectWallet } from './agent-registry.js';
+import { registerAgent, connectWallet, pinFile } from './agent-registry.js';
 import { isPrivyConfigured } from './privy.js';
 
 export class RegisterUI {
@@ -65,10 +65,6 @@ export class RegisterUI {
 						</div>
 					</label>
 
-					<label class="erc8004-label">
-						IPFS API Token
-						<input type="password" class="erc8004-input" name="ipfsToken" placeholder="web3.storage or Filebase token" />
-					</label>
 				</div>
 
 				<!-- Step 3: Register -->
@@ -88,7 +84,7 @@ export class RegisterUI {
 						<h3>Agent Registered!</h3>
 						<dl class="erc8004-result-dl">
 							<dt>Agent ID</dt>  <dd class="erc8004-res-id"></dd>
-							<dt>IPFS CID</dt>  <dd class="erc8004-res-cid"></dd>
+							<dt>Metadata</dt>  <dd class="erc8004-res-cid"></dd>
 							<dt>Tx Hash</dt>   <dd class="erc8004-res-tx"></dd>
 						</dl>
 						<button class="erc8004-btn erc8004-btn--view" type="button">View in 3D</button>
@@ -146,10 +142,10 @@ export class RegisterUI {
 		// Register
 		$('.erc8004-btn--register').addEventListener('click', () => this._doRegister());
 
-		// View result
+		// View result — jump to viewer with the registered model
 		$('.erc8004-btn--view').addEventListener('click', () => {
-			const cid = $('.erc8004-res-cid').textContent;
-			window.location.hash = `model=ipfs://${cid}`;
+			const id = $('.erc8004-res-id').textContent;
+			window.location.hash = id ? `agent=${id}` : '';
 			window.location.reload();
 		});
 	}
@@ -179,7 +175,6 @@ export class RegisterUI {
 		const $ = (sel) => this.el.querySelector(sel);
 		const name = $('[name="agentName"]').value.trim();
 		const description = $('[name="agentDesc"]').value.trim();
-		const apiToken = $('[name="ipfsToken"]').value.trim();
 		const registerBtn = $('.erc8004-btn--register');
 
 		registerBtn.disabled = true;
@@ -190,13 +185,12 @@ export class RegisterUI {
 				glbFile: this.selectedFile,
 				name,
 				description,
-				apiToken: apiToken || undefined,
 				onStatus: (msg) => this._log(msg),
 			});
 
 			// Show result
 			$('.erc8004-res-id').textContent = result.agentId;
-			$('.erc8004-res-cid').textContent = result.registrationCID;
+			$('.erc8004-res-cid').textContent = result.registrationUrl;
 			$('.erc8004-res-tx').textContent = result.txHash;
 			$('.erc8004-result').style.display = '';
 			this._log('Registration complete!');

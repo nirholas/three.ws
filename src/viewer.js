@@ -87,6 +87,9 @@ export class Viewer {
 			// Info overlay
 			showInfo: true,
 			showLabels: false,
+
+			// Avatar follow mode
+			followMode: 'mouse',
 		};
 
 		this.prevTime = 0;
@@ -708,6 +711,10 @@ export class Viewer {
 		// Camera controls.
 		this.cameraFolder = gui.addFolder('Cameras');
 		this.cameraFolder.domElement.style.display = 'none';
+
+		// Agent controls.
+		const agentFolder = gui.addFolder('Agent');
+		agentFolder.add(this.state, 'followMode', { 'None': 'none', 'Follow Mouse': 'mouse', 'Follow Keystrokes': 'keystrokes' }).name('follow mode');
 
 		// Stats.
 		const perfFolder = gui.addFolder('Performance');
