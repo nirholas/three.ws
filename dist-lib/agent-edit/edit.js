@@ -9,14 +9,20 @@ const DEFAULT_PERSONA = {
 	systemPrompt: '',
 	catchphrases: [],
 	sentimentBias: 0,
-	voiceProvider: 'web',
-	voiceId: null,
 	doNotSay: [],
 };
 
 let agent = null;
 let templates = [];
 let _saveDebounce = null;
+
+// Voice picker state — managed separately from persona so changes survive
+// template resets.
+let _voiceProvider = 'web';   // 'web' | 'eleven'
+let _voiceId       = null;    // voice name (web) or voice_id (eleven)
+let _elevenEnabled = false;
+let _elevenLoaded  = false;
+let _webVoices     = [];
 
 // ── Bootstrap ──────────────────────────────────────────────────────────────
 
@@ -38,8 +44,19 @@ async function main() {
 	// Ownership check (user_id only present for owner)
 	if (!agent.user_id || agent.user_id !== me.user.id) return showForbidden();
 
+	// Check ElevenLabs availability
+	try {
+		const cfg = await apiFetch('/api/config').catch(() => ({}));
+		_elevenEnabled = Boolean(cfg.elevenLabsEnabled);
+	} catch {}
+
 	// Load templates
 	templates = await apiFetch('/agent-edit/templates.json').catch(() => []);
+
+	// Restore voice config from meta
+	const voiceMeta = agent.meta?.voice || {};
+	_voiceProvider = voiceMeta.provider === 'eleven' ? 'eleven' : 'web';
+	_voiceId       = voiceMeta.voiceId || null;
 
 	// Render
 	document.getElementById('loading-screen').style.display = 'none';
@@ -51,6 +68,7 @@ async function main() {
 	loadPreview();
 	renderTemplates();
 	renderForm(agent.meta?.persona || DEFAULT_PERSONA);
+	initVoicePicker();
 	bindEvents();
 	document.getElementById('save-btn').disabled = false;
 }
@@ -124,12 +142,6 @@ function renderForm(persona) {
 	const biasInput = document.getElementById('f-sentiment-bias');
 	biasInput.value = p.sentimentBias;
 	document.getElementById('bias-value').textContent = Number(p.sentimentBias).toFixed(2);
-
-	document.querySelectorAll('input[name="voice-provider"]').forEach((r) => {
-		r.checked = r.value === p.voiceProvider;
-	});
-	setVal('f-voice-id', p.voiceId || '');
-	updateVoiceIdVisibility(p.voiceProvider);
 
 	renderCatchphrases(p.catchphrases || []);
 	renderChips(p.doNotSay || []);
@@ -229,8 +241,209 @@ function updateCount(fieldId, countId, max) {
 	}
 }
 
-function updateVoiceIdVisibility(provider) {
-	document.getElementById('voice-id-group').style.display = provider === 'eleven' ? '' : 'none';
+// ── Voice picker ──────────────────────────────────────────────────────────
+
+function initVoicePicker() {
+	const group = document.getElementById('voice-picker-group');
+
+	// Provider toggle
+	const toggle = document.createElement('div');
+	toggle.className = 'vp-toggle';
+	toggle.innerHTML = `
+		<button class="vp-toggle-btn${_voiceProvider === 'web' ? ' active' : ''}" data-vp="web">Web Speech</button>
+		<button class="vp-toggle-btn${_voiceProvider === 'eleven' ? ' active' : ''}" data-vp="eleven"
+			${_elevenEnabled ? '' : 'disabled title="ElevenLabs API key not configured"'}>ElevenLabs</button>
+	`;
+	group.appendChild(toggle);
+
+	toggle.querySelectorAll('.vp-toggle-btn').forEach((btn) => {
+		btn.addEventListener('click', () => setVoiceProvider(btn.dataset.vp));
+	});
+
+	// Voice list container
+	const listWrap = document.createElement('div');
+	listWrap.id = 'vp-list-wrap';
+	group.appendChild(listWrap);
+
+	renderVoiceSection();
+}
+
+function setVoiceProvider(p) {
+	if (p === 'eleven' && !_elevenEnabled) return;
+	_voiceProvider = p;
+	document.querySelectorAll('.vp-toggle-btn').forEach((b) => b.classList.toggle('active', b.dataset.vp === p));
+	renderVoiceSection();
+}
+
+function renderVoiceSection() {
+	const wrap = document.getElementById('vp-list-wrap');
+	if (!wrap) return;
+	wrap.innerHTML = '';
+	if (_voiceProvider === 'web')    renderWebVoices(wrap);
+	if (_voiceProvider === 'eleven') renderElevenVoices(wrap);
+}
+
+// Web Speech
+function renderWebVoices(wrap) {
+	if (!('speechSynthesis' in window)) {
+		wrap.innerHTML = '<div class="vp-empty">Web Speech not available in this browser.</div>';
+		return;
+	}
+
+	const doRender = () => {
+		_webVoices = window.speechSynthesis.getVoices();
+		if (!_webVoices.length) return;
+
+		// Group by language family
+		const groups = {};
+		for (const v of _webVoices) {
+			const lang = v.lang ? v.lang.slice(0, 2).toUpperCase() : '??';
+			(groups[lang] = groups[lang] || []).push(v);
+		}
+
+		const list = document.createElement('div');
+		list.className = 'vp-list';
+		for (const [lang, voices] of Object.entries(groups).sort(([a], [b]) => a.localeCompare(b))) {
+			const label = document.createElement('div');
+			label.className = 'vp-group-label';
+			label.textContent = lang;
+			list.appendChild(label);
+			for (const v of voices) {
+				const selected = _voiceProvider === 'web' && _voiceId === v.name;
+				list.appendChild(buildVoiceItem(v.name, v.name, v.lang, selected, (btn) => {
+					previewWebVoice(v.name, btn);
+				}));
+			}
+		}
+		wrap.innerHTML = '';
+		wrap.appendChild(list);
+	};
+
+	const voices = window.speechSynthesis.getVoices();
+	if (voices.length) { doRender(); return; }
+	window.speechSynthesis.addEventListener('voiceschanged', doRender, { once: true });
+	setTimeout(doRender, 250); // fallback for browsers that don't fire voiceschanged
+}
+
+// ElevenLabs
+async function renderElevenVoices(wrap) {
+	if (!_elevenEnabled) {
+		wrap.innerHTML = '<div class="vp-empty">ElevenLabs API key not configured on this server.</div>';
+		return;
+	}
+
+	if (!_elevenLoaded) {
+		wrap.innerHTML = '<div class="vp-empty">Loading ElevenLabs voices…</div>';
+		let data;
+		try {
+			data = await apiFetch('/api/tts/eleven/voices');
+			_elevenLoaded = true;
+		} catch (e) {
+			wrap.innerHTML = `<div class="vp-empty">Failed to load voices: ${esc(e.message)}</div>`;
+			return;
+		}
+
+		if (!data.enabled) {
+			wrap.innerHTML = '<div class="vp-empty">ElevenLabs not configured.</div>';
+			return;
+		}
+
+		const list = document.createElement('div');
+		list.className = 'vp-list';
+		list.id = 'vp-eleven-list';
+
+		for (const v of data.voices) {
+			const meta = [v.category, v.labels?.accent, v.labels?.gender].filter(Boolean).join(' · ');
+			const selected = _voiceProvider === 'eleven' && _voiceId === v.voice_id;
+			list.appendChild(buildVoiceItem(v.voice_id, v.name, meta, selected, (btn) => {
+				previewElevenVoice(v.voice_id, btn);
+			}));
+		}
+
+		wrap.innerHTML = '';
+		wrap.appendChild(list);
+		return;
+	}
+
+	// Already loaded — just rebuild with correct selection
+	const cached = document.getElementById('vp-eleven-list');
+	if (cached) {
+		wrap.innerHTML = '';
+		wrap.appendChild(cached);
+		cached.querySelectorAll('.vp-item').forEach((item) => {
+			item.classList.toggle('selected', _voiceId === item.dataset.vid);
+		});
+	}
+}
+
+function buildVoiceItem(vid, displayName, meta, selected, previewFn) {
+	const el = document.createElement('div');
+	el.className = 'vp-item' + (selected ? ' selected' : '');
+	el.dataset.vid = vid;
+	el.innerHTML = `
+		<div class="vp-radio"></div>
+		<div style="flex:1;min-width:0">
+			<div class="vp-name">${esc(displayName)}</div>
+			${meta ? `<div class="vp-meta">${esc(meta)}</div>` : ''}
+		</div>
+		<button class="vp-preview-btn" type="button">Preview</button>
+	`;
+	el.addEventListener('click', (e) => {
+		if (e.target.classList.contains('vp-preview-btn')) return;
+		selectVoiceItem(el, vid);
+	});
+	el.querySelector('.vp-preview-btn').addEventListener('click', (e) => {
+		e.stopPropagation();
+		previewFn(e.target);
+	});
+	return el;
+}
+
+function selectVoiceItem(el, vid) {
+	el.closest('.vp-list').querySelectorAll('.vp-item').forEach((i) => i.classList.remove('selected'));
+	el.classList.add('selected');
+	_voiceId = vid;
+}
+
+function previewWebVoice(name, btn) {
+	if (!('speechSynthesis' in window)) return;
+	window.speechSynthesis.cancel();
+	const utter = new SpeechSynthesisUtterance("Hi, I'm your agent.");
+	const voice = window.speechSynthesis.getVoices().find((v) => v.name === name);
+	if (voice) utter.voice = voice;
+	if (btn) {
+		btn.disabled = true;
+		utter.onend = () => { btn.disabled = false; };
+		utter.onerror = () => { btn.disabled = false; };
+	}
+	window.speechSynthesis.speak(utter);
+}
+
+async function previewElevenVoice(voiceId, btn) {
+	if (btn) btn.disabled = true;
+	try {
+		const res = await fetch('/api/tts/eleven', {
+			method:      'POST',
+			credentials: 'include',
+			headers:     { 'content-type': 'application/json' },
+			body:        JSON.stringify({ voiceId, text: "Hi, I'm your agent." }),
+		});
+		if (!res.ok) {
+			const err = await res.json().catch(() => ({}));
+			toast(err.error_description || `Preview failed (${res.status})`, true);
+			return;
+		}
+		const blob = await res.blob();
+		const url  = URL.createObjectURL(blob);
+		const audio = new Audio(url);
+		const cleanup = () => { URL.revokeObjectURL(url); if (btn) btn.disabled = false; };
+		audio.addEventListener('ended', cleanup, { once: true });
+		audio.addEventListener('error', cleanup, { once: true });
+		await audio.play();
+	} catch (e) {
+		toast(`Preview failed: ${e.message}`, true);
+		if (btn) btn.disabled = false;
+	}
 }
 
 // ── Read form → persona object ─────────────────────────────────────────────
@@ -240,18 +453,12 @@ function readForm() {
 		.map((i) => i.value.trim())
 		.filter(Boolean);
 
-	const voiceProvider =
-		document.querySelector('input[name="voice-provider"]:checked')?.value || 'web';
-	const voiceId = document.getElementById('f-voice-id').value.trim() || null;
-
 	return {
 		name: document.getElementById('f-name').value.trim(),
 		bio: document.getElementById('f-bio').value.trim(),
 		systemPrompt: document.getElementById('f-system-prompt').value.trim(),
 		catchphrases,
 		sentimentBias: parseFloat(document.getElementById('f-sentiment-bias').value),
-		voiceProvider,
-		voiceId,
 		doNotSay: [..._doNotSay],
 	};
 }
@@ -259,8 +466,7 @@ function readForm() {
 // ── Save ───────────────────────────────────────────────────────────────────
 
 function scheduleSave() {
-	// Not auto-saving — just mark that the form is dirty so user knows to save.
-	// (debounced auto-save is intentionally not used per task spec)
+	// Not auto-saving — just here for future use if needed.
 }
 
 async function save() {
@@ -273,10 +479,28 @@ async function save() {
 			toast('Name is required.', true);
 			return;
 		}
+
+		// Merge voice config into meta alongside persona. We send the full meta
+		// because the API replaces it wholesale via COALESCE.
+		const currentMeta = agent.meta || {};
+		const newMeta = {
+			...currentMeta,
+			persona,
+			voice: { provider: _voiceProvider, voiceId: _voiceId || null },
+		};
+
 		await apiFetch(`/api/agents/${encodeURIComponent(agentId)}`, {
-			method: 'PATCH',
-			body: JSON.stringify({ persona }),
+			method: 'PUT',
+			body: JSON.stringify({
+				name:        persona.name,
+				description: persona.bio,
+				meta:        newMeta,
+			}),
 		});
+
+		// Update local agent reference so subsequent saves carry forward the new meta.
+		agent = { ...agent, name: persona.name, description: persona.bio, meta: newMeta };
+
 		toast('Saved!');
 		reloadPreview();
 	} catch (err) {
@@ -300,11 +524,6 @@ function bindEvents() {
 	// Sentiment bias label
 	document.getElementById('f-sentiment-bias').addEventListener('input', (e) => {
 		document.getElementById('bias-value').textContent = Number(e.target.value).toFixed(2);
-	});
-
-	// Voice provider radio
-	document.querySelectorAll('input[name="voice-provider"]').forEach((r) => {
-		r.addEventListener('change', (e) => updateVoiceIdVisibility(e.target.value));
 	});
 
 	// Add catchphrase
@@ -372,6 +591,10 @@ function toast(msg, isError = false) {
 	_toastTimer = setTimeout(() => {
 		el.className = 'toast';
 	}, 3200);
+}
+
+function esc(s) {
+	return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 // ── Boot ───────────────────────────────────────────────────────────────────

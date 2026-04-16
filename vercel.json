@@ -33,6 +33,7 @@
         { "src": "/api/agent-memory",    "dest": "/api/agent-memory" },
         { "src": "/api/agent/([^/]+)/og", "dest": "/api/agent-og?id=$1" },
         { "src": "/api/oembed",           "dest": "/api/agent-oembed" },
+        { "src": "/agent/([^/]+)/edit",  "dest": "/agent-edit.html" },
         { "src": "/agent/([^/]+)/embed", "dest": "/agent-embed.html" },
         { "src": "/agent/([^/]+)",       "dest": "/agent-home.html" },
         { "src": "/agent",               "dest": "/agent-home.html" },

@@ -2,6 +2,7 @@
 // See specs/SKILL_SPEC.md
 
 import { resolveURI } from '../ipfs.js';
+import { getHost } from './sandbox-host.js';
 
 const FRONTMATTER_RE = /^---\n([\s\S]*?)\n---\n?([\s\S]*)$/;
 
@@ -27,23 +28,34 @@ function joinURI(base, rel) {
 }
 
 export class Skill {
-	constructor({ uri, manifest, instructions, tools, handlers }) {
+	constructor({ uri, manifest, instructions, tools, handlers, handlersSrc }) {
 		this.uri = uri;
 		this.manifest = manifest;
 		this.name = manifest.name;
 		this.version = manifest.version;
 		this.instructions = instructions;
 		this.tools = tools || [];
+		// trusted-main-thread: populated from dynamic import; sandbox: populated from handlersSrc
 		this.handlers = handlers || {};
+		this.handlersSrc = handlersSrc || null;
 	}
 
 	async invoke(toolName, args, ctx) {
-		const handler = this.handlers[toolName];
-		if (!handler) {
-			throw new Error(`Skill "${this.name}" has no handler for tool "${toolName}"`);
-		}
 		const scoped = { ...ctx, skillBaseURI: this.uri };
-		return handler(args, scoped);
+
+		// Owner-signed skills may opt out of the sandbox via sandboxPolicy: "trusted-main-thread"
+		if (this.manifest.sandboxPolicy === 'trusted-main-thread') {
+			const handler = this.handlers[toolName];
+			if (!handler) {
+				throw new Error(`Skill "${this.name}" has no handler for tool "${toolName}"`);
+			}
+			return handler(args, scoped);
+		}
+
+		if (!this.handlersSrc) {
+			throw new Error(`Skill "${this.name}" has no handler source for tool "${toolName}"`);
+		}
+		return getHost().invoke(this.uri, toolName, args, this.handlersSrc, scoped);
 	}
 
 	systemPromptFragment() {
@@ -69,10 +81,14 @@ export class SkillRegistry {
 		const manifest = await this._fetchJSON(`${uri}manifest.json`);
 		this._enforceTrust(manifest);
 
-		const [instructions, toolsJSON, handlersMod] = await Promise.all([
+		const isTrusted = manifest.sandboxPolicy === 'trusted-main-thread';
+
+		const [instructions, toolsJSON, handlersData] = await Promise.all([
 			this._fetchText(`${uri}SKILL.md`).catch(() => ''),
 			this._fetchJSON(`${uri}tools.json`).catch(() => ({ tools: [] })),
-			this._fetchHandlers(`${uri}handlers.js`).catch(() => null),
+			isTrusted
+				? this._fetchHandlers(`${uri}handlers.js`).catch(() => null)
+				: this._fetchHandlersSrc(`${uri}handlers.js`).catch(() => null),
 		]);
 
 		const skill = new Skill({
@@ -80,7 +96,8 @@ export class SkillRegistry {
 			manifest,
 			instructions,
 			tools: toolsJSON.tools || [],
-			handlers: handlersMod || {},
+			handlers: isTrusted ? (handlersData || {}) : {},
+			handlersSrc: isTrusted ? null : handlersData,
 		});
 
 		// Recursively install skill dependencies
@@ -160,9 +177,7 @@ export class SkillRegistry {
 	}
 
 	async _fetchHandlers(url) {
-		// Dynamic import the handlers module. Browser-side, this uses the import()
-		// intrinsic and respects CORS. For tighter sandboxing, swap in a Realms
-		// shim or Workers-based execution in a future version.
+		// Used only for trusted-main-thread skills — direct import into main thread.
 		try {
 			const mod = await import(/* @vite-ignore */ url);
 			return mod;
@@ -170,6 +185,13 @@ export class SkillRegistry {
 			console.warn(`[skills] handlers load failed: ${url}`, e);
 			return null;
 		}
+	}
+
+	async _fetchHandlersSrc(url) {
+		// Fetch handler source as text for sandboxed execution in the worker.
+		const res = await this.fetchFn(url);
+		if (!res.ok) throw new Error(`Fetch failed: ${url} (${res.status})`);
+		return res.text();
 	}
 
 	_enforceTrust(manifest) {

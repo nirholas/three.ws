@@ -116,6 +116,137 @@ function avatarCard(a) {
 	return el;
 }
 
+// ── Replace GLB ─────────────────────────────────────────────────────────────
+// Shows an inline warning banner on the card, then opens a file picker.
+// Validates extension, MIME, and GLB magic number before uploading.
+// Runs a Mixamo skeleton compatibility check and surfaces a warning if < 50%.
+function replaceGlbFlow(a, cardEl) {
+	if (cardEl.querySelector('[data-glb-warn]')) return; // already open
+
+	const warn = document.createElement('div');
+	warn.setAttribute('data-glb-warn', '');
+	warn.style.cssText = 'margin:8px 0; padding:10px; background:rgba(255,165,0,.08); border:1px solid rgba(255,165,0,.25); border-radius:8px; font-size:12px; color:#d4aa44';
+	warn.innerHTML = `
+		<p style="margin:0 0 8px">&#9888; This bypasses Avaturn &#8212; your avatar may not animate correctly if not rigged to the Mixamo skeleton.</p>
+		<div class="row" style="gap:6px">
+			<button class="btn" data-glb-pick style="font-size:12px;padding:6px 10px">Choose .glb file</button>
+			<button class="btn sec" data-glb-cancel style="font-size:12px;padding:6px 10px">Cancel</button>
+		</div>
+		<input type="file" accept=".glb,model/gltf-binary" data-glb-file style="display:none">
+		<div data-glb-progress style="margin-top:8px; min-height:1em"></div>
+	`;
+	cardEl.appendChild(warn);
+
+	warn.querySelector('[data-glb-cancel]').addEventListener('click', () => warn.remove());
+	warn.querySelector('[data-glb-pick]').addEventListener('click', () => {
+		warn.querySelector('[data-glb-file]').click();
+	});
+	warn.querySelector('[data-glb-file]').addEventListener('change', async (e) => {
+		const file = e.target.files[0];
+		if (!file) return;
+		const pick = warn.querySelector('[data-glb-pick]');
+		const cancel = warn.querySelector('[data-glb-cancel]');
+		pick.disabled = true;
+		cancel.disabled = true;
+		await doReplaceUpload(a, file, warn, cardEl);
+		pick.disabled = false;
+		cancel.disabled = false;
+	});
+}
+
+async function doReplaceUpload(a, file, warnEl, cardEl) {
+	const prog = warnEl.querySelector('[data-glb-progress]');
+	const say = (msg, isError = false) => {
+		prog.textContent = msg;
+		prog.style.color = isError ? '#ffb3b3' : '#888';
+	};
+
+	// Extension check — reject .gltf and anything else
+	if (!file.name.toLowerCase().endsWith('.glb')) {
+		say('Only .glb files accepted. Separate .gltf + .bin packs are not supported.', true);
+		return;
+	}
+
+	// MIME type check
+	if (file.type && file.type !== 'model/gltf-binary' && file.type !== 'application/octet-stream') {
+		say(`Unexpected file type "${file.type}". Expected model/gltf-binary.`, true);
+		return;
+	}
+
+	// Magic number check: first 4 bytes must be 'glTF' (0x46546C67 little-endian)
+	const header = await file.slice(0, 4).arrayBuffer();
+	if (new DataView(header).getUint32(0, true) !== 0x46546C67) {
+		say('Not a valid GLB \u2014 magic number check failed. Renamed files are rejected.', true);
+		return;
+	}
+
+	say('Checking skeleton compatibility\u2026');
+	const glbBuf = await file.arrayBuffer();
+	const boneMatch = checkMixamoSkeleton(glbBuf);
+
+	say('Requesting upload URL\u2026');
+	try {
+		const { upload_url, storage_key } = await api.presign({
+			size_bytes: file.size,
+			content_type: 'model/gltf-binary',
+		});
+		say(`Uploading ${fmtSize(file.size)}\u2026`);
+		await uploadToR2(upload_url, file, (pct) => say(`Uploading ${pct}%\u2026`));
+		say('Registering\u2026');
+		const { avatar } = await api.createAvatar({
+			storage_key,
+			parent_avatar_id: a.id,
+			name: a.name,
+			description: a.description || undefined,
+			visibility: a.visibility,
+			tags: a.tags,
+			size_bytes: file.size,
+			content_type: 'model/gltf-binary',
+			source: 'direct-upload',
+			source_meta: { replaced_from: a.id },
+		});
+
+		// Refresh model-viewer preview if the new avatar is public/unlisted
+		if (avatar.model_url) {
+			const mv = cardEl.querySelector('model-viewer');
+			if (mv) mv.src = avatar.model_url;
+		}
+
+		if (boneMatch !== null && boneMatch < 0.5) {
+			say(`Uploaded. \u26a0 Animations may not play \u2014 skeleton mismatch (${Math.round(boneMatch * 100)}% Mixamo bone match).`);
+		} else {
+			say('Replaced! Your agent now uses the new GLB.');
+		}
+	} catch (err) {
+		say(err.message || 'Upload failed', true);
+	}
+}
+
+// Parse the GLB JSON chunk and count Mixamo bone name matches.
+// Reuses the same strip-prefix logic as AnimationManager._buildBoneNameMap.
+// Returns a ratio 0..1, or null if the file has no parseable node names.
+function checkMixamoSkeleton(buffer) {
+	const MIXAMO_BONES = new Set([
+		'Hips', 'Spine', 'Spine1', 'Spine2', 'Neck', 'Head',
+		'LeftShoulder', 'LeftArm', 'LeftForeArm', 'LeftHand',
+		'RightShoulder', 'RightArm', 'RightForeArm', 'RightHand',
+		'LeftUpLeg', 'LeftLeg', 'LeftFoot', 'LeftToeBase',
+		'RightUpLeg', 'RightLeg', 'RightFoot', 'RightToeBase',
+	]);
+	try {
+		const view = new DataView(buffer);
+		const chunkLen = view.getUint32(12, true);
+		if (view.getUint32(16, true) !== 0x4E4F534A) return null; // chunk 0 is not JSON
+		const json = JSON.parse(new TextDecoder().decode(new Uint8Array(buffer, 20, chunkLen)));
+		const nodes = (json.nodes || []).filter((n) => n.name);
+		if (!nodes.length) return null;
+		const strip = (n) => n.replace(/^mixamorig\d*[_:]?/i, '').replace(/^Armature[_/]?/i, '');
+		return nodes.filter((n) => MIXAMO_BONES.has(strip(n.name))).length / MIXAMO_BONES.size;
+	} catch {
+		return null;
+	}
+}
+
 // ── Upload ──────────────────────────────────────────────────────────────────
 function renderUpload(root) {
 	root.innerHTML = `

@@ -1,0 +1,634 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<title>Edit Agent — 3D Agent</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta name="theme-color" content="#000000" />
+	<link rel="shortcut icon" href="/favicon.ico" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link rel="stylesheet" href="/style.css" />
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+
+	<style>
+		body { overflow: auto; display: flex; flex-direction: column; min-height: 100vh; }
+
+		.edit-header {
+			display: flex;
+			align-items: center;
+			gap: 1rem;
+			padding: 0.875rem 1.618rem;
+			border-bottom: 1px solid rgba(255,255,255,0.06);
+			flex-shrink: 0;
+		}
+		.edit-header a {
+			color: rgba(255,255,255,0.4);
+			text-decoration: none;
+			font-size: 0.764rem;
+		}
+		.edit-header a:hover { color: rgba(255,255,255,0.8); }
+		.edit-header-title {
+			flex: 1;
+			font-size: 0.875rem;
+			font-weight: 500;
+			color: rgba(255,255,255,0.75);
+		}
+
+		.edit-tabs {
+			display: flex;
+			gap: 0;
+			padding: 0 1.618rem;
+			border-bottom: 1px solid rgba(255,255,255,0.06);
+			flex-shrink: 0;
+		}
+		.edit-tab {
+			background: transparent;
+			border: 0;
+			border-bottom: 2px solid transparent;
+			color: rgba(255,255,255,0.4);
+			font-size: 0.764rem;
+			font-family: inherit;
+			padding: 0.75rem 1rem;
+			cursor: pointer;
+			margin-bottom: -1px;
+			transition: color 0.15s, border-color 0.15s;
+		}
+		.edit-tab:hover { color: rgba(255,255,255,0.7); }
+		.edit-tab.active {
+			color: rgba(255,255,255,0.9);
+			border-bottom-color: #3b82f6;
+		}
+
+		.edit-panel { display: none; flex: 1; }
+		.edit-panel.active { display: flex; }
+
+		/* ── Persona tab ── */
+		.persona-panel {
+			max-width: 560px;
+			margin: 2rem auto;
+			padding: 0 1rem;
+			flex-direction: column;
+			gap: 1rem;
+			width: 100%;
+		}
+		.form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+		.form-label {
+			font-size: 0.764rem;
+			color: rgba(255,255,255,0.5);
+			font-weight: 500;
+		}
+		.form-input, .form-textarea {
+			background: rgba(255,255,255,0.04);
+			border: 1px solid rgba(255,255,255,0.1);
+			border-radius: 8px;
+			color: rgba(255,255,255,0.9);
+			font: 0.875rem/1.5 inherit;
+			padding: 0.618rem 0.875rem;
+			width: 100%;
+			box-sizing: border-box;
+			outline: none;
+			transition: border-color 0.15s;
+		}
+		.form-input:focus, .form-textarea:focus { border-color: rgba(59,130,246,0.5); }
+		.form-textarea { resize: vertical; min-height: 90px; }
+		.form-actions { display: flex; align-items: center; gap: 1rem; margin-top: 0.5rem; }
+		.btn-primary {
+			background: #3b82f6;
+			border: 0;
+			border-radius: 8px;
+			color: #fff;
+			cursor: pointer;
+			font: 0.875rem/1 inherit;
+			padding: 0.618rem 1.25rem;
+			font-weight: 500;
+		}
+		.btn-primary:hover { background: #2563eb; }
+		.btn-primary:disabled { opacity: 0.5; cursor: default; }
+		.form-status {
+			font-size: 0.764rem;
+			color: rgba(255,255,255,0.4);
+		}
+		.form-status.ok  { color: #86efac; }
+		.form-status.err { color: #fca5a5; }
+
+		/* ── Outfit tab ── */
+		.outfit-panel {
+			display: grid;
+			grid-template-columns: 380px 1fr;
+			gap: 0;
+			flex: 1;
+			min-height: 0;
+		}
+		@media (max-width: 800px) {
+			.outfit-panel { grid-template-columns: 1fr; }
+			.outfit-preview { height: 300px; }
+		}
+		.outfit-preview {
+			position: sticky;
+			top: 0;
+			height: 100vh;
+			background: #0a0a12;
+			border-right: 1px solid rgba(255,255,255,0.06);
+			overflow: hidden;
+		}
+		.outfit-preview agent-3d {
+			width: 100%;
+			height: 100%;
+		}
+		.outfit-controls {
+			padding: 1.5rem;
+			overflow-y: auto;
+		}
+		.outfit-header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			margin-bottom: 1.25rem;
+		}
+		.outfit-title {
+			font-size: 0.764rem;
+			color: rgba(255,255,255,0.35);
+			text-transform: uppercase;
+			letter-spacing: 0.08em;
+		}
+		.btn-reset-all {
+			background: transparent;
+			border: 1px solid rgba(255,255,255,0.12);
+			border-radius: 6px;
+			color: rgba(255,255,255,0.4);
+			cursor: pointer;
+			font: 0.618rem/1 inherit;
+			padding: 0.382rem 0.75rem;
+		}
+		.btn-reset-all:hover { color: rgba(255,255,255,0.8); border-color: rgba(255,255,255,0.25); }
+
+		.mat-card {
+			background: rgba(255,255,255,0.03);
+			border: 1px solid rgba(255,255,255,0.07);
+			border-radius: 10px;
+			margin-bottom: 0.75rem;
+			overflow: hidden;
+		}
+		.mat-card-header {
+			display: flex;
+			align-items: center;
+			gap: 0.75rem;
+			padding: 0.75rem 1rem;
+			cursor: pointer;
+			user-select: none;
+		}
+		.mat-card-header:hover { background: rgba(255,255,255,0.03); }
+		.mat-card-chevron {
+			color: rgba(255,255,255,0.25);
+			font-size: 0.618rem;
+			transition: transform 0.2s;
+			margin-left: auto;
+		}
+		.mat-card.open .mat-card-chevron { transform: rotate(90deg); }
+		.mat-card-name {
+			font-size: 0.875rem;
+			color: rgba(255,255,255,0.8);
+			font-weight: 500;
+		}
+		.mat-card-swatch {
+			width: 16px;
+			height: 16px;
+			border-radius: 4px;
+			border: 1px solid rgba(255,255,255,0.15);
+			flex-shrink: 0;
+		}
+		.mat-card-modified {
+			font-size: 0.618rem;
+			color: #93c5fd;
+			margin-left: 0;
+		}
+		.mat-card-body { display: none; padding: 0 1rem 1rem; }
+		.mat-card.open .mat-card-body { display: block; }
+
+		.mat-row {
+			display: grid;
+			grid-template-columns: 100px 1fr auto;
+			align-items: center;
+			gap: 0.75rem;
+			margin-bottom: 0.618rem;
+		}
+		.mat-row-label {
+			font-size: 0.764rem;
+			color: rgba(255,255,255,0.4);
+		}
+		.mat-row input[type="color"] {
+			-webkit-appearance: none;
+			width: 100%;
+			height: 28px;
+			border-radius: 6px;
+			border: 1px solid rgba(255,255,255,0.12);
+			padding: 0;
+			cursor: pointer;
+			background: transparent;
+		}
+		.mat-row input[type="color"]::-webkit-color-swatch-wrapper { padding: 2px; }
+		.mat-row input[type="color"]::-webkit-color-swatch { border-radius: 4px; border: none; }
+		.mat-row input[type="range"] {
+			width: 100%;
+			accent-color: #3b82f6;
+		}
+		.mat-row-val {
+			font-size: 0.618rem;
+			color: rgba(255,255,255,0.35);
+			min-width: 30px;
+			text-align: right;
+		}
+		.mat-card-footer {
+			display: flex;
+			justify-content: flex-end;
+			padding-top: 0.5rem;
+		}
+		.btn-reset-mat {
+			background: transparent;
+			border: 0;
+			color: rgba(255,255,255,0.3);
+			cursor: pointer;
+			font: 0.618rem/1 inherit;
+			padding: 0.25rem 0;
+		}
+		.btn-reset-mat:hover { color: rgba(255,255,255,0.7); }
+
+		.outfit-status {
+			position: fixed;
+			bottom: 1rem;
+			right: 1.5rem;
+			font-size: 0.618rem;
+			color: rgba(255,255,255,0.25);
+			pointer-events: none;
+		}
+		.outfit-status.saving { color: rgba(255,255,255,0.4); }
+		.outfit-status.saved  { color: #86efac; }
+		.outfit-status.err    { color: #fca5a5; }
+
+		.loading-msg, .error-msg {
+			flex: 1;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			color: rgba(255,255,255,0.3);
+			font-size: 0.875rem;
+		}
+		.error-msg { color: #fca5a5; }
+		.no-avatar-msg {
+			padding: 2rem;
+			color: rgba(255,255,255,0.3);
+			font-size: 0.764rem;
+			text-align: center;
+		}
+		.no-named-mats {
+			color: rgba(255,255,255,0.3);
+			font-size: 0.764rem;
+			padding: 1rem 0;
+		}
+	</style>
+</head>
+<body>
+	<header class="edit-header">
+		<a id="back-link" href="/">← Agent</a>
+		<div class="edit-header-title" id="agent-title">Edit Agent</div>
+	</header>
+
+	<div class="edit-tabs" role="tablist">
+		<button class="edit-tab active" data-tab="persona">Persona</button>
+		<button class="edit-tab" data-tab="outfit">Outfit</button>
+	</div>
+
+	<div id="loading" class="loading-msg">Loading…</div>
+	<div id="error" class="error-msg" style="display:none"></div>
+
+	<!-- Persona tab -->
+	<div class="edit-panel persona-panel" id="panel-persona">
+		<div class="form-group">
+			<label class="form-label" for="f-name">Name</label>
+			<input class="form-input" id="f-name" type="text" maxlength="100" />
+		</div>
+		<div class="form-group">
+			<label class="form-label" for="f-desc">Description</label>
+			<textarea class="form-textarea" id="f-desc" rows="4" maxlength="500"></textarea>
+		</div>
+		<div class="form-actions">
+			<button class="btn-primary" id="persona-save">Save</button>
+			<span class="form-status" id="persona-status"></span>
+		</div>
+	</div>
+
+	<!-- Outfit tab -->
+	<div class="edit-panel outfit-panel" id="panel-outfit">
+		<div class="outfit-preview" id="outfit-preview">
+			<!-- agent-3d inserted here once avatar is confirmed -->
+		</div>
+		<div class="outfit-controls" id="outfit-controls">
+			<div class="outfit-header">
+				<span class="outfit-title">Materials</span>
+				<button class="btn-reset-all" id="btn-reset-all">Reset all</button>
+			</div>
+			<div id="mat-list">
+				<div class="no-named-mats">Loading preview…</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="outfit-status" id="outfit-status"></div>
+
+	<script type="module">
+		import './src/element.js'; // registers <agent-3d>
+
+		// ── Bootstrap ─────────────────────────────────────────────────────────────
+		const agentId = location.pathname.split('/').filter(Boolean)[1]; // /agent/:id/edit
+		if (!agentId) { showError('No agent ID in URL.'); throw new Error(); }
+
+		document.getElementById('back-link').href = `/agent/${agentId}`;
+
+		let agent = null;
+		let overridesMap = {}; // { materialName: { color, metalness, roughness, emissive } }
+		let agentEl = null;    // the <agent-3d> element once created
+		let saveTimer = null;
+
+		async function init() {
+			const res = await fetch(`/api/agents/${agentId}`, { credentials: 'include' });
+			if (!res.ok) {
+				const err = await res.json().catch(() => ({}));
+				throw new Error(err.error_description || `HTTP ${res.status}`);
+			}
+			const { agent: a } = await res.json();
+			if (!a) throw new Error('Agent not found');
+			if (!a.user_id) {
+				// Not the owner — redirect to public page
+				location.href = `/agent/${agentId}`;
+				return;
+			}
+			agent = a;
+			overridesMap = (agent.meta?.edits?.materials) || {};
+
+			document.getElementById('agent-title').textContent = `Edit — ${agent.name}`;
+			document.getElementById('loading').style.display = 'none';
+
+			initPersonaTab();
+			activateTab('persona');
+		}
+
+		init().catch((err) => showError(err.message || String(err)));
+
+		// ── Tab switching ─────────────────────────────────────────────────────────
+		function activateTab(name) {
+			document.querySelectorAll('.edit-tab').forEach((btn) => {
+				btn.classList.toggle('active', btn.dataset.tab === name);
+			});
+			document.querySelectorAll('.edit-panel').forEach((p) => {
+				p.classList.toggle('active', p.id === `panel-${name}`);
+			});
+			if (name === 'outfit') initOutfitTab();
+		}
+
+		document.querySelectorAll('.edit-tab').forEach((btn) => {
+			btn.addEventListener('click', () => activateTab(btn.dataset.tab));
+		});
+
+		// ── Persona tab ───────────────────────────────────────────────────────────
+		function initPersonaTab() {
+			document.getElementById('f-name').value = agent.name || '';
+			document.getElementById('f-desc').value = agent.description || '';
+		}
+
+		document.getElementById('persona-save').addEventListener('click', async () => {
+			const btn = document.getElementById('persona-save');
+			const status = document.getElementById('persona-status');
+			btn.disabled = true;
+			status.textContent = 'Saving…';
+			status.className = 'form-status';
+			try {
+				const res = await fetch(`/api/agents/${agentId}`, {
+					method: 'PUT',
+					credentials: 'include',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({
+						name: document.getElementById('f-name').value.trim() || agent.name,
+						description: document.getElementById('f-desc').value.trim() || null,
+					}),
+				});
+				if (!res.ok) {
+					const err = await res.json().catch(() => ({}));
+					throw new Error(err.error_description || `HTTP ${res.status}`);
+				}
+				const { agent: updated } = await res.json();
+				agent = updated;
+				document.getElementById('agent-title').textContent = `Edit — ${agent.name}`;
+				status.textContent = 'Saved.';
+				status.className = 'form-status ok';
+			} catch (err) {
+				status.textContent = err.message;
+				status.className = 'form-status err';
+			} finally {
+				btn.disabled = false;
+			}
+		});
+
+		// ── Outfit tab ────────────────────────────────────────────────────────────
+		let outfitInitialized = false;
+
+		function initOutfitTab() {
+			if (outfitInitialized) return;
+			outfitInitialized = true;
+
+			if (!agent.avatar_id) {
+				document.getElementById('mat-list').innerHTML =
+					'<div class="no-avatar-msg">No avatar attached to this agent.<br>Attach an avatar from the Dashboard first.</div>';
+				return;
+			}
+
+			// Create <agent-3d> in the preview panel
+			agentEl = document.createElement('agent-3d');
+			agentEl.setAttribute('agent-id', agentId);
+			agentEl.setAttribute('kiosk', '');
+			agentEl.setAttribute('eager', '');
+			agentEl.style.width = '100%';
+			agentEl.style.height = '100%';
+			document.getElementById('outfit-preview').appendChild(agentEl);
+
+			agentEl.addEventListener('agent:ready', () => buildMatUI());
+			agentEl.addEventListener('agent:error', (e) => {
+				document.getElementById('mat-list').innerHTML =
+					`<div class="no-avatar-msg">Preview error: ${esc(e.detail?.error?.message || 'unknown')}</div>`;
+			});
+		}
+
+		function buildMatUI() {
+			const mats = agentEl.getMaterials();
+			const named = mats.filter((m) => m.name);
+			const list = document.getElementById('mat-list');
+
+			if (!named.length) {
+				list.innerHTML = '<div class="no-named-mats">No named materials found in this model.</div>';
+				return;
+			}
+
+			list.innerHTML = '';
+			for (const mat of named) {
+				list.appendChild(buildMatCard(mat));
+			}
+		}
+
+		function buildMatCard(mat) {
+			const override = overridesMap[mat.name] || {};
+			const card = document.createElement('div');
+			card.className = 'mat-card';
+			card.dataset.mat = mat.name;
+
+			const isModified = !!overridesMap[mat.name];
+
+			card.innerHTML = `
+				<div class="mat-card-header">
+					<span class="mat-card-swatch" style="background:${esc(override.color || mat.color)}"></span>
+					<span class="mat-card-name">${esc(mat.name)}</span>
+					${isModified ? '<span class="mat-card-modified">●</span>' : ''}
+					<span class="mat-card-chevron">▶</span>
+				</div>
+				<div class="mat-card-body">
+					<div class="mat-row">
+						<span class="mat-row-label">Base color</span>
+						<input type="color" data-field="color" value="${esc(override.color || mat.color)}" />
+						<span class="mat-row-val"></span>
+					</div>
+					<div class="mat-row">
+						<span class="mat-row-label">Metalness</span>
+						<input type="range" data-field="metalness" min="0" max="1" step="0.01"
+							value="${override.metalness !== undefined ? override.metalness : mat.metalness}" />
+						<span class="mat-row-val">${fmtN(override.metalness !== undefined ? override.metalness : mat.metalness)}</span>
+					</div>
+					<div class="mat-row">
+						<span class="mat-row-label">Roughness</span>
+						<input type="range" data-field="roughness" min="0" max="1" step="0.01"
+							value="${override.roughness !== undefined ? override.roughness : mat.roughness}" />
+						<span class="mat-row-val">${fmtN(override.roughness !== undefined ? override.roughness : mat.roughness)}</span>
+					</div>
+					<div class="mat-row">
+						<span class="mat-row-label">Emissive</span>
+						<input type="color" data-field="emissive" value="${esc(override.emissive || mat.emissive)}" />
+						<span class="mat-row-val"></span>
+					</div>
+					<div class="mat-card-footer">
+						<button class="btn-reset-mat" data-mat="${esc(mat.name)}">↺ reset this material</button>
+					</div>
+				</div>
+			`;
+
+			// Toggle open/close
+			card.querySelector('.mat-card-header').addEventListener('click', () => {
+				card.classList.toggle('open');
+			});
+
+			// Field changes
+			card.querySelectorAll('input').forEach((inp) => {
+				inp.addEventListener('input', () => {
+					const field = inp.dataset.field;
+					const val = inp.type === 'range' ? parseFloat(inp.value) : inp.value;
+
+					// Update range display value
+					const row = inp.closest('.mat-row');
+					if (inp.type === 'range') row.querySelector('.mat-row-val').textContent = fmtN(val);
+
+					// Update swatch if color
+					if (field === 'color') card.querySelector('.mat-card-swatch').style.background = val;
+
+					// Merge into overrides
+					overridesMap[mat.name] = { ...(overridesMap[mat.name] || {}), [field]: val };
+					markModified(card, true);
+
+					agentEl.applyOverrides(overridesMap);
+					scheduleSave();
+				});
+			});
+
+			// Reset this material
+			card.querySelector('.btn-reset-mat').addEventListener('click', (e) => {
+				e.stopPropagation();
+				delete overridesMap[mat.name];
+				// Rebuild this card using GLB defaults (from getMaterials which reads live state after applyOverrides)
+				agentEl.applyOverrides(overridesMap);
+				const mats = agentEl.getMaterials();
+				const fresh = mats.find((m) => m.name === mat.name);
+				if (fresh) {
+					const newCard = buildMatCard(fresh);
+					card.replaceWith(newCard);
+				}
+				scheduleSave();
+			});
+
+			return card;
+		}
+
+		function markModified(card, modified) {
+			let dot = card.querySelector('.mat-card-modified');
+			if (modified && !dot) {
+				dot = document.createElement('span');
+				dot.className = 'mat-card-modified';
+				dot.textContent = '●';
+				card.querySelector('.mat-card-name').after(dot);
+			} else if (!modified && dot) {
+				dot.remove();
+			}
+		}
+
+		document.getElementById('btn-reset-all').addEventListener('click', () => {
+			overridesMap = {};
+			if (agentEl) {
+				agentEl.applyOverrides({});
+				buildMatUI();
+			}
+			scheduleSave();
+		});
+
+		// ── Debounced save ────────────────────────────────────────────────────────
+		function scheduleSave() {
+			clearTimeout(saveTimer);
+			setOutfitStatus('saving', '● unsaved');
+			saveTimer = setTimeout(saveEdits, 1000);
+		}
+
+		async function saveEdits() {
+			setOutfitStatus('saving', 'Saving…');
+			try {
+				const res = await fetch(`/api/agents/${agentId}`, {
+					method: 'PATCH',
+					credentials: 'include',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({ edits: { materials: overridesMap } }),
+				});
+				if (!res.ok) {
+					const err = await res.json().catch(() => ({}));
+					throw new Error(err.error_description || `HTTP ${res.status}`);
+				}
+				setOutfitStatus('saved', 'Saved ✓');
+				setTimeout(() => setOutfitStatus('', ''), 2000);
+			} catch (err) {
+				setOutfitStatus('err', `Save failed: ${err.message}`);
+			}
+		}
+
+		function setOutfitStatus(cls, text) {
+			const el = document.getElementById('outfit-status');
+			el.className = `outfit-status ${cls}`;
+			el.textContent = text;
+		}
+
+		// ── Helpers ───────────────────────────────────────────────────────────────
+		function esc(s) {
+			return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+		}
+		function fmtN(n) { return Number(n).toFixed(2); }
+
+		function showError(msg) {
+			document.getElementById('loading').style.display = 'none';
+			const el = document.getElementById('error');
+			el.style.display = 'flex';
+			el.textContent = msg;
+		}
+	</script>
+</body>
+</html>

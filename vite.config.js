@@ -29,6 +29,7 @@ const appConfig = {
 				embed: resolve(__dirname, 'embed.html'),
 				create: resolve(__dirname, 'create.html'),
 				'agent-home': resolve(__dirname, 'agent-home.html'),
+				'agent-edit':  resolve(__dirname, 'agent-edit.html'),
 				'agent-embed': resolve(__dirname, 'agent-embed.html'),
 			},
 		},
@@ -52,7 +53,8 @@ const appConfig = {
 				server.middlewares.use(async (req, res, next) => {
 					const path = (req.url || '/').split('?')[0];
 					let filePath = fileMap[path];
-					if (!filePath && /^\/agent\/[^/]+\/embed$/.test(path)) filePath = resolve(root, 'agent-embed.html');
+					if (!filePath && /^\/agent\/[^/]+\/edit$/.test(path)) filePath = resolve(root, 'agent-edit.html');
+					else if (!filePath && /^\/agent\/[^/]+\/embed$/.test(path)) filePath = resolve(root, 'agent-embed.html');
 					else if (!filePath && /^\/agent\/[^/]+$/.test(path)) filePath = resolve(root, 'agent-home.html');
 					if (!filePath) return next();
 					try {

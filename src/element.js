@@ -35,6 +35,18 @@ const BASE_STYLE = `
 		border-radius: var(--agent-bubble-radius);
 		overflow: hidden;
 		box-shadow: var(--agent-shadow);
+		transition:
+			width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+			height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+			border-radius 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	}
+	@media (prefers-reduced-motion: reduce) {
+		:host([mode="floating"]) { transition: none; }
+	}
+	/* Inline responsive: height follows width at a 3:4 portrait ratio */
+	:host([mode="inline"][data-responsive]) {
+		height: auto;
+		aspect-ratio: var(--agent-aspect, 3/4);
 	}
 	:host([mode="fullscreen"]) {
 		position: fixed;
@@ -51,6 +63,33 @@ const BASE_STYLE = `
 		height: 100%;
 	}
 	.stage canvas { display: block; }
+	/* Pill tap target — shown when collapsed to pill on narrow viewports */
+	.pill-btn {
+		display: none;
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		background: none;
+		border: 0;
+		cursor: pointer;
+		border-radius: inherit;
+		z-index: 10;
+	}
+	/* Swipe-down handle visible when bottom-sheet is expanded */
+	.pill-drag {
+		display: none;
+		position: absolute;
+		top: 8px;
+		left: 50%;
+		transform: translateX(-50%);
+		width: 36px;
+		height: 4px;
+		border-radius: 2px;
+		background: rgba(255,255,255,0.25);
+		pointer-events: none;
+		z-index: 20;
+	}
 	.chrome {
 		position: absolute;
 		left: 12px;
@@ -141,7 +180,7 @@ const BASE_STYLE = `
 
 class Agent3DElement extends HTMLElement {
 	static get observedAttributes() {
-		return ['src', 'manifest', 'body', 'agent-id', 'mode', 'position', 'width', 'height', 'voice', 'api-key', 'key-proxy'];
+		return ['src', 'manifest', 'body', 'agent-id', 'mode', 'position', 'width', 'height', 'voice', 'api-key', 'key-proxy', 'responsive'];
 	}
 
 	constructor() {
@@ -156,11 +195,17 @@ class Agent3DElement extends HTMLElement {
 		this._mounted = false;
 		this._booting = false;
 		this._listening = false;
+		this._pillActive = false;
+		this._mqNarrow = null;
+		this._mqNarrowHandler = null;
+		this._ro = null;
+		this._outsideTapHandler = null;
 	}
 
 	connectedCallback() {
 		this._renderShell();
 		this._applyLayout();
+		this._setupResponsive();
 		this._observeViewport();
 		// Defer boot until visible unless `eager` attr is present
 		if (this.hasAttribute('eager')) this._boot();
@@ -172,7 +217,7 @@ class Agent3DElement extends HTMLElement {
 
 	attributeChangedCallback(name, oldVal, newVal) {
 		if (!this._mounted) return;
-		if (['mode', 'position', 'width', 'height'].includes(name)) this._applyLayout();
+		if (['mode', 'position', 'width', 'height', 'responsive'].includes(name)) this._applyLayout();
 		if (['src', 'manifest', 'body', 'agent-id'].includes(name)) {
 			// Source change — reboot
 			this._teardown();
@@ -205,6 +250,23 @@ class Agent3DElement extends HTMLElement {
 		loading.hidden = true;
 		this.shadowRoot.appendChild(loading);
 		this._loadingEl = loading;
+
+		// Pill button — tap/keyboard target when floating collapses to pill on narrow viewports
+		const pillBtn = document.createElement('button');
+		pillBtn.className = 'pill-btn';
+		pillBtn.setAttribute('aria-label', 'Open agent');
+		pillBtn.addEventListener('click', () => this._expandPill());
+		pillBtn.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this._expandPill(); }
+		});
+		this.shadowRoot.appendChild(pillBtn);
+		this._pillBtn = pillBtn;
+
+		// Drag handle shown when bottom-sheet is expanded
+		const pillDrag = document.createElement('div');
+		pillDrag.className = 'pill-drag';
+		this.shadowRoot.appendChild(pillDrag);
+		this._pillDrag = pillDrag;
 
 		// Chat + input chrome (omitted in kiosk mode)
 		if (!this.hasAttribute('kiosk')) {
@@ -245,34 +307,169 @@ class Agent3DElement extends HTMLElement {
 		}
 	}
 
+	_isResponsive() {
+		// Default on; opt out with responsive="false"
+		return this.getAttribute('responsive') !== 'false';
+	}
+
+	_clampWidth(val) {
+		const px = _parsePx(val);
+		if (!px) return val;
+		const min = Math.round(Math.max(160, px * 0.65));
+		const vwPct = Math.round((px / 1440) * 100);
+		return `clamp(${min}px, ${vwPct}vw, ${px}px)`;
+	}
+
+	_clampHeight(val) {
+		const px = _parsePx(val);
+		if (!px) return val;
+		const min = Math.round(Math.max(200, px * 0.65));
+		const vhPct = Math.round((px / 900) * 100);
+		return `clamp(${min}px, ${vhPct}vh, ${px}px)`;
+	}
+
 	_applyLayout() {
 		const mode = this.getAttribute('mode') || 'inline';
 		if (!MODES.includes(mode)) return;
+		const responsive = this._isResponsive();
 
 		if (mode === 'floating') {
-			const pos = this.getAttribute('position') || 'bottom-right';
-			const offset = (this.getAttribute('offset') || '24px 24px').split(/\s+/);
-			const [vOff, hOff] = [offset[0], offset[1] || offset[0]];
-			this.style.top = this.style.bottom = this.style.left = this.style.right = '';
-			if (pos.includes('top')) this.style.top = vOff;
-			else this.style.bottom = vOff;
-			if (pos.includes('left')) this.style.left = hOff;
-			else if (pos.includes('right')) this.style.right = hOff;
-			else if (pos.includes('center')) {
-				this.style.left = '50%';
-				this.style.transform = 'translateX(-50%)';
+			if (!this._pillActive) {
+				const pos = this.getAttribute('position') || 'bottom-right';
+				const offset = (this.getAttribute('offset') || '24px 24px').split(/\s+/);
+				const [vOff, hOff] = [offset[0], offset[1] || offset[0]];
+				this.style.top = this.style.bottom = this.style.left = this.style.right = '';
+				if (pos.includes('top')) this.style.top = vOff;
+				else this.style.bottom = vOff;
+				if (pos.includes('left')) this.style.left = hOff;
+				else if (pos.includes('right')) this.style.right = hOff;
+				else if (pos.includes('center')) {
+					this.style.left = '50%';
+					this.style.transform = 'translateX(-50%)';
+				}
 			}
+
+			const width = this.getAttribute('width') || '320px';
+			const height = this.getAttribute('height') || '420px';
+			this.style.setProperty('--agent-width', responsive ? this._clampWidth(width) : width);
+			this.style.setProperty('--agent-height', responsive ? this._clampHeight(height) : height);
 		} else {
 			this.style.top = this.style.bottom = this.style.left = this.style.right = this.style.transform = '';
+
+			const width = this.getAttribute('width');
+			const height = this.getAttribute('height');
+
+			if (mode === 'inline') {
+				if (width) this.style.width = responsive ? this._clampWidth(width) : width;
+				if (height) {
+					this.style.height = height;
+					this.removeAttribute('data-responsive');
+				} else if (responsive && width) {
+					// No explicit height: aspect-ratio preserves 3:4 portrait via CSS
+					this.style.height = '';
+					this.setAttribute('data-responsive', '');
+				}
+			}
+
+			if (width) this.style.setProperty('--agent-width', responsive ? this._clampWidth(width) : width);
+			if (height) this.style.setProperty('--agent-height', responsive ? this._clampHeight(height) : height);
+		}
+	}
+
+	_setupResponsive() {
+		const mode = this.getAttribute('mode') || 'inline';
+
+		// ResizeObserver on this — reacts to container changes without a viewport listener
+		if (mode === 'inline' && typeof ResizeObserver !== 'undefined') {
+			this._ro = new ResizeObserver(() => this._applyLayout());
+			this._ro.observe(this);
 		}
 
-		const width = this.getAttribute('width');
-		const height = this.getAttribute('height');
-		if (width) this.style.setProperty('--agent-width', width);
-		if (height) this.style.setProperty('--agent-height', height);
-		if (mode === 'inline') {
-			if (width) this.style.width = width;
-			if (height) this.style.height = height;
+		// matchMedia for floating pill collapse at narrow viewports
+		if (mode === 'floating' && this._isResponsive() && typeof window !== 'undefined') {
+			this._mqNarrow = window.matchMedia('(max-width: 479px)');
+			this._mqNarrowHandler = (e) => this._updatePillState(e.matches);
+			this._mqNarrow.addEventListener('change', this._mqNarrowHandler);
+			this._updatePillState(this._mqNarrow.matches);
+		}
+
+		// Swipe-down to close the bottom-sheet (CSS transitions handle the animation)
+		let touchStartY = 0;
+		this.shadowRoot.addEventListener('touchstart', (e) => {
+			touchStartY = e.touches[0].clientY;
+		}, { passive: true });
+		this.shadowRoot.addEventListener('touchend', (e) => {
+			const dy = e.changedTouches[0].clientY - touchStartY;
+			if (dy > 60 && this._pillActive && this.getAttribute('aria-expanded') === 'true') {
+				this._collapsePill();
+			}
+		}, { passive: true });
+	}
+
+	_updatePillState(narrow) {
+		if (narrow && !this._pillActive) {
+			this._pillActive = true;
+			this._collapsePill();
+		} else if (!narrow && this._pillActive) {
+			this._pillActive = false;
+			this._restoreFromPill();
+		}
+	}
+
+	_collapsePill() {
+		this.style.width = '56px';
+		this.style.height = '56px';
+		this.style.borderRadius = '50%';
+		this.setAttribute('aria-expanded', 'false');
+		this._pillBtn.style.display = 'block';
+		this._pillDrag.style.display = 'none';
+		const chrome = this.shadowRoot.querySelector('.chrome');
+		if (chrome) chrome.style.display = 'none';
+		this._stageEl.style.display = 'none';
+		if (this._outsideTapHandler) {
+			document.removeEventListener('pointerdown', this._outsideTapHandler);
+			this._outsideTapHandler = null;
+		}
+	}
+
+	_expandPill() {
+		if (!this._pillActive) return;
+		this.style.width = '100vw';
+		this.style.height = '70vh';
+		this.style.borderRadius = '16px 16px 0 0';
+		this.style.bottom = '0';
+		this.style.top = 'auto';
+		this.style.left = '0';
+		this.style.right = '0';
+		this.style.transform = 'none';
+		this.setAttribute('aria-expanded', 'true');
+		this._pillBtn.style.display = 'none';
+		this._pillDrag.style.display = 'block';
+		const chrome = this.shadowRoot.querySelector('.chrome');
+		if (chrome) chrome.style.display = '';
+		this._stageEl.style.display = '';
+
+		// Close on outside tap
+		this._outsideTapHandler = (e) => {
+			if (!e.composedPath().includes(this)) this._collapsePill();
+		};
+		setTimeout(() => document.addEventListener('pointerdown', this._outsideTapHandler), 0);
+	}
+
+	_restoreFromPill() {
+		this.removeAttribute('aria-expanded');
+		this._pillBtn.style.display = 'none';
+		this._pillDrag.style.display = 'none';
+		const chrome = this.shadowRoot.querySelector('.chrome');
+		if (chrome) chrome.style.display = '';
+		this._stageEl.style.display = '';
+		// Clear pill inline overrides, re-apply proper floating layout
+		this.style.width = this.style.height = this.style.borderRadius = '';
+		this.style.bottom = this.style.top = this.style.left = this.style.right = this.style.transform = '';
+		this._applyLayout();
+		if (this._outsideTapHandler) {
+			document.removeEventListener('pointerdown', this._outsideTapHandler);
+			this._outsideTapHandler = null;
 		}
 	}
 
@@ -372,7 +569,7 @@ class Agent3DElement extends HTMLElement {
 
 			this._mounted = true;
 			this._loadingEl.hidden = true;
-			this._posterEl.style.opacity = '0';
+			if (!this._pillActive) this._posterEl.style.opacity = '0';
 			this.dispatchEvent(new CustomEvent('agent:ready', {
 				detail: { agent: this, manifest },
 				bubbles: true,
@@ -468,9 +665,20 @@ class Agent3DElement extends HTMLElement {
 
 	_teardown() {
 		try { this._io?.disconnect(); } catch {}
+		try { this._ro?.disconnect(); } catch {}
+		try {
+			if (this._mqNarrow && this._mqNarrowHandler) {
+				this._mqNarrow.removeEventListener('change', this._mqNarrowHandler);
+			}
+		} catch {}
+		if (this._outsideTapHandler) {
+			document.removeEventListener('pointerdown', this._outsideTapHandler);
+			this._outsideTapHandler = null;
+		}
 		try { this._runtime?.destroy(); } catch {}
 		try { this._viewer?.dispose?.(); } catch {}
 		this._mounted = false;
+		this._pillActive = false;
 		this._runtime = this._viewer = this._scene = this._memory = this._skills = null;
 	}
 
