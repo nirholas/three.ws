@@ -136,6 +136,7 @@ async function completeSignIn(provider, btn) {
 	const data = await verifyRes.json();
 	if (!verifyRes.ok) throw new Error(data.error_description || 'Verification failed');
 
+	try { localStorage.setItem('3dagent:auth-hint', JSON.stringify({ authed: true, ts: Date.now() })); } catch { /* ignore */ }
 	location.href = next;
 }
 

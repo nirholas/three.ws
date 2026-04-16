@@ -1259,6 +1259,507 @@ footer .separator {
   }
 }
 
+/* ── Tabbed Agent Studio (extends the basic register styles above) ──── */
+
+.erc8004-card--wide {
+  max-width: 880px;
+}
+
+.erc8004-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.erc8004-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--text-sm);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.erc8004-brand-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.6), rgba(236, 72, 153, 0.55));
+  color: #fff;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.erc8004-brand-title b {
+  font-weight: 600;
+  color: #fff;
+}
+
+.erc8004-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  flex-wrap: wrap;
+}
+
+.erc8004-chain-select {
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-sm);
+  color: #fff;
+  font-family: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+.erc8004-btn--wallet.erc8004-btn--connected {
+  background: rgba(34, 197, 94, 0.18);
+  border-color: rgba(34, 197, 94, 0.4);
+}
+
+.erc8004-btn--primary {
+  background: rgba(99, 102, 241, 0.3);
+  border-color: rgba(99, 102, 241, 0.5);
+}
+
+.erc8004-btn--primary:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.45);
+}
+
+.erc8004-btn--ghost {
+  background: transparent;
+}
+
+.erc8004-btn--x {
+  padding: 4px 8px;
+}
+
+.erc8004-btn--close {
+  padding: 4px 10px;
+  font-size: var(--text-base);
+  line-height: 1;
+}
+
+.erc8004-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.erc8004-stat {
+  padding: var(--space-sm);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.erc8004-stat-val {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.erc8004-stat-lbl {
+  font-size: var(--text-xs);
+  color: rgba(255, 255, 255, 0.45);
+  margin-top: 2px;
+}
+
+.erc8004-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+  margin-bottom: var(--space-md);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+}
+
+.erc8004-tab {
+  flex: 1;
+  min-width: max-content;
+  padding: 8px 14px;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.6);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background 0.2s, color 0.2s;
+}
+
+.erc8004-tab:hover {
+  color: #fff;
+}
+
+.erc8004-tab--active {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.erc8004-tab-body {
+  min-height: 280px;
+}
+
+.erc8004-wizard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.erc8004-steps {
+  display: flex;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.erc8004-step {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-sm);
+  color: rgba(255, 255, 255, 0.4);
+  font-size: var(--text-xs);
+}
+
+.erc8004-step--active {
+  background: rgba(99, 102, 241, 0.18);
+  border-color: rgba(99, 102, 241, 0.45);
+  color: #fff;
+}
+
+.erc8004-step--done {
+  color: rgba(34, 197, 94, 0.9);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.erc8004-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  font-weight: 600;
+}
+
+.erc8004-step--active .erc8004-step-num {
+  background: rgba(99, 102, 241, 0.7);
+}
+
+.erc8004-wizard-body {
+  padding: var(--space-md);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md);
+}
+
+.erc8004-wizard-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-xs);
+  margin-top: var(--space-md);
+}
+
+.erc8004-wizard-nav > :only-child {
+  margin-left: auto;
+}
+
+.erc8004-h3 {
+  margin: 0 0 var(--space-3xs);
+  font-size: var(--text-lg);
+  font-weight: 500;
+  color: #fff;
+}
+
+.erc8004-h4 {
+  margin: 0 0 var(--space-xs);
+  font-size: var(--text-base);
+  font-weight: 500;
+  color: #fff;
+}
+
+.erc8004-p {
+  margin: 0 0 var(--space-sm);
+  font-size: var(--text-sm);
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.5;
+}
+
+.erc8004-req {
+  color: #f87171;
+}
+
+.erc8004-hint {
+  margin: -2px 0 var(--space-sm);
+  font-size: var(--text-xs);
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.erc8004-muted {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: var(--text-sm);
+}
+
+.erc8004-small {
+  font-size: var(--text-xs);
+}
+
+.erc8004-row {
+  display: flex;
+  gap: var(--space-xs);
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: var(--space-sm);
+}
+
+.erc8004-link {
+  color: #a5b4fc;
+  text-decoration: none;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+}
+
+.erc8004-link:hover {
+  text-decoration: underline;
+  color: #c7d2fe;
+}
+
+.erc8004-alert {
+  padding: var(--space-xs) var(--space-sm);
+  margin-bottom: var(--space-sm);
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-sm);
+  color: rgba(253, 224, 71, 0.9);
+  font-size: var(--text-sm);
+}
+
+.erc8004-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  font-size: var(--text-xs);
+  color: rgba(255, 255, 255, 0.7);
+  font-variant-numeric: tabular-nums;
+}
+
+.erc8004-clip {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.erc8004-services {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-sm);
+}
+
+.erc8004-svc-row {
+  display: grid;
+  grid-template-columns: 140px 160px 1fr auto;
+  gap: var(--space-xs);
+  align-items: center;
+}
+
+.erc8004-input--tight {
+  width: auto;
+}
+
+.erc8004-summary {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-3xs) var(--space-md);
+  margin: 0 0 var(--space-sm);
+  padding: var(--space-sm);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+}
+
+.erc8004-summary dt {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.erc8004-summary dd {
+  margin: 0;
+  color: #fff;
+  word-break: break-word;
+}
+
+.erc8004-agent-card {
+  padding: var(--space-sm);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-xs);
+}
+
+.erc8004-agent-card-inner {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: var(--space-sm);
+  align-items: start;
+}
+
+.erc8004-agent-card-img {
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.erc8004-agent-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.erc8004-agent-card-ph {
+  font-size: 2rem;
+  opacity: 0.5;
+}
+
+.erc8004-agent-card-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-3xs);
+  color: #fff;
+  font-weight: 500;
+}
+
+.erc8004-agent-card-actions {
+  display: inline-flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-xs);
+  font-size: var(--text-xs);
+}
+
+.erc8004-template-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-sm);
+}
+
+.erc8004-template {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3xs);
+  padding: var(--space-md);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  color: #fff;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+}
+
+.erc8004-template:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(99, 102, 241, 0.45);
+  transform: translateY(-1px);
+}
+
+.erc8004-template-emoji {
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.erc8004-template-name {
+  font-weight: 500;
+  font-size: var(--text-sm);
+}
+
+.erc8004-template-desc {
+  font-size: var(--text-xs);
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 1.4;
+}
+
+.erc8004-history-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-3xs);
+  font-size: var(--text-sm);
+}
+
+.erc8004-history-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.erc8004-history-main code {
+  font-size: var(--text-xs);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.erc8004-toast {
+  position: fixed;
+  bottom: var(--space-lg);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(20, 20, 25, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-md);
+  color: #fff;
+  font-size: var(--text-sm);
+  z-index: 100;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.erc8004-toast--error {
+  background: rgba(127, 29, 29, 0.95);
+  border-color: rgba(248, 113, 113, 0.4);
+}
+
+@media screen and (max-width: 700px) {
+  .erc8004-stats { grid-template-columns: 1fr; }
+  .erc8004-svc-row { grid-template-columns: 1fr; }
+  .erc8004-agent-card-inner { grid-template-columns: 56px 1fr; }
+  .erc8004-agent-card-img { width: 56px; height: 56px; }
+  .erc8004-step-lbl { display: none; }
+}
+
 /******************************************************************************
  * Create Avatar Button
  */

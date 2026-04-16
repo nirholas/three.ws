@@ -281,6 +281,7 @@ function hydrateForm() {
 function wireButtons() {
 	$('#signout-btn').addEventListener('click', async () => {
 		await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
+		try { localStorage.removeItem('3dagent:auth-hint'); } catch { /* ignore */ }
 		location.href = '/';
 	});
 
