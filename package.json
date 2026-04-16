@@ -66,6 +66,7 @@
 		"three": "^0.176.0",
 		"tweakpane": "^4.0.5",
 		"vhtml": "^2.2.0",
+		"viem": "^2.18.0",
 		"zod": "^3.23.8"
 	},
 	"devDependencies": {

@@ -53,7 +53,7 @@
 		Continue with MetaMask
 	</button>
 	<div class="err" id="err"></div>
-	<p class="foot">Already have one? <a href="/login.html">Sign in</a></p>
+	<p class="foot">Already have one? <a href="/login">Sign in</a></p>
 </form>
 <script type="module" src="/wallet-login.js"></script>
 <script>
@@ -79,6 +79,7 @@ form.addEventListener('submit', async (e) => {
 		});
 		const data = await res.json();
 		if (!res.ok) throw new Error(data.error_description || 'Sign-up failed');
+		try { localStorage.setItem('3dagent:auth-hint', JSON.stringify({ authed: true, ts: Date.now() })); } catch { /* ignore */ }
 		location.href = next;
 	} catch (e) {
 		err.textContent = e.message;

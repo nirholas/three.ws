@@ -8,7 +8,7 @@ import { Footer }        from './components/footer';
 import { NichAgent }     from './nich-agent.js';
 import { AvatarCreator } from './avatar-creator.js';
 import { resolveURI, isDecentralizedURI } from './ipfs.js';
-import { saveRemoteGlbToAccount, getMe }  from './account.js';
+import { saveRemoteGlbToAccount, getMe, readAuthHint }  from './account.js';
 import { getWidget }                      from './widgets.js';
 import queryString from 'query-string';
 
@@ -220,7 +220,11 @@ class App {
 		if (kiosk || widget || agent) mode = 'embed';
 		else if (register) mode = 'register';
 		document.body.dataset.viewerMode = mode;
-		if (mode === 'main') document.body.dataset.authed = 'pending';
+		if (mode === 'main') {
+			// Optimistic paint from the last-known auth hint; corrected by
+			// _updateSignInLink once /api/auth/me resolves.
+			document.body.dataset.authed = readAuthHint() ?? 'pending';
+		}
 	}
 
 	async _updateSignInLink() {

@@ -49,7 +49,7 @@
 		Sign in with MetaMask
 	</button>
 	<div class="err" id="err"></div>
-	<p class="foot">No account? <a href="/register.html">Create one</a></p>
+	<p class="foot">No account? <a href="/register">Create one</a></p>
 </form>
 <script type="module" src="/wallet-login.js"></script>
 <script>
@@ -74,6 +74,7 @@ form.addEventListener('submit', async (e) => {
 		});
 		const data = await res.json();
 		if (!res.ok) throw new Error(data.error_description || 'Sign-in failed');
+		try { localStorage.setItem('3dagent:auth-hint', JSON.stringify({ authed: true, ts: Date.now() })); } catch { /* ignore */ }
 		location.href = next;
 	} catch (e) {
 		err.textContent = e.message;

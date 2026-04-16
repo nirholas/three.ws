@@ -32,12 +32,44 @@ function redirectToLogin() {
 	location.href = '/login?next=' + encodeURIComponent(next);
 }
 
+// Optimistic auth hint — non-authoritative, used only for first-paint gating
+// on the viewer. The real session cookie is HttpOnly so we can't read it
+// synchronously; this hint lets us avoid a visible flash between "pending"
+// and the resolved state for returning users. Always revalidated by getMe().
+const AUTH_HINT_KEY = '3dagent:auth-hint';
+const AUTH_HINT_TTL_MS = 1000 * 60 * 60 * 24 * 7; // 7d
+
+export function readAuthHint() {
+	try {
+		const raw = localStorage.getItem(AUTH_HINT_KEY);
+		if (!raw) return null;
+		const { authed, ts } = JSON.parse(raw);
+		if (!ts || Date.now() - ts > AUTH_HINT_TTL_MS) return null;
+		return authed ? 'true' : 'false';
+	} catch { return null; }
+}
+
+function writeAuthHint(authed) {
+	try {
+		localStorage.setItem(AUTH_HINT_KEY, JSON.stringify({ authed: !!authed, ts: Date.now() }));
+	} catch { /* quota or disabled storage */ }
+}
+
+export function clearAuthHint() {
+	try { localStorage.removeItem(AUTH_HINT_KEY); } catch { /* ignore */ }
+}
+
 export async function getMe() {
 	// /api/auth/me 401s for anonymous visitors by design — handle in place.
 	const res = await apiFetch(`${API}/api/auth/me`, { allowAnonymous: true });
-	if (res.status === 401) return null;
+	if (res.status === 401) {
+		writeAuthHint(false);
+		return null;
+	}
 	if (!res.ok) throw new Error(`auth/me failed: ${res.status}`);
-	return (await res.json()).user;
+	const user = (await res.json()).user;
+	writeAuthHint(!!user);
+	return user;
 }
 
 // Fetches a GLB from a URL (e.g. the one the avatar creator returns on export),

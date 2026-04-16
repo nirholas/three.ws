@@ -37,6 +37,7 @@ async function j(method, path, body) {
 
 export function signOut() {
 	fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).finally(() => {
+		try { localStorage.removeItem('3dagent:auth-hint'); } catch { /* ignore */ }
 		location.href = '/';
 	});
 }
