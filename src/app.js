@@ -131,9 +131,7 @@ class App {
 
 		if (resumeToken) {
 			try {
-				const { restoreSession, clearStash } = await import(
-					'./editor/edit-persistence.js'
-				);
+				const { restoreSession, clearStash } = await import('./editor/edit-persistence.js');
 				const stashed = await restoreSession(resumeToken);
 				if (stashed) {
 					if (stashed.source.url) {

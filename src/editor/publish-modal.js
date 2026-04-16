@@ -7,6 +7,8 @@
  * (snippets), or "error" / "auth-required".
  */
 
+import { stashSession } from './edit-persistence.js';
+
 const STEPS = [
 	{ key: 'export', label: 'Export' },
 	{ key: 'upload', label: 'Upload' },
@@ -17,8 +19,9 @@ const STEPS = [
 const STEP_ORDER = STEPS.map((s) => s.key);
 
 export class PublishModal {
-	constructor(containerEl) {
+	constructor(containerEl, { session = null } = {}) {
 		this.container = containerEl || document.body;
+		this._session = session;
 
 		this.overlay = null;
 		this.modal = null;
@@ -121,7 +124,6 @@ export class PublishModal {
 	showAuthRequired() {
 		if (!this.body) return;
 		this._setTitle('Sign in to publish');
-		const next = encodeURIComponent(location.href);
 		this.body.innerHTML = `
 			<div class="publish-auth">
 				<p class="publish-auth-msg">
@@ -134,7 +136,10 @@ export class PublishModal {
 			</div>
 		`;
 		this.body.querySelector('.publish-signin-btn').addEventListener('click', () => {
-			window.location.href = `/login?next=${next}`;
+			this._signInAndReturn().catch((err) => {
+				console.warn('[publish-modal] sign-in redirect failed', err);
+				window.location.href = `/login?next=${encodeURIComponent(location.href)}`;
+			});
 		});
 		this.body
 			.querySelector('.publish-cancel-btn')
@@ -145,6 +150,16 @@ export class PublishModal {
 				signIn.focus();
 			} catch (_) {}
 		}
+	}
+
+	async _signInAndReturn() {
+		const nextURL = new URL(location.href);
+		if (this._session) {
+			const token = await stashSession(this._session);
+			nextURL.searchParams.set('resume', token);
+			nextURL.searchParams.set('publish', '1');
+		}
+		window.location.href = `/login?next=${encodeURIComponent(nextURL.toString())}`;
 	}
 
 	showError(err) {
