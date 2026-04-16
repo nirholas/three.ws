@@ -186,10 +186,11 @@ export function getIdentityRegistry(chainId, signer) {
  * @param {string} opts.name          Agent name
  * @param {string} opts.description   Agent description
  * @param {string} [opts.apiToken]    Optional Pinata JWT (omit to use built-in storage)
+ * @param {Array<{name?:string,type?:string,endpoint:string,version?:string}>} [opts.services]  Extra services to include in registration JSON
  * @param {function} [opts.onStatus]  Callback for progress updates
  * @returns {Promise<{agentId: number, registrationUrl: string, txHash: string}>}
  */
-export async function registerAgent({ glbFile, name, description, apiToken, onStatus }) {
+export async function registerAgent({ glbFile, name, description, apiToken, services = [], onStatus }) {
 	const log = onStatus || (() => {});
 
 	// 1. Connect wallet
@@ -230,6 +231,7 @@ export async function registerAgent({ glbFile, name, description, apiToken, onSt
 		agentId,
 		chainId,
 		registryAddr: REGISTRY_DEPLOYMENTS[chainId].identityRegistry,
+		services,
 	});
 
 	// 6. Upload registration JSON

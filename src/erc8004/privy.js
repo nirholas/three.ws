@@ -136,9 +136,26 @@ export async function connectWithPrivy() {
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** @returns {boolean} Whether a Privy app ID is configured. */
+/**
+ * Whether a Privy app ID is configured.
+ *
+ * Synchronous best-guess from the build-time value + any runtime value resolved
+ * so far. For an accurate runtime answer (forces /api/config fetch on first
+ * call) use `isPrivyConfiguredAsync`.
+ *
+ * @returns {boolean}
+ */
 export function isPrivyConfigured() {
-	return Boolean(APP_ID);
+	if (_resolvedAppId !== null) return Boolean(_resolvedAppId);
+	return Boolean(BUILD_APP_ID);
+}
+
+/**
+ * Runtime check that resolves the app ID (build-time or /api/config).
+ * @returns {Promise<boolean>}
+ */
+export async function isPrivyConfiguredAsync() {
+	return Boolean(await resolveAppId());
 }
 
 /** @returns {object|null} The Privy client instance (null if not initialized). */
