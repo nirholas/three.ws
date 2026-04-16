@@ -64,42 +64,45 @@ export function getSigner() {
 }
 
 // ---------------------------------------------------------------------------
-// IPFS upload (via public pinning gateway — swap for Filebase / web3.storage)
+// File upload — backend R2 (default) or Pinata (if token supplied)
 // ---------------------------------------------------------------------------
 
-const IPFS_UPLOAD_URL = 'https://api.web3.storage/upload';
-
 /**
- * Pin a blob to IPFS. Returns the CID.
+ * Upload a file blob. Returns the public URL.
  *
- * Uses web3.storage free tier by default.
- * Set `window.__W3S_TOKEN` or pass `apiToken` for auth.
+ * Without a token: POSTs to /api/erc8004/pin which stores to R2.
+ * With a Pinata JWT token: POSTs to Pinata and returns an ipfs:// URL.
  *
  * @param {Blob|File} blob
- * @param {string} [apiToken]
- * @returns {Promise<string>}  The IPFS CID.
+ * @param {string} [apiToken]  Pinata JWT (optional)
+ * @returns {Promise<string>}  Public URL for the uploaded file.
  */
-export async function pinToIPFS(blob, apiToken) {
-	const token = apiToken || window.__W3S_TOKEN;
-	if (!token) {
-		throw new Error(
-			'IPFS upload requires an API token. Set window.__W3S_TOKEN or pass one to pinToIPFS().',
-		);
+export async function pinFile(blob, apiToken) {
+	if (apiToken) {
+		const form = new FormData();
+		form.append('file', blob, blob.name || 'upload');
+		const res = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
+			method: 'POST',
+			headers: { Authorization: `Bearer ${apiToken}` },
+			body: form,
+		});
+		if (!res.ok) throw new Error(`Pinata upload failed (${res.status})`);
+		const data = await res.json();
+		return `ipfs://${data.IpfsHash}`;
 	}
 
-	const res = await fetch(IPFS_UPLOAD_URL, {
+	const res = await fetch('/api/erc8004/pin', {
 		method: 'POST',
-		headers: { Authorization: `Bearer ${token}` },
+		headers: { 'content-type': blob.type || 'application/octet-stream' },
 		body: blob,
+		credentials: 'include',
 	});
-
 	if (!res.ok) {
-		const text = await res.text();
-		throw new Error(`IPFS upload failed (${res.status}): ${text}`);
+		const text = await res.text().catch(() => res.status);
+		throw new Error(`Upload failed (${res.status}): ${text}`);
 	}
-
 	const data = await res.json();
-	return data.cid;
+	return data.url;
 }
 
 // ---------------------------------------------------------------------------
@@ -112,7 +115,7 @@ export async function pinToIPFS(blob, apiToken) {
  * @param {object} opts
  * @param {string} opts.name          Agent display name
  * @param {string} opts.description   Natural-language description
- * @param {string} opts.imageCID      IPFS CID of the 3D GLB model
+ * @param {string} opts.imageUrl      URL of the 3D GLB model (HTTPS or ipfs://)
  * @param {number} opts.agentId       Token ID from the registry (filled after mint)
  * @param {number} opts.chainId       Chain ID where registered
  * @param {string} opts.registryAddr  Identity Registry contract address
@@ -122,7 +125,7 @@ export async function pinToIPFS(blob, apiToken) {
 export function buildRegistrationJSON({
 	name,
 	description,
-	imageCID,
+	imageUrl,
 	agentId,
 	chainId,
 	registryAddr,
@@ -132,12 +135,12 @@ export function buildRegistrationJSON({
 		type: 'https://eips.ethereum.org/EIPS/eip-8004#registration-v1',
 		name,
 		description,
-		image: `ipfs://${imageCID}`,
+		image: imageUrl,
 		active: true,
 		services: [
 			{
 				name: '3D',
-				endpoint: `https://3dagent.vercel.app/#model=ipfs://${imageCID}`,
+				endpoint: `https://3dagent.vercel.app/#model=${encodeURIComponent(imageUrl)}`,
 				version: '1.0',
 			},
 			...services,
@@ -172,38 +175,38 @@ export function getIdentityRegistry(chainId, signer) {
 
 /**
  * Full registration flow:
- *  1. Upload GLB to IPFS
+ *  1. Upload GLB to storage (R2 or Pinata)
  *  2. Build registration JSON
- *  3. Upload registration JSON to IPFS
+ *  3. Upload registration JSON to storage
  *  4. Call register(agentURI) on-chain
- *  5. Update registration JSON with agentId, re-pin, call setAgentURI
+ *  5. Update agentURI to the final registration JSON
  *
  * @param {object} opts
  * @param {File}   opts.glbFile       The GLB avatar file
  * @param {string} opts.name          Agent name
  * @param {string} opts.description   Agent description
- * @param {string} [opts.apiToken]    IPFS pinning API token
+ * @param {string} [opts.apiToken]    Optional Pinata JWT (omit to use built-in storage)
  * @param {function} [opts.onStatus]  Callback for progress updates
- * @returns {Promise<{agentId: number, registrationCID: string, txHash: string}>}
+ * @returns {Promise<{agentId: number, registrationUrl: string, txHash: string}>}
  */
 export async function registerAgent({ glbFile, name, description, apiToken, onStatus }) {
 	const log = onStatus || (() => {});
 
 	// 1. Connect wallet
 	log('Connecting wallet...');
-	const { signer, address, chainId } = await connectWallet();
+	const { signer, chainId } = await connectWallet();
 
-	// 2. Upload GLB to IPFS
-	log('Uploading 3D model to IPFS...');
-	const glbCID = await pinToIPFS(glbFile, apiToken);
-	log(`Model pinned: ipfs://${glbCID}`);
+	// 2. Upload GLB
+	log('Uploading 3D model...');
+	const glbUrl = await pinFile(glbFile, apiToken);
+	log(`Model uploaded: ${glbUrl}`);
 
 	// 3. Get contract
 	const registry = getIdentityRegistry(chainId, signer);
 
-	// 4. Register with a placeholder URI first to get the agentId
+	// 4. Register with GLB URL first to get the agentId
 	log('Registering agent on-chain...');
-	const tx = await registry['register(string)'](`ipfs://${glbCID}`);
+	const tx = await registry['register(string)'](glbUrl);
 	log(`Transaction submitted: ${tx.hash}`);
 	const receipt = await tx.wait();
 
@@ -223,29 +226,29 @@ export async function registerAgent({ glbFile, name, description, apiToken, onSt
 	const registrationJSON = buildRegistrationJSON({
 		name,
 		description,
-		imageCID: glbCID,
+		imageUrl: glbUrl,
 		agentId,
 		chainId,
 		registryAddr: REGISTRY_DEPLOYMENTS[chainId].identityRegistry,
 	});
 
-	// 6. Pin registration JSON to IPFS
-	log('Pinning registration metadata to IPFS...');
+	// 6. Upload registration JSON
+	log('Uploading registration metadata...');
 	const jsonBlob = new Blob([JSON.stringify(registrationJSON, null, 2)], {
 		type: 'application/json',
 	});
-	const registrationCID = await pinToIPFS(jsonBlob, apiToken);
-	log(`Registration JSON pinned: ipfs://${registrationCID}`);
+	const registrationUrl = await pinFile(jsonBlob, apiToken);
+	log(`Registration metadata uploaded: ${registrationUrl}`);
 
 	// 7. Update agentURI on-chain to point at the full registration JSON
 	log('Updating agentURI on-chain...');
-	const updateTx = await registry.setAgentURI(agentId, `ipfs://${registrationCID}`);
+	const updateTx = await registry.setAgentURI(agentId, registrationUrl);
 	await updateTx.wait();
 	log('Agent URI updated on-chain.');
 
 	return {
 		agentId,
-		registrationCID,
+		registrationUrl,
 		txHash: tx.hash,
 	};
 }

@@ -229,9 +229,13 @@ function selectAvatar(id) {
 }
 
 function selectByModelUrl(url) {
-	const found = state.avatars.find((a) => a.model_url === url);
+	const urlPath = (() => { try { return new URL(url, location.origin).pathname; } catch { return url; } })();
+	const found = state.avatars.find((a) => {
+		if (!a.model_url) return false;
+		if (a.model_url === url) return true;
+		try { return new URL(a.model_url).pathname === urlPath; } catch { return false; }
+	});
 	if (found) selectAvatar(found.id);
-	else previewSt.textContent = 'Pick an avatar from your library';
 }
 
 function selectType(key) {
@@ -313,7 +317,7 @@ function schedulePreview() {
 }
 
 function updatePreview(forceReload) {
-	if (!state.avatarId) {
+	if (!state.avatarId && !state.preselectedModel) {
 		previewSt.textContent = 'Pick an avatar to preview';
 		return;
 	}
@@ -323,7 +327,8 @@ function updatePreview(forceReload) {
 		previewSt.textContent = 'Avatar has no public URL — make it public/unlisted to preview';
 		return;
 	}
-	previewSt.textContent = 'Live preview';
+	previewSt.textContent = state.avatarId ? 'Live preview' : 'Preview only — pick an avatar from your library to save';
+	if (!state.avatarId) captureBtn.disabled = false;
 
 	const camStr = Array.isArray(state.config.cameraPosition)
 		? `&cameraPosition=${state.config.cameraPosition.map((n) => n.toFixed(3)).join(',')}`

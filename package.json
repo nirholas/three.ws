@@ -64,6 +64,7 @@
 		"query-string": "^8.1.0",
 		"simple-dropzone": "^0.8.3",
 		"three": "^0.176.0",
+		"tweakpane": "^4.0.5",
 		"vhtml": "^2.2.0",
 		"zod": "^3.23.8"
 	},

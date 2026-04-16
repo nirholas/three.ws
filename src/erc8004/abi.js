@@ -28,6 +28,8 @@ export const IDENTITY_REGISTRY_ABI = [
 	// --- ERC-721 basics ---
 	'function ownerOf(uint256 tokenId) external view returns (address)',
 	'function balanceOf(address owner) external view returns (uint256)',
+	'function tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256)',
+	'function totalSupply() external view returns (uint256)',
 	'function name() external view returns (string)',
 	'function symbol() external view returns (string)',
 	'function getVersion() external pure returns (string)',

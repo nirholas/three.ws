@@ -106,7 +106,7 @@ async function loadMe() {
 	try {
 		await api('GET', '/api/auth/me');
 	} catch {
-		location.href = '/login.html?next=' + encodeURIComponent(location.pathname + location.search);
+		location.href = '/login?next=' + encodeURIComponent(location.pathname + location.search);
 		throw new Error('redirecting');
 	}
 }

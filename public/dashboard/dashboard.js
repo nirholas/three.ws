@@ -650,6 +650,7 @@ async function renderEmbed(root) {
 					<p class="muted" style="margin:0 0 10px">By default anyone. Lock it down to specific hosts (your Lobehub deploy, your Substack…) on the <a href="/dashboard/embed-policy?agent=${encodeURIComponent(agent.id)}">embed-policy page</a>.</p>
 				</div>
 				${onchainCard(agent)}
+				${myAgentsCard()}
 			</div>
 		</div>
 	`;
@@ -670,6 +671,7 @@ async function renderEmbed(root) {
 	}
 
 	bindOnchainDeploy(body, agent);
+	bindMyAgents(body);
 }
 
 function snippetBlock(title, code, _lang) {
@@ -775,6 +777,194 @@ function bindOnchainDeploy(body, agent) {
 			btn.disabled = false;
 		}
 	});
+}
+
+// ── My on-chain agents card ─────────────────────────────────────────────────
+// Lists every ERC-8004 agent owned by the connected wallet — minted here or
+// elsewhere. Enumerates via ERC-721: balanceOf + tokenOfOwnerByIndex, falling
+// back to a Transfer-event scan if the registry isn't ERC-721-Enumerable.
+// Merges in DB-registered agents from /api/agents/by-wallet so "home" links
+// work for agents minted through this app.
+function myAgentsCard() {
+	return `
+		<div class="card" id="my-agents-card" style="margin-top:14px">
+			<h3 style="margin:0 0 6px">Your on-chain agents</h3>
+			<p class="muted" style="margin:0 0 10px">All ERC-8004 agents owned by your connected wallet — minted here or anywhere else.</p>
+			<div class="row" style="gap:8px; flex-wrap:wrap; align-items:center">
+				<button class="btn sec" id="my-agents-load" type="button">Load from wallet</button>
+				<span id="my-agents-status" class="muted" style="font-size:12px"></span>
+			</div>
+			<div id="my-agents-list" style="margin-top:12px; display:grid; gap:10px"></div>
+		</div>
+	`;
+}
+
+function bindMyAgents(body) {
+	const btn = body.querySelector('#my-agents-load');
+	const status = body.querySelector('#my-agents-status');
+	const list = body.querySelector('#my-agents-list');
+	if (!btn) return;
+
+	btn.addEventListener('click', async () => {
+		btn.disabled = true;
+		status.textContent = 'Connecting wallet…';
+		list.innerHTML = '';
+
+		try {
+			const [{ connectWallet, getIdentityRegistry }, { REGISTRY_DEPLOYMENTS }] = await Promise.all([
+				import('/src/erc8004/agent-registry.js'),
+				import('/src/erc8004/abi.js'),
+			]);
+
+			const { signer, address, chainId } = await connectWallet();
+			const deployment = REGISTRY_DEPLOYMENTS[chainId];
+			if (!deployment?.identityRegistry) {
+				status.textContent = `No ERC-8004 registry on chain ${chainId}. Switch networks and retry.`;
+				return;
+			}
+
+			status.textContent = 'Reading registry…';
+			const registry = getIdentityRegistry(chainId, signer);
+			const balance = Number(await registry.balanceOf(address));
+
+			// Fire the DB lookup in parallel with on-chain work.
+			const dbPromise = fetch(
+				`/api/agents/by-wallet?address=${encodeURIComponent(address)}&chain_id=${chainId}`,
+				{ credentials: 'include' },
+			).then((r) => (r.ok ? r.json() : { agents: [] })).catch(() => ({ agents: [] }));
+
+			if (balance === 0) {
+				const { agents: dbAgents = [] } = await dbPromise;
+				if (dbAgents.length === 0) {
+					status.textContent = `No agents owned on chain ${chainId}.`;
+					return;
+				}
+				renderAgentRows(list, [], dbAgents);
+				status.textContent = `${dbAgents.length} DB record${dbAgents.length === 1 ? '' : 's'} (not on-chain yet).`;
+				return;
+			}
+
+			status.textContent = `${balance} agent${balance === 1 ? '' : 's'} owned. Enumerating…`;
+
+			// Try ERC-721 Enumerable; fall back to event scan.
+			let tokenIds = [];
+			try {
+				for (let i = 0; i < balance; i++) {
+					tokenIds.push(Number(await registry.tokenOfOwnerByIndex(address, i)));
+				}
+			} catch {
+				status.textContent = 'Registry is not Enumerable — scanning Transfer events…';
+				const events = await registry.queryFilter(registry.filters.Transfer(null, address));
+				const seen = new Set();
+				for (const e of events) {
+					const id = Number(e.args.tokenId);
+					if (seen.has(id)) continue;
+					seen.add(id);
+					try {
+						const owner = await registry.ownerOf(id);
+						if (owner.toLowerCase() === address.toLowerCase()) tokenIds.push(id);
+					} catch { /* token burned/transferred — skip */ }
+				}
+			}
+
+			status.textContent = `Fetching metadata for ${tokenIds.length} agent${tokenIds.length === 1 ? '' : 's'}…`;
+			const onchain = await Promise.all(tokenIds.map((id) => fetchTokenMeta(registry, id)));
+			const { agents: dbAgents = [] } = await dbPromise;
+
+			renderAgentRows(list, onchain, dbAgents);
+			status.textContent = `${onchain.length} on-chain agent${onchain.length === 1 ? '' : 's'} on chain ${chainId}.`;
+		} catch (err) {
+			status.textContent = `Error: ${err.message || String(err)}`;
+		} finally {
+			btn.disabled = false;
+		}
+	});
+}
+
+async function fetchTokenMeta(registry, tokenId) {
+	let uri = '';
+	let meta = null;
+	try { uri = await registry.tokenURI(tokenId); } catch { /* no URI set */ }
+	if (uri) {
+		const httpUrl = uriToHttp(uri);
+		try {
+			const r = await fetch(httpUrl);
+			const ct = r.headers.get('content-type') || '';
+			if (r.ok && ct.includes('json')) meta = await r.json();
+		} catch { /* metadata unreachable */ }
+	}
+	return { id: tokenId, uri, meta };
+}
+
+function uriToHttp(uri) {
+	if (!uri) return '';
+	if (uri.startsWith('ipfs://')) return `https://ipfs.io/ipfs/${uri.slice(7)}`;
+	if (uri.startsWith('ar://'))   return `https://arweave.net/${uri.slice(5)}`;
+	return uri;
+}
+
+function renderAgentRows(list, onchainAgents, dbAgents) {
+	const dbByAgentId = new Map();
+	for (const a of dbAgents) {
+		if (a.erc8004_agent_id != null) dbByAgentId.set(String(a.erc8004_agent_id), a);
+	}
+
+	list.innerHTML = '';
+	for (const { id, uri, meta } of onchainAgents) {
+		const dbRow = dbByAgentId.get(String(id));
+		const name = meta?.name || dbRow?.name || `Agent #${id}`;
+		const desc = meta?.description || dbRow?.description || '';
+		const img = uriToHttp(meta?.image || '');
+		const homeLink = dbRow ? `/agent/${encodeURIComponent(dbRow.id)}` : '';
+		const metaLink = uri ? uriToHttp(uri) : '';
+
+		const el = document.createElement('div');
+		el.className = 'row';
+		el.style.cssText = 'gap:12px; padding:10px; border:1px solid #2a2a34; border-radius:10px; align-items:flex-start';
+		el.innerHTML = `
+			<div style="flex:0 0 64px; width:64px; height:64px; border-radius:8px; background:#0f0f17; overflow:hidden; display:flex; align-items:center; justify-content:center">
+				${img ? `<img src="${attr(img)}" alt="" style="max-width:100%;max-height:100%;object-fit:cover" onerror="this.remove()">` : '<span class="muted" style="font-size:10px">no image</span>'}
+			</div>
+			<div style="flex:1 1 auto; min-width:0">
+				<div class="row" style="justify-content:space-between; gap:8px; flex-wrap:wrap">
+					<strong style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${esc(name)}</strong>
+					<span class="muted" style="font-size:12px">#${esc(String(id))}</span>
+				</div>
+				${desc ? `<p class="muted" style="margin:4px 0 0; font-size:12px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden">${esc(desc)}</p>` : ''}
+				<div class="row" style="gap:10px; margin-top:6px; font-size:12px">
+					${metaLink ? `<a href="${attr(metaLink)}" target="_blank" rel="noopener" class="muted">Metadata</a>` : ''}
+					${homeLink ? `<a href="${attr(homeLink)}" target="_blank" rel="noopener">Open home</a>` : ''}
+				</div>
+			</div>
+		`;
+		list.appendChild(el);
+	}
+
+	// Surface DB rows that aren't on-chain yet (e.g. registration failed).
+	for (const a of dbAgents) {
+		const hasOnchain = a.erc8004_agent_id != null && onchainAgents.some((o) => String(o.id) === String(a.erc8004_agent_id));
+		if (hasOnchain) continue;
+
+		const el = document.createElement('div');
+		el.className = 'row';
+		el.style.cssText = 'gap:12px; padding:10px; border:1px dashed #2a2a34; border-radius:10px; align-items:flex-start; opacity:.85';
+		el.innerHTML = `
+			<div style="flex:0 0 64px; width:64px; height:64px; border-radius:8px; background:#0f0f17; display:flex; align-items:center; justify-content:center">
+				<span class="muted" style="font-size:10px">db only</span>
+			</div>
+			<div style="flex:1 1 auto; min-width:0">
+				<div class="row" style="justify-content:space-between; gap:8px; flex-wrap:wrap">
+					<strong style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${esc(a.name || 'Agent')}</strong>
+					<span class="muted" style="font-size:12px">not on-chain</span>
+				</div>
+				${a.description ? `<p class="muted" style="margin:4px 0 0; font-size:12px">${esc(a.description)}</p>` : ''}
+				<div class="row" style="gap:10px; margin-top:6px; font-size:12px">
+					<a href="/agent/${encodeURIComponent(a.id)}" target="_blank" rel="noopener">Open home</a>
+				</div>
+			</div>
+		`;
+		list.appendChild(el);
+	}
 }
 
 // ── Billing placeholder ─────────────────────────────────────────────────────

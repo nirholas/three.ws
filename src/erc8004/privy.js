@@ -16,8 +16,36 @@ import { BrowserProvider } from 'ethers';
 
 let _privy = null;
 let _initPromise = null;
+let _resolvedAppId = null;
+let _appIdPromise = null;
 
-const APP_ID = import.meta.env.VITE_PRIVY_APP_ID || '';
+const BUILD_APP_ID = import.meta.env.VITE_PRIVY_APP_ID || '';
+
+/**
+ * Resolve the Privy app ID. Prefers build-time VITE_PRIVY_APP_ID; otherwise
+ * fetches /api/config at runtime so ops can rotate the ID without a rebuild.
+ */
+async function resolveAppId() {
+	if (_resolvedAppId !== null) return _resolvedAppId;
+	if (BUILD_APP_ID) { _resolvedAppId = BUILD_APP_ID; return _resolvedAppId; }
+	if (_appIdPromise) return _appIdPromise;
+
+	_appIdPromise = (async () => {
+		try {
+			const res = await fetch('/api/config', { credentials: 'include' });
+			if (!res.ok) return '';
+			const data = await res.json();
+			return data.privyAppId || '';
+		} catch {
+			return '';
+		}
+	})().then((id) => {
+		_resolvedAppId = id;
+		return id;
+	});
+
+	return _appIdPromise;
+}
 
 // ---------------------------------------------------------------------------
 // Init
@@ -29,13 +57,15 @@ const APP_ID = import.meta.env.VITE_PRIVY_APP_ID || '';
 export async function initPrivy() {
 	if (_privy) return _privy;
 	if (_initPromise) return _initPromise;
-	if (!APP_ID) return null;
+
+	const appId = await resolveAppId();
+	if (!appId) return null;
 
 	_initPromise = (async () => {
 		try {
 			const mod = await import('@privy-io/js-sdk-core');
 			const PrivyClient = mod.PrivyClient || mod.default;
-			_privy = new PrivyClient({ appId: APP_ID });
+			_privy = new PrivyClient({ appId });
 			return _privy;
 		} catch (err) {
 			console.warn('[privy] Failed to load — falling back to injected wallet.', err.message);

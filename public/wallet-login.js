@@ -7,9 +7,16 @@
 
 import { BrowserProvider } from 'https://esm.sh/ethers@6.16.0';
 
-const PRIVY_APP_ID = document.querySelector('meta[name="privy-app-id"]')?.content || '';
 const params = new URLSearchParams(location.search);
 const next = params.get('next') || '/dashboard/';
+
+// Privy app id comes from /api/config (backed by PRIVY_APP_ID env var). The
+// meta tag is a local-dev fallback — prod should rely on the fetched config.
+let PRIVY_APP_ID = document.querySelector('meta[name="privy-app-id"]')?.content || '';
+const configReady = fetch('/api/config', { credentials: 'omit' })
+	.then((r) => r.ok ? r.json() : null)
+	.then((cfg) => { if (cfg?.privyAppId) PRIVY_APP_ID = cfg.privyAppId; })
+	.catch(() => {});
 
 // ── UI helpers ──────────────────────────────────────────────────────────────
 
@@ -31,6 +38,7 @@ function ui() {
 
 async function signInWithPrivy() {
 	const { privyBtn, setErr, clearErr } = ui();
+	await configReady;
 	if (!PRIVY_APP_ID) { setErr('Privy not configured.'); return; }
 
 	clearErr();
