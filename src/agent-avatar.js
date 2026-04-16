@@ -148,6 +148,10 @@ export class AgentAvatar {
 		this._oneShotTimer = 0;
 		this._isPlayingOneShot = false;
 
+		// Animation slot override map (from meta.edits.animations)
+		this._animationMap = {};
+		this._warnedSlots = new Set();
+
 		// Streak tracking for empathy injection
 		this._errorStreak = 0;
 		this._firstEncounter = true;
