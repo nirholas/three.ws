@@ -19,7 +19,7 @@ description: 3D Agent is an open-source, browser-native 3D model viewer built on
 
 ---
 
-## 🧠 What is 3D Agent?
+## 🧠 What is 3D Agent? 
 
 **3D Agent** is an open-source, browser-native 3D model viewer built on [three.js](https://threejs.org/) (r176). It renders **glTF 2.0** and **GLB** files directly in WebGL — no plugins, no server uploads, no installs. Just open [3dagent.vercel.app](https://3dagent.vercel.app), drop a file, and inspect your model instantly.
 
