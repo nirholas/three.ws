@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
+import { readFileSync } from 'fs';
 import { VitePWA } from 'vite-plugin-pwa';
 
 // The build emits two targets controlled by the TARGET env var:
@@ -17,6 +18,7 @@ const appConfig = {
 		jsx: 'transform',
 		jsxFactory: 'vhtml',
 		jsxFragment: '"div"',
+		jsxDev: false,
 	},
 	build: {
 		chunkSizeWarningLimit: 1000,
@@ -31,6 +33,37 @@ const appConfig = {
 		},
 	},
 	plugins: [
+		{
+			name: 'vercel-rewrites',
+			configureServer(server) {
+				const root = resolve(__dirname);
+				const fileMap = {
+					'/login':        resolve(root, 'public/login.html'),
+					'/register':     resolve(root, 'public/register.html'),
+					'/features':     resolve(root, 'features.html'),
+					'/dashboard':    resolve(root, 'public/dashboard/index.html'),
+					'/studio':       resolve(root, 'public/studio/index.html'),
+					'/widgets':      resolve(root, 'public/widgets-gallery/index.html'),
+					'/docs/widgets': resolve(root, 'public/docs-widgets.html'),
+					'/agent':        resolve(root, 'agent-home.html'),
+				};
+				server.middlewares.use(async (req, res, next) => {
+					const path = (req.url || '/').split('?')[0];
+					let filePath = fileMap[path];
+					if (!filePath && /^\/agent\/[^/]+\/embed$/.test(path)) filePath = resolve(root, 'agent-embed.html');
+					else if (!filePath && /^\/agent\/[^/]+$/.test(path)) filePath = resolve(root, 'agent-home.html');
+					if (!filePath) return next();
+					try {
+						const html = readFileSync(filePath, 'utf8');
+						const transformed = await server.transformIndexHtml(req.url, html);
+						res.setHeader('Content-Type', 'text/html; charset=utf-8');
+						res.end(transformed);
+					} catch {
+						next();
+					}
+				});
+			},
+		},
 		VitePWA({
 			registerType: 'autoUpdate',
 			includeAssets: ['favicon.ico', 'pwa-192x192.png', 'pwa-512x512.png', 'pwa-icon.svg'],

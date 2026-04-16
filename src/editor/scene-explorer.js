@@ -70,7 +70,8 @@ export class SceneExplorer {
 		}
 		if (this.transformControls) {
 			this.transformControls.detach();
-			this.viewer.scene.remove(this.transformControls);
+			const helper = this.transformControls.getHelper ? this.transformControls.getHelper() : this.transformControls;
+			this.viewer.scene.remove(helper);
 			this.transformControls.dispose?.();
 			this.transformControls = null;
 		}
@@ -417,7 +418,7 @@ export class SceneExplorer {
 			this.viewer.invalidate();
 		});
 		tc.addEventListener('change', () => this.viewer.invalidate());
-		this.viewer.scene.add(tc);
+		this.viewer.scene.add(tc.getHelper ? tc.getHelper() : tc);
 		this.transformControls = tc;
 	}
 
