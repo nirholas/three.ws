@@ -53,12 +53,13 @@ export async function createAvatar({ userId, input, storageKey }) {
 	const [row] = await sql`
 		insert into avatars (
 			owner_id, slug, name, description, storage_key, size_bytes, content_type,
-			source, source_meta, visibility, tags, checksum_sha256
+			source, source_meta, visibility, tags, checksum_sha256, parent_avatar_id
 		) values (
 			${userId}, ${finalSlug}, ${input.name}, ${input.description ?? null},
 			${storageKey}, ${input.size_bytes}, ${input.content_type},
 			${input.source}, ${JSON.stringify(input.source_meta)}::jsonb,
-			${input.visibility}, ${input.tags}, ${input.checksum_sha256 ?? null}
+			${input.visibility}, ${input.tags}, ${input.checksum_sha256 ?? null},
+			${input.parent_avatar_id ?? null}
 		) returning *
 	`;
 	return decorate(row);
@@ -179,6 +180,7 @@ function decorate(row) {
 		model_url: row.visibility === 'public' || row.visibility === 'unlisted'
 			? publicUrl(row.storage_key)
 			: null,
+		parent_avatar_id: row.parent_avatar_id || null,
 		thumbnail_url: row.thumbnail_key ? publicUrl(row.thumbnail_key) : null,
 	};
 }

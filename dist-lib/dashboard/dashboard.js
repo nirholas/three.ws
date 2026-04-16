@@ -97,6 +97,7 @@ function avatarCard(a) {
 			<select data-vis>${['private','unlisted','public'].map((v) => `<option ${v===a.visibility?'selected':''} value="${v}">${v}</option>`).join('')}</select>
 			<div class="row" style="gap:6px">
 				<a class="btn sec" href="#edit/${encodeURIComponent(a.id)}">Edit</a>
+				<button class="btn sec" data-replace>Replace GLB</button>
 				<button class="btn sec" data-del>Delete</button>
 			</div>
 		</div>
@@ -113,6 +114,7 @@ function avatarCard(a) {
 			el.remove();
 		} catch (err) { alert(err.message); }
 	});
+	el.querySelector('[data-replace]').addEventListener('click', () => replaceGlbFlow(a, el));
 	return el;
 }
 
