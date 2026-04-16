@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<title>3D Agent — Give Your AI a Body</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta name="author" content="nirholas" />
+	<meta name="description" content="Drop any GLB model into 3D Agent — view it, animate it, embed it anywhere, and give it a verifiable on-chain identity." />
+	<meta name="theme-color" content="#000000" />
+
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="3D Agent — Give Your AI a Body" />
+	<meta property="og:description" content="Drop any GLB model into 3D Agent — view it, animate it, embed it anywhere." />
+	<meta property="og:url" content="https://3dagent.vercel.app/home" />
+
+	<link rel="canonical" href="https://3dagent.vercel.app/home" />
+	<link rel="shortcut icon" href="/favicon.ico" />
+	<link rel="apple-touch-icon" href="/pwa-192x192.png" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/home.css" />
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet" />
+	<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+</head>
+<body class="home-page">
+	<header>
+		<h1><a href="/"><span class="wordmark-dot" aria-hidden="true"></span>3D Agent</a></h1>
+		<nav class="home-nav">
+			<a href="/app">Viewer</a>
+			<a href="/studio">Studio</a>
+			<a href="/widgets">Widgets</a>
+			<a href="/features">Docs</a>
+			<a href="/login" class="nav-cta" id="home-nav-cta">Get started</a>
+		</nav>
+	</header>
+
+	<main class="home-main">
+
+		<!-- ── Hero ── -->
+		<section class="h-hero">
+			<div class="h-hero-bg" aria-hidden="true">
+				<div class="h-hero-mesh"></div>
+				<div class="h-hero-grid"></div>
+				<div class="h-hero-glow-a"></div>
+				<div class="h-hero-glow-b"></div>
+			</div>
+
+			<div class="h-hero-content">
+				<div class="h-eyebrow h-reveal">
+					<span class="h-eyebrow-dot"></span>
+					<span>Browser-native · No install</span>
+				</div>
+				<h2 class="h-title h-reveal">
+					Give your AI<br/>agent a <em>body</em>.
+				</h2>
+				<p class="h-subtitle h-reveal">
+					Drop any GLB model into 3D Agent — view it, animate it,
+					embed it anywhere, and give it a verifiable on-chain identity.
+					No plugins. No server uploads. Just open and go.
+				</p>
+				<div class="h-cta-row h-reveal">
+					<a href="/" class="h-btn-primary">
+						<span>Launch Viewer</span>
+						<span class="arrow">→</span>
+					</a>
+					<a href="/widgets" class="h-btn-ghost">Explore Widgets</a>
+				</div>
+				<ul class="h-standards h-reveal" aria-label="Supported formats and standards">
+					<li>glTF 2.0</li>
+					<li>GLB</li>
+					<li>ERC-8004</li>
+					<li>A2A</li>
+					<li>MCP</li>
+				</ul>
+			</div>
+
+			<div class="h-hero-visual h-reveal" aria-hidden="true">
+				<div class="h-avatar-ring"></div>
+				<div class="h-avatar-glow"></div>
+				<model-viewer
+					class="h-avatar-viewer"
+					src="/avatars/cz.glb"
+					alt="3D Agent avatar"
+					camera-controls
+					disable-zoom
+					auto-rotate
+					auto-rotate-delay="0"
+					rotation-per-second="18deg"
+					interaction-prompt="none"
+					shadow-intensity="0.8"
+					shadow-softness="1"
+					exposure="1.05"
+					tone-mapping="aces"
+					environment-image="neutral"
+					camera-orbit="20deg 68deg 3.4m"
+					field-of-view="28deg"
+					loading="eager"
+				></model-viewer>
+				<div class="h-avatar-badge">
+					<span class="h-avatar-badge-label">agent</span>
+					<span>0x3d…a9f</span>
+				</div>
+			</div>
+
+			<div class="h-scroll-hint" aria-hidden="true">
+				<span>scroll</span>
+				<span class="h-scroll-line"></span>
+			</div>
+		</section>
+
+		<!-- ── How it works ── -->
+		<section class="h-section">
+			<p class="h-section-label h-reveal">How It Works</p>
+			<h2 class="h-section-title h-reveal">From file to deployed agent<br/>in three steps.</h2>
+			<p class="h-section-sub h-reveal">No account required to start. Drop a model, explore the viewer, then sign in when you're ready to save and share.</p>
+			<div class="h-steps">
+				<div class="h-step h-reveal">
+					<div class="h-step-num">01</div>
+					<h4>Drop your model</h4>
+					<p>Drag a GLB or glTF 2.0 file directly into the browser. Instant WebGL rendering — no upload, no install, no waiting.</p>
+				</div>
+				<div class="h-step h-reveal">
+					<div class="h-step-num">02</div>
+					<h4>Animate &amp; configure</h4>
+					<p>Pick animations, add an AI chat agent, adjust lighting and camera. Save your avatar to your account for reuse.</p>
+				</div>
+				<div class="h-step h-reveal">
+					<div class="h-step-num">03</div>
+					<h4>Embed anywhere</h4>
+					<p>Generate a widget — one iframe, any site. Turntable, talking agent, animation gallery. Works in Notion, Ghost, WordPress.</p>
+				</div>
+			</div>
+		</section>
+
+		<!-- ── Feature: Viewer ── -->
+		<div class="h-section-dark">
+			<div class="h-feature h-section-inner">
+				<div class="h-feature-text h-reveal">
+					<h3>Instant 3D viewer,<br/>no install.</h3>
+					<p>Built on three.js r176. Drag a GLB file onto the page and see it rendered in WebGL with full lighting, animations, and material inspection — on any device, any browser.</p>
+					<a href="/" class="h-feature-link">Open the viewer →</a>
+				</div>
+				<div class="h-feature-visual h-reveal">
+					<model-viewer
+						src="/avatars/cz.glb"
+						alt="3D model preview"
+						camera-controls
+						auto-rotate
+						auto-rotate-delay="0"
+						rotation-per-second="12deg"
+						interaction-prompt="none"
+						shadow-intensity="0.6"
+						exposure="1.0"
+						tone-mapping="aces"
+						environment-image="neutral"
+						camera-orbit="0deg 75deg 2.8m"
+						field-of-view="30deg"
+						loading="lazy"
+					></model-viewer>
+				</div>
+			</div>
+		</div>
+
+		<!-- ── Feature: Widget Studio ── -->
+		<div class="h-feature h-reveal" style="max-width:1080px; margin: 0 auto;">
+			<div class="h-feature-text">
+				<h3>Embeddable widgets.<br/>One line of HTML.</h3>
+				<p>Save any avatar as a widget — a configured, shareable view that any site can drop in with a single iframe. Five types: Turntable, Animation Gallery, Talking Agent, ERC-8004 Passport, Hotspot Tour.</p>
+				<a href="/studio" class="h-feature-link">Open Widget Studio →</a>
+			</div>
+			<div class="h-feature-visual">
+				<div class="h-widget-preview">
+					<div class="h-widget-card h-reveal">
+						<div class="h-widget-card-label">Turntable</div>
+						<div class="h-widget-card-title">Auto-rotating hero banner</div>
+						<div class="h-widget-card-desc">360° display, configurable speed and background.</div>
+					</div>
+					<div class="h-widget-card h-reveal">
+						<div class="h-widget-card-label">Talking Agent</div>
+						<div class="h-widget-card-title">Embodied AI chat</div>
+						<div class="h-widget-card-desc">Your 3D avatar speaks. Powered by your LLM of choice.</div>
+					</div>
+					<div class="h-embed-code h-reveal">
+						<span class="tag">&lt;iframe</span>
+						<span class="attr"> src</span>=<span class="attr">"https://3dagent.vercel.app/#widget=wdgt_abc123"</span>
+						<span class="tag">/&gt;</span>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- ── Feature: Agent Identity ── -->
+		<div class="h-section-dark">
+			<div class="h-feature h-feature-flip h-section-inner">
+				<div class="h-feature-text h-reveal">
+					<h3>On-chain identity<br/>for every agent.</h3>
+					<p>Register your avatar on Ethereum via ERC-8004 — a verifiable, portable identity discoverable by any A2A or MCP client. Your 3D model becomes your agent's on-chain passport.</p>
+					<a href="/features" class="h-feature-link">Read the spec →</a>
+				</div>
+				<div class="h-feature-visual h-reveal">
+					<div class="h-identity-card">
+						<div class="h-id-header">
+							<div class="h-id-dot"></div>
+							<span class="h-id-title">agent-registration.json</span>
+						</div>
+						<div class="h-id-row">
+							<span class="h-id-key">name</span>
+							<span class="h-id-val">"3D Agent"</span>
+						</div>
+						<div class="h-id-row">
+							<span class="h-id-key">agentId</span>
+							<span class="h-id-val gold">0x3d…a9f</span>
+						</div>
+						<div class="h-id-row">
+							<span class="h-id-key">type</span>
+							<span class="h-id-val">ERC-8004</span>
+						</div>
+						<div class="h-id-row">
+							<span class="h-id-key">services</span>
+							<span class="h-id-val">A2A · MCP · web</span>
+						</div>
+						<div class="h-id-row">
+							<span class="h-id-key">active</span>
+							<span class="h-id-val gold">true</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- ── Final CTA ── -->
+		<section class="h-cta-section h-reveal">
+			<h2>Ready to give your<br/>agent a presence?</h2>
+			<p>Drop a 3D model. Add AI. Ship in minutes.</p>
+			<div class="h-cta-row-center">
+				<a href="/" class="h-btn-primary">
+					<span>Launch Viewer</span>
+					<span class="arrow">→</span>
+				</a>
+				<a href="/register" class="h-btn-ghost">Create account</a>
+			</div>
+		</section>
+
+		<footer class="h-footer">
+			<p>
+				3D Agent ·
+				<a href="https://github.com/nirholas/3D" target="_blank" rel="noopener">GitHub</a> ·
+				<a href="/features">Docs</a> ·
+				<a href="https://eips.ethereum.org/EIPS/eip-8004" target="_blank" rel="noopener">ERC-8004</a>
+			</p>
+		</footer>
+	</main>
+
+	<script>
+		// Auth-aware nav CTA
+		(function () {
+			try {
+				const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+				if (token) {
+					const cta = document.getElementById('home-nav-cta');
+					if (cta) {
+						cta.textContent = 'Dashboard';
+						cta.href = '/dashboard';
+					}
+				}
+			} catch (_) {}
+		})();
+
+		// Scroll reveal
+		(function () {
+			const els = document.querySelectorAll('.h-reveal');
+			const observer = new IntersectionObserver(
+				(entries) => {
+					entries.forEach((entry) => {
+						if (entry.isIntersecting) {
+							entry.target.classList.add('revealed');
+							observer.unobserve(entry.target);
+						}
+					});
+				},
+				{ threshold: 0.12, rootMargin: '0px 0px -50px 0px' }
+			);
+			els.forEach((el, i) => {
+				const siblings = Array.from(el.parentElement.querySelectorAll('.h-reveal'));
+				const idx = siblings.indexOf(el);
+				el.style.transitionDelay = (idx * 0.09) + 's';
+				observer.observe(el);
+			});
+		})();
+	</script>
+</body>
+</html>

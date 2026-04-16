@@ -92,7 +92,7 @@ async function recentViewsByDay(id) {
 
 async function topAggregates(id, column) {
 	try {
-		const rows = await sql.query(
+		const rows = await sql(
 			`select coalesce(${column}, '') as key, count(*)::bigint as count
 			 from widget_views
 			 where widget_id = $1 and ${column} is not null

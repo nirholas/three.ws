@@ -87,7 +87,7 @@ async function handleAppend(req, res) {
 		VALUES (
 			${body.agent_id},
 			${String(body.type).slice(0, 64)},
-			${sql.json(body.payload || {})},
+			${JSON.stringify(body.payload || {})}::jsonb,
 			${body.source_skill  || null},
 			${body.signature     || null},
 			${body.signer_address || null}

@@ -32,7 +32,7 @@ export default wrap(async (req, res) => {
 	const key = `erc8004/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
 	await r2.send(new PutObjectCommand({
-		Bucket: env.R2_BUCKET,
+		Bucket: env.S3_BUCKET,
 		Key: key,
 		Body: body,
 		ContentType: ct,

@@ -21,11 +21,11 @@ export const env = {
 
 	get DATABASE_URL()            { return req('DATABASE_URL'); },
 
-	get R2_ACCOUNT_ID()           { return req('R2_ACCOUNT_ID'); },
-	get R2_ACCESS_KEY_ID()        { return req('R2_ACCESS_KEY_ID'); },
-	get R2_SECRET_ACCESS_KEY()    { return req('R2_SECRET_ACCESS_KEY'); },
-	get R2_BUCKET()               { return req('R2_BUCKET'); },
-	get R2_PUBLIC_BASE()          { return trimSlash(req('R2_PUBLIC_BASE')); },
+	get S3_ENDPOINT()             { return trimSlash(req('S3_ENDPOINT')); },
+	get S3_ACCESS_KEY_ID()        { return req('S3_ACCESS_KEY_ID'); },
+	get S3_SECRET_ACCESS_KEY()    { return req('S3_SECRET_ACCESS_KEY'); },
+	get S3_BUCKET()               { return req('S3_BUCKET'); },
+	get S3_PUBLIC_DOMAIN()        { return trimSlash(req('S3_PUBLIC_DOMAIN')); },
 
 	get UPSTASH_REDIS_REST_URL()  { return opt('UPSTASH_REDIS_REST_URL'); },
 	get UPSTASH_REDIS_REST_TOKEN(){ return opt('UPSTASH_REDIS_REST_TOKEN'); },

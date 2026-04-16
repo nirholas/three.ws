@@ -109,7 +109,7 @@ async function handleUpsert(req, res) {
 				${memType},
 				${String(entry.content || '').slice(0, 10000)},
 				${entry.tags  || []},
-				${sql.json(entry.context || {})},
+				${JSON.stringify(entry.context || {})}::jsonb,
 				${entry.salience || 0.5},
 				${entry.createdAt ? new Date(entry.createdAt).toISOString() : new Date().toISOString()},
 				${entry.expiresAt ? new Date(entry.expiresAt).toISOString() : null}
@@ -128,7 +128,7 @@ async function handleUpsert(req, res) {
 				${memType},
 				${String(entry.content || '').slice(0, 10000)},
 				${entry.tags  || []},
-				${sql.json(entry.context || {})},
+				${JSON.stringify(entry.context || {})}::jsonb,
 				${entry.salience || 0.5},
 				${entry.expiresAt ? new Date(entry.expiresAt).toISOString() : null}
 			)

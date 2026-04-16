@@ -27,6 +27,7 @@ export default wrap(async (req, res) => {
 	const [plan] = await sql`
 		select q.* from users u join plan_quotas q on q.plan = u.plan where u.id = ${userId}
 	`;
+	if (!plan) return error(res, 500, 'internal', 'plan quota record missing for user');
 	return json(res, 200, {
 		plan,
 		counts: {

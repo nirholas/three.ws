@@ -66,7 +66,7 @@ export default wrap(async (req, res) => {
 	const policy = parse(policySchema, await readJson(req));
 	const [updated] = await sql`
 		UPDATE agent_identities
-		SET embed_policy = ${sql.json(policy)}
+		SET embed_policy = ${JSON.stringify(policy)}::jsonb
 		WHERE id = ${id}
 		RETURNING embed_policy
 	`;
