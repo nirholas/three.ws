@@ -117,9 +117,14 @@ export const BUILTIN_HANDLERS = {
 
 	async play_clip(args, ctx) {
 		const { name, loop = false, fade_ms = 200 } = args;
-		const played = ctx.viewer.playClipByName?.(name, { loop, fade_ms });
-		if (!played) return { ok: false, error: `No clip named "${name}"` };
-		return { ok: true, name };
+		// Resolve slot name (e.g. 'celebrate') to actual clip via agent's mapping
+		const resolved = ctx.viewer.resolveAnimationSlot?.(name) ?? name;
+		const played = ctx.viewer.playClipByName?.(resolved, { loop, fade_ms });
+		if (!played) {
+			if (resolved !== name) console.warn(`[play_clip] slot "${name}" → "${resolved}" not found in library`);
+			return { ok: false, error: `No clip named "${resolved}"` };
+		}
+		return { ok: true, name, resolved };
 	},
 
 	async setExpression(args, ctx) {

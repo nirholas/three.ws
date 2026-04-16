@@ -4,6 +4,7 @@
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
 import { listAvatars, createAvatar } from '../_lib/avatars.js';
 import { headObject } from '../_lib/r2.js';
+import { sql } from '../_lib/db.js';
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
 import { parse, createAvatarBody } from '../_lib/validate.js';
 import { recordEvent } from '../_lib/usage.js';
@@ -55,11 +56,34 @@ async function handleCreate(req, res) {
 		return error(res, 400, 'size_mismatch', 'size_bytes does not match uploaded object');
 	}
 
+	// Validate parent_avatar_id ownership — prevents user B from pointing at user A's avatar chain.
+	if (body.parent_avatar_id) {
+		const rows = await sql`
+			select 1 from avatars
+			where id = ${body.parent_avatar_id} and owner_id = ${auth.userId} and deleted_at is null
+			limit 1
+		`;
+		if (!rows[0]) return error(res, 404, 'not_found', 'parent_avatar_id not found');
+	}
+
 	const avatar = await createAvatar({
 		userId: auth.userId,
 		input: body,
 		storageKey: body.storage_key,
 	});
+
+	// Re-point any agent identity that currently uses the parent avatar.
+	// agentId, wallet_address, chain_id, and erc8004_agent_id are unchanged.
+	if (body.parent_avatar_id) {
+		await sql`
+			update agent_identities
+			set avatar_id = ${avatar.id}
+			where user_id = ${auth.userId}
+			  and avatar_id = ${body.parent_avatar_id}
+			  and deleted_at is null
+		`;
+	}
+
 	recordEvent({
 		userId: auth.userId,
 		apiKeyId: auth.apiKeyId,

@@ -21,6 +21,7 @@
 
 import { ACTION_TYPES } from './agent-protocol.js';
 import { Vector3, Box3, MathUtils } from 'three';
+import { resolveSlot, DEFAULT_ANIMATION_MAP } from './runtime/animation-slots.js';
 
 const DEG2RAD = Math.PI / 180;
 
