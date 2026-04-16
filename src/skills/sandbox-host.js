@@ -1,12 +1,14 @@
 // Sandbox host — manages the shared Web Worker that executes skill handlers.
 // One worker instance is shared across all skills in a session.
 
-// ?worker&inline tells Vite to bundle and inline the worker, avoiding a
-// separate chunk (required for the UMD lib build which can't code-split).
-import SandboxWorkerCtor from './sandbox-worker.js?worker&inline';
+// ?raw imports the worker source as a plain string — no Vite worker plugin,
+// no code-split chunk, compatible with both ES and UMD lib builds.
+// The worker is created at runtime as a classic-script blob: URL.
+import _workerSrc from './sandbox-worker.js?raw';
 
 /** @type {Worker | null} */
 let _worker = null;
+let _workerBlobUrl = null;
 
 /** @type {Map<string, Promise<void>>} skillURI → install promise */
 const _installPromises = new Map();
@@ -46,7 +48,11 @@ function _resolveArgs(args) {
 
 function _getWorker() {
 	if (!_worker) {
-		_worker = new SandboxWorkerCtor();
+		if (!_workerBlobUrl) {
+			const blob = new Blob([_workerSrc], { type: 'text/javascript' });
+			_workerBlobUrl = URL.createObjectURL(blob);
+		}
+		_worker = new Worker(_workerBlobUrl);
 		_worker.onmessage = _onMessage;
 		_worker.onerror = _onError;
 	}
@@ -208,6 +214,10 @@ function _terminate() {
 	if (!_worker) return;
 	_worker.terminate();
 	_worker = null;
+	if (_workerBlobUrl) {
+		URL.revokeObjectURL(_workerBlobUrl);
+		_workerBlobUrl = null;
+	}
 	_installPromises.clear();
 	_installCallbacks.clear();
 	_handles.clear();

@@ -6,6 +6,7 @@
 import { Vector3 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { resolveURI } from '../ipfs.js';
+import { resolveSlot } from './animation-slots.js';
 
 const EXPRESSION_MAP = {
 	neutral: { /* reset all */ },
@@ -21,6 +22,7 @@ export class SceneController {
 		this.viewer = viewer;
 		this._loader = new GLTFLoader();
 		this._userTarget = new Vector3(0, 1.6, 2); // approx user head position
+		this._animationMap = {};
 	}
 
 	// Expose the underlying Three.js handles skills may need
@@ -28,6 +30,24 @@ export class SceneController {
 	get mixer() { return this.viewer.mixer; }
 	get clips() { return this.viewer.clips || []; }
 	get content() { return this.viewer.content; }
+
+	/**
+	 * Set the agent's animation slot override map (from meta.edits.animations).
+	 * @param {Object|null} map — { slotName: clipName, … }
+	 */
+	setAnimationMap(map) {
+		this._animationMap = map || {};
+	}
+
+	/**
+	 * Resolve a slot name (e.g. 'celebrate') to the actual clip name.
+	 * Falls back to DEFAULT_ANIMATION_MAP, then the slot name itself.
+	 * @param {string} name
+	 * @returns {string}
+	 */
+	resolveAnimationSlot(name) {
+		return resolveSlot(name, this._animationMap);
+	}
 
 	// Delegate raw load for ad-hoc cases
 	async load(url, rootPath = '', assetMap = new Map()) {
@@ -37,24 +57,41 @@ export class SceneController {
 	// --- Animation ---
 
 	playClipByName(name, { loop = false, fade_ms = 200 } = {}) {
+		// Try embedded clips (viewer.clips / viewer.mixer) first
 		const clip = this._findClip(name);
-		if (!clip || !this.viewer.mixer) return false;
-		const action = this.viewer.mixer.clipAction(clip);
-		action.reset();
-		action.setLoop(loop ? 2201 /* LoopRepeat */ : 2200 /* LoopOnce */);
-		action.clampWhenFinished = !loop;
-		action.fadeIn(fade_ms / 1000);
-		action.play();
-		this.viewer.state.actionStates[clip.name] = true;
-		this.viewer.invalidate();
+		if (clip && this.viewer.mixer) {
+			const action = this.viewer.mixer.clipAction(clip);
+			action.reset();
+			action.setLoop(loop ? 2201 /* LoopRepeat */ : 2200 /* LoopOnce */);
+			action.clampWhenFinished = !loop;
+			action.fadeIn(fade_ms / 1000);
+			action.play();
+			this.viewer.state.actionStates[clip.name] = true;
+			this.viewer.invalidate();
+			return true;
+		}
+		// Fall back to animation manager (external clips from manifest)
+		const am = this.viewer?.animationManager;
+		if (!am?.isLoaded(name)) return false;
+		if (loop) am.crossfadeTo(name, fade_ms / 1000);
+		else am.play(name);
 		return true;
 	}
 
 	playAnimationByHint(hint, opts) {
 		const lower = hint.toLowerCase();
+		// Search embedded clips
 		const match = this.clips.find((c) => c.name.toLowerCase().includes(lower));
 		if (match) return this.playClipByName(match.name, opts);
-		// Fallback — skills can ship their own clips via loadClip
+		// Search external clips in animation manager
+		const am = this.viewer?.animationManager;
+		if (am) {
+			for (const name of am.clips.keys()) {
+				if (name.toLowerCase().includes(lower)) {
+					return this.playClipByName(name, opts);
+				}
+			}
+		}
 		return false;
 	}
 
