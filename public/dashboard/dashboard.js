@@ -1,6 +1,8 @@
 // Dashboard single-file app. Uses native DOM — no framework.
 // Keeps bundle small and ensures anything rendering <model-viewer> works without bundler.
 
+import { AvatarCreator } from '../../src/avatar-creator.js';
+
 export const state = { user: null };
 
 export const api = {
@@ -19,6 +21,9 @@ export const api = {
 	deleteWidget: (id) => j('DELETE', `/api/widgets/${encodeURIComponent(id)}`),
 	duplicateWidget: (id) => j('POST', `/api/widgets/${encodeURIComponent(id)}/duplicate`),
 	widgetStats: (id) => j('GET', `/api/widgets/${encodeURIComponent(id)}/stats`),
+	createAvatarSession: (id) => j('POST', `/api/avatars/${id}/session`),
+	getAvatarVersions: (id) => j('GET', `/api/avatars/${id}/versions`),
+	patchAgent: (agentId, patch) => j('PUT', `/api/agents/${agentId}`, patch),
 };
 
 async function j(method, path, body) {

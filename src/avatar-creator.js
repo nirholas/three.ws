@@ -1,10 +1,15 @@
 /**
- * Avatar Creator — embeds the self-hosted CharacterStudio builder in a modal.
+ * Avatar Creator — embeds the self-hosted CharacterStudio builder in a modal,
+ * or an Avaturn edit session when `open(sessionUrl)` is called with a URL.
  *
  * CharacterStudio runs in an iframe and communicates via postMessage. When the
  * user clicks "Save Avatar", CharacterStudio posts a `characterstudio:export`
  * message carrying the GLB as a transferred ArrayBuffer, which we convert to a
  * Blob and hand to `onExport`.
+ *
+ * Avaturn is also loaded in an iframe. It posts an export event with a URL to
+ * the GLB rather than transferring bytes directly; we fetch it then hand the
+ * resulting Blob to `onExport`.
  *
  * The class API is identical to the previous RPM implementation so callers
  * (src/app.js, src/account.js) don't need to change.
@@ -35,21 +40,40 @@ export class AvatarCreator {
 		this.iframe = null;
 		this._onMessage = null;
 		this._onKeyDown = null;
+		this._avaturnMode = false;
+		this._avaturnOrigin = null;
 	}
 
 	/**
-	 * Opens the avatar creator modal and mounts the CharacterStudio iframe.
+	 * Opens the avatar creator modal.
+	 * @param {string} [sessionUrl] - When provided, opens Avaturn in edit mode instead of CharacterStudio.
 	 */
-	async open() {
+	async open(sessionUrl) {
 		if (this.modal) return;
+		this._avaturnMode = !!sessionUrl;
 		this._buildModal();
 		this._onMessage = (event) => this._handleMessage(event);
 		window.addEventListener('message', this._onMessage);
-		this.iframe.src = this.studioUrl;
+		if (sessionUrl) {
+			// @avaturn/sdk is not installed — use raw iframe.
+			// If you install @avaturn/sdk, replace this with: new AvaturnSDK({ ... })
+			console.info('[AvatarCreator] opening Avaturn session (raw iframe — no SDK):', sessionUrl);
+			try { this._avaturnOrigin = new URL(sessionUrl).origin; } catch (_) {}
+			this.iframe.src = sessionUrl;
+		} else {
+			this.iframe.src = this.studioUrl;
+		}
 	}
 
 	_handleMessage(event) {
-		// Only accept messages from the CharacterStudio origin.
+		if (this._avaturnMode) {
+			this._handleAvaturnMessage(event);
+		} else {
+			this._handleCharacterStudioMessage(event);
+		}
+	}
+
+	_handleCharacterStudioMessage(event) {
 		try {
 			const csOrigin = new URL(this.studioUrl).origin;
 			if (event.origin !== csOrigin) return;
@@ -62,6 +86,36 @@ export class AvatarCreator {
 		if (!(msg.glb instanceof ArrayBuffer)) return;
 
 		const blob = new Blob([msg.glb], { type: 'model/gltf-binary' });
+		this._fireExport(blob);
+	}
+
+	async _handleAvaturnMessage(event) {
+		if (this._avaturnOrigin && event.origin !== this._avaturnOrigin) return;
+
+		const msg = event.data;
+		if (!msg) return;
+
+		// Avaturn may post: { type:'export', detail:{url} } or { avaturnEvent:'export', data:{url} }
+		let glbUrl = null;
+		if (msg.type === 'export') {
+			glbUrl = msg.detail?.url || msg.data?.url || null;
+		} else if (msg.avaturnEvent === 'export') {
+			glbUrl = msg.data?.url || null;
+		}
+		if (!glbUrl) return;
+
+		try {
+			const resp = await fetch(glbUrl);
+			if (!resp.ok) throw new Error(`GLB fetch failed: ${resp.status}`);
+			const blob = await resp.blob();
+			const glbBlob = blob.type ? blob : new Blob([await blob.arrayBuffer()], { type: 'model/gltf-binary' });
+			this._fireExport(glbBlob);
+		} catch (err) {
+			console.error('[AvatarCreator] failed to fetch Avaturn GLB:', err);
+		}
+	}
+
+	_fireExport(blob) {
 		if (this.onExport) {
 			try {
 				this.onExport(blob);
@@ -73,13 +127,14 @@ export class AvatarCreator {
 	}
 
 	_buildModal() {
+		const title = this._avaturnMode ? 'Edit Your Avatar' : 'Create Your Avatar';
 		this.modal = document.createElement('div');
 		this.modal.className = 'avatar-creator-overlay';
 
 		this.modal.innerHTML = `
 			<div class="avatar-creator-modal">
 				<div class="avatar-creator-header">
-					<span class="avatar-creator-title">Create Your Avatar</span>
+					<span class="avatar-creator-title">${title}</span>
 					<button class="avatar-creator-close" aria-label="Close">&times;</button>
 				</div>
 				<div class="avatar-creator-body">
@@ -133,6 +188,8 @@ export class AvatarCreator {
 			this.modal = null;
 			this.iframe = null;
 		}
+		this._avaturnMode = false;
+		this._avaturnOrigin = null;
 	}
 
 	dispose() {

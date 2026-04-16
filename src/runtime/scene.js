@@ -23,13 +23,44 @@ export class SceneController {
 		this._loader = new GLTFLoader();
 		this._userTarget = new Vector3(0, 1.6, 2); // approx user head position
 		this._animationMap = {};
+		this._group = null;
+		this._groupMixer = null;
+		this._groupClips = null;
+		this._mixerHook = null;
 	}
 
 	// Expose the underlying Three.js handles skills may need
 	get scene() { return this.viewer.scene; }
-	get mixer() { return this.viewer.mixer; }
-	get clips() { return this.viewer.clips || []; }
-	get content() { return this.viewer.content; }
+	get mixer() { return this._groupMixer || this.viewer.mixer; }
+	get clips() { return this._groupClips || this.viewer.clips || []; }
+	get content() { return this._group || this.viewer.content; }
+
+	// Scope all scene operations to a sub-group (used by <agent-stage>).
+	setGroup(group, { mixer = null, clips = null } = {}) {
+		this._group = group;
+		this._groupMixer = mixer;
+		this._groupClips = clips;
+		if (mixer) {
+			this._mixerHook = (dt) => {
+				mixer.update(dt);
+				this.viewer._animating = true;
+				this.viewer.invalidate();
+			};
+			this._addHook(this._mixerHook);
+		}
+	}
+
+	dispose() {
+		if (this._mixerHook) this._removeHook(this._mixerHook);
+		if (this._groupMixer) {
+			try { this._groupMixer.stopAllAction(); } catch {}
+			try { this._groupMixer.uncacheRoot(this._group); } catch {}
+		}
+		this._mixerHook = null;
+		this._groupMixer = null;
+		this._groupClips = null;
+		this._group = null;
+	}
 
 	/**
 	 * Set the agent's animation slot override map (from meta.edits.animations).
@@ -59,14 +90,16 @@ export class SceneController {
 	playClipByName(name, { loop = false, fade_ms = 200 } = {}) {
 		// Try embedded clips (viewer.clips / viewer.mixer) first
 		const clip = this._findClip(name);
-		if (clip && this.viewer.mixer) {
-			const action = this.viewer.mixer.clipAction(clip);
+		const mixer = this.mixer;
+		if (clip && mixer) {
+			const action = mixer.clipAction(clip);
 			action.reset();
 			action.setLoop(loop ? 2201 /* LoopRepeat */ : 2200 /* LoopOnce */);
 			action.clampWhenFinished = !loop;
 			action.fadeIn(fade_ms / 1000);
 			action.play();
-			this.viewer.state.actionStates[clip.name] = true;
+			if (!this._group) this.viewer.state.actionStates[clip.name] = true;
+			this.viewer._animating = true;
 			this.viewer.invalidate();
 			return true;
 		}
@@ -96,15 +129,18 @@ export class SceneController {
 	}
 
 	stopClip(name) {
-		if (!this.viewer.mixer) return;
+		const mixer = this.mixer;
+		if (!mixer) return;
 		const clip = name ? this._findClip(name) : null;
 		if (clip) {
-			const action = this.viewer.mixer.existingAction(clip);
+			const action = mixer.existingAction(clip);
 			if (action) action.fadeOut(0.2);
-			this.viewer.state.actionStates[clip.name] = false;
+			if (!this._group) this.viewer.state.actionStates[clip.name] = false;
 		} else {
-			this.viewer.mixer.stopAllAction();
-			for (const k in this.viewer.state.actionStates) this.viewer.state.actionStates[k] = false;
+			mixer.stopAllAction();
+			if (!this._group) {
+				for (const k in this.viewer.state.actionStates) this.viewer.state.actionStates[k] = false;
+			}
 		}
 		this.viewer.invalidate();
 	}
@@ -112,11 +148,13 @@ export class SceneController {
 	async play(clip, opts) {
 		// Accept either a clip name or an AnimationClip instance.
 		if (typeof clip === 'string') return this.playClipByName(clip, opts);
-		if (!this.viewer.mixer || !clip) return false;
-		const action = this.viewer.mixer.clipAction(clip);
+		const mixer = this.mixer;
+		if (!mixer || !clip) return false;
+		const action = mixer.clipAction(clip);
 		action.reset();
 		action.fadeIn((opts?.blend ?? 0.2));
 		action.play();
+		this.viewer._animating = true;
 		this.viewer.invalidate();
 		return true;
 	}
