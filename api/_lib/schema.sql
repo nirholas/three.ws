@@ -341,3 +341,45 @@ create table if not exists widget_views (
 
 create index if not exists widget_views_widget_time
     on widget_views(widget_id, created_at desc);
+
+-- ── erc8004_agents_index — crawled directory of every on-chain agent ───────
+-- Populated by api/cron/erc8004-crawl.js from Etherscan V2 getLogs across every
+-- chain in REGISTRY_DEPLOYMENTS. Metadata fields are lazily filled from each
+-- agent's agentURI JSON. `has_3d` = true when services[name=avatar] is set.
+create table if not exists erc8004_agents_index (
+    chain_id           integer     not null,
+    agent_id           text        not null,                -- uint256 as decimal string
+    owner              text        not null,                -- 0x-lowercase
+    registry           text        not null,                -- 0x-lowercase contract addr
+    agent_uri          text,
+    name               text,
+    description        text,
+    image              text,                                -- 2D thumbnail URL
+    glb_url            text,                                -- services[name=avatar] endpoint
+    services           jsonb       not null default '[]'::jsonb,
+    x402_support       boolean     not null default false,
+    has_3d             boolean     not null default false,
+    active             boolean     not null default true,
+    registered_block   bigint,
+    registered_tx      text,
+    registered_at      timestamptz,
+    last_metadata_at   timestamptz,
+    metadata_error     text,
+    last_seen_at       timestamptz not null default now(),
+    primary key (chain_id, agent_id)
+);
+
+create index if not exists erc8004_agents_has3d_time
+    on erc8004_agents_index(has_3d, registered_at desc) where active;
+create index if not exists erc8004_agents_chain_time
+    on erc8004_agents_index(chain_id, registered_at desc) where active;
+create index if not exists erc8004_agents_owner
+    on erc8004_agents_index(owner) where active;
+create index if not exists erc8004_agents_metadata_stale
+    on erc8004_agents_index(last_metadata_at nulls first);
+
+create table if not exists erc8004_crawl_cursor (
+    chain_id       integer primary key,
+    last_block     bigint  not null default 0,
+    updated_at     timestamptz not null default now()
+);

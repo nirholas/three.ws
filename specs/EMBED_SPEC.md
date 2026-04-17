@@ -16,13 +16,18 @@ That's the full install for 95% of users. Everything below is optional.
 
 ### Source (pick one)
 
-| Attribute  | Form                       | Example                               |
-| ---------- | -------------------------- | ------------------------------------- |
-| `src`      | on-chain URI               | `agent://base/42`                     |
-| `manifest` | IPFS or HTTPS manifest URL | `ipfs://bafy.../manifest.json`        |
-| `body`     | bare GLB (ad-hoc agent)    | `ipfs://bafy.../cz.glb` or `./cz.glb` |
+| Attribute  | Form                              | Example                               |
+| ---------- | --------------------------------- | ------------------------------------- |
+| `src`      | on-chain URI                      | `agent://base/42`                     |
+| `agent-id` | numeric id (pair with `chain-id`) | `agent-id="42" chain-id="8453"`       |
+| `agent-id` | CAIP-10 + tokenId                 | `agent-id="eip155:8453:0xReg…:42"`    |
+| `agent-id` | shorthand onchain:                | `agent-id="onchain:8453:42"`          |
+| `agent-id` | backend account id (legacy)       | `agent-id="a_abc123"`                 |
+| `manifest` | IPFS or HTTPS manifest URL        | `ipfs://bafy.../manifest.json`        |
+| `body`     | bare GLB (ad-hoc agent)           | `ipfs://bafy.../cz.glb` or `./cz.glb` |
 
-When multiple are set, priority is `src` > `manifest` > `body`.
+When multiple are set, priority is `src` > `agent-id` > `manifest` > `body`.
+All on-chain forms resolve through [`src/erc8004/resolver.js`](../src/erc8004/resolver.js).
 
 ### Body / scene
 
@@ -86,11 +91,14 @@ When multiple are set, priority is `src` > `manifest` > `body`.
 
 ### Identity / chain
 
-| Attribute  | Type                                        | Notes                                           |
-| ---------- | ------------------------------------------- | ----------------------------------------------- |
-| `chain`    | `base`\|`base-sepolia`\|`ethereum`          | override the chain in `src="agent://..."`       |
-| `registry` | 0x address                                  | override deployed registry                      |
-| `wallet`   | `auto`\|`metamask`\|`walletconnect`\|`none` | wallet connection policy for registration flows |
+| Attribute  | Type                                        | Notes                                              |
+| ---------- | ------------------------------------------- | -------------------------------------------------- |
+| `chain`    | `base`\|`base-sepolia`\|`ethereum`          | override the chain in `src="agent://..."`          |
+| `chain-id` | numeric chain id (e.g. `8453`, `84532`)     | pair with numeric `agent-id` for the common case   |
+| `registry` | 0x address                                  | override deployed registry (for CAIP-10 precision) |
+| `wallet`   | `auto`\|`metamask`\|`walletconnect`\|`none` | wallet connection policy for registration flows    |
+
+The canonical embed shape is `<agent-3d chain-id="8453" agent-id="42">` — the element reads both attributes, resolves the on-chain registry via `REGISTRY_DEPLOYMENTS` (CREATE2-deterministic), and boots. Any of the `agent-id` forms in the Source table are accepted; the explicit `chain-id` attribute is only needed when `agent-id` is a bare number.
 
 ### Dev / debug
 
@@ -338,6 +346,52 @@ All bundle responses ship `access-control-allow-origin: *` and `cross-origin-res
 
 - Element spec: `embed/0.1` — breaking changes bump minor until 1.0.
 - Bundle version: tracks `package.json` `version` of the main repo. Pinning a `<MAJOR>.<MINOR>.<PATCH>` URL is the only forever-stable option — moving channels can ship security fixes that may include behavior changes within their semver range.
+
+## Share routes (on-chain agents)
+
+Every on-chain agent has a canonical URL triad, plus companion endpoints for previews and oEmbed.
+
+| Route                               | Purpose                                                                                                                              | Served by             |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | --------------------- |
+| `/a/:chainId/:agentId`              | Canonical page — Open Graph + Twitter Player Card + Farcaster Frame + oEmbed discovery. Redirects real browsers into the SPA viewer. | `api/a-page.js`       |
+| `/a/:chainId/:agentId/embed`        | Chromeless iframe viewer (kiosk mode) — meant to be embedded in iframes, web-component previews, and Twitter Player Card.            | `a-embed.html`        |
+| `/api/a-og?chain=<id>&id=<agentId>` | 1200×630 OG image. Redirects to the manifest image if present; otherwise renders an SVG card with chain badge + owner.               | `api/a-og.js`         |
+| `/api/oembed?url=...`               | oEmbed v1.0 JSON/XML. Recognizes `/a/:chain/:id` URLs; returns `type: rich` with an iframe html payload.                             | `api/agent-oembed.js` |
+
+### Surface matrix
+
+Pick the right embed for each surface:
+
+| Surface                             | Recommended embed                                               | Why                                                                            |
+| ----------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Your own site / partner site        | `<agent-3d src="agent://:chain/:id">`                           | Full fidelity — voice, memory, skills, animations.                             |
+| Notion, Substack, Ghost, Medium     | `<iframe src="/a/:chain/:id/embed">`                            | iframe-only platforms — universal compatibility.                               |
+| GitHub README / markdown blog       | `![alt](/api/a-og?chain=...&id=...)` linking to `/a/:chain/:id` | Markdown platforms don't run JS — use the OG image as a preview card.          |
+| X / Twitter post                    | Paste `/a/:chain/:id`                                           | Twitter unfurls via `twitter:player` → iframe.                                 |
+| Slack / Discord / iMessage          | Paste `/a/:chain/:id`                                           | OG tags + oEmbed give a rich preview.                                          |
+| Farcaster cast                      | Paste `/a/:chain/:id`                                           | Frame meta tags render an interactive card with "View 3D" + "Explore" buttons. |
+| Claude.ai artifact / LobeHub plugin | `<iframe src="/a/:chain/:id/embed">` (band 5)                   | Sandboxed embed — works inside AI artifact runtimes.                           |
+
+### Embed policy
+
+The iframe at `/a/:chain/:id/embed` reads an optional `embedPolicy` from the agent's on-chain manifest metadata. Shape:
+
+```json
+{
+	"embedPolicy": {
+		"mode": "allowlist" | "denylist" | "open",
+		"hosts": ["partner.example", "*.example.com"]
+	}
+}
+```
+
+- `mode: "open"` (or missing policy): permissionless — embed anywhere. This is the default.
+- `mode: "allowlist"`: iframe refuses to render unless the parent host matches at least one entry.
+- `mode: "denylist"`: iframe refuses to render if the parent host matches any entry.
+
+Parent host is determined from `window.location.ancestorOrigins` (Chromium) or `document.referrer`. When the iframe refuses, it posts `{ __agent, type: 'blocked', host }` to its parent and shows a link to open the agent on `3dagent.vercel.app`.
+
+**We ship permissionless by default.** On-chain identity is public — any embedder can show any agent unless the owner has explicitly set a policy. The policy path exists so owners _can_ restrict later; it doesn't gate the default experience.
 
 ## See also
 

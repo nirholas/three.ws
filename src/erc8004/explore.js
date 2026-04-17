@@ -519,6 +519,17 @@ class ExplorePage {
 				}
 			});
 		});
+		root.querySelectorAll('[data-role="card-embed"]').forEach((btn) => {
+			btn.addEventListener('click', (e) => {
+				e.preventDefault();
+				e.stopPropagation();
+				openEmbedModal({
+					chainId: Number(btn.dataset.chainId),
+					agentId: btn.dataset.agentId,
+					name: btn.dataset.name,
+				});
+			});
+		});
 	}
 
 	_wireExampleClicks(root) {
@@ -651,6 +662,12 @@ function renderCard(r) {
 					<a class="explore-btn explore-btn--sm explore-btn--primary" href="${esc(viewerUrl)}">Open 3D ↗</a>
 					${explorerUrl ? `<a class="explore-btn explore-btn--sm" href="${esc(explorerUrl)}" target="_blank" rel="noopener">Explorer ↗</a>` : ''}
 					<button type="button" class="explore-btn explore-btn--sm explore-btn--ghost"
+						data-role="card-embed"
+						data-chain-id="${esc(String(r.chainId))}"
+						data-agent-id="${esc(String(r.agentId))}"
+						data-name="${esc(r.name || `Agent #${r.agentId}`)}"
+						title="Get embed snippets">Embed</button>
+					<button type="button" class="explore-btn explore-btn--sm explore-btn--ghost"
 						data-role="card-copy" data-share="${esc(viewerUrl)}" title="Copy shareable link">Share</button>
 				</div>
 			</div>
@@ -676,6 +693,149 @@ function renderNoMatchCopy(type, query) {
 		default:
 			return `Nothing resolved. Try an address, ENS name, tx hash, or agent ID.`;
 	}
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Embed modal
+// ───────────────────────────────────────────────────────────────────────────
+
+const LIB_CDN_URL = 'https://3dagent.vercel.app/agent-3d/latest/agent-3d.js';
+
+/**
+ * Open a modal with copy-paste embed snippets for an on-chain agent.
+ * @param {{ chainId: number, agentId: string, name: string }} p
+ */
+function openEmbedModal({ chainId, agentId, name }) {
+	// Remove any existing
+	document.querySelector('.embed-modal')?.remove();
+
+	const origin = location.origin;
+	const pageUrl = `${origin}/a/${chainId}/${agentId}`;
+	const embedUrl = `${origin}/a/${chainId}/${agentId}/embed`;
+	const agentUri = `agent://${chainId}/${agentId}`;
+	const displayName = name || `Agent #${agentId}`;
+
+	const snippets = {
+		iframe: `<iframe src="${embedUrl}" width="480" height="600" style="border:0;border-radius:12px" allow="autoplay; xr-spatial-tracking" sandbox="allow-scripts allow-same-origin allow-popups" title="${displayName}"></iframe>`,
+		webComponent: `<script type="module" src="${LIB_CDN_URL}"></script>
+<agent-3d src="${agentUri}" mode="inline" width="480px" responsive></agent-3d>`,
+		markdown: `[![${displayName}](${origin}/api/a-og?chain=${chainId}&id=${agentId})](${pageUrl})`,
+		link: pageUrl,
+		farcaster: pageUrl,
+	};
+
+	const modal = document.createElement('div');
+	modal.className = 'embed-modal';
+	modal.setAttribute('role', 'dialog');
+	modal.setAttribute('aria-modal', 'true');
+	modal.setAttribute('aria-label', `Embed ${displayName}`);
+	modal.innerHTML = `
+		<div class="embed-modal__backdrop" data-role="close"></div>
+		<div class="embed-modal__panel" role="document">
+			<header class="embed-modal__head">
+				<div>
+					<h2 class="embed-modal__title">Embed ${esc(displayName)}</h2>
+					<p class="embed-modal__sub">Drop this anywhere — any site, any doc, any chat.</p>
+				</div>
+				<button type="button" class="embed-modal__close" data-role="close" aria-label="Close">×</button>
+			</header>
+			<div class="embed-modal__tabs" role="tablist">
+				<button type="button" class="embed-tab is-active" data-tab="webComponent" role="tab" aria-selected="true">Web component</button>
+				<button type="button" class="embed-tab" data-tab="iframe" role="tab" aria-selected="false">iframe</button>
+				<button type="button" class="embed-tab" data-tab="link" role="tab" aria-selected="false">Link</button>
+				<button type="button" class="embed-tab" data-tab="markdown" role="tab" aria-selected="false">Markdown</button>
+				<button type="button" class="embed-tab" data-tab="farcaster" role="tab" aria-selected="false">Farcaster</button>
+			</div>
+			<div class="embed-modal__body">
+				<div class="embed-pane is-active" data-pane="webComponent">
+					<p class="embed-pane__hint">Full fidelity — loads the avatar + runtime. Requires modules.</p>
+					<textarea class="embed-snippet" readonly rows="3">${esc(snippets.webComponent)}</textarea>
+					<button type="button" class="explore-btn explore-btn--sm explore-btn--primary" data-role="copy" data-key="webComponent">Copy</button>
+				</div>
+				<div class="embed-pane" data-pane="iframe">
+					<p class="embed-pane__hint">Works everywhere that allows iframes — Notion, Substack, Ghost, your own site.</p>
+					<textarea class="embed-snippet" readonly rows="3">${esc(snippets.iframe)}</textarea>
+					<button type="button" class="explore-btn explore-btn--sm explore-btn--primary" data-role="copy" data-key="iframe">Copy</button>
+				</div>
+				<div class="embed-pane" data-pane="link">
+					<p class="embed-pane__hint">Share anywhere — unfurls in Slack, X, Discord, iMessage with a preview card.</p>
+					<input class="embed-snippet embed-snippet--input" readonly value="${esc(snippets.link)}" />
+					<button type="button" class="explore-btn explore-btn--sm explore-btn--primary" data-role="copy" data-key="link">Copy</button>
+				</div>
+				<div class="embed-pane" data-pane="markdown">
+					<p class="embed-pane__hint">Drop into a README or blog that renders markdown — shows a preview card that links to the 3D viewer.</p>
+					<textarea class="embed-snippet" readonly rows="2">${esc(snippets.markdown)}</textarea>
+					<button type="button" class="explore-btn explore-btn--sm explore-btn--primary" data-role="copy" data-key="markdown">Copy</button>
+				</div>
+				<div class="embed-pane" data-pane="farcaster">
+					<p class="embed-pane__hint">Cast this link. The page has Frame meta tags — Warpcast and compatible clients render an interactive card with View 3D + Explore buttons.</p>
+					<input class="embed-snippet embed-snippet--input" readonly value="${esc(snippets.farcaster)}" />
+					<button type="button" class="explore-btn explore-btn--sm explore-btn--primary" data-role="copy" data-key="farcaster">Copy</button>
+				</div>
+			</div>
+			<footer class="embed-modal__foot">
+				<a href="${esc(pageUrl)}" target="_blank" rel="noopener" class="embed-foot-link">Open standalone page ↗</a>
+				<a href="${esc(embedUrl)}" target="_blank" rel="noopener" class="embed-foot-link">Preview iframe ↗</a>
+			</footer>
+		</div>
+	`;
+	document.body.appendChild(modal);
+
+	const close = () => {
+		modal.remove();
+		document.removeEventListener('keydown', onEsc);
+	};
+	const onEsc = (e) => {
+		if (e.key === 'Escape') close();
+	};
+	document.addEventListener('keydown', onEsc);
+	modal.querySelectorAll('[data-role="close"]').forEach((el) => el.addEventListener('click', close));
+
+	modal.querySelectorAll('.embed-tab').forEach((tab) => {
+		tab.addEventListener('click', () => {
+			modal.querySelectorAll('.embed-tab').forEach((t) => {
+				t.classList.toggle('is-active', t === tab);
+				t.setAttribute('aria-selected', t === tab ? 'true' : 'false');
+			});
+			modal.querySelectorAll('.embed-pane').forEach((p) => {
+				p.classList.toggle('is-active', p.dataset.pane === tab.dataset.tab);
+			});
+		});
+	});
+
+	modal.querySelectorAll('[data-role="copy"]').forEach((btn) => {
+		btn.addEventListener('click', () => {
+			const key = btn.dataset.key;
+			const text = snippets[key];
+			if (!text) return;
+			const done = (ok) => {
+				btn.textContent = ok ? 'Copied ✓' : 'Copy failed';
+				setTimeout(() => (btn.textContent = 'Copy'), 1400);
+			};
+			if (navigator.clipboard?.writeText) {
+				navigator.clipboard.writeText(text).then(
+					() => done(true),
+					() => done(false),
+				);
+			} else {
+				const ta = modal.querySelector(`[data-pane="${key}"] .embed-snippet`);
+				ta?.select();
+				try {
+					document.execCommand('copy');
+					done(true);
+				} catch {
+					done(false);
+				}
+			}
+		});
+	});
+
+	// Focus first field for quick copy
+	setTimeout(() => {
+		const first = modal.querySelector('.embed-pane.is-active .embed-snippet');
+		first?.focus();
+		first?.select?.();
+	}, 50);
 }
 
 // ───────────────────────────────────────────────────────────────────────────

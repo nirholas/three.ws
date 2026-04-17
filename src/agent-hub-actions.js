@@ -68,14 +68,19 @@ export function renderHubActions(panel, identity, rawAgent) {
 			deployBtn.disabled = true;
 			deployBtn.querySelector('span').textContent = 'Opening…';
 			try {
+				const initial = await _resolveAgentPrefill(rawAgent);
 				const { RegisterUI } = await import('./erc8004/register-ui.js');
 				const wrap = document.createElement('div');
 				wrap.className = 'agent-register-overlay';
 				document.body.appendChild(wrap);
-				new RegisterUI(wrap, () => {
-					wrap.remove();
-					location.reload();
-				});
+				new RegisterUI(
+					wrap,
+					() => {
+						wrap.remove();
+						location.reload();
+					},
+					{ initial },
+				);
 			} catch (err) {
 				console.error('[hub] register-ui load failed', err);
 				deployBtn.disabled = false;
@@ -96,6 +101,35 @@ export function renderHubActions(panel, identity, rawAgent) {
 	} else {
 		panel.appendChild(row);
 	}
+}
+
+/**
+ * Build the `opts.initial` payload for RegisterUI from a backend agent.
+ * Pulls name + description directly; if the agent has a linked avatar_id,
+ * resolves that avatar's GLB + thumbnail so the wizard opens with the
+ * embodied version pre-selected. Falls back silently on any fetch failure.
+ *
+ * @param {Object} rawAgent
+ */
+async function _resolveAgentPrefill(rawAgent) {
+	const initial = {
+		name: rawAgent.name || '',
+		description: rawAgent.description || '',
+	};
+	if (!rawAgent.avatar_id) return initial;
+	try {
+		const res = await fetch(`/api/avatars/${encodeURIComponent(rawAgent.avatar_id)}`, {
+			credentials: 'include',
+		});
+		if (!res.ok) return initial;
+		const { avatar } = await res.json();
+		if (!avatar) return initial;
+		initial.glbUrl = avatar.url || avatar.model_url || '';
+		initial.imageUrl = avatar.thumbnail_url || '';
+	} catch (err) {
+		console.warn('[hub] avatar prefill failed; opening wizard without it', err);
+	}
+	return initial;
 }
 
 // ── Icon helpers (inline SVG, consistent with existing nav icons) ─────────────
