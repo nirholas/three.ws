@@ -9,6 +9,7 @@ import { Memory } from './memory/index.js';
 import { loadManifest, fetchRelative } from './manifest.js';
 import { resolveURI } from './ipfs.js';
 import { resolveAgentById, AgentResolveError } from './agent-resolver.js';
+import { parseAgentRef, resolveOnchainAgent, toManifest } from './erc8004/resolver.js';
 
 const MODES = ['inline', 'floating', 'section', 'fullscreen'];
 
@@ -180,7 +181,20 @@ const BASE_STYLE = `
 
 class Agent3DElement extends HTMLElement {
 	static get observedAttributes() {
-		return ['src', 'manifest', 'body', 'agent-id', 'mode', 'position', 'width', 'height', 'voice', 'api-key', 'key-proxy', 'responsive'];
+		return [
+			'src',
+			'manifest',
+			'body',
+			'agent-id',
+			'mode',
+			'position',
+			'width',
+			'height',
+			'voice',
+			'api-key',
+			'key-proxy',
+			'responsive',
+		];
 	}
 
 	constructor() {
@@ -217,7 +231,8 @@ class Agent3DElement extends HTMLElement {
 
 	attributeChangedCallback(name, oldVal, newVal) {
 		if (!this._mounted) return;
-		if (['mode', 'position', 'width', 'height', 'responsive'].includes(name)) this._applyLayout();
+		if (['mode', 'position', 'width', 'height', 'responsive'].includes(name))
+			this._applyLayout();
 		if (['src', 'manifest', 'body', 'agent-id'].includes(name)) {
 			// Source change — reboot
 			this._teardown();
@@ -257,7 +272,10 @@ class Agent3DElement extends HTMLElement {
 		pillBtn.setAttribute('aria-label', 'Open agent');
 		pillBtn.addEventListener('click', () => this._expandPill());
 		pillBtn.addEventListener('keydown', (e) => {
-			if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this._expandPill(); }
+			if (e.key === 'Enter' || e.key === ' ') {
+				e.preventDefault();
+				this._expandPill();
+			}
 		});
 		this.shadowRoot.appendChild(pillBtn);
 		this._pillBtn = pillBtn;
@@ -352,9 +370,17 @@ class Agent3DElement extends HTMLElement {
 			const width = this.getAttribute('width') || '320px';
 			const height = this.getAttribute('height') || '420px';
 			this.style.setProperty('--agent-width', responsive ? this._clampWidth(width) : width);
-			this.style.setProperty('--agent-height', responsive ? this._clampHeight(height) : height);
+			this.style.setProperty(
+				'--agent-height',
+				responsive ? this._clampHeight(height) : height,
+			);
 		} else {
-			this.style.top = this.style.bottom = this.style.left = this.style.right = this.style.transform = '';
+			this.style.top =
+				this.style.bottom =
+				this.style.left =
+				this.style.right =
+				this.style.transform =
+					'';
 
 			const width = this.getAttribute('width');
 			const height = this.getAttribute('height');
@@ -371,8 +397,16 @@ class Agent3DElement extends HTMLElement {
 				}
 			}
 
-			if (width) this.style.setProperty('--agent-width', responsive ? this._clampWidth(width) : width);
-			if (height) this.style.setProperty('--agent-height', responsive ? this._clampHeight(height) : height);
+			if (width)
+				this.style.setProperty(
+					'--agent-width',
+					responsive ? this._clampWidth(width) : width,
+				);
+			if (height)
+				this.style.setProperty(
+					'--agent-height',
+					responsive ? this._clampHeight(height) : height,
+				);
 		}
 	}
 
@@ -395,15 +429,23 @@ class Agent3DElement extends HTMLElement {
 
 		// Swipe-down to close the bottom-sheet (CSS transitions handle the animation)
 		let touchStartY = 0;
-		this.shadowRoot.addEventListener('touchstart', (e) => {
-			touchStartY = e.touches[0].clientY;
-		}, { passive: true });
-		this.shadowRoot.addEventListener('touchend', (e) => {
-			const dy = e.changedTouches[0].clientY - touchStartY;
-			if (dy > 60 && this._pillActive && this.getAttribute('aria-expanded') === 'true') {
-				this._collapsePill();
-			}
-		}, { passive: true });
+		this.shadowRoot.addEventListener(
+			'touchstart',
+			(e) => {
+				touchStartY = e.touches[0].clientY;
+			},
+			{ passive: true },
+		);
+		this.shadowRoot.addEventListener(
+			'touchend',
+			(e) => {
+				const dy = e.changedTouches[0].clientY - touchStartY;
+				if (dy > 60 && this._pillActive && this.getAttribute('aria-expanded') === 'true') {
+					this._collapsePill();
+				}
+			},
+			{ passive: true },
+		);
 	}
 
 	_updatePillState(narrow) {
@@ -465,7 +507,12 @@ class Agent3DElement extends HTMLElement {
 		this._stageEl.style.display = '';
 		// Clear pill inline overrides, re-apply proper floating layout
 		this.style.width = this.style.height = this.style.borderRadius = '';
-		this.style.bottom = this.style.top = this.style.left = this.style.right = this.style.transform = '';
+		this.style.bottom =
+			this.style.top =
+			this.style.left =
+			this.style.right =
+			this.style.transform =
+				'';
 		this._applyLayout();
 		if (this._outsideTapHandler) {
 			document.removeEventListener('pointerdown', this._outsideTapHandler);
@@ -475,7 +522,10 @@ class Agent3DElement extends HTMLElement {
 
 	_observeViewport() {
 		if (this.hasAttribute('eager')) return;
-		if (typeof IntersectionObserver === 'undefined') { this._boot(); return; }
+		if (typeof IntersectionObserver === 'undefined') {
+			this._boot();
+			return;
+		}
 		this._io = new IntersectionObserver((entries) => {
 			if (entries.some((e) => e.isIntersecting)) {
 				this._io.disconnect();
@@ -490,14 +540,21 @@ class Agent3DElement extends HTMLElement {
 		this._booting = true;
 		try {
 			this._loadingEl.hidden = false;
-			this.dispatchEvent(new CustomEvent('agent:load-progress', { detail: { phase: 'manifest', pct: 0.1 } }));
+			this.dispatchEvent(
+				new CustomEvent('agent:load-progress', { detail: { phase: 'manifest', pct: 0.1 } }),
+			);
 
 			const manifest = await this._resolveManifest();
 			this._manifest = manifest;
-			this.dispatchEvent(new CustomEvent('agent:load-progress', { detail: { phase: 'manifest', pct: 0.3 } }));
+			this.dispatchEvent(
+				new CustomEvent('agent:load-progress', { detail: { phase: 'manifest', pct: 0.3 } }),
+			);
 
 			// Hydrate instructions.md if referenced
-			if (typeof manifest.brain?.instructions === 'string' && manifest.brain.instructions.endsWith('.md')) {
+			if (
+				typeof manifest.brain?.instructions === 'string' &&
+				manifest.brain.instructions.endsWith('.md')
+			) {
 				const text = await fetchRelative(manifest, manifest.brain.instructions);
 				if (text) manifest.instructions = stripFrontmatter(text);
 			} else if (manifest.brain?.instructions) {
@@ -505,7 +562,9 @@ class Agent3DElement extends HTMLElement {
 			}
 
 			// Build Viewer
-			this.dispatchEvent(new CustomEvent('agent:load-progress', { detail: { phase: 'body', pct: 0.45 } }));
+			this.dispatchEvent(
+				new CustomEvent('agent:load-progress', { detail: { phase: 'body', pct: 0.45 } }),
+			);
 			const viewer = new Viewer(this._stageEl, { kiosk: this.hasAttribute('kiosk') });
 			this._viewer = viewer;
 			const bodyURI = resolveURI(manifest.body?.uri);
@@ -515,8 +574,11 @@ class Agent3DElement extends HTMLElement {
 			this._scene = new SceneController(viewer);
 
 			// Memory
-			this.dispatchEvent(new CustomEvent('agent:load-progress', { detail: { phase: 'memory', pct: 0.6 } }));
-			const memoryNamespace = manifest.id?.agentId || this.getAttribute('memory-key') || manifest.name || 'anon';
+			this.dispatchEvent(
+				new CustomEvent('agent:load-progress', { detail: { phase: 'memory', pct: 0.6 } }),
+			);
+			const memoryNamespace =
+				manifest.id?.agentId || this.getAttribute('memory-key') || manifest.name || 'anon';
 			this._memory = await Memory.load({
 				mode: this.getAttribute('memory') || manifest.memory?.mode || 'local',
 				namespace: memoryNamespace,
@@ -525,7 +587,9 @@ class Agent3DElement extends HTMLElement {
 			});
 
 			// Skills
-			this.dispatchEvent(new CustomEvent('agent:load-progress', { detail: { phase: 'skills', pct: 0.75 } }));
+			this.dispatchEvent(
+				new CustomEvent('agent:load-progress', { detail: { phase: 'skills', pct: 0.75 } }),
+			);
 			this._skills = new SkillRegistry({
 				trust: this.getAttribute('skill-trust') || 'owned-only',
 				ownerAddress: manifest.id?.owner,
@@ -533,15 +597,23 @@ class Agent3DElement extends HTMLElement {
 			const skillList = manifest.skills || [];
 			for (const spec of skillList) {
 				try {
-					const skill = await this._skills.install(spec, { bundleBase: manifest._baseURI });
-					this.dispatchEvent(new CustomEvent('skill:loaded', { detail: { name: skill.name, uri: skill.uri } }));
+					const skill = await this._skills.install(spec, {
+						bundleBase: manifest._baseURI,
+					});
+					this.dispatchEvent(
+						new CustomEvent('skill:loaded', {
+							detail: { name: skill.name, uri: skill.uri },
+						}),
+					);
 				} catch (e) {
 					console.warn('[agent-3d] skill load failed', spec, e);
 				}
 			}
 
 			// Runtime
-			this.dispatchEvent(new CustomEvent('agent:load-progress', { detail: { phase: 'brain', pct: 0.9 } }));
+			this.dispatchEvent(
+				new CustomEvent('agent:load-progress', { detail: { phase: 'brain', pct: 0.9 } }),
+			);
 			const providerConfig = {
 				apiKey: this.getAttribute('api-key') || undefined,
 				proxyURL: this.getAttribute('key-proxy') || undefined,
@@ -560,9 +632,20 @@ class Agent3DElement extends HTMLElement {
 				providerConfig,
 			});
 			// Re-dispatch runtime events on the host
-			for (const ev of ['brain:thinking', 'brain:message', 'skill:tool-called', 'voice:speech-start', 'voice:speech-end', 'voice:transcript', 'voice:listen-start', 'memory:write']) {
+			for (const ev of [
+				'brain:thinking',
+				'brain:message',
+				'skill:tool-called',
+				'voice:speech-start',
+				'voice:speech-end',
+				'voice:transcript',
+				'voice:listen-start',
+				'memory:write',
+			]) {
 				this._runtime.addEventListener(ev, (e) => {
-					this.dispatchEvent(new CustomEvent(ev, { detail: e.detail, bubbles: true, composed: true }));
+					this.dispatchEvent(
+						new CustomEvent(ev, { detail: e.detail, bubbles: true, composed: true }),
+					);
 					if (ev === 'brain:message' && this._chatEl) this._renderMessage(e.detail);
 				});
 			}
@@ -570,20 +653,24 @@ class Agent3DElement extends HTMLElement {
 			this._mounted = true;
 			this._loadingEl.hidden = true;
 			if (!this._pillActive) this._posterEl.style.opacity = '0';
-			this.dispatchEvent(new CustomEvent('agent:ready', {
-				detail: { agent: this, manifest },
-				bubbles: true,
-				composed: true,
-			}));
+			this.dispatchEvent(
+				new CustomEvent('agent:ready', {
+					detail: { agent: this, manifest },
+					bubbles: true,
+					composed: true,
+				}),
+			);
 		} catch (err) {
 			console.error('[agent-3d] boot failed', err);
 			this._loadingEl.hidden = true;
 			this._showError(err);
-			this.dispatchEvent(new CustomEvent('agent:error', {
-				detail: { phase: 'boot', error: err },
-				bubbles: true,
-				composed: true,
-			}));
+			this.dispatchEvent(
+				new CustomEvent('agent:error', {
+					detail: { phase: 'boot', error: err },
+					bubbles: true,
+					composed: true,
+				}),
+			);
 		} finally {
 			this._booting = false;
 		}
@@ -594,11 +681,37 @@ class Agent3DElement extends HTMLElement {
 		const manifestAttr = this.getAttribute('manifest');
 		const body = this.getAttribute('body');
 		const agentIdAttr = this.getAttribute('agent-id');
+		const chainIdAttr = this.getAttribute('chain-id');
 		if (src) {
 			if (agentIdAttr) console.warn('[agent-3d] both src and agent-id provided; using src');
-			return loadManifest(src, { rpcURL: this.getAttribute('rpc-url'), registry: this.getAttribute('registry') });
+			return loadManifest(src, {
+				rpcURL: this.getAttribute('rpc-url'),
+				registry: this.getAttribute('registry'),
+			});
 		}
-		if (agentIdAttr) return resolveAgentById(agentIdAttr);
+		if (agentIdAttr) {
+			// On-chain reference? Supported forms:
+			//   agent-id="eip155:8453:0xabc...:42"   full CAIP-10 + token
+			//   agent-id="onchain:8453:42"           shorthand, canonical registry
+			//   agent-id="42" chain-id="8453"        numeric id + explicit chain
+			//   agent-id="agent://8453/42"           agent URI
+			const caipInput = chainIdAttr
+				? {
+						chainId: Number(chainIdAttr),
+						agentId: agentIdAttr,
+						registry: this.getAttribute('registry') || undefined,
+					}
+				: agentIdAttr;
+			const ref = parseAgentRef(caipInput);
+			if (ref) {
+				const resolved = await resolveOnchainAgent(ref);
+				if (resolved.error && !resolved.glbUrl)
+					throw new Error(`On-chain resolve failed: ${resolved.error}`);
+				return toManifest(resolved);
+			}
+			// Fall back to backend agent by UUID
+			return resolveAgentById(agentIdAttr);
+		}
 		if (manifestAttr) return loadManifest(manifestAttr);
 		if (body) {
 			// Ad-hoc agent from a bare GLB
@@ -615,7 +728,11 @@ class Agent3DElement extends HTMLElement {
 				},
 				instructions: instructionsAttr || 'You are an embodied 3D agent.',
 				voice: { tts: { provider: 'browser' }, stt: { provider: 'browser' } },
-				skills: (this.getAttribute('skills') || '').split(',').map((s) => s.trim()).filter(Boolean).map((uri) => ({ uri })),
+				skills: (this.getAttribute('skills') || '')
+					.split(',')
+					.map((s) => s.trim())
+					.filter(Boolean)
+					.map((uri) => ({ uri })),
 				memory: { mode: this.getAttribute('memory') || 'local' },
 				tools: ['wave', 'lookAt', 'play_clip', 'setExpression', 'speak', 'remember'],
 				version: '0.1.0',
@@ -664,8 +781,12 @@ class Agent3DElement extends HTMLElement {
 	}
 
 	_teardown() {
-		try { this._io?.disconnect(); } catch {}
-		try { this._ro?.disconnect(); } catch {}
+		try {
+			this._io?.disconnect();
+		} catch {}
+		try {
+			this._ro?.disconnect();
+		} catch {}
 		try {
 			if (this._mqNarrow && this._mqNarrowHandler) {
 				this._mqNarrow.removeEventListener('change', this._mqNarrowHandler);
@@ -675,8 +796,12 @@ class Agent3DElement extends HTMLElement {
 			document.removeEventListener('pointerdown', this._outsideTapHandler);
 			this._outsideTapHandler = null;
 		}
-		try { this._runtime?.destroy(); } catch {}
-		try { this._viewer?.dispose?.(); } catch {}
+		try {
+			this._runtime?.destroy();
+		} catch {}
+		try {
+			this._viewer?.dispose?.();
+		} catch {}
 		this._mounted = false;
 		this._pillActive = false;
 		this._runtime = this._viewer = this._scene = this._memory = this._skills = null;
@@ -694,23 +819,43 @@ class Agent3DElement extends HTMLElement {
 		return reply?.text || '';
 	}
 
-	clearConversation() { this._runtime?.clearConversation(); }
+	clearConversation() {
+		this._runtime?.clearConversation();
+	}
 
-	async wave(opts) { return this._scene?.playAnimationByHint('wave', opts); }
-	async lookAt(target) { return this._scene?.lookAt(target); }
-	async play(name, opts) { return this._scene?.playClipByName(name, opts); }
+	async wave(opts) {
+		return this._scene?.playAnimationByHint('wave', opts);
+	}
+	async lookAt(target) {
+		return this._scene?.lookAt(target);
+	}
+	async play(name, opts) {
+		return this._scene?.playClipByName(name, opts);
+	}
 
 	async installSkill(uri) {
 		if (!this._skills) throw new Error('Agent not mounted');
 		return this._skills.install({ uri });
 	}
-	uninstallSkill(name) { return this._skills?.uninstall(name); }
-	get skills() { return this._skills?.all() || []; }
-	get memory() { return this._memory; }
-	get manifest() { return this._manifest; }
-	get runtime() { return this._runtime; }
+	uninstallSkill(name) {
+		return this._skills?.uninstall(name);
+	}
+	get skills() {
+		return this._skills?.all() || [];
+	}
+	get memory() {
+		return this._memory;
+	}
+	get manifest() {
+		return this._manifest;
+	}
+	get runtime() {
+		return this._runtime;
+	}
 
-	setMode(mode) { this.setAttribute('mode', mode); }
+	setMode(mode) {
+		this.setAttribute('mode', mode);
+	}
 	setPosition(pos, offset) {
 		this.setAttribute('position', pos);
 		if (offset) this.setAttribute('offset', offset);
@@ -720,14 +865,23 @@ class Agent3DElement extends HTMLElement {
 		this.setAttribute('height', h);
 	}
 
-	pause() { this._runtime?.pause(); }
-	resume() { /* viewer resumes via IntersectionObserver */ }
-	destroy() { this._teardown(); }
+	pause() {
+		this._runtime?.pause();
+	}
+	resume() {
+		/* viewer resumes via IntersectionObserver */
+	}
+	destroy() {
+		this._teardown();
+	}
 
 	_waitForReady() {
 		if (this._mounted) return Promise.resolve();
 		return new Promise((resolve) => {
-			const on = () => { this.removeEventListener('agent:ready', on); resolve(); };
+			const on = () => {
+				this.removeEventListener('agent:ready', on);
+				resolve();
+			};
 			this.addEventListener('agent:ready', on);
 			if (!this._booting) this._boot();
 		});

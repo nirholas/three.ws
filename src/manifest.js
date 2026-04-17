@@ -3,6 +3,7 @@
 
 import { JsonRpcProvider, Contract } from 'ethers';
 import { IDENTITY_REGISTRY_ABI, REGISTRY_DEPLOYMENTS } from './erc8004/abi.js';
+import { findAvatar3D } from './erc8004/queries.js';
 import { resolveURI, fetchWithFallback } from './ipfs.js';
 
 const CHAIN_ALIASES = {
@@ -99,6 +100,10 @@ export function normalize(json, { baseURI = '' } = {}) {
 	// ERC-8004 registration JSON — adapt to manifest shape
 	if (json.type && json.type.includes('eip-8004')) {
 		const registration = json.registrations?.[0] || {};
+		// The GLB lives in services[{name:'avatar'}] per our convention. The
+		// top-level `image` field is a 2D thumbnail (NFT-marketplace compat) —
+		// only fall back to it when no 3D body was declared.
+		const glbUri = findAvatar3D(json);
 		return {
 			spec: 'agent-manifest/0.1',
 			_baseURI: baseURI,
@@ -107,13 +112,16 @@ export function normalize(json, { baseURI = '' } = {}) {
 			name: json.name,
 			description: json.description,
 			image: json.image,
-			body: { uri: json.image, format: 'gltf-binary' },
+			body: { uri: resolveURI(glbUri || json.image || ''), format: 'gltf-binary' },
 			brain: { provider: 'none' },
 			voice: { tts: { provider: 'browser' }, stt: { provider: 'browser' } },
 			skills: [],
 			memory: { mode: 'local' },
 			tools: ['wave', 'lookAt', 'play_clip', 'setExpression'],
 			version: '0.1.0',
+			services: Array.isArray(json.services) ? json.services : [],
+			x402Support: !!json.x402Support,
+			embedPolicy: json.embedPolicy || null,
 		};
 	}
 

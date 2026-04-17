@@ -11,6 +11,7 @@
 import { BrowserProvider, Contract } from 'ethers';
 import { IDENTITY_REGISTRY_ABI, REGISTRY_DEPLOYMENTS, agentRegistryId } from './abi.js';
 import { isPrivyConfigured, connectWithPrivy } from './privy.js';
+import { glbFileToThumbnail } from './thumbnail.js';
 
 // ---------------------------------------------------------------------------
 // Wallet
@@ -44,7 +45,9 @@ export async function connectWallet() {
 
 	// Fallback: raw injected provider (MetaMask, etc.)
 	if (!window.ethereum) {
-		throw new Error('No wallet detected. Install MetaMask or configure Privy (VITE_PRIVY_APP_ID).');
+		throw new Error(
+			'No wallet detected. Install MetaMask or configure Privy (VITE_PRIVY_APP_ID).',
+		);
 	}
 
 	_provider = new BrowserProvider(window.ethereum);
@@ -166,7 +169,7 @@ export function buildRegistrationJSON({
 		});
 	}
 
-	return {
+	const json = {
 		type: 'https://eips.ethereum.org/EIPS/eip-8004#registration-v1',
 		name,
 		description,
@@ -182,6 +185,16 @@ export function buildRegistrationJSON({
 		],
 		supportedTrust: ['reputation'],
 	};
+
+	// Top-level `body` field follows specs/AGENT_MANIFEST.md convention and is
+	// read directly by src/manifest.js → normalize(). Spec-permitted (extension
+	// fields MAY be added). Redundant with the `avatar` service entry above but
+	// keeps this repo's manifest resolver happy without forcing it to grep services.
+	if (glbUrl) {
+		json.body = { uri: glbUrl, format: 'gltf-binary' };
+	}
+
+	return json;
 }
 
 // ---------------------------------------------------------------------------
@@ -203,46 +216,98 @@ export function getIdentityRegistry(chainId, signer) {
 }
 
 /**
- * Full registration flow:
- *  1. Upload GLB to storage (R2 or Pinata)
- *  2. Build registration JSON
- *  3. Upload registration JSON to storage
- *  4. Call register(agentURI) on-chain
- *  5. Update agentURI to the final registration JSON
+ * Full ERC-8004 registration flow.
  *
- * @param {object} opts
- * @param {File}   opts.glbFile       The GLB avatar file
- * @param {string} opts.name          Agent name
- * @param {string} opts.description   Agent description
- * @param {string} [opts.apiToken]    Optional Pinata JWT (omit to use built-in storage)
- * @param {Array<{name?:string,type?:string,endpoint:string,version?:string}>} [opts.services]  Extra services to include in registration JSON
- * @param {function} [opts.onStatus]  Callback for progress updates
- * @returns {Promise<{agentId: number, registrationUrl: string, txHash: string}>}
+ * Resolution order for each asset:
+ *   - GLB:  `glbUrl` (already-stable URL, skips re-pinning) → `glbFile` (pinned) → none
+ *   - 2D image: `imageUrl` → `imageFile` (pinned) → auto-render from `glbFile`
+ *              (unless `autoThumbnail: false`) → empty string
+ *
+ * On-chain sequence:
+ *   1. Pin any files that aren't already URLs
+ *   2. (Optional) auto-render a 2D thumbnail from the GLB for ERC-721 marketplace compat
+ *   3. Connect wallet + get Identity Registry contract
+ *   4. `register(seedURI)` — seeds the mint with whichever URL resolves first
+ *   5. Build full registration JSON with the minted agentId
+ *   6. Pin the JSON
+ *   7. `setAgentURI(agentId, registrationUrl)` — point on-chain pointer at final JSON
+ *
+ * @param {object}  opts
+ * @param {string}  opts.name
+ * @param {string}  opts.description
+ * @param {File}    [opts.glbFile]        GLB to pin (skipped if `glbUrl` provided)
+ * @param {string}  [opts.glbUrl]         Pre-resolved GLB URL — pass instead of `glbFile` to skip re-pin
+ * @param {string}  [opts.imageUrl]       Pre-resolved 2D image URL (PNG/JPG)
+ * @param {File|Blob} [opts.imageFile]    2D image to pin when `imageUrl` absent
+ * @param {boolean} [opts.autoThumbnail=true]  Auto-render thumbnail from GLB if no image provided
+ * @param {string}  [opts.apiToken]       Optional Pinata JWT — omit to use built-in R2 backend
+ * @param {Array<{name?:string,type?:string,endpoint:string,version?:string}>} [opts.services]
+ * @param {boolean} [opts.x402Support=false]
+ * @param {(msg: string) => void} [opts.onStatus]  Progress callback
+ * @returns {Promise<{agentId: number, registrationUrl: string, txHash: string, chainId: number}>}
  */
-export async function registerAgent({ glbFile, name, description, imageUrl, apiToken, services = [], x402Support = false, onStatus }) {
+export async function registerAgent({
+	name,
+	description,
+	glbFile,
+	glbUrl,
+	imageUrl,
+	imageFile,
+	autoThumbnail = true,
+	apiToken,
+	services = [],
+	x402Support = false,
+	onStatus,
+}) {
 	const log = onStatus || (() => {});
 
-	// 1. Connect wallet
+	// ── 1. Resolve GLB: pin file if we don't already have a URL.
+	if (glbFile && !glbUrl) {
+		log('Uploading 3D model...');
+		glbUrl = await pinFile(glbFile, apiToken);
+		log(`Model uploaded: ${glbUrl}`);
+	}
+
+	// ── 2. Resolve 2D image. Priority: URL → File → auto-thumbnail from GLB.
+	if (!imageUrl && imageFile) {
+		log('Uploading 2D image...');
+		imageUrl = await pinFile(imageFile, apiToken);
+		log(`Image uploaded: ${imageUrl}`);
+	} else if (!imageUrl && autoThumbnail && glbFile) {
+		try {
+			log('Rendering 2D thumbnail from GLB...');
+			const thumb = await glbFileToThumbnail(glbFile);
+			imageUrl = await pinFile(thumb, apiToken);
+			log(`Thumbnail uploaded: ${imageUrl}`);
+		} catch (err) {
+			log(`Thumbnail render failed (${err.message}) — continuing without 2D image.`);
+		}
+	}
+	imageUrl = imageUrl || '';
+
+	// ── 3. Wallet + contract.
 	log('Connecting wallet...');
 	const { signer, chainId } = await connectWallet();
-
-	// 2. Upload GLB
-	log('Uploading 3D model...');
-	const glbUrl = await pinFile(glbFile, apiToken);
-	log(`Model uploaded: ${glbUrl}`);
-
-	// 3. Get contract
 	const registry = getIdentityRegistry(chainId, signer);
 
-	// 4. Register with GLB URL first to get the agentId
+	// ── 4. Mint with seed URI (useful metadata in the Registered event even if
+	//     setAgentURI fails before step 7 completes).
 	log('Registering agent on-chain...');
-	const tx = await registry['register(string)'](glbUrl);
+	const seedURI = glbUrl || imageUrl || '';
+	const tx = seedURI
+		? await registry['register(string)'](seedURI)
+		: await registry['register()']();
 	log(`Transaction submitted: ${tx.hash}`);
 	const receipt = await tx.wait();
 
-	// Parse agentId from the Registered event
 	const registeredEvent = receipt.logs
-		.map((l) => { try { return registry.interface.parseLog(l); } catch { return null; } })
+		.map((l) => {
+			try {
+				return registry.interface.parseLog(l);
+			} catch {
+				return null;
+			}
+		})
 		.find((e) => e && e.name === 'Registered');
 
 	if (!registeredEvent) {
@@ -252,13 +317,11 @@ export async function registerAgent({ glbFile, name, description, imageUrl, apiT
 	const agentId = Number(registeredEvent.args.agentId);
 	log(`Agent minted! agentId = ${agentId}`);
 
-	// 5. Build final registration JSON with the agentId. `imageUrl` is left as
-	// whatever the caller passed — NFT-marketplace thumbnails want a PNG/JPG,
-	// not a GLB. The GLB is surfaced via the `avatar` service entry below.
+	// ── 5 + 6. Build + pin the full registration JSON.
 	const registrationJSON = buildRegistrationJSON({
 		name,
 		description,
-		imageUrl: imageUrl || '',
+		imageUrl,
 		glbUrl,
 		agentId,
 		chainId,
@@ -267,7 +330,6 @@ export async function registerAgent({ glbFile, name, description, imageUrl, apiT
 		x402Support,
 	});
 
-	// 6. Upload registration JSON
 	log('Uploading registration metadata...');
 	const jsonBlob = new Blob([JSON.stringify(registrationJSON, null, 2)], {
 		type: 'application/json',
@@ -275,15 +337,11 @@ export async function registerAgent({ glbFile, name, description, imageUrl, apiT
 	const registrationUrl = await pinFile(jsonBlob, apiToken);
 	log(`Registration metadata uploaded: ${registrationUrl}`);
 
-	// 7. Update agentURI on-chain to point at the full registration JSON
+	// ── 7. Point agentURI at the final JSON.
 	log('Updating agentURI on-chain...');
 	const updateTx = await registry.setAgentURI(agentId, registrationUrl);
 	await updateTx.wait();
 	log('Agent URI updated on-chain.');
 
-	return {
-		agentId,
-		registrationUrl,
-		txHash: tx.hash,
-	};
+	return { agentId, registrationUrl, txHash: tx.hash, chainId };
 }

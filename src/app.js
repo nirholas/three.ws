@@ -51,28 +51,34 @@ function _base64ToFile(b64, name, type) {
 /**
  * Parse an on-chain agent URL path. Accepts:
  *   /a/<chainId>/<agentId>                       (canonical — registry inferred)
+ *   /a/<chainId>/<agentId>/embed                 (chromeless iframe variant)
  *   /a/<chainId>/<registry>/<agentId>            (explicit registry, for non-canonical deployments)
+ *   /a/<chainId>/<registry>/<agentId>/embed
  *   /a/eip155:<chainId>:<registry>/<agentId>     (full CAIP)
  */
 function parseOnchainPath(pathname) {
-	const m = pathname.match(/^\/a\/([^/]+)(?:\/([^/]+))?(?:\/([^/]+))?\/?$/);
+	// Strip trailing /embed (capturing) then peel remaining segments.
+	const embedMatch = pathname.match(/^(\/a\/.+?)\/embed\/?$/);
+	const embed = !!embedMatch;
+	const base = embed ? embedMatch[1] : pathname;
+	const m = base.match(/^\/a\/([^/]+)(?:\/([^/]+))?(?:\/([^/]+))?\/?$/);
 	if (!m) return null;
 	const [, a, b, c] = m;
 
 	// /a/eip155:chainId:registry/<agentId>
 	const caipMatch = a.match(/^eip155:(\d+):(0x[a-fA-F0-9]{40})$/);
 	if (caipMatch && b && /^\d+$/.test(b) && !c) {
-		return { chainId: Number(caipMatch[1]), registry: caipMatch[2], agentId: b };
+		return { chainId: Number(caipMatch[1]), registry: caipMatch[2], agentId: b, embed };
 	}
 
 	// /a/<chainId>/<registry>/<agentId>
 	if (b && c && /^\d+$/.test(a) && /^0x[a-fA-F0-9]{40}$/.test(b) && /^\d+$/.test(c)) {
-		return { chainId: Number(a), registry: b, agentId: c };
+		return { chainId: Number(a), registry: b, agentId: c, embed };
 	}
 
 	// /a/<chainId>/<agentId> (canonical: registry inferred from REGISTRY_DEPLOYMENTS)
 	if (b && !c && /^\d+$/.test(a) && /^\d+$/.test(b)) {
-		return { chainId: Number(a), agentId: b };
+		return { chainId: Number(a), agentId: b, embed };
 	}
 
 	return null;
@@ -118,7 +124,7 @@ class App {
 		const onchain = parseOnchainPath(location.pathname) || parseOnchainHash(hash.onchain);
 
 		this.options = {
-			kiosk: Boolean(hash.kiosk),
+			kiosk: Boolean(hash.kiosk) || !!(onchain && onchain.embed),
 			model: hash.model || '',
 			preset: hash.preset || '',
 			cameraPosition: hash.cameraPosition ? hash.cameraPosition.split(',').map(Number) : null,
@@ -130,6 +136,7 @@ class App {
 			deploy: hash.deploy !== undefined || location.pathname === '/deploy',
 			onchain, // { chainId, agentId, registry? } | null
 			explore: location.pathname === '/explore',
+			showcase: location.pathname === '/showcase' || location.pathname === '/showcase/',
 			// pending=1 signals a post-login save round-trip
 			pending: qp.get('pending') === '1',
 		};
@@ -189,6 +196,13 @@ class App {
 		// /explore — gallery of on-chain agents with 3D avatars.
 		if (options.explore) {
 			this._showExplorePage();
+			this._initAgentSystem();
+			return;
+		}
+
+		// /showcase — browsable marketplace of every indexed 3D agent.
+		if (options.showcase) {
+			this._showShowcasePage();
 			this._initAgentSystem();
 			return;
 		}
@@ -1104,8 +1118,10 @@ class App {
 	 */
 	async _loadOnChainAgent(onchain) {
 		try {
-			const [{ getAgentOnchain, fetchAgentMetadata, findAvatar3D }, { REGISTRY_DEPLOYMENTS }] =
-				await Promise.all([import('./erc8004/queries.js'), import('./erc8004/abi.js')]);
+			const [
+				{ getAgentOnchain, fetchAgentMetadata, findAvatar3D },
+				{ REGISTRY_DEPLOYMENTS },
+			] = await Promise.all([import('./erc8004/queries.js'), import('./erc8004/abi.js')]);
 
 			if (!REGISTRY_DEPLOYMENTS[onchain.chainId]) {
 				this._showOnChainError(`Unsupported chain: ${onchain.chainId}`);
@@ -1199,6 +1215,29 @@ class App {
 			renderExplorePage(page);
 		} catch (err) {
 			console.error('[3d-agent] explore page load failed', err);
+		}
+	}
+
+	async _showShowcasePage() {
+		try {
+			const main = this.el.querySelector('main.wrap') || this.el;
+			this.dropEl?.classList.add('hidden');
+			const dropzone = this.el.querySelector('.dropzone');
+			if (dropzone) dropzone.style.display = 'none';
+			if (this.viewerContainerEl) this.viewerContainerEl.style.display = 'none';
+			const authGate = this.el.querySelector('#auth-gate');
+			if (authGate) authGate.style.display = 'none';
+			const presence = this.el.querySelector('.agent-presence-sidebar');
+			if (presence) presence.style.display = 'none';
+
+			const page = document.createElement('section');
+			page.className = 'showcase-page';
+			main.appendChild(page);
+
+			const { renderShowcasePage } = await import('./erc8004/showcase.js');
+			renderShowcasePage(page);
+		} catch (err) {
+			console.error('[3d-agent] showcase page load failed', err);
 		}
 	}
 

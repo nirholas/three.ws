@@ -42,4 +42,11 @@ export const env = {
 	// is hit; keeping these optional so unrelated endpoints still respond when unset.
 	get AVATURN_API_KEY() { return opt('AVATURN_API_KEY'); },
 	get AVATURN_API_URL() { return trimSlash(opt('AVATURN_API_URL', 'https://api.avaturn.me')); },
+
+	// Etherscan V2 — unified multichain explorer API (one key, all chains).
+	// Used by api/cron/erc8004-crawl.js to index ERC-8004 Registered events.
+	get ETHERSCAN_API_KEY() { return opt('ETHERSCAN_API_KEY'); },
+
+	// Secret for Vercel Cron Authorization header (crons call with `Bearer $CRON_SECRET`).
+	get CRON_SECRET() { return opt('CRON_SECRET'); },
 };
