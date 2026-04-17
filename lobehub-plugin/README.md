@@ -139,6 +139,12 @@ Output: `dist/bundle.js` — tree-shaken, browser-targeted. React and react-dom 
 
 ---
 
+## Source note
+
+`src/config-schema.ts` uses `placeholder` as a property name — these are form input hint strings shown in LobeChat's settings UI (standard HTML `<input placeholder="...">` semantics), not implementation stubs.
+
+---
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
