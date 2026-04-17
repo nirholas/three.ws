@@ -1,10 +1,8 @@
 // Neon serverless Postgres. HTTP-based, works in edge + node runtimes.
 // Use `sql` as a tagged template for one-shot queries; use `tx()` for transactions.
 
-import { neon, neonConfig } from '@neondatabase/serverless';
+import { neon } from '@neondatabase/serverless';
 import { env } from './env.js';
-
-neonConfig.fetchConnectionCache = true;
 
 // Lazy Neon client — instantiating requires DATABASE_URL. Keeping it lazy lets
 // this module be imported (transitively) by endpoints that don't touch the DB
