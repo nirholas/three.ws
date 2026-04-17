@@ -1,12 +1,16 @@
-// LobeHub iframe postMessage bridge for 3D Agent.
-// Envelope: { v: 1, ns: '3d-agent', type, id?, payload }
-// See public/lobehub/README.md for full contract.
+// LobeHub iframe bridge for 3D Agent.
+//
+// Primary protocol: v1 spec envelope
+//   { v: 1, source: 'agent-host'|'agent-3d', id, inReplyTo?, kind, op, payload }
+// See prompts/final-integration/01-embed-bridges.md for the canonical contract.
+//
+// Backward-compat layer also accepts the legacy format:
+//   { v: 1, ns: '3d-agent', type: 'host:xxx', id?, payload }
 
-const NS = '3d-agent';
-const V = 1;
-const EMBED_VERSION = '0.1.0';
+const EMBED_VERSION = '1.0.0';
+const CAPABILITIES = ['speak', 'gesture', 'emote', 'look', 'setAgent', 'subscribe', 'ping'];
 
-// Origins trusted unconditionally (no ?host= needed).
+// Origins unconditionally trusted.
 const KNOWN_ORIGINS = new Set(['https://chat.lobehub.com', 'https://lobechat.ai']);
 
 function isDev(origin) {
@@ -20,15 +24,16 @@ function isDev(origin) {
 
 const params = new URL(location.href).searchParams;
 const agentId = params.get('agent') || '';
+const srcParam = params.get('src') || '';
 
-// ?host=<encoded-origin> narrows the allowed parent to a single origin.
+// ?host=<encoded-origin> restricts accepted parent to one origin.
 let allowedOrigin = null;
 const hostParam = params.get('host');
 if (hostParam) {
 	try {
 		allowedOrigin = new URL(decodeURIComponent(hostParam)).origin;
 	} catch {
-		console.warn('[3d-agent:bridge] invalid ?host param');
+		console.warn('[3d-agent] invalid ?host param');
 	}
 }
 
@@ -37,18 +42,34 @@ function isAllowedOrigin(origin) {
 	if (allowedOrigin) return origin === allowedOrigin;
 	if (KNOWN_ORIGINS.has(origin)) return true;
 	if (isDev(origin)) return true;
-	// Permit unlisted origins but log — public agents may embed anywhere.
-	console.warn('[3d-agent:bridge] message from unlisted origin', origin);
+	// Permit unknown origins with a warning — public agents may embed anywhere.
+	console.warn('[3d-agent] message from unlisted origin', origin);
 	return true;
 }
 
-function postToHost(type, payload, replyId) {
-	const msg = { v: V, ns: NS, type, payload: payload ?? {} };
-	if (replyId !== undefined) msg.id = replyId;
-	const target = allowedOrigin || '*';
+function newId() {
+	if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+		return crypto.randomUUID();
+	}
+	return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+}
+
+// ── Outgoing ─────────────────────────────────────────────────────────────────
+
+function post(op, payload, inReplyTo) {
+	const msg = {
+		v: 1,
+		source: 'agent-3d',
+		id: newId(),
+		kind: inReplyTo ? 'response' : 'event',
+		op,
+		payload: payload ?? {},
+	};
+	if (inReplyTo) msg.inReplyTo = inReplyTo;
+	const target = allowedOrigin ?? '*';
 	try {
 		window.parent.postMessage(msg, target);
-	} catch {}
+	} catch (_) {}
 }
 
 // ── Element wiring ────────────────────────────────────────────────────────────
@@ -60,40 +81,43 @@ function setStatus(text) {
 	if (statusEl) statusEl.textContent = text;
 }
 
-if (agentId) {
+if (srcParam) {
+	el.setAttribute('src', decodeURIComponent(srcParam));
+} else if (agentId) {
 	el.setAttribute('agent-id', agentId);
 } else {
-	setStatus('No agent specified — add ?agent=<id> to the URL.');
+	setStatus('No agent specified — add ?agent=<id> or ?src=<glb-url> to the URL.');
 }
 
 el.addEventListener('agent:ready', (ev) => {
 	const { manifest } = ev.detail || {};
 	if (statusEl) statusEl.style.display = 'none';
-	postToHost('embed:ready', {
+	post('ready', {
 		agentId,
+		embedVersion: EMBED_VERSION,
+		capabilities: CAPABILITIES,
 		name: manifest?.meta?.name || manifest?.name || '',
-		avatarUrl: manifest?.body?.url || '',
 	});
 });
 
 el.addEventListener('agent:error', (ev) => {
 	const { phase, error: err } = ev.detail || {};
 	setStatus(err?.message || 'Error loading agent');
-	postToHost('embed:error', {
+	post('error', {
 		code: err?.code || 'load_error',
 		message: err?.message || 'Agent failed to load',
 		phase: phase || 'boot',
 	});
 });
 
-// ── ResizeObserver → embed:resize (debounced 100ms) ──────────────────────────
+// ── ResizeObserver → resize event (debounced 100 ms) ─────────────────────────
 
 if (typeof ResizeObserver !== 'undefined') {
 	let resizeTimer;
 	const ro = new ResizeObserver(() => {
 		clearTimeout(resizeTimer);
 		resizeTimer = setTimeout(() => {
-			postToHost('embed:resize', {
+			post('resize', {
 				width: el.offsetWidth,
 				height: el.offsetHeight,
 				contentHeight: el.scrollHeight,
@@ -105,37 +129,126 @@ if (typeof ResizeObserver !== 'undefined') {
 
 // ── Action dispatch ───────────────────────────────────────────────────────────
 
-async function dispatchAction(action) {
-	if (!action || !action.type) return;
+let subscribed = false;
+
+async function dispatchAction(op, payload, replyId) {
 	try {
-		switch (action.type) {
+		switch (op) {
 			case 'speak':
-				await el.say?.(action.payload?.text || '', {
-					sentiment: action.payload?.sentiment,
-				});
+				el.speak?.(payload.text || '', { sentiment: payload.sentiment ?? 0 });
 				break;
 			case 'gesture':
-				if (action.payload?.name === 'wave') {
+				if (payload.name === 'wave') {
 					await el.wave?.();
 				} else {
-					await el.play?.(action.payload?.name, { duration: action.payload?.duration });
+					await el.play?.(payload.name, { duration: payload.duration });
 				}
 				break;
 			case 'emote':
-				// TODO(lobehub-spec): <agent-3d> has no direct emote() public method.
-				// Dispatching as a CustomEvent; element.js may not consume it without
-				// a corresponding listener. Confirm with src/element.js maintainer.
-				el.dispatchEvent(new CustomEvent('agent:action', { detail: action }));
+				// <agent-3d> has no public emote() method; dispatch as a CustomEvent
+				// for the runtime's empathy-layer listener (src/agent-avatar.js).
+				el.dispatchEvent(
+					new CustomEvent('agent:action', { detail: { type: 'emote', payload } }),
+				);
+				break;
+			case 'look':
+				el.dispatchEvent(
+					new CustomEvent('agent:action', { detail: { type: 'look', payload } }),
+				);
+				break;
+			case 'setAgent':
+				if (payload.agentId && payload.agentId !== agentId) {
+					const url = new URL(location.href);
+					url.searchParams.set('agent', payload.agentId);
+					location.replace(url.toString());
+				}
+				break;
+		}
+		if (replyId) post('pong', { ok: true }, replyId);
+		if (subscribed) {
+			post('action', { op, payload, timestamp: Date.now(), agentId });
+		}
+	} catch (err) {
+		console.warn('[3d-agent] action dispatch failed', err);
+		if (replyId) post('error', { code: 'dispatch_error', message: String(err) }, replyId);
+	}
+}
+
+// ── postMessage handler ───────────────────────────────────────────────────────
+
+function onMessage(ev) {
+	const { origin, data } = ev;
+	if (!data || typeof data !== 'object') return;
+
+	// Dev-harness handshake shortcut.
+	if (data.type === 'handshake') {
+		try {
+			window.parent.postMessage({ type: 'ready', agentId }, ev.origin || '*');
+		} catch (_) {}
+		return;
+	}
+
+	if (!isAllowedOrigin(origin)) return;
+
+	// ── v1 spec envelope ──────────────────────────────────────────────────────
+	if (data.v === 1 && data.source === 'agent-host' && data.kind && data.op) {
+		const { id, kind, op, payload = {} } = data;
+		if (kind !== 'request') return;
+
+		switch (op) {
+			case 'ping':
+				post('pong', { agentId }, id);
+				break;
+			case 'subscribe':
+				subscribed = true;
+				post('pong', { ok: true }, id);
+				break;
+			case 'speak':
+			case 'gesture':
+			case 'emote':
+			case 'look':
+			case 'setAgent':
+				dispatchAction(op, payload, id);
 				break;
 			default:
-				el.dispatchEvent(new CustomEvent('agent:action', { detail: action }));
+				post('error', { code: 'unknown_op', op }, id);
 		}
-		// Mirror action up to host so it can log what the avatar did.
-		postToHost('embed:action', {
-			action: { ...action, timestamp: Date.now(), agentId },
-		});
-	} catch (err) {
-		console.warn('[3d-agent:bridge] action dispatch failed', err);
+		return;
+	}
+
+	// ── Legacy envelope: { v:1, ns:'3d-agent', type:'host:xxx', ... } ─────────
+	if (data.v === 1 && data.ns === '3d-agent' && typeof data.type === 'string') {
+		const { type, id, payload = {} } = data;
+		switch (type) {
+			case 'host:hello':
+				post(
+					'ready',
+					{ agentId, embedVersion: EMBED_VERSION, capabilities: CAPABILITIES },
+					id,
+				);
+				break;
+			case 'host:ping':
+				post('pong', {}, id);
+				break;
+			case 'host:action':
+				if (payload.action) {
+					const a = payload.action;
+					dispatchAction(a.type, a.payload || {}, null);
+				}
+				break;
+			case 'host:pause':
+				el.pause?.();
+				break;
+			case 'host:resume':
+				el.resume?.();
+				break;
+			case 'host:theme':
+				applyTheme(payload);
+				break;
+			case 'host:set-agent':
+				dispatchAction('setAgent', payload, null);
+				break;
+		}
 	}
 }
 
@@ -148,93 +261,12 @@ function applyTheme({ mode, accent } = {}) {
 	if (accent) document.documentElement.style.setProperty('--agent-accent', accent);
 }
 
-// ── postMessage handler ───────────────────────────────────────────────────────
-
-function onMessage(ev) {
-	const { origin, data } = ev;
-	if (!data || typeof data !== 'object') return;
-
-	// Acceptance-test handshake: { type: 'handshake' } → { type: 'ready' }
-	if (data.type === 'handshake') {
-		try {
-			window.parent.postMessage({ type: 'ready', agentId }, ev.origin || '*');
-		} catch {}
-		return;
-	}
-
-	// Legacy compat: { __agent, type: 'action', action } — deprecated, one version support.
-	if (data.__agent !== undefined) {
-		if (data.__agent === agentId && data.type === 'action' && data.action) {
-			console.warn('[3d-agent:bridge] legacy message format — migrate to v1 envelope');
-			dispatchAction(data.action);
-		}
-		return;
-	}
-
-	if (!isAllowedOrigin(origin)) return;
-
-	// v1 envelope validation
-	if (data.v !== V || data.ns !== NS || !data.type) return;
-	const { type, id, payload = {} } = data;
-	console.log('[3d-agent:bridge] recv', type, payload);
-
-	switch (type) {
-		case 'host:hello':
-			postToHost(
-				'embed:hello',
-				{
-					embedVersion: EMBED_VERSION,
-					agentId,
-					capabilities: [
-						'speak',
-						'gesture',
-						'emote',
-						'theme',
-						'resize',
-						'pause',
-						'resume',
-						'set-agent',
-					],
-				},
-				id,
-			);
-			break;
-
-		case 'host:ping':
-			postToHost('embed:pong', {}, id);
-			break;
-
-		case 'host:action':
-			if (payload.action) dispatchAction(payload.action);
-			break;
-
-		case 'host:pause':
-			el.pause?.();
-			break;
-
-		case 'host:resume':
-			el.resume?.();
-			break;
-
-		case 'host:theme':
-			applyTheme(payload);
-			break;
-
-		case 'host:set-agent':
-			if (payload.agentId && payload.agentId !== agentId) {
-				const url = new URL(location.href);
-				url.searchParams.set('agent', payload.agentId);
-				location.replace(url.toString());
-			}
-			break;
-	}
-}
-
 window.addEventListener('message', onMessage);
 
-// Fire initial hello so host knows the iframe is alive.
-postToHost('embed:hello', {
-	embedVersion: EMBED_VERSION,
+// Fire initial ready event so the host knows the iframe is alive.
+// The host should respond with a ping to complete the handshake.
+post('ready', {
 	agentId,
-	capabilities: ['speak', 'gesture', 'emote', 'theme', 'resize', 'pause', 'resume', 'set-agent'],
+	embedVersion: EMBED_VERSION,
+	capabilities: CAPABILITIES,
 });

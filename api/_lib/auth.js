@@ -150,21 +150,63 @@ export function sessionCookie(token, { clear = false } = {}) {
 	return `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${SESSION_TTL_SEC}`;
 }
 
-export async function getSessionUser(req) {
+/**
+ * Resolve the session user from the request cookie.
+ * When `res` is provided, silently rotates the session cookie if it is within
+ * the refresh window (last seen > 1 day ago and expiring within 7 days).
+ * Returns the user object including `sid` (session UUID) for callers that need it.
+ *
+ * @param {import('http').IncomingMessage} req
+ * @param {import('http').ServerResponse} [res]
+ */
+export async function getSessionUser(req, res) {
 	const token = readSessionCookie(req);
 	if (!token) return null;
 	const hash = await sha256(token);
 	const rows = await sql`
-		select s.id as sid, u.id, u.email, u.display_name, u.plan, u.avatar_url
+		select s.id as sid, s.last_seen_at, s.expires_at,
+		       u.id, u.email, u.display_name, u.plan, u.avatar_url
 		from sessions s join users u on u.id = s.user_id
-		where s.token_hash = ${hash} and s.revoked_at is null and s.expires_at > now() and u.deleted_at is null
+		where s.token_hash = ${hash}
+		  and s.revoked_at is null
+		  and s.expires_at > now()
+		  and u.deleted_at is null
 		limit 1
 	`;
 	if (!rows[0]) return null;
+
+	const { last_seen_at, expires_at, ...userFields } = rows[0];
+
 	// Touch last_seen best-effort; don't block the request on a write.
-	sql`update sessions set last_seen_at = now() where id = ${rows[0].sid}`.catch(() => {});
-	const { sid: _sid, ...user } = rows[0];
-	return user;
+	sql`update sessions set last_seen_at = now() where id = ${userFields.sid}`.catch(() => {});
+
+	// Rolling refresh: rotate if last seen > 1 day ago and expiring within 7 days.
+	if (res) {
+		const seenMs = last_seen_at ? new Date(last_seen_at).getTime() : 0;
+		const expiresMs = expires_at ? new Date(expires_at).getTime() : 0;
+		const nowMs = Date.now();
+		if (nowMs - seenMs > 86_400_000 && expiresMs - nowMs < SESSION_REFRESH_WINDOW_SEC * 1000) {
+			const ua = req.headers['user-agent'] || null;
+			const ip =
+				req.headers['x-vercel-forwarded-for']?.split(',')[0]?.trim() ||
+				req.headers['x-real-ip'] ||
+				req.socket?.remoteAddress ||
+				null;
+			rotateSession({ currentSid: userFields.sid, userId: userFields.id, userAgent: ua, ip })
+				.then((newToken) => {
+					try {
+						const existing = res.getHeader('set-cookie') || [];
+						const arr = Array.isArray(existing) ? existing : [existing];
+						res.setHeader('set-cookie', [...arr, sessionCookie(newToken)]);
+					} catch {
+						// header already sent — rotation missed this request, next one will retry
+					}
+				})
+				.catch(() => {});
+		}
+	}
+
+	return userFields; // includes sid alongside u.id, email, display_name, plan, avatar_url
 }
 
 export async function destroySession(req) {

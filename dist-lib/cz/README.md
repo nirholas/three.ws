@@ -80,9 +80,7 @@ Example for `vercel.json`:
 
 ```json
 {
-	"rewrites": [
-		{ "source": "/cz", "destination": "/cz/" }
-	]
+	"rewrites": [{ "source": "/cz", "destination": "/cz/" }]
 }
 ```
 

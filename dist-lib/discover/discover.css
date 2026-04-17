@@ -1,0 +1,343 @@
+/* discover.css — On-chain agent discovery page styles */
+
+/* ── Design tokens (mirrored from dashboard) ─────────────────────────── */
+:root {
+	color-scheme: dark;
+	--d-accent: #6a5cff;
+	--d-accent2: #ff5ca8;
+	--d-border: #22222e;
+	--d-bg: #0b0b10;
+	--d-panel: #14141c;
+}
+
+/* ── Reset ───────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+/* ── Base ────────────────────────────────────────────────────────────── */
+body {
+	font:
+		15px/1.55 -apple-system,
+		system-ui,
+		Segoe UI,
+		Roboto,
+		sans-serif;
+	color: #eee;
+	margin: 0;
+	background: var(--d-bg);
+	min-height: 100vh;
+}
+
+a {
+	color: #9a8cff;
+	text-decoration: none;
+}
+a:hover {
+	text-decoration: underline;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────── */
+.discover-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 16px 24px;
+	border-bottom: 1px solid var(--d-border);
+	position: sticky;
+	top: 0;
+	background: var(--d-bg);
+	z-index: 5;
+	gap: 12px;
+}
+
+.discover-header__brand {
+	font-weight: 600;
+	letter-spacing: -0.01em;
+	flex-shrink: 0;
+}
+
+.discover-header__nav {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+}
+
+.discover-header__nav a {
+	color: #aaa;
+	font-size: 14px;
+}
+.discover-header__nav a:hover {
+	color: #eee;
+	text-decoration: none;
+}
+
+/* ── Main content ────────────────────────────────────────────────────── */
+.discover-main {
+	padding: 32px 24px;
+	max-width: 1100px;
+	margin: 0 auto;
+}
+
+.discover-title {
+	font-size: 22px;
+	margin: 0 0 6px;
+	letter-spacing: -0.01em;
+}
+
+.discover-subtitle {
+	color: #888;
+	margin: 0 0 28px;
+	font-size: 14px;
+}
+
+/* ── Toolbar ─────────────────────────────────────────────────────────── */
+.discover-toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	margin-bottom: 18px;
+}
+
+/* ── Grid ────────────────────────────────────────────────────────────── */
+.discover-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+	gap: 14px;
+}
+
+@media (max-width: 600px) {
+	.discover-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* ── Agent card ──────────────────────────────────────────────────────── */
+.discover-card {
+	background: var(--d-panel);
+	border: 1px solid var(--d-border);
+	border-radius: 14px;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	transition: border-color 0.15s;
+}
+
+.discover-card:hover {
+	border-color: #2c2c40;
+}
+
+.discover-card__thumb {
+	aspect-ratio: 1 / 1;
+	background: #0f0f17;
+	display: grid;
+	place-items: center;
+	color: #444;
+	font-size: 40px;
+	overflow: hidden;
+}
+
+.discover-card__thumb img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+}
+
+.discover-card__body {
+	padding: 14px 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	flex: 1;
+}
+
+.discover-card__name {
+	font-size: 15px;
+	font-weight: 600;
+	margin: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.discover-card__row {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.discover-card__chain-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 11px;
+	padding: 2px 8px;
+	border-radius: 99px;
+	background: #20202c;
+	color: #ccc;
+	white-space: nowrap;
+	flex-shrink: 0;
+}
+
+.discover-card__desc {
+	font-size: 13px;
+	color: #888;
+	margin: 0;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.discover-card__footer {
+	padding: 0 16px 14px;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.discover-card__inline-err {
+	font-size: 12px;
+	color: #ffb3b3;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────── */
+.discover-btn {
+	padding: 9px 14px;
+	border-radius: 9px;
+	border: 0;
+	font-size: 13px;
+	font-weight: 600;
+	cursor: pointer;
+	background: var(--d-accent);
+	color: #fff;
+	width: 100%;
+	text-align: center;
+	transition: filter 0.12s;
+}
+
+.discover-btn:hover:not(:disabled) {
+	filter: brightness(1.08);
+}
+
+.discover-btn:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+.discover-btn--sec {
+	background: #222230;
+	color: #ddd;
+}
+
+.discover-btn--done {
+	background: #1a2a1a;
+	color: #6fcf6f;
+	border: 1px solid #2a4a2a;
+	cursor: default;
+}
+
+/* ── Skeleton shimmer ────────────────────────────────────────────────── */
+@keyframes discover-shimmer {
+	0% {
+		background-position: -600px 0;
+	}
+	100% {
+		background-position: 600px 0;
+	}
+}
+
+.discover-skeleton {
+	background: var(--d-panel);
+	border: 1px solid var(--d-border);
+	border-radius: 14px;
+	overflow: hidden;
+}
+
+.discover-skeleton__thumb {
+	aspect-ratio: 1 / 1;
+	background: linear-gradient(90deg, #1a1a24 25%, #22222e 50%, #1a1a24 75%);
+	background-size: 600px 100%;
+	animation: discover-shimmer 1.4s infinite linear;
+}
+
+.discover-skeleton__body {
+	padding: 14px 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.discover-skeleton__line {
+	height: 12px;
+	border-radius: 6px;
+	background: linear-gradient(90deg, #1a1a24 25%, #22222e 50%, #1a1a24 75%);
+	background-size: 600px 100%;
+	animation: discover-shimmer 1.4s infinite linear;
+}
+
+.discover-skeleton__line--short {
+	width: 55%;
+}
+
+.discover-skeleton__line--btn {
+	height: 36px;
+	margin-top: 10px;
+	border-radius: 9px;
+}
+
+/* ── State panels ────────────────────────────────────────────────────── */
+.discover-state {
+	text-align: center;
+	padding: 64px 20px;
+	border: 1px dashed var(--d-border);
+	border-radius: 14px;
+	color: #888;
+}
+
+.discover-state__icon {
+	font-size: 40px;
+	margin-bottom: 12px;
+}
+
+.discover-state__title {
+	font-size: 17px;
+	font-weight: 600;
+	color: #ddd;
+	margin: 0 0 6px;
+}
+
+.discover-state__msg {
+	font-size: 14px;
+	margin: 0 0 18px;
+}
+
+/* ── Error banner ────────────────────────────────────────────────────── */
+.discover-error-banner {
+	padding: 14px 16px;
+	background: rgba(255, 92, 92, 0.1);
+	border: 1px solid rgba(255, 92, 92, 0.3);
+	border-radius: 10px;
+	color: #ffb3b3;
+	margin-bottom: 18px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.discover-error-banner__msg {
+	font-size: 14px;
+}
+
+/* ── Already-imported link ───────────────────────────────────────────── */
+.discover-card__agent-link {
+	font-size: 12px;
+	color: #9a8cff;
+	display: block;
+	text-align: center;
+}
