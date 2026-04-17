@@ -31,14 +31,19 @@ export default wrap(async (req, res) => {
 
 	// 2. Domain + URI must match this deployment. Prevents signature replay from
 	//    a phishing site using a valid nonce issued here.
+	//    VERCEL_URL is the deployment-specific hostname Vercel injects automatically
+	//    (e.g. "3dagent-git-main-moomsi.vercel.app") — allows preview deployments.
 	const appOrigin = env.APP_ORIGIN;
 	const appHost   = new URL(appOrigin).host;
-	if (fields.domain !== appHost) {
+	const vercelHost = process.env.VERCEL_URL || null;
+	const allowedHosts = new Set([appHost, vercelHost].filter(Boolean));
+	if (!allowedHosts.has(fields.domain)) {
 		return error(res, 400, 'invalid_domain', `domain must be ${appHost}`);
 	}
 	try {
 		const u = new URL(fields.uri);
-		if (u.origin !== appOrigin) return error(res, 400, 'invalid_uri', 'uri origin mismatch');
+		const allowedOrigins = new Set([appOrigin, vercelHost ? `https://${vercelHost}` : null].filter(Boolean));
+		if (!allowedOrigins.has(u.origin)) return error(res, 400, 'invalid_uri', 'uri origin mismatch');
 	} catch {
 		return error(res, 400, 'invalid_uri', 'uri not a valid URL');
 	}

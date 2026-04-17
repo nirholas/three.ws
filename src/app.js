@@ -408,9 +408,10 @@ class App {
 		else if (deploy) mode = 'deploy';
 		document.body.dataset.viewerMode = mode;
 		if (mode === 'main') {
-			// Optimistic paint from the last-known auth hint; corrected by
-			// _updateSignInLink once /api/auth/me resolves.
-			document.body.dataset.authed = readAuthHint() ?? 'pending';
+			// Use 'false' hint immediately to skip auth-gate flash for known-logged-out users.
+			// Never use 'true' hint optimistically — a stale hint would show then snap-hide the
+			// sidebar once /api/auth/me confirms the session expired.
+			document.body.dataset.authed = readAuthHint() === 'false' ? 'false' : 'pending';
 		}
 	}
 
