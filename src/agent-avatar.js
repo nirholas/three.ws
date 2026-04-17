@@ -22,6 +22,9 @@
 import { ACTION_TYPES } from './agent-protocol.js';
 import { Vector3, Box3, MathUtils } from 'three';
 import { resolveSlot, DEFAULT_ANIMATION_MAP } from './runtime/animation-slots.js';
+// BEGIN:IDLE_LOOP_IMPORT
+import { IdleAnimation } from './idle-animation.js';
+// END:IDLE_LOOP_IMPORT
 
 const DEG2RAD = Math.PI / 180;
 
@@ -200,6 +203,16 @@ export class AgentAvatar {
 				this._injectStimulus('celebration', 0.4);
 			}, 600);
 		}
+
+		// BEGIN:IDLE_LOOP_INIT
+		this._idle?.dispose();
+		this._idle = new IdleAnimation({
+			getRoot: () => this.viewer.content,
+			protocol: this.protocol,
+			seed: this.identity?.id ?? 'default',
+			getMorphCurrent: () => this._morphCurrent,
+		});
+		// END:IDLE_LOOP_INIT
 	}
 
 	/** Remove all hooks and listeners */
@@ -214,6 +227,10 @@ export class AgentAvatar {
 			this.protocol.off(type, handler);
 		}
 		this._listeners = [];
+		// BEGIN:IDLE_LOOP_DISPOSE
+		this._idle?.dispose();
+		this._idle = null;
+		// END:IDLE_LOOP_DISPOSE
 	}
 
 	// ── Public API ────────────────────────────────────────────────────────────
@@ -260,14 +277,18 @@ export class AgentAvatar {
 			const def = am.getAnimationDefs().find((d) => d.name === clipName);
 			if (def) {
 				const prev = am.currentName;
-				am.loadAnimation(clipName, def.url, { loop: false, clipName: def.clipName }).then(() => {
-					this._playAmClip(am, clipName, duration, prev);
-				});
+				am.loadAnimation(clipName, def.url, { loop: false, clipName: def.clipName }).then(
+					() => {
+						this._playAmClip(am, clipName, duration, prev);
+					},
+				);
 				return;
 			}
 			// Clip not in library — warn once, try default slot fallback
 			if (!this._warnedSlots.has(clipName)) {
-				console.warn(`[AgentAvatar] slot "${slot}" → "${clipName}" not in animation library`);
+				console.warn(
+					`[AgentAvatar] slot "${slot}" → "${clipName}" not in animation library`,
+				);
 				this._warnedSlots.add(clipName);
 			}
 			const fallback = DEFAULT_ANIMATION_MAP[slot];
@@ -454,6 +475,10 @@ export class AgentAvatar {
 
 		// Stage 4: Apply emotion to avatar
 		this._applyEmotionToAvatar(dt);
+
+		// BEGIN:IDLE_LOOP_TICK
+		this._idle?.update(dt);
+		// END:IDLE_LOOP_TICK
 	}
 
 	/**

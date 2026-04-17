@@ -1,289 +1,364 @@
-import { Quaternion, Vector3, MathUtils } from 'three';
+/**
+ * Idle Animation Loop
+ * -------------------
+ * Four additive ambient motion channels for a static avatar:
+ *   1. Breathing   — spine bone X micro-rotation (~4s period); morph fallback if no bones.
+ *   2. Saccades    — small eye/head yaw+pitch offsets, critically damped spring.
+ *   3. Blink       — eyelid morph close/hold/open on a random [2.5–6s] interval.
+ *   4. Weight shift — hip bone yaw drift (~8s period), per-avatar seeded phase.
+ *
+ * All channels are additive — empathy layer wins. Pure dt-driven; no setTimeout/setInterval.
+ * No allocations in update() — all scratch buffers are pre-allocated instance fields.
+ */
+
+import { ACTION_TYPES } from './agent-protocol.js';
 
 const DEG2RAD = Math.PI / 180;
+const TWO_PI = Math.PI * 2;
 
-// Bone name candidates in priority order
-const SPINE_NAMES = ['Spine1', 'Spine2', 'Spine', 'mixamorigSpine1', 'mixamorigSpine', 'spine_01', 'spine_02', 'spine'];
-const HEAD_NAMES = ['Head', 'mixamorigHead', 'head'];
-const L_SHOULDER_NAMES = ['LeftShoulder', 'mixamorigLeftShoulder', 'left_shoulder', 'ShoulderL'];
-const R_SHOULDER_NAMES = ['RightShoulder', 'mixamorigRightShoulder', 'right_shoulder', 'ShoulderR'];
-
-const BLINK_MORPH_NAMES = ['eyesClosed', 'blink', 'Blink', 'Fcl_EYE_Close', 'eyeBlinkLeft', 'Eye_Blink'];
-
-function findBone(root, names) {
-	for (const name of names) {
-		let found = null;
-		root.traverse(obj => {
-			if (!found && obj.isBone && obj.name === name) found = obj;
-		});
-		if (found) return found;
-	}
-	return null;
+/** mulberry32 PRNG — deterministic, seeded. Returns a function yielding [0, 1). */
+function mulberry32(seed) {
+	return () => {
+		seed |= 0;
+		seed = (seed + 0x6d2b79f5) | 0;
+		let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+		return ((t ^ (t >>> 14)) >>> 0) / 0x100000000;
+	};
 }
 
-function findBlinkMesh(root) {
-	let result = null;
-	root.traverse(obj => {
-		if (result) return;
-		if (!obj.morphTargetDictionary) return;
-		for (const name of BLINK_MORPH_NAMES) {
-			if (name in obj.morphTargetDictionary) {
-				result = { mesh: obj, index: obj.morphTargetDictionary[name] };
-				return;
-			}
-		}
-	});
-	return result;
+/** djb2-style string → uint32, used for PRNG seeding. */
+function hashStr(str) {
+	let h = 0x811c9dc5;
+	for (let i = 0; i < str.length; i++) {
+		h ^= str.charCodeAt(i);
+		h = Math.imul(h, 0x01000193) >>> 0;
+	}
+	return h;
 }
 
 export class IdleAnimation {
 	/**
-	 * @param {{ root: import('three').Object3D, bones?: object|null, intensity?: number }} opts
+	 * @param {object} opts
+	 * @param {() => import('three').Object3D | null} opts.getRoot
+	 *   Getter for the live avatar root — called each frame, handles late-loaded content.
+	 * @param {import('./agent-protocol.js').AgentProtocol} opts.protocol
+	 * @param {string} [opts.seed]   Stable per-avatar seed (agent id); prevents multi-avatar sync.
+	 * @param {() => Record<string,number>} [opts.getMorphCurrent]
+	 *   Returns the empathy layer's live morph weight map (avatar._morphCurrent).
+	 * @param {Partial<{breathing:boolean,saccade:boolean,blink:boolean,weightShift:boolean}>} [opts.channels]
 	 */
-	constructor({ root, bones = null, intensity = 1.0 }) {
-		this._root = root;
-		this._intensity = Math.max(0, Math.min(1, intensity));
-		this._active = false;
-		this._noop = false;
-		this._clock = null;
-		this._elapsedPrev = 0;
+	constructor(opts) {
+		this._getRoot = opts.getRoot;
+		this._protocol = opts.protocol;
+		this._getMorphCurrent = opts.getMorphCurrent ?? null;
 
-		// Reusable temporaries — zero alloc in update()
-		this._tmpQ = new Quaternion();
-		this._tmpV = new Vector3();
-		this._tmpQ2 = new Quaternion();
+		this._channels = {
+			breathing: true,
+			saccade: true,
+			blink: true,
+			weightShift: true,
+			...opts.channels,
+		};
 
-		// Saved original transforms (restored on stop)
-		this._origSpineRot = new Quaternion();
-		this._origSpineScale = new Vector3();
-		this._origHeadRot = new Quaternion();
+		const seed = opts.seed ?? 'default';
+		this._rand = mulberry32(hashStr(seed));
 
-		// Head glance state machine
-		this._glancePhase = 'idle'; // idle | turn | hold | return
-		this._glanceTimer = 0;
-		this._glanceDuration = 0;
-		this._glanceTargetYaw = 0; // radians
-		this._glanceCurrentYaw = 0;
-		this._glanceStartYaw = 0;
-		this._glanceNextDelay = this._randGlanceDelay();
+		// Per-avatar phase offsets — desync multiple instances on the same page.
+		this._breathPhase = this._rand() * TWO_PI;
+		this._weightPhase = this._rand() * TWO_PI;
 
-		// Blink state machine
-		this._blinkPhase = 'wait'; // wait | closing | closed | opening
-		this._blinkTimer = 0;
-		this._blinkNextDelay = this._randBlinkDelay();
-		this._blinkMorphCurrent = 0;
+		// ── Lazy bone / morph discovery ───────────────────────────────────────────
+		this._scannedRoot = null;
+		this._headBone = null;
+		this._spineBone = null;
+		this._hipBone = null;
+		this._spineRestX = 0;
+		this._hipRestY = 0;
 
-		// Resolve bones
-		if (bones) {
-			this._spine = bones.spine || null;
-			this._head = bones.head || null;
-			this._lShoulder = bones.leftShoulder || null;
-			this._rShoulder = bones.rightShoulder || null;
-		} else {
-			this._spine = findBone(root, SPINE_NAMES);
-			this._head = findBone(root, HEAD_NAMES);
-			this._lShoulder = findBone(root, L_SHOULDER_NAMES);
-			this._rShoulder = findBone(root, R_SHOULDER_NAMES);
-		}
+		/**
+		 * Pre-built morph index cache per mesh — eliminates dict lookup in hot path.
+		 * @type {Array<{mesh:import('three').Mesh,blinkL:number,blinkR:number,browInner:number,mouthOpen:number}>}
+		 */
+		this._morphMeshes = [];
 
-		this._blinkTarget = findBlinkMesh(root);
+		// ── Spring scratch buffer — Float32Array avoids GC pressure ─────────────
+		this._springBuf = new Float32Array(2);
 
-		if (!this._spine) {
-			console.warn('[IdleAnimation] No spine bone found — becoming a no-op.');
-			this._noop = true;
-		}
+		// ── Micro-saccade state ───────────────────────────────────────────────────
+		this._saccYaw = 0;
+		this._saccYawVel = 0;
+		this._saccPitch = 0;
+		this._saccPitchVel = 0;
+		this._saccTargetYaw = 0;
+		this._saccTargetPitch = 0;
+		this._saccDwell = this._randRange(0.8, 2.4);
+		this._saccTimer = 0;
+		this._saccPauseTimer = 0; // counts down after look-at; saccade pauses while > 0
 
-		// Honor reduced-motion preference
-		if (typeof window !== 'undefined' &&
-			window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
-			this._noop = true;
-		}
+		// ── Blink state ───────────────────────────────────────────────────────────
+		this._blinkCountdown = this._randRange(2.5, 6.0);
+		this._blinkPhase = 'idle'; // 'idle' | 'close' | 'hold' | 'open'
+		this._blinkPhaseT = 0;
+		this._blinkWeight = 0;
+		this._blinkPauseTimer = 0; // counts down after speak; blink start paused while > 0
+
+		// ── Protocol listeners ────────────────────────────────────────────────────
+		this._onSpeak = () => {
+			this._blinkPauseTimer = 1.0;
+		};
+		this._onLookAt = () => {
+			this._saccPauseTimer = 0.5;
+		};
+		this._protocol.on(ACTION_TYPES.SPEAK, this._onSpeak);
+		this._protocol.on(ACTION_TYPES.LOOK_AT, this._onLookAt);
+	}
+
+	// ── Public API ───────────────────────────────────────────────────────────────
+
+	/**
+	 * Call every frame with elapsed seconds since the last tick.
+	 * @param {number} dt
+	 */
+	update(dt) {
+		this._ensureInit();
+		if (this._channels.breathing) this._tickBreathing(dt);
+		if (this._channels.saccade) this._tickSaccade(dt);
+		if (this._channels.blink) this._tickBlink(dt);
+		if (this._channels.weightShift) this._tickWeightShift(dt);
 	}
 
 	/**
-	 * @param {{ getElapsedTime: () => number }} clock  THREE.Clock or equivalent
+	 * Toggle channels at runtime. Partial — unmentioned channels unchanged.
+	 * @param {Partial<{breathing:boolean,saccade:boolean,blink:boolean,weightShift:boolean}>} partial
 	 */
-	start(clock) {
-		if (this._noop || this._active) return;
-		this._clock = clock;
-		this._elapsedPrev = clock.getElapsedTime();
-		this._active = true;
-
-		// Save originals
-		if (this._spine) {
-			this._origSpineRot.copy(this._spine.quaternion);
-			this._origSpineScale.copy(this._spine.scale);
-		}
-		if (this._head) {
-			this._origHeadRot.copy(this._head.quaternion);
-		}
+	setChannels(partial) {
+		Object.assign(this._channels, partial);
 	}
 
-	stop() {
-		if (!this._active) return;
-		this._active = false;
-
-		// Restore original transforms
-		if (this._spine) {
-			this._spine.quaternion.copy(this._origSpineRot);
-			this._spine.scale.copy(this._origSpineScale);
-		}
-		if (this._head) {
-			this._head.quaternion.copy(this._origHeadRot);
-		}
-
-		// Restore blink morph
-		if (this._blinkTarget) {
-			this._blinkTarget.mesh.morphTargetInfluences[this._blinkTarget.index] = 0;
-		}
-
-		this._glancePhase = 'idle';
-		this._glanceCurrentYaw = 0;
-		this._blinkPhase = 'wait';
-		this._blinkMorphCurrent = 0;
+	/** Remove protocol listeners. */
+	dispose() {
+		this._protocol.off(ACTION_TYPES.SPEAK, this._onSpeak);
+		this._protocol.off(ACTION_TYPES.LOOK_AT, this._onLookAt);
 	}
 
-	/**
-	 * Manual tick — call from your render loop.
-	 * @param {number} deltaSeconds
-	 */
-	update(deltaSeconds) {
-		if (!this._active || this._noop) return;
-		const dt = Math.min(deltaSeconds, 0.1); // clamp runaway dt
-		const t = this._clock.getElapsedTime();
-		const intensity = this._intensity;
+	// ── Lazy init ────────────────────────────────────────────────────────────────
 
-		// ── Breathing: spine Y-scale ±1% at 0.25 Hz ─────────────────────────
-		if (this._spine) {
-			const breathPhase = Math.sin(t * 2 * Math.PI * 0.25); // 0.25 Hz
-			const breathScale = 1.0 + breathPhase * 0.01 * intensity;
-			this._spine.scale.set(
-				this._origSpineScale.x,
-				this._origSpineScale.y * breathScale,
-				this._origSpineScale.z,
+	_ensureInit() {
+		const root = this._getRoot?.();
+		if (!root || root === this._scannedRoot) return;
+		this._scannedRoot = root;
+		this._headBone = null;
+		this._spineBone = null;
+		this._hipBone = null;
+		this._morphMeshes = [];
+
+		root.traverse((node) => {
+			if (node.isBone) {
+				// Strip mixamorig prefix and any leading namespace so 'mixamorig:Head' → 'head'
+				const canon = node.name
+					.replace(/^mixamorig:?/i, '')
+					.replace(/^[A-Za-z0-9]+[_:]/, '')
+					.toLowerCase();
+
+				if (!this._headBone && (canon === 'head' || canon === 'neck'))
+					this._headBone = node;
+
+				if (
+					!this._spineBone &&
+					(canon === 'spine' ||
+						canon === 'spine1' ||
+						canon === 'spine2' ||
+						canon === 'chest' ||
+						canon === 'upperchest')
+				) {
+					this._spineBone = node;
+					this._spineRestX = node.rotation.x;
+				}
+
+				if (
+					!this._hipBone &&
+					(canon === 'hips' || canon === 'hip' || canon === 'pelvis' || canon === 'root')
+				) {
+					this._hipBone = node;
+					this._hipRestY = node.rotation.y;
+				}
+			}
+
+			if (node.isMesh && node.morphTargetDictionary && node.morphTargetInfluences) {
+				const d = node.morphTargetDictionary;
+				this._morphMeshes.push({
+					mesh: node,
+					blinkL: d.eyeBlinkLeft ?? -1,
+					blinkR: d.eyeBlinkRight ?? -1,
+					browInner: d.browInnerUp ?? -1,
+					mouthOpen: d.mouthOpen ?? -1,
+				});
+			}
+		});
+
+		if (
+			!this._headBone &&
+			!this._spineBone &&
+			!this._hipBone &&
+			this._morphMeshes.length === 0
+		) {
+			console.log(
+				'[IdleAnimation] No bones or morph targets found on avatar root — channels will be no-ops.',
 			);
+		}
+	}
 
-			// ── Micro-sway: ±0.5° rotation on spine at 0.08 Hz ──────────────
-			const swayPhase = Math.sin(t * 2 * Math.PI * 0.08);
-			const swayRad = swayPhase * 0.5 * DEG2RAD * intensity;
-			// Apply sway as local Z-rotation delta on top of original
-			this._tmpQ.setFromAxisAngle(this._tmpV.set(0, 0, 1), swayRad);
-			this._spine.quaternion.copy(this._origSpineRot).multiply(this._tmpQ);
+	// ── Channel 1: Breathing ─────────────────────────────────────────────────────
+
+	_tickBreathing(dt) {
+		this._breathPhase = (this._breathPhase + (dt * TWO_PI) / 4.0) % TWO_PI;
+		const signal = Math.sin(this._breathPhase);
+
+		if (this._spineBone) {
+			// Preferred path: subtle chest expansion via spine X rotation (±0.3°).
+			this._spineBone.rotation.x = this._spineRestX + signal * 0.3 * DEG2RAD;
+			return;
 		}
 
-		// ── Head glance state machine ─────────────────────────────────────────
-		if (this._head) {
-			this._glanceTimer += dt;
+		// Morph fallback when no spine bone — micro-modulate brow + mouthOpen.
+		const mc = this._getMorphCurrent?.();
+		const empMouthOpen = mc?.mouthOpen ?? 0;
+		const amp = 0.005; // 0.5% amplitude — imperceptible except as "aliveness"
 
-			switch (this._glancePhase) {
-				case 'idle':
-					if (this._glanceTimer >= this._glanceNextDelay) {
-						this._glancePhase = 'turn';
-						this._glanceTimer = 0;
-						this._glanceDuration = 0.5; // 500ms turn
-						this._glanceStartYaw = this._glanceCurrentYaw;
-						// ±8° random direction
-						this._glanceTargetYaw = (Math.random() < 0.5 ? 1 : -1) *
-							(4 + Math.random() * 4) * DEG2RAD * intensity;
-					}
-					break;
-				case 'turn': {
-					const progress = Math.min(this._glanceTimer / this._glanceDuration, 1);
-					this._glanceCurrentYaw = MathUtils.lerp(
-						this._glanceStartYaw,
-						this._glanceTargetYaw,
-						_easeInOut(progress),
-					);
-					if (progress >= 1) {
-						this._glancePhase = 'hold';
-						this._glanceTimer = 0;
-					}
-					break;
-				}
-				case 'hold':
-					if (this._glanceTimer >= 0.2) { // 200ms hold
-						this._glancePhase = 'return';
-						this._glanceTimer = 0;
-						this._glanceDuration = 0.8; // 800ms return
-						this._glanceStartYaw = this._glanceCurrentYaw;
-						this._glanceTargetYaw = 0;
-					}
-					break;
-				case 'return': {
-					const progress = Math.min(this._glanceTimer / this._glanceDuration, 1);
-					this._glanceCurrentYaw = MathUtils.lerp(
-						this._glanceStartYaw,
-						0,
-						_easeInOut(progress),
-					);
-					if (progress >= 1) {
-						this._glanceCurrentYaw = 0;
-						this._glancePhase = 'idle';
-						this._glanceTimer = 0;
-						this._glanceNextDelay = this._randGlanceDelay();
-					}
-					break;
-				}
+		for (let i = 0; i < this._morphMeshes.length; i++) {
+			const m = this._morphMeshes[i];
+			if (m.browInner >= 0) {
+				m.mesh.morphTargetInfluences[m.browInner] = Math.max(
+					0,
+					Math.min(1, m.mesh.morphTargetInfluences[m.browInner] + signal * amp),
+				);
 			}
-
-			this._tmpQ.setFromAxisAngle(this._tmpV.set(0, 1, 0), this._glanceCurrentYaw);
-			this._head.quaternion.copy(this._origHeadRot).multiply(this._tmpQ);
-		}
-
-		// ── Blink state machine ───────────────────────────────────────────────
-		if (this._blinkTarget) {
-			this._blinkTimer += dt;
-			const { mesh, index } = this._blinkTarget;
-
-			switch (this._blinkPhase) {
-				case 'wait':
-					if (this._blinkTimer >= this._blinkNextDelay) {
-						this._blinkPhase = 'closing';
-						this._blinkTimer = 0;
-					}
-					break;
-				case 'closing': {
-					const progress = Math.min(this._blinkTimer / 0.06, 1); // 60ms close
-					this._blinkMorphCurrent = progress;
-					mesh.morphTargetInfluences[index] = this._blinkMorphCurrent * intensity;
-					if (progress >= 1) {
-						this._blinkPhase = 'closed';
-						this._blinkTimer = 0;
-					}
-					break;
-				}
-				case 'closed':
-					if (this._blinkTimer >= 0.06) { // 60ms closed → total ~120ms
-						this._blinkPhase = 'opening';
-						this._blinkTimer = 0;
-					}
-					break;
-				case 'opening': {
-					const progress = Math.min(this._blinkTimer / 0.06, 1);
-					this._blinkMorphCurrent = 1 - progress;
-					mesh.morphTargetInfluences[index] = this._blinkMorphCurrent * intensity;
-					if (progress >= 1) {
-						this._blinkMorphCurrent = 0;
-						mesh.morphTargetInfluences[index] = 0;
-						this._blinkPhase = 'wait';
-						this._blinkTimer = 0;
-						this._blinkNextDelay = this._randBlinkDelay();
-					}
-					break;
-				}
+			// Defer to empathy layer when it is actively using mouthOpen.
+			if (m.mouthOpen >= 0 && empMouthOpen <= 0.2) {
+				m.mesh.morphTargetInfluences[m.mouthOpen] = Math.max(
+					0,
+					Math.min(1, m.mesh.morphTargetInfluences[m.mouthOpen] + signal * amp),
+				);
 			}
 		}
 	}
 
-	_randGlanceDelay() {
-		return 4 + Math.random() * 5; // 4–9s
+	// ── Channel 2: Micro-saccades ────────────────────────────────────────────────
+
+	_tickSaccade(dt) {
+		if (!this._headBone) return;
+
+		if (this._saccPauseTimer > 0) {
+			this._saccPauseTimer -= dt;
+			return;
+		}
+
+		// Dwell timer — pick a new random target when the dwell expires.
+		this._saccTimer += dt;
+		if (this._saccTimer >= this._saccDwell) {
+			this._saccTimer = 0;
+			this._saccDwell = this._randRange(0.8, 2.4);
+			this._saccTargetYaw = (this._rand() * 2 - 1) * 1.5 * DEG2RAD;
+			this._saccTargetPitch = (this._rand() * 2 - 1) * 1.5 * DEG2RAD;
+		}
+
+		// Critically damped spring (omega=5) — smooth approach, no overshoot.
+		this._springStep(this._saccYaw, this._saccYawVel, this._saccTargetYaw, 5, dt);
+		this._saccYaw = this._springBuf[0];
+		this._saccYawVel = this._springBuf[1];
+
+		this._springStep(this._saccPitch, this._saccPitchVel, this._saccTargetPitch, 5, dt);
+		this._saccPitch = this._springBuf[0];
+		this._saccPitchVel = this._springBuf[1];
+
+		// Additive — applied after the empathy layer sets head rotation this frame.
+		this._headBone.rotation.y += this._saccYaw;
+		this._headBone.rotation.x += this._saccPitch;
 	}
 
-	_randBlinkDelay() {
-		return 3 + Math.random() * 4; // 3–7s
-	}
-}
+	// ── Channel 3: Blink ─────────────────────────────────────────────────────────
 
-function _easeInOut(t) {
-	return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+	_tickBlink(dt) {
+		if (this._blinkPauseTimer > 0) this._blinkPauseTimer -= dt;
+		const paused = this._blinkPauseTimer > 0;
+
+		switch (this._blinkPhase) {
+			case 'idle':
+				if (!paused) {
+					this._blinkCountdown -= dt;
+					if (this._blinkCountdown <= 0) {
+						this._blinkPhase = 'close';
+						this._blinkPhaseT = 0;
+						this._blinkCountdown = this._randRange(2.5, 6.0);
+					}
+				}
+				return; // nothing to write while idle
+
+			case 'close':
+				this._blinkPhaseT += dt;
+				this._blinkWeight = Math.min(1, this._blinkPhaseT / 0.08); // 80ms close
+				if (this._blinkPhaseT >= 0.08) {
+					this._blinkPhase = 'hold';
+					this._blinkPhaseT = 0;
+					this._blinkWeight = 1;
+				}
+				break;
+
+			case 'hold':
+				this._blinkPhaseT += dt;
+				if (this._blinkPhaseT >= 0.04) {
+					// 40ms hold
+					this._blinkPhase = 'open';
+					this._blinkPhaseT = 0;
+				}
+				break;
+
+			case 'open':
+				this._blinkPhaseT += dt;
+				this._blinkWeight = Math.max(0, 1 - this._blinkPhaseT / 0.12); // 120ms open
+				if (this._blinkPhaseT >= 0.12) {
+					this._blinkPhase = 'idle';
+					this._blinkWeight = 0;
+				}
+				break;
+		}
+
+		for (let i = 0; i < this._morphMeshes.length; i++) {
+			const m = this._morphMeshes[i];
+			if (m.blinkL >= 0) m.mesh.morphTargetInfluences[m.blinkL] = this._blinkWeight;
+			if (m.blinkR >= 0) m.mesh.morphTargetInfluences[m.blinkR] = this._blinkWeight;
+		}
+	}
+
+	// ── Channel 4: Weight shift ──────────────────────────────────────────────────
+
+	_tickWeightShift(dt) {
+		if (!this._hipBone) return;
+		this._weightPhase = (this._weightPhase + (dt * TWO_PI) / 8.0) % TWO_PI;
+		this._hipBone.rotation.y = this._hipRestY + Math.sin(this._weightPhase) * 0.5 * DEG2RAD;
+	}
+
+	// ── Utility ──────────────────────────────────────────────────────────────────
+
+	/**
+	 * Critically damped spring step — closed-form, no Euler drift.
+	 * Writes [newPos, newVel] into this._springBuf (zero allocation).
+	 * @param {number} pos     Current position
+	 * @param {number} vel     Current velocity
+	 * @param {number} target  Rest position
+	 * @param {number} omega   Natural frequency (stiffness^0.5)
+	 * @param {number} dt
+	 */
+	_springStep(pos, vel, target, omega, dt) {
+		const x0 = pos - target;
+		const b = vel + omega * x0;
+		const decay = Math.exp(-omega * dt);
+		this._springBuf[0] = target + (x0 + b * dt) * decay;
+		this._springBuf[1] = (b - omega * (x0 + b * dt)) * decay;
+	}
+
+	_randRange(min, max) {
+		return min + this._rand() * (max - min);
+	}
 }

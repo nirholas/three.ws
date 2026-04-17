@@ -2,7 +2,7 @@
 
 ## Context
 
-A static avatar dies on screen. Without idle motion, users think the page froze; with it, the agent looks alive even when nothing is happening. Sprint-100 mapped an `idle-animation.js` module — a subtle continuous ambient loop (breathing, micro-saccades, weight-shifting, blink) — but **the file was never written**. The empathy layer in `src/agent-avatar.js` already handles *reactive* morph blending; this prompt fills in the *baseline* motion underneath.
+A static avatar dies on screen. Without idle motion, users think the page froze; with it, the agent looks alive even when nothing is happening. Sprint-100 mapped an `idle-animation.js` module — a subtle continuous ambient loop (breathing, micro-saccades, weight-shifting, blink) — but **the file was never written**. The empathy layer in `src/agent-avatar.js` already handles _reactive_ morph blending; this prompt fills in the _baseline_ motion underneath.
 
 This is the difference between a kiosk mannequin and something that looks embodied. It is table-stakes for every embed surface: Claude artifact, LobeHub plugin, CZ landing, dashboard preview, and the public viewer.
 
@@ -13,15 +13,17 @@ Implement a tasteful, performant idle loop that runs whenever no other animation
 ## Files you own
 
 Create:
+
 - `src/idle-animation.js`
 
 Edit (inside uniquely-named anchor only):
+
 - `src/agent-avatar.js` — add a single anchor block `// BEGIN:IDLE_LOOP ... // END:IDLE_LOOP` and a matching import block `// BEGIN:IDLE_LOOP_IMPORT ... // END:IDLE_LOOP_IMPORT`. Wire the idle controller in once per avatar mount; tick it from the existing per-frame update. **No edits outside these anchors.**
 
 ## Files read-only
 
 - `src/agent-avatar.js` — understand the existing empathy blend, morph target traversal, and per-frame hook. Find the method that runs every frame (likely `update(dt)` or similar).
-- `src/agent-protocol.js` — `ACTION_TYPES` tells you which actions should *pause* idle (e.g. when the avatar is actively speaking or gesturing).
+- `src/agent-protocol.js` — `ACTION_TYPES` tells you which actions should _pause_ idle (e.g. when the avatar is actively speaking or gesturing).
 - `src/runtime/scene.js` — `SceneController` for context.
 
 ## Design — what "idle" means
@@ -62,6 +64,7 @@ export class IdleAnimation {
 ```
 
 Internals:
+
 - Collect eyelid, brow, mouth morph indices once in constructor; cache them.
 - Collect head/neck/hip bones by name (search Mixamo + RPM + generic — try `Head`, `mixamorig:Head`, `neck`, etc). Log once if none found; fail soft (no errors at runtime).
 - No `setInterval` / `setTimeout` — everything is dt-driven from `update()`. This keeps the module pausable, scrubbable, and test-friendly.
