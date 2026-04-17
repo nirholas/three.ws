@@ -10,6 +10,10 @@ import { loadManifest, fetchRelative } from './manifest.js';
 import { resolveURI } from './ipfs.js';
 import { resolveAgentById, resolveByAgentId, AgentResolveError } from './agent-resolver.js';
 import { parseAgentRef, resolveOnchainAgent, toManifest } from './erc8004/resolver.js';
+// BEGIN:EMBED_BRIDGES_IMPORT
+import { EmbedActionBridge } from './embed-action-bridge.js';
+import { protocol } from './agent-protocol.js';
+// END:EMBED_BRIDGES_IMPORT
 
 const MODES = ['inline', 'floating', 'section', 'fullscreen'];
 
@@ -726,6 +730,16 @@ class Agent3DElement extends HTMLElement {
 			}
 
 			this._mounted = true;
+			// BEGIN:EMBED_BRIDGES
+			if (window !== window.parent) {
+				this._embedBridge = new EmbedActionBridge({
+					protocol,
+					manifest: this._manifest,
+					window,
+				});
+				this._embedBridge.start();
+			}
+			// END:EMBED_BRIDGES
 			this._loadingEl.hidden = true;
 			if (!this._pillActive) this._posterEl.style.opacity = '0';
 			this.dispatchEvent(
@@ -913,6 +927,8 @@ class Agent3DElement extends HTMLElement {
 			document.removeEventListener('pointerdown', this._outsideTapHandler);
 			this._outsideTapHandler = null;
 		}
+		this._embedBridge?.stop();
+		this._embedBridge = null;
 		try {
 			this._runtime?.destroy();
 		} catch {}
