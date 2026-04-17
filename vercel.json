@@ -1,78 +1,124 @@
 {
-    "public": true,
-    "routes": [
-        { "src": "/\\.well-known/oauth-authorization-server", "dest": "/api/wk-oauth-authorization-server" },
-        { "src": "/\\.well-known/oauth-protected-resource",  "dest": "/api/wk-oauth-protected-resource" },
-        { "src": "/api/mcp/\\.well-known/oauth-protected-resource", "dest": "/api/wk-oauth-protected-resource" },
+	"public": true,
+	"routes": [
+		{
+			"src": "/\\.well-known/oauth-authorization-server",
+			"dest": "/api/wk-oauth-authorization-server"
+		},
+		{
+			"src": "/\\.well-known/oauth-protected-resource",
+			"dest": "/api/wk-oauth-protected-resource"
+		},
+		{
+			"src": "/api/mcp/\\.well-known/oauth-protected-resource",
+			"dest": "/api/wk-oauth-protected-resource"
+		},
 
-        { "src": "/oauth/authorize",     "dest": "/api/oauth/authorize" },
-        { "src": "/oauth/consent",       "dest": "/api/oauth/authorize" },
-        { "src": "/oauth/token",         "dest": "/api/oauth/token" },
-        { "src": "/oauth/register",      "dest": "/api/oauth/register" },
-        { "src": "/oauth/revoke",        "dest": "/api/oauth/revoke" },
-        { "src": "/oauth/introspect",    "dest": "/api/oauth/introspect" },
+		{ "src": "/oauth/authorize", "dest": "/api/oauth/authorize" },
+		{ "src": "/oauth/consent", "dest": "/api/oauth/authorize" },
+		{ "src": "/oauth/token", "dest": "/api/oauth/token" },
+		{ "src": "/oauth/register", "dest": "/api/oauth/register" },
+		{ "src": "/oauth/revoke", "dest": "/api/oauth/revoke" },
+		{ "src": "/oauth/introspect", "dest": "/api/oauth/introspect" },
 
-        { "src": "/login",               "dest": "/public/login.html" },
-        { "src": "/deploy",              "dest": "/app.html" },
-        { "src": "/dashboard",           "dest": "/public/dashboard/index.html" },
-        { "src": "/dashboard/",          "dest": "/public/dashboard/index.html" },
-        { "src": "/dashboard/(.*)",      "dest": "/public/dashboard/$1" },
-        { "src": "/studio",              "dest": "/public/studio/index.html" },
-        { "src": "/studio/",             "dest": "/public/studio/index.html" },
-        { "src": "/studio/(.*)",         "dest": "/public/studio/$1" },
+		{ "src": "/login", "dest": "/public/login.html" },
+		{ "src": "/deploy", "dest": "/app.html" },
+		{ "src": "/dashboard", "dest": "/public/dashboard/index.html" },
+		{ "src": "/dashboard/", "dest": "/public/dashboard/index.html" },
+		{ "src": "/dashboard/(.*)", "dest": "/public/dashboard/$1" },
+		{ "src": "/studio", "dest": "/public/studio/index.html" },
+		{ "src": "/studio/", "dest": "/public/studio/index.html" },
+		{ "src": "/studio/(.*)", "dest": "/public/studio/$1" },
 
-        { "src": "/api/agents/me",        "dest": "/api/agents" },
-        { "src": "/api/agents/by-wallet", "dest": "/api/agents/by-wallet" },
-        { "src": "/api/agents/([^/]+)/wallet", "dest": "/api/agents/[id]" },
-        { "src": "/api/agents/([^/]+)/embed-policy", "dest": "/api/agents/[id]/embed-policy?id=$1" },
-        { "src": "/api/agents/([^/]+)/sign", "dest": "/api/agents/[id]/sign?id=$1" },
-        { "src": "/api/agents/([^/]+)",  "dest": "/api/agents/[id]" },
-        { "src": "/api/agents",          "dest": "/api/agents" },
-        { "src": "/api/agent-actions",   "dest": "/api/agent-actions" },
-        { "src": "/api/agent-memory/([^/]+)", "dest": "/api/agent-memory" },
-        { "src": "/api/agent-memory",    "dest": "/api/agent-memory" },
-        { "src": "/api/agent/([^/]+)/og", "dest": "/api/agent-og?id=$1" },
-        { "src": "/api/oembed",           "dest": "/api/agent-oembed" },
-        { "src": "/agent/([^/]+)/edit",  "dest": "/agent-edit.html" },
-        { "src": "/agent/([^/]+)/embed", "dest": "/agent-embed.html" },
-        { "src": "/agent/([^/]+)",       "dest": "/agent-home.html" },
-        { "src": "/agent",               "dest": "/agent-home.html" },
+		{ "src": "/api/agents/me", "dest": "/api/agents" },
+		{ "src": "/api/agents/by-wallet", "dest": "/api/agents/by-wallet" },
+		{ "src": "/api/agents/([^/]+)/wallet", "dest": "/api/agents/[id]" },
+		{
+			"src": "/api/agents/([^/]+)/embed-policy",
+			"dest": "/api/agents/[id]/embed-policy?id=$1"
+		},
+		{ "src": "/api/agents/([^/]+)/sign", "dest": "/api/agents/[id]/sign?id=$1" },
+		{ "src": "/api/agents/([^/]+)", "dest": "/api/agents/[id]" },
+		{ "src": "/api/agents", "dest": "/api/agents" },
+		{ "src": "/api/agent-actions", "dest": "/api/agent-actions" },
+		{ "src": "/api/agent-memory/([^/]+)", "dest": "/api/agent-memory" },
+		{ "src": "/api/agent-memory", "dest": "/api/agent-memory" },
+		{ "src": "/api/agent/([^/]+)/og", "dest": "/api/agent-og?id=$1" },
+		{ "src": "/api/oembed", "dest": "/api/agent-oembed" },
+		{ "src": "/agent/([^/]+)/edit", "dest": "/agent-edit.html" },
+		{ "src": "/agent/([^/]+)/embed", "dest": "/agent-embed.html" },
+		{ "src": "/agent/([^/]+)", "dest": "/agent-home.html" },
+		{ "src": "/agent", "dest": "/agent-home.html" },
 
-        { "src": "/api/widgets/oembed",                    "dest": "/api/widgets/oembed" },
-        { "src": "/api/widgets/page",                      "dest": "/api/widgets/page" },
-        { "src": "/api/widgets/([A-Za-z0-9_-]+)/og",       "dest": "/api/widgets/og?id=$1" },
-        { "src": "/api/widgets/([A-Za-z0-9_-]+)/view",     "dest": "/api/widgets/view?id=$1" },
-        { "src": "/api/widgets/([A-Za-z0-9_-]+)/duplicate","dest": "/api/widgets/[id]/duplicate?id=$1" },
-        { "src": "/api/widgets/([A-Za-z0-9_-]+)/stats",    "dest": "/api/widgets/[id]/stats?id=$1" },
-        { "src": "/api/widgets",                           "dest": "/api/widgets" },
-        { "src": "/api/widgets/([A-Za-z0-9_-]+)",          "dest": "/api/widgets/[id]?id=$1" },
-        { "src": "/w/([A-Za-z0-9_-]+)",  "dest": "/api/widgets/page?id=$1" },
-        { "src": "/widgets",             "dest": "/public/widgets-gallery/index.html" },
-        { "src": "/widgets/",            "dest": "/public/widgets-gallery/index.html" },
-        { "src": "/widgets/(.*)",        "dest": "/public/widgets-gallery/$1" },
-        { "src": "/docs/widgets",        "dest": "/public/docs-widgets.html" },
+		{ "src": "/api/widgets/oembed", "dest": "/api/widgets/oembed" },
+		{ "src": "/api/widgets/page", "dest": "/api/widgets/page" },
+		{ "src": "/api/widgets/([A-Za-z0-9_-]+)/og", "dest": "/api/widgets/og?id=$1" },
+		{ "src": "/api/widgets/([A-Za-z0-9_-]+)/view", "dest": "/api/widgets/view?id=$1" },
+		{
+			"src": "/api/widgets/([A-Za-z0-9_-]+)/duplicate",
+			"dest": "/api/widgets/[id]/duplicate?id=$1"
+		},
+		{ "src": "/api/widgets/([A-Za-z0-9_-]+)/stats", "dest": "/api/widgets/[id]/stats?id=$1" },
+		{ "src": "/api/widgets", "dest": "/api/widgets" },
+		{ "src": "/api/widgets/([A-Za-z0-9_-]+)", "dest": "/api/widgets/[id]?id=$1" },
+		{ "src": "/w/([A-Za-z0-9_-]+)", "dest": "/api/widgets/page?id=$1" },
+		{ "src": "/widgets", "dest": "/public/widgets-gallery/index.html" },
+		{ "src": "/widgets/", "dest": "/public/widgets-gallery/index.html" },
+		{ "src": "/widgets/(.*)", "dest": "/public/widgets-gallery/$1" },
+		{ "src": "/docs/widgets", "dest": "/public/docs-widgets.html" },
 
-        { "src": "/api/(.*)",            "dest": "/api/$1" },
+		{ "src": "/api/(.*)", "dest": "/api/$1" },
 
-        {
-            "src": "/assets/(.*)",
-            "headers": { "cache-control": "max-age=604800, public" },
-            "dest": "/assets/$1"
-        },
-        {
-            "src": "/\\.well-known/(.*)",
-            "headers": { "cache-control": "max-age=86400, public" },
-            "dest": "/public/.well-known/$1"
-        },
-        { "src": "/robots.txt",          "dest": "/public/robots.txt" },
-        { "src": "/sitemap.xml",         "dest": "/public/sitemap.xml" },
-        { "src": "/app",                 "dest": "/app.html" },
-        { "src": "/features",            "dest": "/features.html" },
-        { "src": "/create",              "dest": "/create.html" },
-        { "src": "/create/",             "dest": "/create.html" },
-        { "src": "/home",               "dest": "/home.html" },
-        { "src": "/explore",             "dest": "/app.html" },
-        { "src": "/a/(.*)",              "dest": "/app.html" },
-        { "src": "/(.*)",                "dest": "/public/$1" }
-    ]
+		{
+			"src": "/agent-3d/([0-9]+\\.[0-9]+\\.[0-9]+(?:-[A-Za-z0-9.-]+)?)/(.*)",
+			"headers": {
+				"cache-control": "public, max-age=31536000, immutable",
+				"access-control-allow-origin": "*",
+				"access-control-allow-methods": "GET, HEAD, OPTIONS",
+				"cross-origin-resource-policy": "cross-origin",
+				"timing-allow-origin": "*"
+			},
+			"dest": "/agent-3d/$1/$2"
+		},
+		{
+			"src": "/agent-3d/(latest|[0-9]+|[0-9]+\\.[0-9]+)/(.*)",
+			"headers": {
+				"cache-control": "public, max-age=300, s-maxage=300, stale-while-revalidate=86400",
+				"access-control-allow-origin": "*",
+				"access-control-allow-methods": "GET, HEAD, OPTIONS",
+				"cross-origin-resource-policy": "cross-origin",
+				"timing-allow-origin": "*"
+			},
+			"dest": "/agent-3d/$1/$2"
+		},
+		{
+			"src": "/agent-3d/versions\\.json",
+			"headers": {
+				"cache-control": "public, max-age=60, s-maxage=60",
+				"access-control-allow-origin": "*"
+			},
+			"dest": "/agent-3d/versions.json"
+		},
+
+		{
+			"src": "/assets/(.*)",
+			"headers": { "cache-control": "max-age=604800, public" },
+			"dest": "/assets/$1"
+		},
+		{
+			"src": "/\\.well-known/(.*)",
+			"headers": { "cache-control": "max-age=86400, public" },
+			"dest": "/public/.well-known/$1"
+		},
+		{ "src": "/robots.txt", "dest": "/public/robots.txt" },
+		{ "src": "/sitemap.xml", "dest": "/public/sitemap.xml" },
+		{ "src": "/app", "dest": "/app.html" },
+		{ "src": "/features", "dest": "/features.html" },
+		{ "src": "/create", "dest": "/create.html" },
+		{ "src": "/create/", "dest": "/create.html" },
+		{ "src": "/home", "dest": "/home.html" },
+		{ "src": "/explore", "dest": "/app.html" },
+		{ "src": "/a/(.*)", "dest": "/app.html" },
+		{ "src": "/(.*)", "dest": "/public/$1" }
+	]
 }

@@ -37,14 +37,15 @@
 		"dev:lib": "TARGET=lib vite",
 		"build": "vite build",
 		"build:lib": "TARGET=lib vite build",
-		"build:all": "npm run build && npm run build:lib",
+		"publish:lib": "node scripts/publish-lib.mjs",
+		"build:all": "npm run build && npm run build:lib && npm run publish:lib",
 		"clean": "rm -rf dist/* dist-lib/* || true",
 		"generate-icons": "node scripts/generate-pwa-icons.mjs",
 		"fetch-animations": "node scripts/download-animations.mjs",
 		"test": "echo 'No tests configured' && exit 0",
 		"verify": "prettier --check . && vite build",
 		"format": "prettier --write .",
-		"deploy": "npm run build && vercel --local-config vercel.json --prod",
+		"deploy": "npm run build:all && vercel --local-config vercel.json --prod",
 		"postversion": "git push && git push --tags"
 	},
 	"dependencies": {

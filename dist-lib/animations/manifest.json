@@ -1,114 +1,128 @@
 [
 	{
-		"name": "dance",
-		"url": "/animations/robotexpressive.glb",
-		"clipName": "Dance",
-		"label": "Dance",
-		"icon": "💃",
-		"loop": true
-	},
-	{
-		"name": "death",
-		"url": "/animations/robotexpressive.glb",
-		"clipName": "Death",
-		"label": "Death",
-		"icon": "💀",
-		"loop": false
-	},
-	{
 		"name": "idle",
-		"url": "/animations/robotexpressive.glb",
-		"clipName": "Idle",
+		"url": "/animations/Old Man Idle.fbx",
 		"label": "Idle",
 		"icon": "🧍",
 		"loop": true
 	},
 	{
+		"name": "dance",
+		"url": "/animations/Hip Hop Dancing.fbx",
+		"label": "Dance",
+		"icon": "💃",
+		"loop": true
+	},
+	{
+		"name": "celebrate",
+		"url": "/animations/Joyful Jump.fbx",
+		"label": "Celebrate",
+		"icon": "🎉",
+		"loop": false
+	},
+	{
+		"name": "angry",
+		"url": "/animations/Angry.fbx",
+		"label": "Angry",
+		"icon": "😡",
+		"loop": false
+	},
+	{
+		"name": "defeated",
+		"url": "/animations/Defeated.fbx",
+		"label": "Defeated",
+		"icon": "😞",
+		"loop": false
+	},
+	{
+		"name": "dying",
+		"url": "/animations/Dying.fbx",
+		"label": "Dying",
+		"icon": "💀",
+		"loop": false
+	},
+	{
+		"name": "falling",
+		"url": "/animations/Falling.fbx",
+		"label": "Falling",
+		"icon": "🪂",
+		"loop": false
+	},
+	{
 		"name": "jump",
-		"url": "/animations/robotexpressive.glb",
-		"clipName": "Jump",
+		"url": "/animations/Joyful Jump.fbx",
 		"label": "Jump",
 		"icon": "🦘",
 		"loop": false
 	},
 	{
-		"name": "no",
-		"url": "/animations/robotexpressive.glb",
-		"clipName": "No",
-		"label": "No",
-		"icon": "🚫",
+		"name": "kiss",
+		"url": "/animations/Kiss.fbx",
+		"label": "Kiss",
+		"icon": "💋",
 		"loop": false
 	},
 	{
-		"name": "punch",
-		"url": "/animations/robotexpressive.glb",
-		"clipName": "Punch",
-		"label": "Punch",
-		"icon": "👊",
+		"name": "pray",
+		"url": "/animations/Praying.fbx",
+		"label": "Pray",
+		"icon": "🙏",
 		"loop": false
 	},
 	{
-		"name": "running",
-		"url": "/animations/robotexpressive.glb",
-		"clipName": "Running",
-		"label": "Running",
-		"icon": "🏃",
+		"name": "reaction",
+		"url": "/animations/Reaction.fbx",
+		"label": "Reaction",
+		"icon": "😲",
+		"loop": false
+	},
+	{
+		"name": "rumba",
+		"url": "/animations/Rumba Dancing.fbx",
+		"label": "Rumba",
+		"icon": "🕺",
 		"loop": true
 	},
 	{
-		"name": "sitting",
-		"url": "/animations/robotexpressive.glb",
-		"clipName": "Sitting",
-		"label": "Sitting",
-		"icon": "🪑",
+		"name": "silly",
+		"url": "/animations/Silly Dancing.fbx",
+		"label": "Silly Dance",
+		"icon": "🤪",
 		"loop": true
 	},
 	{
-		"name": "standing",
-		"url": "/animations/robotexpressive.glb",
-		"clipName": "Standing",
-		"label": "Standing",
-		"icon": "🧍",
+		"name": "sitclap",
+		"url": "/animations/Sitting Clap.fbx",
+		"label": "Sit Clap",
+		"icon": "👏",
+		"loop": false
+	},
+	{
+		"name": "sitlaugh",
+		"url": "/animations/Sitting Laughing.fbx",
+		"label": "Sit Laugh",
+		"icon": "😂",
+		"loop": false
+	},
+	{
+		"name": "taunt",
+		"url": "/animations/Taunt.fbx",
+		"label": "Taunt",
+		"icon": "😝",
+		"loop": false
+	},
+	{
+		"name": "thriller",
+		"url": "/animations/Thriller Part 3.fbx",
+		"label": "Thriller",
+		"icon": "🧟",
 		"loop": true
 	},
 	{
-		"name": "thumbsup",
-		"url": "/animations/robotexpressive.glb",
-		"clipName": "ThumbsUp",
-		"label": "ThumbsUp",
-		"icon": "👍",
-		"loop": false
-	},
-	{
-		"name": "walking",
-		"url": "/animations/robotexpressive.glb",
-		"clipName": "Walking",
-		"label": "Walking",
-		"icon": "🚶",
+		"name": "capoeira",
+		"url": "/animations/Capoeira.fbx",
+		"label": "Capoeira",
+		"icon": "🥋",
 		"loop": true
-	},
-	{
-		"name": "walkjump",
-		"url": "/animations/robotexpressive.glb",
-		"clipName": "WalkJump",
-		"label": "WalkJump",
-		"icon": "▶",
-		"loop": false
-	},
-	{
-		"name": "wave",
-		"url": "/animations/robotexpressive.glb",
-		"clipName": "Wave",
-		"label": "Wave",
-		"icon": "👋",
-		"loop": false
-	},
-	{
-		"name": "yes",
-		"url": "/animations/robotexpressive.glb",
-		"clipName": "Yes",
-		"label": "Yes",
-		"icon": "✅",
-		"loop": false
 	}
 ]
