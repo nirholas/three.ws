@@ -61,13 +61,15 @@ function parseWindowMs(w) {
 export const limits = {
 	authIp: (ip) => getLimiter('auth:ip', { limit: 30, window: '10 m' }).limit(ip),
 	registerIp: (ip) => getLimiter('register:ip', { limit: 5, window: '1 h' }).limit(ip),
-	oauthRegisterIp: (ip) => getLimiter('oauth:register:ip', { limit: 10, window: '1 h' }).limit(ip),
+	oauthRegisterIp: (ip) =>
+		getLimiter('oauth:register:ip', { limit: 10, window: '1 h' }).limit(ip),
 	mcpUser: (userId) => getLimiter('mcp:user', { limit: 1200, window: '1 m' }).limit(userId),
 	mcpIp: (ip) => getLimiter('mcp:ip', { limit: 600, window: '1 m' }).limit(ip),
 	mcpValidate: (key) => getLimiter('mcp:validate', { limit: 10, window: '1 m' }).limit(key),
-	mcpInspect:  (key) => getLimiter('mcp:inspect',  { limit: 30, window: '1 m' }).limit(key),
+	mcpInspect: (key) => getLimiter('mcp:inspect', { limit: 30, window: '1 m' }).limit(key),
 	mcpOptimize: (key) => getLimiter('mcp:optimize', { limit: 10, window: '1 m' }).limit(key),
-	oauthToken: (clientId) => getLimiter('oauth:token', { limit: 120, window: '1 m' }).limit(clientId),
+	oauthToken: (clientId) =>
+		getLimiter('oauth:token', { limit: 120, window: '1 m' }).limit(clientId),
 	upload: (userId) => getLimiter('upload', { limit: 60, window: '1 h' }).limit(userId),
 	chatUser: (userId) => getLimiter('chat:user', { limit: 20, window: '1 m' }).limit(userId),
 	chatIp: (ip) => getLimiter('chat:ip', { limit: 40, window: '1 m' }).limit(ip),
@@ -75,8 +77,17 @@ export const limits = {
 	widgetRead: (ip) => getLimiter('widget:read', { limit: 600, window: '1 m' }).limit(ip),
 	// Per-widget visitor chat. Limit is dynamic — one bucket per (widgetId, perMinute).
 	widgetChat: ({ ip, widgetId, perMinute }) =>
-		getLimiter('widget:chat', { limit: Math.max(1, Math.min(60, perMinute || 8)), window: '1 m' })
-			.limit(`${widgetId}:${ip}`),
+		getLimiter('widget:chat', {
+			limit: Math.max(1, Math.min(60, perMinute || 8)),
+			window: '1 m',
+		}).limit(`${widgetId}:${ip}`),
+	// We-pay LLM proxy: 60 req/min per IP (global floor), and per-agent dynamic bucket.
+	embedLlmIp: (ip) => getLimiter('embed:llm:ip', { limit: 60, window: '1 m' }).limit(ip),
+	embedLlmAgent: (agentId, perMin) =>
+		getLimiter('embed:llm:agent', {
+			limit: Math.max(1, Math.min(1000, perMin || 10)),
+			window: '1 m',
+		}).limit(agentId),
 };
 
 // Trust only proxy headers that Vercel itself sets and signs. Naively reading

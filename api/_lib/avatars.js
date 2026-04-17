@@ -5,13 +5,25 @@ import { sql } from './db.js';
 import { publicUrl, presignGet, deleteObject } from './r2.js';
 import { defaultStorageMode } from './storage-mode.js';
 
-export async function listAvatars({ userId, limit = 50, cursor, visibility, includePublic = false }) {
+export async function listAvatars({
+	userId,
+	limit = 50,
+	cursor,
+	visibility,
+	includePublic = false,
+}) {
 	limit = Math.min(Math.max(limit, 1), 200);
 	const params = [userId];
 	const conds = ['deleted_at is null'];
 	conds.push(includePublic ? `(owner_id = $1 or visibility = 'public')` : `owner_id = $1`);
-	if (visibility) { params.push(visibility); conds.push(`visibility = $${params.length}`); }
-	if (cursor)     { params.push(new Date(cursor)); conds.push(`created_at < $${params.length}`); }
+	if (visibility) {
+		params.push(visibility);
+		conds.push(`visibility = $${params.length}`);
+	}
+	if (cursor) {
+		params.push(new Date(cursor));
+		conds.push(`created_at < $${params.length}`);
+	}
 	params.push(limit + 1);
 	const rows = await sql(
 		`select id, owner_id, slug, name, description, storage_key, thumbnail_key, size_bytes,
@@ -104,8 +116,15 @@ export async function deleteAvatar({ id, userId }) {
 	if (!row) return false;
 	// Fire-and-forget object delete — DB row is source of truth.
 	queueMicrotask(async () => {
-		try { await deleteObject(row.storage_key); } catch (e) { console.warn('r2 delete failed', e?.message); }
-		if (row.thumbnail_key) try { await deleteObject(row.thumbnail_key); } catch {}
+		try {
+			await deleteObject(row.storage_key);
+		} catch (e) {
+			console.warn('r2 delete failed', e?.message);
+		}
+		if (row.thumbnail_key)
+			try {
+				await deleteObject(row.thumbnail_key);
+			} catch {}
 	});
 	return true;
 }
@@ -118,8 +137,14 @@ export async function searchPublicAvatars({ q, tag, limit = 24, cursor }) {
 		params.push('%' + q + '%');
 		conds.push(`(name ilike $${params.length} or description ilike $${params.length})`);
 	}
-	if (tag)    { params.push(tag); conds.push(`$${params.length} = any(tags)`); }
-	if (cursor) { params.push(new Date(cursor)); conds.push(`created_at < $${params.length}`); }
+	if (tag) {
+		params.push(tag);
+		conds.push(`$${params.length} = any(tags)`);
+	}
+	if (cursor) {
+		params.push(new Date(cursor));
+		conds.push(`created_at < $${params.length}`);
+	}
 	params.push(limit + 1);
 	const rows = await sql(
 		`select id, owner_id, slug, name, description, storage_key, thumbnail_key, size_bytes,
@@ -140,7 +165,11 @@ export async function resolveAvatarUrl(row, { expiresIn = 600 } = {}) {
 	if (row.visibility === 'public' || row.visibility === 'unlisted') {
 		return { url: publicUrl(row.storage_key), cdn: true };
 	}
-	return { url: await presignGet({ key: row.storage_key, expiresIn }), cdn: false, expires_in: expiresIn };
+	return {
+		url: await presignGet({ key: row.storage_key, expiresIn }),
+		cdn: false,
+		expires_in: expiresIn,
+	};
 }
 
 // ── quotas ───────────────────────────────────────────────────────────────────
@@ -156,13 +185,22 @@ async function enforceQuotas(userId, incomingBytes) {
 	const q = rows[0];
 	if (!q) throw Object.assign(new Error('user not found'), { status: 404 });
 	if (incomingBytes > q.max_bytes_per_avatar) {
-		throw Object.assign(new Error(`file too large for plan ${q.plan}`), { status: 413, code: 'plan_limit_size' });
+		throw Object.assign(new Error(`file too large for plan ${q.plan}`), {
+			status: 413,
+			code: 'plan_limit_size',
+		});
 	}
 	if (q.avatar_count >= q.max_avatars) {
-		throw Object.assign(new Error(`avatar count limit reached on plan ${q.plan}`), { status: 402, code: 'plan_limit_count' });
+		throw Object.assign(new Error(`avatar count limit reached on plan ${q.plan}`), {
+			status: 402,
+			code: 'plan_limit_count',
+		});
 	}
 	if (Number(q.total_bytes) + incomingBytes > Number(q.max_total_bytes)) {
-		throw Object.assign(new Error(`storage limit reached on plan ${q.plan}`), { status: 402, code: 'plan_limit_storage' });
+		throw Object.assign(new Error(`storage limit reached on plan ${q.plan}`), {
+			status: 402,
+			code: 'plan_limit_storage',
+		});
 	}
 }
 
@@ -184,9 +222,10 @@ function decorate(row) {
 		version: row.version,
 		created_at: row.created_at,
 		updated_at: row.updated_at,
-		model_url: row.visibility === 'public' || row.visibility === 'unlisted'
-			? publicUrl(row.storage_key)
-			: null,
+		model_url:
+			row.visibility === 'public' || row.visibility === 'unlisted'
+				? publicUrl(row.storage_key)
+				: null,
 		parent_avatar_id: row.parent_avatar_id || null,
 		thumbnail_url: row.thumbnail_key ? publicUrl(row.thumbnail_key) : null,
 	};
@@ -203,14 +242,16 @@ export function stripOwnerFor(avatar, requesterId) {
 }
 
 async function generateSlug(userId, name) {
-	const base = name
-		.toLowerCase()
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-+|-+$/g, '')
-		.slice(0, 40) || 'avatar';
+	const base =
+		name
+			.toLowerCase()
+			.replace(/[^a-z0-9]+/g, '-')
+			.replace(/^-+|-+$/g, '')
+			.slice(0, 40) || 'avatar';
 	for (let i = 0; i < 5; i++) {
 		const candidate = i === 0 ? base : `${base}-${Math.random().toString(36).slice(2, 6)}`;
-		const rows = await sql`select 1 from avatars where owner_id = ${userId} and slug = ${candidate} limit 1`;
+		const rows =
+			await sql`select 1 from avatars where owner_id = ${userId} and slug = ${candidate} limit 1`;
 		if (!rows[0]) return candidate;
 	}
 	return `${base}-${Date.now().toString(36)}`;

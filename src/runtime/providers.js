@@ -2,13 +2,30 @@
 // never ship API keys in the browser.
 
 export class AnthropicProvider {
-	constructor({ model = 'claude-opus-4-6', proxyURL, apiKey, temperature = 0.7, maxTokens = 4096, thinking = 'auto' } = {}) {
+	constructor({
+		model = 'claude-opus-4-6',
+		proxyURL,
+		apiKey,
+		agentId,
+		apiOrigin,
+		temperature = 0.7,
+		maxTokens = 4096,
+		thinking = 'auto',
+	} = {}) {
 		this.model = model;
-		this.proxyURL = proxyURL;
 		this.apiKey = apiKey;
 		this.temperature = temperature;
 		this.maxTokens = maxTokens;
 		this.thinking = thinking;
+
+		// Priority: explicit proxyURL > direct key > we-pay fallback
+		if (proxyURL) {
+			this.proxyURL = proxyURL;
+		} else if (!apiKey && agentId && apiOrigin) {
+			this.proxyURL = `${apiOrigin}/api/llm/anthropic?agent=${encodeURIComponent(agentId)}`;
+		} else {
+			this.proxyURL = null;
+		}
 	}
 
 	async complete({ system, messages, tools }) {
@@ -83,8 +100,12 @@ export class NullProvider {
 	async complete() {
 		return { text: '', toolCalls: [], stopReason: 'end_turn' };
 	}
-	formatToolResults() { return { role: 'user', content: [] }; }
-	formatAssistantWithToolCalls(text) { return { role: 'assistant', content: text || '' }; }
+	formatToolResults() {
+		return { role: 'user', content: [] };
+	}
+	formatAssistantWithToolCalls(text) {
+		return { role: 'assistant', content: text || '' };
+	}
 }
 
 export function createProvider(config = {}) {

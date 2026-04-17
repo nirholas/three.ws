@@ -387,3 +387,7 @@ create table if not exists erc8004_crawl_cursor (
     last_block     bigint  not null default 0,
     updated_at     timestamptz not null default now()
 );
+
+-- Additive migrations for usage_events.
+alter table usage_events add column if not exists agent_id uuid references agent_identities(id) on delete set null;
+create index if not exists usage_events_agent_time on usage_events(agent_id, created_at desc) where agent_id is not null;
