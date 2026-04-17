@@ -947,9 +947,10 @@ class Agent3DElement extends HTMLElement {
 		return this._runtime.send(text, { voice: opts.voice ?? this.hasAttribute('voice') });
 	}
 
-	// Emit speak directly on the protocol bus — triggers avatar animation without going through LLM.
+	// Play talk animation directly via the scene — bypasses LLM, works in embedded context.
 	speak(text, opts = {}) {
-		protocol.emit(ACTION_TYPES.SPEAK, { text, sentiment: opts.sentiment ?? 0 });
+		const duration = Math.max(1.5, (text?.split(' ').length ?? 3) * 0.3);
+		this._scene?.playAnimationByHint?.('talk', { duration });
 	}
 
 	async ask(text, opts = {}) {

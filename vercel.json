@@ -98,6 +98,8 @@
 		{ "src": "/lobehub/iframe/", "dest": "/public/lobehub/iframe/index.html" },
 		{ "src": "/lobehub/iframe/(.*)", "dest": "/public/lobehub/iframe/$1" },
 
+		{ "src": "/api/auth/logout-everywhere", "dest": "/api/auth/logout-everywhere" },
+
 		{ "src": "/api/llm/anthropic", "dest": "/api/llm/anthropic.js" },
 		{ "src": "/api/agents/([^/]+)/usage", "dest": "/api/agents/[id]/usage?id=$1" },
 		{ "src": "/dashboard/usage", "dest": "/public/dashboard/usage.html" },

@@ -5,6 +5,7 @@
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
 		<title>Sign in · 3D Agent</title>
 		<link rel="icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/wallet-connect.css" />
 		<meta name="privy-app-id" content="" />
 		<style>
 			:root {
@@ -190,21 +191,7 @@
 				</svg>
 				Sign in with Privy
 			</button>
-			<button id="wallet" type="button" class="wallet-btn">
-				<svg
-					class="wallet-icon"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-				>
-					<rect x="2" y="6" width="20" height="14" rx="2" />
-					<path d="M16 12h2" />
-				</svg>
-				Sign in with MetaMask
-			</button>
+			<div id="wallet-mount"></div>
 			<div class="err" id="err"></div>
 			<p class="foot">No account? <a href="/register">Create one</a></p>
 		</form>

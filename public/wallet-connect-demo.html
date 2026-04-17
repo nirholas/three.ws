@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Wallet Connect — QA Demo</title>
+		<link rel="stylesheet" href="/wallet-connect.css" />
+		<style>
+			:root { color-scheme: dark; }
+			body {
+				font: 15px/1.5 system-ui, sans-serif;
+				background: #0b0b10;
+				color: #eee;
+				margin: 0;
+				min-height: 100vh;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				gap: 32px;
+				padding: 32px;
+			}
+			h1 { margin: 0; font-size: 20px; }
+			.demo-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+				gap: 24px;
+				width: 100%;
+				max-width: 800px;
+			}
+			.demo-card {
+				background: #14141c;
+				border: 1px solid #22222e;
+				border-radius: 12px;
+				padding: 20px;
+				display: flex;
+				flex-direction: column;
+				gap: 12px;
+			}
+			.demo-card h2 { margin: 0; font-size: 14px; color: #aaa; text-transform: uppercase; letter-spacing: 0.06em; }
+			.log {
+				font-size: 12px;
+				font-family: monospace;
+				color: #666;
+				min-height: 40px;
+				word-break: break-all;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>Wallet Connect — QA Demo</h1>
+		<p style="color:#666;margin:0;font-size:13px;">Manual test page — not linked from site nav.</p>
+
+		<div class="demo-grid">
+			<div class="demo-card">
+				<h2>Sign in</h2>
+				<div id="mount-signin"></div>
+				<div class="log" id="log-signin">State: idle</div>
+			</div>
+			<div class="demo-card">
+				<h2>Link additional wallet</h2>
+				<div id="mount-link"></div>
+				<div class="log" id="log-link">State: idle</div>
+			</div>
+			<div class="demo-card">
+				<h2>Register agent (ERC-8004)</h2>
+				<div id="mount-agent"></div>
+				<div class="log" id="log-agent">State: idle</div>
+			</div>
+		</div>
+
+		<script type="module">
+			import { createConnectWalletButton } from '/wallet/connect-button.js';
+
+			const params = new URLSearchParams(location.search);
+			const next = params.get('next') || '/dashboard/';
+
+			function wire(mountId, logId, opts) {
+				const mountEl = document.getElementById(mountId);
+				const logEl = document.getElementById(logId);
+				const ctrl = createConnectWalletButton(mountEl, opts);
+				ctrl.addEventListener('change', (e) => {
+					const { status, address, error } = e.detail;
+					logEl.textContent = `State: ${status}${address ? ` · ${address.slice(0,6)}…${address.slice(-4)}` : ''}${error ? ` · ${error.message}` : ''}`;
+				});
+				return ctrl;
+			}
+
+			wire('mount-signin', 'log-signin', {
+				verifyUrl: '/api/auth/siwe/verify',
+				labels: { idle: 'Connect wallet', connected: null },
+				onSuccess: () => {
+					document.getElementById('log-signin').textContent = 'Success — redirecting…';
+					setTimeout(() => location.href = next, 800);
+				},
+			});
+
+			wire('mount-link', 'log-link', {
+				verifyUrl: '/api/auth/wallet/link',
+				labels: { idle: 'Link wallet', signing: 'Sign to link…', success: 'Wallet linked' },
+				onSuccess: () => {
+					document.getElementById('log-link').textContent = 'Wallet linked successfully.';
+				},
+			});
+
+			wire('mount-agent', 'log-agent', {
+				verifyUrl: '/api/auth/siwe/verify',
+				labels: { idle: 'Connect for ERC-8004', signing: 'Sign to register…', success: 'Ready' },
+				onSuccess: () => {
+					document.getElementById('log-agent').textContent = 'Connected — ready for on-chain registration.';
+				},
+			});
+		</script>
+	</body>
+</html>

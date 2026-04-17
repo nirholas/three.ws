@@ -23,6 +23,9 @@ export default wrap(async (req, res) => {
 
 	if (!rows[0]) return error(res, 404, 'not_found', 'session not found');
 
+	if (sessionId === user.sid)
+		return error(res, 409, 'cannot_revoke_current', 'use POST /api/auth/logout to end the current session');
+
 	await sql`update sessions set revoked_at = now() where id = ${sessionId}`;
 	return json(res, 200, { revoked: 1 });
 });
