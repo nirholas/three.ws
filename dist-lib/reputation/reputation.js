@@ -294,7 +294,9 @@ async function main() {
 			btn.textContent = i >= 0 ? `+${i}` : `${i}`;
 			btn.dataset.value = i;
 			btn.addEventListener('click', () => {
-				document.querySelectorAll('#rating-input button').forEach(b => b.classList.remove('selected'));
+				document
+					.querySelectorAll('#rating-input button')
+					.forEach((b) => b.classList.remove('selected'));
 				btn.classList.add('selected');
 				document.getElementById('rep-rating').value = i;
 				submitBtn.disabled = false;
@@ -318,7 +320,9 @@ async function main() {
 				connectedAddress = accounts[0];
 
 				// Check if already reviewed
-				const hasReviewed = recentReviews.some(r => r.from.toLowerCase() === connectedAddress.toLowerCase());
+				const hasReviewed = recentReviews.some(
+					(r) => r.from.toLowerCase() === connectedAddress.toLowerCase(),
+				);
 				if (hasReviewed) {
 					walletStatus.innerHTML = `
 						<div class="rep-error">

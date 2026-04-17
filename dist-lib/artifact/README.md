@@ -15,13 +15,13 @@ Claude will embed the artifact and display the live 3D character.
 
 ## Parameters
 
-| Param | Description |
-|---|---|
-| `agent` | Agent ID (required unless `model` is set) |
+| Param   | Description                                             |
+| ------- | ------------------------------------------------------- |
+| `agent` | Agent ID (required unless `model` is set)               |
 | `model` | Absolute `https://` URL to a GLB from a whitelisted CDN |
-| `theme` | `dark` (default) or `light` |
-| `idle` | Animation clip name to play while idle |
-| `bg` | Background hex colour (without `#`), e.g. `bg=1a0533` |
+| `theme` | `dark` (default) or `light`                             |
+| `idle`  | Animation clip name to play while idle                  |
+| `bg`    | Background hex colour (without `#`), e.g. `bg=1a0533`   |
 
 ## Notes
 
