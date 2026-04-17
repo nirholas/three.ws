@@ -22,14 +22,26 @@ export const avatarContentType = z.enum([
 	'model/gltf+json',
 ]);
 
+export const username = z
+	.string()
+	.trim()
+	.min(3)
+	.max(30)
+	.regex(/^[a-zA-Z0-9_-]+$/, 'username must be alphanumeric with _ or -');
+
 export const registerBody = z.object({
 	email,
 	password,
 	display_name: displayName.optional(),
 });
 
+export const usernameRegisterBody = z.object({
+	username,
+	password,
+});
+
 export const loginBody = z.object({
-	email,
+	email: z.string().trim().min(1).max(254), // accepts email address or username
 	password: z.string().min(1).max(200),
 });
 

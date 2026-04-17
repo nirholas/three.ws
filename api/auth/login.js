@@ -14,13 +14,13 @@ export default wrap(async (req, res) => {
 
 	const body = parse(loginBody, await readJson(req));
 
-	const rows = await sql`
-		select id, email, password_hash, display_name, plan, avatar_url
-		from users where email = ${body.email} and deleted_at is null limit 1
-	`;
+	const isEmail = body.email.includes('@');
+	const rows = isEmail
+		? await sql`select id, email, password_hash, display_name, plan, avatar_url from users where email = ${body.email} and deleted_at is null limit 1`
+		: await sql`select id, email, password_hash, display_name, plan, avatar_url from users where display_name ilike ${body.email} and deleted_at is null limit 1`;
 	const user = rows[0];
 	const ok = user && (await verifyPassword(body.password, user.password_hash));
-	if (!ok) return error(res, 401, 'invalid_credentials', 'invalid email or password');
+	if (!ok) return error(res, 401, 'invalid_credentials', 'invalid username/email or password');
 
 	// Invalidate any pre-existing session tied to the incoming cookie before
 	// minting a new one. Defends against session fixation via planted cookies.
