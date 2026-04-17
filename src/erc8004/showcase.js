@@ -33,7 +33,9 @@ function loadNet() {
 	return 'mainnet';
 }
 function saveNet(v) {
-	try { localStorage.setItem(NET_KEY, v); } catch {}
+	try {
+		localStorage.setItem(NET_KEY, v);
+	} catch {}
 }
 
 function loadSort() {
@@ -44,7 +46,9 @@ function loadSort() {
 	return 'newest';
 }
 function saveSort(v) {
-	try { localStorage.setItem(SORT_KEY, v); } catch {}
+	try {
+		localStorage.setItem(SORT_KEY, v);
+	} catch {}
 }
 
 function loadChains() {
@@ -59,7 +63,9 @@ function loadChains() {
 	}
 }
 function saveChains(ids) {
-	try { localStorage.setItem(CHAINS_KEY, JSON.stringify(ids)); } catch {}
+	try {
+		localStorage.setItem(CHAINS_KEY, JSON.stringify(ids));
+	} catch {}
 }
 
 function splitChains() {
@@ -277,7 +283,12 @@ class ShowcasePage {
 	_renderChainChips() {
 		const root = this.container.querySelector('[data-role="chainChips"]');
 		const { mainnet, testnet } = splitChains();
-		const pool = this._net === 'mainnet' ? mainnet : this._net === 'testnet' ? testnet : [...mainnet, ...testnet];
+		const pool =
+			this._net === 'mainnet'
+				? mainnet
+				: this._net === 'testnet'
+					? testnet
+					: [...mainnet, ...testnet];
 
 		const chip = (id) => {
 			const m = CHAIN_META[id];
@@ -392,13 +403,16 @@ class ShowcasePage {
 		if (skeleton) {
 			out.innerHTML = `
 				<div class="showcase-grid" aria-busy="true">
-					${Array.from({ length: 8 }, () => `
+					${Array.from(
+						{ length: 8 },
+						() => `
 						<div class="showcase-card showcase-card--skel">
 							<div class="showcase-skel-img"></div>
 							<div class="showcase-skel-line"></div>
 							<div class="showcase-skel-line showcase-skel-line--short"></div>
 						</div>
-					`).join('')}
+					`,
+					).join('')}
 				</div>
 			`;
 			return;
@@ -436,7 +450,9 @@ class ShowcasePage {
 				<button type="button" class="showcase-btn" data-role="retry">Retry</button>
 			</div>
 		`;
-		out.querySelector('[data-role="retry"]').addEventListener('click', () => this._resetAndLoad());
+		out.querySelector('[data-role="retry"]').addEventListener('click', () =>
+			this._resetAndLoad(),
+		);
 	}
 
 	_wireCardShare(root) {

@@ -5,12 +5,13 @@
 **Claude.ai / Artifacts**: An MCP tool call returns a self-contained HTML artifact that renders the agent's 3D avatar inline in the Claude conversation. User sees an embodied agent, not a JSON blob.
 
 **LobeHub**: In the user's LobeHub fork (they are the primary integration target), the chat panel has an always-on 3D avatar beside the messages. The avatar:
+
 - is summoned from an agent id or wallet address
 - reacts to chat events (typing, speaking, emoting)
 - persists across turns in the same session
 - can be swapped by entering a different agent id
 
-The novelty is that *the same agent* renders identically in both hosts, because both pull from the same public URL (band 4) or on-chain record (band 6).
+The novelty is that _the same agent_ renders identically in both hosts, because both pull from the same public URL (band 4) or on-chain record (band 6).
 
 ## Current state
 
@@ -20,12 +21,12 @@ The novelty is that *the same agent* renders identically in both hosts, because 
 
 ## Prompts in this band
 
-| # | File | Depends on |
-|---|---|---|
-| 01 | [claude-artifact.md](./01-claude-artifact.md) | band 4 public embed solid |
-| 02 | [lobehub-plugin-scaffold.md](./02-lobehub-plugin-scaffold.md) | — |
-| 03 | [lobehub-chat-bridge.md](./03-lobehub-chat-bridge.md) | 02 |
-| 04 | [agent-from-url-or-id.md](./04-agent-from-url-or-id.md) | 02 |
+| #   | File                                                          | Depends on                |
+| --- | ------------------------------------------------------------- | ------------------------- |
+| 01  | [claude-artifact.md](./01-claude-artifact.md)                 | band 4 public embed solid |
+| 02  | [lobehub-plugin-scaffold.md](./02-lobehub-plugin-scaffold.md) | —                         |
+| 03  | [lobehub-chat-bridge.md](./03-lobehub-chat-bridge.md)         | 02                        |
+| 04  | [agent-from-url-or-id.md](./04-agent-from-url-or-id.md)       | 02                        |
 
 ## Done = merged when
 

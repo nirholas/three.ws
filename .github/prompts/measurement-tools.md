@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Add measurement tools for distances, angles, and bounding box dimensions"
+description: 'Add measurement tools for distances, angles, and bounding box dimensions'
 ---
 
 # Measurement Tools
@@ -43,9 +43,9 @@ The README roadmap lists **"Measurement Tools — click two points to measure di
 ### 5. Surface Area & Volume
 
 - Calculate and display:
-  - Total surface area (sum of triangle areas)
-  - Estimated volume (for closed meshes)
-  - Per-mesh surface area
+    - Total surface area (sum of triangle areas)
+    - Estimated volume (for closed meshes)
+    - Per-mesh surface area
 
 ### 6. Measurement Display
 
@@ -57,6 +57,7 @@ The README roadmap lists **"Measurement Tools — click two points to measure di
 ### 7. GUI Integration
 
 Add "Measure" folder to dat.gui:
+
 ```
 ▸ Measure
   Mode          (dropdown: Off, Distance, Angle, BBox)

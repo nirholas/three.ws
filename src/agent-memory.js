@@ -12,9 +12,9 @@
  */
 
 export const MEMORY_TYPES = {
-	USER:      'user',
-	FEEDBACK:  'feedback',
-	PROJECT:   'project',
+	USER: 'user',
+	FEEDBACK: 'feedback',
+	PROJECT: 'project',
 	REFERENCE: 'reference',
 };
 
@@ -36,11 +36,11 @@ export class AgentMemory {
 	 * @param {{ backendSync?: boolean }} [opts]
 	 */
 	constructor(agentId, { backendSync = false } = {}) {
-		this.agentId     = agentId;
+		this.agentId = agentId;
 		this.backendSync = backendSync;
-		this._entries    = [];
-		this._dirty      = false;
-		this._syncTimer  = null;
+		this._entries = [];
+		this._dirty = false;
+		this._syncTimer = null;
 
 		this._hydrate();
 	}
@@ -57,11 +57,11 @@ export class AgentMemory {
 		const now = Date.now();
 		const mem = {
 			id,
-			type:      entry.type || MEMORY_TYPES.PROJECT,
-			content:   String(entry.content).trim(),
-			tags:      Array.isArray(entry.tags) ? entry.tags : [],
-			context:   entry.context || {},
-			salience:  _computeSalience(entry, now),
+			type: entry.type || MEMORY_TYPES.PROJECT,
+			content: String(entry.content).trim(),
+			tags: Array.isArray(entry.tags) ? entry.tags : [],
+			context: entry.context || {},
+			salience: _computeSalience(entry, now),
 			createdAt: now,
 			expiresAt: entry.expiresAt || null,
 		};
@@ -77,12 +77,12 @@ export class AgentMemory {
 	 */
 	query({ type, tags, limit = 50, since = 0 } = {}) {
 		const now = Date.now();
-		let results = this._entries.filter(m => {
-			if (m.expiresAt && m.expiresAt < now)   return false;
-			if (m.createdAt < since)                 return false;
-			if (type && m.type !== type)             return false;
+		let results = this._entries.filter((m) => {
+			if (m.expiresAt && m.expiresAt < now) return false;
+			if (m.createdAt < since) return false;
+			if (type && m.type !== type) return false;
 			if (tags && tags.length) {
-				const hasTags = tags.every(t => m.tags.includes(t));
+				const hasTags = tags.every((t) => m.tags.includes(t));
 				if (!hasTags) return false;
 			}
 			return true;
@@ -103,7 +103,7 @@ export class AgentMemory {
 	 * @param {string} id
 	 */
 	forget(id) {
-		const idx = this._entries.findIndex(m => m.id === id);
+		const idx = this._entries.findIndex((m) => m.id === id);
 		if (idx !== -1) {
 			this._entries.splice(idx, 1);
 			this._persist();
@@ -117,7 +117,7 @@ export class AgentMemory {
 	 */
 	clear(type) {
 		if (type) {
-			this._entries = this._entries.filter(m => m.type !== type);
+			this._entries = this._entries.filter((m) => m.type !== type);
 		} else {
 			this._entries = [];
 		}
@@ -133,7 +133,7 @@ export class AgentMemory {
 	get stats() {
 		const s = {};
 		for (const t of Object.values(MEMORY_TYPES)) {
-			s[t] = this._entries.filter(m => m.type === t).length;
+			s[t] = this._entries.filter((m) => m.type === t).length;
 		}
 		s.total = this._entries.length;
 		return s;
@@ -166,14 +166,16 @@ export class AgentMemory {
 		} catch {
 			// localStorage quota exceeded — prune oldest low-salience entries
 			this._prune();
-			try { localStorage.setItem(this._storageKey(), JSON.stringify(this._entries)); } catch {}
+			try {
+				localStorage.setItem(this._storageKey(), JSON.stringify(this._entries));
+			} catch {}
 		}
 	}
 
 	_prune() {
 		// Remove expired, then lowest salience until we're under 150 entries
 		const now = Date.now();
-		this._entries = this._entries.filter(m => !m.expiresAt || m.expiresAt > now);
+		this._entries = this._entries.filter((m) => !m.expiresAt || m.expiresAt > now);
 		if (this._entries.length > 150) {
 			this._entries.sort((a, b) => b.salience - a.salience);
 			this._entries = this._entries.slice(0, 150);
@@ -195,7 +197,9 @@ export class AgentMemory {
 				credentials: 'include',
 				body: JSON.stringify({ agentId: this.agentId, entry }),
 			});
-		} catch { /* non-critical — localStorage is authoritative */ }
+		} catch {
+			/* non-critical — localStorage is authoritative */
+		}
 	}
 
 	async _syncForget(id) {
@@ -217,8 +221,8 @@ export class AgentMemory {
 			if (!Array.isArray(entries)) return;
 
 			// Merge: backend entries that don't exist locally win
-			const localIds = new Set(this._entries.map(m => m.id));
-			const newEntries = entries.filter(m => !localIds.has(m.id));
+			const localIds = new Set(this._entries.map((m) => m.id));
+			const newEntries = entries.filter((m) => !localIds.has(m.id));
 			if (newEntries.length) {
 				this._entries.push(...newEntries);
 				this._persist();
@@ -231,7 +235,7 @@ export class AgentMemory {
 
 function _uuid() {
 	if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
-	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
 		const r = (Math.random() * 16) | 0;
 		return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
 	});
@@ -250,7 +254,7 @@ function _computeSalience(entry, now) {
 
 function _recencyBoost(createdAt, now) {
 	// Exponential decay with 7-day half-life
-	const ageMs   = now - createdAt;
+	const ageMs = now - createdAt;
 	const halfLife = 7 * 24 * 60 * 60 * 1000;
-	return Math.exp(-0.693 * ageMs / halfLife);
+	return Math.exp((-0.693 * ageMs) / halfLife);
 }

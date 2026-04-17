@@ -70,7 +70,9 @@ export class SceneExplorer {
 		}
 		if (this.transformControls) {
 			this.transformControls.detach();
-			const helper = this.transformControls.getHelper ? this.transformControls.getHelper() : this.transformControls;
+			const helper = this.transformControls.getHelper
+				? this.transformControls.getHelper()
+				: this.transformControls;
 			this.viewer.scene.remove(helper);
 			this.transformControls.dispose?.();
 			this.transformControls = null;
@@ -217,10 +219,10 @@ export class SceneExplorer {
 		if (!this.inspectorEl) return;
 		const rad2deg = 180 / Math.PI;
 		const parts = [];
+		parts.push(`<div class="inspector__title">${escapeHTML(node.name || node.type)}</div>`);
 		parts.push(
-			`<div class="inspector__title">${escapeHTML(node.name || node.type)}</div>`,
+			`<div class="inspector__sub">${node.type} · uuid: ${node.uuid.slice(0, 8)}</div>`,
 		);
-		parts.push(`<div class="inspector__sub">${node.type} · uuid: ${node.uuid.slice(0, 8)}</div>`);
 
 		parts.push('<div class="inspector__section">Transform</div>');
 		parts.push(this._vec3Row('pos', [node.position.x, node.position.y, node.position.z]));
@@ -299,9 +301,9 @@ export class SceneExplorer {
 			inp.addEventListener('change', () => this._onVec3Change(node));
 		});
 
-		this.inspectorEl.querySelector('[data-act="frame"]')?.addEventListener('click', () =>
-			this._frameNode(node),
-		);
+		this.inspectorEl
+			.querySelector('[data-act="frame"]')
+			?.addEventListener('click', () => this._frameNode(node));
 		this.inspectorEl.querySelector('[data-act="hide"]')?.addEventListener('click', () => {
 			node.visible = !node.visible;
 			this.session.recordVisibilityEdit(node, node.visible);
@@ -404,7 +406,10 @@ export class SceneExplorer {
 	}
 
 	_setupTransformControls() {
-		const tc = new TransformControls(this.viewer.defaultCamera, this.viewer.renderer.domElement);
+		const tc = new TransformControls(
+			this.viewer.defaultCamera,
+			this.viewer.renderer.domElement,
+		);
 		tc.addEventListener('dragging-changed', (e) => {
 			this.viewer.controls.enabled = !e.value;
 		});

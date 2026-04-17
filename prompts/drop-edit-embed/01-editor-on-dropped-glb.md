@@ -13,7 +13,7 @@ The `Editor` class in [src/editor/index.js](../../src/editor/index.js) already e
 ## Shared context
 
 - [src/app.js](../../src/app.js) is the main SPA entry. It constructs the `Viewer` and handles the dropzone + URL hash.
-  - Search for where `new Viewer(...)` is called and where model loads happen (`view()`, `load()`).
+    - Search for where `new Viewer(...)` is called and where model loads happen (`view()`, `load()`).
 - The `Editor` import is `import { Editor } from './editor/index.js';` (already imported on app.js line ~4).
 - `EditorSession.reset({ url, file, name })` in [src/editor/session.js](../../src/editor/session.js) is what the editor uses to track the source for export. If `onContentChanged` isn't called, `session.getSourceBuffer()` will return null and GLB export fails silently later.
 - The editor renders into `viewer.gui` (dat.gui). If the viewer is in kiosk mode (no gui), the editor currently degrades gracefully (see `_addExportFolder()` early-return). Leave that as-is.

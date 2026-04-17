@@ -21,10 +21,10 @@ This task builds a **standalone page** at `/first-meet/?avatar=<id>` so it doesn
 1. **Auth check** — redirect to `/login` if not signed in.
 2. **Load the avatar** — `fetch('/api/avatars/<id>')` — show `<model-viewer>` preview.
 3. **Step 1: Name.** Single input, autofocus, 2–40 chars, defaults to `My Agent`. Skip button allowed.
-4. **Step 2: Bio.** `<textarea>`, 0–280 chars, optional. Placeholder: *"What should people know about this agent?"*.
+4. **Step 2: Bio.** `<textarea>`, 0–280 chars, optional. Placeholder: _"What should people know about this agent?"_.
 5. **Step 3: Voice + body type.** Dropdowns. Voice options: `en-US-female`, `en-US-male`, `en-GB-female`, `en-GB-male`. Body type: `feminine`, `masculine`, `neutral`.
 6. **Step 4: Greet.** Render the avatar with the built-in `<agent-3d>` element loaded from `/dist-lib/agent-3d.js` (already built by `npm run build:lib`). On mount, call the greet sequence: a wave + an emit of `speak` event saying `Hi — I'm <name>. <bio line or fallback>`. Use browser TTS (the element handles this if `voice=<chosen>` attribute is set).
-7. **Step 5: Done.** Two buttons: *Go to my agent* (links to `/agent/<id>`) and *Back to dashboard* (`/dashboard`).
+7. **Step 5: Done.** Two buttons: _Go to my agent_ (links to `/agent/<id>`) and _Back to dashboard_ (`/dashboard`).
 
 All steps persist progress to `PATCH /api/avatars/<id>` and, if an agent identity exists, to `PATCH /api/agents/<agentId>` for the bio/voice. If no agent exists, call `POST /api/agents` with `{ avatarId, name, bio, voice }` (see [api/agents/index.js](../../api/agents/index.js) for shape).
 

@@ -7,7 +7,7 @@ Repo: `/workspaces/3D`. Today there are two parallel wallet fields:
 1. `users.wallet_address` — set by [api/auth/siwe/verify.js](../../api/auth/siwe/verify.js) when a brand-new user signs in with a wallet. One row per user, one wallet per user.
 2. `user_wallets` table — a proper many-to-one join (`user_id`, `address`, `chain_id`, `is_primary`). Already populated by the SIWE verify path.
 
-See [api/_lib/schema.sql](../../api/_lib/schema.sql) lines ~10–26 (`users`) and ~143–153 (`user_wallets`).
+See [api/\_lib/schema.sql](../../api/_lib/schema.sql) lines ~10–26 (`users`) and ~143–153 (`user_wallets`).
 
 Problems:
 
@@ -19,6 +19,7 @@ Problems:
 ## Goal
 
 A clear data model and API where:
+
 - **One user can have many wallets.** Signed message required per link.
 - **One wallet belongs to exactly one user.** Attempting to link a wallet already owned by someone else returns `409 wallet_already_linked`.
 - A signed-in user can list, add, set-primary, and remove wallets.
@@ -26,16 +27,16 @@ A clear data model and API where:
 
 ## Deliverable
 
-1. Schema patch in [api/_lib/schema.sql](../../api/_lib/schema.sql):
-   - Ensure `user_wallets.address` is unique (already is — verify).
-   - Add `user_wallets.label` (nullable text, for UI).
-   - Add `user_wallets.linked_via` check constraint: one of `'signup_siwe' | 'link_siwe'`.
-   - Decision on `users.wallet_address`: either drop the column (write a migration) or document in a comment that it's a denormalized mirror of the primary `user_wallets` row and is updated by the API. Pick one; don't leave it ambiguous.
+1. Schema patch in [api/\_lib/schema.sql](../../api/_lib/schema.sql):
+    - Ensure `user_wallets.address` is unique (already is — verify).
+    - Add `user_wallets.label` (nullable text, for UI).
+    - Add `user_wallets.linked_via` check constraint: one of `'signup_siwe' | 'link_siwe'`.
+    - Decision on `users.wallet_address`: either drop the column (write a migration) or document in a comment that it's a denormalized mirror of the primary `user_wallets` row and is updated by the API. Pick one; don't leave it ambiguous.
 2. New endpoint file `api/wallets.js` (plus a route in [vercel.json](../../vercel.json)):
-   - `GET /api/wallets` — list caller's wallets. Auth required.
-   - `POST /api/wallets/link` — body `{ message, signature }`. Verifies SIWE signature exactly like [api/auth/siwe/verify.js](../../api/auth/siwe/verify.js) but **does not mint a new session** — it requires an existing session and adds the wallet to it. If address already belongs to another user → 409.
-   - `POST /api/wallets/:address/primary` — mark as primary. Unsets `is_primary` on other rows for this user.
-   - `DELETE /api/wallets/:address` — unlink. If it's the only wallet and the user has no password set → 400 `cannot_remove_sole_credential`.
+    - `GET /api/wallets` — list caller's wallets. Auth required.
+    - `POST /api/wallets/link` — body `{ message, signature }`. Verifies SIWE signature exactly like [api/auth/siwe/verify.js](../../api/auth/siwe/verify.js) but **does not mint a new session** — it requires an existing session and adds the wallet to it. If address already belongs to another user → 409.
+    - `POST /api/wallets/:address/primary` — mark as primary. Unsets `is_primary` on other rows for this user.
+    - `DELETE /api/wallets/:address` — unlink. If it's the only wallet and the user has no password set → 400 `cannot_remove_sole_credential`.
 3. Factor the SIWE verification logic out of [api/auth/siwe/verify.js](../../api/auth/siwe/verify.js) into `api/_lib/siwe.js` exporting `verifySiwe(message, signature, { burnNonce }) → { address, chainId, fields }`. Both the login-verify endpoint and the new link endpoint import it. Don't duplicate parser / temporal / domain logic.
 4. Update [src/agent-identity.js](../../src/agent-identity.js) and [src/account.js](../../src/account.js) if they call any now-changed endpoint shapes. Likely a no-op; check.
 
@@ -104,17 +105,17 @@ A clear data model and API where:
 2. `psql "$DATABASE_URL" -f api/_lib/schema.sql` — idempotent, no errors.
 3. `npx vite build` — passes.
 4. Manual curl sequence:
-   ```bash
-   # sign in as user A
-   curl -c a.txt -X POST /api/auth/login -d '…'
-   # link wallet
-   curl -b a.txt -X POST /api/wallets/link -d '{"message":"…","signature":"0x…"}'
-   # list
-   curl -b a.txt /api/wallets   # expect 1 wallet, is_primary=true
-   # sign in as user B, try to link same wallet → 409
-   curl -c b.txt -X POST /api/auth/login -d '…'
-   curl -b b.txt -X POST /api/wallets/link -d '{"message":"…same addr…"}'   # expect 409
-   ```
+    ```bash
+    # sign in as user A
+    curl -c a.txt -X POST /api/auth/login -d '…'
+    # link wallet
+    curl -b a.txt -X POST /api/wallets/link -d '{"message":"…","signature":"0x…"}'
+    # list
+    curl -b a.txt /api/wallets   # expect 1 wallet, is_primary=true
+    # sign in as user B, try to link same wallet → 409
+    curl -c b.txt -X POST /api/auth/login -d '…'
+    curl -b b.txt -X POST /api/wallets/link -d '{"message":"…same addr…"}'   # expect 409
+    ```
 
 ## Scope boundaries — do NOT do these
 

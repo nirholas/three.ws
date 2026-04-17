@@ -10,21 +10,21 @@ The agent needs to fit the host's layout — sometimes inline (300px), sometimes
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| [src/element.js](../../src/element.js) | Existing `mode` attribute (inline | floating | section | fullscreen). |
-| [src/host-bridge.js](../../src/host-bridge.js) | Bridge to extend (created in 05-03). |
-| [src/viewer.js](../../src/viewer.js) | `resize()` method or equivalent — the canvas needs to react. |
-| [style.css](../../style.css) | Mode-specific CSS classes. |
+| File                                           | Why                                                          |
+| :--------------------------------------------- | :----------------------------------------------------------- | -------- | ------- | ------------ |
+| [src/element.js](../../src/element.js)         | Existing `mode` attribute (inline                            | floating | section | fullscreen). |
+| [src/host-bridge.js](../../src/host-bridge.js) | Bridge to extend (created in 05-03).                         |
+| [src/viewer.js](../../src/viewer.js)           | `resize()` method or equivalent — the canvas needs to react. |
+| [style.css](../../style.css)                   | Mode-specific CSS classes.                                   |
 
 ## Build this
 
 1. Extend the bridge inbound protocol with `host:set-mode { mode }` — accepted values: `inline | floating | section | fullscreen`.
 2. On mode change:
-   - Update `data-mode` on the embed root.
-   - Call `viewer.resize()` after the next animation frame.
-   - In `floating` mode, position absolute bottom-right with a 16px margin and a max-size of 240×240.
-   - In `fullscreen` mode, fix to viewport, hide all chrome.
+    - Update `data-mode` on the embed root.
+    - Call `viewer.resize()` after the next animation frame.
+    - In `floating` mode, position absolute bottom-right with a 16px margin and a max-size of 240×240.
+    - In `fullscreen` mode, fix to viewport, hide all chrome.
 3. Add `agent:request-resize { width, height }` outbound — emit when the avatar's natural display height changes (e.g. caption text wraps to a new line).
 4. Listen to `ResizeObserver` on the host iframe element (when `data-host-bridge-track="1"`) and call `viewer.resize()` automatically.
 5. Honor `prefers-reduced-motion` — disable the floating-mode entrance bounce.

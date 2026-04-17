@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Polish the public /agent/:slug page — hero, identity card, presence, CTAs"
+description: 'Polish the public /agent/:slug page — hero, identity card, presence, CTAs'
 ---
 
 # Stack Layer 4: Public Agent Page

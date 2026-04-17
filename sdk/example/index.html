@@ -1,131 +1,150 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-	<meta charset="UTF-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>@nirholas/agent-kit — demo</title>
-	<link rel="stylesheet" href="../src/styles.css" />
-	<style>
-		* { box-sizing: border-box; }
-		body {
-			margin: 0;
-			min-height: 100vh;
-			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-			background: radial-gradient(ellipse at top, #1a1a2e 0%, #0a0a0a 60%);
-			color: #fff;
-			display: flex;
-			flex-direction: column;
-			align-items: center;
-			justify-content: center;
-			padding: 32px;
-			text-align: center;
-		}
-		h1 {
-			font-size: 2rem;
-			margin: 0 0 12px;
-			font-weight: 500;
-			letter-spacing: -0.02em;
-		}
-		p {
-			max-width: 520px;
-			color: rgba(255, 255, 255, 0.6);
-			line-height: 1.6;
-			margin: 0 0 24px;
-		}
-		code {
-			background: rgba(255, 255, 255, 0.08);
-			padding: 2px 8px;
-			border-radius: 6px;
-			font-size: 0.85em;
-		}
-		.row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
-		button.demo {
-			background: rgba(255, 255, 255, 0.08);
-			border: 1px solid rgba(255, 255, 255, 0.14);
-			color: #fff;
-			padding: 10px 18px;
-			border-radius: 10px;
-			font-family: inherit;
-			font-size: 13px;
-			cursor: pointer;
-			transition: all 0.2s ease;
-		}
-		button.demo:hover { background: rgba(255, 255, 255, 0.14); }
-		pre {
-			background: rgba(0, 0, 0, 0.5);
-			border: 1px solid rgba(255, 255, 255, 0.08);
-			border-radius: 10px;
-			padding: 16px;
-			text-align: left;
-			max-width: 640px;
-			width: 100%;
-			overflow-x: auto;
-			font-size: 12px;
-			color: rgba(255, 255, 255, 0.85);
-		}
-	</style>
-</head>
-<body>
-	<h1>agent-kit demo</h1>
-	<p>
-		Click the chat icon in the bottom-left to talk to the agent.
-		Try asking "what can you do" or "hello".
-	</p>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>@nirholas/agent-kit — demo</title>
+		<link rel="stylesheet" href="../src/styles.css" />
+		<style>
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				margin: 0;
+				min-height: 100vh;
+				font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+				background: radial-gradient(ellipse at top, #1a1a2e 0%, #0a0a0a 60%);
+				color: #fff;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				padding: 32px;
+				text-align: center;
+			}
+			h1 {
+				font-size: 2rem;
+				margin: 0 0 12px;
+				font-weight: 500;
+				letter-spacing: -0.02em;
+			}
+			p {
+				max-width: 520px;
+				color: rgba(255, 255, 255, 0.6);
+				line-height: 1.6;
+				margin: 0 0 24px;
+			}
+			code {
+				background: rgba(255, 255, 255, 0.08);
+				padding: 2px 8px;
+				border-radius: 6px;
+				font-size: 0.85em;
+			}
+			.row {
+				display: flex;
+				gap: 12px;
+				flex-wrap: wrap;
+				justify-content: center;
+			}
+			button.demo {
+				background: rgba(255, 255, 255, 0.08);
+				border: 1px solid rgba(255, 255, 255, 0.14);
+				color: #fff;
+				padding: 10px 18px;
+				border-radius: 10px;
+				font-family: inherit;
+				font-size: 13px;
+				cursor: pointer;
+				transition: all 0.2s ease;
+			}
+			button.demo:hover {
+				background: rgba(255, 255, 255, 0.14);
+			}
+			pre {
+				background: rgba(0, 0, 0, 0.5);
+				border: 1px solid rgba(255, 255, 255, 0.08);
+				border-radius: 10px;
+				padding: 16px;
+				text-align: left;
+				max-width: 640px;
+				width: 100%;
+				overflow-x: auto;
+				font-size: 12px;
+				color: rgba(255, 255, 255, 0.85);
+			}
+		</style>
+	</head>
+	<body>
+		<h1>agent-kit demo</h1>
+		<p>
+			Click the chat icon in the bottom-left to talk to the agent. Try asking "what can you
+			do" or "hello".
+		</p>
 
-	<div class="row">
-		<button class="demo" id="open-btn">Open panel</button>
-		<button class="demo" id="manifest-btn">Log manifests</button>
-		<button class="demo" id="say-btn">Inject message</button>
-	</div>
+		<div class="row">
+			<button class="demo" id="open-btn">Open panel</button>
+			<button class="demo" id="manifest-btn">Log manifests</button>
+			<button class="demo" id="say-btn">Inject message</button>
+		</div>
 
-	<pre id="out">// Click "Log manifests" to see the .well-known JSON this agent produces.</pre>
+		<pre id="out">
+// Click "Log manifests" to see the .well-known JSON this agent produces.</pre
+		>
 
-	<script type="module">
-		import { AgentKit } from '../src/index.js';
+		<script type="module">
+			import { AgentKit } from '../src/index.js';
 
-		const agent = new AgentKit({
-			name: 'Demo Agent',
-			description: 'A demo of @nirholas/agent-kit — the fastest way to ship an ERC-8004 agent.',
-			endpoint: 'https://demo.example.com',
-			image: 'https://demo.example.com/logo.png',
-			version: '0.1.0',
-			org: 'nirholas',
-			skills: [
-				{
-					id: 'greet',
-					name: 'Greet User',
-					description: 'Say hello',
-					tags: ['demo'],
-					examples: ['hello', 'hi'],
+			const agent = new AgentKit({
+				name: 'Demo Agent',
+				description:
+					'A demo of @nirholas/agent-kit — the fastest way to ship an ERC-8004 agent.',
+				endpoint: 'https://demo.example.com',
+				image: 'https://demo.example.com/logo.png',
+				version: '0.1.0',
+				org: 'nirholas',
+				skills: [
+					{
+						id: 'greet',
+						name: 'Greet User',
+						description: 'Say hello',
+						tags: ['demo'],
+						examples: ['hello', 'hi'],
+					},
+				],
+				onMessage: async (text) => {
+					const lower = text.toLowerCase();
+					if (/hello|hi|hey/.test(lower))
+						return 'Hey! This panel is powered by agent-kit.';
+					if (/what.*do|help/.test(lower))
+						return 'I can demo the SDK — try asking me about ERC-8004, manifests, or the chat panel.';
+					if (/erc|8004|chain|register/.test(lower))
+						return 'Call agent.register() to mint an on-chain identity via ERC-8004. Needs MetaMask + an IPFS token.';
+					if (/manifest|well.?known/.test(lower))
+						return 'agent.manifests() returns the 3 .well-known JSONs: agent-registration, agent-card, and ai-plugin.';
+					return `You said: "${text}". I'm just a demo — drop in your own onMessage handler for real logic.`;
 				},
-			],
-			onMessage: async (text) => {
-				const lower = text.toLowerCase();
-				if (/hello|hi|hey/.test(lower)) return 'Hey! This panel is powered by agent-kit.';
-				if (/what.*do|help/.test(lower)) return 'I can demo the SDK — try asking me about ERC-8004, manifests, or the chat panel.';
-				if (/erc|8004|chain|register/.test(lower)) return 'Call agent.register() to mint an on-chain identity via ERC-8004. Needs MetaMask + an IPFS token.';
-				if (/manifest|well.?known/.test(lower)) return 'agent.manifests() returns the 3 .well-known JSONs: agent-registration, agent-card, and ai-plugin.';
-				return `You said: "${text}". I'm just a demo — drop in your own onMessage handler for real logic.`;
-			},
-		});
-
-		agent.mount(document.body);
-
-		document.getElementById('open-btn').addEventListener('click', () => agent.open());
-
-		document.getElementById('manifest-btn').addEventListener('click', () => {
-			const manifests = agent.manifests({
-				openapiUrl: 'https://demo.example.com/.well-known/openapi.yaml',
 			});
-			document.getElementById('out').textContent = JSON.stringify(manifests, null, 2);
-		});
 
-		document.getElementById('say-btn').addEventListener('click', () => {
-			agent.open();
-			agent.addMessage('ak-agent', 'This message was injected from the host page via agent.addMessage().');
-		});
+			agent.mount(document.body);
 
-		window.agent = agent;
-	</script>
-</body>
+			document.getElementById('open-btn').addEventListener('click', () => agent.open());
+
+			document.getElementById('manifest-btn').addEventListener('click', () => {
+				const manifests = agent.manifests({
+					openapiUrl: 'https://demo.example.com/.well-known/openapi.yaml',
+				});
+				document.getElementById('out').textContent = JSON.stringify(manifests, null, 2);
+			});
+
+			document.getElementById('say-btn').addEventListener('click', () => {
+				agent.open();
+				agent.addMessage(
+					'ak-agent',
+					'This message was injected from the host page via agent.addMessage().',
+				);
+			});
+
+			window.agent = agent;
+		</script>
+	</body>
 </html>

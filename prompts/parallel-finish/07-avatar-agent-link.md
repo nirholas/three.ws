@@ -19,7 +19,7 @@ We fix this with a single small endpoint + a tweak to the avatar-create hook.
 
 ### `POST /api/avatars/:` (success branch hook)
 
-After a successful INSERT, *if* the caller is authenticated *and* the request `source === 'avaturn'` or `'selfie'` *and* the user has a primary agent with `avatar_id IS NULL`, UPDATE that agent to point at the new avatar. Fire-and-forget — if the UPDATE fails, the 201 still returns.
+After a successful INSERT, _if_ the caller is authenticated _and_ the request `source === 'avaturn'` or `'selfie'` _and_ the user has a primary agent with `avatar_id IS NULL`, UPDATE that agent to point at the new avatar. Fire-and-forget — if the UPDATE fails, the 201 still returns.
 
 Do this inline; do not introduce a job queue or event bus.
 

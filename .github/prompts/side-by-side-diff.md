@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Add side-by-side model diff for comparing two versions of the same model"
+description: 'Add side-by-side model diff for comparing two versions of the same model'
 ---
 
 # Side-by-Side Model Diff
@@ -14,6 +14,7 @@ The README roadmap lists **"Side-by-Side Diff — compare two versions of the sa
 ### 1. Dual Viewport (`src/model-diff.js`)
 
 Split the viewer into two synchronized viewports:
+
 - Left: Model A (original / before)
 - Right: Model B (modified / after)
 - Both viewports share camera controls (orbit synced)
@@ -22,19 +23,20 @@ Split the viewer into two synchronized viewports:
 ### 2. Loading Two Models
 
 Entry points:
+
 - **Drag-and-drop**: Drop model A, then use "Compare With..." button → file picker for model B
 - **URL params**: `#model=A.glb&compare=B.glb`
 - **From avatar gallery**: Select two avatars to compare
 
 ### 3. Comparison Modes
 
-| Mode | Description |
-|------|-------------|
-| **Side by Side** | Two viewports, synced camera |
-| **Overlay** | Both models rendered in same viewport, toggle A/B with slider |
-| **Onion Skin** | Model B overlaid with adjustable opacity |
-| **Wireframe Diff** | Show wireframe of both, highlight geometry differences |
-| **Stats Diff** | Table comparing vertex count, triangle count, file size, materials, textures |
+| Mode               | Description                                                                  |
+| ------------------ | ---------------------------------------------------------------------------- |
+| **Side by Side**   | Two viewports, synced camera                                                 |
+| **Overlay**        | Both models rendered in same viewport, toggle A/B with slider                |
+| **Onion Skin**     | Model B overlaid with adjustable opacity                                     |
+| **Wireframe Diff** | Show wireframe of both, highlight geometry differences                       |
+| **Stats Diff**     | Table comparing vertex count, triangle count, file size, materials, textures |
 
 ### 4. Stats Comparison Table
 
@@ -60,6 +62,7 @@ Animations        | 0            | 0            | 0
 ### 6. Synchronized Controls
 
 Both viewports share:
+
 - Camera position, rotation, zoom (OrbitControls synced)
 - Environment map selection
 - Animation playback (if both have animations)
@@ -68,6 +71,7 @@ Both viewports share:
 ### 7. GUI Integration
 
 Add "Compare" mode:
+
 - "Compare With..." button in header
 - "Exit Comparison" button to return to single viewport
 - Comparison mode dropdown (side-by-side, overlay, onion skin)

@@ -15,11 +15,12 @@ Add `AvatarCreator.openDefaultEditor()` — a new entry point that loads Avaturn
 ## Deliverable
 
 1. **Add `openDefaultEditor()` method to `AvatarCreator`** in [src/avatar-creator.js](../../src/avatar-creator.js):
-   - Resolve the default editor URL from env: `VITE_AVATURN_EDITOR_URL` with fallback (confirm the correct public URL against [docs/avaturn-docs.md](../../docs/avaturn-docs.md) — likely `https://editor.avaturn.me/` or similar; if uncertain, make the URL configurable via env and document the expected value).
-   - Set `this._avaturnMode = true`, `this._avaturnOrigin = new URL(defaultUrl).origin`.
-   - Build modal via existing `_buildModal()`.
-   - Set `this.iframe.src = defaultUrl`.
-   - Register `message` listener via existing pathway.
+
+    - Resolve the default editor URL from env: `VITE_AVATURN_EDITOR_URL` with fallback (confirm the correct public URL against [docs/avaturn-docs.md](../../docs/avaturn-docs.md) — likely `https://editor.avaturn.me/` or similar; if uncertain, make the URL configurable via env and document the expected value).
+    - Set `this._avaturnMode = true`, `this._avaturnOrigin = new URL(defaultUrl).origin`.
+    - Build modal via existing `_buildModal()`.
+    - Set `this.iframe.src = defaultUrl`.
+    - Register `message` listener via existing pathway.
 
 2. **If Avaturn requires a public developer ID / SDK key** in the URL querystring, add it via env `VITE_AVATURN_DEVELOPER_ID`. Document both env vars in [.env.example](../../.env.example).
 
@@ -31,12 +32,12 @@ Add `AvatarCreator.openDefaultEditor()` — a new entry point that loads Avaturn
 
 ```js
 const creator = new AvatarCreator(document.body, async (glb) => {
-    // glb is a Blob, type 'model/gltf-binary'
-    await uploadGlbToAccount(glb);
+	// glb is a Blob, type 'model/gltf-binary'
+	await uploadGlbToAccount(glb);
 });
-await creator.openDefaultEditor();         // NEW — no args, opens default editor
+await creator.openDefaultEditor(); // NEW — no args, opens default editor
 // or still valid:
-await creator.open(someSessionUrl);        // session-based (selfie flow, deferred)
+await creator.open(someSessionUrl); // session-based (selfie flow, deferred)
 ```
 
 ## Constraints

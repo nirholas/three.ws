@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Fix broken template literals in validator lightbox"
+description: 'Fix broken template literals in validator lightbox'
 ---
 
 # Fix Validator Lightbox Template Strings

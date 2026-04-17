@@ -16,7 +16,7 @@ One new JS module + one new server endpoint for uniqueness check. No route wirin
 ## Read first
 
 - [api/agents/check-name.js](../../api/agents/check-name.js) — if present, understand the existing shape.
-- [api/_lib/db.js](../../api/_lib/db.js) — `sql`.
+- [api/\_lib/db.js](../../api/_lib/db.js) — `sql`.
 
 ## Deliverable
 
@@ -31,11 +31,13 @@ export class AgentNaming {
 ```
 
 Form fields:
+
 - **Name** — required, 3–32 chars, `[a-zA-Z0-9_-]+`, must not match denylist (see below), must pass server uniqueness check.
 - **Description** — optional, ≤280 chars.
 - **Submit** button → calls `onSubmit({ name, description })`.
 
 Behavior:
+
 - Debounce uniqueness check 400ms on name input. Show ✓ / ✗ / loading indicator inline.
 - Disable submit while check is pending or name invalid.
 - On submit, re-run the uniqueness check synchronously to avoid races.
@@ -45,6 +47,7 @@ Denylist (hardcode array in the module): `['admin', 'root', 'system', 'anthropic
 ### `GET /api/agents/check-name?name=<n>`
 
 Response: `{ available: boolean, reason?: 'taken' | 'invalid' | 'denylisted' }`.
+
 - Case-insensitive uniqueness against the `agents` (or whichever holds agent names — read the actual schema) table.
 - Rate limit: `60/min per IP`.
 - If the endpoint already exists and returns a compatible shape, do nothing server-side; cite the file in your report.

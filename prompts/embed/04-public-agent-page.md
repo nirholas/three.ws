@@ -22,9 +22,9 @@ This is the canonical URL a user shares when they want the world to see their ag
 
 - Viewer canvas takes the full viewport on mobile, 70% on desktop.
 - Below: the agent name + a 2-line description + three compact action buttons:
-  - **Chat** — opens the Nich agent chat drawer.
-  - **Embed** — opens a modal with an iframe snippet and `<agent-3d id="…">` snippet.
-  - **Share** — uses `navigator.share` if available, else copies the page URL.
+    - **Chat** — opens the Nich agent chat drawer.
+    - **Embed** — opens a modal with an iframe snippet and `<agent-3d id="…">` snippet.
+    - **Share** — uses `navigator.share` if available, else copies the page URL.
 - Owner-only: a "Manage" button linking to the edit panel.
 
 ### Embed modal content
@@ -37,7 +37,13 @@ This is the canonical URL a user shares when they want the world to see their ag
 Plus iframe fallback:
 
 ```html
-<iframe src="https://3dagent.vercel.app/agent/{{agentId}}?kiosk=1" width="100%" height="500" allow="accelerometer; gyroscope; camera" style="border:0"></iframe>
+<iframe
+	src="https://3dagent.vercel.app/agent/{{agentId}}?kiosk=1"
+	width="100%"
+	height="500"
+	allow="accelerometer; gyroscope; camera"
+	style="border:0"
+></iframe>
 ```
 
 Copy-to-clipboard buttons for each.

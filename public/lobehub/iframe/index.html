@@ -34,11 +34,10 @@
 			}
 		</style>
 		<!--
-			TODO(lobehub-sdk): Replace with versioned CDN URL once agent-3d releases are
-			published to /agent-3d/latest/. Dev: run `npm run build:lib` then serve
-			dist-lib/ under /agent-3d/latest/.
-			TODO(lobehub-spec): Confirm LobeHub sandbox CSP allows module scripts from
-			cross-origin CDN, or switch to a bundled inline approach.
+			Loads the <agent-3d> web component from the 3D Agent CDN.
+			For local development, run `npm run build:lib` and serve dist-lib/ under
+			/agent-3d/latest/ so this path resolves without hitting the CDN.
+			LobeChat's sandbox CSP must allow module scripts from this origin.
 		-->
 		<script
 			type="module"
@@ -48,7 +47,7 @@
 	</head>
 	<body>
 		<div id="status">Loading…</div>
-		<!-- agent-id is set dynamically by boot.js from ?agent= param -->
+		<!-- agent-id is set dynamically by boot.js from ?agent= query param -->
 		<agent-3d id="agent" kiosk eager></agent-3d>
 		<script type="module" src="./boot.js"></script>
 	</body>

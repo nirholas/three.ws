@@ -15,14 +15,14 @@ A user lands on `3d.irish`, clicks **Sign in with wallet**, approves a MetaMask 
 
 ## Prompts in this band
 
-| # | File | Depends on |
-|---|---|---|
-| 01 | [siwe-schema.md](./01-siwe-schema.md) | — |
-| 02 | [siwe-nonce-endpoint.md](./02-siwe-nonce-endpoint.md) | 01 |
-| 03 | [siwe-verify-endpoint.md](./03-siwe-verify-endpoint.md) | 01, 02 |
-| 04 | [signin-ui.md](./04-signin-ui.md) | 02, 03 |
-| 05 | [privy-backend-verify.md](./05-privy-backend-verify.md) | 03 |
-| 06 | [link-wallet-to-account.md](./06-link-wallet-to-account.md) | 03 |
+| #   | File                                                        | Depends on |
+| --- | ----------------------------------------------------------- | ---------- |
+| 01  | [siwe-schema.md](./01-siwe-schema.md)                       | —          |
+| 02  | [siwe-nonce-endpoint.md](./02-siwe-nonce-endpoint.md)       | 01         |
+| 03  | [siwe-verify-endpoint.md](./03-siwe-verify-endpoint.md)     | 01, 02     |
+| 04  | [signin-ui.md](./04-signin-ui.md)                           | 02, 03     |
+| 05  | [privy-backend-verify.md](./05-privy-backend-verify.md)     | 03         |
+| 06  | [link-wallet-to-account.md](./06-link-wallet-to-account.md) | 03         |
 
 01 → 02 → 03 → 04 is the critical path. 05 and 06 can run in parallel with 04.
 

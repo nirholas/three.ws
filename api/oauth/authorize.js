@@ -28,11 +28,14 @@ export default wrap(async (req, res) => {
 		resource,
 	} = params;
 
-	if (response_type !== 'code') return error(res, 400, 'unsupported_response_type', 'only response_type=code supported');
+	if (response_type !== 'code')
+		return error(res, 400, 'unsupported_response_type', 'only response_type=code supported');
 	if (!client_id) return error(res, 400, 'invalid_request', 'client_id required');
 	if (!redirect_uri) return error(res, 400, 'invalid_request', 'redirect_uri required');
-	if (!code_challenge) return error(res, 400, 'invalid_request', 'code_challenge required (PKCE)');
-	if ((code_challenge_method ?? 'S256') !== 'S256') return error(res, 400, 'invalid_request', 'code_challenge_method must be S256');
+	if (!code_challenge)
+		return error(res, 400, 'invalid_request', 'code_challenge required (PKCE)');
+	if ((code_challenge_method ?? 'S256') !== 'S256')
+		return error(res, 400, 'invalid_request', 'code_challenge_method must be S256');
 
 	const rows = await sql`select * from oauth_clients where client_id = ${client_id} limit 1`;
 	const client = rows[0];
@@ -57,7 +60,8 @@ export default wrap(async (req, res) => {
 	// POST — user confirmed consent. Reject cross-site POSTs (Origin check) and
 	// forged submissions (CSRF token bound to the session cookie).
 	if (!isSameSiteOrigin(req)) return error(res, 403, 'forbidden', 'cross-site request blocked');
-	if (!(await verifyCsrfToken(req, params.csrf))) return error(res, 403, 'forbidden', 'invalid csrf token');
+	if (!(await verifyCsrfToken(req, params.csrf)))
+		return error(res, 403, 'forbidden', 'invalid csrf token');
 
 	if (params.decision !== 'allow') {
 		const denied = new URL(redirect_uri);
@@ -87,7 +91,12 @@ function parseQuery(url) {
 
 function intersectScopes(requested, allowed) {
 	const a = new Set(allowed.split(/\s+/).filter(Boolean));
-	return requested.split(/\s+/).filter((s) => a.has(s)).join(' ') || allowed;
+	return (
+		requested
+			.split(/\s+/)
+			.filter((s) => a.has(s))
+			.join(' ') || allowed
+	);
 }
 
 function renderConsent(res, { client, user, params, csrf }) {
@@ -97,7 +106,10 @@ function renderConsent(res, { client, user, params, csrf }) {
 	// Harden the consent page against clickjacking, mixed content, and
 	// extension/CDN script injection. form-action restricts where the form
 	// can POST; frame-ancestors blocks iframing of the consent UI.
-	res.setHeader('content-security-policy', "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'");
+	res.setHeader(
+		'content-security-policy',
+		"default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
+	);
 	res.setHeader('x-frame-options', 'DENY');
 	res.setHeader('x-content-type-options', 'nosniff');
 	res.setHeader('referrer-policy', 'strict-origin-when-cross-origin');
@@ -134,7 +146,10 @@ function renderConsent(res, { client, user, params, csrf }) {
 	<p style="margin:0 0 4px"><b>${esc(client.name)}</b> will be able to:</p>
 	<ul>${scopeList.map((s) => `<li>${scopeLabel(s)}</li>`).join('')}</ul>
 	<input type="hidden" name="csrf" value="${esc(csrf || '')}">
-	${Object.entries(params).filter(([k]) => k !== 'csrf' && k !== 'decision').map(([k, v]) => `<input type="hidden" name="${esc(k)}" value="${esc(v)}">`).join('')}
+	${Object.entries(params)
+		.filter(([k]) => k !== 'csrf' && k !== 'decision')
+		.map(([k, v]) => `<input type="hidden" name="${esc(k)}" value="${esc(v)}">`)
+		.join('')}
 	<div class="actions">
 		<button class="deny"  type="submit" name="decision" value="deny">Cancel</button>
 		<button class="allow" type="submit" name="decision" value="allow">Authorize</button>
@@ -155,5 +170,8 @@ function scopeLabel(s) {
 }
 
 function esc(s) {
-	return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+	return String(s).replace(
+		/[&<>"']/g,
+		(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+	);
 }

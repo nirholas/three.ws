@@ -18,52 +18,76 @@ const DEFAULT_MODEL = 'claude-sonnet-4-6';
 const DEFAULT_MAX_TOKENS = 1024;
 const HARD_MAX_TOKENS = 4096;
 
-const contextSchema = z.object({
-	modelName:           z.string().max(200).optional(),
-	vertices:            z.number().int().nonnegative().optional(),
-	triangles:           z.number().int().nonnegative().optional(),
-	materials:           z.number().int().nonnegative().optional(),
-	animations:          z.number().int().nonnegative().optional(),
-	validationErrors:    z.number().int().nonnegative().optional(),
-	validationWarnings:  z.number().int().nonnegative().optional(),
-	currentEnvironment:  z.string().max(80).optional(),
-	wireframe:           z.boolean().optional(),
-	skeleton:            z.boolean().optional(),
-	grid:                z.boolean().optional(),
-	autoRotate:          z.boolean().optional(),
-	transparentBg:       z.boolean().optional(),
-	bgColor:             z.string().max(20).optional(),
-}).partial().default({});
+const contextSchema = z
+	.object({
+		modelName: z.string().max(200).optional(),
+		vertices: z.number().int().nonnegative().optional(),
+		triangles: z.number().int().nonnegative().optional(),
+		materials: z.number().int().nonnegative().optional(),
+		animations: z.number().int().nonnegative().optional(),
+		validationErrors: z.number().int().nonnegative().optional(),
+		validationWarnings: z.number().int().nonnegative().optional(),
+		currentEnvironment: z.string().max(80).optional(),
+		wireframe: z.boolean().optional(),
+		skeleton: z.boolean().optional(),
+		grid: z.boolean().optional(),
+		autoRotate: z.boolean().optional(),
+		transparentBg: z.boolean().optional(),
+		bgColor: z.string().max(20).optional(),
+	})
+	.partial()
+	.default({});
 
 const chatBody = z.object({
 	message: z.string().trim().min(1).max(4000),
 	context: contextSchema,
-	history: z.array(z.object({
-		role:    z.enum(['user', 'assistant']),
-		content: z.string().min(1).max(4000),
-	})).max(20).default([]),
+	history: z
+		.array(
+			z.object({
+				role: z.enum(['user', 'assistant']),
+				content: z.string().min(1).max(4000),
+			}),
+		)
+		.max(20)
+		.default([]),
 });
 
 const ACTION_TOOLS = [
 	{
 		name: 'setWireframe',
 		description: 'Toggle wireframe mode on the currently loaded model.',
-		input_schema: { type: 'object', properties: { value: { type: 'boolean' } }, required: ['value'] },
+		input_schema: {
+			type: 'object',
+			properties: { value: { type: 'boolean' } },
+			required: ['value'],
+		},
 	},
 	{
 		name: 'setSkeleton',
 		description: 'Toggle the skeleton helper visualization for rigged models.',
-		input_schema: { type: 'object', properties: { value: { type: 'boolean' } }, required: ['value'] },
+		input_schema: {
+			type: 'object',
+			properties: { value: { type: 'boolean' } },
+			required: ['value'],
+		},
 	},
 	{
 		name: 'setGrid',
 		description: 'Toggle the reference grid and axes helper.',
-		input_schema: { type: 'object', properties: { value: { type: 'boolean' } }, required: ['value'] },
+		input_schema: {
+			type: 'object',
+			properties: { value: { type: 'boolean' } },
+			required: ['value'],
+		},
 	},
 	{
 		name: 'setAutoRotate',
 		description: 'Toggle auto-rotation of the camera around the model.',
-		input_schema: { type: 'object', properties: { value: { type: 'boolean' } }, required: ['value'] },
+		input_schema: {
+			type: 'object',
+			properties: { value: { type: 'boolean' } },
+			required: ['value'],
+		},
 	},
 	{
 		name: 'setBgColor',
@@ -77,12 +101,21 @@ const ACTION_TOOLS = [
 	{
 		name: 'setTransparentBg',
 		description: 'Toggle transparent background (for compositing screenshots).',
-		input_schema: { type: 'object', properties: { value: { type: 'boolean' } }, required: ['value'] },
+		input_schema: {
+			type: 'object',
+			properties: { value: { type: 'boolean' } },
+			required: ['value'],
+		},
 	},
 	{
 		name: 'setEnvironment',
-		description: 'Change the HDRI lighting environment. Known names: "None", "Neutral", "Venice Sunset", "Footprint Court (HDR Labs)".',
-		input_schema: { type: 'object', properties: { value: { type: 'string' } }, required: ['value'] },
+		description:
+			'Change the HDRI lighting environment. Known names: "None", "Neutral", "Venice Sunset", "Footprint Court (HDR Labs)".',
+		input_schema: {
+			type: 'object',
+			properties: { value: { type: 'string' } },
+			required: ['value'],
+		},
 	},
 	{
 		name: 'takeScreenshot',
@@ -100,7 +133,8 @@ const ACTION_TOOLS = [
 	},
 	{
 		name: 'runValidation',
-		description: 'Run glTF validation on the currently loaded model and report errors/warnings.',
+		description:
+			'Run glTF validation on the currently loaded model and report errors/warnings.',
 		input_schema: { type: 'object', properties: {} },
 	},
 	{
@@ -128,7 +162,9 @@ export default wrap(async (req, res) => {
 	if (!rl.success) {
 		const retryAfter = Math.max(1, Math.ceil((rl.reset - Date.now()) / 1000));
 		res.setHeader('retry-after', String(retryAfter));
-		return error(res, 429, 'rate_limited', 'too many messages — slow down', { retry_after: retryAfter });
+		return error(res, 429, 'rate_limited', 'too many messages — slow down', {
+			retry_after: retryAfter,
+		});
 	}
 
 	const body = parse(chatBody, await readJson(req));
@@ -150,16 +186,16 @@ export default wrap(async (req, res) => {
 		upstream = await fetch(ANTHROPIC_URL, {
 			method: 'POST',
 			headers: {
-				'x-api-key':         apiKey,
+				'x-api-key': apiKey,
 				'anthropic-version': '2023-06-01',
-				'content-type':      'application/json',
+				'content-type': 'application/json',
 			},
 			body: JSON.stringify({
 				model,
 				max_tokens: maxTokens,
-				system:     buildSystemPrompt(body.context),
+				system: buildSystemPrompt(body.context),
 				messages,
-				tools:      ACTION_TOOLS,
+				tools: ACTION_TOOLS,
 			}),
 		});
 	} catch (err) {
@@ -179,17 +215,17 @@ export default wrap(async (req, res) => {
 	const latencyMs = Date.now() - started;
 
 	recordEvent({
-		userId:   auth.userId,
+		userId: auth.userId,
 		apiKeyId: auth.apiKeyId,
 		clientId: auth.clientId,
-		kind:     'chat',
-		tool:     model,
+		kind: 'chat',
+		tool: model,
 		latencyMs,
 		meta: {
-			input_tokens:  data.usage?.input_tokens,
+			input_tokens: data.usage?.input_tokens,
 			output_tokens: data.usage?.output_tokens,
-			actions:       actions.map((a) => a.type),
-			has_context:   Boolean(body.context?.modelName),
+			actions: actions.map((a) => a.type),
+			has_context: Boolean(body.context?.modelName),
 		},
 	});
 
@@ -200,9 +236,10 @@ function buildSystemPrompt(ctx = {}) {
 	const loaded = ctx.modelName
 		? `A model named "${ctx.modelName}" is loaded. Stats: ${fmt(ctx.vertices)} vertices, ${fmt(ctx.triangles)} triangles, ${fmt(ctx.materials)} materials, ${ctx.animations ?? 0} animations.`
 		: 'No model is currently loaded in the viewer.';
-	const validation = ctx.validationErrors != null
-		? `Validation has been run: ${ctx.validationErrors} errors, ${ctx.validationWarnings ?? 0} warnings.`
-		: 'glTF validation has not been run yet for this model.';
+	const validation =
+		ctx.validationErrors != null
+			? `Validation has been run: ${ctx.validationErrors} errors, ${ctx.validationWarnings ?? 0} warnings.`
+			: 'glTF validation has not been run yet for this model.';
 	const settings = `Viewer settings — wireframe:${fmtBool(ctx.wireframe)}, skeleton:${fmtBool(ctx.skeleton)}, grid:${fmtBool(ctx.grid)}, autoRotate:${fmtBool(ctx.autoRotate)}, transparentBg:${fmtBool(ctx.transparentBg)}, bgColor:${ctx.bgColor || '?'}, environment:${ctx.currentEnvironment || '?'}.`;
 
 	return [
@@ -239,6 +276,12 @@ async function resolveAuth(req) {
 	return null;
 }
 
-function fmt(n) { return typeof n === 'number' ? n.toLocaleString('en-US') : '?'; }
-function fmtBool(v) { return typeof v === 'boolean' ? (v ? 'on' : 'off') : '?'; }
-function clampInt(n, min, max) { return Math.min(max, Math.max(min, n)); }
+function fmt(n) {
+	return typeof n === 'number' ? n.toLocaleString('en-US') : '?';
+}
+function fmtBool(v) {
+	return typeof v === 'boolean' ? (v ? 'on' : 'off') : '?';
+}
+function clampInt(n, min, max) {
+	return Math.min(max, Math.max(min, n));
+}

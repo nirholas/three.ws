@@ -2,29 +2,29 @@
 
 Each prompt lists its owned files. No two prompts may write to the same file. Shared reads are fine.
 
-| File / dir | Owner |
-|---|---|
-| `src/auth/walletconnect-bridge.js` | 01 |
-| `src/auth/walletconnect-bridge.test.html` | 01 |
-| `specs/EDITOR_SPEC.md` | 02 |
-| `api/artifact.js` | 03 |
-| `public/artifact/` | 03 |
-| `public/lobehub/` | 04 |
-| `api/lobehub/handshake.js` | 04 |
-| `api/lobehub/manifest.js` | 04 |
-| `public/reputation/` | 05 |
-| `src/reputation-ui.js` | 05 |
-| `public/validation/` | 06 |
-| `src/validation-ui.js` | 06 |
-| `api/avatars/regenerate.js` | 07 |
-| `src/editor/regenerate-panel.js` | 07 |
-| `api/agents/register-prep.js` | 08 |
-| `public/cz/` | 09 |
-| `src/cz-flow.js` | 09 |
-| `docs/CZ_DEMO_RUNBOOK.md` | 10 |
-| `scripts/cz-demo/runbook.sh` | 10 |
-| `public/agents/` | 11 |
-| `src/agents-directory.js` | 11 |
+| File / dir                                | Owner |
+| ----------------------------------------- | ----- |
+| `src/auth/walletconnect-bridge.js`        | 01    |
+| `src/auth/walletconnect-bridge.test.html` | 01    |
+| `specs/EDITOR_SPEC.md`                    | 02    |
+| `api/artifact.js`                         | 03    |
+| `public/artifact/`                        | 03    |
+| `public/lobehub/`                         | 04    |
+| `api/lobehub/handshake.js`                | 04    |
+| `api/lobehub/manifest.js`                 | 04    |
+| `public/reputation/`                      | 05    |
+| `src/reputation-ui.js`                    | 05    |
+| `public/validation/`                      | 06    |
+| `src/validation-ui.js`                    | 06    |
+| `api/avatars/regenerate.js`               | 07    |
+| `src/editor/regenerate-panel.js`          | 07    |
+| `api/agents/register-prep.js`             | 08    |
+| `public/cz/`                              | 09    |
+| `src/cz-flow.js`                          | 09    |
+| `docs/CZ_DEMO_RUNBOOK.md`                 | 10    |
+| `scripts/cz-demo/runbook.sh`              | 10    |
+| `public/agents/`                          | 11    |
+| `src/agents-directory.js`                 | 11    |
 
 ## Read-only (shared) modules — do not modify
 

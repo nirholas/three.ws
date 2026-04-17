@@ -2,19 +2,30 @@
 // Each slot maps to a clip name from the loaded animation library.
 // Agents can override individual slots via meta.edits.animations.
 
-export const SLOTS = ['idle', 'wave', 'nod', 'shake', 'think', 'celebrate', 'concern', 'bow', 'point', 'shrug'];
+export const SLOTS = [
+	'idle',
+	'wave',
+	'nod',
+	'shake',
+	'think',
+	'celebrate',
+	'concern',
+	'bow',
+	'point',
+	'shrug',
+];
 
 export const DEFAULT_ANIMATION_MAP = {
-	idle:      'idle',
-	wave:      'reaction',
-	nod:       'reaction',
-	shake:     'angry',
-	think:     'pray',
+	idle: 'idle',
+	wave: 'reaction',
+	nod: 'reaction',
+	shake: 'angry',
+	think: 'pray',
 	celebrate: 'celebrate',
-	concern:   'defeated',
-	bow:       'sitclap',
-	point:     'reaction',
-	shrug:     'defeated',
+	concern: 'defeated',
+	bow: 'sitclap',
+	point: 'reaction',
+	shrug: 'defeated',
 };
 
 /**

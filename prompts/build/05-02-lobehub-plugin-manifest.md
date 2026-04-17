@@ -3,7 +3,7 @@
 **Branch:** `feat/lobehub-plugin`
 **Stack layer:** 5 (Host embed — Lobehub — the user's primary integration target)
 **Depends on:** 04-02 (embed policy), 04-03 (public decorate), 05-01 (web component bundle)
-**Blocks:** 06-* (onchain → Lobehub demo)
+**Blocks:** 06-\* (onchain → Lobehub demo)
 
 ## Why it matters
 
@@ -11,18 +11,19 @@ The user has a Lobehub fork — the primary integration target for the whole pro
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| LobeChat plugin schema — `lobe-chat-plugin-sdk` docs | Plugin manifest shape, API route conventions. Confirm before wiring. |
-| [src/element.js](../../src/element.js) | `<agent-3d>` — the embeddable render surface. |
-| [api/agents.js](../../api/agents.js) with 04-03 applied | Public agent fetch. |
-| [api/agents/[id]/embed-policy.js](../../api/agents/[id]/embed-policy.js) from 04-02 | Lobehub's origin must be added to default allowlists here. |
+| File                                                                                | Why                                                                  |
+| :---------------------------------------------------------------------------------- | :------------------------------------------------------------------- |
+| LobeChat plugin schema — `lobe-chat-plugin-sdk` docs                                | Plugin manifest shape, API route conventions. Confirm before wiring. |
+| [src/element.js](../../src/element.js)                                              | `<agent-3d>` — the embeddable render surface.                        |
+| [api/agents.js](../../api/agents.js) with 04-03 applied                             | Public agent fetch.                                                  |
+| [api/agents/[id]/embed-policy.js](../../api/agents/[id]/embed-policy.js) from 04-02 | Lobehub's origin must be added to default allowlists here.           |
 
 ## Build this
 
 ### Plugin manifest — `GET /api/lobehub/manifest.json`
 
 Serve a valid LobeChat plugin manifest with:
+
 - `identifier`: `3dagent`
 - `version`: from `package.json`
 - `api`: a single tool — `showAgent(agentId: string)` — that returns a `text/html` widget embedding `<agent-3d agent-id="<id>" host="lobehub"></agent-3d>`.
@@ -38,6 +39,7 @@ Serve a valid LobeChat plugin manifest with:
 ### `host=lobehub` behaviour in `<agent-3d>`
 
 Mirror the `host=claude` treatment from 05-01:
+
 - Kiosk defaults.
 - Listen for LobeChat theme messages (dark / light) via postMessage and apply to the canvas background.
 - Cap DPR to 2.

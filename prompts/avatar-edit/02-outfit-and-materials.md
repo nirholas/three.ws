@@ -20,8 +20,8 @@ Users want to recolor the shirt, swap eye color, change skin tone. Doing this by
 
 ```json
 {
-  "Body":  { "color": "#ffc8a0", "metalness": 0.1, "roughness": 0.8 },
-  "Shirt": { "color": "#3b5eff", "emissive": "#000000" }
+	"Body": { "color": "#ffc8a0", "metalness": 0.1, "roughness": 0.8 },
+	"Shirt": { "color": "#3b5eff", "emissive": "#000000" }
 }
 ```
 
@@ -30,12 +30,14 @@ Only listed fields override; everything else comes from the GLB.
 ### 2. `/agent/:id/edit` tab "Outfit"
 
 A new tab alongside task 01's persona form. Layout:
+
 - Left: live preview.
 - Right: a list of every named mesh/material in the current GLB, each as a collapsible card with color + metalness + roughness + emissive controls.
 
 ### 3. Apply-on-load
 
 In the viewer pipeline (probably a new `src/editor/apply-overrides.js`):
+
 - Fires after model load.
 - Reads `meta.edits.materials` from the agent record.
 - Walks `traverseMaterials` and applies overrides by material name.

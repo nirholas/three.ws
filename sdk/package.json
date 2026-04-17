@@ -1,39 +1,39 @@
 {
-  "name": "@nirholas/agent-kit",
-  "version": "0.1.0",
-  "description": "Ship an ERC-8004 agent with on-chain identity, a chat panel, and discoverable .well-known endpoints in minutes.",
-  "type": "module",
-  "main": "./src/index.js",
-  "module": "./src/index.js",
-  "types": "./src/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./src/index.d.ts",
-      "import": "./src/index.js",
-      "default": "./src/index.js"
-    },
-    "./styles": "./src/styles.css"
-  },
-  "files": [
-    "src"
-  ],
-  "keywords": [
-    "erc-8004",
-    "agent",
-    "blockchain",
-    "a2a",
-    "mcp",
-    "ethereum",
-    "web3",
-    "identity"
-  ],
-  "license": "MIT",
-  "peerDependencies": {
-    "ethers": "^6.0.0"
-  },
-  "peerDependenciesMeta": {
-    "ethers": {
-      "optional": true
-    }
-  }
+	"name": "@nirholas/agent-kit",
+	"version": "0.1.0",
+	"description": "Ship an ERC-8004 agent with on-chain identity, a chat panel, and discoverable .well-known endpoints in minutes.",
+	"type": "module",
+	"main": "./src/index.js",
+	"module": "./src/index.js",
+	"types": "./src/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./src/index.d.ts",
+			"import": "./src/index.js",
+			"default": "./src/index.js"
+		},
+		"./styles": "./src/styles.css"
+	},
+	"files": [
+		"src"
+	],
+	"keywords": [
+		"erc-8004",
+		"agent",
+		"blockchain",
+		"a2a",
+		"mcp",
+		"ethereum",
+		"web3",
+		"identity"
+	],
+	"license": "MIT",
+	"peerDependencies": {
+		"ethers": "^6.0.0"
+	},
+	"peerDependenciesMeta": {
+		"ethers": {
+			"optional": true
+		}
+	}
 }

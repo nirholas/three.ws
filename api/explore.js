@@ -70,9 +70,7 @@ export default wrap(async (req, res) => {
 			registeredAt: r.registered_at,
 			tokenExplorerUrl: tokenExplorerUrl(r.chain_id, r.agent_id),
 			ownerExplorerUrl: addressExplorerUrl(r.chain_id, r.owner),
-			viewerUrl: r.glb_url
-				? `/#model=${encodeURIComponent(r.glb_url)}`
-				: null,
+			viewerUrl: r.glb_url ? `/#model=${encodeURIComponent(r.glb_url)}` : null,
 			services: (r.services || []).map((s) => ({
 				name: s?.name || null,
 				endpoint: s?.endpoint || null,

@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Publish agent manifests to IPFS so agents are portable, censorship-resistant"
+description: 'Publish agent manifests to IPFS so agents are portable, censorship-resistant'
 ---
 
 # Stack Layer 6: Agent Manifest → IPFS
@@ -14,6 +14,7 @@ Today an agent is a DB row in Neon. For the novel unlock (agent hydrates into an
 ### Manifest schema
 
 Conform to [specs/AGENT_MANIFEST.md](specs/AGENT_MANIFEST.md). Minimum fields:
+
 ```json
 {
   "$schema": "https://3dagent.vercel.app/specs/agent-manifest-v1.json",
@@ -35,6 +36,7 @@ Conform to [specs/AGENT_MANIFEST.md](specs/AGENT_MANIFEST.md). Minimum fields:
 ### Pinning service
 
 Use Pinata, Web3.Storage, or Filecoin via [src/ipfs.js](src/ipfs.js) (already exists — check). Add server-side pinning via `api/ipfs/pin.js`:
+
 - Input: manifest JSON.
 - Uploads GLB to IPFS first (gets CID), references it in manifest.
 - Pins manifest JSON, returns CID.
@@ -42,6 +44,7 @@ Use Pinata, Web3.Storage, or Filecoin via [src/ipfs.js](src/ipfs.js) (already ex
 ### Publish endpoint
 
 `POST /api/avatars/:id/publish`:
+
 - Builds manifest from DB row.
 - Uploads GLB to IPFS if not already.
 - Pins manifest.
@@ -54,7 +57,7 @@ For rendering from IPFS, support multiple gateways (Cloudflare, ipfs.io, dweb.li
 
 ### Update semantics
 
-IPFS is immutable. Each publish creates a new CID. Track history in `avatars.manifest_history` array. The *latest* CID is the one registered on-chain (next prompt).
+IPFS is immutable. Each publish creates a new CID. Track history in `avatars.manifest_history` array. The _latest_ CID is the one registered on-chain (next prompt).
 
 ### Signed manifest
 

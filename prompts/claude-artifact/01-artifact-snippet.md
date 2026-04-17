@@ -22,7 +22,7 @@ Create a copy-pasteable HTML template, &lt;2 KB, that a Claude user drops into c
 ## Deliverable
 
 1. **File created** — `public/artifact/index.html`. This is both the documentation of the snippet and a working preview page when hit directly. Contents are the snippet verbatim, wrapped only in enough surrounding `<html><body>` to render standalone.
-2. **File created** — `public/artifact/snippet.html`. The *exact* string users copy/paste. Minified where safe. Ends with a comment naming the project and version.
+2. **File created** — `public/artifact/snippet.html`. The _exact_ string users copy/paste. Minified where safe. Ends with a comment naming the project and version.
 3. **File created** — `prompts/claude-artifact/TESTED-SNIPPET.md` (NOT a codebase doc — it lives in this prompts dir only) — the verbatim snippet that was tested in a real Claude Artifact, plus a note on the date tested and the Claude model used.
 4. **Edit** — add a "Claude Artifact" tab to the share panel on [public/agent/index.html](../../public/agent/index.html) next to the existing iframe/link/`<agent-3d>` tabs, exposing a copy button that yields the snippet from `snippet.html` with `agentId` substituted in.
 
@@ -30,14 +30,18 @@ Create a copy-pasteable HTML template, &lt;2 KB, that a Claude user drops into c
 
 ```html
 <!doctype html>
-<html><head><meta charset="utf-8"></head>
-<body style="margin:0;background:#0b0d10">
-<div id="a" style="width:100%;height:100vh"></div>
-<script src="https://3dagent.vercel.app/artifact.js"></script>
-<script>
-  Agent3D.mount('#a', { agentId: 'AGENT_ID_HERE' });
-</script>
-</body></html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+	</head>
+	<body style="margin:0;background:#0b0d10">
+		<div id="a" style="width:100%;height:100vh"></div>
+		<script src="https://3dagent.vercel.app/artifact.js"></script>
+		<script>
+			Agent3D.mount('#a', { agentId: 'AGENT_ID_HERE' });
+		</script>
+	</body>
+</html>
 ```
 
 - Background is a reasonable default (dark). The user can change it.
@@ -79,7 +83,7 @@ Implement (1) inline with a small `onerror` handler on the script tag. (2) and (
 1. `wc -c public/artifact/snippet.html` — report bytes.
 2. `npx vite build` — report result.
 3. Manually: open a Claude chat, paste the snippet with a real agentId (`0x-demo-agent` or equivalent) into an `html` artifact. Screenshot or describe the result. If the avatar renders and breathes, verification passes.
-4. Paste the snippet with `AGENT_ID_HERE` *unchanged* — expect a clear instruction overlay, not a silent blank.
+4. Paste the snippet with `AGENT_ID_HERE` _unchanged_ — expect a clear instruction overlay, not a silent blank.
 5. Verify the share-panel copy button in `public/agent/index.html` yields the exact bytes of `snippet.html` with id substituted.
 
 ## Scope boundaries — do NOT do these
@@ -93,6 +97,7 @@ Implement (1) inline with a small `onerror` handler on the script tag. (2) and (
 ## Reporting
 
 At the end, summarise:
+
 - Byte count of `snippet.html`.
 - Which files were created and which edited (list sections in `public/agent/index.html`).
 - The exact snippet that was pasted into a live Claude Artifact and what happened.

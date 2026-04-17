@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Add screenshot/video export with PNG capture and animated WebM recording"
+description: 'Add screenshot/video export with PNG capture and animated WebM recording'
 ---
 
 # Screenshot & Video Export
@@ -18,6 +18,7 @@ The README roadmap lists **"Screenshot / Video Export — capture PNGs or record
 ### 1. Enhanced Screenshot (`src/export.js`)
 
 Improve the existing screenshot:
+
 - **Resolution multiplier**: Capture at 2x, 4x native resolution for print-quality exports
 - **Transparent background**: When `transparentBg` is enabled, export PNG with alpha channel
 - **Custom dimensions**: Let user specify exact pixel dimensions (e.g., 1920×1080, 4096×4096)
@@ -27,6 +28,7 @@ Improve the existing screenshot:
 ### 2. Turntable Capture
 
 Automated 360° turntable sequence:
+
 - User clicks "Turntable" → auto-rotate enabled, captures N frames (e.g., 36 frames = 10° per frame)
 - Exports as individual PNGs or animated GIF
 - Progress bar during capture
@@ -34,6 +36,7 @@ Automated 360° turntable sequence:
 ### 3. Video Recording
 
 Record the viewport as a video:
+
 - Use `MediaRecorder` API with `canvas.captureStream()`
 - Controls: Record / Stop / Pause
 - Output format: WebM (VP9) — native browser support, no dependencies
@@ -44,6 +47,7 @@ Record the viewport as a video:
 ### 4. Animated GIF Export
 
 For short clips and turntables:
+
 - Use a lightweight GIF encoder (e.g., `gif.js` or manual LZW)
 - Capture N frames → encode → download
 - Configurable dimensions (downscale for file size)
@@ -70,6 +74,7 @@ Add an "Export" folder to dat.gui:
 ### 6. Sharing
 
 After capture, show a toast/notification:
+
 - "Screenshot saved: model_2026-04-14.png"
 - Option to copy to clipboard (for screenshots, using `navigator.clipboard.write()`)
 

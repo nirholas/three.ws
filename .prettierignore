@@ -1,0 +1,16 @@
+# Dependencies and generated files
+node_modules/
+dist/
+dist-lib/
+dist-artifact/
+
+# Vendored / external library code
+contracts/lib/
+character-studio/
+
+# Build artifacts
+*.min.js
+public/embed-sdk.js
+public/embed.js
+public/wallet-login.js
+public/artifact.js

@@ -15,40 +15,45 @@ Rewrite the `/create` page body as a 3-card picker. Each card represents an avat
 ## The 3 cards
 
 ### Card 1 — "Use default avatar"
+
 - Icon/visual: default avatar thumbnail or abstract avatar illustration
 - Title: **Use default avatar**
-- Subtitle: *Edit a ready-made avatar in our web editor. No download required.*
+- Subtitle: _Edit a ready-made avatar in our web editor. No download required._
 - CTA: **Open editor**
 - Action: calls `AvatarCreator.openDefaultEditor()` (added in task 03). On export → upload GLB via [src/account.js](../../src/account.js) flow → redirect to `/agent/:id`.
 
 ### Card 2 — "Upload your own GLB"
+
 - Icon/visual: upload arrow or 3D cube illustration
 - Title: **Upload your own GLB**
-- Subtitle: *Drop a `.glb` file. Works with any glTF 2.0 model.*
+- Subtitle: _Drop a `.glb` file. Works with any glTF 2.0 model._
 - CTA: **Choose file**
 - Action: opens hidden `<input type="file" accept=".glb,model/gltf-binary">`. On select → validate (ext + magic bytes `glTF`) → upload via presign → redirect to `/agent/:id`.
-- **Tooltip** (render as `<small>` under the CTA): *Need a model? Try [Avaturn](https://avaturn.me) or [Mixamo](https://mixamo.com).* Links should open in new tabs with `rel="noopener"`.
+- **Tooltip** (render as `<small>` under the CTA): _Need a model? Try [Avaturn](https://avaturn.me) or [Mixamo](https://mixamo.com)._ Links should open in new tabs with `rel="noopener"`.
 
 ### Card 3 — "From a selfie" (disabled)
+
 - Icon/visual: camera illustration with a faded/greyscale treatment
 - Title: **From a selfie**
-- Subtitle: *Turn a photo into a rigged avatar.*
+- Subtitle: _Turn a photo into a rigged avatar._
 - Badge: **Coming Soon** (top-right corner of card)
 - Action: no click handler. Card has `aria-disabled="true"` and does not receive keyboard focus.
 
 ## Deliverable
 
 1. **Rewrite [create.html](../../create.html)**:
-   - Replace the current selfie-capture template ([create.html:308-368](../../create.html#L308-L368) and any surrounding method-selection HTML) with a `<section class="create-picker">` containing three `<button class="create-card">` elements (or `<div>` for the disabled one).
-   - Keep the existing `<header>` and overall page chrome.
-   - Do **not** delete [src/selfie-capture.js](../../src/selfie-capture.js) or [src/selfie-pipeline.js](../../src/selfie-pipeline.js). Just unroute them.
+
+    - Replace the current selfie-capture template ([create.html:308-368](../../create.html#L308-L368) and any surrounding method-selection HTML) with a `<section class="create-picker">` containing three `<button class="create-card">` elements (or `<div>` for the disabled one).
+    - Keep the existing `<header>` and overall page chrome.
+    - Do **not** delete [src/selfie-capture.js](../../src/selfie-capture.js) or [src/selfie-pipeline.js](../../src/selfie-pipeline.js). Just unroute them.
 
 2. **New file: `src/create.js`** (the page controller). Wires the three cards:
-   - Card 1 → instantiates `AvatarCreator` with an `onExport` callback that POSTs the Blob through the presign + upload + `/api/agents/me` create flow (mirror what [src/account.js](../../src/account.js) does in the save path — factor a shared helper if clean).
-   - Card 2 → file input handler, validates, uploads, creates agent.
-   - Card 3 → no handler.
-   - On successful avatar save: `window.location.href = '/agent/' + agentId`.
-   - Use [src/account.js](../../src/account.js) `readAuthHint()` to check auth; if unauthed, redirect to `/login?next=/create`.
+
+    - Card 1 → instantiates `AvatarCreator` with an `onExport` callback that POSTs the Blob through the presign + upload + `/api/agents/me` create flow (mirror what [src/account.js](../../src/account.js) does in the save path — factor a shared helper if clean).
+    - Card 2 → file input handler, validates, uploads, creates agent.
+    - Card 3 → no handler.
+    - On successful avatar save: `window.location.href = '/agent/' + agentId`.
+    - Use [src/account.js](../../src/account.js) `readAuthHint()` to check auth; if unauthed, redirect to `/login?next=/create`.
 
 3. **CSS** — add minimal styles to [style.css](../../style.css) (or a new `create.css` if you prefer — match the existing pattern in the repo). Cards should be equal-width on desktop, stacked on mobile. Use existing CSS variables from the homepage so the visual language matches.
 
@@ -68,10 +73,10 @@ Rewrite the `/create` page body as a 3-card picker. Each card represents an avat
 - [ ] `npm run build` passes
 - [ ] `node --check create.html` — actually, HTML doesn't need `node --check`; just ensure `src/create.js` parses: `node --check src/create.js`
 - [ ] `localhost:3000/create`:
-  - Three cards visible, equal width on desktop
-  - Card 1 opens the Avaturn iframe modal (via task 03's `openDefaultEditor`)
-  - Card 2 opens a file picker; uploading a valid GLB redirects to `/agent/:id`
-  - Card 3 shows "Coming Soon" badge, doesn't open anything when clicked
+    - Three cards visible, equal width on desktop
+    - Card 1 opens the Avaturn iframe modal (via task 03's `openDefaultEditor`)
+    - Card 2 opens a file picker; uploading a valid GLB redirects to `/agent/:id`
+    - Card 3 shows "Coming Soon" badge, doesn't open anything when clicked
 - [ ] Unauthed user visiting `/create` redirects to `/login?next=/create`
 - [ ] Authenticated user after export lands on `/agent/:id` with the correct avatar loaded
 

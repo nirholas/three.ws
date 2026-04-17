@@ -95,7 +95,10 @@ export class PinataPinner {
 			}).then(async (r) => {
 				if (!r.ok) {
 					const body = await r.text().catch(() => '');
-					throw statusError(r.status, `Pinata directory upload failed (${r.status}): ${body}`);
+					throw statusError(
+						r.status,
+						`Pinata directory upload failed (${r.status}): ${body}`,
+					);
 				}
 				return r;
 			}),

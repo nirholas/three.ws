@@ -482,7 +482,9 @@ export class Viewer {
 			this.scene.environment = envMap;
 			this.scene.background = this.state.transparentBg
 				? null
-				: this.state.background ? envMap : this.backgroundColor;
+				: this.state.background
+					? envMap
+					: this.backgroundColor;
 			this.invalidate();
 		});
 	}
@@ -550,7 +552,8 @@ export class Viewer {
 	 * @param {string|number} color  CSS color string or hex int.
 	 */
 	setBackgroundColor(color) {
-		this.state.bgColor = typeof color === 'string' ? color : '#' + color.toString(16).padStart(6, '0');
+		this.state.bgColor =
+			typeof color === 'string' ? color : '#' + color.toString(16).padStart(6, '0');
 		this.state.transparentBg = false;
 		this.updateBackground();
 	}
@@ -610,7 +613,7 @@ export class Viewer {
 				return;
 			}
 
-			const x = (tempVec.x * halfW) + halfW;
+			const x = tempVec.x * halfW + halfW;
 			const y = -(tempVec.y * halfH) + halfH;
 
 			el.style.display = '';
@@ -668,7 +671,9 @@ export class Viewer {
 		transparentCtrl.onChange(() => this.updateBackground());
 		const bgColorCtrl = dispFolder.addColor(this.state, 'bgColor');
 		bgColorCtrl.onChange(() => this.updateBackground());
-		dispFolder.add({ screenshot: () => this.takeScreenshot() }, 'screenshot').name('Screenshot [P]');
+		dispFolder
+			.add({ screenshot: () => this.takeScreenshot() }, 'screenshot')
+			.name('Screenshot [P]');
 		const infoCtrl = dispFolder.add(this.state, 'showInfo').name('model info');
 		infoCtrl.onChange(() => this.updateModelInfo(this.content, this.clips));
 		const labelsCtrl = dispFolder.add(this.state, 'showLabels').name('mesh labels');
@@ -714,7 +719,13 @@ export class Viewer {
 
 		// Agent controls.
 		const agentFolder = gui.addFolder('Agent');
-		agentFolder.add(this.state, 'followMode', { 'None': 'none', 'Follow Mouse': 'mouse', 'Follow Keystrokes': 'keystrokes' }).name('follow mode');
+		agentFolder
+			.add(this.state, 'followMode', {
+				None: 'none',
+				'Follow Mouse': 'mouse',
+				'Follow Keystrokes': 'keystrokes',
+			})
+			.name('follow mode');
 
 		// Stats.
 		const perfFolder = gui.addFolder('Performance');
@@ -926,39 +937,62 @@ export class Viewer {
 		const activeName = this.animationManager.currentName;
 
 		const ICONS = {
-			idle: '🧍', breathing: '🧍', standing: '🧍',
-			walking: '🚶', walk: '🚶',
-			running: '🏃', run: '🏃',
-			waving: '👋', wave: '👋',
-			dancing: '💃', dance: '💃',
-			sitting: '🪑', sit: '🪑',
-			jumping: '🦘', jump: '🦘',
-			talking: '🗣️', talk: '🗣️',
-			clapping: '👏', clap: '👏',
-			punching: '👊', punch: '👊',
-			kicking: '🦵', kick: '🦵',
+			idle: '🧍',
+			breathing: '🧍',
+			standing: '🧍',
+			walking: '🚶',
+			walk: '🚶',
+			running: '🏃',
+			run: '🏃',
+			waving: '👋',
+			wave: '👋',
+			dancing: '💃',
+			dance: '💃',
+			sitting: '🪑',
+			sit: '🪑',
+			jumping: '🦘',
+			jump: '🦘',
+			talking: '🗣️',
+			talk: '🗣️',
+			clapping: '👏',
+			clap: '👏',
+			punching: '👊',
+			punch: '👊',
+			kicking: '🦵',
+			kick: '🦵',
 		};
 
-		grid.innerHTML = defs.map((def, i) => {
-			const loaded = this.animationManager.isLoaded(def.name);
-			const isActive = activeName === def.name;
-			const icon = def.icon || ICONS[def.name.toLowerCase()] || '▶';
-			const label = def.label || def.name.charAt(0).toUpperCase() + def.name.slice(1);
-			const keyHint = i < 9 ? (i + 1) : '';
-			return (
-				'<button class="anim-btn' +
-				(isActive ? ' anim-btn--active' : '') +
-				(loaded ? '' : ' anim-btn--loading') +
-				'" data-anim="' + def.name + '"' +
-				' title="' + label + (keyHint ? ' — press ' + keyHint : '') + '"' +
-				(loaded ? '' : ' disabled') +
-				'>' +
-				(keyHint ? '<span class="anim-btn__key">' + keyHint + '</span>' : '') +
-				'<span class="anim-btn__icon">' + icon + '</span>' +
-				'<span class="anim-btn__label">' + label + '</span>' +
-				'</button>'
-			);
-		}).join('');
+		grid.innerHTML = defs
+			.map((def, i) => {
+				const loaded = this.animationManager.isLoaded(def.name);
+				const isActive = activeName === def.name;
+				const icon = def.icon || ICONS[def.name.toLowerCase()] || '▶';
+				const label = def.label || def.name.charAt(0).toUpperCase() + def.name.slice(1);
+				const keyHint = i < 9 ? i + 1 : '';
+				return (
+					'<button class="anim-btn' +
+					(isActive ? ' anim-btn--active' : '') +
+					(loaded ? '' : ' anim-btn--loading') +
+					'" data-anim="' +
+					def.name +
+					'"' +
+					' title="' +
+					label +
+					(keyHint ? ' — press ' + keyHint : '') +
+					'"' +
+					(loaded ? '' : ' disabled') +
+					'>' +
+					(keyHint ? '<span class="anim-btn__key">' + keyHint + '</span>' : '') +
+					'<span class="anim-btn__icon">' +
+					icon +
+					'</span>' +
+					'<span class="anim-btn__label">' +
+					label +
+					'</span>' +
+					'</button>'
+				);
+			})
+			.join('');
 
 		// Bind click events
 		grid.querySelectorAll('.anim-btn:not([disabled])').forEach((btn) => {

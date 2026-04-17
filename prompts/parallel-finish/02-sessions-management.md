@@ -4,7 +4,7 @@
 
 Repo root: `/workspaces/3D-Agent`. Read [/CLAUDE.md](../../CLAUDE.md) and [api/CLAUDE.md](../../api/CLAUDE.md) first.
 
-The `sessions` table (see [api/_lib/schema.sql](../../api/_lib/schema.sql)) tracks each logged-in session with `last_seen_at`, `user_agent`, `ip`. There is currently no way for a user to list or revoke their sessions. We need a "sign out everywhere" path and a per-session revoke.
+The `sessions` table (see [api/\_lib/schema.sql](../../api/_lib/schema.sql)) tracks each logged-in session with `last_seen_at`, `user_agent`, `ip`. There is currently no way for a user to list or revoke their sessions. We need a "sign out everywhere" path and a per-session revoke.
 
 ## Files you own (exclusive — create all as new files)
 

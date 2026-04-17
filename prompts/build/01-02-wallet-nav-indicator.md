@@ -19,13 +19,13 @@ Source of truth: `GET /api/auth/me` on page load + local cache invalidated on 40
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| [api/auth/me.js](../../api/auth/me.js) | Shape of the `user` object — `{ id, email, display_name, plan, avatar_url }`. Note there is NO `wallet_address` field on the returned user today. |
-| [api/_lib/auth.js](../../api/_lib/auth.js) | `getSessionUser` — source SQL. You may need to join `user_wallets` here so `/api/auth/me` returns the primary wallet. |
-| [public/dashboard/dashboard.js](../../public/dashboard/dashboard.js) | Native DOM pattern to follow. |
-| [public/wallet-login.js](../../public/wallet-login.js) | Wallet flow — nothing to change here, but learn what a wallet-created user's `email` looks like (`wallet-0x..@wallet.local`) so you can hide that ugly string. |
-| [style.css](../../style.css) | Token palette — use `--accent`, `--bg-elevated`, etc. Don't introduce new colors. |
+| File                                                                 | Why                                                                                                                                                            |
+| :------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [api/auth/me.js](../../api/auth/me.js)                               | Shape of the `user` object — `{ id, email, display_name, plan, avatar_url }`. Note there is NO `wallet_address` field on the returned user today.              |
+| [api/\_lib/auth.js](../../api/_lib/auth.js)                          | `getSessionUser` — source SQL. You may need to join `user_wallets` here so `/api/auth/me` returns the primary wallet.                                          |
+| [public/dashboard/dashboard.js](../../public/dashboard/dashboard.js) | Native DOM pattern to follow.                                                                                                                                  |
+| [public/wallet-login.js](../../public/wallet-login.js)               | Wallet flow — nothing to change here, but learn what a wallet-created user's `email` looks like (`wallet-0x..@wallet.local`) so you can hide that ugly string. |
+| [style.css](../../style.css)                                         | Token palette — use `--accent`, `--bg-elevated`, etc. Don't introduce new colors.                                                                              |
 
 ## Build this
 
@@ -61,6 +61,7 @@ Menu: absolute-positioned popover. Close on outside click, Esc, or selection.
 ### 3. Mount on every page
 
 Add a script tag + chip mount to:
+
 - [public/dashboard/index.html](../../public/dashboard/) — top-right, replacing whatever's there.
 - `public/studio/index.html` (if it exists from the widget-studio prompts — if not, skip).
 - [public/agent/index.html](../../public/agent/index.html) — top-right.
@@ -82,9 +83,11 @@ Do not modify the landing page [index.html](../../index.html) — it has its own
 ## Deliverables
 
 **New:**
+
 - `src/components/wallet-chip.js`
 
 **Modified:**
+
 - [api/auth/me.js](../../api/auth/me.js) — include `wallet` on user.
 - [public/dashboard/index.html](../../public/dashboard/) — mount chip.
 - [public/agent/index.html](../../public/agent/index.html) — mount chip.

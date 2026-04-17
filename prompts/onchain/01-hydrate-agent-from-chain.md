@@ -13,18 +13,18 @@ Add a read-only hydration path so any caller with `(chainId, agentId)` can build
 ## Deliverable
 
 1. New file [src/erc8004/hydrate.js](../../src/erc8004/hydrate.js) exporting:
-   - `async function hydrateFromChain({ chainId, agentId, rpcURL? })` → returns a **plain record** shaped like `AgentRecord` in [agent-identity.js](../../src/agent-identity.js) (`id`, `name`, `description`, `avatarId` — leave `null` if only a body URI is known, `homeUrl`, `walletAddress`, `chainId`, `skills: []`, `meta`, `createdAt`, `isRegistered: true`). Must also set a `meta.onchain = { chainId, agentId, registryAddr, tokenURI, ownerAddress, agentRegistry }` block.
-   - Internally:
-     - Resolve registry address via `REGISTRY_DEPLOYMENTS[chainId].identityRegistry`. Throw a typed error (`new Error('unknown-chain')` etc.) if missing.
-     - Use `JsonRpcProvider` from `ethers` with the given `rpcURL` or fall back to a known default (extend `DEFAULT_RPCS` in [manifest.js](../../src/manifest.js) if new chains are needed, do **not** fork it — import and reuse).
-     - Read `tokenURI(agentId)` and `ownerOf(agentId)` via the identity registry.
-     - Resolve the `tokenURI` through [src/ipfs.js](../../src/ipfs.js) `resolveURI` / `fetchWithFallback`, then parse the registration JSON.
-     - Pass the JSON through `normalize()` in [src/manifest.js](../../src/manifest.js) to reuse the ERC-8004 adapter (preferred) OR read the relevant fields directly — but if you read directly, cover the ERC-8004 `registrations[]` shape and the nested `image` / `body.uri` fallback.
-     - Shape the return value so `AgentIdentity` can consume it without further translation.
+    - `async function hydrateFromChain({ chainId, agentId, rpcURL? })` → returns a **plain record** shaped like `AgentRecord` in [agent-identity.js](../../src/agent-identity.js) (`id`, `name`, `description`, `avatarId` — leave `null` if only a body URI is known, `homeUrl`, `walletAddress`, `chainId`, `skills: []`, `meta`, `createdAt`, `isRegistered: true`). Must also set a `meta.onchain = { chainId, agentId, registryAddr, tokenURI, ownerAddress, agentRegistry }` block.
+    - Internally:
+        - Resolve registry address via `REGISTRY_DEPLOYMENTS[chainId].identityRegistry`. Throw a typed error (`new Error('unknown-chain')` etc.) if missing.
+        - Use `JsonRpcProvider` from `ethers` with the given `rpcURL` or fall back to a known default (extend `DEFAULT_RPCS` in [manifest.js](../../src/manifest.js) if new chains are needed, do **not** fork it — import and reuse).
+        - Read `tokenURI(agentId)` and `ownerOf(agentId)` via the identity registry.
+        - Resolve the `tokenURI` through [src/ipfs.js](../../src/ipfs.js) `resolveURI` / `fetchWithFallback`, then parse the registration JSON.
+        - Pass the JSON through `normalize()` in [src/manifest.js](../../src/manifest.js) to reuse the ERC-8004 adapter (preferred) OR read the relevant fields directly — but if you read directly, cover the ERC-8004 `registrations[]` shape and the nested `image` / `body.uri` fallback.
+        - Shape the return value so `AgentIdentity` can consume it without further translation.
 2. Extend [src/agent-identity.js](../../src/agent-identity.js):
-   - Add constructor option `{ onchain: { chainId, agentId, rpcURL? } }`.
-   - When `onchain` is set and `autoLoad` is true, the internal `_loadAsync` **tries chain first**, falls back to localStorage/backend if chain hydration throws.
-   - Add a new method `async hydrateOnchain({ chainId, agentId, rpcURL? })` that callers can invoke later to merge on-chain fields into the current record (merging only non-empty fields — never overwrite a user-set local name/description with an empty on-chain one).
+    - Add constructor option `{ onchain: { chainId, agentId, rpcURL? } }`.
+    - When `onchain` is set and `autoLoad` is true, the internal `_loadAsync` **tries chain first**, falls back to localStorage/backend if chain hydration throws.
+    - Add a new method `async hydrateOnchain({ chainId, agentId, rpcURL? })` that callers can invoke later to merge on-chain fields into the current record (merging only non-empty fields — never overwrite a user-set local name/description with an empty on-chain one).
 3. Minimal unit-ish smoke in a REPL (document in the verification block below) — no new test file required.
 
 ## Audit checklist
@@ -51,12 +51,12 @@ Add a read-only hydration path so any caller with `(chainId, agentId)` can build
 1. `node --check src/erc8004/hydrate.js src/agent-identity.js`.
 2. `npx vite build` — passes (ignore `@avaturn/sdk` warning).
 3. In a browser console on a running dev server:
-   ```js
-   const { hydrateFromChain } = await import('/src/erc8004/hydrate.js');
-   const rec = await hydrateFromChain({ chainId: 84532, agentId: 1 });
-   console.log(rec);
-   // Expect: { id: '84532:1', meta: { onchain: { registryAddr: '0x8004A818...', tokenURI: 'ipfs://...', ownerAddress: '0x...' } }, ... }
-   ```
+    ```js
+    const { hydrateFromChain } = await import('/src/erc8004/hydrate.js');
+    const rec = await hydrateFromChain({ chainId: 84532, agentId: 1 });
+    console.log(rec);
+    // Expect: { id: '84532:1', meta: { onchain: { registryAddr: '0x8004A818...', tokenURI: 'ipfs://...', ownerAddress: '0x...' } }, ... }
+    ```
 4. Use `new AgentIdentity({ agentId: null, autoLoad: false, onchain: { chainId: 84532, agentId: 1 } }); await ident.load();` and confirm the loaded record has `isRegistered === true` and `meta.onchain.tokenURI` set.
 5. Negative case: pass `agentId: 99999999` on a testnet and confirm `Error('not-found')`.
 

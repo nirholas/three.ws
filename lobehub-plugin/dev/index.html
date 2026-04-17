@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>3D Agent — LobeHub Plugin Dev Harness</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<style>
+			*,
+			*::before,
+			*::after {
+				box-sizing: border-box;
+			}
+			body {
+				margin: 0;
+				font:
+					14px/1.5 system-ui,
+					sans-serif;
+				background: #0f0f10;
+				color: #e0e0e0;
+				display: flex;
+				height: 100vh;
+				overflow: hidden;
+			}
+
+			/* ── Left: simulated LobeChat sidebar ── */
+			#sidebar {
+				width: 420px;
+				flex-shrink: 0;
+				background: #151618;
+				border-right: 1px solid #2a2a2e;
+				display: flex;
+				flex-direction: column;
+			}
+			#sidebar-header {
+				padding: 12px 16px;
+				border-bottom: 1px solid #2a2a2e;
+				font-size: 12px;
+				color: #888;
+				letter-spacing: 0.05em;
+				text-transform: uppercase;
+			}
+			#agent-frame {
+				flex: 1;
+				border: none;
+				width: 100%;
+			}
+
+			/* ── Right: control panel ── */
+			#controls {
+				flex: 1;
+				padding: 24px;
+				overflow-y: auto;
+				display: flex;
+				flex-direction: column;
+				gap: 20px;
+			}
+			h1 {
+				margin: 0 0 4px;
+				font-size: 18px;
+				font-weight: 600;
+			}
+			.subtitle {
+				color: #888;
+				font-size: 13px;
+				margin: 0 0 8px;
+			}
+			.section {
+				background: #151618;
+				border: 1px solid #2a2a2e;
+				border-radius: 8px;
+				padding: 16px;
+			}
+			.section h2 {
+				margin: 0 0 12px;
+				font-size: 13px;
+				font-weight: 600;
+				color: #aaa;
+				text-transform: uppercase;
+				letter-spacing: 0.05em;
+			}
+			.row {
+				display: flex;
+				gap: 8px;
+				align-items: center;
+				margin-bottom: 8px;
+			}
+			input[type='text'],
+			select {
+				flex: 1;
+				background: #0f0f10;
+				border: 1px solid #333;
+				border-radius: 6px;
+				color: #e0e0e0;
+				padding: 6px 10px;
+				font: inherit;
+			}
+			input[type='range'] {
+				flex: 1;
+			}
+			button {
+				background: #2563eb;
+				border: none;
+				border-radius: 6px;
+				color: #fff;
+				cursor: pointer;
+				font: inherit;
+				font-size: 13px;
+				padding: 6px 14px;
+				white-space: nowrap;
+				transition: background 0.15s;
+			}
+			button:hover {
+				background: #1d4ed8;
+			}
+			button.secondary {
+				background: #2a2a2e;
+				color: #ccc;
+			}
+			button.secondary:hover {
+				background: #333;
+			}
+			#log {
+				font: 12px/1.6 monospace;
+				color: #6ee7b7;
+				background: #0a0a0c;
+				border: 1px solid #1e3a2a;
+				border-radius: 6px;
+				padding: 10px;
+				max-height: 220px;
+				overflow-y: auto;
+				white-space: pre-wrap;
+				word-break: break-all;
+			}
+			.status-dot {
+				display: inline-block;
+				width: 8px;
+				height: 8px;
+				border-radius: 50%;
+				background: #ef4444;
+				margin-right: 6px;
+			}
+			.status-dot.ready {
+				background: #22c55e;
+			}
+			label {
+				font-size: 12px;
+				color: #888;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="sidebar">
+			<div id="sidebar-header">
+				<span id="status-dot" class="status-dot"></span>
+				3D Agent sidebar
+			</div>
+			<iframe id="agent-frame" title="Agent embed"></iframe>
+		</div>
+
+		<div id="controls">
+			<div>
+				<h1>LobeHub Plugin Dev Harness</h1>
+				<p class="subtitle">
+					Simulates the LobeChat host. Use the controls below to verify the plugin without
+					running LobeChat.
+				</p>
+			</div>
+
+			<!-- Agent config -->
+			<div class="section">
+				<h2>Config</h2>
+				<div class="row">
+					<label style="width: 80px">Agent ID</label>
+					<input type="text" id="agent-id-input" placeholder="agent-xyz-123" />
+				</div>
+				<div class="row">
+					<label style="width: 80px">API Origin</label>
+					<input type="text" id="origin-input" value="https://3dagent.vercel.app" />
+				</div>
+				<div class="row">
+					<button id="load-btn">Load agent</button>
+					<button class="secondary" id="ping-btn">Ping</button>
+				</div>
+			</div>
+
+			<!-- Tool call simulation -->
+			<div class="section">
+				<h2>Inject tool call (simulates LobeChat calling the plugin API)</h2>
+				<div class="row">
+					<label style="width: 60px">Text</label>
+					<input type="text" id="speak-text" value="Hello! I am your 3D agent." />
+				</div>
+				<div class="row">
+					<label style="width: 60px">Sentiment</label>
+					<input type="range" id="sentiment" min="-1" max="1" step="0.1" value="0.3" />
+					<span id="sentiment-label">0.3</span>
+				</div>
+				<div class="row">
+					<button id="speak-btn">Inject speak</button>
+				</div>
+				<div class="row" style="margin-top: 8px">
+					<label style="width: 60px">Gesture</label>
+					<select id="gesture-select">
+						<option value="wave">wave</option>
+						<option value="nod">nod</option>
+						<option value="point">point</option>
+						<option value="shrug">shrug</option>
+					</select>
+					<button id="gesture-btn">Inject gesture</button>
+				</div>
+				<div class="row" style="margin-top: 8px">
+					<label style="width: 60px">Emote</label>
+					<select id="emote-select">
+						<option value="celebration">celebration</option>
+						<option value="curiosity">curiosity</option>
+						<option value="concern">concern</option>
+						<option value="patience">patience</option>
+						<option value="empathy">empathy</option>
+					</select>
+					<button id="emote-btn">Inject emote</button>
+				</div>
+			</div>
+
+			<!-- Log -->
+			<div class="section">
+				<h2>PostMessage log</h2>
+				<div id="log">Waiting for messages…</div>
+			</div>
+		</div>
+
+		<script>
+			// ── State ──────────────────────────────────────────────────────────────────
+
+			const frame = document.getElementById('agent-frame');
+			const log = document.getElementById('log');
+			const statusDot = document.getElementById('status-dot');
+			let agentId = '';
+			let apiOrigin = 'https://3dagent.vercel.app';
+			let pendingRequests = new Map();
+			let isReady = false;
+
+			function appendLog(msg) {
+				log.textContent += '\n' + new Date().toISOString().slice(11, 23) + ' ' + msg;
+				log.scrollTop = log.scrollHeight;
+			}
+
+			function newId() {
+				return crypto?.randomUUID?.() || Math.random().toString(36).slice(2);
+			}
+
+			// ── Iframe load ────────────────────────────────────────────────────────────
+
+			function loadAgent() {
+				agentId = document.getElementById('agent-id-input').value.trim();
+				apiOrigin = document.getElementById('origin-input').value.trim();
+				if (!agentId) {
+					alert('Enter an Agent ID first.');
+					return;
+				}
+				isReady = false;
+				statusDot.className = 'status-dot';
+				const url = `${apiOrigin}/lobehub/iframe/?agent=${encodeURIComponent(agentId)}&host=${encodeURIComponent(location.origin)}`;
+				frame.src = url;
+				appendLog(`→ Loading ${url}`);
+			}
+
+			document.getElementById('load-btn').addEventListener('click', loadAgent);
+
+			// ── Bridge (host side) ─────────────────────────────────────────────────────
+
+			function sendToFrame(envelope) {
+				if (!frame.contentWindow) return;
+				appendLog('→ ' + JSON.stringify(envelope));
+				frame.contentWindow.postMessage(envelope, '*');
+			}
+
+			function request(op, payload) {
+				return new Promise((resolve, reject) => {
+					const id = newId();
+					const timer = setTimeout(() => {
+						pendingRequests.delete(id);
+						reject(new Error(`Timeout: ${op}`));
+					}, 10000);
+					pendingRequests.set(id, { resolve, reject, timer });
+					sendToFrame({
+						v: 1,
+						source: 'agent-host',
+						id,
+						kind: 'request',
+						op,
+						payload: payload || {},
+					});
+				});
+			}
+
+			window.addEventListener('message', (ev) => {
+				const d = ev.data;
+				if (!d || typeof d !== 'object') return;
+				appendLog('← ' + JSON.stringify(d));
+
+				// v1 spec envelope
+				if (d.v === 1 && d.source === 'agent-3d') {
+					if (d.kind === 'event' && d.op === 'ready') {
+						isReady = true;
+						statusDot.className = 'status-dot ready';
+						// Complete handshake
+						request('ping', {})
+							.then(() => appendLog('✓ Handshake complete'))
+							.catch((e) => appendLog('✗ Ping failed: ' + e.message));
+					}
+					if (d.kind === 'response' && d.inReplyTo) {
+						const entry = pendingRequests.get(d.inReplyTo);
+						if (entry) {
+							clearTimeout(entry.timer);
+							pendingRequests.delete(d.inReplyTo);
+							entry.resolve(d.payload);
+						}
+					}
+				}
+			});
+
+			// ── Control buttons ────────────────────────────────────────────────────────
+
+			document.getElementById('ping-btn').addEventListener('click', () => {
+				request('ping', {})
+					.then(() => appendLog('✓ pong'))
+					.catch((e) => appendLog('✗ ' + e.message));
+			});
+
+			document.getElementById('speak-btn').addEventListener('click', () => {
+				const text = document.getElementById('speak-text').value.trim();
+				const sentiment = parseFloat(document.getElementById('sentiment').value);
+				if (!text) return;
+
+				// Simulate LobeChat sending a tool call via postMessage
+				// (this is what @lobehub/chat-plugin-sdk sends from the host page)
+				const lobeMsg = {
+					type: 'LobePlugin.renderPlugin',
+					payload: {
+						apiName: 'speak',
+						arguments: JSON.stringify({ text, sentiment }),
+						identifier: '3d-agent',
+					},
+				};
+				appendLog('→ [LobeChat sim] ' + JSON.stringify(lobeMsg));
+				// Post to the AgentPane's window context (simulates LobeChat → plugin iframe).
+				// In real LobeChat, this goes to the React plugin's window, not directly to the
+				// agent iframe. The AgentPane then uses the bridge to forward it.
+				// Here we send directly to the agent iframe for simplicity.
+				request('speak', { text, sentiment })
+					.then(() => appendLog('✓ speak dispatched'))
+					.catch((e) => appendLog('✗ ' + e.message));
+			});
+
+			document.getElementById('gesture-btn').addEventListener('click', () => {
+				const name = document.getElementById('gesture-select').value;
+				request('gesture', { name })
+					.then(() => appendLog('✓ gesture dispatched'))
+					.catch((e) => appendLog('✗ ' + e.message));
+			});
+
+			document.getElementById('emote-btn').addEventListener('click', () => {
+				const trigger = document.getElementById('emote-select').value;
+				request('emote', { trigger, weight: 1 })
+					.then(() => appendLog('✓ emote dispatched'))
+					.catch((e) => appendLog('✗ ' + e.message));
+			});
+
+			// ── Sentiment slider label ─────────────────────────────────────────────────
+
+			document.getElementById('sentiment').addEventListener('input', (e) => {
+				document.getElementById('sentiment-label').textContent = parseFloat(
+					e.target.value,
+				).toFixed(1);
+			});
+
+			// ── Auto-load from query params ────────────────────────────────────────────
+
+			const qp = new URLSearchParams(location.search);
+			if (qp.get('agent')) {
+				document.getElementById('agent-id-input').value = qp.get('agent');
+				if (qp.get('origin'))
+					document.getElementById('origin-input').value = qp.get('origin');
+				loadAgent();
+			}
+		</script>
+	</body>
+</html>

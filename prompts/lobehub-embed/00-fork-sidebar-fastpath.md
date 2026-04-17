@@ -61,7 +61,9 @@ export function AgentDock() {
 					{collapsed ? '‹' : '›'}
 				</button>
 				<span className="agent-dock__name">{/* populated from ready event */}</span>
-				<a href={`${ORIGIN}/agent/${agentId}`} target="_blank" rel="noopener">⚙</a>
+				<a href={`${ORIGIN}/agent/${agentId}`} target="_blank" rel="noopener">
+					⚙
+				</a>
 			</header>
 			{!collapsed && (
 				<iframe
@@ -113,7 +115,7 @@ Purpose: listen to LobeHub's chat-stream state (find it via the fork's Zustand s
 
 ```ts
 import { RefObject, useEffect } from 'react';
-import { useChatStore } from '@/store/chat';   // path depends on fork — confirm first
+import { useChatStore } from '@/store/chat'; // path depends on fork — confirm first
 
 export function useChatStreamBridge(iframeRef: RefObject<HTMLIFrameElement>, origin: string) {
 	useEffect(() => {
@@ -137,10 +139,16 @@ export function useChatStreamBridge(iframeRef: RefObject<HTMLIFrameElement>, ori
 		// Optional: when the assistant finishes, forward the final text.
 		const unsubDone = useChatStore.subscribe(
 			(s) => s.lastAssistantMessage,
-			(msg) => msg && post('speak', { text: msg.content, sentiment: detectSentiment(msg.content) }),
+			(msg) =>
+				msg &&
+				post('speak', { text: msg.content, sentiment: detectSentiment(msg.content) }),
 		);
 
-		return () => { unsubSend(); unsubStream(); unsubDone(); };
+		return () => {
+			unsubSend();
+			unsubStream();
+			unsubDone();
+		};
 	}, [iframeRef, origin]);
 }
 
@@ -177,15 +185,30 @@ CSS (in `src/features/AgentDock/dock.module.css` or a global stylesheet — matc
 	transition: transform 0.25s ease;
 	z-index: 40;
 }
-.agent-dock--collapsed { transform: translateX(calc(100% - 32px)); }
+.agent-dock--collapsed {
+	transform: translateX(calc(100% - 32px));
+}
 .agent-dock__header {
-	display: flex; align-items: center; gap: 8px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
 	padding: 10px 12px;
 	border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
-.agent-dock__name { font-size: 13px; opacity: 0.7; flex: 1; }
-.agent-dock iframe { flex: 1; min-height: 0; }
-@media (max-width: 900px) { .agent-dock { display: none; } }  /* hide on mobile for now */
+.agent-dock__name {
+	font-size: 13px;
+	opacity: 0.7;
+	flex: 1;
+}
+.agent-dock iframe {
+	flex: 1;
+	min-height: 0;
+}
+@media (max-width: 900px) {
+	.agent-dock {
+		display: none;
+	}
+} /* hide on mobile for now */
 ```
 
 Push the main content left by `360px` when the dock is expanded (search the fork's main layout for `margin-right` / CSS variable control — follow the existing pattern).
@@ -258,6 +281,7 @@ Keep the change to under 25 lines. Do **not** change the `AgentAvatar` decay rat
 ## Files you own
 
 In the fork:
+
 - `src/features/AgentDock/index.tsx` (create)
 - `src/features/AgentDock/store.ts` (create)
 - `src/features/AgentDock/useChatStreamBridge.ts` (create)
@@ -267,6 +291,7 @@ In the fork:
 - `next.config.js` CSP (if edits required — flag if so)
 
 In this repo (optional, step 7 only):
+
 - [public/agent/embed.html](../../public/agent/embed.html) — tiny `?host=lobehub` branch. No other edits.
 
 ## Files off-limits

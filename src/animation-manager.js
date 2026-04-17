@@ -130,7 +130,9 @@ export class AnimationManager {
 		if (options.clipName) {
 			clip = animations.find((a) => a.name === options.clipName);
 			if (!clip) {
-				console.warn(`[AnimationManager] Clip "${options.clipName}" not found in ${url}, using first clip`);
+				console.warn(
+					`[AnimationManager] Clip "${options.clipName}" not found in ${url}, using first clip`,
+				);
 				clip = animations[0];
 			}
 		} else {

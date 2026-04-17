@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Animation tab — pick idle + gesture animations from Mixamo bundle"
+description: 'Animation tab — pick idle + gesture animations from Mixamo bundle'
 ---
 
 # Stack Layer 3: Animation Tab
@@ -16,6 +16,7 @@ Avatars ship with a skeleton but no default animations. We need a UI to pick: (1
 [src/animation-manager.js](src/animation-manager.js) already handles loading/blending. List available clips via `GET /api/animations/catalog` — reads from wherever fetch-animations puts them (`public/animations/` or similar).
 
 Catalog response:
+
 ```json
 [
   { "id": "idle-breathing", "name": "Breathing Idle", "tags": ["idle"], "durationMs": 3200, "previewGif": "/previews/idle-breathing.gif" },
@@ -42,8 +43,14 @@ Picker shows animation name + a looping preview. If GIF previews don't exist, re
 ### Persistence
 
 `avatars.animations` jsonb column:
+
 ```json
-{ "idle": "idle-breathing", "greet": "waving", "think": "thinking-scratch", "celebrate": "fist-pump" }
+{
+	"idle": "idle-breathing",
+	"greet": "waving",
+	"think": "thinking-scratch",
+	"celebrate": "fist-pump"
+}
 ```
 
 `PATCH /api/avatars/:id/animations` endpoint.

@@ -9,23 +9,23 @@ const RESIZE_DEBOUNCE_MS = 120;
 
 export default class PretextHero {
 	constructor(root, options = {}) {
-		this.root        = root;
-		this.content     = root?.querySelector('.hero-content')  || null;
-		this.title       = root?.querySelector('.hero-title')    || null;
-		this.subtitle    = root?.querySelector('.hero-subtitle') || null;
-		this.avatar      = root?.querySelector('.hero-avatar')   || null;
+		this.root = root;
+		this.content = root?.querySelector('.hero-content') || null;
+		this.title = root?.querySelector('.hero-title') || null;
+		this.subtitle = root?.querySelector('.hero-subtitle') || null;
+		this.avatar = root?.querySelector('.hero-avatar') || null;
 		this.modelViewer = this.avatar?.querySelector('model-viewer') || null;
 
-		this.flag    = String(options.flag ?? '1');
+		this.flag = String(options.flag ?? '1');
 		this.pretext = null;
 
-		this._gaze       = null;
-		this._dragon     = null;
-		this._overlay    = null;
-		this._onResize   = null;
-		this._resizeT    = null;
-		this._rafToken   = 0;
-		this._ctx        = null;
+		this._gaze = null;
+		this._dragon = null;
+		this._overlay = null;
+		this._onResize = null;
+		this._resizeT = null;
+		this._rafToken = 0;
+		this._ctx = null;
 	}
 
 	async init() {
@@ -118,7 +118,12 @@ export default class PretextHero {
 		this._ctx = ctx;
 
 		const { circleX, circleY, circleR } = this._avatarCircle(ctx);
-		const { lines, contentHeight } = this._layoutLinesAroundCircle(ctx, circleX, circleY, circleR);
+		const { lines, contentHeight } = this._layoutLinesAroundCircle(
+			ctx,
+			circleX,
+			circleY,
+			circleR,
+		);
 
 		const token = ++this._rafToken;
 		requestAnimationFrame(() => {
@@ -134,46 +139,55 @@ export default class PretextHero {
 	_computeLayoutContext() {
 		if (!this.content || !this.subtitle || !this.avatar || !this.pretext) return null;
 
-		const contentRect  = this.content.getBoundingClientRect();
+		const contentRect = this.content.getBoundingClientRect();
 		const subtitleRect = this.subtitle.getBoundingClientRect();
-		const avatarRect   = this.avatar.getBoundingClientRect();
+		const avatarRect = this.avatar.getBoundingClientRect();
 
-		const style      = getComputedStyle(this.subtitle);
-		const font       = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
-		const fontSize   = Number.parseFloat(style.fontSize);
-		const lhRaw      = style.lineHeight;
+		const style = getComputedStyle(this.subtitle);
+		const font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+		const fontSize = Number.parseFloat(style.fontSize);
+		const lhRaw = style.lineHeight;
 		const lineHeight = lhRaw === 'normal' ? fontSize * 1.5 : Number.parseFloat(lhRaw);
 
 		const overlayLeft = subtitleRect.left - contentRect.left;
-		const overlayTop  = subtitleRect.top  - contentRect.top;
+		const overlayTop = subtitleRect.top - contentRect.top;
 
 		// Dragon mode stretches .hero-content to full hero width, so use the
 		// content box as the outer bound and let the subtitle flow wider.
-		const heroRect        = this.root.getBoundingClientRect();
-		const rightmostPage   = this.root.classList.contains('hero--dragon')
+		const heroRect = this.root.getBoundingClientRect();
+		const rightmostPage = this.root.classList.contains('hero--dragon')
 			? heroRect.right - 32
 			: Math.max(avatarRect.right - 24, subtitleRect.right);
-		const overlayWidth    = Math.max(subtitleRect.width, rightmostPage - subtitleRect.left);
+		const overlayWidth = Math.max(subtitleRect.width, rightmostPage - subtitleRect.left);
 
-		const text     = this.subtitle.textContent ?? '';
+		const text = this.subtitle.textContent ?? '';
 		const prepared = this.pretext.prepareWithSegments(text, font);
 
 		const circleBaseR = (Math.min(avatarRect.width, avatarRect.height) / 2) * 0.92;
 
 		return {
-			font, lineHeight, prepared, text,
-			overlayLeft, overlayTop, overlayWidth,
-			subtitleRect, avatarRect, subtitleLeftPage: subtitleRect.left, subtitleTopPage: subtitleRect.top,
+			font,
+			lineHeight,
+			prepared,
+			text,
+			overlayLeft,
+			overlayTop,
+			overlayWidth,
+			subtitleRect,
+			avatarRect,
+			subtitleLeftPage: subtitleRect.left,
+			subtitleTopPage: subtitleRect.top,
 			circleBaseR,
-			hPad: 14, maxLines: 32,
+			hPad: 14,
+			maxLines: 32,
 		};
 	}
 
 	_avatarCircle(ctx) {
 		const r = ctx.avatarRect;
 		return {
-			circleX: (r.left + r.width  / 2) - ctx.subtitleLeftPage,
-			circleY: (r.top  + r.height / 2) - ctx.subtitleTopPage,
+			circleX: r.left + r.width / 2 - ctx.subtitleLeftPage,
+			circleY: r.top + r.height / 2 - ctx.subtitleTopPage,
 			circleR: ctx.circleBaseR,
 		};
 	}
@@ -186,8 +200,8 @@ export default class PretextHero {
 
 		while (lines.length < maxLines) {
 			const bandMid = lineTop + lineHeight / 2;
-			const dy      = bandMid - circleY;
-			const effR    = circleR + hPad;
+			const dy = bandMid - circleY;
+			const effR = circleR + hPad;
 
 			let slotWidth = overlayWidth;
 			if (Math.abs(dy) < effR) {
@@ -217,16 +231,16 @@ export default class PretextHero {
 	_paintLines(ctx, lines, contentHeight) {
 		if (!this._overlay) return;
 		const overlay = this._overlay;
-		overlay.style.left   = `${ctx.overlayLeft}px`;
-		overlay.style.top    = `${ctx.overlayTop}px`;
-		overlay.style.width  = `${ctx.overlayWidth}px`;
+		overlay.style.left = `${ctx.overlayLeft}px`;
+		overlay.style.top = `${ctx.overlayTop}px`;
+		overlay.style.width = `${ctx.overlayWidth}px`;
 		overlay.style.height = `${Math.max(contentHeight, ctx.subtitleRect.height)}px`;
 
 		const frag = document.createDocumentFragment();
 		for (const { y, text } of lines) {
 			const span = document.createElement('span');
 			span.className = 'hero-subtitle-pretext-line';
-			span.style.top  = `${y}px`;
+			span.style.top = `${y}px`;
 			span.textContent = text;
 			frag.appendChild(span);
 		}
@@ -245,7 +259,12 @@ export default class PretextHero {
 	paintCircle(circleX, circleY, circleR) {
 		if (!this._ctx || !this._overlay) return 0;
 		const t0 = performance.now();
-		const { lines, contentHeight } = this._layoutLinesAroundCircle(this._ctx, circleX, circleY, circleR);
+		const { lines, contentHeight } = this._layoutLinesAroundCircle(
+			this._ctx,
+			circleX,
+			circleY,
+			circleR,
+		);
 		this._paintLines(this._ctx, lines, contentHeight);
 		return performance.now() - t0;
 	}

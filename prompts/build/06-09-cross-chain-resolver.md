@@ -10,29 +10,29 @@ An agent identifier in the wild looks like `did:erc8004:<chainId>:<tokenId>` or 
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| [src/agent-resolver.js](../../src/agent-resolver.js) | Today's resolver. |
-| [src/erc8004/abi.js](../../src/erc8004/abi.js) | Address map per chain. |
-| [api/onchain/agent/[chainId]/[tokenId].js](../../api/onchain/agent/[chainId]/[tokenId].js) | Indexer read endpoint from 06-06. |
-| [src/manifest.js](../../src/manifest.js) | Manifest loader — adapt to chain-specific URIs. |
+| File                                                                                       | Why                                             |
+| :----------------------------------------------------------------------------------------- | :---------------------------------------------- |
+| [src/agent-resolver.js](../../src/agent-resolver.js)                                       | Today's resolver.                               |
+| [src/erc8004/abi.js](../../src/erc8004/abi.js)                                             | Address map per chain.                          |
+| [api/onchain/agent/[chainId]/[tokenId].js](../../api/onchain/agent/[chainId]/[tokenId].js) | Indexer read endpoint from 06-06.               |
+| [src/manifest.js](../../src/manifest.js)                                                   | Manifest loader — adapt to chain-specific URIs. |
 
 ## Build this
 
 1. Define the canonical agent ID format and document it in `specs/AGENT_ID.md` (single new file allowed for this prompt):
-   - Preferred: `did:erc8004:<chainId>:<tokenId>` (CAIP-style)
-   - Aliases accepted: `<chainName>:<tokenId>`, `<tokenId>@<chainName>`
-   - Names: `mainnet, sepolia, base, optimism, arbitrum, polygon, bnb, avalanche, fantom, gnosis, scroll, linea, blast, mode`
+    - Preferred: `did:erc8004:<chainId>:<tokenId>` (CAIP-style)
+    - Aliases accepted: `<chainName>:<tokenId>`, `<tokenId>@<chainName>`
+    - Names: `mainnet, sepolia, base, optimism, arbitrum, polygon, bnb, avalanche, fantom, gnosis, scroll, linea, blast, mode`
 2. Add `src/agent-id.js`:
-   ```js
-   export function parseAgentId(input)  // → { chainId, tokenId } | null
-   export function formatAgentId(chainId, tokenId)
-   export function chainNameToId(name)
-   ```
+    ```js
+    export function parseAgentId(input)  // → { chainId, tokenId } | null
+    export function formatAgentId(chainId, tokenId)
+    export function chainNameToId(name)
+    ```
 3. Extend [src/agent-resolver.js](../../src/agent-resolver.js):
-   - If input parses as a chain-qualified ID, hit `/api/onchain/agent/:chain/:token` first.
-   - On miss, fall back to live RPC read of `tokenURI(tokenId)` from IdentityRegistry on that chain.
-   - Cache hits in `sessionStorage` for 5 minutes.
+    - If input parses as a chain-qualified ID, hit `/api/onchain/agent/:chain/:token` first.
+    - On miss, fall back to live RPC read of `tokenURI(tokenId)` from IdentityRegistry on that chain.
+    - Cache hits in `sessionStorage` for 5 minutes.
 4. Update `<agent-3d agent-id="…">` to accept the qualified format.
 5. Bare numeric IDs (no chain) default to the production primary chain (configurable via env, default `1`).
 

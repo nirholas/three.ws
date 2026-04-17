@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Agent embeds cleanly inside a Claude.ai Artifact with the right iframe hints"
+description: 'Agent embeds cleanly inside a Claude.ai Artifact with the right iframe hints'
 ---
 
 # 05-01 · Embed in a Claude Artifact
@@ -23,14 +23,17 @@ The novel unlock of pillar 5. A Claude user pastes an agent URL into a chat → 
 ## Build this
 
 1. **Claude-friendly HTML snippet** — produce a canonical Artifact-ready snippet and display it on `/agent/:id` under Share → "Claude Artifact":
-   ```html
-   <iframe src="https://3dagent.vercel.app/agent/<ID>/embed?kiosk=1&bg=transparent"
-           width="100%" height="520"
-           style="border:0;border-radius:16px"
-           allow="autoplay; fullscreen"
-           referrerpolicy="no-referrer-when-downgrade">
-   </iframe>
-   ```
+    ```html
+    <iframe
+    	src="https://3dagent.vercel.app/agent/<ID>/embed?kiosk=1&bg=transparent"
+    	width="100%"
+    	height="520"
+    	style="border:0;border-radius:16px"
+    	allow="autoplay; fullscreen"
+    	referrerpolicy="no-referrer-when-downgrade"
+    >
+    </iframe>
+    ```
 2. **Static HTML fallback** — under the iframe, include a "No-iframe fallback" snippet (for hosts that strip iframes): a link + a static thumbnail image. Claude sometimes strips iframes; graceful degradation matters.
 3. **Dynamic resize** — Claude Artifacts can't observe `agent:resize` messages; size the iframe with a fixed aspect ratio fallback. Use a `padding-top: 100%` CSS trick wrapper for square.
 4. **Test in a real Claude conversation** — paste the snippet, confirm rendering, record browser console errors if any. If CSP blocks something, narrow the permissions rather than widening.

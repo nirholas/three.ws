@@ -10,21 +10,21 @@ When users share their agent, they want it to be discoverable by others. A `/gal
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| [public/dashboard/dashboard.js](../../public/dashboard/dashboard.js) | Native-DOM rendering pattern; copy. |
-| [api/agents.js](../../api/agents.js) | List endpoint — needs a public scope. |
-| [src/agent-resolver.js](../../src/agent-resolver.js) | Resolution helpers. |
-| [api/onchain/agent/[chainId]/[tokenId].js](../../api/onchain/agent/[chainId]/[tokenId].js) | Reputation join. |
+| File                                                                                       | Why                                   |
+| :----------------------------------------------------------------------------------------- | :------------------------------------ |
+| [public/dashboard/dashboard.js](../../public/dashboard/dashboard.js)                       | Native-DOM rendering pattern; copy.   |
+| [api/agents.js](../../api/agents.js)                                                       | List endpoint — needs a public scope. |
+| [src/agent-resolver.js](../../src/agent-resolver.js)                                       | Resolution helpers.                   |
+| [api/onchain/agent/[chainId]/[tokenId].js](../../api/onchain/agent/[chainId]/[tokenId].js) | Reputation join.                      |
 
 ## Build this
 
 1. Add `GET /api/agents/public` — returns paginated list of agents where `visibility = 'public'`. Response: `{ agents: [{ id, name, thumbnail_url, description, owner_handle, reputation? }], next_cursor }`. Cursor-based pagination, 24 per page.
 2. Create `public/gallery/index.html` and `public/gallery/gallery.js`. Three-column responsive grid (single column < 600px). Each card:
-   - Square thumbnail (CDN-cached).
-   - Name + truncated description.
-   - Reputation stars if on-chain.
-   - Click → `/agent/<id>`.
+    - Square thumbnail (CDN-cached).
+    - Name + truncated description.
+    - Reputation stars if on-chain.
+    - Click → `/agent/<id>`.
 3. Filters: search box (debounced 250ms, server-side ILIKE), tag chips (skill-based: `chat`, `art`, `gaming`, `coach`).
 4. Add `/gallery` route to [vercel.json](../../vercel.json).
 5. Add a "Make public" toggle to dashboard agent settings (re-uses 03-03 metadata flow).

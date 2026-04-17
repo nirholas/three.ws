@@ -9,15 +9,15 @@ This runs in parallel with 01–06. It's verification + targeted polish, not new
 ## Shared context
 
 - `/w/:id` is served by [api/widgets/page.js](../../api/widgets/page.js) (read it). It should render a full HTML shell with:
-  - `<title>` and `<meta name="description">` from `widget.name` / description
-  - `og:image` → `/api/widgets/:id/og`
-  - `og:url` → canonical `/w/:id`
-  - `twitter:card`, `twitter:image`
-  - `<link rel="alternate" type="application/json+oembed" href="/api/widgets/oembed?url=<encoded>">`
-  - An `<iframe>` or direct `<agent-3d>` that renders the avatar
+    - `<title>` and `<meta name="description">` from `widget.name` / description
+    - `og:image` → `/api/widgets/:id/og`
+    - `og:url` → canonical `/w/:id`
+    - `twitter:card`, `twitter:image`
+    - `<link rel="alternate" type="application/json+oembed" href="/api/widgets/oembed?url=<encoded>">`
+    - An `<iframe>` or direct `<agent-3d>` that renders the avatar
 - [api/widgets/og.js](../../api/widgets/og.js) generates the preview image. Read it and determine:
-  - Does it 302 to the avatar's `thumbnail_url` when one exists?
-  - Does it generate a fallback SVG/PNG when there's no thumbnail? (New avatars from this flow won't have a thumbnail until we build thumbnail generation — out of scope here.)
+    - Does it 302 to the avatar's `thumbnail_url` when one exists?
+    - Does it generate a fallback SVG/PNG when there's no thumbnail? (New avatars from this flow won't have a thumbnail until we build thumbnail generation — out of scope here.)
 - [api/widgets/oembed.js](../../api/widgets/oembed.js) — verify it returns `type: 'rich'`, `html: '<iframe …>'`, `provider_name`, `thumbnail_url`, `width`/`height`.
 
 ## What to build
@@ -35,10 +35,10 @@ Read and record in your reporting block:
 For widgets with no avatar thumbnail:
 
 - Render a server-side SVG (served as `image/svg+xml`) with:
-  - Dark background `#0b0d10`.
-  - Widget name in large text (truncate at ~40 chars).
-  - A small `◎` glyph (match the `3D Agent` brand — same glyph used in the Widget Studio type-picker).
-  - Dimensions `1200x630` (Open Graph sweet spot).
+    - Dark background `#0b0d10`.
+    - Widget name in large text (truncate at ~40 chars).
+    - A small `◎` glyph (match the `3D Agent` brand — same glyph used in the Widget Studio type-picker).
+    - Dimensions `1200x630` (Open Graph sweet spot).
 - Slack, Discord, X, and iMessage accept SVG for OG. WordPress sometimes strips SVG — acceptable trade-off; note it.
 - Cache header: `public, max-age=3600, s-maxage=86400`.
 - Do NOT add any image-processing dependency. No `sharp`, no canvas.
@@ -51,19 +51,19 @@ Verify the oEmbed endpoint returns, at minimum:
 
 ```json
 {
-  "type": "rich",
-  "version": "1.0",
-  "provider_name": "3D Agent",
-  "provider_url": "https://3dagent.vercel.app",
-  "title": "<widget.name>",
-  "html": "<iframe src=\"https://3dagent.vercel.app/w/<id>\" width=\"600\" height=\"600\" frameborder=\"0\" allow=\"autoplay; fullscreen\" allowfullscreen></iframe>",
-  "width": 600,
-  "height": 600,
-  "thumbnail_url": "https://3dagent.vercel.app/api/widgets/<id>/og",
-  "thumbnail_width": 1200,
-  "thumbnail_height": 630,
-  "author_name": "<widget owner display name or empty>",
-  "cache_age": 900
+	"type": "rich",
+	"version": "1.0",
+	"provider_name": "3D Agent",
+	"provider_url": "https://3dagent.vercel.app",
+	"title": "<widget.name>",
+	"html": "<iframe src=\"https://3dagent.vercel.app/w/<id>\" width=\"600\" height=\"600\" frameborder=\"0\" allow=\"autoplay; fullscreen\" allowfullscreen></iframe>",
+	"width": 600,
+	"height": 600,
+	"thumbnail_url": "https://3dagent.vercel.app/api/widgets/<id>/og",
+	"thumbnail_width": 1200,
+	"thumbnail_height": 630,
+	"author_name": "<widget owner display name or empty>",
+	"cache_age": 900
 }
 ```
 
@@ -101,10 +101,10 @@ The drop-edit-embed flow defaults to `is_public: true` (task 02), so this is a s
 
 - Publish a new widget via tasks 01–05 flow → copy `/w/<id>`.
 - Paste in Slack, Discord, and X DMs (use real accounts or the bot-test tools below) → all three unfurl with a thumbnail + title.
-  - Slack debug: https://api.slack.com/reflection/tools/link-checker (or paste into a private channel)
-  - X debug: https://cards-dev.twitter.com/validator (deprecated but still works for some)
-  - Discord: just paste it; expect the same unfurl.
-  - Facebook sharing debugger: https://developers.facebook.com/tools/debug/ (also checks OG).
+    - Slack debug: https://api.slack.com/reflection/tools/link-checker (or paste into a private channel)
+    - X debug: https://cards-dev.twitter.com/validator (deprecated but still works for some)
+    - Discord: just paste it; expect the same unfurl.
+    - Facebook sharing debugger: https://developers.facebook.com/tools/debug/ (also checks OG).
 - Paste in Notion → auto-embeds as iframe via oEmbed.
 - `curl -s https://<host>/api/widgets/oembed?url=https://<host>/w/<id>` returns the JSON above.
 - `curl -sI https://<host>/api/widgets/<id>/og` returns 200 with an `image/*` content-type.

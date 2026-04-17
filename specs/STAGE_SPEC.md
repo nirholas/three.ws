@@ -13,9 +13,9 @@ A single-child stage is valid; a zero-child stage is valid (empty room). Stages 
 
 ## Attributes
 
-| Attribute | Values | Default | Notes |
-|---|---|---|---|
-| `formation` | `row` \| `circle` \| `freeform` | `row` | Arrangement of children in 3D + screen-space sub-rects. |
+| Attribute   | Values                          | Default | Notes                                                   |
+| ----------- | ------------------------------- | ------- | ------------------------------------------------------- |
+| `formation` | `row` \| `circle` \| `freeform` | `row`   | Arrangement of children in 3D + screen-space sub-rects. |
 
 Additional scene attributes (`environment`, `camera-controls`, `shadows`, …) mirror `<agent-3d>` and may be added in a later version.
 
@@ -35,11 +35,11 @@ An `<agent-3d>` outside any `<agent-stage>` falls back to solo mode and behaves 
 
 ## Formations
 
-| Value | 3D layout | DOM sub-rect layout |
-|---|---|---|
-| `row` | evenly spaced along the X axis (`spacing = 1.1m`) | vertical slices, equal width |
-| `circle` | evenly spaced around the Y axis on a radius scaled by agent count | vertical slices, equal width |
-| `freeform` | all groups at origin — caller positions via JS | each child fills the stage |
+| Value      | 3D layout                                                         | DOM sub-rect layout          |
+| ---------- | ----------------------------------------------------------------- | ---------------------------- |
+| `row`      | evenly spaced along the X axis (`spacing = 1.1m`)                 | vertical slices, equal width |
+| `circle`   | evenly spaced around the Y axis on a radius scaled by agent count | vertical slices, equal width |
+| `freeform` | all groups at origin — caller positions via JS                    | each child fills the stage   |
 
 The `row` and `circle` values are sufficient for most meeting-style layouts. A `grid` value may be added if 6+ agent scenes become common — propose it with a demo.
 
@@ -48,12 +48,12 @@ The `row` and `circle` values are sufficient for most meeting-style layouts. A `
 ```ts
 interface AgentStageElement extends HTMLElement {
 	formation: 'row' | 'circle' | 'freeform';
-	viewer: Viewer;                                 // the shared three.js Viewer
+	viewer: Viewer; // the shared three.js Viewer
 	addAgent(manifest: object): Promise<HTMLElement>;
 	removeAgent(agentId: string): void;
-	getAgents(): Array<{ agentId, name, position: [x,y,z], element }>;
-	broadcast(fromId: string, event: unknown): void;  // fires 'stage:message' on siblings
-	routeMessage(fromId, toId, text): Promise<{ ok, reply?, error? }>;
+	getAgents(): Array<{ agentId; name; position: [x, y, z]; element }>;
+	broadcast(fromId: string, event: unknown): void; // fires 'stage:message' on siblings
+	routeMessage(fromId, toId, text): Promise<{ ok; reply?; error? }>;
 }
 ```
 
@@ -63,11 +63,11 @@ interface AgentStageElement extends HTMLElement {
 
 All events bubble and are `composed: true`.
 
-| Type | Detail | Fired on |
-|---|---|---|
-| `stage:agent-joined` | `{ agentId, element, manifest }` | stage |
-| `stage:agent-left` | `{ agentId, element }` | stage |
-| `stage:message` | `{ from, event }` | stage (and each non-sender child when using `broadcast`) |
+| Type                 | Detail                           | Fired on                                                 |
+| -------------------- | -------------------------------- | -------------------------------------------------------- |
+| `stage:agent-joined` | `{ agentId, element, manifest }` | stage                                                    |
+| `stage:agent-left`   | `{ agentId, element }`           | stage                                                    |
+| `stage:message`      | `{ from, event }`                | stage (and each non-sender child when using `broadcast`) |
 
 `broadcast(fromId, event)` fires `stage:message` on every `<agent-3d>` except the sender, and once on the stage itself. The payload is opaque — the message protocol is whatever the agents in the stage agree on.
 
@@ -76,9 +76,11 @@ All events bubble and are `composed: true`.
 When a `Runtime` is attached to a stage, two extra tools are appended to its tool list automatically. They are not present in solo mode.
 
 ### `observe_agents`
+
 Returns `{ ok: true, agents: [{ agentId, name, position }] }` listing every other agent on the stage (the caller is excluded).
 
 ### `say_to_agent(agentId, text)`
+
 Routes `text` into the target agent's runtime as a user turn formatted `[from <callerId>] <text>`. Also fires a `stage:message` broadcast with `{ kind: 'direct', to: agentId, text }` so spectators can observe the exchange.
 
 Returns `{ ok: true, reply }` where `reply` is the target's final text, or `{ ok: false, error }` on a bad id.

@@ -12,11 +12,11 @@ Extend the `ready` outbound message from the agent iframe to carry the full iden
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| `src/lib/embed-bridge.js` (from 05-04) | `ready` envelope lives here. |
-| [api/agents.js](../../api/agents.js) `decorate()` | Fields available for public consumers. |
-| `specs/EMBED_POSTMESSAGE.md` (from 05-04) | Where to document the extended `ready`. |
+| File                                              | Why                                     |
+| :------------------------------------------------ | :-------------------------------------- |
+| `src/lib/embed-bridge.js` (from 05-04)            | `ready` envelope lives here.            |
+| [api/agents.js](../../api/agents.js) `decorate()` | Fields available for public consumers.  |
+| `specs/EMBED_POSTMESSAGE.md` (from 05-04)         | Where to document the extended `ready`. |
 
 ## Build this
 
@@ -60,6 +60,7 @@ Update the three host UIs:
 ### 5. Privacy defaults
 
 Do NOT send:
+
 - `user_id` (owner)
 - `email`
 - Internal skill URLs (just the short names).
@@ -76,6 +77,7 @@ Any host-facing URL must be the public `home_url`, not an authenticated dashboar
 ## Deliverables
 
 **Modified:**
+
 - `src/lib/embed-bridge.js` — extended `ready` payload.
 - `public/agent/embed.html` — emit extended `ready`.
 - `api/agents/[id]/artifact.js` (05-01) — emit extended `ready`.

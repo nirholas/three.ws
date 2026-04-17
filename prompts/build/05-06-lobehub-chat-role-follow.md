@@ -4,28 +4,28 @@
 
 ## Why it matters
 
-In a Lobehub chat, there are two speakers: user and assistant. A present agent should *look like* it's listening when the user types, and *speak* (animate) when the assistant replies. This is the sub-second cue that sells "present" over "rendered."
+In a Lobehub chat, there are two speakers: user and assistant. A present agent should _look like_ it's listening when the user types, and _speak_ (animate) when the assistant replies. This is the sub-second cue that sells "present" over "rendered."
 
 ## What to build
 
 Tap into Lobehub's chat lifecycle events (which the fork already emits) and translate them to agent bus events:
 
-| Lobehub event | Agent effect |
-|:---|:---|
-| User starts typing | `emote:patience + look-at:user` |
-| User sends message | `emote:curiosity` brief pulse |
-| Assistant begins streaming | `gesture:speak-start` (subtle mouth pre-shape) |
-| Assistant token arrives | continuous `emote:sentiment` from `05-05` scoring of the partial |
-| Assistant finishes | `gesture:speak-end` (return to neutral gaze) |
-| Error / rate limit | `emote:concern + look-at:user` |
+| Lobehub event              | Agent effect                                                     |
+| :------------------------- | :--------------------------------------------------------------- |
+| User starts typing         | `emote:patience + look-at:user`                                  |
+| User sends message         | `emote:curiosity` brief pulse                                    |
+| Assistant begins streaming | `gesture:speak-start` (subtle mouth pre-shape)                   |
+| Assistant token arrives    | continuous `emote:sentiment` from `05-05` scoring of the partial |
+| Assistant finishes         | `gesture:speak-end` (return to neutral gaze)                     |
+| Error / rate limit         | `emote:concern + look-at:user`                                   |
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| `api/agents/[id]/lobe-ui.js` (from 05-03) | The iframe that runs inside Lobehub. |
-| `src/lib/embed-bridge.js` (from 05-04) | Bridge API. |
-| `src/lib/sentiment-heuristic.js` (from 05-05) | Score function. |
+| File                                               | Why                                                                                                                                                                                                                                           |
+| :------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `api/agents/[id]/lobe-ui.js` (from 05-03)          | The iframe that runs inside Lobehub.                                                                                                                                                                                                          |
+| `src/lib/embed-bridge.js` (from 05-04)             | Bridge API.                                                                                                                                                                                                                                   |
+| `src/lib/sentiment-heuristic.js` (from 05-05)      | Score function.                                                                                                                                                                                                                               |
 | User's Lobehub fork — `/chat` UI or plugin runtime | What `postMessage` events Lobehub actually emits into plugin UIs. **Grep the fork first**; do not assume an API. If the fork doesn't emit these, add the minimum bridge hook in the fork (separate PR against the fork) and document it here. |
 
 ## Build this
@@ -64,9 +64,11 @@ When idle (no chat activity for 5s), gently look back to the camera and settle t
 ## Deliverables
 
 **New:**
+
 - If the fork needs a patch: `lobehub-patch.md` in this repo documenting the diff to apply in the Lobehub fork (separate checkout).
 
 **Modified:**
+
 - `api/agents/[id]/lobe-ui.js` — full listener + role follow behavior.
 
 ## Acceptance

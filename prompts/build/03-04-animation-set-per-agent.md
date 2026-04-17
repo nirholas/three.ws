@@ -2,14 +2,14 @@
 
 ## Why it matters
 
-The Empathy Layer (idle, wave, nod, shake, think) is the difference between a static model and an embodied agent. Today the Mixamo bundle is global and ad-hoc. Each agent needs a *chosen, persisted* animation set so the avatar reads the same across the agent page, embeds, and host integrations (Layers 4–5).
+The Empathy Layer (idle, wave, nod, shake, think) is the difference between a static model and an embodied agent. Today the Mixamo bundle is global and ad-hoc. Each agent needs a _chosen, persisted_ animation set so the avatar reads the same across the agent page, embeds, and host integrations (Layers 4–5).
 
 ## Context
 
 - Animation manager: [src/animation-manager.js](../../src/animation-manager.js).
 - Fetch script: `npm run fetch-animations` (Mixamo bundle in [public/animations/](../../public/animations/)).
 - Manifest spec: [specs/AGENT_MANIFEST.md](../../specs/AGENT_MANIFEST.md).
-- Per-agent record: `agents` table in [api/_lib/schema.sql](../../api/_lib/schema.sql).
+- Per-agent record: `agents` table in [api/\_lib/schema.sql](../../api/_lib/schema.sql).
 
 ## What to build
 

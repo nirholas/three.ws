@@ -15,13 +15,13 @@ Public agent pages are the only surface we expose to search. Without structured 
 ### Dynamic sitemap — `api/sitemap.xml.js`
 
 - `GET` → `application/xml`. Streams from `agents where visibility = 'public' and deleted_at is null` ordered by `updated_at desc`. One `<url>` per agent:
-  ```xml
-  <url>
-    <loc>https://3dagent.vercel.app/a/{id}</loc>
-    <lastmod>{updated_at iso}</lastmod>
-    <changefreq>weekly</changefreq>
-  </url>
-  ```
+    ```xml
+    <url>
+      <loc>https://3dagent.vercel.app/a/{id}</loc>
+      <lastmod>{updated_at iso}</lastmod>
+      <changefreq>weekly</changefreq>
+    </url>
+    ```
 - Add the landing page, `/features`, `/docs-widgets`, and the top-level `/` explicitly.
 - Cache: `public, max-age=3600`.
 - Update [public/robots.txt](../../public/robots.txt) to point at the dynamic path: `Sitemap: https://3dagent.vercel.app/sitemap.xml`. Wire `/sitemap.xml` in [vercel.json](../../vercel.json) to the serverless function.
@@ -32,13 +32,13 @@ Inject a `<script type="application/ld+json">` block into [public/agent/index.ht
 
 ```json
 {
-  "@context": "https://schema.org",
-  "@type": "Person",
-  "name": "<agent name>",
-  "image": "<og-image url>",
-  "url": "https://3dagent.vercel.app/a/<id>",
-  "identifier": "<agentId>",
-  "sameAs": ["<erc8004 explorer url if onchain>"]
+	"@context": "https://schema.org",
+	"@type": "Person",
+	"name": "<agent name>",
+	"image": "<og-image url>",
+	"url": "https://3dagent.vercel.app/a/<id>",
+	"identifier": "<agentId>",
+	"sameAs": ["<erc8004 explorer url if onchain>"]
 }
 ```
 

@@ -10,7 +10,11 @@
  */
 
 import { connectWallet } from './erc8004/agent-registry.js';
-import { getLatestValidation, recordValidation, hashReport } from './erc8004/validation-recorder.js';
+import {
+	getLatestValidation,
+	recordValidation,
+	hashReport,
+} from './erc8004/validation-recorder.js';
 
 export class ValidationDashboard {
 	constructor(root, els) {
@@ -121,9 +125,7 @@ export class ValidationDashboard {
 		this.els.emptyState.style.display = 'none';
 		const recordArray = Array.isArray(records) ? records : [records];
 
-		this.els.recordsContainer.innerHTML = recordArray
-			.map((r) => this.renderRecord(r))
-			.join('');
+		this.els.recordsContainer.innerHTML = recordArray.map((r) => this.renderRecord(r)).join('');
 	}
 
 	renderRecord(record) {

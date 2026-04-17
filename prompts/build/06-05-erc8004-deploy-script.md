@@ -11,23 +11,23 @@ Today contract addresses are hand-pasted into [src/erc8004/abi.js](../../src/erc
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| [contracts/](../../contracts/) | Foundry project layout. |
-| [contracts/script/](../../contracts/script/) | Existing deploy scripts — match style. |
-| [src/erc8004/abi.js](../../src/erc8004/abi.js) | Hardcoded ABIs + `REGISTRY_DEPLOYMENTS` address map — output target. |
-| [contracts/CLAUDE.md](../../contracts/CLAUDE.md) | Existing deploy notes. |
+| File                                             | Why                                                                  |
+| :----------------------------------------------- | :------------------------------------------------------------------- |
+| [contracts/](../../contracts/)                   | Foundry project layout.                                              |
+| [contracts/script/](../../contracts/script/)     | Existing deploy scripts — match style.                               |
+| [src/erc8004/abi.js](../../src/erc8004/abi.js)   | Hardcoded ABIs + `REGISTRY_DEPLOYMENTS` address map — output target. |
+| [contracts/CLAUDE.md](../../contracts/CLAUDE.md) | Existing deploy notes.                                               |
 
 ## Build this
 
 1. Add `contracts/script/DeployAll.s.sol` — deploys IdentityRegistry, ReputationRegistry, ValidationRegistry deterministically (CREATE2 with the existing salt). Fail loudly if any address differs from the expected deterministic address.
 2. Add `scripts/deploy-erc8004.mjs` — Node wrapper that:
-   - Reads target chain ID from CLI arg.
-   - Reads `DEPLOYER_PK` and `RPC_URL_<CHAIN>` from env.
-   - Runs `forge script DeployAll --broadcast`.
-   - Parses the broadcast JSON for the three deployed addresses.
-   - Updates `REGISTRY_DEPLOYMENTS` in [src/erc8004/abi.js](../../src/erc8004/abi.js) using a string-replace (don't rewrite the whole file).
-   - Verifies on Etherscan via `forge verify-contract` if `ETHERSCAN_API_KEY_<CHAIN>` is set.
+    - Reads target chain ID from CLI arg.
+    - Reads `DEPLOYER_PK` and `RPC_URL_<CHAIN>` from env.
+    - Runs `forge script DeployAll --broadcast`.
+    - Parses the broadcast JSON for the three deployed addresses.
+    - Updates `REGISTRY_DEPLOYMENTS` in [src/erc8004/abi.js](../../src/erc8004/abi.js) using a string-replace (don't rewrite the whole file).
+    - Verifies on Etherscan via `forge verify-contract` if `ETHERSCAN_API_KEY_<CHAIN>` is set.
 3. Add `scripts/sync-erc8004-abi.mjs` — reads `contracts/out/*.sol/*.json`, extracts the ABI, regenerates the human-readable ethers v6 array in [src/erc8004/abi.js](../../src/erc8004/abi.js). Idempotent.
 4. Add npm scripts: `deploy:erc8004 -- <chainId>`, `sync:erc8004-abi`.
 5. Document `RPC_URL_*`, `DEPLOYER_PK`, `ETHERSCAN_API_KEY_*` in `.env.example`.

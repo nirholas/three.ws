@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Upgrade the chat agent from pattern matching to real AI with LLM backend"
+description: 'Upgrade the chat agent from pattern matching to real AI with LLM backend'
 ---
 
 # AI-Powered Chat Agent
@@ -23,10 +23,10 @@ Response: { "reply": "string", "actions": [] }
 
 - Use OpenAI API (or compatible: Anthropic, Groq, local Ollama)
 - System prompt includes:
-  - 3D Agent capabilities and feature knowledge
-  - Current loaded model info (name, stats, validation results)
-  - Available actions the agent can trigger in the viewer
-  - glTF format expertise for answering technical questions
+    - 3D Agent capabilities and feature knowledge
+    - Current loaded model info (name, stats, validation results)
+    - Available actions the agent can trigger in the viewer
+    - glTF format expertise for answering technical questions
 
 ### 2. Tool Use / Function Calling
 
@@ -34,16 +34,17 @@ The LLM can return structured actions that the frontend executes:
 
 ```json
 {
-    "reply": "I've enabled wireframe mode and set the background to dark blue.",
-    "actions": [
-        { "type": "setWireframe", "value": true },
-        { "type": "setBgColor", "value": "#001133" },
-        { "type": "setAutoRotate", "value": true }
-    ]
+	"reply": "I've enabled wireframe mode and set the background to dark blue.",
+	"actions": [
+		{ "type": "setWireframe", "value": true },
+		{ "type": "setBgColor", "value": "#001133" },
+		{ "type": "setAutoRotate", "value": true }
+	]
 }
 ```
 
 Supported actions:
+
 - `setWireframe`, `setSkeleton`, `setGrid` — display toggles
 - `setBgColor`, `setTransparentBg` — background controls
 - `setEnvironment` — change lighting environment
@@ -56,17 +57,18 @@ Supported actions:
 ### 3. Context-Aware Responses
 
 Pass model context to the LLM:
+
 ```js
 const context = {
-    modelName: viewer.content?.name,
-    vertices: viewer.modelInfo?.vertices,
-    triangles: viewer.modelInfo?.triangles,
-    materials: viewer.modelInfo?.materials,
-    animations: viewer.clips?.length,
-    validationErrors: validator.report?.errors?.length,
-    validationWarnings: validator.report?.warnings?.length,
-    currentEnvironment: viewer.state.environment,
-    currentSettings: { wireframe, skeleton, grid, autoRotate, bgColor }
+	modelName: viewer.content?.name,
+	vertices: viewer.modelInfo?.vertices,
+	triangles: viewer.modelInfo?.triangles,
+	materials: viewer.modelInfo?.materials,
+	animations: viewer.clips?.length,
+	validationErrors: validator.report?.errors?.length,
+	validationWarnings: validator.report?.warnings?.length,
+	currentEnvironment: viewer.state.environment,
+	currentSettings: { wireframe, skeleton, grid, autoRotate, bgColor },
 };
 ```
 
@@ -79,6 +81,7 @@ const context = {
 ### 5. Frontend Updates
 
 Update `src/avaturn-agent.js`:
+
 - Replace pattern matching with API calls to `/api/chat`
 - Keep speech synthesis/recognition as optional interface
 - Add typing indicator during API calls
@@ -88,6 +91,7 @@ Update `src/avaturn-agent.js`:
 ### 6. Streaming Responses
 
 For better UX, stream LLM responses:
+
 - Use SSE or ReadableStream from the API
 - Display tokens as they arrive
 - Execute actions after full response is received

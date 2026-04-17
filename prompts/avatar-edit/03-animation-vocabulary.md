@@ -50,6 +50,7 @@ Missing slots fall back to a default map defined in code.
 In `src/runtime/tools.js`, when a tool says `play_clip('wave')`, look up the agent's mapping and pass the actual clip name to `viewer.animationManager.play(clipName)`.
 
 In `src/agent-avatar.js`, the Empathy Layer already fires one-shot gestures on high emotion events. Route those through the same mapping:
+
 - celebration > 0.6 → `play('celebrate')`
 - concern > 0.6 → `play('concern')`
 - curiosity > 0.6 + idle → small `play('think')`

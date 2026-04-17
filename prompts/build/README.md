@@ -9,7 +9,7 @@ Prompts in this directory are scoped to the product priority stack. If a prompt 
 3. **Edit avatar** — swap, regenerate, tweak without destroying identity. `03-*`.
 4. **View & embed** — agent page polish and iframe/oEmbed so the avatar can be shared. `04-*`.
 5. **Host embed** — avatar lives inside Claude.ai Artifacts and Lobehub chat (user has a Lobehub fork — primary integration target). `05-*`.
-6. **Onchain portability** — the agent is pulled *from chain* into any host. The novel unlock. `06-*`.
+6. **Onchain portability** — the agent is pulled _from chain_ into any host. The novel unlock. `06-*`.
 
 ## Prompt file format
 
@@ -37,9 +37,11 @@ Within a pillar, suffix numbers indicate sequence: `02-01-*` before `02-02-*`.
 ## Prompts
 
 **Stack-wide**
+
 - [00-stack-e2e-smoke.md](./00-stack-e2e-smoke.md) — end-to-end smoke script
 
 **Pillar 1 — Wallet auth**
+
 - [01-01-wallet-auth-smoke-test.md](./01-01-wallet-auth-smoke-test.md) — e2e verification of SIWE login
 - [01-01-wallet-auth-privy.md](./01-01-wallet-auth-privy.md) — Privy fallback provider
 - [01-01-wallet-link-existing-account.md](./01-01-wallet-link-existing-account.md) — link without new account
@@ -55,6 +57,7 @@ Within a pillar, suffix numbers indicate sequence: `02-01-*` before `02-02-*`.
 - [01-04-wallet-chain-switch.md](./01-04-wallet-chain-switch.md) — chain switching prompt UX
 
 **Pillar 2 — Selfie → agent**
+
 - [02-01-selfie-capture-ui.md](./02-01-selfie-capture-ui.md) — camera capture page
 - [02-02-selfie-upload-r2.md](./02-02-selfie-upload-r2.md) — presign + PUT to R2
 - [02-02-image-to-3d-backend.md](./02-02-image-to-3d-backend.md) — backend pipeline scaffolding
@@ -68,6 +71,7 @@ Within a pillar, suffix numbers indicate sequence: `02-01-*` before `02-02-*`.
 - [02-06-no-wallet-guest-creation.md](./02-06-no-wallet-guest-creation.md) — guest path (no wallet required)
 
 **Pillar 3 — Edit avatar**
+
 - [03-01-avatar-swap.md](./03-01-avatar-swap.md) — swap GLB on existing agent
 - [03-01-dashboard-edit-tab.md](./03-01-dashboard-edit-tab.md) — edit tab on dashboard
 - [03-01-regenerate-from-new-selfie.md](./03-01-regenerate-from-new-selfie.md) — retake + regenerate
@@ -81,6 +85,7 @@ Within a pillar, suffix numbers indicate sequence: `02-01-*` before `02-02-*`.
 - [03-05-memory-review-and-edit.md](./03-05-memory-review-and-edit.md) — inspect and edit memories
 
 **Pillar 4 — View & embed**
+
 - [04-01-agent-public-page-polish.md](./04-01-agent-public-page-polish.md) — mobile-first polish
 - [04-01-agent-page-polish.md](./04-01-agent-page-polish.md) — desktop-side polish
 - [04-01-agent-og-image.md](./04-01-agent-og-image.md) — dedicated OG endpoint
@@ -92,6 +97,7 @@ Within a pillar, suffix numbers indicate sequence: `02-01-*` before `02-02-*`.
 - [04-04-agent-card-json.md](./04-04-agent-card-json.md) — A2A discovery card
 
 **Pillar 5 — Host embed**
+
 - [05-01-claude-artifact-embed.md](./05-01-claude-artifact-embed.md) — Claude iframe snippet
 - [05-01-claude-artifact-build.md](./05-01-claude-artifact-build.md) — artifact builder tooling
 - [05-01-claude-artifact-export.md](./05-01-claude-artifact-export.md) — export-as-artifact flow
@@ -105,6 +111,7 @@ Within a pillar, suffix numbers indicate sequence: `02-01-*` before `02-02-*`.
 - [05-05-host-resize-and-mode.md](./05-05-host-resize-and-mode.md) — auto-resize + kiosk modes
 
 **Pillar 6 — Onchain portability**
+
 - [06-01-erc8004-mint-from-ui.md](./06-01-erc8004-mint-from-ui.md) — mint wizard
 - [06-02-pin-card-to-ipfs.md](./06-02-pin-card-to-ipfs.md) — pin card, store CID
 - [06-03-resolve-agent-from-chain.md](./06-03-resolve-agent-from-chain.md) — chain → body resolver

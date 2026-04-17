@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Post-generation landing page so a new user immediately sees their 3D self"
+description: 'Post-generation landing page so a new user immediately sees their 3D self'
 ---
 
 # 02-04 · First-agent landing
@@ -26,15 +26,15 @@ After 02-03 redirects to `/agent/:id`, the page must feel like an arrival — "t
 2. **Celebrate via the Empathy Layer** — on load with `?welcome=1`, emit a `celebration` pulse through the agent protocol so the avatar smiles + leans forward. Use the existing scoring in [src/agent-avatar.js](../../src/agent-avatar.js) — fire an action with high celebration valence; do not invent a new state.
 3. **Name the agent** — if the agent's `name` is the default `'Agent'`, show an inline "Name your agent" input that saves via `PUT /api/agents/:id`. No modal.
 4. **Next steps strip** — three cards below the viewer:
-   - "Edit your look" → `/agent/:id/edit` (03-*)
-   - "Share your agent" → opens the existing share panel
-   - "Make it onchain" → `/agent/:id/register` (06-*) — disabled state + tooltip "Coming soon" if registration isn't wired yet.
+    - "Edit your look" → `/agent/:id/edit` (03-\*)
+    - "Share your agent" → opens the existing share panel
+    - "Make it onchain" → `/agent/:id/register` (06-\*) — disabled state + tooltip "Coming soon" if registration isn't wired yet.
 5. **Clean state after welcome** — once the user names the agent or dismisses the overlay, replace the URL with `history.replaceState` to drop `?welcome=1` so a refresh doesn't re-celebrate.
 
 ## Out of scope
 
-- Building the edit page (03-*).
-- Any onchain registration (06-*).
+- Building the edit page (03-\*).
+- Any onchain registration (06-\*).
 - Redesigning the existing share panel.
 - Adding a tutorial walkthrough.
 

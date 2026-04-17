@@ -46,7 +46,10 @@ export class Web3StoragePinner {
 			}).then(async (r) => {
 				if (!r.ok) {
 					const body = await r.text().catch(() => '');
-					throw statusError(r.status, `web3.storage upload failed (${r.status}): ${body}`);
+					throw statusError(
+						r.status,
+						`web3.storage upload failed (${r.status}): ${body}`,
+					);
 				}
 				return r;
 			}),

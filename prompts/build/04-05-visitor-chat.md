@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Visitors on /agent/:id can chat with the agent — text in, animated voice + text out"
+description: 'Visitors on /agent/:id can chat with the agent — text in, animated voice + text out'
 ---
 
 # 04-05 · Visitor chat on /agent/:id

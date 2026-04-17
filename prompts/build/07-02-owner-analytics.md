@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Owner analytics: views, chat msgs, embed loads per agent — shown on the dashboard"
+description: 'Owner analytics: views, chat msgs, embed loads per agent — shown on the dashboard'
 ---
 
 # 07-02 · Owner analytics
@@ -16,9 +16,9 @@ Owners who share their agent want to know if anyone's actually interacting with 
 
 ## Read these first
 
-- [api/_lib/http.js](../../api/_lib/http.js) — `wrap()` is where we'll record events.
-- [api/_lib/rate-limit.js](../../api/_lib/rate-limit.js) — reuses Upstash Redis.
-- [api/_lib/schema.sql](../../api/_lib/schema.sql) — `usage_events` table already exists.
+- [api/\_lib/http.js](../../api/_lib/http.js) — `wrap()` is where we'll record events.
+- [api/\_lib/rate-limit.js](../../api/_lib/rate-limit.js) — reuses Upstash Redis.
+- [api/\_lib/schema.sql](../../api/_lib/schema.sql) — `usage_events` table already exists.
 
 ## Build this
 
@@ -26,7 +26,7 @@ Owners who share their agent want to know if anyone's actually interacting with 
 
 Instrument these endpoints to write rows into `usage_events`:
 
-- `GET /agent/:id`  (via a middleware or shared helper) → `kind='agent_view'`.
+- `GET /agent/:id` (via a middleware or shared helper) → `kind='agent_view'`.
 - `GET /agent/:id/embed` → `kind='agent_embed_view'`.
 - `POST /api/agents/:id/chat` (prompt `04-05`) → `kind='agent_chat_msg'`.
 - `GET /api/agent-oembed` → `kind='agent_unfurl'`.

@@ -14,11 +14,11 @@ Self-contained prompt files for follow-up work on the "share/embed any agent ava
 
 All three tasks can run simultaneously in separate chats. File ownership is disjoint except for `vercel.json` (each task adds routes in a distinct block, so git merges cleanly).
 
-| Task | What it ships | File ownership |
-|---|---|---|
-| [01-og-oembed.md](./01-og-oembed.md) | Link unfurls — OG image + oembed endpoint so pasted `/agent/:id` links preview on Slack/X/Discord | owns `api/agent-og.js`, `api/agent-oembed.js`; edits `<head>` of `public/agent/index.html` + `vercel.json` |
-| [02-agent-id-resolver.md](./02-agent-id-resolver.md) | Native `<agent-3d agent-id="...">` attribute so the web-component embed works without a manifest URL | owns `src/agent-resolver.js`; edits `src/element.js` only |
-| [03-embed-allowlist.md](./03-embed-allowlist.md) | Per-agent embed referrer allowlist + dashboard UI for owners to gate where their avatar renders | owns `api/agents/[id]/embed-policy.js`, new dashboard panel; edits `public/agent/embed.html` + `vercel.json` |
+| Task                                                 | What it ships                                                                                        | File ownership                                                                                               |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| [01-og-oembed.md](./01-og-oembed.md)                 | Link unfurls — OG image + oembed endpoint so pasted `/agent/:id` links preview on Slack/X/Discord    | owns `api/agent-og.js`, `api/agent-oembed.js`; edits `<head>` of `public/agent/index.html` + `vercel.json`   |
+| [02-agent-id-resolver.md](./02-agent-id-resolver.md) | Native `<agent-3d agent-id="...">` attribute so the web-component embed works without a manifest URL | owns `src/agent-resolver.js`; edits `src/element.js` only                                                    |
+| [03-embed-allowlist.md](./03-embed-allowlist.md)     | Per-agent embed referrer allowlist + dashboard UI for owners to gate where their avatar renders      | owns `api/agents/[id]/embed-policy.js`, new dashboard panel; edits `public/agent/embed.html` + `vercel.json` |
 
 ## Rules that apply to all tasks
 

@@ -7,28 +7,31 @@ description: "Memory tab — seed initial facts/feedback/references into an avat
 
 ## Problem
 
-Per [specs/MEMORY_SPEC.md](specs/MEMORY_SPEC.md) and [src/agent-memory.js](src/agent-memory.js), agent memory has four canonical types: `user`, `feedback`, `project`, `reference`. Today memories are only written by the agent at runtime. We need a UI to *seed* memories during avatar setup so the agent boots with meaningful context.
+Per [specs/MEMORY_SPEC.md](specs/MEMORY_SPEC.md) and [src/agent-memory.js](src/agent-memory.js), agent memory has four canonical types: `user`, `feedback`, `project`, `reference`. Today memories are only written by the agent at runtime. We need a UI to _seed_ memories during avatar setup so the agent boots with meaningful context.
 
 ## Implementation
 
 ### Existing backend
 
 [api/agent-memory.js](api/agent-memory.js) likely already handles read/write. Verify the endpoints match:
+
 - `GET /api/agents/:id/memories?type=...`
 - `POST /api/agents/:id/memories` body `{ type, name, description, body }`
 - `DELETE /api/agents/:id/memories/:memoryId`
 
-Note: memory is keyed to *agent* not *avatar* — confirm agent_identity ↔ avatar relationship in [api/agents/](api/agents/). If an avatar doesn't yet have an agent_identity row, create one on first memory write.
+Note: memory is keyed to _agent_ not _avatar_ — confirm agent_identity ↔ avatar relationship in [api/agents/](api/agents/). If an avatar doesn't yet have an agent_identity row, create one on first memory write.
 
 ### UI
 
 Four subsections, one per memory type, in collapsible cards:
+
 1. **User** — "Who is this agent for?"
 2. **Feedback** — "How should it behave?"
 3. **Project** — "What is it working on?"
 4. **Reference** — "External resources it should know about"
 
 Each subsection:
+
 - List of existing memories (name + one-line description).
 - "Add memory" → modal with `name`, `description`, `body` textarea.
 - Edit / delete per row.
@@ -40,6 +43,7 @@ Each subsection:
 ### Validation
 
 Server-side zod schema:
+
 ```js
 {
   type: z.enum(['user', 'feedback', 'project', 'reference']),

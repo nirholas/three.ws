@@ -22,10 +22,10 @@ New endpoint. Does not touch the by-address resolver (sibling prompt 19).
 
 - Public, rate-limited `60/min per IP`.
 - Steps:
-  1. Validate `name` ends with `.eth` and is a sensible ENS label (`[a-z0-9-]+` across labels).
-  2. Use `ethers.getDefaultProvider('mainnet')` or a configured `MAINNET_RPC_URL` to call `provider.resolveName(name)` → address. If null, 404.
-  3. Proxy/forward to `/api/agents/by-address/:addr` logic — NOT via an HTTP hop; factor the shared logic out into a small helper if convenient, OR duplicate the read-through with a TODO to dedupe later. Note the decision in the report.
-  4. Return `{ name, address, agents: [...] }`.
+    1. Validate `name` ends with `.eth` and is a sensible ENS label (`[a-z0-9-]+` across labels).
+    2. Use `ethers.getDefaultProvider('mainnet')` or a configured `MAINNET_RPC_URL` to call `provider.resolveName(name)` → address. If null, 404.
+    3. Proxy/forward to `/api/agents/by-address/:addr` logic — NOT via an HTTP hop; factor the shared logic out into a small helper if convenient, OR duplicate the read-through with a TODO to dedupe later. Note the decision in the report.
+    4. Return `{ name, address, agents: [...] }`.
 - Cache ENS → address resolution for 5 minutes in-memory.
 
 ## Constraints

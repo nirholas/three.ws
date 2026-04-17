@@ -33,9 +33,7 @@ export function buildAnnotations(object) {
 		const matType = mat ? mat.type.replace('Material', '') : '';
 
 		// Rich inline: mesh name (bold) + vertex count (light)
-		const items = [
-			{ text: node.name, font: FONT_NAME },
-		];
+		const items = [{ text: node.name, font: FONT_NAME }];
 		if (vertCount > 0) {
 			items.push({ text: '  ' + formatShort(vertCount) + ' verts', font: FONT_DETAIL });
 		}
@@ -120,7 +118,8 @@ export function renderAnnotationCanvas(annotation) {
 			x += frag.gapBefore;
 			const item = items[frag.itemIndex];
 			ctx.font = item.font;
-			ctx.fillStyle = frag.itemIndex === 0 ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 255, 255, 0.45)';
+			ctx.fillStyle =
+				frag.itemIndex === 0 ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 255, 255, 0.45)';
 			ctx.fillText(frag.text, x, y);
 			x += frag.occupiedWidth;
 		});

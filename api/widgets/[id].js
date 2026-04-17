@@ -13,21 +13,27 @@
 
 import { z } from 'zod';
 
-import { sql }                            from '../_lib/db.js';
+import { sql } from '../_lib/db.js';
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
-import { parse }                          from '../_lib/validate.js';
-import { limits, clientIp }               from '../_lib/rate-limit.js';
-import { decorate }                       from './index.js';
+import { parse } from '../_lib/validate.js';
+import { limits, clientIp } from '../_lib/rate-limit.js';
+import { decorate } from './index.js';
 
-const WIDGET_TYPES = ['turntable', 'animation-gallery', 'talking-agent', 'passport', 'hotspot-tour'];
+const WIDGET_TYPES = [
+	'turntable',
+	'animation-gallery',
+	'talking-agent',
+	'passport',
+	'hotspot-tour',
+];
 
 const patchSchema = z.object({
-	name:      z.string().trim().min(1).max(120).optional(),
-	config:    z.record(z.any()).optional(),
+	name: z.string().trim().min(1).max(120).optional(),
+	config: z.record(z.any()).optional(),
 	is_public: z.boolean().optional(),
 	avatar_id: z.string().uuid().nullable().optional(),
-	type:      z.enum(WIDGET_TYPES).optional(),
+	type: z.enum(WIDGET_TYPES).optional(),
 });
 
 export default wrap(async (req, res) => {
@@ -70,7 +76,8 @@ export default wrap(async (req, res) => {
 	if (!auth?.userId) return error(res, 401, 'unauthorized', 'authentication required');
 	if (auth.source === 'oauth' || auth.source === 'apikey') {
 		const need = req.method === 'DELETE' ? 'avatars:delete' : 'avatars:write';
-		if (!hasScope(auth.scope, need)) return error(res, 403, 'insufficient_scope', `${need} required`);
+		if (!hasScope(auth.scope, need))
+			return error(res, 403, 'insufficient_scope', `${need} required`);
 	}
 
 	const rl = await limits.widgetWrite(auth.userId);
@@ -83,7 +90,13 @@ export default wrap(async (req, res) => {
 			const owns = await sql`
 				select 1 from avatars where id = ${patch.avatar_id} and owner_id = ${auth.userId} and deleted_at is null limit 1
 			`;
-			if (!owns[0]) return error(res, 400, 'invalid_avatar', 'avatar_id not found or not owned by caller');
+			if (!owns[0])
+				return error(
+					res,
+					400,
+					'invalid_avatar',
+					'avatar_id not found or not owned by caller',
+				);
 		}
 
 		const [row] = await sql`
@@ -120,6 +133,11 @@ function idFromReq(req) {
 
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);
-	if (session) return { userId: session.id, source: 'session', scope: 'avatars:read avatars:write avatars:delete' };
+	if (session)
+		return {
+			userId: session.id,
+			source: 'session',
+			scope: 'avatars:read avatars:write avatars:delete',
+		};
 	return await authenticateBearer(extractBearer(req));
 }

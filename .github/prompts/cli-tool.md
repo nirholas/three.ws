@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Build a headless CLI tool for model validation and inspection in CI/CD"
+description: 'Build a headless CLI tool for model validation and inspection in CI/CD'
 ---
 
 # CLI Tool
@@ -18,6 +18,7 @@ npx 3d-agent <command> [options] <file>
 ```
 
 Commands:
+
 - `validate` — Run glTF validation and output report
 - `inspect` — Show model metadata and statistics
 - `optimize` — Suggest or apply optimizations (requires glTF-Transform)
@@ -31,12 +32,13 @@ npx 3d-agent validate model.glb [--format json|text|table] [--max-issues 100] [-
 - Load GLB/glTF from local file path or URL
 - Run `gltf-validator`
 - Output report in requested format:
-  - `json`: Full validation report as JSON (machine-readable)
-  - `text`: Human-readable summary
-  - `table`: Formatted table with colors (default for TTY)
+    - `json`: Full validation report as JSON (machine-readable)
+    - `text`: Human-readable summary
+    - `table`: Formatted table with colors (default for TTY)
 - Exit code: 0 = pass, 1 = errors found, 2 = file not found
 
 Example output (table format):
+
 ```
 ✓ model.glb — Valid glTF 2.0
   Generator: Blender 3.6
@@ -56,6 +58,7 @@ npx 3d-agent inspect model.glb [--format json|text]
 ```
 
 Output:
+
 - File size
 - glTF version, generator
 - Extensions used / required
@@ -71,6 +74,7 @@ npx 3d-agent optimize model.glb -o optimized.glb [--draco] [--texture-resize 204
 ```
 
 Using `@gltf-transform/cli` or programmatic API:
+
 - `--draco`: Apply Draco mesh compression
 - `--texture-resize N`: Downscale textures to max NxN
 - `--dedup`: Remove duplicate accessors/textures
@@ -78,6 +82,7 @@ Using `@gltf-transform/cli` or programmatic API:
 - `--quantize`: Quantize accessors
 
 If no `-o` flag, output suggestions only (dry run):
+
 ```
 Suggestions for model.glb:
   • Draco compression would reduce geometry from 1.2 MB to ~450 KB
@@ -89,29 +94,33 @@ Suggestions for model.glb:
 ### 5. Package Configuration
 
 In `package.json`:
+
 ```json
 {
-    "bin": {
-        "3d-agent": "./cli/index.js"
-    }
+	"bin": {
+		"3d-agent": "./cli/index.js"
+	}
 }
 ```
 
 ### 6. Dependencies
 
 CLI-specific:
+
 - `commander` or `yargs` for argument parsing
 - `chalk` for colored terminal output
 - `ora` for spinners
 - `cli-table3` for table formatting
 
 Reuse existing:
+
 - `gltf-validator` (already installed)
 - `@gltf-transform/core` (from Material Editor prompt)
 
 ### 7. CI/CD Integration Examples
 
 GitHub Actions:
+
 ```yaml
 - name: Validate 3D Models
   run: npx 3d-agent validate models/**/*.glb --format json > report.json

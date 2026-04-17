@@ -35,7 +35,10 @@ export default wrap(async (req, res) => {
 	// Issue a CSRF token tied to a temporary cookie (not session-based).
 	const csrfRaw = randomToken(32);
 	const csrf = await hmacSha256(env.JWT_SECRET, `csrf-siwe:${csrfRaw}`);
-	res.setHeader('set-cookie', `${CSRF_COOKIE}=${csrfRaw}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${NONCE_TTL_SEC}`);
+	res.setHeader(
+		'set-cookie',
+		`${CSRF_COOKIE}=${csrfRaw}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${NONCE_TTL_SEC}`,
+	);
 
 	const issuedAt = new Date().toISOString();
 	const expiresAt = new Date(Date.now() + NONCE_TTL_SEC * 1000).toISOString();

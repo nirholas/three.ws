@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "First-party camera capture page that emits a JPEG blob as selfie:ready"
+description: 'First-party camera capture page that emits a JPEG blob as selfie:ready'
 ---
 
 # 02-01 · Selfie capture UI
@@ -17,24 +17,24 @@ This prompt is **capture only** — it emits a blob. Upload is 02-02, generation
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
+| File                                                                 | Why                                                            |
+| :------------------------------------------------------------------- | :------------------------------------------------------------- |
 | [public/dashboard/dashboard.js](../../public/dashboard/dashboard.js) | Existing RPM iframe flow — to understand what we're replacing. |
-| [public/dashboard/index.html](../../public/dashboard/index.html) | Chrome + CSS to match. |
-| [src/features/](../../src/features/) | Pattern for feature-flagged modules. Follow it. |
-| [api/_lib/auth.js](../../api/_lib/auth.js) | Session requirement for downstream upload. |
+| [public/dashboard/index.html](../../public/dashboard/index.html)     | Chrome + CSS to match.                                         |
+| [src/features/](../../src/features/)                                 | Pattern for feature-flagged modules. Follow it.                |
+| [api/\_lib/auth.js](../../api/_lib/auth.js)                          | Session requirement for downstream upload.                     |
 
 ## Build this
 
 1. **New page** `public/selfie/index.html`:
-   - Full-viewport dark layout matching the dashboard chrome.
-   - Title, a one-sentence primer, a big centered `<video>` element (~640×640 square framing), shutter button, retake button, "Use this photo" button.
-   - Mobile-first — camera should be usable on a phone.
+    - Full-viewport dark layout matching the dashboard chrome.
+    - Title, a one-sentence primer, a big centered `<video>` element (~640×640 square framing), shutter button, retake button, "Use this photo" button.
+    - Mobile-first — camera should be usable on a phone.
 2. **New module** `public/selfie/selfie.js`:
-   - `startCamera()` → calls `navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 1024, height: 1024 }, audio: false })`, pipes to `<video>`.
-   - Graceful error if permission denied: show a card with "Enable camera in your browser settings" and a text link to the upload path (there is already a file-upload path in the dashboard — link to it).
-   - `capture()` → draws the `<video>` frame to a hidden `<canvas>`, exports a JPEG blob at quality `0.92`. Stop the media tracks.
-   - Preview the captured JPEG, offer "Retake" (restarts camera) or "Use this photo" (dispatches a `CustomEvent('selfie:ready', { detail: { blob, width, height } })` on `document`).
+    - `startCamera()` → calls `navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 1024, height: 1024 }, audio: false })`, pipes to `<video>`.
+    - Graceful error if permission denied: show a card with "Enable camera in your browser settings" and a text link to the upload path (there is already a file-upload path in the dashboard — link to it).
+    - `capture()` → draws the `<video>` frame to a hidden `<canvas>`, exports a JPEG blob at quality `0.92`. Stop the media tracks.
+    - Preview the captured JPEG, offer "Retake" (restarts camera) or "Use this photo" (dispatches a `CustomEvent('selfie:ready', { detail: { blob, width, height } })` on `document`).
 3. **Route** in [vercel.json](../../vercel.json): `/selfie` → `public/selfie/index.html`.
 4. **Redirect if unauthenticated**: on load, `fetch('/api/auth/me')`; if 401, `location.href = '/login?next=/selfie'`.
 
@@ -44,7 +44,7 @@ This prompt is **capture only** — it emits a blob. Upload is 02-02, generation
 - Generating the avatar (02-03).
 - Face-detection / quality scoring (could be added as 02-05).
 - Video/multi-angle capture — single frontal frame is the contract.
-- Any fallback to RPM's iframe. RPM is retired as the capture step; it may remain as an adapter option in 02-07 for *generation*.
+- Any fallback to RPM's iframe. RPM is retired as the capture step; it may remain as an adapter option in 02-07 for _generation_.
 
 ## Deliverables
 

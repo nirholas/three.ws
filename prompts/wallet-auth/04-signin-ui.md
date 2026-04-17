@@ -22,18 +22,20 @@ Exports a single async function `signInWithWallet({ chainId } = {})` that:
 1. Calls `connectWallet()` from `src/erc8004/agent-registry.js` → `{ provider, signer, address, chainId: connectedChainId }`.
 2. `POST /api/auth/siwe/nonce` with `{ purpose: 'login', address }` — receives `{ nonce, expiresAt, domain, statement, version }`.
 3. Builds the EIP-4361 message string client-side:
-   ```
-   ${domain} wants you to sign in with your Ethereum account:
-   ${address}
 
-   ${statement}
+    ```
+    ${domain} wants you to sign in with your Ethereum account:
+    ${address}
 
-   URI: ${location.origin}
-   Version: ${version}
-   Chain ID: ${connectedChainId}
-   Nonce: ${nonce}
-   Issued At: ${new Date().toISOString()}
-   ```
+    ${statement}
+
+    URI: ${location.origin}
+    Version: ${version}
+    Chain ID: ${connectedChainId}
+    Nonce: ${nonce}
+    Issued At: ${new Date().toISOString()}
+    ```
+
 4. `signature = await signer.signMessage(message)`.
 5. `POST /api/auth/siwe/verify` with `{ message, signature, purpose: 'login' }` and `credentials: 'include'`.
 6. On success: `window.location.assign('/dashboard')`.
@@ -63,9 +65,9 @@ Under the existing "email + password" form, a visual divider ("— or —") and 
 1. `node --check src/wallet-auth.js` passes.
 2. `npx vite build` — no new warnings.
 3. Manual (Chrome + MetaMask):
-   - Click "Sign in with wallet" in the header → MetaMask opens with the SIWE message → approve → redirected to `/dashboard` as a signed-in user.
-   - Refresh the page → stays signed in, chip shows truncated address.
-   - Click sign out → cookie cleared, button returns.
+    - Click "Sign in with wallet" in the header → MetaMask opens with the SIWE message → approve → redirected to `/dashboard` as a signed-in user.
+    - Refresh the page → stays signed in, chip shows truncated address.
+    - Click sign out → cookie cleared, button returns.
 4. Manual (no injected wallet): button shows a message instead of throwing.
 5. DevTools Network tab shows exactly: `nonce` (POST), one `personal_sign` RPC to the wallet, `verify` (POST).
 

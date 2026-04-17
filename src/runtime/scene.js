@@ -9,7 +9,9 @@ import { resolveURI } from '../ipfs.js';
 import { resolveSlot } from './animation-slots.js';
 
 const EXPRESSION_MAP = {
-	neutral: { /* reset all */ },
+	neutral: {
+		/* reset all */
+	},
 	happy: { mouthSmile: 1, browInnerUp: 0.3, cheekSquintL: 0.4, cheekSquintR: 0.4 },
 	sad: { mouthFrownL: 0.8, mouthFrownR: 0.8, browDownL: 0.6, browDownR: 0.6 },
 	surprised: { jawOpen: 0.5, eyeWideL: 0.8, eyeWideR: 0.8, browInnerUp: 0.9 },
@@ -30,10 +32,18 @@ export class SceneController {
 	}
 
 	// Expose the underlying Three.js handles skills may need
-	get scene() { return this.viewer.scene; }
-	get mixer() { return this._groupMixer || this.viewer.mixer; }
-	get clips() { return this._groupClips || this.viewer.clips || []; }
-	get content() { return this._group || this.viewer.content; }
+	get scene() {
+		return this.viewer.scene;
+	}
+	get mixer() {
+		return this._groupMixer || this.viewer.mixer;
+	}
+	get clips() {
+		return this._groupClips || this.viewer.clips || [];
+	}
+	get content() {
+		return this._group || this.viewer.content;
+	}
 
 	// Scope all scene operations to a sub-group (used by <agent-stage>).
 	setGroup(group, { mixer = null, clips = null } = {}) {
@@ -53,8 +63,12 @@ export class SceneController {
 	dispose() {
 		if (this._mixerHook) this._removeHook(this._mixerHook);
 		if (this._groupMixer) {
-			try { this._groupMixer.stopAllAction(); } catch {}
-			try { this._groupMixer.uncacheRoot(this._group); } catch {}
+			try {
+				this._groupMixer.stopAllAction();
+			} catch {}
+			try {
+				this._groupMixer.uncacheRoot(this._group);
+			} catch {}
 		}
 		this._mixerHook = null;
 		this._groupMixer = null;
@@ -139,7 +153,8 @@ export class SceneController {
 		} else {
 			mixer.stopAllAction();
 			if (!this._group) {
-				for (const k in this.viewer.state.actionStates) this.viewer.state.actionStates[k] = false;
+				for (const k in this.viewer.state.actionStates)
+					this.viewer.state.actionStates[k] = false;
 			}
 		}
 		this.viewer.invalidate();
@@ -152,7 +167,7 @@ export class SceneController {
 		if (!mixer || !clip) return false;
 		const action = mixer.clipAction(clip);
 		action.reset();
-		action.fadeIn((opts?.blend ?? 0.2));
+		action.fadeIn(opts?.blend ?? 0.2);
 		action.play();
 		this.viewer._animating = true;
 		this.viewer.invalidate();
@@ -280,7 +295,9 @@ export class SceneController {
 		const exact = this.clips.find((c) => c.name === name);
 		if (exact) return exact;
 		const ci = name.toLowerCase();
-		return this.clips.find((c) => c.name.toLowerCase() === ci)
-			|| this.clips.find((c) => c.name.toLowerCase().includes(ci));
+		return (
+			this.clips.find((c) => c.name.toLowerCase() === ci) ||
+			this.clips.find((c) => c.name.toLowerCase().includes(ci))
+		);
 	}
 }

@@ -8,8 +8,8 @@ Right now `/agent/:id/embed` renders for anyone who iframes it. Agent owners may
 
 - Embed page: [public/agent/embed.html](../../public/agent/embed.html) — loads the avatar, no chrome. You will add a **referrer check** that runs before the 3D scene mounts.
 - Agent records are stored server-side; there is no `embed_policy` field yet — you add it.
-- Auth helpers: [api/_lib/auth.js](../../api/_lib/auth.js) exports `getSessionUser`, `authenticateBearer`, `extractBearer`, `hasScope`.
-- HTTP helpers: [api/_lib/http.js](../../api/_lib/http.js) exports `cors`, `json`, `error`, `wrap`, `method`, `readJson`.
+- Auth helpers: [api/\_lib/auth.js](../../api/_lib/auth.js) exports `getSessionUser`, `authenticateBearer`, `extractBearer`, `hasScope`.
+- HTTP helpers: [api/\_lib/http.js](../../api/_lib/http.js) exports `cors`, `json`, `error`, `wrap`, `method`, `readJson`.
 - Existing agent endpoint: [api/agents/[id].js](../../api/agents/[id].js) — do **not** modify it. Add a sibling endpoint for policy (spec below).
 - DB layer: agents are in table `agent_identities`. Find the current schema file (search for `CREATE TABLE agent_identities` in the repo) and extend it with your migration file. Do not modify existing migrations.
 
@@ -20,10 +20,10 @@ Right now `/agent/:id/embed` renders for anyone who iframes it. Agent owners may
 - Add a migration file alongside existing ones (follow whatever naming pattern you find — e.g. `specs/schema/NNN-embed-policy.sql`, or wherever migrations live). If you cannot locate a migrations directory, create `specs/schema/embed-policy.sql` with just the `ALTER TABLE` and a comment explaining it needs to be applied manually.
 - Column: `embed_policy JSONB` — nullable (null = "allow all embeds," the current behavior).
 - Shape when non-null:
-  ```json
-  { "mode": "allowlist", "hosts": ["example.com", "*.substack.com"] }
-  ```
-  `mode` is `"allowlist"` or `"denylist"`. `hosts` supports exact matches and a single leading-wildcard segment (`*.foo.com`).
+    ```json
+    { "mode": "allowlist", "hosts": ["example.com", "*.substack.com"] }
+    ```
+    `mode` is `"allowlist"` or `"denylist"`. `hosts` supports exact matches and a single leading-wildcard segment (`*.foo.com`).
 
 ### 2. Server endpoint — `GET / PUT /api/agents/:id/embed-policy`
 
@@ -50,7 +50,7 @@ Edit [public/agent/embed.html](../../public/agent/embed.html):
 - Before creating the `Viewer`, fetch `GET /api/agents/${agentId}/embed-policy`.
 - If `policy === null` → proceed (current behavior, allow all).
 - Otherwise, derive the embedding host from `document.referrer` (top-level) or `window.location.ancestorOrigins?.[0]` when available. Parse the hostname.
-  - Browser note: `ancestorOrigins` is Chromium/Safari only. `document.referrer` is the correct cross-browser signal for the parent origin of a first-party iframe. Prefer `ancestorOrigins` when present; fall back to `referrer`.
+    - Browser note: `ancestorOrigins` is Chromium/Safari only. `document.referrer` is the correct cross-browser signal for the parent origin of a first-party iframe. Prefer `ancestorOrigins` when present; fall back to `referrer`.
 - Match the host against `policy.hosts` with leading-`*` wildcard support.
 - On block: replace the stage with a small centered message — "This agent can only be embedded on approved sites." — style to match the existing `#error` div. Do not render the avatar.
 - On allow: proceed as before.
@@ -71,7 +71,9 @@ Create a new page (or panel, depending on the dashboard's structure — inspect 
 In [public/agent/index.html](../../public/agent/index.html), near the existing "preview embed →" link (it already exists — grep for `agent-embed-preview`), add **one sibling link** right after it:
 
 ```html
-<a class="agent-embed-preview-link" id="agent-embed-settings" href="" target="_blank" rel="noopener">embed settings →</a>
+<a class="agent-embed-preview-link" id="agent-embed-settings" href="" target="_blank" rel="noopener"
+	>embed settings →</a
+>
 ```
 
 And in the existing script, set `.href = '/dashboard/embed-policy?agent=' + identity.id`. Only this link — do not touch anything else in the file.
@@ -93,17 +95,18 @@ And in the existing script, set `.href = '/dashboard/embed-policy?agent=' + iden
 1. `node --check api/agents/[id]/embed-policy.js` passes.
 2. `npx vite build` — note result.
 3. Manual:
-   - `GET /api/agents/SOMEID/embed-policy` → `{ policy: null }` when unset.
-   - As owner, `PUT /api/agents/SOMEID/embed-policy` with `{ mode: "allowlist", hosts: ["example.com"] }` → returns the policy.
-   - `GET` again returns it.
-   - `DELETE` clears it.
-   - Open `/agent/SOMEID/embed` from the project origin — still loads (same-origin implicit allow OR `?preview=1`).
-   - Open an iframe of `/agent/SOMEID/embed` from a page on a disallowed host — confirm the block message renders instead of the avatar.
+    - `GET /api/agents/SOMEID/embed-policy` → `{ policy: null }` when unset.
+    - As owner, `PUT /api/agents/SOMEID/embed-policy` with `{ mode: "allowlist", hosts: ["example.com"] }` → returns the policy.
+    - `GET` again returns it.
+    - `DELETE` clears it.
+    - Open `/agent/SOMEID/embed` from the project origin — still loads (same-origin implicit allow OR `?preview=1`).
+    - Open an iframe of `/agent/SOMEID/embed` from a page on a disallowed host — confirm the block message renders instead of the avatar.
 4. Dashboard page loads, shows current policy, saves a change, reload reflects it.
 
 ## Reporting
 
 Report:
+
 - All created files with line counts
 - Files edited with which sections touched (keep edits narrowly scoped — call out if you had to go beyond the spec)
 - Migration file path and exact SQL

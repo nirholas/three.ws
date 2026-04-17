@@ -16,8 +16,8 @@ Live event runbook for the CZ agent demo. This is the operator's edge — when t
 - [ ] Console clean on `/cz` load: `window.VIEWER.agent_protocol.history` shows no errors
 - [ ] VPN / proxy disabled; public internet only
 - [ ] Backup RPC endpoints saved locally:
-  - Primary: Base Sepolia public RPC (e.g., `https://sepolia.base.org/`)
-  - Secondary: Alchemy / Infura Base Sepolia endpoint (check rate limits)
+    - Primary: Base Sepolia public RPC (e.g., `https://sepolia.base.org/`)
+    - Secondary: Alchemy / Infura Base Sepolia endpoint (check rate limits)
 
 ---
 
@@ -29,10 +29,10 @@ Live event runbook for the CZ agent demo. This is the operator's edge — when t
 - [ ] Hotspot phone ready (venue wifi fallback)
 - [ ] `/cz` preloaded and avatar fully rendered; camera responds
 - [ ] Dry-run entire demo flow with a throwaway wallet:
-  1. Load `/cz`
-  2. Click claim button (may fail; that's ok for this run)
-  3. Observe modal and any error state
-  4. Return to home state
+    1. Load `/cz`
+    2. Click claim button (may fail; that's ok for this run)
+    3. Observe modal and any error state
+    4. Return to home state
 - [ ] Reset `/cz/state.json` to `pre-onchain` after dry-run
 - [ ] Check browser DevTools for any JavaScript errors or failed network requests
 - [ ] Stopwatch ready for timing each demo step
@@ -42,6 +42,7 @@ Live event runbook for the CZ agent demo. This is the operator's edge — when t
 ## Demo Sequence (9 steps, ≤ 5 minutes total)
 
 ### Step 1: Landing (15 seconds)
+
 **Speaker:** "This is CZ. It's an agent. And it's onchain."
 
 - Open browser to `https://staging-url.vercel.app/cz/`
@@ -50,15 +51,17 @@ Live event runbook for the CZ agent demo. This is the operator's edge — when t
 - **Expected screen:** Full-screen avatar with claim button visible, footer shows chain/agent ID (if onchain)
 
 ### Step 2: Passport (30 seconds)
+
 **Speaker:** "Every agent has a passport—an onchain registration. Let me show you."
 
 - Click the agent address chip / footer link (if onchain)
 - Basescan or Sepolia block explorer opens in new tab
 - Show `AgentRegistered` event or registry entry
 - **Expected screen:** Block explorer showing agent's ERC-8004 registration
-- *If pre-onchain:* Skip this step; say "Registration is coming this week."
+- _If pre-onchain:_ Skip this step; say "Registration is coming this week."
 
 ### Step 3: Claim Flow Begins (10 seconds)
+
 **Speaker:** "CZ, can you claim this? Let's see."
 
 - Back to CZ tab
@@ -67,6 +70,7 @@ Live event runbook for the CZ agent demo. This is the operator's edge — when t
 - **Expected screen:** MetaMask signature request
 
 ### Step 4: Signature (15 seconds)
+
 **Speaker:** "Signing the claim..."
 
 - In MetaMask, approve the signature (not a tx, just a message signature)
@@ -75,6 +79,7 @@ Live event runbook for the CZ agent demo. This is the operator's edge — when t
 - **Expected screen:** Spinning modal with confirmation text
 
 ### Step 5: Confirmation (30 seconds)
+
 **Speaker:** "And it's confirmed. Confetti."
 
 - Confetti animation plays
@@ -84,12 +89,14 @@ Live event runbook for the CZ agent demo. This is the operator's edge — when t
 - **Expected screen:** Success state with tx hash and confetti
 
 ### Step 6: Close Modal (5 seconds)
+
 **Speaker:** "Close."
 
 - Click close button or tap outside modal
 - **Expected screen:** Back to `/cz` main page with updated owner state
 
 ### Step 7: Live in LobeHub (60 seconds)
+
 **Speaker:** "Now watch this in LobeHub, our plugin partner."
 
 - Open second tab to LobeHub instance (pre-loaded, or navigate to hosted instance)
@@ -99,6 +106,7 @@ Live event runbook for the CZ agent demo. This is the operator's edge — when t
 - **Expected screen:** LobeHub chat with agent, avatar responding
 
 ### Step 8: Empathy Layer (30 seconds)
+
 **Speaker:** "Notice the avatar's expression. It reads emotion—that's the empathy layer."
 
 - Observe subtle emotion shifts in avatar face as agent responds
@@ -106,6 +114,7 @@ Live event runbook for the CZ agent demo. This is the operator's edge — when t
 - **Expected screen:** Avatar with visible emotion feedback
 
 ### Step 9: Close (10 seconds)
+
 **Speaker:** "That's CZ. Questions?"
 
 - Close tabs
@@ -119,9 +128,11 @@ Live event runbook for the CZ agent demo. This is the operator's edge — when t
 ## Fallbacks
 
 ### Fallback 1: Avatar Won't Render
+
 **Symptom:** Avatar displays as blank or black, or loading spinner never stops.  
 **Likely cause:** GLB file 404, CORS error, or slow network.  
 **Response:**
+
 1. Check DevTools Network tab for 404 on `/avatars/cz.glb`
 2. If 404: Confirm file exists in `public/avatars/cz.glb`; restart dev server or redeploy
 3. If CORS: Check that origin is in `ALLOWED_ORIGINS`
@@ -129,40 +140,48 @@ Live event runbook for the CZ agent demo. This is the operator's edge — when t
 5. **Last resort:** Open `/cz/offline/index.html` in the same browser window; avatar is pre-bundled
 
 ### Fallback 2: Claim Transaction Pending > 45 Seconds
+
 **Symptom:** Modal says "Waiting for confirmation…" and doesn't update.  
 **Likely cause:** Base Sepolia RPC congestion or node sync lag.  
 **Response:**
+
 1. Continue narrating the feature while waiting (talk about onchain identity, wallets, etc.)
 2. Check Basescan in a side window: search for the tx hash from MetaMask (if visible)
 3. If tx is confirmed on-chain: Refresh the `/cz` page; state should update
 4. If tx is still pending after 2 minutes:
-   - Switch to fallback mode: Open `/cz?rehearsal=1` in a new tab
-   - This shows a fake "already claimed" state without hitting the chain
-   - Say: "We've pre-claimed this in rehearsal mode to keep the demo flowing."
+    - Switch to fallback mode: Open `/cz?rehearsal=1` in a new tab
+    - This shows a fake "already claimed" state without hitting the chain
+    - Say: "We've pre-claimed this in rehearsal mode to keep the demo flowing."
 5. **Root cause investigation (later):** Check Vercel logs and Base Sepolia RPC status
 
 ### Fallback 3: MetaMask Popup Blocked
+
 **Symptom:** User clicks claim button; nothing happens.  
 **Likely cause:** Browser popup blocker, or MetaMask extension not installed.  
 **Response:**
+
 1. Check address bar for popup-blocker icon; allow popups for this origin
 2. Reload the page and try claim again
 3. If still blocked: Click the MetaMask extension icon in the toolbar directly; wallet should open
 4. If MetaMask not installed: Say "MetaMask isn't installed on this profile. We'll skip the live signing." Switch to `/cz?rehearsal=1`
 
 ### Fallback 4: Internet Drops Mid-Demo
+
 **Symptom:** Page loads fine, then network goes dead. Avatar frozen. Claim button unresponsive.  
 **Likely cause:** Venue wifi failed, or hotspot disconnected.  
 **Response:**
+
 1. Switch to hotspot (phone tethering) if available; wait 5 seconds for DNS to stabilize
 2. Reload `/cz` page
 3. If still offline: Open `/cz/offline/index.html` (served from browser cache); avatar and state are fully pre-rendered
 4. Say: "We're offline now, but the agent still renders thanks to our offline cache."
 
 ### Fallback 5: LobeHub Embed Blank or Unresponsive
+
 **Symptom:** LobeHub iframe loads but shows blank white space, or chat doesn't respond.  
 **Likely cause:** `postMessage` origin mismatch, or LobeHub build is stale.  
 **Response:**
+
 1. Check DevTools Console for `postMessage` security warnings (frame origin mismatch)
 2. Close the LobeHub tab and skip to Q&A (Step 9)
 3. Say: "LobeHub integration is still rolling out; let's focus on the agent itself."
@@ -205,6 +224,7 @@ If the demo hits a hard blocker (venue wifi down, RPC completely unavailable, la
 ## Demo Environment Setup (for the operator)
 
 ### Local / Staging Setup
+
 ```bash
 # Ensure staging is deployed and healthy
 npm run deploy
@@ -220,13 +240,15 @@ curl -s https://staging-url/api/cz/identity | jq .agentId
 ```
 
 ### Browser Setup
+
 - Fresh profile (no extensions except MetaMask)
 - MetaMask: CZ's seed imported, Base Sepolia selected
 - Two tabs pre-loaded:
-  1. `https://staging-url/cz/`
-  2. `https://lobehub-instance/` (or bookmark ready to click)
+    1. `https://staging-url/cz/`
+    2. `https://lobehub-instance/` (or bookmark ready to click)
 
 ### Network Backup
+
 ```bash
 # Save these endpoints locally for manual testing
 PRIMARY_RPC="https://sepolia.base.org/"
@@ -242,18 +264,18 @@ curl -s -X POST $PRIMARY_RPC \
 
 ## Timing Reference
 
-| Step | Speaker Script | Duration | Expected State |
-|---|---|---|---|
-| 1 | Landing pitch | 15s | Avatar loaded, idle |
-| 2 | Passport / onchain | 30s | Block explorer or "coming soon" |
-| 3 | Claim begins | 10s | MetaMask popup |
-| 4 | Signing | 15s | Waiting for confirmation modal |
-| 5 | Success / confetti | 30s | Success modal + updated footer |
-| 6 | Close modal | 5s | Back to main page |
-| 7 | LobeHub live | 60s | Chat with avatar response |
-| 8 | Empathy layer | 30s | Avatar expressions visible |
-| 9 | Close / Q&A | 10s | Ready for questions |
-| **Total** | | **4m 45s** | |
+| Step      | Speaker Script     | Duration   | Expected State                  |
+| --------- | ------------------ | ---------- | ------------------------------- |
+| 1         | Landing pitch      | 15s        | Avatar loaded, idle             |
+| 2         | Passport / onchain | 30s        | Block explorer or "coming soon" |
+| 3         | Claim begins       | 10s        | MetaMask popup                  |
+| 4         | Signing            | 15s        | Waiting for confirmation modal  |
+| 5         | Success / confetti | 30s        | Success modal + updated footer  |
+| 6         | Close modal        | 5s         | Back to main page               |
+| 7         | LobeHub live       | 60s        | Chat with avatar response       |
+| 8         | Empathy layer      | 30s        | Avatar expressions visible      |
+| 9         | Close / Q&A        | 10s        | Ready for questions             |
+| **Total** |                    | **4m 45s** |                                 |
 
 ---
 

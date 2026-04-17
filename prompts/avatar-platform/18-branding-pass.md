@@ -16,14 +16,14 @@ The project identity is TBD at the start of this task — confirm with the user 
 ## Deliverable
 
 1. **Copy audit** — grep user-facing strings for vendor names. Fix each:
-   - `grep -ri "avaturn\|charactersudio\|talkinghead\|kalidokit\|mediapipe\|nextface\|whisper\|piper\|kokoro\|webllm" src/ public/ *.html` — triage each hit.
-   - Code comments referencing libraries by name are fine. User-visible strings are not.
+    - `grep -ri "avaturn\|charactersudio\|talkinghead\|kalidokit\|mediapipe\|nextface\|whisper\|piper\|kokoro\|webllm" src/ public/ *.html` — triage each hit.
+    - Code comments referencing libraries by name are fine. User-visible strings are not.
 2. **CSS prefix scan** — every vendored or custom module should use one of: `agent-`, `editor-`, `capture-`, `mirror-`, `brand-`. No `avaturn-*`, no upstream-vendor prefixes.
 3. **HTML metadata** — [index.html](../../index.html), [features.html](../../features.html), `m.html` (from task 06):
-   - `<title>`.
-   - `<meta name="description">`.
-   - OG tags (title, description, image).
-   - Favicon.
+    - `<title>`.
+    - `<meta name="description">`.
+    - OG tags (title, description, image).
+    - Favicon.
 4. **PWA manifest** — [pwa-manifest.json / manifest.webmanifest](../../) references: name, short_name, description, theme_color, icons.
 5. **Credits page** — new `credits.html` route. Lists every vendored dep (from NOTICE files), every asset author (from task 17's NOTICES), and every licensed package of note. Auto-generated ideally, but a hand-maintained version is acceptable.
 6. **In-app "About"** — small "(i)" button in the editor/agent panel opens a modal linking to the credits page.

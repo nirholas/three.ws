@@ -6,11 +6,11 @@ Repo: `/workspaces/3D`. Once the selfie pipeline (prompts 01-02) produces a GLB 
 
 Existing building blocks you'll reuse:
 
-- `slug` zod schema in [api/_lib/validate.js](../../api/_lib/validate.js) — lowercase alphanumeric + `-`/`_`, max 64 chars.
+- `slug` zod schema in [api/\_lib/validate.js](../../api/_lib/validate.js) — lowercase alphanumeric + `-`/`_`, max 64 chars.
 - `agent_identities` table already has a `name` column but no `slug` column. This task **does not** add a column; slug is a derived, per-user-unique string enforced by checking `LOWER(name)` collisions at insert time. A proper slug column + routing is a later migration task.
 - Wallet address for the caller is reachable via `/api/auth/me` and the `user_wallets` table (layer 1 — already shipped).
 - Display surfaces that read the name: [src/agent-home.js](../../src/agent-home.js), the `agent-home.html` route, and the `.name` getter on [src/agent-identity.js](../../src/agent-identity.js).
-- Existing session auth helpers in [api/_lib/auth.js](../../api/_lib/auth.js) (`getSessionUser`) and the standard serverless endpoint shape in [api/CLAUDE.md](../../api/CLAUDE.md).
+- Existing session auth helpers in [api/\_lib/auth.js](../../api/_lib/auth.js) (`getSessionUser`) and the standard serverless endpoint shape in [api/CLAUDE.md](../../api/CLAUDE.md).
 
 ## Goal
 
@@ -31,27 +31,30 @@ On submit, hand `{ name, description, slug }` up the call chain so prompt 03 can
 ## Deliverable
 
 1. **New file: `src/selfie-name-form.js`** — class `SelfieNameForm(rootEl, { onSubmit, initial })` with:
-   - Form rendering name + description inputs, character counters, a Continue button.
-   - Debounced (300ms) availability check against `GET /api/agents/check-name?slug=…` → `{ available, reason? }`.
-   - Inline error messages under the name field: `"Name must be 2-32 characters."`, `"Name contains disallowed characters."`, `"That name isn't allowed."`, `"You already have an agent with that name."`.
-   - Continue disabled until the current name is syntactically valid and remotely available.
-   - `onSubmit({ name, description, slug })` fires on Continue click.
-   - All listeners stored on `this._…` fields for clean `unmount()` (follow the pattern used in [src/avatar-creator.js](../../src/avatar-creator.js)).
+
+    - Form rendering name + description inputs, character counters, a Continue button.
+    - Debounced (300ms) availability check against `GET /api/agents/check-name?slug=…` → `{ available, reason? }`.
+    - Inline error messages under the name field: `"Name must be 2-32 characters."`, `"Name contains disallowed characters."`, `"That name isn't allowed."`, `"You already have an agent with that name."`.
+    - Continue disabled until the current name is syntactically valid and remotely available.
+    - `onSubmit({ name, description, slug })` fires on Continue click.
+    - All listeners stored on `this._…` fields for clean `unmount()` (follow the pattern used in [src/avatar-creator.js](../../src/avatar-creator.js)).
 
 2. **New file: `src/selfie-denylist.js`** — export:
-   - `DENYLIST: Set<string>` of disallowed substrings (case-insensitive). Keep it short and obvious; stub real slurs with `/* …redacted, fill locally… */` comments if you prefer not to commit the words. Include at minimum `null`, `undefined`, and a handful of common slurs.
-   - `RESERVED_SLUGS: Set<string>` — `admin`, `root`, `support`, `api`, `agent`, `agents`, `login`, `logout`, `signin`, `signup`, `create`, `system`, `wallet`, `settings`, `help`, `docs`, `me`, `null`, `undefined`.
-   - `isNameAllowed(name): boolean`
-   - `isSlugReserved(slug): boolean`
-   - `deriveSlug(name): string` — `name.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 64)`.
+
+    - `DENYLIST: Set<string>` of disallowed substrings (case-insensitive). Keep it short and obvious; stub real slurs with `/* …redacted, fill locally… */` comments if you prefer not to commit the words. Include at minimum `null`, `undefined`, and a handful of common slurs.
+    - `RESERVED_SLUGS: Set<string>` — `admin`, `root`, `support`, `api`, `agent`, `agents`, `login`, `logout`, `signin`, `signup`, `create`, `system`, `wallet`, `settings`, `help`, `docs`, `me`, `null`, `undefined`.
+    - `isNameAllowed(name): boolean`
+    - `isSlugReserved(slug): boolean`
+    - `deriveSlug(name): string` — `name.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 64)`.
 
 3. **New API: `api/agents/check-name.js`** — `GET /api/agents/check-name?slug=…`:
-   - Auth: session cookie only (`getSessionUser(req)`). No bearer.
-   - Validate `slug` via the existing `slug` zod schema from [api/_lib/validate.js](../../api/_lib/validate.js).
-   - Call `isSlugReserved(slug)` → if reserved, return `{ available: false, reason: 'reserved' }`.
-   - SQL: `SELECT 1 FROM agent_identities WHERE user_id = $1 AND LOWER(name) = $2 AND deleted_at IS NULL LIMIT 1`. The `$2` is the *lowercased original name*, not the slug — reasoning: uniqueness is on the name surface, slug is just a stable identity for the check request. Accept both `?name=` and `?slug=` query params; prefer `name` if present and fall back to deriving.
-   - Return `{ available: boolean, reason?: 'reserved'|'taken' }`.
-   - Rate-limit via `limits.authIp(clientIp(req))` per [api/CLAUDE.md](../../api/CLAUDE.md).
+
+    - Auth: session cookie only (`getSessionUser(req)`). No bearer.
+    - Validate `slug` via the existing `slug` zod schema from [api/\_lib/validate.js](../../api/_lib/validate.js).
+    - Call `isSlugReserved(slug)` → if reserved, return `{ available: false, reason: 'reserved' }`.
+    - SQL: `SELECT 1 FROM agent_identities WHERE user_id = $1 AND LOWER(name) = $2 AND deleted_at IS NULL LIMIT 1`. The `$2` is the _lowercased original name_, not the slug — reasoning: uniqueness is on the name surface, slug is just a stable identity for the check request. Accept both `?name=` and `?slug=` query params; prefer `name` if present and fall back to deriving.
+    - Return `{ available: boolean, reason?: 'reserved'|'taken' }`.
+    - Rate-limit via `limits.authIp(clientIp(req))` per [api/CLAUDE.md](../../api/CLAUDE.md).
 
 4. **New file: `api/_lib/agent-names.js`** — exports `assertNameAvailable({ userId, name }): Promise<void>` that throws `{ status: 409, code: 'name_taken', message: '…' }` if the caller already has a live agent with that name. Prompt 03's POST handler will `await` this before insert.
 
@@ -62,6 +65,7 @@ On submit, hand `{ name, description, slug }` up the call chain so prompt 03 can
 ## Audit checklist — must handle all of these
 
 **Name validation (client + server, same rules)**
+
 - Trim input before any check.
 - Length 2-32 chars after trim.
 - Allowed character class: `[A-Za-z0-9 _'.-]`. Reject anything else.
@@ -69,24 +73,29 @@ On submit, hand `{ name, description, slug }` up the call chain so prompt 03 can
 - Derived slug runs through the `slug` zod schema. Empty slug after derivation → rejected as `invalid_name`.
 
 **Denylist**
+
 - Case-insensitive substring match against `DENYLIST`. Any match → `"That name isn't allowed."`. This is a **blunt** instrument on purpose — it's a stopgap, not moderation.
 - Reserved slugs are **exact match** against `RESERVED_SLUGS`.
 
 **Uniqueness**
+
 - Per-user, not global. `LOWER(name)` comparison in SQL.
 - No fuzzy / trigram match.
 
 **Debounce + race**
+
 - 300ms input debounce.
 - Cancel prior in-flight checks via `AbortController`. Only the latest response is surfaced.
 - If Continue is pressed while a check is pending, await the pending result before firing `onSubmit`.
 
 **Accessibility**
+
 - `<label>`s linked to inputs via `for`/`id`.
 - Inline errors in an `aria-live="polite"` container.
 - Continue button gets `aria-busy="true"` while a check or submit is in flight.
 
 **Mobile**
+
 - Inputs scale to full width on a 375px viewport.
 - `autocapitalize="words"` on name, `autocapitalize="sentences"` on description.
 - Plain `type="text"` — never `type="email"` / `type="tel"`.
@@ -126,6 +135,7 @@ On submit, hand `{ name, description, slug }` up the call chain so prompt 03 can
 ## Reporting
 
 Report:
+
 - Files created / edited with line counts.
 - The final denylist + reserved-slug contents (so a reviewer can tweak).
 - The slug derivation rule you shipped and any edge case you found (e.g. CJK input collapses to empty — how you handled it).

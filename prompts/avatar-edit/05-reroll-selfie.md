@@ -25,8 +25,8 @@ Currently one-to-one. Add `avatar_history` (JSONB array on `agent_identities.met
 
 ```json
 [
-  { "avatarId": "avt_old", "createdAt": "…", "replacedAt": "…" },
-  { "avatarId": "avt_new", "createdAt": "…" }
+	{ "avatarId": "avt_old", "createdAt": "…", "replacedAt": "…" },
+	{ "avatarId": "avt_new", "createdAt": "…" }
 ]
 ```
 
@@ -43,6 +43,7 @@ On reroll, the current `avatar_id` row is pushed to history (with `replacedAt`) 
 ### 3. Server endpoint
 
 `POST /api/agents/:id/avatar` (owner-auth):
+
 - Body: `{ avatarId }` (must be owned by the user).
 - Verifies caller owns both the agent and the avatar.
 - Swaps `agent_identities.avatar_id`, appends to history.
@@ -52,6 +53,7 @@ On reroll, the current `avatar_id` row is pushed to history (with `replacedAt`) 
 ### 4. On-chain consideration
 
 If `agent.chain_id` is set, the on-chain `agentURI` still points to the old IPFS CID. Swap flow:
+
 - Warn: "This agent is on-chain. The public record still shows your previous avatar until you re-register."
 - Offer "Update on-chain" button — pins the new GLB (task onchain/02), pins a new metadata JSON, calls `IdentityRegistry.update(agentId, newURI)`.
 - If the user skips, new avatar is local-only.

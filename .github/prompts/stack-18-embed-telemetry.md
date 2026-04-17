@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Track embed views, skill invocations, and session duration — without tracking users"
+description: 'Track embed views, skill invocations, and session duration — without tracking users'
 ---
 
 # Stack Layer 4: Embed Telemetry
@@ -14,6 +14,7 @@ We need to know which agents are being embedded, where, how often they're intera
 ### Events
 
 POST to `/api/telemetry` (batched, fire-and-forget from client):
+
 - `embed.view` — iframe loaded. Fields: `{ avatarId, parentOrigin, kiosk, theme, ua }`
 - `embed.skill.invoked` — `{ avatarId, skillId, parentOrigin }`
 - `embed.session.duration` — on pagehide: `{ avatarId, parentOrigin, ms, interactions }`
@@ -27,6 +28,7 @@ POST to `/api/telemetry` (batched, fire-and-forget from client):
 ### Storage
 
 `agent_telemetry` table in Neon:
+
 ```sql
 avatar_id, event, parent_origin, kiosk bool, theme, ua_bucket, occurred_at
 ```
@@ -36,6 +38,7 @@ Keep raw events 30 days, then aggregate into `agent_telemetry_daily` rollups.
 ### Dashboard
 
 Owner-only page `/dashboard/agents/:slug/stats`:
+
 - 7-day / 30-day views.
 - Top parent origins.
 - Top skills invoked.

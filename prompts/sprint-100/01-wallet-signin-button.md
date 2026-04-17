@@ -37,23 +37,26 @@ export function wireSigninButton(buttonEl) // attaches click handler + swaps UI 
 1. `connectWallet()` → `{ signer, address, chainId }`
 2. `POST /api/auth/siwe/nonce` with `{ address }` — read `{ nonce }`.
 3. Build EIP-4361 message string client-side:
-   ```
-   ${location.host} wants you to sign in with your Ethereum account:
-   ${address}
 
-   Sign in to 3D Agent.
+    ```
+    ${location.host} wants you to sign in with your Ethereum account:
+    ${address}
 
-   URI: ${location.origin}
-   Version: 1
-   Chain ID: ${chainId}
-   Nonce: ${nonce}
-   Issued At: ${new Date().toISOString()}
-   ```
+    Sign in to 3D Agent.
+
+    URI: ${location.origin}
+    Version: 1
+    Chain ID: ${chainId}
+    Nonce: ${nonce}
+    Issued At: ${new Date().toISOString()}
+    ```
+
 4. `signature = await signer.signMessage(message)`
 5. `POST /api/auth/siwe/verify` with `{ message, signature }`, `credentials: 'include'`.
 6. On 200, resolve with the returned user. On non-200, throw with the server's `error`/`message` field.
 
 `wireSigninButton(buttonEl)`:
+
 - Calls `getCurrentUser()` on load. If signed in, replace the button with a small chip `0xabcd…1234 · sign out`. If signed out, attach the click handler.
 - Click handler: disable button, show inline status text, call `signInWithWallet()`, on success reload page, on failure show the error under the button.
 - If `window.ethereum` is missing AND no Privy is configured, status text: "No wallet detected — install MetaMask or use a wallet-enabled browser."

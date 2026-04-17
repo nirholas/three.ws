@@ -114,13 +114,13 @@ After each step: `node --check` and (if possible) load the app and smoke-test.
 1. `node --check` each new file.
 2. Run `npx vite build` — must succeed or fail only on the known pre-existing `@avaturn/sdk` error in `avatar-creator.js`, which is unrelated.
 3. Manual smoke test:
-   - App loads, drop a GLB, model appears
-   - Change environment from the GUI — IBL updates
-   - Toggle background, wireframe, skeleton, grid
-   - Play animations from the GUI
-   - Resize the window — camera aspect updates
-   - Press `p` — screenshot downloads
-   - Open the model info panel — fields populated
+    - App loads, drop a GLB, model appears
+    - Change environment from the GUI — IBL updates
+    - Toggle background, wireframe, skeleton, grid
+    - Play animations from the GUI
+    - Resize the window — camera aspect updates
+    - Press `p` — screenshot downloads
+    - Open the model info panel — fields populated
 4. Compare the network tab / memory before and after — should be identical.
 
 ## Reporting

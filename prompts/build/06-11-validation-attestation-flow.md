@@ -6,16 +6,16 @@
 
 ## Why it matters
 
-ValidationRegistry exists on testnets; the contract lets allow-listed validators attest to off-chain proofs about an agent (e.g. "model passes gltf-validator", "manifest signature verified", "skill output reproducible"). Without a flow that *uses* it, the registry is dead weight.
+ValidationRegistry exists on testnets; the contract lets allow-listed validators attest to off-chain proofs about an agent (e.g. "model passes gltf-validator", "manifest signature verified", "skill output reproducible"). Without a flow that _uses_ it, the registry is dead weight.
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| [contracts/src/ValidationRegistry.sol](../../contracts/src/ValidationRegistry.sol) | Contract surface. |
-| [src/erc8004/validation-recorder.js](../../src/erc8004/validation-recorder.js) | `recordValidation`, `hashReport`. |
-| [api/mcp.js](../../api/mcp.js) | `validate_model` tool — produces a report we can attest. |
-| [api/_lib/](../../api/_lib/) | Auth + db helpers. |
+| File                                                                               | Why                                                      |
+| :--------------------------------------------------------------------------------- | :------------------------------------------------------- |
+| [contracts/src/ValidationRegistry.sol](../../contracts/src/ValidationRegistry.sol) | Contract surface.                                        |
+| [src/erc8004/validation-recorder.js](../../src/erc8004/validation-recorder.js)     | `recordValidation`, `hashReport`.                        |
+| [api/mcp.js](../../api/mcp.js)                                                     | `validate_model` tool — produces a report we can attest. |
+| [api/\_lib/](../../api/_lib/)                                                      | Auth + db helpers.                                       |
 
 ## Build this
 
@@ -42,5 +42,5 @@ ValidationRegistry exists on testnets; the contract lets allow-listed validators
 
 1. Local anvil with all three registries deployed and indexed.
 2. Mint a valid GLB-backed agent. Wait one cron tick. Confirm row in `validations` and on-chain tx.
-3. Mint an agent with a malformed GLB. Confirm it does *not* get a `gltf-valid` attestation.
+3. Mint an agent with a malformed GLB. Confirm it does _not_ get a `gltf-valid` attestation.
 4. POST a user-submitted report; verify it appears with unverified tag.

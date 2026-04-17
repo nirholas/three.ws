@@ -13,10 +13,10 @@
 
 (async function downloadMixamoAnimations() {
 	const ANIMATIONS = [
-		{ name: 'Idle',    query: 'Breathing Idle' },
+		{ name: 'Idle', query: 'Breathing Idle' },
 		{ name: 'Walking', query: 'Walking' },
 		{ name: 'Running', query: 'Running' },
-		{ name: 'Waving',  query: 'Waving' },
+		{ name: 'Waving', query: 'Waving' },
 		{ name: 'Dancing', query: 'Hip Hop Dancing' },
 		{ name: 'Sitting', query: 'Sitting' },
 		{ name: 'Jumping', query: 'Jump' },
@@ -25,8 +25,8 @@
 	// Grab auth token from the page
 	const token = document.cookie
 		.split(';')
-		.map(c => c.trim())
-		.find(c => c.startsWith('access_token='));
+		.map((c) => c.trim())
+		.find((c) => c.startsWith('access_token='));
 
 	// Try bearer token from localStorage or existing fetch headers
 	let bearer = null;
@@ -37,14 +37,17 @@
 	// Fallback: intercept from meta or global state
 	if (!bearer) {
 		// Mixamo stores auth in window state
-		const state = window.__NEXT_DATA__?.props?.pageProps?.accessToken
-			|| document.querySelector('meta[name="csrf-token"]')?.content;
+		const state =
+			window.__NEXT_DATA__?.props?.pageProps?.accessToken ||
+			document.querySelector('meta[name="csrf-token"]')?.content;
 		if (state) bearer = state;
 	}
 
 	if (!bearer) {
 		console.error('❌ Could not find auth token. Make sure you are signed in to Mixamo.');
-		console.log('💡 Try: copy a Bearer token from any Network request to mixamo.com and set it manually:');
+		console.log(
+			'💡 Try: copy a Bearer token from any Network request to mixamo.com and set it manually:',
+		);
 		console.log('   window.__MIXAMO_TOKEN = "your-token-here"');
 		console.log('   Then re-run this script.');
 		if (window.__MIXAMO_TOKEN) {
@@ -55,9 +58,9 @@
 	}
 
 	const headers = {
-		'Accept': 'application/json',
+		Accept: 'application/json',
 		'Content-Type': 'application/json',
-		'Authorization': `Bearer ${bearer}`,
+		Authorization: `Bearer ${bearer}`,
 		'X-Api-Key': 'mixamo2',
 	};
 
@@ -70,7 +73,10 @@
 
 		if (!characterId) {
 			// Search for Y Bot as fallback
-			const searchRes = await fetch('https://www.mixamo.com/api/v1/characters?page=1&limit=1&query=y+bot', { headers });
+			const searchRes = await fetch(
+				'https://www.mixamo.com/api/v1/characters?page=1&limit=1&query=y+bot',
+				{ headers },
+			);
 			const searchData = await searchRes.json();
 			characterId = searchData.results?.[0]?.id;
 		}
@@ -91,11 +97,13 @@
 			// Search for the animation
 			const searchRes = await fetch(
 				`https://www.mixamo.com/api/v1/products?page=1&limit=10&query=${encodeURIComponent(anim.query)}&type=Motion`,
-				{ headers }
+				{ headers },
 			);
 
 			if (!searchRes.ok) {
-				console.error(`   ❌ Search failed (${searchRes.status}). Token may be expired — refresh the page and try again.`);
+				console.error(
+					`   ❌ Search failed (${searchRes.status}). Token may be expired — refresh the page and try again.`,
+				);
 				return;
 			}
 
@@ -130,11 +138,11 @@
 			console.log(`   ⏳ Processing...`);
 			let downloadUrl = null;
 			for (let i = 0; i < 30; i++) {
-				await new Promise(r => setTimeout(r, 2000));
+				await new Promise((r) => setTimeout(r, 2000));
 
 				const statusRes = await fetch(
 					`https://www.mixamo.com/api/v1/animations/export/${product.id}?character_id=${characterId}`,
-					{ headers }
+					{ headers },
 				);
 				const statusData = await statusRes.json();
 
@@ -165,13 +173,14 @@
 			console.log(`   ✅ ${anim.name}.fbx downloaded!`);
 
 			// Small delay between downloads to be polite
-			await new Promise(r => setTimeout(r, 1500));
-
+			await new Promise((r) => setTimeout(r, 1500));
 		} catch (err) {
 			console.error(`   ❌ Error with "${anim.query}":`, err.message);
 		}
 	}
 
 	console.log('\n🎉 Done! Convert with:');
-	console.log('   python3 scripts/convert-fbx-to-glb.py ~/Downloads/Idle.fbx ~/Downloads/Walking.fbx ~/Downloads/Running.fbx ~/Downloads/Waving.fbx ~/Downloads/Dancing.fbx ~/Downloads/Sitting.fbx ~/Downloads/Jumping.fbx');
+	console.log(
+		'   python3 scripts/convert-fbx-to-glb.py ~/Downloads/Idle.fbx ~/Downloads/Walking.fbx ~/Downloads/Running.fbx ~/Downloads/Waving.fbx ~/Downloads/Dancing.fbx ~/Downloads/Sitting.fbx ~/Downloads/Jumping.fbx',
+	);
 })();

@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Produce a Lobehub plugin manifest so an agent URL renders embodied in Lobehub chat"
+description: 'Produce a Lobehub plugin manifest so an agent URL renders embodied in Lobehub chat'
 ---
 
 # 05-02 · Lobehub plugin manifest
@@ -17,24 +17,24 @@ The user maintains a Lobehub fork. The product's killer demo is: paste an agent 
 ## Read these first
 
 - Lobehub plugin docs (external). Link and summarize in the PR description — Lobehub uses a `lobe-chat-plugin` manifest convention. We need to produce:
-  - A plugin manifest JSON.
-  - An openapi-ish schema describing inputs.
-  - A render hint so Lobehub renders our iframe rather than JSON.
+    - A plugin manifest JSON.
+    - An openapi-ish schema describing inputs.
+    - A render hint so Lobehub renders our iframe rather than JSON.
 - [public/agent/embed.html](../../public/agent/embed.html)
 - Existing `src/element.js` — `<agent-3d>` web component.
 
 ## Build this
 
 1. **New endpoint** `GET /.well-known/lobehub-plugin.json` (or the exact path Lobehub requires — confirm from the docs):
-   - Describes the plugin: name, description, icon, author, homepage.
-   - Declares a `renderer` of type `iframe` pointing at `/agent/{id}/embed?kiosk=1`.
-   - Inputs: `agent_id` (string).
+    - Describes the plugin: name, description, icon, author, homepage.
+    - Declares a `renderer` of type `iframe` pointing at `/agent/{id}/embed?kiosk=1`.
+    - Inputs: `agent_id` (string).
 2. **New endpoint** `POST /api/lobehub/resolve`:
-   - Accepts `{ agent_id }`, returns `{ iframe_url, card_url, name, description }`.
-   - Uses `agent-card.json` internally for the metadata.
+    - Accepts `{ agent_id }`, returns `{ iframe_url, card_url, name, description }`.
+    - Uses `agent-card.json` internally for the metadata.
 3. **Installation snippet** — on `/agent/:id` Share panel, add a "Lobehub" tab with:
-   - A one-click "Install in your Lobehub" link that deep-links into the user's Lobehub fork plugin registry (confirm Lobehub deep-link format from docs).
-   - A manual JSON snippet for users whose Lobehub doesn't support deep-link install.
+    - A one-click "Install in your Lobehub" link that deep-links into the user's Lobehub fork plugin registry (confirm Lobehub deep-link format from docs).
+    - A manual JSON snippet for users whose Lobehub doesn't support deep-link install.
 4. **User's fork** — note in the PR: if the plugin needs to be pre-registered in the fork's plugin registry rather than self-hosted, we add a PR to the fork. Don't write that PR here; flag it as next step.
 
 ## Out of scope

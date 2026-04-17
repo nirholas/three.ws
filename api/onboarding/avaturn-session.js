@@ -44,16 +44,18 @@ export default wrap(async (req, res) => {
 	// Rate-limit on the same bucket as other uploads — 60/hour/user is plenty
 	// for onboarding and bounds abuse cost on the Avaturn API.
 	const rlUser = await limits.upload(userId);
-	if (!rlUser.success) return error(res, 429, 'rate_limited', 'too many avatar attempts, try again later');
+	if (!rlUser.success)
+		return error(res, 429, 'rate_limited', 'too many avatar attempts, try again later');
 	const rlIp = await limits.authIp(clientIp(req));
-	if (!rlIp.success) return error(res, 429, 'rate_limited', 'too many requests from this network');
+	if (!rlIp.success)
+		return error(res, 429, 'rate_limited', 'too many requests from this network');
 
 	if (!env.AVATURN_API_KEY) {
 		return error(
 			res,
 			501,
 			'not_configured',
-			'Avaturn is not configured on this deployment. Set AVATURN_API_KEY.'
+			'Avaturn is not configured on this deployment. Set AVATURN_API_KEY.',
 		);
 	}
 

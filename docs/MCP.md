@@ -11,13 +11,13 @@ MCP-compatible app — list, render, and manage a user's 3D avatars.
 
 ## Tools
 
-| Name | Scope | Description |
-| --- | --- | --- |
-| `list_my_avatars`       | `avatars:read`   | Paginated list of the caller's avatars. |
-| `get_avatar`            | `avatars:read`   | Fetch one avatar by `id` or `slug`. |
-| `search_public_avatars` | —                | Discover public avatars (no auth needed for read). |
+| Name                    | Scope            | Description                                                             |
+| ----------------------- | ---------------- | ----------------------------------------------------------------------- |
+| `list_my_avatars`       | `avatars:read`   | Paginated list of the caller's avatars.                                 |
+| `get_avatar`            | `avatars:read`   | Fetch one avatar by `id` or `slug`.                                     |
+| `search_public_avatars` | —                | Discover public avatars (no auth needed for read).                      |
 | `render_avatar`         | `avatars:read`   | Returns ready-to-embed `<model-viewer>` HTML. Use as a Claude artifact. |
-| `delete_avatar`         | `avatars:delete` | Soft-delete an avatar you own. |
+| `delete_avatar`         | `avatars:delete` | Soft-delete an avatar you own.                                          |
 
 ## Auth: OAuth 2.1
 
@@ -31,7 +31,7 @@ Claude handles the handshake automatically via dynamic client registration:
 Metadata discovery:
 
 - Authorization Server: `GET /.well-known/oauth-authorization-server`
-- Protected Resource:   `GET /.well-known/oauth-protected-resource`
+- Protected Resource: `GET /.well-known/oauth-protected-resource`
 
 On a 401 from `/api/mcp`, the `WWW-Authenticate` header points clients at the
 protected-resource metadata URL, per RFC 9728.
@@ -39,7 +39,7 @@ protected-resource metadata URL, per RFC 9728.
 ## Auth: API key
 
 For server-to-server usage (scripts, agents, CI), create a key in the dashboard
-under *API keys* and pass it as a bearer token:
+under _API keys_ and pass it as a bearer token:
 
 ```bash
 curl -X POST https://3dagent.vercel.app/api/mcp \
@@ -62,12 +62,12 @@ and emit the returned HTML as an inline artifact.
 
 ## Plans & quotas
 
-| Plan | Avatars | Size / file | Total storage | MCP calls / day |
-| --- | --- | --- | --- | --- |
-| Free       | 10     | 25 MB  | 250 MB   | 1 000     |
-| Pro        | 500    | 50 MB  | 25 GB    | 50 000    |
-| Team       | 5 000  | 100 MB | 500 GB   | 500 000   |
-| Enterprise | 100 000| 500 MB | 10 TB    | 10 000 000|
+| Plan       | Avatars | Size / file | Total storage | MCP calls / day |
+| ---------- | ------- | ----------- | ------------- | --------------- |
+| Free       | 10      | 25 MB       | 250 MB        | 1 000           |
+| Pro        | 500     | 50 MB       | 25 GB         | 50 000          |
+| Team       | 5 000   | 100 MB      | 500 GB        | 500 000         |
+| Enterprise | 100 000 | 500 MB      | 10 TB         | 10 000 000      |
 
 ## Credits
 

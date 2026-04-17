@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Embed code generator — copy-paste snippets for iframe, web component, React"
+description: 'Embed code generator — copy-paste snippets for iframe, web component, React'
 ---
 
 # Stack Layer 4: Embed Code Generator
@@ -29,19 +29,26 @@ For the agent to appear in third-party sites, the owner needs one-click copy-pas
 Live-update three snippets in tabs as settings change:
 
 **iframe**:
+
 ```html
-<iframe src="https://3dagent.vercel.app/agent/satoshi?kiosk=1&theme=dark"
-        width="600" height="600" style="border:0"
-        allow="camera; microphone; xr-spatial-tracking"></iframe>
+<iframe
+	src="https://3dagent.vercel.app/agent/satoshi?kiosk=1&theme=dark"
+	width="600"
+	height="600"
+	style="border:0"
+	allow="camera; microphone; xr-spatial-tracking"
+></iframe>
 ```
 
 **Web component** (using [src/element.js](src/element.js)):
+
 ```html
 <script src="https://3dagent.vercel.app/dist-lib/agent-3d.js"></script>
 <agent-3d slug="satoshi" theme="dark" mode="kiosk"></agent-3d>
 ```
 
 **React** (thin wrapper note — the lib is framework-agnostic):
+
 ```jsx
 <iframe src="https://3dagent.vercel.app/agent/satoshi?kiosk=1" width={600} height={600} />
 ```

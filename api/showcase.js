@@ -105,7 +105,10 @@ function parseParams(sp) {
 	const chainParam = sp.get('chain') || '';
 	const explicitChains = [];
 	if (chainParam) {
-		for (const p of chainParam.split(',').map((s) => s.trim()).filter(Boolean)) {
+		for (const p of chainParam
+			.split(',')
+			.map((s) => s.trim())
+			.filter(Boolean)) {
 			const n = Number(p);
 			if (!Number.isInteger(n) || !CHAIN_BY_ID[n]) {
 				return { error: `unknown chain: ${p}` };

@@ -36,6 +36,7 @@ npm run build
 ```
 
 Manually:
+
 - `curl -sX POST /api/auth/siwe/verify -d '{}'` → 403 `invalid_request` with no CSRF.
 - Fresh nonce → verify flow works end-to-end in the browser.
 

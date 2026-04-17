@@ -26,7 +26,7 @@ const IPFS_GATEWAYS = [
 export function uriToHttp(uri) {
 	if (!uri) return '';
 	if (uri.startsWith('ipfs://')) return IPFS_GATEWAYS[0](uri.slice(7));
-	if (uri.startsWith('ar://'))   return `https://arweave.net/${uri.slice(5)}`;
+	if (uri.startsWith('ar://')) return `https://arweave.net/${uri.slice(5)}`;
 	return uri;
 }
 
@@ -82,7 +82,9 @@ export async function getAgentsByOwner(registry, address, opts = {}) {
 		try {
 			const currentOwner = await registry.ownerOf(id);
 			if (currentOwner.toLowerCase() === address.toLowerCase()) tokenIds.push(id);
-		} catch { /* burned — skip */ }
+		} catch {
+			/* burned — skip */
+		}
 	}
 	return { tokenIds, balance, strategy: 'event-scan' };
 }
@@ -99,8 +101,16 @@ export async function fetchTokenMeta(registry, tokenId) {
 	let meta = null;
 	let owner = null;
 
-	try { uri = await registry.tokenURI(tokenId); } catch { /* no URI set */ }
-	try { owner = await registry.ownerOf(tokenId); } catch { /* burned */ }
+	try {
+		uri = await registry.tokenURI(tokenId);
+	} catch {
+		/* no URI set */
+	}
+	try {
+		owner = await registry.ownerOf(tokenId);
+	} catch {
+		/* burned */
+	}
 
 	if (uri) {
 		const urls = ipfsFallbackUrls(uri);
@@ -112,7 +122,9 @@ export async function fetchTokenMeta(registry, tokenId) {
 					meta = await r.json();
 					break;
 				}
-			} catch { /* try next gateway */ }
+			} catch {
+				/* try next gateway */
+			}
 		}
 	}
 	return { id: tokenId, uri, meta, owner };

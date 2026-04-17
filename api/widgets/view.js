@@ -12,18 +12,18 @@
  * the dashboard does.
  */
 
-import { sql }                from '../_lib/db.js';
-import { cors, wrap, error }  from '../_lib/http.js';
+import { sql } from '../_lib/db.js';
+import { cors, wrap, error } from '../_lib/http.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
 	if (req.method !== 'POST') return error(res, 405, 'method_not_allowed', 'POST only');
 
-	const url      = new URL(req.url, 'http://x');
+	const url = new URL(req.url, 'http://x');
 	const widgetId = url.searchParams.get('id');
 	if (!widgetId) return error(res, 400, 'invalid_request', 'id required');
 
-	const country     = headerOnce(req, 'x-vercel-ip-country') || null;
+	const country = headerOnce(req, 'x-vercel-ip-country') || null;
 	const refererHost = parseRefererHost(req.headers.referer);
 
 	try {
@@ -53,5 +53,9 @@ function headerOnce(req, name) {
 
 function parseRefererHost(referer) {
 	if (!referer) return null;
-	try { return new URL(referer).hostname || null; } catch { return null; }
+	try {
+		return new URL(referer).hostname || null;
+	} catch {
+		return null;
+	}
 }

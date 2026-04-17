@@ -9,25 +9,25 @@ Should be scheduled **after** tasks 04, 06, 07, 08, 14, 16, 18 are in.
 ## Goal
 
 1. A new user visits the app and within 90 seconds has:
-   - A personalized 3D avatar based on their photo.
-   - A name entered.
-   - A first conversational exchange with the agent.
-   - Their state persisted locally for future visits.
+    - A personalized 3D avatar based on their photo.
+    - A name entered.
+    - A first conversational exchange with the agent.
+    - Their state persisted locally for future visits.
 2. Returning users land directly in the main experience; onboarding does not re-prompt.
 3. Onboarding is skippable — "Use a default avatar and explore" route always available.
 
 ## Deliverable
 
 1. **Onboarding controller** `src/onboarding/flow.js`:
-   - Steps: `welcome → choose-capture → capture → fast-generating → fast-preview → name → ready` (with `hd-upgrade` happening in the background after `fast-preview`).
-   - State machine, explicit transitions, every step has a "back" exit.
+    - Steps: `welcome → choose-capture → capture → fast-generating → fast-preview → name → ready` (with `hd-upgrade` happening in the background after `fast-preview`).
+    - State machine, explicit transitions, every step has a "back" exit.
 2. **Welcome** — one-screen hero: "Meet your agent." CTA: "Create my avatar" / secondary "Use a default".
 3. **Choose capture** — two tiles: "Scan QR with phone" (opens task 06 desktop QR UI) / "Use webcam" (opens task 04). Third option: "Upload three photos" (file picker, gates only by file count + type).
 4. **Fast generating** — loading screen with the fast-path (task 07) running. Subtle copy: "Meeting you…" — 3–5s max on a mid-range machine.
 5. **Fast preview** — the avatar appears, rotating in the hero spot. User can:
-   - **Retake** — back to capture.
-   - **Looks good** — proceed.
-   - **Tweak** — open the editor panel (task 16) inline; finishing takes them to "name".
+    - **Retake** — back to capture.
+    - **Looks good** — proceed.
+    - **Tweak** — open the editor panel (task 16) inline; finishing takes them to "name".
 6. **HD upgrade (background)** — task 08 runs asynchronously. On completion, a small "HD-ready" toast lets the user accept/dismiss. Accepting hot-swaps the avatar without interrupting flow.
 7. **Name** — single input, default suggestion "My Agent". Stored to IndexedDB + sent as system-prompt context to the brain (task 14).
 8. **Ready** — opens the agent panel with a welcome message that uses the user's name and avatar description. Agent (task 14 brain) already knows the viewer state.

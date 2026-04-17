@@ -3,6 +3,7 @@
 ## Why
 
 Every host (LobeHub, Claude Artifact, a third-party chat) needs the same surface area:
+
 ```js
 import { mountAgent } from '@3dagent/embed';
 const handle = mountAgent(element, { agentId: 'agt_abc' });
@@ -50,15 +51,15 @@ export interface AgentHandle {
 }
 
 export interface MountOptions {
-	agentId?:       string;
-	agentAddress?:  string;
-	agentName?:     string;
-	src?:           string;          // manifest URL alternative
-	origin?:        string;          // default 'https://3dagent.vercel.app'
+	agentId?: string;
+	agentAddress?: string;
+	agentName?: string;
+	src?: string; // manifest URL alternative
+	origin?: string; // default 'https://3dagent.vercel.app'
 	transparentBg?: boolean;
-	kiosk?:         boolean;
-	width?:         string;          // default '100%'
-	height?:        string;          // default '100%'
+	kiosk?: boolean;
+	width?: string; // default '100%'
+	height?: string; // default '100%'
 }
 
 export function mountAgent(target: HTMLElement, opts: MountOptions): AgentHandle;
@@ -69,12 +70,14 @@ export function mountAgent(target: HTMLElement, opts: MountOptions): AgentHandle
 The package creates an iframe (`origin + '/agent/' + id + '/embed'`) inside `target` and bridges via `postMessage`. The bridge vocabulary already exists in [public/agent/embed.html](../../public/agent/embed.html) — reuse it verbatim.
 
 Events (`event.data.type`):
+
 - `ready` — iframe loaded, agent mounted
 - `speak` — `{ text, sentiment }`
 - `action` — `{ type, payload }`
 - `error` — `{ message, code }`
 
 Imperative methods post messages:
+
 - `say(text)` → `{ type: 'say', text }`
 - `playClip(name)` → `{ type: 'play-clip', name }`
 - `setExpression(name, weight)` → `{ type: 'expression', name, weight }`
@@ -101,7 +104,7 @@ Also produce an IIFE build at `packages/embed/dist/embed.iife.js` and host under
 ```html
 <script src="https://3dagent.vercel.app/dist-lib/embed.iife.js"></script>
 <script>
-  window.Agent3D.mountAgent(document.getElementById('stage'), { agentAddress: '0xabc…' });
+	window.Agent3D.mountAgent(document.getElementById('stage'), { agentAddress: '0xabc…' });
 </script>
 ```
 

@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Kiosk mode polish — minimal chrome, responsive to parent sizing, fast first paint"
+description: 'Kiosk mode polish — minimal chrome, responsive to parent sizing, fast first paint'
 ---
 
 # Stack Layer 4: Kiosk Mode Polish
@@ -40,11 +40,13 @@ description: "Kiosk mode polish — minimal chrome, responsive to parent sizing,
 ### Parent-child messaging
 
 Accept `postMessage` from the parent:
+
 - `{ type: 'agent.setSkill', id: 'greet' }` → triggers a skill.
 - `{ type: 'agent.setEmotion', blend: { curious: 0.8 } }` → overrides emotional state temporarily.
 - `{ type: 'agent.reload' }` → re-fetch and re-render.
 
 Post back to parent:
+
 - `{ type: 'agent.ready', avatarId }` on first render.
 - `{ type: 'agent.skillResult', id, result }` on skill completion.
 

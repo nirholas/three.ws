@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Make the deployment actually observable — error tracking, usage metrics, health checks"
+description: 'Make the deployment actually observable — error tracking, usage metrics, health checks'
 ---
 
 # 07-01 · Production readiness
@@ -15,16 +15,16 @@ None. Can be done anytime after pillar 1 ships.
 
 ## Read these first
 
-- [api/_lib/http.js](../../api/_lib/http.js) — `wrap()` catches all unhandled errors. Extend it.
-- [api/_lib/env.js](../../api/_lib/env.js) — env var access pattern.
-- [api/_lib/rate-limit.js](../../api/_lib/rate-limit.js) — Upstash Redis already a dep.
+- [api/\_lib/http.js](../../api/_lib/http.js) — `wrap()` catches all unhandled errors. Extend it.
+- [api/\_lib/env.js](../../api/_lib/env.js) — env var access pattern.
+- [api/\_lib/rate-limit.js](../../api/_lib/rate-limit.js) — Upstash Redis already a dep.
 
 ## Build this
 
 ### 1. Error reporting
 
 - Add Sentry (or a simpler equivalent like Axiom / Logtail) as the error sink. Sentry is the conservative choice — the `@sentry/node` SDK works in Vercel functions.
-- Initialize at the top of [api/_lib/http.js](../../api/_lib/http.js)'s `wrap` helper.
+- Initialize at the top of [api/\_lib/http.js](../../api/_lib/http.js)'s `wrap` helper.
 - Tag events with: `endpoint` (req.url), `user_id` (if session), `release` (git sha at build time).
 - Env: `SENTRY_DSN`. If unset, log to stderr and no-op on network — do not crash.
 
@@ -50,10 +50,10 @@ None. Can be done anytime after pillar 1 ships.
 ### 5. Deploy script
 
 - Add a `scripts/deploy-check.sh` that:
-  1. Runs `npm run build`.
-  2. POSTs to `/api/health` on the current Vercel preview URL — fails if not 200.
-  3. Runs `scripts/smoke-stack.sh` (from prompt `00-stack-e2e-smoke.md`).
-  4. Only on green, prints the promote-to-prod command.
+    1. Runs `npm run build`.
+    2. POSTs to `/api/health` on the current Vercel preview URL — fails if not 200.
+    3. Runs `scripts/smoke-stack.sh` (from prompt `00-stack-e2e-smoke.md`).
+    4. Only on green, prints the promote-to-prod command.
 
 Do not auto-promote. Deploys are still manual.
 

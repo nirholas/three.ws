@@ -3,6 +3,7 @@
 ## The end state
 
 A user's agent exists on-chain. The record contains:
+
 - owner wallet
 - agent id (also an NFT or ERC-8004 entry)
 - GLB URI (IPFS or Arweave for permanence)
@@ -19,13 +20,13 @@ From any host (Claude, LobeHub, the user's personal site, a random iframe on X),
 
 ## Prompts in this band
 
-| # | File | Depends on |
-|---|---|---|
-| 01 | [erc8004-write-flow.md](./01-erc8004-write-flow.md) | contracts deployed |
-| 02 | [ipfs-arweave-pinning.md](./02-ipfs-arweave-pinning.md) | — |
-| 03 | [agent-by-address-resolver.md](./03-agent-by-address-resolver.md) | 01, 02 |
-| 04 | [ens-naming.md](./04-ens-naming.md) | 03 |
-| 05 | [action-provenance-signing.md](./05-action-provenance-signing.md) | band 1 wallet auth |
+| #   | File                                                              | Depends on         |
+| --- | ----------------------------------------------------------------- | ------------------ |
+| 01  | [erc8004-write-flow.md](./01-erc8004-write-flow.md)               | contracts deployed |
+| 02  | [ipfs-arweave-pinning.md](./02-ipfs-arweave-pinning.md)           | —                  |
+| 03  | [agent-by-address-resolver.md](./03-agent-by-address-resolver.md) | 01, 02             |
+| 04  | [ens-naming.md](./04-ens-naming.md)                               | 03                 |
+| 05  | [action-provenance-signing.md](./05-action-provenance-signing.md) | band 1 wallet auth |
 
 ## Done = merged when
 

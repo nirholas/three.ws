@@ -18,15 +18,15 @@ Ship `src/pinning/` with a `Pinner` interface, three implementations (web3.stora
 4. **`src/pinning/pinata.js`** — `POST /pinning/pinFileToIPFS` with JWT auth.
 5. **`src/pinning/null-dev.js`** — hashes the blob with SHA-256, returns a fake `bafkdev-...` CID, stores content in a local `Map` so fetches by that CID resolve during dev.
 6. **Pinner interface contract**:
-	 - `async pinBlob(blob: Blob | Uint8Array, opts?: { name, wrapInDir? }): Promise<{ cid: string, size: number }>`
-	 - `async pinDirectory(files: Array<{ path, data }>): Promise<{ cid, size }>` — required for bundle-based pins (manifest + body + skills).
-	 - `async unpin(cid): Promise<void>` — optional; throw NotImplemented if unsupported.
+    - `async pinBlob(blob: Blob | Uint8Array, opts?: { name, wrapInDir? }): Promise<{ cid: string, size: number }>`
+    - `async pinDirectory(files: Array<{ path, data }>): Promise<{ cid, size }>` — required for bundle-based pins (manifest + body + skills).
+    - `async unpin(cid): Promise<void>` — optional; throw NotImplemented if unsupported.
 7. **Refactor call sites**:
-	 - [src/erc8004/agent-registry.js](../../src/erc8004/agent-registry.js) — replace `pinToIPFS` with `getPinner().pinBlob()`. Preserve the existing `pinToIPFS` export as a thin wrapper for backwards compat.
-	 - Ensure the encrypted-memory task ([04](./04-encrypted-memory.md)) and manifest builder task ([07](./07-manifest-builder-ui.md)) wire to `getPinner()` — not to a specific backend.
+    - [src/erc8004/agent-registry.js](../../src/erc8004/agent-registry.js) — replace `pinToIPFS` with `getPinner().pinBlob()`. Preserve the existing `pinToIPFS` export as a thin wrapper for backwards compat.
+    - Ensure the encrypted-memory task ([04](./04-encrypted-memory.md)) and manifest builder task ([07](./07-manifest-builder-ui.md)) wire to `getPinner()` — not to a specific backend.
 8. **Config surface**:
-	 - `window.__agent3dPinner` — if set (to a Pinner instance or a config object), initialize the process-wide pinner from it.
-	 - Server-side config passthrough: the hosted editor can read env vars (separate task for the backend; this task just defines the shape).
+    - `window.__agent3dPinner` — if set (to a Pinner instance or a config object), initialize the process-wide pinner from it.
+    - Server-side config passthrough: the hosted editor can read env vars (separate task for the backend; this task just defines the shape).
 
 ## Audit checklist
 

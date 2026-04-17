@@ -21,18 +21,18 @@ After this task:
 
 1. **Fetch upstream** — `git clone https://github.com/M3-org/CharacterStudio /tmp/character-studio` (shallow clone fine). Note the commit SHA; record it in `NOTICE`.
 2. **Identify the core** — in upstream, locate `CharacterManager` and the modules it directly imports. Typically: character loading, asset swapping, VRM manipulation, export-to-GLB helpers. Do NOT pull in:
-   - React components
-   - Next.js routing
-   - UI styling
-   - Anything under `src/components/` that imports JSX
+    - React components
+    - Next.js routing
+    - UI styling
+    - Anything under `src/components/` that imports JSX
 3. **Copy the minimal set** into `src/vendor/character-studio/`. Preserve the original relative import paths within that tree; adjust only the entry point.
 4. **Adapter** `src/character/character-manager.js` — exports a class `CharacterManager` (our name, wraps the upstream one) with:
-   - `async loadManifest(url)` — loads an asset manifest JSON.
-   - `async loadTrait(traitGroup, traitId)` — e.g., `loadTrait('hair', 'hair-03')`.
-   - `async removeTrait(traitGroup)`.
-   - `getScene()` — returns a `THREE.Object3D` to add to the scene.
-   - `async exportVRM()` / `async exportGLB()` — returns a `Blob`.
-   - `dispose()`.
+    - `async loadManifest(url)` — loads an asset manifest JSON.
+    - `async loadTrait(traitGroup, traitId)` — e.g., `loadTrait('hair', 'hair-03')`.
+    - `async removeTrait(traitGroup)`.
+    - `getScene()` — returns a `THREE.Object3D` to add to the scene.
+    - `async exportVRM()` / `async exportGLB()` — returns a `Blob`.
+    - `dispose()`.
 5. **Manifest bootstrap** — create `public/character-manifest.example.json` showing the schema. Task 17 replaces this with a real asset library.
 6. **Viewer hook** — when a `CharacterManager` instance is created and `getScene()` is called, the consumer (future editor UI) decides when to add it. No automatic wiring in the viewer — keep the runtime pluggable.
 7. **License handling** — copy upstream `LICENSE` verbatim to `src/vendor/character-studio/NOTICE` with a prepended line: `Vendored from https://github.com/M3-org/CharacterStudio @ <SHA>`.
@@ -60,13 +60,13 @@ After this task:
 1. `node --check` each new JS file.
 2. `npx vite build` passes.
 3. Smoke test in DevTools console:
-   ```js
-   const { CharacterManager } = await import('/src/character/character-manager.js');
-   const mgr = new CharacterManager({ renderer: VIEWER.app.viewer.renderer });
-   await mgr.loadManifest('/character-manifest.example.json');
-   VIEWER.app.viewer.scene.add(mgr.getScene());
-   ```
-   Avatar appears. No console errors.
+    ```js
+    const { CharacterManager } = await import('/src/character/character-manager.js');
+    const mgr = new CharacterManager({ renderer: VIEWER.app.viewer.renderer });
+    await mgr.loadManifest('/character-manifest.example.json');
+    VIEWER.app.viewer.scene.add(mgr.getScene());
+    ```
+    Avatar appears. No console errors.
 4. `mgr.dispose()` removes the character and frees GPU resources (verify via `renderer.info.memory`).
 
 ## Scope boundaries — do NOT do these

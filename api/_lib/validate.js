@@ -17,10 +17,7 @@ export const avatarVisibility = z.enum(['private', 'unlisted', 'public']);
 // Avatars are GLB/GLTF models. Lock the content-type allowlist here so both
 // the presign URL and the stored object can only ever be model binaries —
 // prevents an attacker uploading HTML/SVG to the public CDN for stored XSS.
-export const avatarContentType = z.enum([
-	'model/gltf-binary',
-	'model/gltf+json',
-]);
+export const avatarContentType = z.enum(['model/gltf-binary', 'model/gltf+json']);
 
 export const username = z
 	.string()
@@ -55,20 +52,36 @@ export const createAvatarBody = z.object({
 	parent_avatar_id: z.string().uuid().optional(),
 	source_meta: z.record(z.any()).default({}),
 	content_type: avatarContentType.default('model/gltf-binary'),
-	size_bytes: z.number().int().positive().max(500 * 1024 * 1024),
-	checksum_sha256: z.string().regex(/^[a-f0-9]{64}$/).optional(),
+	size_bytes: z
+		.number()
+		.int()
+		.positive()
+		.max(500 * 1024 * 1024),
+	checksum_sha256: z
+		.string()
+		.regex(/^[a-f0-9]{64}$/)
+		.optional(),
 });
 
 export const presignUploadBody = z.object({
-	size_bytes: z.number().int().positive().max(500 * 1024 * 1024),
+	size_bytes: z
+		.number()
+		.int()
+		.positive()
+		.max(500 * 1024 * 1024),
 	content_type: avatarContentType.default('model/gltf-binary'),
-	checksum_sha256: z.string().regex(/^[a-f0-9]{64}$/).optional(),
+	checksum_sha256: z
+		.string()
+		.regex(/^[a-f0-9]{64}$/)
+		.optional(),
 });
 
 export function parse(schema, input) {
 	const res = schema.safeParse(input);
 	if (!res.success) {
-		const err = new Error(res.error.issues.map((i) => `${i.path.join('.') || 'body'}: ${i.message}`).join('; '));
+		const err = new Error(
+			res.error.issues.map((i) => `${i.path.join('.') || 'body'}: ${i.message}`).join('; '),
+		);
 		err.status = 400;
 		err.code = 'validation_error';
 		throw err;

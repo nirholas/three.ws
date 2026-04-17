@@ -9,7 +9,8 @@
 	if (!container) return;
 
 	// Setup container
-	container.style.cssText = 'position: relative; width: 100%; height: 100%; min-height: 400px; background: #000;';
+	container.style.cssText =
+		'position: relative; width: 100%; height: 100%; min-height: 400px; background: #000;';
 
 	// Add caption
 	const caption = document.createElement('div');
@@ -31,7 +32,9 @@
 	container.appendChild(caption);
 
 	// Get agent ID from config or data attributes
-	const scriptTag = document.querySelector('script[type="application/json"][id="agent3d-config"]');
+	const scriptTag = document.querySelector(
+		'script[type="application/json"][id="agent3d-config"]',
+	);
 	const config = scriptTag ? JSON.parse(scriptTag.textContent) : {};
 	const agentId = config.agentId || container.dataset.agentId;
 	const origin = config.origin || container.dataset.origin || 'https://3dagent.vercel.app';
@@ -44,7 +47,9 @@
 	try {
 		// Load three.js modules from CDN
 		const THREE = await import('https://esm.sh/three@0.176.0');
-		const { GLTFLoader } = await import('https://esm.sh/three@0.176.0/examples/jsm/loaders/GLTFLoader.js');
+		const { GLTFLoader } = await import(
+			'https://esm.sh/three@0.176.0/examples/jsm/loaders/GLTFLoader.js'
+		);
 		const { OrbitControls } = await import(
 			'https://esm.sh/three@0.176.0/examples/jsm/controls/OrbitControls.js'
 		);

@@ -15,6 +15,7 @@
 ### Attribute audit
 
 Read [src/element.js](../../src/element.js) + [specs/EMBED_SPEC.md](../../specs/EMBED_SPEC.md). List every attribute the element reads. For each:
+
 - Name (kebab-case as attribute, camelCase as property).
 - Accepted values + type.
 - Default when absent.
@@ -23,6 +24,7 @@ Read [src/element.js](../../src/element.js) + [specs/EMBED_SPEC.md](../../specs/
 ### Spec update
 
 Rewrite the attribute table in [specs/EMBED_SPEC.md](../../specs/EMBED_SPEC.md). Add these sections if missing:
+
 - **Loading** — `eager` vs IntersectionObserver lazy-load.
 - **Kiosk vs interactive** — `kiosk` hides all chrome.
 - **Brain** — `brain="none"` (pattern match) vs `brain="anthropic"` + `proxy-url`.
@@ -36,6 +38,7 @@ Check that `element.js` defaults match the spec. Fix mismatches by updating the 
 ### Example gallery
 
 Add two new worked examples to [specs/EMBED_SPEC.md](../../specs/EMBED_SPEC.md):
+
 - Minimum embed (just `agent-id`).
 - Kiosk with a custom brain proxy.
 

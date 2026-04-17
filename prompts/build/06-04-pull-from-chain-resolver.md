@@ -2,7 +2,7 @@
 
 ## Why it matters
 
-This is the payoff for Layer 6. Given an onchain agent id, any host — Lobehub, Claude, a cold wallet, a random web page — should be able to load and render the agent *without* our server. The resolver is the code path that turns `erc8004://<chain>:<id>` into a runnable manifest + GLB, using only public RPC and IPFS. If this works, the product escapes us.
+This is the payoff for Layer 6. Given an onchain agent id, any host — Lobehub, Claude, a cold wallet, a random web page — should be able to load and render the agent _without_ our server. The resolver is the code path that turns `erc8004://<chain>:<id>` into a runnable manifest + GLB, using only public RPC and IPFS. If this works, the product escapes us.
 
 ## Context
 
@@ -26,13 +26,13 @@ Accept any of:
 
 ```js
 export async function resolveAgent(urn, { rpcUrl, ipfsGateway } = {}) {
-  // 1. parse urn -> { chain_id, onchain_id }
-  // 2. fetch IdentityRegistry(chain_id).getAgent(onchain_id)
-  // 3. read manifest_cid, controller, updated_at
-  // 4. fetch manifest JSON via ipfs gateway(s) with fallback
-  // 5. resolve GLB and thumbnails (ipfs:// → https:// via gateway)
-  // 6. attach reputation / validation rollups (lightweight; 06-02/06-03)
-  // 7. return a normalized manifest object
+	// 1. parse urn -> { chain_id, onchain_id }
+	// 2. fetch IdentityRegistry(chain_id).getAgent(onchain_id)
+	// 3. read manifest_cid, controller, updated_at
+	// 4. fetch manifest JSON via ipfs gateway(s) with fallback
+	// 5. resolve GLB and thumbnails (ipfs:// → https:// via gateway)
+	// 6. attach reputation / validation rollups (lightweight; 06-02/06-03)
+	// 7. return a normalized manifest object
 }
 ```
 

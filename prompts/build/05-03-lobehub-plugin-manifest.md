@@ -4,7 +4,7 @@
 
 ## Why it matters
 
-User has a Lobehub fork and it's the *primary* integration target per the priority stack. Lobehub plugins are installed via a plugin manifest (JSON) that registers tools + UI surfaces. Our avatar needs to show up in Lobehub as an installable plugin so any Lobehub user can add their 3D agent to their chat.
+User has a Lobehub fork and it's the _primary_ integration target per the priority stack. Lobehub plugins are installed via a plugin manifest (JSON) that registers tools + UI surfaces. Our avatar needs to show up in Lobehub as an installable plugin so any Lobehub user can add their 3D agent to their chat.
 
 ## What to build
 
@@ -12,11 +12,11 @@ A public endpoint `GET /api/agents/:id/lobe-plugin.json` that returns a **Lobehu
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| [api/agents.js](../../api/agents.js) | Public fields of an agent. |
-| `api/agents/[id]/artifact.js` (from 05-01) | Artifact URL — the Lobehub plugin uses this (or a Lobehub-specific variant). |
-| Lobehub plugin docs (for your reference; user has the fork — don't assume an API that doesn't exist in the fork) | Manifest schema. |
+| File                                                                                                             | Why                                                                          |
+| :--------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------- |
+| [api/agents.js](../../api/agents.js)                                                                             | Public fields of an agent.                                                   |
+| `api/agents/[id]/artifact.js` (from 05-01)                                                                       | Artifact URL — the Lobehub plugin uses this (or a Lobehub-specific variant). |
+| Lobehub plugin docs (for your reference; user has the fork — don't assume an API that doesn't exist in the fork) | Manifest schema.                                                             |
 
 ## Build this
 
@@ -29,32 +29,40 @@ A public endpoint `GET /api/agents/:id/lobe-plugin.json` that returns a **Lobehu
 
 ```json
 {
-  "$schema": "https://chat-plugins.lobehub.com/schema/plugin.json",
-  "identifier": "3d-agent-<agentId>",
-  "api": [
-    {
-      "url": "https://3dagent.vercel.app/api/agents/<agentId>/lobe/tool/<name>",
-      "name": "emote",
-      "description": "Have the agent express an emotion: celebrate, concern, curiosity, empathy, patience, neutral.",
-      "parameters": { "type": "object", "properties": { "emotion": { "type": "string" }, "weight": { "type": "number" } }, "required": ["emotion"] }
-    },
-    {
-      "url": "https://3dagent.vercel.app/api/agents/<agentId>/lobe/tool/gesture",
-      "name": "gesture",
-      "description": "Trigger a one-shot gesture.",
-      "parameters": { "type": "object", "properties": { "name": { "type": "string" } }, "required": ["name"] }
-    }
-  ],
-  "ui": {
-    "url": "https://3dagent.vercel.app/api/agents/<agentId>/lobe-ui.html",
-    "height": 420
-  },
-  "meta": {
-    "avatar": "<agent.avatar_thumbnail_url or favicon>",
-    "title": "<agent.name>",
-    "description": "<agent.description>",
-    "tags": ["3d", "avatar", "embodied"]
-  }
+	"$schema": "https://chat-plugins.lobehub.com/schema/plugin.json",
+	"identifier": "3d-agent-<agentId>",
+	"api": [
+		{
+			"url": "https://3dagent.vercel.app/api/agents/<agentId>/lobe/tool/<name>",
+			"name": "emote",
+			"description": "Have the agent express an emotion: celebrate, concern, curiosity, empathy, patience, neutral.",
+			"parameters": {
+				"type": "object",
+				"properties": { "emotion": { "type": "string" }, "weight": { "type": "number" } },
+				"required": ["emotion"]
+			}
+		},
+		{
+			"url": "https://3dagent.vercel.app/api/agents/<agentId>/lobe/tool/gesture",
+			"name": "gesture",
+			"description": "Trigger a one-shot gesture.",
+			"parameters": {
+				"type": "object",
+				"properties": { "name": { "type": "string" } },
+				"required": ["name"]
+			}
+		}
+	],
+	"ui": {
+		"url": "https://3dagent.vercel.app/api/agents/<agentId>/lobe-ui.html",
+		"height": 420
+	},
+	"meta": {
+		"avatar": "<agent.avatar_thumbnail_url or favicon>",
+		"title": "<agent.name>",
+		"description": "<agent.description>",
+		"tags": ["3d", "avatar", "embodied"]
+	}
 }
 ```
 
@@ -63,6 +71,7 @@ A public endpoint `GET /api/agents/:id/lobe-plugin.json` that returns a **Lobehu
 ### 2. UI iframe endpoint
 
 `GET /api/agents/:id/lobe-ui.html` — a Lobehub-optimized variant of the artifact. It's the artifact HTML from 05-01 with:
+
 - Lobehub-friendly CSS (full width, 420px height default).
 - postMessage origin allowlist includes Lobehub-fork hostnames.
 - Chat log hook: listens for `{ type: 'lobe:message', payload: { role, content } }` and when `role === 'assistant'`, emits `speak` + derived emotion.
@@ -71,11 +80,11 @@ A public endpoint `GET /api/agents/:id/lobe-plugin.json` that returns a **Lobehu
 
 Each tool in the manifest maps to `POST /api/agents/:id/lobe/tool/:name`:
 
-| Tool | Effect |
-|:---|:---|
-| `emote` | Emits an emote event to the agent's runtime bus (via the UI iframe's channel). |
-| `gesture` | Same. |
-| `speak` | Feeds an override line to the agent's TTS (if enabled). |
+| Tool      | Effect                                                                         |
+| :-------- | :----------------------------------------------------------------------------- |
+| `emote`   | Emits an emote event to the agent's runtime bus (via the UI iframe's channel). |
+| `gesture` | Same.                                                                          |
+| `speak`   | Feeds an override line to the agent's TTS (if enabled).                        |
 
 These endpoints do NOT call our server mutating APIs — they post to a broadcast channel the UI iframe listens to. Effectively a thin proxy to `postMessage` since Lobehub's plugin runtime is disconnected from our iframe.
 
@@ -101,11 +110,13 @@ Plus the install instructions ("Paste this URL in Lobehub → Settings → Plugi
 ## Deliverables
 
 **New:**
+
 - `api/agents/[id]/lobe-plugin.js` — manifest endpoint.
 - `api/agents/[id]/lobe-ui.js` — UI iframe variant.
 - `api/agents/[id]/lobe/tool/[name].js` — tool proxy endpoints.
 
 **Modified:**
+
 - `src/components/snippet-picker.jsx` (from 04-06) — `lobehub-plugin` target returns the manifest URL + install instructions.
 - `vercel.json` — routes.
 

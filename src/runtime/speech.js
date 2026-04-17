@@ -19,9 +19,19 @@ export class BrowserTTS {
 			utter.lang = this.lang;
 			const voice = this._pickVoice();
 			if (voice) utter.voice = voice;
-			utter.onstart = () => { this._speaking = true; onStart?.(); };
-			utter.onend = () => { this._speaking = false; onEnd?.(); resolve(); };
-			utter.onerror = () => { this._speaking = false; resolve(); };
+			utter.onstart = () => {
+				this._speaking = true;
+				onStart?.();
+			};
+			utter.onend = () => {
+				this._speaking = false;
+				onEnd?.();
+				resolve();
+			};
+			utter.onerror = () => {
+				this._speaking = false;
+				resolve();
+			};
 			window.speechSynthesis.speak(utter);
 		});
 	}
@@ -31,13 +41,17 @@ export class BrowserTTS {
 		this._speaking = false;
 	}
 
-	get speaking() { return this._speaking; }
+	get speaking() {
+		return this._speaking;
+	}
 
 	_pickVoice() {
 		if (!('speechSynthesis' in window)) return null;
 		const voices = window.speechSynthesis.getVoices();
 		if (this.voiceId && this.voiceId !== 'default') {
-			const found = voices.find((v) => v.name === this.voiceId || v.voiceURI === this.voiceId);
+			const found = voices.find(
+				(v) => v.name === this.voiceId || v.voiceURI === this.voiceId,
+			);
 			if (found) return found;
 		}
 		return voices.find((v) => v.lang?.startsWith(this.lang.slice(0, 2))) || null;
@@ -82,10 +96,21 @@ export class BrowserSTT {
 					}
 				}
 			};
-			r.onerror = (e) => { this._listening = false; reject(e.error); };
-			r.onend = () => { this._listening = false; resolve(finalText.trim()); };
+			r.onerror = (e) => {
+				this._listening = false;
+				reject(e.error);
+			};
+			r.onend = () => {
+				this._listening = false;
+				resolve(finalText.trim());
+			};
 			this._listening = true;
-			try { r.start(); } catch (e) { this._listening = false; reject(e); }
+			try {
+				r.start();
+			} catch (e) {
+				this._listening = false;
+				reject(e);
+			}
 		});
 	}
 
@@ -93,7 +118,9 @@ export class BrowserSTT {
 		if (this._recognition && this._listening) this._recognition.stop();
 	}
 
-	get listening() { return this._listening; }
+	get listening() {
+		return this._listening;
+	}
 }
 
 /**
@@ -126,33 +153,33 @@ export class BrowserSTT {
 export class ElevenLabsTTS {
 	constructor({
 		voiceId,
-		modelId            = 'eleven_turbo_v2_5',
-		apiKey             = null,
-		proxyURL           = null,
-		rate               = 1,
-		pitch              = 1,
-		lang               = 'en-US',
-		stability          = 0.5,
-		similarityBoost    = 0.75,
-		useSpeakerBoost    = true,
+		modelId = 'eleven_turbo_v2_5',
+		apiKey = null,
+		proxyURL = null,
+		rate = 1,
+		pitch = 1,
+		lang = 'en-US',
+		stability = 0.5,
+		similarityBoost = 0.75,
+		useSpeakerBoost = true,
 	} = {}) {
 		if (!voiceId) throw new Error('ElevenLabsTTS requires voiceId');
-		this.voiceId          = voiceId;
-		this.modelId          = modelId;
-		this.apiKey           = apiKey;
-		this.proxyURL         = proxyURL;
-		this.rate             = rate;
-		this.pitch            = pitch;            // unused — see class comment
-		this.lang             = lang;
-		this.stability        = stability;
-		this.similarityBoost  = similarityBoost;
-		this.useSpeakerBoost  = useSpeakerBoost;
+		this.voiceId = voiceId;
+		this.modelId = modelId;
+		this.apiKey = apiKey;
+		this.proxyURL = proxyURL;
+		this.rate = rate;
+		this.pitch = pitch; // unused — see class comment
+		this.lang = lang;
+		this.stability = stability;
+		this.similarityBoost = similarityBoost;
+		this.useSpeakerBoost = useSpeakerBoost;
 
-		this._speaking        = false;
-		this._abort           = null;             // current AbortController
-		this._audio           = null;             // current <audio> element
-		this._mediaSourceURL  = null;             // for revocation
-		this._onEnd           = null;             // pending resolve
+		this._speaking = false;
+		this._abort = null; // current AbortController
+		this._audio = null; // current <audio> element
+		this._mediaSourceURL = null; // for revocation
+		this._onEnd = null; // pending resolve
 	}
 
 	async speak(text, { onStart, onEnd } = {}) {
@@ -162,7 +189,8 @@ export class ElevenLabsTTS {
 		this._abort = new AbortController();
 		this._speaking = true;
 
-		const url = this.proxyURL ||
+		const url =
+			this.proxyURL ||
 			`https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(this.voiceId)}/stream`;
 
 		const headers = { 'content-type': 'application/json', accept: 'audio/mpeg' };
@@ -177,9 +205,9 @@ export class ElevenLabsTTS {
 			text,
 			model_id: this.modelId,
 			voice_settings: {
-				stability:         this.stability,
-				similarity_boost:  this.similarityBoost,
-				style:             styleVal,
+				stability: this.stability,
+				similarity_boost: this.similarityBoost,
+				style: styleVal,
 				use_speaker_boost: this.useSpeakerBoost,
 			},
 			// Forwarded for proxies that prefer a single endpoint
@@ -209,8 +237,7 @@ export class ElevenLabsTTS {
 		// Try MediaSource first (low-latency streaming). Fall back to buffered
 		// playback for browsers that don't support MSE for audio/mpeg (Safari).
 		const supportsMSE =
-			typeof MediaSource !== 'undefined' &&
-			MediaSource.isTypeSupported('audio/mpeg');
+			typeof MediaSource !== 'undefined' && MediaSource.isTypeSupported('audio/mpeg');
 
 		const playStarted = (cb) => {
 			if (this._startedFired) return;
@@ -242,7 +269,9 @@ export class ElevenLabsTTS {
 
 	cancel() {
 		if (this._abort) {
-			try { this._abort.abort(); } catch {}
+			try {
+				this._abort.abort();
+			} catch {}
 			this._abort = null;
 		}
 		this._cleanupAudio();
@@ -251,7 +280,9 @@ export class ElevenLabsTTS {
 		if (this._onEnd) this._onEnd();
 	}
 
-	get speaking() { return this._speaking; }
+	get speaking() {
+		return this._speaking;
+	}
 
 	// ── Internal: streaming via MediaSource ────────────────────────────────
 
@@ -263,8 +294,8 @@ export class ElevenLabsTTS {
 		audio.preload = 'auto';
 
 		audio.addEventListener('playing', onStart, { once: true });
-		audio.addEventListener('ended',   () => this._onEnd?.(), { once: true });
-		audio.addEventListener('error',   () => onError?.(),     { once: true });
+		audio.addEventListener('ended', () => this._onEnd?.(), { once: true });
+		audio.addEventListener('error', () => onError?.(), { once: true });
 
 		ms.addEventListener('sourceopen', async () => {
 			let sb;
@@ -276,8 +307,8 @@ export class ElevenLabsTTS {
 			}
 
 			const reader = stream.getReader();
-			const queue  = [];
-			let   reading = true;
+			const queue = [];
+			let reading = true;
 
 			const pump = () => {
 				if (!reading || sb.updating) return;
@@ -287,7 +318,9 @@ export class ElevenLabsTTS {
 					sb.appendBuffer(next);
 				} catch {
 					reading = false;
-					try { ms.endOfStream(); } catch {}
+					try {
+						ms.endOfStream();
+					} catch {}
 				}
 			};
 
@@ -302,7 +335,9 @@ export class ElevenLabsTTS {
 							if (sb.updating || queue.length) {
 								setTimeout(wait, 30);
 							} else {
-								try { ms.endOfStream(); } catch {}
+								try {
+									ms.endOfStream();
+								} catch {}
 							}
 						};
 						wait();
@@ -324,13 +359,13 @@ export class ElevenLabsTTS {
 	async _playBuffered(resp, onStart, onError) {
 		try {
 			const blob = await resp.blob();
-			const url  = URL.createObjectURL(blob);
+			const url = URL.createObjectURL(blob);
 			this._mediaSourceURL = url;
 			const audio = new Audio(url);
 			this._audio = audio;
 			audio.addEventListener('playing', onStart, { once: true });
-			audio.addEventListener('ended',   () => this._onEnd?.(), { once: true });
-			audio.addEventListener('error',   () => onError?.(), { once: true });
+			audio.addEventListener('ended', () => this._onEnd?.(), { once: true });
+			audio.addEventListener('error', () => onError?.(), { once: true });
 			await audio.play();
 		} catch (err) {
 			if (err.name !== 'AbortError') onError?.();
@@ -339,12 +374,16 @@ export class ElevenLabsTTS {
 
 	_cleanupAudio() {
 		if (this._audio) {
-			try { this._audio.pause(); } catch {}
+			try {
+				this._audio.pause();
+			} catch {}
 			this._audio.src = '';
 			this._audio = null;
 		}
 		if (this._mediaSourceURL) {
-			try { URL.revokeObjectURL(this._mediaSourceURL); } catch {}
+			try {
+				URL.revokeObjectURL(this._mediaSourceURL);
+			} catch {}
 			this._mediaSourceURL = null;
 		}
 		this._startedFired = false;
@@ -353,8 +392,8 @@ export class ElevenLabsTTS {
 
 export function createTTS(config = {}) {
 	const provider = config.provider || 'browser';
-	if (provider === 'none')       return null;
-	if (provider === 'browser')    return new BrowserTTS(config);
+	if (provider === 'none') return null;
+	if (provider === 'browser') return new BrowserTTS(config);
 	if (provider === 'elevenlabs') return new ElevenLabsTTS(config);
 	throw new Error(`TTS provider "${provider}" not implemented yet`);
 }

@@ -6,7 +6,7 @@
 
 Asking users to sign in before they see their 3D self is backwards. The magic moment should come first, then the "save your agent" prompt should drive sign-up. Today, `/dashboard/avatars/new` requires auth.
 
-Without this, most first-touch users bounce before they ever see themselves in 3D. We need a guest flow that keeps the magic up-front and converts via wallet sign-in *after* they're hooked.
+Without this, most first-touch users bounce before they ever see themselves in 3D. We need a guest flow that keeps the magic up-front and converts via wallet sign-in _after_ they're hooked.
 
 ## What to build
 
@@ -20,13 +20,13 @@ A guest creation flow at `/try` (or `/create`, pick shorter) that:
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| [api/auth/siwe/verify.js](../../api/auth/siwe/verify.js) | SIWE flow. The claim step reuses this + a follow-up handoff. |
-| [api/avatars/index.js](../../api/avatars/index.js) | Avatar create flow — will need a guest mode that stamps a guest user placeholder. |
-| [api/_lib/auth.js](../../api/_lib/auth.js) | Session helpers. |
-| Backend from 02-02 / 02-03 | Generation pipeline — needs to accept guest-session token. |
-| [api/agents.js](../../api/agents.js) | Agent auto-create on `GET /api/agents/me`. |
+| File                                                     | Why                                                                               |
+| :------------------------------------------------------- | :-------------------------------------------------------------------------------- |
+| [api/auth/siwe/verify.js](../../api/auth/siwe/verify.js) | SIWE flow. The claim step reuses this + a follow-up handoff.                      |
+| [api/avatars/index.js](../../api/avatars/index.js)       | Avatar create flow — will need a guest mode that stamps a guest user placeholder. |
+| [api/\_lib/auth.js](../../api/_lib/auth.js)              | Session helpers.                                                                  |
+| Backend from 02-02 / 02-03                               | Generation pipeline — needs to accept guest-session token.                        |
+| [api/agents.js](../../api/agents.js)                     | Agent auto-create on `GET /api/agents/me`.                                        |
 
 ## Build this
 
@@ -64,10 +64,12 @@ Skip on the guest path — we don't create an agent until the user claims. Just 
 ### 5. Claim flow
 
 Button on the result page: **Claim this agent**. Runs SIWE (or email sign-up). After `verify` returns 200, call `POST /api/guest/claim` with:
+
 - `Authorization: Bearer guest:<token>`
 - Cookie: the brand-new `__Host-sid`
 
 Server atomically:
+
 1. Looks up `guest_id` by token hash.
 2. Confirms `claimed_user_id IS NULL`.
 3. Transfers the avatar row: `update avatars set owner_id = <user>, guest_id = null where guest_id = <guest>`.
@@ -91,6 +93,7 @@ A cron-friendly (or Vercel cron) endpoint `POST /api/guest/reap` that deletes un
 ## Deliverables
 
 **New:**
+
 - `api/guest/start.js`
 - `api/guest/claim.js`
 - `api/guest/reap.js`
@@ -98,6 +101,7 @@ A cron-friendly (or Vercel cron) endpoint `POST /api/guest/reap` that deletes un
 - Migration: `guests` table + `avatars.guest_id` column (ask before running).
 
 **Modified:**
+
 - `api/avatars/presign.js` + `api/avatars/index.js` — accept guest bearer.
 - `vercel.json` — `/try` route, guest endpoints, cron entry for `/api/guest/reap`.
 

@@ -27,6 +27,7 @@ Users can register at developer.avaturn.me to begin using Avaturn at no cost wit
 Straightforward instructions for importing Avaturn avatars into Blender, leveraging the software's native support for GLTF 2.0 format.
 
 Three-Step Import Process:
+
 1. Initiate Import: Access Blender's import function to load your GLB file
 2. Configure Settings: When the import dialog appears, set the bone direction parameter to "Blender" before finalizing the import process
 3. Completion: Your avatar assets are now ready for use within your Blender project
@@ -40,6 +41,7 @@ If the imported avatar appears gray or you're uncertain whether textures have lo
 Avaturn exports avatars in GLB format, which Unity doesn't natively support. The documentation recommends using the "GLTFast" package to load GLB files either during editing or while the application runs.
 
 Key Recommendations:
+
 - Apply an environment map to prevent metallic clothing from appearing black
 - GLTFast version 5.2 was tested, though other versions should work
 
@@ -54,12 +56,13 @@ Two distinct import processes depending on your Unreal Engine version.
 For UE 5.1 and newer: The procedure is streamlined since these versions natively support GLB files. Users simply need to drag and drop it onto the content manager to complete the import.
 
 For UE 5.0 and earlier: Since native GLB support is unavailable, the workflow requires additional steps:
+
 1. Download a GLB avatar from Avaturn
 2. Convert the file to FBX format using Avaturn's dedicated converter tool, ensuring "Unreal" is selected in the converter settings
 3. Import the FBX into the content browser with specific settings:
-   - Normals import method set to "Import Normals"
-   - Import uniform scale at 100.0 (adjustable based on asset scale)
-   - Enable "Invert normal maps"
+    - Normals import method set to "Import Normals"
+    - Import uniform scale at 100.0 (adjustable based on asset scale)
+    - Enable "Invert normal maps"
 4. Finalize the process, with occasional manual transparency corrections needed for eyewear elements
 
 ### 2.4 Meta Spark Studio
@@ -75,6 +78,7 @@ Brief documentation page with reference to a video tutorial contributed by Max G
 Avaturn exports 3D avatars in GLTF 2.0 format to ensure compatibility across different engines. For legacy workflows that require FBX files, Avaturn provides a conversion tool that outputs FBX files with separate texture maps, though materials may require manual adjustment.
 
 Why GLTF 2.0 is Preferred:
+
 - Open standard developed by the Khronos Group (versus Autodesk's proprietary FBX)
 - JSON-based structure for readability and easier debugging
 - Optimized for real-time rendering in web and VR applications
@@ -84,6 +88,7 @@ Why GLTF 2.0 is Preferred:
 - Extensible architecture for custom metadata
 
 Engine-Specific Guidance:
+
 - Unity: Strongly recommends using GLTFast package to load GLB directly, avoiding conversion
 - Unreal Engine: Versions 5.1+ support native GLB importing. Older versions requiring FBX need specific import settings: Import Normals method, 100.0 uniform scale, and inverted normal maps enabled
 
@@ -100,6 +105,7 @@ Avaturn exports in GLTF 2.0 format to ensure the 3D model looks well in every en
 While Avaturn exports models in GLB format, Mixamo cannot directly read this format. Converting GLB to FBX may cause issues, so the guide recommends an alternative approach:
 
 Recommended Process:
+
 1. Download a pre-tested Avaturn avatar in FBX format from their assets
 2. Import that model into Mixamo and select desired animations
 3. Export the animated avatar, choosing "without skin" for Blender or "with skin" for Unity
@@ -118,6 +124,7 @@ The key insight is that instead of converting your exported avatar, users should
 Avaturn functions as an integrable plugin for applications, games, and metaverse platforms. The workflow is straightforward: users trigger an avatar configurator within a game, customize their avatar, and the game then receives the completed avatar file.
 
 Available SDKs and Integration Options:
+
 - Unity integration
 - Unreal Engine support
 - HTML and JavaScript implementation
@@ -132,10 +139,12 @@ Basic integration follows published tutorials at no cost. Developers seeking adv
 **URL:** https://docs.avaturn.me/docs/integration/bodies/
 
 Avatar Types:
+
 - **T1 Avatars:** Static faces that provide the most realistic avatar. Cannot use face bones or blendshapes for facial animation.
 - **T2 Avatars:** Feature separate eyeballs and mouthhole structures, enabling facial animation through ARKit blendshapes and visemes. Slightly reduced recognizability compared to T1 models.
 
 Body Shape Types: Two body presets are available: v2023 and v2024.
+
 - **v2023:** The original body design iteration with unique skeletons per body shape that vary significantly from each other.
 - **v2024:** An improved version with nearly identical skeletons across body shapes. "Skeletons are identical everywhere, but have a bit of stretch/compression of the shoulder joints. Legs, arm length, head bone is the same!" This design makes animation work easier while maintaining shape variety.
 
@@ -148,10 +157,12 @@ Both versions come in Female and Male configurations.
 Instructions for integrating the Avaturn avatar creation tool into web applications.
 
 Quick Start:
+
 1. Add a div element with the ID `avaturn-sdk-container` to your HTML markup.
 2. Include a module script that imports the AvaturnSDK from a CDN. Initialize the SDK with your custom subdomain and set up an event listener for the export event.
 
 Key Configuration Details:
+
 - **Subdomain Setup:** Create a project and obtain your own subdomain through developer.avaturn.me rather than using the limited "demo" subdomain.
 - **Export Callback:** The SDK triggers an "export" event when users click the "Next" button, returning the generated avatar data for processing.
 - **Styling Options:** CSS can be applied to the container element, with optional custom class names for the internal iframe.
@@ -173,11 +184,13 @@ Required Configuration: Replace the demo subdomain with your own, created throug
 **URL:** https://docs.avaturn.me/docs/integration/web/sdk/introduction/
 
 Key Features:
+
 - Receive callbacks on user actions (garment change, body change, export)
 - Customize the list of assets available for a particular user
 - Create custom UI for the avatar editor through programmatic asset switching
 
 Prerequisites and Installation:
+
 - Create a project at the developer portal and activate API access
 - Install via npm: `npm install @avaturn/sdk`
 
@@ -190,6 +203,7 @@ Basic Implementation: Obtain a session link from the `/v1/sessions/new` API endp
 **URL:** https://docs.avaturn.me/docs/integration/web/sdk/callbacks/
 
 The Avaturn Web SDK enables developers to implement callbacks that respond to user interactions:
+
 - Asset changed
 - Body changed
 - Avatar exported
@@ -198,9 +212,9 @@ Implementation: Obtain a URL using the `/v1/sessions/new` API request, then pass
 
 ```js
 const scene = await sdk.init(container, {
-  url: '<URL_RETURNED_BY_AVATURN_API>',
-  iframeClassName: '<CSS_CLASS_NAME_FOR_IFRAME>',
-  disableUi: false,
+	url: '<URL_RETURNED_BY_AVATURN_API>',
+	iframeClassName: '<CSS_CLASS_NAME_FOR_IFRAME>',
+	disableUi: false,
 });
 ```
 
@@ -223,6 +237,7 @@ Once disabled, the SDK provides access to asset and body data through specific m
 Supported Platforms: WebGL and Android/iOS integrations. Windows/Mac Standalone apps possible but require contacting the company directly.
 
 Available Resources:
+
 - Integration tutorial explaining how to add Avaturn to games
 - SDK and sample code available on GitHub, supporting Android, iOS, and WebGL
 - WebGL demo showcasing runtime avatar replacement
@@ -233,6 +248,7 @@ Available Resources:
 **URL:** https://docs.avaturn.me/docs/integration/unreal/
 
 Introduction to Avaturn integration for Unreal Engine 5.0 and later. Two SDK options:
+
 1. Web-view based SDK — a browser-integrated approach
 2. Native SDK — a direct integration method (newer)
 
@@ -249,6 +265,7 @@ Key Resources: Google Drive folder containing the SDK, demo project source code,
 The framework builds upon the Ready Player Me Unreal framework. Copy necessary files from the downloaded demo project into your own projects.
 
 Troubleshooting:
+
 - Material loading failures in packaged builds: solved via cooking plugin directories
 - Multiplayer functionality requiring proper httpURL configuration in developer settings
 
@@ -277,6 +294,7 @@ Update the URL initialization in `WebViewController.swift` from the demo domain 
 **URL:** https://docs.avaturn.me/docs/integration/api/introduction/
 
 Key Capabilities:
+
 - Integrate Avaturn while bypassing the sign-in interface (use your own authentication method)
 - Customize user workflows
 - Upload selfies directly rather than requiring users to scan through the UI
@@ -285,6 +303,7 @@ Key Capabilities:
 - Utilize native SDKs for Unreal and Unity
 
 Getting Started:
+
 1. Create a project at the developer portal
 2. Generate an API authentication token
 3. Maintain a paid subscription plan — **the API is not available on the free plan**
@@ -300,6 +319,7 @@ Getting Started:
 "Avaturn can be easily customized and extended with additional content."
 
 Key Features:
+
 - Upload personalized looks and accessories
 - Adjust UI color schemes
 - Modify the avatar's environment setting
@@ -322,6 +342,7 @@ Avatar Resources: Two downloadable template avatars — male body template and f
 **URL:** https://docs.avaturn.me/docs/ux_customization/assets/clothing/
 
 Key Requirements:
+
 - Create an alpha mask for the avatar to hide parts covered by clothing (prevents visibility issues from deformations)
 - Asset must share the same skeleton as the avatar with correct skinning weights (manual painting recommended)
 - The mesh and avatar require proper alignment with identity global transforms
@@ -340,6 +361,7 @@ Pipeline is the same as for clothing. Key distinction: footwear textures are com
 **URL:** https://docs.avaturn.me/docs/ux_customization/assets/eyewear/
 
 Guidelines:
+
 - "The lower polycount the better" for mesh optimization
 - Glasses typically consist of two parts: frame and lens
 - Lens uses translucent material; frame uses another material type

@@ -14,6 +14,7 @@ The goal is a **shippable** LobeHub plugin — not a scaffold. When this is done
 ## Goal
 
 Ship an installable LobeHub plugin with:
+
 - A correct manifest matching the current LobeHub plugin schema.
 - A React iframe host that resolves an agent id → `<agent-3d>` iframe → working bridge.
 - A working hook into LobeChat's message stream (assistant messages → `avatar.speak(...)` with sentiment).
@@ -24,6 +25,7 @@ Ship an installable LobeHub plugin with:
 ## Files you own
 
 Everything under:
+
 - `lobehub-plugin/**` (except `node_modules/`)
 - `public/.well-known/lobehub-plugin.json` (the manifest served from the 3dagent.vercel.app origin for remote-plugin installs)
 - `public/lobehub/iframe/**` (the iframe target referenced by the manifest — create if it doesn't fully exist yet)
@@ -39,32 +41,33 @@ Everything under:
 ## Acceptance — what "shippable" means
 
 1. **Manifest.** `public/.well-known/lobehub-plugin.json` validates against the current LobeHub plugin-manifest JSON Schema. Check the LobeHub docs (<https://lobehub.com/docs/usage/plugins/development>) for the schemaVersion and ensure:
-   - `identifier` is globally unique (`3d-agent` is reasonable).
-   - `$schema` points to the canonical URL.
-   - `api` entries either all resolve to real endpoints or the `api` array is omitted if this is iframe-only.
-   - `ui.url` points to `https://3dagent.vercel.app/lobehub/iframe/` and that route actually serves HTML.
-   - `settings` schema matches what the React component reads (`agentId`, `apiOrigin`).
+    - `identifier` is globally unique (`3d-agent` is reasonable).
+    - `$schema` points to the canonical URL.
+    - `api` entries either all resolve to real endpoints or the `api` array is omitted if this is iframe-only.
+    - `ui.url` points to `https://3dagent.vercel.app/lobehub/iframe/` and that route actually serves HTML.
+    - `settings` schema matches what the React component reads (`agentId`, `apiOrigin`).
 2. **Iframe host.** `public/lobehub/iframe/index.html` renders `<agent-3d agent-id="{{agentId}}">` with correct styling for a 420–640px sidebar frame. Transparent background, no scrollbars, respects the `agentId` query param (the LobeHub host passes settings as querystring or fragment — implement whichever the real manifest spec requires).
 3. **React plugin package.** `lobehub-plugin/src/`:
-   - `AgentPane.tsx` — remove the `TODO: Hook into Lobe's onAssistantMessage` placeholder. Use whatever `@lobehub/ui` / `@lobehub/chat-plugin-sdk` package exposes for assistant-message observation. If the SDK shape is unstable, document fallback to the `window.addEventListener('lobe:assistantMessage', …)` path explicitly with a README note + a clear code comment explaining why this fallback exists.
-   - `bridge.ts` — align with the final wire protocol from prompt 01. Every `op` in the manifest's `api` array (`render_agent`, `speak`, `gesture`, `emote`) has a matching bridge method. Handshake, timeout, origin check.
-   - `config-schema.ts` — export a zod-like validator (or hand-rolled if zod isn't in deps) that guards `PluginSettings`.
-   - `index.ts` — default export the plugin entry expected by the LobeHub runtime.
+    - `AgentPane.tsx` — remove the `TODO: Hook into Lobe's onAssistantMessage` placeholder. Use whatever `@lobehub/ui` / `@lobehub/chat-plugin-sdk` package exposes for assistant-message observation. If the SDK shape is unstable, document fallback to the `window.addEventListener('lobe:assistantMessage', …)` path explicitly with a README note + a clear code comment explaining why this fallback exists.
+    - `bridge.ts` — align with the final wire protocol from prompt 01. Every `op` in the manifest's `api` array (`render_agent`, `speak`, `gesture`, `emote`) has a matching bridge method. Handshake, timeout, origin check.
+    - `config-schema.ts` — export a zod-like validator (or hand-rolled if zod isn't in deps) that guards `PluginSettings`.
+    - `index.ts` — default export the plugin entry expected by the LobeHub runtime.
 4. **Build.**
-   - `cd lobehub-plugin && npm install && npm run build` produces `dist/bundle.js` with a tree-shaken, production-minified build.
-   - No warnings in the build output.
-   - `npm run type-check` passes.
+    - `cd lobehub-plugin && npm install && npm run build` produces `dist/bundle.js` with a tree-shaken, production-minified build.
+    - No warnings in the build output.
+    - `npm run type-check` passes.
 5. **Dev harness.** `lobehub-plugin/dev/index.html` (new file) loads the built plugin inside a page that mocks the LobeChat host message contract. Include a button to inject a fake assistant message so the avatar can be seen reacting in isolation.
 6. **Docs.**
-   - `lobehub-plugin/README.md` — install instructions, config options, troubleshooting, link to the manifest URL for "one-click" install in LobeChat.
-   - `LICENSE` file (MIT or Apache-2 — match what the rest of the repo uses).
+    - `lobehub-plugin/README.md` — install instructions, config options, troubleshooting, link to the manifest URL for "one-click" install in LobeChat.
+    - `LICENSE` file (MIT or Apache-2 — match what the rest of the repo uses).
 7. **Icons / screenshots.**
-   - `lobehub-plugin/assets/icon-256.png` (transparent square, 256×256) — if asset missing, generate a placeholder SVG + note in report that a designed icon needs replacing before launch.
-   - `lobehub-plugin/assets/screenshots/` with at least one screenshot referenced by the README.
+    - `lobehub-plugin/assets/icon-256.png` (transparent square, 256×256) — if asset missing, generate a placeholder SVG + note in report that a designed icon needs replacing before launch.
+    - `lobehub-plugin/assets/screenshots/` with at least one screenshot referenced by the README.
 
 ## Allowed new deps
 
 `lobehub-plugin/package.json` may add:
+
 - `@lobehub/chat-plugin-sdk` (or the current official plugin SDK name — verify on npm at build time).
 - `zod` if you use it for config validation — optional.
 - Nothing else.
@@ -107,6 +110,7 @@ Your `bridge.ts` sends requests matching this exact envelope and op set. If you 
 ## Report + archive
 
 Post the report block from `00-README.md`. Include:
+
 - Exact LobeHub SDK package name + version you targeted.
 - Whether the SDK exposes a real `onAssistantMessage` hook (and what you used if it doesn't).
 - Build output bytes (`dist/bundle.js` size).

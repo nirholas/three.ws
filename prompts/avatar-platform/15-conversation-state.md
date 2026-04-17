@@ -16,22 +16,22 @@ Depends on task 14.
 ## Deliverable
 
 1. **Storage** `src/agent/history.js`:
-   - IndexedDB-backed. Key by `agentId` (a client UUID generated on first run).
-   - `append({ role, content, toolCalls? })`, `load(limit?)`, `clear()`.
-   - Token budget: cap at ~8k tokens for the context window; oldest turns summarized into a running synopsis once cap is hit.
+    - IndexedDB-backed. Key by `agentId` (a client UUID generated on first run).
+    - `append({ role, content, toolCalls? })`, `load(limit?)`, `clear()`.
+    - Token budget: cap at ~8k tokens for the context window; oldest turns summarized into a running synopsis once cap is hit.
 2. **Tool definitions** `src/agent/tools.js`:
-   - Each tool is `{ name, description, parameters (JSON Schema), handler(args) }`.
-   - Tools: `loadModel(url)`, `listAnimations()`, `playAnimation(name)`, `describeCurrentModel()`, `setLighting({ exposure?, environment? })`.
-   - Handlers call the viewer API directly; they're the **only** layer that touches `VIEWER.app.viewer`.
+    - Each tool is `{ name, description, parameters (JSON Schema), handler(args) }`.
+    - Tools: `loadModel(url)`, `listAnimations()`, `playAnimation(name)`, `describeCurrentModel()`, `setLighting({ exposure?, environment? })`.
+    - Handlers call the viewer API directly; they're the **only** layer that touches `VIEWER.app.viewer`.
 3. **Tool-use wiring** — extend `Brain.respond` to support tool calls:
-   - Cloud path: Claude/OpenAI function-calling format (whichever the backend uses).
-   - Local path: prompted-JSON convention (Llama tool-use) — the model writes `{"tool": "...", "args": {...}}` in a fenced block; the frontend parses, executes, feeds back.
+    - Cloud path: Claude/OpenAI function-calling format (whichever the backend uses).
+    - Local path: prompted-JSON convention (Llama tool-use) — the model writes `{"tool": "...", "args": {...}}` in a fenced block; the frontend parses, executes, feeds back.
 4. **Tool-result UI** — in the chat panel, render tool calls as collapsible cards with the call + result, before the model's final reply.
 5. **Settings menu** — small gear icon opens a panel:
-   - View history length.
-   - "Clear history" button (with confirm).
-   - "Forget my avatar" (clears current VRM from local storage; task 20 stores it).
-   - Brain mode selector (local/cloud/auto).
+    - View history length.
+    - "Clear history" button (with confirm).
+    - "Forget my avatar" (clears current VRM from local storage; task 20 stores it).
+    - Brain mode selector (local/cloud/auto).
 6. **Privacy notice** — a one-line "Conversations are saved on this device only" next to the chat input.
 
 ## Audit checklist

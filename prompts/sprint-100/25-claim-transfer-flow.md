@@ -36,6 +36,7 @@ export class ClaimError extends Error {} // .code: 'wrong-owner'|'already-claime
 ```
 
 Behavior:
+
 - If the registry contract doesn't have a transfer entry point on the target chain, resolve by creating a new identity record on the claimer's wallet and marking the old one `superseded_by` — record that in `POST /api/cz/claim` (or the equivalent). If no server endpoint, throw `ClaimError('unsupported-chain')`.
 - Never skip user signing. Every state change requires signer interaction.
 

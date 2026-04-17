@@ -4,7 +4,7 @@
 
 ## Why it matters
 
-Both Claude Artifact and Lobehub can pipe the assistant's current reply into the agent iframe. What's missing is the *sentiment analysis* step — without it, the agent just mouths words silently. The Empathy Layer needs a valence + arousal signal per utterance.
+Both Claude Artifact and Lobehub can pipe the assistant's current reply into the agent iframe. What's missing is the _sentiment analysis_ step — without it, the agent just mouths words silently. The Empathy Layer needs a valence + arousal signal per utterance.
 
 ## What to build
 
@@ -12,11 +12,11 @@ A tiny client-side sentiment scorer that the host bridge runs before calling `sp
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| [src/agent-avatar.js](../../src/agent-avatar.js) | The Empathy Layer's stimulus rules — what the avatar does with sentiment. |
-| `src/lib/embed-bridge.js` (from 05-04) | Where this wires in. |
-| [src/agent-protocol.js](../../src/agent-protocol.js) | `speak` event payload shape. |
+| File                                                 | Why                                                                       |
+| :--------------------------------------------------- | :------------------------------------------------------------------------ |
+| [src/agent-avatar.js](../../src/agent-avatar.js)     | The Empathy Layer's stimulus rules — what the avatar does with sentiment. |
+| `src/lib/embed-bridge.js` (from 05-04)               | Where this wires in.                                                      |
+| [src/agent-protocol.js](../../src/agent-protocol.js) | `speak` event payload shape.                                              |
 
 ## Build this
 
@@ -24,11 +24,12 @@ A tiny client-side sentiment scorer that the host bridge runs before calling `sp
 
 ```js
 export function score(text) {
-  // returns { sentiment: -1..1, arousal: 0..1, tags: string[] }
+	// returns { sentiment: -1..1, arousal: 0..1, tags: string[] }
 }
 ```
 
 Implementation sketch:
+
 - Normalize: lowercase, strip punctuation except `!`, `?`.
 - Bag-of-words counts against small positive/negative dictionaries (inline literals — no file I/O).
 - Arousal: presence of `!`, ALL CAPS ratio, exclamation density.
@@ -42,14 +43,15 @@ Extend the `speak` method on `createHostBridge` (from 05-04):
 
 ```js
 function speak(text, overrides = {}) {
-  const { sentiment, arousal, tags } = score(text);
-  post('speak', { text, sentiment, arousal, tags, ...overrides });
+	const { sentiment, arousal, tags } = score(text);
+	post('speak', { text, sentiment, arousal, tags, ...overrides });
 }
 ```
 
 ### 3. Agent-side wiring
 
 Inside the iframe (embed.html / artifact / lobe-ui), when a `speak` message arrives:
+
 - Always nudge emotion: positive `sentiment` → celebration weight; negative → concern; high `arousal` → curiosity.
 - If `tags` include a direct emotion name, emit `emote` with that trigger + weight 0.4.
 - Still log to timeline regardless.
@@ -72,9 +74,11 @@ The artifact (05-01) already accepts inbound `speak`; nothing to change beyond e
 ## Deliverables
 
 **New:**
+
 - `src/lib/sentiment-heuristic.js`
 
 **Modified:**
+
 - `src/lib/embed-bridge.js` (05-04) — auto-score on `speak`.
 - Agent iframe runtimes (05-01, 05-03, embed.html) — honor `sentiment`/`arousal`/`tags`.
 

@@ -17,13 +17,13 @@ This is the admin UI that makes the Studio worth using repeatedly.
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
+| File                                                                 | Why                                                                     |
+| :------------------------------------------------------------------- | :---------------------------------------------------------------------- |
 | [public/dashboard/dashboard.js](../../public/dashboard/dashboard.js) | Existing dashboard code. Native DOM, no framework. Follow this pattern. |
-| [public/dashboard/index.html](../../public/dashboard/index.html) | Layout + CSS. You'll add a new sidebar entry. |
-| `api/widgets/index.js` (from Prompt 00) | List/create endpoints. |
-| `api/widgets/[id].js` (from Prompt 00) | Update/delete endpoints. |
-| Prompt 03's `api/widgets/[id]/chat.js` + telemetry (if shipped) | Source for chat stats. |
+| [public/dashboard/index.html](../../public/dashboard/index.html)     | Layout + CSS. You'll add a new sidebar entry.                           |
+| `api/widgets/index.js` (from Prompt 00)                              | List/create endpoints.                                                  |
+| `api/widgets/[id].js` (from Prompt 00)                               | Update/delete endpoints.                                                |
+| Prompt 03's `api/widgets/[id]/chat.js` + telemetry (if shipped)      | Source for chat stats.                                                  |
 
 ## Build this
 
@@ -33,12 +33,12 @@ In `dashboard.js`:
 
 ```js
 const tabs = {
-  avatars: renderAvatars,
-  upload: renderUpload,
-  widgets: renderWidgets,     // NEW
-  keys: renderKeys,
-  mcp: renderMcp,
-  billing: renderBilling,
+	avatars: renderAvatars,
+	upload: renderUpload,
+	widgets: renderWidgets, // NEW
+	keys: renderKeys,
+	mcp: renderMcp,
+	billing: renderBilling,
 };
 ```
 
@@ -66,7 +66,7 @@ Add the duplicate + stats endpoints on the server side:
 
 ```js
 async function renderWidgets(root) {
-  root.innerHTML = `
+	root.innerHTML = `
     <div class="widgets-header">
       <h1>Your widgets</h1>
       <p class="sub">Embeddable 3D experiences — each gets a stable URL.</p>
@@ -74,20 +74,20 @@ async function renderWidgets(root) {
     </div>
     <div id="widget-list" class="cards"></div>
   `;
-  // Fetch, render each as widgetCard().
-  // Empty state: "No widgets yet. Create your first in the Studio."
+	// Fetch, render each as widgetCard().
+	// Empty state: "No widgets yet. Create your first in the Studio."
 }
 
 function widgetCard(w) {
-  // Each card:
-  // - Live preview iframe (lazy-loaded on IntersectionObserver)
-  //   src="/#widget=${w.id}&kiosk=true" — small fixed size, no controls.
-  // - Title (editable inline — double-click to edit).
-  // - Widget type pill with colored icon.
-  // - Stats: view count, "updated X ago."
-  // - Public/private toggle.
-  // - Actions: Edit (→ /studio?edit=<id>), Duplicate, Copy URL, Copy iframe, Delete (with confirm).
-  // - Expander: "Show embed code" reveals snippets.
+	// Each card:
+	// - Live preview iframe (lazy-loaded on IntersectionObserver)
+	//   src="/#widget=${w.id}&kiosk=true" — small fixed size, no controls.
+	// - Title (editable inline — double-click to edit).
+	// - Widget type pill with colored icon.
+	// - Stats: view count, "updated X ago."
+	// - Public/private toggle.
+	// - Actions: Edit (→ /studio?edit=<id>), Duplicate, Copy URL, Copy iframe, Delete (with confirm).
+	// - Expander: "Show embed code" reveals snippets.
 }
 ```
 
@@ -162,11 +162,13 @@ Button links to `/studio`.
 ## Deliverables
 
 **New (server):**
+
 - `api/widgets/[id]/duplicate.js`
 - `api/widgets/[id]/stats.js`
 - Optional: `api/_lib/migrations/NNN_widget_views.sql` if you add per-day granularity.
 
 **Modified:**
+
 - `public/dashboard/dashboard.js` — new tab + API calls + UI.
 - `public/dashboard/index.html` — sidebar link + any new CSS classes.
 - `vercel.json` — new routes for duplicate and stats.

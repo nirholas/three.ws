@@ -17,7 +17,7 @@ New static file + new endpoint. No edits to anything existing.
 ## Read first
 
 - Skim the existing well-known files under `public/.well-known/` for conventions.
-- [api/_lib/http.js](../../api/_lib/http.js) — `wrap`, `json`, `cors`.
+- [api/\_lib/http.js](../../api/_lib/http.js) — `wrap`, `json`, `cors`.
 
 ## Deliverable
 
@@ -25,31 +25,31 @@ New static file + new endpoint. No edits to anything existing.
 
 ```json
 {
-    "$schema": "https://lobehub.com/schema/plugin.json",
-    "api": [],
-    "identifier": "3d-agent",
-    "meta": {
-        "title": "3D Agent",
-        "description": "Embed any on-chain or off-chain 3D agent as an embodied avatar inside your chat.",
-        "avatar": "https://3dagent.vercel.app/favicon.png",
-        "tags": ["3d", "avatar", "embodied-agent", "erc-8004"]
-    },
-    "ui": {
-        "mode": "iframe",
-        "url": "https://3dagent.vercel.app/agent-embed.html",
-        "height": 640,
-        "settings": {
-            "agentId": {
-                "type": "string",
-                "title": "Agent ID",
-                "description": "Paste a 3D Agent ID or ENS name"
-            }
-        }
-    },
-    "author": "3d-agent",
-    "createdAt": "2026-04-17",
-    "homepage": "https://3dagent.vercel.app",
-    "version": "1.0.0"
+	"$schema": "https://lobehub.com/schema/plugin.json",
+	"api": [],
+	"identifier": "3d-agent",
+	"meta": {
+		"title": "3D Agent",
+		"description": "Embed any on-chain or off-chain 3D agent as an embodied avatar inside your chat.",
+		"avatar": "https://3dagent.vercel.app/favicon.png",
+		"tags": ["3d", "avatar", "embodied-agent", "erc-8004"]
+	},
+	"ui": {
+		"mode": "iframe",
+		"url": "https://3dagent.vercel.app/agent-embed.html",
+		"height": 640,
+		"settings": {
+			"agentId": {
+				"type": "string",
+				"title": "Agent ID",
+				"description": "Paste a 3D Agent ID or ENS name"
+			}
+		}
+	},
+	"author": "3d-agent",
+	"createdAt": "2026-04-17",
+	"homepage": "https://3dagent.vercel.app",
+	"version": "1.0.0"
 }
 ```
 

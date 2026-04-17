@@ -13,23 +13,23 @@ Introduce `<agent-stage>` — a parent element that hosts one canvas and zero-or
 ## Deliverable
 
 1. **`<agent-stage>` element** in `src/stage-element.js` (new file):
-	 - Creates its own `Viewer` instance (one per stage). All child `<agent-3d>` elements detect the parent and attach their body to the stage's scene rather than creating a new Viewer.
-	 - Manages shared orbit controls, lighting, environment map.
-	 - Positions children along a default formation (row, circle, freeform) — `formation="row"` attribute.
-	 - Exposes `stage.addAgent(manifest)` / `stage.removeAgent(agentId)` JS API in addition to declarative children.
+    - Creates its own `Viewer` instance (one per stage). All child `<agent-3d>` elements detect the parent and attach their body to the stage's scene rather than creating a new Viewer.
+    - Manages shared orbit controls, lighting, environment map.
+    - Positions children along a default formation (row, circle, freeform) — `formation="row"` attribute.
+    - Exposes `stage.addAgent(manifest)` / `stage.removeAgent(agentId)` JS API in addition to declarative children.
 2. **Modify [src/element.js](../../src/element.js)**:
-	 - In `_boot()`, detect `this.closest('agent-stage')`. If present, skip creating a local Viewer — use the parent stage's Viewer, scope the body under a per-agent `Group`, and use a sub-canvas-rect for chat chrome.
-	 - When detached, fall back to solo mode.
+    - In `_boot()`, detect `this.closest('agent-stage')`. If present, skip creating a local Viewer — use the parent stage's Viewer, scope the body under a per-agent `Group`, and use a sub-canvas-rect for chat chrome.
+    - When detached, fall back to solo mode.
 3. **Cross-agent messaging**:
-	 - Add `stage.broadcast(from, event)` — in-process event dispatch visible to all child agents.
-	 - Add a built-in tool `observe_agents` to each agent's tool list (scoped by a new `tools` flag in manifest or stage opt-in), returning `[{ agentId, name, position }]` for other agents on the same stage.
-	 - Add a built-in tool `say_to_agent(agentId, text)` that routes a message to another agent's runtime as a user-turn-from-agent-X.
+    - Add `stage.broadcast(from, event)` — in-process event dispatch visible to all child agents.
+    - Add a built-in tool `observe_agents` to each agent's tool list (scoped by a new `tools` flag in manifest or stage opt-in), returning `[{ agentId, name, position }]` for other agents on the same stage.
+    - Add a built-in tool `say_to_agent(agentId, text)` that routes a message to another agent's runtime as a user-turn-from-agent-X.
 4. **Positioning**:
-	 - `SceneController` gains `setGroup(group: Three.Group)` to scope all its operations to a sub-group.
-	 - Each child agent's GLB loads into its own Group; bounding-box normalized to a common human height (uses `manifest.body.boundingBoxHeight`); positioned per `formation`.
+    - `SceneController` gains `setGroup(group: Three.Group)` to scope all its operations to a sub-group.
+    - Each child agent's GLB loads into its own Group; bounding-box normalized to a common human height (uses `manifest.body.boundingBoxHeight`); positioned per `formation`.
 5. **Spec updates**:
-	 - New `specs/STAGE_SPEC.md` describing the element, formation options, messaging protocol, event names (`stage:agent-joined`, `stage:agent-left`, `stage:message`).
-	 - Link from [specs/EMBED_SPEC.md](../../specs/EMBED_SPEC.md) under a new "Multi-agent" section.
+    - New `specs/STAGE_SPEC.md` describing the element, formation options, messaging protocol, event names (`stage:agent-joined`, `stage:agent-left`, `stage:message`).
+    - Link from [specs/EMBED_SPEC.md](../../specs/EMBED_SPEC.md) under a new "Multi-agent" section.
 
 ## Audit checklist
 

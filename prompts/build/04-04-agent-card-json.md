@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Publish agent-card.json and agent-registration.json for A2A discovery"
+description: 'Publish agent-card.json and agent-registration.json for A2A discovery'
 ---
 
 # 04-04 · A2A discovery: agent-card.json
@@ -22,21 +22,21 @@ A2A (Agent-to-Agent) discovery — other agent runtimes find and introspect your
 ## Build this
 
 1. **New endpoint** `GET /api/agents/:id/card.json`:
-   - Returns the agent card in the A2A convention (use the spec in `specs/` if present; if not, match the shape below).
-   - `{ name, description, home, avatar: { url, content_type, size }, skills: [...], identity: { wallet?, chain_id?, erc8004_agent_id? }, endpoints: { embed, postmessage_bridge }, schema_version }`.
-   - No auth required — this is public discovery.
-   - Etag on the response (hash of the content) so hosts can cache.
+    - Returns the agent card in the A2A convention (use the spec in `specs/` if present; if not, match the shape below).
+    - `{ name, description, home, avatar: { url, content_type, size }, skills: [...], identity: { wallet?, chain_id?, erc8004_agent_id? }, endpoints: { embed, postmessage_bridge }, schema_version }`.
+    - No auth required — this is public discovery.
+    - Etag on the response (hash of the content) so hosts can cache.
 2. **Well-known alias** `GET /.well-known/agent-card.json?id=...` → same response. Some consumers only read `.well-known`.
 3. **Registration card** `GET /api/agents/:id/registration.json`:
-   - Smaller, onchain-bound subset: `{ card_url, card_sha256, avatar_sha256, created_at, wallet }`.
-   - Field to record what was pinned to IPFS — the card CID goes onchain in pillar 6.
+    - Smaller, onchain-bound subset: `{ card_url, card_sha256, avatar_sha256, created_at, wallet }`.
+    - Field to record what was pinned to IPFS — the card CID goes onchain in pillar 6.
 4. **Viewer link** — add `<link rel="agent-card" href="/api/agents/:id/card.json">` to `/agent/:id` page head.
 
 ## Out of scope
 
-- Pinning to IPFS (06-*).
-- Onchain registration (06-*).
-- Signing the card (06-*).
+- Pinning to IPFS (06-\*).
+- Onchain registration (06-\*).
+- Signing the card (06-\*).
 
 ## Deliverables
 

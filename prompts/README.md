@@ -6,15 +6,15 @@ Each file is designed to be dropped into a fresh Claude Code agent without extra
 
 ## The priority stack (build in this order)
 
-| Layer | Directory | Ship state |
-|---|---|---|
-| 1. Wallet auth 100% | [wallet-auth/](./wallet-auth/) | Foundation. SIWE login + link-to-user + fix `/api/agents/me` 500. |
-| 2. Selfie → agent | [selfie-agent/](./selfie-agent/) | The magic moment — photo capture becomes a personal avatar. |
-| 3. Edit avatar | [avatar-edit/](./avatar-edit/) | Post-creation morph / outfit / accessory editing. |
-| 4. View + embed | existing `/agent/:id` + [embed/](./embed/) | Mostly working. Polish prompts exist in `embed/`. |
-| 5. Claude / LobeHub embed | [lobehub-embed/](./lobehub-embed/), [claude-artifact/](./claude-artifact/) | Agent renders embodied inside host chats. Primary integration target. |
-| 6. Onchain | [onchain/](./onchain/) | Deploy ERC-8004 contracts, register, hydrate agent from chain. |
-| 🎯 CZ demo | [cz-demo/](./cz-demo/) | Bespoke landing + pre-registered cz.glb onchain + scripted first interaction. |
+| Layer                     | Directory                                                                  | Ship state                                                                    |
+| ------------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| 1. Wallet auth 100%       | [wallet-auth/](./wallet-auth/)                                             | Foundation. SIWE login + link-to-user + fix `/api/agents/me` 500.             |
+| 2. Selfie → agent         | [selfie-agent/](./selfie-agent/)                                           | The magic moment — photo capture becomes a personal avatar.                   |
+| 3. Edit avatar            | [avatar-edit/](./avatar-edit/)                                             | Post-creation morph / outfit / accessory editing.                             |
+| 4. View + embed           | existing `/agent/:id` + [embed/](./embed/)                                 | Mostly working. Polish prompts exist in `embed/`.                             |
+| 5. Claude / LobeHub embed | [lobehub-embed/](./lobehub-embed/), [claude-artifact/](./claude-artifact/) | Agent renders embodied inside host chats. Primary integration target.         |
+| 6. Onchain                | [onchain/](./onchain/)                                                     | Deploy ERC-8004 contracts, register, hydrate agent from chain.                |
+| 🎯 CZ demo                | [cz-demo/](./cz-demo/)                                                     | Bespoke landing + pre-registered cz.glb onchain + scripted first interaction. |
 
 ## Side lanes (not blockers for CZ demo)
 

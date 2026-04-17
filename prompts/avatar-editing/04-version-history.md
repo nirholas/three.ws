@@ -50,6 +50,7 @@ Whenever task-01's save runs, also `INSERT INTO avatar_versions` with `source='e
 ### Editor UI
 
 Panel toggle: `🕘` icon in the editor GUI. Opens a sidebar with:
+
 - Scrollable list of versions, newest first.
 - Each row: thumbnail, version number, source tag, relative time, "Restore" button.
 - Clicking a row previews that version in the viewer without committing.

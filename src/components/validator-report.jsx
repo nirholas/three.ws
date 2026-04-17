@@ -24,8 +24,7 @@ export function ValidatorReport({
 				</li>
 				{info?.extras?.title && (
 					<li>
-						<b>Title:</b>{' '}
-						<span>{info.extras.title}</span>
+						<b>Title:</b> <span>{info.extras.title}</span>
 					</li>
 				)}
 				{info?.extras?.author && (

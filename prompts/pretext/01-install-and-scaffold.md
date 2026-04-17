@@ -22,13 +22,13 @@ Without the flag, the page must render exactly as it does today.
 
 1. **Install the dep** — `npm install @chenglou/pretext`. Update [package.json](../../package.json) and [package-lock.json](../../package-lock.json). No other deps.
 2. **New file** `src/features/hero-pretext.js` — exports a default class `PretextHero` with:
-   - `constructor(root)` — `root` is the `.hero` element. Caches references to `.hero-content`, `.hero-title`, `.hero-subtitle`, `.hero-avatar`.
-   - `async init()` — dynamic-imports `@chenglou/pretext`, stores the API on `this.pretext`, logs `[pretext-hero] ready`, returns `this`.
-   - `dispose()` — no-op for now; reserved for later tasks.
+    - `constructor(root)` — `root` is the `.hero` element. Caches references to `.hero-content`, `.hero-title`, `.hero-subtitle`, `.hero-avatar`.
+    - `async init()` — dynamic-imports `@chenglou/pretext`, stores the API on `this.pretext`, logs `[pretext-hero] ready`, returns `this`.
+    - `dispose()` — no-op for now; reserved for later tasks.
 3. **Modify [features.html](../../features.html)** — at the bottom of `<body>`, add a small bootstrap `<script type="module">` that:
-   - Parses `new URLSearchParams(location.search).get('pretext')`.
-   - If the flag is `'1'` (or `'2'`, `'3'`, `'4'` — room for later tasks to enable themselves), dynamic-imports `/src/features/hero-pretext.js` and calls `new PretextHero(document.querySelector('.hero')).init()`.
-   - Wraps the whole thing in `try/catch` so a failure leaves the page in its current state.
+    - Parses `new URLSearchParams(location.search).get('pretext')`.
+    - If the flag is `'1'` (or `'2'`, `'3'`, `'4'` — room for later tasks to enable themselves), dynamic-imports `/src/features/hero-pretext.js` and calls `new PretextHero(document.querySelector('.hero')).init()`.
+    - Wraps the whole thing in `try/catch` so a failure leaves the page in its current state.
 4. **Do NOT** modify [features.css](../../features.css) in this task.
 
 ## Audit checklist

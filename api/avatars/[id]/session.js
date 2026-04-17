@@ -38,7 +38,12 @@ export default wrap(async (req, res) => {
 	}
 
 	if (!env.AVATURN_API_KEY) {
-		return error(res, 501, 'not_configured', 'Avaturn is not configured on this deployment. Set AVATURN_API_KEY.');
+		return error(
+			res,
+			501,
+			'not_configured',
+			'Avaturn is not configured on this deployment. Set AVATURN_API_KEY.',
+		);
 	}
 
 	// Resolve a time-limited URL the Avaturn upstream can fetch (works for private too).

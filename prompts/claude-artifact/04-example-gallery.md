@@ -10,6 +10,7 @@ Repo: `/workspaces/3D`. Tasks [./01-artifact-snippet.md](./01-artifact-snippet.m
 This task extends that with a **curated gallery of ready-to-paste templates** for the four main use cases. The goal is that a Claude user (or, meta-circle, a Claude instance generating HTML for its user) can pick the closest template and paste it verbatim.
 
 Relevant existing files:
+
 - [../../public/agent/index.html](../../public/agent/index.html) — already hosts a share panel; add a "Claude Artifacts" tab group here.
 - [../../public/artifact/snippet.html](../../public/artifact/) — produced by task 01.
 - [../../public/artifact.js](../../public/artifact.js) — produced by task 02.
@@ -22,58 +23,71 @@ Produce four self-contained Claude Artifact HTML templates, each &lt;3 KB, hoste
 ## The four templates
 
 ### A. "My agent"
+
 The trivial case — the signed-in user's own agent.
+
 ```html
 <script src="https://3dagent.vercel.app/artifact.js"></script>
 <script>
-  Agent3D.mount('#a', { agentId: 'AGENT_ID_HERE' });
+	Agent3D.mount('#a', { agentId: 'AGENT_ID_HERE' });
 </script>
 ```
-*Already delivered by task 01. Just reference it from the gallery.*
+
+_Already delivered by task 01. Just reference it from the gallery._
 
 ### B. "Any wallet's agent"
+
 Resolve the primary agent for a given Ethereum address.
+
 ```html
 <script src="https://3dagent.vercel.app/artifact.js"></script>
 <script>
-  Agent3D.mount('#a', { wallet: '0xWALLET_HERE' });
+	Agent3D.mount('#a', { wallet: '0xWALLET_HERE' });
 </script>
 ```
-*Depends on the bundle's `wallet` mode (task 02). If the wallet has no registered agent, the bundle renders the stand-in.*
+
+_Depends on the bundle's `wallet` mode (task 02). If the wallet has no registered agent, the bundle renders the stand-in._
 
 ### C. "Any ERC-8004 agent from chain"
+
 Look up directly by onchain agent id.
+
 ```html
 <script src="https://3dagent.vercel.app/artifact.js"></script>
 <script>
-  Agent3D.mount('#a', { chain: 'base', onchainId: 42 });
+	Agent3D.mount('#a', { chain: 'base', onchainId: 42 });
 </script>
 ```
-*`chain` accepts keys from `REGISTRY_DEPLOYMENTS` in [../../src/erc8004/abi.js](../../src/erc8004/abi.js). Document the supported chain keys inline in the gallery.*
+
+_`chain` accepts keys from `REGISTRY_DEPLOYMENTS` in [../../src/erc8004/abi.js](../../src/erc8004/abi.js). Document the supported chain keys inline in the gallery._
 
 ### D. "Talking agent — responds to chat messages via postMessage"
+
 The novel template. The Artifact sandbox receives `postMessage` from its parent (Claude's chat UI) or from a sibling Artifact, and the avatar responds by speaking the text (routing through the Empathy Layer so the face reacts).
+
 ```html
 <script src="https://3dagent.vercel.app/artifact.js"></script>
 <script>
-  const agent = Agent3D.mount('#a', { agentId: 'AGENT_ID_HERE' });
-  window.addEventListener('message', (ev) => {
-    const msg = ev.data;
-    if (msg && msg.type === 'speak' && typeof msg.text === 'string') {
-      agent.then(a => a.say(msg.text));
-    }
-  });
+	const agent = Agent3D.mount('#a', { agentId: 'AGENT_ID_HERE' });
+	window.addEventListener('message', (ev) => {
+		const msg = ev.data;
+		if (msg && msg.type === 'speak' && typeof msg.text === 'string') {
+			agent.then((a) => a.say(msg.text));
+		}
+	});
 </script>
 ```
-*Caveat: Claude's chat UI does not currently post arbitrary messages into Artifact iframes. This template is valuable for (1) Artifact-to-Artifact communication within the same chat, (2) hosts beyond Claude that adopt the same protocol, (3) future Claude features. The gallery page must document this caveat clearly.*
+
+_Caveat: Claude's chat UI does not currently post arbitrary messages into Artifact iframes. This template is valuable for (1) Artifact-to-Artifact communication within the same chat, (2) hosts beyond Claude that adopt the same protocol, (3) future Claude features. The gallery page must document this caveat clearly._
 
 ## Deliverable
 
 1. **File created** — `public/artifact/gallery.html`. A static page under `/artifact/gallery` that:
-   - Lists the four templates as cards with a live preview iframe for each (loading `public/artifact/preview-{a,b,c,d}.html`).
-   - Each card has a "Copy" button that copies the template's HTML snippet to clipboard.
-   - Includes the Artifact-sandbox caveats from [./README.md](./README.md) in a short expandable section.
-   - Minimal CSS, self-contained, no frameworks.
+
+    - Lists the four templates as cards with a live preview iframe for each (loading `public/artifact/preview-{a,b,c,d}.html`).
+    - Each card has a "Copy" button that copies the template's HTML snippet to clipboard.
+    - Includes the Artifact-sandbox caveats from [./README.md](./README.md) in a short expandable section.
+    - Minimal CSS, self-contained, no frameworks.
 
 2. **Files created** — `public/artifact/preview-a.html`, `preview-b.html`, `preview-c.html`, `preview-d.html`. Each is a rendering of the corresponding template with a working placeholder id/wallet/onchainId so visitors can see what the result looks like before pasting into Claude.
 
@@ -126,6 +140,7 @@ The novel template. The Artifact sandbox receives `postMessage` from its parent 
 ## Reporting
 
 At the end, summarise:
+
 - Files created under `public/artifact/` with byte counts.
 - The one `prompts/README.md` edit (one bullet, line number).
 - The paste-into-Claude result for each of the four templates — one line each.

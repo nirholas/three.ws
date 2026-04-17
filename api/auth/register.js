@@ -23,7 +23,8 @@ export default wrap(async (req, res) => {
 		displayName = body.username;
 		password = body.password;
 
-		const existing = await sql`select id from users where display_name ilike ${body.username} and deleted_at is null limit 1`;
+		const existing =
+			await sql`select id from users where display_name ilike ${body.username} and deleted_at is null limit 1`;
 		if (existing[0]) return error(res, 409, 'username_taken', 'that username is already taken');
 	} else {
 		const body = parse(registerBody, raw);
@@ -31,8 +32,10 @@ export default wrap(async (req, res) => {
 		displayName = body.display_name ?? null;
 		password = body.password;
 
-		const existing = await sql`select id from users where email = ${email} and deleted_at is null limit 1`;
-		if (existing[0]) return error(res, 409, 'email_taken', 'an account with this email already exists');
+		const existing =
+			await sql`select id from users where email = ${email} and deleted_at is null limit 1`;
+		if (existing[0])
+			return error(res, 409, 'email_taken', 'an account with this email already exists');
 	}
 
 	const hash = await hashPassword(password);

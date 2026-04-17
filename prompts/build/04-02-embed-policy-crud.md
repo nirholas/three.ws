@@ -3,7 +3,7 @@
 **Branch:** `feat/embed-policy-crud`
 **Stack layer:** 4 (View + embed)
 **Depends on:** 01-02 (stable session)
-**Blocks:** 05-* (host embeds need a policy to enforce against Claude / Lobehub origins)
+**Blocks:** 05-\* (host embeds need a policy to enforce against Claude / Lobehub origins)
 
 ## Why it matters
 
@@ -11,12 +11,12 @@
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| [api/agents/[id]/embed-policy.js](../../api/agents/[id]/embed-policy.js) | Current stub. |
-| [agent-embed.html](../../agent-embed.html) | The iframe page. Its `Content-Security-Policy` + `X-Frame-Options` must reflect the policy. |
-| [api/_lib/](../../api/_lib/) | Auth + Neon helpers. |
-| [api/agents.js](../../api/agents.js) | Schema for agents and how ownership is checked. |
+| File                                                                     | Why                                                                                         |
+| :----------------------------------------------------------------------- | :------------------------------------------------------------------------------------------ |
+| [api/agents/[id]/embed-policy.js](../../api/agents/[id]/embed-policy.js) | Current stub.                                                                               |
+| [agent-embed.html](../../agent-embed.html)                               | The iframe page. Its `Content-Security-Policy` + `X-Frame-Options` must reflect the policy. |
+| [api/\_lib/](../../api/_lib/)                                            | Auth + Neon helpers.                                                                        |
+| [api/agents.js](../../api/agents.js)                                     | Schema for agents and how ownership is checked.                                             |
 
 ## Build this
 
@@ -45,13 +45,14 @@ In [agent-embed.html](../../agent-embed.html) (and any server-side render of it)
 1. Server reads the policy on each request.
 2. If `mode === 'private'`, require auth + ownership; 403 otherwise.
 3. If `mode === 'allowlist'`, set:
-   - `Content-Security-Policy: frame-ancestors <allowed_origins>`
-   - `X-Frame-Options: SAMEORIGIN` as a safety net (modern browsers prefer CSP).
+    - `Content-Security-Policy: frame-ancestors <allowed_origins>`
+    - `X-Frame-Options: SAMEORIGIN` as a safety net (modern browsers prefer CSP).
 4. If `mode === 'open'`, set `frame-ancestors *`.
 
 ### Dashboard UI
 
 On the agent edit view (from 03-01 extended, or a new "Embed" tab), surface:
+
 - Mode selector (Open / Allowlist / Private).
 - Allowed origins list with add/remove (validate format on blur).
 - Live preview of a test iframe loaded from a picker origin to confirm enforcement.
@@ -61,7 +62,7 @@ On the agent edit view (from 03-01 extended, or a new "Embed" tab), surface:
 
 - Do not add per-origin analytics — separate prompt.
 - Do not add signed embed tokens — separate prompt.
-- Do not validate that the given origins *actually* resolve to real hosts. We trust the user to know their deployment.
+- Do not validate that the given origins _actually_ resolve to real hosts. We trust the user to know their deployment.
 
 ## Acceptance
 

@@ -9,6 +9,7 @@ Repo: `/workspaces/3D`. Animation handling is centralized in [src/animation-mana
 - `loadAll()` for batch load, `play(name)`, `crossfadeTo(name, duration)`, `getLoadedNames()`
 
 What is missing:
+
 1. A **persistent** list of which clips belong to an avatar — today `defs` are set per-session in code.
 2. A dashboard UI to add/remove clips.
 3. A preview mechanism where the dashboard can load the avatar + a candidate clip without touching the live `<agent-3d>` instance.
@@ -22,29 +23,32 @@ Ship an animation-library panel in the dashboard that lists clips attached to th
 ## Deliverable
 
 1. **Backend**
-   - No new endpoints if `PATCH /api/agents/:id` already accepts `meta` (it does, per [src/agent-identity.js](../../src/agent-identity.js)'s `save()` which posts `meta`). Confirm and document.
-   - Validate `meta.animations` server-side — add to the agents-patch zod schema:
-     - Array, max 30 entries.
-     - Each entry: `name` (1–60 chars), `url` (valid URL, `http`/`https`/`ipfs`/`ar`), `loop` (boolean, default true), `clipName` (optional, ≤ 120 chars), `source` (enum).
-     - Dedupe by `name` case-insensitively.
-   - Optional: add `POST /api/animations/presign` delegating to the same R2 flow if users upload custom `.glb` clips. Scope key under `u/{userId}/animations/{slug}.glb`. Use `limits.upload(userId)`. If this endpoint already exists under a different name (e.g. generic R2 presign), reuse it — do not duplicate.
+
+    - No new endpoints if `PATCH /api/agents/:id` already accepts `meta` (it does, per [src/agent-identity.js](../../src/agent-identity.js)'s `save()` which posts `meta`). Confirm and document.
+    - Validate `meta.animations` server-side — add to the agents-patch zod schema:
+        - Array, max 30 entries.
+        - Each entry: `name` (1–60 chars), `url` (valid URL, `http`/`https`/`ipfs`/`ar`), `loop` (boolean, default true), `clipName` (optional, ≤ 120 chars), `source` (enum).
+        - Dedupe by `name` case-insensitively.
+    - Optional: add `POST /api/animations/presign` delegating to the same R2 flow if users upload custom `.glb` clips. Scope key under `u/{userId}/animations/{slug}.glb`. Use `limits.upload(userId)`. If this endpoint already exists under a different name (e.g. generic R2 presign), reuse it — do not duplicate.
 
 2. **Preset pack**
-   - Ship a small curated list in a new JSON file `public/animations/presets.json` with 6–10 entries (idle, wave, nod, shrug, thinking, celebrate, typing, walking). URLs point to `.glb` files in `public/animations/`. Do **not** add the `.glb` binary files in this task — assume they're pre-existing or will be added by a separate content task. Document missing files in the reporting section.
-   - Loader in the dashboard fetches `presets.json` and renders each as a one-click "add" tile.
+
+    - Ship a small curated list in a new JSON file `public/animations/presets.json` with 6–10 entries (idle, wave, nod, shrug, thinking, celebrate, typing, walking). URLs point to `.glb` files in `public/animations/`. Do **not** add the `.glb` binary files in this task — assume they're pre-existing or will be added by a separate content task. Document missing files in the reporting section.
+    - Loader in the dashboard fetches `presets.json` and renders each as a one-click "add" tile.
 
 3. **Frontend — dashboard animation panel**
-   - New route: `#edit/<agentId>/animations` in [public/dashboard/dashboard.js](../../public/dashboard/dashboard.js).
-   - Two columns:
-     - Left: current clips (from the agent's `meta.animations`). Each row has name, source, loop toggle, preview button, detach button.
-     - Right: add-new area — preset tiles + "upload custom `.glb`" button.
-   - Preview: mount an isolated `<agent-3d>` (or a dedicated Viewer instance) in a small modal, load the avatar's current GLB, attach the candidate clip via `AnimationManager`, and play it. Crossfade back to idle when the modal closes.
-   - Must not reuse the main app's viewer — create a scoped one so preview playback doesn't disturb a live session in another tab. Use the existing `<agent-3d>` web component with an `animations` attribute if it supports per-instance clip override; otherwise instantiate `Viewer` + `AnimationManager` directly.
-   - Attach: updates local state, calls `PATCH /api/agents/:id` with the new `meta.animations` set. Debounce 500 ms so rapid toggles don't spam.
-   - Detach: removes from the list; same PATCH.
+
+    - New route: `#edit/<agentId>/animations` in [public/dashboard/dashboard.js](../../public/dashboard/dashboard.js).
+    - Two columns:
+        - Left: current clips (from the agent's `meta.animations`). Each row has name, source, loop toggle, preview button, detach button.
+        - Right: add-new area — preset tiles + "upload custom `.glb`" button.
+    - Preview: mount an isolated `<agent-3d>` (or a dedicated Viewer instance) in a small modal, load the avatar's current GLB, attach the candidate clip via `AnimationManager`, and play it. Crossfade back to idle when the modal closes.
+    - Must not reuse the main app's viewer — create a scoped one so preview playback doesn't disturb a live session in another tab. Use the existing `<agent-3d>` web component with an `animations` attribute if it supports per-instance clip override; otherwise instantiate `Viewer` + `AnimationManager` directly.
+    - Attach: updates local state, calls `PATCH /api/agents/:id` with the new `meta.animations` set. Debounce 500 ms so rapid toggles don't spam.
+    - Detach: removes from the list; same PATCH.
 
 4. **Client runtime integration**
-   - When `<agent-3d>` boots (see [src/element.js](../../src/element.js)), after loading the GLB it should hydrate animations from `agent_identities.meta.animations` by calling `AnimationManager.setAnimationDefs()` + `loadAll()` already. Verify this path. If not wired, add it. Do not change its API.
+    - When `<agent-3d>` boots (see [src/element.js](../../src/element.js)), after loading the GLB it should hydrate animations from `agent_identities.meta.animations` by calling `AnimationManager.setAnimationDefs()` + `loadAll()` already. Verify this path. If not wired, add it. Do not change its API.
 
 ## IPFS / on-chain re-pinning
 
@@ -77,13 +81,13 @@ Ship an animation-library panel in the dashboard that lists clips attached to th
 1. `node --check` every modified JS file.
 2. `npx vite build`.
 3. Manual:
-   - Open dashboard → avatar card → "Animations".
-   - Attach `wave` from presets. Confirm `agent_identities.meta.animations` has an entry. Confirm the preview modal plays the clip.
-   - Detach. Confirm the entry is gone and R2 object is untouched.
-   - Upload a custom `.glb` animation. Confirm it lands under `u/{userId}/animations/...`.
-   - Attempt to attach two clips named `wave` — second fails with inline error.
-   - Reload the main app / `<agent-3d>` → confirm `getAnimationDefs()` returns the hydrated list.
-   - With an agent where `isRegistered` is true, confirm the re-pin warning shows.
+    - Open dashboard → avatar card → "Animations".
+    - Attach `wave` from presets. Confirm `agent_identities.meta.animations` has an entry. Confirm the preview modal plays the clip.
+    - Detach. Confirm the entry is gone and R2 object is untouched.
+    - Upload a custom `.glb` animation. Confirm it lands under `u/{userId}/animations/...`.
+    - Attempt to attach two clips named `wave` — second fails with inline error.
+    - Reload the main app / `<agent-3d>` → confirm `getAnimationDefs()` returns the hydrated list.
+    - With an agent where `isRegistered` is true, confirm the re-pin warning shows.
 4. Confirm agentId + wallet fields unchanged in the DB.
 5. Close the preview modal mid-playback → confirm no AnimationMixer errors in the console, RAF cancelled.
 

@@ -20,6 +20,7 @@ Do not change the editor's in-memory state management or the scene explorer.
 Placement: immediately under the existing "download GLB (N)" button in the editor GUI. Label: `💾 save to my account (N)` where N is the pending-edit count. Disabled when N=0 or user is not the owner.
 
 Click behavior:
+
 1. Export GLB via existing `glb-export.js`.
 2. Call `saveEdits({ agentId, glbBytes })` from `save-edits.js`.
 3. Show inline toast: `"Saving…"` → `"Saved ✓"` or `"Save failed"` with retry.
@@ -28,6 +29,7 @@ Click behavior:
 ### Backend accept path
 
 `PATCH /api/avatars/:id` (owner-only, session required):
+
 - Validates the uploaded bytes are a GLB (magic bytes check — reuse `api/_lib/model-inspect.js` `isGLB`).
 - Re-uses the existing R2 upload helper.
 - Overwrites the blob at the same R2 key (or writes a new key + updates `model_url`).

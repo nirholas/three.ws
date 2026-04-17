@@ -3,7 +3,7 @@
 **Branch:** `feat/dashboard-edit-tab`
 **Stack layer:** 3 (Edit avatar)
 **Depends on:** 02-03 (avatars are bound to agents)
-**Blocks:** 03-02 (regenerate/swap), 04-* (embed polish reveals editing gaps)
+**Blocks:** 03-02 (regenerate/swap), 04-\* (embed polish reveals editing gaps)
 
 ## Why it matters
 
@@ -11,12 +11,12 @@
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
+| File                                                                 | Why                                                                                                  |
+| :------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------- |
 | [public/dashboard/dashboard.js](../../public/dashboard/dashboard.js) | Tab routing, state shape, existing tab renderers as templates (especially the avatar list renderer). |
-| [api/avatars/[id].js](../../api/avatars/[id].js) | PATCH handler already supports `name`, `description`, `visibility`, `tags`. |
-| [src/account.js](../../src/account.js) | Client helpers — extend, don't duplicate. |
-| [style.css](../../style.css) | Existing form field styles. |
+| [api/avatars/[id].js](../../api/avatars/[id].js)                     | PATCH handler already supports `name`, `description`, `visibility`, `tags`.                          |
+| [src/account.js](../../src/account.js)                               | Client helpers — extend, don't duplicate.                                                            |
+| [style.css](../../style.css)                                         | Existing form field styles.                                                                          |
 
 ## Build this
 

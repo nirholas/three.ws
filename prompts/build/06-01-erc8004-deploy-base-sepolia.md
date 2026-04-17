@@ -4,7 +4,7 @@
 
 ## Why it matters
 
-Pillar 6 promises: the same agent renders inside any host app *directly from its onchain record*. That requires three registries deployed on a public chain: `IdentityRegistry`, `ReputationRegistry`, `ValidationRegistry`. The contracts exist in [contracts/src/](../../contracts/src/) but may not be deployed anywhere non-local, or the deployed addresses may not be wired into [src/erc8004/abi.js](../../src/erc8004/abi.js)'s `REGISTRY_DEPLOYMENTS`. Ship this first; everything downstream (06-02+) assumes it.
+Pillar 6 promises: the same agent renders inside any host app _directly from its onchain record_. That requires three registries deployed on a public chain: `IdentityRegistry`, `ReputationRegistry`, `ValidationRegistry`. The contracts exist in [contracts/src/](../../contracts/src/) but may not be deployed anywhere non-local, or the deployed addresses may not be wired into [src/erc8004/abi.js](../../src/erc8004/abi.js)'s `REGISTRY_DEPLOYMENTS`. Ship this first; everything downstream (06-02+) assumes it.
 
 ## What to build
 
@@ -12,15 +12,15 @@ A clean deployment to Base Sepolia + wired addresses + a public block explorer l
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| [contracts/src/IdentityRegistry.sol](../../contracts/src/IdentityRegistry.sol) | The three registries. |
-| [contracts/src/ReputationRegistry.sol](../../contracts/src/ReputationRegistry.sol) | |
-| [contracts/src/ValidationRegistry.sol](../../contracts/src/ValidationRegistry.sol) | |
-| [contracts/script/Deploy.s.sol](../../contracts/script/Deploy.s.sol) | Existing Foundry script. Read it and confirm it deploys the three in one run. |
-| [contracts/foundry.toml](../../contracts/foundry.toml) | Network profile. |
-| [src/erc8004/abi.js](../../src/erc8004/abi.js) | `REGISTRY_DEPLOYMENTS` keyed by chainId. Add Base Sepolia entries after deploy. |
-| [contracts/CLAUDE.md](../../contracts/CLAUDE.md) | Local project rules. |
+| File                                                                               | Why                                                                             |
+| :--------------------------------------------------------------------------------- | :------------------------------------------------------------------------------ |
+| [contracts/src/IdentityRegistry.sol](../../contracts/src/IdentityRegistry.sol)     | The three registries.                                                           |
+| [contracts/src/ReputationRegistry.sol](../../contracts/src/ReputationRegistry.sol) |                                                                                 |
+| [contracts/src/ValidationRegistry.sol](../../contracts/src/ValidationRegistry.sol) |                                                                                 |
+| [contracts/script/Deploy.s.sol](../../contracts/script/Deploy.s.sol)               | Existing Foundry script. Read it and confirm it deploys the three in one run.   |
+| [contracts/foundry.toml](../../contracts/foundry.toml)                             | Network profile.                                                                |
+| [src/erc8004/abi.js](../../src/erc8004/abi.js)                                     | `REGISTRY_DEPLOYMENTS` keyed by chainId. Add Base Sepolia entries after deploy. |
+| [contracts/CLAUDE.md](../../contracts/CLAUDE.md)                                   | Local project rules.                                                            |
 
 ## Build this
 
@@ -37,6 +37,7 @@ Confirm all three contracts deploy and pass any existing tests. If tests fail, s
 ### 2. Deploy to Base Sepolia
 
 Requirements:
+
 - `DEPLOYER_PRIVATE_KEY` in env (never committed).
 - ~0.05 ETH test balance on Base Sepolia (faucet: `https://www.coinbase.com/faucets/base-ethereum-sepolia-faucet`).
 
@@ -86,10 +87,12 @@ Use `cast` or a tiny script to call a read function on IdentityRegistry and conf
 ## Deliverables
 
 **Modified:**
+
 - [src/erc8004/abi.js](../../src/erc8004/abi.js) — add Base Sepolia entry.
 - [contracts/README.md](../../contracts/README.md) — deployment table.
 
 **Runtime artifacts (check in under contracts/broadcast/):**
+
 - Foundry broadcast logs. Git should track these per Foundry convention.
 
 ## Acceptance

@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Re-run the selfie→avatar pipeline reusing the stored selfie, keeping the same agent id"
+description: 'Re-run the selfie→avatar pipeline reusing the stored selfie, keeping the same agent id'
 ---
 
 # 03-02 · Regenerate avatar from stored selfie

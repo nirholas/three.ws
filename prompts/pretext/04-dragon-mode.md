@@ -22,25 +22,25 @@ All other flags (`?pretext=1`, `=2`, `=3`) behave as before.
 ## Deliverable
 
 1. **Extend [src/features/hero-pretext.js](../../src/features/hero-pretext.js)**:
-   - `enableDragonMode()` method, activated when the flag is `>= 4`.
-   - Records the avatar's "home" rect on init.
-   - Adds `.hero--dragon` class to the hero, which in CSS lets the avatar use `position: absolute; inset: auto; transform: translate3d(x, y, 0);`.
-   - `pointermove` (rAF-coalesced) sets a target (x, y) in hero-local coordinates, clamped so the avatar stays fully within `.hero`.
-   - Integrator runs on `requestAnimationFrame`:
-     - Damped spring toward target: `stiffness ≈ 120`, `damping ≈ 20`, `mass ≈ 1`. Tune for a "trailing fish" feel.
-     - Applies translation via `transform` on `.hero-avatar` (never left/top).
-     - Reads the avatar's new center, computes bounding circle, calls Pretext to re-lay the subtitle, paints via the same `.hero-subtitle-pretext` overlay from task 02.
-   - `pointerleave` on `.hero`: target becomes home position; integrator continues until `|velocity|` and `|home - position|` are both below thresholds; then the class is removed and task 02's static layout takes over.
-   - `prefers-reduced-motion: reduce` → fully disabled; falls back to task 02 behavior.
-   - Touch devices (`matchMedia('(hover: none)')`) → disabled; falls back to task 02.
+    - `enableDragonMode()` method, activated when the flag is `>= 4`.
+    - Records the avatar's "home" rect on init.
+    - Adds `.hero--dragon` class to the hero, which in CSS lets the avatar use `position: absolute; inset: auto; transform: translate3d(x, y, 0);`.
+    - `pointermove` (rAF-coalesced) sets a target (x, y) in hero-local coordinates, clamped so the avatar stays fully within `.hero`.
+    - Integrator runs on `requestAnimationFrame`:
+        - Damped spring toward target: `stiffness ≈ 120`, `damping ≈ 20`, `mass ≈ 1`. Tune for a "trailing fish" feel.
+        - Applies translation via `transform` on `.hero-avatar` (never left/top).
+        - Reads the avatar's new center, computes bounding circle, calls Pretext to re-lay the subtitle, paints via the same `.hero-subtitle-pretext` overlay from task 02.
+    - `pointerleave` on `.hero`: target becomes home position; integrator continues until `|velocity|` and `|home - position|` are both below thresholds; then the class is removed and task 02's static layout takes over.
+    - `prefers-reduced-motion: reduce` → fully disabled; falls back to task 02 behavior.
+    - Touch devices (`matchMedia('(hover: none)')`) → disabled; falls back to task 02.
 2. **CSS additions in [features.css](../../features.css)** under `/* ── Dragon mode ─── */`:
-   - `.hero--dragon .hero-avatar { position: absolute; top: 0; left: 0; will-change: transform; }`
-   - `.hero--dragon .hero-content` retains its width — text column no longer shares the grid with the avatar; set `grid-column: 1 / -1` so the subtitle has full-hero width to reflow in.
-   - Disable `.hero-avatar-ring`/`pulse`/`tag` during dragon mode if they interfere with the feel (acceptable to hide them for this mode).
-   - Ensure z-index: the avatar stays above the text overlay but below `.hero-bg` glows? Decide and document. Default recommendation: avatar above text (parting-water metaphor).
+    - `.hero--dragon .hero-avatar { position: absolute; top: 0; left: 0; will-change: transform; }`
+    - `.hero--dragon .hero-content` retains its width — text column no longer shares the grid with the avatar; set `grid-column: 1 / -1` so the subtitle has full-hero width to reflow in.
+    - Disable `.hero-avatar-ring`/`pulse`/`tag` during dragon mode if they interfere with the feel (acceptable to hide them for this mode).
+    - Ensure z-index: the avatar stays above the text overlay but below `.hero-bg` glows? Decide and document. Default recommendation: avatar above text (parting-water metaphor).
 3. **Performance budget**:
-   - Frame budget for Pretext relayout: ≤4ms on a mid-range laptop (measure with `performance.now()`).
-   - If the measured cost exceeds 8ms over a 30-frame rolling window, **automatically downgrade** — disable per-frame reflow, keep cursor chase, fall back to task 02's static wrap. Log a single `[pretext-hero] dragon downgraded` warning. This guard is mandatory.
+    - Frame budget for Pretext relayout: ≤4ms on a mid-range laptop (measure with `performance.now()`).
+    - If the measured cost exceeds 8ms over a 30-frame rolling window, **automatically downgrade** — disable per-frame reflow, keep cursor chase, fall back to task 02's static wrap. Log a single `[pretext-hero] dragon downgraded` warning. This guard is mandatory.
 
 ## Audit checklist
 
@@ -68,13 +68,13 @@ All other flags (`?pretext=1`, `=2`, `=3`) behave as before.
 1. `node --check` on the modified JS.
 2. `npx vite build` completes.
 3. `/features?pretext=4`:
-   - Slow circle → avatar trails smoothly; subtitle parts.
-   - Fast flick → avatar lags realistically; no stutter; subtitle keeps up.
-   - Cursor out → eased return home; static wrap resumes.
+    - Slow circle → avatar trails smoothly; subtitle parts.
+    - Fast flick → avatar lags realistically; no stutter; subtitle keeps up.
+    - Cursor out → eased return home; static wrap resumes.
 4. DevTools Performance, 10s recording of a circular mouse motion:
-   - p95 frame time < 16ms.
-   - Long tasks < 50ms.
-   - Paste the Pretext relayout cost (mean/p95) into the reporting section.
+    - p95 frame time < 16ms.
+    - Long tasks < 50ms.
+    - Paste the Pretext relayout cost (mean/p95) into the reporting section.
 5. Force the downgrade — set the threshold very low temporarily, confirm the warning fires and reflow stops but the chase continues.
 6. `prefers-reduced-motion: reduce` → falls back to task 02 exactly.
 7. Mobile emulation → falls back to task 02.

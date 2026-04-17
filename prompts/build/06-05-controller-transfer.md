@@ -22,14 +22,14 @@ Users change wallets — lose a seed, switch from hot to hardware, migrate custo
 ### Confirmation — `POST /api/agents/:id/transfer-controller/confirm`
 
 - Body `{ tx_hash }`. Server waits for receipt, parses `ControllerTransferred(onchain_id, old, new)`, updates:
-  - `user_wallets`: flip `is_primary` (only if `new_controller` is on the caller's wallet list and becomes the new primary).
-  - `agents`: no column change — controller is derived from onchain state, not cached in DB. If any cached column exists (e.g. `agents.onchain_controller`), update it.
+    - `user_wallets`: flip `is_primary` (only if `new_controller` is on the caller's wallet list and becomes the new primary).
+    - `agents`: no column change — controller is derived from onchain state, not cached in DB. If any cached column exists (e.g. `agents.onchain_controller`), update it.
 - Emits an `agent_actions` row with type `controller_transferred` (audited).
 
 ### Post-transfer UX
 
 - Dashboard shows a banner on the agent page: "Controller is now 0x…. Future onchain actions (update manifest, anchor) will be signed by this wallet."
-- If the new controller isn't the user's *primary* wallet, offer a one-click "Make primary" that calls the 01-03 endpoint.
+- If the new controller isn't the user's _primary_ wallet, offer a one-click "Make primary" that calls the 01-03 endpoint.
 
 ### Edge cases
 

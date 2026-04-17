@@ -1,13 +1,13 @@
 ---
 mode: agent
-description: "postMessage bridge between host chat context and embedded agent (emotion + skills)"
+description: 'postMessage bridge between host chat context and embedded agent (emotion + skills)'
 ---
 
 # Stack Layer 5: Host Chat ↔ Agent Bridge
 
 ## Problem
 
-When an agent is embedded in a host chat (Claude Artifacts, LobeHub, any site), it should *react* to the conversation, not just sit there. The host doesn't know about the agent's skill API; the agent doesn't see the chat content. We need a thin standardized bridge.
+When an agent is embedded in a host chat (Claude Artifacts, LobeHub, any site), it should _react_ to the conversation, not just sit there. The host doesn't know about the agent's skill API; the agent doesn't see the chat content. We need a thin standardized bridge.
 
 ## Implementation
 
@@ -16,6 +16,7 @@ When an agent is embedded in a host chat (Claude Artifacts, LobeHub, any site), 
 Define in [specs/EMBED_SPEC.md](specs/EMBED_SPEC.md). Messages flow both ways via `postMessage`.
 
 **Host → Agent:**
+
 ```js
 { type: '3dagent.context', turn: 'user' | 'assistant', text: string, id: string }
 { type: '3dagent.invokeSkill', skillId: string, input?: any, requestId: string }
@@ -24,6 +25,7 @@ Define in [specs/EMBED_SPEC.md](specs/EMBED_SPEC.md). Messages flow both ways vi
 ```
 
 **Agent → Host:**
+
 ```js
 { type: '3dagent.ready', avatarId: string }
 { type: '3dagent.skillResult', requestId: string, result: any, error?: string }

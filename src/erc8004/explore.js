@@ -197,7 +197,8 @@ class ExplorePage {
 		}
 		const type = detectInputType(v);
 		const label = INPUT_TYPE_LABEL[type];
-		const cls = type === INPUT_TYPES.UNKNOWN ? 'explore-inputmeta--warn' : 'explore-inputmeta--ok';
+		const cls =
+			type === INPUT_TYPES.UNKNOWN ? 'explore-inputmeta--warn' : 'explore-inputmeta--ok';
 		el.className = `explore-input-meta ${cls}`;
 		el.textContent = `Detected: ${label}`;
 	}
@@ -440,7 +441,8 @@ class ExplorePage {
 					? `Agent #${esc(this._query)} not found on any selected chain`
 					: `Agent #${esc(this._query)} on ${n} chain${n === 1 ? '' : 's'}`;
 		} else if (type === INPUT_TYPES.AGENT_URI) {
-			title = n === 0 ? `Agent not found` : `Agent on ${esc(this._results[0]?.chainName || '?')}`;
+			title =
+				n === 0 ? `Agent not found` : `Agent on ${esc(this._results[0]?.chainName || '?')}`;
 			sub = `<code>${esc(this._query)}</code>`;
 		}
 
@@ -789,7 +791,9 @@ function openEmbedModal({ chainId, agentId, name }) {
 		if (e.key === 'Escape') close();
 	};
 	document.addEventListener('keydown', onEsc);
-	modal.querySelectorAll('[data-role="close"]').forEach((el) => el.addEventListener('click', close));
+	modal
+		.querySelectorAll('[data-role="close"]')
+		.forEach((el) => el.addEventListener('click', close));
 
 	modal.querySelectorAll('.embed-tab').forEach((tab) => {
 		tab.addEventListener('click', () => {

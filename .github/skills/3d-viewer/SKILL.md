@@ -1,7 +1,7 @@
 ---
 name: 3d-viewer
-description: "Full project workflow for the 3D Agent platform. Use when: developing features, debugging, modifying UI, understanding architecture, running dev server, or making code changes anywhere in the repo (viewer, agent runtime, API, contracts)."
-argument-hint: "Describe what you want to do"
+description: 'Full project workflow for the 3D Agent platform. Use when: developing features, debugging, modifying UI, understanding architecture, running dev server, or making code changes anywhere in the repo (viewer, agent runtime, API, contracts).'
+argument-hint: 'Describe what you want to do'
 ---
 
 # 3D Agent — Project Workflow
@@ -19,16 +19,16 @@ The viewer never imports the agent half. The agent layer wraps the viewer throug
 
 ## Where code lives
 
-| Area | Path | Scoped doc |
-|---|---|---|
-| Browser app (viewer + agent) | `src/` | [src/CLAUDE.md](../../../src/CLAUDE.md) |
-| Vercel serverless API | `api/` | [api/CLAUDE.md](../../../api/CLAUDE.md) |
+| Area                         | Path         | Scoped doc                                          |
+| ---------------------------- | ------------ | --------------------------------------------------- |
+| Browser app (viewer + agent) | `src/`       | [src/CLAUDE.md](../../../src/CLAUDE.md)             |
+| Vercel serverless API        | `api/`       | [api/CLAUDE.md](../../../api/CLAUDE.md)             |
 | ERC-8004 Solidity registries | `contracts/` | [contracts/CLAUDE.md](../../../contracts/CLAUDE.md) |
-| Format specs | `specs/` | — |
-| Priority-stack build prompts | `prompts/` | [prompts/INDEX.md](../../../prompts/INDEX.md) |
-| User-facing docs | `docs/` | — |
-| Static pages / assets | `public/` | — |
-| SDK package | `sdk/` | — |
+| Format specs                 | `specs/`     | —                                                   |
+| Priority-stack build prompts | `prompts/`   | [prompts/INDEX.md](../../../prompts/INDEX.md)       |
+| User-facing docs             | `docs/`      | —                                                   |
+| Static pages / assets        | `public/`    | —                                                   |
+| SDK package                  | `sdk/`       | —                                                   |
 
 Top-level HTML entries: `index.html`, `features.html`, `embed.html`, `agent-home.html`, `agent-embed.html`. Additional routes are rewritten by the `vercel-rewrites` middleware in [vite.config.js](../../../vite.config.js) and mirrored in [vercel.json](../../../vercel.json).
 

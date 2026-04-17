@@ -33,108 +33,110 @@ Everything is optional except `manifest.json` and a `body` reference.
 
 ```jsonc
 {
-  "$schema": "https://3d-agent.io/schemas/manifest/0.1.json",
-  "spec": "agent-manifest/0.1",
+	"$schema": "https://3d-agent.io/schemas/manifest/0.1.json",
+	"spec": "agent-manifest/0.1",
 
-  // Identity — filled in after on-chain registration
-  "id": {
-    "chain": "base",              // "base" | "base-sepolia" | "ethereum" | "local"
-    "registry": "0x...",          // ERC-8004 Identity Registry address
-    "agentId": "1234",            // assigned by the registry
-    "owner": "0x..."              // wallet that controls the agent
-  },
+	// Identity — filled in after on-chain registration
+	"id": {
+		"chain": "base", // "base" | "base-sepolia" | "ethereum" | "local"
+		"registry": "0x...", // ERC-8004 Identity Registry address
+		"agentId": "1234", // assigned by the registry
+		"owner": "0x...", // wallet that controls the agent
+	},
 
-  // Display
-  "name": "Coach Leo",
-  "description": "A football coach who reviews your form.",
-  "image": "ipfs://Qm.../poster.webp",
-  "tags": ["coach", "sports", "argentina"],
+	// Display
+	"name": "Coach Leo",
+	"description": "A football coach who reviews your form.",
+	"image": "ipfs://Qm.../poster.webp",
+	"tags": ["coach", "sports", "argentina"],
 
-  // Body — the 3D embodiment
-  "body": {
-    "uri": "ipfs://Qm.../body.glb",
-    "format": "gltf-binary",       // "gltf-binary" | "gltf" | "vrm"
-    "validator": "attestations/gltf-validator.json",
-    "rig": "mixamo",               // "mixamo" | "vrm" | "custom" — drives animation retargeting
-    "boundingBoxHeight": 1.78      // meters, for scale normalization
-  },
+	// Body — the 3D embodiment
+	"body": {
+		"uri": "ipfs://Qm.../body.glb",
+		"format": "gltf-binary", // "gltf-binary" | "gltf" | "vrm"
+		"validator": "attestations/gltf-validator.json",
+		"rig": "mixamo", // "mixamo" | "vrm" | "custom" — drives animation retargeting
+		"boundingBoxHeight": 1.78, // meters, for scale normalization
+	},
 
-  // Brain — LLM runtime binding
-  "brain": {
-    "provider": "anthropic",       // "anthropic" | "openai" | "local" | "none"
-    "model": "claude-opus-4-6",
-    "instructions": "instructions.md",
-    "temperature": 0.7,
-    "maxTokens": 4096,
-    "thinking": "auto"             // "auto" | "always" | "never"
-  },
+	// Brain — LLM runtime binding
+	"brain": {
+		"provider": "anthropic", // "anthropic" | "openai" | "local" | "none"
+		"model": "claude-opus-4-6",
+		"instructions": "instructions.md",
+		"temperature": 0.7,
+		"maxTokens": 4096,
+		"thinking": "auto", // "auto" | "always" | "never"
+	},
 
-  // Voice — I/O
-  "voice": {
-    "tts": {
-      "provider": "browser",       // "browser" | "elevenlabs" | "openai" | "none"
-      "voiceId": "default",
-      "rate": 1.0,
-      "pitch": 1.0
-    },
-    "stt": {
-      "provider": "browser",       // "browser" | "whisper" | "none"
-      "language": "en-US",
-      "continuous": false
-    }
-  },
+	// Voice — I/O
+	"voice": {
+		"tts": {
+			"provider": "browser", // "browser" | "elevenlabs" | "openai" | "none"
+			"voiceId": "default",
+			"rate": 1.0,
+			"pitch": 1.0,
+		},
+		"stt": {
+			"provider": "browser", // "browser" | "whisper" | "none"
+			"language": "en-US",
+			"continuous": false,
+		},
+	},
 
-  // Skills — capability bundles, composable, content-addressed
-  "skills": [
-    { "uri": "skills/wave/", "version": "0.1.0" },
-    { "uri": "ipfs://Qm.../dance/", "version": "1.2.0" },
-    { "uri": "https://skills.3d-agent.io/explain-gltf@0.3.0" }
-  ],
+	// Skills — capability bundles, composable, content-addressed
+	"skills": [
+		{ "uri": "skills/wave/", "version": "0.1.0" },
+		{ "uri": "ipfs://Qm.../dance/", "version": "1.2.0" },
+		{ "uri": "https://skills.3d-agent.io/explain-gltf@0.3.0" },
+	],
 
-  // Memory — persistent state
-  "memory": {
-    "mode": "local",               // "local" | "ipfs" | "encrypted-ipfs" | "none"
-    "index": "memory/MEMORY.md",
-    "maxTokens": 8192              // budget for memory context injection
-  },
+	// Memory — persistent state
+	"memory": {
+		"mode": "local", // "local" | "ipfs" | "encrypted-ipfs" | "none"
+		"index": "memory/MEMORY.md",
+		"maxTokens": 8192, // budget for memory context injection
+	},
 
-  // Scene-tools — what the LLM can do in the 3D world
-  // Tools declared here are always available; skills add more.
-  "tools": [
-    "wave", "lookAt", "pointAt", "play_clip",
-    "setExpression", "moveTo", "speak"
-  ],
+	// Scene-tools — what the LLM can do in the 3D world
+	// Tools declared here are always available; skills add more.
+	"tools": ["wave", "lookAt", "pointAt", "play_clip", "setExpression", "moveTo", "speak"],
 
-  // Provenance — signed attestations
-  "attestations": [
-    {
-      "type": "gltf-validator",
-      "uri": "attestations/gltf-validator.json",
-      "issuer": "0x...",
-      "signature": "0x..."
-    }
-  ],
+	// Provenance — signed attestations
+	"attestations": [
+		{
+			"type": "gltf-validator",
+			"uri": "attestations/gltf-validator.json",
+			"issuer": "0x...",
+			"signature": "0x...",
+		},
+	],
 
-  // Lifecycle
-  "created": "2026-04-14T12:00:00Z",
-  "updated": "2026-04-14T12:00:00Z",
-  "version": "0.1.0"
+	// Lifecycle
+	"created": "2026-04-14T12:00:00Z",
+	"updated": "2026-04-14T12:00:00Z",
+	"version": "0.1.0",
 }
 ```
 
 ## Field semantics
 
 ### `id`
+
 The on-chain identity. When absent, the agent is unregistered (local-only). When present, `agent://{chain}/{agentId}` resolves to this manifest via the registry's `tokenURI(agentId)` call.
 
 ### `body`
+
 Only `uri` and `format` are required. `rig` lets skills retarget animations across compatible rigs (Mixamo-to-Mixamo skill bundles are portable). `boundingBoxHeight` lets the scene normalize scale — a 20-meter model and a 0.2-meter model both render at consistent human size.
 
 ### `brain`
+
 `provider: "none"` is valid — a purely reactive avatar with no LLM, controlled only by skill triggers. `instructions` is a relative path to a markdown file; its frontmatter can override `brain.*` fields per-prompt.
 
 ### `skills`
+
 Three URI forms:
+
 - **Relative** (`skills/wave/`) — bundled in the manifest.
 - **IPFS** (`ipfs://Qm.../`) — resolved via gateway fallback.
 - **HTTPS** (`https://skills.3d-agent.io/...`) — centrally hosted skill registry (optional, for discoverability).
@@ -142,49 +144,51 @@ Three URI forms:
 Skills load lazily. The `<agent-3d>` element emits `skill:loaded` events as each comes online.
 
 ### `memory`
+
 `local` persists in `localStorage` keyed by agentId. `ipfs` pins after each write (slow, durable). `encrypted-ipfs` wraps with the owner wallet's pubkey. See [MEMORY_SPEC.md](./MEMORY_SPEC.md).
 
 ### `tools`
+
 Built-in scene-tools available without any skill installed. Additional tools come from skills' `tools.json`. Tool names are merged; skill tools override built-ins if names collide (with a console warning).
 
 ## Worked example: Coach Leo
 
 ```json
 {
-  "spec": "agent-manifest/0.1",
-  "id": {
-    "chain": "base-sepolia",
-    "registry": "0xAbC...123",
-    "agentId": "42",
-    "owner": "0xDeadBeef..."
-  },
-  "name": "Coach Leo",
-  "description": "Football coach. Reviews your form, cheers you on.",
-  "image": "ipfs://bafy.../poster.webp",
-  "tags": ["coach", "football", "argentina"],
-  "body": {
-    "uri": "ipfs://bafy.../cz.glb",
-    "format": "gltf-binary",
-    "rig": "mixamo",
-    "boundingBoxHeight": 1.78
-  },
-  "brain": {
-    "provider": "anthropic",
-    "model": "claude-opus-4-6",
-    "instructions": "instructions.md",
-    "temperature": 0.8
-  },
-  "voice": {
-    "tts": { "provider": "browser", "rate": 1.1 },
-    "stt": { "provider": "browser", "language": "en-US" }
-  },
-  "skills": [
-    { "uri": "skills/wave/", "version": "0.1.0" },
-    { "uri": "ipfs://bafy.../football-drills/", "version": "1.0.0" }
-  ],
-  "memory": { "mode": "local", "index": "memory/MEMORY.md", "maxTokens": 8192 },
-  "tools": ["wave", "lookAt", "play_clip", "setExpression", "speak"],
-  "version": "0.1.0"
+	"spec": "agent-manifest/0.1",
+	"id": {
+		"chain": "base-sepolia",
+		"registry": "0xAbC...123",
+		"agentId": "42",
+		"owner": "0xDeadBeef..."
+	},
+	"name": "Coach Leo",
+	"description": "Football coach. Reviews your form, cheers you on.",
+	"image": "ipfs://bafy.../poster.webp",
+	"tags": ["coach", "football", "argentina"],
+	"body": {
+		"uri": "ipfs://bafy.../cz.glb",
+		"format": "gltf-binary",
+		"rig": "mixamo",
+		"boundingBoxHeight": 1.78
+	},
+	"brain": {
+		"provider": "anthropic",
+		"model": "claude-opus-4-6",
+		"instructions": "instructions.md",
+		"temperature": 0.8
+	},
+	"voice": {
+		"tts": { "provider": "browser", "rate": 1.1 },
+		"stt": { "provider": "browser", "language": "en-US" }
+	},
+	"skills": [
+		{ "uri": "skills/wave/", "version": "0.1.0" },
+		{ "uri": "ipfs://bafy.../football-drills/", "version": "1.0.0" }
+	],
+	"memory": { "mode": "local", "index": "memory/MEMORY.md", "maxTokens": 8192 },
+	"tools": ["wave", "lookAt", "play_clip", "setExpression", "speak"],
+	"version": "0.1.0"
 }
 ```
 

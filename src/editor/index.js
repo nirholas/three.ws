@@ -125,7 +125,9 @@ export class Editor {
 
 	async _saveEdits() {
 		if (this._saveNeedsAuth) {
-			window.location.href = '/login?next=' + encodeURIComponent(location.pathname + location.search + location.hash);
+			window.location.href =
+				'/login?next=' +
+				encodeURIComponent(location.pathname + location.search + location.hash);
 			return;
 		}
 		const avatarId =
@@ -139,7 +141,14 @@ export class Editor {
 		const stepPct = { export: 0, presign: 0.25, upload: 0.4, patch: 0.9 };
 		const onStep = ({ step, pct }) => {
 			const base = stepPct[step] ?? 0;
-			const span = step === 'upload' ? 0.5 : step === 'export' ? 0.25 : step === 'presign' ? 0.15 : 0.1;
+			const span =
+				step === 'upload'
+					? 0.5
+					: step === 'export'
+						? 0.25
+						: step === 'presign'
+							? 0.15
+							: 0.1;
 			const overall = Math.round((base + pct * span) * 100);
 			this._saveCtrl?.name(`saving… ${overall}%`);
 		};

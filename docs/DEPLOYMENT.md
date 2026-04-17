@@ -87,27 +87,27 @@ vercel --prod
 
 ```json
 {
-    "public": true,
-    "routes": [
-        {
-            "src": "/assets/(.*)",
-            "headers": { "cache-control": "max-age=604800, public" },
-            "dest": "/assets/$1"
-        },
-        {
-            "src": "/(.*)",
-            "dest": "/public/$1"
-        }
-    ]
+	"public": true,
+	"routes": [
+		{
+			"src": "/assets/(.*)",
+			"headers": { "cache-control": "max-age=604800, public" },
+			"dest": "/assets/$1"
+		},
+		{
+			"src": "/(.*)",
+			"dest": "/public/$1"
+		}
+	]
 }
 ```
 
 ### Route Breakdown
 
-| Route | Behavior |
-|-------|----------|
+| Route       | Behavior                                                |
+| ----------- | ------------------------------------------------------- |
 | `/assets/*` | Static assets served with 7-day cache (604,800 seconds) |
-| `/*` | Everything else rewrites to `/public/*` |
+| `/*`        | Everything else rewrites to `/public/*`                 |
 
 The `public: true` flag allows listing of the deployment.
 
@@ -119,24 +119,25 @@ The `public: true` flag allows listing of the deployment.
 
 ```json
 [
-    {
-        "method": ["GET"],
-        "origin": [
-            "https://3dagent.vercel.app",
-            "https://*.3dagent.vercel.app",
-            "https://chat.sperax.io",
-            "https://sperax-jam2emun9-moomsi.vercel.app",
-            "https://sperax-iota.vercel.app",
-            "http://localhost:*",
-            "https://localhost:*"
-        ],
-        "responseHeader": ["Content-Type"],
-        "maxAgeSeconds": 3600
-    }
+	{
+		"method": ["GET"],
+		"origin": [
+			"https://3dagent.vercel.app",
+			"https://*.3dagent.vercel.app",
+			"https://chat.sperax.io",
+			"https://sperax-jam2emun9-moomsi.vercel.app",
+			"https://sperax-iota.vercel.app",
+			"http://localhost:*",
+			"https://localhost:*"
+		],
+		"responseHeader": ["Content-Type"],
+		"maxAgeSeconds": 3600
+	}
 ]
 ```
 
 This allows:
+
 - The production domain and all subdomains
 - Partner domains (Sperax)
 - Local development on any port
@@ -158,8 +159,8 @@ The production deployment uses `3dagent.vercel.app`. To use a custom domain:
 
 1. Add the domain in the Vercel dashboard under **Settings → Domains**
 2. Configure DNS:
-   - **A record:** `76.76.21.21`
-   - **CNAME:** `cname.vercel-dns.com`
+    - **A record:** `76.76.21.21`
+    - **CNAME:** `cname.vercel-dns.com`
 3. Vercel automatically provisions an SSL certificate
 
 ---
@@ -170,18 +171,19 @@ The production deployment uses `3dagent.vercel.app`. To use a custom domain:
 
 ```html
 <iframe
-    src="https://3dagent.vercel.app/#model=https://your-cdn.com/model.glb&kiosk=true"
-    width="100%"
-    height="600"
-    frameborder="0"
-    allow="autoplay; fullscreen"
-    style="border: none;"
+	src="https://3dagent.vercel.app/#model=https://your-cdn.com/model.glb&kiosk=true"
+	width="100%"
+	height="600"
+	frameborder="0"
+	allow="autoplay; fullscreen"
+	style="border: none;"
 ></iframe>
 ```
 
 ### Kiosk Mode
 
 Add `kiosk=true` to the hash to:
+
 - Hide the top header bar
 - Auto-close the dat.gui panel
 - Hide the validation toggle
@@ -275,10 +277,10 @@ docker run -p 8080:80 3d-agent
 
 The app loads decoder libraries from unpkg at runtime:
 
-| Library | CDN URL Pattern |
-|---------|----------------|
-| Draco decoder | `https://unpkg.com/three@0.{REVISION}.x/examples/jsm/libs/draco/gltf/` |
-| KTX2/Basis transcoder | `https://unpkg.com/three@0.{REVISION}.x/examples/jsm/libs/basis/` |
+| Library               | CDN URL Pattern                                                        |
+| --------------------- | ---------------------------------------------------------------------- |
+| Draco decoder         | `https://unpkg.com/three@0.{REVISION}.x/examples/jsm/libs/draco/gltf/` |
+| KTX2/Basis transcoder | `https://unpkg.com/three@0.{REVISION}.x/examples/jsm/libs/basis/`      |
 
 These are versioned to the installed three.js revision, so they automatically match.
 
@@ -286,27 +288,28 @@ These are versioned to the installed three.js revision, so they automatically ma
 
 Environment maps are loaded from Google Cloud Storage:
 
-| Map | URL |
-|-----|-----|
-| Venice Sunset | `https://storage.googleapis.com/donmccurdy-static/venice_sunset_1k.exr` |
+| Map             | URL                                                                       |
+| --------------- | ------------------------------------------------------------------------- |
+| Venice Sunset   | `https://storage.googleapis.com/donmccurdy-static/venice_sunset_1k.exr`   |
 | Footprint Court | `https://storage.googleapis.com/donmccurdy-static/footprint_court_2k.exr` |
 
 For self-hosting, download these files and update the paths in `src/environments.js`.
 
 ### Caching Strategy
 
-| Resource | Cache Duration |
-|----------|---------------|
-| `/assets/*` | 7 days (`max-age=604800`) |
-| Decoder libraries (unpkg) | CDN-controlled |
-| HDR maps (GCS) | CDN-controlled |
-| Application bundles | Content-hashed by Vite |
+| Resource                  | Cache Duration            |
+| ------------------------- | ------------------------- |
+| `/assets/*`               | 7 days (`max-age=604800`) |
+| Decoder libraries (unpkg) | CDN-controlled            |
+| HDR maps (GCS)            | CDN-controlled            |
+| Application bundles       | Content-hashed by Vite    |
 
 ---
 
 ## Environment Variables
 
 3D Agent does not require any environment variables. All configuration is done via:
+
 - URL hash parameters (runtime)
 - `src/environments.js` (build-time)
 - `vercel.json` (deployment)
@@ -325,6 +328,7 @@ NODE_OPTIONS=--max-old-space-size=4096 npm run build
 ### Model doesn't load (CORS error)
 
 Check the browser console for CORS errors. The model URL must either:
+
 - Be on the same domain as the app
 - Include proper `Access-Control-Allow-Origin` headers
 
@@ -335,6 +339,7 @@ Verify that `vercel.json` routing is correct. The `/(.*) → /public/$1` rewrite
 ### Draco models fail to load
 
 Draco decoders are loaded from unpkg. If the CDN is down or blocked:
+
 1. Download the Draco decoder files
 2. Serve them locally
 3. Update the `DRACO_LOADER.setDecoderPath()` call in `src/viewer.js`
@@ -342,6 +347,7 @@ Draco decoders are loaded from unpkg. If the CDN is down or blocked:
 ### Environment maps don't appear
 
 EXR files are large. Check:
+
 - Network tab for failed requests
 - Console for `EXRLoader` errors
 - That the GCS URLs are accessible from your deployment

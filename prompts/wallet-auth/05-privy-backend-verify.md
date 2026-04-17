@@ -3,6 +3,7 @@
 ## Why this exists
 
 Privy (already a client-side dep) gives us embedded wallets, email-based wallet login, and WalletConnect UX for free. Today it is used only on the ERC-8004 registration page. If we accept a Privy access token at the backend, we get:
+
 - Users without a browser wallet can still sign in (Privy issues them an embedded wallet).
 - Mobile / Brave / Safari users without MetaMask can still sign in via WalletConnect UX.
 - Existing MetaMask users keep working because task 03 still accepts raw SIWE.
@@ -25,6 +26,7 @@ Do not rewrite task 03.
 Body: `{ accessToken: "eyJ..." }` (Privy-issued JWT).
 
 Steps:
+
 1. If `env.PRIVY_APP_ID` or `env.PRIVY_APP_SECRET` unset → `501 { error: "privy not configured" }`.
 2. Verify the JWT with Privy's JWKS. Use `jose` (already a dep). Fetch JWKS from `https://auth.privy.io/api/v1/apps/${appId}/jwks.json`, cache for 10 minutes in memory.
 3. Require `aud === env.PRIVY_APP_ID` and `iss === 'privy.io'`. Reject expired tokens.
@@ -38,7 +40,7 @@ In `src/wallet-auth.js`, add:
 
 ```js
 export async function signInWithPrivy() {
-  // Load @privy-io/js-sdk-core lazily; get accessToken; POST to /api/auth/privy/verify.
+	// Load @privy-io/js-sdk-core lazily; get accessToken; POST to /api/auth/privy/verify.
 }
 ```
 

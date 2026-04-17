@@ -188,7 +188,8 @@ function _esc(str) {
 		.replace(/"/g, '&quot;');
 }
 
-const FOCUSABLE = 'a[href],button:not([disabled]),input,select,textarea,[tabindex]:not([tabindex="-1"])';
+const FOCUSABLE =
+	'a[href],button:not([disabled]),input,select,textarea,[tabindex]:not([tabindex="-1"])';
 
 function _trapFocus(modal) {
 	// Initial focus on first focusable element

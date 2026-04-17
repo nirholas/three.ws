@@ -15,12 +15,12 @@ With `?pretext=3` (or `?gaze=1` — choose one, document it), hovering the hero 
 ## Deliverable
 
 1. **Extend [src/features/hero-pretext.js](../../src/features/hero-pretext.js)** (or add a small sibling `src/features/gaze-follow.js` and import it — your call, document the choice):
-   - `enableGazeFollow()` method triggered by the flag.
-   - Attach `pointermove` (throttled to rAF) on `.hero` — convert cursor position to a pair of offsets relative to the avatar center, normalized to `[-1, 1]` per axis.
-   - Map to orbit deltas: max ±15° on theta (horizontal), max ±8° on phi (vertical). Feel free to tune, but keep magnitudes subtle.
-   - Disable `auto-rotate` while tracking; re-enable after 1.2s of idle (no pointer movement) or on `pointerleave`.
-   - Smooth toward target with a critically-damped spring or `lerp` with `alpha ≈ 0.12` per frame — no stuttering, no overshoot.
-   - Honor `prefers-reduced-motion: reduce` — if set, skip the entire feature and leave `auto-rotate` on.
+    - `enableGazeFollow()` method triggered by the flag.
+    - Attach `pointermove` (throttled to rAF) on `.hero` — convert cursor position to a pair of offsets relative to the avatar center, normalized to `[-1, 1]` per axis.
+    - Map to orbit deltas: max ±15° on theta (horizontal), max ±8° on phi (vertical). Feel free to tune, but keep magnitudes subtle.
+    - Disable `auto-rotate` while tracking; re-enable after 1.2s of idle (no pointer movement) or on `pointerleave`.
+    - Smooth toward target with a critically-damped spring or `lerp` with `alpha ≈ 0.12` per frame — no stuttering, no overshoot.
+    - Honor `prefers-reduced-motion: reduce` — if set, skip the entire feature and leave `auto-rotate` on.
 2. **No CSS changes** required. If you need to hint interactivity (e.g. `cursor: none` or a subtle reticle), propose it in the reporting section but do not ship it.
 
 ## Audit checklist
@@ -46,9 +46,9 @@ With `?pretext=3` (or `?gaze=1` — choose one, document it), hovering the hero 
 1. `node --check` the new/modified JS file.
 2. `npx vite build` completes.
 3. Dev server, `/features?pretext=3`:
-   - Move cursor in a slow circle over the hero → avatar head tracks smoothly.
-   - Flick the cursor left↔right fast → no stutter, no snap-back.
-   - Leave the hero → ~400ms eased return → auto-rotate resumes within ~1.2s.
+    - Move cursor in a slow circle over the hero → avatar head tracks smoothly.
+    - Flick the cursor left↔right fast → no stutter, no snap-back.
+    - Leave the hero → ~400ms eased return → auto-rotate resumes within ~1.2s.
 4. `prefers-reduced-motion: reduce` set in OS or DevTools → feature disabled, auto-rotate unchanged.
 5. Touch device (DevTools device emulation) → feature disabled.
 6. DevTools Performance → `pointermove`-driven frames stay under 16ms.

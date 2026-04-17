@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Wire the uploaded selfie to the avatar-generation pipeline (Avaturn or chosen provider)"
+description: 'Wire the uploaded selfie to the avatar-generation pipeline (Avaturn or chosen provider)'
 ---
 
 # 02-03 · Selfie → avatar pipeline
@@ -18,32 +18,32 @@ The magic moment itself. A JPEG on R2 must become a rigged GLB at `/api/avatars/
 
 - [src/avatar-creator.js](../../src/avatar-creator.js) — existing Avaturn SDK integration (client-side).
 - [api/avatars/index.js](../../api/avatars/index.js) — how generated avatars get registered.
-- [api/_lib/r2.js](../../api/_lib/r2.js) — `presignGet` for handing a signed URL to a third-party generator.
+- [api/\_lib/r2.js](../../api/_lib/r2.js) — `presignGet` for handing a signed URL to a third-party generator.
 
 ## Build this
 
 1. **Decision doc (one paragraph, in PR description)**: are we calling Avaturn (or Ready Player Me, or a self-hosted pipeline) from the **client** (SDK) or the **server** (REST API)? The rest of this prompt assumes server-side because it's more portable and keeps API keys out of the client. If client-side is required, note why.
 2. **New endpoint** `api/selfies/generate.js`:
-   - Session auth required.
-   - Body: `{ selfie_id }`.
-   - Resolve selfie row, generate a short-lived `presignGet` for the R2 object.
-   - Submit to provider with a webhook callback URL `/api/avatars/webhook/{provider}`.
-   - Insert an `avatar_jobs` row: `{ id, user_id, selfie_id, provider, provider_job_id, status: 'queued' }`. (New table — same schema-change constraint; reuse an existing table if possible or halt and surface.)
-   - Return `{ job_id, status: 'queued' }`.
+    - Session auth required.
+    - Body: `{ selfie_id }`.
+    - Resolve selfie row, generate a short-lived `presignGet` for the R2 object.
+    - Submit to provider with a webhook callback URL `/api/avatars/webhook/{provider}`.
+    - Insert an `avatar_jobs` row: `{ id, user_id, selfie_id, provider, provider_job_id, status: 'queued' }`. (New table — same schema-change constraint; reuse an existing table if possible or halt and surface.)
+    - Return `{ job_id, status: 'queued' }`.
 3. **New endpoint** `api/avatars/webhook/:provider.js`:
-   - Verify webhook signature per provider's scheme.
-   - On `completed`: download the GLB from the provider URL, `PUT` it to R2 at `u/{userId}/{slug}/{timestamp}.glb`, register it in `avatars` (reusing `api/avatars/index.js` helpers), mark the job `done`, set `agent_identities.avatar_id` to the new avatar (assign to the user's default agent — the one `/api/agents/me` would return).
-   - On `failed`: mark the job `failed`, store the error message.
+    - Verify webhook signature per provider's scheme.
+    - On `completed`: download the GLB from the provider URL, `PUT` it to R2 at `u/{userId}/{slug}/{timestamp}.glb`, register it in `avatars` (reusing `api/avatars/index.js` helpers), mark the job `done`, set `agent_identities.avatar_id` to the new avatar (assign to the user's default agent — the one `/api/agents/me` would return).
+    - On `failed`: mark the job `failed`, store the error message.
 4. **Polling endpoint** `api/selfies/generate.js` → also handles `GET ?job_id=` → returns `{ status, avatar_id? }`. Keep polling simple; no websockets.
 5. **Client wiring** in `public/selfie/selfie.js`:
-   - After `POST /api/selfies` succeeds, call `POST /api/selfies/generate` with the `selfie_id`.
-   - Poll `/api/selfies/generate?job_id=...` every 3s, max 120s.
-   - On success, redirect to `/agent/${agent_id}` (or `/dashboard/` with a toast if no agent page yet — 04-01 polishes that page).
+    - After `POST /api/selfies` succeeds, call `POST /api/selfies/generate` with the `selfie_id`.
+    - Poll `/api/selfies/generate?job_id=...` every 3s, max 120s.
+    - On success, redirect to `/agent/${agent_id}` (or `/dashboard/` with a toast if no agent page yet — 04-01 polishes that page).
 
 ## Out of scope
 
 - Picking between providers — make one call; document in the decision paragraph.
-- Editing the avatar post-generation (03-*).
+- Editing the avatar post-generation (03-\*).
 - Multiple-angle capture (single front-facing selfie).
 - Anything to do with ERC-8004 registration.
 

@@ -75,11 +75,7 @@ export class MaterialEditor {
 				roughness: mat.roughness,
 				emissive: [mat.emissive.r, mat.emissive.g, mat.emissive.b],
 				opacity: mat.opacity,
-				alphaMode: mat.transparent
-					? 'BLEND'
-					: mat.alphaTest > 0
-						? 'MASK'
-						: 'OPAQUE',
+				alphaMode: mat.transparent ? 'BLEND' : mat.alphaTest > 0 ? 'MASK' : 'OPAQUE',
 				alphaCutoff: mat.alphaTest,
 				doubleSided: mat.side === DoubleSide,
 			});
@@ -87,20 +83,26 @@ export class MaterialEditor {
 			this.viewer.invalidate();
 		};
 
-		folder.addColor(proxy, 'color').name('base color').onChange((v) => {
-			mat.color.set(v);
-			record();
-		});
+		folder
+			.addColor(proxy, 'color')
+			.name('base color')
+			.onChange((v) => {
+				mat.color.set(v);
+				record();
+			});
 		folder.add(mat, 'metalness', 0, 1, 0.01).onChange(record);
 		folder.add(mat, 'roughness', 0, 1, 0.01).onChange(record);
 		folder.addColor(proxy, 'emissive').onChange((v) => {
 			mat.emissive.set(v);
 			record();
 		});
-		folder.add(mat, 'emissiveIntensity', 0, 4, 0.01).name('emissive int').onChange(() => {
-			mat.needsUpdate = true;
-			this.viewer.invalidate();
-		});
+		folder
+			.add(mat, 'emissiveIntensity', 0, 4, 0.01)
+			.name('emissive int')
+			.onChange(() => {
+				mat.needsUpdate = true;
+				this.viewer.invalidate();
+			});
 		folder.add(mat, 'opacity', 0, 1, 0.01).onChange(() => {
 			mat.transparent = mat.opacity < 1;
 			record();
@@ -111,14 +113,20 @@ export class MaterialEditor {
 			mat.needsUpdate = true;
 			this.viewer.invalidate();
 		});
-		folder.add(mat, 'flatShading').name('flat shading').onChange(() => {
-			mat.needsUpdate = true;
-			this.viewer.invalidate();
-		});
-		if (mat.envMapIntensity !== undefined) {
-			folder.add(mat, 'envMapIntensity', 0, 4, 0.01).name('env map int').onChange(() => {
+		folder
+			.add(mat, 'flatShading')
+			.name('flat shading')
+			.onChange(() => {
+				mat.needsUpdate = true;
 				this.viewer.invalidate();
 			});
+		if (mat.envMapIntensity !== undefined) {
+			folder
+				.add(mat, 'envMapIntensity', 0, 4, 0.01)
+				.name('env map int')
+				.onChange(() => {
+					this.viewer.invalidate();
+				});
 		}
 		folder.add(proxy, 'side', Object.keys(SIDES)).onChange((v) => {
 			mat.side = SIDES[v];

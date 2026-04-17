@@ -17,13 +17,13 @@ This is the "product explainer" widget — perfect for describing a rigged chara
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| [src/annotations.js](../../src/annotations.js) | Existing auto-annotation system. Your widget reuses the projection math (world-space point → screen-space overlay). |
-| [src/viewer.js](../../src/viewer.js) — `buildAnnotations`, `updateAnnotations`, `projectAnnotations` references | Understand how annotations attach to world positions and track the camera. |
-| [src/viewer.js](../../src/viewer.js) — raycasting (look for `THREE.Raycaster`) | You need to cast rays from click points to find world-space mesh intersections. |
-| Prompt 00 — Studio preview iframe + postMessage bridge | You'll extend the bridge to carry click events from the preview to the Studio authoring UI. |
-| Prompt 01 | Copy the base widget runtime pattern. |
+| File                                                                                                            | Why                                                                                                                 |
+| :-------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------ |
+| [src/annotations.js](../../src/annotations.js)                                                                  | Existing auto-annotation system. Your widget reuses the projection math (world-space point → screen-space overlay). |
+| [src/viewer.js](../../src/viewer.js) — `buildAnnotations`, `updateAnnotations`, `projectAnnotations` references | Understand how annotations attach to world positions and track the camera.                                          |
+| [src/viewer.js](../../src/viewer.js) — raycasting (look for `THREE.Raycaster`)                                  | You need to cast rays from click points to find world-space mesh intersections.                                     |
+| Prompt 00 — Studio preview iframe + postMessage bridge                                                          | You'll extend the bridge to carry click events from the preview to the Studio authoring UI.                         |
+| Prompt 01                                                                                                       | Copy the base widget runtime pattern.                                                                               |
 
 ## Build this
 
@@ -63,10 +63,10 @@ Layout when `state.type === 'hotspot-tour'`:
 
 - **Preview becomes authoring mode.** A "Place hotspot" button toggles. When active, clicking the preview model drops a hotspot at the clicked surface point.
 - **Hotspot list sidebar:** shows all hotspots. Click one to:
-  - Edit title, body.
-  - "Recenter camera" — snapshots the current preview camera as this hotspot's `cameraFrame`.
-  - Delete.
-  - Reorder (drag handles).
+    - Edit title, body.
+    - "Recenter camera" — snapshots the current preview camera as this hotspot's `cameraFrame`.
+    - Delete.
+    - Reorder (drag handles).
 - **Tour options:** free vs. guided, auto-advance, show controls, etc.
 
 **The click-to-place flow requires cross-frame cooperation.** The Studio (parent) listens for a `widget:hotspot:place` message. The preview (child) runs in "author mode" when it receives `widget:author:enable { mode: 'place' }`. The preview enables a raycaster on canvas clicks, emits `{ point, normal, hitMeshName }` back up. Studio appends to `config.hotspots` and triggers a save draft.
@@ -77,20 +77,20 @@ Create `src/widgets/hotspot-tour.js`:
 
 ```js
 export function mountHotspotTour(viewer, config, container) {
-  // 1. Hide non-canvas UI.
-  // 2. For each hotspot, create a DOM element (dot + number).
-  //    Project its world position to screen space each frame (mirror src/annotations.js).
-  // 3. On hotspot click/tap:
-  //    - Show a popover near the dot with title + body.
-  //    - If hotspot.cameraFrame, animate viewer camera + target to that frame with an ease.
-  //    - In guided tour mode, show prev/next buttons in the popover.
-  // 4. If autoOpenFirst, trigger hotspot 0 on mount.
-  // 5. In tourAutoAdvance mode, advance every N seconds; pause on user interaction.
-  // 6. Handle occlusion: if a hotspot's world position is behind geometry from the camera's view,
-  //    dim the dot to 40% opacity. Use a raycaster from camera to hotspot.position; if hit distance
-  //    < distance to hotspot, it's occluded.
-  // 7. Keyboard: arrow keys cycle hotspots in guided mode.
-  // 8. Return { destroy, goto(index) }.
+	// 1. Hide non-canvas UI.
+	// 2. For each hotspot, create a DOM element (dot + number).
+	//    Project its world position to screen space each frame (mirror src/annotations.js).
+	// 3. On hotspot click/tap:
+	//    - Show a popover near the dot with title + body.
+	//    - If hotspot.cameraFrame, animate viewer camera + target to that frame with an ease.
+	//    - In guided tour mode, show prev/next buttons in the popover.
+	// 4. If autoOpenFirst, trigger hotspot 0 on mount.
+	// 5. In tourAutoAdvance mode, advance every N seconds; pause on user interaction.
+	// 6. Handle occlusion: if a hotspot's world position is behind geometry from the camera's view,
+	//    dim the dot to 40% opacity. Use a raycaster from camera to hotspot.position; if hit distance
+	//    < distance to hotspot, it's occluded.
+	// 7. Keyboard: arrow keys cycle hotspots in guided mode.
+	// 8. Return { destroy, goto(index) }.
 }
 ```
 
@@ -100,8 +100,8 @@ Use a smooth spring or `TWEEN.js`-style ease (do not pull in TWEEN — hand-roll
 
 ```js
 function easeCameraTo(camera, controls, target, position, durationMs = 700) {
-  // lerp controls.target toward target, camera.position toward position, over durationMs.
-  // Use easeInOutCubic.
+	// lerp controls.target toward target, camera.position toward position, over durationMs.
+	// Use easeInOutCubic.
 }
 ```
 
@@ -145,10 +145,12 @@ Respect `prefers-reduced-motion` (disable pulse).
 ## Deliverables
 
 **New:**
+
 - `src/widgets/hotspot-tour.js`
 - Hotspot-related CSS (dots, popover, tour controls).
 
 **Modified:**
+
 - `src/widget-types.js` — mark `hotspot-tour` as `ready`, add schema.
 - `src/app.js` — dispatcher + enable author-mode postMessage handling when a query param (e.g. `?author=1`) is present on the preview iframe.
 - `public/studio/studio.js` — hotspot-tour authoring UI (click-to-place, list, editor).

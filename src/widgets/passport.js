@@ -20,8 +20,11 @@ import {
 	REGISTRY_DEPLOYMENTS,
 } from '../erc8004/index.js';
 import {
-	CHAIN_SLUGS, PUBLIC_RPCS, EXPLORERS,
-	resolveChainId, chainLabel,
+	CHAIN_SLUGS,
+	PUBLIC_RPCS,
+	EXPLORERS,
+	resolveChainId,
+	chainLabel,
 } from '../widget-types.js';
 import { resolveURI, isDecentralizedURI } from '../ipfs.js';
 
@@ -76,7 +79,9 @@ export async function mountPassport(viewer, config, container, widgetId) {
 		const tick = () => {
 			if (state.destroyed) return;
 			if (document.hidden) return;
-			_refresh(state, panel).catch(() => { /* keep stale */ });
+			_refresh(state, panel).catch(() => {
+				/* keep stale */
+			});
 		};
 		state.pollTimer = setInterval(tick, config.refreshIntervalSec * 1000);
 
@@ -189,7 +194,15 @@ async function _refresh(state, panel) {
 			manifest = await _fetchManifest(tokenURI).catch(() => null);
 		}
 
-		state.data = { wallet, tokenURI, name, symbol, reputation: reputationData, feedback, manifest };
+		state.data = {
+			wallet,
+			tokenURI,
+			name,
+			symbol,
+			reputation: reputationData,
+			feedback,
+			manifest,
+		};
 		state.lastVerifiedAt = Date.now();
 
 		_writeCache(state.cacheKey, { data: state.data, savedAt: state.lastVerifiedAt });
@@ -240,9 +253,9 @@ async function _fetchManifest(tokenURI) {
 function _pickManifestFields(raw) {
 	if (!raw || typeof raw !== 'object') return null;
 	return {
-		name:         typeof raw.name === 'string'        ? raw.name.slice(0, 120)        : '',
-		description:  typeof raw.description === 'string' ? raw.description.slice(0, 500) : '',
-		image:        typeof raw.image === 'string'       ? raw.image                     : '',
+		name: typeof raw.name === 'string' ? raw.name.slice(0, 120) : '',
+		description: typeof raw.description === 'string' ? raw.description.slice(0, 500) : '',
+		image: typeof raw.image === 'string' ? raw.image : '',
 		agentRegistry: typeof raw.agentRegistry === 'string' ? raw.agentRegistry.slice(0, 200) : '',
 	};
 }
@@ -290,45 +303,62 @@ function _render(panel, state, opts = {}) {
 	const verifiedRel = lastVerifiedAt ? _relativeTime(lastVerifiedAt) : '';
 	const stale = Boolean(opts.staleReason);
 
-	const repBlock = (config.showReputation && data.reputation) ? `
+	const repBlock =
+		config.showReputation && data.reputation
+			? `
 		<div class="passport-row passport-row--reputation">
 			<span class="passport-star" aria-hidden="true">★</span>
 			<span class="passport-rep-avg">${data.reputation.count === 0 ? '—' : data.reputation.average.toFixed(2)}</span>
 			<span class="passport-rep-count">(${data.reputation.count} ${data.reputation.count === 1 ? 'review' : 'reviews'})</span>
 		</div>
-	` : '';
+	`
+			: '';
 
-	const feedbackBlock = (config.showRecentFeedback && data.feedback && data.feedback.length) ? `
+	const feedbackBlock =
+		config.showRecentFeedback && data.feedback && data.feedback.length
+			? `
 		<div class="passport-section passport-section--feedback">
 			<div class="passport-section-title">Recent feedback</div>
 			<ul class="passport-feedback-list">
-				${data.feedback.map((f) => `
+				${data.feedback
+					.map(
+						(f) => `
 					<li class="passport-feedback-item">
 						<span class="passport-feedback-comment">${_escapeHTML(f.comment || '—')}</span>
 						<span class="passport-feedback-meta">${_shortAddr(f.from)} · ${f.score}★</span>
 					</li>
-				`).join('')}
+				`,
+					)
+					.join('')}
 			</ul>
 		</div>
-	` : '';
+	`
+			: '';
 
-	const jsonBlock = (config.showRegistrationJSON && data.tokenURI) ? `
+	const jsonBlock =
+		config.showRegistrationJSON && data.tokenURI
+			? `
 		<div class="passport-section passport-section--json">
 			<a class="passport-json-link" href="${_escapeAttr(_resolveForLink(data.tokenURI))}" target="_blank" rel="noopener noreferrer">
 				View passport JSON ↗
 			</a>
 		</div>
-	` : '';
+	`
+			: '';
 
-	const explorerLink = explorer ? `
+	const explorerLink = explorer
+		? `
 		<a class="passport-explorer-link" href="${_escapeAttr(`${explorer}/address/${data.wallet}`)}" target="_blank" rel="noopener noreferrer" title="View on explorer">↗</a>
-	` : '';
+	`
+		: '';
 
 	const chainSlug = chainLabel(chainId);
 
-	const staleBanner = stale ? `
+	const staleBanner = stale
+		? `
 		<div class="passport-stale">Offline · last verified ${_escapeHTML(verifiedRel)}</div>
-	` : '';
+	`
+		: '';
 
 	if (config.layout === 'badge') {
 		panel.innerHTML = `
@@ -340,12 +370,16 @@ function _render(panel, state, opts = {}) {
 					<span class="passport-badge-chain">${_escapeHTML(chainSlug)}</span>
 					<span class="passport-badge-check" aria-label="Registered on-chain">✓</span>
 				</div>
-				${config.showReputation && data.reputation ? `
+				${
+					config.showReputation && data.reputation
+						? `
 					<div class="passport-badge-rep">
 						<span class="passport-star" aria-hidden="true">★</span>
 						${data.reputation.count === 0 ? '—' : data.reputation.average.toFixed(2)}
 					</div>
-				` : ''}
+				`
+						: ''
+				}
 				${staleBanner}
 			</div>
 			${config.showPoweredBy ? _poweredByHTML(config) : ''}
@@ -373,11 +407,15 @@ function _render(panel, state, opts = {}) {
 			${repBlock}
 			${feedbackBlock}
 			${jsonBlock}
-			${lastVerifiedAt ? `
+			${
+				lastVerifiedAt
+					? `
 				<div class="passport-verified" title="${_escapeAttr(verifiedISO)}">
 					${stale ? 'Last verified' : 'Verified'} ${_escapeHTML(verifiedRel)}
 				</div>
-			` : ''}
+			`
+					: ''
+			}
 		</div>
 		${config.showPoweredBy ? _poweredByHTML(config) : ''}
 	`;
@@ -387,10 +425,15 @@ function _render(panel, state, opts = {}) {
 		copyBtn.addEventListener('click', () => {
 			const addr = copyBtn.dataset.copy;
 			if (!addr) return;
-			navigator.clipboard?.writeText(addr).then(() => {
-				copyBtn.classList.add('passport-wallet--copied');
-				setTimeout(() => copyBtn.classList.remove('passport-wallet--copied'), 1200);
-			}).catch(() => { /* ignore */ });
+			navigator.clipboard
+				?.writeText(addr)
+				.then(() => {
+					copyBtn.classList.add('passport-wallet--copied');
+					setTimeout(() => copyBtn.classList.remove('passport-wallet--copied'), 1200);
+				})
+				.catch(() => {
+					/* ignore */
+				});
 		});
 	}
 }
@@ -437,7 +480,9 @@ function _readCache(key) {
 		if (!parsed?.savedAt) return null;
 		if (Date.now() - parsed.savedAt > STALE_TTL_MS) return null;
 		return parsed;
-	} catch { return null; }
+	} catch {
+		return null;
+	}
 }
 
 function _writeCache(key, payload) {
@@ -446,17 +491,19 @@ function _writeCache(key, payload) {
 		const safe = {
 			savedAt: payload.savedAt,
 			data: {
-				wallet:     payload.data.wallet,
-				tokenURI:   payload.data.tokenURI,
-				name:       payload.data.name,
-				symbol:     payload.data.symbol,
+				wallet: payload.data.wallet,
+				tokenURI: payload.data.tokenURI,
+				name: payload.data.name,
+				symbol: payload.data.symbol,
 				reputation: payload.data.reputation,
-				feedback:   payload.data.feedback,
-				manifest:   payload.data.manifest,
+				feedback: payload.data.feedback,
+				manifest: payload.data.manifest,
 			},
 		};
 		localStorage.setItem(key, JSON.stringify(safe));
-	} catch { /* quota / privacy mode — ignore */ }
+	} catch {
+		/* quota / privacy mode — ignore */
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -484,7 +531,9 @@ function _escapeAttr(s) {
 
 function _sanitizeText(s) {
 	// Strip anything that looks like a tag. Feedback is plain text.
-	return String(s ?? '').replace(/<[^>]*>/g, '').slice(0, 500);
+	return String(s ?? '')
+		.replace(/<[^>]*>/g, '')
+		.slice(0, 500);
 }
 
 function _relativeTime(ts) {

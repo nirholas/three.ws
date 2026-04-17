@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Add service endpoint editor to the existing on-chain agent edit modal in RegisterUI"
+description: 'Add service endpoint editor to the existing on-chain agent edit modal in RegisterUI'
 ---
 
 # 06-03 · Edit Modal — Service Endpoint Editor
@@ -29,6 +29,7 @@ The service list logic in `_renderStepServices` builds a list of `{ name, type, 
 Then in `_renderStepServices`, call `this._buildServiceEditor(serviceContainer, this.form.services)` and wire the returned `getServices` to update `this.form.services` on next/deploy click (replacing the current inline list-render logic).
 
 **Read `_renderStepServices` carefully** before extracting — the current code around line 768–825 uses:
+
 - `renderList()` — a closure that re-renders rows from a `services` array
 - An "add" button (`data-role="add"`)
 - Per-row remove buttons (`data-role="rm"`)
@@ -43,71 +44,79 @@ In `_openEditModal`, find the edit modal HTML template (the `modal.innerHTML = .
 
 ```html
 <div class="erc8004-label" style="margin-top:14px">Service endpoints</div>
-<p class="erc8004-hint">Add or remove A2A / MCP / web endpoints. The 3D avatar service is managed by the "3D Avatar (GLB)" field above.</p>
+<p class="erc8004-hint">
+	Add or remove A2A / MCP / web endpoints. The 3D avatar service is managed by the "3D Avatar
+	(GLB)" field above.
+</p>
 <div data-role="services-editor"></div>
 ```
 
 After the modal is appended to `this.el`, wire the service editor:
+
 ```js
 const nonAvatarServices = (meta?.services || []).filter(
-    (s) => s?.name !== 'avatar' && s?.name !== '3D',
+	(s) => s?.name !== 'avatar' && s?.name !== '3D',
 );
 const { getServices } = this._buildServiceEditor(
-    modal.querySelector('[data-role="services-editor"]'),
-    nonAvatarServices,
+	modal.querySelector('[data-role="services-editor"]'),
+	nonAvatarServices,
 );
 ```
 
 ### 3. Edit modal save handler — read services and pass to `_doUpdateAgent`
 
 In the save handler (around line 1796–1826), currently:
+
 ```js
 const x402Support = !!modal.querySelector('[name="x402Support"]')?.checked;
 
 await this._doUpdateAgent({
-    agentId,
-    name,
-    description,
-    imageUrl: imageUrlInput,
-    glbFile,
-    removeAvatar,
-    x402Support,
-    apiToken,
-    currentMeta: card._meta,
-    say,
+	agentId,
+	name,
+	description,
+	imageUrl: imageUrlInput,
+	glbFile,
+	removeAvatar,
+	x402Support,
+	apiToken,
+	currentMeta: card._meta,
+	say,
 });
 ```
 
 Add services read and pass it through:
+
 ```js
 const editedServices = getServices();
 const x402Support = !!modal.querySelector('[name="x402Support"]')?.checked;
 
 await this._doUpdateAgent({
-    agentId,
-    name,
-    description,
-    imageUrl: imageUrlInput,
-    glbFile,
-    removeAvatar,
-    x402Support,
-    services: editedServices,
-    apiToken,
-    currentMeta: card._meta,
-    say,
+	agentId,
+	name,
+	description,
+	imageUrl: imageUrlInput,
+	glbFile,
+	removeAvatar,
+	x402Support,
+	services: editedServices,
+	apiToken,
+	currentMeta: card._meta,
+	say,
 });
 ```
 
 ### 4. `_doUpdateAgent` — use provided services instead of always pulling from metadata
 
 Currently `_doUpdateAgent` (line ~1834) always reconstructs services from `currentMeta`:
+
 ```js
 const preservedServices = (currentMeta?.services || []).filter(
-    (s) => s?.name !== 'avatar' && s?.name !== '3D',
+	(s) => s?.name !== 'avatar' && s?.name !== '3D',
 );
 ```
 
 Add a `services` parameter to `_doUpdateAgent` and use it when provided:
+
 ```js
 async _doUpdateAgent({
     agentId,
@@ -125,10 +134,11 @@ async _doUpdateAgent({
 ```
 
 Then change the `preservedServices` line:
+
 ```js
 const preservedServices = Array.isArray(services)
-    ? services
-    : (currentMeta?.services || []).filter((s) => s?.name !== 'avatar' && s?.name !== '3D');
+	? services
+	: (currentMeta?.services || []).filter((s) => s?.name !== 'avatar' && s?.name !== '3D');
 ```
 
 This keeps backward compat — callers that don't pass `services` still get the metadata-preserve behavior.
@@ -136,8 +146,9 @@ This keeps backward compat — callers that don't pass `services` still get the 
 ## Service type options (for the editor select)
 
 Use the same set as Step 2:
+
 - `a2a` → label "A2A"
-- `mcp` → label "MCP"  
+- `mcp` → label "MCP"
 - `web` → label "Web"
 - `x402` → label "x402"
 

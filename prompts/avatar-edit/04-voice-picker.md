@@ -41,6 +41,7 @@ From task 01: `persona.voiceProvider` (`web` | `eleven`), `persona.voiceId`.
 ### 5. Runtime hook
 
 `src/runtime/speech.js#speak(text)`:
+
 - Read `identity.persona.voiceProvider + voiceId`.
 - If `web`, synthesize locally.
 - If `eleven`, call `/api/tts/eleven`.

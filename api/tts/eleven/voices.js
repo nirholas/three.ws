@@ -15,7 +15,7 @@ export default wrap(async (req, res) => {
 	if (!method(req, res, ['GET'])) return;
 
 	const session = await getSessionUser(req);
-	const bearer  = session ? null : await authenticateBearer(extractBearer(req));
+	const bearer = session ? null : await authenticateBearer(extractBearer(req));
 	if (!session && !bearer) return error(res, 401, 'unauthorized', 'sign in required');
 
 	const apiKey = env.ELEVENLABS_API_KEY;
@@ -37,10 +37,10 @@ export default wrap(async (req, res) => {
 	}
 
 	const voices = (data.voices || []).map((v) => ({
-		voice_id:    v.voice_id,
-		name:        v.name,
-		category:    v.category,
-		labels:      v.labels || {},
+		voice_id: v.voice_id,
+		name: v.name,
+		category: v.category,
+		labels: v.labels || {},
 		preview_url: v.preview_url || null,
 	}));
 

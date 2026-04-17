@@ -31,13 +31,13 @@ A widget is a saved bundle of: an avatar (GLB stored in R2), a widget type (turn
 
 ## Widget types
 
-| Type | Best for | Default size |
-|---|---|---|
-| `turntable` | Hero banners, product showcases. Auto-rotate, no UI. | 600 × 600 |
-| `animation-gallery` | Showcasing a rigged avatar's animation library. | 720 × 720 |
-| `talking-agent` | Embodied chat — your agent on your site. | 420 × 600 |
-| `passport` | On-chain identity card backed by ERC-8004. | 480 × 560 |
-| `hotspot-tour` | Annotated 3D scenes with clickable POIs. | 800 × 600 |
+| Type                | Best for                                             | Default size |
+| ------------------- | ---------------------------------------------------- | ------------ |
+| `turntable`         | Hero banners, product showcases. Auto-rotate, no UI. | 600 × 600    |
+| `animation-gallery` | Showcasing a rigged avatar's animation library.      | 720 × 720    |
+| `talking-agent`     | Embodied chat — your agent on your site.             | 420 × 600    |
+| `passport`          | On-chain identity card backed by ERC-8004.           | 480 × 560    |
+| `hotspot-tour`      | Annotated 3D scenes with clickable POIs.             | 800 × 600    |
 
 ---
 
@@ -45,11 +45,11 @@ A widget is a saved bundle of: an avatar (GLB stored in R2), a widget type (turn
 
 Every widget has three canonical URLs.
 
-| URL | Use it for |
-|---|---|
-| `https://3dagent.vercel.app/w/<id>` | Sharing in Slack/Discord/X — server-rendered with rich OG card. |
-| `https://3dagent.vercel.app/#widget=<id>` | The SPA viewer with the widget config applied. |
-| `https://3dagent.vercel.app/api/widgets/<id>/og` | The 1200×630 preview image. |
+| URL                                              | Use it for                                                      |
+| ------------------------------------------------ | --------------------------------------------------------------- |
+| `https://3dagent.vercel.app/w/<id>`              | Sharing in Slack/Discord/X — server-rendered with rich OG card. |
+| `https://3dagent.vercel.app/#widget=<id>`        | The SPA viewer with the widget config applied.                  |
+| `https://3dagent.vercel.app/api/widgets/<id>/og` | The 1200×630 preview image.                                     |
 
 `/w/<id>` is the recommended share URL — bots get an OG preview, browsers fall through to the SPA.
 
@@ -57,13 +57,13 @@ Every widget has three canonical URLs.
 
 The viewer supports the following hash params (combine with `&`):
 
-| Param | Type | Description |
-|---|---|---|
-| `widget` | `string` | Loads a saved widget by id. |
-| `model` | `string` | Loads a raw GLB by URL (mutually exclusive with `widget`). |
-| `kiosk` | `boolean` | Hides the header chrome for clean iframe embeds. |
-| `cameraPosition` | `x,y,z` | Comma-separated camera position override. |
-| `preset` | `string` | HDR environment preset name. |
+| Param            | Type      | Description                                                |
+| ---------------- | --------- | ---------------------------------------------------------- |
+| `widget`         | `string`  | Loads a saved widget by id.                                |
+| `model`          | `string`  | Loads a raw GLB by URL (mutually exclusive with `widget`). |
+| `kiosk`          | `boolean` | Hides the header chrome for clean iframe embeds.           |
+| `cameraPosition` | `x,y,z`   | Comma-separated camera position override.                  |
+| `preset`         | `string`  | HDR environment preset name.                               |
 
 ---
 
@@ -78,10 +78,12 @@ The viewer supports the following hash params (combine with `&`):
 	height="600"
 	style="border:0;border-radius:12px;max-width:100%"
 	allow="autoplay; xr-spatial-tracking; clipboard-write"
-	loading="lazy"></iframe>
+	loading="lazy"
+></iframe>
 ```
 
 **Size guidance:**
+
 - Turntable / hotspot-tour: 1:1 or 4:3 — let the user breathe.
 - Talking-agent: 7:10 portrait — chat needs vertical space.
 - Passport: anything ≥ 360 × 480.
@@ -106,14 +108,14 @@ Widgets communicate with the parent page via `window.postMessage`. **Always chec
 
 ### iframe → parent
 
-| Event | Payload | When |
-|---|---|---|
-| `widget:ready` | `{ id, type }` | Widget runtime has booted. |
-| `widget:load` | `{ id, model_url }` | Underlying GLB loaded successfully. |
-| `widget:load:error` | `{ id, error }` | GLB or config failed to load. |
-| `widget:chat:message` | `{ role, content }` | Talking-agent only — a new chat turn. |
-| `widget:hotspot:open` | `{ id, label }` | Hotspot-tour only — visitor opened a POI. |
-| `widget:resize` | `{ width, height }` | Widget reports its preferred size. |
+| Event                 | Payload             | When                                      |
+| --------------------- | ------------------- | ----------------------------------------- |
+| `widget:ready`        | `{ id, type }`      | Widget runtime has booted.                |
+| `widget:load`         | `{ id, model_url }` | Underlying GLB loaded successfully.       |
+| `widget:load:error`   | `{ id, error }`     | GLB or config failed to load.             |
+| `widget:chat:message` | `{ role, content }` | Talking-agent only — a new chat turn.     |
+| `widget:hotspot:open` | `{ id, label }`     | Hotspot-tour only — visitor opened a POI. |
+| `widget:resize`       | `{ width, height }` | Widget reports its preferred size.        |
 
 ```js
 window.addEventListener('message', (e) => {
@@ -126,16 +128,16 @@ window.addEventListener('message', (e) => {
 
 ### parent → iframe
 
-| Event | Payload | Effect |
-|---|---|---|
-| `widget:config` | `{ background, accent, autoRotate, ... }` | Live-update brand config (used by the Studio preview). |
-| `widget:command` | `{ command, args }` | Trigger a runtime action (e.g. `play_clip`, `wave`). |
+| Event            | Payload                                   | Effect                                                 |
+| ---------------- | ----------------------------------------- | ------------------------------------------------------ |
+| `widget:config`  | `{ background, accent, autoRotate, ... }` | Live-update brand config (used by the Studio preview). |
+| `widget:command` | `{ command, args }`                       | Trigger a runtime action (e.g. `play_clip`, `wave`).   |
 
 ```js
 const iframe = document.querySelector('iframe');
 iframe.contentWindow.postMessage(
 	{ type: 'widget:config', config: { background: '#ff00aa' } },
-	'https://3dagent.vercel.app'
+	'https://3dagent.vercel.app',
 );
 ```
 
@@ -150,11 +152,15 @@ Every widget URL serves rich-preview metadata.
 `/w/<id>` returns a server-rendered HTML page with:
 
 ```html
-<meta property="og:title" content="…">
-<meta property="og:description" content="…">
-<meta property="og:image" content="https://3dagent.vercel.app/api/widgets/<id>/og">
-<meta name="twitter:card" content="summary_large_image">
-<link rel="alternate" type="application/json+oembed" href="https://3dagent.vercel.app/api/widgets/oembed?url=…">
+<meta property="og:title" content="…" />
+<meta property="og:description" content="…" />
+<meta property="og:image" content="https://3dagent.vercel.app/api/widgets/<id>/og" />
+<meta name="twitter:card" content="summary_large_image" />
+<link
+	rel="alternate"
+	type="application/json+oembed"
+	href="https://3dagent.vercel.app/api/widgets/oembed?url=…"
+/>
 ```
 
 ### oEmbed endpoint
@@ -208,15 +214,16 @@ The widget iframe makes outbound requests to `3dagent.vercel.app` and (for some 
 
 We log a minimal first-party event per widget load:
 
-| Field | Source |
-|---|---|
-| `widget_id` | the widget being loaded |
-| `type` | the widget type |
-| `country` | Vercel edge header (`x-vercel-ip-country`) |
+| Field          | Source                                             |
+| -------------- | -------------------------------------------------- |
+| `widget_id`    | the widget being loaded                            |
+| `type`         | the widget type                                    |
+| `country`      | Vercel edge header (`x-vercel-ip-country`)         |
 | `referer_host` | hostname of the embedding page (no path, no query) |
-| `created_at` | timestamp |
+| `created_at`   | timestamp                                          |
 
 We **do not** log:
+
 - IP addresses
 - User agent strings
 - Cookies (we don't set any on the embed)
@@ -247,4 +254,4 @@ The widget owner can see aggregated counts in their [Dashboard](https://3dagent.
 
 - iOS Safari may require a user gesture before `speechSynthesis.getVoices()` returns voices for the talking-agent widget.
 - Some browser extensions (uBlock + strict mode) will block the analytics POST. The widget itself still works.
-- Embedding inside a parent iframe that's *also* sandboxed can break WebGL initialization. Add `allow-scripts allow-same-origin` to the parent sandbox.
+- Embedding inside a parent iframe that's _also_ sandboxed can break WebGL initialization. Add `allow-scripts allow-same-origin` to the parent sandbox.

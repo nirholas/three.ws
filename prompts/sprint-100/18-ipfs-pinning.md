@@ -17,7 +17,7 @@ New endpoint, no edits elsewhere.
 
 - [api/avatars/presign.js](../../api/avatars/presign.js) — confirm the R2 URL shape.
 - [.env.example](../../.env.example) — check for existing pinning creds (`PINATA_JWT`, `WEB3_STORAGE_TOKEN`, `ARWEAVE_KEY`).
-- [api/_lib/http.js](../../api/_lib/http.js), [api/_lib/auth.js](../../api/_lib/auth.js).
+- [api/\_lib/http.js](../../api/_lib/http.js), [api/\_lib/auth.js](../../api/_lib/auth.js).
 
 ## Deliverable
 
@@ -26,11 +26,11 @@ New endpoint, no edits elsewhere.
 - Auth required (session or bearer).
 - Body: `{ sourceUrl: string, kind: 'manifest' | 'glb' }`.
 - Steps:
-  1. Validate `sourceUrl` is an R2 URL we own OR a `data:` URL under 10 MB.
-  2. HEAD the source — reject >50 MB.
-  3. Pin via Pinata (preferred; use `PINATA_JWT` if set) or Web3.Storage (fallback). If neither env var is present, return `503 pinning-unconfigured` with a clear message.
-  4. Return `{ ok: true, cid, gatewayUrl: 'https://ipfs.io/ipfs/' + cid, provider }`.
-  5. Record the pin in a `pins` table: `{ user_id, source_url, cid, provider, kind, created_at }` — create the table lazily via `if not exists` on first call.
+    1. Validate `sourceUrl` is an R2 URL we own OR a `data:` URL under 10 MB.
+    2. HEAD the source — reject >50 MB.
+    3. Pin via Pinata (preferred; use `PINATA_JWT` if set) or Web3.Storage (fallback). If neither env var is present, return `503 pinning-unconfigured` with a clear message.
+    4. Return `{ ok: true, cid, gatewayUrl: 'https://ipfs.io/ipfs/' + cid, provider }`.
+    5. Record the pin in a `pins` table: `{ user_id, source_url, cid, provider, kind, created_at }` — create the table lazily via `if not exists` on first call.
 - Rate limit: `30/hour per user`.
 
 ### `GET /api/pinning/status?cid=...`

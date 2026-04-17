@@ -13,22 +13,25 @@ Ship responsive dimensions: the element adapts sensibly to viewport width when `
 ## Deliverable
 
 1. **Element-level responsive** — [src/element.js](../../src/element.js):
-	 - When `responsive` attribute is present (default on), compute `width` / `height` as `clamp(min, preferred, max)` values. Preferred is what the user set; min/max derive from that preferred.
-	 - For `mode="floating"`, shrink to a pill (mic-only, chat collapsed) when viewport width < 480px. User can tap to expand.
-	 - For `mode="inline"`, scale height proportionally to width so the avatar doesn't stretch.
-	 - Use a `ResizeObserver` on `this` so the layout reacts to container size, not just viewport.
+    - When `responsive` attribute is present (default on), compute `width` / `height` as `clamp(min, preferred, max)` values. Preferred is what the user set; min/max derive from that preferred.
+    - For `mode="floating"`, shrink to a pill (mic-only, chat collapsed) when viewport width < 480px. User can tap to expand.
+    - For `mode="inline"`, scale height proportionally to width so the avatar doesn't stretch.
+    - Use a `ResizeObserver` on `this` so the layout reacts to container size, not just viewport.
 2. **Floating pill mode** — when collapsed on mobile:
-	 - Shows only the poster image + a tap target.
-	 - Expands to a bottom-sheet (full width, ~70vh) on tap, not the full floating rect.
-	 - Closes to pill on outside tap or swipe-down.
+    - Shows only the poster image + a tap target.
+    - Expands to a bottom-sheet (full width, ~70vh) on tap, not the full floating rect.
+    - Closes to pill on outside tap or swipe-down.
 3. **Editor device preview** — [src/editor/embed-editor.js](../../src/editor/embed-editor.js):
-	 - Add a toolbar: `[ Desktop | Tablet | Mobile ]` above the stage. Each resizes the stage wrapper to 1440×900 / 768×1024 / 390×844 (iPhone 14) and shows the agent at the corresponding computed size.
-	 - Add a "Responsive preset" selector: `[ Fixed | Mobile-first | Desktop-first ]` — each generates different `width`/`height`/`offset` CSS rules in the snippet output.
-	 - Snippet output gains a commented block showing the computed CSS:
-		 ```html
-		 <!-- generated responsive styles -->
-		 <agent-3d ... style="--agent-width: clamp(280px, 30vw, 420px); --agent-height: clamp(360px, 40vh, 560px);"></agent-3d>
-		 ```
+    - Add a toolbar: `[ Desktop | Tablet | Mobile ]` above the stage. Each resizes the stage wrapper to 1440×900 / 768×1024 / 390×844 (iPhone 14) and shows the agent at the corresponding computed size.
+    - Add a "Responsive preset" selector: `[ Fixed | Mobile-first | Desktop-first ]` — each generates different `width`/`height`/`offset` CSS rules in the snippet output.
+    - Snippet output gains a commented block showing the computed CSS:
+        ```html
+        <!-- generated responsive styles -->
+        <agent-3d
+        	...
+        	style="--agent-width: clamp(280px, 30vw, 420px); --agent-height: clamp(360px, 40vh, 560px);"
+        ></agent-3d>
+        ```
 
 ## Audit checklist
 

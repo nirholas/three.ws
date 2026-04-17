@@ -5,7 +5,7 @@
 import { webcrypto } from 'node:crypto';
 import { env } from './env.js';
 
-const subtle = (globalThis.crypto?.subtle) || webcrypto.subtle;
+const subtle = globalThis.crypto?.subtle || webcrypto.subtle;
 const randomBytes = (n) => {
 	const b = new Uint8Array(n);
 	(globalThis.crypto || webcrypto).getRandomValues(b);
@@ -18,7 +18,12 @@ async function deriveKey() {
 	const raw = new TextEncoder().encode(env.JWT_SECRET);
 	const base = await subtle.importKey('raw', raw, 'HKDF', false, ['deriveKey']);
 	return subtle.deriveKey(
-		{ name: 'HKDF', hash: 'SHA-256', salt: new TextEncoder().encode('agent-wallet-v1'), info: new Uint8Array(0) },
+		{
+			name: 'HKDF',
+			hash: 'SHA-256',
+			salt: new TextEncoder().encode('agent-wallet-v1'),
+			info: new Uint8Array(0),
+		},
 		base,
 		{ name: 'AES-GCM', length: 256 },
 		false,

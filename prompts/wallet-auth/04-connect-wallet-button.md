@@ -19,8 +19,8 @@ One component and one state machine that every caller uses. When the button is i
 ## Deliverable
 
 1. New module `src/wallet/connect-button.js` exporting:
-   - A class `ConnectWalletController` — headless state machine with the states below. Emits `change` events on state transition.
-   - A factory `createConnectWalletButton(mountEl, opts)` — renders and wires a button that binds to the controller. Returns the controller.
+    - A class `ConnectWalletController` — headless state machine with the states below. Emits `change` events on state transition.
+    - A factory `createConnectWalletButton(mountEl, opts)` — renders and wires a button that binds to the controller. Returns the controller.
 2. New module `src/wallet/state.js` exporting the state enum and a pure reducer for unit-testability.
 3. Refactored [public/wallet-login.js](../../public/wallet-login.js) to use the controller. Strip its copy of the connect logic; keep only the page-specific redirect-after-success behavior.
 4. Minimal CSS in `public/wallet-connect.css` — the button should not depend on the existing login page's CSS to render correctly when used elsewhere.
@@ -43,22 +43,22 @@ States (one active at a time):
 
 Transitions (inputs from the reducer):
 
-| From | Input | To |
-|---|---|---|
-| `idle` | `connect()` | `detecting` |
-| `detecting` | no `window.ethereum` | `no_provider` |
-| `detecting` | has provider | `requesting_accounts` |
-| `requesting_accounts` | `eth_accounts` resolves | `connected` |
-| `requesting_accounts` | user rejects | `error` |
-| `connected` | chainId ∉ allowed | `wrong_chain` |
-| `connected` | `sign()` called | `signing` |
-| `wrong_chain` | user switches chain | `connected` |
-| `signing` | signature obtained | `verifying` |
-| `signing` | user rejects | `error` |
-| `verifying` | server 200 | `success` |
-| `verifying` | server 4xx/5xx | `error` |
-| any | `reset()` | `idle` |
-| any | wallet disconnect event | `idle` |
+| From                  | Input                   | To                    |
+| --------------------- | ----------------------- | --------------------- |
+| `idle`                | `connect()`             | `detecting`           |
+| `detecting`           | no `window.ethereum`    | `no_provider`         |
+| `detecting`           | has provider            | `requesting_accounts` |
+| `requesting_accounts` | `eth_accounts` resolves | `connected`           |
+| `requesting_accounts` | user rejects            | `error`               |
+| `connected`           | chainId ∉ allowed       | `wrong_chain`         |
+| `connected`           | `sign()` called         | `signing`             |
+| `wrong_chain`         | user switches chain     | `connected`           |
+| `signing`             | signature obtained      | `verifying`           |
+| `signing`             | user rejects            | `error`               |
+| `verifying`           | server 200              | `success`             |
+| `verifying`           | server 4xx/5xx          | `error`               |
+| any                   | `reset()`               | `idle`                |
+| any                   | wallet disconnect event | `idle`                |
 
 ## Audit checklist
 
@@ -112,11 +112,11 @@ Transitions (inputs from the reducer):
 1. `node --check src/wallet/connect-button.js src/wallet/state.js public/wallet-login.js`
 2. `npx vite build` — passes.
 3. Open `public/wallet-connect-demo.html` in a browser with MetaMask:
-   - Click "Connect wallet" on the first button → MetaMask prompt → connected state shows short address.
-   - Switch MetaMask to an unsupported chain → button shows "Switch to Mainnet".
-   - Click → switch prompt → returns to connected.
-   - Click "Sign in" → signature prompt → server verifies → success state.
-   - Disconnect in MetaMask → all three buttons return to `idle` via `accountsChanged`.
+    - Click "Connect wallet" on the first button → MetaMask prompt → connected state shows short address.
+    - Switch MetaMask to an unsupported chain → button shows "Switch to Mainnet".
+    - Click → switch prompt → returns to connected.
+    - Click "Sign in" → signature prompt → server verifies → success state.
+    - Disconnect in MetaMask → all three buttons return to `idle` via `accountsChanged`.
 4. `/login` still works end-to-end: connect → sign → redirected to `/dashboard/`.
 5. Reducer tests (optional but recommended) — if you add `scripts/test-connect-reducer.mjs`, assert every transition in the table above.
 
@@ -124,7 +124,7 @@ Transitions (inputs from the reducer):
 
 - Do not add Privy-specific integration. Privy stays in its current code path.
 - Do not add WalletConnect / QR-code flow.
-- Do not implement the "link additional wallet" endpoint — that is task 03. This component just has to *support* being pointed at that endpoint via `verifyUrl`.
+- Do not implement the "link additional wallet" endpoint — that is task 03. This component just has to _support_ being pointed at that endpoint via `verifyUrl`.
 - Do not add logout / session refresh (task 05).
 - Do not change [api/auth/siwe/verify.js](../../api/auth/siwe/verify.js) or [api/auth/siwe/nonce.js](../../api/auth/siwe/nonce.js).
 - Do not add styling that overrides the global site theme. Component CSS must be scoped via the `[data-state]` attribute or a prefixed class.

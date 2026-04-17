@@ -26,21 +26,22 @@ You own ONE existing file, [src/agent-resolver.js](../../src/agent-resolver.js),
 
 ```js
 export async function resolveByAgentId(agentId) {
-    // 1. GET /api/agents/:id — returns { agent: { ..., manifestUrl } } OR 404.
-    // 2. If manifestUrl is absolute, return it.
-    // 3. If relative, resolve against location.origin.
-    // 4. Cache results in an in-memory Map for the page lifetime (max 100 entries, LRU optional).
-    // 5. On 404, throw AgentResolverError('not-found').
-    // 6. Respect AbortSignal passed as second arg.
+	// 1. GET /api/agents/:id — returns { agent: { ..., manifestUrl } } OR 404.
+	// 2. If manifestUrl is absolute, return it.
+	// 3. If relative, resolve against location.origin.
+	// 4. Cache results in an in-memory Map for the page lifetime (max 100 entries, LRU optional).
+	// 5. On 404, throw AgentResolverError('not-found').
+	// 6. Respect AbortSignal passed as second arg.
 }
 ```
 
 ### Web-component hook
 
 Inside `connectedCallback`:
+
 - If `this.hasAttribute('agent-id')` AND NOT `this.hasAttribute('manifest')`:
-  - `const url = await resolveByAgentId(this.getAttribute('agent-id'))`
-  - Set `this.setAttribute('manifest', url)` and continue the existing boot path.
+    - `const url = await resolveByAgentId(this.getAttribute('agent-id'))`
+    - Set `this.setAttribute('manifest', url)` and continue the existing boot path.
 - If both are present, `manifest` wins and `agent-id` is ignored.
 - If resolution fails, render a minimal inline error (`<div class="agent-3d-error">Agent not found</div>`) instead of throwing on the element.
 

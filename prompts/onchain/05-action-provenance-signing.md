@@ -41,6 +41,7 @@ Every action sent to `/api/agent-actions` becomes a canonical JSON:
 ### 2. Hash chain
 
 Each action's `prevHash` references the previous action's `actionHash`. The chain:
+
 - Is per-agent.
 - Genesis action's `prevHash = 0x00…00`.
 - A broken chain means tampering — server rejects.
@@ -48,6 +49,7 @@ Each action's `prevHash` references the previous action's `actionHash`. The chai
 ### 3. Server endpoint
 
 `POST /api/agent-actions`:
+
 - Verify `signer_address` matches `agents.wallet_address`.
 - Verify `prevHash` matches last stored action's `action_hash`.
 - Recompute `actionHash` server-side from the canonical JSON; ensure match.
@@ -59,6 +61,7 @@ Reject with `{ ok: false, error: 'signature_invalid' | 'chain_mismatch' | 'stale
 ### 4. Client batch
 
 Many events per second (speak + emote + think). Batch every 300ms:
+
 - Collect actions in a queue.
 - Build a single Merkle root over the batch; sign the root.
 - Send `/api/agent-actions/batch` with `{ items: […], merkleRoot, signature }`.
@@ -67,12 +70,14 @@ Many events per second (speak + emote + think). Batch every 300ms:
 ### 5. Public audit endpoint
 
 `GET /api/agent-actions/:agentId/verify?from=<n>&to=<m>`:
+
 - Returns a proof bundle (all actions + sigs + Merkle paths).
 - Client-side verifier at `/agent/:id/audit` re-verifies every sig + chain link in-browser and shows ✓ / ✗ per link.
 
 ### 6. UI
 
 On `/agent/:id`, the Timeline already exists. Add a small green/red chip per entry:
+
 - ✓ = signature verified locally
 - ✗ = signature invalid (should only happen if someone tampered)
 - hover → shows signer address

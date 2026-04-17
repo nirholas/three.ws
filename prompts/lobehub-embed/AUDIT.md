@@ -40,6 +40,7 @@ If the fork is unavailable, note explicitly that the `mock-host.html` fallback f
 Files in the folder are `06-host-sdk-package.md`, `07-message-renderer.md`, `08-mention-autocomplete.md`. Their in-file headers say `Task 01`, `Task 03`, `Task 04` respectively. They were clearly authored as a separate 01–04 series ("host SDK sub-stack") and copied in without renumbering.
 
 Evidence:
+
 - [06-host-sdk-package.md:1](./06-host-sdk-package.md) → `# Task 01 — @3dagent/embed host SDK package`
 - [07-message-renderer.md:1](./07-message-renderer.md) → `# Task 03 — In-chat message renderer`
 - [08-mention-autocomplete.md:1](./08-mention-autocomplete.md) → `# Task 04 — @ autocomplete for agents`

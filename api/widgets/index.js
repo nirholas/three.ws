@@ -11,20 +11,26 @@
 import crypto from 'node:crypto';
 import { z } from 'zod';
 
-import { sql }                            from '../_lib/db.js';
+import { sql } from '../_lib/db.js';
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
-import { parse }                          from '../_lib/validate.js';
-import { limits, clientIp }               from '../_lib/rate-limit.js';
-import { publicUrl }                      from '../_lib/r2.js';
+import { parse } from '../_lib/validate.js';
+import { limits, clientIp } from '../_lib/rate-limit.js';
+import { publicUrl } from '../_lib/r2.js';
 
-const WIDGET_TYPES = ['turntable', 'animation-gallery', 'talking-agent', 'passport', 'hotspot-tour'];
+const WIDGET_TYPES = [
+	'turntable',
+	'animation-gallery',
+	'talking-agent',
+	'passport',
+	'hotspot-tour',
+];
 
 const createBody = z.object({
-	type:      z.enum(WIDGET_TYPES),
-	name:      z.string().trim().min(1).max(120),
+	type: z.enum(WIDGET_TYPES),
+	name: z.string().trim().min(1).max(120),
 	avatar_id: z.string().uuid().nullable().optional(),
-	config:    z.record(z.any()).default({}),
+	config: z.record(z.any()).default({}),
 	is_public: z.boolean().default(true),
 });
 
@@ -63,7 +69,8 @@ export default wrap(async (req, res) => {
 		const owns = await sql`
 			select 1 from avatars where id = ${body.avatar_id} and owner_id = ${auth.userId} and deleted_at is null limit 1
 		`;
-		if (!owns[0]) return error(res, 400, 'invalid_avatar', 'avatar_id not found or not owned by caller');
+		if (!owns[0])
+			return error(res, 400, 'invalid_avatar', 'avatar_id not found or not owned by caller');
 	}
 
 	const id = newWidgetId();
@@ -103,19 +110,27 @@ export function decorate(row) {
 		updated_at: row.updated_at,
 	};
 	if (row.avatar_name !== undefined) {
-		out.avatar = row.avatar_id ? {
-			id: row.avatar_id,
-			name: row.avatar_name,
-			thumbnail_url: safePublicUrl(row.avatar_thumbnail_key),
-			model_url: (row.avatar_visibility === 'public' || row.avatar_visibility === 'unlisted')
-				? safePublicUrl(row.avatar_storage_key) : null,
-			visibility: row.avatar_visibility,
-		} : null;
+		out.avatar = row.avatar_id
+			? {
+					id: row.avatar_id,
+					name: row.avatar_name,
+					thumbnail_url: safePublicUrl(row.avatar_thumbnail_key),
+					model_url:
+						row.avatar_visibility === 'public' || row.avatar_visibility === 'unlisted'
+							? safePublicUrl(row.avatar_storage_key)
+							: null,
+					visibility: row.avatar_visibility,
+				}
+			: null;
 	}
 	return out;
 }
 
 function safePublicUrl(key) {
 	if (!key) return null;
-	try { return publicUrl(key); } catch { return null; }
+	try {
+		return publicUrl(key);
+	} catch {
+		return null;
+	}
 }

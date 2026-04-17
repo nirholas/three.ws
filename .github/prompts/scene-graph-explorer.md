@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Build a visual scene graph explorer with node inspection and transform controls"
+description: 'Build a visual scene graph explorer with node inspection and transform controls'
 ---
 
 # Scene Graph Explorer
@@ -25,6 +25,7 @@ Build a collapsible tree view that mirrors the Three.js scene graph:
 ```
 
 Each tree node shows:
+
 - **Name** (or type if unnamed)
 - **Icon** by type: 📦 Mesh, 💡 Light, 📷 Camera, 🦴 Bone, 🎯 Empty/Group
 - **Visibility toggle** (eye icon) — sets `object.visible`
@@ -35,6 +36,7 @@ Each tree node shows:
 When a node is selected in the tree, show a properties panel:
 
 **For all nodes:**
+
 - Name (editable)
 - Position (x, y, z)
 - Rotation (x, y, z in degrees)
@@ -43,19 +45,23 @@ When a node is selected in the tree, show a properties panel:
 - Matrix (read-only, 4x4)
 
 **For Meshes:**
+
 - Geometry stats: vertices, triangles, indexed, attributes list
 - Material reference (click to jump to Material Editor)
 - Bounding box dimensions
 - Morph targets list
 
 **For Lights:**
+
 - Type, color, intensity
 - Shadow settings
 
 **For Cameras:**
+
 - FOV, near, far, aspect
 
 **For Bones/SkinnedMesh:**
+
 - Joint index, skin reference
 - Inverse bind matrix
 
@@ -74,6 +80,7 @@ When a node is selected in the tree, show a properties panel:
 ### 5. UI Layout
 
 The scene explorer should be a **resizable side panel** (left or right side):
+
 - Tree view takes most of the vertical space
 - Properties panel below the tree (or tabbed)
 - Panel can be toggled with keyboard shortcut (T) or GUI button
@@ -84,6 +91,7 @@ Use plain DOM (no framework) to match the existing codebase style. CSS in `style
 ### 6. Integration
 
 In `src/viewer.js`:
+
 - After model load (`setContent`), call `sceneExplorer.buildTree(this.content)`
 - Wire click-to-select raycasting in the render loop
 - Add `TransformControls` from `three/addons/controls/TransformControls.js`
@@ -92,6 +100,7 @@ In `src/viewer.js`:
 ### 7. Export Transform Changes
 
 If the user moves/rotates/scales objects:
+
 - Track which nodes were modified
 - On GLB export (via `glb-export.js` from Material Editor), apply transform changes to the glTF-Transform document
 - Serialize updated transforms into the exported file

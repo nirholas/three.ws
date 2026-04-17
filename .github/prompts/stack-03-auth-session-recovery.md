@@ -1,13 +1,14 @@
 ---
 mode: agent
-description: "Make auth sessions survive refresh, new tab, wallet disconnect, token near-expiry"
+description: 'Make auth sessions survive refresh, new tab, wallet disconnect, token near-expiry'
 ---
 
 # Stack Layer 1: Session Recovery & Refresh
 
 ## Problem
 
-Wallet auth must *stay* authenticated across page refresh, new tabs, wallet disconnect, and token near-expiry. Today the session cookie works on refresh but we have no:
+Wallet auth must _stay_ authenticated across page refresh, new tabs, wallet disconnect, and token near-expiry. Today the session cookie works on refresh but we have no:
+
 - Silent refresh before token expiry
 - Cross-tab auth state sync
 - Graceful handling when wallet disconnects but session is still valid (session should persist — wallet is not session)
@@ -17,6 +18,7 @@ Wallet auth must *stay* authenticated across page refresh, new tabs, wallet disc
 ### Refresh endpoint
 
 `POST /api/auth/refresh`:
+
 - Reads existing `auth` cookie.
 - If token is valid and within the last 7 days of its 30d TTL, issue a new cookie with fresh 30d TTL.
 - If expired, return 401.

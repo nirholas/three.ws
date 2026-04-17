@@ -19,23 +19,23 @@ After this task:
 ## Deliverable
 
 1. **Backend choice** — decide between:
-   - A. **Vercel Edge Function + Upstash Redis** (matches existing [vercel.json](../../vercel.json) hint in [package.json:41](../../package.json#L41)). Document the env vars needed.
-   - B. **Standalone Node/Bun server** under `server/session/` with in-memory map + SSE.
-   - Default to A if the project already deploys to Vercel; else B. **Document the decision** in the reporting section.
+    - A. **Vercel Edge Function + Upstash Redis** (matches existing [vercel.json](../../vercel.json) hint in [package.json:41](../../package.json#L41)). Document the env vars needed.
+    - B. **Standalone Node/Bun server** under `server/session/` with in-memory map + SSE.
+    - Default to A if the project already deploys to Vercel; else B. **Document the decision** in the reporting section.
 2. **Endpoints** (names are fixed regardless of backend choice):
-   - `POST /api/session/new` → `{ sessionId, sessionUrl, expiresAt }`. `sessionUrl` is `https://<host>/m/<sessionId>`.
-   - `GET /api/session/:id/stream` — Server-Sent Events stream pushing `{ type, data }` events to the subscriber (desktop).
-   - `POST /api/session/:id/events` — mobile posts `{ type, data }` events (JSON body, multipart for images).
-   - `GET /api/session/:id` → metadata only (`{ status, lastEventAt }`), no event payloads.
+    - `POST /api/session/new` → `{ sessionId, sessionUrl, expiresAt }`. `sessionUrl` is `https://<host>/m/<sessionId>`.
+    - `GET /api/session/:id/stream` — Server-Sent Events stream pushing `{ type, data }` events to the subscriber (desktop).
+    - `POST /api/session/:id/events` — mobile posts `{ type, data }` events (JSON body, multipart for images).
+    - `GET /api/session/:id` → metadata only (`{ status, lastEventAt }`), no event payloads.
 3. **Client module** `src/capture/session-client.js`:
-   - `async createSession() -> { sessionId, sessionUrl, stream }` — `stream` is an `AsyncIterable<Event>`.
-   - `async attachSession(sessionId) -> { post(type, data) }`.
-   - Auto-reconnects SSE on drop (with backoff).
+    - `async createSession() -> { sessionId, sessionUrl, stream }` — `stream` is an `AsyncIterable<Event>`.
+    - `async attachSession(sessionId) -> { post(type, data) }`.
+    - Auto-reconnects SSE on drop (with backoff).
 4. **Security**:
-   - Session IDs are 128-bit random, URL-safe base64 (~22 chars).
-   - Rate-limit: max 5 `/api/session/new` per IP per minute; max 20 events per session; max 10 MB total payload per session.
-   - No CORS wildcard — allow the deployed origin + `localhost`.
-   - Images never written to disk; streamed through memory and discarded after dispatch.
+    - Session IDs are 128-bit random, URL-safe base64 (~22 chars).
+    - Rate-limit: max 5 `/api/session/new` per IP per minute; max 20 events per session; max 10 MB total payload per session.
+    - No CORS wildcard — allow the deployed origin + `localhost`.
+    - Images never written to disk; streamed through memory and discarded after dispatch.
 5. **Expiry** — sessions self-destruct after 10 min from `createdAt`, or 2 min after `terminated` event, whichever comes first.
 6. **Observability** — a minimal counter log line per session (`[session] new <id>`, `[session] end <id> reason=<expiry|done|error>`). **Never** log event payloads.
 

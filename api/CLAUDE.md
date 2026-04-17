@@ -26,7 +26,8 @@ export default wrap(async (req, res) => {
 	const session = await getSessionUser(req);
 	const bearer = session ? null : await authenticateBearer(extractBearer(req));
 	if (!session && !bearer) return error(res, 401, 'unauthorized', 'sign in required');
-	if (bearer && !hasScope(bearer.scope, 'avatars:read')) return error(res, 403, 'insufficient_scope', '...');
+	if (bearer && !hasScope(bearer.scope, 'avatars:read'))
+		return error(res, 403, 'insufficient_scope', '...');
 	const userId = session?.id ?? bearer.userId;
 
 	// Rate limit
@@ -38,7 +39,8 @@ export default wrap(async (req, res) => {
 		// ... do work
 	}
 
-	const rows = await sql`select id, name from avatars where owner_id = ${userId} and deleted_at is null`;
+	const rows =
+		await sql`select id, name from avatars where owner_id = ${userId} and deleted_at is null`;
 	return json(res, 200, { data: rows });
 });
 ```
@@ -47,18 +49,18 @@ Never `res.end(JSON.stringify(...))`. Never read/verify JWTs yourself. Never int
 
 ---
 
-## Helpers in [_lib/](./_lib/)
+## Helpers in [\_lib/](./_lib/)
 
-| File | Exports | Use for |
-|---|---|---|
-| [_lib/auth.js](_lib/auth.js) | `getSessionUser`, `authenticateBearer`, `extractBearer`, `hasScope`, `createSession`, `sessionCookie`, `destroySession`, `csrfTokenFor`, `verifyCsrfToken`, `isSameSiteOrigin` | All auth. Never roll your own. |
-| [_lib/db.js](_lib/db.js) | `sql` | Tagged-template Postgres via `@neondatabase/serverless`. Import; don't instantiate a new Pool. |
-| [_lib/http.js](_lib/http.js) | `cors`, `json`, `text`, `redirect`, `error`, `wrap`, `method`, `readJson` | Every response. `wrap()` catches async errors → 500. |
-| [_lib/validate.js](_lib/validate.js) | `parse`, `email`, `password`, `displayName`, `slug`, `avatarVisibility`, `avatarContentType`, `registerBody`, `loginBody`, `createAvatarBody`, `presignUploadBody` | zod wrappers. `parse()` throws `{status:400, code:'validation_error'}`. |
-| [_lib/rate-limit.js](_lib/rate-limit.js) | `limits.*`, `clientIp` | Preset Upstash limiters. |
-| [_lib/r2.js](_lib/r2.js) | `presignUpload`, `presignGet`, `headObject`, `deleteObject`, `publicUrl` | R2 / S3 ops. |
-| [_lib/env.js](_lib/env.js) | `env`, `env.ISSUER`, `env.MCP_RESOURCE` | Env vars. Throws if required ones missing. |
-| [_lib/avatars.js](_lib/avatars.js) | `stripOwnerFor`, avatar URL resolution | Hides R2 path prefixes from unauthenticated callers. |
+| File                                      | Exports                                                                                                                                                                        | Use for                                                                                        |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| [\_lib/auth.js](_lib/auth.js)             | `getSessionUser`, `authenticateBearer`, `extractBearer`, `hasScope`, `createSession`, `sessionCookie`, `destroySession`, `csrfTokenFor`, `verifyCsrfToken`, `isSameSiteOrigin` | All auth. Never roll your own.                                                                 |
+| [\_lib/db.js](_lib/db.js)                 | `sql`                                                                                                                                                                          | Tagged-template Postgres via `@neondatabase/serverless`. Import; don't instantiate a new Pool. |
+| [\_lib/http.js](_lib/http.js)             | `cors`, `json`, `text`, `redirect`, `error`, `wrap`, `method`, `readJson`                                                                                                      | Every response. `wrap()` catches async errors → 500.                                           |
+| [\_lib/validate.js](_lib/validate.js)     | `parse`, `email`, `password`, `displayName`, `slug`, `avatarVisibility`, `avatarContentType`, `registerBody`, `loginBody`, `createAvatarBody`, `presignUploadBody`             | zod wrappers. `parse()` throws `{status:400, code:'validation_error'}`.                        |
+| [\_lib/rate-limit.js](_lib/rate-limit.js) | `limits.*`, `clientIp`                                                                                                                                                         | Preset Upstash limiters.                                                                       |
+| [\_lib/r2.js](_lib/r2.js)                 | `presignUpload`, `presignGet`, `headObject`, `deleteObject`, `publicUrl`                                                                                                       | R2 / S3 ops.                                                                                   |
+| [\_lib/env.js](_lib/env.js)               | `env`, `env.ISSUER`, `env.MCP_RESOURCE`                                                                                                                                        | Env vars. Throws if required ones missing.                                                     |
+| [\_lib/avatars.js](_lib/avatars.js)       | `stripOwnerFor`, avatar URL resolution                                                                                                                                         | Hides R2 path prefixes from unauthenticated callers.                                           |
 
 ---
 
@@ -73,11 +75,11 @@ Never `res.end(JSON.stringify(...))`. Never read/verify JWTs yourself. Never int
 
 ## Auth modes
 
-| Mode | Helper | When |
-|---|---|---|
-| Session cookie | `getSessionUser(req)` | Browser apps in [public/](../public/) — `credentials: 'include'` |
-| Bearer JWT (OAuth) | `authenticateBearer(extractBearer(req))` → `{ userId, scope, source: 'oauth', clientId }` | MCP clients, third-party apps |
-| Bearer API key | `authenticateBearer(...)` → `{ userId, scope, source: 'apikey', apiKeyId }` | Server-to-server from user scripts |
+| Mode               | Helper                                                                                    | When                                                             |
+| ------------------ | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Session cookie     | `getSessionUser(req)`                                                                     | Browser apps in [public/](../public/) — `credentials: 'include'` |
+| Bearer JWT (OAuth) | `authenticateBearer(extractBearer(req))` → `{ userId, scope, source: 'oauth', clientId }` | MCP clients, third-party apps                                    |
+| Bearer API key     | `authenticateBearer(...)` → `{ userId, scope, source: 'apikey', apiKeyId }`               | Server-to-server from user scripts                               |
 
 **Scopes:** `avatars:read`, `avatars:write`, `avatars:delete`, `profile`, `offline_access`. Check via `hasScope(bearer.scope, 'avatars:write')`.
 
@@ -121,16 +123,16 @@ For public/unlisted avatars use `publicUrl(key)` (CDN-cached). For private, `pre
 Use the named preset that matches the endpoint. Don't invent new ones inline.
 
 ```js
-limits.authIp(ip)          // 30 / 10 min  — login/register
-limits.registerIp(ip)      // 5 / 1 h
-limits.oauthRegisterIp(ip) // 10 / 1 h     — dynamic client reg
-limits.mcpUser(userId)     // 1200 / 1 min
-limits.mcpIp(ip)           // 600 / 1 min
-limits.mcpValidate(key)    // 10 / 1 min
-limits.mcpInspect(key)     // 30 / 1 min
-limits.mcpOptimize(key)    // 10 / 1 min
-limits.oauthToken(clientId)// 120 / 1 min
-limits.upload(userId)      // 60 / 1 h
+limits.authIp(ip); // 30 / 10 min  — login/register
+limits.registerIp(ip); // 5 / 1 h
+limits.oauthRegisterIp(ip); // 10 / 1 h     — dynamic client reg
+limits.mcpUser(userId); // 1200 / 1 min
+limits.mcpIp(ip); // 600 / 1 min
+limits.mcpValidate(key); // 10 / 1 min
+limits.mcpInspect(key); // 30 / 1 min
+limits.mcpOptimize(key); // 10 / 1 min
+limits.oauthToken(clientId); // 120 / 1 min
+limits.upload(userId); // 60 / 1 h
 ```
 
 `clientIp(req)` reads `x-vercel-forwarded-for` → `x-real-ip` → socket.
@@ -149,7 +151,7 @@ When adding a tool: bump rate-limit bucket if heavy, declare scope via `hasScope
 
 ## OAuth provider
 
-We *issue* tokens (not consume). Endpoints:
+We _issue_ tokens (not consume). Endpoints:
 
 - `/api/oauth/authorize` (GET consent render, POST consent submit) — PKCE S256 mandatory, no implicit/password grants
 - `/api/oauth/token` — `authorization_code` + `refresh_token` grants → JWT access + opaque refresh
@@ -167,7 +169,7 @@ Token JWT: `{ sub, client_id, scope, aud, exp, iat, jti, kid: env.JWT_KID }`.
 - Hand-rolled JWT / bearer extraction → use `authenticateBearer()`
 - Inline SQL concat → always tagged-template `sql\`... ${x} ...\``
 - `res.end(JSON.stringify(...))` → `json(res, ...)`
-- Instantiating a new `Pool` or `neon()` → import `sql` from [_lib/db.js](_lib/db.js)
+- Instantiating a new `Pool` or `neon()` → import `sql` from [\_lib/db.js](_lib/db.js)
 - Missing rate-limit on public endpoint
 - Hardcoded origins → `env.ISSUER` or `env.APP_ORIGIN`
 - Registering a file in `avatars` without `headObject()` size check

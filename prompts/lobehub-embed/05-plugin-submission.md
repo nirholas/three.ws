@@ -20,19 +20,19 @@ Produce everything needed to (a) reproduce a green local smoke test of the plugi
 ## Deliverable
 
 1. **Local-test harness** under `prompts/lobehub-embed/fixtures/`:
-   - `sample-lobehub-config.json` — a LobeHub plugin-install descriptor pointing at `https://3dagent.vercel.app/.well-known/lobehub-plugin.json` (or a local dev URL).
-   - `mock-host.html` — a standalone page that mimics the LobeHub host frame: iframes our embed, sends the full handshake sequence (`host:hello` → `host:identity` → `host:action` samples), logs replies. Use for offline testing.
-   - `smoke.md` — a step-by-step manual smoke test script (10–15 steps) covering: install, open agent, chat sends tool call, avatar speaks with emotion, wallet link prompt, signed action surfaces back to transcript.
+    - `sample-lobehub-config.json` — a LobeHub plugin-install descriptor pointing at `https://3dagent.vercel.app/.well-known/lobehub-plugin.json` (or a local dev URL).
+    - `mock-host.html` — a standalone page that mimics the LobeHub host frame: iframes our embed, sends the full handshake sequence (`host:hello` → `host:identity` → `host:action` samples), logs replies. Use for offline testing.
+    - `smoke.md` — a step-by-step manual smoke test script (10–15 steps) covering: install, open agent, chat sends tool call, avatar speaks with emotion, wallet link prompt, signed action surfaces back to transcript.
 2. **Submission bundle** under `prompts/lobehub-embed/submission/`:
-   - `PR_DESCRIPTION.md` — marketplace PR body. Must include:
-     - What the plugin does (2–3 sentence pitch focused on embodied + Empathy Layer)
-     - Why users want it (scenarios: paste an agent id in chat, see a 3D avatar react emotionally, sign onchain actions via ERC-8004)
-     - Compliance statement (no arbitrary code execution in host, no data exfiltration, origin-checked `postMessage`)
-     - Link to the hosted manifest
-     - Link to a demo video / GIF (placeholder URL the maintainer fills in)
-     - Maintainer contact
-   - `SCREENSHOTS.md` — a script (not actual images) describing the five screenshots to capture: (1) install dialog, (2) agent rendered in a chat bubble, (3) avatar mid-gesture, (4) emotion blend visible (concerned face), (5) signed-action receipt in transcript. For each, list the URL, window size, and visible elements.
-   - `DEMO_SCRIPT.md` — 60-second walkthrough script for recording a demo GIF/MP4. Word-for-word spoken lines optional.
+    - `PR_DESCRIPTION.md` — marketplace PR body. Must include:
+        - What the plugin does (2–3 sentence pitch focused on embodied + Empathy Layer)
+        - Why users want it (scenarios: paste an agent id in chat, see a 3D avatar react emotionally, sign onchain actions via ERC-8004)
+        - Compliance statement (no arbitrary code execution in host, no data exfiltration, origin-checked `postMessage`)
+        - Link to the hosted manifest
+        - Link to a demo video / GIF (placeholder URL the maintainer fills in)
+        - Maintainer contact
+    - `SCREENSHOTS.md` — a script (not actual images) describing the five screenshots to capture: (1) install dialog, (2) agent rendered in a chat bubble, (3) avatar mid-gesture, (4) emotion blend visible (concerned face), (5) signed-action receipt in transcript. For each, list the URL, window size, and visible elements.
+    - `DEMO_SCRIPT.md` — 60-second walkthrough script for recording a demo GIF/MP4. Word-for-word spoken lines optional.
 3. **Tracking metadata** — add a single line to `public/.well-known/lobehub-plugin.json` (if not already present): `"marketplaceStatus": "pending"` (string), updated to `"listed"` post-acceptance.
 4. **Release notes stub** — append a `## v0.1.0 — LobeHub plugin` section to the repo's existing CHANGELOG if one exists; otherwise note its absence in the report.
 
@@ -58,8 +58,8 @@ Produce everything needed to (a) reproduce a green local smoke test of the plugi
 ## Verification
 
 1. All fixture files parse:
-   - `node -e "JSON.parse(require('fs').readFileSync('prompts/lobehub-embed/fixtures/sample-lobehub-config.json','utf8'))"`
-   - Open `mock-host.html` in a browser; confirm it loads and sends the handshake without errors.
+    - `node -e "JSON.parse(require('fs').readFileSync('prompts/lobehub-embed/fixtures/sample-lobehub-config.json','utf8'))"`
+    - Open `mock-host.html` in a browser; confirm it loads and sends the handshake without errors.
 2. Run `smoke.md` end-to-end, cross off each step, paste the transcript into the report.
 3. `npx vite build` still succeeds — fixture files outside `public/` must not interfere with the build.
 4. `node --check` passes on any JS touched (probably none for this task).

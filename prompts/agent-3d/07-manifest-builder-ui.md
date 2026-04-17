@@ -16,19 +16,19 @@ Ship `src/editor/manifest-builder.js` — a shadow-DOM form UI that produces a v
 
 1. **`src/editor/manifest-builder.js`** — `mountManifestBuilder(rootEl, options)` pattern mirroring [src/editor/embed-editor.js](../../src/editor/embed-editor.js).
 2. **Form sections** (collapsible, in this order):
-	 - **Identity** — name, description, tags, image (defaults to first GLB thumbnail).
-	 - **Body** — GLB drop-zone (reuses `simple-dropzone`), auto-detected rig (Mixamo / VRM), auto-computed bounding box height.
-	 - **Brain** — provider select (Anthropic / OpenAI / none), model dropdown filtered by provider, temperature slider, `maxTokens`, thinking toggle.
-	 - **Voice** — TTS provider select, STT provider select, per-provider secondary fields (voiceId for ElevenLabs, language for Browser/Whisper).
-	 - **Skills** — searchable list of known skills (load from `public/skills-index.json` — stub with 3 entries for now: wave, dance, explain-gltf). Each skill has "Install" toggle and version pin. Manual URI paste for custom skills.
-	 - **Memory** — mode select (`local` / `ipfs` / `encrypted-ipfs` / `none`), maxTokens, advanced: timeline retention days.
-	 - **Instructions** — markdown textarea with monospace font and live char counter. Frontmatter auto-prepended on export.
-	 - **Provenance** (read-only until GLB loaded) — glTF validator report. Show errors/warnings count + a details drawer.
+    - **Identity** — name, description, tags, image (defaults to first GLB thumbnail).
+    - **Body** — GLB drop-zone (reuses `simple-dropzone`), auto-detected rig (Mixamo / VRM), auto-computed bounding box height.
+    - **Brain** — provider select (Anthropic / OpenAI / none), model dropdown filtered by provider, temperature slider, `maxTokens`, thinking toggle.
+    - **Voice** — TTS provider select, STT provider select, per-provider secondary fields (voiceId for ElevenLabs, language for Browser/Whisper).
+    - **Skills** — searchable list of known skills (load from `public/skills-index.json` — stub with 3 entries for now: wave, dance, explain-gltf). Each skill has "Install" toggle and version pin. Manual URI paste for custom skills.
+    - **Memory** — mode select (`local` / `ipfs` / `encrypted-ipfs` / `none`), maxTokens, advanced: timeline retention days.
+    - **Instructions** — markdown textarea with monospace font and live char counter. Frontmatter auto-prepended on export.
+    - **Provenance** (read-only until GLB loaded) — glTF validator report. Show errors/warnings count + a details drawer.
 3. **Live preview panel** — always-mounted `<agent-3d>` inside the builder, manifest= fed by a blob URL of the current form state, re-mounted on change (debounced).
 4. **Export actions**:
-	 - **Download ZIP** — bundles manifest.json, instructions.md (with frontmatter), any dropped GLB, memory/MEMORY.md seed, and referenced skill bundles (if local). Pure client-side.
-	 - **Pin to IPFS** — uses the configured pinner (see [08-ipfs-pinning-service.md](./08-ipfs-pinning-service.md)). On success, shows the CID and a copy-to-clipboard link.
-	 - **Register on-chain** — opens the existing ERC-8004 flow with the IPFS CID pre-filled.
+    - **Download ZIP** — bundles manifest.json, instructions.md (with frontmatter), any dropped GLB, memory/MEMORY.md seed, and referenced skill bundles (if local). Pure client-side.
+    - **Pin to IPFS** — uses the configured pinner (see [08-ipfs-pinning-service.md](./08-ipfs-pinning-service.md)). On success, shows the CID and a copy-to-clipboard link.
+    - **Register on-chain** — opens the existing ERC-8004 flow with the IPFS CID pre-filled.
 5. **Routing** — add to `agent-home.html` (already in [vite.config.js](../../vite.config.js)) as the canonical "create agent" page.
 
 ## Audit checklist

@@ -21,13 +21,13 @@ Depends on tasks 02, 09.
 1. **Vendor Kalidokit** — MIT. Copy into `src/vendor/kalidokit/` with NOTICE. Kalidokit is tiny; no npm needed.
 2. **MediaPipe integration** — reuse `src/capture/face-landmarks.js` from task 07 where possible. Add a `src/capture/pose-landmarks.js` for upper-body tracking (MediaPipe Pose Landmarker).
 3. **Module** `src/agent/mirror.js`:
-   - `class MirrorMode { constructor(vrm, videoEl); async start(); stop(); dispose(); }`
-   - Starts webcam, feeds MediaPipe Face + Pose landmarker on every video frame (throttled to 30fps).
-   - Passes landmarks to Kalidokit; applies outputs to:
-     - Head bone rotation (yaw/pitch/roll).
-     - Upper-body bones (neck, chest, shoulders).
-     - Arm bones (hands optional; gate behind a sub-flag — hand tracking doubles CPU).
-     - Face blendshapes (mouth, eyes, brows) — routed into VRM expression manager.
+    - `class MirrorMode { constructor(vrm, videoEl); async start(); stop(); dispose(); }`
+    - Starts webcam, feeds MediaPipe Face + Pose landmarker on every video frame (throttled to 30fps).
+    - Passes landmarks to Kalidokit; applies outputs to:
+        - Head bone rotation (yaw/pitch/roll).
+        - Upper-body bones (neck, chest, shoulders).
+        - Arm bones (hands optional; gate behind a sub-flag — hand tracking doubles CPU).
+        - Face blendshapes (mouth, eyes, brows) — routed into VRM expression manager.
 4. **UI** — a small toolbar button "Mirror me" that opens a permission prompt + tiny PIP video preview so the user can see what the camera sees.
 5. **Integration with TalkingHead** (task 09) — when `MirrorMode.start()` runs, call `talkingHead.idleOff()`. On stop, `idleOn()`. If the brain (task 14) calls `speak()` while mirroring, the jaw/mouth is driven by visemes (TTS) AND the user's mouth-open expression is attenuated — document the blend strategy you pick.
 6. **Performance** — render every Nth frame, not every RAF. Target: 30 landmark detections/sec, 60 render fps. Use `requestVideoFrameCallback` if available.

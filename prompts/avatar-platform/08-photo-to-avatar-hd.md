@@ -17,29 +17,29 @@ Depends on task 07 (to have a result to replace).
 ## Deliverable
 
 1. **Backend service** under `services/nextface/`:
-   - `Dockerfile` starting from a PyTorch CUDA base image.
-   - `requirements.txt` with NextFace's pins (pull from upstream).
-   - `server.py` — a minimal FastAPI or Flask app exposing:
-     - `POST /api/reconstruct` — multipart with `center`, `left`, `right` image fields → returns a `application/zip` of `{ mesh.obj, albedo.png, normal.png, meta.json }`.
-     - `GET /health` — GPU status, queue depth, model warm/cold.
-   - Concurrency: one job at a time per GPU; additional requests queue.
-   - Timeouts: 120s hard cap, 60s soft target.
+    - `Dockerfile` starting from a PyTorch CUDA base image.
+    - `requirements.txt` with NextFace's pins (pull from upstream).
+    - `server.py` — a minimal FastAPI or Flask app exposing:
+        - `POST /api/reconstruct` — multipart with `center`, `left`, `right` image fields → returns a `application/zip` of `{ mesh.obj, albedo.png, normal.png, meta.json }`.
+        - `GET /health` — GPU status, queue depth, model warm/cold.
+    - Concurrency: one job at a time per GPU; additional requests queue.
+    - Timeouts: 120s hard cap, 60s soft target.
 2. **Deployment docs** in `services/nextface/DEPLOY.md`:
-   - Supported hardware (minimum: 8 GB VRAM, CUDA 11.8+).
-   - One-liner to run locally: `docker build && docker run --gpus all -p 8080:8080 ...`.
-   - One production target choice: Modal, Replicate, RunPod, Baseten, or self-hosted. **Pick one and document it**. Don't spread across all.
+    - Supported hardware (minimum: 8 GB VRAM, CUDA 11.8+).
+    - One-liner to run locally: `docker build && docker run --gpus all -p 8080:8080 ...`.
+    - One production target choice: Modal, Replicate, RunPod, Baseten, or self-hosted. **Pick one and document it**. Don't spread across all.
 3. **Client module** `src/capture/hd-avatar.js`:
-   - `async requestHD(blobs, baseVRMBlob, { endpoint, timeoutMs = 90000 })` → Promise<`Blob` (upgraded VRM)> or rejects.
-   - Posts multipart, streams progress events if the backend supports them (optional, nice-to-have).
-   - Applies the returned mesh + textures onto the VRM from task 07:
-     - Replaces head mesh geometry (keeping bone weights re-projected via closest-point mapping).
-     - Replaces face texture.
-     - Normal map applied to the head material if the VRM supports it.
+    - `async requestHD(blobs, baseVRMBlob, { endpoint, timeoutMs = 90000 })` → Promise<`Blob` (upgraded VRM)> or rejects.
+    - Posts multipart, streams progress events if the backend supports them (optional, nice-to-have).
+    - Applies the returned mesh + textures onto the VRM from task 07:
+        - Replaces head mesh geometry (keeping bone weights re-projected via closest-point mapping).
+        - Replaces face texture.
+        - Normal map applied to the head material if the VRM supports it.
 4. **Orchestration** `src/capture/avatar-pipeline.js`:
-   - Combines 07 + 08. `async runPipeline(blobs, { onFast, onHD, onError })`:
-     - Resolves `onFast` with the fast-path VRM.
-     - In parallel, kicks off `requestHD`; on resolve, calls `onHD` with the upgraded VRM.
-     - On HD failure, calls `onError({ stage: 'hd' })` but does not discard the fast-path result.
+    - Combines 07 + 08. `async runPipeline(blobs, { onFast, onHD, onError })`:
+        - Resolves `onFast` with the fast-path VRM.
+        - In parallel, kicks off `requestHD`; on resolve, calls `onHD` with the upgraded VRM.
+        - On HD failure, calls `onError({ stage: 'hd' })` but does not discard the fast-path result.
 5. **Config** — `VITE_HD_ENDPOINT` env var for the client; `NEXTFACE_MODEL_DIR` for the backend.
 
 ## Audit checklist

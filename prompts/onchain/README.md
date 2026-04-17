@@ -24,14 +24,14 @@ The remaining work is **integration + UX**. The registration code path exists ([
 
 ## Execution order
 
-| # | File | Depends on |
-|---|---|---|
-| 1 | [01-hydrate-agent-from-chain.md](./01-hydrate-agent-from-chain.md) | — |
-| 2 | [02-wallet-to-agents.md](./02-wallet-to-agents.md) | 01 (shares hydrate path) |
-| 3 | [03-register-flow-polish.md](./03-register-flow-polish.md) | — |
-| 4 | [04-update-agent-uri.md](./04-update-agent-uri.md) | 03 helpful but not required |
-| 5 | [05-reputation-display-and-submit.md](./05-reputation-display-and-submit.md) | 01 (uses hydrate on `/agent/:id`) |
-| 6 | [06-cross-chain-lookup.md](./06-cross-chain-lookup.md) | 01 |
+| #   | File                                                                         | Depends on                        |
+| --- | ---------------------------------------------------------------------------- | --------------------------------- |
+| 1   | [01-hydrate-agent-from-chain.md](./01-hydrate-agent-from-chain.md)           | —                                 |
+| 2   | [02-wallet-to-agents.md](./02-wallet-to-agents.md)                           | 01 (shares hydrate path)          |
+| 3   | [03-register-flow-polish.md](./03-register-flow-polish.md)                   | —                                 |
+| 4   | [04-update-agent-uri.md](./04-update-agent-uri.md)                           | 03 helpful but not required       |
+| 5   | [05-reputation-display-and-submit.md](./05-reputation-display-and-submit.md) | 01 (uses hydrate on `/agent/:id`) |
+| 6   | [06-cross-chain-lookup.md](./06-cross-chain-lookup.md)                       | 01                                |
 
 ## Rules for every task
 

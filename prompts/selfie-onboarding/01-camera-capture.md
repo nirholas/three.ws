@@ -20,11 +20,11 @@ Do not modify `src/app.js` yet.
 import { CameraCapture } from './onboarding/camera-capture.js';
 
 const cap = new CameraCapture({ container: document.querySelector('#cam') });
-await cap.start();              // request permission, show preview
+await cap.start(); // request permission, show preview
 const blob = await cap.capture(); // returns a JPEG Blob (~0.9 quality, ~1024 longest side)
-cap.retake();                   // goes back to preview
-cap.stop();                     // releases the camera track
-cap.on('error', (err) => {});   // emits CameraError with .code in {'permission', 'no-device', 'insecure-context', 'unknown'}
+cap.retake(); // goes back to preview
+cap.stop(); // releases the camera track
+cap.on('error', (err) => {}); // emits CameraError with .code in {'permission', 'no-device', 'insecure-context', 'unknown'}
 ```
 
 Expose a DOM event too: `cap.addEventListener('photo', (e) => e.detail.blob)`.
@@ -61,9 +61,9 @@ Expose a DOM event too: `cap.addEventListener('photo', (e) => e.detail.blob)`.
 1. `node --check src/onboarding/camera-capture.js` passes.
 2. `npx vite build` succeeds.
 3. Open `public/onboarding/camera-demo.html` in Chrome:
-   - Click Enable → browser prompts → allow → live preview.
-   - Click shutter → freeze frame → Retake returns to preview.
-   - Click "Use this photo" → demo page shows the blob size and a `<img>` preview.
+    - Click Enable → browser prompts → allow → live preview.
+    - Click shutter → freeze frame → Retake returns to preview.
+    - Click "Use this photo" → demo page shows the blob size and a `<img>` preview.
 4. Repeat in Safari (desktop). Document any workarounds.
 5. Toggle Chrome `camera: block` in site settings → permission-denied state renders cleanly.
 6. Deny camera at the OS level (System Settings) → `no-device` or similar renders cleanly.

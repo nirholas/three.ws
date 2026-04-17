@@ -16,22 +16,22 @@ Depends on tasks 04 and 05.
 ## Deliverable
 
 1. **Mobile route entry** `m.html` at the repo root + [vite.config.mjs](../../vite.config.mjs) tweak to register it as an additional input. Page content:
-   - Detects `window.location.pathname` → extracts `sessionId`.
-   - Loads `src/capture/mobile-capture.js`.
-   - Renders full-screen camera preview + capture UI optimized for portrait phone form factor.
+    - Detects `window.location.pathname` → extracts `sessionId`.
+    - Loads `src/capture/mobile-capture.js`.
+    - Renders full-screen camera preview + capture UI optimized for portrait phone form factor.
 2. **New module** `src/capture/mobile-capture.js`:
-   - `init(sessionId)` — attaches to the session via `attachSession()` from task 05.
-   - Three-shot capture flow (left, center, right), mirrored from desktop task 04 but redesigned for touch + portrait + single-hand use.
-   - On each capture, POST the blob to `/api/session/:id/events` with `type: 'photo'`, `step: 'left'|'center'|'right'`.
-   - After the third capture, POST `type: 'done'` and show "Photos sent — check your desktop".
-   - Front-camera only (`facingMode: 'user'`).
-   - Fallback: if `getUserMedia` fails, show a file-picker accepting three images with `capture="user"` hint.
+    - `init(sessionId)` — attaches to the session via `attachSession()` from task 05.
+    - Three-shot capture flow (left, center, right), mirrored from desktop task 04 but redesigned for touch + portrait + single-hand use.
+    - On each capture, POST the blob to `/api/session/:id/events` with `type: 'photo'`, `step: 'left'|'center'|'right'`.
+    - After the third capture, POST `type: 'done'` and show "Photos sent — check your desktop".
+    - Front-camera only (`facingMode: 'user'`).
+    - Fallback: if `getUserMedia` fails, show a file-picker accepting three images with `capture="user"` hint.
 3. **Desktop QR handoff module** `src/capture/qr-handoff.js`:
-   - `async open(container): Promise<{ left, center, right }>` — same return shape as `PhotoCapture` from task 04.
-   - Creates a session via `createSession()`, renders the `sessionUrl` as a QR code (use the `qrcode` npm package — add it, it's ~7 KB gzipped).
-   - Shows a waiting state with spinner + "Scan to continue on your phone".
-   - Subscribes to the SSE stream; collects three `photo` events, resolves when `done` arrives.
-   - Has a "Use webcam instead" button that disposes the QR flow and opens `PhotoCapture` from task 04.
+    - `async open(container): Promise<{ left, center, right }>` — same return shape as `PhotoCapture` from task 04.
+    - Creates a session via `createSession()`, renders the `sessionUrl` as a QR code (use the `qrcode` npm package — add it, it's ~7 KB gzipped).
+    - Shows a waiting state with spinner + "Scan to continue on your phone".
+    - Subscribes to the SSE stream; collects three `photo` events, resolves when `done` arrives.
+    - Has a "Use webcam instead" button that disposes the QR flow and opens `PhotoCapture` from task 04.
 4. **Styling** — `capture-mobile-*` prefix for the mobile-only CSS. Keep the mobile route CSS in a separate stylesheet loaded only by `m.html` to avoid bloat on the main app.
 5. **PWA config** — update `vite-plugin-pwa` options so `m.html` and its module chunk are precached. The main app's existing PWA behavior must not regress.
 

@@ -19,17 +19,17 @@ Produce a LobeHub plugin manifest, hosted at a stable public URL under this depl
 ## Deliverable
 
 1. **Manifest file** at `public/.well-known/lobehub-plugin.json` (served at `https://<host>/.well-known/lobehub-plugin.json`) that declares:
-   - `identifier` — kebab-case, e.g. `3d-agent`
-   - `meta` — `{ title, description, avatar, tags }`
-   - `author`, `homepage`, `version` (read from `package.json`'s version at build if trivial; otherwise hard-code `0.1.0` and note)
-   - `ui.url` — absolute URL to our iframe (e.g. `https://<host>/agent/{AGENT_ID}/embed?host=lobehub`). Use a placeholder token if LobeHub supports runtime interpolation; otherwise require the user to edit.
-   - `ui.height` — default iframe height (e.g. `520`)
-   - `api` — tool schemas the chat model can call, each with `name`, `description`, `parameters` (JSON Schema). Start with:
-     - `render_agent({ agentId })` — mount the avatar for a given agent id
-     - `speak({ text, sentiment? })` — make the avatar speak with emotional valence
-     - `gesture({ name, duration? })` — trigger a named gesture (wave, nod, point, shrug)
-     - `emote({ trigger, weight? })` — inject an emotion (`concern`, `celebration`, `patience`, `curiosity`, `empathy`)
-   - `systemRole` — optional priming text so the LobeHub chat model knows an embodied agent is present
+    - `identifier` — kebab-case, e.g. `3d-agent`
+    - `meta` — `{ title, description, avatar, tags }`
+    - `author`, `homepage`, `version` (read from `package.json`'s version at build if trivial; otherwise hard-code `0.1.0` and note)
+    - `ui.url` — absolute URL to our iframe (e.g. `https://<host>/agent/{AGENT_ID}/embed?host=lobehub`). Use a placeholder token if LobeHub supports runtime interpolation; otherwise require the user to edit.
+    - `ui.height` — default iframe height (e.g. `520`)
+    - `api` — tool schemas the chat model can call, each with `name`, `description`, `parameters` (JSON Schema). Start with:
+        - `render_agent({ agentId })` — mount the avatar for a given agent id
+        - `speak({ text, sentiment? })` — make the avatar speak with emotional valence
+        - `gesture({ name, duration? })` — trigger a named gesture (wave, nod, point, shrug)
+        - `emote({ trigger, weight? })` — inject an emotion (`concern`, `celebration`, `patience`, `curiosity`, `empathy`)
+    - `systemRole` — optional priming text so the LobeHub chat model knows an embodied agent is present
 2. **Vercel route** — add a route to `vercel.json` that serves the manifest with `Content-Type: application/json` and `Cache-Control: public, max-age=300`. Place the route in the existing `.well-known/*` block if present; otherwise add it grouped with other well-known entries.
 3. **Served copy for discovery** — if LobeHub reads from `.well-known/` specifically, no extra work. If not, also link it from the top of `.well-known/agent-card.json` via a non-breaking `lobehub_plugin_url` field.
 

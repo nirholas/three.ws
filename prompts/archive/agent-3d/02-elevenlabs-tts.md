@@ -13,11 +13,11 @@ Add `ElevenLabsTTS` to [src/runtime/speech.js](../../src/runtime/speech.js) that
 ## Deliverable
 
 1. **`ElevenLabsTTS` class** in [src/runtime/speech.js](../../src/runtime/speech.js):
-	 - Constructor: `{ voiceId, modelId = "eleven_turbo_v2_5", apiKey, proxyURL, rate = 1, pitch = 1, lang = "en-US" }`.
-	 - `async speak(text, { onStart, onEnd })` — POST to ElevenLabs `text-to-speech/{voiceId}/stream` endpoint (via `proxyURL` if set, else direct with `apiKey`). Stream the audio response via `MediaSource` or fall back to buffered `<audio>` playback if the browser doesn't support MSE for `audio/mpeg`.
-	 - `cancel()` aborts the fetch and stops playback. Set `this._speaking = false`.
-	 - Respect `rate` and `pitch` by mapping to ElevenLabs' `voice_settings` (`stability`, `similarity_boost`, `style`, `use_speaker_boost`) where reasonable. Document mapping choice in a code comment.
-	 - Same public surface as `BrowserTTS`: `speak`, `cancel`, `speaking` getter.
+    - Constructor: `{ voiceId, modelId = "eleven_turbo_v2_5", apiKey, proxyURL, rate = 1, pitch = 1, lang = "en-US" }`.
+    - `async speak(text, { onStart, onEnd })` — POST to ElevenLabs `text-to-speech/{voiceId}/stream` endpoint (via `proxyURL` if set, else direct with `apiKey`). Stream the audio response via `MediaSource` or fall back to buffered `<audio>` playback if the browser doesn't support MSE for `audio/mpeg`.
+    - `cancel()` aborts the fetch and stops playback. Set `this._speaking = false`.
+    - Respect `rate` and `pitch` by mapping to ElevenLabs' `voice_settings` (`stability`, `similarity_boost`, `style`, `use_speaker_boost`) where reasonable. Document mapping choice in a code comment.
+    - Same public surface as `BrowserTTS`: `speak`, `cancel`, `speaking` getter.
 2. **Register in `createTTS()`** — dispatch `provider === "elevenlabs"`.
 3. **Update [specs/AGENT_MANIFEST.md](../../specs/AGENT_MANIFEST.md)** — extend the `voice.tts.provider` enum to include `"elevenlabs"` with a note about `voiceId` and `modelId` fields.
 4. **Update [specs/EMBED_SPEC.md](../../specs/EMBED_SPEC.md)** — document that `tts="elevenlabs:{voiceId}"` on the element is shorthand. Parser lives in [src/element.js](../../src/element.js).

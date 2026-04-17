@@ -1,7 +1,7 @@
 ---
 name: 3d-features
-description: "Add or modify Three.js 3D features in the viewer. Use when: adding rendering features, new GUI controls, camera behavior, loaders, post-processing, environment maps, animation features, display toggles, materials, or extending the Viewer class."
-argument-hint: "Describe the 3D feature to add or change"
+description: 'Add or modify Three.js 3D features in the viewer. Use when: adding rendering features, new GUI controls, camera behavior, loaders, post-processing, environment maps, animation features, display toggles, materials, or extending the Viewer class.'
+argument-hint: 'Describe the 3D feature to add or change'
 ---
 
 # 3D Feature Development
@@ -23,6 +23,7 @@ The `Viewer` class manages all Three.js rendering. Key sections:
 ### State Object
 
 All GUI-controllable state lives in `this.state` (defined in constructor). To add a new toggle:
+
 1. Add default value to `this.state`
 2. Add GUI control in the appropriate `addGUI()` subfolder
 3. Add the handler method on the `Viewer` class
@@ -30,6 +31,7 @@ All GUI-controllable state lives in `this.state` (defined in constructor). To ad
 ### GUI Folders
 
 dat.gui controls are organized into folders created in `addGUI()`:
+
 - **Lights** — Ambient/directional intensity, punctual lights, exposure, tone mapping
 - **Display** — Wireframe, skeleton, grid, axes, auto-rotate, background
 - **Animation** — Playback speed, individual clip controls, morph targets
@@ -37,17 +39,18 @@ dat.gui controls are organized into folders created in `addGUI()`:
 
 ### Loaders
 
-| Loader | Purpose | CDN Path |
-|--------|---------|----------|
-| `GLTFLoader` | glTF/GLB models | Built-in Three.js |
-| `DRACOLoader` | Compressed geometry | `unpkg.com/three@.../draco/gltf/` |
-| `KTX2Loader` | Basis textures | `unpkg.com/three@.../basis/` |
-| `MeshoptDecoder` | Meshopt geometry | Built-in Three.js |
-| `EXRLoader` | HDR environment maps | Built-in Three.js |
+| Loader           | Purpose              | CDN Path                          |
+| ---------------- | -------------------- | --------------------------------- |
+| `GLTFLoader`     | glTF/GLB models      | Built-in Three.js                 |
+| `DRACOLoader`    | Compressed geometry  | `unpkg.com/three@.../draco/gltf/` |
+| `KTX2Loader`     | Basis textures       | `unpkg.com/three@.../basis/`      |
+| `MeshoptDecoder` | Meshopt geometry     | Built-in Three.js                 |
+| `EXRLoader`      | HDR environment maps | Built-in Three.js                 |
 
 ### Environment Maps
 
 Defined in `src/environments.js` as an array of `{ id, name, path, format }` objects. To add a new environment:
+
 1. Add entry to the array in `environments.js`
 2. The viewer auto-discovers it via the `environments` import
 

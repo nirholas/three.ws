@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Let a signed-in user mint an ERC-8004 agent id from the agent page"
+description: 'Let a signed-in user mint an ERC-8004 agent id from the agent page'
 ---
 
 # 06-01 · Mint ERC-8004 id from UI
@@ -26,10 +26,10 @@ Pillar 6 begins here. The agent record lives on-chain, portable across hosts. To
 ## Build this
 
 1. **New page** `/agent/:id/register` (owner-only) with a step wizard:
-   - Step 1 — connect wallet (reuse `wallet-login.js` logic; if already linked via 01-03, skip).
-   - Step 2 — preview the agent-card.json payload that will be committed.
-   - Step 3 — confirm chain + network fee, sign & send the `registerAgent` tx via the user's wallet (ethers `BrowserProvider`).
-   - Step 4 — on success: extract the `AgentRegistered` event's `agentId`, `PUT /api/agents/:id/wallet` with `{ erc8004_agent_id, chain_id, wallet_address }`.
+    - Step 1 — connect wallet (reuse `wallet-login.js` logic; if already linked via 01-03, skip).
+    - Step 2 — preview the agent-card.json payload that will be committed.
+    - Step 3 — confirm chain + network fee, sign & send the `registerAgent` tx via the user's wallet (ethers `BrowserProvider`).
+    - Step 4 — on success: extract the `AgentRegistered` event's `agentId`, `PUT /api/agents/:id/wallet` with `{ erc8004_agent_id, chain_id, wallet_address }`.
 2. **Error states** — wrong network, insufficient funds, user rejected, contract revert — each gets a clear message and a retry button. No cryptic hex strings shown.
 3. **Display on `/agent/:id`** — if `erc8004_agent_id` is set, show "On-chain: #<id> on <chain>" with a block-explorer link. Read-only badge.
 4. **Anti-double-register guard** — if agent already has `erc8004_agent_id`, the register page shows a "Already registered" state with the id and link; no double-mint.

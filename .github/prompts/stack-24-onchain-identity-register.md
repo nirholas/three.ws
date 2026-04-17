@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Register agent identity on ERC-8004 contract with IPFS manifest CID"
+description: 'Register agent identity on ERC-8004 contract with IPFS manifest CID'
 ---
 
 # Stack Layer 6: ERC-8004 On-Chain Registration
@@ -14,6 +14,7 @@ For agents to be portable into ANY host app directly from chain, each agent need
 ### Contract interaction
 
 Use the deployed contract addresses in [src/erc8004/abi.js:61-69](src/erc8004/abi.js#L61-L69). Confirm the contract's public ABI includes:
+
 - `register(address owner, string manifestURI) returns (uint256 agentId)`
 - `updateManifest(uint256 agentId, string manifestURI)`
 - `getAgent(uint256 agentId) returns (address owner, string manifestURI, uint256 updatedAt)`
@@ -41,6 +42,7 @@ Support meta-transactions if the deployed contract has them. Otherwise sponsor g
 ### Client code
 
 New module `src/onchain/register.js`:
+
 - `registerAgent(signer, cid) => { agentId, txHash }`
 - `updateManifest(signer, agentId, cid) => { txHash }`
 - `getAgent(agentId, provider) => { owner, manifestURI, updatedAt }`

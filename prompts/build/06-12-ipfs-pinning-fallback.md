@@ -10,27 +10,29 @@ Manifests and GLBs pinned to web3.storage today rely on a single gateway. If web
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| [src/erc8004/agent-registry.js](../../src/erc8004/agent-registry.js) | Today's pin path. |
-| [src/ipfs.js](../../src/ipfs.js) | IPFS helpers. |
-| [.env.example](../../.env.example) | Document new env vars. |
+| File                                                                 | Why                    |
+| :------------------------------------------------------------------- | :--------------------- |
+| [src/erc8004/agent-registry.js](../../src/erc8004/agent-registry.js) | Today's pin path.      |
+| [src/ipfs.js](../../src/ipfs.js)                                     | IPFS helpers.          |
+| [.env.example](../../.env.example)                                   | Document new env vars. |
 
 ## Build this
 
 1. Add a second pinning provider — `pinata` (no SDK, plain `fetch` to `https://api.pinata.cloud/pinning/pinFileToIPFS`). Configurable via `PINATA_JWT`. If unset, skip silently.
 2. Pin in parallel; the upload returns the union `{ cid, providers: ['web3', 'pinata'] }`. Persist in `pins` table.
 3. **Gateway list** in `src/ipfs.js`:
-   ```js
-   export const IPFS_GATEWAYS = [
-     'https://w3s.link/ipfs/',
-     'https://gateway.pinata.cloud/ipfs/',
-     'https://ipfs.io/ipfs/',
-     'https://cloudflare-ipfs.com/ipfs/',
-   ];
-   export async function fetchFromIpfs(cid, opts) { /* race + fallback */ }
-   ```
-   Race the first 2; if both fail/timeout (3s), fall back to the rest serially.
+    ```js
+    export const IPFS_GATEWAYS = [
+    	'https://w3s.link/ipfs/',
+    	'https://gateway.pinata.cloud/ipfs/',
+    	'https://ipfs.io/ipfs/',
+    	'https://cloudflare-ipfs.com/ipfs/',
+    ];
+    export async function fetchFromIpfs(cid, opts) {
+    	/* race + fallback */
+    }
+    ```
+    Race the first 2; if both fail/timeout (3s), fall back to the rest serially.
 4. Update [src/manifest.js](../../src/manifest.js) and any GLB loader that takes `ipfs://` URLs to use `fetchFromIpfs`.
 5. Add `scripts/repin.mjs <cid>` — utility to re-pin an existing CID to all configured providers.
 

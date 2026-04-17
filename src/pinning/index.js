@@ -61,8 +61,7 @@ export function getPinner() {
 
 	if (typeof window !== 'undefined' && window.__agent3dPinner) {
 		const cfg = window.__agent3dPinner;
-		_defaultPinner =
-			typeof cfg.pinBlob === 'function' ? cfg : createPinner(cfg);
+		_defaultPinner = typeof cfg.pinBlob === 'function' ? cfg : createPinner(cfg);
 		return _defaultPinner;
 	}
 

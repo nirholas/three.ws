@@ -44,7 +44,7 @@ There is **no UI** to view this log. We need one — the timeline is the most ho
 
 - Do not add a "re-sign all" button.
 - Do not integrate into the dashboard sidebar.
-- Do not implement action *replay* (playing back a speak/gesture in the viewer).
+- Do not implement action _replay_ (playing back a speak/gesture in the viewer).
 - Do not add time-range picker beyond the infinite-scroll.
 - Do not add CSV export — JSON is enough.
 

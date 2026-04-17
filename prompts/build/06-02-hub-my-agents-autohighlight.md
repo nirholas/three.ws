@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "When opening RegisterUI from the hub Manage button, auto-highlight the specific registered agent in the My Agents tab"
+description: 'When opening RegisterUI from the hub Manage button, auto-highlight the specific registered agent in the My Agents tab'
 ---
 
 # 06-02 · Hub Manage Button — Auto-Highlight Registered Agent in My Agents Tab
@@ -11,9 +11,12 @@ On `/agent/:id`, the owner sees a "Deploy on-chain" button that, when the agent 
 
 ```js
 new RegisterUI(
-    wrap,
-    () => { wrap.remove(); location.reload(); },
-    { initialTab: 'my' },
+	wrap,
+	() => {
+		wrap.remove();
+		location.reload();
+	},
+	{ initialTab: 'my' },
 );
 ```
 
@@ -43,9 +46,9 @@ In `_renderMyAgents` (line ~1382), before the `listAgentsByOwner` call, if a hig
 
 ```js
 if (this._highlightChainId && this._highlightChainId !== this.selectedChainId) {
-    this.selectedChainId = this._highlightChainId;
-    const sel = this.el.querySelector('.erc8004-chain-select');
-    if (sel) sel.value = String(this._highlightChainId);
+	this.selectedChainId = this._highlightChainId;
+	const sel = this.el.querySelector('.erc8004-chain-select');
+	if (sel) sel.value = String(this._highlightChainId);
 }
 ```
 
@@ -57,18 +60,18 @@ In `_fillAgentCard` (line ~1443), after the card's full `innerHTML` is set and t
 
 ```js
 if (this._highlightAgentId && Number(agentId) === this._highlightAgentId) {
-    card.classList.add('erc8004-agent-card--highlight');
-    // Scroll into view after a brief frame so layout is complete
-    requestAnimationFrame(() => card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
-    // If this card has an edit button, click it automatically so the owner
-    // lands directly in the edit flow without an extra click.
-    if (opts.withEdit) {
-        const editBtn = card.querySelector('[data-role="edit"]');
-        if (editBtn) {
-            // Small delay to let the scroll finish
-            setTimeout(() => editBtn.click(), 400);
-        }
-    }
+	card.classList.add('erc8004-agent-card--highlight');
+	// Scroll into view after a brief frame so layout is complete
+	requestAnimationFrame(() => card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
+	// If this card has an edit button, click it automatically so the owner
+	// lands directly in the edit flow without an extra click.
+	if (opts.withEdit) {
+		const editBtn = card.querySelector('[data-role="edit"]');
+		if (editBtn) {
+			// Small delay to let the scroll finish
+			setTimeout(() => editBtn.click(), 400);
+		}
+	}
 }
 ```
 
@@ -78,8 +81,8 @@ The `erc8004-agent-card--highlight` class needs a visual distinction. Find where
 
 ```css
 .erc8004-agent-card--highlight {
-    outline: 2px solid var(--erc8004-accent, #7c6fff);
-    outline-offset: 2px;
+	outline: 2px solid var(--erc8004-accent, #7c6fff);
+	outline-offset: 2px;
 }
 ```
 
@@ -91,12 +94,12 @@ In the registered-agent click handler (around line 59–79), find:
 
 ```js
 new RegisterUI(
-    wrap,
-    () => {
-        wrap.remove();
-        location.reload();
-    },
-    { initialTab: 'my' },
+	wrap,
+	() => {
+		wrap.remove();
+		location.reload();
+	},
+	{ initialTab: 'my' },
 );
 ```
 
@@ -104,16 +107,16 @@ Change to:
 
 ```js
 new RegisterUI(
-    wrap,
-    () => {
-        wrap.remove();
-        location.reload();
-    },
-    {
-        initialTab: 'my',
-        highlightAgentId: erc8004AgentId || null,
-        highlightChainId: chainId || null,
-    },
+	wrap,
+	() => {
+		wrap.remove();
+		location.reload();
+	},
+	{
+		initialTab: 'my',
+		highlightAgentId: erc8004AgentId || null,
+		highlightChainId: chainId || null,
+	},
 );
 ```
 

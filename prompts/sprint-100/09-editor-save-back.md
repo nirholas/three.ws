@@ -38,12 +38,11 @@ export async function saveEditedAvatar(session, { avatarId, onStep })
 In `_addExportFolder()` add:
 
 ```js
-folder
-    .add({ save: () => this._saveEdits() }, 'save')
-    .name('💾 save edits');
+folder.add({ save: () => this._saveEdits() }, 'save').name('💾 save edits');
 ```
 
 `_saveEdits()` on the `Editor` class:
+
 - Requires `this.session.avatarId`. If missing (dropped GLB, not a saved avatar), show a toast "Not a saved avatar — use Publish instead" and return.
 - Dynamic-import `./save-back.js` and call `saveEditedAvatar`.
 - Show a tiny non-modal status text in the editor folder during the save ("saving… 42%"). On success, flash "saved ✓" for ~1.5s. On 401, show "Sign in to save" with a link to `/login?next=<current>`.

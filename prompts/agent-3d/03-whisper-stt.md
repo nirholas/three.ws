@@ -13,16 +13,16 @@ Add `WhisperSTT` to [src/runtime/speech.js](../../src/runtime/speech.js) that re
 ## Deliverable
 
 1. **`WhisperSTT` class** in [src/runtime/speech.js](../../src/runtime/speech.js):
-	 - Constructor: `{ endpoint, apiKey, language = "en", model = "whisper-1", chunkDurationMs = 3000 }`.
-		 - `endpoint` defaults to `https://api.openai.com/v1/audio/transcriptions`. Operators can point to their own whisper.cpp server by swapping.
-	 - `async listen({ onInterim, onFinal })`:
-		 - Request mic permission via `navigator.mediaDevices.getUserMedia({ audio: true })`.
-		 - Record with `MediaRecorder` (`audio/webm;codecs=opus`).
-		 - Option A (simpler): stop recording on VAD silence (see below) or when `stop()` is called, upload the full blob, emit one `onFinal(text)`.
-		 - Option B (preferred): chunk recording every `chunkDurationMs`, upload each chunk, emit `onInterim(text)` per chunk, emit `onFinal(text)` on stop. Chunks are independent transcriptions; concatenate on the client.
-		 - Emit VAD-based silence detection using `AudioContext` + `AnalyserNode` RMS threshold — stop recording after ~1.2s of silence unless in `continuous` mode.
-	 - `stop()` — halt recording, await any in-flight transcription, resolve the `listen()` promise with accumulated text.
-	 - `listening` getter.
+    - Constructor: `{ endpoint, apiKey, language = "en", model = "whisper-1", chunkDurationMs = 3000 }`.
+        - `endpoint` defaults to `https://api.openai.com/v1/audio/transcriptions`. Operators can point to their own whisper.cpp server by swapping.
+    - `async listen({ onInterim, onFinal })`:
+        - Request mic permission via `navigator.mediaDevices.getUserMedia({ audio: true })`.
+        - Record with `MediaRecorder` (`audio/webm;codecs=opus`).
+        - Option A (simpler): stop recording on VAD silence (see below) or when `stop()` is called, upload the full blob, emit one `onFinal(text)`.
+        - Option B (preferred): chunk recording every `chunkDurationMs`, upload each chunk, emit `onInterim(text)` per chunk, emit `onFinal(text)` on stop. Chunks are independent transcriptions; concatenate on the client.
+        - Emit VAD-based silence detection using `AudioContext` + `AnalyserNode` RMS threshold — stop recording after ~1.2s of silence unless in `continuous` mode.
+    - `stop()` — halt recording, await any in-flight transcription, resolve the `listen()` promise with accumulated text.
+    - `listening` getter.
 2. **Register in `createSTT()`**.
 3. **Update [specs/AGENT_MANIFEST.md](../../specs/AGENT_MANIFEST.md)** — add `whisper` to the `voice.stt.provider` enum, document `endpoint` and `language` fields.
 

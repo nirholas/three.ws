@@ -21,27 +21,27 @@ Wire bidirectional, lossless relay between LobeHub's chat tool-call surface and 
 ## Deliverable
 
 1. **New module** `src/embed-action-relay.js`:
-   - `class EmbedActionRelay` wired to the bridge from [02](./02-iframe-handshake.md) and the [protocol](../../src/agent-protocol.js) singleton.
-   - `attach({ bridge, protocol, identity })` — starts both directions.
-   - `detach()` — tears both down.
+    - `class EmbedActionRelay` wired to the bridge from [02](./02-iframe-handshake.md) and the [protocol](../../src/agent-protocol.js) singleton.
+    - `attach({ bridge, protocol, identity })` — starts both directions.
+    - `detach()` — tears both down.
 2. **Inbound mapping** (host tool call → protocol emit):
 
-   | LobeHub tool | ACTION_TYPE | payload shape |
-   |---|---|---|
-   | `render_agent({ agentId })` | (no emit; triggers `bridge` `host:set-agent` path) | — |
-   | `speak({ text, sentiment? })` | `SPEAK` | `{ text, sentiment: clamp(sentiment, -1, 1) }` |
-   | `gesture({ name, duration? })` | `GESTURE` | `{ name, duration: duration \|\| 1.5 }` |
-   | `emote({ trigger, weight? })` | `EMOTE` | `{ trigger, weight: clamp(weight, 0, 1) }` |
-   | `look_at({ target })` | `LOOK_AT` | `{ target }` (validate against `'model'\|'user'\|'camera'`) |
+    | LobeHub tool                   | ACTION_TYPE                                        | payload shape                                               |
+    | ------------------------------ | -------------------------------------------------- | ----------------------------------------------------------- |
+    | `render_agent({ agentId })`    | (no emit; triggers `bridge` `host:set-agent` path) | —                                                           |
+    | `speak({ text, sentiment? })`  | `SPEAK`                                            | `{ text, sentiment: clamp(sentiment, -1, 1) }`              |
+    | `gesture({ name, duration? })` | `GESTURE`                                          | `{ name, duration: duration \|\| 1.5 }`                     |
+    | `emote({ trigger, weight? })`  | `EMOTE`                                            | `{ trigger, weight: clamp(weight, 0, 1) }`                  |
+    | `look_at({ target })`          | `LOOK_AT`                                          | `{ target }` (validate against `'model'\|'user'\|'camera'`) |
 
-   Every emit must be tagged `sourceSkill: 'lobehub-host'` so the outbound relay filters it out (no loops).
+    Every emit must be tagged `sourceSkill: 'lobehub-host'` so the outbound relay filters it out (no loops).
 
 3. **Outbound mapping** (protocol event → host envelope):
-   - Subscribe to `protocol.on('*', handler)`.
-   - Skip events whose `sourceSkill === 'lobehub-host'` (loop guard).
-   - Skip high-frequency internal events (`load-start` and `load-end` are **allowed**; per-frame morph lerps **never** reach the protocol anyway).
-   - Translate the canonical action shape into `{ v: 1, ns: '3d-agent', type: 'embed:action', payload: { action: { type, payload, sourceSkill, timestamp, agentId } } }`.
-   - Post via the bridge.
+    - Subscribe to `protocol.on('*', handler)`.
+    - Skip events whose `sourceSkill === 'lobehub-host'` (loop guard).
+    - Skip high-frequency internal events (`load-start` and `load-end` are **allowed**; per-frame morph lerps **never** reach the protocol anyway).
+    - Translate the canonical action shape into `{ v: 1, ns: '3d-agent', type: 'embed:action', payload: { action: { type, payload, sourceSkill, timestamp, agentId } } }`.
+    - Post via the bridge.
 4. **Tool-result replies** — when an inbound tool call carried an envelope `id`, post back `{ type: 'embed:tool-result', id, payload: { ok: true, ... } }` once the corresponding protocol event has fired (or after a short timeout with `{ ok: false, error: 'timed-out' }`). This is how LobeHub's chat model closes the tool-call round trip.
 5. **Signed actions surface** — when the avatar emits `SIGN` (agent signs an action with its wallet per [03](./03-host-auth-handoff.md) + ERC-8004), the outbound `embed:action` envelope must include `signature`, `address`, and `chainId` from the payload. Downstream task [05](./05-plugin-submission.md) covers the chat-UI representation.
 
@@ -67,9 +67,9 @@ Wire bidirectional, lossless relay between LobeHub's chat tool-call surface and 
 1. `node --check src/embed-action-relay.js` passes.
 2. `npx vite build` succeeds.
 3. Ad-hoc test harness (do not commit): a small HTML page that iframes the embed, sends the five tool calls in order, and asserts:
-   - Each produces the expected protocol emission (observe via debug global `window.VIEWER.agent_protocol.history`).
-   - Each produces an `embed:action` mirror back out (listen in parent).
-   - No loop — count of host-originated events in history === count sent.
+    - Each produces the expected protocol emission (observe via debug global `window.VIEWER.agent_protocol.history`).
+    - Each produces an `embed:action` mirror back out (listen in parent).
+    - No loop — count of host-originated events in history === count sent.
 4. Trigger a skill from inside the avatar (e.g. `protocol.emit({ type: 'speak', payload: { text: 'hi', sentiment: 0.5 }, agentId: ... })` from devtools) and confirm it surfaces back to parent as `embed:action`.
 5. Trigger an unknown tool `{ type: 'tool', name: 'nope' }` — confirm `embed:tool-result { ok: false, error: 'unknown-tool' }`.
 6. Open the agent log in the parent frame; confirm the action timeline matches [agent-home](../../src/agent-home.js) style (types + timestamps).

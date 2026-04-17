@@ -13,7 +13,11 @@ const root = resolve(__dirname, '..');
 
 function loadEnvFile(path) {
 	let raw;
-	try { raw = readFileSync(path, 'utf8'); } catch { return; }
+	try {
+		raw = readFileSync(path, 'utf8');
+	} catch {
+		return;
+	}
 	for (const line of raw.split('\n')) {
 		const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/i);
 		if (!m) continue;

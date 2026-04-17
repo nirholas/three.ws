@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "First-run onboarding tour — connect wallet → take selfie → meet your agent"
+description: 'First-run onboarding tour — connect wallet → take selfie → meet your agent'
 ---
 
 # Stack Layer 2 (support): First-Run Onboarding
@@ -20,15 +20,15 @@ On `/` (home), if `!session`, show a landing with a big "Create your agent" CTA 
 Three-step wizard (server-side state: `users.onboarding_step`):
 
 1. **Step 1: Connect** — "Your agent lives on-chain. Start by connecting a wallet or signing up with email."
-   - Both auth paths.
-   - On success, advance to step 2.
+    - Both auth paths.
+    - On success, advance to step 2.
 2. **Step 2: Take a selfie** — "This becomes your agent's body. We use your photo to generate a rigged 3D avatar."
-   - Launches the flow from stack-05.
-   - While generating, show "While we work, here's what your agent can do..." with 3 cards (skills, memory, embed).
+    - Launches the flow from stack-05.
+    - While generating, show "While we work, here's what your agent can do..." with 3 cards (skills, memory, embed).
 3. **Step 3: Meet your agent** — "Here's [name]. Say hi?"
-   - Live viewer with the new avatar.
-   - Big "Try a skill" button, "Edit your agent" button, "Share your agent" button.
-   - First action (e.g., greet) fires automatically — the avatar's first action is to greet its owner.
+    - Live viewer with the new avatar.
+    - Big "Try a skill" button, "Edit your agent" button, "Share your agent" button.
+    - First action (e.g., greet) fires automatically — the avatar's first action is to greet its owner.
 
 ### Skip / later
 

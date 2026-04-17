@@ -6,27 +6,29 @@ Self-contained prompt files for replacing the hosted Avaturn integration with a 
 
 ## Reference repos (all MIT / Apache / MPL)
 
-| Layer | Repo | Used in tasks |
-|---|---|---|
-| VRM runtime | [pixiv/three-vrm](https://github.com/pixiv/three-vrm) | 02, 09, 12 |
-| Editor | [M3-org/CharacterStudio](https://github.com/M3-org/CharacterStudio) | 03, 16, 17 |
-| Photo → 3D (HD) | [abdallahdib/NextFace](https://github.com/abdallahdib/NextFace) | 08 |
-| Photo → landmarks | [MediaPipe Face Landmarker](https://developers.google.com/mediapipe/solutions/vision/face_landmarker/web_js) | 07, 12 |
-| Talking head + lipsync | [met4citizen/TalkingHead](https://github.com/met4citizen/TalkingHead) | 09 |
-| TTS w/ visemes | [HeadTTS (Kokoro)](https://github.com/met4citizen/TalkingHead) + [rhasspy/Piper](https://github.com/rhasspy/piper) | 10 |
-| STT | [xenova/whisper-web](https://github.com/xenova/whisper-web) | 11 |
-| Mirror mode | [yeemachine/kalidokit](https://github.com/yeemachine/kalidokit) | 12 |
-| Full-body mocap | [ButzYung/SystemAnimatorOnline](https://github.com/ButzYung/SystemAnimatorOnline) | 13 |
-| Local LLM | [mlc-ai/web-llm](https://github.com/mlc-ai/web-llm) | 14 |
+| Layer                  | Repo                                                                                                               | Used in tasks |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------- |
+| VRM runtime            | [pixiv/three-vrm](https://github.com/pixiv/three-vrm)                                                              | 02, 09, 12    |
+| Editor                 | [M3-org/CharacterStudio](https://github.com/M3-org/CharacterStudio)                                                | 03, 16, 17    |
+| Photo → 3D (HD)        | [abdallahdib/NextFace](https://github.com/abdallahdib/NextFace)                                                    | 08            |
+| Photo → landmarks      | [MediaPipe Face Landmarker](https://developers.google.com/mediapipe/solutions/vision/face_landmarker/web_js)       | 07, 12        |
+| Talking head + lipsync | [met4citizen/TalkingHead](https://github.com/met4citizen/TalkingHead)                                              | 09            |
+| TTS w/ visemes         | [HeadTTS (Kokoro)](https://github.com/met4citizen/TalkingHead) + [rhasspy/Piper](https://github.com/rhasspy/piper) | 10            |
+| STT                    | [xenova/whisper-web](https://github.com/xenova/whisper-web)                                                        | 11            |
+| Mirror mode            | [yeemachine/kalidokit](https://github.com/yeemachine/kalidokit)                                                    | 12            |
+| Full-body mocap        | [ButzYung/SystemAnimatorOnline](https://github.com/ButzYung/SystemAnimatorOnline)                                  | 13            |
+| Local LLM              | [mlc-ai/web-llm](https://github.com/mlc-ai/web-llm)                                                                | 14            |
 
 ## Recommended execution order
 
 ### Foundation — do these in order, no parallelism
+
 1. [01-strip-avaturn.md](./01-strip-avaturn.md) — Remove `@avaturn/sdk`, `@avaturn-live/web-sdk`, rename `AvaturnAgent`. **Blocks everything.**
 2. [02-vrm-runtime.md](./02-vrm-runtime.md) — Add `@pixiv/three-vrm`, load VRM into the viewer. **Blocks 03, 09–13, 16.**
 3. [03-vendor-character-studio.md](./03-vendor-character-studio.md) — Vendor CharacterStudio's `CharacterManager` into `src/character/`. **Blocks 16, 17.**
 
 ### Photo capture pipeline — parallelizable after 02
+
 4. [04-desktop-photo-capture.md](./04-desktop-photo-capture.md) — Three-shot webcam capture UI (left/center/right).
 5. [05-session-bridge.md](./05-session-bridge.md) — Session store + SSE/WebSocket relay. **Blocks 06.**
 6. [06-mobile-capture-route.md](./06-mobile-capture-route.md) — `/m/:sessionId` phone route with QR flow on desktop. **Depends on 05.**
@@ -34,6 +36,7 @@ Self-contained prompt files for replacing the hosted Avaturn integration with a 
 8. [08-photo-to-avatar-hd.md](./08-photo-to-avatar-hd.md) — Backend path: NextFace GPU service → high-fidelity rebake.
 
 ### Animation stack — parallelizable after 02
+
 9. [09-talking-head.md](./09-talking-head.md) — Vendor `TalkingHead`, wire to the active VRM.
 10. [10-tts-visemes.md](./10-tts-visemes.md) — Browser TTS with phoneme/viseme timestamps. **Depends on 09.**
 11. [11-speech-to-text.md](./11-speech-to-text.md) — Replace Web Speech API with whisper-web.
@@ -41,14 +44,17 @@ Self-contained prompt files for replacing the hosted Avaturn integration with a 
 13. [13-full-body-mocap.md](./13-full-body-mocap.md) — Optional XR Animator-style full-body capture.
 
 ### Brain — after 10, 11
+
 14. [14-agent-brain.md](./14-agent-brain.md) — Pluggable LLM interface: local (WebLLM) and cloud (Claude/OpenAI).
 15. [15-conversation-state.md](./15-conversation-state.md) — Session memory, tool invocations, viewer context.
 
 ### Editor + UX — after 03
+
 16. [16-character-editor-ui.md](./16-character-editor-ui.md) — Branded side-panel editor driving `CharacterManager`.
 17. [17-asset-library.md](./17-asset-library.md) — Browsable VRM asset registry (from CC0 sources).
 
 ### Polish
+
 18. [18-branding-pass.md](./18-branding-pass.md) — Scrub `avaturn-` everywhere, rename to project brand.
 19. [19-performance-dispose.md](./19-performance-dispose.md) — Render-on-demand, GPU disposal, idle throttling.
 20. [20-onboarding-flow.md](./20-onboarding-flow.md) — First-run journey: QR → photo → preview → name → ready.

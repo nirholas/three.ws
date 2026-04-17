@@ -16,8 +16,8 @@ You create two NEW endpoints. You do not touch SIWE nonce/verify or login/regist
 ## Read first
 
 - [api/auth/siwe/verify.js](../../api/auth/siwe/verify.js) — confirm the `user_wallets` schema in use (`user_id`, `address`, `chain_id`, `is_primary`, `last_used_at`).
-- [api/_lib/auth.js](../../api/_lib/auth.js) — `getSessionUser`.
-- [api/_lib/db.js](../../api/_lib/db.js) — `sql` tag.
+- [api/\_lib/auth.js](../../api/_lib/auth.js) — `getSessionUser`.
+- [api/\_lib/db.js](../../api/_lib/db.js) — `sql` tag.
 
 ## Deliverable
 
@@ -26,12 +26,12 @@ You create two NEW endpoints. You do not touch SIWE nonce/verify or login/regist
 - Requires session cookie.
 - Body: `{ message, signature }` — full SIWE message + signature, same format the verify endpoint consumes.
 - Steps:
-  1. Parse message, extract `address` and `nonce`.
-  2. Look up + consume the nonce exactly like [verify.js](../../api/auth/siwe/verify.js) does.
-  3. `ethers.verifyMessage(message, signature) === address` (case-insensitive).
-  4. If the address is already linked to a DIFFERENT user → `409 wallet-taken`.
-  5. Insert into `user_wallets` with `user_id = session.user.id`, `is_primary = false`.
-  6. Return `{ ok: true, address, chainId }`.
+    1. Parse message, extract `address` and `nonce`.
+    2. Look up + consume the nonce exactly like [verify.js](../../api/auth/siwe/verify.js) does.
+    3. `ethers.verifyMessage(message, signature) === address` (case-insensitive).
+    4. If the address is already linked to a DIFFERENT user → `409 wallet-taken`.
+    5. Insert into `user_wallets` with `user_id = session.user.id`, `is_primary = false`.
+    6. Return `{ ok: true, address, chainId }`.
 - Rate limit: `10/10min per user`.
 
 ### `POST /api/auth/wallet/unlink`
@@ -39,10 +39,10 @@ You create two NEW endpoints. You do not touch SIWE nonce/verify or login/regist
 - Requires session cookie.
 - Body: `{ address }`.
 - Steps:
-  1. Verify the wallet row exists for this user. 404 if not.
-  2. If this is the user's ONLY auth method (no password_hash AND this is the only wallet row), refuse with `409 last-auth-method`.
-  3. Delete the row.
-  4. Return `{ ok: true }`.
+    1. Verify the wallet row exists for this user. 404 if not.
+    2. If this is the user's ONLY auth method (no password_hash AND this is the only wallet row), refuse with `409 last-auth-method`.
+    3. Delete the row.
+    4. Return `{ ok: true }`.
 - If `is_primary` was true and other wallets exist, promote the most-recently-used remaining wallet to primary.
 
 ## Constraints

@@ -21,7 +21,7 @@ This task produces the **script + runbook**, not the broadcast itself. Per [/CLA
 
 - Identical CREATE2 salt to the existing deploy script — ensures deterministic address parity with the testnet deployment (if one exists — check `REGISTRY_DEPLOYMENTS` for testnet ValidationRegistry addresses and **must match**).
 - Reads `IDENTITY_REGISTRY` env var if the constructor needs it, else hardcode the canonical CREATE2 address from `contracts/CLAUDE.md`.
-- Logs the computed address *before* deploying (so a human can sanity-check).
+- Logs the computed address _before_ deploying (so a human can sanity-check).
 - `forge script ... --rpc-url $RPC --sender $DEPLOYER` as the dry-run. Broadcast is `--broadcast --verify --etherscan-api-key $KEY`.
 
 ## Runbook requirements

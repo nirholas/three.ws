@@ -26,7 +26,9 @@ async function _resolveProjectId(override) {
 			const cfg = await res.json();
 			if (cfg.walletConnectProjectId) return cfg.walletConnectProjectId;
 		}
-	} catch { /* network failure — fall through */ }
+	} catch {
+		/* network failure — fall through */
+	}
 
 	return null;
 }
@@ -114,7 +116,10 @@ export async function signInWithWalletConnect({ projectId, chains } = {}) {
 	// 5. Sign.
 	let signature;
 	try {
-		signature = await _provider.request({ method: 'personal_sign', params: [message, address] });
+		signature = await _provider.request({
+			method: 'personal_sign',
+			params: [message, address],
+		});
 	} catch (e) {
 		throw _wcError('sign_rejected', `User rejected signing: ${e.message}`);
 	}
@@ -138,7 +143,9 @@ export async function signInWithWalletConnect({ projectId, chains } = {}) {
 	try {
 		const { getMe } = await import('../account.js');
 		await getMe();
-	} catch { /* non-fatal: hint just won't be refreshed */ }
+	} catch {
+		/* non-fatal: hint just won't be refreshed */
+	}
 
 	return {
 		user: result.user,

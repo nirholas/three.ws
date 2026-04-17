@@ -127,12 +127,32 @@ function fit(w, h, max) {
  */
 function mapApiError(status, payload) {
 	const code = payload.error;
-	if (status === 401) return withMessage(new Error(code || 'unauthorized'), 'Please sign in to create an avatar.');
-	if (status === 413) return withMessage(new Error(code || 'too_large'), 'Photos are too large. Try again.');
-	if (status === 429) return withMessage(new Error(code || 'rate_limited'), 'Too many attempts — wait a minute and try again.');
-	if (status === 501) return withMessage(new Error(code || 'not_configured'), 'Avatar pipeline is not set up on this deployment.');
-	if (status === 502) return withMessage(new Error(code || 'upstream_error'), 'Avatar provider is having trouble. Try again shortly.');
-	return withMessage(new Error(code || `http_${status}`), payload.error_description || 'Could not create avatar.');
+	if (status === 401)
+		return withMessage(
+			new Error(code || 'unauthorized'),
+			'Please sign in to create an avatar.',
+		);
+	if (status === 413)
+		return withMessage(new Error(code || 'too_large'), 'Photos are too large. Try again.');
+	if (status === 429)
+		return withMessage(
+			new Error(code || 'rate_limited'),
+			'Too many attempts — wait a minute and try again.',
+		);
+	if (status === 501)
+		return withMessage(
+			new Error(code || 'not_configured'),
+			'Avatar pipeline is not set up on this deployment.',
+		);
+	if (status === 502)
+		return withMessage(
+			new Error(code || 'upstream_error'),
+			'Avatar provider is having trouble. Try again shortly.',
+		);
+	return withMessage(
+		new Error(code || `http_${status}`),
+		payload.error_description || 'Could not create avatar.',
+	);
 }
 
 /**

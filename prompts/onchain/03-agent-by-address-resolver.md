@@ -16,23 +16,26 @@ Hosts (Claude, LobeHub) paste a wallet address. We must return the canonical age
 ### 1. `GET /api/agents/by-address/:addr`
 
 Public (no auth). Accepts:
+
 - `0x…` address (EIP-55 or lowercased)
 - Optional `?chain=base-sepolia` (default: try every deployed chain in order, first hit wins)
 
 Flow:
+
 1. Normalize address to lowercase.
 2. Check `agents` cache: `select * from agent_identities where lower(wallet_address) = $1`. If hit and `chain_id` set, return.
 3. Otherwise, for each chainId in `REGISTRY_DEPLOYMENTS`:
-   - `IdentityRegistry.agentOf(address)` → `agentId` (or 0)
-   - If nonzero, `IdentityRegistry.getAgent(agentId)` → `agentURI`
-   - Fetch `agentURI` (IPFS → HTTPS gateway fallback, using the `ipfs.js` helper)
-   - Build a cache row in `agent_identities` (mark `_source: 'chain'`). Use the metadata's `name`, `description`, `avatar.uri`, `skills`.
-   - Return it.
+    - `IdentityRegistry.agentOf(address)` → `agentId` (or 0)
+    - If nonzero, `IdentityRegistry.getAgent(agentId)` → `agentURI`
+    - Fetch `agentURI` (IPFS → HTTPS gateway fallback, using the `ipfs.js` helper)
+    - Build a cache row in `agent_identities` (mark `_source: 'chain'`). Use the metadata's `name`, `description`, `avatar.uri`, `skills`.
+    - Return it.
 4. If nothing on any chain, 404 with `{ ok: false, error: 'not_registered' }`.
 
 ### 2. Client resolver update
 
 Extend [src/agent-resolver.js](../../src/agent-resolver.js):
+
 ```js
 export async function resolveAgentByAddress(addr, opts) { … }
 ```

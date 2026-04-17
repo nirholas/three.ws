@@ -28,15 +28,20 @@ Renders a modal with these rows:
 
 1. **Link** — `https://${embedOrigin}/a/${agent.slug || agent.id}` + Copy + Open-in-new-tab buttons
 2. **iframe snippet**:
-   ```html
-   <iframe src="${embedOrigin}/agent-embed.html?id=${agent.id}"
-       width="480" height="640" frameborder="0" allow="microphone; camera"></iframe>
-   ```
+    ```html
+    <iframe
+    	src="${embedOrigin}/agent-embed.html?id=${agent.id}"
+    	width="480"
+    	height="640"
+    	frameborder="0"
+    	allow="microphone; camera"
+    ></iframe>
+    ```
 3. **Web-component snippet**:
-   ```html
-   <script type="module" src="${embedOrigin}/dist-lib/agent-3d.js"></script>
-   <agent-3d agent-id="${agent.id}"></agent-3d>
-   ```
+    ```html
+    <script type="module" src="${embedOrigin}/dist-lib/agent-3d.js"></script>
+    <agent-3d agent-id="${agent.id}"></agent-3d>
+    ```
 4. **OG preview** — render an `<img src="${embedOrigin}/api/a-og?id=${agent.id}">` at 1200×630 scaled down, with copy-OG-URL button.
 5. **QR code** — generate client-side (see constraint) pointing to the Link row.
 

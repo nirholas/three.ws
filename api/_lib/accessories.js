@@ -23,12 +23,14 @@ export function validateAppearance(appearance) {
 	if (!appearance) return null;
 
 	if (appearance.outfit !== undefined && appearance.outfit !== null) {
-		if (typeof appearance.outfit !== 'string') return 'appearance.outfit must be a string or null';
+		if (typeof appearance.outfit !== 'string')
+			return 'appearance.outfit must be a string or null';
 		if (!isValidPresetId(appearance.outfit)) return `unknown preset id: ${appearance.outfit}`;
 	}
 
 	if (appearance.accessories !== undefined) {
-		if (!Array.isArray(appearance.accessories)) return 'appearance.accessories must be an array';
+		if (!Array.isArray(appearance.accessories))
+			return 'appearance.accessories must be an array';
 		if (appearance.accessories.length > 8) return 'appearance.accessories max length is 8';
 		for (const id of appearance.accessories) {
 			if (typeof id !== 'string') return 'appearance.accessories entries must be strings';

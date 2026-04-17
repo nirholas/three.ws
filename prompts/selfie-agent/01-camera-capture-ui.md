@@ -22,10 +22,10 @@ On accept, the flow hands the `Blob` off to a single exported function `onCaptur
 ## Deliverable
 
 1. **New file: `src/selfie-capture.js`** — class `SelfieCapture` with:
-   - `constructor(rootEl, { onCaptureReady })`
-   - `mount()` / `unmount()` — idempotent
-   - Internal `_startCamera()`, `_stopCamera()`, `_capture()`, `_showReview(blob)`, `_retake()`, `_handleUploadFallback(file)`
-   - All `addEventListener` callbacks stored on `this._…` fields so `unmount()` can remove them cleanly (follow the stored-bound-handler pattern used in [src/avatar-creator.js](../../src/avatar-creator.js)).
+    - `constructor(rootEl, { onCaptureReady })`
+    - `mount()` / `unmount()` — idempotent
+    - Internal `_startCamera()`, `_stopCamera()`, `_capture()`, `_showReview(blob)`, `_retake()`, `_handleUploadFallback(file)`
+    - All `addEventListener` callbacks stored on `this._…` fields so `unmount()` can remove them cleanly (follow the stored-bound-handler pattern used in [src/avatar-creator.js](../../src/avatar-creator.js)).
 2. **New file: `public/create.html`** — minimal skeleton (DOCTYPE, meta viewport, single `<div id="create-root">`). Import `../src/selfie-capture.js` via a `<script type="module">` and call `new SelfieCapture(root, { onCaptureReady }).mount()`.
 3. **Edit [vercel.json](../../vercel.json)** — add `{ "src": "/create", "dest": "/public/create.html" }` and `{ "src": "/create/", "dest": "/public/create.html" }` above the catch-all `/public/$1` route.
 4. **Edit [index.html](../../index.html)** — make `#create-avatar-btn` navigate to `/create` (use an `<a>` or plain `window.location = '/create'` click handler). Keep the existing in-page Avaturn modal reachable via a "Skip — use the editor" link inside `/create` for users without a camera.
@@ -34,30 +34,36 @@ On accept, the flow hands the `Blob` off to a single exported function `onCaptur
 ## Audit checklist — must handle all of these
 
 **Camera lifecycle**
+
 - Request camera only after the user explicitly taps "Start camera" — never on mount. iOS Safari requires the prompt to happen inside a user gesture.
 - Request `{ video: { facingMode: 'user', width: { ideal: 1024 }, height: { ideal: 1024 } }, audio: false }`.
 - Store the `MediaStream` on `this._stream` and always stop all tracks (`this._stream.getTracks().forEach(t => t.stop())`) on: `unmount()`, retake-that-reopens-camera is fine but the previous stream must stop first, successful accept, navigation away (`pagehide` listener), and tab hidden (`visibilitychange` → pause/stop).
 
 **Capture**
+
 - Draw `<video>` onto a 1024×1024 `<canvas>` with center-crop (match shorter edge, centered).
 - `canvas.toBlob(cb, 'image/jpeg', 0.92)`.
 - Reject images smaller than 128×128 with an inline message.
 
 **Review step**
+
 - Show the frozen JPEG via `URL.createObjectURL(blob)` and `URL.revokeObjectURL` on retake / accept.
 - Two buttons: **Use this photo** and **Retake**. Both must be thumb-reachable on mobile.
 
 **Upload fallback**
+
 - Hidden `<input type="file" accept="image/*" capture="user">`. `capture="user"` triggers the rear/front camera picker on mobile browsers that support it.
 - Same review step as camera capture.
 - Enforce a 10 MB client-side cap, reject anything else with an inline message.
 
 **Errors** (no `alert()` — render inline under the preview)
+
 - `NotAllowedError` / `PermissionDeniedError` → "Camera permission denied. Upload a photo instead." + surface the upload button.
 - `NotFoundError` / `OverconstrainedError` → "No camera detected. Upload a photo instead."
 - `NotReadableError` → "Camera is busy in another app. Close it and retry."
 
 **Accessibility**
+
 - The capture button is a real `<button>` with `aria-label="Take photo"`.
 - Live preview `<video>` has `playsinline`, `muted`, `autoplay`, and no controls.
 - Review step images have `alt="Captured photo"`.
@@ -92,6 +98,7 @@ On accept, the flow hands the `Blob` off to a single exported function `onCaptur
 ## Reporting
 
 Report:
+
 - Files created and their line counts.
 - Files edited and which sections.
 - Commands run (`node --check`, `npx vite build`) and their output.

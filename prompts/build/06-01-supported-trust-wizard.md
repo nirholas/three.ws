@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Add supportedTrust multi-select to the ERC-8004 registration wizard and edit modal"
+description: 'Add supportedTrust multi-select to the ERC-8004 registration wizard and edit modal'
 ---
 
 # 06-01 · supportedTrust Multi-Select in ERC-8004 Wizard
@@ -37,6 +37,7 @@ export function buildRegistrationJSON({
 ```
 
 And the `json` object sets:
+
 ```js
 supportedTrust: ['reputation'],
 ```
@@ -59,6 +60,7 @@ export function buildRegistrationJSON({
 ```
 
 In the `json` object, replace the hardcoded line with:
+
 ```js
 supportedTrust: Array.isArray(supportedTrust) && supportedTrust.length > 0
     ? supportedTrust
@@ -70,24 +72,29 @@ supportedTrust: Array.isArray(supportedTrust) && supportedTrust.length > 0
 There are two form objects in `src/erc8004/register-ui.js`:
 
 **Primary form init** (around line 270 in the constructor, after `x402Support: false`):
+
 ```js
 services: [],
 x402Support: false,
 apiToken: '',
 ```
+
 Add `supportedTrust: ['reputation'],` after `x402Support: false`.
 
 **Scratch reset** (around line 680, inside `_resetWizard` when `mode === 'scratch'`):
+
 ```js
 services: [],
 x402Support: false,
 apiToken: this.form.apiToken || '',
 ```
+
 Add `supportedTrust: ['reputation'],` after `x402Support: false`.
 
 ### 3. `_renderStepServices` — add checkbox group
 
 In `_renderStepServices`, find the x402 checkbox block:
+
 ```html
 <label class="erc8004-checkbox" style="margin-top:12px">
     <input type="checkbox" data-role="x402" ${this.form.x402Support ? 'checked' : ''} />
@@ -96,6 +103,7 @@ In `_renderStepServices`, find the x402 checkbox block:
 ```
 
 Add a trust multi-select block immediately after it:
+
 ```html
 <fieldset class="erc8004-fieldset" style="margin-top:14px;border:1px solid var(--erc8004-border,#333);border-radius:6px;padding:10px 12px">
     <legend class="erc8004-label" style="padding:0 4px">Trust models</legend>
@@ -110,37 +118,40 @@ Add a trust multi-select block immediately after it:
 ```
 
 Then in the JS wiring section of `_renderStepServices` (after the x402 change listener), add listeners for each trust checkbox:
+
 ```js
 ['reputation', 'validation', 'stake'].forEach((t) => {
-    body.querySelector(`[data-role="trust-${t}"]`).addEventListener('change', () => {
-        const checked = ['reputation', 'validation', 'stake'].filter(
-            (x) => body.querySelector(`[data-role="trust-${x}"]`)?.checked,
-        );
-        this.form.supportedTrust = checked.length > 0 ? checked : ['reputation'];
-    });
+	body.querySelector(`[data-role="trust-${t}"]`).addEventListener('change', () => {
+		const checked = ['reputation', 'validation', 'stake'].filter(
+			(x) => body.querySelector(`[data-role="trust-${x}"]`)?.checked,
+		);
+		this.form.supportedTrust = checked.length > 0 ? checked : ['reputation'];
+	});
 });
 ```
 
 ### 4. `_doRegister` — pass `supportedTrust` to `registerAgent`
 
 In `_doRegister` (line ~1347), find the `registerAgent` call:
+
 ```js
 return await registerAgent({
-    name,
-    description,
-    glbFile: glbFile || undefined,
-    glbUrl: glbUrl || undefined,
-    imageUrl: imageUrl || undefined,
-    apiToken: apiToken || undefined,
-    services: extraServices,
-    x402Support: !!this.form.x402Support,
-    onStatus: say,
+	name,
+	description,
+	glbFile: glbFile || undefined,
+	glbUrl: glbUrl || undefined,
+	imageUrl: imageUrl || undefined,
+	apiToken: apiToken || undefined,
+	services: extraServices,
+	x402Support: !!this.form.x402Support,
+	onStatus: say,
 });
 ```
 
 `registerAgent` calls `buildRegistrationJSON` internally. Look at how `registerAgent` is defined in `src/erc8004/agent-registry.js` (around line 218+) — add `supportedTrust` to its destructured params and forward it to `buildRegistrationJSON`. Then pass `supportedTrust: this.form.supportedTrust || ['reputation']` in the `registerAgent` call from `_doRegister`.
 
 In `src/erc8004/agent-registry.js`, the `registerAgent` function (around line 218+):
+
 ```js
 export async function registerAgent({
     name,
@@ -155,43 +166,47 @@ export async function registerAgent({
     onStatus = () => {},
 }) {
 ```
+
 Add `supportedTrust = ['reputation'],` to the destructuring. Then find the `buildRegistrationJSON` call inside it (around line 321) and add `supportedTrust` to that call:
+
 ```js
 const registrationJSON = buildRegistrationJSON({
-    name,
-    description,
-    imageUrl,
-    glbUrl,
-    agentId,
-    chainId,
-    registryAddr,
-    services,
-    x402Support,
-    supportedTrust,
+	name,
+	description,
+	imageUrl,
+	glbUrl,
+	agentId,
+	chainId,
+	registryAddr,
+	services,
+	x402Support,
+	supportedTrust,
 });
 ```
 
 ### 5. `_doUpdateAgent` — preserve or override `supportedTrust`
 
 In `_doUpdateAgent` (line ~1895), find the `buildRegistrationJSON` call:
+
 ```js
 const registrationJSON = buildRegistrationJSON({
-    name,
-    description,
-    imageUrl: newImageUrl || '',
-    glbUrl,
-    agentId,
-    chainId,
-    registryAddr,
-    services: preservedServices,
-    x402Support:
-        typeof x402Support === 'boolean'
-            ? x402Support
-            : !!(currentMeta?.x402Support || currentMeta?.x402),
+	name,
+	description,
+	imageUrl: newImageUrl || '',
+	glbUrl,
+	agentId,
+	chainId,
+	registryAddr,
+	services: preservedServices,
+	x402Support:
+		typeof x402Support === 'boolean'
+			? x402Support
+			: !!(currentMeta?.x402Support || currentMeta?.x402),
 });
 ```
 
 Add `supportedTrust` similarly — use it when provided (from the edit modal), otherwise fall back to whatever was in the existing metadata:
+
 ```js
 supportedTrust: Array.isArray(supportedTrust) && supportedTrust.length > 0
     ? supportedTrust
@@ -205,6 +220,7 @@ Add `supportedTrust` to the `_doUpdateAgent` destructured params (alongside `x40
 ### 6. `_openEditModal` — read `supportedTrust` from existing metadata + add checkboxes
 
 In `_openEditModal` (line ~1727), find the x402 checkbox in the modal HTML:
+
 ```html
 <label class="erc8004-checkbox">
     <input type="checkbox" name="x402Support" ${currentMeta?.x402Support || currentMeta?.x402 ? 'checked' : ''} />
@@ -213,6 +229,7 @@ In `_openEditModal` (line ~1727), find the x402 checkbox in the modal HTML:
 ```
 
 Add the same trust fieldset immediately after it:
+
 ```html
 <fieldset class="erc8004-fieldset" style="margin-top:14px;border:1px solid var(--erc8004-border,#333);border-radius:6px;padding:10px 12px">
     <legend class="erc8004-label" style="padding:0 4px">Trust models</legend>
@@ -226,9 +243,10 @@ Add the same trust fieldset immediately after it:
 ```
 
 In the modal save handler (where `x402Support` is read), add:
+
 ```js
 const supportedTrust = ['reputation', 'validation', 'stake'].filter(
-    (t) => !!modal.querySelector(`[name="trust-${t}"]`)?.checked,
+	(t) => !!modal.querySelector(`[name="trust-${t}"]`)?.checked,
 );
 ```
 

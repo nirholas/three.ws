@@ -124,7 +124,9 @@ export class AccessoryManager {
 
 		const bone = _findBone(this.viewer?.content, preset.attachBone);
 		if (!bone) {
-			console.warn(`[accessories] bone not found: ${preset.attachBone} (preset: ${preset.id})`);
+			console.warn(
+				`[accessories] bone not found: ${preset.attachBone} (preset: ${preset.id})`,
+			);
 			// Still record as applied so list() and removePreset() work correctly
 			this._applied.set(preset.id, { preset, object: null });
 			return;

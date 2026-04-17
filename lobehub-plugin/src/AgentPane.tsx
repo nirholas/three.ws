@@ -7,55 +7,107 @@ export interface AgentPaneProps {
 }
 
 /**
- * Main plugin component that renders a 3D agent avatar.
- * Listens to chat assistant messages via Lobe hooks and forwards them to the
- * agent via the bridge protocol.
+ * Sidebar plugin component that renders a 3D agent avatar and
+ * forwards LobeChat tool-call payloads to the agent via the bridge.
+ *
+ * LobeChat delivers tool calls by postMessage into the plugin iframe:
+ *   { type: 'LobePlugin.renderPlugin', payload: { apiName, arguments } }
+ *
+ * When @lobehub/chat-plugin-sdk ships a stable usePluginStore hook,
+ * replace the window message listener below with that hook so the
+ * React render cycle drives the effect instead of a raw event.
  */
 export const AgentPane: React.FC<AgentPaneProps> = ({ settings }) => {
 	const iframeRef = useRef<HTMLIFrameElement>(null);
 	const bridgeRef = useRef<AgentBridge | null>(null);
 	const [isReady, setIsReady] = useState(false);
-	const [frameHeight, setFrameHeight] = useState(420);
+	const [frameHeight, setFrameHeight] = useState(480);
 
 	const apiOrigin = settings.apiOrigin || DEFAULT_API_ORIGIN;
-	const embedUrl = `${apiOrigin}/agent/${settings.agentId}/embed?bg=transparent&name=1`;
+	// Pass agent id via query param; boot.js reads ?agent=
+	const embedUrl = `${apiOrigin}/lobehub/iframe/?agent=${encodeURIComponent(settings.agentId)}&bg=transparent`;
 
-	// Initialize bridge on mount.
+	// Mount bridge once per agentId.
 	useEffect(() => {
+		setIsReady(false);
 		const bridge = new AgentBridge({
 			agentId: settings.agentId,
 			iframeRef,
 			onReady: () => setIsReady(true),
-			onResize: (height: number) => setFrameHeight(Math.min(height, 600)),
+			onResize: (h: number) => setFrameHeight(Math.min(Math.max(h, 200), 640)),
 		});
-
 		bridge.mount();
 		bridgeRef.current = bridge;
-
 		return () => {
 			bridge.unmount();
+			bridgeRef.current = null;
 		};
 	}, [settings.agentId]);
 
-	// TODO: Hook into Lobe's onAssistantMessage event.
-	// This depends on what @lobehub/ui@latest exports.
-	// If usePluginStore or onAssistantMessage doesn't exist,
-	// this should be provided by the host Lobe fork.
+	// Observe LobeChat tool calls delivered as postMessage to this plugin iframe.
+	//
+	// LobeChat sends: { type: 'LobePlugin.renderPlugin', payload: { apiName, arguments } }
+	// where `arguments` is a JSON string of the tool's input object.
+	//
+	// Fallback path: if LobeChat changes its message contract or a host-level fork
+	// dispatches { type: 'lobe:assistantMessage', detail: { content } } as a custom
+	// event, the second listener below handles that case.
 	useEffect(() => {
-		const handleLobeMessage = (ev: CustomEvent) => {
-			const { content } = ev.detail || {};
-			if (content && bridgeRef.current) {
-				bridgeRef.current.speak(content);
+		const handleMessage = (ev: MessageEvent) => {
+			if (!ev.data || typeof ev.data !== 'object') return;
+			const { type, payload } = ev.data as {
+				type?: string;
+				payload?: Record<string, unknown>;
+			};
+			if (type !== 'LobePlugin.renderPlugin' || !payload) return;
+
+			const apiName = payload['apiName'] as string | undefined;
+			let args: Record<string, unknown> = {};
+			try {
+				args = JSON.parse((payload['arguments'] as string) || '{}');
+			} catch {
+				return;
+			}
+
+			const bridge = bridgeRef.current;
+			if (!bridge) return;
+
+			switch (apiName) {
+				case 'speak':
+					if (typeof args['text'] === 'string') {
+						bridge
+							.speak(args['text'], {
+								sentiment:
+									typeof args['sentiment'] === 'number' ? args['sentiment'] : 0,
+							})
+							.catch(() => undefined);
+					}
+					break;
+				case 'gesture':
+					if (typeof args['name'] === 'string') {
+						bridge.gesture(args['name']).catch(() => undefined);
+					}
+					break;
+				case 'emote':
+					if (typeof args['trigger'] === 'string') {
+						bridge
+							.emote({
+								trigger: args['trigger'],
+								weight: typeof args['weight'] === 'number' ? args['weight'] : 1,
+							})
+							.catch(() => undefined);
+					}
+					break;
+				case 'render_agent':
+					if (typeof args['agentId'] === 'string') {
+						bridge.setAgent(args['agentId']).catch(() => undefined);
+					}
+					break;
 			}
 		};
 
-		// Placeholder: listen for a custom event from the Lobe host.
-		// Replace with actual Lobe hook when SDK is available.
-		window.addEventListener('lobe:assistantMessage', handleLobeMessage as EventListener);
-
-		return () => {
-			window.removeEventListener('lobe:assistantMessage', handleLobeMessage as EventListener);
-		};
+		window.addEventListener('message', handleMessage);
+		return () => window.removeEventListener('message', handleMessage);
 	}, []);
 
 	return (
@@ -68,19 +120,20 @@ export const AgentPane: React.FC<AgentPaneProps> = ({ settings }) => {
 				backgroundColor: 'transparent',
 				borderRadius: '8px',
 				overflow: 'hidden',
+				position: 'relative',
 			}}
 		>
 			{!isReady && (
 				<div
 					style={{
+						position: 'absolute',
+						inset: 0,
 						display: 'flex',
 						alignItems: 'center',
 						justifyContent: 'center',
-						width: '100%',
-						height: '100%',
-						backgroundColor: 'rgba(0, 0, 0, 0.1)',
-						color: 'rgba(0, 0, 0, 0.5)',
+						color: 'rgba(128, 128, 128, 0.6)',
 						fontSize: '12px',
+						fontFamily: 'system-ui, sans-serif',
 					}}
 				>
 					Loading agent…
@@ -94,7 +147,8 @@ export const AgentPane: React.FC<AgentPaneProps> = ({ settings }) => {
 					width: '100%',
 					height: '100%',
 					border: 'none',
-					display: isReady ? 'block' : 'none',
+					opacity: isReady ? 1 : 0,
+					transition: 'opacity 0.3s ease',
 				}}
 				sandbox="allow-same-origin allow-scripts allow-presentation"
 			/>

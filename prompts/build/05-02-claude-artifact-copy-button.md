@@ -24,11 +24,11 @@ Copying that into a fresh Claude chat reliably produces an artifact with the age
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| `src/components/snippet-picker.jsx` (from 04-06) | Where the snippet string lives. |
-| `api/agents/[id]/artifact.js` (from 05-01) | Target URL. |
-| [public/agent/index.html](../../public/agent/index.html) | Share panel mount. |
+| File                                                     | Why                             |
+| :------------------------------------------------------- | :------------------------------ |
+| `src/components/snippet-picker.jsx` (from 04-06)         | Where the snippet string lives. |
+| `api/agents/[id]/artifact.js` (from 05-01)               | Target URL.                     |
+| [public/agent/index.html](../../public/agent/index.html) | Share panel mount.              |
 
 ## Build this
 
@@ -83,9 +83,11 @@ Keep short — one screen, no tabs.
 ## Deliverables
 
 **New:**
+
 - `public/preview/claude-artifact.html` — 20-line test harness.
 
 **Modified:**
+
 - `src/components/snippet-picker.jsx` — generator + copy flow + hint text.
 - `public/agent/index.html` (or wherever SnippetPicker mounts) — confirm the `claude-artifact` tab is no longer a placeholder.
 

@@ -2,7 +2,7 @@
 
 ## Why
 
-Band 5 goal: an embodied agent renders *inside* a Claude.ai chat as an artifact, not as a JSON blob. Claude.ai artifacts are standalone HTML documents — no external script tags allowed beyond whatever runs inside the sandboxed iframe the artifact is rendered in.
+Band 5 goal: an embodied agent renders _inside_ a Claude.ai chat as an artifact, not as a JSON blob. Claude.ai artifacts are standalone HTML documents — no external script tags allowed beyond whatever runs inside the sandboxed iframe the artifact is rendered in.
 
 Today [api/mcp.js](../../api/mcp.js) has a `render_avatar` tool but there's no dedicated endpoint that returns a **single self-contained HTML document** an agent can cite directly. This prompt ships that.
 
@@ -21,24 +21,37 @@ Output shape — a minimal HTML document inline-styled and inline-scripted, usin
 ```html
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>CZ — 3D Agent</title>
-    <style>html,body{margin:0;height:100%;background:#080814;} agent-3d{display:block;width:100%;height:100%}</style>
-  </head>
-  <body>
-    <agent-3d agent="{agentId}" eager></agent-3d>
-    <script src="https://3dagent.vercel.app/dist-lib/agent-3d.umd.cjs"></script>
-  </body>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>CZ — 3D Agent</title>
+		<style>
+			html,
+			body {
+				margin: 0;
+				height: 100%;
+				background: #080814;
+			}
+			agent-3d {
+				display: block;
+				width: 100%;
+				height: 100%;
+			}
+		</style>
+	</head>
+	<body>
+		<agent-3d agent="{agentId}" eager></agent-3d>
+		<script src="https://3dagent.vercel.app/dist-lib/agent-3d.umd.cjs"></script>
+	</body>
 </html>
 ```
 
 Requirements:
-- Validate `agentId` / `glbUrl` — reject anything that doesn't match `/^[a-z0-9-]{3,64}$/i` for agent, or a whitelisted https origin for model (reuse [api/_lib/fetch-model.js](../../api/_lib/fetch-model.js) if it has a URL-validation helper).
+
+- Validate `agentId` / `glbUrl` — reject anything that doesn't match `/^[a-z0-9-]{3,64}$/i` for agent, or a whitelisted https origin for model (reuse [api/\_lib/fetch-model.js](../../api/_lib/fetch-model.js) if it has a URL-validation helper).
 - `Content-Security-Policy: default-src 'self' https://3dagent.vercel.app; script-src 'self' 'unsafe-inline' https://3dagent.vercel.app; img-src * data: blob:; connect-src *; style-src 'self' 'unsafe-inline'; frame-ancestors *` — permissive enough to embed in Claude.ai's artifact iframe.
-- Use [api/_lib/http.js](../../api/_lib/http.js) to set headers; output via `res.end(html)` is OK here *only* because we're returning HTML, not JSON (the "no res.end" rule is for JSON responses). Document this exception inline.
-- Rate-limit via `limits.publicRead` from [api/_lib/limits.js](../../api/_lib/limits.js) if the preset exists.
+- Use [api/\_lib/http.js](../../api/_lib/http.js) to set headers; output via `res.end(html)` is OK here _only_ because we're returning HTML, not JSON (the "no res.end" rule is for JSON responses). Document this exception inline.
+- Rate-limit via `limits.publicRead` from [api/\_lib/limits.js](../../api/_lib/limits.js) if the preset exists.
 
 ### 2. Static fallback + docs
 

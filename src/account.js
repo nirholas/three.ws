@@ -46,17 +46,25 @@ export function readAuthHint() {
 		const { authed, ts } = JSON.parse(raw);
 		if (!ts || Date.now() - ts > AUTH_HINT_TTL_MS) return null;
 		return authed ? 'true' : 'false';
-	} catch { return null; }
+	} catch {
+		return null;
+	}
 }
 
 function writeAuthHint(authed) {
 	try {
 		localStorage.setItem(AUTH_HINT_KEY, JSON.stringify({ authed: !!authed, ts: Date.now() }));
-	} catch { /* quota or disabled storage */ }
+	} catch {
+		/* quota or disabled storage */
+	}
 }
 
 export function clearAuthHint() {
-	try { localStorage.removeItem(AUTH_HINT_KEY); } catch { /* ignore */ }
+	try {
+		localStorage.removeItem(AUTH_HINT_KEY);
+	} catch {
+		/* ignore */
+	}
 }
 
 export async function getMe() {
@@ -134,8 +142,14 @@ async function postJson(path, body) {
 		headers: { 'content-type': 'application/json' },
 		body: JSON.stringify(body),
 	});
-	const data = res.headers.get('content-type')?.includes('application/json') ? await res.json() : null;
-	if (!res.ok) throw Object.assign(new Error(data?.error_description || res.statusText), { status: res.status, data });
+	const data = res.headers.get('content-type')?.includes('application/json')
+		? await res.json()
+		: null;
+	if (!res.ok)
+		throw Object.assign(new Error(data?.error_description || res.statusText), {
+			status: res.status,
+			data,
+		});
 	return data;
 }
 

@@ -20,13 +20,13 @@ If a task would orphan or duplicate the agentId, stop and report. This is the wh
 
 ## Tasks
 
-| # | File | Ships |
-|---|---|---|
-| 01 | [01-edit-appearance-flow.md](./01-edit-appearance-flow.md) | Re-enter Avaturn with current avatar loaded → save diff as new GLB version, keep prior as history |
-| 02 | [02-replace-glb-upload.md](./02-replace-glb-upload.md) | Direct GLB upload replaces avatar bytes without going through Avaturn |
-| 03 | [03-edit-identity-metadata.md](./03-edit-identity-metadata.md) | Edit name / bio / skills / service endpoints with debounced autosave + uniqueness checks |
-| 04 | [04-animation-library.md](./04-animation-library.md) | List / attach / detach animation clips on an avatar, preview in dashboard |
-| 05 | [05-outfits-and-accessories.md](./05-outfits-and-accessories.md) | Preset pack (hats, glasses, 2-3 outfits) swapped via morph / bone overlays in the same GLB |
+| #   | File                                                             | Ships                                                                                             |
+| --- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| 01  | [01-edit-appearance-flow.md](./01-edit-appearance-flow.md)       | Re-enter Avaturn with current avatar loaded → save diff as new GLB version, keep prior as history |
+| 02  | [02-replace-glb-upload.md](./02-replace-glb-upload.md)           | Direct GLB upload replaces avatar bytes without going through Avaturn                             |
+| 03  | [03-edit-identity-metadata.md](./03-edit-identity-metadata.md)   | Edit name / bio / skills / service endpoints with debounced autosave + uniqueness checks          |
+| 04  | [04-animation-library.md](./04-animation-library.md)             | List / attach / detach animation clips on an avatar, preview in dashboard                         |
+| 05  | [05-outfits-and-accessories.md](./05-outfits-and-accessories.md) | Preset pack (hats, glasses, 2-3 outfits) swapped via morph / bone overlays in the same GLB        |
 
 ## Sequencing
 

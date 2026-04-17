@@ -11,12 +11,12 @@
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| [src/avatar-creator.js](../../src/avatar-creator.js) | Existing Avaturn wrapper. Understand `initOptions.url` (session URL with a pre-seeded selfie). |
-| [api/avatars/presign.js](../../api/avatars/presign.js), [api/avatars/index.js](../../api/avatars/index.js) | R2 presign + metadata write. Reuse, don't duplicate. |
-| [api/_lib/](../../api/_lib/) | Auth middleware (`requireAuth()`), Neon client, response helpers. |
-| [public/dashboard/selfie.html](../../public/dashboard/selfie.html) *(from 02-01)* | The caller. Its POST body shape defines this endpoint's input. |
+| File                                                                                                       | Why                                                                                            |
+| :--------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------- |
+| [src/avatar-creator.js](../../src/avatar-creator.js)                                                       | Existing Avaturn wrapper. Understand `initOptions.url` (session URL with a pre-seeded selfie). |
+| [api/avatars/presign.js](../../api/avatars/presign.js), [api/avatars/index.js](../../api/avatars/index.js) | R2 presign + metadata write. Reuse, don't duplicate.                                           |
+| [api/\_lib/](../../api/_lib/)                                                                              | Auth middleware (`requireAuth()`), Neon client, response helpers.                              |
+| [public/dashboard/selfie.html](../../public/dashboard/selfie.html) _(from 02-01)_                          | The caller. Its POST body shape defines this endpoint's input.                                 |
 
 ## Build this
 
@@ -25,12 +25,13 @@
 - **Auth:** required (`requireAuth()`).
 - **Body:** `multipart/form-data` with a single `photo` field (JPEG, ≤ 4 MB). Reject anything else with 400.
 - **Pipeline:**
-  1. Stream the JPEG into a temp buffer. Reject non-JPEG magic bytes (`0xFFD8`).
-  2. Upload the selfie to R2 under `selfies/<user_id>/<uuid>.jpg` — private, not publicly listable.
-  3. Call the Avaturn (or equivalent) generation API with the R2 signed-read URL for the selfie. Env var: `AVATAR_GENERATION_API_KEY`. Document in `.env.example`.
-  4. Poll the generation job until `status=ready` or timeout (90s). On timeout, return `202` with `{ job_id }` so the client can poll `GET /api/avatars/from-selfie/:job_id`.
-  5. On success, fetch the generated GLB, stream it to R2 under `avatars/<user_id>/<uuid>.glb`, and create an `avatars` row via the same internal helper used by `POST /api/avatars`.
-  6. Return the created avatar row (same shape as `POST /api/avatars`).
+
+    1. Stream the JPEG into a temp buffer. Reject non-JPEG magic bytes (`0xFFD8`).
+    2. Upload the selfie to R2 under `selfies/<user_id>/<uuid>.jpg` — private, not publicly listable.
+    3. Call the Avaturn (or equivalent) generation API with the R2 signed-read URL for the selfie. Env var: `AVATAR_GENERATION_API_KEY`. Document in `.env.example`.
+    4. Poll the generation job until `status=ready` or timeout (90s). On timeout, return `202` with `{ job_id }` so the client can poll `GET /api/avatars/from-selfie/:job_id`.
+    5. On success, fetch the generated GLB, stream it to R2 under `avatars/<user_id>/<uuid>.glb`, and create an `avatars` row via the same internal helper used by `POST /api/avatars`.
+    6. Return the created avatar row (same shape as `POST /api/avatars`).
 
 - **Status endpoint:** `GET /api/avatars/from-selfie/:job_id` — returns `{ status: 'pending' | 'ready' | 'failed', avatar?: {...}, error?: string }`.
 
@@ -40,7 +41,7 @@ Only validate at the boundary: reject bad input, surface upstream provider failu
 
 ### Zero-new-dep rule
 
-Use `@aws-sdk/client-s3` (already present). For multipart parsing on Vercel serverless, use `busboy` *only if nothing already in the repo parses multipart* — grep first. If a helper exists, use it.
+Use `@aws-sdk/client-s3` (already present). For multipart parsing on Vercel serverless, use `busboy` _only if nothing already in the repo parses multipart_ — grep first. If a helper exists, use it.
 
 ## Out of scope
 

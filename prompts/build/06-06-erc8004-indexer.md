@@ -3,7 +3,7 @@
 **Branch:** `feat/erc8004-indexer`
 **Stack layer:** 6 (Onchain portability)
 **Depends on:** 06-05 (canonical ABI + address map)
-**Blocks:** 06-07 (reputation UI), 14-* (agent gallery)
+**Blocks:** 06-07 (reputation UI), 14-\* (agent gallery)
 
 ## Why it matters
 
@@ -11,49 +11,51 @@
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| [src/erc8004/abi.js](../../src/erc8004/abi.js) | Event signatures + addresses. |
-| [api/_lib/db.js](../../api/_lib/db.js) | Neon client. |
-| [api/_lib/migrations/](../../api/_lib/migrations/) | Migration pattern (see 00 prompt). |
-| [api/agents/[id].js](../../api/agents/[id].js) | Read endpoint that will join the new tables. |
+| File                                                | Why                                          |
+| :-------------------------------------------------- | :------------------------------------------- |
+| [src/erc8004/abi.js](../../src/erc8004/abi.js)      | Event signatures + addresses.                |
+| [api/\_lib/db.js](../../api/_lib/db.js)             | Neon client.                                 |
+| [api/\_lib/migrations/](../../api/_lib/migrations/) | Migration pattern (see 00 prompt).           |
+| [api/agents/[id].js](../../api/agents/[id].js)      | Read endpoint that will join the new tables. |
 
 ## Build this
 
 1. **Schema** (new migration `0NN_onchain_index.sql`):
-   ```sql
-   create table if not exists onchain_agents (
-     chain_id        bigint not null,
-     token_id        bigint not null,
-     wallet          text not null,
-     agent_uri       text not null,
-     registered_at   timestamptz not null,
-     last_seen_block bigint not null,
-     primary key (chain_id, token_id)
-   );
-   create index if not exists onchain_agents_wallet_idx on onchain_agents(wallet);
 
-   create table if not exists onchain_reputation (
-     chain_id   bigint not null,
-     token_id   bigint not null,
-     score_x100 integer not null,
-     count      integer not null,
-     updated_at timestamptz not null,
-     primary key (chain_id, token_id)
-   );
+    ```sql
+    create table if not exists onchain_agents (
+      chain_id        bigint not null,
+      token_id        bigint not null,
+      wallet          text not null,
+      agent_uri       text not null,
+      registered_at   timestamptz not null,
+      last_seen_block bigint not null,
+      primary key (chain_id, token_id)
+    );
+    create index if not exists onchain_agents_wallet_idx on onchain_agents(wallet);
 
-   create table if not exists indexer_cursor (
-     chain_id     bigint primary key,
-     last_block   bigint not null,
-     updated_at   timestamptz not null default now()
-   );
-   ```
+    create table if not exists onchain_reputation (
+      chain_id   bigint not null,
+      token_id   bigint not null,
+      score_x100 integer not null,
+      count      integer not null,
+      updated_at timestamptz not null,
+      primary key (chain_id, token_id)
+    );
+
+    create table if not exists indexer_cursor (
+      chain_id     bigint primary key,
+      last_block   bigint not null,
+      updated_at   timestamptz not null default now()
+    );
+    ```
+
 2. **Indexer** at `scripts/indexer.mjs`:
-   - Reads chain list from `REGISTRY_DEPLOYMENTS`.
-   - Per chain: loads cursor, queries `Registered` + `FeedbackSubmitted` from cursor → `latest - 1`, upserts rows, advances cursor.
-   - Caps each query window to 5000 blocks; loops until caught up.
-   - Sleeps 30s between polling cycles.
-   - Logs structured JSON.
+    - Reads chain list from `REGISTRY_DEPLOYMENTS`.
+    - Per chain: loads cursor, queries `Registered` + `FeedbackSubmitted` from cursor → `latest - 1`, upserts rows, advances cursor.
+    - Caps each query window to 5000 blocks; loops until caught up.
+    - Sleeps 30s between polling cycles.
+    - Logs structured JSON.
 3. **Vercel cron** entry in [vercel.json](../../vercel.json) → `api/cron/index-onchain.js` calling the indexer for one cycle. 1-minute cron.
 4. **Read endpoint** `api/onchain/agent/[chainId]/[tokenId].js` — returns the joined row.
 5. Wire `api/agents/[id].js` to optionally include `onchain: { chain_id, token_id, score_x100, count }` if the off-chain agent has a stored chain id + token id (column `onchain_token_id` on `agents`).

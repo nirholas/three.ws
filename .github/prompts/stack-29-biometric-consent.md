@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Biometric (face photo) consent flow — required before selfie capture"
+description: 'Biometric (face photo) consent flow — required before selfie capture'
 ---
 
 # Stack Layer 2 (legal): Biometric Consent
@@ -14,6 +14,7 @@ Selfie-to-avatar involves processing biometric data. Depending on jurisdiction (
 ### Consent modal (before stack-05)
 
 Before `/create/` lets the user open the camera, show a consent modal:
+
 - What we collect (one facial photo).
 - What we do (send to provider [RPM or chosen], generate 3D avatar).
 - How long we retain (30 days for raw photo, then delete; avatar GLB retained per user choice).
@@ -35,6 +36,7 @@ No "Pre-checked" checkbox. No dark patterns.
 ### Revoke / delete
 
 `/settings/privacy/`:
+
 - List of active consents.
 - "Revoke biometric consent" button → logs revocation, triggers delete of all stored raw photos, prevents new selfie-to-avatar.
 - "Delete my account" button → triggers full data deletion (avatars, memories, action log, consents). Soft-delete 30d then purge.
@@ -42,6 +44,7 @@ No "Pre-checked" checkbox. No dark patterns.
 ### Retention job
 
 Vercel cron daily:
+
 - Delete raw photos older than 30 days from R2 (regardless of revocation).
 - For revoked consents, delete immediately (next cron run).
 

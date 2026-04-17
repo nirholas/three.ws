@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Public /agents gallery — discover, search, featured agents"
+description: 'Public /agents gallery — discover, search, featured agents'
 ---
 
 # Stack Layer 4 (support): Agents Gallery
@@ -18,6 +18,7 @@ Without a discovery page, created agents are islands. Need a public `/agents` ga
 ### Data
 
 `GET /api/avatars/public?cursor=&q=&tag=&sort=recent|popular`:
+
 - Returns `{ items: [...], nextCursor, total }`.
 - Items: `{ id, slug, name, bio, thumbnailUrl, ownerHandle, skillsCount, onchain: bool, createdAt }`.
 - Only `visibility: 'public'`, not soft-deleted.

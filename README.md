@@ -1,8 +1,8 @@
 ---
 title: 3D Agent
-description: 3D Agent is an open-source, browser-native 3D model viewer built on three.js. It renders glTF 2.0 and GLB files directly in WebGL. No plugins, no server uploads, no installs. Create your own models and agents or just open the site, drop a file, and inspect your model instantly. 
+description: 3D Agent is an open-source, browser-native 3D model viewer built on three.js. It renders glTF 2.0 and GLB files directly in WebGL. No plugins, no server uploads, no installs. Create your own models and agents or just open the site, drop a file, and inspect your model instantly.
 ---
- 
+
 <video width="100%" height="auto" autoplay loop muted playsinline>
   <source src="https://github.com/nirholas/3D-Agent/raw/refs/heads/main/public/skills.mp4" type="video/mp4">
   Your browser does not support the video tag. 
@@ -19,7 +19,7 @@ description: 3D Agent is an open-source, browser-native 3D model viewer built on
 
 ---
 
-## 🧠 What is 3D Agent? 
+## 🧠 What is 3D Agent?
 
 **3D Agent** is an open-source, browser-native 3D model viewer built on [three.js](https://threejs.org/) (r176). It renders **glTF 2.0** and **GLB** files directly in WebGL — no plugins, no server uploads, no installs. Just open [3dagent.vercel.app](https://3dagent.vercel.app), drop a file, and inspect your model instantly.
 
@@ -36,7 +36,12 @@ It's built for **3D artists** previewing exports, **game developers** debugging 
 Save any avatar as a **widget** — a configured, shareable view that any site can drop in with one line of HTML. Five types: **Turntable** (auto-rotate hero banner), **Animation Gallery** (clip browser), **Talking Agent** (embodied chat), **ERC-8004 Passport** (on-chain identity card), **Hotspot Tour** (annotated 3D scene).
 
 ```html
-<iframe src="https://3dagent.vercel.app/#widget=wdgt_abc123" width="600" height="600" style="border:0"></iframe>
+<iframe
+	src="https://3dagent.vercel.app/#widget=wdgt_abc123"
+	width="600"
+	height="600"
+	style="border:0"
+></iframe>
 ```
 
 - **[Open the Studio →](https://3dagent.vercel.app/studio)** — pick avatar, pick type, generate embed.
@@ -63,19 +68,19 @@ Widget URLs (`/w/<id>`) get rich Open Graph cards in Slack/Discord/X and auto-em
 
 ### Full Feature Breakdown
 
-| Category | What You Get |
-|:---------|:-------------|
-| **File Support** | `.glTF` and `.GLB` (glTF 2.0), with multi-file drag-and-drop (textures, bins) |
-| **Compression** | Draco mesh compression, KTX2 texture compression, Meshopt decoder |
-| **Lighting** | Ambient + directional lights, HDR environment maps (Venice Sunset, Footprint Court), neutral room environment, exposure & tone mapping (Linear / ACES Filmic) |
-| **Display** | Wireframe overlay, skeleton visualization, grid + axes helpers, background color picker, auto-rotate, point size control |
-| **Animation** | Full clip playback with per-clip toggle, playback speed control, play-all |
-| **Morph Targets** | Real-time slider control for every morph target on every mesh |
-| **Cameras** | Switch between default orbit camera and any cameras embedded in the glTF |
-| **Validation** | Integrated [glTF-Validator](https://github.com/KhronosGroup/gltf-validator) — errors, warnings, hints, and info-level messages in a structured report |
-| **Performance** | Live FPS/MS/MB stats panel via `stats.js` |
-| **Deep Linking** | Load models via URL hash: `#model=url&preset=...&cameraPosition=x,y,z` |
-| **Privacy** | 100% client-side — your files never leave your browser |
+| Category          | What You Get                                                                                                                                                  |
+| :---------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **File Support**  | `.glTF` and `.GLB` (glTF 2.0), with multi-file drag-and-drop (textures, bins)                                                                                 |
+| **Compression**   | Draco mesh compression, KTX2 texture compression, Meshopt decoder                                                                                             |
+| **Lighting**      | Ambient + directional lights, HDR environment maps (Venice Sunset, Footprint Court), neutral room environment, exposure & tone mapping (Linear / ACES Filmic) |
+| **Display**       | Wireframe overlay, skeleton visualization, grid + axes helpers, background color picker, auto-rotate, point size control                                      |
+| **Animation**     | Full clip playback with per-clip toggle, playback speed control, play-all                                                                                     |
+| **Morph Targets** | Real-time slider control for every morph target on every mesh                                                                                                 |
+| **Cameras**       | Switch between default orbit camera and any cameras embedded in the glTF                                                                                      |
+| **Validation**    | Integrated [glTF-Validator](https://github.com/KhronosGroup/gltf-validator) — errors, warnings, hints, and info-level messages in a structured report         |
+| **Performance**   | Live FPS/MS/MB stats panel via `stats.js`                                                                                                                     |
+| **Deep Linking**  | Load models via URL hash: `#model=url&preset=...&cameraPosition=x,y,z`                                                                                        |
+| **Privacy**       | 100% client-side — your files never leave your browser                                                                                                        |
 
 <br/>
 
@@ -104,12 +109,12 @@ Open **http://localhost:3000** and drop any `.glb` or `.gltf` file onto the page
 
 ### Available Scripts
 
-| Command | What It Does |
-|:--------|:-------------|
-| `npm run dev` | Starts Vite dev server on port 3000 with hot reload |
-| `npm run build` | Production build to `dist/` |
-| `npm run deploy` | Build + deploy to Vercel |
-| `npm run clean` | Wipe the `dist/` directory |
+| Command          | What It Does                                        |
+| :--------------- | :-------------------------------------------------- |
+| `npm run dev`    | Starts Vite dev server on port 3000 with hot reload |
+| `npm run build`  | Production build to `dist/`                         |
+| `npm run deploy` | Build + deploy to Vercel                            |
+| `npm run clean`  | Wipe the `dist/` directory                          |
 
 <br/>
 
@@ -148,17 +153,17 @@ Open **http://localhost:3000** and drop any `.glb` or `.gltf` file onto the page
 
 ### Tech Stack
 
-| Layer | Technology |
-|:------|:-----------|
-| **Rendering** | [three.js](https://threejs.org/) r176 — WebGL 2.0 |
-| **Model Loading** | `GLTFLoader` + `DRACOLoader` + `KTX2Loader` + `MeshoptDecoder` |
-| **Controls** | `OrbitControls` — pan, zoom, rotate |
-| **GUI** | [dat.gui](https://github.com/dataarts/dat.gui) — real-time parameter tweaking |
-| **Validation** | [gltf-validator](https://github.com/KhronosGroup/gltf-validator) — Khronos spec compliance |
-| **Templating** | [vhtml](https://github.com/developit/vhtml) — JSX → HTML string rendering |
-| **Drag & Drop** | [simple-dropzone](https://github.com/donmccurdy/simple-dropzone) |
-| **Build** | [Vite](https://vitejs.dev/) 8 — sub-second HMR |
-| **Hosting** | [Vercel](https://vercel.com/) — edge CDN |
+| Layer             | Technology                                                                                 |
+| :---------------- | :----------------------------------------------------------------------------------------- |
+| **Rendering**     | [three.js](https://threejs.org/) r176 — WebGL 2.0                                          |
+| **Model Loading** | `GLTFLoader` + `DRACOLoader` + `KTX2Loader` + `MeshoptDecoder`                             |
+| **Controls**      | `OrbitControls` — pan, zoom, rotate                                                        |
+| **GUI**           | [dat.gui](https://github.com/dataarts/dat.gui) — real-time parameter tweaking              |
+| **Validation**    | [gltf-validator](https://github.com/KhronosGroup/gltf-validator) — Khronos spec compliance |
+| **Templating**    | [vhtml](https://github.com/developit/vhtml) — JSX → HTML string rendering                  |
+| **Drag & Drop**   | [simple-dropzone](https://github.com/donmccurdy/simple-dropzone)                           |
+| **Build**         | [Vite](https://vitejs.dev/) 8 — sub-second HMR                                             |
+| **Hosting**       | [Vercel](https://vercel.com/) — edge CDN                                                   |
 
 <br/>
 
@@ -174,14 +179,15 @@ Load models and configure the viewer directly via URL hash parameters. This is u
 https://3dagent.vercel.app/#model=URL&kiosk=true&preset=assetgenerator&cameraPosition=1,2,3
 ```
 
-| Parameter | Type | Description |
-|:----------|:-----|:------------|
-| `model` | `string` | URL to a `.glb` or `.gltf` file to load on page open |
-| `kiosk` | `boolean` | Hides the header and validation UI for clean embedding |
-| `preset` | `string` | Set to `assetgenerator` for glTF asset generator testing mode |
-| `cameraPosition` | `x,y,z` | Initial camera position as comma-separated floats |
+| Parameter        | Type      | Description                                                   |
+| :--------------- | :-------- | :------------------------------------------------------------ |
+| `model`          | `string`  | URL to a `.glb` or `.gltf` file to load on page open          |
+| `kiosk`          | `boolean` | Hides the header and validation UI for clean embedding        |
+| `preset`         | `string`  | Set to `assetgenerator` for glTF asset generator testing mode |
+| `cameraPosition` | `x,y,z`   | Initial camera position as comma-separated floats             |
 
 **Example — embed a model in kiosk mode:**
+
 ```
 https://3dagent.vercel.app/#model=https://example.com/model.glb&kiosk=true
 ```
@@ -258,11 +264,11 @@ Use an `<iframe>` with kiosk mode for clean embedding:
 
 ```html
 <iframe
-  src="https://3dagent.vercel.app/#model=https://your-cdn.com/model.glb&kiosk=true"
-  width="800"
-  height="600"
-  frameborder="0"
-  allow="autoplay; fullscreen"
+	src="https://3dagent.vercel.app/#model=https://your-cdn.com/model.glb&kiosk=true"
+	width="800"
+	height="600"
+	frameborder="0"
+	allow="autoplay; fullscreen"
 ></iframe>
 ```
 
@@ -333,9 +339,9 @@ console.log(window.VIEWER.scene);
 
 // Traverse all meshes
 window.VIEWER.scene.traverse((node) => {
-  if (node.isMesh) {
-    console.log(node.name, node.geometry.attributes);
-  }
+	if (node.isMesh) {
+		console.log(node.name, node.geometry.attributes);
+	}
 });
 ```
 
@@ -381,13 +387,13 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide.
 
 For deeper technical detail, see the `docs/` directory:
 
-| Document | Description |
-|:---------|:------------|
-| **[Architecture](docs/ARCHITECTURE.md)** | Data flow, module responsibilities, Three.js setup, validation pipeline, GUI structure, styling architecture, and security considerations |
-| **[API Reference](docs/API.md)** | Complete reference for all classes (`App`, `Viewer`, `Validator`), methods, properties, state objects, components, and the `window.VIEWER` debugging API |
-| **[Deployment](docs/DEPLOYMENT.md)** | Build pipeline, Vercel deploy, routing, CORS config, custom domains, iframe embedding, self-hosting (nginx, Docker), CDN strategy, and troubleshooting |
-| **[Development](docs/DEVELOPMENT.md)** | Local setup, code style, how-things-work guide, common tasks (new GUI controls, components, environments), debugging techniques, browser compatibility, and performance notes |
-| **[Contributing](CONTRIBUTING.md)** | Bug reporting, feature requests, PR workflow, commit conventions, code guidelines, and testing checklist |
+| Document                                 | Description                                                                                                                                                                   |
+| :--------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **[Architecture](docs/ARCHITECTURE.md)** | Data flow, module responsibilities, Three.js setup, validation pipeline, GUI structure, styling architecture, and security considerations                                     |
+| **[API Reference](docs/API.md)**         | Complete reference for all classes (`App`, `Viewer`, `Validator`), methods, properties, state objects, components, and the `window.VIEWER` debugging API                      |
+| **[Deployment](docs/DEPLOYMENT.md)**     | Build pipeline, Vercel deploy, routing, CORS config, custom domains, iframe embedding, self-hosting (nginx, Docker), CDN strategy, and troubleshooting                        |
+| **[Development](docs/DEVELOPMENT.md)**   | Local setup, code style, how-things-work guide, common tasks (new GUI controls, components, environments), debugging techniques, browser compatibility, and performance notes |
+| **[Contributing](CONTRIBUTING.md)**      | Bug reporting, feature requests, PR workflow, commit conventions, code guidelines, and testing checklist                                                                      |
 
 <br/>
 
@@ -397,16 +403,16 @@ For deeper technical detail, see the `docs/` directory:
 
 ## 📚 Resources
 
-| Resource | Link |
-|:---------|:-----|
-| **glTF 2.0 Spec** | [registry.khronos.org/glTF](https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html) |
-| **Sample Models** | [KhronosGroup/glTF-Sample-Assets](https://github.com/KhronosGroup/glTF-Sample-Assets) |
-| **three.js Docs** | [threejs.org/docs](https://threejs.org/docs/) |
-| **GLTFLoader** | [three.js GLTFLoader](https://threejs.org/docs/#examples/en/loaders/GLTFLoader) |
-| **glTF Validator** | [KhronosGroup/gltf-validator](https://github.com/KhronosGroup/gltf-validator) |
-| **Sketchfab** | [sketchfab.com](https://sketchfab.com/) — download free glTF models |
-| **Mixamo** | [mixamo.com](https://www.mixamo.com/) — free rigged & animated characters |
-| **Poly Haven** | [polyhaven.com](https://polyhaven.com/) — free HDRIs, textures, and 3D models |
+| Resource           | Link                                                                                   |
+| :----------------- | :------------------------------------------------------------------------------------- |
+| **glTF 2.0 Spec**  | [registry.khronos.org/glTF](https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html) |
+| **Sample Models**  | [KhronosGroup/glTF-Sample-Assets](https://github.com/KhronosGroup/glTF-Sample-Assets)  |
+| **three.js Docs**  | [threejs.org/docs](https://threejs.org/docs/)                                          |
+| **GLTFLoader**     | [three.js GLTFLoader](https://threejs.org/docs/#examples/en/loaders/GLTFLoader)        |
+| **glTF Validator** | [KhronosGroup/gltf-validator](https://github.com/KhronosGroup/gltf-validator)          |
+| **Sketchfab**      | [sketchfab.com](https://sketchfab.com/) — download free glTF models                    |
+| **Mixamo**         | [mixamo.com](https://www.mixamo.com/) — free rigged & animated characters              |
+| **Poly Haven**     | [polyhaven.com](https://polyhaven.com/) — free HDRIs, textures, and 3D models          |
 
 <br/>
 

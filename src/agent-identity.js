@@ -33,10 +33,10 @@ export class AgentIdentity {
 	 * @param {{ userId?: string, agentId?: string, autoLoad?: boolean }} [opts]
 	 */
 	constructor({ userId = null, agentId = null, autoLoad = true } = {}) {
-		this.userId  = userId;
+		this.userId = userId;
 		this._record = null;
 		this._loaded = false;
-		this.memory  = null;
+		this.memory = null;
 
 		// Pre-seed agentId from arg or storage so callers can use it synchronously
 		this._agentId = agentId || this._readStoredId();
@@ -46,17 +46,39 @@ export class AgentIdentity {
 
 	// ── Public getters ────────────────────────────────────────────────────────
 
-	get id()            { return this._record?.id           || this._agentId; }
-	get name()          { return this._record?.name         || 'Agent'; }
-	get description()   { return this._record?.description  || ''; }
-	get avatarId()      { return this._record?.avatarId     || null; }
-	get homeUrl()       { return this._record?.homeUrl      || (this.id ? `/agent/${this.id}` : null); }
-	get walletAddress() { return this._record?.walletAddress || null; }
-	get chainId()       { return this._record?.chainId      || null; }
-	get skills()        { return this._record?.skills       || []; }
-	get meta()          { return this._record?.meta         || {}; }
-	get isLoaded()      { return this._loaded; }
-	get isRegistered()  { return Boolean(this._record?.isRegistered); }
+	get id() {
+		return this._record?.id || this._agentId;
+	}
+	get name() {
+		return this._record?.name || 'Agent';
+	}
+	get description() {
+		return this._record?.description || '';
+	}
+	get avatarId() {
+		return this._record?.avatarId || null;
+	}
+	get homeUrl() {
+		return this._record?.homeUrl || (this.id ? `/agent/${this.id}` : null);
+	}
+	get walletAddress() {
+		return this._record?.walletAddress || null;
+	}
+	get chainId() {
+		return this._record?.chainId || null;
+	}
+	get skills() {
+		return this._record?.skills || [];
+	}
+	get meta() {
+		return this._record?.meta || {};
+	}
+	get isLoaded() {
+		return this._loaded;
+	}
+	get isRegistered() {
+		return Boolean(this._record?.isRegistered);
+	}
 
 	// ── Load + Save ───────────────────────────────────────────────────────────
 
@@ -73,11 +95,11 @@ export class AgentIdentity {
 				headers: { 'content-type': 'application/json' },
 				credentials: 'include',
 				body: JSON.stringify({
-					name:        this._record.name,
+					name: this._record.name,
 					description: this._record.description,
-					avatar_id:   this._record.avatarId,
-					skills:      this._record.skills,
-					meta:        this._record.meta,
+					avatar_id: this._record.avatarId,
+					skills: this._record.skills,
+					meta: this._record.meta,
 				}),
 			});
 			if (resp.ok) {
@@ -85,7 +107,9 @@ export class AgentIdentity {
 				this._record = _normalise(agent);
 				this._persist();
 			}
-		} catch { /* localStorage is authoritative */ }
+		} catch {
+			/* localStorage is authoritative */
+		}
 	}
 
 	/**
@@ -135,9 +159,9 @@ export class AgentIdentity {
 			headers: { 'content-type': 'application/json' },
 			credentials: 'include',
 			body: JSON.stringify({
-				agent_id:     this.id,
-				type:         action.type,
-				payload:      action.payload,
+				agent_id: this.id,
+				type: action.type,
+				payload: action.payload,
 				source_skill: action.sourceSkill || null,
 			}),
 		}).catch(() => {}); // non-critical
@@ -186,26 +210,26 @@ export class AgentIdentity {
 		// 1. Try localStorage first (instant)
 		const local = this._readLocal();
 		if (local) {
-			this._record  = local;
+			this._record = local;
 			this._agentId = local.id;
-			this._loaded  = true;
-			this.memory   = new AgentMemory(local.id, { backendSync: true });
+			this._loaded = true;
+			this.memory = new AgentMemory(local.id, { backendSync: true });
 		}
 
 		// 2. Try backend (authoritative if user is signed in)
 		try {
 			const agentId = this._agentId;
-			const url     = agentId ? `/api/agents/${agentId}` : '/api/agents/me';
-			const resp    = await fetch(url, { credentials: 'include' });
+			const url = agentId ? `/api/agents/${agentId}` : '/api/agents/me';
+			const resp = await fetch(url, { credentials: 'include' });
 
 			if (resp.ok) {
 				const { agent } = await resp.json();
 				// Server returns { agent: null } for anonymous /me — treat as
 				// "no server identity" and fall through to local-only.
 				if (agent) {
-					this._record  = _normalise(agent);
+					this._record = _normalise(agent);
 					this._agentId = this._record.id;
-					this._loaded  = true;
+					this._loaded = true;
 					this._persist();
 					if (!this.memory) {
 						this.memory = new AgentMemory(this._record.id, { backendSync: true });
@@ -218,20 +242,20 @@ export class AgentIdentity {
 			// one, otherwise synthesize a local-only identity. Tolerant of 5xx
 			// so a backend blip doesn't brick the avatar for the visitor.
 			if (!this._record) {
-				this._record  = _makeDefault(this._agentId);
+				this._record = _makeDefault(this._agentId);
 				this._agentId = this._record.id;
-				this._loaded  = true;
+				this._loaded = true;
 				this._persist();
-				this.memory   = new AgentMemory(this._agentId, { backendSync: false });
+				this.memory = new AgentMemory(this._agentId, { backendSync: false });
 			}
 		} catch {
 			// Offline — use local record if we have one
 			if (!this._record) {
-				this._record  = _makeDefault(this._agentId);
+				this._record = _makeDefault(this._agentId);
 				this._agentId = this._record.id;
-				this._loaded  = true;
+				this._loaded = true;
 				this._persist();
-				this.memory   = new AgentMemory(this._agentId, { backendSync: false });
+				this.memory = new AgentMemory(this._agentId, { backendSync: false });
 			}
 		}
 	}
@@ -264,7 +288,7 @@ export class AgentIdentity {
 
 function _uuid() {
 	if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
-	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
 		const r = (Math.random() * 16) | 0;
 		return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
 	});
@@ -272,34 +296,34 @@ function _uuid() {
 
 function _makeDefault(existingId) {
 	return {
-		id:           existingId || _uuid(),
-		name:         'Agent',
-		description:  'A 3D AI agent',
-		avatarId:     null,
-		homeUrl:      null,
+		id: existingId || _uuid(),
+		name: 'Agent',
+		description: 'A 3D AI agent',
+		avatarId: null,
+		homeUrl: null,
 		walletAddress: null,
-		chainId:      null,
-		skills:       ['greet', 'present-model', 'validate-model', 'remember', 'think'],
-		meta:         {},
-		createdAt:    Date.now(),
+		chainId: null,
+		skills: ['greet', 'present-model', 'validate-model', 'remember', 'think'],
+		meta: {},
+		createdAt: Date.now(),
 		isRegistered: false,
 	};
 }
 
 function _normalise(apiRecord) {
 	return {
-		id:            apiRecord.id,
-		name:          apiRecord.name || 'Agent',
-		description:   apiRecord.description || '',
-		avatarId:      apiRecord.avatar_id    || apiRecord.avatarId    || null,
-		homeUrl:       apiRecord.home_url     || apiRecord.homeUrl     || `/agent/${apiRecord.id}`,
+		id: apiRecord.id,
+		name: apiRecord.name || 'Agent',
+		description: apiRecord.description || '',
+		avatarId: apiRecord.avatar_id || apiRecord.avatarId || null,
+		homeUrl: apiRecord.home_url || apiRecord.homeUrl || `/agent/${apiRecord.id}`,
 		walletAddress: apiRecord.wallet_address || apiRecord.walletAddress || null,
-		chainId:       apiRecord.chain_id      || apiRecord.chainId    || null,
-		skills:        apiRecord.skills        || [],
-		meta:          apiRecord.meta          || {},
-		createdAt:     apiRecord.created_at
+		chainId: apiRecord.chain_id || apiRecord.chainId || null,
+		skills: apiRecord.skills || [],
+		meta: apiRecord.meta || {},
+		createdAt: apiRecord.created_at
 			? new Date(apiRecord.created_at).getTime()
-			: (apiRecord.createdAt || Date.now()),
-		isRegistered:  Boolean(apiRecord.erc8004_agent_id || apiRecord.isRegistered),
+			: apiRecord.createdAt || Date.now(),
+		isRegistered: Boolean(apiRecord.erc8004_agent_id || apiRecord.isRegistered),
 	};
 }

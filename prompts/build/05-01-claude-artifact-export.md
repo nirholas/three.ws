@@ -3,19 +3,19 @@
 **Branch:** `feat/claude-artifact-export`
 **Stack layer:** 5 (Host embed — Claude)
 **Depends on:** 04-01 (OG image), 04-02 (embed policy), 04-03 (redacted public fetch)
-**Blocks:** 06-* (onchain resolution wants a concrete host integration to validate against)
+**Blocks:** 06-\* (onchain resolution wants a concrete host integration to validate against)
 
 ## Why it matters
 
-Claude Artifacts are self-contained HTML documents. A user pastes the artifact into a Claude chat and the agent appears *embodied in the conversation* — exactly the novel unlock in the priority stack. This prompt produces the artifact HTML on demand, scoped to a single agent.
+Claude Artifacts are self-contained HTML documents. A user pastes the artifact into a Claude chat and the agent appears _embodied in the conversation_ — exactly the novel unlock in the priority stack. This prompt produces the artifact HTML on demand, scoped to a single agent.
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| [src/element.js](../../src/element.js) | `<agent-3d>` web component — the minimal embed surface. |
-| [agent-embed.html](../../agent-embed.html) | Current iframe shell; structurally close to what the artifact will contain. |
-| [api/agents.js](../../api/agents.js), the public `toPublicAgent` helper from 04-03 | The data that goes into the artifact. |
+| File                                                                                                    | Why                                                                         |
+| :------------------------------------------------------------------------------------------------------ | :-------------------------------------------------------------------------- |
+| [src/element.js](../../src/element.js)                                                                  | `<agent-3d>` web component — the minimal embed surface.                     |
+| [agent-embed.html](../../agent-embed.html)                                                              | Current iframe shell; structurally close to what the artifact will contain. |
+| [api/agents.js](../../api/agents.js), the public `toPublicAgent` helper from 04-03                      | The data that goes into the artifact.                                       |
 | Claude Artifacts docs — assume: single HTML file, external resources allowed, sandboxed iframe context. |
 
 ## Build this
@@ -24,22 +24,24 @@ Claude Artifacts are self-contained HTML documents. A user pastes the artifact i
 
 - **Auth:** public; rate-limited.
 - **Output:** a single, self-contained HTML document (content-type `text/html; charset=utf-8`) that:
-  1. Loads the built web-component bundle from the production origin (`<script type="module" src="https://3dagent.vercel.app/dist-lib/agent-3d.js">`).
-  2. Renders `<agent-3d agent-id="<id>" host="claude"></agent-3d>`.
-  3. Sets a viewport meta tag, a dark background, and sane mobile defaults.
-  4. Includes Open Graph meta tags (reusing the 04-01 OG image) so previews of the artifact render correctly outside Claude too.
+    1. Loads the built web-component bundle from the production origin (`<script type="module" src="https://3dagent.vercel.app/dist-lib/agent-3d.js">`).
+    2. Renders `<agent-3d agent-id="<id>" host="claude"></agent-3d>`.
+    3. Sets a viewport meta tag, a dark background, and sane mobile defaults.
+    4. Includes Open Graph meta tags (reusing the 04-01 OG image) so previews of the artifact render correctly outside Claude too.
 
 The goal: drop-in paste into Claude Artifacts, shows the agent.
 
 ### Dashboard UI
 
 On the agent home / dashboard, add a **"Embed in Claude"** button. Clicking it:
+
 - Generates a copy-to-clipboard snippet containing the artifact HTML (inlined — not a URL).
 - Also offers a short-lived signed URL (`/api/agents/:id/artifact.html?token=...`) for users who prefer linking.
 
 ### `host=claude` behaviour
 
 The web component reads its `host` attribute. When `host=claude`:
+
 - Disable any hover-only UI (Claude artifacts may sandbox pointer events).
 - Default to `kiosk=true` (no dat.gui, no header).
 - Cap the canvas devicePixelRatio at 2 to keep perf bounded inside Claude.

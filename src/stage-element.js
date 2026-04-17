@@ -49,9 +49,13 @@ class AgentStageElement extends HTMLElement {
 	}
 
 	disconnectedCallback() {
-		try { this._mo?.disconnect(); } catch {}
+		try {
+			this._mo?.disconnect();
+		} catch {}
 		for (const a of [...this._agents]) this.unregisterAgent(a.element);
-		try { this._viewer?.dispose?.(); } catch {}
+		try {
+			this._viewer?.dispose?.();
+		} catch {}
 		this._viewer = null;
 		this._initialized = false;
 	}
@@ -65,7 +69,9 @@ class AgentStageElement extends HTMLElement {
 		return FORMATIONS.includes(f) ? f : 'row';
 	}
 
-	get viewer() { return this._viewer; }
+	get viewer() {
+		return this._viewer;
+	}
 
 	_renderShell() {
 		const style = document.createElement('style');
@@ -90,8 +96,12 @@ class AgentStageElement extends HTMLElement {
 		this._viewer.defaultCamera.lookAt(0, 1.2, 0);
 		this._viewer.controls.target.set(0, 1.2, 0);
 		this._viewer.controls.update();
-		try { this._viewer.updateLights?.(); } catch {}
-		try { this._viewer.updateEnvironment?.(); } catch {}
+		try {
+			this._viewer.updateLights?.();
+		} catch {}
+		try {
+			this._viewer.updateEnvironment?.();
+		} catch {}
 		this._viewer.invalidate();
 		this._initialized = true;
 	}
@@ -104,11 +114,13 @@ class AgentStageElement extends HTMLElement {
 		this._agents.push(rec);
 		this._viewer?.scene.add(group);
 		this._repositionAll();
-		this.dispatchEvent(new CustomEvent('stage:agent-joined', {
-			detail: { agentId: finalId, element, manifest },
-			bubbles: true,
-			composed: true,
-		}));
+		this.dispatchEvent(
+			new CustomEvent('stage:agent-joined', {
+				detail: { agentId: finalId, element, manifest },
+				bubbles: true,
+				composed: true,
+			}),
+		);
 		return finalId;
 	}
 
@@ -116,14 +128,18 @@ class AgentStageElement extends HTMLElement {
 		const i = this._agents.findIndex((a) => a.element === element);
 		if (i < 0) return;
 		const [rec] = this._agents.splice(i, 1);
-		try { this._viewer?.scene.remove(rec.group); } catch {}
+		try {
+			this._viewer?.scene.remove(rec.group);
+		} catch {}
 		disposeGroup(rec.group);
 		this._repositionAll();
-		this.dispatchEvent(new CustomEvent('stage:agent-left', {
-			detail: { agentId: rec.id, element: rec.element },
-			bubbles: true,
-			composed: true,
-		}));
+		this.dispatchEvent(
+			new CustomEvent('stage:agent-left', {
+				detail: { agentId: rec.id, element: rec.element },
+				bubbles: true,
+				composed: true,
+			}),
+		);
 	}
 
 	_uniqueId(base) {
@@ -155,11 +171,13 @@ class AgentStageElement extends HTMLElement {
 			if (a.id === fromId) continue;
 			a.element.dispatchEvent(new CustomEvent('stage:message', { detail }));
 		}
-		this.dispatchEvent(new CustomEvent('stage:message', {
-			detail,
-			bubbles: true,
-			composed: true,
-		}));
+		this.dispatchEvent(
+			new CustomEvent('stage:message', {
+				detail,
+				bubbles: true,
+				composed: true,
+			}),
+		);
 	}
 
 	async routeMessage(fromId, toId, text) {
@@ -249,7 +267,9 @@ class AgentStageElement extends HTMLElement {
 function disposeGroup(group) {
 	group.traverse((o) => {
 		if (o.geometry) {
-			try { o.geometry.dispose(); } catch {}
+			try {
+				o.geometry.dispose();
+			} catch {}
 		}
 		if (o.material) {
 			const mats = Array.isArray(o.material) ? o.material : [o.material];
@@ -257,10 +277,14 @@ function disposeGroup(group) {
 				for (const k of Object.keys(m)) {
 					const v = m[k];
 					if (v && v.isTexture) {
-						try { v.dispose(); } catch {}
+						try {
+							v.dispose();
+						} catch {}
 					}
 				}
-				try { m.dispose(); } catch {}
+				try {
+					m.dispose();
+				} catch {}
 			}
 		}
 	});

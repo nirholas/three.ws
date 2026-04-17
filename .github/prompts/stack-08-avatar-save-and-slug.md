@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Persist created avatars with a user-chosen slug and route /agent/:slug to the viewer"
+description: 'Persist created avatars with a user-chosen slug and route /agent/:slug to the viewer'
 ---
 
 # Stack Layer 2: Avatar Persistence + Slug Routing
@@ -16,6 +16,7 @@ Once an avatar is generated we need: (1) a stable, shareable URL, (2) a slug cho
 On the status page when status hits `ready`, prompt the user for a slug (prefilled with something like `agent-<short>`). Validate client-side: `[a-z0-9-]{3,32}`, no leading/trailing dash.
 
 Call `PATCH /api/avatars/:id`:
+
 ```json
 { "slug": "satoshi", "name": "Satoshi", "bio": "optional one-liner" }
 ```
@@ -35,6 +36,7 @@ Server returns 409 if slug is taken, 400 if invalid, 200 with the updated row on
 ### Lookup endpoint
 
 `GET /api/avatars/by-slug/:slug` returns the public view of the avatar (no owner PII):
+
 ```json
 { "id", "slug", "name", "bio", "glb_url", "owner": { "handle" }, "created_at" }
 ```

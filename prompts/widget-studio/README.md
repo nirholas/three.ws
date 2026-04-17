@@ -67,15 +67,15 @@ PRs 2–6 all depend on PR 1 being merged. They can otherwise be built in parall
 
 ## Shared vocabulary
 
-| Term | Meaning |
-|:---|:---|
-| **Widget** | A preconfigured, embeddable viewer experience owned by one user account. |
-| **Widget Studio** | The authoring UI at `/studio` where widgets are created and edited. |
-| **Widget runtime** | The viewer code that renders a saved widget config inside an iframe. |
-| **Widget ID** | A short URL-safe ID (`wdgt_<12char>`) that resolves to a saved config. |
-| **Widget type** | One of: `turntable`, `animation-gallery`, `talking-agent`, `passport`, `hotspot-tour`. |
-| **Avatar** | A glTF/GLB model in the user's R2 account, addressable by `avatar_id`. |
-| **Embed config** | JSON document describing widget state (camera, env, brand colors, type-specific fields). Stored in Neon. |
+| Term               | Meaning                                                                                                  |
+| :----------------- | :------------------------------------------------------------------------------------------------------- |
+| **Widget**         | A preconfigured, embeddable viewer experience owned by one user account.                                 |
+| **Widget Studio**  | The authoring UI at `/studio` where widgets are created and edited.                                      |
+| **Widget runtime** | The viewer code that renders a saved widget config inside an iframe.                                     |
+| **Widget ID**      | A short URL-safe ID (`wdgt_<12char>`) that resolves to a saved config.                                   |
+| **Widget type**    | One of: `turntable`, `animation-gallery`, `talking-agent`, `passport`, `hotspot-tour`.                   |
+| **Avatar**         | A glTF/GLB model in the user's R2 account, addressable by `avatar_id`.                                   |
+| **Embed config**   | JSON document describing widget state (camera, env, brand colors, type-specific fields). Stored in Neon. |
 
 ## After all prompts are done
 

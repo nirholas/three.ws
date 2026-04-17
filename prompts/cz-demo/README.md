@@ -16,13 +16,13 @@ CZ opens a link. He sees a 3D CZ avatar standing in a scene — pre-registered o
 
 ## Execution order
 
-| # | File | Ships |
-|---|---|---|
-| 01 | [01-preregister-cz-onchain.md](./01-preregister-cz-onchain.md) | Script + one-time action that mints the CZ agent onchain on Base Sepolia with known `agentId`, metadata on IPFS, `cz.glb` in the registration JSON. |
-| 02 | [02-cz-landing-page.md](./02-cz-landing-page.md) | Bespoke `/cz` route — dark theme, spotlit CZ avatar, owner chip, one "Claim your agent" CTA, post-claim state. |
-| 03 | [03-claim-transfer-flow.md](./03-claim-transfer-flow.md) | Onchain ownership flip from ops-owner (or `0x0`) to CZ's wallet via one user-signed tx. |
-| 04 | [04-lobehub-embed-drop-in.md](./04-lobehub-embed-drop-in.md) | LobeHub-fork patch + fallback HTML that puts the agent embed inside the chat sidebar, hydrated from chain. |
-| 05 | [05-demo-script-and-fallbacks.md](./05-demo-script-and-fallbacks.md) | Live-demo runbook, preflight script, kill-switch (`?rehearsal=1`), service-worker warm cache, offline demo mode. |
+| #   | File                                                                 | Ships                                                                                                                                               |
+| --- | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 01  | [01-preregister-cz-onchain.md](./01-preregister-cz-onchain.md)       | Script + one-time action that mints the CZ agent onchain on Base Sepolia with known `agentId`, metadata on IPFS, `cz.glb` in the registration JSON. |
+| 02  | [02-cz-landing-page.md](./02-cz-landing-page.md)                     | Bespoke `/cz` route — dark theme, spotlit CZ avatar, owner chip, one "Claim your agent" CTA, post-claim state.                                      |
+| 03  | [03-claim-transfer-flow.md](./03-claim-transfer-flow.md)             | Onchain ownership flip from ops-owner (or `0x0`) to CZ's wallet via one user-signed tx.                                                             |
+| 04  | [04-lobehub-embed-drop-in.md](./04-lobehub-embed-drop-in.md)         | LobeHub-fork patch + fallback HTML that puts the agent embed inside the chat sidebar, hydrated from chain.                                          |
+| 05  | [05-demo-script-and-fallbacks.md](./05-demo-script-and-fallbacks.md) | Live-demo runbook, preflight script, kill-switch (`?rehearsal=1`), service-worker warm cache, offline demo mode.                                    |
 
 01 is the dependency root. 02 + 04 can run in parallel after 01. 03 depends on 01 + the wallet-auth / onchain tasks. 05 is written last, once the flow is green end-to-end.
 

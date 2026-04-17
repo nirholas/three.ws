@@ -9,6 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 Initial public release.
 
 ### Added
+
 - `AgentKit` — one-call class to ship an ERC-8004 agent (panel + registration + manifests).
 - `AgentPanel` — standalone floating chat UI with voice I/O. Bring your own `onMessage` handler.
 - ERC-8004 wallet + IPFS + on-chain registration flow via `registerAgent()`.

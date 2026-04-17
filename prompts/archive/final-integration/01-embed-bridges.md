@@ -5,6 +5,7 @@
 The `<agent-3d>` web component is the sole distribution channel for the 3D Agent product. It's embedded inside third-party sites (Claude.ai artifacts, LobeHub plugins, customer pages). When an agent lives inside an iframe, the host page has no way to talk to it and vice versa — you can't tell the agent to speak, change avatar, or react to chat messages. You also can't hear the agent's events (skill calls, action logs, state changes) from the parent.
 
 Sprint-100 mapped two bridge modules to fill this gap:
+
 - `src/embed-host-bridge.js` — iframe ↔ parent `postMessage` transport. Handshake, origin check, request/response routing.
 - `src/embed-action-bridge.js` — translates bridge messages into `AgentProtocol` events on the agent side and back out on the parent side.
 
@@ -17,10 +18,12 @@ Build a production-grade bidirectional bridge between a host page and an embedde
 ## Files you own
 
 Create:
+
 - `src/embed-host-bridge.js`
 - `src/embed-action-bridge.js`
 
 Edit (inside uniquely-named anchor only):
+
 - `src/element.js` — add a single anchor block `<!-- BEGIN:EMBED_BRIDGES --> ... <!-- END:EMBED_BRIDGES -->` near the end of the `connectedCallback` / mount path. Wire both bridges in when the element mounts inside an iframe. **Do not edit anything outside that anchor.**
 
 ## Files read-only
@@ -47,18 +50,22 @@ Use `postMessage` with a structured envelope. Every message MUST include:
 ```
 
 Handshake:
+
 - Child (`agent-3d`) posts `{ kind: 'event', op: 'ready', payload: { agentId, capabilities: [...] } }` once mounted.
 - Parent responds with `{ kind: 'request', op: 'ping' }`; child replies `{ kind: 'response', op: 'pong', inReplyTo }`. That round-trip confirms both sides.
 
 Origin security:
+
 - Respect the agent manifest's `policy.origins` allowlist (already parsed by `src/element.js:originAllowed`). Reject any `postMessage` whose `event.origin` is not on the allowlist.
 - On the parent side, accept messages only from `event.source === iframe.contentWindow`.
 
 Timeouts & retries:
+
 - Requests carry a 10s timeout. If no response, reject with `TimeoutError`.
 - No automatic retries — the host decides.
 
 Backpressure:
+
 - Queue outgoing requests if handshake is not yet complete. Flush on `ready`.
 - Drop events (never buffer them indefinitely) if no listener — cap at 256 queued events to prevent memory runaway.
 
@@ -90,6 +97,7 @@ Export a class `EmbedActionBridge` that lives **inside** the `<agent-3d>` elemen
 4. Translates protocol errors into `kind: 'event', op: 'error', payload: { code, message }`.
 
 Constructor:
+
 ```js
 new EmbedActionBridge({ protocol, avatar, manifest, window: win })
   .start(): void
@@ -107,13 +115,13 @@ Inside the anchor block `EMBED_BRIDGES`, at the tail of the mount path (after `r
 import { EmbedActionBridge } from './embed-action-bridge.js';
 
 if (window !== window.parent) {
-    this._embedBridge = new EmbedActionBridge({
-        protocol: this._protocol,
-        avatar: this._avatar,
-        manifest: this._manifest,
-        window,
-    });
-    this._embedBridge.start();
+	this._embedBridge = new EmbedActionBridge({
+		protocol: this._protocol,
+		avatar: this._avatar,
+		manifest: this._manifest,
+		window,
+	});
+	this._embedBridge.start();
 }
 // END:EMBED_BRIDGES
 ```

@@ -32,7 +32,7 @@ Create `public/lobehub/iframe/index.html` — minimal page that:
 
 Create `api/lobehub/handshake.js` — POST-only JSON endpoint that, given `{ agentId, hostOrigin }`, returns `{ ok: true, iframeUrl, embedPolicy }`. This lets LobeHub pre-validate the agent before rendering the iframe (avoiding a broken iframe on unknown agents).
 
-Use `sql` from [api/_lib/db.js](../../api/_lib/db.js) to look up `agents` by id — return 404 if missing. Use `json()` / `error()` from [api/_lib/http.js](../../api/_lib/http.js). Rate-limit with `limits.publicRead`.
+Use `sql` from [api/\_lib/db.js](../../api/_lib/db.js) to look up `agents` by id — return 404 if missing. Use `json()` / `error()` from [api/\_lib/http.js](../../api/_lib/http.js). Rate-limit with `limits.publicRead`.
 
 ### 4. Manifest serving endpoint
 
@@ -41,6 +41,7 @@ Create `api/lobehub/manifest.js` — GET-only, returns the contents of `public/l
 ### 5. Docs
 
 Create `public/lobehub/README.md` covering:
+
 - How to install the plugin into a LobeHub fork (the operator task).
 - postMessage contract (types, payload shapes, origin rules).
 - What the plugin does NOT do yet (any LobeHub features we skipped).

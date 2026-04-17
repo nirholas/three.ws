@@ -13,27 +13,27 @@ Depends on tasks 02 and 04 (or 06).
 1. Given `{ center: Blob }` (left/right are ignored in v1 — they'll feed task 08), produce a VRM file (or a patched VRM from a base template) that resembles the user.
 2. The template is a neutral base VRM bundled in [public/avatars/](../../public/avatars/).
 3. Customization applied:
-   - Head shape morphed toward the detected face via landmark-driven morph targets or a blendshape approximation.
-   - Face texture projected from the center photo.
-   - Skin tone sampled from the face and applied to exposed skin slots.
-   - Hair kept from the template (editor UI in task 16 lets the user swap).
+    - Head shape morphed toward the detected face via landmark-driven morph targets or a blendshape approximation.
+    - Face texture projected from the center photo.
+    - Skin tone sampled from the face and applied to exposed skin slots.
+    - Hair kept from the template (editor UI in task 16 lets the user swap).
 4. Total time from blob in to avatar rendered < 5 seconds on a mid-range laptop.
 
 ## Deliverable
 
 1. **Base template** — `public/avatars/template-neutral.vrm`. A rigged, expression-ready VRM with a neutral face. Source with CC0/MIT license only. Record in `public/avatars/NOTICES.md`.
 2. **MediaPipe integration** `src/capture/face-landmarks.js`:
-   - Loads MediaPipe Face Landmarker WASM + model from a CDN or vendored at `public/vendor/mediapipe/`.
-   - Exports `detectFace(blob) -> { landmarks: Float32Array[478*3], blendshapes: Record<string, number>, matrix: Float32Array[16] }`.
-   - Model is loaded lazily on first call, cached for subsequent calls.
+    - Loads MediaPipe Face Landmarker WASM + model from a CDN or vendored at `public/vendor/mediapipe/`.
+    - Exports `detectFace(blob) -> { landmarks: Float32Array[478*3], blendshapes: Record<string, number>, matrix: Float32Array[16] }`.
+    - Model is loaded lazily on first call, cached for subsequent calls.
 3. **Avatar generator** `src/capture/fast-avatar.js`:
-   - `async generate({ center, left?, right? }) -> Blob` — a VRM Blob.
-   - Loads the template VRM, applies morphs/textures, exports with `VRMExporter` (from `@pixiv/three-vrm-core` or implement via `GLTFExporter` + manual VRM extension patching).
+    - `async generate({ center, left?, right? }) -> Blob` — a VRM Blob.
+    - Loads the template VRM, applies morphs/textures, exports with `VRMExporter` (from `@pixiv/three-vrm-core` or implement via `GLTFExporter` + manual VRM extension patching).
 4. **Head-shape approximation** — use a small set of morph-target drivers:
-   - Face width → `faceWidth` morph (if template has it) or a scale on jaw bones.
-   - Face length → scale Y on cranium bone.
-   - Nose prominence → nose morph or localized mesh displacement.
-   - Document exactly which drivers the template exposes in `public/avatars/template-neutral.vrm.meta.json`.
+    - Face width → `faceWidth` morph (if template has it) or a scale on jaw bones.
+    - Face length → scale Y on cranium bone.
+    - Nose prominence → nose morph or localized mesh displacement.
+    - Document exactly which drivers the template exposes in `public/avatars/template-neutral.vrm.meta.json`.
 5. **Texture projection** — crop the center photo to the face region detected by MediaPipe, warp to the template's UV head region using the 478-landmark topology. Use a small offscreen canvas + perspective warp. This is the biggest quality lever; budget it explicitly.
 6. **Skin-tone sampling** — average pixels inside the face mesh polygon (excluding eyes/mouth), convert to linear sRGB, find nearest slot and apply to all skin-mapped materials.
 7. **Fallback** — if MediaPipe fails to detect a face, resolve with the plain template and emit a `photo_quality_low` warning; the caller can surface a "retake" option.

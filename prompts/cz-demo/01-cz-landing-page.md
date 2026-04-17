@@ -19,24 +19,24 @@ Ship a `/cz` route with a curated layout, strong hero copy, and the CZ avatar re
 ## Deliverable
 
 1. New file [public/cz.html](../../public/cz.html) — a standalone entry that reuses the shared build output. Two acceptable implementations; **pick one** and justify in the reporting section:
-   - **(a) Route variant:** a top-level `cz.html` file Vite serves at `/cz.html`, with a redirect in [vercel.json](../../vercel.json) rewriting `/cz` → `/cz.html`.
-   - **(b) Hash variant:** reuse `/` and gate on `window.location.hash === '#cz'`; preferred if `vercel.json` changes are risky.
+    - **(a) Route variant:** a top-level `cz.html` file Vite serves at `/cz.html`, with a redirect in [vercel.json](../../vercel.json) rewriting `/cz` → `/cz.html`.
+    - **(b) Hash variant:** reuse `/` and gate on `window.location.hash === '#cz'`; preferred if `vercel.json` changes are risky.
 2. New module [src/features/cz-landing.js](../../src/features/cz-landing.js) exporting `mountCzLanding(containerEl, opts)` that:
-   - Injects the hero layout: left column = agent stage; right column = title, subtitle, three CTAs.
-   - Mounts a `Viewer` instance with the CZ GLB.
-   - Uses **poster-first** rendering: shows a blurred thumbnail until the GLB's first frame paints, then fades the poster out (generate the poster PNG once via `scripts/cz-demo/gen-poster.js` — see `Deliverable 5`).
-   - Wires up the first-interaction hook: `window.addEventListener('cz:viewer-ready', ...)` fires a `CustomEvent('cz:greet')` exactly once after viewer.load completes and 300ms settle — consumed by [03](./03-scripted-first-interaction.md).
-   - If the on-chain hydrate from [onchain/01-hydrate-agent-from-chain.md](../onchain/01-hydrate-agent-from-chain.md) is available, hydrates name/description from `(chainId, agentId)` provided in `opts`. Falls back to hard-coded copy if not (the demo works without the onchain hydration being live).
+    - Injects the hero layout: left column = agent stage; right column = title, subtitle, three CTAs.
+    - Mounts a `Viewer` instance with the CZ GLB.
+    - Uses **poster-first** rendering: shows a blurred thumbnail until the GLB's first frame paints, then fades the poster out (generate the poster PNG once via `scripts/cz-demo/gen-poster.js` — see `Deliverable 5`).
+    - Wires up the first-interaction hook: `window.addEventListener('cz:viewer-ready', ...)` fires a `CustomEvent('cz:greet')` exactly once after viewer.load completes and 300ms settle — consumed by [03](./03-scripted-first-interaction.md).
+    - If the on-chain hydrate from [onchain/01-hydrate-agent-from-chain.md](../onchain/01-hydrate-agent-from-chain.md) is available, hydrates name/description from `(chainId, agentId)` provided in `opts`. Falls back to hard-coded copy if not (the demo works without the onchain hydration being live).
 3. Hero copy (final, ship as-is; tweak if the reviewer asks):
-   - Eyebrow: `A 3D agent with a passport`
-   - H1: `This is CZ. Say hi.`
-   - Subtitle: `A signed, embodied, portable agent you can embed anywhere — inside a Claude Artifact, a chat sidebar, or your own site.`
-   - CTAs: `Chat with CZ` · `Embed this agent` · `Register your own`
+    - Eyebrow: `A 3D agent with a passport`
+    - H1: `This is CZ. Say hi.`
+    - Subtitle: `A signed, embodied, portable agent you can embed anywhere — inside a Claude Artifact, a chat sidebar, or your own site.`
+    - CTAs: `Chat with CZ` · `Embed this agent` · `Register your own`
 4. Styling: keep the CZ route **dark-themed** (matches the app default `#191919`). Use a subtle radial gradient behind the stage (`radial-gradient(ellipse at center, rgba(80,120,255,0.18) 0%, transparent 60%)`). No new global CSS — scoped classes under `.cz-hero-*`. Inject via a `<style>` tag the module appends once.
 5. New build-time script [scripts/cz-demo/gen-poster.js](../../scripts/cz-demo/gen-poster.js) — Node script that uses `puppeteer` or an existing headless renderer **only if already a dev-dep**; otherwise write a hand-authored 1200×800 PNG based on a screenshot you take manually and commit as [public/cz-poster.png](../../public/cz-poster.png). Prefer the manual commit path — simpler, zero new deps.
 6. Route wiring:
-   - In [src/app.js](../../src/app.js), detect the `/cz` route (or `#cz` hash) early in the boot sequence and delegate to `mountCzLanding` **instead of** the normal app. The generic viewer should not initialise for this route.
-   - OG tags (title, description, `og:image = /cz-og.png`) — see [04-share-card-and-embed-presets.md](./04-share-card-and-embed-presets.md) for the OG image. For this task, just emit the `<meta>` tags referencing the filename even if the image isn't committed yet.
+    - In [src/app.js](../../src/app.js), detect the `/cz` route (or `#cz` hash) early in the boot sequence and delegate to `mountCzLanding` **instead of** the normal app. The generic viewer should not initialise for this route.
+    - OG tags (title, description, `og:image = /cz-og.png`) — see [04-share-card-and-embed-presets.md](./04-share-card-and-embed-presets.md) for the OG image. For this task, just emit the `<meta>` tags referencing the filename even if the image isn't committed yet.
 
 ## Audit checklist
 
@@ -64,10 +64,10 @@ Ship a `/cz` route with a curated layout, strong hero copy, and the CZ avatar re
 1. `node --check src/features/cz-landing.js` and any other modified JS.
 2. `npx vite build` passes.
 3. `npx vite` then open `/cz` (or `/#cz` depending on variant):
-   - Poster visible → GLB loads → poster fades.
-   - Window title is `CZ — 3D Agent`.
-   - DevTools Lighthouse on mobile: LCP under 2.5s.
-   - `window.dispatchEvent(new Event('cz:greet'))` and nothing crashes (proper hook even before [03](./03-scripted-first-interaction.md) lands).
+    - Poster visible → GLB loads → poster fades.
+    - Window title is `CZ — 3D Agent`.
+    - DevTools Lighthouse on mobile: LCP under 2.5s.
+    - `window.dispatchEvent(new Event('cz:greet'))` and nothing crashes (proper hook even before [03](./03-scripted-first-interaction.md) lands).
 4. Test with `#cz&raw=1`: landing UI gone; bare viewer behind.
 5. Test `/` still works. Test `/#agent=...` still works.
 

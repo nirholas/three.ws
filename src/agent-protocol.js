@@ -8,20 +8,20 @@
  */
 
 export const ACTION_TYPES = {
-	SPEAK:         'speak',         // agent says something (text + sentiment)
-	THINK:         'think',         // agent is processing (internal monologue)
-	GESTURE:       'gesture',       // named body gesture (point, wave, nod, shrug)
-	EMOTE:         'emote',         // direct emotion injection (concern, celebrate…)
-	LOOK_AT:       'look-at',       // agent looks at a world position or object
+	SPEAK: 'speak', // agent says something (text + sentiment)
+	THINK: 'think', // agent is processing (internal monologue)
+	GESTURE: 'gesture', // named body gesture (point, wave, nod, shrug)
+	EMOTE: 'emote', // direct emotion injection (concern, celebrate…)
+	LOOK_AT: 'look-at', // agent looks at a world position or object
 	PERFORM_SKILL: 'perform-skill', // a skill is starting execution
-	SKILL_DONE:    'skill-done',    // a skill finished (success + result payload)
-	SKILL_ERROR:   'skill-error',   // a skill failed
-	REMEMBER:      'remember',      // agent stored a memory
-	SIGN:          'sign',          // agent signs an action with its wallet
-	LOAD_START:    'load-start',    // model/asset loading started
-	LOAD_END:      'load-end',      // model/asset loading finished
-	VALIDATE:      'validate',      // validation result (errors, warnings, hints)
-	PRESENCE:      'presence',      // agent came online / went idle
+	SKILL_DONE: 'skill-done', // a skill finished (success + result payload)
+	SKILL_ERROR: 'skill-error', // a skill failed
+	REMEMBER: 'remember', // agent stored a memory
+	SIGN: 'sign', // agent signs an action with its wallet
+	LOAD_START: 'load-start', // model/asset loading started
+	LOAD_END: 'load-end', // model/asset loading finished
+	VALIDATE: 'validate', // validation result (errors, warnings, hints)
+	PRESENCE: 'presence', // agent came online / went idle
 };
 
 /**
@@ -46,10 +46,10 @@ class AgentProtocol extends EventTarget {
 	 */
 	emit(action) {
 		const full = {
-			type:        action.type,
-			payload:     action.payload   || {},
-			timestamp:   Date.now(),
-			agentId:     action.agentId   || 'default',
+			type: action.type,
+			payload: action.payload || {},
+			timestamp: Date.now(),
+			agentId: action.agentId || 'default',
 			sourceSkill: action.sourceSkill || null,
 		};
 
@@ -102,7 +102,7 @@ class AgentProtocol extends EventTarget {
 
 	/** Returns last N actions of a given type */
 	recent(type, n = 10) {
-		return this._history.filter(a => a.type === type).slice(-n);
+		return this._history.filter((a) => a.type === type).slice(-n);
 	}
 
 	_wrap(type, handler, once) {

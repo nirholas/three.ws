@@ -2,9 +2,9 @@
 name: wave
 description: Wave at the user with context-appropriate enthusiasm.
 triggers:
-  - user_greeting
-  - user_farewell
-  - introduction
+    - user_greeting
+    - user_farewell
+    - introduction
 cost: low
 ---
 

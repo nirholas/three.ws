@@ -7,8 +7,8 @@ Users see `0xabc…1234` today. That's hostile. Showing `nich.eth` or `nich.base
 ## Context
 
 - SIWE verify path: [api/auth/siwe/verify.js](../../api/auth/siwe/verify.js).
-- Linked-wallet table: `user_wallets` in [api/_lib/schema.sql](../../api/_lib/schema.sql).
-- Session helper: `getSessionUser` in [api/_lib/auth.js](../../api/_lib/auth.js).
+- Linked-wallet table: `user_wallets` in [api/\_lib/schema.sql](../../api/_lib/schema.sql).
+- Session helper: `getSessionUser` in [api/\_lib/auth.js](../../api/_lib/auth.js).
 - Dashboard render: [public/dashboard/dashboard.js](../../public/dashboard/dashboard.js).
 
 ## What to build
@@ -17,10 +17,10 @@ Users see `0xabc…1234` today. That's hostile. Showing `nich.eth` or `nich.base
 
 - `GET ?address=0x…&chain_id=1|8453`. Public (no session required — names are public).
 - Resolves via public RPC, with a 24h cache keyed on `(address, chain_id)`.
-  - `chain_id=1` → ENS (`name.eth`) via reverse record.
-  - `chain_id=8453` → basename via the Base name registrar. Fall back to ENS mainnet if no basename.
+    - `chain_id=1` → ENS (`name.eth`) via reverse record.
+    - `chain_id=8453` → basename via the Base name registrar. Fall back to ENS mainnet if no basename.
 - Response: `{ address, name: "nich.eth" | null, avatar: "https://…" | null, chain_id, ttl }`.
-- Cache: use the existing rate-limit/kv pattern in [api/_lib/rate-limit.js](../../api/_lib/rate-limit.js) (Neon `kv` table or equivalent — reuse, don't invent).
+- Cache: use the existing rate-limit/kv pattern in [api/\_lib/rate-limit.js](../../api/_lib/rate-limit.js) (Neon `kv` table or equivalent — reuse, don't invent).
 - Failures (RPC down, no record) → `{ name: null }` with 200, not 5xx.
 
 ### Persist on link

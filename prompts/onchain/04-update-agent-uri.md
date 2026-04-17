@@ -18,33 +18,35 @@ Add an idempotent, resumable "update agent URI" flow that runs after avatar-edit
 
 1. New file [src/erc8004/update-agent.js](../../src/erc8004/update-agent.js) exporting:
 
-   ```
-   async function updateAgentURI({
-     agentId,         // number | bigint | string
-     chainId,
-     newGLB?,         // File | Blob — optional; if absent, only re-pin metadata
-     nextRecord,      // merged patch: { name?, description?, image?, services?, supportedTrust?, ... }
-     apiToken,
-     signer,
-     onStatus,        // structured step emitter, same shape as 03
-   })
-   ```
+    ```
+    async function updateAgentURI({
+      agentId,         // number | bigint | string
+      chainId,
+      newGLB?,         // File | Blob — optional; if absent, only re-pin metadata
+      nextRecord,      // merged patch: { name?, description?, image?, services?, supportedTrust?, ... }
+      apiToken,
+      signer,
+      onStatus,        // structured step emitter, same shape as 03
+    })
+    ```
 
-   Flow:
-   1. If `newGLB` is provided → `pinToIPFS(newGLB)` → new `imageCID`.
-   2. Fetch the current `tokenURI(agentId)` from chain; resolve + fetch the current registration JSON (reuse [src/ipfs.js](../../src/ipfs.js) fallback).
-   3. Deep-merge the existing JSON with `nextRecord`, replacing `image` with `ipfs://<imageCID>` when a new GLB was pinned. **Preserve** `registrations[]` exactly — do not rewrite the `agentId`/`agentRegistry` fields.
-   4. Pin the merged JSON → new `registrationCID`.
-   5. Connect contract with `signer`; call `setAgentURI(agentId, 'ipfs://<registrationCID>')`. Return `{ imageCID?, registrationCID, txHash }`.
+    Flow:
+
+    1. If `newGLB` is provided → `pinToIPFS(newGLB)` → new `imageCID`.
+    2. Fetch the current `tokenURI(agentId)` from chain; resolve + fetch the current registration JSON (reuse [src/ipfs.js](../../src/ipfs.js) fallback).
+    3. Deep-merge the existing JSON with `nextRecord`, replacing `image` with `ipfs://<imageCID>` when a new GLB was pinned. **Preserve** `registrations[]` exactly — do not rewrite the `agentId`/`agentRegistry` fields.
+    4. Pin the merged JSON → new `registrationCID`.
+    5. Connect contract with `signer`; call `setAgentURI(agentId, 'ipfs://<registrationCID>')`. Return `{ imageCID?, registrationCID, txHash }`.
+
 2. **Idempotence key.** Write to `localStorage` under key `erc8004:update-in-flight:{chainId}:{agentId}` a JSON blob `{ step, imageCID?, registrationCID?, newTokenURI, startedAt }` as the flow progresses. On re-entry with the same `(chainId, agentId)`, the flow:
-   - If `step === 'pinning-glb'` and no `imageCID` yet → re-pin.
-   - If `step === 'pinning-json'` but `imageCID` already set → skip re-pin of GLB, rebuild & re-pin JSON (OK to re-pin JSON; deterministic content would yield the same CID anyway).
-   - If `step === 'sending-tx'` → check if `tokenURI(agentId)` already equals the in-flight `newTokenURI`. If yes → clear the localStorage key, return the record; if no → resend the tx.
-   - On terminal success → clear the key.
+    - If `step === 'pinning-glb'` and no `imageCID` yet → re-pin.
+    - If `step === 'pinning-json'` but `imageCID` already set → skip re-pin of GLB, rebuild & re-pin JSON (OK to re-pin JSON; deterministic content would yield the same CID anyway).
+    - If `step === 'sending-tx'` → check if `tokenURI(agentId)` already equals the in-flight `newTokenURI`. If yes → clear the localStorage key, return the record; if no → resend the tx.
+    - On terminal success → clear the key.
 3. **Ownership guard.** Before step 5, call `ownerOf(agentId)` and compare to `signer.getAddress()` (case-insensitive checksum). If mismatch, throw `new Error('not-owner')`.
 4. Integration point in the avatar-edit flow:
-   - In [src/avatar-creator.js](../../src/avatar-creator.js) (or wherever avatar-edit's "save" handler lives — search for the save/confirm callback) add a post-save hook that, **only if** `AgentIdentity.isRegistered === true` and `meta.onchain.chainId` is set, calls `updateAgentURI`. Gate this behind an explicit user confirmation dialog: "Publish changes on-chain? This requires a signature and ~0.0003 ETH."
-   - If the user cancels, local/backend state is still updated (unchanged behavior); only the on-chain step is skipped.
+    - In [src/avatar-creator.js](../../src/avatar-creator.js) (or wherever avatar-edit's "save" handler lives — search for the save/confirm callback) add a post-save hook that, **only if** `AgentIdentity.isRegistered === true` and `meta.onchain.chainId` is set, calls `updateAgentURI`. Gate this behind an explicit user confirmation dialog: "Publish changes on-chain? This requires a signature and ~0.0003 ETH."
+    - If the user cancels, local/backend state is still updated (unchanged behavior); only the on-chain step is skipped.
 5. Standalone surface: add a button "Republish on-chain" to [src/agent-home.js](../../src/agent-home.js) that appears only for owners of registered agents; clicking invokes `updateAgentURI` with no `newGLB`, forcing a metadata-only refresh (useful for renaming or editing description).
 
 ## Audit checklist
@@ -71,11 +73,11 @@ Add an idempotent, resumable "update agent URI" flow that runs after avatar-edit
 1. `node --check` each modified / new JS file.
 2. `npx vite build` passes.
 3. Manual:
-   - Register an agent on Base Sepolia (uses [03](./03-register-flow-polish.md)).
-   - Open avatar-edit, swap a hair, save → confirm "Publish changes on-chain?" dialog → accept → tx lands → `tokenURI(agentId)` now resolves to a new registration JSON with updated `image`.
-   - Console-kill the tab between step 4 (pin JSON) and step 5 (tx). Reload. Trigger save again — flow resumes, tx sends once.
-   - Without a wallet, call `updateAgentURI` → fails with `not-owner` or `no-signer`.
-   - Rename the agent locally, click "Republish on-chain" → only step 3-5 run; no new GLB pinned.
+    - Register an agent on Base Sepolia (uses [03](./03-register-flow-polish.md)).
+    - Open avatar-edit, swap a hair, save → confirm "Publish changes on-chain?" dialog → accept → tx lands → `tokenURI(agentId)` now resolves to a new registration JSON with updated `image`.
+    - Console-kill the tab between step 4 (pin JSON) and step 5 (tx). Reload. Trigger save again — flow resumes, tx sends once.
+    - Without a wallet, call `updateAgentURI` → fails with `not-owner` or `no-signer`.
+    - Rename the agent locally, click "Republish on-chain" → only step 3-5 run; no new GLB pinned.
 4. Read the final on-chain `tokenURI` and confirm `registrations[0]` is unchanged from before the update.
 
 ## Scope boundaries — do NOT do these

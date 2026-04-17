@@ -28,7 +28,11 @@ Callers receive structured errors:
 
 ```js
 class SelfieAvatarError extends Error {
-  constructor(code, message, cause) { super(message); this.code = code; this.cause = cause; }
+	constructor(code, message, cause) {
+		super(message);
+		this.code = code;
+		this.cause = cause;
+	}
 }
 // code ∈ 'quota_exceeded' | 'session_timeout' | 'pipeline_failed' | 'invalid_photo' | 'network'
 ```
@@ -42,10 +46,12 @@ class SelfieAvatarError extends Error {
 ## Audit checklist — must handle all of these
 
 **Input validation**
+
 - Reject blobs with `blob.type` not in `['image/jpeg', 'image/png', 'image/webp']` → `invalid_photo`.
 - Reject blobs `size > 10 * 1024 * 1024` → `invalid_photo` (prompt 01 already caps this; enforce defensively).
 
 **Photo upload step**
+
 - `POST /api/avatars/presign` with `content_type: blob.type`, `size_bytes: blob.size`. Shape of the presign endpoint is locked today in [api/avatars/presign.js](../../api/avatars/presign.js). See also [src/account.js](../../src/account.js) `saveRemoteGlbToAccount` for a working client example of the same handshake.
 - `PUT` the blob to `presign.upload_url` with the `content-type` header Avaturn will see.
 - If the presign call returns `401` → throw `SelfieAvatarError('quota_exceeded'?, …)` → actually map `401` to `pipeline_failed` with a message "sign in required" — quota is `429`. Do not silently sign the user out.
@@ -53,8 +59,9 @@ class SelfieAvatarError extends Error {
 - Emit `opts.onProgress('uploading_photo')` before and `'photo_uploaded'` after.
 
 **Avaturn handoff**
+
 - Prefer an SDK entry point that accepts a seed photo URL — check `@avaturn/sdk` for `createFromPhoto`, `photoAvatar`, `fromImage`, or equivalent. If none exists, document in a JSDoc comment on the function which symbol you actually called and why.
-- Pass the *public* URL form of the uploaded seed (from presign response — most likely a signed GET URL since the avatar is still private). If the SDK requires CORS-enabled URLs, note in the JSDoc.
+- Pass the _public_ URL form of the uploaded seed (from presign response — most likely a signed GET URL since the avatar is still private). If the SDK requires CORS-enabled URLs, note in the JSDoc.
 - Subscribe to the same `export` event the existing [src/avatar-creator.js](../../src/avatar-creator.js) listens for, plus any `error` / `session-timeout` / `quota-exceeded` events the SDK emits.
 - Wrap the whole Avaturn step in a 90s timeout via `AbortSignal.timeout(90_000)` combined with `opts.signal`. If both fire, the user's abort wins semantically.
 - Emit `onProgress('generating_avatar')` before and `'avatar_ready'` after.
@@ -71,11 +78,13 @@ class SelfieAvatarError extends Error {
 Log the full underlying error on `console.error` with a `[selfie-pipeline]` prefix — never swallow it silently.
 
 **Teardown**
+
 - On abort or failure, call `sdk.destroy()` if the SDK was initialised.
 - Revoke any `URL.createObjectURL` you allocated.
 - Do not leave the Avaturn iframe container mounted after the function returns — whether success or failure.
 
 **UX in create.html**
+
 - Progress is one visible string at a time, driven by `onProgress`.
 - The Try-again button re-calls `createAvatarFromSelfie(blob, …)` with the same blob (cache it in memory; do not re-prompt the camera).
 - Error panel surfaces the `code` as a subtle `data-error-code` attribute for QA / analytics, and the human message as the visible text.
@@ -111,6 +120,7 @@ Log the full underlying error on `console.error` with a `[selfie-pipeline]` pref
 ## Reporting
 
 Report:
+
 - Files created and their line counts.
 - Files edited and which sections.
 - The exact `@avaturn/sdk` symbol you used for the photo entry point and why.

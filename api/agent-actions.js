@@ -10,14 +10,14 @@
  */
 
 import { getSessionUser, authenticateBearer, extractBearer } from './_lib/auth.js';
-import { sql }    from './_lib/db.js';
+import { sql } from './_lib/db.js';
 import { cors, json, method, readJson, wrap, error } from './_lib/http.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET', 'POST'])) return;
 
-	if (req.method === 'GET')  return handleList(req, res);
+	if (req.method === 'GET') return handleList(req, res);
 	return handleAppend(req, res);
 });
 
@@ -27,10 +27,10 @@ async function handleList(req, res) {
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
 
-	const url      = new URL(req.url, 'http://x');
-	const agentId  = url.searchParams.get('agent_id');
-	const limit    = Math.min(Number(url.searchParams.get('limit')) || 50, 200);
-	const cursor   = url.searchParams.get('cursor');  // bigserial id cursor
+	const url = new URL(req.url, 'http://x');
+	const agentId = url.searchParams.get('agent_id');
+	const limit = Math.min(Number(url.searchParams.get('limit')) || 50, 200);
+	const cursor = url.searchParams.get('cursor'); // bigserial id cursor
 
 	if (!agentId) return error(res, 400, 'validation_error', 'agent_id is required');
 
@@ -39,8 +39,8 @@ async function handleList(req, res) {
 		SELECT user_id FROM agent_identities
 		WHERE id = ${agentId} AND deleted_at IS NULL
 	`;
-	if (!agentRow)                        return error(res, 404, 'not_found',  'agent not found');
-	if (agentRow.user_id !== auth.userId) return error(res, 403, 'forbidden',  'not your agent');
+	if (!agentRow) return error(res, 404, 'not_found', 'agent not found');
+	if (agentRow.user_id !== auth.userId) return error(res, 403, 'forbidden', 'not your agent');
 
 	const rows = cursor
 		? await sql`
@@ -56,8 +56,8 @@ async function handleList(req, res) {
 			LIMIT ${limit + 1}
 		`;
 
-	const hasMore   = rows.length > limit;
-	const actions   = hasMore ? rows.slice(0, limit) : rows;
+	const hasMore = rows.length > limit;
+	const actions = hasMore ? rows.slice(0, limit) : rows;
 	const nextCursor = hasMore ? String(actions[actions.length - 1].id) : null;
 
 	return json(res, 200, { actions: actions.map(decorate), next_cursor: nextCursor });
@@ -72,14 +72,14 @@ async function handleAppend(req, res) {
 	const body = await readJson(req);
 
 	if (!body.agent_id) return error(res, 400, 'validation_error', 'agent_id required');
-	if (!body.type)     return error(res, 400, 'validation_error', 'type required');
+	if (!body.type) return error(res, 400, 'validation_error', 'type required');
 
 	// Verify ownership
 	const [agentRow] = await sql`
 		SELECT user_id FROM agent_identities
 		WHERE id = ${body.agent_id} AND deleted_at IS NULL
 	`;
-	if (!agentRow)                        return error(res, 404, 'not_found', 'agent not found');
+	if (!agentRow) return error(res, 404, 'not_found', 'agent not found');
 	if (agentRow.user_id !== auth.userId) return error(res, 403, 'forbidden', 'not your agent');
 
 	const [action] = await sql`
@@ -88,8 +88,8 @@ async function handleAppend(req, res) {
 			${body.agent_id},
 			${String(body.type).slice(0, 64)},
 			${JSON.stringify(body.payload || {})}::jsonb,
-			${body.source_skill  || null},
-			${body.signature     || null},
+			${body.source_skill || null},
+			${body.signature || null},
 			${body.signer_address || null}
 		)
 		RETURNING *
@@ -103,20 +103,20 @@ async function handleAppend(req, res) {
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);
 	if (session) return { userId: session.id };
-	const bearer  = await authenticateBearer(extractBearer(req));
-	if (bearer)   return { userId: bearer.userId };
+	const bearer = await authenticateBearer(extractBearer(req));
+	if (bearer) return { userId: bearer.userId };
 	return null;
 }
 
 function decorate(row) {
 	return {
-		id:             String(row.id),
-		agent_id:       row.agent_id,
-		type:           row.type,
-		payload:        row.payload,
-		source_skill:   row.source_skill,
-		signature:      row.signature,
+		id: String(row.id),
+		agent_id: row.agent_id,
+		type: row.type,
+		payload: row.payload,
+		source_skill: row.source_skill,
+		signature: row.signature,
 		signer_address: row.signer_address,
-		created_at:     row.created_at,
+		created_at: row.created_at,
 	};
 }

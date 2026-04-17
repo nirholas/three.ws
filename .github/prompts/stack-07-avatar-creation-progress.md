@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Progress UI for the 30-90s avatar generation — live status, cancel, preview"
+description: 'Progress UI for the 30-90s avatar generation — live status, cancel, preview'
 ---
 
 # Stack Layer 2: Avatar Creation Progress UI

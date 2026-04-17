@@ -21,12 +21,12 @@ A refactor of the share panel on [public/agent/index.html](../../public/agent/in
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| [public/agent/index.html](../../public/agent/index.html) | Current share panel — replace. |
-| [public/agent/embed.html](../../public/agent/embed.html) | Target URL shape for the iframe snippet. |
-| [src/element.js](../../src/element.js) | `<agent-3d>` attribute surface for the web-component snippet. |
-| `prompts/build/05-*.md` | Drives the claude-artifact + lobehub-plugin snippet strings once that pillar ships. It's OK if those hosts' runtimes don't exist yet — the snippet picker still generates valid strings for future use. |
+| File                                                     | Why                                                                                                                                                                                                     |
+| :------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [public/agent/index.html](../../public/agent/index.html) | Current share panel — replace.                                                                                                                                                                          |
+| [public/agent/embed.html](../../public/agent/embed.html) | Target URL shape for the iframe snippet.                                                                                                                                                                |
+| [src/element.js](../../src/element.js)                   | `<agent-3d>` attribute surface for the web-component snippet.                                                                                                                                           |
+| `prompts/build/05-*.md`                                  | Drives the claude-artifact + lobehub-plugin snippet strings once that pillar ships. It's OK if those hosts' runtimes don't exist yet — the snippet picker still generates valid strings for future use. |
 
 ## Build this
 
@@ -36,9 +36,9 @@ Create `src/components/snippet-picker.jsx` (vhtml). Signature:
 
 ```js
 export function SnippetPicker({ agent, origin }) {
-  // state: target, size, theme, bg, showName
-  // derived: snippet string
-  // returns: JSX block mountable into a container
+	// state: target, size, theme, bg, showName
+	// derived: snippet string
+	// returns: JSX block mountable into a container
 }
 ```
 
@@ -48,13 +48,13 @@ export function SnippetPicker({ agent, origin }) {
 function generate(target, opts) { ... }
 ```
 
-| Target | Output |
-|:---|:---|
-| `iframe` | `<iframe src="https://<origin>/agent/<id>/embed?size=<s>&theme=<t>&bg=<bg>&name=<n>" width="<w>" height="<h>" style="border:0;background:transparent" loading="lazy"></iframe>` |
-| `web-component` | `<script type="module" src="https://<origin>/dist-lib/index.js"></script>\n<agent-3d agent-id="<id>" size="<s>" theme="<t>" bg="<bg>" name="<n>"></agent-3d>` |
+| Target            | Output                                                                                                                                                                                                                                                          |
+| :---------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `iframe`          | `<iframe src="https://<origin>/agent/<id>/embed?size=<s>&theme=<t>&bg=<bg>&name=<n>" width="<w>" height="<h>" style="border:0;background:transparent" loading="lazy"></iframe>`                                                                                 |
+| `web-component`   | `<script type="module" src="https://<origin>/dist-lib/index.js"></script>\n<agent-3d agent-id="<id>" size="<s>" theme="<t>" bg="<bg>" name="<n>"></agent-3d>`                                                                                                   |
 | `claude-artifact` | The single-file snippet from `05-01-claude-artifact-single-file-bundle` — refer to the target output there. If that pillar hasn't shipped, output a placeholder `<!-- Claude Artifact target not yet available -->` and disable the Copy button with a tooltip. |
-| `lobehub-plugin` | JSON plugin manifest snippet (from `05-03`). Same degrade-gracefully fallback. |
-| `link` | `https://<origin>/agent/<id>` |
+| `lobehub-plugin`  | JSON plugin manifest snippet (from `05-03`). Same degrade-gracefully fallback.                                                                                                                                                                                  |
+| `link`            | `https://<origin>/agent/<id>`                                                                                                                                                                                                                                   |
 
 ### 3. Preview modal
 
@@ -80,10 +80,12 @@ Iframe target shows two extra number inputs (width/height) pre-filled with size-
 ## Deliverables
 
 **New:**
+
 - `src/components/snippet-picker.jsx`
 - `public/preview/web-component.html`
 
 **Modified:**
+
 - [public/agent/index.html](../../public/agent/index.html) — replace existing tabbed share panel with SnippetPicker.
 - [public/agent/agent.js](../../public/agent/) (if present) — mount SnippetPicker.
 - [style.css](../../style.css) — small additions for the picker; reuse token palette.

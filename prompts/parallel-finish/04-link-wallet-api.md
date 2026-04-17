@@ -4,7 +4,7 @@
 
 Repo root: `/workspaces/3D-Agent`. Read [/CLAUDE.md](../../CLAUDE.md) and [api/CLAUDE.md](../../api/CLAUDE.md) first.
 
-The `user_wallets` table (see [api/_lib/schema.sql](../../api/_lib/schema.sql)) already supports many wallets per user, but there is no API for an authenticated user to link a new wallet to their existing account. Users who sign in with wallet A cannot later add wallet B.
+The `user_wallets` table (see [api/\_lib/schema.sql](../../api/_lib/schema.sql)) already supports many wallets per user, but there is no API for an authenticated user to link a new wallet to their existing account. Users who sign in with wallet A cannot later add wallet B.
 
 The linking flow is: authenticated user requests a nonce → signs a SIWE-like message with the new wallet → server verifies the signature and inserts a `user_wallets` row. No new session is created (the user is already signed in).
 

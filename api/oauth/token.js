@@ -28,7 +28,10 @@ export default wrap(async (req, res) => {
 	if (client.client_type === 'confidential') {
 		const secret = form.client_secret || basicAuthPass(req) || '';
 		const providedHash = await sha256(secret);
-		if (!client.client_secret_hash || !constantTimeEquals(providedHash, client.client_secret_hash)) {
+		if (
+			!client.client_secret_hash ||
+			!constantTimeEquals(providedHash, client.client_secret_hash)
+		) {
 			return error(res, 401, 'invalid_client', 'bad client credentials');
 		}
 	}
@@ -55,12 +58,16 @@ async function handleAuthCode(res, client, form) {
 		          where user_id = ${row.user_id} and client_id = ${client.client_id} and revoked_at is null`;
 		return error(res, 400, 'invalid_grant', 'authorization code already used');
 	}
-	if (new Date(row.expires_at) < new Date()) return error(res, 400, 'invalid_grant', 'code expired');
-	if (row.client_id !== client.client_id) return error(res, 400, 'invalid_grant', 'client mismatch');
-	if (row.redirect_uri !== redirect_uri) return error(res, 400, 'invalid_grant', 'redirect_uri mismatch');
+	if (new Date(row.expires_at) < new Date())
+		return error(res, 400, 'invalid_grant', 'code expired');
+	if (row.client_id !== client.client_id)
+		return error(res, 400, 'invalid_grant', 'client mismatch');
+	if (row.redirect_uri !== redirect_uri)
+		return error(res, 400, 'invalid_grant', 'redirect_uri mismatch');
 
 	const computed = await sha256Base64Url(code_verifier);
-	if (computed !== row.code_challenge) return error(res, 400, 'invalid_grant', 'PKCE verification failed');
+	if (computed !== row.code_challenge)
+		return error(res, 400, 'invalid_grant', 'PKCE verification failed');
 
 	await sql`update oauth_auth_codes set consumed_at = now() where code = ${code}`;
 
@@ -73,7 +80,12 @@ async function handleAuthCode(res, client, form) {
 
 	const wantsRefresh = client.grant_types.includes('refresh_token');
 	const refresh = wantsRefresh
-		? await issueRefreshToken({ userId: row.user_id, clientId: client.client_id, scope: row.scope, resource: row.resource })
+		? await issueRefreshToken({
+				userId: row.user_id,
+				clientId: client.client_id,
+				scope: row.scope,
+				resource: row.resource,
+			})
 		: null;
 
 	return json(res, 200, {
@@ -120,7 +132,12 @@ async function handleRefresh(res, client, form) {
 
 function intersect(a, b) {
 	const set = new Set(b.split(/\s+/).filter(Boolean));
-	return a.split(/\s+/).filter((s) => set.has(s)).join(' ') || b;
+	return (
+		a
+			.split(/\s+/)
+			.filter((s) => set.has(s))
+			.join(' ') || b
+	);
 }
 
 function basicAuthUser(req) {
@@ -129,7 +146,9 @@ function basicAuthUser(req) {
 	try {
 		const decoded = Buffer.from(h.slice(6), 'base64').toString('utf8');
 		return decoded.split(':')[0];
-	} catch { return null; }
+	} catch {
+		return null;
+	}
 }
 
 function basicAuthPass(req) {
@@ -138,5 +157,7 @@ function basicAuthPass(req) {
 	try {
 		const decoded = Buffer.from(h.slice(6), 'base64').toString('utf8');
 		return decoded.split(':').slice(1).join(':');
-	} catch { return null; }
+	} catch {
+		return null;
+	}
 }

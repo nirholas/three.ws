@@ -20,9 +20,9 @@ Depends on task 12.
 1. **Evaluate XR Animator** — it's a web-based app; check if its core (MediaPipe Pose + retargeting math) can be extracted as a module. If it can't be cleanly vendored, use [BlazeWild/Real-Time-Motion-Transfer](https://github.com/BlazeWild/Real-Time-Motion-Transfer-to-a-3D-Avatar) as a simpler reference.
 2. **Vendor the chosen upstream** — copy minimal pose-retargeting code into `src/vendor/fullbody-mocap/`. NOTICE file with license + SHA.
 3. **Module** `src/agent/fullbody-mirror.js` extending `MirrorMode` from task 12:
-   - `class FullBodyMirror extends MirrorMode { ... }`
-   - Adds leg bone retargeting: hip, knee, ankle rotations.
-   - Detects "low confidence / legs out of frame" → gracefully degrades to upper-body mode.
+    - `class FullBodyMirror extends MirrorMode { ... }`
+    - Adds leg bone retargeting: hip, knee, ankle rotations.
+    - Detects "low confidence / legs out of frame" → gracefully degrades to upper-body mode.
 4. **IK sanity** — legs are IK-sensitive (a wrong hip rotation makes the avatar fall over). Use Kalidokit's or the upstream's stabilization; document any filters/dampeners tuned.
 5. **UI** — the "Mirror me" toolbar button from task 12 gains a sub-option "Full body (experimental)".
 6. **Camera framing coach** — show a subtle silhouette overlay on the webcam preview guiding the user to step back and include their full body.

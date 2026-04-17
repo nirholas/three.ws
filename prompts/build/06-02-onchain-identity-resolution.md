@@ -1,4 +1,4 @@
-# 06-02 — Render an agent *from chain* into a host app
+# 06-02 — Render an agent _from chain_ into a host app
 
 **Branch:** `feat/onchain-agent-resolution`
 **Stack layer:** 6 (Onchain identity — the novel unlock)
@@ -7,28 +7,30 @@
 
 ## Why it matters
 
-This is the entire strategic bet: a host app (Claude Artifact, Lobehub, anything) takes an ERC-8004 agent id and renders the agent embodied — pulling the identity, avatar URL, skills, and reputation directly from chain, with our platform only serving the runtime. When this works, *other people's apps* can render *our* agents without knowing or caring about our backend.
+This is the entire strategic bet: a host app (Claude Artifact, Lobehub, anything) takes an ERC-8004 agent id and renders the agent embodied — pulling the identity, avatar URL, skills, and reputation directly from chain, with our platform only serving the runtime. When this works, _other people's apps_ can render _our_ agents without knowing or caring about our backend.
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
+| File                                                                 | Why                                                        |
+| :------------------------------------------------------------------- | :--------------------------------------------------------- |
 | [src/erc8004/agent-registry.js](../../src/erc8004/agent-registry.js) | `registerAgent()` + JSON shape — the mirror of resolution. |
-| [src/erc8004/abi.js](../../src/erc8004/abi.js) | ABIs, deployed addresses, chain constants. |
-| [src/element.js](../../src/element.js) | `<agent-3d>` — gets a new attribute mode. |
-| [src/agent-resolver.js](../../src/agent-resolver.js) | Existing manifest resolver; extend it. |
-| [specs/](../../specs/) | Manifest spec — confirm agent JSON matches. |
+| [src/erc8004/abi.js](../../src/erc8004/abi.js)                       | ABIs, deployed addresses, chain constants.                 |
+| [src/element.js](../../src/element.js)                               | `<agent-3d>` — gets a new attribute mode.                  |
+| [src/agent-resolver.js](../../src/agent-resolver.js)                 | Existing manifest resolver; extend it.                     |
+| [specs/](../../specs/)                                               | Manifest spec — confirm agent JSON matches.                |
 
 ## Build this
 
 ### New `<agent-3d>` attribute: `chain-id` + `onchain-id`
 
 Usage:
+
 ```html
 <agent-3d chain-id="84532" onchain-id="123"></agent-3d>
 ```
 
 On connect, the component:
+
 1. Reads a free/public RPC for the given `chain-id` (configurable via `rpc-url` attr; defaults to a set of known public RPCs keyed by chain id).
 2. Calls `IdentityRegistry.getAgent(onchainId)` → returns `{ registrationURI, owner }`.
 3. Fetches the registration JSON from `registrationURI` (HTTP or IPFS gateway).

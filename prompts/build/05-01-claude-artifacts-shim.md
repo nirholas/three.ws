@@ -11,19 +11,19 @@ Claude.ai Artifacts run user-pasted HTML inside a sandboxed iframe (`sandbox="al
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| [src/element.js](../../src/element.js) | The `<agent-3d>` web component. Detect Artifact context here. |
-| [src/manifest.js](../../src/manifest.js) | Manifest loader — currently uses same-origin fetch. |
-| [api/agents/[id].js](../../api/agents/[id].js) | Public read shape; verify CORS + cache headers. |
-| [public/agent/embed.html](../../public/agent/embed.html) | Iframe target — must work in nested sandbox. |
-| [vercel.json](../../vercel.json) | Add CORS headers to the public read routes. |
+| File                                                     | Why                                                           |
+| :------------------------------------------------------- | :------------------------------------------------------------ |
+| [src/element.js](../../src/element.js)                   | The `<agent-3d>` web component. Detect Artifact context here. |
+| [src/manifest.js](../../src/manifest.js)                 | Manifest loader — currently uses same-origin fetch.           |
+| [api/agents/[id].js](../../api/agents/[id].js)           | Public read shape; verify CORS + cache headers.               |
+| [public/agent/embed.html](../../public/agent/embed.html) | Iframe target — must work in nested sandbox.                  |
+| [vercel.json](../../vercel.json)                         | Add CORS headers to the public read routes.                   |
 
 ## Build this
 
 1. In [src/element.js](../../src/element.js), detect opaque origin: `try { document.cookie } catch { isArtifact = true }` (Artifacts throw `SecurityError`). Also set when `window.location.origin === 'null'`.
 2. When `isArtifact`, force absolute URL for every backend call: `https://3dagent.vercel.app/api/...` (read host from `data-host` attribute on the script tag, fall back to `3dagent.vercel.app`).
-3. Add CORS headers to public-read endpoints: `Access-Control-Allow-Origin: *`, `Access-Control-Allow-Methods: GET, OPTIONS`, no credentials. Apply to: `/api/agents/:id`, `/api/widgets/:id`, `/api/avatars/public`, `/api/agents/:id/embed-policy`. Reuse the helper in [api/_lib/http.js](../../api/_lib/http.js) — add `corsPublic(res)`.
+3. Add CORS headers to public-read endpoints: `Access-Control-Allow-Origin: *`, `Access-Control-Allow-Methods: GET, OPTIONS`, no credentials. Apply to: `/api/agents/:id`, `/api/widgets/:id`, `/api/avatars/public`, `/api/agents/:id/embed-policy`. Reuse the helper in [api/\_lib/http.js](../../api/_lib/http.js) — add `corsPublic(res)`.
 4. Reject any `credentials: 'include'` fetch when `isArtifact` (cookies are useless in sandbox; sending them just confuses CORS).
 5. Add a `data-host` attribute to the canonical embed snippet generator at [embed.html](../../embed.html).
 

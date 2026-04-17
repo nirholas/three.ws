@@ -19,15 +19,15 @@ The audit that produced these prompts found that ~72% of the stated work is wire
 
 ## File-ownership map (no overlaps)
 
-| # | Prompt | Primary new files | Shared-file anchors |
-|---|---|---|---|
-| 01 | `01-embed-bridges.md` | `src/embed-host-bridge.js`, `src/embed-action-bridge.js` | `src/element.js` — anchor `EMBED_BRIDGES` |
-| 02 | `02-idle-animation.md` | `src/idle-animation.js` | `src/agent-avatar.js` — anchor `IDLE_LOOP` |
-| 03 | `03-agent-home-integration.md` | (none) | `agent-home.html` — anchor `AGENT_HOME_ORPHANS` |
-| 04 | `04-discover-page.md` | `public/discover/index.html`, `public/discover/discover.js`, `public/discover/discover.css` | homepage CTA added via anchor `DISCOVER_LINK` in `index.html` |
-| 05 | `05-lobehub-real-integration.md` | everything under `lobehub-plugin/` | — |
-| 06 | `06-camera-capture-resolution.md` | — | `src/camera-capture.js` (delete or repurpose) + `src/camera-capture.css` |
-| 07 | `07-qa-smoke-test.md` | `docs/SMOKE_TEST.md` | — (read-only audit; may open small surgical fixes in any file with 1-line patch rule) |
+| #   | Prompt                            | Primary new files                                                                           | Shared-file anchors                                                                   |
+| --- | --------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| 01  | `01-embed-bridges.md`             | `src/embed-host-bridge.js`, `src/embed-action-bridge.js`                                    | `src/element.js` — anchor `EMBED_BRIDGES`                                             |
+| 02  | `02-idle-animation.md`            | `src/idle-animation.js`                                                                     | `src/agent-avatar.js` — anchor `IDLE_LOOP`                                            |
+| 03  | `03-agent-home-integration.md`    | (none)                                                                                      | `agent-home.html` — anchor `AGENT_HOME_ORPHANS`                                       |
+| 04  | `04-discover-page.md`             | `public/discover/index.html`, `public/discover/discover.js`, `public/discover/discover.css` | homepage CTA added via anchor `DISCOVER_LINK` in `index.html`                         |
+| 05  | `05-lobehub-real-integration.md`  | everything under `lobehub-plugin/`                                                          | —                                                                                     |
+| 06  | `06-camera-capture-resolution.md` | —                                                                                           | `src/camera-capture.js` (delete or repurpose) + `src/camera-capture.css`              |
+| 07  | `07-qa-smoke-test.md`             | `docs/SMOKE_TEST.md`                                                                        | — (read-only audit; may open small surgical fixes in any file with 1-line patch rule) |
 
 ## Shared-file anchor protocol
 
@@ -43,6 +43,7 @@ This guarantees parallel runs never stomp each other even if two agents touch th
 ## What counts as "done"
 
 A prompt is complete when:
+
 - Every file listed under **Deliverables** exists and passes `node --check`.
 - `npm run build` succeeds with zero new warnings.
 - The **Acceptance** checklist passes.

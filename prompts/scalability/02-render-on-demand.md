@@ -24,8 +24,8 @@ Modified [src/viewer.js](../../src/viewer.js) with:
 
 1. `invalidate()` method on `Viewer`.
 2. Reworked `animate()`:
-   - If any animation mixer action is active (`this._animating === true`) → keep looping (`requestAnimationFrame(this.animate)`) and updating mixer.
-   - Else → render once if `_needsRender`, then stop scheduling.
+    - If any animation mixer action is active (`this._animating === true`) → keep looping (`requestAnimationFrame(this.animate)`) and updating mixer.
+    - Else → render once if `_needsRender`, then stop scheduling.
 3. `_needsRender` flag set by `invalidate()`, cleared in `animate()` after rendering.
 4. `_animating` flag maintained when animation clips play/pause/finish.
 5. Invalidation wired into every mutation site — see list below.
@@ -64,6 +64,7 @@ Audit the full file. At minimum:
 - `controls.update()` currently runs every frame inside `animate()`; it still needs to run when auto-rotate is active (which is why auto-rotate sets `_animating = true`). When not animating, `controls.update()` only needs to run when user interacts — but OrbitControls' damping also needs `update()` called each frame until damping settles. **If `controls.enableDamping === true`, treat user interaction as short-lived animation**: on `start` event begin animating, on `end` event stop after damping settles (a few RAF ticks). Simpler alternative: on `change` event, invalidate and always call `controls.update()` inside the render path whether animating or not.
 
 Recommended simplest correct approach:
+
 - Every `change` event → invalidate.
 - `animate()` always calls `controls.update()` before `renderer.render()`.
 - If damping is on, also call `invalidate()` for one extra frame after `change` to let damping settle — in practice OrbitControls keeps firing `change` during damping, so this is self-sustaining.

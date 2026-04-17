@@ -14,16 +14,16 @@ The iframe snippet from task 01 is a good default but embedders want knobs — s
 
 ### Supported params
 
-| Param | Values | Default |
-|---|---|---|
-| `height` | `<css length>` | `480px` |
-| `width` | `<css length>` | `100%` |
-| `theme` | `light` / `dark` / `auto` | `auto` |
-| `autoplay` | `0` / `1` | `1` |
-| `rotate` | `0` / `1` | `1` |
-| `bg` | `transparent` / `solid` / `gradient` | `transparent` |
-| `variant` | `<slug>` | — |
-| `camera` | `"20deg 68deg 3.4m"` etc. | — |
+| Param      | Values                               | Default       |
+| ---------- | ------------------------------------ | ------------- |
+| `height`   | `<css length>`                       | `480px`       |
+| `width`    | `<css length>`                       | `100%`        |
+| `theme`    | `light` / `dark` / `auto`            | `auto`        |
+| `autoplay` | `0` / `1`                            | `1`           |
+| `rotate`   | `0` / `1`                            | `1`           |
+| `bg`       | `transparent` / `solid` / `gradient` | `transparent` |
+| `variant`  | `<slug>`                             | —             |
+| `camera`   | `"20deg 68deg 3.4m"` etc.            | —             |
 
 The embed page honors these by setting `<model-viewer>` attributes. CSS-injected values are validated with `safeCssValue` / `safeCssLength` helpers that already exist in `api/mcp.js` — lift them into a shared module `src/shared/safe-css.js` that both files import.
 
@@ -34,6 +34,7 @@ Inline under the snippet: labeled inputs for each param. As the user flips them,
 ### Snippet formats
 
 Offer three:
+
 1. **iframe** — the default.
 2. **Web component** — `<script src=".../agent-3d.js" />` + `<agent-3d id="…" height="…" …>`.
 3. **oEmbed URL** — a link embedders paste into platforms that auto-resolve oEmbed (Slack, Notion, etc.).

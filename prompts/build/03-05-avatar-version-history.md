@@ -6,10 +6,10 @@ Layer 3 lets users regenerate the GLB without breaking their `agentId` — but e
 
 ## Context
 
-- Avatar table: `avatars` in [api/_lib/schema.sql](../../api/_lib/schema.sql) — already has `version int not null default 1` and `checksum_sha256`.
+- Avatar table: `avatars` in [api/\_lib/schema.sql](../../api/_lib/schema.sql) — already has `version int not null default 1` and `checksum_sha256`.
 - Agent record: `agents.avatar_id` in the same schema.
 - Swap endpoint: scoped in `03-01-avatar-swap.md` / `03-02-swap-avatar-on-agent.md`. This prompt assumes one of them is merged.
-- R2 helper: [api/_lib/r2.js](../../api/_lib/r2.js).
+- R2 helper: [api/\_lib/r2.js](../../api/_lib/r2.js).
 
 ## What to build
 

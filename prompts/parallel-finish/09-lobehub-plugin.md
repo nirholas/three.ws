@@ -38,22 +38,22 @@ lobehub-plugin/
 
 ```json
 {
-  "identifier": "3dagent",
-  "schemaVersion": 1,
-  "meta": {
-    "title": "3D Agent",
-    "description": "Render a 3D avatar that reacts to the chat.",
-    "avatar": "https://3dagent.vercel.app/favicon.ico",
-    "tags": ["avatar", "3d", "agent"]
-  },
-  "ui": {
-    "position": "right",
-    "size": { "width": 320, "height": 420 }
-  },
-  "settings": [
-    { "name": "agentId", "type": "string", "required": true, "title": "Agent ID" },
-    { "name": "apiOrigin", "type": "string", "default": "https://3dagent.vercel.app" }
-  ]
+	"identifier": "3dagent",
+	"schemaVersion": 1,
+	"meta": {
+		"title": "3D Agent",
+		"description": "Render a 3D avatar that reacts to the chat.",
+		"avatar": "https://3dagent.vercel.app/favicon.ico",
+		"tags": ["avatar", "3d", "agent"]
+	},
+	"ui": {
+		"position": "right",
+		"size": { "width": 320, "height": 420 }
+	},
+	"settings": [
+		{ "name": "agentId", "type": "string", "required": true, "title": "Agent ID" },
+		{ "name": "apiOrigin", "type": "string", "default": "https://3dagent.vercel.app" }
+	]
 }
 ```
 

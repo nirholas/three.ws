@@ -10,23 +10,23 @@ When the embed is the first thing a user sees inside another app, slow cold star
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
+| File                                   | Why                                             |
+| :------------------------------------- | :---------------------------------------------- |
 | [vite.config.js](../../vite.config.js) | Bundle config — needs a separate `embed` entry. |
-| [src/element.js](../../src/element.js) | Boot path — find what's eagerly imported. |
-| [src/lib.js](../../src/lib.js) | Library entry — current bundle composition. |
-| [package.json](../../package.json) | `build:lib` script. |
+| [src/element.js](../../src/element.js) | Boot path — find what's eagerly imported.       |
+| [src/lib.js](../../src/lib.js)         | Library entry — current bundle composition.     |
+| [package.json](../../package.json)     | `build:lib` script.                             |
 
 ## Build this
 
 1. Add a new Vite build target `embed` that produces `dist-embed/`. Entry: `src/embed-bootstrap.js` — a tiny shim (~10KB) that:
-   - Reads the agent id from script tag.
-   - Renders a placeholder dot/loader.
-   - Dynamically imports the heavy bundle on `requestIdleCallback` (or after IntersectionObserver fires).
+    - Reads the agent id from script tag.
+    - Renders a placeholder dot/loader.
+    - Dynamically imports the heavy bundle on `requestIdleCallback` (or after IntersectionObserver fires).
 2. Code-split:
-   - **Always:** bootstrap, host-bridge, agent-protocol stub.
-   - **Lazy on visible:** Three.js, viewer, agent-avatar.
-   - **Lazy on first interaction:** ethers, agent-identity, agent-skills tools.
+    - **Always:** bootstrap, host-bridge, agent-protocol stub.
+    - **Lazy on visible:** Three.js, viewer, agent-avatar.
+    - **Lazy on first interaction:** ethers, agent-identity, agent-skills tools.
 3. Add a CI check that fails if the always-loaded chunk exceeds 50KB gzipped.
 4. Preload the lazy chunks on hover (when the embed dot becomes visible) using `<link rel="modulepreload">`.
 5. Inline a 1KB CSS-only loading shimmer so the user sees something within 100ms.

@@ -37,7 +37,11 @@
 			"name": "Researcher",
 			"bio": "A methodical investigator who digs into details and questions assumptions.",
 			"systemPrompt": "You are a careful, inquisitive researcher. Ask clarifying questions before concluding. Surface trade-offs and edge cases. Prefer precision over brevity. Acknowledge uncertainty explicitly.",
-			"catchphrases": ["Interesting — let me look closer", "What's the underlying assumption here?", "That depends on…"],
+			"catchphrases": [
+				"Interesting — let me look closer",
+				"What's the underlying assumption here?",
+				"That depends on…"
+			],
 			"sentimentBias": -0.1,
 			"voiceProvider": "web",
 			"voiceId": null,

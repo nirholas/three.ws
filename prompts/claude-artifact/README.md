@@ -10,7 +10,7 @@ Claude.ai renders each `html` Artifact in a sandboxed iframe. A Claude user shou
 
 ## What's the deliverable exactly
 
-Not code. The deliverable for this directory is *prompts* that a future Claude Code session will execute to produce:
+Not code. The deliverable for this directory is _prompts_ that a future Claude Code session will execute to produce:
 
 1. A copy-pasteable minimal HTML snippet (task 01).
 2. A hosted single-file bundle, `https://3dagent.vercel.app/artifact.js`, that the snippet loads (task 02).

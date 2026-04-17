@@ -3,6 +3,7 @@
 ## Why this exists
 
 The user signs the SIWE message client-side. The server must:
+
 1. Recover the signing address.
 2. Validate the nonce is ours, unused, unexpired.
 3. Bind that address to a user row (find-or-create).
@@ -25,11 +26,12 @@ Do not touch existing auth handlers.
 `POST /api/auth/siwe/verify`
 
 Body:
+
 ```json
 {
-  "message": "<full EIP-4361 message the user signed>",
-  "signature": "0x...",
-  "purpose": "login"
+	"message": "<full EIP-4361 message the user signed>",
+	"signature": "0x...",
+	"purpose": "login"
 }
 ```
 
@@ -37,15 +39,15 @@ Steps:
 
 1. IP rate limit: `siweVerifyIp` (60 / 10m). On fail → 429.
 2. Parse the SIWE message. Extract: `domain`, `address`, `statement`, `uri`, `version`, `chainId`, `nonce`, `issuedAt`, `expirationTime`.
-   - Minimum viable parser: regex out the fields. No new dep.
+    - Minimum viable parser: regex out the fields. No new dep.
 3. Reject if `domain !== new URL(env.APP_ORIGIN).host`.
 4. Reject if `version !== '1'`.
 5. Reject if `expirationTime` is present and past, or if `issuedAt` is >10 min old.
 6. Recover signer: `ethers.verifyMessage(message, signature)` (ethers v6 is already a dep). Reject if `recovered.toLowerCase() !== address.toLowerCase()`.
 7. `SELECT * FROM auth_nonces WHERE nonce = $1 FOR UPDATE` inside a transaction. Reject if row absent, `expires_at < now`, or `used_at IS NOT NULL`. Then `UPDATE auth_nonces SET used_at = now() WHERE nonce = $1`.
 8. Find-or-create user:
-   - `SELECT * FROM users WHERE lower(wallet_address) = lower($1)`.
-   - If missing, `INSERT INTO users (id, wallet_address, wallet_chain_id, wallet_linked_at, created_at) VALUES (...)`. `email` stays NULL.
+    - `SELECT * FROM users WHERE lower(wallet_address) = lower($1)`.
+    - If missing, `INSERT INTO users (id, wallet_address, wallet_chain_id, wallet_linked_at, created_at) VALUES (...)`. `email` stays NULL.
 9. Issue session: reuse `createSession({ userId, userAgent, ip })` from `api/_lib/auth.js`. Set `__Host-sid` cookie with the same attributes the email login uses.
 10. Respond `200 { user: { id, walletAddress, chainId, createdAt } }`.
 

@@ -6,9 +6,9 @@ import { env } from './env.js';
 import { sql } from './db.js';
 import { randomToken, sha256, hmacSha256, constantTimeEquals } from './crypto.js';
 
-const ACCESS_TTL_SEC = 60 * 60;              // 1h access tokens
-const REFRESH_TTL_SEC = 60 * 60 * 24 * 30;   // 30d refresh tokens
-const SESSION_TTL_SEC = 60 * 60 * 24 * 30;   // 30d browser sessions
+const ACCESS_TTL_SEC = 60 * 60; // 1h access tokens
+const REFRESH_TTL_SEC = 60 * 60 * 24 * 30; // 30d refresh tokens
+const SESSION_TTL_SEC = 60 * 60 * 24 * 30; // 30d browser sessions
 
 // Lazy: env.JWT_SECRET throws if unset, so defer encoding until first use.
 let _jwtKey;
@@ -75,7 +75,10 @@ export async function rotateRefreshToken({ oldSecret, clientId, narrowScope }) {
 		// Reuse detected — revoke whole chain for this user+client.
 		await sql`update oauth_refresh_tokens set revoked_at = now()
 		          where user_id = ${row.user_id} and client_id = ${clientId} and revoked_at is null`;
-		throw Object.assign(new Error('invalid_grant'), { status: 400, code: 'refresh_reuse_detected' });
+		throw Object.assign(new Error('invalid_grant'), {
+			status: 400,
+			code: 'refresh_reuse_detected',
+		});
 	}
 	if (new Date(row.expires_at) < new Date()) {
 		throw Object.assign(new Error('invalid_grant'), { status: 400, code: 'refresh_expired' });
@@ -84,7 +87,12 @@ export async function rotateRefreshToken({ oldSecret, clientId, narrowScope }) {
 	// subset). Without this, a caller could re-widen back to the full scope on
 	// the next rotation by omitting `scope`.
 	const effectiveScope = typeof narrowScope === 'function' ? narrowScope(row.scope) : row.scope;
-	const next = await issueRefreshToken({ userId: row.user_id, clientId, scope: effectiveScope, resource: row.resource });
+	const next = await issueRefreshToken({
+		userId: row.user_id,
+		clientId,
+		scope: effectiveScope,
+		resource: row.resource,
+	});
 	await sql`update oauth_refresh_tokens set revoked_at = now(), replaced_by = ${next.id}, last_used_at = now()
 	          where id = ${row.id}`;
 	return { next, userId: row.user_id, scope: effectiveScope, resource: row.resource };
@@ -106,8 +114,7 @@ const LEGACY_COOKIE = 'sid';
 
 function readSessionCookie(req) {
 	const cookie = req.headers.cookie || '';
-	const m = cookie.match(/(?:^|;\s*)__Host-sid=([^;]+)/)
-		|| cookie.match(/(?:^|;\s*)sid=([^;]+)/);
+	const m = cookie.match(/(?:^|;\s*)__Host-sid=([^;]+)/) || cookie.match(/(?:^|;\s*)sid=([^;]+)/);
 	return m ? decodeURIComponent(m[1]) : null;
 }
 
@@ -178,7 +185,11 @@ export function isSameSiteOrigin(req) {
 	if (origin) return origin === env.APP_ORIGIN;
 	const referer = req.headers.referer;
 	if (!referer) return false;
-	try { return new URL(referer).origin === env.APP_ORIGIN; } catch { return false; }
+	try {
+		return new URL(referer).origin === env.APP_ORIGIN;
+	} catch {
+		return false;
+	}
 }
 
 // ── bearer extraction (OAuth access tokens OR API keys) ─────────────────────

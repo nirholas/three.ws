@@ -33,6 +33,7 @@ export class IdleAnimation {
 ```
 
 Behavior:
+
 - **Breathing**: scale spine on Y by ±1% at 0.25Hz (~4s per breath).
 - **Micro-sway**: ±0.5° rotation on spine root at 0.08Hz.
 - **Head glance**: every 4–9s (random), rotate head yaw ±8° over 500ms, hold 200ms, return over 800ms.

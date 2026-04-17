@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Add WebXR AR Quick Look support for viewing models in augmented reality"
+description: 'Add WebXR AR Quick Look support for viewing models in augmented reality'
 ---
 
 # AR Quick Look / WebXR
@@ -17,9 +17,9 @@ Use the WebXR Device API for AR:
 
 ```js
 const session = await navigator.xr.requestSession('immersive-ar', {
-    requiredFeatures: ['hit-test', 'local-floor'],
-    optionalFeatures: ['dom-overlay'],
-    domOverlay: { root: document.getElementById('ar-overlay') }
+	requiredFeatures: ['hit-test', 'local-floor'],
+	optionalFeatures: ['dom-overlay'],
+	domOverlay: { root: document.getElementById('ar-overlay') },
 });
 ```
 
@@ -32,20 +32,23 @@ const session = await navigator.xr.requestSession('immersive-ar', {
 ### 2. iOS Quick Look Fallback
 
 For iOS Safari (no WebXR):
+
 - Generate USDZ file from the GLB using a client-side converter
 - Or provide a `<a rel="ar">` link with the GLB → iOS handles natively
 - Apple's AR Quick Look supports GLB directly since iOS 15
 
 ```html
 <a rel="ar" href="model.glb">
-    <img src="ar-icon.png">
+	<img src="ar-icon.png" />
 </a>
 ```
 
 ### 3. Android Scene Viewer Fallback
 
 For Android Chrome without WebXR:
+
 - Use Google's Scene Viewer intent:
+
 ```
 intent://arvr.google.com/scene-viewer/1.0?file=MODEL_URL#Intent;scheme=https;package=com.google.android.googlequicksearchbox;end;
 ```
@@ -53,6 +56,7 @@ intent://arvr.google.com/scene-viewer/1.0?file=MODEL_URL#Intent;scheme=https;pac
 ### 4. AR UI Overlay
 
 During AR session:
+
 - Crosshair reticle for surface detection
 - "Place Model" tap handler
 - Scale/rotate gesture indicators

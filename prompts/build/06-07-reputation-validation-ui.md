@@ -10,24 +10,24 @@ The on-chain reputation score is meaningless if no one sees it. Surface the scor
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| [src/erc8004/reputation.js](../../src/erc8004/reputation.js) | `submitFeedback`, `getReputation`, `getRecentReviews`. |
-| [src/agent-home.js](../../src/agent-home.js) | Identity card mount point. |
-| [public/agent/index.html](../../public/agent/index.html) | Public agent page. |
-| [api/onchain/agent/[chainId]/[tokenId].js](../../api/onchain/agent/[chainId]/[tokenId].js) | Read endpoint from 06-06. |
+| File                                                                                       | Why                                                    |
+| :----------------------------------------------------------------------------------------- | :----------------------------------------------------- |
+| [src/erc8004/reputation.js](../../src/erc8004/reputation.js)                               | `submitFeedback`, `getReputation`, `getRecentReviews`. |
+| [src/agent-home.js](../../src/agent-home.js)                                               | Identity card mount point.                             |
+| [public/agent/index.html](../../public/agent/index.html)                                   | Public agent page.                                     |
+| [api/onchain/agent/[chainId]/[tokenId].js](../../api/onchain/agent/[chainId]/[tokenId].js) | Read endpoint from 06-06.                              |
 
 ## Build this
 
 1. In [src/agent-home.js](../../src/agent-home.js), add a `<reputation-card>` block:
-   - Star rating (5-star, derived from `score_x100 / 20`).
-   - Total feedback count.
-   - "View on chain" link → block explorer for the registry contract.
+    - Star rating (5-star, derived from `score_x100 / 20`).
+    - Total feedback count.
+    - "View on chain" link → block explorer for the registry contract.
 2. On the public agent page, add a "Leave feedback" button → opens a modal:
-   - Connect wallet (reuse [public/wallet-login.js](../../public/wallet-login.js) flow).
-   - Slider: −100 to +100, default 0.
-   - Optional 280-char comment (stored in IPFS, hash submitted on-chain).
-   - Submit → `submitFeedback(chainId, tokenId, score, ipfsHash)`.
+    - Connect wallet (reuse [public/wallet-login.js](../../public/wallet-login.js) flow).
+    - Slider: −100 to +100, default 0.
+    - Optional 280-char comment (stored in IPFS, hash submitted on-chain).
+    - Submit → `submitFeedback(chainId, tokenId, score, ipfsHash)`.
 3. Show a small "verified ✓" badge if `count >= 5` and `score_x100 >= 4000` (i.e. avg ≥ +40). Otherwise show neutral.
 4. Cache the read in the client for 60s to avoid hammering the indexer.
 5. If the agent has no on-chain twin, hide the entire reputation block (don't show "0 reviews" — looks broken).

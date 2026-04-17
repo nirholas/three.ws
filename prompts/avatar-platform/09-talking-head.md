@@ -20,8 +20,8 @@ Depends on task 02.
 1. **Vendor** — clone upstream, record SHA + MIT license in `src/vendor/talking-head/NOTICE`. Copy only the engine module(s); skip demo HTML/CSS.
 2. **Dependencies** — TalkingHead expects three.js (we have it) and, for its TTS path, browser APIs. It has optional ties to ElevenLabs / Azure; **do not vendor those paths** — task 10 provides our own TTS with visemes.
 3. **Adapter** `src/agent/talking-head.js`:
-   - `class TalkingHead { attach(vrm): void; detach(): void; async speak(text, { visemes?, audio? }); setMood(name, strength); playGesture(name); idleOn(); idleOff(); dispose(); }`
-   - If `visemes` + `audio` are supplied (from task 10), use them directly. If only `text` is supplied, emit a warning — task 10 is the expected provider.
+    - `class TalkingHead { attach(vrm): void; detach(): void; async speak(text, { visemes?, audio? }); setMood(name, strength); playGesture(name); idleOn(); idleOff(); dispose(); }`
+    - If `visemes` + `audio` are supplied (from task 10), use them directly. If only `text` is supplied, emit a warning — task 10 is the expected provider.
 4. **Render-loop integration** — the adapter registers a `tick(delta)` callback that the existing render loop already calls (see how [src/viewer.js](../../src/viewer.js) drives animation). Don't start a second RAF loop.
 5. **Auto-attach** — observe `activeVRM` changes. When a new VRM loads (task 02 swap), detach from the old one (if any) and attach to the new. When `activeVRM` is null, idle is paused.
 6. **Animation library** — optional: if upstream bundles or expects Mixamo FBX idle loops, put them in [public/animations/](../../public/animations/) with per-file license notes. Keep the set minimal (1 idle, 1 wave, 1 nod).

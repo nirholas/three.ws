@@ -11,8 +11,8 @@ When anyone pastes an agent URL like `https://3dagent.vercel.app/agent/ab12cd` i
 - The share panel on that page is already built and works. You only need to improve what link-previewers see — do not touch the share-panel UI.
 - Agent records are fetched via `GET /api/agents/:id` → `{ agent: { id, name, description, avatar_id, ... } }` (see [api/agents/[id].js](../../api/agents/[id].js)).
 - Avatar records: `GET /api/avatars/:id` → `{ avatar: { url, thumbnail_url, ... } }`. Use `thumbnail_url` if present; otherwise render the OG image from the GLB (see "OG image implementation" below).
-- HTTP helpers: [api/_lib/http.js](../../api/_lib/http.js) exports `cors`, `json`, `error`, `wrap`, `method`.
-- Avatar helpers: [api/_lib/avatars.js](../../api/_lib/avatars.js) exports `getAvatar`, `resolveAvatarUrl`.
+- HTTP helpers: [api/\_lib/http.js](../../api/_lib/http.js) exports `cors`, `json`, `error`, `wrap`, `method`.
+- Avatar helpers: [api/\_lib/avatars.js](../../api/_lib/avatars.js) exports `getAvatar`, `resolveAvatarUrl`.
 
 ## What to build
 
@@ -43,16 +43,22 @@ Add these tags. Use placeholder `__AGENT__` tokens for any per-agent values — 
 
 ```html
 <!-- unfurl (populated at runtime from identity) -->
-<meta property="og:type"        content="website" />
-<meta property="og:title"       content="Agent" id="og-title" />
-<meta property="og:description" content="An embodied 3D agent."  id="og-description" />
-<meta property="og:image"       content=""   id="og-image" />
-<meta property="og:url"         content=""   id="og-url" />
-<meta name="twitter:card"       content="summary_large_image" />
-<meta name="twitter:title"      content="Agent" id="tw-title" />
-<meta name="twitter:description" content=""  id="tw-description" />
-<meta name="twitter:image"      content=""   id="tw-image" />
-<link rel="alternate" type="application/json+oembed" href="" id="oembed-link" title="Agent oEmbed" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Agent" id="og-title" />
+<meta property="og:description" content="An embodied 3D agent." id="og-description" />
+<meta property="og:image" content="" id="og-image" />
+<meta property="og:url" content="" id="og-url" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Agent" id="tw-title" />
+<meta name="twitter:description" content="" id="tw-description" />
+<meta name="twitter:image" content="" id="tw-image" />
+<link
+	rel="alternate"
+	type="application/json+oembed"
+	href=""
+	id="oembed-link"
+	title="Agent oEmbed"
+/>
 ```
 
 In the runtime helper, populate every `id` above once identity loads. `og:image` and `twitter:image` → `/api/agent/{id}/og`. `og:url` → `location.href`. `oembed-link.href` → `/api/oembed?url=<encoded agent url>`.
@@ -84,14 +90,15 @@ Do not touch any other route.
 1. `node --check api/agent-og.js api/agent-oembed.js` passes.
 2. `npx vite build` — note result.
 3. Manual URL checks (report the response shape):
-   - `GET /api/agent/SOMEID/og` → 200 image or 302 to thumbnail.
-   - `GET /api/oembed?url=http://localhost:3000/agent/SOMEID` → 200 JSON with `html` containing an iframe pointing at `/agent/SOMEID/embed`.
-   - `GET /agent/SOMEID` → `<head>` contains populated `og:image` with `/api/agent/SOMEID/og`.
+    - `GET /api/agent/SOMEID/og` → 200 image or 302 to thumbnail.
+    - `GET /api/oembed?url=http://localhost:3000/agent/SOMEID` → 200 JSON with `html` containing an iframe pointing at `/agent/SOMEID/embed`.
+    - `GET /agent/SOMEID` → `<head>` contains populated `og:image` with `/api/agent/SOMEID/og`.
 4. Paste a real agent URL into https://www.opengraph.xyz/ or Slack's link-preview debugger and confirm the card renders (manual — flag if you can't test this).
 
 ## Reporting
 
 Report:
+
 - Files created and line counts
 - Files edited with which sections touched
 - `node --check` / `vite build` results

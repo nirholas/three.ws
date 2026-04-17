@@ -16,7 +16,9 @@ const registerSchema = z.object({
 	scope: z.string().max(500).optional(),
 	grant_types: z.array(z.string()).optional(),
 	response_types: z.array(z.string()).optional(),
-	token_endpoint_auth_method: z.enum(['none', 'client_secret_basic', 'client_secret_post']).optional(),
+	token_endpoint_auth_method: z
+		.enum(['none', 'client_secret_basic', 'client_secret_post'])
+		.optional(),
 	software_id: z.string().max(120).optional(),
 	software_version: z.string().max(60).optional(),
 });
@@ -36,7 +38,12 @@ export default wrap(async (req, res) => {
 	for (const uri of body.redirect_uris) {
 		const u = new URL(uri);
 		if (u.protocol === 'http:' && !/^localhost$|^127\.0\.0\.1$/.test(u.hostname)) {
-			return error(res, 400, 'invalid_redirect_uri', 'non-https redirect URIs only allowed for localhost');
+			return error(
+				res,
+				400,
+				'invalid_redirect_uri',
+				'non-https redirect URIs only allowed for localhost',
+			);
 		}
 	}
 

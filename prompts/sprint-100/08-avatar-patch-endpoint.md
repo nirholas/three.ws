@@ -16,7 +16,7 @@ The editor can export a GLB but has no server path to persist it. A `PATCH /api/
 
 - [api/avatars/[id].js](../../api/avatars/[id].js) — the current shape.
 - [api/avatars/presign.js](../../api/avatars/presign.js) — the R2 upload/presign pattern (reuse, don't reimplement).
-- [api/_lib/db.js](../../api/_lib/db.js), [api/_lib/http.js](../../api/_lib/http.js), [api/_lib/auth.js](../../api/_lib/auth.js).
+- [api/\_lib/db.js](../../api/_lib/db.js), [api/\_lib/http.js](../../api/_lib/http.js), [api/\_lib/auth.js](../../api/_lib/auth.js).
 
 ## Deliverable
 
@@ -25,12 +25,12 @@ The editor can export a GLB but has no server path to persist it. A `PATCH /api/
 - Auth: session cookie OR bearer with `avatars:write` scope.
 - Body: `{ glbUrl: string }` — a signed R2 URL the client already uploaded to via the existing presign flow. NEVER accept raw GLB bytes on this endpoint.
 - Steps:
-  1. Load the avatar row. 404 if missing.
-  2. Ownership check: `avatar.owner_user_id === user.id`. Else 403.
-  3. `headObject()` the `glbUrl` key — reject if size > 25 MB or content-type is not `model/gltf-binary` (or `application/octet-stream` for R2). If the helper doesn't exist, inline a minimal HEAD via the R2 SDK already in use.
-  4. Insert a row into an `avatar_versions` table (see prompt 10; if table doesn't exist yet, try the insert inside a try/catch — on missing-table error, log a warning and continue).
-  5. Update the avatar row: `current_glb_url = glbUrl`, `updated_at = now()`.
-  6. Return `{ ok: true, avatar: { id, currentGlbUrl, updatedAt } }`.
+    1. Load the avatar row. 404 if missing.
+    2. Ownership check: `avatar.owner_user_id === user.id`. Else 403.
+    3. `headObject()` the `glbUrl` key — reject if size > 25 MB or content-type is not `model/gltf-binary` (or `application/octet-stream` for R2). If the helper doesn't exist, inline a minimal HEAD via the R2 SDK already in use.
+    4. Insert a row into an `avatar_versions` table (see prompt 10; if table doesn't exist yet, try the insert inside a try/catch — on missing-table error, log a warning and continue).
+    5. Update the avatar row: `current_glb_url = glbUrl`, `updated_at = now()`.
+    6. Return `{ ok: true, avatar: { id, currentGlbUrl, updatedAt } }`.
 - Rate limit: `20/hour per user`.
 
 ## Constraints
