@@ -8,7 +8,7 @@ import { SkillRegistry } from './skills/index.js';
 import { Memory } from './memory/index.js';
 import { loadManifest, fetchRelative } from './manifest.js';
 import { resolveURI } from './ipfs.js';
-import { resolveAgentById, AgentResolveError } from './agent-resolver.js';
+import { resolveAgentById, resolveByAgentId, AgentResolveError } from './agent-resolver.js';
 import { parseAgentRef, resolveOnchainAgent, toManifest } from './erc8004/resolver.js';
 
 const MODES = ['inline', 'floating', 'section', 'fullscreen'];
@@ -194,7 +194,7 @@ const BASE_STYLE = `
 		padding: 8px 14px;
 		border-radius: 999px;
 	}
-	.error {
+	.error, .agent-3d-error {
 		position: absolute;
 		inset: 16px;
 		display: grid;
@@ -242,6 +242,8 @@ class Agent3DElement extends HTMLElement {
 		this._mqNarrowHandler = null;
 		this._ro = null;
 		this._outsideTapHandler = null;
+		this._autoResolvedManifest = false;
+		this._suppressAttrChange = false;
 	}
 
 	connectedCallback() {
@@ -258,7 +260,7 @@ class Agent3DElement extends HTMLElement {
 	}
 
 	attributeChangedCallback(name, oldVal, newVal) {
-		if (!this._mounted) return;
+		if (!this._mounted || this._suppressAttrChange) return;
 		if (['mode', 'position', 'width', 'height', 'responsive'].includes(name))
 			this._applyLayout();
 		if (['src', 'manifest', 'body', 'agent-id'].includes(name)) {
@@ -736,7 +738,14 @@ class Agent3DElement extends HTMLElement {
 		} catch (err) {
 			console.error('[agent-3d] boot failed', err);
 			this._loadingEl.hidden = true;
-			this._showError(err);
+			if (err instanceof AgentResolveError && err.code === 'not-found') {
+				const el = document.createElement('div');
+				el.className = 'agent-3d-error';
+				el.textContent = 'Agent not found';
+				this.shadowRoot.appendChild(el);
+			} else {
+				this._showError(err);
+			}
 			this.dispatchEvent(
 				new CustomEvent('agent:error', {
 					detail: { phase: 'boot', error: err },
@@ -782,7 +791,16 @@ class Agent3DElement extends HTMLElement {
 					throw new Error(`On-chain resolve failed: ${resolved.error}`);
 				return toManifest(resolved);
 			}
-			// Fall back to backend agent by UUID
+			// Explicit manifest= wins over backend UUID resolution.
+			if (manifestAttr) return loadManifest(manifestAttr);
+			// Resolve agent-id → manifestUrl via backend, then load that manifest.
+			const manifestUrl = await resolveByAgentId(agentIdAttr);
+			if (manifestUrl) {
+				this._autoResolvedManifest = true;
+				this.setAttribute('manifest', manifestUrl);
+				return loadManifest(manifestUrl);
+			}
+			// No manifestUrl on agent record — build inline manifest from avatar data.
 			return resolveAgentById(agentIdAttr);
 		}
 		if (manifestAttr) return loadManifest(manifestAttr);
@@ -869,6 +887,17 @@ class Agent3DElement extends HTMLElement {
 	}
 
 	_teardown() {
+		// Clear manifest that was auto-resolved from agent-id so the next boot resolves fresh.
+		// Suppress attributeChangedCallback to avoid a reboot loop.
+		if (this._autoResolvedManifest) {
+			this._suppressAttrChange = true;
+			try {
+				this.removeAttribute('manifest');
+			} finally {
+				this._suppressAttrChange = false;
+			}
+			this._autoResolvedManifest = false;
+		}
 		try {
 			this._io?.disconnect();
 		} catch {}

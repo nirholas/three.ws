@@ -97,4 +97,10 @@ export const env = {
 	get PRIVY_APP_ID() {
 		return req('PRIVY_APP_ID');
 	},
+
+	// Mainnet RPC URL for ENS resolution. Falls back to ethers public default provider.
+	// Recommended: set to an Alchemy / Infura URL for reliability.
+	get MAINNET_RPC_URL() {
+		return opt('MAINNET_RPC_URL');
+	},
 };

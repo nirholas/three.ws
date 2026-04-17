@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Validation Records · 3D Agent</title>
+		<link rel="icon" href="/favicon.ico" />
+		<style>
+			:root {
+				color-scheme: dark;
+				--accent: #6a5cff;
+				--accent2: #ff5ca8;
+				--border: #22222e;
+				--bg: #0b0b10;
+				--panel: #14141c;
+			}
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				font: 15px/1.55 -apple-system, system-ui, Segoe UI, Roboto, sans-serif;
+				color: #eee;
+				margin: 0;
+				background: var(--bg);
+				min-height: 100vh;
+			}
+			a {
+				color: #9a8cff;
+				text-decoration: none;
+			}
+			header {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: 16px 24px;
+				border-bottom: 1px solid var(--border);
+				position: sticky;
+				top: 0;
+				background: var(--bg);
+				z-index: 5;
+			}
+			.brand {
+				font-weight: 600;
+				letter-spacing: -0.01em;
+			}
+			nav a {
+				margin-right: 14px;
+				color: #aaa;
+				font-size: 14px;
+			}
+			nav a.active {
+				color: #fff;
+			}
+			main {
+				padding: 28px;
+				max-width: 1200px;
+				margin: 0 auto;
+			}
+			h1 {
+				font-size: 22px;
+				margin: 0 0 6px;
+				letter-spacing: -0.01em;
+			}
+			.sub {
+				color: #888;
+				margin: 0 0 22px;
+				font-size: 14px;
+			}
+			.toolbar {
+				display: flex;
+				gap: 12px;
+				margin-bottom: 24px;
+				flex-wrap: wrap;
+				align-items: center;
+			}
+			.toolbar input {
+				padding: 9px 11px;
+				background: #0f0f17;
+				border: 1px solid var(--border);
+				color: #eee;
+				border-radius: 8px;
+				font-size: 14px;
+			}
+			.toolbar input:focus {
+				outline: none;
+				border-color: var(--accent);
+			}
+			.form-group {
+				margin-bottom: 18px;
+			}
+			label {
+				display: block;
+				font-size: 13px;
+				font-weight: 500;
+				color: #bbb;
+				margin-bottom: 6px;
+			}
+			input[type='text'],
+			textarea,
+			select {
+				width: 100%;
+				background: #0f0f17;
+				border: 1px solid var(--border);
+				color: #eee;
+				padding: 9px 11px;
+				border-radius: 8px;
+				font-size: 14px;
+				font-family: inherit;
+			}
+			input[type='text']:focus,
+			textarea:focus,
+			select:focus {
+				outline: none;
+				border-color: var(--accent);
+			}
+			textarea {
+				resize: vertical;
+				font-family: ui-monospace, SF Mono, Menlo, monospace;
+				font-size: 13px;
+			}
+			.btn {
+				padding: 9px 14px;
+				border-radius: 9px;
+				border: 0;
+				font-size: 13px;
+				font-weight: 600;
+				cursor: pointer;
+				background: var(--accent);
+				color: #fff;
+			}
+			.btn:hover {
+				filter: brightness(1.1);
+			}
+			.btn:disabled {
+				opacity: 0.5;
+				cursor: not-allowed;
+				filter: none;
+			}
+			.btn.sec {
+				background: #222230;
+				color: #ddd;
+			}
+			.err {
+				padding: 12px;
+				background: rgba(255, 92, 92, 0.1);
+				border: 1px solid rgba(255, 92, 92, 0.3);
+				border-radius: 8px;
+				color: #ffb3b3;
+				margin-bottom: 14px;
+			}
+			.info {
+				padding: 12px;
+				background: rgba(106, 92, 255, 0.1);
+				border: 1px solid rgba(106, 92, 255, 0.3);
+				border-radius: 8px;
+				color: #c9bfff;
+				margin-bottom: 14px;
+				font-size: 13px;
+			}
+			.records {
+				display: flex;
+				flex-direction: column;
+				gap: 12px;
+			}
+			.record {
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				padding: 16px;
+			}
+			.record-header {
+				display: flex;
+				justify-content: space-between;
+				align-items: flex-start;
+				margin-bottom: 10px;
+			}
+			.record-title {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+			}
+			.record-title h3 {
+				margin: 0;
+				font-size: 14px;
+			}
+			.badge {
+				display: inline-flex;
+				align-items: center;
+				padding: 3px 9px;
+				border-radius: 99px;
+				font-size: 11px;
+				font-weight: 600;
+				text-transform: uppercase;
+				letter-spacing: 0.5px;
+			}
+			.badge.pass {
+				background: rgba(76, 175, 80, 0.15);
+				color: #76d776;
+			}
+			.badge.warn {
+				background: rgba(255, 193, 7, 0.15);
+				color: #ffc107;
+			}
+			.badge.fail {
+				background: rgba(244, 67, 54, 0.15);
+				color: #ff5252;
+			}
+			.record-meta {
+				display: flex;
+				gap: 16px;
+				font-size: 12px;
+				color: #888;
+				margin: 8px 0;
+			}
+			.record-meta-item {
+				display: flex;
+				flex-direction: column;
+				gap: 2px;
+			}
+			.record-meta-label {
+				color: #666;
+				font-size: 11px;
+				text-transform: uppercase;
+				letter-spacing: 0.5px;
+			}
+			.record-meta-value {
+				color: #ccc;
+				font-family: ui-monospace, SF Mono, Menlo, monospace;
+				font-size: 13px;
+				word-break: break-all;
+			}
+			.record-actions {
+				display: flex;
+				gap: 8px;
+				margin-top: 10px;
+			}
+			.record-actions button,
+			.record-actions a {
+				padding: 6px 10px;
+				font-size: 12px;
+				border-radius: 7px;
+				border: 1px solid var(--border);
+				background: #1a1a24;
+				color: #ddd;
+				cursor: pointer;
+				text-decoration: none;
+			}
+			.record-actions button:hover,
+			.record-actions a:hover {
+				background: #22222e;
+			}
+			.empty {
+				text-align: center;
+				padding: 60px 20px;
+				border: 1px dashed var(--border);
+				border-radius: 14px;
+				color: #888;
+			}
+			.modal-overlay {
+				position: fixed;
+				inset: 0;
+				background: rgba(0, 0, 0, 0.6);
+				z-index: 60;
+				display: grid;
+				place-items: center;
+				opacity: 0;
+				pointer-events: none;
+				transition: opacity 0.15s;
+			}
+			.modal-overlay.open {
+				opacity: 1;
+				pointer-events: auto;
+			}
+			.modal {
+				background: #0e0e16;
+				border: 1px solid var(--border);
+				border-radius: 14px;
+				padding: 22px;
+				width: min(600px, calc(100vw - 32px));
+				max-height: calc(100vh - 32px);
+				overflow-y: auto;
+			}
+			.modal h2 {
+				margin: 0 0 4px;
+				font-size: 17px;
+			}
+			.modal .sub {
+				margin: 0 0 18px;
+			}
+			.modal-actions {
+				display: flex;
+				gap: 8px;
+				margin-top: 20px;
+				justify-content: flex-end;
+			}
+			.toast {
+				position: fixed;
+				bottom: 24px;
+				left: 50%;
+				transform: translateX(-50%);
+				background: #1a1a24;
+				border: 1px solid var(--border);
+				padding: 10px 18px;
+				border-radius: 99px;
+				font-size: 13px;
+				color: #ddd;
+				z-index: 70;
+				box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+				animation: toast-in 0.2s;
+			}
+			@keyframes toast-in {
+				from {
+					opacity: 0;
+					transform: translate(-50%, 8px);
+				}
+				to {
+					opacity: 1;
+					transform: translateX(-50%);
+				}
+			}
+			.toast.err {
+				border-color: #cc4040;
+				background: #1e1010;
+			}
+			.section {
+				margin-top: 34px;
+			}
+			.section-title {
+				font-size: 15px;
+				font-weight: 600;
+				margin: 0 0 12px;
+				color: #eee;
+			}
+			.file-input-wrapper {
+				position: relative;
+				display: inline-block;
+				width: 100%;
+			}
+			.file-input-wrapper input[type='file'] {
+				position: absolute;
+				opacity: 0;
+				width: 0;
+				height: 0;
+			}
+			.file-input-label {
+				display: block;
+				padding: 18px;
+				background: #0f0f17;
+				border: 2px dashed var(--border);
+				border-radius: 8px;
+				text-align: center;
+				cursor: pointer;
+				transition: border-color 0.15s;
+				color: #888;
+			}
+			.file-input-wrapper input[type='file']:focus + .file-input-label {
+				border-color: var(--accent);
+				color: #ccc;
+			}
+			.file-input-wrapper:hover .file-input-label {
+				border-color: #444;
+				color: #aaa;
+			}
+			pre {
+				background: #0f0f17;
+				border: 1px solid var(--border);
+				border-radius: 8px;
+				padding: 10px 12px;
+				overflow: auto;
+				font-size: 12px;
+				max-height: 200px;
+			}
+			code {
+				font-family: ui-monospace, SF Mono, Menlo, monospace;
+			}
+		</style>
+	</head>
+	<body>
+		<header>
+			<div class="brand"><a href="/">3D Agent</a></div>
+			<nav>
+				<a href="/">Home</a>
+				<a href="/dashboard">Dashboard</a>
+				<a href="/explore">Explore</a>
+			</nav>
+		</header>
+
+		<main id="main">
+			<h1>Validation Records</h1>
+			<p class="sub">Browse validation reports for this agent to verify trust and integrity.</p>
+
+			<div class="toolbar">
+				<input
+					type="text"
+					id="agent-input"
+					placeholder="Agent ID (e.g., 1)"
+					style="width: 200px"
+				/>
+				<input
+					type="text"
+					id="chain-input"
+					placeholder="Chain ID (e.g., 84532)"
+					style="width: 200px"
+				/>
+				<button class="btn" id="load-btn">Load Records</button>
+				<button class="btn sec" id="submit-btn">Submit Validation</button>
+			</div>
+
+			<div id="error" class="err" style="display: none"></div>
+			<div id="info" class="info" style="display: none"></div>
+			<div id="records" class="records"></div>
+			<div id="empty" class="empty" style="display: none">No validation records yet.</div>
+		</main>
+
+		<!-- Submit Modal -->
+		<div class="modal-overlay" id="submit-modal">
+			<div class="modal">
+				<h2>Submit Validation Report</h2>
+				<p class="sub">Upload a JSON validation report signed by your wallet.</p>
+
+				<div class="form-group">
+					<label>Report File (JSON)</label>
+					<div class="file-input-wrapper">
+						<input type="file" id="report-file" accept=".json" />
+						<label for="report-file" class="file-input-label">
+							📄 Click to select or drag a JSON report file
+						</label>
+					</div>
+					<div id="file-status" style="font-size: 12px; color: #888; margin-top: 8px"></div>
+				</div>
+
+				<div id="preview-section" style="display: none" class="section">
+					<div class="section-title">Preview</div>
+					<pre id="preview-json"></pre>
+					<div id="preview-error" style="color: #ffb3b3; font-size: 12px; margin-top: 8px"></div>
+				</div>
+
+				<div id="hash-section" style="display: none" class="form-group">
+					<label>Report Hash</label>
+					<input
+						type="text"
+						id="report-hash"
+						readonly
+						style="font-family: ui-monospace, SF Mono, Menlo, monospace; font-size: 12px"
+					/>
+					<div style="font-size: 12px; color: #888; margin-top: 6px">
+						Computed via keccak256(JSON.stringify(report))
+					</div>
+				</div>
+
+				<div class="modal-actions">
+					<button class="btn sec" onclick="closeSubmitModal()">Cancel</button>
+					<button class="btn" id="submit-report-btn" disabled>Submit on-chain</button>
+				</div>
+			</div>
+		</div>
+
+		<script type="module">
+			import { ValidationDashboard } from '/validation/boot.js';
+
+			const dashboard = new ValidationDashboard(document.getElementById('main'), {
+				agentInput: document.getElementById('agent-input'),
+				chainInput: document.getElementById('chain-input'),
+				loadBtn: document.getElementById('load-btn'),
+				submitBtn: document.getElementById('submit-btn'),
+				recordsContainer: document.getElementById('records'),
+				emptyState: document.getElementById('empty'),
+				errorEl: document.getElementById('error'),
+				infoEl: document.getElementById('info'),
+				submitModal: document.getElementById('submit-modal'),
+				reportFile: document.getElementById('report-file'),
+				fileStatus: document.getElementById('file-status'),
+				previewSection: document.getElementById('preview-section'),
+				previewJson: document.getElementById('preview-json'),
+				previewError: document.getElementById('preview-error'),
+				hashSection: document.getElementById('hash-section'),
+				reportHash: document.getElementById('report-hash'),
+				submitReportBtn: document.getElementById('submit-report-btn'),
+			});
+
+			window.closeSubmitModal = () => dashboard.closeModal();
+			window.submitModal = () => dashboard.submitReport();
+		</script>
+	</body>
+</html>

@@ -20,12 +20,40 @@ export default wrap(async (req, res) => {
 	const url = new URL(req.url, 'http://x');
 	const chainId = Number(url.searchParams.get('chain'));
 	const agentId = url.searchParams.get('id');
+	const format = (url.searchParams.get('format') || '').toLowerCase();
 
 	if (!Number.isFinite(chainId) || !agentId) {
 		return error(res, 400, 'invalid_request', 'chain and id required');
 	}
 
 	const agent = await resolveOnChainAgent({ chainId, agentId });
+
+	if (format === 'json') {
+		const origin = url.searchParams.get('origin') || 'https://3dagent.vercel.app';
+		const pageUrl = `${origin}/a/${chainId}/${agentId}`;
+		const imageUrl = `${origin}/api/a-og?chain=${chainId}&id=${encodeURIComponent(agentId)}`;
+		const status = agent.error && !agent.name ? 404 : 200;
+		res.statusCode = status;
+		res.setHeader('content-type', 'application/json; charset=utf-8');
+		res.setHeader('cache-control', status === 200 ? CACHE_CARD : 'public, max-age=60');
+		res.end(
+			JSON.stringify({
+				title: (agent.name || `Agent #${agentId}`) + ' — 3D Agent',
+				description: agent.description || 'An embodied 3D agent.',
+				image: imageUrl,
+				url: pageUrl,
+				type: 'profile',
+				agent: {
+					name: agent.name || null,
+					slug: `${chainId}/${agentId}`,
+					thumbnailUrl: agent.image || null,
+					chainId: agent.chainId,
+					onChain: true,
+				},
+			}),
+		);
+		return;
+	}
 
 	// If the manifest has a raw image URL, redirect so the crawler caches
 	// an actual PNG/JPG (better social preview than SVG text card).

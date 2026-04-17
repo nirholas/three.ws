@@ -34,8 +34,8 @@
 	<p class="brand">3D Agent</p>
 	<h1>Welcome back</h1>
 	<p class="sub">Sign in to manage your avatars.</p>
-	<label for="email">Email</label>
-	<input id="email" type="email" autocomplete="email" required>
+	<label for="email">Email or username</label>
+	<input id="email" type="text" autocomplete="username email" required>
 	<label for="password">Password</label>
 	<input id="password" type="password" autocomplete="current-password" required minlength="10">
 	<button id="submit" type="submit">Sign in</button>
@@ -55,6 +55,12 @@
 <script>
 const params = new URLSearchParams(location.search);
 const next = params.get('next') || '/dashboard/';
+
+// If already signed in, skip the login form entirely.
+fetch('/api/auth/me', { credentials: 'include' })
+	.then(r => { if (r.ok) location.replace(next); })
+	.catch(() => {});
+
 const form = document.getElementById('f');
 const err = document.getElementById('err');
 const btn = document.getElementById('submit');

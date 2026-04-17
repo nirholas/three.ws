@@ -1,8 +1,6 @@
 // Dashboard single-file app. Uses native DOM — no framework.
 // Keeps bundle small and ensures anything rendering <model-viewer> works without bundler.
 
-import { AvatarCreator } from '../../src/avatar-creator.js';
-
 export const state = { user: null };
 
 export const api = {

@@ -1,0 +1,143 @@
+.share-panel-backdrop {
+	position: fixed;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.6);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 9000;
+	backdrop-filter: blur(2px);
+}
+
+.share-panel-modal {
+	background: #1a1a1a;
+	border: 1px solid #333;
+	border-radius: 12px;
+	width: min(540px, calc(100vw - 32px));
+	max-height: calc(100vh - 64px);
+	overflow-y: auto;
+	padding: 24px;
+	color: #e8e8e8;
+	font-family: system-ui, sans-serif;
+	font-size: 14px;
+}
+
+.share-panel-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 20px;
+}
+
+.share-panel-title {
+	font-size: 17px;
+	font-weight: 600;
+	color: #fff;
+	margin: 0;
+}
+
+.share-panel-close {
+	background: none;
+	border: none;
+	color: #888;
+	font-size: 22px;
+	line-height: 1;
+	cursor: pointer;
+	padding: 2px 6px;
+	border-radius: 4px;
+}
+
+.share-panel-close:hover {
+	color: #fff;
+	background: #2e2e2e;
+}
+
+.share-panel-row {
+	margin-bottom: 18px;
+}
+
+.share-panel-label {
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.07em;
+	color: #888;
+	margin-bottom: 6px;
+}
+
+.share-panel-field {
+	display: flex;
+	gap: 6px;
+	align-items: flex-start;
+}
+
+.share-panel-code {
+	flex: 1;
+	background: #111;
+	border: 1px solid #2e2e2e;
+	border-radius: 6px;
+	padding: 8px 10px;
+	font-family: 'Courier New', monospace;
+	font-size: 12px;
+	color: #c8d3f5;
+	word-break: break-all;
+	white-space: pre-wrap;
+	line-height: 1.5;
+	min-height: 36px;
+}
+
+.share-panel-actions {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	flex-shrink: 0;
+}
+
+.share-panel-btn {
+	background: #2a2a2a;
+	border: 1px solid #3a3a3a;
+	border-radius: 6px;
+	color: #d0d0d0;
+	cursor: pointer;
+	font-size: 12px;
+	padding: 6px 12px;
+	white-space: nowrap;
+	transition: background 0.12s, color 0.12s;
+}
+
+.share-panel-btn:hover {
+	background: #383838;
+	color: #fff;
+}
+
+.share-panel-btn.copied {
+	color: #4caf7d;
+	border-color: #4caf7d44;
+}
+
+.share-panel-og-img {
+	display: block;
+	width: 100%;
+	height: auto;
+	border-radius: 6px;
+	border: 1px solid #2e2e2e;
+	margin-bottom: 8px;
+	background: #111;
+}
+
+.share-panel-qr {
+	display: flex;
+	justify-content: center;
+	margin-top: 4px;
+}
+
+.share-panel-qr canvas {
+	border-radius: 6px;
+	border: 4px solid #fff;
+}
+
+.share-panel-divider {
+	border: none;
+	border-top: 1px solid #2a2a2a;
+	margin: 20px 0;
+}

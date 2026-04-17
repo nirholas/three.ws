@@ -282,6 +282,7 @@ async function persistState() {
 	});
 
 	// 2. Create or update agent
+	const agentMeta = { voice: state.voice, bodyType: state.bodyType };
 	if (!state.agent) {
 		// POST new agent
 		const res = await fetch('/api/agents', {
@@ -292,6 +293,7 @@ async function persistState() {
 				name: state.name,
 				description: state.bio,
 				avatar_id: state.avatarId,
+				meta: agentMeta,
 			}),
 		});
 		if (!res.ok) throw new Error(`Agent creation failed: ${res.status}`);
@@ -307,6 +309,7 @@ async function persistState() {
 				name: state.name,
 				description: state.bio,
 				avatar_id: state.avatarId,
+				meta: agentMeta,
 			}),
 		});
 		if (!res.ok) throw new Error(`Agent update failed: ${res.status}`);

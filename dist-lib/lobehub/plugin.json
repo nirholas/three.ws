@@ -1,0 +1,98 @@
+{
+	"$schema": "https://lobehub.com/schema/plugin-manifest/v1.json",
+	"identifier": "3d-agent",
+	"version": "0.1.0",
+	"author": "3D Agent",
+	"homepage": "https://3dagent.vercel.app",
+	"meta": {
+		"title": "3D Agent",
+		"description": "Embodied 3D avatar agent with continuous emotion blending. Renders a rigged glTF avatar inside chat, responds with gestures, speech, and on-chain ERC-8004 identity.",
+		"avatar": "https://3dagent.vercel.app/icon.svg",
+		"tags": ["3d", "avatar", "agent", "embodied", "empathy", "erc-8004"]
+	},
+	"ui": {
+		"url": "https://3dagent.vercel.app/lobehub/iframe/",
+		"height": 480
+	},
+	"api": [
+		{
+			"url": "https://3dagent.vercel.app/api/mcp",
+			"name": "render_agent",
+			"description": "Mount the 3D avatar for a given agent id. Call this first to bind the iframe to a specific agent before using speak/gesture/emote.",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"agentId": {
+						"type": "string",
+						"description": "Agent identity id (UUID) to render."
+					}
+				},
+				"required": ["agentId"]
+			}
+		},
+		{
+			"url": "https://3dagent.vercel.app/api/mcp",
+			"name": "speak",
+			"description": "Make the avatar speak with optional emotional valence.",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"text": {
+						"type": "string",
+						"description": "Text for the avatar to speak aloud."
+					},
+					"sentiment": {
+						"type": "number",
+						"description": "Emotional valence in [-1, 1]. Negative → concern, positive → celebration.",
+						"minimum": -1,
+						"maximum": 1
+					}
+				},
+				"required": ["text"]
+			}
+		},
+		{
+			"url": "https://3dagent.vercel.app/api/mcp",
+			"name": "gesture",
+			"description": "Trigger a named gesture on the avatar.",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "Gesture to play.",
+						"enum": ["wave", "nod", "point", "shrug"]
+					},
+					"duration": {
+						"type": "number",
+						"description": "Gesture duration in seconds (optional)."
+					}
+				},
+				"required": ["name"]
+			}
+		},
+		{
+			"url": "https://3dagent.vercel.app/api/mcp",
+			"name": "emote",
+			"description": "Inject an emotion into the avatar's continuous Empathy Layer blend.",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"trigger": {
+						"type": "string",
+						"description": "Emotion to inject.",
+						"enum": ["concern", "celebration", "patience", "curiosity", "empathy"]
+					},
+					"weight": {
+						"type": "number",
+						"description": "Blend weight in [0, 1] (defaults to 1).",
+						"minimum": 0,
+						"maximum": 1
+					}
+				},
+				"required": ["trigger"]
+			}
+		}
+	],
+	"systemRole": "You have an embodied 3D avatar agent visible in the chat. It displays emotional responses in real time using a continuous Empathy Layer blend. Use render_agent to bind it to a specific agent, speak to give it voice with emotional valence, gesture for physical expression, and emote to inject emotional state directly into its blend."
+}

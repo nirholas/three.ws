@@ -102,7 +102,7 @@ async function completeSignIn(provider, btn) {
 	if (btn) btn.textContent = 'Requesting nonce…';
 	const nonceRes = await fetch('/api/auth/siwe/nonce', { credentials: 'include' });
 	if (!nonceRes.ok) throw new Error('Failed to get nonce');
-	const { nonce } = await nonceRes.json();
+	const { nonce, csrf } = await nonceRes.json();
 
 	const domain = location.host;
 	const uri    = location.origin;
@@ -130,7 +130,7 @@ async function completeSignIn(provider, btn) {
 	const verifyRes = await fetch('/api/auth/siwe/verify', {
 		method: 'POST',
 		credentials: 'include',
-		headers: { 'content-type': 'application/json' },
+		headers: { 'content-type': 'application/json', 'x-csrf-token': csrf },
 		body: JSON.stringify({ message, signature }),
 	});
 	const data = await verifyRes.json();

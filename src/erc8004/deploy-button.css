@@ -1,0 +1,197 @@
+/* deploy-button.css — scoped under .deploy-button-root */
+
+.deploy-button-root {
+	display: inline-flex;
+	align-items: center;
+	font-family: inherit;
+}
+
+/* ── Deploy button ───────────────────────────────────────────────────────── */
+
+.deploy-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4em;
+	padding: 0.45em 1em;
+	border: 1.5px solid #6c63ff;
+	border-radius: 6px;
+	background: transparent;
+	color: #a89fff;
+	font-size: 0.875rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition:
+		background 0.15s,
+		color 0.15s,
+		border-color 0.15s;
+	white-space: nowrap;
+}
+
+.deploy-btn:hover:not(:disabled) {
+	background: #6c63ff22;
+	border-color: #a89fff;
+	color: #fff;
+}
+
+.deploy-btn--disabled,
+.deploy-btn:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+	border-color: #555;
+	color: #888;
+}
+
+/* ── Success chip ────────────────────────────────────────────────────────── */
+
+.deploy-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4em;
+	padding: 0.35em 0.85em;
+	border-radius: 999px;
+	font-size: 0.8rem;
+	font-weight: 600;
+	text-decoration: none;
+	white-space: nowrap;
+	transition: opacity 0.15s;
+}
+
+.deploy-chip--success {
+	background: #0f2e1a;
+	border: 1.5px solid #2a7a4a;
+	color: #4ade80;
+}
+
+.deploy-chip--success:hover {
+	opacity: 0.82;
+}
+
+/* ── Progress bar ────────────────────────────────────────────────────────── */
+
+.deploy-progress {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3em;
+	font-size: 0.78rem;
+	color: #aaa;
+}
+
+.progress-step {
+	padding: 0.2em 0.5em;
+	border-radius: 4px;
+	transition:
+		color 0.2s,
+		background 0.2s;
+}
+
+.progress-step--pending {
+	color: #555;
+}
+
+.progress-step--active {
+	color: #fff;
+	background: #6c63ff33;
+	border: 1px solid #6c63ff88;
+}
+
+.progress-step--done {
+	color: #4ade80;
+}
+
+.progress-sep {
+	color: #444;
+	font-size: 0.7em;
+}
+
+/* ── Error state ─────────────────────────────────────────────────────────── */
+
+.deploy-error {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.6em;
+	padding: 0.4em 0.75em;
+	border: 1.5px solid #7a2a2a;
+	border-radius: 6px;
+	background: #2e0f0f;
+	font-size: 0.8rem;
+	color: #f87171;
+	max-width: 400px;
+}
+
+.deploy-error-msg {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.deploy-action-btn {
+	flex-shrink: 0;
+	padding: 0.25em 0.7em;
+	border: 1px solid #f87171;
+	border-radius: 4px;
+	background: transparent;
+	color: #f87171;
+	font-size: 0.8rem;
+	cursor: pointer;
+	transition: background 0.15s;
+}
+
+.deploy-action-btn:hover {
+	background: #f8717122;
+}
+
+/* ── Tooltip ─────────────────────────────────────────────────────────────── */
+
+.deploy-tooltip {
+	margin-left: 0.5em;
+	font-size: 0.75rem;
+	color: #888;
+	font-style: italic;
+}
+
+/* ── Light-mode overrides ────────────────────────────────────────────────── */
+
+@media (prefers-color-scheme: light) {
+	.deploy-btn {
+		border-color: #4f46e5;
+		color: #4f46e5;
+	}
+
+	.deploy-btn:hover:not(:disabled) {
+		background: #4f46e511;
+		border-color: #4f46e5;
+		color: #312e81;
+	}
+
+	.deploy-chip--success {
+		background: #ecfdf5;
+		border-color: #22c55e;
+		color: #15803d;
+	}
+
+	.deploy-progress {
+		color: #555;
+	}
+
+	.progress-step--active {
+		color: #312e81;
+		background: #eef2ff;
+		border-color: #818cf8;
+	}
+
+	.progress-step--done {
+		color: #15803d;
+	}
+
+	.deploy-error {
+		background: #fff1f2;
+		border-color: #fca5a5;
+		color: #b91c1c;
+	}
+
+	.deploy-action-btn {
+		border-color: #b91c1c;
+		color: #b91c1c;
+	}
+}

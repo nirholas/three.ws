@@ -9,9 +9,8 @@
  * - ethers for wallet connection
  */
 
-import { connectWallet, getSigner } from './erc8004/agent-registry.js';
+import { connectWallet } from './erc8004/agent-registry.js';
 import { getLatestValidation, recordValidation, hashReport } from './erc8004/validation-recorder.js';
-import { keccak256, toUtf8Bytes } from 'ethers';
 
 export class ValidationDashboard {
 	constructor(root, els) {

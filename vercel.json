@@ -27,12 +27,15 @@
 		{ "src": "/dashboard", "dest": "/public/dashboard/index.html" },
 		{ "src": "/dashboard/", "dest": "/public/dashboard/index.html" },
 		{ "src": "/dashboard/(.*)", "dest": "/public/dashboard/$1" },
+		{ "src": "/hydrate", "dest": "/public/hydrate/index.html" },
+		{ "src": "/hydrate/", "dest": "/public/hydrate/index.html" },
 		{ "src": "/studio", "dest": "/public/studio/index.html" },
 		{ "src": "/studio/", "dest": "/public/studio/index.html" },
 		{ "src": "/studio/(.*)", "dest": "/public/studio/$1" },
 
 		{ "src": "/api/agents/me", "dest": "/api/agents" },
 		{ "src": "/api/agents/by-wallet", "dest": "/api/agents/by-wallet" },
+		{ "src": "/api/agents/by-address/([^/]+)", "dest": "/api/agents/by-address/[addr]?addr=$1" },
 		{ "src": "/api/agents/([^/]+)/wallet", "dest": "/api/agents/[id]" },
 		{ "src": "/api/avatars/([^/]+)/storage-mode", "dest": "/api/avatars/[id]/storage-mode?id=$1" },
 		{ "src": "/api/avatars/([^/]+)/pin-ipfs",     "dest": "/api/avatars/[id]/pin-ipfs?id=$1" },
@@ -84,9 +87,15 @@
 		{ "src": "/validation/", "dest": "/public/validation/index.html" },
 		{ "src": "/validation/(.*)", "dest": "/public/validation/$1" },
 
+		{ "src": "/lobehub/iframe", "dest": "/public/lobehub/iframe/index.html" },
+		{ "src": "/lobehub/iframe/", "dest": "/public/lobehub/iframe/index.html" },
+		{ "src": "/lobehub/iframe/(.*)", "dest": "/public/lobehub/iframe/$1" },
+
 		{ "src": "/api/llm/anthropic", "dest": "/api/llm/anthropic.js" },
 		{ "src": "/api/agents/([^/]+)/usage", "dest": "/api/agents/[id]/usage?id=$1" },
 		{ "src": "/dashboard/usage", "dest": "/public/dashboard/usage.html" },
+		{ "src": "/api/erc8004/hydrate", "dest": "/api/erc8004/hydrate.js" },
+		{ "src": "/api/erc8004/import", "dest": "/api/erc8004/import.js" },
 
 		{ "src": "/api/(.*)", "dest": "/api/$1" },
 

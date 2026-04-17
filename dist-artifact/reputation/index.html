@@ -452,19 +452,19 @@
 		</main>
 
 		<script type="module">
-		import { ReputationDashboard } from '/src/reputation-ui.js';
+			import { ReputationDashboard } from '/src/reputation-ui.js';
 
-		function getQueryParam(name) {
-			const params = new URLSearchParams(window.location.search);
-			return params.get(name);
-		}
+			function getQueryParam(name) {
+				const params = new URLSearchParams(window.location.search);
+				return params.get(name);
+			}
 
-		async function init() {
-			const agentId = getQueryParam('agent');
-			const chainId = getQueryParam('chain');
+			async function init() {
+				const agentId = getQueryParam('agent');
+				const chainId = getQueryParam('chain');
 
-			if (!agentId) {
-				document.querySelector('#app').innerHTML = `
+				if (!agentId) {
+					document.querySelector('#app').innerHTML = `
 					<div class="rep-error">
 						<h3>Missing agent ID</h3>
 						<p>URL parameter required: ?agent=&lt;id&gt;&amp;chain=&lt;chainId&gt;</p>
@@ -473,30 +473,30 @@
 						</p>
 					</div>
 				`;
-				return;
+					return;
+				}
+
+				const resolvedChainId = chainId ? Number(chainId) : 84532; // Default: Base Sepolia
+
+				const app = document.querySelector('#app');
+				const dashboard = new ReputationDashboard(app, {
+					agentId: Number(agentId),
+					chainId: resolvedChainId,
+				});
+
+				await dashboard.load();
 			}
 
-			const resolvedChainId = chainId ? Number(chainId) : 84532; // Default: Base Sepolia
-
-			const app = document.querySelector('#app');
-			const dashboard = new ReputationDashboard(app, {
-				agentId: Number(agentId),
-				chainId: resolvedChainId,
-			});
-
-			await dashboard.load();
-		}
-
-		init().catch((err) => {
-			console.error('Init failed:', err);
-			document.querySelector('#app').innerHTML = `
+			init().catch((err) => {
+				console.error('Init failed:', err);
+				document.querySelector('#app').innerHTML = `
 				<div class="rep-error">
 					<h3>Failed to initialize</h3>
 					<p>${err.message || String(err)}</p>
 					<button onclick="location.reload()">Retry</button>
 				</div>
 			`;
-		});
-	</script>
+			});
+		</script>
 	</body>
 </html>

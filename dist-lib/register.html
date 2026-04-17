@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Create account · 3D Agent</title>
+<link rel="icon" href="/favicon.ico">
+<style>
+	:root { color-scheme: dark; --accent:#6a5cff; --accent2:#ff5ca8; }
+	* { box-sizing: border-box; }
+	body { font: 15px/1.5 -apple-system,system-ui,Segoe UI,Roboto,sans-serif; background:radial-gradient(1200px 600px at 50% -100px,#1a1a2e 0,#080814 60%); color:#eee; margin:0; min-height:100vh; display:grid; place-items:center; padding:24px; }
+	a { color:#9a8cff; }
+	.card { background:#14141c; border:1px solid #2a2a36; border-radius:16px; padding:32px; max-width:400px; width:100%; box-shadow:0 10px 40px rgba(0,0,0,.5); }
+	h1 { font-size:22px; margin:0 0 4px; letter-spacing:-0.01em; }
+	.sub { color:#888; margin:0 0 24px; font-size:14px; }
+	label { display:block; font-size:13px; color:#aaa; margin:14px 0 6px; }
+	input { width:100%; padding:11px 13px; background:#0f0f17; border:1px solid #2a2a36; border-radius:9px; color:#eee; font-size:15px; }
+	input:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(106,92,255,.15); }
+	.hint { font-size:12px; color:#666; margin-top:4px; }
+	button { width:100%; margin-top:20px; padding:12px 16px; border:0; border-radius:10px; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; font-weight:600; font-size:15px; cursor:pointer; }
+	button:disabled { opacity:.6; cursor:default; }
+	.err { margin-top:14px; padding:10px 12px; background:rgba(255,92,92,.1); border:1px solid rgba(255,92,92,.3); border-radius:8px; color:#ffb3b3; font-size:13px; display:none; }
+	.foot { margin-top:20px; text-align:center; font-size:13px; color:#888; }
+	.brand { font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); margin:0 0 8px; }
+</style>
+</head>
+<body>
+<form class="card" id="f">
+	<p class="brand">3D Agent</p>
+	<h1>Create account</h1>
+	<p class="sub">Pick a username and password — no email needed.</p>
+	<label for="username">Username</label>
+	<input id="username" type="text" autocomplete="username" required minlength="3" maxlength="30" pattern="[a-zA-Z0-9_-]+" placeholder="e.g. cool_agent">
+	<p class="hint">3–30 characters, letters, numbers, _ or -</p>
+	<label for="password">Password</label>
+	<input id="password" type="password" autocomplete="new-password" required minlength="10" maxlength="200">
+	<p class="hint">Minimum 10 characters</p>
+	<button id="submit" type="submit">Create account</button>
+	<div class="err" id="err"></div>
+	<p class="foot">Already have an account? <a href="/login">Sign in</a></p>
+</form>
+<script>
+const params = new URLSearchParams(location.search);
+const next = params.get('next') || '/dashboard/';
+const form = document.getElementById('f');
+const err = document.getElementById('err');
+const btn = document.getElementById('submit');
+form.addEventListener('submit', async (e) => {
+	e.preventDefault();
+	err.style.display = 'none';
+	btn.disabled = true; btn.textContent = 'Creating account…';
+	try {
+		const res = await fetch('/api/auth/register', {
+			method: 'POST',
+			credentials: 'include',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({
+				username: document.getElementById('username').value,
+				password: document.getElementById('password').value,
+			}),
+		});
+		const data = await res.json();
+		if (!res.ok) throw new Error(data.error_description || 'Registration failed');
+		try { localStorage.setItem('3dagent:auth-hint', JSON.stringify({ authed: true, ts: Date.now() })); } catch { /* ignore */ }
+		location.href = next;
+	} catch (e) {
+		err.textContent = e.message;
+		err.style.display = 'block';
+		btn.disabled = false; btn.textContent = 'Create account';
+	}
+});
+</script>
+</body>
+</html>

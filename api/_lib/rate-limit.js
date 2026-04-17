@@ -71,8 +71,13 @@ export const limits = {
 	oauthToken: (clientId) =>
 		getLimiter('oauth:token', { limit: 120, window: '1 m' }).limit(clientId),
 	upload: (userId) => getLimiter('upload', { limit: 60, window: '1 h' }).limit(userId),
+	avatarPatch: (userId) => getLimiter('avatar:patch', { limit: 20, window: '1 h' }).limit(userId),
+	avatarRollback: (userId) =>
+		getLimiter('avatar:rollback', { limit: 10, window: '1 h' }).limit(userId),
 	chatUser: (userId) => getLimiter('chat:user', { limit: 20, window: '1 m' }).limit(userId),
 	chatIp: (ip) => getLimiter('chat:ip', { limit: 40, window: '1 m' }).limit(ip),
+	checkName: (ip) => getLimiter('check-name:ip', { limit: 60, window: '1 m' }).limit(ip),
+	ensResolve: (ip) => getLimiter('ens:resolve:ip', { limit: 60, window: '1 m' }).limit(ip),
 	widgetWrite: (userId) => getLimiter('widget:write', { limit: 60, window: '1 m' }).limit(userId),
 	widgetRead: (ip) => getLimiter('widget:read', { limit: 600, window: '1 m' }).limit(ip),
 	// Per-widget visitor chat. Limit is dynamic — one bucket per (widgetId, perMinute).
@@ -88,6 +93,9 @@ export const limits = {
 			limit: Math.max(1, Math.min(1000, perMin || 10)),
 			window: '1 m',
 		}).limit(agentId),
+	pinUser: (userId) => getLimiter('pin:user', { limit: 30, window: '1 h' }).limit(userId),
+	pinStatusIp: (ip) => getLimiter('pin:status:ip', { limit: 60, window: '1 m' }).limit(ip),
+	agentByAddress: (ip) => getLimiter('agents:by-address', { limit: 120, window: '1 m' }).limit(ip),
 };
 
 // Trust only proxy headers that Vercel itself sets and signs. Naively reading

@@ -23,7 +23,9 @@ export class Editor {
 		this.exportFolder = null;
 		this._exportCtrl = null;
 		this._publishCtrl = null;
+		this._saveCtrl = null;
 		this._publishInFlight = false;
+		this._saveNeedsAuth = false;
 		this._attached = false;
 	}
 
@@ -74,6 +76,9 @@ export class Editor {
 				'explorer',
 			)
 			.name('🗂 scene panel [T]');
+		this._saveCtrl = folder
+			.add({ save: () => this._saveEdits() }, 'save')
+			.name('☁️ save edits');
 		folder
 			.add(
 				{
@@ -115,6 +120,43 @@ export class Editor {
 		} catch (err) {
 			console.error('[editor] GLB export failed', err);
 			window.alert('GLB export failed: ' + (err.message || err));
+		}
+	}
+
+	async _saveEdits() {
+		if (this._saveNeedsAuth) {
+			window.location.href = '/login?next=' + encodeURIComponent(location.pathname + location.search + location.hash);
+			return;
+		}
+		const avatarId =
+			this.session.avatarId ?? new URLSearchParams(location.search).get('avatarId');
+		if (!avatarId) {
+			this._saveCtrl?.name('⚠ use Publish instead');
+			setTimeout(() => this._saveCtrl?.name('☁️ save edits'), 2500);
+			return;
+		}
+		const LABEL = '☁️ save edits';
+		const stepPct = { export: 0, presign: 0.25, upload: 0.4, patch: 0.9 };
+		const onStep = ({ step, pct }) => {
+			const base = stepPct[step] ?? 0;
+			const span = step === 'upload' ? 0.5 : step === 'export' ? 0.25 : step === 'presign' ? 0.15 : 0.1;
+			const overall = Math.round((base + pct * span) * 100);
+			this._saveCtrl?.name(`saving… ${overall}%`);
+		};
+		try {
+			const { saveEditedAvatar } = await import('./save-back.js');
+			await saveEditedAvatar(this.session, { avatarId, onStep });
+			this._saveCtrl?.name('saved ✓');
+			setTimeout(() => this._saveCtrl?.name(LABEL), 1500);
+		} catch (err) {
+			if (err?.code === 'auth') {
+				this._saveNeedsAuth = true;
+				this._saveCtrl?.name('⚠ sign in to save (click)');
+			} else {
+				console.error('[editor] save failed', err);
+				this._saveCtrl?.name('⚠ ' + (err?.message || 'save failed'));
+				setTimeout(() => this._saveCtrl?.name(LABEL), 3000);
+			}
 		}
 	}
 
@@ -184,6 +226,7 @@ export class Editor {
 		this.exportFolder = null;
 		this._exportCtrl = null;
 		this._publishCtrl = null;
+		this._saveCtrl = null;
 		this._attached = false;
 	}
 }

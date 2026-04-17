@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Meet Your Agent · 3D Agent</title>
+		<link rel="icon" href="/favicon.ico" />
+		<style>
+			:root {
+				color-scheme: dark;
+				--accent: #6a5cff;
+				--accent2: #ff5ca8;
+				--border: #22222e;
+				--bg: #0b0b10;
+				--panel: #14141c;
+			}
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				font:
+					15px/1.55 -apple-system,
+					system-ui,
+					Segoe UI,
+					Roboto,
+					sans-serif;
+				color: #eee;
+				margin: 0;
+				background: var(--bg);
+				min-height: 100vh;
+			}
+			a {
+				color: #9a8cff;
+				text-decoration: none;
+			}
+			.container {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				min-height: 100vh;
+				gap: 0;
+			}
+			.preview-col {
+				background: var(--panel);
+				border-right: 1px solid var(--border);
+				padding: 28px;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				overflow: auto;
+			}
+			.preview-col model-viewer,
+			.preview-col agent-3d {
+				width: 100%;
+				height: 100%;
+				max-height: 600px;
+				border-radius: 8px;
+				background: linear-gradient(135deg, #1a1a24 0%, #0f0f14 100%);
+			}
+			.preview-col .loading,
+			.preview-col .error-msg {
+				text-align: center;
+				color: #aaa;
+			}
+			.form-col {
+				padding: 28px;
+				display: flex;
+				flex-direction: column;
+				justify-content: center;
+				max-width: 600px;
+				overflow: auto;
+			}
+			.form-col h1 {
+				font-size: 24px;
+				margin: 0 0 8px;
+				letter-spacing: -0.01em;
+			}
+			.form-col .sub {
+				color: #888;
+				font-size: 14px;
+				margin: 0 0 24px;
+			}
+			.step {
+				display: none;
+			}
+			.step.active {
+				display: block;
+			}
+			.form-group {
+				margin-bottom: 20px;
+			}
+			label {
+				display: block;
+				font-size: 14px;
+				font-weight: 500;
+				margin-bottom: 8px;
+				color: #ccc;
+			}
+			input[type='text'],
+			textarea,
+			select {
+				width: 100%;
+				padding: 10px 12px;
+				border: 1px solid var(--border);
+				border-radius: 6px;
+				background: rgba(0, 0, 0, 0.3);
+				color: #eee;
+				font-size: 14px;
+				font-family: inherit;
+				transition:
+					border-color 0.2s,
+					background-color 0.2s;
+			}
+			input[type='text']:focus,
+			textarea:focus,
+			select:focus {
+				outline: none;
+				border-color: var(--accent);
+				background: rgba(0, 0, 0, 0.5);
+			}
+			textarea {
+				resize: vertical;
+				min-height: 80px;
+			}
+			.char-count {
+				font-size: 12px;
+				color: #666;
+				margin-top: 4px;
+			}
+			.buttons {
+				display: flex;
+				gap: 12px;
+				margin-top: 24px;
+			}
+			button {
+				flex: 1;
+				padding: 10px 16px;
+				border: 1px solid var(--border);
+				border-radius: 6px;
+				background: rgba(106, 92, 255, 0.1);
+				color: #9a8cff;
+				font-size: 14px;
+				font-weight: 500;
+				cursor: pointer;
+				transition:
+					background-color 0.2s,
+					border-color 0.2s;
+			}
+			button:hover:not(:disabled) {
+				background: rgba(106, 92, 255, 0.2);
+				border-color: var(--accent);
+			}
+			button:disabled {
+				opacity: 0.5;
+				cursor: not-allowed;
+			}
+			button.primary {
+				background: var(--accent);
+				color: #000;
+				border-color: var(--accent);
+			}
+			button.primary:hover:not(:disabled) {
+				background: #7b6dff;
+			}
+			.skip-btn {
+				flex: 0;
+				padding: 10px 20px;
+				background: transparent;
+				color: #666;
+				border: none;
+			}
+			.skip-btn:hover {
+				color: #aaa;
+				background: transparent;
+			}
+			.progress {
+				height: 3px;
+				background: var(--border);
+				border-radius: 2px;
+				margin-bottom: 20px;
+				overflow: hidden;
+			}
+			.progress-bar {
+				height: 100%;
+				background: var(--accent);
+				transition: width 0.3s ease;
+			}
+			.greeting-text {
+				text-align: center;
+				margin: 20px 0;
+				font-size: 16px;
+				color: #aaa;
+				font-style: italic;
+			}
+			.grid-2col {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 12px;
+			}
+			.grid-2col .form-group {
+				margin-bottom: 0;
+			}
+			@media (max-width: 900px) {
+				.container {
+					grid-template-columns: 1fr;
+				}
+				.preview-col {
+					min-height: 300px;
+					border-right: none;
+					border-bottom: 1px solid var(--border);
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<div class="preview-col">
+				<div id="preview-content">
+					<div class="loading">Loading avatar…</div>
+				</div>
+			</div>
+			<div class="form-col">
+				<div class="progress">
+					<div class="progress-bar" id="progress-bar"></div>
+				</div>
+
+				<!-- Step 1: Name -->
+				<div class="step active" id="step-name">
+					<h1>Name your agent</h1>
+					<p class="sub">Give your avatar a name. You can change it later.</p>
+					<div class="form-group">
+						<input
+							type="text"
+							id="name-input"
+							placeholder="My Agent"
+							minlength="2"
+							maxlength="40"
+							autofocus
+						/>
+						<div class="char-count"><span id="name-count">0</span>/40</div>
+					</div>
+					<div class="buttons">
+						<button class="primary" id="name-next">Next</button>
+						<button class="skip-btn" id="name-skip">Skip</button>
+					</div>
+				</div>
+
+				<!-- Step 2: Bio -->
+				<div class="step" id="step-bio">
+					<h1>Tell us about your agent</h1>
+					<p class="sub">Add a short bio (optional). Max 280 characters.</p>
+					<div class="form-group">
+						<textarea
+							id="bio-input"
+							placeholder="What should people know about this agent?"
+							maxlength="280"
+						></textarea>
+						<div class="char-count"><span id="bio-count">0</span>/280</div>
+					</div>
+					<div class="buttons">
+						<button class="primary" id="bio-next">Next</button>
+						<button id="bio-back">Back</button>
+					</div>
+				</div>
+
+				<!-- Step 3: Voice + Body Type -->
+				<div class="step" id="step-voice">
+					<h1>Voice & appearance</h1>
+					<p class="sub">Choose how your agent communicates and looks.</p>
+					<div class="form-group">
+						<label for="voice-select">Voice</label>
+						<select id="voice-select">
+							<option value="en-US-female">US Female</option>
+							<option value="en-US-male">US Male</option>
+							<option value="en-GB-female">British Female</option>
+							<option value="en-GB-male">British Male</option>
+						</select>
+					</div>
+					<div class="form-group">
+						<label for="body-type-select">Body type</label>
+						<select id="body-type-select">
+							<option value="neutral">Neutral</option>
+							<option value="feminine">Feminine</option>
+							<option value="masculine">Masculine</option>
+						</select>
+					</div>
+					<div class="buttons">
+						<button class="primary" id="voice-next">Next</button>
+						<button id="voice-back">Back</button>
+					</div>
+				</div>
+
+				<!-- Step 4: Greet -->
+				<div class="step" id="step-greet">
+					<h1>Meet your agent</h1>
+					<p class="sub">Your agent is ready to say hello.</p>
+					<div class="greeting-text" id="greeting-text">Listening…</div>
+					<div class="buttons">
+						<button class="primary" id="greet-next">Continue</button>
+					</div>
+				</div>
+
+				<!-- Step 5: Done -->
+				<div class="step" id="step-done">
+					<h1>All set!</h1>
+					<p class="sub">Your agent is ready to go.</p>
+					<div class="buttons">
+						<button class="primary" id="done-agent">Go to my agent</button>
+						<button id="done-dashboard">Back to dashboard</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<script src="/dist-lib/agent-3d.js" type="module"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+		<script type="module" src="./first-meet.js"></script>
+	</body>
+</html>

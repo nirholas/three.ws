@@ -5,7 +5,12 @@
  * Uses on-chain data from IdentityRegistry with optional backend metadata.
  */
 
-import { listRegisteredEvents, getAgentOnchain, fetchAgentMetadata, findAvatar3D } from './erc8004/queries.js';
+import {
+	listRegisteredEvents,
+	getAgentOnchain,
+	fetchAgentMetadata,
+	findAvatar3D,
+} from './erc8004/queries.js';
 import { CHAIN_META } from './erc8004/chain-meta.js';
 import { REGISTRY_DEPLOYMENTS } from './erc8004/abi.js';
 
@@ -108,9 +113,7 @@ export class AgentsDirectory {
 	 * Render agent cards as HTML. Call after load().
 	 */
 	render() {
-		const html = this.displayedAgents
-			.map((agent) => this._renderCard(agent))
-			.join('');
+		const html = this.displayedAgents.map((agent) => this._renderCard(agent)).join('');
 		this.container.innerHTML = html;
 		this._attachEventListeners();
 		this.setupLazyLoad();
@@ -120,9 +123,7 @@ export class AgentsDirectory {
 	 * Return pagination info for current state.
 	 */
 	getPaginationInfo() {
-		const totalPages = Math.ceil(
-			this._applyFilters().length / ITEMS_PER_PAGE
-		);
+		const totalPages = Math.ceil(this._applyFilters().length / ITEMS_PER_PAGE);
 		return {
 			page: this.currentPage,
 			totalPages,
@@ -136,14 +137,13 @@ export class AgentsDirectory {
 
 	async _fetchAllAgents() {
 		const agents = [];
-		const chains = ['all'].includes(this.filters.chain)
-			? Object.keys(CHAIN_META).map(Number)
-			: [Number(this.filters.chain.split('-')[0]) || 8453]; // Default to Base if unclear
+		const chainId = this._parseChainFilter(this.filters.chain);
+		const chains = chainId === 'all' ? Object.keys(CHAIN_META).map(Number) : [chainId];
 
-		for (const chainId of chains) {
+		for (const cid of chains) {
 			try {
 				const events = await listRegisteredEvents({
-					chainId,
+					chainId: cid,
 					limit: 500, // Adjust as needed
 				});
 
@@ -151,23 +151,26 @@ export class AgentsDirectory {
 					try {
 						const agentId = String(ev.agentId);
 						const onchain = await getAgentOnchain({
-							chainId,
+							chainId: cid,
 							agentId,
 						});
 
 						let metadata = {};
 						if (ev.agentURI) {
-							metadata = await fetchAgentMetadata(ev.agentURI).catch(() => ({}));
+							const result = await fetchAgentMetadata(ev.agentURI);
+							if (result.ok && result.data) {
+								metadata = result.data;
+							}
 						}
 
-						const avatar = await findAvatar3D(metadata).catch(() => null);
+						const avatar = findAvatar3D(metadata);
 
 						agents.push({
 							id: agentId,
-							chainId,
+							chainId: cid,
 							name: metadata.name || `Agent #${agentId}`,
 							description: metadata.description || '',
-							avatar: avatar?.url || null,
+							avatar,
 							owner: onchain.owner || ev.owner,
 							createdAt: ev.blockNumber
 								? new Date(ev.blockNumber * 12000) // Rough estimate
@@ -180,7 +183,7 @@ export class AgentsDirectory {
 					}
 				}
 			} catch (err) {
-				console.warn(`Failed to fetch chain ${chainId}:`, err);
+				console.warn(`Failed to fetch chain ${cid}:`, err);
 			}
 		}
 
@@ -191,7 +194,7 @@ export class AgentsDirectory {
 		return this.agents.filter((agent) => {
 			// Chain filter
 			if (this.filters.chain !== 'all') {
-				const targetChain = Number(this.filters.chain.split('-')[0]) || 8453;
+				const targetChain = Number(this.filters.chain);
 				if (agent.chainId !== targetChain) return false;
 			}
 
@@ -259,13 +262,19 @@ export class AgentsDirectory {
 		return String(text).replace(/[&<>"']/g, (m) => map[m]);
 	}
 
+	_parseChainFilter(filter) {
+		if (filter === 'all') return 'all';
+		const num = Number(filter);
+		return isNaN(num) ? 'all' : num;
+	}
+
 	_attachEventListeners() {
 		this.container.querySelectorAll('.agent-card').forEach((card) => {
 			card.addEventListener('click', () => {
 				const agentId = card.dataset.agentId;
 				const chainId = card.dataset.chainId;
 				const agent = this.agents.find(
-					(a) => a.id === agentId && a.chainId === Number(chainId)
+					(a) => a.id === agentId && a.chainId === Number(chainId),
 				);
 				if (agent && this.cardClickHandler) {
 					this.cardClickHandler(agent);

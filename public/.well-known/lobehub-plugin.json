@@ -1,0 +1,95 @@
+{
+	"$schema": "https://lobehub.com/schema/plugin-manifest/v1.json",
+	"identifier": "3d-agent",
+	"version": "1.0.0",
+	"author": "3D Agent",
+	"createdAt": "2026-04-17",
+	"homepage": "https://3dagent.vercel.app",
+	"meta": {
+		"title": "3D Agent",
+		"description": "Embed any on-chain or off-chain 3D agent as an embodied avatar inside your chat.",
+		"avatar": "https://3dagent.vercel.app/favicon.png",
+		"tags": ["3d", "avatar", "embodied-agent", "erc-8004"]
+	},
+	"ui": {
+		"url": "https://3dagent.vercel.app/lobehub/iframe/",
+		"height": 640,
+		"settings": {
+			"agentId": {
+				"type": "string",
+				"title": "Agent ID",
+				"description": "Paste a 3D Agent ID or ENS name"
+			}
+		}
+	},
+	"api": [
+		{
+			"url": "https://3dagent.vercel.app/api/mcp",
+			"name": "render_agent",
+			"description": "Mount the 3D avatar for a given agent id.",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"agentId": {
+						"type": "string",
+						"description": "Agent identity id (UUID) to render."
+					}
+				},
+				"required": ["agentId"]
+			}
+		},
+		{
+			"url": "https://3dagent.vercel.app/api/mcp",
+			"name": "speak",
+			"description": "Make the avatar speak with optional emotional valence.",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"text": {
+						"type": "string",
+						"description": "Text for the avatar to speak aloud."
+					},
+					"sentiment": {
+						"type": "number",
+						"description": "Emotional valence in [-1, 1].",
+						"minimum": -1,
+						"maximum": 1
+					}
+				},
+				"required": ["text"]
+			}
+		},
+		{
+			"url": "https://3dagent.vercel.app/api/mcp",
+			"name": "gesture",
+			"description": "Trigger a named gesture on the avatar.",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"name": {
+						"type": "string",
+						"enum": ["wave", "nod", "point", "shrug"]
+					}
+				},
+				"required": ["name"]
+			}
+		},
+		{
+			"url": "https://3dagent.vercel.app/api/mcp",
+			"name": "emote",
+			"description": "Inject an emotion into the avatar's Empathy Layer blend.",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"trigger": {
+						"type": "string",
+						"enum": ["concern", "celebration", "patience", "curiosity", "empathy"]
+					},
+					"weight": { "type": "number", "minimum": 0, "maximum": 1 }
+				},
+				"required": ["trigger"]
+			}
+		}
+	],
+	"systemRole": "You have an embodied 3D avatar agent visible in the chat. Use render_agent to bind it to a specific agent, speak to give it voice with emotional valence, gesture for physical expression, and emote to inject emotional state into its blend."
+}

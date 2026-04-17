@@ -35,6 +35,64 @@ async function fetchJSON(url, { fetchFn }) {
 	}
 }
 
+const _resolveCache = new Map();
+const _CACHE_MAX = 100;
+
+/**
+ * Resolve an agent ID to its manifest URL via GET /api/agents/:id.
+ * Returns null if the agent record has no manifestUrl (caller may fall back to resolveAgentById).
+ * Throws AgentResolveError('not-found') on 404.
+ *
+ * @param {string} agentId
+ * @param {AbortSignal} [signal]
+ * @returns {Promise<string|null>}
+ */
+export async function resolveByAgentId(agentId, signal) {
+	if (!agentId) throw new AgentResolveError('not-found', 'agentId required');
+
+	if (_resolveCache.has(agentId)) return _resolveCache.get(agentId);
+
+	const origin = typeof location !== 'undefined' ? location.origin : '';
+	const endpoint = `${origin}/api/agents/${encodeURIComponent(agentId)}`;
+
+	let res;
+	try {
+		res = await fetch(endpoint, { credentials: 'include', signal });
+	} catch (err) {
+		if (err?.name === 'AbortError') throw err;
+		throw new AgentResolveError('network', `network error fetching ${endpoint}: ${err.message || err}`);
+	}
+
+	if (res.status === 404)
+		throw new AgentResolveError('not-found', `agent ${agentId} not found`, { status: 404 });
+	if (res.status === 401 || res.status === 403)
+		throw new AgentResolveError('unauthorized', `unauthorized (${res.status})`, { status: res.status });
+	if (!res.ok)
+		throw new AgentResolveError('network', `request failed (${res.status})`, { status: res.status });
+
+	let data;
+	try {
+		data = await res.json();
+	} catch (err) {
+		throw new AgentResolveError('network', `invalid JSON from ${endpoint}`);
+	}
+
+	const raw = data?.agent?.manifestUrl ?? null;
+	let resolved = null;
+	if (raw) {
+		try {
+			resolved = new URL(raw, origin).href;
+		} catch {
+			resolved = raw;
+		}
+	}
+
+	if (_resolveCache.size >= _CACHE_MAX) _resolveCache.delete(_resolveCache.keys().next().value);
+	_resolveCache.set(agentId, resolved);
+
+	return resolved;
+}
+
 export async function resolveAgentById(agentId, { origin = typeof location !== 'undefined' ? location.origin : '', fetchFn = fetch } = {}) {
 	if (!agentId) throw new AgentResolveError('not_found', 'agentId required');
 

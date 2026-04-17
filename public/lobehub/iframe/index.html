@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>3D Agent — LobeHub Embed</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="robots" content="noindex" />
+		<style>
+			html,
+			body {
+				margin: 0;
+				padding: 0;
+				width: 100%;
+				height: 100%;
+				background: transparent;
+				overflow: hidden;
+			}
+			agent-3d {
+				display: block;
+				width: 100%;
+				height: 100%;
+			}
+			#status {
+				position: absolute;
+				inset: 0;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				color: rgba(255, 255, 255, 0.4);
+				font:
+					13px system-ui,
+					sans-serif;
+				pointer-events: none;
+			}
+		</style>
+		<!--
+			TODO(lobehub-sdk): Replace with versioned CDN URL once agent-3d releases are
+			published to /agent-3d/latest/. Dev: run `npm run build:lib` then serve
+			dist-lib/ under /agent-3d/latest/.
+			TODO(lobehub-spec): Confirm LobeHub sandbox CSP allows module scripts from
+			cross-origin CDN, or switch to a bundled inline approach.
+		-->
+		<script
+			type="module"
+			src="https://3dagent.vercel.app/agent-3d/latest/agent-3d.js"
+			crossorigin
+		></script>
+	</head>
+	<body>
+		<div id="status">Loading…</div>
+		<!-- agent-id is set dynamically by boot.js from ?agent= param -->
+		<agent-3d id="agent" kiosk eager></agent-3d>
+		<script type="module" src="./boot.js"></script>
+	</body>
+</html>

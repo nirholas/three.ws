@@ -40,7 +40,7 @@ export default wrap(async (req, res) => {
 	const embedUrl = `${origin}/a/${chainId}/${agentId}/embed`;
 	const viewerUrl = `${origin}/?agent=agent://${chainId}/${agentId}`;
 	const ogUrl = `${origin}/api/a-og?chain=${chainId}&id=${encodeURIComponent(agentId)}`;
-	const oembedJs = `${origin}/api/oembed?url=${encodeURIComponent(pageUrl)}&format=json`;
+	const oembedJs = `${origin}/api/agent-oembed?url=${encodeURIComponent(pageUrl)}&format=json`;
 
 	const title = agent.name || `Agent #${agentId}`;
 	const chainLabel = agent.chainName || `Chain ${chainId}`;
@@ -106,7 +106,7 @@ function renderHtml(p) {
 	<meta property="og:image:height" content="630">
 	<meta property="og:image:alt" content="${t} on ${chainL}">
 
-	<meta name="twitter:card" content="player">
+	<meta name="twitter:card" content="summary_large_image">
 	<meta name="twitter:title" content="${t}">
 	<meta name="twitter:description" content="${d}">
 	<meta name="twitter:image" content="${escapeAttr(p.ogUrl)}">

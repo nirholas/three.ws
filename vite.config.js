@@ -34,6 +34,7 @@ const appConfig = {
 				'agent-embed': resolve(__dirname, 'agent-embed.html'),
 				'a-embed': resolve(__dirname, 'a-embed.html'),
 				reputation: resolve(__dirname, 'public/reputation/index.html'),
+				hydrate: resolve(__dirname, 'public/hydrate/index.html'),
 			},
 		},
 	},
@@ -62,6 +63,8 @@ const appConfig = {
 					'/validation/': resolve(root, 'public/validation/index.html'),
 					'/reputation': resolve(root, 'public/reputation/index.html'),
 					'/reputation/': resolve(root, 'public/reputation/index.html'),
+					'/hydrate': resolve(root, 'public/hydrate/index.html'),
+					'/hydrate/': resolve(root, 'public/hydrate/index.html'),
 					'/agent': resolve(root, 'agent-home.html'),
 				};
 				server.middlewares.use(async (req, res, next) => {
