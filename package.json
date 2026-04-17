@@ -43,7 +43,7 @@
 		"clean": "rm -rf dist/* dist-lib/* || true",
 		"generate-icons": "node scripts/generate-pwa-icons.mjs",
 		"fetch-animations": "node scripts/download-animations.mjs",
-		"test": "echo 'No tests configured' && exit 0",
+		"test": "vitest run",
 		"verify": "prettier --check . && vite build",
 		"format": "prettier --write .",
 		"deploy": "npm run build:all && vercel --local-config vercel.json --prod",
@@ -79,6 +79,7 @@
 		"sharp": "^0.34.5",
 		"vite": "^7.3.2",
 		"vite-plugin-pwa": "^1.2.0",
+		"vitest": "^4.1.4",
 		"workbox-build": "^7.4.0",
 		"workbox-window": "^7.4.0"
 	}
