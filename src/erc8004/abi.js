@@ -34,6 +34,13 @@ export const IDENTITY_REGISTRY_ABI = [
 	'function symbol() external view returns (string)',
 	'function getVersion() external pure returns (string)',
 
+	// --- ERC-721 transfer ---
+	'function transferFrom(address from, address to, uint256 tokenId) external',
+	'function safeTransferFrom(address from, address to, uint256 tokenId) external',
+	'function safeTransferFrom(address from, address to, uint256 tokenId, bytes data) external',
+	'function approve(address to, uint256 tokenId) external',
+	'function setApprovalForAll(address operator, bool approved) external',
+
 	// --- Events ---
 	'event Registered(uint256 indexed agentId, string agentURI, address indexed owner)',
 	'event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)',
@@ -76,30 +83,30 @@ const MAINNET = {
  */
 export const REGISTRY_DEPLOYMENTS = {
 	// Mainnets
-	1: MAINNET,        // Ethereum
-	10: MAINNET,       // Optimism
-	56: MAINNET,       // BSC
-	100: MAINNET,      // Gnosis
-	137: MAINNET,      // Polygon
-	250: MAINNET,      // Fantom
-	324: MAINNET,      // zkSync Era
-	1284: MAINNET,     // Moonbeam
-	5000: MAINNET,     // Mantle
-	8453: MAINNET,     // Base
-	42161: MAINNET,    // Arbitrum One
-	42220: MAINNET,    // Celo
-	43114: MAINNET,    // Avalanche
-	59144: MAINNET,    // Linea
-	534352: MAINNET,   // Scroll
+	1: MAINNET, // Ethereum
+	10: MAINNET, // Optimism
+	56: MAINNET, // BSC
+	100: MAINNET, // Gnosis
+	137: MAINNET, // Polygon
+	250: MAINNET, // Fantom
+	324: MAINNET, // zkSync Era
+	1284: MAINNET, // Moonbeam
+	5000: MAINNET, // Mantle
+	8453: MAINNET, // Base
+	42161: MAINNET, // Arbitrum One
+	42220: MAINNET, // Celo
+	43114: MAINNET, // Avalanche
+	59144: MAINNET, // Linea
+	534352: MAINNET, // Scroll
 
 	// Testnets
-	97: TESTNET,       // BSC Testnet
+	97: TESTNET, // BSC Testnet
 	11155111: TESTNET, // Ethereum Sepolia
-	84532: TESTNET,    // Base Sepolia
-	421614: TESTNET,   // Arbitrum Sepolia
+	84532: TESTNET, // Base Sepolia
+	421614: TESTNET, // Arbitrum Sepolia
 	11155420: TESTNET, // Optimism Sepolia
-	80002: TESTNET,    // Polygon Amoy
-	43113: TESTNET,    // Avalanche Fuji
+	80002: TESTNET, // Polygon Amoy
+	43113: TESTNET, // Avalanche Fuji
 };
 
 /**

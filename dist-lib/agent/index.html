@@ -214,6 +214,194 @@
 			text-align: center;
 			padding: 2rem;
 		}
+
+		/* ── Hub actions row ────────────────────────────────────────────────── */
+
+		.agent-hub-actions {
+			display: flex;
+			gap: 0.5rem;
+			flex-wrap: wrap;
+			padding: 0.75rem 1rem;
+			border-top: 1px solid rgba(255,255,255,0.06);
+			border-bottom: 1px solid rgba(255,255,255,0.06);
+		}
+
+		.agent-hub-btn {
+			display: inline-flex;
+			align-items: center;
+			gap: 0.382rem;
+			background: rgba(255,255,255,0.05);
+			border: 1px solid rgba(255,255,255,0.1);
+			color: rgba(255,255,255,0.7);
+			font-size: 0.718rem;
+			font-family: inherit;
+			padding: 0.382rem 0.75rem;
+			border-radius: 999px;
+			cursor: pointer;
+			transition: background 0.15s, border-color 0.15s, color 0.15s;
+			white-space: nowrap;
+		}
+
+		.agent-hub-btn:hover:not(:disabled) {
+			background: rgba(255,255,255,0.1);
+			border-color: rgba(255,255,255,0.2);
+			color: rgba(255,255,255,0.95);
+		}
+
+		.agent-hub-btn:disabled {
+			opacity: 0.5;
+			cursor: default;
+		}
+
+		.agent-hub-btn svg {
+			flex-shrink: 0;
+			opacity: 0.7;
+		}
+
+		.agent-hub-opt {
+			font-size: 0.618rem;
+			opacity: 0.45;
+		}
+
+		.hub-btn--deployed {
+			border-color: rgba(134,239,172,0.25);
+			color: #86efac;
+		}
+
+		.hub-btn--deployed svg {
+			opacity: 0.9;
+		}
+
+		/* ── Embed modal ────────────────────────────────────────────────────── */
+
+		.aem-overlay {
+			position: fixed;
+			inset: 0;
+			background: rgba(0,0,0,0.65);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			z-index: 9000;
+			opacity: 0;
+			transition: opacity 0.15s;
+		}
+
+		.aem-overlay.aem-open {
+			opacity: 1;
+		}
+
+		.aem-modal {
+			background: #0f0f18;
+			border: 1px solid rgba(255,255,255,0.1);
+			border-radius: 12px;
+			width: min(480px, calc(100vw - 2rem));
+			max-height: calc(100vh - 4rem);
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+			box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+		}
+
+		.aem-header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: 1rem 1.25rem;
+			border-bottom: 1px solid rgba(255,255,255,0.07);
+		}
+
+		.aem-title {
+			font-size: 0.875rem;
+			font-weight: 500;
+			color: rgba(255,255,255,0.85);
+		}
+
+		.aem-close {
+			background: none;
+			border: none;
+			color: rgba(255,255,255,0.4);
+			font-size: 1.25rem;
+			line-height: 1;
+			cursor: pointer;
+			padding: 0.25rem;
+			border-radius: 4px;
+		}
+
+		.aem-close:hover { color: rgba(255,255,255,0.8); }
+
+		.aem-body {
+			padding: 1rem 1.25rem 1.25rem;
+			display: flex;
+			flex-direction: column;
+			gap: 0.75rem;
+		}
+
+		.aem-tabs {
+			display: flex;
+			gap: 0.382rem;
+		}
+
+		.aem-tab {
+			background: transparent;
+			border: 1px solid rgba(255,255,255,0.1);
+			color: rgba(255,255,255,0.45);
+			font-size: 0.618rem;
+			padding: 0.236rem 0.618rem;
+			border-radius: 999px;
+			cursor: pointer;
+			font-family: inherit;
+			transition: background 0.12s, color 0.12s;
+		}
+
+		.aem-tab.active {
+			background: rgba(255,255,255,0.08);
+			color: rgba(255,255,255,0.9);
+			border-color: rgba(255,255,255,0.2);
+		}
+
+		.aem-snippet-wrap {
+			position: relative;
+		}
+
+		.aem-snippet {
+			background: rgba(255,255,255,0.04);
+			border: 1px solid rgba(255,255,255,0.08);
+			border-radius: 8px;
+			padding: 0.75rem 1rem;
+			padding-right: 4rem;
+			font-family: monospace;
+			font-size: 0.618rem;
+			color: rgba(255,255,255,0.6);
+			white-space: pre-wrap;
+			word-break: break-all;
+			line-height: 1.6;
+			margin: 0;
+		}
+
+		.aem-copy {
+			position: absolute;
+			top: 0.382rem;
+			right: 0.382rem;
+			background: rgba(255,255,255,0.06);
+			border: 1px solid rgba(255,255,255,0.1);
+			color: rgba(255,255,255,0.6);
+			font-size: 0.618rem;
+			padding: 0.236rem 0.618rem;
+			border-radius: 6px;
+			cursor: pointer;
+			font-family: inherit;
+			transition: background 0.12s, color 0.12s;
+		}
+
+		.aem-copy:hover { color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.1); }
+		.aem-copy.aem-copied { color: #86efac; border-color: rgba(134,239,172,0.3); }
+
+		.aem-note {
+			font-size: 0.618rem;
+			color: rgba(255,255,255,0.25);
+			margin: 0;
+			line-height: 1.5;
+		}
 	</style>
 </head>
 <body>
@@ -258,16 +446,29 @@
 	</div>
 
 	<script type="module">
-		import { AgentIdentity } from '/src/agent-identity.js';
-		import { AgentMemory }   from '/src/agent-memory.js';
-		import { AgentSkills }   from '/src/agent-skills.js';
-		import { AgentHome }     from '/src/agent-home.js';
-		import { protocol }      from '/src/agent-protocol.js';
+		import { AgentIdentity }   from '/src/agent-identity.js';
+		import { AgentMemory }     from '/src/agent-memory.js';
+		import { AgentSkills }     from '/src/agent-skills.js';
+		import { AgentHome }       from '/src/agent-home.js';
+		import { protocol }        from '/src/agent-protocol.js';
+		import { renderHubActions } from '/src/agent-hub-actions.js';
 
 		// Pull agent id from URL: /agent/:id
 		const agentId = location.pathname.split('/').filter(Boolean).pop();
 
 		async function main() {
+			// Fetch raw API response first — it includes user_id only for owners.
+			let rawAgent = null;
+			if (agentId) {
+				try {
+					const resp = await fetch(`/api/agents/${agentId}`, { credentials: 'include' });
+					if (resp.ok) {
+						const data = await resp.json();
+						rawAgent = data.agent || null;
+					}
+				} catch {}
+			}
+
 			const identity = new AgentIdentity({ agentId: agentId || undefined, autoLoad: false });
 			await identity.load();
 
@@ -282,6 +483,13 @@
 			container.innerHTML = '';
 			const home = new AgentHome(container, identity, protocol, null);
 			await home.render();
+
+			// Inject hub actions if the viewer is the owner (user_id present = owner)
+			const isOwner = Boolean(rawAgent?.user_id);
+			if (isOwner) {
+				const panel = container.querySelector('.agent-home-panel');
+				if (panel) renderHubActions(panel, identity, rawAgent);
+			}
 
 			// Render skills catalog
 			if (identity.skills?.length) {
@@ -318,7 +526,8 @@
 			let current = 'iframe';
 			const render = () => { embedCode.textContent = snippets[current]; };
 			render();
-			embedSection.style.display = '';
+			// Hide the bottom embed section for owners — they have the modal via the hub Embed button.
+			if (!isOwner) embedSection.style.display = '';
 			embedPreview.href = embedUrl;
 			document.getElementById('agent-embed-settings').href = '/dashboard/embed-policy?agent=' + identity.id;
 

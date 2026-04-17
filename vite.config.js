@@ -30,7 +30,7 @@ const appConfig = {
 				embed: resolve(__dirname, 'embed.html'),
 				create: resolve(__dirname, 'create.html'),
 				'agent-home': resolve(__dirname, 'agent-home.html'),
-				'agent-edit':  resolve(__dirname, 'agent-edit.html'),
+				'agent-edit': resolve(__dirname, 'agent-edit.html'),
 				'agent-embed': resolve(__dirname, 'agent-embed.html'),
 			},
 		},
@@ -41,26 +41,30 @@ const appConfig = {
 			configureServer(server) {
 				const root = resolve(__dirname);
 				const fileMap = {
-					'/app':          resolve(root, 'app.html'),
-					'/login':        resolve(root, 'public/login.html'),
-					'/deploy':       resolve(root, 'app.html'),
-					'/explore':      resolve(root, 'app.html'),
-					'/features':     resolve(root, 'features.html'),
-					'/create':       resolve(root, 'create.html'),
-					'/dashboard':    resolve(root, 'public/dashboard/index.html'),
-					'/studio':       resolve(root, 'public/studio/index.html'),
-					'/widgets':      resolve(root, 'public/widgets-gallery/index.html'),
+					'/app': resolve(root, 'app.html'),
+					'/login': resolve(root, 'public/login.html'),
+					'/deploy': resolve(root, 'app.html'),
+					'/explore': resolve(root, 'app.html'),
+					'/features': resolve(root, 'features.html'),
+					'/create': resolve(root, 'create.html'),
+					'/dashboard': resolve(root, 'public/dashboard/index.html'),
+					'/studio': resolve(root, 'public/studio/index.html'),
+					'/widgets': resolve(root, 'public/widgets-gallery/index.html'),
 					'/docs/widgets': resolve(root, 'public/docs-widgets.html'),
-					'/agent':        resolve(root, 'agent-home.html'),
+					'/agent': resolve(root, 'agent-home.html'),
 				};
 				server.middlewares.use(async (req, res, next) => {
 					const path = (req.url || '/').split('?')[0];
 					let filePath = fileMap[path];
-					if (!filePath && /^\/agent\/[^/]+\/edit$/.test(path)) filePath = resolve(root, 'agent-edit.html');
-					else if (!filePath && /^\/agent\/[^/]+\/embed$/.test(path)) filePath = resolve(root, 'agent-embed.html');
-					else if (!filePath && /^\/agent\/[^/]+$/.test(path)) filePath = resolve(root, 'agent-home.html');
+					if (!filePath && /^\/agent\/[^/]+\/edit$/.test(path))
+						filePath = resolve(root, 'agent-edit.html');
+					else if (!filePath && /^\/agent\/[^/]+\/embed$/.test(path))
+						filePath = resolve(root, 'agent-embed.html');
+					else if (!filePath && /^\/agent\/[^/]+$/.test(path))
+						filePath = resolve(root, 'agent-home.html');
 					// /a/<chainId>/<agentId> — public on-chain agent viewer.
-					else if (!filePath && /^\/a\/[^/]+(?:\/[^/]+){1,2}$/.test(path)) filePath = resolve(root, 'app.html');
+					else if (!filePath && /^\/a\/[^/]+(?:\/[^/]+){1,2}$/.test(path))
+						filePath = resolve(root, 'app.html');
 					if (!filePath) return next();
 					try {
 						const html = readFileSync(filePath, 'utf8');
@@ -79,7 +83,8 @@ const appConfig = {
 			manifest: {
 				name: '3D Agent — AI-Powered 3D Model Viewer',
 				short_name: '3D Agent',
-				description: 'Drag and drop glTF, GLB, and 3D files to preview instantly in your browser.',
+				description:
+					'Drag and drop glTF, GLB, and 3D files to preview instantly in your browser.',
 				theme_color: '#000000',
 				background_color: '#080814',
 				display: 'standalone',
@@ -88,7 +93,12 @@ const appConfig = {
 				icons: [
 					{ src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
 					{ src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
-					{ src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+					{
+						src: 'pwa-512x512.png',
+						sizes: '512x512',
+						type: 'image/png',
+						purpose: 'any maskable',
+					},
 				],
 			},
 			workbox: {
@@ -133,7 +143,7 @@ const libConfig = {
 			entry: resolve(__dirname, 'src/lib.js'),
 			name: 'Agent3D',
 			formats: ['es', 'umd'],
-			fileName: (format) => format === 'es' ? 'agent-3d.js' : 'agent-3d.umd.cjs',
+			fileName: (format) => (format === 'es' ? 'agent-3d.js' : 'agent-3d.umd.cjs'),
 		},
 		rollupOptions: {
 			// No externals — we want a self-contained drop-in embed.

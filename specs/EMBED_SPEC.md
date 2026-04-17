@@ -16,89 +16,89 @@ That's the full install for 95% of users. Everything below is optional.
 
 ### Source (pick one)
 
-| Attribute | Form | Example |
-|---|---|---|
-| `src` | on-chain URI | `agent://base/42` |
-| `manifest` | IPFS or HTTPS manifest URL | `ipfs://bafy.../manifest.json` |
-| `body` | bare GLB (ad-hoc agent) | `ipfs://bafy.../cz.glb` or `./cz.glb` |
+| Attribute  | Form                       | Example                               |
+| ---------- | -------------------------- | ------------------------------------- |
+| `src`      | on-chain URI               | `agent://base/42`                     |
+| `manifest` | IPFS or HTTPS manifest URL | `ipfs://bafy.../manifest.json`        |
+| `body`     | bare GLB (ad-hoc agent)    | `ipfs://bafy.../cz.glb` or `./cz.glb` |
 
 When multiple are set, priority is `src` > `manifest` > `body`.
 
 ### Body / scene
 
-| Attribute | Type | Default | Notes |
-|---|---|---|---|
-| `poster` | URL | none | image shown during load |
-| `environment` | preset name or HDRI URL | `neutral` | tone-mapped IBL |
-| `camera-controls` | boolean | off | orbit, pan, zoom |
-| `auto-rotate` | boolean | off | slow Y-axis rotation |
-| `ar` | boolean | off | WebXR / Scene Viewer / Quick Look |
-| `shadows` | boolean | on | contact + soft shadows |
-| `exposure` | number | 1.0 | tone-map exposure |
-| `background` | CSS color or `transparent` | transparent | canvas clear color |
-| `skybox` | URL | none | HDRI as visible sky |
+| Attribute         | Type                       | Default     | Notes                             |
+| ----------------- | -------------------------- | ----------- | --------------------------------- |
+| `poster`          | URL                        | none        | image shown during load           |
+| `environment`     | preset name or HDRI URL    | `neutral`   | tone-mapped IBL                   |
+| `camera-controls` | boolean                    | off         | orbit, pan, zoom                  |
+| `auto-rotate`     | boolean                    | off         | slow Y-axis rotation              |
+| `ar`              | boolean                    | off         | WebXR / Scene Viewer / Quick Look |
+| `shadows`         | boolean                    | on          | contact + soft shadows            |
+| `exposure`        | number                     | 1.0         | tone-map exposure                 |
+| `background`      | CSS color or `transparent` | transparent | canvas clear color                |
+| `skybox`          | URL                        | none        | HDRI as visible sky               |
 
 ### Brain
 
-| Attribute | Type | Default | Notes |
-|---|---|---|---|
-| `brain` | model id | from manifest | `claude-opus-4-6`, `none`, etc. |
-| `api-key` | string | none | **dev use only** — prefer `key-proxy` |
-| `key-proxy` | URL | none | your backend that injects API keys safely |
-| `instructions` | URL or inline | from manifest | overrides manifest's instructions.md |
-| `thinking` | `auto`\|`always`\|`never` | `auto` | extended thinking hint |
+| Attribute      | Type                      | Default       | Notes                                     |
+| -------------- | ------------------------- | ------------- | ----------------------------------------- |
+| `brain`        | model id                  | from manifest | `claude-opus-4-6`, `none`, etc.           |
+| `api-key`      | string                    | none          | **dev use only** — prefer `key-proxy`     |
+| `key-proxy`    | URL                       | none          | your backend that injects API keys safely |
+| `instructions` | URL or inline             | from manifest | overrides manifest's instructions.md      |
+| `thinking`     | `auto`\|`always`\|`never` | `auto`        | extended thinking hint                    |
 
 ### Voice
 
-| Attribute | Type | Default | Notes |
-|---|---|---|---|
-| `voice` | boolean | on if voice in manifest | master on/off for speech I/O |
-| `tts` | provider id | browser | overrides manifest |
-| `stt` | provider id | browser | overrides manifest |
-| `mic` | `push-to-talk`\|`continuous`\|`off` | `push-to-talk` | mic policy |
+| Attribute | Type                                | Default                 | Notes                        |
+| --------- | ----------------------------------- | ----------------------- | ---------------------------- |
+| `voice`   | boolean                             | on if voice in manifest | master on/off for speech I/O |
+| `tts`     | provider id                         | browser                 | overrides manifest           |
+| `stt`     | provider id                         | browser                 | overrides manifest           |
+| `mic`     | `push-to-talk`\|`continuous`\|`off` | `push-to-talk`          | mic policy                   |
 
 ### Skills
 
-| Attribute | Type | Notes |
-|---|---|---|
-| `skills` | comma-separated URIs | adds to (or replaces with `skills-only`) manifest skills |
-| `skills-only` | boolean | use only `skills` attribute, ignore manifest |
-| `skill-trust` | `any`\|`whitelist`\|`owned-only` | overrides manifest default |
+| Attribute     | Type                             | Notes                                                    |
+| ------------- | -------------------------------- | -------------------------------------------------------- |
+| `skills`      | comma-separated URIs             | adds to (or replaces with `skills-only`) manifest skills |
+| `skills-only` | boolean                          | use only `skills` attribute, ignore manifest             |
+| `skill-trust` | `any`\|`whitelist`\|`owned-only` | overrides manifest default                               |
 
 ### Memory
 
-| Attribute | Type | Default | Notes |
-|---|---|---|---|
-| `memory` | `local`\|`ipfs`\|`encrypted-ipfs`\|`none` | from manifest | override storage mode |
-| `memory-key` | string | `agentId` | namespace under which memory is stored |
+| Attribute    | Type                                      | Default       | Notes                                  |
+| ------------ | ----------------------------------------- | ------------- | -------------------------------------- |
+| `memory`     | `local`\|`ipfs`\|`encrypted-ipfs`\|`none` | from manifest | override storage mode                  |
+| `memory-key` | string                                    | `agentId`     | namespace under which memory is stored |
 
 ### Layout / embed mode
 
-| Attribute | Type | Default | Notes |
-|---|---|---|---|
-| `mode` | `inline`\|`floating`\|`section`\|`fullscreen` | `inline` | see "Modes" below |
-| `position` | `bottom-right`\|`bottom-left`\|`top-right`\|`top-left`\|`bottom-center` | `bottom-right` | for `floating` mode |
-| `offset` | CSS length pair | `24px 24px` | distance from edge in floating mode |
-| `width` | CSS length | `100%` (inline), `320px` (floating) | |
-| `height` | CSS length | `100%` (inline), `480px` (floating) | |
-| `scale` | number | `1.0` | camera zoom multiplier, independent of pixel size |
-| `responsive` | boolean | on | applies `clamp()`-based mobile shrinking |
+| Attribute    | Type                                                                    | Default                             | Notes                                             |
+| ------------ | ----------------------------------------------------------------------- | ----------------------------------- | ------------------------------------------------- |
+| `mode`       | `inline`\|`floating`\|`section`\|`fullscreen`                           | `inline`                            | see "Modes" below                                 |
+| `position`   | `bottom-right`\|`bottom-left`\|`top-right`\|`top-left`\|`bottom-center` | `bottom-right`                      | for `floating` mode                               |
+| `offset`     | CSS length pair                                                         | `24px 24px`                         | distance from edge in floating mode               |
+| `width`      | CSS length                                                              | `100%` (inline), `320px` (floating) |                                                   |
+| `height`     | CSS length                                                              | `100%` (inline), `480px` (floating) |                                                   |
+| `scale`      | number                                                                  | `1.0`                               | camera zoom multiplier, independent of pixel size |
+| `responsive` | boolean                                                                 | on                                  | applies `clamp()`-based mobile shrinking          |
 
 ### Identity / chain
 
-| Attribute | Type | Notes |
-|---|---|---|
-| `chain` | `base`\|`base-sepolia`\|`ethereum` | override the chain in `src="agent://..."` |
-| `registry` | 0x address | override deployed registry |
-| `wallet` | `auto`\|`metamask`\|`walletconnect`\|`none` | wallet connection policy for registration flows |
+| Attribute  | Type                                        | Notes                                           |
+| ---------- | ------------------------------------------- | ----------------------------------------------- |
+| `chain`    | `base`\|`base-sepolia`\|`ethereum`          | override the chain in `src="agent://..."`       |
+| `registry` | 0x address                                  | override deployed registry                      |
+| `wallet`   | `auto`\|`metamask`\|`walletconnect`\|`none` | wallet connection policy for registration flows |
 
 ### Dev / debug
 
-| Attribute | Notes |
-|---|---|
-| `kiosk` | hides all UI chrome (validator, controls, chat) |
-| `debug` | overlays scene graph, tool-call log, memory inspector |
-| `editor` | mounts the embed editor instead of the live agent |
+| Attribute | Notes                                                 |
+| --------- | ----------------------------------------------------- |
+| `kiosk`   | hides all UI chrome (validator, controls, chat)       |
+| `debug`   | overlays scene graph, tool-call log, memory inspector |
+| `editor`  | mounts the embed editor instead of the live agent     |
 
 ## Modes
 
@@ -118,12 +118,12 @@ Fixed-position bubble. Does not affect document flow.
 
 ```html
 <agent-3d
-  src="agent://base/42"
-  mode="floating"
-  position="bottom-right"
-  offset="24px 24px"
-  width="320px"
-  height="420px"
+	src="agent://base/42"
+	mode="floating"
+	position="bottom-right"
+	offset="24px 24px"
+	width="320px"
+	height="420px"
 ></agent-3d>
 ```
 
@@ -135,7 +135,7 @@ Fills a parent container with aspect-ratio preservation. Ideal for hero sections
 
 ```html
 <section class="hero">
-  <agent-3d src="..." mode="section"></agent-3d>
+	<agent-3d src="..." mode="section"></agent-3d>
 </section>
 ```
 
@@ -144,9 +144,7 @@ Fills a parent container with aspect-ratio preservation. Ideal for hero sections
 Takes over the viewport with a close button. Useful for mobile.
 
 ```html
-<button onclick="document.querySelector('agent-3d').openFullscreen()">
-  Meet Coach Leo
-</button>
+<button onclick="document.querySelector('agent-3d').openFullscreen()">Meet Coach Leo</button>
 <agent-3d src="..." mode="fullscreen"></agent-3d>
 ```
 
@@ -154,21 +152,21 @@ Takes over the viewport with a close button. Useful for mobile.
 
 ```html
 <agent-3d src="agent://base/42">
-  <!-- Shown before model loads -->
-  <div slot="poster">
-    <img src="./leo.webp" alt="Coach Leo">
-  </div>
+	<!-- Shown before model loads -->
+	<div slot="poster">
+		<img src="./leo.webp" alt="Coach Leo" />
+	</div>
 
-  <!-- Shown if loading fails -->
-  <div slot="error">Couldn't reach Coach Leo. Try again?</div>
+	<!-- Shown if loading fails -->
+	<div slot="error">Couldn't reach Coach Leo. Try again?</div>
 
-  <!-- AR button (inherits <model-viewer> pattern) -->
-  <button slot="ar-button">View in your space</button>
+	<!-- AR button (inherits <model-viewer> pattern) -->
+	<button slot="ar-button">View in your space</button>
 
-  <!-- Custom chat UI override -->
-  <div slot="chat">
-    <!-- host their own chat; hook events below -->
-  </div>
+	<!-- Custom chat UI override -->
+	<div slot="chat">
+		<!-- host their own chat; hook events below -->
+	</div>
 </agent-3d>
 ```
 
@@ -176,22 +174,22 @@ Takes over the viewport with a close button. Useful for mobile.
 
 All events bubble and compose (`composed: true`).
 
-| Event | Detail | When |
-|---|---|---|
-| `agent:ready` | `{ agent, manifest }` | fully mounted, skills loaded, brain connected |
-| `agent:load-progress` | `{ phase, pct }` | `"body"` \| `"skills"` \| `"memory"` with 0–1 |
-| `agent:error` | `{ phase, error }` | anything fatal |
-| `skill:loaded` | `{ name, uri }` | per skill |
-| `skill:tool-called` | `{ tool, args, result }` | every tool call |
-| `brain:thinking` | `{ content }` | streamed thinking tokens (if enabled) |
-| `brain:message` | `{ role, content }` | each assistant or user turn |
-| `voice:speech-start` | `{ text }` | TTS begins |
-| `voice:speech-end` | `{}` | TTS ends |
-| `voice:listen-start` | `{}` | mic opens |
-| `voice:transcript` | `{ text, final }` | STT chunks |
-| `memory:write` | `{ key, type }` | memory updated |
-| `chain:resolved` | `{ chain, agentId, cid }` | on-chain lookup succeeded |
-| `chain:tx` | `{ hash, kind }` | registration / update tx submitted |
+| Event                 | Detail                    | When                                          |
+| --------------------- | ------------------------- | --------------------------------------------- |
+| `agent:ready`         | `{ agent, manifest }`     | fully mounted, skills loaded, brain connected |
+| `agent:load-progress` | `{ phase, pct }`          | `"body"` \| `"skills"` \| `"memory"` with 0–1 |
+| `agent:error`         | `{ phase, error }`        | anything fatal                                |
+| `skill:loaded`        | `{ name, uri }`           | per skill                                     |
+| `skill:tool-called`   | `{ tool, args, result }`  | every tool call                               |
+| `brain:thinking`      | `{ content }`             | streamed thinking tokens (if enabled)         |
+| `brain:message`       | `{ role, content }`       | each assistant or user turn                   |
+| `voice:speech-start`  | `{ text }`                | TTS begins                                    |
+| `voice:speech-end`    | `{}`                      | TTS ends                                      |
+| `voice:listen-start`  | `{}`                      | mic opens                                     |
+| `voice:transcript`    | `{ text, final }`         | STT chunks                                    |
+| `memory:write`        | `{ key, type }`           | memory updated                                |
+| `chain:resolved`      | `{ chain, agentId, cid }` | on-chain lookup succeeded                     |
+| `chain:tx`            | `{ hash, kind }`          | registration / update tx submitted            |
 
 ## JS API
 
@@ -240,13 +238,13 @@ For themers and designers. All opt-in; defaults match `<model-viewer>`-style neu
 
 ```css
 agent-3d {
-  --agent-bubble-radius: 16px;
-  --agent-accent: #3b82f6;
-  --agent-surface: rgba(17, 24, 39, 0.9);
-  --agent-on-surface: #f9fafb;
-  --agent-chat-font: system-ui, sans-serif;
-  --agent-mic-glow: #22c55e;
-  --agent-shadow: 0 20px 60px rgba(0,0,0,0.3);
+	--agent-bubble-radius: 16px;
+	--agent-accent: #3b82f6;
+	--agent-surface: rgba(17, 24, 39, 0.9);
+	--agent-on-surface: #f9fafb;
+	--agent-chat-font: system-ui, sans-serif;
+	--agent-mic-glow: #22c55e;
+	--agent-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 ```
 
@@ -284,8 +282,8 @@ If the script fails to load, the element falls back to:
 
 ```html
 <agent-3d src="agent://base/42">
-  <!-- this content shows if JS disabled or script blocked -->
-  <img src="./leo-poster.webp" alt="Coach Leo (3D agent, requires JavaScript)">
+	<!-- this content shows if JS disabled or script blocked -->
+	<img src="./leo-poster.webp" alt="Coach Leo (3D agent, requires JavaScript)" />
 </agent-3d>
 ```
 
@@ -306,10 +304,40 @@ The editor's "Copy Embed" output is a plain `<agent-3d>` with no `editor` attrib
 - Works inside React (`<agent-3d />`), Vue, Svelte, Angular, plain HTML, WordPress, Webflow, Notion embeds, Shopify, Ghost, Framer.
 - iOS Safari: WebXR unsupported — AR falls back to Quick Look (USDZ export).
 
+## Install / CDN
+
+The bundle is published from the main app's deploy at `https://3dagent.vercel.app/agent-3d/`. Three URL channels, pick based on how strict you need updates:
+
+| Path                                            | Cache                         | Use when                                                  |
+| ----------------------------------------------- | ----------------------------- | --------------------------------------------------------- |
+| `/agent-3d/<MAJOR>.<MINOR>.<PATCH>/agent-3d.js` | `max-age=31536000, immutable` | **production** — pin exact bytes, always combine with SRI |
+| `/agent-3d/<MAJOR>.<MINOR>/agent-3d.js`         | `max-age=300`                 | follow patch releases automatically                       |
+| `/agent-3d/<MAJOR>/agent-3d.js`                 | `max-age=300`                 | follow minor + patch releases                             |
+| `/agent-3d/latest/agent-3d.js`                  | `max-age=300`                 | demos / prototypes only — never in production             |
+
+**Recommended snippet** (pinned + SRI):
+
+```html
+<script
+	type="module"
+	src="https://3dagent.vercel.app/agent-3d/1.5.1/agent-3d.js"
+	integrity="sha384-…"
+	crossorigin="anonymous"
+></script>
+
+<agent-3d src="agent://base/42"></agent-3d>
+```
+
+The current SRI hash for each release lives in `/agent-3d/<version>/integrity.json`. The full release manifest (channels, current version, publish time) is `/agent-3d/versions.json` (max-age 60s).
+
+UMD build available at the same path with `agent-3d.umd.cjs` if you can't use ES modules.
+
+All bundle responses ship `access-control-allow-origin: *` and `cross-origin-resource-policy: cross-origin`, so the script loads fine from any origin.
+
 ## Versioning
 
 - Element spec: `embed/0.1` — breaking changes bump minor until 1.0.
-- CDN URL pinning: `https://cdn.3d-agent.io/agent-3d@0.1.js` (SRI-hashed).
+- Bundle version: tracks `package.json` `version` of the main repo. Pinning a `<MAJOR>.<MINOR>.<PATCH>` URL is the only forever-stable option — moving channels can ship security fixes that may include behavior changes within their semver range.
 
 ## See also
 

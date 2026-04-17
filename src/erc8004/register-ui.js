@@ -42,9 +42,17 @@ import {
 	listRegisteredEvents,
 	getAgentOnchain,
 	fetchAgentMetadata,
+	findAvatar3D,
 	getRegistryVersion,
 	getTotalSupply,
 } from './queries.js';
+import {
+	detectInputType,
+	resolveByAddress,
+	resolveByTxHash,
+	resolveENSAddress,
+	INPUT_TYPES,
+} from './resolve-avatar.js';
 
 // ───────────────────────────────────────────────────────────────────────────
 // Templates (for the Templates tab → prefills Create)
@@ -483,22 +491,33 @@ export class RegisterUI {
 		return detail?.url || null;
 	}
 
-	async _linkAgentToAccount({ agentId, chainId, txHash }) {
-		if (!this._backendAgentId || !this.wallet) return;
+	async _linkAgentToAccount({ agentId, chainId, txHash, throwOnError = false }) {
+		if (!this._backendAgentId || !this.wallet) {
+			if (throwOnError) throw new Error('Sign in and connect a wallet first');
+			return;
+		}
 		try {
-			await fetch(`/api/agents/${encodeURIComponent(this._backendAgentId)}/wallet`, {
-				method: 'POST',
-				credentials: 'include',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({
-					wallet_address: this.wallet.address,
-					chain_id: chainId,
-					erc8004_agent_id: agentId,
-					tx_hash: txHash,
-				}),
-			});
+			const res = await fetch(
+				`/api/agents/${encodeURIComponent(this._backendAgentId)}/wallet`,
+				{
+					method: 'POST',
+					credentials: 'include',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({
+						wallet_address: this.wallet.address,
+						chain_id: chainId,
+						erc8004_agent_id: agentId,
+						tx_hash: txHash,
+					}),
+				},
+			);
+			if (!res.ok) {
+				const text = await res.text().catch(() => res.status);
+				throw new Error(`link failed (${res.status}): ${text}`);
+			}
 		} catch (err) {
 			console.warn('[erc8004] Failed to link on-chain agentId to account:', err.message);
+			if (throwOnError) throw err;
 		}
 	}
 
@@ -555,6 +574,27 @@ export class RegisterUI {
 		const step = this.wizardStep;
 		body.innerHTML = `
 			<div class="erc8004-wizard">
+				<div class="erc8004-quickstart" data-role="quickstart">
+					<div class="erc8004-quickstart-title">How would you like to start?</div>
+					<div class="erc8004-quickstart-grid">
+						<button class="erc8004-quickstart-btn" data-role="qs-saved" ${this._signedIn ? '' : 'disabled'}>
+							<div class="erc8004-quickstart-btn-title">🧑 My saved agent</div>
+							<div class="erc8004-quickstart-btn-hint">Prefill from the agent linked to your account.</div>
+						</button>
+						<button class="erc8004-quickstart-btn" data-role="qs-current">
+							<div class="erc8004-quickstart-btn-title">🪄 Current session</div>
+							<div class="erc8004-quickstart-btn-hint">Use the avatar loaded in the viewer right now.</div>
+						</button>
+						<button class="erc8004-quickstart-btn" data-role="qs-scratch">
+							<div class="erc8004-quickstart-btn-title">📝 From scratch</div>
+							<div class="erc8004-quickstart-btn-hint">Metadata-only agent — add a GLB later if you want.</div>
+						</button>
+						<button class="erc8004-quickstart-btn" data-role="qs-update">
+							<div class="erc8004-quickstart-btn-title">✏️ Update on-chain</div>
+							<div class="erc8004-quickstart-btn-hint">Edit an agent you've already registered.</div>
+						</button>
+					</div>
+				</div>
 				<ol class="erc8004-steps">
 					${[1, 2, 3, 4]
 						.map(
@@ -570,11 +610,80 @@ export class RegisterUI {
 				<div class="erc8004-wizard-body" data-role="wizard-body"></div>
 			</div>
 		`;
+		body.querySelector('[data-role="qs-saved"]').addEventListener('click', () =>
+			this._applyQuickStart('saved'),
+		);
+		body.querySelector('[data-role="qs-current"]').addEventListener('click', () =>
+			this._applyQuickStart('current'),
+		);
+		body.querySelector('[data-role="qs-scratch"]').addEventListener('click', () =>
+			this._applyQuickStart('scratch'),
+		);
+		body.querySelector('[data-role="qs-update"]').addEventListener('click', () =>
+			this._applyQuickStart('update'),
+		);
 		const wbody = body.querySelector('[data-role="wizard-body"]');
 		if (step === 1) this._renderStepIdentity(wbody);
 		else if (step === 2) this._renderStepServices(wbody);
 		else if (step === 3) this._renderStepConfig(wbody);
 		else this._renderStepDeploy(wbody);
+	}
+
+	/**
+	 * Apply one of the Step-0 quick-start modes. Resets wizard state appropriately
+	 * and returns to Step 1. Signed-in-only modes bail with a toast if no session.
+	 */
+	async _applyQuickStart(mode) {
+		if (mode === 'update') {
+			this._setTab('my');
+			this._toast('Pick an agent and click "Edit on-chain ✏️".');
+			return;
+		}
+		if (mode === 'scratch') {
+			this.form = {
+				name: '',
+				description: '',
+				imageUrl: '',
+				glbUrl: '',
+				glbFile: null,
+				savedAvatar: null,
+				avatarSource: 'skip',
+				services: [],
+				apiToken: this.form.apiToken || '',
+			};
+			this.wizardStep = 1;
+			this._renderActiveTab();
+			return;
+		}
+		if (mode === 'current') {
+			this.form.avatarSource = this.form.glbUrl ? 'current' : 'upload';
+			this.wizardStep = 1;
+			this._renderActiveTab();
+			return;
+		}
+		if (mode === 'saved') {
+			if (!this._signedIn) {
+				this._toast('Sign in to use a saved agent.', true);
+				return;
+			}
+			try {
+				const res = await fetch('/api/agents/me', { credentials: 'include' });
+				const body = await res.json().catch(() => ({}));
+				const agent = body?.agent;
+				if (!agent) {
+					this._toast('No saved agent on this account yet.', true);
+					return;
+				}
+				this.form.name = agent.name || this.form.name;
+				this.form.description = agent.description || this.form.description;
+				this.form.avatarSource = 'saved';
+				this.wizardStep = 1;
+				this._renderActiveTab();
+				this._loadSavedAvatars?.();
+			} catch (err) {
+				this._toast('Could not load saved agent: ' + err.message, true);
+			}
+		}
 	}
 
 	_renderStepIdentity(body) {
@@ -1323,9 +1432,11 @@ export class RegisterUI {
 			const name = meta.ok ? meta.data.name || `Agent #${agentId}` : `Agent #${agentId}`;
 			const description = meta.ok ? meta.data.description : '';
 			const image = meta.ok ? meta.data.image : '';
+			const glbUrl = meta.ok ? findAvatar3D(meta.data) : null;
 			const hasX402 = meta.ok && (meta.data.x402Support || meta.data.x402);
 			card._meta = meta.ok ? meta.data : null;
 			card._owner = owner;
+			const publicUrl = `/a/${this.selectedChainId}/${agentId}`;
 
 			const isOwner =
 				this.wallet && owner && this.wallet.address.toLowerCase() === owner.toLowerCase();
@@ -1342,13 +1453,16 @@ export class RegisterUI {
 							<span class="erc8004-tag">#${agentId}</span>
 							${hasX402 ? `<span class="erc8004-tag erc8004-tag--x402">x402 💳</span>` : ''}
 							${isOwner ? `<span class="erc8004-tag erc8004-tag--owner">You own this</span>` : ''}
+							${glbUrl ? `<span class="erc8004-tag" title="Resolvable 3D avatar">3D</span>` : ''}
 						</div>
 						${description ? `<p class="erc8004-p erc8004-clip">${esc(description)}</p>` : ''}
 						<div class="erc8004-agent-card-actions">
 							${tokenUrl ? `<a class="erc8004-link" href="${esc(tokenUrl)}" target="_blank" rel="noopener">Details ↗</a>` : ''}
-							<a class="erc8004-link" href="#agent=${agentId}">Open in viewer</a>
+							${glbUrl ? `<a class="erc8004-link" href="${esc(publicUrl)}">Open in 3D ↗</a>` : `<a class="erc8004-link" href="#agent=${agentId}">Open in viewer</a>`}
 							${opts.withQR && tokenUrl ? `<button type="button" class="erc8004-link" data-role="qr">QR</button>` : ''}
 							${opts.withEdit ? `<button type="button" class="erc8004-link" data-role="edit">Edit on-chain ✏️</button>` : ''}
+							${isOwner ? `<button type="button" class="erc8004-link" data-role="redeploy">Deploy on another chain 🌐</button>` : ''}
+							${isOwner ? `<button type="button" class="erc8004-link" data-role="transfer">Transfer 🔁</button>` : ''}
 							${showLink ? `<button type="button" class="erc8004-link" data-role="link">Link to my account 🔗</button>` : ''}
 						</div>
 					</div>
@@ -1369,6 +1483,16 @@ export class RegisterUI {
 						this._openEditModal({ agentId, currentMeta: card._meta, card }),
 					);
 			}
+			const redeployBtn = card.querySelector('[data-role="redeploy"]');
+			if (redeployBtn)
+				redeployBtn.addEventListener('click', () =>
+					this._openRedeployModal({ agentId, currentMeta: card._meta }),
+				);
+			const transferBtn = card.querySelector('[data-role="transfer"]');
+			if (transferBtn)
+				transferBtn.addEventListener('click', () =>
+					this._openTransferModal({ agentId, card }),
+				);
 			const linkBtn = card.querySelector('[data-role="link"]');
 			if (linkBtn)
 				linkBtn.addEventListener('click', async () => {
@@ -1378,6 +1502,7 @@ export class RegisterUI {
 						await this._linkAgentToAccount({
 							agentId: Number(agentId),
 							chainId: this.selectedChainId,
+							throwOnError: true,
 						});
 						linkBtn.textContent = 'Linked ✓';
 						this._toast('Agent linked to your account');
@@ -1613,16 +1738,186 @@ export class RegisterUI {
 	}
 
 	// -----------------------------------------------------------------------
+	// Transfer ownership — ERC-721 safeTransferFrom
+	// -----------------------------------------------------------------------
+
+	_openTransferModal({ agentId, card }) {
+		const modal = document.createElement('div');
+		modal.className = 'erc8004-modal';
+		modal.innerHTML = `
+			<div class="erc8004-modal-card">
+				<div class="erc8004-modal-head">
+					<div class="erc8004-h4" style="margin:0">Transfer Agent #${String(agentId)}</div>
+					<button class="erc8004-btn erc8004-btn--x" data-role="close" title="Close">✕</button>
+				</div>
+				<p class="erc8004-muted erc8004-small">Transfers the agent NFT to a new owner on <b>${esc(CHAIN_META[this.selectedChainId]?.name || '?')}</b>. The new owner gains full control — they can update the URI, transfer it again, or burn it.</p>
+				<label class="erc8004-label">Recipient address
+					<input class="erc8004-input" name="to" placeholder="0x…" />
+				</label>
+				<div class="erc8004-log" data-role="log"></div>
+				<div class="erc8004-row" style="justify-content:flex-end">
+					<button class="erc8004-btn" data-role="cancel">Cancel</button>
+					<button class="erc8004-btn erc8004-btn--primary" data-role="go">Transfer</button>
+				</div>
+			</div>
+		`;
+		this.el.appendChild(modal);
+		const close = () => modal.remove();
+		modal.addEventListener('click', (e) => {
+			if (e.target === modal) close();
+		});
+		modal.querySelector('[data-role="close"]').addEventListener('click', close);
+		modal.querySelector('[data-role="cancel"]').addEventListener('click', close);
+
+		modal.querySelector('[data-role="go"]').addEventListener('click', async () => {
+			const btn = modal.querySelector('[data-role="go"]');
+			const log = modal.querySelector('[data-role="log"]');
+			const say = (msg, err = false) => {
+				const line = document.createElement('div');
+				line.className = 'erc8004-log-line' + (err ? ' erc8004-log-error' : '');
+				line.textContent = msg;
+				log.appendChild(line);
+			};
+			const to = modal.querySelector('[name="to"]').value.trim();
+			if (!/^0x[0-9a-fA-F]{40}$/.test(to)) {
+				say('Invalid recipient address.', true);
+				return;
+			}
+			btn.disabled = true;
+			try {
+				say('Connecting wallet…');
+				const { signer, address } = await connectWallet();
+				const registry = getIdentityRegistry(this.selectedChainId, signer);
+				say('Submitting safeTransferFrom…');
+				const tx = await registry['safeTransferFrom(address,address,uint256)'](
+					address,
+					to,
+					agentId,
+				);
+				say(`Transaction: ${tx.hash}`);
+				await tx.wait();
+				say('Transfer complete ✓');
+				this._toast('Agent transferred');
+				close();
+				if (card) this._fillAgentCard(card, agentId, { withQR: true, withEdit: true });
+			} catch (err) {
+				say('Transfer failed: ' + (err.shortMessage || err.message || String(err)), true);
+				btn.disabled = false;
+			}
+		});
+	}
+
+	// -----------------------------------------------------------------------
+	// Deploy on another chain — re-mint using the current agent's metadata
+	// -----------------------------------------------------------------------
+
+	_openRedeployModal({ agentId, currentMeta }) {
+		const meta = currentMeta || {};
+		const chainOptions = supportedChainIds()
+			.filter((id) => id !== this.selectedChainId)
+			.map(
+				(id) =>
+					`<option value="${id}">${esc(CHAIN_META[id]?.name || id)} ${CHAIN_META[id]?.testnet ? '(testnet)' : ''}</option>`,
+			)
+			.join('');
+
+		const modal = document.createElement('div');
+		modal.className = 'erc8004-modal';
+		modal.innerHTML = `
+			<div class="erc8004-modal-card">
+				<div class="erc8004-modal-head">
+					<div class="erc8004-h4" style="margin:0">Deploy #${String(agentId)} on another chain</div>
+					<button class="erc8004-btn erc8004-btn--x" data-role="close" title="Close">✕</button>
+				</div>
+				<p class="erc8004-muted erc8004-small">Mints a new agent on the selected chain reusing this agent's name, description, image, and 3D body. The new agent gets its own on-chain ID — nothing about the original changes.</p>
+				<label class="erc8004-label">Target chain
+					<select class="erc8004-input" name="chain">${chainOptions}</select>
+				</label>
+				<label class="erc8004-label">Pinata JWT (optional)
+					<input class="erc8004-input" name="apiToken" placeholder="leave blank for R2 backend" />
+				</label>
+				<div class="erc8004-log" data-role="log"></div>
+				<div class="erc8004-row" style="justify-content:flex-end">
+					<button class="erc8004-btn" data-role="cancel">Cancel</button>
+					<button class="erc8004-btn erc8004-btn--primary" data-role="go">Deploy</button>
+				</div>
+			</div>
+		`;
+		this.el.appendChild(modal);
+		const close = () => modal.remove();
+		modal.addEventListener('click', (e) => {
+			if (e.target === modal) close();
+		});
+		modal.querySelector('[data-role="close"]').addEventListener('click', close);
+		modal.querySelector('[data-role="cancel"]').addEventListener('click', close);
+
+		modal.querySelector('[data-role="go"]').addEventListener('click', async () => {
+			const btn = modal.querySelector('[data-role="go"]');
+			const log = modal.querySelector('[data-role="log"]');
+			const say = (msg, err = false) => {
+				const line = document.createElement('div');
+				line.className = 'erc8004-log-line' + (err ? ' erc8004-log-error' : '');
+				line.textContent = msg;
+				log.appendChild(line);
+			};
+			const targetChainId = Number(modal.querySelector('[name="chain"]').value);
+			const apiToken = modal.querySelector('[name="apiToken"]').value.trim() || undefined;
+			btn.disabled = true;
+			try {
+				say(`Switching wallet to ${CHAIN_META[targetChainId]?.name || targetChainId}…`);
+				await switchChain(targetChainId);
+				const existingGlb = (meta.services || []).find(
+					(s) => s?.name === 'avatar' && s?.endpoint,
+				)?.endpoint;
+				let glbFile = null;
+				if (existingGlb) {
+					glbFile = await this._fetchUrlAsFile(
+						existingGlb.startsWith('ipfs://')
+							? 'https://ipfs.io/ipfs/' + existingGlb.slice(7)
+							: existingGlb,
+						say,
+						'3D body',
+					);
+				}
+				const preservedServices = (meta.services || []).filter(
+					(s) => s?.name !== 'avatar' && s?.name !== '3D',
+				);
+				say('Registering on new chain…');
+				const result = await registerAgent({
+					glbFile,
+					name: meta.name || `Agent #${agentId}`,
+					description: meta.description || '',
+					imageUrl: meta.image || '',
+					apiToken,
+					services: preservedServices,
+					x402Support: !!(meta.x402Support || meta.x402),
+					onStatus: (m) => say(m),
+				});
+				say(`Deployed! New agentId = ${result.agentId} on chain ${targetChainId}`);
+				this._toast(`Deployed as #${result.agentId} on ${CHAIN_META[targetChainId]?.name}`);
+				close();
+			} catch (err) {
+				say('Deploy failed: ' + (err.shortMessage || err.message || String(err)), true);
+				btn.disabled = false;
+			}
+		});
+	}
+
+	// -----------------------------------------------------------------------
 	// Tab: Search
 	// -----------------------------------------------------------------------
 
 	_renderSearch(body) {
 		if (!this._searchFilter) this._searchFilter = 'all';
+		const chainName = esc(CHAIN_META[this.selectedChainId]?.name);
 		body.innerHTML = `
 			<h3 class="erc8004-h3">Agent Search</h3>
-			<p class="erc8004-p">Find a registered agent by its on-chain ID on <b>${esc(CHAIN_META[this.selectedChainId]?.name)}</b>.</p>
+			<p class="erc8004-p">
+				Look up agents on <b>${chainName}</b> by ID, wallet address, ENS name, tx hash, or <code>agent://</code> URI.
+				Need cross-chain? <a class="erc8004-link" href="/explore" target="_blank" rel="noopener">Open /explore ↗</a>.
+			</p>
 			<div class="erc8004-row">
-				<input class="erc8004-input" name="q" placeholder="Agent ID (e.g., 6443)" />
+				<input class="erc8004-input" name="q" placeholder="Agent ID · 0x address · ENS · tx hash · agent://chain/id" />
 				<button class="erc8004-btn erc8004-btn--primary" data-role="go">Search</button>
 			</div>
 			<div class="erc8004-filter-chips" data-role="chips">
@@ -1651,18 +1946,82 @@ export class RegisterUI {
 		});
 
 		const go = async () => {
-			const id = q.value.trim();
-			if (!/^\d+$/.test(id)) {
-				out.innerHTML = `<div class="erc8004-log-error">Enter a numeric Agent ID.</div>`;
-				return;
-			}
-			out.innerHTML = `<div class="erc8004-muted">Loading #${id}…</div>`;
+			const raw = q.value.trim();
+			if (!raw) return;
+			const type = detectInputType(raw);
+			out.innerHTML = `<div class="erc8004-muted">Resolving…</div>`;
+
 			try {
-				const card = document.createElement('div');
-				card.className = 'erc8004-agent-card';
+				let agentIds = [];
+				if (type === INPUT_TYPES.AGENT_ID) {
+					agentIds = [BigInt(raw)];
+				} else if (type === INPUT_TYPES.AGENT_URI) {
+					const match = raw.match(/^agent:\/\/([^/]+)\/(\d+)$/i);
+					if (!match) throw new Error('Malformed agent:// URI');
+					const aliases = {
+						base: 8453,
+						'base-sepolia': 84532,
+						ethereum: 1,
+						mainnet: 1,
+						optimism: 10,
+						arbitrum: 42161,
+						polygon: 137,
+						bsc: 56,
+					};
+					const uriChain = aliases[match[1].toLowerCase()] || Number(match[1]);
+					if (uriChain !== this.selectedChainId) {
+						out.innerHTML = `<div class="erc8004-log-error">
+							This agent is on <b>${esc(CHAIN_META[uriChain]?.name || `Chain ${uriChain}`)}</b>, not the selected chain.
+							<a class="erc8004-link" href="/explore?q=${encodeURIComponent(raw)}" target="_blank" rel="noopener">Open in /explore ↗</a>
+						</div>`;
+						return;
+					}
+					agentIds = [BigInt(match[2])];
+				} else if (type === INPUT_TYPES.ADDRESS) {
+					const results = await resolveByAddress({
+						address: raw,
+						chainIds: [this.selectedChainId],
+						ethProvider: window.ethereum,
+					});
+					agentIds = results.map((r) => BigInt(r.agentId));
+				} else if (type === INPUT_TYPES.ENS) {
+					const addr = await resolveENSAddress(raw);
+					const results = await resolveByAddress({
+						address: addr,
+						chainIds: [this.selectedChainId],
+						ethProvider: window.ethereum,
+					});
+					agentIds = results.map((r) => BigInt(r.agentId));
+				} else if (type === INPUT_TYPES.TX_HASH) {
+					const results = await resolveByTxHash({
+						txHash: raw,
+						chainId: this.selectedChainId,
+						ethProvider: window.ethereum,
+					});
+					agentIds = results.map((r) => BigInt(r.agentId));
+				} else {
+					out.innerHTML = `<div class="erc8004-log-error">Unrecognized input. Try an agent ID, 0x address, ENS name, tx hash, or agent:// URI.</div>`;
+					return;
+				}
+
+				if (!agentIds.length) {
+					out.innerHTML = `
+						<div class="erc8004-muted">
+							No agents resolved on ${chainName} for <code>${esc(raw)}</code>.
+							<a class="erc8004-link" href="/explore?q=${encodeURIComponent(raw)}" target="_blank" rel="noopener">Try across all chains ↗</a>
+						</div>
+					`;
+					return;
+				}
+
 				out.innerHTML = '';
-				out.appendChild(card);
-				await this._fillAgentCard(card, BigInt(id), { withQR: true });
+				for (const id of agentIds) {
+					const card = document.createElement('div');
+					card.className = 'erc8004-agent-card';
+					card.innerHTML = `<div class="erc8004-muted">Loading #${id}…</div>`;
+					out.appendChild(card);
+					this._fillAgentCard(card, id, { withQR: true, withEdit: true });
+				}
 				this._applySearchFilter(out);
 			} catch (err) {
 				out.innerHTML = `<div class="erc8004-log-error">${esc(err.message)}</div>`;
