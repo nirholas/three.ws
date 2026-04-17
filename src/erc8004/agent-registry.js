@@ -122,29 +122,58 @@ export async function pinFile(blob, apiToken) {
  * @param {string[]} [opts.services]  Additional service objects
  * @returns {object}
  */
+/**
+ * Build a spec-compliant ERC-8004 registration JSON.
+ *
+ * `imageUrl` is the 2D thumbnail (per NFT convention). `glbUrl` is optional —
+ * when present, the GLB is surfaced as a dedicated `avatar` service entry and
+ * a companion `3D` renderer service pointing at 3dagent so other apps can load
+ * the body in-browser without coupling to our domain.
+ *
+ * @param {object} opts
+ * @param {string} opts.name
+ * @param {string} opts.description
+ * @param {string} [opts.imageUrl]     2D thumbnail URL (PNG/JPG) — used for `image`
+ * @param {string} [opts.glbUrl]       Optional GLB URL — emitted as an `avatar` service
+ * @param {number} opts.agentId
+ * @param {number} opts.chainId
+ * @param {string} opts.registryAddr
+ * @param {Array}  [opts.services]     Extra service entries
+ * @param {boolean}[opts.x402Support]
+ */
 export function buildRegistrationJSON({
 	name,
 	description,
 	imageUrl,
+	glbUrl,
 	agentId,
 	chainId,
 	registryAddr,
 	services = [],
+	x402Support = false,
 }) {
+	const baseServices = [];
+	if (glbUrl) {
+		baseServices.push({
+			name: 'avatar',
+			endpoint: glbUrl,
+			version: 'gltf-2.0',
+		});
+		baseServices.push({
+			name: '3D',
+			endpoint: `https://3dagent.vercel.app/#model=${encodeURIComponent(glbUrl)}`,
+			version: '1.0',
+		});
+	}
+
 	return {
 		type: 'https://eips.ethereum.org/EIPS/eip-8004#registration-v1',
 		name,
 		description,
-		image: imageUrl,
+		image: imageUrl || '',
 		active: true,
-		services: [
-			{
-				name: '3D',
-				endpoint: `https://3dagent.vercel.app/#model=${encodeURIComponent(imageUrl)}`,
-				version: '1.0',
-			},
-			...services,
-		],
+		x402Support,
+		services: [...baseServices, ...services],
 		registrations: [
 			{
 				agentId,
@@ -190,7 +219,7 @@ export function getIdentityRegistry(chainId, signer) {
  * @param {function} [opts.onStatus]  Callback for progress updates
  * @returns {Promise<{agentId: number, registrationUrl: string, txHash: string}>}
  */
-export async function registerAgent({ glbFile, name, description, apiToken, services = [], onStatus }) {
+export async function registerAgent({ glbFile, name, description, imageUrl, apiToken, services = [], x402Support = false, onStatus }) {
 	const log = onStatus || (() => {});
 
 	// 1. Connect wallet
@@ -223,15 +252,19 @@ export async function registerAgent({ glbFile, name, description, apiToken, serv
 	const agentId = Number(registeredEvent.args.agentId);
 	log(`Agent minted! agentId = ${agentId}`);
 
-	// 5. Build final registration JSON with the agentId
+	// 5. Build final registration JSON with the agentId. `imageUrl` is left as
+	// whatever the caller passed — NFT-marketplace thumbnails want a PNG/JPG,
+	// not a GLB. The GLB is surfaced via the `avatar` service entry below.
 	const registrationJSON = buildRegistrationJSON({
 		name,
 		description,
-		imageUrl: glbUrl,
+		imageUrl: imageUrl || '',
+		glbUrl,
 		agentId,
 		chainId,
 		registryAddr: REGISTRY_DEPLOYMENTS[chainId].identityRegistry,
 		services,
+		x402Support,
 	});
 
 	// 6. Upload registration JSON

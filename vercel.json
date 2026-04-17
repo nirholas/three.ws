@@ -71,6 +71,8 @@
         { "src": "/create",              "dest": "/create.html" },
         { "src": "/create/",             "dest": "/create.html" },
         { "src": "/home",               "dest": "/home.html" },
+        { "src": "/explore",             "dest": "/app.html" },
+        { "src": "/a/(.*)",              "dest": "/app.html" },
         { "src": "/(.*)",                "dest": "/public/$1" }
     ]
 }

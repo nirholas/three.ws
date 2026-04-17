@@ -44,6 +44,7 @@ const appConfig = {
 					'/app':          resolve(root, 'app.html'),
 					'/login':        resolve(root, 'public/login.html'),
 					'/deploy':       resolve(root, 'app.html'),
+					'/explore':      resolve(root, 'app.html'),
 					'/features':     resolve(root, 'features.html'),
 					'/create':       resolve(root, 'create.html'),
 					'/dashboard':    resolve(root, 'public/dashboard/index.html'),
@@ -58,6 +59,8 @@ const appConfig = {
 					if (!filePath && /^\/agent\/[^/]+\/edit$/.test(path)) filePath = resolve(root, 'agent-edit.html');
 					else if (!filePath && /^\/agent\/[^/]+\/embed$/.test(path)) filePath = resolve(root, 'agent-embed.html');
 					else if (!filePath && /^\/agent\/[^/]+$/.test(path)) filePath = resolve(root, 'agent-home.html');
+					// /a/<chainId>/<agentId> — public on-chain agent viewer.
+					else if (!filePath && /^\/a\/[^/]+(?:\/[^/]+){1,2}$/.test(path)) filePath = resolve(root, 'app.html');
 					if (!filePath) return next();
 					try {
 						const html = readFileSync(filePath, 'utf8');

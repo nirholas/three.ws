@@ -176,6 +176,38 @@ export async function getAgentOnchain({ chainId, agentId, ethProvider }) {
 }
 
 /**
+ * Extract a 3D avatar URL (GLB/GLTF) from an ERC-8004 registration payload.
+ *
+ * Canonical location is a service entry named `avatar` / `avatar-3d` with a
+ * `version` that starts with `gltf`. Falls back to the top-level `image` field
+ * when it ends in `.glb` or `.gltf` — older files we wrote before the service
+ * convention pollute `image` with the GLB URL.
+ *
+ * @param {any} metadata  Parsed registration JSON
+ * @returns {string|null} GLB/GLTF URL (still in raw ipfs://, ar://, https:// form)
+ */
+export function findAvatar3D(metadata) {
+	if (!metadata || typeof metadata !== 'object') return null;
+
+	const services = Array.isArray(metadata.services) ? metadata.services : [];
+	for (const svc of services) {
+		if (!svc || typeof svc !== 'object') continue;
+		const endpoint = String(svc.endpoint || '').trim();
+		if (!endpoint) continue;
+		const name = String(svc.name || '').toLowerCase();
+		const version = String(svc.version || '').toLowerCase();
+		if (name === 'avatar' || name === 'avatar-3d') return endpoint;
+		if (version.startsWith('gltf')) return endpoint;
+		if (/\.(glb|gltf)(\?|#|$)/i.test(endpoint)) return endpoint;
+	}
+
+	const img = String(metadata.image || '').trim();
+	if (/\.(glb|gltf)(\?|#|$)/i.test(img)) return img;
+
+	return null;
+}
+
+/**
  * Resolve any IPFS/Arweave/data/https URI to a fetchable URL and parse JSON.
  *
  * @param {string} uri
