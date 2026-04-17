@@ -947,10 +947,14 @@ class Agent3DElement extends HTMLElement {
 		return this._runtime.send(text, { voice: opts.voice ?? this.hasAttribute('voice') });
 	}
 
-	// Play talk animation directly via the scene — bypasses LLM, works in embedded context.
+	// Play speak animation — tries 'talk', falls back to 'yes', then 'wave'.
 	speak(text, opts = {}) {
 		const duration = Math.max(1.5, (text?.split(' ').length ?? 3) * 0.3);
-		this._scene?.playAnimationByHint?.('talk', { duration });
+		const sc = this._scene;
+		if (!sc) return;
+		sc.playAnimationByHint('talk', { duration }) ||
+			sc.playAnimationByHint('yes', { duration }) ||
+			sc.playAnimationByHint('wave', { duration });
 	}
 
 	async ask(text, opts = {}) {
