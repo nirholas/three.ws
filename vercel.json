@@ -13,7 +13,7 @@
         { "src": "/oauth/introspect",    "dest": "/api/oauth/introspect" },
 
         { "src": "/login",               "dest": "/public/login.html" },
-        { "src": "/register",            "dest": "/public/register.html" },
+        { "src": "/deploy",              "dest": "/app.html" },
         { "src": "/dashboard",           "dest": "/public/dashboard/index.html" },
         { "src": "/dashboard/",          "dest": "/public/dashboard/index.html" },
         { "src": "/dashboard/(.*)",      "dest": "/public/dashboard/$1" },

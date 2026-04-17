@@ -51,6 +51,76 @@ import {
 
 const TEMPLATES = [
 	{
+		id: 'companion',
+		emoji: '🤝',
+		name: 'Virtual Companion',
+		description:
+			'Always-on digital friend with persistent memory and empathy for daily check-ins and emotional support.',
+	},
+	{
+		id: 'influencer',
+		emoji: '🎭',
+		name: 'Virtual Influencer',
+		description:
+			'On-brand 3D persona for social posts, livestreams, and AMAs with a consistent face and voice.',
+	},
+	{
+		id: 'vtuber',
+		emoji: '📺',
+		name: 'VTuber Co-Host',
+		description:
+			'Livestream co-host with reactive expressions, chat moderation, superchat shoutouts, and lore memory.',
+	},
+	{
+		id: 'tutor',
+		emoji: '🎓',
+		name: 'Language Tutor',
+		description:
+			'One-on-one conversation practice with pronunciation feedback, spaced repetition, and adaptive lessons.',
+	},
+	{
+		id: 'gallery',
+		emoji: '🖼️',
+		name: 'Gallery Guide',
+		description:
+			'Embodied docent for 3D galleries, NFT exhibitions, and metaverse rooms with scripted tours and Q&A.',
+	},
+	{
+		id: 'npc',
+		emoji: '🎮',
+		name: 'Game NPC',
+		description:
+			'Questgiver and dialog partner for game worlds with persistent lore, per-player memory, and branching scripts.',
+	},
+	{
+		id: 'wellness',
+		emoji: '🧘',
+		name: 'Wellness Coach',
+		description:
+			'Breathwork, meditation, and daily mood check-ins with a calm, empathetic embodied presence.',
+	},
+	{
+		id: 'concierge',
+		emoji: '🪪',
+		name: 'NFT Concierge',
+		description:
+			'Token-gated holder assistant — perks, drops, private channel access, and holder-specific analytics.',
+	},
+	{
+		id: 'dao',
+		emoji: '🏛️',
+		name: 'DAO Delegate',
+		description:
+			'Reads governance proposals, summarizes sentiment, and votes on behalf of delegators within a mandate.',
+	},
+	{
+		id: 'portfolio',
+		emoji: '💼',
+		name: 'Portfolio Manager',
+		description:
+			'Tracks wallet positions across chains, alerts on drawdown and risk, and rebalances on schedule.',
+	},
+	{
 		id: 'defi',
 		emoji: '📈',
 		name: 'DeFi Trading Agent',
@@ -60,16 +130,16 @@ const TEMPLATES = [
 	{
 		id: 'support',
 		emoji: '🎧',
-		name: 'Customer Support Bot',
+		name: 'Avatar Support Agent',
 		description:
-			'AI-powered support agent for handling tickets, FAQ queries, and multi-language communication.',
+			'Face-of-the-brand support — tickets, FAQ, and multi-language help with a consistent embodied persona.',
 	},
 	{
 		id: 'code',
 		emoji: '🔍',
 		name: 'Code Review Agent',
 		description:
-			'Automated code analysis, security auditing, gas optimization, and best practice enforcement.',
+			'Automated code analysis, security auditing, gas optimization, and best-practice enforcement.',
 	},
 	{
 		id: 'data',
@@ -83,7 +153,7 @@ const TEMPLATES = [
 		emoji: '✍️',
 		name: 'Content Creator',
 		description:
-			'AI content generation for social media, documentation, technical writing, and marketing.',
+			'AI content generation for social posts, documentation, technical writing, and marketing copy.',
 	},
 	{
 		id: 'research',
@@ -114,10 +184,12 @@ export class RegisterUI {
 	/**
 	 * @param {HTMLElement} containerEl
 	 * @param {(result: { agentId: number, txHash: string, chainId: number }) => void} [onRegistered]
+	 * @param {{ initial?: { name?: string, description?: string, imageUrl?: string, glbUrl?: string } }} [opts]
 	 */
-	constructor(containerEl, onRegistered) {
+	constructor(containerEl, onRegistered, opts = {}) {
 		this.container = containerEl;
 		this.onRegistered = onRegistered || (() => {});
+		this.mode = opts.mode === 'page' ? 'page' : 'modal';
 
 		// Wallet state
 		this.wallet = null; // { address, chainId }
@@ -129,12 +201,16 @@ export class RegisterUI {
 		// Tab state
 		this.activeTab = 'create';
 
-		// Wizard state
+		const initial = opts.initial || {};
+
+		// Wizard state — pre-populate from the user's current avatar/session so
+		// the on-chain JSON points to the GLB they just uploaded/created.
 		this.wizardStep = 1;
 		this.form = {
-			name: '',
-			description: '',
-			imageUrl: '',
+			name: initial.name || '',
+			description: initial.description || '',
+			imageUrl: initial.imageUrl || '',
+			glbUrl: initial.glbUrl || '',
 			glbFile: null,
 			services: [], // [{ name, type, endpoint }]
 			apiToken: '', // optional Pinata JWT
@@ -153,87 +229,42 @@ export class RegisterUI {
 	// -----------------------------------------------------------------------
 
 	_build() {
+		const pageMode = this.mode === 'page';
 		this.el = document.createElement('div');
-		this.el.className = 'erc8004-register';
+		this.el.className = 'erc8004-register' + (pageMode ? ' erc8004-register--page' : '');
+		const closeBtn = pageMode
+			? ''
+			: `<button class="erc8004-btn erc8004-btn--close" type="button" title="Close">✕</button>`;
 		this.el.innerHTML = `
-			<div class="erc8004-shell">
-				<header class="erc8004-hero">
-					<div class="erc8004-hero-topbar">
-						<div class="erc8004-brand">
-							<span class="erc8004-brand-badge">8004</span>
-							<span class="erc8004-brand-title"><b>ERC-8004</b> Agent Studio</span>
-						</div>
-						<div class="erc8004-controls">
-							<select class="erc8004-chain-select" title="Target chain"></select>
-							<button class="erc8004-btn erc8004-btn--wallet" type="button">
-								${isPrivyConfigured() ? 'Connect Wallet' : 'Connect MetaMask'}
-							</button>
-							<button class="erc8004-btn erc8004-btn--close" type="button" title="Close">✕</button>
-						</div>
+			<div class="erc8004-card erc8004-card--wide">
+				<div class="erc8004-header">
+					<div class="erc8004-controls">
+						<select class="erc8004-chain-select" title="Target chain"></select>
+						<button class="erc8004-btn erc8004-btn--wallet" type="button">
+							${isPrivyConfigured() ? 'Connect Wallet' : 'Connect MetaMask'}
+						</button>
+						${closeBtn}
 					</div>
-					<div class="erc8004-hero-body">
-						<div class="erc8004-hero-badge"><span class="erc8004-hero-dot"></span>Live on 20+ EVM Chains</div>
-						<h1 class="erc8004-hero-h1">Create <span class="erc8004-hero-accent">Trustless Agents</span><br>on Any Chain</h1>
-						<p class="erc8004-hero-sub">Register AI agents on-chain with ERC-8004. Get a portable, censorship-resistant identity backed by an ERC-721 NFT — discoverable across the entire agent economy.</p>
-						<div class="erc8004-stats">
-							<div class="erc8004-stat"><div class="erc8004-stat-val" data-stat="total">—</div><div class="erc8004-stat-lbl">Agents Registered</div></div>
-							<div class="erc8004-stat"><div class="erc8004-stat-val" data-stat="chains">${supportedChainIds().length}</div><div class="erc8004-stat-lbl">Chains Supported</div></div>
-							<div class="erc8004-stat"><div class="erc8004-stat-val" data-stat="version">—</div><div class="erc8004-stat-lbl">Registry Version</div></div>
-						</div>
-					</div>
-				</header>
+				</div>
 
 				<div class="erc8004-mainnet-banner" data-role="mainnet-banner" style="display:none"></div>
 
-				<div class="erc8004-card erc8004-card--wide">
-					<nav class="erc8004-tabs" role="tablist">
-						<button class="erc8004-tab erc8004-tab--active" data-tab="create">Create Agent</button>
-						<button class="erc8004-tab" data-tab="my">My Agents</button>
-						<button class="erc8004-tab" data-tab="search">Search</button>
-						<button class="erc8004-tab" data-tab="templates">Templates</button>
-						<button class="erc8004-tab" data-tab="batch">Batch</button>
-						<button class="erc8004-tab" data-tab="history">History</button>
-					</nav>
+				<nav class="erc8004-tabs" role="tablist">
+					<button class="erc8004-tab erc8004-tab--active" data-tab="create">Create Agent</button>
+					<button class="erc8004-tab" data-tab="my">My Agents</button>
+					<button class="erc8004-tab" data-tab="search">Search</button>
+					<button class="erc8004-tab" data-tab="templates">Templates</button>
+					<button class="erc8004-tab" data-tab="batch">Batch</button>
+					<button class="erc8004-tab" data-tab="history">History</button>
+				</nav>
 
-					<div class="erc8004-tab-body" data-role="tab-body"></div>
-				</div>
-
-				<footer class="erc8004-footer">
-					<div class="erc8004-footer-links">
-						<a href="https://eips.ethereum.org/EIPS/eip-8004" target="_blank" rel="noopener">ERC-8004 Spec</a>
-						<a href="https://github.com/erc-8004/erc-8004-contracts" target="_blank" rel="noopener">Contracts</a>
-						<a href="https://bnbchaintoolkit.com" target="_blank" rel="noopener">BNB Chain AI Toolkit</a>
-						<a href="https://github.com/nirholas/3D" target="_blank" rel="noopener">GitHub</a>
-					</div>
-					<div class="erc8004-footer-cols">
-						<div class="erc8004-footer-col">
-							<div class="erc8004-footer-title">Learn</div>
-							<a href="https://eips.ethereum.org/EIPS/eip-8004" target="_blank" rel="noopener">What is ERC-8004?</a>
-							<a href="/features" target="_blank" rel="noopener">Getting Started</a>
-							<a href="https://github.com/nirholas/3D" target="_blank" rel="noopener">FAQ</a>
-						</div>
-						<div class="erc8004-footer-col">
-							<div class="erc8004-footer-title">Build</div>
-							<a href="/features">Tutorials</a>
-							<a href="https://github.com/nirholas/3D" target="_blank" rel="noopener">Examples</a>
-							<a href="/features">Integration Guide</a>
-						</div>
-						<div class="erc8004-footer-col">
-							<div class="erc8004-footer-title">Ecosystem</div>
-							<a href="https://github.com/nirholas/3D" target="_blank" rel="noopener">Architecture</a>
-							<a href="https://github.com/nirholas/3D" target="_blank" rel="noopener">MCP Server</a>
-							<a href="https://github.com/nirholas/3D" target="_blank" rel="noopener">SDKs</a>
-						</div>
-					</div>
-					<p class="erc8004-footer-credit">Built on <a href="https://eips.ethereum.org/EIPS/eip-8004" target="_blank" rel="noopener">ERC-8004</a></p>
-				</footer>
+				<div class="erc8004-tab-body" data-role="tab-body"></div>
 			</div>
 		`;
 		this.container.appendChild(this.el);
 
 		this._populateChainSelect();
 		this._renderActiveTab();
-		this._refreshStats();
 		this._refreshMainnetBanner();
 	}
 
@@ -256,9 +287,8 @@ export class RegisterUI {
 		this.el
 			.querySelector('.erc8004-btn--wallet')
 			.addEventListener('click', () => this._connectWallet());
-		this.el
-			.querySelector('.erc8004-btn--close')
-			.addEventListener('click', () => this.destroy());
+		const closeBtn = this.el.querySelector('.erc8004-btn--close');
+		if (closeBtn) closeBtn.addEventListener('click', () => this.destroy());
 
 		this.el.querySelector('.erc8004-chain-select').addEventListener('change', async (e) => {
 			const newChain = Number(e.target.value);
@@ -274,7 +304,6 @@ export class RegisterUI {
 				}
 			}
 			this._renderActiveTab();
-			this._refreshStats();
 			this._refreshMainnetBanner();
 		});
 
@@ -305,7 +334,6 @@ export class RegisterUI {
 
 			this._refreshWalletButton();
 			this._renderActiveTab();
-			this._refreshStats();
 			this._refreshMainnetBanner();
 		} catch (err) {
 			this._toast('Wallet: ' + err.message, true);
@@ -357,8 +385,10 @@ export class RegisterUI {
 				getTotalSupply(this.selectedChainId).catch(() => null),
 				getRegistryVersion(this.selectedChainId).catch(() => null),
 			]);
-			if (total !== null) el('total').textContent = String(total);
-			if (version) el('version').textContent = version;
+			const totalEl = el('total');
+			const versionEl = el('version');
+			if (total !== null && totalEl) totalEl.textContent = String(total);
+			if (version && versionEl) versionEl.textContent = version;
 		} catch {
 			/* swallow; stats are cosmetic */
 		}
@@ -588,7 +618,13 @@ export class RegisterUI {
 			<label class="erc8004-label">3D Avatar (GLB)
 				<div class="erc8004-file-drop" data-role="drop">
 					<input type="file" accept=".glb,.gltf" class="erc8004-file-input" />
-					<span class="erc8004-file-text">${this.form.glbFile ? esc(this.form.glbFile.name) : 'Drop .glb file or click to browse'}</span>
+					<span class="erc8004-file-text">${
+						this.form.glbFile
+							? esc(this.form.glbFile.name)
+							: this.form.glbUrl
+								? `Using current avatar: ${esc(this.form.glbUrl)} (click to replace)`
+								: 'Drop .glb file or click to browse'
+					}</span>
 				</div>
 			</label>
 
@@ -656,7 +692,7 @@ export class RegisterUI {
 				<dt>Name</dt>        <dd>${esc(this.form.name)}</dd>
 				<dt>Description</dt> <dd>${esc(this.form.description)}</dd>
 				${this.form.imageUrl ? `<dt>Image</dt>      <dd>${esc(this.form.imageUrl)}</dd>` : ''}
-				${this.form.glbFile ? `<dt>GLB File</dt>    <dd>${esc(this.form.glbFile.name)} (${(this.form.glbFile.size / 1024).toFixed(1)} KB)</dd>` : ''}
+				${this.form.glbFile ? `<dt>GLB File</dt>    <dd>${esc(this.form.glbFile.name)} (${(this.form.glbFile.size / 1024).toFixed(1)} KB)</dd>` : this.form.glbUrl ? `<dt>GLB URL</dt>     <dd>${esc(this.form.glbUrl)}</dd>` : ''}
 				<dt>Services</dt>    <dd>${this.form.services.length ? this.form.services.map((s) => `${esc(s.type)}: ${esc(s.endpoint || '—')}`).join('<br>') : '<span class="erc8004-muted">none</span>'}</dd>
 				<dt>Chain</dt>       <dd>${esc(meta.name)} (chainId ${this.selectedChainId})</dd>
 				<dt>Registry</dt>    <dd><code>${esc(REGISTRY_DEPLOYMENTS[this.selectedChainId].identityRegistry)}</code></dd>
@@ -863,7 +899,24 @@ export class RegisterUI {
 	 * to metadata-JSON pinning + on-chain mint.
 	 */
 	async _doRegister(say) {
-		const { name, description, imageUrl, glbFile, services, apiToken } = this.form;
+		const { name, description, imageUrl, services, apiToken, glbUrl } = this.form;
+		let { glbFile } = this.form;
+
+		// If no file was uploaded but the SPA pre-populated a glbUrl (the avatar
+		// the user just uploaded/created), fetch it as a File so the normal
+		// GLB-pinning pipeline applies.
+		if (!glbFile && glbUrl) {
+			try {
+				say(`Fetching current avatar from ${glbUrl}…`);
+				const res = await fetch(glbUrl);
+				if (!res.ok) throw new Error(`HTTP ${res.status}`);
+				const blob = await res.blob();
+				const fileName = glbUrl.split('/').pop()?.split('?')[0] || 'avatar.glb';
+				glbFile = new File([blob], fileName, { type: blob.type || 'model/gltf-binary' });
+			} catch (err) {
+				say(`Could not fetch current avatar (${err.message}) — continuing without GLB.`);
+			}
+		}
 
 		// GLB path — use the existing registerAgent flow (pins GLB, mints, updates URI).
 		// We extend it by appending user-supplied services to the registration JSON.

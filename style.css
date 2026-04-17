@@ -1075,6 +1075,31 @@ footer .separator {
 	padding: var(--space-lg);
 }
 
+/* Page mode — /deploy renders inside app.html shell, not as a modal overlay. */
+.deploy-page {
+	display: block;
+	width: 100%;
+	min-height: calc(100vh - var(--header-h));
+	padding: var(--space-xl) var(--space-lg) var(--space-2xl);
+	overflow-y: auto;
+}
+
+.erc8004-register--page {
+	position: static;
+	inset: auto;
+	z-index: auto;
+	display: block;
+	background: transparent;
+	backdrop-filter: none;
+	-webkit-backdrop-filter: none;
+	padding: 0;
+}
+
+.erc8004-register--page .erc8004-card {
+	margin: 0 auto;
+	background: rgba(255, 255, 255, 0.02);
+}
+
 .erc8004-card {
 	width: 100%;
 	max-width: 480px;
@@ -1201,12 +1226,12 @@ footer .separator {
 	width: 100%;
 	justify-content: center;
 	padding: var(--space-sm) var(--space-md);
-	background: rgba(99, 102, 241, 0.25);
-	border-color: rgba(99, 102, 241, 0.4);
+	background: rgba(139, 92, 246, 0.25);
+	border-color: rgba(139, 92, 246, 0.45);
 }
 
 .erc8004-btn--register:hover:not(:disabled) {
-	background: rgba(99, 102, 241, 0.4);
+	background: rgba(139, 92, 246, 0.45);
 }
 
 .erc8004-btn--view {
@@ -1351,7 +1376,7 @@ footer .separator {
 }
 
 .erc8004-btn--primary {
-	background: rgba(99, 102, 241, 0.3);
+	background: rgba(139, 92, 246, 0.35);
 	border-color: rgba(99, 102, 241, 0.5);
 }
 
@@ -1470,7 +1495,7 @@ footer .separator {
 }
 
 .erc8004-step--active {
-	background: rgba(99, 102, 241, 0.18);
+	background: var(--accent-soft);
 	border-color: rgba(99, 102, 241, 0.45);
 	color: #fff;
 }
@@ -3771,7 +3796,7 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 	padding: 6px 14px;
 	border-radius: 20px;
 	background: rgba(99, 102, 241, 0.15);
-	border: 1px solid rgba(99, 102, 241, 0.3);
+	border: 1px solid rgba(139, 92, 246, 0.35);
 	color: #a5b4fc;
 	font-size: 12px;
 	font-weight: 500;
@@ -4028,7 +4053,7 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 
 .erc8004-export-opt:hover {
 	background: rgba(99, 102, 241, 0.1);
-	border-color: rgba(99, 102, 241, 0.3);
+	border-color: rgba(139, 92, 246, 0.35);
 }
 
 .erc8004-export-emoji {

@@ -404,6 +404,68 @@
 				color: rgba(230, 175, 100, 0.85);
 			}
 
+			/* vis-onchain */
+
+			.vis-onchain {
+				padding: var(--space-md);
+				display: flex;
+				flex-direction: column;
+				gap: var(--space-sm);
+			}
+
+			.vis-onchain-header {
+				display: flex;
+				align-items: center;
+				gap: 0.5rem;
+				font-family: 'JetBrains Mono', monospace;
+				font-size: 0.72rem;
+				color: rgba(255, 255, 255, 0.45);
+				margin-bottom: var(--space-xs);
+			}
+
+			.vis-onchain-dot {
+				width: 8px;
+				height: 8px;
+				border-radius: 50%;
+				background: #4ade80;
+				box-shadow: 0 0 6px #4ade80;
+				flex-shrink: 0;
+			}
+
+			.vis-onchain-row {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				padding: 0.5rem 0.75rem;
+				background: rgba(255, 255, 255, 0.03);
+				border: 1px solid rgba(255, 255, 255, 0.06);
+				border-radius: 8px;
+			}
+
+			.vis-onchain-label {
+				font-size: 0.8rem;
+				color: rgba(255, 255, 255, 0.45);
+				font-family: 'JetBrains Mono', monospace;
+			}
+
+			.vis-onchain-val {
+				font-size: 0.8rem;
+				color: rgba(255, 215, 0, 0.75);
+				font-family: 'JetBrains Mono', monospace;
+			}
+
+			.vis-onchain-badge {
+				align-self: flex-start;
+				margin-top: var(--space-xs);
+				padding: 0.25rem 0.65rem;
+				border-radius: 99px;
+				background: rgba(74, 222, 128, 0.1);
+				border: 1px solid rgba(74, 222, 128, 0.25);
+				font-size: 0.7rem;
+				color: #4ade80;
+				font-family: 'JetBrains Mono', monospace;
+			}
+
 			/* Responsive */
 
 			@media screen and (max-width: 768px) {
@@ -695,7 +757,7 @@
 							standard. Get a verifiable on-chain identity, portable reputation, and
 							proof of execution discoverable by any A2A or MCP client.
 						</p>
-						<a href="/register" class="journey-step-cta">Register on-chain →</a>
+						<a href="/deploy" class="journey-step-cta">Deploy on-chain →</a>
 					</div>
 					<div class="journey-step-visual scroll-reveal">
 						<div class="vis-onchain">
@@ -820,7 +882,7 @@
 					<a href="https://github.com/nirholas/3D" target="_blank" rel="noopener"
 						>GitHub</a
 					>
-					· <a href="/features">Docs</a> · <a href="/#register">Register on-chain</a> ·
+					· <a href="/features">Docs</a> · <a href="/deploy">Deploy on-chain</a> ·
 					<a href="https://eips.ethereum.org/EIPS/eip-8004" target="_blank" rel="noopener"
 						>ERC-8004</a
 					>

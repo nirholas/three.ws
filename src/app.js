@@ -76,7 +76,7 @@ class App {
 			agent: agentHash, // hash-based agent keeps legacy embed behaviour
 			agentEdit: agentQuery, // query-param agent → editing surface
 			widget: hash.widget || '',
-			register: hash.register !== undefined,
+			deploy: hash.deploy !== undefined || location.pathname === '/deploy',
 			// pending=1 signals a post-login save round-trip
 			pending: qp.get('pending') === '1',
 		};
@@ -121,9 +121,15 @@ class App {
 			headerEl.style.display = 'none';
 		}
 
-		// Check for register page
-		if (hash.register !== undefined) {
-			this._showRegisterPage();
+		// Check for deploy (ERC-8004 mint) page. We still load the default
+		// avatar in the background so `_currentModelUrl` is populated for the
+		// RegisterUI pre-fill — it reflects the viewer's current model.
+		if (options.deploy) {
+			const model = options.model || '/avatars/cz.glb';
+			this.view(isDecentralizedURI(model) ? resolveURI(model) : model, '', new Map())
+				.catch(() => {})
+				.finally(() => this._showDeployPage());
+			this._initAgentSystem();
 			return;
 		}
 
@@ -310,10 +316,10 @@ class App {
 	}
 
 	_applyViewerMode() {
-		const { kiosk, widget, agent, register } = this.options;
+		const { kiosk, widget, agent, deploy } = this.options;
 		let mode = 'main';
 		if (kiosk || widget || agent) mode = 'embed';
-		else if (register) mode = 'register';
+		else if (deploy) mode = 'deploy';
 		document.body.dataset.viewerMode = mode;
 		if (mode === 'main') {
 			// Optimistic paint from the last-known auth hint; corrected by
@@ -1023,8 +1029,40 @@ class App {
 		console.error(error);
 	}
 
-	_showRegisterPage() {
-		window.location.replace('/register');
+	async _showDeployPage() {
+		// Render /deploy as a normal page inside the app.html shell (header +
+		// footer stay visible). We hide the viewer + dropzone + auth gate and
+		// replace them with the ERC-8004 wizard, pre-filled from the user's
+		// current avatar so Step 5 flows from Steps 1–4.
+		try {
+			const main = this.el.querySelector('main.wrap') || this.el;
+			this.dropEl?.classList.add('hidden');
+			const dropzone = this.el.querySelector('.dropzone');
+			if (dropzone) dropzone.style.display = 'none';
+			if (this.viewerContainerEl) this.viewerContainerEl.style.display = 'none';
+			const authGate = this.el.querySelector('#auth-gate');
+			if (authGate) authGate.style.display = 'none';
+			const presence = this.el.querySelector('.agent-presence-sidebar');
+			if (presence) presence.style.display = 'none';
+
+			const page = document.createElement('section');
+			page.className = 'deploy-page';
+			main.appendChild(page);
+
+			const { RegisterUI } = await import('./erc8004/register-ui.js');
+			new RegisterUI(
+				page,
+				(result) => {
+					console.info('[ERC-8004] Agent registered:', result);
+				},
+				{
+					mode: 'page',
+					initial: { glbUrl: this._currentModelUrl || '' },
+				},
+			);
+		} catch (err) {
+			console.error('[3d-agent] deploy page load failed', err);
+		}
 	}
 
 	showSpinner() {

@@ -43,7 +43,7 @@ const appConfig = {
 				const fileMap = {
 					'/app':          resolve(root, 'app.html'),
 					'/login':        resolve(root, 'public/login.html'),
-					'/register':     resolve(root, 'public/register.html'),
+					'/deploy':       resolve(root, 'app.html'),
 					'/features':     resolve(root, 'features.html'),
 					'/create':       resolve(root, 'create.html'),
 					'/dashboard':    resolve(root, 'public/dashboard/index.html'),
