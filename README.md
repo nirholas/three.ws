@@ -5,7 +5,7 @@ description: 3D Agent is an open-source, browser-native 3D model viewer built on
  
 <video width="100%" height="auto" autoplay loop muted playsinline>
   <source src="https://github.com/nirholas/3D-Agent/raw/refs/heads/main/public/skills.mp4" type="video/mp4">
-  Your browser does not support the video tag.
+  Your browser does not support the video tag. 
 </video>
 
 <p align="center">
