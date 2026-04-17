@@ -14,3 +14,4 @@ npm-debug.log*
 character-studio/node_modules
 character-studio/build
 character-studio/public/loot-assets
+.mcp.json
