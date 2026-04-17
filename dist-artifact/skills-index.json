@@ -1,0 +1,26 @@
+[
+	{
+		"id": "wave",
+		"name": "Wave",
+		"description": "Agent waves at the user on greet or prompt.",
+		"version": "0.1.0",
+		"uri": "skills/wave/",
+		"author": "3d-agent"
+	},
+	{
+		"id": "dance",
+		"name": "Dance",
+		"description": "Plays a dance animation loop on request.",
+		"version": "0.1.0",
+		"uri": "skills/dance/",
+		"author": "3d-agent"
+	},
+	{
+		"id": "explain-gltf",
+		"name": "Explain glTF",
+		"description": "Narrates mesh, material, and animation info from the loaded scene.",
+		"version": "0.3.0",
+		"uri": "https://skills.3d-agent.io/explain-gltf@0.3.0",
+		"author": "3d-agent"
+	}
+]

@@ -1,0 +1,26 @@
+{
+  "type": "agent-validation-report/0.1",
+  "agentId": 42,
+  "chainId": 84532,
+  "validator": "0x1234567890123456789012345678901234567890",
+  "ranAt": "2026-04-17T14:30:00Z",
+  "suites": [
+    {
+      "name": "glb-schema",
+      "status": "pass",
+      "details": null
+    },
+    {
+      "name": "manifest-integrity",
+      "status": "pass",
+      "details": null
+    },
+    {
+      "name": "skill-handlers-load",
+      "status": "pass",
+      "details": null
+    }
+  ],
+  "verdict": "pass",
+  "notes": "Agent passes baseline validation. Ready for deployment."
+}

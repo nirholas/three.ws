@@ -1,0 +1,45 @@
+{
+	"_comment": "Each entry is a real, working widget on a demo account. Replace the placeholder ids with actual wdgt_ ids once Prompts 01-05 ship and you've created showcase widgets in the studio.",
+	"widgets": [
+		{
+			"type": "turntable",
+			"label": "Turntable Showcase",
+			"tagline": "Hero banner for sites — auto-rotate, no UI.",
+			"id": "wdgt_demo_turntab",
+			"width": 600,
+			"height": 600
+		},
+		{
+			"type": "animation-gallery",
+			"label": "Animation Gallery",
+			"tagline": "Click through every clip on a rigged avatar.",
+			"id": "wdgt_demo_animgal",
+			"width": 720,
+			"height": 720
+		},
+		{
+			"type": "talking-agent",
+			"label": "Talking Agent",
+			"tagline": "Embodied chat — your agent, your site, your tone.",
+			"id": "wdgt_demo_talking",
+			"width": 420,
+			"height": 600
+		},
+		{
+			"type": "passport",
+			"label": "ERC-8004 Passport",
+			"tagline": "On-chain identity card for any agent.",
+			"id": "wdgt_demo_passprt",
+			"width": 480,
+			"height": 560
+		},
+		{
+			"type": "hotspot-tour",
+			"label": "Hotspot Tour",
+			"tagline": "Explorable 3D scenes with annotated points of interest.",
+			"id": "wdgt_demo_hotspot",
+			"width": 800,
+			"height": 600
+		}
+	]
+}

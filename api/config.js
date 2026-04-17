@@ -10,5 +10,6 @@ export default wrap(async (req, res) => {
 
 	return json(res, 200, {
 		privyAppId: process.env.PRIVY_APP_ID || '',
+		walletConnectProjectId: process.env.VITE_WALLETCONNECT_PROJECT_ID || '',
 	});
 });

@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://3dagent.vercel.app/sitemap.xml

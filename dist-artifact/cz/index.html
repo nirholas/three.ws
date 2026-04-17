@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<title>Claim CZ · 3D Agent</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta name="description" content="Meet CZ — an embodied 3D AI agent." />
+	<meta name="theme-color" content="#000000" />
+	<link rel="icon" href="/favicon.ico" />
+	<style>
+		:root {
+			color-scheme: dark;
+			--accent: #6a5cff;
+			--accent2: #ff5ca8;
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		body {
+			font: 15px / 1.5 -apple-system, system-ui, Segoe UI, Roboto, sans-serif;
+			background: radial-gradient(1200px 600px at 50% -100px, #1a1a2e 0, #080814 60%);
+			color: #eee;
+			margin: 0;
+			min-height: 100vh;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			padding: 24px;
+		}
+
+		.cz-hero {
+			width: 100%;
+			max-width: 600px;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 2rem;
+		}
+
+		.cz-avatar-container {
+			width: 100%;
+			max-width: 400px;
+			aspect-ratio: 1;
+			border-radius: 12px;
+			overflow: hidden;
+			box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+		}
+
+		agent-3d {
+			width: 100%;
+			height: 100%;
+		}
+
+		.cz-content {
+			text-align: center;
+			width: 100%;
+		}
+
+		h1 {
+			font-size: 2.5rem;
+			margin: 0 0 0.5rem;
+			letter-spacing: -0.02em;
+			font-weight: 300;
+		}
+
+		.cz-subhead {
+			font-size: 1.1rem;
+			color: rgba(255, 255, 255, 0.6);
+			margin: 0 0 2rem;
+			line-height: 1.6;
+		}
+
+		.cz-cta-group {
+			display: flex;
+			flex-direction: column;
+			gap: 12px;
+			width: 100%;
+		}
+
+		button {
+			padding: 14px 24px;
+			border: none;
+			border-radius: 10px;
+			font-size: 15px;
+			font-weight: 600;
+			cursor: pointer;
+			transition: all 0.2s ease;
+		}
+
+		#cz-claim-btn {
+			background: linear-gradient(135deg, var(--accent), var(--accent2));
+			color: #fff;
+		}
+
+		#cz-claim-btn:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 8px 24px rgba(106, 92, 255, 0.3);
+		}
+
+		#cz-claim-btn:focus {
+			outline: 2px solid var(--accent);
+			outline-offset: 2px;
+		}
+
+		#cz-claim-btn:active {
+			transform: translateY(0);
+		}
+
+		#cz-embed-container {
+			display: flex;
+		}
+
+		#cz-embed-copy {
+			background: rgba(255, 255, 255, 0.1);
+			border: 1px solid rgba(255, 255, 255, 0.2);
+			color: #eee;
+			width: 100%;
+		}
+
+		#cz-embed-copy:hover {
+			background: rgba(255, 255, 255, 0.15);
+			border-color: rgba(255, 255, 255, 0.3);
+		}
+
+		#cz-embed-copy:focus {
+			outline: 2px solid var(--accent);
+			outline-offset: 2px;
+		}
+
+		.cz-footer {
+			margin-top: 3rem;
+			padding-top: 2rem;
+			border-top: 1px solid rgba(255, 255, 255, 0.1);
+			font-size: 0.875rem;
+			color: rgba(255, 255, 255, 0.5);
+			width: 100%;
+			text-align: center;
+		}
+
+		.cz-footer p {
+			margin: 0.5rem 0;
+		}
+
+		.cz-footer code {
+			background: rgba(255, 255, 255, 0.05);
+			padding: 2px 6px;
+			border-radius: 4px;
+			font-family: 'Courier New', monospace;
+			font-size: 0.8rem;
+			color: rgba(255, 255, 255, 0.7);
+		}
+
+		/* Modal */
+		#cz-claim-modal {
+			display: none;
+			position: fixed;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background: rgba(0, 0, 0, 0.7);
+			z-index: 2000;
+			align-items: center;
+			justify-content: center;
+			padding: 24px;
+		}
+
+		.cz-modal-dialog {
+			background: #14141c;
+			border: 1px solid #2a2a36;
+			border-radius: 16px;
+			padding: 32px;
+			max-width: 420px;
+			width: 100%;
+			position: relative;
+			box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+		}
+
+		#cz-modal-close {
+			position: absolute;
+			top: 16px;
+			right: 16px;
+			background: none;
+			border: none;
+			color: rgba(255, 255, 255, 0.5);
+			cursor: pointer;
+			padding: 8px;
+			font-size: 1.5rem;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		#cz-modal-close:hover {
+			color: rgba(255, 255, 255, 0.8);
+		}
+
+		#cz-modal-content {
+			text-align: center;
+			min-height: 100px;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+		}
+
+		#cz-modal-content h3 {
+			font-size: 1.2rem;
+			font-weight: 600;
+		}
+
+		#cz-modal-content p {
+			color: rgba(255, 255, 255, 0.7);
+			margin: 0.5rem 0;
+			line-height: 1.5;
+		}
+
+		#cz-modal-content code {
+			background: rgba(255, 255, 255, 0.05);
+			padding: 4px 8px;
+			border-radius: 4px;
+			font-family: 'Courier New', monospace;
+			font-size: 0.85rem;
+			color: rgba(255, 255, 255, 0.8);
+			word-break: break-all;
+		}
+
+		.modal-spinner {
+			width: 40px;
+			height: 40px;
+			border: 3px solid rgba(106, 92, 255, 0.2);
+			border-top-color: var(--accent);
+			border-radius: 50%;
+			animation: spin 0.8s linear infinite;
+			margin-bottom: 1rem;
+		}
+
+		@keyframes spin {
+			to {
+				transform: rotate(360deg);
+			}
+		}
+
+		.modal-close-btn {
+			margin-top: 1.5rem;
+			width: 100%;
+			background: linear-gradient(135deg, var(--accent), var(--accent2));
+			color: #fff;
+		}
+
+		.modal-close-btn:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 8px 24px rgba(106, 92, 255, 0.3);
+		}
+
+		/* Responsive */
+		@media (max-width: 640px) {
+			h1 {
+				font-size: 2rem;
+			}
+
+			.cz-hero {
+				gap: 1.5rem;
+			}
+
+			.cz-avatar-container {
+				max-width: 100%;
+			}
+		}
+
+		/* Reduced motion */
+		@media (prefers-reduced-motion: reduce) {
+			button {
+				transition: none;
+			}
+
+			.modal-spinner {
+				animation: none;
+				border-top-color: var(--accent);
+			}
+		}
+	</style>
+</head>
+<body>
+	<div class="cz-hero">
+		<div class="cz-avatar-container">
+			<agent-3d src="/avatars/cz.glb" eager></agent-3d>
+		</div>
+
+		<div class="cz-content">
+			<h1>Meet CZ</h1>
+			<p class="cz-subhead">An embodied 3D AI agent built for the Ethereum ecosystem.</p>
+
+			<div class="cz-cta-group">
+				<button id="cz-claim-btn" aria-label="Claim CZ agent ownership">Claim CZ</button>
+				<div id="cz-embed-container"></div>
+			</div>
+		</div>
+
+		<div class="cz-footer" id="cz-footer">
+			<p>Not yet onchain</p>
+		</div>
+	</div>
+
+	<!-- Claim Modal -->
+	<div id="cz-claim-modal">
+		<div class="cz-modal-dialog">
+			<button id="cz-modal-close" aria-label="Close claim dialog">×</button>
+			<div id="cz-modal-content">
+				<div class="modal-spinner"></div>
+				<p>Loading…</p>
+			</div>
+		</div>
+	</div>
+
+	<script type="module" src="./boot.js"></script>
+</body>
+</html>

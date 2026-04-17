@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>CZ Agent — Offline Demo</title>
+	<style>
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+
+		body {
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+			background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+			color: #fff;
+			overflow: hidden;
+			height: 100vh;
+		}
+
+		.container {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			height: 100vh;
+			position: relative;
+		}
+
+		.header {
+			position: absolute;
+			top: 24px;
+			left: 24px;
+			right: 24px;
+			z-index: 10;
+		}
+
+		.offline-badge {
+			display: inline-block;
+			background: rgba(255, 255, 255, 0.1);
+			border: 1px solid rgba(255, 255, 255, 0.2);
+			padding: 8px 16px;
+			border-radius: 8px;
+			font-size: 12px;
+			font-weight: 600;
+			letter-spacing: 0.5px;
+			text-transform: uppercase;
+		}
+
+		.badge-dot {
+			display: inline-block;
+			width: 6px;
+			height: 6px;
+			background: #fbbf24;
+			border-radius: 50%;
+			margin-right: 6px;
+			animation: pulse 2s infinite;
+		}
+
+		@keyframes pulse {
+			0%, 100% {
+				opacity: 1;
+			}
+			50% {
+				opacity: 0.5;
+			}
+		}
+
+		.avatar-container {
+			width: 100%;
+			height: 100%;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			position: relative;
+		}
+
+		#viewer {
+			width: 100%;
+			height: 100%;
+		}
+
+		.fallback-image {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+			display: none;
+		}
+
+		.modal {
+			position: fixed;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background: rgba(0, 0, 0, 0.6);
+			display: none;
+			align-items: center;
+			justify-content: center;
+			z-index: 100;
+		}
+
+		.modal.active {
+			display: flex;
+		}
+
+		.modal-content {
+			background: #16213e;
+			border: 1px solid rgba(255, 255, 255, 0.1);
+			border-radius: 12px;
+			padding: 40px;
+			max-width: 400px;
+			text-align: center;
+			box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+		}
+
+		.modal-content h2 {
+			font-size: 24px;
+			margin-bottom: 16px;
+			color: #fff;
+		}
+
+		.modal-content p {
+			font-size: 14px;
+			color: rgba(255, 255, 255, 0.7);
+			line-height: 1.6;
+			margin-bottom: 24px;
+		}
+
+		.button {
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			color: white;
+			border: none;
+			padding: 12px 24px;
+			border-radius: 8px;
+			font-size: 14px;
+			font-weight: 600;
+			cursor: pointer;
+			transition: transform 0.2s, box-shadow 0.2s;
+		}
+
+		.button:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+		}
+
+		.button:active {
+			transform: translateY(0);
+		}
+
+		.spinner {
+			width: 40px;
+			height: 40px;
+			border: 3px solid rgba(255, 255, 255, 0.1);
+			border-top-color: #667eea;
+			border-radius: 50%;
+			animation: spin 1s linear infinite;
+			margin: 0 auto 24px;
+		}
+
+		@keyframes spin {
+			to {
+				transform: rotate(360deg);
+			}
+		}
+
+		.footer {
+			position: absolute;
+			bottom: 24px;
+			left: 24px;
+			right: 24px;
+			font-size: 12px;
+			color: rgba(255, 255, 255, 0.5);
+			text-align: center;
+		}
+
+		.footer-item {
+			display: inline-block;
+			margin: 0 8px;
+		}
+
+		.code {
+			font-family: 'Monaco', 'Courier New', monospace;
+			background: rgba(255, 255, 255, 0.1);
+			padding: 2px 6px;
+			border-radius: 3px;
+			font-size: 11px;
+		}
+
+		.confetti {
+			position: fixed;
+			pointer-events: none;
+		}
+	</style>
+</head>
+<body>
+	<div class="header">
+		<div class="offline-badge">
+			<span class="badge-dot"></span>
+			Offline Demo Mode
+		</div>
+	</div>
+
+	<div class="container">
+		<div class="avatar-container">
+			<canvas id="viewer"></canvas>
+			<img id="fallback" class="fallback-image" alt="CZ Avatar" />
+		</div>
+	</div>
+
+	<div class="modal" id="modal">
+		<div class="modal-content">
+			<div id="modal-body"></div>
+		</div>
+	</div>
+
+	<div class="footer">
+		<div class="footer-item">CZ Agent</div>
+		<div class="footer-item">•</div>
+		<div class="footer-item">
+			Agent ID: <span class="code">0x1234567</span>
+		</div>
+		<div class="footer-item">•</div>
+		<div class="footer-item">
+			Chain: <span class="code">Base Sepolia</span>
+		</div>
+	</div>
+
+	<script>
+		// Offline demo mode: loads avatar GLB from origin, shows pre-rendered claim flow
+		// Falls back to static image if WebGL unavailable or network fails
+
+		const modal = document.getElementById('modal');
+		const modalBody = document.getElementById('modal-body');
+		const viewer = document.getElementById('viewer');
+		const fallback = document.getElementById('fallback');
+
+		// Initialize Three.js viewer (optional: gracefully degrade if not available)
+		// For now, we'll load the avatar and render it with a simple viewer
+		// If Three.js is not available, the fallback image will be shown
+
+		function showModal(html) {
+			modalBody.innerHTML = html;
+			modal.classList.add('active');
+		}
+
+		function hideModal() {
+			modal.classList.remove('active');
+		}
+
+		// Simulate claim flow
+		function handleClaimClick() {
+			showModal(`
+				<div class="spinner"></div>
+				<p>Initializing claim flow...</p>
+			`);
+
+			setTimeout(() => {
+				showModal(`
+					<div class="spinner"></div>
+					<p>Connecting wallet...</p>
+				`);
+			}, 800);
+
+			setTimeout(() => {
+				showModal(`
+					<div class="spinner"></div>
+					<p>Submitting claim...</p>
+				`);
+			}, 1600);
+
+			setTimeout(() => {
+				showModal(`
+					<div class="spinner"></div>
+					<p>Waiting for confirmation...</p>
+				`);
+			}, 2400);
+
+			setTimeout(() => {
+				playConfetti();
+				showModal(`
+					<h2>Claim Successful!</h2>
+					<p>Your agent is now registered on Base Sepolia.</p>
+					<p>Transaction: <span class="code">0xabc123…</span></p>
+					<button class="button" onclick="document.getElementById('modal').classList.remove('active')">Close</button>
+				`);
+			}, 3200);
+		}
+
+		// Confetti animation
+		function playConfetti() {
+			const count = 50;
+			for (let i = 0; i < count; i++) {
+				const confetti = document.createElement('div');
+				confetti.className = 'confetti';
+				confetti.style.left = Math.random() * 100 + '%';
+				confetti.style.top = '-10px';
+				confetti.style.backgroundColor = ['#667eea', '#764ba2', '#f093fb', '#4facfe'][Math.floor(Math.random() * 4)];
+				confetti.style.width = Math.random() * 10 + 5 + 'px';
+				confetti.style.height = confetti.style.width;
+				confetti.style.borderRadius = '50%';
+
+				document.body.appendChild(confetti);
+
+				const duration = Math.random() * 2 + 2; // 2-4 seconds
+				const keyframes = `
+					@keyframes fall-${i} {
+						to {
+							transform: translateY(${window.innerHeight + 20}px) rotate(720deg);
+							opacity: 0;
+						}
+					}
+				`;
+				const style = document.createElement('style');
+				style.textContent = keyframes;
+				document.head.appendChild(style);
+
+				confetti.style.animation = `fall-${i} ${duration}s ease-in forwards`;
+
+				setTimeout(() => confetti.remove(), duration * 1000);
+			}
+		}
+
+		// Try to load Three.js and render the avatar
+		async function initViewer() {
+			try {
+				// Check if Three.js is available
+				if (typeof THREE === 'undefined') {
+					console.warn('Three.js not available, using fallback image');
+					loadFallback();
+					return;
+				}
+
+				// Load GLB from origin
+				const glbUrl = '/avatars/cz.glb';
+				const response = await fetch(glbUrl);
+				if (!response.ok) {
+					console.warn(`Failed to load GLB: ${response.status}`, 'falling back to image');
+					loadFallback();
+					return;
+				}
+
+				// If we have Three.js and the GLB, render it
+				// This is a simplified viewer; full implementation would use three-std or similar
+				console.log('GLB loaded successfully, could render with Three.js');
+
+				// For now, just show a placeholder
+				viewer.style.background = 'radial-gradient(ellipse at center, #2d3d5c 0%, #1a1a2e 100%)';
+				const ctx = viewer.getContext('2d');
+				if (ctx) {
+					ctx.fillStyle = '#667eea';
+					ctx.font = '14px sans-serif';
+					ctx.textAlign = 'center';
+					ctx.fillText('CZ Avatar', viewer.width / 2, viewer.height / 2 - 10);
+					ctx.font = '12px sans-serif';
+					ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+					ctx.fillText('(3D rendering requires Three.js)', viewer.width / 2, viewer.height / 2 + 20);
+				}
+			} catch (err) {
+				console.error('Avatar initialization error:', err);
+				loadFallback();
+			}
+		}
+
+		function loadFallback() {
+			// In production, this would be a pre-rendered screenshot of the avatar
+			// For now, just show a placeholder
+			fallback.style.display = 'block';
+			fallback.style.background = 'radial-gradient(ellipse at center, #2d3d5c 0%, #1a1a2e 100%)';
+
+			// Create a canvas fallback
+			const canvas = document.createElement('canvas');
+			canvas.width = window.innerWidth;
+			canvas.height = window.innerHeight;
+			const ctx = canvas.getContext('2d');
+			ctx.fillStyle = '#1a1a2e';
+			ctx.fillRect(0, 0, canvas.width, canvas.height);
+			ctx.fillStyle = '#667eea';
+			ctx.font = 'bold 48px sans-serif';
+			ctx.textAlign = 'center';
+			ctx.fillText('CZ', canvas.width / 2, canvas.height / 2);
+			ctx.font = '14px sans-serif';
+			ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+			ctx.fillText('Offline Demo Mode', canvas.width / 2, canvas.height / 2 + 60);
+
+			fallback.src = canvas.toDataURL();
+		}
+
+		// Handle window resize
+		function handleResize() {
+			if (viewer) {
+				viewer.width = viewer.offsetWidth;
+				viewer.height = viewer.offsetHeight;
+			}
+		}
+
+		window.addEventListener('resize', handleResize);
+		handleResize();
+
+		// Create a claim button in the overlay
+		function createUI() {
+			const ui = document.createElement('div');
+			ui.style.position = 'fixed';
+			ui.style.bottom = '100px';
+			ui.style.left = '50%';
+			ui.style.transform = 'translateX(-50%)';
+			ui.style.zIndex = '50';
+			ui.innerHTML = `
+				<button class="button" style="font-size: 16px; padding: 16px 32px;" onclick="window.handleClaimClick()">
+					Claim Agent
+				</button>
+			`;
+			document.body.appendChild(ui);
+		}
+
+		// Export for global access
+		window.handleClaimClick = handleClaimClick;
+
+		// Initialize when page loads
+		document.addEventListener('DOMContentLoaded', () => {
+			createUI();
+			initViewer();
+		});
+
+		// Handle visibility change (pause/resume animations)
+		document.addEventListener('visibilitychange', () => {
+			if (document.hidden) {
+				console.log('Demo paused');
+			} else {
+				console.log('Demo resumed');
+			}
+		});
+
+		// Service worker registration (for cache awareness)
+		if ('serviceWorker' in navigator) {
+			navigator.serviceWorker.register('/cz/sw.js').catch(err => {
+				console.log('Service Worker registration failed:', err);
+			});
+		}
+
+		console.log('CZ Offline Demo initialized');
+	</script>
+</body>
+</html>
