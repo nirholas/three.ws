@@ -3,11 +3,14 @@
 
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
 import { listAvatars, createAvatar } from '../_lib/avatars.js';
-import { headObject } from '../_lib/r2.js';
+import { headObject, r2 } from '../_lib/r2.js';
+import { HeadObjectCommand } from '@aws-sdk/client-s3';
+import { env } from '../_lib/env.js';
 import { sql } from '../_lib/db.js';
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
 import { parse, createAvatarBody } from '../_lib/validate.js';
 import { recordEvent } from '../_lib/usage.js';
+import { defaultStorageMode } from '../_lib/storage-mode.js';
 import { z } from 'zod';
 
 const createWithStorage = createAvatarBody.extend({
@@ -54,6 +57,26 @@ async function handleCreate(req, res) {
 	if (!head) return error(res, 400, 'upload_missing', 'no object at storage_key; upload first');
 	if (Number(head.ContentLength) !== body.size_bytes) {
 		return error(res, 400, 'size_mismatch', 'size_bytes does not match uploaded object');
+	}
+
+	// Attempt to read sha256 from R2 (only present if the browser upload included it).
+	// Use ChecksumMode: ENABLED for a lightweight HEAD — no body download.
+	if (!body.checksum_sha256) {
+		try {
+			const headChecked = await r2.send(
+				new HeadObjectCommand({
+					Bucket: env.S3_BUCKET,
+					Key: body.storage_key,
+					ChecksumMode: 'ENABLED',
+				}),
+			);
+			if (headChecked?.ChecksumSHA256) {
+				// R2 returns base64; convert to lowercase hex.
+				body.checksum_sha256 = Buffer.from(headChecked.ChecksumSHA256, 'base64').toString('hex');
+			}
+		} catch {
+			// ChecksumMode unsupported or object has no checksum — leave null, not fatal.
+		}
 	}
 
 	// Validate parent_avatar_id ownership — prevents user B from pointing at user A's avatar chain.

@@ -1,140 +1,253 @@
 <!doctype html>
 <html lang="en">
-<head>
-	<meta charset="utf-8" />
-	<title>Agent</title>
-	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<meta name="description" content="Embedded 3D agent avatar." />
-	<meta name="robots" content="noindex" />
-	<style>
-		html, body { margin: 0; padding: 0; height: 100%; width: 100%; background: transparent; overflow: hidden; font-family: system-ui, sans-serif; }
-		#stage { position: absolute; inset: 0; }
-		#stage canvas { display: block; width: 100% !important; height: 100% !important; }
-		#stage .gui-wrap, #stage .gui-toggle, #stage .annotation-canvas { display: none !important; }
-		#stage .model-info { display: none !important; }
-		#name-plate {
-			position: absolute; left: 12px; bottom: 10px; z-index: 2; pointer-events: none;
-			font-size: 11px; color: rgba(255,255,255,0.55); letter-spacing: 0.04em;
-			text-shadow: 0 1px 2px rgba(0,0,0,0.6);
-		}
-		#error {
-			position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
-			color: rgba(255,255,255,0.4); font-size: 12px; padding: 1rem; text-align: center;
-		}
-		body.bg-dark  { background: #0b0d10; }
-		body.bg-light { background: #f5f5f5; }
-	</style>
-</head>
-<body>
-	<div id="stage"></div>
-	<div id="name-plate"></div>
-	<div id="error"></div>
-
-	<script type="module">
-		import { Viewer }         from './src/viewer.js';
-		import { AgentIdentity }  from './src/agent-identity.js';
-		import { AgentAvatar }    from './src/agent-avatar.js';
-		import { protocol }       from './src/agent-protocol.js';
-
-		const params    = new URL(location.href).searchParams;
-		const bg        = params.get('bg') || 'transparent';
-		if (bg === 'dark')  document.body.classList.add('bg-dark');
-		if (bg === 'light') document.body.classList.add('bg-light');
-
-		const plateOn   = params.get('name') !== '0';
-		const preview   = params.get('preview') === '1';
-		const parts     = location.pathname.split('/').filter(Boolean);
-		const agentId   = parts[parts.indexOf('agent') + 1];
-
-		function hostMatches(host, pattern) {
-			if (!host || !pattern) return false;
-			host = host.toLowerCase();
-			pattern = pattern.toLowerCase();
-			if (pattern.startsWith('*.')) {
-				const suffix = pattern.slice(2);
-				return host === suffix || host.endsWith('.' + suffix);
+	<head>
+		<meta charset="utf-8" />
+		<title>Agent</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="description" content="Embedded 3D agent avatar." />
+		<meta name="robots" content="noindex" />
+		<style>
+			html,
+			body {
+				margin: 0;
+				padding: 0;
+				height: 100%;
+				width: 100%;
+				background: transparent;
+				overflow: hidden;
+				font-family: system-ui, sans-serif;
 			}
-			return host === pattern;
-		}
+			#stage {
+				position: absolute;
+				inset: 0;
+			}
+			#stage canvas {
+				display: block;
+				width: 100% !important;
+				height: 100% !important;
+			}
+			#stage .gui-wrap,
+			#stage .gui-toggle,
+			#stage .annotation-canvas {
+				display: none !important;
+			}
+			#stage .model-info {
+				display: none !important;
+			}
+			#name-plate {
+				position: absolute;
+				left: 12px;
+				bottom: 10px;
+				z-index: 2;
+				pointer-events: none;
+				font-size: 11px;
+				color: rgba(255, 255, 255, 0.55);
+				letter-spacing: 0.04em;
+				text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+			}
+			#error {
+				position: absolute;
+				inset: 0;
+				display: none;
+				align-items: center;
+				justify-content: center;
+				color: rgba(255, 255, 255, 0.4);
+				font-size: 12px;
+				padding: 1rem;
+				text-align: center;
+			}
+			body.bg-dark {
+				background: #0b0d10;
+			}
+			body.bg-light {
+				background: #f5f5f5;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="stage"></div>
+		<div id="name-plate"></div>
+		<div id="error"></div>
 
-		function embeddingHost() {
-			try {
-				const anc = window.location.ancestorOrigins;
-				if (anc && anc.length) return new URL(anc[0]).hostname;
-			} catch {}
-			try {
-				if (document.referrer) return new URL(document.referrer).hostname;
-			} catch {}
-			return null;
-		}
+		<script type="module">
+			import { Viewer } from './src/viewer.js';
+			import { AgentIdentity } from './src/agent-identity.js';
+			import { AgentAvatar } from './src/agent-avatar.js';
+			import { protocol } from './src/agent-protocol.js';
 
-		async function checkPolicy() {
-			if (preview) return true;
-			const sameOrigin = !window.parent || window.parent === window
-				|| (() => { try { return window.parent.location.origin === location.origin; } catch { return false; } })();
-			let policy = null;
-			try {
-				const r = await fetch(`/api/agents/${agentId}/embed-policy`, { credentials: 'omit' });
-				if (r.ok) policy = (await r.json()).policy;
-			} catch {}
-			if (policy === null || policy === undefined) return true;
-			if (sameOrigin) return true;
-			const host = embeddingHost();
-			const hosts = Array.isArray(policy.hosts) ? policy.hosts : [];
-			const matched = host ? hosts.some((p) => hostMatches(host, p)) : false;
-			if (policy.mode === 'allowlist') return matched;
-			if (policy.mode === 'denylist')  return !matched;
-			return true;
-		}
+			const params = new URL(location.href).searchParams;
+			const bg = params.get('bg') || 'transparent';
+			if (bg === 'dark') document.body.classList.add('bg-dark');
+			if (bg === 'light') document.body.classList.add('bg-light');
 
-		async function main() {
-			if (!(await checkPolicy())) {
+			const plateOn = params.get('name') !== '0';
+			const preview = params.get('preview') === '1';
+			const parts = location.pathname.split('/').filter(Boolean);
+			const agentId = parts[parts.indexOf('agent') + 1];
+
+			function hostMatches(host, pattern) {
+				if (!host || !pattern) return false;
+				host = host.toLowerCase();
+				pattern = pattern.toLowerCase();
+				if (pattern.startsWith('*.')) {
+					const suffix = pattern.slice(2);
+					return host === suffix || host.endsWith('.' + suffix);
+				}
+				return host === pattern;
+			}
+
+			function embeddingHost() {
+				try {
+					const anc = window.location.ancestorOrigins;
+					if (anc && anc.length) return new URL(anc[0]).hostname;
+				} catch {}
+				try {
+					if (document.referrer) return new URL(document.referrer).hostname;
+				} catch {}
+				return null;
+			}
+
+			// Normalise policy to extended shape; returns null when no policy is set.
+			function normalisePolicy(raw) {
+				if (!raw) return null;
+				if (!('version' in raw) && ('mode' in raw || 'hosts' in raw)) {
+					// Old flat { mode, hosts } shape — only origins were configured.
+					return {
+						version: 1,
+						origins: {
+							mode: raw.mode || 'allowlist',
+							hosts: Array.isArray(raw.hosts) ? raw.hosts : [],
+						},
+						surfaces: { script: true, iframe: true, widget: true, mcp: true },
+					};
+				}
+				return raw;
+			}
+
+			function buildCspContent(policy) {
+				const base = ["'self'", 'https://3dagent.vercel.app'];
+				if (policy?.origins?.hosts?.length) {
+					for (const h of policy.origins.hosts) {
+						const lower = h.toLowerCase();
+						// CSP wildcard format: *.foo.com → https://*.foo.com
+						base.push(lower.startsWith('*.') ? `https://${lower}` : `https://${lower}`);
+					}
+				}
+				return `frame-ancestors ${[...new Set(base)].join(' ')}`;
+			}
+
+			function insertCspMeta(policy) {
+				const existing = document.querySelector(
+					'meta[http-equiv="Content-Security-Policy"]',
+				);
+				if (existing) existing.remove();
+				const meta = document.createElement('meta');
+				meta.httpEquiv = 'Content-Security-Policy';
+				meta.content = buildCspContent(policy);
+				document.head.insertBefore(meta, document.head.querySelector('script'));
+			}
+
+			async function checkPolicy() {
+				if (preview) return true;
+				const sameOrigin =
+					!window.parent ||
+					window.parent === window ||
+					(() => {
+						try {
+							return window.parent.location.origin === location.origin;
+						} catch {
+							return false;
+						}
+					})();
+				let rawPolicy = null;
+				try {
+					const r = await fetch(`/api/agents/${agentId}/embed-policy`, {
+						credentials: 'omit',
+					});
+					if (r.ok) rawPolicy = (await r.json()).policy;
+				} catch {}
+
+				const policy = normalisePolicy(rawPolicy);
+				insertCspMeta(policy);
+
+				if (policy === null) return true;
+				if (sameOrigin) {
+					// surfaces.iframe gate still runs even for same-origin embeds
+					if (policy.surfaces && policy.surfaces.iframe === false) return false;
+					return true;
+				}
+
+				// Origin check (existing logic, extended shape)
+				const host = embeddingHost();
+				const hosts = policy.origins?.hosts ?? [];
+				const mode = policy.origins?.mode ?? 'allowlist';
+				const matched = host ? hosts.some((p) => hostMatches(host, p)) : false;
+				const originOk = mode === 'allowlist' ? matched : !matched;
+				if (!originOk) return false;
+
+				// surfaces.iframe gate — fail-closed
+				if (policy.surfaces && policy.surfaces.iframe === false) {
+					showError("This agent's iframe embed is disabled.");
+					return false;
+				}
+
+				return true;
+			}
+
+			function showError(msg) {
 				const el = document.getElementById('error');
-				el.textContent = 'This agent can only be embedded on approved sites.';
+				el.textContent = msg;
 				el.style.display = 'flex';
-				parent?.postMessage({ __agent: agentId, type: 'blocked' }, '*');
-				return;
 			}
 
-			const identity = new AgentIdentity({ agentId, autoLoad: false });
-			await identity.load();
+			async function main() {
+				if (!(await checkPolicy())) {
+					showError('This agent can only be embedded on approved sites.');
+					parent?.postMessage({ __agent: agentId, type: 'blocked' }, '*');
+					return;
+				}
 
-			if (plateOn && identity.name) {
-				document.getElementById('name-plate').textContent = identity.name;
+				const identity = new AgentIdentity({ agentId, autoLoad: false });
+				await identity.load();
+
+				if (plateOn && identity.name) {
+					document.getElementById('name-plate').textContent = identity.name;
+				}
+
+				if (!identity.avatarId) throw new Error('agent has no avatar body');
+
+				const resp = await fetch(`/api/avatars/${identity.avatarId}`, {
+					credentials: 'include',
+				});
+				if (!resp.ok) throw new Error(`avatar ${resp.status}`);
+				const { avatar } = await resp.json();
+				const glbUrl = avatar?.url;
+				if (!glbUrl) throw new Error('no avatar url');
+
+				const stage = document.getElementById('stage');
+				const viewer = new Viewer(stage, { kiosk: true });
+				if (bg === 'transparent') {
+					viewer.renderer?.setClearAlpha(0);
+					if (viewer.scene) viewer.scene.background = null;
+				}
+				await viewer.load(glbUrl, '', new Map());
+
+				const avatarCtl = new AgentAvatar(viewer, protocol, identity);
+				avatarCtl.attach();
+
+				window.addEventListener('message', (ev) => {
+					const msg = ev.data;
+					if (!msg || msg.__agent !== agentId) return;
+					if (msg.type === 'action' && msg.action) protocol.emit(msg.action);
+				});
+				parent?.postMessage({ __agent: agentId, type: 'ready', name: identity.name }, '*');
 			}
 
-			if (!identity.avatarId) throw new Error('agent has no avatar body');
-
-			const resp = await fetch(`/api/avatars/${identity.avatarId}`, { credentials: 'include' });
-			if (!resp.ok) throw new Error(`avatar ${resp.status}`);
-			const { avatar } = await resp.json();
-			const glbUrl = avatar?.url;
-			if (!glbUrl) throw new Error('no avatar url');
-
-			const stage  = document.getElementById('stage');
-			const viewer = new Viewer(stage, { kiosk: true });
-			if (bg === 'transparent') {
-				viewer.renderer?.setClearAlpha(0);
-				if (viewer.scene) viewer.scene.background = null;
-			}
-			await viewer.load(glbUrl, '', new Map());
-
-			const avatarCtl = new AgentAvatar(viewer, protocol, identity);
-			avatarCtl.attach();
-
-			window.addEventListener('message', (ev) => {
-				const msg = ev.data;
-				if (!msg || msg.__agent !== agentId) return;
-				if (msg.type === 'action' && msg.action) protocol.emit(msg.action);
+			main().catch((err) => {
+				const el = document.getElementById('error');
+				el.textContent = err.message || 'Could not load agent';
+				el.style.display = 'flex';
 			});
-			parent?.postMessage({ __agent: agentId, type: 'ready', name: identity.name }, '*');
-		}
-
-		main().catch(err => {
-			const el = document.getElementById('error');
-			el.textContent = err.message || 'Could not load agent';
-			el.style.display = 'flex';
-		});
-	</script>
-</body>
+		</script>
+	</body>
 </html>

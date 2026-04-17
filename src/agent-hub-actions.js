@@ -17,7 +17,6 @@ export function renderHubActions(panel, identity, rawAgent) {
 	const isRegistered = Boolean(rawAgent.is_registered);
 	const chainId = rawAgent.chain_id || null;
 	const walletAddress = rawAgent.wallet_address || null;
-	const erc8004Registry = rawAgent.erc8004_registry || null;
 	const erc8004AgentId = rawAgent.erc8004_agent_id || null;
 
 	const row = document.createElement('div');
@@ -32,7 +31,7 @@ export function renderHubActions(panel, identity, rawAgent) {
 			<span>Embed</span>
 		</button>
 		<button class="agent-hub-btn${isRegistered ? ' hub-btn--deployed' : ''}" id="hub-deploy"
-			title="${isRegistered ? 'View registry record' : 'Deploy on-chain — optional'}">
+			title="${isRegistered ? 'Manage on-chain record (edit, transfer, redeploy)' : 'Deploy on-chain — optional'}">
 			${_iconChain()}
 			<span>${isRegistered ? _deployedLabel(chainId, walletAddress, erc8004AgentId) : 'Deploy on-chain'}</span>
 			${isRegistered ? '' : '<span class="agent-hub-opt">· Optional</span>'}
@@ -52,16 +51,31 @@ export function renderHubActions(panel, identity, rawAgent) {
 	const embedModal = new AgentEmbedModal(agentId);
 	row.querySelector('#hub-embed').addEventListener('click', () => embedModal.open());
 
-	// Deploy on-chain → RegisterUI (lazy-imported) OR open explorer link if already deployed
+	// Deploy on-chain → RegisterUI (lazy-imported). For a registered agent we
+	// open directly on the "My Agents" tab so the owner gets Edit / Redeploy /
+	// Transfer without re-selecting their chain + agent.
 	const deployBtn = row.querySelector('#hub-deploy');
 	if (isRegistered) {
 		deployBtn.addEventListener('click', async () => {
-			const { addressExplorerUrl } = await import('./erc8004/chain-meta.js');
-			const { REGISTRY_DEPLOYMENTS } = await import('./erc8004/abi.js');
-			const registry =
-				erc8004Registry || REGISTRY_DEPLOYMENTS?.[chainId]?.identityRegistry || null;
-			const url = registry && chainId ? addressExplorerUrl(chainId, registry) : null;
-			if (url) window.open(url, '_blank', 'noopener');
+			deployBtn.disabled = true;
+			try {
+				const { RegisterUI } = await import('./erc8004/register-ui.js');
+				const wrap = document.createElement('div');
+				wrap.className = 'agent-register-overlay';
+				document.body.appendChild(wrap);
+				new RegisterUI(
+					wrap,
+					() => {
+						wrap.remove();
+						location.reload();
+					},
+					{ initialTab: 'my' },
+				);
+			} catch (err) {
+				console.error('[hub] register-ui load failed', err);
+			} finally {
+				deployBtn.disabled = false;
+			}
 		});
 	} else {
 		deployBtn.addEventListener('click', async () => {

@@ -3,6 +3,7 @@
 
 import { sql } from './db.js';
 import { publicUrl, presignGet, deleteObject } from './r2.js';
+import { defaultStorageMode } from './storage-mode.js';
 
 export async function listAvatars({ userId, limit = 50, cursor, visibility, includePublic = false }) {
 	limit = Math.min(Math.max(limit, 1), 200);
@@ -50,16 +51,22 @@ export async function getAvatarBySlug({ ownerId, slug, requesterId = null }) {
 export async function createAvatar({ userId, input, storageKey }) {
 	await enforceQuotas(userId, input.size_bytes);
 	const finalSlug = input.slug || (await generateSlug(userId, input.name));
+	const storageMode = defaultStorageMode({
+		storage_key: storageKey,
+		checksum_sha256: input.checksum_sha256 ?? null,
+	});
 	const [row] = await sql`
 		insert into avatars (
 			owner_id, slug, name, description, storage_key, size_bytes, content_type,
-			source, source_meta, visibility, tags, checksum_sha256, parent_avatar_id
+			source, source_meta, visibility, tags, checksum_sha256, parent_avatar_id,
+			storage_mode
 		) values (
 			${userId}, ${finalSlug}, ${input.name}, ${input.description ?? null},
 			${storageKey}, ${input.size_bytes}, ${input.content_type},
 			${input.source}, ${JSON.stringify(input.source_meta)}::jsonb,
 			${input.visibility}, ${input.tags}, ${input.checksum_sha256 ?? null},
-			${input.parent_avatar_id ?? null}
+			${input.parent_avatar_id ?? null},
+			${JSON.stringify(storageMode)}::jsonb
 		) returning *
 	`;
 	return decorate(row);

@@ -12,11 +12,19 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { env } from './_lib/env.js';
+import { sql } from './_lib/db.js';
 import { authenticateBearer, extractBearer, hasScope } from './_lib/auth.js';
 import { cors, readJson, wrap } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { recordEvent, logger } from './_lib/usage.js';
-import { listAvatars, getAvatar, getAvatarBySlug, searchPublicAvatars, resolveAvatarUrl, deleteAvatar } from './_lib/avatars.js';
+import {
+	listAvatars,
+	getAvatar,
+	getAvatarBySlug,
+	searchPublicAvatars,
+	resolveAvatarUrl,
+	deleteAvatar,
+} from './_lib/avatars.js';
 import { fetchModel, FetchModelError } from './_lib/fetch-model.js';
 import { inspectModel, suggestOptimizations } from './_lib/model-inspect.js';
 import { validateBytes } from 'gltf-validator';
@@ -29,18 +37,24 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,POST,DELETE,OPTIONS' })) return;
 
 	// Unauthenticated discovery surface — DELETE and GET without bearer are OK to reject quickly.
-	if (req.method === 'GET')    return handleSse(req, res);
+	if (req.method === 'GET') return handleSse(req, res);
 	if (req.method === 'DELETE') return handleTerminate(req, res);
-	if (req.method !== 'POST')   return send401(res, 'method not supported');
+	if (req.method !== 'POST') return send401(res, 'method not supported');
 
 	const bearer = extractBearer(req);
 	const auth = await authenticateBearer(bearer, { audience: env.MCP_RESOURCE });
 	if (!auth) return send401(res, 'missing or invalid access token');
 
 	const ipRl = await limits.mcpIp(clientIp(req));
-	if (!ipRl.success) return sendJsonRpcError(res, null, -32000, 'rate_limited', { retry_after: Math.ceil((ipRl.reset - Date.now()) / 1000) });
+	if (!ipRl.success)
+		return sendJsonRpcError(res, null, -32000, 'rate_limited', {
+			retry_after: Math.ceil((ipRl.reset - Date.now()) / 1000),
+		});
 	const userRl = await limits.mcpUser(auth.userId);
-	if (!userRl.success) return sendJsonRpcError(res, null, -32000, 'rate_limited', { retry_after: Math.ceil((userRl.reset - Date.now()) / 1000) });
+	if (!userRl.success)
+		return sendJsonRpcError(res, null, -32000, 'rate_limited', {
+			retry_after: Math.ceil((userRl.reset - Date.now()) / 1000),
+		});
 
 	const body = await readJson(req, 2_000_000);
 	const batch = Array.isArray(body) ? body : [body];
@@ -57,7 +71,7 @@ export default wrap(async (req, res) => {
 	res.statusCode = 200;
 	res.setHeader('content-type', 'application/json; charset=utf-8');
 	res.setHeader('mcp-protocol-version', PROTOCOL_VERSION);
-	res.end(JSON.stringify(Array.isArray(body) ? responses : responses[0] ?? null));
+	res.end(JSON.stringify(Array.isArray(body) ? responses : (responses[0] ?? null)));
 });
 
 // ── JSON-RPC dispatch ────────────────────────────────────────────────────────
@@ -70,15 +84,15 @@ async function dispatch(msg, auth, req) {
 		if (msg.jsonrpc !== '2.0') throw rpcError(-32600, 'invalid Request');
 		const method = msg.method;
 
-		if (method === 'initialize')              return ok(id, await onInitialize(msg.params, auth));
-		if (method === 'ping')                    return ok(id, {});
+		if (method === 'initialize') return ok(id, await onInitialize(msg.params, auth));
+		if (method === 'ping') return ok(id, {});
 		if (method === 'notifications/initialized') return null;
-		if (method === 'tools/list')              return ok(id, { tools: TOOL_CATALOG });
-		if (method === 'tools/call')              return ok(id, await onToolCall(msg.params, auth, started));
-		if (method === 'resources/list')          return ok(id, { resources: [] });
+		if (method === 'tools/list') return ok(id, { tools: TOOL_CATALOG });
+		if (method === 'tools/call') return ok(id, await onToolCall(msg.params, auth, started));
+		if (method === 'resources/list') return ok(id, { resources: [] });
 		if (method === 'resources/templates/list') return ok(id, { resourceTemplates: [] });
-		if (method === 'prompts/list')            return ok(id, { prompts: [] });
-		if (method === 'logging/setLevel')        return ok(id, {});
+		if (method === 'prompts/list') return ok(id, { prompts: [] });
+		if (method === 'logging/setLevel') return ok(id, {});
 
 		throw rpcError(-32601, `method not found: ${method}`);
 	} catch (err) {
@@ -87,7 +101,11 @@ async function dispatch(msg, auth, req) {
 		return {
 			jsonrpc: '2.0',
 			id,
-			error: { code: err.code || -32603, message: err.message || 'internal error', data: err.data },
+			error: {
+				code: err.code || -32603,
+				message: err.message || 'internal error',
+				data: err.data,
+			},
 		};
 	}
 }
@@ -115,7 +133,7 @@ async function onInitialize(_params, _auth) {
 		},
 		instructions: [
 			'Render 3D avatars stored on 3dagent.vercel.app as <model-viewer> HTML artifacts.',
-			'Use list_my_avatars to see the user\'s avatars and render_avatar to get embeddable viewer HTML.',
+			"Use list_my_avatars to see the user's avatars and render_avatar to get embeddable viewer HTML.",
 			'Public avatars can be discovered via search_public_avatars.',
 		].join(' '),
 	};
@@ -161,17 +179,58 @@ async function onToolCall(params, auth, started) {
 	}
 }
 
+// ── inline embed-policy helpers (prompt 02 / api/_lib/embed-policy.js not yet shipped) ──
+
+function _mcpDefaultPolicy() {
+	return {
+		version: 1,
+		origins: { mode: 'allowlist', hosts: [] },
+		surfaces: { script: true, iframe: true, widget: true, mcp: true },
+	};
+}
+
+function _mcpParsePolicy(p) {
+	if (!p) return null;
+	if (!('version' in p) && ('mode' in p || 'hosts' in p)) {
+		// Old flat shape — only origins were configured; all surfaces (incl. mcp) allowed.
+		return {
+			..._mcpDefaultPolicy(),
+			origins: { mode: p.mode || 'allowlist', hosts: p.hosts ?? [] },
+		};
+	}
+	return { ..._mcpDefaultPolicy(), ...p };
+}
+
+async function _readMcpPolicyByAvatar(avatarId) {
+	try {
+		const [row] = await sql`
+			SELECT embed_policy FROM agent_identities
+			WHERE avatar_id = ${avatarId} AND deleted_at IS NULL
+			LIMIT 1
+		`;
+		if (!row) return null;
+		return _mcpParsePolicy(row.embed_policy);
+	} catch (err) {
+		if (/column .* does not exist/i.test(String(err?.message))) return null;
+		throw err;
+	}
+}
+
 // ── tool catalog ─────────────────────────────────────────────────────────────
 const TOOL_CATALOG = [
 	{
 		name: 'list_my_avatars',
 		title: 'List my avatars',
-		description: 'List the authenticated user\'s avatars. Returns id, name, slug, size, visibility, and direct model_url (when visibility permits).',
+		description:
+			"List the authenticated user's avatars. Returns id, name, slug, size, visibility, and direct model_url (when visibility permits).",
 		inputSchema: {
 			type: 'object',
 			properties: {
 				limit: { type: 'integer', minimum: 1, maximum: 100, default: 25 },
-				cursor: { type: 'string', description: 'Opaque pagination cursor from previous response.' },
+				cursor: {
+					type: 'string',
+					description: 'Opaque pagination cursor from previous response.',
+				},
 				visibility: { type: 'string', enum: ['private', 'unlisted', 'public'] },
 			},
 			additionalProperties: false,
@@ -180,7 +239,8 @@ const TOOL_CATALOG = [
 	{
 		name: 'get_avatar',
 		title: 'Get avatar',
-		description: 'Fetch a single avatar by id or by owner+slug. Returns metadata and a model_url (public/unlisted) or short-lived signed URL (private).',
+		description:
+			'Fetch a single avatar by id or by owner+slug. Returns metadata and a model_url (public/unlisted) or short-lived signed URL (private).',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -193,7 +253,8 @@ const TOOL_CATALOG = [
 	{
 		name: 'search_public_avatars',
 		title: 'Search public avatars',
-		description: 'Search the public avatar gallery. Useful for finding characters to render without prior knowledge of an id.',
+		description:
+			'Search the public avatar gallery. Useful for finding characters to render without prior knowledge of an id.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -216,12 +277,26 @@ const TOOL_CATALOG = [
 				id: { type: 'string', format: 'uuid' },
 				slug: { type: 'string' },
 				auto_rotate: { type: 'boolean', default: true },
-				background: { type: 'string', description: 'CSS background color or gradient.', default: 'transparent' },
+				background: {
+					type: 'string',
+					description: 'CSS background color or gradient.',
+					default: 'transparent',
+				},
 				height: { type: 'string', default: '480px' },
 				width: { type: 'string', default: '100%' },
-				camera_orbit: { type: 'string', description: 'model-viewer camera-orbit value, e.g. "0deg 80deg 2m".' },
-				poster: { type: 'string', description: 'Optional poster image URL shown while loading.' },
-				ar: { type: 'boolean', default: true, description: 'Include AR button for mobile.' },
+				camera_orbit: {
+					type: 'string',
+					description: 'model-viewer camera-orbit value, e.g. "0deg 80deg 2m".',
+				},
+				poster: {
+					type: 'string',
+					description: 'Optional poster image URL shown while loading.',
+				},
+				ar: {
+					type: 'boolean',
+					default: true,
+					description: 'Include AR button for mobile.',
+				},
 			},
 			additionalProperties: false,
 		},
@@ -245,7 +320,11 @@ const TOOL_CATALOG = [
 		inputSchema: {
 			type: 'object',
 			properties: {
-				url: { type: 'string', format: 'uri', description: 'Public https URL of a .glb or .gltf file.' },
+				url: {
+					type: 'string',
+					format: 'uri',
+					description: 'Public https URL of a .glb or .gltf file.',
+				},
 				max_issues: { type: 'integer', minimum: 1, maximum: 500, default: 100 },
 			},
 			required: ['url'],
@@ -260,7 +339,11 @@ const TOOL_CATALOG = [
 		inputSchema: {
 			type: 'object',
 			properties: {
-				url: { type: 'string', format: 'uri', description: 'Public https URL of a .glb or .gltf file.' },
+				url: {
+					type: 'string',
+					format: 'uri',
+					description: 'Public https URL of a .glb or .gltf file.',
+				},
 			},
 			required: ['url'],
 			additionalProperties: false,
@@ -274,7 +357,11 @@ const TOOL_CATALOG = [
 		inputSchema: {
 			type: 'object',
 			properties: {
-				url: { type: 'string', format: 'uri', description: 'Public https URL of a .glb or .gltf file.' },
+				url: {
+					type: 'string',
+					format: 'uri',
+					description: 'Public https URL of a .glb or .gltf file.',
+				},
 			},
 			required: ['url'],
 			additionalProperties: false,
@@ -305,8 +392,12 @@ const TOOLS = {
 			const avatar = args.id
 				? await getAvatar({ id: args.id, requesterId: auth.userId })
 				: args.slug
-				? await getAvatarBySlug({ ownerId: auth.userId, slug: args.slug, requesterId: auth.userId })
-				: null;
+					? await getAvatarBySlug({
+							ownerId: auth.userId,
+							slug: args.slug,
+							requesterId: auth.userId,
+						})
+					: null;
 			if (!avatar) throw new Error('avatar not found');
 			const urlInfo = await resolveAvatarUrl(avatar);
 			const merged = { ...avatar, ...urlInfo };
@@ -325,7 +416,9 @@ const TOOLS = {
 				limit: args.limit || 12,
 			});
 			return {
-				content: [{ type: 'text', text: formatAvatarList(result.avatars, { public: true }) }],
+				content: [
+					{ type: 'text', text: formatAvatarList(result.avatars, { public: true }) },
+				],
 				structuredContent: result,
 			};
 		},
@@ -337,9 +430,22 @@ const TOOLS = {
 			const avatar = args.id
 				? await getAvatar({ id: args.id, requesterId: auth.userId })
 				: args.slug
-				? await getAvatarBySlug({ ownerId: auth.userId, slug: args.slug, requesterId: auth.userId })
-				: null;
+					? await getAvatarBySlug({
+							ownerId: auth.userId,
+							slug: args.slug,
+							requesterId: auth.userId,
+						})
+					: null;
 			if (!avatar) throw new Error('avatar not found');
+			// surfaces.mcp gate — check if a registered agent owns this avatar
+			const _mcpPolicy = await _readMcpPolicyByAvatar(avatar.id);
+			if (_mcpPolicy && _mcpPolicy.surfaces?.mcp === false) {
+				throw rpcError(
+					-32000,
+					'embed_denied_surface',
+					'This agent disallows the MCP surface.',
+				);
+			}
 			const urlInfo = await resolveAvatarUrl(avatar, { expiresIn: 3600 });
 			const html = renderModelViewerHtml({
 				src: urlInfo.url,
@@ -385,7 +491,10 @@ const TOOLS = {
 	validate_model: {
 		async handler(args, auth) {
 			const rl = await limits.mcpValidate(auth.userId);
-			if (!rl.success) throw rpcError(-32000, 'rate_limited', { retry_after: Math.ceil((rl.reset - Date.now()) / 1000) });
+			if (!rl.success)
+				throw rpcError(-32000, 'rate_limited', {
+					retry_after: Math.ceil((rl.reset - Date.now()) / 1000),
+				});
 			const { bytes, url, filename } = await safeFetchModel(args.url);
 			const max = Math.min(Math.max(args.max_issues || 100, 1), 500);
 			const report = await validateBytes(bytes, { maxIssues: max, uri: filename });
@@ -403,8 +512,14 @@ const TOOLS = {
 				truncated: !!issues.truncated,
 			};
 			return {
-				content: [{ type: 'text', text: formatValidationSummary(summary, issues.messages || []) }],
-				structuredContent: { ...summary, messages: issues.messages || [], info: report?.info || null },
+				content: [
+					{ type: 'text', text: formatValidationSummary(summary, issues.messages || []) },
+				],
+				structuredContent: {
+					...summary,
+					messages: issues.messages || [],
+					info: report?.info || null,
+				},
 			};
 		},
 	},
@@ -412,7 +527,10 @@ const TOOLS = {
 	inspect_model: {
 		async handler(args, auth) {
 			const rl = await limits.mcpInspect(auth.userId);
-			if (!rl.success) throw rpcError(-32000, 'rate_limited', { retry_after: Math.ceil((rl.reset - Date.now()) / 1000) });
+			if (!rl.success)
+				throw rpcError(-32000, 'rate_limited', {
+					retry_after: Math.ceil((rl.reset - Date.now()) / 1000),
+				});
 			const { bytes, url, filename } = await safeFetchModel(args.url);
 			const info = await inspectModel(bytes, { fileSize: bytes.byteLength });
 			return {
@@ -425,7 +543,10 @@ const TOOLS = {
 	optimize_model: {
 		async handler(args, auth) {
 			const rl = await limits.mcpOptimize(auth.userId);
-			if (!rl.success) throw rpcError(-32000, 'rate_limited', { retry_after: Math.ceil((rl.reset - Date.now()) / 1000) });
+			if (!rl.success)
+				throw rpcError(-32000, 'rate_limited', {
+					retry_after: Math.ceil((rl.reset - Date.now()) / 1000),
+				});
 			const { bytes, url, filename } = await safeFetchModel(args.url);
 			const info = await inspectModel(bytes, { fileSize: bytes.byteLength });
 			const suggestions = suggestOptimizations(info);
@@ -447,7 +568,8 @@ async function safeFetchModel(url) {
 }
 
 function formatValidationSummary(s, messages) {
-	const head = `glTF-Validator report for ${s.filename} (${(s.fileSize / 1024).toFixed(1)} KB)\n` +
+	const head =
+		`glTF-Validator report for ${s.filename} (${(s.fileSize / 1024).toFixed(1)} KB)\n` +
 		`Errors: ${s.numErrors}, Warnings: ${s.numWarnings}, Infos: ${s.numInfos}, Hints: ${s.numHints}` +
 		(s.truncated ? ' (truncated)' : '');
 	if (!messages.length) return head;
@@ -463,7 +585,12 @@ function formatValidationSummary(s, messages) {
 function formatInspection(info) {
 	const c = info.counts;
 	const tex = info.textures.length
-		? info.textures.map((t) => `  • ${t.name || '(unnamed)'} — ${t.mimeType} ${t.width}×${t.height}, ${(t.byteSize / 1024).toFixed(1)} KB`).join('\n')
+		? info.textures
+				.map(
+					(t) =>
+						`  • ${t.name || '(unnamed)'} — ${t.mimeType} ${t.width}×${t.height}, ${(t.byteSize / 1024).toFixed(1)} KB`,
+				)
+				.join('\n')
 		: '  (none)';
 	return [
 		`Model: ${info.filename} (${(info.fileSize / 1024 / 1024).toFixed(2)} MB, ${info.container})`,
@@ -479,15 +606,29 @@ function formatInspection(info) {
 
 function formatSuggestions(suggestions) {
 	if (!suggestions.length) return 'No suggestions.';
-	return suggestions.map((s) => {
-		const tag = { info: 'INFO', warn: 'WARN', critical: 'CRIT' }[s.severity] || s.severity.toUpperCase();
-		const est = s.estimate ? ` — ${s.estimate}` : '';
-		return `[${tag}] ${s.id}: ${s.message}${est}`;
-	}).join('\n');
+	return suggestions
+		.map((s) => {
+			const tag =
+				{ info: 'INFO', warn: 'WARN', critical: 'CRIT' }[s.severity] ||
+				s.severity.toUpperCase();
+			const est = s.estimate ? ` — ${s.estimate}` : '';
+			return `[${tag}] ${s.id}: ${s.message}${est}`;
+		})
+		.join('\n');
 }
 
 // ── <model-viewer> artifact builder ─────────────────────────────────────────
-function renderModelViewerHtml({ src, name, poster, background, height, width, autoRotate, ar, cameraOrbit }) {
+function renderModelViewerHtml({
+	src,
+	name,
+	poster,
+	background,
+	height,
+	width,
+	autoRotate,
+	ar,
+	cameraOrbit,
+}) {
 	const attrs = [
 		`src="${attr(src)}"`,
 		'camera-controls',
@@ -499,13 +640,19 @@ function renderModelViewerHtml({ src, name, poster, background, height, width, a
 		poster ? `poster="${attr(poster)}"` : '',
 		cameraOrbit ? `camera-orbit="${attr(cameraOrbit)}"` : '',
 		`alt="${attr(name || 'Avatar')}"`,
-	].filter(Boolean).join(' ');
+	]
+		.filter(Boolean)
+		.join(' ');
 	return [
 		'<!doctype html>',
 		'<html><head><meta charset="utf-8"><title>' + esc(name || 'Avatar') + '</title>',
 		'<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>',
 		'<style>html,body{margin:0;height:100%;background:' + attr(background) + '}',
-		'model-viewer{width:' + attr(width) + ';height:' + attr(height) + ';--progress-bar-color:#6a5cff}</style>',
+		'model-viewer{width:' +
+			attr(width) +
+			';height:' +
+			attr(height) +
+			';--progress-bar-color:#6a5cff}</style>',
 		'</head><body>',
 		'<model-viewer ' + attrs + '></model-viewer>',
 		'</body></html>',
@@ -546,7 +693,7 @@ function send401(res, msg) {
 	res.statusCode = 401;
 	res.setHeader(
 		'www-authenticate',
-		`Bearer resource_metadata="${env.APP_ORIGIN}/.well-known/oauth-protected-resource", resource="${resource}"`
+		`Bearer resource_metadata="${env.APP_ORIGIN}/.well-known/oauth-protected-resource", resource="${resource}"`,
 	);
 	res.setHeader('content-type', 'application/json; charset=utf-8');
 	res.end(JSON.stringify({ error: 'unauthorized', error_description: msg }));
@@ -568,10 +715,13 @@ function summarize(args) {
 }
 
 function esc(s) {
-	return String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+	return String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
 }
 function attr(s) {
-	return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+	return String(s).replace(
+		/[&<>"]/g,
+		(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c],
+	);
 }
 
 // CSS inputs land inside a <style> declaration (`background: <value>`), where
@@ -599,5 +749,7 @@ function safeHttpsUrl(s) {
 	try {
 		const u = new URL(String(s));
 		return u.protocol === 'https:' ? u.toString() : undefined;
-	} catch { return undefined; }
+	} catch {
+		return undefined;
+	}
 }

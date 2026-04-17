@@ -13,6 +13,59 @@ import { sql } from '../_lib/db.js';
 import { env } from '../_lib/env.js';
 import { cors, wrap } from '../_lib/http.js';
 
+// ── inline embed-policy helpers (prompt 02 / api/_lib/embed-policy.js not yet shipped) ──
+
+function _defaultPolicy() {
+	return {
+		version: 1,
+		origins: { mode: 'allowlist', hosts: [] },
+		surfaces: { script: true, iframe: true, widget: true, mcp: true },
+	};
+}
+
+function _parsePolicy(p) {
+	if (!p) return null;
+	if (!('version' in p) && ('mode' in p || 'hosts' in p)) {
+		// Old flat shape — only origins were configured; all surfaces allowed.
+		return {
+			..._defaultPolicy(),
+			origins: { mode: p.mode || 'allowlist', hosts: p.hosts ?? [] },
+		};
+	}
+	return { ..._defaultPolicy(), ...p };
+}
+
+async function _readPolicyForAgent(agentId) {
+	try {
+		const [row] =
+			await sql`SELECT embed_policy FROM agent_identities WHERE id = ${agentId} AND deleted_at IS NULL`;
+		if (!row) return null;
+		return _parsePolicy(row.embed_policy);
+	} catch (err) {
+		if (/column .* does not exist/i.test(String(err?.message))) return null;
+		throw err;
+	}
+}
+
+function _originAllowed(refererHeader, policy, appOriginHost) {
+	if (!refererHeader) return true; // no referer → allow (bots, direct)
+	let host;
+	try {
+		host = new URL(refererHeader).hostname.toLowerCase();
+	} catch {
+		return true;
+	}
+	if (host === appOriginHost || host === 'localhost' || host.endsWith('.localhost')) return true;
+	const hosts = policy?.origins?.hosts ?? [];
+	const mode = policy?.origins?.mode ?? 'allowlist';
+	const matched = hosts.some((h) => {
+		const lower = h.toLowerCase();
+		if (lower.startsWith('*.')) return host.endsWith(lower.slice(1)) && host !== lower.slice(2);
+		return host === lower;
+	});
+	return mode === 'allowlist' ? matched : !matched;
+}
+
 const TYPE_LABEL = {
 	turntable: 'Turntable Showcase',
 	'animation-gallery': 'Animation Gallery',
@@ -30,6 +83,20 @@ export default wrap(async (req, res) => {
 
 	const widget = await loadWidget(widgetId);
 	if (!widget) return notFound(res);
+
+	// Agent embed-policy gate — only when widget is tied to an agent identity.
+	if (widget.agent_id) {
+		const agentPolicy = await _readPolicyForAgent(widget.agent_id);
+		if (agentPolicy) {
+			if (agentPolicy.surfaces?.widget === false) {
+				return forbidden(res, "This widget's embed is disabled by the agent owner.");
+			}
+			const appHost = new URL(env.APP_ORIGIN).hostname.toLowerCase();
+			if (!_originAllowed(req.headers['referer'], agentPolicy, appHost)) {
+				return forbidden(res, 'This widget is not permitted on the requesting origin.');
+			}
+		}
+	}
 
 	const origin = env.APP_ORIGIN;
 	const pageUrl = `${origin}/w/${widget.id}`;
@@ -58,16 +125,36 @@ export default wrap(async (req, res) => {
 async function loadWidget(id) {
 	try {
 		const [row] = await sql`
-			select id, name, type, avatar_id, is_public
+			select id, name, type, avatar_id, agent_id, is_public
 			from widgets
 			where id = ${id} and deleted_at is null
 			limit 1
 		`;
 		return row || null;
 	} catch (err) {
+		if (/column .* does not exist/i.test(err?.message || '')) {
+			// agent_id column not yet migrated — fall back without it
+			const [row] = await sql`
+				select id, name, type, avatar_id, is_public
+				from widgets
+				where id = ${id} and deleted_at is null
+				limit 1
+			`;
+			return row || null;
+		}
 		if (/relation .* does not exist/i.test(err?.message || '')) return null;
 		throw err;
 	}
+}
+
+function forbidden(res, msg) {
+	res.statusCode = 403;
+	res.setHeader('content-type', 'text/html; charset=utf-8');
+	res.setHeader('cache-control', 'public, max-age=60');
+	const m = escapeHtml(msg || 'Access denied.');
+	res.end(`<!doctype html><meta charset="utf-8"><title>Access denied</title>
+<style>body{font-family:Inter,system-ui,sans-serif;background:#0a0a0a;color:#e0e0e0;display:grid;place-items:center;min-height:100vh;margin:0}main{text-align:center;padding:2rem}a{color:#8b5cf6}</style>
+<main><h1>Access denied</h1><p>${m}</p><p><a href="/">Open 3D Agent</a></p></main>`);
 }
 
 function notFound(res) {

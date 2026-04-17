@@ -1,36 +1,11 @@
-// GET    /api/agents/:id/embed-policy  — public; returns { policy } (or { policy: null })
-// PUT    /api/agents/:id/embed-policy  — owner-only; sets the policy
+// GET    /api/agents/:id/embed-policy  — public; returns { policy } (extended normalized shape)
+// PUT    /api/agents/:id/embed-policy  — owner-only; accepts extended or legacy shape
 // DELETE /api/agents/:id/embed-policy  — owner-only; clears the policy
-//
-// Policy shape when non-null:
-//   { mode: "allowlist" | "denylist", hosts: ["example.com", "*.substack.com"] }
-// `hosts` supports exact match and a single leading-wildcard segment ("*.foo.com").
 
-import { z } from 'zod';
 import { getSessionUser } from '../../_lib/auth.js';
 import { sql } from '../../_lib/db.js';
 import { cors, json, method, readJson, wrap, error } from '../../_lib/http.js';
-import { parse } from '../../_lib/validate.js';
-
-// Hostnames are ASCII only here — policy authors enter punycoded forms.
-// Allow a single leading "*." wildcard segment; otherwise require conventional
-// dot-separated labels. Cap at 253 chars (DNS max).
-const hostPattern = /^(\*\.)?([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*$/i;
-
-const policySchema = z.object({
-	mode: z.enum(['allowlist', 'denylist']),
-	hosts: z
-		.array(
-			z
-				.string()
-				.trim()
-				.toLowerCase()
-				.min(1)
-				.max(253)
-				.regex(hostPattern, 'invalid host; use example.com or *.example.com'),
-		)
-		.max(100),
-});
+import { readEmbedPolicy, validateEmbedPolicy } from '../../_lib/embed-policy.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,PUT,DELETE,OPTIONS', credentials: true })) return;
@@ -40,12 +15,15 @@ export default wrap(async (req, res) => {
 	if (!id) return error(res, 400, 'invalid_request', 'agent id required');
 
 	if (req.method === 'GET') {
-		const [row] = await sql`
-			SELECT embed_policy FROM agent_identities
-			WHERE id = ${id} AND deleted_at IS NULL
-		`;
-		if (!row) return error(res, 404, 'not_found', 'agent not found');
-		return json(res, 200, { policy: row.embed_policy ?? null });
+		const policy = await readEmbedPolicy(id);
+		if (policy === null) {
+			// Check if agent actually exists vs column missing
+			const [row] = await sql`
+				SELECT id FROM agent_identities WHERE id = ${id} AND deleted_at IS NULL
+			`;
+			if (!row) return error(res, 404, 'not_found', 'agent not found');
+		}
+		return json(res, 200, { policy: policy ?? null });
 	}
 
 	const session = await getSessionUser(req);
@@ -63,10 +41,21 @@ export default wrap(async (req, res) => {
 		return json(res, 200, { policy: null });
 	}
 
-	const policy = parse(policySchema, await readJson(req));
+	let normalized;
+	try {
+		normalized = validateEmbedPolicy(await readJson(req));
+	} catch (err) {
+		if (err.name === 'ZodError') {
+			return error(res, 400, 'validation_error', err.errors[0]?.message || 'invalid policy', {
+				fields: err.errors,
+			});
+		}
+		throw err;
+	}
+
 	const [updated] = await sql`
 		UPDATE agent_identities
-		SET embed_policy = ${JSON.stringify(policy)}::jsonb
+		SET embed_policy = ${JSON.stringify(normalized)}::jsonb
 		WHERE id = ${id}
 		RETURNING embed_policy
 	`;

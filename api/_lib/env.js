@@ -43,6 +43,10 @@ export const env = {
 	get AVATURN_API_KEY() { return opt('AVATURN_API_KEY'); },
 	get AVATURN_API_URL() { return trimSlash(opt('AVATURN_API_URL', 'https://api.avaturn.me')); },
 
+	// Anthropic API key — used by the we-pay LLM proxy (/api/llm/anthropic).
+	// Must be set in production; optional in local dev if the proxy is unused.
+	get ANTHROPIC_API_KEY() { return req('ANTHROPIC_API_KEY'); },
+
 	// Etherscan V2 — unified multichain explorer API (one key, all chains).
 	// Used by api/cron/erc8004-crawl.js to index ERC-8004 Registered events.
 	get ETHERSCAN_API_KEY() { return opt('ETHERSCAN_API_KEY'); },
