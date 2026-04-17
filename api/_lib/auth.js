@@ -9,6 +9,7 @@ import { randomToken, sha256, hmacSha256, constantTimeEquals } from './crypto.js
 const ACCESS_TTL_SEC = 60 * 60; // 1h access tokens
 const REFRESH_TTL_SEC = 60 * 60 * 24 * 30; // 30d refresh tokens
 const SESSION_TTL_SEC = 60 * 60 * 24 * 30; // 30d browser sessions
+const SESSION_REFRESH_WINDOW_SEC = 60 * 60 * 24 * 7; // rotate when < 7d remain
 
 // Lazy: env.JWT_SECRET throws if unset, so defer encoding until first use.
 let _jwtKey;
@@ -116,6 +117,16 @@ function readSessionCookie(req) {
 	const cookie = req.headers.cookie || '';
 	const m = cookie.match(/(?:^|;\s*)__Host-sid=([^;]+)/) || cookie.match(/(?:^|;\s*)sid=([^;]+)/);
 	return m ? decodeURIComponent(m[1]) : null;
+}
+
+/**
+ * Issue a new session and revoke the old one. Returns the new plaintext token.
+ * @param {{ currentSid: string, userId: string, userAgent: string|null, ip: string|null }} opts
+ */
+export async function rotateSession({ currentSid, userId, userAgent, ip }) {
+	const newSecret = await createSession({ userId, userAgent, ip });
+	await sql`update sessions set revoked_at = now() where id = ${currentSid}`;
+	return newSecret;
 }
 
 export async function createSession({ userId, userAgent, ip }) {

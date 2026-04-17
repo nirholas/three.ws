@@ -34,16 +34,16 @@
 			}
 		</style>
 		<!--
-			Loads the <agent-3d> web component from the 3D Agent CDN.
-			For local development, run `npm run build:lib` and serve dist-lib/ under
-			/agent-3d/latest/ so this path resolves without hitting the CDN.
+			Loads the <agent-3d> web component. In production loads from CDN; in dev
+			loads from the local Vite dev server so local changes are reflected immediately.
 			LobeChat's sandbox CSP must allow module scripts from this origin.
 		-->
-		<script
-			type="module"
-			src="https://3dagent.vercel.app/agent-3d/latest/agent-3d.js"
-			crossorigin
-		></script>
+		<script type="module">
+			const CDN = 'https://3dagent.vercel.app/agent-3d/latest/agent-3d.js';
+			const h = location.hostname;
+			const isLocal = h === 'localhost' || h === '127.0.0.1' || h.endsWith('.github.dev') || h.endsWith('.local');
+			import(isLocal ? '/src/lib.js' : CDN);
+		</script>
 	</head>
 	<body>
 		<div id="status">Loading…</div>

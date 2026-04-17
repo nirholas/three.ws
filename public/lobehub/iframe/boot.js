@@ -24,6 +24,7 @@ function isDev(origin) {
 
 const params = new URL(location.href).searchParams;
 const agentId = params.get('agent') || '';
+const srcParam = params.get('src') || '';
 
 // ?host=<encoded-origin> restricts accepted parent to one origin.
 let allowedOrigin = null;
@@ -80,10 +81,12 @@ function setStatus(text) {
 	if (statusEl) statusEl.textContent = text;
 }
 
-if (agentId) {
+if (srcParam) {
+	el.setAttribute('src', decodeURIComponent(srcParam));
+} else if (agentId) {
 	el.setAttribute('agent-id', agentId);
 } else {
-	setStatus('No agent specified — add ?agent=<id> to the URL.');
+	setStatus('No agent specified — add ?agent=<id> or ?src=<glb-url> to the URL.');
 }
 
 el.addEventListener('agent:ready', (ev) => {
@@ -132,7 +135,7 @@ async function dispatchAction(op, payload, replyId) {
 	try {
 		switch (op) {
 			case 'speak':
-				await el.say?.(payload.text || '', { sentiment: payload.sentiment });
+				el.speak?.(payload.text || '', { sentiment: payload.sentiment ?? 0 });
 				break;
 			case 'gesture':
 				if (payload.name === 'wave') {
