@@ -688,6 +688,8 @@ class Agent3DElement extends HTMLElement {
 			const providerConfig = {
 				apiKey: this.getAttribute('api-key') || undefined,
 				proxyURL: this.getAttribute('key-proxy') || undefined,
+				agentId: _backendId || undefined,
+				apiOrigin: _scriptOrigin || window.location.origin,
 			};
 			// Apply tts="..." attribute shorthand on top of the manifest's voice config.
 			const ttsOverride = this._parseTTSAttribute();

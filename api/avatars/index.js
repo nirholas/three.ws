@@ -72,7 +72,9 @@ async function handleCreate(req, res) {
 			);
 			if (headChecked?.ChecksumSHA256) {
 				// R2 returns base64; convert to lowercase hex.
-				body.checksum_sha256 = Buffer.from(headChecked.ChecksumSHA256, 'base64').toString('hex');
+				body.checksum_sha256 = Buffer.from(headChecked.ChecksumSHA256, 'base64').toString(
+					'hex',
+				);
 			}
 		} catch {
 			// ChecksumMode unsupported or object has no checksum — leave null, not fatal.

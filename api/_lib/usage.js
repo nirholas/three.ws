@@ -7,12 +7,13 @@ export function recordEvent(evt) {
 	queueMicrotask(async () => {
 		try {
 			await sql`
-				insert into usage_events (user_id, api_key_id, client_id, avatar_id, kind, tool, status, bytes, latency_ms, meta)
+				insert into usage_events (user_id, api_key_id, client_id, avatar_id, agent_id, kind, tool, status, bytes, latency_ms, meta)
 				values (
 					${evt.userId ?? null},
 					${evt.apiKeyId ?? null},
 					${evt.clientId ?? null},
 					${evt.avatarId ?? null},
+					${evt.agentId ?? null},
 					${evt.kind},
 					${evt.tool ?? null},
 					${evt.status ?? 'ok'},
@@ -31,6 +32,7 @@ export function logger(name) {
 	return {
 		info: (msg, meta = {}) => console.log(JSON.stringify({ lvl: 'info', name, msg, ...meta })),
 		warn: (msg, meta = {}) => console.warn(JSON.stringify({ lvl: 'warn', name, msg, ...meta })),
-		error: (msg, meta = {}) => console.error(JSON.stringify({ lvl: 'error', name, msg, ...meta })),
+		error: (msg, meta = {}) =>
+			console.error(JSON.stringify({ lvl: 'error', name, msg, ...meta })),
 	};
 }

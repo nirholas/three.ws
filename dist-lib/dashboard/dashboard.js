@@ -87,7 +87,7 @@ async function renderAvatars(root) {
 	try {
 		const { avatars } = await api.listAvatars();
 		if (!avatars.length) {
-			list.innerHTML = `<div class="empty">No avatars yet. <a href="#create">Take a selfie</a> or <a href="#upload">upload a .glb</a>.</div>`;
+			list.innerHTML = `<div class="empty">No avatars yet. <a href="#create">Take a selfie</a>, <a href="#upload">upload a .glb</a>, or <a href="/deploy">deploy a metadata-only agent on-chain</a>.</div>`;
 			return;
 		}
 		list.innerHTML = '';
