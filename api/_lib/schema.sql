@@ -257,6 +257,8 @@ create table if not exists agent_identities (
 
 create index if not exists agent_identities_user
     on agent_identities(user_id) where deleted_at is null;
+create unique index if not exists agent_identities_user_unique
+    on agent_identities(user_id) where deleted_at is null;
 create index if not exists agent_identities_wallet
     on agent_identities(wallet_address) where wallet_address is not null;
 

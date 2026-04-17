@@ -80,7 +80,7 @@ async function handleGetOrCreateMe(req, res, auth) {
 
 		if (!agent) {
 			const wallet = await generateAgentWallet();
-			[agent] = await sql`
+			await sql`
 				INSERT INTO agent_identities (user_id, name, skills, wallet_address, meta)
 				VALUES (
 					${auth.userId},
@@ -89,7 +89,13 @@ async function handleGetOrCreateMe(req, res, auth) {
 					${wallet.address},
 					${JSON.stringify({ encrypted_wallet_key: wallet.encrypted_key })}::jsonb
 				)
-				RETURNING *
+				ON CONFLICT (user_id) WHERE deleted_at IS NULL DO NOTHING
+			`;
+			// Re-select covers both: we inserted, or a concurrent request beat us.
+			[agent] = await sql`
+				SELECT * FROM agent_identities
+				WHERE user_id = ${auth.userId} AND deleted_at IS NULL
+				ORDER BY created_at ASC LIMIT 1
 			`;
 		}
 

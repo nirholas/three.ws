@@ -4,6 +4,27 @@ Root guidance for agents working in this repo. Read this first. Then read the sc
 
 ---
 
+## Current state (updated 2026-04-17) — read this before touching anything
+
+**Working directory:** `/workspaces/3D-Agent`. All prompt files say `Repo: /workspaces/3D` — that path is stale. Use the actual working directory. Do not "fix" the prompts as part of an implementation task.
+
+**What's done:**
+- `api/auth/siwe/verify.js` — SIWE verify endpoint complete, VERCEL_URL preview-deploy support added (committed).
+- `api/agents.js` — `/api/agents/me` 500 hardened: all errors caught, `[agents/me]` log prefix, `42P01` fallback. Race on concurrent first-agent insert is fixed via `ON CONFLICT DO NOTHING` + re-select.
+- `api/_lib/schema.sql` — unique partial index `agent_identities_user_unique` on `(user_id) where deleted_at is null` added.
+
+**What's in-flight / broken:**
+- Band 1 (wallet auth) is the active band. Do not start band 2+ tasks.
+- Next task: `prompts/wallet-auth/04-connect-wallet-button.md` — shared "Connect wallet" component. Depends on verify + agents/me being green (they are).
+
+**Quick rules for agents starting a task:**
+1. Run `node --check` on every JS file you touch.
+2. Run `npm run build` before reporting done.
+3. Don't fix bugs outside the task scope — note them in your report.
+4. Don't create new top-level markdown files.
+
+---
+
 ## How to work here
 
 1. **Move on your own.** You have broad permissions (see [.claude/settings.json](.claude/settings.json)). Don't ask before running builds, tests, formatters, git commits, or reads — just do them. Ask only before destructive ops, on-chain broadcasts, or production deploys.
