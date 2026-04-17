@@ -174,6 +174,10 @@
 					<input type="text" id="agent-id-input" placeholder="agent-xyz-123" />
 				</div>
 				<div class="row">
+					<label style="width: 80px">GLB URL</label>
+					<input type="text" id="src-input" placeholder="optional — bypasses agent API (e.g. /avatars/cz.glb)" />
+				</div>
+				<div class="row">
 					<label style="width: 80px">API Origin</label>
 					<input type="text" id="origin-input" value="https://3dagent.vercel.app" />
 				</div>
@@ -253,13 +257,17 @@
 			function loadAgent() {
 				agentId = document.getElementById('agent-id-input').value.trim();
 				apiOrigin = document.getElementById('origin-input').value.trim();
-				if (!agentId) {
-					alert('Enter an Agent ID first.');
+				const srcVal = document.getElementById('src-input').value.trim();
+				if (!agentId && !srcVal) {
+					alert('Enter an Agent ID or GLB URL first.');
 					return;
 				}
 				isReady = false;
 				statusDot.className = 'status-dot';
-				const url = `${apiOrigin}/lobehub/iframe/?agent=${encodeURIComponent(agentId)}&host=${encodeURIComponent(location.origin)}`;
+				const base = apiOrigin.replace(/\/$/, '');
+				let url = `${base}/lobehub/iframe/?host=${encodeURIComponent(location.origin)}`;
+				if (srcVal) url += `&src=${encodeURIComponent(srcVal)}`;
+				if (agentId) url += `&agent=${encodeURIComponent(agentId)}`;
 				frame.src = url;
 				appendLog(`→ Loading ${url}`);
 			}

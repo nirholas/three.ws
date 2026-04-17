@@ -12,7 +12,7 @@ import { resolveAgentById, resolveByAgentId, AgentResolveError } from './agent-r
 import { parseAgentRef, resolveOnchainAgent, toManifest } from './erc8004/resolver.js';
 // BEGIN:EMBED_BRIDGES_IMPORT
 import { EmbedActionBridge } from './embed-action-bridge.js';
-import { protocol } from './agent-protocol.js';
+import { protocol, ACTION_TYPES } from './agent-protocol.js';
 // END:EMBED_BRIDGES_IMPORT
 
 const MODES = ['inline', 'floating', 'section', 'fullscreen'];
@@ -945,6 +945,11 @@ class Agent3DElement extends HTMLElement {
 	async say(text, opts = {}) {
 		if (!this._runtime) await this._waitForReady();
 		return this._runtime.send(text, { voice: opts.voice ?? this.hasAttribute('voice') });
+	}
+
+	// Emit speak directly on the protocol bus — triggers avatar animation without going through LLM.
+	speak(text, opts = {}) {
+		protocol.emit(ACTION_TYPES.SPEAK, { text, sentiment: opts.sentiment ?? 0 });
 	}
 
 	async ask(text, opts = {}) {
