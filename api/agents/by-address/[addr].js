@@ -69,7 +69,9 @@ async function queryChain(addr, chainId, meta) {
 
 	const agentIds = await Promise.all(
 		Array.from({ length: count }, (_, i) =>
-			withTimeout(registry.tokenOfOwnerByIndex(addr, BigInt(i)), RPC_TIMEOUT).catch(() => null),
+			withTimeout(registry.tokenOfOwnerByIndex(addr, BigInt(i)), RPC_TIMEOUT).catch(
+				() => null,
+			),
 		),
 	);
 
@@ -102,7 +104,7 @@ export default wrap(async (req, res) => {
 	const rl = await limits.agentByAddress(clientIp(req));
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
-	const raw = ((req.query?.addr) || '').trim().toLowerCase();
+	const raw = (req.query?.addr || '').trim().toLowerCase();
 	if (!/^0x[a-f0-9]{40}$/.test(raw)) {
 		return error(res, 400, 'validation_error', 'invalid wallet address');
 	}

@@ -17,7 +17,12 @@ export default wrap(async (req, res) => {
 
 	const cid = req.query?.cid || new URL(req.url, 'http://x').searchParams.get('cid');
 	if (!cid || !CID_RE.test(cid)) {
-		return error(res, 400, 'validation_error', 'cid query parameter is required and must be alphanumeric');
+		return error(
+			res,
+			400,
+			'validation_error',
+			'cid query parameter is required and must be alphanumeric',
+		);
 	}
 
 	const pinataJwt = process.env.PINATA_JWT;
