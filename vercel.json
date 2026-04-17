@@ -22,6 +22,7 @@
 		{ "src": "/oauth/introspect", "dest": "/api/oauth/introspect" },
 
 		{ "src": "/login", "dest": "/public/login.html" },
+		{ "src": "/wallet-login.js", "dest": "/wallet-login.js" },
 		{ "src": "/deploy", "dest": "/app.html" },
 		{ "src": "/dashboard", "dest": "/public/dashboard/index.html" },
 		{ "src": "/dashboard/", "dest": "/public/dashboard/index.html" },
@@ -70,6 +71,18 @@
 		{ "src": "/widgets/", "dest": "/public/widgets-gallery/index.html" },
 		{ "src": "/widgets/(.*)", "dest": "/public/widgets-gallery/$1" },
 		{ "src": "/docs/widgets", "dest": "/public/docs-widgets.html" },
+
+		{ "src": "/artifact", "dest": "/public/artifact/index.html" },
+		{ "src": "/artifact/", "dest": "/public/artifact/index.html" },
+		{ "src": "/artifact/(.*)", "dest": "/public/artifact/$1" },
+
+		{ "src": "/cz", "dest": "/public/cz/index.html" },
+		{ "src": "/cz/", "dest": "/public/cz/index.html" },
+		{ "src": "/cz/(.*)", "dest": "/public/cz/$1" },
+
+		{ "src": "/validation", "dest": "/public/validation/index.html" },
+		{ "src": "/validation/", "dest": "/public/validation/index.html" },
+		{ "src": "/validation/(.*)", "dest": "/public/validation/$1" },
 
 		{ "src": "/api/llm/anthropic", "dest": "/api/llm/anthropic.js" },
 		{ "src": "/api/agents/([^/]+)/usage", "dest": "/api/agents/[id]/usage?id=$1" },

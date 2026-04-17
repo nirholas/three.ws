@@ -1,0 +1,184 @@
+# Avatar Regeneration API
+
+Pluggable endpoint for avatar re-mesh, re-texture, re-rig, and restyle operations. Designed to support multiple ML backends with a consistent interface.
+
+## Endpoints
+
+### `POST /api/avatars/regenerate`
+
+Initiate an avatar regeneration job.
+
+**Authentication:** Session cookie or `avatars:write` bearer token required.
+
+**Request body:**
+```json
+{
+  "sourceAvatarId": "avatar-uuid",
+  "mode": "remesh|retex|rerig|restyle",
+  "params": {
+    "custom": "values"
+  }
+}
+```
+
+**Mode definitions:**
+- `remesh` — regenerate mesh topology from source material or reference
+- `retex` — regenerate textures and materials
+- `rerig` — regenerate skeleton/rig bindings
+- `restyle` — regenerate styling/appearance from description
+
+**Success response (202):**
+```json
+{
+  "ok": true,
+  "jobId": "string",
+  "status": "queued",
+  "eta": null
+}
+```
+
+**Error responses:**
+
+- **404 not_found** — source avatar not found or not owned
+- **501 regen_unconfigured** — `AVATAR_REGEN_PROVIDER` env var not set
+  ```json
+  {
+    "error": "regen_unconfigured",
+    "error_description": "Avatar regeneration is not yet wired to an ML backend. Set AVATAR_REGEN_PROVIDER env var."
+  }
+  ```
+- **429 rate_limited** — user has exceeded upload quota
+
+### `GET /api/avatars/regenerate-status?jobId=<id>`
+
+Poll the status of a regeneration job.
+
+**Authentication:** Session cookie or `avatars:read` bearer token required.
+
+**Query parameters:**
+- `jobId` (required) — job ID from regenerate endpoint
+
+**Success response (200):**
+```json
+{
+  "ok": true,
+  "jobId": "string",
+  "status": "queued|running|done|failed",
+  "resultAvatarId": "avatar-uuid",
+  "error": "optional error message"
+}
+```
+
+**Status values:**
+- `queued` — job waiting for processing
+- `running` — actively processing
+- `done` — completed successfully
+- `failed` — failed (check `error` field)
+
+## Provider Plug Shape
+
+Providers are swapped via the `AVATAR_REGEN_PROVIDER` env var (e.g., `meshy`, `csm`, `rodin`, `tripor`, `stub`).
+
+### Provider function signature
+
+```typescript
+// Each provider exports an async factory function
+export async function createRegenProvider(config) {
+  return {
+    // Accept regeneration request, return job handle
+    submit: async (request) => {
+      // request shape:
+      // {
+      //   userId: string,
+      //   sourceAvatarId: string,
+      //   mode: 'remesh' | 'retex' | 'rerig' | 'restyle',
+      //   params: Record<string, unknown>,
+      //   sourceStorageKey: string,  // R2 path to source GLB
+      // }
+
+      // return shape:
+      // { jobId: string, eta?: number }
+      return { jobId: 'ext-' + Date.now(), eta: 30 };
+    },
+
+    // Poll job status
+    status: async (jobId) => {
+      // return shape:
+      // {
+      //   status: 'queued' | 'running' | 'done' | 'failed',
+      //   resultGlbUrl?: string,   // temporary signed URL or CDN URL
+      //   textureUrls?: string[],  // optional pre-resolved texture URLs
+      //   error?: string,
+      // }
+      return { status: 'done', resultGlbUrl: 'https://...' };
+    },
+  };
+}
+```
+
+### Output requirements
+
+When `status` returns `done`:
+- **resultGlbUrl** (required) — HTTP(S) URL to the regenerated GLB file. If temporary signed URL, provider must guarantee it stays valid for at least 24 hours.
+- **textureUrls** (optional) — Array of HTTP(S) URLs to texture files if they differ from those embedded in the GLB.
+
+Provider is responsible for:
+1. Storing intermediate results (probably temporary S3 / R2 bucket)
+2. Persisting temporary URLs long enough for the client to register the avatar
+3. Handling cleanup of stale jobs after X days
+
+The client will:
+1. Fetch the GLB from `resultGlbUrl` and store it in `avatars` R2 bucket
+2. Register the new avatar via `POST /api/avatars` with `parent_avatar_id = sourceAvatarId`
+3. Delete or archive the old avatar (user decision)
+
+## Candidate providers
+
+Research-stage notes (costs and integration effort unknown):
+
+| Provider   | Specialization         | Notes                                                 |
+| ---------- | ---------------------- | ----------------------------------------------------- |
+| **Meshy**  | 3D generation          | Text/image → mesh. API available; evaluate cost/time. |
+| **CSM**    | Custom avatar builder  | Photo → avatar. Avalready integrated for `POST /api/onboarding/avaturn-session`. |
+| **Rodin**  | Avatar generation      | Competitors of Meshy; check pricing.                  |
+| **TripoSR** | Text-to-3D models     | Open-source model; would need self-hosted inference. |
+| **Kaedim** | Automated mesh cleanup | Specifically optimized remeshing for game assets.     |
+
+Picking a provider is a separate decision and out of scope for this contract. When chosen, create `api/_providers/<name>.js` implementing the shape above, then set `AVATAR_REGEN_PROVIDER=<name>` in Vercel env.
+
+## Environment
+
+Add to `.env.local` or Vercel settings:
+
+```
+# Avatar regeneration provider. Set to "stub" for testing, or a provider name.
+# Unset → returns 501 regen_unconfigured.
+AVATAR_REGEN_PROVIDER=stub
+```
+
+## Database schema (future migration)
+
+The stub provider and status endpoint assume a `avatar_regen_jobs` table:
+
+```sql
+create table avatar_regen_jobs (
+  job_id text primary key,
+  user_id uuid not null,
+  source_avatar_id uuid not null,
+  mode text not null,  -- remesh | retex | rerig | restyle
+  params jsonb,
+  status text not null,  -- queued | running | done | failed
+  result_avatar_id uuid,
+  error text,
+  created_at timestamp default now(),
+  updated_at timestamp default now(),
+  foreign key (user_id) references users(id),
+  foreign key (source_avatar_id) references avatars(id),
+  foreign key (result_avatar_id) references avatars(id)
+);
+
+create index on avatar_regen_jobs(user_id);
+create index on avatar_regen_jobs(job_id, user_id);
+```
+
+This table is not required if using an external provider (e.g., Meshy) for job tracking.

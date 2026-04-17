@@ -9,15 +9,32 @@ import { cors, json, method, readJson, wrap, error } from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { env } from '../../_lib/env.js';
 import { parse } from '../../_lib/validate.js';
+import { hmacSha256, constantTimeEquals } from '../../_lib/crypto.js';
 
 const verifyBody = z.object({
 	message:   z.string().min(64).max(4000),
 	signature: z.string().regex(/^0x[a-fA-F0-9]+$/),
 });
 
+const CSRF_COOKIE = '__Host-csrf-siwe';
+
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
+
+	// Verify CSRF token before processing the request.
+	const csrfHeader = req.headers['x-csrf-token'];
+	if (!csrfHeader) return error(res, 403, 'invalid_request', 'CSRF check failed');
+
+	const cookie = req.headers.cookie || '';
+	const csrfMatch = cookie.match(/(?:^|;\s*)__Host-csrf-siwe=([^;]+)/);
+	const csrfCookie = csrfMatch ? decodeURIComponent(csrfMatch[1]) : null;
+	if (!csrfCookie) return error(res, 403, 'invalid_request', 'CSRF check failed');
+
+	const expectedCsrf = await hmacSha256(env.JWT_SECRET, `csrf-siwe:${csrfCookie}`);
+	if (!constantTimeEquals(expectedCsrf, String(csrfHeader))) {
+		return error(res, 403, 'invalid_request', 'CSRF check failed');
+	}
 
 	const ip = clientIp(req);
 	const rl = await limits.authIp(ip);

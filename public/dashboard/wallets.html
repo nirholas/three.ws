@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Linked Wallets · Dashboard · 3D Agent</title>
+		<link rel="icon" href="/favicon.ico" />
+		<style>
+			:root {
+				color-scheme: dark;
+				--accent: #6a5cff;
+				--accent2: #ff5ca8;
+				--border: #22222e;
+				--bg: #0b0b10;
+				--panel: #14141c;
+			}
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				font:
+					15px/1.55 -apple-system,
+					system-ui,
+					Segoe UI,
+					Roboto,
+					sans-serif;
+				color: #eee;
+				margin: 0;
+				background: var(--bg);
+				min-height: 100vh;
+			}
+			a {
+				color: #9a8cff;
+				text-decoration: none;
+			}
+			header {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: 16px 24px;
+				border-bottom: 1px solid var(--border);
+				position: sticky;
+				top: 0;
+				background: var(--bg);
+				z-index: 5;
+			}
+			.brand {
+				font-weight: 600;
+				letter-spacing: -0.01em;
+			}
+			.row {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+			}
+			main {
+				padding: 28px;
+				max-width: 800px;
+				margin: 0 auto;
+			}
+			h1 {
+				font-size: 22px;
+				margin: 0 0 6px;
+				letter-spacing: -0.01em;
+			}
+			.sub {
+				color: #888;
+				margin: 0 0 22px;
+				font-size: 14px;
+			}
+			.btn {
+				padding: 9px 14px;
+				border-radius: 9px;
+				border: 0;
+				font-size: 13px;
+				font-weight: 600;
+				cursor: pointer;
+				background: var(--accent);
+				color: #fff;
+			}
+			.btn:hover {
+				filter: brightness(1.08);
+			}
+			.btn.sec {
+				background: #222230;
+				color: #ddd;
+			}
+			.btn.danger {
+				background: #cc4040;
+			}
+			.btn:disabled {
+				opacity: 0.5;
+				cursor: not-allowed;
+			}
+			.wallet-table {
+				width: 100%;
+				border-collapse: collapse;
+				margin-bottom: 24px;
+			}
+			.wallet-table th {
+				text-align: left;
+				padding: 12px;
+				border-bottom: 1px solid var(--border);
+				font-size: 12px;
+				font-weight: 600;
+				color: #aaa;
+				text-transform: uppercase;
+				letter-spacing: 0.5px;
+			}
+			.wallet-table td {
+				padding: 12px;
+				border-bottom: 1px solid var(--border);
+				font-size: 14px;
+			}
+			.wallet-table tr:last-child td {
+				border-bottom: none;
+			}
+			.address-cell {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				font-family:
+					ui-monospace,
+					SF Mono,
+					Menlo,
+					monospace;
+				font-size: 13px;
+			}
+			.copy-btn {
+				background: none;
+				border: none;
+				color: #666;
+				cursor: pointer;
+				padding: 2px 4px;
+				font-size: 12px;
+			}
+			.copy-btn:hover {
+				color: #aaa;
+			}
+			.pill {
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				font-size: 11px;
+				padding: 3px 8px;
+				border-radius: 99px;
+				background: #20202c;
+				color: #ccc;
+				white-space: nowrap;
+			}
+			.meta {
+				color: #888;
+				font-size: 13px;
+			}
+			.err {
+				padding: 12px;
+				background: rgba(255, 92, 92, 0.1);
+				border: 1px solid rgba(255, 92, 92, 0.3);
+				border-radius: 8px;
+				color: #ffb3b3;
+				margin-bottom: 14px;
+				display: none;
+			}
+			.empty {
+				text-align: center;
+				padding: 40px 20px;
+				border: 1px dashed var(--border);
+				border-radius: 14px;
+				color: #888;
+			}
+			.loading {
+				opacity: 0.6;
+			}
+			.muted {
+				color: #888;
+				font-size: 13px;
+			}
+		</style>
+	</head>
+	<body>
+		<header>
+			<div class="brand"><a href="/">3D Agent</a></div>
+			<div class="row">
+				<span class="muted" id="user-email"></span>
+				<button class="btn sec" onclick="signOut()">Sign out</button>
+			</div>
+		</header>
+		<main>
+			<h1>Linked Wallets</h1>
+			<p class="sub">Manage Ethereum wallets connected to your account.</p>
+
+			<div id="error" class="err"></div>
+
+			<div id="wallets-container" class="loading">
+				<p style="color: #666">Loading wallets…</p>
+			</div>
+
+			<button id="link-btn" class="btn" style="margin-top: 20px">Link Another Wallet</button>
+		</main>
+
+		<script type="module">
+			let apiUrl = '/api';
+
+			async function signOut() {
+				await fetch(`${apiUrl}/auth/logout`, { method: 'POST', credentials: 'include' });
+				location.href = '/login';
+			}
+
+			async function fetchUser() {
+				const res = await fetch(`${apiUrl}/auth/me`, { credentials: 'include' });
+				if (!res.ok) {
+					location.href = '/login?next=' + encodeURIComponent(location.pathname);
+					return null;
+				}
+				return res.json();
+			}
+
+			async function loadWallets() {
+				try {
+					const res = await fetch(`${apiUrl}/auth/wallets`, { credentials: 'include' });
+					if (!res.ok) throw new Error('Failed to load wallets');
+					const data = await res.json();
+					renderWallets(data.wallets);
+				} catch (err) {
+					showError(err.message);
+				}
+			}
+
+			function renderWallets(wallets) {
+				const container = document.getElementById('wallets-container');
+				if (wallets.length === 0) {
+					container.innerHTML = `
+						<div class="empty">
+							<p>No wallets linked yet.</p>
+							<p class="muted">Click "Link Another Wallet" to add your first wallet.</p>
+						</div>
+					`;
+					return;
+				}
+
+				const rows = wallets
+					.map(
+						(w) => `
+					<tr>
+						<td>
+							<div class="address-cell">
+								<span>${w.address.slice(0, 6)}…${w.address.slice(-4)}</span>
+								<button
+									class="copy-btn"
+									onclick="copyToClipboard('${w.address}')"
+									title="Copy full address"
+								>
+									📋
+								</button>
+							</div>
+						</td>
+						<td class="meta">${w.chain_id ? `Chain ${w.chain_id}` : 'Multi-chain'}</td>
+						<td class="meta">${new Date(w.created_at).toLocaleDateString()}</td>
+						<td>
+							${w.is_primary ? '<span class="pill">Primary</span>' : ''}
+						</td>
+						<td style="text-align: right">
+							<button
+								class="btn sec btn-sm"
+								onclick="unlinkWallet('${w.address}')"
+								style="padding: 6px 10px; font-size: 12px"
+							>
+								Unlink
+							</button>
+						</td>
+					</tr>
+				`,
+					)
+					.join('');
+
+				container.innerHTML = `
+					<table class="wallet-table">
+						<thead>
+							<tr>
+								<th>Address</th>
+								<th>Chain</th>
+								<th>Linked</th>
+								<th></th>
+								<th></th>
+							</tr>
+						</thead>
+						<tbody>
+							${rows}
+						</tbody>
+					</table>
+				`;
+			}
+
+			function copyToClipboard(text) {
+				navigator.clipboard.writeText(text).then(
+					() => {
+						// Show brief feedback
+						const btn = event.target;
+						const orig = btn.textContent;
+						btn.textContent = '✓';
+						setTimeout(() => {
+							btn.textContent = orig;
+						}, 1500);
+					},
+					() => alert('Copy failed'),
+				);
+			}
+
+			async function unlinkWallet(address) {
+				if (!confirm(`Unlink ${address.slice(0, 6)}…${address.slice(-4)}?`)) return;
+
+				try {
+					const res = await fetch(`${apiUrl}/auth/wallets/${address}`, {
+						method: 'DELETE',
+						credentials: 'include',
+					});
+					if (!res.ok) {
+						const err = await res.json();
+						throw new Error(err.error_description || 'Failed to unlink wallet');
+					}
+					loadWallets();
+				} catch (err) {
+					showError(err.message);
+				}
+			}
+
+			async function linkWallet() {
+				if (!window.ethereum) {
+					showError('MetaMask not found. Please install it to link wallets.');
+					return;
+				}
+
+				try {
+					// 1. Request accounts from MetaMask
+					const accounts = await window.ethereum.request({
+						method: 'eth_requestAccounts',
+					});
+					const address = accounts[0];
+
+					// 2. Get nonce from server
+					const nonceRes = await fetch(`${apiUrl}/auth/wallets/nonce`, {
+						method: 'POST',
+						credentials: 'include',
+					});
+					if (!nonceRes.ok) throw new Error('Failed to get nonce');
+					const { nonce, message } = await nonceRes.json();
+
+					// 3. Sign message with MetaMask
+					let signature;
+					try {
+						signature = await window.ethereum.request({
+							method: 'personal_sign',
+							params: [message, address],
+						});
+					} catch (err) {
+						if (err.code === 4001) {
+							showError('Signature cancelled by user');
+						} else {
+							showError(err.message || 'Signature failed');
+						}
+						return;
+					}
+
+					// 4. Send signature to server
+					const linkRes = await fetch(`${apiUrl}/auth/wallets`, {
+						method: 'POST',
+						credentials: 'include',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ address, message, signature, nonce }),
+					});
+					if (!linkRes.ok) {
+						const err = await linkRes.json();
+						throw new Error(err.error_description || 'Failed to link wallet');
+					}
+
+					showError('', 'success');
+					loadWallets();
+				} catch (err) {
+					showError(err.message);
+				}
+			}
+
+			function showError(msg, type = 'error') {
+				const el = document.getElementById('error');
+				if (!msg) {
+					el.style.display = 'none';
+					return;
+				}
+				if (type === 'success') {
+					el.textContent = '✓ Wallet linked successfully!';
+					el.style.background = 'rgba(92, 255, 92, 0.1)';
+					el.style.borderColor = 'rgba(92, 255, 92, 0.3)';
+					el.style.color = '#b3ffb3';
+				} else {
+					el.textContent = msg;
+					el.style.background = 'rgba(255, 92, 92, 0.1)';
+					el.style.borderColor = 'rgba(255, 92, 92, 0.3)';
+					el.style.color = '#ffb3b3';
+				}
+				el.style.display = 'block';
+			}
+
+			window.copyToClipboard = copyToClipboard;
+			window.unlinkWallet = unlinkWallet;
+
+			// Initialize
+			(async () => {
+				const me = await fetchUser();
+				if (me) {
+					document.getElementById('user-email').textContent = me.user.email;
+					loadWallets();
+				}
+			})();
+
+			document.getElementById('link-btn').addEventListener('click', linkWallet);
+		</script>
+	</body>
+</html>

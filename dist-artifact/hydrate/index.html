@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Import My Agents</title>
+		<style>
+			:root {
+				--primary: #0066cc;
+				--primary-dark: #0052a3;
+				--gray-100: #f5f5f5;
+				--gray-200: #e0e0e0;
+				--gray-700: #333;
+				--error: #d32f2f;
+				--success: #388e3c;
+			}
+
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+
+			body {
+				font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+				background: var(--gray-100);
+				color: var(--gray-700);
+				min-height: 100vh;
+				padding: 20px;
+			}
+
+			.container {
+				max-width: 800px;
+				margin: 0 auto;
+				background: white;
+				border-radius: 8px;
+				box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+				padding: 40px;
+			}
+
+			h1 {
+				margin-bottom: 10px;
+				font-size: 28px;
+			}
+
+			.subtitle {
+				color: #666;
+				margin-bottom: 30px;
+				font-size: 14px;
+			}
+
+			.alert {
+				padding: 16px;
+				border-radius: 4px;
+				margin-bottom: 24px;
+				display: none;
+			}
+
+			.alert.show {
+				display: block;
+			}
+
+			.alert.error {
+				background: #ffebee;
+				color: var(--error);
+				border-left: 4px solid var(--error);
+			}
+
+			.alert.success {
+				background: #e8f5e9;
+				color: var(--success);
+				border-left: 4px solid var(--success);
+			}
+
+			.alert.info {
+				background: #e3f2fd;
+				color: var(--primary);
+				border-left: 4px solid var(--primary);
+			}
+
+			.auth-prompt {
+				text-align: center;
+				padding: 40px 20px;
+			}
+
+			.auth-prompt p {
+				margin-bottom: 20px;
+				color: #666;
+			}
+
+			.button {
+				display: inline-block;
+				padding: 12px 24px;
+				border-radius: 4px;
+				border: none;
+				font-size: 14px;
+				font-weight: 600;
+				cursor: pointer;
+				text-decoration: none;
+				text-align: center;
+				transition: all 0.2s;
+			}
+
+			.button.primary {
+				background: var(--primary);
+				color: white;
+			}
+
+			.button.primary:hover {
+				background: var(--primary-dark);
+			}
+
+			.button.secondary {
+				background: var(--gray-200);
+				color: var(--gray-700);
+			}
+
+			.button.secondary:hover {
+				background: var(--gray-300);
+			}
+
+			.button:disabled {
+				opacity: 0.5;
+				cursor: not-allowed;
+			}
+
+			.agents-list {
+				display: none;
+			}
+
+			.agent-card {
+				border: 1px solid var(--gray-200);
+				border-radius: 6px;
+				padding: 16px;
+				margin-bottom: 16px;
+				display: flex;
+				gap: 16px;
+				align-items: flex-start;
+			}
+
+			.agent-image {
+				width: 80px;
+				height: 80px;
+				background: var(--gray-100);
+				border-radius: 4px;
+				flex-shrink: 0;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 12px;
+				color: #999;
+				overflow: hidden;
+			}
+
+			.agent-image img {
+				width: 100%;
+				height: 100%;
+				object-fit: cover;
+			}
+
+			.agent-info {
+				flex: 1;
+				min-width: 0;
+			}
+
+			.agent-header {
+				display: flex;
+				align-items: baseline;
+				gap: 8px;
+				margin-bottom: 4px;
+			}
+
+			.agent-name {
+				font-size: 16px;
+				font-weight: 600;
+				color: var(--gray-700);
+			}
+
+			.chain-badge {
+				display: inline-block;
+				background: var(--gray-100);
+				color: #666;
+				padding: 2px 8px;
+				border-radius: 3px;
+				font-size: 12px;
+				font-weight: 500;
+			}
+
+			.agent-description {
+				color: #666;
+				font-size: 14px;
+				line-height: 1.4;
+				margin-bottom: 8px;
+			}
+
+			.agent-id {
+				color: #999;
+				font-size: 12px;
+				font-family: monospace;
+			}
+
+			.agent-actions {
+				display: flex;
+				gap: 8px;
+				margin-top: 12px;
+			}
+
+			.button-small {
+				padding: 6px 12px;
+				font-size: 12px;
+			}
+
+			.import-link {
+				color: var(--primary);
+				text-decoration: none;
+				font-weight: 600;
+				font-size: 12px;
+			}
+
+			.import-link:hover {
+				text-decoration: underline;
+			}
+
+			.loading {
+				text-align: center;
+				padding: 40px;
+				color: #666;
+			}
+
+			.spinner {
+				display: inline-block;
+				width: 20px;
+				height: 20px;
+				border: 2px solid var(--gray-200);
+				border-top-color: var(--primary);
+				border-radius: 50%;
+				animation: spin 0.6s linear infinite;
+				margin-right: 10px;
+				vertical-align: middle;
+			}
+
+			@keyframes spin {
+				to {
+					transform: rotate(360deg);
+				}
+			}
+
+			.empty-state {
+				text-align: center;
+				padding: 60px 20px;
+			}
+
+			.empty-state p {
+				color: #666;
+				margin-bottom: 20px;
+			}
+
+			.breadcrumb {
+				font-size: 12px;
+				color: #999;
+				margin-bottom: 20px;
+			}
+
+			.breadcrumb a {
+				color: var(--primary);
+				text-decoration: none;
+			}
+
+			.breadcrumb a:hover {
+				text-decoration: underline;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<div class="breadcrumb">
+				<a href="/">Home</a> / <a href="/dashboard/">Dashboard</a> / Import Agents
+			</div>
+
+			<h1>Import My Agents</h1>
+			<p class="subtitle">
+				Discover and import agents you've already registered on-chain
+			</p>
+
+			<div id="alert" class="alert"></div>
+
+			<div id="authPrompt" class="auth-prompt" style="display: none">
+				<p>
+					To import your on-chain agents, you need to
+					<strong>connect a wallet</strong> first.
+				</p>
+				<a href="/dashboard/wallets.html" class="button primary">Connect Wallet</a>
+			</div>
+
+			<div id="loadingState" class="loading" style="display: none">
+				<span class="spinner"></span> Fetching your agents…
+			</div>
+
+			<div id="agentsList" class="agents-list"></div>
+
+			<div id="emptyState" class="empty-state" style="display: none">
+				<p>No on-chain agents found for your wallets.</p>
+				<p style="font-size: 12px; color: #999">
+					Register a new agent at <a href="/deploy" style="color: var(--primary)">Deploy</a>
+				</p>
+			</div>
+		</div>
+
+		<script type="module">
+			const alertEl = document.getElementById('alert');
+			const authPrompt = document.getElementById('authPrompt');
+			const loadingState = document.getElementById('loadingState');
+			const agentsList = document.getElementById('agentsList');
+			const emptyState = document.getElementById('emptyState');
+
+			function showAlert(message, type = 'info') {
+				alertEl.textContent = message;
+				alertEl.className = `alert show ${type}`;
+				if (type === 'error') {
+					console.error('[hydrate]', message);
+				}
+			}
+
+			function hideAlert() {
+				alertEl.className = 'alert';
+			}
+
+			async function checkAuth() {
+				try {
+					const res = await fetch('/api/auth/wallets', {
+						credentials: 'include',
+					});
+
+					if (res.status === 401) {
+						// Not authenticated
+						return { authenticated: false, wallets: [] };
+					}
+
+					const data = await res.json();
+					return {
+						authenticated: true,
+						wallets: data.wallets || [],
+					};
+				} catch (err) {
+					console.error('[hydrate] auth check failed', err);
+					return { authenticated: false, wallets: [] };
+				}
+			}
+
+			async function loadAgents() {
+				const auth = await checkAuth();
+
+				if (!auth.authenticated) {
+					authPrompt.style.display = 'block';
+					return;
+				}
+
+				if (auth.wallets.length === 0) {
+					authPrompt.style.display = 'block';
+					return;
+				}
+
+				loadingState.style.display = 'block';
+
+				try {
+					const { fetchDiscoveredAgents } = await import('/src/erc8004/hydrate.js');
+					const agents = await fetchDiscoveredAgents();
+
+					loadingState.style.display = 'none';
+
+					if (agents.length === 0) {
+						emptyState.style.display = 'block';
+						return;
+					}
+
+					renderAgents(agents);
+					agentsList.style.display = 'block';
+				} catch (err) {
+					loadingState.style.display = 'none';
+					showAlert(`Failed to load agents: ${err.message}`, 'error');
+				}
+			}
+
+			function renderAgents(agents) {
+				agentsList.innerHTML = agents
+					.map(
+						(agent) => `
+					<div class="agent-card">
+						<div class="agent-image">
+							${
+								agent.image
+									? `<img src="${escapeHtml(agent.image)}" alt="${escapeHtml(agent.name)}" />`
+									: '📦'
+							}
+						</div>
+						<div class="agent-info">
+							<div class="agent-header">
+								<div class="agent-name">${escapeHtml(agent.name)}</div>
+								<span class="chain-badge">Chain ${agent.chainId}</span>
+							</div>
+							${
+								agent.description
+									? `<p class="agent-description">${escapeHtml(agent.description)}</p>`
+									: ''
+							}
+							<div class="agent-id">Agent ID: ${escapeHtml(agent.agentId)}</div>
+						</div>
+						<div class="agent-actions">
+							${
+								agent.alreadyImported
+									? `<a href="/dashboard/?agent=${escapeHtml(agent.id)}" class="import-link">Go to agent →</a>`
+									: `<button class="button primary button-small" data-chain="${agent.chainId}" data-id="${escapeHtml(agent.agentId)}">Import</button>`
+							}
+						</div>
+					</div>
+				`,
+					)
+					.join('');
+
+				// Attach import handlers
+				document.querySelectorAll('[data-chain]').forEach((btn) => {
+					btn.addEventListener('click', () => {
+						importAgent(btn.dataset.chain, btn.dataset.id, btn);
+					});
+				});
+			}
+
+			async function importAgent(chainId, agentId, button) {
+				button.disabled = true;
+				const originalText = button.textContent;
+				button.innerHTML = '<span class="spinner"></span> Importing…';
+				hideAlert();
+
+				try {
+					const { importAgent: doImport } = await import('/src/erc8004/hydrate.js');
+					const agent = await doImport({
+						chainId: parseInt(chainId),
+						agentId,
+					});
+
+					showAlert(`Successfully imported ${agent.name}!`, 'success');
+
+					// Replace button with link after a brief delay
+					setTimeout(() => {
+						button.outerHTML = `<a href="/dashboard/?agent=${escapeHtml(agent.id)}" class="import-link">Go to agent →</a>`;
+					}, 1000);
+				} catch (err) {
+					showAlert(`Import failed: ${err.message}`, 'error');
+					button.disabled = false;
+					button.textContent = originalText;
+				}
+			}
+
+			function escapeHtml(text) {
+				if (!text) return '';
+				const div = document.createElement('div');
+				div.textContent = text;
+				return div.innerHTML;
+			}
+
+			// Load on page load
+			loadAgents();
+		</script>
+	</body>
+</html>

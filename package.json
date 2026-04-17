@@ -37,6 +37,7 @@
 		"dev:lib": "TARGET=lib vite",
 		"build": "vite build",
 		"build:lib": "TARGET=lib vite build",
+		"build:artifact": "vite build --config vite.config.artifact.js",
 		"publish:lib": "node scripts/publish-lib.mjs",
 		"build:all": "npm run build && npm run build:lib && npm run publish:lib",
 		"clean": "rm -rf dist/* dist-lib/* || true",

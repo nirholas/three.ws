@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>3D Agent Artifact Demo</title>
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+
+			body {
+				font-family: system-ui, -apple-system, sans-serif;
+				background: #0a0e27;
+				color: #fff;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				min-height: 100vh;
+				padding: 20px;
+			}
+
+			.container {
+				max-width: 800px;
+				width: 100%;
+			}
+
+			h1 {
+				text-align: center;
+				margin-bottom: 20px;
+				font-size: 28px;
+			}
+
+			.info {
+				background: rgba(255, 255, 255, 0.05);
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				border-radius: 8px;
+				padding: 16px;
+				margin-bottom: 20px;
+				font-size: 14px;
+				line-height: 1.6;
+			}
+
+			.viewer-frame {
+				background: #000;
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				border-radius: 8px;
+				overflow: hidden;
+				aspect-ratio: 16 / 9;
+				margin-bottom: 20px;
+			}
+
+			#agent3d {
+				width: 100%;
+				height: 100%;
+			}
+
+			.controls {
+				display: flex;
+				gap: 10px;
+				flex-wrap: wrap;
+				justify-content: center;
+			}
+
+			button {
+				background: rgba(59, 130, 246, 0.8);
+				border: none;
+				color: #fff;
+				padding: 10px 20px;
+				border-radius: 6px;
+				cursor: pointer;
+				font-size: 14px;
+				transition: background 0.2s;
+			}
+
+			button:hover {
+				background: rgba(59, 130, 246, 1);
+			}
+
+			button:active {
+				transform: scale(0.98);
+			}
+
+			.input-group {
+				display: flex;
+				gap: 10px;
+				align-items: center;
+				margin-bottom: 10px;
+			}
+
+			input {
+				background: rgba(255, 255, 255, 0.1);
+				border: 1px solid rgba(255, 255, 255, 0.2);
+				color: #fff;
+				padding: 8px 12px;
+				border-radius: 4px;
+				flex: 1;
+			}
+
+			input::placeholder {
+				color: rgba(255, 255, 255, 0.5);
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<h1>3D Agent Artifact Viewer</h1>
+
+			<div class="info">
+				<p>
+					This demo shows how a 3D Agent renders inside a Claude Artifact. The bundle is
+					self-contained — no external dependencies or iframes.
+				</p>
+			</div>
+
+			<div class="input-group">
+				<input
+					type="text"
+					id="agentIdInput"
+					placeholder="Enter agent ID (e.g., from URL ?agentId=123)"
+					value=""
+				/>
+				<button onclick="loadAgent()">Load</button>
+			</div>
+
+			<div class="viewer-frame">
+				<div id="agent3d" data-origin="https://3dagent.vercel.app"></div>
+			</div>
+
+			<div class="controls">
+				<button onclick="reloadAgent()">Reload</button>
+			</div>
+		</div>
+
+		<!-- The artifact bundle -->
+		<script src="artifact.js"></script>
+
+		<script>
+			function getAgentIdFromUrl() {
+				const params = new URLSearchParams(window.location.search);
+				return params.get('agentId') || localStorage.getItem('demo-agentId');
+			}
+
+			function loadAgent() {
+				const input = document.getElementById('agentIdInput');
+				const agentId = input.value.trim();
+
+				if (!agentId) {
+					alert('Please enter an agent ID');
+					return;
+				}
+
+				localStorage.setItem('demo-agentId', agentId);
+				const container = document.getElementById('agent3d');
+				container.dataset.agentId = agentId;
+
+				location.reload();
+			}
+
+			function reloadAgent() {
+				location.reload();
+			}
+
+			window.addEventListener('DOMContentLoaded', () => {
+				const agentId = getAgentIdFromUrl();
+				if (agentId) {
+					const container = document.getElementById('agent3d');
+					container.dataset.agentId = agentId;
+					document.getElementById('agentIdInput').value = agentId;
+				}
+			});
+		</script>
+	</body>
+</html>

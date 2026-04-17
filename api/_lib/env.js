@@ -91,4 +91,10 @@ export const env = {
 	get CRON_SECRET() {
 		return opt('CRON_SECRET');
 	},
+
+	// Privy app ID (wallet auth via Privy identity tokens).
+	// Get from https://dashboard.privy.io
+	get PRIVY_APP_ID() {
+		return req('PRIVY_APP_ID');
+	},
 };

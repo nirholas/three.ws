@@ -109,6 +109,26 @@ async function handleCreate(req, res) {
 		`;
 	}
 
+	// Auto-link selfie-derived avatars to the user's primary agent if it has no avatar yet.
+	// Fire-and-forget — if this UPDATE fails, the 201 still returns.
+	if ((body.source === 'selfie' || body.source === 'avaturn') && auth.source === 'session') {
+		queueMicrotask(async () => {
+			try {
+				await sql`
+					update agent_identities
+					set avatar_id = ${avatar.id}
+					where user_id = ${auth.userId}
+					  and avatar_id is null
+					  and deleted_at is null
+					order by created_at asc
+					limit 1
+				`;
+			} catch {
+				// Log and ignore — don't block the response.
+			}
+		});
+	}
+
 	recordEvent({
 		userId: auth.userId,
 		apiKeyId: auth.apiKeyId,

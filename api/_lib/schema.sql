@@ -393,3 +393,17 @@ create table if not exists erc8004_crawl_cursor (
 -- Additive migrations for usage_events.
 alter table usage_events add column if not exists agent_id uuid references agent_identities(id) on delete set null;
 create index if not exists usage_events_agent_time on usage_events(agent_id, created_at desc) where agent_id is not null;
+
+-- ── agent_registrations_pending — transient prep records for 2-step registration ─────
+create table if not exists agent_registrations_pending (
+	id              uuid primary key default gen_random_uuid(),
+	user_id         uuid not null references users(id) on delete cascade,
+	cid             text not null,                         -- IPFS CID
+	metadata_uri    text not null,                         -- ipfs://CID
+	payload         jsonb not null,                        -- registration JSON
+	created_at      timestamptz not null default now(),
+	expires_at      timestamptz not null
+);
+
+create index if not exists agent_registrations_pending_user_expiry
+	on agent_registrations_pending(user_id, expires_at);
