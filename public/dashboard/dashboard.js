@@ -370,42 +370,46 @@ function uploadToR2(url, file, onProgress) {
 	});
 }
 
-// ── Create from selfie ──────────────────────────────────────────────────────
-// Embeds the Ready Player Me hosted creator (free, no API key). RPM handles
-// camera capture, selfie-to-mesh, and returns a GLB URL via postMessage.
-// We fetch that GLB and run it through the same R2 upload path as manual uploads.
-const RPM_SUBDOMAIN = 'demo'; // any public RPM subdomain works for self-serve
-const RPM_ORIGIN = `https://${RPM_SUBDOMAIN}.readyplayer.me`;
-const RPM_SRC = `${RPM_ORIGIN}/avatar?frameApi&bodyType=fullbody&clearCache=true`;
+// ── Create avatar ───────────────────────────────────────────────────────────
+// Uses Avaturn SDK (same provider as /create page) instead of the defunct
+// demo.readyplayer.me iframe.
+let _avaturnSdk = null;
+async function getAvaturnSDK() {
+	if (!_avaturnSdk) {
+		const mod = await import('/dashboard/avaturn-sdk.js');
+		_avaturnSdk = mod.AvaturnSDK;
+	}
+	return _avaturnSdk;
+}
 
 function renderCreate(root) {
 	root.innerHTML = `
 		<div class="toolbar">
 			<div>
-				<h1>Create from a selfie</h1>
-				<p class="sub">Take a photo. We turn it into a 3D avatar and save it to your account.</p>
+				<h1>Create avatar</h1>
+				<p class="sub">Design a 3D avatar and save it to your account.</p>
 			</div>
-			<button class="btn sec" id="rpm-restart" type="button" style="display:none">Start over</button>
+			<button class="btn sec" id="avaturn-restart" type="button" style="display:none">Start over</button>
 		</div>
-		<div id="rpm-stage" class="card" style="padding:0; overflow:hidden; min-height:640px; position:relative">
-			<div id="rpm-intro" style="padding:32px; text-align:center">
-				<div style="font-size:42px; line-height:1; margin-bottom:12px">📸</div>
+		<div id="avaturn-stage" class="card" style="padding:0; overflow:hidden; min-height:640px; position:relative">
+			<div id="avaturn-intro" style="padding:32px; text-align:center">
+				<div style="font-size:42px; line-height:1; margin-bottom:12px">🧍</div>
 				<p style="margin:0 0 18px; color:#ccc">
-					Next screen: allow camera access, take a selfie, pick body type.
-					Your avatar auto-saves here when you hit "Next" in the last step.
+					Customize your 3D avatar — body type, outfit, hair, and more.
+					It auto-saves here when you click Export.
 				</p>
-				<button class="btn" id="rpm-launch" type="button">Open camera</button>
+				<button class="btn" id="avaturn-launch" type="button">Open avatar editor</button>
 			</div>
-			<iframe id="rpm-iframe" title="Avatar creator" allow="camera *; microphone *" style="display:none; width:100%; height:640px; border:0; background:#0f0f17"></iframe>
-			<div id="rpm-progress" class="muted" style="padding:16px 20px; border-top:1px solid var(--border); display:none"></div>
+			<div id="avaturn-container" style="display:none; width:100%; height:640px; position:relative"></div>
+			<div id="avaturn-progress" class="muted" style="padding:16px 20px; border-top:1px solid var(--border); display:none"></div>
 		</div>
 	`;
 
-	const launchBtn = root.querySelector('#rpm-launch');
-	const restartBtn = root.querySelector('#rpm-restart');
-	const intro = root.querySelector('#rpm-intro');
-	const iframe = root.querySelector('#rpm-iframe');
-	const progress = root.querySelector('#rpm-progress');
+	const launchBtn = root.querySelector('#avaturn-launch');
+	const restartBtn = root.querySelector('#avaturn-restart');
+	const intro = root.querySelector('#avaturn-intro');
+	const container = root.querySelector('#avaturn-container');
+	const progress = root.querySelector('#avaturn-progress');
 
 	const say = (msg, isError = false) => {
 		progress.style.display = 'block';
@@ -413,82 +417,67 @@ function renderCreate(root) {
 		progress.textContent = msg;
 	};
 
-	let onMsg = null;
+	let sdk = null;
 
-	const start = () => {
-		intro.style.display = 'none';
-		iframe.style.display = 'block';
-		iframe.src = RPM_SRC;
-		restartBtn.style.display = 'inline-block';
-		progress.style.display = 'none';
+	const start = async () => {
+		launchBtn.disabled = true;
+		launchBtn.textContent = 'Loading…';
+		try {
+			const AvaturnSDK = await getAvaturnSDK();
+			sdk = new AvaturnSDK();
+			await sdk.init(container, {});
+			intro.style.display = 'none';
+			container.style.display = 'block';
+			restartBtn.style.display = 'inline-block';
+			progress.style.display = 'none';
 
-		onMsg = async (event) => {
-			if (event.origin !== RPM_ORIGIN) return;
-			const data = parseRpmMessage(event.data);
-			if (!data?.eventName) return;
-
-			// Ready Player Me → subscribe to all events once its frame is ready.
-			if (data.eventName === 'v1.frame.ready') {
-				iframe.contentWindow?.postMessage(
-					JSON.stringify({
-						target: 'readyplayerme',
-						type: 'subscribe',
-						eventName: 'v1.**',
-					}),
-					RPM_ORIGIN,
-				);
-				return;
-			}
-
-			if (data.eventName === 'v1.avatar.exported') {
-				const glbUrl = data.data?.url;
-				if (!glbUrl) {
-					say('No avatar URL returned', true);
-					return;
-				}
-				say('Fetching avatar…');
+			sdk.on('export', async (data) => {
+				const glbUrl = data?.url;
+				if (!glbUrl) { say('No avatar URL returned', true); return; }
+				say('Saving avatar…');
 				try {
-					const avatar = await saveRpmAvatar(glbUrl);
+					const blob = await fetchGlbBlob(glbUrl, data?.urlType);
+					const avatar = await saveAvaturnAvatar(blob);
 					say(`Saved "${avatar.name}". Redirecting…`);
-					setTimeout(() => {
-						location.hash = 'avatars';
-					}, 600);
+					setTimeout(() => { location.hash = 'avatars'; }, 600);
 				} catch (err) {
 					say(err.message || 'Failed to save avatar', true);
 				}
-			}
-		};
-		window.addEventListener('message', onMsg);
+			});
+		} catch (err) {
+			say(err.message || 'Failed to load editor', true);
+			launchBtn.disabled = false;
+			launchBtn.textContent = 'Open avatar editor';
+		}
 	};
 
 	const stop = () => {
-		if (onMsg) window.removeEventListener('message', onMsg);
-		onMsg = null;
-		iframe.src = 'about:blank';
-		iframe.style.display = 'none';
+		if (sdk) { sdk.destroy(); sdk = null; }
+		container.style.display = 'none';
+		container.innerHTML = '';
 		intro.style.display = 'block';
 		restartBtn.style.display = 'none';
 		progress.style.display = 'none';
+		launchBtn.disabled = false;
+		launchBtn.textContent = 'Open avatar editor';
 	};
 
 	launchBtn.addEventListener('click', start);
 	restartBtn.addEventListener('click', stop);
 }
 
-function parseRpmMessage(raw) {
-	if (!raw) return null;
-	if (typeof raw === 'object') return raw;
-	try {
-		return JSON.parse(raw);
-	} catch {
-		return null;
+async function fetchGlbBlob(url, urlType) {
+	if (urlType === 'dataURL') {
+		const res = await fetch(url);
+		if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+		return res.blob();
 	}
+	const res = await fetch(url);
+	if (!res.ok) throw new Error(`Fetch avatar failed: ${res.status}`);
+	return res.blob();
 }
 
-async function saveRpmAvatar(sourceUrl) {
-	const res = await fetch(sourceUrl);
-	if (!res.ok) throw new Error(`Fetch avatar failed: ${res.status}`);
-	const blob = await res.blob();
+async function saveAvaturnAvatar(blob) {
 	const contentType = 'model/gltf-binary';
 	const size = blob.size;
 	const checksum = await sha256Hex(blob);
@@ -516,15 +505,13 @@ async function saveRpmAvatar(sourceUrl) {
 		size_bytes: size,
 		content_type: contentType,
 		checksum_sha256: checksum,
-		name: `Selfie avatar ${new Date().toLocaleDateString()}`,
+		name: `Avatar ${new Date().toLocaleDateString()}`,
 		visibility: 'private',
-		tags: ['selfie'],
+		tags: [],
 		source: 'import',
-		source_meta: { provider: 'readyplayerme', source_url: sourceUrl, selfie_based: true },
+		source_meta: { provider: 'avaturn' },
 	});
 
-	// Wire the new avatar straight into the caller's default agent identity so
-	// the selfie immediately becomes the agent's body across the site.
 	await attachAvatarToDefaultAgent(avatar.id).catch((e) =>
 		console.warn('attach to agent skipped:', e.message),
 	);
