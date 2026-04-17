@@ -1,19 +1,4 @@
-/**
- * Avatar Creator — embeds the self-hosted CharacterStudio builder in a modal,
- * or an Avaturn edit session when `open(sessionUrl)` is called with a URL.
- *
- * CharacterStudio runs in an iframe and communicates via postMessage. When the
- * user clicks "Save Avatar", CharacterStudio posts a `characterstudio:export`
- * message carrying the GLB as a transferred ArrayBuffer, which we convert to a
- * Blob and hand to `onExport`.
- *
- * Avaturn is also loaded in an iframe. It posts an export event with a URL to
- * the GLB rather than transferring bytes directly; we fetch it then hand the
- * resulting Blob to `onExport`.
- *
- * The class API is identical to the previous RPM implementation so callers
- * (src/app.js, src/account.js) don't need to change.
- */
+import { AvaturnSDK } from '@avaturn/sdk';
 
 function getStudioUrl() {
 	try {
@@ -58,64 +43,72 @@ export class AvatarCreator {
 
 		this.modal = null;
 		this.iframe = null;
+		this.sdk = null;
 		this._onMessage = null;
 		this._onKeyDown = null;
-		this._avaturnMode = false;
-		this._avaturnOrigin = null;
 	}
 
 	/**
 	 * Opens the avatar creator modal.
-	 * @param {string} [sessionUrl] - When provided, opens Avaturn in edit mode instead of CharacterStudio.
+	 * @param {string} [sessionUrl] - When provided, opens Avaturn SDK in edit mode.
+	 *                                When omitted, opens CharacterStudio.
 	 */
 	async open(sessionUrl) {
 		if (this.modal) return;
-		this._avaturnMode = !!sessionUrl;
-		this._buildModal();
-		this._onMessage = (event) => this._handleMessage(event);
-		window.addEventListener('message', this._onMessage);
 		if (sessionUrl) {
-			// @avaturn/sdk is not installed — use raw iframe.
-			// If you install @avaturn/sdk, replace this with: new AvaturnSDK({ ... })
-			console.info(
-				'[AvatarCreator] opening Avaturn session (raw iframe — no SDK):',
-				sessionUrl,
-			);
-			try {
-				this._avaturnOrigin = new URL(sessionUrl).origin;
-			} catch (_) {}
-			this.iframe.src = sessionUrl;
+			await this._openAvaturn(sessionUrl);
 		} else {
+			this._buildModal(true);
+			this._onMessage = (e) => this._handleCharacterStudioMessage(e);
+			window.addEventListener('message', this._onMessage);
 			this.iframe.src = this.studioUrl;
 		}
 	}
 
 	/**
-	 * Opens the Avaturn default hosted editor — no session API, no selfies required.
-	 * User edits a ready-made avatar and exports a GLB. Export event is handled by
-	 * the same `_handleAvaturnMessage` pipeline as the session-based flow.
+	 * Opens the Avaturn default hosted editor via the Avaturn SDK.
 	 */
 	async openDefaultEditor() {
 		if (this.modal) return;
-		const editorUrl = getAvaturnEditorUrl();
-		this._avaturnMode = true;
-		try {
-			this._avaturnOrigin = new URL(editorUrl).origin;
-		} catch (_) {
-			this._avaturnOrigin = null;
-		}
-		this._buildModal();
-		this._onMessage = (event) => this._handleMessage(event);
-		window.addEventListener('message', this._onMessage);
-		console.info('[AvatarCreator] opening Avaturn default editor:', editorUrl);
-		this.iframe.src = editorUrl;
+		await this._openAvaturn(getAvaturnEditorUrl());
 	}
 
-	_handleMessage(event) {
-		if (this._avaturnMode) {
-			this._handleAvaturnMessage(event);
-		} else {
-			this._handleCharacterStudioMessage(event);
+	async _openAvaturn(url) {
+		this._buildModal(false);
+		try {
+			this.sdk = new AvaturnSDK();
+			await this.sdk.init(this.modal.querySelector('.avatar-creator-container'), {
+				iframeClassName: 'avatar-creator-iframe',
+				url,
+			});
+
+			const loading = this.modal?.querySelector('.avatar-creator-loading');
+			if (loading) loading.style.display = 'none';
+
+			this.sdk.on('export', async (data) => {
+				const glbUrl = data?.url;
+				if (!glbUrl) return;
+				try {
+					let blob;
+					if (data.urlType === 'dataURL') {
+						const res = await fetch(glbUrl);
+						blob = await res.blob();
+					} else {
+						const res = await fetch(glbUrl);
+						if (!res.ok) throw new Error(`GLB fetch failed: ${res.status}`);
+						blob = await res.blob();
+					}
+					const glbBlob = blob.type
+						? blob
+						: new Blob([await blob.arrayBuffer()], { type: 'model/gltf-binary' });
+					this._fireExport(glbBlob);
+				} catch (err) {
+					console.error('[AvatarCreator] failed to fetch Avaturn GLB:', err);
+				}
+			});
+		} catch (err) {
+			console.error('[AvatarCreator] Failed to initialize Avaturn SDK:', err);
+			this._showError('Failed to load avatar creator. Please try again.');
 		}
 	}
 
@@ -135,34 +128,6 @@ export class AvatarCreator {
 		this._fireExport(blob);
 	}
 
-	async _handleAvaturnMessage(event) {
-		if (!this._avaturnOrigin || event.origin !== this._avaturnOrigin) return;
-
-		const msg = event.data;
-		if (!msg) return;
-
-		// Avaturn may post: { type:'export', detail:{url} } or { avaturnEvent:'export', data:{url} }
-		let glbUrl = null;
-		if (msg.type === 'export') {
-			glbUrl = msg.detail?.url || msg.data?.url || null;
-		} else if (msg.avaturnEvent === 'export') {
-			glbUrl = msg.data?.url || null;
-		}
-		if (!glbUrl) return;
-
-		try {
-			const resp = await fetch(glbUrl);
-			if (!resp.ok) throw new Error(`GLB fetch failed: ${resp.status}`);
-			const blob = await resp.blob();
-			const glbBlob = blob.type
-				? blob
-				: new Blob([await blob.arrayBuffer()], { type: 'model/gltf-binary' });
-			this._fireExport(glbBlob);
-		} catch (err) {
-			console.error('[AvatarCreator] failed to fetch Avaturn GLB:', err);
-		}
-	}
-
 	_fireExport(blob) {
 		if (this.onExport) {
 			try {
@@ -174,8 +139,19 @@ export class AvatarCreator {
 		this.close();
 	}
 
-	_buildModal() {
-		const title = this._avaturnMode ? 'Edit Your Avatar' : 'Create Your Avatar';
+	_showError(message) {
+		const loading = this.modal?.querySelector('.avatar-creator-loading');
+		if (loading) {
+			loading.innerHTML = `<span class="avatar-creator-error">${message}</span>`;
+		}
+	}
+
+	/**
+	 * @param {boolean} withIframe - true for CharacterStudio (needs a pre-rendered iframe),
+	 *                               false for Avaturn SDK (SDK injects its own iframe).
+	 */
+	_buildModal(withIframe) {
+		const title = withIframe ? 'Create Your Avatar' : 'Edit Your Avatar';
 		this.modal = document.createElement('div');
 		this.modal.className = 'avatar-creator-overlay';
 
@@ -186,14 +162,16 @@ export class AvatarCreator {
 					<button class="avatar-creator-close" aria-label="Close">&times;</button>
 				</div>
 				<div class="avatar-creator-body">
-					<div class="avatar-creator-container">
-						<iframe
-							class="avatar-creator-iframe"
-							title="Avatar Creator"
-							allow="camera *; microphone *; clipboard-write"
-							sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-						></iframe>
-					</div>
+					<div class="avatar-creator-container">${
+						withIframe
+							? `<iframe
+						class="avatar-creator-iframe"
+						title="Avatar Creator"
+						allow="camera *; microphone *; clipboard-write"
+						sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+					></iframe>`
+							: ''
+					}</div>
 					<div class="avatar-creator-loading">
 						<div class="spinner"></div>
 						<span>Loading avatar creator...</span>
@@ -203,17 +181,16 @@ export class AvatarCreator {
 		`;
 
 		this.container.appendChild(this.modal);
-		this.iframe = this.modal.querySelector('.avatar-creator-iframe');
 
-		// Hide the loading spinner once the iframe fires its load event.
-		this.iframe.addEventListener('load', () => {
-			const loading = this.modal?.querySelector('.avatar-creator-loading');
-			if (loading) loading.style.display = 'none';
-		});
+		if (withIframe) {
+			this.iframe = this.modal.querySelector('.avatar-creator-iframe');
+			this.iframe.addEventListener('load', () => {
+				const loading = this.modal?.querySelector('.avatar-creator-loading');
+				if (loading) loading.style.display = 'none';
+			});
+		}
 
-		this.modal
-			.querySelector('.avatar-creator-close')
-			.addEventListener('click', () => this.close());
+		this.modal.querySelector('.avatar-creator-close').addEventListener('click', () => this.close());
 		this.modal.addEventListener('click', (e) => {
 			if (e.target === this.modal) this.close();
 		});
@@ -225,6 +202,12 @@ export class AvatarCreator {
 	}
 
 	close() {
+		if (this.sdk) {
+			try {
+				this.sdk.destroy();
+			} catch (_) {}
+			this.sdk = null;
+		}
 		if (this._onMessage) {
 			window.removeEventListener('message', this._onMessage);
 			this._onMessage = null;
@@ -238,8 +221,6 @@ export class AvatarCreator {
 			this.modal = null;
 			this.iframe = null;
 		}
-		this._avaturnMode = false;
-		this._avaturnOrigin = null;
 	}
 
 	dispose() {

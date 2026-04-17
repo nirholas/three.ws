@@ -20,6 +20,11 @@
     jsonpointer "^5.0.1"
     leven "^3.1.0"
 
+"@avaturn/sdk@^1.1.4":
+  version "1.1.4"
+  resolved "https://registry.npmjs.org/@avaturn/sdk/-/sdk-1.1.4.tgz"
+  integrity sha512-OAbpcssUowv6Iy+x+OamiBrJnrVYwv3F9JY9xhUAP0OBNK5DADHywYVIYNk/0xknFAFDoB2lMSDqrXb1nIrVJw==
+
 "@aws-crypto/crc32@5.2.0":
   version "5.2.0"
   resolved "https://registry.npmjs.org/@aws-crypto/crc32/-/crc32-5.2.0.tgz"
