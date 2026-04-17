@@ -433,13 +433,18 @@ function renderCreate(root) {
 
 			sdk.on('export', async (data) => {
 				const glbUrl = data?.url;
-				if (!glbUrl) { say('No avatar URL returned', true); return; }
+				if (!glbUrl) {
+					say('No avatar URL returned', true);
+					return;
+				}
 				say('Saving avatar…');
 				try {
 					const blob = await fetchGlbBlob(glbUrl, data?.urlType);
 					const avatar = await saveAvaturnAvatar(blob);
 					say(`Saved "${avatar.name}". Redirecting…`);
-					setTimeout(() => { location.hash = 'avatars'; }, 600);
+					setTimeout(() => {
+						location.hash = 'avatars';
+					}, 600);
 				} catch (err) {
 					say(err.message || 'Failed to save avatar', true);
 				}
@@ -452,7 +457,10 @@ function renderCreate(root) {
 	};
 
 	const stop = () => {
-		if (sdk) { sdk.destroy(); sdk = null; }
+		if (sdk) {
+			sdk.destroy();
+			sdk = null;
+		}
 		container.style.display = 'none';
 		container.innerHTML = '';
 		intro.style.display = 'block';

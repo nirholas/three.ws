@@ -33,6 +33,7 @@ const appConfig = {
 				'agent-edit': resolve(__dirname, 'agent-edit.html'),
 				'agent-embed': resolve(__dirname, 'agent-embed.html'),
 				'a-embed': resolve(__dirname, 'a-embed.html'),
+				studio: resolve(__dirname, 'public/studio/index.html'),
 				reputation: resolve(__dirname, 'public/reputation/index.html'),
 				hydrate: resolve(__dirname, 'public/hydrate/index.html'),
 			},

@@ -10,9 +10,9 @@ Render an embodied 3D avatar in the LobeChat sidebar. The avatar reacts to the L
 
 1. In LobeChat, open **Plugins → Plugin Store → Custom plugins**.
 2. Paste the manifest URL:
-   ```
-   https://3dagent.vercel.app/.well-known/lobehub-plugin.json
-   ```
+    ```
+    https://3dagent.vercel.app/.well-known/lobehub-plugin.json
+    ```
 3. Click **Install**. LobeChat will show the plugin settings dialog.
 4. Enter your **Agent ID** (UUID from the 3D Agent dashboard at `https://3dagent.vercel.app/dashboard`).
 5. Click **Save**. The 3D avatar appears in the right sidebar.
@@ -21,10 +21,10 @@ Render an embodied 3D avatar in the LobeChat sidebar. The avatar reacts to the L
 
 ## Configuration
 
-| Setting | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `agentId` | `string` | Yes | — | Agent UUID from the 3D Agent dashboard |
-| `apiOrigin` | `string` | No | `https://3dagent.vercel.app` | Override for self-hosted instances |
+| Setting     | Type     | Required | Default                      | Description                            |
+| ----------- | -------- | -------- | ---------------------------- | -------------------------------------- |
+| `agentId`   | `string` | Yes      | —                            | Agent UUID from the 3D Agent dashboard |
+| `apiOrigin` | `string` | No       | `https://3dagent.vercel.app` | Override for self-hosted instances     |
 
 ---
 
@@ -51,12 +51,12 @@ LobeChat (and `@lobehub/chat-plugin-sdk` internally) sends:
 
 ```json
 {
-  "type": "LobePlugin.renderPlugin",
-  "payload": {
-    "apiName": "speak",
-    "arguments": "{\"text\":\"Hello!\",\"sentiment\":0.5}",
-    "identifier": "3d-agent"
-  }
+	"type": "LobePlugin.renderPlugin",
+	"payload": {
+		"apiName": "speak",
+		"arguments": "{\"text\":\"Hello!\",\"sentiment\":0.5}",
+		"identifier": "3d-agent"
+	}
 }
 ```
 
@@ -68,13 +68,13 @@ Bridge envelope:
 
 ```json
 {
-  "v": 1,
-  "source": "agent-host",
-  "id": "<uuid>",
-  "inReplyTo": "<request-id>",
-  "kind": "request | response | event",
-  "op": "speak | gesture | emote | look | setAgent | ping | subscribe",
-  "payload": {}
+	"v": 1,
+	"source": "agent-host",
+	"id": "<uuid>",
+	"inReplyTo": "<request-id>",
+	"kind": "request | response | event",
+	"op": "speak | gesture | emote | look | setAgent | ping | subscribe",
+	"payload": {}
 }
 ```
 
@@ -84,12 +84,12 @@ Full spec: [`01-embed-bridges.md`](../prompts/final-integration/01-embed-bridges
 
 ## Available tool ops
 
-| Op | Payload | Description |
-|---|---|---|
-| `render_agent` | `{ agentId }` | Swap the agent in the sidebar |
-| `speak` | `{ text, sentiment? [-1,1] }` | Avatar speaks with emotional valence |
-| `gesture` | `{ name: wave\|nod\|point\|shrug }` | Trigger a named gesture |
-| `emote` | `{ trigger, weight? [0,1] }` | Inject emotion into the Empathy Layer |
+| Op             | Payload                             | Description                           |
+| -------------- | ----------------------------------- | ------------------------------------- |
+| `render_agent` | `{ agentId }`                       | Swap the agent in the sidebar         |
+| `speak`        | `{ text, sentiment? [-1,1] }`       | Avatar speaks with emotional valence  |
+| `gesture`      | `{ name: wave\|nod\|point\|shrug }` | Trigger a named gesture               |
+| `emote`        | `{ trigger, weight? [0,1] }`        | Inject emotion into the Empathy Layer |
 
 ---
 
@@ -129,13 +129,13 @@ Output: `dist/bundle.js` — tree-shaken, browser-targeted. React and react-dom 
 
 ## Troubleshooting
 
-| Symptom | Likely cause | Fix |
-|---|---|---|
-| Avatar never appears | Wrong `agentId` | Copy UUID from dashboard; ensure agent has an avatar |
-| "Loading agent…" stuck | Bridge handshake failed | Check browser console for `[3d-agent]` messages; verify `apiOrigin` is reachable |
-| `speak` does nothing | LobeChat hasn't installed the plugin | Confirm plugin is active in LobeChat Plugin Store |
-| CORS error | Self-hosted origin not allowed | Add origin to `CORS_ORIGINS` in your 3D Agent deployment |
-| Timeout errors | Network latency | The bridge has a 10 s timeout; the iframe may still be loading the web component |
+| Symptom                | Likely cause                         | Fix                                                                              |
+| ---------------------- | ------------------------------------ | -------------------------------------------------------------------------------- |
+| Avatar never appears   | Wrong `agentId`                      | Copy UUID from dashboard; ensure agent has an avatar                             |
+| "Loading agent…" stuck | Bridge handshake failed              | Check browser console for `[3d-agent]` messages; verify `apiOrigin` is reachable |
+| `speak` does nothing   | LobeChat hasn't installed the plugin | Confirm plugin is active in LobeChat Plugin Store                                |
+| CORS error             | Self-hosted origin not allowed       | Add origin to `CORS_ORIGINS` in your 3D Agent deployment                         |
+| Timeout errors         | Network latency                      | The bridge has a 10 s timeout; the iframe may still be loading the web component |
 
 ---
 

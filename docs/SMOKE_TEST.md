@@ -9,20 +9,20 @@
 
 ## Summary
 
-| Flow | Result | Notes |
-|------|--------|-------|
-| A. Wallet sign-in | BLOCKED | No browser or MetaMask in CI environment. Static analysis: SIWE nonce + verify endpoints exist and pass `node --check`. Login page present at `/public/login.html`. |
-| B. Selfie → agent | BLOCKED | Requires camera hardware + Avaturn API key. Static analysis: `src/selfie-capture.js`, `src/selfie-pipeline.js`, `src/avaturn-client.js` all pass `node --check`. `/create` route maps to `create.html`. |
-| C. Edit + save-back | BLOCKED | Requires authenticated session + owned agent. Static analysis: `src/editor/save-back.js`, `/api/avatars/[id]/versions.js` both present and syntactically valid. |
-| D. Share + embed | BLOCKED | Requires browser + running agent. Static analysis: `src/share-panel.js` exports `SharePanel`. CORS headers set in `api/_lib/http.js`. `agent-embed.html` has `frame-ancestors` CSP meta tag. |
-| E. Embed bridge round-trip | BLOCKED | Requires browser. Static analysis: `src/embed-host-bridge.js` and `src/embed-action-bridge.js` implement ping/pong handshake. `op: 'speak'` mapped to `speak` action in bridge. |
-| F. Idle loop | FAIL | `src/idle-animation.js` exports `IdleAnimation` class but it is **never imported anywhere** in the codebase. Blink + head-drift are not wired into the agent avatar system. Escalated — see defects below. |
-| G. Discover page | BLOCKED | Requires seeded Base Sepolia wallet. Static analysis: `/public/explore/index.html` + `explore.js` present. `/api/explore.js` endpoint present. Import flow routes to `/hydrate`. |
-| H. Deploy on-chain | BLOCKED | Requires MetaMask + Base Sepolia test ETH. Static analysis: `src/erc8004/agent-registry.js` + `src/agent-home-orphans.js` implement `DeployButton` wiring into `agent-home.html`. |
-| I. LobeHub plugin | FAIL | `lobehub-plugin/dev/index.html` dev harness **does not exist** (required by Flow I step 2). `lobehub-plugin/` has `src/`, `dist/`, `package.json` but no `dev/` directory. Escalated — see defects below. |
-| J. Dashboard sidebar | BLOCKED | Requires authenticated session. Static analysis: all 6 pages present (`index.html`, `actions.html`, `sessions.html`, `wallets.html`, `usage.html`, `embed-policy.html`). All import from `dashboard.js`. |
-| K. Logout + session revocation | BLOCKED | Requires authenticated session. Static analysis: `DELETE /api/auth/sessions` endpoint confirmed — revokes all non-current sessions and returns `{ revoked: N }`. Sessions page calls this correctly. |
-| L. Mobile layout | BLOCKED | Requires browser + devtools. Static analysis: all key pages (`index.html`, `agent-home.html`, `agent-embed.html`, `public/dashboard/index.html`) have `<meta name="viewport" content="width=device-width, initial-scale=1">`. |
+| Flow                           | Result  | Notes                                                                                                                                                                                                                         |
+| ------------------------------ | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A. Wallet sign-in              | BLOCKED | No browser or MetaMask in CI environment. Static analysis: SIWE nonce + verify endpoints exist and pass `node --check`. Login page present at `/public/login.html`.                                                           |
+| B. Selfie → agent              | BLOCKED | Requires camera hardware + Avaturn API key. Static analysis: `src/selfie-capture.js`, `src/selfie-pipeline.js`, `src/avaturn-client.js` all pass `node --check`. `/create` route maps to `create.html`.                       |
+| C. Edit + save-back            | BLOCKED | Requires authenticated session + owned agent. Static analysis: `src/editor/save-back.js`, `/api/avatars/[id]/versions.js` both present and syntactically valid.                                                               |
+| D. Share + embed               | BLOCKED | Requires browser + running agent. Static analysis: `src/share-panel.js` exports `SharePanel`. CORS headers set in `api/_lib/http.js`. `agent-embed.html` has `frame-ancestors` CSP meta tag.                                  |
+| E. Embed bridge round-trip     | BLOCKED | Requires browser. Static analysis: `src/embed-host-bridge.js` and `src/embed-action-bridge.js` implement ping/pong handshake. `op: 'speak'` mapped to `speak` action in bridge.                                               |
+| F. Idle loop                   | FAIL    | `src/idle-animation.js` exports `IdleAnimation` class but it is **never imported anywhere** in the codebase. Blink + head-drift are not wired into the agent avatar system. Escalated — see defects below.                    |
+| G. Discover page               | BLOCKED | Requires seeded Base Sepolia wallet. Static analysis: `/public/explore/index.html` + `explore.js` present. `/api/explore.js` endpoint present. Import flow routes to `/hydrate`.                                              |
+| H. Deploy on-chain             | BLOCKED | Requires MetaMask + Base Sepolia test ETH. Static analysis: `src/erc8004/agent-registry.js` + `src/agent-home-orphans.js` implement `DeployButton` wiring into `agent-home.html`.                                             |
+| I. LobeHub plugin              | FAIL    | `lobehub-plugin/dev/index.html` dev harness **does not exist** (required by Flow I step 2). `lobehub-plugin/` has `src/`, `dist/`, `package.json` but no `dev/` directory. Escalated — see defects below.                     |
+| J. Dashboard sidebar           | BLOCKED | Requires authenticated session. Static analysis: all 6 pages present (`index.html`, `actions.html`, `sessions.html`, `wallets.html`, `usage.html`, `embed-policy.html`). All import from `dashboard.js`.                      |
+| K. Logout + session revocation | BLOCKED | Requires authenticated session. Static analysis: `DELETE /api/auth/sessions` endpoint confirmed — revokes all non-current sessions and returns `{ revoked: N }`. Sessions page calls this correctly.                          |
+| L. Mobile layout               | BLOCKED | Requires browser + devtools. Static analysis: all key pages (`index.html`, `agent-home.html`, `agent-embed.html`, `public/dashboard/index.html`) have `<meta name="viewport" content="width=device-width, initial-scale=1">`. |
 
 **Flows fully verified by static analysis:** Build passes (`npm run build` ✓), `npm run verify` passes (✓), all modified JS files pass `node --check`.
 
@@ -55,6 +55,7 @@
 This smoke test was executed in a headless Codespace environment with no browser, no MetaMask, no camera hardware, and no Base Sepolia test wallet. All flows requiring a browser (A, B, C, D, E, G, H, J, K, L) are marked BLOCKED, not FAIL — the code paths are present and syntactically valid; they simply could not be exercised interactively.
 
 **To re-run this test with a browser:**
+
 1. `npm run dev` → open `http://localhost:3000/` in Chrome.
 2. For Flows A/H: use MetaMask with a fresh account on Base Sepolia. Fund from https://sepoliafaucet.com.
 3. For Flow B: the Avaturn pipeline requires `VITE_AVATURN_API_KEY` in `.env.local`.
@@ -62,6 +63,7 @@ This smoke test was executed in a headless Codespace environment with no browser
 5. For Flow I: create `lobehub-plugin/dev/index.html` first (see defects above).
 
 **Verified without browser:**
+
 - `npm run verify` → exits 0 (prettier + vite build both pass).
 - `node --check` on all key source files → no syntax errors.
 - All 12 flow entry points (HTML pages, API routes) confirmed present in filesystem.
