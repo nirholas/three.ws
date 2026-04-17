@@ -48,6 +48,51 @@ function _base64ToFile(b64, name, type) {
 	return new File([bytes], name, { type });
 }
 
+/**
+ * Parse an on-chain agent URL path. Accepts:
+ *   /a/<chainId>/<agentId>                       (canonical — registry inferred)
+ *   /a/<chainId>/<registry>/<agentId>            (explicit registry, for non-canonical deployments)
+ *   /a/eip155:<chainId>:<registry>/<agentId>     (full CAIP)
+ */
+function parseOnchainPath(pathname) {
+	const m = pathname.match(/^\/a\/([^/]+)(?:\/([^/]+))?(?:\/([^/]+))?\/?$/);
+	if (!m) return null;
+	const [, a, b, c] = m;
+
+	// /a/eip155:chainId:registry/<agentId>
+	const caipMatch = a.match(/^eip155:(\d+):(0x[a-fA-F0-9]{40})$/);
+	if (caipMatch && b && /^\d+$/.test(b) && !c) {
+		return { chainId: Number(caipMatch[1]), registry: caipMatch[2], agentId: b };
+	}
+
+	// /a/<chainId>/<registry>/<agentId>
+	if (b && c && /^\d+$/.test(a) && /^0x[a-fA-F0-9]{40}$/.test(b) && /^\d+$/.test(c)) {
+		return { chainId: Number(a), registry: b, agentId: c };
+	}
+
+	// /a/<chainId>/<agentId> (canonical: registry inferred from REGISTRY_DEPLOYMENTS)
+	if (b && !c && /^\d+$/.test(a) && /^\d+$/.test(b)) {
+		return { chainId: Number(a), agentId: b };
+	}
+
+	return null;
+}
+
+function escHtml(s) {
+	return String(s ?? '').replace(
+		/[&<>"']/g,
+		(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+	);
+}
+
+/** Parse #onchain=<chainId>:<agentId> for embed mode. */
+function parseOnchainHash(value) {
+	if (!value) return null;
+	const m = String(value).match(/^(\d+):(\d+)$/);
+	if (!m) return null;
+	return { chainId: Number(m[1]), agentId: m[2] };
+}
+
 if (!(window.File && window.FileReader && window.FileList && window.Blob)) {
 	console.error('The File APIs are not fully supported in this browser.');
 } else if (!WebGL.isWebGL2Available()) {
@@ -66,6 +111,12 @@ class App {
 		// agentHash:  from #agent= hash → legacy embed mode
 		const agentQuery = qp.get('agent') || '';
 		const agentHash = hash.agent || '';
+
+		// On-chain CAIP-style route: /a/<chainId>/<agentId> [ /<registry> optional ]
+		// Parses to { chainId, agentId, registry? } when matched. Renders the agent's
+		// 3D avatar by resolving its registration file → `avatar` service endpoint.
+		const onchain = parseOnchainPath(location.pathname) || parseOnchainHash(hash.onchain);
+
 		this.options = {
 			kiosk: Boolean(hash.kiosk),
 			model: hash.model || '',
@@ -77,6 +128,8 @@ class App {
 			agentEdit: agentQuery, // query-param agent → editing surface
 			widget: hash.widget || '',
 			deploy: hash.deploy !== undefined || location.pathname === '/deploy',
+			onchain, // { chainId, agentId, registry? } | null
+			explore: location.pathname === '/explore',
 			// pending=1 signals a post-login save round-trip
 			pending: qp.get('pending') === '1',
 		};
@@ -129,6 +182,20 @@ class App {
 			this.view(isDecentralizedURI(model) ? resolveURI(model) : model, '', new Map())
 				.catch(() => {})
 				.finally(() => this._showDeployPage());
+			this._initAgentSystem();
+			return;
+		}
+
+		// /explore — gallery of on-chain agents with 3D avatars.
+		if (options.explore) {
+			this._showExplorePage();
+			this._initAgentSystem();
+			return;
+		}
+
+		// /a/<chainId>/<agentId> — resolve an on-chain agent to its 3D avatar.
+		if (options.onchain) {
+			this._loadOnChainAgent(options.onchain);
 			this._initAgentSystem();
 			return;
 		}
@@ -1029,11 +1096,121 @@ class App {
 		console.error(error);
 	}
 
+	/**
+	 * Resolve an on-chain ERC-8004 agent to its 3D avatar and render it.
+	 * Public — works for anyone, no wallet required.
+	 *
+	 * @param {{ chainId: number, agentId: string, registry?: string }} onchain
+	 */
+	async _loadOnChainAgent(onchain) {
+		try {
+			const [{ getAgentOnchain, fetchAgentMetadata, findAvatar3D }, { REGISTRY_DEPLOYMENTS }] =
+				await Promise.all([import('./erc8004/queries.js'), import('./erc8004/abi.js')]);
+
+			if (!REGISTRY_DEPLOYMENTS[onchain.chainId]) {
+				this._showOnChainError(`Unsupported chain: ${onchain.chainId}`);
+				return;
+			}
+
+			const { uri } = await getAgentOnchain({
+				chainId: onchain.chainId,
+				agentId: onchain.agentId,
+				ethProvider: window.ethereum,
+			});
+			if (!uri) {
+				this._showOnChainError(`Agent #${onchain.agentId} has no agentURI set.`);
+				return;
+			}
+
+			const meta = await fetchAgentMetadata(uri);
+			if (!meta.ok) {
+				this._showOnChainError(`Could not fetch registration JSON: ${meta.error}`);
+				return;
+			}
+
+			this._onchainMetadata = meta.data;
+			this._updateOnChainCard(onchain, meta.data);
+
+			const glbUri = findAvatar3D(meta.data);
+			if (!glbUri) {
+				this._showOnChainError(
+					`Agent #${onchain.agentId} has no 3D avatar — no <code>avatar</code> service entry and <code>image</code> is not a GLB.`,
+				);
+				return;
+			}
+
+			const resolvedGlb = isDecentralizedURI(glbUri) ? resolveURI(glbUri) : glbUri;
+			await this.view(resolvedGlb, '', new Map());
+		} catch (err) {
+			console.warn('[3d-agent] on-chain load failed:', err);
+			this._showOnChainError(err.message || String(err));
+		}
+	}
+
+	_showOnChainError(msg) {
+		this._updateOnChainCard(this.options.onchain, null, msg);
+		this.dropEl?.classList.add('hidden');
+	}
+
+	/**
+	 * Render a small info card overlaying the viewer so users know whose agent
+	 * they're looking at. Hidden in kiosk mode.
+	 */
+	_updateOnChainCard(onchain, metadata, errorMsg = '') {
+		if (this.options.kiosk) return;
+		let card = this.el.querySelector('.onchain-card');
+		if (!card) {
+			card = document.createElement('div');
+			card.className = 'onchain-card';
+			this.el.appendChild(card);
+		}
+		const chainLabel = `chainId ${onchain.chainId}`;
+		if (errorMsg) {
+			card.innerHTML = `<div class="onchain-card__err">⚠ ${escHtml(errorMsg)}</div>
+				<div class="onchain-card__sub">Agent #${escHtml(onchain.agentId)} · ${escHtml(chainLabel)}</div>`;
+			return;
+		}
+		const name = metadata?.name ? String(metadata.name) : `Agent #${onchain.agentId}`;
+		const desc = metadata?.description ? String(metadata.description) : '';
+		card.innerHTML = `
+			<div class="onchain-card__name">${escHtml(name)}</div>
+			<div class="onchain-card__sub">#${escHtml(onchain.agentId)} · ${escHtml(chainLabel)}</div>
+			${desc ? `<div class="onchain-card__desc">${escHtml(desc)}</div>` : ''}
+		`;
+	}
+
+	async _showExplorePage() {
+		try {
+			const main = this.el.querySelector('main.wrap') || this.el;
+			this.dropEl?.classList.add('hidden');
+			const dropzone = this.el.querySelector('.dropzone');
+			if (dropzone) dropzone.style.display = 'none';
+			if (this.viewerContainerEl) this.viewerContainerEl.style.display = 'none';
+			const authGate = this.el.querySelector('#auth-gate');
+			if (authGate) authGate.style.display = 'none';
+			const presence = this.el.querySelector('.agent-presence-sidebar');
+			if (presence) presence.style.display = 'none';
+
+			const page = document.createElement('section');
+			page.className = 'explore-page';
+			main.appendChild(page);
+
+			const { renderExplorePage } = await import('./erc8004/explore.js');
+			renderExplorePage(page);
+		} catch (err) {
+			console.error('[3d-agent] explore page load failed', err);
+		}
+	}
+
 	async _showDeployPage() {
 		// Render /deploy as a normal page inside the app.html shell (header +
 		// footer stay visible). We hide the viewer + dropzone + auth gate and
 		// replace them with the ERC-8004 wizard, pre-filled from the user's
 		// current avatar so Step 5 flows from Steps 1–4.
+		//
+		// Deep-link support: `/deploy?avatar=<id>` pre-fills from a previously
+		// saved avatar (dashboard "Deploy on-chain" per row). That prefill
+		// overrides the viewer's current model.
 		try {
 			const main = this.el.querySelector('main.wrap') || this.el;
 			this.dropEl?.classList.add('hidden');
@@ -1049,19 +1226,48 @@ class App {
 			page.className = 'deploy-page';
 			main.appendChild(page);
 
+			const initial = await this._resolveDeployInitial();
+
 			const { RegisterUI } = await import('./erc8004/register-ui.js');
 			new RegisterUI(
 				page,
 				(result) => {
 					console.info('[ERC-8004] Agent registered:', result);
 				},
-				{
-					mode: 'page',
-					initial: { glbUrl: this._currentModelUrl || '' },
-				},
+				{ mode: 'page', initial },
 			);
 		} catch (err) {
 			console.error('[3d-agent] deploy page load failed', err);
+		}
+	}
+
+	/**
+	 * Resolve the initial state passed to RegisterUI. If `?avatar=<id>` is
+	 * present, fetch that avatar from the backend and pre-fill name /
+	 * description / image / GLB. Otherwise fall back to the current viewer
+	 * model.
+	 */
+	async _resolveDeployInitial() {
+		const qp = new URLSearchParams(location.search);
+		const avatarId = qp.get('avatar');
+		const fallback = { glbUrl: this._currentModelUrl || '' };
+		if (!avatarId) return fallback;
+		try {
+			const res = await fetch(`/api/avatars/${encodeURIComponent(avatarId)}`, {
+				credentials: 'include',
+			});
+			if (!res.ok) throw new Error(`HTTP ${res.status}`);
+			const { avatar } = await res.json();
+			if (!avatar) throw new Error('empty avatar payload');
+			return {
+				name: avatar.name || '',
+				description: avatar.description || '',
+				imageUrl: avatar.thumbnail_url || '',
+				glbUrl: avatar.url || avatar.model_url || '',
+			};
+		} catch (err) {
+			console.warn('[deploy] avatar prefill failed; falling back to viewer model', err);
+			return fallback;
 		}
 	}
 

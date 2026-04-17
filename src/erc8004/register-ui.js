@@ -22,6 +22,7 @@ import {
 	getIdentityRegistry,
 	buildRegistrationJSON,
 } from './agent-registry.js';
+import { glbFileToThumbnail } from './thumbnail.js';
 import { isPrivyConfigured } from './privy.js';
 import { REGISTRY_DEPLOYMENTS } from './abi.js';
 import { renderBatchTab } from './batch-tab.js';
@@ -176,6 +177,24 @@ const esc = (s) =>
 	);
 const shortAddr = (a) => (a ? a.slice(0, 6) + '…' + a.slice(-4) : '');
 
+/**
+ * True if `url` is already a content-addressed or durable public URL that
+ * doesn't need to be fetched and re-pinned before referencing in a
+ * registration JSON. Avoids wasted uploads for avatars users created
+ * earlier (or default avatars shipped on the same domain).
+ */
+const _isStableUrl = (url) => {
+	if (!url || typeof url !== 'string') return false;
+	const u = url.trim();
+	return (
+		u.startsWith('ipfs://') ||
+		u.startsWith('ar://') ||
+		u.startsWith('https://') ||
+		u.startsWith('http://') ||
+		u.startsWith('/') // same-origin public asset (e.g. /avatars/cz.glb)
+	);
+};
+
 // ───────────────────────────────────────────────────────────────────────────
 // RegisterUI
 // ───────────────────────────────────────────────────────────────────────────
@@ -205,6 +224,11 @@ export class RegisterUI {
 
 		// Wizard state — pre-populate from the user's current avatar/session so
 		// the on-chain JSON points to the GLB they just uploaded/created.
+		// `avatarSource` drives Step 3 behaviour:
+		//   'current' → use `glbUrl` pre-filled from the live SPA viewer
+		//   'saved'   → pick one from the signed-in user's saved avatars
+		//   'upload'  → user drops a new .glb in the wizard
+		//   'skip'    → deploy as a metadata-only agent (no 3D body)
 		this.wizardStep = 1;
 		this.form = {
 			name: initial.name || '',
@@ -212,12 +236,16 @@ export class RegisterUI {
 			imageUrl: initial.imageUrl || '',
 			glbUrl: initial.glbUrl || '',
 			glbFile: null,
+			savedAvatar: null, // { id, name, url, thumbnailUrl }
+			avatarSource: initial.glbUrl ? 'current' : 'upload',
 			services: [], // [{ name, type, endpoint }]
 			apiToken: '', // optional Pinata JWT
 		};
 
 		// Cache of signed-in user's backend agent id (if any) — linked after deploy
 		this._backendAgentId = null;
+		this._signedIn = false;
+		this._savedAvatars = null; // loaded lazily when user switches source to 'saved'
 
 		this._build();
 		this._bind();
@@ -402,11 +430,57 @@ export class RegisterUI {
 		try {
 			const res = await fetch('/api/agents/me', { credentials: 'include' });
 			if (!res.ok) return;
+			this._signedIn = true;
 			const { agent } = await res.json();
 			if (agent && agent.id) this._backendAgentId = agent.id;
+			// If Step 3 is already rendered (signed-in detection raced with UI),
+			// re-render so the "Use a saved avatar" option appears.
+			if (this.wizardStep === 3 && this.activeTab === 'create') this._renderActiveTab();
 		} catch {
 			/* anon user or endpoint unavailable — fine */
 		}
+	}
+
+	/**
+	 * Lazily fetch the signed-in user's saved avatars for the Step 3 picker.
+	 * Returns [] on any failure (anonymous, endpoint down, etc) so the UI can
+	 * silently fall back to the upload/skip options.
+	 */
+	async _loadSavedAvatars() {
+		if (this._savedAvatars) return this._savedAvatars;
+		try {
+			const res = await fetch('/api/avatars?limit=50', { credentials: 'include' });
+			if (!res.ok) {
+				this._savedAvatars = [];
+				return this._savedAvatars;
+			}
+			const payload = await res.json();
+			const rows = payload.avatars || payload.data || [];
+			this._savedAvatars = rows.map((r) => ({
+				id: r.id,
+				name: r.name || 'Untitled',
+				modelUrl: r.model_url || null, // null for private — resolved on select
+				thumbnailUrl: r.thumbnail_url || null,
+				visibility: r.visibility,
+			}));
+		} catch {
+			this._savedAvatars = [];
+		}
+		return this._savedAvatars;
+	}
+
+	/**
+	 * Resolve a saved avatar's download URL. Public/unlisted expose `model_url`
+	 * directly; private avatars require a per-object signed-URL fetch.
+	 */
+	async _resolveSavedAvatarUrl(avatar) {
+		if (avatar.modelUrl) return avatar.modelUrl;
+		const res = await fetch(`/api/avatars/${encodeURIComponent(avatar.id)}`, {
+			credentials: 'include',
+		});
+		if (!res.ok) throw new Error(`avatar fetch failed (${res.status})`);
+		const { avatar: detail } = await res.json();
+		return detail?.url || null;
 	}
 
 	async _linkAgentToAccount({ agentId, chainId, txHash }) {
@@ -611,22 +685,31 @@ export class RegisterUI {
 	}
 
 	_renderStepConfig(body) {
-		body.innerHTML = `
-			<h3 class="erc8004-h3">Configuration</h3>
-			<p class="erc8004-p">Optional: attach a 3D avatar (GLB) so anyone can render your agent in a browser. If provided, it becomes the agent's primary image.</p>
-
-			<label class="erc8004-label">3D Avatar (GLB)
-				<div class="erc8004-file-drop" data-role="drop">
-					<input type="file" accept=".glb,.gltf" class="erc8004-file-input" />
-					<span class="erc8004-file-text">${
-						this.form.glbFile
-							? esc(this.form.glbFile.name)
-							: this.form.glbUrl
-								? `Using current avatar: ${esc(this.form.glbUrl)} (click to replace)`
-								: 'Drop .glb file or click to browse'
-					}</span>
+		const hasCurrent = !!this.form.glbUrl;
+		const canPickSaved = this._signedIn;
+		const src = this.form.avatarSource;
+		const radio = (value, label, hint, disabled = false) => `
+			<label class="erc8004-avatar-source ${src === value ? 'erc8004-avatar-source--active' : ''} ${disabled ? 'erc8004-avatar-source--disabled' : ''}">
+				<input type="radio" name="avatarSource" value="${value}" ${src === value ? 'checked' : ''} ${disabled ? 'disabled' : ''} />
+				<div>
+					<div class="erc8004-avatar-source-title">${label}</div>
+					<div class="erc8004-avatar-source-hint">${hint}</div>
 				</div>
 			</label>
+		`;
+
+		body.innerHTML = `
+			<h3 class="erc8004-h3">3D Avatar</h3>
+			<p class="erc8004-p">Attach a GLB so any 3D-aware client can render your agent's body, or deploy as metadata-only. ERC-8004 doesn't require a 3D avatar — a 2D <code>image</code> works too.</p>
+
+			<div class="erc8004-avatar-sources" data-role="sources">
+				${hasCurrent ? radio('current', 'Use current avatar', `From your active session — <code>${esc(this.form.glbUrl)}</code>`) : ''}
+				${radio('saved', 'Use a saved avatar', canPickSaved ? 'Pick one from your account library.' : 'Sign in to pick from your saved avatars.', !canPickSaved)}
+				${radio('upload', 'Upload a new GLB', 'Drop or browse a .glb / .gltf file from your machine.')}
+				${radio('skip', 'Skip — no 3D body', 'Deploy as a metadata-only agent. You can attach an avatar later via setAgentURI.')}
+			</div>
+
+			<div class="erc8004-avatar-panel" data-role="panel"></div>
 
 			<label class="erc8004-label">IPFS Pinning Token (optional)
 				<input class="erc8004-input" type="password" name="apiToken" placeholder="Pinata JWT — leave blank to use built-in R2 storage" value="${esc(this.form.apiToken)}" />
@@ -638,32 +721,101 @@ export class RegisterUI {
 				<button class="erc8004-btn erc8004-btn--primary" data-role="next">Next: Deploy →</button>
 			</div>
 		`;
-		const drop = body.querySelector('[data-role="drop"]');
-		const input = drop.querySelector('.erc8004-file-input');
-		const label = drop.querySelector('.erc8004-file-text');
 
-		const setFile = (f) => {
-			if (!f) return;
-			if (!/\.(glb|gltf)$/i.test(f.name)) {
-				this._toast('Must be a .glb or .gltf file', true);
-				return;
+		const panel = body.querySelector('[data-role="panel"]');
+
+		const renderPanel = () => {
+			const s = this.form.avatarSource;
+			if (s === 'current') {
+				panel.innerHTML = `
+					<div class="erc8004-avatar-summary">
+						<span class="erc8004-avatar-summary-badge">✓</span>
+						<div>
+							<div>Using your current avatar.</div>
+							<div class="erc8004-hint"><code>${esc(this.form.glbUrl)}</code></div>
+						</div>
+					</div>
+				`;
+			} else if (s === 'saved') {
+				panel.innerHTML = `<div class="erc8004-saved-grid" data-role="grid"><div class="erc8004-muted">Loading your avatars…</div></div>`;
+				this._loadSavedAvatars().then((list) => {
+					const grid = panel.querySelector('[data-role="grid"]');
+					if (!grid) return;
+					if (!list.length) {
+						grid.innerHTML = `<div class="erc8004-muted">No saved avatars yet. <a href="/create" class="erc8004-link">Create one</a> or choose another option above.</div>`;
+						return;
+					}
+					grid.innerHTML = list
+						.map(
+							(a) => `
+								<button type="button" class="erc8004-saved-card ${this.form.savedAvatar?.id === a.id ? 'erc8004-saved-card--active' : ''}" data-id="${esc(a.id)}">
+									${a.thumbnailUrl ? `<img src="${esc(a.thumbnailUrl)}" alt="" loading="lazy" />` : `<div class="erc8004-saved-card-ph">GLB</div>`}
+									<div class="erc8004-saved-card-name">${esc(a.name)}</div>
+								</button>
+							`,
+						)
+						.join('');
+					grid.querySelectorAll('.erc8004-saved-card').forEach((btn) => {
+						btn.addEventListener('click', () => {
+							const id = btn.dataset.id;
+							const picked = list.find((x) => x.id === id);
+							this.form.savedAvatar = picked || null;
+							renderPanel();
+						});
+					});
+				});
+			} else if (s === 'upload') {
+				panel.innerHTML = `
+					<div class="erc8004-file-drop" data-role="drop">
+						<input type="file" accept=".glb,.gltf" class="erc8004-file-input" />
+						<span class="erc8004-file-text">${this.form.glbFile ? esc(this.form.glbFile.name) : 'Drop .glb file or click to browse'}</span>
+					</div>
+				`;
+				const drop = panel.querySelector('[data-role="drop"]');
+				const input = drop.querySelector('.erc8004-file-input');
+				const label = drop.querySelector('.erc8004-file-text');
+				const setFile = (f) => {
+					if (!f) return;
+					if (!/\.(glb|gltf)$/i.test(f.name)) {
+						this._toast('Must be a .glb or .gltf file', true);
+						return;
+					}
+					this.form.glbFile = f;
+					label.textContent = f.name;
+				};
+				input.addEventListener('change', (e) => setFile(e.target.files[0]));
+				drop.addEventListener('dragover', (e) => {
+					e.preventDefault();
+					drop.classList.add('erc8004-file-drop--active');
+				});
+				drop.addEventListener('dragleave', () =>
+					drop.classList.remove('erc8004-file-drop--active'),
+				);
+				drop.addEventListener('drop', (e) => {
+					e.preventDefault();
+					drop.classList.remove('erc8004-file-drop--active');
+					setFile(e.dataTransfer.files[0]);
+				});
+			} else if (s === 'skip') {
+				panel.innerHTML = `
+					<div class="erc8004-avatar-summary">
+						<span class="erc8004-avatar-summary-badge erc8004-avatar-summary-badge--muted">∅</span>
+						<div>
+							<div>Deploying as a metadata-only agent.</div>
+							<div class="erc8004-hint">Your registration JSON will include <code>image</code> (from Step 1) and services but no GLB. You can attach an avatar later from My Agents → Edit.</div>
+						</div>
+					</div>
+				`;
 			}
-			this.form.glbFile = f;
-			label.textContent = f.name;
 		};
 
-		input.addEventListener('change', (e) => setFile(e.target.files[0]));
-		drop.addEventListener('dragover', (e) => {
-			e.preventDefault();
-			drop.classList.add('erc8004-file-drop--active');
-		});
-		drop.addEventListener('dragleave', () =>
-			drop.classList.remove('erc8004-file-drop--active'),
-		);
-		drop.addEventListener('drop', (e) => {
-			e.preventDefault();
-			drop.classList.remove('erc8004-file-drop--active');
-			setFile(e.dataTransfer.files[0]);
+		renderPanel();
+
+		body.querySelectorAll('input[name="avatarSource"]').forEach((r) => {
+			r.addEventListener('change', (e) => {
+				this.form.avatarSource = e.target.value;
+				this._renderActiveTab(); // re-render to update active-class + panel
+			});
 		});
 
 		body.querySelector('[name="apiToken"]').addEventListener(
@@ -675,6 +827,16 @@ export class RegisterUI {
 			this._renderActiveTab();
 		});
 		body.querySelector('[data-role="next"]').addEventListener('click', () => {
+			// Validate the selected source before advancing.
+			const s = this.form.avatarSource;
+			if (s === 'saved' && !this.form.savedAvatar) {
+				this._toast('Pick one of your saved avatars, or choose another option.', true);
+				return;
+			}
+			if (s === 'upload' && !this.form.glbFile) {
+				this._toast('Drop a .glb file, or choose another option.', true);
+				return;
+			}
 			this.wizardStep = 4;
 			this._renderActiveTab();
 		});
@@ -692,7 +854,7 @@ export class RegisterUI {
 				<dt>Name</dt>        <dd>${esc(this.form.name)}</dd>
 				<dt>Description</dt> <dd>${esc(this.form.description)}</dd>
 				${this.form.imageUrl ? `<dt>Image</dt>      <dd>${esc(this.form.imageUrl)}</dd>` : ''}
-				${this.form.glbFile ? `<dt>GLB File</dt>    <dd>${esc(this.form.glbFile.name)} (${(this.form.glbFile.size / 1024).toFixed(1)} KB)</dd>` : this.form.glbUrl ? `<dt>GLB URL</dt>     <dd>${esc(this.form.glbUrl)}</dd>` : ''}
+				<dt>Avatar</dt>      <dd>${this._avatarSummary()}</dd>
 				<dt>Services</dt>    <dd>${this.form.services.length ? this.form.services.map((s) => `${esc(s.type)}: ${esc(s.endpoint || '—')}`).join('<br>') : '<span class="erc8004-muted">none</span>'}</dd>
 				<dt>Chain</dt>       <dd>${esc(meta.name)} (chainId ${this.selectedChainId})</dd>
 				<dt>Registry</dt>    <dd><code>${esc(REGISTRY_DEPLOYMENTS[this.selectedChainId].identityRegistry)}</code></dd>
@@ -774,23 +936,58 @@ export class RegisterUI {
 		this._wireExportOptions(body);
 	}
 
+	/**
+	 * One-line summary of the user's Step 3 avatar choice, shown on the Deploy
+	 * review screen.
+	 */
+	_avatarSummary() {
+		const s = this.form.avatarSource;
+		if (s === 'current' && this.form.glbUrl) {
+			return `Current session avatar — <code>${esc(this.form.glbUrl)}</code>`;
+		}
+		if (s === 'saved' && this.form.savedAvatar) {
+			return `Saved: ${esc(this.form.savedAvatar.name)}`;
+		}
+		if (s === 'upload' && this.form.glbFile) {
+			return `Uploaded: ${esc(this.form.glbFile.name)} (${(this.form.glbFile.size / 1024).toFixed(1)} KB)`;
+		}
+		if (s === 'skip') return `<span class="erc8004-muted">None — metadata-only</span>`;
+		return `<span class="erc8004-muted">Not selected</span>`;
+	}
+
 	_wireExportOptions(body) {
 		const buildJSON = () => {
 			const identityAddr = REGISTRY_DEPLOYMENTS[this.selectedChainId].identityRegistry;
-			return {
-				type: 'https://eips.ethereum.org/EIPS/eip-8004#registration-v1',
+			// Preview JSON should match the shape `_doRegister` actually mints so
+			// users export what they're about to deploy.
+			const extra = (this.form.services || [])
+				.filter((s) => s.endpoint?.trim())
+				.map((s) => ({
+					name: s.name || s.type,
+					type: s.type,
+					endpoint: s.endpoint,
+					version: '1.0',
+				}));
+			// Best-effort glbUrl preview: 'current' uses pre-fill; 'saved' uses the
+			// picked avatar's known URL; 'upload' is unknown until pin; 'skip' is
+			// omitted entirely.
+			let glbUrl = null;
+			if (this.form.avatarSource === 'current') glbUrl = this.form.glbUrl || null;
+			else if (this.form.avatarSource === 'saved')
+				glbUrl = this.form.savedAvatar?.modelUrl || null;
+			else if (this.form.avatarSource === 'upload' && this.form.glbFile)
+				glbUrl = `<pending-upload:${this.form.glbFile.name}>`;
+
+			return buildRegistrationJSON({
 				name: this.form.name,
 				description: this.form.description,
-				image: this.form.imageUrl || '',
-				services: (this.form.services || []).filter((s) => s.endpoint?.trim()),
-				active: true,
-				registrations: [
-					{
-						agentId: 'PENDING',
-						agentRegistry: `eip155:${this.selectedChainId}:${identityAddr}`,
-					},
-				],
-			};
+				imageUrl: this.form.imageUrl || glbUrl || '',
+				glbUrl: glbUrl || undefined,
+				agentId: 'PENDING',
+				chainId: this.selectedChainId,
+				registryAddr: identityAddr,
+				services: extra,
+			});
 		};
 		const download = (text, filename, mime = 'application/json') => {
 			const blob = new Blob([text], { type: mime });
@@ -894,57 +1091,96 @@ export class RegisterUI {
 	}
 
 	/**
-	 * Wraps agent-registry.registerAgent() with GLB-optional behavior: if the
-	 * user uploaded a GLB we use the existing flow; otherwise we go straight
-	 * to metadata-JSON pinning + on-chain mint.
+	 * Unified deploy flow covering all avatar scenarios:
+	 *   - 'upload'  → pin the dropped File
+	 *   - 'current' → reference existing stable URL (ipfs/https) without re-pinning,
+	 *                 or fetch+pin if it's a blob:/data: URL
+	 *   - 'saved'   → same bypass logic for stable saved-avatar URLs
+	 *   - 'skip'    → no GLB, metadata-only agent
+	 *
+	 * If a GLB is present but no 2D `imageUrl` was supplied, auto-render a
+	 * 512×512 PNG thumbnail from the GLB and pin it so ERC-721 marketplaces
+	 * have a valid value for the `image` field.
 	 */
 	async _doRegister(say) {
-		const { name, description, imageUrl, services, apiToken, glbUrl } = this.form;
-		let { glbFile } = this.form;
+		const {
+			name,
+			description,
+			imageUrl: userImageUrl,
+			services,
+			apiToken,
+			avatarSource,
+		} = this.form;
+		const extraServices = services
+			.filter((s) => s.endpoint.trim())
+			.map((s) => ({
+				name: s.name || s.type,
+				type: s.type,
+				endpoint: s.endpoint,
+				version: '1.0',
+			}));
 
-		// If no file was uploaded but the SPA pre-populated a glbUrl (the avatar
-		// the user just uploaded/created), fetch it as a File so the normal
-		// GLB-pinning pipeline applies.
-		if (!glbFile && glbUrl) {
+		// ── 1. Resolve GLB source: File to pin, or stable URL to reference as-is.
+		let glbFile = null;
+		let glbUrl = null;
+
+		if (avatarSource === 'upload') {
+			glbFile = this.form.glbFile;
+		} else if (avatarSource === 'current' && this.form.glbUrl) {
+			if (_isStableUrl(this.form.glbUrl)) {
+				glbUrl = this.form.glbUrl;
+				say(`Reusing existing avatar URL (no re-upload): ${glbUrl}`);
+			} else {
+				glbFile = await this._fetchUrlAsFile(this.form.glbUrl, say, 'current avatar');
+			}
+		} else if (avatarSource === 'saved' && this.form.savedAvatar) {
 			try {
-				say(`Fetching current avatar from ${glbUrl}…`);
-				const res = await fetch(glbUrl);
-				if (!res.ok) throw new Error(`HTTP ${res.status}`);
-				const blob = await res.blob();
-				const fileName = glbUrl.split('/').pop()?.split('?')[0] || 'avatar.glb';
-				glbFile = new File([blob], fileName, { type: blob.type || 'model/gltf-binary' });
+				say(`Resolving saved avatar: ${this.form.savedAvatar.name}…`);
+				const url = await this._resolveSavedAvatarUrl(this.form.savedAvatar);
+				if (!url) throw new Error('no download URL');
+				if (_isStableUrl(url)) {
+					glbUrl = url;
+					say(`Reusing saved avatar URL (no re-upload): ${url}`);
+				} else {
+					glbFile = await this._fetchUrlAsFile(url, say, this.form.savedAvatar.name);
+				}
 			} catch (err) {
-				say(`Could not fetch current avatar (${err.message}) — continuing without GLB.`);
+				say(
+					`Could not load saved avatar (${err.message}) — deploying metadata-only.`,
+					true,
+				);
 			}
 		}
 
-		// GLB path — use the existing registerAgent flow (pins GLB, mints, updates URI).
-		// We extend it by appending user-supplied services to the registration JSON.
-		if (glbFile) {
-			return await registerAgent({
-				glbFile,
-				name,
-				description,
-				apiToken: apiToken || undefined,
-				onStatus: say,
-				services: services
-					.filter((s) => s.endpoint.trim())
-					.map((s) => ({
-						name: s.name || s.type,
-						type: s.type,
-						endpoint: s.endpoint,
-						version: '1.0',
-					})),
-			});
+		// ── 2. Pin GLB if we have a File (stable URLs skip this step).
+		if (glbFile && !glbUrl) {
+			say('Uploading 3D model…');
+			glbUrl = await pinFile(glbFile, apiToken || undefined);
+			say(`Model uploaded: ${glbUrl}`);
 		}
 
-		// URI-only path: mirror agent-registry.registerAgent() but without the GLB upload.
+		// ── 3. Auto-generate 2D thumbnail when user has a GLB but no 2D poster.
+		//       Spec `image` must be PNG/JPG for ERC-721 marketplace compat.
+		let imageUrl = userImageUrl || '';
+		if (!imageUrl && glbFile) {
+			try {
+				say('Rendering 2D thumbnail from GLB…');
+				const thumb = await glbFileToThumbnail(glbFile);
+				imageUrl = await pinFile(thumb, apiToken || undefined);
+				say(`Thumbnail uploaded: ${imageUrl}`);
+			} catch (err) {
+				say(`Thumbnail render failed (${err.message}) — continuing without 2D image.`);
+			}
+		}
+
+		// ── 4. Mint on-chain. Seed URI carries useful metadata in the Registered
+		//       event in case setAgentURI fails later.
 		say('Connecting wallet…');
 		const { signer, chainId } = await connectWallet();
 		const registry = getIdentityRegistry(chainId, signer);
 
 		say('Registering agent on-chain…');
-		const seedURI = imageUrl || '';
+		const seedURI = glbUrl || imageUrl || '';
 		const tx = seedURI
 			? await registry['register(string)'](seedURI)
 			: await registry['register()']();
@@ -964,21 +1200,16 @@ export class RegisterUI {
 		const agentId = Number(registeredEvent.args.agentId);
 		say(`Agent minted! agentId = ${agentId}`);
 
+		// ── 5. Build + pin the full registration JSON, then setAgentURI.
 		const registrationJSON = buildRegistrationJSON({
 			name,
 			description,
-			imageUrl: imageUrl || '',
+			imageUrl,
+			glbUrl: glbUrl || undefined,
 			agentId,
 			chainId,
 			registryAddr: REGISTRY_DEPLOYMENTS[chainId].identityRegistry,
-			services: services
-				.filter((s) => s.endpoint.trim())
-				.map((s) => ({
-					name: s.name || s.type,
-					type: s.type,
-					endpoint: s.endpoint,
-					version: '1.0',
-				})),
+			services: extraServices,
 		});
 
 		say('Uploading registration metadata…');
@@ -993,6 +1224,24 @@ export class RegisterUI {
 		await updateTx.wait();
 
 		return { agentId, registrationUrl, txHash: tx.hash };
+	}
+
+	/**
+	 * Fetch a URL and wrap the response as a File for the pinning pipeline.
+	 * Returns null on failure (after logging via `say`).
+	 */
+	async _fetchUrlAsFile(url, say, label = 'avatar') {
+		try {
+			say(`Fetching ${label}…`);
+			const res = await fetch(url, { credentials: 'include' });
+			if (!res.ok) throw new Error(`HTTP ${res.status}`);
+			const blob = await res.blob();
+			const fileName = url.split('/').pop()?.split('?')[0] || 'avatar.glb';
+			return new File([blob], fileName, { type: blob.type || 'model/gltf-binary' });
+		} catch (err) {
+			say(`Could not fetch ${label} (${err.message}) — continuing without GLB.`, true);
+			return null;
+		}
 	}
 
 	// -----------------------------------------------------------------------
@@ -1046,7 +1295,7 @@ export class RegisterUI {
 					card.className = 'erc8004-agent-card';
 					card.innerHTML = `<div class="erc8004-muted">Loading #${id}…</div>`;
 					list.appendChild(card);
-					this._fillAgentCard(card, id, { withQR: true });
+					this._fillAgentCard(card, id, { withQR: true, withEdit: true });
 				}
 				if (res.partial) {
 					const note = document.createElement('div');
@@ -1076,6 +1325,11 @@ export class RegisterUI {
 			const image = meta.ok ? meta.data.image : '';
 			const hasX402 = meta.ok && (meta.data.x402Support || meta.data.x402);
 			card._meta = meta.ok ? meta.data : null;
+			card._owner = owner;
+
+			const isOwner =
+				this.wallet && owner && this.wallet.address.toLowerCase() === owner.toLowerCase();
+			const showLink = isOwner && this._signedIn && this._backendAgentId;
 
 			card.innerHTML = `
 				<div class="erc8004-agent-card-inner">
@@ -1087,12 +1341,15 @@ export class RegisterUI {
 							<strong>${esc(name)}</strong>
 							<span class="erc8004-tag">#${agentId}</span>
 							${hasX402 ? `<span class="erc8004-tag erc8004-tag--x402">x402 💳</span>` : ''}
+							${isOwner ? `<span class="erc8004-tag erc8004-tag--owner">You own this</span>` : ''}
 						</div>
 						${description ? `<p class="erc8004-p erc8004-clip">${esc(description)}</p>` : ''}
 						<div class="erc8004-agent-card-actions">
 							${tokenUrl ? `<a class="erc8004-link" href="${esc(tokenUrl)}" target="_blank" rel="noopener">Details ↗</a>` : ''}
 							<a class="erc8004-link" href="#agent=${agentId}">Open in viewer</a>
 							${opts.withQR && tokenUrl ? `<button type="button" class="erc8004-link" data-role="qr">QR</button>` : ''}
+							${opts.withEdit ? `<button type="button" class="erc8004-link" data-role="edit">Edit on-chain ✏️</button>` : ''}
+							${showLink ? `<button type="button" class="erc8004-link" data-role="link">Link to my account 🔗</button>` : ''}
 						</div>
 					</div>
 				</div>
@@ -1105,6 +1362,31 @@ export class RegisterUI {
 						this._openQRModal({ agentId, url: tokenUrl }),
 					);
 			}
+			if (opts.withEdit) {
+				const editBtn = card.querySelector('[data-role="edit"]');
+				if (editBtn)
+					editBtn.addEventListener('click', () =>
+						this._openEditModal({ agentId, currentMeta: card._meta, card }),
+					);
+			}
+			const linkBtn = card.querySelector('[data-role="link"]');
+			if (linkBtn)
+				linkBtn.addEventListener('click', async () => {
+					linkBtn.disabled = true;
+					linkBtn.textContent = 'Linking…';
+					try {
+						await this._linkAgentToAccount({
+							agentId: Number(agentId),
+							chainId: this.selectedChainId,
+						});
+						linkBtn.textContent = 'Linked ✓';
+						this._toast('Agent linked to your account');
+					} catch (err) {
+						linkBtn.disabled = false;
+						linkBtn.textContent = 'Link to my account 🔗';
+						this._toast(`Link failed: ${err.message}`, true);
+					}
+				});
 		} catch (err) {
 			card.innerHTML = `<div class="erc8004-log-error">Agent #${agentId}: ${esc(err.message)}</div>`;
 		}
@@ -1160,6 +1442,174 @@ export class RegisterUI {
 				this._toast('Copy failed', true);
 			}
 		});
+	}
+
+	/**
+	 * Edit modal for an existing on-chain agent. Lets the owner update
+	 * name / description / 2D image / 3D body, then pins a new registration
+	 * JSON and calls setAgentURI(agentId, newURI). Preserves unrelated
+	 * fields from the current metadata (services, registrations, trust, etc.).
+	 */
+	_openEditModal({ agentId, currentMeta, card }) {
+		const meta = currentMeta || {};
+		const modal = document.createElement('div');
+		modal.className = 'erc8004-modal';
+		modal.innerHTML = `
+			<div class="erc8004-modal-card">
+				<div class="erc8004-modal-head">
+					<div class="erc8004-h4" style="margin:0">Edit Agent #${String(agentId)}</div>
+					<button class="erc8004-btn erc8004-btn--x" data-role="close" title="Close">✕</button>
+				</div>
+				<p class="erc8004-muted erc8004-small">Updates are written on-chain via <code>setAgentURI()</code>. Re-pins the registration JSON and points <code>agentURI</code> at the new CID.</p>
+
+				<label class="erc8004-label">Name
+					<input class="erc8004-input" name="name" value="${esc(meta.name || '')}" />
+				</label>
+				<label class="erc8004-label">Description
+					<textarea class="erc8004-input" name="description" rows="3">${esc(meta.description || '')}</textarea>
+				</label>
+				<label class="erc8004-label">Image URL (2D — for marketplaces)
+					<input class="erc8004-input" name="imageUrl" value="${esc(meta.image || '')}" placeholder="https://… or ipfs://…" />
+				</label>
+				<label class="erc8004-label">3D Avatar (GLB) — optional, replaces existing body
+					<input type="file" accept=".glb,.gltf" class="erc8004-file-input" name="glb" />
+				</label>
+				<label class="erc8004-label">Pinata JWT (optional)
+					<input class="erc8004-input" name="apiToken" placeholder="leave blank for R2 backend" />
+				</label>
+
+				<div class="erc8004-log" data-role="log"></div>
+
+				<div class="erc8004-row" style="justify-content:flex-end">
+					<button class="erc8004-btn" data-role="cancel">Cancel</button>
+					<button class="erc8004-btn erc8004-btn--primary" data-role="save">Save on-chain</button>
+				</div>
+			</div>
+		`;
+		this.el.appendChild(modal);
+
+		const close = () => modal.remove();
+		modal.addEventListener('click', (e) => {
+			if (e.target === modal) close();
+		});
+		modal.querySelector('[data-role="close"]').addEventListener('click', close);
+		modal.querySelector('[data-role="cancel"]').addEventListener('click', close);
+
+		modal.querySelector('[data-role="save"]').addEventListener('click', async () => {
+			const saveBtn = modal.querySelector('[data-role="save"]');
+			const log = modal.querySelector('[data-role="log"]');
+			const say = (msg, err = false) => {
+				const line = document.createElement('div');
+				line.className = 'erc8004-log-line' + (err ? ' erc8004-log-error' : '');
+				line.textContent = msg;
+				log.appendChild(line);
+				log.scrollTop = log.scrollHeight;
+			};
+			saveBtn.disabled = true;
+			try {
+				const name = modal.querySelector('[name="name"]').value.trim();
+				const description = modal.querySelector('[name="description"]').value.trim();
+				const imageUrlInput = modal.querySelector('[name="imageUrl"]').value.trim();
+				const apiToken = modal.querySelector('[name="apiToken"]').value.trim() || undefined;
+				const fileInput = modal.querySelector('[name="glb"]');
+				const glbFile = fileInput.files?.[0] || null;
+
+				await this._doUpdateAgent({
+					agentId,
+					name,
+					description,
+					imageUrl: imageUrlInput,
+					glbFile,
+					apiToken,
+					currentMeta: meta,
+					say,
+				});
+
+				this._toast('Agent updated on-chain');
+				close();
+				if (card) this._fillAgentCard(card, agentId, { withQR: true, withEdit: true });
+			} catch (err) {
+				say('Update failed: ' + (err.shortMessage || err.message || String(err)), true);
+				saveBtn.disabled = false;
+			}
+		});
+	}
+
+	/**
+	 * Build + pin a new registration JSON and call setAgentURI on-chain.
+	 * Preserves `services`, `registrations`, `supportedTrust`, `x402Support`
+	 * from the existing metadata; only touches the fields the user edited.
+	 */
+	async _doUpdateAgent({
+		agentId,
+		name,
+		description,
+		imageUrl,
+		glbFile,
+		apiToken,
+		currentMeta,
+		say,
+	}) {
+		// Find the current GLB URL from the metadata (it lives in services[name=avatar]).
+		const existingGlbUrl = (currentMeta?.services || []).find(
+			(s) => s?.name === 'avatar' && s?.endpoint,
+		)?.endpoint;
+
+		let glbUrl = existingGlbUrl || undefined;
+		let newImageUrl = imageUrl;
+
+		// If user uploaded a new GLB, pin it and re-render thumbnail when image is empty.
+		if (glbFile) {
+			say('Uploading new 3D model…');
+			glbUrl = await pinFile(glbFile, apiToken);
+			say(`Model uploaded: ${glbUrl}`);
+			if (!newImageUrl) {
+				try {
+					say('Rendering 2D thumbnail from new GLB…');
+					const thumb = await glbFileToThumbnail(glbFile);
+					newImageUrl = await pinFile(thumb, apiToken);
+					say(`Thumbnail uploaded: ${newImageUrl}`);
+				} catch (err) {
+					say(`Thumbnail render failed (${err.message}) — keeping existing image.`);
+					newImageUrl = currentMeta?.image || '';
+				}
+			}
+		}
+
+		// Preserve non-avatar services (user-added A2A/MCP/etc.) and other fields.
+		const preservedServices = (currentMeta?.services || []).filter(
+			(s) => s?.name !== 'avatar' && s?.name !== '3D',
+		);
+
+		say('Connecting wallet…');
+		const { signer, chainId } = await connectWallet();
+		const registry = getIdentityRegistry(chainId, signer);
+		const registryAddr = REGISTRY_DEPLOYMENTS[chainId].identityRegistry;
+
+		const registrationJSON = buildRegistrationJSON({
+			name,
+			description,
+			imageUrl: newImageUrl || '',
+			glbUrl,
+			agentId,
+			chainId,
+			registryAddr,
+			services: preservedServices,
+			x402Support: !!(currentMeta?.x402Support || currentMeta?.x402),
+		});
+
+		say('Uploading new registration metadata…');
+		const jsonBlob = new Blob([JSON.stringify(registrationJSON, null, 2)], {
+			type: 'application/json',
+		});
+		const newUri = await pinFile(jsonBlob, apiToken);
+		say(`New metadata: ${newUri}`);
+
+		say('Calling setAgentURI on-chain…');
+		const tx = await registry.setAgentURI(agentId, newUri);
+		say(`Transaction submitted: ${tx.hash}`);
+		await tx.wait();
+		say('Agent URI updated ✓');
 	}
 
 	// -----------------------------------------------------------------------

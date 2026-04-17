@@ -1076,12 +1076,53 @@ footer .separator {
 }
 
 /* Page mode — /deploy renders inside app.html shell, not as a modal overlay. */
-.deploy-page {
+.deploy-page,
+.explore-page {
 	display: block;
 	width: 100%;
 	min-height: calc(100vh - var(--header-h));
 	padding: var(--space-xl) var(--space-lg) var(--space-2xl);
 	overflow-y: auto;
+}
+
+/* /a/<chainId>/<agentId> — overlay card that tells the viewer whose agent they're looking at. */
+.onchain-card {
+	position: fixed;
+	left: var(--space-md);
+	bottom: var(--space-md);
+	z-index: 50;
+	max-width: 320px;
+	padding: var(--space-sm) var(--space-md);
+	background: rgba(8, 8, 20, 0.85);
+	backdrop-filter: blur(10px);
+	-webkit-backdrop-filter: blur(10px);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	border-radius: var(--radius-md);
+	color: #fff;
+	font-size: var(--text-sm);
+	line-height: 1.35;
+	pointer-events: none;
+}
+.onchain-card__name {
+	font-weight: 600;
+}
+.onchain-card__sub {
+	margin-top: 2px;
+	color: rgba(255, 255, 255, 0.55);
+	font-size: var(--text-xs);
+}
+.onchain-card__desc {
+	margin-top: var(--space-xs);
+	color: rgba(255, 255, 255, 0.8);
+	font-size: var(--text-xs);
+	max-height: 4.2em;
+	overflow: hidden;
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+}
+.onchain-card__err {
+	color: #ff7a7a;
 }
 
 .erc8004-register--page {
@@ -3989,6 +4030,172 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 	color: rgba(255, 255, 255, 0.7);
 	white-space: pre-wrap;
 	overflow-x: auto;
+}
+
+/* Step 3 — avatar source picker */
+.erc8004-avatar-sources {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--space-xs);
+	margin: var(--space-sm) 0 var(--space-md);
+}
+
+@media (max-width: 640px) {
+	.erc8004-avatar-sources {
+		grid-template-columns: 1fr;
+	}
+}
+
+.erc8004-avatar-source {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--space-xs);
+	padding: var(--space-sm);
+	background: rgba(255, 255, 255, 0.02);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	border-radius: var(--radius-md);
+	cursor: pointer;
+	transition: border-color 0.15s, background 0.15s;
+}
+
+.erc8004-avatar-source:hover {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+.erc8004-avatar-source--active {
+	border-color: var(--accent);
+	background: var(--accent-soft);
+}
+
+.erc8004-avatar-source--disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.erc8004-avatar-source input[type='radio'] {
+	margin-top: 3px;
+	accent-color: var(--accent);
+}
+
+.erc8004-avatar-source-title {
+	font-size: var(--text-sm);
+	font-weight: 500;
+	color: #fff;
+}
+
+.erc8004-avatar-source-hint {
+	margin-top: 2px;
+	font-size: var(--text-xs);
+	color: rgba(255, 255, 255, 0.45);
+}
+
+.erc8004-avatar-source-hint code {
+	font-family: var(--font-mono);
+	font-size: 0.92em;
+	color: rgba(255, 255, 255, 0.6);
+	word-break: break-all;
+}
+
+.erc8004-avatar-panel {
+	margin-bottom: var(--space-md);
+}
+
+.erc8004-avatar-summary {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--space-sm);
+	padding: var(--space-sm) var(--space-md);
+	background: rgba(139, 92, 246, 0.08);
+	border: 1px solid rgba(139, 92, 246, 0.25);
+	border-radius: var(--radius-md);
+	font-size: var(--text-sm);
+	color: #fff;
+}
+
+.erc8004-avatar-summary code {
+	font-family: var(--font-mono);
+	font-size: 0.9em;
+	word-break: break-all;
+}
+
+.erc8004-avatar-summary-badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 22px;
+	height: 22px;
+	border-radius: 50%;
+	background: var(--accent);
+	color: #fff;
+	font-size: var(--text-xs);
+	font-weight: 700;
+	flex-shrink: 0;
+}
+
+.erc8004-avatar-summary-badge--muted {
+	background: rgba(255, 255, 255, 0.12);
+	color: rgba(255, 255, 255, 0.55);
+}
+
+.erc8004-saved-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+	gap: var(--space-xs);
+	padding: var(--space-sm);
+	background: rgba(255, 255, 255, 0.02);
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	border-radius: var(--radius-md);
+	min-height: 120px;
+}
+
+.erc8004-saved-card {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 4px;
+	padding: 4px;
+	background: rgba(255, 255, 255, 0.04);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	border-radius: var(--radius-sm);
+	cursor: pointer;
+	text-align: left;
+	color: inherit;
+	font-family: inherit;
+	transition: border-color 0.15s, background 0.15s;
+}
+
+.erc8004-saved-card:hover {
+	border-color: rgba(255, 255, 255, 0.25);
+}
+
+.erc8004-saved-card--active {
+	border-color: var(--accent);
+	background: var(--accent-soft);
+}
+
+.erc8004-saved-card img,
+.erc8004-saved-card-ph {
+	width: 100%;
+	aspect-ratio: 1 / 1;
+	object-fit: cover;
+	border-radius: var(--radius-sm);
+	background: rgba(255, 255, 255, 0.04);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: var(--text-xs);
+	color: rgba(255, 255, 255, 0.4);
+	font-weight: 600;
+	letter-spacing: 0.08em;
+}
+
+.erc8004-saved-card-name {
+	font-size: var(--text-xs);
+	color: rgba(255, 255, 255, 0.8);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	padding: 0 2px 2px;
 }
 
 /* Accordion */
