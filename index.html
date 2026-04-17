@@ -936,5 +936,15 @@
 			const btn = document.getElementById('btn-wallet-signin');
 			if (btn) wireSigninButton(btn);
 		</script>
+		<!-- BEGIN:DISCOVER_LINK -->
+		<a href="/discover" id="discoverLink" class="discover-cta" hidden
+			>Find my on-chain agents →</a
+		>
+		<script type="module">
+			fetch('/api/auth/me', { credentials: 'include' })
+				.then((r) => r.ok && (document.getElementById('discoverLink').hidden = false))
+				.catch(() => {});
+		</script>
+		<!-- END:DISCOVER_LINK -->
 	</body>
 </html>

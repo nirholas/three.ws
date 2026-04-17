@@ -104,6 +104,9 @@
 		{ "src": "/api/erc8004/hydrate", "dest": "/api/erc8004/hydrate.js" },
 		{ "src": "/api/erc8004/import", "dest": "/api/erc8004/import.js" },
 
+		{ "src": "/discover", "dest": "/public/discover/index.html" },
+		{ "src": "/discover/", "dest": "/public/discover/index.html" },
+
 		{ "src": "/api/(.*)", "dest": "/api/$1" },
 
 		{

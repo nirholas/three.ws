@@ -36,6 +36,9 @@ const appConfig = {
 				studio: resolve(__dirname, 'public/studio/index.html'),
 				reputation: resolve(__dirname, 'public/reputation/index.html'),
 				hydrate: resolve(__dirname, 'public/hydrate/index.html'),
+				// BEGIN:DISCOVER_ROUTE
+				discover: resolve(__dirname, 'public/discover/index.html'),
+				// END:DISCOVER_ROUTE
 			},
 		},
 	},
@@ -66,6 +69,10 @@ const appConfig = {
 					'/reputation/': resolve(root, 'public/reputation/index.html'),
 					'/hydrate': resolve(root, 'public/hydrate/index.html'),
 					'/hydrate/': resolve(root, 'public/hydrate/index.html'),
+					// BEGIN:DISCOVER_ROUTE
+					'/discover': resolve(root, 'public/discover/index.html'),
+					'/discover/': resolve(root, 'public/discover/index.html'),
+					// END:DISCOVER_ROUTE
 					'/agent': resolve(root, 'agent-home.html'),
 				};
 				server.middlewares.use(async (req, res, next) => {
