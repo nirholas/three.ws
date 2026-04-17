@@ -52,6 +52,9 @@ create index if not exists avatars_owner_idx on avatars(owner_id) where deleted_
 create index if not exists avatars_public_idx on avatars(visibility, created_at desc) where visibility = 'public' and deleted_at is null;
 create index if not exists avatars_tags_idx on avatars using gin(tags);
 
+-- Additive migrations for avatars columns added after initial deployment.
+alter table avatars add column if not exists storage_mode jsonb;
+
 -- ── OAuth 2.1 clients (for MCP & third-party apps) ──────────────────────────
 -- Supports RFC 7591 dynamic client registration.
 create table if not exists oauth_clients (
@@ -264,6 +267,7 @@ alter table agent_identities add column if not exists erc8004_agent_id bigint;
 alter table agent_identities add column if not exists erc8004_registry text;
 alter table agent_identities add column if not exists registration_cid text;
 alter table agent_identities add column if not exists home_url         text;
+alter table agent_identities add column if not exists embed_policy     jsonb;
 
 -- ── agent_memories — the agent's persistent context ──────────────────────────
 create table if not exists agent_memories (

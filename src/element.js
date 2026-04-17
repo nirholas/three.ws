@@ -13,6 +13,34 @@ import { parseAgentRef, resolveOnchainAgent, toManifest } from './erc8004/resolv
 
 const MODES = ['inline', 'floating', 'section', 'fullscreen'];
 
+// Derive the origin of the script itself so cross-origin embeds hit the right API.
+const _scriptOrigin = (() => {
+	try {
+		return new URL(import.meta.url).origin;
+	} catch {
+		return '';
+	}
+})();
+
+function originAllowed(originUrl, policy, firstParty = []) {
+	if (!originUrl) return false;
+	let host;
+	try {
+		host = new URL(originUrl).hostname.toLowerCase();
+	} catch {
+		return false;
+	}
+	if (firstParty.some((fp) => host === fp || host.endsWith('.' + fp))) return true;
+	const hosts = policy?.origins?.hosts ?? [];
+	const mode = policy?.origins?.mode ?? 'allowlist';
+	const matches = hosts.some((h) => {
+		const lower = h.toLowerCase();
+		if (lower.startsWith('*.')) return host.endsWith(lower.slice(1)) && host !== lower.slice(2);
+		return host === lower;
+	});
+	return mode === 'allowlist' ? matches : !matches;
+}
+
 const BASE_STYLE = `
 	:host {
 		display: block;
@@ -561,6 +589,49 @@ class Agent3DElement extends HTMLElement {
 				manifest.instructions = manifest.brain.instructions;
 			}
 
+			// Embed-policy surface + origin gate (fail-open on infra errors)
+			const _backendId = (() => {
+				const a = this.getAttribute('agent-id') || manifest.id?.agentId || '';
+				return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(a)
+					? a
+					: null;
+			})();
+			if (_backendId) {
+				try {
+					const _policyBase = _scriptOrigin || window.location.origin;
+					const _pr = await fetch(
+						`${_policyBase}/api/agents/${_backendId}/embed-policy`,
+						{ credentials: 'omit' },
+					);
+					if (_pr.ok) {
+						const { policy } = await _pr.json();
+						if (policy) {
+							if (policy.surfaces?.script === false) {
+								this._fail(
+									'embed_denied_surface',
+									'This agent disallows the script-tag embed.',
+								);
+								return;
+							}
+							const _fp = ['3dagent.vercel.app', 'localhost'];
+							const _host = window.location.origin;
+							if (
+								!_host.startsWith('http://localhost') &&
+								!originAllowed(_host, policy, _fp)
+							) {
+								this._fail(
+									'embed_denied_origin',
+									`This agent isn't permitted on ${_host}.`,
+								);
+								return;
+							}
+						}
+					}
+				} catch (_e) {
+					console.warn('[agent-3d] embed-policy fetch failed; continuing', _e);
+				}
+			}
+
 			// Build Viewer
 			this.dispatchEvent(
 				new CustomEvent('agent:load-progress', { detail: { phase: 'body', pct: 0.45 } }),
@@ -757,6 +828,21 @@ class Agent3DElement extends HTMLElement {
 		el.className = 'error';
 		el.textContent = `Couldn't load agent: ${err.message || err}`;
 		this.shadowRoot.appendChild(el);
+	}
+
+	_fail(code, message) {
+		this._loadingEl.hidden = true;
+		const el = document.createElement('div');
+		el.className = 'error';
+		el.textContent = message;
+		this.shadowRoot.appendChild(el);
+		this.dispatchEvent(
+			new CustomEvent('agent:error', {
+				detail: { phase: 'policy', error: { code, message } },
+				bubbles: true,
+				composed: true,
+			}),
+		);
 	}
 
 	async _toggleMic() {

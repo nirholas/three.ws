@@ -156,6 +156,7 @@ const TEMPLATES = [
 		description:
 			'Automated DeFi yield optimization, liquidity management, and token swaps across protocols.',
 		services: [S.a2a, S.mcp, S.x402],
+		x402Support: true,
 	},
 	{
 		id: 'support',
@@ -172,6 +173,7 @@ const TEMPLATES = [
 		description:
 			'Automated code analysis, security auditing, gas optimization, and best-practice enforcement.',
 		services: [S.a2a, S.mcp, S.x402],
+		x402Support: true,
 	},
 	{
 		id: 'data',
@@ -188,6 +190,7 @@ const TEMPLATES = [
 		description:
 			'AI content generation for social posts, documentation, technical writing, and marketing copy.',
 		services: [S.a2a, S.x402],
+		x402Support: true,
 	},
 	{
 		id: 'research',
@@ -252,7 +255,7 @@ export class RegisterUI {
 		this.selectedChainId = DEFAULT_CHAIN_ID;
 
 		// Tab state
-		this.activeTab = 'create';
+		this.activeTab = opts.initialTab || 'create';
 
 		const initial = opts.initial || {};
 
@@ -1349,6 +1352,7 @@ export class RegisterUI {
 			imageUrl: imageUrl || undefined,
 			apiToken: apiToken || undefined,
 			services: extraServices,
+			x402Support: !!this.form.x402Support,
 			onStatus: say,
 		});
 	}
@@ -1753,6 +1757,10 @@ export class RegisterUI {
 							</label>`
 						: ''
 				}
+				<label class="erc8004-checkbox">
+					<input type="checkbox" name="x402Support" ${currentMeta?.x402Support || currentMeta?.x402 ? 'checked' : ''} />
+					Accept x402 payments (HTTP-native micropayments)
+				</label>
 				<label class="erc8004-label">Pinata JWT (optional)
 					<input class="erc8004-input" name="apiToken" placeholder="leave blank for R2 backend" />
 				</label>
@@ -1793,6 +1801,7 @@ export class RegisterUI {
 				const fileInput = modal.querySelector('[name="glb"]');
 				const glbFile = fileInput.files?.[0] || null;
 				const removeAvatar = !!modal.querySelector('[name="removeAvatar"]')?.checked;
+				const x402Support = !!modal.querySelector('[name="x402Support"]')?.checked;
 
 				await this._doUpdateAgent({
 					agentId,
@@ -1801,6 +1810,7 @@ export class RegisterUI {
 					imageUrl: imageUrlInput,
 					glbFile,
 					removeAvatar,
+					x402Support,
 					apiToken,
 					currentMeta: meta,
 					say,
@@ -1828,6 +1838,7 @@ export class RegisterUI {
 		imageUrl,
 		glbFile,
 		removeAvatar = false,
+		x402Support,
 		apiToken,
 		currentMeta,
 		say,
@@ -1890,7 +1901,10 @@ export class RegisterUI {
 			chainId,
 			registryAddr,
 			services: preservedServices,
-			x402Support: !!(currentMeta?.x402Support || currentMeta?.x402),
+			x402Support:
+				typeof x402Support === 'boolean'
+					? x402Support
+					: !!(currentMeta?.x402Support || currentMeta?.x402),
 		});
 
 		say('Uploading new registration metadata…');
@@ -2254,6 +2268,7 @@ export class RegisterUI {
 				if (Array.isArray(t.services)) {
 					this.form.services = t.services.map((s) => ({ ...s }));
 				}
+				this.form.x402Support = !!t.x402Support;
 				this.wizardStep = 1;
 				this._setTab('create');
 			});
