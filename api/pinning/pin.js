@@ -48,7 +48,10 @@ async function pinViaWeb3Storage(buf, filename) {
 	});
 	if (!resp.ok) {
 		const detail = await resp.text().catch(() => '');
-		throw Object.assign(new Error(`Web3.Storage error ${resp.status}`), { status: 502, detail });
+		throw Object.assign(new Error(`Web3.Storage error ${resp.status}`), {
+			status: 502,
+			detail,
+		});
 	}
 	const data = await resp.json();
 	return { cid: data.cid, provider: 'web3.storage' };
@@ -74,7 +77,8 @@ export default wrap(async (req, res) => {
 
 	const session = await getSessionUser(req);
 	const bearer = session ? null : await authenticateBearer(extractBearer(req));
-	if (!session && !bearer) return error(res, 401, 'unauthorized', 'sign in or provide a valid bearer token');
+	if (!session && !bearer)
+		return error(res, 401, 'unauthorized', 'sign in or provide a valid bearer token');
 	const userId = session?.id ?? bearer.userId;
 
 	const rl = await limits.pinUser(userId);
@@ -117,7 +121,12 @@ export default wrap(async (req, res) => {
 		}
 	} else {
 		if (!isOwnedR2Url(sourceUrl)) {
-			return error(res, 400, 'validation_error', 'sourceUrl must be an owned R2 URL or a data: URL');
+			return error(
+				res,
+				400,
+				'validation_error',
+				'sourceUrl must be an owned R2 URL or a data: URL',
+			);
 		}
 		const head = await fetch(sourceUrl, { method: 'HEAD' });
 		if (!head.ok) return error(res, 400, 'validation_error', 'source URL is not accessible');

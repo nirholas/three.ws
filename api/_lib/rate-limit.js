@@ -96,6 +96,8 @@ export const limits = {
 	pinUser: (userId) => getLimiter('pin:user', { limit: 30, window: '1 h' }).limit(userId),
 	pinStatusIp: (ip) => getLimiter('pin:status:ip', { limit: 60, window: '1 m' }).limit(ip),
 	agentByAddress: (ip) => getLimiter('agents:by-address', { limit: 120, window: '1 m' }).limit(ip),
+	walletLink: (userId) => getLimiter('wallet:link', { limit: 10, window: '10 m' }).limit(userId),
+	agentSuggest: (ip) => getLimiter('agents:suggest', { limit: 120, window: '1 m' }).limit(ip),
 };
 
 // Trust only proxy headers that Vercel itself sets and signs. Naively reading

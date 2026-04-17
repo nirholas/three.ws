@@ -34,6 +34,7 @@
 		{ "src": "/studio/(.*)", "dest": "/public/studio/$1" },
 
 		{ "src": "/api/agents/me", "dest": "/api/agents" },
+		{ "src": "/api/agents/suggest", "dest": "/api/agents/suggest" },
 		{ "src": "/api/agents/by-wallet", "dest": "/api/agents/by-wallet" },
 		{ "src": "/api/agents/by-address/([^/]+)", "dest": "/api/agents/by-address/[addr]?addr=$1" },
 		{ "src": "/api/agents/([^/]+)/wallet", "dest": "/api/agents/[id]" },
