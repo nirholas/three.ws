@@ -25,20 +25,34 @@ const cameraSupported =
 	typeof navigator.mediaDevices.getUserMedia === 'function';
 
 // ── DOM refs ───────────────────────────────────────────────────────────────
-const steps = /** @type {NodeListOf<HTMLElement>} */ (document.querySelectorAll('.step[data-step]'));
+const steps = /** @type {NodeListOf<HTMLElement>} */ (
+	document.querySelectorAll('.step[data-step]')
+);
 const backBtn = /** @type {HTMLButtonElement} */ (document.getElementById('back-btn'));
-const choiceButtons = /** @type {NodeListOf<HTMLButtonElement>} */ (document.querySelectorAll('.choice[data-method]'));
+const choiceButtons = /** @type {NodeListOf<HTMLButtonElement>} */ (
+	document.querySelectorAll('.choice[data-method]')
+);
 const unsupportedMsg = document.getElementById('unsupported-msg');
-const slotFrames = /** @type {NodeListOf<HTMLElement>} */ (document.querySelectorAll('.slot-frame[data-slot]'));
-const slotInputs = /** @type {NodeListOf<HTMLInputElement>} */ (document.querySelectorAll('input[data-slot-input]'));
+const slotFrames = /** @type {NodeListOf<HTMLElement>} */ (
+	document.querySelectorAll('.slot-frame[data-slot]')
+);
+const slotInputs = /** @type {NodeListOf<HTMLInputElement>} */ (
+	document.querySelectorAll('input[data-slot-input]')
+);
 const submitBar = document.getElementById('submit-bar');
 const submitBtn = /** @type {HTMLButtonElement} */ (document.getElementById('submit-btn'));
-const bodyBtns = /** @type {NodeListOf<HTMLButtonElement>} */ (document.querySelectorAll('[data-body]'));
-const typeBtns = /** @type {NodeListOf<HTMLButtonElement>} */ (document.querySelectorAll('[data-type]'));
+const bodyBtns = /** @type {NodeListOf<HTMLButtonElement>} */ (
+	document.querySelectorAll('[data-body]')
+);
+const typeBtns = /** @type {NodeListOf<HTMLButtonElement>} */ (
+	document.querySelectorAll('[data-type]')
+);
 
 // ── Step 1: method picker ──────────────────────────────────────────────────
 if (!cameraSupported) {
-	const camChoice = /** @type {HTMLButtonElement | null} */ (document.querySelector('.choice[data-method="camera"]'));
+	const camChoice = /** @type {HTMLButtonElement | null} */ (
+		document.querySelector('.choice[data-method="camera"]')
+	);
 	if (camChoice) {
 		camChoice.disabled = true;
 		camChoice.setAttribute('aria-disabled', 'true');
@@ -139,7 +153,7 @@ submitBtn.addEventListener('click', () => {
 				avatarType: state.avatarType,
 				method: state.method,
 			},
-		})
+		}),
 	);
 	// Temporary visual ack until task 3 wires the pipeline.
 	submitBtn.textContent = 'Sending…';
@@ -186,7 +200,9 @@ function clearSlot(slot) {
 
 /** @param {string} slot */
 function renderSlot(slot) {
-	const frame = /** @type {HTMLElement | null} */ (document.querySelector(`.slot-frame[data-slot="${slot}"]`));
+	const frame = /** @type {HTMLElement | null} */ (
+		document.querySelector(`.slot-frame[data-slot="${slot}"]`)
+	);
 	if (!frame) return;
 	const file = state.files[slot];
 

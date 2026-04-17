@@ -11,37 +11,35 @@ The `agentURI` field in IdentityRegistry currently points to a JSON document wit
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| [src/manifest.js](../../src/manifest.js) | Existing manifest loader. |
-| [specs/](../../specs/) | Existing spec files; this prompt adds one. |
-| [examples/coach-leo/](../../examples/coach-leo/) | Reference agent — must validate against the new schema after migration. |
-| [src/agent-resolver.js](../../src/agent-resolver.js) | Resolver that consumes manifests. |
+| File                                                 | Why                                                                     |
+| :--------------------------------------------------- | :---------------------------------------------------------------------- |
+| [src/manifest.js](../../src/manifest.js)             | Existing manifest loader.                                               |
+| [specs/](../../specs/)                               | Existing spec files; this prompt adds one.                              |
+| [examples/coach-leo/](../../examples/coach-leo/)     | Reference agent — must validate against the new schema after migration. |
+| [src/agent-resolver.js](../../src/agent-resolver.js) | Resolver that consumes manifests.                                       |
 
 ## Build this
 
 1. Add `specs/AGENT_MANIFEST.md` documenting v1 schema:
-   ```jsonc
-   {
-     "$schema": "https://3dagent.vercel.app/schemas/agent-manifest-v1.json",
-     "version": 1,
-     "id": "did:erc8004:1:42",
-     "name": "Coach Leo",
-     "description": "Personal posture coach",
-     "avatar": {
-       "model_url": "ipfs://bafy.../leo.glb",
-       "thumbnail_url": "ipfs://bafy.../thumb.png"
-     },
-     "skills": [
-       { "id": "greet", "version": "1.0.0", "danger": "safe" }
-     ],
-     "memory": { "mode": "encrypted-ipfs", "root": "ipfs://..." },
-     "wallet": "0x...",
-     "homepage": "https://3dagent.vercel.app/agent/leo",
-     "created_at": "2026-04-15T00:00:00Z",
-     "signature": "0x..."  // wallet-signed hash of the rest of the doc
-   }
-   ```
+    ```jsonc
+    {
+    	"$schema": "https://3dagent.vercel.app/schemas/agent-manifest-v1.json",
+    	"version": 1,
+    	"id": "did:erc8004:1:42",
+    	"name": "Coach Leo",
+    	"description": "Personal posture coach",
+    	"avatar": {
+    		"model_url": "ipfs://bafy.../leo.glb",
+    		"thumbnail_url": "ipfs://bafy.../thumb.png",
+    	},
+    	"skills": [{ "id": "greet", "version": "1.0.0", "danger": "safe" }],
+    	"memory": { "mode": "encrypted-ipfs", "root": "ipfs://..." },
+    	"wallet": "0x...",
+    	"homepage": "https://3dagent.vercel.app/agent/leo",
+    	"created_at": "2026-04-15T00:00:00Z",
+    	"signature": "0x...", // wallet-signed hash of the rest of the doc
+    }
+    ```
 2. Generate `public/schemas/agent-manifest-v1.json` (JSON Schema draft 2020-12).
 3. Add `src/manifest-validate.js` exporting `validateManifest(json)` using zod (mirror schema). Returns `{ ok, errors }`.
 4. Update [src/manifest.js](../../src/manifest.js) to call the validator on every load; reject malformed manifests with a structured error.

@@ -18,7 +18,12 @@
 				box-sizing: border-box;
 			}
 			body {
-				font: 15px/1.55 -apple-system, system-ui, Segoe UI, Roboto, sans-serif;
+				font:
+					15px/1.55 -apple-system,
+					system-ui,
+					Segoe UI,
+					Roboto,
+					sans-serif;
 				color: #eee;
 				margin: 0;
 				background: var(--bg);
@@ -115,7 +120,11 @@
 			}
 			textarea {
 				resize: vertical;
-				font-family: ui-monospace, SF Mono, Menlo, monospace;
+				font-family:
+					ui-monospace,
+					SF Mono,
+					Menlo,
+					monospace;
 				font-size: 13px;
 			}
 			.btn {
@@ -225,7 +234,11 @@
 			}
 			.record-meta-value {
 				color: #ccc;
-				font-family: ui-monospace, SF Mono, Menlo, monospace;
+				font-family:
+					ui-monospace,
+					SF Mono,
+					Menlo,
+					monospace;
 				font-size: 13px;
 				word-break: break-all;
 			}
@@ -371,7 +384,11 @@
 				max-height: 200px;
 			}
 			code {
-				font-family: ui-monospace, SF Mono, Menlo, monospace;
+				font-family:
+					ui-monospace,
+					SF Mono,
+					Menlo,
+					monospace;
 			}
 		</style>
 	</head>
@@ -387,7 +404,9 @@
 
 		<main id="main">
 			<h1>Validation Records</h1>
-			<p class="sub">Browse validation reports for this agent to verify trust and integrity.</p>
+			<p class="sub">
+				Browse validation reports for this agent to verify trust and integrity.
+			</p>
 
 			<div class="toolbar">
 				<input
@@ -426,13 +445,19 @@
 							📄 Click to select or drag a JSON report file
 						</label>
 					</div>
-					<div id="file-status" style="font-size: 12px; color: #888; margin-top: 8px"></div>
+					<div
+						id="file-status"
+						style="font-size: 12px; color: #888; margin-top: 8px"
+					></div>
 				</div>
 
 				<div id="preview-section" style="display: none" class="section">
 					<div class="section-title">Preview</div>
 					<pre id="preview-json"></pre>
-					<div id="preview-error" style="color: #ffb3b3; font-size: 12px; margin-top: 8px"></div>
+					<div
+						id="preview-error"
+						style="color: #ffb3b3; font-size: 12px; margin-top: 8px"
+					></div>
 				</div>
 
 				<div id="hash-section" style="display: none" class="form-group">
@@ -441,7 +466,14 @@
 						type="text"
 						id="report-hash"
 						readonly
-						style="font-family: ui-monospace, SF Mono, Menlo, monospace; font-size: 12px"
+						style="
+							font-family:
+								ui-monospace,
+								SF Mono,
+								Menlo,
+								monospace;
+							font-size: 12px;
+						"
 					/>
 					<div style="font-size: 12px; color: #888; margin-top: 6px">
 						Computed via keccak256(JSON.stringify(report))

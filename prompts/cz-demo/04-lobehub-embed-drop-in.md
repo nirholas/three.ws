@@ -7,8 +7,8 @@ The "embodied, not JSON" moment of the demo. CZ opens your LobeHub fork and sees
 ## Shared context
 
 - You maintain a LobeHub fork. That repo is **separate** from this one. This task produces:
-  1. Instructions + a patch/diff for the LobeHub side.
-  2. The iframe embed source + postMessage protocol on the 3D side.
+    1. Instructions + a patch/diff for the LobeHub side.
+    2. The iframe embed source + postMessage protocol on the 3D side.
 - 3D side embed URL: `/agent/chain/:chainId/:agentId/embed` (or `/embed?chain=...&agent=...` — reuse whichever lands from [../lobehub-embed/04-embed-from-chain.md](../lobehub-embed/04-embed-from-chain.md)).
 - 3D side embed page: [public/agent/embed.html](../../public/agent/embed.html) already supports a `postMessage` bridge. Extend it with a defined protocol (see [../lobehub-embed/02-postmessage-protocol.md](../lobehub-embed/02-postmessage-protocol.md)).
 
@@ -17,6 +17,7 @@ The "embodied, not JSON" moment of the demo. CZ opens your LobeHub fork and sees
 ### 1. Define the parent ↔ embed postMessage protocol (confirm or extend)
 
 Messages the **host → embed**:
+
 ```
 { type: 'agent/user-message', text: string, role: 'user'|'assistant' }
 { type: 'agent/set-theme', theme: 'light'|'dark' }
@@ -24,6 +25,7 @@ Messages the **host → embed**:
 ```
 
 Messages the **embed → host**:
+
 ```
 { type: 'agent/ready' }
 { type: 'agent/speak', text: string, sentiment: number }
@@ -51,6 +53,7 @@ The patch file is for **operator application** — they'll apply it in the LobeH
 If a full LobeHub patch is too invasive for the demo timeline, provide `public/cz/lobehub-embed-demo.html` — a static page that **looks** like LobeHub's chat and iframes the agent embed. Useful for rehearsal and as a backup if the fork patch isn't ready.
 
 Simple two-column layout:
+
 - Left 60%: fake chat with three preset CZ messages. Typing simulated in JS.
 - Right 40%: iframe of the agent embed. Reacts to each message via postMessage.
 

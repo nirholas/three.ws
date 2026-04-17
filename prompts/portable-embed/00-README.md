@@ -9,16 +9,16 @@ Anyone with the share URL sees a public, interactive 3D agent page. Anyone with 
 - Public viewer exists at `public/agent/index.html`; embed at `public/agent/embed.html`.
 - OG/oEmbed metadata partially shipped (see `prompts/embed/01-og-oembed.md`).
 - Agent-id resolver work in flight (`prompts/embed/02-agent-id-resolver.md`).
-- Per-agent embed allowlist spec exists (`prompts/embed/03-embed-allowlist.md`) — *not* a priority right now; owners can worry about it later.
+- Per-agent embed allowlist spec exists (`prompts/embed/03-embed-allowlist.md`) — _not_ a priority right now; owners can worry about it later.
 
 ## Prompts in this band
 
-| # | File | Depends on |
-|---|---|---|
-| 01 | [share-panel.md](./01-share-panel.md) | — |
-| 02 | [embed-snippet-generator.md](./02-embed-snippet-generator.md) | 01 |
-| 03 | [public-agent-page-polish.md](./03-public-agent-page-polish.md) | — |
-| 04 | [embed-sizing-and-theming.md](./04-embed-sizing-and-theming.md) | — |
+| #   | File                                                            | Depends on |
+| --- | --------------------------------------------------------------- | ---------- |
+| 01  | [share-panel.md](./01-share-panel.md)                           | —          |
+| 02  | [embed-snippet-generator.md](./02-embed-snippet-generator.md)   | 01         |
+| 03  | [public-agent-page-polish.md](./03-public-agent-page-polish.md) | —          |
+| 04  | [embed-sizing-and-theming.md](./04-embed-sizing-and-theming.md) | —          |
 
 All four can run in parallel after a quick scan of `public/agent/`.
 
@@ -31,6 +31,6 @@ All four can run in parallel after a quick scan of `public/agent/`.
 
 ## Off-limits for this band
 
-- Don't do Claude.ai / LobeHub integration here — that's band 5. This band is about the *generic* embed being solid first.
+- Don't do Claude.ai / LobeHub integration here — that's band 5. This band is about the _generic_ embed being solid first.
 - Don't build a CDN. R2 is the blob store; Vercel serves the HTML.
 - Don't introduce a new model-viewer component. `<model-viewer>` is fine.

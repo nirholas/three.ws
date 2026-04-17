@@ -32,7 +32,7 @@ The crawler at [api/cron/erc8004-crawl.js](../../api/cron/erc8004-crawl.js) inde
 - Auth required.
 - Validate `chainId` (integer, in the 15-chain allowlist) and `agentId` (integer).
 - Look up the index row. Must exist. Must be owned by one of the caller's linked wallets.
-- Resolve `tokenURI` → metadata (use the existing `resolveOnChainAgent` helper in [api/_lib/onchain.js](../../api/_lib/onchain.js)).
+- Resolve `tokenURI` → metadata (use the existing `resolveOnChainAgent` helper in [api/\_lib/onchain.js](../../api/_lib/onchain.js)).
 - INSERT `agent_identities` with the resolved name, description, avatar (download and store via R2 if you want, or link directly — document which you chose).
 - 409 if already imported.
 - Output `{ agent: { id, erc8004_agent_id, erc8004_agent_id_chain_id, name, avatar_url } }`.

@@ -2,7 +2,7 @@
 
 ## Why
 
-The agent's *personality* lives in `agent_identities.meta.persona` — a blob the runtime prompt builder inlines into the LLM system prompt. Without a UI, users can't shape it. Without shaping, every agent sounds identical.
+The agent's _personality_ lives in `agent_identities.meta.persona` — a blob the runtime prompt builder inlines into the LLM system prompt. Without a UI, users can't shape it. Without shaping, every agent sounds identical.
 
 ## Read first
 
@@ -34,6 +34,7 @@ The agent's *personality* lives in `agent_identities.meta.persona` — a blob th
 ### 2. Server patch
 
 `PATCH /api/agents/:id` (owner-auth):
+
 - Accept a `persona` key.
 - Validate with zod (exact limits above).
 - Merge into `meta.persona` (don't replace siblings like `edits`).
@@ -43,23 +44,25 @@ The agent's *personality* lives in `agent_identities.meta.persona` — a blob th
 ### 3. `/agent/:id/edit` page
 
 New route `public/agent-edit/index.html` + `public/agent-edit/edit.js`:
+
 - Auth-gated; redirect to `/login?return=/agent/:id/edit` if anon.
 - Owner-only; 403 for non-owners.
 - Left column: live avatar preview (iframe of the viewer with `#agent=<id>`).
 - Right column: form.
-  - Name (text, required)
-  - Bio (textarea, char count)
-  - System prompt (textarea, monospace, char count, "Reset to template" button)
-  - Catchphrases (repeating text input, ≤ 5)
-  - Sentiment bias (slider, -1 → +1, labels: "stoic" / "effusive")
-  - Voice provider (radio)
-  - Voice (select populated by provider list — stub for now if ElevenLabs not wired)
-  - Do-not-say (chip input)
+    - Name (text, required)
+    - Bio (textarea, char count)
+    - System prompt (textarea, monospace, char count, "Reset to template" button)
+    - Catchphrases (repeating text input, ≤ 5)
+    - Sentiment bias (slider, -1 → +1, labels: "stoic" / "effusive")
+    - Voice provider (radio)
+    - Voice (select populated by provider list — stub for now if ElevenLabs not wired)
+    - Do-not-say (chip input)
 - Bottom: **Save** button. On save, `PATCH` → toast → reload iframe so the runtime picks up the new persona.
 
 ### 4. Runtime prompt assembly
 
 In `src/runtime/providers.js`, when building the system prompt:
+
 - Prepend `persona.systemPrompt` if present.
 - Append `You are ${persona.name}. ${persona.bio}`.
 - Append `Catchphrases you sometimes use: ${list}`.
@@ -69,6 +72,7 @@ In `src/runtime/providers.js`, when building the system prompt:
 ### 5. Template picker
 
 Three starter templates the user can click to fill the form (they can then edit):
+
 - **Friend** — casual, supportive, high celebration bias
 - **Coach** — directive, concise, neutral bias
 - **Researcher** — careful, inquisitive, high curiosity bias

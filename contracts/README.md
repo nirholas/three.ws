@@ -27,27 +27,30 @@ forge test -vv
 ## Deploy to Base Sepolia
 
 1. Install Foundry if you haven't:
-   ```bash
-   curl -L https://foundry.paradigm.xyz | bash && foundryup
-   ```
+
+    ```bash
+    curl -L https://foundry.paradigm.xyz | bash && foundryup
+    ```
 
 2. Fund a deployer wallet with Base Sepolia ETH: https://www.alchemy.com/faucets/base-sepolia
 
 3. Configure environment:
-   ```bash
-   cp .env.example .env
-   # Fill in DEPLOYER_PK and BASESCAN_API_KEY
-   ```
+
+    ```bash
+    cp .env.example .env
+    # Fill in DEPLOYER_PK and BASESCAN_API_KEY
+    ```
 
 4. Deploy + verify:
-   ```bash
-   source .env
-   forge script script/Deploy.s.sol:Deploy \
-       --rpc-url $BASE_SEPOLIA_RPC_URL \
-       --private-key $DEPLOYER_PK \
-       --broadcast \
-       --verify
-   ```
+
+    ```bash
+    source .env
+    forge script script/Deploy.s.sol:Deploy \
+        --rpc-url $BASE_SEPOLIA_RPC_URL \
+        --private-key $DEPLOYER_PK \
+        --broadcast \
+        --verify
+    ```
 
 5. Copy the three addresses from the console output into [`../src/erc8004/abi.js`](../src/erc8004/abi.js) under the `84532` entry of `REGISTRY_DEPLOYMENTS`.
 

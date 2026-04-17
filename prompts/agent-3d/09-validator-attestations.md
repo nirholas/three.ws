@@ -13,13 +13,13 @@ Emit a signed attestation when a GLB passes validation, pin it alongside the bod
 ## Deliverable
 
 1. **`src/attestations/gltf.js`** (new file):
-	 - `async createGlTFAttestation({ glbBlob, validatorReport, signer, agentId })` — SHA-256 the GLB, embed the validator's summary (error/warning counts, severity max) + issuer + timestamp + agentId + GLB hash. Sign the canonical JSON with the signer's `signMessage`. Return `{ type: "gltf-validator", ... , signature: "0x..." }`.
-	 - `async verifyGlTFAttestation({ attestation, glbBlob, trustedIssuers? })` — recomputes the hash, recovers the signer from the signature, returns `{ valid: boolean, issuer: string, reasons: string[] }`.
+    - `async createGlTFAttestation({ glbBlob, validatorReport, signer, agentId })` — SHA-256 the GLB, embed the validator's summary (error/warning counts, severity max) + issuer + timestamp + agentId + GLB hash. Sign the canonical JSON with the signer's `signMessage`. Return `{ type: "gltf-validator", ... , signature: "0x..." }`.
+    - `async verifyGlTFAttestation({ attestation, glbBlob, trustedIssuers? })` — recomputes the hash, recovers the signer from the signature, returns `{ valid: boolean, issuer: string, reasons: string[] }`.
 2. **Register flow integration** — [src/erc8004/agent-registry.js](../../src/erc8004/agent-registry.js):
-	 - After validation but before registration JSON is built, call `createGlTFAttestation`, pin via `getPinner()`, add the CID to the registration JSON under `attestations`.
+    - After validation but before registration JSON is built, call `createGlTFAttestation`, pin via `getPinner()`, add the CID to the registration JSON under `attestations`.
 3. **Runtime integration** — [src/element.js](../../src/element.js) `_boot()`:
-	 - If `manifest.attestations` includes a `gltf-validator` entry, fetch the attestation JSON and the GLB, `verifyGlTFAttestation`.
-	 - On `valid: false`: emit `agent:warning { type: "attestation-invalid" }` and either continue (default) or refuse (if `manifest.require.validAttestation === true`).
+    - If `manifest.attestations` includes a `gltf-validator` entry, fetch the attestation JSON and the GLB, `verifyGlTFAttestation`.
+    - On `valid: false`: emit `agent:warning { type: "attestation-invalid" }` and either continue (default) or refuse (if `manifest.require.validAttestation === true`).
 4. **Element attribute** — `require-attestation="true"` refuses to mount agents with invalid or missing attestations.
 5. **Spec update** — [specs/AGENT_MANIFEST.md](../../specs/AGENT_MANIFEST.md) § attestations: document the canonical signing message format.
 

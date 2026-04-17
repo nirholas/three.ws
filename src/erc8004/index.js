@@ -5,8 +5,24 @@ export {
 	REGISTRY_DEPLOYMENTS,
 	agentRegistryId,
 } from './abi.js';
-export { connectWallet, registerAgent, buildRegistrationJSON, pinToIPFS } from './agent-registry.js';
+export {
+	connectWallet,
+	registerAgent,
+	buildRegistrationJSON,
+	pinToIPFS,
+} from './agent-registry.js';
 export { RegisterUI } from './register-ui.js';
 export { submitReputation, submitFeedback, getReputation, getRecentReviews } from './reputation.js';
-export { recordValidation, getLatestValidation, reportPassed, hashReport } from './validation-recorder.js';
-export { initPrivy, loginWithPrivy, connectWithPrivy, logoutPrivy, isPrivyConfigured } from './privy.js';
+export {
+	recordValidation,
+	getLatestValidation,
+	reportPassed,
+	hashReport,
+} from './validation-recorder.js';
+export {
+	initPrivy,
+	loginWithPrivy,
+	connectWithPrivy,
+	logoutPrivy,
+	isPrivyConfigured,
+} from './privy.js';

@@ -20,13 +20,13 @@ Plus: a passive network pill in the wallet chip showing current chain name + col
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| [src/erc8004/abi.js](../../src/erc8004/abi.js) | `REGISTRY_DEPLOYMENTS` — source of truth for supported chains. |
-| [src/erc8004/agent-registry.js](../../src/erc8004/agent-registry.js) | Existing `connectWallet`. See what chain check (if any) is there. |
-| [public/wallet-login.js](../../public/wallet-login.js) | Current sign-in — reads `chainId` but does nothing with it. |
-| [api/auth/siwe/verify.js](../../api/auth/siwe/verify.js) | Persists `chain_id` on `user_wallets`. No guard server-side — that's fine, guard is UX-only. |
-| `src/components/wallet-chip.js` (from 01-02) | Where the network pill mounts. |
+| File                                                                 | Why                                                                                          |
+| :------------------------------------------------------------------- | :------------------------------------------------------------------------------------------- |
+| [src/erc8004/abi.js](../../src/erc8004/abi.js)                       | `REGISTRY_DEPLOYMENTS` — source of truth for supported chains.                               |
+| [src/erc8004/agent-registry.js](../../src/erc8004/agent-registry.js) | Existing `connectWallet`. See what chain check (if any) is there.                            |
+| [public/wallet-login.js](../../public/wallet-login.js)               | Current sign-in — reads `chainId` but does nothing with it.                                  |
+| [api/auth/siwe/verify.js](../../api/auth/siwe/verify.js)             | Persists `chain_id` on `user_wallets`. No guard server-side — that's fine, guard is UX-only. |
+| `src/components/wallet-chip.js` (from 01-02)                         | Where the network pill mounts.                                                               |
 
 ## Build this
 
@@ -36,13 +36,33 @@ Create `src/lib/chains.js`:
 
 ```js
 export const CHAINS = {
-  1:      { name: 'Ethereum',     short: 'ETH',  color: '#627eea', rpc: null, explorer: 'https://etherscan.io' },
-  8453:   { name: 'Base',         short: 'BASE', color: '#0052ff', rpc: 'https://mainnet.base.org',     explorer: 'https://basescan.org' },
-  84532:  { name: 'Base Sepolia', short: 'B-SEP',color: '#88aaff', rpc: 'https://sepolia.base.org',    explorer: 'https://sepolia.basescan.org' },
-  // Add more as needed.
+	1: {
+		name: 'Ethereum',
+		short: 'ETH',
+		color: '#627eea',
+		rpc: null,
+		explorer: 'https://etherscan.io',
+	},
+	8453: {
+		name: 'Base',
+		short: 'BASE',
+		color: '#0052ff',
+		rpc: 'https://mainnet.base.org',
+		explorer: 'https://basescan.org',
+	},
+	84532: {
+		name: 'Base Sepolia',
+		short: 'B-SEP',
+		color: '#88aaff',
+		rpc: 'https://sepolia.base.org',
+		explorer: 'https://sepolia.basescan.org',
+	},
+	// Add more as needed.
 };
 
-export function chainInfo(id) { return CHAINS[Number(id)] || { name: `Chain ${id}`, short: 'UNK', color: '#777' }; }
+export function chainInfo(id) {
+	return CHAINS[Number(id)] || { name: `Chain ${id}`, short: 'UNK', color: '#777' };
+}
 
 export const TARGET_CHAIN_ID = Number(import.meta.env.VITE_TARGET_CHAIN_ID) || 84532;
 ```
@@ -54,8 +74,12 @@ Also document `VITE_TARGET_CHAIN_ID` in `.env.example`.
 Create `src/lib/network-guard.js`:
 
 ```js
-export async function ensureChain(targetId) { /* returns true if on target chain after prompt, false if user cancelled */ }
-export async function switchOrAdd(provider, chainId) { /* wallet_switchEthereumChain → wallet_addEthereumChain */ }
+export async function ensureChain(targetId) {
+	/* returns true if on target chain after prompt, false if user cancelled */
+}
+export async function switchOrAdd(provider, chainId) {
+	/* wallet_switchEthereumChain → wallet_addEthereumChain */
+}
 ```
 
 Use dynamic `BrowserProvider` from esm.sh to keep the file CDN-loadable like `wallet-login.js`.
@@ -79,10 +103,12 @@ Extend `src/components/wallet-chip.js` (from 01-02) to show the current chain as
 ## Deliverables
 
 **New:**
+
 - `src/lib/chains.js`
 - `src/lib/network-guard.js`
 
 **Modified:**
+
 - [src/erc8004/agent-registry.js](../../src/erc8004/agent-registry.js) — add `ensureChain` calls before each write path.
 - `src/components/wallet-chip.js` — network pill + `chainChanged` listener.
 - `.env.example` — document `VITE_TARGET_CHAIN_ID`.

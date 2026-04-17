@@ -11,6 +11,7 @@ Google's `<model-viewer>` solves this with one shared `WebGLRenderer` drawing in
 ## Goal
 
 Introduce a `Renderer` singleton that:
+
 - Owns the only `WebGLRenderer` in the application.
 - Lets each viewer instance request renders via `renderer.render(scene, camera, targetCanvas)`.
 - Schedules frames across instances based on visibility and animation state.
@@ -19,27 +20,28 @@ Introduce a `Renderer` singleton that:
 ## Deliverable
 
 1. `src/viewer/Renderer.js` exporting a singleton:
-   ```js
-   export class Renderer {
-     static singleton;
-     constructor();
-     registerScene(scene);       // returns handle
-     unregisterScene(handle);
-     render(scene, camera, targetCanvas2D);   // synchronous blit
-     invalidate(scene);          // mark dirty for next frame
-     dispose();
-   }
-   ```
+    ```js
+    export class Renderer {
+      static singleton;
+      constructor();
+      registerScene(scene);       // returns handle
+      unregisterScene(handle);
+      render(scene, camera, targetCanvas2D);   // synchronous blit
+      invalidate(scene);          // mark dirty for next frame
+      dispose();
+    }
+    ```
 2. Refactor [src/viewer.js](../../src/viewer.js) to:
-   - No longer create its own `WebGLRenderer`.
-   - Own a 2D canvas (`CanvasRenderingContext2D`) that it mounts into `this.el`.
-   - Register with the shared `Renderer` on construct, unregister on dispose.
-   - Route all `this.renderer.render(...)` calls through the shared renderer.
+    - No longer create its own `WebGLRenderer`.
+    - Own a 2D canvas (`CanvasRenderingContext2D`) that it mounts into `this.el`.
+    - Register with the shared `Renderer` on construct, unregister on dispose.
+    - Route all `this.renderer.render(...)` calls through the shared renderer.
 3. Update all places that read from `this.renderer` directly — e.g., PMREM generator creation, screenshot export via `this.renderer.domElement.toBlob()`, `pixelRatio` setting, shadow map config, tone mapping. These need to be rerouted either to the shared renderer (shared config) or computed differently (screenshots need an explicit render-to-target-canvas step).
 
 ## Architecture notes
 
 **Compositing path.** Each viewer mounts a 2D `<canvas>` sized to its element. The shared WebGL canvas is sized to the largest visible viewer's pixel dimensions (or a configured max). On render:
+
 1. Set WebGL renderer size to the target viewer's pixel size.
 2. `renderer.render(scene, camera)`.
 3. `target2dCtx.drawImage(webglCanvas, 0, 0, w, h)`.
@@ -49,18 +51,22 @@ This adds a copy per frame but saves N–1 WebGL contexts.
 Alternative (more modern, less broadly supported): `renderer.domElement.transferControlToOffscreen()` and assign as OffscreenCanvas — but requires a totally different pipeline. Prefer the drawImage path.
 
 **Scheduler.**
+
 - Maintain a list of registered scenes + their visibility/dirty state.
 - Each frame: pick visible + (dirty OR animating) scenes, render each in priority order.
 - Budget: a max of e.g. 4 renders per frame, defer the rest.
 - If all registered scenes are idle, don't schedule RAF.
 
 **Shared config.**
+
 - Tone mapping, exposure, pixel ratio — these are per-render settings, applied just before each `renderer.render`. Store them per-scene in the viewer, apply on render.
 
 **PMREM.**
+
 - Move PMREM generator to the shared renderer (it also needs a GL context). Expose a `Renderer.singleton.pmrem` or similar. Environment textures become globally cached by URL.
 
 **Screenshot.**
+
 - `takeScreenshot()` currently uses `this.renderer.domElement.toBlob()`. After this refactor, capture from the per-viewer 2D canvas (which mirrors the last frame) or force a fresh render to a RenderTarget → readPixels → canvas → toBlob.
 
 ## Risks / things that bite

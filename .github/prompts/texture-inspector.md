@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Build texture inspector with channel separation and full-size preview"
+description: 'Build texture inspector with channel separation and full-size preview'
 ---
 
 # Texture Inspector
@@ -15,29 +15,31 @@ The README roadmap lists **"Texture Inspector — view individual texture channe
 
 After a model loads, traverse all materials and collect every unique texture:
 
-| Slot | Three.js Property | glTF Channel |
-|------|-------------------|--------------|
-| Base Color | `material.map` | baseColorTexture |
-| Normal | `material.normalMap` | normalTexture |
+| Slot               | Three.js Property                                 | glTF Channel             |
+| ------------------ | ------------------------------------------------- | ------------------------ |
+| Base Color         | `material.map`                                    | baseColorTexture         |
+| Normal             | `material.normalMap`                              | normalTexture            |
 | Metallic-Roughness | `material.metalnessMap` / `material.roughnessMap` | metallicRoughnessTexture |
-| Occlusion | `material.aoMap` | occlusionTexture |
-| Emissive | `material.emissiveMap` | emissiveTexture |
-| Alpha | (from `material.map` alpha channel) | — |
+| Occlusion          | `material.aoMap`                                  | occlusionTexture         |
+| Emissive           | `material.emissiveMap`                            | emissiveTexture          |
+| Alpha              | (from `material.map` alpha channel)               | —                        |
 
 ### 2. Channel Separation
 
 For packed textures (metallic-roughness is R+G channels in one image):
+
 - Extract individual channels using a canvas 2D context
 - Display each channel as a separate grayscale image:
-  - **R** = Occlusion (if packed)
-  - **G** = Roughness
-  - **B** = Metallic
+    - **R** = Occlusion (if packed)
+    - **G** = Roughness
+    - **B** = Metallic
 
 Use `getImageData()` and pixel manipulation to isolate channels.
 
 ### 3. Texture Info Display
 
 For each texture, show:
+
 - Resolution (width × height)
 - Format (PNG/JPEG/KTX2/Basis)
 - Memory estimate (width × height × 4 bytes for RGBA, accounting for mipmaps)

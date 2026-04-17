@@ -17,13 +17,13 @@ A **Skills** tab on the agent edit page (`/agent/:id/edit` or the dashboard agen
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| [src/skills/index.js](../../src/skills/index.js) | `SkillRegistry.install(spec, { bundleBase })` — reuse, don't reinvent. |
-| [src/manifest.js](../../src/manifest.js) | Manifest normalization. Skills may live inside a manifest or alone. |
+| File                                                  | Why                                                                                                        |
+| :---------------------------------------------------- | :--------------------------------------------------------------------------------------------------------- |
+| [src/skills/index.js](../../src/skills/index.js)      | `SkillRegistry.install(spec, { bundleBase })` — reuse, don't reinvent.                                     |
+| [src/manifest.js](../../src/manifest.js)              | Manifest normalization. Skills may live inside a manifest or alone.                                        |
 | [api/agents.js](../../api/agents.js) — `handleUpdate` | Already accepts `skills` in the PUT body. Update is a no-op if you only add/remove strings from the array. |
-| [specs/](../../specs/) | Skill format spec — what's in a skill bundle (`SKILL.md`, `tools.json`, `handlers.js`). |
-| [src/runtime/tools.js](../../src/runtime/tools.js) | Built-in tools the agent already has. Third-party skills add to this set at runtime. |
+| [specs/](../../specs/)                                | Skill format spec — what's in a skill bundle (`SKILL.md`, `tools.json`, `handlers.js`).                    |
+| [src/runtime/tools.js](../../src/runtime/tools.js)    | Built-in tools the agent already has. Third-party skills add to this set at runtime.                       |
 
 ## Build this
 
@@ -32,6 +32,7 @@ A **Skills** tab on the agent edit page (`/agent/:id/edit` or the dashboard agen
 Create `public/agent/edit-skills.html` + `edit-skills.js` (or add as a tab inside an existing `/agent/:id/edit` page).
 
 Layout:
+
 - Header: "Skills for <agent name>"
 - Installed list, each row: name · short description · source · [Remove]
 - Divider
@@ -54,6 +55,7 @@ On paste + Install, fetch the skill bundle via [src/skills/index.js](../../src/s
 Reuse `PUT /api/agents/:id` with a modified `skills` array. No new endpoint.
 
 The `skills` column holds either:
+
 - built-in skill name (`"greet"`, `"remember"`, etc.)
 - external skill URL (`"https://..."`, `"ipfs://..."`, `"agent://..."`)
 
@@ -66,6 +68,7 @@ Remove button PATCHes `skills` with the string filtered out. Built-in skills are
 ### 5. Trust modes
 
 The agent record has a `meta.skill_trust` field:
+
 - `any` (default) — allows any URL.
 - `owned-only` — only skills authored by the agent's wallet address.
 - `whitelist` — explicit list of authors in `meta.skill_authors`.
@@ -86,10 +89,12 @@ At agent boot (`element.js` / `agent-home`), iterate `identity.skills`. For each
 ## Deliverables
 
 **New:**
+
 - `public/agent/edit-skills.html`
 - `public/agent/edit-skills.js`
 
 **Modified:**
+
 - [src/element.js](../../src/element.js) — iterate `identity.skills`, call `SkillRegistry.install` for URLs.
 - [src/agent-home.js](../../src/agent-home.js) — render installed skills list in the home UI (read-only).
 

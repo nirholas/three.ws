@@ -28,7 +28,7 @@ Stages 3–4 are inferred client-side from elapsed time because the current back
 - If in flight more than 6s, flip to `building`.
 - If in flight more than 30s, show a "still working — this occasionally takes up to 60s" note. Do not abort.
 
-If the POST errors, show the error and a *Try again* button. Never leave the user stuck on a spinner.
+If the POST errors, show the error and a _Try again_ button. Never leave the user stuck on a spinner.
 
 ## UI requirements
 

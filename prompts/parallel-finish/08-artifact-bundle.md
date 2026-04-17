@@ -4,7 +4,7 @@
 
 Repo root: `/workspaces/3D-Agent`. Read [/CLAUDE.md](../../CLAUDE.md) and [specs/EMBED_SPEC.md](../../specs/EMBED_SPEC.md) first.
 
-Claude Artifacts run inside a sandboxed iframe. The dashboard currently generates a snippet that puts *another* iframe inside — nested iframes work poorly and break the postMessage bridge. We want a **zero-dependency, self-contained bundle** the user can paste as a single `<script>` + `<div>` and get a live agent inside a Claude Artifact.
+Claude Artifacts run inside a sandboxed iframe. The dashboard currently generates a snippet that puts _another_ iframe inside — nested iframes work poorly and break the postMessage bridge. We want a **zero-dependency, self-contained bundle** the user can paste as a single `<script>` + `<div>` and get a live agent inside a Claude Artifact.
 
 The bundle lives at `https://3dagent.vercel.app/artifact.js`. It includes three.js + GLTFLoader inlined (or fetched from a CDN the Artifact sandbox allows — `esm.sh`), reads config from a `<script type="application/json" id="agent3d-config">` block, resolves the agent via `GET /api/agents/:id`, loads the GLB, renders it with basic controls + a caption line (no chat).
 
@@ -30,7 +30,7 @@ The bundle lives at `https://3dagent.vercel.app/artifact.js`. It includes three.
 ## Claude Artifact compatibility
 
 - Works inside `<iframe sandbox="allow-scripts">` with no `allow-same-origin`. That means the bundle must not access `document.cookie`, `localStorage`, or parent window.
-- CORS: ensure `GET /api/agents/:id` has `Access-Control-Allow-Origin: *` — check [api/_lib/http.js](../../api/_lib/http.js) `cors()` helper; you can use it but do not edit it.
+- CORS: ensure `GET /api/agents/:id` has `Access-Control-Allow-Origin: *` — check [api/\_lib/http.js](../../api/_lib/http.js) `cors()` helper; you can use it but do not edit it.
 
 ## Out of scope
 

@@ -1,93 +1,261 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sign in · 3D Agent</title>
-<link rel="icon" href="/favicon.ico">
-<meta name="privy-app-id" content="">
-<style>
-	:root { color-scheme: dark; --accent:#6a5cff; --accent2:#ff5ca8; }
-	* { box-sizing: border-box; }
-	body { font: 15px/1.5 -apple-system,system-ui,Segoe UI,Roboto,sans-serif; background:radial-gradient(1200px 600px at 50% -100px,#1a1a2e 0,#080814 60%); color:#eee; margin:0; min-height:100vh; display:grid; place-items:center; padding:24px; }
-	a { color:#9a8cff; }
-	.card { background:#14141c; border:1px solid #2a2a36; border-radius:16px; padding:32px; max-width:400px; width:100%; box-shadow:0 10px 40px rgba(0,0,0,.5); }
-	h1 { font-size:22px; margin:0 0 4px; letter-spacing:-0.01em; }
-	.sub { color:#888; margin:0 0 24px; font-size:14px; }
-	label { display:block; font-size:13px; color:#aaa; margin:14px 0 6px; }
-	input { width:100%; padding:11px 13px; background:#0f0f17; border:1px solid #2a2a36; border-radius:9px; color:#eee; font-size:15px; }
-	input:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(106,92,255,.15); }
-	button { width:100%; margin-top:20px; padding:12px 16px; border:0; border-radius:10px; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; font-weight:600; font-size:15px; cursor:pointer; }
-	button:disabled { opacity:.6; cursor:default; }
-	.err { margin-top:14px; padding:10px 12px; background:rgba(255,92,92,.1); border:1px solid rgba(255,92,92,.3); border-radius:8px; color:#ffb3b3; font-size:13px; display:none; }
-	.foot { margin-top:20px; text-align:center; font-size:13px; color:#888; }
-	.brand { font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); margin:0 0 8px; }
-	.wallet-btn { background:#1c1c28; border:1px solid #2a2a36; color:#eee; font-weight:500; margin-top:12px; display:flex; align-items:center; justify-content:center; gap:8px; }
-	.wallet-btn:hover { background:#22222e; border-color:var(--accent); }
-	.divider { display:flex; align-items:center; gap:12px; margin:22px 0 4px; color:#555; font-size:12px; text-transform:uppercase; letter-spacing:.08em; }
-	.divider::before, .divider::after { content:''; flex:1; height:1px; background:#2a2a36; }
-	.wallet-icon { width:18px; height:18px; }
-</style>
-</head>
-<body>
-<form class="card" id="f">
-	<p class="brand">3D Agent</p>
-	<h1>Welcome back</h1>
-	<p class="sub">Sign in to manage your avatars.</p>
-	<label for="email">Email or username</label>
-	<input id="email" type="text" autocomplete="username email" required>
-	<label for="password">Password</label>
-	<input id="password" type="password" autocomplete="current-password" required minlength="10">
-	<button id="submit" type="submit">Sign in</button>
-	<div class="divider">or</div>
-	<button id="privy" type="button" class="wallet-btn" style="background:linear-gradient(135deg,var(--accent),var(--accent2)); border-color:transparent; color:#fff">
-		<svg class="wallet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
-		Sign in with Privy
-	</button>
-	<button id="wallet" type="button" class="wallet-btn">
-		<svg class="wallet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M16 12h2"/></svg>
-		Sign in with MetaMask
-	</button>
-	<div class="err" id="err"></div>
-	<p class="foot">No account? <a href="/register">Create one</a></p>
-</form>
-<script type="module" src="/wallet-login.js"></script>
-<script>
-const params = new URLSearchParams(location.search);
-const next = params.get('next') || '/dashboard/';
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Sign in · 3D Agent</title>
+		<link rel="icon" href="/favicon.ico" />
+		<meta name="privy-app-id" content="" />
+		<style>
+			:root {
+				color-scheme: dark;
+				--accent: #6a5cff;
+				--accent2: #ff5ca8;
+			}
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				font:
+					15px/1.5 -apple-system,
+					system-ui,
+					Segoe UI,
+					Roboto,
+					sans-serif;
+				background: radial-gradient(1200px 600px at 50% -100px, #1a1a2e 0, #080814 60%);
+				color: #eee;
+				margin: 0;
+				min-height: 100vh;
+				display: grid;
+				place-items: center;
+				padding: 24px;
+			}
+			a {
+				color: #9a8cff;
+			}
+			.card {
+				background: #14141c;
+				border: 1px solid #2a2a36;
+				border-radius: 16px;
+				padding: 32px;
+				max-width: 400px;
+				width: 100%;
+				box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+			}
+			h1 {
+				font-size: 22px;
+				margin: 0 0 4px;
+				letter-spacing: -0.01em;
+			}
+			.sub {
+				color: #888;
+				margin: 0 0 24px;
+				font-size: 14px;
+			}
+			label {
+				display: block;
+				font-size: 13px;
+				color: #aaa;
+				margin: 14px 0 6px;
+			}
+			input {
+				width: 100%;
+				padding: 11px 13px;
+				background: #0f0f17;
+				border: 1px solid #2a2a36;
+				border-radius: 9px;
+				color: #eee;
+				font-size: 15px;
+			}
+			input:focus {
+				outline: none;
+				border-color: var(--accent);
+				box-shadow: 0 0 0 3px rgba(106, 92, 255, 0.15);
+			}
+			button {
+				width: 100%;
+				margin-top: 20px;
+				padding: 12px 16px;
+				border: 0;
+				border-radius: 10px;
+				background: linear-gradient(135deg, var(--accent), var(--accent2));
+				color: #fff;
+				font-weight: 600;
+				font-size: 15px;
+				cursor: pointer;
+			}
+			button:disabled {
+				opacity: 0.6;
+				cursor: default;
+			}
+			.err {
+				margin-top: 14px;
+				padding: 10px 12px;
+				background: rgba(255, 92, 92, 0.1);
+				border: 1px solid rgba(255, 92, 92, 0.3);
+				border-radius: 8px;
+				color: #ffb3b3;
+				font-size: 13px;
+				display: none;
+			}
+			.foot {
+				margin-top: 20px;
+				text-align: center;
+				font-size: 13px;
+				color: #888;
+			}
+			.brand {
+				font-size: 12px;
+				letter-spacing: 0.1em;
+				text-transform: uppercase;
+				color: var(--accent);
+				margin: 0 0 8px;
+			}
+			.wallet-btn {
+				background: #1c1c28;
+				border: 1px solid #2a2a36;
+				color: #eee;
+				font-weight: 500;
+				margin-top: 12px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				gap: 8px;
+			}
+			.wallet-btn:hover {
+				background: #22222e;
+				border-color: var(--accent);
+			}
+			.divider {
+				display: flex;
+				align-items: center;
+				gap: 12px;
+				margin: 22px 0 4px;
+				color: #555;
+				font-size: 12px;
+				text-transform: uppercase;
+				letter-spacing: 0.08em;
+			}
+			.divider::before,
+			.divider::after {
+				content: '';
+				flex: 1;
+				height: 1px;
+				background: #2a2a36;
+			}
+			.wallet-icon {
+				width: 18px;
+				height: 18px;
+			}
+		</style>
+	</head>
+	<body>
+		<form class="card" id="f">
+			<p class="brand">3D Agent</p>
+			<h1>Welcome back</h1>
+			<p class="sub">Sign in to manage your avatars.</p>
+			<label for="email">Email or username</label>
+			<input id="email" type="text" autocomplete="username email" required />
+			<label for="password">Password</label>
+			<input
+				id="password"
+				type="password"
+				autocomplete="current-password"
+				required
+				minlength="10"
+			/>
+			<button id="submit" type="submit">Sign in</button>
+			<div class="divider">or</div>
+			<button
+				id="privy"
+				type="button"
+				class="wallet-btn"
+				style="
+					background: linear-gradient(135deg, var(--accent), var(--accent2));
+					border-color: transparent;
+					color: #fff;
+				"
+			>
+				<svg
+					class="wallet-icon"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
+					<circle cx="12" cy="8" r="4" />
+					<path d="M20 21a8 8 0 0 0-16 0" />
+				</svg>
+				Sign in with Privy
+			</button>
+			<button id="wallet" type="button" class="wallet-btn">
+				<svg
+					class="wallet-icon"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
+					<rect x="2" y="6" width="20" height="14" rx="2" />
+					<path d="M16 12h2" />
+				</svg>
+				Sign in with MetaMask
+			</button>
+			<div class="err" id="err"></div>
+			<p class="foot">No account? <a href="/register">Create one</a></p>
+		</form>
+		<script type="module" src="/wallet-login.js"></script>
+		<script>
+			const params = new URLSearchParams(location.search);
+			const next = params.get('next') || '/dashboard/';
 
-// If already signed in, skip the login form entirely.
-fetch('/api/auth/me', { credentials: 'include' })
-	.then(r => { if (r.ok) location.replace(next); })
-	.catch(() => {});
+			// If already signed in, skip the login form entirely.
+			fetch('/api/auth/me', { credentials: 'include' })
+				.then((r) => {
+					if (r.ok) location.replace(next);
+				})
+				.catch(() => {});
 
-const form = document.getElementById('f');
-const err = document.getElementById('err');
-const btn = document.getElementById('submit');
-form.addEventListener('submit', async (e) => {
-	e.preventDefault();
-	err.style.display = 'none';
-	btn.disabled = true; btn.textContent = 'Signing in…';
-	try {
-		const res = await fetch('/api/auth/login', {
-			method: 'POST',
-			credentials: 'include',
-			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({
-				email: document.getElementById('email').value,
-				password: document.getElementById('password').value,
-			}),
-		});
-		const data = await res.json();
-		if (!res.ok) throw new Error(data.error_description || 'Sign-in failed');
-		try { localStorage.setItem('3dagent:auth-hint', JSON.stringify({ authed: true, ts: Date.now() })); } catch { /* ignore */ }
-		location.href = next;
-	} catch (e) {
-		err.textContent = e.message;
-		err.style.display = 'block';
-		btn.disabled = false; btn.textContent = 'Sign in';
-	}
-});
-</script>
-</body>
+			const form = document.getElementById('f');
+			const err = document.getElementById('err');
+			const btn = document.getElementById('submit');
+			form.addEventListener('submit', async (e) => {
+				e.preventDefault();
+				err.style.display = 'none';
+				btn.disabled = true;
+				btn.textContent = 'Signing in…';
+				try {
+					const res = await fetch('/api/auth/login', {
+						method: 'POST',
+						credentials: 'include',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({
+							email: document.getElementById('email').value,
+							password: document.getElementById('password').value,
+						}),
+					});
+					const data = await res.json();
+					if (!res.ok) throw new Error(data.error_description || 'Sign-in failed');
+					try {
+						localStorage.setItem(
+							'3dagent:auth-hint',
+							JSON.stringify({ authed: true, ts: Date.now() }),
+						);
+					} catch {
+						/* ignore */
+					}
+					location.href = next;
+				} catch (e) {
+					err.textContent = e.message;
+					err.style.display = 'block';
+					btn.disabled = false;
+					btn.textContent = 'Sign in';
+				}
+			});
+		</script>
+	</body>
 </html>

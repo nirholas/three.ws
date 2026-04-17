@@ -23,24 +23,24 @@ Depends on tasks 09, 10, 11.
 
 1. **Interface** `src/agent/brain.js` — `class Brain { async respond(history, { signal, onToken }): Promise<string> }` where `history` is `[{role, content}]` and `onToken` streams partials.
 2. **WebLLM adapter** `src/agent/brain-webllm.js`:
-   - npm install `@mlc-ai/web-llm`.
-   - Loads a small model (e.g., `Llama-3.2-3B-Instruct-q4f16_1-MLC`); document model choice with size + VRAM.
-   - First call triggers model download with a visible progress UI.
-   - Subsequent calls are instant-ish.
+    - npm install `@mlc-ai/web-llm`.
+    - Loads a small model (e.g., `Llama-3.2-3B-Instruct-q4f16_1-MLC`); document model choice with size + VRAM.
+    - First call triggers model download with a visible progress UI.
+    - Subsequent calls are instant-ish.
 3. **Cloud adapter** `src/agent/brain-cloud.js`:
-   - POSTs to `/api/agent/complete`; streams SSE back.
-   - Supports Claude and OpenAI via the same backend endpoint (server decides based on env).
+    - POSTs to `/api/agent/complete`; streams SSE back.
+    - Supports Claude and OpenAI via the same backend endpoint (server decides based on env).
 4. **Backend proxy** `services/agent/`:
-   - Accepts `{ history, model? }`.
-   - Uses server-side API key (`ANTHROPIC_API_KEY` or `OPENAI_API_KEY`).
-   - Streams SSE.
-   - Rate-limit per IP.
-   - **Never** logs request/response content.
-   - If no API key is configured, endpoint returns 501 and the frontend auto-degrades to local.
+    - Accepts `{ history, model? }`.
+    - Uses server-side API key (`ANTHROPIC_API_KEY` or `OPENAI_API_KEY`).
+    - Streams SSE.
+    - Rate-limit per IP.
+    - **Never** logs request/response content.
+    - If no API key is configured, endpoint returns 501 and the frontend auto-degrades to local.
 5. **Capability selector** `src/agent/brain.js` → `async createBrain({ prefer: 'local'|'cloud'|'auto' })`:
-   - `local`: requires WebGPU + `navigator.deviceMemory >= 4` (or unknown on Safari — try).
-   - `cloud`: requires backend reachable.
-   - `auto`: prefer local if capable, else cloud, else rule-based fallback from task 01.
+    - `local`: requires WebGPU + `navigator.deviceMemory >= 4` (or unknown on Safari — try).
+    - `cloud`: requires backend reachable.
+    - `auto`: prefer local if capable, else cloud, else rule-based fallback from task 01.
 6. **System prompt** — templated from viewer state. Include: current model file name, animation list, any validation warnings, whether a VRM is loaded, user's name if known (task 20).
 7. **Agent panel wiring** — replace `_generateResponse` with `brain.respond(history, { onToken })`. As tokens stream, push to TalkingHead via `speak` (task 09 + 10) in sentence-sized chunks so lipsync catches up.
 8. **Abort handling** — user presses "stop" → `AbortController` cancels both the LLM stream and the TTS synthesis.

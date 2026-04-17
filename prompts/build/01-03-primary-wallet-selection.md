@@ -6,9 +6,9 @@
 
 ## Context
 
-- Schema: `users.wallet_address`, `user_wallets(user_id, address, chain_id, created_at)` in [api/_lib/schema.sql](../../api/_lib/schema.sql).
+- Schema: `users.wallet_address`, `user_wallets(user_id, address, chain_id, created_at)` in [api/\_lib/schema.sql](../../api/_lib/schema.sql).
 - Linking endpoints: `api/auth/siwe/link.js` (from 01-01).
-- Session helper: `getSessionUser` in [api/_lib/auth.js](../../api/_lib/auth.js).
+- Session helper: `getSessionUser` in [api/\_lib/auth.js](../../api/_lib/auth.js).
 - Dashboard wallet section: [public/dashboard/dashboard.js](../../public/dashboard/dashboard.js).
 
 ## What to build
@@ -27,9 +27,9 @@ One-time backfill (include in the same migration): for each user with ≥1 walle
 
 - Session-authed. Body: `{ address }`.
 - In a single transaction:
-  1. Verify the address belongs to the caller in `user_wallets` → else 404.
-  2. `update user_wallets set is_primary = (address = $1) where user_id = $me`.
-  3. `update users set wallet_address = $1 where id = $me`.
+    1. Verify the address belongs to the caller in `user_wallets` → else 404.
+    2. `update user_wallets set is_primary = (address = $1) where user_id = $me`.
+    3. `update users set wallet_address = $1 where id = $me`.
 - Returns `{ ok: true, primary: address }`.
 
 ### Dashboard UI

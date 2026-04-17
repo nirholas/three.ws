@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Mesh tab — replace underlying GLB (rerun selfie, upload GLB, or pick preset)"
+description: 'Mesh tab — replace underlying GLB (rerun selfie, upload GLB, or pick preset)'
 ---
 
 # Stack Layer 3: Mesh Replacement Tab
@@ -20,6 +20,7 @@ Users may want to change the underlying 3D mesh of an existing avatar while keep
 ### Validation (server)
 
 On any mesh replacement, run the existing [src/validator.js](src/validator.js) server-side (or a lightweight version) against the new GLB:
+
 - Must be valid glTF 2.0.
 - Must have a skinned mesh with a rig (warn if not — some presets are static).
 - File size < 100MB.

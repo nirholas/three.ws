@@ -27,19 +27,19 @@ Live at <https://3dagent.vercel.app>. Backend is Vercel serverless (`api/`) + Ne
 
 ## Directory map — where things live
 
-| Path | What it is | Scoped doc |
-|---|---|---|
-| [src/](src/) | Browser app — viewer + agent runtime + web component | [src/CLAUDE.md](src/CLAUDE.md) |
-| [api/](api/) | Vercel serverless endpoints (auth, avatars, OAuth, MCP, agents) | [api/CLAUDE.md](api/CLAUDE.md) |
-| [contracts/](contracts/) | Foundry project — ERC-8004 registries (Solidity) | [contracts/CLAUDE.md](contracts/CLAUDE.md) |
-| [specs/](specs/) | Format specs: `AGENT_MANIFEST.md`, `SKILL_SPEC.md`, `EMBED_SPEC.md`, `MEMORY_SPEC.md` | — |
-| [docs/](docs/) | User-facing docs: `ARCHITECTURE.md`, `API.md`, `DEPLOYMENT.md`, `DEVELOPMENT.md`, `WIDGETS.md`, `MCP.md` | — |
-| [prompts/](prompts/) | Build prompts organized by priority band — see [prompts/INDEX.md](prompts/INDEX.md) | — |
-| [public/](public/) | Static assets, separate HTML pages (`login.html`, `dashboard/`, `studio/`, `widgets-gallery/`) | — |
-| [sdk/](sdk/) | `@3dagent/sdk` — public TS client (separate npm package) | — |
-| [scripts/](scripts/) | One-off node scripts (schema apply, icon gen, animation fetchers) | — |
-| [.github/skills/](.github/skills/) | GitHub Copilot `SKILL.md` bundles (viewer, features, validation, deploy) | — |
-| [.github/prompts/](.github/prompts/) | Copilot prompt library for one-shot features | — |
+| Path                                 | What it is                                                                                               | Scoped doc                                 |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| [src/](src/)                         | Browser app — viewer + agent runtime + web component                                                     | [src/CLAUDE.md](src/CLAUDE.md)             |
+| [api/](api/)                         | Vercel serverless endpoints (auth, avatars, OAuth, MCP, agents)                                          | [api/CLAUDE.md](api/CLAUDE.md)             |
+| [contracts/](contracts/)             | Foundry project — ERC-8004 registries (Solidity)                                                         | [contracts/CLAUDE.md](contracts/CLAUDE.md) |
+| [specs/](specs/)                     | Format specs: `AGENT_MANIFEST.md`, `SKILL_SPEC.md`, `EMBED_SPEC.md`, `MEMORY_SPEC.md`                    | —                                          |
+| [docs/](docs/)                       | User-facing docs: `ARCHITECTURE.md`, `API.md`, `DEPLOYMENT.md`, `DEVELOPMENT.md`, `WIDGETS.md`, `MCP.md` | —                                          |
+| [prompts/](prompts/)                 | Build prompts organized by priority band — see [prompts/INDEX.md](prompts/INDEX.md)                      | —                                          |
+| [public/](public/)                   | Static assets, separate HTML pages (`login.html`, `dashboard/`, `studio/`, `widgets-gallery/`)           | —                                          |
+| [sdk/](sdk/)                         | `@3dagent/sdk` — public TS client (separate npm package)                                                 | —                                          |
+| [scripts/](scripts/)                 | One-off node scripts (schema apply, icon gen, animation fetchers)                                        | —                                          |
+| [.github/skills/](.github/skills/)   | GitHub Copilot `SKILL.md` bundles (viewer, features, validation, deploy)                                 | —                                          |
+| [.github/prompts/](.github/prompts/) | Copilot prompt library for one-shot features                                                             | —                                          |
 
 Top-level HTML entry points: `index.html` (app), `features.html`, `embed.html`, `agent-home.html`, `agent-embed.html`. Additional routes served from `public/` — wiring is in [vite.config.js](vite.config.js) `vercel-rewrites` plugin, mirrored in [vercel.json](vercel.json).
 
@@ -86,19 +86,19 @@ No test suite is configured (`npm test` exits 0). Verification = `node --check` 
 
 ## Conventions
 
-| Topic | Rule |
-|---|---|
-| Modules | **ESM only.** No CommonJS in `src/` or `api/`. |
-| Formatting | Prettier: **tabs**, 4-wide, single quotes, 100-col print width, `bracketSpacing`. Run `npx prettier --write` before committing. |
-| Typing | **No TypeScript** in the main app. JSDoc for public APIs. (SDK in `sdk/` may use TS — check locally.) |
-| Templating | **vhtml JSX** — string-based, no virtual DOM. Files end in `.jsx`. `jsxFactory: 'vhtml'`. |
-| Naming | CamelCase classes, camelCase methods, UPPER_CASE constants, `_underscore` for private. |
-| State | Classes over factories where there's state. `EventTarget` for buses. |
-| SQL | Always tagged-template via `sql\`...\`` from [api/_lib/db.js](api/_lib/db.js). Never concat. |
-| HTTP responses | Use `json()` / `error()` / `wrap()` from [api/_lib/http.js](api/_lib/http.js). Never `res.end(JSON.stringify(...))`. |
-| Auth | Use `getSessionUser` / `authenticateBearer` from [api/_lib/auth.js](api/_lib/auth.js). Never hand-roll JWT. |
-| Tool result shape | `{ ok: true, ... }` or `{ ok: false, error: 'msg' }`. |
-| Errors | `error(res, status, code, message)` — OAuth-style string codes. See `api/CLAUDE.md`. |
+| Topic             | Rule                                                                                                                            |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Modules           | **ESM only.** No CommonJS in `src/` or `api/`.                                                                                  |
+| Formatting        | Prettier: **tabs**, 4-wide, single quotes, 100-col print width, `bracketSpacing`. Run `npx prettier --write` before committing. |
+| Typing            | **No TypeScript** in the main app. JSDoc for public APIs. (SDK in `sdk/` may use TS — check locally.)                           |
+| Templating        | **vhtml JSX** — string-based, no virtual DOM. Files end in `.jsx`. `jsxFactory: 'vhtml'`.                                       |
+| Naming            | CamelCase classes, camelCase methods, UPPER_CASE constants, `_underscore` for private.                                          |
+| State             | Classes over factories where there's state. `EventTarget` for buses.                                                            |
+| SQL               | Always tagged-template via `sql\`...\`` from [api/\_lib/db.js](api/_lib/db.js). Never concat.                                   |
+| HTTP responses    | Use `json()` / `error()` / `wrap()` from [api/\_lib/http.js](api/_lib/http.js). Never `res.end(JSON.stringify(...))`.           |
+| Auth              | Use `getSessionUser` / `authenticateBearer` from [api/\_lib/auth.js](api/_lib/auth.js). Never hand-roll JWT.                    |
+| Tool result shape | `{ ok: true, ... }` or `{ ok: false, error: 'msg' }`.                                                                           |
+| Errors            | `error(res, status, code, message)` — OAuth-style string codes. See `api/CLAUDE.md`.                                            |
 
 ---
 
@@ -143,7 +143,7 @@ No test suite is configured (`npm test` exits 0). Verification = `node --check` 
 - Adding TypeScript to the main app.
 - Importing agent modules from the viewer half.
 - Writing a new routing layer instead of extending the URL-hash params in [src/app.js](src/app.js).
-- Long multi-paragraph comments / docstrings explaining *what* code does. Keep it tight.
+- Long multi-paragraph comments / docstrings explaining _what_ code does. Keep it tight.
 
 ---
 

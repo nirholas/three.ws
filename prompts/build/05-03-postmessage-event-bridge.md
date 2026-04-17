@@ -11,30 +11,32 @@ Hosts (Claude Artifacts, Lobehub, ChatGPT canvas, generic iframes) need a unifor
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| [src/element.js](../../src/element.js) | Mount point for the bridge. |
-| [src/agent-protocol.js](../../src/agent-protocol.js) | Bus that bridges messages dispatch into. |
-| [specs/EMBED_SPEC.md](../../specs/EMBED_SPEC.md) | Embed spec — append the host-message protocol section here. |
-| [src/agent-skills.js](../../src/agent-skills.js) | Skill execution — what `host:perform-skill` calls. |
+| File                                                 | Why                                                         |
+| :--------------------------------------------------- | :---------------------------------------------------------- |
+| [src/element.js](../../src/element.js)               | Mount point for the bridge.                                 |
+| [src/agent-protocol.js](../../src/agent-protocol.js) | Bus that bridges messages dispatch into.                    |
+| [specs/EMBED_SPEC.md](../../specs/EMBED_SPEC.md)     | Embed spec — append the host-message protocol section here. |
+| [src/agent-skills.js](../../src/agent-skills.js)     | Skill execution — what `host:perform-skill` calls.          |
 
 ## Build this
 
 1. Add `src/host-bridge.js` — small ESM module exporting `mountHostBridge(element, protocol)`. Listens to `window.message`, validates origin against `element.dataset.allowOrigins` (CSV) or a sane default (Claude, Lobehub, same-origin).
 2. Define and document the protocol (extend [specs/EMBED_SPEC.md](../../specs/EMBED_SPEC.md)):
 
-   **Inbound (host → agent):**
-   - `host:hello` `{ host, version }` → reply `agent:ready { agentId, capabilities, version }`
-   - `host:set-context` `{ agentId?, theme?, locale? }` → swap context live
-   - `host:perform-skill` `{ skill, args, callId }` → reply `agent:skill-result { callId, ok, result|error }`
-   - `host:say` `{ text }` → triggers `speak` action on bus
-   - `host:resize` `{ width, height }` → element adopts dimensions
+    **Inbound (host → agent):**
 
-   **Outbound (agent → host):**
-   - `agent:ready` (boot complete)
-   - `agent:action` `{ type, payload }` (mirror of every protocol bus event)
-   - `agent:request-resize` `{ height }` (when content height changes)
-   - `agent:request-auth` (when user clicks something requiring SIWE)
+    - `host:hello` `{ host, version }` → reply `agent:ready { agentId, capabilities, version }`
+    - `host:set-context` `{ agentId?, theme?, locale? }` → swap context live
+    - `host:perform-skill` `{ skill, args, callId }` → reply `agent:skill-result { callId, ok, result|error }`
+    - `host:say` `{ text }` → triggers `speak` action on bus
+    - `host:resize` `{ width, height }` → element adopts dimensions
+
+    **Outbound (agent → host):**
+
+    - `agent:ready` (boot complete)
+    - `agent:action` `{ type, payload }` (mirror of every protocol bus event)
+    - `agent:request-resize` `{ height }` (when content height changes)
+    - `agent:request-auth` (when user clicks something requiring SIWE)
 
 3. Wire `mountHostBridge` from `<agent-3d>` connected callback. Tear down on disconnect.
 4. Add a `data-host-debug="1"` attribute that logs every inbound + outbound message to console (off by default).

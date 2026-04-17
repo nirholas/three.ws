@@ -29,18 +29,19 @@ On the agent page, if `agent.owner_user_id === current_user.id` **and** `agent.c
 ```
 
 Click flow:
+
 1. Open modal: "Choose network" — radio list of deployed chains (from step 1). Default to Base Sepolia.
 2. Load network for their wallet; prompt to switch if needed.
 3. Build the `agentURI` metadata JSON (`buildRegistrationJSON`):
-   ```json
-   {
-     "name": "…",
-     "description": "…",
-     "avatar": { "uri": "ipfs://<cid>", "mimeType": "model/gltf-binary" },
-     "skills": [...],
-     "schema": "agent-manifest/0.1"
-   }
-   ```
+    ```json
+    {
+      "name": "…",
+      "description": "…",
+      "avatar": { "uri": "ipfs://<cid>", "mimeType": "model/gltf-binary" },
+      "skills": [...],
+      "schema": "agent-manifest/0.1"
+    }
+    ```
 4. Pin that JSON to IPFS (task 02 wires the pinning; here just call the helper with a clear error if pinning fails).
 5. Estimate gas. Show fee preview. Require explicit confirm.
 6. Call `IdentityRegistry.register(agentURI)` via ethers.
@@ -52,6 +53,7 @@ Click flow:
 ### 3. Server endpoint
 
 `POST /api/agents/:id/chain` (auth + owner gate):
+
 - Validates `chainId` is a known deployment.
 - Validates `agentId` by reading the chain (`IdentityRegistry.getAgent(agentId) == caller`).
 - Updates `agent_identities` row.

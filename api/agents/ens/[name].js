@@ -93,7 +93,8 @@ export default wrap(async (req, res) => {
 			return error(res, 503, 'ens_error', 'ENS resolution failed');
 		}
 
-		if (!resolved) return error(res, 404, 'not_found', `${name} does not resolve to an address`);
+		if (!resolved)
+			return error(res, 404, 'not_found', `${name} does not resolve to an address`);
 
 		address = resolved.toLowerCase();
 		setCached(name, address);

@@ -21,11 +21,11 @@ Replace the ad-hoc bridge with a versioned, typed, bidirectional protocol betwee
 ## Deliverable
 
 1. **Protocol module** — new file `src/embed-host-bridge.js`. Pure JS, no runtime deps. Exports a class `EmbedHostBridge` with:
-   - Constructor: `new EmbedHostBridge({ protocol, identity, viewer, avatarCtl, agentId })`
-   - `attach()` — starts listening for host messages, posts `hello`
-   - `detach()` — removes listeners
-   - `postToHost(type, payload)` — envelope helper
-   - Internal event vocabulary below
+    - Constructor: `new EmbedHostBridge({ protocol, identity, viewer, avatarCtl, agentId })`
+    - `attach()` — starts listening for host messages, posts `hello`
+    - `detach()` — removes listeners
+    - `postToHost(type, payload)` — envelope helper
+    - Internal event vocabulary below
 2. **Edit embed page** — [public/agent/embed.html](../../public/agent/embed.html) imports the bridge and replaces the inline `window.addEventListener('message', ...)` block. The existing `ready`/`blocked` posts should be routed through the bridge.
 3. **Version** — first line of every envelope: `{ v: 1, ns: '3d-agent', ... }`. Reject unknown `v`.
 
@@ -35,27 +35,27 @@ All messages are JSON objects. Outbound (embed → host) and inbound (host → e
 
 ### Inbound (host → embed)
 
-| type | payload | effect |
-|---|---|---|
-| `host:hello` | `{ hostName, hostVersion, capabilities: string[] }` | Handshake. Embed replies with `embed:hello` including its capability list. |
-| `host:set-agent` | `{ agentId }` | Rebind to a different agent id. Tear down current avatar, resolve new one, boot. |
-| `host:action` | `{ action: { type, payload, sourceSkill? } }` | Emit on `protocol`. Covered in full in [04-action-passthrough.md](./04-action-passthrough.md); for this task, keep the existing relay wrapped in the new envelope. |
-| `host:pause` | `{}` | Call `viewer.pause?.()` or stop RAF. |
-| `host:resume` | `{}` | Resume viewer. |
-| `host:theme` | `{ mode: 'dark' \| 'light' \| 'transparent', accent? }` | Apply background + accent without reload. |
-| `host:ping` | `{}` | Reply with `embed:pong`. Used by host to detect stale iframes. |
+| type             | payload                                                 | effect                                                                                                                                                             |
+| ---------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `host:hello`     | `{ hostName, hostVersion, capabilities: string[] }`     | Handshake. Embed replies with `embed:hello` including its capability list.                                                                                         |
+| `host:set-agent` | `{ agentId }`                                           | Rebind to a different agent id. Tear down current avatar, resolve new one, boot.                                                                                   |
+| `host:action`    | `{ action: { type, payload, sourceSkill? } }`           | Emit on `protocol`. Covered in full in [04-action-passthrough.md](./04-action-passthrough.md); for this task, keep the existing relay wrapped in the new envelope. |
+| `host:pause`     | `{}`                                                    | Call `viewer.pause?.()` or stop RAF.                                                                                                                               |
+| `host:resume`    | `{}`                                                    | Resume viewer.                                                                                                                                                     |
+| `host:theme`     | `{ mode: 'dark' \| 'light' \| 'transparent', accent? }` | Apply background + accent without reload.                                                                                                                          |
+| `host:ping`      | `{}`                                                    | Reply with `embed:pong`. Used by host to detect stale iframes.                                                                                                     |
 
 ### Outbound (embed → host)
 
-| type | payload | when |
-|---|---|---|
-| `embed:hello` | `{ embedVersion, agentId, capabilities }` | On `host:hello` or first post after DOM ready |
-| `embed:ready` | `{ agentId, name, avatarUrl }` | Avatar GLB loaded, `AgentAvatar` attached |
-| `embed:blocked` | `{ reason: 'policy' }` | Embed-policy check failed |
-| `embed:error` | `{ code, message, phase }` | Any boot or runtime error (phases: `policy`, `identity`, `avatar`, `viewer`, `bridge`) |
-| `embed:action` | `{ action: { type, payload, sourceSkill, timestamp, agentId } }` | Mirrors every `protocol` event outward so the host can log what the avatar did. Filter to protocol's `ACTION_TYPES` only. |
-| `embed:resize` | `{ width, height, contentHeight }` | When the viewer reports a new content height (e.g. name plate grew, error shown) |
-| `embed:pong` | `{}` | Reply to `host:ping` |
+| type            | payload                                                          | when                                                                                                                      |
+| --------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `embed:hello`   | `{ embedVersion, agentId, capabilities }`                        | On `host:hello` or first post after DOM ready                                                                             |
+| `embed:ready`   | `{ agentId, name, avatarUrl }`                                   | Avatar GLB loaded, `AgentAvatar` attached                                                                                 |
+| `embed:blocked` | `{ reason: 'policy' }`                                           | Embed-policy check failed                                                                                                 |
+| `embed:error`   | `{ code, message, phase }`                                       | Any boot or runtime error (phases: `policy`, `identity`, `avatar`, `viewer`, `bridge`)                                    |
+| `embed:action`  | `{ action: { type, payload, sourceSkill, timestamp, agentId } }` | Mirrors every `protocol` event outward so the host can log what the avatar did. Filter to protocol's `ACTION_TYPES` only. |
+| `embed:resize`  | `{ width, height, contentHeight }`                               | When the viewer reports a new content height (e.g. name plate grew, error shown)                                          |
+| `embed:pong`    | `{}`                                                             | Reply to `host:ping`                                                                                                      |
 
 ## Audit checklist
 

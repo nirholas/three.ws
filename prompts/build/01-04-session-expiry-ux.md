@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Handle expired sessions gracefully across the SPA and public pages"
+description: 'Handle expired sessions gracefully across the SPA and public pages'
 ---
 
 # 01-04 · Session expiry UX
@@ -17,7 +17,7 @@ Right now, when a session expires, the dashboard throws `401` noisily and the us
 
 - [src/account.js](../../src/account.js) — current authenticated fetch client.
 - [public/dashboard/dashboard.js](../../public/dashboard/dashboard.js) — dashboard fetch usage.
-- [api/_lib/auth.js](../../api/_lib/auth.js) — session TTL / revocation.
+- [api/\_lib/auth.js](../../api/_lib/auth.js) — session TTL / revocation.
 
 ## Build this
 

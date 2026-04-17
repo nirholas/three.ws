@@ -69,10 +69,16 @@ async function assertPublicHost(host) {
 	const addrs = Array.isArray(resolved) ? resolved : [resolved];
 	for (const { address, family } of addrs) {
 		if (family === 4 && isPrivateIPv4(address)) {
-			throw new FetchModelError(`host resolves to private address: ${address}`, 'private_address');
+			throw new FetchModelError(
+				`host resolves to private address: ${address}`,
+				'private_address',
+			);
 		}
 		if (family === 6 && isPrivateIPv6(address)) {
-			throw new FetchModelError(`host resolves to private address: ${address}`, 'private_address');
+			throw new FetchModelError(
+				`host resolves to private address: ${address}`,
+				'private_address',
+			);
 		}
 	}
 }

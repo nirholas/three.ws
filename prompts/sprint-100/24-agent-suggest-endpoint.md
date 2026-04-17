@@ -15,7 +15,7 @@ New endpoint, no edits elsewhere.
 ## Read first
 
 - [api/agents/check-name.js](../../api/agents/check-name.js) — schema used.
-- [api/_lib/http.js](../../api/_lib/http.js), [api/_lib/db.js](../../api/_lib/db.js).
+- [api/\_lib/http.js](../../api/_lib/http.js), [api/\_lib/db.js](../../api/_lib/db.js).
 
 ## Deliverable
 
@@ -24,10 +24,10 @@ New endpoint, no edits elsewhere.
 - Query: `q` (string, 1–32 chars), `limit` (default 8, max 20).
 - Public, rate-limited `120/min per IP`.
 - Ranks:
-  1. Exact name match (case-insensitive)
-  2. Prefix match on name
-  3. Prefix match on slug
-  4. Fuzzy match (trigram if available; otherwise `ILIKE '%q%'`)
+    1. Exact name match (case-insensitive)
+    2. Prefix match on name
+    3. Prefix match on slug
+    4. Fuzzy match (trigram if available; otherwise `ILIKE '%q%'`)
 - Returns `{ agents: [{ id, name, slug, thumbnailUrl, chainId?: number, onChain: boolean }] }`.
 - Excludes agents marked `private = true` or `hidden = true` if such columns exist.
 - 60s response cache (CDN header `cache-control: public, max-age=60`).

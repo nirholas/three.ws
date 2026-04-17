@@ -5,12 +5,14 @@
 Repo: `/workspaces/3D`. The Avaturn export already includes outfit topology and some morph targets. What's missing is a lightweight way for the user to iterate — try a hat, glasses, swap between 2–3 outfits — **without re-entering Avaturn** and **without branching a new GLB per combination**.
 
 Principle: **stay in the same GLB.** The avatar file on R2 is canonical. Accessories and outfit variants are applied at runtime via:
+
 - **Morph targets** the GLB already exposes (e.g. outfit color/pattern blend shapes Avaturn ships with).
 - **Bone-attached overlays** for accessories (hat, glasses, earrings) — small `.glb` snippets loaded and parented to head/hand bones at runtime.
 
 The current outfit/morph state lives in `agent_identities.meta.appearance = { outfit: 'preset-id', accessories: ['hat-01', 'glasses-02'], morphs: { ... } }`. Consumed at boot by [src/element.js](../../src/element.js) → [src/runtime/scene.js](../../src/runtime/scene.js).
 
 Relevant existing code to reuse (do not fork):
+
 - [src/editor/material-editor.js](../../src/editor/material-editor.js) — exposes material tweaks per mesh.
 - [src/editor/scene-explorer.js](../../src/editor/scene-explorer.js) — enumerates the scene graph (useful for finding head/hand bones).
 - [src/agent-avatar.js](../../src/agent-avatar.js) — already iterates morph targets every frame for emotion blend. The outfit morph application runs alongside its loop; do not fight it.
@@ -22,38 +24,41 @@ Ship a small preset pack of outfits and accessories, plus a dashboard panel to a
 ## Deliverable
 
 1. **Preset pack**
-   - New directory `public/accessories/` with:
-     - `presets.json` listing `{ id, kind: 'hat'|'glasses'|'outfit'|'earrings', name, glbUrl?, morphBinding?, attachBone?, thumbnail }`.
-     - 6–10 entries total (2–3 outfits, 2–3 hats, 2 glasses).
-     - For outfit presets that rely on morph targets exposed by Avaturn, specify `morphBinding: { 'Outfit.Variant': 1.0 }` instead of a `glbUrl`. For accessory presets, specify `glbUrl` + `attachBone` (e.g. `'Head'`, `'LeftHand'`).
-     - Do **not** add the actual `.glb` / thumbnail binaries in this task — assume a separate content pass. Note missing files in the reporting section.
+
+    - New directory `public/accessories/` with:
+        - `presets.json` listing `{ id, kind: 'hat'|'glasses'|'outfit'|'earrings', name, glbUrl?, morphBinding?, attachBone?, thumbnail }`.
+        - 6–10 entries total (2–3 outfits, 2–3 hats, 2 glasses).
+        - For outfit presets that rely on morph targets exposed by Avaturn, specify `morphBinding: { 'Outfit.Variant': 1.0 }` instead of a `glbUrl`. For accessory presets, specify `glbUrl` + `attachBone` (e.g. `'Head'`, `'LeftHand'`).
+        - Do **not** add the actual `.glb` / thumbnail binaries in this task — assume a separate content pass. Note missing files in the reporting section.
 
 2. **Runtime — new module**
-   - New file `src/agent-accessories.js`:
-     - `class AccessoryManager { constructor(viewer) }`
-     - `async applyPreset(preset)` — if `glbUrl`, loads via the same `GLTFLoader` path as the animation manager, parents the root under the named bone, caches the loaded scene. If `morphBinding`, sets morph influences on the matching mesh's `morphTargetDictionary`.
-     - `removePreset(id)` — removes the attached object (disposes geometry/material/texture) or zeroes the morph.
-     - `list()` — returns currently applied preset ids.
-     - `hydrateFromAppearance(appearance)` — applies all presets from `meta.appearance` on boot.
-     - Cleanup: when the underlying model is replaced (task 01 / 02 path), `AccessoryManager` must re-hydrate on the new model. Listen on the viewer or wire an explicit `onModelReplaced(newModel)` method.
-   - Wire it from [src/element.js](../../src/element.js) or [src/runtime/scene.js](../../src/runtime/scene.js) so a boot with `appearance` applies automatically.
+
+    - New file `src/agent-accessories.js`:
+        - `class AccessoryManager { constructor(viewer) }`
+        - `async applyPreset(preset)` — if `glbUrl`, loads via the same `GLTFLoader` path as the animation manager, parents the root under the named bone, caches the loaded scene. If `morphBinding`, sets morph influences on the matching mesh's `morphTargetDictionary`.
+        - `removePreset(id)` — removes the attached object (disposes geometry/material/texture) or zeroes the morph.
+        - `list()` — returns currently applied preset ids.
+        - `hydrateFromAppearance(appearance)` — applies all presets from `meta.appearance` on boot.
+        - Cleanup: when the underlying model is replaced (task 01 / 02 path), `AccessoryManager` must re-hydrate on the new model. Listen on the viewer or wire an explicit `onModelReplaced(newModel)` method.
+    - Wire it from [src/element.js](../../src/element.js) or [src/runtime/scene.js](../../src/runtime/scene.js) so a boot with `appearance` applies automatically.
 
 3. **Dashboard — outfits panel**
-   - New route: `#edit/<agentId>/outfits` in [public/dashboard/dashboard.js](../../public/dashboard/dashboard.js).
-   - Tabbed grid: Outfits | Hats | Glasses | Earrings. Each tab renders a thumbnail grid from `public/accessories/presets.json`.
-   - Clicking a preset toggles it in a small live preview viewer (isolated, same pattern as [04-animation-library.md](./04-animation-library.md)). Confirm / apply → `PATCH /api/agents/:id` with updated `meta.appearance`.
-   - "Remove" button per category.
-   - Conflict rules: only one outfit at a time, only one hat at a time, only one pair of glasses at a time. Multiple earrings allowed.
+
+    - New route: `#edit/<agentId>/outfits` in [public/dashboard/dashboard.js](../../public/dashboard/dashboard.js).
+    - Tabbed grid: Outfits | Hats | Glasses | Earrings. Each tab renders a thumbnail grid from `public/accessories/presets.json`.
+    - Clicking a preset toggles it in a small live preview viewer (isolated, same pattern as [04-animation-library.md](./04-animation-library.md)). Confirm / apply → `PATCH /api/agents/:id` with updated `meta.appearance`.
+    - "Remove" button per category.
+    - Conflict rules: only one outfit at a time, only one hat at a time, only one pair of glasses at a time. Multiple earrings allowed.
 
 4. **Backend validation**
-   - Extend the agents-patch zod schema to validate `meta.appearance`:
-     - `outfit`: string (preset id) | null.
-     - `accessories`: array of strings (preset ids), max 8.
-     - `morphs`: `Record<string, number>` with values clamped 0..1, max 32 keys.
-   - Reject preset ids that don't exist in a server-side allowlist. Options:
-     - Ship the allowlist as a `public/accessories/presets.json` read at build time (baked into a small `api/_lib/accessories.js` module), OR
-     - Fetch and cache it on cold start.
-     - Pick the simpler path and document the choice.
+    - Extend the agents-patch zod schema to validate `meta.appearance`:
+        - `outfit`: string (preset id) | null.
+        - `accessories`: array of strings (preset ids), max 8.
+        - `morphs`: `Record<string, number>` with values clamped 0..1, max 32 keys.
+    - Reject preset ids that don't exist in a server-side allowlist. Options:
+        - Ship the allowlist as a `public/accessories/presets.json` read at build time (baked into a small `api/_lib/accessories.js` module), OR
+        - Fetch and cache it on cold start.
+        - Pick the simpler path and document the choice.
 
 ## Important: stay in the same GLB
 
@@ -87,15 +92,15 @@ Ship a small preset pack of outfits and accessories, plus a dashboard panel to a
 1. `node --check` every modified JS file.
 2. `npx vite build`.
 3. Manual:
-   - Open `#edit/<agentId>/outfits`.
-   - Apply a hat → dashboard preview shows it parented to the head bone. PATCH persists `meta.appearance.accessories` with the hat id.
-   - Apply an outfit preset bound to a morph target → morph influence is set. Persisted.
-   - Reload main app with `<agent-3d agent-id="...">` — the same hat + outfit re-apply on boot.
-   - Remove the hat → disposed, gone from the record.
-   - Apply a second hat → replaces the first (not additive).
-   - Apply earrings → two accessories allowed.
-   - Confirm emotion blend still animates (smile when greeted) — outfit morphs do not freeze the face.
-   - Replace the avatar GLB (task 02 flow). Confirm accessories either re-hydrate on the new skeleton or surface a clear warning.
+    - Open `#edit/<agentId>/outfits`.
+    - Apply a hat → dashboard preview shows it parented to the head bone. PATCH persists `meta.appearance.accessories` with the hat id.
+    - Apply an outfit preset bound to a morph target → morph influence is set. Persisted.
+    - Reload main app with `<agent-3d agent-id="...">` — the same hat + outfit re-apply on boot.
+    - Remove the hat → disposed, gone from the record.
+    - Apply a second hat → replaces the first (not additive).
+    - Apply earrings → two accessories allowed.
+    - Confirm emotion blend still animates (smile when greeted) — outfit morphs do not freeze the face.
+    - Replace the avatar GLB (task 02 flow). Confirm accessories either re-hydrate on the new skeleton or surface a clear warning.
 4. Try PATCHing `meta.appearance.outfit = 'not-a-preset'` — expect 400.
 5. Confirm `agent_identities.id` unchanged across all these operations.
 

@@ -5,6 +5,7 @@
 [src/skills/index.js](../../src/skills/index.js) loads skill `handlers.js` via dynamic `import()`. This gives handlers full DOM access, `window`, arbitrary network — too much. Per [specs/SKILL_SPEC.md](../../specs/SKILL_SPEC.md) § Security model, code skills should execute in an isolated scope with a fixed `ctx` API as their only capability.
 
 Realms (the proposal) isn't available yet. Workers are. A Web Worker-hosted handler gets:
+
 - No DOM access.
 - No direct `window`, `document`, or origin access beyond what we postMessage in.
 - Only `fetch` (we can override) and whatever APIs we explicitly expose.
@@ -16,20 +17,20 @@ Move skill handler execution into a shared Web Worker. The main-thread `ctx` API
 ## Deliverable
 
 1. **`src/skills/sandbox-worker.js`** (new file):
-	 - Receives `{ type: "install", uri, handlersSrc }` messages, evaluates the source in the worker scope (via `Function()` or `importScripts()` for classic workers; prefer a module worker with a `blob:` URL).
-	 - Receives `{ type: "invoke", skillURI, toolName, args }` messages. Calls the handler with a worker-side `ctx` that:
-		 - Has the same method names as main-thread ctx (`viewer.play`, `memory.write`, `speak`, `loadClip`, ...).
-		 - Each call becomes a `{ type: "request", id, method, args }` message back to main, which awaits and replies with `{ type: "response", id, result }`.
-	 - Tracks in-flight requests by id; rejects on timeout (30s).
+    - Receives `{ type: "install", uri, handlersSrc }` messages, evaluates the source in the worker scope (via `Function()` or `importScripts()` for classic workers; prefer a module worker with a `blob:` URL).
+    - Receives `{ type: "invoke", skillURI, toolName, args }` messages. Calls the handler with a worker-side `ctx` that:
+        - Has the same method names as main-thread ctx (`viewer.play`, `memory.write`, `speak`, `loadClip`, ...).
+        - Each call becomes a `{ type: "request", id, method, args }` message back to main, which awaits and replies with `{ type: "response", id, result }`.
+    - Tracks in-flight requests by id; rejects on timeout (30s).
 2. **`src/skills/sandbox-host.js`** (new file):
-	 - Singleton worker manager. `getHost()` returns the shared worker instance.
-	 - `invoke(skillURI, toolName, args, mainThreadCtx)` — posts to the worker, listens for request messages, forwards each to `mainThreadCtx`, posts responses, resolves when the worker returns the final result.
-	 - Handles worker death/restart.
+    - Singleton worker manager. `getHost()` returns the shared worker instance.
+    - `invoke(skillURI, toolName, args, mainThreadCtx)` — posts to the worker, listens for request messages, forwards each to `mainThreadCtx`, posts responses, resolves when the worker returns the final result.
+    - Handles worker death/restart.
 3. **Refactor `Skill.invoke()`** in [src/skills/index.js](../../src/skills/index.js):
-	 - Instead of calling the in-process handler, delegate to `sandbox-host.getHost().invoke(...)` — passing the main-thread `ctx` from the runtime as the proxy target.
-	 - Load `handlersSrc` as text (not dynamic import) and send to the worker at install time.
+    - Instead of calling the in-process handler, delegate to `sandbox-host.getHost().invoke(...)` — passing the main-thread `ctx` from the runtime as the proxy target.
+    - Load `handlersSrc` as text (not dynamic import) and send to the worker at install time.
 4. **Opt-out escape hatch**:
-	 - Manifests can set `manifest.sandboxPolicy: "trusted-main-thread"` (name-bikeshed; document it) to bypass the worker for owner-signed skills. This preserves the current behavior for trusted skills while defaulting new skills to sandboxed.
+    - Manifests can set `manifest.sandboxPolicy: "trusted-main-thread"` (name-bikeshed; document it) to bypass the worker for owner-signed skills. This preserves the current behavior for trusted skills while defaulting new skills to sandboxed.
 5. **Spec update** — [specs/SKILL_SPEC.md](../../specs/SKILL_SPEC.md) § Security model: document the worker sandbox and the opt-out.
 
 ## Audit checklist

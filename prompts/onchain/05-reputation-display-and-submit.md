@@ -19,24 +19,24 @@ On `/agent/:id`, show aggregate reputation + a capped list of recent reviews; le
 ## Deliverable
 
 1. New file [src/erc8004/reputation-ui.js](../../src/erc8004/reputation-ui.js) exporting class `ReputationPanel`:
-   - Constructor: `new ReputationPanel(containerEl, { agentId, chainId, ownerAddress, provider, signer? })`
-   - Renders into `containerEl`:
-     - Top strip: `★ 84 · 12 reviews` (average score + count). If no reviews → `"Be the first to review"`.
-     - A bar chart of the score distribution (bins of 10) — pure CSS bars, no chart lib.
-     - Up to 10 most-recent reviews, each showing: submitter address (truncated 0x1234…abcd), score, comment, block number, link to explorer.
-     - A "Write a review" form (score slider 1–100, comment textarea maxlength 500, submit button) visible **only** when a wallet is connected AND the connected address !== `ownerAddress`.
-   - Handles the "no reviews yet" revert:
-     - Wrap `getReputation` in a try/catch. On revert or on `count === 0`, show the empty state. Don't log an error to console.
-     - In [reputation.js](../../src/erc8004/reputation.js), update `getReputation` to swallow the revert and return `{ total: 0, count: 0, average: 0 }` so it's uniform — document this behavior in a JSDoc comment. Do this in a single helper `_tryReadReputation(contract, agentId)` internal to the file.
-   - On submit:
-     - Validate `Number.isInteger(score) && score >= 1 && score <= 100` (UI enforces but guard anyway).
-     - Call `submitReputation`. Use structured `onStatus` consistent with [03](./03-register-flow-polish.md) if that lands: steps `estimating → signing → mining → done`.
-     - On success, optimistically prepend the new review to the list and re-fetch aggregate; don't full-reload.
-     - On error, reuse `classifyTxError` if available, otherwise show a dismissible error card.
+    - Constructor: `new ReputationPanel(containerEl, { agentId, chainId, ownerAddress, provider, signer? })`
+    - Renders into `containerEl`:
+        - Top strip: `★ 84 · 12 reviews` (average score + count). If no reviews → `"Be the first to review"`.
+        - A bar chart of the score distribution (bins of 10) — pure CSS bars, no chart lib.
+        - Up to 10 most-recent reviews, each showing: submitter address (truncated 0x1234…abcd), score, comment, block number, link to explorer.
+        - A "Write a review" form (score slider 1–100, comment textarea maxlength 500, submit button) visible **only** when a wallet is connected AND the connected address !== `ownerAddress`.
+    - Handles the "no reviews yet" revert:
+        - Wrap `getReputation` in a try/catch. On revert or on `count === 0`, show the empty state. Don't log an error to console.
+        - In [reputation.js](../../src/erc8004/reputation.js), update `getReputation` to swallow the revert and return `{ total: 0, count: 0, average: 0 }` so it's uniform — document this behavior in a JSDoc comment. Do this in a single helper `_tryReadReputation(contract, agentId)` internal to the file.
+    - On submit:
+        - Validate `Number.isInteger(score) && score >= 1 && score <= 100` (UI enforces but guard anyway).
+        - Call `submitReputation`. Use structured `onStatus` consistent with [03](./03-register-flow-polish.md) if that lands: steps `estimating → signing → mining → done`.
+        - On success, optimistically prepend the new review to the list and re-fetch aggregate; don't full-reload.
+        - On error, reuse `classifyTxError` if available, otherwise show a dismissible error card.
 2. Wire `ReputationPanel` into [src/agent-home.js](../../src/agent-home.js):
-   - Mount only when `AgentIdentity.isRegistered === true` AND `meta.onchain.chainId` is known.
-   - Sits below the existing identity card + action timeline, not above.
-   - Provider: use a read-only `JsonRpcProvider` with `DEFAULT_RPCS[chainId]` from [manifest.js](../../src/manifest.js) by default. If the user has connected a wallet, swap in that signer for submit-time only.
+    - Mount only when `AgentIdentity.isRegistered === true` AND `meta.onchain.chainId` is known.
+    - Sits below the existing identity card + action timeline, not above.
+    - Provider: use a read-only `JsonRpcProvider` with `DEFAULT_RPCS[chainId]` from [manifest.js](../../src/manifest.js) by default. If the user has connected a wallet, swap in that signer for submit-time only.
 3. CSS: add styles inside an injected `<style>` tag the module appends once to `document.head`. Keep classes namespaced (`.rep-panel-*`). No Tailwind, no new global stylesheet.
 
 ## Audit checklist
@@ -64,11 +64,11 @@ On `/agent/:id`, show aggregate reputation + a capped list of recent reviews; le
 1. `node --check` all new/modified JS files.
 2. `npx vite build` passes.
 3. Manual on Base Sepolia:
-   - Load `/agent/:id` for an agent with **zero** reviews → panel shows "Be the first to review"; no console errors.
-   - Connect a wallet that is NOT the owner → form appears. Submit a 73 with comment "Very smooth wave." → tx lands → review appears at top; aggregate updates to 73 / 1.
-   - Submit a second review from a different wallet. Bar chart updates.
-   - Load `/agent/:id` as the owner — form is hidden; only aggregate + list shown.
-   - Disconnect wallet; form disappears, "Connect wallet to review" CTA shows.
+    - Load `/agent/:id` for an agent with **zero** reviews → panel shows "Be the first to review"; no console errors.
+    - Connect a wallet that is NOT the owner → form appears. Submit a 73 with comment "Very smooth wave." → tx lands → review appears at top; aggregate updates to 73 / 1.
+    - Submit a second review from a different wallet. Bar chart updates.
+    - Load `/agent/:id` as the owner — form is hidden; only aggregate + list shown.
+    - Disconnect wallet; form disappears, "Connect wallet to review" CTA shows.
 4. Throttle the RPC (DevTools network) — panel should degrade to spinners, never crash.
 
 ## Scope boundaries — do NOT do these

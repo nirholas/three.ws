@@ -2,7 +2,7 @@
 
 Wallet auth is the base of the entire platform. Until a user can sign in with their wallet, keep that session stable across reloads, and have a single user record link to their wallet(s) deterministically, every downstream feature (selfie agent, avatar edit, onchain passport, CZ demo) is building on sand. These tasks take the existing SIWE scaffold from "works for the happy path" to "works 100%."
 
-Backing code that already exists: [api/auth/login.js](../../api/auth/login.js), [api/auth/logout.js](../../api/auth/logout.js), [api/auth/me.js](../../api/auth/me.js), [api/auth/register.js](../../api/auth/register.js), [api/auth/siwe/nonce.js](../../api/auth/siwe/nonce.js), [api/auth/siwe/verify.js](../../api/auth/siwe/verify.js), [api/_lib/auth.js](../../api/_lib/auth.js), [api/_lib/schema.sql](../../api/_lib/schema.sql), [src/account.js](../../src/account.js), [src/agent-identity.js](../../src/agent-identity.js), [public/wallet-login.js](../../public/wallet-login.js).
+Backing code that already exists: [api/auth/login.js](../../api/auth/login.js), [api/auth/logout.js](../../api/auth/logout.js), [api/auth/me.js](../../api/auth/me.js), [api/auth/register.js](../../api/auth/register.js), [api/auth/siwe/nonce.js](../../api/auth/siwe/nonce.js), [api/auth/siwe/verify.js](../../api/auth/siwe/verify.js), [api/\_lib/auth.js](../../api/_lib/auth.js), [api/\_lib/schema.sql](../../api/_lib/schema.sql), [src/account.js](../../src/account.js), [src/agent-identity.js](../../src/agent-identity.js), [public/wallet-login.js](../../public/wallet-login.js).
 
 ## Recommended execution order
 

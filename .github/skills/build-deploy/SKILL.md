@@ -1,7 +1,7 @@
 ---
 name: build-deploy
-description: "Build, deploy, and configure the 3D viewer app. Use when: running dev server, building for production, deploying to Vercel, configuring CORS, editing vercel.json routes, managing static assets, or troubleshooting build issues."
-argument-hint: "Describe the build or deploy task"
+description: 'Build, deploy, and configure the 3D viewer app. Use when: running dev server, building for production, deploying to Vercel, configuring CORS, editing vercel.json routes, managing static assets, or troubleshooting build issues.'
+argument-hint: 'Describe the build or deploy task'
 ---
 
 # Build & Deploy
@@ -17,13 +17,13 @@ argument-hint: "Describe the build or deploy task"
 
 ## Commands
 
-| Command | Purpose |
-|---------|---------|
-| `npm install` | Install dependencies |
-| `npm run dev` | Vite dev server on port 3000 |
-| `npm run build` | Production build → `dist/` |
-| `npm run clean` | Remove `dist/` contents |
-| `npm run deploy` | Build + `vercel --prod` with local config |
+| Command                             | Purpose                                     |
+| ----------------------------------- | ------------------------------------------- |
+| `npm install`                       | Install dependencies                        |
+| `npm run dev`                       | Vite dev server on port 3000                |
+| `npm run build`                     | Production build → `dist/`                  |
+| `npm run clean`                     | Remove `dist/` contents                     |
+| `npm run deploy`                    | Build + `vercel --prod` with local config   |
 | `npm version <patch\|minor\|major>` | Bump version, auto-pushes via `postversion` |
 
 ## Vite Configuration
@@ -31,8 +31,8 @@ argument-hint: "Describe the build or deploy task"
 **Config**: [`vite.config.js`](../../../vite.config.js)
 
 - Two build targets switched via `TARGET` env var:
-  - `TARGET=app` (default) → multi-page app in `dist/` (entries: `index.html`, `features.html`, `embed.html`, `agent-home.html`, `agent-embed.html`)
-  - `TARGET=lib` → self-contained `<agent-3d>` web component in `dist-lib/` (ESM + UMD, three.js bundled)
+    - `TARGET=app` (default) → multi-page app in `dist/` (entries: `index.html`, `features.html`, `embed.html`, `agent-home.html`, `agent-embed.html`)
+    - `TARGET=lib` → self-contained `<agent-3d>` web component in `dist-lib/` (ESM + UMD, three.js bundled)
 - JSX configured for vhtml: `jsxFactory: 'vhtml'`, `jsxFragment: '"div"'`
 - Dev server has a `vercel-rewrites` middleware that mirrors Vercel routing for `/login`, `/register`, `/dashboard`, `/studio`, `/widgets`, `/docs/widgets`, `/agent`, `/agent/:id`, `/agent/:id/embed`
 - `vite-plugin-pwa` emits the service worker + manifest
@@ -43,6 +43,7 @@ argument-hint: "Describe the build or deploy task"
 **Config**: `vercel.json`
 
 Key routes:
+
 - `/assets/*` — Cached 1 week (`max-age=604800`)
 - `/.well-known/*` — Cached 1 day, serves from `public/.well-known/`
 - `/robots.txt`, `/sitemap.xml` — Served from `public/`
@@ -55,6 +56,7 @@ Key routes:
 **Config**: `cors.json`
 
 Allowed origins:
+
 - `https://3dagent.vercel.app` and subdomains
 - `http://localhost:*` / `https://localhost:*`
 - Specific partner domains
@@ -72,16 +74,19 @@ public/
 ## Procedure
 
 ### Local Development
+
 1. `npm install`
 2. `npm run dev`
 3. Open `http://localhost:3000`
 
 ### Production Deploy
+
 1. `npm run build` — verify no build errors
 2. `npm run deploy` — builds and deploys to Vercel
 3. Verify at [3dagent.vercel.app](https://3dagent.vercel.app/)
 
 ### Adding Static Assets
+
 1. Place files in `public/` (copied as-is to build output)
 2. If they need caching rules, add a route in `vercel.json`
 3. If they need CORS access, verify origins in `cors.json`

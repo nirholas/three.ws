@@ -6,11 +6,11 @@ Priority 5 in the [top-level stack](../README.md). One of two parallel host-inte
 
 ## Two parallel deliverables in this folder
 
-| Deliverable | Ships to | Tasks |
-|---|---|---|
-| **Fast path** — mount the avatar in your own LobeHub fork's right sidebar | your fork only, not public | [00-fork-sidebar-fastpath.md](./00-fork-sidebar-fastpath.md) |
-| **Plugin stack** — marketplace plugin so anyone's LobeHub can install | LobeHub plugin marketplace | [01](./01-plugin-manifest.md) → [05](./05-plugin-submission.md) |
-| **Host SDK + mention UX** — `@3dagent/embed` npm package + inline `@mentions` + autocomplete | npm + your fork | [06](./06-host-sdk-package.md) → [08](./08-mention-autocomplete.md) |
+| Deliverable                                                                                  | Ships to                   | Tasks                                                               |
+| -------------------------------------------------------------------------------------------- | -------------------------- | ------------------------------------------------------------------- |
+| **Fast path** — mount the avatar in your own LobeHub fork's right sidebar                    | your fork only, not public | [00-fork-sidebar-fastpath.md](./00-fork-sidebar-fastpath.md)        |
+| **Plugin stack** — marketplace plugin so anyone's LobeHub can install                        | LobeHub plugin marketplace | [01](./01-plugin-manifest.md) → [05](./05-plugin-submission.md)     |
+| **Host SDK + mention UX** — `@3dagent/embed` npm package + inline `@mentions` + autocomplete | npm + your fork            | [06](./06-host-sdk-package.md) → [08](./08-mention-autocomplete.md) |
 
 Dispatch **task 00 first** — it ships the demo today. Then pick plugin, SDK, or both.
 
@@ -20,17 +20,17 @@ LobeHub is the **primary** integration target for embodied-agent rendering insid
 
 ## Task index
 
-| # | File | What it ships | Blocks on |
-|---|---|---|---|
-| 00 | [00-fork-sidebar-fastpath.md](./00-fork-sidebar-fastpath.md) | Iframe mounted in the fork's right sidebar; persistent; reacts to chat stream | nothing |
-| 01 | [01-plugin-manifest.md](./01-plugin-manifest.md) | `.well-known/lobehub-plugin.json` manifest hosted publicly | resolving `TODO(lobehub-spec)` flags (see AUDIT.md §6) |
-| 02 | [02-iframe-handshake.md](./02-iframe-handshake.md) | Versioned `postMessage` bridge module `src/embed-host-bridge.js` | 01 |
-| 03 | [03-host-auth-handoff.md](./03-host-auth-handoff.md) | Anon / host-user / wallet-linked identity tiers with opt-in SIWE prompt | 02 |
-| 04 | [04-action-passthrough.md](./04-action-passthrough.md) | Bidirectional chat-tool ↔ protocol relay `src/embed-action-relay.js` | 02, 03 |
-| 05 | [05-plugin-submission.md](./05-plugin-submission.md) | Marketplace submission bundle + smoke test fixtures | 01–04 |
-| 06 | [06-host-sdk-package.md](./06-host-sdk-package.md) | `@3dagent/embed` npm package (`packages/embed/`) | nothing (can parallel 01–05) |
-| 07 | [07-message-renderer.md](./07-message-renderer.md) | Inline `<AgentMention>` React component for @-tokens in chat | 06 |
-| 08 | [08-mention-autocomplete.md](./08-mention-autocomplete.md) | `@`-trigger suggest menu + `GET /api/agents/suggest` endpoint | 07 |
+| #   | File                                                         | What it ships                                                                 | Blocks on                                              |
+| --- | ------------------------------------------------------------ | ----------------------------------------------------------------------------- | ------------------------------------------------------ |
+| 00  | [00-fork-sidebar-fastpath.md](./00-fork-sidebar-fastpath.md) | Iframe mounted in the fork's right sidebar; persistent; reacts to chat stream | nothing                                                |
+| 01  | [01-plugin-manifest.md](./01-plugin-manifest.md)             | `.well-known/lobehub-plugin.json` manifest hosted publicly                    | resolving `TODO(lobehub-spec)` flags (see AUDIT.md §6) |
+| 02  | [02-iframe-handshake.md](./02-iframe-handshake.md)           | Versioned `postMessage` bridge module `src/embed-host-bridge.js`              | 01                                                     |
+| 03  | [03-host-auth-handoff.md](./03-host-auth-handoff.md)         | Anon / host-user / wallet-linked identity tiers with opt-in SIWE prompt       | 02                                                     |
+| 04  | [04-action-passthrough.md](./04-action-passthrough.md)       | Bidirectional chat-tool ↔ protocol relay `src/embed-action-relay.js`         | 02, 03                                                 |
+| 05  | [05-plugin-submission.md](./05-plugin-submission.md)         | Marketplace submission bundle + smoke test fixtures                           | 01–04                                                  |
+| 06  | [06-host-sdk-package.md](./06-host-sdk-package.md)           | `@3dagent/embed` npm package (`packages/embed/`)                              | nothing (can parallel 01–05)                           |
+| 07  | [07-message-renderer.md](./07-message-renderer.md)           | Inline `<AgentMention>` React component for @-tokens in chat                  | 06                                                     |
+| 08  | [08-mention-autocomplete.md](./08-mention-autocomplete.md)   | `@`-trigger suggest menu + `GET /api/agents/suggest` endpoint                 | 07                                                     |
 
 ## Rules that apply to every task in this series
 

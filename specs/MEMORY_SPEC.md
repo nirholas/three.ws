@@ -30,18 +30,22 @@ No frontmatter. One line per memory: `- [Title](file.md) — one-line hook`.
 # Coach Leo's Memory
 
 ## User
+
 - [Role](user_role.md) — Argentina fan, plays weekly 5-a-side on Saturdays
 - [Preferences](user_preferences.md) — terse feedback, no emojis
 
 ## Feedback
+
 - [Tone](feedback_tone.md) — stay warm but don't coddle; user asked for direct critique
 - [Drill pacing](feedback_pacing.md) — 3 drills per session max
 
 ## Project
+
 - [Season goal](project_season.md) — user is training for a tournament in June 2026
 - [Recovery](project_recovery.md) — knee injury from March; avoid high-impact drills until May
 
 ## Reference
+
 - [Highlight reel](reference_reel.md) — shared Drive folder where user stores match clips
 ```
 
@@ -68,15 +72,15 @@ genuine wins, not every message.
 
 ### Frontmatter fields
 
-| Field | Required | Purpose |
-|---|---|---|
-| `name` | yes | Human-readable title |
-| `description` | yes | One-line, used by the retrieval layer to judge relevance |
-| `type` | yes | `user` \| `feedback` \| `project` \| `reference` |
-| `created` | yes | ISO date |
-| `updated` | yes | ISO date — bump on every edit |
-| `source` | no | What conversation/event produced this memory |
-| `decay` | no | `never` \| `30d` \| `90d` — retrieval-layer decay hint |
+| Field         | Required | Purpose                                                  |
+| ------------- | -------- | -------------------------------------------------------- |
+| `name`        | yes      | Human-readable title                                     |
+| `description` | yes      | One-line, used by the retrieval layer to judge relevance |
+| `type`        | yes      | `user` \| `feedback` \| `project` \| `reference`         |
+| `created`     | yes      | ISO date                                                 |
+| `updated`     | yes      | ISO date — bump on every edit                            |
+| `source`      | no       | What conversation/event produced this memory             |
+| `decay`       | no       | `never` \| `30d` \| `90d` — retrieval-layer decay hint   |
 
 ### Types
 
@@ -140,14 +144,14 @@ Skills and the runtime both write via `ctx.memory.*`:
 
 ```js
 ctx.memory.write('feedback_tone', {
-  name: 'Tone',
-  description: 'user wants direct critique, not encouragement-first',
-  type: 'feedback',
-  body: 'User prefers direct critique...\n\n**Why:** ...\n**How to apply:** ...'
+	name: 'Tone',
+	description: 'user wants direct critique, not encouragement-first',
+	type: 'feedback',
+	body: 'User prefers direct critique...\n\n**Why:** ...\n**How to apply:** ...',
 });
 
-ctx.memory.note('waved', { style: 'casual' });          // timeline
-ctx.memory.read('feedback_tone');                        // read single
+ctx.memory.note('waved', { style: 'casual' }); // timeline
+ctx.memory.read('feedback_tone'); // read single
 await ctx.memory.recall('how does the user prefer feedback'); // semantic search
 ```
 
@@ -175,8 +179,8 @@ Automatic decay (per frontmatter `decay`): retrieval layer down-weights; files a
 ## Export / import
 
 ```js
-const blob = await agent.memory.export();     // tarball of memory/
-await otherAgent.memory.import(blob);          // merges with conflict resolution
+const blob = await agent.memory.export(); // tarball of memory/
+await otherAgent.memory.import(blob); // merges with conflict resolution
 ```
 
 Enables memory-as-inheritance: fork an agent, carry the memories forward.

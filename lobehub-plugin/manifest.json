@@ -13,6 +13,11 @@
 	},
 	"settings": [
 		{ "name": "agentId", "type": "string", "required": true, "title": "Agent ID" },
-		{ "name": "apiOrigin", "type": "string", "default": "https://3dagent.vercel.app", "title": "API Origin" }
+		{
+			"name": "apiOrigin",
+			"type": "string",
+			"default": "https://3dagent.vercel.app",
+			"title": "API Origin"
+		}
 	]
 }

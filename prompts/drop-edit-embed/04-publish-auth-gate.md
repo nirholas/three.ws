@@ -7,10 +7,10 @@ After task 03, signed-out users who click Publish see a "Sign in" modal. If they
 ## Shared context
 
 - Login page is [public/login.html](../../public/login.html). It reads `?next=<url>` and redirects to it on success. Verify by reading the file — do not assume.
-- Session cookie is set by `/api/auth/login` ([api/auth/login.js](../../api/auth/login.js)) via `createSession` / `sessionCookie` from [api/_lib/auth.js](../../api/_lib/auth.js). The browser will have a valid cookie after login completes.
+- Session cookie is set by `/api/auth/login` ([api/auth/login.js](../../api/auth/login.js)) via `createSession` / `sessionCookie` from [api/\_lib/auth.js](../../api/_lib/auth.js). The browser will have a valid cookie after login completes.
 - The Editor session state that needs to survive the round-trip:
-  - The loaded source (URL or the dropped file bytes)
-  - `session.materialEdits`, `session.transformEdits`, `session.visibilityEdits` from [src/editor/session.js](../../src/editor/session.js)
+    - The loaded source (URL or the dropped file bytes)
+    - `session.materialEdits`, `session.transformEdits`, `session.visibilityEdits` from [src/editor/session.js](../../src/editor/session.js)
 - File bytes can't go in the URL. Dropped files are the hard case — browsers won't let us re-drop a file after navigation. We store dropped bytes in `IndexedDB` keyed by a short random id; URL-loaded models are re-fetched by URL after login.
 - Edits are small JSON — they can round-trip in `sessionStorage`.
 
@@ -73,8 +73,9 @@ const resumeToken = new URLSearchParams(location.search).get('resume');
 if (resumeToken) {
 	const stashed = await restoreSession(resumeToken);
 	if (stashed) {
-		if (stashed.source.url)       await this.view(stashed.source.url, '', new Map());
-		else if (stashed.source.file) await this.load(new Map([[stashed.source.file.name, stashed.source.file]]));
+		if (stashed.source.url) await this.view(stashed.source.url, '', new Map());
+		else if (stashed.source.file)
+			await this.load(new Map([[stashed.source.file.name, stashed.source.file]]));
 		// Replay edits into the new session.
 		this.editor.session.restoreEdits(stashed.edits);
 		// Auto-open Publish if &publish=1.

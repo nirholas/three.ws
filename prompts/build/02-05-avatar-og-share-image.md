@@ -7,8 +7,8 @@ The moment a user gets their 3D avatar is also the moment they're most likely to
 ## Context
 
 - OG endpoint scaffold exists: [api/agent-og.js](../../api/agent-og.js).
-- Per-agent record: `api/agents/[id].js`, table `agents` (reference [api/_lib/schema.sql](../../api/_lib/schema.sql)).
-- Avatar storage: `avatars.storage_key` in R2, helper in [api/_lib/r2.js](../../api/_lib/r2.js).
+- Per-agent record: `api/agents/[id].js`, table `agents` (reference [api/\_lib/schema.sql](../../api/_lib/schema.sql)).
+- Avatar storage: `avatars.storage_key` in R2, helper in [api/\_lib/r2.js](../../api/_lib/r2.js).
 - Three.js is already a dep — server-side render via `@react-three/offscreen` or node-three is NOT in scope. Use a pre-rendered "hero pose" PNG captured on the client immediately after avatar generation.
 
 ## What to build
@@ -43,7 +43,7 @@ On [public/agent/index.html](../../public/agent/index.html), ensure `<meta prope
 - Animated OGs (video OG).
 - Server-side Three.js rendering.
 - Customising the pose per-user (one canonical pose is fine).
-- Editing existing OGs — regenerate on avatar-swap / regenerate (covered implicitly by re-running the client capture after 03-* flows).
+- Editing existing OGs — regenerate on avatar-swap / regenerate (covered implicitly by re-running the client capture after 03-\* flows).
 
 ## Acceptance
 

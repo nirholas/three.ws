@@ -17,16 +17,25 @@ async function fetchJSON(url, { fetchFn }) {
 	try {
 		res = await fetchFn(url, { credentials: 'include' });
 	} catch (err) {
-		throw new AgentResolveError('network', `network error fetching ${url}: ${err.message || err}`);
+		throw new AgentResolveError(
+			'network',
+			`network error fetching ${url}: ${err.message || err}`,
+		);
 	}
 	if (res.status === 401 || res.status === 403) {
-		throw new AgentResolveError('unauthorized', `unauthorized fetching ${url} (${res.status})`, { status: res.status });
+		throw new AgentResolveError(
+			'unauthorized',
+			`unauthorized fetching ${url} (${res.status})`,
+			{ status: res.status },
+		);
 	}
 	if (res.status === 404) {
 		throw new AgentResolveError('not_found', `resource not found: ${url}`, { status: 404 });
 	}
 	if (!res.ok) {
-		throw new AgentResolveError('network', `request failed: ${url} (${res.status})`, { status: res.status });
+		throw new AgentResolveError('network', `request failed: ${url} (${res.status})`, {
+			status: res.status,
+		});
 	}
 	try {
 		return await res.json();
@@ -60,15 +69,22 @@ export async function resolveByAgentId(agentId, signal) {
 		res = await fetch(endpoint, { credentials: 'include', signal });
 	} catch (err) {
 		if (err?.name === 'AbortError') throw err;
-		throw new AgentResolveError('network', `network error fetching ${endpoint}: ${err.message || err}`);
+		throw new AgentResolveError(
+			'network',
+			`network error fetching ${endpoint}: ${err.message || err}`,
+		);
 	}
 
 	if (res.status === 404)
 		throw new AgentResolveError('not-found', `agent ${agentId} not found`, { status: 404 });
 	if (res.status === 401 || res.status === 403)
-		throw new AgentResolveError('unauthorized', `unauthorized (${res.status})`, { status: res.status });
+		throw new AgentResolveError('unauthorized', `unauthorized (${res.status})`, {
+			status: res.status,
+		});
 	if (!res.ok)
-		throw new AgentResolveError('network', `request failed (${res.status})`, { status: res.status });
+		throw new AgentResolveError('network', `request failed (${res.status})`, {
+			status: res.status,
+		});
 
 	let data;
 	try {
@@ -93,12 +109,17 @@ export async function resolveByAgentId(agentId, signal) {
 	return resolved;
 }
 
-export async function resolveAgentById(agentId, { origin = typeof location !== 'undefined' ? location.origin : '', fetchFn = fetch } = {}) {
+export async function resolveAgentById(
+	agentId,
+	{ origin = typeof location !== 'undefined' ? location.origin : '', fetchFn = fetch } = {},
+) {
 	if (!agentId) throw new AgentResolveError('not_found', 'agentId required');
 
 	const boundFetch = fetchFn.bind(typeof globalThis !== 'undefined' ? globalThis : undefined);
 
-	const agentRes = await fetchJSON(`${origin}/api/agents/${encodeURIComponent(agentId)}`, { fetchFn: boundFetch });
+	const agentRes = await fetchJSON(`${origin}/api/agents/${encodeURIComponent(agentId)}`, {
+		fetchFn: boundFetch,
+	});
 	const agent = agentRes?.agent;
 	if (!agent) throw new AgentResolveError('not_found', `agent ${agentId} not found`);
 
@@ -106,7 +127,10 @@ export async function resolveAgentById(agentId, { origin = typeof location !== '
 		throw new AgentResolveError('no_avatar', `agent ${agentId} has no avatar bound`);
 	}
 
-	const avatarRes = await fetchJSON(`${origin}/api/avatars/${encodeURIComponent(agent.avatar_id)}`, { fetchFn: boundFetch });
+	const avatarRes = await fetchJSON(
+		`${origin}/api/avatars/${encodeURIComponent(agent.avatar_id)}`,
+		{ fetchFn: boundFetch },
+	);
 	const avatar = avatarRes?.avatar;
 	if (!avatar || !avatar.url) {
 		throw new AgentResolveError('no_avatar', `avatar ${agent.avatar_id} has no url`);

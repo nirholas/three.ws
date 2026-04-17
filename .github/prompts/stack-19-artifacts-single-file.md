@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Self-contained HTML build for Claude.ai Artifacts — one file, no external fetches"
+description: 'Self-contained HTML build for Claude.ai Artifacts — one file, no external fetches'
 ---
 
 # Stack Layer 5: Claude Artifacts Single-File Embed
@@ -14,6 +14,7 @@ Claude.ai Artifacts run user-supplied HTML in a sandboxed iframe with restricted
 ### Build target
 
 Add a new Vite build output: `npm run build:artifact` → produces `dist-artifact/agent.html` — a single HTML file with:
+
 - Inline JS (three.js, viewer, agent runtime, all in one `<script type="module">`).
 - Inline CSS.
 - Inline base64-encoded or HTTP-fetched GLB (see hydration below).
@@ -25,13 +26,17 @@ Vite config: new entry `src/artifact-entry.js`, `viteStaticCopy` or `rollup-plug
 The single HTML accepts an agent spec via URL hash OR inlined JSON:
 
 Mode A (hash-injected by the host):
+
 ```
 agent.html#agent={"slug":"satoshi","glb":"data:...","skills":[...]}
 ```
 
 Mode B (inline, for static Artifacts):
+
 ```html
-<script type="application/json" id="agent-spec">{...full spec...}</script>
+<script type="application/json" id="agent-spec">
+	{...full spec...}
+</script>
 ```
 
 On load, read spec, boot viewer + agent runtime, render.
@@ -39,6 +44,7 @@ On load, read spec, boot viewer + agent runtime, render.
 ### GLB handling
 
 Claude Artifacts block many cross-origin fetches. Three options:
+
 1. **Inline base64** — GLB embedded in the HTML (bloats the file; only for demo avatars).
 2. **Use Claude's allowed origins** — if R2 public URL is on an allowed list, fetch normally.
 3. **Host-proxied** — Claude's environment might proxy fetches; document the constraint and test.
@@ -48,6 +54,7 @@ For v1: support inline base64 AND allow a passthrough URL. Document which works 
 ### No auth / no writes
 
 Artifact mode is read-only:
+
 - No login UI.
 - No memory writes.
 - Skills that need the network are disabled (grayed out).

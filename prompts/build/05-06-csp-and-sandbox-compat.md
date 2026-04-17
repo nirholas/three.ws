@@ -10,34 +10,34 @@ Strict hosts apply Content-Security-Policy and `<iframe sandbox>` restrictions. 
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| [src/element.js](../../src/element.js) | Mount point — verify no inline event handlers added at runtime. |
-| [vite.config.js](../../vite.config.js) | Build config — can disable `eval`-like outputs. |
-| [public/agent/embed.html](../../public/agent/embed.html) | The embed page — must work under strict CSP. |
-| [specs/EMBED_SPEC.md](../../specs/EMBED_SPEC.md) | Spec to extend. |
+| File                                                     | Why                                                             |
+| :------------------------------------------------------- | :-------------------------------------------------------------- |
+| [src/element.js](../../src/element.js)                   | Mount point — verify no inline event handlers added at runtime. |
+| [vite.config.js](../../vite.config.js)                   | Build config — can disable `eval`-like outputs.                 |
+| [public/agent/embed.html](../../public/agent/embed.html) | The embed page — must work under strict CSP.                    |
+| [specs/EMBED_SPEC.md](../../specs/EMBED_SPEC.md)         | Spec to extend.                                                 |
 
 ## Build this
 
 1. Audit the production bundle for forbidden patterns:
-   - `eval(`, `new Function(`, `Function('return`
-   - inline `<script>` without nonce
-   - inline `on*` handlers
-   - `javascript:` URLs
-   Use a one-shot grep against `dist/` after `npm run build`. Document in the PR.
+    - `eval(`, `new Function(`, `Function('return`
+    - inline `<script>` without nonce
+    - inline `on*` handlers
+    - `javascript:` URLs
+      Use a one-shot grep against `dist/` after `npm run build`. Document in the PR.
 2. If three.js / dat.gui pull in any of the above, gate them behind a build flag (`TARGET=embed`) or replace the offender. Document any unavoidable exception in the spec.
 3. Add a recommended host CSP block to [specs/EMBED_SPEC.md](../../specs/EMBED_SPEC.md):
-   ```
-   frame-src 'self' https://3dagent.vercel.app https://3d.irish;
-   script-src 'self' https://3dagent.vercel.app;
-   img-src 'self' https://3dagent.vercel.app data: blob:;
-   connect-src 'self' https://3dagent.vercel.app https://*.r2.cloudflarestorage.com;
-   ```
+    ```
+    frame-src 'self' https://3dagent.vercel.app https://3d.irish;
+    script-src 'self' https://3dagent.vercel.app;
+    img-src 'self' https://3dagent.vercel.app data: blob:;
+    connect-src 'self' https://3dagent.vercel.app https://*.r2.cloudflarestorage.com;
+    ```
 4. Add a recommended `iframe sandbox` block:
-   ```
-   sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
-   ```
-   Document the failure mode if `allow-same-origin` is omitted (no cookies, must use 05-01 shim).
+    ```
+    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+    ```
+    Document the failure mode if `allow-same-origin` is omitted (no cookies, must use 05-01 shim).
 5. Set `Permissions-Policy` headers on `/agent/:id/embed` to restrict cameras/mics unless the agent declares them in its manifest.
 
 ## Out of scope

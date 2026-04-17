@@ -18,12 +18,12 @@ A **Memory** tab on the agent edit page:
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| [src/agent-memory.js](../../src/agent-memory.js) | In-memory 4-type store. |
-| [api/agent-memory.js](../../api/agent-memory.js) | Server CRUD. If this file is thin today, extend rather than replace. |
-| [api/_lib/schema.sql](../../api/_lib/schema.sql) | `agent_memories` columns: `agent_id, type, content, tags, context, salience, expires_at`. |
-| [src/memory/index.js](../../src/memory/index.js) | File-based memory variant — you don't touch this for this task, but understand the shared type vocabulary. |
+| File                                              | Why                                                                                                        |
+| :------------------------------------------------ | :--------------------------------------------------------------------------------------------------------- |
+| [src/agent-memory.js](../../src/agent-memory.js)  | In-memory 4-type store.                                                                                    |
+| [api/agent-memory.js](../../api/agent-memory.js)  | Server CRUD. If this file is thin today, extend rather than replace.                                       |
+| [api/\_lib/schema.sql](../../api/_lib/schema.sql) | `agent_memories` columns: `agent_id, type, content, tags, context, salience, expires_at`.                  |
+| [src/memory/index.js](../../src/memory/index.js)  | File-based memory variant — you don't touch this for this task, but understand the shared type vocabulary. |
 
 ## Build this
 
@@ -45,6 +45,7 @@ Zod schema for the body (4 types only; `salience` 0–1; `content` 1..4000; `tag
 `public/agent/edit-memory.html` + `edit-memory.js`.
 
 Type colors (reuse from agent-home if already defined):
+
 - `user` — indigo
 - `feedback` — amber
 - `project` — green
@@ -78,12 +79,14 @@ Memories of type `feedback` with high salience should influence future emotion b
 ## Deliverables
 
 **New:**
+
 - `public/agent/edit-memory.html`
 - `public/agent/edit-memory.js`
 
 **Modified:**
+
 - [api/agent-memory.js](../../api/agent-memory.js) — full CRUD + auth.
-- [api/_lib/schema.sql](../../api/_lib/schema.sql) — add `deleted_at` column (ask first).
+- [api/\_lib/schema.sql](../../api/_lib/schema.sql) — add `deleted_at` column (ask first).
 - [src/agent-memory.js](../../src/agent-memory.js) — respect `deleted_at` in reads.
 
 ## Acceptance

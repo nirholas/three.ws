@@ -11,56 +11,60 @@
 // Auto-downgrade: if mean reflow cost over a 30-frame window exceeds
 // COST_BUDGET_MS, disable per-frame relayout and keep the chase running.
 
-const STIFFNESS      = 120;
-const DAMPING        = 20;
-const MASS           = 1;
-const RETURN_EPS_POS = 0.5;   // px
-const RETURN_EPS_VEL = 5;     // px/s
+const STIFFNESS = 120;
+const DAMPING = 20;
+const MASS = 1;
+const RETURN_EPS_POS = 0.5; // px
+const RETURN_EPS_VEL = 5; // px/s
 const COST_BUDGET_MS = 8;
-const COST_WINDOW    = 30;
-const HERO_INSET     = 16;    // px — keep avatar fully inside hero
+const COST_WINDOW = 30;
+const HERO_INSET = 16; // px — keep avatar fully inside hero
 
 function prefersReducedMotion() {
-	return typeof window !== 'undefined'
-		&& window.matchMedia
-		&& window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+	return (
+		typeof window !== 'undefined' &&
+		window.matchMedia &&
+		window.matchMedia('(prefers-reduced-motion: reduce)').matches
+	);
 }
 
 function hasHover() {
-	return typeof window !== 'undefined'
-		&& window.matchMedia
-		&& window.matchMedia('(hover: hover)').matches;
+	return (
+		typeof window !== 'undefined' &&
+		window.matchMedia &&
+		window.matchMedia('(hover: hover)').matches
+	);
 }
 
 export class HeroDragon {
 	constructor(hero) {
-		this.hero        = hero;
-		this.root        = hero.root;
-		this.avatar      = hero.avatar;
+		this.hero = hero;
+		this.root = hero.root;
+		this.avatar = hero.avatar;
 		this.modelViewer = hero.modelViewer;
 
 		this._targetX = 0;
 		this._targetY = 0;
-		this._x  = 0;
-		this._y  = 0;
+		this._x = 0;
+		this._y = 0;
 		this._vx = 0;
 		this._vy = 0;
 
-		this._homeRect  = null;
-		this._heroRect  = null;
-		this._lastTs    = 0;
-		this._rafId     = null;
-		this._attached  = false;
+		this._homeRect = null;
+		this._heroRect = null;
+		this._lastTs = 0;
+		this._rafId = null;
+		this._attached = false;
 		this._returning = false;
 
 		this._costSamples = [];
-		this._downgraded  = false;
+		this._downgraded = false;
 
-		this._onPointerMove  = this._onPointerMove.bind(this);
+		this._onPointerMove = this._onPointerMove.bind(this);
 		this._onPointerLeave = this._onPointerLeave.bind(this);
-		this._onResize       = this._onResize.bind(this);
-		this._onVisibility   = this._onVisibility.bind(this);
-		this._tick           = this._tick.bind(this);
+		this._onResize = this._onResize.bind(this);
+		this._onVisibility = this._onVisibility.bind(this);
+		this._tick = this._tick.bind(this);
 	}
 
 	attach() {
@@ -82,14 +86,14 @@ export class HeroDragon {
 			this.hero.recomputeContext?.();
 			this._paint();
 
-			this.root.addEventListener('pointermove',  this._onPointerMove,  { passive: true });
+			this.root.addEventListener('pointermove', this._onPointerMove, { passive: true });
 			this.root.addEventListener('pointerleave', this._onPointerLeave);
 			window.addEventListener('resize', this._onResize, { passive: true });
 			window.addEventListener('scroll', this._onResize, { passive: true });
 			document.addEventListener('visibilitychange', this._onVisibility);
 
 			this._lastTs = performance.now();
-			this._rafId  = requestAnimationFrame(this._tick);
+			this._rafId = requestAnimationFrame(this._tick);
 		});
 	}
 
@@ -97,7 +101,7 @@ export class HeroDragon {
 		if (!this._attached) return;
 		this._attached = false;
 
-		this.root.removeEventListener('pointermove',  this._onPointerMove);
+		this.root.removeEventListener('pointermove', this._onPointerMove);
 		this.root.removeEventListener('pointerleave', this._onPointerLeave);
 		window.removeEventListener('resize', this._onResize);
 		window.removeEventListener('scroll', this._onResize);
@@ -108,7 +112,7 @@ export class HeroDragon {
 
 		this.root.classList.remove('hero--dragon');
 		if (this.avatar) {
-			this.avatar.style.transform  = '';
+			this.avatar.style.transform = '';
 			this.avatar.style.willChange = '';
 		}
 		this._setAutoRotate(true);
@@ -133,8 +137,8 @@ export class HeroDragon {
 		// but using the avatar's home rect.
 		const r = this._homeRect ?? ctx.avatarRect;
 		return {
-			x: (r.left + r.width  / 2) - ctx.subtitleLeftPage,
-			y: (r.top  + r.height / 2) - ctx.subtitleTopPage,
+			x: r.left + r.width / 2 - ctx.subtitleLeftPage,
+			y: r.top + r.height / 2 - ctx.subtitleTopPage,
 			r: ctx.circleBaseR,
 		};
 	}
@@ -155,7 +159,7 @@ export class HeroDragon {
 			this._rafId = null;
 		} else if (this._attached && this._rafId == null) {
 			this._lastTs = performance.now();
-			this._rafId  = requestAnimationFrame(this._tick);
+			this._rafId = requestAnimationFrame(this._tick);
 		}
 	}
 
@@ -164,15 +168,15 @@ export class HeroDragon {
 		const hero = this._heroRect;
 		if (!home || !hero) return;
 
-		const homeCx = home.left + home.width  / 2;
-		const homeCy = home.top  + home.height / 2;
+		const homeCx = home.left + home.width / 2;
+		const homeCy = home.top + home.height / 2;
 
 		// Clamp so the avatar rect stays within the hero rect (minus inset).
-		const halfW = home.width  / 2;
+		const halfW = home.width / 2;
 		const halfH = home.height / 2;
-		const minCx = hero.left   + halfW + HERO_INSET;
-		const maxCx = hero.right  - halfW - HERO_INSET;
-		const minCy = hero.top    + halfH + HERO_INSET;
+		const minCx = hero.left + halfW + HERO_INSET;
+		const maxCx = hero.right - halfW - HERO_INSET;
+		const minCy = hero.top + halfH + HERO_INSET;
 		const maxCy = hero.bottom - halfH - HERO_INSET;
 
 		const cx = Math.min(maxCx, Math.max(minCx, e.clientX));
@@ -202,8 +206,8 @@ export class HeroDragon {
 		const ay = (STIFFNESS * (this._targetY - this._y) - DAMPING * this._vy) / MASS;
 		this._vx += ax * dt;
 		this._vy += ay * dt;
-		this._x  += this._vx * dt;
-		this._y  += this._vy * dt;
+		this._x += this._vx * dt;
+		this._y += this._vy * dt;
 
 		this.avatar.style.transform = `translate3d(${this._x.toFixed(2)}px, ${this._y.toFixed(2)}px, 0)`;
 
@@ -213,8 +217,8 @@ export class HeroDragon {
 		// the static wrap and auto-rotate resume.
 		if (this._returning) {
 			const settled =
-				Math.abs(this._x)  < RETURN_EPS_POS &&
-				Math.abs(this._y)  < RETURN_EPS_POS &&
+				Math.abs(this._x) < RETURN_EPS_POS &&
+				Math.abs(this._y) < RETURN_EPS_POS &&
 				Math.abs(this._vx) < RETURN_EPS_VEL &&
 				Math.abs(this._vy) < RETURN_EPS_VEL;
 			if (settled) {
@@ -234,10 +238,10 @@ export class HeroDragon {
 		const home = this._homeRect;
 		if (!home) return;
 
-		const homeCxPage = home.left + home.width  / 2;
-		const homeCyPage = home.top  + home.height / 2;
-		const cx = (homeCxPage + this._x) - ctx.subtitleLeftPage;
-		const cy = (homeCyPage + this._y) - ctx.subtitleTopPage;
+		const homeCxPage = home.left + home.width / 2;
+		const homeCyPage = home.top + home.height / 2;
+		const cx = homeCxPage + this._x - ctx.subtitleLeftPage;
+		const cy = homeCyPage + this._y - ctx.subtitleTopPage;
 
 		const cost = this.hero.paintCircle?.(cx, cy, ctx.circleBaseR) ?? 0;
 
@@ -256,6 +260,6 @@ export class HeroDragon {
 	_setAutoRotate(on) {
 		if (!this.modelViewer) return;
 		if (on) this.modelViewer.setAttribute('auto-rotate', '');
-		else    this.modelViewer.removeAttribute('auto-rotate');
+		else this.modelViewer.removeAttribute('auto-rotate');
 	}
 }

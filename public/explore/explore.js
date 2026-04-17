@@ -159,8 +159,7 @@ function renderCard(item) {
 	badges.push(
 		`<span class="explore-badge explore-badge--chain">${escapeHtml(item.chainName)}</span>`,
 	);
-	if (item.has3d)
-		badges.push(`<span class="explore-badge explore-badge--3d">3D</span>`);
+	if (item.has3d) badges.push(`<span class="explore-badge explore-badge--3d">3D</span>`);
 	if (item.x402Support)
 		badges.push(`<span class="explore-badge explore-badge--x402">x402</span>`);
 
@@ -300,7 +299,9 @@ function openEmbedModal({ chainId, agentId, name }) {
 		if (e.key === 'Escape') close();
 	};
 	document.addEventListener('keydown', onEsc);
-	modal.querySelectorAll('[data-role="close"]').forEach((el) => el.addEventListener('click', close));
+	modal
+		.querySelectorAll('[data-role="close"]')
+		.forEach((el) => el.addEventListener('click', close));
 
 	modal.querySelectorAll('.embed-tab').forEach((tab) => {
 		tab.addEventListener('click', () => {
@@ -324,7 +325,10 @@ function openEmbedModal({ chainId, agentId, name }) {
 				setTimeout(() => (btn.textContent = 'Copy'), 1400);
 			};
 			if (navigator.clipboard?.writeText) {
-				navigator.clipboard.writeText(text).then(() => done(true), () => done(false));
+				navigator.clipboard.writeText(text).then(
+					() => done(true),
+					() => done(false),
+				);
 			} else {
 				const ta = modal.querySelector(`[data-pane="${key}"] .embed-snippet`);
 				ta?.select();

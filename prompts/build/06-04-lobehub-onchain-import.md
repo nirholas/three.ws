@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Lobehub (or any MCP host) imports an agent directly from its on-chain record"
+description: 'Lobehub (or any MCP host) imports an agent directly from its on-chain record'
 ---
 
 # 06-04 · Lobehub onchain import
@@ -21,7 +21,7 @@ This is the specific demo that proves the whole product thesis: a user in Lobehu
 ## Build this
 
 1. **Extend the Lobehub plugin manifest** (05-02) with an alternate input mode:
-   - `{ chain_id, erc8004_id }` instead of / in addition to `{ agent_id }`.
+    - `{ chain_id, erc8004_id }` instead of / in addition to `{ agent_id }`.
 2. **Resolver call** — plugin renderer calls `/api/agents/by-chain?...` (06-03) and renders the returned `embed_url` in its iframe renderer.
 3. **Native chat command** — document a `/3d-agent chain:1 id:42` slash-command pattern for the Lobehub fork. Include a minimal command-parser snippet in the PR; the user will wire it into their fork.
 4. **End-to-end test** — in the user's Lobehub fork, trigger the import with a known on-chain id and verify the avatar appears embodied inline.

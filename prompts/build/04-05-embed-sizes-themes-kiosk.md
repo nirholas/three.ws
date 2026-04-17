@@ -12,26 +12,26 @@ This prompt makes the embed URL self-adapt across sizes and themes via query par
 
 Extend [public/agent/embed.html](../../public/agent/embed.html) to honor a small, documented query-param API:
 
-| Param | Values | Effect |
-|:---|:---|:---|
-| `bg` | `transparent` (default), `dark`, `light`, `#rrggbb` | Canvas background. Arbitrary hex too. |
-| `theme` | `auto`, `dark`, `light` | UI chrome (name plate, error text). `auto` follows `prefers-color-scheme`. |
-| `size` | `bubble`, `card`, `banner`, `full` | Presets that tune camera distance, name plate visibility, framing. |
-| `name` | `0` / `1` | Show name plate. |
-| `controls` | `0` / `1` | Show orbit controls (default 0 — kiosk). |
-| `autorotate` | `0` / `1` | Default 1 for bubble/card/banner; 0 for full. |
-| `speed` | number (0.1–3) | Autorotate speed. |
-| `expression` | emotion name or `random` | Starting emotion blend seed. |
-| `cta` | url | On click, open this URL in a new tab. If unset, click does nothing. |
+| Param        | Values                                              | Effect                                                                     |
+| :----------- | :-------------------------------------------------- | :------------------------------------------------------------------------- |
+| `bg`         | `transparent` (default), `dark`, `light`, `#rrggbb` | Canvas background. Arbitrary hex too.                                      |
+| `theme`      | `auto`, `dark`, `light`                             | UI chrome (name plate, error text). `auto` follows `prefers-color-scheme`. |
+| `size`       | `bubble`, `card`, `banner`, `full`                  | Presets that tune camera distance, name plate visibility, framing.         |
+| `name`       | `0` / `1`                                           | Show name plate.                                                           |
+| `controls`   | `0` / `1`                                           | Show orbit controls (default 0 — kiosk).                                   |
+| `autorotate` | `0` / `1`                                           | Default 1 for bubble/card/banner; 0 for full.                              |
+| `speed`      | number (0.1–3)                                      | Autorotate speed.                                                          |
+| `expression` | emotion name or `random`                            | Starting emotion blend seed.                                               |
+| `cta`        | url                                                 | On click, open this URL in a new tab. If unset, click does nothing.        |
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
+| File                                                     | Why                                                                                |
+| :------------------------------------------------------- | :--------------------------------------------------------------------------------- |
 | [public/agent/embed.html](../../public/agent/embed.html) | The file you're extending. Keep it small; don't promote to a module if not needed. |
-| [src/agent-avatar.js](../../src/agent-avatar.js) | `setExpression` / emotion API. |
-| [src/viewer.js](../../src/viewer.js) | Camera framing. `kiosk` option already exists. |
-| `src/components/wallet-chip.js` (if present) | Don't mount inside the iframe — the embed is chromeless by design. |
+| [src/agent-avatar.js](../../src/agent-avatar.js)         | `setExpression` / emotion API.                                                     |
+| [src/viewer.js](../../src/viewer.js)                     | Camera framing. `kiosk` option already exists.                                     |
+| `src/components/wallet-chip.js` (if present)             | Don't mount inside the iframe — the embed is chromeless by design.                 |
 
 ## Build this
 
@@ -49,12 +49,12 @@ Inside the existing `main()`, after loading the avatar:
 
 ### 2. Preset tuning
 
-| Preset | Camera z | Name plate | Framing | Notes |
-|:---|:---|:---|:---|:---|
-| `bubble` | tight head shot | hidden | chest-up | intended 96–160 px iframes |
-| `card` | tighter than default | visible | upper body | ~300 px |
-| `banner` | medium | visible | full body | 600×600+ |
-| `full` | default | visible | scene fits | full page |
+| Preset   | Camera z             | Name plate | Framing    | Notes                      |
+| :------- | :------------------- | :--------- | :--------- | :------------------------- |
+| `bubble` | tight head shot      | hidden     | chest-up   | intended 96–160 px iframes |
+| `card`   | tighter than default | visible    | upper body | ~300 px                    |
+| `banner` | medium               | visible    | full body  | 600×600+                   |
+| `full`   | default              | visible    | scene fits | full page                  |
 
 ### 3. Responsive to iframe size
 
@@ -78,10 +78,12 @@ Add a section to [public/agent/index.html](../../public/agent/index.html) share 
 ## Deliverables
 
 **Modified:**
+
 - [public/agent/embed.html](../../public/agent/embed.html) — accept the new params.
 - [public/agent/index.html](../../public/agent/index.html) — preset picker in share panel.
 
 **New (if split needed):**
+
 - `public/agent/embed.js`
 - `public/agent/embed.css`
 

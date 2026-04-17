@@ -14,20 +14,20 @@ Replace the 3-step "How It Works" section with **4 steps** that accurately descr
 Connect your wallet or sign in with email. Your avatars, animations, and on-chain identities are saved to your account.
 
 **Step 02 — Create your avatar**
-Edit a default avatar in our web editor, or drop in your own GLB. Need a model? Try [Avaturn](https://avaturn.me) or [Mixamo](https://mixamo.com). *(Selfie-to-avatar — coming soon.)*
+Edit a default avatar in our web editor, or drop in your own GLB. Need a model? Try [Avaturn](https://avaturn.me) or [Mixamo](https://mixamo.com). _(Selfie-to-avatar — coming soon.)_
 
 **Step 03 — Customize**
 Name your agent, pick animations, add voice, and connect a brain. Save once, use everywhere.
 
 **Step 04 — Embed anywhere**
-Generate a widget — one iframe, any site. Works in Notion, Ghost, WordPress, and more. *Optionally claim an on-chain identity via ERC-8004.*
+Generate a widget — one iframe, any site. Works in Notion, Ghost, WordPress, and more. _Optionally claim an on-chain identity via ERC-8004._
 
 ## Deliverable
 
 1. Edit [index.html](../../index.html) section `#how-it-works` ([index.html:109-129](../../index.html#L109-L129)). Replace the 3 `.step` divs with 4 new ones containing the copy above.
 2. Tweak the hero "Open viewer" ghost CTA copy ([index.html:66](../../index.html#L66)) to better signal the sandbox:
-   - Current: `Open viewer`
-   - New: `Try the viewer →` with `title="No sign-in needed — drop a GLB and play"` attribute
+    - Current: `Open viewer`
+    - New: `Try the viewer →` with `title="No sign-in needed — drop a GLB and play"` attribute
 3. Update the `<meta name="description">` ([index.html:9](../../index.html#L9)) only if the old copy is now stale — otherwise leave it.
 4. Verify the `.scroll-reveal` delays still stagger correctly (the JS at [index.html:246-266](../../index.html#L246-L266) picks up all `.scroll-reveal` siblings and assigns delays — no JS changes needed).
 
@@ -49,6 +49,6 @@ Generate a widget — one iframe, any site. Works in Notion, Ghost, WordPress, a
 
 ## Reporting
 
-- Confirm the diff is *only* to the `#how-it-works` section and the hero ghost CTA.
+- Confirm the diff is _only_ to the `#how-it-works` section and the hero ghost CTA.
 - Screenshot or describe the rendered section.
 - Any scroll-reveal delay weirdness (there shouldn't be any).

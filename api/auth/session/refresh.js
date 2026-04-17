@@ -7,9 +7,7 @@ import { clientIp } from '../../_lib/rate-limit.js';
 // Reads __Host-sid (or legacy sid) from the cookie header.
 function readCookieToken(req) {
 	const cookie = req.headers.cookie || '';
-	const m =
-		cookie.match(/(?:^|;\s*)__Host-sid=([^;]+)/) ||
-		cookie.match(/(?:^|;\s*)sid=([^;]+)/);
+	const m = cookie.match(/(?:^|;\s*)__Host-sid=([^;]+)/) || cookie.match(/(?:^|;\s*)sid=([^;]+)/);
 	return m ? decodeURIComponent(m[1]) : null;
 }
 

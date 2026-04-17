@@ -2,7 +2,7 @@
 
 ## Context
 
-Repo: `/workspaces/3D`. Sign-In with Ethereum (EIP-4361) is the primary login mode for the CZ demo. Nonce issuing lives in [api/auth/siwe/nonce.js](../../api/auth/siwe/nonce.js) and verification in [api/auth/siwe/verify.js](../../api/auth/siwe/verify.js). The client builds the SIWE message in [public/wallet-login.js](../../public/wallet-login.js). Schema: `siwe_nonces` table in [api/_lib/schema.sql](../../api/_lib/schema.sql) (lines ~130–140).
+Repo: `/workspaces/3D`. Sign-In with Ethereum (EIP-4361) is the primary login mode for the CZ demo. Nonce issuing lives in [api/auth/siwe/nonce.js](../../api/auth/siwe/nonce.js) and verification in [api/auth/siwe/verify.js](../../api/auth/siwe/verify.js). The client builds the SIWE message in [public/wallet-login.js](../../public/wallet-login.js). Schema: `siwe_nonces` table in [api/\_lib/schema.sql](../../api/_lib/schema.sql) (lines ~130–140).
 
 Today the flow does the right shape of things (parse → domain check → temporal check → nonce lookup → signature recover → burn nonce → create-or-link user → session). What this task covers is making every one of those steps airtight under adversarial conditions: replay, phishing domain, chainId mismatch, clock skew, nonce exhaustion, parallel verify calls with the same nonce.
 
@@ -25,12 +25,12 @@ After this task, a reviewer can tick every box on the audit checklist below and 
 - [ ] Nonce has ≥ 128 bits of entropy. Current code loops to pad to 16 alphanumeric chars ≈ 95 bits — document whether that's acceptable or bump to 22 chars (≈ 128 bits).
 - [ ] Rate-limited per IP via `limits.authIp(ip)`. Confirm the preset applies; do not invent a new limiter.
 - [ ] No user input is accepted — nonce endpoint is GET-only, no body echoed.
-- [ ] Response sets `Cache-Control: no-store` (via `json()` helper in [api/_lib/http.js](../../api/_lib/http.js) — confirm the helper does this).
+- [ ] Response sets `Cache-Control: no-store` (via `json()` helper in [api/\_lib/http.js](../../api/_lib/http.js) — confirm the helper does this).
 
 **Message parsing — `parseSiweMessage` in [api/auth/siwe/verify.js](../../api/auth/siwe/verify.js)**
 
 - [ ] Header regex anchors both `^` and `$`. It does today — don't regress.
-- [ ] Address is validated as a 40-hex string *and* re-checksummed via `getAddress()` before comparison.
+- [ ] Address is validated as a 40-hex string _and_ re-checksummed via `getAddress()` before comparison.
 - [ ] `Version` must equal `'1'`. Current parser stores it but never checks the value — **fix this**.
 - [ ] `Chain ID` is required (not just present — verify it's a valid integer, not `null`). Reject if missing.
 - [ ] Unknown lines are ignored silently — that's fine, but `Resources:` (multi-line) is not currently handled. Decide: either parse it or explicitly reject messages that contain `Resources:`. Document the choice.
@@ -40,7 +40,7 @@ After this task, a reviewer can tick every box on the audit checklist below and 
 - [ ] `fields.domain === new URL(env.APP_ORIGIN).host` — confirmed.
 - [ ] `fields.uri` origin equals `env.APP_ORIGIN` — confirmed. Make sure the `new URL(fields.uri)` throw is caught (it is).
 - [ ] On a mismatch, return `400 invalid_domain` / `invalid_uri` — do not 500.
-- [ ] `APP_ORIGIN` is read from `env` (not hardcoded). Check [api/_lib/env.js](../../api/_lib/env.js) that it's a required var and throws at startup if missing.
+- [ ] `APP_ORIGIN` is read from `env` (not hardcoded). Check [api/\_lib/env.js](../../api/_lib/env.js) that it's a required var and throws at startup if missing.
 
 **Temporal checks**
 
@@ -89,14 +89,14 @@ After this task, a reviewer can tick every box on the audit checklist below and 
 1. `node --check api/auth/siwe/verify.js api/auth/siwe/nonce.js`
 2. `npx vite build` — passes.
 3. `node scripts/test-siwe-flow.mjs` — run against a local dev deploy:
-   - Good path → 200, session cookie issued.
-   - Replay with used nonce → 400 `nonce_reused`.
-   - Tampered message (changed address) → 401 `invalid_signature`.
-   - Wrong domain in message → 400 `invalid_domain`.
-   - Expired message (`expirationTime` in the past) → 400 `expired`.
-   - Clock-skewed `issuedAt` (1 day in the future) → 400 `clock_skew`.
-   - Missing `Chain ID` → 400 validation-ish error.
-   - Wrong signature (signer ≠ address) → 401 `invalid_signature`.
+    - Good path → 200, session cookie issued.
+    - Replay with used nonce → 400 `nonce_reused`.
+    - Tampered message (changed address) → 401 `invalid_signature`.
+    - Wrong domain in message → 400 `invalid_domain`.
+    - Expired message (`expirationTime` in the past) → 400 `expired`.
+    - Clock-skewed `issuedAt` (1 day in the future) → 400 `clock_skew`.
+    - Missing `Chain ID` → 400 validation-ish error.
+    - Wrong signature (signer ≠ address) → 401 `invalid_signature`.
 4. `psql` — confirm `siwe_nonces` rows older than a day are cleaned up.
 
 ## Scope boundaries — do NOT do these

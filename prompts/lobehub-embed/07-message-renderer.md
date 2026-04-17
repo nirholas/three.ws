@@ -7,7 +7,7 @@ LobeHub's chat renders messages as React components. When a message contains an 
 ## Depends on
 
 - Task 01 (SDK) shipped or pinned via git URL.
-- LobeHub fork checked out on the user's side (we write *against* its conventions, not *in* its repo).
+- LobeHub fork checked out on the user's side (we write _against_ its conventions, not _in_ its repo).
 
 ## Read first
 
@@ -50,7 +50,7 @@ export function AgentMention({ query }: { query: string }) {
 
 function resolveQueryToOpts(q: string) {
 	if (q.startsWith('agt_')) return { agentId: q };
-	if (q.startsWith('0x'))   return { agentAddress: q };
+	if (q.startsWith('0x')) return { agentAddress: q };
 	return { agentName: q };
 }
 ```

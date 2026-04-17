@@ -11,11 +11,11 @@
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| [public/agent-home.html](../../public/agent-home.html) | References `/api/agent-og`. See the exact param shape it expects. |
-| [api/agents.js](../../api/agents.js) | `GET /api/agents/:id` — used to look up the avatar model URL and agent name. |
-| [vercel.json](../../vercel.json) | Current route table. |
+| File                                                   | Why                                                                          |
+| :----------------------------------------------------- | :--------------------------------------------------------------------------- |
+| [public/agent-home.html](../../public/agent-home.html) | References `/api/agent-og`. See the exact param shape it expects.            |
+| [api/agents.js](../../api/agents.js)                   | `GET /api/agents/:id` — used to look up the avatar model URL and agent name. |
+| [vercel.json](../../vercel.json)                       | Current route table.                                                         |
 
 ## Build this
 
@@ -30,6 +30,7 @@
 **Tier 1 (preferred): cached server-rendered PNG.** On first request, render the agent's GLB in a headless three.js context via `@napi-rs/canvas` or `node-canvas` + a Node-side GL shim. If this is too heavy for Vercel serverless limits, skip to Tier 2. Store the resulting PNG in R2 under `og/<agent_id>.png` and redirect there.
 
 **Tier 2 (ship this first): SVG template rendered to PNG.** Compose a 1200×630 SVG with:
+
 - Agent name (big)
 - Short tagline (from agent bio, truncated)
 - Avatar thumbnail (use the `thumbnail_url` field from avatars — if absent, fall back to a generic silhouette)

@@ -28,6 +28,7 @@ npm install
 ```
 
 **Requirements:**
+
 - Node.js ≥ 18
 - A browser with WebGL 2.0 support (Chrome, Firefox, Edge)
 
@@ -80,14 +81,14 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ### Available Scripts
 
-| Script | Command | Description |
-|--------|---------|-------------|
-| `dev` | `vite --port 3000` | Dev server with HMR |
-| `build` | `vite build` | Production build to `dist/` |
-| `clean` | `rm -rf dist/* \|\| true` | Remove build output |
-| `test` | `node test/gen_test.js` | Run test suite |
-| `deploy` | `npm run build && vercel --prod` | Build and deploy |
-| `postversion` | `git push && git push --tags` | Auto-push after version bump |
+| Script        | Command                          | Description                  |
+| ------------- | -------------------------------- | ---------------------------- |
+| `dev`         | `vite --port 3000`               | Dev server with HMR          |
+| `build`       | `vite build`                     | Production build to `dist/`  |
+| `clean`       | `rm -rf dist/* \|\| true`        | Remove build output          |
+| `test`        | `node test/gen_test.js`          | Run test suite               |
+| `deploy`      | `npm run build && vercel --prod` | Build and deploy             |
+| `postversion` | `git push && git push --tags`    | Auto-push after version bump |
 
 ---
 
@@ -124,6 +125,7 @@ npx prettier --check .
 ```
 
 On `DOMContentLoaded`, `app.js` instantiates the `App` class, which:
+
 1. Parses URL hash parameters
 2. Sets up drag-and-drop
 3. Loads the default or specified model
@@ -219,8 +221,8 @@ The `Validator` class runs independently of the viewer. When a model loads:
 
 ```javascript
 this.state = {
-    // ... existing state
-    opacity: 1.0,
+	// ... existing state
+	opacity: 1.0,
 };
 ```
 
@@ -235,8 +237,8 @@ opacityCtrl.onChange(() => this.updateDisplay());
 
 ```javascript
 traverseMaterials(this.content, (material) => {
-    material.opacity = this.state.opacity;
-    material.transparent = this.state.opacity < 1;
+	material.opacity = this.state.opacity;
+	material.transparent = this.state.opacity < 1;
 });
 ```
 
@@ -249,14 +251,16 @@ import vhtml from 'vhtml';
 /** @jsx vhtml */
 
 export function MyComponent({ title, items }) {
-    return (
-        <div class="my-component">
-            <h2>{title}</h2>
-            <ul>
-                {items.map(item => <li>{item}</li>)}
-            </ul>
-        </div>
-    );
+	return (
+		<div class="my-component">
+			<h2>{title}</h2>
+			<ul>
+				{items.map((item) => (
+					<li>{item}</li>
+				))}
+			</ul>
+		</div>
+	);
 }
 ```
 
@@ -286,8 +290,8 @@ Replace `/avatars/cz.glb` with the path to your model. Place the file in `public
 ```javascript
 const hash = location.hash ? queryString.parse(location.hash) : {};
 this.options = {
-    // ... existing options
-    myParam: hash.myParam || 'default',
+	// ... existing options
+	myParam: hash.myParam || 'default',
 };
 ```
 
@@ -302,9 +306,9 @@ this.options = {
 The app exports state to `window.VIEWER` for console debugging:
 
 ```javascript
-window.VIEWER.app    // App instance (access viewer, validator, options)
-window.VIEWER.scene  // Current THREE.Object3D scene graph
-window.VIEWER.json   // Raw glTF JSON from GLTFLoader
+window.VIEWER.app; // App instance (access viewer, validator, options)
+window.VIEWER.scene; // Current THREE.Object3D scene graph
+window.VIEWER.json; // Raw glTF JSON from GLTFLoader
 ```
 
 ### Scene Graph Logging
@@ -312,7 +316,7 @@ window.VIEWER.json   // Raw glTF JSON from GLTFLoader
 Every model load prints the scene graph to the console:
 
 ```
-▼ <Scene> 
+▼ <Scene>
   ▼ <Group> MyModel
     ▼ <Mesh> Body
     ▼ <Mesh> Head
@@ -333,7 +337,7 @@ console.table(window.VIEWER.app.viewer.renderer.info.memory);
 const v = window.VIEWER.app.viewer;
 
 // List all clips
-v.clips.forEach(c => console.log(c.name, c.duration + 's'));
+v.clips.forEach((c) => console.log(c.name, c.duration + 's'));
 
 // Play a specific clip
 v.mixer.clipAction(v.clips[0]).play();
@@ -345,27 +349,27 @@ v.mixer.setTime(1.5);
 ### Morph Target Debugging
 
 ```javascript
-window.VIEWER.scene.traverse(node => {
-    if (node.morphTargetInfluences) {
-        console.log(node.name, node.morphTargetDictionary);
-    }
+window.VIEWER.scene.traverse((node) => {
+	if (node.morphTargetInfluences) {
+		console.log(node.name, node.morphTargetDictionary);
+	}
 });
 ```
 
 ### Material Inspection
 
 ```javascript
-window.VIEWER.scene.traverse(node => {
-    if (node.isMesh) {
-        const mat = node.material;
-        console.log(node.name, {
-            type: mat.type,
-            color: mat.color?.getHexString(),
-            roughness: mat.roughness,
-            metalness: mat.metalness,
-            map: mat.map?.name,
-        });
-    }
+window.VIEWER.scene.traverse((node) => {
+	if (node.isMesh) {
+		const mat = node.material;
+		console.log(node.name, {
+			type: mat.type,
+			color: mat.color?.getHexString(),
+			roughness: mat.roughness,
+			metalness: mat.metalness,
+			map: mat.map?.name,
+		});
+	}
 });
 ```
 
@@ -375,23 +379,23 @@ window.VIEWER.scene.traverse(node => {
 
 ### Requirements
 
-| Feature | Minimum |
-|---------|---------|
-| WebGL 2.0 | Required |
-| File API | Required (`File`, `FileReader`, `FileList`, `Blob`) |
-| ES Modules | Required (`<script type="module">`) |
+| Feature     | Minimum                                             |
+| ----------- | --------------------------------------------------- |
+| WebGL 2.0   | Required                                            |
+| File API    | Required (`File`, `FileReader`, `FileList`, `Blob`) |
+| ES Modules  | Required (`<script type="module">`)                 |
 | CSS `env()` | Needed for safe-area support (graceful degradation) |
 
 ### Tested Browsers
 
-| Browser | Status |
-|---------|--------|
-| Chrome 90+ | Fully supported |
-| Firefox 90+ | Fully supported |
-| Edge (Chromium) 90+ | Fully supported |
-| Safari 15+ | Mostly works; drag-and-drop has known limitations |
-| Mobile Chrome (Android) | Works; GUI auto-collapses |
-| Mobile Safari (iOS) | Works with limitations; iOS detection via `isIOS()` |
+| Browser                 | Status                                              |
+| ----------------------- | --------------------------------------------------- |
+| Chrome 90+              | Fully supported                                     |
+| Firefox 90+             | Fully supported                                     |
+| Edge (Chromium) 90+     | Fully supported                                     |
+| Safari 15+              | Mostly works; drag-and-drop has known limitations   |
+| Mobile Chrome (Android) | Works; GUI auto-collapses                           |
+| Mobile Safari (iOS)     | Works with limitations; iOS detection via `isIOS()` |
 
 ### Known Limitations
 
@@ -406,6 +410,7 @@ window.VIEWER.scene.traverse(node => {
 ### Memory Management
 
 The `Viewer.clear()` method properly disposes:
+
 - All geometries (`geometry.dispose()`)
 - All textures (`texture.dispose()`, except `envMap`)
 - All materials (`material.dispose()`)

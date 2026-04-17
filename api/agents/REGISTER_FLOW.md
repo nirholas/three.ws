@@ -80,23 +80,25 @@ The server-side prep endpoint eliminates the need for users to manage IPFS pinni
 **Rate limit:** `limits.authIp` (per-user, 30 per 10 min).
 
 **Request body:**
+
 ```json
 {
-  "name": "Coach Leo",
-  "description": "A football coach who reviews your form.",
-  "avatarId": "<uuid of owned avatar>",
-  "brain": {
-    "provider": "anthropic",
-    "model": "claude-opus-4-6",
-    "instructions": "instructions.md"
-  },
-  "skills": ["wave", "dance"],
-  "embedPolicy": {},
-  "demoSlug": "coach-leo"
+	"name": "Coach Leo",
+	"description": "A football coach who reviews your form.",
+	"avatarId": "<uuid of owned avatar>",
+	"brain": {
+		"provider": "anthropic",
+		"model": "claude-opus-4-6",
+		"instructions": "instructions.md"
+	},
+	"skills": ["wave", "dance"],
+	"embedPolicy": {},
+	"demoSlug": "coach-leo"
 }
 ```
 
 **Validation:**
+
 - `name`: 1–60 chars.
 - `description`: ≤ 280 chars.
 - `avatarId`: Must belong to the authed user (404 if not).
@@ -104,20 +106,23 @@ The server-side prep endpoint eliminates the need for users to manage IPFS pinni
 - `brain`, `embedPolicy`, `demoSlug`: Optional.
 
 **Response (200 OK):**
+
 ```json
 {
-  "ok": true,
-  "cid": "bafkreigenerated...",
-  "metadataURI": "ipfs://bafkreigenerated...",
-  "prepId": "<uuid>"
+	"ok": true,
+	"cid": "bafkreigenerated...",
+	"metadataURI": "ipfs://bafkreigenerated...",
+	"prepId": "<uuid>"
 }
 ```
 
 **Pinning strategy:**
+
 - If `WEB3_STORAGE_TOKEN` is set: pins to web3.storage, returns real CID.
 - Otherwise: stores to R2, generates stub CID from content hash.
 
 **Error responses:**
+
 - 401: Not authenticated.
 - 404: Avatar not found or doesn't belong to user.
 - 429: Rate limited.
@@ -133,16 +138,18 @@ The server-side prep endpoint eliminates the need for users to manage IPFS pinni
 **Rate limit:** `limits.authIp` (per-user, 30 per 10 min).
 
 **Request body:**
+
 ```json
 {
-  "prepId": "<uuid from register-prep>",
-  "chainId": 8453,
-  "agentId": "1234",
-  "txHash": "0x..."
+	"prepId": "<uuid from register-prep>",
+	"chainId": 8453,
+	"agentId": "1234",
+	"txHash": "0x..."
 }
 ```
 
 **Verification steps:**
+
 1. Prep record exists, belongs to authed user, not expired (> now).
 2. TX receipt fetched from the chain's RPC (status = 1, success).
 3. Registered event parsed from logs.
@@ -150,18 +157,21 @@ The server-side prep endpoint eliminates the need for users to manage IPFS pinni
 5. Agent record upserted to `agent_identities` table.
 
 **Response (200 OK):**
+
 ```json
 {
-  "ok": true,
-  "agentId": "<agent_identities.id>"
+	"ok": true,
+	"agentId": "<agent_identities.id>"
 }
 ```
 
 **Side effects:**
+
 - Prep record is deleted (consumed), preventing reuse.
 - Agent identity row is inserted or updated.
 
 **Error responses:**
+
 - 400: Chain unsupported, TX not found, TX failed, event parse failed, CID mismatch.
 - 401: Not authenticated.
 - 404: Prep not found or expired.
@@ -192,6 +202,7 @@ The server-side prep endpoint eliminates the need for users to manage IPFS pinni
 ### Database schema
 
 **agent_registrations_pending:**
+
 - `id` (uuid, PK)
 - `user_id` (uuid, FK to users)
 - `cid` (text) — IPFS CID
@@ -200,6 +211,7 @@ The server-side prep endpoint eliminates the need for users to manage IPFS pinni
 - `created_at`, `expires_at` (timestamptz)
 
 **agent_identities** (updated by confirm):
+
 - `user_id`, `name`, `description`, `avatar_id`
 - `chain_id`, `erc8004_agent_id`, `erc8004_registry`, `registration_cid`
 

@@ -23,11 +23,11 @@ User calls the claim function directly. CZ's wallet pays gas.
 
 1. Read `agentId`, `chainId`, contract address from a new small endpoint `GET /api/cz/identity` that reads from `agent_identities` by `meta.demo = 'cz'` (use the row from task 01 step 4).
 2. `window.claimAgent()` on the `/cz` page:
-   - Require `window.ethereum`. Prompt `eth_requestAccounts`.
-   - Prompt chain switch to `chainId` via `wallet_switchEthereumChain`. If unknown chain, use `wallet_addEthereumChain` with the Base Sepolia params.
-   - Call `IdentityRegistry.claim(agentId)` via `viem`.
-   - Wait for receipt, parse `OwnerSet` event, confirm `newOwner === caller`.
-   - `localStorage.setItem('cz:claimed', 'true')`; reload.
+    - Require `window.ethereum`. Prompt `eth_requestAccounts`.
+    - Prompt chain switch to `chainId` via `wallet_switchEthereumChain`. If unknown chain, use `wallet_addEthereumChain` with the Base Sepolia params.
+    - Call `IdentityRegistry.claim(agentId)` via `viem`.
+    - Wait for receipt, parse `OwnerSet` event, confirm `newOwner === caller`.
+    - `localStorage.setItem('cz:claimed', 'true')`; reload.
 
 ### Pattern B — "Pre-authorized transfer" (if only `transferOwner(uint256, address)` exists, requires current owner signature)
 
@@ -52,8 +52,8 @@ On successful claim, add a small canvas-confetti burst + change the agent's Empa
 
 ```js
 window.VIEWER.agent_protocol.emit('skill-done', {
-  skill: 'claim-onchain',
-  result: { success: true, output: 'Claimed', sentiment: 0.9 }
+	skill: 'claim-onchain',
+	result: { success: true, output: 'Claimed', sentiment: 0.9 },
 });
 ```
 

@@ -8,22 +8,22 @@ These prompts are designed to run **simultaneously in separate agent chats** wit
 
 ## File ownership map (no overlaps)
 
-| Prompt | Owns (create/edit) |
-|---|---|
-| `01-siwe-csrf-hardening.md` | `api/auth/siwe/verify.js`, `api/auth/siwe/nonce.js` |
-| `02-sessions-management.md` | `api/auth/sessions/` (new), `public/dashboard/sessions.html` (new) |
-| `03-privy-backend-verify.md` | `api/auth/privy/` (new) |
-| `04-link-wallet-api.md` | `api/auth/wallets/` (new), `public/dashboard/wallets.html` (new) |
-| `05-first-meet-flow.md` | `public/first-meet/` (new) |
-| `06-selfie-progress-ui.md` | `src/selfie-pipeline.js`, `src/selfie-capture.js` |
-| `07-avatar-agent-link.md` | `api/avatars/index.js` (post-create hook only), `api/onboarding/link-avatar.js` (new) |
-| `08-artifact-bundle.md` | `public/artifact/` (new), `vite.config.artifact.js` (new) |
-| `09-lobehub-plugin.md` | `lobehub-plugin/` (new top-level package) |
-| `10-reputation-ui.md` | `public/reputation/` (new) |
+| Prompt                             | Owns (create/edit)                                                                        |
+| ---------------------------------- | ----------------------------------------------------------------------------------------- |
+| `01-siwe-csrf-hardening.md`        | `api/auth/siwe/verify.js`, `api/auth/siwe/nonce.js`                                       |
+| `02-sessions-management.md`        | `api/auth/sessions/` (new), `public/dashboard/sessions.html` (new)                        |
+| `03-privy-backend-verify.md`       | `api/auth/privy/` (new)                                                                   |
+| `04-link-wallet-api.md`            | `api/auth/wallets/` (new), `public/dashboard/wallets.html` (new)                          |
+| `05-first-meet-flow.md`            | `public/first-meet/` (new)                                                                |
+| `06-selfie-progress-ui.md`         | `src/selfie-pipeline.js`, `src/selfie-capture.js`                                         |
+| `07-avatar-agent-link.md`          | `api/avatars/index.js` (post-create hook only), `api/onboarding/link-avatar.js` (new)     |
+| `08-artifact-bundle.md`            | `public/artifact/` (new), `vite.config.artifact.js` (new)                                 |
+| `09-lobehub-plugin.md`             | `lobehub-plugin/` (new top-level package)                                                 |
+| `10-reputation-ui.md`              | `public/reputation/` (new)                                                                |
 | `11-validation-registry-deploy.md` | `contracts/script/DeployValidationMainnet.s.sol` (new), `docs/VALIDATION_DEPLOY.md` (new) |
-| `12-hydrate-from-chain.md` | `public/hydrate/` (new), `src/erc8004/hydrate.js` (new) |
-| `13-signed-action-log-ui.md` | `public/dashboard/actions.html` (new) |
-| `14-ipfs-pinning-real.md` | `api/erc8004/pin.js` |
+| `12-hydrate-from-chain.md`         | `public/hydrate/` (new), `src/erc8004/hydrate.js` (new)                                   |
+| `13-signed-action-log-ui.md`       | `public/dashboard/actions.html` (new)                                                     |
+| `14-ipfs-pinning-real.md`          | `api/erc8004/pin.js`                                                                      |
 
 ## Running them
 

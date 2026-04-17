@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Wallet-signed agent actions with on-chain anchoring for reputation"
+description: 'Wallet-signed agent actions with on-chain anchoring for reputation'
 ---
 
 # Stack Layer 6: Signed Action Log
@@ -14,6 +14,7 @@ Agents emit actions continuously (skill runs, memory writes, interactions). For 
 ### Action signing
 
 For opt-in "significant" actions (configurable per skill), the agent protocol captures the action payload and:
+
 1. Hashes it (`keccak256(canonicalJSON(action))`).
 2. Optionally prompts the owner to sign it via EIP-712 typed data.
 3. Stores `{action, hash, signature, signer}` in the `agent_actions` table.
@@ -25,10 +26,12 @@ Every N actions or daily, compute a Merkle root of new action hashes → write t
 ### Verification
 
 Public action log endpoint `GET /api/agents/:id/actions/verified` returns actions with:
+
 - `signature` (EIP-712, verifiable client-side).
 - `merkleProof` (Merkle path to the on-chain root, if anchored).
 
 Any consumer can independently verify:
+
 - Signature → action was approved by the owner at the time.
 - Merkle proof + on-chain root → action existed by block time X.
 

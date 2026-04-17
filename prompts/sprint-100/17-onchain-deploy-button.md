@@ -34,16 +34,16 @@ Behavior:
 1. Render a button `⬢ Deploy on-chain` inside `container`.
 2. If `agent.chainId` is already set (already deployed), replace the button with a chip `On-chain on Base Sepolia · view on explorer` linked to the appropriate explorer.
 3. On click:
-   - `connectWallet({ chainId: preferredChainId })`.
-   - Show an inline progress panel: `Estimating gas... → Sign tx → Waiting confirmation → Done`.
-   - Call `registerAgent({ signer, owner, agentURI })` with `agentURI` derived from the agent's manifest URL.
-   - On confirmation: `POST /api/agents/:id/onchain` with `{ chainId, txHash, contractAddress }` to persist. If that endpoint doesn't exist, log a warning — the on-chain state is still authoritative.
-   - Show success chip with explorer link.
+    - `connectWallet({ chainId: preferredChainId })`.
+    - Show an inline progress panel: `Estimating gas... → Sign tx → Waiting confirmation → Done`.
+    - Call `registerAgent({ signer, owner, agentURI })` with `agentURI` derived from the agent's manifest URL.
+    - On confirmation: `POST /api/agents/:id/onchain` with `{ chainId, txHash, contractAddress }` to persist. If that endpoint doesn't exist, log a warning — the on-chain state is still authoritative.
+    - Show success chip with explorer link.
 4. Errors:
-   - user rejected → reset silently.
-   - wrong network → offer "Switch to Base Sepolia" action.
-   - no contract deployed on chain → disable button with tooltip.
-   - insufficient funds → show "Fund this wallet" with faucet link.
+    - user rejected → reset silently.
+    - wrong network → offer "Switch to Base Sepolia" action.
+    - no contract deployed on chain → disable button with tooltip.
+    - insufficient funds → show "Fund this wallet" with faucet link.
 
 ## CSS
 

@@ -37,6 +37,7 @@ const result = await pipe.run(photoBlob);
 ```
 
 Steps inside `run`:
+
 1. Fetch `/api/onboarding/avaturn-session` → `{ sessionToken, url }`.
 2. Initialize Avaturn SDK with the session token.
 3. Upload the blob, poll for completion (SDK usually handles this — use the SDK's built-in async flow; emit progress).
@@ -46,6 +47,7 @@ Steps inside `run`:
 ### Error surface
 
 Each failure throws a typed error:
+
 - `AvaturnError('quota_exceeded')`
 - `AvaturnError('face_not_found')` — SDK returns a known "no face detected" state
 - `AvaturnError('timeout')` — >90s without completion

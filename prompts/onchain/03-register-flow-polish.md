@@ -25,15 +25,15 @@ Make registration feel trustworthy on a live production wallet. Show cost before
 
 In [register-ui.js](../../src/erc8004/register-ui.js), classify errors by a new helper `classifyTxError(err)` (put it in [src/erc8004/errors.js](../../src/erc8004/errors.js), new file) returning `{ code, title, detail, hint }`. Codes to handle:
 
-| Code | Trigger | User hint |
-|---|---|---|
-| `user-rejected` | `err.code === 4001` or `err.code === 'ACTION_REJECTED'` | "You cancelled the signature." |
-| `insufficient-funds` | `err.code === 'INSUFFICIENT_FUNDS'` or error message matches `/insufficient funds/i` | "This wallet doesn't have enough native token for gas on chain X. Try Base Sepolia testnet." |
-| `chain-mismatch` | network chainId not in `REGISTRY_DEPLOYMENTS` | "ERC-8004 isn't deployed on chain N. Switch to a supported chain." Show a "switch chain" button that calls `wallet_switchEthereumChain`. |
-| `ipfs-no-token` | `pinToIPFS` throws about missing token | "IPFS pinning requires an API token. Paste your web3.storage or Filebase token." |
-| `ipfs-upload-failed` | `pinToIPFS` HTTP error | "IPFS pinning failed ({status}). Try a different token or gateway." |
-| `tx-reverted` | receipt status 0 | "The transaction was mined but reverted — likely a contract-level check." Link to the explorer. |
-| `unknown` | fallback | Show raw message below a collapsible "details" toggle. |
+| Code                 | Trigger                                                                              | User hint                                                                                                                                |
+| -------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `user-rejected`      | `err.code === 4001` or `err.code === 'ACTION_REJECTED'`                              | "You cancelled the signature."                                                                                                           |
+| `insufficient-funds` | `err.code === 'INSUFFICIENT_FUNDS'` or error message matches `/insufficient funds/i` | "This wallet doesn't have enough native token for gas on chain X. Try Base Sepolia testnet."                                             |
+| `chain-mismatch`     | network chainId not in `REGISTRY_DEPLOYMENTS`                                        | "ERC-8004 isn't deployed on chain N. Switch to a supported chain." Show a "switch chain" button that calls `wallet_switchEthereumChain`. |
+| `ipfs-no-token`      | `pinToIPFS` throws about missing token                                               | "IPFS pinning requires an API token. Paste your web3.storage or Filebase token."                                                         |
+| `ipfs-upload-failed` | `pinToIPFS` HTTP error                                                               | "IPFS pinning failed ({status}). Try a different token or gateway."                                                                      |
+| `tx-reverted`        | receipt status 0                                                                     | "The transaction was mined but reverted — likely a contract-level check." Link to the explorer.                                          |
+| `unknown`            | fallback                                                                             | Show raw message below a collapsible "details" toggle.                                                                                   |
 
 Render errors as a **card** above the log with title/detail/hint — not a red line in a scrolling log.
 
@@ -44,10 +44,10 @@ Before the user clicks "Register Agent On-Chain", once wallet is connected + fil
 - Estimate gas for `register(string)` using `contract.estimateGas['register(string)'](placeholderURI)` where `placeholderURI` can be `'ipfs://placeholder-for-estimate'`.
 - Fetch `getFeeData()` and compute `gasLimit * (maxFeePerGas || gasPrice)`.
 - Render under the register button:
-  ```
-  Est. gas: ~250,000 · Est. cost: 0.0012 ETH (≈ $4.30)
-  ```
-  ETH→USD conversion is best-effort via `https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd` — silently drop the USD string on fetch failure.
+    ```
+    Est. gas: ~250,000 · Est. cost: 0.0012 ETH (≈ $4.30)
+    ```
+    ETH→USD conversion is best-effort via `https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd` — silently drop the USD string on fetch failure.
 - Cache the estimate for 30s; recompute if file or chain changes.
 - Add a second line covering the `setAgentURI` step: estimate separately, show as "+ update-URI step: ~0.0003 ETH". Total cost = sum.
 
@@ -68,11 +68,11 @@ Each step shows `pending | in-progress | done | failed`. Render inside the exist
 After success:
 
 1. Re-fetch [public/.well-known/agent-registration.json](../../public/.well-known/agent-registration.json), append to `registrations[]` the `{ agentId, agentRegistry }` the new agent lives at (build via `agentRegistryId(chainId, registryAddr)` from [abi.js](../../src/erc8004/abi.js)), and `PUT` to a **new backend endpoint** [api/well-known-register.js](../../api/well-known-register.js) — new serverless route — that rewrites `public/.well-known/agent-registration.json` on disk (idempotent; no dup entries).
-   - If the backend endpoint isn't available (local static preview), fail silently with a console warning — don't block the success UX.
+    - If the backend endpoint isn't available (local static preview), fail silently with a console warning — don't block the success UX.
 2. In the result card, add three buttons:
-   - **"View agent"** → `window.location.href = '/agent/' + agentId` (the page consumes [01-hydrate-agent-from-chain.md](./01-hydrate-agent-from-chain.md) for chain-only data).
-   - **"Copy share link"** → copies `https://3dagent.vercel.app/agent/{agentId}?chain={chainId}`.
-   - **"View tx on explorer"** → uses a new `explorerTxURL(chainId, txHash)` helper in [src/erc8004/explorers.js](../../src/erc8004/explorers.js).
+    - **"View agent"** → `window.location.href = '/agent/' + agentId` (the page consumes [01-hydrate-agent-from-chain.md](./01-hydrate-agent-from-chain.md) for chain-only data).
+    - **"Copy share link"** → copies `https://3dagent.vercel.app/agent/{agentId}?chain={chainId}`.
+    - **"View tx on explorer"** → uses a new `explorerTxURL(chainId, txHash)` helper in [src/erc8004/explorers.js](../../src/erc8004/explorers.js).
 3. Emit a DOM event on `window`: `window.dispatchEvent(new CustomEvent('agent:registered', { detail: { agentId, chainId, registrationCID, txHash } }))`. Dashboard / other surfaces can listen and refresh.
 
 ## Audit checklist
@@ -99,11 +99,11 @@ After success:
 1. `node --check` every modified JS file and the new files.
 2. `npx vite build` — passes.
 3. Manual with MetaMask on Base Sepolia:
-   - Connect wallet → name input → attach small GLB. Within a couple of seconds, gas preview line appears.
-   - Click Register. Stepper advances 1 → 2, tx hash link appears.
-   - Reject the `register(string)` prompt. Error card shows "You cancelled the signature." Register button re-enables.
-   - Accept the first tx, watch stepper through 5. Reject the second (`setAgentURI`) → error card explains and lets you retry the URI step only (don't re-mint).
-   - After full success, the `.well-known/agent-registration.json` fetch shows the new entry in `registrations[]`.
+    - Connect wallet → name input → attach small GLB. Within a couple of seconds, gas preview line appears.
+    - Click Register. Stepper advances 1 → 2, tx hash link appears.
+    - Reject the `register(string)` prompt. Error card shows "You cancelled the signature." Register button re-enables.
+    - Accept the first tx, watch stepper through 5. Reject the second (`setAgentURI`) → error card explains and lets you retry the URI step only (don't re-mint).
+    - After full success, the `.well-known/agent-registration.json` fetch shows the new entry in `registrations[]`.
 4. Insufficient-funds path: switch to Ethereum mainnet on a gas-less wallet, trigger register → clean error card.
 
 ## Scope boundaries — do NOT do these

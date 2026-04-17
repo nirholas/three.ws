@@ -69,7 +69,11 @@ function readBody(req, limit) {
 	});
 }
 
-export function cors(req, res, { origins = null, methods = 'GET,POST,OPTIONS', credentials = false } = {}) {
+export function cors(
+	req,
+	res,
+	{ origins = null, methods = 'GET,POST,OPTIONS', credentials = false } = {},
+) {
 	const origin = req.headers.origin;
 	if (origin && isAllowedOrigin(origin, origins)) {
 		res.setHeader('access-control-allow-origin', origin);
@@ -77,7 +81,10 @@ export function cors(req, res, { origins = null, methods = 'GET,POST,OPTIONS', c
 		if (credentials) res.setHeader('access-control-allow-credentials', 'true');
 	}
 	res.setHeader('access-control-allow-methods', methods);
-	res.setHeader('access-control-allow-headers', 'authorization, content-type, mcp-session-id, mcp-protocol-version');
+	res.setHeader(
+		'access-control-allow-headers',
+		'authorization, content-type, mcp-session-id, mcp-protocol-version',
+	);
 	res.setHeader('access-control-max-age', '86400');
 	if (req.method === 'OPTIONS') {
 		res.statusCode = 204;
@@ -101,7 +108,12 @@ export function wrap(handler) {
 			const status = err.status || 500;
 			if (status >= 500) console.error('[api] unhandled', err);
 			if (!res.writableEnded) {
-				error(res, status, err.code || (status >= 500 ? 'internal_error' : 'bad_request'), err.message || 'error');
+				error(
+					res,
+					status,
+					err.code || (status >= 500 ? 'internal_error' : 'bad_request'),
+					err.message || 'error',
+				);
 			}
 		}
 	};

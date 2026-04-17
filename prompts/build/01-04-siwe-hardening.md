@@ -9,7 +9,7 @@ Wallet auth is user-facing and unauthenticated at the entry point. Nonce reuse, 
 - Nonce mint: [api/auth/siwe/nonce.js](../../api/auth/siwe/nonce.js).
 - Verify/burn: [api/auth/siwe/verify.js](../../api/auth/siwe/verify.js).
 - Link (from 01-01): `api/auth/siwe/link.js`.
-- Shared rate limit: [api/_lib/rate-limit.js](../../api/_lib/rate-limit.js).
+- Shared rate limit: [api/\_lib/rate-limit.js](../../api/_lib/rate-limit.js).
 
 ## What to build
 
@@ -24,7 +24,7 @@ Confirm (or add):
 
 ### Rate limits
 
-Apply via [api/_lib/rate-limit.js](../../api/_lib/rate-limit.js):
+Apply via [api/\_lib/rate-limit.js](../../api/_lib/rate-limit.js):
 
 - `POST /api/auth/siwe/nonce` — 20 / 10min per IP, 5 / 10min per `(IP, requested-address)` if the client sends one.
 - `POST /api/auth/siwe/verify` — 10 / 10min per IP, 5 / 10min per address.

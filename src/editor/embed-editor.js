@@ -389,7 +389,11 @@ export function mountEmbedEditor(root, options = {}) {
 		btn.dataset.device = d.id;
 		btn.setAttribute('aria-pressed', String(d.id === state.device));
 		btn.textContent = d.label;
-		btn.addEventListener('click', () => { state.device = d.id; syncDevice(); writeSnippet(); });
+		btn.addEventListener('click', () => {
+			state.device = d.id;
+			syncDevice();
+			writeSnippet();
+		});
 		deviceBar.appendChild(btn);
 	}
 
@@ -415,7 +419,10 @@ export function mountEmbedEditor(root, options = {}) {
 		card.setAttribute('aria-pressed', String(m.id === state.mode));
 		card.tabIndex = 0;
 		card.innerHTML = `<div class="ml">${m.label}</div><div class="mh">${m.hint}</div>`;
-		card.addEventListener('click', () => { state.mode = m.id; sync(); });
+		card.addEventListener('click', () => {
+			state.mode = m.id;
+			sync();
+		});
 		modeGrid.appendChild(card);
 	}
 
@@ -427,18 +434,42 @@ export function mountEmbedEditor(root, options = {}) {
 		btn.dataset.pos = p.id;
 		btn.setAttribute('aria-pressed', String(p.id === state.position));
 		btn.textContent = p.label;
-		btn.addEventListener('click', () => { state.position = p.id; sync(); });
+		btn.addEventListener('click', () => {
+			state.position = p.id;
+			sync();
+		});
 		posGrid.appendChild(btn);
 	}
 
 	// Input bindings
-	srcInput.addEventListener('change', () => { state.src = srcInput.value; sync(); });
-	wInput.addEventListener('change', () => { state.width = wInput.value; sync(); });
-	hInput.addEventListener('change', () => { state.height = hInput.value; sync(); });
-	$('#voice-select').addEventListener('change', (e) => { state.voice = e.target.value === 'off' ? false : true; sync(); });
-	$('#camera-select').addEventListener('change', (e) => { state.cameraControls = e.target.value === 'on'; sync(); });
-	$('#ar-select').addEventListener('change', (e) => { state.ar = e.target.value === 'on'; sync(); });
-	$('#responsive-select').addEventListener('change', (e) => { state.responsivePreset = e.target.value; writeSnippet(); });
+	srcInput.addEventListener('change', () => {
+		state.src = srcInput.value;
+		sync();
+	});
+	wInput.addEventListener('change', () => {
+		state.width = wInput.value;
+		sync();
+	});
+	hInput.addEventListener('change', () => {
+		state.height = hInput.value;
+		sync();
+	});
+	$('#voice-select').addEventListener('change', (e) => {
+		state.voice = e.target.value === 'off' ? false : true;
+		sync();
+	});
+	$('#camera-select').addEventListener('change', (e) => {
+		state.cameraControls = e.target.value === 'on';
+		sync();
+	});
+	$('#ar-select').addEventListener('change', (e) => {
+		state.ar = e.target.value === 'on';
+		sync();
+	});
+	$('#responsive-select').addEventListener('change', (e) => {
+		state.responsivePreset = e.target.value;
+		writeSnippet();
+	});
 
 	// URL preview
 	const urlInput = $('#url-input');
@@ -499,7 +530,14 @@ export function mountEmbedEditor(root, options = {}) {
 		if (dragState.kind === 'move') {
 			const x = e.clientX - rect.left - dragState.offsetX;
 			const y = e.clientY - rect.top - dragState.offsetY;
-			const snapped = snapToCorner(x, y, agentWrap.offsetWidth, agentWrap.offsetHeight, rect.width, rect.height);
+			const snapped = snapToCorner(
+				x,
+				y,
+				agentWrap.offsetWidth,
+				agentWrap.offsetHeight,
+				rect.width,
+				rect.height,
+			);
 			agentWrap.style.left = snapped.x + 'px';
 			agentWrap.style.top = snapped.y + 'px';
 			if (snapped.corner) {
@@ -511,13 +549,22 @@ export function mountEmbedEditor(root, options = {}) {
 		} else if (dragState.kind === 'resize') {
 			const dx = e.clientX - dragState.startX;
 			const dy = e.clientY - dragState.startY;
-			let w = dragState.startW, h = dragState.startH;
-			let left = dragState.startLeft, top = dragState.startTop;
+			let w = dragState.startW,
+				h = dragState.startH;
+			let left = dragState.startLeft,
+				top = dragState.startTop;
 			if (dragState.handle.includes('e')) w = dragState.startW + dx;
 			if (dragState.handle.includes('s')) h = dragState.startH + dy;
-			if (dragState.handle.includes('w')) { w = dragState.startW - dx; left = dragState.startLeft + dx; }
-			if (dragState.handle.includes('n')) { h = dragState.startH - dy; top = dragState.startTop + dy; }
-			w = Math.max(160, w); h = Math.max(200, h);
+			if (dragState.handle.includes('w')) {
+				w = dragState.startW - dx;
+				left = dragState.startLeft + dx;
+			}
+			if (dragState.handle.includes('n')) {
+				h = dragState.startH - dy;
+				top = dragState.startTop + dy;
+			}
+			w = Math.max(160, w);
+			h = Math.max(200, h);
 			agentWrap.style.width = w + 'px';
 			agentWrap.style.height = h + 'px';
 			agentWrap.style.left = left + 'px';
@@ -559,10 +606,12 @@ export function mountEmbedEditor(root, options = {}) {
 
 	// Show appropriate resize handles based on position
 	function syncPositionButtons() {
-		for (const btn of $$('.pos-btn')) btn.setAttribute('aria-pressed', String(btn.dataset.pos === state.position));
+		for (const btn of $$('.pos-btn'))
+			btn.setAttribute('aria-pressed', String(btn.dataset.pos === state.position));
 	}
 	function syncModeCards() {
-		for (const card of $$('.mode-card')) card.setAttribute('aria-pressed', String(card.dataset.mode === state.mode));
+		for (const card of $$('.mode-card'))
+			card.setAttribute('aria-pressed', String(card.dataset.mode === state.mode));
 	}
 
 	function applyToPreview() {
@@ -572,7 +621,11 @@ export function mountEmbedEditor(root, options = {}) {
 		readout.textContent = `${state.width} × ${state.height}`;
 
 		// Position — place the wrap inside the stage per mode + position
-		agentWrap.style.left = agentWrap.style.right = agentWrap.style.top = agentWrap.style.bottom = '';
+		agentWrap.style.left =
+			agentWrap.style.right =
+			agentWrap.style.top =
+			agentWrap.style.bottom =
+				'';
 		if (state.mode === 'floating') {
 			const [vOff, hOff] = (state.offset || '24px 24px').split(/\s+/);
 			if (state.position.includes('top')) agentWrap.style.top = vOff;
@@ -600,7 +653,8 @@ export function mountEmbedEditor(root, options = {}) {
 		}
 
 		// Agent attrs
-		if (state.src) agentEl.setAttribute('src', state.src); else agentEl.removeAttribute('src');
+		if (state.src) agentEl.setAttribute('src', state.src);
+		else agentEl.removeAttribute('src');
 	}
 
 	function buildSnippet() {
@@ -609,7 +663,8 @@ export function mountEmbedEditor(root, options = {}) {
 		if (state.mode && state.mode !== 'inline') attrs.push(`mode="${state.mode}"`);
 		if (state.mode === 'floating') {
 			if (state.position !== 'bottom-right') attrs.push(`position="${state.position}"`);
-			if (state.offset && state.offset !== '24px 24px') attrs.push(`offset="${state.offset}"`);
+			if (state.offset && state.offset !== '24px 24px')
+				attrs.push(`offset="${state.offset}"`);
 		}
 
 		const wPx = parsePx(state.width);
@@ -723,17 +778,23 @@ export function mountEmbedEditor(root, options = {}) {
 		for (const c of corners) {
 			if (Math.abs(x - c.cx) < SNAP && Math.abs(y - c.cy) < SNAP) {
 				// Compute offsets from nearest edge
-				const offV = c.corner.startsWith('top') ? `${Math.round(c.cy)}px` : `${Math.round(stageH - h - c.cy)}px`;
-				const offH = c.corner.endsWith('left') ? `${Math.round(c.cx)}px`
-					: c.corner.endsWith('right') ? `${Math.round(stageW - w - c.cx)}px`
-					: '0px';
+				const offV = c.corner.startsWith('top')
+					? `${Math.round(c.cy)}px`
+					: `${Math.round(stageH - h - c.cy)}px`;
+				const offH = c.corner.endsWith('left')
+					? `${Math.round(c.cx)}px`
+					: c.corner.endsWith('right')
+						? `${Math.round(stageW - w - c.cx)}px`
+						: '0px';
 				return { x: c.cx, y: c.cy, corner: c.corner, offsetV: offV, offsetH: offH };
 			}
 		}
 		return { x, y };
 	}
 
-	function escapeAttr(s) { return String(s).replace(/"/g, '&quot;'); }
+	function escapeAttr(s) {
+		return String(s).replace(/"/g, '&quot;');
+	}
 
 	sync();
 	return { state, host };

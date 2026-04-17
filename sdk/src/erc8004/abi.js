@@ -86,13 +86,13 @@ export const VALIDATION_REGISTRY_ABI = [
 export const REGISTRY_DEPLOYMENTS = {
 	// Base mainnet (chain 8453)
 	8453: {
-		identityRegistry: '',   // TODO: fill once deployed
+		identityRegistry: '', // TODO: fill once deployed
 		reputationRegistry: '', // TODO: fill once deployed
 		validationRegistry: '', // TODO: fill once deployed
 	},
 	// Base Sepolia testnet (chain 84532)
 	84532: {
-		identityRegistry: '',   // TODO: fill in from Deploy.s.sol broadcast output
+		identityRegistry: '', // TODO: fill in from Deploy.s.sol broadcast output
 		reputationRegistry: '',
 		validationRegistry: '',
 	},

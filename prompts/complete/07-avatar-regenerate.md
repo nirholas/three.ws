@@ -12,18 +12,22 @@ When an ML provider is chosen later, wiring it in is one config change. Until th
 
 Create `api/avatars/regenerate.js`:
 
-- `POST /api/avatars/regenerate` — auth required (via `getSessionUser` from [api/_lib/auth.js](../../api/_lib/auth.js)).
+- `POST /api/avatars/regenerate` — auth required (via `getSessionUser` from [api/\_lib/auth.js](../../api/_lib/auth.js)).
 - Body: `{ sourceAvatarId: string, mode: 'remesh' | 'retex' | 'rerig' | 'restyle', params: object }`.
-- Look up source avatar via `sql\`SELECT * FROM avatars WHERE id = ${id} AND owner_user_id = ${user.id}\`` — 404 if not found or not owned.
+- Look up source avatar via `sql\`SELECT \* FROM avatars WHERE id = ${id} AND owner_user_id = ${user.id}\`` — 404 if not found or not owned.
 - Check env `AVATAR_REGEN_PROVIDER` — if unset or `"none"`, return:
-  ```json
-  { "ok": false, "error": "regen-unconfigured", "message": "Avatar regeneration is not yet wired to an ML backend. Set AVATAR_REGEN_PROVIDER env var." }
-  ```
-  with HTTP 501.
+    ```json
+    {
+    	"ok": false,
+    	"error": "regen-unconfigured",
+    	"message": "Avatar regeneration is not yet wired to an ML backend. Set AVATAR_REGEN_PROVIDER env var."
+    }
+    ```
+    with HTTP 501.
 - If set to `"stub"`, return a deterministic fake job: `{ ok: true, jobId: 'stub-<uuid>', status: 'queued', eta: null }`.
 - Document the future provider plug shape in a comment: what input the provider function receives, what output shape is expected (probably `{ glbUrl, textureUrls[], meta }`).
 
-Rate-limit via `limits.authedWrite` from [api/_lib/limits.js](../../api/_lib/limits.js) (or the closest equivalent). Use `json()` / `error()` from [api/_lib/http.js](../../api/_lib/http.js).
+Rate-limit via `limits.authedWrite` from [api/\_lib/limits.js](../../api/_lib/limits.js) (or the closest equivalent). Use `json()` / `error()` from [api/\_lib/http.js](../../api/_lib/http.js).
 
 ### 2. Status endpoint
 
@@ -48,6 +52,7 @@ Create `src/editor/regenerate-panel.js` — a UI panel that:
 ### 4. Docs
 
 Create `api/avatars/REGENERATE.md` describing:
+
 - The endpoint contract.
 - Provider plug shape.
 - Roadmap: what providers are candidates (Meshy, CSM, Rodin, TripoSR, etc.) — note that picking one is out of scope.

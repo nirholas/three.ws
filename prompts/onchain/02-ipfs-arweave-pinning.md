@@ -20,6 +20,7 @@ Must support: JSON pins + binary (GLB) pins, dashboard, API keys, free tier. Rec
 ### 2. Server endpoint
 
 `POST /api/pin` (auth required):
+
 ```
 body: { kind: 'json' | 'glb', uri?: string, data?: object, contentType?: string }
 ```

@@ -9,10 +9,10 @@ export function applyMaterialOverrides(model, overrides) {
 	traverseMaterials(model, (mat) => {
 		const p = overrides[mat.name];
 		if (!p) return;
-		if (p.color     !== undefined) mat.color.set(p.color);
+		if (p.color !== undefined) mat.color.set(p.color);
 		if (p.metalness !== undefined) mat.metalness = Number(p.metalness);
 		if (p.roughness !== undefined) mat.roughness = Number(p.roughness);
-		if (p.emissive  !== undefined) mat.emissive.set(p.emissive);
+		if (p.emissive !== undefined) mat.emissive.set(p.emissive);
 		mat.needsUpdate = true;
 	});
 }
@@ -23,11 +23,11 @@ export function listMaterials(model) {
 	traverseMaterials(model, (mat) => {
 		if (mat.isMeshStandardMaterial || mat.isMeshPhysicalMaterial) {
 			result.push({
-				name:      mat.name,
-				color:     '#' + mat.color.getHexString(),
+				name: mat.name,
+				color: '#' + mat.color.getHexString(),
 				metalness: mat.metalness,
 				roughness: mat.roughness,
-				emissive:  '#' + mat.emissive.getHexString(),
+				emissive: '#' + mat.emissive.getHexString(),
 			});
 		}
 	});

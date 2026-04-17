@@ -10,14 +10,14 @@
  */
 
 import { getSessionUser, authenticateBearer, extractBearer } from './_lib/auth.js';
-import { sql }    from './_lib/db.js';
+import { sql } from './_lib/db.js';
 import { cors, json, method, readJson, wrap, error } from './_lib/http.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,POST,DELETE,OPTIONS', credentials: true })) return;
 
-	const url     = new URL(req.url, 'http://x');
-	const pathId  = url.pathname.split('/').pop(); // /api/agent-memory/:id
+	const url = new URL(req.url, 'http://x');
+	const pathId = url.pathname.split('/').pop(); // /api/agent-memory/:id
 
 	// DELETE /api/agent-memory/:id
 	if (req.method === 'DELETE' && pathId && pathId !== 'agent-memory') {
@@ -25,7 +25,7 @@ export default wrap(async (req, res) => {
 	}
 
 	if (!method(req, res, ['GET', 'POST'])) return;
-	if (req.method === 'GET')  return handleList(req, res);
+	if (req.method === 'GET') return handleList(req, res);
 	return handleUpsert(req, res);
 });
 
@@ -35,11 +35,11 @@ async function handleList(req, res) {
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
 
-	const url     = new URL(req.url, 'http://x');
+	const url = new URL(req.url, 'http://x');
 	const agentId = url.searchParams.get('agentId') || url.searchParams.get('agent_id');
-	const type    = url.searchParams.get('type');
-	const since   = Number(url.searchParams.get('since')) || 0;
-	const limit   = Math.min(Number(url.searchParams.get('limit')) || 200, 500);
+	const type = url.searchParams.get('type');
+	const since = Number(url.searchParams.get('since')) || 0;
+	const limit = Math.min(Number(url.searchParams.get('limit')) || 200, 500);
 
 	if (!agentId) return error(res, 400, 'validation_error', 'agentId required');
 
@@ -47,7 +47,7 @@ async function handleList(req, res) {
 	const [agentRow] = await sql`
 		SELECT user_id FROM agent_identities WHERE id = ${agentId} AND deleted_at IS NULL
 	`;
-	if (!agentRow)                        return error(res, 404, 'not_found', 'agent not found');
+	if (!agentRow) return error(res, 404, 'not_found', 'agent not found');
 	if (agentRow.user_id !== auth.userId) return error(res, 403, 'forbidden', 'not your agent');
 
 	const rows = type
@@ -78,22 +78,22 @@ async function handleUpsert(req, res) {
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
 
-	const body    = await readJson(req);
+	const body = await readJson(req);
 	const agentId = body.agentId || body.agent_id;
-	const entry   = body.entry;
+	const entry = body.entry;
 
 	if (!agentId) return error(res, 400, 'validation_error', 'agentId required');
-	if (!entry)   return error(res, 400, 'validation_error', 'entry required');
+	if (!entry) return error(res, 400, 'validation_error', 'entry required');
 
 	// Verify ownership
 	const [agentRow] = await sql`
 		SELECT user_id FROM agent_identities WHERE id = ${agentId} AND deleted_at IS NULL
 	`;
-	if (!agentRow)                        return error(res, 404, 'not_found', 'agent not found');
+	if (!agentRow) return error(res, 404, 'not_found', 'agent not found');
 	if (agentRow.user_id !== auth.userId) return error(res, 403, 'forbidden', 'not your agent');
 
 	const validTypes = ['user', 'feedback', 'project', 'reference'];
-	const memType    = validTypes.includes(entry.type) ? entry.type : 'project';
+	const memType = validTypes.includes(entry.type) ? entry.type : 'project';
 
 	// Upsert by id (idempotent — local storage may resync the same entry).
 	// The WHERE clause on ON CONFLICT is critical: IDs come from the client,
@@ -108,7 +108,7 @@ async function handleUpsert(req, res) {
 				${agentId},
 				${memType},
 				${String(entry.content || '').slice(0, 10000)},
-				${entry.tags  || []},
+				${entry.tags || []},
 				${JSON.stringify(entry.context || {})}::jsonb,
 				${entry.salience || 0.5},
 				${entry.createdAt ? new Date(entry.createdAt).toISOString() : new Date().toISOString()},
@@ -127,7 +127,7 @@ async function handleUpsert(req, res) {
 				${agentId},
 				${memType},
 				${String(entry.content || '').slice(0, 10000)},
-				${entry.tags  || []},
+				${entry.tags || []},
 				${JSON.stringify(entry.context || {})}::jsonb,
 				${entry.salience || 0.5},
 				${entry.expiresAt ? new Date(entry.expiresAt).toISOString() : null}
@@ -156,7 +156,7 @@ async function handleDelete(req, res, memoryId) {
 		WHERE m.id = ${memoryId}
 	`;
 
-	if (!row)                        return error(res, 404, 'not_found', 'memory not found');
+	if (!row) return error(res, 404, 'not_found', 'memory not found');
 	if (row.user_id !== auth.userId) return error(res, 403, 'forbidden', 'not your memory');
 
 	await sql`DELETE FROM agent_memories WHERE id = ${memoryId}`;
@@ -168,21 +168,21 @@ async function handleDelete(req, res, memoryId) {
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);
 	if (session) return { userId: session.id };
-	const bearer  = await authenticateBearer(extractBearer(req));
-	if (bearer)   return { userId: bearer.userId };
+	const bearer = await authenticateBearer(extractBearer(req));
+	if (bearer) return { userId: bearer.userId };
 	return null;
 }
 
 function decorateMemory(row) {
 	return {
-		id:         row.id,
-		agent_id:   row.agent_id,
-		type:       row.type,
-		content:    row.content,
-		tags:       row.tags    || [],
-		context:    row.context || {},
-		salience:   row.salience,
-		createdAt:  row.created_at ? new Date(row.created_at).getTime() : Date.now(),
-		expiresAt:  row.expires_at ? new Date(row.expires_at).getTime()  : null,
+		id: row.id,
+		agent_id: row.agent_id,
+		type: row.type,
+		content: row.content,
+		tags: row.tags || [],
+		context: row.context || {},
+		salience: row.salience,
+		createdAt: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
+		expiresAt: row.expires_at ? new Date(row.expires_at).getTime() : null,
 	};
 }

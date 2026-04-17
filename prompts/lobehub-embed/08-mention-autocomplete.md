@@ -21,13 +21,13 @@ Task 03 shipped.
 - Query: `?q=<prefix>&limit=8`.
 - Public endpoint. CORS open.
 - Returns:
-  ```json
-  { agents: [ { id, name, avatar_thumb, address, ens?: string }, … ] }
-  ```
+    ```json
+    { agents: [ { id, name, avatar_thumb, address, ens?: string }, … ] }
+    ```
 - Ranking:
-  1. Prefix match on ENS / Basename
-  2. Prefix match on agent name
-  3. Recent usage (stretch — MVP can skip this)
+    1. Prefix match on ENS / Basename
+    2. Prefix match on agent name
+    3. Recent usage (stretch — MVP can skip this)
 - Cache 60 seconds.
 
 ### 2. Input plugin in LobeHub
@@ -40,13 +40,13 @@ export const agentMentionRule = {
 	async suggest(query: string) {
 		const res = await fetch(`${ORIGIN}/api/agents/suggest?q=${query}`);
 		const { agents } = await res.json();
-		return agents.map(a => ({
-			id:    a.id,
+		return agents.map((a) => ({
+			id: a.id,
 			label: a.ens ?? a.name,
 			avatar: a.avatar_thumb,
 			insert: a.ens ? `@${a.ens}` : `@${a.id}`,
 		}));
-	}
+	},
 };
 ```
 
@@ -55,6 +55,7 @@ Attach to whichever mention plugin LobeHub already ships (tiptap / slate / quill
 ### 3. Preview in the suggest menu
 
 Each row shows:
+
 - Avatar thumbnail (24×24)
 - Name / ENS (bold if exact match)
 - Short description (muted, truncated)

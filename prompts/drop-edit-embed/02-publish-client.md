@@ -7,9 +7,9 @@ Task 03 adds a "📤 Publish as embed" button. That button needs a single async 
 ## Shared context
 
 - The three endpoints you'll call — **read them before you wire** — are:
-  - `POST /api/avatars/presign` → [api/avatars/presign.js](../../api/avatars/presign.js). Returns `{ storage_key, upload_url, method: 'PUT', headers: { 'content-type' }, expires_in }`.
-  - `POST /api/avatars` → [api/avatars/index.js](../../api/avatars/index.js). Registers an avatar given `{ name, slug, storage_key, content_type, size_bytes, ... }`. Verifies R2 object exists via `headObject()`. Returns `{ avatar: { id, slug, url, ... } }`.
-  - `POST /api/widgets` → [api/widgets/index.js](../../api/widgets/index.js). Shape: `{ type: 'turntable', name, avatar_id, config, is_public }`. Returns `{ widget: { id, url, ... } }`.
+    - `POST /api/avatars/presign` → [api/avatars/presign.js](../../api/avatars/presign.js). Returns `{ storage_key, upload_url, method: 'PUT', headers: { 'content-type' }, expires_in }`.
+    - `POST /api/avatars` → [api/avatars/index.js](../../api/avatars/index.js). Registers an avatar given `{ name, slug, storage_key, content_type, size_bytes, ... }`. Verifies R2 object exists via `headObject()`. Returns `{ avatar: { id, slug, url, ... } }`.
+    - `POST /api/widgets` → [api/widgets/index.js](../../api/widgets/index.js). Shape: `{ type: 'turntable', name, avatar_id, config, is_public }`. Returns `{ widget: { id, url, ... } }`.
 - Edit-to-bytes is already done: [src/editor/glb-export.js](../../src/editor/glb-export.js) exports `exportEditedGLB(session) → Uint8Array`.
 - The `EditorSession` exposes `sourceName` (the original filename or URL tail) — use that as the default avatar name, sanitized.
 - Auth is cookie-based for the browser flow (`credentials: 'include'`). The helper does **not** handle login — it throws a typed `AuthRequiredError` and lets the caller redirect. Task 04 wires the redirect.
@@ -70,11 +70,11 @@ export const MAX_BYTES = 25 * 1024 * 1024;
 - On 401 from any step → throw `AuthRequiredError`. Do not retry.
 - On 413 from `/api/avatars` → throw `SizeTooLargeError(bytes, MAX_BYTES)`.
 - `onStep` emits:
-  - `{ step: 'export', pct: 0 }` then `{ step: 'export', pct: 1 }`
-  - `{ step: 'presign', pct: 1 }`
-  - `{ step: 'upload', pct: 0..1 }` — use `XMLHttpRequest` for real upload progress; `fetch` doesn't give you upload progress in browsers. If you'd rather keep `fetch`, emit `0` at start and `1` on completion — that's acceptable for this task.
-  - `{ step: 'register', pct: 1 }`
-  - `{ step: 'widget', pct: 1 }`
+    - `{ step: 'export', pct: 0 }` then `{ step: 'export', pct: 1 }`
+    - `{ step: 'presign', pct: 1 }`
+    - `{ step: 'upload', pct: 0..1 }` — use `XMLHttpRequest` for real upload progress; `fetch` doesn't give you upload progress in browsers. If you'd rather keep `fetch`, emit `0` at start and `1` on completion — that's acceptable for this task.
+    - `{ step: 'register', pct: 1 }`
+    - `{ step: 'widget', pct: 1 }`
 - Widget `config`: the defaults for `turntable` are in [public/studio/studio.js](../../public/studio/studio.js) (`TYPE_DEFAULTS.turntable` = `{ rotationSpeed: 0.5 }`). Include `{ rotationSpeed: 0.5, autoRotate: true, showControls: true, background: '#0a0a0a', accent: '#8b5cf6' }` as the baseline; shallow-merge caller-supplied `config` on top.
 
 ### Do NOT
@@ -100,13 +100,13 @@ export const MAX_BYTES = 25 * 1024 * 1024;
 - `node --check src/editor/publish.js` passes.
 - `npm run verify` passes.
 - Manual smoke in DevTools console after loading any model:
-  ```js
-  const { publishEditedGLB } = await import('/src/editor/publish.js');
-  const session = window.VIEWER.editor.session;
-  const result = await publishEditedGLB(session, { onStep: (s) => console.log(s) });
-  console.log(result.urls);
-  ```
-  Expected: progress events, resolves with a `{ widget, avatar, urls }` object where `urls.page` is a working `/w/<id>` URL. (You must be signed in; if not, expect `AuthRequiredError` — that's correct.)
+    ```js
+    const { publishEditedGLB } = await import('/src/editor/publish.js');
+    const session = window.VIEWER.editor.session;
+    const result = await publishEditedGLB(session, { onStep: (s) => console.log(s) });
+    console.log(result.urls);
+    ```
+    Expected: progress events, resolves with a `{ widget, avatar, urls }` object where `urls.page` is a working `/w/<id>` URL. (You must be signed in; if not, expect `AuthRequiredError` — that's correct.)
 
 ## Reporting
 

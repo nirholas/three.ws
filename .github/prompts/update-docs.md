@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Update all documentation to cover new modules and current architecture"
+description: 'Update all documentation to cover new modules and current architecture'
 ---
 
 # Update Documentation
@@ -52,6 +52,7 @@ api/
 ### 2. Update `docs/ARCHITECTURE.md`
 
 Add sections for:
+
 - **Avatar System**: Avaturn SDK → export GLB → save to R2 → view in 3D
 - **ERC-8004 Integration**: Identity Registry → IPFS pin → on-chain registration
 - **MCP Server**: JSON-RPC dispatch, tool catalog, OAuth auth flow
@@ -61,6 +62,7 @@ Add sections for:
 ### 3. Update `docs/API.md`
 
 Add documentation for:
+
 - `AvatarCreator` class (constructor, open, close)
 - `NichAgent` class (chat agent)
 - `IPFS` module (resolveIpfsUrl, resolveArweaveUrl)
@@ -73,6 +75,7 @@ Add documentation for:
 ### 4. Update `docs/DEPLOYMENT.md`
 
 Add:
+
 - Environment variables needed for full deployment (R2, DB, OAuth secrets)
 - MCP server deployment considerations
 - Contract deployment references (link to `deploy-erc8004-contracts.md`)

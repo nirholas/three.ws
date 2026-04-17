@@ -6,10 +6,10 @@ import { handleGetOne, handleWallet } from '../agents.js';
 import { cors, error, wrap } from '../_lib/http.js';
 
 export default wrap(async function handler(req, res) {
-	const url   = new URL(req.url, 'http://x');
+	const url = new URL(req.url, 'http://x');
 	const parts = url.pathname.split('/').filter(Boolean);
 	// parts: ['api', 'agents', ':id'] or ['api', 'agents', ':id', 'wallet']
-	const id  = parts[2];
+	const id = parts[2];
 	const sub = parts[3];
 
 	if (!id) {
@@ -19,4 +19,4 @@ export default wrap(async function handler(req, res) {
 
 	if (sub === 'wallet') return handleWallet(req, res, id);
 	return handleGetOne(req, res, id);
-})
+});

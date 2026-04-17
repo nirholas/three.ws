@@ -12,8 +12,6 @@ export class Validator {
 	constructor(el) {
 		this.el = el;
 		this.report = null;
-
-
 	}
 
 	/**
@@ -27,15 +25,15 @@ export class Validator {
 	validate(rootFile, rootPath, assetMap, response) {
 		// Use Three.js Cache to avoid re-downloading the model.
 		// Cache.enabled is set to true in viewer.js.
-		const fetchBuffer = window.THREE && window.THREE.Cache && window.THREE.Cache.get(rootFile)
-			? Promise.resolve(window.THREE.Cache.get(rootFile))
-				.then((data) => {
-					if (data instanceof ArrayBuffer) return data;
-					// Cache may hold string for .gltf; convert
-					if (typeof data === 'string') return new TextEncoder().encode(data).buffer;
-					return fetch(rootFile).then((r) => r.arrayBuffer());
-				})
-			: fetch(rootFile).then((r) => r.arrayBuffer());
+		const fetchBuffer =
+			window.THREE && window.THREE.Cache && window.THREE.Cache.get(rootFile)
+				? Promise.resolve(window.THREE.Cache.get(rootFile)).then((data) => {
+						if (data instanceof ArrayBuffer) return data;
+						// Cache may hold string for .gltf; convert
+						if (typeof data === 'string') return new TextEncoder().encode(data).buffer;
+						return fetch(rootFile).then((r) => r.arrayBuffer());
+					})
+				: fetch(rootFile).then((r) => r.arrayBuffer());
 
 		return fetchBuffer
 			.then((buffer) =>
@@ -99,8 +97,6 @@ export class Validator {
 		this.report = report;
 
 		this.setResponse(response);
-
-
 
 		function groupMessages(report) {
 			const CODES = {
@@ -174,7 +170,6 @@ export class Validator {
 	setReportException(e) {
 		this.report = null;
 	}
-
 
 	showLightbox() {
 		if (!this.report) return;

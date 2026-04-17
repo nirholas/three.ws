@@ -13,14 +13,14 @@ Add `OpenAIProvider` to [src/runtime/providers.js](../../src/runtime/providers.j
 ## Deliverable
 
 1. **`OpenAIProvider` class** in [src/runtime/providers.js](../../src/runtime/providers.js):
-	 - Constructor accepts `{ model, proxyURL, apiKey, temperature, maxTokens }`. Default model: `gpt-4o-2024-11-20`.
-	 - `async complete({ system, messages, tools })` — POST to `${proxyURL}/v1/chat/completions` (or `https://api.openai.com/v1/chat/completions` if `apiKey` passed directly). Respect the `key-proxy` pattern from [specs/EMBED_SPEC.md](../../specs/EMBED_SPEC.md) — never send raw API keys to the browser unless explicitly provided.
-	 - Convert Anthropic-shaped `messages` (already flowing through the runtime) into OpenAI's chat format:
-		 - `role: "assistant"` messages with `content: [{ type: "tool_use", id, name, input }]` → OpenAI's `tool_calls: [{ id, type: "function", function: { name, arguments: JSON.stringify(input) } }]`.
-		 - `role: "user"` messages with `content: [{ type: "tool_result", tool_use_id, content }]` → OpenAI's `role: "tool", tool_call_id, content`.
-	 - Convert tool schemas: Anthropic's `{ name, description, input_schema }` → OpenAI's `{ type: "function", function: { name, description, parameters } }`.
-	 - Normalize response to `{ text, toolCalls, thinking: "", stopReason }`.
-	 - `formatAssistantWithToolCalls(text, toolCalls)` must round-trip through the runtime untouched — meaning the Anthropic-shape message objects the runtime stores are OK; the conversion happens inside `complete()` on the way out.
+    - Constructor accepts `{ model, proxyURL, apiKey, temperature, maxTokens }`. Default model: `gpt-4o-2024-11-20`.
+    - `async complete({ system, messages, tools })` — POST to `${proxyURL}/v1/chat/completions` (or `https://api.openai.com/v1/chat/completions` if `apiKey` passed directly). Respect the `key-proxy` pattern from [specs/EMBED_SPEC.md](../../specs/EMBED_SPEC.md) — never send raw API keys to the browser unless explicitly provided.
+    - Convert Anthropic-shaped `messages` (already flowing through the runtime) into OpenAI's chat format:
+        - `role: "assistant"` messages with `content: [{ type: "tool_use", id, name, input }]` → OpenAI's `tool_calls: [{ id, type: "function", function: { name, arguments: JSON.stringify(input) } }]`.
+        - `role: "user"` messages with `content: [{ type: "tool_result", tool_use_id, content }]` → OpenAI's `role: "tool", tool_call_id, content`.
+    - Convert tool schemas: Anthropic's `{ name, description, input_schema }` → OpenAI's `{ type: "function", function: { name, description, parameters } }`.
+    - Normalize response to `{ text, toolCalls, thinking: "", stopReason }`.
+    - `formatAssistantWithToolCalls(text, toolCalls)` must round-trip through the runtime untouched — meaning the Anthropic-shape message objects the runtime stores are OK; the conversion happens inside `complete()` on the way out.
 2. **Register in `createProvider()`** — extend the factory to dispatch `provider === "openai"`.
 3. **Update [specs/AGENT_MANIFEST.md](../../specs/AGENT_MANIFEST.md)** — add `openai` to the `brain.provider` enum line and list representative model ids.
 

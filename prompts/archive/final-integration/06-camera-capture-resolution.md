@@ -31,6 +31,7 @@ Either path: **only one camera capture module must exist at the end.**
 ## Files you own
 
 Edit / delete:
+
 - `src/camera-capture.js`
 - `src/camera-capture.css`
 - `src/selfie-capture.js` (only if you choose Path B and need to merge APIs)
@@ -83,6 +84,7 @@ If any box is unchecked, either close the gap in `selfie-capture.js` as part of 
 ## Report + archive
 
 Post the report block from `00-README.md`. Include:
+
 - Path taken (A or B).
 - Feature parity gaps found (if any) and how you closed them.
 - Files deleted.

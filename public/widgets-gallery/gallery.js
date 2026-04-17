@@ -33,8 +33,8 @@ function renderShowcase(w) {
 	root.setAttribute('aria-labelledby', `sc-${w.id}-title`);
 
 	const widgetUrl = `${ORIGIN}/#widget=${encodeURIComponent(w.id)}&kiosk=true`;
-	const pageUrl   = `${ORIGIN}/w/${encodeURIComponent(w.id)}`;
-	const snippet   = `<iframe src="${widgetUrl}" width="${w.width}" height="${w.height}" style="border:0;border-radius:12px;max-width:100%" allow="autoplay; xr-spatial-tracking; clipboard-write" loading="lazy"></iframe>`;
+	const pageUrl = `${ORIGIN}/w/${encodeURIComponent(w.id)}`;
+	const snippet = `<iframe src="${widgetUrl}" width="${w.width}" height="${w.height}" style="border:0;border-radius:12px;max-width:100%" allow="autoplay; xr-spatial-tracking; clipboard-write" loading="lazy"></iframe>`;
 
 	const frame = document.createElement('div');
 	frame.className = 'showcase-frame';
@@ -113,7 +113,9 @@ async function copy(text, btn) {
 		ta.style.opacity = '0';
 		document.body.appendChild(ta);
 		ta.select();
-		try { document.execCommand('copy'); } catch {}
+		try {
+			document.execCommand('copy');
+		} catch {}
 		ta.remove();
 	}
 	const orig = btn.textContent;

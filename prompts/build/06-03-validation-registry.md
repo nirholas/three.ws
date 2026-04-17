@@ -2,13 +2,13 @@
 
 ## Why it matters
 
-Reputation (06-02) is subjective. The ValidationRegistry complements it with *verifiable* claims — "this agent signed this output", "this agent delivered this tool call on this block". These are how hosts prove, without trusting us or the agent, that a given action happened. Critical for host-embed trust (Layer 5) and for the onchain-discovery flywheel (06-07).
+Reputation (06-02) is subjective. The ValidationRegistry complements it with _verifiable_ claims — "this agent signed this output", "this agent delivered this tool call on this block". These are how hosts prove, without trusting us or the agent, that a given action happened. Critical for host-embed trust (Layer 5) and for the onchain-discovery flywheel (06-07).
 
 ## Context
 
 - Validation contract: [contracts/src/ValidationRegistry.sol](../../contracts/src/ValidationRegistry.sol).
 - ABI entries: [src/erc8004/abi.js](../../src/erc8004/abi.js).
-- Agent actions table: `agent_actions` (reference [api/_lib/schema.sql](../../api/_lib/schema.sql)).
+- Agent actions table: `agent_actions` (reference [api/\_lib/schema.sql](../../api/_lib/schema.sql)).
 - Requires: 06-01 merged.
 
 ## What to build

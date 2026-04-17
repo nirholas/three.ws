@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Hydrate an embodied agent into any host directly from its on-chain record"
+description: 'Hydrate an embodied agent into any host directly from its on-chain record'
 ---
 
 # Stack Layer 6: Hydrate Agent From Chain
@@ -14,12 +14,14 @@ The novel unlock: a host app (LobeHub, Claude, any site) can render an embodied 
 ### Library API ([dist-lib/agent-3d.js](dist-lib/agent-3d.js) / [src/element.js](src/element.js))
 
 Web component usage:
+
 ```html
 <script src="https://3dagent.vercel.app/dist-lib/agent-3d.js"></script>
 <agent-3d chain="base-sepolia" agent-id="42"></agent-3d>
 ```
 
 Programmatic:
+
 ```js
 import { renderAgent } from '3d-agent';
 renderAgent(document.getElementById('host'), { chain: 'base-sepolia', agentId: 42 });
@@ -28,6 +30,7 @@ renderAgent(document.getElementById('host'), { chain: 'base-sepolia', agentId: 4
 ### Resolution chain
 
 Inside [src/agent-resolver.js](src/agent-resolver.js):
+
 1. Accept `(chain, agentId)` OR `(manifestCid)` OR `(slug)` OR `(url)`.
 2. If `(chain, agentId)`: read the on-chain registry (read-only RPC — default to a free public RPC for Base; let host override).
 3. Get `manifestURI` (usually `ipfs://...`).

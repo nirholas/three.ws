@@ -19,12 +19,12 @@ An owner opens `/agent/:slug/edit` (or the equivalent panel) on an avatar they a
 
 ## Prompts in this band
 
-| # | File | Depends on |
-|---|---|---|
-| 01 | [save-edits-to-server.md](./01-save-edits-to-server.md) | — |
-| 02 | [regenerate-from-photo.md](./02-regenerate-from-photo.md) | band 2 done |
-| 03 | [outfit-variants.md](./03-outfit-variants.md) | 01 |
-| 04 | [version-history.md](./04-version-history.md) | 01 |
+| #   | File                                                      | Depends on  |
+| --- | --------------------------------------------------------- | ----------- |
+| 01  | [save-edits-to-server.md](./01-save-edits-to-server.md)   | —           |
+| 02  | [regenerate-from-photo.md](./02-regenerate-from-photo.md) | band 2 done |
+| 03  | [outfit-variants.md](./03-outfit-variants.md)             | 01          |
+| 04  | [version-history.md](./04-version-history.md)             | 01          |
 
 ## Done = merged when
 

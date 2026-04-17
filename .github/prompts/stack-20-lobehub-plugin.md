@@ -14,49 +14,63 @@ User maintains a LobeHub fork. Per priority stack, an agent from 3dagent.vercel.
 ### Plugin manifest
 
 Host at `https://3dagent.vercel.app/.well-known/lobehub-plugin.json`:
+
 ```json
 {
-  "identifier": "3d-agent",
-  "version": "1.0.0",
-  "meta": {
-    "title": "3D Agent",
-    "description": "Embodied 3D agents — identity, memory, skills, emotional presence",
-    "avatar": "https://3dagent.vercel.app/icon.png",
-    "tags": ["3d", "agent", "avatar"]
-  },
-  "api": [
-    {
-      "name": "renderAgent",
-      "description": "Render an embodied agent by slug or agent card URL",
-      "url": "https://3dagent.vercel.app/api/lobehub/render-agent",
-      "parameters": { "type": "object", "properties": { "slug": { "type": "string" } }, "required": ["slug"] }
-    },
-    {
-      "name": "summonAgent",
-      "description": "Ask the 3D agent to perform a skill and return the result + rendering",
-      "url": "https://3dagent.vercel.app/api/lobehub/summon-agent",
-      "parameters": { "type": "object", "properties": { "slug": { "type": "string" }, "skill": { "type": "string" }, "input": { "type": "string" } }, "required": ["slug", "skill"] }
-    }
-  ],
-  "ui": [
-    {
-      "name": "agent-embed",
-      "url": "https://3dagent.vercel.app/lobehub/embed.html"
-    }
-  ]
+	"identifier": "3d-agent",
+	"version": "1.0.0",
+	"meta": {
+		"title": "3D Agent",
+		"description": "Embodied 3D agents — identity, memory, skills, emotional presence",
+		"avatar": "https://3dagent.vercel.app/icon.png",
+		"tags": ["3d", "agent", "avatar"]
+	},
+	"api": [
+		{
+			"name": "renderAgent",
+			"description": "Render an embodied agent by slug or agent card URL",
+			"url": "https://3dagent.vercel.app/api/lobehub/render-agent",
+			"parameters": {
+				"type": "object",
+				"properties": { "slug": { "type": "string" } },
+				"required": ["slug"]
+			}
+		},
+		{
+			"name": "summonAgent",
+			"description": "Ask the 3D agent to perform a skill and return the result + rendering",
+			"url": "https://3dagent.vercel.app/api/lobehub/summon-agent",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"slug": { "type": "string" },
+					"skill": { "type": "string" },
+					"input": { "type": "string" }
+				},
+				"required": ["slug", "skill"]
+			}
+		}
+	],
+	"ui": [
+		{
+			"name": "agent-embed",
+			"url": "https://3dagent.vercel.app/lobehub/embed.html"
+		}
+	]
 }
 ```
 
 ### Plugin endpoints
 
 `POST /api/lobehub/render-agent` — returns a payload the plugin chrome renders:
+
 ```json
 {
-  "type": "embed",
-  "url": "https://3dagent.vercel.app/agent/satoshi?kiosk=1&theme=auto",
-  "width": 480,
-  "height": 480,
-  "fallbackText": "3D Agent: Satoshi — open in browser to interact"
+	"type": "embed",
+	"url": "https://3dagent.vercel.app/agent/satoshi?kiosk=1&theme=auto",
+	"width": 480,
+	"height": 480,
+	"fallbackText": "3D Agent: Satoshi — open in browser to interact"
 }
 ```
 
@@ -65,6 +79,7 @@ Host at `https://3dagent.vercel.app/.well-known/lobehub-plugin.json`:
 ### UI plugin
 
 `/lobehub/embed.html` — near-identical to `?kiosk=1` but:
+
 - Reads the LobeHub plugin context (agent spec, theme from host).
 - Posts lifecycle events via `postMessage` to the LobeHub parent.
 - Respects LobeHub's theme tokens (read from `postMessage` at mount).
@@ -72,12 +87,13 @@ Host at `https://3dagent.vercel.app/.well-known/lobehub-plugin.json`:
 ### Install flow
 
 Document in repo: how the user installs the plugin in their fork. Either:
+
 - Official LobeHub plugin marketplace submission (later), OR
 - Direct manifest URL install (immediate).
 
 ### Auth
 
-Plugin does NOT require auth to render public avatars. If the LobeHub user wants their *own* agents listed, they pass a 3D Agent API key (see [api/keys/](api/keys/)) in a settings field.
+Plugin does NOT require auth to render public avatars. If the LobeHub user wants their _own_ agents listed, they pass a 3D Agent API key (see [api/keys/](api/keys/)) in a settings field.
 
 ## Validation
 

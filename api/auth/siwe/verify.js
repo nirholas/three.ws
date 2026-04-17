@@ -12,7 +12,7 @@ import { parse } from '../../_lib/validate.js';
 import { hmacSha256, constantTimeEquals } from '../../_lib/crypto.js';
 
 const verifyBody = z.object({
-	message:   z.string().min(64).max(4000),
+	message: z.string().min(64).max(4000),
 	signature: z.string().regex(/^0x[a-fA-F0-9]+$/),
 });
 
@@ -51,7 +51,7 @@ export default wrap(async (req, res) => {
 	//    VERCEL_URL is the deployment-specific hostname Vercel injects automatically
 	//    (e.g. "3dagent-git-main-moomsi.vercel.app") — allows preview deployments.
 	const appOrigin = env.APP_ORIGIN;
-	const appHost   = new URL(appOrigin).host;
+	const appHost = new URL(appOrigin).host;
 	const vercelHost = process.env.VERCEL_URL || null;
 	const allowedHosts = new Set([appHost, vercelHost].filter(Boolean));
 	if (!allowedHosts.has(fields.domain)) {
@@ -59,8 +59,11 @@ export default wrap(async (req, res) => {
 	}
 	try {
 		const u = new URL(fields.uri);
-		const allowedOrigins = new Set([appOrigin, vercelHost ? `https://${vercelHost}` : null].filter(Boolean));
-		if (!allowedOrigins.has(u.origin)) return error(res, 400, 'invalid_uri', 'uri origin mismatch');
+		const allowedOrigins = new Set(
+			[appOrigin, vercelHost ? `https://${vercelHost}` : null].filter(Boolean),
+		);
+		if (!allowedOrigins.has(u.origin))
+			return error(res, 400, 'invalid_uri', 'uri origin mismatch');
 	} catch {
 		return error(res, 400, 'invalid_uri', 'uri not a valid URL');
 	}
@@ -115,7 +118,7 @@ export default wrap(async (req, res) => {
 
 	// 6. Find or create user. Wallet address is the primary key into the user record.
 	const addrLower = claimed.toLowerCase();
-	const chainId   = fields.chainId || null;
+	const chainId = fields.chainId || null;
 
 	let [wallet] = await sql`
 		select user_id from user_wallets where address = ${addrLower} limit 1
@@ -187,14 +190,30 @@ function parseSiweMessage(msg) {
 		const key = kv[1].trim();
 		const val = kv[2].trim();
 		switch (key) {
-			case 'URI':              out.uri = val; break;
-			case 'Version':          out.version = val; break;
-			case 'Chain ID':         out.chainId = parseInt(val, 10) || null; break;
-			case 'Nonce':            out.nonce = val; break;
-			case 'Issued At':        out.issuedAt = val; break;
-			case 'Expiration Time':  out.expirationTime = val; break;
-			case 'Not Before':       out.notBefore = val; break;
-			case 'Request ID':       out.requestId = val; break;
+			case 'URI':
+				out.uri = val;
+				break;
+			case 'Version':
+				out.version = val;
+				break;
+			case 'Chain ID':
+				out.chainId = parseInt(val, 10) || null;
+				break;
+			case 'Nonce':
+				out.nonce = val;
+				break;
+			case 'Issued At':
+				out.issuedAt = val;
+				break;
+			case 'Expiration Time':
+				out.expirationTime = val;
+				break;
+			case 'Not Before':
+				out.notBefore = val;
+				break;
+			case 'Request ID':
+				out.requestId = val;
+				break;
 		}
 	}
 	if (!out.uri || !out.nonce || !out.version) return null;

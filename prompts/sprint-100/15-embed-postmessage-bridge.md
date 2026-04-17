@@ -20,12 +20,14 @@ New standalone module. Not wired to the web component yet — sibling prompts co
 Messages are JSON, always shaped `{ v: 1, type: string, id?: string, payload?: object }`.
 
 **Host → embed:**
+
 - `host.hello` → `{ hostName, hostVersion, hostOrigin, userId?: string, userName?: string }`
 - `host.chat.message` → `{ role: 'user'|'assistant', text: string, messageId: string }`
 - `host.action` → `{ action: string, args?: object }` (e.g., `'emote.wave'`, `'speak', { text }`)
 - `host.theme` → `{ mode: 'dark'|'light' }`
 
 **Embed → host:**
+
 - `embed.ready` → `{ agentId, version, capabilities: string[] }`
 - `embed.event` → `{ event: string, data?: object }`
 - `embed.error` → `{ code, message }`
@@ -44,6 +46,7 @@ export class EmbedHostBridge extends EventTarget {
 ```
 
 Behavior:
+
 - Only messages from `window.parent` matching an allowed origin are processed.
 - `addEventListener('host.chat.message', e => ...)` etc — emit a typed CustomEvent per incoming type.
 - `request()` assigns an id, waits for matching `host.response`, rejects on timeout.

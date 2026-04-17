@@ -8,11 +8,11 @@
 
 import crypto from 'node:crypto';
 
-import { sql }                            from '../../_lib/db.js';
+import { sql } from '../../_lib/db.js';
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../../_lib/auth.js';
 import { cors, json, method, wrap, error } from '../../_lib/http.js';
-import { limits }                         from '../../_lib/rate-limit.js';
-import { decorate }                       from '../index.js';
+import { limits } from '../../_lib/rate-limit.js';
+import { decorate } from '../index.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
@@ -24,7 +24,8 @@ export default wrap(async (req, res) => {
 	const auth = await resolveAuth(req);
 	if (!auth?.userId) return error(res, 401, 'unauthorized', 'authentication required');
 	if (auth.source === 'oauth' || auth.source === 'apikey') {
-		if (!hasScope(auth.scope, 'avatars:write')) return error(res, 403, 'insufficient_scope', 'avatars:write required');
+		if (!hasScope(auth.scope, 'avatars:write'))
+			return error(res, 403, 'insufficient_scope', 'avatars:write required');
 	}
 
 	const rl = await limits.widgetWrite(auth.userId);
@@ -38,7 +39,7 @@ export default wrap(async (req, res) => {
 	`;
 	if (!src) return error(res, 404, 'not_found', 'widget not found or not yours');
 
-	const newId   = 'wdgt_' + crypto.randomBytes(9).toString('base64url');
+	const newId = 'wdgt_' + crypto.randomBytes(9).toString('base64url');
 	const newName = trim(`${src.name} (copy)`, 120);
 
 	const [row] = await sql`
@@ -65,6 +66,7 @@ function idFromReq(req) {
 
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);
-	if (session) return { userId: session.id, source: 'session', scope: 'avatars:read avatars:write' };
+	if (session)
+		return { userId: session.id, source: 'session', scope: 'avatars:read avatars:write' };
 	return await authenticateBearer(extractBearer(req));
 }

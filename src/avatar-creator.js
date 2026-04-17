@@ -11,7 +11,6 @@ function getStudioUrl() {
 	return 'http://localhost:5173';
 }
 
-
 export class AvatarCreator {
 	/**
 	 * @param {Element} containerEl - Parent element to mount the modal into
@@ -174,7 +173,9 @@ export class AvatarCreator {
 			});
 		}
 
-		this.modal.querySelector('.avatar-creator-close').addEventListener('click', () => this.close());
+		this.modal
+			.querySelector('.avatar-creator-close')
+			.addEventListener('click', () => this.close());
 		this.modal.addEventListener('click', (e) => {
 			if (e.target === this.modal) this.close();
 		});

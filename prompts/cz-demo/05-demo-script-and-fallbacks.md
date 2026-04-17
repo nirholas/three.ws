@@ -11,6 +11,7 @@ The CZ demo is a live event. Everything can fail — RPC flaps, the venue wifi, 
 Sections:
 
 **Pre-flight checklist (T-24h)**
+
 - [ ] `scripts/cz-demo/register-onchain.mjs` has been run; `agentId` in `.state.json`.
 - [ ] Basescan confirms `AgentRegistered` event exists for that agentId.
 - [ ] `/cz` loads on the staging URL; avatar renders; camera orbits.
@@ -23,6 +24,7 @@ Sections:
 - [ ] `window.VIEWER.agent_protocol.history` shows clean boot (no errors) on `/cz`.
 
 **Pre-flight checklist (T-1h)**
+
 - [ ] Fresh browser profile, MetaMask imported from CZ's seed (or hardware wallet plugged in).
 - [ ] DNS cached for the demo origin (`nslookup` twice).
 - [ ] Phone on hotspot ready if venue wifi dies.
@@ -41,17 +43,18 @@ Sections:
 
 **Failure modes + response**
 
-| Symptom | Likely cause | Response |
-|---|---|---|
-| Avatar never renders | GLB 404 or CORS | Fallback 1 |
-| Claim tx pending > 45s | RPC congestion | Continue talking; fallback 2 if > 2 min |
-| MetaMask doesn't pop | Popup blocker | Click wallet icon directly |
-| LobeHub iframe blank | `postMessage` origin mismatch | Fallback 3 |
-| IPFS gateway fetch slow | ipfs.io rate limit | Switch to `dweb.link` via URL fragment |
+| Symptom                 | Likely cause                  | Response                                |
+| ----------------------- | ----------------------------- | --------------------------------------- |
+| Avatar never renders    | GLB 404 or CORS               | Fallback 1                              |
+| Claim tx pending > 45s  | RPC congestion                | Continue talking; fallback 2 if > 2 min |
+| MetaMask doesn't pop    | Popup blocker                 | Click wallet icon directly              |
+| LobeHub iframe blank    | `postMessage` origin mismatch | Fallback 3                              |
+| IPFS gateway fetch slow | ipfs.io rate limit            | Switch to `dweb.link` via URL fragment  |
 
 ### 2. Fallback 1 — "demo mode" static build
 
 Create `public/cz/demo.html` — a **self-contained** page with zero network calls after initial load:
+
 - GLB bundled as a blob URL (read at build-time from `public/avatars/cz.glb`).
 - No `/api/agents/me`, no `/api/cz/identity` — all identity data baked into the HTML.
 - Fake claim flow: clicking "Claim" plays the confetti + flips the UI after a 1.5s delay; no MetaMask call.
@@ -66,6 +69,7 @@ Have a sacrificial pre-mined claim transaction ready — the agent is pre-claime
 ### 4. Fallback 3 — service-worker warm cache
 
 `public/cz/sw.js` — pre-caches:
+
 - `/avatars/cz.glb`
 - `/animations/*.glb`
 - `/dist-lib/agent-3d.js`
@@ -76,6 +80,7 @@ Register on `/cz` page load. Serve from cache when offline. Document that 5s of 
 ### 5. Operator one-liner
 
 `scripts/cz-demo/preflight.sh`:
+
 ```bash
 #!/usr/bin/env bash
 set -e
@@ -88,7 +93,7 @@ echo "Preflight complete"
 ## Files you own
 
 - Create: `docs/cz-demo-runbook.md`, `public/cz/demo.html`, `public/cz/sw.js`, `scripts/cz-demo/preflight.sh`
-- Edit: `public/cz/claim.js` (rehearsal-mode branch — *only* this branch; do not restructure), `public/cz/index.html` (one `<script>` line to register the SW)
+- Edit: `public/cz/claim.js` (rehearsal-mode branch — _only_ this branch; do not restructure), `public/cz/index.html` (one `<script>` line to register the SW)
 
 ## Files off-limits
 

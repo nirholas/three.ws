@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Fix XSS vulnerability in glTF validator — unescaped title field"
+description: 'Fix XSS vulnerability in glTF validator — unescaped title field'
 ---
 
 # Fix XSS: Validator Title Escaping
@@ -11,7 +11,7 @@ In `src/validator.js`, the `setResponse()` method escapes `extras.author`, `extr
 
 ```js
 if (extras.title) {
-    this.report.info.extras.title = extras.title; // ← NOT escaped
+	this.report.info.extras.title = extras.title; // ← NOT escaped
 }
 ```
 

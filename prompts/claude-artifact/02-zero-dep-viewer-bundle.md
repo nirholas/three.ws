@@ -17,6 +17,7 @@ This task produces `artifact.js` — a single self-contained, zero-install, CDN-
 5. Supports both `agentId` lookup and **ERC-8004 onchain lookup** (delegating to [../../src/agent-resolver.js](../../src/agent-resolver.js) logic, ported into the bundle as needed).
 
 Relevant existing modules:
+
 - [../../src/element.js](../../src/element.js) — full web component. Too heavy for an Artifact bundle. Cannibalise selectively.
 - [../../src/viewer.js](../../src/viewer.js) — ~11k LOC. Do **not** bundle as-is; port only the minimum: GLB load, render loop, camera setup.
 - [../../src/agent-avatar.js](../../src/agent-avatar.js) — Empathy Layer. Small and self-contained. Port whole.
@@ -59,7 +60,7 @@ Agent3D.mount(target, opts) → Promise<Instance>
 1. **New directory** `artifact-bundle/` at the repo root with its own `package.json`, `src/index.js`, `rollup.config.js` (or `esbuild.config.js`). This is a separate build pipeline from the main Vite app — its output is `public/artifact.js`, committed, not gitignored, so Vercel serves it statically.
 2. **Build script** wired into the root `package.json` as `npm run build:artifact`. CI-safe (`npm run build` does NOT need to run it — but document clearly in the bundle's README that `build:artifact` must be re-run before shipping changes).
 3. **Port, don't re-depend** — the bundle must not import the full [src/viewer.js](../../src/viewer.js). Extract the render loop + GLB load into `artifact-bundle/src/mini-viewer.js`. The Empathy Layer ([src/agent-avatar.js](../../src/agent-avatar.js)) and protocol ([src/agent-protocol.js](../../src/agent-protocol.js)) can be imported or copy-forwarded — document the choice in the bundle README.
-4. **CORS** — add `Access-Control-Allow-Origin: *` to responses from `/api/agents/:id`, `/api/avatars/:id`, and `/api/agents/:id/resolve` (or whatever the resolver consumes). Verify in [api/_lib/](../../api/_lib/) that CORS middleware exists or add it. Allowed origins MUST include at minimum: `claude.ai`, `*.claude.ai`, `claude.com`, `*.claude.com`, `anthropic.com`, `*.anthropic.com`, or be `*`.
+4. **CORS** — add `Access-Control-Allow-Origin: *` to responses from `/api/agents/:id`, `/api/avatars/:id`, and `/api/agents/:id/resolve` (or whatever the resolver consumes). Verify in [api/\_lib/](../../api/_lib/) that CORS middleware exists or add it. Allowed origins MUST include at minimum: `claude.ai`, `*.claude.ai`, `claude.com`, `*.claude.com`, `anthropic.com`, `*.anthropic.com`, or be `*`.
 5. **three.js loading** — inside `mount()`, dynamically inject `<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js">` and the GLTFLoader companion. Wait for `window.THREE`. If already present, skip.
 6. **Output file** — committed at `public/artifact.js`. Vercel serves `/artifact.js` at edge.
 
@@ -112,6 +113,7 @@ Agent3D.mount(target, opts) → Promise<Instance>
 ## Reporting
 
 At the end, summarise:
+
 - `public/artifact.js` size (raw + gzipped).
 - Which files from `src/` were ported vs imported vs rewritten.
 - CORS changes shipped (which endpoints, what headers).

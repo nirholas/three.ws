@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Complete MCP server with validate-model tool and full tool documentation"
+description: 'Complete MCP server with validate-model tool and full tool documentation'
 ---
 
 # Complete MCP Integration
@@ -31,6 +31,7 @@ Allow MCP clients to submit a model URL for server-side validation:
 ```
 
 Implementation:
+
 - Fetch the model from the URL (with size limit, e.g., 50MB)
 - Run `validateBytes()` from `gltf-validator`
 - Return structured report with errors, warnings, info, hints
@@ -75,6 +76,7 @@ Returns suggestions like: "Use Draco compression to reduce geometry size by ~60%
 ### 4. `create_avatar` — Upload and Create Avatar via MCP
 
 Allow MCP clients to create avatars programmatically:
+
 - Accept GLB upload (base64 or URL)
 - Create avatar record
 - Return avatar ID and viewer URL
@@ -82,6 +84,7 @@ Allow MCP clients to create avatars programmatically:
 ## Server-Side Dependencies
 
 For `validate_model` and `inspect_model`, install `gltf-validator` in the API:
+
 - Already in `dependencies` — just import in the API handler
 - Add URL fetching with proper timeout and size limits
 - Sanitize URLs to prevent SSRF (allowlist of protocols: `https://`)
@@ -89,6 +92,7 @@ For `validate_model` and `inspect_model`, install `gltf-validator` in the API:
 ## Rate Limiting
 
 Add per-tool rate limits:
+
 - `validate_model`: 10/min (compute-heavy)
 - `inspect_model`: 30/min
 - `optimize_model`: 10/min

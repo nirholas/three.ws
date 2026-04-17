@@ -15,15 +15,15 @@ Add a read-only function that takes `(walletAddress, chainId)` and returns an ar
 ## Deliverable
 
 1. New file [src/erc8004/wallet-agents.js](../../src/erc8004/wallet-agents.js) exporting:
-   - `async function listAgentsByOwner({ owner, chainId, rpcURL?, fromBlock? })` → `Promise<{ agentId: bigint, tokenURI: string | null }[]>`
-   - `async function listAgentsAcrossChains({ owner, chainIds?, rpcURL? })` → `Promise<{ chainId, agents }[]>` — defaults to iterating every chain in `REGISTRY_DEPLOYMENTS`, concurrency cap of 4.
+    - `async function listAgentsByOwner({ owner, chainId, rpcURL?, fromBlock? })` → `Promise<{ agentId: bigint, tokenURI: string | null }[]>`
+    - `async function listAgentsAcrossChains({ owner, chainIds?, rpcURL? })` → `Promise<{ chainId, agents }[]>` — defaults to iterating every chain in `REGISTRY_DEPLOYMENTS`, concurrency cap of 4.
 2. Strategy inside `listAgentsByOwner`:
-   - First pass: call `balanceOf(owner)`. If it returns 0n → return `[]` early.
-   - Second pass: scan `Transfer(from, to, tokenId)` where `to === owner` from `fromBlock` (default: chain deployment block if known, else `0`) to `latest`, in chunks of 10_000 blocks (configurable const `LOG_CHUNK = 10_000`), retrying halved on `-32005` / `range too large` errors down to `LOG_CHUNK_MIN = 500`.
-   - Collect `tokenId`s where the most recent Transfer whose party is `owner` resulted in `owner` being the `to`. Verify final ownership with `ownerOf(tokenId)` and drop tokens that have since moved.
-   - For each surviving token, call `tokenURI(tokenId)` in parallel with a 6-wide limit. Swallow `tokenURI` errors as `tokenURI: null` — a token with no URI is still owned.
+    - First pass: call `balanceOf(owner)`. If it returns 0n → return `[]` early.
+    - Second pass: scan `Transfer(from, to, tokenId)` where `to === owner` from `fromBlock` (default: chain deployment block if known, else `0`) to `latest`, in chunks of 10_000 blocks (configurable const `LOG_CHUNK = 10_000`), retrying halved on `-32005` / `range too large` errors down to `LOG_CHUNK_MIN = 500`.
+    - Collect `tokenId`s where the most recent Transfer whose party is `owner` resulted in `owner` being the `to`. Verify final ownership with `ownerOf(tokenId)` and drop tokens that have since moved.
+    - For each surviving token, call `tokenURI(tokenId)` in parallel with a 6-wide limit. Swallow `tokenURI` errors as `tokenURI: null` — a token with no URI is still owned.
 3. Dashboard integration:
-   - In [public/dashboard/](../../public/dashboard/), find the module that renders "my agents" (look for the fetch to `/api/agents/me`). Add a secondary list sourced from `listAgentsAcrossChains` for the currently connected wallet, merged with the backend list by `meta.onchain.agentId`. De-dupe: if an agent already shows in the backend list with a matching `(chainId, agentId)`, **don't add it twice**; decorate the backend card with an "on-chain" badge instead.
+    - In [public/dashboard/](../../public/dashboard/), find the module that renders "my agents" (look for the fetch to `/api/agents/me`). Add a secondary list sourced from `listAgentsAcrossChains` for the currently connected wallet, merged with the backend list by `meta.onchain.agentId`. De-dupe: if an agent already shows in the backend list with a matching `(chainId, agentId)`, **don't add it twice**; decorate the backend card with an "on-chain" badge instead.
 4. Expose the helper in [src/erc8004/index.js](../../src/erc8004/index.js) (create if missing) as a barrel export next to `registerAgent`.
 
 ## Audit checklist
@@ -52,13 +52,15 @@ Add a read-only function that takes `(walletAddress, chainId)` and returns an ar
 1. `node --check src/erc8004/wallet-agents.js` plus any file you edited in `public/dashboard/`.
 2. `npx vite build` — passes (ignore `@avaturn/sdk`).
 3. In a browser console on dev server:
-   ```js
-   const { listAgentsByOwner, listAgentsAcrossChains } = await import('/src/erc8004/wallet-agents.js');
-   const agents = await listAgentsByOwner({ owner: '0x...', chainId: 84532 });
-   console.log(agents.length, agents.slice(0,3));
-   const all = await listAgentsAcrossChains({ owner: '0x...' });
-   console.log(all);
-   ```
+    ```js
+    const { listAgentsByOwner, listAgentsAcrossChains } = await import(
+    	'/src/erc8004/wallet-agents.js'
+    );
+    const agents = await listAgentsByOwner({ owner: '0x...', chainId: 84532 });
+    console.log(agents.length, agents.slice(0, 3));
+    const all = await listAgentsAcrossChains({ owner: '0x...' });
+    console.log(all);
+    ```
 4. On the dashboard, connect a wallet that owns ≥ 1 on-chain agent (use the pre-registered CZ agent after [cz-demo/02](../cz-demo/02-cz-preregistered-agent.md) lands). Confirm it appears with the "on-chain" badge. Confirm backend agents still render.
 5. Empty wallet: no crash, empty state shown.
 

@@ -74,11 +74,7 @@ export async function recordValidation({
 		proofURI = `ipfs://${cid}`;
 	}
 
-	const contract = new Contract(
-		deployment.validationRegistry,
-		VALIDATION_REGISTRY_ABI,
-		signer,
-	);
+	const contract = new Contract(deployment.validationRegistry, VALIDATION_REGISTRY_ABI, signer);
 	const tx = await contract.recordValidation(agentId, passed, proofHash, proofURI, kind);
 	await tx.wait();
 
@@ -98,10 +94,6 @@ export async function getLatestValidation({ agentId, runner, chainId, kind = KIN
 	if (!deployment || !deployment.validationRegistry) {
 		throw new Error(`No Validation Registry deployed on chain ${chainId}.`);
 	}
-	const contract = new Contract(
-		deployment.validationRegistry,
-		VALIDATION_REGISTRY_ABI,
-		runner,
-	);
+	const contract = new Contract(deployment.validationRegistry, VALIDATION_REGISTRY_ABI, runner);
 	return contract.getLatestByKind(agentId, kind);
 }

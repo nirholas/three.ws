@@ -7,9 +7,12 @@
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"build": "tsc && esbuild dist/index.js --bundle --platform=browser --outfile=dist/bundle.js",
-		"dev": "tsc --watch & esbuild dist/index.js --bundle --platform=browser --outfile=dist/bundle.js --watch",
+		"build": "tsc && esbuild dist/index.js --bundle --platform=browser --external:react --external:react-dom --outfile=dist/bundle.js",
+		"dev": "tsc --watch & esbuild dist/index.js --bundle --platform=browser --external:react --external:react-dom --outfile=dist/bundle.js --watch",
 		"type-check": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@lobehub/chat-plugin-sdk": "^1.0.0"
 	},
 	"devDependencies": {
 		"@types/react": "^18.2.0",

@@ -7,7 +7,7 @@ const API = '';
 
 export async function listWidgets({ limit, cursor } = {}) {
 	const url = new URL(`${API}/api/widgets`, location.origin);
-	if (limit)  url.searchParams.set('limit', String(limit));
+	if (limit) url.searchParams.set('limit', String(limit));
 	if (cursor) url.searchParams.set('cursor', cursor);
 	const res = await fetch(url.pathname + url.search, { credentials: 'include' });
 	if (res.status === 401) throw err401();
@@ -73,11 +73,13 @@ async function postJson(path, body) {
 
 async function asError(res) {
 	let data = null;
-	try { data = await res.json(); } catch {}
+	try {
+		data = await res.json();
+	} catch {}
 	const e = new Error(data?.error_description || res.statusText || 'request failed');
 	e.status = res.status;
-	e.code   = data?.error || 'request_failed';
-	e.data   = data;
+	e.code = data?.error || 'request_failed';
+	e.data = data;
 	return e;
 }
 

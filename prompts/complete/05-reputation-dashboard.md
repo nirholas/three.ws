@@ -32,6 +32,7 @@ export class ReputationDashboard {
 ```
 
 Use:
+
 - `getReputation`, `getRecentReviews`, `submitFeedback` from [src/erc8004/reputation.js](../../src/erc8004/reputation.js).
 - `connectWallet` from [src/erc8004/agent-registry.js](../../src/erc8004/agent-registry.js).
 - vhtml JSX for templates (file ends `.jsx` if you write JSX; or plain template strings if not).

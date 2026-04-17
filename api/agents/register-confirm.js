@@ -25,7 +25,8 @@ const bodySchema = z.object({
 });
 
 // ERC-721 Transfer event (emitted when token is minted)
-const REGISTERED_EVENT_ABI = 'event Registered(uint256 indexed agentId, string agentURI, address indexed owner)';
+const REGISTERED_EVENT_ABI =
+	'event Registered(uint256 indexed agentId, string agentURI, address indexed owner)';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
@@ -76,7 +77,12 @@ export default wrap(async (req, res) => {
 
 	// Verify metadataURI matches prep record
 	if (agentURI !== prep.metadata_uri) {
-		return error(res, 409, 'conflict', `metadata URI mismatch: expected ${prep.metadata_uri} got ${agentURI}`);
+		return error(
+			res,
+			409,
+			'conflict',
+			`metadata URI mismatch: expected ${prep.metadata_uri} got ${agentURI}`,
+		);
 	}
 
 	// Upsert agent_identities
@@ -156,10 +162,7 @@ function parseRegisteredEvent(logs, registryAddress) {
 
 	for (const log of logs) {
 		// Match registry address and Registered event topic
-		if (
-			getAddress(log.address) === registryAddr &&
-			log.topics[0] === topic0
-		) {
+		if (getAddress(log.address) === registryAddr && log.topics[0] === topic0) {
 			// Decode the data field which contains the string agentURI
 			// For Registered(uint256 indexed agentId, string agentURI, address indexed owner),
 			// the data field contains (agentURI). The string is ABI-encoded as offset + length + data.

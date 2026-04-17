@@ -6,7 +6,7 @@ A new user (signed in via wallet — band 1) is shown a camera viewfinder. They 
 
 ## Why this matters
 
-Typing a name, picking a body type, dragging sliders — all friction. A selfie is the *magic moment* that makes the product obvious. Every downstream priority (edit, embed, on-chain) is post-creation; if creation is slow or unclear, nothing else matters.
+Typing a name, picking a body type, dragging sliders — all friction. A selfie is the _magic moment_ that makes the product obvious. Every downstream priority (edit, embed, on-chain) is post-creation; if creation is slow or unclear, nothing else matters.
 
 ## Current state
 
@@ -17,13 +17,13 @@ Typing a name, picking a body type, dragging sliders — all friction. A selfie 
 
 ## Prompts in this band
 
-| # | File | Depends on |
-|---|---|---|
-| 01 | [camera-capture.md](./01-camera-capture.md) | — |
-| 02 | [avaturn-pipeline.md](./02-avaturn-pipeline.md) | 01 |
-| 03 | [readyplayerme-fallback.md](./03-readyplayerme-fallback.md) | 01 |
-| 04 | [onboarding-flow.md](./04-onboarding-flow.md) | 02 |
-| 05 | [commit-and-name.md](./05-commit-and-name.md) | 02, 04 |
+| #   | File                                                        | Depends on |
+| --- | ----------------------------------------------------------- | ---------- |
+| 01  | [camera-capture.md](./01-camera-capture.md)                 | —          |
+| 02  | [avaturn-pipeline.md](./02-avaturn-pipeline.md)             | 01         |
+| 03  | [readyplayerme-fallback.md](./03-readyplayerme-fallback.md) | 01         |
+| 04  | [onboarding-flow.md](./04-onboarding-flow.md)               | 02         |
+| 05  | [commit-and-name.md](./05-commit-and-name.md)               | 02, 04     |
 
 01 unblocks 02 and 03 in parallel. 04 sits on top of 02. 05 is the final mile.
 

@@ -1,73 +1,101 @@
 <!doctype html>
 <html lang="en">
-<head>
-	<meta charset="UTF-8" />
-	<title>WalletConnect Bridge — smoke test</title>
-	<style>
-		body { font-family: monospace; max-width: 640px; margin: 2rem auto; padding: 0 1rem; }
-		button { margin: .25rem; padding: .5rem 1rem; cursor: pointer; }
-		#log { margin-top: 1rem; white-space: pre-wrap; border: 1px solid #ccc; padding: .75rem; min-height: 6rem; }
-		.ok  { color: green; }
-		.err { color: red; }
-	</style>
-</head>
-<body>
-	<h2>WalletConnect → SIWE smoke test</h2>
-	<p>Requires <code>VITE_WALLETCONNECT_PROJECT_ID</code> to be set in <code>.env.local</code>.</p>
-
-	<button id="btn-connect">Connect + Sign In</button>
-	<button id="btn-me">GET /api/auth/me</button>
-	<button id="btn-disconnect">Disconnect</button>
-
-	<div id="log">Ready.</div>
-
-	<script type="module">
-		import { signInWithWalletConnect, getWalletConnectProvider, disconnectWalletConnect }
-			from './walletconnect-bridge.js';
-
-		const log = document.getElementById('log');
-
-		function write(msg, cls = '') {
-			const ts = new Date().toISOString().slice(11, 23);
-			log.innerHTML += `<span class="${cls}">[${ts}] ${escHtml(msg)}\n</span>`;
-			log.scrollTop = log.scrollHeight;
-		}
-
-		function escHtml(s) {
-			return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-		}
-
-		document.getElementById('btn-connect').addEventListener('click', async () => {
-			write('Starting WalletConnect sign-in…');
-			try {
-				const { user, address } = await signInWithWalletConnect();
-				write(`Signed in — address: ${address}`, 'ok');
-				write(`User: ${JSON.stringify(user, null, 2)}`, 'ok');
-			} catch (err) {
-				write(`Error [${err.code}]: ${err.message}`, 'err');
+	<head>
+		<meta charset="UTF-8" />
+		<title>WalletConnect Bridge — smoke test</title>
+		<style>
+			body {
+				font-family: monospace;
+				max-width: 640px;
+				margin: 2rem auto;
+				padding: 0 1rem;
 			}
-		});
-
-		document.getElementById('btn-me').addEventListener('click', async () => {
-			write('GET /api/auth/me…');
-			try {
-				const res = await fetch('/api/auth/me', { credentials: 'include' });
-				const body = await res.json();
-				write(`${res.status} → ${JSON.stringify(body, null, 2)}`, res.ok ? 'ok' : 'err');
-			} catch (err) {
-				write(`Fetch error: ${err.message}`, 'err');
+			button {
+				margin: 0.25rem;
+				padding: 0.5rem 1rem;
+				cursor: pointer;
 			}
-		});
-
-		document.getElementById('btn-disconnect').addEventListener('click', async () => {
-			write('Disconnecting…');
-			try {
-				await disconnectWalletConnect();
-				write('Disconnected.', 'ok');
-			} catch (err) {
-				write(`Disconnect error: ${err.message}`, 'err');
+			#log {
+				margin-top: 1rem;
+				white-space: pre-wrap;
+				border: 1px solid #ccc;
+				padding: 0.75rem;
+				min-height: 6rem;
 			}
-		});
-	</script>
-</body>
+			.ok {
+				color: green;
+			}
+			.err {
+				color: red;
+			}
+		</style>
+	</head>
+	<body>
+		<h2>WalletConnect → SIWE smoke test</h2>
+		<p>
+			Requires <code>VITE_WALLETCONNECT_PROJECT_ID</code> to be set in
+			<code>.env.local</code>.
+		</p>
+
+		<button id="btn-connect">Connect + Sign In</button>
+		<button id="btn-me">GET /api/auth/me</button>
+		<button id="btn-disconnect">Disconnect</button>
+
+		<div id="log">Ready.</div>
+
+		<script type="module">
+			import {
+				signInWithWalletConnect,
+				getWalletConnectProvider,
+				disconnectWalletConnect,
+			} from './walletconnect-bridge.js';
+
+			const log = document.getElementById('log');
+
+			function write(msg, cls = '') {
+				const ts = new Date().toISOString().slice(11, 23);
+				log.innerHTML += `<span class="${cls}">[${ts}] ${escHtml(msg)}\n</span>`;
+				log.scrollTop = log.scrollHeight;
+			}
+
+			function escHtml(s) {
+				return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+			}
+
+			document.getElementById('btn-connect').addEventListener('click', async () => {
+				write('Starting WalletConnect sign-in…');
+				try {
+					const { user, address } = await signInWithWalletConnect();
+					write(`Signed in — address: ${address}`, 'ok');
+					write(`User: ${JSON.stringify(user, null, 2)}`, 'ok');
+				} catch (err) {
+					write(`Error [${err.code}]: ${err.message}`, 'err');
+				}
+			});
+
+			document.getElementById('btn-me').addEventListener('click', async () => {
+				write('GET /api/auth/me…');
+				try {
+					const res = await fetch('/api/auth/me', { credentials: 'include' });
+					const body = await res.json();
+					write(
+						`${res.status} → ${JSON.stringify(body, null, 2)}`,
+						res.ok ? 'ok' : 'err',
+					);
+				} catch (err) {
+					write(`Fetch error: ${err.message}`, 'err');
+				}
+			});
+
+			document.getElementById('btn-disconnect').addEventListener('click', async () => {
+				write('Disconnecting…');
+				try {
+					await disconnectWalletConnect();
+					write('Disconnected.', 'ok');
+				} catch (err) {
+					write(`Disconnect error: ${err.message}`, 'err');
+				}
+			});
+		</script>
+	</body>
 </html>

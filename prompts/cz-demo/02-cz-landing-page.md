@@ -27,10 +27,10 @@ Route: `/cz` → `public/cz/index.html`. Add to [vercel.json](../../vercel.json)
 - Full-viewport black background.
 - Centered 3D stage — 70vh tall, the CZ avatar center-stage, auto-rotating slowly (0.2 rad/sec).
 - Below the stage:
-  - `<h1>` "CZ" + tagline "An embodied agent. Signed onchain."
-  - Address chip showing the current onchain `owner` (shortened: `0x1234…abcd`).
-  - Metadata pills: `chain: base-sepolia · agent #123 · CID Qm…`.
-  - One primary button: **Claim your agent →**.
+    - `<h1>` "CZ" + tagline "An embodied agent. Signed onchain."
+    - Address chip showing the current onchain `owner` (shortened: `0x1234…abcd`).
+    - Metadata pills: `chain: base-sepolia · agent #123 · CID Qm…`.
+    - One primary button: **Claim your agent →**.
 - Below the fold: three short paragraphs explaining what's happening technically (onchain identity, portable embed, Empathy Layer).
 
 ### 3. Rendering
@@ -39,9 +39,9 @@ Use the same `Viewer` + agent stack as `/agent/:id`. Import from `dist-lib/agent
 
 ```html
 <agent-3d
-  agent-id-chain="base-sepolia:123"
-  eager
-  style="width:100%;height:70vh;background:transparent"
+	agent-id-chain="base-sepolia:123"
+	eager
+	style="width:100%;height:70vh;background:transparent"
 ></agent-3d>
 ```
 
@@ -54,6 +54,7 @@ Hooked to the flow defined in [03-claim-transfer-flow.md](./03-claim-transfer-fl
 ### 5. Post-claim state
 
 When `localStorage['cz:claimed'] === 'true'`:
+
 - Replace "Claim your agent →" with `Open in LobeHub →` + `Open in Claude →` buttons.
 - Hide the address chip's old owner, show the new owner address.
 - Show a small green dot + "claimed" label next to the agent id.

@@ -9,17 +9,17 @@
  * pulling in canvas/imagemagick on the serverless side.
  */
 
-import { sql }       from './_lib/db.js';
+import { sql } from './_lib/db.js';
 import { getAvatar } from './_lib/avatars.js';
 import { cors, wrap } from './_lib/http.js';
 
-const CACHE_CARD  = 'public, max-age=3600, s-maxage=86400';
+const CACHE_CARD = 'public, max-age=3600, s-maxage=86400';
 const CACHE_REDIR = 'public, max-age=3600';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
 
-	const url     = new URL(req.url, 'http://x');
+	const url = new URL(req.url, 'http://x');
 	const agentId = url.searchParams.get('id');
 
 	if (!agentId) return sendNotFound(res);
@@ -44,14 +44,14 @@ export default wrap(async (req, res) => {
 	}
 
 	sendCardSvg(res, 200, CACHE_CARD, {
-		name:        agent.name        || 'Agent',
+		name: agent.name || 'Agent',
 		description: agent.description || 'An embodied 3D agent.',
 	});
 });
 
 function sendNotFound(res) {
 	sendCardSvg(res, 404, 'public, max-age=60', {
-		name:        'Agent not found',
+		name: 'Agent not found',
 		description: '',
 	});
 }
@@ -83,9 +83,9 @@ function truncate(s, n) {
 
 function escapeXml(s) {
 	return String(s)
-		.replace(/&/g,  '&amp;')
-		.replace(/</g,  '&lt;')
-		.replace(/>/g,  '&gt;')
-		.replace(/"/g,  '&quot;')
-		.replace(/'/g,  '&apos;');
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&apos;');
 }

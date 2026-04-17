@@ -146,7 +146,8 @@ export async function hydrateAgent({ chainId, agentId, ethProvider }) {
 		x402: false,
 		serviceTypes: [],
 		viewerUrl: `/a/${chainId}/${String(agentId)}`,
-		tokenExplorerUrl: registry && meta ? `${meta.explorer}/token/${registry}?a=${String(agentId)}` : '',
+		tokenExplorerUrl:
+			registry && meta ? `${meta.explorer}/token/${registry}?a=${String(agentId)}` : '',
 		ownerExplorerUrl: '',
 		registry,
 	};
@@ -412,7 +413,12 @@ export async function autoResolve({
 			return { type, results };
 		}
 		case INPUT_TYPES.TX_HASH: {
-			const results = await resolveByTxHash({ txHash: trimmed, chainIds, ethProvider, onProgress });
+			const results = await resolveByTxHash({
+				txHash: trimmed,
+				chainIds,
+				ethProvider,
+				onProgress,
+			});
 			return { type, results };
 		}
 		case INPUT_TYPES.ADDRESS: {
@@ -439,7 +445,9 @@ export async function autoResolve({
 			return { type, resolvedAddress: address, results };
 		}
 		default:
-			throw new Error(`Unrecognized input: "${trimmed}". Paste an address, ENS name, tx hash, or agent ID.`);
+			throw new Error(
+				`Unrecognized input: "${trimmed}". Paste an address, ENS name, tx hash, or agent ID.`,
+			);
 	}
 }
 

@@ -2,7 +2,7 @@
 
 ## Why
 
-Bands 4 and 6 both benefit from a public index of every registered agent. Today there's no `/agents` list — you can only view an agent if you already know its id. The existing [public/explore/](../../public/explore/) is for 3D *models*, not agents.
+Bands 4 and 6 both benefit from a public index of every registered agent. Today there's no `/agents` list — you can only view an agent if you already know its id. The existing [public/explore/](../../public/explore/) is for 3D _models_, not agents.
 
 A public directory makes the ecosystem feel alive, lets users discover agents, and is the natural surface to paginate on-chain registrations.
 

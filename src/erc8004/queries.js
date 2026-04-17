@@ -90,7 +90,9 @@ export async function listAgentsByOwner({ chainId, owner, ethProvider, eventScan
 			ids.push(id);
 		}
 		return { ids, count, partial: false, mode: 'enumerable' };
-	} catch { /* fall through */ }
+	} catch {
+		/* fall through */
+	}
 
 	// 2. Event-scan fallback
 	try {
@@ -107,15 +109,19 @@ export async function listAgentsByOwner({ chainId, owner, ethProvider, eventScan
 			try {
 				const currentOwner = await registry.ownerOf(id);
 				if (currentOwner.toLowerCase() === owner.toLowerCase()) idsFromEvents.push(id);
-			} catch { /* ignore burned/missing */ }
+			} catch {
+				/* ignore burned/missing */
+			}
 		}
 		return {
-			ids:     idsFromEvents,
+			ids: idsFromEvents,
 			count,
 			partial: idsFromEvents.length < count,
-			mode:    'events',
+			mode: 'events',
 		};
-	} catch { /* fall through */ }
+	} catch {
+		/* fall through */
+	}
 
 	// 3. Count-only
 	return { ids: [], count, partial: true, mode: 'count-only' };
@@ -133,7 +139,13 @@ export async function listAgentsByOwner({ chainId, owner, ethProvider, eventScan
  * @param {number}  [opts.limit]   Max events returned (newest first)
  * @returns {Promise<Array<{ agentId: bigint, agentURI: string, owner: string, blockNumber: number, txHash: string }>>}
  */
-export async function listRegisteredEvents({ chainId, owner, ethProvider, blocks = 500000, limit = 100 }) {
+export async function listRegisteredEvents({
+	chainId,
+	owner,
+	ethProvider,
+	blocks = 500000,
+	limit = 100,
+}) {
 	const registry = getReadRegistry(chainId, ethProvider);
 	const provider = registry.runner.provider || registry.runner;
 	const latest = await provider.getBlockNumber();
@@ -148,11 +160,11 @@ export async function listRegisteredEvents({ chainId, owner, ethProvider, blocks
 		.reverse()
 		.slice(0, limit)
 		.map((ev) => ({
-			agentId:     ev.args.agentId,
-			agentURI:    ev.args.agentURI,
-			owner:       ev.args.owner,
+			agentId: ev.args.agentId,
+			agentURI: ev.args.agentURI,
+			owner: ev.args.owner,
 			blockNumber: ev.blockNumber,
-			txHash:      ev.transactionHash,
+			txHash: ev.transactionHash,
 		}));
 	return out;
 }

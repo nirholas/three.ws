@@ -7,12 +7,14 @@ Prompts are prioritized by the product stack from [memory/project_vision.md](../
 ## Priority stack prompts
 
 ### Layer 1 — Wallet auth 100%
+
 - [stack-01-siwe-wallet-login.md](stack-01-siwe-wallet-login.md)
 - [stack-02-privy-unified-auth.md](stack-02-privy-unified-auth.md)
 - [stack-03-auth-session-recovery.md](stack-03-auth-session-recovery.md)
 - [stack-04-auth-error-ux.md](stack-04-auth-error-ux.md)
 
 ### Layer 2 — Selfie → agent creation (the magic moment)
+
 - [stack-05-selfie-capture.md](stack-05-selfie-capture.md)
 - [stack-06-face-to-avatar-backend.md](stack-06-face-to-avatar-backend.md)
 - [stack-07-avatar-creation-progress.md](stack-07-avatar-creation-progress.md)
@@ -21,6 +23,7 @@ Prompts are prioritized by the product stack from [memory/project_vision.md](../
 - [stack-29-biometric-consent.md](stack-29-biometric-consent.md) (legal, ship with stack-05)
 
 ### Layer 3 — Edit avatar
+
 - [stack-09-avatar-editor-shell.md](stack-09-avatar-editor-shell.md)
 - [stack-10-avatar-identity-tab.md](stack-10-avatar-identity-tab.md)
 - [stack-11-avatar-skills-tab.md](stack-11-avatar-skills-tab.md)
@@ -29,6 +32,7 @@ Prompts are prioritized by the product stack from [memory/project_vision.md](../
 - [stack-14-avatar-mesh-replace.md](stack-14-avatar-mesh-replace.md)
 
 ### Layer 4 — View + embed
+
 - [stack-15-agent-public-page.md](stack-15-agent-public-page.md)
 - [stack-16-embed-code-generator.md](stack-16-embed-code-generator.md)
 - [stack-17-kiosk-mode-polish.md](stack-17-kiosk-mode-polish.md)
@@ -36,12 +40,14 @@ Prompts are prioritized by the product stack from [memory/project_vision.md](../
 - [stack-27-agents-gallery.md](stack-27-agents-gallery.md) (discovery)
 
 ### Layer 5 — Embed in Claude.ai & LobeHub (the novel integration)
+
 - [stack-19-artifacts-single-file.md](stack-19-artifacts-single-file.md)
 - [stack-20-lobehub-plugin.md](stack-20-lobehub-plugin.md)
 - [stack-21-host-chat-bridge.md](stack-21-host-chat-bridge.md)
 - [stack-22-mcp-embodied-responses.md](stack-22-mcp-embodied-responses.md)
 
 ### Layer 6 — Onchain portable identity (the novel unlock)
+
 - [stack-23-manifest-to-ipfs.md](stack-23-manifest-to-ipfs.md)
 - [stack-24-onchain-identity-register.md](stack-24-onchain-identity-register.md)
 - [stack-25-hydrate-from-chain.md](stack-25-hydrate-from-chain.md)
@@ -54,6 +60,7 @@ Existing viewer/feature prompts: ai-model-analysis, ar-quick-look, cli-tool, mat
 ## Stale — do not use
 
 These describe work already done or targeting deleted files:
+
 - ai-chat-agent.md (targets deleted src/avaturn-agent.js)
 - cleanup-dead-code.md (already applied)
 - create-agent-card.md (file now exists)

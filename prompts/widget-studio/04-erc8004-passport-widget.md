@@ -6,7 +6,7 @@
 
 ## Goal
 
-Ship the ERC-8004 Passport widget: a public, embeddable 3D avatar *plus* its verifiable on-chain identity. Visitors see the avatar, its registered wallet, the chain it's registered on, its reputation score, and a link to the registration JSON. This is the widget that makes "agent-as-infrastructure" visible — a provable digital identity in an iframe.
+Ship the ERC-8004 Passport widget: a public, embeddable 3D avatar _plus_ its verifiable on-chain identity. Visitors see the avatar, its registered wallet, the chain it's registered on, its reputation score, and a link to the registration JSON. This is the widget that makes "agent-as-infrastructure" visible — a provable digital identity in an iframe.
 
 This widget is what turns an ERC-8004-registered agent into a badge you can put in a GitHub README, a personal site, or an X bio.
 
@@ -17,16 +17,16 @@ This widget is what turns an ERC-8004-registered agent into a badge you can put 
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| [src/erc8004/index.js](../../src/erc8004/index.js) — all exports | Understand what's available: identity registry, reputation, validation recorder. |
-| [src/erc8004/abi.js](../../src/erc8004/abi.js) | Contract ABIs + deployment addresses. Confirm which chains are live. |
-| [src/erc8004/agent-registry.js](../../src/erc8004/agent-registry.js) | `buildRegistrationJSON` and `registerAgent` — understand what's on-chain for a given token id. |
-| [src/erc8004/reputation.js](../../src/erc8004/reputation.js) | `getReputation`, `getFeedbackRange` — you'll render these. |
-| [src/erc8004/validation-recorder.js](../../src/erc8004/validation-recorder.js) | `getLatestValidation` — optional "last validated" proof. |
-| [src/erc8004/register-ui.js](../../src/erc8004/register-ui.js) | Reference for how the project currently renders identity info. |
-| [features.html](../../features.html) | Visual style for ERC-8004 presentation. Match this feel. |
-| Prompt 01 | Copy the turntable's base visual polish — this widget extends it. |
+| File                                                                           | Why                                                                                            |
+| :----------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------- |
+| [src/erc8004/index.js](../../src/erc8004/index.js) — all exports               | Understand what's available: identity registry, reputation, validation recorder.               |
+| [src/erc8004/abi.js](../../src/erc8004/abi.js)                                 | Contract ABIs + deployment addresses. Confirm which chains are live.                           |
+| [src/erc8004/agent-registry.js](../../src/erc8004/agent-registry.js)           | `buildRegistrationJSON` and `registerAgent` — understand what's on-chain for a given token id. |
+| [src/erc8004/reputation.js](../../src/erc8004/reputation.js)                   | `getReputation`, `getFeedbackRange` — you'll render these.                                     |
+| [src/erc8004/validation-recorder.js](../../src/erc8004/validation-recorder.js) | `getLatestValidation` — optional "last validated" proof.                                       |
+| [src/erc8004/register-ui.js](../../src/erc8004/register-ui.js)                 | Reference for how the project currently renders identity info.                                 |
+| [features.html](../../features.html)                                           | Visual style for ERC-8004 presentation. Match this feel.                                       |
+| Prompt 01                                                                      | Copy the turntable's base visual polish — this widget extends it.                              |
 
 ## Build this
 
@@ -36,23 +36,23 @@ Extend `src/widget-types.js`:
 
 ```js
 const PASSPORT_DEFAULTS = {
-  chain:         'base',       // 'base' | 'base-sepolia' | 'ethereum' | 'optimism' (whatever REGISTRY_DEPLOYMENTS supports)
-  agentId:       null,         // on-chain token id (bigint as string)
-  wallet:        null,         // cached address; widget also refetches from chain
-  // What to show
-  showReputation:     true,
-  showRecentFeedback: true,    // last 5 feedback entries
-  showValidation:     false,   // last validation recorder entry
-  showRegistrationJSON: true,  // "view passport JSON" link
-  // Visual layout
-  layout:        'portrait',   // 'portrait' (avatar top, passport below) | 'landscape' (avatar left, passport right) | 'badge' (tiny inline card)
-  badgeSize:     'medium',     // 'small' (80px) | 'medium' (120px) | 'large' (200px) — badge layout only
-  // Autorotate (inherits from turntable)
-  autoRotate:    true,
-  rotationSpeed: 0.6,
-  // Chain reader
-  rpcURL:        '',           // optional owner-supplied RPC; fallback to a public one
-  refreshIntervalSec: 60,      // how often to re-poll reputation (0 = never after initial load)
+	chain: 'base', // 'base' | 'base-sepolia' | 'ethereum' | 'optimism' (whatever REGISTRY_DEPLOYMENTS supports)
+	agentId: null, // on-chain token id (bigint as string)
+	wallet: null, // cached address; widget also refetches from chain
+	// What to show
+	showReputation: true,
+	showRecentFeedback: true, // last 5 feedback entries
+	showValidation: false, // last validation recorder entry
+	showRegistrationJSON: true, // "view passport JSON" link
+	// Visual layout
+	layout: 'portrait', // 'portrait' (avatar top, passport below) | 'landscape' (avatar left, passport right) | 'badge' (tiny inline card)
+	badgeSize: 'medium', // 'small' (80px) | 'medium' (120px) | 'large' (200px) — badge layout only
+	// Autorotate (inherits from turntable)
+	autoRotate: true,
+	rotationSpeed: 0.6,
+	// Chain reader
+	rpcURL: '', // optional owner-supplied RPC; fallback to a public one
+	refreshIntervalSec: 60, // how often to re-poll reputation (0 = never after initial load)
 };
 ```
 
@@ -75,20 +75,20 @@ Create `src/widgets/passport.js`:
 
 ```js
 export async function mountPassport(viewer, config, container, widgetId) {
-  // 1. Hide everything except the canvas and passport panel.
-  // 2. Read chain data in parallel:
-  //    - ERC-721 ownerOf(tokenId) → wallet
-  //    - ERC-721 tokenURI(tokenId) → registration JSON URL (probably IPFS — resolve via src/ipfs.js)
-  //    - ReputationRegistry.getReputation(agentId)
-  //    - ReputationRegistry.getFeedbackRange(agentId, 0, 5) if showRecentFeedback
-  //    - ValidationRecorder.getLatestValidation(agentId) if showValidation
-  // 3. Apply turntable-style auto-rotate.
-  // 4. Render the passport panel alongside the canvas per config.layout.
-  //    - portrait: stacked, canvas on top (~60% height), panel below (~40%).
-  //    - landscape: side-by-side.
-  //    - badge: small circular avatar + compact card next to it.
-  // 5. Poll on config.refreshIntervalSec; skip if document.hidden.
-  // 6. Return { destroy }.
+	// 1. Hide everything except the canvas and passport panel.
+	// 2. Read chain data in parallel:
+	//    - ERC-721 ownerOf(tokenId) → wallet
+	//    - ERC-721 tokenURI(tokenId) → registration JSON URL (probably IPFS — resolve via src/ipfs.js)
+	//    - ReputationRegistry.getReputation(agentId)
+	//    - ReputationRegistry.getFeedbackRange(agentId, 0, 5) if showRecentFeedback
+	//    - ValidationRecorder.getLatestValidation(agentId) if showValidation
+	// 3. Apply turntable-style auto-rotate.
+	// 4. Render the passport panel alongside the canvas per config.layout.
+	//    - portrait: stacked, canvas on top (~60% height), panel below (~40%).
+	//    - landscape: side-by-side.
+	//    - badge: small circular avatar + compact card next to it.
+	// 5. Poll on config.refreshIntervalSec; skip if document.hidden.
+	// 6. Return { destroy }.
 }
 ```
 
@@ -129,7 +129,7 @@ Visible information:
 The badge layout is meant for embedding inline in a website header or sidebar — it's small and tasteful.
 
 ```html
-<iframe src="/#widget=<id>" width="200" height="80">
+<iframe src="/#widget=<id>" width="200" height="80"></iframe>
 ```
 
 Must render cleanly at small sizes. Use CSS `container-type: inline-size` and `@container` queries to adapt layout.
@@ -160,15 +160,18 @@ The widget does NOT need to let visitors submit feedback or trigger on-chain wri
 ## Deliverables
 
 **New:**
+
 - `src/widgets/passport.js`
 - Passport panel CSS.
 
 **Modified:**
+
 - `src/widget-types.js` — mark `passport` as `ready`, add schema.
 - `src/app.js` — dispatcher.
 - `public/studio/studio.js` — passport fieldset + wallet→tokenId lookup helper.
 
 **Possibly modified:**
+
 - `src/erc8004/reputation.js` / `agent-registry.js` — only if the existing API doesn't expose what you need efficiently. Favor additive, backward-compatible changes.
 
 ## Acceptance criteria

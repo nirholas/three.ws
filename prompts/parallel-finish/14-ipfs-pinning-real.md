@@ -9,7 +9,7 @@ The ERC-8004 registration flow ([src/erc8004/agent-registry.js](../../src/erc800
 1. **Pinata JWT path** — real IPFS. Good.
 2. **Internal `/api/erc8004/pin` path** — currently uploads to R2 and returns an `https://...` URL. The on-chain `tokenURI` then points at a centralized R2 URL. Not truly decentralized.
 
-We want path 2 to also return an `ipfs://<cid>` URI by uploading to an IPFS service (web3.storage, nft.storage, or a self-hosted IPFS node) and optionally *also* mirroring to R2 for speed. The client is already happy with an `ipfs://` return value.
+We want path 2 to also return an `ipfs://<cid>` URI by uploading to an IPFS service (web3.storage, nft.storage, or a self-hosted IPFS node) and optionally _also_ mirroring to R2 for speed. The client is already happy with an `ipfs://` return value.
 
 ## Files you own (exclusive)
 
@@ -21,16 +21,16 @@ We want path 2 to also return an `ipfs://<cid>` URI by uploading to an IPFS serv
 
 - **Prefer:** `WEB3_STORAGE_TOKEN` env var → upload via web3.storage HTTP API, return `ipfs://<cid>/<filename>`.
 - **Fallback:** `NFT_STORAGE_TOKEN` env var → upload via nft.storage, same return format.
-- **Final fallback:** if neither is set, *and* `R2_BUCKET` is configured, keep the existing R2 path but also return `{ url, ipfs: null, warning: 'R2-only pin — not decentralized' }` so the client can surface a clear warning.
+- **Final fallback:** if neither is set, _and_ `R2_BUCKET` is configured, keep the existing R2 path but also return `{ url, ipfs: null, warning: 'R2-only pin — not decentralized' }` so the client can surface a clear warning.
 - **Response shape:**
 
-  ```
-  { cid: string | null, uri: string, url: string, warning?: string }
-  ```
+    ```
+    { cid: string | null, uri: string, url: string, warning?: string }
+    ```
 
-  - `uri` is the preferred value to pin on-chain (`ipfs://...` when possible).
-  - `url` is an HTTPS gateway URL (always set, even for IPFS — use `https://w3s.link/ipfs/<cid>`).
-  - `cid` is the raw CID string when available.
+    - `uri` is the preferred value to pin on-chain (`ipfs://...` when possible).
+    - `url` is an HTTPS gateway URL (always set, even for IPFS — use `https://w3s.link/ipfs/<cid>`).
+    - `cid` is the raw CID string when available.
 
 - **Content-addressing:** if the same bytes are uploaded twice, the same `cid` comes back (web3.storage and nft.storage both guarantee this). Verify this in a comment.
 

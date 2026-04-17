@@ -2,7 +2,7 @@
 
 ## Why this exists
 
-We have `users` (email + password) and `agent_identities` (per-agent wallet). We have **no** place to store the fact that a wallet address *is* a user, and no place to store single-use auth nonces. Without both, SIWE sign-in is either impossible (no user mapping) or replayable (no nonce tracking).
+We have `users` (email + password) and `agent_identities` (per-agent wallet). We have **no** place to store the fact that a wallet address _is_ a user, and no place to store single-use auth nonces. Without both, SIWE sign-in is either impossible (no user mapping) or replayable (no nonce tracking).
 
 ## Files you own
 
@@ -27,6 +27,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS users_wallet_address_unique
 ```
 
 Notes:
+
 - `wallet_address` nullable — existing email users keep working.
 - Case-insensitive unique — EIP-55 checksummed and all-lowercase addresses must collide.
 - `wallet_chain_id` optional because SIWE can be chain-agnostic; store the chain the user signed on for audit.
@@ -47,6 +48,7 @@ CREATE INDEX IF NOT EXISTS auth_nonces_expires_idx ON auth_nonces (expires_at);
 ```
 
 Notes:
+
 - `nonce` is 16+ random bytes base64url'd on the server; treat it as an opaque PK.
 - `used_at` is set on successful verify — never allow the same nonce twice.
 - A nightly cron / lazy cleanup can prune `expires_at < now()` rows; don't build it here.

@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Identity tab of avatar editor — edit name, bio, visibility; delete avatar"
+description: 'Identity tab of avatar editor — edit name, bio, visibility; delete avatar'
 ---
 
 # Stack Layer 3: Identity Tab
@@ -21,6 +21,7 @@ Users need to edit an avatar's public identity after creation: name, bio, visibi
 ### Save
 
 `PATCH /api/avatars/:id`:
+
 ```json
 { "name": "...", "bio": "...", "visibility": "public" }
 ```
@@ -32,6 +33,7 @@ Use `zod` to validate on the server. Reject unknowns. Only owner can edit.
 "Delete avatar" button with a confirm-text input ("type the slug to confirm").
 
 `DELETE /api/avatars/:id`:
+
 - Soft-delete first: mark `deleted_at`. Keep the row 30 days for recovery.
 - Remove from public lookups (`GET /api/avatars/by-slug/:slug` returns 404 for soft-deleted).
 - Remove GLB from R2 only after 30d via a cron.

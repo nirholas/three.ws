@@ -18,31 +18,31 @@ After this task:
 ## Deliverable
 
 1. **New module** `src/capture/photo-capture.js` exporting default class `PhotoCapture`:
-   - `constructor(container, options)` — `options: { jpegQuality = 0.92, targetSize = { w: 1024, h: 1024 } }`.
-   - `async open() -> Promise<{ left: Blob, center: Blob, right: Blob }>` — opens modal, resolves on success, rejects on cancel.
-   - `dispose()` — stops tracks, removes DOM.
+    - `constructor(container, options)` — `options: { jpegQuality = 0.92, targetSize = { w: 1024, h: 1024 } }`.
+    - `async open() -> Promise<{ left: Blob, center: Blob, right: Blob }>` — opens modal, resolves on success, rejects on cancel.
+    - `dispose()` — stops tracks, removes DOM.
 2. **Modal UX**:
-   - Title: "Take three photos to build your avatar"
-   - Live `<video>` preview with a face-oriented overlay guide (SVG circle + rule-of-thirds hints).
-   - Current step indicator (1/3, 2/3, 3/3) + labeled step: "Left profile" / "Face forward" / "Right profile".
-   - Primary button: "Capture" (`space` or `enter` to trigger).
-   - Retake button on each thumbnail after capture.
-   - Cancel button (`escape`).
+    - Title: "Take three photos to build your avatar"
+    - Live `<video>` preview with a face-oriented overlay guide (SVG circle + rule-of-thirds hints).
+    - Current step indicator (1/3, 2/3, 3/3) + labeled step: "Left profile" / "Face forward" / "Right profile".
+    - Primary button: "Capture" (`space` or `enter` to trigger).
+    - Retake button on each thumbnail after capture.
+    - Cancel button (`escape`).
 3. **Capture pipeline**:
-   - `getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' } })`.
-   - Draw current frame to an offscreen `<canvas>`, resize to `targetSize`, encode as JPEG at `jpegQuality` via `canvas.toBlob()`.
-   - Show thumbnail for each captured step.
+    - `getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' } })`.
+    - Draw current frame to an offscreen `<canvas>`, resize to `targetSize`, encode as JPEG at `jpegQuality` via `canvas.toBlob()`.
+    - Show thumbnail for each captured step.
 4. **Error handling** — rejections:
-   - `PhotoCaptureError('permission_denied')` if `NotAllowedError`.
-   - `PhotoCaptureError('no_camera')` if `NotFoundError`.
-   - `PhotoCaptureError('cancelled')` on user cancel.
-   - `PhotoCaptureError('unsupported')` if `navigator.mediaDevices` is missing.
+    - `PhotoCaptureError('permission_denied')` if `NotAllowedError`.
+    - `PhotoCaptureError('no_camera')` if `NotFoundError`.
+    - `PhotoCaptureError('cancelled')` on user cancel.
+    - `PhotoCaptureError('unsupported')` if `navigator.mediaDevices` is missing.
 5. **Styling** — add a block to [style.css](../../style.css) using the `capture-*` class prefix. Dark theme, matches the existing agent panel aesthetic.
 6. **Accessibility**:
-   - Focus trap in modal.
-   - `aria-live` region announces step changes.
-   - Buttons have `aria-label`.
-   - `prefers-reduced-motion: reduce` disables modal entry/exit animation.
+    - Focus trap in modal.
+    - `aria-live` region announces step changes.
+    - Buttons have `aria-label`.
+    - `prefers-reduced-motion: reduce` disables modal entry/exit animation.
 
 ## Audit checklist
 

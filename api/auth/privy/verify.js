@@ -63,7 +63,12 @@ export default wrap(async (req, res) => {
 	}
 
 	if (!hasPrivyUserIdColumn) {
-		return error(res, 501, 'schema_migration_required', 'user_wallets.privy_user_id column missing');
+		return error(
+			res,
+			501,
+			'schema_migration_required',
+			'user_wallets.privy_user_id column missing',
+		);
 	}
 
 	// 4. Find or create the user and wallet.

@@ -22,9 +22,7 @@
 		"tts": { "provider": "browser", "rate": 1.05 },
 		"stt": { "provider": "browser", "language": "en-US" }
 	},
-	"skills": [
-		{ "uri": "../skills/wave/", "version": "0.1.0" }
-	],
+	"skills": [{ "uri": "../skills/wave/", "version": "0.1.0" }],
 	"memory": {
 		"mode": "local",
 		"index": "memory/MEMORY.md",

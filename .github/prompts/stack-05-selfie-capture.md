@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Camera + upload UI that captures a selfie and hands it to the avatar pipeline"
+description: 'Camera + upload UI that captures a selfie and hands it to the avatar pipeline'
 ---
 
 # Stack Layer 2: Selfie Capture UI
@@ -20,11 +20,11 @@ The magic moment of the product is "photo becomes your agent." We need the captu
 1. **Auth gate** — if no session, redirect to `/login.html?next=/create/`.
 2. **Method picker** — two buttons: "Use Camera" and "Upload Photo".
 3. **Camera path** — `navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 1024, height: 1024 } })`.
-   - Live `<video>` preview.
-   - Circle/square crop overlay for framing guidance.
-   - Capture button → draw frame to `<canvas>` at native resolution → `canvas.toBlob('image/jpeg', 0.9)`.
+    - Live `<video>` preview.
+    - Circle/square crop overlay for framing guidance.
+    - Capture button → draw frame to `<canvas>` at native resolution → `canvas.toBlob('image/jpeg', 0.9)`.
 4. **Upload path** — `<input type="file" accept="image/jpeg,image/png,image/webp">`.
-   - Validate: max 10MB, min 512px shortest side.
+    - Validate: max 10MB, min 512px shortest side.
 5. **Preview + confirm** — show captured/uploaded image, "Retake" and "Use this photo" buttons.
 6. **Submit** — presigned upload to R2 (see [api/avatars/presign.js](api/avatars/presign.js) for pattern), then POST to the pipeline kickoff endpoint (`/api/avatars/create-from-photo` — see prompt stack-06).
 

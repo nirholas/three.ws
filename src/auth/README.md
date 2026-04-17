@@ -26,9 +26,9 @@ https://esm.sh/@walletconnect/ethereum-provider@2.17.0
 
 ```js
 import {
-    signInWithWalletConnect,
-    getWalletConnectProvider,
-    disconnectWalletConnect,
+	signInWithWalletConnect,
+	getWalletConnectProvider,
+	disconnectWalletConnect,
 } from './auth/walletconnect-bridge.js';
 
 // Opens WC modal, signs SIWE message, verifies with server, sets session cookie.
@@ -45,16 +45,16 @@ await disconnectWalletConnect();
 
 All errors have an `err.code` of the form `wc/<stage>`:
 
-| Code | Meaning |
-|---|---|
-| `wc/no_project_id` | `VITE_WALLETCONNECT_PROJECT_ID` not set |
-| `wc/load_failed` | CDN import failed (network / CSP) |
-| `wc/init_failed` | EthereumProvider.init() threw |
-| `wc/connect_rejected` | User closed modal or rejected session |
-| `wc/no_accounts` | Provider returned no accounts after connect |
-| `wc/nonce_failed` | `/api/auth/siwe/nonce` request failed |
-| `wc/sign_rejected` | User rejected personal_sign |
-| `wc/verify_failed` | `/api/auth/siwe/verify` returned an error |
+| Code                  | Meaning                                     |
+| --------------------- | ------------------------------------------- |
+| `wc/no_project_id`    | `VITE_WALLETCONNECT_PROJECT_ID` not set     |
+| `wc/load_failed`      | CDN import failed (network / CSP)           |
+| `wc/init_failed`      | EthereumProvider.init() threw               |
+| `wc/connect_rejected` | User closed modal or rejected session       |
+| `wc/no_accounts`      | Provider returned no accounts after connect |
+| `wc/nonce_failed`     | `/api/auth/siwe/nonce` request failed       |
+| `wc/sign_rejected`    | User rejected personal_sign                 |
+| `wc/verify_failed`    | `/api/auth/siwe/verify` returned an error   |
 
 ## Known issues
 

@@ -23,6 +23,7 @@ Document how `<agent-3d editor>` activates the editor panel. List every editor-o
 ### 3. Editor panels (one subsection each)
 
 Walk [src/editor/](../../src/editor/) and document each panel's public interface:
+
 - `material-editor.js` — what it edits, what events it fires, what state it owns.
 - `scene-explorer.js` — tree shape, selection semantics, mesh visibility toggle.
 - `texture-inspector.js` — read-only? mutating? export path.

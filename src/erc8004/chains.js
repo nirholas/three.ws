@@ -21,30 +21,206 @@ import { REGISTRY_DEPLOYMENTS } from './abi.js';
 /** @type {Record<number, ChainInfo>} */
 export const CHAIN_INFO = {
 	// ── Mainnets ──────────────────────────────────────────────────────────
-	1:       { chainId: 1,       name: 'Ethereum',        short: 'ETH',       symbol: 'ETH',   explorer: 'https://etherscan.io',          rpc: 'https://eth.llamarpc.com',                     kind: 'mainnet' },
-	10:      { chainId: 10,      name: 'Optimism',        short: 'OP',        symbol: 'ETH',   explorer: 'https://optimistic.etherscan.io', rpc: 'https://mainnet.optimism.io',                kind: 'mainnet' },
-	56:      { chainId: 56,      name: 'BNB Chain',       short: 'BSC',       symbol: 'BNB',   explorer: 'https://bscscan.com',            rpc: 'https://bsc-dataseed.bnbchain.org',           kind: 'mainnet' },
-	100:     { chainId: 100,     name: 'Gnosis',          short: 'GNO',       symbol: 'xDAI',  explorer: 'https://gnosisscan.io',          rpc: 'https://rpc.gnosischain.com',                 kind: 'mainnet' },
-	137:     { chainId: 137,     name: 'Polygon',         short: 'MATIC',     symbol: 'POL',   explorer: 'https://polygonscan.com',        rpc: 'https://polygon-rpc.com',                     kind: 'mainnet' },
-	250:     { chainId: 250,     name: 'Fantom',          short: 'FTM',       symbol: 'FTM',   explorer: 'https://ftmscan.com',            rpc: 'https://rpc.ftm.tools',                       kind: 'mainnet' },
-	324:     { chainId: 324,     name: 'zkSync Era',      short: 'zkSync',    symbol: 'ETH',   explorer: 'https://explorer.zksync.io',     rpc: 'https://mainnet.era.zksync.io',               kind: 'mainnet' },
-	1284:    { chainId: 1284,    name: 'Moonbeam',        short: 'GLMR',      symbol: 'GLMR',  explorer: 'https://moonscan.io',            rpc: 'https://rpc.api.moonbeam.network',            kind: 'mainnet' },
-	5000:    { chainId: 5000,    name: 'Mantle',          short: 'MNT',       symbol: 'MNT',   explorer: 'https://explorer.mantle.xyz',    rpc: 'https://rpc.mantle.xyz',                      kind: 'mainnet' },
-	8453:    { chainId: 8453,    name: 'Base',            short: 'BASE',      symbol: 'ETH',   explorer: 'https://basescan.org',           rpc: 'https://mainnet.base.org',                    kind: 'mainnet' },
-	42161:   { chainId: 42161,   name: 'Arbitrum One',    short: 'ARB',       symbol: 'ETH',   explorer: 'https://arbiscan.io',            rpc: 'https://arb1.arbitrum.io/rpc',                kind: 'mainnet' },
-	42220:   { chainId: 42220,   name: 'Celo',            short: 'CELO',      symbol: 'CELO',  explorer: 'https://celoscan.io',            rpc: 'https://forno.celo.org',                      kind: 'mainnet' },
-	43114:   { chainId: 43114,   name: 'Avalanche',       short: 'AVAX',      symbol: 'AVAX',  explorer: 'https://snowtrace.io',           rpc: 'https://api.avax.network/ext/bc/C/rpc',       kind: 'mainnet' },
-	59144:   { chainId: 59144,   name: 'Linea',           short: 'LINEA',     symbol: 'ETH',   explorer: 'https://lineascan.build',        rpc: 'https://rpc.linea.build',                     kind: 'mainnet' },
-	534352:  { chainId: 534352,  name: 'Scroll',          short: 'SCR',       symbol: 'ETH',   explorer: 'https://scrollscan.com',         rpc: 'https://rpc.scroll.io',                       kind: 'mainnet' },
+	1: {
+		chainId: 1,
+		name: 'Ethereum',
+		short: 'ETH',
+		symbol: 'ETH',
+		explorer: 'https://etherscan.io',
+		rpc: 'https://eth.llamarpc.com',
+		kind: 'mainnet',
+	},
+	10: {
+		chainId: 10,
+		name: 'Optimism',
+		short: 'OP',
+		symbol: 'ETH',
+		explorer: 'https://optimistic.etherscan.io',
+		rpc: 'https://mainnet.optimism.io',
+		kind: 'mainnet',
+	},
+	56: {
+		chainId: 56,
+		name: 'BNB Chain',
+		short: 'BSC',
+		symbol: 'BNB',
+		explorer: 'https://bscscan.com',
+		rpc: 'https://bsc-dataseed.bnbchain.org',
+		kind: 'mainnet',
+	},
+	100: {
+		chainId: 100,
+		name: 'Gnosis',
+		short: 'GNO',
+		symbol: 'xDAI',
+		explorer: 'https://gnosisscan.io',
+		rpc: 'https://rpc.gnosischain.com',
+		kind: 'mainnet',
+	},
+	137: {
+		chainId: 137,
+		name: 'Polygon',
+		short: 'MATIC',
+		symbol: 'POL',
+		explorer: 'https://polygonscan.com',
+		rpc: 'https://polygon-rpc.com',
+		kind: 'mainnet',
+	},
+	250: {
+		chainId: 250,
+		name: 'Fantom',
+		short: 'FTM',
+		symbol: 'FTM',
+		explorer: 'https://ftmscan.com',
+		rpc: 'https://rpc.ftm.tools',
+		kind: 'mainnet',
+	},
+	324: {
+		chainId: 324,
+		name: 'zkSync Era',
+		short: 'zkSync',
+		symbol: 'ETH',
+		explorer: 'https://explorer.zksync.io',
+		rpc: 'https://mainnet.era.zksync.io',
+		kind: 'mainnet',
+	},
+	1284: {
+		chainId: 1284,
+		name: 'Moonbeam',
+		short: 'GLMR',
+		symbol: 'GLMR',
+		explorer: 'https://moonscan.io',
+		rpc: 'https://rpc.api.moonbeam.network',
+		kind: 'mainnet',
+	},
+	5000: {
+		chainId: 5000,
+		name: 'Mantle',
+		short: 'MNT',
+		symbol: 'MNT',
+		explorer: 'https://explorer.mantle.xyz',
+		rpc: 'https://rpc.mantle.xyz',
+		kind: 'mainnet',
+	},
+	8453: {
+		chainId: 8453,
+		name: 'Base',
+		short: 'BASE',
+		symbol: 'ETH',
+		explorer: 'https://basescan.org',
+		rpc: 'https://mainnet.base.org',
+		kind: 'mainnet',
+	},
+	42161: {
+		chainId: 42161,
+		name: 'Arbitrum One',
+		short: 'ARB',
+		symbol: 'ETH',
+		explorer: 'https://arbiscan.io',
+		rpc: 'https://arb1.arbitrum.io/rpc',
+		kind: 'mainnet',
+	},
+	42220: {
+		chainId: 42220,
+		name: 'Celo',
+		short: 'CELO',
+		symbol: 'CELO',
+		explorer: 'https://celoscan.io',
+		rpc: 'https://forno.celo.org',
+		kind: 'mainnet',
+	},
+	43114: {
+		chainId: 43114,
+		name: 'Avalanche',
+		short: 'AVAX',
+		symbol: 'AVAX',
+		explorer: 'https://snowtrace.io',
+		rpc: 'https://api.avax.network/ext/bc/C/rpc',
+		kind: 'mainnet',
+	},
+	59144: {
+		chainId: 59144,
+		name: 'Linea',
+		short: 'LINEA',
+		symbol: 'ETH',
+		explorer: 'https://lineascan.build',
+		rpc: 'https://rpc.linea.build',
+		kind: 'mainnet',
+	},
+	534352: {
+		chainId: 534352,
+		name: 'Scroll',
+		short: 'SCR',
+		symbol: 'ETH',
+		explorer: 'https://scrollscan.com',
+		rpc: 'https://rpc.scroll.io',
+		kind: 'mainnet',
+	},
 
 	// ── Testnets ──────────────────────────────────────────────────────────
-	97:       { chainId: 97,       name: 'BSC Testnet',        short: 'tBSC',     symbol: 'tBNB',  explorer: 'https://testnet.bscscan.com',        rpc: 'https://data-seed-prebsc-1-s1.bnbchain.org:8545', kind: 'testnet' },
-	11155111: { chainId: 11155111, name: 'Ethereum Sepolia',   short: 'SEP',      symbol: 'ETH',   explorer: 'https://sepolia.etherscan.io',       rpc: 'https://rpc.sepolia.org',                         kind: 'testnet' },
-	84532:    { chainId: 84532,    name: 'Base Sepolia',       short: 'baseSep',  symbol: 'ETH',   explorer: 'https://sepolia.basescan.org',       rpc: 'https://sepolia.base.org',                        kind: 'testnet' },
-	421614:   { chainId: 421614,   name: 'Arbitrum Sepolia',   short: 'arbSep',   symbol: 'ETH',   explorer: 'https://sepolia.arbiscan.io',        rpc: 'https://sepolia-rollup.arbitrum.io/rpc',          kind: 'testnet' },
-	11155420: { chainId: 11155420, name: 'Optimism Sepolia',   short: 'opSep',    symbol: 'ETH',   explorer: 'https://sepolia-optimism.etherscan.io', rpc: 'https://sepolia.optimism.io',                 kind: 'testnet' },
-	80002:    { chainId: 80002,    name: 'Polygon Amoy',       short: 'Amoy',     symbol: 'POL',   explorer: 'https://amoy.polygonscan.com',       rpc: 'https://rpc-amoy.polygon.technology',             kind: 'testnet' },
-	43113:    { chainId: 43113,    name: 'Avalanche Fuji',     short: 'Fuji',     symbol: 'AVAX',  explorer: 'https://testnet.snowtrace.io',       rpc: 'https://api.avax-test.network/ext/bc/C/rpc',      kind: 'testnet' },
+	97: {
+		chainId: 97,
+		name: 'BSC Testnet',
+		short: 'tBSC',
+		symbol: 'tBNB',
+		explorer: 'https://testnet.bscscan.com',
+		rpc: 'https://data-seed-prebsc-1-s1.bnbchain.org:8545',
+		kind: 'testnet',
+	},
+	11155111: {
+		chainId: 11155111,
+		name: 'Ethereum Sepolia',
+		short: 'SEP',
+		symbol: 'ETH',
+		explorer: 'https://sepolia.etherscan.io',
+		rpc: 'https://rpc.sepolia.org',
+		kind: 'testnet',
+	},
+	84532: {
+		chainId: 84532,
+		name: 'Base Sepolia',
+		short: 'baseSep',
+		symbol: 'ETH',
+		explorer: 'https://sepolia.basescan.org',
+		rpc: 'https://sepolia.base.org',
+		kind: 'testnet',
+	},
+	421614: {
+		chainId: 421614,
+		name: 'Arbitrum Sepolia',
+		short: 'arbSep',
+		symbol: 'ETH',
+		explorer: 'https://sepolia.arbiscan.io',
+		rpc: 'https://sepolia-rollup.arbitrum.io/rpc',
+		kind: 'testnet',
+	},
+	11155420: {
+		chainId: 11155420,
+		name: 'Optimism Sepolia',
+		short: 'opSep',
+		symbol: 'ETH',
+		explorer: 'https://sepolia-optimism.etherscan.io',
+		rpc: 'https://sepolia.optimism.io',
+		kind: 'testnet',
+	},
+	80002: {
+		chainId: 80002,
+		name: 'Polygon Amoy',
+		short: 'Amoy',
+		symbol: 'POL',
+		explorer: 'https://amoy.polygonscan.com',
+		rpc: 'https://rpc-amoy.polygon.technology',
+		kind: 'testnet',
+	},
+	43113: {
+		chainId: 43113,
+		name: 'Avalanche Fuji',
+		short: 'Fuji',
+		symbol: 'AVAX',
+		explorer: 'https://testnet.snowtrace.io',
+		rpc: 'https://api.avax-test.network/ext/bc/C/rpc',
+		kind: 'testnet',
+	},
 };
 
 /** Default chain presented to new users. */
@@ -111,13 +287,15 @@ export async function requestSwitchChain(chainId) {
 		if (err?.code === 4902 || /unrecognized chain/i.test(err?.message || '')) {
 			await window.ethereum.request({
 				method: 'wallet_addEthereumChain',
-				params: [{
-					chainId: hex,
-					chainName: info.name,
-					nativeCurrency: { name: info.symbol, symbol: info.symbol, decimals: 18 },
-					rpcUrls: [info.rpc],
-					blockExplorerUrls: [info.explorer],
-				}],
+				params: [
+					{
+						chainId: hex,
+						chainName: info.name,
+						nativeCurrency: { name: info.symbol, symbol: info.symbol, decimals: 18 },
+						rpcUrls: [info.rpc],
+						blockExplorerUrls: [info.explorer],
+					},
+				],
 			});
 		} else {
 			throw err;
@@ -136,9 +314,13 @@ export function explorerUrl(chainId, kind, value) {
 	const info = getChainInfo(chainId);
 	if (!info) return '';
 	switch (kind) {
-		case 'tx':      return `${info.explorer}/tx/${value}`;
-		case 'address': return `${info.explorer}/address/${value}`;
-		case 'token':   return `${info.explorer}/token/${value}`;
-		default:        return info.explorer;
+		case 'tx':
+			return `${info.explorer}/tx/${value}`;
+		case 'address':
+			return `${info.explorer}/address/${value}`;
+		case 'token':
+			return `${info.explorer}/token/${value}`;
+		default:
+			return info.explorer;
 	}
 }

@@ -6,24 +6,62 @@
 // Keep this list in sync with src/widget-types.js as new types light up.
 
 const WIDGET_TYPES = {
-	'turntable':         { label: 'Turntable Showcase', desc: 'Hero banner — auto-rotate, no UI, just the avatar.', status: 'ready',   icon: '◎' },
-	'animation-gallery': { label: 'Animation Gallery',  desc: 'Click through every clip on a rigged avatar.',       status: 'pending', icon: '▶' },
-	'talking-agent':     { label: 'Talking Agent',      desc: 'Embodied chat — your agent on your site.',           status: 'pending', icon: '◐' },
-	'passport':          { label: 'ERC-8004 Passport',  desc: 'On-chain identity card for any agent.',              status: 'ready',   icon: '◊' },
-	'hotspot-tour':      { label: 'Hotspot Tour',       desc: 'Annotated 3D scene with clickable POIs.',            status: 'pending', icon: '⌖' },
+	turntable: {
+		label: 'Turntable Showcase',
+		desc: 'Hero banner — auto-rotate, no UI, just the avatar.',
+		status: 'ready',
+		icon: '◎',
+	},
+	'animation-gallery': {
+		label: 'Animation Gallery',
+		desc: 'Click through every clip on a rigged avatar.',
+		status: 'pending',
+		icon: '▶',
+	},
+	'talking-agent': {
+		label: 'Talking Agent',
+		desc: 'Embodied chat — your agent on your site.',
+		status: 'pending',
+		icon: '◐',
+	},
+	passport: {
+		label: 'ERC-8004 Passport',
+		desc: 'On-chain identity card for any agent.',
+		status: 'ready',
+		icon: '◊',
+	},
+	'hotspot-tour': {
+		label: 'Hotspot Tour',
+		desc: 'Annotated 3D scene with clickable POIs.',
+		status: 'pending',
+		icon: '⌖',
+	},
 };
 
 const BRAND_DEFAULTS = Object.freeze({
-	background: '#0a0a0a', accent: '#8b5cf6', caption: '',
-	showControls: true, autoRotate: true, envPreset: 'neutral', cameraPosition: null,
+	background: '#0a0a0a',
+	accent: '#8b5cf6',
+	caption: '',
+	showControls: true,
+	autoRotate: true,
+	envPreset: 'neutral',
+	cameraPosition: null,
 });
 
 const TYPE_DEFAULTS = {
-	'turntable':         { rotationSpeed: 0.5 },
+	turntable: { rotationSpeed: 0.5 },
 	'animation-gallery': { defaultClip: '', loopAll: false, showClipPicker: true },
-	'talking-agent':     { greeting: 'Hi! What would you like to know?', brain: 'none', proxyURL: '' },
-	'passport':          { chain: 'base-sepolia', agentId: null, wallet: null, showReputation: true, showRecentFeedback: true, layout: 'portrait', rotationSpeed: 0.6 },
-	'hotspot-tour':      { hotspots: [] },
+	'talking-agent': { greeting: 'Hi! What would you like to know?', brain: 'none', proxyURL: '' },
+	passport: {
+		chain: 'base-sepolia',
+		agentId: null,
+		wallet: null,
+		showReputation: true,
+		showRecentFeedback: true,
+		layout: 'portrait',
+		rotationSpeed: 0.6,
+	},
+	'hotspot-tour': { hotspots: [] },
 };
 
 function defaultConfig(type) {
@@ -32,33 +70,33 @@ function defaultConfig(type) {
 
 const $ = (sel, root = document) => root.querySelector(sel);
 
-const layoutEl   = $('#studio-layout');
-const blockerEl  = $('#auth-blocker');
+const layoutEl = $('#studio-layout');
+const blockerEl = $('#auth-blocker');
 const signinLink = $('#signin-link');
-const formEl     = $('#config-form');
-const errEl      = $('#form-error');
+const formEl = $('#config-form');
+const errEl = $('#form-error');
 const previewIfr = $('#preview-iframe');
-const previewSt  = $('#preview-status');
+const previewSt = $('#preview-status');
 const captureBtn = $('#capture-camera-btn');
-const saveBtn    = $('#save-draft-btn');
-const generateBtn= $('#generate-btn');
-const toastEl    = $('#toast');
+const saveBtn = $('#save-draft-btn');
+const generateBtn = $('#generate-btn');
+const toastEl = $('#toast');
 
 const state = {
-	user:        null,
-	avatars:     [],
-	avatarId:    null,
-	type:        'turntable',
-	editingId:   null,
-	config:      defaultConfig('turntable'),
-	name:        '',
-	is_public:   true,
+	user: null,
+	avatars: [],
+	avatarId: null,
+	type: 'turntable',
+	editingId: null,
+	config: defaultConfig('turntable'),
+	name: '',
+	is_public: true,
 	preselectedModel: null,
 };
 
 const params = new URLSearchParams(location.search);
-const editId   = params.get('edit');
-const tplId    = params.get('template');
+const editId = params.get('edit');
+const tplId = params.get('template');
 const pickType = params.get('type');
 const preModel = params.get('model');
 
@@ -96,7 +134,9 @@ async function fetchMe() {
 		if (!res.ok) return null;
 		const { user } = await res.json();
 		return user || null;
-	} catch { return null; }
+	} catch {
+		return null;
+	}
 }
 
 async function loadAvatars() {
@@ -116,20 +156,24 @@ async function loadAvatars() {
 
 async function loadForEdit(id) {
 	try {
-		const res = await fetch(`/api/widgets/${encodeURIComponent(id)}`, { credentials: 'include' });
+		const res = await fetch(`/api/widgets/${encodeURIComponent(id)}`, {
+			credentials: 'include',
+		});
 		if (!res.ok) return;
 		const { widget } = await res.json();
 		state.editingId = widget.id;
-		state.type      = widget.type;
-		state.avatarId  = widget.avatar_id;
-		state.name      = widget.name || '';
-		state.config    = { ...defaultConfig(widget.type), ...(widget.config || {}) };
+		state.type = widget.type;
+		state.avatarId = widget.avatar_id;
+		state.name = widget.name || '';
+		state.config = { ...defaultConfig(widget.type), ...(widget.config || {}) };
 		state.is_public = widget.is_public;
 		hydrateForm();
 		renderTypeGrid();
 		renderAvatarList();
 		renderTypeFields();
-	} catch (err) { console.warn('[studio] edit load failed', err); }
+	} catch (err) {
+		console.warn('[studio] edit load failed', err);
+	}
 }
 
 async function cloneTemplate(id) {
@@ -137,14 +181,16 @@ async function cloneTemplate(id) {
 		const res = await fetch(`/api/widgets/${encodeURIComponent(id)}`);
 		if (!res.ok) return;
 		const { widget } = await res.json();
-		state.type      = widget.type;
-		state.config    = { ...defaultConfig(widget.type), ...(widget.config || {}) };
-		state.name      = `Copy of ${widget.name}`;
+		state.type = widget.type;
+		state.config = { ...defaultConfig(widget.type), ...(widget.config || {}) };
+		state.name = `Copy of ${widget.name}`;
 		// avatarId stays unset — user must pick their own
 		hydrateForm();
 		renderTypeGrid();
 		renderTypeFields();
-	} catch { /* ignore */ }
+	} catch {
+		/* ignore */
+	}
 }
 
 // ── rendering ────────────────────────────────────────────────────────────────
@@ -201,7 +247,13 @@ function renderTypeFields() {
 		return;
 	}
 	if (state.type === 'turntable') {
-		wrap.appendChild(numberField('rotationSpeed', 'Rotation speed', state.config.rotationSpeed ?? 0.5, { min: 0, max: 10, step: 0.1 }));
+		wrap.appendChild(
+			numberField('rotationSpeed', 'Rotation speed', state.config.rotationSpeed ?? 0.5, {
+				min: 0,
+				max: 10,
+				step: 0.1,
+			}),
+		);
 	}
 }
 
@@ -229,11 +281,21 @@ function selectAvatar(id) {
 }
 
 function selectByModelUrl(url) {
-	const urlPath = (() => { try { return new URL(url, location.origin).pathname; } catch { return url; } })();
+	const urlPath = (() => {
+		try {
+			return new URL(url, location.origin).pathname;
+		} catch {
+			return url;
+		}
+	})();
 	const found = state.avatars.find((a) => {
 		if (!a.model_url) return false;
 		if (a.model_url === url) return true;
-		try { return new URL(a.model_url).pathname === urlPath; } catch { return false; }
+		try {
+			return new URL(a.model_url).pathname === urlPath;
+		} catch {
+			return false;
+		}
 	});
 	if (found) selectAvatar(found.id);
 }
@@ -271,9 +333,9 @@ function wireForm() {
 function hydrateForm() {
 	for (const el of formEl.elements) {
 		if (!el.name) continue;
-		if (el.name === 'name')      el.value = state.name || '';
+		if (el.name === 'name') el.value = state.name || '';
 		else if (el.name === 'is_public') el.checked = !!state.is_public;
-		else if (el.type === 'checkbox')  el.checked = !!state.config[el.name];
+		else if (el.type === 'checkbox') el.checked = !!state.config[el.name];
 		else if (state.config[el.name] !== undefined) el.value = state.config[el.name];
 	}
 }
@@ -281,7 +343,11 @@ function hydrateForm() {
 function wireButtons() {
 	$('#signout-btn').addEventListener('click', async () => {
 		await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
-		try { localStorage.removeItem('3dagent:auth-hint'); } catch { /* ignore */ }
+		try {
+			localStorage.removeItem('3dagent:auth-hint');
+		} catch {
+			/* ignore */
+		}
 		location.href = '/';
 	});
 
@@ -293,7 +359,9 @@ function wireButtons() {
 			state.config.cameraPosition = [cam.position.x, cam.position.y, cam.position.z];
 			toast('Camera captured');
 			updatePreview(true);
-		} catch { toast('Could not read camera'); }
+		} catch {
+			toast('Could not read camera');
+		}
 	});
 
 	saveBtn.addEventListener('click', () => save({ generate: false }));
@@ -328,14 +396,18 @@ function updatePreview(forceReload) {
 		previewSt.textContent = 'Avatar has no public URL — make it public/unlisted to preview';
 		return;
 	}
-	previewSt.textContent = state.avatarId ? 'Live preview' : 'Preview only — pick an avatar from your library to save';
+	previewSt.textContent = state.avatarId
+		? 'Live preview'
+		: 'Preview only — pick an avatar from your library to save';
 	if (!state.avatarId) captureBtn.disabled = false;
 
 	const camStr = Array.isArray(state.config.cameraPosition)
 		? `&cameraPosition=${state.config.cameraPosition.map((n) => n.toFixed(3)).join(',')}`
 		: '';
-	const presetStr = state.config.envPreset && state.config.envPreset !== 'none'
-		? `&preset=${encodeURIComponent(state.config.envPreset)}` : '';
+	const presetStr =
+		state.config.envPreset && state.config.envPreset !== 'none'
+			? `&preset=${encodeURIComponent(state.config.envPreset)}`
+			: '';
 	const src = `/?widget-preview=1#model=${encodeURIComponent(modelUrl)}&kiosk=true${camStr}${presetStr}`;
 	const key = src;
 	if (forceReload || key !== previewSrcKey) {
@@ -352,7 +424,9 @@ function postConfigToPreview() {
 			{ type: 'widget:config', config: { ...state.config } },
 			location.origin,
 		);
-	} catch { /* iframe may not be ready yet — full reload covers it */ }
+	} catch {
+		/* iframe may not be ready yet — full reload covers it */
+	}
 }
 
 // ── save / generate ──────────────────────────────────────────────────────────
@@ -360,22 +434,32 @@ async function save({ generate }) {
 	errEl.hidden = true;
 
 	if (!state.name?.trim()) return showError('Name is required');
-	if (!state.avatarId)     return showError('Pick an avatar first');
+	if (!state.avatarId) return showError('Pick an avatar first');
 	if (!WIDGET_TYPES[state.type]) return showError('Pick a widget type');
 
 	const body = {
-		type:      state.type,
-		name:      state.name.trim(),
+		type: state.type,
+		name: state.name.trim(),
 		avatar_id: state.avatarId,
 		is_public: state.is_public,
-		config:    state.config,
+		config: state.config,
 	};
 
-	const url = state.editingId ? `/api/widgets/${encodeURIComponent(state.editingId)}` : '/api/widgets';
+	const url = state.editingId
+		? `/api/widgets/${encodeURIComponent(state.editingId)}`
+		: '/api/widgets';
 	const method = state.editingId ? 'PATCH' : 'POST';
-	const sendBody = state.editingId ? { name: body.name, avatar_id: body.avatar_id, is_public: body.is_public, config: body.config } : body;
+	const sendBody = state.editingId
+		? {
+				name: body.name,
+				avatar_id: body.avatar_id,
+				is_public: body.is_public,
+				config: body.config,
+			}
+		: body;
 
-	saveBtn.disabled = true; generateBtn.disabled = true;
+	saveBtn.disabled = true;
+	generateBtn.disabled = true;
 	try {
 		const res = await fetch(url, {
 			method,
@@ -400,7 +484,8 @@ async function save({ generate }) {
 	} catch (err) {
 		showError(err.message);
 	} finally {
-		saveBtn.disabled = false; generateBtn.disabled = false;
+		saveBtn.disabled = false;
+		generateBtn.disabled = false;
 	}
 }
 
@@ -409,8 +494,10 @@ function openEmbedModal(widget) {
 	const shareUrl = `${origin}/w/${widget.id}`;
 	const embedUrl = `${origin}/#widget=${widget.id}&kiosk=true`;
 	$('#embed-share-url').value = shareUrl;
-	$('#embed-iframe-snippet').value = `<iframe src="${embedUrl}" width="600" height="600" style="border:0;border-radius:12px" allow="autoplay; xr-spatial-tracking" loading="lazy"></iframe>`;
-	$('#embed-script-snippet').value = `<script async src="${origin}/embed.js" data-widget="${widget.id}"></` + 'script>';
+	$('#embed-iframe-snippet').value =
+		`<iframe src="${embedUrl}" width="600" height="600" style="border:0;border-radius:12px" allow="autoplay; xr-spatial-tracking" loading="lazy"></iframe>`;
+	$('#embed-script-snippet').value =
+		`<script async src="${origin}/embed.js" data-widget="${widget.id}"></` + 'script>';
 	$('#embed-preview-iframe').src = embedUrl;
 	$('#embed-modal').hidden = false;
 }
@@ -420,7 +507,11 @@ function copyFromSelector(sel, btn) {
 	if (!el) return;
 	el.select?.();
 	navigator.clipboard.writeText(el.value).then(
-		() => { const o = btn.textContent; btn.textContent = 'Copied'; setTimeout(() => btn.textContent = o, 1200); },
+		() => {
+			const o = btn.textContent;
+			btn.textContent = 'Copied';
+			setTimeout(() => (btn.textContent = o), 1200);
+		},
 		() => toast('Copy failed'),
 	);
 }
@@ -435,10 +526,15 @@ function toast(msg) {
 	toastEl.textContent = msg;
 	toastEl.hidden = false;
 	clearTimeout(toastTimer);
-	toastTimer = setTimeout(() => toastEl.hidden = true, 1800);
+	toastTimer = setTimeout(() => (toastEl.hidden = true), 1800);
 }
 
 function escapeHtml(s) {
-	return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+	return String(s ?? '').replace(
+		/[&<>"']/g,
+		(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+	);
 }
-function attr(s) { return escapeHtml(s); }
+function attr(s) {
+	return escapeHtml(s);
+}

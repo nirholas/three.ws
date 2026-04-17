@@ -15,6 +15,7 @@ Claude artifacts and many other host environments iframe-embed with `sandbox` at
 ### Sandbox-safe boot
 
 In the embed entry script:
+
 1. Detect `window.top !== window.self && sandbox attribute present`.
 2. If `localStorage` is blocked (DOMException on write) → fall back to `sessionStorage`.
 3. If `sessionStorage` is also blocked → memory-only identity (no persistence).
@@ -24,6 +25,7 @@ In the embed entry script:
 ### CSP audit
 
 Document required CSP:
+
 ```
 default-src 'self' https://3dagent.vercel.app;
 img-src 'self' data: blob: https:;

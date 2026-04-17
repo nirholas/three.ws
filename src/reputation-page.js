@@ -7,4 +7,11 @@ import { getReputation, getRecentReviews, submitReputation } from './erc8004/rep
 import { JsonRpcProvider, BrowserProvider } from 'ethers';
 import { REGISTRY_DEPLOYMENTS } from './erc8004/abi.js';
 
-export { getReputation, getRecentReviews, submitReputation, JsonRpcProvider, BrowserProvider, REGISTRY_DEPLOYMENTS };
+export {
+	getReputation,
+	getRecentReviews,
+	submitReputation,
+	JsonRpcProvider,
+	BrowserProvider,
+	REGISTRY_DEPLOYMENTS,
+};

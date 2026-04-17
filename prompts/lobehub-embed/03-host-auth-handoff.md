@@ -19,22 +19,22 @@ Define and implement the three-tier viewer identity handoff inside the embed, an
 ## Deliverable
 
 1. **Extend the handshake** in `src/embed-host-bridge.js` (created in [02](./02-iframe-handshake.md)) with two new envelope types:
-   - Inbound: `host:identity` — `{ hostUserId, hostUserName?, hostUserAvatar?, hostSignedToken? }`
-   - Outbound: `embed:identity-request` — `{ want: ['wallet' | 'host-user'], reason }` (embed asks host to either (a) reveal its user id, or (b) trigger wallet link)
+    - Inbound: `host:identity` — `{ hostUserId, hostUserName?, hostUserAvatar?, hostSignedToken? }`
+    - Outbound: `embed:identity-request` — `{ want: ['wallet' | 'host-user'], reason }` (embed asks host to either (a) reveal its user id, or (b) trigger wallet link)
 2. **Viewer identity state machine** — new file `src/embed-viewer-identity.js`:
-   - Tiers: `anon` → `host-user` → `wallet-linked`
-   - Transitions stored in `sessionStorage` under key `3d-agent:viewer-identity:<agentId>`
-   - Methods: `current()`, `setHostUser(info)`, `linkWallet({ address, chainId, signature, message })`, `clear()`
-   - Expose a read-only object: `{ tier, hostUserId?, walletAddress?, chainId? }`
+    - Tiers: `anon` → `host-user` → `wallet-linked`
+    - Transitions stored in `sessionStorage` under key `3d-agent:viewer-identity:<agentId>`
+    - Methods: `current()`, `setHostUser(info)`, `linkWallet({ address, chainId, signature, message })`, `clear()`
+    - Expose a read-only object: `{ tier, hostUserId?, walletAddress?, chainId? }`
 3. **Optional SIWE-on-open** — an opt-in flow:
-   - Embed renders a small, dismissible prompt in the corner: "Link wallet to let [agent name] act as you" with a "Connect" button.
-   - Clicking "Connect" posts `embed:identity-request { want: ['wallet'] }` to host so LobeHub can open its wallet UI — **or** if host capability `inline-wallet` is false, opens a same-origin SIWE pop-up using our existing wallet infra.
-   - Completed SIWE stores tier=`wallet-linked`, notifies host with `embed:identity-change`.
-   - The prompt must be **dismissible** and **remembered** per agent id for the session.
+    - Embed renders a small, dismissible prompt in the corner: "Link wallet to let [agent name] act as you" with a "Connect" button.
+    - Clicking "Connect" posts `embed:identity-request { want: ['wallet'] }` to host so LobeHub can open its wallet UI — **or** if host capability `inline-wallet` is false, opens a same-origin SIWE pop-up using our existing wallet infra.
+    - Completed SIWE stores tier=`wallet-linked`, notifies host with `embed:identity-change`.
+    - The prompt must be **dismissible** and **remembered** per agent id for the session.
 4. **Avatar behavior gating** — when tier is `anon`:
-   - Avatar still renders with full Empathy Layer (do **not** flatten).
-   - Memory operates in "ephemeral" mode (in-process only, no persistence to the agent's wallet-scoped namespace).
-   - Skills that require `ctx.wallet` or `ctx.sign` return `{ ok: false, error: 'wallet-required' }` instead of throwing.
+    - Avatar still renders with full Empathy Layer (do **not** flatten).
+    - Memory operates in "ephemeral" mode (in-process only, no persistence to the agent's wallet-scoped namespace).
+    - Skills that require `ctx.wallet` or `ctx.sign` return `{ ok: false, error: 'wallet-required' }` instead of throwing.
 5. **Propagation to the runtime** — when tier changes, re-hydrate [AgentIdentity](../../src/agent-identity.js) with the new scope. Existing avatar instance is **not** re-mounted (avoid full reboot); only the identity record is swapped.
 
 ## Audit checklist
@@ -59,10 +59,10 @@ Define and implement the three-tier viewer identity handoff inside the embed, an
 1. `node --check src/embed-viewer-identity.js api/embed/verify-host-token.js` passes.
 2. `npx vite build` succeeds.
 3. Manual matrix:
-   - **Anon**: iframe the embed, send no messages. Avatar works.
-   - **Host-user only**: iframe sends `host:identity { hostUserId: 'u1' }`. Prompt appears. Dismiss persists.
-   - **Host-user + wallet**: dismiss then re-init with a `linkWallet()` call in console. Tier flips to `wallet-linked`. `embed:identity-change` fires.
-   - **Tier downgrade**: call `clear()`. Avatar keeps running; memory flips to ephemeral. Skills fail softly.
+    - **Anon**: iframe the embed, send no messages. Avatar works.
+    - **Host-user only**: iframe sends `host:identity { hostUserId: 'u1' }`. Prompt appears. Dismiss persists.
+    - **Host-user + wallet**: dismiss then re-init with a `linkWallet()` call in console. Tier flips to `wallet-linked`. `embed:identity-change` fires.
+    - **Tier downgrade**: call `clear()`. Avatar keeps running; memory flips to ephemeral. Skills fail softly.
 4. Unit-test the state machine in isolation via a quick node REPL (`import('./src/embed-viewer-identity.js')`). Document what you ran.
 
 ## Scope boundaries — do NOT do these

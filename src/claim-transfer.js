@@ -54,10 +54,7 @@ async function _ensureChain(chainId) {
 		});
 	} catch (err) {
 		// 4902 = chain not added to wallet — surface as network error
-		throw new ClaimError(
-			`Wallet chain switch failed (${err.message})`,
-			'network',
-		);
+		throw new ClaimError(`Wallet chain switch failed (${err.message})`, 'network');
 	}
 }
 
@@ -119,7 +116,10 @@ export async function claimAgent({ agentId, fromAddress, toAddress, signer, onSt
 	try {
 		currentOwner = await registry.ownerOf(agentId);
 	} catch (err) {
-		throw new ClaimError(`Could not fetch owner for agentId ${agentId}: ${err.message}`, 'network');
+		throw new ClaimError(
+			`Could not fetch owner for agentId ${agentId}: ${err.message}`,
+			'network',
+		);
 	}
 
 	const normalize = (a) => a.toLowerCase();
@@ -132,7 +132,10 @@ export async function claimAgent({ agentId, fromAddress, toAddress, signer, onSt
 	}
 
 	if (normalize(currentOwner) === normalize(toAddress)) {
-		throw new ClaimError(`Agent ${agentId} is already owned by ${toAddress}`, 'already-claimed');
+		throw new ClaimError(
+			`Agent ${agentId} is already owned by ${toAddress}`,
+			'already-claimed',
+		);
 	}
 
 	step('sign', 25);

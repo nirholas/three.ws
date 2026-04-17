@@ -8,14 +8,14 @@ Once a user has published their first widget, they'll reload it (e.g. via `#widg
 
 - The viewer already accepts `#widget=wdgt_abc123` as a hash param (per README and [src/app.js](../../src/app.js) — verify the exact key and the fetch path it uses).
 - A loaded widget gives us:
-  - `widget.id`
-  - `widget.avatar_id`
-  - `widget.name`
-  - `widget.config`
+    - `widget.id`
+    - `widget.avatar_id`
+    - `widget.name`
+    - `widget.config`
 - `PATCH /api/widgets/:id` exists in [api/widgets/\[id\].js](../../api/widgets/[id].js). Verify its accepted body shape — expect `{ name?, config?, is_public?, avatar_id? }`. Do not assume; read the file.
 - **Avatar swap vs edit-in-place:** the edited GLB is always a new avatar (different bytes, different `storage_key`). Re-publish = upload new avatar, then either:
-  - (A) Update the widget to point at the new `avatar_id`, or
-  - (B) Mint a fresh widget.
+    - (A) Update the widget to point at the new `avatar_id`, or
+    - (B) Mint a fresh widget.
 - Option A preserves the `/w/<id>` URL — critical for links already pasted elsewhere.
 
 ## What to build
@@ -48,10 +48,10 @@ If no widget context, skip this step and run the existing flow directly (task 03
 `Go` calls either:
 
 - **Update:** a new `updateWidget()` function in [src/editor/publish.js](../../src/editor/publish.js) (task 02). Steps:
-  1. `exportEditedGLB(session)` → bytes
-  2. Upload → register new avatar (same as first-publish)
-  3. `PATCH /api/widgets/:id` with `{ avatar_id: newAvatar.id }`
-  4. Resolves `{ widget: updated, avatar: new, urls }` — same shape as `publishEditedGLB`.
+    1. `exportEditedGLB(session)` → bytes
+    2. Upload → register new avatar (same as first-publish)
+    3. `PATCH /api/widgets/:id` with `{ avatar_id: newAvatar.id }`
+    4. Resolves `{ widget: updated, avatar: new, urls }` — same shape as `publishEditedGLB`.
 - **Create new:** the existing `publishEditedGLB(session, …)` — unchanged.
 
 Result modal shows:

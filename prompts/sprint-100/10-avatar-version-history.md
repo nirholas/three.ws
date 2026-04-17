@@ -17,7 +17,7 @@ Pure schema + two new endpoints. No client wiring.
 ## Read first
 
 - [api/avatars/[id].js](../../api/avatars/[id].js) — the base avatar route + ownership pattern.
-- [api/_lib/db.js](../../api/_lib/db.js) — `sql`.
+- [api/\_lib/db.js](../../api/_lib/db.js) — `sql`.
 - [scripts/](../../scripts/) — any existing migration conventions.
 
 ## Deliverable

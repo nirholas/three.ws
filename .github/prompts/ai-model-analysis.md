@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Build AI model analysis that describes meshes, materials, and suggests optimizations"
+description: 'Build AI model analysis that describes meshes, materials, and suggests optimizations'
 ---
 
 # AI Model Analysis
@@ -16,6 +16,7 @@ The README roadmap lists **"AI Model Analysis — describe meshes, materials, an
 After a model loads, automatically analyze:
 
 #### Geometry Analysis
+
 - Identify over-tessellated flat surfaces (high tri count, low curvature)
 - Detect degenerate triangles (zero area)
 - Find disconnected geometry (floating vertices)
@@ -23,6 +24,7 @@ After a model loads, automatically analyze:
 - Estimate appropriate LOD levels
 
 #### Material Analysis
+
 - Identify materials with identical properties (can be merged)
 - Detect textures larger than necessary (4K on small objects)
 - Find unused materials (not assigned to any mesh)
@@ -30,6 +32,7 @@ After a model loads, automatically analyze:
 - Identify missing normal maps on high-detail surfaces
 
 #### Performance Analysis
+
 - Total draw calls estimate
 - GPU memory usage estimate (geometry + textures)
 - Suggest texture compression (KTX2/Basis)
@@ -50,27 +53,29 @@ Body: {
 ```
 
 LLM returns:
+
 ```json
 {
-    "summary": "This is a high-detail character model with PBR materials...",
-    "optimizations": [
-        {
-            "priority": "high",
-            "category": "textures",
-            "suggestion": "Resize 4096×4096 normal map to 2048×2048 — minimal visual impact, saves 12MB GPU memory",
-            "estimatedSaving": "60%"
-        }
-    ],
-    "quality": {
-        "score": 85,
-        "notes": "Well-optimized geometry, good UV layout, textures could be compressed"
-    }
+	"summary": "This is a high-detail character model with PBR materials...",
+	"optimizations": [
+		{
+			"priority": "high",
+			"category": "textures",
+			"suggestion": "Resize 4096×4096 normal map to 2048×2048 — minimal visual impact, saves 12MB GPU memory",
+			"estimatedSaving": "60%"
+		}
+	],
+	"quality": {
+		"score": 85,
+		"notes": "Well-optimized geometry, good UV layout, textures could be compressed"
+	}
 }
 ```
 
 ### 3. Analysis Panel UI
 
 Display results in a panel (side panel or overlay):
+
 - **Summary**: Natural language description of the model
 - **Score**: Quality/optimization score (0-100) with color badge
 - **Optimizations**: Prioritized list with estimated savings
@@ -79,6 +84,7 @@ Display results in a panel (side panel or overlay):
 ### 4. One-Click Optimizations
 
 For each suggestion, provide an "Apply" button that uses glTF-Transform:
+
 - "Resize textures" → applies texture resize and re-exports
 - "Enable Draco compression" → applies Draco and re-exports
 - "Merge duplicate materials" → deduplicates and re-exports

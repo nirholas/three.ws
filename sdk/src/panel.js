@@ -25,7 +25,13 @@ export class AgentPanel {
 	 * @param {Function} [opts.onMessage]  async (text: string) => string — your response handler
 	 * @param {boolean}  [opts.voice]      Enable text-to-speech on agent responses (default: true)
 	 */
-	constructor({ title = 'Agent', welcome = 'Hi! How can I help?', placeholder = 'Ask anything...', onMessage, voice = true } = {}) {
+	constructor({
+		title = 'Agent',
+		welcome = 'Hi! How can I help?',
+		placeholder = 'Ask anything...',
+		onMessage,
+		voice = true,
+	} = {}) {
 		this.title = title;
 		this.welcome = welcome;
 		this.placeholder = placeholder;

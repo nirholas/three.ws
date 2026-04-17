@@ -5,12 +5,42 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<title>&lt;mv-viewer&gt; Custom Element demo</title>
 		<style>
-			body { margin: 0; font-family: system-ui, sans-serif; background: #0f0f0f; color: #e9e9e9; padding: 24px; }
-			h1 { margin: 0 0 8px; font-weight: 500; }
-			h2 { margin: 24px 0 8px; font-size: 14px; font-weight: 500; color: #9a9a9a; text-transform: uppercase; letter-spacing: 0.05em; }
-			.grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
-			.log { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: #8fd4a4; background: #1a1a1a; border-radius: 4px; padding: 8px 12px; min-height: 24px; }
-			mv-viewer { border-radius: 8px; }
+			body {
+				margin: 0;
+				font-family: system-ui, sans-serif;
+				background: #0f0f0f;
+				color: #e9e9e9;
+				padding: 24px;
+			}
+			h1 {
+				margin: 0 0 8px;
+				font-weight: 500;
+			}
+			h2 {
+				margin: 24px 0 8px;
+				font-size: 14px;
+				font-weight: 500;
+				color: #9a9a9a;
+				text-transform: uppercase;
+				letter-spacing: 0.05em;
+			}
+			.grid {
+				display: grid;
+				gap: 16px;
+				grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+			}
+			.log {
+				font-family: ui-monospace, Menlo, monospace;
+				font-size: 12px;
+				color: #8fd4a4;
+				background: #1a1a1a;
+				border-radius: 4px;
+				padding: 8px 12px;
+				min-height: 24px;
+			}
+			mv-viewer {
+				border-radius: 8px;
+			}
 		</style>
 	</head>
 	<body>
@@ -22,7 +52,12 @@
 		<div class="log" id="log1"></div>
 
 		<h2>Auto-rotate</h2>
-		<mv-viewer id="v2" src="/avatars/cz.glb" auto-rotate environment="Venice Sunset"></mv-viewer>
+		<mv-viewer
+			id="v2"
+			src="/avatars/cz.glb"
+			auto-rotate
+			environment="Venice Sunset"
+		></mv-viewer>
 
 		<h2>Poster &amp; reveal on interaction (click to load)</h2>
 		<mv-viewer

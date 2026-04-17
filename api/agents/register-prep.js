@@ -24,12 +24,17 @@ const bodySchema = z.object({
 	name: z.string().trim().min(1).max(60),
 	description: z.string().trim().max(280),
 	avatarId: z.string().uuid(),
-	brain: z.object({
-		provider: z.string().optional(),
-		model: z.string().optional(),
-		instructions: z.string().optional(),
-	}).optional(),
-	skills: z.array(z.string().regex(/^[a-z0-9-]{1,40}$/i)).max(16).optional(),
+	brain: z
+		.object({
+			provider: z.string().optional(),
+			model: z.string().optional(),
+			instructions: z.string().optional(),
+		})
+		.optional(),
+	skills: z
+		.array(z.string().regex(/^[a-z0-9-]{1,40}$/i))
+		.max(16)
+		.optional(),
 	embedPolicy: z.record(z.any()).optional(),
 	demoSlug: z.string().optional(),
 });
@@ -128,12 +133,14 @@ async function pinRegistrationJson(json) {
 	const stubCid = `bafkreigenerated${contentHash.slice(0, 40)}`; // mock bafk-prefixed CID
 	const key = `agent-registrations/${Date.now()}-${Math.random().toString(36).slice(2)}.json`;
 
-	await r2.send(new PutObjectCommand({
-		Bucket: env.S3_BUCKET,
-		Key: key,
-		Body: jsonBytes,
-		ContentType: 'application/json',
-	}));
+	await r2.send(
+		new PutObjectCommand({
+			Bucket: env.S3_BUCKET,
+			Key: key,
+			Body: jsonBytes,
+			ContentType: 'application/json',
+		}),
+	);
 
 	return { cid: stubCid, metadataURI: `ipfs://${stubCid}` };
 }

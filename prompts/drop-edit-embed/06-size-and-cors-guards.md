@@ -5,16 +5,16 @@
 Task 02 added a single 25 MB size check. That's the easy half. The harder failure modes live in two spots:
 
 1. **Server-side size policy** — plan quotas exist in the `plan_quotas` table. A free user may be under a stricter cap than 25 MB per avatar. Today the editor client doesn't know; it hits `/api/avatars/presign` and gets a cryptic 413.
-2. **Remote GLBs loaded via `#model=<url>`** — the editor *can* display them (the viewer fetches them), but the editor's `EditorSession.getSourceBuffer()` may or may not have kept the original bytes, and re-fetching cross-origin often fails at CORS. Exporting then fails silently or with a confusing error.
+2. **Remote GLBs loaded via `#model=<url>`** — the editor _can_ display them (the viewer fetches them), but the editor's `EditorSession.getSourceBuffer()` may or may not have kept the original bytes, and re-fetching cross-origin often fails at CORS. Exporting then fails silently or with a confusing error.
 
 We surface both failures with useful error copy, blocks them before users upload, and gives one clear remediation for each.
 
 ## Shared context
 
-- Plan quotas live in the `plan_quotas` table ([api/_lib/schema.sql](../../api/_lib/schema.sql)) and are read by endpoints that need them — search for `plan_quotas` to see where.
+- Plan quotas live in the `plan_quotas` table ([api/\_lib/schema.sql](../../api/_lib/schema.sql)) and are read by endpoints that need them — search for `plan_quotas` to see where.
 - [api/avatars/index.js](../../api/avatars/index.js) returns 413 with `error: 'payload_too_large'` and an `error_description` if size exceeds the user's plan.
 - `EditorSession` in [src/editor/session.js](../../src/editor/session.js) exposes `getSourceBuffer()`. Check whether it caches the bytes on load or re-fetches on demand; if it re-fetches, CORS will bite on cross-origin URLs loaded via `#model=`.
-- The viewer's load path goes through `GLTFLoader` which internally manages fetching. We need to capture the bytes *at load time* regardless of how the viewer fetched them, then hand them to the editor session.
+- The viewer's load path goes through `GLTFLoader` which internally manages fetching. We need to capture the bytes _at load time_ regardless of how the viewer fetched them, then hand them to the editor session.
 
 ## What to build
 
@@ -24,10 +24,10 @@ Create [api/me/limits.js](../../api/me/limits.js). Returns the caller's avatar s
 
 ```json
 {
-  "max_avatars": 20,
-  "max_bytes_per_avatar": 26214400,
-  "max_total_bytes": 524288000,
-  "current_total_bytes": 48271934
+	"max_avatars": 20,
+	"max_bytes_per_avatar": 26214400,
+	"max_total_bytes": 524288000,
+	"current_total_bytes": 48271934
 }
 ```
 
@@ -59,9 +59,9 @@ Edit [src/editor/session.js](../../src/editor/session.js) `reset({ url, file, na
 - If `file` is a `File` or `Blob` → read it once with `await file.arrayBuffer()` and cache on `this._sourceBytes`.
 - If `url` is provided → attempt one `fetch(url, { credentials: 'omit' })`; on success cache the `ArrayBuffer` in `this._sourceBytes`; on CORS / network failure, set `this._sourceBytes = null` and store the failure reason in `this._sourceBytesError = { url, reason }`.
 - Replace `getSourceBuffer()` with:
-  - If `_sourceBytes` → return it.
-  - Else if `_sourceBytesError` → throw a new typed `SourceFetchError` with copy: "Couldn't re-read the model bytes for export. Most often this is a CORS issue with the host. Try: (1) hosting the GLB on the same origin, or (2) drag-and-dropping the file directly."
-  - Else throw `new Error('No source buffer for export')` (existing behavior).
+    - If `_sourceBytes` → return it.
+    - Else if `_sourceBytesError` → throw a new typed `SourceFetchError` with copy: "Couldn't re-read the model bytes for export. Most often this is a CORS issue with the host. Try: (1) hosting the GLB on the same origin, or (2) drag-and-dropping the file directly."
+    - Else throw `new Error('No source buffer for export')` (existing behavior).
 
 Export `SourceFetchError` from `src/editor/session.js` so `publish.js` can wrap it as `ExportFailedError` with the same copy.
 

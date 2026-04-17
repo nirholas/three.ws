@@ -6,7 +6,7 @@ The **only** goal. Six bands, in order. Everything else is secondary until these
 2. **Selfie → agent** — User takes a photo in-browser; we return a rigged 3D avatar bound to their identity.
 3. **Edit avatars** — Material/texture/scene editing on an existing avatar (partially shipped), plus regenerate-from-photo and variants.
 4. **View + embed** — Public viewer and embeddable snippet (partially shipped); polish, share flow, and per-agent settings.
-5. **Portable embed (Claude.ai + LobeHub)** — The agent shows up *inside* a chat surface looking embodied, not as JSON.
+5. **Portable embed (Claude.ai + LobeHub)** — The agent shows up _inside_ a chat surface looking embodied, not as JSON.
 6. **On-chain deployment** — Agent identity lives on-chain; any host (LobeHub, Claude) can summon the same avatar from the address alone.
 
 ## Dispatch order
@@ -23,7 +23,7 @@ Each band is a folder. Prompts inside a band can run in parallel unless they tou
 - [cz-demo/](./cz-demo/) — **the ship target.** Rolls up bands 1, 5, 6 into one live-demo flow. Work here last, after the bands above are green.
 - [build/](./build/) — master flat index (`NN-NN-*.md`) covering bands 1–5 in one place; use as an alternative dispatch list if the band-folder layout gets noisy.
 
-Don't skip bands. Band 2 depends on band 1 (we need to know *who* owns the agent before generating one). Band 5 depends on band 4 (embed must work on a regular page before it works inside Claude). Band 6 depends on band 1 (wallet = onchain identity).
+Don't skip bands. Band 2 depends on band 1 (we need to know _who_ owns the agent before generating one). Band 5 depends on band 4 (embed must work on a regular page before it works inside Claude). Band 6 depends on band 1 (wallet = onchain identity).
 
 ## House rules for every prompt
 
@@ -40,7 +40,7 @@ Don't skip bands. Band 2 depends on band 1 (we need to know *who* owns the agent
 - `api/mcp.js` — MCP tools including `validate_model`, `inspect_model`, `optimize_model`
 - `api/_lib/fetch-model.js` — SSRF-hardened URL fetcher
 - `public/.well-known/agent-card.json` — A2A discovery with 8 skills
-- `src/erc8004/agent-registry.js` — wallet connect via Privy / injected provider (used for ERC-8004 registration, *not yet* for user auth)
+- `src/erc8004/agent-registry.js` — wallet connect via Privy / injected provider (used for ERC-8004 registration, _not yet_ for user auth)
 - `src/agent-identity.js`, `src/agent-memory.js`, `src/agent-protocol.js`, `src/agent-avatar.js`, `src/agent-home.js` — the agent runtime (Empathy Layer etc.)
 
 ## What we are NOT prioritizing right now

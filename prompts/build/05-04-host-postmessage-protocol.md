@@ -23,24 +23,24 @@ All messages are JSON-serializable. Always include `v`. The agent ignores messag
 
 ### Host → agent messages
 
-| type | payload | behavior |
-|---|---|---|
-| `init` | `{ originAllowlist?: string[] }` | handshake — agent replies with `ready` |
-| `speak` | `{ text, voice?: 'system' }` | emits `speech:say` on the protocol bus |
-| `play_animation` | `{ slot: 'wave' | 'nod' | 'shake' | 'think' }` | emits `empathy:<slot>` |
-| `set_mood` | `{ mood: 'happy'|'sad'|'neutral'|'surprised' }` | emits `empathy:mood` |
-| `resize` | `{ width, height }` | lets the host tell the agent to re-layout (useful inside auto-sizing panels) |
-| `dispose` | `{}` | cleans up and emits `ready: false` |
+| type             | payload                          | behavior                                                                     |
+| ---------------- | -------------------------------- | ---------------------------------------------------------------------------- | --------- | -------------- | ---------------------- |
+| `init`           | `{ originAllowlist?: string[] }` | handshake — agent replies with `ready`                                       |
+| `speak`          | `{ text, voice?: 'system' }`     | emits `speech:say` on the protocol bus                                       |
+| `play_animation` | `{ slot: 'wave'                  | 'nod'                                                                        | 'shake'   | 'think' }`     | emits `empathy:<slot>` |
+| `set_mood`       | `{ mood: 'happy'                 | 'sad'                                                                        | 'neutral' | 'surprised' }` | emits `empathy:mood`   |
+| `resize`         | `{ width, height }`              | lets the host tell the agent to re-layout (useful inside auto-sizing panels) |
+| `dispose`        | `{}`                             | cleans up and emits `ready: false`                                           |
 
 ### Agent → host messages
 
-| type | payload | when |
-|---|---|---|
-| `ready` | `{ agentId, capabilities: string[] }` | once after load |
-| `speaking_started` / `speaking_ended` | `{ utteranceId }` | while TTS plays |
-| `animation_started` / `animation_ended` | `{ slot }` | per animation |
-| `click` | `{ region: 'head'|'body'|'hand' }` | user clicks the avatar (if host enabled) |
-| `error` | `{ code, message }` | non-fatal failures |
+| type                                    | payload                               | when               |
+| --------------------------------------- | ------------------------------------- | ------------------ | --------- | ---------------------------------------- |
+| `ready`                                 | `{ agentId, capabilities: string[] }` | once after load    |
+| `speaking_started` / `speaking_ended`   | `{ utteranceId }`                     | while TTS plays    |
+| `animation_started` / `animation_ended` | `{ slot }`                            | per animation      |
+| `click`                                 | `{ region: 'head'                     | 'body'             | 'hand' }` | user clicks the avatar (if host enabled) |
+| `error`                                 | `{ code, message }`                   | non-fatal failures |
 
 ### Origin handshake
 

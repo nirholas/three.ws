@@ -1,13 +1,13 @@
 ---
 mode: agent
-description: "Let an email/password user link a wallet to their existing account without creating a new one"
+description: 'Let an email/password user link a wallet to their existing account without creating a new one'
 ---
 
 # 01-01 · Link wallet to existing account
 
 ## Why it matters
 
-Today a returning user who signed up with email+password cannot attach a wallet without creating a *second* account. That fragments ownership of agents across two users and breaks the onchain pillar (layer 6) — you want one user → many wallets → many agents. The SIWE verify endpoint already supports a linked branch ([api/auth/siwe/verify.js:114](../../api/auth/siwe/verify.js#L114)); the client just doesn't drive it.
+Today a returning user who signed up with email+password cannot attach a wallet without creating a _second_ account. That fragments ownership of agents across two users and breaks the onchain pillar (layer 6) — you want one user → many wallets → many agents. The SIWE verify endpoint already supports a linked branch ([api/auth/siwe/verify.js:114](../../api/auth/siwe/verify.js#L114)); the client just doesn't drive it.
 
 ## Prerequisites
 
@@ -16,22 +16,22 @@ Today a returning user who signed up with email+password cannot attach a wallet 
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
+| File                                                     | Why                                                                                                                                                                                                                |
+| :------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [api/auth/siwe/verify.js](../../api/auth/siwe/verify.js) | The `link=1` branch — an authenticated caller that signs a nonce should have the wallet attached to the current `userId` instead of creating a new user. Verify the handler already supports this; if not, extend. |
-| [public/wallet-login.js](../../public/wallet-login.js) | Where `completeSignIn(provider)` lives — you'll add a `linkWallet(provider)` sibling. |
-| [api/_lib/auth.js](../../api/_lib/auth.js) | `getSessionUser(req)` — used to know this is a link, not a sign-in. |
-| [api/_lib/schema.sql](../../api/_lib/schema.sql) | `user_wallets` table (line ~143) — linked wallets go here. |
+| [public/wallet-login.js](../../public/wallet-login.js)   | Where `completeSignIn(provider)` lives — you'll add a `linkWallet(provider)` sibling.                                                                                                                              |
+| [api/\_lib/auth.js](../../api/_lib/auth.js)              | `getSessionUser(req)` — used to know this is a link, not a sign-in.                                                                                                                                                |
+| [api/\_lib/schema.sql](../../api/_lib/schema.sql)        | `user_wallets` table (line ~143) — linked wallets go here.                                                                                                                                                         |
 
 ## Build this
 
 1. **Confirm or add the link branch in `siwe/verify.js`**:
-   - If the request arrives with a valid session cookie AND the signed address is **not already bound to another user**, insert into `user_wallets(user_id, address)` and return `{ linked: true, address }`. Do NOT rotate the session.
-   - If the address is already bound to a **different** user, return 409 with a clear error message.
-   - If no session, fall through to the existing sign-in/create flow.
+    - If the request arrives with a valid session cookie AND the signed address is **not already bound to another user**, insert into `user_wallets(user_id, address)` and return `{ linked: true, address }`. Do NOT rotate the session.
+    - If the address is already bound to a **different** user, return 409 with a clear error message.
+    - If no session, fall through to the existing sign-in/create flow.
 2. **Client helper** in [public/wallet-login.js](../../public/wallet-login.js):
-   - Export `linkWallet(provider)` that runs the same EIP-4361 flow as `completeSignIn` but marks the nonce request with `{ intent: 'link' }` and posts to `/api/auth/siwe/verify?intent=link`.
-   - On success, dispatch a `wallet:linked` custom event with `{ address, provider }`.
+    - Export `linkWallet(provider)` that runs the same EIP-4361 flow as `completeSignIn` but marks the nonce request with `{ intent: 'link' }` and posts to `/api/auth/siwe/verify?intent=link`.
+    - On success, dispatch a `wallet:linked` custom event with `{ address, provider }`.
 3. **Wire from the account/settings page** (see `01-02` for that page) — a "Link a wallet" button that calls `linkWallet('metamask')` or `linkWallet('privy')`.
 
 ## Out of scope

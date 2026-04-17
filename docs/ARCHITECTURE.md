@@ -87,16 +87,18 @@ When a user drops a multi-file glTF (e.g., `scene.gltf` + `scene.bin` + textures
 
 ```javascript
 MANAGER.setURLModifier((url, path) => {
-    const normalizedURL = rootPath + decodeURI(url)
-        .replace(baseURL, '')
-        .replace(/^(\.?\/)/, '');
+	const normalizedURL =
+		rootPath +
+		decodeURI(url)
+			.replace(baseURL, '')
+			.replace(/^(\.?\/)/, '');
 
-    if (assetMap.has(normalizedURL)) {
-        const blob = assetMap.get(normalizedURL);
-        return URL.createObjectURL(blob);  // Serve from local blob
-    }
+	if (assetMap.has(normalizedURL)) {
+		const blob = assetMap.get(normalizedURL);
+		return URL.createObjectURL(blob); // Serve from local blob
+	}
 
-    return (path || '') + url;  // Fall back to network fetch
+	return (path || '') + url; // Fall back to network fetch
 });
 ```
 
@@ -123,15 +125,15 @@ requestAnimationFrame(this.animate)
 
 The application controller. Creates the dropzone, viewer, and validator. Routes user interactions.
 
-| Method | Description |
-|--------|-------------|
-| `constructor(el, location)` | Parses hash params, sets up dropzone, loads initial model |
-| `createDropzone()` | Binds SimpleDropzone to `.wrap` element and `#file-input` |
-| `createViewer()` | Instantiates `Viewer` on first model load |
-| `load(fileMap)` | Finds root glTF/GLB in a dropped fileset and calls `view()` |
-| `view(rootFile, rootPath, fileMap)` | Passes model to `Viewer.load()` and `Validator.validate()` |
-| `onError(error)` | Normalizes error messages and shows `window.alert()` |
-| `showSpinner()` / `hideSpinner()` | Toggle loading indicator visibility |
+| Method                              | Description                                                 |
+| ----------------------------------- | ----------------------------------------------------------- |
+| `constructor(el, location)`         | Parses hash params, sets up dropzone, loads initial model   |
+| `createDropzone()`                  | Binds SimpleDropzone to `.wrap` element and `#file-input`   |
+| `createViewer()`                    | Instantiates `Viewer` on first model load                   |
+| `load(fileMap)`                     | Finds root glTF/GLB in a dropped fileset and calls `view()` |
+| `view(rootFile, rootPath, fileMap)` | Passes model to `Viewer.load()` and `Validator.validate()`  |
+| `onError(error)`                    | Normalizes error messages and shows `window.alert()`        |
+| `showSpinner()` / `hideSpinner()`   | Toggle loading indicator visibility                         |
 
 ### `Viewer` — `src/viewer.js`
 
@@ -151,11 +153,11 @@ Exports a flat array of environment map definitions:
 
 ```javascript
 [
-  { id: '',           name: 'None',                    path: null },
-  { id: 'neutral',    name: 'Neutral',                 path: null },
-  { id: 'venice-sunset', name: 'Venice Sunset',        path: '...1k.exr' },
-  { id: 'footprint-court', name: 'Footprint Court',    path: '...2k.exr' },
-]
+	{ id: '', name: 'None', path: null },
+	{ id: 'neutral', name: 'Neutral', path: null },
+	{ id: 'venice-sunset', name: 'Venice Sunset', path: '...1k.exr' },
+	{ id: 'footprint-court', name: 'Footprint Court', path: '...2k.exr' },
+];
 ```
 
 - `id: ''` — no environment map applied
@@ -166,12 +168,12 @@ Exports a flat array of environment map definitions:
 
 All components use [vhtml](https://github.com/developit/vhtml) — a JSX-compatible library that outputs plain HTML strings (no virtual DOM, no reactivity).
 
-| Component | File | Description |
-|-----------|------|-------------|
-| `Footer` | `footer.jsx` | Social links (X/Twitter, GitHub) and feedback link |
-| `ValidatorToggle` | `validator-toggle.jsx` | Status bar with severity color and dismiss button |
+| Component         | File                   | Description                                                |
+| ----------------- | ---------------------- | ---------------------------------------------------------- |
+| `Footer`          | `footer.jsx`           | Social links (X/Twitter, GitHub) and feedback link         |
+| `ValidatorToggle` | `validator-toggle.jsx` | Status bar with severity color and dismiss button          |
 | `ValidatorReport` | `validator-report.jsx` | Full report with metadata, stats, extensions, issue tables |
-| `ValidatorTable` | `validator-table.jsx` | Color-coded table of issues (code, message, JSON pointer) |
+| `ValidatorTable`  | `validator-table.jsx`  | Color-coded table of issues (code, message, JSON pointer)  |
 
 ---
 
@@ -181,9 +183,9 @@ All components use [vhtml](https://github.com/developit/vhtml) — a JSX-compati
 
 ```javascript
 new WebGLRenderer({ antialias: true })
-  .setClearColor(0xcccccc)
-  .setPixelRatio(window.devicePixelRatio)
-  .setSize(el.clientWidth, el.clientHeight)
+	.setClearColor(0xcccccc)
+	.setPixelRatio(window.devicePixelRatio)
+	.setSize(el.clientWidth, el.clientHeight);
 ```
 
 ### Camera
@@ -197,10 +199,10 @@ new WebGLRenderer({ antialias: true })
 
 When the model does **not** contain embedded lights (`state.punctualLights = true`):
 
-| Light | Type | Default Intensity | Position |
-|-------|------|------------------|----------|
-| Ambient | `AmbientLight` | 0.3 | Attached to camera |
-| Directional | `DirectionalLight` | 0.8π ≈ 2.51 | `(0.5, 0, 0.866)` on camera |
+| Light       | Type               | Default Intensity | Position                    |
+| ----------- | ------------------ | ----------------- | --------------------------- |
+| Ambient     | `AmbientLight`     | 0.3               | Attached to camera          |
+| Directional | `DirectionalLight` | 0.8π ≈ 2.51       | `(0.5, 0, 0.866)` on camera |
 
 When the model **does** contain lights, punctual lights are disabled and the model's own lights are used.
 
@@ -208,12 +210,12 @@ Asset generator preset uses a single `HemisphereLight` instead.
 
 ### Loaders
 
-| Loader | CDN Source | Purpose |
-|--------|-----------|---------|
-| `GLTFLoader` | Bundled (three.js) | Core glTF 2.0 parser |
-| `DRACOLoader` | `unpkg.com/three@0.{REVISION}.x/examples/jsm/libs/draco/gltf/` | Draco mesh decompression |
-| `KTX2Loader` | `unpkg.com/three@0.{REVISION}.x/examples/jsm/libs/basis/` | KTX2/Basis Universal texture transcoding |
-| `MeshoptDecoder` | Bundled (three.js) | Meshopt compression decoding |
+| Loader           | CDN Source                                                     | Purpose                                  |
+| ---------------- | -------------------------------------------------------------- | ---------------------------------------- |
+| `GLTFLoader`     | Bundled (three.js)                                             | Core glTF 2.0 parser                     |
+| `DRACOLoader`    | `unpkg.com/three@0.{REVISION}.x/examples/jsm/libs/draco/gltf/` | Draco mesh decompression                 |
+| `KTX2Loader`     | `unpkg.com/three@0.{REVISION}.x/examples/jsm/libs/basis/`      | KTX2/Basis Universal texture transcoding |
+| `MeshoptDecoder` | Bundled (three.js)                                             | Meshopt compression decoding             |
 
 All loaders are shared singleton instances to avoid redundant initialization.
 
@@ -249,12 +251,12 @@ Validator.validate(fileURL, rootPath, assetMap, gltfResponse)
 
 ### Severity Levels
 
-| Level | Color | CSS Class | Meaning |
-|-------|-------|-----------|---------|
-| 0 | Red | `level-0` | Errors — spec violations |
-| 1 | Yellow | `level-1` | Warnings — potential issues |
-| 2 | Blue | — | Informational notes |
-| 3 | Green | — | Optimization hints |
+| Level | Color  | CSS Class | Meaning                     |
+| ----- | ------ | --------- | --------------------------- |
+| 0     | Red    | `level-0` | Errors — spec violations    |
+| 1     | Yellow | `level-1` | Warnings — potential issues |
+| 2     | Blue   | —         | Informational notes         |
+| 3     | Green  | —         | Optimization hints          |
 
 ### Message Aggregation
 
@@ -311,20 +313,20 @@ Dynamic folders (Animation, Morph Targets, Cameras) have their controls rebuilt 
 
 All styles live in a single `style.css` file with clearly delineated sections:
 
-| Section | Description |
-|---------|-------------|
-| Base reset | `html, body` reset, dark background, Inter font |
-| Layout | Flexbox column: header → main (viewer + dropzone) |
-| Viewer | Full-bleed canvas container |
-| Axes | Fixed 100×100 px overlay, bottom-left, `pointer-events: none` |
-| Header | Sticky top bar, blur backdrop, 3.5rem height |
-| GUI wrap | Absolute positioning, right side, `pointer-events: none` on wrapper |
-| dat.gui overrides | Dark theme: `#0a0a0a` backgrounds, subtle borders |
-| Responsive (≤700px) | Collapsed header, hidden drop hint, 65vw max GUI width |
-| Footer | Absolute bottom-right, monospace, low opacity |
-| Upload button | Custom file input styling |
-| Validation report | Tables, toggle bar, severity colors |
-| Spinner | CSS-only pulsing circle animation |
+| Section             | Description                                                         |
+| ------------------- | ------------------------------------------------------------------- |
+| Base reset          | `html, body` reset, dark background, Inter font                     |
+| Layout              | Flexbox column: header → main (viewer + dropzone)                   |
+| Viewer              | Full-bleed canvas container                                         |
+| Axes                | Fixed 100×100 px overlay, bottom-left, `pointer-events: none`       |
+| Header              | Sticky top bar, blur backdrop, 3.5rem height                        |
+| GUI wrap            | Absolute positioning, right side, `pointer-events: none` on wrapper |
+| dat.gui overrides   | Dark theme: `#0a0a0a` backgrounds, subtle borders                   |
+| Responsive (≤700px) | Collapsed header, hidden drop hint, 65vw max GUI width              |
+| Footer              | Absolute bottom-right, monospace, low opacity                       |
+| Upload button       | Custom file input styling                                           |
+| Validation report   | Tables, toggle bar, severity colors                                 |
+| Spinner             | CSS-only pulsing circle animation                                   |
 
 ### Safe Area Support
 

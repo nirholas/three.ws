@@ -10,13 +10,13 @@ GET https://3dagent.vercel.app/api/artifact
 
 ### Parameters
 
-| Param | Required | Pattern | Notes |
-|---|---|---|---|
-| `agent` | one of | `/^[a-z0-9_-]{3,64}$/i` | Agent ID; looked up in `agent_identities` |
-| `model` | one of | `https://` URL, whitelisted origin | GLB URL; viewer-only, no persona |
-| `theme` | no | `dark` \| `light` | Default `dark` |
-| `idle` | no | string | Animation clip name |
-| `bg` | no | hex string (no `#`) | Background colour |
+| Param   | Required | Pattern                            | Notes                                     |
+| ------- | -------- | ---------------------------------- | ----------------------------------------- |
+| `agent` | one of   | `/^[a-z0-9_-]{3,64}$/i`            | Agent ID; looked up in `agent_identities` |
+| `model` | one of   | `https://` URL, whitelisted origin | GLB URL; viewer-only, no persona          |
+| `theme` | no       | `dark` \| `light`                  | Default `dark`                            |
+| `idle`  | no       | string                             | Animation clip name                       |
+| `bg`    | no       | hex string (no `#`)                | Background colour                         |
 
 Exactly one of `agent` or `model` must be supplied; both or neither → 400.
 
@@ -55,12 +55,12 @@ frame-ancestors *
 
 All errors are `application/json` in the standard `{ error, error_description }` envelope:
 
-| Status | Code | Cause |
-|---|---|---|
-| 400 | `invalid_request` | Bad agent ID pattern, bad model URL, or missing both params |
-| 404 | `not_found` | Agent ID not found or deleted |
-| 405 | `method_not_allowed` | Non-GET/HEAD request |
-| 429 | `rate_limited` | Exceeded `widgetRead` preset (600/min per IP) |
+| Status | Code                 | Cause                                                       |
+| ------ | -------------------- | ----------------------------------------------------------- |
+| 400    | `invalid_request`    | Bad agent ID pattern, bad model URL, or missing both params |
+| 404    | `not_found`          | Agent ID not found or deleted                               |
+| 405    | `method_not_allowed` | Non-GET/HEAD request                                        |
+| 429    | `rate_limited`       | Exceeded `widgetRead` preset (600/min per IP)               |
 
 ## Browser compat
 

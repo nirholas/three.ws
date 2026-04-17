@@ -39,6 +39,7 @@ When rendering the agent page for someone who arrived via address, do a reverse 
 ### 4. UX on /agent
 
 URL shapes:
+
 - `/agent/0xabc…` — address
 - `/agent/vitalik.eth` — ENS (redirect to `/agent/<resolved-address>`? or keep the name in the URL? Pick the one that keeps the URL stable across name changes — lean **address-canonical** with a small ENS chip in the header)
 

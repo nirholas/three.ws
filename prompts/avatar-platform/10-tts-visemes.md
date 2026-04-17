@@ -21,13 +21,13 @@ Depends on task 09.
 1. **HeadTTS vendoring** — HeadTTS is part of the TalkingHead author's stack; vendor the browser build into `src/vendor/headtts/`. Include the Kokoro model or document its CDN URL.
 2. **Piper client** `src/agent/tts-piper.js` — POSTs text to a configured `/api/tts` endpoint, receives `{ audioUrl, phonemes: [{ phoneme, startMs, endMs }] }`, maps phonemes to Oculus visemes.
 3. **Piper server** under `services/piper/`:
-   - Dockerfile (CPU-only, small image).
-   - Serves `POST /api/tts` accepting `{ text, voice }` → returns audio + phoneme timestamps.
-   - Pick one Piper voice model (e.g., `en_US-amy-medium`) as default; allow override via `voice` param.
+    - Dockerfile (CPU-only, small image).
+    - Serves `POST /api/tts` accepting `{ text, voice }` → returns audio + phoneme timestamps.
+    - Pick one Piper voice model (e.g., `en_US-amy-medium`) as default; allow override via `voice` param.
 4. **Unified facade** `src/agent/tts.js`:
-   - `class TTS { constructor({ prefer: 'local'|'server'|'auto' }); async synthesize(text, voice?); dispose(); }`
-   - Capability detection: WebGPU via `navigator.gpu`, WASM SIMD via a quick probe.
-   - Route: `local` → HeadTTS; `server` → Piper; `auto` → HeadTTS if capable else Piper if `/api/tts` reachable else Web Speech API.
+    - `class TTS { constructor({ prefer: 'local'|'server'|'auto' }); async synthesize(text, voice?); dispose(); }`
+    - Capability detection: WebGPU via `navigator.gpu`, WASM SIMD via a quick probe.
+    - Route: `local` → HeadTTS; `server` → Piper; `auto` → HeadTTS if capable else Piper if `/api/tts` reachable else Web Speech API.
 5. **Viseme mapping** `src/agent/viseme-map.js` — phoneme→Oculus viseme table. Oculus visemes: `sil, PP, FF, TH, DD, kk, CH, SS, nn, RR, aa, E, I, O, U`. Document gaps (not all phonemes map cleanly).
 6. **TalkingHead wiring** — update task 09's `talking-head.js` adapter: `speak(text)` now internally calls `tts.synthesize` and passes the result to the engine. The raw `speak(text, { audio, visemes, ... })` overload stays for callers that synthesize externally.
 7. **Audio playback** — use a shared `AudioContext`. Resume on first user interaction (browser autoplay policy). Document the gesture requirement in the reporting section.

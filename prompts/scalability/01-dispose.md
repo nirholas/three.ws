@@ -15,14 +15,15 @@ Add a `dispose()` method on `Viewer` that fully tears down the instance, so `vie
 ## Deliverable
 
 1. Modified [src/viewer.js](../../src/viewer.js) with:
-   - A new `dispose()` method
-   - All listener callbacks stored on `this._…` fields during construction so they can be removed
-   - The existing `window.addEventListener('resize', …)` and `window.addEventListener('keydown', …)` — currently anonymous/bound inline — refactored to stored bound handlers
+    - A new `dispose()` method
+    - All listener callbacks stored on `this._…` fields during construction so they can be removed
+    - The existing `window.addEventListener('resize', …)` and `window.addEventListener('keydown', …)` — currently anonymous/bound inline — refactored to stored bound handlers
 2. Updated callers (check [src/app.js](../../src/app.js), [src/avatar-creator.js](../../src/avatar-creator.js)) that destroy or recreate viewers — call `dispose()` before discarding.
 
 ## Audit checklist — must handle all of these
 
 **three.js resources (constructor)**
+
 - `this.renderer` → `renderer.dispose()`, then remove `renderer.domElement` from `this.el`, then `renderer.forceContextLoss()` is optional but recommended
 - `this.pmremGenerator` → `.dispose()`
 - `this.neutralEnvironment` (texture from PMREMGenerator) → `.dispose()`
@@ -36,6 +37,7 @@ Add a `dispose()` method on `Viewer` that fully tears down the instance, so `vie
 - `this.content` → reuse existing `clear()` logic
 
 **UI resources**
+
 - `this.stats` → `stats.dom.remove()`
 - `this.gui` (dat.gui) → `gui.destroy()`
 - `this.annotationEls` → `.forEach((a) => a.el.remove())`
@@ -43,6 +45,7 @@ Add a `dispose()` method on `Viewer` that fully tears down the instance, so `vie
 - Any canvas overlays for annotations (see [src/annotations.js](../../src/annotations.js))
 
 **Listeners / observers / RAF**
+
 - `cancelAnimationFrame(this._rafId)` and null it
 - `document.removeEventListener('visibilitychange', this._onVisibilityChange)`
 - `this._intersectionObserver?.disconnect()`
@@ -50,6 +53,7 @@ Add a `dispose()` method on `Viewer` that fully tears down the instance, so `vie
 - `window.removeEventListener('keydown', this._onKeyDown)` — **refactor the current anonymous `(e) => …` handler** at roughly lines 182–184 to a stored bound handler
 
 **State**
+
 - Null out `this.content`, `this.mixer`, `this.clips`, `this.scene`, `this.renderer`, `this.controls`, `this.gui` at the end of dispose, so accidental reuse fails loudly rather than silently.
 
 ## Constraints
@@ -63,14 +67,14 @@ Add a `dispose()` method on `Viewer` that fully tears down the instance, so `vie
 
 1. `node --check src/viewer.js` — parses.
 2. Manually in a browser console after the app loads:
-   ```js
-   window.app.viewer.dispose();
-   // Check: no errors in console
-   // Check: renderer.domElement no longer in DOM
-   // Check: GUI panel gone
-   // Check: stats panel gone
-   // Call it again — should not throw
-   ```
+    ```js
+    window.app.viewer.dispose();
+    // Check: no errors in console
+    // Check: renderer.domElement no longer in DOM
+    // Check: GUI panel gone
+    // Check: stats panel gone
+    // Call it again — should not throw
+    ```
 3. Create a second viewer (`window.app.createViewer()` or equivalent) and confirm it works.
 4. Load a scene, toggle env, load another scene, dispose, recreate, repeat — observe memory does not grow in DevTools Memory tab across several cycles.
 
@@ -84,6 +88,7 @@ Add a `dispose()` method on `Viewer` that fully tears down the instance, so `vie
 ## Reporting
 
 At the end, summarise:
+
 - What was disposed
 - Which listeners were refactored to stored handlers
 - Any resource you found that had no cleanup path and that you added

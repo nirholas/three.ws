@@ -31,38 +31,38 @@ skill-name/
 
 ```jsonc
 {
-  "spec": "skill/0.1",
-  "name": "wave",
-  "version": "0.1.0",
-  "description": "Wave at the user with context-appropriate enthusiasm.",
-  "author": "0xDeadBeef...",       // optional wallet
-  "license": "MIT",
-  "tags": ["greeting", "gesture", "mixamo-compatible"],
+	"spec": "skill/0.1",
+	"name": "wave",
+	"version": "0.1.0",
+	"description": "Wave at the user with context-appropriate enthusiasm.",
+	"author": "0xDeadBeef...", // optional wallet
+	"license": "MIT",
+	"tags": ["greeting", "gesture", "mixamo-compatible"],
 
-  // Compatibility
-  "requires": {
-    "rig": ["mixamo", "any"],       // rigs this skill works with
-    "runtime": ">=0.1.0",
-    "tools": ["play_clip"]          // built-in tools this skill depends on
-  },
+	// Compatibility
+	"requires": {
+		"rig": ["mixamo", "any"], // rigs this skill works with
+		"runtime": ">=0.1.0",
+		"tools": ["play_clip"], // built-in tools this skill depends on
+	},
 
-  // Dependencies on other skills (composition)
-  "dependencies": {
-    "ipfs://bafy.../gesture-base/": "^1.0.0"
-  },
+	// Dependencies on other skills (composition)
+	"dependencies": {
+		"ipfs://bafy.../gesture-base/": "^1.0.0",
+	},
 
-  // What this skill adds
-  "provides": {
-    "tools": ["wave"],              // declared in tools.json
-    "triggers": ["greeting"]        // semantic tags for skill discovery
-  },
+	// What this skill adds
+	"provides": {
+		"tools": ["wave"], // declared in tools.json
+		"triggers": ["greeting"], // semantic tags for skill discovery
+	},
 
-  // Content-addressed integrity (optional but recommended)
-  "integrity": {
-    "SKILL.md": "sha256-...",
-    "tools.json": "sha256-...",
-    "clips/wave-casual.glb": "sha256-..."
-  }
+	// Content-addressed integrity (optional but recommended)
+	"integrity": {
+		"SKILL.md": "sha256-...",
+		"tools.json": "sha256-...",
+		"clips/wave-casual.glb": "sha256-...",
+	},
 }
 ```
 
@@ -75,9 +75,9 @@ Frontmatter + markdown. The LLM sees this as a system-prompt fragment whenever t
 name: wave
 description: Wave at the user with context-appropriate enthusiasm.
 triggers:
-  - user_greeting
-  - user_farewell
-  - introduction
+    - user_greeting
+    - user_farewell
+    - introduction
 cost: low
 ---
 
@@ -97,12 +97,12 @@ Do not wave more than once per turn. Do not wave if you just waved.
 
 Frontmatter fields:
 
-| Field | Type | Purpose |
-|---|---|---|
-| `name` | string | Must match `manifest.json` |
-| `description` | string | One-line, used in skill discovery UIs |
-| `triggers` | string[] | Semantic tags — when LLM router sees these, it surfaces the skill |
-| `cost` | `low` \| `medium` \| `high` | Latency/token hint for the runtime to decide eager vs. lazy load |
+| Field         | Type                        | Purpose                                                           |
+| ------------- | --------------------------- | ----------------------------------------------------------------- |
+| `name`        | string                      | Must match `manifest.json`                                        |
+| `description` | string                      | One-line, used in skill discovery UIs                             |
+| `triggers`    | string[]                    | Semantic tags — when LLM router sees these, it surfaces the skill |
+| `cost`        | `low` \| `medium` \| `high` | Latency/token hint for the runtime to decide eager vs. lazy load  |
 
 ## tools.json
 
@@ -110,29 +110,29 @@ Standard tool-use schema (Anthropic / OpenAI compatible). This is what the LLM s
 
 ```jsonc
 {
-  "tools": [
-    {
-      "name": "wave",
-      "description": "Wave at the user.",
-      "input_schema": {
-        "type": "object",
-        "properties": {
-          "style": {
-            "type": "string",
-            "enum": ["casual", "enthusiastic", "subtle"],
-            "default": "casual"
-          },
-          "duration_ms": {
-            "type": "integer",
-            "minimum": 500,
-            "maximum": 5000,
-            "default": 1500
-          }
-        },
-        "required": []
-      }
-    }
-  ]
+	"tools": [
+		{
+			"name": "wave",
+			"description": "Wave at the user.",
+			"input_schema": {
+				"type": "object",
+				"properties": {
+					"style": {
+						"type": "string",
+						"enum": ["casual", "enthusiastic", "subtle"],
+						"default": "casual",
+					},
+					"duration_ms": {
+						"type": "integer",
+						"minimum": 500,
+						"maximum": 5000,
+						"default": 1500,
+					},
+				},
+				"required": [],
+			},
+		},
+	],
 }
 ```
 
@@ -143,20 +143,21 @@ ES module exporting one function per tool. Receives `(args, context)` where `con
 ```js
 // skills/wave/handlers.js
 export async function wave(args, ctx) {
-  const { style = 'casual', duration_ms = 1500 } = args;
-  const clipUri = new URL(`clips/wave-${style}.glb`, ctx.skillBaseURI).href;
+	const { style = 'casual', duration_ms = 1500 } = args;
+	const clipUri = new URL(`clips/wave-${style}.glb`, ctx.skillBaseURI).href;
 
-  const clip = await ctx.loadClip(clipUri);
-  ctx.viewer.play(clip, { duration: duration_ms, blend: 0.2 });
+	const clip = await ctx.loadClip(clipUri);
+	ctx.viewer.play(clip, { duration: duration_ms, blend: 0.2 });
 
-  // Optional — annotate memory so the LLM doesn't double-wave
-  ctx.memory.note('just_waved', { at: Date.now(), style });
+	// Optional — annotate memory so the LLM doesn't double-wave
+	ctx.memory.note('just_waved', { at: Date.now(), style });
 
-  return { ok: true, played: style };
+	return { ok: true, played: style };
 }
 ```
 
 Handlers run in a sandboxed scope with a fixed `context` API. **They cannot**:
+
 - Import arbitrary modules (only `ctx.*` is available)
 - Touch `window` directly
 - Make network calls outside `ctx.fetch` (which enforces CORS + IPFS gateway policy)
@@ -166,45 +167,45 @@ Handlers run in a sandboxed scope with a fixed `context` API. **They cannot**:
 
 ```ts
 interface SkillContext {
-  // Scene control
-  viewer: {
-    play(clip: AnimationClip, opts?: PlayOptions): void;
-    stop(clipName?: string): void;
-    setExpression(preset: string): void;
-    lookAt(target: Vector3 | 'user' | 'camera'): void;
-    moveTo(position: Vector3, opts?: MoveOptions): void;
-    scene: Scene;              // read-only reference
-  };
+	// Scene control
+	viewer: {
+		play(clip: AnimationClip, opts?: PlayOptions): void;
+		stop(clipName?: string): void;
+		setExpression(preset: string): void;
+		lookAt(target: Vector3 | 'user' | 'camera'): void;
+		moveTo(position: Vector3, opts?: MoveOptions): void;
+		scene: Scene; // read-only reference
+	};
 
-  // LLM
-  llm: {
-    complete(prompt: string, opts?: CompleteOpts): Promise<string>;
-    embed(text: string): Promise<Float32Array>;
-  };
+	// LLM
+	llm: {
+		complete(prompt: string, opts?: CompleteOpts): Promise<string>;
+		embed(text: string): Promise<Float32Array>;
+	};
 
-  // Memory
-  memory: {
-    read(key: string): any;
-    write(key: string, value: any): void;
-    note(type: string, data: any): void;   // appends to a timeline
-    recall(query: string): Promise<MemoryEntry[]>;
-  };
+	// Memory
+	memory: {
+		read(key: string): any;
+		write(key: string, value: any): void;
+		note(type: string, data: any): void; // appends to a timeline
+		recall(query: string): Promise<MemoryEntry[]>;
+	};
 
-  // Asset loading
-  loadClip(uri: string): Promise<AnimationClip>;
-  loadGLB(uri: string): Promise<GLTF>;
-  loadJSON(uri: string): Promise<any>;
-  skillBaseURI: string;         // base for relative asset resolution
+	// Asset loading
+	loadClip(uri: string): Promise<AnimationClip>;
+	loadGLB(uri: string): Promise<GLTF>;
+	loadJSON(uri: string): Promise<any>;
+	skillBaseURI: string; // base for relative asset resolution
 
-  // Safe network
-  fetch(uri: string, opts?: FetchOpts): Promise<Response>;
+	// Safe network
+	fetch(uri: string, opts?: FetchOpts): Promise<Response>;
 
-  // Cross-skill calls
-  call(toolName: string, args: any): Promise<any>;
+	// Cross-skill calls
+	call(toolName: string, args: any): Promise<any>;
 
-  // User interaction
-  speak(text: string): Promise<void>;
-  listen(opts?: ListenOpts): Promise<string>;
+	// User interaction
+	speak(text: string): Promise<void>;
+	listen(opts?: ListenOpts): Promise<string>;
 }
 ```
 
@@ -256,9 +257,9 @@ A skill without `handlers.js` is valid — it's pure prompt engineering + assets
 - `ctx.fetch` and `ctx.loadJSON` use the worker's native `fetch` — no main-thread proxy is needed. Standard CORS rules apply (same-origin and credentialed-CORS requests work; cross-origin without CORS headers are blocked by the browser as usual).
 - Individual `ctx.*` calls time out after **30 seconds**. A timed-out or errored handler surfaces as `{ error: "..." }` to the runtime without crashing the worker.
 - Agent owners set a **skill trust policy** per agent: `trust: "any" | "whitelist" | "owned-only"`.
-  - `owned-only` (default) — only run skills signed by the agent's owner wallet.
-  - `whitelist` — allow a list of publisher wallets.
-  - `any` — wild west, allowed for kiosks/demos.
+    - `owned-only` (default) — only run skills signed by the agent's owner wallet.
+    - `whitelist` — allow a list of publisher wallets.
+    - `any` — wild west, allowed for kiosks/demos.
 - Integrity hashes are verified before handlers execute.
 
 ### Opt-out: `sandboxPolicy: "trusted-main-thread"`
@@ -267,7 +268,7 @@ Owner-signed skills that require main-thread capabilities (Three.js direct acces
 
 ```jsonc
 {
-  "sandboxPolicy": "trusted-main-thread"
+	"sandboxPolicy": "trusted-main-thread",
 }
 ```
 

@@ -9,27 +9,27 @@
  */
 
 import { ACTION_TYPES } from './agent-protocol.js';
-import { MEMORY_TYPES }  from './agent-memory.js';
+import { MEMORY_TYPES } from './agent-memory.js';
 
 const ACTION_ICONS = {
-	[ACTION_TYPES.SPEAK]:         '💬',
-	[ACTION_TYPES.REMEMBER]:      '🧠',
-	[ACTION_TYPES.SIGN]:          '✍️',
+	[ACTION_TYPES.SPEAK]: '💬',
+	[ACTION_TYPES.REMEMBER]: '🧠',
+	[ACTION_TYPES.SIGN]: '✍️',
 	[ACTION_TYPES.PERFORM_SKILL]: '⚡',
-	[ACTION_TYPES.SKILL_DONE]:    '✓',
-	[ACTION_TYPES.SKILL_ERROR]:   '⚠',
-	[ACTION_TYPES.LOAD_END]:      '📦',
-	[ACTION_TYPES.VALIDATE]:      '🔍',
-	default:                      '·',
+	[ACTION_TYPES.SKILL_DONE]: '✓',
+	[ACTION_TYPES.SKILL_ERROR]: '⚠',
+	[ACTION_TYPES.LOAD_END]: '📦',
+	[ACTION_TYPES.VALIDATE]: '🔍',
+	default: '·',
 };
 
 const EMOTION_LABELS = {
-	neutral:     'calm',
-	concern:     'focused',
+	neutral: 'calm',
+	concern: 'focused',
 	celebration: 'excited',
-	patience:    'patient',
-	curiosity:   'curious',
-	empathy:     'empathetic',
+	patience: 'patient',
+	curiosity: 'curious',
+	empathy: 'empathetic',
 };
 
 export class AgentHome {
@@ -41,11 +41,11 @@ export class AgentHome {
 	 */
 	constructor(containerEl, identity, protocol, avatar = null) {
 		this.container = containerEl;
-		this.identity  = identity;
-		this.protocol  = protocol;
-		this.avatar    = avatar;
+		this.identity = identity;
+		this.protocol = protocol;
+		this.avatar = avatar;
 
-		this._panel    = null;
+		this._panel = null;
 		this._timeline = [];
 		this._maxTimeline = 30;
 		this._emotionInterval = null;
@@ -69,11 +69,11 @@ export class AgentHome {
 	// ── Identity Card ─────────────────────────────────────────────────────────
 
 	_buildPanel() {
-		const id     = this.identity;
+		const id = this.identity;
 		const skills = id.skills || [];
-		const panel  = document.createElement('div');
-		panel.className  = 'agent-home-panel';
-		panel.innerHTML  = `
+		const panel = document.createElement('div');
+		panel.className = 'agent-home-panel';
+		panel.innerHTML = `
 			<div class="agent-home-identity">
 				<div class="agent-home-avatar-ring" id="agent-avatar-ring">
 					<div class="agent-home-avatar-inner" id="agent-avatar-inner">
@@ -83,10 +83,14 @@ export class AgentHome {
 				<div class="agent-home-info">
 					<div class="agent-home-name-row">
 						<span class="agent-home-name" id="agent-home-name">${_esc(id.name)}</span>
-						${id.isRegistered ? `
+						${
+							id.isRegistered
+								? `
 						<span class="agent-home-badge erc8004" title="Registered on-chain (ERC-8004)">
 							<svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-						</span>` : ''}
+						</span>`
+								: ''
+						}
 					</div>
 					<div class="agent-home-status" id="agent-home-status">
 						<span class="agent-home-dot online"></span>
@@ -100,7 +104,9 @@ export class AgentHome {
 				</button>
 			</div>
 
-			${skills.length ? `
+			${
+				skills.length
+					? `
 			<details class="agent-home-skills" id="agent-skills-details">
 				<summary class="agent-home-skills-summary">
 					<span class="agent-home-skills-label">Skills</span>
@@ -108,10 +114,12 @@ export class AgentHome {
 					<svg class="agent-home-chevron" width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
 				</summary>
 				<div class="agent-home-skills-strip" id="agent-skills-strip">
-					${skills.map(s => `<span class="agent-skill-chip">${_esc(s)}</span>`).join('')}
+					${skills.map((s) => `<span class="agent-skill-chip">${_esc(s)}</span>`).join('')}
 				</div>
 			</details>
-			` : ''}
+			`
+					: ''
+			}
 
 			<div class="agent-home-memory-bar" id="agent-memory-bar">
 				${this._renderMemoryBar()}
@@ -144,14 +152,19 @@ export class AgentHome {
 		const stats = this.identity.memory.stats;
 		if (!stats.total) return '<span class="agent-mem-empty">no memories yet</span>';
 
-		return Object.entries(stats)
-			.filter(([k]) => k !== 'total')
-			.filter(([, v]) => v > 0)
-			.map(([type, count]) => `
+		return (
+			Object.entries(stats)
+				.filter(([k]) => k !== 'total')
+				.filter(([, v]) => v > 0)
+				.map(
+					([type, count]) => `
 				<span class="agent-mem-chip" data-type="${type}" title="${count} ${type} ${count === 1 ? 'memory' : 'memories'}">
 					${_memIcon(type)} ${count}
 				</span>
-			`).join('') + `<span class="agent-mem-total">${stats.total}</span>`;
+			`,
+				)
+				.join('') + `<span class="agent-mem-total">${stats.total}</span>`
+		);
 	}
 
 	_refreshMemoryBar() {
@@ -208,15 +221,18 @@ export class AgentHome {
 		// Update the emotion label in the status bar every second
 		this._emotionInterval = setInterval(() => {
 			if (!this.avatar) return;
-			const state    = this.avatar.emotionState;
-			const dominant = Object.entries(state).reduce((a, b) => b[1] > a[1] ? b : a, ['neutral', 0]);
-			const label    = EMOTION_LABELS[dominant[0]] || 'present';
+			const state = this.avatar.emotionState;
+			const dominant = Object.entries(state).reduce(
+				(a, b) => (b[1] > a[1] ? b : a),
+				['neutral', 0],
+			);
+			const label = EMOTION_LABELS[dominant[0]] || 'present';
 
 			const el = this._panel?.querySelector('#agent-home-emotion-label');
 			if (el && el.textContent !== label) {
 				el.style.opacity = '0';
 				setTimeout(() => {
-					el.textContent  = label;
+					el.textContent = label;
 					el.style.opacity = '1';
 				}, 150);
 			}
@@ -241,15 +257,18 @@ export class AgentHome {
 		if (!btn) return;
 		const orig = btn.innerHTML;
 		btn.textContent = text;
-		setTimeout(() => { btn.innerHTML = orig; }, 1500);
+		setTimeout(() => {
+			btn.innerHTML = orig;
+		}, 1500);
 	}
 }
 
 // ── Rendering Helpers ─────────────────────────────────────────────────────────
 
 function _esc(str) {
-	return String(str || '').replace(/[<>&"]/g, c =>
-		({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c])
+	return String(str || '').replace(
+		/[<>&"]/g,
+		(c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[c],
 	);
 }
 
@@ -264,7 +283,7 @@ function _memIcon(type) {
 
 function _relTime(ts) {
 	const diff = Date.now() - ts;
-	if (diff < 60_000)  return 'just now';
+	if (diff < 60_000) return 'just now';
 	if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`;
 	if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`;
 	return new Date(ts).toLocaleDateString();
@@ -274,7 +293,7 @@ function _timelineText(action) {
 	const p = action.payload || {};
 	switch (action.type) {
 		case ACTION_TYPES.SPEAK:
-			return _esc((p.text || '').slice(0, 80) + ((p.text?.length > 80) ? '…' : ''));
+			return _esc((p.text || '').slice(0, 80) + (p.text?.length > 80 ? '…' : ''));
 		case ACTION_TYPES.REMEMBER:
 			return _esc(`Remembered: ${(p.content || '').slice(0, 60)}`);
 		case ACTION_TYPES.PERFORM_SKILL:

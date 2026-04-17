@@ -11,7 +11,8 @@ export default wrap(async (req, res) => {
 
 	const form = await readForm(req);
 	const { token, token_type_hint, client_id, client_secret } = form;
-	if (!token || !client_id) return error(res, 400, 'invalid_request', 'token and client_id required');
+	if (!token || !client_id)
+		return error(res, 400, 'invalid_request', 'token and client_id required');
 
 	const rows = await sql`select * from oauth_clients where client_id = ${client_id} limit 1`;
 	const client = rows[0];

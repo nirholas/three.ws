@@ -1,26 +1,36 @@
 <!doctype html>
 <html lang="en">
-<head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>Embed editor — 3D Agent</title>
-	<style>
-		html, body { margin: 0; padding: 0; height: 100%; background: #0b0d10; color: #fff; font-family: system-ui, sans-serif; }
-		#root { height: 100vh; }
-	</style>
-</head>
-<body>
-	<div id="root"></div>
-	<script type="module">
-		import { mountEmbedEditor } from './src/editor/embed-editor.js';
-		const url = new URL(location.href);
-		mountEmbedEditor(document.getElementById('root'), {
-			src: url.searchParams.get('src') || '',
-			mode: url.searchParams.get('mode') || 'floating',
-			position: url.searchParams.get('position') || 'bottom-right',
-			width: url.searchParams.get('width') || '320px',
-			height: url.searchParams.get('height') || '420px',
-		});
-	</script>
-</body>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Embed editor — 3D Agent</title>
+		<style>
+			html,
+			body {
+				margin: 0;
+				padding: 0;
+				height: 100%;
+				background: #0b0d10;
+				color: #fff;
+				font-family: system-ui, sans-serif;
+			}
+			#root {
+				height: 100vh;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="root"></div>
+		<script type="module">
+			import { mountEmbedEditor } from './src/editor/embed-editor.js';
+			const url = new URL(location.href);
+			mountEmbedEditor(document.getElementById('root'), {
+				src: url.searchParams.get('src') || '',
+				mode: url.searchParams.get('mode') || 'floating',
+				position: url.searchParams.get('position') || 'bottom-right',
+				width: url.searchParams.get('width') || '320px',
+				height: url.searchParams.get('height') || '420px',
+			});
+		</script>
+	</body>
 </html>

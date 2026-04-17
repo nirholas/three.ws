@@ -10,9 +10,16 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { z } from 'zod';
 
 const bodySchema = z.object({
-	size_bytes: z.number().int().positive().max(100 * 1024 * 1024), // 100 MB cap for animation clips
+	size_bytes: z
+		.number()
+		.int()
+		.positive()
+		.max(100 * 1024 * 1024), // 100 MB cap for animation clips
 	content_type: z.enum(['model/gltf-binary', 'model/gltf+json']).default('model/gltf-binary'),
-	checksum_sha256: z.string().regex(/^[a-f0-9]{64}$/).optional(),
+	checksum_sha256: z
+		.string()
+		.regex(/^[a-f0-9]{64}$/)
+		.optional(),
 	slug: z
 		.string()
 		.trim()
@@ -35,7 +42,9 @@ export default wrap(async (req, res) => {
 	const raw = await readJson(req);
 	const parsed = bodySchema.safeParse(raw);
 	if (!parsed.success) {
-		const msg = parsed.error.issues.map((i) => `${i.path.join('.') || 'body'}: ${i.message}`).join('; ');
+		const msg = parsed.error.issues
+			.map((i) => `${i.path.join('.') || 'body'}: ${i.message}`)
+			.join('; ');
 		return error(res, 400, 'validation_error', msg);
 	}
 	const body = parsed.data;

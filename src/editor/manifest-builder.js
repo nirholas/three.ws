@@ -18,60 +18,74 @@ const OPENAI_MODELS = [
 	{ id: 'gpt-4-turbo', label: 'GPT-4 Turbo' },
 ];
 const BRAIN_PROVIDERS = ['anthropic', 'openai', 'local', 'none'];
-const TTS_PROVIDERS   = ['browser', 'elevenlabs', 'openai', 'none'];
-const STT_PROVIDERS   = ['browser', 'whisper', 'none'];
-const MEMORY_MODES    = ['local', 'ipfs', 'encrypted-ipfs', 'none'];
-const RIG_TYPES       = ['mixamo', 'vrm', 'custom'];
-const BODY_FORMATS    = ['gltf-binary', 'gltf', 'vrm'];
-const THINKING_OPTS   = ['auto', 'always', 'never'];
+const TTS_PROVIDERS = ['browser', 'elevenlabs', 'openai', 'none'];
+const STT_PROVIDERS = ['browser', 'whisper', 'none'];
+const MEMORY_MODES = ['local', 'ipfs', 'encrypted-ipfs', 'none'];
+const RIG_TYPES = ['mixamo', 'vrm', 'custom'];
+const BODY_FORMATS = ['gltf-binary', 'gltf', 'vrm'];
+const THINKING_OPTS = ['auto', 'always', 'never'];
 
 const DRAFT_KEY = 'manifest-builder-draft';
 
 // ─── Zod schema ───────────────────────────────────────────────────────────────
 
 const ManifestSchema = z.object({
-	spec:        z.literal('agent-manifest/0.1'),
-	name:        z.string().min(1, 'Name is required').max(100, 'Max 100 chars'),
+	spec: z.literal('agent-manifest/0.1'),
+	name: z.string().min(1, 'Name is required').max(100, 'Max 100 chars'),
 	description: z.string().max(1000).optional(),
-	image:       z.string().optional(),
-	tags:        z.array(z.string()).optional(),
+	image: z.string().optional(),
+	tags: z.array(z.string()).optional(),
 	body: z.object({
-		uri:               z.string().min(1, 'Body URI is required'),
-		format:            z.enum(['gltf-binary', 'gltf', 'vrm']),
-		rig:               z.enum(['mixamo', 'vrm', 'custom']).optional(),
+		uri: z.string().min(1, 'Body URI is required'),
+		format: z.enum(['gltf-binary', 'gltf', 'vrm']),
+		rig: z.enum(['mixamo', 'vrm', 'custom']).optional(),
 		boundingBoxHeight: z.number().positive().optional(),
 	}),
-	brain: z.object({
-		provider:    z.enum(['anthropic', 'openai', 'local', 'none']),
-		model:       z.string().optional(),
-		instructions:z.string().optional(),
-		temperature: z.number().min(0).max(2).optional(),
-		maxTokens:   z.number().int().positive().optional(),
-		thinking:    z.enum(['auto', 'always', 'never']).optional(),
-	}).optional(),
-	voice: z.object({
-		tts: z.object({
-			provider: z.enum(['browser', 'elevenlabs', 'openai', 'none']),
-			voiceId:  z.string().optional(),
-			rate:     z.number().min(0.5).max(2).optional(),
-			pitch:    z.number().min(0).max(2).optional(),
-		}).optional(),
-		stt: z.object({
-			provider:   z.enum(['browser', 'whisper', 'none']),
-			language:   z.string().optional(),
-			continuous: z.boolean().optional(),
-		}).optional(),
-	}).optional(),
-	skills: z.array(z.object({
-		uri:     z.string(),
-		version: z.string().optional(),
-	})).optional(),
-	memory: z.object({
-		mode:      z.enum(['local', 'ipfs', 'encrypted-ipfs', 'none']),
-		index:     z.string().optional(),
-		maxTokens: z.number().int().positive().optional(),
-	}).optional(),
-	tools:   z.array(z.string()).optional(),
+	brain: z
+		.object({
+			provider: z.enum(['anthropic', 'openai', 'local', 'none']),
+			model: z.string().optional(),
+			instructions: z.string().optional(),
+			temperature: z.number().min(0).max(2).optional(),
+			maxTokens: z.number().int().positive().optional(),
+			thinking: z.enum(['auto', 'always', 'never']).optional(),
+		})
+		.optional(),
+	voice: z
+		.object({
+			tts: z
+				.object({
+					provider: z.enum(['browser', 'elevenlabs', 'openai', 'none']),
+					voiceId: z.string().optional(),
+					rate: z.number().min(0.5).max(2).optional(),
+					pitch: z.number().min(0).max(2).optional(),
+				})
+				.optional(),
+			stt: z
+				.object({
+					provider: z.enum(['browser', 'whisper', 'none']),
+					language: z.string().optional(),
+					continuous: z.boolean().optional(),
+				})
+				.optional(),
+		})
+		.optional(),
+	skills: z
+		.array(
+			z.object({
+				uri: z.string(),
+				version: z.string().optional(),
+			}),
+		)
+		.optional(),
+	memory: z
+		.object({
+			mode: z.enum(['local', 'ipfs', 'encrypted-ipfs', 'none']),
+			index: z.string().optional(),
+			maxTokens: z.number().int().positive().optional(),
+		})
+		.optional(),
+	tools: z.array(z.string()).optional(),
 	version: z.string().optional(),
 });
 
@@ -79,14 +93,32 @@ const ManifestSchema = z.object({
 
 function defaultState() {
 	return {
-		name: '', description: '', tags: '', image: '',
-		glbFile: null, glbUri: '', bodyFormat: 'gltf-binary', rig: 'mixamo', boundingBoxHeight: 1.78,
-		brainProvider: 'anthropic', brainModel: 'claude-opus-4-6',
-		temperature: 0.7, maxTokens: 4096, thinking: 'auto',
-		ttsProvider: 'browser', voiceId: '', ttsRate: 1.0, ttsPitch: 1.0,
-		sttProvider: 'browser', sttLanguage: 'en-US', sttContinuous: false,
-		installedSkills: {}, customSkills: [],
-		memoryMode: 'local', memoryMaxTokens: 8192, memoryRetentionDays: 90,
+		name: '',
+		description: '',
+		tags: '',
+		image: '',
+		glbFile: null,
+		glbUri: '',
+		bodyFormat: 'gltf-binary',
+		rig: 'mixamo',
+		boundingBoxHeight: 1.78,
+		brainProvider: 'anthropic',
+		brainModel: 'claude-opus-4-6',
+		temperature: 0.7,
+		maxTokens: 4096,
+		thinking: 'auto',
+		ttsProvider: 'browser',
+		voiceId: '',
+		ttsRate: 1.0,
+		ttsPitch: 1.0,
+		sttProvider: 'browser',
+		sttLanguage: 'en-US',
+		sttContinuous: false,
+		installedSkills: {},
+		customSkills: [],
+		memoryMode: 'local',
+		memoryMaxTokens: 8192,
+		memoryRetentionDays: 90,
 		instructions: '',
 		version: '0.1.0',
 	};
@@ -236,12 +268,12 @@ export function mountManifestBuilder(rootEl, options = {}) {
 	const shadow = host.attachShadow({ mode: 'open' });
 	rootEl.appendChild(host);
 
-	let glbBlobUrl   = null;
-	let allSkills    = [];
-	let validReport  = null;
-	let ipfsCid      = null;
-	let _draftTimer  = null;
-	let _prevTimer   = null;
+	let glbBlobUrl = null;
+	let allSkills = [];
+	let validReport = null;
+	let ipfsCid = null;
+	let _draftTimer = null;
+	let _prevTimer = null;
 
 	shadow.innerHTML = `
 		<style>${STYLE}</style>
@@ -298,17 +330,19 @@ export function mountManifestBuilder(rootEl, options = {}) {
 	shadow.querySelectorAll('.tab-btn').forEach((btn) => {
 		btn.addEventListener('click', () => {
 			const tab = btn.dataset.tab;
-			shadow.querySelectorAll('.tab-btn').forEach((b) =>
-				b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
-			shadow.querySelectorAll('.tab-panel').forEach((p) =>
-				p.classList.toggle('active', p.dataset.panel === tab));
+			shadow
+				.querySelectorAll('.tab-btn')
+				.forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
+			shadow
+				.querySelectorAll('.tab-panel')
+				.forEach((p) => p.classList.toggle('active', p.dataset.panel === tab));
 			if (tab === 'raw') syncRawJson();
 		});
 	});
 
 	// Raw JSON tab
-	const rawTa    = $('#raw-ta');
-	const rawErr   = $('#raw-err');
+	const rawTa = $('#raw-ta');
+	const rawErr = $('#raw-err');
 	const rawApply = $('#raw-apply');
 
 	rawTa.addEventListener('input', () => {
@@ -345,10 +379,13 @@ export function mountManifestBuilder(rootEl, options = {}) {
 	});
 
 	// Fetch skills index
-	fetch('/skills-index.json').then((r) => r.json()).then((data) => {
-		allSkills = data;
-		refreshSkillsList();
-	}).catch(() => {});
+	fetch('/skills-index.json')
+		.then((r) => r.json())
+		.then((data) => {
+			allSkills = data;
+			refreshSkillsList();
+		})
+		.catch(() => {});
 
 	schedulePreview();
 
@@ -440,7 +477,8 @@ export function mountManifestBuilder(rootEl, options = {}) {
 	}
 
 	function brainHtml() {
-		const modelOpts = (models) => models.map((m) => `<option value="${m.id}">${m.label}</option>`).join('');
+		const modelOpts = (models) =>
+			models.map((m) => `<option value="${m.id}">${m.label}</option>`).join('');
 		return `<details>
 			<summary>Brain</summary>
 			<div class="section-body">
@@ -603,66 +641,146 @@ export function mountManifestBuilder(rootEl, options = {}) {
 	// ── Event binding ──────────────────────────────────────────────────────────
 
 	function bindEvents() {
-		const on = (id, ev, fn) => { const el = $(id); if (el) el.addEventListener(ev, fn); };
+		const on = (id, ev, fn) => {
+			const el = $(id);
+			if (el) el.addEventListener(ev, fn);
+		};
 
-		on('#f-name',  'input', (e) => { state.name = e.target.value; showFieldError('#err-name', ''); scheduleDraft(); schedulePreview(); });
-		on('#f-desc',  'input', (e) => { state.description = e.target.value; scheduleDraft(); });
-		on('#f-tags',  'input', (e) => { state.tags = e.target.value; scheduleDraft(); });
-		on('#f-image', 'input', (e) => { state.image = e.target.value; scheduleDraft(); });
+		on('#f-name', 'input', (e) => {
+			state.name = e.target.value;
+			showFieldError('#err-name', '');
+			scheduleDraft();
+			schedulePreview();
+		});
+		on('#f-desc', 'input', (e) => {
+			state.description = e.target.value;
+			scheduleDraft();
+		});
+		on('#f-tags', 'input', (e) => {
+			state.tags = e.target.value;
+			scheduleDraft();
+		});
+		on('#f-image', 'input', (e) => {
+			state.image = e.target.value;
+			scheduleDraft();
+		});
 
 		// Body drop zone
-		const drop  = $('#glb-drop');
+		const drop = $('#glb-drop');
 		const input = $('#glb-input');
 		drop.addEventListener('click', () => input.click());
-		drop.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') input.click(); });
-		drop.addEventListener('dragover',  (e) => { e.preventDefault(); drop.classList.add('drag'); });
+		drop.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter' || e.key === ' ') input.click();
+		});
+		drop.addEventListener('dragover', (e) => {
+			e.preventDefault();
+			drop.classList.add('drag');
+		});
 		drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
-		drop.addEventListener('drop', (e) => { e.preventDefault(); drop.classList.remove('drag'); handleGlbFile(e.dataTransfer.files[0]); });
+		drop.addEventListener('drop', (e) => {
+			e.preventDefault();
+			drop.classList.remove('drag');
+			handleGlbFile(e.dataTransfer.files[0]);
+		});
 		input.addEventListener('change', (e) => handleGlbFile(e.target.files[0]));
 
-		on('#f-body-uri',    'input',  (e) => { state.glbUri = e.target.value; scheduleDraft(); schedulePreview(); });
-		on('#f-body-format', 'change', (e) => { state.bodyFormat = e.target.value; scheduleDraft(); });
-		on('#f-body-rig',    'change', (e) => { state.rig = e.target.value; scheduleDraft(); });
-		on('#f-body-height', 'input',  (e) => {
+		on('#f-body-uri', 'input', (e) => {
+			state.glbUri = e.target.value;
+			scheduleDraft();
+			schedulePreview();
+		});
+		on('#f-body-format', 'change', (e) => {
+			state.bodyFormat = e.target.value;
+			scheduleDraft();
+		});
+		on('#f-body-rig', 'change', (e) => {
+			state.rig = e.target.value;
+			scheduleDraft();
+		});
+		on('#f-body-height', 'input', (e) => {
 			state.boundingBoxHeight = parseFloat(e.target.value) || 1.78;
-			const v = $('#f-body-height-val'); if (v) v.textContent = state.boundingBoxHeight.toFixed(2);
+			const v = $('#f-body-height-val');
+			if (v) v.textContent = state.boundingBoxHeight.toFixed(2);
 			scheduleDraft();
 		});
 
-		on('#f-brain-provider', 'change', (e) => { state.brainProvider = e.target.value; refreshModelDropdown(); scheduleDraft(); });
-		on('#f-brain-model',    'change', (e) => { state.brainModel = e.target.value; scheduleDraft(); });
-		on('#f-brain-temp',     'input',  (e) => {
+		on('#f-brain-provider', 'change', (e) => {
+			state.brainProvider = e.target.value;
+			refreshModelDropdown();
+			scheduleDraft();
+		});
+		on('#f-brain-model', 'change', (e) => {
+			state.brainModel = e.target.value;
+			scheduleDraft();
+		});
+		on('#f-brain-temp', 'input', (e) => {
 			state.temperature = parseFloat(e.target.value);
-			const v = $('#f-brain-temp-val'); if (v) v.textContent = state.temperature.toFixed(2);
+			const v = $('#f-brain-temp-val');
+			if (v) v.textContent = state.temperature.toFixed(2);
 			scheduleDraft();
 		});
-		on('#f-brain-maxtokens', 'change', (e) => { state.maxTokens = parseInt(e.target.value) || 4096; scheduleDraft(); });
-		on('#f-brain-thinking',  'change', (e) => { state.thinking = e.target.value; scheduleDraft(); });
+		on('#f-brain-maxtokens', 'change', (e) => {
+			state.maxTokens = parseInt(e.target.value) || 4096;
+			scheduleDraft();
+		});
+		on('#f-brain-thinking', 'change', (e) => {
+			state.thinking = e.target.value;
+			scheduleDraft();
+		});
 
-		on('#f-tts-provider', 'change', (e) => { state.ttsProvider = e.target.value; refreshTtsSecondary(); scheduleDraft(); });
-		on('#f-tts-voiceid',  'input',  (e) => { state.voiceId = e.target.value; scheduleDraft(); });
+		on('#f-tts-provider', 'change', (e) => {
+			state.ttsProvider = e.target.value;
+			refreshTtsSecondary();
+			scheduleDraft();
+		});
+		on('#f-tts-voiceid', 'input', (e) => {
+			state.voiceId = e.target.value;
+			scheduleDraft();
+		});
 		on('#f-tts-rate', 'input', (e) => {
 			state.ttsRate = parseFloat(e.target.value);
-			const v = $('#f-tts-rate-val'); if (v) v.textContent = state.ttsRate.toFixed(1);
+			const v = $('#f-tts-rate-val');
+			if (v) v.textContent = state.ttsRate.toFixed(1);
 			scheduleDraft();
 		});
 		on('#f-tts-pitch', 'input', (e) => {
 			state.ttsPitch = parseFloat(e.target.value);
-			const v = $('#f-tts-pitch-val'); if (v) v.textContent = state.ttsPitch.toFixed(1);
+			const v = $('#f-tts-pitch-val');
+			if (v) v.textContent = state.ttsPitch.toFixed(1);
 			scheduleDraft();
 		});
 
-		on('#f-stt-provider',   'change', (e) => { state.sttProvider = e.target.value; refreshSttSecondary(); scheduleDraft(); });
-		on('#f-stt-lang',       'input',  (e) => { state.sttLanguage = e.target.value; scheduleDraft(); });
-		on('#f-stt-continuous', 'change', (e) => { state.sttContinuous = e.target.checked; scheduleDraft(); });
+		on('#f-stt-provider', 'change', (e) => {
+			state.sttProvider = e.target.value;
+			refreshSttSecondary();
+			scheduleDraft();
+		});
+		on('#f-stt-lang', 'input', (e) => {
+			state.sttLanguage = e.target.value;
+			scheduleDraft();
+		});
+		on('#f-stt-continuous', 'change', (e) => {
+			state.sttContinuous = e.target.checked;
+			scheduleDraft();
+		});
 
-		on('#f-mem-mode',      'change', (e) => { state.memoryMode = e.target.value; scheduleDraft(); });
-		on('#f-mem-maxtokens', 'change', (e) => { state.memoryMaxTokens = parseInt(e.target.value) || 8192; scheduleDraft(); });
-		on('#f-mem-retention', 'change', (e) => { state.memoryRetentionDays = parseInt(e.target.value) || 90; scheduleDraft(); });
+		on('#f-mem-mode', 'change', (e) => {
+			state.memoryMode = e.target.value;
+			scheduleDraft();
+		});
+		on('#f-mem-maxtokens', 'change', (e) => {
+			state.memoryMaxTokens = parseInt(e.target.value) || 8192;
+			scheduleDraft();
+		});
+		on('#f-mem-retention', 'change', (e) => {
+			state.memoryRetentionDays = parseInt(e.target.value) || 90;
+			scheduleDraft();
+		});
 
 		on('#f-instructions', 'input', (e) => {
 			state.instructions = e.target.value;
-			const c = $('#instructions-counter'); if (c) c.textContent = `${e.target.value.length} chars`;
+			const c = $('#instructions-counter');
+			if (c) c.textContent = `${e.target.value.length} chars`;
 			refreshMdPreview();
 			scheduleDraft();
 		});
@@ -681,8 +799,14 @@ export function mountManifestBuilder(rootEl, options = {}) {
 	}
 
 	function hydrateForm() {
-		const set = (id, val) => { const el = $(id); if (el && val != null) el.value = String(val); };
-		const setChk = (id, val) => { const el = $(id); if (el) el.checked = !!val; };
+		const set = (id, val) => {
+			const el = $(id);
+			if (el && val != null) el.value = String(val);
+		};
+		const setChk = (id, val) => {
+			const el = $(id);
+			if (el) el.checked = !!val;
+		};
 
 		set('#f-name', state.name);
 		set('#f-desc', state.description);
@@ -692,22 +816,26 @@ export function mountManifestBuilder(rootEl, options = {}) {
 		set('#f-body-format', state.bodyFormat);
 		set('#f-body-rig', state.rig);
 		set('#f-body-height', state.boundingBoxHeight);
-		const hv = $('#f-body-height-val'); if (hv) hv.textContent = Number(state.boundingBoxHeight).toFixed(2);
+		const hv = $('#f-body-height-val');
+		if (hv) hv.textContent = Number(state.boundingBoxHeight).toFixed(2);
 
 		set('#f-brain-provider', state.brainProvider);
 		refreshModelDropdown();
 		set('#f-brain-model', state.brainModel);
 		set('#f-brain-temp', state.temperature);
-		const tv = $('#f-brain-temp-val'); if (tv) tv.textContent = Number(state.temperature).toFixed(2);
+		const tv = $('#f-brain-temp-val');
+		if (tv) tv.textContent = Number(state.temperature).toFixed(2);
 		set('#f-brain-maxtokens', state.maxTokens);
 		set('#f-brain-thinking', state.thinking);
 
 		set('#f-tts-provider', state.ttsProvider);
 		set('#f-tts-voiceid', state.voiceId);
 		set('#f-tts-rate', state.ttsRate);
-		const rv = $('#f-tts-rate-val'); if (rv) rv.textContent = Number(state.ttsRate).toFixed(1);
+		const rv = $('#f-tts-rate-val');
+		if (rv) rv.textContent = Number(state.ttsRate).toFixed(1);
 		set('#f-tts-pitch', state.ttsPitch);
-		const pv = $('#f-tts-pitch-val'); if (pv) pv.textContent = Number(state.ttsPitch).toFixed(1);
+		const pv = $('#f-tts-pitch-val');
+		if (pv) pv.textContent = Number(state.ttsPitch).toFixed(1);
 		refreshTtsSecondary();
 
 		set('#f-stt-provider', state.sttProvider);
@@ -764,7 +892,10 @@ export function mountManifestBuilder(rootEl, options = {}) {
 		if (!list) return;
 		const q = query.toLowerCase();
 		const filtered = q
-			? allSkills.filter((s) => s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q))
+			? allSkills.filter(
+					(s) =>
+						s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q),
+				)
 			: allSkills;
 		if (filtered.length === 0) {
 			list.innerHTML = `<div style="font-size:12px;color:#4b5563;padding:4px 0">No skills found</div>`;
@@ -861,9 +992,15 @@ export function mountManifestBuilder(rootEl, options = {}) {
 			const result = await validateBytes(bytes);
 			validReport = result;
 			const { numErrors: ne, numWarnings: nw } = result.issues;
-			const errBadge  = ne > 0 ? `<span class="badge badge-err">${ne} error${ne !== 1 ? 's' : ''}</span>` : '';
-			const warnBadge = nw > 0 ? `<span class="badge badge-warn">${nw} warning${nw !== 1 ? 's' : ''}</span>` : '';
-			const okBadge   = ne === 0 && nw === 0 ? `<span class="badge badge-ok">Clean</span>` : '';
+			const errBadge =
+				ne > 0
+					? `<span class="badge badge-err">${ne} error${ne !== 1 ? 's' : ''}</span>`
+					: '';
+			const warnBadge =
+				nw > 0
+					? `<span class="badge badge-warn">${nw} warning${nw !== 1 ? 's' : ''}</span>`
+					: '';
+			const okBadge = ne === 0 && nw === 0 ? `<span class="badge badge-ok">Clean</span>` : '';
 			vc.innerHTML = `
 				<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
 					${errBadge}${warnBadge}${okBadge}
@@ -883,7 +1020,9 @@ export function mountManifestBuilder(rootEl, options = {}) {
 	function buildValidatorDetail(result) {
 		const msgs = result.issues.messages.slice(0, 50);
 		if (msgs.length === 0) return 'No issues found.';
-		return msgs.map((m) => `[${m.severity === 0 ? 'ERR' : 'WARN'}] ${esc(m.message)}`).join('\n');
+		return msgs
+			.map((m) => `[${m.severity === 0 ? 'ERR' : 'WARN'}] ${esc(m.message)}`)
+			.join('\n');
 	}
 
 	// ── Preview ────────────────────────────────────────────────────────────────
@@ -894,7 +1033,7 @@ export function mountManifestBuilder(rootEl, options = {}) {
 	}
 
 	function updatePreview() {
-		const wrap  = $('#prev-wrap');
+		const wrap = $('#prev-wrap');
 		const empty = $('#prev-empty');
 		const label = $('#prev-label');
 		const agent = $('#prev-agent');
@@ -916,61 +1055,68 @@ export function mountManifestBuilder(rootEl, options = {}) {
 
 	function buildManifest(forExport = false) {
 		const tags = state.tags
-			? state.tags.split(',').map((t) => t.trim()).filter(Boolean)
+			? state.tags
+					.split(',')
+					.map((t) => t.trim())
+					.filter(Boolean)
 			: undefined;
 		const bodyUri = forExport
-			? (state.glbFile ? 'body.glb' : state.glbUri || 'body.glb')
-			: (glbBlobUrl || state.glbUri || 'body.glb');
+			? state.glbFile
+				? 'body.glb'
+				: state.glbUri || 'body.glb'
+			: glbBlobUrl || state.glbUri || 'body.glb';
 
 		const m = {
 			$schema: 'https://3d-agent.io/schemas/manifest/0.1.json',
-			spec:    'agent-manifest/0.1',
-			name:    state.name || 'Unnamed Agent',
+			spec: 'agent-manifest/0.1',
+			name: state.name || 'Unnamed Agent',
 		};
 		if (state.description) m.description = state.description;
-		if (state.image)       m.image = state.image;
-		if (tags?.length)      m.tags  = tags;
+		if (state.image) m.image = state.image;
+		if (tags?.length) m.tags = tags;
 
 		m.body = {
-			uri:    bodyUri,
+			uri: bodyUri,
 			format: state.bodyFormat,
-			rig:    state.rig,
+			rig: state.rig,
 			boundingBoxHeight: state.boundingBoxHeight,
 		};
 
 		if (state.brainProvider !== 'none') {
 			m.brain = {
-				provider:     state.brainProvider,
-				model:        state.brainModel,
+				provider: state.brainProvider,
+				model: state.brainModel,
 				instructions: 'instructions.md',
-				temperature:  state.temperature,
-				maxTokens:    state.maxTokens,
-				thinking:     state.thinking,
+				temperature: state.temperature,
+				maxTokens: state.maxTokens,
+				thinking: state.thinking,
 			};
 		}
 
 		const tts = { provider: state.ttsProvider };
 		if (state.ttsProvider === 'elevenlabs' && state.voiceId) tts.voiceId = state.voiceId;
-		if (state.ttsRate !== 1.0)  tts.rate  = state.ttsRate;
+		if (state.ttsRate !== 1.0) tts.rate = state.ttsRate;
 		if (state.ttsPitch !== 1.0) tts.pitch = state.ttsPitch;
 		const stt = { provider: state.sttProvider, language: state.sttLanguage };
 		if (state.sttContinuous) stt.continuous = true;
 		m.voice = { tts, stt };
 
 		const skills = [
-			...Object.entries(state.installedSkills).map(([id, cfg]) => {
-				const sk = allSkills.find((s) => s.id === id);
-				if (!sk) return null;
-				return { uri: sk.uri, ...(cfg.version ? { version: cfg.version } : {}) };
-			}).filter(Boolean),
+			...Object.entries(state.installedSkills)
+				.map(([id, cfg]) => {
+					const sk = allSkills.find((s) => s.id === id);
+					if (!sk) return null;
+					return { uri: sk.uri, ...(cfg.version ? { version: cfg.version } : {}) };
+				})
+				.filter(Boolean),
 			...state.customSkills,
 		];
 		if (skills.length) m.skills = skills;
 
 		if (state.memoryMode !== 'none') {
 			m.memory = {
-				mode:      state.memoryMode,
-				index:     'memory/MEMORY.md',
+				mode: state.memoryMode,
+				index: 'memory/MEMORY.md',
 				maxTokens: state.memoryMaxTokens,
 			};
 		}
@@ -995,36 +1141,38 @@ export function mountManifestBuilder(rootEl, options = {}) {
 	}
 
 	function hydrateFromManifest(m) {
-		if (typeof m.name === 'string')        state.name        = m.name;
+		if (typeof m.name === 'string') state.name = m.name;
 		if (typeof m.description === 'string') state.description = m.description;
-		if (Array.isArray(m.tags))             state.tags        = m.tags.join(', ');
-		if (typeof m.image === 'string')       state.image       = m.image;
+		if (Array.isArray(m.tags)) state.tags = m.tags.join(', ');
+		if (typeof m.image === 'string') state.image = m.image;
 		if (m.body) {
-			if (!glbBlobUrl && m.body.uri)      state.glbUri           = m.body.uri;
-			if (m.body.format)                  state.bodyFormat        = m.body.format;
-			if (m.body.rig)                     state.rig               = m.body.rig;
-			if (m.body.boundingBoxHeight != null) state.boundingBoxHeight = m.body.boundingBoxHeight;
+			if (!glbBlobUrl && m.body.uri) state.glbUri = m.body.uri;
+			if (m.body.format) state.bodyFormat = m.body.format;
+			if (m.body.rig) state.rig = m.body.rig;
+			if (m.body.boundingBoxHeight != null)
+				state.boundingBoxHeight = m.body.boundingBoxHeight;
 		}
 		if (m.brain) {
-			if (m.brain.provider)                   state.brainProvider = m.brain.provider;
-			if (m.brain.model)                      state.brainModel    = m.brain.model;
+			if (m.brain.provider) state.brainProvider = m.brain.provider;
+			if (m.brain.model) state.brainModel = m.brain.model;
 			if (typeof m.brain.temperature === 'number') state.temperature = m.brain.temperature;
-			if (typeof m.brain.maxTokens   === 'number') state.maxTokens   = m.brain.maxTokens;
-			if (m.brain.thinking)                   state.thinking      = m.brain.thinking;
+			if (typeof m.brain.maxTokens === 'number') state.maxTokens = m.brain.maxTokens;
+			if (m.brain.thinking) state.thinking = m.brain.thinking;
 		}
 		if (m.voice?.tts) {
-			if (m.voice.tts.provider)              state.ttsProvider = m.voice.tts.provider;
-			if (m.voice.tts.voiceId)               state.voiceId     = m.voice.tts.voiceId;
-			if (typeof m.voice.tts.rate  === 'number') state.ttsRate = m.voice.tts.rate;
+			if (m.voice.tts.provider) state.ttsProvider = m.voice.tts.provider;
+			if (m.voice.tts.voiceId) state.voiceId = m.voice.tts.voiceId;
+			if (typeof m.voice.tts.rate === 'number') state.ttsRate = m.voice.tts.rate;
 			if (typeof m.voice.tts.pitch === 'number') state.ttsPitch = m.voice.tts.pitch;
 		}
 		if (m.voice?.stt) {
-			if (m.voice.stt.provider)              state.sttProvider   = m.voice.stt.provider;
-			if (m.voice.stt.language)              state.sttLanguage   = m.voice.stt.language;
-			if (typeof m.voice.stt.continuous === 'boolean') state.sttContinuous = m.voice.stt.continuous;
+			if (m.voice.stt.provider) state.sttProvider = m.voice.stt.provider;
+			if (m.voice.stt.language) state.sttLanguage = m.voice.stt.language;
+			if (typeof m.voice.stt.continuous === 'boolean')
+				state.sttContinuous = m.voice.stt.continuous;
 		}
 		if (m.memory) {
-			if (m.memory.mode)      state.memoryMode      = m.memory.mode;
+			if (m.memory.mode) state.memoryMode = m.memory.mode;
 			if (m.memory.maxTokens) state.memoryMaxTokens = m.memory.maxTokens;
 		}
 		if (typeof m.version === 'string') state.version = m.version;
@@ -1039,7 +1187,9 @@ export function mountManifestBuilder(rootEl, options = {}) {
 
 	function saveDraft() {
 		const toSave = { ...state, glbFile: null };
-		try { localStorage.setItem(DRAFT_KEY, JSON.stringify(toSave)); } catch {}
+		try {
+			localStorage.setItem(DRAFT_KEY, JSON.stringify(toSave));
+		} catch {}
 	}
 
 	// ── Raw JSON sync ──────────────────────────────────────────────────────────
@@ -1067,15 +1217,21 @@ export function mountManifestBuilder(rootEl, options = {}) {
 			const files = [
 				{ name: 'manifest.json', data: enc.encode(JSON.stringify(manifest, null, 2)) },
 				{ name: 'instructions.md', data: enc.encode(buildInstructionsMd()) },
-				{ name: 'memory/MEMORY.md', data: enc.encode('# Memory\n\n<!-- Auto-generated memory seed -->\n') },
+				{
+					name: 'memory/MEMORY.md',
+					data: enc.encode('# Memory\n\n<!-- Auto-generated memory seed -->\n'),
+				},
 			];
 			if (state.glbFile) {
-				files.push({ name: 'body.glb', data: new Uint8Array(await state.glbFile.arrayBuffer()) });
+				files.push({
+					name: 'body.glb',
+					data: new Uint8Array(await state.glbFile.arrayBuffer()),
+				});
 			}
 			const zip = buildZip(files);
 			const blob = new Blob([zip], { type: 'application/zip' });
-			const url  = URL.createObjectURL(blob);
-			const a    = document.createElement('a');
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement('a');
 			a.href = url;
 			a.download = `${(state.name || 'agent').toLowerCase().replace(/\s+/g, '-')}-manifest.zip`;
 			document.body.appendChild(a);
@@ -1091,8 +1247,8 @@ export function mountManifestBuilder(rootEl, options = {}) {
 	function buildInstructionsMd() {
 		const lines = [
 			'---',
-			state.name        ? `name: ${state.name}`          : null,
-			state.brainModel  ? `model: ${state.brainModel}`   : null,
+			state.name ? `name: ${state.name}` : null,
+			state.brainModel ? `model: ${state.brainModel}` : null,
 			`temperature: ${state.temperature}`,
 			'---',
 			'',
@@ -1112,7 +1268,9 @@ export function mountManifestBuilder(rootEl, options = {}) {
 			if (!pinner) throw new Error('No IPFS pinner (window.__agent3dPinner not configured)');
 
 			const manifest = buildManifest(true);
-			const jsonBlob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
+			const jsonBlob = new Blob([JSON.stringify(manifest, null, 2)], {
+				type: 'application/json',
+			});
 			const cid = await pinner.pin(jsonBlob, 'manifest.json');
 			ipfsCid = cid;
 
@@ -1157,13 +1315,35 @@ function renderMarkdown(src) {
 	let inPre = false;
 	for (let i = 0; i < lines.length; i++) {
 		let l = lines[i];
-		if (l.startsWith('```')) { inPre = !inPre; html += inPre ? '<pre>' : '</pre>'; continue; }
-		if (inPre) { html += esc(l) + '\n'; continue; }
-		if (/^### /.test(l)) { html += `<h3>${inlineHtml(l.slice(4))}</h3>`; continue; }
-		if (/^## /.test(l))  { html += `<h2>${inlineHtml(l.slice(3))}</h2>`; continue; }
-		if (/^# /.test(l))   { html += `<h1>${inlineHtml(l.slice(2))}</h1>`; continue; }
-		if (/^> /.test(l))   { html += `<blockquote>${inlineHtml(l.slice(2))}</blockquote>`; continue; }
-		if (l.trim() === '') { html += '<br>'; continue; }
+		if (l.startsWith('```')) {
+			inPre = !inPre;
+			html += inPre ? '<pre>' : '</pre>';
+			continue;
+		}
+		if (inPre) {
+			html += esc(l) + '\n';
+			continue;
+		}
+		if (/^### /.test(l)) {
+			html += `<h3>${inlineHtml(l.slice(4))}</h3>`;
+			continue;
+		}
+		if (/^## /.test(l)) {
+			html += `<h2>${inlineHtml(l.slice(3))}</h2>`;
+			continue;
+		}
+		if (/^# /.test(l)) {
+			html += `<h1>${inlineHtml(l.slice(2))}</h1>`;
+			continue;
+		}
+		if (/^> /.test(l)) {
+			html += `<blockquote>${inlineHtml(l.slice(2))}</blockquote>`;
+			continue;
+		}
+		if (l.trim() === '') {
+			html += '<br>';
+			continue;
+		}
 		html += `<p>${inlineHtml(l)}</p>`;
 	}
 	return html;
@@ -1198,36 +1378,35 @@ function buildZip(files) {
 		centralParts.push(centralHeader(f.nameBytes, f.data.length, f.crc, f.offset));
 	}
 
-	const centralSize   = centralParts.reduce((s, p) => s + p.length, 0);
+	const centralSize = centralParts.reduce((s, p) => s + p.length, 0);
 	const centralOffset = offset;
-	const eocd          = endRecord(localParts.length, centralSize, centralOffset);
+	const eocd = endRecord(localParts.length, centralSize, centralOffset);
 
-	const chunks = [
-		...localParts.flatMap((f) => [f.local, f.data]),
-		...centralParts,
-		eocd,
-	];
+	const chunks = [...localParts.flatMap((f) => [f.local, f.data]), ...centralParts, eocd];
 	const total = chunks.reduce((s, c) => s + c.length, 0);
-	const out   = new Uint8Array(total);
+	const out = new Uint8Array(total);
 	let pos = 0;
-	for (const c of chunks) { out.set(c, pos); pos += c.length; }
+	for (const c of chunks) {
+		out.set(c, pos);
+		pos += c.length;
+	}
 	return out;
 }
 
 function localHeader(nameBytes, size, crc) {
 	const h = new Uint8Array(30 + nameBytes.length);
 	const v = new DataView(h.buffer);
-	v.setUint32(0,  0x04034b50, true); // signature
-	v.setUint16(4,  20,         true); // version needed
-	v.setUint16(6,  0,          true); // flags
-	v.setUint16(8,  0,          true); // compression = stored
-	v.setUint16(10, 0,          true); // mod time
-	v.setUint16(12, 0,          true); // mod date
-	v.setUint32(14, crc,        true); // crc-32
-	v.setUint32(18, size,       true); // compressed size
-	v.setUint32(22, size,       true); // uncompressed size
+	v.setUint32(0, 0x04034b50, true); // signature
+	v.setUint16(4, 20, true); // version needed
+	v.setUint16(6, 0, true); // flags
+	v.setUint16(8, 0, true); // compression = stored
+	v.setUint16(10, 0, true); // mod time
+	v.setUint16(12, 0, true); // mod date
+	v.setUint32(14, crc, true); // crc-32
+	v.setUint32(18, size, true); // compressed size
+	v.setUint32(22, size, true); // uncompressed size
 	v.setUint16(26, nameBytes.length, true);
-	v.setUint16(28, 0,          true); // extra length
+	v.setUint16(28, 0, true); // extra length
 	h.set(nameBytes, 30);
 	return h;
 }
@@ -1235,23 +1414,23 @@ function localHeader(nameBytes, size, crc) {
 function centralHeader(nameBytes, size, crc, localOffset) {
 	const h = new Uint8Array(46 + nameBytes.length);
 	const v = new DataView(h.buffer);
-	v.setUint32(0,  0x02014b50, true);
-	v.setUint16(4,  0x031e,     true); // version made by
-	v.setUint16(6,  20,         true); // version needed
-	v.setUint16(8,  0,          true); // flags
-	v.setUint16(10, 0,          true); // compression
-	v.setUint16(12, 0,          true); // mod time
-	v.setUint16(14, 0,          true); // mod date
-	v.setUint32(16, crc,        true);
-	v.setUint32(20, size,       true); // compressed
-	v.setUint32(24, size,       true); // uncompressed
+	v.setUint32(0, 0x02014b50, true);
+	v.setUint16(4, 0x031e, true); // version made by
+	v.setUint16(6, 20, true); // version needed
+	v.setUint16(8, 0, true); // flags
+	v.setUint16(10, 0, true); // compression
+	v.setUint16(12, 0, true); // mod time
+	v.setUint16(14, 0, true); // mod date
+	v.setUint32(16, crc, true);
+	v.setUint32(20, size, true); // compressed
+	v.setUint32(24, size, true); // uncompressed
 	v.setUint16(28, nameBytes.length, true);
-	v.setUint16(30, 0,          true); // extra
-	v.setUint16(32, 0,          true); // comment
-	v.setUint16(34, 0,          true); // disk start
-	v.setUint16(36, 0,          true); // internal attr
-	v.setUint32(38, 0,          true); // external attr
-	v.setUint32(42, localOffset,true); // local header offset
+	v.setUint16(30, 0, true); // extra
+	v.setUint16(32, 0, true); // comment
+	v.setUint16(34, 0, true); // disk start
+	v.setUint16(36, 0, true); // internal attr
+	v.setUint32(38, 0, true); // external attr
+	v.setUint32(42, localOffset, true); // local header offset
 	h.set(nameBytes, 46);
 	return h;
 }
@@ -1259,14 +1438,14 @@ function centralHeader(nameBytes, size, crc, localOffset) {
 function endRecord(count, centralSize, centralOffset) {
 	const h = new Uint8Array(22);
 	const v = new DataView(h.buffer);
-	v.setUint32(0,  0x06054b50,   true);
-	v.setUint16(4,  0,            true); // disk number
-	v.setUint16(6,  0,            true); // disk with central dir
-	v.setUint16(8,  count,        true);
-	v.setUint16(10, count,        true);
-	v.setUint32(12, centralSize,  true);
-	v.setUint32(16, centralOffset,true);
-	v.setUint16(20, 0,            true); // comment length
+	v.setUint32(0, 0x06054b50, true);
+	v.setUint16(4, 0, true); // disk number
+	v.setUint16(6, 0, true); // disk with central dir
+	v.setUint16(8, count, true);
+	v.setUint16(10, count, true);
+	v.setUint32(12, centralSize, true);
+	v.setUint32(16, centralOffset, true);
+	v.setUint16(20, 0, true); // comment length
 	return h;
 }
 
@@ -1289,6 +1468,8 @@ function crc32(tbl, data) {
 // ─── Escape helper ────────────────────────────────────────────────────────────
 
 function esc(s) {
-	return String(s ?? '').replace(/[&<>"']/g, (c) =>
-		({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+	return String(s ?? '').replace(
+		/[&<>"']/g,
+		(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+	);
 }

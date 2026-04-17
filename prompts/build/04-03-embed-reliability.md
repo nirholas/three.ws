@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Harden /agent/:id/embed so it renders in third-party iframes under CSP"
+description: 'Harden /agent/:id/embed so it renders in third-party iframes under CSP'
 ---
 
 # 04-03 · Embed iframe reliability
@@ -11,7 +11,7 @@ Pillar 5 (host embed in Claude Artifacts and Lobehub) depends on the embed URL w
 
 ## Prerequisites
 
-- 02-* complete so an agent can actually be embedded.
+- 02-\* complete so an agent can actually be embedded.
 
 ## Read these first
 
@@ -22,21 +22,21 @@ Pillar 5 (host embed in Claude Artifacts and Lobehub) depends on the embed URL w
 ## Build this
 
 1. **Response headers** for `/agent/:id/embed`:
-   - `X-Frame-Options`: remove (it blocks cross-origin iframes).
-   - `Content-Security-Policy`: `frame-ancestors *` (or an allowlist — see 04-04).
-   - `Permissions-Policy`: allow `camera=(), microphone=(), clipboard-write=(self)` depending on which widgets are enabled.
+    - `X-Frame-Options`: remove (it blocks cross-origin iframes).
+    - `Content-Security-Policy`: `frame-ancestors *` (or an allowlist — see 04-04).
+    - `Permissions-Policy`: allow `camera=(), microphone=(), clipboard-write=(self)` depending on which widgets are enabled.
 2. **Transparent background mode** — query param `?bg=transparent` sets the canvas clear alpha to 0 so the avatar sits on host chrome. `?bg=000000` forces opaque. Default: opaque `#111`.
 3. **Kiosk mode** — `?kiosk=1` hides dat.gui, the share panel, and the owner bar. Purely the avatar.
 4. **postMessage bridge** — document and implement the minimal contract:
-   - Host → iframe: `{ type: 'agent:action', action }` — forwarded to the protocol bus.
-   - Iframe → host: `{ type: 'agent:ready' }`, `{ type: 'agent:action', action }` (echo), `{ type: 'agent:resize', height }`.
-   - All messages include `agentId` so the host can multiplex.
+    - Host → iframe: `{ type: 'agent:action', action }` — forwarded to the protocol bus.
+    - Iframe → host: `{ type: 'agent:ready' }`, `{ type: 'agent:action', action }` (echo), `{ type: 'agent:resize', height }`.
+    - All messages include `agentId` so the host can multiplex.
 5. **Resize observer** — post `agent:resize` when the iframe content height changes so hosts can auto-size the iframe.
 
 ## Out of scope
 
 - Referrer allowlist (optional; see 04-04 or `prompts/embed/03-embed-allowlist.md`).
-- Actual Claude/Lobehub integration (05-*).
+- Actual Claude/Lobehub integration (05-\*).
 
 ## Deliverables
 

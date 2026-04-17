@@ -3,26 +3,26 @@
 **Branch:** `feat/avatar-regenerate-swap`
 **Stack layer:** 3 (Edit avatar)
 **Depends on:** 03-01, 02-02
-**Blocks:** nothing critical, but improves 04-* user flow
+**Blocks:** nothing critical, but improves 04-\* user flow
 
 ## Why it matters
 
-After 03-01, users can rename and delete. They still can't *improve* their avatar without starting over and losing the agent identity. Two operations close this gap:
+After 03-01, users can rename and delete. They still can't _improve_ their avatar without starting over and losing the agent identity. Two operations close this gap:
 
-1. **Regenerate** — take a new selfie, produce a new GLB, attach it to the *same* avatar row (preserves `agent_identities.avatar_id`).
+1. **Regenerate** — take a new selfie, produce a new GLB, attach it to the _same_ avatar row (preserves `agent_identities.avatar_id`).
 2. **Swap** — pick a different existing avatar from your library as the agent's body.
 
 Both keep agent identity, memory, and on-chain records intact across a visual refresh.
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| [api/avatars/[id].js](../../api/avatars/[id].js) | PATCH/DELETE handler. Regenerate will add a new sub-route. |
-| [api/avatars/from-selfie.js](../../api/avatars/from-selfie.js) *(from 02-02)* | Generation pipeline — reuse its internals. |
-| [api/agents.js](../../api/agents.js) | Agent PATCH accepts `avatar_id`. |
-| [public/dashboard/dashboard.js](../../public/dashboard/dashboard.js) | Where 03-01 placed the edit tab. |
-| [src/agent-identity.js](../../src/agent-identity.js) | Client model — nothing to change; just confirm it holds no GLB state directly. |
+| File                                                                          | Why                                                                            |
+| :---------------------------------------------------------------------------- | :----------------------------------------------------------------------------- |
+| [api/avatars/[id].js](../../api/avatars/[id].js)                              | PATCH/DELETE handler. Regenerate will add a new sub-route.                     |
+| [api/avatars/from-selfie.js](../../api/avatars/from-selfie.js) _(from 02-02)_ | Generation pipeline — reuse its internals.                                     |
+| [api/agents.js](../../api/agents.js)                                          | Agent PATCH accepts `avatar_id`.                                               |
+| [public/dashboard/dashboard.js](../../public/dashboard/dashboard.js)          | Where 03-01 placed the edit tab.                                               |
+| [src/agent-identity.js](../../src/agent-identity.js)                          | Client model — nothing to change; just confirm it holds no GLB state directly. |
 
 ## Build this
 

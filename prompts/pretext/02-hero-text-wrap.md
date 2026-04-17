@@ -17,14 +17,14 @@ Default (`?pretext=1` or no flag) continues to use the CSS-only grid layout. The
 ## Deliverable
 
 1. **Extend [src/features/hero-pretext.js](../../src/features/hero-pretext.js)**:
-   - Add `enableStaticWrap()` method triggered when the flag is `>= 2`.
-   - Computes the avatar's bounding circle in page-space via `getBoundingClientRect()` (read once, cached).
-   - Calls Pretext's layout API with the subtitle text + the avatar circle as an exclusion. **Verify the exact API by reading `node_modules/@chenglou/pretext/` + [chenglou.me/pretext](https://chenglou.me/pretext/) Dragon/Editorial demos before implementing.** If the public API doesn't support per-line exclusion, fall back to splitting the subtitle into a 2-column flow that flanks the avatar (see §Fallback).
-   - Renders laid-out lines into an absolutely-positioned overlay `<div class="hero-subtitle-pretext">` inside `.hero-content`, replacing the original `.hero-subtitle` visually (keep the original in DOM as `aria-hidden="false"` for screen readers; mark the overlay `aria-hidden="true"`).
-   - On `resize` (debounced ~120ms), recompute and re-render.
+    - Add `enableStaticWrap()` method triggered when the flag is `>= 2`.
+    - Computes the avatar's bounding circle in page-space via `getBoundingClientRect()` (read once, cached).
+    - Calls Pretext's layout API with the subtitle text + the avatar circle as an exclusion. **Verify the exact API by reading `node_modules/@chenglou/pretext/` + [chenglou.me/pretext](https://chenglou.me/pretext/) Dragon/Editorial demos before implementing.** If the public API doesn't support per-line exclusion, fall back to splitting the subtitle into a 2-column flow that flanks the avatar (see §Fallback).
+    - Renders laid-out lines into an absolutely-positioned overlay `<div class="hero-subtitle-pretext">` inside `.hero-content`, replacing the original `.hero-subtitle` visually (keep the original in DOM as `aria-hidden="false"` for screen readers; mark the overlay `aria-hidden="true"`).
+    - On `resize` (debounced ~120ms), recompute and re-render.
 2. **Add CSS to [features.css](../../features.css)** under a new `/* ── Pretext overlay ─── */` section:
-   - `.hero-subtitle-pretext` — absolute positioned, matches `.hero-subtitle` typography (font, size, color, weight, line-height) via CSS custom props or explicit rules.
-   - When Pretext is active, hide the original `.hero-subtitle` via a `.pretext-active` class on `.hero` (`.pretext-active .hero-subtitle { visibility: hidden; }`). This keeps the layout reserved if Pretext fails to paint.
+    - `.hero-subtitle-pretext` — absolute positioned, matches `.hero-subtitle` typography (font, size, color, weight, line-height) via CSS custom props or explicit rules.
+    - When Pretext is active, hide the original `.hero-subtitle` via a `.pretext-active` class on `.hero` (`.pretext-active .hero-subtitle { visibility: hidden; }`). This keeps the layout reserved if Pretext fails to paint.
 3. **No layout thrash** — all `getBoundingClientRect()` reads happen up front; writes follow. Use a single `requestAnimationFrame` to paint lines.
 
 ## Audit checklist

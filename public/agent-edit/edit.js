@@ -18,11 +18,11 @@ let _saveDebounce = null;
 
 // Voice picker state — managed separately from persona so changes survive
 // template resets.
-let _voiceProvider = 'web';   // 'web' | 'eleven'
-let _voiceId       = null;    // voice name (web) or voice_id (eleven)
+let _voiceProvider = 'web'; // 'web' | 'eleven'
+let _voiceId = null; // voice name (web) or voice_id (eleven)
 let _elevenEnabled = false;
-let _elevenLoaded  = false;
-let _webVoices     = [];
+let _elevenLoaded = false;
+let _webVoices = [];
 
 // ── Bootstrap ──────────────────────────────────────────────────────────────
 
@@ -56,7 +56,7 @@ async function main() {
 	// Restore voice config from meta
 	const voiceMeta = agent.meta?.voice || {};
 	_voiceProvider = voiceMeta.provider === 'eleven' ? 'eleven' : 'web';
-	_voiceId       = voiceMeta.voiceId || null;
+	_voiceId = voiceMeta.voiceId || null;
 
 	// Render
 	document.getElementById('loading-screen').style.display = 'none';
@@ -271,7 +271,9 @@ function initVoicePicker() {
 function setVoiceProvider(p) {
 	if (p === 'eleven' && !_elevenEnabled) return;
 	_voiceProvider = p;
-	document.querySelectorAll('.vp-toggle-btn').forEach((b) => b.classList.toggle('active', b.dataset.vp === p));
+	document
+		.querySelectorAll('.vp-toggle-btn')
+		.forEach((b) => b.classList.toggle('active', b.dataset.vp === p));
 	renderVoiceSection();
 }
 
@@ -279,7 +281,7 @@ function renderVoiceSection() {
 	const wrap = document.getElementById('vp-list-wrap');
 	if (!wrap) return;
 	wrap.innerHTML = '';
-	if (_voiceProvider === 'web')    renderWebVoices(wrap);
+	if (_voiceProvider === 'web') renderWebVoices(wrap);
 	if (_voiceProvider === 'eleven') renderElevenVoices(wrap);
 }
 
@@ -303,16 +305,20 @@ function renderWebVoices(wrap) {
 
 		const list = document.createElement('div');
 		list.className = 'vp-list';
-		for (const [lang, voices] of Object.entries(groups).sort(([a], [b]) => a.localeCompare(b))) {
+		for (const [lang, voices] of Object.entries(groups).sort(([a], [b]) =>
+			a.localeCompare(b),
+		)) {
 			const label = document.createElement('div');
 			label.className = 'vp-group-label';
 			label.textContent = lang;
 			list.appendChild(label);
 			for (const v of voices) {
 				const selected = _voiceProvider === 'web' && _voiceId === v.name;
-				list.appendChild(buildVoiceItem(v.name, v.name, v.lang, selected, (btn) => {
-					previewWebVoice(v.name, btn);
-				}));
+				list.appendChild(
+					buildVoiceItem(v.name, v.name, v.lang, selected, (btn) => {
+						previewWebVoice(v.name, btn);
+					}),
+				);
 			}
 		}
 		wrap.innerHTML = '';
@@ -320,7 +326,10 @@ function renderWebVoices(wrap) {
 	};
 
 	const voices = window.speechSynthesis.getVoices();
-	if (voices.length) { doRender(); return; }
+	if (voices.length) {
+		doRender();
+		return;
+	}
 	window.speechSynthesis.addEventListener('voiceschanged', doRender, { once: true });
 	setTimeout(doRender, 250); // fallback for browsers that don't fire voiceschanged
 }
@@ -328,7 +337,8 @@ function renderWebVoices(wrap) {
 // ElevenLabs
 async function renderElevenVoices(wrap) {
 	if (!_elevenEnabled) {
-		wrap.innerHTML = '<div class="vp-empty">ElevenLabs API key not configured on this server.</div>';
+		wrap.innerHTML =
+			'<div class="vp-empty">ElevenLabs API key not configured on this server.</div>';
 		return;
 	}
 
@@ -353,11 +363,15 @@ async function renderElevenVoices(wrap) {
 		list.id = 'vp-eleven-list';
 
 		for (const v of data.voices) {
-			const meta = [v.category, v.labels?.accent, v.labels?.gender].filter(Boolean).join(' · ');
+			const meta = [v.category, v.labels?.accent, v.labels?.gender]
+				.filter(Boolean)
+				.join(' · ');
 			const selected = _voiceProvider === 'eleven' && _voiceId === v.voice_id;
-			list.appendChild(buildVoiceItem(v.voice_id, v.name, meta, selected, (btn) => {
-				previewElevenVoice(v.voice_id, btn);
-			}));
+			list.appendChild(
+				buildVoiceItem(v.voice_id, v.name, meta, selected, (btn) => {
+					previewElevenVoice(v.voice_id, btn);
+				}),
+			);
 		}
 
 		wrap.innerHTML = '';
@@ -400,7 +414,9 @@ function buildVoiceItem(vid, displayName, meta, selected, previewFn) {
 }
 
 function selectVoiceItem(el, vid) {
-	el.closest('.vp-list').querySelectorAll('.vp-item').forEach((i) => i.classList.remove('selected'));
+	el.closest('.vp-list')
+		.querySelectorAll('.vp-item')
+		.forEach((i) => i.classList.remove('selected'));
 	el.classList.add('selected');
 	_voiceId = vid;
 }
@@ -413,8 +429,12 @@ function previewWebVoice(name, btn) {
 	if (voice) utter.voice = voice;
 	if (btn) {
 		btn.disabled = true;
-		utter.onend = () => { btn.disabled = false; };
-		utter.onerror = () => { btn.disabled = false; };
+		utter.onend = () => {
+			btn.disabled = false;
+		};
+		utter.onerror = () => {
+			btn.disabled = false;
+		};
 	}
 	window.speechSynthesis.speak(utter);
 }
@@ -423,10 +443,10 @@ async function previewElevenVoice(voiceId, btn) {
 	if (btn) btn.disabled = true;
 	try {
 		const res = await fetch('/api/tts/eleven', {
-			method:      'POST',
+			method: 'POST',
 			credentials: 'include',
-			headers:     { 'content-type': 'application/json' },
-			body:        JSON.stringify({ voiceId, text: "Hi, I'm your agent." }),
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ voiceId, text: "Hi, I'm your agent." }),
 		});
 		if (!res.ok) {
 			const err = await res.json().catch(() => ({}));
@@ -434,9 +454,12 @@ async function previewElevenVoice(voiceId, btn) {
 			return;
 		}
 		const blob = await res.blob();
-		const url  = URL.createObjectURL(blob);
+		const url = URL.createObjectURL(blob);
 		const audio = new Audio(url);
-		const cleanup = () => { URL.revokeObjectURL(url); if (btn) btn.disabled = false; };
+		const cleanup = () => {
+			URL.revokeObjectURL(url);
+			if (btn) btn.disabled = false;
+		};
 		audio.addEventListener('ended', cleanup, { once: true });
 		audio.addEventListener('error', cleanup, { once: true });
 		await audio.play();
@@ -492,9 +515,9 @@ async function save() {
 		await apiFetch(`/api/agents/${encodeURIComponent(agentId)}`, {
 			method: 'PUT',
 			body: JSON.stringify({
-				name:        persona.name,
+				name: persona.name,
 				description: persona.bio,
-				meta:        newMeta,
+				meta: newMeta,
 			}),
 		});
 
@@ -594,7 +617,11 @@ function toast(msg, isError = false) {
 }
 
 function esc(s) {
-	return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+	return String(s ?? '')
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;');
 }
 
 // ── Boot ───────────────────────────────────────────────────────────────────

@@ -9,12 +9,12 @@ We want: `<agent-3d agent-id="ab12cd">` resolves directly against the hosted API
 ## Shared context
 
 - [src/element.js](../../src/element.js) is the full `<agent-3d>` custom element. Its `_boot()` method currently:
-  1. Calls `_resolveManifest()` which reads the `src` attribute.
-  2. Loads the manifest, resolves `manifest.body.uri` as a GLB, constructs a `Viewer`, loads the GLB, wires Memory/Skills/Runtime.
+    1. Calls `_resolveManifest()` which reads the `src` attribute.
+    2. Loads the manifest, resolves `manifest.body.uri` as a GLB, constructs a `Viewer`, loads the GLB, wires Memory/Skills/Runtime.
 - You are adding a **third path** into `_resolveManifest()` that activates when the element has an `agent-id` attribute (and no `src`).
 - API:
-  - `GET /api/agents/:id` → `{ agent: { id, name, description, avatar_id, skills, wallet_address, chain_id, meta, ... } }`
-  - `GET /api/avatars/:id` → `{ avatar: { url, thumbnail_url, ... } }` — `url` is the GLB
+    - `GET /api/agents/:id` → `{ agent: { id, name, description, avatar_id, skills, wallet_address, chain_id, meta, ... } }`
+    - `GET /api/avatars/:id` → `{ avatar: { url, thumbnail_url, ... } }` — `url` is the GLB
 - The existing manifest loader is in [src/manifest.js](../../src/manifest.js). The in-memory manifest you build should be shaped the same way a file-based manifest looks, so downstream code (`manifest.brain`, `manifest.body.uri`, `manifest.skills`, `manifest.id`, `manifest._baseURI`) just works.
 
 ## What to build
@@ -24,7 +24,10 @@ We want: `<agent-3d agent-id="ab12cd">` resolves directly against the hosted API
 Create `src/agent-resolver.js`. Exports one function:
 
 ```js
-export async function resolveAgentById(agentId, { origin = location.origin, fetchFn = fetch } = {}) {
+export async function resolveAgentById(
+	agentId,
+	{ origin = location.origin, fetchFn = fetch } = {},
+) {
 	// 1. Fetch /api/agents/:id — throw a typed error on non-200
 	// 2. Fetch /api/avatars/:avatar_id — throw if no avatar bound
 	// 3. Return a manifest-shaped object:
@@ -55,9 +58,9 @@ Edit [src/element.js](../../src/element.js):
 - If both `agent-id` and `src` are present, prefer `src` (the existing path) and log a one-line console warning.
 - On resolver error, dispatch the existing error-phase event the element uses for manifest failures. Do not invent a new event type.
 - Import:
-  ```js
-  import { resolveAgentById, AgentResolveError } from './agent-resolver.js';
-  ```
+    ```js
+    import { resolveAgentById, AgentResolveError } from './agent-resolver.js';
+    ```
 
 ### 3. Update the share-panel snippet (one-line edit)
 
@@ -91,14 +94,15 @@ webcomponent: `<script type="module" src="${origin}/dist-lib/agent-3d.js"><\/scr
 1. `node --check src/agent-resolver.js src/element.js` passes.
 2. `npx vite build` — note result (the web-component bundle should still build).
 3. Manual test — write a tiny ad-hoc HTML page (do not commit it) that loads `<agent-3d agent-id="REAL_AGENT_ID">` against a local or deployed backend and confirm:
-   - Avatar GLB loads in the stage
-   - Agent name appears in the chrome
-   - Console shows no unhandled errors
+    - Avatar GLB loads in the stage
+    - Agent name appears in the chrome
+    - Console shows no unhandled errors
 4. Edge case: `<agent-3d agent-id="does-not-exist">` — confirm it dispatches the manifest-error event without throwing uncaught.
 
 ## Reporting
 
 Report:
+
 - `src/agent-resolver.js` line count and exported symbols
 - Exact diff summary for `src/element.js` (which methods touched)
 - The one-line diff for `public/agent/index.html`

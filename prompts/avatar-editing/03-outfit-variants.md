@@ -43,6 +43,7 @@ CREATE INDEX IF NOT EXISTS avatar_variants_avatar_idx ON avatar_variants (avatar
 ### Editor UI
 
 A "Variants" folder in the editor GUI (adjacent to the Editor folder we already added). Controls:
+
 - Dropdown: current variant (defaults to "original")
 - "Save current edits as new variant" button
 - "Delete selected variant" button

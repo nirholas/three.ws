@@ -11,7 +11,7 @@
  */
 
 import { ACTION_TYPES } from './agent-protocol.js';
-import { MEMORY_TYPES }  from './agent-memory.js';
+import { MEMORY_TYPES } from './agent-memory.js';
 
 /**
  * @typedef {Object} SkillContext
@@ -49,8 +49,8 @@ export class AgentSkills {
 	 */
 	constructor(protocol, memory) {
 		this.protocol = protocol;
-		this.memory   = memory;
-		this._skills  = new Map();
+		this.memory = memory;
+		this._skills = new Map();
 
 		this._registerBuiltins();
 	}
@@ -80,9 +80,9 @@ export class AgentSkills {
 	/** Returns MCP-compatible tool definitions for exposed skills */
 	toMcpTools() {
 		return this.list()
-			.filter(s => s.mcpExposed)
-			.map(s => ({
-				name:        `skill_${s.name.replace(/-/g, '_')}`,
+			.filter((s) => s.mcpExposed)
+			.map((s) => ({
+				name: `skill_${s.name.replace(/-/g, '_')}`,
 				description: s.description,
 				inputSchema: s.inputSchema || { type: 'object', properties: {} },
 			}));
@@ -104,48 +104,53 @@ export class AgentSkills {
 		}
 
 		const fullCtx = {
-			protocol:  this.protocol,
-			memory:    this.memory,
-			identity:  ctx.identity  || null,
-			viewer:    ctx.viewer    || (typeof window !== 'undefined' ? window.VIEWER?.app?.viewer : null),
+			protocol: this.protocol,
+			memory: this.memory,
+			identity: ctx.identity || null,
+			viewer:
+				ctx.viewer || (typeof window !== 'undefined' ? window.VIEWER?.app?.viewer : null),
 			isBrowser: typeof window !== 'undefined',
 			...ctx,
 		};
 
 		// Announce the skill is starting
 		this.protocol.emit({
-			type:        ACTION_TYPES.PERFORM_SKILL,
-			payload:     { skill: name, args, animationHint: skill.animationHint },
-			agentId:     fullCtx.identity?.id || 'default',
+			type: ACTION_TYPES.PERFORM_SKILL,
+			payload: { skill: name, args, animationHint: skill.animationHint },
+			agentId: fullCtx.identity?.id || 'default',
 			sourceSkill: name,
 		});
 
 		try {
 			const result = await skill.handler(args, fullCtx);
 			this.protocol.emit({
-				type:        ACTION_TYPES.SKILL_DONE,
-				payload:     { skill: name, result },
-				agentId:     fullCtx.identity?.id || 'default',
+				type: ACTION_TYPES.SKILL_DONE,
+				payload: { skill: name, result },
+				agentId: fullCtx.identity?.id || 'default',
 				sourceSkill: name,
 			});
 
 			// Auto-speak the result if it has output text
 			if (result.output && fullCtx.isBrowser) {
 				this.protocol.emit({
-					type:        ACTION_TYPES.SPEAK,
-					payload:     { text: result.output, sentiment: result.sentiment ?? 0 },
-					agentId:     fullCtx.identity?.id || 'default',
+					type: ACTION_TYPES.SPEAK,
+					payload: { text: result.output, sentiment: result.sentiment ?? 0 },
+					agentId: fullCtx.identity?.id || 'default',
 					sourceSkill: name,
 				});
 			}
 
 			return result;
 		} catch (err) {
-			const errResult = { success: false, output: `Skill failed: ${err.message}`, sentiment: -0.5 };
+			const errResult = {
+				success: false,
+				output: `Skill failed: ${err.message}`,
+				sentiment: -0.5,
+			};
 			this.protocol.emit({
-				type:        ACTION_TYPES.SKILL_ERROR,
-				payload:     { skill: name, error: err.message },
-				agentId:     fullCtx.identity?.id || 'default',
+				type: ACTION_TYPES.SKILL_ERROR,
+				payload: { skill: name, error: err.message },
+				agentId: fullCtx.identity?.id || 'default',
 				sourceSkill: name,
 			});
 			return errResult;
@@ -157,19 +162,19 @@ export class AgentSkills {
 	_registerBuiltins() {
 		// ── greet ──────────────────────────────────────────────────────────
 		this.register({
-			name:          'greet',
-			description:   'Greet the user and introduce the agent',
-			instruction:   'Say hello warmly, offer to help with 3D models or agent configuration',
+			name: 'greet',
+			description: 'Greet the user and introduce the agent',
+			instruction: 'Say hello warmly, offer to help with 3D models or agent configuration',
 			animationHint: 'wave',
-			voicePattern:  'Hey! I\'m {{name}}, your 3D agent. Drop a model or ask me anything.',
-			mcpExposed:    true,
-			inputSchema:   { type: 'object', properties: { userName: { type: 'string' } } },
+			voicePattern: "Hey! I'm {{name}}, your 3D agent. Drop a model or ask me anything.",
+			mcpExposed: true,
+			inputSchema: { type: 'object', properties: { userName: { type: 'string' } } },
 			handler: async (args, ctx) => {
-				const name     = ctx.identity?.name || 'Agent';
+				const name = ctx.identity?.name || 'Agent';
 				const userName = args.userName ? `, ${args.userName}` : '';
 				return {
-					success:   true,
-					output:    `Hey${userName}! I'm ${name}. Drop a 3D model in or ask me anything — I can validate, present, and remember things about your work.`,
+					success: true,
+					output: `Hey${userName}! I'm ${name}. Drop a 3D model in or ask me anything — I can validate, present, and remember things about your work.`,
 					sentiment: 0.8,
 				};
 			},
@@ -177,76 +182,91 @@ export class AgentSkills {
 
 		// ── present-model ─────────────────────────────────────────────────
 		this.register({
-			name:          'present-model',
-			description:   'Narrate and present the currently loaded 3D model',
-			instruction:   'Look at the model, describe its properties, gestures toward interesting features',
+			name: 'present-model',
+			description: 'Narrate and present the currently loaded 3D model',
+			instruction:
+				'Look at the model, describe its properties, gestures toward interesting features',
 			animationHint: 'present',
-			voicePattern:  'This model has {{vertices}} vertices, {{materials}} materials.',
-			mcpExposed:    true,
-			inputSchema:   { type: 'object', properties: {} },
+			voicePattern: 'This model has {{vertices}} vertices, {{materials}} materials.',
+			mcpExposed: true,
+			inputSchema: { type: 'object', properties: {} },
 			handler: async (_args, ctx) => {
 				const viewer = ctx.viewer;
 				if (!viewer || !viewer.content) {
-					return { success: false, output: 'No model loaded yet. Drop a glTF or GLB file to get started.', sentiment: -0.1 };
+					return {
+						success: false,
+						output: 'No model loaded yet. Drop a glTF or GLB file to get started.',
+						sentiment: -0.1,
+					};
 				}
 
-				let verts = 0, meshes = 0, mats = new Set();
-				viewer.content.traverse(node => {
+				let verts = 0,
+					meshes = 0,
+					mats = new Set();
+				viewer.content.traverse((node) => {
 					if (node.isMesh) {
 						meshes++;
 						if (node.geometry?.attributes?.position) {
 							verts += node.geometry.attributes.position.count;
 						}
 						if (node.material) {
-							const m = Array.isArray(node.material) ? node.material : [node.material];
-							m.forEach(mat => mats.add(mat.name || mat.uuid));
+							const m = Array.isArray(node.material)
+								? node.material
+								: [node.material];
+							m.forEach((mat) => mats.add(mat.name || mat.uuid));
 						}
 					}
 				});
 
-				const clips  = viewer.clips?.length || 0;
-				const bones  = (viewer.content.animations || []).length;
+				const clips = viewer.clips?.length || 0;
+				const bones = (viewer.content.animations || []).length;
 				const output = [
 					`I'm looking at your model now.`,
 					`It has ${verts.toLocaleString()} vertices across ${meshes} mesh${meshes !== 1 ? 'es' : ''},`,
 					`${mats.size} material${mats.size !== 1 ? 's' : ''},`,
-					clips ? `and ${clips} animation clip${clips !== 1 ? 's' : ''}.` : 'with no animations.',
+					clips
+						? `and ${clips} animation clip${clips !== 1 ? 's' : ''}.`
+						: 'with no animations.',
 				].join(' ');
 
 				// Look at model
 				if (ctx.isBrowser) {
 					ctx.protocol.emit({
-						type:    ACTION_TYPES.LOOK_AT,
+						type: ACTION_TYPES.LOOK_AT,
 						payload: { target: 'model' },
 						agentId: ctx.identity?.id || 'default',
 					});
 				}
 
 				return {
-					success:   true,
+					success: true,
 					output,
 					sentiment: 0.4,
-					data:      { vertices: verts, meshes, materials: mats.size, clips },
+					data: { vertices: verts, meshes, materials: mats.size, clips },
 				};
 			},
 		});
 
 		// ── validate-model ────────────────────────────────────────────────
 		this.register({
-			name:          'validate-model',
-			description:   'Run glTF validation and report results',
-			instruction:   'Trigger the validator, summarise errors and warnings with empathy',
+			name: 'validate-model',
+			description: 'Run glTF validation and report results',
+			instruction: 'Trigger the validator, summarise errors and warnings with empathy',
 			animationHint: 'inspect',
-			voicePattern:  'Validation found {{errors}} errors and {{warnings}} warnings.',
-			mcpExposed:    true,
-			inputSchema:   {
+			voicePattern: 'Validation found {{errors}} errors and {{warnings}} warnings.',
+			mcpExposed: true,
+			inputSchema: {
 				type: 'object',
 				properties: { url: { type: 'string', description: 'Model URL to validate' } },
 			},
 			handler: async (_args, ctx) => {
 				const viewer = ctx.viewer;
 				if (!viewer || !viewer.content) {
-					return { success: false, output: 'Load a model first and I\'ll validate it.', sentiment: -0.1 };
+					return {
+						success: false,
+						output: "Load a model first and I'll validate it.",
+						sentiment: -0.1,
+					};
 				}
 
 				// The validator runs automatically after load — read the last result from the DOM
@@ -255,8 +275,8 @@ export class AgentSkills {
 					const text = reportEl.textContent?.trim();
 					const hasErrors = reportEl.classList.contains('errors');
 					return {
-						success:   !hasErrors,
-						output:    text
+						success: !hasErrors,
+						output: text
 							? `Validation result: ${text}`
 							: 'Validator is still running — check the bar at the bottom of the screen.',
 						sentiment: hasErrors ? -0.5 : 0.6,
@@ -264,8 +284,8 @@ export class AgentSkills {
 				}
 
 				return {
-					success:   true,
-					output:    'The model loaded successfully. For detailed validation, check the bottom of the screen after loading.',
+					success: true,
+					output: 'The model loaded successfully. For detailed validation, check the bottom of the screen after loading.',
 					sentiment: 0.3,
 				};
 			},
@@ -273,19 +293,19 @@ export class AgentSkills {
 
 		// ── remember ─────────────────────────────────────────────────────
 		this.register({
-			name:          'remember',
-			description:   'Store a memory about the user, session, or project',
-			instruction:   'Save important information for future conversations',
+			name: 'remember',
+			description: 'Store a memory about the user, session, or project',
+			instruction: 'Save important information for future conversations',
 			animationHint: 'nod',
-			voicePattern:  'Got it. I\'ll remember that.',
-			mcpExposed:    true,
-			inputSchema:   {
+			voicePattern: "Got it. I'll remember that.",
+			mcpExposed: true,
+			inputSchema: {
 				type: 'object',
 				required: ['content'],
 				properties: {
 					content: { type: 'string', description: 'What to remember' },
-					type:    { type: 'string', enum: ['user', 'feedback', 'project', 'reference'] },
-					tags:    { type: 'array', items: { type: 'string' } },
+					type: { type: 'string', enum: ['user', 'feedback', 'project', 'reference'] },
+					tags: { type: 'array', items: { type: 'string' } },
 				},
 			},
 			handler: async (args, ctx) => {
@@ -294,88 +314,88 @@ export class AgentSkills {
 				}
 
 				const id = ctx.memory?.add({
-					type:    args.type    || MEMORY_TYPES.PROJECT,
+					type: args.type || MEMORY_TYPES.PROJECT,
 					content: args.content,
-					tags:    args.tags    || [],
+					tags: args.tags || [],
 				});
 
 				if (ctx.isBrowser) {
 					ctx.protocol.emit({
-						type:    ACTION_TYPES.REMEMBER,
+						type: ACTION_TYPES.REMEMBER,
 						payload: { content: args.content, memoryId: id },
 						agentId: ctx.identity?.id || 'default',
 					});
 				}
 
 				return {
-					success:   true,
-					output:    `Got it — I'll remember that.`,
+					success: true,
+					output: `Got it — I'll remember that.`,
 					sentiment: 0.5,
-					data:      { memoryId: id },
+					data: { memoryId: id },
 				};
 			},
 		});
 
 		// ── think ─────────────────────────────────────────────────────────
 		this.register({
-			name:          'think',
-			description:   'Retrieve relevant memories and reason about a question',
-			instruction:   'Search memory, synthesise context, respond thoughtfully',
+			name: 'think',
+			description: 'Retrieve relevant memories and reason about a question',
+			instruction: 'Search memory, synthesise context, respond thoughtfully',
 			animationHint: 'think',
-			voicePattern:  'Let me think about that...',
-			mcpExposed:    false,
-			inputSchema:   {
+			voicePattern: 'Let me think about that...',
+			mcpExposed: false,
+			inputSchema: {
 				type: 'object',
 				required: ['query'],
 				properties: { query: { type: 'string' } },
 			},
 			handler: async (args, ctx) => {
-				const query    = args.query || '';
+				const query = args.query || '';
 				const memories = ctx.memory?.query({ limit: 5 }) || [];
 
 				if (!memories.length) {
 					return {
-						success:   true,
-						output:    `I don't have any stored context yet. As we work together, I'll build up memory to give you better answers.`,
+						success: true,
+						output: `I don't have any stored context yet. As we work together, I'll build up memory to give you better answers.`,
 						sentiment: 0.1,
 					};
 				}
 
-				const context = memories.map(m => `- ${m.content}`).join('\n');
+				const context = memories.map((m) => `- ${m.content}`).join('\n');
 				return {
-					success:   true,
-					output:    `Based on what I remember: ${memories[0].content}`,
+					success: true,
+					output: `Based on what I remember: ${memories[0].content}`,
 					sentiment: 0.3,
-					data:      { memories, context },
+					data: { memories, context },
 				};
 			},
 		});
 
 		// ── sign-action ───────────────────────────────────────────────────
 		this.register({
-			name:          'sign-action',
-			description:   'Sign the most recent action with the agent\'s linked wallet',
-			instruction:   'Use ERC-191 personal_sign to create a verifiable proof of the action',
+			name: 'sign-action',
+			description: "Sign the most recent action with the agent's linked wallet",
+			instruction: 'Use ERC-191 personal_sign to create a verifiable proof of the action',
 			animationHint: 'sign',
-			voicePattern:  'Signing action {{actionId}} with my wallet.',
-			mcpExposed:    true,
-			inputSchema:   {
+			voicePattern: 'Signing action {{actionId}} with my wallet.',
+			mcpExposed: true,
+			inputSchema: {
 				type: 'object',
 				properties: { actionId: { type: 'string' } },
 			},
 			handler: async (args, ctx) => {
 				if (!ctx.identity?.walletAddress) {
 					return {
-						success:   false,
-						output:    'No wallet linked. Connect a wallet first to sign actions.',
+						success: false,
+						output: 'No wallet linked. Connect a wallet first to sign actions.',
 						sentiment: -0.2,
 					};
 				}
 
 				if (!ctx.isBrowser || !window.ethereum) {
 					return {
-						success:   false,
-						output:    'No web3 wallet detected. Install MetaMask or a compatible wallet.',
+						success: false,
+						output: 'No web3 wallet detected. Install MetaMask or a compatible wallet.',
 						sentiment: -0.2,
 					};
 				}
@@ -383,40 +403,44 @@ export class AgentSkills {
 				try {
 					const { ethers } = await import('ethers');
 					const provider = new ethers.BrowserProvider(window.ethereum);
-					const signer   = await provider.getSigner();
-					const message  = `Agent action: ${args.actionId || 'latest'} at ${Date.now()}`;
-					const sig      = await signer.signMessage(message);
+					const signer = await provider.getSigner();
+					const message = `Agent action: ${args.actionId || 'latest'} at ${Date.now()}`;
+					const sig = await signer.signMessage(message);
 
 					ctx.protocol.emit({
-						type:    ACTION_TYPES.SIGN,
+						type: ACTION_TYPES.SIGN,
 						payload: { message, signature: sig, actionId: args.actionId },
 						agentId: ctx.identity?.id || 'default',
 					});
 
 					return {
-						success:   true,
-						output:    `Action signed. Signature: ${sig.slice(0, 20)}…`,
+						success: true,
+						output: `Action signed. Signature: ${sig.slice(0, 20)}…`,
 						sentiment: 0.6,
-						data:      { signature: sig, message },
+						data: { signature: sig, message },
 					};
 				} catch (err) {
-					return { success: false, output: `Signing failed: ${err.message}`, sentiment: -0.4 };
+					return {
+						success: false,
+						output: `Signing failed: ${err.message}`,
+						sentiment: -0.4,
+					};
 				}
 			},
 		});
 
 		// ── help ──────────────────────────────────────────────────────────
 		this.register({
-			name:          'help',
-			description:   'List available skills and controls',
-			instruction:   'Summarise what the agent can do',
+			name: 'help',
+			description: 'List available skills and controls',
+			instruction: 'Summarise what the agent can do',
 			animationHint: 'gesture',
-			voicePattern:  'Here\'s what I can do.',
-			mcpExposed:    false,
+			voicePattern: "Here's what I can do.",
+			mcpExposed: false,
 			handler: async (_args, _ctx) => {
 				return {
-					success:   true,
-					output:    'I can present and validate 3D models, remember things about your work, sign actions with a wallet, and answer questions. Try dropping a GLB file in, or ask me to present what\'s loaded.',
+					success: true,
+					output: "I can present and validate 3D models, remember things about your work, sign actions with a wallet, and answer questions. Try dropping a GLB file in, or ask me to present what's loaded.",
 					sentiment: 0.5,
 				};
 			},

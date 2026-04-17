@@ -2,7 +2,7 @@
 
 import { webcrypto } from 'node:crypto';
 
-const subtle = (globalThis.crypto?.subtle) || webcrypto.subtle;
+const subtle = globalThis.crypto?.subtle || webcrypto.subtle;
 const randomBytes = (n) => {
 	const b = new Uint8Array(n);
 	(globalThis.crypto || webcrypto).getRandomValues(b);

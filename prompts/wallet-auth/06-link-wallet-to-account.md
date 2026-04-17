@@ -22,6 +22,7 @@ Requires existing session (email or wallet).
 Body: `{ message, signature, purpose: "link" }` (same shape as siwe-verify).
 
 Steps:
+
 1. `getSessionUser(req)` → user. 401 if missing.
 2. Do the full SIWE verification (lift the verify helper from task 03 into `api/_lib/siwe.js` and import here — if the helper wasn't extracted in 03, extract it now but keep the 03 behavior byte-identical).
 3. Require `purpose === 'link'` on the nonce; reject `'login'` nonces here.
@@ -39,10 +40,11 @@ Requires existing session. Body: `{}`.
 ### Settings UI
 
 A simple panel:
-- "Linked wallet: `0xABC…` (Base Mainnet) — *Unlink*"
+
+- "Linked wallet: `0xABC…` (Base Mainnet) — _Unlink_"
 - Or: "No wallet linked — [Link your wallet] button"
-- The *Link* button triggers the client-side SIWE dance with `purpose: "link"`.
-- The *Unlink* button hits the unlink endpoint.
+- The _Link_ button triggers the client-side SIWE dance with `purpose: "link"`.
+- The _Unlink_ button hits the unlink endpoint.
 
 Use the dashboard's existing CSS and layout. Do not introduce new global styles.
 

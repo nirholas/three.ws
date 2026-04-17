@@ -23,15 +23,16 @@ Open [http://localhost:3000](http://localhost:3000) and verify the default model
 
 1. Check [existing issues](https://github.com/nirholas/3d-agent/issues) to avoid duplicates
 2. Open a [new issue](https://github.com/nirholas/3d-agent/issues/new) with:
-   - Browser and OS
-   - Steps to reproduce
-   - Expected vs. actual behavior
-   - Console errors (if any)
-   - The model file (if possible) or a link to a public glTF sample that triggers the issue
+    - Browser and OS
+    - Steps to reproduce
+    - Expected vs. actual behavior
+    - Console errors (if any)
+    - The model file (if possible) or a link to a public glTF sample that triggers the issue
 
 ### Suggest a Feature
 
 Open an issue with the **Feature Request** label. Describe:
+
 - The use case (what problem does it solve?)
 - Proposed behavior
 - Any UI mockups or examples from other tools
@@ -40,19 +41,19 @@ Open an issue with the **Feature Request** label. Describe:
 
 1. Fork the repository
 2. Create a feature branch from `main`:
-   ```bash
-   git checkout -b feat/my-feature
-   ```
+    ```bash
+    git checkout -b feat/my-feature
+    ```
 3. Make your changes
 4. Format your code:
-   ```bash
-   npx prettier --write .
-   ```
+    ```bash
+    npx prettier --write .
+    ```
 5. Test locally with `npm run dev`
 6. Commit with a clear message:
-   ```bash
-   git commit -m "feat: add opacity slider to display controls"
-   ```
+    ```bash
+    git commit -m "feat: add opacity slider to display controls"
+    ```
 7. Push and open a PR against `main`
 
 ---
@@ -61,15 +62,15 @@ Open an issue with the **Feature Request** label. Describe:
 
 Use clear, descriptive commit messages. Conventional format is preferred:
 
-| Prefix | Use |
-|--------|-----|
-| `feat:` | New feature |
-| `fix:` | Bug fix |
-| `docs:` | Documentation only |
-| `style:` | Formatting, no logic change |
-| `refactor:` | Code restructuring |
-| `perf:` | Performance improvement |
-| `chore:` | Build, tooling, dependency updates |
+| Prefix      | Use                                |
+| ----------- | ---------------------------------- |
+| `feat:`     | New feature                        |
+| `fix:`      | Bug fix                            |
+| `docs:`     | Documentation only                 |
+| `style:`    | Formatting, no logic change        |
+| `refactor:` | Code restructuring                 |
+| `perf:`     | Performance improvement            |
+| `chore:`    | Build, tooling, dependency updates |
 
 ---
 
@@ -119,13 +120,13 @@ Before submitting a PR, verify:
 
 Use the [Khronos glTF Sample Assets](https://github.com/KhronosGroup/glTF-Sample-Assets):
 
-| Model | Tests |
-|-------|-------|
+| Model          | Tests                              |
+| -------------- | ---------------------------------- |
 | Damaged Helmet | PBR materials, environment mapping |
-| Fox | Skinned mesh, animation |
-| Flight Helmet | Multi-texture, display controls |
-| Box | Minimal model, basic rendering |
-| Animated Cube | Animation playback |
+| Fox            | Skinned mesh, animation            |
+| Flight Helmet  | Multi-texture, display controls    |
+| Box            | Minimal model, basic rendering     |
+| Animated Cube  | Animation playback                 |
 
 ---
 

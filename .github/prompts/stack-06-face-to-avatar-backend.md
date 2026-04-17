@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Backend pipeline that turns an uploaded selfie into a riggable GLB avatar"
+description: 'Backend pipeline that turns an uploaded selfie into a riggable GLB avatar'
 ---
 
 # Stack Layer 2: Selfie → GLB Avatar Pipeline
@@ -16,11 +16,13 @@ We need a server endpoint that accepts a selfie and returns a GLB avatar (riggab
 `POST /api/avatars/create-from-photo`
 
 Body:
+
 ```json
 { "photoKey": "uploads/<userId>/<uuid>.jpg", "name": "optional display name" }
 ```
 
 Response (202 Accepted):
+
 ```json
 { "avatarId": "...", "status": "processing", "statusUrl": "/api/avatars/<id>/status" }
 ```
@@ -29,11 +31,11 @@ Response (202 Accepted):
 
 Pick ONE provider to start (don't implement all):
 
-| Provider | Pros | Cons |
-|---|---|---|
-| Ready Player Me | Mature, has avatar-from-photo API, GLB output with standard rig + ARKit blendshapes | Requires partner key; avatars are stylized, not photoreal |
-| Meshy / Tripo AI | Photoreal head meshes | No standard rig — would need rigging pass |
-| In-house (MediaPipe + blendshape fitting) | Zero vendor lock-in | Weeks of work |
+| Provider                                  | Pros                                                                                | Cons                                                      |
+| ----------------------------------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| Ready Player Me                           | Mature, has avatar-from-photo API, GLB output with standard rig + ARKit blendshapes | Requires partner key; avatars are stylized, not photoreal |
+| Meshy / Tripo AI                          | Photoreal head meshes                                                               | No standard rig — would need rigging pass                 |
+| In-house (MediaPipe + blendshape fitting) | Zero vendor lock-in                                                                 | Weeks of work                                             |
 
 **Recommend Ready Player Me** for v1 — it gives us a production-ready rigged GLB with ARKit blendshapes that our Empathy Layer can drive. Use the partner API (ask user for the API key env var — do NOT check one in).
 

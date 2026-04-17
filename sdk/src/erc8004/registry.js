@@ -84,7 +84,15 @@ export async function pinToIPFS(blob, apiToken) {
  * @param {Array}    [opts.services]     Additional service entries
  * @returns {object}
  */
-export function buildRegistrationJSON({ name, description, imageCID, agentId, chainId, registryAddr, services = [] }) {
+export function buildRegistrationJSON({
+	name,
+	description,
+	imageCID,
+	agentId,
+	chainId,
+	registryAddr,
+	services = [],
+}) {
 	return {
 		type: 'https://eips.ethereum.org/EIPS/eip-8004#registration-v1',
 		name,
@@ -117,7 +125,7 @@ export function getIdentityRegistry(chainId, signer) {
 	if (!deployment?.identityRegistry) {
 		throw new Error(
 			`No Identity Registry configured for chain ${chainId}. ` +
-			`Set REGISTRY_DEPLOYMENTS[${chainId}].identityRegistry in sdk/src/erc8004/abi.js`,
+				`Set REGISTRY_DEPLOYMENTS[${chainId}].identityRegistry in sdk/src/erc8004/abi.js`,
 		);
 	}
 	return new Contract(deployment.identityRegistry, IDENTITY_REGISTRY_ABI, signer);
@@ -147,7 +155,15 @@ export function getIdentityRegistry(chainId, signer) {
  * @param {Function} [opts.onStatus]     Progress callback (message: string) => void
  * @returns {Promise<{agentId: number, registrationCID: string, txHash: string}>}
  */
-export async function registerAgent({ name, description, endpoint, imageFile, services = [], apiToken, onStatus }) {
+export async function registerAgent({
+	name,
+	description,
+	endpoint,
+	imageFile,
+	services = [],
+	apiToken,
+	onStatus,
+}) {
 	const log = onStatus || (() => {});
 
 	log('Connecting wallet...');
@@ -168,7 +184,13 @@ export async function registerAgent({ name, description, endpoint, imageFile, se
 	const receipt = await tx.wait();
 
 	const registeredEvent = receipt.logs
-		.map((l) => { try { return registry.interface.parseLog(l); } catch { return null; } })
+		.map((l) => {
+			try {
+				return registry.interface.parseLog(l);
+			} catch {
+				return null;
+			}
+		})
 		.find((e) => e?.name === 'Registered');
 
 	if (!registeredEvent) {
@@ -178,10 +200,7 @@ export async function registerAgent({ name, description, endpoint, imageFile, se
 	const agentId = Number(registeredEvent.args.agentId);
 	log(`Agent minted — agentId: ${agentId}`);
 
-	const allServices = [
-		{ name: 'web', endpoint },
-		...services,
-	];
+	const allServices = [{ name: 'web', endpoint }, ...services];
 
 	const registrationJSON = buildRegistrationJSON({
 		name,
@@ -194,7 +213,9 @@ export async function registerAgent({ name, description, endpoint, imageFile, se
 	});
 
 	log('Pinning registration metadata to IPFS...');
-	const jsonBlob = new Blob([JSON.stringify(registrationJSON, null, 2)], { type: 'application/json' });
+	const jsonBlob = new Blob([JSON.stringify(registrationJSON, null, 2)], {
+		type: 'application/json',
+	});
 	const registrationCID = await pinToIPFS(jsonBlob, apiToken);
 	log(`Registration JSON pinned: ipfs://${registrationCID}`);
 

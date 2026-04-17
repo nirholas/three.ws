@@ -23,12 +23,12 @@ Auth is resolved in `resolveAuth()`: session cookie first, then bearer. If neith
 ## Deliverable
 
 1. Modified [api/agents.js](../../api/agents.js):
-   - `handleGetOrCreateMe` hardened against race on insert (two concurrent requests creating the default agent).
-   - Error branches tagged in logs with a stable prefix like `[agents/me]` so future 500s are grep-able.
-   - No behavior change for anonymous callers (`auth === null` → `200 { agent: null }`).
+    - `handleGetOrCreateMe` hardened against race on insert (two concurrent requests creating the default agent).
+    - Error branches tagged in logs with a stable prefix like `[agents/me]` so future 500s are grep-able.
+    - No behavior change for anonymous callers (`auth === null` → `200 { agent: null }`).
 2. A minimal regression test file — plain Node, no new dev deps. Either:
-   - `scripts/test-agents-me.mjs` — a standalone script that hits the endpoint with three cookie states and asserts status 200 + expected body shape; or
-   - Inline `assert` block in an existing test harness if one exists in `scripts/`.
+    - `scripts/test-agents-me.mjs` — a standalone script that hits the endpoint with three cookie states and asserts status 200 + expected body shape; or
+    - Inline `assert` block in an existing test harness if one exists in `scripts/`.
 3. Report the exact root cause you found. If the bug was a race, say "race on concurrent insert into `agent_identities`." If it was a schema mismatch, name the column. Don't report "hardened the handler" without a root cause.
 
 ## Audit checklist
@@ -58,7 +58,7 @@ Auth is resolved in `resolveAuth()`: session cookie first, then bearer. If neith
 
 - **Do not change the route rewrite.** The `vercel.json` plumbing works; the bug is in the handler.
 - **Do not add a new runtime dependency.** `sql` from `_lib/db.js`, `zod`, `jose` are all that's allowed.
-- **Do not silently swallow unknown errors.** The existing `42P01` swallow is the *only* acceptable silent fallback — anything else must `throw` so `wrap()` can 500 it visibly. The goal is to eliminate 500s by fixing root causes, not by hiding them.
+- **Do not silently swallow unknown errors.** The existing `42P01` swallow is the _only_ acceptable silent fallback — anything else must `throw` so `wrap()` can 500 it visibly. The goal is to eliminate 500s by fixing root causes, not by hiding them.
 - Keep the file under 300 lines. If your fix balloons the file, move helpers into `_lib/`.
 
 ## Verification
@@ -66,16 +66,16 @@ Auth is resolved in `resolveAuth()`: session cookie first, then bearer. If neith
 1. `node --check api/agents.js`
 2. `npx vite build` — should pass (ignore pre-existing `@avaturn/sdk` warning).
 3. Run your regression script against a local dev deploy:
-   ```bash
-   node scripts/test-agents-me.mjs
-   ```
-   Output should show three passing cases: anonymous → 200 null, fresh user → 200 agent, existing user → 200 agent.
+    ```bash
+    node scripts/test-agents-me.mjs
+    ```
+    Output should show three passing cases: anonymous → 200 null, fresh user → 200 agent, existing user → 200 agent.
 4. Concurrency check — with `DATABASE_URL` pointed at a dev branch:
-   ```bash
-   for i in {1..10}; do curl -s -b "__Host-sid=$SID" https://localhost/api/agents/me & done; wait
-   psql "$DATABASE_URL" -c "select count(*) from agent_identities where user_id = '<uid>' and deleted_at is null"
-   ```
-   Must return `1`.
+    ```bash
+    for i in {1..10}; do curl -s -b "__Host-sid=$SID" https://localhost/api/agents/me & done; wait
+    psql "$DATABASE_URL" -c "select count(*) from agent_identities where user_id = '<uid>' and deleted_at is null"
+    ```
+    Must return `1`.
 
 ## Scope boundaries — do NOT do these
 

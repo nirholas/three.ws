@@ -1,8 +1,7 @@
 # Editor Spec v0.1 — `<agent-3d editor>` & `src/editor/`
 
-> **Format ID:** `agent-editor/0.1`
-> **Stability:** draft — breaking changes may occur before 1.0
-> **Relationship to EMBED_SPEC:** EMBED_SPEC defines how a finished agent is played back. This spec defines the surface for *authoring* one. The `editor` attribute switches the same `<agent-3d>` element from playback mode into editing mode. The "Copy Embed" output of the editor is a plain `<agent-3d>` element with no `editor` attribute — a clean embed the user pastes anywhere.
+> **Format ID:** `agent-editor/0.1` > **Stability:** draft — breaking changes may occur before 1.0
+> **Relationship to EMBED_SPEC:** EMBED*SPEC defines how a finished agent is played back. This spec defines the surface for \_authoring* one. The `editor` attribute switches the same `<agent-3d>` element from playback mode into editing mode. The "Copy Embed" output of the editor is a plain `<agent-3d>` element with no `editor` attribute — a clean embed the user pastes anywhere.
 
 ---
 
@@ -21,9 +20,11 @@ The editor layer lives in [`src/editor/`](../src/editor/) and is orchestrated by
 ### `editor` attribute (boolean)
 
 **Documented contract** (see EMBED_SPEC.md line 109):
+
 ```html
 <agent-3d editor src="agent://base/42"></agent-3d>
 ```
+
 Replaces the live agent runtime with the embed editor. Intended to be a boolean presence attribute — no value required.
 
 **Current state:** not handled by `observedAttributes` in [`src/element.js:211`](../src/element.js#L211). Manual integration required (see §6).
@@ -32,18 +33,18 @@ Replaces the live agent runtime with the embed editor. Intended to be a boolean 
 
 These are standard embed attributes that the editor reads or writes to its output snippet. They are fully handled by [`src/element.js`](../src/element.js):
 
-| Attribute | Type | Role in editor context |
-|---|---|---|
-| `src` | URI | Source agent URI; echoed into "Copy Embed" snippet |
-| `agent-id` | string | Backend UUID or on-chain ref; echoed into snippet |
-| `manifest` | URL | Manifest URL; echoed into snippet |
-| `body` | URL | Bare GLB URI; the editor's primary input when no manifest exists |
-| `mode` | `inline`\|`floating`\|`section`\|`fullscreen` | Layout mode selector in embed-editor UI |
-| `position` | string | Floating mode anchor — `bottom-right`, etc. |
-| `width` | CSS length | Configurable in embed-editor |
-| `height` | CSS length | Configurable in embed-editor |
-| `responsive` | boolean | Toggleable in embed-editor |
-| `kiosk` | boolean | Suppresses chat chrome — not editor-specific but affects embed output |
+| Attribute    | Type                                          | Role in editor context                                                |
+| ------------ | --------------------------------------------- | --------------------------------------------------------------------- |
+| `src`        | URI                                           | Source agent URI; echoed into "Copy Embed" snippet                    |
+| `agent-id`   | string                                        | Backend UUID or on-chain ref; echoed into snippet                     |
+| `manifest`   | URL                                           | Manifest URL; echoed into snippet                                     |
+| `body`       | URL                                           | Bare GLB URI; the editor's primary input when no manifest exists      |
+| `mode`       | `inline`\|`floating`\|`section`\|`fullscreen` | Layout mode selector in embed-editor UI                               |
+| `position`   | string                                        | Floating mode anchor — `bottom-right`, etc.                           |
+| `width`      | CSS length                                    | Configurable in embed-editor                                          |
+| `height`     | CSS length                                    | Configurable in embed-editor                                          |
+| `responsive` | boolean                                       | Toggleable in embed-editor                                            |
+| `kiosk`      | boolean                                       | Suppresses chat chrome — not editor-specific but affects embed output |
 
 ---
 
@@ -55,15 +56,15 @@ The central shared state object. All panels read from and write to it.
 
 **State owned:**
 
-| Field | Type | Description |
-|---|---|---|
-| `sourceURL` | `string\|null` | URL of the loaded model |
-| `sourceFile` | `File\|null` | Dropped File object |
-| `sourceBuffer` | `ArrayBuffer\|null` | Lazily cached bytes (fetched or read from File) |
-| `sourceName` | `string` | Display name, derived from URL basename or File.name |
-| `materialEdits` | `{ [uuid]: MaterialEditPatch }` | Keyed by Three.js `material.uuid` |
-| `transformEdits` | `{ [uuid]: TransformEditPatch }` | Keyed by Three.js `Object3D.uuid` |
-| `visibilityEdits` | `{ [uuid]: { name, visible } }` | Keyed by Three.js `Object3D.uuid` |
+| Field             | Type                             | Description                                          |
+| ----------------- | -------------------------------- | ---------------------------------------------------- |
+| `sourceURL`       | `string\|null`                   | URL of the loaded model                              |
+| `sourceFile`      | `File\|null`                     | Dropped File object                                  |
+| `sourceBuffer`    | `ArrayBuffer\|null`              | Lazily cached bytes (fetched or read from File)      |
+| `sourceName`      | `string`                         | Display name, derived from URL basename or File.name |
+| `materialEdits`   | `{ [uuid]: MaterialEditPatch }`  | Keyed by Three.js `material.uuid`                    |
+| `transformEdits`  | `{ [uuid]: TransformEditPatch }` | Keyed by Three.js `Object3D.uuid`                    |
+| `visibilityEdits` | `{ [uuid]: { name, visible } }`  | Keyed by Three.js `Object3D.uuid`                    |
 
 **Patch shapes:**
 
@@ -94,18 +95,18 @@ The central shared state object. All panels read from and write to it.
 
 **Methods:**
 
-| Method | Returns | Description |
-|---|---|---|
-| `reset({ url, file, name })` | void | Clears all edits; sets new source |
-| `isExportReady()` | boolean | True when any source is set |
-| `isDirty()` | boolean | True when any edit map is non-empty |
-| `onChange(fn)` | unsubscribe fn | Fires after any edit or reset |
-| `recordMaterialEdit(material, patch)` | void | Merges patch into materialEdits |
-| `clearMaterialEdit(material)` | void | Removes entry from materialEdits |
-| `recordTransformEdit(node)` | void | Writes current position/rotation/scale |
-| `recordVisibilityEdit(node, visible)` | void | Writes visibility state |
-| `restoreEdits(edits)` | void | Re-applies a saved edit set by name-matching |
-| `getSourceBuffer()` | `Promise<ArrayBuffer>` | Fetches or reads bytes; caches result |
+| Method                                | Returns                | Description                                  |
+| ------------------------------------- | ---------------------- | -------------------------------------------- |
+| `reset({ url, file, name })`          | void                   | Clears all edits; sets new source            |
+| `isExportReady()`                     | boolean                | True when any source is set                  |
+| `isDirty()`                           | boolean                | True when any edit map is non-empty          |
+| `onChange(fn)`                        | unsubscribe fn         | Fires after any edit or reset                |
+| `recordMaterialEdit(material, patch)` | void                   | Merges patch into materialEdits              |
+| `clearMaterialEdit(material)`         | void                   | Removes entry from materialEdits             |
+| `recordTransformEdit(node)`           | void                   | Writes current position/rotation/scale       |
+| `recordVisibilityEdit(node, visible)` | void                   | Writes visibility state                      |
+| `restoreEdits(edits)`                 | void                   | Re-applies a saved edit set by name-matching |
+| `getSourceBuffer()`                   | `Promise<ArrayBuffer>` | Fetches or reads bytes; caches result        |
 
 **Failure modes:** `getSourceBuffer()` throws if no source is set. `reset()` with no source logs a warning but does not throw.
 
@@ -117,20 +118,20 @@ The central shared state object. All panels read from and write to it.
 
 **Editable properties per material:**
 
-| Property | Range | Notes |
-|---|---|---|
-| base color | hex color | `mat.color` |
-| metalness | 0–1 | |
-| roughness | 0–1 | |
-| emissive color | hex color | `mat.emissive` |
-| emissive intensity | 0–4 | **Not recorded to session** (pre-1.0 rough edge #2) |
-| opacity | 0–1 | Sets `mat.transparent` automatically when < 1 |
-| transparent | boolean | |
-| alpha test | 0–1 | |
-| wireframe | boolean | Not recorded to session (viewport-only preview) |
-| flat shading | boolean | Not recorded to session (viewport-only preview) |
-| env map intensity | 0–4 | If present on material; not recorded to session |
-| side | Front/Back/Double | Maps to three.js `FrontSide`/`BackSide`/`DoubleSide` |
+| Property           | Range             | Notes                                                |
+| ------------------ | ----------------- | ---------------------------------------------------- |
+| base color         | hex color         | `mat.color`                                          |
+| metalness          | 0–1               |                                                      |
+| roughness          | 0–1               |                                                      |
+| emissive color     | hex color         | `mat.emissive`                                       |
+| emissive intensity | 0–4               | **Not recorded to session** (pre-1.0 rough edge #2)  |
+| opacity            | 0–1               | Sets `mat.transparent` automatically when < 1        |
+| transparent        | boolean           |                                                      |
+| alpha test         | 0–1               |                                                      |
+| wireframe          | boolean           | Not recorded to session (viewport-only preview)      |
+| flat shading       | boolean           | Not recorded to session (viewport-only preview)      |
+| env map intensity  | 0–4               | If present on material; not recorded to session      |
+| side               | Front/Back/Double | Maps to three.js `FrontSide`/`BackSide`/`DoubleSide` |
 
 **Inputs:** `viewer.content` (Three.js scene graph), `viewer.gui` (dat.GUI instance), `EditorSession`.
 
@@ -141,6 +142,7 @@ The central shared state object. All panels read from and write to it.
 **Reset:** `↺ reset` button per subfolder restores the snapshot captured at `rebuild()` time and calls `session.clearMaterialEdit(mat)`.
 
 **Failure modes:**
+
 - If `viewer.gui` is null, no UI is built (silent no-op).
 - If the scene has no standard/physical materials, the `Materials` folder is not created.
 
@@ -155,6 +157,7 @@ The central shared state object. All panels read from and write to it.
 **What it is:** A side panel appended to `viewer.el` showing the full Three.js scene tree, a node inspector, and a TransformControls gizmo.
 
 **Tree shape:** Recursive DOM tree mirroring `viewer.content` hierarchy. Root is auto-expanded. Each node row shows:
+
 - Expand/collapse arrow (if children present)
 - Type icon (mesh, skinned mesh, group, bone, light, camera, etc.)
 - Node name or type
@@ -163,16 +166,19 @@ The central shared state object. All panels read from and write to it.
 Nodes are identified in the tree DOM by `data-uuid` attribute.
 
 **Selection semantics:**
+
 - Click on a row selects the node → `this.selectedNode`, highlights the row with `.selected` class, attaches TransformControls.
 - Double-click frames the node in the camera.
 - Left-click on the canvas raycasts against `viewer.content`; hit object is selected (walks up to the nearest Mesh/Light/Camera ancestor).
 - `Escape` key detaches TransformControls and clears selection.
 
 **Visibility toggle:**
+
 - Per-row ● button sets `node.visible` and calls `session.recordVisibilityEdit(node, visible)`.
 - Inspector "Hide"/"Show" button does the same.
 
 **Transform editing:**
+
 - Gizmo keys: `W` translate, `E` rotate, `R` scale.
 - Inspector shows editable numeric inputs for pos/rot°/scale; changes call `session.recordTransformEdit(node)`.
 - TransformControls `objectChange` event also calls `session.recordTransformEdit`.
@@ -181,12 +187,12 @@ Nodes are identified in the tree DOM by `data-uuid` attribute.
 
 **Keyboard shortcuts** (when not in an input):
 
-| Key | Action |
-|---|---|
-| `T` | Toggle panel open/closed |
-| `W` | Switch gizmo to translate |
-| `E` | Switch gizmo to rotate |
-| `R` | Switch gizmo to scale |
+| Key      | Action                      |
+| -------- | --------------------------- |
+| `T`      | Toggle panel open/closed    |
+| `W`      | Switch gizmo to translate   |
+| `E`      | Switch gizmo to rotate      |
+| `R`      | Switch gizmo to scale       |
 | `Escape` | Detach gizmo, deselect node |
 
 **Inputs:** `viewer` (Viewer instance), `EditorSession`.
@@ -210,6 +216,7 @@ Nodes are identified in the tree DOM by `data-uuid` attribute.
 **Thumbnail grid panel** (`.texture-inspector`): Opens appended to `document.body`. Close button or `X` key toggles.
 
 **Lightbox** (`.texture-lightbox`): Opens on card click. Provides:
+
 - RGB / R / G / B / A channel extraction (requires same-origin or CORS-readable image for channel modes)
 - Alpha-over-checkerboard mode
 - UV wireframe overlay (renders triangle edges from mesh UV attributes)
@@ -225,6 +232,7 @@ Nodes are identified in the tree DOM by `data-uuid` attribute.
 **Events:** none emitted.
 
 **Failure modes:**
+
 - Channel extraction calls `ctx.getImageData()` — this will throw (CORS) for cross-origin textures. The lightbox shows "channel extraction blocked (CORS)" in place of extracted data.
 - If no textures are found, the `Textures` dat.gui folder is not created.
 
@@ -235,6 +243,7 @@ Nodes are identified in the tree DOM by `data-uuid` attribute.
 **Export format:** GLB (`model/gltf-binary`) via `@gltf-transform/core` `WebIO` + all extensions (`@gltf-transform/extensions`).
 
 **What is included:** The full original GLB/GLTF content, with the following edits applied:
+
 - Material properties: base color factor, metallic factor, roughness factor, emissive factor, alpha mode, alpha cutoff, double-sided.
 - Node transforms: translation, rotation (converted from Euler XYZ to quaternion), scale.
 - Node visibility: hidden nodes are written with `scale = [0, 0, 0]` (no glTF `extras.hidden` — see rough edge #3).
@@ -248,6 +257,7 @@ Nodes are identified in the tree DOM by `data-uuid` attribute.
 **Output filename:** `<sourceName>.edited.glb` where `sourceName` strips query strings and `.glb`/`.gltf` extensions.
 
 **Failure modes:**
+
 - `exportEditedGLB(session)` throws `Error('No source buffer for export')` if `session.getSourceBuffer()` returns nothing.
 - `getSourceBuffer()` throws if no source URL or File is set.
 - Caller in `Editor._exportGLB()` catches and shows `window.alert`.
@@ -266,17 +276,18 @@ Both material edits and transform/visibility edits match by the first occurrence
 
 Turns an in-progress `EditorSession` into a live shareable widget. Five sequential steps:
 
-| Step | Operation | Endpoint |
-|---|---|---|
-| `export` | `exportEditedGLB(session)` → `Uint8Array` | (client-side) |
-| `presign` | POST metadata, get signed PUT URL | `POST /api/avatars/presign` |
-| `upload` | PUT raw bytes to presigned URL | R2 (presigned URL) |
-| `register` | Create avatar metadata record | `POST /api/avatars` |
-| `widget` | Create turntable widget | `POST /api/widgets` |
+| Step       | Operation                                 | Endpoint                    |
+| ---------- | ----------------------------------------- | --------------------------- |
+| `export`   | `exportEditedGLB(session)` → `Uint8Array` | (client-side)               |
+| `presign`  | POST metadata, get signed PUT URL         | `POST /api/avatars/presign` |
+| `upload`   | PUT raw bytes to presigned URL            | R2 (presigned URL)          |
+| `register` | Create avatar metadata record             | `POST /api/avatars`         |
+| `widget`   | Create turntable widget                   | `POST /api/widgets`         |
 
 **Progress callback:** `onStep({ step, pct })` fired at each step boundary. Steps: `'export'`, `'presign'`, `'upload'`, `'register'`, `'widget'`.
 
 **Return value on success:**
+
 ```js
 {
   widget: { id, ... },
@@ -291,12 +302,12 @@ Turns an in-progress `EditorSession` into a live shareable widget. Five sequenti
 
 **Error classes exported** (importable from `./publish.js`):
 
-| Class | When thrown |
-|---|---|
-| `AuthRequiredError` | 401 from any fetch step |
+| Class               | When thrown                                      |
+| ------------------- | ------------------------------------------------ |
+| `AuthRequiredError` | 401 from any fetch step                          |
 | `SizeTooLargeError` | Client-side size check or 413 from register step |
-| `ExportFailedError` | `exportEditedGLB` throws |
-| `PublishError` | Any non-401/non-413 non-2xx response |
+| `ExportFailedError` | `exportEditedGLB` throws                         |
+| `PublishError`      | Any non-401/non-413 non-2xx response             |
 
 **Client-side size limit:** `MAX_BYTES = 25 * 1024 * 1024` (25 MB) — enforced before upload. Server-side schema allows up to 500 MB ([`api/_lib/validate.js:58`](../api/_lib/validate.js#L58)); the client is the stricter limit here.
 
@@ -323,6 +334,7 @@ UI wrapper over `publishEditedGLB`. Manages three states: **working** (step prog
 A separate "place, scale, preview, copy" UX. Mounted by calling `mountEmbedEditor(rootEl, { src, defaults })`. Renders a split view: a live iframe preview on the left, a control panel on the right.
 
 Controls exposed:
+
 - Mode selector (floating, inline, section, fullscreen)
 - Position selector for floating mode (6 anchors)
 - Width/height inputs
@@ -341,13 +353,15 @@ Controls exposed:
 Wires MaterialEditor, TextureInspector, SceneExplorer, and GLB export/publish into the Viewer via dat.gui.
 
 **Entry point:**
+
 ```js
 const editor = new Editor(viewer);
-editor.attach();                             // once, after viewer constructed
+editor.attach(); // once, after viewer constructed
 editor.onContentChanged({ url, file, name }); // every time a new model loads
 ```
 
 **dat.gui folder added:** `Editor` — contains:
+
 - `💾 download GLB` (count badge when edits exist; disabled when no source)
 - `📤 publish as embed`
 - `🗂 scene panel [T]`
@@ -361,13 +375,13 @@ editor.onContentChanged({ url, file, name }); // every time a new model loads
 
 ### Who can edit
 
-| Actor | Can view model | Can edit materials/transforms | Can export GLB | Can publish |
-|---|---|---|---|---|
-| Anonymous visitor | Yes | Yes (viewport only) | Yes (download only) | No — 401 → login redirect |
-| Authenticated user | Yes | Yes | Yes | Yes — creates under their account |
-| Owner of the agent | Yes | Yes | Yes | Yes |
+| Actor              | Can view model | Can edit materials/transforms | Can export GLB      | Can publish                       |
+| ------------------ | -------------- | ----------------------------- | ------------------- | --------------------------------- |
+| Anonymous visitor  | Yes            | Yes (viewport only)           | Yes (download only) | No — 401 → login redirect         |
+| Authenticated user | Yes            | Yes                           | Yes                 | Yes — creates under their account |
+| Owner of the agent | Yes            | Yes                           | Yes                 | Yes                               |
 
-The editor itself is entirely client-side; there is no server-side ownership gate on the *editing* phase. Ownership is enforced only at **publish time** (API).
+The editor itself is entirely client-side; there is no server-side ownership gate on the _editing_ phase. Ownership is enforced only at **publish time** (API).
 
 ### Ownership check at publish
 
@@ -381,6 +395,7 @@ Client-side auth hint via `readAuthHint()` from [`src/account.js:43`](../src/acc
 ### Unauthed user save path
 
 When `publishEditedGLB` catches `AuthRequiredError`, `PublishModal.showAuthRequired()` is called. The user clicks "Sign in" — `_signInAndReturn()`:
+
 1. Serializes current `EditorSession` edits + source to `sessionStorage`/IndexedDB via `stashSession()` ([`src/editor/edit-persistence.js`](../src/editor/edit-persistence.js)).
 2. Redirects to `/login?next=<current URL with ?resume=<token>&publish=1>`.
 3. Post-login, the caller is expected to detect `?resume` and call `restoreEdits()` on a fresh session.
@@ -395,26 +410,26 @@ When `publishEditedGLB` catches `AuthRequiredError`, `PublishModal.showAuthRequi
 
 `EditorSession` uses a listener set, not DOM events. Subscribe via `session.onChange(fn)`.
 
-| Trigger | When fired |
-|---|---|
-| `session.reset()` | New model loaded |
-| `session.recordMaterialEdit()` | Any material property change |
-| `session.clearMaterialEdit()` | Material reset |
-| `session.recordTransformEdit()` | Any node transform change |
-| `session.recordVisibilityEdit()` | Visibility toggle |
-| `session.restoreEdits()` | Edits restored from stash |
+| Trigger                          | When fired                   |
+| -------------------------------- | ---------------------------- |
+| `session.reset()`                | New model loaded             |
+| `session.recordMaterialEdit()`   | Any material property change |
+| `session.clearMaterialEdit()`    | Material reset               |
+| `session.recordTransformEdit()`  | Any node transform change    |
+| `session.recordVisibilityEdit()` | Visibility toggle            |
+| `session.restoreEdits()`         | Edits restored from stash    |
 
 ### Publish progress events
 
 Passed to `publishEditedGLB({ onStep })` as a callback, not DOM events.
 
-| `step` value | `pct` range | When |
-|---|---|---|
-| `'export'` | 0 → 1 | GLB serialization start → done |
-| `'presign'` | — → 1 | Presign response received |
-| `'upload'` | 0 → 1 | XHR upload progress |
-| `'register'` | — → 1 | Avatar record created |
-| `'widget'` | — → 1 | Widget record created |
+| `step` value | `pct` range | When                           |
+| ------------ | ----------- | ------------------------------ |
+| `'export'`   | 0 → 1       | GLB serialization start → done |
+| `'presign'`  | — → 1       | Presign response received      |
+| `'upload'`   | 0 → 1       | XHR upload progress            |
+| `'register'` | — → 1       | Avatar record created          |
+| `'widget'`   | — → 1       | Widget record created          |
 
 (`PublishModal.onStep` maps `'presign'` → `'upload'` bucket for UI display.)
 
@@ -447,6 +462,7 @@ async function exportEditedGLB(session: EditorSession): Promise<Uint8Array>
 ```
 
 A custom exporter can be dropped in by:
+
 1. Reading `await session.getSourceBuffer()` for the original bytes.
 2. Reading `session.materialEdits`, `session.transformEdits`, `session.visibilityEdits` for the accumulated changes.
 3. Returning a `Uint8Array` of any desired format.
@@ -471,11 +487,11 @@ No formal exporter plugin contract exists; the `Editor._exportGLB()` method ([`s
 
 ### Size limits
 
-| Limit | Value | Enforced by |
-|---|---|---|
-| Client-side publish limit | 25 MB | [`src/editor/publish.js:17`](../src/editor/publish.js#L17) `MAX_BYTES` |
-| Server-side schema max | 500 MB | [`api/_lib/validate.js:58,63`](../api/_lib/validate.js#L58) |
-| Rate limit (uploads) | 60 per hour per user | `limits.upload(userId)` in presign |
+| Limit                     | Value                | Enforced by                                                            |
+| ------------------------- | -------------------- | ---------------------------------------------------------------------- |
+| Client-side publish limit | 25 MB                | [`src/editor/publish.js:17`](../src/editor/publish.js#L17) `MAX_BYTES` |
+| Server-side schema max    | 500 MB               | [`api/_lib/validate.js:58,63`](../api/_lib/validate.js#L58)            |
+| Rate limit (uploads)      | 60 per hour per user | `limits.upload(userId)` in presign                                     |
 
 The client enforces 25 MB; the server allows up to 500 MB. A caller bypassing the client library can upload up to 500 MB.
 
@@ -498,12 +514,14 @@ The presign flow issues a PUT URL for direct browser-to-R2 upload; the server ne
 This document covers `agent-editor/0.1`. Breaking changes bump the minor until 1.0; after 1.0 they bump the major.
 
 A **breaking change** is:
+
 - Removing or renaming a published export from any `src/editor/*.js` module.
 - Changing the shape of `materialEdits`, `transformEdits`, or `visibilityEdits` in a way that breaks `restoreEdits()` round-trips.
 - Changing the publish API endpoints or their response shapes.
 - Removing an attribute that the embed editor reads or writes.
 
 A **non-breaking change** is:
+
 - Adding new optional fields to patch objects.
 - Adding new dat.gui controls.
 - New `onStep` step names (callers should ignore unknown steps).
@@ -521,13 +539,13 @@ Until then, feature-detect by checking whether the `Editor` class is exported fr
 
 ## Pre-1.0 rough edges — summary
 
-| # | Location | Issue |
-|---|---|---|
-| 1 | [`src/element.js:211`](../src/element.js#L211) | `editor` boolean attribute not wired — `<agent-3d editor>` does not activate the editor |
-| 2 | [`src/editor/material-editor.js:100`](../src/editor/material-editor.js#L100) | `emissiveIntensity` changes are not recorded to session — lost on export |
-| 3 | [`src/editor/glb-export.js:106`](../src/editor/glb-export.js#L106) | Hidden nodes written as `scale=[0,0,0]` instead of `KHR_node_visibility` |
-| 4 | [`src/editor/glb-export.js:53`](../src/editor/glb-export.js#L53) | Duplicate material/node names resolve to first match only — no warning |
-| 5 | [`src/editor/index.js`](../src/editor/index.js) | No DOM `CustomEvent` emitted — external hosts cannot observe edit activity without accessing `session.onChange()` directly |
+| #   | Location                                                                     | Issue                                                                                                                      |
+| --- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| 1   | [`src/element.js:211`](../src/element.js#L211)                               | `editor` boolean attribute not wired — `<agent-3d editor>` does not activate the editor                                    |
+| 2   | [`src/editor/material-editor.js:100`](../src/editor/material-editor.js#L100) | `emissiveIntensity` changes are not recorded to session — lost on export                                                   |
+| 3   | [`src/editor/glb-export.js:106`](../src/editor/glb-export.js#L106)           | Hidden nodes written as `scale=[0,0,0]` instead of `KHR_node_visibility`                                                   |
+| 4   | [`src/editor/glb-export.js:53`](../src/editor/glb-export.js#L53)             | Duplicate material/node names resolve to first match only — no warning                                                     |
+| 5   | [`src/editor/index.js`](../src/editor/index.js)                              | No DOM `CustomEvent` emitted — external hosts cannot observe edit activity without accessing `session.onChange()` directly |
 
 ---
 

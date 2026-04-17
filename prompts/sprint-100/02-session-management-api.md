@@ -6,7 +6,7 @@ Long-lived sessions need rotation and a "log out everywhere" escape hatch. Today
 
 ## Parallel-safety
 
-You only create NEW files under `api/auth/session/`. You do NOT edit `login.js`, `logout.js`, or `me.js`. If the existing `createSession()` helper in [api/_lib/auth.js](../../api/_lib/auth.js) already exposes what you need, import it. If it doesn't, stub a local helper in your endpoint and note the gap in the report — do not edit `_lib/auth.js`.
+You only create NEW files under `api/auth/session/`. You do NOT edit `login.js`, `logout.js`, or `me.js`. If the existing `createSession()` helper in [api/\_lib/auth.js](../../api/_lib/auth.js) already exposes what you need, import it. If it doesn't, stub a local helper in your endpoint and note the gap in the report — do not edit `_lib/auth.js`.
 
 ## Files you own
 
@@ -16,9 +16,9 @@ You only create NEW files under `api/auth/session/`. You do NOT edit `login.js`,
 
 ## Read first
 
-- [api/_lib/auth.js](../../api/_lib/auth.js) — inspect `getSessionUser`, `createSession`, and the sessions table name.
-- [api/_lib/http.js](../../api/_lib/http.js) — `wrap`, `json`, `error`, `cors`, `method`.
-- [api/_lib/db.js](../../api/_lib/db.js) — `sql` tagged template.
+- [api/\_lib/auth.js](../../api/_lib/auth.js) — inspect `getSessionUser`, `createSession`, and the sessions table name.
+- [api/\_lib/http.js](../../api/_lib/http.js) — `wrap`, `json`, `error`, `cors`, `method`.
+- [api/\_lib/db.js](../../api/_lib/db.js) — `sql` tagged template.
 - [api/auth/logout.js](../../api/auth/logout.js) — reference pattern.
 
 ## Deliverable

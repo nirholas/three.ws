@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Edit-avatar page shell — auth-gated, tabbed, lives at /edit/:slug"
+description: 'Edit-avatar page shell — auth-gated, tabbed, lives at /edit/:slug'
 ---
 
 # Stack Layer 3: Avatar Editor Shell
@@ -26,10 +26,12 @@ Users need a page to edit an avatar after creation. Today there is no edit surfa
 `public/edit/index.html` — native DOM, plain CSS.
 
 Layout:
+
 - Left (40%): live 3D preview via [src/viewer.js](src/viewer.js), auto-rotating.
 - Right (60%): tabbed editor.
 
 Tabs (each filled by a separate prompt):
+
 1. **Identity** — name, bio, slug lock, delete (stack-10)
 2. **Skills** — attach/detach (stack-11)
 3. **Memory** — seed initial facts (stack-12)

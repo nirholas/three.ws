@@ -105,7 +105,11 @@ export async function verifyGlTFAttestation({ attestation, glbBlob, trustedIssue
 	// 2. Recover signer from signature — catches any field tampering
 	//    Note: we sign against the *attested* glbSha256 and summary so that
 	//    the hash mismatch above is independent of signature failure.
-	const message = await buildMessage(attestation.agentId, attestation.glbSha256, attestation.summary);
+	const message = await buildMessage(
+		attestation.agentId,
+		attestation.glbSha256,
+		attestation.summary,
+	);
 	let recoveredAddress;
 	try {
 		recoveredAddress = verifyMessage(message, attestation.signature).toLowerCase();
@@ -115,7 +119,9 @@ export async function verifyGlTFAttestation({ attestation, glbBlob, trustedIssue
 	}
 
 	if (recoveredAddress !== attestation.issuer) {
-		reasons.push(`Issuer mismatch: attested ${attestation.issuer}, recovered ${recoveredAddress}`);
+		reasons.push(
+			`Issuer mismatch: attested ${attestation.issuer}, recovered ${recoveredAddress}`,
+		);
 	}
 
 	// 3. Optional: enforce a caller-supplied trusted-issuer list

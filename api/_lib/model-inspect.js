@@ -11,11 +11,7 @@ const GLB_MAGIC = 0x46546c67; // "glTF"
 
 function isGLB(bytes) {
 	if (!bytes || bytes.byteLength < 4) return false;
-	const view = new DataView(
-		bytes.buffer,
-		bytes.byteOffset,
-		Math.min(4, bytes.byteLength),
-	);
+	const view = new DataView(bytes.buffer, bytes.byteOffset, Math.min(4, bytes.byteLength));
 	return view.getUint32(0, true) === GLB_MAGIC;
 }
 
@@ -158,13 +154,12 @@ export function suggestOptimizations(info) {
 		out.push({
 			id: 'meshopt',
 			severity: 'info',
-			message: 'Meshopt compression can reduce vertex+index size with faster decode than Draco.',
+			message:
+				'Meshopt compression can reduce vertex+index size with faster decode than Draco.',
 		});
 	}
 
-	const bigTextures = info.textures.filter(
-		(t) => Math.max(t.width, t.height) >= 4096,
-	);
+	const bigTextures = info.textures.filter((t) => Math.max(t.width, t.height) >= 4096);
 	if (bigTextures.length > 0) {
 		out.push({
 			id: 'texture_oversized',
@@ -178,7 +173,8 @@ export function suggestOptimizations(info) {
 		out.push({
 			id: 'texture_basisu',
 			severity: 'info',
-			message: 'Transcode PNG textures to KTX2 (Basis Universal) for GPU-direct upload and smaller download.',
+			message:
+				'Transcode PNG textures to KTX2 (Basis Universal) for GPU-direct upload and smaller download.',
 		});
 	}
 

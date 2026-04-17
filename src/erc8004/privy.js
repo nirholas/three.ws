@@ -27,7 +27,10 @@ const BUILD_APP_ID = import.meta.env.VITE_PRIVY_APP_ID || '';
  */
 async function resolveAppId() {
 	if (_resolvedAppId !== null) return _resolvedAppId;
-	if (BUILD_APP_ID) { _resolvedAppId = BUILD_APP_ID; return _resolvedAppId; }
+	if (BUILD_APP_ID) {
+		_resolvedAppId = BUILD_APP_ID;
+		return _resolvedAppId;
+	}
 	if (_appIdPromise) return _appIdPromise;
 
 	_appIdPromise = (async () => {

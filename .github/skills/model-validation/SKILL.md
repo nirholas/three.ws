@@ -1,7 +1,7 @@
 ---
 name: model-validation
-description: "glTF model validation and reporting features. Use when: modifying validation logic, customizing validation reports, changing severity handling, adding new validation checks, fixing validator UI, or working with gltf-validator integration."
-argument-hint: "Describe the validation change or feature"
+description: 'glTF model validation and reporting features. Use when: modifying validation logic, customizing validation reports, changing severity handling, adding new validation checks, fixing validator UI, or working with gltf-validator integration.'
+argument-hint: 'Describe the validation change or feature'
 ---
 
 # Model Validation
@@ -35,24 +35,24 @@ src/components/validator-table.jsx  → Individual issue severity table renderin
 
 ## Severity Levels
 
-| Index | Level | CSS Class |
-|-------|-------|-----------|
-| 0 | Errors | `report-toggle--errors` |
-| 1 | Warnings | `report-toggle--warnings` |
-| 2 | Infos | `report-toggle--infos` |
-| 3 | Hints | `report-toggle--hints` |
+| Index | Level    | CSS Class                 |
+| ----- | -------- | ------------------------- |
+| 0     | Errors   | `report-toggle--errors`   |
+| 1     | Warnings | `report-toggle--warnings` |
+| 2     | Infos    | `report-toggle--infos`    |
+| 3     | Hints    | `report-toggle--hints`    |
 
 Messages are grouped by `code` and `message` text. Grouped messages show a count badge.
 
 ## Key Methods
 
-| Method | Purpose |
-|--------|---------|
-| `validate()` | Entry point — fetches model, runs validator, sets report |
-| `resolveExternalResource()` | Resolves URIs for multi-file glTF validation |
-| `setReport()` | Processes raw validator output, groups messages, updates UI |
-| `setResponse()` | Extracts metadata (generator, title, author, license) from glTF JSON |
-| `showToggle()` / `hideToggle()` | Controls visibility of the validation badge |
+| Method                          | Purpose                                                              |
+| ------------------------------- | -------------------------------------------------------------------- |
+| `validate()`                    | Entry point — fetches model, runs validator, sets report             |
+| `resolveExternalResource()`     | Resolves URIs for multi-file glTF validation                         |
+| `setReport()`                   | Processes raw validator output, groups messages, updates UI          |
+| `setResponse()`                 | Extracts metadata (generator, title, author, license) from glTF JSON |
+| `showToggle()` / `hideToggle()` | Controls visibility of the validation badge                          |
 
 ## Components (vhtml JSX)
 

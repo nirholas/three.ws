@@ -13,24 +13,24 @@ This is the "look-at-my-cool-model" widget. It must feel polished. If it feels l
 ## Prerequisites
 
 - Prompt 00 merged. You have:
-  - `/studio` route with avatar picker, type picker, live preview, config save/load.
-  - `src/widget-types.js` with `turntable` marked `status: 'ready'`.
-  - `src/widgets.js` client.
-  - `api/widgets/*` endpoints.
-  - Public `#widget=<id>` resolution in `src/app.js`.
+    - `/studio` route with avatar picker, type picker, live preview, config save/load.
+    - `src/widget-types.js` with `turntable` marked `status: 'ready'`.
+    - `src/widgets.js` client.
+    - `api/widgets/*` endpoints.
+    - Public `#widget=<id>` resolution in `src/app.js`.
 
 Read the PR that shipped Prompt 00 before starting so you know the exact contract.
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| [src/viewer.js](../../src/viewer.js) | Find the existing auto-rotate support (OrbitControls `autoRotate`) and the background color implementation. Find how the camera is framed. Find how env presets are applied. |
-| [src/app.js](../../src/app.js) — `hash.widget` handling from Prompt 00 | You will branch on `widget.type === 'turntable'` in the public flow. |
-| [src/widget-types.js](../../src/widget-types.js) | You will extend the turntable schema here. |
-| [public/studio/studio.js](../../public/studio/studio.js) | You will add the turntable-specific form fields. |
-| [src/ipfs.js](../../src/ipfs.js) | Resolve IPFS/Arweave URIs if the avatar uses them. |
-| The existing `features.html` hero | Match visual polish level. |
+| File                                                                   | Why                                                                                                                                                                          |
+| :--------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [src/viewer.js](../../src/viewer.js)                                   | Find the existing auto-rotate support (OrbitControls `autoRotate`) and the background color implementation. Find how the camera is framed. Find how env presets are applied. |
+| [src/app.js](../../src/app.js) — `hash.widget` handling from Prompt 00 | You will branch on `widget.type === 'turntable'` in the public flow.                                                                                                         |
+| [src/widget-types.js](../../src/widget-types.js)                       | You will extend the turntable schema here.                                                                                                                                   |
+| [public/studio/studio.js](../../public/studio/studio.js)               | You will add the turntable-specific form fields.                                                                                                                             |
+| [src/ipfs.js](../../src/ipfs.js)                                       | Resolve IPFS/Arweave URIs if the avatar uses them.                                                                                                                           |
+| The existing `features.html` hero                                      | Match visual polish level.                                                                                                                                                   |
 
 ## Build this
 
@@ -40,16 +40,16 @@ In `src/widget-types.js`, add turntable-specific fields on top of `BRAND_DEFAULT
 
 ```js
 const TURNTABLE_DEFAULTS = {
-  rotationSpeed:  1.0,          // OrbitControls autoRotateSpeed (1.0 = ~30s/rev)
-  rotationAxis:   'y',          // 'x' | 'y' | 'z'
-  clickToPause:   true,
-  loopDirection:  'cw',         // 'cw' | 'ccw'
-  posterUrl:      null,         // optional poster image (shown before load)
-  captionPosition: 'bottom',    // 'top' | 'bottom' | 'none'
-  captionStyle:   'pill',       // 'pill' | 'bar' | 'none'
-  startFrame:     null,         // optional [x,y,z] camera start if different from cameraPosition
-  fogColor:       null,         // optional radial fog for vignette feel
-  shadow:         'contact',    // 'contact' | 'ground' | 'none' — ground contact shadow
+	rotationSpeed: 1.0, // OrbitControls autoRotateSpeed (1.0 = ~30s/rev)
+	rotationAxis: 'y', // 'x' | 'y' | 'z'
+	clickToPause: true,
+	loopDirection: 'cw', // 'cw' | 'ccw'
+	posterUrl: null, // optional poster image (shown before load)
+	captionPosition: 'bottom', // 'top' | 'bottom' | 'none'
+	captionStyle: 'pill', // 'pill' | 'bar' | 'none'
+	startFrame: null, // optional [x,y,z] camera start if different from cameraPosition
+	fogColor: null, // optional radial fog for vignette feel
+	shadow: 'contact', // 'contact' | 'ground' | 'none' — ground contact shadow
 };
 ```
 
@@ -76,17 +76,17 @@ Create `src/widgets/turntable.js`. This is the module that runs inside the viewe
 
 ```js
 export function mountTurntable(viewer, config, container) {
-  // 1. Apply brand config (already done by Prompt 00's resolver, but verify idempotence).
-  // 2. Set OrbitControls.autoRotate = true, autoRotateSpeed = direction * speed.
-  // 3. Lock controls based on config.clickToPause:
-  //    - If true: render invisible click target; pause/resume on click.
-  //    - If false: disable all user input (viewer.controls.enabled = false).
-  // 4. Hide dat.gui, validator bar, drop zone, footer — anything not the canvas.
-  // 5. Render caption overlay if config.caption && captionPosition !== 'none'.
-  // 6. Apply rotationAxis by swapping OrbitControls target offset (y default is already correct; x/z require tweaking camera up vector + orbit target).
-  // 7. If config.shadow !== 'none', add a ContactShadows plane under the model (use three.js ContactShadows or a simple shadow-catching plane).
-  // 8. If config.posterUrl, render an <img> overlay that fades out on gltf load.
-  // 9. Return { destroy, pause, resume } for cleanup.
+	// 1. Apply brand config (already done by Prompt 00's resolver, but verify idempotence).
+	// 2. Set OrbitControls.autoRotate = true, autoRotateSpeed = direction * speed.
+	// 3. Lock controls based on config.clickToPause:
+	//    - If true: render invisible click target; pause/resume on click.
+	//    - If false: disable all user input (viewer.controls.enabled = false).
+	// 4. Hide dat.gui, validator bar, drop zone, footer — anything not the canvas.
+	// 5. Render caption overlay if config.caption && captionPosition !== 'none'.
+	// 6. Apply rotationAxis by swapping OrbitControls target offset (y default is already correct; x/z require tweaking camera up vector + orbit target).
+	// 7. If config.shadow !== 'none', add a ContactShadows plane under the model (use three.js ContactShadows or a simple shadow-catching plane).
+	// 8. If config.posterUrl, render an <img> overlay that fades out on gltf load.
+	// 9. Return { destroy, pause, resume } for cleanup.
 }
 ```
 
@@ -96,11 +96,11 @@ After the widget fetch in `hash.widget` resolution:
 
 ```js
 if (window.VIEWER.widget?.type === 'turntable') {
-  const { mountTurntable } = await import('./widgets/turntable.js');
-  // Wait for viewer.load() to complete, then mount:
-  this.view(resolvedModel, '', new Map()).then(() => {
-    this._widgetRuntime = mountTurntable(this.viewer, window.VIEWER.widget.config, this.el);
-  });
+	const { mountTurntable } = await import('./widgets/turntable.js');
+	// Wait for viewer.load() to complete, then mount:
+	this.view(resolvedModel, '', new Map()).then(() => {
+		this._widgetRuntime = mountTurntable(this.viewer, window.VIEWER.widget.config, this.el);
+	});
 }
 ```
 
@@ -114,11 +114,18 @@ The Studio needs a "Use current frame" button. Implementation:
 // In studio.js, when user clicks the button:
 const iframe = document.getElementById('preview-iframe');
 const canvas = iframe.contentDocument.querySelector('canvas');
-canvas.toBlob(async (blob) => {
-  const { url, upload_url } = await api.presign({ kind: 'poster', content_type: 'image/png' });
-  await fetch(upload_url, { method: 'PUT', body: blob });
-  updateConfig({ posterUrl: url });
-}, 'image/png', 0.92);
+canvas.toBlob(
+	async (blob) => {
+		const { url, upload_url } = await api.presign({
+			kind: 'poster',
+			content_type: 'image/png',
+		});
+		await fetch(upload_url, { method: 'PUT', body: blob });
+		updateConfig({ posterUrl: url });
+	},
+	'image/png',
+	0.92,
+);
 ```
 
 If `/api/avatars/presign` only supports GLBs today, extend it to accept `kind: 'poster' | 'thumbnail' | 'glb'` with separate R2 prefixes.
@@ -154,10 +161,12 @@ When the widget successfully mounts, POST `/api/widgets/:id/ping` once. The endp
 ## Deliverables
 
 **New:**
+
 - `src/widgets/turntable.js` — runtime module.
 - CSS additions (either `style.css` or new `src/widgets/widgets.css` imported by the runtime modules).
 
 **Modified:**
+
 - `src/widget-types.js` — add turntable schema and defaults.
 - `src/app.js` — dispatch to `mountTurntable` when widget type matches.
 - `public/studio/studio.js` — turntable-specific form fieldset.
@@ -168,12 +177,12 @@ When the widget successfully mounts, POST `/api/widgets/:id/ping` once. The endp
 
 - [ ] A signed-in user can create a turntable widget in Studio, save it, and share the resulting URL.
 - [ ] The public widget URL, loaded cold in an incognito window:
-  - [ ] Shows no dat.gui, no validator bar, no drop UI, no footer.
-  - [ ] Auto-rotates at the configured speed in the configured direction.
-  - [ ] Respects background color, accent color, caption, caption position/style.
-  - [ ] Starts at the saved camera position.
-  - [ ] Pauses on tap/click when `clickToPause: true`; resumes on second tap.
-  - [ ] Is fully responsive — works at 300x300 and 1920x1080.
+    - [ ] Shows no dat.gui, no validator bar, no drop UI, no footer.
+    - [ ] Auto-rotates at the configured speed in the configured direction.
+    - [ ] Respects background color, accent color, caption, caption position/style.
+    - [ ] Starts at the saved camera position.
+    - [ ] Pauses on tap/click when `clickToPause: true`; resumes on second tap.
+    - [ ] Is fully responsive — works at 300x300 and 1920x1080.
 - [ ] On a device with `prefers-reduced-motion: reduce`, auto-rotate is disabled.
 - [ ] Off-screen widgets pause via IntersectionObserver.
 - [ ] Poster image (if set) appears before the GLB loads and fades out smoothly.

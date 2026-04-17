@@ -12,12 +12,12 @@ Every message is a JSON object:
 { "v": 1, "type": "<direction>.<category>", "id": "<optional>", "payload": { ... } }
 ```
 
-| Field | Required | Description |
-|---|---|---|
-| `v` | yes | Protocol version integer. Current: `1`. |
-| `type` | yes | Dot-namespaced string. `host.*` or `embed.*`. |
-| `id` | request/response only | Correlation token for request–response pairs. |
-| `payload` | conditional | Type-specific data object. |
+| Field     | Required              | Description                                   |
+| --------- | --------------------- | --------------------------------------------- |
+| `v`       | yes                   | Protocol version integer. Current: `1`.       |
+| `type`    | yes                   | Dot-namespaced string. `host.*` or `embed.*`. |
+| `id`      | request/response only | Correlation token for request–response pairs. |
+| `payload` | conditional           | Type-specific data object.                    |
 
 Messages missing `v: 1` or `type` are malformed and MUST be ignored by the receiver (embed sends one `embed.error` diagnostic; host should log and discard).
 
@@ -31,25 +31,25 @@ Sent once after the iframe load event. Initiates the handshake.
 
 ```json
 {
-  "v": 1,
-  "type": "host.hello",
-  "payload": {
-    "hostName": "claude.ai",
-    "hostVersion": "2024-11",
-    "hostOrigin": "https://claude.ai",
-    "userId": "u_abc123",
-    "userName": "Alice"
-  }
+	"v": 1,
+	"type": "host.hello",
+	"payload": {
+		"hostName": "claude.ai",
+		"hostVersion": "2024-11",
+		"hostOrigin": "https://claude.ai",
+		"userId": "u_abc123",
+		"userName": "Alice"
+	}
 }
 ```
 
-| Field | Required | Type |
-|---|---|---|
-| `hostName` | yes | string |
-| `hostVersion` | yes | string |
-| `hostOrigin` | yes | string (origin URL) |
-| `userId` | no | string |
-| `userName` | no | string |
+| Field         | Required | Type                |
+| ------------- | -------- | ------------------- |
+| `hostName`    | yes      | string              |
+| `hostVersion` | yes      | string              |
+| `hostOrigin`  | yes      | string (origin URL) |
+| `userId`      | no       | string              |
+| `userName`    | no       | string              |
 
 ---
 
@@ -59,21 +59,21 @@ Delivers a chat turn into the agent.
 
 ```json
 {
-  "v": 1,
-  "type": "host.chat.message",
-  "payload": {
-    "role": "user",
-    "text": "Hello, tell me about yourself.",
-    "messageId": "msg_001"
-  }
+	"v": 1,
+	"type": "host.chat.message",
+	"payload": {
+		"role": "user",
+		"text": "Hello, tell me about yourself.",
+		"messageId": "msg_001"
+	}
 }
 ```
 
-| Field | Required | Type |
-|---|---|---|
-| `role` | yes | `"user"` \| `"assistant"` |
-| `text` | yes | string |
-| `messageId` | yes | string (unique per message) |
+| Field       | Required | Type                        |
+| ----------- | -------- | --------------------------- |
+| `role`      | yes      | `"user"` \| `"assistant"`   |
+| `text`      | yes      | string                      |
+| `messageId` | yes      | string (unique per message) |
 
 ---
 
@@ -83,30 +83,30 @@ Triggers a named action on the agent (emotes, speech, etc.).
 
 ```json
 {
-  "v": 1,
-  "type": "host.action",
-  "payload": {
-    "action": "emote.wave",
-    "args": {}
-  }
+	"v": 1,
+	"type": "host.action",
+	"payload": {
+		"action": "emote.wave",
+		"args": {}
+	}
 }
 ```
 
 ```json
 {
-  "v": 1,
-  "type": "host.action",
-  "payload": {
-    "action": "speak",
-    "args": { "text": "Welcome back!" }
-  }
+	"v": 1,
+	"type": "host.action",
+	"payload": {
+		"action": "speak",
+		"args": { "text": "Welcome back!" }
+	}
 }
 ```
 
-| Field | Required | Type |
-|---|---|---|
-| `action` | yes | string |
-| `args` | no | object |
+| Field    | Required | Type   |
+| -------- | -------- | ------ |
+| `action` | yes      | string |
+| `args`   | no       | object |
 
 ---
 
@@ -116,17 +116,17 @@ Updates the embed's visual theme.
 
 ```json
 {
-  "v": 1,
-  "type": "host.theme",
-  "payload": {
-    "mode": "dark"
-  }
+	"v": 1,
+	"type": "host.theme",
+	"payload": {
+		"mode": "dark"
+	}
 }
 ```
 
-| Field | Required | Type |
-|---|---|---|
-| `mode` | yes | `"dark"` \| `"light"` |
+| Field  | Required | Type                  |
+| ------ | -------- | --------------------- |
+| `mode` | yes      | `"dark"` \| `"light"` |
 
 ---
 
@@ -149,12 +149,12 @@ On error:
 
 ```json
 {
-  "v": 1,
-  "type": "host.response",
-  "id": "<same id>",
-  "payload": {
-    "error": { "code": "NOT_FOUND", "message": "resource not found" }
-  }
+	"v": 1,
+	"type": "host.response",
+	"id": "<same id>",
+	"payload": {
+		"error": { "code": "NOT_FOUND", "message": "resource not found" }
+	}
 }
 ```
 
@@ -168,21 +168,21 @@ Sent by the embed after `start()` to announce the agent is live.
 
 ```json
 {
-  "v": 1,
-  "type": "embed.ready",
-  "payload": {
-    "agentId": "agent_xyz",
-    "version": "1.0.0",
-    "capabilities": ["chat", "emote", "speak"]
-  }
+	"v": 1,
+	"type": "embed.ready",
+	"payload": {
+		"agentId": "agent_xyz",
+		"version": "1.0.0",
+		"capabilities": ["chat", "emote", "speak"]
+	}
 }
 ```
 
-| Field | Required | Type |
-|---|---|---|
-| `agentId` | yes | string |
-| `version` | yes | semver string |
-| `capabilities` | yes | string[] |
+| Field          | Required | Type          |
+| -------------- | -------- | ------------- |
+| `agentId`      | yes      | string        |
+| `version`      | yes      | semver string |
+| `capabilities` | yes      | string[]      |
 
 ---
 
@@ -192,19 +192,19 @@ Generic agent lifecycle or interaction event stream.
 
 ```json
 {
-  "v": 1,
-  "type": "embed.event",
-  "payload": {
-    "event": "agent.speaking",
-    "data": { "text": "Hello!" }
-  }
+	"v": 1,
+	"type": "embed.event",
+	"payload": {
+		"event": "agent.speaking",
+		"data": { "text": "Hello!" }
+	}
 }
 ```
 
-| Field | Required | Type |
-|---|---|---|
-| `event` | yes | string |
-| `data` | no | object |
+| Field   | Required | Type   |
+| ------- | -------- | ------ |
+| `event` | yes      | string |
+| `data`  | no       | object |
 
 Common event names: `agent.speaking`, `agent.idle`, `agent.emote`, `agent.error`.
 
@@ -216,19 +216,19 @@ Reports a protocol-level error to the host (malformed message received, unsuppor
 
 ```json
 {
-  "v": 1,
-  "type": "embed.error",
-  "payload": {
-    "code": "MALFORMED_MESSAGE",
-    "message": "missing v:1 or type"
-  }
+	"v": 1,
+	"type": "embed.error",
+	"payload": {
+		"code": "MALFORMED_MESSAGE",
+		"message": "missing v:1 or type"
+	}
 }
 ```
 
-| Field | Required | Type |
-|---|---|---|
-| `code` | yes | UPPER_SNAKE string |
-| `message` | yes | string |
+| Field     | Required | Type               |
+| --------- | -------- | ------------------ |
+| `code`    | yes      | UPPER_SNAKE string |
+| `message` | yes      | string             |
 
 ---
 
@@ -238,21 +238,21 @@ Ask the host for data or an action. Host replies with `host.response` matching `
 
 ```json
 {
-  "v": 1,
-  "type": "embed.request",
-  "id": "req_abc",
-  "payload": {
-    "method": "host.getUser",
-    "params": {}
-  }
+	"v": 1,
+	"type": "embed.request",
+	"id": "req_abc",
+	"payload": {
+		"method": "host.getUser",
+		"params": {}
+	}
 }
 ```
 
-| Field | Required | Type |
-|---|---|---|
-| `id` | yes | string (unique per request) |
-| `payload.method` | yes | string |
-| `payload.params` | no | object |
+| Field            | Required | Type                        |
+| ---------------- | -------- | --------------------------- |
+| `id`             | yes      | string (unique per request) |
+| `payload.method` | yes      | string                      |
+| `payload.params` | no       | object                      |
 
 Default timeout: 5 000 ms. After timeout the pending request rejects with a timeout error.
 
@@ -281,10 +281,10 @@ The embed sends `embed.ready` immediately on `start()`. The host may send `host.
 
 `EmbedHostBridge` accepts an `allowedOrigins` constructor option:
 
-| Value | Behaviour |
-|---|---|
-| `'*'` (default) | Accept messages from any `window.parent` origin. |
-| `string[]` | Accept only listed origins (exact match). Example: `['https://claude.ai', 'https://lobehub.com']`. |
+| Value           | Behaviour                                                                                          |
+| --------------- | -------------------------------------------------------------------------------------------------- |
+| `'*'` (default) | Accept messages from any `window.parent` origin.                                                   |
+| `string[]`      | Accept only listed origins (exact match). Example: `['https://claude.ai', 'https://lobehub.com']`. |
 
 Messages from non-parent frames are always rejected regardless of allowlist.
 

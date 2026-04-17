@@ -41,24 +41,31 @@ export class NichAgent {
 	 * @param {import('./runtime/index.js').Runtime}               [runtime]
 	 * @param {NichAgentOptions}                                   [options]
 	 */
-	constructor(containerEl, protocol = null, skills = null, identity = null, runtime = null, options = {}) {
-		this.container  = containerEl;
-		this.protocol   = protocol;
-		this.skills     = skills;
-		this.identity   = identity;
-		this.runtime    = runtime;
-		this.options    = options || {};
-		this.layout     = this.options.layout    || 'floating';
-		this.position   = this.options.position  || 'right';
-		this.voiceInput = this.options.voiceInput  !== false;
+	constructor(
+		containerEl,
+		protocol = null,
+		skills = null,
+		identity = null,
+		runtime = null,
+		options = {},
+	) {
+		this.container = containerEl;
+		this.protocol = protocol;
+		this.skills = skills;
+		this.identity = identity;
+		this.runtime = runtime;
+		this.options = options || {};
+		this.layout = this.options.layout || 'floating';
+		this.position = this.options.position || 'right';
+		this.voiceInput = this.options.voiceInput !== false;
 		this.voiceOutput = this.options.voiceOutput !== false;
 		this.isSpeaking = false;
 		this.isListening = false;
 		this.recognition = null;
-		this.synth      = window.speechSynthesis;
-		this.messages   = [];
+		this.synth = window.speechSynthesis;
+		this.messages = [];
 		this.onFirstOpen = null;
-		this._hasOpened  = false;
+		this._hasOpened = false;
 		this._apiDisabled = false;
 		this._storageKey = `nich-agent:history:${this.identity?.id || 'default'}`;
 		this._loadHistory();
@@ -95,9 +102,9 @@ export class NichAgent {
 		if (!SpeechRecognition) return;
 
 		this.recognition = new SpeechRecognition();
-		this.recognition.continuous      = false;
-		this.recognition.interimResults  = false;
-		this.recognition.lang            = 'en-US';
+		this.recognition.continuous = false;
+		this.recognition.interimResults = false;
+		this.recognition.lang = 'en-US';
 
 		this.recognition.onresult = (event) => {
 			const text = event.results[0][0].transcript;
@@ -120,13 +127,19 @@ export class NichAgent {
 
 	_buildUI() {
 		const titleText = this.options.title || this.identity?.name || 'Agent';
-		const greeting  = this.options.greeting
-			|| (this.layout === 'embedded' ? 'Hi! Ask me anything.' : `I'm here. Drop a model, ask me anything, or say "help".`);
+		const greeting =
+			this.options.greeting ||
+			(this.layout === 'embedded'
+				? 'Hi! Ask me anything.'
+				: `I'm here. Drop a model, ask me anything, or say "help".`);
 
 		this.panel = document.createElement('div');
-		this.panel.className  = 'nich-panel'
-			+ (this.layout === 'embedded' ? ' nich-panel--embedded nich-position--' + this.position : '');
-		this.panel.innerHTML  = `
+		this.panel.className =
+			'nich-panel' +
+			(this.layout === 'embedded'
+				? ' nich-panel--embedded nich-position--' + this.position
+				: '');
+		this.panel.innerHTML = `
 			<div class="nich-header">
 				<span class="nich-title">${_escapeHTML(titleText)}</span>
 				<div class="nich-header-right">
@@ -143,23 +156,27 @@ export class NichAgent {
 					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
 				</button>
 			</div>
-			${this.voiceInput ? `
+			${
+				this.voiceInput
+					? `
 				<div class="nich-mic-row">
 					<button class="nich-mic" aria-label="Toggle microphone">
 						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5zm6 6c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
 					</button>
 					<span class="nich-mic-hint">${SpeechRecognition ? 'or press mic to speak' : 'voice unavailable in this browser'}</span>
 				</div>
-			` : ''}
+			`
+					: ''
+			}
 			${this.options.showPoweredBy ? '<a class="nich-powered-by" href="https://3dagent.vercel.app" target="_blank" rel="noopener noreferrer">powered by 3dagent</a>' : ''}
 		`;
 
 		// Apply theme overrides via CSS custom properties scoped to the panel.
 		if (this.options.theme) {
 			const t = this.options.theme;
-			if (t.accent)     this.panel.style.setProperty('--nich-accent',     t.accent);
-			if (t.background) this.panel.style.setProperty('--nich-bg',         t.background);
-			if (t.caption)    this.panel.style.setProperty('--nich-fg',         t.caption);
+			if (t.accent) this.panel.style.setProperty('--nich-accent', t.accent);
+			if (t.background) this.panel.style.setProperty('--nich-bg', t.background);
+			if (t.caption) this.panel.style.setProperty('--nich-fg', t.caption);
 		}
 
 		if (this.layout === 'embedded') {
@@ -182,10 +199,12 @@ export class NichAgent {
 			`;
 			this.container.appendChild(this.toggleBtn);
 			this.toggleBtn.addEventListener('click', () => this._togglePanel());
-			this.panel.querySelector('.nich-close')?.addEventListener('click', () => this._togglePanel());
+			this.panel
+				.querySelector('.nich-close')
+				?.addEventListener('click', () => this._togglePanel());
 		}
 
-		this.panel.querySelector('.nich-send').addEventListener('click',  () => this._send());
+		this.panel.querySelector('.nich-send').addEventListener('click', () => this._send());
 		this.panel.querySelector('.nich-input').addEventListener('keydown', (e) => {
 			if (e.key === 'Enter') this._send();
 		});
@@ -215,7 +234,7 @@ export class NichAgent {
 
 	_send() {
 		const input = this.panel.querySelector('.nich-input');
-		const text  = input.value.trim();
+		const text = input.value.trim();
 		if (!text) return;
 		input.value = '';
 		this._addMessage('user', text);
@@ -235,7 +254,7 @@ export class NichAgent {
 					this._pushHistory('assistant', result.reply);
 					if (this.protocol) {
 						this.protocol.emit({
-							type:    ACTION_TYPES.SPEAK,
+							type: ACTION_TYPES.SPEAK,
 							payload: { text: result.reply, sentiment: 0 },
 							agentId: this.identity?.id || 'default',
 						});
@@ -294,7 +313,7 @@ export class NichAgent {
 
 		if (this.protocol) {
 			this.protocol.emit({
-				type:    ACTION_TYPES.SPEAK,
+				type: ACTION_TYPES.SPEAK,
 				payload: { text: response, sentiment: 0 },
 				agentId: this.identity?.id || 'default',
 			});
@@ -307,9 +326,9 @@ export class NichAgent {
 		const typing = this._startTyping();
 		try {
 			const res = await fetch('/api/chat', {
-				method:      'POST',
+				method: 'POST',
 				credentials: 'include',
-				headers:     { 'content-type': 'application/json' },
+				headers: { 'content-type': 'application/json' },
 				body: JSON.stringify({
 					message,
 					context: this._buildContext(),
@@ -326,7 +345,12 @@ export class NichAgent {
 			if (!res.ok) return { ok: false, reason: `http_${res.status}` };
 
 			const data = await res.json();
-			return { ok: true, message, reply: (data.reply || '').trim(), actions: data.actions || [] };
+			return {
+				ok: true,
+				message,
+				reply: (data.reply || '').trim(),
+				actions: data.actions || [],
+			};
 		} catch (err) {
 			console.warn('[NichAgent] /api/chat failed:', err.message);
 			return { ok: false, reason: 'network' };
@@ -344,7 +368,7 @@ export class NichAgent {
 			this._pushHistory('assistant', reply);
 			if (this.protocol) {
 				this.protocol.emit({
-					type:    ACTION_TYPES.SPEAK,
+					type: ACTION_TYPES.SPEAK,
 					payload: { text: reply, sentiment: 0 },
 					agentId: this.identity?.id || 'default',
 				});
@@ -365,38 +389,40 @@ export class NichAgent {
 		const validator = window.VIEWER?.app?.validator;
 		const state = viewer?.state || {};
 		const ctx = {
-			wireframe:     !!state.wireframe,
-			skeleton:      !!state.skeleton,
-			grid:          !!state.grid,
-			autoRotate:    !!state.autoRotate,
+			wireframe: !!state.wireframe,
+			skeleton: !!state.skeleton,
+			grid: !!state.grid,
+			autoRotate: !!state.autoRotate,
 			transparentBg: !!state.transparentBg,
-			bgColor:       state.bgColor,
+			bgColor: state.bgColor,
 			currentEnvironment: state.environment,
 		};
 		if (viewer?.content) {
 			if (viewer.content.name) ctx.modelName = viewer.content.name;
 			const stats = this._countStats(viewer.content);
-			ctx.vertices  = stats.vertices;
+			ctx.vertices = stats.vertices;
 			ctx.triangles = stats.triangles;
 			ctx.materials = stats.materials;
 			ctx.animations = viewer.clips?.length || 0;
 		}
 		if (validator?.report) {
-			ctx.validationErrors   = validator.report.errors?.length   || 0;
+			ctx.validationErrors = validator.report.errors?.length || 0;
 			ctx.validationWarnings = validator.report.warnings?.length || 0;
 		}
 		return ctx;
 	}
 
 	_countStats(root) {
-		let vertices = 0, triangles = 0;
+		let vertices = 0,
+			triangles = 0;
 		const materials = new Set();
 		root.traverse((node) => {
 			if (node.isMesh || node.isPoints || node.isLine) {
 				const geo = node.geometry;
 				if (geo) {
 					if (geo.index) triangles += geo.index.count / 3;
-					else if (geo.attributes.position) triangles += geo.attributes.position.count / 3;
+					else if (geo.attributes.position)
+						triangles += geo.attributes.position.count / 3;
 					if (geo.attributes.position) vertices += geo.attributes.position.count;
 				}
 				const mats = Array.isArray(node.material) ? node.material : [node.material];
@@ -408,21 +434,33 @@ export class NichAgent {
 
 	async _executeAction(action) {
 		const viewer = window.VIEWER?.app?.viewer;
-		const app    = window.VIEWER?.app;
+		const app = window.VIEWER?.app;
 		if (!action || typeof action.type !== 'string') return;
 
 		switch (action.type) {
 			case 'setWireframe':
-				if (viewer) { viewer.state.wireframe = !!action.value; viewer.updateDisplay(); }
+				if (viewer) {
+					viewer.state.wireframe = !!action.value;
+					viewer.updateDisplay();
+				}
 				break;
 			case 'setSkeleton':
-				if (viewer) { viewer.state.skeleton = !!action.value; viewer.updateDisplay(); }
+				if (viewer) {
+					viewer.state.skeleton = !!action.value;
+					viewer.updateDisplay();
+				}
 				break;
 			case 'setGrid':
-				if (viewer) { viewer.state.grid = !!action.value; viewer.updateDisplay(); }
+				if (viewer) {
+					viewer.state.grid = !!action.value;
+					viewer.updateDisplay();
+				}
 				break;
 			case 'setAutoRotate':
-				if (viewer) { viewer.state.autoRotate = !!action.value; viewer.updateDisplay(); }
+				if (viewer) {
+					viewer.state.autoRotate = !!action.value;
+					viewer.updateDisplay();
+				}
 				break;
 			case 'setBgColor':
 				if (viewer && typeof action.value === 'string') {
@@ -431,7 +469,10 @@ export class NichAgent {
 				}
 				break;
 			case 'setTransparentBg':
-				if (viewer) { viewer.state.transparentBg = !!action.value; viewer.updateBackground(); }
+				if (viewer) {
+					viewer.state.transparentBg = !!action.value;
+					viewer.updateBackground();
+				}
 				break;
 			case 'setEnvironment':
 				if (viewer && typeof action.value === 'string') {
@@ -486,12 +527,16 @@ export class NichAgent {
 	_pushHistory(role, content) {
 		this._history.push({ role, content });
 		if (this._history.length > 20) this._history = this._history.slice(-20);
-		try { sessionStorage.setItem(this._storageKey, JSON.stringify(this._history)); } catch {}
+		try {
+			sessionStorage.setItem(this._storageKey, JSON.stringify(this._history));
+		} catch {}
 	}
 
 	_resetHistory() {
 		this._history = [];
-		try { sessionStorage.removeItem(this._storageKey); } catch {}
+		try {
+			sessionStorage.removeItem(this._storageKey);
+		} catch {}
 	}
 
 	/**
@@ -499,19 +544,20 @@ export class NichAgent {
 	 * Returns null if no skill matches.
 	 */
 	_matchSkill(lower) {
-		if (lower.match(/\b(present|describe|tell me about|what.*model|show me)\b/)) return 'present-model';
-		if (lower.match(/\b(validate|check|errors|warnings|valid)\b/))              return 'validate-model';
-		if (lower.match(/\b(remember|save|store|note|don't forget)\b/))              return 'remember';
-		if (lower.match(/\b(sign|signature|wallet|verify|prove)\b/))                 return 'sign-action';
-		if (lower.match(/\b(think|recall|what do you know|context)\b/))              return 'think';
-		if (lower.match(/\b(help|what can you|commands|skills|abilities)\b/))        return 'help';
+		if (lower.match(/\b(present|describe|tell me about|what.*model|show me)\b/))
+			return 'present-model';
+		if (lower.match(/\b(validate|check|errors|warnings|valid)\b/)) return 'validate-model';
+		if (lower.match(/\b(remember|save|store|note|don't forget)\b/)) return 'remember';
+		if (lower.match(/\b(sign|signature|wallet|verify|prove)\b/)) return 'sign-action';
+		if (lower.match(/\b(think|recall|what do you know|context)\b/)) return 'think';
+		if (lower.match(/\b(help|what can you|commands|skills|abilities)\b/)) return 'help';
 		return null;
 	}
 
 	// ── Response Generation (fallback) ────────────────────────────────────────
 
 	_generateResponse(input) {
-		const lower  = input.toLowerCase();
+		const lower = input.toLowerCase();
 		const viewer = window.VIEWER?.app?.viewer;
 
 		if (lower.match(/\b(hello|hi|hey|sup|yo)\b/)) {
@@ -566,7 +612,7 @@ export class NichAgent {
 			return 'No memories yet. Tell me something worth remembering.';
 		}
 
-		return "Try asking me to present or validate the loaded model, or drop a glTF/GLB file to get started.";
+		return 'Try asking me to present or validate the loaded model, or drop a glTF/GLB file to get started.';
 	}
 
 	// ── Speech Synthesis ─────────────────────────────────────────────────────
@@ -576,12 +622,16 @@ export class NichAgent {
 		if (!this.synth) return;
 		this.synth.cancel();
 
-		const utterance    = new SpeechSynthesisUtterance(text);
-		utterance.rate     = 1.0;
-		utterance.pitch    = 1.0;
-		utterance.volume   = 0.8;
-		utterance.onstart  = () => { this.isSpeaking = true; };
-		utterance.onend    = () => { this.isSpeaking = false; };
+		const utterance = new SpeechSynthesisUtterance(text);
+		utterance.rate = 1.0;
+		utterance.pitch = 1.0;
+		utterance.volume = 0.8;
+		utterance.onstart = () => {
+			this.isSpeaking = true;
+		};
+		utterance.onend = () => {
+			this.isSpeaking = false;
+		};
 
 		this.synth.speak(utterance);
 	}
@@ -611,8 +661,8 @@ export class NichAgent {
 			this.messages.push({ role, text });
 		}
 		const messagesEl = this.panel.querySelector('#agent-messages');
-		const msgEl      = document.createElement('div');
-		msgEl.className  = `nich-message ${role}${type ? ' ' + type : ''}`;
+		const msgEl = document.createElement('div');
+		msgEl.className = `nich-message ${role}${type ? ' ' + type : ''}`;
 		msgEl.textContent = text;
 		messagesEl.appendChild(msgEl);
 		messagesEl.scrollTop = messagesEl.scrollHeight;
@@ -622,9 +672,13 @@ export class NichAgent {
 
 	dispose() {
 		if (this.recognition) {
-			try { this.recognition.stop(); } catch {}
+			try {
+				this.recognition.stop();
+			} catch {}
 		}
-		try { this.synth?.cancel(); } catch {}
+		try {
+			this.synth?.cancel();
+		} catch {}
 		this.panel?.remove();
 		this.toggleBtn?.remove();
 	}

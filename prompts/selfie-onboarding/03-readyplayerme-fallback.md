@@ -27,6 +27,7 @@ const result = await pipe.run({ photoBlob });
 ```
 
 Strategy:
+
 1. Embed the Ready Player Me iframe (`https://${RPM_SUBDOMAIN}/avatar?frameApi`) in a modal container the pipeline creates and tears down.
 2. Pass the selfie blob to RPM via their `postMessage` API (RPM accepts `{ target: 'readyplayerme', type: 'selfie', data }` — verify against their current docs and record what you used).
 3. Listen for `v1.avatar.exported` messages; pull the GLB URL from the payload.
@@ -35,9 +36,9 @@ Strategy:
 ### When to use fallback
 
 - Export a helper `chooseAvatarPipeline({ preferred })` that returns either `AvaturnPipeline` or `RpmPipeline` based on:
-  - explicit user choice (query param `?pipeline=rpm` or `?pipeline=avaturn`)
-  - a health check against both services (1s timeout, in parallel)
-  - default to Avaturn
+    - explicit user choice (query param `?pipeline=rpm` or `?pipeline=avaturn`)
+    - a health check against both services (1s timeout, in parallel)
+    - default to Avaturn
 - On first-pipeline failure with `quota_exceeded | network | timeout`, automatically retry with the other and emit a user-visible toast ("Trying another service…").
 
 Keep the selector in `src/onboarding/pipeline-selector.js`.

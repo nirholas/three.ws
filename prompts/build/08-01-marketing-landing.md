@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Rewrite the root landing page to sell the actual product: embodied agents you can embed anywhere"
+description: 'Rewrite the root landing page to sell the actual product: embodied agents you can embed anywhere'
 ---
 
 # 08-01 · Marketing landing page

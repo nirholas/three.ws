@@ -20,17 +20,17 @@ None. This prompt assumes the current codebase state as of commit `ef3b0d4`. Rea
 
 ## Read these first (do not skip)
 
-| File | Why |
-|:---|:---|
-| [src/app.js](../../src/app.js) — lines 36–100, 270–340 | Understand the existing App boot sequence, URL hash parsing, `view()` method signature, and how `protocol`/`identity`/`avatar`/`runtime` are wired. You will add `hash.widget` parsing here. |
-| [src/viewer.js](../../src/viewer.js) — constructor + `load()` + `setCamera()` | The `Viewer` class is what you'll render inside the Studio preview iframe. It already supports `cameraPosition`, background color, HDR environments, animations. |
-| [src/account.js](../../src/account.js) | Existing client for avatar CRUD against `/api/avatars`. Mirror this pattern for widgets. |
-| [api/avatars/index.js](../../api/avatars/index.js) and [api/avatars/presign.js](../../api/avatars/presign.js) | Reference implementation for an authenticated Vercel serverless CRUD endpoint backed by Neon. Follow the same auth + error conventions. |
-| [api/_lib/](../../api/_lib/) | Shared helpers: auth middleware, Neon client, response helpers. Use these — do not create duplicates. |
-| [public/dashboard/dashboard.js](../../public/dashboard/dashboard.js) — lines 1–90 | Dashboard's native-DOM rendering pattern. The Studio UI should follow the same style (no framework, no JSX runtime on the client — use `vhtml` if you want JSX, same as the validator components). |
-| [vercel.json](../../vercel.json) | Route table. You will add `/studio` and `/api/widgets/*` routes here. |
-| [style.css](../../style.css) | Existing dark theme tokens. Reuse the CSS variables and classes; do not introduce a new design system. |
-| [index.html](../../index.html) | The SPA shell. You need to understand how hash params are consumed so `#widget=<id>` can hook in without breaking existing `#model=` behavior. |
+| File                                                                                                          | Why                                                                                                                                                                                                |
+| :------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [src/app.js](../../src/app.js) — lines 36–100, 270–340                                                        | Understand the existing App boot sequence, URL hash parsing, `view()` method signature, and how `protocol`/`identity`/`avatar`/`runtime` are wired. You will add `hash.widget` parsing here.       |
+| [src/viewer.js](../../src/viewer.js) — constructor + `load()` + `setCamera()`                                 | The `Viewer` class is what you'll render inside the Studio preview iframe. It already supports `cameraPosition`, background color, HDR environments, animations.                                   |
+| [src/account.js](../../src/account.js)                                                                        | Existing client for avatar CRUD against `/api/avatars`. Mirror this pattern for widgets.                                                                                                           |
+| [api/avatars/index.js](../../api/avatars/index.js) and [api/avatars/presign.js](../../api/avatars/presign.js) | Reference implementation for an authenticated Vercel serverless CRUD endpoint backed by Neon. Follow the same auth + error conventions.                                                            |
+| [api/\_lib/](../../api/_lib/)                                                                                 | Shared helpers: auth middleware, Neon client, response helpers. Use these — do not create duplicates.                                                                                              |
+| [public/dashboard/dashboard.js](../../public/dashboard/dashboard.js) — lines 1–90                             | Dashboard's native-DOM rendering pattern. The Studio UI should follow the same style (no framework, no JSX runtime on the client — use `vhtml` if you want JSX, same as the validator components). |
+| [vercel.json](../../vercel.json)                                                                              | Route table. You will add `/studio` and `/api/widgets/*` routes here.                                                                                                                              |
+| [style.css](../../style.css)                                                                                  | Existing dark theme tokens. Reuse the CSS variables and classes; do not introduce a new design system.                                                                                             |
+| [index.html](../../index.html)                                                                                | The SPA shell. You need to understand how hash params are consumed so `#widget=<id>` can hook in without breaking existing `#model=` behavior.                                                     |
 
 Also run `ls api/_lib` and open every file in there — one of them almost certainly has `requireAuth()` or equivalent. Use it. Do not hand-roll auth.
 
@@ -64,13 +64,13 @@ create index if not exists widgets_type_idx on widgets(type);
 
 Create the following under `api/widgets/`:
 
-| File | Method + Path | Auth | Purpose |
-|:---|:---|:---|:---|
-| `api/widgets/index.js` | `GET /api/widgets` | required | List current user's widgets. |
-| `api/widgets/index.js` | `POST /api/widgets` | required | Create a widget. Returns `{ id, ... }`. |
-| `api/widgets/[id].js` | `GET /api/widgets/:id` | **public** | Fetch a widget config by id. If `is_public=false`, require auth + ownership. Increment `view_count`. |
-| `api/widgets/[id].js` | `PATCH /api/widgets/:id` | required + owner | Update config/name/is_public. |
-| `api/widgets/[id].js` | `DELETE /api/widgets/:id` | required + owner | Delete. |
+| File                   | Method + Path             | Auth             | Purpose                                                                                              |
+| :--------------------- | :------------------------ | :--------------- | :--------------------------------------------------------------------------------------------------- |
+| `api/widgets/index.js` | `GET /api/widgets`        | required         | List current user's widgets.                                                                         |
+| `api/widgets/index.js` | `POST /api/widgets`       | required         | Create a widget. Returns `{ id, ... }`.                                                              |
+| `api/widgets/[id].js`  | `GET /api/widgets/:id`    | **public**       | Fetch a widget config by id. If `is_public=false`, require auth + ownership. Increment `view_count`. |
+| `api/widgets/[id].js`  | `PATCH /api/widgets/:id`  | required + owner | Update config/name/is_public.                                                                        |
+| `api/widgets/[id].js`  | `DELETE /api/widgets/:id` | required + owner | Delete.                                                                                              |
 
 ID format: `wdgt_` + 12 URL-safe random chars (use `crypto.randomBytes(9).toString('base64url')` and verify the length — 9 bytes → 12 base64url chars).
 
@@ -98,26 +98,35 @@ Create `src/widget-types.js`. Defines:
 
 ```js
 export const WIDGET_TYPES = {
-  'turntable':         { label: 'Turntable Showcase',  status: 'ready',   icon: '...', desc: '...' },
-  'animation-gallery': { label: 'Animation Gallery',    status: 'pending', icon: '...', desc: '...' },
-  'talking-agent':     { label: 'Talking Agent',        status: 'pending', icon: '...', desc: '...' },
-  'passport':          { label: 'ERC-8004 Passport',    status: 'pending', icon: '...', desc: '...' },
-  'hotspot-tour':      { label: 'Hotspot Tour',         status: 'pending', icon: '...', desc: '...' },
+	turntable: { label: 'Turntable Showcase', status: 'ready', icon: '...', desc: '...' },
+	'animation-gallery': {
+		label: 'Animation Gallery',
+		status: 'pending',
+		icon: '...',
+		desc: '...',
+	},
+	'talking-agent': { label: 'Talking Agent', status: 'pending', icon: '...', desc: '...' },
+	passport: { label: 'ERC-8004 Passport', status: 'pending', icon: '...', desc: '...' },
+	'hotspot-tour': { label: 'Hotspot Tour', status: 'pending', icon: '...', desc: '...' },
 };
 
 // Shared brand config present on every widget
 export const BRAND_DEFAULTS = {
-  background: '#0a0a0a',
-  accent:     '#00e5a0',
-  caption:    '',
-  showControls: true,
-  autoRotate:   true,
-  envPreset:    'neutral',
-  cameraPosition: null,  // [x, y, z] or null for auto-frame
+	background: '#0a0a0a',
+	accent: '#00e5a0',
+	caption: '',
+	showControls: true,
+	autoRotate: true,
+	envPreset: 'neutral',
+	cameraPosition: null, // [x, y, z] or null for auto-frame
 };
 
-export function defaultConfig(type) { /* returns { ...BRAND_DEFAULTS, ...typeSpecificDefaults[type] } */ }
-export function validateConfig(type, config) { /* zod parse, throws on invalid */ }
+export function defaultConfig(type) {
+	/* returns { ...BRAND_DEFAULTS, ...typeSpecificDefaults[type] } */
+}
+export function validateConfig(type, config) {
+	/* zod parse, throws on invalid */
+}
 ```
 
 `status: 'ready'` on type `turntable` only (per run order — the Turntable prompt will flip more to `ready` as they ship).
@@ -154,6 +163,7 @@ Column 1 calls `api.listAvatars()` (reuse `dashboard.js`'s `api`). Thumbnail car
 Column 2 is an `<iframe src="/?widget-preview=1#model=<model_url>&kiosk=true&...">` that reloads whenever config changes (debounce 200ms). **Do not build a second viewer.** Reuse the existing one via URL hash params. To apply brand colors, post a message to the iframe (next section).
 
 Column 3 is a form. All changes update in-memory state and trigger the debounced preview reload. Fields:
+
 - **Name** (text, required)
 - **Background color** (color picker)
 - **Accent color** (color picker)
@@ -165,18 +175,20 @@ Column 3 is a form. All changes update in-memory state and trigger the debounced
 - **Type-specific fields** — for `turntable`, just rotation speed. For others, show a placeholder "Configured by Widget 0X — coming soon."
 
 Below the form:
+
 - **[Save Draft]** button → `createWidget()` or `updateWidget()` if editing.
 - **[Generate Embed]** button → saves, then opens a modal with:
-  - Live preview
-  - Shareable URL: `https://<host>/#widget=<id>`
-  - Iframe snippet (600x600 default, editable dimensions)
-  - One-line script snippet: `<script async src="https://<host>/embed.js" data-widget="<id>"></script>` (stub script file — create `public/embed.js` that just creates an iframe for now)
-  - "Show HTML" disclosure showing the raw snippet
-  - Copy-to-clipboard buttons
+    - Live preview
+    - Shareable URL: `https://<host>/#widget=<id>`
+    - Iframe snippet (600x600 default, editable dimensions)
+    - One-line script snippet: `<script async src="https://<host>/embed.js" data-widget="<id>"></script>` (stub script file — create `public/embed.js` that just creates an iframe for now)
+    - "Show HTML" disclosure showing the raw snippet
+    - Copy-to-clipboard buttons
 
 ### 6. `postMessage` bridge between Studio and preview iframe
 
 The Studio parent sends live config updates to the preview iframe without a full reload. In `src/app.js`, add a message listener that accepts `{ type: 'widget:config', config }` and applies:
+
 - Background color → `viewer.setBackgroundColor(config.background)` (add this method to `Viewer` if missing — it already supports background color via dat.gui, so the logic exists).
 - Auto-rotate → `viewer.controls.autoRotate = config.autoRotate`.
 - Env preset → `viewer.setEnvironment(preset)` (already exists).
@@ -192,13 +204,13 @@ In `src/app.js`, after parsing the hash:
 
 ```js
 if (hash.widget) {
-  const widget = await getWidget(hash.widget);   // public endpoint
-  // Apply widget.config to this.options before any viewer work:
-  //   - model URL comes from widget.avatar.model_url (server-joined or second fetch)
-  //   - cameraPosition, background, etc. from config
-  // Then proceed with normal view() flow.
-  // Also expose widget.type so later prompts can branch on it:
-  window.VIEWER.widget = widget;
+	const widget = await getWidget(hash.widget); // public endpoint
+	// Apply widget.config to this.options before any viewer work:
+	//   - model URL comes from widget.avatar.model_url (server-joined or second fetch)
+	//   - cameraPosition, background, etc. from config
+	// Then proceed with normal view() flow.
+	// Also expose widget.type so later prompts can branch on it:
+	window.VIEWER.widget = widget;
 }
 ```
 
@@ -220,11 +232,12 @@ If the widget id is unknown, show an in-page error: "Widget not found." Do not r
 - Do not duplicate auth logic — reuse the helper in `api/_lib/`.
 - Do not create a mock mode. If the Neon connection fails locally, document how to run Neon in dev (probably via `DATABASE_URL` env var — check how `api/avatars` does it).
 - Do not hardcode the production domain. Use `location.origin` client-side and `req.headers.host` (or Vercel env vars) server-side.
-- Do not ship the widget type cards as unclickable placeholders. "Coming soon" types should be *clickable* and render a Studio form with a banner saying "This widget type isn't functional yet — you can save the config; the runtime will light up when its prompt ships." The config still saves and round-trips.
+- Do not ship the widget type cards as unclickable placeholders. "Coming soon" types should be _clickable_ and render a Studio form with a banner saying "This widget type isn't functional yet — you can save the config; the runtime will light up when its prompt ships." The config still saves and round-trips.
 
 ## Deliverables (exact file list)
 
 **New:**
+
 - `api/_lib/migrations/002_widgets.sql` (or next available number — verify first)
 - `api/widgets/index.js`
 - `api/widgets/[id].js`
@@ -236,6 +249,7 @@ If the widget id is unknown, show an in-page error: "Widget not found." Do not r
 - `public/embed.js` (stub iframe-injector script)
 
 **Modified:**
+
 - `src/app.js` — add `hash.widget` handling + postMessage listener
 - `src/viewer.js` — add `setBackgroundColor()` if not already exposed as a public method
 - `vercel.json` — add `/studio`, `/api/widgets`, `/api/widgets/*` routes
@@ -265,9 +279,9 @@ You are done when **all** of these are true:
 4. Click "Use current view" after orbiting — preview persists that camera.
 5. Save draft. Refresh. Verify it re-loads the draft.
 6. Generate embed. Copy the URL. Paste in a private window. Verify:
-   - Model loads.
-   - Background, camera, env are applied.
-   - No dat.gui panel if `showControls=false`.
+    - Model loads.
+    - Background, camera, env are applied.
+    - No dat.gui panel if `showControls=false`.
 7. Deliberately break: visit `/#widget=wdgt_does_not_exist`. Verify graceful error, not a crash.
 8. Open `public/embed.js` snippet in an HTML scratch file. Verify it injects an iframe.
 9. `npm run build && npm run dev` — confirm production build works.

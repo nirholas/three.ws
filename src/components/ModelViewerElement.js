@@ -122,7 +122,9 @@ export class ModelViewerElement extends HTMLElement {
 		if (typeof this._viewer.dispose === 'function') {
 			this._viewer.dispose();
 		} else {
-			console.warn('[mv-viewer] Viewer.dispose() not available — disconnect will leak resources.');
+			console.warn(
+				'[mv-viewer] Viewer.dispose() not available — disconnect will leak resources.',
+			);
 		}
 		this._viewer = null;
 		this._stageEl = null;

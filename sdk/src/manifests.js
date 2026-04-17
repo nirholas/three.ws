@@ -19,17 +19,21 @@
  * @param {Array}    [opts.registrations]  On-chain registration records
  * @returns {object}
  */
-export function agentRegistration({ name, description, endpoint, image = '', services = [], registrations = [] }) {
+export function agentRegistration({
+	name,
+	description,
+	endpoint,
+	image = '',
+	services = [],
+	registrations = [],
+}) {
 	return {
 		type: 'https://eips.ethereum.org/EIPS/eip-8004#registration-v1',
 		name,
 		description,
 		image,
 		active: true,
-		services: [
-			{ name: 'web', endpoint },
-			...services,
-		],
+		services: [{ name: 'web', endpoint }, ...services],
 		registrations,
 		supportedTrust: ['reputation'],
 	};
@@ -84,7 +88,14 @@ export function agentCard({ name, description, url, version = '1.0.0', org = '',
  * @param {string}   [opts.legalUrl]
  * @returns {object}
  */
-export function aiPlugin({ name, description, openapiUrl, logoUrl = '', contactEmail = '', legalUrl = '' }) {
+export function aiPlugin({
+	name,
+	description,
+	openapiUrl,
+	logoUrl = '',
+	contactEmail = '',
+	legalUrl = '',
+}) {
 	const modelName = name.toLowerCase().replace(/[^a-z0-9_]/g, '_');
 	return {
 		schema_version: 'v1',

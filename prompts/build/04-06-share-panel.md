@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "One-click share panel on the agent page — link, embed snippet, Claude Artifact, Lobehub"
+description: 'One-click share panel on the agent page — link, embed snippet, Claude Artifact, Lobehub'
 ---
 
 # 04-06 · Share panel on /agent/:id
@@ -33,20 +33,26 @@ Three tabs:
 
 1. **Link** — the canonical `/agent/:id` URL with a copy button. Shows a preview of the OG card so owners see what it looks like when pasted into Slack/Discord.
 2. **Embed** — three one-click snippets:
-   - **iframe** — for static sites.
-     ```html
-     <iframe src="https://3dagent.vercel.app/agent/ID/embed" width="400" height="500" frameborder="0" allow="camera; microphone"></iframe>
-     ```
-   - **web component** — for modern sites.
-     ```html
-     <script type="module" src="https://3dagent.vercel.app/agent-3d.js"></script>
-     <agent-avatar agent-id="ID" height="500px"></agent-avatar>
-     ```
-   - **Markdown** — for GitHub READMEs (falls back to an image link to the OG card).
+    - **iframe** — for static sites.
+        ```html
+        <iframe
+        	src="https://3dagent.vercel.app/agent/ID/embed"
+        	width="400"
+        	height="500"
+        	frameborder="0"
+        	allow="camera; microphone"
+        ></iframe>
+        ```
+    - **web component** — for modern sites.
+        ```html
+        <script type="module" src="https://3dagent.vercel.app/agent-3d.js"></script>
+        <agent-avatar agent-id="ID" height="500px"></agent-avatar>
+        ```
+    - **Markdown** — for GitHub READMEs (falls back to an image link to the OG card).
 3. **Apps** — destination launchers (these link out; the actual integrations live in pillar 5 prompts):
-   - "Open in Claude.ai" — links to a pre-filled prompt that asks Claude to render the agent via the Artifact shim.
-   - "Install in Lobehub" — links to the Lobehub plugin install deep-link (see `05-02`).
-   - "Download agent-card.json" — downloads the A2A card for other hosts.
+    - "Open in Claude.ai" — links to a pre-filled prompt that asks Claude to render the agent via the Artifact shim.
+    - "Install in Lobehub" — links to the Lobehub plugin install deep-link (see `05-02`).
+    - "Download agent-card.json" — downloads the A2A card for other hosts.
 
 ### Copy UX
 

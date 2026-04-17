@@ -15,10 +15,10 @@ Create `api/agents/register-prep.js`:
 - `POST /api/agents/register-prep` — **auth required** via `getSessionUser`.
 - Body: `{ name, description, avatarId, brain?, skills?, embedPolicy?, demoSlug? }`.
 - Validation:
-  - `name`: 1–60 chars.
-  - `description`: ≤ 280 chars.
-  - `avatarId`: must belong to the authed user (`SELECT * FROM avatars WHERE id = ${avatarId} AND owner_user_id = ${user.id}`). 404 if not.
-  - `skills`: array of strings, ≤ 16, each ≤ 40 chars, ascii + hyphen.
+    - `name`: 1–60 chars.
+    - `description`: ≤ 280 chars.
+    - `avatarId`: must belong to the authed user (`SELECT * FROM avatars WHERE id = ${avatarId} AND owner_user_id = ${user.id}`). 404 if not.
+    - `skills`: array of strings, ≤ 16, each ≤ 40 chars, ascii + hyphen.
 - Build the registration JSON — canonical shape per [specs/AGENT_MANIFEST.md](../../specs/AGENT_MANIFEST.md). Must include `_baseURI` ending in `/` (hard rule per repo invariants).
 - Pin to IPFS via helpers in [src/ipfs.js](../../src/ipfs.js). If ipfs helpers aren't import-safe from serverless, use direct HTTP against `api.web3.storage` — document which path taken.
 - Store a prep record: `INSERT INTO agent_registrations_pending (user_id, cid, payload, created_at, expires_at)` with a 1-hour expiry. (If that table doesn't exist, create a migration SQL file at `scripts/sql/<ts>-create-agent-registrations-pending.sql` — don't auto-apply.)
@@ -33,7 +33,7 @@ Create `api/agents/register-confirm.js`:
 - `POST /api/agents/register-confirm` with `{ prepId, chainId, agentId, txHash }`.
 - Verifies the prep record exists, not expired, belongs to the authed user.
 - Verifies the tx on-chain via a read-only RPC: fetch the tx receipt, parse the `AgentRegistered` event, check the event's `metadataURI` matches the prep record's `ipfs://<cid>`.
-- On success: upsert the `agents` row (or whatever the existing agents table shape requires — read [api/_lib/db.js](../../api/_lib/db.js) / the schema for authority) with `{ owner_user_id, chain_id, onchain_agent_id, metadata_cid, avatar_id }`.
+- On success: upsert the `agents` row (or whatever the existing agents table shape requires — read [api/\_lib/db.js](../../api/_lib/db.js) / the schema for authority) with `{ owner_user_id, chain_id, onchain_agent_id, metadata_cid, avatar_id }`.
 - Returns `{ ok: true, agentId }`.
 
 This closes the loop without ever needing a private key on the server.

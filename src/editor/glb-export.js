@@ -63,7 +63,7 @@ function applyMaterialEdits(root, edits) {
 		if (edit.baseColor) {
 			const [r, g, b] = edit.baseColor;
 			const alpha =
-				edit.opacity !== undefined ? edit.opacity : mat.getBaseColorFactor()[3] ?? 1;
+				edit.opacity !== undefined ? edit.opacity : (mat.getBaseColorFactor()[3] ?? 1);
 			mat.setBaseColorFactor([r, g, b, alpha]);
 		} else if (edit.opacity !== undefined) {
 			const f = mat.getBaseColorFactor() || [1, 1, 1, 1];

@@ -17,14 +17,14 @@ This prompt is where the project stops feeling like a developer tool and starts 
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| All `src/widgets/*.js` files | Confirm every widget mounts cleanly and exposes a consistent `mount(...)` / `destroy()` contract. |
-| [features.html](../../features.html) and [style.css](../../style.css) | Reference for the visual system. Match it. |
-| [vercel.json](../../vercel.json) | You will add new public routes. |
-| [api/agent-oembed.js](../../api/agent-oembed.js) and [api/agent-og.js](../../api/agent-og.js) | Pattern for OG/oEmbed endpoints. |
-| [scripts/](../../scripts/) | Existing build-time scripts for icons, animations. If the gallery needs prebuilt poster images, mirror this pattern. |
-| [docs/](../../docs/) | Existing developer docs. Follow the tone. |
+| File                                                                                          | Why                                                                                                                  |
+| :-------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------- |
+| All `src/widgets/*.js` files                                                                  | Confirm every widget mounts cleanly and exposes a consistent `mount(...)` / `destroy()` contract.                    |
+| [features.html](../../features.html) and [style.css](../../style.css)                         | Reference for the visual system. Match it.                                                                           |
+| [vercel.json](../../vercel.json)                                                              | You will add new public routes.                                                                                      |
+| [api/agent-oembed.js](../../api/agent-oembed.js) and [api/agent-og.js](../../api/agent-og.js) | Pattern for OG/oEmbed endpoints.                                                                                     |
+| [scripts/](../../scripts/)                                                                    | Existing build-time scripts for icons, animations. If the gallery needs prebuilt poster images, mirror this pattern. |
+| [docs/](../../docs/)                                                                          | Existing developer docs. Follow the tone.                                                                            |
 
 ## Build this
 
@@ -63,10 +63,10 @@ Sections:
 - **iframe embed** — snippet + size recommendations.
 - **Script embed** — `embed.js` snippet + what it does.
 - **postMessage API** — parent-to-iframe and iframe-to-parent events the widgets emit:
-  - `widget:ready` (iframe → parent)
-  - `widget:load` / `widget:load:error`
-  - `widget:chat:message` (talking-agent only)
-  - `widget:hotspot:open` (hotspot-tour only)
+    - `widget:ready` (iframe → parent)
+    - `widget:load` / `widget:load:error`
+    - `widget:chat:message` (talking-agent only)
+    - `widget:hotspot:open` (hotspot-tour only)
 - **CSP / CORS** — what sites need to allow (usually nothing, but document if your embed requires `allow="..."`).
 - **Privacy** — visitor data, rate limits, what's logged.
 - **FAQ** — why no WordPress plugin, can I self-host, etc.
@@ -77,7 +77,7 @@ For each widget type, extend the OG/oEmbed endpoints so:
 
 - **OG image** (`/api/widgets/:id/og`) returns a rendered PNG or SVG preview — title + avatar thumbnail + type badge. Use a server-side image library if one is already in deps (`sharp` is in devDependencies — check if it's available at runtime on Vercel; if not, use SVG since Slack/Discord/X will render it). Reasonable output: 1200x630.
 - **OG tags** (in the widget page's HTML head when resolving `#widget=`): Open Graph + Twitter card tags. The `index.html` SPA shell needs to set these dynamically — since hash params aren't available server-side, either use a pre-render crawler check (user-agent detection for social bots; redirect them to a server-rendered metadata page) OR move the widget resolution upstream so `/widget/:id` (path, not hash) is the canonical URL.
-  - **Recommendation:** add a second canonical URL pattern: `https://host/w/<id>` that's server-rendered with proper meta tags and client-redirects to `#widget=<id>` for regular browsers. Social crawlers see the meta. Regular users hit the SPA. Update Studio's share UI to prefer `/w/<id>`.
+    - **Recommendation:** add a second canonical URL pattern: `https://host/w/<id>` that's server-rendered with proper meta tags and client-redirects to `#widget=<id>` for regular browsers. Social crawlers see the meta. Regular users hit the SPA. Update Studio's share UI to prefer `/w/<id>`.
 - **oEmbed** (`/api/widgets/:id/oembed`): returns the standard oEmbed JSON so WordPress, Ghost, and Notion auto-embed pasted widget URLs. Type = `rich`, `html` = an iframe snippet.
 
 Add `<link rel="alternate" type="application/json+oembed" href="...">` to the widget HTML head.
@@ -95,15 +95,16 @@ Do not redesign the homepage. One button, one link.
 
 Run through each widget type on each browser/device:
 
-| | Chrome desktop | Safari desktop | Firefox desktop | iOS Safari | Android Chrome |
-|:---|:-:|:-:|:-:|:-:|:-:|
-| Turntable | | | | | |
-| Animation Gallery | | | | | |
-| Talking Agent | | | | | |
-| Passport | | | | | |
-| Hotspot Tour | | | | | |
+|                   | Chrome desktop | Safari desktop | Firefox desktop | iOS Safari | Android Chrome |
+| :---------------- | :------------: | :------------: | :-------------: | :--------: | :------------: |
+| Turntable         |                |                |                 |            |                |
+| Animation Gallery |                |                |                 |            |                |
+| Talking Agent     |                |                |                 |            |                |
+| Passport          |                |                |                 |            |                |
+| Hotspot Tour      |                |                |                 |            |                |
 
 Fix any browser-specific bugs found. Common ones:
+
 - iOS Safari autoplay restrictions on animation clips.
 - Safari `speechSynthesis.getVoices()` returning empty until a user gesture.
 - Chrome/iOS intersection observer quirks on nested iframes.
@@ -120,6 +121,7 @@ Run `axe` (via `@axe-core/cli` — add as devDep if needed) on:
 Fix every critical and serious violation. Document any known issues in `docs/WIDGETS.md`.
 
 Key checks:
+
 - Color contrast ≥ 4.5:1 for text.
 - All interactive elements keyboard-reachable.
 - ARIA labels on icon-only buttons.
@@ -173,6 +175,7 @@ Update the main `README.md` with:
 ## Deliverables
 
 **New:**
+
 - `public/widgets-gallery/index.html`
 - `public/widgets-gallery/gallery.js`
 - `public/widgets-gallery/showcase.json`
@@ -183,6 +186,7 @@ Update the main `README.md` with:
 - `public/w/[id].html` + route rewrite for server-rendered metadata page.
 
 **Modified:**
+
 - `vercel.json` — new routes (`/widgets`, `/w/:id`, `/docs/widgets`, og/oembed endpoints).
 - `README.md` — Widget Studio section + roadmap updates.
 - `index.html` — "Make this a widget" button + Widgets nav link.
@@ -215,17 +219,17 @@ Update the main `README.md` with:
 6. **a11y:** run `axe-cli` and Lighthouse a11y on each widget type URL and on Studio/Dashboard. Fix violations.
 7. **Perf:** run Lighthouse perf mobile on each widget. Tune preload hints if FCP > 2s.
 8. **Error simulation:**
-   - Delete an avatar → load its widget → "Model unavailable."
-   - Revoke a Talking Agent's brain endpoint → "Can't reach brain."
-   - Point a Passport at a non-existent tokenId → "Agent not found."
-   - Hit Talking Agent rate limit → polite message.
+    - Delete an avatar → load its widget → "Model unavailable."
+    - Revoke a Talking Agent's brain endpoint → "Can't reach brain."
+    - Point a Passport at a non-existent tokenId → "Agent not found."
+    - Hit Talking Agent rate limit → polite message.
 9. **Analytics:** load 3 widgets, query DB, confirm view rows with correct metadata.
 10. **Full flow, fresh user:** sign up → go to viewer → load model → "Make this a widget" → lands in Studio → picks turntable → saves → shares → works in incognito. No friction.
 
 ## When you finish
 
 - PR with:
-  - Screenshots of `/widgets` gallery and one OG card.
-  - Lighthouse scores for each widget type.
-  - A short paragraph for the project's social post.
+    - Screenshots of `/widgets` gallery and one OG card.
+    - Lighthouse scores for each widget type.
+    - A short paragraph for the project's social post.
 - Then: ship it. Post about it. Send the demo link to 3 real people. Ask what they'd pay for.

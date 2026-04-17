@@ -3,7 +3,13 @@
 // DELETE /api/avatars/:id  — soft-delete (owner only)
 
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
-import { getAvatar, updateAvatar, deleteAvatar, resolveAvatarUrl, stripOwnerFor } from '../_lib/avatars.js';
+import {
+	getAvatar,
+	updateAvatar,
+	deleteAvatar,
+	resolveAvatarUrl,
+	stripOwnerFor,
+} from '../_lib/avatars.js';
 import { sql } from '../_lib/db.js';
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
 import { headObject } from '../_lib/r2.js';
@@ -32,7 +38,13 @@ export default wrap(async (req, res) => {
 		const avatar = await getAvatar({ id, requesterId: auth?.userId });
 		if (!avatar) return error(res, 404, 'not_found', 'avatar not found');
 		const urlInfo = await resolveAvatarUrl(avatar);
-		recordEvent({ userId: auth?.userId, clientId: auth?.clientId, apiKeyId: auth?.apiKeyId, avatarId: id, kind: 'avatar_fetch' });
+		recordEvent({
+			userId: auth?.userId,
+			clientId: auth?.clientId,
+			apiKeyId: auth?.apiKeyId,
+			avatarId: id,
+			kind: 'avatar_fetch',
+		});
 		return json(res, 200, { avatar: stripOwnerFor({ ...avatar, ...urlInfo }, auth?.userId) });
 	}
 
@@ -40,7 +52,8 @@ export default wrap(async (req, res) => {
 
 	if (req.method === 'PATCH') {
 		if (auth.source === 'oauth' || auth.source === 'apikey') {
-			if (!hasScope(auth.scope, 'avatars:write')) return error(res, 403, 'insufficient_scope', 'avatars:write required');
+			if (!hasScope(auth.scope, 'avatars:write'))
+				return error(res, 403, 'insufficient_scope', 'avatars:write required');
 		}
 		const body = await readJson(req);
 		if (body && typeof body.glbUrl === 'string') {
@@ -54,7 +67,8 @@ export default wrap(async (req, res) => {
 
 	// DELETE
 	if (auth.source === 'oauth' || auth.source === 'apikey') {
-		if (!hasScope(auth.scope, 'avatars:delete')) return error(res, 403, 'insufficient_scope', 'avatars:delete required');
+		if (!hasScope(auth.scope, 'avatars:delete'))
+			return error(res, 403, 'insufficient_scope', 'avatars:delete required');
 	}
 	const ok = await deleteAvatar({ id, userId: auth.userId });
 	if (!ok) return error(res, 404, 'not_found', 'avatar not found or not yours');
@@ -69,7 +83,12 @@ async function handleGlbPatch(res, auth, id, glbUrl) {
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many patch requests');
 
 	if (!/^u\/[^/]+\/.+\.glb$/.test(glbUrl)) {
-		return error(res, 400, 'invalid_request', 'glbUrl must be a valid R2 storage key (u/{userId}/...)');
+		return error(
+			res,
+			400,
+			'invalid_request',
+			'glbUrl must be a valid R2 storage key (u/{userId}/...)',
+		);
 	}
 	if (!glbUrl.startsWith(`u/${auth.userId}/`)) {
 		return error(res, 403, 'forbidden', 'key does not belong to your storage namespace');
@@ -81,13 +100,20 @@ async function handleGlbPatch(res, auth, id, glbUrl) {
 		return error(res, 413, 'payload_too_large', 'glb exceeds 25 MB limit');
 	}
 	if (!VALID_GLB_TYPES.has(head.ContentType)) {
-		return error(res, 415, 'unsupported_media_type', 'content-type must be model/gltf-binary or application/octet-stream');
+		return error(
+			res,
+			415,
+			'unsupported_media_type',
+			'content-type must be model/gltf-binary or application/octet-stream',
+		);
 	}
 
-	const rows = await sql`select id, owner_id from avatars where id = ${id} and deleted_at is null limit 1`;
+	const rows =
+		await sql`select id, owner_id from avatars where id = ${id} and deleted_at is null limit 1`;
 	const avatar = rows[0];
 	if (!avatar) return error(res, 404, 'not_found', 'avatar not found');
-	if (avatar.owner_id !== auth.userId) return error(res, 403, 'forbidden', 'you do not own this avatar');
+	if (avatar.owner_id !== auth.userId)
+		return error(res, 403, 'forbidden', 'you do not own this avatar');
 
 	try {
 		await sql`insert into avatar_versions (avatar_id, storage_key, created_by) values (${id}, ${glbUrl}, ${auth.userId})`;
@@ -107,13 +133,22 @@ async function handleGlbPatch(res, auth, id, glbUrl) {
 
 	return json(res, 200, {
 		ok: true,
-		avatar: { id: updated.id, currentGlbUrl: updated.storage_key, updatedAt: updated.updated_at },
+		avatar: {
+			id: updated.id,
+			currentGlbUrl: updated.storage_key,
+			updatedAt: updated.updated_at,
+		},
 	});
 }
 
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);
-	if (session) return { userId: session.id, source: 'session', scope: 'avatars:read avatars:write avatars:delete' };
+	if (session)
+		return {
+			userId: session.id,
+			source: 'session',
+			scope: 'avatars:read avatars:write avatars:delete',
+		};
 	const bearer = await authenticateBearer(extractBearer(req));
 	return bearer;
 }

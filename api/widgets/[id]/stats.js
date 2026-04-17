@@ -16,7 +16,7 @@
  * "all-zero" state without special casing.
  */
 
-import { sql }                            from '../../_lib/db.js';
+import { sql } from '../../_lib/db.js';
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../../_lib/auth.js';
 import { cors, json, method, wrap, error } from '../../_lib/http.js';
 
@@ -30,7 +30,8 @@ export default wrap(async (req, res) => {
 	const auth = await resolveAuth(req);
 	if (!auth?.userId) return error(res, 401, 'unauthorized', 'authentication required');
 	if (auth.source === 'oauth' || auth.source === 'apikey') {
-		if (!hasScope(auth.scope, 'avatars:read')) return error(res, 403, 'insufficient_scope', 'avatars:read required');
+		if (!hasScope(auth.scope, 'avatars:read'))
+			return error(res, 403, 'insufficient_scope', 'avatars:read required');
 	}
 
 	// Ownership check — never 404 vs 403 leak: collapse to 404 either way.
@@ -53,12 +54,12 @@ export default wrap(async (req, res) => {
 	res.setHeader('cache-control', 'private, max-age=30');
 	return json(res, 200, {
 		stats: {
-			view_count:      Number(w.view_count || 0),
-			last_viewed_at:  lastViewed,
+			view_count: Number(w.view_count || 0),
+			last_viewed_at: lastViewed,
 			recent_views_7d: recentViews,
-			top_referers:    topReferers,
-			top_countries:   topCountries,
-			chat_count:      chatCount,
+			top_referers: topReferers,
+			top_countries: topCountries,
+			chat_count: chatCount,
 		},
 	});
 });
@@ -99,7 +100,10 @@ async function topAggregates(id, column) {
 			 group by 1 order by count desc limit 5`,
 			[id],
 		);
-		return rows.map((r) => ({ [column === 'referer_host' ? 'host' : 'country']: r.key, count: Number(r.count) }));
+		return rows.map((r) => ({
+			[column === 'referer_host' ? 'host' : 'country']: r.key,
+			count: Number(r.count),
+		}));
 	} catch (err) {
 		if (/relation .* does not exist/i.test(err?.message || '')) return [];
 		throw err;
@@ -108,7 +112,8 @@ async function topAggregates(id, column) {
 
 async function lastViewedAt(id) {
 	try {
-		const rows = await sql`select max(created_at) as t from widget_views where widget_id = ${id}`;
+		const rows =
+			await sql`select max(created_at) as t from widget_views where widget_id = ${id}`;
 		return rows[0]?.t || null;
 	} catch (err) {
 		if (/relation .* does not exist/i.test(err?.message || '')) return null;
@@ -138,6 +143,7 @@ function idFromReq(req) {
 
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);
-	if (session) return { userId: session.id, source: 'session', scope: 'avatars:read avatars:write' };
+	if (session)
+		return { userId: session.id, source: 'session', scope: 'avatars:read avatars:write' };
 	return await authenticateBearer(extractBearer(req));
 }

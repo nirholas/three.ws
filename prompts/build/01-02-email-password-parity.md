@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Ensure email/password signup has parity with SIWE: session, user row, agent bootstrap"
+description: 'Ensure email/password signup has parity with SIWE: session, user row, agent bootstrap'
 ---
 
 # 01-02 · Email/password auth parity
@@ -25,11 +25,11 @@ Wallet is the primary path, but email/password must still work for users without
 ## Build this
 
 1. **Audit the three code paths side-by-side** (register, password login, SIWE verify) and list what each does:
-   - `users` row creation / lookup
-   - `user_wallets` row (SIWE only)
-   - `destroySession()` before `createSession()`
-   - cookie flags (`HttpOnly`, `Secure`, `SameSite`)
-   - response shape (`{ user: {...} }`)
+    - `users` row creation / lookup
+    - `user_wallets` row (SIWE only)
+    - `destroySession()` before `createSession()`
+    - cookie flags (`HttpOnly`, `Secure`, `SameSite`)
+    - response shape (`{ user: {...} }`)
 2. **Normalize** any field that differs without reason. Pick SIWE's shape as canonical — it's the newest and reviewed.
 3. **Agent bootstrap parity** — after a new user registers with email, hitting `GET /api/agents/me` auto-creates the default agent (already true for SIWE because the endpoint is shared). Verify by registering a fresh email and hitting `/dashboard/` — the client-side `AgentIdentity.load()` should succeed.
 4. **Logout** — `POST /api/auth/logout` clears the cookie and destroys the session row. Verify `Set-Cookie` has `Max-Age=0` and `sessions.revoked_at` is set.

@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Turn every auth failure into a clear, recoverable user-facing message"
+description: 'Turn every auth failure into a clear, recoverable user-facing message'
 ---
 
 # Stack Layer 1: Auth Error UX
@@ -14,6 +14,7 @@ Today auth errors bubble up as generic "Login failed" with no indication of caus
 ### Catalog every auth error path
 
 For each endpoint under [api/auth/](api/auth/), enumerate failure modes and map to an error code string:
+
 - `WALLET_REJECTED` — user rejected signature
 - `NONCE_EXPIRED` — SIWE nonce older than 5 min
 - `NONCE_INVALID` — nonce not found / already consumed
@@ -29,6 +30,7 @@ Server returns `{ error: { code, message } }` with HTTP status 400/401/429.
 ### Client error renderer
 
 In [public/wallet-login.js](public/wallet-login.js) and [public/login.html](public/login.html), map each code to:
+
 - A human message.
 - A **recovery action** (button): "Retry", "Connect different wallet", "Switch network", "Sign in with email instead".
 

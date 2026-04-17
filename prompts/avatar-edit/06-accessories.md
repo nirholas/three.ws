@@ -33,6 +33,7 @@ Each GLB is a single root-anchored mesh. No animations, no skeleton. Local-origi
 ### 2. Manifest
 
 `public/accessories/index.json`:
+
 ```json
 {
   "hats":     [ { "id": "baseball-cap", "name": "Cap", "uri": "./hats/baseball-cap.glb", "anchor": "head" } , … ],
@@ -44,6 +45,7 @@ Each GLB is a single root-anchored mesh. No animations, no skeleton. Local-origi
 ### 3. Anchor resolution
 
 In a new `src/editor/accessories.js`:
+
 ```js
 export function attachAccessory(agentContent, accessory) {
 	// find bone by anchor name (try: HeadTop_End, Head, Neck, Spine2, Spine1, Spine)
@@ -52,12 +54,15 @@ export function attachAccessory(agentContent, accessory) {
 	// apply offset + rotation from the accessory manifest
 	// return a handle so detach works
 }
-export function detachAccessory(handle) { /* remove from parent, dispose */ }
+export function detachAccessory(handle) {
+	/* remove from parent, dispose */
+}
 ```
 
 ### 4. Patch shape
 
 `agent_identities.meta.edits.accessories`:
+
 ```json
 { "hats": "baseball-cap", "glasses": null, "backpacks": "adventurer" }
 ```

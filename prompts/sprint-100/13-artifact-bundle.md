@@ -26,14 +26,25 @@ Output is a new static file under `public/`. No edits to `src/app.js` or the lib
 ### `public/artifact-example.html`
 
 A minimal HTML document a user can paste into a Claude.ai Artifact:
+
 ```html
 <!doctype html>
 <html>
-<head><meta charset="utf-8"><style>html,body{margin:0;height:100%;background:#111}</style></head>
-<body>
-    <div data-agent-id="demo" style="width:100%;height:100vh"></div>
-    <script type="module" src="https://3dagent.vercel.app/artifact.js"></script>
-</body>
+	<head>
+		<meta charset="utf-8" />
+		<style>
+			html,
+			body {
+				margin: 0;
+				height: 100%;
+				background: #111;
+			}
+		</style>
+	</head>
+	<body>
+		<div data-agent-id="demo" style="width:100%;height:100vh"></div>
+		<script type="module" src="https://3dagent.vercel.app/artifact.js"></script>
+	</body>
 </html>
 ```
 

@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "End-to-end smoke test of the whole priority stack on a cold browser"
+description: 'End-to-end smoke test of the whole priority stack on a cold browser'
 ---
 
 # 00 · End-to-end stack smoke test

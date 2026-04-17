@@ -18,22 +18,22 @@ Should be scheduled **after** tasks 02, 09, 12, 14, 16 are in.
 ## Deliverable
 
 1. **Dispose audit** — for each module added in tasks 02–17, confirm `dispose()` exists and is called on teardown. Write a `src/runtime/lifecycle.js` that owns the module registry:
-   - `register(name, { start, stop, dispose })`.
-   - `teardownAll()` calls `dispose` on each in reverse registration order.
+    - `register(name, { start, stop, dispose })`.
+    - `teardownAll()` calls `dispose` on each in reverse registration order.
 2. **Render-on-demand** — adapt [src/viewer.js](../../src/viewer.js)'s render loop:
-   - Replace the unconditional RAF loop with an `invalidate()` gate.
-   - Invalidate on: camera orbit, window resize, texture/material updates, animation active, TalkingHead active, mirror mode active.
-   - When nothing demands a frame, skip rendering.
+    - Replace the unconditional RAF loop with an `invalidate()` gate.
+    - Invalidate on: camera orbit, window resize, texture/material updates, animation active, TalkingHead active, mirror mode active.
+    - When nothing demands a frame, skip rendering.
 3. **Animation reference counting** — many modules request continuous rendering (TalkingHead idle, mirror, TTS-driven lipsync). Introduce `viewer.requestContinuous(owner)` / `releaseContinuous(owner)`. Render only if count > 0 OR a one-shot invalidate is pending.
 4. **Texture/geometry disposal** — on model swap, walk the old scene graph and call `.dispose()` on every `BufferGeometry`, `Material`, and `Texture`. Verify via `renderer.info.memory`.
 5. **Throttle landmark detections** — mirror mode (task 12) runs MediaPipe at 30 Hz max; verify this instead of per-RAF.
 6. **Web Worker offload** — move whisper-web (task 11) to a Web Worker if not already; move any heavy image processing (task 07 texture projection) to a Worker. Don't block the render thread.
 7. **Idle detection** — add a global "user idle" detector (no mouse/keyboard for 60s): pause TalkingHead idle to a slow-blink-only mode, pause mirror mode processing.
 8. **Performance budget doc** — `docs/PERFORMANCE.md` (one-time doc, OK here):
-   - Budget: 16ms frame at 60 fps idle, 33ms frame budget for mirror/mocap.
-   - GPU memory budget per loaded avatar.
-   - Tactics (render-on-demand, workers, LOD, throttling).
-   - How to profile (Chrome Performance, three.js stats, renderer.info).
+    - Budget: 16ms frame at 60 fps idle, 33ms frame budget for mirror/mocap.
+    - GPU memory budget per loaded avatar.
+    - Tactics (render-on-demand, workers, LOD, throttling).
+    - How to profile (Chrome Performance, three.js stats, renderer.info).
 
 ## Audit checklist
 

@@ -14,7 +14,7 @@ export const BUILTIN_TOOLS = [
 	},
 	{
 		name: 'lookAt',
-		description: 'Direct the agent\'s gaze toward a target.',
+		description: "Direct the agent's gaze toward a target.",
 		input_schema: {
 			type: 'object',
 			properties: {
@@ -46,7 +46,10 @@ export const BUILTIN_TOOLS = [
 		input_schema: {
 			type: 'object',
 			properties: {
-				preset: { type: 'string', enum: ['neutral', 'happy', 'sad', 'surprised', 'confused', 'focused'] },
+				preset: {
+					type: 'string',
+					enum: ['neutral', 'happy', 'sad', 'surprised', 'confused', 'focused'],
+				},
 				intensity: { type: 'number', minimum: 0, maximum: 1, default: 1 },
 			},
 			required: ['preset'],
@@ -54,7 +57,8 @@ export const BUILTIN_TOOLS = [
 	},
 	{
 		name: 'speak',
-		description: 'Say something out loud via TTS. Use this instead of plain text when voice is on.',
+		description:
+			'Say something out loud via TTS. Use this instead of plain text when voice is on.',
 		input_schema: {
 			type: 'object',
 			properties: { text: { type: 'string' } },
@@ -63,7 +67,8 @@ export const BUILTIN_TOOLS = [
 	},
 	{
 		name: 'remember',
-		description: 'Save a durable memory about the user, a feedback rule, a project fact, or a reference.',
+		description:
+			'Save a durable memory about the user, a feedback rule, a project fact, or a reference.',
 		input_schema: {
 			type: 'object',
 			properties: {
@@ -83,7 +88,8 @@ export const BUILTIN_TOOLS = [
 export const STAGE_TOOLS = [
 	{
 		name: 'observe_agents',
-		description: 'List the other agents currently sharing this stage, with their names and positions.',
+		description:
+			'List the other agents currently sharing this stage, with their names and positions.',
 		input_schema: { type: 'object', properties: {} },
 	},
 	{
@@ -93,7 +99,10 @@ export const STAGE_TOOLS = [
 		input_schema: {
 			type: 'object',
 			properties: {
-				agentId: { type: 'string', description: 'Target agent id as returned by observe_agents.' },
+				agentId: {
+					type: 'string',
+					description: 'Target agent id as returned by observe_agents.',
+				},
 				text: { type: 'string' },
 			},
 			required: ['agentId', 'text'],
@@ -121,7 +130,8 @@ export const BUILTIN_HANDLERS = {
 		const resolved = ctx.viewer.resolveAnimationSlot?.(name) ?? name;
 		const played = ctx.viewer.playClipByName?.(resolved, { loop, fade_ms });
 		if (!played) {
-			if (resolved !== name) console.warn(`[play_clip] slot "${name}" → "${resolved}" not found in library`);
+			if (resolved !== name)
+				console.warn(`[play_clip] slot "${name}" → "${resolved}" not found in library`);
 			return { ok: false, error: `No clip named "${resolved}"` };
 		}
 		return { ok: true, name, resolved };

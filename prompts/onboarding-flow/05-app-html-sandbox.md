@@ -16,35 +16,39 @@ Make `/app` work seamlessly for both anonymous drop-a-GLB users and authenticate
 ## Deliverable
 
 1. **Edit [app.html](../../app.html):**
-   - Remove the `/app#register` nav link ([app.html:45](../../app.html#L45)). On-chain deployment now lives on the agent hub page, not as a viewer nav item.
-   - Add a persistent "Save to account" CTA in the header area, visible *only* when a GLB is loaded (anonymous or authed). Mirror the `.make-widget-btn` pattern at [app.html:46-49](../../app.html#L46-L49).
+
+    - Remove the `/app#register` nav link ([app.html:45](../../app.html#L45)). On-chain deployment now lives on the agent hub page, not as a viewer nav item.
+    - Add a persistent "Save to account" CTA in the header area, visible _only_ when a GLB is loaded (anonymous or authed). Mirror the `.make-widget-btn` pattern at [app.html:46-49](../../app.html#L46-L49).
 
 2. **Edit [src/app.js](../../src/app.js):**
-   - Parse a new URL query/hash param: `agent=<id>`. Add to the list at [src/CLAUDE.md#L60](../../src/CLAUDE.md) (Agent URL hash keys).
-   - When `agent=:id` is present: fetch `/api/agents/:id`, hydrate `manifest.body.uri` as the loaded GLB, and tag the session as "editing agent :id" (so save-back updates that agent, not creates a new one).
-   - When absent: current anonymous behavior is preserved — drop GLB, play, no persistence.
+
+    - Parse a new URL query/hash param: `agent=<id>`. Add to the list at [src/CLAUDE.md#L60](../../src/CLAUDE.md) (Agent URL hash keys).
+    - When `agent=:id` is present: fetch `/api/agents/:id`, hydrate `manifest.body.uri` as the loaded GLB, and tag the session as "editing agent :id" (so save-back updates that agent, not creates a new one).
+    - When absent: current anonymous behavior is preserved — drop GLB, play, no persistence.
 
 3. **Save-to-account CTA behavior:**
-   - **Anonymous user, clicks Save:**
-     - Stash current GLB + config in `sessionStorage` under key `pending_save`:
-       ```json
-       { "glbUrl": "blob:...", "manifest": { ... }, "returnTo": "/app" }
-       ```
-     - Redirect to `/login?next=/app?pending=1`.
-   - **Authenticated user with no `?agent`:**
-     - Create new avatar + agent via `/api/avatars/presign` → PUT → `/api/agents/me` POST.
-     - Redirect to `/agent/:id` (the hub).
-   - **Authenticated user with `?agent=:id`:**
-     - PATCH the existing agent's avatar (use the versioning endpoint if it exists; otherwise re-upload and PUT).
-     - Redirect to `/agent/:id`.
+
+    - **Anonymous user, clicks Save:**
+        - Stash current GLB + config in `sessionStorage` under key `pending_save`:
+            ```json
+            { "glbUrl": "blob:...", "manifest": { ... }, "returnTo": "/app" }
+            ```
+        - Redirect to `/login?next=/app?pending=1`.
+    - **Authenticated user with no `?agent`:**
+        - Create new avatar + agent via `/api/avatars/presign` → PUT → `/api/agents/me` POST.
+        - Redirect to `/agent/:id` (the hub).
+    - **Authenticated user with `?agent=:id`:**
+        - PATCH the existing agent's avatar (use the versioning endpoint if it exists; otherwise re-upload and PUT).
+        - Redirect to `/agent/:id`.
 
 4. **On `/app` boot, check `sessionStorage.pending_save`:**
-   - If present AND user is now authenticated → re-hydrate the GLB + config, trigger the save flow, clear the stash.
-   - If present but still unauthed → no-op (they cancelled auth).
+
+    - If present AND user is now authenticated → re-hydrate the GLB + config, trigger the save flow, clear the stash.
+    - If present but still unauthed → no-op (they cancelled auth).
 
 5. **Keep the existing "Make this a widget" button** ([app.html:46-49](../../app.html#L46-L49)):
-   - For anonymous users, it prompts sign-in (same `sessionStorage` pattern).
-   - For authed users with `?agent=:id`, it creates a widget bound to that agent.
+    - For anonymous users, it prompts sign-in (same `sessionStorage` pattern).
+    - For authed users with `?agent=:id`, it creates a widget bound to that agent.
 
 ## Constraints
 

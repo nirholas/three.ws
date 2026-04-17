@@ -21,14 +21,14 @@
 
 import { z } from 'zod';
 
-import { sql }                              from '../../_lib/db.js';
-import { getSessionUser }                   from '../../_lib/auth.js';
+import { sql } from '../../_lib/db.js';
+import { getSessionUser } from '../../_lib/auth.js';
 import { cors, json, method, readJson, wrap, error } from '../../_lib/http.js';
-import { parse }                            from '../../_lib/validate.js';
-import { limits, clientIp }                 from '../../_lib/rate-limit.js';
+import { parse } from '../../_lib/validate.js';
+import { limits, clientIp } from '../../_lib/rate-limit.js';
 
-const ANTHROPIC_URL  = 'https://api.anthropic.com/v1/messages';
-const DEFAULT_MODEL  = 'claude-sonnet-4-6';
+const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
+const DEFAULT_MODEL = 'claude-sonnet-4-6';
 const DEFAULT_MAX_TOKENS = 1024;
 const HARD_MAX_TOKENS = 4096;
 
@@ -36,10 +36,15 @@ const SAFE_SKILLS = new Set(['speak', 'wave', 'lookAt', 'playClip', 'remember'])
 
 const chatBody = z.object({
 	message: z.string().trim().min(1).max(4000),
-	history: z.array(z.object({
-		role:    z.enum(['user', 'assistant']),
-		content: z.string().min(1).max(4000),
-	})).max(40).default([]),
+	history: z
+		.array(
+			z.object({
+				role: z.enum(['user', 'assistant']),
+				content: z.string().min(1).max(4000),
+			}),
+		)
+		.max(40)
+		.default([]),
 });
 
 const SKILL_TOOLS = [
@@ -110,7 +115,9 @@ export default wrap(async (req, res) => {
 		if (!rl.success) {
 			const retryAfter = Math.max(1, Math.ceil((rl.reset - Date.now()) / 1000));
 			res.setHeader('retry-after', String(retryAfter));
-			return error(res, 429, 'rate_limited', 'too many messages — slow down', { retry_after: retryAfter });
+			return error(res, 429, 'rate_limited', 'too many messages — slow down', {
+				retry_after: retryAfter,
+			});
 		}
 	}
 
@@ -136,17 +143,17 @@ export default wrap(async (req, res) => {
 			result = await callCustomProxy(cfg.proxyURL, body, cfg, allowedSkills);
 		} else {
 			result = await callAnthropic({
-				message:      body.message,
-				history:      body.history,
+				message: body.message,
+				history: body.history,
 				systemPrompt: buildSystemPrompt(cfg, widget),
-				temperature:  Number(cfg.temperature) || 0.7,
-				maxTurns:     Math.min(20, Math.max(1, Number(cfg.maxTurns) || 20)),
+				temperature: Number(cfg.temperature) || 0.7,
+				maxTurns: Math.min(20, Math.max(1, Number(cfg.maxTurns) || 20)),
 				allowedSkills,
 			});
 		}
 
 		writeSse(res, 'message', { reply: result.reply || '', actions: result.actions || [] });
-		writeSse(res, 'done',    {});
+		writeSse(res, 'done', {});
 	} catch (err) {
 		console.warn('[widget-chat] dispatch failed', err?.message);
 		writeSse(res, 'error', { message: 'chat backend unavailable' });
@@ -160,16 +167,27 @@ export default wrap(async (req, res) => {
 
 // ── Brain dispatchers ──────────────────────────────────────────────────────
 
-async function callAnthropic({ message, history, systemPrompt, temperature, maxTurns, allowedSkills }) {
+async function callAnthropic({
+	message,
+	history,
+	systemPrompt,
+	temperature,
+	maxTurns,
+	allowedSkills,
+}) {
 	const apiKey = process.env.ANTHROPIC_API_KEY;
 	if (!apiKey) {
 		return {
-			reply:   "I'm not configured to answer just yet — the owner needs to set ANTHROPIC_API_KEY.",
+			reply: "I'm not configured to answer just yet — the owner needs to set ANTHROPIC_API_KEY.",
 			actions: [],
 		};
 	}
-	const model     = process.env.CHAT_MODEL || DEFAULT_MODEL;
-	const maxTokens = clampInt(parseInt(process.env.CHAT_MAX_TOKENS || '', 10) || DEFAULT_MAX_TOKENS, 128, HARD_MAX_TOKENS);
+	const model = process.env.CHAT_MODEL || DEFAULT_MODEL;
+	const maxTokens = clampInt(
+		parseInt(process.env.CHAT_MAX_TOKENS || '', 10) || DEFAULT_MAX_TOKENS,
+		128,
+		HARD_MAX_TOKENS,
+	);
 
 	// Truncate history to maxTurns (each turn = one user + one assistant message).
 	const trimmed = history.slice(-(maxTurns * 2));
@@ -181,24 +199,27 @@ async function callAnthropic({ message, history, systemPrompt, temperature, maxT
 		model,
 		max_tokens: maxTokens,
 		temperature,
-		system:     systemPrompt,
+		system: systemPrompt,
 		messages,
 	};
 	if (tools.length) payload.tools = tools;
 
 	const upstream = await fetch(ANTHROPIC_URL, {
-		method:  'POST',
+		method: 'POST',
 		headers: {
-			'x-api-key':         apiKey,
+			'x-api-key': apiKey,
 			'anthropic-version': '2023-06-01',
-			'content-type':      'application/json',
+			'content-type': 'application/json',
 		},
 		body: JSON.stringify(payload),
 	});
 	if (!upstream.ok) {
 		const text = await upstream.text().catch(() => '');
 		console.warn('[widget-chat] anthropic', upstream.status, text.slice(0, 400));
-		return { reply: 'I had trouble thinking of a response. Try again in a moment.', actions: [] };
+		return {
+			reply: 'I had trouble thinking of a response. Try again in a moment.',
+			actions: [],
+		};
 	}
 	const data = await upstream.json();
 	return normalizeAnthropic(data, allowedSkills);
@@ -206,16 +227,16 @@ async function callAnthropic({ message, history, systemPrompt, temperature, maxT
 
 async function callCustomProxy(proxyURL, body, cfg, allowedSkills) {
 	if (!/^https:\/\//i.test(proxyURL || '')) {
-		return { reply: "Custom brain misconfigured — proxyURL must be HTTPS.", actions: [] };
+		return { reply: 'Custom brain misconfigured — proxyURL must be HTTPS.', actions: [] };
 	}
 	const upstream = await fetch(proxyURL, {
-		method:  'POST',
+		method: 'POST',
 		headers: { 'content-type': 'application/json' },
 		body: JSON.stringify({
-			message:      body.message,
-			history:      body.history,
+			message: body.message,
+			history: body.history,
 			systemPrompt: buildSystemPromptForCustom(cfg),
-			temperature:  Number(cfg.temperature) || 0.7,
+			temperature: Number(cfg.temperature) || 0.7,
 		}),
 	});
 	if (!upstream.ok) {
@@ -327,4 +348,6 @@ function idFromReq(req) {
 	return m ? decodeURIComponent(m[1]) : null;
 }
 
-function clampInt(n, min, max) { return Math.min(max, Math.max(min, n)); }
+function clampInt(n, min, max) {
+	return Math.min(max, Math.max(min, n));
+}

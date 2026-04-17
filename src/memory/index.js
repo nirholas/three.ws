@@ -68,7 +68,9 @@ export class Memory {
 				try {
 					const r = await fetchFn(`${base}memory/${file}`);
 					if (r.ok) files[file] = await r.text();
-				} catch { /* skip missing */ }
+				} catch {
+					/* skip missing */
+				}
 			}
 			return new Memory({ mode, namespace, index: { text: indexText }, files });
 		} catch {
@@ -126,7 +128,12 @@ export class Memory {
 			byType[t].push({ file, name: meta.name || file, description: meta.description || '' });
 		}
 		const lines = ['# Memory', ''];
-		const headings = { user: '## User', feedback: '## Feedback', project: '## Project', reference: '## Reference' };
+		const headings = {
+			user: '## User',
+			feedback: '## Feedback',
+			project: '## Project',
+			reference: '## Reference',
+		};
 		for (const [t, items] of Object.entries(byType)) {
 			if (!items.length) continue;
 			lines.push(headings[t] || `## ${t}`);

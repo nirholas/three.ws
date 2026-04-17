@@ -28,8 +28,9 @@ export default wrap(async (req, res) => {
 	const rl = await limits.authIp(ip);
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many uploads');
 
-	const ct  = (req.headers['content-type'] || 'application/octet-stream').split(';')[0].trim();
-	if (!ALLOWED.has(ct)) return error(res, 415, 'unsupported_media_type', 'unsupported content-type');
+	const ct = (req.headers['content-type'] || 'application/octet-stream').split(';')[0].trim();
+	if (!ALLOWED.has(ct))
+		return error(res, 415, 'unsupported_media_type', 'unsupported content-type');
 
 	const body = await readRaw(req, MAX_SIZE);
 
@@ -52,12 +53,14 @@ export default wrap(async (req, res) => {
 
 	// Fallback to R2 with warning
 	const key = `erc8004/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-	await r2.send(new PutObjectCommand({
-		Bucket: env.S3_BUCKET,
-		Key: key,
-		Body: body,
-		ContentType: ct,
-	}));
+	await r2.send(
+		new PutObjectCommand({
+			Bucket: env.S3_BUCKET,
+			Key: key,
+			Body: body,
+			ContentType: ct,
+		}),
+	);
 
 	const url = publicUrl(key);
 	return json(res, 200, {
@@ -70,12 +73,18 @@ export default wrap(async (req, res) => {
 
 function getExt(ct) {
 	switch (ct) {
-		case 'application/json': return 'json';
-		case 'model/gltf-binary': return 'glb';
-		case 'image/png': return 'png';
-		case 'image/jpeg': return 'jpg';
-		case 'image/webp': return 'webp';
-		default: return 'bin';
+		case 'application/json':
+			return 'json';
+		case 'model/gltf-binary':
+			return 'glb';
+		case 'image/png':
+			return 'png';
+		case 'image/jpeg':
+			return 'jpg';
+		case 'image/webp':
+			return 'webp';
+		default:
+			return 'bin';
 	}
 }
 
@@ -88,7 +97,7 @@ async function uploadToWeb3Storage(token, ext, body, ct) {
 	const response = await fetch('https://api.web3.storage/upload', {
 		method: 'POST',
 		headers: {
-			'Authorization': `Bearer ${token}`,
+			Authorization: `Bearer ${token}`,
 		},
 		body: formData,
 	});
@@ -117,7 +126,7 @@ async function uploadToNftStorage(token, ext, body, ct) {
 	const response = await fetch('https://api.nft.storage/upload', {
 		method: 'POST',
 		headers: {
-			'Authorization': `Bearer ${token}`,
+			Authorization: `Bearer ${token}`,
 		},
 		body: formData,
 	});

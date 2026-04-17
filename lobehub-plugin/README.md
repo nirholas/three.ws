@@ -1,152 +1,144 @@
 # @3dagent/lobehub-plugin
 
-A LobeHub plugin that renders a 3D agent avatar in the chat sidebar, reacting to assistant messages via the agent bridge protocol.
+Render an embodied 3D avatar in the LobeChat sidebar. The avatar reacts to the LLM's tool calls — speaking, gesturing, and emoting — in real time.
 
-## Features
+> **Icon/screenshot note:** `assets/icon-256.svg` is a placeholder. Replace with a designed 256×256 PNG before submitting to the LobeHub plugin registry.
 
-- **Embedded 3D Avatar** — Renders a glTF-based agent in a fixed 320×420 pane
-- **Message Reaction** — Avatar speaks when the LLM generates responses
-- **Zero Dependencies** — No external 3D libraries; uses the 3D Agent embed endpoint
-- **Configurable** — Plugin settings for agent ID and API origin
+---
 
-## Installation
+## One-click install (LobeChat ≥ 1.x)
 
-1. Clone this directory into your LobeHub fork at `plugins/@3dagent/lobehub-plugin/`
-2. Install dependencies:
-   ```bash
-   cd lobehub-plugin
-   npm install
+1. In LobeChat, open **Plugins → Plugin Store → Custom plugins**.
+2. Paste the manifest URL:
    ```
-3. Build:
-   ```bash
-   npm run build
+   https://3dagent.vercel.app/.well-known/lobehub-plugin.json
    ```
-4. Reference the plugin manifest in your LobeHub fork's plugin registry.
+3. Click **Install**. LobeChat will show the plugin settings dialog.
+4. Enter your **Agent ID** (UUID from the 3D Agent dashboard at `https://3dagent.vercel.app/dashboard`).
+5. Click **Save**. The 3D avatar appears in the right sidebar.
 
-## Usage
-
-In LobeHub's plugin settings, configure:
-
-- **Agent ID** (required): The UUID or identifier of the agent you want to embed (e.g., `agent-xyz-123`)
-- **API Origin** (optional): The base URL of your 3D Agent server (defaults to `https://3dagent.vercel.app`)
-
-The plugin will render an iframe pointing to `${apiOrigin}/agent/${agentId}/embed` and listen for chat messages.
+---
 
 ## Configuration
 
-Plugin settings are defined in [`src/config-schema.ts`](src/config-schema.ts) and exposed via the [`manifest.json`](manifest.json) schema section.
+| Setting | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `agentId` | `string` | Yes | — | Agent UUID from the 3D Agent dashboard |
+| `apiOrigin` | `string` | No | `https://3dagent.vercel.app` | Override for self-hosted instances |
 
-## Bridge Protocol
+---
 
-The plugin uses the **v1 bridge protocol** (FROZEN) from `public/agent/embed.html`:
+## How it works
 
-### Host → Iframe
-
-```json
-{
-  "type": "agent:hello",
-  "agentId": "agent-id",
-  "host": "optional-origin"
-}
+```
+LobeChat host
+  │  postMessage({ type: 'LobePlugin.renderPlugin', payload: { apiName, arguments } })
+  ▼
+AgentPane (React sidebar component)
+  │  v1 bridge request: { v:1, source:'agent-host', kind:'request', op:'speak', payload }
+  ▼
+/lobehub/iframe/ (boot.js)
+  │  el.say(text, { sentiment })
+  ▼
+<agent-3d> web component — avatar speaks
 ```
 
+When the LLM calls one of the plugin's tools (`speak`, `gesture`, `emote`, `render_agent`), LobeChat sends the tool args as a postMessage to the plugin iframe. `AgentPane` receives it, translates it into a bridge request, and the iframe's `boot.js` dispatches it to the `<agent-3d>` element.
+
+### LobeChat message format
+
+LobeChat (and `@lobehub/chat-plugin-sdk` internally) sends:
+
 ```json
 {
-  "type": "agent:action",
-  "agentId": "agent-id",
-  "action": {
-    "type": "speak",
-    "payload": { "text": "Hello, world!" }
+  "type": "LobePlugin.renderPlugin",
+  "payload": {
+    "apiName": "speak",
+    "arguments": "{\"text\":\"Hello!\",\"sentiment\":0.5}",
+    "identifier": "3d-agent"
   }
 }
 ```
 
-### Iframe → Host
+`AgentPane` listens for this on `window.addEventListener('message', ...)`. When `@lobehub/chat-plugin-sdk` ships a stable `usePluginStore` / `useWatchPluginMessage` hook that is directly callable for sidebar plugins, replace the listener with that hook so the React render cycle drives the effect.
+
+### Wire protocol (v1)
+
+Bridge envelope:
 
 ```json
 {
-  "type": "agent:ready",
-  "agentId": "agent-id",
-  "version": "1",
-  "capabilities": ["speak", "gesture", "look-at", "emote", "present-model"],
-  "name": "Agent Name"
+  "v": 1,
+  "source": "agent-host",
+  "id": "<uuid>",
+  "inReplyTo": "<request-id>",
+  "kind": "request | response | event",
+  "op": "speak | gesture | emote | look | setAgent | ping | subscribe",
+  "payload": {}
 }
 ```
 
-```json
-{
-  "type": "agent:resize",
-  "agentId": "agent-id",
-  "height": 500
-}
-```
+Full spec: [`01-embed-bridges.md`](../prompts/final-integration/01-embed-bridges.md).
 
-## Lobe Hook Integration
+---
 
-### Current Status
+## Available tool ops
 
-The plugin currently **mocks** the Lobe hook API with a custom event emitter. To integrate with a real LobeHub fork, you must:
+| Op | Payload | Description |
+|---|---|---|
+| `render_agent` | `{ agentId }` | Swap the agent in the sidebar |
+| `speak` | `{ text, sentiment? [-1,1] }` | Avatar speaks with emotional valence |
+| `gesture` | `{ name: wave\|nod\|point\|shrug }` | Trigger a named gesture |
+| `emote` | `{ trigger, weight? [0,1] }` | Inject emotion into the Empathy Layer |
 
-1. **Find the actual SDK**: Check `@lobehub/ui@latest` or `lobehub-plugin-sdk` for the real `usePluginStore` and `onAssistantMessage` hooks.
-2. **Update `src/AgentPane.tsx`**: Replace the `lobe:assistantMessage` custom event listener with the real hook:
+---
 
-```typescript
-// Example (adjust based on actual SDK):
-import { usePluginStore } from '@lobehub/ui';
+## Dev harness
 
-export const AgentPane: React.FC<AgentPaneProps> = ({ settings }) => {
-  // ... existing code ...
-
-  const { onAssistantMessage } = usePluginStore();
-
-  useEffect(() => {
-    if (onAssistantMessage) {
-      const unsubscribe = onAssistantMessage((msg) => {
-        if (msg.content && bridgeRef.current) {
-          bridgeRef.current.speak(msg.content);
-        }
-      });
-      return unsubscribe;
-    }
-  }, [onAssistantMessage]);
-
-  // ... rest of component ...
-};
-```
-
-### Placeholder Implementation
-
-If the Lobe SDK is not available, you can emit a custom event from your LobeHub fork:
-
-```javascript
-// In your chat message handler:
-window.dispatchEvent(new CustomEvent('lobe:assistantMessage', {
-  detail: { content: 'Assistant message text' }
-}));
-```
-
-## Development
+To test the plugin without running LobeChat:
 
 ```bash
+# From repo root:
+npm run build:lib   # produces dist-lib/agent-3d.js (the <agent-3d> web component)
+npm --prefix lobehub-plugin install
+npm --prefix lobehub-plugin run build
+
+# Serve the repo root:
+python3 -m http.server 8080
+
+# Open in browser:
+open http://localhost:8080/lobehub-plugin/dev/?agent=<your-agent-id>
+```
+
+The harness shows the agent iframe on the left and a control panel on the right. Click **Inject speak** to fire a fake assistant message and verify the avatar reacts.
+
+---
+
+## Build
+
+```bash
+cd lobehub-plugin
 npm install
-npm run dev         # Watch build (tsc + esbuild)
-npm run type-check  # Check TypeScript without emitting
-npm run build       # Production bundle
+npm run build        # → dist/bundle.js
+npm run type-check   # TypeScript strict check
 ```
 
-The build outputs to `dist/bundle.js` (ESM module).
+Output: `dist/bundle.js` — tree-shaken, browser-targeted. React and react-dom are external (provided by LobeChat at runtime).
 
-## Structure
+---
 
-```
-src/
-├── index.ts          # Entry point (exports AgentPane, AgentBridge, settingsSchema)
-├── AgentPane.tsx     # Main React component with iframe and hooks
-├── bridge.ts         # PostMessage bridge (v1 protocol implementation)
-├── config-schema.ts  # Settings schema and defaults
-manifest.json         # LobeHub plugin manifest
-```
+## Troubleshooting
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| Avatar never appears | Wrong `agentId` | Copy UUID from dashboard; ensure agent has an avatar |
+| "Loading agent…" stuck | Bridge handshake failed | Check browser console for `[3d-agent]` messages; verify `apiOrigin` is reachable |
+| `speak` does nothing | LobeChat hasn't installed the plugin | Confirm plugin is active in LobeChat Plugin Store |
+| CORS error | Self-hosted origin not allowed | Add origin to `CORS_ORIGINS` in your 3D Agent deployment |
+| Timeout errors | Network latency | The bridge has a 10 s timeout; the iframe may still be loading the web component |
+
+---
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE).

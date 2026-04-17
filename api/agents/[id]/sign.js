@@ -66,6 +66,6 @@ async function resolveAuth(req) {
 	const session = await getSessionUser(req);
 	if (session) return { userId: session.id };
 	const bearer = await authenticateBearer(extractBearer(req));
-	if (bearer)  return { userId: bearer.userId };
+	if (bearer) return { userId: bearer.userId };
 	return null;
 }

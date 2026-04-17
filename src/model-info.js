@@ -1,5 +1,15 @@
-import { prepare, layout, prepareWithSegments, layoutWithLines, measureLineStats } from '@chenglou/pretext';
-import { prepareRichInline, walkRichInlineLineRanges, materializeRichInlineLineRange } from '@chenglou/pretext/rich-inline';
+import {
+	prepare,
+	layout,
+	prepareWithSegments,
+	layoutWithLines,
+	measureLineStats,
+} from '@chenglou/pretext';
+import {
+	prepareRichInline,
+	walkRichInlineLineRanges,
+	materializeRichInlineLineRange,
+} from '@chenglou/pretext/rich-inline';
 
 // Fonts
 const FONT_TITLE = '500 14px Inter, sans-serif';
@@ -52,7 +62,8 @@ function countStats(object) {
 				}
 			}
 			if (node.skeleton) hasSkinning = true;
-			if (node.morphTargetInfluences && node.morphTargetInfluences.length > 0) hasMorphs = true;
+			if (node.morphTargetInfluences && node.morphTargetInfluences.length > 0)
+				hasMorphs = true;
 
 			const mats = Array.isArray(node.material) ? node.material : [node.material];
 			mats.forEach((mat) => {
@@ -91,7 +102,8 @@ function buildDescription(stats, clips) {
 	const parts = [];
 	if (stats.hasSkinning) parts.push('skinned');
 	if (stats.hasMorphs) parts.push('morph targets');
-	if (clips && clips.length > 0) parts.push(`${clips.length} animation${clips.length > 1 ? 's' : ''}`);
+	if (clips && clips.length > 0)
+		parts.push(`${clips.length} animation${clips.length > 1 ? 's' : ''}`);
 	if (stats.materialTypes.length > 0) parts.push(stats.materialTypes.join(', '));
 	return parts.length > 0 ? parts.join(' · ') : '';
 }
@@ -191,10 +203,11 @@ export function createModelInfo(container, object, clips) {
 
 	const canvasHeight =
 		PADDING +
-		titleMeasure.height + ROW_GAP +     // title
-		ROW_GAP +                             // separator
+		titleMeasure.height +
+		ROW_GAP + // title
+		ROW_GAP + // separator
 		rowMeasurements.length * (LINE_HEIGHT + ROW_GAP) + // stat rows
-		chipRowHeight +                       // chips
+		chipRowHeight + // chips
 		(descHeight > 0 ? ROW_GAP + descHeight : 0) + // description
 		PADDING;
 

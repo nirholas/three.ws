@@ -32,6 +32,7 @@ Implemented in `src/onboarding/flow.js`. States: `'auth' | 'capture' | 'process'
 ### Progress UI
 
 During `process`:
+
 - Primary label cycles: "Analyzing your photo…" → "Building your avatar…" → "Almost ready…"
 - Progress bar driven by the `progress` events from the pipeline.
 - If the pipeline emits a preview image, show it at 25% opacity behind the spinner — conveys "something real is happening."
@@ -39,6 +40,7 @@ During `process`:
 ### Error UI
 
 Each failure has a specific recovery path:
+
 - Camera permission denied → "Upload a photo instead" button (file input, emits same Blob contract).
 - Face not detected → retake + tip ("Good lighting, face the camera, no sunglasses").
 - Pipeline timeout → retry button + switch-pipeline button.

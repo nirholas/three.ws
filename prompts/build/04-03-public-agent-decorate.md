@@ -3,7 +3,7 @@
 **Branch:** `feat/agent-public-decorate`
 **Stack layer:** 4 (View + embed)
 **Depends on:** nothing
-**Blocks:** 05-* (host embeds call the public endpoint and should not leak internals)
+**Blocks:** 05-\* (host embeds call the public endpoint and should not leak internals)
 
 ## Why it matters
 
@@ -11,12 +11,12 @@
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| [api/agents.js](../../api/agents.js) | `decorate()` function and the GET handler. |
-| [api/_lib/](../../api/_lib/) | Any shared response-shaping helpers. |
-| [src/agent-identity.js](../../src/agent-identity.js) | Client expectation of the agent shape. |
-| [agent-embed.html](../../agent-embed.html), [public/agent-home.html](../../public/agent-home.html) | Public consumers of the endpoint. |
+| File                                                                                               | Why                                        |
+| :------------------------------------------------------------------------------------------------- | :----------------------------------------- |
+| [api/agents.js](../../api/agents.js)                                                               | `decorate()` function and the GET handler. |
+| [api/\_lib/](../../api/_lib/)                                                                      | Any shared response-shaping helpers.       |
+| [src/agent-identity.js](../../src/agent-identity.js)                                               | Client expectation of the agent shape.     |
+| [agent-embed.html](../../agent-embed.html), [public/agent-home.html](../../public/agent-home.html) | Public consumers of the endpoint.          |
 
 ## Build this
 

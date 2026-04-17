@@ -48,16 +48,16 @@ The gap is the **hand-off** — today a user who drops+edits a GLB in the viewer
 
 Run 01 → 02 → 03 → 04 first; those ship the happy path. 05 → 06 harden it. 07 → 08 verify.
 
-| Prompt | Ships | Can parallel with |
-|---|---|---|
-| [01-editor-on-dropped-glb.md](./01-editor-on-dropped-glb.md) | Editor reliably attaches for drag-drop + `#model=` loads | — |
-| [02-publish-client.md](./02-publish-client.md) | `src/editor/publish.js` — one function that uploads + mints widget | 01 |
-| [03-publish-button-and-modal.md](./03-publish-button-and-modal.md) | "📤 Publish as embed" button in editor + share modal with 3 snippets | depends on 02 |
-| [04-publish-auth-gate.md](./04-publish-auth-gate.md) | Signed-out users get sent to `/login?next=...` with their edits preserved | depends on 03 |
-| [05-republish-existing.md](./05-republish-existing.md) | Loaded-from-a-widget re-edit → Update vs Create new | depends on 03 |
-| [06-size-and-cors-guards.md](./06-size-and-cors-guards.md) | Block >25 MB, catch CORS-blocked remote GLBs with a useful error | depends on 02 |
-| [07-widget-metadata.md](./07-widget-metadata.md) | Verify + polish OG card + oEmbed for `/w/<id>` | parallel with 01–06 |
-| [08-smoke-test.md](./08-smoke-test.md) | E2E manual checklist — drop, edit, publish, paste in each surface | last |
+| Prompt                                                             | Ships                                                                     | Can parallel with   |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------- | ------------------- |
+| [01-editor-on-dropped-glb.md](./01-editor-on-dropped-glb.md)       | Editor reliably attaches for drag-drop + `#model=` loads                  | —                   |
+| [02-publish-client.md](./02-publish-client.md)                     | `src/editor/publish.js` — one function that uploads + mints widget        | 01                  |
+| [03-publish-button-and-modal.md](./03-publish-button-and-modal.md) | "📤 Publish as embed" button in editor + share modal with 3 snippets      | depends on 02       |
+| [04-publish-auth-gate.md](./04-publish-auth-gate.md)               | Signed-out users get sent to `/login?next=...` with their edits preserved | depends on 03       |
+| [05-republish-existing.md](./05-republish-existing.md)             | Loaded-from-a-widget re-edit → Update vs Create new                       | depends on 03       |
+| [06-size-and-cors-guards.md](./06-size-and-cors-guards.md)         | Block >25 MB, catch CORS-blocked remote GLBs with a useful error          | depends on 02       |
+| [07-widget-metadata.md](./07-widget-metadata.md)                   | Verify + polish OG card + oEmbed for `/w/<id>`                            | parallel with 01–06 |
+| [08-smoke-test.md](./08-smoke-test.md)                             | E2E manual checklist — drop, edit, publish, paste in each surface         | last                |
 
 ## House rules for every prompt (inherits from `/CLAUDE.md`)
 

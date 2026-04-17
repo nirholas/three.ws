@@ -27,9 +27,9 @@ After this task:
 1. **Package surgery** — `npm uninstall @avaturn/sdk @avaturn-live/web-sdk`. Confirm [package.json](../../package.json) and lockfile diff is exactly the two removals.
 2. **Delete** [src/avatar-creator.js](../../src/avatar-creator.js). Search for any imports (`import .* from .*avatar-creator`) and remove them — update callers to no-op the creator-open path with a `console.warn('[creator] not yet wired — see avatar-platform task 03+')`. Don't leave dead buttons; comment them out with a TODO pointing at task 16.
 3. **Rename** [src/avaturn-agent.js](../../src/avaturn-agent.js) → `src/agent-panel.js`. Inside:
-   - Class `AvaturnAgent` → `AgentPanel`.
-   - All CSS classes `avaturn-*` → `agent-*` (keep the suffix: `avaturn-panel` → `agent-panel`, `avaturn-mic` → `agent-mic`, etc.).
-   - The header title `SperaxOS` stays (it's a valid brand label).
+    - Class `AvaturnAgent` → `AgentPanel`.
+    - All CSS classes `avaturn-*` → `agent-*` (keep the suffix: `avaturn-panel` → `agent-panel`, `avaturn-mic` → `agent-mic`, etc.).
+    - The header title `SperaxOS` stays (it's a valid brand label).
 4. **Update [src/app.js](../../src/app.js)** — import path and class name. No behavioral changes.
 5. **Update [style.css](../../style.css)** — replace every `.avaturn-*` selector with `.agent-*`. Verify none are missed.
 6. **Update [src/avaturn-agent.js](../../src/avaturn-agent.js) callers** if any exist outside app.js (there shouldn't be).
@@ -56,9 +56,9 @@ After this task:
 1. `npm uninstall @avaturn/sdk @avaturn-live/web-sdk` — watch the lockfile diff.
 2. `npx vite build` passes.
 3. `npm run dev`, open the app:
-   - Agent panel toggle works.
-   - Typing + pressing Enter echoes a reply.
-   - Mic button still toggles active state.
+    - Agent panel toggle works.
+    - Typing + pressing Enter echoes a reply.
+    - Mic button still toggles active state.
 4. Open DevTools, inspect panel DOM — classes are all `agent-*`, no `avaturn-*`.
 5. Drag-drop a `.glb` into the viewer — it still loads (confirms nothing accidental in viewer path).
 

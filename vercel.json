@@ -36,11 +36,17 @@
 		{ "src": "/api/agents/me", "dest": "/api/agents" },
 		{ "src": "/api/agents/suggest", "dest": "/api/agents/suggest" },
 		{ "src": "/api/agents/by-wallet", "dest": "/api/agents/by-wallet" },
-		{ "src": "/api/agents/by-address/([^/]+)", "dest": "/api/agents/by-address/[addr]?addr=$1" },
+		{
+			"src": "/api/agents/by-address/([^/]+)",
+			"dest": "/api/agents/by-address/[addr]?addr=$1"
+		},
 		{ "src": "/api/agents/([^/]+)/wallet", "dest": "/api/agents/[id]" },
-		{ "src": "/api/avatars/([^/]+)/storage-mode", "dest": "/api/avatars/[id]/storage-mode?id=$1" },
-		{ "src": "/api/avatars/([^/]+)/pin-ipfs",     "dest": "/api/avatars/[id]/pin-ipfs?id=$1" },
-		{ "src": "/dashboard/storage",                "dest": "/public/dashboard/storage.html" },
+		{
+			"src": "/api/avatars/([^/]+)/storage-mode",
+			"dest": "/api/avatars/[id]/storage-mode?id=$1"
+		},
+		{ "src": "/api/avatars/([^/]+)/pin-ipfs", "dest": "/api/avatars/[id]/pin-ipfs?id=$1" },
+		{ "src": "/dashboard/storage", "dest": "/public/dashboard/storage.html" },
 		{
 			"src": "/api/agents/([^/]+)/embed-policy",
 			"dest": "/api/agents/[id]/embed-policy?id=$1"

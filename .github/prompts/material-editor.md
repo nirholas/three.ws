@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Build a live material editor with PBR parameter tweaking and GLB export"
+description: 'Build a live material editor with PBR parameter tweaking and GLB export'
 ---
 
 # Material Editor
@@ -24,30 +24,32 @@ These libraries let you read a GLB, modify material properties programmatically,
 ### 1. Material Inspector Panel (`src/material-editor.js`)
 
 Create a new module that:
+
 - Traverses the loaded `content` (Three.js scene graph) to find all `MeshStandardMaterial` / `MeshPhysicalMaterial` instances
 - Groups materials by name (deduplicating shared materials)
 - For each material, exposes editable PBR properties:
 
-| Property | Type | Control |
-|----------|------|---------|
-| `color` (baseColor) | Color | dat.gui color picker |
-| `metalness` | Float 0-1 | Slider |
-| `roughness` | Float 0-1 | Slider |
-| `emissive` | Color | Color picker |
-| `emissiveIntensity` | Float | Slider |
-| `opacity` | Float 0-1 | Slider |
-| `transparent` | Boolean | Checkbox |
-| `alphaTest` | Float 0-1 | Slider |
-| `side` | Enum | Dropdown (Front/Back/Double) |
-| `flatShading` | Boolean | Checkbox |
-| `wireframe` | Boolean | Checkbox |
-| `envMapIntensity` | Float | Slider |
-| `normalScale` | Vector2 | Two sliders |
-| `aoMapIntensity` | Float 0-1 | Slider |
+| Property            | Type      | Control                      |
+| ------------------- | --------- | ---------------------------- |
+| `color` (baseColor) | Color     | dat.gui color picker         |
+| `metalness`         | Float 0-1 | Slider                       |
+| `roughness`         | Float 0-1 | Slider                       |
+| `emissive`          | Color     | Color picker                 |
+| `emissiveIntensity` | Float     | Slider                       |
+| `opacity`           | Float 0-1 | Slider                       |
+| `transparent`       | Boolean   | Checkbox                     |
+| `alphaTest`         | Float 0-1 | Slider                       |
+| `side`              | Enum      | Dropdown (Front/Back/Double) |
+| `flatShading`       | Boolean   | Checkbox                     |
+| `wireframe`         | Boolean   | Checkbox                     |
+| `envMapIntensity`   | Float     | Slider                       |
+| `normalScale`       | Vector2   | Two sliders                  |
+| `aoMapIntensity`    | Float 0-1 | Slider                       |
 
 ### 2. Texture Viewer
 
 For each material, show thumbnail previews of assigned textures:
+
 - `map` (baseColor texture)
 - `normalMap`
 - `roughnessMap` / `metalnessMap`
@@ -64,6 +66,7 @@ All material property changes apply immediately to the Three.js material via `ma
 ### 4. GLB Export with Edits
 
 Using glTF-Transform:
+
 1. Read the original GLB bytes
 2. Apply material property changes to the glTF-Transform document
 3. Write modified GLB
@@ -74,22 +77,24 @@ import { Document, NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 
 async function exportEditedGLB(originalBuffer, materialEdits) {
-    const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
-    const doc = await io.readBinary(new Uint8Array(originalBuffer));
+	const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
+	const doc = await io.readBinary(new Uint8Array(originalBuffer));
 
-    for (const [materialName, edits] of Object.entries(materialEdits)) {
-        const mat = doc.getRoot().listMaterials()
-            .find(m => m.getName() === materialName);
-        if (!mat) continue;
+	for (const [materialName, edits] of Object.entries(materialEdits)) {
+		const mat = doc
+			.getRoot()
+			.listMaterials()
+			.find((m) => m.getName() === materialName);
+		if (!mat) continue;
 
-        if (edits.baseColor) mat.setBaseColorFactor(edits.baseColor);
-        if (edits.metalness !== undefined) mat.setMetallicFactor(edits.metalness);
-        if (edits.roughness !== undefined) mat.setRoughnessFactor(edits.roughness);
-        if (edits.emissive) mat.setEmissiveFactor(edits.emissive);
-        // ... etc
-    }
+		if (edits.baseColor) mat.setBaseColorFactor(edits.baseColor);
+		if (edits.metalness !== undefined) mat.setMetallicFactor(edits.metalness);
+		if (edits.roughness !== undefined) mat.setRoughnessFactor(edits.roughness);
+		if (edits.emissive) mat.setEmissiveFactor(edits.emissive);
+		// ... etc
+	}
 
-    return io.writeBinary(doc);
+	return io.writeBinary(doc);
 }
 ```
 

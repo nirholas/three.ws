@@ -23,10 +23,10 @@ Single primary button: `Create agent`.
 
 ```js
 export async function commitAvatar({ glbBlob, name, source = 'selfie' }) {
-  // 1. Request upload URL or multipart POST, depending on the existing API.
-  // 2. Upload the GLB.
-  // 3. Create the avatar + agent rows.
-  // 4. Return { agentId, slug, viewerUrl, editorUrl }.
+	// 1. Request upload URL or multipart POST, depending on the existing API.
+	// 2. Upload the GLB.
+	// 3. Create the avatar + agent rows.
+	// 4. Return { agentId, slug, viewerUrl, editorUrl }.
 }
 ```
 

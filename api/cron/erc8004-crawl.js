@@ -100,7 +100,9 @@ async function crawlChain(chain) {
 		return { inserted: 0, lastBlock: fromBlock - 1, fromBlock };
 	}
 	if (body.status !== '1' || !Array.isArray(body.result)) {
-		throw new Error(`etherscan ${chain.id}: ${body.message || 'unknown'} — ${String(body.result).slice(0, 120)}`);
+		throw new Error(
+			`etherscan ${chain.id}: ${body.message || 'unknown'} — ${String(body.result).slice(0, 120)}`,
+		);
 	}
 
 	let lastBlock = fromBlock - 1;

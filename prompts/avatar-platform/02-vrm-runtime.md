@@ -19,14 +19,14 @@ After this task:
 
 1. **Install** — `npm install @pixiv/three-vrm`. Pin to the latest 3.x (check the upstream for the current major). Update lockfile.
 2. **New file** `src/vrm-runtime.js`:
-   - Exports `createVRMLoaderPlugin(gltfLoader)` that registers the VRM plugin on the provided `GLTFLoader`.
-   - Exports `async loadVRM(gltfLoader, url)` returning `{ scene, vrm }` where `vrm` is the `VRM` instance or `null` if the file is plain GLB.
-   - Exports `updateVRM(vrm, deltaSeconds)` calling `vrm.update(dt)` — used by the render loop.
-   - Exports `disposeVRM(vrm)` — cleans up spring bones and detaches.
+    - Exports `createVRMLoaderPlugin(gltfLoader)` that registers the VRM plugin on the provided `GLTFLoader`.
+    - Exports `async loadVRM(gltfLoader, url)` returning `{ scene, vrm }` where `vrm` is the `VRM` instance or `null` if the file is plain GLB.
+    - Exports `updateVRM(vrm, deltaSeconds)` calling `vrm.update(dt)` — used by the render loop.
+    - Exports `disposeVRM(vrm)` — cleans up spring bones and detaches.
 3. **Modify [src/viewer.js](../../src/viewer.js)** — in the GLTFLoader setup, install the VRM plugin. In the scene-setup path that runs after a model loads, detect `gltf.userData.vrm` (set by the plugin). If present:
-   - Store it as `this.activeVRM`.
-   - In the render/update loop, call `updateVRM(this.activeVRM, delta)` every frame.
-   - On model replacement/dispose, call `disposeVRM(previous)`.
+    - Store it as `this.activeVRM`.
+    - In the render/update loop, call `updateVRM(this.activeVRM, delta)` every frame.
+    - On model replacement/dispose, call `disposeVRM(previous)`.
 4. **Expose** — `window.VIEWER.activeVRM` reads from `app.viewer.activeVRM`.
 5. **Accept `.vrm` in the file picker / dropzone** — search [src/app.js](../../src/app.js) and the dropzone config for the `.glb, .gltf` accept list; add `.vrm`.
 6. **Smoke-test asset** — download a public CC0 VRM (e.g., one of the AvatarSample set from VRoid Hub, or a file from the asset-library task later) into [public/avatars/](../../public/avatars/) as `sample.vrm`. License info goes into a `public/avatars/NOTICES.md` (create it).

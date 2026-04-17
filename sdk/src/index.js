@@ -27,7 +27,13 @@
 
 export { AgentPanel } from './panel.js';
 export { agentRegistration, agentCard, aiPlugin } from './manifests.js';
-export { connectWallet, registerAgent, pinToIPFS, buildRegistrationJSON, getIdentityRegistry } from './erc8004/registry.js';
+export {
+	connectWallet,
+	registerAgent,
+	pinToIPFS,
+	buildRegistrationJSON,
+	getIdentityRegistry,
+} from './erc8004/registry.js';
 export { IDENTITY_REGISTRY_ABI, REGISTRY_DEPLOYMENTS, agentRegistryId } from './erc8004/abi.js';
 
 import { AgentPanel } from './panel.js';
@@ -90,16 +96,27 @@ export class AgentKit {
 	}
 
 	/** Open the chat panel. */
-	open() { this._panel.open(); return this; }
+	open() {
+		this._panel.open();
+		return this;
+	}
 
 	/** Close the chat panel. */
-	close() { this._panel.close(); return this; }
+	close() {
+		this._panel.close();
+		return this;
+	}
 
 	/** Add a message to the panel. */
-	addMessage(role, text) { this._panel.addMessage(role, text); return this; }
+	addMessage(role, text) {
+		this._panel.addMessage(role, text);
+		return this;
+	}
 
 	/** Remove the panel from the DOM. */
-	dispose() { this._panel.dispose(); }
+	dispose() {
+		this._panel.dispose();
+	}
 
 	// ---------------------------------------------------------------------------
 	// Blockchain registration

@@ -41,11 +41,11 @@ async function download(url, dest) {
 function parseGlbAnimations(buf) {
 	// GLB header: magic(4) + version(4) + length(4)
 	const magic = buf.readUInt32LE(0);
-	if (magic !== 0x46546C67) return []; // 'glTF'
+	if (magic !== 0x46546c67) return []; // 'glTF'
 
 	const chunkLength = buf.readUInt32LE(12);
 	const chunkType = buf.readUInt32LE(16);
-	if (chunkType !== 0x4E4F534A) return []; // 'JSON'
+	if (chunkType !== 0x4e4f534a) return []; // 'JSON'
 
 	const jsonStr = buf.slice(20, 20 + chunkLength).toString('utf8');
 	const gltf = JSON.parse(jsonStr);
@@ -99,14 +99,27 @@ async function main() {
 	const soldier = downloaded.find((d) => d.name === 'Soldier');
 
 	const ICONS = {
-		idle: '🧍', Idle: '🧍',
-		Walking: '🚶', Walk: '🚶', walking: '🚶',
-		Running: '🏃', Run: '🏃', running: '🏃',
-		Wave: '👋', Waving: '👋', waving: '👋',
-		Dance: '💃', Dancing: '💃', dancing: '💃',
-		Sitting: '🪑', sitting: '🪑',
-		Jump: '🦘', Jumping: '🦘', jumping: '🦘',
-		Punch: '👊', punching: '👊',
+		idle: '🧍',
+		Idle: '🧍',
+		Walking: '🚶',
+		Walk: '🚶',
+		walking: '🚶',
+		Running: '🏃',
+		Run: '🏃',
+		running: '🏃',
+		Wave: '👋',
+		Waving: '👋',
+		waving: '👋',
+		Dance: '💃',
+		Dancing: '💃',
+		dancing: '💃',
+		Sitting: '🪑',
+		sitting: '🪑',
+		Jump: '🦘',
+		Jumping: '🦘',
+		jumping: '🦘',
+		Punch: '👊',
+		punching: '👊',
 		Standing: '🧍',
 		ThumbsUp: '👍',
 		Yes: '✅',
@@ -115,7 +128,15 @@ async function main() {
 	};
 
 	const LOOPS = new Set([
-		'Idle', 'Walking', 'Running', 'Dance', 'Sitting', 'Standing', 'idle', 'walking', 'running',
+		'Idle',
+		'Walking',
+		'Running',
+		'Dance',
+		'Sitting',
+		'Standing',
+		'idle',
+		'walking',
+		'running',
 	]);
 
 	const manifest = [];
@@ -146,7 +167,9 @@ async function main() {
 		const czInfo = parseGlbAnimations(czBuf);
 		console.log(`\n🧬 cz.glb skeleton: ${czInfo.jointCount} joints`);
 		console.log(`   Bones: ${czInfo.boneNames.join(', ')}`);
-		console.log(`   Existing animations: ${czInfo.anims.length ? czInfo.anims.join(', ') : '(none)'}`);
+		console.log(
+			`   Existing animations: ${czInfo.anims.length ? czInfo.anims.join(', ') : '(none)'}`,
+		);
 	}
 
 	// ── Summary ──────────────────────────────────────────────────────────────

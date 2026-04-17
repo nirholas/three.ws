@@ -9,20 +9,21 @@ The Empathy Layer in [../../src/agent-avatar.js](../../src/agent-avatar.js) is a
 This task specifies an idle-loop driver that lives inside the bundle from [./02-zero-dep-viewer-bundle.md](./02-zero-dep-viewer-bundle.md) and makes the avatar look alive without any user input.
 
 Relevant existing files:
+
 - [../../src/agent-avatar.js](../../src/agent-avatar.js) — Empathy Layer. The `_injectStimulus(emotion, weight)` method is the right entry point for injecting synthetic stimuli (see `_onSpeak`, `_onSkillDone` etc. for patterns).
 - [../../src/agent-protocol.js](../../src/agent-protocol.js) — the bus. Idle-loop stimuli can be fired through `protocol.emit()` so the Empathy Layer reacts naturally rather than directly poking `_emotion`.
 
 ## Goal
 
-Design and implement an idle animation loop that makes the Artifact-embedded avatar look subtly alive — continuous breathing, occasional head glances, very rare blinks — without being distracting and without requiring any user interaction. The loop must be layered *on top of* the existing Empathy Layer so that real stimuli (from task 04's chat-message postMessage bridge) still override it cleanly.
+Design and implement an idle animation loop that makes the Artifact-embedded avatar look subtly alive — continuous breathing, occasional head glances, very rare blinks — without being distracting and without requiring any user interaction. The loop must be layered _on top of_ the existing Empathy Layer so that real stimuli (from task 04's chat-message postMessage bridge) still override it cleanly.
 
 ## Deliverable
 
 1. **File created** — `artifact-bundle/src/idle-loop.js` (lives under the bundle directory from task 02). Exports `class IdleLoop`:
 
     ```js
-    new IdleLoop({ avatar, protocol, viewer }).start()
-    idle.stop()
+    new IdleLoop({ avatar, protocol, viewer }).start();
+    idle.stop();
     ```
 
 2. Integration point in `artifact-bundle/src/index.js` (from task 02) — when `opts.idle !== false`, instantiate and start the loop at the end of `mount()`.
@@ -32,25 +33,30 @@ Design and implement an idle animation loop that makes the Artifact-embedded ava
 ## Behaviour specification
 
 ### Breathing (continuous)
+
 - Apply a sine-wave scale to the root bone's Y position (or chest bone if found): `amplitude = 0.006` in world units, `period = 4.0 s`. This is pure kinematics — do NOT route through the emotion blend.
 - Find-the-bone logic: traverse scene for a bone named `Spine`, `Spine1`, `Chest`, or `mixamorigSpine`, case-insensitive. Fall back to animating the root of the skinned mesh if no bone found.
 - Budget: &lt;0.05 ms per frame.
 
 ### Head glance (occasional)
+
 - Every `randBetween(6, 14)` seconds, pick a random off-axis look target within a cone of ±30° horizontal, ±15° vertical, at distance 2m in front of the avatar. Hold for `randBetween(1.2, 2.5)` seconds, then glance back to center for a random hold `randBetween(2, 5)` seconds.
 - Drive this through the Empathy Layer by calling `avatar.setLookTarget(vec3)` — existing API. Do NOT bypass.
 - While a glance is active, inject a very small `curiosity` stimulus (`weight: 0.15`) on glance-start so the avatar's face subtly engages.
 
 ### Blink (rare — only when model supports it)
+
 - Detect if any morph target named `eyeBlinkLeft` / `eyeBlinkRight` / `eyesClosed` exists on any mesh. If not, skip entirely.
 - Every `randBetween(3, 7)` seconds, play a 120 ms blink: ramp closed→0.95, hold 40 ms, ramp open→0.0. Apply directly to morph targets, do NOT route through the blend map.
 - Never fire mid-glance (skip if glance just started).
 
 ### Ambient emotion drift (very subtle)
+
 - Every `randBetween(15, 40)` seconds, inject one of `{ curiosity: 0.20, empathy: 0.15, celebration: 0.18 }` — choose uniformly. Let the Empathy Layer's existing decay handle fade-out. Never inject concern from the idle loop.
 - Skip injection entirely if the current blended weight of that emotion is already &gt; 0.3 (don't pile on).
 
 ### First-encounter behaviour
+
 - The existing Empathy Layer already does a curiosity burst at attach-time (see [src/agent-avatar.js:120-126](../../src/agent-avatar.js)). The idle loop must NOT duplicate it. Add a 2-second grace period after `start()` before the idle loop fires its first stimulus.
 
 ## Audit checklist — must handle all of these
@@ -93,6 +99,7 @@ Design and implement an idle animation loop that makes the Artifact-embedded ava
 ## Reporting
 
 At the end, summarise:
+
 - File created (`artifact-bundle/src/idle-loop.js`), lines of code.
 - Integration point changed in `artifact-bundle/src/index.js` (one line or a block).
 - Bundle size delta (before/after gzipped).

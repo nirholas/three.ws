@@ -2,20 +2,20 @@
 
 **Branch:** `feat/host-auth-bridge`
 **Stack layer:** 5 (Host embed)
-**Depends on:** 05-03 (postMessage bridge), 01-* (wallet auth)
+**Depends on:** 05-03 (postMessage bridge), 01-\* (wallet auth)
 
 ## Why it matters
 
-A user viewing an agent inside Lobehub may want to *adopt* it — write to its memory, sign actions on its behalf, link it to their wallet. From inside an opaque-origin sandbox they can't use cookies. We need a popup-based SIWE flow that returns a short-lived bearer token to the embed via postMessage.
+A user viewing an agent inside Lobehub may want to _adopt_ it — write to its memory, sign actions on its behalf, link it to their wallet. From inside an opaque-origin sandbox they can't use cookies. We need a popup-based SIWE flow that returns a short-lived bearer token to the embed via postMessage.
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| [api/auth/siwe/](../../api/auth/siwe/) | Existing SIWE endpoints — reuse, don't duplicate. |
-| [src/host-bridge.js](../../src/host-bridge.js) | Bridge to extend. |
-| [api/_lib/auth.js](../../api/_lib/auth.js) | Bearer token issuance — likely already supports JWT. |
-| [public/wallet-login.js](../../public/wallet-login.js) | Existing SIWE client. |
+| File                                                   | Why                                                  |
+| :----------------------------------------------------- | :--------------------------------------------------- |
+| [api/auth/siwe/](../../api/auth/siwe/)                 | Existing SIWE endpoints — reuse, don't duplicate.    |
+| [src/host-bridge.js](../../src/host-bridge.js)         | Bridge to extend.                                    |
+| [api/\_lib/auth.js](../../api/_lib/auth.js)            | Bearer token issuance — likely already supports JWT. |
+| [public/wallet-login.js](../../public/wallet-login.js) | Existing SIWE client.                                |
 
 ## Build this
 

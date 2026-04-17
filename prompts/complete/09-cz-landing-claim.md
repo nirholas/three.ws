@@ -24,12 +24,12 @@ Create `public/cz/state.json` with a stub shape:
 
 ```json
 {
-  "status": "pre-onchain",
-  "chainId": null,
-  "agentId": null,
-  "metadataURI": null,
-  "ownerAddress": null,
-  "avatarUrl": "/avatars/cz.glb"
+	"status": "pre-onchain",
+	"chainId": null,
+	"agentId": null,
+	"metadataURI": null,
+	"ownerAddress": null,
+	"avatarUrl": "/avatars/cz.glb"
 }
 ```
 
@@ -41,14 +41,16 @@ Create `src/cz-flow.js` — standalone ES module:
 
 ```js
 export async function startClaim({ state, onProgress }) {
-  // 1. connectWallet() via src/erc8004/agent-registry.js
-  // 2. If state.status === 'pre-onchain' → show "Claim opens when CZ is registered" modal.
-  // 3. If state.ownerAddress === '0x0' → call claim() on IdentityRegistry.
-  // 4. If state.ownerAddress is a known demo EOA → guide user through transferOwner flow.
-  // 5. Emit progress via onProgress({ step, status, txHash? })
+	// 1. connectWallet() via src/erc8004/agent-registry.js
+	// 2. If state.status === 'pre-onchain' → show "Claim opens when CZ is registered" modal.
+	// 3. If state.ownerAddress === '0x0' → call claim() on IdentityRegistry.
+	// 4. If state.ownerAddress is a known demo EOA → guide user through transferOwner flow.
+	// 5. Emit progress via onProgress({ step, status, txHash? })
 }
 
-export function mountEmbedCopy(container, { state }) { /* CTA that copies an <agent-3d> snippet */ }
+export function mountEmbedCopy(container, { state }) {
+	/* CTA that copies an <agent-3d> snippet */
+}
 ```
 
 Imports allowed: [src/erc8004/agent-registry.js](../../src/erc8004/agent-registry.js), [src/erc8004/abi.js](../../src/erc8004/abi.js). Do **not** re-implement wallet connection.
@@ -67,6 +69,7 @@ When `state.chainId` / `state.agentId` are present, interpolate them in.
 ### 5. Analytics (no-op if unconfigured)
 
 Fire `window.dispatchEvent(new CustomEvent('cz-demo-event', { detail: { event, props } }))` at key moments:
+
 - `landing_view`
 - `claim_start`
 - `claim_wallet_connected`

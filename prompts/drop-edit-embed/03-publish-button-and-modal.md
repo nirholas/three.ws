@@ -18,9 +18,7 @@ Tasks 01–02 built the plumbing. This one ships the user-visible piece: a butto
 In [src/editor/index.js](../../src/editor/index.js) `_addExportFolder()`, after the `💾 download GLB` row, add:
 
 ```js
-folder
-	.add({ publish: () => this._openPublishModal() }, 'publish')
-	.name('📤 publish as embed');
+folder.add({ publish: () => this._openPublishModal() }, 'publish').name('📤 publish as embed');
 ```
 
 Store a reference (`this._publishCtrl = …`) so you can disable it while a publish is in-flight.

@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Unify Privy + SIWE so one user row handles both email+wallet auth paths"
+description: 'Unify Privy + SIWE so one user row handles both email+wallet auth paths'
 ---
 
 # Stack Layer 1: Unified Privy + SIWE Auth
@@ -14,6 +14,7 @@ Privy is integrated (per recent commit `e4bc161`) and SIWE is being added. Witho
 ### Schema reconciliation
 
 `users` table should have:
+
 - `id` (primary key, uuid or serial)
 - `wallet_address` (unique, lowercase, nullable only during transitional migration)
 - `privy_did` (nullable, unique when set)
@@ -21,9 +22,10 @@ Privy is integrated (per recent commit `e4bc161`) and SIWE is being added. Witho
 - `handle` (nullable)
 - `created_at`, `updated_at`
 
-### Server resolution logic ([api/_lib/](api/_lib/))
+### Server resolution logic ([api/\_lib/](api/_lib/))
 
 Add `resolveUser({ walletAddress, privyDid, email })` helper:
+
 1. If `privyDid` is provided: look up by `privy_did`. If found, return.
 2. If `walletAddress` is provided: look up by `wallet_address`. If found, link `privy_did` if not set, return.
 3. Else create a new row with whatever identifiers are present.

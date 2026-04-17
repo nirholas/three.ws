@@ -7,21 +7,21 @@
 
 ## Why it matters
 
-The SIWE flow works, but the user can't *leave* cleanly or recover a stale session. [/api/agents/me](../../api/agents.js) has been observed 500'ing (see project memory). Wallet auth is only "100% done" when sign-in, sign-out, and the `/me` round-trip are all green.
+The SIWE flow works, but the user can't _leave_ cleanly or recover a stale session. [/api/agents/me](../../api/agents.js) has been observed 500'ing (see project memory). Wallet auth is only "100% done" when sign-in, sign-out, and the `/me` round-trip are all green.
 
 ## Read these first
 
-| File | Why |
-|:---|:---|
-| [api/auth/logout.js](../../api/auth/logout.js) | Exists but has no UI caller. |
-| [api/auth/me.js](../../api/auth/me.js) (or equivalent in `api/auth/`) | The canonical "who am I" endpoint. |
-| [api/agents.js](../../api/agents.js) | Contains the `/api/agents/me` handler and its auto-create-default-agent logic. This is where the 500 comes from. |
-| [public/dashboard/dashboard.js](../../public/dashboard/dashboard.js) | Sign-in state read on page load. |
-| [public/wallet-login.js](../../public/wallet-login.js) | The client session-issuer. |
+| File                                                                  | Why                                                                                                              |
+| :-------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------- |
+| [api/auth/logout.js](../../api/auth/logout.js)                        | Exists but has no UI caller.                                                                                     |
+| [api/auth/me.js](../../api/auth/me.js) (or equivalent in `api/auth/`) | The canonical "who am I" endpoint.                                                                               |
+| [api/agents.js](../../api/agents.js)                                  | Contains the `/api/agents/me` handler and its auto-create-default-agent logic. This is where the 500 comes from. |
+| [public/dashboard/dashboard.js](../../public/dashboard/dashboard.js)  | Sign-in state read on page load.                                                                                 |
+| [public/wallet-login.js](../../public/wallet-login.js)                | The client session-issuer.                                                                                       |
 
 ## Build this
 
-1. **Reproduce the 500.** Call `/api/agents/me` with a valid session cookie but no existing agent row. Capture the stack trace. Fix the underlying cause — likely a null `user_wallets` join or a missing column. Do *not* paper over with a try/catch that swallows errors.
+1. **Reproduce the 500.** Call `/api/agents/me` with a valid session cookie but no existing agent row. Capture the stack trace. Fix the underlying cause — likely a null `user_wallets` join or a missing column. Do _not_ paper over with a try/catch that swallows errors.
 2. **Logout button.** In [public/dashboard/dashboard.js](../../public/dashboard/dashboard.js), add a "Sign out" item in the header user menu. POSTs `/api/auth/logout`, clears in-memory state, redirects to `/`.
 3. **Session recovery.** On every authenticated page load (`/dashboard`, `/studio` when it ships), call `/api/auth/me` first. If 401, redirect to `/login?return=<current>`. If 500, show a banner "We couldn't load your account — try signing in again" with a logout link.
 4. **Agent auto-create safety.** In [api/agents.js](../../api/agents.js), the `/api/agents/me` auto-create path must be idempotent: if a default agent already exists for the user, return it; if not, create it inside a transaction so two racing requests don't both insert.

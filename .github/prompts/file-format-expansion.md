@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Add multi-format import support for FBX, OBJ, and USDZ files"
+description: 'Add multi-format import support for FBX, OBJ, and USDZ files'
 ---
 
 # File Format Expansion
@@ -80,16 +80,26 @@ In `src/app.js`, detect file format by extension:
 
 ```js
 function getLoader(filename) {
-    const ext = filename.split('.').pop().toLowerCase();
-    switch (ext) {
-        case 'gltf': case 'glb': return 'gltf';
-        case 'fbx': return 'fbx';
-        case 'obj': return 'obj';
-        case 'usdz': case 'usda': case 'usdc': return 'usdz';
-        case 'stl': return 'stl';
-        case 'ply': return 'ply';
-        default: return 'gltf'; // fallback
-    }
+	const ext = filename.split('.').pop().toLowerCase();
+	switch (ext) {
+		case 'gltf':
+		case 'glb':
+			return 'gltf';
+		case 'fbx':
+			return 'fbx';
+		case 'obj':
+			return 'obj';
+		case 'usdz':
+		case 'usda':
+		case 'usdc':
+			return 'usdz';
+		case 'stl':
+			return 'stl';
+		case 'ply':
+			return 'ply';
+		default:
+			return 'gltf'; // fallback
+	}
 }
 ```
 
@@ -102,6 +112,7 @@ function getLoader(filename) {
 ### 8. Drag-and-Drop Updates
 
 Update `SimpleDropzone` in `src/app.js` to accept new extensions:
+
 - `.fbx`, `.obj`, `.mtl`, `.usdz`, `.usda`, `.usdc`, `.stl`, `.ply`
 - Handle companion files (`.mtl` with `.obj`, texture files with `.fbx`)
 

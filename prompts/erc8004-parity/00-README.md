@@ -24,7 +24,7 @@ Mirror the reference hero:
 - "● Live on 20+ EVM Chains" pill badge
 - H1: "Create **Trustless Agents** on Any Chain" (second word in accent)
 - Subtitle: "Register AI agents on-chain with ERC-8004. Get a portable, censorship-resistant identity backed by an ERC-721 NFT — discoverable across the entire agent economy."
-- The stats row (630 / 22 / v2.0) should sit under this hero, *above* the tabs (move it out of the current card header).
+- The stats row (630 / 22 / v2.0) should sit under this hero, _above_ the tabs (move it out of the current card header).
 
 ### 2. Mainnet warning banner
 
@@ -103,14 +103,14 @@ Today `/#register` has no visible entry. Add one:
 - [ ] `node --check src/erc8004/register-ui.js`
 - [ ] `npm run build`
 - [ ] Load `/#register` on `localhost:3000`:
-  - Hero + stats render above the card
-  - 6 tabs present; each one renders content
-  - BSC Testnet selected → no mainnet banner; switch to BSC Mainnet → red banner appears
-  - Create flow still mints (testnet) end-to-end
-  - Search an agent → QR button opens modal with scannable code + Download PNG works
-  - Filter chips on Search narrow results
-  - Batch: drop a 2-row CSV, wallet connected on testnet → both rows confirm
-  - Step 4 Deploy → Export Options accordion shows 4 snippets
+    - Hero + stats render above the card
+    - 6 tabs present; each one renders content
+    - BSC Testnet selected → no mainnet banner; switch to BSC Mainnet → red banner appears
+    - Create flow still mints (testnet) end-to-end
+    - Search an agent → QR button opens modal with scannable code + Download PNG works
+    - Filter chips on Search narrow results
+    - Batch: drop a 2-row CSV, wallet connected on testnet → both rows confirm
+    - Step 4 Deploy → Export Options accordion shows 4 snippets
 - [ ] Footer renders with all three columns
 - [ ] `/agent/:id` hub's "Deploy on-chain" button navigates to `/#register` (or opens in modal — match what task 04 chose)
 - [ ] Homepage footer has "Register on-chain" link

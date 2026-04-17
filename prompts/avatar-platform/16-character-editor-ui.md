@@ -17,15 +17,15 @@ Depends on tasks 03, 17 (manifest / asset library).
 ## Deliverable
 
 1. **New module** `src/character/editor-panel.js` exporting default class `CharacterEditorPanel`:
-   - `constructor(container, characterManager)`.
-   - `open()` / `close()` / `dispose()`.
+    - `constructor(container, characterManager)`.
+    - `open()` / `close()` / `dispose()`.
 2. **Sections**, rendered from the loaded manifest (task 17):
-   - **Body** — body shape picker + proportion sliders (head, chest, arms — proxy to `CharacterManager.setBodyProportions`).
-   - **Skin** — tone slider + swatch presets.
-   - **Face** — morph-target sliders exposed by the current VRM.
-   - **Hair** — grid of thumbnails; click to swap.
-   - **Clothing** — top, bottom, footwear, accessories tabs.
-   - **Expression test** — quick-fire buttons for `aa`, `happy`, `blink`, etc. to sanity-check expression bindings.
+    - **Body** — body shape picker + proportion sliders (head, chest, arms — proxy to `CharacterManager.setBodyProportions`).
+    - **Skin** — tone slider + swatch presets.
+    - **Face** — morph-target sliders exposed by the current VRM.
+    - **Hair** — grid of thumbnails; click to swap.
+    - **Clothing** — top, bottom, footwear, accessories tabs.
+    - **Expression test** — quick-fire buttons for `aa`, `happy`, `blink`, etc. to sanity-check expression bindings.
 3. **Live preview** — every slider/click calls into `CharacterManager` synchronously; no "apply" needed for exploration.
 4. **Commit + persist** — on "Save", serialize the current trait selections to IndexedDB keyed by `agentId` (task 15). On reload, the last saved state restores.
 5. **Undo stack** — last 10 state changes; `cmd+Z` pops. `cmd+shift+Z` redoes.

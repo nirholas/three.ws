@@ -358,9 +358,12 @@ export class TextureInspector {
 					const by = (1 - uvAttr.getY(b)) * h;
 					const cx = uvAttr.getX(c) * w;
 					const cy = (1 - uvAttr.getY(c)) * h;
-					uctx.moveTo(ax, ay); uctx.lineTo(bx, by);
-					uctx.moveTo(bx, by); uctx.lineTo(cx, cy);
-					uctx.moveTo(cx, cy); uctx.lineTo(ax, ay);
+					uctx.moveTo(ax, ay);
+					uctx.lineTo(bx, by);
+					uctx.moveTo(bx, by);
+					uctx.lineTo(cx, cy);
+					uctx.moveTo(cx, cy);
+					uctx.lineTo(ax, ay);
 				};
 				if (index) {
 					const arr = index.array;
@@ -387,19 +390,23 @@ export class TextureInspector {
 		};
 		applyTransform();
 
-		viewport.addEventListener('wheel', (e) => {
-			e.preventDefault();
-			const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
-			const next = Math.max(0.1, Math.min(12, zoom * factor));
-			// zoom toward cursor
-			const rect = viewport.getBoundingClientRect();
-			const cx = e.clientX - rect.left - rect.width / 2;
-			const cy = e.clientY - rect.top - rect.height / 2;
-			tx = cx - (cx - tx) * (next / zoom);
-			ty = cy - (cy - ty) * (next / zoom);
-			zoom = next;
-			applyTransform();
-		}, { passive: false });
+		viewport.addEventListener(
+			'wheel',
+			(e) => {
+				e.preventDefault();
+				const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+				const next = Math.max(0.1, Math.min(12, zoom * factor));
+				// zoom toward cursor
+				const rect = viewport.getBoundingClientRect();
+				const cx = e.clientX - rect.left - rect.width / 2;
+				const cy = e.clientY - rect.top - rect.height / 2;
+				tx = cx - (cx - tx) * (next / zoom);
+				ty = cy - (cy - ty) * (next / zoom);
+				zoom = next;
+				applyTransform();
+			},
+			{ passive: false },
+		);
 
 		viewport.addEventListener('mousedown', (e) => {
 			dragging = true;
@@ -421,7 +428,9 @@ export class TextureInspector {
 		});
 
 		const fit = () => {
-			zoom = 1; tx = 0; ty = 0;
+			zoom = 1;
+			tx = 0;
+			ty = 0;
 			applyTransform();
 		};
 

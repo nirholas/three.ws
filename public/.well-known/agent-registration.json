@@ -22,7 +22,5 @@
 	],
 	"x402Support": false,
 	"registrations": [],
-	"supportedTrust": [
-		"reputation"
-	]
+	"supportedTrust": ["reputation"]
 }

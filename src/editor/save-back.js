@@ -26,7 +26,8 @@ export async function saveEditedAvatar(session, { avatarId, onStep = () => {} } 
 		throw new SaveError('server', 'GLB export failed: ' + (e?.message || e));
 	}
 	if (!bytes?.byteLength) throw new SaveError('server', 'Empty GLB buffer');
-	if (bytes.byteLength > MAX_BYTES) throw new SaveError('oversize', `GLB too large (${bytes.byteLength} bytes)`);
+	if (bytes.byteLength > MAX_BYTES)
+		throw new SaveError('oversize', `GLB too large (${bytes.byteLength} bytes)`);
 	onStep({ step: 'export', pct: 1 });
 
 	// 2. Presign
@@ -37,7 +38,10 @@ export async function saveEditedAvatar(session, { avatarId, onStep = () => {} } 
 			method: 'POST',
 			credentials: 'include',
 			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({ size_bytes: bytes.byteLength, content_type: 'model/gltf-binary' }),
+			body: JSON.stringify({
+				size_bytes: bytes.byteLength,
+				content_type: 'model/gltf-binary',
+			}),
 		});
 		if (res.status === 401) throw new SaveError('auth', 'Not signed in');
 		if (!res.ok) {
@@ -58,7 +62,8 @@ export async function saveEditedAvatar(session, { avatarId, onStep = () => {} } 
 		xhr.open('PUT', presign.upload_url, true);
 		for (const [k, v] of Object.entries(presign.headers || {})) xhr.setRequestHeader(k, v);
 		xhr.upload.onprogress = (e) => {
-			if (e.lengthComputable) onStep({ step: 'upload', pct: Math.max(0, Math.min(1, e.loaded / e.total)) });
+			if (e.lengthComputable)
+				onStep({ step: 'upload', pct: Math.max(0, Math.min(1, e.loaded / e.total)) });
 		};
 		xhr.onerror = () => reject(new SaveError('network', 'Upload network error'));
 		xhr.onabort = () => reject(new SaveError('network', 'Upload aborted'));

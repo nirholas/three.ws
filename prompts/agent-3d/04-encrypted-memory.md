@@ -13,17 +13,17 @@ Implement `encrypted-ipfs` memory mode: writes are encrypted to the agent's owne
 ## Deliverable
 
 1. **Key derivation** in `src/memory/crypto.js` (new file):
-	 - Export `deriveEncryptionKey(signer)` — signs a canonical message with the wallet (via `ethers`) and HKDFs a 32-byte key. Use `ethers.hashMessage` + `signer.signMessage` patterns already used in [src/erc8004/agent-registry.js](../../src/erc8004/agent-registry.js).
-	 - Export `encryptBlob(plaintext: Uint8Array, key: Uint8Array)` → `{ nonce, ciphertext }` using `crypto.subtle` (`AES-GCM`, 12-byte nonce, authenticated).
-	 - Export `decryptBlob({ nonce, ciphertext }, key)` → `Uint8Array` or throws on tamper.
+    - Export `deriveEncryptionKey(signer)` — signs a canonical message with the wallet (via `ethers`) and HKDFs a 32-byte key. Use `ethers.hashMessage` + `signer.signMessage` patterns already used in [src/erc8004/agent-registry.js](../../src/erc8004/agent-registry.js).
+    - Export `encryptBlob(plaintext: Uint8Array, key: Uint8Array)` → `{ nonce, ciphertext }` using `crypto.subtle` (`AES-GCM`, 12-byte nonce, authenticated).
+    - Export `decryptBlob({ nonce, ciphertext }, key)` → `Uint8Array` or throws on tamper.
 2. **Extend `Memory` class** in [src/memory/index.js](../../src/memory/index.js):
-	 - New static `Memory._loadEncryptedIPFS({ namespace, manifestURI, signer, pinner })` — fetch the encrypted blob from IPFS, decrypt with the derived key, parse JSON, hydrate state.
-	 - New `_persistEncrypted()` method that serializes memory to JSON, encrypts, uploads via the provided `pinner`, and updates the stored CID (in localStorage for fast recovery AND optionally in `manifest.id.memoryCID` if a signer + registry write is authorized).
-	 - Batch persistence: do NOT pin on every write — debounce by ~3s or a manual `flush()` call.
+    - New static `Memory._loadEncryptedIPFS({ namespace, manifestURI, signer, pinner })` — fetch the encrypted blob from IPFS, decrypt with the derived key, parse JSON, hydrate state.
+    - New `_persistEncrypted()` method that serializes memory to JSON, encrypts, uploads via the provided `pinner`, and updates the stored CID (in localStorage for fast recovery AND optionally in `manifest.id.memoryCID` if a signer + registry write is authorized).
+    - Batch persistence: do NOT pin on every write — debounce by ~3s or a manual `flush()` call.
 3. **Pinner abstraction** — accept `pinner: (blob) => Promise<{ cid }>` so this task does not bind to a specific pinning service (see [08-ipfs-pinning-service.md](./08-ipfs-pinning-service.md)).
 4. **Element integration** — in [src/element.js](../../src/element.js)'s `_boot()`, when `manifest.memory.mode === "encrypted-ipfs"`:
-	 - Require a connected signer (if none, surface `agent:error` with `{ phase: "memory", reason: "wallet-required" }`).
-	 - Wire the pinner from whichever pinning service is configured (default to `window.__agent3dPinner` if present; otherwise no-op with a console warning).
+    - Require a connected signer (if none, surface `agent:error` with `{ phase: "memory", reason: "wallet-required" }`).
+    - Wire the pinner from whichever pinning service is configured (default to `window.__agent3dPinner` if present; otherwise no-op with a console warning).
 
 ## Audit checklist
 
@@ -49,15 +49,15 @@ Implement `encrypted-ipfs` memory mode: writes are encrypted to the agent's owne
 1. `node --check src/memory/crypto.js src/memory/index.js`.
 2. `npm run build:lib` passes.
 3. Integration smoke test in a dev page with a local wallet (hardhat, or signed MetaMask on a testnet):
-	 - Write memories, refresh, confirm they load and decrypt.
-	 - Use a different wallet — decryption must fail with a clear error.
-	 - Flush to IPFS, fetch the CID manually, confirm content is unreadable without the key.
+    - Write memories, refresh, confirm they load and decrypt.
+    - Use a different wallet — decryption must fail with a clear error.
+    - Flush to IPFS, fetch the CID manually, confirm content is unreadable without the key.
 
 ## Scope boundaries — do NOT do these
 
 - Do not introduce multi-signer / shared memory (two wallets unlocking the same bundle). That's a future feature.
 - Do not attempt on-chain key registration — key derivation stays purely off-chain + deterministic from signatures.
-- Do not re-encrypt every write with a new nonce *and* re-pin the whole bundle if the write is a single-line append — use an append-only blob format OR debounce aggressively (pick one and document).
+- Do not re-encrypt every write with a new nonce _and_ re-pin the whole bundle if the write is a single-line append — use an append-only blob format OR debounce aggressively (pick one and document).
 - Do not mask or rotate nonces per entry — per-bundle nonce is fine given AEAD semantics.
 
 ## Reporting

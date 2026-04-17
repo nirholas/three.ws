@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Complete the OpenAPI spec with all actual API endpoints"
+description: 'Complete the OpenAPI spec with all actual API endpoints'
 ---
 
 # Complete OpenAPI Specification
@@ -12,6 +12,7 @@ description: "Complete the OpenAPI spec with all actual API endpoints"
 ### Endpoints that exist but are undocumented:
 
 **Avatar CRUD:**
+
 - `GET /api/avatars` — list user's avatars
 - `POST /api/avatars` — create avatar
 - `GET /api/avatars/:id` — get avatar by ID
@@ -21,12 +22,14 @@ description: "Complete the OpenAPI spec with all actual API endpoints"
 - `POST /api/avatars/presign` — get presigned upload URL
 
 **Auth:**
+
 - `POST /api/auth/register` — register user
 - `POST /api/auth/login` — login
 - `GET /api/auth/me` — current user
 - `POST /api/auth/logout` — logout
 
 **OAuth 2.1:**
+
 - `POST /api/oauth/register` — dynamic client registration
 - `GET /api/oauth/authorize` — authorization endpoint
 - `POST /api/oauth/token` — token endpoint
@@ -34,19 +37,23 @@ description: "Complete the OpenAPI spec with all actual API endpoints"
 - `POST /api/oauth/introspect` — token introspection
 
 **MCP:**
+
 - `POST /api/mcp` — JSON-RPC (MCP protocol)
 - `GET /api/mcp` — SSE stream
 - `DELETE /api/mcp` — terminate session
 
 **API Keys:**
+
 - `GET /api/keys` — list API keys
 - `POST /api/keys` — create API key
 - `DELETE /api/keys/:id` — revoke API key
 
 **Usage:**
+
 - `GET /api/usage/summary` — usage statistics
 
 **Discovery:**
+
 - `GET /.well-known/oauth-authorization-server`
 - `GET /.well-known/oauth-protected-resource`
 - `GET /.well-known/agent-card.json`
@@ -59,12 +66,12 @@ description: "Complete the OpenAPI spec with all actual API endpoints"
 2. Read `api/_lib/schema.sql` for data models
 3. Read `api/_lib/validate.js` for request validation schemas
 4. Build complete OpenAPI 3.0 spec with:
-   - All endpoints with methods, parameters, request bodies, responses
-   - Authentication schemes (Bearer token, OAuth 2.1, API key)
-   - Schema definitions for Avatar, User, ApiKey, UsageSummary, etc.
-   - Error response schemas
-   - Rate limiting headers
-   - Tags for grouping (Avatars, Auth, OAuth, MCP, Keys, Usage)
+    - All endpoints with methods, parameters, request bodies, responses
+    - Authentication schemes (Bearer token, OAuth 2.1, API key)
+    - Schema definitions for Avatar, User, ApiKey, UsageSummary, etc.
+    - Error response schemas
+    - Rate limiting headers
+    - Tags for grouping (Avatars, Auth, OAuth, MCP, Keys, Usage)
 
 ## Validation
 

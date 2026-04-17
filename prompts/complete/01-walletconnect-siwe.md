@@ -2,7 +2,7 @@
 
 ## Why
 
-SIWE end-to-end already works via injected wallets (MetaMask) and Privy (see [api/auth/siwe/verify.js](../../api/auth/siwe/verify.js) and [src/erc8004/privy.js](../../src/erc8004/privy.js)). What's missing: an explicit, documented WalletConnect v2 path so a user on a mobile-only wallet can still sign in without Privy. Privy *bundles* WalletConnect internally, but there's no clean standalone path for devs who don't want Privy as a dep.
+SIWE end-to-end already works via injected wallets (MetaMask) and Privy (see [api/auth/siwe/verify.js](../../api/auth/siwe/verify.js) and [src/erc8004/privy.js](../../src/erc8004/privy.js)). What's missing: an explicit, documented WalletConnect v2 path so a user on a mobile-only wallet can still sign in without Privy. Privy _bundles_ WalletConnect internally, but there's no clean standalone path for devs who don't want Privy as a dep.
 
 Closes the audit's only remaining wallet-auth gap.
 
@@ -20,13 +20,13 @@ export async function disconnectWalletConnect() → void
 Signature:
 
 1. Lazy-load `@walletconnect/ethereum-provider` from a CDN (esm.sh) — **no new npm dep**. Use dynamic `import()` so this code only runs when the user clicks the WalletConnect button.
-2. Read `projectId` from arg → `VITE_WALLETCONNECT_PROJECT_ID` env → `/api/config` fallback (already returns arbitrary public config; see [api/config.js](../../api/config.js) — add a key *only* if you must, otherwise read from VITE\_).
+2. Read `projectId` from arg → `VITE_WALLETCONNECT_PROJECT_ID` env → `/api/config` fallback (already returns arbitrary public config; see [api/config.js](../../api/config.js) — add a key _only_ if you must, otherwise read from VITE\_).
 3. Connect provider, request `eth_requestAccounts`, then run the existing SIWE flow:
-   - `GET /api/auth/siwe/nonce` → nonce
-   - Build EIP-4361 message matching the format in [api/auth/siwe/verify.js](../../api/auth/siwe/verify.js) (domain = `location.host`, uri = `location.origin`, chainId from provider, version `1`, issuedAt ISO).
-   - Sign via `provider.request({ method: 'personal_sign', params: [message, address] })`.
-   - `POST /api/auth/siwe/verify` with `{ message, signature, address }`.
-   - On success, set cookie (server does this), call `writeAuthHint(true)` from [src/account.js](../../src/account.js).
+    - `GET /api/auth/siwe/nonce` → nonce
+    - Build EIP-4361 message matching the format in [api/auth/siwe/verify.js](../../api/auth/siwe/verify.js) (domain = `location.host`, uri = `location.origin`, chainId from provider, version `1`, issuedAt ISO).
+    - Sign via `provider.request({ method: 'personal_sign', params: [message, address] })`.
+    - `POST /api/auth/siwe/verify` with `{ message, signature, address }`.
+    - On success, set cookie (server does this), call `writeAuthHint(true)` from [src/account.js](../../src/account.js).
 4. On failure, surface a typed error `{ code: 'wc/<stage>', message }` so the sign-in UI can show it.
 
 Also add: `src/auth/walletconnect-bridge.test.html` — a minimal standalone page (not linked from the app) that instantiates the bridge, shows connect/sign-in/disconnect buttons, and logs results. Useful for manual smoke.

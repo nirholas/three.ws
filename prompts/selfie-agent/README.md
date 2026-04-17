@@ -14,13 +14,13 @@ See [../README.md](../README.md) for where this series sits in the overall prior
 
 ## Recommended execution order
 
-| # | File | Ships |
-|---|---|---|
-| 01 | [01-camera-capture-ui.md](./01-camera-capture-ui.md) | `/create` route + `getUserMedia` capture, photo review, retry, upload fallback |
-| 02 | [02-avaturn-session-bridge.md](./02-avaturn-session-bridge.md) | Hand the captured image to Avaturn SDK, await the generated GLB; error / quota / timeout handling |
-| 03 | [03-glb-pin-and-store.md](./03-glb-pin-and-store.md) | Pin the finalized GLB to R2 via the existing presign flow + create an `agent_identities` row |
-| 04 | [04-name-and-description.md](./04-name-and-description.md) | Claim a short name + one-line description with per-wallet uniqueness, slug reservation, denylist |
-| 05 | [05-first-meet-moment.md](./05-first-meet-moment.md) | Post-creation scene renders, avatar waves, confetti, share CTA, redirect to `/agent/:id` |
+| #   | File                                                           | Ships                                                                                             |
+| --- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| 01  | [01-camera-capture-ui.md](./01-camera-capture-ui.md)           | `/create` route + `getUserMedia` capture, photo review, retry, upload fallback                    |
+| 02  | [02-avaturn-session-bridge.md](./02-avaturn-session-bridge.md) | Hand the captured image to Avaturn SDK, await the generated GLB; error / quota / timeout handling |
+| 03  | [03-glb-pin-and-store.md](./03-glb-pin-and-store.md)           | Pin the finalized GLB to R2 via the existing presign flow + create an `agent_identities` row      |
+| 04  | [04-name-and-description.md](./04-name-and-description.md)     | Claim a short name + one-line description with per-wallet uniqueness, slug reservation, denylist  |
+| 05  | [05-first-meet-moment.md](./05-first-meet-moment.md)           | Post-creation scene renders, avatar waves, confetti, share CTA, redirect to `/agent/:id`          |
 
 ### Sequencing
 
@@ -36,7 +36,7 @@ See [../README.md](../README.md) for where this series sits in the overall prior
 - **No TypeScript.** This codebase is vanilla JS (ESM). No `.ts` files, no `.d.ts`.
 - **No new README / CLAUDE.md files** unless the task file explicitly allows them.
 - **Every new or changed `.js` file must pass `node --check`** before reporting done.
-- **Every change must be followed by `npx vite build`** and the result reported. The pre-existing `@avaturn/sdk` resolution warning is expected — ignore it. Any *new* error is yours.
+- **Every change must be followed by `npx vite build`** and the result reported. The pre-existing `@avaturn/sdk` resolution warning is expected — ignore it. Any _new_ error is yours.
 - **Any new route must be added to [vercel.json](../../vercel.json)** in the same task that creates it.
 - **Mobile matters.** The hero demo is "take a selfie on your phone". Anything gated behind desktop-only APIs (drag-drop, hover, large modals) must have a mobile-first fallback.
 - **If you discover an unrelated bug,** note it in the reporting section. Do not fix it in the same change.

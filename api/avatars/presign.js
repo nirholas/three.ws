@@ -20,7 +20,9 @@ export default wrap(async (req, res) => {
 
 	const body = parse(presignUploadBody, await readJson(req));
 	const bodyAny = body;
-	const slug = bodyAny.slug ? slugSchema.parse(bodyAny.slug) : `draft-${Math.random().toString(36).slice(2, 8)}`;
+	const slug = bodyAny.slug
+		? slugSchema.parse(bodyAny.slug)
+		: `draft-${Math.random().toString(36).slice(2, 8)}`;
 
 	const key = storageKeyFor({ userId, slug });
 	const url = await presignUpload({

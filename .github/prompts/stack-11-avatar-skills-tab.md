@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Skills tab — attach/detach skills to an avatar from a catalog"
+description: 'Skills tab — attach/detach skills to an avatar from a catalog'
 ---
 
 # Stack Layer 3: Skills Tab
@@ -14,10 +14,16 @@ An avatar's capabilities are defined by which skills are attached. Today skills 
 ### Catalog source
 
 Skills live in [src/skills/](src/skills/). Add a manifest at [specs/schema/skills.json](specs/schema/skills.json) (or read the directory) that exposes:
+
 ```json
 [
-  { "id": "greet", "name": "Greet", "description": "Say hello with presence", "tags": ["default"] },
-  { "id": "validate-model", "name": "Validate glTF", "tags": ["3d"] }
+	{
+		"id": "greet",
+		"name": "Greet",
+		"description": "Say hello with presence",
+		"tags": ["default"]
+	},
+	{ "id": "validate-model", "name": "Validate glTF", "tags": ["3d"] }
 ]
 ```
 
@@ -30,6 +36,7 @@ Expose via `GET /api/skills/catalog` (public, cached).
 ### UI
 
 Two columns:
+
 - **Attached** (left): skills currently on this avatar. Each row has a toggle (enable/disable), a config button (if skill has settings), and a remove.
 - **Available** (right): catalog minus attached. "Attach" button per row.
 

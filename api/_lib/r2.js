@@ -1,6 +1,12 @@
 // S3-compatible storage client (works with AWS S3, Cloudflare R2, Backblaze B2, etc.)
 
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
+import {
+	S3Client,
+	PutObjectCommand,
+	GetObjectCommand,
+	DeleteObjectCommand,
+	HeadObjectCommand,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { env } from './env.js';
 
@@ -16,13 +22,23 @@ function getR2() {
 				accessKeyId: env.S3_ACCESS_KEY_ID,
 				secretAccessKey: env.S3_SECRET_ACCESS_KEY,
 			},
+			// AWS SDK v3 ≥ 3.730 adds CRC32 to every PutObject by default.
+			// Browsers can't compute/send that header, so presigned PUT URLs
+			// would be rejected by R2. Opt out until we add client-side CRC32.
+			requestChecksumCalculation: 'WHEN_REQUIRED',
+			responseChecksumValidation: 'WHEN_REQUIRED',
 		});
 	}
 	return _r2;
 }
-export const r2 = new Proxy({}, {
-	get(_t, prop) { return getR2()[prop]; },
-});
+export const r2 = new Proxy(
+	{},
+	{
+		get(_t, prop) {
+			return getR2()[prop];
+		},
+	},
+);
 
 // Short-lived signed URL for direct browser upload (PUT).
 export async function presignUpload({ key, contentType, contentLength, checksumSha256 }) {

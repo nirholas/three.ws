@@ -8,13 +8,13 @@ Deploys `ValidationRegistry` to 15 mainnet chains via CREATE2 (deterministic add
 
 ## Deployment Overview
 
-| Property | Value |
-|---|---|
-| **Script** | `contracts/script/DeployValidationMainnet.s.sol` |
-| **Constructor args** | `(identityRegistry: 0x8004A169FB4a3325136EB29fA0ceB6D2e539a432, owner: msg.sender)` |
-| **CREATE2 salt** | `keccak256(abi.encodePacked("ValidationRegistry", uint256(1)))` |
-| **Expected address** | See "Expected Addresses" section below |
-| **Time to deploy all chains** | ~2–4 hours (wait for block finality between chains) |
+| Property                      | Value                                                                               |
+| ----------------------------- | ----------------------------------------------------------------------------------- |
+| **Script**                    | `contracts/script/DeployValidationMainnet.s.sol`                                    |
+| **Constructor args**          | `(identityRegistry: 0x8004A169FB4a3325136EB29fA0ceB6D2e539a432, owner: msg.sender)` |
+| **CREATE2 salt**              | `keccak256(abi.encodePacked("ValidationRegistry", uint256(1)))`                     |
+| **Expected address**          | See "Expected Addresses" section below                                              |
+| **Time to deploy all chains** | ~2–4 hours (wait for block finality between chains)                                 |
 
 ---
 
@@ -37,6 +37,7 @@ forge test
 ```
 
 Output should show all tests passing:
+
 ```
 ...
 Test result: ok. X passed; 0 failed; 0 skipped
@@ -80,6 +81,7 @@ forge script script/DeployValidationMainnet.s.sol:DeployValidationMainnet \
 ```
 
 Expected output:
+
 ```
 Expected ValidationRegistry: 0x...
 IdentityRegistry:            0x8004A169FB4a3325136EB29fA0ceB6D2e539a432
@@ -296,23 +298,23 @@ Expected address: **identical to all others**.
 
 ## Reference: RPC Endpoints & Etherscan Keys
 
-| Chain | Chain ID | RPC Endpoint | Etherscan URL | API Key Env Var |
-|---|---|---|---|---|
-| Ethereum | 1 | https://ethereum-rpc.publicnode.com | https://etherscan.io | `ETHEREUM_ETHERSCAN_API_KEY` |
-| Base | 8453 | https://base-rpc.publicnode.com | https://basescan.org | `BASE_ETHERSCAN_API_KEY` |
-| Optimism | 10 | https://optimism-rpc.publicnode.com | https://optimistic.etherscan.io | `OPTIMISM_ETHERSCAN_API_KEY` |
-| Arbitrum One | 42161 | https://arbitrum-rpc.publicnode.com | https://arbiscan.io | `ARBITRUM_ETHERSCAN_API_KEY` |
-| Polygon | 137 | https://polygon-rpc.publicnode.com | https://polygonscan.com | `POLYGON_ETHERSCAN_API_KEY` |
-| BNB Chain | 56 | https://bsc-rpc.publicnode.com | https://bscscan.com | `BSC_ETHERSCAN_API_KEY` |
-| Avalanche C-Chain | 43114 | https://avalanche-c-chain-rpc.publicnode.com | https://snowtrace.io | `AVALANCHE_ETHERSCAN_API_KEY` |
-| Gnosis | 100 | https://gnosis-rpc.publicnode.com | https://gnosisscan.io | `GNOSIS_ETHERSCAN_API_KEY` |
-| Linea | 59144 | https://linea-rpc.publicnode.com | https://lineascan.build | `LINEA_ETHERSCAN_API_KEY` |
-| Scroll | 534352 | https://scroll-rpc.publicnode.com | https://scrollscan.com | `SCROLL_ETHERSCAN_API_KEY` |
-| zkSync Era | 324 | https://zksync-mainnet-rpc.publicnode.com | https://explorer.zksync.io | `ZKSYNC_ETHERSCAN_API_KEY` |
-| Mantle | 5000 | https://mantle-rpc.publicnode.com | https://mantlescan.xyz | `MANTLE_ETHERSCAN_API_KEY` |
-| Celo | 42220 | https://celo-mainnet-rpc.publicnode.com | https://celoscan.io | `CELO_ETHERSCAN_API_KEY` |
-| Ink | TBD | https://ink-mainnet-rpc.publicnode.com | TBD | `INK_ETHERSCAN_API_KEY` |
-| Unichain | TBD | https://unichain-mainnet-rpc.publicnode.com | TBD | `UNICHAIN_ETHERSCAN_API_KEY` |
+| Chain             | Chain ID | RPC Endpoint                                 | Etherscan URL                   | API Key Env Var               |
+| ----------------- | -------- | -------------------------------------------- | ------------------------------- | ----------------------------- |
+| Ethereum          | 1        | https://ethereum-rpc.publicnode.com          | https://etherscan.io            | `ETHEREUM_ETHERSCAN_API_KEY`  |
+| Base              | 8453     | https://base-rpc.publicnode.com              | https://basescan.org            | `BASE_ETHERSCAN_API_KEY`      |
+| Optimism          | 10       | https://optimism-rpc.publicnode.com          | https://optimistic.etherscan.io | `OPTIMISM_ETHERSCAN_API_KEY`  |
+| Arbitrum One      | 42161    | https://arbitrum-rpc.publicnode.com          | https://arbiscan.io             | `ARBITRUM_ETHERSCAN_API_KEY`  |
+| Polygon           | 137      | https://polygon-rpc.publicnode.com           | https://polygonscan.com         | `POLYGON_ETHERSCAN_API_KEY`   |
+| BNB Chain         | 56       | https://bsc-rpc.publicnode.com               | https://bscscan.com             | `BSC_ETHERSCAN_API_KEY`       |
+| Avalanche C-Chain | 43114    | https://avalanche-c-chain-rpc.publicnode.com | https://snowtrace.io            | `AVALANCHE_ETHERSCAN_API_KEY` |
+| Gnosis            | 100      | https://gnosis-rpc.publicnode.com            | https://gnosisscan.io           | `GNOSIS_ETHERSCAN_API_KEY`    |
+| Linea             | 59144    | https://linea-rpc.publicnode.com             | https://lineascan.build         | `LINEA_ETHERSCAN_API_KEY`     |
+| Scroll            | 534352   | https://scroll-rpc.publicnode.com            | https://scrollscan.com          | `SCROLL_ETHERSCAN_API_KEY`    |
+| zkSync Era        | 324      | https://zksync-mainnet-rpc.publicnode.com    | https://explorer.zksync.io      | `ZKSYNC_ETHERSCAN_API_KEY`    |
+| Mantle            | 5000     | https://mantle-rpc.publicnode.com            | https://mantlescan.xyz          | `MANTLE_ETHERSCAN_API_KEY`    |
+| Celo              | 42220    | https://celo-mainnet-rpc.publicnode.com      | https://celoscan.io             | `CELO_ETHERSCAN_API_KEY`      |
+| Ink               | TBD      | https://ink-mainnet-rpc.publicnode.com       | TBD                             | `INK_ETHERSCAN_API_KEY`       |
+| Unichain          | TBD      | https://unichain-mainnet-rpc.publicnode.com  | TBD                             | `UNICHAIN_ETHERSCAN_API_KEY`  |
 
 ---
 
@@ -381,9 +383,9 @@ Once deployed and verified on all 15 chains, update [src/erc8004/abi.js](../src/
 
 ```javascript
 const MAINNET = {
-  identityRegistry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432',
-  reputationRegistry: '0x8004BAa17C55a88189AE136b182e5fdA19dE9b63',
-  validationRegistry: '0x8004Cb1BF31DAf7788923b405b754f57acEB42ab', // <- ADD THIS LINE
+	identityRegistry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432',
+	reputationRegistry: '0x8004BAa17C55a88189AE136b182e5fdA19dE9b63',
+	validationRegistry: '0x8004Cb1BF31DAf7788923b405b754f57acEB42ab', // <- ADD THIS LINE
 };
 ```
 
@@ -401,6 +403,7 @@ Update `REGISTRY_DEPLOYMENTS` object—it should already have entries for all 15
 4. **Update frontend** to the new address.
 
 **Cost of rollback:** Extra gas on failed chains. Avoid by:
+
 - Dry-running thoroughly
 - Testing with a throwaway wallet first
 - Deploying during low-gas hours on L1s
@@ -409,24 +412,24 @@ Update `REGISTRY_DEPLOYMENTS` object—it should already have entries for all 15
 
 ## Total Gas Cost Estimate
 
-| Chain | Est. Gas (ETH) | Notes |
-|---|---|---|
-| Ethereum | 0.5 | L1, highly variable (gwei) |
-| Base | 0.01 | L2, very cheap |
-| Optimism | 0.01 | L2, very cheap |
-| Arbitrum One | 0.01 | L2, very cheap |
-| Polygon | 0.001 | Sidechain, cheap |
-| BNB Chain | 0.002 | Cheap |
-| Avalanche | 0.005 | Moderate |
-| Gnosis | 0.002 | Cheap |
-| Linea | 0.005 | L2, moderate |
-| Scroll | 0.005 | L2, moderate |
-| zkSync Era | 0.005 | L2, moderate |
-| Mantle | 0.005 | L2, moderate |
-| Celo | 0.001 | Cheap |
-| Ink | 0.01 | L2, moderate |
-| Unichain | 0.01 | L2, moderate |
-| **TOTAL** | **≈ 0.6–0.8 ETH** | Varies by network congestion |
+| Chain        | Est. Gas (ETH)    | Notes                        |
+| ------------ | ----------------- | ---------------------------- |
+| Ethereum     | 0.5               | L1, highly variable (gwei)   |
+| Base         | 0.01              | L2, very cheap               |
+| Optimism     | 0.01              | L2, very cheap               |
+| Arbitrum One | 0.01              | L2, very cheap               |
+| Polygon      | 0.001             | Sidechain, cheap             |
+| BNB Chain    | 0.002             | Cheap                        |
+| Avalanche    | 0.005             | Moderate                     |
+| Gnosis       | 0.002             | Cheap                        |
+| Linea        | 0.005             | L2, moderate                 |
+| Scroll       | 0.005             | L2, moderate                 |
+| zkSync Era   | 0.005             | L2, moderate                 |
+| Mantle       | 0.005             | L2, moderate                 |
+| Celo         | 0.001             | Cheap                        |
+| Ink          | 0.01              | L2, moderate                 |
+| Unichain     | 0.01              | L2, moderate                 |
+| **TOTAL**    | **≈ 0.6–0.8 ETH** | Varies by network congestion |
 
 (Etherscan verification is usually free; if using a paid RPC, factor in API costs.)
 
@@ -435,20 +438,24 @@ Update `REGISTRY_DEPLOYMENTS` object—it should already have entries for all 15
 ## Troubleshooting
 
 ### "Address already exists"
+
 - Chain was already deployed. Use `cast call` to verify the address has the correct `identityRegistry`.
 - If already correct, update frontend and move on.
 - If incorrect, use rollback procedure above.
 
 ### "Private key insufficient gas"
+
 - Deployer wallet is out of gas on that chain.
 - Bridge more ETH and retry.
 
 ### "Etherscan verification failed"
+
 - API key is wrong or rate-limited.
 - Verify manually by checking constructor args on Etherscan UI.
 - Retry later.
 
 ### "Constructor arg mismatch"
+
 - The `identityRegistry` or `owner` address in the script doesn't match what you passed.
 - Check [contracts/script/DeployValidationMainnet.s.sol](../contracts/script/DeployValidationMainnet.s.sol) for hardcoded addresses.
 - Do not change them without user approval.

@@ -81,9 +81,14 @@ export async function createAvaturnSession({ front, left, right }) {
 	if (!res.ok) {
 		const payload = await res.json().catch(() => ({}));
 		const code = payload?.error;
-		if (res.status === 401 || res.status === 403) throw new AvaturnError(payload?.error_description || 'unauthorized', 'auth');
-		if (res.status === 429) throw new AvaturnError(payload?.error_description || 'rate limited', 'quota');
-		throw new AvaturnError(payload?.error_description || `http ${res.status}`, code === 'not_configured' ? 'auth' : 'network');
+		if (res.status === 401 || res.status === 403)
+			throw new AvaturnError(payload?.error_description || 'unauthorized', 'auth');
+		if (res.status === 429)
+			throw new AvaturnError(payload?.error_description || 'rate limited', 'quota');
+		throw new AvaturnError(
+			payload?.error_description || `http ${res.status}`,
+			code === 'not_configured' ? 'auth' : 'network',
+		);
 	}
 
 	const data = await res.json();
@@ -156,7 +161,10 @@ export async function awaitAvatarGLB({ sessionUrl, onProgress, signal }) {
 		// base set because it may open OAuth flows in a new window.
 		iframe = document.createElement('iframe');
 		iframe.style.display = 'none';
-		iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox');
+		iframe.setAttribute(
+			'sandbox',
+			'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox',
+		);
 		iframe.setAttribute('title', 'Avaturn avatar export');
 		iframe.setAttribute('aria-hidden', 'true');
 
@@ -193,7 +201,8 @@ export async function awaitAvatarGLB({ sessionUrl, onProgress, signal }) {
 					} catch (err) {
 						throw new AvaturnError(`GLB fetch failed: ${err?.message}`, 'network');
 					}
-					if (!fetchRes.ok) throw new AvaturnError(`GLB fetch ${fetchRes.status}`, 'network');
+					if (!fetchRes.ok)
+						throw new AvaturnError(`GLB fetch ${fetchRes.status}`, 'network');
 
 					const glbBytes = await fetchRes.arrayBuffer();
 					progress({ step: 'glb-fetch', pct: 100 });
@@ -208,16 +217,24 @@ export async function awaitAvatarGLB({ sessionUrl, onProgress, signal }) {
 				} catch (err) {
 					cleanup();
 					signal?.removeEventListener('abort', onAbort);
-					reject(err instanceof AvaturnError ? err : new AvaturnError(err?.message ?? 'unknown', 'network'));
+					reject(
+						err instanceof AvaturnError
+							? err
+							: new AvaturnError(err?.message ?? 'unknown', 'network'),
+					);
 				}
 			}
 		};
 
 		window.addEventListener('message', messageListener);
 
-		iframe.addEventListener('load', () => {
-			progress({ step: 'iframe-load', pct: 5 });
-		}, { once: true });
+		iframe.addEventListener(
+			'load',
+			() => {
+				progress({ step: 'iframe-load', pct: 5 });
+			},
+			{ once: true },
+		);
 
 		document.body.appendChild(iframe);
 		progress({ step: 'iframe-load', pct: 0 });

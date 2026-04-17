@@ -19,13 +19,13 @@ Reroute `/a/:id/embed` through a serverless function that:
 
 1. Loads the agent's `agent_embed_policies` row.
 2. If `require_referrer = true`:
-   - Extract `Referer` header (fall back to `Origin` / `Sec-Fetch-Site` for stricter browsers).
-   - If the request is top-level (Sec-Fetch-Site: `none`) and `require_referrer` is true → allow only if the policy explicitly whitelists `*` or the page's own origin.
-   - Match the referrer origin against `origin_allowlist`. Support glob entries like `https://*.lobehub.com`.
+    - Extract `Referer` header (fall back to `Origin` / `Sec-Fetch-Site` for stricter browsers).
+    - If the request is top-level (Sec-Fetch-Site: `none`) and `require_referrer` is true → allow only if the policy explicitly whitelists `*` or the page's own origin.
+    - Match the referrer origin against `origin_allowlist`. Support glob entries like `https://*.lobehub.com`.
 3. On match → serve the existing static [public/agent/embed.html](../../public/agent/embed.html) with:
-   - `Content-Security-Policy: frame-ancestors <joined-allowlist>;`
-   - `X-Frame-Options` omitted intentionally (CSP is authoritative and CSP `frame-ancestors` deprecates XFO).
-   - `X-Robots-Tag: noindex`.
+    - `Content-Security-Policy: frame-ancestors <joined-allowlist>;`
+    - `X-Frame-Options` omitted intentionally (CSP is authoritative and CSP `frame-ancestors` deprecates XFO).
+    - `X-Robots-Tag: noindex`.
 4. On miss → `403` with a styled explainer page (HTML) that names the expected allowlist and a "Contact agent owner" mailto. Do not leak the full allowlist; show only the requested origin.
 
 ### Vercel rewrite

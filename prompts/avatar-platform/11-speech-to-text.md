@@ -17,19 +17,19 @@ Depends on task 01 (renamed agent panel exists).
 
 1. **Vendor or npm** — whisper-web depends on `@xenova/transformers`. Install via npm (it's infrastructural-ish, and bundling Transformers.js manually is painful).
 2. **New module** `src/agent/stt.js`:
-   - `class STT { async start({ onPartial, onFinal, onError }); stop(); dispose(); }`
-   - Loads the whisper `base.en` model (or `tiny.en` on low-memory devices) lazily on first `start()`.
-   - Uses `MediaRecorder` + a VAD-ish silence detector to chunk audio into ~1s windows for streaming transcription.
-   - Supports cancel mid-utterance.
+    - `class STT { async start({ onPartial, onFinal, onError }); stop(); dispose(); }`
+    - Loads the whisper `base.en` model (or `tiny.en` on low-memory devices) lazily on first `start()`.
+    - Uses `MediaRecorder` + a VAD-ish silence detector to chunk audio into ~1s windows for streaming transcription.
+    - Supports cancel mid-utterance.
 3. **Capability detection** — `STT.canUseLocal()` returns true if:
-   - `navigator.hardwareConcurrency >= 4`.
-   - `navigator.deviceMemory >= 4` (fallback to `true` on Safari where this API is absent — treat as capable).
-   - WebAssembly SIMD probe passes.
+    - `navigator.hardwareConcurrency >= 4`.
+    - `navigator.deviceMemory >= 4` (fallback to `true` on Safari where this API is absent — treat as capable).
+    - WebAssembly SIMD probe passes.
 4. **Agent panel integration** — in `src/agent-panel.js`, replace the Web Speech API block with STT:
-   - Mic button press → `stt.start(...)`.
-   - Partial results render in the input field in a muted color.
-   - Final result commits to the input; auto-sends if "push-to-talk" mode is active (new option).
-   - Release or press-again → `stt.stop()`.
+    - Mic button press → `stt.start(...)`.
+    - Partial results render in the input field in a muted color.
+    - Final result commits to the input; auto-sends if "push-to-talk" mode is active (new option).
+    - Release or press-again → `stt.stop()`.
 5. **Fallback wiring** — if `STT.canUseLocal()` is false, dynamically import the old Web Speech path and route through it with the same event shape.
 6. **Model hosting** — prefer the Hugging Face CDN by default; allow override with `VITE_WHISPER_MODEL_URL` for self-hosted deploys.
 

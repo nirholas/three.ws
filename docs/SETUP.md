@@ -69,7 +69,7 @@ npm run deploy
   storage + requests, both cheap.
 - **Database:** Neon autoscales; for very high traffic, switch `sql` to the
   pooled connection string or consider branching for heavy tenants.
-- **Rate limits:** Defaults in [api/_lib/rate-limit.js](../api/_lib/rate-limit.js) —
+- **Rate limits:** Defaults in [api/\_lib/rate-limit.js](../api/_lib/rate-limit.js) —
   tune once real traffic patterns emerge. Per-plan daily caps are enforced from
   the `plan_quotas` table.
 - **Observability:** Every tool call writes to `usage_events`. Build dashboards

@@ -27,7 +27,8 @@ export async function startClaim({ state, onProgress }) {
 		// Step 2: Check state
 		if (state.status === 'pre-onchain') {
 			log('check_state', 'pre_onchain', {
-				message: 'CZ is not yet registered on-chain. Claiming opens once registration is complete.',
+				message:
+					'CZ is not yet registered on-chain. Claiming opens once registration is complete.',
 			});
 			return { ok: true, message: 'pre_onchain' };
 		}
@@ -92,7 +93,10 @@ export function mountEmbedCopy(container, { state }) {
 			await navigator.clipboard.writeText(snippet);
 			const orig = button.textContent;
 			button.textContent = 'Copied!';
-			fireAnalytics('embed_copied', { hasChainId: !!state.chainId, hasAgentId: !!state.agentId });
+			fireAnalytics('embed_copied', {
+				hasChainId: !!state.chainId,
+				hasAgentId: !!state.agentId,
+			});
 			setTimeout(() => {
 				button.textContent = orig;
 			}, 2000);

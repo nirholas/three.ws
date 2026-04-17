@@ -13,8 +13,12 @@ function getSql() {
 	return _sql;
 }
 export const sql = new Proxy(function () {}, {
-	apply(_t, _this, args) { return getSql()(...args); },
-	get(_t, prop) { return getSql()[prop]; },
+	apply(_t, _this, args) {
+		return getSql()(...args);
+	},
+	get(_t, prop) {
+		return getSql()[prop];
+	},
 });
 
 // Simple retry for transient network errors — Neon drops idle HTTPS quickly.

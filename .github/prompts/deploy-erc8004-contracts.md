@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: "Deploy ERC-8004 contracts and complete on-chain agent registration"
+description: 'Deploy ERC-8004 contracts and complete on-chain agent registration'
 ---
 
 # Deploy ERC-8004 Contracts & Complete Integration
@@ -26,23 +26,25 @@ The UI (`register-ui.js`), registry interaction (`agent-registry.js`), and ABI a
 1. **Create `contracts/` directory** at project root
 2. **Initialize Hardhat or Foundry** project for Solidity development
 3. **Implement ERC-8004 Identity Registry** contract:
-   - ERC-721 base (agent identity NFTs)
-   - `register(string agentURI)` → mints token, stores URI
-   - `setAgentURI(uint256 agentId, string newURI)` — owner-only
-   - `setAgentWallet(uint256, address, uint256, bytes)` — delegated wallet with sig verification
-   - `getMetadata(uint256, string)` / `setMetadata(uint256, string, bytes)` — key-value metadata
-   - Events: `Registered`, `URIUpdated`, `MetadataSet`
-   - Must match the ABI already defined in `src/erc8004/abi.js`
+
+    - ERC-721 base (agent identity NFTs)
+    - `register(string agentURI)` → mints token, stores URI
+    - `setAgentURI(uint256 agentId, string newURI)` — owner-only
+    - `setAgentWallet(uint256, address, uint256, bytes)` — delegated wallet with sig verification
+    - `getMetadata(uint256, string)` / `setMetadata(uint256, string, bytes)` — key-value metadata
+    - Events: `Registered`, `URIUpdated`, `MetadataSet`
+    - Must match the ABI already defined in `src/erc8004/abi.js`
 
 4. **Implement Reputation Registry** contract:
-   - Submit reputation feedback for agents
-   - Query reputation scores
-   - Only registered agents (holders of Identity NFT) can receive reputation
+
+    - Submit reputation feedback for agents
+    - Query reputation scores
+    - Only registered agents (holders of Identity NFT) can receive reputation
 
 5. **Implement Validation Registry** contract:
-   - Store validation proofs on-chain
-   - Link validation results to agent identities
-   - Support for multiple validators
+    - Store validation proofs on-chain
+    - Link validation results to agent identities
+    - Support for multiple validators
 
 ### Phase 2: Deployment (Base Sepolia Testnet)
 
@@ -55,8 +57,8 @@ The UI (`register-ui.js`), registry interaction (`agent-registry.js`), and ABI a
 
 1. **Register 3D Agent itself** on the Identity Registry
 2. **Update `public/.well-known/agent-registration.json`**:
-   - Fill the empty `registrations` array with the on-chain registration
-   - Format: `{ "agentRegistry": "eip155:84532:0x...", "agentId": "1" }`
+    - Fill the empty `registrations` array with the on-chain registration
+    - Format: `{ "agentRegistry": "eip155:84532:0x...", "agentId": "1" }`
 3. Set agent metadata (capabilities, version, etc.)
 
 ### Phase 4: Complete Reputation & Validation

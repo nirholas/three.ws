@@ -31,16 +31,17 @@ export class EmbedActionBridge {
 
 Event map:
 
-| Host event | Translation to agent protocol |
-|---|---|
-| `host.chat.message {role:'user',text}` | `protocol.emit(ACTION_TYPES.SPEAK_TO_AGENT, { text })` |
+| Host event                                  | Translation to agent protocol                                              |
+| ------------------------------------------- | -------------------------------------------------------------------------- |
+| `host.chat.message {role:'user',text}`      | `protocol.emit(ACTION_TYPES.SPEAK_TO_AGENT, { text })`                     |
 | `host.chat.message {role:'assistant',text}` | `protocol.emit(ACTION_TYPES.AGENT_SPEAK, { text })` + optional TTS trigger |
-| `host.action {action:'emote.wave'}` | `protocol.emit(ACTION_TYPES.PLAY_ANIMATION, { clip: 'Wave' })` |
-| `host.action {action:'emote.*'}` | generic animation trigger with the suffix |
-| `host.action {action:'speak', args:{text}}` | `protocol.emit(ACTION_TYPES.AGENT_SPEAK, { text })` |
-| `host.theme {mode}` | `document.body.dataset.theme = mode` |
+| `host.action {action:'emote.wave'}`         | `protocol.emit(ACTION_TYPES.PLAY_ANIMATION, { clip: 'Wave' })`             |
+| `host.action {action:'emote.*'}`            | generic animation trigger with the suffix                                  |
+| `host.action {action:'speak', args:{text}}` | `protocol.emit(ACTION_TYPES.AGENT_SPEAK, { text })`                        |
+| `host.theme {mode}`                         | `document.body.dataset.theme = mode`                                       |
 
 Reverse (agent → host):
+
 - When `protocol` emits `AGENT_EVENT` / `MEMORY_UPDATED` / `EMOTION_CHANGED` → `bridge.send('embed.event', { event, data })`.
 
 Unknown events logged once at debug level, not propagated.

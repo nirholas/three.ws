@@ -26,22 +26,27 @@ Additive edits to two existing server files, plus optionally a new thumbnail ren
 ### `api/a-page.js` `<head>` must include:
 
 ```html
-<meta property="og:type" content="profile">
-<meta property="og:title" content="${agent.name} — 3D Agent">
-<meta property="og:description" content="${agent.bio || 'An embodied 3D agent'}">
-<meta property="og:image" content="${ogImageUrl}">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="${ogImageUrl}">
-<link rel="alternate" type="application/json+oembed"
-      href="${origin}/api/agent-oembed?url=${encodedCurrentUrl}&format=json">
+<meta property="og:type" content="profile" />
+<meta property="og:title" content="${agent.name} — 3D Agent" />
+<meta property="og:description" content="${agent.bio || 'An embodied 3D agent'}" />
+<meta property="og:image" content="${ogImageUrl}" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="${ogImageUrl}" />
+<link
+	rel="alternate"
+	type="application/json+oembed"
+	href="${origin}/api/agent-oembed?url=${encodedCurrentUrl}&format=json"
+/>
 ```
 
 ### `api/a-og.js` response must include:
+
 - `title`, `description`, `image`, `url`, `type`, plus new fields: `agent.name`, `agent.slug`, `agent.thumbnailUrl`, `agent.chainId?`, `agent.onChain?`.
 
 ### Dynamic OG image (if `@vercel/og` exists):
+
 - 1200×630, dark background, centered square thumbnail, agent name, small chain badge if on-chain.
 - 60s CDN cache.
 

@@ -20,18 +20,18 @@ Create `scripts/cz-demo/registration-cz.json` (committed, not generated). Shape:
 
 ```json
 {
-  "type": "agent-registration/0.1",
-  "name": "CZ",
-  "description": "Test agent for the CZ demo — the canonical embodied agent for demonstrating portable onchain identity.",
-  "body": {
-    "uri": "https://3d.irish/avatars/cz.glb",
-    "format": "glb"
-  },
-  "brain": { "provider": "anthropic", "model": "claude-opus-4-6" },
-  "skills": ["greet", "present-model", "validate-model", "remember", "think", "sign-action"],
-  "owner": "0x0000000000000000000000000000000000000000",
-  "createdAt": "2026-04-15T00:00:00Z",
-  "demo": { "slug": "cz" }
+	"type": "agent-registration/0.1",
+	"name": "CZ",
+	"description": "Test agent for the CZ demo — the canonical embodied agent for demonstrating portable onchain identity.",
+	"body": {
+		"uri": "https://3d.irish/avatars/cz.glb",
+		"format": "glb"
+	},
+	"brain": { "provider": "anthropic", "model": "claude-opus-4-6" },
+	"skills": ["greet", "present-model", "validate-model", "remember", "think", "sign-action"],
+	"owner": "0x0000000000000000000000000000000000000000",
+	"createdAt": "2026-04-15T00:00:00Z",
+	"demo": { "slug": "cz" }
 }
 ```
 
