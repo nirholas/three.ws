@@ -139,6 +139,8 @@ class App {
 			showcase: location.pathname === '/showcase' || location.pathname === '/showcase/',
 			// pending=1 signals a post-login save round-trip
 			pending: qp.get('pending') === '1',
+			// avatarSession: selfie pipeline passes a session URL here after processing photos
+			avatarSession: hash.avatarSession ? decodeURIComponent(hash.avatarSession) : '',
 		};
 
 		this.el = el;
@@ -168,6 +170,9 @@ class App {
 
 		this.createDropzone();
 		this.setupAvatarCreator();
+		if (this.options.avatarSession) {
+			this.avatarCreator.open(this.options.avatarSession);
+		}
 		this.hideSpinner();
 		this._applyViewerMode();
 		this._updateSignInLink();
@@ -873,15 +878,12 @@ class App {
 	// ── Avatar Creator ────────────────────────────────────────────────────────
 
 	setupAvatarCreator() {
-		// Ready Player Me iframe builder. The creator stays mounted so downstream
-		// flows (selfie → agent) can reopen it. "Create Avatar" button is a link
-		// to /create — no click wiring here.
-		this.avatarCreator = new AvatarCreator(document.body, async (glbUrl) => {
-			this.view(glbUrl, '', new Map());
+		this.avatarCreator = new AvatarCreator(document.body, async (glbSource) => {
+			this.view(glbSource, '', new Map());
 			try {
-				const avatar = await saveRemoteGlbToAccount(glbUrl, {
-					source: 'import',
-					source_meta: { provider: 'readyplayerme', source_url: glbUrl },
+				const avatar = await saveRemoteGlbToAccount(glbSource, {
+					source: 'avaturn',
+					source_meta: { provider: 'avaturn' },
 				});
 				this._flashSaved(avatar);
 			} catch (err) {
