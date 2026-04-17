@@ -11,23 +11,6 @@ function getStudioUrl() {
 	return 'http://localhost:5173';
 }
 
-function getAvaturnEditorUrl() {
-	let base = 'https://editor.avaturn.me/';
-	let devId = '';
-	try {
-		if (typeof import.meta !== 'undefined' && import.meta.env) {
-			if (import.meta.env.VITE_AVATURN_EDITOR_URL) {
-				base = String(import.meta.env.VITE_AVATURN_EDITOR_URL).trim();
-			}
-			if (import.meta.env.VITE_AVATURN_DEVELOPER_ID) {
-				devId = String(import.meta.env.VITE_AVATURN_DEVELOPER_ID).trim();
-			}
-		}
-	} catch (_) {}
-	if (!devId) return base;
-	const sep = base.includes('?') ? '&' : '?';
-	return base + sep + 'developer=' + encodeURIComponent(devId);
-}
 
 export class AvatarCreator {
 	/**
@@ -67,10 +50,11 @@ export class AvatarCreator {
 
 	/**
 	 * Opens the Avaturn default hosted editor via the Avaturn SDK.
+	 * No URL passed → SDK uses its own default public editor (no developer ID needed).
 	 */
 	async openDefaultEditor() {
 		if (this.modal) return;
-		await this._openAvaturn(getAvaturnEditorUrl());
+		await this._openAvaturn();
 	}
 
 	async _openAvaturn(url) {
