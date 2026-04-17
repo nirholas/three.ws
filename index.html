@@ -1,130 +1,872 @@
 <!doctype html>
 <html lang="en">
-<head>
-	<meta charset="utf-8" />
-	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-	<title>3D Agent — AI-Powered 3D Model Viewer</title>
-	<meta
-		name="viewport"
-		content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
-	/>
-	<meta name="author" content="nirholas" />
-	<meta name="description" content="The first embodied 3D AI agent. Not a chatbot. A presence — with a body, a place, an identity, and memory." />
-	<meta name="keywords" content="3D agent, AI agent, embodied AI, glTF viewer, GLB viewer, 3D model viewer, WebGL, three.js, ERC-8004, agent identity" />
-	<meta name="theme-color" content="#000000" />
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>3D Agent — Give Your AI a Body</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="author" content="nirholas" />
+		<meta
+			name="description"
+			content="Drop any GLB model into 3D Agent — view it, animate it, embed it anywhere, and give it a verifiable on-chain identity."
+		/>
+		<meta name="theme-color" content="#000000" />
 
-	<!-- Open Graph -->
-	<meta property="og:type" content="website" />
-	<meta property="og:title" content="3D Agent — The First Embodied AI Agent" />
-	<meta property="og:description" content="Agents have always been imagined as present. We made that real." />
-	<meta property="og:url" content="https://3dagent.vercel.app/" />
-	<meta property="og:site_name" content="3D Agent" />
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content="3D Agent — Give Your AI a Body" />
+		<meta
+			property="og:description"
+			content="Drop any GLB model into 3D Agent — view it, animate it, embed it anywhere."
+		/>
+		<meta property="og:url" content="https://3dagent.vercel.app/" />
 
-	<!-- Twitter / X -->
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="3D Agent — Embodied AI" />
-	<meta name="twitter:description" content="The first 3D agent with a body, a place, an identity, and memory." />
-	<meta name="twitter:creator" content="@nichxbt" />
+		<link rel="canonical" href="https://3dagent.vercel.app/" />
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="apple-touch-icon" href="/pwa-192x192.png" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/features.css" />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400&display=swap"
+			rel="stylesheet"
+		/>
+		<script
+			type="module"
+			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
+		></script>
 
-	<link rel="canonical" href="https://3dagent.vercel.app/" />
-	<link rel="shortcut icon" href="/favicon.ico" />
-	<link rel="apple-touch-icon" href="/pwa-192x192.png" />
-	<link rel="preconnect" href="https://fonts.googleapis.com" />
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-	<link rel="stylesheet" href="style.css" />
-	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-	<script defer type="module" src="src/app.js"></script>
-</head>
-<body>
-	<header>
-		<h1><a href="/"><span class="wordmark-dot" aria-hidden="true"></span>3D Agent</a></h1>
-		<nav class="features-nav">
-			<a href="/" class="active">Viewer</a>
-			<a href="/features">Features</a>
-			<a href="/widgets">Widgets</a>
-			<a href="/#register">Register Agent</a>
-			<a class="make-widget-btn" id="make-widget-btn" href="/studio" hidden title="Save the current model as an embeddable widget">
-				<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-				<span>Make this a widget</span>
-			</a>
-			<a href="/dashboard" class="nav-dashboard">Dashboard</a>
-			<a href="/login" class="nav-sign-in" id="nav-sign-in">Sign in</a>
-		</nav>
-	</header>
+		<style>
+			/* ── Journey Steps ── */
 
-	<main class="wrap">
-		<!-- Agent presence panel — rendered by AgentHome -->
-		<div class="agent-presence-sidebar" id="agent-presence-sidebar">
-			<div id="agent-home-container"></div>
-		</div>
-
-		<!-- Auth gate — shown only to anonymous visitors on the main viewer -->
-		<aside class="auth-gate" id="auth-gate">
-			<div class="auth-gate__inner">
-				<div class="auth-gate__eyebrow">
-					<span class="auth-gate__lock" aria-hidden="true">◎</span>
-					<span>Unlock the agent</span>
-				</div>
-				<h2 class="auth-gate__title">Your agent lives here</h2>
-				<p class="auth-gate__desc">
-					Sign in to access animations, scene controls, and your agent's on-chain identity, memory, and skills.
-				</p>
-				<div class="auth-gate__actions">
-					<a class="auth-gate__btn auth-gate__btn--primary" href="/login">Sign in</a>
-					<a class="auth-gate__btn" href="/register">Create account</a>
-				</div>
-				<ul class="auth-gate__perks">
-					<li>Animations &amp; presence controls</li>
-					<li>Save avatars to your account</li>
-					<li>Register on-chain agent identity</li>
-					<li>Scene, lighting &amp; material editor</li>
-				</ul>
-			</div>
-		</aside>
-
-		<!-- 3D Viewer -->
-		<div class="viewer-container" id="viewer-container"></div>
-
-		<!-- Bottom bar -->
-		<div class="dropzone">
-			<div class="upload-btn">
-				<input type="file" name="file-input[]" id="file-input" multiple="" />
-				<label for="file-input">
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="20"
-						height="17"
-						viewBox="0 0 20 17"
-					>
-						<path
-							d="M10 0l-5.2 4.9h3.3v5.1h3.8v-5.1h3.3l-5.2-4.9zm9.3 11.5l-3.2-2.1h-2l3.4 2.6h-3.5c-.1 0-.2.1-.2.1l-.8 2.3h-6l-.8-2.2c-.1-.1-.1-.2-.2-.2h-3.6l3.4-2.6h-2l-3.2 2.1c-.4.3-.7 1-.6 1.5l.6 3.1c.1.5.7.9 1.2.9h16.3c.6 0 1.1-.4 1.3-.9l.6-3.1c.1-.5-.2-1.2-.7-1.5z"
-						></path>
-					</svg>
-					<span>Upload your own model</span>
-				</label>
-			</div>
-			<span class="drop-hint">or drag &amp; drop glTF / GLB anywhere</span>
-			<a class="create-avatar-btn" id="create-avatar-btn" href="/create" title="Create a custom 3D avatar from a selfie">
-				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-				<span>Create Avatar</span>
-			</a>
-		</div>
-		<div class="spinner"></div>
-	</main>
-
-	<!-- Golden Ratio dev grid — toggle with Alt+G -->
-	<div class="phi-grid" id="phi-grid">
-		<div class="phi-grid-h"></div>
-		<div class="phi-grid-thirds"></div>
-		<div class="phi-grid-thirds-h"></div>
-	</div>
-	<div class="phi-grid-label" id="phi-grid-label">φ Grid — Alt+G to toggle</div>
-	<script>
-		document.addEventListener('keydown', function (e) {
-			if (e.altKey && e.key.toLowerCase() === 'g') {
-				document.getElementById('phi-grid').classList.toggle('visible');
+			.journey {
+				padding: var(--space-2xl) 0 0;
 			}
-		});
-	</script>
-</body>
+
+			.journey-header {
+				text-align: center;
+				padding: 0 var(--space-lg) var(--space-2xl);
+				max-width: 720px;
+				margin: 0 auto;
+			}
+
+			.journey-overline {
+				font-family: 'JetBrains Mono', monospace;
+				font-size: var(--text-xs);
+				color: rgba(255, 215, 0, 0.6);
+				letter-spacing: 0.15em;
+				text-transform: uppercase;
+				margin: 0 0 var(--space-md);
+			}
+
+			.journey-title {
+				font-size: clamp(2rem, 4vw, 3rem);
+				font-weight: 600;
+				color: #fff;
+				line-height: 1.08;
+				letter-spacing: -0.03em;
+				margin: 0 0 var(--space-md);
+			}
+
+			.journey-sub {
+				font-size: var(--text-base);
+				color: rgba(255, 255, 255, 0.38);
+				font-weight: 300;
+				margin: 0;
+			}
+
+			/* Individual step row */
+
+			.journey-step {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				align-items: center;
+				gap: var(--space-2xl);
+				max-width: 1080px;
+				margin: 0 auto;
+				padding: var(--space-2xl) var(--space-lg);
+				border-top: 1px solid rgba(255, 255, 255, 0.05);
+			}
+
+			.journey-step:last-child {
+				border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+			}
+
+			.journey-step--flip .journey-step-content {
+				order: 2;
+			}
+			.journey-step--flip .journey-step-visual {
+				order: 1;
+			}
+
+			.journey-step-num {
+				font-family: 'JetBrains Mono', monospace;
+				font-size: 0.68rem;
+				color: rgba(255, 215, 0, 0.55);
+				letter-spacing: 0.18em;
+				text-transform: uppercase;
+				margin-bottom: var(--space-md);
+			}
+
+			.journey-step-title {
+				font-size: clamp(1.5rem, 2.5vw, 2.2rem);
+				font-weight: 600;
+				color: #fff;
+				line-height: 1.1;
+				letter-spacing: -0.025em;
+				margin: 0 0 var(--space-md);
+			}
+
+			.journey-step-desc {
+				font-size: var(--text-base);
+				color: rgba(255, 255, 255, 0.42);
+				line-height: var(--leading-normal);
+				font-weight: 300;
+				margin: 0 0 var(--space-lg);
+				max-width: 30em;
+			}
+
+			.journey-step-cta {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.4em;
+				font-size: var(--text-sm);
+				color: rgba(255, 215, 0, 0.75);
+				text-decoration: none;
+				letter-spacing: 0.02em;
+				transition:
+					color 0.2s ease,
+					gap 0.2s ease;
+			}
+
+			.journey-step-cta:hover {
+				color: #ffd76a;
+				gap: 0.7em;
+			}
+
+			/* Visual area */
+
+			.journey-step-visual {
+				background: rgba(255, 255, 255, 0.02);
+				border: 1px solid rgba(255, 255, 255, 0.07);
+				border-radius: 12px;
+				overflow: hidden;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				min-height: 300px;
+				position: relative;
+			}
+
+			.journey-step-visual model-viewer {
+				width: 100%;
+				height: 340px;
+				background: transparent;
+				--poster-color: transparent;
+			}
+
+			/* Upload drop visual */
+
+			.vis-upload {
+				width: 100%;
+				padding: var(--space-xl) var(--space-lg);
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: var(--space-md);
+			}
+
+			.vis-upload-zone {
+				width: 100%;
+				border: 1.5px dashed rgba(255, 255, 255, 0.12);
+				border-radius: 10px;
+				padding: var(--space-xl) var(--space-lg);
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: var(--space-sm);
+				text-align: center;
+				transition: border-color 0.2s ease;
+			}
+
+			.vis-upload-icon {
+				width: 40px;
+				height: 40px;
+				border-radius: 8px;
+				background: rgba(255, 255, 255, 0.05);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 1.2rem;
+			}
+
+			.vis-upload-label {
+				font-size: var(--text-sm);
+				color: rgba(255, 255, 255, 0.55);
+			}
+
+			.vis-upload-sub {
+				font-size: var(--text-xs);
+				color: rgba(255, 255, 255, 0.22);
+				font-family: 'JetBrains Mono', monospace;
+				letter-spacing: 0.06em;
+			}
+
+			.vis-file-chip {
+				display: inline-flex;
+				align-items: center;
+				gap: var(--space-sm);
+				padding: 0.4rem 0.9rem;
+				background: rgba(255, 255, 255, 0.04);
+				border: 1px solid rgba(255, 255, 255, 0.08);
+				border-radius: 999px;
+				font-family: 'JetBrains Mono', monospace;
+				font-size: 0.68rem;
+				color: rgba(255, 255, 255, 0.5);
+			}
+
+			.vis-file-dot {
+				width: 6px;
+				height: 6px;
+				border-radius: 50%;
+				background: #4ade80;
+			}
+
+			/* Animation picker visual */
+
+			.vis-anim {
+				width: 100%;
+				padding: var(--space-md);
+			}
+
+			.vis-anim-header {
+				font-family: 'JetBrains Mono', monospace;
+				font-size: 0.65rem;
+				color: rgba(255, 215, 0, 0.5);
+				letter-spacing: 0.12em;
+				text-transform: uppercase;
+				padding: var(--space-xs) var(--space-sm);
+				margin-bottom: var(--space-xs);
+			}
+
+			.vis-anim-row {
+				display: flex;
+				align-items: center;
+				gap: var(--space-sm);
+				padding: 0.6rem var(--space-sm);
+				border-radius: 6px;
+				font-size: var(--text-sm);
+				color: rgba(255, 255, 255, 0.45);
+				cursor: pointer;
+				transition:
+					background 0.15s ease,
+					color 0.15s ease;
+			}
+
+			.vis-anim-row.active {
+				background: rgba(255, 255, 255, 0.05);
+				color: #fff;
+			}
+
+			.vis-anim-play {
+				width: 20px;
+				height: 20px;
+				border-radius: 50%;
+				background: rgba(255, 255, 255, 0.06);
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				flex-shrink: 0;
+				font-size: 0.5rem;
+			}
+
+			.vis-anim-row.active .vis-anim-play {
+				background: rgba(255, 215, 0, 0.15);
+				border-color: rgba(255, 215, 0, 0.3);
+				color: #ffd76a;
+			}
+
+			.vis-anim-dur {
+				margin-left: auto;
+				font-family: 'JetBrains Mono', monospace;
+				font-size: 0.62rem;
+				color: rgba(255, 255, 255, 0.2);
+			}
+
+			/* Identity card visual */
+
+			.vis-identity {
+				padding: var(--space-lg);
+				width: 100%;
+			}
+
+			.vis-id-header {
+				display: flex;
+				align-items: center;
+				gap: var(--space-sm);
+				margin-bottom: var(--space-md);
+				padding-bottom: var(--space-sm);
+				border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+			}
+
+			.vis-id-dot {
+				width: 8px;
+				height: 8px;
+				border-radius: 50%;
+				background: #4ade80;
+				box-shadow: 0 0 6px rgba(74, 222, 128, 0.5);
+			}
+
+			.vis-id-filename {
+				font-family: 'JetBrains Mono', monospace;
+				font-size: 0.7rem;
+				color: rgba(255, 255, 255, 0.45);
+			}
+
+			.vis-id-row {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				padding: var(--space-xs) 0;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+				font-size: 0.75rem;
+			}
+
+			.vis-id-row:last-child {
+				border-bottom: none;
+			}
+
+			.vis-id-key {
+				font-family: 'JetBrains Mono', monospace;
+				color: rgba(255, 255, 255, 0.28);
+			}
+
+			.vis-id-val {
+				font-family: 'JetBrains Mono', monospace;
+				color: rgba(255, 255, 255, 0.6);
+			}
+
+			.vis-id-val.gold {
+				color: rgba(255, 215, 0, 0.75);
+			}
+			.vis-id-val.green {
+				color: rgba(74, 222, 128, 0.8);
+			}
+
+			/* Embed code visual */
+
+			.vis-embed {
+				padding: var(--space-md);
+				width: 100%;
+			}
+
+			.vis-embed-tabs {
+				display: flex;
+				gap: var(--space-xs);
+				margin-bottom: var(--space-md);
+			}
+
+			.vis-embed-tab {
+				padding: 0.3rem 0.8rem;
+				border-radius: 999px;
+				font-size: 0.68rem;
+				font-family: 'JetBrains Mono', monospace;
+				color: rgba(255, 255, 255, 0.3);
+				border: 1px solid rgba(255, 255, 255, 0.07);
+				letter-spacing: 0.04em;
+			}
+
+			.vis-embed-tab.active {
+				color: #fff;
+				background: rgba(255, 255, 255, 0.06);
+				border-color: rgba(255, 255, 255, 0.12);
+			}
+
+			.vis-embed-code {
+				background: #080810;
+				border: 1px solid rgba(255, 255, 255, 0.05);
+				border-radius: 8px;
+				padding: var(--space-md);
+				font-family: 'JetBrains Mono', monospace;
+				font-size: 0.72rem;
+				line-height: 1.7;
+				color: rgba(255, 255, 255, 0.5);
+			}
+
+			.vis-embed-code .tag {
+				color: rgba(125, 200, 255, 0.85);
+			}
+			.vis-embed-code .attr {
+				color: rgba(168, 204, 140, 0.85);
+			}
+			.vis-embed-code .val {
+				color: rgba(230, 175, 100, 0.85);
+			}
+
+			/* Responsive */
+
+			@media screen and (max-width: 768px) {
+				.journey-step {
+					grid-template-columns: 1fr;
+					gap: var(--space-xl);
+					padding: var(--space-xl) var(--space-md);
+				}
+
+				.journey-step--flip .journey-step-content {
+					order: unset;
+				}
+				.journey-step--flip .journey-step-visual {
+					order: unset;
+				}
+
+				.journey-step-visual {
+					min-height: 240px;
+				}
+			}
+		</style>
+	</head>
+	<body class="features-page">
+		<header>
+			<h1>
+				<a href="/"><span class="wordmark-dot" aria-hidden="true"></span>3D Agent</a>
+			</h1>
+			<nav class="features-nav">
+				<a href="/app">Viewer</a>
+				<a href="/features">Features</a>
+				<a href="/widgets">Widgets</a>
+				<a href="/dashboard" class="nav-dashboard">Dashboard</a>
+				<a href="/login" class="nav-sign-in" id="nav-sign-in">Sign in</a>
+			</nav>
+		</header>
+
+		<main class="features-main">
+			<!-- ── Hero ── -->
+			<section class="hero" id="hero">
+				<div class="hero-bg" aria-hidden="true">
+					<div class="hero-mesh"></div>
+					<div class="hero-grid"></div>
+					<div class="hero-glow hero-glow-gold"></div>
+					<div class="hero-glow hero-glow-cyan"></div>
+				</div>
+				<div class="hero-content">
+					<div class="hero-chip scroll-reveal">
+						<span class="hero-chip-dot"></span>
+						<span>Browser-native · No install</span>
+						<span class="hero-chip-divider"></span>
+						<span class="hero-chip-spec">Free to start</span>
+					</div>
+					<h2 class="hero-title scroll-reveal">
+						Give your AI<br />
+						agent a <em>body</em>.
+					</h2>
+					<p class="hero-subtitle scroll-reveal">
+						Drop any GLB model — view it, animate it, embed it anywhere, and give it a
+						verifiable on-chain identity. No plugins. No server uploads.
+					</p>
+					<div class="hero-cta scroll-reveal">
+						<a href="/create" class="btn-primary">
+							<span>Create your agent</span>
+							<span class="btn-arrow">→</span>
+						</a>
+						<a
+							href="/app"
+							class="btn-ghost"
+							title="No sign-in needed — drop a GLB and play"
+							>Try the viewer →</a
+						>
+					</div>
+					<ul
+						class="hero-proof scroll-reveal"
+						aria-label="Supported formats and standards"
+					>
+						<li>glTF 2.0</li>
+						<li>GLB</li>
+						<li>ERC-8004</li>
+						<li>A2A</li>
+						<li>MCP</li>
+					</ul>
+				</div>
+				<div class="hero-avatar scroll-reveal">
+					<div class="hero-avatar-ring" aria-hidden="true"></div>
+					<div class="hero-avatar-pulse" aria-hidden="true"></div>
+					<a href="/app" class="hero-avatar-link" aria-label="Open the 3D Agent viewer">
+						<model-viewer
+							class="hero-avatar-viewer"
+							src="/avatars/cz.glb"
+							alt="3D Agent avatar"
+							autoplay
+							animation-name="IdleV4.2(maya_head)"
+							disable-zoom
+							auto-rotate
+							auto-rotate-delay="0"
+							rotation-per-second="18deg"
+							interaction-prompt="none"
+							shadow-intensity="0.8"
+							shadow-softness="1"
+							exposure="1.05"
+							tone-mapping="aces"
+							environment-image="neutral"
+							camera-orbit="20deg 88deg 4.8m"
+							field-of-view="32deg"
+							loading="eager"
+						></model-viewer>
+					</a>
+					<div class="hero-avatar-tag" aria-hidden="true">
+						<span class="hero-avatar-tag-label">agent</span>
+						<span class="hero-avatar-tag-value">0x3d…a9f</span>
+					</div>
+				</div>
+				<div class="hero-scroll-hint scroll-reveal" aria-hidden="true">
+					<span>scroll</span>
+					<span class="hero-scroll-line"></span>
+				</div>
+			</section>
+
+			<!-- ── Journey Steps ── -->
+			<section class="journey" id="get-started">
+				<div class="journey-header scroll-reveal">
+					<p class="journey-overline">Get Started</p>
+					<h2 class="journey-title">From sign-in to<br />embedded agent.</h2>
+					<p class="journey-sub">Five steps. Embed for free. On-chain is optional.</p>
+				</div>
+
+				<!-- Step 01 -->
+				<div class="journey-step">
+					<div class="journey-step-content scroll-reveal">
+						<p class="journey-step-num">Step 01</p>
+						<h3 class="journey-step-title">Sign in.</h3>
+						<p class="journey-step-desc">
+							Connect your wallet or sign in with email. Your avatars, animations, and
+							on-chain identities are saved to your account.
+						</p>
+						<a href="/login" class="journey-step-cta">Sign in →</a>
+					</div>
+					<div class="journey-step-visual scroll-reveal">
+						<div class="vis-identity">
+							<div class="vis-id-header">
+								<div class="vis-id-dot"></div>
+								<span class="vis-id-filename">session.json</span>
+							</div>
+							<div class="vis-id-row">
+								<span class="vis-id-key">method</span>
+								<span class="vis-id-val">"wallet" · "email"</span>
+							</div>
+							<div class="vis-id-row">
+								<span class="vis-id-key">address</span>
+								<span class="vis-id-val gold">0x3d…a9f</span>
+							</div>
+							<div class="vis-id-row">
+								<span class="vis-id-key">saved</span>
+								<span class="vis-id-val">avatars · agents · widgets</span>
+							</div>
+							<div class="vis-id-row">
+								<span class="vis-id-key">active</span>
+								<span class="vis-id-val green">true</span>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Step 02 -->
+				<div class="journey-step journey-step--flip">
+					<div class="journey-step-content scroll-reveal">
+						<p class="journey-step-num">Step 02</p>
+						<h3 class="journey-step-title">Create your<br />avatar.</h3>
+						<p class="journey-step-desc">
+							Edit a default avatar in our web editor, or drop in your own GLB. Need a
+							model? Try
+							<a href="https://avaturn.me" target="_blank" rel="noopener">Avaturn</a>
+							or
+							<a href="https://mixamo.com" target="_blank" rel="noopener">Mixamo</a>.
+							(Selfie-to-avatar — coming soon.)
+						</p>
+						<a href="/create" class="journey-step-cta">Create your avatar →</a>
+					</div>
+					<div class="journey-step-visual scroll-reveal">
+						<div class="vis-upload">
+							<div class="vis-upload-zone">
+								<div class="vis-upload-icon">⬆</div>
+								<span class="vis-upload-label">Edit default · Upload GLB</span>
+								<span class="vis-upload-sub">glTF 2.0 · GLB · Draco · KTX2</span>
+							</div>
+							<div class="vis-file-chip">
+								<span class="vis-file-dot"></span>
+								<span>my-avatar.glb · 4.2 MB · saved</span>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Step 03 -->
+				<div class="journey-step">
+					<div class="journey-step-content scroll-reveal">
+						<p class="journey-step-num">Step 03</p>
+						<h3 class="journey-step-title">Customize.</h3>
+						<p class="journey-step-desc">
+							Name your agent, pick animations, add voice, and connect a brain. Save
+							once, use everywhere.
+						</p>
+						<a href="/app" class="journey-step-cta">Open the viewer →</a>
+					</div>
+					<div class="journey-step-visual scroll-reveal">
+						<div class="vis-anim">
+							<div class="vis-anim-header">Animations</div>
+							<div class="vis-anim-row active">
+								<div class="vis-anim-play">▶</div>
+								<span>Idle — Breathing</span>
+								<span class="vis-anim-dur">∞</span>
+							</div>
+							<div class="vis-anim-row">
+								<div class="vis-anim-play">▶</div>
+								<span>Wave</span>
+								<span class="vis-anim-dur">2.4s</span>
+							</div>
+							<div class="vis-anim-row">
+								<div class="vis-anim-play">▶</div>
+								<span>Talking</span>
+								<span class="vis-anim-dur">∞</span>
+							</div>
+							<div class="vis-anim-row">
+								<div class="vis-anim-play">▶</div>
+								<span>Dance — Hip Hop</span>
+								<span class="vis-anim-dur">4.1s</span>
+							</div>
+							<div class="vis-anim-row">
+								<div class="vis-anim-play">▶</div>
+								<span>Walk Cycle</span>
+								<span class="vis-anim-dur">∞</span>
+							</div>
+							<div class="vis-anim-row">
+								<div class="vis-anim-play">▶</div>
+								<span>Thinking</span>
+								<span class="vis-anim-dur">3.2s</span>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Step 04 -->
+				<div class="journey-step journey-step--flip">
+					<div class="journey-step-content scroll-reveal">
+						<p class="journey-step-num">Step 04</p>
+						<h3 class="journey-step-title">Embed<br />anywhere.</h3>
+						<p class="journey-step-desc">
+							Generate a widget — one iframe, any site. Works in Notion, Ghost,
+							WordPress, and more.
+
+						</p>
+						<a href="/studio" class="journey-step-cta">Open Widget Studio →</a>
+					</div>
+					<div class="journey-step-visual scroll-reveal">
+						<div class="vis-embed">
+							<div class="vis-embed-tabs">
+								<span class="vis-embed-tab active">iframe</span>
+								<span class="vis-embed-tab">web component</span>
+								<span class="vis-embed-tab">on-chain</span>
+							</div>
+							<div class="vis-embed-code">
+								<span class="tag">&lt;iframe</span><br />
+								&nbsp;&nbsp;<span class="attr">src</span>=<span class="val"
+									>"https://3dagent.vercel.app/w/wdgt_abc123"</span
+								><br />
+								&nbsp;&nbsp;<span class="attr">width</span>=<span class="val"
+									>"400"</span
+								><br />
+								&nbsp;&nbsp;<span class="attr">height</span>=<span class="val"
+									>"600"</span
+								><br />
+								&nbsp;&nbsp;<span class="attr">allow</span>=<span class="val"
+									>"microphone"</span
+								><br />
+								<span class="tag">/&gt;</span>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Step 05 -->
+				<div class="journey-step">
+					<div class="journey-step-content scroll-reveal">
+						<p class="journey-step-num">Step 05</p>
+						<h3 class="journey-step-title">Deploy<br />on-chain.</h3>
+						<p class="journey-step-desc">
+							Register your agent on Ethereum via ERC-8004 — the trustless agents
+							standard. Get a verifiable on-chain identity, portable reputation, and
+							proof of execution discoverable by any A2A or MCP client.
+						</p>
+						<a href="/register" class="journey-step-cta">Register on-chain →</a>
+					</div>
+					<div class="journey-step-visual scroll-reveal">
+						<div class="vis-onchain">
+							<div class="vis-onchain-header">
+								<div class="vis-onchain-dot"></div>
+								<span>ERC-8004 Registry</span>
+							</div>
+							<div class="vis-onchain-row">
+								<span class="vis-onchain-label">Identity</span>
+								<span class="vis-onchain-val">ERC-721 token</span>
+							</div>
+							<div class="vis-onchain-row">
+								<span class="vis-onchain-label">Reputation</span>
+								<span class="vis-onchain-val">on-chain score</span>
+							</div>
+							<div class="vis-onchain-row">
+								<span class="vis-onchain-label">Validation</span>
+								<span class="vis-onchain-val">TEE / zkML proof</span>
+							</div>
+							<div class="vis-onchain-badge">Mainnet + L2s</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- ── Three product pillars ── -->
+			<section class="section" id="features">
+				<h3 class="section-label scroll-reveal">What You Get</h3>
+				<div class="registry-grid">
+					<div class="registry-card scroll-reveal">
+						<div class="registry-icon">🎭</div>
+						<h4>3D Avatar Viewer</h4>
+						<p>
+							Render any GLB in WebGL with full animations, materials, and lighting —
+							directly in the browser. No install required.
+						</p>
+						<ul class="registry-details">
+							<li><code>glTF 2.0 + GLB</code></li>
+							<li><code>Draco + KTX2 + Meshopt</code></li>
+							<li><code>three.js r176</code></li>
+						</ul>
+					</div>
+					<div class="registry-card scroll-reveal">
+						<div class="registry-icon">💬</div>
+						<h4>Talking Agent</h4>
+						<p>
+							Give your avatar an AI brain. It speaks, remembers, and responds —
+							powered by your LLM of choice via a simple skill interface.
+						</p>
+						<ul class="registry-details">
+							<li><code>Voice + text input</code></li>
+							<li><code>Persistent memory</code></li>
+							<li><code>Custom skills</code></li>
+						</ul>
+					</div>
+					<div class="registry-card scroll-reveal">
+						<div class="registry-icon">🪪</div>
+						<h4>On-Chain Identity</h4>
+						<p>
+							Register on Ethereum via ERC-8004. A verifiable, portable identity
+							discoverable by any A2A or MCP client.
+						</p>
+						<ul class="registry-details">
+							<li><code>ERC-721 ownership</code></li>
+							<li><code>A2A + MCP endpoints</code></li>
+							<li><code>ENS compatible</code></li>
+						</ul>
+					</div>
+				</div>
+			</section>
+
+			<!-- ── Integration grid ── -->
+			<section class="section section-dark" id="integration">
+				<h3 class="section-label scroll-reveal">Built to Integrate</h3>
+				<div class="integration-grid">
+					<div class="integration-item scroll-reveal">
+						<h4>Any 3D Model</h4>
+						<p>
+							Drag in a <code>.glb</code> or <code>.gltf</code> — Draco-compressed,
+							KTX2-textured, or Meshopt-quantized. No conversion step.
+						</p>
+					</div>
+					<div class="integration-item scroll-reveal">
+						<h4>Any Website</h4>
+						<p>
+							One iframe works in Notion, Ghost, WordPress, Webflow, and Framer. No
+							SDK required on the consumer side.
+						</p>
+					</div>
+					<div class="integration-item scroll-reveal">
+						<h4>Any AI Stack</h4>
+						<p>
+							Connect via <code>MCP</code> or <code>A2A</code>. Works with Claude,
+							GPT, Gemini, and any OpenAI-compatible model.
+						</p>
+					</div>
+					<div class="integration-item scroll-reveal">
+						<h4>Any EVM Chain</h4>
+						<p>
+							ERC-8004 identities are CREATE2-deterministic — same address on every
+							chain. Deploy once, discoverable everywhere.
+						</p>
+					</div>
+				</div>
+			</section>
+
+			<!-- ── CTA ── -->
+			<section class="section cta-section" id="cta">
+				<div class="cta-content scroll-reveal">
+					<h3>Ready to give your AI agent a body?</h3>
+					<p>Drop a 3D model. Add AI. Ship in minutes.</p>
+					<div class="hero-cta">
+						<a href="/create" class="btn-primary">Create your agent</a>
+						<a href="/app" class="btn-ghost">Open viewer →</a>
+					</div>
+				</div>
+			</section>
+
+			<footer class="features-footer">
+				<p>
+					3D Agent ·
+					<a href="https://github.com/nirholas/3D" target="_blank" rel="noopener"
+						>GitHub</a
+					>
+					· <a href="/features">Docs</a> · <a href="/#register">Register on-chain</a> ·
+					<a href="https://eips.ethereum.org/EIPS/eip-8004" target="_blank" rel="noopener"
+						>ERC-8004</a
+					>
+				</p>
+			</footer>
+		</main>
+
+		<script>
+			// Auth-aware nav
+			(function () {
+				try {
+					const token =
+						localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+					if (token) {
+						const el = document.getElementById('nav-sign-in');
+						if (el) {
+							el.textContent = 'Dashboard';
+							el.href = '/dashboard';
+						}
+					}
+				} catch (_) {}
+			})();
+
+			// Scroll reveal
+			(function () {
+				const reveals = document.querySelectorAll('.scroll-reveal');
+				const observer = new IntersectionObserver(
+					(entries) => {
+						entries.forEach((entry) => {
+							if (entry.isIntersecting) {
+								entry.target.classList.add('revealed');
+								observer.unobserve(entry.target);
+							}
+						});
+					},
+					{ threshold: 0.12, rootMargin: '0px 0px -60px 0px' },
+				);
+				reveals.forEach((el) => {
+					const siblings = Array.from(
+						el.parentElement.querySelectorAll('.scroll-reveal'),
+					);
+					const idx = siblings.indexOf(el);
+					el.style.transitionDelay = idx * 0.1 + 's';
+					observer.observe(el);
+				});
+			})();
+		</script>
+	</body>
 </html>

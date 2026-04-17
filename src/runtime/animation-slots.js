@@ -6,15 +6,15 @@ export const SLOTS = ['idle', 'wave', 'nod', 'shake', 'think', 'celebrate', 'con
 
 export const DEFAULT_ANIMATION_MAP = {
 	idle:      'idle',
-	wave:      'wave',
-	nod:       'yes',
-	shake:     'no',
-	think:     'sitting',
-	celebrate: 'dance',
-	concern:   'standing',
-	bow:       'wave',
-	point:     'standing',
-	shrug:     'standing',
+	wave:      'reaction',
+	nod:       'reaction',
+	shake:     'angry',
+	think:     'pray',
+	celebrate: 'celebrate',
+	concern:   'defeated',
+	bow:       'sitclap',
+	point:     'reaction',
+	shrug:     'defeated',
 };
 
 /**

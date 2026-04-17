@@ -95,16 +95,15 @@ async function handleGetOrCreateMe(req, res, auth) {
 
 		return json(res, 200, { agent: decorate(agent) });
 	} catch (err) {
-		// Missing table / bad migration shouldn't brick the client — surface a
-		// null agent and let the UI fall back to local-only identity.
+		// Any failure here (missing table, wallet generation error, missing env var)
+		// should not brick the client — surface null and let the UI fall back to
+		// local-only identity.
 		const code = err?.code || '';
 		const msg  = String(err?.message || '');
 		const missing = code === '42P01' || /relation.*does not exist/i.test(msg);
-		if (missing) {
-			console.error('[agents/me] agent_identities table missing — run schema.sql', err);
-			return json(res, 200, { agent: null, warning: 'agents_table_missing' });
-		}
-		throw err;
+		const warning = missing ? 'agents_table_missing' : 'agent_init_failed';
+		console.error(`[agents/me] ${warning}`, err);
+		return json(res, 200, { agent: null, warning });
 	}
 }
 
@@ -197,6 +196,12 @@ async function handleUpdate(req, res, id, auth) {
 		RETURNING *
 	`;
 	return json(res, 200, { agent: decorate(updated) });
+}
+
+// ── Patch (partial update) ────────────────────────────────────────────────
+
+async function handlePatchEdits(req, res, id, auth) {
+	return handleUpdate(req, res, id, auth);
 }
 
 // ── Delete ────────────────────────────────────────────────────────────────

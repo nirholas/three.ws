@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>3D Agent — AI-Powered 3D Model Viewer</title>
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+		/>
+		<meta name="author" content="nirholas" />
+		<meta
+			name="description"
+			content="The first embodied 3D AI agent. Not a chatbot. A presence — with a body, a place, an identity, and memory."
+		/>
+		<meta
+			name="keywords"
+			content="3D agent, AI agent, embodied AI, glTF viewer, GLB viewer, 3D model viewer, WebGL, three.js, ERC-8004, agent identity"
+		/>
+		<meta name="theme-color" content="#000000" />
+
+		<!-- Open Graph -->
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content="3D Agent — The First Embodied AI Agent" />
+		<meta
+			property="og:description"
+			content="Agents have always been imagined as present. We made that real."
+		/>
+		<meta property="og:url" content="https://3dagent.vercel.app/" />
+		<meta property="og:site_name" content="3D Agent" />
+
+		<!-- Twitter / X -->
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="3D Agent — Embodied AI" />
+		<meta
+			name="twitter:description"
+			content="The first 3D agent with a body, a place, an identity, and memory."
+		/>
+		<meta name="twitter:creator" content="@nichxbt" />
+
+		<link rel="canonical" href="https://3dagent.vercel.app/app" />
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="apple-touch-icon" href="/pwa-192x192.png" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link rel="stylesheet" href="style.css" />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+			rel="stylesheet"
+		/>
+		<script defer type="module" src="src/app.js"></script>
+	</head>
+	<body>
+		<header>
+			<h1>
+				<a href="/"><span class="wordmark-dot" aria-hidden="true"></span>3D Agent</a>
+			</h1>
+			<nav class="features-nav">
+				<a href="/app" class="active">Viewer</a>
+				<a href="/features">Features</a>
+				<a href="/widgets">Widgets</a>
+				<a
+					class="save-to-account-btn"
+					id="save-to-account-btn"
+					hidden
+					title="Save this model to your account"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="14"
+						height="14"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
+					>
+						<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+						<polyline points="17 21 17 13 7 13 7 21" />
+						<polyline points="7 3 7 8 15 8" />
+					</svg>
+					<span>Save to account</span>
+				</a>
+				<a
+					class="make-widget-btn"
+					id="make-widget-btn"
+					href="/studio"
+					hidden
+					title="Save the current model as an embeddable widget"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="14"
+						height="14"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
+					>
+						<rect x="3" y="3" width="7" height="7" rx="1" />
+						<rect x="14" y="3" width="7" height="7" rx="1" />
+						<rect x="3" y="14" width="7" height="7" rx="1" />
+						<rect x="14" y="14" width="7" height="7" rx="1" />
+					</svg>
+					<span>Make this a widget</span>
+				</a>
+				<a href="/dashboard" class="nav-dashboard">Dashboard</a>
+				<a href="/login" class="nav-sign-in" id="nav-sign-in">Sign in</a>
+			</nav>
+		</header>
+
+		<main class="wrap">
+			<!-- Agent presence panel — rendered by AgentHome -->
+			<div class="agent-presence-sidebar" id="agent-presence-sidebar">
+				<div id="agent-home-container"></div>
+			</div>
+
+			<!-- Auth gate — shown only to anonymous visitors on the main viewer -->
+			<aside class="auth-gate" id="auth-gate">
+				<div class="auth-gate__inner">
+					<div class="auth-gate__eyebrow">
+						<span class="auth-gate__lock" aria-hidden="true">◎</span>
+						<span>Unlock the agent</span>
+					</div>
+					<h2 class="auth-gate__title">Your agent lives here</h2>
+					<p class="auth-gate__desc">
+						Sign in to access animations, scene controls, and your agent's on-chain
+						identity, memory, and skills.
+					</p>
+					<div class="auth-gate__actions">
+						<a class="auth-gate__btn auth-gate__btn--primary" href="/login">Sign in</a>
+						<a class="auth-gate__btn" href="/register">Create account</a>
+					</div>
+					<ul class="auth-gate__perks">
+						<li>Animations &amp; presence controls</li>
+						<li>Save avatars to your account</li>
+						<li>Register on-chain agent identity</li>
+						<li>Scene, lighting &amp; material editor</li>
+					</ul>
+				</div>
+			</aside>
+
+			<!-- 3D Viewer -->
+			<div class="viewer-container" id="viewer-container"></div>
+
+			<!-- Bottom bar -->
+			<div class="dropzone">
+				<div class="upload-btn">
+					<input type="file" name="file-input[]" id="file-input" multiple="" />
+					<label for="file-input">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="20"
+							height="17"
+							viewBox="0 0 20 17"
+						>
+							<path
+								d="M10 0l-5.2 4.9h3.3v5.1h3.8v-5.1h3.3l-5.2-4.9zm9.3 11.5l-3.2-2.1h-2l3.4 2.6h-3.5c-.1 0-.2.1-.2.1l-.8 2.3h-6l-.8-2.2c-.1-.1-.1-.2-.2-.2h-3.6l3.4-2.6h-2l-3.2 2.1c-.4.3-.7 1-.6 1.5l.6 3.1c.1.5.7.9 1.2.9h16.3c.6 0 1.1-.4 1.3-.9l.6-3.1c.1-.5-.2-1.2-.7-1.5z"
+							></path>
+						</svg>
+						<span>Upload your own model</span>
+					</label>
+				</div>
+				<span class="drop-hint">or drag &amp; drop glTF / GLB anywhere</span>
+				<a
+					class="create-avatar-btn"
+					id="create-avatar-btn"
+					href="/create"
+					title="Create a custom 3D avatar from a selfie"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="16"
+						height="16"
+						viewBox="0 0 24 24"
+						fill="currentColor"
+					>
+						<path
+							d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+						/>
+					</svg>
+					<span>Create Avatar</span>
+				</a>
+			</div>
+			<div class="spinner"></div>
+		</main>
+
+		<!-- Golden Ratio dev grid — toggle with Alt+G -->
+		<div class="phi-grid" id="phi-grid">
+			<div class="phi-grid-h"></div>
+			<div class="phi-grid-thirds"></div>
+			<div class="phi-grid-thirds-h"></div>
+		</div>
+		<div class="phi-grid-label" id="phi-grid-label">φ Grid — Alt+G to toggle</div>
+		<script>
+			document.addEventListener('keydown', function (e) {
+				if (e.altKey && e.key.toLowerCase() === 'g') {
+					document.getElementById('phi-grid').classList.toggle('visible');
+				}
+			});
+		</script>
+	</body>
+</html>

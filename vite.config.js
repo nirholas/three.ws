@@ -25,6 +25,7 @@ const appConfig = {
 		rollupOptions: {
 			input: {
 				main: resolve(__dirname, 'index.html'),
+				app: resolve(__dirname, 'app.html'),
 				features: resolve(__dirname, 'features.html'),
 				embed: resolve(__dirname, 'embed.html'),
 				create: resolve(__dirname, 'create.html'),
@@ -40,6 +41,7 @@ const appConfig = {
 			configureServer(server) {
 				const root = resolve(__dirname);
 				const fileMap = {
+					'/app':          resolve(root, 'app.html'),
 					'/login':        resolve(root, 'public/login.html'),
 					'/register':     resolve(root, 'public/register.html'),
 					'/features':     resolve(root, 'features.html'),

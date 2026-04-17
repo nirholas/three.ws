@@ -1,405 +1,478 @@
 <!doctype html>
 <html lang="en">
-<head>
-	<meta charset="utf-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<title>Create avatar · 3D Agent</title>
-	<link rel="icon" href="/favicon.ico" />
-	<meta name="description" content="Create a 3D avatar from a selfie. Use your camera or upload photos." />
-	<meta name="robots" content="noindex" />
-	<style>
-		:root { color-scheme: dark; --accent:#d6ff3d; --accent-ink:#0a0a0a; --bg:#05060a; --panel:#0f1018; --border:#1e1f2b; --text:#eee; --muted:#8a8d98; }
-		* { box-sizing: border-box; }
-		html, body { margin:0; padding:0; height:100%; }
-		body { font: 15px/1.55 -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; color:var(--text); background:var(--bg); min-height:100vh; overflow-x:hidden; }
-		body::before {
-			content:''; position:fixed; inset:0; z-index:-1; pointer-events:none;
-			background:
-				radial-gradient(800px 500px at 50% -100px, rgba(106,92,255,.12) 0, transparent 70%),
-				radial-gradient(600px 400px at 50% 110%, rgba(214,255,61,.05) 0, transparent 70%),
-				#05060a;
-		}
-		header.topbar {
-			display:flex; align-items:center; justify-content:space-between;
-			padding:18px 28px; border-bottom:1px solid var(--border);
-		}
-		.back {
-			display:inline-flex; align-items:center; gap:6px; color:var(--muted);
-			background:transparent; border:0; cursor:pointer;
-			text-decoration:none; font:inherit; font-size:14px; padding:6px 10px; border-radius:8px;
-			transition: background .15s, color .15s;
-		}
-		.back:hover { background:rgba(255,255,255,.04); color:var(--text); }
-		.brand { font-weight:600; letter-spacing:-.01em; font-size:15px; }
-		.brand a { color:var(--text); text-decoration:none; }
-		.spacer { width:72px; }
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Create avatar · 3D Agent</title>
+		<link rel="icon" href="/favicon.ico" />
+		<meta
+			name="description"
+			content="Create a 3D avatar. Use our web editor, upload a GLB, or generate from a selfie."
+		/>
+		<meta name="robots" content="noindex" />
+		<style>
+			:root {
+				color-scheme: dark;
+				--accent: #d6ff3d;
+				--accent-ink: #0a0a0a;
+				--bg: #05060a;
+				--panel: #0f1018;
+				--border: #1e1f2b;
+				--text: #eee;
+				--muted: #8a8d98;
+			}
+			* {
+				box-sizing: border-box;
+			}
+			html,
+			body {
+				margin: 0;
+				padding: 0;
+				height: 100%;
+			}
+			body {
+				font:
+					15px/1.55 -apple-system,
+					system-ui,
+					'Segoe UI',
+					Roboto,
+					sans-serif;
+				color: var(--text);
+				background: var(--bg);
+				min-height: 100vh;
+				overflow-x: hidden;
+			}
+			body::before {
+				content: '';
+				position: fixed;
+				inset: 0;
+				z-index: -1;
+				pointer-events: none;
+				background:
+					radial-gradient(
+						800px 500px at 50% -100px,
+						rgba(106, 92, 255, 0.12) 0,
+						transparent 70%
+					),
+					radial-gradient(
+						600px 400px at 50% 110%,
+						rgba(214, 255, 61, 0.05) 0,
+						transparent 70%
+					),
+					#05060a;
+			}
+			header.topbar {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: 18px 28px;
+				border-bottom: 1px solid var(--border);
+			}
+			.back {
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				color: var(--muted);
+				background: transparent;
+				border: 0;
+				cursor: pointer;
+				text-decoration: none;
+				font: inherit;
+				font-size: 14px;
+				padding: 6px 10px;
+				border-radius: 8px;
+				transition:
+					background 0.15s,
+					color 0.15s;
+			}
+			.back:hover {
+				background: rgba(255, 255, 255, 0.04);
+				color: var(--text);
+			}
+			.brand {
+				font-weight: 600;
+				letter-spacing: -0.01em;
+				font-size: 15px;
+			}
+			.brand a {
+				color: var(--text);
+				text-decoration: none;
+			}
+			.spacer {
+				width: 72px;
+			}
 
-		main.stage { max-width:1100px; margin:0 auto; padding:48px 24px 120px; }
-		.step { display:none; }
-		.step.active { display:block; }
-		.heading { display:flex; align-items:center; justify-content:center; gap:10px; margin:8px 0 36px; }
-		.heading h1 { font-size:22px; font-weight:500; margin:0; letter-spacing:-.01em; }
-		.heading svg { width:22px; height:22px; color:var(--muted); }
-		.subhead { text-align:center; color:var(--muted); font-size:13px; margin:-24px 0 32px; }
+			main.stage {
+				max-width: 1100px;
+				margin: 0 auto;
+				padding: 56px 24px 80px;
+			}
 
-		/* ── Step 1: method choice ────────────────────────────────────────── */
-		.choice-grid {
-			display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));
-			gap:22px; max-width:820px; margin:0 auto;
-		}
-		.choice {
-			position:relative; display:flex; flex-direction:column; justify-content:flex-end;
-			aspect-ratio: 3/4; padding:24px; border-radius:22px; overflow:hidden;
-			background:var(--panel); border:1px solid var(--border); cursor:pointer;
-			text-align:left; color:inherit; font:inherit;
-			transition: transform .18s ease, border-color .18s, box-shadow .18s;
-		}
-		.choice:hover { transform: translateY(-2px); border-color:#2c2d3d; box-shadow:0 12px 32px rgba(0,0,0,.4); }
-		.choice:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
-		.choice[disabled] { cursor:not-allowed; opacity:.45; }
-		.choice[disabled]:hover { transform:none; box-shadow:none; border-color:var(--border); }
-		.choice .illustration {
-			position:absolute; inset:0; display:grid; place-items:center;
-			background:linear-gradient(180deg, rgba(20,22,34,0) 0%, rgba(5,6,10,.6) 75%, rgba(5,6,10,.92) 100%);
-		}
-		.choice .illustration svg { width:60%; max-width:220px; opacity:.85; color:#cfd2e0; }
-		.choice .label {
-			position:relative; display:flex; align-items:flex-end; justify-content:space-between;
-			gap:12px; z-index:1;
-		}
-		.choice .label h2 { margin:0; font-size:22px; font-weight:500; letter-spacing:-.01em; line-height:1.15; }
-		.choice .arrow {
-			flex:0 0 auto; width:44px; height:44px; border-radius:50%;
-			background:#f5f5f5; color:#0a0a0a;
-			display:grid; place-items:center;
-			transition: transform .18s ease, background .18s;
-		}
-		.choice:hover:not([disabled]) .arrow { transform: translateX(4px); background:var(--accent); }
-		.choice[data-method="upload"] .illustration {
-			background:linear-gradient(180deg, rgba(20,22,34,0) 40%, rgba(5,6,10,.6) 75%, rgba(5,6,10,.92) 100%);
-		}
+			.picker-heading {
+				text-align: center;
+				margin: 0 0 12px;
+			}
+			.picker-heading h1 {
+				font-size: 22px;
+				font-weight: 500;
+				margin: 0;
+				letter-spacing: -0.01em;
+			}
+			.picker-sub {
+				text-align: center;
+				color: var(--muted);
+				font-size: 13px;
+				margin: 0 0 48px;
+			}
 
-		.unsupported {
-			margin-top:16px; padding:8px 12px; border-radius:8px;
-			background:rgba(255,92,92,.08); border:1px solid rgba(255,92,92,.3);
-			color:#ffb3b3; font-size:12px; text-align:center; display:none;
-		}
-		.unsupported.show { display:block; }
+			/* ── 3-card grid ──────────────────────────────────────────────────── */
+			.card-grid {
+				display: grid;
+				grid-template-columns: repeat(3, 1fr);
+				gap: 20px;
+				max-width: 920px;
+				margin: 0 auto;
+			}
 
-		/* ── Step 2: 3-photo capture ──────────────────────────────────────── */
-		.slot-grid {
-			display:grid; grid-template-columns:repeat(3, 1fr);
-			gap:18px; max-width:720px; margin:0 auto 28px;
-		}
-		.slot {
-			display:flex; flex-direction:column; align-items:center; gap:8px;
-		}
-		.slot-label { font-size:14px; color:var(--text); }
-		.slot-frame {
-			position:relative; width:100%; aspect-ratio: 3/4;
-			border:1.5px dashed #3a3c4d; border-radius:14px;
-			background:rgba(255,255,255,.01);
-			display:grid; place-items:center; cursor:pointer; overflow:hidden;
-			transition: border-color .15s, background .15s;
-		}
-		.slot-frame:hover, .slot-frame.drag { border-color:var(--accent); background:rgba(214,255,61,.04); }
-		.slot-frame:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
-		.slot-frame .plus {
-			width:36px; height:36px; color:#555869;
-			display:grid; place-items:center;
-		}
-		.slot-frame.filled { border-style:solid; border-color:#2c2d3d; cursor:default; }
-		.slot-frame img.preview { width:100%; height:100%; object-fit:cover; display:block; }
-		.slot-retake {
-			position:absolute; top:6px; right:6px; width:28px; height:28px; border-radius:50%;
-			background:rgba(10,10,12,.7); color:#fff; border:0; cursor:pointer;
-			display:grid; place-items:center; backdrop-filter: blur(4px);
-		}
-		.slot-retake:hover { background:rgba(10,10,12,.9); }
-		.slot-example {
-			position:absolute; left:8px; bottom:8px; width:48px; height:60px;
-			border-radius:8px; overflow:hidden; border:1.5px dashed #3a3c4d;
-			background:#1a1b27; display:grid; place-items:center; font-size:10px; color:#555869;
-			pointer-events:none;
-		}
-		.slot-frame.filled .slot-example { display:none; }
-		.slot-example::after {
-			content:''; position:absolute; top:-3px; right:-3px; width:8px; height:8px;
-			border-radius:50%; background:var(--accent);
-		}
+			.create-card {
+				position: relative;
+				display: flex;
+				flex-direction: column;
+				padding: 28px 24px 22px;
+				border-radius: 18px;
+				background: var(--panel);
+				border: 1.5px solid var(--border);
+				cursor: pointer;
+				text-align: left;
+				color: inherit;
+				font: inherit;
+				transition:
+					border-color 0.18s,
+					transform 0.18s,
+					box-shadow 0.18s;
+			}
+			.create-card:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+			}
+			.create-card:hover:not([aria-disabled='true']) {
+				transform: translateY(-2px);
+				border-color: #2c2d3d;
+				box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
+			}
+			.create-card[aria-disabled='true'] {
+				cursor: default;
+				opacity: 0.52;
+			}
 
-		.tips {
-			max-width:720px; margin:0 auto 32px;
-			padding:16px 20px; border:1px solid var(--border); border-radius:14px;
-			background:rgba(15,16,24,.6);
-		}
-		.tips .tips-head { display:flex; align-items:center; gap:8px; font-size:13px; margin:0 0 12px; }
-		.tips .tips-head strong { color:var(--accent); letter-spacing:.02em; }
-		.tips .tips-head .check {
-			width:16px; height:16px; border-radius:50%; background:var(--accent); color:var(--accent-ink);
-			display:grid; place-items:center; flex:0 0 auto;
-		}
-		.tips ul {
-			list-style:none; padding:0; margin:0;
-			display:grid; grid-template-columns:repeat(2, 1fr); gap:10px 22px;
-			font-size:12.5px; color:var(--muted);
-		}
-		.tips li { display:flex; gap:8px; align-items:flex-start; }
-		.tips li svg { flex:0 0 auto; width:14px; height:14px; color:var(--accent); margin-top:2px; }
-		.tips li strong { color:var(--text); font-weight:500; }
+			.card-icon {
+				width: 48px;
+				height: 48px;
+				border-radius: 12px;
+				background: rgba(255, 255, 255, 0.04);
+				border: 1px solid var(--border);
+				display: grid;
+				place-items: center;
+				margin-bottom: 20px;
+				flex: 0 0 auto;
+				color: #cfd2e0;
+			}
+			.card-icon svg {
+				width: 24px;
+				height: 24px;
+			}
 
-		.selectors {
-			max-width:720px; margin:0 auto 40px;
-			display:flex; justify-content:center; gap:32px; flex-wrap:wrap;
-			font-size:13px; color:var(--muted);
-		}
-		.selector-group { display:flex; align-items:center; gap:10px; }
-		.seg {
-			display:inline-flex; border:1px solid var(--border); border-radius:10px; overflow:hidden;
-			background:rgba(15,16,24,.5);
-		}
-		.seg button {
-			padding:6px 12px; background:transparent; color:var(--muted); border:0; cursor:pointer;
-			font:inherit; font-size:13px; min-width:36px;
-			display:inline-flex; align-items:center; justify-content:center; gap:4px;
-		}
-		.seg button[aria-pressed="true"] { background:var(--accent); color:var(--accent-ink); font-weight:600; }
-		.seg button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+			.card-title {
+				font-size: 17px;
+				font-weight: 600;
+				margin: 0 0 8px;
+				letter-spacing: -0.01em;
+				line-height: 1.25;
+			}
+			.card-subtitle {
+				font-size: 13px;
+				color: var(--muted);
+				margin: 0;
+				line-height: 1.55;
+				flex: 1;
+			}
 
-		.submit-bar {
-			position:fixed; left:0; right:0; bottom:0;
-			padding:18px 24px 22px; display:flex; justify-content:center;
-			background:linear-gradient(180deg, transparent, rgba(5,6,10,.95) 40%);
-			pointer-events:none;
-		}
-		.submit-btn {
-			pointer-events:auto; min-width:260px; padding:13px 24px; border:0; border-radius:12px;
-			background:#2a2b3a; color:#777; font:inherit; font-size:15px; font-weight:600;
-			cursor:not-allowed; transition: background .18s, color .18s, transform .12s;
-		}
-		.submit-btn.ready { background:var(--accent); color:var(--accent-ink); cursor:pointer; }
-		.submit-btn.ready:hover { transform: translateY(-1px); filter:brightness(1.05); }
-		.submit-btn.ready:active { transform: translateY(0); }
+			.card-cta {
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				margin-top: 22px;
+				padding: 9px 16px;
+				border-radius: 10px;
+				background: rgba(255, 255, 255, 0.06);
+				border: 1px solid var(--border);
+				color: var(--text);
+				font: inherit;
+				font-size: 13px;
+				font-weight: 500;
+				cursor: pointer;
+				transition:
+					background 0.15s,
+					border-color 0.15s;
+				align-self: flex-start;
+			}
+			.create-card:hover:not([aria-disabled='true']) .card-cta {
+				background: var(--accent);
+				border-color: transparent;
+				color: var(--accent-ink);
+			}
+			.create-card[aria-disabled='true'] .card-cta {
+				cursor: default;
+			}
 
-		/* ── Camera overlay ───────────────────────────────────────────────── */
-		.cam-overlay {
-			position:fixed; inset:0; z-index:40; background:rgba(5,6,10,.92);
-			display:none; place-items:center; padding:24px;
-		}
-		.cam-overlay.open { display:grid; }
-		.cam-modal {
-			width:min(560px, 100%); background:var(--panel); border:1px solid var(--border);
-			border-radius:18px; padding:20px; display:flex; flex-direction:column; gap:14px;
-		}
-		.cam-modal h3 { margin:0; font-size:16px; font-weight:500; text-align:center; }
-		.cam-modal h3 span { color:var(--muted); margin-left:6px; font-size:13px; }
-		.cam-stage {
-			position:relative; width:100%; aspect-ratio: 3/4; border-radius:12px; overflow:hidden;
-			background:#000;
-		}
-		.cam-stage video, .cam-stage canvas, .cam-stage img {
-			position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
-		}
-		.cam-stage video { transform: scaleX(-1); }
-		.cam-frame-overlay {
-			position:absolute; inset:0; pointer-events:none;
-			background:
-				radial-gradient(ellipse 60% 72% at 50% 46%, transparent 60%, rgba(5,6,10,.55) 100%);
-		}
-		.cam-frame-overlay::before {
-			content:''; position:absolute; left:18%; right:18%; top:12%; bottom:18%;
-			border:1.5px dashed rgba(255,255,255,.4); border-radius:50%;
-		}
-		.cam-actions { display:flex; gap:10px; justify-content:center; align-items:center; }
-		.cam-btn {
-			padding:10px 16px; border-radius:10px; border:1px solid var(--border);
-			background:#1a1b27; color:var(--text); font:inherit; font-size:13px; cursor:pointer;
-		}
-		.cam-btn:hover { background:#22222e; }
-		.cam-btn.primary { background:var(--accent); color:var(--accent-ink); border-color:transparent; font-weight:600; }
-		.cam-btn.primary:hover { filter:brightness(1.05); }
-		.cam-shutter {
-			width:64px; height:64px; border-radius:50%; background:#fff; border:4px solid rgba(255,255,255,.25);
-			cursor:pointer; padding:0;
-		}
-		.cam-shutter:hover { filter:brightness(.95); }
-		.cam-error { color:#ffb3b3; font-size:12px; text-align:center; margin:0; }
+			.card-tooltip {
+				margin-top: 10px;
+				font-size: 11.5px;
+				color: var(--muted);
+				line-height: 1.5;
+			}
+			.card-tooltip a {
+				color: inherit;
+				text-decoration: underline;
+				text-underline-offset: 2px;
+			}
+			.card-tooltip a:hover {
+				color: var(--text);
+			}
 
-		.hidden-input { display:none; }
+			.coming-soon-badge {
+				position: absolute;
+				top: 16px;
+				right: 16px;
+				padding: 3px 9px;
+				border-radius: 20px;
+				background: rgba(255, 255, 255, 0.06);
+				border: 1px solid var(--border);
+				font-size: 11px;
+				font-weight: 600;
+				letter-spacing: 0.04em;
+				color: var(--muted);
+				text-transform: uppercase;
+			}
 
-		@media (max-width: 640px) {
-			main.stage { padding:24px 16px 120px; }
-			.heading h1 { font-size:18px; }
-			.choice { aspect-ratio: 4/5; padding:20px; border-radius:18px; }
-			.choice .label h2 { font-size:18px; }
-			.slot-grid { grid-template-columns:repeat(3, 1fr); gap:10px; }
-			.slot-label { font-size:12px; }
-			.tips ul { grid-template-columns:1fr; }
-			.submit-btn { min-width:0; width:100%; }
-		}
-	</style>
-</head>
-<body>
-	<header class="topbar">
-		<button class="back" id="back-btn" type="button" aria-label="Back">
-			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
-			<span>Back</span>
-		</button>
-		<div class="brand"><a href="/">3D Agent</a></div>
-		<div class="spacer" aria-hidden="true"></div>
-	</header>
+			/* ── Status toast ─────────────────────────────────────────────────── */
+			.status-toast {
+				position: fixed;
+				bottom: 32px;
+				left: 50%;
+				transform: translateX(-50%);
+				padding: 11px 20px;
+				border-radius: 12px;
+				font-size: 13px;
+				font-weight: 500;
+				border: 1px solid var(--border);
+				background: var(--panel);
+				white-space: nowrap;
+				z-index: 50;
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+			}
+			.status-toast.loading {
+				color: var(--muted);
+			}
+			.status-toast.error {
+				border-color: rgba(255, 92, 92, 0.4);
+				color: #ffb3b3;
+				background: #140a0a;
+			}
+			.status-toast.success {
+				border-color: rgba(214, 255, 61, 0.3);
+				color: var(--accent);
+			}
 
-	<main class="stage">
-		<!-- Step 1: method choice -->
-		<section class="step active" data-step="method">
-			<div class="heading">
-				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7V5a1 1 0 0 1 1-1h2"/><path d="M4 17v2a1 1 0 0 0 1 1h2"/><path d="M20 7V5a1 1 0 0 0-1-1h-2"/><path d="M20 17v2a1 1 0 0 1-1 1h-2"/><circle cx="12" cy="12" r="3"/></svg>
+			@media (max-width: 700px) {
+				main.stage {
+					padding: 32px 16px 60px;
+				}
+				.card-grid {
+					grid-template-columns: 1fr;
+					max-width: 420px;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<header class="topbar">
+			<button class="back" id="back-btn" type="button" aria-label="Go back">
+				<svg
+					width="16"
+					height="16"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					aria-hidden="true"
+				>
+					<polyline points="15 18 9 12 15 6" />
+				</svg>
+				<span>Back</span>
+			</button>
+			<div class="brand"><a href="/">3D Agent</a></div>
+			<div class="spacer" aria-hidden="true"></div>
+		</header>
+
+		<main class="stage">
+			<div class="picker-heading">
 				<h1>Create new avatar</h1>
 			</div>
+			<p class="picker-sub">Choose how you want to create your 3D avatar.</p>
 
-			<div class="choice-grid" role="group" aria-label="Choose avatar input method">
-				<button type="button" class="choice" data-method="camera" aria-label="Use camera to capture selfies">
-					<div class="illustration" aria-hidden="true">
-						<svg viewBox="0 0 160 200" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-							<circle cx="80" cy="72" r="34" fill="rgba(255,255,255,.04)" />
-							<path d="M28 180c0-28 23-46 52-46s52 18 52 46" fill="rgba(255,255,255,.04)" />
-							<path d="M24 40 L24 52 M32 40 L40 40" />
-							<path d="M136 40 L136 52 M128 40 L120 40" />
-							<path d="M24 160 L24 148 M32 160 L40 160" />
-							<path d="M136 160 L136 148 M128 160 L120 160" />
+			<div class="card-grid" role="group" aria-label="Choose avatar creation method">
+				<!-- Card 1: Default editor -->
+				<div
+					class="create-card"
+					id="card-default-editor"
+					role="button"
+					tabindex="0"
+					aria-label="Open avatar web editor"
+				>
+					<div class="card-icon" aria-hidden="true">
+						<svg
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="1.7"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						>
+							<circle cx="12" cy="8" r="3.5" />
+							<path d="M5 20c0-3.87 3.13-7 7-7s7 3.13 7 7" />
+							<path d="M18 3l3 3-9 9-4 1 1-4 9-9z" />
 						</svg>
 					</div>
-					<div class="label">
-						<h2>Use<br/>camera</h2>
-						<span class="arrow" aria-hidden="true">
-							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-						</span>
-					</div>
-				</button>
-
-				<button type="button" class="choice" data-method="upload" aria-label="Upload photos from device">
-					<div class="illustration" aria-hidden="true">
-						<svg viewBox="0 0 160 200" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-							<rect x="28" y="52" width="60" height="88" rx="6" fill="rgba(255,255,255,.04)" transform="rotate(-8 58 96)" />
-							<rect x="50" y="34" width="60" height="88" rx="6" fill="rgba(255,255,255,.06)" stroke-dasharray="4 4" />
-							<rect x="72" y="52" width="60" height="88" rx="6" fill="rgba(255,255,255,.04)" transform="rotate(8 102 96)" />
+					<h2 class="card-title">Use default avatar</h2>
+					<p class="card-subtitle">
+						Edit a ready-made avatar in our web editor. No download required.
+					</p>
+					<span class="card-cta">
+						Open editor
+						<svg
+							width="13"
+							height="13"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2.2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							aria-hidden="true"
+						>
+							<line x1="5" y1="12" x2="19" y2="12" />
+							<polyline points="12 5 19 12 12 19" />
 						</svg>
-					</div>
-					<div class="label">
-						<h2>Upload<br/>from device</h2>
-						<span class="arrow" aria-hidden="true">
-							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-						</span>
-					</div>
-				</button>
-			</div>
-
-			<p class="unsupported" id="unsupported-msg">Camera not available on this device — use the upload option instead.</p>
-		</section>
-
-		<!-- Step 2: 3-photo capture -->
-		<section class="step" data-step="capture">
-			<div class="heading">
-				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M8 6l2-3h4l2 3"/><path d="M12 10v6M9 13h6"/></svg>
-				<h1>Upload 3 photos to create an avatar</h1>
-			</div>
-			<p class="subhead">Drag &amp; drop or click to choose a file (jpeg or png)</p>
-
-			<div class="slot-grid" id="slot-grid">
-				<div class="slot">
-					<span class="slot-label">1. Frontal</span>
-					<div class="slot-frame" data-slot="frontal" role="button" tabindex="0" aria-label="Add frontal photo">
-						<svg class="plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-						<div class="slot-example" aria-hidden="true">ex</div>
-					</div>
-				</div>
-				<div class="slot">
-					<span class="slot-label">2. Left</span>
-					<div class="slot-frame" data-slot="left" role="button" tabindex="0" aria-label="Add left-profile photo">
-						<svg class="plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-						<div class="slot-example" aria-hidden="true">ex</div>
-					</div>
-				</div>
-				<div class="slot">
-					<span class="slot-label">3. Right</span>
-					<div class="slot-frame" data-slot="right" role="button" tabindex="0" aria-label="Add right-profile photo">
-						<svg class="plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-						<div class="slot-example" aria-hidden="true">ex</div>
-					</div>
-				</div>
-			</div>
-
-			<div class="tips">
-				<p class="tips-head">
-					<span class="check" aria-hidden="true">
-						<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
 					</span>
-					<strong>IMPORTANT</strong>
-					<span>— Best results require selfie-distance shots in good lighting.</span>
-				</p>
-				<ul>
-					<li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"/><polyline points="8 17 3 12 8 7"/><polyline points="16 7 21 12 16 17"/></svg><span><strong>Selfie-distance</strong> — max ~0.7m from the face.</span></li>
-					<li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="3.5"/></svg><span><strong>Same camera</strong> for all 3 photos.</span></li>
-					<li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9 10s1-2 3-2 3 2 3 2"/><line x1="9" y1="15" x2="15" y2="15"/></svg><span><strong>No distortion</strong> — long-distance shots won&rsquo;t work.</span></li>
-					<li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 7l9-4 9 4"/><path d="M5 10v7"/><path d="M19 10v7"/></svg><span><strong>Glasses off</strong>, hair tied back.</span></li>
-					<li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="3" width="12" height="18" rx="1"/><line x1="8" y1="3" x2="8" y2="21"/></svg><span>Vertical images, <strong>3:4 or 9:16</strong>.</span></li>
-					<li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/></svg><span><strong>Good lighting</strong> on the face.</span></li>
-				</ul>
-			</div>
-
-			<div class="selectors">
-				<div class="selector-group">
-					<span>Choose body type</span>
-					<div class="seg" role="group" aria-label="Body type">
-						<button type="button" data-body="male" aria-pressed="true" aria-label="Male body type">
-							<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="3"/><path d="M8 22v-7H6l2.5-6.5h7L18 15h-2v7z"/></svg>
-						</button>
-						<button type="button" data-body="female" aria-pressed="false" aria-label="Female body type">
-							<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="3"/><path d="M9 22l-2-7 2-6h6l2 6-2 7z"/></svg>
-						</button>
-					</div>
 				</div>
-				<div class="selector-group">
-					<span>Choose avatar type</span>
-					<div class="seg" role="group" aria-label="Avatar type">
-						<button type="button" data-type="v1" aria-pressed="true">V1</button>
-						<button type="button" data-type="v2" aria-pressed="false">V2</button>
+
+				<!-- Card 2: Upload GLB -->
+				<div
+					class="create-card"
+					id="card-upload-glb"
+					role="button"
+					tabindex="0"
+					aria-label="Upload a GLB file"
+				>
+					<div class="card-icon" aria-hidden="true">
+						<svg
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="1.7"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						>
+							<polyline points="16 16 12 12 8 16" />
+							<line x1="12" y1="12" x2="12" y2="21" />
+							<path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
+						</svg>
 					</div>
+					<h2 class="card-title">Upload your own GLB</h2>
+					<p class="card-subtitle">
+						Drop a <code style="font-size: 11px; opacity: 0.7">.glb</code> file. Works
+						with any glTF 2.0 model.
+					</p>
+					<span class="card-cta">
+						Choose file
+						<svg
+							width="13"
+							height="13"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2.2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							aria-hidden="true"
+						>
+							<line x1="5" y1="12" x2="19" y2="12" />
+							<polyline points="12 5 19 12 12 19" />
+						</svg>
+					</span>
+					<p class="card-tooltip">
+						Need a model? Try
+						<a href="https://avaturn.me" target="_blank" rel="noopener">Avaturn</a> or
+						<a href="https://www.mixamo.com" target="_blank" rel="noopener">Mixamo</a>.
+					</p>
+				</div>
+
+				<!-- Card 3: From selfie (disabled) -->
+				<div class="create-card" id="card-selfie" aria-disabled="true" tabindex="-1">
+					<span class="coming-soon-badge" aria-label="Coming soon">Coming Soon</span>
+					<div
+						class="card-icon"
+						aria-hidden="true"
+						style="opacity: 0.5; filter: grayscale(1)"
+					>
+						<svg
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="1.7"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						>
+							<path
+								d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
+							/>
+							<circle cx="12" cy="13" r="4" />
+						</svg>
+					</div>
+					<h2 class="card-title">From a selfie</h2>
+					<p class="card-subtitle">
+						Turn a photo into a rigged 3D avatar. Powered by AI.
+					</p>
+					<span class="card-cta" aria-hidden="true">
+						Take selfie
+						<svg
+							width="13"
+							height="13"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2.2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							aria-hidden="true"
+						>
+							<line x1="5" y1="12" x2="19" y2="12" />
+							<polyline points="12 5 19 12 12 19" />
+						</svg>
+					</span>
 				</div>
 			</div>
-		</section>
-	</main>
+		</main>
 
-	<div class="submit-bar" id="submit-bar" hidden>
-		<button type="button" class="submit-btn" id="submit-btn" disabled>Upload 0/3</button>
-	</div>
+		<input type="file" id="glb-input" accept=".glb,model/gltf-binary" style="display: none" />
+		<div class="status-toast" id="status-toast" hidden></div>
 
-	<!-- Camera overlay -->
-	<div class="cam-overlay" id="cam-overlay" role="dialog" aria-modal="true" aria-labelledby="cam-title">
-		<div class="cam-modal">
-			<h3 id="cam-title">Capture photo <span id="cam-slot-name">Frontal</span></h3>
-			<div class="cam-stage" id="cam-stage">
-				<video id="cam-video" autoplay playsinline muted></video>
-				<div class="cam-frame-overlay" aria-hidden="true"></div>
-			</div>
-			<p class="cam-error" id="cam-error" hidden></p>
-			<div class="cam-actions" id="cam-actions-live">
-				<button type="button" class="cam-btn" data-cam-action="cancel">Cancel</button>
-				<button type="button" class="cam-shutter" data-cam-action="shoot" aria-label="Take photo"></button>
-				<button type="button" class="cam-btn" data-cam-action="switch" hidden>Switch</button>
-			</div>
-			<div class="cam-actions" id="cam-actions-review" hidden>
-				<button type="button" class="cam-btn" data-cam-action="retake">Retake</button>
-				<button type="button" class="cam-btn primary" data-cam-action="use">Use photo</button>
-			</div>
-		</div>
-	</div>
-
-	<!-- One hidden file input per slot — keeps click → picker reliable across browsers. -->
-	<input type="file" class="hidden-input" data-slot-input="frontal" accept="image/jpeg,image/png" />
-	<input type="file" class="hidden-input" data-slot-input="left"     accept="image/jpeg,image/png" />
-	<input type="file" class="hidden-input" data-slot-input="right"    accept="image/jpeg,image/png" />
-
-	<script type="module" src="/src/selfie-capture.js"></script>
-</body>
+		<script type="module" src="/src/create.js"></script>
+	</body>
 </html>

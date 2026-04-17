@@ -18,10 +18,30 @@
 function getStudioUrl() {
 	try {
 		if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_CHARACTER_STUDIO_URL) {
-			return String(import.meta.env.VITE_CHARACTER_STUDIO_URL).trim().replace(/\/$/, '');
+			return String(import.meta.env.VITE_CHARACTER_STUDIO_URL)
+				.trim()
+				.replace(/\/$/, '');
 		}
 	} catch (_) {}
 	return 'http://localhost:5173';
+}
+
+function getAvaturnEditorUrl() {
+	let base = 'https://editor.avaturn.me/';
+	let devId = '';
+	try {
+		if (typeof import.meta !== 'undefined' && import.meta.env) {
+			if (import.meta.env.VITE_AVATURN_EDITOR_URL) {
+				base = String(import.meta.env.VITE_AVATURN_EDITOR_URL).trim();
+			}
+			if (import.meta.env.VITE_AVATURN_DEVELOPER_ID) {
+				devId = String(import.meta.env.VITE_AVATURN_DEVELOPER_ID).trim();
+			}
+		}
+	} catch (_) {}
+	if (!devId) return base;
+	const sep = base.includes('?') ? '&' : '?';
+	return base + sep + 'developer=' + encodeURIComponent(devId);
 }
 
 export class AvatarCreator {
@@ -57,12 +77,38 @@ export class AvatarCreator {
 		if (sessionUrl) {
 			// @avaturn/sdk is not installed — use raw iframe.
 			// If you install @avaturn/sdk, replace this with: new AvaturnSDK({ ... })
-			console.info('[AvatarCreator] opening Avaturn session (raw iframe — no SDK):', sessionUrl);
-			try { this._avaturnOrigin = new URL(sessionUrl).origin; } catch (_) {}
+			console.info(
+				'[AvatarCreator] opening Avaturn session (raw iframe — no SDK):',
+				sessionUrl,
+			);
+			try {
+				this._avaturnOrigin = new URL(sessionUrl).origin;
+			} catch (_) {}
 			this.iframe.src = sessionUrl;
 		} else {
 			this.iframe.src = this.studioUrl;
 		}
+	}
+
+	/**
+	 * Opens the Avaturn default hosted editor — no session API, no selfies required.
+	 * User edits a ready-made avatar and exports a GLB. Export event is handled by
+	 * the same `_handleAvaturnMessage` pipeline as the session-based flow.
+	 */
+	async openDefaultEditor() {
+		if (this.modal) return;
+		const editorUrl = getAvaturnEditorUrl();
+		this._avaturnMode = true;
+		try {
+			this._avaturnOrigin = new URL(editorUrl).origin;
+		} catch (_) {
+			this._avaturnOrigin = null;
+		}
+		this._buildModal();
+		this._onMessage = (event) => this._handleMessage(event);
+		window.addEventListener('message', this._onMessage);
+		console.info('[AvatarCreator] opening Avaturn default editor:', editorUrl);
+		this.iframe.src = editorUrl;
 	}
 
 	_handleMessage(event) {
@@ -90,7 +136,7 @@ export class AvatarCreator {
 	}
 
 	async _handleAvaturnMessage(event) {
-		if (this._avaturnOrigin && event.origin !== this._avaturnOrigin) return;
+		if (!this._avaturnOrigin || event.origin !== this._avaturnOrigin) return;
 
 		const msg = event.data;
 		if (!msg) return;
@@ -108,7 +154,9 @@ export class AvatarCreator {
 			const resp = await fetch(glbUrl);
 			if (!resp.ok) throw new Error(`GLB fetch failed: ${resp.status}`);
 			const blob = await resp.blob();
-			const glbBlob = blob.type ? blob : new Blob([await blob.arrayBuffer()], { type: 'model/gltf-binary' });
+			const glbBlob = blob.type
+				? blob
+				: new Blob([await blob.arrayBuffer()], { type: 'model/gltf-binary' });
 			this._fireExport(glbBlob);
 		} catch (err) {
 			console.error('[AvatarCreator] failed to fetch Avaturn GLB:', err);
@@ -163,7 +211,9 @@ export class AvatarCreator {
 			if (loading) loading.style.display = 'none';
 		});
 
-		this.modal.querySelector('.avatar-creator-close').addEventListener('click', () => this.close());
+		this.modal
+			.querySelector('.avatar-creator-close')
+			.addEventListener('click', () => this.close());
 		this.modal.addEventListener('click', (e) => {
 			if (e.target === this.modal) this.close();
 		});

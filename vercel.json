@@ -66,6 +66,7 @@
         },
         { "src": "/robots.txt",          "dest": "/public/robots.txt" },
         { "src": "/sitemap.xml",         "dest": "/public/sitemap.xml" },
+        { "src": "/app",                 "dest": "/app.html" },
         { "src": "/features",            "dest": "/features.html" },
         { "src": "/create",              "dest": "/create.html" },
         { "src": "/create/",             "dest": "/create.html" },

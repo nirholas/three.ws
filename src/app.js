@@ -28,6 +28,26 @@ import { SkillRegistry } from './skills/index.js';
 window.THREE = THREE;
 window.VIEWER = {};
 
+function _blobToBase64(blob) {
+	return new Promise((resolve, reject) => {
+		const reader = new FileReader();
+		reader.onload = () => {
+			const s = reader.result;
+			const comma = s.indexOf(',');
+			resolve(comma >= 0 ? s.slice(comma + 1) : s);
+		};
+		reader.onerror = () => reject(reader.error);
+		reader.readAsDataURL(blob);
+	});
+}
+
+function _base64ToFile(b64, name, type) {
+	const bin = atob(b64);
+	const bytes = new Uint8Array(bin.length);
+	for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+	return new File([bytes], name, { type });
+}
+
 if (!(window.File && window.FileReader && window.FileList && window.Blob)) {
 	console.error('The File APIs are not fully supported in this browser.');
 } else if (!WebGL.isWebGL2Available()) {
@@ -41,6 +61,11 @@ class App {
 	 */
 	constructor(el, location) {
 		const hash = location.hash ? queryString.parse(location.hash) : {};
+		const qp = new URLSearchParams(location.search);
+		// agentQuery: from ?agent= query param → editing mode (main UI with save-back)
+		// agentHash:  from #agent= hash → legacy embed mode
+		const agentQuery = qp.get('agent') || '';
+		const agentHash = hash.agent || '';
 		this.options = {
 			kiosk: Boolean(hash.kiosk),
 			model: hash.model || '',
@@ -48,9 +73,12 @@ class App {
 			cameraPosition: hash.cameraPosition ? hash.cameraPosition.split(',').map(Number) : null,
 			brain: hash.brain || 'none',
 			proxyURL: hash.proxyURL || '',
-			agent: hash.agent || '',
+			agent: agentHash, // hash-based agent keeps legacy embed behaviour
+			agentEdit: agentQuery, // query-param agent → editing surface
 			widget: hash.widget || '',
 			register: hash.register !== undefined,
+			// pending=1 signals a post-login save round-trip
+			pending: qp.get('pending') === '1',
 		};
 
 		this.el = el;
@@ -76,11 +104,15 @@ class App {
 		// Wire validator results into the protocol
 		this._hookValidator();
 
+		this._editingAgentId = this.options.agentEdit || null;
+
 		this.createDropzone();
 		this.setupAvatarCreator();
 		this.hideSpinner();
 		this._applyViewerMode();
 		this._updateSignInLink();
+		this._setupSaveToAccount();
+		this._setupMakeWidgetButton();
 
 		const options = this.options;
 
@@ -95,7 +127,7 @@ class App {
 			return;
 		}
 
-		// Load a specific agent by ID: /#agent=<uuid>
+		// Load a specific agent by ID: /#agent=<uuid> (embed mode)
 		if (options.agent) {
 			this._loadAgent(options.agent);
 			return;
@@ -109,9 +141,19 @@ class App {
 			return;
 		}
 
-		// Resume a stashed editor session (post-login round-trip), else
-		// load the model named in the URL or fall back to the CZ avatar.
-		this._maybeResumeOrLoad(options);
+		// Editing an existing agent: ?agent=<uuid> (authenticated editing surface)
+		if (options.agentEdit) {
+			this._loadAgentForEdit(options.agentEdit);
+		} else {
+			// Resume a stashed editor session (post-login round-trip), else
+			// load the model named in the URL or fall back to the CZ avatar.
+			this._maybeResumeOrLoad(options);
+		}
+
+		// After sign-in redirect, check for a pending_save stash.
+		if (options.pending) {
+			this._maybePendingSave();
+		}
 
 		// Boot the agent system once identity is ready
 		this._initAgentSystem();
@@ -299,12 +341,225 @@ class App {
 		const btn = document.getElementById('make-widget-btn');
 		if (!btn) return;
 		const url = this._currentModelUrl;
-		if (!url) {
+		if (!url && !this._hasLocalGlb) {
 			btn.hidden = true;
 			return;
 		}
-		btn.href = `/studio?model=${encodeURIComponent(url)}`;
+		if (url) {
+			btn.href = `/studio?model=${encodeURIComponent(url)}`;
+		}
 		btn.hidden = false;
+	}
+
+	_refreshSaveToAccountButton() {
+		const btn = document.getElementById('save-to-account-btn');
+		if (!btn) return;
+		const hasModel = this._currentModelUrl || this._hasLocalGlb;
+		btn.hidden = !hasModel;
+	}
+
+	_setupSaveToAccount() {
+		const btn = document.getElementById('save-to-account-btn');
+		if (!btn) return;
+		btn.addEventListener('click', (e) => {
+			e.preventDefault();
+			this._triggerSaveToAccount();
+		});
+	}
+
+	_setupMakeWidgetButton() {
+		const btn = document.getElementById('make-widget-btn');
+		if (!btn) return;
+		btn.addEventListener('click', async (e) => {
+			const user = await getMe();
+			if (!user) {
+				e.preventDefault();
+				await this._stashAndRedirectToLogin();
+			}
+			// Authed: let the href navigate to /studio normally.
+		});
+	}
+
+	async _triggerSaveToAccount() {
+		const user = await getMe();
+		if (!user) {
+			await this._stashAndRedirectToLogin();
+			return;
+		}
+		await this._performSave(user);
+	}
+
+	async _stashAndRedirectToLogin() {
+		const btn = document.getElementById('save-to-account-btn');
+		if (btn) {
+			btn.setAttribute('disabled', '');
+			btn.querySelector('span').textContent = 'Preparing…';
+		}
+
+		const stash = {
+			glbUrl: this._currentModelUrl || null,
+			fileName: this._currentLocalFile?.name || null,
+			fileB64: null,
+			returnTo: '/app',
+			agentId: this._editingAgentId || null,
+			ts: Date.now(),
+		};
+
+		// Local file drops can't be re-hydrated from a blob URL after reload.
+		// Encode as base64 and stash — sessionStorage quota is ~5MB, so this
+		// fails gracefully for oversized GLBs (user re-drops after sign-in).
+		if (this._currentLocalFile) {
+			try {
+				stash.fileB64 = await _blobToBase64(this._currentLocalFile);
+				stash.contentType = this._currentLocalFile.type || 'model/gltf-binary';
+			} catch {
+				/* fall through without file data */
+			}
+		}
+
+		try {
+			sessionStorage.setItem('pending_save', JSON.stringify(stash));
+		} catch {
+			// Quota exceeded — drop the file payload and retry with just metadata
+			delete stash.fileB64;
+			try {
+				sessionStorage.setItem('pending_save', JSON.stringify(stash));
+			} catch {
+				/* storage disabled — proceed without stash */
+			}
+		}
+		location.href = '/login?next=' + encodeURIComponent('/app?pending=1');
+	}
+
+	async _performSave(user) {
+		if (!user) return;
+		const btn = document.getElementById('save-to-account-btn');
+		if (btn) {
+			btn.setAttribute('disabled', '');
+			btn.querySelector('span').textContent = 'Saving…';
+		}
+		try {
+			let avatarId;
+			const source = this._currentLocalFile || this._currentModelUrl;
+			if (!source) {
+				// Nothing to save — reset UI and bail
+				if (btn) {
+					btn.removeAttribute('disabled');
+					btn.querySelector('span').textContent = 'Save to account';
+				}
+				return;
+			}
+			const avatar = await saveRemoteGlbToAccount(source, {
+				source: this._currentLocalFile ? 'upload' : 'import',
+				name: this._currentLocalFile?.name,
+				source_meta: this._currentLocalFile
+					? { original_filename: this._currentLocalFile.name }
+					: undefined,
+			});
+			avatarId = avatar.id;
+
+			if (this._editingAgentId) {
+				// Update existing agent's avatar
+				if (avatarId) {
+					await fetch(`/api/agents/${this._editingAgentId}`, {
+						method: 'PUT',
+						credentials: 'include',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ avatar_id: avatarId }),
+					});
+				}
+				location.href = `/agent/${this._editingAgentId}`;
+			} else {
+				// Create a new agent linked to the uploaded avatar
+				const res = await fetch('/api/agents/me', {
+					method: 'GET',
+					credentials: 'include',
+				});
+				const data = res.ok ? await res.json() : null;
+				let agentId = data?.agent?.id;
+
+				if (!agentId) {
+					const created = await fetch('/api/agents', {
+						method: 'POST',
+						credentials: 'include',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ name: 'My Agent' }),
+					});
+					const createdData = created.ok ? await created.json() : null;
+					agentId = createdData?.agent?.id;
+				}
+
+				if (agentId && avatarId) {
+					await fetch(`/api/agents/${agentId}`, {
+						method: 'PUT',
+						credentials: 'include',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ avatar_id: avatarId }),
+					});
+				}
+
+				if (agentId) {
+					location.href = `/agent/${agentId}`;
+				} else {
+					this._flashSaved({ name: 'your account' });
+					if (btn) {
+						btn.removeAttribute('disabled');
+						btn.querySelector('span').textContent = 'Save to account';
+					}
+				}
+			}
+		} catch (err) {
+			console.warn('[3d-agent] save failed:', err.message);
+			if (btn) {
+				btn.removeAttribute('disabled');
+				btn.querySelector('span').textContent = 'Save to account';
+			}
+		}
+	}
+
+	async _maybePendingSave() {
+		let stash;
+		try {
+			const raw = sessionStorage.getItem('pending_save');
+			if (!raw) return;
+			stash = JSON.parse(raw);
+		} catch {
+			return;
+		}
+
+		// Stale stashes (older than 1 hour) are discarded — the user likely
+		// abandoned the sign-in flow and we shouldn't silently replay old work.
+		if (!stash || !stash.ts || Date.now() - stash.ts > 60 * 60 * 1000) {
+			sessionStorage.removeItem('pending_save');
+			return;
+		}
+
+		const user = await getMe();
+		if (!user) return; // still not authed — leave stash intact
+
+		sessionStorage.removeItem('pending_save');
+
+		// Restore the editing context from the stash
+		if (stash.agentId) this._editingAgentId = stash.agentId;
+
+		// Re-hydrate the model: local file (base64) takes priority over remote URL
+		if (stash.fileB64 && stash.fileName) {
+			const file = _base64ToFile(
+				stash.fileB64,
+				stash.fileName,
+				stash.contentType || 'model/gltf-binary',
+			);
+			await this.load(new Map([[stash.fileName, file]]));
+		} else if (stash.glbUrl && stash.glbUrl !== this._currentModelUrl) {
+			await this.view(stash.glbUrl, '', new Map());
+		}
+
+		// Strip ?pending from URL before saving
+		const clean = new URL(location.href);
+		clean.searchParams.delete('pending');
+		history.replaceState(null, '', clean.toString());
+
+		await this._performSave(user);
 	}
 
 	async _loadAgent(agentId) {
@@ -328,6 +583,36 @@ class App {
 
 		this.view(glbUrl, '', new Map());
 		this._initAgentSystem();
+	}
+
+	async _loadAgentForEdit(agentId) {
+		// Fetch the agent record and load its GLB into the editor (main UI, not embed)
+		let glbUrl = null;
+		try {
+			const resp = await fetch(`/api/agents/${agentId}`, { credentials: 'include' });
+			if (resp.ok) {
+				const { agent } = await resp.json();
+				if (agent?.avatar_id) {
+					const avatarResp = await fetch(`/api/avatars/${agent.avatar_id}`, {
+						credentials: 'include',
+					});
+					if (avatarResp.ok) {
+						const { avatar } = await avatarResp.json();
+						if (avatar?.url) glbUrl = avatar.url;
+					}
+				}
+			}
+		} catch {
+			/* fall through to default */
+		}
+
+		if (glbUrl) {
+			await this.view(glbUrl, '', new Map());
+		} else {
+			this._maybeResumeOrLoad(this.options);
+		}
+		this._initAgentSystem();
+		this._initWidgetBridge();
 	}
 
 	async _loadWidget(widgetId) {
@@ -553,7 +838,10 @@ class App {
 		const fileURL = typeof rootFile === 'string' ? rootFile : URL.createObjectURL(rootFile);
 
 		this._currentModelUrl = typeof rootFile === 'string' ? rootFile : null;
+		this._hasLocalGlb = typeof rootFile !== 'string';
+		this._currentLocalFile = typeof rootFile !== 'string' ? rootFile : null;
 		this._refreshMakeWidgetButton();
+		this._refreshSaveToAccountButton();
 
 		// Emit load start
 		protocol.emit({
@@ -736,16 +1024,7 @@ class App {
 	}
 
 	_showRegisterPage() {
-		this.dropEl.style.display = 'none';
-		import('./erc8004/register-ui.js').then(({ RegisterUI }) => {
-			new RegisterUI(this.viewerContainerEl, (result) => {
-				console.info('[ERC-8004] Agent registered:', result);
-				this.identity.update({
-					isRegistered: true,
-					meta: { ...this.identity.meta, erc8004: result },
-				});
-			});
-		});
+		window.location.replace('/register');
 	}
 
 	showSpinner() {

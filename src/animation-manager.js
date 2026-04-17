@@ -1,5 +1,6 @@
 import { AnimationMixer, LoopRepeat, LoopOnce } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 
 /**
  * Manages loading external animation clips (e.g. from Mixamo) and applying
@@ -31,6 +32,8 @@ export class AnimationManager {
 		this.currentAction = null;
 		/** @type {GLTFLoader} */
 		this.loader = new GLTFLoader();
+		/** @type {FBXLoader} */
+		this.fbxLoader = new FBXLoader();
 		/** @type {Function|null} */
 		this.onChange = null;
 		/** @type {Map<string, object>} - Cache of loaded GLTF objects by URL */
@@ -108,27 +111,30 @@ export class AnimationManager {
 			return this.clips.get(name);
 		}
 
-		// Check if we already loaded this URL (multi-animation GLB reuse)
-		let gltf;
+		// Check if we already loaded this URL
+		let animations;
 		if (this._gltfCache.has(url)) {
-			gltf = this._gltfCache.get(url);
+			animations = this._gltfCache.get(url);
 		} else {
-			gltf = await new Promise((resolve, reject) => {
-				this.loader.load(url, resolve, undefined, reject);
+			const isFbx = url.toLowerCase().endsWith('.fbx');
+			const loaded = await new Promise((resolve, reject) => {
+				(isFbx ? this.fbxLoader : this.loader).load(url, resolve, undefined, reject);
 			});
-			this._gltfCache.set(url, gltf);
+			// FBX: loaded is the scene object with .animations; GLTF: loaded.animations
+			animations = loaded.animations || [];
+			this._gltfCache.set(url, animations);
 		}
 
 		// Find the right clip: by clipName if specified, otherwise first clip
 		let clip;
 		if (options.clipName) {
-			clip = gltf.animations.find((a) => a.name === options.clipName);
+			clip = animations.find((a) => a.name === options.clipName);
 			if (!clip) {
 				console.warn(`[AnimationManager] Clip "${options.clipName}" not found in ${url}, using first clip`);
-				clip = gltf.animations[0];
+				clip = animations[0];
 			}
 		} else {
-			clip = gltf.animations[0];
+			clip = animations[0];
 		}
 
 		if (!clip) {
@@ -299,7 +305,9 @@ export class AnimationManager {
 			})
 			.filter(Boolean);
 
-		return clip.clone().resetDuration();
+		const newClip = clip.clone();
+		newClip.tracks = newTracks;
+		return newClip;
 	}
 
 	/**

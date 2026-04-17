@@ -1896,6 +1896,52 @@ footer .separator {
 	}
 }
 
+.save-to-account-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-xs);
+	padding: var(--space-sm) var(--space-lg);
+	background: rgba(139, 92, 246, 0.12);
+	border: 1px solid rgba(139, 92, 246, 0.35);
+	border-radius: var(--radius-lg);
+	color: rgba(255, 255, 255, 0.9);
+	font-family: inherit;
+	font-size: var(--text-sm);
+	font-weight: 500;
+	text-decoration: none;
+	cursor: pointer;
+	transition: all 0.25s ease;
+	letter-spacing: 0.02em;
+}
+.save-to-account-btn:hover {
+	background: rgba(139, 92, 246, 0.24);
+	color: #fff;
+	border-color: rgba(139, 92, 246, 0.6);
+}
+.save-to-account-btn:focus-visible {
+	outline: 2px solid rgba(139, 92, 246, 0.7);
+	outline-offset: 2px;
+}
+.save-to-account-btn[hidden] {
+	display: none;
+}
+.save-to-account-btn[disabled] {
+	opacity: 0.6;
+	pointer-events: none;
+}
+.save-to-account-btn svg {
+	width: 1em;
+	height: 1em;
+}
+@media screen and (max-width: 700px) {
+	.save-to-account-btn span {
+		display: none;
+	}
+	.save-to-account-btn {
+		padding: var(--space-xs) var(--space-sm);
+	}
+}
+
 /******************************************************************************
  * Avatar Creator Modal
  */
@@ -3226,15 +3272,13 @@ footer .separator {
 
 body[data-viewer-mode='main'][data-authed='pending'] .anim-panel,
 body[data-viewer-mode='main'][data-authed='pending'] #agent-presence-sidebar,
-body[data-viewer-mode='main'][data-authed='pending'] .dg.main,
-body[data-viewer-mode='main'][data-authed='pending'] #make-widget-btn {
+body[data-viewer-mode='main'][data-authed='pending'] .dg.main {
 	visibility: hidden !important;
 }
 
 body[data-viewer-mode='main'][data-authed='false'] .anim-panel,
 body[data-viewer-mode='main'][data-authed='false'] #agent-presence-sidebar,
-body[data-viewer-mode='main'][data-authed='false'] .dg.main,
-body[data-viewer-mode='main'][data-authed='false'] #make-widget-btn {
+body[data-viewer-mode='main'][data-authed='false'] .dg.main {
 	display: none !important;
 }
 
@@ -3689,4 +3733,438 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 	.publish-snippet-actions {
 		justify-content: flex-end;
 	}
+}
+
+/******************************************************************************
+ * ERC-8004 Agent Studio — parity additions (hero, mainnet banner,
+ * filter chips, batch tab, QR modal, export accordion, footer).
+ */
+
+.erc8004-shell {
+	width: 100%;
+	max-width: 960px;
+	margin: 0 auto;
+}
+
+.erc8004-hero {
+	margin-bottom: var(--space-md);
+}
+
+.erc8004-hero-topbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-md);
+	margin-bottom: var(--space-lg);
+	flex-wrap: wrap;
+}
+
+.erc8004-hero-body {
+	text-align: center;
+	padding: var(--space-lg) 0;
+}
+
+.erc8004-hero-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 14px;
+	border-radius: 20px;
+	background: rgba(99, 102, 241, 0.15);
+	border: 1px solid rgba(99, 102, 241, 0.3);
+	color: #a5b4fc;
+	font-size: 12px;
+	font-weight: 500;
+	margin-bottom: var(--space-md);
+}
+
+.erc8004-hero-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: #22c55e;
+	box-shadow: 0 0 8px #22c55e;
+}
+
+.erc8004-hero-h1 {
+	margin: 0 0 var(--space-sm);
+	font-size: clamp(28px, 5vw, 44px);
+	line-height: 1.1;
+	font-weight: 600;
+	color: #fff;
+	letter-spacing: -0.02em;
+}
+
+.erc8004-hero-accent {
+	background: linear-gradient(90deg, #6366f1, #a78bfa);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+}
+
+.erc8004-hero-sub {
+	max-width: 620px;
+	margin: 0 auto var(--space-md);
+	color: rgba(255, 255, 255, 0.55);
+	font-size: var(--text-base);
+	line-height: 1.6;
+}
+
+.erc8004-hero .erc8004-stats {
+	max-width: 540px;
+	margin: 0 auto;
+}
+
+.erc8004-mainnet-banner {
+	padding: var(--space-sm) var(--space-md);
+	margin-bottom: var(--space-md);
+	background: rgba(239, 68, 68, 0.1);
+	border: 1px solid rgba(239, 68, 68, 0.4);
+	border-radius: var(--radius-md);
+	color: #fca5a5;
+	font-size: var(--text-sm);
+	text-align: center;
+}
+
+/* Filter chips */
+.erc8004-filter-chips {
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+	margin: var(--space-sm) 0;
+}
+
+.erc8004-chip {
+	padding: 6px 14px;
+	border-radius: 20px;
+	font-size: 12px;
+	font-weight: 500;
+	background: rgba(255, 255, 255, 0.04);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	color: rgba(255, 255, 255, 0.6);
+	cursor: pointer;
+	font-family: inherit;
+	transition: all 0.2s;
+}
+
+.erc8004-chip:hover {
+	border-color: rgba(99, 102, 241, 0.5);
+}
+
+.erc8004-chip--active {
+	background: rgba(99, 102, 241, 0.15);
+	border-color: rgba(99, 102, 241, 0.5);
+	color: #a5b4fc;
+}
+
+.erc8004-tag--x402 {
+	background: rgba(124, 58, 237, 0.2);
+	color: #c4b5fd;
+	border-color: rgba(124, 58, 237, 0.4);
+}
+
+/* Batch tab */
+.erc8004-batch-drop {
+	height: 140px;
+	margin: var(--space-md) 0;
+}
+
+.erc8004-batch-drop-inner {
+	pointer-events: none;
+	text-align: center;
+}
+
+.erc8004-batch-drop-icon {
+	font-size: 32px;
+	margin-bottom: 8px;
+}
+
+.erc8004-batch-drop-title {
+	font-weight: 600;
+	color: rgba(255, 255, 255, 0.8);
+	margin-bottom: 4px;
+}
+
+.erc8004-batch-drop-sub {
+	font-size: 13px;
+	color: rgba(255, 255, 255, 0.45);
+}
+
+.erc8004-batch-preview {
+	margin-top: var(--space-md);
+}
+
+.erc8004-batch-list {
+	max-height: 380px;
+	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.erc8004-batch-row {
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	gap: 12px;
+	align-items: center;
+	padding: 8px 12px;
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	border-radius: var(--radius-sm);
+}
+
+.erc8004-batch-row-num {
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+	background: rgba(99, 102, 241, 0.2);
+	color: #a5b4fc;
+	font-size: 12px;
+	font-weight: 600;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.erc8004-batch-row-title {
+	font-weight: 500;
+	color: #fff;
+}
+
+.erc8004-batch-row-status {
+	font-size: 12px;
+}
+
+.erc8004-batch-progress {
+	margin-top: var(--space-md);
+}
+
+.erc8004-progress-bar {
+	height: 6px;
+	background: rgba(255, 255, 255, 0.08);
+	border-radius: 3px;
+	overflow: hidden;
+	margin-bottom: 6px;
+}
+
+.erc8004-progress-fill {
+	height: 100%;
+	background: linear-gradient(90deg, #6366f1, #a78bfa);
+	transition: width 0.3s;
+	width: 0;
+}
+
+.erc8004-pre {
+	font-family: monospace;
+	font-size: 12px;
+	background: rgba(0, 0, 0, 0.3);
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	border-radius: var(--radius-sm);
+	padding: 10px 12px;
+	color: rgba(255, 255, 255, 0.7);
+	white-space: pre-wrap;
+	overflow-x: auto;
+}
+
+/* Accordion */
+.erc8004-accordion {
+	margin-top: var(--space-md);
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	border-radius: var(--radius-md);
+	overflow: hidden;
+}
+
+.erc8004-accordion-head {
+	cursor: pointer;
+	list-style: none;
+	padding: 12px 14px;
+	font-weight: 500;
+	color: rgba(255, 255, 255, 0.8);
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.erc8004-accordion-head::after {
+	content: '▼';
+	color: rgba(255, 255, 255, 0.4);
+	font-size: 10px;
+	transition: transform 0.2s;
+}
+
+.erc8004-accordion[open] .erc8004-accordion-head::after {
+	transform: rotate(180deg);
+}
+
+.erc8004-accordion-head::-webkit-details-marker {
+	display: none;
+}
+
+.erc8004-accordion-body {
+	padding: 0 14px 14px;
+	border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Export options grid */
+.erc8004-export-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+	gap: 8px;
+	margin-top: 12px;
+}
+
+.erc8004-export-opt {
+	padding: 14px;
+	background: rgba(255, 255, 255, 0.04);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	border-radius: var(--radius-sm);
+	color: #fff;
+	font-family: inherit;
+	cursor: pointer;
+	text-align: center;
+	transition: all 0.2s;
+}
+
+.erc8004-export-opt:hover {
+	background: rgba(99, 102, 241, 0.1);
+	border-color: rgba(99, 102, 241, 0.3);
+}
+
+.erc8004-export-emoji {
+	font-size: 22px;
+	margin-bottom: 6px;
+}
+
+.erc8004-export-title {
+	font-size: 13px;
+	font-weight: 600;
+	margin-bottom: 2px;
+}
+
+.erc8004-export-sub {
+	font-size: 11px;
+	color: rgba(255, 255, 255, 0.45);
+}
+
+/* QR modal */
+.erc8004-modal {
+	position: fixed;
+	inset: 0;
+	z-index: 600;
+	background: rgba(0, 0, 0, 0.7);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--space-md);
+}
+
+.erc8004-modal-card {
+	background: #0d0d12;
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	border-radius: var(--radius-lg);
+	padding: var(--space-lg);
+	max-width: 420px;
+	width: 100%;
+	text-align: center;
+}
+
+.erc8004-modal-head {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: var(--space-sm);
+}
+
+.erc8004-qr-canvas-wrap {
+	display: flex;
+	justify-content: center;
+	background: #fff;
+	border-radius: var(--radius-sm);
+	padding: 12px;
+	margin: var(--space-sm) 0;
+}
+
+.erc8004-qr-canvas-wrap canvas {
+	max-width: 100%;
+	height: auto;
+	image-rendering: pixelated;
+}
+
+.erc8004-qr-url {
+	word-break: break-all;
+	margin: 0 0 var(--space-sm);
+}
+
+/* Footer */
+.erc8004-footer {
+	margin-top: var(--space-lg);
+	padding: var(--space-lg) 0;
+	text-align: center;
+	color: rgba(255, 255, 255, 0.45);
+	font-size: var(--text-sm);
+}
+
+.erc8004-footer-links {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: var(--space-md);
+	margin-bottom: var(--space-md);
+}
+
+.erc8004-footer-links a {
+	color: rgba(255, 255, 255, 0.6);
+	text-decoration: none;
+}
+
+.erc8004-footer-links a:hover {
+	color: #fff;
+}
+
+.erc8004-footer-cols {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+	gap: var(--space-lg);
+	max-width: 800px;
+	margin: 0 auto var(--space-md);
+	padding: var(--space-md) 0;
+	border-top: 1px solid rgba(255, 255, 255, 0.08);
+	border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+	text-align: left;
+}
+
+.erc8004-footer-col {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.erc8004-footer-title {
+	font-weight: 600;
+	color: rgba(255, 255, 255, 0.8);
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 1px;
+	margin-bottom: 4px;
+}
+
+.erc8004-footer-col a {
+	color: rgba(255, 255, 255, 0.55);
+	text-decoration: none;
+	font-size: 13px;
+}
+
+.erc8004-footer-col a:hover {
+	color: #fff;
+}
+
+.erc8004-footer-credit {
+	margin: 0;
+	font-size: 12px;
+	color: rgba(255, 255, 255, 0.35);
+}
+
+.erc8004-footer-credit a {
+	color: rgba(255, 255, 255, 0.55);
 }

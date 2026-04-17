@@ -594,13 +594,14 @@ export class AgentAvatar {
 			AgentAvatar.HEAD_MAX_LEAN,
 		);
 
-		// Apply as an offset from rest pose, not an absolute rotation — otherwise
-		// rigs with non-zero rest rotation on the head bone snap toward world zero.
+		// Apply pre-smoothed values directly — _currentTilt/Lean/Yaw are already
+		// dt-lerped above, so a second lerp on the live bone value would fight the
+		// animation mixer and cause visible head bobbing.
 		const r = this._headRestRotation;
 		const b = this._headBone;
-		b.rotation.z = _lerp(b.rotation.z, r.z + tilt, 0.1);
-		b.rotation.x = _lerp(b.rotation.x, r.x + lean, 0.1);
-		b.rotation.y = _lerp(b.rotation.y, r.y + yaw, 0.1);
+		b.rotation.z = r.z + tilt;
+		b.rotation.x = r.x + lean;
+		b.rotation.y = r.y + yaw;
 	}
 
 	/**
