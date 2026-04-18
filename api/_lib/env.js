@@ -103,4 +103,36 @@ export const env = {
 	get MAINNET_RPC_URL() {
 		return opt('MAINNET_RPC_URL');
 	},
+
+	// ── ERC-7710 Delegation Relayer ──────────────────────────────────────────
+	// Private key of the server-held EOA that pays gas for redeemDelegations.
+	// NEVER log this value. Rotate via Vercel env; derive AGENT_RELAYER_ADDRESS
+	// from the key using: node -e "require('ethers').Wallet.createRandom().address"
+	get AGENT_RELAYER_KEY() {
+		return req('AGENT_RELAYER_KEY');
+	},
+
+	// Derived: checksummed address of the relayer EOA. Fund with testnet ETH.
+	// Optional — can be computed from AGENT_RELAYER_KEY; provided here for ops convenience.
+	get AGENT_RELAYER_ADDRESS() {
+		return opt('AGENT_RELAYER_ADDRESS');
+	},
+
+	// Feature flag. Set to "true" to enable POST /api/permissions/redeem.
+	// Defaults to false so the endpoint is opt-in per environment.
+	get PERMISSIONS_RELAYER_ENABLED() {
+		return opt('PERMISSIONS_RELAYER_ENABLED', 'false') === 'true';
+	},
+
+	// Per-chain RPC URLs for on-chain delegation calls.
+	// Pattern: RPC_URL_<CHAINID> e.g. RPC_URL_84532 for Base Sepolia.
+	// Falls back to public RPC nodes when unset; set Alchemy/Infura URLs for production.
+	getRpcUrl(chainId) {
+		return (
+			opt(`RPC_URL_${chainId}`) ||
+			(chainId === 84532 ? opt('BASE_SEPOLIA_RPC_URL') : null) ||
+			(chainId === 11155111 ? opt('SEPOLIA_RPC_URL') : null) ||
+			null
+		);
+	},
 };

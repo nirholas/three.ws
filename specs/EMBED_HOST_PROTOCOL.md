@@ -290,12 +290,34 @@ Messages from non-parent frames are always rejected regardless of allowlist.
 
 ---
 
+## Permissions messages (v0.2+)
+
+Five additional types for delegation discovery and redemption, introduced alongside `embed/0.2` of the Embed Spec. They follow the same `host.*` / `embed.*` directional naming convention as all other types in this protocol. Implementors that do not support delegations MUST silently ignore them per the versioning policy below.
+
+Full shapes and semantics are defined in [EMBED_SPEC.md § Delegations](./EMBED_SPEC.md#delegations-optional-v02).
+
+| Type                         | Direction    | Purpose                                           |
+| ---------------------------- | ------------ | ------------------------------------------------- |
+| `host.permissions.query`     | host → embed | Request the loaded delegation list (with filter)  |
+| `embed.permissions.query`    | embed → host | Reply to `host.permissions.query`; carries list   |
+| `host.permissions.redeem`    | host → embed | Initiate a redemption on the host's behalf        |
+| `embed.permissions.redeemed` | embed → host | Redemption succeeded; carries `txHash`            |
+| `embed.permissions.error`    | embed → host | Redemption failed; carries canonical error `code` |
+
+---
+
 ## Versioning policy
 
 - `v` is an integer incremented on **breaking changes** (field renames, removed types, changed semantics).
 - New optional fields and new message types are **non-breaking** — do not bump `v`.
 - Deprecated types MUST be supported for one full minor version before removal.
 - Receivers MUST silently ignore unknown types (log once; do not crash; do not send `embed.error` for unknown types from a higher version).
+
+## Changelog
+
+### v1 (current)
+
+- Added permissions messages (`host.permissions.query`, `embed.permissions.query`, `host.permissions.redeem`, `embed.permissions.redeemed`, `embed.permissions.error`) as non-breaking additions per the versioning policy above. Shapes in [EMBED_SPEC.md § Delegations](./EMBED_SPEC.md#delegations-optional-v02).
 
 ---
 

@@ -106,6 +106,9 @@
 		{ "src": "/api/erc8004/hydrate", "dest": "/api/erc8004/hydrate.js" },
 		{ "src": "/api/erc8004/import", "dest": "/api/erc8004/import.js" },
 
+		{ "src": "/api/dca-strategies/([^/]+)", "dest": "/api/dca-strategies?id=$1" },
+		{ "src": "/api/dca-strategies", "dest": "/api/dca-strategies" },
+
 		{ "src": "/discover", "dest": "/public/discover/index.html" },
 		{ "src": "/discover/", "dest": "/public/discover/index.html" },
 
@@ -167,5 +170,10 @@
 		{ "src": "/a/(.*)", "dest": "/app.html" },
 		{ "src": "/(.*)", "dest": "/public/$1" }
 	],
-	"crons": [{ "path": "/api/cron/erc8004-crawl", "schedule": "*/15 * * * *" }]
+	"crons": [
+		{ "path": "/api/cron/erc8004-crawl", "schedule": "*/15 * * * *" },
+		{ "path": "/api/cron/index-delegations", "schedule": "*/5 * * * *" },
+		{ "path": "/api/cron/run-dca", "schedule": "0 * * * *" },
+		{ "path": "/api/cron/run-subscriptions", "schedule": "0 * * * *" }
+	]
 }

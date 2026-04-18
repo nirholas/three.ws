@@ -239,3 +239,16 @@ export interface RegistryDeployment {
 export const REGISTRY_DEPLOYMENTS: Record<number, RegistryDeployment>;
 
 export function agentRegistryId(chainId: number, registryAddress: string): string;
+
+// ---------------------------------------------------------------------------
+// Permissions — re-exported from ./permissions.js
+// ---------------------------------------------------------------------------
+
+export {
+	DelegationScope,
+	DelegationPublic,
+	ScopePreset,
+	PermissionError,
+	PermissionsClientOptions,
+	PermissionsClient,
+} from './permissions';

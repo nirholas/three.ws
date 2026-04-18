@@ -437,6 +437,220 @@
 				margin: 0;
 				line-height: 1.5;
 			}
+
+			/* ── Manage Permissions Panel ────────────────────────────────────────── */
+
+			.mp-panel {
+				max-width: 420px;
+				margin: 1.618rem auto 0;
+				padding: 0 1rem;
+			}
+
+			.mp-header {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				margin-bottom: 0.618rem;
+			}
+
+			.mp-title {
+				font-size: 0.618rem;
+				color: rgba(255, 255, 255, 0.25);
+				text-transform: uppercase;
+				letter-spacing: 0.08em;
+			}
+
+			.mp-refresh-btn {
+				background: none;
+				border: none;
+				color: rgba(255, 255, 255, 0.3);
+				cursor: pointer;
+				padding: 0.2rem;
+				border-radius: 4px;
+				line-height: 0;
+				transition: color 0.15s;
+			}
+
+			.mp-refresh-btn:hover { color: rgba(255, 255, 255, 0.7); }
+
+			.mp-loading, .mp-error {
+				font-size: 0.764rem;
+				color: rgba(255, 255, 255, 0.3);
+				padding: 1rem 0;
+			}
+
+			.mp-error { color: #fca5a5; }
+
+			.mp-empty {
+				font-size: 0.764rem;
+				color: rgba(255, 255, 255, 0.3);
+				padding: 1rem 0;
+				text-align: center;
+			}
+
+			.mp-empty p { margin: 0 0 0.618rem; }
+
+			.mp-grant-btn {
+				background: rgba(255, 255, 255, 0.06);
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				color: rgba(255, 255, 255, 0.7);
+				font-size: 0.718rem;
+				font-family: inherit;
+				padding: 0.382rem 0.75rem;
+				border-radius: 999px;
+				cursor: pointer;
+				transition: background 0.15s, color 0.15s;
+			}
+
+			.mp-grant-btn:hover {
+				background: rgba(255, 255, 255, 0.1);
+				color: rgba(255, 255, 255, 0.95);
+			}
+
+			.mp-card {
+				background: rgba(255, 255, 255, 0.04);
+				border: 1px solid rgba(255, 255, 255, 0.07);
+				border-radius: 10px;
+				padding: 0.75rem 1rem;
+				margin-bottom: 0.618rem;
+				transition: border-color 0.2s;
+			}
+
+			.mp-card--active { border-color: rgba(134, 239, 172, 0.15); }
+			.mp-card--revoked { opacity: 0.5; }
+			.mp-card--expired { border-color: rgba(251, 191, 36, 0.15); }
+
+			.mp-card-top {
+				display: flex;
+				align-items: center;
+				gap: 0.382rem;
+				margin-bottom: 0.382rem;
+			}
+
+			.mp-badge {
+				font-size: 0.618rem;
+				padding: 0.1rem 0.45rem;
+				border-radius: 999px;
+				font-weight: 500;
+			}
+
+			.mp-badge--active { background: rgba(134, 239, 172, 0.15); color: #86efac; }
+			.mp-badge--revoked { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.4); }
+			.mp-badge--expired { background: rgba(251, 191, 36, 0.12); color: #fbbf24; }
+
+			.mp-chain-chip {
+				font-size: 0.618rem;
+				background: rgba(255,255,255,0.07);
+				color: rgba(255,255,255,0.5);
+				padding: 0.1rem 0.45rem;
+				border-radius: 999px;
+			}
+
+			.mp-indexer-pending {
+				font-size: 0.618rem;
+				color: rgba(251, 191, 36, 0.7);
+				font-style: italic;
+			}
+
+			.mp-card-scope {
+				font-size: 0.764rem;
+				color: rgba(255, 255, 255, 0.8);
+				margin-bottom: 0.236rem;
+				line-height: 1.4;
+			}
+
+			.mp-card-hash {
+				font-size: 0.618rem;
+				font-family: monospace;
+				color: rgba(255, 255, 255, 0.25);
+				margin-bottom: 0.236rem;
+			}
+
+			.mp-card-usage {
+				font-size: 0.618rem;
+				color: rgba(255, 255, 255, 0.35);
+				margin-bottom: 0.5rem;
+			}
+
+			.mp-card-addresses {
+				display: flex;
+				align-items: center;
+				gap: 0.382rem;
+				margin-bottom: 0.5rem;
+			}
+
+			.mp-addr-link {
+				font-size: 0.618rem;
+				font-family: monospace;
+				color: rgba(255, 255, 255, 0.4);
+				text-decoration: none;
+			}
+
+			.mp-addr-link:hover { color: rgba(255, 255, 255, 0.8); }
+
+			.mp-addr-arrow {
+				font-size: 0.618rem;
+				color: rgba(255, 255, 255, 0.2);
+			}
+
+			.mp-card-actions { display: flex; gap: 0.5rem; }
+
+			.mp-revoke-btn {
+				background: rgba(239, 68, 68, 0.1);
+				border: 1px solid rgba(239, 68, 68, 0.25);
+				color: #f87171;
+				font-size: 0.718rem;
+				font-family: inherit;
+				padding: 0.3rem 0.7rem;
+				border-radius: 999px;
+				cursor: pointer;
+				transition: background 0.15s;
+			}
+
+			.mp-revoke-btn:hover:not(:disabled) {
+				background: rgba(239, 68, 68, 0.2);
+			}
+
+			.mp-revoke-btn:disabled {
+				opacity: 0.5;
+				cursor: default;
+			}
+
+			.mp-card-error {
+				font-size: 0.618rem;
+				color: #fca5a5;
+				margin-top: 0.382rem;
+			}
+
+			.mp-card-pending {
+				display: flex;
+				align-items: center;
+				gap: 0.382rem;
+				font-size: 0.618rem;
+				color: rgba(255,255,255,0.5);
+				margin-top: 0.382rem;
+			}
+
+			.mp-tx-link {
+				color: rgba(255,255,255,0.4);
+				text-decoration: none;
+			}
+
+			.mp-tx-link:hover { color: rgba(255,255,255,0.8); }
+
+			@keyframes mp-spin {
+				to { transform: rotate(360deg); }
+			}
+
+			.mp-spinner {
+				display: inline-block;
+				width: 10px;
+				height: 10px;
+				border: 1.5px solid rgba(255,255,255,0.15);
+				border-top-color: rgba(255,255,255,0.6);
+				border-radius: 50%;
+				animation: mp-spin 0.7s linear infinite;
+			}
 		</style>
 	</head>
 	<body>
@@ -455,6 +669,9 @@
 				<div class="loading-placeholder">Loading agent…</div>
 			</div>
 		</div>
+
+		<!-- Permissions panel (owner only, mounted by JS) -->
+		<div id="agent-permissions-mount"></div>
 
 		<!-- Skills catalog -->
 		<div class="agent-skills-full" id="agent-skills-section" style="display: none">
@@ -498,6 +715,7 @@
 			import { AgentHome } from '/src/agent-home.js';
 			import { protocol } from '/src/agent-protocol.js';
 			import { renderHubActions } from '/src/agent-hub-actions.js';
+			import { mountManagePanel } from '/src/permissions/manage-panel.js';
 
 			// Pull agent id from URL: /agent/:id
 			const agentId = location.pathname.split('/').filter(Boolean).pop();
@@ -540,6 +758,10 @@
 				if (isOwner) {
 					const panel = container.querySelector('.agent-home-panel');
 					if (panel) renderHubActions(panel, identity, rawAgent);
+
+					// Mount the permissions management panel below the agent card
+					const permMount = document.getElementById('agent-permissions-mount');
+					if (permMount) mountManagePanel({ container: permMount, agentId });
 				}
 
 				// Render skills catalog

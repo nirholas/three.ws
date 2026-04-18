@@ -1,0 +1,19 @@
+{
+	"spec": "skill/0.1",
+	"name": "dca",
+	"version": "0.1.0",
+	"description": "Dollar-cost averaging: swap a fixed USDC amount into WETH on a schedule via Uniswap V3.",
+	"author": "3d-agent",
+	"license": "MIT",
+	"tags": ["defi", "dca", "uniswap", "metamask", "permissions"],
+	"trust": "owned-only",
+	"requires": {
+		"rig": ["any"],
+		"runtime": ">=0.1.0",
+		"tools": []
+	},
+	"provides": {
+		"tools": ["start_dca", "list_dca_strategies", "stop_dca"],
+		"triggers": ["dca", "recurring_swap", "dollar_cost_average"]
+	}
+}

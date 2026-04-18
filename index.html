@@ -540,6 +540,7 @@
 							>Try the viewer →</a
 						>
 					</div>
+					<p class="hero-signin-hint scroll-reveal" id="hero-signin-hint">Already have an account? <a href="/login" class="hero-signin-link">Sign in →</a></p>
 					<ul
 						class="hero-proof scroll-reveal"
 						aria-label="Supported formats and standards"
@@ -895,13 +896,17 @@
 			// Auth-aware nav
 			(function () {
 				try {
-					const token =
-						localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
-					if (token) {
-						const el = document.getElementById('nav-sign-in');
-						if (el) {
-							el.textContent = 'Dashboard';
-							el.href = '/dashboard';
+					const raw = localStorage.getItem('3dagent:auth-hint');
+					if (raw) {
+						const { authed } = JSON.parse(raw);
+						if (authed) {
+							const el = document.getElementById('nav-sign-in');
+							if (el) {
+								el.textContent = 'Dashboard';
+								el.href = '/dashboard';
+							}
+							const heroSignin = document.getElementById('hero-signin-hint');
+							if (heroSignin) heroSignin.hidden = true;
 						}
 					}
 				} catch (_) {}

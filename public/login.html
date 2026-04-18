@@ -6,7 +6,6 @@
 		<title>Sign in · 3D Agent</title>
 		<link rel="icon" href="/favicon.ico" />
 		<link rel="stylesheet" href="/wallet-connect.css" />
-		<meta name="privy-app-id" content="" />
 		<style>
 			:root {
 				color-scheme: dark;
@@ -112,21 +111,6 @@
 				color: var(--accent);
 				margin: 0 0 8px;
 			}
-			.wallet-btn {
-				background: #1c1c28;
-				border: 1px solid #2a2a36;
-				color: #eee;
-				font-weight: 500;
-				margin-top: 12px;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				gap: 8px;
-			}
-			.wallet-btn:hover {
-				background: #22222e;
-				border-color: var(--accent);
-			}
 			.divider {
 				display: flex;
 				align-items: center;
@@ -143,10 +127,6 @@
 				flex: 1;
 				height: 1px;
 				background: #2a2a36;
-			}
-			.wallet-icon {
-				width: 18px;
-				height: 18px;
 			}
 		</style>
 	</head>
@@ -167,30 +147,6 @@
 			/>
 			<button id="submit" type="submit">Sign in</button>
 			<div class="divider">or</div>
-			<button
-				id="privy"
-				type="button"
-				class="wallet-btn"
-				style="
-					background: linear-gradient(135deg, var(--accent), var(--accent2));
-					border-color: transparent;
-					color: #fff;
-				"
-			>
-				<svg
-					class="wallet-icon"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-				>
-					<circle cx="12" cy="8" r="4" />
-					<path d="M20 21a8 8 0 0 0-16 0" />
-				</svg>
-				Sign in with Privy
-			</button>
 			<div id="wallet-mount"></div>
 			<div class="err" id="err"></div>
 			<p class="foot">No account? <a href="/register">Create one</a></p>

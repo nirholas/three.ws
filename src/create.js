@@ -1,16 +1,14 @@
-import { apiFetch, getMe, saveRemoteGlbToAccount } from './account.js';
+import { apiFetch, saveRemoteGlbToAccount } from './account.js';
 import { AvatarCreator } from './avatar-creator.js';
 
 // GLB magic bytes: ASCII "glTF"
 const GLB_MAGIC = [0x67, 0x6c, 0x54, 0x46];
 
-async function boot() {
-	const user = await getMe();
-	if (!user) {
-		window.location.href = '/login?next=/create';
-		return;
-	}
+function redirectToLogin() {
+	window.location.href = '/login?next=' + encodeURIComponent('/create');
+}
 
+async function boot() {
 	const creator = new AvatarCreator(document.body, (blob) =>
 		saveAndRedirect(blob, { source: 'avaturn' }),
 	);
@@ -73,6 +71,10 @@ async function saveAndRedirect(blob, meta = {}) {
 		const agent = await attachAvatarToAgent(avatar.id, meta.name);
 		window.location.href = '/agent/' + agent.id;
 	} catch (err) {
+		if (err.code === 'not_signed_in') {
+			redirectToLogin();
+			return;
+		}
 		if (!err.redirected) showStatus(err.message || 'Upload failed.', 'error');
 	}
 }

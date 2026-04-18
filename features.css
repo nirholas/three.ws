@@ -282,6 +282,22 @@
 	transform: translateX(3px);
 }
 
+.hero-signin-hint {
+	margin: calc(var(--space-md) * -0.5) 0 var(--space-xl);
+	font-size: var(--text-sm);
+	color: rgba(255, 255, 255, 0.38);
+}
+
+.hero-signin-link {
+	color: rgba(255, 255, 255, 0.6);
+	text-decoration: none;
+	transition: color 0.2s;
+}
+
+.hero-signin-link:hover {
+	color: #fff;
+}
+
 .hero-proof {
 	list-style: none;
 	padding: 0;

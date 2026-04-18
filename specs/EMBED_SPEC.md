@@ -1,4 +1,4 @@
-# Embed Spec v0.1 — `<agent-3d>` Web Component
+# Embed Spec v0.2 — `<agent-3d>` Web Component
 
 > **Placeholder tag**: `<agent-3d>`. The element name is one find/replace away from whatever you choose — the spec is tag-agnostic.
 
@@ -344,8 +344,18 @@ All bundle responses ship `access-control-allow-origin: *` and `cross-origin-res
 
 ## Versioning
 
-- Element spec: `embed/0.1` — breaking changes bump minor until 1.0.
+- Element spec: `embed/0.2` — breaking changes bump minor until 1.0.
 - Bundle version: tracks `package.json` `version` of the main repo. Pinning a `<MAJOR>.<MINOR>.<PATCH>` URL is the only forever-stable option — moving channels can ship security fixes that may include behavior changes within their semver range.
+
+## Changelog
+
+### v0.2 (2026-04-18)
+
+- Added **Delegations (optional, v0.2+)** section: delegation discovery (manifest + metadata paths), host `permissions` / `permissions-bearer` attributes, five post-message types following the `host.*` / `embed.*` naming convention (`host.permissions.query`, `embed.permissions.query`, `host.permissions.redeem`, `embed.permissions.redeemed`, `embed.permissions.error`), Claude artifact and LobeHub host profiles, and security requirements.
+
+### v0.1
+
+- Initial release: attributes, modes, slots, events, JS API, CSS custom properties, shadow DOM, accessibility, resource policy, CSP guidance, progressive enhancement, editor mode, share routes, and embed policy.
 
 ## Share routes (on-chain agents)
 
@@ -393,8 +403,218 @@ Parent host is determined from `window.location.ancestorOrigins` (Chromium) or `
 
 **We ship permissionless by default.** On-chain identity is public — any embedder can show any agent unless the owner has explicitly set a policy. The policy path exists so owners _can_ restrict later; it doesn't gate the default experience.
 
+## Delegations (optional, v0.2+)
+
+The `<agent-3d>` embed can surface and redeem ERC-7710 delegations granted to an agent. This section specifies how the embed discovers delegations, which host configurations unlock redemption, and how hosts communicate with the embed over the post-message channel.
+
+### Discovery
+
+The embed resolves delegations through two paths, tried in order:
+
+**Manifest path** — if the loaded `manifest.json` contains a `permissions.delegations[]` array (see [AGENT_MANIFEST.md](./AGENT_MANIFEST.md)), the embed uses that array directly. No additional network call is needed.
+
+**Metadata path** — if the manifest omits `permissions` (e.g. it was pinned before permissions were granted), the embed MAY call:
+
+```
+GET /api/permissions/metadata?agentId=<id>
+```
+
+to hydrate the delegation list. Hosts MUST cache the response for at least 60 s.
+
+### Host attributes
+
+Two attributes on `<agent-3d>` govern the redemption surface the host exposes:
+
+| Attribute            | Type / Values                            | Default    | Notes                                               |
+| -------------------- | ---------------------------------------- | ---------- | --------------------------------------------------- |
+| `permissions`        | `readonly` \| `interactive` \| `relayer` | `readonly` | Host's redemption stance (see below)                |
+| `permissions-bearer` | opaque string                            | none       | Bearer token; required when `permissions="relayer"` |
+
+**`permissions` values:**
+
+- **`readonly`** (default) — embed renders delegation status and scope; never initiates a redemption. Safe default for any host that has not provisioned signing capability.
+- **`interactive`** — embed may prompt the end user for a wallet signer. The host MUST expose a `host.getSigner()` method that returns an ethers-compatible signer. Requires the host to have a wallet session available.
+- **`relayer`** — embed may call `POST /api/permissions/redeem` using the bearer token in `permissions-bearer`. No wallet popup. Requires the agent owner to have provisioned a bearer token scoped to `permissions:redeem` (per task 09).
+
+**`permissions-bearer`** is an opaque string. The host is responsible for rotation; the embed never stores it beyond the current page lifetime.
+
+### Post-message protocol
+
+The five message types below extend the `EMBED_HOST_PROTOCOL` v1 envelope (`{ v: 1, type, id?, payload }`), following the same `host.*` / `embed.*` directional naming convention used throughout that protocol. Hosts and embeds that do not support delegations MUST silently ignore unknown types per the existing protocol's versioning policy.
+
+#### `host.permissions.query` (host → embed)
+
+Request the list of delegations currently loaded by the embed.
+
+```json
+{
+	"v": 1,
+	"type": "host.permissions.query",
+	"id": "pq_001",
+	"payload": {
+		"filter": {
+			"chainId": 84532,
+			"status": "active"
+		}
+	}
+}
+```
+
+| Field            | Required | Notes                                           |
+| ---------------- | -------- | ----------------------------------------------- |
+| `payload.filter` | no       | Narrows results; omit to return all delegations |
+| `filter.chainId` | no       | Limit to a specific chain                       |
+| `filter.status`  | no       | `"active"` \| `"expired"` \| `"revoked"`        |
+
+The embed replies with `embed.permissions.query` (below), correlating via the same `id`.
+
+#### `embed.permissions.query` (embed → host)
+
+Reply to `host.permissions.query`. Carries the filtered delegation list.
+
+```json
+{
+	"v": 1,
+	"type": "embed.permissions.query",
+	"id": "pq_001",
+	"payload": {
+		"delegations": [
+			{
+				"delegationId": "uuid-...",
+				"chainId": 84532,
+				"scope": {
+					"token": "native",
+					"maxAmount": "1000000000000000000",
+					"period": "daily",
+					"expiry": 1775250000
+				},
+				"status": "active"
+			}
+		]
+	}
+}
+```
+
+| Field                 | Required | Notes                                            |
+| --------------------- | -------- | ------------------------------------------------ |
+| `id`                  | yes      | Matches the originating `host.permissions.query` |
+| `payload.delegations` | yes      | Array of public delegation views; empty if none  |
+
+#### `host.permissions.redeem` (host → embed)
+
+Ask the embed to initiate a redemption. The embed resolves the signer or bearer token based on the current `permissions` attribute value.
+
+```json
+{
+	"v": 1,
+	"type": "host.permissions.redeem",
+	"id": "pr_001",
+	"payload": {
+		"delegationId": "uuid-...",
+		"calls": [{ "to": "0x...", "value": "0", "data": "0x..." }]
+	}
+}
+```
+
+| Field                  | Required | Notes                                          |
+| ---------------------- | -------- | ---------------------------------------------- |
+| `payload.delegationId` | yes      | UUID from the delegation list                  |
+| `payload.calls`        | yes      | Array of `{ to, value, data }` — raw EVM calls |
+
+On completion the embed posts either `embed.permissions.redeemed` or `embed.permissions.error` with the matching `id`.
+
+#### `embed.permissions.redeemed` (embed → host)
+
+Announce a successful redemption.
+
+```json
+{
+	"v": 1,
+	"type": "embed.permissions.redeemed",
+	"id": "pr_001",
+	"payload": {
+		"delegationId": "uuid-...",
+		"txHash": "0x...",
+		"chainId": 84532
+	}
+}
+```
+
+| Field                  | Required | Notes                                             |
+| ---------------------- | -------- | ------------------------------------------------- |
+| `payload.delegationId` | yes      | Echoed from the `host.permissions.redeem` request |
+| `payload.txHash`       | yes      | Confirmed transaction hash                        |
+| `payload.chainId`      | yes      | Chain the transaction landed on                   |
+
+#### `embed.permissions.error` (embed → host)
+
+Announce a failed redemption. `code` is one of the canonical error codes; `message` is a human-readable description.
+
+```json
+{
+	"v": 1,
+	"type": "embed.permissions.error",
+	"id": "pr_001",
+	"payload": {
+		"delegationId": "uuid-...",
+		"code": "scope_exceeded",
+		"message": "Requested value exceeds the daily allowance."
+	}
+}
+```
+
+| Field                  | Required | Notes                                                                                                                                                                          |
+| ---------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `payload.delegationId` | yes      | Echoed from the `host.permissions.redeem` request                                                                                                                              |
+| `payload.code`         | yes      | One of: `delegation_expired`, `delegation_revoked`, `scope_exceeded`, `target_not_allowed`, `delegation_not_found`, `signature_invalid`, `chain_not_supported`, `rate_limited` |
+| `payload.message`      | yes      | Human-readable description for display or logging                                                                                                                              |
+
+### Claude artifact profile
+
+In a Claude.ai artifact sandbox:
+
+- **Default mode**: `permissions="readonly"`. Artifacts can render tipping UIs, display delegation scope, and show status — but the embed never initiates a redemption automatically.
+- **Relayer mode**: if a skill needs to transact, the artifact HTML must include `permissions="relayer"` and the agent owner must have provisioned a `permissions-bearer` token at embed time. The owner provisions this once via the manage panel.
+- **Interactive mode is not supported.** Claude artifact iframes have no persistent wallet session. If `permissions="interactive"` is set inside the Claude profile, the embed MUST treat it as `"readonly"` and emit a console warning.
+
+Example Claude artifact embed with relayer mode:
+
+```html
+<agent-3d
+	src="agent://base/42"
+	permissions="relayer"
+	permissions-bearer="sk_perm_abc123"
+></agent-3d>
+```
+
+### LobeHub profile
+
+LobeHub supports all three modes. LobeHub users typically have wallets configured at the platform level, so the default is `permissions="interactive"`.
+
+| Mode          | Supported | Notes                                                         |
+| ------------- | --------- | ------------------------------------------------------------- |
+| `readonly`    | Yes       | Explicit opt-in; disables all redemption UI                   |
+| `interactive` | Yes       | **Default on LobeHub.** Host provides `getSigner()`.          |
+| `relayer`     | Yes       | Agent owner provisions bearer; LobeHub injects at embed time. |
+
+When `interactive`, LobeHub's wallet bridge calls `host.getSigner()` and returns the user's connected wallet signer to the embed runtime.
+
+### Security
+
+**Envelope integrity** — embeds MUST verify `delegation.hash === keccak256(delegation.envelope)` before trusting any delegation loaded from the manifest or metadata endpoint. A mismatch MUST abort processing and log a warning; do not attempt redemption.
+
+**Signature verification** — embeds MUST call `isDelegationValid({ hash, chainId })` (from `src/permissions/toolkit.js`; see [PERMISSIONS_SPEC.md](./PERMISSIONS_SPEC.md) for the full library contract) before rendering a redeem action. An invalid or revoked delegation MUST render as inactive, not redeemable.
+
+**Origin isolation** — embeds MUST NOT write delegation envelopes to any storage (`localStorage`, `sessionStorage`, `IndexedDB`, cookies) that is shared across origins. In-memory only for the current page session.
+
+**Bearer token handling** — hosts MUST NOT set `permissions="relayer"` without a valid, owner-provided `permissions-bearer` value. If the attribute is absent or empty when `permissions="relayer"` is requested, the embed MUST silently fall back to `permissions="readonly"`.
+
+> **Future work (out of scope for v0.2):** multi-delegation chaining, session key delegation, and WebAuthn-gated redemption are explicitly deferred.
+
 ## See also
 
 - [AGENT_MANIFEST.md](./AGENT_MANIFEST.md)
 - [SKILL_SPEC.md](./SKILL_SPEC.md)
 - [MEMORY_SPEC.md](./MEMORY_SPEC.md)
+- [PERMISSIONS_SPEC.md](./PERMISSIONS_SPEC.md)
+- [EMBED_HOST_PROTOCOL.md](./EMBED_HOST_PROTOCOL.md)

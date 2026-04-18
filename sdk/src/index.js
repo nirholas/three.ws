@@ -35,6 +35,7 @@ export {
 	getIdentityRegistry,
 } from './erc8004/registry.js';
 export { IDENTITY_REGISTRY_ABI, REGISTRY_DEPLOYMENTS, agentRegistryId } from './erc8004/abi.js';
+export { PermissionsClient, PermissionError } from './permissions.js';
 
 import { AgentPanel } from './panel.js';
 import { agentRegistration, agentCard, aiPlugin } from './manifests.js';

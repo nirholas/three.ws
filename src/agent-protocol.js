@@ -22,6 +22,9 @@ export const ACTION_TYPES = {
 	LOAD_END: 'load-end', // model/asset loading finished
 	VALIDATE: 'validate', // validation result (errors, warnings, hints)
 	PRESENCE: 'presence', // agent came online / went idle
+	PERMISSIONS_REDEEM_START: 'permissions.redeem.start',
+	PERMISSIONS_REDEEM_SUCCESS: 'permissions.redeem.success',
+	PERMISSIONS_REDEEM_ERROR: 'permissions.redeem.error',
 };
 
 /**
