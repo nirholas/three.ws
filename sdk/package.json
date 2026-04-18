@@ -12,11 +12,24 @@
 			"import": "./src/index.js",
 			"default": "./src/index.js"
 		},
+		"./permissions": {
+			"types": "./src/permissions.d.ts",
+			"import": "./src/permissions.js",
+			"default": "./src/permissions.js"
+		},
+		"./permissions/advanced": {
+			"types": "./src/permissions/advanced.d.ts",
+			"import": "./src/permissions/advanced.js",
+			"default": "./src/permissions/advanced.js"
+		},
 		"./styles": "./src/styles.css"
 	},
 	"files": [
 		"src"
 	],
+	"scripts": {
+		"test": "node --test 'test/**/*.test.js'"
+	},
 	"keywords": [
 		"erc-8004",
 		"agent",

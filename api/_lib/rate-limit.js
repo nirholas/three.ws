@@ -93,12 +93,19 @@ export const limits = {
 			limit: Math.max(1, Math.min(1000, perMin || 10)),
 			window: '1 m',
 		}).limit(agentId),
+	// Gas-spending endpoints: 10 redeems per 5 minutes per IP
+	strict: (key) => getLimiter('permissions:redeem:strict', { limit: 10, window: '5 m' }).limit(key),
 	pinUser: (userId) => getLimiter('pin:user', { limit: 30, window: '1 h' }).limit(userId),
 	pinStatusIp: (ip) => getLimiter('pin:status:ip', { limit: 60, window: '1 m' }).limit(ip),
 	agentByAddress: (ip) =>
 		getLimiter('agents:by-address', { limit: 120, window: '1 m' }).limit(ip),
 	walletLink: (userId) => getLimiter('wallet:link', { limit: 10, window: '10 m' }).limit(userId),
 	agentSuggest: (ip) => getLimiter('agents:suggest', { limit: 120, window: '1 m' }).limit(ip),
+	read: (ip) => getLimiter('permissions:read', { limit: 300, window: '1 m' }).limit(ip),
+	permissionsGrant: (userId) =>
+		getLimiter('permissions:grant', { limit: 10, window: '1 h' }).limit(userId),
+	permissionsRevoke: (userId) =>
+		getLimiter('permissions:revoke', { limit: 20, window: '1 h' }).limit(userId),
 };
 
 // Trust only proxy headers that Vercel itself sets and signs. Naively reading

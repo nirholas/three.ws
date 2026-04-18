@@ -1,0 +1,29 @@
+{
+	"spec": "skill/0.1",
+	"name": "tip-jar",
+	"version": "0.1.0",
+	"description": "Let viewers send a USDC tip directly to the agent creator via ERC-7710 delegation.",
+	"license": "MIT",
+	"tags": ["payments", "usdc", "erc7710", "tip"],
+	"sandboxPolicy": "trusted-main-thread",
+	"requires": {
+		"runtime": ">=0.1.0",
+		"tools": []
+	},
+	"provides": {
+		"tools": [],
+		"triggers": ["tip_request"]
+	},
+	"permissions": {
+		"spec": "erc-7715/0.1",
+		"default_scope_preset": {
+			"token": {
+				"84532": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+				"8453": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+			},
+			"maxAmount": "10000000",
+			"period": "daily",
+			"expiry_days": 30
+		}
+	}
+}

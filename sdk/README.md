@@ -111,6 +111,42 @@ export const REGISTRY_DEPLOYMENTS = {
 };
 ```
 
+## Permissions
+
+Grant, list, redeem, and revoke ERC-7710 scoped delegations via the `PermissionsClient`.
+`grant` and `revoke` require a browser wallet (MetaMask / any injected ethers v6 Signer).
+
+```ts
+import { AgentKit } from '@nirholas/agent-kit';
+import { PermissionsClient } from '@nirholas/agent-kit/permissions';
+
+const client = new PermissionsClient({ baseUrl: 'https://3dagent.vercel.app' });
+
+// Fetch active delegations for an agent
+const { spec, delegations } = await client.getMetadata(agentId);
+
+// Grant a new delegation (browser only — needs MetaMask)
+const { id, delegationHash } = await client.grant({
+  agentId,
+  chainId: 84532,
+  preset: { token: 'native', maxAmount: '1000000', period: 'daily', targets: ['0xTarget'], expiryDays: 30 },
+  delegate: agentSmartAccountAddress,
+  signer,   // ethers v6 Signer from connectWallet()
+});
+
+// Verify on-chain that a delegation is still active
+const { valid, reason } = await client.verify(delegationHash, 84532);
+
+// Revoke (browser only)
+await client.revoke({ id, delegationHash, signer });
+```
+
+For advanced use (direct toolkit access with tree-shaking):
+
+```ts
+import { encodeScopedDelegation, isDelegationValid } from '@nirholas/agent-kit/permissions/advanced';
+```
+
 ## License
 
 MIT

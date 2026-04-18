@@ -1,0 +1,85 @@
+/* Wallet connect button — scoped via .cwb-btn and [data-state] attribute. */
+
+.cwb-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	width: 100%;
+	padding: 10px 18px;
+	font: inherit;
+	font-size: 14px;
+	font-weight: 500;
+	border-radius: 8px;
+	border: 1px solid #2a2a36;
+	background: #1c1c28;
+	color: #eee;
+	cursor: pointer;
+	transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.cwb-btn:hover:not(:disabled) {
+	background: #22222e;
+	border-color: #6a5cff;
+}
+
+.cwb-btn:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+/* State variants */
+.cwb-btn[data-state="connected"] {
+	border-color: #2a5c2a;
+	background: #141c14;
+	color: #7ddf7d;
+}
+
+.cwb-btn[data-state="wrong_chain"] {
+	border-color: #7a5a00;
+	background: #1c1800;
+	color: #f0c040;
+}
+
+.cwb-btn[data-state="error"] {
+	border-color: #5c2a2a;
+	background: #1c1414;
+	color: #df7d7d;
+}
+
+.cwb-btn[data-state="success"] {
+	border-color: #2a5c2a;
+	background: #141c14;
+	color: #7ddf7d;
+	cursor: default;
+}
+
+.cwb-btn[data-state="no_provider"] {
+	border-color: #f6851b;
+	color: #f6851b;
+}
+
+.cwb-btn[data-state="no_provider"]:hover {
+	background: #1c1710;
+	border-color: #f6851b;
+}
+
+/* Async spinner — simple border animation */
+.cwb-btn[aria-busy="true"]::before {
+	content: '';
+	display: inline-block;
+	width: 12px;
+	height: 12px;
+	border: 2px solid currentColor;
+	border-top-color: transparent;
+	border-radius: 50%;
+	animation: cwb-spin 0.7s linear infinite;
+	flex-shrink: 0;
+}
+
+@keyframes cwb-spin {
+	to { transform: rotate(360deg); }
+}
