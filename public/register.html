@@ -150,7 +150,8 @@
 		</form>
 		<script>
 			const params = new URLSearchParams(location.search);
-			const next = params.get('next') || '/dashboard/';
+			const next = params.get('next') || sessionStorage.getItem('login_redirect') || '/create';
+			sessionStorage.removeItem('login_redirect');
 			const form = document.getElementById('f');
 			const err = document.getElementById('err');
 			const btn = document.getElementById('submit');
