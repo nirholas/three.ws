@@ -154,7 +154,8 @@
 		<script type="module" src="/wallet-login.js"></script>
 		<script>
 			const params = new URLSearchParams(location.search);
-			const next = params.get('next') || '/dashboard/';
+			const next = params.get('next') || sessionStorage.getItem('login_redirect') || '/dashboard/';
+			sessionStorage.removeItem('login_redirect');
 
 			// If already signed in, skip the login form entirely.
 			fetch('/api/auth/me', { credentials: 'include' })

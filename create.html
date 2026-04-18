@@ -410,6 +410,14 @@
 				}
 			}
 		</style>
+	<script>
+		fetch('/api/auth/me', { credentials: 'include' }).then(function(r) {
+			if (!r.ok) {
+				sessionStorage.setItem('login_redirect', '/create');
+				location.replace('/login');
+			}
+		});
+	</script>
 	</head>
 	<body>
 		<header class="topbar">

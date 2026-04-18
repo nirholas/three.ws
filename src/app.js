@@ -408,10 +408,11 @@ class App {
 		else if (deploy) mode = 'deploy';
 		document.body.dataset.viewerMode = mode;
 		if (mode === 'main') {
-			// Use 'false' hint immediately to skip auth-gate flash for known-logged-out users.
-			// Never use 'true' hint optimistically — a stale hint would show then snap-hide the
-			// sidebar once /api/auth/me confirms the session expired.
-			document.body.dataset.authed = readAuthHint() === 'false' ? 'false' : 'pending';
+			// Only use 'pending' (hide gate, hide sidebar) when we have a stored 'true' hint —
+			// i.e. the user was last seen logged in and may still be. For everyone else (no hint
+			// or a 'false' hint) show the auth gate immediately so it never appears after the
+			// CZ model renders (which is instant when the GLB is cached from the homepage).
+			document.body.dataset.authed = readAuthHint() === 'true' ? 'pending' : 'false';
 		}
 	}
 
