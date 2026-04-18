@@ -19,10 +19,3 @@ export {
 	reportPassed,
 	hashReport,
 } from './validation-recorder.js';
-export {
-	initPrivy,
-	loginWithPrivy,
-	connectWithPrivy,
-	logoutPrivy,
-	isPrivyConfigured,
-} from './privy.js';

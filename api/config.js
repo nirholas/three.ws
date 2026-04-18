@@ -1,6 +1,4 @@
-// Public client-config. Returns non-secret config values the browser needs
-// (Privy app id, etc.). Lets us keep values in env vars instead of hardcoded
-// in static HTML in public/.
+// Public client-config. Returns non-secret config values the browser needs.
 
 import { cors, json, method, wrap } from './_lib/http.js';
 
@@ -9,7 +7,6 @@ export default wrap(async (req, res) => {
 	if (!method(req, res, ['GET'])) return;
 
 	return json(res, 200, {
-		privyAppId: process.env.PRIVY_APP_ID || '',
 		walletConnectProjectId: process.env.VITE_WALLETCONNECT_PROJECT_ID || '',
 	});
 });
