@@ -14,7 +14,10 @@ async function boot() {
 		else window.location.href = '/';
 	});
 
-	wireCard('card-default-editor', () => creator.openDefaultEditor());
+	wireCard('card-default-editor', async () => {
+		if (await isAtAvatarLimit()) return;
+		creator.openDefaultEditor();
+	});
 	wireCard('card-upload-glb', (e) => {
 		// Tooltip anchors live inside the card; let them navigate normally.
 		if (e && e.target && e.target.closest('a')) return;
@@ -60,6 +63,24 @@ async function handleGlbFile(file) {
 	await saveAndRedirect(file, { source: 'upload', name });
 }
 
+async function isAtAvatarLimit() {
+	try {
+		const res = await apiFetch('/api/usage/summary');
+		if (!res.ok) return false;
+		const { counts, plan } = await res.json();
+		if (counts.avatars >= plan.max_avatars) {
+			showStatus(
+				`You've reached the ${plan.max_avatars}-avatar limit on the free plan. Delete an avatar to create a new one.`,
+				'error',
+			);
+			return true;
+		}
+	} catch {
+		// network error — let the upload attempt proceed and fail naturally
+	}
+	return false;
+}
+
 async function saveAndRedirect(blob, meta = {}) {
 	showStatus('Uploading avatar…', 'loading');
 	try {
@@ -70,6 +91,13 @@ async function saveAndRedirect(blob, meta = {}) {
 		if (err.code === 'not_signed_in') {
 			sessionStorage.setItem('login_redirect', '/create');
 			window.location.replace('/login');
+			return;
+		}
+		if (err.data?.error === 'plan_limit_count') {
+			showStatus(
+				"You've reached your avatar limit. Delete an avatar to create a new one.",
+				'error',
+			);
 			return;
 		}
 		if (!err.redirected) showStatus(err.message || 'Upload failed.', 'error');

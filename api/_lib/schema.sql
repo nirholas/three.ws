@@ -407,3 +407,116 @@ create table if not exists agent_registrations_pending (
 
 create index if not exists agent_registrations_pending_user_expiry
 	on agent_registrations_pending(user_id, expires_at);
+
+-- ── Additive: ensure partial unique index exists (required by ON CONFLICT in agents.js) ──
+create unique index if not exists agent_identities_user_unique
+    on agent_identities(user_id) where deleted_at is null;
+
+-- ── agent_delegations — ERC-7710 signed delegation envelopes ────────────────
+create table if not exists agent_delegations (
+    id                  uuid primary key default gen_random_uuid(),
+    agent_id            uuid not null references agent_identities(id) on delete cascade,
+    chain_id            integer not null,
+    delegator_address   text not null,
+    delegate_address    text not null,
+    delegation_hash     text not null unique,
+    delegation_json     jsonb not null,
+    scope               jsonb not null,
+    status              text not null default 'active',
+    expires_at          timestamptz not null,
+    created_at          timestamptz not null default now(),
+    revoked_at          timestamptz,
+    tx_hash_revoke      text,
+    last_redeemed_at    timestamptz,
+    redemption_count    integer not null default 0,
+
+    constraint agent_delegations_status_check
+        check (status in ('active', 'revoked', 'expired')),
+    constraint agent_delegations_chain_id_check
+        check (chain_id > 0),
+    constraint agent_delegations_delegator_address_check
+        check (length(delegator_address) = 42 and delegator_address like '0x%'),
+    constraint agent_delegations_delegate_address_check
+        check (length(delegate_address) = 42 and delegate_address like '0x%')
+);
+
+create index if not exists idx_delegations_agent on agent_delegations(agent_id);
+create index if not exists idx_delegations_status on agent_delegations(status) where status = 'active';
+create index if not exists idx_delegations_delegator on agent_delegations(delegator_address);
+
+-- ── agent_subscriptions — recurring on-chain payment schedules ──────────────
+create table if not exists agent_subscriptions (
+    id                  uuid primary key default gen_random_uuid(),
+    user_id             uuid not null references users(id) on delete cascade,
+    agent_id            uuid not null references agent_identities(id) on delete cascade,
+    delegation_id       uuid not null references agent_delegations(id) on delete cascade,
+    period_seconds      integer not null,
+    amount_per_period   text not null,
+    next_charge_at      timestamptz not null,
+    last_charge_at      timestamptz,
+    status              text not null default 'active',
+    last_error          text,
+    created_at          timestamptz not null default now(),
+    canceled_at         timestamptz,
+
+    constraint agent_subscriptions_status_check
+        check (status in ('active', 'canceled', 'paused')),
+    constraint agent_subscriptions_period_seconds_check
+        check (period_seconds > 0)
+);
+
+create index if not exists idx_subscriptions_due on agent_subscriptions(next_charge_at) where status = 'active';
+create index if not exists idx_subscriptions_user on agent_subscriptions(user_id);
+create index if not exists idx_subscriptions_agent on agent_subscriptions(agent_id);
+
+-- ── dca_strategies — DCA schedule configs ───────────────────────────────────
+create table if not exists dca_strategies (
+    id                      uuid primary key default gen_random_uuid(),
+    agent_id                uuid not null,
+    delegation_id           uuid not null,
+    chain_id                integer not null default 84532,
+    token_in                text not null,
+    token_out               text not null,
+    token_out_symbol        text not null default 'WETH',
+    amount_per_execution    text not null,
+    period_seconds          integer not null,
+    slippage_bps            integer not null default 50,
+    status                  text not null default 'active',
+    next_execution_at       timestamptz not null,
+    last_execution_at       timestamptz,
+    created_at              timestamptz not null default now(),
+    cancelled_at            timestamptz,
+
+    constraint dca_strategies_status_check
+        check (status in ('active', 'paused', 'expired', 'cancelled')),
+    constraint dca_strategies_chain_id_check
+        check (chain_id > 0),
+    constraint dca_strategies_slippage_check
+        check (slippage_bps between 1 and 500),
+    constraint dca_strategies_period_check
+        check (period_seconds in (86400, 604800))
+);
+
+create index if not exists idx_dca_strategies_agent on dca_strategies(agent_id);
+create index if not exists idx_dca_strategies_next_exec on dca_strategies(next_execution_at) where status = 'active';
+
+-- ── dca_executions — per-cron swap attempt log ───────────────────────────────
+create table if not exists dca_executions (
+    id                      uuid primary key default gen_random_uuid(),
+    strategy_id             uuid not null references dca_strategies(id) on delete cascade,
+    chain_id                integer not null,
+    tx_hash                 text,
+    amount_in               text not null,
+    quote_amount_out        text,
+    amount_out              text,
+    slippage_bps_used       integer,
+    quote_divergence_bps    integer,
+    status                  text not null default 'pending',
+    error                   text,
+    executed_at             timestamptz not null default now(),
+
+    constraint dca_executions_status_check
+        check (status in ('pending', 'success', 'failed', 'aborted'))
+);
+
+create index if not exists idx_dca_executions_strategy on dca_executions(strategy_id);

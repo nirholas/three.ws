@@ -173,7 +173,7 @@ export async function resolveAvatarUrl(row, { expiresIn = 600 } = {}) {
 }
 
 // ── quotas ───────────────────────────────────────────────────────────────────
-async function enforceQuotas(userId, incomingBytes) {
+export async function enforceQuotas(userId, incomingBytes) {
 	const rows = await sql`
 		select u.plan, q.max_avatars, q.max_bytes_per_avatar, q.max_total_bytes,
 		       (select count(*) from avatars a where a.owner_id = u.id and a.deleted_at is null) as avatar_count,

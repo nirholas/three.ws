@@ -3,7 +3,7 @@
 
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
 import { presignUpload } from '../_lib/r2.js';
-import { storageKeyFor } from '../_lib/avatars.js';
+import { storageKeyFor, enforceQuotas } from '../_lib/avatars.js';
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
 import { limits } from '../_lib/rate-limit.js';
 import { parse, presignUploadBody, slug as slugSchema } from '../_lib/validate.js';
@@ -19,6 +19,13 @@ export default wrap(async (req, res) => {
 	if (!rl.success) return error(res, 429, 'rate_limited', 'upload rate exceeded');
 
 	const body = parse(presignUploadBody, await readJson(req));
+
+	try {
+		await enforceQuotas(userId, body.size_bytes);
+	} catch (err) {
+		return error(res, err.status || 402, err.code || 'plan_limit', err.message);
+	}
+
 	const bodyAny = body;
 	const slug = bodyAny.slug
 		? slugSchema.parse(bodyAny.slug)
