@@ -24,7 +24,6 @@ import {
 } from './agent-registry.js';
 import { glbFileToThumbnail } from './thumbnail.js';
 import { DEFAULT_AVATARS, getDefaultAvatar } from './default-avatars.js';
-import { isPrivyConfigured } from './privy.js';
 import { REGISTRY_DEPLOYMENTS } from './abi.js';
 import { renderBatchTab } from './batch-tab.js';
 import { renderQRToCanvas } from './qr.js';
@@ -308,7 +307,7 @@ export class RegisterUI {
 					<div class="erc8004-controls">
 						<select class="erc8004-chain-select" title="Target chain"></select>
 						<button class="erc8004-btn erc8004-btn--wallet" type="button">
-							${isPrivyConfigured() ? 'Connect Wallet' : 'Connect MetaMask'}
+							Connect MetaMask
 						</button>
 						${closeBtn}
 					</div>
@@ -410,7 +409,7 @@ export class RegisterUI {
 	_refreshWalletButton() {
 		const btn = this.el.querySelector('.erc8004-btn--wallet');
 		if (!this.wallet) {
-			btn.textContent = isPrivyConfigured() ? 'Connect Wallet' : 'Connect MetaMask';
+			btn.textContent = 'Connect MetaMask';
 			btn.classList.remove('erc8004-btn--connected');
 			return;
 		}

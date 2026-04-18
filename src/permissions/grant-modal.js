@@ -940,3 +940,76 @@ if (typeof window !== 'undefined') {
 		window.openGrantPermissions = (opts) => new GrantPermissionsModal(opts).open();
 	}
 }
+
+// ── openGrantModal — skill-facing convenience function ────────────────────────
+
+/**
+ * Simplified entry point for skills that want to open the grant modal with a
+ * scope preset, without needing to resolve wallet addresses themselves.
+ *
+ * Connects the wallet to get the delegator address, fetches the agent's
+ * delegate address from the permissions metadata endpoint, then opens the
+ * GrantPermissionsModal with the preset fields pre-filled.
+ *
+ * @param {{
+ *   agentId:          string,
+ *   chainId:          number,
+ *   preset:           {
+ *     token:          string,
+ *     maxAmount:      string,       // base units (e.g. "10000000" for 10 USDC)
+ *     period:         string,
+ *     targets?:       string[],
+ *     expiry_days?:   number,
+ *   },
+ *   delegateAddress?: string,       // optional override; otherwise fetched from API
+ * }} opts
+ * @returns {Promise<{ ok: true, id: string, delegationHash: string } | { ok: false, reason: string }>}
+ */
+export async function openGrantModal({ agentId, chainId, preset, delegateAddress } = {}) {
+	// 1. Connect wallet — delegator is whoever is currently signed in
+	let delegatorAddress;
+	try {
+		const { address } = await connectWallet();
+		delegatorAddress = address;
+	} catch (err) {
+		return { ok: false, reason: `wallet_connection_failed: ${err.message}` };
+	}
+
+	// 2. Resolve delegate (agent smart account) from metadata if not provided
+	let delegate = delegateAddress;
+	if (!delegate) {
+		try {
+			const url = `/api/permissions/metadata?agentId=${encodeURIComponent(agentId)}&chainId=${encodeURIComponent(chainId)}`;
+			const res = await fetch(url);
+			const data = res.ok ? await res.json() : null;
+			delegate = data?.delegations?.[0]?.delegate ?? null;
+		} catch { /* ignore */ }
+	}
+	if (!delegate) {
+		return { ok: false, reason: 'delegate_address_unknown' };
+	}
+
+	// 3. Normalize preset — convert maxAmount from base units to display units
+	const tokens = tokensForChain(chainId);
+	const tokenMeta = preset?.token
+		? tokens.find((t) => t.address.toLowerCase() === preset.token.toLowerCase())
+		: null;
+	const decimals = tokenMeta?.decimals ?? 6;
+
+	const presets = {};
+	if (preset?.token)      presets.token   = preset.token;
+	if (preset?.period)     presets.period  = preset.period;
+	if (preset?.targets)    presets.targets = preset.targets;
+	if (preset?.maxAmount)  presets.amount  = String(Number(preset.maxAmount) / 10 ** decimals);
+	if (preset?.expiry_days) {
+		presets.expiry = '30d';
+	}
+
+	return new GrantPermissionsModal({
+		agentId,
+		chainId,
+		delegatorAddress,
+		delegateAddress: delegate,
+		presets,
+	}).open();
+}

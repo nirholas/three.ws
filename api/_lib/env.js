@@ -92,12 +92,6 @@ export const env = {
 		return opt('CRON_SECRET');
 	},
 
-	// Privy app ID (wallet auth via Privy identity tokens).
-	// Get from https://dashboard.privy.io
-	get PRIVY_APP_ID() {
-		return req('PRIVY_APP_ID');
-	},
-
 	// Mainnet RPC URL for ENS resolution. Falls back to ethers public default provider.
 	// Recommended: set to an Alchemy / Infura URL for reliability.
 	get MAINNET_RPC_URL() {

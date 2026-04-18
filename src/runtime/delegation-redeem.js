@@ -146,55 +146,19 @@ function _getRelayerToken(agentId) {
 
 // ── Client-mode redemption ────────────────────────────────────────────────────
 
-async function _redeemClient(delegation, calls) {
-	// Prefer the permissions toolkit when available (task 04)
-	try {
-		const { redeemDelegation } = await import('../permissions/toolkit.js');
-		return redeemDelegation(delegation, calls);
-	} catch {
-		// Toolkit not yet installed — fall back to direct ethers call
+async function _redeemClient(delegation, calls, chainId) {
+	if (!delegation.signature) {
+		// Metadata endpoint returns a public view without the signature.
+		// Client-mode redemption requires the full signed delegation object.
+		throw new Error('no_redemption_path');
 	}
 
-	if (typeof window === 'undefined' || !window.ethereum) {
-		throw new Error('no_wallet');
-	}
+	const { connectWallet } = await import('../erc8004/agent-registry.js');
+	const { signer } = await connectWallet();
 
-	const { ethers } = await import('ethers');
-	const provider = new ethers.BrowserProvider(window.ethereum);
-	const signer = await provider.getSigner();
-
-	// Minimal ERC-7710 redeemDelegations call
-	const abi = [
-		'function redeemDelegations(bytes[] calldata _permissionContexts, bytes32[] calldata _modes, bytes[] calldata _executionCallDatas) external payable',
-	];
-	const contract = new ethers.Contract(delegation.delegatorAddress, abi, signer);
-
-	const encodedDelegation = ethers.hexlify(
-		typeof delegation.envelope === 'string'
-			? ethers.toUtf8Bytes(delegation.envelope)
-			: delegation.envelope,
-	);
-
-	const encodedCalls = calls.map((c) => {
-		const target = c.to ?? c.target ?? ethers.ZeroAddress;
-		const value = c.value ?? 0n;
-		const data = c.data ?? '0x';
-		return ethers.AbiCoder.defaultAbiCoder().encode(
-			['address', 'uint256', 'bytes'],
-			[target, value, data],
-		);
-	});
-
-	// SINGLE execution mode (0x01000000)
-	const modes = calls.map(() => ethers.zeroPadValue('0x01000000', 32));
-
-	const tx = await contract.redeemDelegations(
-		[encodedDelegation],
-		modes,
-		encodedCalls,
-	);
-	const receipt = await tx.wait();
-	return receipt.hash;
+	const { redeemDelegation } = await import('../permissions/toolkit.js');
+	const { txHash } = await redeemDelegation({ delegation, calls, signer, chainId });
+	return txHash;
 }
 
 // ── Relayer-mode redemption ───────────────────────────────────────────────────
@@ -281,7 +245,7 @@ export async function redeemFromSkill({ agentId, chainId, calls, skillId, mode =
 	// Resolve auto mode
 	let resolvedMode = mode;
 	if (mode === 'auto') {
-		const hasWallet = typeof window !== 'undefined' && !!window.ethereum;
+		const hasWallet = typeof window !== 'undefined' && !!window.ethereum && !!delegation.signature;
 		const hasToken = !!_getRelayerToken(agentId);
 		if (hasWallet) resolvedMode = 'client';
 		else if (hasToken) resolvedMode = 'relayer';
@@ -338,7 +302,7 @@ export async function redeemFromSkill({ agentId, chainId, calls, skillId, mode =
 	try {
 		let txHash;
 		if (resolvedMode === 'client') {
-			txHash = await _redeemClient(delegation, calls);
+			txHash = await _redeemClient(delegation, calls, chainId);
 		} else {
 			txHash = await _redeemRelayer(delegation, calls, agentId, chainId, skillId);
 		}

@@ -1,5 +1,4 @@
 import { connectWallet } from './erc8004/agent-registry.js';
-import { isPrivyConfigured } from './erc8004/privy.js';
 
 // ─── Public API ─────────────────────────────────────────────────────────────
 
@@ -133,7 +132,7 @@ function _wireClickHandler(buttonEl) {
 	buttonEl.addEventListener('click', async () => {
 		if (_busy) return;
 
-		if (!window.ethereum && !isPrivyConfigured()) {
+		if (!window.ethereum) {
 			statusEl.style.display = 'inline';
 			statusEl.textContent =
 				'No wallet detected — install MetaMask or use a wallet-enabled browser.';
