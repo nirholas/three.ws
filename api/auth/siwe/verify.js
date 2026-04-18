@@ -53,8 +53,13 @@ export default wrap(async (req, res) => {
 	const appOrigin = env.APP_ORIGIN;
 	const appHost = new URL(appOrigin).host;
 	const vercelHost = process.env.VERCEL_URL || null;
+	const isLocalDev = process.env.VERCEL_ENV !== 'production' && process.env.VERCEL_ENV !== 'preview';
 	const allowedHosts = new Set([appHost, vercelHost].filter(Boolean));
-	if (!allowedHosts.has(fields.domain)) {
+	// In local dev, accept any localhost domain so vercel dev works without
+	// overriding PUBLIC_APP_ORIGIN.
+	const domainOk = allowedHosts.has(fields.domain) ||
+		(isLocalDev && /^localhost(:\d+)?$/.test(fields.domain));
+	if (!domainOk) {
 		return error(res, 400, 'invalid_domain', `domain must be ${appHost}`);
 	}
 	try {
@@ -62,7 +67,9 @@ export default wrap(async (req, res) => {
 		const allowedOrigins = new Set(
 			[appOrigin, vercelHost ? `https://${vercelHost}` : null].filter(Boolean),
 		);
-		if (!allowedOrigins.has(u.origin))
+		const originOk = allowedOrigins.has(u.origin) ||
+			(isLocalDev && /^https?:\/\/localhost(:\d+)?$/.test(u.origin));
+		if (!originOk)
 			return error(res, 400, 'invalid_uri', 'uri origin mismatch');
 	} catch {
 		return error(res, 400, 'invalid_uri', 'uri not a valid URL');

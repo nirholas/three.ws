@@ -121,6 +121,8 @@ export class AgentHome {
 					: ''
 			}
 
+			<div id="agent-permissions-container"></div>
+
 			<div class="agent-home-memory-bar" id="agent-memory-bar">
 				${this._renderMemoryBar()}
 			</div>
@@ -136,6 +138,15 @@ export class AgentHome {
 
 		this.container.appendChild(panel);
 		this._panel = panel;
+
+		// Permissions manage panel — lazy load; degrades gracefully if unauthenticated
+		const agentId = this.identity.id;
+		if (agentId) {
+			const permContainer = panel.querySelector('#agent-permissions-container');
+			import('./permissions/manage-panel.js')
+				.then(({ mountManagePanel }) => mountManagePanel({ container: permContainer, agentId }))
+				.catch(() => {});
+		}
 
 		// Copy link button
 		panel.querySelector('#agent-copy-link')?.addEventListener('click', () => {

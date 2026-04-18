@@ -165,7 +165,7 @@ export async function getSessionUser(req, res) {
 	const hash = await sha256(token);
 	const rows = await sql`
 		select s.id as sid, s.last_seen_at, s.expires_at,
-		       u.id, u.email, u.display_name, u.plan, u.avatar_url
+		       u.id, u.email, u.display_name, u.plan, u.avatar_url, u.wallet_address
 		from sessions s join users u on u.id = s.user_id
 		where s.token_hash = ${hash}
 		  and s.revoked_at is null

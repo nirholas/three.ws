@@ -22,6 +22,18 @@ const bodySchema = z.object({
 const iface = new Interface(DELEGATION_MANAGER_ABI);
 const DISABLED_TOPIC = iface.getEvent('DelegationDisabled').topicHash;
 
+const RPC_TIMEOUT_MS = 5000;
+
+function withTimeout(promise, ms) {
+	return new Promise((resolve, reject) => {
+		const t = setTimeout(() => reject(new Error(`rpc timeout after ${ms}ms`)), ms);
+		Promise.resolve(promise).then(
+			(v) => { clearTimeout(t); resolve(v); },
+			(e) => { clearTimeout(t); reject(e); },
+		);
+	});
+}
+
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
@@ -83,9 +95,13 @@ export default wrap(async (req, res) => {
 	let receipt = null;
 	for (let attempt = 0; attempt < 3 && !receipt; attempt++) {
 		if (attempt > 0) await new Promise((r) => setTimeout(r, 800));
-		receipt = await provider.getTransactionReceipt(txHash).catch(() => null);
+		receipt = await withTimeout(provider.getTransactionReceipt(txHash), RPC_TIMEOUT_MS).catch(() => null);
 	}
 	if (!receipt) return error(res, 400, 'tx_not_found', 'transaction receipt not found');
+
+	if (receipt.status === 0) {
+		return error(res, 400, 'tx_reverted', 'transaction was reverted on-chain');
+	}
 
 	// Decode DelegationDisabled event: (address indexed delegationManager, bytes32 indexed delegationHash)
 	// topics[0] = event sig, topics[1] = delegationManager, topics[2] = delegationHash
@@ -101,7 +117,7 @@ export default wrap(async (req, res) => {
 
 	// Second confirmation: call disabledDelegations(hash) on-chain
 	const manager = new Contract(managerAddr, DELEGATION_MANAGER_ABI, provider);
-	const isDisabled = await manager.disabledDelegations(row.delegation_hash).catch(() => null);
+	const isDisabled = await withTimeout(manager.disabledDelegations(row.delegation_hash), RPC_TIMEOUT_MS).catch(() => null);
 	if (!isDisabled) {
 		return error(res, 400, 'not_yet_disabled', 'delegation is not yet marked disabled on-chain');
 	}
@@ -114,7 +130,9 @@ export default wrap(async (req, res) => {
 		RETURNING revoked_at
 	`;
 	if (!updated || updated.length === 0) {
-		return error(res, 409, 'already_revoked', 'delegation is already revoked or expired');
+		const [current] = await sql`SELECT status FROM agent_delegations WHERE id = ${id} LIMIT 1`;
+		const currentStatus = current?.status ?? 'unknown';
+		return error(res, 409, 'already_revoked', `delegation cannot be revoked (current status: ${currentStatus})`);
 	}
 
 	const revokedAt = updated[0].revoked_at;
