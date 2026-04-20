@@ -17,7 +17,9 @@ const postSchema = z.object({
 	agentId: z.string().uuid(),
 	delegationId: z.string().uuid(),
 	periodSeconds: z.number().int().positive(),
-	amountPerPeriod: z.string().regex(/^\d+$/, 'amountPerPeriod must be a base-unit integer string'),
+	amountPerPeriod: z
+		.string()
+		.regex(/^\d+$/, 'amountPerPeriod must be a base-unit integer string'),
 });
 
 export default wrap(async (req, res) => {
@@ -55,7 +57,8 @@ export default wrap(async (req, res) => {
 			SELECT id FROM agent_delegations
 			WHERE id = ${delegationId} AND agent_id = ${agentId} AND status = 'active'
 		`;
-		if (!delegation) return error(res, 400, 'validation_error', 'delegation not found or not active');
+		if (!delegation)
+			return error(res, 400, 'validation_error', 'delegation not found or not active');
 
 		// Idempotency: return existing active subscription rather than duplicating.
 		const [existing] = await sql`

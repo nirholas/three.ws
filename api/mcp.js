@@ -688,12 +688,16 @@ async function handleTerminate(_req, res) {
 }
 
 // ── error helpers ────────────────────────────────────────────────────────────
+function quoteString(s) {
+	return `"${String(s).replace(/[\\"]/g, '\\$&')}"`;
+}
+
 function send401(res, msg) {
 	const resource = env.MCP_RESOURCE;
 	res.statusCode = 401;
 	res.setHeader(
 		'www-authenticate',
-		`Bearer resource_metadata="${env.APP_ORIGIN}/.well-known/oauth-protected-resource", resource="${resource}"`,
+		`Bearer resource_metadata=${quoteString(`${env.APP_ORIGIN}/.well-known/oauth-protected-resource`)}, resource=${quoteString(resource)}`,
 	);
 	res.setHeader('content-type', 'application/json; charset=utf-8');
 	res.end(JSON.stringify({ error: 'unauthorized', error_description: msg }));

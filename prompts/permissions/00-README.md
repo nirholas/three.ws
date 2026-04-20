@@ -47,14 +47,14 @@ CREATE INDEX idx_delegations_delegator ON agent_delegations(delegator_address);
 
 ### API — endpoints under `/api/permissions/`
 
-| Method | Path                               | Body / Query                                                   | Response                            |
-| ------ | ---------------------------------- | -------------------------------------------------------------- | ----------------------------------- |
-| POST   | `/api/permissions/grant`           | `{ agentId, chainId, delegation, scope }`                      | `{ ok, id, delegationHash }`        |
-| GET    | `/api/permissions/list`            | `?agentId=X` or `?delegator=0x...`                             | `{ ok, delegations: [...] }`        |
-| POST   | `/api/permissions/revoke`          | `{ id, txHash }`                                               | `{ ok, status: 'revoked' }`         |
-| POST   | `/api/permissions/redeem`          | `{ id, calls: [{to,value,data}] }` (auth: agent bearer token)  | `{ ok, txHash, receipt }`           |
-| GET    | `/api/permissions/metadata`        | `?agentId=X` (public, cached)                                  | `{ ok, delegations: [public view] }`|
-| GET    | `/api/permissions/verify`          | `?hash=0x...&chainId=N`                                        | `{ ok, valid, reason? }`            |
+| Method | Path                        | Body / Query                                                  | Response                             |
+| ------ | --------------------------- | ------------------------------------------------------------- | ------------------------------------ |
+| POST   | `/api/permissions/grant`    | `{ agentId, chainId, delegation, scope }`                     | `{ ok, id, delegationHash }`         |
+| GET    | `/api/permissions/list`     | `?agentId=X` or `?delegator=0x...`                            | `{ ok, delegations: [...] }`         |
+| POST   | `/api/permissions/revoke`   | `{ id, txHash }`                                              | `{ ok, status: 'revoked' }`          |
+| POST   | `/api/permissions/redeem`   | `{ id, calls: [{to,value,data}] }` (auth: agent bearer token) | `{ ok, txHash, receipt }`            |
+| GET    | `/api/permissions/metadata` | `?agentId=X` (public, cached)                                 | `{ ok, delegations: [public view] }` |
+| GET    | `/api/permissions/verify`   | `?hash=0x...&chainId=N`                                       | `{ ok, valid, reason? }`             |
 
 All responses follow `{ ok: true, ... }` / `{ ok: false, error: 'code', message: '...' }` per [api/CLAUDE.md](../../api/CLAUDE.md).
 
@@ -125,28 +125,28 @@ export async function getActiveDelegation({ agentId, chainId }) { /* */ }
 
 ## Tasks (independent — run in any order)
 
-| #   | File                                                                  | Area                           |
-| --- | --------------------------------------------------------------------- | ------------------------------ |
-| 01  | [01-permissions-spec.md](./01-permissions-spec.md)                    | specs (new doc)                |
-| 02  | [02-manifest-permissions-field.md](./02-manifest-permissions-field.md)| specs (append)                 |
-| 03  | [03-erc7710-abi.md](./03-erc7710-abi.md)                              | src/erc7710/                   |
-| 04  | [04-delegation-toolkit.md](./04-delegation-toolkit.md)                | src/permissions/toolkit.js     |
-| 05  | [05-db-schema.md](./05-db-schema.md)                                  | schema + migration             |
-| 06  | [06-api-grant.md](./06-api-grant.md)                                  | api/permissions/grant.js       |
-| 07  | [07-api-list.md](./07-api-list.md)                                    | api/permissions/list.js        |
-| 08  | [08-api-revoke.md](./08-api-revoke.md)                                | api/permissions/revoke.js      |
-| 09  | [09-api-redeem.md](./09-api-redeem.md)                                | api/permissions/redeem.js      |
-| 10  | [10-grant-ui.md](./10-grant-ui.md)                                    | src/permissions/grant-modal.js |
-| 11  | [11-manage-ui.md](./11-manage-ui.md)                                  | src/permissions/manage-panel.js|
-| 12  | [12-api-metadata.md](./12-api-metadata.md)                            | api/permissions/metadata.js    |
-| 13  | [13-runtime-redeem-hook.md](./13-runtime-redeem-hook.md)              | src/runtime/                   |
-| 14  | [14-skill-tip-jar.md](./14-skill-tip-jar.md)                          | public/skills/tip-jar/         |
-| 15  | [15-skill-subscription.md](./15-skill-subscription.md)                | public/skills/subscription/    |
-| 16  | [16-skill-dca.md](./16-skill-dca.md)                                  | public/skills/dca/             |
-| 17  | [17-embed-spec-delegation.md](./17-embed-spec-delegation.md)          | specs (append)                 |
-| 18  | [18-sdk-permissions.md](./18-sdk-permissions.md)                      | sdk/                           |
-| 19  | [19-indexer-cron.md](./19-indexer-cron.md)                            | api/cron/                      |
-| 20  | [20-verify-endpoint.md](./20-verify-endpoint.md)                      | api/permissions/verify.js      |
+| #   | File                                                                   | Area                            |
+| --- | ---------------------------------------------------------------------- | ------------------------------- |
+| 01  | [01-permissions-spec.md](./01-permissions-spec.md)                     | specs (new doc)                 |
+| 02  | [02-manifest-permissions-field.md](./02-manifest-permissions-field.md) | specs (append)                  |
+| 03  | [03-erc7710-abi.md](./03-erc7710-abi.md)                               | src/erc7710/                    |
+| 04  | [04-delegation-toolkit.md](./04-delegation-toolkit.md)                 | src/permissions/toolkit.js      |
+| 05  | [05-db-schema.md](./05-db-schema.md)                                   | schema + migration              |
+| 06  | [06-api-grant.md](./06-api-grant.md)                                   | api/permissions/grant.js        |
+| 07  | [07-api-list.md](./07-api-list.md)                                     | api/permissions/list.js         |
+| 08  | [08-api-revoke.md](./08-api-revoke.md)                                 | api/permissions/revoke.js       |
+| 09  | [09-api-redeem.md](./09-api-redeem.md)                                 | api/permissions/redeem.js       |
+| 10  | [10-grant-ui.md](./10-grant-ui.md)                                     | src/permissions/grant-modal.js  |
+| 11  | [11-manage-ui.md](./11-manage-ui.md)                                   | src/permissions/manage-panel.js |
+| 12  | [12-api-metadata.md](./12-api-metadata.md)                             | api/permissions/metadata.js     |
+| 13  | [13-runtime-redeem-hook.md](./13-runtime-redeem-hook.md)               | src/runtime/                    |
+| 14  | [14-skill-tip-jar.md](./14-skill-tip-jar.md)                           | public/skills/tip-jar/          |
+| 15  | [15-skill-subscription.md](./15-skill-subscription.md)                 | public/skills/subscription/     |
+| 16  | [16-skill-dca.md](./16-skill-dca.md)                                   | public/skills/dca/              |
+| 17  | [17-embed-spec-delegation.md](./17-embed-spec-delegation.md)           | specs (append)                  |
+| 18  | [18-sdk-permissions.md](./18-sdk-permissions.md)                       | sdk/                            |
+| 19  | [19-indexer-cron.md](./19-indexer-cron.md)                             | api/cron/                       |
+| 20  | [20-verify-endpoint.md](./20-verify-endpoint.md)                       | api/permissions/verify.js       |
 
 All tasks reference the Canonical Shapes section above. None depend on another task being done first — each ships its own slice. Collisions on existing files are limited to `specs/AGENT_MANIFEST.md` (task 02) and `specs/EMBED_SPEC.md` (task 17), which are different files.
 

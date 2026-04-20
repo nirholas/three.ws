@@ -44,7 +44,10 @@
 	color: #b0b8d8;
 	cursor: pointer;
 	font-size: 0.9rem;
-	transition: background 0.15s, color 0.15s, border-color 0.15s;
+	transition:
+		background 0.15s,
+		color 0.15s,
+		border-color 0.15s;
 }
 
 .tip-jar-btn:hover {

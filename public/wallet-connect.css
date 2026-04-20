@@ -15,7 +15,10 @@
 	background: #1c1c28;
 	color: #eee;
 	cursor: pointer;
-	transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+	transition:
+		background 0.15s,
+		border-color 0.15s,
+		opacity 0.15s;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -32,43 +35,43 @@
 }
 
 /* State variants */
-.cwb-btn[data-state="connected"] {
+.cwb-btn[data-state='connected'] {
 	border-color: #2a5c2a;
 	background: #141c14;
 	color: #7ddf7d;
 }
 
-.cwb-btn[data-state="wrong_chain"] {
+.cwb-btn[data-state='wrong_chain'] {
 	border-color: #7a5a00;
 	background: #1c1800;
 	color: #f0c040;
 }
 
-.cwb-btn[data-state="error"] {
+.cwb-btn[data-state='error'] {
 	border-color: #5c2a2a;
 	background: #1c1414;
 	color: #df7d7d;
 }
 
-.cwb-btn[data-state="success"] {
+.cwb-btn[data-state='success'] {
 	border-color: #2a5c2a;
 	background: #141c14;
 	color: #7ddf7d;
 	cursor: default;
 }
 
-.cwb-btn[data-state="no_provider"] {
+.cwb-btn[data-state='no_provider'] {
 	border-color: #f6851b;
 	color: #f6851b;
 }
 
-.cwb-btn[data-state="no_provider"]:hover {
+.cwb-btn[data-state='no_provider']:hover {
 	background: #1c1710;
 	border-color: #f6851b;
 }
 
 /* Async spinner — simple border animation */
-.cwb-btn[aria-busy="true"]::before {
+.cwb-btn[aria-busy='true']::before {
 	content: '';
 	display: inline-block;
 	width: 12px;
@@ -81,5 +84,7 @@
 }
 
 @keyframes cwb-spin {
-	to { transform: rotate(360deg); }
+	to {
+		transform: rotate(360deg);
+	}
 }

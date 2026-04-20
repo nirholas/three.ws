@@ -21,26 +21,26 @@ Create `api/permissions/metadata.js` (GET only):
 4. **Shape** (must match `specs/AGENT_MANIFEST.md` `permissions.delegations[]`):
     ```jsonc
     {
-        "ok": true,
-        "agentId": "...",
-        "spec": "erc-7715/0.1",
-        "delegationManager": "0x...", // resolved from abi.js per chainId
-        "delegations": [
-            {
-                "chainId": 84532,
-                "delegator": "0x...",
-                "delegate": "0x...",
-                "hash": "0x...",
-                "scope": {
-                    /* from column, redacted signatures */
-                },
-                "expiresAt": "...",
-                "createdAt": "...",
-                "envelope": {
-                    /* full signed envelope INCLUDING signature — it's on-chain verifiable, not secret */
-                }
-            }
-        ]
+    	"ok": true,
+    	"agentId": "...",
+    	"spec": "erc-7715/0.1",
+    	"delegationManager": "0x...", // resolved from abi.js per chainId
+    	"delegations": [
+    		{
+    			"chainId": 84532,
+    			"delegator": "0x...",
+    			"delegate": "0x...",
+    			"hash": "0x...",
+    			"scope": {
+    				/* from column, redacted signatures */
+    			},
+    			"expiresAt": "...",
+    			"createdAt": "...",
+    			"envelope": {
+    				/* full signed envelope INCLUDING signature — it's on-chain verifiable, not secret */
+    			},
+    		},
+    	],
     }
     ```
     Signatures are NOT secret — they're meant to be on-chain-verifiable. Including the envelope is what lets an embed redeem without a round-trip. This is the intentional difference from `/list`'s public view.

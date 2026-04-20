@@ -6,12 +6,7 @@ import { limits, clientIp } from './_lib/rate-limit.js';
 import { parse } from './_lib/validate.js';
 import { z } from 'zod';
 
-const ALLOWED_SCOPES = new Set([
-	'avatars:read',
-	'avatars:write',
-	'avatars:delete',
-	'profile',
-]);
+const ALLOWED_SCOPES = new Set(['avatars:read', 'avatars:write', 'avatars:delete', 'profile']);
 
 const createSchema = z.object({
 	name: z.string().trim().min(1).max(80),

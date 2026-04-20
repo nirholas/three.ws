@@ -8,7 +8,18 @@ describe('SLOTS', () => {
 	});
 
 	it('contains expected slot names', () => {
-		const expected = ['idle', 'wave', 'nod', 'shake', 'think', 'celebrate', 'concern', 'bow', 'point', 'shrug'];
+		const expected = [
+			'idle',
+			'wave',
+			'nod',
+			'shake',
+			'think',
+			'celebrate',
+			'concern',
+			'bow',
+			'point',
+			'shrug',
+		];
 		expect(SLOTS).toEqual(expected);
 	});
 

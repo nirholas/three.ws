@@ -71,7 +71,14 @@ function isTransient(err) {
 	const name = err?.name;
 	const status = err?.status;
 	if (name === 'AbortError' || name === 'TimeoutError') return true;
-	if (code === 'ETIMEDOUT' || code === 'ECONNRESET' || code === 'ECONNREFUSED' || code === 'ENOTFOUND' || code === 'EAI_AGAIN') return true;
+	if (
+		code === 'ETIMEDOUT' ||
+		code === 'ECONNRESET' ||
+		code === 'ECONNREFUSED' ||
+		code === 'ENOTFOUND' ||
+		code === 'EAI_AGAIN'
+	)
+		return true;
 	if (typeof status === 'number' && status >= 500 && status < 600) return true;
 	// viem transport errors
 	const msg = String(err?.message || '');
@@ -89,7 +96,13 @@ async function withRetry(fn, { retries, backoffMs = 500, label }) {
 			attempt++;
 			if (attempt > retries || !isTransient(err)) throw err;
 			const delay = backoffMs * 2 ** (attempt - 1);
-			log('warn', 'retry', { label, attempt, delay_ms: delay, message: err?.message, code: err?.code });
+			log('warn', 'retry', {
+				label,
+				attempt,
+				delay_ms: delay,
+				message: err?.message,
+				code: err?.code,
+			});
 			await new Promise((r) => setTimeout(r, delay));
 		}
 	}
@@ -147,8 +160,7 @@ async function getVerifiedQuote(client, quoterAddress, tokenIn, tokenOut, amount
 	});
 
 	// Divergence in basis points: |q2-q1| / q1 * 10000
-	const divergenceBps =
-		q1 === 0n ? 0 : Number(((q2 > q1 ? q2 - q1 : q1 - q2) * 10000n) / q1);
+	const divergenceBps = q1 === 0n ? 0 : Number(((q2 > q1 ? q2 - q1 : q1 - q2) * 10000n) / q1);
 
 	if (divergenceBps > 50) {
 		throw Object.assign(
@@ -237,7 +249,10 @@ async function onPeriod(strategy) {
 	} = strategy;
 
 	const cfg = CHAIN_CONFIG[chainId];
-	if (!cfg) throw Object.assign(new Error(`No config for chainId ${chainId}`), { code: 'unsupported_chain' });
+	if (!cfg)
+		throw Object.assign(new Error(`No config for chainId ${chainId}`), {
+			code: 'unsupported_chain',
+		});
 
 	const client = getViemClient(chainId);
 	const logCtx = { strategy_id: strategyId, chain_id: chainId };
@@ -262,7 +277,9 @@ async function onPeriod(strategy) {
 		LIMIT 1
 	`;
 	if (!delegationRow) {
-		throw Object.assign(new Error('Delegation not found or no longer active'), { code: 'delegation_gone' });
+		throw Object.assign(new Error('Delegation not found or no longer active'), {
+			code: 'delegation_gone',
+		});
 	}
 	const recipient = delegationRow.delegator_address;
 
@@ -298,7 +315,7 @@ export default wrap(async (req, res) => {
 		}
 	}
 
-	const runId = (globalThis.crypto?.randomUUID?.() ?? `run_${Date.now()}`);
+	const runId = globalThis.crypto?.randomUUID?.() ?? `run_${Date.now()}`;
 	log('info', 'tick_start', { run_id: runId });
 
 	// Fetch all due active strategies
@@ -403,7 +420,11 @@ export default wrap(async (req, res) => {
 				WHERE id = ${strategy.id}
 			`;
 
-			log('info', 'execute_success', { ...logCtx, tx_hash: txHash, divergence_bps: divergenceBps });
+			log('info', 'execute_success', {
+				...logCtx,
+				tx_hash: txHash,
+				divergence_bps: divergenceBps,
+			});
 			results.push({ id: strategy.id, txHash, quoteAmountOut });
 		} catch (err) {
 			execRow.status = err.code === 'quote_divergence' ? 'aborted' : 'failed';
@@ -423,9 +444,7 @@ export default wrap(async (req, res) => {
 					UPDATE dca_strategies
 					SET next_execution_at = ${nowIso}
 					WHERE id = ${strategy.id}
-				`.catch((e) =>
-					log('error', 'claim_release_failed', { ...logCtx, message: e?.message }),
-				);
+				`.catch((e) => log('error', 'claim_release_failed', { ...logCtx, message: e?.message }));
 			}
 
 			log('error', 'execute_failed', {

@@ -34,12 +34,8 @@ const TOKENS = {
 };
 
 const KNOWN_CONTRACTS = {
-	84532: [
-		{ name: 'Uniswap V3 Router', address: '0x94cC0AaC535CCDB3C01d6787D6413C739ae12bc4' },
-	],
-	11155111: [
-		{ name: 'Uniswap V3 Router', address: '0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48' },
-	],
+	84532: [{ name: 'Uniswap V3 Router', address: '0x94cC0AaC535CCDB3C01d6787D6413C739ae12bc4' }],
+	11155111: [{ name: 'Uniswap V3 Router', address: '0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48' }],
 	1: [
 		{ name: 'Uniswap V3 Router', address: '0xE592427A0AEce92De3Edee1F18E0157C05861564' },
 		{ name: 'Uniswap V2 Router', address: '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D' },
@@ -108,13 +104,16 @@ function buildReviewLines(form, chainId) {
 	const decimals = meta ? meta.decimals : 18;
 	const amount = form.amount ? formatAmount(toBaseUnits(form.amount, decimals), decimals) : '?';
 
-	const periodLabel = { once: 'in total', daily: 'per day', weekly: 'per week' }[form.period] ?? '';
+	const periodLabel =
+		{ once: 'in total', daily: 'per day', weekly: 'per week' }[form.period] ?? '';
 
 	const expiryTs = resolveExpiry(form.expiry, form.customExpiry);
 	const expiryDate = expiryTs
 		? new Date(expiryTs * 1000).toLocaleDateString('en-US', {
-			month: 'short', day: 'numeric', year: 'numeric',
-		})
+				month: 'short',
+				day: 'numeric',
+				year: 'numeric',
+			})
 		: 'an unknown date';
 
 	const lines = [];
@@ -126,15 +125,12 @@ function buildReviewLines(form, chainId) {
 		return known ? `${known.name} (${formatAddress(addr)})` : formatAddress(addr);
 	});
 
-	const targetDesc =
-		form.targets.length === 0
-			? 'any contract'
-			: targetNames.join(', ');
+	const targetDesc = form.targets.length === 0 ? 'any contract' : targetNames.join(', ');
 
 	lines.push(
 		`This agent can spend up to <strong>${escapeHtml(amount)} ${escapeHtml(symbol)}</strong>` +
-		` ${escapeHtml(periodLabel)} on <strong>${escapeHtml(targetDesc)}</strong>` +
-		` until <strong>${escapeHtml(expiryDate)}</strong>.`,
+			` ${escapeHtml(periodLabel)} on <strong>${escapeHtml(targetDesc)}</strong>` +
+			` until <strong>${escapeHtml(expiryDate)}</strong>.`,
 	);
 
 	return lines;
@@ -409,7 +405,9 @@ export class GrantPermissionsModal {
 		const prev = this._previouslyFocused;
 		this._previouslyFocused = null;
 		if (prev && typeof prev.focus === 'function' && document.contains(prev)) {
-			try { prev.focus(); } catch (_) {}
+			try {
+				prev.focus();
+			} catch (_) {}
 		}
 	}
 
@@ -480,9 +478,7 @@ export class GrantPermissionsModal {
 
 		const targetRows = this._form.targets
 			.map((addr) => {
-				const known = contracts.find(
-					(c) => c.address.toLowerCase() === addr.toLowerCase(),
-				);
+				const known = contracts.find((c) => c.address.toLowerCase() === addr.toLowerCase());
 				return `
 				<div class="gm-target-row" data-addr="${escapeHtml(addr)}">
 					<span class="gm-target-addr" title="${escapeHtml(addr)}">${escapeHtml(addr)}</span>
@@ -494,10 +490,7 @@ export class GrantPermissionsModal {
 			.join('');
 
 		const knownOptions = contracts
-			.map(
-				(c) =>
-					`<option value="${escapeHtml(c.address)}">${escapeHtml(c.name)}</option>`,
-			)
+			.map((c) => `<option value="${escapeHtml(c.address)}">${escapeHtml(c.name)}</option>`)
 			.join('');
 
 		this._body.innerHTML = `
@@ -665,9 +658,7 @@ export class GrantPermissionsModal {
 	}
 
 	_addTarget(addr, listEl) {
-		if (
-			this._form.targets.some((t) => t.toLowerCase() === addr.toLowerCase())
-		) return;
+		if (this._form.targets.some((t) => t.toLowerCase() === addr.toLowerCase())) return;
 		this._form.targets.push(addr);
 		const known = knownContractsForChain(this._chainId).find(
 			(c) => c.address.toLowerCase() === addr.toLowerCase(),
@@ -705,13 +696,9 @@ export class GrantPermissionsModal {
 
 	_renderStep2() {
 		const lines = buildReviewLines(this._form, this._chainId);
-		const hasUnknown = this._form.targets.some(
-			(addr) => !isKnownTarget(addr, this._chainId),
-		);
+		const hasUnknown = this._form.targets.some((addr) => !isKnownTarget(addr, this._chainId));
 
-		const lineItems = lines
-			.map((l) => `<li class="gm-review-item">${l}</li>`)
-			.join('');
+		const lineItems = lines.map((l) => `<li class="gm-review-item">${l}</li>`).join('');
 
 		this._body.innerHTML = `
 			<ul class="gm-review-list" role="list">${lineItems}</ul>
@@ -733,12 +720,12 @@ export class GrantPermissionsModal {
 			</div>
 		`;
 
-		this._body.querySelector('#gm-back-btn').addEventListener('click', () =>
-			this._renderStep(1),
-		);
-		this._body.querySelector('#gm-continue-btn').addEventListener('click', () =>
-			this._renderStep(3),
-		);
+		this._body
+			.querySelector('#gm-back-btn')
+			.addEventListener('click', () => this._renderStep(1));
+		this._body
+			.querySelector('#gm-continue-btn')
+			.addEventListener('click', () => this._renderStep(3));
 	}
 
 	// ── Step 3: Sign + submit ─────────────────────────────────────────────────
@@ -781,15 +768,13 @@ export class GrantPermissionsModal {
 			this._setActions(
 				`<button class="gm-btn gm-btn--ghost" id="gm-retry-conn">Retry</button>`,
 			);
-			this._body.querySelector('#gm-retry-conn')?.addEventListener('click', () =>
-				this._signAndSubmit(),
-			);
+			this._body
+				.querySelector('#gm-retry-conn')
+				?.addEventListener('click', () => this._signAndSubmit());
 			return;
 		}
 
-		const meta = tokensForChain(this._chainId).find(
-			(t) => t.address === this._form.token,
-		);
+		const meta = tokensForChain(this._chainId).find((t) => t.address === this._form.token);
 		const decimals = meta ? meta.decimals : 18;
 		const maxAmount = toBaseUnits(this._form.amount || '0', decimals);
 		const expiry = resolveExpiry(this._form.expiry, this._form.customExpiry);
@@ -823,9 +808,9 @@ export class GrantPermissionsModal {
 				this._setActions(
 					`<button class="gm-btn gm-btn--ghost" id="gm-back-from-err">← Back</button>`,
 				);
-				this._body.querySelector('#gm-back-from-err')?.addEventListener('click', () =>
-					this._renderStep(1),
-				);
+				this._body
+					.querySelector('#gm-back-from-err')
+					?.addEventListener('click', () => this._renderStep(1));
 				return;
 			}
 
@@ -833,17 +818,18 @@ export class GrantPermissionsModal {
 				signed = await signDelegation({ ...delegation, scope }, signer);
 				this._signedDelegation = signed;
 			} catch (err) {
-				const reason = err?.code === 4001 || err?.code === 'ACTION_REJECTED'
-					? 'Signature rejected.'
-					: `Signature failed: ${err.message}`;
+				const reason =
+					err?.code === 4001 || err?.code === 'ACTION_REJECTED'
+						? 'Signature rejected.'
+						: `Signature failed: ${err.message}`;
 				this._setStatus('✗', reason, 'gm-status--error');
 				this._setActions(`
 					<button class="gm-btn gm-btn--ghost" id="gm-back-from-err">← Back</button>
 					<button class="gm-btn gm-btn--primary" id="gm-retry-sign">Retry</button>
 				`);
-				this._body.querySelector('#gm-back-from-err')?.addEventListener('click', () =>
-					this._renderStep(1),
-				);
+				this._body
+					.querySelector('#gm-back-from-err')
+					?.addEventListener('click', () => this._renderStep(1));
 				this._body.querySelector('#gm-retry-sign')?.addEventListener('click', () => {
 					this._signedDelegation = null;
 					this._signAndSubmit();
@@ -881,8 +867,11 @@ export class GrantPermissionsModal {
 			const msg = err.message || String(err);
 			const isConflict = err.statusCode === 409;
 
-			this._setStatus('✗', isConflict ? 'Already granted.' : `Failed: ${msg}`,
-				'gm-status--error');
+			this._setStatus(
+				'✗',
+				isConflict ? 'Already granted.' : `Failed: ${msg}`,
+				'gm-status--error',
+			);
 
 			const detail = document.createElement('div');
 			detail.className = 'gm-error-detail';
@@ -895,15 +884,13 @@ export class GrantPermissionsModal {
 				   <button class="gm-btn gm-btn--primary" id="gm-retry-submit">Retry submit</button>`;
 			this._setActions(retryHtml);
 
-			this._body.querySelector('#gm-back-from-err')?.addEventListener('click', () =>
-				this._renderStep(1),
-			);
-			this._body.querySelector('#gm-retry-submit')?.addEventListener('click', () =>
-				this._submitDelegation(signed, scope),
-			);
-			this._body.querySelector('#gm-done-err')?.addEventListener('click', () =>
-				this.close(),
-			);
+			this._body
+				.querySelector('#gm-back-from-err')
+				?.addEventListener('click', () => this._renderStep(1));
+			this._body
+				.querySelector('#gm-retry-submit')
+				?.addEventListener('click', () => this._submitDelegation(signed, scope));
+			this._body.querySelector('#gm-done-err')?.addEventListener('click', () => this.close());
 			return;
 		}
 
@@ -918,7 +905,9 @@ export class GrantPermissionsModal {
 	_focusFirst() {
 		const items = this._focusables();
 		if (items.length) {
-			try { items[0].focus(); } catch (_) {}
+			try {
+				items[0].focus();
+			} catch (_) {}
 		}
 	}
 
@@ -927,7 +916,7 @@ export class GrantPermissionsModal {
 		return Array.from(
 			this.overlay.querySelectorAll(
 				'button:not([disabled]), input:not([disabled]):not([hidden]), ' +
-				'select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+					'select:not([disabled]), [tabindex]:not([tabindex="-1"])',
 			),
 		).filter((el) => !el.closest('[hidden]'));
 	}
@@ -983,7 +972,9 @@ export async function openGrantModal({ agentId, chainId, preset, delegateAddress
 			const res = await fetch(url);
 			const data = res.ok ? await res.json() : null;
 			delegate = data?.delegations?.[0]?.delegate ?? null;
-		} catch { /* ignore */ }
+		} catch {
+			/* ignore */
+		}
 	}
 	if (!delegate) {
 		return { ok: false, reason: 'delegate_address_unknown' };
@@ -997,10 +988,10 @@ export async function openGrantModal({ agentId, chainId, preset, delegateAddress
 	const decimals = tokenMeta?.decimals ?? 6;
 
 	const presets = {};
-	if (preset?.token)      presets.token   = preset.token;
-	if (preset?.period)     presets.period  = preset.period;
-	if (preset?.targets)    presets.targets = preset.targets;
-	if (preset?.maxAmount)  presets.amount  = String(Number(preset.maxAmount) / 10 ** decimals);
+	if (preset?.token) presets.token = preset.token;
+	if (preset?.period) presets.period = preset.period;
+	if (preset?.targets) presets.targets = preset.targets;
+	if (preset?.maxAmount) presets.amount = String(Number(preset.maxAmount) / 10 ** decimals);
 	if (preset?.expiry_days) {
 		presets.expiry = '30d';
 	}

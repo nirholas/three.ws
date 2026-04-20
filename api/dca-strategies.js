@@ -27,9 +27,12 @@ const createSchema = z.object({
 	token_out: ethAddress,
 	token_out_symbol: z.string().min(1).max(10),
 	amount_per_execution: weiString,
-	period_seconds: z.number().int().refine((v) => v === 86400 || v === 604800, {
-		message: 'period_seconds must be 86400 (daily) or 604800 (weekly)',
-	}),
+	period_seconds: z
+		.number()
+		.int()
+		.refine((v) => v === 86400 || v === 604800, {
+			message: 'period_seconds must be 86400 (daily) or 604800 (weekly)',
+		}),
 	slippage_bps: z.number().int().min(1).max(MAX_SLIPPAGE_BPS).default(50),
 });
 
@@ -135,7 +138,12 @@ export default wrap(async (req, res) => {
 	}
 
 	if (!ALLOWED_TOKEN_OUT_SYMBOLS.has(body.token_out_symbol)) {
-		return error(res, 400, 'validation_error', `token_out_symbol must be one of: ${[...ALLOWED_TOKEN_OUT_SYMBOLS].join(', ')}`);
+		return error(
+			res,
+			400,
+			'validation_error',
+			`token_out_symbol must be one of: ${[...ALLOWED_TOKEN_OUT_SYMBOLS].join(', ')}`,
+		);
 	}
 
 	// Confirm session user owns the agent
@@ -172,7 +180,12 @@ export default wrap(async (req, res) => {
 		LIMIT 1
 	`;
 	if (existing) {
-		return error(res, 409, 'conflict', 'an active strategy already exists for this token pair — cancel it first');
+		return error(
+			res,
+			409,
+			'conflict',
+			'an active strategy already exists for this token pair — cancel it first',
+		);
 	}
 
 	const nextExecAt = new Date(Date.now() + body.period_seconds * 1000).toISOString();

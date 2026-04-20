@@ -32,6 +32,9 @@ export default wrap(async (req, res) => {
 		// any registered client from probing arbitrary tokens for user identity
 		// or scope (especially relevant given open dynamic registration).
 		if (payload.client_id && payload.client_id !== client_id) {
+			// RFC 7662 §2.2: response for "not issued to this client" must be
+			// indistinguishable from "token not found" so clients can't probe
+			// token ownership. Both return identical {active: false} at 200.
 			return json(res, 200, { active: false });
 		}
 		return json(res, 200, {

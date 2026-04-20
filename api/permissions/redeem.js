@@ -127,7 +127,12 @@ export default wrap(async (req, res) => {
 	const bearer = await authenticateBearer(token);
 	if (!bearer) return error(res, 401, 'unauthorized', 'valid bearer token required');
 	if (!hasScope(bearer.scope, 'permissions:redeem')) {
-		return error(res, 403, 'insufficient_scope', "token must include 'permissions:redeem' scope");
+		return error(
+			res,
+			403,
+			'insufficient_scope',
+			"token must include 'permissions:redeem' scope",
+		);
 	}
 
 	// Idempotency-Key check (before parsing body — key is in header)
@@ -184,7 +189,12 @@ export default wrap(async (req, res) => {
 	const allowedTargets = new Set((scope.targets || []).map((t) => t.toLowerCase()));
 	for (const call of calls) {
 		if (!allowedTargets.has(call.to.toLowerCase())) {
-			return error(res, 403, 'target_not_allowed', `call target ${call.to} is not in scope.targets`);
+			return error(
+				res,
+				403,
+				'target_not_allowed',
+				`call target ${call.to} is not in scope.targets`,
+			);
 		}
 	}
 
@@ -222,11 +232,17 @@ export default wrap(async (req, res) => {
 		const historicalSpend = BigInt(Math.floor(Number(histRow?.spent ?? '0')));
 
 		if (requestAmount + historicalSpend > maxAmount) {
-			return error(res, 403, 'scope_exceeded', 'ETH spend would exceed scope.maxAmount for this period', {
-				maxAmount: scope.maxAmount,
-				periodSpent: historicalSpend.toString(),
-				requested: requestAmount.toString(),
-			});
+			return error(
+				res,
+				403,
+				'scope_exceeded',
+				'ETH spend would exceed scope.maxAmount for this period',
+				{
+					maxAmount: scope.maxAmount,
+					periodSpent: historicalSpend.toString(),
+					requested: requestAmount.toString(),
+				},
+			);
 		}
 	} else {
 		// ERC-20: decode transfer amounts from call data
@@ -254,18 +270,29 @@ export default wrap(async (req, res) => {
 		const historicalSpend = BigInt(Math.floor(Number(histRow?.spent ?? '0')));
 
 		if (requestAmount + historicalSpend > maxAmount) {
-			return error(res, 403, 'scope_exceeded', 'token spend would exceed scope.maxAmount for this period', {
-				maxAmount: scope.maxAmount,
-				periodSpent: historicalSpend.toString(),
-				requested: requestAmount.toString(),
-			});
+			return error(
+				res,
+				403,
+				'scope_exceeded',
+				'token spend would exceed scope.maxAmount for this period',
+				{
+					maxAmount: scope.maxAmount,
+					periodSpent: historicalSpend.toString(),
+					requested: requestAmount.toString(),
+				},
+			);
 		}
 	}
 
 	// ── Build signer ───────────────────────────────────────────────────────
 	const rpcUrl = getRpcUrl(chainId);
 	if (!rpcUrl) {
-		return error(res, 502, 'rpc_error', `no RPC URL configured for chain ${chainId} (set RPC_URL_${chainId})`);
+		return error(
+			res,
+			502,
+			'rpc_error',
+			`no RPC URL configured for chain ${chainId} (set RPC_URL_${chainId})`,
+		);
 	}
 
 	let signer;
@@ -309,10 +336,12 @@ export default wrap(async (req, res) => {
 	// Compute amount redeemed for usage tracking
 	const redeemAmount = isNative
 		? calls.reduce((s, c) => s + BigInt(c.value), 0n).toString()
-		: calls.reduce((s, c) => {
-				const a = decodeErc20AmountFixed(c.data);
-				return s + (a ?? 0n);
-			}, 0n).toString();
+		: calls
+				.reduce((s, c) => {
+					const a = decodeErc20AmountFixed(c.data);
+					return s + (a ?? 0n);
+				}, 0n)
+				.toString();
 
 	recordEvent({
 		userId: bearer.userId,

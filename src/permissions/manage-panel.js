@@ -113,12 +113,19 @@ class ManagePanel {
 		const chainName = chainMeta?.shortName ?? `${d.chain_id}`;
 		const explorerBase = chainMeta?.explorer ?? '';
 
-		const delegatorUrl = explorerBase ? addressExplorerUrl(d.chain_id, d.delegator_address) : '#';
+		const delegatorUrl = explorerBase
+			? addressExplorerUrl(d.chain_id, d.delegator_address)
+			: '#';
 		const delegateUrl = explorerBase ? addressExplorerUrl(d.chain_id, d.delegate_address) : '#';
 
 		const scopeText = _scopeSentence(d.scope);
 		const usageLine = _usageLine(d.redemption_count, d.last_redeemed_at);
-		const badgeClass = { active: 'mp-badge--active', revoked: 'mp-badge--revoked', expired: 'mp-badge--expired' }[d.status] || '';
+		const badgeClass =
+			{
+				active: 'mp-badge--active',
+				revoked: 'mp-badge--revoked',
+				expired: 'mp-badge--expired',
+			}[d.status] || '';
 		const hashShort = d.delegation_hash
 			? `${d.delegation_hash.slice(0, 8)}…${d.delegation_hash.slice(-6)}`
 			: 'unknown hash';
@@ -145,9 +152,11 @@ class ManagePanel {
 				</a>
 			</div>
 			<div class="mp-card-actions">
-				${d.status === 'active'
-					? `<button class="mp-revoke-btn" data-id="${_esc(d.id)}" data-hash="${_esc(d.delegation_hash || '')}" data-chain="${d.chain_id}">Revoke</button>`
-					: ''}
+				${
+					d.status === 'active'
+						? `<button class="mp-revoke-btn" data-id="${_esc(d.id)}" data-hash="${_esc(d.delegation_hash || '')}" data-chain="${d.chain_id}">Revoke</button>`
+						: ''
+				}
 			</div>
 			<div class="mp-card-error" style="display:none"></div>
 			<div class="mp-card-pending" style="display:none"></div>
@@ -194,9 +203,7 @@ class ManagePanel {
 
 		const delegatorAddr = (d.delegator_address || '').toLowerCase();
 		if (signerAddress !== delegatorAddr) {
-			_showError(
-				`Connect with ${_shortAddr(d.delegator_address)} to revoke.`,
-			);
+			_showError(`Connect with ${_shortAddr(d.delegator_address)} to revoke.`);
 			return;
 		}
 
@@ -303,12 +310,28 @@ function _shortAddr(addr) {
 function _scopeSentence(scope) {
 	if (!scope) return 'Unknown scope';
 	const { token, maxAmount, period, targets, expiry } = scope;
-	const tokenLabel = token && token !== 'native' ? _shortAddr(token) : (token === 'native' ? 'native token' : 'token');
+	const tokenLabel =
+		token && token !== 'native'
+			? _shortAddr(token)
+			: token === 'native'
+				? 'native token'
+				: 'token';
 	const amountLabel = maxAmount ? _formatAmount(maxAmount) : '?';
-	const periodLabel = { daily: 'per day', weekly: 'per week', once: 'once' }[period] || period || '';
-	const targetLabel = targets?.length === 1 ? `on ${_shortAddr(targets[0])}` : targets?.length > 1 ? `on ${targets.length} contracts` : '';
+	const periodLabel =
+		{ daily: 'per day', weekly: 'per week', once: 'once' }[period] || period || '';
+	const targetLabel =
+		targets?.length === 1
+			? `on ${_shortAddr(targets[0])}`
+			: targets?.length > 1
+				? `on ${targets.length} contracts`
+				: '';
 	const expiryLabel = expiry ? `until ${_formatDate(expiry)}` : '';
-	const parts = [`Up to ${amountLabel} ${tokenLabel}`, periodLabel, targetLabel, expiryLabel].filter(Boolean);
+	const parts = [
+		`Up to ${amountLabel} ${tokenLabel}`,
+		periodLabel,
+		targetLabel,
+		expiryLabel,
+	].filter(Boolean);
 	return parts.join(' ');
 }
 

@@ -1,6 +1,8 @@
 import { neon } from '@neondatabase/serverless';
 
-const sql = neon('postgresql://neondb_owner:npg_4nWXZhq2Hjse@ep-rapid-surf-ak9p7occ-pooler.c-3.us-west-2.aws.neon.tech/neondb?channel_binding=require&sslmode=require');
+const sql = neon(
+	'postgresql://neondb_owner:npg_4nWXZhq2Hjse@ep-rapid-surf-ak9p7occ-pooler.c-3.us-west-2.aws.neon.tech/neondb?channel_binding=require&sslmode=require',
+);
 
 const [user] = await sql`
 	INSERT INTO users (email, display_name, email_verified)

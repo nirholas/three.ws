@@ -49,9 +49,7 @@ try {
 	await pool.query(schema);
 	console.log('✓ schema applied');
 
-	const countResult = await pool.query(
-		'SELECT COUNT(*) AS count FROM agent_delegations'
-	);
+	const countResult = await pool.query('SELECT COUNT(*) AS count FROM agent_delegations');
 	console.log(`  agent_delegations row count: ${countResult.rows[0].count}`);
 
 	const indexResult = await pool.query(`

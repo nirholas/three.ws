@@ -195,12 +195,19 @@ test('revoke — throws browser_only PermissionError in Node.js', async () => {
 // ---------------------------------------------------------------------------
 
 test('server 4xx ok:false → PermissionError with server error code', async () => {
-	mockFetch({ ok: false, error: 'delegation_not_found', message: 'No delegation found for that id' });
+	mockFetch({
+		ok: false,
+		error: 'delegation_not_found',
+		message: 'No delegation found for that id',
+	});
 	const client = new PermissionsClient({ baseUrl: 'https://example.com' });
 	await assert.rejects(
 		() => client.getMetadata('bad-agent'),
 		(err) => {
-			assert.ok(err instanceof PermissionError, `expected PermissionError, got ${err.constructor.name}`);
+			assert.ok(
+				err instanceof PermissionError,
+				`expected PermissionError, got ${err.constructor.name}`,
+			);
 			assert.equal(err.code, 'delegation_not_found');
 			assert.equal(err.message, 'No delegation found for that id');
 			return true;

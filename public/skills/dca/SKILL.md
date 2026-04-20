@@ -5,16 +5,16 @@ description: Dollar-cost average a fixed USDC amount into WETH on a recurring sc
 trust: owned-only
 permissions_required: true
 default_scope_preset:
-  token: "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
-  maxAmount: "100000000"
-  period: "daily"
-  targets:
-    - "0x94cC0AaC535CCDB3C01d6787D6413C739ae12bc4"
-    - "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
-  selectors:
-    - "0x04e45aaf"
-    - "0x095ea7b3"
-  expiry_days: 30
+    token: '0x036CbD53842c5426634e7929541eC2318f3dCF7e'
+    maxAmount: '100000000'
+    period: 'daily'
+    targets:
+        - '0x94cC0AaC535CCDB3C01d6787D6413C739ae12bc4'
+        - '0x036CbD53842c5426634e7929541eC2318f3dCF7e'
+    selectors:
+        - '0x04e45aaf'
+        - '0x095ea7b3'
+    expiry_days: 30
 ---
 
 # DCA (Dollar-Cost Averaging)
@@ -30,6 +30,7 @@ a fixed USDC amount into WETH using Uniswap V3 on Base Sepolia.
 ## Actions
 
 Call `start_dca` when the owner wants to configure a new strategy. It will:
+
 1. Prompt for amount (USDC), token out (default WETH), and frequency.
 2. Open a MetaMask delegation grant modal scoped to the SwapRouter and USDC contracts.
 3. Store the strategy once the delegation is signed.

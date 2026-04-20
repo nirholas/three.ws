@@ -471,15 +471,20 @@
 				transition: color 0.15s;
 			}
 
-			.mp-refresh-btn:hover { color: rgba(255, 255, 255, 0.7); }
+			.mp-refresh-btn:hover {
+				color: rgba(255, 255, 255, 0.7);
+			}
 
-			.mp-loading, .mp-error {
+			.mp-loading,
+			.mp-error {
 				font-size: 0.764rem;
 				color: rgba(255, 255, 255, 0.3);
 				padding: 1rem 0;
 			}
 
-			.mp-error { color: #fca5a5; }
+			.mp-error {
+				color: #fca5a5;
+			}
 
 			.mp-empty {
 				font-size: 0.764rem;
@@ -488,7 +493,9 @@
 				text-align: center;
 			}
 
-			.mp-empty p { margin: 0 0 0.618rem; }
+			.mp-empty p {
+				margin: 0 0 0.618rem;
+			}
 
 			.mp-grant-btn {
 				background: rgba(255, 255, 255, 0.06);
@@ -499,7 +506,9 @@
 				padding: 0.382rem 0.75rem;
 				border-radius: 999px;
 				cursor: pointer;
-				transition: background 0.15s, color 0.15s;
+				transition:
+					background 0.15s,
+					color 0.15s;
 			}
 
 			.mp-grant-btn:hover {
@@ -516,9 +525,15 @@
 				transition: border-color 0.2s;
 			}
 
-			.mp-card--active { border-color: rgba(134, 239, 172, 0.15); }
-			.mp-card--revoked { opacity: 0.5; }
-			.mp-card--expired { border-color: rgba(251, 191, 36, 0.15); }
+			.mp-card--active {
+				border-color: rgba(134, 239, 172, 0.15);
+			}
+			.mp-card--revoked {
+				opacity: 0.5;
+			}
+			.mp-card--expired {
+				border-color: rgba(251, 191, 36, 0.15);
+			}
 
 			.mp-card-top {
 				display: flex;
@@ -534,14 +549,23 @@
 				font-weight: 500;
 			}
 
-			.mp-badge--active { background: rgba(134, 239, 172, 0.15); color: #86efac; }
-			.mp-badge--revoked { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.4); }
-			.mp-badge--expired { background: rgba(251, 191, 36, 0.12); color: #fbbf24; }
+			.mp-badge--active {
+				background: rgba(134, 239, 172, 0.15);
+				color: #86efac;
+			}
+			.mp-badge--revoked {
+				background: rgba(255, 255, 255, 0.07);
+				color: rgba(255, 255, 255, 0.4);
+			}
+			.mp-badge--expired {
+				background: rgba(251, 191, 36, 0.12);
+				color: #fbbf24;
+			}
 
 			.mp-chain-chip {
 				font-size: 0.618rem;
-				background: rgba(255,255,255,0.07);
-				color: rgba(255,255,255,0.5);
+				background: rgba(255, 255, 255, 0.07);
+				color: rgba(255, 255, 255, 0.5);
 				padding: 0.1rem 0.45rem;
 				border-radius: 999px;
 			}
@@ -586,14 +610,19 @@
 				text-decoration: none;
 			}
 
-			.mp-addr-link:hover { color: rgba(255, 255, 255, 0.8); }
+			.mp-addr-link:hover {
+				color: rgba(255, 255, 255, 0.8);
+			}
 
 			.mp-addr-arrow {
 				font-size: 0.618rem;
 				color: rgba(255, 255, 255, 0.2);
 			}
 
-			.mp-card-actions { display: flex; gap: 0.5rem; }
+			.mp-card-actions {
+				display: flex;
+				gap: 0.5rem;
+			}
 
 			.mp-revoke-btn {
 				background: rgba(239, 68, 68, 0.1);
@@ -627,27 +656,31 @@
 				align-items: center;
 				gap: 0.382rem;
 				font-size: 0.618rem;
-				color: rgba(255,255,255,0.5);
+				color: rgba(255, 255, 255, 0.5);
 				margin-top: 0.382rem;
 			}
 
 			.mp-tx-link {
-				color: rgba(255,255,255,0.4);
+				color: rgba(255, 255, 255, 0.4);
 				text-decoration: none;
 			}
 
-			.mp-tx-link:hover { color: rgba(255,255,255,0.8); }
+			.mp-tx-link:hover {
+				color: rgba(255, 255, 255, 0.8);
+			}
 
 			@keyframes mp-spin {
-				to { transform: rotate(360deg); }
+				to {
+					transform: rotate(360deg);
+				}
 			}
 
 			.mp-spinner {
 				display: inline-block;
 				width: 10px;
 				height: 10px;
-				border: 1.5px solid rgba(255,255,255,0.15);
-				border-top-color: rgba(255,255,255,0.6);
+				border: 1.5px solid rgba(255, 255, 255, 0.15);
+				border-top-color: rgba(255, 255, 255, 0.6);
 				border-radius: 50%;
 				animation: mp-spin 0.7s linear infinite;
 			}

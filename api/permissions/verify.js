@@ -3,10 +3,7 @@ import { Contract, JsonRpcProvider } from 'ethers';
 import { sql } from '../_lib/db.js';
 import { error, wrap } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import {
-	DELEGATION_MANAGER_DEPLOYMENTS,
-	DELEGATION_MANAGER_ABI,
-} from '../../src/erc7710/abi.js';
+import { DELEGATION_MANAGER_DEPLOYMENTS, DELEGATION_MANAGER_ABI } from '../../src/erc7710/abi.js';
 
 const HASH_RE = /^0x[0-9a-fA-F]{64}$/;
 const CACHE_VALID = 'public, max-age=30, s-maxage=60';
@@ -56,11 +53,19 @@ export default wrap(async (req, res) => {
 	`;
 
 	if (row?.status === 'revoked') {
-		return respond(res, { ok: true, valid: false, reason: 'delegation_revoked', checkedAt, chainId, hash }, CACHE_INVALID);
+		return respond(
+			res,
+			{ ok: true, valid: false, reason: 'delegation_revoked', checkedAt, chainId, hash },
+			CACHE_INVALID,
+		);
 	}
 
 	if (row?.status === 'expired' || (row?.expires_at && new Date(row.expires_at) <= new Date())) {
-		return respond(res, { ok: true, valid: false, reason: 'delegation_expired', checkedAt, chainId, hash }, CACHE_INVALID);
+		return respond(
+			res,
+			{ ok: true, valid: false, reason: 'delegation_expired', checkedAt, chainId, hash },
+			CACHE_INVALID,
+		);
 	}
 
 	// On-chain check — 5 s timeout
@@ -88,7 +93,11 @@ export default wrap(async (req, res) => {
 				`.catch((e) => console.error('[verify] self-heal failed', e));
 			});
 		}
-		return respond(res, { ok: true, valid: false, reason: 'delegation_revoked', checkedAt, chainId, hash }, CACHE_INVALID);
+		return respond(
+			res,
+			{ ok: true, valid: false, reason: 'delegation_revoked', checkedAt, chainId, hash },
+			CACHE_INVALID,
+		);
 	}
 
 	const body = { ok: true, valid: true, checkedAt, chainId, hash };

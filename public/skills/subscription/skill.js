@@ -75,7 +75,7 @@ export async function execute({ agent, host, args }) {
 
 	let delegation;
 	try {
-		const { openGrantModal } = await import('../../src/permissions/grant-modal.js');
+		const { openGrantModal } = await import('/src/permissions/grant-modal.js');
 		delegation = await openGrantModal({ agent, scopePreset });
 	} catch {
 		host.speak('Permission request is not available in this context.');

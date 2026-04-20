@@ -4,11 +4,13 @@
 import { z } from 'zod';
 import { Redis } from '@upstash/redis';
 import { env } from '../_lib/env.js';
-import { cors, error, method, wrap, readJson } from '../_lib/http.js';
+import { cors, error, method, wrap, readJson, json } from '../_lib/http.js';
 import { parse } from '../_lib/validate.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { recordEvent } from '../_lib/usage.js';
+import { recordEvent, logger } from '../_lib/usage.js';
 import { readEmbedPolicy } from '../_lib/embed-policy.js';
+
+const log = logger('llm.anthropic');
 
 // ── Redis client (for monthly quota counters) ────────────────────────────────
 
@@ -35,6 +37,25 @@ const MODEL_ALLOWLIST = new Set([
 // First-party hostnames always pass origin checks (same as element.js).
 const FIRST_PARTY = ['3dagent.vercel.app', 'localhost'];
 
+// Default per-agent monthly token budget when policy.brain.cost_limit_cents is unset.
+const DEFAULT_MONTHLY_TOKEN_BUDGET = 1_000_000;
+// Rough cents-per-token conversion when a cost budget is provided. Conservative
+// blended estimate across input+output for the allowlisted models.
+const CENTS_PER_1K_TOKENS = 1.5;
+
+function tokenBudgetFromPolicy(policy) {
+	const cents = policy?.brain?.cost_limit_cents;
+	if (typeof cents === 'number' && cents > 0) {
+		return Math.floor((cents / CENTS_PER_1K_TOKENS) * 1000);
+	}
+	return DEFAULT_MONTHLY_TOKEN_BUDGET;
+}
+
+function monthKey() {
+	const now = new Date();
+	return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
 function originAllowed(originHeader, policy) {
 	if (!originHeader) return true; // server-to-server / curl — allow
 	let host;
@@ -54,15 +75,60 @@ function originAllowed(originHeader, policy) {
 	return mode === 'allowlist' ? matches : !matches;
 }
 
+// Build the strict CORS allowlist: first-party origins + any origin the agent's
+// embed policy declares. Returns an array of exact-match origin strings.
+function buildCorsAllowlist(policy) {
+	const out = new Set();
+	if (env.APP_ORIGIN) out.add(env.APP_ORIGIN);
+	try {
+		if (env.ISSUER) out.add(env.ISSUER);
+	} catch {
+		// ISSUER derives from APP_ORIGIN; ignore if unset.
+	}
+	// Localhost for dev parity with the same-origin check above.
+	const hosts = policy?.origins?.hosts ?? [];
+	for (const h of hosts) {
+		const lower = String(h).toLowerCase();
+		if (lower.startsWith('*.')) {
+			// Wildcard — convert to a regex matching https://<sub>.<base>.
+			const base = lower.slice(2).replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+			out.add(new RegExp(`^https?://([a-z0-9-]+\\.)+${base}$`));
+		} else {
+			out.add(`https://${lower}`);
+			out.add(`http://${lower}`);
+		}
+	}
+	// Always allow localhost in dev for the proxy (matches isAllowedOrigin default).
+	out.add(/^https?:\/\/localhost(:\d+)?$/);
+	return Array.from(out);
+}
+
 async function incrementMonthlyQuota(agentId) {
 	const r = getRedis();
 	if (!r) return 0; // no Redis → quota not enforced
-	const now = new Date();
-	const ym = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
-	const key = `llm:quota:${agentId}:${ym}`;
+	const key = `llm:quota:${agentId}:${monthKey()}`;
 	const count = await r.incr(key);
 	if (count === 1) await r.expire(key, 40 * 24 * 3600); // expire after 40 days
 	return count;
+}
+
+// Peek at the current month's token total without incrementing. Returns 0 when
+// Redis is unavailable (quota not enforced).
+async function getMonthlyTokens(agentId) {
+	const r = getRedis();
+	if (!r) return 0;
+	const key = `llm:tokens:${agentId}:${monthKey()}`;
+	const v = await r.get(key);
+	return typeof v === 'number' ? v : parseInt(v || '0', 10) || 0;
+}
+
+async function addMonthlyTokens(agentId, delta) {
+	const r = getRedis();
+	if (!r || !delta) return 0;
+	const key = `llm:tokens:${agentId}:${monthKey()}`;
+	const total = await r.incrby(key, delta);
+	if (total === delta) await r.expire(key, 40 * 24 * 3600);
+	return total;
 }
 
 // ── Request schema ────────────────────────────────────────────────────────────
@@ -93,16 +159,22 @@ const bodySchema = z.object({
 // ── Handler ───────────────────────────────────────────────────────────────────
 
 export default wrap(async (req, res) => {
-	// Allow all HTTP origins for CORS — policy is enforced server-side below.
-	if (cors(req, res, { origins: [/^https?:\/\/.+/], methods: 'POST,OPTIONS' })) return;
-	if (!method(req, res, ['POST'])) return;
-
+	// Resolve the agent up front so CORS can use the agent's embed policy.
 	const url = new URL(req.url, 'http://x');
 	const agentId = url.searchParams.get('agent');
-	if (!agentId) return error(res, 400, 'validation_error', 'agent query param required');
 
-	// 1. Read embed policy
-	const policy = await readEmbedPolicy(agentId);
+	// Load policy first (when possible) so CORS allowlist can include the
+	// agent-declared origins. If no agent is supplied or not found, fall back
+	// to first-party only — the preflight will then be rejected for unknown
+	// third-party origins, which is the desired hardening.
+	let policy = null;
+	if (agentId) policy = await readEmbedPolicy(agentId);
+
+	const corsOrigins = buildCorsAllowlist(policy);
+	if (cors(req, res, { origins: corsOrigins, methods: 'POST,OPTIONS' })) return;
+	if (!method(req, res, ['POST'])) return;
+
+	if (!agentId) return error(res, 400, 'validation_error', 'agent query param required');
 	if (!policy) return error(res, 404, 'not_found', 'agent not found');
 
 	if (policy.brain?.mode !== 'we-pay') {
@@ -140,13 +212,22 @@ export default wrap(async (req, res) => {
 		if (!agentRl.success) return error(res, 429, 'rate_limited', 'agent rate limit exceeded');
 	}
 
-	// 5. Monthly quota check
+	// 5a. Monthly call-count quota (existing)
 	const quota = policy.brain?.monthly_quota;
 	if (typeof quota === 'number' && quota !== null) {
 		const used = await incrementMonthlyQuota(agentId);
 		if (used > quota) {
 			return error(res, 429, 'quota_exceeded', `monthly quota of ${quota} calls reached`);
 		}
+	}
+
+	// 5b. Monthly token budget (input+output). Check before forwarding; debit
+	// the actual usage after the upstream response so we never under-count but
+	// may serve one request that tips over — acceptable for a soft budget.
+	const tokenBudget = tokenBudgetFromPolicy(policy);
+	const tokensUsedSoFar = await getMonthlyTokens(agentId);
+	if (tokensUsedSoFar >= tokenBudget) {
+		return error(res, 429, 'quota_exceeded', `monthly token budget of ${tokenBudget} reached`);
 	}
 
 	// 6. Validate + normalize request body
@@ -171,7 +252,26 @@ export default wrap(async (req, res) => {
 	const upstreamText = await upstream.text();
 	const latencyMs = Date.now() - t0;
 
-	// 8. Record usage (fire-and-forget)
+	// 8. Parse upstream JSON once — extract token usage and detect errors.
+	let upstreamJson = null;
+	try {
+		upstreamJson = JSON.parse(upstreamText);
+	} catch {
+		// Non-JSON body — treated as an opaque upstream failure below.
+	}
+	const inputTokens = upstreamJson?.usage?.input_tokens ?? 0;
+	const outputTokens = upstreamJson?.usage?.output_tokens ?? 0;
+
+	// Debit the per-agent token counter when we got a successful response.
+	if (upstream.ok && (inputTokens || outputTokens)) {
+		try {
+			await addMonthlyTokens(agentId, inputTokens + outputTokens);
+		} catch (err) {
+			log.warn('token_counter_write_failed', { agentId, msg: err?.message });
+		}
+	}
+
+	// 9. Record usage (fire-and-forget)
 	recordEvent({
 		kind: 'llm',
 		tool: 'anthropic.messages',
@@ -179,10 +279,26 @@ export default wrap(async (req, res) => {
 		bytes: upstreamText.length,
 		latencyMs,
 		status: upstream.ok ? 'ok' : 'error',
-		meta: { model },
+		meta: {
+			model,
+			input_tokens: inputTokens,
+			output_tokens: outputTokens,
+			upstream_status: upstream.status,
+		},
 	});
 
-	// 9. Proxy Anthropic's response faithfully
+	// 10a. Sanitize upstream errors — do not forward Anthropic's error JSON.
+	if (upstream.status >= 400) {
+		log.error('upstream_error', {
+			agentId,
+			model,
+			status: upstream.status,
+			body: upstreamText.slice(0, 2000),
+		});
+		return json(res, 502, { error: 'upstream_error', status: upstream.status });
+	}
+
+	// 10b. Proxy Anthropic's successful response faithfully (unchanged shape).
 	res.statusCode = upstream.status;
 	res.setHeader('content-type', upstream.headers.get('content-type') || 'application/json');
 	return res.end(upstreamText);

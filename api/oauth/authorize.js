@@ -12,6 +12,33 @@ import { env } from '../_lib/env.js';
 
 const CODE_TTL_SEC = 60;
 
+// OAuth 2.1 §3.1.2.2 — exact match on protocol/host/port/pathname.
+// Request URI must carry no extra query params or fragment.
+function redirectUriMatches(requested, registered) {
+	let reqUrl;
+	try {
+		reqUrl = new URL(requested);
+	} catch {
+		return false;
+	}
+	if (reqUrl.hash) return false;
+	if (reqUrl.search) return false;
+	return registered.some((entry) => {
+		let regUrl;
+		try {
+			regUrl = new URL(entry);
+		} catch {
+			return false;
+		}
+		return (
+			reqUrl.protocol === regUrl.protocol &&
+			reqUrl.host === regUrl.host &&
+			reqUrl.port === regUrl.port &&
+			reqUrl.pathname === regUrl.pathname
+		);
+	});
+}
+
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET', 'POST'])) return;
@@ -34,13 +61,15 @@ export default wrap(async (req, res) => {
 	if (!redirect_uri) return error(res, 400, 'invalid_request', 'redirect_uri required');
 	if (!code_challenge)
 		return error(res, 400, 'invalid_request', 'code_challenge required (PKCE)');
-	if ((code_challenge_method ?? 'S256') !== 'S256')
+	if (!code_challenge_method)
+		return error(res, 400, 'invalid_request', 'code_challenge_method required (must be S256)');
+	if (code_challenge_method !== 'S256')
 		return error(res, 400, 'invalid_request', 'code_challenge_method must be S256');
 
 	const rows = await sql`select * from oauth_clients where client_id = ${client_id} limit 1`;
 	const client = rows[0];
 	if (!client) return error(res, 400, 'invalid_client', 'unknown client');
-	if (!client.redirect_uris.includes(redirect_uri)) {
+	if (!redirectUriMatches(redirect_uri, client.redirect_uris)) {
 		return error(res, 400, 'invalid_redirect_uri', 'redirect_uri not registered');
 	}
 

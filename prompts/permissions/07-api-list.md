@@ -29,19 +29,19 @@ Create `api/permissions/list.js` (GET only):
 6. **Public view shape** (when agentId-only, no auth):
     ```jsonc
     {
-        "id": "...",
-        "chainId": 84532,
-        "delegator": "0x...",
-        "delegate": "0x...",
-        "delegationHash": "0x...",
-        "scope": {
-            /* from column */
-        },
-        "status": "active",
-        "expiresAt": "...",
-        "createdAt": "...",
-        "lastRedeemedAt": "...",
-        "redemptionCount": 3
+    	"id": "...",
+    	"chainId": 84532,
+    	"delegator": "0x...",
+    	"delegate": "0x...",
+    	"delegationHash": "0x...",
+    	"scope": {
+    		/* from column */
+    	},
+    	"status": "active",
+    	"expiresAt": "...",
+    	"createdAt": "...",
+    	"lastRedeemedAt": "...",
+    	"redemptionCount": 3,
     }
     ```
     Never return `delegation_json` in the public view.

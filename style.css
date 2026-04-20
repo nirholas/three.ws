@@ -664,6 +664,51 @@ footer .separator {
 	background: rgba(255, 255, 255, 0.02);
 }
 
+.report-table-wrap {
+	overflow-x: auto;
+	margin-bottom: var(--space-md);
+}
+
+.report-section-heading {
+	font-size: 1.05rem;
+	margin: var(--space-md) 0 var(--space-xs);
+	padding-left: var(--space-md);
+	border-left: 4px solid #888;
+}
+
+.report-count {
+	font-weight: normal;
+	opacity: 0.7;
+	font-size: 0.9em;
+}
+
+.report-banner {
+	display: flex;
+	align-items: center;
+	gap: var(--space-md);
+	padding: var(--space-md);
+	border-radius: 6px;
+	margin-bottom: var(--space-md);
+	font-size: 0.95rem;
+}
+
+.report-banner-clean {
+	background: rgba(139, 195, 74, 0.12);
+	border: 1px solid rgba(139, 195, 74, 0.35);
+	color: #8bc34a;
+}
+
+.report-banner-issues {
+	background: rgba(244, 67, 54, 0.08);
+	border: 1px solid rgba(244, 67, 54, 0.25);
+	color: rgba(255, 255, 255, 0.85);
+}
+
+.report-banner-icon {
+	font-size: 1.5rem;
+	font-weight: bold;
+}
+
 /******************************************************************************
  * CSS Spinner
  *

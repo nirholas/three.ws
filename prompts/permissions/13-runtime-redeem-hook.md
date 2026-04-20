@@ -17,12 +17,14 @@ Skills are the primary consumer of delegations. A skill ("tip the creator", "sub
 Create `src/runtime/delegation-redeem.js` exporting:
 
 1. **`async getActiveDelegation({ agentId, chainId, scopeHint? })`**
+
     - Fetches `/api/permissions/metadata?agentId=...&chainId=...`.
     - Filters to the delegation whose `scope` best matches `scopeHint` (if provided: prefer a scope with the right `token` and enough remaining `maxAmount`).
     - Returns the envelope or `null` if none match.
     - Caches the response in-memory for 60 seconds keyed by `{agentId, chainId}`. Cache is invalidated on a successful revoke event via the protocol bus.
 
 2. **`async redeemFromSkill({ agentId, chainId, calls, skillId, mode? })`**
+
     - `mode` is `'client' | 'relayer' | 'auto'` (default `'auto'`).
     - `'client'`: get a signer from the host page's wallet helper (same one task 10 uses) and call `redeemDelegation` from the toolkit directly.
     - `'relayer'`: `POST /api/permissions/redeem` with a bearer token pulled from the agent's runtime config (the host is responsible for providing the bearer; if missing, throw `no_relayer_token`).

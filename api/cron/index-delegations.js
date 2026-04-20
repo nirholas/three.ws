@@ -97,7 +97,9 @@ export default wrap(async (req, res) => {
 			INSERT INTO usage_events (kind, tool, status, latency_ms)
 			VALUES ('permissions.indexer.tick', 'index-delegations', 'ok', ${Date.now() - started})
 		`;
-	} catch { /* non-fatal */ }
+	} catch {
+		/* non-fatal */
+	}
 
 	return json(res, 200, report);
 });
@@ -203,7 +205,9 @@ async function rpc(url, method, params) {
 		if (!res.ok) throw new Error(`RPC HTTP ${res.status} from ${url}`);
 		const data = await res.json();
 		if (data.error) {
-			throw new Error(`RPC ${method} error: ${data.error.message ?? JSON.stringify(data.error)}`);
+			throw new Error(
+				`RPC ${method} error: ${data.error.message ?? JSON.stringify(data.error)}`,
+			);
 		}
 		return data.result;
 	} finally {

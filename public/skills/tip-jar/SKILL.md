@@ -6,8 +6,8 @@ trust: owned-only
 permissions_required: true
 cost: medium
 triggers:
-  - tip_request
-  - viewer_appreciation
+    - tip_request
+    - viewer_appreciation
 default_scope_preset: '{"token":"chain-specific-usdc","maxAmount":"10000000","period":"daily","targets":["usdc-contract"],"expiry_days":30}'
 ---
 
@@ -24,13 +24,13 @@ On success, thank the viewer warmly.
 
 ## Scope requested
 
-| Field       | Value                                           |
-| ----------- | ----------------------------------------------- |
-| token       | USDC on the active chain (6 decimals)           |
-| maxAmount   | 10 000 000 base units (10 USDC) per day         |
-| period      | daily                                           |
-| targets     | USDC contract address on the active chain       |
-| expiry_days | 30                                              |
+| Field       | Value                                     |
+| ----------- | ----------------------------------------- |
+| token       | USDC on the active chain (6 decimals)     |
+| maxAmount   | 10 000 000 base units (10 USDC) per day   |
+| period      | daily                                     |
+| targets     | USDC contract address on the active chain |
+| expiry_days | 30                                        |
 
 ## Error cases
 

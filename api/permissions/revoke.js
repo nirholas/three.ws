@@ -7,10 +7,7 @@ import { cors, method, readJson, wrap, error, json } from '../_lib/http.js';
 import { limits } from '../_lib/rate-limit.js';
 import { recordEvent } from '../_lib/usage.js';
 import { SERVER_CHAIN_META } from '../_lib/onchain.js';
-import {
-	DELEGATION_MANAGER_ABI,
-	DELEGATION_MANAGER_DEPLOYMENTS,
-} from '../../src/erc7710/abi.js';
+import { DELEGATION_MANAGER_ABI, DELEGATION_MANAGER_DEPLOYMENTS } from '../../src/erc7710/abi.js';
 import { z } from 'zod';
 import { JsonRpcProvider, Contract, Interface } from 'ethers';
 
@@ -28,8 +25,14 @@ function withTimeout(promise, ms) {
 	return new Promise((resolve, reject) => {
 		const t = setTimeout(() => reject(new Error(`rpc timeout after ${ms}ms`)), ms);
 		Promise.resolve(promise).then(
-			(v) => { clearTimeout(t); resolve(v); },
-			(e) => { clearTimeout(t); reject(e); },
+			(v) => {
+				clearTimeout(t);
+				resolve(v);
+			},
+			(e) => {
+				clearTimeout(t);
+				reject(e);
+			},
 		);
 	});
 }
@@ -86,7 +89,12 @@ export default wrap(async (req, res) => {
 	}
 	const managerAddr = DELEGATION_MANAGER_DEPLOYMENTS[row.chain_id];
 	if (!managerAddr) {
-		return error(res, 400, 'chain_not_supported', `no DelegationManager for chainId ${row.chain_id}`);
+		return error(
+			res,
+			400,
+			'chain_not_supported',
+			`no DelegationManager for chainId ${row.chain_id}`,
+		);
 	}
 
 	const provider = new JsonRpcProvider(chainMeta.rpc, row.chain_id, { staticNetwork: true });
@@ -95,7 +103,9 @@ export default wrap(async (req, res) => {
 	let receipt = null;
 	for (let attempt = 0; attempt < 3 && !receipt; attempt++) {
 		if (attempt > 0) await new Promise((r) => setTimeout(r, 800));
-		receipt = await withTimeout(provider.getTransactionReceipt(txHash), RPC_TIMEOUT_MS).catch(() => null);
+		receipt = await withTimeout(provider.getTransactionReceipt(txHash), RPC_TIMEOUT_MS).catch(
+			() => null,
+		);
 	}
 	if (!receipt) return error(res, 400, 'tx_not_found', 'transaction receipt not found');
 
@@ -117,9 +127,17 @@ export default wrap(async (req, res) => {
 
 	// Second confirmation: call disabledDelegations(hash) on-chain
 	const manager = new Contract(managerAddr, DELEGATION_MANAGER_ABI, provider);
-	const isDisabled = await withTimeout(manager.disabledDelegations(row.delegation_hash), RPC_TIMEOUT_MS).catch(() => null);
+	const isDisabled = await withTimeout(
+		manager.disabledDelegations(row.delegation_hash),
+		RPC_TIMEOUT_MS,
+	).catch(() => null);
 	if (!isDisabled) {
-		return error(res, 400, 'not_yet_disabled', 'delegation is not yet marked disabled on-chain');
+		return error(
+			res,
+			400,
+			'not_yet_disabled',
+			'delegation is not yet marked disabled on-chain',
+		);
 	}
 
 	// Flip status active → revoked; 0 rows = already revoked / never active
@@ -132,7 +150,12 @@ export default wrap(async (req, res) => {
 	if (!updated || updated.length === 0) {
 		const [current] = await sql`SELECT status FROM agent_delegations WHERE id = ${id} LIMIT 1`;
 		const currentStatus = current?.status ?? 'unknown';
-		return error(res, 409, 'already_revoked', `delegation cannot be revoked (current status: ${currentStatus})`);
+		return error(
+			res,
+			409,
+			'already_revoked',
+			`delegation cannot be revoked (current status: ${currentStatus})`,
+		);
 	}
 
 	const revokedAt = updated[0].revoked_at;

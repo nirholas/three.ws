@@ -16,7 +16,11 @@ vi.mock('../api/_lib/auth.js', () => ({
 
 // env throws if required vars are missing — stub before handler imports it.
 vi.mock('../api/_lib/env.js', () => ({
-	env: { APP_ORIGIN: 'http://localhost:3000', ISSUER: 'http://test', MCP_RESOURCE: 'http://test' },
+	env: {
+		APP_ORIGIN: 'http://localhost:3000',
+		ISSUER: 'http://test',
+		MCP_RESOURCE: 'http://test',
+	},
 }));
 
 // Import the handler AFTER mocks are registered.

@@ -10,6 +10,7 @@ import { AvatarCreator } from './avatar-creator.js';
 import { resolveURI, isDecentralizedURI } from './ipfs.js';
 import { saveRemoteGlbToAccount, getMe, readAuthHint } from './account.js';
 import { getWidget } from './widgets.js';
+import { mountAnimationGallery } from './widgets/animation-gallery.js';
 import queryString from 'query-string';
 
 // Agent system — the new primitive layer
@@ -741,11 +742,26 @@ class App {
 		// Apply post-create brand bits once viewer exists.
 		queueMicrotask(() => this._applyWidgetConfig(cfg));
 
+		// Type-specific mount (runs after viewer + content come up).
+		queueMicrotask(() => this._mountWidgetByType(widget.type, cfg));
+
 		// Caption overlay — render once, simple.
 		if (cfg.caption) this._renderWidgetCaption(cfg.caption);
 
 		// Notify parent (script embed / Studio) that we're up.
 		this._postToParent({ type: 'widget:ready', id: widget.id, widgetType: widget.type });
+	}
+
+	async _mountWidgetByType(type, cfg) {
+		try {
+			if (type === 'animation-gallery') {
+				const container = document.body;
+				const ctl = await mountAnimationGallery(this.viewer, cfg, container);
+				this._widgetController = ctl;
+			}
+		} catch (e) {
+			console.warn('[widget] mount failed', type, e?.message);
+		}
 	}
 
 	_applyWidgetConfig(cfg) {

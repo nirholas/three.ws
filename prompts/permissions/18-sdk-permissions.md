@@ -19,37 +19,47 @@ Third-party developers integrating agents into their own apps need a typed SDK e
 
     ```ts
     export interface DelegationPublic {
-        /* ... matches metadata endpoint shape ... */
+    	/* ... matches metadata endpoint shape ... */
     }
     export interface ScopePreset {
-        token: string;
-        maxAmount: string;
-        period: 'once' | 'daily' | 'weekly';
-        targets: string[];
-        expiryDays: number;
+    	token: string;
+    	maxAmount: string;
+    	period: 'once' | 'daily' | 'weekly';
+    	targets: string[];
+    	expiryDays: number;
     }
     export class PermissionsClient {
-        constructor(opts: { baseUrl?: string; bearer?: string });
+    	constructor(opts: { baseUrl?: string; bearer?: string });
 
-        listDelegations(params: { agentId?: string; delegator?: string; status?: string }): Promise<DelegationPublic[]>;
+    	listDelegations(params: {
+    		agentId?: string;
+    		delegator?: string;
+    		status?: string;
+    	}): Promise<DelegationPublic[]>;
 
-        getMetadata(agentId: string): Promise<{ spec: string; delegations: DelegationPublic[] }>;
+    	getMetadata(agentId: string): Promise<{ spec: string; delegations: DelegationPublic[] }>;
 
-        // Browser only — throws in Node
-        async grant(params: {
-            agentId: string;
-            chainId: number;
-            preset: ScopePreset;
-            signer: ethers.Signer;
-        }): Promise<{ id: string; delegationHash: string }>;
+    	// Browser only — throws in Node
+    	async grant(params: {
+    		agentId: string;
+    		chainId: number;
+    		preset: ScopePreset;
+    		signer: ethers.Signer;
+    	}): Promise<{ id: string; delegationHash: string }>;
 
-        async redeem(params: { id: string; calls: Array<{ to: string; value?: string; data: string }> }): Promise<{
-            txHash: string;
-        }>;
+    	async redeem(params: {
+    		id: string;
+    		calls: Array<{ to: string; value?: string; data: string }>;
+    	}): Promise<{
+    		txHash: string;
+    	}>;
 
-        async revoke(params: { id: string; signer: ethers.Signer }): Promise<{ status: 'revoked'; txHash: string }>;
+    	async revoke(params: {
+    		id: string;
+    		signer: ethers.Signer;
+    	}): Promise<{ status: 'revoked'; txHash: string }>;
 
-        async verify(hash: string, chainId: number): Promise<{ valid: boolean; reason?: string }>;
+    	async verify(hash: string, chainId: number): Promise<{ valid: boolean; reason?: string }>;
     }
     ```
 
@@ -71,6 +81,7 @@ Third-party developers integrating agents into their own apps need a typed SDK e
     ```
 
 6. **Tests**: add `sdk/test/permissions.test.ts` (or `.js` matching convention) covering:
+
     - URL construction for each method
     - Bearer header is sent when set
     - Error surface: a 403 from the server becomes a thrown `PermissionError` with the right code

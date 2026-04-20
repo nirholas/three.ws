@@ -19,11 +19,11 @@ description: 3D Agent is an open-source, browser-native 3D model viewer built on
 
 ---
 
-## 🧠 What is 3D Agent? 
+## 🧠 What is 3D Agent?
 
 **3D Agent** is an open-source, browser-native 3D model viewer built on [three.js](https://threejs.org/) (r176). It renders **glTF 2.0** and **GLB** files directly in WebGL — no plugins, no server uploads, no installs. Just open [3dagent.vercel.app](https://3dagent.vercel.app), drop a file, and inspect your model instantly.
 
-It's built for **3D artists** previewing exports, **game developers** debugging assets, **web developers** integrating models, and **anyone curious** about 3D on the web. 
+It's built for **3D artists** previewing exports, **game developers** debugging assets, **web developers** integrating models, and **anyone curious** about 3D on the web.
 
 <br/>
 
@@ -109,22 +109,22 @@ Open **http://localhost:3000** for the landing page, or **http://localhost:3000/
 
 ### Available Scripts
 
-| Command                  | What It Does                                                          |
-| :----------------------- | :-------------------------------------------------------------------- |
-| `npm run dev`            | Starts Vite dev server on port 3000 with hot reload                   |
-| `npm run dev:lib`        | Dev server in library-build mode (`TARGET=lib`)                       |
-| `npm run build`          | Production build to `dist/`                                           |
-| `npm run build:lib`      | Build the embeddable library bundle to `dist-lib/`                    |
-| `npm run build:artifact` | Build the standalone artifact bundle (`vite.config.artifact.js`)      |
-| `npm run build:all`      | `build` + `build:lib` + `publish:lib`                                 |
-| `npm run publish:lib`    | Run `scripts/publish-lib.mjs` to publish versioned `agent-3d` bundles |
-| `npm run test`           | Run Vitest test suite                                                 |
-| `npm run verify`         | `prettier --check .` + `vite build`                                   |
-| `npm run format`         | Run Prettier write across the repo                                    |
-| `npm run deploy`         | `build:all` + `vercel --prod`                                         |
-| `npm run clean`          | Wipe `dist/` and `dist-lib/`                                          |
-| `npm run generate-icons` | Regenerate PWA icons (`scripts/generate-pwa-icons.mjs`)               |
-| `npm run fetch-animations` | Download animation assets (`scripts/download-animations.mjs`)       |
+| Command                    | What It Does                                                          |
+| :------------------------- | :-------------------------------------------------------------------- |
+| `npm run dev`              | Starts Vite dev server on port 3000 with hot reload                   |
+| `npm run dev:lib`          | Dev server in library-build mode (`TARGET=lib`)                       |
+| `npm run build`            | Production build to `dist/`                                           |
+| `npm run build:lib`        | Build the embeddable library bundle to `dist-lib/`                    |
+| `npm run build:artifact`   | Build the standalone artifact bundle (`vite.config.artifact.js`)      |
+| `npm run build:all`        | `build` + `build:lib` + `publish:lib`                                 |
+| `npm run publish:lib`      | Run `scripts/publish-lib.mjs` to publish versioned `agent-3d` bundles |
+| `npm run test`             | Run Vitest test suite                                                 |
+| `npm run verify`           | `prettier --check .` + `vite build`                                   |
+| `npm run format`           | Run Prettier write across the repo                                    |
+| `npm run deploy`           | `build:all` + `vercel --prod`                                         |
+| `npm run clean`            | Wipe `dist/` and `dist-lib/`                                          |
+| `npm run generate-icons`   | Regenerate PWA icons (`scripts/generate-pwa-icons.mjs`)               |
+| `npm run fetch-animations` | Download animation assets (`scripts/download-animations.mjs`)         |
 
 <br/>
 
@@ -191,20 +191,20 @@ Open **http://localhost:3000** for the landing page, or **http://localhost:3000/
 
 ### Tech Stack
 
-| Layer             | Technology                                                                                 |
-| :---------------- | :----------------------------------------------------------------------------------------- |
-| **Rendering**     | [three.js](https://threejs.org/) r176 — WebGL 2.0                                          |
-| **Model Loading** | `GLTFLoader` + `DRACOLoader` + `KTX2Loader` + `MeshoptDecoder`                             |
-| **Controls**      | `OrbitControls` — pan, zoom, rotate                                                        |
-| **GUI**           | [dat.gui](https://github.com/dataarts/dat.gui) + [tweakpane](https://tweakpane.github.io/docs/) — real-time parameter tweaking |
-| **Validation**    | [gltf-validator](https://github.com/KhronosGroup/gltf-validator) — Khronos spec compliance |
-| **Templating**    | [vhtml](https://github.com/developit/vhtml) — JSX → HTML string rendering                  |
-| **Drag & Drop**   | [simple-dropzone](https://github.com/donmccurdy/simple-dropzone)                           |
-| **Build**         | [Vite](https://vitejs.dev/) 7 — sub-second HMR                                             |
-| **Backend**       | Vercel serverless functions · [Neon](https://neon.tech/) Postgres · Cloudflare R2 · [Upstash](https://upstash.com/) Redis |
+| Layer             | Technology                                                                                                                                                                                          |
+| :---------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Rendering**     | [three.js](https://threejs.org/) r176 — WebGL 2.0                                                                                                                                                   |
+| **Model Loading** | `GLTFLoader` + `DRACOLoader` + `KTX2Loader` + `MeshoptDecoder`                                                                                                                                      |
+| **Controls**      | `OrbitControls` — pan, zoom, rotate                                                                                                                                                                 |
+| **GUI**           | [dat.gui](https://github.com/dataarts/dat.gui) + [tweakpane](https://tweakpane.github.io/docs/) — real-time parameter tweaking                                                                      |
+| **Validation**    | [gltf-validator](https://github.com/KhronosGroup/gltf-validator) — Khronos spec compliance                                                                                                          |
+| **Templating**    | [vhtml](https://github.com/developit/vhtml) — JSX → HTML string rendering                                                                                                                           |
+| **Drag & Drop**   | [simple-dropzone](https://github.com/donmccurdy/simple-dropzone)                                                                                                                                    |
+| **Build**         | [Vite](https://vitejs.dev/) 7 — sub-second HMR                                                                                                                                                      |
+| **Backend**       | Vercel serverless functions · [Neon](https://neon.tech/) Postgres · Cloudflare R2 · [Upstash](https://upstash.com/) Redis                                                                           |
 | **Auth**          | Session JWT ([`jose`](https://github.com/panva/jose)) · [SIWE](https://eips.ethereum.org/EIPS/eip-4361) / [viem](https://viem.sh/) + [ethers](https://ethers.org/) · [Privy](https://www.privy.io/) |
-| **Testing**       | [Vitest](https://vitest.dev/)                                                              |
-| **Hosting**       | [Vercel](https://vercel.com/) — edge CDN + cron                                            |
+| **Testing**       | [Vitest](https://vitest.dev/)                                                                                                                                                                       |
+| **Hosting**       | [Vercel](https://vercel.com/) — edge CDN + cron                                                                                                                                                     |
 
 <br/>
 
@@ -245,53 +245,53 @@ Routing is driven by [`vercel.json`](vercel.json). High-level map:
 
 ### Pages
 
-| Path                            | Serves                                        |
-| :------------------------------ | :-------------------------------------------- |
-| `/`                             | `index.html` — landing                        |
-| `/app`, `/deploy`, `/a/*`       | `app.html` — viewer + deploy flow             |
-| `/home`                         | `home.html`                                   |
-| `/features`                     | `features.html`                               |
-| `/create`                       | `create.html` — avatar + agent creation       |
-| `/agent`, `/agent/<id>`         | Agent detail page                             |
-| `/agent/<id>/edit`, `/embed`    | Agent edit + embed surfaces                   |
-| `/studio`, `/widgets`, `/widgets/...` | Widget Studio + gallery                 |
-| `/w/<id>`                       | Rendered widget page (with OG + oEmbed)       |
-| `/dashboard`, `/dashboard/...`  | Authenticated dashboard (storage, usage)      |
-| `/discover`, `/explore`         | Directories                                   |
-| `/artifact`, `/hydrate`, `/cz`, `/validation`, `/lobehub/iframe` | Standalone subapps |
-| `/login`, `/register`           | Auth pages                                    |
-| `/docs/widgets`                 | Widgets documentation                         |
+| Path                                                             | Serves                                   |
+| :--------------------------------------------------------------- | :--------------------------------------- |
+| `/`                                                              | `index.html` — landing                   |
+| `/app`, `/deploy`, `/a/*`                                        | `app.html` — viewer + deploy flow        |
+| `/home`                                                          | `home.html`                              |
+| `/features`                                                      | `features.html`                          |
+| `/create`                                                        | `create.html` — avatar + agent creation  |
+| `/agent`, `/agent/<id>`                                          | Agent detail page                        |
+| `/agent/<id>/edit`, `/embed`                                     | Agent edit + embed surfaces              |
+| `/studio`, `/widgets`, `/widgets/...`                            | Widget Studio + gallery                  |
+| `/w/<id>`                                                        | Rendered widget page (with OG + oEmbed)  |
+| `/dashboard`, `/dashboard/...`                                   | Authenticated dashboard (storage, usage) |
+| `/discover`, `/explore`                                          | Directories                              |
+| `/artifact`, `/hydrate`, `/cz`, `/validation`, `/lobehub/iframe` | Standalone subapps                       |
+| `/login`, `/register`                                            | Auth pages                               |
+| `/docs/widgets`                                                  | Widgets documentation                    |
 
 ### API
 
-| Path                                              | Purpose                                              |
-| :------------------------------------------------ | :--------------------------------------------------- |
-| `/api/agents`, `/api/agents/<id>`                 | Agent CRUD, wallet, sign, embed-policy, usage        |
-| `/api/agents/suggest`, `/api/agents/by-wallet`    | Lookup helpers                                       |
-| `/api/agent-actions`, `/api/agent-memory`         | Agent actions + memory store                         |
-| `/api/widgets`, `/api/widgets/<id>`               | Widget CRUD, duplicate, stats, view                  |
-| `/api/widgets/oembed`, `/api/widgets/<id>/og`     | oEmbed + Open Graph card                             |
-| `/api/avatars/<id>/...`                           | Storage mode + IPFS pinning                          |
-| `/api/auth/...`, `/oauth/...`                     | Sessions + OAuth 2.1 authorization server            |
-| `/.well-known/oauth-authorization-server`, `/.well-known/oauth-protected-resource` | Discovery docs |
-| `/api/mcp`                                        | Model Context Protocol endpoint                      |
-| `/api/llm/anthropic`                              | LLM proxy                                            |
-| `/api/erc8004/hydrate`, `/api/erc8004/import`, `/api/erc8004/pin` | ERC-8004 passport tools              |
-| `/api/dca-strategies`, `/api/subscriptions.js`    | Scheduled on-chain actions                           |
-| `/api/cz/claim`                                   | CZ claim flow                                        |
-| `/api/chat`, `/api/tts/*`, `/api/animations/*`    | Chat, TTS, animation services                        |
-| `/a/<chain>/<id>`, `/a/<chain>/<id>/embed`, `/api/a/<chain>/<id>/og` | Attestation pages + OG             |
+| Path                                                                               | Purpose                                       |
+| :--------------------------------------------------------------------------------- | :-------------------------------------------- |
+| `/api/agents`, `/api/agents/<id>`                                                  | Agent CRUD, wallet, sign, embed-policy, usage |
+| `/api/agents/suggest`, `/api/agents/by-wallet`                                     | Lookup helpers                                |
+| `/api/agent-actions`, `/api/agent-memory`                                          | Agent actions + memory store                  |
+| `/api/widgets`, `/api/widgets/<id>`                                                | Widget CRUD, duplicate, stats, view           |
+| `/api/widgets/oembed`, `/api/widgets/<id>/og`                                      | oEmbed + Open Graph card                      |
+| `/api/avatars/<id>/...`                                                            | Storage mode + IPFS pinning                   |
+| `/api/auth/...`, `/oauth/...`                                                      | Sessions + OAuth 2.1 authorization server     |
+| `/.well-known/oauth-authorization-server`, `/.well-known/oauth-protected-resource` | Discovery docs                                |
+| `/api/mcp`                                                                         | Model Context Protocol endpoint               |
+| `/api/llm/anthropic`                                                               | LLM proxy                                     |
+| `/api/erc8004/hydrate`, `/api/erc8004/import`, `/api/erc8004/pin`                  | ERC-8004 passport tools                       |
+| `/api/dca-strategies`, `/api/subscriptions.js`                                     | Scheduled on-chain actions                    |
+| `/api/cz/claim`                                                                    | CZ claim flow                                 |
+| `/api/chat`, `/api/tts/*`, `/api/animations/*`                                     | Chat, TTS, animation services                 |
+| `/a/<chain>/<id>`, `/a/<chain>/<id>/embed`, `/api/a/<chain>/<id>/og`               | Attestation pages + OG                        |
 
 ### Cron jobs
 
 Scheduled in `vercel.json` → `crons`:
 
-| Schedule        | Handler                             |
-| :-------------- | :---------------------------------- |
-| `*/15 * * * *`  | `/api/cron/erc8004-crawl`           |
-| `*/5 * * * *`   | `/api/cron/index-delegations`       |
-| `0 * * * *`     | `/api/cron/run-dca`                 |
-| `0 * * * *`     | `/api/cron/run-subscriptions`       |
+| Schedule       | Handler                       |
+| :------------- | :---------------------------- |
+| `*/15 * * * *` | `/api/cron/erc8004-crawl`     |
+| `*/5 * * * *`  | `/api/cron/index-delegations` |
+| `0 * * * *`    | `/api/cron/run-dca`           |
+| `0 * * * *`    | `/api/cron/run-subscriptions` |
 
 <br/>
 

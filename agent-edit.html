@@ -400,45 +400,85 @@
 		</header>
 
 		<div class="edit-tabs" role="tablist" aria-label="Edit sections">
-			<button class="edit-tab active" data-tab="persona" role="tab" aria-selected="true" aria-controls="panel-persona" id="tab-persona">Persona</button>
-			<button class="edit-tab" data-tab="outfit" role="tab" aria-selected="false" aria-controls="panel-outfit" id="tab-outfit">Outfit</button>
+			<button
+				class="edit-tab active"
+				data-tab="persona"
+				role="tab"
+				aria-selected="true"
+				aria-controls="panel-persona"
+				id="tab-persona"
+			>
+				Persona
+			</button>
+			<button
+				class="edit-tab"
+				data-tab="outfit"
+				role="tab"
+				aria-selected="false"
+				aria-controls="panel-outfit"
+				id="tab-outfit"
+			>
+				Outfit
+			</button>
 		</div>
 
 		<main id="main">
-		<div id="loading" class="loading-msg" role="status" aria-live="polite">Loading…</div>
-		<div id="error" class="error-msg" style="display: none" role="alert"></div>
+			<div id="loading" class="loading-msg" role="status" aria-live="polite">Loading…</div>
+			<div id="error" class="error-msg" style="display: none" role="alert"></div>
 
-		<!-- Persona tab -->
-		<section class="edit-panel persona-panel" id="panel-persona" role="tabpanel" aria-labelledby="tab-persona">
-			<div class="form-group">
-				<label class="form-label" for="f-name">Name</label>
-				<input class="form-input" id="f-name" type="text" maxlength="100" />
-			</div>
-			<div class="form-group">
-				<label class="form-label" for="f-desc">Description</label>
-				<textarea class="form-textarea" id="f-desc" rows="4" maxlength="500"></textarea>
-			</div>
-			<div class="form-actions">
-				<button class="btn-primary" id="persona-save">Save</button>
-				<span class="form-status" id="persona-status" role="status" aria-live="polite"></span>
-			</div>
-		</section>
+			<!-- Persona tab -->
+			<section
+				class="edit-panel persona-panel"
+				id="panel-persona"
+				role="tabpanel"
+				aria-labelledby="tab-persona"
+			>
+				<div class="form-group">
+					<label class="form-label" for="f-name">Name</label>
+					<input class="form-input" id="f-name" type="text" maxlength="100" />
+				</div>
+				<div class="form-group">
+					<label class="form-label" for="f-desc">Description</label>
+					<textarea class="form-textarea" id="f-desc" rows="4" maxlength="500"></textarea>
+				</div>
+				<div class="form-actions">
+					<button class="btn-primary" id="persona-save">Save</button>
+					<span
+						class="form-status"
+						id="persona-status"
+						role="status"
+						aria-live="polite"
+					></span>
+				</div>
+			</section>
 
-		<!-- Outfit tab -->
-		<section class="edit-panel outfit-panel" id="panel-outfit" role="tabpanel" aria-labelledby="tab-outfit" hidden>
-			<div class="outfit-preview" id="outfit-preview" aria-label="Avatar preview">
-				<!-- agent-3d inserted here once avatar is confirmed -->
-			</div>
-			<div class="outfit-controls" id="outfit-controls">
-				<div class="outfit-header">
-					<h2 class="outfit-title">Materials</h2>
-					<button class="btn-reset-all" id="btn-reset-all" aria-label="Reset all materials">Reset all</button>
+			<!-- Outfit tab -->
+			<section
+				class="edit-panel outfit-panel"
+				id="panel-outfit"
+				role="tabpanel"
+				aria-labelledby="tab-outfit"
+				hidden
+			>
+				<div class="outfit-preview" id="outfit-preview" aria-label="Avatar preview">
+					<!-- agent-3d inserted here once avatar is confirmed -->
 				</div>
-				<div id="mat-list">
-					<div class="no-named-mats">Loading preview…</div>
+				<div class="outfit-controls" id="outfit-controls">
+					<div class="outfit-header">
+						<h2 class="outfit-title">Materials</h2>
+						<button
+							class="btn-reset-all"
+							id="btn-reset-all"
+							aria-label="Reset all materials"
+						>
+							Reset all
+						</button>
+					</div>
+					<div id="mat-list">
+						<div class="no-named-mats">Loading preview…</div>
+					</div>
 				</div>
-			</div>
-		</section>
+			</section>
 		</main>
 
 		<div class="outfit-status" id="outfit-status" role="status" aria-live="polite"></div>
@@ -510,9 +550,10 @@
 					e.preventDefault();
 					const arr = Array.from(editTabs);
 					const i = arr.indexOf(btn);
-					const next = e.key === 'ArrowRight'
-						? arr[(i + 1) % arr.length]
-						: arr[(i - 1 + arr.length) % arr.length];
+					const next =
+						e.key === 'ArrowRight'
+							? arr[(i + 1) % arr.length]
+							: arr[(i - 1 + arr.length) % arr.length];
 					activateTab(next.dataset.tab);
 					next.focus();
 				});

@@ -25,7 +25,7 @@ export default wrap(async (req, res) => {
 
 		const existing =
 			await sql`select id from users where display_name ilike ${body.username} and deleted_at is null limit 1`;
-		if (existing[0]) return error(res, 409, 'username_taken', 'that username is already taken');
+		if (existing[0]) return error(res, 409, 'conflict', 'email or username already in use');
 	} else {
 		const body = parse(registerBody, raw);
 		email = body.email;
@@ -34,8 +34,7 @@ export default wrap(async (req, res) => {
 
 		const existing =
 			await sql`select id from users where email = ${email} and deleted_at is null limit 1`;
-		if (existing[0])
-			return error(res, 409, 'email_taken', 'an account with this email already exists');
+		if (existing[0]) return error(res, 409, 'conflict', 'email or username already in use');
 	}
 
 	const hash = await hashPassword(password);

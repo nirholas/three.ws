@@ -41,7 +41,11 @@
 		<script type="module">
 			const CDN = 'https://3dagent.vercel.app/agent-3d/latest/agent-3d.js';
 			const h = location.hostname;
-			const isLocal = h === 'localhost' || h === '127.0.0.1' || h.endsWith('.github.dev') || h.endsWith('.local');
+			const isLocal =
+				h === 'localhost' ||
+				h === '127.0.0.1' ||
+				h.endsWith('.github.dev') ||
+				h.endsWith('.local');
 			if (isLocal) {
 				const { defineElement } = await import('/src/lib.js');
 				defineElement();

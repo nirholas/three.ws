@@ -26,10 +26,10 @@ Every UI + runtime path needs a single, well-typed (JSDoc) facade over the MetaM
 
     ```js
     export class PermissionError extends Error {
-        constructor(code, message) {
-            super(message);
-            this.code = code;
-        }
+    	constructor(code, message) {
+    		super(message);
+    		this.code = code;
+    	}
     }
     ```
 

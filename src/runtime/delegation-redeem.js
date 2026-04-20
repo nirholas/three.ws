@@ -245,7 +245,8 @@ export async function redeemFromSkill({ agentId, chainId, calls, skillId, mode =
 	// Resolve auto mode
 	let resolvedMode = mode;
 	if (mode === 'auto') {
-		const hasWallet = typeof window !== 'undefined' && !!window.ethereum && !!delegation.signature;
+		const hasWallet =
+			typeof window !== 'undefined' && !!window.ethereum && !!delegation.signature;
 		const hasToken = !!_getRelayerToken(agentId);
 		if (hasWallet) resolvedMode = 'client';
 		else if (hasToken) resolvedMode = 'relayer';

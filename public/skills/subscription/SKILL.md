@@ -4,11 +4,11 @@ version: 0.1.0
 trust: owned-only
 permissions_required: true
 default_scope_preset:
-  token: "<USDC>"
-  maxAmount: "5000000"
-  period: "weekly"
-  targets: ["<subscription executor contract>"]
-  expiry_days: 90
+    token: '<USDC>'
+    maxAmount: '5000000'
+    period: 'weekly'
+    targets: ['<subscription executor contract>']
+    expiry_days: 90
 ---
 
 # Subscription

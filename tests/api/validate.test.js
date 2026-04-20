@@ -135,7 +135,10 @@ describe('username schema', () => {
 
 describe('registerBody schema', () => {
 	it('accepts valid registration body', () => {
-		const result = registerBody.parse({ email: 'user@example.com', password: 'securepassword1' });
+		const result = registerBody.parse({
+			email: 'user@example.com',
+			password: 'securepassword1',
+		});
 		expect(result.email).toBe('user@example.com');
 		expect(result.password).toBe('securepassword1');
 	});
@@ -178,13 +181,13 @@ describe('createAvatarBody schema', () => {
 	});
 
 	it('rejects size_bytes over 500MB', () => {
-		expect(() => createAvatarBody.parse({ ...base, size_bytes: 500 * 1024 * 1024 + 1 })).toThrow();
+		expect(() =>
+			createAvatarBody.parse({ ...base, size_bytes: 500 * 1024 * 1024 + 1 }),
+		).toThrow();
 	});
 
 	it('rejects invalid checksum format', () => {
-		expect(() =>
-			createAvatarBody.parse({ ...base, checksum_sha256: 'not-a-hash' }),
-		).toThrow();
+		expect(() => createAvatarBody.parse({ ...base, checksum_sha256: 'not-a-hash' })).toThrow();
 	});
 
 	it('accepts valid 64-char hex checksum', () => {

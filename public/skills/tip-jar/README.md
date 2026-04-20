@@ -6,13 +6,13 @@ initial grant.
 
 ## Scope requested
 
-| Field       | Value                                              |
-| ----------- | -------------------------------------------------- |
-| token       | USDC on the active chain (6 decimals)              |
-| maxAmount   | 10 000 000 base units (10 USDC) per day            |
-| period      | daily                                              |
-| targets     | USDC contract on the active chain                  |
-| expiry_days | 30                                                 |
+| Field       | Value                                   |
+| ----------- | --------------------------------------- |
+| token       | USDC on the active chain (6 decimals)   |
+| maxAmount   | 10 000 000 base units (10 USDC) per day |
+| period      | daily                                   |
+| targets     | USDC contract on the active chain       |
+| expiry_days | 30                                      |
 
 Base Sepolia USDC: `0x036CbD53842c5426634e7929541eC2318f3dCF7e`
 
@@ -76,12 +76,12 @@ Example — 5 USDC to 0x1234...5678:
 
 ## Files
 
-| File         | Purpose                                    |
-| ------------ | ------------------------------------------ |
-| `SKILL.md`   | LLM instructions + scope declaration       |
+| File            | Purpose                                    |
+| --------------- | ------------------------------------------ |
+| `SKILL.md`      | LLM instructions + scope declaration       |
 | `manifest.json` | Skill metadata, sandboxPolicy, permissions |
-| `skill.js`   | `setup` / `execute` exports + pure helpers |
-| `skill.css`  | Tip-amount picker modal styles             |
+| `skill.js`      | `setup` / `execute` exports + pure helpers |
+| `skill.css`     | Tip-amount picker modal styles             |
 
 ## Dependencies (lazy-loaded at runtime)
 

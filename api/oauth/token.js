@@ -107,8 +107,20 @@ async function handleRefresh(res, client, form) {
 			oldSecret: refresh_token,
 			clientId: client.client_id,
 			// Narrow the rotated refresh token to the requested subset so a caller
-			// can't re-widen back to the full grant on a later refresh.
-			narrowScope: (stored) => (scope ? intersect(scope, stored) : stored),
+			// can't re-widen back to the full grant on a later refresh. When no
+			// scope is sent, preserve the stored scope. When scope is sent, it
+			// must be a strict subset of the stored scope — reject otherwise so
+			// the intersect fallback never silently upgrades to stored.
+			narrowScope: (stored) => {
+				if (!scope) return stored;
+				if (!isSubsetScope(scope, stored)) {
+					throw Object.assign(new Error('requested scope exceeds granted scope'), {
+						status: 400,
+						code: 'invalid_scope',
+					});
+				}
+				return scope.split(/\s+/).filter(Boolean).join(' ');
+			},
 		});
 	} catch (err) {
 		return error(res, err.status || 400, err.code || 'invalid_grant', err.message);
@@ -130,14 +142,11 @@ async function handleRefresh(res, client, form) {
 	});
 }
 
-function intersect(a, b) {
-	const set = new Set(b.split(/\s+/).filter(Boolean));
-	return (
-		a
-			.split(/\s+/)
-			.filter((s) => set.has(s))
-			.join(' ') || b
-	);
+function isSubsetScope(requested, stored) {
+	const allowed = new Set(stored.split(/\s+/).filter(Boolean));
+	const asked = requested.split(/\s+/).filter(Boolean);
+	if (asked.length === 0) return false;
+	return asked.every((s) => allowed.has(s));
 }
 
 function basicAuthUser(req) {
