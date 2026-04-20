@@ -43,6 +43,7 @@
 				font-size: 0.875rem;
 				font-weight: 500;
 				color: rgba(255, 255, 255, 0.75);
+				margin: 0;
 			}
 
 			.edit-tabs {
@@ -199,6 +200,8 @@
 				color: rgba(255, 255, 255, 0.35);
 				text-transform: uppercase;
 				letter-spacing: 0.08em;
+				font-weight: 500;
+				margin: 0;
 			}
 			.btn-reset-all {
 				background: transparent;
@@ -362,24 +365,51 @@
 				font-size: 0.764rem;
 				padding: 1rem 0;
 			}
+
+			.edit-tab:focus-visible,
+			.btn-primary:focus-visible,
+			.btn-reset-all:focus-visible,
+			.btn-reset-mat:focus-visible,
+			.edit-header a:focus-visible,
+			.mat-card-header:focus-visible {
+				outline: 2px solid rgba(147, 197, 253, 0.7);
+				outline-offset: 2px;
+			}
+
+			.skip-link {
+				position: absolute;
+				left: -9999px;
+				top: 0;
+				background: #000;
+				color: #fff;
+				padding: 0.5rem 1rem;
+				z-index: 10000;
+				text-decoration: none;
+			}
+			.skip-link:focus {
+				left: 0.5rem;
+				top: 0.5rem;
+			}
 		</style>
 	</head>
 	<body>
+		<a href="#main" class="skip-link">Skip to main content</a>
 		<header class="edit-header">
-			<a id="back-link" href="/">← Agent</a>
-			<div class="edit-header-title" id="agent-title">Edit Agent</div>
+			<a id="back-link" href="/" aria-label="Back to agent page">← Agent</a>
+			<h1 class="edit-header-title" id="agent-title">Edit Agent</h1>
 		</header>
 
-		<div class="edit-tabs" role="tablist">
-			<button class="edit-tab active" data-tab="persona">Persona</button>
-			<button class="edit-tab" data-tab="outfit">Outfit</button>
+		<div class="edit-tabs" role="tablist" aria-label="Edit sections">
+			<button class="edit-tab active" data-tab="persona" role="tab" aria-selected="true" aria-controls="panel-persona" id="tab-persona">Persona</button>
+			<button class="edit-tab" data-tab="outfit" role="tab" aria-selected="false" aria-controls="panel-outfit" id="tab-outfit">Outfit</button>
 		</div>
 
-		<div id="loading" class="loading-msg">Loading…</div>
-		<div id="error" class="error-msg" style="display: none"></div>
+		<main id="main">
+		<div id="loading" class="loading-msg" role="status" aria-live="polite">Loading…</div>
+		<div id="error" class="error-msg" style="display: none" role="alert"></div>
 
 		<!-- Persona tab -->
-		<div class="edit-panel persona-panel" id="panel-persona">
+		<section class="edit-panel persona-panel" id="panel-persona" role="tabpanel" aria-labelledby="tab-persona">
 			<div class="form-group">
 				<label class="form-label" for="f-name">Name</label>
 				<input class="form-input" id="f-name" type="text" maxlength="100" />
@@ -390,27 +420,28 @@
 			</div>
 			<div class="form-actions">
 				<button class="btn-primary" id="persona-save">Save</button>
-				<span class="form-status" id="persona-status"></span>
+				<span class="form-status" id="persona-status" role="status" aria-live="polite"></span>
 			</div>
-		</div>
+		</section>
 
 		<!-- Outfit tab -->
-		<div class="edit-panel outfit-panel" id="panel-outfit">
-			<div class="outfit-preview" id="outfit-preview">
+		<section class="edit-panel outfit-panel" id="panel-outfit" role="tabpanel" aria-labelledby="tab-outfit" hidden>
+			<div class="outfit-preview" id="outfit-preview" aria-label="Avatar preview">
 				<!-- agent-3d inserted here once avatar is confirmed -->
 			</div>
 			<div class="outfit-controls" id="outfit-controls">
 				<div class="outfit-header">
-					<span class="outfit-title">Materials</span>
-					<button class="btn-reset-all" id="btn-reset-all">Reset all</button>
+					<h2 class="outfit-title">Materials</h2>
+					<button class="btn-reset-all" id="btn-reset-all" aria-label="Reset all materials">Reset all</button>
 				</div>
 				<div id="mat-list">
 					<div class="no-named-mats">Loading preview…</div>
 				</div>
 			</div>
-		</div>
+		</section>
+		</main>
 
-		<div class="outfit-status" id="outfit-status"></div>
+		<div class="outfit-status" id="outfit-status" role="status" aria-live="polite"></div>
 
 		<script type="module">
 			import './src/element.js'; // registers <agent-3d>
@@ -457,16 +488,34 @@
 			// ── Tab switching ─────────────────────────────────────────────────────────
 			function activateTab(name) {
 				document.querySelectorAll('.edit-tab').forEach((btn) => {
-					btn.classList.toggle('active', btn.dataset.tab === name);
+					const active = btn.dataset.tab === name;
+					btn.classList.toggle('active', active);
+					btn.setAttribute('aria-selected', active ? 'true' : 'false');
+					btn.tabIndex = active ? 0 : -1;
 				});
 				document.querySelectorAll('.edit-panel').forEach((p) => {
-					p.classList.toggle('active', p.id === `panel-${name}`);
+					const active = p.id === `panel-${name}`;
+					p.classList.toggle('active', active);
+					if (active) p.removeAttribute('hidden');
+					else p.setAttribute('hidden', '');
 				});
 				if (name === 'outfit') initOutfitTab();
 			}
 
-			document.querySelectorAll('.edit-tab').forEach((btn) => {
+			const editTabs = document.querySelectorAll('.edit-tab');
+			editTabs.forEach((btn) => {
 				btn.addEventListener('click', () => activateTab(btn.dataset.tab));
+				btn.addEventListener('keydown', (e) => {
+					if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+					e.preventDefault();
+					const arr = Array.from(editTabs);
+					const i = arr.indexOf(btn);
+					const next = e.key === 'ArrowRight'
+						? arr[(i + 1) % arr.length]
+						: arr[(i - 1 + arr.length) % arr.length];
+					activateTab(next.dataset.tab);
+					next.focus();
+				});
 			});
 
 			// ── Persona tab ───────────────────────────────────────────────────────────
@@ -562,45 +611,59 @@
 
 				const isModified = !!overridesMap[mat.name];
 
+				const bodyId = `mat-body-${esc(mat.name).replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+				const rowColorId = `${bodyId}-color`;
+				const rowMetalId = `${bodyId}-metal`;
+				const rowRoughId = `${bodyId}-rough`;
+				const rowEmissId = `${bodyId}-emiss`;
 				card.innerHTML = `
-				<div class="mat-card-header">
-					<span class="mat-card-swatch" style="background:${esc(override.color || mat.color)}"></span>
+				<div class="mat-card-header" role="button" tabindex="0" aria-expanded="false" aria-controls="${bodyId}">
+					<span class="mat-card-swatch" style="background:${esc(override.color || mat.color)}" aria-hidden="true"></span>
 					<span class="mat-card-name">${esc(mat.name)}</span>
-					${isModified ? '<span class="mat-card-modified">●</span>' : ''}
-					<span class="mat-card-chevron">▶</span>
+					${isModified ? '<span class="mat-card-modified" aria-label="modified">●</span>' : ''}
+					<span class="mat-card-chevron" aria-hidden="true">▶</span>
 				</div>
-				<div class="mat-card-body">
+				<div class="mat-card-body" id="${bodyId}">
 					<div class="mat-row">
-						<span class="mat-row-label">Base color</span>
-						<input type="color" data-field="color" value="${esc(override.color || mat.color)}" />
+						<label class="mat-row-label" for="${rowColorId}">Base color</label>
+						<input id="${rowColorId}" type="color" data-field="color" value="${esc(override.color || mat.color)}" />
 						<span class="mat-row-val"></span>
 					</div>
 					<div class="mat-row">
-						<span class="mat-row-label">Metalness</span>
-						<input type="range" data-field="metalness" min="0" max="1" step="0.01"
+						<label class="mat-row-label" for="${rowMetalId}">Metalness</label>
+						<input id="${rowMetalId}" type="range" data-field="metalness" min="0" max="1" step="0.01"
 							value="${override.metalness !== undefined ? override.metalness : mat.metalness}" />
 						<span class="mat-row-val">${fmtN(override.metalness !== undefined ? override.metalness : mat.metalness)}</span>
 					</div>
 					<div class="mat-row">
-						<span class="mat-row-label">Roughness</span>
-						<input type="range" data-field="roughness" min="0" max="1" step="0.01"
+						<label class="mat-row-label" for="${rowRoughId}">Roughness</label>
+						<input id="${rowRoughId}" type="range" data-field="roughness" min="0" max="1" step="0.01"
 							value="${override.roughness !== undefined ? override.roughness : mat.roughness}" />
 						<span class="mat-row-val">${fmtN(override.roughness !== undefined ? override.roughness : mat.roughness)}</span>
 					</div>
 					<div class="mat-row">
-						<span class="mat-row-label">Emissive</span>
-						<input type="color" data-field="emissive" value="${esc(override.emissive || mat.emissive)}" />
+						<label class="mat-row-label" for="${rowEmissId}">Emissive</label>
+						<input id="${rowEmissId}" type="color" data-field="emissive" value="${esc(override.emissive || mat.emissive)}" />
 						<span class="mat-row-val"></span>
 					</div>
 					<div class="mat-card-footer">
-						<button class="btn-reset-mat" data-mat="${esc(mat.name)}">↺ reset this material</button>
+						<button class="btn-reset-mat" data-mat="${esc(mat.name)}" aria-label="Reset ${esc(mat.name)} material">↺ reset this material</button>
 					</div>
 				</div>
 			`;
 
 				// Toggle open/close
-				card.querySelector('.mat-card-header').addEventListener('click', () => {
-					card.classList.toggle('open');
+				const header = card.querySelector('.mat-card-header');
+				const toggleCard = () => {
+					const open = card.classList.toggle('open');
+					header.setAttribute('aria-expanded', open ? 'true' : 'false');
+				};
+				header.addEventListener('click', toggleCard);
+				header.addEventListener('keydown', (e) => {
+					if (e.key === 'Enter' || e.key === ' ') {
+						e.preventDefault();
+						toggleCard();
+					}
 				});
 
 				// Field changes

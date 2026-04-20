@@ -80,6 +80,9 @@ export default wrap(async (req, res) => {
 
 	if (req.method === 'GET') {
 		const agentId = req.query?.agentId ?? null;
+		if (agentId && !z.string().uuid().safeParse(agentId).success) {
+			return error(res, 400, 'validation_error', 'agentId must be a uuid');
+		}
 
 		const rows = agentId
 			? await sql`
@@ -105,6 +108,9 @@ export default wrap(async (req, res) => {
 	if (req.method === 'DELETE') {
 		const id = req.query?.id;
 		if (!id) return error(res, 400, 'validation_error', 'id query param is required');
+		if (!z.string().uuid().safeParse(id).success) {
+			return error(res, 400, 'validation_error', 'id must be a uuid');
+		}
 
 		const [row] = await sql`
 			UPDATE agent_subscriptions

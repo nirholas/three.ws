@@ -545,8 +545,8 @@
 				</div>
 
 				<!-- Card 3: From selfie (disabled) -->
-				<div class="create-card" id="card-selfie" aria-disabled="true" tabindex="-1">
-					<span class="coming-soon-badge" aria-label="Coming soon">Coming Soon</span>
+				<div class="create-card" id="card-selfie" role="button" aria-disabled="true" aria-label="From a selfie (coming soon)" tabindex="-1">
+					<span class="coming-soon-badge" aria-hidden="true">Coming Soon</span>
 					<div
 						class="card-icon"
 						aria-hidden="true"
@@ -591,8 +591,10 @@
 			</div>
 		</main>
 
-		<input type="file" id="glb-input" accept=".glb,model/gltf-binary" style="display: none" />
-		<div class="status-toast" id="status-toast" hidden></div>
+		<label for="glb-input" class="visually-hidden" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">Upload GLB file</label>
+		<input type="file" id="glb-input" accept=".glb,model/gltf-binary" style="display: none" aria-describedby="glb-input-desc" />
+		<span id="glb-input-desc" hidden>Select a .glb or glTF 2.0 binary model file</span>
+		<div class="status-toast" id="status-toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
 
 		<script type="module" src="/src/create.js"></script>
 	</body>

@@ -47,6 +47,9 @@ export default wrap(async (req, res) => {
 		if (!strategyId || strategyId === 'dca-strategies') {
 			return error(res, 400, 'missing_param', 'strategy id required in path');
 		}
+		if (!z.string().uuid().safeParse(strategyId).success) {
+			return error(res, 400, 'validation_error', 'strategy id must be a uuid');
+		}
 
 		const ip = clientIp(req);
 		const rl = await limits.authIp(ip);
@@ -76,6 +79,9 @@ export default wrap(async (req, res) => {
 	if (req.method === 'GET') {
 		const agentId = url.searchParams.get('agent_id');
 		if (!agentId) return error(res, 400, 'missing_param', 'agent_id is required');
+		if (!z.string().uuid().safeParse(agentId).success) {
+			return error(res, 400, 'validation_error', 'agent_id must be a uuid');
+		}
 
 		const ip = clientIp(req);
 		const rl = await limits.authIp(ip);

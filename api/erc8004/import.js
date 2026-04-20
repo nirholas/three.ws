@@ -13,9 +13,16 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { resolveOnChainAgent, SERVER_CHAIN_META } from '../_lib/onchain.js';
 import { z } from 'zod';
 
+// agentId is a uint256 on-chain but we cap the decimal string length to 78
+// (max digits for uint256) and require digits only so BigInt() can't throw.
+const agentIdSchema = z
+	.union([z.string(), z.number()])
+	.transform((v) => (typeof v === 'number' ? String(v) : v.trim()))
+	.refine((v) => /^\d{1,78}$/.test(v), { message: 'agentId must be a non-negative integer' });
+
 const bodySchema = z.object({
-	chainId: z.number().int().positive(),
-	agentId: z.union([z.string(), z.number()]),
+	chainId: z.number().int().positive().max(2_147_483_647),
+	agentId: agentIdSchema,
 });
 
 export default wrap(async (req, res) => {
@@ -35,7 +42,7 @@ export default wrap(async (req, res) => {
 		return error(res, 400, 'bad_request', `unsupported chain ${body.chainId}`);
 	}
 
-	const agentId = String(body.agentId);
+	const agentId = body.agentId;
 
 	// Check if already imported by this user.
 	const [existing] = await sql`

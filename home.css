@@ -7,6 +7,44 @@
 	scroll-behavior: smooth;
 }
 
+/* ── Skip to content (a11y) ── */
+
+.h-skip-link {
+	position: absolute;
+	top: 0;
+	left: 0;
+	padding: 0.6rem 1rem;
+	background: #fff;
+	color: #000;
+	font-size: var(--text-sm);
+	font-weight: 500;
+	text-decoration: none;
+	border-radius: 0 0 var(--radius-sm) 0;
+	transform: translateY(-110%);
+	transition: transform 0.18s ease;
+	z-index: 9999;
+}
+
+.h-skip-link:focus {
+	transform: translateY(0);
+	outline: 2px solid #ffd76a;
+	outline-offset: 2px;
+}
+
+/* ── Focus-visible outlines (a11y) ── */
+
+.home-page a:focus-visible,
+.home-page button:focus-visible,
+.home-nav a:focus-visible,
+.h-btn-primary:focus-visible,
+.h-btn-ghost:focus-visible,
+.h-feature-link:focus-visible,
+.h-footer a:focus-visible {
+	outline: 2px solid #ffd76a;
+	outline-offset: 3px;
+	border-radius: var(--radius-sm);
+}
+
 .home-main {
 	width: 100%;
 }
