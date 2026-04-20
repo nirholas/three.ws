@@ -167,6 +167,8 @@ function _renderPicker(container, names, initialIdx, onSelect) {
 	panel.className = 'anim-gallery-panel';
 	panel.setAttribute('role', 'listbox');
 	panel.setAttribute('aria-label', 'Animation clips');
+	panel.setAttribute('aria-activedescendant', `anim-gallery-opt-${initialIdx}`);
+	panel.tabIndex = 0;
 
 	const header = document.createElement('div');
 	header.className = 'anim-gallery-header';
@@ -181,6 +183,7 @@ function _renderPicker(container, names, initialIdx, onSelect) {
 		const btn = document.createElement('button');
 		btn.type = 'button';
 		btn.className = 'anim-gallery-item';
+		btn.id = `anim-gallery-opt-${i}`;
 		btn.setAttribute('role', 'option');
 		btn.dataset.idx = String(i);
 		btn.textContent = name;
@@ -194,6 +197,37 @@ function _renderPicker(container, names, initialIdx, onSelect) {
 	});
 
 	panel.appendChild(list);
+
+	panel.addEventListener('keydown', (ev) => {
+		const current = Number(panel.getAttribute('data-current') || initialIdx);
+		let next = current;
+		switch (ev.key) {
+			case 'ArrowDown':
+			case 'j':
+				next = (current + 1) % names.length;
+				break;
+			case 'ArrowUp':
+			case 'k':
+				next = (current - 1 + names.length) % names.length;
+				break;
+			case 'Home':
+				next = 0;
+				break;
+			case 'End':
+				next = names.length - 1;
+				break;
+			case 'Enter':
+			case ' ':
+				onSelect(current);
+				ev.preventDefault();
+				return;
+			default:
+				return;
+		}
+		ev.preventDefault();
+		onSelect(next);
+	});
+
 	container.appendChild(panel);
 	_injectStyles();
 	return panel;
@@ -201,10 +235,13 @@ function _renderPicker(container, names, initialIdx, onSelect) {
 
 function _highlight(panel, idx) {
 	if (!panel) return;
+	panel.setAttribute('data-current', String(idx));
+	panel.setAttribute('aria-activedescendant', `anim-gallery-opt-${idx}`);
 	panel.querySelectorAll('.anim-gallery-item').forEach((btn) => {
 		const active = Number(btn.dataset.idx) === idx;
 		btn.classList.toggle('is-active', active);
 		btn.setAttribute('aria-selected', active ? 'true' : 'false');
+		if (active) btn.scrollIntoView({ block: 'nearest' });
 	});
 }
 

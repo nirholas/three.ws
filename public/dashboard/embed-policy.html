@@ -214,9 +214,12 @@
 			.hidden {
 				display: none !important;
 			}
+			body[data-auth-pending] {
+				visibility: hidden;
+			}
 		</style>
 	</head>
-	<body>
+	<body data-auth-pending>
 		<header>
 			<div class="brand"><a href="/dashboard">← Dashboard</a></div>
 			<div class="muted"><span id="agent-name">Agent</span></div>
@@ -437,6 +440,7 @@
 			async function loadMe() {
 				try {
 					await api('GET', '/api/auth/me');
+					document.body.removeAttribute('data-auth-pending');
 				} catch {
 					location.href =
 						'/login?next=' + encodeURIComponent(location.pathname + location.search);

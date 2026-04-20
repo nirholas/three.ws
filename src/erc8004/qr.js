@@ -369,6 +369,33 @@ function penalty(modules) {
 // ───────────────────────────────────────────────────────────────────────────
 
 /**
+ * Render a QR code as an SVG string. Works in any environment that can hold a
+ * string — no canvas required. Useful as a fallback when 2D canvas is
+ * unavailable or as a directly embeddable inline SVG.
+ *
+ * @param {string} text
+ * @param {{ scale?: number, margin?: number, dark?: string, light?: string }} [opts]
+ * @returns {string} SVG markup
+ */
+export function renderQRToSVG(text, opts = {}) {
+	const scale = opts.scale ?? 8;
+	const margin = opts.margin ?? 2;
+	const dark = opts.dark ?? '#000';
+	const light = opts.light ?? '#fff';
+	const { size, modules } = generateQR(text);
+	const px = (size + margin * 2) * scale;
+	let rects = '';
+	for (let y = 0; y < size; y++) {
+		for (let x = 0; x < size; x++) {
+			if (modules[y][x]) {
+				rects += `<rect x="${(x + margin) * scale}" y="${(y + margin) * scale}" width="${scale}" height="${scale}"/>`;
+			}
+		}
+	}
+	return `<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${px}" viewBox="0 0 ${px} ${px}" shape-rendering="crispEdges"><rect width="${px}" height="${px}" fill="${light}"/><g fill="${dark}">${rects}</g></svg>`;
+}
+
+/**
  * Render a QR code into a canvas. Returns the canvas.
  * @param {string} text
  * @param {{ scale?: number, margin?: number }} [opts]

@@ -173,6 +173,7 @@ export class Validator {
 	showLightbox() {
 		if (!this.report) return;
 		const tab = window.open('', '_blank');
+		const reportJSON = _buildDownloadHref(this.report);
 		tab.document.body.innerHTML = `
 			<!DOCTYPE html>
 			<title>glTF 2.0 validation report</title>
@@ -182,7 +183,18 @@ export class Validator {
 				body { overflow-y: auto; }
 				html, body { background: #FFFFFF; }
 			</style>
-			${ValidatorReport({ ...this.report, location })}`;
+			${ValidatorReport({ ...this.report, location, reportJSON })}`;
+	}
+}
+
+function _buildDownloadHref(report) {
+	try {
+		const { errors, warnings, infos, hints, issues, info, generator } = report;
+		const payload = { generator, info, issues, errors, warnings, infos, hints };
+		const json = JSON.stringify(payload, null, 2);
+		return 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
+	} catch {
+		return '';
 	}
 }
 

@@ -11,13 +11,25 @@ export function ValidatorReport({
 	warnings,
 	hints,
 	infos,
+	reportJSON,
 }) {
 	const totalIssues =
 		issues.numErrors + issues.numWarnings + issues.numInfos + issues.numHints;
 	const isClean = totalIssues === 0;
 	return (
 		<div class="report">
-			<h1>Validation report</h1>
+			<div class="report-head">
+				<h1>Validation report</h1>
+				{reportJSON && (
+					<a
+						class="report-download"
+						href={reportJSON}
+						download="gltf-validation-report.json"
+					>
+						Download JSON
+					</a>
+				)}
+			</div>
 			{isClean ? (
 				<div class="report-banner report-banner-clean" role="status">
 					<span class="report-banner-icon" aria-hidden="true">
@@ -107,7 +119,7 @@ export function ValidatorReport({
 							<li>None</li>
 						)}
 					</ul>
-					{info.extensionsUsed?.length && (
+					{info.extensionsUsed?.length > 0 && (
 						<p>
 							<i>
 								NOTE: Extensions above are present in the model, but may or may not
@@ -134,12 +146,18 @@ export function ValidatorReport({
 				</a>{' '}
 				{validatorVersion}.
 			</p>
-			{issues.numErrors && <ValidatorTable messages={errors} color="#f44336" title="Error" />}
-			{issues.numWarnings && (
+			{issues.numErrors > 0 && (
+				<ValidatorTable messages={errors} color="#f44336" title="Error" />
+			)}
+			{issues.numWarnings > 0 && (
 				<ValidatorTable messages={warnings} color="#f9a825" title="Warning" />
 			)}
-			{issues.numHints && <ValidatorTable messages={hints} color="#8bc34a" title="Hint" />}
-			{issues.numInfos && <ValidatorTable messages={infos} color="#2196f3" title="Info" />}
+			{issues.numHints > 0 && (
+				<ValidatorTable messages={hints} color="#8bc34a" title="Hint" />
+			)}
+			{issues.numInfos > 0 && (
+				<ValidatorTable messages={infos} color="#2196f3" title="Info" />
+			)}
 		</div>
 	);
 }

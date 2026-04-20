@@ -122,6 +122,10 @@ export async function pinFile(blob, apiToken) {
  * @param {string} opts.registryAddr
  * @param {Array}  [opts.services]     Extra service entries
  * @param {boolean}[opts.x402Support]
+ * @param {Array<{name:string,url:string,loop?:boolean,clipName?:string,source?:string}>} [opts.animations]
+ *   Optional animation clip list — emitted as a top-level `animations` extension
+ *   field (ERC-8004 permits extensions). Viewers that understand the field can
+ *   attach extra clips; others ignore it harmlessly.
  */
 export function buildRegistrationJSON({
 	name,
@@ -133,6 +137,7 @@ export function buildRegistrationJSON({
 	registryAddr,
 	services = [],
 	x402Support = false,
+	animations,
 }) {
 	const baseServices = [];
 	if (glbUrl) {
@@ -171,6 +176,10 @@ export function buildRegistrationJSON({
 	// keeps this repo's manifest resolver happy without forcing it to grep services.
 	if (glbUrl) {
 		json.body = { uri: glbUrl, format: 'gltf-binary' };
+	}
+
+	if (Array.isArray(animations) && animations.length > 0) {
+		json.animations = animations;
 	}
 
 	return json;

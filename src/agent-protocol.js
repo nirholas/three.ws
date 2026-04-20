@@ -36,7 +36,7 @@ export const ACTION_TYPES = {
  * @property {string} [sourceSkill] — skill name if emitted by a skill
  */
 
-class AgentProtocol extends EventTarget {
+export class AgentProtocol extends EventTarget {
 	constructor() {
 		super();
 		this._history = [];

@@ -709,6 +709,29 @@ footer .separator {
 	font-weight: bold;
 }
 
+.report-head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--space-md);
+	flex-wrap: wrap;
+}
+
+.report-download {
+	display: inline-block;
+	padding: 6px 12px;
+	font-size: 0.85rem;
+	border: 1px solid rgba(255, 255, 255, 0.18);
+	border-radius: 6px;
+	color: rgba(255, 255, 255, 0.85);
+	text-decoration: none;
+	transition: background-color 120ms ease;
+}
+
+.report-download:hover {
+	background: rgba(255, 255, 255, 0.08);
+}
+
 /******************************************************************************
  * CSS Spinner
  *

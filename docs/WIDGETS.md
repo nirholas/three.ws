@@ -85,8 +85,21 @@ The viewer supports the following hash params (combine with `&`):
 **Size guidance:**
 
 - Turntable / hotspot-tour: 1:1 or 4:3 — let the user breathe.
+- Animation-gallery: 1:1 or slightly wider — picker docks to the top-right on desktop, bottom on mobile.
 - Talking-agent: 7:10 portrait — chat needs vertical space.
 - Passport: anything ≥ 360 × 480.
+
+### Animation Gallery specifics
+
+The `animation-gallery` widget renders every skinned clip on the avatar as a keyboard-navigable list.
+
+| Config key       | Type      | Default | Description                                                                         |
+| ---------------- | --------- | ------- | ----------------------------------------------------------------------------------- |
+| `defaultClip`    | `string`  | `''`    | Clip name to autoplay on mount. Falls back to the first clip if the name is unknown. |
+| `loopAll`        | `boolean` | `false` | When true, each clip plays once then advances to the next; wraps to the first.      |
+| `showClipPicker` | `boolean` | `true`  | Hide the picker chrome while keeping clip playback driven by `widget:command`.      |
+
+Keyboard: ↑/↓ (or `k`/`j`) to move, Home/End to jump, Enter or Space to (re)play the highlighted clip. The picker pins to the top-right; on narrow viewports it docks to the bottom.
 
 ### Script embed
 
