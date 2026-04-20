@@ -37,11 +37,12 @@
 		></script>
 	</head>
 	<body class="home-page">
+		<a href="#main-content" class="h-skip-link">Skip to main content</a>
 		<header>
 			<h1>
-				<a href="/"><span class="wordmark-dot" aria-hidden="true"></span>3D Agent</a>
+				<a href="/" aria-label="3D Agent home"><span class="wordmark-dot" aria-hidden="true"></span>3D Agent</a>
 			</h1>
-			<nav class="home-nav">
+			<nav class="home-nav" aria-label="Primary">
 				<a href="/app">Viewer</a>
 				<a href="/studio">Studio</a>
 				<a href="/widgets">Widgets</a>
@@ -50,7 +51,7 @@
 			</nav>
 		</header>
 
-		<main class="home-main">
+		<main id="main-content" class="home-main">
 			<!-- ── Hero ── -->
 			<section class="h-hero">
 				<div class="h-hero-bg" aria-hidden="true">
@@ -133,24 +134,24 @@
 				</p>
 				<div class="h-steps">
 					<div class="h-step h-reveal">
-						<div class="h-step-num">01</div>
-						<h4>Drop your model</h4>
+						<div class="h-step-num" aria-hidden="true">01</div>
+						<h3>Drop your model</h3>
 						<p>
 							Drag a GLB or glTF 2.0 file directly into the browser. Instant WebGL
 							rendering — no upload, no install, no waiting.
 						</p>
 					</div>
 					<div class="h-step h-reveal">
-						<div class="h-step-num">02</div>
-						<h4>Animate &amp; configure</h4>
+						<div class="h-step-num" aria-hidden="true">02</div>
+						<h3>Animate &amp; configure</h3>
 						<p>
 							Pick animations, add an AI chat agent, adjust lighting and camera. Save
 							your avatar to your account for reuse.
 						</p>
 					</div>
 					<div class="h-step h-reveal">
-						<div class="h-step-num">03</div>
-						<h4>Embed anywhere</h4>
+						<div class="h-step-num" aria-hidden="true">03</div>
+						<h3>Embed anywhere</h3>
 						<p>
 							Generate a widget — one iframe, any site. Turntable, talking agent,
 							animation gallery. Works in Notion, Ghost, WordPress.

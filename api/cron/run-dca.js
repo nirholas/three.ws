@@ -41,16 +41,70 @@ const ERC20_ABI = parseAbi([
 // Uniswap V3 standard fee tier — 0.3% pool is the most liquid USDC/WETH tier
 const FEE_TIER = 3000;
 
+// ── Operational tunables ──────────────────────────────────────────────────────
+
+const RPC_TIMEOUT_MS = 10_000;
+const RPC_MAX_RETRIES = 2; // total attempts = 1 + retries
+const RELAYER_TIMEOUT_MS = 30_000;
+const RELAYER_MAX_RETRIES = 1;
+const RELAYER_RETRY_BACKOFF_MS = 1_500;
+
+// ── Structured logging ────────────────────────────────────────────────────────
+
+function log(level, event, fields = {}) {
+	const line = JSON.stringify({
+		level,
+		event,
+		ts: new Date().toISOString(),
+		component: 'cron/run-dca',
+		...fields,
+	});
+	if (level === 'error') console.error(line);
+	else console.log(line);
+}
+
+// ── Retry helper for transient failures ───────────────────────────────────────
+
+function isTransient(err) {
+	// Network-level & RPC transport errors
+	const code = err?.code;
+	const name = err?.name;
+	const status = err?.status;
+	if (name === 'AbortError' || name === 'TimeoutError') return true;
+	if (code === 'ETIMEDOUT' || code === 'ECONNRESET' || code === 'ECONNREFUSED' || code === 'ENOTFOUND' || code === 'EAI_AGAIN') return true;
+	if (typeof status === 'number' && status >= 500 && status < 600) return true;
+	// viem transport errors
+	const msg = String(err?.message || '');
+	if (/HttpRequestError|TimeoutError|fetch failed|network|socket hang up/i.test(msg)) return true;
+	return false;
+}
+
+async function withRetry(fn, { retries, backoffMs = 500, label }) {
+	let attempt = 0;
+	// eslint-disable-next-line no-constant-condition
+	while (true) {
+		try {
+			return await fn();
+		} catch (err) {
+			attempt++;
+			if (attempt > retries || !isTransient(err)) throw err;
+			const delay = backoffMs * 2 ** (attempt - 1);
+			log('warn', 'retry', { label, attempt, delay_ms: delay, message: err?.message, code: err?.code });
+			await new Promise((r) => setTimeout(r, delay));
+		}
+	}
+}
+
 // ── RPC client factory ────────────────────────────────────────────────────────
 
 function getViemClient(chainId) {
 	const cfg = CHAIN_CONFIG[chainId];
 	if (!cfg) throw new Error(`Unsupported chainId: ${chainId}`);
 	const rpcUrl = env.getRpcUrl(chainId);
-	return createPublicClient({
-		chain: cfg.chain,
-		transport: rpcUrl ? http(rpcUrl) : http(),
-	});
+	const transport = rpcUrl
+		? http(rpcUrl, { timeout: RPC_TIMEOUT_MS, retryCount: 0 })
+		: http(undefined, { timeout: RPC_TIMEOUT_MS, retryCount: 0 });
+	return createPublicClient({ chain: cfg.chain, transport });
 }
 
 // ── Quote with divergence check ───────────────────────────────────────────────
@@ -59,7 +113,7 @@ function getViemClient(chainId) {
  * Fetch a quote twice 15s apart; abort if they diverge by more than 0.5%.
  * Returns { amountOut, divergenceBps } or throws if divergence exceeds limit.
  */
-async function getVerifiedQuote(client, quoterAddress, tokenIn, tokenOut, amountIn) {
+async function getVerifiedQuote(client, quoterAddress, tokenIn, tokenOut, amountIn, logCtx) {
 	const params = {
 		tokenIn,
 		tokenOut,
@@ -68,22 +122,28 @@ async function getVerifiedQuote(client, quoterAddress, tokenIn, tokenOut, amount
 		sqrtPriceLimitX96: 0n,
 	};
 
-	// First quote
-	const [q1] = await client.readContract({
-		address: quoterAddress,
-		abi: QUOTER_V2_ABI,
-		functionName: 'quoteExactInputSingle',
-		args: [params],
+	const readQuote = () =>
+		client.readContract({
+			address: quoterAddress,
+			abi: QUOTER_V2_ABI,
+			functionName: 'quoteExactInputSingle',
+			args: [params],
+		});
+
+	// First quote (with retry on transient RPC failures)
+	const [q1] = await withRetry(readQuote, {
+		retries: RPC_MAX_RETRIES,
+		backoffMs: 500,
+		label: `quote1:${logCtx?.strategy_id ?? ''}`,
 	});
 
 	// Wait 15s then quote again
 	await new Promise((r) => setTimeout(r, 15_000));
 
-	const [q2] = await client.readContract({
-		address: quoterAddress,
-		abi: QUOTER_V2_ABI,
-		functionName: 'quoteExactInputSingle',
-		args: [params],
+	const [q2] = await withRetry(readQuote, {
+		retries: RPC_MAX_RETRIES,
+		backoffMs: 500,
+		label: `quote2:${logCtx?.strategy_id ?? ''}`,
 	});
 
 	// Divergence in basis points: |q2-q1| / q1 * 10000
@@ -132,26 +192,35 @@ function buildSwapCalldata(tokenIn, tokenOut, recipient, amountIn, amountOutMini
 
 // ── Relayer redemption ────────────────────────────────────────────────────────
 
-async function redeemViaRelayer(delegationId, calls) {
+async function redeemViaRelayer(delegationId, calls, logCtx) {
 	const relayerUrl = `${env.APP_ORIGIN}/api/permissions/redeem`;
-	const res = await fetch(relayerUrl, {
-		method: 'POST',
-		headers: {
-			'content-type': 'application/json',
-			// Cron uses the shared relayer bearer token set in env
-			authorization: `Bearer ${env.CRON_SECRET}`,
-		},
-		body: JSON.stringify({ id: delegationId, calls }),
-	});
 
-	if (!res.ok) {
-		const body = await res.json().catch(() => ({ message: res.statusText }));
-		throw Object.assign(
-			new Error(body.error_description || body.message || `Relayer ${res.status}`),
-			{ code: body.error || 'relayer_error', status: res.status },
-		);
-	}
-	return res.json();
+	const doFetch = async () => {
+		const res = await fetch(relayerUrl, {
+			method: 'POST',
+			headers: {
+				'content-type': 'application/json',
+				authorization: `Bearer ${env.CRON_SECRET}`,
+			},
+			body: JSON.stringify({ id: delegationId, calls }),
+			signal: AbortSignal.timeout(RELAYER_TIMEOUT_MS),
+		});
+
+		if (!res.ok) {
+			const body = await res.json().catch(() => ({ message: res.statusText }));
+			throw Object.assign(
+				new Error(body.error_description || body.message || `Relayer ${res.status}`),
+				{ code: body.error || 'relayer_error', status: res.status },
+			);
+		}
+		return res.json();
+	};
+
+	return withRetry(doFetch, {
+		retries: RELAYER_MAX_RETRIES,
+		backoffMs: RELAYER_RETRY_BACKOFF_MS,
+		label: `relayer:${logCtx?.strategy_id ?? ''}`,
+	});
 }
 
 // ── onPeriod — process one strategy ──────────────────────────────────────────
@@ -171,6 +240,7 @@ async function onPeriod(strategy) {
 	if (!cfg) throw Object.assign(new Error(`No config for chainId ${chainId}`), { code: 'unsupported_chain' });
 
 	const client = getViemClient(chainId);
+	const logCtx = { strategy_id: strategyId, chain_id: chainId };
 
 	// Get verified quote
 	const { amountOut, divergenceBps } = await getVerifiedQuote(
@@ -179,6 +249,7 @@ async function onPeriod(strategy) {
 		tokenIn,
 		tokenOut,
 		amountIn,
+		logCtx,
 	);
 
 	// Apply slippage: amountOutMinimum = amountOut * (10000 - slippageBps) / 10000
@@ -210,7 +281,7 @@ async function onPeriod(strategy) {
 	];
 
 	// Submit via relayer
-	const result = await redeemViaRelayer(delegationId, calls);
+	const result = await redeemViaRelayer(delegationId, calls, logCtx);
 
 	return { txHash: result.txHash, quoteAmountOut: amountOut.toString(), divergenceBps };
 }
@@ -227,23 +298,34 @@ export default wrap(async (req, res) => {
 		}
 	}
 
+	const runId = (globalThis.crypto?.randomUUID?.() ?? `run_${Date.now()}`);
+	log('info', 'tick_start', { run_id: runId });
+
 	// Fetch all due active strategies
-	const strategies = await sql`
-		SELECT
-			s.id, s.delegation_id, s.chain_id,
-			s.token_in, s.token_out, s.amount_per_execution,
-			s.period_seconds, s.slippage_bps, s.agent_id,
-			ad.status AS delegation_status, ad.expires_at AS delegation_expires_at
-		FROM dca_strategies s
-		JOIN agent_delegations ad ON ad.id = s.delegation_id
-		WHERE s.status = 'active'
-		  AND s.next_execution_at <= NOW()
-		ORDER BY s.next_execution_at ASC
-		LIMIT 50
-	`;
+	let strategies;
+	try {
+		strategies = await sql`
+			SELECT
+				s.id, s.delegation_id, s.chain_id,
+				s.token_in, s.token_out, s.amount_per_execution,
+				s.period_seconds, s.slippage_bps, s.agent_id,
+				ad.status AS delegation_status, ad.expires_at AS delegation_expires_at
+			FROM dca_strategies s
+			JOIN agent_delegations ad ON ad.id = s.delegation_id
+			WHERE s.status = 'active'
+			  AND s.next_execution_at <= NOW()
+			ORDER BY s.next_execution_at ASC
+			LIMIT 50
+		`;
+	} catch (err) {
+		log('error', 'fetch_due_failed', { run_id: runId, message: err?.message });
+		throw err;
+	}
 
 	const results = [];
 	for (const strategy of strategies) {
+		const logCtx = { run_id: runId, strategy_id: strategy.id, chain_id: strategy.chain_id };
+
 		const execRow = {
 			strategy_id: strategy.id,
 			chain_id: strategy.chain_id,
@@ -259,7 +341,10 @@ export default wrap(async (req, res) => {
 			`;
 			execRow.status = 'aborted';
 			execRow.error = `Delegation ${strategy.delegation_status}`;
-			await sql`INSERT INTO dca_executions ${sql(execRow)}`;
+			await sql`INSERT INTO dca_executions ${sql(execRow)}`.catch((e) =>
+				log('error', 'exec_insert_failed', { ...logCtx, message: e?.message }),
+			);
+			log('info', 'skipped', { ...logCtx, reason: execRow.error });
 			results.push({ id: strategy.id, skipped: true, reason: execRow.error });
 			continue;
 		}
@@ -270,10 +355,39 @@ export default wrap(async (req, res) => {
 			`;
 			execRow.status = 'aborted';
 			execRow.error = 'Delegation expired';
-			await sql`INSERT INTO dca_executions ${sql(execRow)}`;
+			await sql`INSERT INTO dca_executions ${sql(execRow)}`.catch((e) =>
+				log('error', 'exec_insert_failed', { ...logCtx, message: e?.message }),
+			);
+			log('info', 'skipped', { ...logCtx, reason: execRow.error });
 			results.push({ id: strategy.id, skipped: true, reason: execRow.error });
 			continue;
 		}
+
+		// ── Idempotency claim ───────────────────────────────────────────────
+		// Atomically advance next_execution_at so a concurrent tick (or a retry
+		// of this tick) will not re-pick this row. We advance by period_seconds
+		// provisionally; on success we leave it; on failure we reset to NOW so
+		// the next tick retries it.
+		const nowIso = new Date().toISOString();
+		const provisionalNextIso = new Date(
+			Date.now() + strategy.period_seconds * 1000,
+		).toISOString();
+
+		const claim = await sql`
+			UPDATE dca_strategies
+			SET next_execution_at = ${provisionalNextIso}
+			WHERE id = ${strategy.id}
+			  AND status = 'active'
+			  AND next_execution_at <= ${nowIso}
+			RETURNING id
+		`;
+		if (claim.length === 0) {
+			log('info', 'claim_lost', { ...logCtx });
+			results.push({ id: strategy.id, skipped: true, reason: 'claim_lost' });
+			continue;
+		}
+
+		log('info', 'execute_start', { ...logCtx });
 
 		try {
 			const { txHash, quoteAmountOut, divergenceBps } = await onPeriod(strategy);
@@ -283,31 +397,54 @@ export default wrap(async (req, res) => {
 			execRow.quote_divergence_bps = divergenceBps;
 			execRow.status = 'success';
 
-			const nextExecAt = new Date(
-				Date.now() + strategy.period_seconds * 1000,
-			).toISOString();
-
 			await sql`
 				UPDATE dca_strategies
-				SET last_execution_at = NOW(), next_execution_at = ${nextExecAt}
+				SET last_execution_at = NOW()
 				WHERE id = ${strategy.id}
 			`;
 
+			log('info', 'execute_success', { ...logCtx, tx_hash: txHash, divergence_bps: divergenceBps });
 			results.push({ id: strategy.id, txHash, quoteAmountOut });
 		} catch (err) {
 			execRow.status = err.code === 'quote_divergence' ? 'aborted' : 'failed';
 			execRow.error = err.message;
 			execRow.quote_divergence_bps = err.divergenceBps ?? null;
 
-			console.error('[cron/run-dca] strategy', strategy.id, err.code, err.message);
+			// Release the idempotency claim so the next tick can retry this
+			// strategy — but only for transient / recoverable failures. For
+			// aborts (quote_divergence, delegation_gone) leave the advanced
+			// next_execution_at in place so we wait the full period.
+			const shouldRetryNextTick =
+				err.code !== 'quote_divergence' &&
+				err.code !== 'delegation_gone' &&
+				err.code !== 'unsupported_chain';
+			if (shouldRetryNextTick) {
+				await sql`
+					UPDATE dca_strategies
+					SET next_execution_at = ${nowIso}
+					WHERE id = ${strategy.id}
+				`.catch((e) =>
+					log('error', 'claim_release_failed', { ...logCtx, message: e?.message }),
+				);
+			}
+
+			log('error', 'execute_failed', {
+				...logCtx,
+				code: err.code,
+				message: err.message,
+				status: err.status,
+				will_retry_next_tick: shouldRetryNextTick,
+			});
 			results.push({ id: strategy.id, error: err.message, code: err.code });
 		}
 
 		// Insert execution record regardless of outcome
 		await sql`INSERT INTO dca_executions ${sql(execRow)}`.catch((e) =>
-			console.error('[cron/run-dca] failed to insert execution row', e.message),
+			log('error', 'exec_insert_failed', { ...logCtx, message: e?.message }),
 		);
 	}
+
+	log('info', 'tick_done', { run_id: runId, processed: strategies.length });
 
 	return json(res, 200, {
 		ok: true,

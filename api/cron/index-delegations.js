@@ -36,8 +36,12 @@ const BLOCKS_PER_DAY = {
 
 // Public RPC fallbacks — override per chain via env RPC_<chainId>.
 const PUBLIC_RPC = {
+	1: 'https://cloudflare-eth.com',
+	8453: 'https://mainnet.base.org',
 	84532: 'https://sepolia.base.org',
 	11155111: 'https://rpc.sepolia.org',
+	421614: 'https://sepolia-rollup.arbitrum.io/rpc',
+	11155420: 'https://sepolia.optimism.io',
 };
 
 function rpcUrl(chainId) {

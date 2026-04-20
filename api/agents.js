@@ -68,7 +68,7 @@ async function handleList(req, res) {
 		  AND deleted_at IS NULL
 		ORDER BY created_at ASC
 	`;
-	return json(res, 200, { agents: rows.map(decorate) });
+	return json(res, 200, { agents: rows.map((row) => decorate(row)) });
 }
 
 // ── Get-or-create default agent ───────────────────────────────────────────

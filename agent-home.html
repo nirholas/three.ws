@@ -237,10 +237,34 @@
 				border-color: rgba(134, 239, 172, 0.3);
 			}
 
+			.agent-embed-tab:focus-visible,
+			.agent-embed-copy:focus-visible,
+			.agent-page-header a:focus-visible,
+			.agent-embed-preview-link:focus-visible {
+				outline: 2px solid rgba(255, 255, 255, 0.4);
+				outline-offset: 2px;
+			}
+
+			.skip-link {
+				position: absolute;
+				left: -9999px;
+				top: 0;
+				background: #000;
+				color: #fff;
+				padding: 0.5rem 1rem;
+				z-index: 10000;
+				text-decoration: none;
+			}
+			.skip-link:focus {
+				left: 0.5rem;
+				top: 0.5rem;
+			}
+
 			.agent-embed-label {
 				font-size: 0.618rem;
 				color: rgba(255, 255, 255, 0.25);
-				margin-bottom: 0.382rem;
+				margin: 0 0 0.382rem;
+				font-weight: 400;
 			}
 
 			.agent-embed-preview-link {
@@ -264,9 +288,10 @@
 			.agent-skills-title {
 				font-size: 0.618rem;
 				color: rgba(255, 255, 255, 0.25);
-				margin-bottom: 0.618rem;
+				margin: 0 0 0.618rem;
 				text-transform: uppercase;
 				letter-spacing: 0.08em;
+				font-weight: 400;
 			}
 
 			.agent-skills-grid {
@@ -304,39 +329,41 @@
 		</style>
 	</head>
 	<body>
-		<div class="agent-page-header" style="justify-content: space-between">
-			<a href="/">← 3D Agent</a>
+		<a href="#main" class="skip-link">Skip to main content</a>
+		<header class="agent-page-header" style="justify-content: space-between">
+			<a href="/" aria-label="Back to 3D Agent home">← 3D Agent</a>
 			<!-- BEGIN:AGENT_HOME_ORPHANS_DOM -->
 			<div id="agent-share-btn-mount"></div>
 			<!-- END:AGENT_HOME_ORPHANS_DOM -->
-		</div>
+		</header>
 
+		<main id="main">
 		<div class="agent-page-hero">
 			<h1 class="agent-page-title" id="page-agent-name">Agent</h1>
 			<p class="agent-page-subtitle" id="page-agent-desc">Embodied. Present. Persistent.</p>
 		</div>
 
 		<div class="agent-page-card-wrap">
-			<div id="agent-home-container">
+			<div id="agent-home-container" aria-live="polite" aria-busy="true">
 				<div class="loading-placeholder">Loading agent…</div>
 			</div>
 		</div>
 
-		<div class="agent-skills-full" id="agent-skills-section" style="display: none">
-			<div class="agent-skills-title">Skills</div>
+		<section class="agent-skills-full" id="agent-skills-section" style="display: none" aria-labelledby="agent-skills-heading">
+			<h2 class="agent-skills-title" id="agent-skills-heading">Skills</h2>
 			<div class="agent-skills-grid" id="agent-skills-grid"></div>
-		</div>
+		</section>
 
-		<div class="agent-embed-hint" id="agent-embed-section" style="display: none">
-			<div class="agent-embed-label">Share &amp; embed</div>
-			<div class="agent-embed-tabs" role="tablist">
-				<button class="agent-embed-tab active" data-tab="iframe">iframe</button>
-				<button class="agent-embed-tab" data-tab="link">link</button>
-				<button class="agent-embed-tab" data-tab="webcomponent">&lt;agent-3d&gt;</button>
+		<section class="agent-embed-hint" id="agent-embed-section" style="display: none" aria-labelledby="agent-embed-heading">
+			<h2 class="agent-embed-label" id="agent-embed-heading">Share &amp; embed</h2>
+			<div class="agent-embed-tabs" role="tablist" aria-label="Embed format">
+				<button class="agent-embed-tab active" data-tab="iframe" role="tab" aria-selected="true" aria-controls="agent-embed-code" id="embed-tab-iframe">iframe</button>
+				<button class="agent-embed-tab" data-tab="link" role="tab" aria-selected="false" aria-controls="agent-embed-code" id="embed-tab-link">link</button>
+				<button class="agent-embed-tab" data-tab="webcomponent" role="tab" aria-selected="false" aria-controls="agent-embed-code" id="embed-tab-webcomponent">&lt;agent-3d&gt;</button>
 			</div>
 			<div class="agent-embed-code-wrap">
-				<div class="agent-embed-code" id="agent-embed-code"></div>
-				<button class="agent-embed-copy" id="agent-embed-copy">copy</button>
+				<div class="agent-embed-code" id="agent-embed-code" role="tabpanel" aria-labelledby="embed-tab-iframe" aria-live="polite"></div>
+				<button class="agent-embed-copy" id="agent-embed-copy" aria-label="Copy embed code">copy</button>
 			</div>
 			<a
 				class="agent-embed-preview-link"
@@ -353,7 +380,8 @@
 				rel="noopener"
 				>embed settings →</a
 			>
-		</div>
+		</section>
+		</main>
 
 		<script type="module">
 			import { AgentIdentity } from './src/agent-identity.js';
@@ -378,6 +406,7 @@
 
 				const container = document.getElementById('agent-home-container');
 				container.innerHTML = '';
+				container.setAttribute('aria-busy', 'false');
 				const home = new AgentHome(container, identity, protocol, null);
 				await home.render();
 
@@ -424,13 +453,30 @@
 				document.getElementById('agent-embed-settings').href =
 					'/dashboard/embed-policy?agent=' + identity.id;
 
-				document.querySelectorAll('.agent-embed-tab').forEach((btn) => {
-					btn.addEventListener('click', () => {
-						current = btn.dataset.tab;
-						document
-							.querySelectorAll('.agent-embed-tab')
-							.forEach((b) => b.classList.toggle('active', b === btn));
-						render();
+				const embedTabs = document.querySelectorAll('.agent-embed-tab');
+				const selectTab = (btn) => {
+					current = btn.dataset.tab;
+					embedTabs.forEach((b) => {
+						const active = b === btn;
+						b.classList.toggle('active', active);
+						b.setAttribute('aria-selected', active ? 'true' : 'false');
+						b.tabIndex = active ? 0 : -1;
+					});
+					embedCode.setAttribute('aria-labelledby', `embed-tab-${current}`);
+					render();
+				};
+				embedTabs.forEach((btn) => {
+					btn.addEventListener('click', () => selectTab(btn));
+					btn.addEventListener('keydown', (e) => {
+						if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+						e.preventDefault();
+						const arr = Array.from(embedTabs);
+						const i = arr.indexOf(btn);
+						const next = e.key === 'ArrowRight'
+							? arr[(i + 1) % arr.length]
+							: arr[(i - 1 + arr.length) % arr.length];
+						selectTab(next);
+						next.focus();
 					});
 				});
 

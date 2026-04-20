@@ -36,12 +36,13 @@
 		></script>
 	</head>
 	<body class="features-page">
+		<a href="#hero" class="skip-link">Skip to main content</a>
 		<header>
-			<h1><a href="/">3D Agent</a></h1>
-			<nav class="features-nav">
+			<h1><a href="/" aria-label="3D Agent home">3D Agent</a></h1>
+			<nav class="features-nav" aria-label="Primary">
 				<a href="/app">Viewer</a>
 				<a href="/explore">Explore</a>
-				<a href="/features" class="active">Features</a>
+				<a href="/features" class="active" aria-current="page">Features</a>
 			</nav>
 		</header>
 
@@ -72,13 +73,14 @@
 					<div class="hero-cta scroll-reveal">
 						<a href="/" class="btn-primary">
 							<span>Launch Viewer</span>
-							<span class="btn-arrow">→</span>
+							<span class="btn-arrow" aria-hidden="true">→</span>
 						</a>
 						<a
 							href="https://eips.ethereum.org/EIPS/eip-8004"
 							target="_blank"
 							rel="noopener"
 							class="btn-ghost"
+							aria-label="Read the ERC-8004 spec (opens in a new tab)"
 							>Read the spec</a
 						>
 					</div>
@@ -96,7 +98,8 @@
 					<model-viewer
 						class="hero-avatar-viewer"
 						src="/avatars/cz.glb"
-						alt="3D Agent avatar"
+						alt="Rotating 3D avatar representing the 3D Agent brand"
+						aria-label="Rotating 3D avatar representing the 3D Agent brand"
 						camera-controls
 						disable-zoom
 						auto-rotate
@@ -166,9 +169,9 @@
 				</p>
 				<div class="code-block scroll-reveal">
 					<div class="code-header">
-						<span class="code-dot red"></span>
-						<span class="code-dot yellow"></span>
-						<span class="code-dot green"></span>
+						<span class="code-dot red" aria-hidden="true"></span>
+						<span class="code-dot yellow" aria-hidden="true"></span>
+						<span class="code-dot green" aria-hidden="true"></span>
 						<span class="code-filename">agent-registration.json</span>
 					</div>
 					<pre class="code-body"><code>{
@@ -192,7 +195,7 @@
 				<h3 class="section-label scroll-reveal">Three Registries</h3>
 				<div class="registry-grid">
 					<div class="registry-card scroll-reveal">
-						<div class="registry-icon">🪪</div>
+						<div class="registry-icon" aria-hidden="true">🪪</div>
 						<h4>Identity Registry</h4>
 						<p>
 							ERC-721 based. Every agent gets a unique <code>agentId</code> and a URI
@@ -206,7 +209,7 @@
 						</ul>
 					</div>
 					<div class="registry-card scroll-reveal">
-						<div class="registry-icon">⭐</div>
+						<div class="registry-icon" aria-hidden="true">⭐</div>
 						<h4>Reputation Registry</h4>
 						<p>
 							Any client can leave signed feedback — quality scores, uptime, response
@@ -219,7 +222,7 @@
 						</ul>
 					</div>
 					<div class="registry-card scroll-reveal">
-						<div class="registry-icon">🔐</div>
+						<div class="registry-icon" aria-hidden="true">🔐</div>
 						<h4>Validation Registry</h4>
 						<p>
 							Request independent verification: stake-secured re-execution, zkML
@@ -281,7 +284,8 @@
 							target="_blank"
 							rel="noopener"
 							class="btn-ghost"
-							>Join the Discussion →</a
+							aria-label="Join the ERC-8004 discussion (opens in a new tab)"
+							>Join the Discussion <span aria-hidden="true">→</span></a
 						>
 					</div>
 				</div>
@@ -290,11 +294,19 @@
 			<footer class="features-footer">
 				<p>
 					3D Agent ·
-					<a href="https://github.com/nirholas/3D" target="_blank" rel="noopener"
+					<a
+						href="https://github.com/nirholas/3D"
+						target="_blank"
+						rel="noopener"
+						aria-label="3D Agent on GitHub (opens in a new tab)"
 						>GitHub</a
 					>
 					· Built on
-					<a href="https://eips.ethereum.org/EIPS/eip-8004" target="_blank" rel="noopener"
+					<a
+						href="https://eips.ethereum.org/EIPS/eip-8004"
+						target="_blank"
+						rel="noopener"
+						aria-label="ERC-8004 specification (opens in a new tab)"
 						>ERC-8004</a
 					>
 				</p>
