@@ -132,10 +132,8 @@ describe('GET /api/agents — list', () => {
 		expect(body.agents[0].home_url).toBe('/agent/agent-1');
 		// decorate() must strip encrypted_wallet_key from meta
 		expect(body.agents[0].meta.encrypted_wallet_key).toBeUndefined();
-		// NOTE: handleList uses `rows.map(decorate)`, so `isOwner` receives the
-		// array index (a falsy 0 for the first item) — owner-only fields are
-		// omitted here. Verified against current api/agents.js behavior.
-		expect(body.agents[0].wallet_address).toBeUndefined();
+		// Owner sees their own wallet_address
+		expect(body.agents[0].wallet_address).toBe('0xabc');
 	});
 
 	it('accepts bearer token as auth source', async () => {
