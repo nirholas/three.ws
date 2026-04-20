@@ -272,9 +272,12 @@
 				height: 1px;
 				margin-top: 20px;
 			}
+			body[data-auth-pending] {
+				visibility: hidden;
+			}
 		</style>
 	</head>
-	<body>
+	<body data-auth-pending>
 		<div class="container">
 			<div class="header">
 				<div class="agent-info">
@@ -334,17 +337,21 @@
 					}
 					if (r.status === 403) {
 						showError('Not authorized to view this agent.');
+						document.body.removeAttribute('data-auth-pending');
 						return;
 					}
 					if (r.status === 404) {
 						showError('Agent not found.');
+						document.body.removeAttribute('data-auth-pending');
 						return;
 					}
 					if (!r.ok) {
 						showError(`Error ${r.status}`);
+						document.body.removeAttribute('data-auth-pending');
 						return;
 					}
 
+					document.body.removeAttribute('data-auth-pending');
 					const data = await r.json();
 					const { actions, nextCursor: nc } = data;
 

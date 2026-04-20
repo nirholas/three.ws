@@ -39,7 +39,11 @@ const paths = [
 async function probe(url) {
 	try {
 		const r = await fetch(url, { redirect: 'manual' });
-		return { status: r.status, ok: r.ok || r.status < 400, body: r.status < 400 ? await r.text() : null };
+		return {
+			status: r.status,
+			ok: r.ok || r.status < 400,
+			body: r.status < 400 ? await r.text() : null,
+		};
 	} catch (e) {
 		return { status: 0, ok: false, err: e.message };
 	}
@@ -69,12 +73,14 @@ for (const p of paths) {
 		$('script[src]').each((_, el) => refs.add($(el).attr('src')));
 		$('link[href]').each((_, el) => refs.add($(el).attr('href')));
 		$('img[src]').each((_, el) => refs.add($(el).attr('src')));
-		const refList = [...refs].filter((u) => u && !u.startsWith('http') && !u.startsWith('//') && !u.startsWith('data:'));
+		const refList = [...refs].filter(
+			(u) => u && !u.startsWith('http') && !u.startsWith('//') && !u.startsWith('data:'),
+		);
 		const results = await Promise.all(
 			refList.map(async (ref) => {
 				const abs = ref.startsWith('/') ? BASE + ref : new URL(ref, BASE + p).toString();
 				return { ref, status: await head(abs) };
-			})
+			}),
 		);
 		for (const { ref, status } of results) {
 			if (status >= 400 || status === 0) entry.broken.push({ ref, status });

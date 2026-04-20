@@ -76,8 +76,14 @@ for (const p of paths) {
 		failed: failed.filter((x) => !/\/@vite\/|vite\/client|hot-update/.test(x)),
 	};
 	report.push(entry);
-	const problems = (entry.loadErr ? 1 : 0) + entry.consoleErrors.length + entry.pageErrors.length + entry.failed.length;
-	console.log(`[${problems === 0 ? 'OK' : 'WARN'}] ${p}  (${problems} issue${problems === 1 ? '' : 's'})`);
+	const problems =
+		(entry.loadErr ? 1 : 0) +
+		entry.consoleErrors.length +
+		entry.pageErrors.length +
+		entry.failed.length;
+	console.log(
+		`[${problems === 0 ? 'OK' : 'WARN'}] ${p}  (${problems} issue${problems === 1 ? '' : 's'})`,
+	);
 }
 
 await browser.close();
@@ -85,7 +91,8 @@ await browser.close();
 // Print details
 console.log('\n\n==== DETAILS ====');
 for (const r of report) {
-	const issues = (r.loadErr ? 1 : 0) + r.consoleErrors.length + r.pageErrors.length + r.failed.length;
+	const issues =
+		(r.loadErr ? 1 : 0) + r.consoleErrors.length + r.pageErrors.length + r.failed.length;
 	if (issues === 0) continue;
 	console.log(`\n--- ${r.path} ---`);
 	if (r.loadErr) console.log('  LOAD:', r.loadErr);

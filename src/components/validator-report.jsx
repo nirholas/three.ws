@@ -13,8 +13,7 @@ export function ValidatorReport({
 	infos,
 	reportJSON,
 }) {
-	const totalIssues =
-		issues.numErrors + issues.numWarnings + issues.numInfos + issues.numHints;
+	const totalIssues = issues.numErrors + issues.numWarnings + issues.numInfos + issues.numHints;
 	const isClean = totalIssues === 0;
 	return (
 		<div class="report">
@@ -49,7 +48,8 @@ export function ValidatorReport({
 						{issues.numErrors > 0 && issues.numWarnings > 0 && ', '}
 						{issues.numWarnings > 0 && (
 							<span>
-								<b>{issues.numWarnings}</b> warning{issues.numWarnings === 1 ? '' : 's'}
+								<b>{issues.numWarnings}</b> warning
+								{issues.numWarnings === 1 ? '' : 's'}
 							</span>
 						)}
 						{(issues.numErrors > 0 || issues.numWarnings > 0) &&

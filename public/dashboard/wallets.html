@@ -175,9 +175,12 @@
 				color: #888;
 				font-size: 13px;
 			}
+			body[data-auth-pending] {
+				visibility: hidden;
+			}
 		</style>
 	</head>
-	<body>
+	<body data-auth-pending>
 		<header>
 			<div class="brand"><a href="/">3D Agent</a></div>
 			<div class="row">

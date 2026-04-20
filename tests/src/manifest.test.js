@@ -220,7 +220,10 @@ describe('normalize — fallback / unknown input', () => {
 	});
 
 	it('preserves user-provided brain config', () => {
-		const m = normalize({ brain: { provider: 'anthropic', model: 'claude-x' } }, { baseURI: '' });
+		const m = normalize(
+			{ brain: { provider: 'anthropic', model: 'claude-x' } },
+			{ baseURI: '' },
+		);
 		expect(m.brain.provider).toBe('anthropic');
 		expect(m.brain.model).toBe('claude-x');
 	});

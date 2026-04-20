@@ -92,9 +92,7 @@ describe('validateConfig — turntable', () => {
 
 describe('validateConfig — talking-agent', () => {
 	it('accepts default config', () => {
-		expect(() =>
-			validateConfig('talking-agent', defaultConfig('talking-agent')),
-		).not.toThrow();
+		expect(() => validateConfig('talking-agent', defaultConfig('talking-agent'))).not.toThrow();
 	});
 
 	it('requires proxyURL when brainProvider is custom', () => {
@@ -127,7 +125,10 @@ describe('validateConfig — talking-agent', () => {
 
 	it('rejects temperature above 1', () => {
 		expect(() =>
-			validateConfig('talking-agent', { ...defaultConfig('talking-agent'), temperature: 1.5 }),
+			validateConfig('talking-agent', {
+				...defaultConfig('talking-agent'),
+				temperature: 1.5,
+			}),
 		).toThrow();
 	});
 });
@@ -166,9 +167,7 @@ describe('validateConfig — passport', () => {
 
 describe('validateConfig — hotspot-tour', () => {
 	it('accepts empty hotspots array', () => {
-		expect(() =>
-			validateConfig('hotspot-tour', defaultConfig('hotspot-tour')),
-		).not.toThrow();
+		expect(() => validateConfig('hotspot-tour', defaultConfig('hotspot-tour'))).not.toThrow();
 	});
 
 	it('rejects hotspot with missing position', () => {

@@ -69,8 +69,8 @@ The TODO at `api/agents/ens/[name].js:45` suggested deduping with
 `/api/agents/by-address/[addr].js`. After reading both endpoints, they
 return very different shapes:
 
-- ENS endpoint returns a full agent profile (name, description, avatar_id,
-  erc8004_*, etc.).
+- ENS endpoint returns a full agent profile (name, description, avatar*id,
+  erc8004*\*, etc.).
 - by-address returns a minimal NFT-style shape ({id, chainId, agentURI,
   manifestUrl, onChain, source}) with chain enumeration fallback.
 
@@ -87,13 +87,13 @@ precache entries). The package.json removal of these two deps is clean.
 
 ## Test summary
 
-| Suite | Tests | Status |
-| --- | --- | --- |
-| OAuth authorize | 22 | ✅ |
-| OAuth token | 24 | ✅ |
-| LLM proxy | 22 | ✅ |
-| **Newly added** | **68** | **✅** |
-| Full suite | 289 | 288 ✅ / 1 ❌ (pre-existing) |
+| Suite           | Tests  | Status                       |
+| --------------- | ------ | ---------------------------- |
+| OAuth authorize | 22     | ✅                           |
+| OAuth token     | 24     | ✅                           |
+| LLM proxy       | 22     | ✅                           |
+| **Newly added** | **68** | **✅**                       |
+| Full suite      | 289    | 288 ✅ / 1 ❌ (pre-existing) |
 
 ## Findings requiring your decision
 
@@ -142,3 +142,117 @@ Nothing was committed or pushed. All changes from this session are:
 - New: `tests/api/llm-anthropic.test.js`
 - Edited: `api/agents/ens/[name].js` (TODO → rationale comment, ~6 lines)
 - Edited: this report.
+
+---
+
+# Second pass — formatting + broken refs (parallel session)
+
+This appears to be a second autonomous session running in parallel with the
+one above. Different scope; appending so neither is lost. Heads up: another
+session wrote the section above, then commits `84e5249` and `b6cb561`
+absorbed all in-progress work into git.
+
+## Verification at end-of-session
+
+- `npm test` → 18 files / 355 tests / 0 failures.
+- `npm run build` → clean, no warnings, 138 PWA precache entries.
+- `npx prettier --check .` → clean.
+- `npm audit` → 0 vulnerabilities.
+
+## Edits made
+
+1. **`3d-demo/.prettierrc`** — `jsxBracketSameLine` → `bracketSameLine`
+   (Prettier 3 deprecated the old name; was emitting a warning on every
+   format run).
+2. **`api/auth/wallets/_link-nonces.js:4`** — import path was `../_lib/crypto.js`
+   which resolves to `api/auth/_lib/crypto.js` (does not exist). Corrected
+   to `../../_lib/crypto.js` → `api/_lib/crypto.js`. This file is imported
+   by `wallets/index.js` and `wallets/nonce.js`, so the wallet-link flow
+   would have thrown at module load.
+3. **`public/skills/subscription/skill.js:78`** — dynamic import path was
+   `'../../src/permissions/grant-modal.js'`, which resolves to
+   `public/src/permissions/grant-modal.js` and 404s in production. Changed
+   to absolute `'/src/permissions/grant-modal.js'` to match the sibling
+   `public/skills/tip-jar/skill.js:223` pattern.
+4. **`public/dashboard/usage.html:7`** — removed `<link rel="stylesheet"
+href="/assets/dashboard.css" />`. The file does not exist anywhere in
+   the repo and was producing a guaranteed 404. Inline `<style>` block in
+   the same file already covers all styling.
+5. **`public/artifact/index.html:142`** — `<script src="artifact.js">`
+   resolved to `/artifact/artifact.js` under the Vercel rewrite, which
+   404s. The actual bundle is at `/public/artifact.js` (served at
+   `/artifact.js`). Made the path absolute.
+6. **Whole-repo `prettier --write`** — formatted ~80 files. All edits are
+   formatting-only; no semantic changes.
+
+## Findings requiring your decision
+
+### 🔴 P0 — Live API key committed to git
+
+`.mcp.json:6` contains:
+
+```
+"Authorization": "Bearer sk_live_nFp3_eDJzJolnNjU27Jf1KKWuj4agpQs7Q-79Q"
+```
+
+The file is in `.gitignore` now but **was committed previously** (`git
+ls-files .mcp.json` confirms it's tracked; `git log` shows commits
+`0b745eb` and `a1109b9`). Anyone with read access to the repo (including
+forks/clones) has this key.
+
+Required action — not safe to do without you:
+
+1. Revoke + rotate this API key immediately.
+2. `git rm --cached .mcp.json` then commit the removal.
+3. Rewrite history with `git-filter-repo` or BFG to scrub the key from
+   past commits, then force-push (coordinate with anyone who has clones).
+
+I did **not** delete the file or rewrite history.
+
+### 🟡 P2 — `res.end(JSON.stringify(...))` deviations from `api/CLAUDE.md`
+
+The convention says use `json(res, status, body)` from `api/_lib/http.js`.
+Five spots ship raw `res.end(JSON.stringify(...))`:
+
+- `api/agent-oembed.js:79`, `:160` — both intentional (special
+  `application/json+oembed` content type); `json()` hardcodes
+  `application/json`. Leave as-is or extend the helper.
+- `api/widgets/oembed.js:86` — same oEmbed reason.
+- `api/mcp.js:74`, `:703`, `:709` — JSON-RPC framing; leave as-is.
+- `api/permissions/verify.js:80` — could migrate to `error()`. Trivial.
+
+Only `permissions/verify.js` is a real cleanup candidate.
+
+### 🟡 P2 — Sweep scripts
+
+The auto-commit at `b6cb561` ("chore: add HTTP and page sweep scripts for
+resource validation") committed two scratch scripts I'd written to drive
+the page sweep:
+
+- `tmp-http-sweep.mjs` — fetch HTML pages + sub-resource probes
+- `tmp-page-sweep.mjs` — playwright variant (blocked: missing `libatk1.0`,
+  no sudo)
+
+If you want to keep them, move under `scripts/` and reinstall `cheerio`
+(I uninstalled it because the script wasn't intended to land). If they
+were committed by mistake, `git rm` them.
+
+## What I checked and found nothing
+
+- `npm audit` — 0 vulns.
+- All JSON files (`vercel.json`, `package.json`, manifests, etc.) parse.
+- HTTP sub-resource sweep across 28 built pages — every `<script src>`,
+  `<link href>`, `<img src>` resolved to a 2xx. (Runtime JS errors NOT
+  checked — playwright would not launch.)
+- `forEach(async ...)` patterns — none.
+- Static checks for unhandled `JSON.parse`, hardcoded sk-/AKIA-/ghp-
+  prefixed secrets in `*.js`/`*.json` — only the one in `.mcp.json`.
+
+## Coverage gaps observed (not addressed)
+
+- No JS-runtime error sweep — chromium needs system libs that need sudo.
+  Worth a follow-up on a machine where `npx playwright install --with-deps`
+  works, or in CI.
+- `knip` reports 600+ "unused" files but it has no config and treats every
+  Vercel function entry + every HTML script as orphaned. Real dead-code
+  audit needs a `knip.json` describing entry points.

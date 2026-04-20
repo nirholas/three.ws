@@ -184,9 +184,12 @@
 				background: #222230;
 				color: #ddd;
 			}
+			body[data-auth-pending] {
+				visibility: hidden;
+			}
 		</style>
 	</head>
-	<body>
+	<body data-auth-pending>
 		<header>
 			<div class="brand"><a href="/">3D Agent</a></div>
 			<button class="btn sec" onclick="signOut()">Sign out</button>
@@ -275,6 +278,7 @@
 						return;
 					}
 					if (!res.ok) throw new Error('Failed to verify auth');
+					document.body.removeAttribute('data-auth-pending');
 
 					const sessionsRes = await fetch('/api/auth/sessions', {
 						credentials: 'include',

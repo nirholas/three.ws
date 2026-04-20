@@ -89,7 +89,17 @@ describe('Validator.setReport', () => {
 	});
 
 	it('uses empty string when info.generator is missing', () => {
-		const report = { info: {}, issues: { numErrors: 0, numWarnings: 0, numInfos: 0, numHints: 0, messages: [], maxSeverity: -1 } };
+		const report = {
+			info: {},
+			issues: {
+				numErrors: 0,
+				numWarnings: 0,
+				numInfos: 0,
+				numHints: 0,
+				messages: [],
+				maxSeverity: -1,
+			},
+		};
 		validator.setReport(report, null);
 		expect(validator.report.generator).toBe('');
 	});
@@ -165,7 +175,14 @@ describe('Validator.setResponse', () => {
 		validator.setReport(
 			{
 				info: { generator: 'x' },
-				issues: { numErrors: 0, numWarnings: 0, numInfos: 0, numHints: 0, messages: [], maxSeverity: -1 },
+				issues: {
+					numErrors: 0,
+					numWarnings: 0,
+					numInfos: 0,
+					numHints: 0,
+					messages: [],
+					maxSeverity: -1,
+				},
 			},
 			null,
 		);

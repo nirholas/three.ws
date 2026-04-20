@@ -100,7 +100,9 @@ function patchHeaders(map) {
 globalThis.fetch = vi.fn(async (url, init) => {
 	fetchState.calls.push({ url, init });
 	const r = await fetchState.response();
-	r.headers = patchHeaders(r.headers instanceof Map ? r.headers : new Map(Object.entries(r.headers || {})));
+	r.headers = patchHeaders(
+		r.headers instanceof Map ? r.headers : new Map(Object.entries(r.headers || {})),
+	);
 	return r;
 });
 
@@ -109,9 +111,7 @@ const { default: handler } = await import('../../api/llm/anthropic.js');
 // ── Helpers ───────────────────────────────────────────────────────────────
 
 function makeReq({ url = '/api/llm/anthropic?agent=agent-1', headers = {}, body = null } = {}) {
-	const base = body
-		? Readable.from([Buffer.from(JSON.stringify(body))])
-		: Readable.from([]);
+	const base = body ? Readable.from([Buffer.from(JSON.stringify(body))]) : Readable.from([]);
 	base.method = 'POST';
 	base.url = url;
 	base.headers = {
@@ -128,9 +128,16 @@ function makeRes() {
 		headers: {},
 		body: '',
 		writableEnded: false,
-		setHeader(k, v) { this.headers[k.toLowerCase()] = v; },
-		getHeader(k) { return this.headers[k.toLowerCase()]; },
-		end(chunk) { if (chunk !== undefined) this.body += chunk; this.writableEnded = true; },
+		setHeader(k, v) {
+			this.headers[k.toLowerCase()] = v;
+		},
+		getHeader(k) {
+			return this.headers[k.toLowerCase()];
+		},
+		end(chunk) {
+			if (chunk !== undefined) this.body += chunk;
+			this.writableEnded = true;
+		},
 	};
 }
 
@@ -142,7 +149,13 @@ async function invoke(opts = {}) {
 	return { res, status: res.statusCode, body: json };
 }
 
-function safeJson(s) { try { return JSON.parse(s); } catch { return s; } }
+function safeJson(s) {
+	try {
+		return JSON.parse(s);
+	} catch {
+		return s;
+	}
+}
 
 const VALID_BODY = {
 	messages: [{ role: 'user', content: 'hello' }],
@@ -367,7 +380,9 @@ describe('/api/llm/anthropic — upstream behaviour', () => {
 
 	it('sanitizes upstream errors into a generic 502 envelope (no leaking)', async () => {
 		fetchState.response = () =>
-			upstreamErr(429, { error: { type: 'rate_limit', message: 'slow down', secret: 'leaked' } });
+			upstreamErr(429, {
+				error: { type: 'rate_limit', message: 'slow down', secret: 'leaked' },
+			});
 		const { status, body } = await invoke({ body: VALID_BODY });
 		expect(status).toBe(502);
 		expect(body.error).toBe('upstream_error');

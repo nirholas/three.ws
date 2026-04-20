@@ -46,9 +46,7 @@ describe('resolveURI', () => {
 	});
 
 	it('returns http(s) URLs unchanged', () => {
-		expect(resolveURI('https://example.com/model.glb')).toBe(
-			'https://example.com/model.glb',
-		);
+		expect(resolveURI('https://example.com/model.glb')).toBe('https://example.com/model.glb');
 		expect(resolveURI('http://example.com/x')).toBe('http://example.com/x');
 	});
 

@@ -1196,11 +1196,13 @@ async function rePinAgentManifest({ agent, animations, logEl }) {
 	btn.disabled = true;
 	logEl.textContent = '';
 	try {
-		const [{ connectWallet, getIdentityRegistry, pinFile, buildRegistrationJSON }, { REGISTRY_DEPLOYMENTS }] =
-			await Promise.all([
-				import('/src/erc8004/agent-registry.js'),
-				import('/src/erc8004/abi.js'),
-			]);
+		const [
+			{ connectWallet, getIdentityRegistry, pinFile, buildRegistrationJSON },
+			{ REGISTRY_DEPLOYMENTS },
+		] = await Promise.all([
+			import('/src/erc8004/agent-registry.js'),
+			import('/src/erc8004/abi.js'),
+		]);
 
 		say('Connecting wallet…');
 		const { signer, chainId } = await connectWallet();
@@ -1237,7 +1239,8 @@ async function rePinAgentManifest({ agent, animations, logEl }) {
 		);
 		const glbUrl =
 			currentMeta.body?.uri ||
-			(currentMeta.services || []).find((s) => s?.name === 'avatar' && s?.endpoint)?.endpoint ||
+			(currentMeta.services || []).find((s) => s?.name === 'avatar' && s?.endpoint)
+				?.endpoint ||
 			'';
 
 		say('Building new registration JSON…');

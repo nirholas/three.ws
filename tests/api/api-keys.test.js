@@ -45,9 +45,7 @@ const { default: handler } = await import('../../api/api-keys.js');
 // ── Helpers ───────────────────────────────────────────────────────────────
 
 function makeReq({ method = 'GET', url = '/api/api-keys', headers = {}, body = null } = {}) {
-	const base = body
-		? Readable.from([Buffer.from(JSON.stringify(body))])
-		: Readable.from([]);
+	const base = body ? Readable.from([Buffer.from(JSON.stringify(body))]) : Readable.from([]);
 	base.method = method;
 	base.url = url;
 	base.headers = {
