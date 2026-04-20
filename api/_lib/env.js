@@ -118,6 +118,13 @@ export const env = {
 		return opt('PERMISSIONS_RELAYER_ENABLED', 'false') === 'true';
 	},
 
+	// IPFS pinning provider credentials. Optional — when unset, pin endpoints
+	// fall back to a content-hash stub so the rest of the flow still works in
+	// dev. Set PINATA_JWT in production for real pins.
+	get PINATA_JWT() {
+		return opt('PINATA_JWT');
+	},
+
 	// Per-chain RPC URLs for on-chain delegation calls.
 	// Pattern: RPC_URL_<CHAINID> e.g. RPC_URL_84532 for Base Sepolia.
 	// Falls back to public RPC nodes when unset; set Alchemy/Infura URLs for production.

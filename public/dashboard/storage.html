@@ -207,9 +207,12 @@
 			.hidden {
 				display: none !important;
 			}
+			body[data-auth-pending] {
+				visibility: hidden;
+			}
 		</style>
 	</head>
-	<body>
+	<body data-auth-pending>
 		<header>
 			<div class="brand"><a href="/dashboard">← Dashboard</a></div>
 			<div class="muted"><span id="avatar-name">Avatar</span></div>
@@ -255,11 +258,12 @@
 						<span id="ipfs-pinned-at" class="kv-value muted">—</span>
 					</div>
 					<div class="actions">
-						<button class="btn" id="pin-btn">Pin to IPFS (stub)</button>
+						<button class="btn" id="pin-btn">Pin to IPFS</button>
 					</div>
 					<p class="muted" style="margin-top: 10px">
-						Real Pinata / Web3.Storage integration is a follow-up. This stub records a
-						placeholder CID derived from the content hash.
+						Real pinning runs through Pinata when <code>PINATA_JWT</code> is configured
+						on the server. Otherwise the endpoint records a content-hash stub CID so
+						the rest of the flow still works in dev.
 					</p>
 				</fieldset>
 			</div>
@@ -365,7 +369,7 @@
 					ipfsBadge.textContent = 'Not pinned';
 					ipfsBadge.className = 'badge grey';
 					document.getElementById('pin-btn').disabled = false;
-					document.getElementById('pin-btn').textContent = 'Pin to IPFS (stub)';
+					document.getElementById('pin-btn').textContent = 'Pin to IPFS';
 				}
 				document.getElementById('ipfs-cid').textContent = mode.ipfs?.cid || '—';
 				document.getElementById('ipfs-pinned-at').textContent = mode.ipfs?.pinned_at
@@ -386,6 +390,7 @@
 			async function loadMe() {
 				try {
 					await api('GET', '/api/auth/me');
+					document.body.removeAttribute('data-auth-pending');
 				} catch {
 					location.href =
 						'/login?next=' + encodeURIComponent(location.pathname + location.search);
@@ -423,10 +428,12 @@
 				setStatus('');
 				document.getElementById('pin-btn').disabled = true;
 				try {
-					const { storage_mode } = await api('POST', `/api/avatars/${avatarId}/pin-ipfs`);
-					populateMode(storage_mode);
+					const result = await api('POST', `/api/avatars/${avatarId}/pin-ipfs`);
+					populateMode(result.storage_mode);
 					setStatus(
-						'<div class="ok">Pinned (stub). Real IPFS pinning is a follow-up.</div>',
+						result.stub
+							? '<div class="ok">Pinned (stub CID). Set PINATA_JWT on the server for real IPFS pins.</div>'
+							: '<div class="ok">Pinned to IPFS via Pinata.</div>',
 					);
 				} catch (e) {
 					document.getElementById('pin-btn').disabled = false;

@@ -22,6 +22,11 @@ export const api = {
 	createAvatarSession: (id) => j('POST', `/api/avatars/${id}/session`),
 	getAvatarVersions: (id) => j('GET', `/api/avatars/${id}/versions`),
 	patchAgent: (agentId, patch) => j('PUT', `/api/agents/${agentId}`, patch),
+	getAgentMe: () => j('GET', '/api/agents/me'),
+	getAvatar: (id) => j('GET', `/api/avatars/${encodeURIComponent(id)}`),
+	patchAgentAnimations: (agentId, animations) =>
+		j('PUT', `/api/agents/${encodeURIComponent(agentId)}/animations`, { animations }),
+	presignAnimation: (body) => j('POST', '/api/animations/presign', body),
 };
 
 async function j(method, path, body) {
@@ -70,6 +75,7 @@ const tabs = {
 	create: renderCreate,
 	edit: renderEdit,
 	upload: renderUpload,
+	animations: renderAnimations,
 	widgets: renderWidgets,
 	embed: renderEmbed,
 	keys: renderKeys,
@@ -1168,6 +1174,106 @@ function uriToHttp(uri) {
 	return uri;
 }
 
+// Re-pin the agent's on-chain manifest with the current animations. Fetches the
+// existing tokenURI metadata to preserve services/registrations/trust fields
+// that live outside the DB (so skills, A2A endpoints, x402, etc. aren't lost).
+async function rePinAgentManifest({ agent, animations, logEl }) {
+	const btn = logEl.parentElement.querySelector('#anim-repin-btn');
+	const say = (msg, err = false) => {
+		const line = document.createElement('div');
+		if (err) line.style.color = '#ffb3b3';
+		line.textContent = msg;
+		logEl.appendChild(line);
+	};
+
+	const agentIdOnchain = agent.erc8004_agent_id;
+	const chainIdExpected = Number(agent.chain_id || 0);
+	if (!agentIdOnchain || !chainIdExpected) {
+		say('Missing erc8004_agent_id or chain_id on this agent.', true);
+		return;
+	}
+
+	btn.disabled = true;
+	logEl.textContent = '';
+	try {
+		const [{ connectWallet, getIdentityRegistry, pinFile, buildRegistrationJSON }, { REGISTRY_DEPLOYMENTS }] =
+			await Promise.all([
+				import('/src/erc8004/agent-registry.js'),
+				import('/src/erc8004/abi.js'),
+			]);
+
+		say('Connecting wallet…');
+		const { signer, chainId } = await connectWallet();
+		if (Number(chainId) !== chainIdExpected) {
+			throw new Error(
+				`Wallet is on chain ${chainId} but this agent lives on chain ${chainIdExpected}. Switch networks and try again.`,
+			);
+		}
+
+		const deployment = REGISTRY_DEPLOYMENTS[chainId];
+		if (!deployment?.identityRegistry) {
+			throw new Error(`No ERC-8004 registry deployed on chain ${chainId}.`);
+		}
+
+		say('Reading current manifest from chain…');
+		const registry = getIdentityRegistry(chainId, signer);
+		const currentURI = await registry.tokenURI(agentIdOnchain);
+		let currentMeta = {};
+		if (currentURI) {
+			try {
+				const r = await fetch(uriToHttp(currentURI));
+				if (r.ok && (r.headers.get('content-type') || '').includes('json')) {
+					currentMeta = await r.json();
+				}
+			} catch {
+				/* fall through — treat as empty and rebuild */
+			}
+		}
+
+		// Preserve non-avatar services (skills, A2A, MCP, etc.) from the existing
+		// manifest. The avatar + 3D services are rebuilt from the current GLB URL.
+		const preservedServices = (currentMeta.services || []).filter(
+			(s) => s?.name !== 'avatar' && s?.name !== '3D',
+		);
+		const glbUrl =
+			currentMeta.body?.uri ||
+			(currentMeta.services || []).find((s) => s?.name === 'avatar' && s?.endpoint)?.endpoint ||
+			'';
+
+		say('Building new registration JSON…');
+		const registrationJSON = buildRegistrationJSON({
+			name: currentMeta.name || agent.name || 'Agent',
+			description: currentMeta.description || agent.description || '',
+			imageUrl: currentMeta.image || '',
+			glbUrl,
+			agentId: Number(agentIdOnchain),
+			chainId,
+			registryAddr: deployment.identityRegistry,
+			services: preservedServices,
+			x402Support: !!(currentMeta.x402Support || currentMeta.x402),
+			animations,
+		});
+
+		say('Pinning new manifest…');
+		const jsonBlob = new Blob([JSON.stringify(registrationJSON, null, 2)], {
+			type: 'application/json',
+		});
+		const newUri = await pinFile(jsonBlob);
+		say(`New metadata URI: ${newUri}`);
+
+		say('Calling setAgentURI on-chain…');
+		const tx = await registry.setAgentURI(agentIdOnchain, newUri);
+		say(`Transaction submitted: ${tx.hash}`);
+		await tx.wait();
+		say('✓ Manifest updated on-chain.');
+		toast('On-chain manifest re-pinned');
+	} catch (err) {
+		say(`Failed: ${err.shortMessage || err.message || String(err)}`, true);
+	} finally {
+		btn.disabled = false;
+	}
+}
+
 function renderAgentRows(list, onchainAgents, dbAgents) {
 	const dbByAgentId = new Map();
 	for (const a of dbAgents) {
@@ -2083,8 +2189,12 @@ async function renderAnimations(root) {
 	if (agent.is_registered) {
 		const warn = document.createElement('div');
 		warn.className = 'anim-notice';
-		warn.innerHTML = `<strong>On-chain notice:</strong> Your agent has an ERC-8004 registration. Animation changes won't be visible on-chain until you re-pin the manifest. <button class="btn sec" style="margin-left:8px;font-size:11px;padding:4px 10px;" disabled title="Re-pin not implemented — update your manifest manually">Re-pin manifest</button>`;
+		warn.innerHTML = `<strong>On-chain notice:</strong> Your agent has an ERC-8004 registration. Animation changes aren't visible on-chain until you re-pin the manifest. <button class="btn sec" id="anim-repin-btn" style="margin-left:8px;font-size:11px;padding:4px 10px;" title="Pin a new manifest with the current animations and call setAgentURI()">Re-pin manifest</button><div id="anim-repin-log" class="muted" style="font-size:12px;margin-top:6px;white-space:pre-wrap"></div>`;
 		body.appendChild(warn);
+
+		warn.querySelector('#anim-repin-btn').addEventListener('click', () =>
+			rePinAgentManifest({ agent, animations, logEl: warn.querySelector('#anim-repin-log') }),
+		);
 	}
 
 	const cols = document.createElement('div');

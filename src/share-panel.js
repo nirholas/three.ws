@@ -1,4 +1,4 @@
-import { renderQRToCanvas } from './erc8004/qr.js';
+import { renderQRToCanvas, renderQRToSVG } from './erc8004/qr.js';
 import './share-panel.css';
 
 /**
@@ -126,12 +126,18 @@ export class SharePanel {
 		this._container.appendChild(backdrop);
 		this._backdrop = backdrop;
 
-		// Render QR
+		// Render QR — prefer canvas; fall back to inline SVG when canvas isn't
+		// available (older browsers, jsdom, restricted contexts).
+		const qrMount = modal.querySelector('#share-panel-qr-mount');
 		try {
 			const canvas = renderQRToCanvas(link, { scale: 6, margin: 2 });
-			modal.querySelector('#share-panel-qr-mount').appendChild(canvas);
+			qrMount.appendChild(canvas);
 		} catch {
-			modal.querySelector('#share-panel-qr-mount').textContent = 'QR coming soon';
+			try {
+				qrMount.innerHTML = renderQRToSVG(link, { scale: 6, margin: 2 });
+			} catch {
+				qrMount.textContent = link;
+			}
 		}
 
 		// Focus trap + keyboard

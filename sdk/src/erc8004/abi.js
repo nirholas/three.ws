@@ -79,29 +79,52 @@ export const VALIDATION_REGISTRY_ABI = [
 	'event ValidationRecorded(uint256 indexed agentId, address indexed validator, bool passed, bytes32 proofHash, string kind)',
 ];
 
+// Canonical ERC-8004 reference deployments — same address on every chain via
+// CREATE2. Source: https://github.com/nirholas/erc8004-agents
+// Validation Registry is testnet-only for now; mainnet entry is empty.
+
+const TESTNET = {
+	identityRegistry: '0x8004A818BFB912233c491871b3d84c89A494BD9e',
+	reputationRegistry: '0x8004B663056A597Dffe9eCcC1965A193B7388713',
+	validationRegistry: '0x8004Cb1BF31DAf7788923b405b754f57acEB4272',
+};
+
+const MAINNET = {
+	identityRegistry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432',
+	reputationRegistry: '0x8004BAa17C55a88189AE136b182e5fdA19dE9b63',
+	validationRegistry: '',
+};
+
 /**
- * Known deployments — add chain-specific addresses here.
+ * Known deployments keyed by chainId.
  * Format follows agentRegistry spec: eip155:{chainId}:{address}
  */
 export const REGISTRY_DEPLOYMENTS = {
-	// Base mainnet (chain 8453)
-	8453: {
-		identityRegistry: '', // TODO: fill once deployed
-		reputationRegistry: '', // TODO: fill once deployed
-		validationRegistry: '', // TODO: fill once deployed
-	},
-	// Base Sepolia testnet (chain 84532)
-	84532: {
-		identityRegistry: '', // TODO: fill in from Deploy.s.sol broadcast output
-		reputationRegistry: '',
-		validationRegistry: '',
-	},
-	// Ethereum mainnet (chain 1) — if deployed
-	1: {
-		identityRegistry: '',
-		reputationRegistry: '',
-		validationRegistry: '',
-	},
+	// Mainnets
+	1: MAINNET, // Ethereum
+	10: MAINNET, // Optimism
+	56: MAINNET, // BSC
+	100: MAINNET, // Gnosis
+	137: MAINNET, // Polygon
+	250: MAINNET, // Fantom
+	324: MAINNET, // zkSync Era
+	1284: MAINNET, // Moonbeam
+	5000: MAINNET, // Mantle
+	8453: MAINNET, // Base
+	42161: MAINNET, // Arbitrum One
+	42220: MAINNET, // Celo
+	43114: MAINNET, // Avalanche
+	59144: MAINNET, // Linea
+	534352: MAINNET, // Scroll
+
+	// Testnets
+	97: TESTNET, // BSC Testnet
+	11155111: TESTNET, // Ethereum Sepolia
+	84532: TESTNET, // Base Sepolia
+	421614: TESTNET, // Arbitrum Sepolia
+	11155420: TESTNET, // Optimism Sepolia
+	80002: TESTNET, // Polygon Amoy
+	43113: TESTNET, // Avalanche Fuji
 };
 
 /**

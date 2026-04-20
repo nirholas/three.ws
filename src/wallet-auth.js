@@ -52,7 +52,7 @@ export async function signInWithWallet() {
 
 /** @returns {Promise<void>} */
 export async function signOut() {
-	await fetch('/api/auth/signout', {
+	await fetch('/api/auth/logout', {
 		method: 'POST',
 		credentials: 'include',
 	}).catch(() => {});
