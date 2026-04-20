@@ -40,9 +40,29 @@ function seededRand(seed) {
  * @param {string}   opts.color       tint color (default 'white')
  */
 export class Cloud extends Object3D {
-	constructor({ seed = 0, segments = 20, bounds = [5, 1, 1], scale = 1, volume = 6, speed = 0, fade = 10, opacity = 1, color = 'white' } = {}) {
+	constructor({
+		seed = 0,
+		segments = 20,
+		bounds = [5, 1, 1],
+		scale = 1,
+		volume = 6,
+		speed = 0,
+		fade = 10,
+		opacity = 1,
+		color = 'white',
+	} = {}) {
 		super();
-		this._cfg = { seed, segments, bounds, scale, volume, speed, fade, opacity, color: new Color(color) };
+		this._cfg = {
+			seed,
+			segments,
+			bounds,
+			scale,
+			volume,
+			speed,
+			fade,
+			opacity,
+			color: new Color(color),
+		};
 		this._segs = [];
 		this._build();
 	}
@@ -104,7 +124,10 @@ export class Clouds extends Object3D {
 				});
 			this._mesh = new InstancedMesh(new PlaneGeometry(1, 1), mat, this._limit);
 			this._mesh.instanceMatrix.setUsage(DynamicDrawUsage);
-			this._mesh.instanceColor = new InstancedBufferAttribute(new Float32Array(this._limit * 3), 3);
+			this._mesh.instanceColor = new InstancedBufferAttribute(
+				new Float32Array(this._limit * 3),
+				3,
+			);
 			this._mesh.count = 0;
 			this._mesh.frustumCulled = false;
 			this.add(this._mesh);

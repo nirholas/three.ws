@@ -42,6 +42,9 @@ export async function mintAccessToken({ userId, clientId, scope, resource, token
 }
 
 export async function verifyAccessToken(token, { audience } = {}) {
+	// Passing `issuer` to jose.jwtVerify enforces the `iss` claim equals
+	// env.ISSUER and throws otherwise — no separate check needed in
+	// authenticateBearer(), which treats any throw here as auth failure.
 	const { payload } = await jwtVerify(token, jwtKey(), {
 		issuer: env.ISSUER,
 		audience: audience || env.MCP_RESOURCE,

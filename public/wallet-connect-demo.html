@@ -6,9 +6,13 @@
 		<title>Wallet Connect — QA Demo</title>
 		<link rel="stylesheet" href="/wallet-connect.css" />
 		<style>
-			:root { color-scheme: dark; }
+			:root {
+				color-scheme: dark;
+			}
 			body {
-				font: 15px/1.5 system-ui, sans-serif;
+				font:
+					15px/1.5 system-ui,
+					sans-serif;
 				background: #0b0b10;
 				color: #eee;
 				margin: 0;
@@ -20,7 +24,10 @@
 				gap: 32px;
 				padding: 32px;
 			}
-			h1 { margin: 0; font-size: 20px; }
+			h1 {
+				margin: 0;
+				font-size: 20px;
+			}
 			.demo-grid {
 				display: grid;
 				grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -37,7 +44,13 @@
 				flex-direction: column;
 				gap: 12px;
 			}
-			.demo-card h2 { margin: 0; font-size: 14px; color: #aaa; text-transform: uppercase; letter-spacing: 0.06em; }
+			.demo-card h2 {
+				margin: 0;
+				font-size: 14px;
+				color: #aaa;
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+			}
 			.log {
 				font-size: 12px;
 				font-family: monospace;
@@ -49,7 +62,9 @@
 	</head>
 	<body>
 		<h1>Wallet Connect — QA Demo</h1>
-		<p style="color:#666;margin:0;font-size:13px;">Manual test page — not linked from site nav.</p>
+		<p style="color: #666; margin: 0; font-size: 13px">
+			Manual test page — not linked from site nav.
+		</p>
 
 		<div class="demo-grid">
 			<div class="demo-card">
@@ -81,7 +96,7 @@
 				const ctrl = createConnectWalletButton(mountEl, opts);
 				ctrl.addEventListener('change', (e) => {
 					const { status, address, error } = e.detail;
-					logEl.textContent = `State: ${status}${address ? ` · ${address.slice(0,6)}…${address.slice(-4)}` : ''}${error ? ` · ${error.message}` : ''}`;
+					logEl.textContent = `State: ${status}${address ? ` · ${address.slice(0, 6)}…${address.slice(-4)}` : ''}${error ? ` · ${error.message}` : ''}`;
 				});
 				return ctrl;
 			}
@@ -91,7 +106,7 @@
 				labels: { idle: 'Connect wallet', connected: null },
 				onSuccess: () => {
 					document.getElementById('log-signin').textContent = 'Success — redirecting…';
-					setTimeout(() => location.href = next, 800);
+					setTimeout(() => (location.href = next), 800);
 				},
 			});
 
@@ -105,9 +120,14 @@
 
 			wire('mount-agent', 'log-agent', {
 				verifyUrl: '/api/auth/siwe/verify',
-				labels: { idle: 'Connect for ERC-8004', signing: 'Sign to register…', success: 'Ready' },
+				labels: {
+					idle: 'Connect for ERC-8004',
+					signing: 'Sign to register…',
+					success: 'Ready',
+				},
 				onSuccess: () => {
-					document.getElementById('log-agent').textContent = 'Connected — ready for on-chain registration.';
+					document.getElementById('log-agent').textContent =
+						'Connected — ready for on-chain registration.';
 				},
 			});
 		</script>

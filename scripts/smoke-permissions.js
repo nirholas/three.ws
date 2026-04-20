@@ -42,27 +42,29 @@ import {
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
-const BASE_URL      = process.env.SMOKE_BASE_URL?.replace(/\/$/, '');
-const AGENT_ID      = process.env.SMOKE_AGENT_ID;
-const CHAIN_ID      = Number(process.env.SMOKE_CHAIN_ID || 84532);
+const BASE_URL = process.env.SMOKE_BASE_URL?.replace(/\/$/, '');
+const AGENT_ID = process.env.SMOKE_AGENT_ID;
+const CHAIN_ID = Number(process.env.SMOKE_CHAIN_ID || 84532);
 const DELEGATOR_KEY = process.env.SMOKE_DELEGATOR_KEY;
 const SESSION_COOKIE = process.env.SMOKE_SESSION_COOKIE;
-const SKIP_REVOKE   = process.env.SMOKE_SKIP_REVOKE === '1';
-const SKIP_DB       = process.env.SMOKE_SKIP_DB === '1';
-const DATABASE_URL  = process.env.DATABASE_URL;
+const SKIP_REVOKE = process.env.SMOKE_SKIP_REVOKE === '1';
+const SKIP_DB = process.env.SMOKE_SKIP_DB === '1';
+const DATABASE_URL = process.env.DATABASE_URL;
 
 const RPC_URLS = {
-	1:        'https://ethereum-rpc.publicnode.com',
-	8453:     'https://mainnet.base.org',
+	1: 'https://ethereum-rpc.publicnode.com',
+	8453: 'https://mainnet.base.org',
 	11155111: 'https://ethereum-sepolia-rpc.publicnode.com',
-	84532:    process.env.RPC_URL_84532 || 'https://sepolia.base.org',
-	421614:   'https://sepolia-rollup.arbitrum.io/rpc',
+	84532: process.env.RPC_URL_84532 || 'https://sepolia.base.org',
+	421614: 'https://sepolia-rollup.arbitrum.io/rpc',
 	11155420: 'https://sepolia.optimism.io',
 };
 
 // ── Result tracker ────────────────────────────────────────────────────────────
 
-let passed = 0, failed = 0, skipped = 0;
+let passed = 0,
+	failed = 0,
+	skipped = 0;
 const failures = [];
 
 function pass(label) {
@@ -112,12 +114,27 @@ function assertOk(res, body, label) {
 
 section('1. Pre-flight');
 
-if (!BASE_URL)          { console.error('\x1b[31mERROR: SMOKE_BASE_URL is required\x1b[0m\n'); process.exit(1); }
-if (!AGENT_ID)          { console.error('\x1b[31mERROR: SMOKE_AGENT_ID is required\x1b[0m\n'); process.exit(1); }
-if (!DELEGATOR_KEY)     { console.error('\x1b[31mERROR: SMOKE_DELEGATOR_KEY is required\x1b[0m\n'); process.exit(1); }
-if (!SESSION_COOKIE)    { console.warn('\x1b[33mWARN: SMOKE_SESSION_COOKIE not set — authenticated tests will be skipped\x1b[0m'); }
+if (!BASE_URL) {
+	console.error('\x1b[31mERROR: SMOKE_BASE_URL is required\x1b[0m\n');
+	process.exit(1);
+}
+if (!AGENT_ID) {
+	console.error('\x1b[31mERROR: SMOKE_AGENT_ID is required\x1b[0m\n');
+	process.exit(1);
+}
+if (!DELEGATOR_KEY) {
+	console.error('\x1b[31mERROR: SMOKE_DELEGATOR_KEY is required\x1b[0m\n');
+	process.exit(1);
+}
+if (!SESSION_COOKIE) {
+	console.warn(
+		'\x1b[33mWARN: SMOKE_SESSION_COOKIE not set — authenticated tests will be skipped\x1b[0m',
+	);
+}
 if (!(CHAIN_ID in DELEGATION_MANAGER_DEPLOYMENTS)) {
-	console.error(`\x1b[31mERROR: CHAIN_ID ${CHAIN_ID} not in DELEGATION_MANAGER_DEPLOYMENTS\x1b[0m`);
+	console.error(
+		`\x1b[31mERROR: CHAIN_ID ${CHAIN_ID} not in DELEGATION_MANAGER_DEPLOYMENTS\x1b[0m`,
+	);
 	process.exit(1);
 }
 
@@ -128,7 +145,7 @@ pass(`CHAIN_ID = ${CHAIN_ID}`);
 // Create test wallet
 const wallet = new Wallet(DELEGATOR_KEY);
 const DELEGATOR_ADDRESS = wallet.address;
-const DELEGATE_ADDRESS  = getAddress('0x70997970C51812dc3A010C7d01b50e0d17dc79C8'); // well-known test addr
+const DELEGATE_ADDRESS = getAddress('0x70997970C51812dc3A010C7d01b50e0d17dc79C8'); // well-known test addr
 pass(`Delegator wallet = ${DELEGATOR_ADDRESS}`);
 
 if (SKIP_DB || !DATABASE_URL) {
@@ -146,9 +163,21 @@ if (SKIP_DB || !DATABASE_URL) {
 		sql.end();
 		const cols = rows.map((r) => r.column_name);
 		const required = [
-			'id', 'agent_id', 'chain_id', 'delegator_address', 'delegate_address',
-			'delegation_hash', 'delegation_json', 'scope', 'status', 'expires_at',
-			'created_at', 'revoked_at', 'tx_hash_revoke', 'last_redeemed_at', 'redemption_count',
+			'id',
+			'agent_id',
+			'chain_id',
+			'delegator_address',
+			'delegate_address',
+			'delegation_hash',
+			'delegation_json',
+			'scope',
+			'status',
+			'expires_at',
+			'created_at',
+			'revoked_at',
+			'tx_hash_revoke',
+			'last_redeemed_at',
+			'redemption_count',
 		];
 		const missing = required.filter((c) => !cols.includes(c));
 		assert.deepStrictEqual(missing, [], `Missing columns: ${missing.join(', ')}`);
@@ -169,12 +198,20 @@ section('2. Contract addresses (eth_getCode)');
 const rpcUrl = RPC_URLS[CHAIN_ID];
 for (const [chainId, addr] of Object.entries(DELEGATION_MANAGER_DEPLOYMENTS)) {
 	const url = RPC_URLS[chainId];
-	if (!url) { skip(`chainId ${chainId}`, 'no RPC URL'); continue; }
-	await check(`DelegationManager on chain ${chainId} (${addr.slice(0,10)}…)`, async () => {
+	if (!url) {
+		skip(`chainId ${chainId}`, 'no RPC URL');
+		continue;
+	}
+	await check(`DelegationManager on chain ${chainId} (${addr.slice(0, 10)}…)`, async () => {
 		const res = await fetch(url, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_getCode', params: [addr, 'latest'] }),
+			body: JSON.stringify({
+				jsonrpc: '2.0',
+				id: 1,
+				method: 'eth_getCode',
+				params: [addr, 'latest'],
+			}),
 		});
 		const { result } = await res.json();
 		assert.ok(result && result.length > 4, `No bytecode at ${addr} on chain ${chainId}`);
@@ -194,42 +231,68 @@ await check('encodeScopedDelegation — valid input', () => {
 	const caveats = [
 		{
 			enforcer: CAVEAT_ENFORCERS.AllowedTargetsEnforcer[CHAIN_ID],
-			terms:    '0x' + DELEGATE_ADDRESS.slice(2).toLowerCase().padStart(64, '0'),
-			args:     '0x',
+			terms: '0x' + DELEGATE_ADDRESS.slice(2).toLowerCase().padStart(64, '0'),
+			args: '0x',
 		},
 		{
-			enforcer: CAVEAT_ENFORCERS.ERC20PeriodTransferEnforcer?.[CHAIN_ID] ||
-			           CAVEAT_ENFORCERS.ERC20TransferAmountEnforcer[CHAIN_ID],
-			terms:    AbiCoder.defaultAbiCoder().encode(['address', 'uint256'], [USDC_BASE_SEPOLIA, 10_000_000n]),
-			args:     '0x',
+			enforcer:
+				CAVEAT_ENFORCERS.ERC20PeriodTransferEnforcer?.[CHAIN_ID] ||
+				CAVEAT_ENFORCERS.ERC20TransferAmountEnforcer[CHAIN_ID],
+			terms: AbiCoder.defaultAbiCoder().encode(
+				['address', 'uint256'],
+				[USDC_BASE_SEPOLIA, 10_000_000n],
+			),
+			args: '0x',
 		},
 	];
 	delegation = encodeScopedDelegation({
 		delegator: DELEGATOR_ADDRESS,
-		delegate:  DELEGATE_ADDRESS,
+		delegate: DELEGATE_ADDRESS,
 		caveats,
-		expiry:    EXPIRY,
-		chainId:   CHAIN_ID,
+		expiry: EXPIRY,
+		chainId: CHAIN_ID,
 	});
-	assert.strictEqual(delegation.delegate,   DELEGATE_ADDRESS);
-	assert.strictEqual(delegation.delegator,  DELEGATOR_ADDRESS);
+	assert.strictEqual(delegation.delegate, DELEGATE_ADDRESS);
+	assert.strictEqual(delegation.delegator, DELEGATOR_ADDRESS);
 	assert.ok(delegation.caveats.length >= 1);
 });
 
 await check('encodeScopedDelegation — delegate === delegator throws', () => {
 	assert.throws(
-		() => encodeScopedDelegation({ delegator: DELEGATOR_ADDRESS, delegate: DELEGATOR_ADDRESS,
-			caveats: [{ enforcer: '0x1234567890123456789012345678901234567890', terms: '0x', args: '0x' }],
-			expiry: EXPIRY, chainId: CHAIN_ID }),
+		() =>
+			encodeScopedDelegation({
+				delegator: DELEGATOR_ADDRESS,
+				delegate: DELEGATOR_ADDRESS,
+				caveats: [
+					{
+						enforcer: '0x1234567890123456789012345678901234567890',
+						terms: '0x',
+						args: '0x',
+					},
+				],
+				expiry: EXPIRY,
+				chainId: CHAIN_ID,
+			}),
 		(e) => e instanceof PermissionError,
 	);
 });
 
 await check('encodeScopedDelegation — unsupported chain throws', () => {
 	assert.throws(
-		() => encodeScopedDelegation({ delegator: DELEGATOR_ADDRESS, delegate: DELEGATE_ADDRESS,
-			caveats: [{ enforcer: '0x1234567890123456789012345678901234567890', terms: '0x', args: '0x' }],
-			expiry: EXPIRY, chainId: 999999 }),
+		() =>
+			encodeScopedDelegation({
+				delegator: DELEGATOR_ADDRESS,
+				delegate: DELEGATE_ADDRESS,
+				caveats: [
+					{
+						enforcer: '0x1234567890123456789012345678901234567890',
+						terms: '0x',
+						args: '0x',
+					},
+				],
+				expiry: EXPIRY,
+				chainId: 999999,
+			}),
 		(e) => e instanceof PermissionError && e.code === 'chain_not_supported',
 	);
 });
@@ -255,13 +318,16 @@ await check('signDelegation — produces valid signature', async () => {
 await check('delegationToManifestEntry — correct shape', () => {
 	assert.ok(signedDelegation, 'signDelegation must have passed');
 	const scope = {
-		token: USDC_BASE_SEPOLIA, maxAmount: '10000000', period: 'daily',
-		targets: [DELEGATE_ADDRESS], expiry: EXPIRY,
+		token: USDC_BASE_SEPOLIA,
+		maxAmount: '10000000',
+		period: 'daily',
+		targets: [DELEGATE_ADDRESS],
+		expiry: EXPIRY,
 	};
 	const entry = delegationToManifestEntry({ ...signedDelegation, scope });
-	assert.strictEqual(entry.chainId,   CHAIN_ID);
+	assert.strictEqual(entry.chainId, CHAIN_ID);
 	assert.strictEqual(entry.delegator, DELEGATOR_ADDRESS);
-	assert.strictEqual(entry.hash,      signedDelegation.hash);
+	assert.strictEqual(entry.hash, signedDelegation.hash);
 	assert.ok(!('signature' in entry), 'signature must NOT appear in manifest entry');
 	assert.strictEqual(entry.scope.token, USDC_BASE_SEPOLIA);
 });
@@ -300,7 +366,7 @@ await check('GET /api/permissions/verify — missing params returns 400', async 
 });
 
 await check('GET /api/permissions/verify — invalid chainId returns 400', async () => {
-	const hash = signedDelegation?.hash || ('0x' + 'ab'.repeat(32));
+	const hash = signedDelegation?.hash || '0x' + 'ab'.repeat(32);
 	const res = await api(`/api/permissions/verify?hash=${hash}&chainId=999999`);
 	assert.ok(res.status === 400 || res.status === 200);
 	if (res.status === 200) {
@@ -316,14 +382,17 @@ section('6. API — authenticated endpoints');
 let grantedId, grantedHash;
 
 if (!SESSION_COOKIE) {
-	skip('POST /api/permissions/grant',          'no SMOKE_SESSION_COOKIE');
-	skip('GET  /api/permissions/list',            'no SMOKE_SESSION_COOKIE');
-	skip('GET  /api/permissions/verify (live)',   'no SMOKE_SESSION_COOKIE');
-	skip('POST /api/permissions/revoke',          'no SMOKE_SESSION_COOKIE');
+	skip('POST /api/permissions/grant', 'no SMOKE_SESSION_COOKIE');
+	skip('GET  /api/permissions/list', 'no SMOKE_SESSION_COOKIE');
+	skip('GET  /api/permissions/verify (live)', 'no SMOKE_SESSION_COOKIE');
+	skip('POST /api/permissions/revoke', 'no SMOKE_SESSION_COOKIE');
 } else {
 	const scope = {
-		token: USDC_BASE_SEPOLIA, maxAmount: '10000000', period: 'daily',
-		targets: [DELEGATE_ADDRESS], expiry: EXPIRY,
+		token: USDC_BASE_SEPOLIA,
+		maxAmount: '10000000',
+		period: 'daily',
+		targets: [DELEGATE_ADDRESS],
+		expiry: EXPIRY,
 	};
 
 	await check('POST /api/permissions/grant — happy path', async () => {
@@ -331,17 +400,17 @@ if (!SESSION_COOKIE) {
 		const res = await api('/api/permissions/grant', {
 			method: 'POST',
 			body: JSON.stringify({
-				agentId:    AGENT_ID,
-				chainId:    CHAIN_ID,
+				agentId: AGENT_ID,
+				chainId: CHAIN_ID,
 				delegation: signedDelegation,
 				scope,
 			}),
 		});
 		const body = await res.json();
 		assertOk(res, body, 'grant');
-		assert.ok(body.id,              'id must be present');
-		assert.ok(body.delegationHash,  'delegationHash must be present');
-		grantedId   = body.id;
+		assert.ok(body.id, 'id must be present');
+		assert.ok(body.delegationHash, 'delegationHash must be present');
+		grantedId = body.id;
 		grantedHash = body.delegationHash;
 		console.log(`      id:   ${grantedId}`);
 		console.log(`      hash: ${grantedHash}`);
@@ -351,7 +420,12 @@ if (!SESSION_COOKIE) {
 		assert.ok(signedDelegation, 'need signed delegation');
 		const res = await api('/api/permissions/grant', {
 			method: 'POST',
-			body: JSON.stringify({ agentId: AGENT_ID, chainId: CHAIN_ID, delegation: signedDelegation, scope }),
+			body: JSON.stringify({
+				agentId: AGENT_ID,
+				chainId: CHAIN_ID,
+				delegation: signedDelegation,
+				scope,
+			}),
 		});
 		assert.strictEqual(res.status, 409);
 		const body = await res.json();
@@ -366,8 +440,10 @@ if (!SESSION_COOKIE) {
 		const found = body.delegations.find((d) => d.delegationHash === grantedHash);
 		assert.ok(found, `Delegation ${grantedHash} not found in list`);
 		assert.strictEqual(found.status, 'active');
-		assert.ok(!('delegationJson' in found) || typeof found.delegationJson === 'object',
-			'signature should only be in authenticated view');
+		assert.ok(
+			!('delegationJson' in found) || typeof found.delegationJson === 'object',
+			'signature should only be in authenticated view',
+		);
 		console.log(`      listed ${body.delegations.length} delegation(s)`);
 	});
 
@@ -386,54 +462,68 @@ if (!SESSION_COOKIE) {
 	if (SKIP_REVOKE) {
 		skip('POST /api/permissions/revoke — on-chain', 'SMOKE_SKIP_REVOKE=1');
 	} else {
-		await check('POST /api/permissions/revoke — on-chain disableDelegation + server mirror', async () => {
-			assert.ok(grantedId && grantedHash && signedDelegation, 'grant must have passed');
+		await check(
+			'POST /api/permissions/revoke — on-chain disableDelegation + server mirror',
+			async () => {
+				assert.ok(grantedId && grantedHash && signedDelegation, 'grant must have passed');
 
-			// Submit the on-chain disableDelegation tx
-			const provider = new JsonRpcProvider(rpcUrl);
-			const signer   = wallet.connect(provider);
-			const balance  = await provider.getBalance(DELEGATOR_ADDRESS);
-			assert.ok(balance > 0n, `Delegator ${DELEGATOR_ADDRESS} has no ETH on chain ${CHAIN_ID} — fund it first`);
+				// Submit the on-chain disableDelegation tx
+				const provider = new JsonRpcProvider(rpcUrl);
+				const signer = wallet.connect(provider);
+				const balance = await provider.getBalance(DELEGATOR_ADDRESS);
+				assert.ok(
+					balance > 0n,
+					`Delegator ${DELEGATOR_ADDRESS} has no ETH on chain ${CHAIN_ID} — fund it first`,
+				);
 
-			const { Contract } = await import('ethers');
-			const dm = new Contract(DELEGATION_MANAGER_DEPLOYMENTS[CHAIN_ID], DELEGATION_MANAGER_ABI, signer);
+				const { Contract } = await import('ethers');
+				const dm = new Contract(
+					DELEGATION_MANAGER_DEPLOYMENTS[CHAIN_ID],
+					DELEGATION_MANAGER_ABI,
+					signer,
+				);
 
-			// Build the delegation tuple the contract expects
-			const delegationTuple = {
-				delegate:  signedDelegation.delegate,
-				delegator: signedDelegation.delegator,
-				authority: signedDelegation.authority,
-				caveats:   signedDelegation.caveats,
-				salt:      signedDelegation.salt,
-				signature: signedDelegation.signature,
-			};
+				// Build the delegation tuple the contract expects
+				const delegationTuple = {
+					delegate: signedDelegation.delegate,
+					delegator: signedDelegation.delegator,
+					authority: signedDelegation.authority,
+					caveats: signedDelegation.caveats,
+					salt: signedDelegation.salt,
+					signature: signedDelegation.signature,
+				};
 
-			console.log('      submitting disableDelegation tx…');
-			const tx = await dm.disableDelegation(delegationTuple);
-			const receipt = await tx.wait();
-			assert.ok(receipt.status === 1, `tx reverted: ${receipt.hash}`);
-			console.log(`      tx:    ${receipt.hash}`);
-			console.log(`      block: ${receipt.blockNumber}`);
+				console.log('      submitting disableDelegation tx…');
+				const tx = await dm.disableDelegation(delegationTuple);
+				const receipt = await tx.wait();
+				assert.ok(receipt.status === 1, `tx reverted: ${receipt.hash}`);
+				console.log(`      tx:    ${receipt.hash}`);
+				console.log(`      block: ${receipt.blockNumber}`);
 
-			// Mirror revocation to the server
-			const res = await api('/api/permissions/revoke', {
-				method: 'POST',
-				body: JSON.stringify({ id: grantedId, txHash: receipt.hash }),
-			});
-			const body = await res.json();
-			assertOk(res, body, 'revoke');
-			assert.strictEqual(body.status, 'revoked');
+				// Mirror revocation to the server
+				const res = await api('/api/permissions/revoke', {
+					method: 'POST',
+					body: JSON.stringify({ id: grantedId, txHash: receipt.hash }),
+				});
+				const body = await res.json();
+				assertOk(res, body, 'revoke');
+				assert.strictEqual(body.status, 'revoked');
 
-			// Confirm verify endpoint now returns invalid
-			const vRes  = await api(`/api/permissions/verify?hash=${grantedHash}&chainId=${CHAIN_ID}`);
-			const vBody = await vRes.json();
-			if (vBody.valid !== false) {
-				console.log('      \x1b[33mWARN: verify still shows valid — indexer may not have run yet\x1b[0m');
-			} else {
-				assert.strictEqual(vBody.reason, 'delegation_revoked');
-				console.log('      verify correctly shows delegation_revoked');
-			}
-		});
+				// Confirm verify endpoint now returns invalid
+				const vRes = await api(
+					`/api/permissions/verify?hash=${grantedHash}&chainId=${CHAIN_ID}`,
+				);
+				const vBody = await vRes.json();
+				if (vBody.valid !== false) {
+					console.log(
+						'      \x1b[33mWARN: verify still shows valid — indexer may not have run yet\x1b[0m',
+					);
+				} else {
+					assert.strictEqual(vBody.reason, 'delegation_revoked');
+					console.log('      verify correctly shows delegation_revoked');
+				}
+			},
+		);
 	}
 
 	// ── 7. API — negative cases ──────────────────────────────────────────────
@@ -444,7 +534,12 @@ if (!SESSION_COOKIE) {
 		const res = await fetch(`${BASE_URL}/api/permissions/grant`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ agentId: AGENT_ID, chainId: CHAIN_ID, delegation: {}, scope: {} }),
+			body: JSON.stringify({
+				agentId: AGENT_ID,
+				chainId: CHAIN_ID,
+				delegation: {},
+				scope: {},
+			}),
 		});
 		assert.strictEqual(res.status, 401);
 	});
@@ -452,7 +547,10 @@ if (!SESSION_COOKIE) {
 	await check('POST /api/permissions/revoke — wrong id returns 404', async () => {
 		const res = await api('/api/permissions/revoke', {
 			method: 'POST',
-			body: JSON.stringify({ id: '00000000-0000-0000-0000-000000000000', txHash: '0x' + '00'.repeat(32) }),
+			body: JSON.stringify({
+				id: '00000000-0000-0000-0000-000000000000',
+				txHash: '0x' + '00'.repeat(32),
+			}),
 		});
 		assert.ok(res.status === 404 || res.status === 400);
 	});
@@ -461,7 +559,9 @@ if (!SESSION_COOKIE) {
 // ── Summary ───────────────────────────────────────────────────────────────────
 
 console.log('\n' + '─'.repeat(60));
-console.log(`\x1b[1mResults:\x1b[0m  \x1b[32m${passed} passed\x1b[0m  \x1b[31m${failed} failed\x1b[0m  \x1b[33m${skipped} skipped\x1b[0m`);
+console.log(
+	`\x1b[1mResults:\x1b[0m  \x1b[32m${passed} passed\x1b[0m  \x1b[31m${failed} failed\x1b[0m  \x1b[33m${skipped} skipped\x1b[0m`,
+);
 
 if (failures.length) {
 	console.log('\nFailed checks:');
@@ -473,7 +573,9 @@ if (failures.length) {
 }
 
 if (!SESSION_COOKIE) {
-	console.log('\n\x1b[33mTIP:\x1b[0m Set SMOKE_SESSION_COOKIE to run authenticated grant/list/revoke tests.');
+	console.log(
+		'\n\x1b[33mTIP:\x1b[0m Set SMOKE_SESSION_COOKIE to run authenticated grant/list/revoke tests.',
+	);
 }
 
 console.log('\nAll checks passed.');

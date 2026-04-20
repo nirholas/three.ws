@@ -127,11 +127,17 @@ const { spec, delegations } = await client.getMetadata(agentId);
 
 // Grant a new delegation (browser only — needs MetaMask)
 const { id, delegationHash } = await client.grant({
-  agentId,
-  chainId: 84532,
-  preset: { token: 'native', maxAmount: '1000000', period: 'daily', targets: ['0xTarget'], expiryDays: 30 },
-  delegate: agentSmartAccountAddress,
-  signer,   // ethers v6 Signer from connectWallet()
+	agentId,
+	chainId: 84532,
+	preset: {
+		token: 'native',
+		maxAmount: '1000000',
+		period: 'daily',
+		targets: ['0xTarget'],
+		expiryDays: 30,
+	},
+	delegate: agentSmartAccountAddress,
+	signer, // ethers v6 Signer from connectWallet()
 });
 
 // Verify on-chain that a delegation is still active
@@ -144,7 +150,10 @@ await client.revoke({ id, delegationHash, signer });
 For advanced use (direct toolkit access with tree-shaking):
 
 ```ts
-import { encodeScopedDelegation, isDelegationValid } from '@nirholas/agent-kit/permissions/advanced';
+import {
+	encodeScopedDelegation,
+	isDelegationValid,
+} from '@nirholas/agent-kit/permissions/advanced';
 ```
 
 ## License

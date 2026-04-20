@@ -24,12 +24,12 @@ Create `public/skills/dca/`:
     - `default_scope_preset`:
         ```jsonc
         {
-            "token": "<USDC>",
-            "maxAmount": "100000000", // 100 USDC per day cap
-            "period": "daily",
-            "targets": ["<Uniswap V3 SwapRouter address>"],
-            "selectors": ["0x04e45aaf"], // exactInputSingle selector — verify from Uniswap ABI
-            "expiry_days": 30
+        	"token": "<USDC>",
+        	"maxAmount": "100000000", // 100 USDC per day cap
+        	"period": "daily",
+        	"targets": ["<Uniswap V3 SwapRouter address>"],
+        	"selectors": ["0x04e45aaf"], // exactInputSingle selector — verify from Uniswap ABI
+        	"expiry_days": 30,
         }
         ```
 2. **`skill.js`**:

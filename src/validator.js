@@ -125,13 +125,12 @@ export class Validator {
 			});
 			Object.keys(CODES).forEach((code) => {
 				Object.keys(CODES[code].pointerCounts).forEach((pointer) => {
+					const count = CODES[code].pointerCounts[pointer];
+					if (count < 2) return;
 					report.errors.push({
 						code: code,
 						pointer: pointer,
-						message: CODES[code].message.replace(
-							'{count}',
-							CODES[code].pointerCounts[pointer],
-						),
+						message: CODES[code].message.replace('{count}', count),
 					});
 				});
 			});

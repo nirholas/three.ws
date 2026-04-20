@@ -92,7 +92,8 @@ export class ConnectWalletController extends EventTarget {
 		};
 		this.#s = initialState();
 
-		this.#onAccountsChanged = (accounts) => this.#dispatch({ type: 'ACCOUNTS_CHANGED', accounts });
+		this.#onAccountsChanged = (accounts) =>
+			this.#dispatch({ type: 'ACCOUNTS_CHANGED', accounts });
 		this.#onChainChanged = (chainIdHex) => {
 			const chainId = parseInt(chainIdHex, 16);
 			this.#dispatch({ type: 'CHAIN_CHANGED', chainId });
@@ -109,10 +110,18 @@ export class ConnectWalletController extends EventTarget {
 		}
 	}
 
-	get state() { return this.#s.status; }
-	get address() { return this.#s.address; }
-	get chainId() { return this.#s.chainId; }
-	get error() { return this.#s.error; }
+	get state() {
+		return this.#s.status;
+	}
+	get address() {
+		return this.#s.address;
+	}
+	get chainId() {
+		return this.#s.chainId;
+	}
+	get error() {
+		return this.#s.error;
+	}
 
 	/** @param {{ type: string, [k: string]: any }} action */
 	#dispatch(action) {
@@ -168,7 +177,10 @@ export class ConnectWalletController extends EventTarget {
 				});
 			} else if (e?.code !== 4001) {
 				// 4001 = user rejected — surface as error; other codes are bugs
-				this.#dispatch({ type: 'ERROR', error: e instanceof Error ? e : new Error(String(e)) });
+				this.#dispatch({
+					type: 'ERROR',
+					error: e instanceof Error ? e : new Error(String(e)),
+				});
 			}
 		}
 	}

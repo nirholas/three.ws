@@ -17,7 +17,6 @@ import {
 } from 'three';
 import Stats from 'three/addons/libs/stats.module.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
@@ -30,8 +29,7 @@ import {
 	DEFAULT_CAMERA,
 	Preset,
 	MANAGER,
-	DRACO_LOADER,
-	KTX2_LOADER,
+	getDecoders,
 	traverseMaterials,
 } from './viewer/internal.js';
 import { addLights, removeLights } from './viewer/lights.js';
@@ -308,42 +306,44 @@ export class Viewer {
 				return (path || '') + url;
 			});
 
-			const loader = new GLTFLoader(MANAGER)
-				.setCrossOrigin('anonymous')
-				.setDRACOLoader(DRACO_LOADER)
-				.setKTX2Loader(KTX2_LOADER.detectSupport(this.renderer))
-				.setMeshoptDecoder(MeshoptDecoder);
-
 			const blobURLs = [];
 
-			loader.load(
-				url,
-				(gltf) => {
-					window.VIEWER.json = gltf;
+			getDecoders().then(({ dracoLoader, ktx2Loader, meshoptDecoder }) => {
+				const loader = new GLTFLoader(MANAGER)
+					.setCrossOrigin('anonymous')
+					.setDRACOLoader(dracoLoader)
+					.setKTX2Loader(ktx2Loader.detectSupport(this.renderer))
+					.setMeshoptDecoder(meshoptDecoder);
 
-					const scene = gltf.scene || gltf.scenes[0];
-					const clips = gltf.animations || [];
+				loader.load(
+					url,
+					(gltf) => {
+						window.VIEWER.json = gltf;
 
-					if (!scene) {
-						// Valid, but not supported by this viewer.
-						throw new Error(
-							'This model contains no scene, and cannot be viewed here. However,' +
-								' it may contain individual 3D resources.',
-						);
-					}
+						const scene = gltf.scene || gltf.scenes[0];
+						const clips = gltf.animations || [];
 
-					this.setContent(scene, clips);
+						if (!scene) {
+							// Valid, but not supported by this viewer.
+							throw new Error(
+								'This model contains no scene, and cannot be viewed here. However,' +
+									' it may contain individual 3D resources.',
+							);
+						}
 
-					blobURLs.forEach(URL.revokeObjectURL);
+						this.setContent(scene, clips);
 
-					// See: https://github.com/google/draco/issues/349
-					// DRACOLoader.releaseDecoderModule();
+						blobURLs.forEach(URL.revokeObjectURL);
 
-					resolve(gltf);
-				},
-				undefined,
-				reject,
-			);
+						// See: https://github.com/google/draco/issues/349
+						// DRACOLoader.releaseDecoderModule();
+
+						resolve(gltf);
+					},
+					undefined,
+					reject,
+				);
+			}, reject);
 		});
 	}
 

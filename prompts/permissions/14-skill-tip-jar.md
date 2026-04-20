@@ -24,11 +24,11 @@ Create `public/skills/tip-jar/` with:
     - `default_scope_preset`:
         ```jsonc
         {
-            "token": "<USDC address per chain>",
-            "maxAmount": "10000000", // 10 USDC (6 decimals)
-            "period": "daily",
-            "targets": ["<this skill's executor contract>"],
-            "expiry_days": 30
+        	"token": "<USDC address per chain>",
+        	"maxAmount": "10000000", // 10 USDC (6 decimals)
+        	"period": "daily",
+        	"targets": ["<this skill's executor contract>"],
+        	"expiry_days": 30,
         }
         ```
     - Body: short human description of what it does.

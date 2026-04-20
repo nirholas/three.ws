@@ -1,7 +1,7 @@
 // In-memory nonce store for wallet linking. Separate from login nonces.
 // Used by nonce.js (issuer) and index.js (validator).
 
-import { randomToken } from '../_lib/crypto.js';
+import { randomToken } from '../../_lib/crypto.js';
 
 export const NONCE_TTL_SEC = 5 * 60;
 const nonceStore = new Map();

@@ -139,7 +139,9 @@ export class PermissionsClient {
 		const caveats = [
 			{
 				enforcer: CAVEAT_ENFORCERS.AllowedTargetsEnforcer[chainId],
-				terms: encodeCaveats(preset.targets.map((t) => ({ enforcer: t, terms: '0x', args: '0x' }))),
+				terms: encodeCaveats(
+					preset.targets.map((t) => ({ enforcer: t, terms: '0x', args: '0x' })),
+				),
 				args: '0x',
 			},
 			{
@@ -154,7 +156,13 @@ export class PermissionsClient {
 			},
 		];
 
-		const unsigned = encodeScopedDelegation({ delegator: delegatorAddr, delegate, caveats, expiry, chainId });
+		const unsigned = encodeScopedDelegation({
+			delegator: delegatorAddr,
+			delegate,
+			caveats,
+			expiry,
+			chainId,
+		});
 		const signed = await signDelegation(unsigned, signer);
 
 		const data = await this._request(`${this._base}/api/permissions/grant`, {
@@ -220,7 +228,10 @@ export class PermissionsClient {
 		const network = await signer.provider.getNetwork();
 		const managerAddr = DELEGATION_MANAGER_DEPLOYMENTS[Number(network.chainId)];
 		if (!managerAddr) {
-			throw new PermissionError('chain_not_supported', `no DelegationManager for chain ${network.chainId}`);
+			throw new PermissionError(
+				'chain_not_supported',
+				`no DelegationManager for chain ${network.chainId}`,
+			);
 		}
 		const dm = new Contract(managerAddr, DELEGATION_MANAGER_ABI, signer);
 		const tx = await dm.disableDelegation(delegationHash);
@@ -243,6 +254,8 @@ export class PermissionsClient {
 	async verify(hash, chainId) {
 		const url = `${this._base}/api/permissions/verify?hash=${encodeURIComponent(hash)}&chainId=${chainId}`;
 		const data = await this._request(url);
-		return data.reason !== undefined ? { valid: data.valid, reason: data.reason } : { valid: data.valid };
+		return data.reason !== undefined
+			? { valid: data.valid, reason: data.reason }
+			: { valid: data.valid };
 	}
 }

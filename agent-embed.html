@@ -240,27 +240,72 @@
 					const clouds = new Clouds({ limit: 350 });
 
 					// Deep background sweep — wide, slow, anchors the scene
-					const back = new Cloud({ seed: 1, segments: 40, bounds: [14, 5, 4], volume: 4, color: '#7a9ad8', fade: 32, opacity: 0.9, speed: 0.012 });
+					const back = new Cloud({
+						seed: 1,
+						segments: 40,
+						bounds: [14, 5, 4],
+						volume: 4,
+						color: '#7a9ad8',
+						fade: 32,
+						opacity: 0.9,
+						speed: 0.012,
+					});
 					back.position.set(0, 1.5, -9);
 					clouds.add(back);
 
 					// Mid left — cool blue wisps
-					const left = new Cloud({ seed: 7, segments: 25, bounds: [6, 2.5, 2], volume: 3, color: '#b8ccff', fade: 20, opacity: 0.65, speed: 0.038 });
+					const left = new Cloud({
+						seed: 7,
+						segments: 25,
+						bounds: [6, 2.5, 2],
+						volume: 3,
+						color: '#b8ccff',
+						fade: 20,
+						opacity: 0.65,
+						speed: 0.038,
+					});
 					left.position.set(-3.5, 0.8, -5);
 					clouds.add(left);
 
 					// Mid right — slightly warmer, offset depth
-					const right = new Cloud({ seed: 13, segments: 25, bounds: [6, 2, 2], volume: 3, color: '#ccd8ff', fade: 22, opacity: 0.6, speed: 0.05 });
+					const right = new Cloud({
+						seed: 13,
+						segments: 25,
+						bounds: [6, 2, 2],
+						volume: 3,
+						color: '#ccd8ff',
+						fade: 22,
+						opacity: 0.6,
+						speed: 0.05,
+					});
 					right.position.set(3.2, 1.2, -6);
 					clouds.add(right);
 
 					// Foreground haze — etheral and close, fades fast
-					const fore = new Cloud({ seed: 42, segments: 15, bounds: [4, 1.5, 1], volume: 2, color: 'white', fade: 7, opacity: 0.28, speed: 0.07 });
+					const fore = new Cloud({
+						seed: 42,
+						segments: 15,
+						bounds: [4, 1.5, 1],
+						volume: 2,
+						color: 'white',
+						fade: 7,
+						opacity: 0.28,
+						speed: 0.07,
+					});
 					fore.position.set(0, -0.8, -2);
 					clouds.add(fore);
 
 					// Upper accent — gives vertical depth
-					const top = new Cloud({ seed: 99, segments: 18, bounds: [8, 2, 2], volume: 3.5, color: '#a0b8f0', fade: 25, opacity: 0.5, speed: 0.025 });
+					const top = new Cloud({
+						seed: 99,
+						segments: 18,
+						bounds: [8, 2, 2],
+						volume: 3.5,
+						color: '#a0b8f0',
+						fade: 25,
+						opacity: 0.5,
+						speed: 0.025,
+					});
 					top.position.set(-1, 4, -7);
 					clouds.add(top);
 

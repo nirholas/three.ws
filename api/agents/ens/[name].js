@@ -42,7 +42,11 @@ async function resolveEns(name) {
 }
 
 async function agentsByAddress(address) {
-	// TODO: dedupe with /api/agents/by-address once that endpoint exists (prompt 19)
+	// Note: /api/agents/by-address/[addr].js exists but returns a minimal NFT-style
+	// shape ({id, chainId, agentURI, manifestUrl, onChain, source}) with chain
+	// enumeration fallback. This endpoint returns the full agent profile for ENS
+	// → identity resolution. The two queries differ enough that extracting a
+	// shared helper would add abstraction without removing real duplication.
 	const rows = await sql`
 		SELECT id, name, description, avatar_id, home_url,
 		       erc8004_agent_id, erc8004_registry, chain_id,

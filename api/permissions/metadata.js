@@ -80,7 +80,7 @@ export default wrap(async (req, res) => {
 	}));
 
 	// delegationManager: use the filtered chain if provided, otherwise first delegation's chain
-	const resolveChain = chainId ?? (rows[0]?.chain_id ?? null);
+	const resolveChain = chainId ?? rows[0]?.chain_id ?? null;
 	const delegationManager = resolveChain
 		? (DELEGATION_MANAGER_DEPLOYMENTS[resolveChain] ?? null)
 		: null;

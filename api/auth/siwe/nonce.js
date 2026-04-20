@@ -37,7 +37,7 @@ export default wrap(async (req, res) => {
 	const csrf = await hmacSha256(env.JWT_SECRET, `csrf-siwe:${csrfRaw}`);
 	res.setHeader(
 		'set-cookie',
-		`${CSRF_COOKIE}=${csrfRaw}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${NONCE_TTL_SEC}`,
+		`${CSRF_COOKIE}=${csrfRaw}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${NONCE_TTL_SEC}`,
 	);
 
 	const issuedAt = new Date().toISOString();

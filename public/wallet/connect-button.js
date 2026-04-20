@@ -59,7 +59,8 @@ export class ConnectWalletController extends EventTarget {
 		};
 		this.#s = initialState();
 
-		this.#onAccountsChanged = (accounts) => this.#dispatch({ type: 'ACCOUNTS_CHANGED', accounts });
+		this.#onAccountsChanged = (accounts) =>
+			this.#dispatch({ type: 'ACCOUNTS_CHANGED', accounts });
 		this.#onChainChanged = (chainIdHex) => {
 			const chainId = parseInt(chainIdHex, 16);
 			this.#dispatch({ type: 'CHAIN_CHANGED', chainId });
@@ -76,10 +77,18 @@ export class ConnectWalletController extends EventTarget {
 		}
 	}
 
-	get state() { return this.#s.status; }
-	get address() { return this.#s.address; }
-	get chainId() { return this.#s.chainId; }
-	get error() { return this.#s.error; }
+	get state() {
+		return this.#s.status;
+	}
+	get address() {
+		return this.#s.address;
+	}
+	get chainId() {
+		return this.#s.chainId;
+	}
+	get error() {
+		return this.#s.error;
+	}
 
 	#dispatch(action) {
 		const next = reduce(this.#s, action);
@@ -125,10 +134,15 @@ export class ConnectWalletController extends EventTarget {
 			if (e?.code === 4902) {
 				this.#dispatch({
 					type: 'ERROR',
-					error: new Error(`Chain ${CHAIN_NAMES[target] || target} not in wallet. Add it manually.`),
+					error: new Error(
+						`Chain ${CHAIN_NAMES[target] || target} not in wallet. Add it manually.`,
+					),
 				});
 			} else if (e?.code !== 4001) {
-				this.#dispatch({ type: 'ERROR', error: e instanceof Error ? e : new Error(String(e)) });
+				this.#dispatch({
+					type: 'ERROR',
+					error: e instanceof Error ? e : new Error(String(e)),
+				});
 			}
 		}
 	}
@@ -177,7 +191,9 @@ export class ConnectWalletController extends EventTarget {
 		}
 	}
 
-	reset() { this.#dispatch({ type: 'RESET' }); }
+	reset() {
+		this.#dispatch({ type: 'RESET' });
+	}
 
 	dispose() {
 		if (window.ethereum) {
@@ -237,7 +253,10 @@ export function createConnectWalletButton(mountEl, opts = {}) {
 		} else if (status === STATES.WRONG_CHAIN) {
 			btn.onclick = () => ctrl.connect();
 		} else if (status === STATES.ERROR) {
-			btn.onclick = () => { ctrl.reset(); ctrl.connect(); };
+			btn.onclick = () => {
+				ctrl.reset();
+				ctrl.connect();
+			};
 		} else if (status === STATES.IDLE) {
 			btn.onclick = () => ctrl.connect();
 		}

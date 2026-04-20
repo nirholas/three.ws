@@ -12,9 +12,52 @@ export function ValidatorReport({
 	hints,
 	infos,
 }) {
+	const totalIssues =
+		issues.numErrors + issues.numWarnings + issues.numInfos + issues.numHints;
+	const isClean = totalIssues === 0;
 	return (
 		<div class="report">
 			<h1>Validation report</h1>
+			{isClean ? (
+				<div class="report-banner report-banner-clean" role="status">
+					<span class="report-banner-icon" aria-hidden="true">
+						✓
+					</span>
+					<span>All clear — no validation issues found.</span>
+				</div>
+			) : (
+				<div class="report-banner report-banner-issues" role="status">
+					<span>
+						Found <b>{totalIssues}</b> issue{totalIssues === 1 ? '' : 's'}:{' '}
+						{issues.numErrors > 0 && (
+							<span>
+								<b>{issues.numErrors}</b> error{issues.numErrors === 1 ? '' : 's'}
+							</span>
+						)}
+						{issues.numErrors > 0 && issues.numWarnings > 0 && ', '}
+						{issues.numWarnings > 0 && (
+							<span>
+								<b>{issues.numWarnings}</b> warning{issues.numWarnings === 1 ? '' : 's'}
+							</span>
+						)}
+						{(issues.numErrors > 0 || issues.numWarnings > 0) &&
+							(issues.numInfos > 0 || issues.numHints > 0) &&
+							', '}
+						{issues.numInfos > 0 && (
+							<span>
+								<b>{issues.numInfos}</b> info
+							</span>
+						)}
+						{issues.numInfos > 0 && issues.numHints > 0 && ', '}
+						{issues.numHints > 0 && (
+							<span>
+								<b>{issues.numHints}</b> hint{issues.numHints === 1 ? '' : 's'}
+							</span>
+						)}
+						.
+					</span>
+				</div>
+			)}
 			<ul>
 				<li>
 					<b>Format:</b> glTF {info.version}

@@ -25,11 +25,11 @@ Create `public/skills/subscription/` with:
     - `default_scope_preset`:
         ```jsonc
         {
-            "token": "<USDC>",
-            "maxAmount": "5000000", // 5 USDC
-            "period": "weekly",
-            "targets": ["<subscription executor contract>"],
-            "expiry_days": 90
+        	"token": "<USDC>",
+        	"maxAmount": "5000000", // 5 USDC
+        	"period": "weekly",
+        	"targets": ["<subscription executor contract>"],
+        	"expiry_days": 90,
         }
         ```
 2. **`skill.js`** — ESM exporting:

@@ -338,49 +338,100 @@
 		</header>
 
 		<main id="main">
-		<div class="agent-page-hero">
-			<h1 class="agent-page-title" id="page-agent-name">Agent</h1>
-			<p class="agent-page-subtitle" id="page-agent-desc">Embodied. Present. Persistent.</p>
-		</div>
-
-		<div class="agent-page-card-wrap">
-			<div id="agent-home-container" aria-live="polite" aria-busy="true">
-				<div class="loading-placeholder">Loading agent…</div>
+			<div class="agent-page-hero">
+				<h1 class="agent-page-title" id="page-agent-name">Agent</h1>
+				<p class="agent-page-subtitle" id="page-agent-desc">
+					Embodied. Present. Persistent.
+				</p>
 			</div>
-		</div>
 
-		<section class="agent-skills-full" id="agent-skills-section" style="display: none" aria-labelledby="agent-skills-heading">
-			<h2 class="agent-skills-title" id="agent-skills-heading">Skills</h2>
-			<div class="agent-skills-grid" id="agent-skills-grid"></div>
-		</section>
+			<div class="agent-page-card-wrap">
+				<div id="agent-home-container" aria-live="polite" aria-busy="true">
+					<div class="loading-placeholder">Loading agent…</div>
+				</div>
+			</div>
 
-		<section class="agent-embed-hint" id="agent-embed-section" style="display: none" aria-labelledby="agent-embed-heading">
-			<h2 class="agent-embed-label" id="agent-embed-heading">Share &amp; embed</h2>
-			<div class="agent-embed-tabs" role="tablist" aria-label="Embed format">
-				<button class="agent-embed-tab active" data-tab="iframe" role="tab" aria-selected="true" aria-controls="agent-embed-code" id="embed-tab-iframe">iframe</button>
-				<button class="agent-embed-tab" data-tab="link" role="tab" aria-selected="false" aria-controls="agent-embed-code" id="embed-tab-link">link</button>
-				<button class="agent-embed-tab" data-tab="webcomponent" role="tab" aria-selected="false" aria-controls="agent-embed-code" id="embed-tab-webcomponent">&lt;agent-3d&gt;</button>
-			</div>
-			<div class="agent-embed-code-wrap">
-				<div class="agent-embed-code" id="agent-embed-code" role="tabpanel" aria-labelledby="embed-tab-iframe" aria-live="polite"></div>
-				<button class="agent-embed-copy" id="agent-embed-copy" aria-label="Copy embed code">copy</button>
-			</div>
-			<a
-				class="agent-embed-preview-link"
-				id="agent-embed-preview"
-				target="_blank"
-				rel="noopener"
-				>preview embed →</a
+			<section
+				class="agent-skills-full"
+				id="agent-skills-section"
+				style="display: none"
+				aria-labelledby="agent-skills-heading"
 			>
-			<a
-				class="agent-embed-preview-link"
-				id="agent-embed-settings"
-				href=""
-				target="_blank"
-				rel="noopener"
-				>embed settings →</a
+				<h2 class="agent-skills-title" id="agent-skills-heading">Skills</h2>
+				<div class="agent-skills-grid" id="agent-skills-grid"></div>
+			</section>
+
+			<section
+				class="agent-embed-hint"
+				id="agent-embed-section"
+				style="display: none"
+				aria-labelledby="agent-embed-heading"
 			>
-		</section>
+				<h2 class="agent-embed-label" id="agent-embed-heading">Share &amp; embed</h2>
+				<div class="agent-embed-tabs" role="tablist" aria-label="Embed format">
+					<button
+						class="agent-embed-tab active"
+						data-tab="iframe"
+						role="tab"
+						aria-selected="true"
+						aria-controls="agent-embed-code"
+						id="embed-tab-iframe"
+					>
+						iframe
+					</button>
+					<button
+						class="agent-embed-tab"
+						data-tab="link"
+						role="tab"
+						aria-selected="false"
+						aria-controls="agent-embed-code"
+						id="embed-tab-link"
+					>
+						link
+					</button>
+					<button
+						class="agent-embed-tab"
+						data-tab="webcomponent"
+						role="tab"
+						aria-selected="false"
+						aria-controls="agent-embed-code"
+						id="embed-tab-webcomponent"
+					>
+						&lt;agent-3d&gt;
+					</button>
+				</div>
+				<div class="agent-embed-code-wrap">
+					<div
+						class="agent-embed-code"
+						id="agent-embed-code"
+						role="tabpanel"
+						aria-labelledby="embed-tab-iframe"
+						aria-live="polite"
+					></div>
+					<button
+						class="agent-embed-copy"
+						id="agent-embed-copy"
+						aria-label="Copy embed code"
+					>
+						copy
+					</button>
+				</div>
+				<a
+					class="agent-embed-preview-link"
+					id="agent-embed-preview"
+					target="_blank"
+					rel="noopener"
+					>preview embed →</a
+				>
+				<a
+					class="agent-embed-preview-link"
+					id="agent-embed-settings"
+					href=""
+					target="_blank"
+					rel="noopener"
+					>embed settings →</a
+				>
+			</section>
 		</main>
 
 		<script type="module">
@@ -472,9 +523,10 @@
 						e.preventDefault();
 						const arr = Array.from(embedTabs);
 						const i = arr.indexOf(btn);
-						const next = e.key === 'ArrowRight'
-							? arr[(i + 1) % arr.length]
-							: arr[(i - 1 + arr.length) % arr.length];
+						const next =
+							e.key === 'ArrowRight'
+								? arr[(i + 1) % arr.length]
+								: arr[(i - 1 + arr.length) % arr.length];
 						selectTab(next);
 						next.focus();
 					});

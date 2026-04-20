@@ -28,7 +28,12 @@ export default wrap(async (req, res) => {
 
 	const statusParam = url.searchParams.get('status') || 'active';
 	if (!VALID_STATUSES.has(statusParam)) {
-		return error(res, 400, 'validation_error', 'status must be active, revoked, expired, or all');
+		return error(
+			res,
+			400,
+			'validation_error',
+			'status must be active, revoked, expired, or all',
+		);
 	}
 
 	const chainIdParam = url.searchParams.get('chainId');
@@ -37,7 +42,10 @@ export default wrap(async (req, res) => {
 		return error(res, 400, 'validation_error', 'chainId must be a positive integer');
 	}
 
-	const limitParam = Math.min(200, Math.max(1, parseInt(url.searchParams.get('limit') || '50', 10)));
+	const limitParam = Math.min(
+		200,
+		Math.max(1, parseInt(url.searchParams.get('limit') || '50', 10)),
+	);
 	const offset = Math.max(0, parseInt(url.searchParams.get('offset') || '0', 10));
 
 	// agentId-only path: public, no auth required
@@ -79,7 +87,12 @@ export default wrap(async (req, res) => {
 			LIMIT 1
 		`;
 		if (!wallet) {
-			return error(res, 403, 'forbidden', 'delegator address does not belong to your account');
+			return error(
+				res,
+				403,
+				'forbidden',
+				'delegator address does not belong to your account',
+			);
 		}
 	}
 

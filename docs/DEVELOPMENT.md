@@ -23,7 +23,7 @@ Everything you need to know to work on 3D Agent locally.
 
 ```bash
 git clone https://github.com/nirholas/3d-agent.git
-cd 3D
+cd 3D-Agent
 npm install
 ```
 

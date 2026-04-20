@@ -18,7 +18,7 @@
 /** USDC contract addresses indexed by EVM chainId. */
 const USDC_BY_CHAIN = {
 	84532: '0x036CbD53842c5426634e7929541eC2318f3dCF7e', // Base Sepolia
-	8453:  '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', // Base mainnet
+	8453: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', // Base mainnet
 };
 
 const TIP_OPTIONS = [1, 5, 10]; // USDC display amounts
@@ -45,11 +45,11 @@ const USDC_DECIMALS = 6;
  */
 export function buildERC20Transfer(tokenAddr, recipient, amountBaseUnits) {
 	const addr = recipient.replace(/^0x/i, '').toLowerCase().padStart(64, '0');
-	const amt  = BigInt(amountBaseUnits).toString(16).padStart(64, '0');
+	const amt = BigInt(amountBaseUnits).toString(16).padStart(64, '0');
 	return {
-		to:    tokenAddr,
+		to: tokenAddr,
 		value: '0x0',
-		data:  '0xa9059cbb' + addr + amt,
+		data: '0xa9059cbb' + addr + amt,
 	};
 }
 
@@ -63,9 +63,9 @@ export function buildERC20Transfer(tokenAddr, recipient, amountBaseUnits) {
  */
 export async function setup({ agent, host }) {
 	host.attachAction({
-		id:      'tip-jar:tip',
-		label:   'Tip the creator',
-		icon:    '💝',
+		id: 'tip-jar:tip',
+		label: 'Tip the creator',
+		icon: '💝',
 		handler: () => execute({ agent, host, args: {} }),
 	});
 }
@@ -76,7 +76,7 @@ export async function setup({ agent, host }) {
  * @param {{ agent: Object, host: Object, args: Object }} ctx
  */
 export async function execute({ agent, host, args: _args }) {
-	const chainId  = agent.chainId ?? 84532;
+	const chainId = agent.chainId ?? 84532;
 	const usdcAddr = USDC_BY_CHAIN[chainId];
 
 	if (!usdcAddr) {
@@ -103,16 +103,16 @@ export async function execute({ agent, host, args: _args }) {
 	// 3. Execute the delegated transfer
 	try {
 		const result = await redeemFromSkill({
-			agentId:  agent.id,
+			agentId: agent.id,
 			chainId,
-			skillId:  'tip-jar',
-			calls:    [call],
-			mode:     'auto',
+			skillId: 'tip-jar',
+			calls: [call],
+			mode: 'auto',
 		});
 
 		if (!result.ok) {
 			const err = new Error(result.error);
-			err.code  = result.error;
+			err.code = result.error;
 			throw err;
 		}
 
@@ -120,7 +120,6 @@ export async function execute({ agent, host, args: _args }) {
 		host.speak('Thank you for the tip!');
 		_emitTipReceived(agent, amount, result.txHash);
 		_notify(host, `Tip sent! Tx: ${result.txHash}`);
-
 	} catch (err) {
 		const code = err.code ?? err.message;
 
@@ -163,16 +162,16 @@ function _pickAmount() {
 		`;
 		document.body.appendChild(overlay);
 
-		const sendBtn    = overlay.querySelector('.tip-jar-send');
-		const cancelBtn  = overlay.querySelector('.tip-jar-cancel');
+		const sendBtn = overlay.querySelector('.tip-jar-send');
+		const cancelBtn = overlay.querySelector('.tip-jar-cancel');
 		const customInput = overlay.querySelector('.tip-jar-custom');
 		let selected = null;
 
 		const select = (val) => {
 			selected = val;
-			overlay.querySelectorAll('.tip-jar-btn').forEach(
-				(b) => b.classList.toggle('selected', Number(b.dataset.v) === val),
-			);
+			overlay
+				.querySelectorAll('.tip-jar-btn')
+				.forEach((b) => b.classList.toggle('selected', Number(b.dataset.v) === val));
 			sendBtn.disabled = false;
 		};
 
@@ -186,7 +185,9 @@ function _pickAmount() {
 		customInput.addEventListener('input', () => {
 			const val = parseFloat(customInput.value);
 			if (val > 0 && val <= 10) {
-				overlay.querySelectorAll('.tip-jar-btn').forEach((b) => b.classList.remove('selected'));
+				overlay
+					.querySelectorAll('.tip-jar-btn')
+					.forEach((b) => b.classList.remove('selected'));
 				select(val);
 			} else {
 				selected = null;
@@ -194,8 +195,11 @@ function _pickAmount() {
 			}
 		});
 
-		const done = (val) => { document.body.removeChild(overlay); resolve(val); };
-		sendBtn.addEventListener('click',  () => done(selected));
+		const done = (val) => {
+			document.body.removeChild(overlay);
+			resolve(val);
+		};
+		sendBtn.addEventListener('click', () => done(selected));
 		cancelBtn.addEventListener('click', () => done(null));
 	});
 }
@@ -223,19 +227,19 @@ async function _handleNoDelegation({ agent, host, chainId, usdcAddr }) {
 	}
 
 	host.attachAction({
-		id:      'tip-jar:grant',
-		label:   'Grant tipping',
-		icon:    '🔑',
+		id: 'tip-jar:grant',
+		label: 'Grant tipping',
+		icon: '🔑',
 		oneShot: true,
 		handler: () =>
 			openGrantModal({
 				agentId: agent.id,
 				chainId,
 				preset: {
-					token:       usdcAddr,
-					maxAmount:   '10000000',
-					period:      'daily',
-					targets:     [usdcAddr],
+					token: usdcAddr,
+					maxAmount: '10000000',
+					period: 'daily',
+					targets: [usdcAddr],
 					expiry_days: 30,
 				},
 			}),
@@ -250,13 +254,15 @@ function _emitTipReceived(agent, amountUsdc, txHash) {
 		const bus = globalThis.__agentProtocol ?? globalThis.VIEWER?.agent_protocol;
 		if (bus) {
 			bus.emit({
-				type:        'tip.received',
-				payload:     { agentId: agent.id, amountUsdc, txHash },
-				agentId:     agent.id,
+				type: 'tip.received',
+				payload: { agentId: agent.id, amountUsdc, txHash },
+				agentId: agent.id,
 				sourceSkill: 'tip-jar',
 			});
 		}
-	} catch { /* protocol is optional */ }
+	} catch {
+		/* protocol is optional */
+	}
 }
 
 /** Surface a message via host.showMessage if available, otherwise log. */

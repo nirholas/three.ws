@@ -93,7 +93,8 @@ export async function execute({ agent, host, args = {} }) {
 	}
 
 	const cfg = CHAIN_CONFIG[chain_id];
-	if (!cfg) return { ok: false, code: 'unsupported_chain', message: `Chain ${chain_id} not supported` };
+	if (!cfg)
+		return { ok: false, code: 'unsupported_chain', message: `Chain ${chain_id} not supported` };
 
 	const tokenOutAddress = cfg.tokens[token_out];
 	if (!tokenOutAddress) {
@@ -108,9 +109,7 @@ export async function execute({ agent, host, args = {} }) {
 	const slippage = Math.min(500, Math.max(10, Number(slippage_bps)));
 
 	// Convert USDC amount to 6-decimal wei
-	const amountPerExecution = String(
-		Math.round(parseFloat(amount_usdc) * 10 ** USDC_DECIMALS),
-	);
+	const amountPerExecution = String(Math.round(parseFloat(amount_usdc) * 10 ** USDC_DECIMALS));
 
 	const periodSeconds = frequency === 'weekly' ? 7 * 86400 : 86400;
 

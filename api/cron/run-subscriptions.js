@@ -27,10 +27,7 @@ const USDC_BY_CHAIN = {
 
 // Max time we'll wait for the skill's onPeriod (which fetches the relayer).
 // Override via SUBSCRIPTION_CHARGE_TIMEOUT_MS.
-const ONPERIOD_TIMEOUT_MS = parseInt(
-	process.env.SUBSCRIPTION_CHARGE_TIMEOUT_MS ?? '30000',
-	10,
-);
+const ONPERIOD_TIMEOUT_MS = parseInt(process.env.SUBSCRIPTION_CHARGE_TIMEOUT_MS ?? '30000', 10);
 
 // Structured log helper — single-line JSON so Vercel log drains can parse it.
 function log(event, fields = {}) {
@@ -222,7 +219,8 @@ export default wrap(async (req, res) => {
 					'onPeriod',
 				);
 			} catch (err) {
-				const reason = (err.code === 'timeout' ? 'timeout: ' : '') + (err.message ?? 'unknown');
+				const reason =
+					(err.code === 'timeout' ? 'timeout: ' : '') + (err.message ?? 'unknown');
 				await _safePause(row.id, reason, ctx);
 				report.paused++;
 				report.errors.push({ id: row.id, reason });
@@ -256,7 +254,11 @@ export default wrap(async (req, res) => {
 						message: err.message,
 						txHash: result.txHash,
 					});
-					report.errors.push({ id: row.id, reason: 'advance_failed', message: err.message });
+					report.errors.push({
+						id: row.id,
+						reason: 'advance_failed',
+						message: err.message,
+					});
 					continue;
 				}
 

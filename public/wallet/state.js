@@ -28,13 +28,19 @@ export function reduce(state, action) {
 		case 'HAS_PROVIDER':
 			return { ...state, status: STATES.REQUESTING_ACCOUNTS };
 		case 'ACCOUNTS_RESOLVED':
-			return { ...state, status: STATES.CONNECTED, address: action.address, chainId: action.chainId };
+			return {
+				...state,
+				status: STATES.CONNECTED,
+				address: action.address,
+				chainId: action.chainId,
+			};
 		case 'WRONG_CHAIN':
 			return { ...state, status: STATES.WRONG_CHAIN };
 		case 'CHAIN_OK':
 			return { ...state, status: STATES.CONNECTED };
 		case 'SIGN':
-			if (state.status !== STATES.CONNECTED && state.status !== STATES.WRONG_CHAIN) return state;
+			if (state.status !== STATES.CONNECTED && state.status !== STATES.WRONG_CHAIN)
+				return state;
 			return { ...state, status: STATES.SIGNING };
 		case 'SIGNATURE_OBTAINED':
 			return { ...state, status: STATES.VERIFYING };
@@ -46,7 +52,12 @@ export function reduce(state, action) {
 			return initialState();
 		case 'ACCOUNTS_CHANGED':
 			if (!action.accounts || action.accounts.length === 0) return initialState();
-			return { ...state, address: action.accounts[0], chainId: state.chainId, status: STATES.CONNECTED };
+			return {
+				...state,
+				address: action.accounts[0],
+				chainId: state.chainId,
+				status: STATES.CONNECTED,
+			};
 		case 'CHAIN_CHANGED':
 			return { ...state, chainId: action.chainId };
 		default:

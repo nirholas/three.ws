@@ -17,7 +17,7 @@ export const WIDGET_TYPES = {
 	'animation-gallery': {
 		label: 'Animation Gallery',
 		desc: 'Click through every clip on a rigged avatar.',
-		status: 'pending',
+		status: 'ready',
 		icon: '▶',
 	},
 	'talking-agent': {

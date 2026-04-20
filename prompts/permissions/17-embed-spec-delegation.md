@@ -26,12 +26,14 @@ Append a new section to `specs/EMBED_SPEC.md` titled **Delegations (optional, v0
         - `relayer` — embed may call `/api/permissions/redeem` with a bearer token the host has provisioned
     - `permissions-bearer` — when `permissions="relayer"`, the bearer token scoped to `permissions:redeem` (per task 09). Opaque string, host is responsible for rotation.
 3. **Host → embed messages** (post-message protocol):
+
     - `permissions.query` (host→embed): request a list of active delegations matching a filter
     - `permissions.redeem` (host→embed): ask the embed to initiate a redemption on the host's behalf
     - `permissions.redeemed` (embed→host): announce a successful redemption with tx hash
     - `permissions.error` (embed→host): announce a failed redemption with code + message
 
     Shapes documented inline, copy the error codes verbatim from the canonical shapes.
+
 4. **Claude artifact profile**:
     - Default `permissions="readonly"`. Claude artifacts can render tipping UIs and show status, but a skill that needs to actually transact must request `permissions="relayer"` and the agent owner must provision a bearer token at embed time.
     - Document that the artifact has no persistent wallet connection — `interactive` is not supported in the Claude profile.

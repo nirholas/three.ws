@@ -160,7 +160,10 @@ describe('validateEmbedPolicy', () => {
 
 	it('rejects more than 100 hosts', () => {
 		const policy = {
-			origins: { mode: 'allowlist', hosts: Array.from({ length: 101 }, (_, i) => `host${i}.com`) },
+			origins: {
+				mode: 'allowlist',
+				hosts: Array.from({ length: 101 }, (_, i) => `host${i}.com`),
+			},
 			surfaces: { script: true, iframe: true, widget: true, mcp: false },
 			brain: {
 				mode: 'we-pay',

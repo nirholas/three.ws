@@ -46,9 +46,7 @@ const { default: handler } = await import('../../api/agents.js');
 // ── Test helpers ──────────────────────────────────────────────────────────
 
 function makeReq({ method = 'GET', url = '/api/agents', headers = {}, body = null } = {}) {
-	const base = body
-		? Readable.from([Buffer.from(JSON.stringify(body))])
-		: Readable.from([]);
+	const base = body ? Readable.from([Buffer.from(JSON.stringify(body))]) : Readable.from([]);
 	base.method = method;
 	base.url = url;
 	base.headers = {

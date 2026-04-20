@@ -16,8 +16,7 @@ import {
 } from '../../src/erc7710/abi.js';
 import { isDelegationValid, PermissionError } from '../../src/permissions/toolkit.js';
 
-const ROOT_AUTHORITY =
-	'0x0000000000000000000000000000000000000000000000000000000000000000';
+const ROOT_AUTHORITY = '0x0000000000000000000000000000000000000000000000000000000000000000';
 
 const hexAddr = z.string().regex(/^0x[0-9a-fA-F]{40}$/, 'must be a 20-byte hex address');
 const hexBytes = z.string().regex(/^0x([0-9a-fA-F]{2})*$/, 'must be 0x-prefixed hex bytes');
@@ -35,7 +34,9 @@ const delegationSchema = z.object({
 	authority: hexBytes32.optional(),
 	caveats: z.array(caveatSchema).default([]),
 	salt: z.union([
-		z.string().regex(/^(0x[0-9a-fA-F]+|\d+)$/, 'salt must be a decimal or 0x-prefixed hex integer'),
+		z
+			.string()
+			.regex(/^(0x[0-9a-fA-F]+|\d+)$/, 'salt must be a decimal or 0x-prefixed hex integer'),
 		z.number().int().nonnegative(),
 	]),
 	signature: hexBytes,
@@ -99,7 +100,12 @@ export default wrap(async (req, res) => {
 		limit 1
 	`;
 	if (!linkedWallet) {
-		return error(res, 409, 'wallet_not_linked', 'delegation.delegator is not linked to your account');
+		return error(
+			res,
+			409,
+			'wallet_not_linked',
+			'delegation.delegator is not linked to your account',
+		);
 	}
 
 	// Signature verification — two steps:
@@ -125,7 +131,12 @@ export default wrap(async (req, res) => {
 		derivedHash = ethers.TypedDataEncoder.hash(eip712Domain, DELEGATION_TYPES, structValue);
 
 		if (derivedHash.toLowerCase() !== delegation.hash.toLowerCase()) {
-			return error(res, 400, 'hash_mismatch', 'delegation.hash does not match the delegation fields');
+			return error(
+				res,
+				400,
+				'hash_mismatch',
+				'delegation.hash does not match the delegation fields',
+			);
 		}
 
 		const recovered = ethers.verifyTypedData(
@@ -135,7 +146,12 @@ export default wrap(async (req, res) => {
 			delegation.signature,
 		);
 		if (recovered.toLowerCase() !== delegatorLower) {
-			return error(res, 400, 'signature_invalid', 'signature does not match delegation.delegator');
+			return error(
+				res,
+				400,
+				'signature_invalid',
+				'signature does not match delegation.delegator',
+			);
 		}
 	} catch (err) {
 		if (err instanceof PermissionError) {
@@ -154,13 +170,23 @@ export default wrap(async (req, res) => {
 		},
 	);
 	if (!validity.valid) {
-		return error(res, 400, validity.reason || 'signature_invalid', 'delegation is not valid on-chain');
+		return error(
+			res,
+			400,
+			validity.reason || 'signature_invalid',
+			'delegation is not valid on-chain',
+		);
 	}
 
 	// Scope sanity checks
 	const nowSec = Math.floor(Date.now() / 1000);
 	if (scope.expiry <= nowSec + 60) {
-		return error(res, 400, 'validation_error', 'scope.expiry must be at least 60 seconds in the future');
+		return error(
+			res,
+			400,
+			'validation_error',
+			'scope.expiry must be at least 60 seconds in the future',
+		);
 	}
 	if (scope.expiry > nowSec + 365 * 24 * 3600) {
 		return error(res, 400, 'validation_error', 'scope.expiry must be within 365 days');

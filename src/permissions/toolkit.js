@@ -7,7 +7,14 @@
  * 5 MB threshold (@metamask/delegation-abis alone is 6.2 MB unpacked).
  */
 
-import { AbiCoder, Contract, getAddress, JsonRpcProvider, randomBytes, TypedDataEncoder } from 'ethers';
+import {
+	AbiCoder,
+	Contract,
+	getAddress,
+	JsonRpcProvider,
+	randomBytes,
+	TypedDataEncoder,
+} from 'ethers';
 import {
 	CAVEAT_ENFORCERS,
 	DELEGATION_MANAGER_ABI,
@@ -60,7 +67,11 @@ function checksum(addr, label) {
  */
 function managerAddress(chainId) {
 	const addr = DELEGATION_MANAGER_DEPLOYMENTS[chainId];
-	if (!addr) throw new PermissionError('chain_not_supported', `No DelegationManager deployment for chain ${chainId}`);
+	if (!addr)
+		throw new PermissionError(
+			'chain_not_supported',
+			`No DelegationManager deployment for chain ${chainId}`,
+		);
 	return addr;
 }
 
@@ -130,7 +141,7 @@ const SINGLE_DEFAULT_MODE = '0x0100000000000000000000000000000000000000000000000
  */
 export function encodeScopedDelegation({ delegator, delegate, caveats, expiry, chainId }) {
 	const delegatorAddr = checksum(delegator, 'delegator');
-	const delegateAddr  = checksum(delegate,  'delegate');
+	const delegateAddr = checksum(delegate, 'delegate');
 
 	if (delegateAddr === delegatorAddr) {
 		throw new PermissionError('signature_invalid', 'delegate must differ from delegator');
@@ -139,25 +150,28 @@ export function encodeScopedDelegation({ delegator, delegate, caveats, expiry, c
 		throw new PermissionError('signature_invalid', 'at least one caveat is required');
 	}
 	if (expiry <= Math.floor(Date.now() / 1000) + 60) {
-		throw new PermissionError('delegation_expired', 'expiry must be at least 60 seconds in the future');
+		throw new PermissionError(
+			'delegation_expired',
+			'expiry must be at least 60 seconds in the future',
+		);
 	}
 
 	managerAddress(chainId); // throws chain_not_supported if unknown
 
 	const normalizedCaveats = caveats.map((c, i) => ({
 		enforcer: checksum(c.enforcer, `caveats[${i}].enforcer`),
-		terms:    c.terms ?? '0x',
-		args:     c.args  ?? '0x',
+		terms: c.terms ?? '0x',
+		args: c.args ?? '0x',
 	}));
 
 	// Cryptographically random 32-byte salt to prevent replay.
 	const salt = BigInt('0x' + Buffer.from(randomBytes(32)).toString('hex'));
 
 	return {
-		delegate:  delegateAddr,
+		delegate: delegateAddr,
 		delegator: delegatorAddr,
 		authority: ROOT_AUTHORITY,
-		caveats:   normalizedCaveats,
+		caveats: normalizedCaveats,
 		salt,
 		expiry,
 		chainId,
@@ -188,11 +202,11 @@ export async function signDelegation(delegation, signer) {
 	const domain = EIP712_DOMAIN({ chainId: delegation.chainId, verifyingContract });
 
 	const typedValue = {
-		delegate:  delegation.delegate,
+		delegate: delegation.delegate,
 		delegator: delegation.delegator,
 		authority: delegation.authority ?? ROOT_AUTHORITY,
-		caveats:   delegation.caveats,
-		salt:      delegation.salt ?? 0n,
+		caveats: delegation.caveats,
+		salt: delegation.salt ?? 0n,
 	};
 
 	let signature;
@@ -223,19 +237,21 @@ export async function signDelegation(delegation, signer) {
  */
 export async function redeemDelegation({ delegation, calls, signer, chainId }) {
 	if (!signer) throw new PermissionError('signature_invalid', 'signer is required');
-	if (!signer.provider) throw new PermissionError('chain_not_supported', 'signer has no provider attached');
+	if (!signer.provider)
+		throw new PermissionError('chain_not_supported', 'signer has no provider attached');
 
 	const addr = managerAddress(chainId);
 
 	// Pre-flight: check delegation is not disabled on-chain.
 	const dmRead = new Contract(addr, DELEGATION_MANAGER_ABI, signer.provider);
 	const disabled = await dmRead.disabledDelegations(delegation.hash);
-	if (disabled) throw new PermissionError('delegation_revoked', 'delegation has been revoked on-chain');
+	if (disabled)
+		throw new PermissionError('delegation_revoked', 'delegation has been revoked on-chain');
 
 	// Build permissionContexts: one entry per call, each wrapping the same delegation chain.
 	const permissionContext = encodePermissionContext([delegation]);
 	const permissionContexts = calls.map(() => permissionContext);
-	const modes             = calls.map(() => SINGLE_DEFAULT_MODE);
+	const modes = calls.map(() => SINGLE_DEFAULT_MODE);
 	const executionCallDatas = calls.map((c) =>
 		encodeSingleExecution(checksum(c.to, 'calls[].to'), c.value ?? 0n, c.data ?? '0x'),
 	);
@@ -247,9 +263,9 @@ export async function redeemDelegation({ delegation, calls, signer, chainId }) {
 	return {
 		txHash: tx.hash,
 		receipt: {
-			status:      receipt.status,
+			status: receipt.status,
 			blockNumber: receipt.blockNumber,
-			gasUsed:     receipt.gasUsed.toString(),
+			gasUsed: receipt.gasUsed.toString(),
 		},
 	};
 }
@@ -270,7 +286,8 @@ export async function redeemDelegation({ delegation, calls, signer, chainId }) {
 export async function isDelegationValid({ hash, chainId, rpcUrl, delegation }) {
 	const addr = managerAddress(chainId); // throws if unsupported
 
-	const url = rpcUrl ?? (typeof process !== 'undefined' ? process.env[`RPC_URL_${chainId}`] : undefined);
+	const url =
+		rpcUrl ?? (typeof process !== 'undefined' ? process.env[`RPC_URL_${chainId}`] : undefined);
 	if (!url) return { valid: false, reason: 'no rpcUrl provided for on-chain check' };
 
 	try {
@@ -292,13 +309,18 @@ export async function isDelegationValid({ hash, chainId, rpcUrl, delegation }) {
 			const verifyingContract = addr;
 			const domain = EIP712_DOMAIN({ chainId, verifyingContract });
 			const typedValue = {
-				delegate:  delegation.delegate,
+				delegate: delegation.delegate,
 				delegator: delegation.delegator,
 				authority: delegation.authority ?? ROOT_AUTHORITY,
-				caveats:   delegation.caveats,
-				salt:      delegation.salt,
+				caveats: delegation.caveats,
+				salt: delegation.salt,
 			};
-			const recovered = TypedDataEncoder.recoverAddress(domain, DELEGATION_TYPES, typedValue, delegation.signature);
+			const recovered = TypedDataEncoder.recoverAddress(
+				domain,
+				DELEGATION_TYPES,
+				typedValue,
+				delegation.signature,
+			);
 			if (recovered.toLowerCase() !== delegation.delegator.toLowerCase()) {
 				return { valid: false, reason: 'signature_invalid' };
 			}
@@ -341,11 +363,11 @@ export function delegationToManifestEntry(signedDelegation) {
 		hash,
 		...(uri ? { uri } : {}),
 		scope: scope ?? {
-			token:     'native',
+			token: 'native',
 			maxAmount: '0',
-			period:    'once',
-			targets:   [],
-			expiry:    expiry ?? 0,
+			period: 'once',
+			targets: [],
+			expiry: expiry ?? 0,
 		},
 	};
 }
