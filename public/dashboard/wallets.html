@@ -215,6 +215,7 @@
 					location.href = '/login?next=' + encodeURIComponent(location.pathname);
 					return null;
 				}
+				document.body.removeAttribute('data-auth-pending');
 				return res.json();
 			}
 
