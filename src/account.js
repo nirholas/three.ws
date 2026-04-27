@@ -126,7 +126,7 @@ export async function saveRemoteGlbToAccount(source, meta = {}) {
 		size_bytes: size,
 		content_type: contentType,
 		checksum_sha256: checksum,
-		name: meta.name || `Avatar ${new Date().toLocaleString()}`,
+		name: meta.name || deriveAvatarName(source, checksum),
 		description: meta.description,
 		visibility: meta.visibility || 'private',
 		tags: meta.tags || [],
@@ -157,4 +157,21 @@ async function sha256Hex(blob) {
 	const buf = await blob.arrayBuffer();
 	const hash = await crypto.subtle.digest('SHA-256', buf);
 	return Array.from(new Uint8Array(hash), (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+function deriveAvatarName(source, checksum) {
+	if (source && typeof source === 'object' && typeof source.name === 'string') {
+		const base = source.name.replace(/\.(glb|gltf)$/i, '').trim();
+		if (base) return base.slice(0, 80);
+	}
+	if (typeof source === 'string') {
+		try {
+			const file = new URL(source).pathname.split('/').pop() || '';
+			const base = file.replace(/\.(glb|gltf)$/i, '').trim();
+			if (base) return base.slice(0, 80);
+		} catch {
+			/* ignore non-URL strings */
+		}
+	}
+	return `Avatar #${checksum.slice(0, 6)}`;
 }

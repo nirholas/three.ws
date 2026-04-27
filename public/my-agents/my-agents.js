@@ -1,5 +1,5 @@
 /**
- * On-chain agent discovery page logic.
+ * /my-agents — personal on-chain agent page.
  * Fetches agents owned by the signed-in user's linked wallets and renders them
  * as importable cards.
  */
@@ -59,20 +59,20 @@ async function getSession() {
 
 // ── Rendering helpers ─────────────────────────────────────────────────────────
 
-const grid = /** @type {HTMLElement} */ (document.getElementById('discover-grid'));
-const errorBanner = /** @type {HTMLElement} */ (document.getElementById('discover-error'));
+const grid = /** @type {HTMLElement} */ (document.getElementById('my-agents-grid'));
+const errorBanner = /** @type {HTMLElement} */ (document.getElementById('my-agents-error'));
 
 /** Show N skeleton cards in the grid. */
 function showSkeletons(n = 6) {
 	grid.innerHTML = Array.from(
 		{ length: n },
 		() => `
-		<div class="discover-skeleton" aria-hidden="true">
-			<div class="discover-skeleton__thumb"></div>
-			<div class="discover-skeleton__body">
-				<div class="discover-skeleton__line"></div>
-				<div class="discover-skeleton__line discover-skeleton__line--short"></div>
-				<div class="discover-skeleton__line discover-skeleton__line--btn"></div>
+		<div class="my-agents-skeleton" aria-hidden="true">
+			<div class="my-agents-skeleton__thumb"></div>
+			<div class="my-agents-skeleton__body">
+				<div class="my-agents-skeleton__line"></div>
+				<div class="my-agents-skeleton__line my-agents-skeleton__line--short"></div>
+				<div class="my-agents-skeleton__line my-agents-skeleton__line--btn"></div>
 			</div>
 		</div>`,
 	).join('');
@@ -87,11 +87,11 @@ function showSkeletons(n = 6) {
  */
 function showState(icon, title, msg, cta = null, secondary = null) {
 	grid.innerHTML = `
-		<div class="discover-state" style="grid-column: 1 / -1" role="status">
-			<div class="discover-state__icon" aria-hidden="true">${icon}</div>
-			<p class="discover-state__title">${escapeHtml(title)}</p>
-			<p class="discover-state__msg">${escapeHtml(msg)}</p>
-			${cta ? `<a class="discover-btn" style="display:inline-block;width:auto;padding:9px 22px" href="${escapeHtml(cta.href)}">${escapeHtml(cta.label)}</a>` : ''}
+		<div class="my-agents-state" style="grid-column: 1 / -1" role="status">
+			<div class="my-agents-state__icon" aria-hidden="true">${icon}</div>
+			<p class="my-agents-state__title">${escapeHtml(title)}</p>
+			<p class="my-agents-state__msg">${escapeHtml(msg)}</p>
+			${cta ? `<a class="my-agents-btn" style="display:inline-block;width:auto;padding:9px 22px" href="${escapeHtml(cta.href)}">${escapeHtml(cta.label)}</a>` : ''}
 			${secondary ? `<div><a class="my-agents-secondary" href="${escapeHtml(secondary.href)}">${escapeHtml(secondary.label)}</a></div>` : ''}
 		</div>`;
 }
@@ -103,12 +103,12 @@ function showState(icon, title, msg, cta = null, secondary = null) {
 function showErrorBanner(msg, retry = true) {
 	const showRetry = retry !== false;
 	errorBanner.innerHTML = `
-		<span class="discover-error-banner__msg">${escapeHtml(msg)}</span>
-		${showRetry ? `<button class="discover-btn discover-btn--sec" id="discover-retry" style="width:auto;padding:7px 14px;font-size:12px" aria-label="Retry loading agents">Retry</button>` : ''}`;
+		<span class="my-agents-error-banner__msg">${escapeHtml(msg)}</span>
+		${showRetry ? `<button class="my-agents-btn my-agents-btn--sec" id="my-agents-retry" style="width:auto;padding:7px 14px;font-size:12px" aria-label="Retry loading agents">Retry</button>` : ''}`;
 	errorBanner.hidden = false;
 	if (showRetry) {
 		const handler = typeof retry === 'function' ? retry : () => loadAgents();
-		document.getElementById('discover-retry')?.addEventListener('click', () => {
+		document.getElementById('my-agents-retry')?.addEventListener('click', () => {
 			errorBanner.hidden = true;
 			grid.innerHTML = '';
 			handler();
@@ -123,7 +123,7 @@ function showErrorBanner(msg, retry = true) {
  */
 function buildCard(agent) {
 	const card = document.createElement('article');
-	card.className = 'discover-card';
+	card.className = 'my-agents-card';
 	card.setAttribute('aria-label', `Agent: ${agent.name}`);
 
 	const thumbSrc = agent.glbUrl || agent.image;
@@ -132,19 +132,19 @@ function buildCard(agent) {
 		: `<span aria-hidden="true">🤖</span>`;
 
 	card.innerHTML = `
-		<div class="discover-card__thumb">${thumbHtml}</div>
-		<div class="discover-card__body">
-			<h2 class="discover-card__name" title="${escapeHtml(agent.name)}">${escapeHtml(agent.name)}</h2>
-			<div class="discover-card__row">
-				<span class="discover-card__chain-pill" title="Chain ID ${escapeHtml(String(agent.chainId))}">${escapeHtml(chainName(agent.chainId))}</span>
+		<div class="my-agents-card__thumb">${thumbHtml}</div>
+		<div class="my-agents-card__body">
+			<h2 class="my-agents-card__name" title="${escapeHtml(agent.name)}">${escapeHtml(agent.name)}</h2>
+			<div class="my-agents-card__row">
+				<span class="my-agents-card__chain-pill" title="Chain ID ${escapeHtml(String(agent.chainId))}">${escapeHtml(chainName(agent.chainId))}</span>
 			</div>
-			${agent.description ? `<p class="discover-card__desc">${escapeHtml(agent.description)}</p>` : ''}
+			${agent.description ? `<p class="my-agents-card__desc">${escapeHtml(agent.description)}</p>` : ''}
 		</div>
-		<div class="discover-card__footer">
-			<div class="discover-card__action-wrap"></div>
+		<div class="my-agents-card__footer">
+			<div class="my-agents-card__action-wrap"></div>
 		</div>`;
 
-	const wrap = /** @type {HTMLElement} */ (card.querySelector('.discover-card__action-wrap'));
+	const wrap = /** @type {HTMLElement} */ (card.querySelector('.my-agents-card__action-wrap'));
 	_renderCardAction(wrap, agent);
 	return card;
 }
@@ -158,13 +158,13 @@ function _renderCardAction(wrap, agent, importedId = null) {
 	if (agent.alreadyImported || importedId) {
 		const id = importedId || '';
 		wrap.innerHTML = `
-			<button class="discover-btn discover-btn--done" disabled aria-label="Agent already in library">Already in library</button>
-			${id ? `<a class="discover-card__agent-link" href="/agent/${escapeHtml(id)}">Open agent →</a>` : ''}`;
+			<button class="my-agents-btn my-agents-btn--done" disabled aria-label="Agent already in library">Already in library</button>
+			${id ? `<a class="my-agents-card__agent-link" href="/agent/${escapeHtml(id)}">Open agent →</a>` : ''}`;
 		return;
 	}
 
 	const btn = document.createElement('button');
-	btn.className = 'discover-btn';
+	btn.className = 'my-agents-btn';
 	btn.textContent = 'Import';
 	btn.setAttribute('aria-label', `Import ${agent.name}`);
 	btn.addEventListener('click', () => _handleImport(btn, wrap, agent));
@@ -181,7 +181,7 @@ async function _handleImport(btn, wrap, agent) {
 	btn.textContent = 'Importing…';
 
 	// Clear any previous inline error
-	const prev = wrap.querySelector('.discover-card__inline-err');
+	const prev = wrap.querySelector('.my-agents-card__inline-err');
 	if (prev) prev.remove();
 
 	try {
@@ -192,7 +192,7 @@ async function _handleImport(btn, wrap, agent) {
 		btn.disabled = false;
 		btn.textContent = 'Import';
 		const errEl = document.createElement('span');
-		errEl.className = 'discover-card__inline-err';
+		errEl.className = 'my-agents-card__inline-err';
 		errEl.textContent = err.message || 'Import failed';
 		errEl.setAttribute('role', 'alert');
 		wrap.appendChild(errEl);

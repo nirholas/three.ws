@@ -12,6 +12,7 @@
 import { sql } from '../_lib/db.js';
 import { env } from '../_lib/env.js';
 import { cors, wrap } from '../_lib/http.js';
+import { isDemoWidgetId, getDemoWidget } from './_demo-fixtures.js';
 
 // ── inline embed-policy helpers (prompt 02 / api/_lib/embed-policy.js not yet shipped) ──
 
@@ -123,6 +124,18 @@ export default wrap(async (req, res) => {
 });
 
 async function loadWidget(id) {
+	if (isDemoWidgetId(id)) {
+		const demo = getDemoWidget(id);
+		if (!demo) return null;
+		return {
+			id: demo.id,
+			name: demo.name,
+			type: demo.type,
+			avatar_id: null,
+			agent_id: null,
+			is_public: true,
+		};
+	}
 	try {
 		const [row] = await sql`
 			select id, name, type, avatar_id, agent_id, is_public

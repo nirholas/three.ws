@@ -1,9 +1,19 @@
 {
-	"type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
+	"type": [
+		"https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
+		"https://3dagent.vercel.app/specs/3d-agent-card-v1"
+	],
 	"name": "3D Agent",
 	"description": "AI-powered 3D model viewer and validation agent. Drag and drop glTF, GLB, and 3D files to preview instantly in your browser. Supports real-time rendering, model validation, environment maps, and animation playback via Three.js and WebGL.",
 	"image": "https://3dagent.vercel.app/og-image.png",
 	"active": true,
+	"model": {
+		"uri": "https://3dagent.vercel.app/avatars/cz.glb",
+		"format": "gltf-binary",
+		"sha256": "e81d3b9d6bd2e5e2e97effd270b12bc608063e0340ab9df053a23a84e7c6f36b",
+		"sizeBytes": 2195336,
+		"license": "CC-BY-4.0"
+	},
 	"services": [
 		{
 			"name": "web",

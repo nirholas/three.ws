@@ -192,6 +192,65 @@
 			.card .actions .danger:hover {
 				background: rgba(204, 64, 64, 0.18);
 			}
+			.card h3 {
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+			.card .meta {
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+			.card .tag {
+				max-width: 100%;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+			.card .confirm {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				flex-wrap: wrap;
+				margin-top: 8px;
+				padding: 8px 10px;
+				background: rgba(204, 64, 64, 0.08);
+				border: 1px solid rgba(204, 64, 64, 0.3);
+				border-radius: 8px;
+				font-size: 12px;
+				color: #ffb3b3;
+			}
+			.card .confirm .grow {
+				flex: 1;
+				min-width: 120px;
+			}
+			.card .confirm .btn {
+				padding: 5px 10px;
+				font-size: 12px;
+			}
+			.load-more {
+				grid-column: 1 / -1;
+				display: flex;
+				justify-content: center;
+				padding: 14px 0;
+			}
+			.load-more button {
+				padding: 9px 18px;
+				border-radius: 9px;
+				border: 1px solid var(--border);
+				background: #1a1a24;
+				color: #ddd;
+				font-size: 13px;
+				cursor: pointer;
+			}
+			.load-more button:hover:not(:disabled) {
+				background: #22222e;
+			}
+			.load-more button:disabled {
+				opacity: 0.6;
+				cursor: default;
+			}
 			.row {
 				display: flex;
 				align-items: center;
@@ -882,6 +941,20 @@
 				color: #ffb3b3;
 				font-size: 12px;
 				min-height: 16px;
+			}
+			.preview-stage {
+				width: 100%;
+				aspect-ratio: 1 / 1;
+				background: #0f0f17;
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				overflow: hidden;
+				display: grid;
+				place-items: center;
+			}
+			.preview-stage agent-3d {
+				width: 100%;
+				height: 100%;
 			}
 
 			/* visually-hidden utility for screen-reader-only labels */

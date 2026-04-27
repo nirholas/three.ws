@@ -184,8 +184,7 @@ async function loadPage() {
 		els.loadMore.hidden = !state.cursor;
 
 		if (els.grid.children.length === 0) {
-			const filtersActive =
-				state.filter !== 'all' || !!state.chainId || !!state.query;
+			const filtersActive = state.filter !== 'all' || !!state.chainId || !!state.query;
 			els.status.innerHTML = filtersActive
 				? `<div class="explore-empty">
 						No agents match these filters yet.
