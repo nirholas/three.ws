@@ -127,35 +127,13 @@ function retargetClip(clip, avaturnBones) {
 }
 
 /**
- * Build a minimal scene containing only the bone hierarchy from a reference
- * skinned model. Skips meshes/textures so each exported clip GLB stays small
- * (~bone count × keyframes) instead of carrying a copy of the avatar mesh.
+ * Serialize a retargeted clip as three.js native JSON. Loaded at runtime with
+ * AnimationClip.parse — no FBXLoader, no GLTFLoader, no retargeting needed in
+ * the browser. ~5–10× smaller than the equivalent GLB and round-trips losslessly.
  */
-async function buildBonesOnlyScene(referenceScene) {
-	const { Scene } = await import('three');
-	const scene = new Scene();
-	scene.name = 'AnimationRig';
-	// Find the root bone (first bone with no bone parent) and clone the bone tree.
-	let rootBone = null;
-	referenceScene.traverse((n) => {
-		if (n.isBone && !rootBone && (!n.parent || !n.parent.isBone)) rootBone = n;
-	});
-	if (!rootBone) throw new Error('reference scene has no bones');
-	scene.add(rootBone.clone(true));
-	return scene;
-}
-
-async function exportClipAsGLB(clip, bonesScene) {
-	const { GLTFExporter } = await import('three/examples/jsm/exporters/GLTFExporter.js');
-	const exporter = new GLTFExporter();
-	return new Promise((resolve, reject) => {
-		exporter.parse(
-			bonesScene,
-			(arrayBuffer) => resolve(Buffer.from(arrayBuffer)),
-			(err) => reject(err),
-			{ binary: true, animations: [clip], onlyVisible: false },
-		);
-	});
+async function serializeClip(clip) {
+	const { AnimationClip } = await import('three');
+	return AnimationClip.toJSON(clip);
 }
 
 async function main() {
@@ -167,8 +145,6 @@ async function main() {
 	const reference = await loadGLB(REFERENCE_GLB);
 	const avaturnBones = collectBoneNames(reference.scene);
 	console.log(`[animations] reference rig has ${avaturnBones.size} bones`);
-
-	const bonesScene = await buildBonesOnlyScene(reference.scene);
 
 	const manifest = [];
 	let okCount = 0;
@@ -199,9 +175,10 @@ async function main() {
 				continue;
 			}
 			clip.name = def.name;
-			const glbBytes = await exportClipAsGLB(clip, bonesScene);
-			const outName = `${def.name}.glb`;
-			writeFileSync(resolve(OUT_DIR, outName), glbBytes);
+			const json = await serializeClip(clip);
+			const outName = `${def.name}.json`;
+			const text = JSON.stringify(json);
+			writeFileSync(resolve(OUT_DIR, outName), text);
 			manifest.push({
 				name: def.name,
 				url: `/animations/clips/${outName}`,
@@ -212,7 +189,7 @@ async function main() {
 			okCount++;
 			const droppedNote = dropped.length ? ` (dropped ${dropped.length} unknown bones)` : '';
 			console.log(
-				`[animations] OK   ${def.name.padEnd(12)} ${matched}/${total} tracks, ${(glbBytes.length / 1024).toFixed(0)}kB${droppedNote}`,
+				`[animations] OK   ${def.name.padEnd(12)} ${matched}/${total} tracks, ${(text.length / 1024).toFixed(0)}kB${droppedNote}`,
 			);
 		} catch (err) {
 			console.warn(`[animations] FAIL ${def.name}: ${err.message}`);

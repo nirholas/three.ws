@@ -60,9 +60,7 @@ export default wrap(async (req, res) => {
 		description: row.description || '',
 		image: '',
 		tags: Array.isArray(row.meta?.tags) ? row.meta.tags : [],
-		body: bodyUri
-			? { uri: bodyUri, format: row.content_type || 'gltf-binary' }
-			: undefined,
+		body: bodyUri ? { uri: bodyUri, format: row.content_type || 'gltf-binary' } : undefined,
 		skills: Array.isArray(row.skills) ? row.skills : [],
 		homeUrl: `${origin}/agent/${row.id}`,
 		// Surface registrations array so consumers can find every chain this

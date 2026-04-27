@@ -42,11 +42,7 @@
 	position: fixed;
 	inset: 0 0 auto 0;
 	z-index: 50;
-	background: linear-gradient(
-		to bottom,
-		rgba(6, 7, 11, 0.85) 0%,
-		rgba(6, 7, 11, 0) 100%
-	);
+	background: linear-gradient(to bottom, rgba(6, 7, 11, 0.85) 0%, rgba(6, 7, 11, 0) 100%);
 	backdrop-filter: blur(8px);
 	-webkit-backdrop-filter: blur(8px);
 }
@@ -117,46 +113,22 @@
 
 .layer-bg--nebula {
 	background:
-		radial-gradient(
-			ellipse at 20% 30%,
-			rgba(255, 215, 106, 0.12) 0%,
-			transparent 55%
-		),
-		radial-gradient(
-			ellipse at 80% 70%,
-			rgba(103, 232, 249, 0.1) 0%,
-			transparent 55%
-		),
+		radial-gradient(ellipse at 20% 30%, rgba(255, 215, 106, 0.12) 0%, transparent 55%),
+		radial-gradient(ellipse at 80% 70%, rgba(103, 232, 249, 0.1) 0%, transparent 55%),
 		linear-gradient(180deg, #0a0c12 0%, #06070b 100%);
 }
 
 .layer-bg--violet {
 	background:
-		radial-gradient(
-			ellipse at 70% 30%,
-			rgba(167, 139, 250, 0.18) 0%,
-			transparent 55%
-		),
-		radial-gradient(
-			ellipse at 25% 75%,
-			rgba(236, 72, 153, 0.08) 0%,
-			transparent 60%
-		),
+		radial-gradient(ellipse at 70% 30%, rgba(167, 139, 250, 0.18) 0%, transparent 55%),
+		radial-gradient(ellipse at 25% 75%, rgba(236, 72, 153, 0.08) 0%, transparent 60%),
 		linear-gradient(180deg, #0c0915 0%, #06070b 100%);
 }
 
 .layer-bg--mint {
 	background:
-		radial-gradient(
-			ellipse at 30% 40%,
-			rgba(110, 231, 183, 0.14) 0%,
-			transparent 55%
-		),
-		radial-gradient(
-			ellipse at 80% 80%,
-			rgba(255, 215, 106, 0.08) 0%,
-			transparent 55%
-		),
+		radial-gradient(ellipse at 30% 40%, rgba(110, 231, 183, 0.14) 0%, transparent 55%),
+		radial-gradient(ellipse at 80% 80%, rgba(255, 215, 106, 0.08) 0%, transparent 55%),
 		linear-gradient(180deg, #06120e 0%, #06070b 100%);
 }
 
@@ -460,7 +432,9 @@
 	padding: 0.3rem 0.6rem;
 	border-radius: 6px;
 	cursor: pointer;
-	transition: background 0.15s ease, color 0.15s ease;
+	transition:
+		background 0.15s ease,
+		color 0.15s ease;
 }
 
 .act-code-copy:hover,
@@ -497,7 +471,10 @@
 	font-size: 14px;
 	font-weight: 500;
 	cursor: pointer;
-	transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+	transition:
+		background 0.15s ease,
+		border-color 0.15s ease,
+		transform 0.15s ease;
 }
 
 .emotion-chip:hover,
@@ -572,7 +549,10 @@
 	font-weight: 500;
 	letter-spacing: 0.01em;
 	text-decoration: none;
-	transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+	transition:
+		transform 0.15s ease,
+		background 0.15s ease,
+		border-color 0.15s ease;
 }
 
 .btn-primary {
@@ -627,8 +607,7 @@
 	position: relative;
 	background: var(--features-bg);
 	color: var(--features-fg);
-	padding: clamp(3rem, 8vh, 6rem) var(--features-content-pad)
-		clamp(2rem, 5vh, 4rem);
+	padding: clamp(3rem, 8vh, 6rem) var(--features-content-pad) clamp(2rem, 5vh, 4rem);
 	z-index: 30;
 }
 

@@ -83,8 +83,18 @@
 					"description": "Axis-aligned bounding box in meters, model space.",
 					"required": ["min", "max"],
 					"properties": {
-						"min": { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3 },
-						"max": { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3 }
+						"min": {
+							"type": "array",
+							"items": { "type": "number" },
+							"minItems": 3,
+							"maxItems": 3
+						},
+						"max": {
+							"type": "array",
+							"items": { "type": "number" },
+							"minItems": 3,
+							"maxItems": 3
+						}
 					}
 				},
 				"license": {
@@ -110,7 +120,10 @@
 			"required": ["reportUri"],
 			"properties": {
 				"reportUri": { "type": "string" },
-				"reportType": { "type": "string", "description": "e.g. \"agent-validation-report/0.1\"" },
+				"reportType": {
+					"type": "string",
+					"description": "e.g. \"agent-validation-report/0.1\""
+				},
 				"validator": { "type": "string", "pattern": "^0x[a-fA-F0-9]{40}$" }
 			}
 		},

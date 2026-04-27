@@ -55,6 +55,7 @@
 		},
 		{ "src": "/api/agents/([^/]+)/sign", "dest": "/api/agents/[id]/sign?id=$1" },
 		{ "src": "/api/agents/([^/]+)/animations", "dest": "/api/agents/[id]/animations?id=$1" },
+		{ "src": "/api/agents/([^/]+)/manifest", "dest": "/api/agents/[id]/manifest?id=$1" },
 		{ "src": "/api/agents/([^/]+)", "dest": "/api/agents/[id]" },
 		{ "src": "/api/agents", "dest": "/api/agents" },
 		{ "src": "/api/agent-actions", "dest": "/api/agent-actions" },

@@ -443,10 +443,7 @@
 					This agent doesn't have a body yet.
 				</p>
 				<div class="agent-stage-cta-row" id="agent-stage-ctas" hidden>
-					<a
-						class="agent-stage-cta agent-stage-cta--primary"
-						id="agent-stage-edit"
-						hidden
+					<a class="agent-stage-cta agent-stage-cta--primary" id="agent-stage-edit" hidden
 						>Open in editor →</a
 					>
 					<button
@@ -713,10 +710,7 @@
 					const me = await fetch('/api/auth/me', { credentials: 'include' });
 					if (me.ok) {
 						editLink.href = `/app?agent=${identity.id}`;
-						editLink.setAttribute(
-							'aria-label',
-							`Open ${friendlyName} in the editor`,
-						);
+						editLink.setAttribute('aria-label', `Open ${friendlyName} in the editor`);
 						editLink.hidden = false;
 					}
 				} catch {}

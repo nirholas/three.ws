@@ -103,59 +103,59 @@ docs_dir: src
 site_dir: _site
 
 theme:
-  name: material
-  custom_dir: overrides
-  language: en
-  logo: assets/pai-logo-white.png
-  palette:
-    - scheme: slate
-      primary: custom
-      accent: custom
-  font:
-    text: Inter
-    code: JetBrains Mono
-  features:
-    - navigation.tabs
-    - navigation.sections
-    - navigation.top
-    - navigation.instant
-    - navigation.tracking
-    - search.suggest
-    - search.highlight
-    - content.code.copy
-    - content.action.edit
-    - toc.follow
+    name: material
+    custom_dir: overrides
+    language: en
+    logo: assets/pai-logo-white.png
+    palette:
+        - scheme: slate
+          primary: custom
+          accent: custom
+    font:
+        text: Inter
+        code: JetBrains Mono
+    features:
+        - navigation.tabs
+        - navigation.sections
+        - navigation.top
+        - navigation.instant
+        - navigation.tracking
+        - search.suggest
+        - search.highlight
+        - content.code.copy
+        - content.action.edit
+        - toc.follow
 
 extra_css:
-  - assets/pai-theme.css
-  - assets/stylesheets/home.css
+    - assets/pai-theme.css
+    - assets/stylesheets/home.css
 
 markdown_extensions:
-  - admonition
-  - attr_list
-  - def_list
-  - footnotes
-  - md_in_html
-  - tables
-  - toc:
-      permalink: true
-  - pymdownx.details
-  - pymdownx.highlight:
-      anchor_linenums: true
-  - pymdownx.inlinehilite
-  - pymdownx.snippets
-  - pymdownx.superfences:
-      custom_fences:
-        - name: mermaid
-          class: mermaid
-          format: !!python/name:pymdownx.superfences.fence_code_format
-  - pymdownx.tabbed:
-      alternate_style: true
-  - pymdownx.tasklist:
-      custom_checkbox: true
+    - admonition
+    - attr_list
+    - def_list
+    - footnotes
+    - md_in_html
+    - tables
+    - toc:
+          permalink: true
+    - pymdownx.details
+    - pymdownx.highlight:
+          anchor_linenums: true
+    - pymdownx.inlinehilite
+    - pymdownx.snippets
+    - pymdownx.superfences:
+          custom_fences:
+              - name: mermaid
+                class: mermaid
+                format: !!python/name:pymdownx.superfences.fence_code_format
+    - pymdownx.tabbed:
+          alternate_style: true
+    - pymdownx.tasklist:
+          custom_checkbox: true
 
 plugins:
-  - search
+    - search
 ```
 
 A few decisions to call out:
@@ -170,69 +170,69 @@ Now append the navigation tree. This is the part that takes the longest, but it 
 
 ```yaml
 nav:
-  - Home: index.md
-  - Overview:
-      - How PAI works: general/how-pai-works.md
-      - Features included: general/features-included.md
-      - System requirements: general/system-requirements.md
-      - Warnings and limitations: general/warnings-and-limitations.md
-  - Getting started:
-      - Try in a VM: first-steps/try-in-a-vm.md
-      - Quickstart: quickstart.md
-      - Installation: installation.md
-      - USB flashing: USB-FLASHING.md
-      - Starting on Mac: first-steps/starting-on-mac.md
-      - Starting on Windows: first-steps/starting-on-windows.md
-      - First boot walkthrough: first-steps/first-boot-walkthrough.md
-      - Desktop basics: first-steps/desktop-basics.md
-  - Guides:
-      - Using PAI: using-pai.md
-      - Basic usage: usage/basic.md
-      - Advanced usage: usage/advanced.md
-      - Persistence:
-          - Introduction: persistence/introduction.md
-          - Creating persistence: persistence/creating-persistence.md
-          - Unlocking: persistence/unlocking.md
-          - Backing up: persistence/backing-up.md
-      - Configuration: configuration.md
-      - Deployment: deployment.md
-  - AI:
-      - Choosing a model: ai/choosing-a-model.md
-      - Managing models: ai/managing-models.md
-      - Using Ollama: ai/using-ollama.md
-      - Using Open WebUI: ai/using-open-webui.md
-  - Apps:
-      - Password management: apps/password-management.md
-      - Encrypting files (GPG): apps/encrypting-files-gpg.md
-      - Secure delete: apps/secure-delete.md
-  - Advanced:
-      - GPU setup: advanced/gpu-setup.md
-      - GPU passthrough (VMs): advanced/gpu-passthrough.md
-      - Running in a VM: advanced/running-in-a-vm.md
-      - Boot options: advanced/boot-options.md
-  - Privacy:
-      - Introduction: privacy/introduction-to-privacy.md
-      - Privacy mode (Tor): privacy/privacy-mode-tor.md
-      - MAC address anonymization: privacy/mac-address-anonymization.md
-      - Offline mode: privacy/offline-mode.md
-  - Examples:
-      - Local AI assistant: examples/local-ai-assistant.md
-      - Crypto cold signing: examples/crypto-cold-signing.md
-      - Travel and network hardening: examples/travel-and-network-hardening.md
-  - Reference:
-      - Architecture:
-          - Overview: architecture/overview.md
-          - Components: architecture/components.md
-          - Data flow: architecture/data-flow.md
-      - Skills: skills.md
-      - Keyboard shortcuts: reference/keyboard-shortcuts.md
-      - FAQ: reference/faq.md
-      - Glossary: reference/glossary.md
-  - About:
-      - Philosophy: PHILOSOPHY.md
-      - Vision: VISION.md
-      - Roadmap: roadmap.md
-      - Changelog: CHANGELOG.md
+    - Home: index.md
+    - Overview:
+          - How PAI works: general/how-pai-works.md
+          - Features included: general/features-included.md
+          - System requirements: general/system-requirements.md
+          - Warnings and limitations: general/warnings-and-limitations.md
+    - Getting started:
+          - Try in a VM: first-steps/try-in-a-vm.md
+          - Quickstart: quickstart.md
+          - Installation: installation.md
+          - USB flashing: USB-FLASHING.md
+          - Starting on Mac: first-steps/starting-on-mac.md
+          - Starting on Windows: first-steps/starting-on-windows.md
+          - First boot walkthrough: first-steps/first-boot-walkthrough.md
+          - Desktop basics: first-steps/desktop-basics.md
+    - Guides:
+          - Using PAI: using-pai.md
+          - Basic usage: usage/basic.md
+          - Advanced usage: usage/advanced.md
+          - Persistence:
+                - Introduction: persistence/introduction.md
+                - Creating persistence: persistence/creating-persistence.md
+                - Unlocking: persistence/unlocking.md
+                - Backing up: persistence/backing-up.md
+          - Configuration: configuration.md
+          - Deployment: deployment.md
+    - AI:
+          - Choosing a model: ai/choosing-a-model.md
+          - Managing models: ai/managing-models.md
+          - Using Ollama: ai/using-ollama.md
+          - Using Open WebUI: ai/using-open-webui.md
+    - Apps:
+          - Password management: apps/password-management.md
+          - Encrypting files (GPG): apps/encrypting-files-gpg.md
+          - Secure delete: apps/secure-delete.md
+    - Advanced:
+          - GPU setup: advanced/gpu-setup.md
+          - GPU passthrough (VMs): advanced/gpu-passthrough.md
+          - Running in a VM: advanced/running-in-a-vm.md
+          - Boot options: advanced/boot-options.md
+    - Privacy:
+          - Introduction: privacy/introduction-to-privacy.md
+          - Privacy mode (Tor): privacy/privacy-mode-tor.md
+          - MAC address anonymization: privacy/mac-address-anonymization.md
+          - Offline mode: privacy/offline-mode.md
+    - Examples:
+          - Local AI assistant: examples/local-ai-assistant.md
+          - Crypto cold signing: examples/crypto-cold-signing.md
+          - Travel and network hardening: examples/travel-and-network-hardening.md
+    - Reference:
+          - Architecture:
+                - Overview: architecture/overview.md
+                - Components: architecture/components.md
+                - Data flow: architecture/data-flow.md
+          - Skills: skills.md
+          - Keyboard shortcuts: reference/keyboard-shortcuts.md
+          - FAQ: reference/faq.md
+          - Glossary: reference/glossary.md
+    - About:
+          - Philosophy: PHILOSOPHY.md
+          - Vision: VISION.md
+          - Roadmap: roadmap.md
+          - Changelog: CHANGELOG.md
 ```
 
 You can shrink this for a smaller starter site, but Material tolerates an unbalanced tree poorly: half the nav features assume you have at least two levels. Stub the files with one-line placeholders for now; you can fill them in later.
@@ -354,103 +354,125 @@ Create `pai-fresh/src/assets/stylesheets/home.css`. The full contents are reprod
 
 ```css
 :root {
-  --md-parallax-perspective: 2.5rem;
+	--md-parallax-perspective: 2.5rem;
 }
 
-.md-main__inner { margin: 0; }
+.md-main__inner {
+	margin: 0;
+}
 .md-main__inner > .md-content,
-.md-main__inner > .md-sidebar--secondary { display: none; }
+.md-main__inner > .md-sidebar--secondary {
+	display: none;
+}
 
 .md-header:not(.md-header--shadow) {
-  background-color: initial;
-  transition: background-color 125ms, transform 125ms cubic-bezier(.1, .7, .1, 1), box-shadow 0ms;
+	background-color: initial;
+	transition:
+		background-color 125ms,
+		transform 125ms cubic-bezier(0.1, 0.7, 0.1, 1),
+		box-shadow 0ms;
 }
 .md-header--shadow {
-  transition: background-color .25s, transform .25s cubic-bezier(.1, .7, .1, 1), box-shadow .25s;
+	transition:
+		background-color 0.25s,
+		transform 0.25s cubic-bezier(0.1, 0.7, 0.1, 1),
+		box-shadow 0.25s;
 }
 
 /* Scroll container */
 .mdx-parallax {
-  height: 100vh;
-  margin-top: -2.4rem;
-  overflow: hidden auto;
-  overscroll-behavior-y: none;
-  perspective: var(--md-parallax-perspective);
-  scroll-behavior: smooth;
-  width: 100vw;
+	height: 100vh;
+	margin-top: -2.4rem;
+	overflow: hidden auto;
+	overscroll-behavior-y: none;
+	perspective: var(--md-parallax-perspective);
+	scroll-behavior: smooth;
+	width: 100vw;
 }
 
 /* Sections */
 .mdx-parallax__group {
-  background-color: var(--md-default-bg-color);
-  color: var(--md-typeset-color);
-  display: block;
-  position: relative;
-  transform-style: preserve-3d;
+	background-color: var(--md-default-bg-color);
+	color: var(--md-typeset-color);
+	display: block;
+	position: relative;
+	transform-style: preserve-3d;
 }
 
 /* Hero section is taller than the viewport so layers have room to travel */
 .mdx-parallax__group:first-child {
-  background-color: initial;
-  contain: strict;
-  height: 140vh;
+	background-color: initial;
+	contain: strict;
+	height: 140vh;
 }
 
 /* Layers */
 .mdx-parallax__layer {
-  height: max(120vh, 100vw);
-  pointer-events: none;
-  position: absolute;
-  top: 0;
-  transform:
-    translateZ(calc(var(--md-parallax-perspective) * var(--md-parallax-depth) * -1))
-    scale(calc(var(--md-parallax-depth) + 1));
-  transform-origin: 50vw 50vh;
-  width: 100vw;
-  z-index: calc(10 - var(--md-parallax-depth, 0));
+	height: max(120vh, 100vw);
+	pointer-events: none;
+	position: absolute;
+	top: 0;
+	transform: translateZ(calc(var(--md-parallax-perspective) * var(--md-parallax-depth) * -1))
+		scale(calc(var(--md-parallax-depth) + 1));
+	transform-origin: 50vw 50vh;
+	width: 100vw;
+	z-index: calc(10 - var(--md-parallax-depth, 0));
 }
 
 .mdx-parallax__image {
-  display: block;
-  height: 100%;
-  object-fit: cover;
-  object-position: var(--md-image-position, 50%);
-  position: absolute;
-  width: 100%;
-  z-index: -1;
+	display: block;
+	height: 100%;
+	object-fit: cover;
+	object-position: var(--md-image-position, 50%);
+	position: absolute;
+	width: 100%;
+	z-index: -1;
 }
 
 .mdx-parallax__blend {
-  background-image: linear-gradient(to bottom, transparent, var(--md-default-bg-color));
-  bottom: 0;
-  height: min(100vh, 100vw);
-  top: auto;
+	background-image: linear-gradient(to bottom, transparent, var(--md-default-bg-color));
+	bottom: 0;
+	height: min(100vh, 100vw);
+	top: auto;
 }
 
 /* Hero text */
-.mdx-hero { display: block; height: inherit; }
+.mdx-hero {
+	display: block;
+	height: inherit;
+}
 .mdx-hero__scrollwrap {
-  height: 100vh;
-  margin-bottom: -100vh;
-  position: sticky;
-  top: 0;
-  z-index: 9;
+	height: 100vh;
+	margin-bottom: -100vh;
+	position: sticky;
+	top: 0;
+	z-index: 9;
 }
 .mdx-hero__inner {
-  bottom: 3.2rem;
-  display: block;
-  position: absolute;
-  width: 100%;
+	bottom: 3.2rem;
+	display: block;
+	position: absolute;
+	width: 100%;
 }
 .mdx-hero__teaser {
-  color: var(--md-primary-bg-color);
-  margin: 0 .8rem;
-  max-width: 27rem;
+	color: var(--md-primary-bg-color);
+	margin: 0 0.8rem;
+	max-width: 27rem;
 }
-.mdx-hero__teaser :not(.md-button) { text-shadow: 0 0 .2rem #211d2dcc; }
+.mdx-hero__teaser :not(.md-button) {
+	text-shadow: 0 0 0.2rem #211d2dcc;
+}
 
-@media screen and (min-width: 60em)    { .md-sidebar--secondary { display: none; } }
-@media screen and (min-width: 76.25em) { .md-sidebar--primary   { display: none; } }
+@media screen and (min-width: 60em) {
+	.md-sidebar--secondary {
+		display: none;
+	}
+}
+@media screen and (min-width: 76.25em) {
+	.md-sidebar--primary {
+		display: none;
+	}
+}
 ```
 
 The mental model for the depth formula is short. The scroll container has `perspective: 2.5rem`. A layer with `--md-parallax-depth: 5` ends up at `translateZ(-12.5rem)` — five times the perspective, pushed away from the camera. Because the projection shrinks distant things, we counter with `scale(6)` (depth + 1) so the layer still fills the viewport. The browser, when scrolling the container, applies its standard 3D projection math; layers further from the camera traverse less screen distance per unit of scroll. That is the parallax. There is no JavaScript timer interpolating positions, no `scroll` event handler reading `window.scrollY` and updating transforms, no `requestAnimationFrame` loop. The animation is a side-effect of how the browser already renders 3D transforms during scroll.
@@ -537,28 +559,28 @@ Use Material's admonition extension for callouts:
 
 ```markdown
 !!! warning "USB drives wear out"
-    Flash storage has a finite write count. If you enable persistence,
-    use a quality drive — Samsung BAR Plus, SanDisk Extreme Pro, or
-    similar — and back up your encrypted volume regularly.
+Flash storage has a finite write count. If you enable persistence,
+use a quality drive — Samsung BAR Plus, SanDisk Extreme Pro, or
+similar — and back up your encrypted volume regularly.
 ```
 
 Use tabbed content blocks for platform-specific install steps:
 
 ```markdown
 === "macOS"
-    ```bash
+`bash
     diskutil list
     sudo dd if=pai.iso of=/dev/rdiskN bs=1m
-    ```
+    `
 
 === "Linux"
-    ```bash
+`bash
     lsblk
     sudo dd if=pai.iso of=/dev/sdX bs=4M status=progress
-    ```
+    `
 
 === "Windows"
-    Use Rufus or Raspberry Pi Imager.
+Use Rufus or Raspberry Pi Imager.
 ```
 
 Both are enabled in the `markdown_extensions` block from Step 3.
@@ -571,42 +593,48 @@ The parallax stylesheet handles the hero. Brand styling — accent colours, butt
 
 ```css
 :root {
-  --md-primary-fg-color:        #0e7c66;
-  --md-primary-fg-color--light: #14a484;
-  --md-primary-fg-color--dark:  #094f41;
-  --md-accent-fg-color:         #14a484;
+	--md-primary-fg-color: #0e7c66;
+	--md-primary-fg-color--light: #14a484;
+	--md-primary-fg-color--dark: #094f41;
+	--md-accent-fg-color: #14a484;
 }
 
-[data-md-color-scheme="slate"] {
-  --md-default-bg-color:        #0a0d10;
-  --md-default-fg-color:        #e6e9ec;
-  --md-typeset-color:            #d8dde2;
-  --md-typeset-a-color:          #14a484;
+[data-md-color-scheme='slate'] {
+	--md-default-bg-color: #0a0d10;
+	--md-default-fg-color: #e6e9ec;
+	--md-typeset-color: #d8dde2;
+	--md-typeset-a-color: #14a484;
 }
 
 .md-button--primary {
-  background-color: var(--md-primary-fg-color);
-  border-color:     var(--md-primary-fg-color);
+	background-color: var(--md-primary-fg-color);
+	border-color: var(--md-primary-fg-color);
 }
 
 .mdx-pillars__inner,
 .mdx-intro__inner {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
-  gap: 2rem;
-  max-width: 64rem;
-  margin: 0 auto;
-  padding: 6rem 1.5rem;
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+	gap: 2rem;
+	max-width: 64rem;
+	margin: 0 auto;
+	padding: 6rem 1.5rem;
 }
 
-.mdx-pillar__title { font-size: 1.25rem; margin-bottom: .5rem; }
-.mdx-pillar__body  { color: var(--md-default-fg-color--light); line-height: 1.6; }
+.mdx-pillar__title {
+	font-size: 1.25rem;
+	margin-bottom: 0.5rem;
+}
+.mdx-pillar__body {
+	color: var(--md-default-fg-color--light);
+	line-height: 1.6;
+}
 
 .mdx-intro__card {
-  background: rgba(255,255,255,.03);
-  border: 1px solid rgba(255,255,255,.06);
-  border-radius: .5rem;
-  padding: 2rem;
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	border-radius: 0.5rem;
+	padding: 2rem;
 }
 ```
 
@@ -644,46 +672,46 @@ Add a deploy workflow at `.github/workflows/pages.yml`:
 name: Deploy docs
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'pai-fresh/**'
-      - '.github/workflows/pages.yml'
-  workflow_dispatch:
+    push:
+        branches: [main]
+        paths:
+            - 'pai-fresh/**'
+            - '.github/workflows/pages.yml'
+    workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+    contents: read
+    pages: write
+    id-token: write
 
 concurrency:
-  group: pages
-  cancel-in-progress: true
+    group: pages
+    cancel-in-progress: true
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          cache: pip
-      - run: pip install -r pai-fresh/requirements.txt
-      - run: mkdocs build --config-file pai-fresh/mkdocs.yml --strict
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: pai-fresh/_site
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-python@v5
+              with:
+                  python-version: '3.12'
+                  cache: pip
+            - run: pip install -r pai-fresh/requirements.txt
+            - run: mkdocs build --config-file pai-fresh/mkdocs.yml --strict
+            - uses: actions/upload-pages-artifact@v3
+              with:
+                  path: pai-fresh/_site
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+    deploy:
+        needs: build
+        runs-on: ubuntu-latest
+        environment:
+            name: github-pages
+            url: ${{ steps.deployment.outputs.page_url }}
+        steps:
+            - id: deployment
+              uses: actions/deploy-pages@v4
 ```
 
 The `--strict` flag in the build step turns broken links and missing nav targets into hard errors. Use it; the alternative is silently shipping 404s.
@@ -710,12 +738,16 @@ A few non-negotiables before you call it done:
 
 - **Decorative alt text.** All four parallax layers carry `alt=""` and `draggable="false"` because they are decoration. Screen readers will skip them, which is correct — the meaningful content is the hero text.
 - **Reduced motion.** The parallax respects scroll speed but does not honour `prefers-reduced-motion`. Add a media query that flattens the depth for users who request it:
-  ```css
-  @media (prefers-reduced-motion: reduce) {
-    .mdx-parallax__layer { transform: none; }
-    .mdx-hero__more      { animation: none; }
-  }
-  ```
+    ```css
+    @media (prefers-reduced-motion: reduce) {
+    	.mdx-parallax__layer {
+    		transform: none;
+    	}
+    	.mdx-hero__more {
+    		animation: none;
+    	}
+    }
+    ```
 - **Focus order.** The sticky hero text sits inside the same DOM section as the layers, so tabbing works without surprises. Verify by tabbing from the hero CTAs into the pillars without using the mouse.
 - **Lighthouse.** Aim for 95+ on Performance, 100 on Accessibility. The parallax costs almost nothing at runtime — no JS, decoded AVIFs are cached by the browser — but if a layer is oversized you will see a bad LCP score. Resize sources before encoding rather than relying on `object-fit` to compensate.
 
@@ -820,24 +852,24 @@ description: How to create and export layered AVIF images.
 
 ## Image requirements
 
-| Property      | Recommendation                                |
-|---------------|------------------------------------------------|
-| Format        | AVIF (best), WebP fallback, PNG last resort    |
-| Dimensions    | Wide panorama — at least 1920×600              |
-| Transparency  | Required for mid and foreground layers         |
-| Naming        | `1-far@4x.avif`, `2-mid@4x.avif`, etc.         |
+| Property     | Recommendation                              |
+| ------------ | ------------------------------------------- |
+| Format       | AVIF (best), WebP fallback, PNG last resort |
+| Dimensions   | Wide panorama — at least 1920×600           |
+| Transparency | Required for mid and foreground layers      |
+| Naming       | `1-far@4x.avif`, `2-mid@4x.avif`, etc.      |
 
 ## How many layers
 
 Four is the sweet spot. Fewer and the effect is subtle; more and you
 are paying file size for imperceptible depth.
 
-| Layer | Contents                              | Depth |
-|-------|----------------------------------------|-------|
-| 1 Far | Sky, horizon — opaque                  | 8     |
-| 2 Mid | Buildings, terrain — transparent       | 5     |
-| 3 Near| Foliage, structures — transparent      | 2     |
-| 4 Front| Closest plants, frame — transparent   | 1     |
+| Layer   | Contents                            | Depth |
+| ------- | ----------------------------------- | ----- |
+| 1 Far   | Sky, horizon — opaque               | 8     |
+| 2 Mid   | Buildings, terrain — transparent    | 5     |
+| 3 Near  | Foliage, structures — transparent   | 2     |
+| 4 Front | Closest plants, frame — transparent | 1     |
 
 ## Wiring layers in `home.html`
 
@@ -856,8 +888,8 @@ Both pages should appear in the Development section of `mkdocs.yml`:
 
 ```yaml
 - Development:
-    - How parallax works: development/how-parallax-works.md
-    - Use your own layers: development/your-own-layers.md
+      - How parallax works: development/how-parallax-works.md
+      - Use your own layers: development/your-own-layers.md
 ```
 
 These pages are short on purpose. They link from the hero "Learn more" button as a fallback — anyone who sees the parallax and wants to know how it was built lands here within two clicks.
@@ -870,7 +902,7 @@ The reference repo's `agents/image-agent.md` exists because making four cohesive
 
 ### Decide the scene before prompting
 
-Write a one-sentence brief covering subject, time of day, palette, and aspect. Example: *"A high desert plateau at blue hour, indigo and slate palette, 16:5 panoramic, sparse foreground vegetation."* This sentence becomes the style anchor that every layer prompt repeats verbatim. Layers that drift in lighting or palette will not composite — you will spend an afternoon trying to colour-correct them and conclude you have to start over.
+Write a one-sentence brief covering subject, time of day, palette, and aspect. Example: _"A high desert plateau at blue hour, indigo and slate palette, 16:5 panoramic, sparse foreground vegetation."_ This sentence becomes the style anchor that every layer prompt repeats verbatim. Layers that drift in lighting or palette will not composite — you will spend an afternoon trying to colour-correct them and conclude you have to start over.
 
 ### Layer prompts
 
@@ -966,8 +998,12 @@ Add `pai-fresh/overrides/main.html` to extend Material's base layout with a tiny
 The corresponding stylesheet rules already live in `home.css` from Step 5:
 
 ```css
-.safari .mdx-parallax__group:first-child { contain: none; }
-.ff-hack .mdx-parallax__group:first-child { contain: none !important; }
+.safari .mdx-parallax__group:first-child {
+	contain: none;
+}
+.ff-hack .mdx-parallax__group:first-child {
+	contain: none !important;
+}
 ```
 
 Two notes on the trade-off. First, this is the only JavaScript on the home page. Stripping it out costs you Safari and Firefox visitors who would otherwise see a clipped or flashing hero. Second, the UA sniff is intentional. Feature detection does not help here; the bugs are about how the browser implements features it claims to support. UA sniffs age badly in general but age fine for "is this engine WebKit or Gecko."
@@ -982,7 +1018,7 @@ The structure is identical for every group:
 
 ```html
 <section class="mdx-parallax__group" data-md-color-scheme="slate">
-  <!-- content -->
+	<!-- content -->
 </section>
 ```
 
@@ -997,14 +1033,14 @@ To add a fourth section — say, a "frequently asked questions" panel — append
 
 ```html
 <section class="mdx-parallax__group mdx-faq" data-md-color-scheme="default">
-  <div class="mdx-faq__inner">
-    <h2>Frequently asked</h2>
-    <details>
-      <summary>Does PAI work without internet?</summary>
-      <p>Yes. Models you have already pulled run entirely locally.</p>
-    </details>
-    <!-- more <details> -->
-  </div>
+	<div class="mdx-faq__inner">
+		<h2>Frequently asked</h2>
+		<details>
+			<summary>Does PAI work without internet?</summary>
+			<p>Yes. Models you have already pulled run entirely locally.</p>
+		</details>
+		<!-- more <details> -->
+	</div>
 </section>
 ```
 
@@ -1020,7 +1056,7 @@ The depth values that look right on a 14-inch laptop look subtle on a 32-inch ul
 
 ```css
 :root {
-  --md-parallax-perspective: clamp(1.5rem, 2.5vw, 3rem);
+	--md-parallax-perspective: clamp(1.5rem, 2.5vw, 3rem);
 }
 ```
 
@@ -1030,10 +1066,18 @@ This shrinks perspective on small screens (more dramatic depth) and grows it on 
 
 ```css
 @media (min-width: 120em) {
-  .mdx-parallax__layer:nth-child(1) { --md-parallax-depth: 10; }
-  .mdx-parallax__layer:nth-child(2) { --md-parallax-depth: 7; }
-  .mdx-parallax__layer:nth-child(3) { --md-parallax-depth: 3; }
-  .mdx-parallax__layer:nth-child(4) { --md-parallax-depth: 1.5; }
+	.mdx-parallax__layer:nth-child(1) {
+		--md-parallax-depth: 10;
+	}
+	.mdx-parallax__layer:nth-child(2) {
+		--md-parallax-depth: 7;
+	}
+	.mdx-parallax__layer:nth-child(3) {
+		--md-parallax-depth: 3;
+	}
+	.mdx-parallax__layer:nth-child(4) {
+		--md-parallax-depth: 1.5;
+	}
 }
 ```
 
@@ -1042,10 +1086,26 @@ Use Strategy A for everyone, then layer Strategy B on top for ultrawide if you a
 The hero height also needs to grow with viewport width or layers run out of vertical room. The default stylesheet ships with these breakpoints:
 
 ```css
-@media (min-width: 125vh)   { .mdx-parallax__group:first-child { height: 120vw; } }
-@media (min-width: 150vh)   { .mdx-parallax__group:first-child { height: 130vw; } }
-@media (min-width: 200vh)   { .mdx-parallax__group:first-child { height: 150vw; } }
-@media (min-width: 250vh)   { .mdx-parallax__group:first-child { height: 160vw; } }
+@media (min-width: 125vh) {
+	.mdx-parallax__group:first-child {
+		height: 120vw;
+	}
+}
+@media (min-width: 150vh) {
+	.mdx-parallax__group:first-child {
+		height: 130vw;
+	}
+}
+@media (min-width: 200vh) {
+	.mdx-parallax__group:first-child {
+		height: 150vw;
+	}
+}
+@media (min-width: 250vh) {
+	.mdx-parallax__group:first-child {
+		height: 160vw;
+	}
+}
 ```
 
 The unit is intentional: `min-width` in `vh` measures viewport aspect ratio, not absolute width. A 1920×600 ultrawide laptop and a 3840×1200 desktop monitor both have width-greater-than-2×-height, so they both pick up the `min-width: 200vh` rule even though their pixel widths are wildly different.

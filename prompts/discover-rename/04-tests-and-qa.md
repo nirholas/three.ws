@@ -22,35 +22,40 @@ Lock in the rename with automated checks and a manual QA pass so the next deploy
 1. **Find the existing test setup.** Check `tests/`, `vitest.config.js`, and `package.json` scripts. Identify whether route tests are HTTP-level (against a running dev server) or static (parsing HTML files).
 
 2. **Add or extend route tests** in the appropriate test file:
-   - Static check (always works): assert `public/discover/index.html` exists and contains `Discover · 3D Agent` and `ERC-8004 Agent Directory`.
-   - Static check: assert `public/my-agents/index.html` exists and contains `My Agents · 3D Agent`.
-   - Static check: assert `public/explore/` directory does not exist (was moved).
-   - `vercel.json` parse test: assert a redirect from `/explore` → `/discover` (permanent) exists, and assert no redirect from `/discover` → `/my-agents` exists (would shadow the page).
+
+    - Static check (always works): assert `public/discover/index.html` exists and contains `Discover · 3D Agent` and `ERC-8004 Agent Directory`.
+    - Static check: assert `public/my-agents/index.html` exists and contains `My Agents · 3D Agent`.
+    - Static check: assert `public/explore/` directory does not exist (was moved).
+    - `vercel.json` parse test: assert a redirect from `/explore` → `/discover` (permanent) exists, and assert no redirect from `/discover` → `/my-agents` exists (would shadow the page).
 
 3. **Run the test suite** and fix anything that breaks. Don't mute or skip failures.
 
 4. **Manual QA — click every nav surface** with a checklist. For each, confirm "Discover" and "My Agents" links route correctly:
-   - [ ] `/` (home, logged out)
-   - [ ] `/` (home, logged in)
-   - [ ] `/features`
-   - [ ] `/widgets` index
-   - [ ] `/dashboard` and any sub-pages with their own header
-   - [ ] `/app` viewer header
-   - [ ] `/agent/:id` page header
-   - [ ] Footer (if any)
+
+    - [ ] `/` (home, logged out)
+    - [ ] `/` (home, logged in)
+    - [ ] `/features`
+    - [ ] `/widgets` index
+    - [ ] `/dashboard` and any sub-pages with their own header
+    - [ ] `/app` viewer header
+    - [ ] `/agent/:id` page header
+    - [ ] Footer (if any)
 
 5. **Service worker check.** Open DevTools → Application → Service Workers. Confirm:
-   - SW activated with the bumped version.
-   - Cache Storage no longer contains a `/discover` entry that maps to the old "On-chain Agents" HTML.
-   - Hard-refresh `/discover` → community page renders (not a stale cached personal page).
+
+    - SW activated with the bumped version.
+    - Cache Storage no longer contains a `/discover` entry that maps to the old "On-chain Agents" HTML.
+    - Hard-refresh `/discover` → community page renders (not a stale cached personal page).
 
 6. **Redirect verification with curl** against the deployed preview:
-   ```
-   curl -sI https://<preview-url>/explore | head -5
-   curl -sI https://<preview-url>/discover | head -5
-   curl -sI https://<preview-url>/my-agents | head -5
-   ```
-   Expected: `/explore` → 301, `/discover` → 200, `/my-agents` → 200.
+
+    ```
+    curl -sI https://<preview-url>/explore | head -5
+    curl -sI https://<preview-url>/discover | head -5
+    curl -sI https://<preview-url>/my-agents | head -5
+    ```
+
+    Expected: `/explore` → 301, `/discover` → 200, `/my-agents` → 200.
 
 7. **Sitemap.** If `public/sitemap.xml` or a generator exists, update entries: drop `/explore`, ensure `/discover` and `/my-agents` are present. `/my-agents` should have `<changefreq>` weekly and likely `noindex` (it's user-specific) — confirm whether the page sets `<meta name="robots" content="noindex">` and add if missing.
 

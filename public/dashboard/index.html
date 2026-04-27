@@ -685,6 +685,27 @@
 				box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
 				animation: toast-in 0.2s;
 			}
+			.toast.toast-undo {
+				display: inline-flex;
+				align-items: center;
+				gap: 14px;
+				padding: 8px 8px 8px 16px;
+			}
+			.toast-undo-btn {
+				background: rgba(106, 92, 255, 0.18);
+				border: 1px solid rgba(106, 92, 255, 0.45);
+				color: #cfc6ff;
+				padding: 5px 12px;
+				border-radius: 99px;
+				font-size: 12px;
+				font-weight: 600;
+				cursor: pointer;
+				font-family: inherit;
+			}
+			.toast-undo-btn:hover {
+				background: rgba(106, 92, 255, 0.3);
+				color: #fff;
+			}
 			@keyframes toast-in {
 				from {
 					opacity: 0;

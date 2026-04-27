@@ -20,41 +20,49 @@ Move the personal "On-chain Agents in your linked wallets" page from `/discover`
 # Steps
 
 1. **Move files** (use `git mv` to preserve history):
-   - `public/discover/index.html` → `public/my-agents/index.html`
-   - `public/discover/discover.js` → `public/my-agents/my-agents.js`
-   - `public/discover/discover.css` → `public/my-agents/my-agents.css`
-   - Update internal `<link>` / `<script>` paths in the HTML accordingly.
-   - **Do NOT rename the CSS class prefix `discover-*`** in this task — that's a separate cleanup. Renaming classes risks breaking the JS selector logic and isn't required to ship the URL change. Note the leftover prefix in a follow-up TODO comment at the top of `my-agents.css`.
+
+    - `public/discover/index.html` → `public/my-agents/index.html`
+    - `public/discover/discover.js` → `public/my-agents/my-agents.js`
+    - `public/discover/discover.css` → `public/my-agents/my-agents.css`
+    - Update internal `<link>` / `<script>` paths in the HTML accordingly.
+    - **Do NOT rename the CSS class prefix `discover-*`** in this task — that's a separate cleanup. Renaming classes risks breaking the JS selector logic and isn't required to ship the URL change. Note the leftover prefix in a follow-up TODO comment at the top of `my-agents.css`.
 
 2. **Update page chrome** in `public/my-agents/index.html`:
-   - `<title>On-chain Agents · 3D Agent</title>` → `<title>My Agents · 3D Agent</title>`
-   - `<meta name="description">` → "Your ERC-8004 agents across every supported chain."
-   - Update subtitle and (downstream) any empty-state strings emitted by `my-agents.js`.
+
+    - `<title>On-chain Agents · 3D Agent</title>` → `<title>My Agents · 3D Agent</title>`
+    - `<meta name="description">` → "Your ERC-8004 agents across every supported chain."
+    - Update subtitle and (downstream) any empty-state strings emitted by `my-agents.js`.
 
 3. **Update empty-state copy** in `public/my-agents/my-agents.js`:
-   - Find the "Link a wallet to discover your on-chain agents." string and change to "Link a wallet to see your on-chain agents."
-   - Find the "No wallets linked" block — keep heading, update sub-copy.
+
+    - Find the "Link a wallet to discover your on-chain agents." string and change to "Link a wallet to see your on-chain agents."
+    - Find the "No wallets linked" block — keep heading, update sub-copy.
 
 4. **Update nav link** in `index.html` (look for `#discoverLink`, around lines 243–249):
-   - `href="/discover"` → `href="/my-agents"`
-   - Visible label "Discover" → "My Agents"
-   - Keep the auth-gated visibility logic untouched.
+
+    - `href="/discover"` → `href="/my-agents"`
+    - Visible label "Discover" → "My Agents"
+    - Keep the auth-gated visibility logic untouched.
 
 5. **Add 301 redirect** in `vercel.json`:
-   ```json
-   {
-     "source": "/discover",
-     "destination": "/my-agents",
-     "permanent": true
-   }
-   ```
-   Add to the `redirects` array (create the array if missing). Verify the rewrite for the new path works — check existing patterns in `vercel.json` to see if `/my-agents` needs an explicit rewrite rule for the static directory or if Vercel's default behavior covers it.
+
+    ```json
+    {
+    	"source": "/discover",
+    	"destination": "/my-agents",
+    	"permanent": true
+    }
+    ```
+
+    Add to the `redirects` array (create the array if missing). Verify the rewrite for the new path works — check existing patterns in `vercel.json` to see if `/my-agents` needs an explicit rewrite rule for the static directory or if Vercel's default behavior covers it.
 
 6. **Grep the repo** for remaining references and update each:
-   ```
-   rg -n '/discover\b' --hidden -g '!node_modules' -g '!dist' -g '!dist-*'
-   ```
-   Likely hits to update: `README.md`, `docs/**`, `sitemap.xml` (if present), service worker file (search for `discover` in `public/sw.js` or similar), other prompt files. **Don't** update `prompts/` historical files — those are records.
+
+    ```
+    rg -n '/discover\b' --hidden -g '!node_modules' -g '!dist' -g '!dist-*'
+    ```
+
+    Likely hits to update: `README.md`, `docs/**`, `sitemap.xml` (if present), service worker file (search for `discover` in `public/sw.js` or similar), other prompt files. **Don't** update `prompts/` historical files — those are records.
 
 7. **Bump service worker cache version** if the SW caches `/discover/index.html`. Find the SW version constant and increment.
 

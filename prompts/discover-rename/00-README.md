@@ -8,27 +8,28 @@ goal: Resolve the naming conflict where `/discover` shows the user's *own* on-ch
 Today the app has two overlapping concepts:
 
 - **`/discover`** (file: `public/discover/index.html`, JS: `public/discover/discover.js`)
-  - Heading: "On-chain Agents"
-  - Subtitle: "Agents we found in your linked wallets"
-  - Empty state: "No wallets linked / Link a wallet to discover your on-chain agents"
-  - Data source: `GET /api/erc8004/hydrate` — agents owned by the *current user's* linked wallets only.
-  - Linked from `index.html` via `#discoverLink` (visible only when authed).
+
+    - Heading: "On-chain Agents"
+    - Subtitle: "Agents we found in your linked wallets"
+    - Empty state: "No wallets linked / Link a wallet to discover your on-chain agents"
+    - Data source: `GET /api/erc8004/hydrate` — agents owned by the _current user's_ linked wallets only.
+    - Linked from `index.html` via `#discoverLink` (visible only when authed).
 
 - **`/explore`** (file: `public/explore/index.html`, JS: `public/explore/explore.js`)
-  - Heading: "Every agent, every chain."
-  - Chip: "ERC-8004 Agent Directory"
-  - Data source: cross-chain index of ALL ERC-8004 agents, with search/filter.
-  - Linked from the public-facing nav (Features/Widgets header).
+    - Heading: "Every agent, every chain."
+    - Chip: "ERC-8004 Agent Directory"
+    - Data source: cross-chain index of ALL ERC-8004 agents, with search/filter.
+    - Linked from the public-facing nav (Features/Widgets header).
 
-**Problem:** "Discover" semantically means *community browse*, not *my own agents*. The current naming is backwards. `/explore` is the real "Discover" feature; `/discover` is really "My Agents".
+**Problem:** "Discover" semantically means _community browse_, not _my own agents_. The current naming is backwards. `/explore` is the real "Discover" feature; `/discover` is really "My Agents".
 
 # Target end state
 
-| URL              | Label         | Purpose                                      |
-| ---------------- | ------------- | -------------------------------------------- |
-| `/my-agents`     | My Agents     | Agents owned by the signed-in user's wallets |
-| `/discover`      | Discover      | Community browse of all ERC-8004 agents (was `/explore`) |
-| `/explore`       | (301 → `/discover`) | Back-compat redirect                  |
+| URL          | Label               | Purpose                                                  |
+| ------------ | ------------------- | -------------------------------------------------------- |
+| `/my-agents` | My Agents           | Agents owned by the signed-in user's wallets             |
+| `/discover`  | Discover            | Community browse of all ERC-8004 agents (was `/explore`) |
+| `/explore`   | (301 → `/discover`) | Back-compat redirect                                     |
 
 Rationale for swapping `/explore` → `/discover` rather than just renaming `/discover` → `/my-agents` and leaving `/explore` alone: "Discover" is the more discoverable, marketing-friendly word for the community feed; "Explore" is fine but inferior. If the team prefers to keep `/explore` as the community URL and only rename `/discover` → `/my-agents`, do **task 01 only** and skip 02.
 

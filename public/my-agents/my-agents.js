@@ -98,18 +98,20 @@ function showState(icon, title, msg, cta = null, secondary = null) {
 
 /**
  * @param {string} msg
- * @param {boolean} showRetry
+ * @param {boolean | (() => void)} retry  true → default loadAgents; function → custom; false → no button
  */
-function showErrorBanner(msg, showRetry = true) {
+function showErrorBanner(msg, retry = true) {
+	const showRetry = retry !== false;
 	errorBanner.innerHTML = `
 		<span class="discover-error-banner__msg">${escapeHtml(msg)}</span>
 		${showRetry ? `<button class="discover-btn discover-btn--sec" id="discover-retry" style="width:auto;padding:7px 14px;font-size:12px" aria-label="Retry loading agents">Retry</button>` : ''}`;
 	errorBanner.hidden = false;
 	if (showRetry) {
+		const handler = typeof retry === 'function' ? retry : () => loadAgents();
 		document.getElementById('discover-retry')?.addEventListener('click', () => {
 			errorBanner.hidden = true;
 			grid.innerHTML = '';
-			loadAgents();
+			handler();
 		});
 	}
 }
@@ -248,24 +250,31 @@ async function loadAgents() {
 		return;
 	}
 
-	// Check if user has linked wallets before hitting hydrate
+	// Check if user has linked wallets before hitting hydrate. If the wallets API
+	// itself fails, surface a retry instead of silently falling through to hydrate
+	// (which would render a misleading "Failed to load agents" for a no-wallet user).
+	let wallets = null;
 	try {
 		const walletsRes = await fetch('/api/auth/wallets', { credentials: 'include' });
 		if (walletsRes.ok) {
-			const { wallets } = await walletsRes.json();
-			if (!wallets || wallets.length === 0) {
-				showState(
-					'👛',
-					'No wallets linked',
-					'Link a wallet to see your on-chain agents.',
-					{ label: 'Link a wallet', href: '/dashboard/wallets.html' },
-					{ label: 'Or browse community agents →', href: '/discover' },
-				);
-				return;
-			}
+			({ wallets } = await walletsRes.json());
+		} else {
+			throw new Error(`wallets ${walletsRes.status}`);
 		}
 	} catch {
-		// If wallet check fails, proceed to hydrate anyway — it will handle empty gracefully
+		showErrorBanner('Could not check linked wallets. Tap retry.', () => location.reload());
+		return;
+	}
+
+	if (!wallets || wallets.length === 0) {
+		showState(
+			'👛',
+			'No wallets linked',
+			'Link a wallet to see your on-chain agents.',
+			{ label: 'Link a wallet', href: '/dashboard/wallets.html' },
+			{ label: 'Or browse community agents →', href: '/discover' },
+		);
+		return;
 	}
 
 	await loadAgents();

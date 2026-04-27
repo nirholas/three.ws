@@ -940,7 +940,12 @@ async function renderEmbed(root) {
 		<div class="embed-grid">
 			<div class="embed-preview-col">
 				<div class="card" style="padding:8px">
-					<iframe src="${attr(embedUrl + '?preview=1&bg=dark')}" style="width:100%;aspect-ratio:3/4;border:0;border-radius:10px;background:#0f0f17" title="Preview"></iframe>
+					<iframe id="embed-preview-frame" src="${attr(embedUrl + '?preview=1&bg=dark')}" style="width:100%;aspect-ratio:3/4;border:0;border-radius:10px;background:#0f0f17" title="Preview"></iframe>
+					<div class="row" style="gap:6px; flex-wrap:wrap; padding:8px 6px 0">
+						<button class="btn sec" type="button" data-tryit="speak">Speak</button>
+						<button class="btn sec" type="button" data-tryit="emote">Emote</button>
+						<button class="btn sec" type="button" data-tryit="gesture">Wave</button>
+					</div>
 					<div class="row" style="justify-content:space-between; padding:10px 6px 4px">
 						<strong>${esc(agent.name || 'My Agent')}</strong>
 						<a href="${attr(homeUrl)}" target="_blank" class="muted">Home page →</a>
@@ -1020,8 +1025,26 @@ async function renderEmbed(root) {
 		});
 	}
 
+	bindEmbedTryIt(body, agent);
 	bindOnchainDeploy(body, agent);
 	bindMyAgents(body);
+}
+
+function bindEmbedTryIt(body, agent) {
+	const frame = body.querySelector('#embed-preview-frame');
+	if (!frame) return;
+	const samples = {
+		speak: { type: 'speak', payload: { text: `Hi, I'm ${agent.name || 'your agent'}.` } },
+		emote: { type: 'emote', payload: { name: 'smile' } },
+		gesture: { type: 'gesture', payload: { name: 'wave' } },
+	};
+	for (const btn of body.querySelectorAll('[data-tryit]')) {
+		btn.addEventListener('click', () => {
+			const action = samples[btn.dataset.tryit];
+			if (!action) return;
+			frame.contentWindow?.postMessage({ __agent: agent.id, type: 'action', action }, '*');
+		});
+	}
 }
 
 function snippetBlock(title, code, _lang) {
@@ -2159,6 +2182,41 @@ function toast(message, isError = false) {
 		el.style.transition = 'opacity .25s';
 		setTimeout(() => el.remove(), 260);
 	}, 2200);
+}
+
+function toastUndo(message, onUndo, durationMs = 5000) {
+	const existing = document.querySelector('.toast');
+	if (existing) existing.remove();
+	clearTimeout(_toastTimer);
+	const el = document.createElement('div');
+	el.className = 'toast toast-undo';
+	el.setAttribute('role', 'status');
+	const text = document.createElement('span');
+	text.textContent = message;
+	const btn = document.createElement('button');
+	btn.type = 'button';
+	btn.className = 'toast-undo-btn';
+	btn.textContent = 'Undo';
+	let undone = false;
+	btn.addEventListener('click', () => {
+		if (undone) return;
+		undone = true;
+		clearTimeout(_toastTimer);
+		try {
+			onUndo();
+		} finally {
+			el.remove();
+		}
+	});
+	el.appendChild(text);
+	el.appendChild(btn);
+	document.body.appendChild(el);
+	_toastTimer = setTimeout(() => {
+		if (undone) return;
+		el.style.opacity = '0';
+		el.style.transition = 'opacity .25s';
+		setTimeout(() => el.remove(), 260);
+	}, durationMs);
 }
 
 function timeAgo(ts) {

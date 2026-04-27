@@ -107,6 +107,7 @@ export const limits = {
 		getLimiter('permissions:grant', { limit: 10, window: '1 h' }).limit(userId),
 	permissionsRevoke: (userId) =>
 		getLimiter('permissions:revoke', { limit: 20, window: '1 h' }).limit(userId),
+	apiKeyManage: (userId) => getLimiter('api-key:manage', { limit: 30, window: '1 h' }).limit(userId),
 };
 
 // Trust only proxy headers that Vercel itself sets and signs. Naively reading

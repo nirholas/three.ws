@@ -1,1 +1,135 @@
-[]
+[
+	{
+		"name": "idle",
+		"url": "/animations/clips/idle.json",
+		"label": "Idle",
+		"icon": "🧍",
+		"loop": true
+	},
+	{
+		"name": "dance",
+		"url": "/animations/clips/dance.json",
+		"label": "Dance",
+		"icon": "💃",
+		"loop": true
+	},
+	{
+		"name": "celebrate",
+		"url": "/animations/clips/celebrate.json",
+		"label": "Celebrate",
+		"icon": "🎉",
+		"loop": false
+	},
+	{
+		"name": "angry",
+		"url": "/animations/clips/angry.json",
+		"label": "Angry",
+		"icon": "😡",
+		"loop": false
+	},
+	{
+		"name": "defeated",
+		"url": "/animations/clips/defeated.json",
+		"label": "Defeated",
+		"icon": "😞",
+		"loop": false
+	},
+	{
+		"name": "dying",
+		"url": "/animations/clips/dying.json",
+		"label": "Dying",
+		"icon": "💀",
+		"loop": false
+	},
+	{
+		"name": "falling",
+		"url": "/animations/clips/falling.json",
+		"label": "Falling",
+		"icon": "🪂",
+		"loop": false
+	},
+	{
+		"name": "jump",
+		"url": "/animations/clips/jump.json",
+		"label": "Jump",
+		"icon": "🦘",
+		"loop": false
+	},
+	{
+		"name": "kiss",
+		"url": "/animations/clips/kiss.json",
+		"label": "Kiss",
+		"icon": "💋",
+		"loop": false
+	},
+	{
+		"name": "pray",
+		"url": "/animations/clips/pray.json",
+		"label": "Pray",
+		"icon": "🙏",
+		"loop": false
+	},
+	{
+		"name": "reaction",
+		"url": "/animations/clips/reaction.json",
+		"label": "Reaction",
+		"icon": "😲",
+		"loop": false
+	},
+	{
+		"name": "rumba",
+		"url": "/animations/clips/rumba.json",
+		"label": "Rumba",
+		"icon": "🕺",
+		"loop": true
+	},
+	{
+		"name": "silly",
+		"url": "/animations/clips/silly.json",
+		"label": "Silly Dance",
+		"icon": "🤪",
+		"loop": true
+	},
+	{
+		"name": "sitclap",
+		"url": "/animations/clips/sitclap.json",
+		"label": "Sit Clap",
+		"icon": "👏",
+		"loop": false
+	},
+	{
+		"name": "sitlaugh",
+		"url": "/animations/clips/sitlaugh.json",
+		"label": "Sit Laugh",
+		"icon": "😂",
+		"loop": false
+	},
+	{
+		"name": "taunt",
+		"url": "/animations/clips/taunt.json",
+		"label": "Taunt",
+		"icon": "😝",
+		"loop": false
+	},
+	{
+		"name": "thriller",
+		"url": "/animations/clips/thriller.json",
+		"label": "Thriller",
+		"icon": "🧟",
+		"loop": true
+	},
+	{
+		"name": "capoeira",
+		"url": "/animations/clips/capoeira.json",
+		"label": "Capoeira",
+		"icon": "🥋",
+		"loop": true
+	},
+	{
+		"name": "wave",
+		"url": "/animations/clips/wave.json",
+		"label": "Wave",
+		"icon": "👋",
+		"loop": false
+	}
+]

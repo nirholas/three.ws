@@ -539,9 +539,7 @@ export class Viewer {
 		// the framed position. On the first interactive load we tween in from
 		// a slightly wider angle so the reveal feels intentional.
 		const skipReveal =
-			this.options.kiosk ||
-			this.options.cameraPosition ||
-			this._hasRevealed === true;
+			this.options.kiosk || this.options.cameraPosition || this._hasRevealed === true;
 
 		if (skipReveal) {
 			this.defaultCamera.position.copy(framedPos);

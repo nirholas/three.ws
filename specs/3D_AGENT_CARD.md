@@ -28,15 +28,15 @@ Only `model` is new and required. The block is intentionally small:
 }
 ```
 
-| Field          | Required | Notes                                                                     |
-| -------------- | -------- | ------------------------------------------------------------------------- |
-| `uri`          | ✓        | SHOULD be `ipfs://` — mutable URIs disqualify "trustless" claims.         |
-| `format`       | ✓        | `gltf-binary` \| `gltf` \| `vrm`.                                         |
-| `sha256`       | ✓        | Lowercase hex of the model bytes. Lets consumers verify independently.    |
-| `sizeBytes`    | —        | For load-time budgeting.                                                  |
-| `polygonCount` | —        | For perf/quality discovery.                                               |
-| `boundingBox`  | —        | `{min:[x,y,z], max:[x,y,z]}` in meters. Lets viewers normalize scale.     |
-| `license`      | —        | SPDX identifier or URL.                                                   |
+| Field          | Required | Notes                                                                  |
+| -------------- | -------- | ---------------------------------------------------------------------- |
+| `uri`          | ✓        | SHOULD be `ipfs://` — mutable URIs disqualify "trustless" claims.      |
+| `format`       | ✓        | `gltf-binary` \| `gltf` \| `vrm`.                                      |
+| `sha256`       | ✓        | Lowercase hex of the model bytes. Lets consumers verify independently. |
+| `sizeBytes`    | —        | For load-time budgeting.                                               |
+| `polygonCount` | —        | For perf/quality discovery.                                            |
+| `boundingBox`  | —        | `{min:[x,y,z], max:[x,y,z]}` in meters. Lets viewers normalize scale.  |
+| `license`      | —        | SPDX identifier or URL.                                                |
 
 ## Optional extension blocks
 
@@ -50,8 +50,8 @@ A document conforms to 3D Agent Card v1 if:
 
 1. It validates against the JSON Schema linked above.
 2. Its `type` field includes both:
-   - `https://eips.ethereum.org/EIPS/eip-8004#registration-v1`
-   - `https://3dagent.vercel.app/specs/3d-agent-card-v1`
+    - `https://eips.ethereum.org/EIPS/eip-8004#registration-v1`
+    - `https://3dagent.vercel.app/specs/3d-agent-card-v1`
 3. The bytes at `model.uri` hash to `model.sha256`.
 
 Consumers MUST treat any document missing point 3 as unverified, regardless of validation reports.

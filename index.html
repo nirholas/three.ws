@@ -965,15 +965,13 @@
 			const btn = document.getElementById('btn-wallet-signin');
 			if (btn) wireSigninButton(btn);
 		</script>
-		<!-- BEGIN:DISCOVER_LINK -->
-		<a href="/my-agents" id="discoverLink" class="discover-cta" hidden
-			>My Agents →</a
-		>
+		<!-- BEGIN:MY_AGENTS_LINK -->
+		<a href="/my-agents" id="myAgentsLink" class="my-agents-cta" hidden>My Agents →</a>
 		<script type="module">
 			fetch('/api/auth/me', { credentials: 'include' })
-				.then((r) => r.ok && (document.getElementById('discoverLink').hidden = false))
+				.then((r) => r.ok && (document.getElementById('myAgentsLink').hidden = false))
 				.catch(() => {});
 		</script>
-		<!-- END:DISCOVER_LINK -->
+		<!-- END:MY_AGENTS_LINK -->
 	</body>
 </html>

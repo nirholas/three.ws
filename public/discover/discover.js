@@ -60,13 +60,47 @@ for (const c of CHAINS) {
 	els.chain.appendChild(opt);
 }
 
+// Hydrate initial state from URL so deep links from register-ui (?q=…) and
+// browser back/forward restore the user's filters.
+const initialParams = new URLSearchParams(location.search);
+const initialFilter = initialParams.get('only3d') === '1' ? '3d' : 'all';
+const initialChain = initialParams.get('chain') || '';
+const initialQuery = initialParams.get('q') || '';
+
 const state = {
-	filter: 'all', // 'all' | '3d'
-	chainId: '',
-	query: '',
+	filter: initialFilter, // 'all' | '3d'
+	chainId: initialChain,
+	query: initialQuery,
 	cursor: null,
 	loading: false,
 };
+
+// Reflect hydrated state in the controls.
+if (initialQuery) els.search.value = initialQuery;
+if (initialChain) {
+	// Chain dropdown is populated above; pre-select if the option exists.
+	const opt = els.chain.querySelector(`option[value="${CSS.escape(initialChain)}"]`);
+	if (opt) els.chain.value = initialChain;
+	else state.chainId = ''; // unknown chain id — fall back to All
+}
+if (initialFilter !== 'all') {
+	for (const b of els.filters.querySelectorAll('[data-filter]')) {
+		b.classList.toggle('active', b.dataset.filter === initialFilter);
+	}
+}
+
+/** Sync state into URL via replaceState (no history spam). */
+function syncUrl() {
+	const p = new URLSearchParams();
+	if (state.filter === '3d') p.set('only3d', '1');
+	if (state.chainId) p.set('chain', state.chainId);
+	if (state.query) p.set('q', state.query);
+	const qs = p.toString();
+	const next = qs ? `${location.pathname}?${qs}` : location.pathname;
+	if (next !== location.pathname + location.search) {
+		history.replaceState(null, '', next);
+	}
+}
 
 let searchDebounce;
 
@@ -77,11 +111,13 @@ els.filters.addEventListener('click', (e) => {
 	for (const b of els.filters.querySelectorAll('[data-filter]')) {
 		b.classList.toggle('active', b.dataset.filter === state.filter);
 	}
+	syncUrl();
 	resetAndLoad();
 });
 
 els.chain.addEventListener('change', () => {
 	state.chainId = els.chain.value;
+	syncUrl();
 	resetAndLoad();
 });
 
@@ -89,6 +125,7 @@ els.search.addEventListener('input', () => {
 	clearTimeout(searchDebounce);
 	searchDebounce = setTimeout(() => {
 		state.query = els.search.value.trim();
+		syncUrl();
 		resetAndLoad();
 	}, 250);
 });
@@ -127,12 +164,15 @@ async function loadPage() {
 	if (state.cursor) params.set('cursor', state.cursor);
 	params.set('limit', '24');
 
+	const isFirstPage = !state.cursor;
 	try {
 		const res = await fetch(`/api/explore?${params.toString()}`);
 		if (!res.ok) throw new Error(`HTTP ${res.status}`);
 		const data = await res.json();
 
-		if (data.totals) {
+		// Totals reflect the unfiltered corpus and don't change between pages —
+		// only paint them once per filter cycle.
+		if (isFirstPage && data.totals) {
 			els.statAll.textContent = data.totals.all.toLocaleString();
 			els.stat3d.textContent = data.totals.threeD.toLocaleString();
 		}
@@ -144,8 +184,14 @@ async function loadPage() {
 		els.loadMore.hidden = !state.cursor;
 
 		if (els.grid.children.length === 0) {
-			els.status.innerHTML =
-				'<div class="explore-empty">No agents match these filters yet.</div>';
+			const filtersActive =
+				state.filter !== 'all' || !!state.chainId || !!state.query;
+			els.status.innerHTML = filtersActive
+				? `<div class="explore-empty">
+						No agents match these filters yet.
+						<button type="button" class="explore-clear-filters" data-role="clear-filters">Clear filters</button>
+					</div>`
+				: '<div class="explore-empty">No agents indexed yet.</div>';
 		} else {
 			els.status.textContent = '';
 		}
@@ -154,6 +200,26 @@ async function loadPage() {
 	} finally {
 		state.loading = false;
 	}
+}
+
+// Delegated clear-filters click (status block is re-rendered each load).
+els.status.addEventListener('click', (e) => {
+	const btn = e.target.closest('[data-role="clear-filters"]');
+	if (!btn) return;
+	clearAllFilters();
+});
+
+function clearAllFilters() {
+	state.filter = 'all';
+	state.chainId = '';
+	state.query = '';
+	els.search.value = '';
+	els.chain.value = '';
+	for (const b of els.filters.querySelectorAll('[data-filter]')) {
+		b.classList.toggle('active', b.dataset.filter === 'all');
+	}
+	syncUrl();
+	resetAndLoad();
 }
 
 function renderCard(item) {

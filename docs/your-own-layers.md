@@ -20,12 +20,12 @@ If your scene genuinely needs five planes (for example, a foggy mountain range w
 
 ## Image Format Comparison
 
-| Format | Compression | Alpha (Transparency) | Browser Support | Recommended Use |
-|--------|-------------|---------------------|-----------------|-----------------|
-| AVIF | Excellent (AV1-based) | Yes (full alpha channel) | Chrome 85+, Firefox 93+, Safari 16+ | Primary format for all layers |
-| WebP | Good (VP8-based) | Yes | Chrome 32+, Firefox 65+, Safari 14+ | Fallback for older Safari |
-| PNG | Lossless | Yes | Universal | Source files only; not for production |
-| JPEG | Good (DCT-based) | No | Universal | Far background only (no transparency needed) |
+| Format | Compression           | Alpha (Transparency)     | Browser Support                     | Recommended Use                              |
+| ------ | --------------------- | ------------------------ | ----------------------------------- | -------------------------------------------- |
+| AVIF   | Excellent (AV1-based) | Yes (full alpha channel) | Chrome 85+, Firefox 93+, Safari 16+ | Primary format for all layers                |
+| WebP   | Good (VP8-based)      | Yes                      | Chrome 32+, Firefox 65+, Safari 14+ | Fallback for older Safari                    |
+| PNG    | Lossless              | Yes                      | Universal                           | Source files only; not for production        |
+| JPEG   | Good (DCT-based)      | No                       | Universal                           | Far background only (no transparency needed) |
 
 **AVIF** is the primary format for this theme. It delivers dramatically smaller file sizes than WebP or PNG at equivalent visual quality — typically 40–60% smaller than WebP and 70–80% smaller than PNG for photographic content. For the wide panoramic images that parallax layers require (often 3000px+ wide), this difference is significant.
 
@@ -63,16 +63,16 @@ In practice, the scale compensation is applied in CSS, not to the image itself. 
 
 ### Ideal Dimensions by Layer
 
-| Layer | Depth | Scale Factor | Recommended Width | Recommended Height |
-|-------|-------|--------------|-------------------|--------------------|
-| Far background | 8 | 9× | 3000px | 1500px |
-| Mid-background | 5 | 6× | 2800px | 1400px |
-| Near-ground | 2 | 3× | 2400px | 1200px |
-| Foreground | 1 | 2× | 2400px | 1200px |
+| Layer          | Depth | Scale Factor | Recommended Width | Recommended Height |
+| -------------- | ----- | ------------ | ----------------- | ------------------ |
+| Far background | 8     | 9×           | 3000px            | 1500px             |
+| Mid-background | 5     | 6×           | 2800px            | 1400px             |
+| Near-ground    | 2     | 3×           | 2400px            | 1200px             |
+| Foreground     | 1     | 2×           | 2400px            | 1200px             |
 
 ### Why Wide Panoramas Work Better Than Tall Images
 
-The horizontal crop of each layer is controlled by `--md-image-position`, which maps to `object-position`. Because the scale compensation zooms the image in considerably, a tall image mostly wastes pixels on the top and bottom edges that will never be visible. A wide panorama uses that pixel budget on horizontal detail that *will* be seen as the user adjusts `--md-image-position` or visits on different viewport widths.
+The horizontal crop of each layer is controlled by `--md-image-position`, which maps to `object-position`. Because the scale compensation zooms the image in considerably, a tall image mostly wastes pixels on the top and bottom edges that will never be visible. A wide panorama uses that pixel budget on horizontal detail that _will_ be seen as the user adjusts `--md-image-position` or visits on different viewport widths.
 
 The aspect ratio `2:1` (width:height) is a reliable default. If your scene has significant vertical interest in the mid-ground (tall trees, cliffs, buildings), you can go to `1.5:1`, but avoid portrait-oriented source images.
 
@@ -165,8 +165,8 @@ Each parallax layer is displayed using `object-fit: cover` (or equivalent backgr
 
 ```css
 .parallax__layer img {
-  object-fit: cover;
-  object-position: calc(var(--md-image-position) * 1%) center;
+	object-fit: cover;
+	object-position: calc(var(--md-image-position) * 1%) center;
 }
 ```
 
@@ -188,13 +188,13 @@ All layers should share the same horizon line — the perceived eye level of the
 
 ### Foreground Anchoring to the Bottom
 
-Foreground elements should be rooted at the *bottom* of the image frame, not floating in the middle. Plants, rocks, architectural elements, and terrain features that anchor to the bottom edge of the frame appear to "sit" on the ground plane, which is where the user expects near objects to be. Floating foreground elements — a tree whose trunk is not connected to the bottom of the frame — look ungrounded and break the illusion.
+Foreground elements should be rooted at the _bottom_ of the image frame, not floating in the middle. Plants, rocks, architectural elements, and terrain features that anchor to the bottom edge of the frame appear to "sit" on the ground plane, which is where the user expects near objects to be. Floating foreground elements — a tree whose trunk is not connected to the bottom of the frame — look ungrounded and break the illusion.
 
 Set the foreground layer's `object-position` vertical value to `bottom` to ensure the anchoring is respected:
 
 ```css
 .parallax__layer--foreground img {
-  object-position: calc(var(--md-image-position) * 1%) bottom;
+	object-position: calc(var(--md-image-position) * 1%) bottom;
 }
 ```
 
@@ -257,20 +257,9 @@ Each layer is rendered using a `<picture>` element to support both AVIF and WebP
 
 ```html
 <picture class="parallax__layer" style="--md-parallax-depth: 8; --md-image-position: 50">
-  <source
-    type="image/avif"
-    srcset="/assets/hero/hero-background@4x.avif"
-  />
-  <source
-    type="image/webp"
-    srcset="/assets/hero/hero-background@4x.webp"
-  />
-  <img
-    src="/assets/hero/hero-background@4x.png"
-    alt=""
-    loading="eager"
-    decoding="async"
-  />
+	<source type="image/avif" srcset="/assets/hero/hero-background@4x.avif" />
+	<source type="image/webp" srcset="/assets/hero/hero-background@4x.webp" />
+	<img src="/assets/hero/hero-background@4x.png" alt="" loading="eager" decoding="async" />
 </picture>
 ```
 
@@ -327,14 +316,14 @@ After a layer swap, clear your browser cache or use an incognito window to test,
 
 ## Quick Reference: Layer Properties
 
-| Property | Far Background | Mid-Background | Near-Ground | Foreground |
-|----------|---------------|----------------|-------------|------------|
-| `--md-parallax-depth` | `8` | `5` | `2` | `1` |
-| Scale factor | `9×` | `6×` | `3×` | `2×` |
-| Visual scroll rate | ~11% | ~17% | ~33% | ~50% |
-| Needs transparency | No | Yes | Yes | Yes |
-| Recommended width | 3000px | 2800px | 2400px | 2400px |
-| `loading` attribute | `eager` | `eager` | `lazy` | `lazy` |
-| `z-index` (auto) | 2 | 5 | 8 | 9 |
+| Property              | Far Background | Mid-Background | Near-Ground | Foreground |
+| --------------------- | -------------- | -------------- | ----------- | ---------- |
+| `--md-parallax-depth` | `8`            | `5`            | `2`         | `1`        |
+| Scale factor          | `9×`           | `6×`           | `3×`        | `2×`       |
+| Visual scroll rate    | ~11%           | ~17%           | ~33%        | ~50%       |
+| Needs transparency    | No             | Yes            | Yes         | Yes        |
+| Recommended width     | 3000px         | 2800px         | 2400px      | 2400px     |
+| `loading` attribute   | `eager`        | `eager`        | `lazy`      | `lazy`     |
+| `z-index` (auto)      | 2              | 5              | 8           | 9          |
 
 Adjust `--md-parallax-depth` first when you want to change how dramatic the parallax separation feels. Adjust `--md-image-position` when you want to shift the horizontal crop without changing the depth behavior.

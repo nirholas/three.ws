@@ -12,7 +12,7 @@ CSS uses a right-handed coordinate system. The X axis runs left to right across 
 
 The **vanishing point** is where all parallel lines in the 3D scene would converge if extended to infinity. In CSS, the vanishing point defaults to the center of the element that has `perspective` set on it. If you set `perspective: 500px` on a container and it is 800px wide and 600px tall, the vanishing point sits at `(400px, 300px)` in that container's coordinate space. Elements positioned away from that center will appear to slant toward it, which is exactly what gives 3D scenes their sense of depth.
 
-There is one important subtlety: the vanishing point is relative to the *perspective element*, not the viewport. This matters enormously for parallax, as we will see shortly.
+There is one important subtlety: the vanishing point is relative to the _perspective element_, not the viewport. This matters enormously for parallax, as we will see shortly.
 
 ---
 
@@ -24,8 +24,8 @@ There are two ways to introduce perspective into CSS:
 
 ```css
 .scroll-container {
-  perspective: 2.5rem;
-  overflow: hidden auto;
+	perspective: 2.5rem;
+	overflow: hidden auto;
 }
 ```
 
@@ -33,13 +33,13 @@ There are two ways to introduce perspective into CSS:
 
 ```css
 .layer {
-  transform: perspective(2.5rem) translateZ(-10px);
+	transform: perspective(2.5rem) translateZ(-10px);
 }
 ```
 
 These look similar but behave fundamentally differently, and the difference is what makes scrolling parallax possible.
 
-When you use the `perspective` *property* on a parent, all children share a *single* vanishing point. Every child's 3D transform is evaluated relative to that one shared origin. As a result, moving one child does not move the vanishing point — it stays anchored to the parent.
+When you use the `perspective` _property_ on a parent, all children share a _single_ vanishing point. Every child's 3D transform is evaluated relative to that one shared origin. As a result, moving one child does not move the vanishing point — it stays anchored to the parent.
 
 When you use `perspective()` inside an individual element's `transform`, each element gets its own independent vanishing point centered on itself. There is no shared scene. Objects do not relate to each other in 3D space.
 
@@ -57,19 +57,19 @@ More precisely, when the scroll container moves by `d` pixels (i.e., `scrollTop`
 visual_movement = d × (p / (p - z))
 ```
 
-For the parallax effect we want *slower* movement for elements further away (negative Z). Substituting a negative Z value:
+For the parallax effect we want _slower_ movement for elements further away (negative Z). Substituting a negative Z value:
 
 ```
 visual_movement = d × (p / (p + |z|))
 ```
 
-When `|z|` is large, the denominator grows, and the fraction shrinks below 1. The element appears to move *less* than the scroll distance. That is parallax.
+When `|z|` is large, the denominator grows, and the fraction shrinks below 1. The element appears to move _less_ than the scroll distance. That is parallax.
 
 In this theme, the perspective value is `2.5rem`. The CSS variable `--md-parallax-depth` sets the depth multiplier. The actual `translateZ` value applied to each layer is:
 
 ```css
 transform: translateZ(calc(2.5rem * var(--md-parallax-depth) * -1))
-           scale(calc(var(--md-parallax-depth) + 1));
+	scale(calc(var(--md-parallax-depth) + 1));
 ```
 
 With `--md-parallax-depth: 8` (the farthest background layer), the element is pushed `20rem` (8 × 2.5rem) back into the page. Its visual scroll rate becomes:
@@ -114,7 +114,7 @@ For the near foreground at `--md-parallax-depth: 1`:
 - Scale compensation: `2`
 - Net visual size: `1/2 × 2 = 1` — back to full size
 
-A critical side effect: because scale compensation makes far layers appear full-size, they must actually be *much larger* in pixel terms than they appear. A layer at depth 8 needs to be rendered 9× its visible dimensions. This is why background images for deep layers need to be wide panoramic files — the scale transform stretches them to fill the viewport.
+A critical side effect: because scale compensation makes far layers appear full-size, they must actually be _much larger_ in pixel terms than they appear. A layer at depth 8 needs to be rendered 9× its visible dimensions. This is why background images for deep layers need to be wide panoramic files — the scale transform stretches them to fill the viewport.
 
 ---
 
@@ -122,7 +122,7 @@ A critical side effect: because scale compensation makes far layers appear full-
 
 You might wonder: if the scroll container is scrolled, does not everything inside move together by the same amount? The answer is yes in 2D, but not in 3D.
 
-When the container scrolls, the viewport's position in the container's coordinate space changes. Elements at `translateZ(0)` behave normally — they scroll at 1:1. But the 3D projection matrix transforms the geometry of elements at non-zero Z positions. As the viewpoint shifts relative to the Z-displaced elements, the *projected* position on screen changes at a different rate than the raw scroll offset. The perspective math does this automatically; the browser's rendering engine handles it correctly by compositing each layer with its appropriate depth-projected transform.
+When the container scrolls, the viewport's position in the container's coordinate space changes. Elements at `translateZ(0)` behave normally — they scroll at 1:1. But the 3D projection matrix transforms the geometry of elements at non-zero Z positions. As the viewpoint shifts relative to the Z-displaced elements, the _projected_ position on screen changes at a different rate than the raw scroll offset. The perspective math does this automatically; the browser's rendering engine handles it correctly by compositing each layer with its appropriate depth-projected transform.
 
 This is why this technique requires no JavaScript whatsoever. The parallax is not computed by reading `scrollTop` and updating element positions — it is a natural geometric consequence of CSS 3D perspective projection. The browser's compositor thread handles it entirely, on the GPU.
 
@@ -134,13 +134,13 @@ The hero text sits on top of the parallax image layers and should remain readabl
 
 ```css
 .parallax__group--hero-text {
-  position: sticky;
-  top: 0;
-  margin-bottom: -100vh;
+	position: sticky;
+	top: 0;
+	margin-bottom: -100vh;
 }
 ```
 
-The `margin-bottom: -100vh` deserves explanation. Sticky positioning keeps an element "stuck" to the top of the scroll container until its *parent* scrolls out of view. Without the negative margin, the parent element would end exactly at the bottom of the text content, and the text would begin to scroll away before the parallax images are done moving through the viewport.
+The `margin-bottom: -100vh` deserves explanation. Sticky positioning keeps an element "stuck" to the top of the scroll container until its _parent_ scrolls out of view. Without the negative margin, the parent element would end exactly at the bottom of the text content, and the text would begin to scroll away before the parallax images are done moving through the viewport.
 
 By setting `margin-bottom: -100vh`, the parent element's layout height is reduced by one viewport height. This pulls the sticky constraint boundary upward, keeping the text stuck for exactly as long as the parallax hero section occupies the viewport. When the parallax scroll group eventually leaves the viewport, the sticky text goes with it, revealing the normal document content below.
 
@@ -152,7 +152,7 @@ This is a purely CSS technique. No scroll event listeners, no `position: fixed` 
 
 ```css
 .parallax__group {
-  contain: strict;
+	contain: strict;
 }
 ```
 
@@ -174,7 +174,7 @@ Subsequent groups (if any) use responsive `vw`-based heights rather than fixed `
 
 ```css
 .parallax__group--scene {
-  height: 56.25vw; /* 16:9 aspect ratio */
+	height: 56.25vw; /* 16:9 aspect ratio */
 }
 ```
 
@@ -188,12 +188,8 @@ Between the parallax image layers and the content below, there is a gradient ble
 
 ```css
 .parallax__blend {
-  background: linear-gradient(
-    to bottom,
-    transparent 0%,
-    var(--md-default-bg-color) 100%
-  );
-  z-index: 5;
+	background: linear-gradient(to bottom, transparent 0%, var(--md-default-bg-color) 100%);
+	z-index: 5;
 }
 ```
 
@@ -228,7 +224,7 @@ Safari has a known issue where `contain: strict` on elements inside a `perspecti
 
 ```js
 if (/^((?!chrome|android).)*safari/i.test(navigator.userAgent)) {
-  document.body.classList.add('safari');
+	document.body.classList.add('safari');
 }
 ```
 
@@ -236,7 +232,7 @@ The CSS then disables `contain` specifically for Safari:
 
 ```css
 .safari .parallax__group {
-  contain: none;
+	contain: none;
 }
 ```
 
@@ -248,14 +244,14 @@ Firefox has a repaint bug where the parallax layers occasionally fail to repaint
 
 ```js
 window.addEventListener('focus', () => {
-  document.body.classList.add('ff-hack');
-  requestAnimationFrame(() => document.body.classList.remove('ff-hack'));
+	document.body.classList.add('ff-hack');
+	requestAnimationFrame(() => document.body.classList.remove('ff-hack'));
 });
 ```
 
 ```css
 .ff-hack .parallax__layer {
-  will-change: transform;
+	will-change: transform;
 }
 ```
 

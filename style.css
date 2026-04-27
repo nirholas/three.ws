@@ -5890,6 +5890,30 @@ textarea.erc8004-code {
 	border: 1px dashed rgba(255, 255, 255, 0.1);
 	border-radius: var(--radius-md);
 	color: rgba(255, 255, 255, 0.5);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 14px;
+}
+.explore-clear-filters {
+	background: transparent;
+	border: 1px solid rgba(255, 255, 255, 0.18);
+	color: rgba(255, 255, 255, 0.78);
+	padding: 7px 16px;
+	border-radius: 99px;
+	font-size: 13px;
+	font-weight: 500;
+	cursor: pointer;
+	transition:
+		border-color 0.15s ease,
+		color 0.15s ease,
+		background 0.15s ease;
+}
+.explore-clear-filters:hover,
+.explore-clear-filters:focus-visible {
+	border-color: var(--accent);
+	color: var(--accent);
+	background: var(--accent-soft);
 }
 .explore-error {
 	padding: var(--space-md);
