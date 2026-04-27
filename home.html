@@ -49,6 +49,7 @@
 			</h1>
 			<nav class="home-nav" aria-label="Primary">
 				<a href="/app">Viewer</a>
+				<a href="/create">Create</a>
 				<a href="/studio">Studio</a>
 				<a href="/widgets">Widgets</a>
 				<a href="/features">Docs</a>
@@ -99,24 +100,11 @@
 						<div class="h-avatar-wrap">
 							<div class="h-avatar-ring"></div>
 							<div class="h-avatar-glow"></div>
-							<model-viewer
+							<canvas
 								id="hero-avatar"
 								class="h-avatar-viewer"
-								src="/avatars/cz.glb"
-								alt="three.ws — interactive 3D agent. Click for surprises."
-								animation-name="IdleV4.2(maya_head)"
-								autoplay
-								disable-zoom
-								interaction-prompt="none"
-								shadow-intensity="0.9"
-								shadow-softness="1"
-								exposure="1.1"
-								tone-mapping="aces"
-								environment-image="neutral"
-								camera-orbit="-45deg 80deg 8.5m"
-								field-of-view="18deg"
-								loading="eager"
-							></model-viewer>
+								aria-label="three.ws — interactive 3D agent. Click for surprises."
+							></canvas>
 							<div class="h-avatar-badge">
 								<span class="h-avatar-badge-label">live agent</span>
 								<span>0x3d…a9f</span>
@@ -365,24 +353,17 @@
 					<h2 class="h-section-title">Everything an agent needs<br />to exist in the world.</h2>
 				</div>
 				<div class="h-bento-grid">
-					<!-- Large card: 3D viewer -->
+					<!-- Large card: 3D viewer + inline animation panel -->
 					<div class="h-bento-card h-bento-card--lg h-reveal">
 						<div class="h-bento-visual">
-							<model-viewer
-								src="/avatars/cz.glb"
-								auto-rotate
-								auto-rotate-delay="0"
-								rotation-per-second="14deg"
-								interaction-prompt="none"
-								camera-controls
-								disable-zoom
-								shadow-intensity="0.7"
-								exposure="1.0"
-								environment-image="neutral"
-								camera-orbit="0deg 72deg 2.8m"
-								field-of-view="30deg"
-								loading="lazy"
-							></model-viewer>
+							<canvas id="bento-cz-canvas" class="h-bento-cz-canvas"></canvas>
+						</div>
+						<div class="h-bento-anim-panel" data-role="bento-anim-panel">
+							<div class="h-bento-anim-header">
+								<span class="h-bento-anim-title">Animations</span>
+								<button type="button" class="h-bento-anim-stop" data-role="bento-anim-stop" title="Stop all">⏹</button>
+							</div>
+							<div class="h-bento-anim-grid" data-role="bento-anim-grid"></div>
 						</div>
 						<div class="h-bento-body">
 							<span class="h-bento-tag">Viewer</span>
@@ -498,11 +479,12 @@
 					</div>
 					<nav class="h-footer-links" aria-label="Footer">
 						<a href="https://github.com/nirholas/3D" target="_blank" rel="noopener">GitHub</a>
-						<a href="/features">Docs</a>
 						<a href="/features">Features</a>
-						<a href="/studio">Widgets</a>
+						<a href="/widgets">Widgets</a>
 						<a href="/discover">Discover</a>
 						<a href="https://eips.ethereum.org/EIPS/eip-8004" target="_blank" rel="noopener">ERC-8004</a>
+						<a href="/legal/privacy">Privacy</a>
+						<a href="/legal/tos">Terms</a>
 					</nav>
 					<p class="h-footer-copy">Open source · MIT license</p>
 				</div>
@@ -549,17 +531,14 @@
 				});
 			})();
 
-			// Hero avatar — track cursor + orbit on scroll + clickable easter eggs
+			// Hero avatar — Act2Viewer with cursor/scroll orbit + click → real animations
 			(function () {
 				const scrollEl = document.querySelector('.home-parallax');
-				const mv = document.getElementById('hero-avatar');
-				const wrap = mv ? mv.closest('.h-avatar-wrap') : null;
+				const canvas = document.getElementById('hero-avatar');
 				const heroAct = document.querySelector('.h-hero-act');
-				if (!scrollEl || !mv || !wrap || !heroAct) return;
+				if (!scrollEl || !canvas || !heroAct) return;
 
-				let mouseX = 0, mouseY = 0;
-				let scrollProgress = 0;
-				let dollyOffset = 0; /* additive zoom from click reaction */
+				let mouseX = 0, mouseY = 0, scrollProgress = 0;
 				const BASE_THETA = -45, BASE_PHI = 80, BASE_R = 8.5;
 				let curTheta = BASE_THETA, curPhi = BASE_PHI, curR = BASE_R;
 
@@ -572,50 +551,44 @@
 					scrollProgress = Math.min(scrollEl.scrollTop / heroAct.offsetHeight, 1);
 				}, { passive: true });
 
-				function tick() {
-					/* sweep from left-front (-45°) to right-front (+45°) — never
-					   rotates past the side, so we never show CZ's back. */
-					const scrollTheta = scrollProgress * 90;
-					const scrollPhi   = -scrollProgress * 8;
-					const scrollR     = scrollProgress * 0.8;
-					const cursorTheta = mouseX * 16;
-					const cursorPhi   = mouseY * 6;
-					const targetTheta = BASE_THETA + scrollTheta + cursorTheta;
-					const targetPhi   = BASE_PHI   + scrollPhi   + cursorPhi;
-					const targetR     = BASE_R     + scrollR + dollyOffset;
-					curTheta += (targetTheta - curTheta) * 0.07;
-					curPhi   += (targetPhi   - curPhi)   * 0.07;
-					curR     += (targetR     - curR)     * 0.12;
-					mv.setAttribute('camera-orbit',
-						curTheta.toFixed(1) + 'deg ' +
-						curPhi.toFixed(1)   + 'deg ' +
-						curR.toFixed(2)     + 'm');
-					requestAnimationFrame(tick);
+				function whenReady(cb) {
+					if (window.Act2Viewer) return cb();
+					setTimeout(() => whenReady(cb), 60);
 				}
-				tick();
 
-				/* Click → random fun trick (CZ has no extra animations, so we do
-				   it with CSS transforms on the wrap: fall over, spin, push-up,
-				   jump). State is auto-cleared. */
-				/* CZ has only one baked animation in his GLB (Idle), so faking
-				   skeletal motion with CSS transforms looks plastic. Instead,
-				   clicking does a real camera dolly-zoom — actual rendering
-				   on the real animated model = looks natural, like /app. */
-				let dollyActive = false;
-				mv.style.cursor = 'pointer';
-				mv.addEventListener('click', () => {
-					if (dollyActive) return;
-					dollyActive = true;
-					const t0 = performance.now();
-					const dur = 700;
-					function step(now) {
-						const t = Math.min((now - t0) / dur, 1);
-						const wave = Math.sin(t * Math.PI); /* 0 → 1 → 0 */
-						dollyOffset = -3.2 * wave; /* zoom in 3.2m closer at peak */
-						if (t < 1) requestAnimationFrame(step);
-						else { dollyOffset = 0; dollyActive = false; }
-					}
-					requestAnimationFrame(step);
+				whenReady(() => {
+					const viewer = new window.Act2Viewer(canvas, { fov: 18 });
+
+					/* cursor + scroll orbit loop — matches original model-viewer camera-orbit params */
+					(function tick() {
+						const scrollTheta = scrollProgress * 90;
+						const scrollPhi   = -scrollProgress * 8;
+						const scrollR     = scrollProgress * 0.8;
+						curTheta += (BASE_THETA + scrollTheta + mouseX * 16 - curTheta) * 0.07;
+						curPhi   += (BASE_PHI   + scrollPhi  + mouseY * 6  - curPhi)   * 0.07;
+						curR     += (BASE_R     + scrollR                  - curR)     * 0.12;
+						viewer.setOrbit(curTheta, curPhi, curR);
+						requestAnimationFrame(tick);
+					})();
+
+					viewer.loadModel('/avatars/cz.glb').catch(console.error);
+
+					/* click → random manifest animation; non-looping ones return to idle */
+					const FUN = ['wave', 'dance', 'celebrate', 'jump', 'silly', 'rumba', 'capoeira', 'thriller'];
+					let lastAnim = null;
+					canvas.style.cursor = 'pointer';
+					canvas.addEventListener('click', async () => {
+						const pool = FUN.filter(a => a !== lastAnim);
+						const name = pool[Math.floor(Math.random() * pool.length)];
+						lastAnim = name;
+						try {
+							await viewer.playClip(name);
+							const def = viewer._manifest.find(d => d.name === name);
+							if (def && !def.loop) {
+								setTimeout(() => viewer.playClip('idle').catch(() => {}), 2600);
+							}
+						} catch (_) {}
+					});
 				});
 			})();
 
@@ -688,6 +661,66 @@
 						wider = !wider;
 						viewer.zoom(wider ? FAR : NEAR);
 					});
+				});
+			})();
+
+			// Bento Viewer card — same Act2Viewer + animation panel as Act 2
+			(function () {
+				const canvas = document.getElementById('bento-cz-canvas');
+				const grid = document.querySelector('[data-role="bento-anim-grid"]');
+				const stopBtn = document.querySelector('[data-role="bento-anim-stop"]');
+				if (!canvas || !grid) return;
+
+				function whenReady(cb) {
+					if (window.Act2Viewer) return cb();
+					setTimeout(() => whenReady(cb), 60);
+				}
+
+				whenReady(() => {
+					const viewer = new window.Act2Viewer(canvas);
+
+					function prettyLabel(def) {
+						return (def.label || def.name).replace(/\s*\([^)]*\)/g, '').trim();
+					}
+
+					function buildButtons(defs) {
+						grid.innerHTML = '';
+						defs.forEach((def, i) => {
+							const btn = document.createElement('button');
+							btn.type = 'button';
+							btn.className = 'h-bento-anim-btn';
+							btn.dataset.anim = def.name;
+							btn.title = def.label || def.name;
+							const icon = document.createElement('span');
+							icon.className = 'h-bento-anim-btn__icon';
+							icon.textContent = def.icon || '✨';
+							const label = document.createElement('span');
+							label.className = 'h-bento-anim-btn__label';
+							label.textContent = prettyLabel(def);
+							btn.appendChild(icon);
+							btn.appendChild(label);
+							if (i === 0) btn.classList.add('h-bento-anim-btn--active');
+							btn.addEventListener('click', async () => {
+								grid.querySelectorAll('.h-bento-anim-btn').forEach((b) => b.classList.remove('h-bento-anim-btn--active'));
+								btn.classList.add('h-bento-anim-btn--active');
+								btn.classList.add('h-bento-anim-btn--loading');
+								try { await viewer.playClip(def.name); } catch (_) {}
+								btn.classList.remove('h-bento-anim-btn--loading');
+							});
+							grid.appendChild(btn);
+						});
+					}
+
+					viewer.onClipsReady = buildButtons;
+					viewer.loadModel('/avatars/cz.glb').catch(console.error);
+
+					if (stopBtn) {
+						stopBtn.addEventListener('click', () => {
+							if (viewer.mixer) viewer.mixer.stopAllAction();
+							viewer.currentAction = null;
+							grid.querySelectorAll('.h-bento-anim-btn').forEach((b) => b.classList.remove('h-bento-anim-btn--active'));
+						});
+					}
 				});
 			})();
 

@@ -31,7 +31,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 const CROSSFADE = 0.35;
 
 export class Act2Viewer {
-	constructor(canvas) {
+	constructor(canvas, { fov = 14 } = {}) {
 		this.canvas = canvas;
 		this.renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true });
 		this.renderer.toneMapping = ACESFilmicToneMapping;
@@ -39,7 +39,7 @@ export class Act2Viewer {
 		this.renderer.outputColorSpace = SRGBColorSpace;
 
 		this.scene = new Scene();
-		this.camera = new PerspectiveCamera(14, 1, 0.1, 100);
+		this.camera = new PerspectiveCamera(fov, 1, 0.1, 100);
 		this.camera.position.set(0, 1.0, 22);
 
 		/* neutral environment (matches model-viewer's environment-image="neutral") */
@@ -65,6 +65,8 @@ export class Act2Viewer {
 		this._loader = new GLTFLoader();
 		this._clock = new Clock();
 		this._modelYaw = 0;
+		this._modelFocusY = 1.0;
+		this._externalOrbit = false;
 
 		/** Optional callback when the chip list changes (manifest + GLB-baked combined). */
 		this.onClipsReady = null;
@@ -91,8 +93,8 @@ export class Act2Viewer {
 	_tick() {
 		const dt = this._clock.getDelta();
 		if (this.mixer) this.mixer.update(dt);
-		if (this.model) {
-			this._modelYaw += dt * 0.18; /* slow auto-rotate, like model-viewer's auto-rotate */
+		if (this.model && !this._externalOrbit) {
+			this._modelYaw += dt * 0.18;
 			this.model.rotation.y = this._modelYaw;
 		}
 		this.renderer.render(this.scene, this.camera);
@@ -175,8 +177,10 @@ export class Act2Viewer {
 		/* fit camera to model height with a comfortable framing */
 		const targetHeight = size.y;
 		const dist = (targetHeight / 2) / Math.tan((this.camera.fov / 2) * (Math.PI / 180));
-		this.camera.position.set(0, targetHeight * 0.55, dist * 1.2);
-		this.camera.lookAt(0, targetHeight * 0.55, 0);
+		this._modelFocusY = targetHeight * 0.55;
+		this._externalOrbit = false;
+		this.camera.position.set(0, this._modelFocusY, dist * 1.2);
+		this.camera.lookAt(0, this._modelFocusY, 0);
 
 		this.mixer = new AnimationMixer(this.model);
 
@@ -233,6 +237,25 @@ export class Act2Viewer {
 			action.reset().play();
 		}
 		this.currentAction = action;
+	}
+
+	/**
+	 * Orbit the camera around the model using polar coordinates matching model-viewer's
+	 * camera-orbit convention: theta = azimuth (deg), phi = elevation from top (deg),
+	 * radius = distance (m).  Calling this disables internal auto-rotate.
+	 */
+	setOrbit(thetaDeg, phiDeg, radius) {
+		this._externalOrbit = true;
+		const theta = thetaDeg * (Math.PI / 180);
+		const phi = phiDeg * (Math.PI / 180);
+		const sinPhi = Math.sin(phi);
+		const cosPhi = Math.cos(phi);
+		this.camera.position.set(
+			radius * sinPhi * Math.sin(theta),
+			this._modelFocusY + radius * cosPhi,
+			radius * sinPhi * Math.cos(theta),
+		);
+		this.camera.lookAt(0, this._modelFocusY, 0);
 	}
 
 	setExposure(v) {
