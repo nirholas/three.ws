@@ -13,7 +13,7 @@
 	background: #1a1a1a;
 	border: 1px solid #333;
 	border-radius: 12px;
-	width: min(540px, calc(100vw - 32px));
+	width: min(560px, calc(100vw - 32px));
 	max-height: calc(100vh - 64px);
 	overflow-y: auto;
 	padding: 24px;
@@ -142,4 +142,104 @@
 	border: none;
 	border-top: 1px solid #2a2a2a;
 	margin: 20px 0;
+}
+
+/* ── Customise controls ──────────────────────────────────────────────────────── */
+
+.share-panel-controls {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+}
+
+.share-panel-fieldset {
+	flex: 1 1 140px;
+	min-width: 140px;
+	border: 1px solid #2a2a2a;
+	border-radius: 8px;
+	padding: 8px 10px 10px;
+	margin: 0;
+}
+
+.share-panel-fieldset legend {
+	font-size: 10px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: #888;
+	padding: 0 4px;
+}
+
+.share-panel-segments {
+	display: flex;
+	gap: 4px;
+	flex-wrap: wrap;
+}
+
+.share-panel-segment {
+	flex: 1;
+	min-width: 0;
+	background: #1f1f1f;
+	border: 1px solid #2e2e2e;
+	border-radius: 5px;
+	color: #b0b0b0;
+	cursor: pointer;
+	font-size: 11px;
+	padding: 5px 8px;
+	white-space: nowrap;
+	text-align: center;
+	transition:
+		background 0.12s,
+		color 0.12s,
+		border-color 0.12s;
+}
+
+.share-panel-segment:hover {
+	background: #2a2a2a;
+	color: #fff;
+}
+
+.share-panel-segment--active {
+	background: #2e3a55;
+	border-color: #4d6aa3;
+	color: #e8eeff;
+}
+
+.share-panel-segment--active:hover {
+	background: #364568;
+}
+
+/* ── Live preview ────────────────────────────────────────────────────────────── */
+
+.share-panel-preview {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	border-radius: 10px;
+	background:
+		linear-gradient(45deg, #1d1d1d 25%, transparent 25%) 0 0 / 16px 16px,
+		linear-gradient(-45deg, #1d1d1d 25%, transparent 25%) 0 8px / 16px 16px,
+		linear-gradient(45deg, transparent 75%, #1d1d1d 75%) 8px -8px / 16px 16px,
+		linear-gradient(-45deg, transparent 75%, #1d1d1d 75%) 8px 0 / 16px 16px,
+		#252525;
+	padding: 16px;
+	border: 1px solid #2a2a2a;
+	min-height: 200px;
+}
+
+.share-panel-preview-frame {
+	display: block;
+	border: 0;
+	border-radius: 8px;
+	background: transparent;
+	max-width: 100%;
+	box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
+
+.share-panel-preview-frame[data-bg='dark'] {
+	background: #0b0d10;
+}
+
+.share-panel-preview-frame[data-bg='light'] {
+	background: #f5f5f5;
 }

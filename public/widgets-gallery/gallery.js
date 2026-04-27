@@ -32,7 +32,7 @@ function renderShowcase(w) {
 	root.className = 'showcase';
 	root.setAttribute('aria-labelledby', `sc-${w.id}-title`);
 
-	const widgetUrl = `${ORIGIN}/#widget=${encodeURIComponent(w.id)}&kiosk=true`;
+	const widgetUrl = `${ORIGIN}/app#widget=${encodeURIComponent(w.id)}&kiosk=true`;
 	const pageUrl = `${ORIGIN}/w/${encodeURIComponent(w.id)}`;
 	const snippet = `<iframe src="${widgetUrl}" width="${w.width}" height="${w.height}" style="border:0;border-radius:12px;max-width:100%" allow="autoplay; xr-spatial-tracking; clipboard-write" loading="lazy"></iframe>`;
 

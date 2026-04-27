@@ -64,7 +64,16 @@
 		{ "src": "/api/a/(\\d+)/(\\d+)/og", "dest": "/api/a-og?chain=$1&id=$2" },
 		{ "src": "/api/oembed", "dest": "/api/agent-oembed" },
 		{ "src": "/agent/([^/]+)/edit", "dest": "/agent-edit.html" },
-		{ "src": "/agent/([^/]+)/embed", "dest": "/agent-embed.html" },
+		{
+			"src": "/agent/([^/]+)/embed",
+			"headers": {
+				"content-security-policy": "frame-ancestors *",
+				"x-content-type-options": "nosniff",
+				"referrer-policy": "strict-origin-when-cross-origin",
+				"permissions-policy": "microphone=(self), camera=(self), xr-spatial-tracking=*"
+			},
+			"dest": "/agent-embed.html"
+		},
 		{ "src": "/agent/([^/]+)", "dest": "/agent-home.html" },
 		{ "src": "/agent", "dest": "/agent-home.html" },
 
@@ -114,9 +123,10 @@
 
 		{ "src": "/my-agents", "dest": "/my-agents/index.html" },
 		{ "src": "/my-agents/", "dest": "/my-agents/index.html" },
-		{ "src": "/discover", "dest": "/discover/index.html" },
-		{ "src": "/discover/", "dest": "/discover/index.html" },
-		{ "src": "/discover/(.*)", "dest": "/discover/$1" },
+		{ "src": "/my-agents/(.*)", "dest": "/my-agents/$1" },
+		{ "src": "/discover", "status": 301, "headers": { "Location": "/my-agents" } },
+		{ "src": "/discover/", "status": 301, "headers": { "Location": "/my-agents" } },
+		{ "src": "/discover/(.*)", "status": 301, "headers": { "Location": "/my-agents" } },
 
 		{ "src": "/api/(.*)", "dest": "/api/$1" },
 
@@ -170,7 +180,16 @@
 		{ "src": "/home", "dest": "/home.html" },
 		{ "src": "/explore", "status": 301, "headers": { "Location": "/discover" } },
 		{ "src": "/explore/", "status": 301, "headers": { "Location": "/discover" } },
-		{ "src": "/a/(\\d+)/(\\d+)/embed", "dest": "/a-embed.html" },
+		{
+			"src": "/a/(\\d+)/(\\d+)/embed",
+			"headers": {
+				"content-security-policy": "frame-ancestors *",
+				"x-content-type-options": "nosniff",
+				"referrer-policy": "strict-origin-when-cross-origin",
+				"permissions-policy": "microphone=(self), camera=(self), xr-spatial-tracking=*"
+			},
+			"dest": "/a-embed.html"
+		},
 		{ "src": "/a/(\\d+)/(\\d+)", "dest": "/api/a-page?chain=$1&id=$2" },
 		{ "src": "/a/(.*)", "dest": "/app.html" },
 		{ "src": "/(.*)", "dest": "/$1" }

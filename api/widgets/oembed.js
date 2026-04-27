@@ -4,7 +4,7 @@
  * GET /api/widgets/oembed?url=<widget-url>[&format=json|xml]
  *
  * Implements https://oembed.com with type=rich. Accepts canonical widget URLs
- * (https://host/w/<id>) and the legacy SPA hash form (https://host/#widget=<id>).
+ * (https://host/w/<id>) and the legacy SPA hash form (https://host/app#widget=<id>).
  * The html payload is a sandboxed iframe so consumers (WordPress, Ghost, Notion,
  * Discord, Slack) can render the widget inline.
  */
@@ -44,7 +44,7 @@ export default wrap(async (req, res) => {
 	if (!widget) return error(res, 404, 'not_found', 'widget not found');
 
 	const origin = env.APP_ORIGIN;
-	const embedUrl = `${origin}/#widget=${widget.id}&kiosk=true`;
+	const embedUrl = `${origin}/app#widget=${widget.id}&kiosk=true`;
 	const pageUrl = `${origin}/w/${widget.id}`;
 	const thumbUrl = `${origin}/api/widgets/${widget.id}/og`;
 	const title = widget.name || 'Widget';
@@ -119,7 +119,8 @@ function extractWidgetId(target) {
 	const pathMatch = parsed.pathname.match(/^\/w\/([A-Za-z0-9_-]+)\/?$/);
 	if (pathMatch) return pathMatch[1];
 
-	if (parsed.hash) {
+	// Accept both legacy /#widget=<id> and current /app#widget=<id> forms.
+	if (parsed.hash && (parsed.pathname === '/' || parsed.pathname === '/app')) {
 		const hashMatch = parsed.hash.match(/(?:^|[#&])widget=([A-Za-z0-9_-]+)/);
 		if (hashMatch) return hashMatch[1];
 	}
