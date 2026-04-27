@@ -205,14 +205,13 @@ export class Act2Viewer {
 	}
 
 	_pickStartName() {
-		/* prefer 'idle', then anything matching 'Idle*', then first manifest entry,
-		   then first baked clip */
+		const SKIP = ['idle', 'silly'];
 		const all = this.listAvailableClips();
-		const idle = all.find((c) => c.name.toLowerCase() === 'idle');
-		if (idle) return idle.name;
-		const idleish = all.find((c) => c.name.toLowerCase().includes('idle'));
-		if (idleish) return idleish.name;
-		return all[0]?.name || null;
+		for (const preferred of ['dance', 'rumba', 'capoeira', 'wave', 'thriller']) {
+			const match = all.find((c) => c.name === preferred);
+			if (match) return match.name;
+		}
+		return all.find((c) => !SKIP.some(s => c.name.toLowerCase().includes(s)))?.name || all[0]?.name || null;
 	}
 
 	async playClip(name) {

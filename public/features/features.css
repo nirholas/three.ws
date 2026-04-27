@@ -78,8 +78,6 @@
 	display: block;
 	height: var(--features-act-height);
 	transform-style: preserve-3d;
-	overflow: hidden;
-	isolation: isolate;
 }
 
 .parallax-act + .parallax-act {

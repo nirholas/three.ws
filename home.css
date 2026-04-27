@@ -903,9 +903,10 @@
 
 .h-layer-bg--mint {
 	background:
-		radial-gradient(ellipse at 30% 40%, rgba(110, 231, 183, 0.15) 0%, transparent 55%),
-		radial-gradient(ellipse at 80% 75%, rgba(255, 215, 106, 0.06) 0%, transparent 55%),
-		linear-gradient(180deg, #06120e 0%, #06070b 100%);
+		radial-gradient(ellipse at 30% 40%, rgba(110, 231, 183, 0.12) 0%, transparent 55%),
+		radial-gradient(ellipse at 70% 60%, rgba(56, 189, 248, 0.10) 0%, transparent 50%),
+		radial-gradient(ellipse at 80% 75%, rgba(255, 215, 106, 0.04) 0%, transparent 55%),
+		linear-gradient(180deg, #060e14 0%, #06070b 100%);
 }
 
 /* ── Act depth orbs ──────────────────────────────────────────────────────── */
@@ -926,7 +927,7 @@
 }
 
 .h-layer-orb--mint {
-	background: radial-gradient(circle, #6ee7b7, transparent 70%);
+	background: radial-gradient(circle, color-mix(in srgb, #6ee7b7 60%, #38bdf8 40%), transparent 70%);
 	top: 18%;
 	right: 8%;
 }
@@ -974,9 +975,9 @@
 	inset: -2rem -2rem -2rem -2rem;
 	background: linear-gradient(
 		100deg,
-		rgba(6, 18, 14, 0.92) 0%,
-		rgba(6, 18, 14, 0.78) 45%,
-		rgba(6, 18, 14, 0.35) 75%,
+		rgba(4, 12, 20, 0.96) 0%,
+		rgba(4, 12, 20, 0.88) 45%,
+		rgba(4, 12, 20, 0.45) 75%,
 		transparent 100%
 	);
 	z-index: -1;
@@ -987,9 +988,29 @@
 /* ── Ghost avatar (Act 3, depth 1) ──────────────────────────────────────── */
 
 .h-avatar-wrap--ghost {
-	opacity: 0.15;
-	filter: blur(0.5px) hue-rotate(130deg) saturate(0.4);
+	opacity: 0.18;
+	filter: blur(0.5px) hue-rotate(150deg) saturate(0.5);
 	pointer-events: none;
+}
+
+.h-avatar-stage--trio {
+	flex-direction: row;
+	align-items: flex-end;
+	justify-content: center;
+	gap: 4vw;
+	padding-bottom: 4vh;
+}
+
+.h-avatar-wrap--trio {
+	width: clamp(140px, 20vw, 300px);
+	aspect-ratio: 2 / 3;
+}
+
+.h-avatar-viewer--tall {
+	border-radius: 8px;
+	display: block;
+	width: 100%;
+	height: 100%;
 }
 
 /* ── Sticky act text (same as h-hero-text but for acts 2/3) ─────────────── */
