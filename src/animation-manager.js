@@ -1,17 +1,18 @@
-import { AnimationMixer, LoopRepeat, LoopOnce } from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+import { AnimationClip, AnimationMixer, LoopRepeat, LoopOnce } from 'three';
 
 /**
- * Manages loading external animation clips (e.g. from Mixamo) and applying
- * them to any skinned model with crossfade transitions.
+ * Manages pre-baked animation clips for skinned agents.
+ *
+ * Clips are authored at build time (scripts/build-animations.mjs):
+ *   - Mixamo FBX → retargeted to canonical Avaturn skeleton → JSON
+ *   - No FBXLoader or retargeting in the browser; just fetch + parse.
  *
  * Usage:
  *   const mgr = new AnimationManager();
  *   mgr.attach(skinnedModel);
- *   await mgr.loadAnimation('idle', '/animations/idle.glb');
+ *   await mgr.loadAll();   // reads manifest, fetches clips lazily on first play
  *   mgr.play('idle');
- *   mgr.crossfadeTo('walking', 0.4);
+ *   mgr.crossfadeTo('dance', 0.4);
  */
 
 const DEFAULT_CROSSFADE = 0.35; // seconds
@@ -30,21 +31,19 @@ export class AnimationManager {
 		this.currentName = null;
 		/** @type {THREE.AnimationAction|null} */
 		this.currentAction = null;
-		/** @type {GLTFLoader} */
-		this.loader = new GLTFLoader();
-		/** @type {FBXLoader} */
-		this.fbxLoader = new FBXLoader();
-		/** @type {Function|null} */
+		/** @type {Function|null} Fired with the new clip name (or null) on every change. */
 		this.onChange = null;
-		/** @type {Map<string, object>} - Cache of loaded GLTF objects by URL */
-		this._gltfCache = new Map();
-
+		/** @type {Array<{name:string, url:string, label:string, icon:string, loop:boolean}>} */
 		this._animationDefs = [];
+		/** @type {Set<string>} Clip names that failed to load — buttons grayed out in UI. */
+		this._failed = new Set();
 	}
 
+	// ── Model binding ──────────────────────────────────────────────────────────
+
 	/**
-	 * Attach the manager to a loaded model. Creates a new mixer.
-	 * Call this every time a new model is loaded.
+	 * Attach to a loaded model. Call this every time a new model is loaded.
+	 * Re-creates actions for any clips that are already in memory.
 	 * @param {THREE.Object3D} model
 	 */
 	attach(model) {
@@ -55,18 +54,14 @@ export class AnimationManager {
 		this.currentAction = null;
 		this.currentName = null;
 
-		// Re-create actions for any clips that were already loaded
 		for (const [name, clip] of this.clips) {
-			const retargetedClip = this._retargetClip(clip, name);
-			const action = this.mixer.clipAction(retargetedClip);
+			const action = this.mixer.clipAction(clip);
 			action.enabled = true;
 			this.actions.set(name, action);
 		}
 	}
 
-	/**
-	 * Detach from current model, stop all actions, dispose mixer.
-	 */
+	/** Detach, stop all actions, dispose mixer. */
 	detach() {
 		if (this.mixer) {
 			this.mixer.stopAllAction();
@@ -79,305 +74,169 @@ export class AnimationManager {
 		this.currentName = null;
 	}
 
+	// ── Definitions ────────────────────────────────────────────────────────────
+
 	/**
-	 * Register animation definitions to be loaded lazily or eagerly.
-	 * @param {Array<{name: string, url: string, loop?: boolean}>} defs
+	 * Register animation definitions (from manifest.json).
+	 * @param {Array<{name:string, url:string, label?:string, icon?:string, loop?:boolean}>} defs
 	 */
 	setAnimationDefs(defs) {
 		this._animationDefs = defs;
 	}
 
-	/**
-	 * Get registered animation definitions.
-	 * @returns {Array<{name: string, url: string, loop?: boolean}>}
-	 */
+	/** @returns {Array} */
 	getAnimationDefs() {
 		return this._animationDefs;
 	}
 
+	/** @param {string} name @returns {boolean} */
+	isFailed(name) {
+		return this._failed.has(name);
+	}
+
+	// ── Loading ────────────────────────────────────────────────────────────────
+
 	/**
-	 * Load an animation clip from a GLB/glTF file and register it.
-	 * If a model is attached, also creates the action.
-	 * @param {string} name - Friendly name (e.g. "idle", "walking")
-	 * @param {string} url - URL of the GLB/glTF containing the animation
-	 * @param {object} [options]
-	 * @param {boolean} [options.loop=true] - Whether to loop the animation
-	 * @param {string} [options.clipName] - Name of a specific clip inside a multi-animation GLB
+	 * Load a single clip from a pre-baked JSON URL and register it.
+	 * Idempotent — returns the cached clip if already loaded.
+	 *
+	 * @param {string} name
+	 * @param {string} url  URL to a clip JSON produced by build-animations.mjs
+	 * @param {{ loop?: boolean }} [opts]
 	 * @returns {Promise<THREE.AnimationClip>}
 	 */
-	async loadAnimation(name, url, options = {}) {
-		// Return cached clip if already loaded
-		if (this.clips.has(name)) {
-			return this.clips.get(name);
-		}
+	async loadAnimation(name, url, opts = {}) {
+		if (this.clips.has(name)) return this.clips.get(name);
 
-		// Check if we already loaded this URL
-		let animations;
-		if (this._gltfCache.has(url)) {
-			animations = this._gltfCache.get(url);
-		} else {
-			const isFbx = url.toLowerCase().endsWith('.fbx');
-			const loaded = await new Promise((resolve, reject) => {
-				(isFbx ? this.fbxLoader : this.loader).load(url, resolve, undefined, reject);
-			});
-			// FBX: loaded is the scene object with .animations; GLTF: loaded.animations
-			animations = loaded.animations || [];
-			this._gltfCache.set(url, animations);
-		}
-
-		// Find the right clip: by clipName if specified, otherwise first clip
-		let clip;
-		if (options.clipName) {
-			clip = animations.find((a) => a.name === options.clipName);
-			if (!clip) {
-				console.warn(
-					`[AnimationManager] Clip "${options.clipName}" not found in ${url}, using first clip`,
-				);
-				clip = animations[0];
-			}
-		} else {
-			clip = animations[0];
-		}
-
-		if (!clip) {
-			throw new Error(`No animation found in ${url}`);
-		}
-
-		clip = clip.clone();
+		const res = await fetch(url);
+		if (!res.ok) throw new Error(`HTTP ${res.status} loading animation ${name}`);
+		const json = await res.json();
+		const clip = AnimationClip.parse(json);
 		clip.name = name;
+
 		this.clips.set(name, clip);
 
-		// If we have a model attached, create the action immediately
 		if (this.model && this.mixer) {
-			const retargetedClip = this._retargetClip(clip, name);
-			const action = this.mixer.clipAction(retargetedClip);
+			const action = this.mixer.clipAction(clip);
 			action.enabled = true;
-			action.setLoop(options.loop === false ? LoopOnce : LoopRepeat);
-			if (options.loop === false) {
-				action.clampWhenFinished = true;
-			}
+			action.setLoop(opts.loop === false ? LoopOnce : LoopRepeat);
+			if (opts.loop === false) action.clampWhenFinished = true;
 			this.actions.set(name, action);
 		}
-
 		return clip;
 	}
 
 	/**
-	 * Load all registered animation definitions.
-	 * Loads in parallel, non-blocking. Failed loads are logged but don't throw.
-	 * @returns {Promise<void>}
+	 * Load all registered definitions in parallel.
+	 * Failed clips are logged and added to _failed; they do not throw.
 	 */
 	async loadAll() {
-		const promises = this._animationDefs.map(async (def) => {
-			try {
-				await this.loadAnimation(def.name, def.url, {
-					loop: def.loop !== false,
-					clipName: def.clipName,
-				});
-			} catch (e) {
-				console.warn(`[AnimationManager] Failed to load "${def.name}" from ${def.url}:`, e);
-			}
-		});
-		await Promise.all(promises);
+		await Promise.all(
+			this._animationDefs.map(async (def) => {
+				try {
+					await this.loadAnimation(def.name, def.url, { loop: def.loop !== false });
+				} catch (err) {
+					console.warn(`[AnimationManager] failed to load "${def.name}":`, err.message);
+					this._failed.add(def.name);
+				}
+			}),
+		);
 	}
 
 	/**
-	 * Play a named animation immediately (no crossfade).
+	 * Lazily load a single clip by name (from registered defs) if not yet loaded.
+	 * Used so the first click on a strip button triggers a load without blocking startup.
+	 * @param {string} name
+	 * @returns {Promise<boolean>} true if ready
+	 */
+	async ensureLoaded(name) {
+		if (this.clips.has(name)) return true;
+		if (this._failed.has(name)) return false;
+		const def = this._animationDefs.find((d) => d.name === name);
+		if (!def) return false;
+		try {
+			await this.loadAnimation(def.name, def.url, { loop: def.loop !== false });
+			return true;
+		} catch {
+			this._failed.add(name);
+			return false;
+		}
+	}
+
+	// ── Playback ───────────────────────────────────────────────────────────────
+
+	/**
+	 * Play a named clip immediately (hard cut, no crossfade).
+	 * Lazily loads if not yet in memory.
 	 * @param {string} name
 	 */
-	play(name) {
-		const action = this.actions.get(name);
-		if (!action) {
-			console.warn(`[AnimationManager] Animation "${name}" not loaded`);
+	async play(name) {
+		const ready = await this.ensureLoaded(name);
+		if (!ready) {
+			console.warn(`[AnimationManager] "${name}" unavailable`);
 			return;
 		}
+		const action = this.actions.get(name);
+		if (!action) return;
 
 		if (this.currentAction && this.currentAction !== action) {
 			this.currentAction.fadeOut(0.01);
 		}
-
 		action.reset().fadeIn(0.01).play();
 		this.currentAction = action;
 		this.currentName = name;
-
-		if (this.onChange) this.onChange(name);
+		this.onChange?.(name);
 	}
 
 	/**
-	 * Crossfade from the current animation to a named animation.
+	 * Crossfade from the current clip to a named clip.
+	 * Lazily loads if not yet in memory.
 	 * @param {string} name
-	 * @param {number} [duration] - Crossfade duration in seconds
+	 * @param {number} [duration] seconds
 	 */
-	crossfadeTo(name, duration = DEFAULT_CROSSFADE) {
+	async crossfadeTo(name, duration = DEFAULT_CROSSFADE) {
 		if (name === this.currentName) return;
-
-		const nextAction = this.actions.get(name);
-		if (!nextAction) {
-			console.warn(`[AnimationManager] Animation "${name}" not loaded`);
+		const ready = await this.ensureLoaded(name);
+		if (!ready) {
+			console.warn(`[AnimationManager] "${name}" unavailable`);
 			return;
 		}
+		const next = this.actions.get(name);
+		if (!next) return;
 
-		nextAction.reset();
-		nextAction.play();
-
+		next.reset().play();
 		if (this.currentAction) {
-			this.currentAction.crossFadeTo(nextAction, duration, true);
+			this.currentAction.crossFadeTo(next, duration, true);
 		} else {
-			nextAction.fadeIn(duration);
+			next.fadeIn(duration);
 		}
-
-		this.currentAction = nextAction;
+		this.currentAction = next;
 		this.currentName = name;
-
-		if (this.onChange) this.onChange(name);
+		this.onChange?.(name);
 	}
 
-	/**
-	 * Stop all animations.
-	 */
+	/** Stop all animations. */
 	stopAll() {
-		if (this.mixer) {
-			this.mixer.stopAllAction();
-		}
+		this.mixer?.stopAllAction();
 		this.currentAction = null;
 		this.currentName = null;
-		if (this.onChange) this.onChange(null);
+		this.onChange?.(null);
 	}
 
 	/**
-	 * Update the mixer. Call this in the render loop.
-	 * @param {number} deltaTime - Time since last frame in seconds
+	 * Tick the mixer. Call from the render loop.
+	 * @param {number} delta seconds since last frame
 	 */
-	update(deltaTime) {
-		if (this.mixer) {
-			this.mixer.update(deltaTime);
-		}
+	update(delta) {
+		this.mixer?.update(delta);
 	}
 
-	/**
-	 * Retarget an animation clip to match the current model's skeleton.
-	 * Handles common naming convention mismatches between Mixamo exports.
-	 * @param {THREE.AnimationClip} clip
-	 * @param {string} name
-	 * @returns {THREE.AnimationClip}
-	 * @private
-	 */
-	_retargetClip(clip, name) {
-		if (!this.model) return clip;
-
-		// Collect bone names from the current model
-		const modelBones = new Set();
-		this.model.traverse((node) => {
-			if (node.isBone) {
-				modelBones.add(node.name);
-			}
-		});
-
-		if (modelBones.size === 0) return clip;
-
-		// Check if clip tracks already match model bones
-		const clipBoneNames = new Set();
-		for (const track of clip.tracks) {
-			const boneName = track.name.split('.')[0];
-			clipBoneNames.add(boneName);
-		}
-
-		// If most tracks already match, no retargeting needed
-		let matchCount = 0;
-		for (const boneName of clipBoneNames) {
-			if (modelBones.has(boneName)) matchCount++;
-		}
-		if (matchCount / clipBoneNames.size > 0.5) return clip;
-
-		// Build a name mapping for retargeting
-		const nameMap = this._buildBoneNameMap(modelBones, clipBoneNames);
-		if (!nameMap) return clip;
-
-		// Clone the clip with remapped track names
-		const newTracks = clip.tracks
-			.map((track) => {
-				const parts = track.name.split('.');
-				const boneName = parts[0];
-				const property = parts.slice(1).join('.');
-				const mappedName = nameMap.get(boneName);
-				if (!mappedName) return null;
-				const newTrack = track.clone();
-				newTrack.name = `${mappedName}.${property}`;
-				return newTrack;
-			})
-			.filter(Boolean);
-
-		const newClip = clip.clone();
-		newClip.tracks = newTracks;
-		return newClip;
-	}
-
-	/**
-	 * Attempts to build a bone name mapping between two skeleton naming conventions.
-	 * Supports: Mixamo → Mixamo, stripped prefixes, common standardizations.
-	 * @param {Set<string>} modelBones
-	 * @param {Set<string>} clipBones
-	 * @returns {Map<string, string>|null}
-	 * @private
-	 */
-	_buildBoneNameMap(modelBones, clipBones) {
-		const map = new Map();
-
-		// Strategy 1: Strip common prefixes (e.g., "mixamorig:" vs "mixamorig1:")
-		const modelArr = [...modelBones];
-		const clipArr = [...clipBones];
-
-		const stripPrefix = (name) =>
-			name.replace(/^mixamorig\d*[_:]?/i, '').replace(/^Armature[_/]?/i, '');
-
-		const modelStripped = new Map(modelArr.map((n) => [stripPrefix(n), n]));
-
-		let matches = 0;
-		for (const clipBone of clipArr) {
-			const stripped = stripPrefix(clipBone);
-			if (modelStripped.has(stripped)) {
-				map.set(clipBone, modelStripped.get(stripped));
-				matches++;
-			}
-		}
-
-		// If we matched at least 50% of bones, consider it a valid mapping
-		if (matches / clipArr.length > 0.5) {
-			return map;
-		}
-
-		// Strategy 2: Case-insensitive matching
-		const modelLower = new Map(modelArr.map((n) => [n.toLowerCase(), n]));
-		map.clear();
-		matches = 0;
-
-		for (const clipBone of clipArr) {
-			if (modelLower.has(clipBone.toLowerCase())) {
-				map.set(clipBone, modelLower.get(clipBone.toLowerCase()));
-				matches++;
-			}
-		}
-
-		if (matches / clipArr.length > 0.5) {
-			return map;
-		}
-
-		return null;
-	}
-
-	/**
-	 * Get the list of loaded animation names.
-	 * @returns {string[]}
-	 */
+	/** @returns {string[]} */
 	getLoadedNames() {
 		return [...this.clips.keys()];
 	}
 
-	/**
-	 * Check if a specific animation is loaded.
-	 * @param {string} name
-	 * @returns {boolean}
-	 */
+	/** @param {string} name @returns {boolean} */
 	isLoaded(name) {
 		return this.clips.has(name);
 	}
@@ -385,7 +244,7 @@ export class AnimationManager {
 	dispose() {
 		this.detach();
 		this.clips.clear();
-		this._gltfCache.clear();
 		this._animationDefs = [];
+		this._failed.clear();
 	}
 }

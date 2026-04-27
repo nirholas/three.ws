@@ -7,6 +7,87 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, '..');
 const p = (...parts) => resolve(repoRoot, ...parts);
 
+describe('discover page — cross-links and new features', () => {
+	const discoverHtml = readFileSync(p('public/discover/index.html'), 'utf8');
+	const discoverJs = readFileSync(p('public/discover/discover.js'), 'utf8');
+
+	it('/discover has OG and Twitter card meta tags', () => {
+		expect(discoverHtml).toContain('property="og:title"');
+		expect(discoverHtml).toContain('property="og:image"');
+		expect(discoverHtml).toContain('name="twitter:card"');
+		expect(discoverHtml).toContain('https://3dagent.vercel.app/og-image.png');
+	});
+
+	it('/discover has a hidden "View my agents" chip linking to /my-agents', () => {
+		expect(discoverHtml).toContain('data-role="my-agents-chip"');
+		expect(discoverHtml).toContain('href="/my-agents"');
+		expect(discoverHtml).toMatch(/data-role="my-agents-chip"[^>]*hidden/s);
+	});
+
+	it('/discover JS reveals chip on successful auth probe', () => {
+		expect(discoverJs).toContain('/api/auth/me');
+		expect(discoverJs).toContain("els.myAgentsChip.hidden = false");
+	});
+
+	it('/discover JS syncs filters to URL params', () => {
+		expect(discoverJs).toContain('syncUrl');
+		expect(discoverJs).toContain('history.replaceState');
+	});
+
+	it('/discover JS hydrates filter state from URL on load', () => {
+		expect(discoverJs).toContain('new URLSearchParams(location.search)');
+		expect(discoverJs).toContain("initialParams.get('q')");
+		expect(discoverJs).toContain("initialParams.get('chain')");
+		expect(discoverJs).toContain("initialParams.get('only3d')");
+	});
+
+	it('/discover JS has a clear-all-filters function', () => {
+		expect(discoverJs).toContain('clearAllFilters');
+		expect(discoverJs).toContain('data-role="clear-filters"');
+	});
+
+	it('/discover has a search clear button in HTML', () => {
+		expect(discoverHtml).toContain('data-role="search-clear"');
+	});
+
+	it('/discover JS stats are only set on first page (not on paginated loads)', () => {
+		expect(discoverJs).toContain('isFirstPage');
+		expect(discoverJs).toContain('if (isFirstPage && data.totals)');
+	});
+});
+
+describe('my-agents page — cross-links and empty states', () => {
+	const myAgentsHtml = readFileSync(p('public/my-agents/index.html'), 'utf8');
+	const myAgentsJs = readFileSync(p('public/my-agents/my-agents.js'), 'utf8');
+
+	it('/my-agents nav includes Discover and My Agents links', () => {
+		expect(myAgentsHtml).toContain('href="/discover"');
+		expect(myAgentsHtml).toContain('href="/my-agents"');
+	});
+
+	it('/my-agents nav marks My Agents as current page', () => {
+		expect(myAgentsHtml).toContain('aria-current="page"');
+	});
+
+	it('/my-agents is noindex (personal page, not for search)', () => {
+		expect(myAgentsHtml).toContain('content="noindex"');
+	});
+
+	it('/my-agents empty state for no wallets shows secondary link to /discover', () => {
+		expect(myAgentsJs).toContain('Or browse community agents');
+		expect(myAgentsJs).toContain("href: '/discover'");
+	});
+
+	it('/my-agents empty state for no agents found shows link to /discover', () => {
+		expect(myAgentsJs).toContain('Browse the community directory');
+	});
+
+	it('/my-agents showState supports a secondary link', () => {
+		expect(myAgentsJs).toContain('secondary = null');
+		expect(myAgentsJs).toContain('my-agents-secondary');
+	});
+});
+
 describe('discover/my-agents rename — static page contents', () => {
 	it('/discover serves the community ERC-8004 directory page', () => {
 		const path = p('public/discover/index.html');
