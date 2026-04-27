@@ -452,31 +452,6 @@ body.studio-body {
 	font-size: var(--text-xs);
 }
 
-.auth-blocker {
-	position: fixed;
-	inset: 0;
-	background: rgba(10, 10, 10, 0.92);
-	display: grid;
-	place-items: center;
-	z-index: 80;
-	visibility: hidden;
-	opacity: 0;
-	transition: opacity 0.15s;
-}
-.auth-blocker.visible {
-	visibility: visible;
-	opacity: 1;
-}
-.auth-blocker-card {
-	background: #14141c;
-	border: 1px solid rgba(255, 255, 255, 0.1);
-	border-radius: var(--radius-lg);
-	padding: var(--space-xl);
-	text-align: center;
-	display: flex;
-	flex-direction: column;
-	gap: var(--space-md);
-}
 
 .modal-overlay {
 	position: fixed;

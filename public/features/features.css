@@ -333,6 +333,28 @@
 	white-space: nowrap;
 }
 
+/* ── Ghost model-viewer (depth 3 background figures) ────────────────────── */
+
+.layer-ghost-model {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	background: transparent;
+	--poster-color: transparent;
+	opacity: 0.13;
+	filter: blur(0.6px);
+	pointer-events: none;
+}
+
+.layer-ghost-model--violet {
+	filter: blur(0.6px) hue-rotate(240deg) saturate(0.4);
+}
+
+.layer-ghost-model--mint {
+	filter: blur(0.6px) hue-rotate(130deg) saturate(0.4);
+}
+
 /* ── Front-layer stage (where the live agent lives) ─────────────────────── */
 
 .act-stage {

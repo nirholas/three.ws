@@ -31,6 +31,7 @@
 			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap"
 			rel="stylesheet"
 		/>
+		<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
 		<script type="module" src="https://3dagent.vercel.app/agent-3d/latest/agent-3d.js"></script>
 	</head>
 	<body class="features-page features-parallax-page">
@@ -89,6 +90,24 @@
 							<ellipse cx="800" cy="450" rx="700" ry="400"/>
 						</g>
 					</svg>
+				</div>
+				<div class="parallax-layer" style="--depth: 3" aria-hidden="true">
+					<model-viewer
+						class="layer-ghost-model"
+						src="/animations/robotexpressive.glb"
+						auto-rotate
+						auto-rotate-delay="0"
+						rotation-per-second="6deg"
+						interaction-prompt="none"
+						camera-controls="false"
+						disable-zoom
+						shadow-intensity="0"
+						exposure="0.6"
+						environment-image="neutral"
+						camera-orbit="15deg 80deg 4m"
+						field-of-view="45deg"
+						loading="lazy"
+					></model-viewer>
 				</div>
 				<div class="parallax-layer" style="--depth: 2" aria-hidden="true">
 					<div class="layer-orb layer-orb--gold"></div>
@@ -171,6 +190,24 @@
 						</g>
 					</svg>
 				</div>
+				<div class="parallax-layer" style="--depth: 3" aria-hidden="true">
+					<model-viewer
+						class="layer-ghost-model layer-ghost-model--violet"
+						src="/avatars/cz.glb"
+						auto-rotate
+						auto-rotate-delay="0"
+						rotation-per-second="5deg"
+						interaction-prompt="none"
+						camera-controls="false"
+						disable-zoom
+						shadow-intensity="0"
+						exposure="0.5"
+						environment-image="neutral"
+						camera-orbit="-20deg 75deg 3.5m"
+						field-of-view="40deg"
+						loading="lazy"
+					></model-viewer>
+				</div>
 				<div class="parallax-layer" style="--depth: 2" aria-hidden="true">
 					<div class="layer-orb layer-orb--violet"></div>
 				</div>
@@ -244,6 +281,24 @@
 				</div>
 				<div class="parallax-layer" style="--depth: 5" aria-hidden="true">
 					<div class="layer-chains" data-role="chain-ribbon"></div>
+				</div>
+				<div class="parallax-layer" style="--depth: 3" aria-hidden="true">
+					<model-viewer
+						class="layer-ghost-model layer-ghost-model--mint"
+						src="/animations/soldier.glb"
+						auto-rotate
+						auto-rotate-delay="0"
+						rotation-per-second="7deg"
+						interaction-prompt="none"
+						camera-controls="false"
+						disable-zoom
+						shadow-intensity="0"
+						exposure="0.55"
+						environment-image="neutral"
+						camera-orbit="10deg 85deg 3m"
+						field-of-view="35deg"
+						loading="lazy"
+					></model-viewer>
 				</div>
 				<div class="parallax-layer" style="--depth: 2" aria-hidden="true">
 					<div class="layer-orb layer-orb--mint"></div>

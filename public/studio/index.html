@@ -30,7 +30,8 @@
 				<a href="/widgets">Gallery</a>
 				<a href="/docs/widgets">Docs</a>
 				<a href="/dashboard#widgets">My widgets</a>
-				<button class="btn-ghost" id="signout-btn" type="button">Sign out</button>
+				<a class="btn-ghost" id="signin-link" href="/login?next=/studio" hidden>Sign in</a>
+				<button class="btn-ghost" id="signout-btn" type="button" hidden>Sign out</button>
 			</nav>
 		</header>
 
@@ -141,13 +142,6 @@
 				<p id="form-error" class="form-error" hidden></p>
 			</section>
 		</main>
-
-		<div class="auth-blocker" id="auth-blocker">
-			<div class="auth-blocker-card">
-				<p>Sign in to use the Studio.</p>
-				<a class="btn-primary" href="#" id="signin-link">Sign in →</a>
-			</div>
-		</div>
 
 		<div class="modal-overlay" id="embed-modal" hidden>
 			<div class="modal" role="dialog" aria-labelledby="embed-modal-title" aria-modal="true">

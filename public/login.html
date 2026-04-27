@@ -128,6 +128,40 @@
 				height: 1px;
 				background: #2a2a36;
 			}
+			/* Wallet chain tabs */
+			.chain-tabs {
+				display: flex;
+				gap: 4px;
+				background: #0f0f17;
+				border: 1px solid #2a2a36;
+				border-radius: 10px;
+				padding: 3px;
+				margin-bottom: 4px;
+			}
+			.chain-tab {
+				flex: 1;
+				padding: 7px 10px;
+				border: none;
+				border-radius: 7px;
+				background: transparent;
+				color: #888;
+				font-size: 13px;
+				font-weight: 500;
+				cursor: pointer;
+				transition: background 0.15s, color 0.15s;
+				margin-top: 0;
+				width: auto;
+			}
+			.chain-tab.active {
+				background: #1e1e2e;
+				color: #eee;
+				border: 1px solid #2a2a36;
+			}
+			.chain-tab:hover:not(.active) {
+				color: #bbb;
+			}
+			.chain-panel { display: none; }
+			.chain-panel.active { display: block; }
 		</style>
 	</head>
 	<body>
@@ -146,11 +180,41 @@
 				minlength="10"
 			/>
 			<button id="submit" type="submit">Sign in</button>
-			<div class="divider">or</div>
-			<div id="wallet-mount"></div>
+			<div class="divider">or connect wallet</div>
+			<div class="chain-tabs">
+				<button type="button" class="chain-tab active" data-chain="evm">EVM</button>
+				<button type="button" class="chain-tab" data-chain="solana">Solana</button>
+			</div>
+			<div id="evm-panel" class="chain-panel active">
+				<div id="wallet-mount"></div>
+			</div>
+			<div id="solana-panel" class="chain-panel">
+				<div id="solana-wallet-mount"></div>
+				<div class="chain-hints" id="solana-hints" style="margin-top:8px;font-size:12px;color:#555;display:flex;gap:8px;justify-content:center;">
+					<button type="button" class="wallet-hint-btn" data-wallet="phantom">Phantom</button>
+					<button type="button" class="wallet-hint-btn" data-wallet="backpack">Backpack</button>
+					<button type="button" class="wallet-hint-btn" data-wallet="solflare">Solflare</button>
+				</div>
+			</div>
 			<div class="err" id="err"></div>
 			<p class="foot">No account? <a href="/register">Create one</a></p>
 		</form>
+		<style>
+			.wallet-hint-btn {
+				width: auto;
+				margin-top: 0;
+				padding: 4px 10px;
+				background: transparent;
+				border: 1px solid #2a2a36;
+				border-radius: 6px;
+				color: #666;
+				font-size: 11px;
+				font-weight: 400;
+				cursor: pointer;
+			}
+			.wallet-hint-btn:hover { border-color: #6a5cff; color: #9a8cff; }
+			.wallet-hint-btn.active { border-color: #6a5cff; color: #9a8cff; background: rgba(106,92,255,0.08); }
+		</style>
 		<script type="module" src="/wallet-login.js"></script>
 		<script>
 			const params = new URLSearchParams(location.search);

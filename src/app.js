@@ -527,16 +527,7 @@ class App {
 	}
 
 	_setupMakeWidgetButton() {
-		const btn = document.getElementById('make-widget-btn');
-		if (!btn) return;
-		btn.addEventListener('click', async (e) => {
-			const user = await getMe();
-			if (!user) {
-				e.preventDefault();
-				await this._stashAndRedirectToLogin();
-			}
-			// Authed: let the href navigate to /studio normally.
-		});
+		// No auth gate — /studio handles anonymous users gracefully.
 	}
 
 	async _triggerSaveToAccount() {
