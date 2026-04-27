@@ -47,7 +47,8 @@
 		"verify": "prettier --check . && vite build",
 		"format": "prettier --write .",
 		"deploy": "npm run build:all && vercel --local-config vercel.json --prod",
-		"postversion": "git push && git push --tags"
+		"postversion": "git push && git push --tags",
+		"validate:cards": "node scripts/validate-agent-cards.mjs"
 	},
 	"dependencies": {
 		"@avaturn/sdk": "^1.1.4",
@@ -73,6 +74,8 @@
 		"zod": "^3.23.8"
 	},
 	"devDependencies": {
+		"ajv": "^8.17.1",
+		"ajv-formats": "^3.0.1",
 		"playwright": "^1.59.1",
 		"prettier": "^3.2.5",
 		"sharp": "^0.34.5",

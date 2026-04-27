@@ -1,5 +1,4 @@
 /* my-agents.css — My on-chain agents page styles */
-/* TODO: rename `discover-*` class prefix to `my-agents-*` (deferred — JS selectors use these names). */
 
 /* ── Design tokens (mirrored from dashboard) ─────────────────────────── */
 :root {
@@ -41,7 +40,7 @@ a:hover {
 }
 
 /* ── Header ──────────────────────────────────────────────────────────── */
-.discover-header {
+.my-agents-header {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -54,48 +53,63 @@ a:hover {
 	gap: 12px;
 }
 
-.discover-header__brand {
+.my-agents-header__brand {
 	font-weight: 600;
 	letter-spacing: -0.01em;
 	flex-shrink: 0;
 }
 
-.discover-header__nav {
+.my-agents-header__nav {
 	display: flex;
 	align-items: center;
 	gap: 14px;
 }
 
-.discover-header__nav a {
+.my-agents-header__nav a {
 	color: #aaa;
 	font-size: 14px;
 }
-.discover-header__nav a:hover {
+.my-agents-header__nav a:hover {
 	color: #eee;
 	text-decoration: none;
 }
+.my-agents-header__nav a[aria-current='page'] {
+	color: #fff;
+	font-weight: 600;
+}
+
+@media (max-width: 720px) {
+	.my-agents-header {
+		flex-wrap: wrap;
+	}
+	.my-agents-header__nav {
+		gap: 10px;
+		flex-wrap: wrap;
+		font-size: 13px;
+	}
+}
 
 /* ── Main content ────────────────────────────────────────────────────── */
-.discover-main {
+.my-agents-main {
 	padding: 32px 24px;
 	max-width: 1100px;
 	margin: 0 auto;
 }
 
-.discover-title {
+.my-agents-title {
 	font-size: 22px;
 	margin: 0 0 6px;
 	letter-spacing: -0.01em;
 }
 
-.discover-subtitle {
+.my-agents-subtitle {
 	color: #888;
 	margin: 0 0 28px;
 	font-size: 14px;
 }
 
 /* ── Toolbar ─────────────────────────────────────────────────────────── */
-.discover-toolbar {
+.my-agents-toolbar {
 	display: flex;
 	align-items: center;
 	justify-content: flex-end;
@@ -103,20 +117,20 @@ a:hover {
 }
 
 /* ── Grid ────────────────────────────────────────────────────────────── */
-.discover-grid {
+.my-agents-grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
 	gap: 14px;
 }
 
 @media (max-width: 600px) {
-	.discover-grid {
+	.my-agents-grid {
 		grid-template-columns: 1fr;
 	}
 }
 
 /* ── Agent card ──────────────────────────────────────────────────────── */
-.discover-card {
+.my-agents-card {
 	background: var(--d-panel);
 	border: 1px solid var(--d-border);
 	border-radius: 14px;
@@ -127,11 +141,11 @@ a:hover {
 	transition: border-color 0.15s;
 }
 
-.discover-card:hover {
+.my-agents-card:hover {
 	border-color: #2c2c40;
 }
 
-.discover-card__thumb {
+.my-agents-card__thumb {
 	aspect-ratio: 1 / 1;
 	background: #0f0f17;
 	display: grid;
@@ -141,14 +155,14 @@ a:hover {
 	overflow: hidden;
 }
 
-.discover-card__thumb img {
+.my-agents-card__thumb img {
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
 	display: block;
 }
 
-.discover-card__body {
+.my-agents-card__body {
 	padding: 14px 16px;
 	display: flex;
 	flex-direction: column;
@@ -156,7 +170,7 @@ a:hover {
 	flex: 1;
 }
 
-.discover-card__name {
+.my-agents-card__name {
 	font-size: 15px;
 	font-weight: 600;
 	margin: 0;
@@ -165,13 +179,13 @@ a:hover {
 	text-overflow: ellipsis;
 }
 
-.discover-card__row {
+.my-agents-card__row {
 	display: flex;
 	align-items: center;
 	gap: 6px;
 }
 
-.discover-card__chain-pill {
+.my-agents-card__chain-pill {
 	display: inline-flex;
 	align-items: center;
 	gap: 4px;
@@ -184,7 +198,7 @@ a:hover {
 	flex-shrink: 0;
 }
 
-.discover-card__desc {
+.my-agents-card__desc {
 	font-size: 13px;
 	color: #888;
 	margin: 0;
@@ -194,20 +208,20 @@ a:hover {
 	overflow: hidden;
 }
 
-.discover-card__footer {
+.my-agents-card__footer {
 	padding: 0 16px 14px;
 	display: flex;
 	flex-direction: column;
 	gap: 6px;
 }
 
-.discover-card__inline-err {
+.my-agents-card__inline-err {
 	font-size: 12px;
 	color: #ffb3b3;
 }
 
 /* ── Buttons ─────────────────────────────────────────────────────────── */
-.discover-btn {
+.my-agents-btn {
 	padding: 9px 14px;
 	border-radius: 9px;
 	border: 0;
@@ -221,21 +235,21 @@ a:hover {
 	transition: filter 0.12s;
 }
 
-.discover-btn:hover:not(:disabled) {
+.my-agents-btn:hover:not(:disabled) {
 	filter: brightness(1.08);
 }
 
-.discover-btn:disabled {
+.my-agents-btn:disabled {
 	opacity: 0.55;
 	cursor: not-allowed;
 }
 
-.discover-btn--sec {
+.my-agents-btn--sec {
 	background: #222230;
 	color: #ddd;
 }
 
-.discover-btn--done {
+.my-agents-btn--done {
 	background: #1a2a1a;
 	color: #6fcf6f;
 	border: 1px solid #2a4a2a;
@@ -243,7 +257,7 @@ a:hover {
 }
 
 /* ── Skeleton shimmer ────────────────────────────────────────────────── */
-@keyframes discover-shimmer {
+@keyframes my-agents-shimmer {
 	0% {
 		background-position: -600px 0;
 	}
@@ -252,47 +266,47 @@ a:hover {
 	}
 }
 
-.discover-skeleton {
+.my-agents-skeleton {
 	background: var(--d-panel);
 	border: 1px solid var(--d-border);
 	border-radius: 14px;
 	overflow: hidden;
 }
 
-.discover-skeleton__thumb {
+.my-agents-skeleton__thumb {
 	aspect-ratio: 1 / 1;
 	background: linear-gradient(90deg, #1a1a24 25%, #22222e 50%, #1a1a24 75%);
 	background-size: 600px 100%;
-	animation: discover-shimmer 1.4s infinite linear;
+	animation: my-agents-shimmer 1.4s infinite linear;
 }
 
-.discover-skeleton__body {
+.my-agents-skeleton__body {
 	padding: 14px 16px;
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
 }
 
-.discover-skeleton__line {
+.my-agents-skeleton__line {
 	height: 12px;
 	border-radius: 6px;
 	background: linear-gradient(90deg, #1a1a24 25%, #22222e 50%, #1a1a24 75%);
 	background-size: 600px 100%;
-	animation: discover-shimmer 1.4s infinite linear;
+	animation: my-agents-shimmer 1.4s infinite linear;
 }
 
-.discover-skeleton__line--short {
+.my-agents-skeleton__line--short {
 	width: 55%;
 }
 
-.discover-skeleton__line--btn {
+.my-agents-skeleton__line--btn {
 	height: 36px;
 	margin-top: 10px;
 	border-radius: 9px;
 }
 
 /* ── State panels ────────────────────────────────────────────────────── */
-.discover-state {
+.my-agents-state {
 	text-align: center;
 	padding: 64px 20px;
 	border: 1px dashed var(--d-border);
@@ -300,19 +314,19 @@ a:hover {
 	color: #888;
 }
 
-.discover-state__icon {
+.my-agents-state__icon {
 	font-size: 40px;
 	margin-bottom: 12px;
 }
 
-.discover-state__title {
+.my-agents-state__title {
 	font-size: 17px;
 	font-weight: 600;
 	color: #ddd;
 	margin: 0 0 6px;
 }
 
-.discover-state__msg {
+.my-agents-state__msg {
 	font-size: 14px;
 	margin: 0 0 18px;
 }
@@ -335,7 +349,7 @@ a:hover {
 }
 
 /* ── Error banner ────────────────────────────────────────────────────── */
-.discover-error-banner {
+.my-agents-error-banner {
 	padding: 14px 16px;
 	background: rgba(255, 92, 92, 0.1);
 	border: 1px solid rgba(255, 92, 92, 0.3);
@@ -348,12 +362,12 @@ a:hover {
 	gap: 12px;
 }
 
-.discover-error-banner__msg {
+.my-agents-error-banner__msg {
 	font-size: 14px;
 }
 
 /* ── Already-imported link ───────────────────────────────────────────── */
-.discover-card__agent-link {
+.my-agents-card__agent-link {
 	font-size: 12px;
 	color: #9a8cff;
 	display: block;

@@ -19,6 +19,7 @@ import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
 import { parse } from '../_lib/validate.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { decorate } from './index.js';
+import { isDemoWidgetId, getDemoWidget } from './_demo-fixtures.js';
 
 const WIDGET_TYPES = [
 	'turntable',
@@ -48,6 +49,15 @@ export default wrap(async (req, res) => {
 	if (req.method === 'GET') {
 		const rl = await limits.widgetRead(clientIp(req));
 		if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
+
+		// Public showcase fixtures — short-circuit DB lookup so the gallery
+		// renders without seeded rows in any environment.
+		if (isDemoWidgetId(id)) {
+			const demo = getDemoWidget(id);
+			if (!demo) return error(res, 404, 'not_found', 'widget not found');
+			res.setHeader('cache-control', 'public, max-age=300, s-maxage=900');
+			return json(res, 200, { widget: demo });
+		}
 
 		const rows = await sql`
 			select w.id, w.user_id, w.avatar_id, w.type, w.name, w.config, w.is_public,

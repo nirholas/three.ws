@@ -209,6 +209,28 @@ const BASE_STYLE = `
 		padding: 16px;
 		font: 14px var(--agent-chat-font);
 	}
+	/* Optional name plate overlay — toggled by the name-plate attribute. */
+	.name-plate {
+		position: absolute;
+		left: 12px;
+		bottom: 10px;
+		z-index: 2;
+		pointer-events: none;
+		font: 11px/1 var(--agent-chat-font);
+		letter-spacing: 0.04em;
+		color: rgba(255, 255, 255, 0.6);
+		text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+	}
+	.name-plate:empty,
+	:host([name-plate="off"]) .name-plate { display: none; }
+	/* Background variants — set on :host so the canvas composites over them. */
+	:host([background="transparent"]) { background: transparent; }
+	:host([background="dark"]) { background: #0b0d10; }
+	:host([background="light"]) { background: #f5f5f5; }
+	:host([background="light"]) .name-plate {
+		color: rgba(0, 0, 0, 0.55);
+		text-shadow: none;
+	}
 `;
 
 class Agent3DElement extends HTMLElement {
@@ -226,6 +248,8 @@ class Agent3DElement extends HTMLElement {
 			'api-key',
 			'key-proxy',
 			'responsive',
+			'background',
+			'name-plate',
 		];
 	}
 
@@ -267,6 +291,8 @@ class Agent3DElement extends HTMLElement {
 		if (!this._mounted || this._suppressAttrChange) return;
 		if (['mode', 'position', 'width', 'height', 'responsive'].includes(name))
 			this._applyLayout();
+		if (name === 'background') this._applyBackground();
+		if (name === 'name-plate') this._applyNamePlate();
 		if (['src', 'manifest', 'body', 'agent-id'].includes(name)) {
 			// Source change — reboot
 			this._teardown();
@@ -299,6 +325,15 @@ class Agent3DElement extends HTMLElement {
 		loading.hidden = true;
 		this.shadowRoot.appendChild(loading);
 		this._loadingEl = loading;
+
+		// Optional name-plate overlay. Hidden until a name is set on boot, and
+		// toggled off entirely when the host carries `name-plate="off"`. The CSS
+		// hides `.name-plate:empty`, so we don't have to manage `hidden` here.
+		const namePlate = document.createElement('div');
+		namePlate.className = 'name-plate';
+		namePlate.part = 'name-plate';
+		this.shadowRoot.appendChild(namePlate);
+		this._nameplateEl = namePlate;
 
 		// Pill button — tap/keyboard target when floating collapses to pill on narrow viewports
 		const pillBtn = document.createElement('button');
@@ -644,6 +679,11 @@ class Agent3DElement extends HTMLElement {
 			);
 			const viewer = new Viewer(this._stageEl, { kiosk: this.hasAttribute('kiosk') });
 			this._viewer = viewer;
+			// Apply the embed surface attributes (`background`, `name-plate`) now
+			// that the viewer exists. They are also re-applied on attribute change.
+			this._applyBackground();
+			this._setNamePlateText(manifest.name || '');
+			this._applyNamePlate();
 			const bodyURI = resolveURI(manifest.body?.uri);
 			if (bodyURI) {
 				await viewer.load(bodyURI, '', new Map());
@@ -1016,6 +1056,23 @@ class Agent3DElement extends HTMLElement {
 	}
 	destroy() {
 		this._teardown();
+	}
+
+	/**
+	 * Trigger an emotion stimulus on the running avatar(s) via the protocol bus.
+	 * Trigger names match the avatar's emotion vocabulary:
+	 *   'celebration' | 'concern' | 'curiosity' | 'empathy' | 'patience'
+	 * Weight is clamped to [0, 1] by the avatar; defaults to 0.7.
+	 * No-op if the agent hasn't booted yet.
+	 */
+	expressEmotion(trigger, weight = 0.7) {
+		if (!trigger) return false;
+		protocol.emit(ACTION_TYPES.EMOTE, {
+			trigger,
+			weight: Math.max(0, Math.min(1, Number(weight) || 0)),
+			agentId: this._manifest?.id?.agentId,
+		});
+		return true;
 	}
 
 	_waitForReady() {

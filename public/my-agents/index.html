@@ -11,29 +11,33 @@
 		<link rel="stylesheet" href="/my-agents/my-agents.css" />
 	</head>
 	<body>
-		<header class="discover-header">
-			<div class="discover-header__brand"><a href="/">3D Agent</a></div>
-			<nav class="discover-header__nav" aria-label="Page navigation">
-				<a href="/">Home</a>
+		<header class="my-agents-header">
+			<div class="my-agents-header__brand"><a href="/">3D Agent</a></div>
+			<nav class="my-agents-header__nav" aria-label="Page navigation">
+				<a href="/app">Viewer</a>
+				<a href="/discover">Discover</a>
+				<a href="/my-agents" aria-current="page">My Agents</a>
+				<a href="/features">Features</a>
+				<a href="/widgets">Widgets</a>
 				<a href="/dashboard">Dashboard</a>
 			</nav>
 		</header>
 
-		<main class="discover-main" id="discover-main">
-			<h1 class="discover-title">On-chain Agents</h1>
-			<p class="discover-subtitle">Agents owned by your linked wallets</p>
+		<main class="my-agents-main" id="my-agents-main">
+			<h1 class="my-agents-title">On-chain Agents</h1>
+			<p class="my-agents-subtitle">Agents owned by your linked wallets</p>
 
 			<div
-				id="discover-error"
-				class="discover-error-banner"
+				id="my-agents-error"
+				class="my-agents-error-banner"
 				hidden
 				role="alert"
 				aria-live="polite"
 			></div>
 
 			<div
-				id="discover-grid"
-				class="discover-grid"
+				id="my-agents-grid"
+				class="my-agents-grid"
 				role="list"
 				aria-label="Your on-chain agents"
 				aria-live="polite"

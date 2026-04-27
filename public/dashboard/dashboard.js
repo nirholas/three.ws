@@ -5,7 +5,11 @@ export const state = { user: null };
 
 export const api = {
 	me: () => j('GET', '/api/auth/me'),
-	listAvatars: () => j('GET', '/api/avatars?limit=100'),
+	listAvatars: ({ cursor, limit = 24 } = {}) => {
+		const params = new URLSearchParams({ limit: String(limit) });
+		if (cursor) params.set('cursor', cursor);
+		return j('GET', `/api/avatars?${params.toString()}`);
+	},
 	deleteAvatar: (id) => j('DELETE', `/api/avatars/${id}`),
 	patchAvatar: (id, patch) => j('PATCH', `/api/avatars/${id}`, patch),
 	presign: (body) => j('POST', '/api/avatars/presign', body),
@@ -88,14 +92,50 @@ async function renderAvatars(root) {
 	root.innerHTML = `<h1>Your avatars</h1><p class="sub">Each avatar gets a stable URL and can be rendered in Claude or any app via MCP.</p><div id="list" class="cards"></div>`;
 	const list = root.querySelector('#list');
 	list.innerHTML = '<div class="muted">Loading…</div>';
+
+	let nextCursor = null;
+	let loadMoreEl = null;
+
+	const appendPage = ({ avatars, next_cursor }, replace) => {
+		if (replace) list.innerHTML = '';
+		if (loadMoreEl) loadMoreEl.remove();
+		for (const a of avatars) list.appendChild(avatarCard(a));
+		nextCursor = next_cursor || null;
+		if (nextCursor) {
+			loadMoreEl = document.createElement('div');
+			loadMoreEl.className = 'load-more';
+			loadMoreEl.innerHTML = '<button type="button">Load more</button>';
+			loadMoreEl.querySelector('button').addEventListener('click', loadNext);
+			list.appendChild(loadMoreEl);
+		}
+	};
+
+	const loadNext = async () => {
+		if (!nextCursor) return;
+		const btn = loadMoreEl?.querySelector('button');
+		if (btn) {
+			btn.disabled = true;
+			btn.textContent = 'Loading…';
+		}
+		try {
+			const data = await api.listAvatars({ cursor: nextCursor });
+			appendPage(data, false);
+		} catch (e) {
+			toast(e.message || 'Failed to load more', true);
+			if (btn) {
+				btn.disabled = false;
+				btn.textContent = 'Load more';
+			}
+		}
+	};
+
 	try {
-		const { avatars } = await api.listAvatars();
-		if (!avatars.length) {
+		const data = await api.listAvatars();
+		if (!data.avatars.length) {
 			list.innerHTML = `<div class="empty">No avatars yet. <a href="#create">Take a selfie</a>, <a href="#upload">upload a .glb</a>, or <a href="/deploy">deploy a metadata-only agent on-chain</a>.</div>`;
 			return;
 		}
-		list.innerHTML = '';
-		for (const a of avatars) list.appendChild(avatarCard(a));
+		appendPage(data, true);
 	} catch (e) {
 		list.innerHTML = `<div class="err">${esc(e.message)}</div>`;
 	}
@@ -2552,12 +2592,16 @@ let _animPreviewEl = null;
 
 async function _ensureAgent3DLib() {
 	if (customElements.get('agent-3d')) return true;
-	try {
-		await import('/dist-lib/agent-3d.js');
-		return true;
-	} catch {
-		return false;
+	const candidates = ['/agent-3d/latest/agent-3d.js', '/dist-lib/agent-3d.js'];
+	for (const url of candidates) {
+		try {
+			await import(/* @vite-ignore */ url);
+			if (customElements.get('agent-3d')) return true;
+		} catch {
+			/* try next candidate */
+		}
 	}
+	return false;
 }
 
 async function openAnimPreview(clip, avatarUrl) {
