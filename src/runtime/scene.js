@@ -198,7 +198,11 @@ export class SceneController {
 
 	lookAt(target) {
 		const t = this._resolveTarget(target);
-		if (!t || !this.viewer.content) return;
+		if (!t) {
+			if (target != null) console.warn(`[SceneController] unknown lookAt target: "${target}"`);
+			return;
+		}
+		if (!this.viewer.content) return;
 		// Simple head-bone gaze if rig has Head, otherwise root rotation.
 		const head = this._findBone(['Head', 'head', 'mixamorigHead']);
 		if (head) {
@@ -225,11 +229,19 @@ export class SceneController {
 
 	_findBone(names) {
 		if (!this.viewer.content) return null;
+		// Rebuild cache when content changes
+		if (!this._boneCache || this._boneCacheContent !== this.viewer.content) {
+			this._boneCache = new Map();
+			this._boneCacheContent = this.viewer.content;
+		}
+		const key = names.join(',');
+		if (this._boneCache.has(key)) return this._boneCache.get(key);
 		let found = null;
 		this.viewer.content.traverse((n) => {
 			if (found) return;
 			if (n.isBone && names.includes(n.name)) found = n;
 		});
+		this._boneCache.set(key, found);
 		return found;
 	}
 
@@ -259,6 +271,11 @@ export class SceneController {
 
 	moveTo(position, { duration = 600 } = {}) {
 		if (!this.viewer.content) return;
+		// Cancel any in-progress tween before starting a new one
+		if (this._moveToHook) {
+			this._removeHook(this._moveToHook);
+			this._moveToHook = null;
+		}
 		const start = this.viewer.content.position.clone();
 		const end = new Vector3(position.x || 0, position.y || start.y, position.z || 0);
 		const startT = performance.now();
@@ -268,8 +285,12 @@ export class SceneController {
 			const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 			this.viewer.content.position.lerpVectors(start, end, eased);
 			this.viewer.invalidate();
-			if (t >= 1) this._removeHook(tick);
+			if (t >= 1) {
+				this._removeHook(tick);
+				this._moveToHook = null;
+			}
 		};
+		this._moveToHook = tick;
 		this._addHook(tick);
 	}
 

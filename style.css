@@ -3424,6 +3424,118 @@ footer .separator {
 	}
 }
 
+/* ── Edit affordance — pencil hint on hover ────────────────────────────────── */
+
+.agent-home-editable:hover:not(.is-editing)::after {
+	content: ' ✎';
+	font-size: 9px;
+	opacity: 0.35;
+	pointer-events: none;
+}
+
+/* ── Local-save feedback (amber — distinct from green API-saved) ─────────────── */
+
+.agent-home-editable.is-saved-local {
+	box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.6);
+}
+
+/* ── Char counter ────────────────────────────────────────────────────────────── */
+
+.agent-edit-counter {
+	display: none;
+	font-size: 9px;
+	color: rgba(255, 255, 255, 0.22);
+	margin-left: 4px;
+	font-variant-numeric: tabular-nums;
+	pointer-events: none;
+	user-select: none;
+	transition: color 0.15s;
+}
+
+.agent-edit-counter--visible {
+	display: inline;
+}
+
+.agent-edit-counter--warn {
+	color: rgba(251, 191, 36, 0.6);
+}
+
+.agent-edit-counter--over {
+	color: rgba(248, 113, 113, 0.8);
+}
+
+/* ── Wallet address CTA button ───────────────────────────────────────────────── */
+
+.agent-home-address--cta {
+	background: none;
+	border: none;
+	padding: 0;
+	cursor: pointer;
+	color: rgba(255, 255, 255, 0.35);
+	font-size: 10px;
+	font-family: var(--font-mono);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	transition: color 0.15s;
+	text-decoration: underline dotted rgba(255, 255, 255, 0.2);
+	text-underline-offset: 2px;
+}
+
+.agent-home-address--cta:hover {
+	color: rgba(251, 191, 36, 0.85);
+	text-decoration-color: rgba(251, 191, 36, 0.4);
+}
+
+/* ── Connect wallet nudge ────────────────────────────────────────────────────── */
+
+.agent-wallet-nudge {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-xs);
+	padding: 6px var(--space-sm);
+	border-top: 1px solid rgba(255, 255, 255, 0.05);
+	opacity: 0;
+	transform: translateY(-4px);
+	transition:
+		opacity 0.25s ease,
+		transform 0.25s ease;
+}
+
+.agent-wallet-nudge--visible {
+	opacity: 1;
+	transform: translateY(0);
+}
+
+.agent-wallet-nudge-text {
+	font-size: 9px;
+	color: rgba(255, 255, 255, 0.35);
+	line-height: 1.3;
+}
+
+.agent-wallet-nudge-btn {
+	background: none;
+	border: 1px solid rgba(251, 191, 36, 0.35);
+	border-radius: 999px;
+	color: rgba(251, 191, 36, 0.8);
+	font-size: 9px;
+	padding: 2px 8px;
+	cursor: pointer;
+	white-space: nowrap;
+	flex-shrink: 0;
+	transition:
+		background 0.15s,
+		color 0.15s,
+		border-color 0.15s;
+}
+
+.agent-wallet-nudge-btn:hover {
+	background: rgba(251, 191, 36, 0.1);
+	color: rgba(251, 191, 36, 1);
+	border-color: rgba(251, 191, 36, 0.6);
+}
+
 /* ── NichAgent updates — emotion dot in header ─────────────────────────────── */
 
 .nich-header {
