@@ -136,6 +136,70 @@ describe('share-panel — buildWebComponentSnippet', () => {
 		expect(snippet).toContain('width:520px');
 		expect(snippet).toContain('height:680px');
 	});
+
+	it('omits background/name-plate attrs when defaults are in effect', () => {
+		const snippet = buildWebComponentSnippet({ origin: ORIGIN, agentId: ID });
+		expect(snippet).not.toContain('background=');
+		expect(snippet).not.toContain('name-plate=');
+	});
+
+	it('emits background="dark" when the dark BG toggle is on', () => {
+		const snippet = buildWebComponentSnippet({
+			origin: ORIGIN,
+			agentId: ID,
+			opts: { bg: 'dark' },
+		});
+		expect(snippet).toContain('background="dark"');
+	});
+
+	it('emits background="light" when the light BG toggle is on', () => {
+		const snippet = buildWebComponentSnippet({
+			origin: ORIGIN,
+			agentId: ID,
+			opts: { bg: 'light' },
+		});
+		expect(snippet).toContain('background="light"');
+	});
+
+	it('emits name-plate="off" when the name plate is disabled', () => {
+		const snippet = buildWebComponentSnippet({
+			origin: ORIGIN,
+			agentId: ID,
+			opts: { name: false },
+		});
+		expect(snippet).toContain('name-plate="off"');
+	});
+});
+
+describe('agent-3d web component — attribute surface', () => {
+	const elementSrc = readFileSync(p('src/element.js'), 'utf8');
+
+	it('declares `background` and `name-plate` in observedAttributes', () => {
+		expect(elementSrc).toMatch(/'background'\s*,/);
+		expect(elementSrc).toMatch(/'name-plate'\s*,/);
+	});
+
+	it('routes `background` changes to _applyBackground without rebooting', () => {
+		expect(elementSrc).toContain("if (name === 'background') this._applyBackground();");
+	});
+
+	it('routes `name-plate` changes to _applyNamePlate without rebooting', () => {
+		expect(elementSrc).toContain("if (name === 'name-plate') this._applyNamePlate();");
+	});
+
+	it('paints the scene background for dark/light modes and clears alpha for transparent', () => {
+		expect(elementSrc).toContain("v.renderer?.setClearAlpha?.(0)");
+		expect(elementSrc).toContain("v.scene.background.set('#0b0d10')");
+		expect(elementSrc).toContain("v.scene.background.set('#f5f5f5')");
+	});
+
+	it('hides the name-plate via CSS host selector, not JS visibility juggling', () => {
+		expect(elementSrc).toContain(':host([name-plate="off"]) .name-plate { display: none; }');
+	});
+
+	it('renders a name-plate element in the shadow DOM during _renderShell', () => {
+		expect(elementSrc).toContain("namePlate.className = 'name-plate'");
+	});
 });
 
 describe('agent-embed.html — consolidated embed page', () => {
