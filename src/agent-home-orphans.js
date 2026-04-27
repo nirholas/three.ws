@@ -34,10 +34,16 @@ export async function mountOrphans({ agentId, identity, shareMount }) {
 		// Already on-chain: show pill (API doesn't store tx_hash, link to registry contract)
 		_renderSuccessChip(chipMount, rawAgent.chain_id, rawAgent.erc8004_registry);
 	} else {
-		// Not yet deployed: mount the deploy button
+		// Not yet deployed: mount the deploy button. Pass through avatarId,
+		// description, and skills so register-prep can build a complete
+		// manifest pinned to IPFS — without these the on-chain agentURI
+		// would point to a stub.
 		const agentObj = {
 			id: rawAgent.id,
 			name: rawAgent.name,
+			description: rawAgent.description || '',
+			avatarId: rawAgent.avatar_id || null,
+			skills: Array.isArray(rawAgent.skills) ? rawAgent.skills : [],
 			chainId: null,
 			txHash: null,
 			contractAddress: rawAgent.erc8004_registry || null,
