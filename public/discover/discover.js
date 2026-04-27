@@ -51,10 +51,13 @@ function updateSearchClearVisibility() {
 	els.searchClear.hidden = !els.search.value;
 }
 
-// Reveal "View my agents" chip when signed in. Same probe as index.html.
+// Reveal "View my agents" chip + nav link when signed in.
 fetch('/api/auth/me', { credentials: 'include' })
 	.then((r) => {
-		if (r.ok && els.myAgentsChip) els.myAgentsChip.hidden = false;
+		if (!r.ok) return;
+		if (els.myAgentsChip) els.myAgentsChip.hidden = false;
+		const navLink = document.getElementById('nav-my-agents');
+		if (navLink) navLink.hidden = false;
 	})
 	.catch(() => {});
 

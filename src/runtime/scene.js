@@ -117,9 +117,10 @@ export class SceneController {
 			this.viewer.invalidate();
 			return true;
 		}
-		// Fall back to animation manager (external clips from manifest)
+		// Fall back to animation manager (external clips from manifest).
+		// crossfadeTo/play are async (lazy-load on demand); fire-and-forget is fine.
 		const am = this.viewer?.animationManager;
-		if (!am?.isLoaded(name)) return false;
+		if (!am || am.isFailed(name)) return false;
 		if (loop) am.crossfadeTo(name, fade_ms / 1000);
 		else am.play(name);
 		return true;
