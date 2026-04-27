@@ -11,11 +11,15 @@
 
 import { sql } from './_lib/db.js';
 import { cors, json, method, wrap, error } from './_lib/http.js';
+import { limits, clientIp } from './_lib/rate-limit.js';
 import { CHAIN_BY_ID, tokenExplorerUrl, addressExplorerUrl } from './_lib/erc8004-chains.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
 	if (!method(req, res, ['GET'])) return;
+
+	const rl = await limits.publicIp(clientIp(req));
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
 	const url = new URL(req.url, 'http://x');
 	const only3d = url.searchParams.get('only3d') === '1';

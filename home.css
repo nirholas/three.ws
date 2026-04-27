@@ -141,6 +141,50 @@
 	font-size: 1.4rem;
 }
 
+/* ── Pillars transition band (docs.pai.direct style) ───────────────────── */
+
+.h-pillars {
+	position: relative;
+	z-index: 30;
+	background:
+		linear-gradient(180deg, rgba(8, 7, 11, 0) 0%, rgba(8, 7, 11, 1) 25%, rgba(8, 7, 11, 1) 100%),
+		radial-gradient(ellipse at 50% 0%, rgba(255, 175, 60, 0.08) 0%, transparent 60%);
+	padding: clamp(4rem, 9vh, 7rem) clamp(1.25rem, 4vw, 2rem);
+}
+
+.h-pillars-inner {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: clamp(2rem, 4vw, 3.5rem);
+	max-width: 1180px;
+	margin: 0 auto;
+}
+
+.h-pillar h3 {
+	font-family: 'Space Grotesk', 'Inter', sans-serif;
+	font-size: 1.15rem;
+	font-weight: 700;
+	color: #fff;
+	letter-spacing: -0.005em;
+	line-height: 1.25;
+	margin: 0 0 0.85rem;
+}
+
+.h-pillar p {
+	font-size: 0.95rem;
+	line-height: 1.65;
+	color: rgba(255, 255, 255, 0.55);
+	margin: 0;
+	max-width: 32em;
+}
+
+@media (max-width: 880px) {
+	.h-pillars-inner {
+		grid-template-columns: 1fr;
+		gap: 2rem;
+	}
+}
+
 /* ── Bento feature grid ──────────────────────────────────────────────────── */
 
 .h-bento-section {
@@ -579,6 +623,60 @@
 	pointer-events: none;
 }
 
+/* ── CZ click + idle trick animations ───────────────────────────────────── */
+
+/* applied to model-viewer only — ring/glow/badge stay put as a stable frame,
+   so the avatar visibly moves *inside* its container, not the whole page. */
+.h-avatar-viewer.cz-fall,
+.h-avatar-viewer.cz-spin,
+.h-avatar-viewer.cz-pushup,
+.h-avatar-viewer.cz-jump,
+.h-avatar-viewer.cz-dance {
+	transform-origin: 50% 95%;
+}
+
+.h-avatar-viewer.cz-fall    { animation: cz-fall    1.4s cubic-bezier(.4,1.6,.6,1) both; }
+.h-avatar-viewer.cz-spin    { animation: cz-spin    1.2s cubic-bezier(.5,0,.5,1) both; }
+.h-avatar-viewer.cz-pushup  { animation: cz-pushup  1.8s ease-in-out both; }
+.h-avatar-viewer.cz-jump    { animation: cz-jump    0.9s cubic-bezier(.3,1.4,.6,1) both; }
+.h-avatar-viewer.cz-dance   { animation: cz-dance   2.0s ease-in-out both; }
+
+@keyframes cz-fall {
+	0%   { transform: rotate(0deg); }
+	35%  { transform: rotate(-22deg); }
+	55%  { transform: rotate(-22deg); }
+	78%  { transform: rotate(-18deg); }
+	100% { transform: rotate(0deg); }
+}
+
+@keyframes cz-spin {
+	0%   { transform: rotateY(0)      scale(1); }
+	50%  { transform: rotateY(180deg) scale(0.97); }
+	100% { transform: rotateY(360deg) scale(1); }
+}
+
+@keyframes cz-pushup {
+	0%, 100% { transform: translateY(0); }
+	25%      { transform: translateY(8px) scale(1, 0.97); }
+	50%      { transform: translateY(0); }
+	75%      { transform: translateY(8px) scale(1, 0.97); }
+}
+
+@keyframes cz-jump {
+	0%, 100% { transform: translateY(0)    scale(1, 1); }
+	30%      { transform: translateY(0)    scale(1.05, 0.93); }
+	60%      { transform: translateY(-32px) scale(0.96, 1.06); }
+	85%      { transform: translateY(0)    scale(1.04, 0.96); }
+}
+
+@keyframes cz-dance {
+	0%, 100% { transform: rotate(0)     translateX(0); }
+	15%      { transform: rotate(4deg)  translateX(-6px) translateY(-2px); }
+	40%      { transform: rotate(-5deg) translateX(6px)  translateY(-1px); }
+	65%      { transform: rotate(3deg)  translateX(-4px) translateY(-3px); }
+	85%      { transform: rotate(-2deg) translateX(4px)  translateY(0); }
+}
+
 /* ── Avatar centered in its depth-1 parallax layer ─────────────────────── */
 
 .h-avatar-stage {
@@ -735,12 +833,30 @@
 	font-size: 17px;
 	font-weight: 600;
 	letter-spacing: 0.08em;
-	color: rgba(110, 231, 183, 0.28);
+	color: rgba(110, 231, 183, 0.18);
 	text-transform: uppercase;
-	border: 1px solid rgba(110, 231, 183, 0.16);
+	border: 1px solid rgba(110, 231, 183, 0.1);
 	border-radius: 999px;
 	padding: 0.4rem 1rem;
 	white-space: nowrap;
+}
+
+/* ── Readability backdrop behind Act 3 sticky text ──────────────────────── */
+
+.h-act--deploy .h-act-text::before {
+	content: '';
+	position: absolute;
+	inset: -2rem -2rem -2rem -2rem;
+	background: linear-gradient(
+		100deg,
+		rgba(6, 18, 14, 0.92) 0%,
+		rgba(6, 18, 14, 0.78) 45%,
+		rgba(6, 18, 14, 0.35) 75%,
+		transparent 100%
+	);
+	z-index: -1;
+	pointer-events: none;
+	border-radius: 0 24px 24px 0;
 }
 
 /* ── Ghost avatar (Act 3, depth 1) ──────────────────────────────────────── */
@@ -1414,16 +1530,16 @@
 	background: conic-gradient(
 		from 140deg,
 		rgba(255, 200, 60, 0) 0deg,
-		rgba(255, 200, 60, 0.22) 60deg,
-		rgba(125, 249, 255, 0.15) 180deg,
-		rgba(157, 140, 255, 0.1) 260deg,
+		rgba(255, 200, 60, 0.55) 60deg,
+		rgba(255, 100, 180, 0.4) 180deg,
+		rgba(157, 140, 255, 0.35) 260deg,
 		rgba(255, 200, 60, 0) 360deg
 	);
 	filter: blur(1px);
-	opacity: 0.65;
+	opacity: 0.9;
 	animation: hRingSpin 30s linear infinite;
-	mask: radial-gradient(circle, transparent 58%, #000 59%, #000 63%, transparent 64%);
-	-webkit-mask: radial-gradient(circle, transparent 58%, #000 59%, #000 63%, transparent 64%);
+	mask: radial-gradient(circle, transparent 56%, #000 57%, #000 64%, transparent 65%);
+	-webkit-mask: radial-gradient(circle, transparent 56%, #000 57%, #000 64%, transparent 65%);
 	pointer-events: none;
 	z-index: 1;
 }

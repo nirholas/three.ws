@@ -591,3 +591,32 @@ create table if not exists plan_payment_intents (
 create index if not exists payment_intents_user on plan_payment_intents(user_id);
 create index if not exists payment_intents_expiry on plan_payment_intents(expires_at) where status = 'pending';
 create index if not exists payment_intents_nonce on plan_payment_intents(nonce);
+
+-- ── email_verifications — short-lived numeric codes for email verification ──
+-- Code is stored hashed. Latest unconsumed row per user is the active one.
+create table if not exists email_verifications (
+    id           uuid primary key default gen_random_uuid(),
+    user_id      uuid not null references users(id) on delete cascade,
+    code_hash    text not null,             -- sha256 of the 6-digit code
+    expires_at   timestamptz not null,
+    consumed_at  timestamptz,
+    attempts     int not null default 0,
+    created_at   timestamptz not null default now()
+);
+
+create index if not exists email_verifications_user on email_verifications(user_id) where consumed_at is null;
+create index if not exists email_verifications_expiry on email_verifications(expires_at);
+
+-- ── password_resets — single-use tokens for password reset flow ─────────────
+-- Token is stored hashed; raw value is delivered via email link only.
+create table if not exists password_resets (
+    id           uuid primary key default gen_random_uuid(),
+    user_id      uuid not null references users(id) on delete cascade,
+    token_hash   text not null unique,       -- sha256 of the random token
+    expires_at   timestamptz not null,
+    consumed_at  timestamptz,
+    created_at   timestamptz not null default now()
+);
+
+create index if not exists password_resets_user on password_resets(user_id) where consumed_at is null;
+create index if not exists password_resets_expiry on password_resets(expires_at);

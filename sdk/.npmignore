@@ -1,0 +1,5 @@
+src/
+test/
+example/
+build.mjs
+*.test.js

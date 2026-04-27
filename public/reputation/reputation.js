@@ -146,7 +146,14 @@ async function main() {
 
 		// Check if chain is supported
 		if (!REGISTRY_DEPLOYMENTS[chainId]) {
-			throw new Error(`ReputationRegistry not deployed on ${getChainName(chainId)}`);
+			appEl.innerHTML = `
+				<div class="rep-unsupported-chain">
+					<h3>Network not supported</h3>
+					<p>On-chain reputation is not available on ${getChainName(chainId)} (chain ID ${chainId}).</p>
+					<p>Switch to Ethereum mainnet, Polygon, Base, or Arbitrum to view reputation.</p>
+				</div>
+			`;
+			return;
 		}
 
 		// Get agent info from backend if available

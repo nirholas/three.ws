@@ -18,7 +18,7 @@ const ALLOWED_MODEL_ORIGINS = [
 	/^https:\/\/[^/]+\.cloudfront\.net$/,
 	/^https:\/\/storage\.googleapis\.com$/,
 	/^https:\/\/[^/]+\.blob\.core\.windows\.net$/,
-	/^https:\/\/3dagent\.vercel\.app$/,
+	/^https:\/\/three\.ws$/,
 	/^https:\/\/[^/]+\.vercel\.app$/,
 ];
 

@@ -98,7 +98,16 @@ export function cors(
 }
 
 function isAllowedOrigin(origin, allowed) {
-	if (!allowed) return origin === env.APP_ORIGIN || /^https?:\/\/localhost(:\d+)?$/.test(origin);
+	if (!allowed) {
+		if (origin === env.APP_ORIGIN) return true;
+		if (
+			process.env.NODE_ENV !== 'production' &&
+			/^https?:\/\/localhost(:\d+)?$/.test(origin)
+		) {
+			return true;
+		}
+		return false;
+	}
 	return allowed.some((pat) => (typeof pat === 'string' ? origin === pat : pat.test(origin)));
 }
 

@@ -101,9 +101,9 @@
 							<model-viewer
 								id="hero-avatar"
 								class="h-avatar-viewer"
-								src="/animations/robotexpressive.glb"
-								alt="three.ws — interactive 3D agent that waves hello"
-								animation-name="Wave"
+								src="/avatars/cz.glb"
+								alt="three.ws — interactive 3D agent. Click for surprises."
+								animation-name="IdleV4.2(maya_head)"
 								autoplay
 								disable-zoom
 								interaction-prompt="none"
@@ -112,8 +112,8 @@
 								exposure="1.1"
 								tone-mapping="aces"
 								environment-image="neutral"
-								camera-orbit="0deg 75deg 3.2m"
-								field-of-view="30deg"
+								camera-orbit="-45deg 80deg 8.5m"
+								field-of-view="18deg"
 								loading="eager"
 							></model-viewer>
 							<div class="h-avatar-badge">
@@ -162,6 +162,36 @@
 				</div>
 			</section>
 
+			<!-- ── Pillars transition band (between hero and Act 2) ── -->
+			<section class="h-pillars" aria-label="What you get">
+				<div class="h-pillars-inner">
+					<article class="h-pillar h-reveal">
+						<h3>A 3D body for any agent</h3>
+						<p>
+							Drop any GLB into the browser and your AI agent appears as a fully
+							rendered 3D avatar — animated, reactive, and ready to embed anywhere
+							you can drop a script tag.
+						</p>
+					</article>
+					<article class="h-pillar h-reveal">
+						<h3>Your stack, your brain</h3>
+						<p>
+							Connect any LLM via MCP or A2A — Claude, GPT, Gemini, or your own.
+							Built-in empathy layer for real-time emotion. No SDK on the consumer side.
+							No vendor lock-in.
+						</p>
+					</article>
+					<article class="h-pillar h-reveal">
+						<h3>Owned, on-chain, portable</h3>
+						<p>
+							Register your agent on 20+ EVM chains via ERC-8004 — a verifiable,
+							CREATE2-deterministic identity discoverable by any A2A or MCP client.
+							Your agent. Your keys.
+						</p>
+					</article>
+				</div>
+			</section>
+
 			<!-- ── Act 2: Pick & Animate ── -->
 			<section class="h-act h-act--animate" data-act="2" id="pick-animate">
 				<div class="h-act-warp h-act-warp--amber" aria-hidden="true"></div>
@@ -200,8 +230,8 @@
 								shadow-intensity="0.6"
 								exposure="1.0"
 								environment-image="neutral"
-								camera-orbit="0deg 75deg 3m"
-								field-of-view="30deg"
+								camera-orbit="0deg 75deg 4.5m"
+								field-of-view="28deg"
 								loading="lazy"
 							></model-viewer>
 						</div>
@@ -225,16 +255,7 @@
 						<button class="h-av-opt" data-src="/avatars/cz.glb" aria-pressed="false">CZ</button>
 					</div>
 
-					<div class="h-anim-chips" role="group" aria-label="Trigger animation" data-role="anim-chips">
-						<button class="h-anim-chip" data-anim="Dance">💃 Dance</button>
-						<button class="h-anim-chip" data-anim="Wave">👋 Wave</button>
-						<button class="h-anim-chip" data-anim="Jump">⬆ Jump</button>
-						<button class="h-anim-chip" data-anim="ThumbsUp">👍 ThumbsUp</button>
-						<button class="h-anim-chip" data-anim="Punch">🥊 Punch</button>
-						<button class="h-anim-chip" data-anim="No">🙅 No</button>
-						<button class="h-anim-chip" data-anim="Yes">🙆 Yes</button>
-						<button class="h-anim-chip" data-anim="Idle">😐 Idle</button>
-					</div>
+					<div class="h-anim-chips" role="group" aria-label="Trigger animation" data-role="anim-chips"></div>
 
 					<div class="h-act-cta">
 						<a href="/app" class="h-btn-primary"><span>Open full viewer</span><span class="arrow">→</span></a>
@@ -542,56 +563,42 @@
 				});
 			})();
 
-			// Hero avatar — wave on load, then idle, then track cursor + scroll
+			// Hero avatar — track cursor + orbit on scroll + clickable easter eggs
 			(function () {
 				const scrollEl = document.querySelector('.home-parallax');
 				const mv = document.getElementById('hero-avatar');
+				const wrap = mv ? mv.closest('.h-avatar-wrap') : null;
 				const heroAct = document.querySelector('.h-hero-act');
-				if (!scrollEl || !mv || !heroAct) return;
+				if (!scrollEl || !mv || !wrap || !heroAct) return;
 
-				// Cursor + scroll state
 				let mouseX = 0, mouseY = 0;
 				let scrollProgress = 0;
-				let baseTheta = 0, basePhi = 75;
-				let curTheta = 0, curPhi = 75, curR = 3.2;
-				let targetTheta = 0, targetPhi = 75, targetR = 3.2;
+				const BASE_THETA = -45, BASE_PHI = 80, BASE_R = 8.5;
+				let curTheta = BASE_THETA, curPhi = BASE_PHI, curR = BASE_R;
+				let trickActive = false;
 
-				// Track cursor in -1..1 NDC
 				window.addEventListener('mousemove', (e) => {
 					mouseX = (e.clientX / innerWidth) * 2 - 1;
 					mouseY = (e.clientY / innerHeight) * 2 - 1;
 				}, { passive: true });
 
-				// Scroll progress
 				scrollEl.addEventListener('scroll', () => {
 					scrollProgress = Math.min(scrollEl.scrollTop / heroAct.offsetHeight, 1);
 				}, { passive: true });
 
-				// After wave finishes (~2.5s), settle to Idle
-				mv.addEventListener('load', () => {
-					setTimeout(() => {
-						const anims = mv.availableAnimations || [];
-						if (anims.includes('Idle')) {
-							mv.animationName = 'Idle';
-							mv.play();
-						}
-					}, 2600);
-				}, { once: true });
-
-				// Smoothly drive camera-orbit each frame
 				function tick() {
-					// scroll: orbit around as you scroll through hero
-					const scrollTheta = scrollProgress * 240;
-					const scrollPhi   = 75 - scrollProgress * 12;
-					const scrollR     = 3.2 + scrollProgress * 0.6;
-					// cursor: subtle tracking — the avatar looks at you
-					const cursorTheta = mouseX * 18;
-					const cursorPhi   = 8 * mouseY;
-					targetTheta = scrollTheta + cursorTheta;
-					targetPhi   = scrollPhi   + cursorPhi;
-					targetR     = scrollR;
-					curTheta += (targetTheta - curTheta) * 0.08;
-					curPhi   += (targetPhi   - curPhi)   * 0.08;
+					/* sweep from left-front (-45°) to right-front (+45°) — never
+					   rotates past the side, so we never show CZ's back. */
+					const scrollTheta = scrollProgress * 90;
+					const scrollPhi   = -scrollProgress * 8;
+					const scrollR     = scrollProgress * 0.8;
+					const cursorTheta = mouseX * 16;
+					const cursorPhi   = mouseY * 6;
+					const targetTheta = BASE_THETA + scrollTheta + cursorTheta;
+					const targetPhi   = BASE_PHI   + scrollPhi   + cursorPhi;
+					const targetR     = BASE_R     + scrollR;
+					curTheta += (targetTheta - curTheta) * 0.07;
+					curPhi   += (targetPhi   - curPhi)   * 0.07;
 					curR     += (targetR     - curR)     * 0.06;
 					mv.setAttribute('camera-orbit',
 						curTheta.toFixed(1) + 'deg ' +
@@ -600,6 +607,44 @@
 					requestAnimationFrame(tick);
 				}
 				tick();
+
+				/* Click → random fun trick (CZ has no extra animations, so we do
+				   it with CSS transforms on the wrap: fall over, spin, push-up,
+				   jump). State is auto-cleared. */
+				/* clicks always trigger something fun and energetic — dance or jump.
+				   idle easter eggs can mix in spins / falls / push-ups for variety. */
+				const CLICK_TRICKS = ['cz-dance', 'cz-jump'];
+				const IDLE_TRICKS  = ['cz-dance', 'cz-jump', 'cz-spin', 'cz-fall', 'cz-pushup'];
+				function playTrick(name) {
+					if (trickActive) return;
+					trickActive = true;
+					/* apply animation to the model-viewer only, NOT the wrap.
+					   the ring/glow/badge stay static — the avatar appears to
+					   move *within* its frame, not tilt the whole page. */
+					mv.classList.add(name);
+					const onEnd = () => {
+						mv.classList.remove(name);
+						trickActive = false;
+						mv.removeEventListener('animationend', onEnd);
+					};
+					mv.addEventListener('animationend', onEnd);
+				}
+				mv.style.cursor = 'pointer';
+				mv.addEventListener('click', () => {
+					playTrick(CLICK_TRICKS[Math.floor(Math.random() * CLICK_TRICKS.length)]);
+				});
+
+				/* Idle easter egg: every 18-32s, CZ does something fun on his own */
+				function scheduleIdleTrick() {
+					const delay = 18000 + Math.random() * 14000;
+					setTimeout(() => {
+						if (!trickActive && document.visibilityState === 'visible') {
+							playTrick(IDLE_TRICKS[Math.floor(Math.random() * IDLE_TRICKS.length)]);
+						}
+						scheduleIdleTrick();
+					}, delay);
+				}
+				scheduleIdleTrick();
 			})();
 
 			// Avatar picker + animation chips (Act 2)
@@ -649,7 +694,7 @@
 			(function () {
 				const ribbon = document.querySelector('[data-role="home-chain-ribbon"]');
 				if (!ribbon) return;
-				const labels = ['Ethereum','Base','Optimism','Polygon','Arbitrum','Avalanche','Celo','Linea','zkSync','Scroll','Blast','Mantle','Mode','opBNB'];
+				const labels = ['Solana','Base','Ethereum','Optimism','Polygon','Avalanche','Celo','Linea','zkSync','Scroll','Blast','Mode'];
 				ribbon.replaceChildren(...labels.map(l => {
 					const s = document.createElement('span');
 					s.className = 'chain-pill';

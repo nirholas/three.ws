@@ -129,9 +129,9 @@ export class PermissionsClient {
 		}
 		// Dynamic import keeps ethers + toolkit out of the Node.js bundle.
 		const { encodeScopedDelegation, signDelegation } = await import(
-			'../../src/permissions/toolkit.js'
+			'./permissions/toolkit.js'
 		);
-		const { CAVEAT_ENFORCERS, encodeCaveats } = await import('../../src/erc7710/abi.js');
+		const { CAVEAT_ENFORCERS, encodeCaveats } = await import('./erc7710/abi.js');
 
 		const delegatorAddr = await signer.getAddress();
 		const expiry = Math.floor(Date.now() / 1000) + preset.expiryDays * 86400;
@@ -223,7 +223,7 @@ export class PermissionsClient {
 		}
 		const { Contract } = await import('ethers');
 		const { DELEGATION_MANAGER_ABI, DELEGATION_MANAGER_DEPLOYMENTS } = await import(
-			'../../src/erc7710/abi.js'
+			'./erc7710/abi.js'
 		);
 		const network = await signer.provider.getNetwork();
 		const managerAddr = DELEGATION_MANAGER_DEPLOYMENTS[Number(network.chainId)];

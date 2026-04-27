@@ -3,32 +3,42 @@
 	"version": "0.1.0",
 	"description": "Ship a cross-chain 3D AI agent with EVM + Solana identity, a chat panel, and discoverable .well-known endpoints.",
 	"type": "module",
-	"main": "./src/index.js",
-	"module": "./src/index.js",
-	"types": "./src/index.d.ts",
+	"main": "./dist/index.js",
+	"module": "./dist/index.mjs",
+	"types": "./dist/index.d.ts",
 	"exports": {
 		".": {
-			"types": "./src/index.d.ts",
-			"import": "./src/index.js",
-			"default": "./src/index.js"
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.mjs",
+			"require": "./dist/index.js",
+			"default": "./dist/index.mjs"
 		},
 		"./permissions": {
-			"types": "./src/permissions.d.ts",
-			"import": "./src/permissions.js",
-			"default": "./src/permissions.js"
+			"types": "./dist/permissions.d.ts",
+			"import": "./dist/index.mjs",
+			"require": "./dist/index.js",
+			"default": "./dist/index.mjs"
 		},
 		"./permissions/advanced": {
-			"types": "./src/permissions/advanced.d.ts",
-			"import": "./src/permissions/advanced.js",
-			"default": "./src/permissions/advanced.js"
+			"types": "./dist/permissions/advanced.d.ts",
+			"import": "./dist/index.mjs",
+			"require": "./dist/index.js",
+			"default": "./dist/index.mjs"
 		},
-		"./styles": "./src/styles.css"
+		"./styles": "./dist/styles.css"
 	},
 	"files": [
-		"src"
+		"dist",
+		"README.md",
+		"LICENSE",
+		"CHANGELOG.md"
 	],
 	"scripts": {
+		"build": "node build.mjs",
 		"test": "node --test 'test/**/*.test.js'"
+	},
+	"publishConfig": {
+		"access": "public"
 	},
 	"keywords": [
 		"erc-8004", "agent", "blockchain", "a2a", "mcp",
