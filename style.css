@@ -4334,13 +4334,11 @@ footer .separator {
 	display: none;
 }
 
-body[data-viewer-mode='main'][data-authed='pending'] .anim-panel,
 body[data-viewer-mode='main'][data-authed='pending'] #agent-presence-sidebar,
 body[data-viewer-mode='main'][data-authed='pending'] .dg.main {
 	visibility: hidden !important;
 }
 
-body[data-viewer-mode='main'][data-authed='false'] .anim-panel,
 body[data-viewer-mode='main'][data-authed='false'] #agent-presence-sidebar,
 body[data-viewer-mode='main'][data-authed='false'] .dg.main {
 	display: none !important;
