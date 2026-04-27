@@ -302,9 +302,9 @@ export class Viewer {
 
 		const target = center.clone();
 		const pos = center.clone();
-		pos.x += size / 2.0;
-		pos.y += size / 5.0;
-		pos.z += size / 2.0;
+		pos.x += size / 4.0;
+		pos.y += size / 8.0;
+		pos.z += size * 0.85;
 
 		if (animate) {
 			this._tweenCamera(pos, target, durationMs);
@@ -530,9 +530,9 @@ export class Viewer {
 			framedPos.fromArray(this.options.cameraPosition);
 		} else {
 			framedPos.copy(center);
-			framedPos.x += size / 2.0;
-			framedPos.y += size / 5.0;
-			framedPos.z += size / 2.0;
+			framedPos.x += size / 4.0;
+			framedPos.y += size / 8.0;
+			framedPos.z += size * 0.85;
 		}
 
 		// In kiosk / embed modes (and on subsequent loads), snap straight to

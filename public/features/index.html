@@ -54,11 +54,41 @@
 		<main class="parallax" data-role="parallax-root">
 			<!-- ─── ACT 1 — Live 3D, in your browser ─────────────────────────── -->
 			<section class="parallax-act" data-act="1" aria-labelledby="act1-title">
-				<div class="parallax-layer" style="--depth: 8" aria-hidden="true">
+				<div class="parallax-layer" style="--depth: 10" aria-hidden="true">
 					<div class="layer-bg layer-bg--nebula"></div>
+					<canvas class="layer-stars-canvas" data-role="star-canvas" data-tint="255,220,130" data-count="280"></canvas>
 				</div>
 				<div class="parallax-layer" style="--depth: 5" aria-hidden="true">
-					<div class="layer-grid"></div>
+					<svg class="layer-perspective-grid" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" role="presentation">
+						<!-- Lines radiating from vanishing point (800, 450) -->
+						<g stroke="rgba(255,215,106,0.07)" stroke-width="1" fill="none">
+							<line x1="800" y1="450" x2="0" y2="0"/>
+							<line x1="800" y1="450" x2="267" y2="0"/>
+							<line x1="800" y1="450" x2="533" y2="0"/>
+							<line x1="800" y1="450" x2="800" y2="0"/>
+							<line x1="800" y1="450" x2="1067" y2="0"/>
+							<line x1="800" y1="450" x2="1333" y2="0"/>
+							<line x1="800" y1="450" x2="1600" y2="0"/>
+							<line x1="800" y1="450" x2="0" y2="900"/>
+							<line x1="800" y1="450" x2="267" y2="900"/>
+							<line x1="800" y1="450" x2="533" y2="900"/>
+							<line x1="800" y1="450" x2="800" y2="900"/>
+							<line x1="800" y1="450" x2="1067" y2="900"/>
+							<line x1="800" y1="450" x2="1333" y2="900"/>
+							<line x1="800" y1="450" x2="1600" y2="900"/>
+							<line x1="800" y1="450" x2="0" y2="225"/>
+							<line x1="800" y1="450" x2="0" y2="675"/>
+							<line x1="800" y1="450" x2="1600" y2="225"/>
+							<line x1="800" y1="450" x2="1600" y2="675"/>
+						</g>
+						<!-- Concentric distance rings -->
+						<g stroke="rgba(255,215,106,0.05)" stroke-width="1" fill="none">
+							<ellipse cx="800" cy="450" rx="160" ry="90"/>
+							<ellipse cx="800" cy="450" rx="320" ry="180"/>
+							<ellipse cx="800" cy="450" rx="480" ry="270"/>
+							<ellipse cx="800" cy="450" rx="700" ry="400"/>
+						</g>
+					</svg>
 				</div>
 				<div class="parallax-layer" style="--depth: 2" aria-hidden="true">
 					<div class="layer-orb layer-orb--gold"></div>
@@ -116,8 +146,9 @@
 				id="act-empathy"
 				aria-labelledby="act2-title"
 			>
-				<div class="parallax-layer" style="--depth: 8" aria-hidden="true">
+				<div class="parallax-layer" style="--depth: 10" aria-hidden="true">
 					<div class="layer-bg layer-bg--violet"></div>
+					<canvas class="layer-stars-canvas" data-role="star-canvas" data-tint="200,160,255" data-count="220"></canvas>
 				</div>
 				<div class="parallax-layer" style="--depth: 5" aria-hidden="true">
 					<svg
@@ -199,8 +230,9 @@
 				id="act-onchain"
 				aria-labelledby="act3-title"
 			>
-				<div class="parallax-layer" style="--depth: 8" aria-hidden="true">
+				<div class="parallax-layer" style="--depth: 10" aria-hidden="true">
 					<div class="layer-bg layer-bg--mint"></div>
+					<canvas class="layer-stars-canvas" data-role="star-canvas" data-tint="110,231,183" data-count="240"></canvas>
 				</div>
 				<div class="parallax-layer" style="--depth: 5" aria-hidden="true">
 					<div class="layer-chains" data-role="chain-ribbon"></div>
