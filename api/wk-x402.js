@@ -5,7 +5,7 @@ import { env } from './_lib/env.js';
 import { cors, json, method, wrap } from './_lib/http.js';
 
 export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
+	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
 	return json(
 		res,
