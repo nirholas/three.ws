@@ -387,6 +387,22 @@
 				color: #aaa;
 			}
 
+			@media (max-width: 768px) {
+				.layout {
+					grid-template-columns: 1fr;
+					height: auto;
+					grid-template-rows: 50vw auto;
+				}
+				.preview-pane {
+					border-right: none;
+					border-bottom: 1px solid var(--border);
+					height: 50vw;
+				}
+				.editor-pane {
+					padding: 18px 16px 60px;
+				}
+			}
+
 			/* ── Voice picker ──────────────────────────────────────────────────────── */
 			.vp-toggle {
 				display: flex;

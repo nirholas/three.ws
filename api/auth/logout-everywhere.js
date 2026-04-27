@@ -1,6 +1,7 @@
-// Revoke every session for the caller, including the current one, and clear the cookie.
-// Different from DELETE /api/auth/sessions (which keeps the current session):
-// this fully signs the user out on every device.
+// Revoke every session AND every OAuth refresh token for the caller, including
+// the current session, and clear the cookie. This fully signs the user out on
+// every device and invalidates any OAuth tokens issued to third-party clients.
+// Different from DELETE /api/auth/sessions (which keeps the current session).
 
 import { sql } from '../_lib/db.js';
 import { getSessionUser, sessionCookie } from '../_lib/auth.js';
@@ -18,8 +19,18 @@ export default wrap(async (req, res) => {
 	const rl = await limits.authIp(ip);
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
-	const result = await sql`
+	// Revoke all active sessions across every device.
+	const sessionResult = await sql`
 		update sessions
+		set revoked_at = now()
+		where user_id = ${user.id}
+		  and revoked_at is null
+	`;
+
+	// Revoke all OAuth refresh tokens so third-party clients can no longer
+	// obtain new access tokens on behalf of this user.
+	await sql`
+		update oauth_refresh_tokens
 		set revoked_at = now()
 		where user_id = ${user.id}
 		  and revoked_at is null
@@ -30,5 +41,5 @@ export default wrap(async (req, res) => {
 	const arr = Array.isArray(existing) ? existing : [existing];
 	res.setHeader('set-cookie', [...arr, ...clearCookies]);
 
-	return json(res, 200, { ok: true, revoked: result.count });
+	return json(res, 200, { ok: true, revoked: sessionResult.count });
 });

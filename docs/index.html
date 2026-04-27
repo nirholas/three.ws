@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Docs · three.ws</title>
+		<link rel="icon" href="/favicon.ico" />
+		<style>
+			:root { color-scheme: dark; --accent: #6a5cff; }
+			* { box-sizing: border-box; }
+			body {
+				font: 15px/1.6 -apple-system, system-ui, Segoe UI, Roboto, sans-serif;
+				background: #0b0b10;
+				color: #eee;
+				margin: 0;
+				padding: 40px 24px 80px;
+			}
+			a { color: #9a8cff; text-decoration: none; }
+			a:hover { text-decoration: underline; }
+			.container { max-width: 680px; margin: 0 auto; }
+			.brand { font-size: 13px; color: #555; margin-bottom: 32px; }
+			h1 { font-size: 26px; margin: 0 0 8px; letter-spacing: -0.02em; }
+			.sub { color: #888; margin: 0 0 36px; font-size: 15px; }
+			h2 { font-size: 14px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: 0.08em; margin: 32px 0 10px; }
+			ul { margin: 0; padding: 0; list-style: none; }
+			li { border-top: 1px solid #1e1e28; }
+			li:last-child { border-bottom: 1px solid #1e1e28; }
+			li a { display: block; padding: 11px 0; color: #ccc; font-size: 14px; }
+			li a:hover { color: #fff; text-decoration: none; }
+			li a span { font-size: 12px; color: #555; display: block; margin-top: 2px; }
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<p class="brand"><a href="/">← three.ws</a></p>
+			<h1>Documentation</h1>
+			<p class="sub">Guides, API reference, and architecture notes for three.ws.</p>
+
+			<h2>Getting started</h2>
+			<ul>
+				<li><a href="/docs/SETUP.md">Setup <span>Local development and environment variables</span></a></li>
+				<li><a href="/docs/DEVELOPMENT.md">Development guide <span>Running, building, and testing</span></a></li>
+				<li><a href="/docs/DEPLOYMENT.md">Deployment <span>Deploying to Vercel</span></a></li>
+			</ul>
+
+			<h2>Architecture</h2>
+			<ul>
+				<li><a href="/docs/ARCHITECTURE.md">Architecture overview <span>How the platform is structured</span></a></li>
+				<li><a href="/docs/how-it-works.md">How it works <span>End-to-end flow from GLB to embedded agent</span></a></li>
+			</ul>
+
+			<h2>API reference</h2>
+			<ul>
+				<li><a href="/docs/API.md">REST API <span>Avatars, agents, OAuth, MCP endpoints</span></a></li>
+				<li><a href="/docs/MCP.md">MCP <span>Model Context Protocol integration</span></a></li>
+				<li><a href="/docs/WIDGETS.md">Widgets <span>Widget types, embed codes, and the Widget Studio</span></a></li>
+				<li><a href="/docs/widgets">Widgets reference (interactive) <span>Full widget API docs</span></a></li>
+			</ul>
+
+			<h2>Tutorials</h2>
+			<ul>
+				<li><a href="/docs/tutorial-build-pai-site.md">Build a PAI site <span>Step-by-step: deploy a personal AI agent site</span></a></li>
+				<li><a href="/docs/your-own-layers.md">Custom layers <span>Adding your own scene layers</span></a></li>
+				<li><a href="/docs/avaturn-docs.md">Avaturn integration <span>Selfie-to-avatar via Avaturn</span></a></li>
+			</ul>
+
+			<h2>Operations</h2>
+			<ul>
+				<li><a href="/docs/SMOKE_TEST.md">Smoke test <span>Manual verification checklist</span></a></li>
+				<li><a href="/docs/VALIDATION_DEPLOY.md">Validation deployment <span>Pre-release checklist</span></a></li>
+				<li><a href="/docs/api-inventory.md">API inventory <span>Full list of API endpoints</span></a></li>
+			</ul>
+		</div>
+	</body>
+</html>

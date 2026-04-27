@@ -170,7 +170,7 @@
 			<h1>Welcome back</h1>
 			<p class="sub">Sign in to manage your avatars.</p>
 			<label for="email">Email or username</label>
-			<input id="email" type="text" autocomplete="username email" required />
+			<input id="email" type="text" autocomplete="username email" required aria-describedby="err" />
 			<label for="password">Password</label>
 			<input
 				id="password"
@@ -178,20 +178,21 @@
 				autocomplete="current-password"
 				required
 				minlength="10"
+				aria-describedby="err"
 			/>
 			<p class="hint" style="font-size:12px;color:#666;margin-top:4px;text-align:right">
 				<a href="/forgot-password">Forgot password?</a>
 			</p>
 			<button id="submit" type="submit">Sign in</button>
 			<div class="divider">or connect wallet</div>
-			<div class="chain-tabs">
-				<button type="button" class="chain-tab active" data-chain="evm">EVM</button>
-				<button type="button" class="chain-tab" data-chain="solana">Solana</button>
+			<div class="chain-tabs" role="tablist" aria-label="Wallet chain">
+				<button type="button" class="chain-tab active" data-chain="evm" role="tab" aria-selected="true" aria-controls="evm-panel">EVM</button>
+				<button type="button" class="chain-tab" data-chain="solana" role="tab" aria-selected="false" aria-controls="solana-panel">Solana</button>
 			</div>
-			<div id="evm-panel" class="chain-panel active">
+			<div id="evm-panel" class="chain-panel active" role="tabpanel">
 				<div id="wallet-mount"></div>
 			</div>
-			<div id="solana-panel" class="chain-panel">
+			<div id="solana-panel" class="chain-panel" role="tabpanel">
 				<div id="solana-wallet-mount"></div>
 				<div class="chain-hints" id="solana-hints" style="margin-top:8px;font-size:12px;color:#555;display:flex;gap:8px;justify-content:center;">
 					<button type="button" class="wallet-hint-btn" data-wallet="phantom">Phantom</button>
@@ -199,7 +200,7 @@
 					<button type="button" class="wallet-hint-btn" data-wallet="solflare">Solflare</button>
 				</div>
 			</div>
-			<div class="err" id="err"></div>
+			<div class="err" id="err" role="alert" aria-live="polite"></div>
 			<p class="foot">No account? <a href="/register">Create one</a></p>
 		</form>
 		<style>
