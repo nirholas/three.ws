@@ -18,6 +18,10 @@
 			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap"
 			rel="stylesheet"
 		/>
+		<script
+			type="module"
+			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
+		></script>
 
 		<meta property="og:type" content="website" />
 		<meta property="og:title" content="Agent" id="og-title" />
@@ -131,9 +135,72 @@
 				color: rgba(255, 255, 255, 0.8);
 			}
 
+			.agent-stage {
+				max-width: 720px;
+				margin: 2.5rem auto 0;
+				padding: 0 1rem;
+			}
+
+			.agent-stage-viewer {
+				width: 100%;
+				height: clamp(360px, 55vh, 560px);
+				background: radial-gradient(
+					ellipse at center,
+					rgba(255, 215, 0, 0.04) 0%,
+					transparent 70%
+				);
+				border: 1px solid rgba(255, 255, 255, 0.06);
+				border-radius: 12px;
+				--poster-color: transparent;
+			}
+
+			.agent-stage-cta-row {
+				display: flex;
+				gap: 0.618rem;
+				justify-content: center;
+				margin-top: 1.25rem;
+				flex-wrap: wrap;
+			}
+
+			.agent-stage-cta {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.4em;
+				padding: 0.6em 1.1em;
+				border-radius: 8px;
+				font-size: 0.85rem;
+				font-family: inherit;
+				font-weight: 500;
+				text-decoration: none;
+				cursor: pointer;
+				border: 1px solid transparent;
+				transition:
+					background 0.15s,
+					border-color 0.15s,
+					color 0.15s;
+			}
+
+			.agent-stage-cta--primary {
+				background: rgba(255, 215, 0, 0.92);
+				color: #000;
+			}
+			.agent-stage-cta--primary:hover {
+				background: #ffd700;
+			}
+
+			.agent-stage-cta--ghost {
+				background: transparent;
+				color: rgba(255, 255, 255, 0.7);
+				border-color: rgba(255, 255, 255, 0.18);
+			}
+			.agent-stage-cta--ghost:hover {
+				color: #fff;
+				border-color: rgba(255, 255, 255, 0.4);
+			}
+
 			.agent-page-hero {
 				max-width: 520px;
-				margin: 4rem auto 2rem;
+				margin: 2rem auto 2rem;
 				padding: 0 1rem;
 				text-align: center;
 			}
@@ -338,6 +405,34 @@
 		</header>
 
 		<main id="main">
+			<section class="agent-stage" aria-label="Agent body">
+				<model-viewer
+					id="agent-stage-viewer"
+					class="agent-stage-viewer"
+					camera-controls
+					auto-rotate
+					rotation-per-second="20deg"
+					exposure="0.9"
+					shadow-intensity="0.6"
+					interaction-prompt="none"
+					ar
+					ar-modes="webxr scene-viewer quick-look"
+					alt="Agent avatar"
+				></model-viewer>
+				<div class="agent-stage-cta-row" id="agent-stage-ctas" hidden>
+					<a
+						class="agent-stage-cta agent-stage-cta--primary"
+						id="agent-stage-edit"
+						href="#"
+						hidden
+						>Open in editor →</a
+					>
+					<button class="agent-stage-cta agent-stage-cta--ghost" id="agent-stage-share">
+						Copy share link
+					</button>
+				</div>
+			</section>
+
 			<div class="agent-page-hero">
 				<h1 class="agent-page-title" id="page-agent-name">Agent</h1>
 				<p class="agent-page-subtitle" id="page-agent-desc">
@@ -455,6 +550,8 @@
 					document.getElementById('page-agent-desc').textContent = identity.description;
 				}
 
+				mountStage(identity);
+
 				const container = document.getElementById('agent-home-container');
 				container.innerHTML = '';
 				container.setAttribute('aria-busy', 'false');
@@ -549,6 +646,59 @@
 				// Signal orphans module that identity is ready
 				window.__agentReady = { agentId, identity };
 				window.dispatchEvent(new CustomEvent('agent:ready'));
+			}
+
+			async function mountStage(identity) {
+				const viewer = document.getElementById('agent-stage-viewer');
+				const ctaRow = document.getElementById('agent-stage-ctas');
+				const editLink = document.getElementById('agent-stage-edit');
+				const shareBtn = document.getElementById('agent-stage-share');
+				const agentUrl = `${location.origin}/agent/${identity.id}`;
+
+				ctaRow.hidden = false;
+
+				shareBtn.addEventListener('click', async () => {
+					try {
+						await navigator.clipboard.writeText(agentUrl);
+						const original = shareBtn.textContent;
+						shareBtn.textContent = 'Copied ✓';
+						setTimeout(() => {
+							shareBtn.textContent = original;
+						}, 1400);
+					} catch {}
+				});
+
+				try {
+					const me = await fetch('/api/auth/me', { credentials: 'include' });
+					if (me.ok) {
+						editLink.href = `/app?agent=${identity.id}`;
+						editLink.hidden = false;
+					}
+				} catch {}
+
+				const glbUrl = await resolveAgentGlb(identity);
+				if (glbUrl) viewer.src = glbUrl;
+			}
+
+			async function resolveAgentGlb(identity) {
+				try {
+					const agentResp = await fetch(`/api/agents/${identity.id}`, {
+						credentials: 'include',
+					});
+					if (!agentResp.ok) return null;
+					const { agent } = await agentResp.json();
+					const avatarId = agent?.avatar_id || identity.avatarId;
+					if (!avatarId) return null;
+
+					const avResp = await fetch(`/api/avatars/${avatarId}`, {
+						credentials: 'include',
+					});
+					if (!avResp.ok) return null;
+					const { avatar } = await avResp.json();
+					return avatar?.url || null;
+				} catch {
+					return null;
+				}
 			}
 
 			function populateUnfurlMeta(identity) {

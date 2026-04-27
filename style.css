@@ -2751,6 +2751,48 @@ footer .separator {
 	}
 }
 
+.view-public-profile-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-xs);
+	padding: var(--space-sm) var(--space-lg);
+	background: rgba(255, 215, 0, 0.1);
+	border: 1px solid rgba(255, 215, 0, 0.32);
+	border-radius: var(--radius-lg);
+	color: rgba(255, 255, 255, 0.9);
+	font-family: inherit;
+	font-size: var(--text-sm);
+	font-weight: 500;
+	text-decoration: none;
+	cursor: pointer;
+	transition: all 0.25s ease;
+	letter-spacing: 0.02em;
+}
+.view-public-profile-btn:hover {
+	background: rgba(255, 215, 0, 0.2);
+	color: #fff;
+	border-color: rgba(255, 215, 0, 0.6);
+}
+.view-public-profile-btn:focus-visible {
+	outline: 2px solid rgba(255, 215, 0, 0.7);
+	outline-offset: 2px;
+}
+.view-public-profile-btn[hidden] {
+	display: none;
+}
+.view-public-profile-btn svg {
+	width: 1em;
+	height: 1em;
+}
+@media screen and (max-width: 700px) {
+	.view-public-profile-btn span {
+		display: none;
+	}
+	.view-public-profile-btn {
+		padding: var(--space-xs) var(--space-sm);
+	}
+}
+
 /******************************************************************************
  * Avatar Creator Modal
  */

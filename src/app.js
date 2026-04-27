@@ -706,6 +706,13 @@ class App {
 		} else {
 			this._maybeResumeOrLoad(this.options);
 		}
+
+		const publicLink = document.getElementById('view-public-profile-btn');
+		if (publicLink) {
+			publicLink.href = `/agent/${agentId}`;
+			publicLink.hidden = false;
+		}
+
 		this._initAgentSystem();
 		this._initWidgetBridge();
 	}

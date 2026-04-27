@@ -307,14 +307,14 @@
 			// Auth-aware nav CTA
 			(function () {
 				try {
-					const token =
-						localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
-					if (token) {
-						const cta = document.getElementById('home-nav-cta');
-						if (cta) {
-							cta.textContent = 'Dashboard';
-							cta.href = '/dashboard';
-						}
+					const raw = localStorage.getItem('3dagent:auth-hint');
+					if (!raw) return;
+					const { authed } = JSON.parse(raw);
+					if (!authed) return;
+					const cta = document.getElementById('home-nav-cta');
+					if (cta) {
+						cta.textContent = 'Dashboard';
+						cta.href = '/dashboard';
 					}
 				} catch (_) {}
 			})();

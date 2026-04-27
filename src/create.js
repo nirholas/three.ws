@@ -86,7 +86,7 @@ async function saveAndRedirect(blob, meta = {}) {
 	try {
 		const avatar = await saveRemoteGlbToAccount(blob, meta);
 		const agent = await attachAvatarToAgent(avatar.id, meta.name);
-		window.location.href = '/agent/' + agent.id;
+		window.location.href = '/app?agent=' + agent.id;
 	} catch (err) {
 		if (err.code === 'not_signed_in') {
 			sessionStorage.setItem('login_redirect', '/create');
