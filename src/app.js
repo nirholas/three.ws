@@ -218,7 +218,7 @@ class App {
 			return;
 		}
 
-		// Load a saved widget by ID: /#widget=<wdgt_...>
+		// Load a saved widget by ID: /app#widget=<wdgt_...>
 		if (options.widget) {
 			this._loadWidget(options.widget);
 			this._initAgentSystem();

@@ -244,10 +244,7 @@ export class SharePanel {
 		frame.setAttribute('loading', 'lazy');
 		frame.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
 		frame.setAttribute('allow', 'autoplay; xr-spatial-tracking');
-		frame.setAttribute(
-			'aria-label',
-			`Live preview of ${this._agent.name || 'agent'} embed`,
-		);
+		frame.setAttribute('aria-label', `Live preview of ${this._agent.name || 'agent'} embed`);
 		// Visualise the chosen background while the iframe paints.
 		frame.dataset.bg = this._opts.bg;
 		this._previewMount.replaceChildren(frame);

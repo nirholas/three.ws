@@ -1,9 +1,61 @@
-/* Widget Studio — dark, three-column. Reuses tokens from /style.css. */
+/* Widget Studio — dark, three-column. Self-contained: defines its own
+   tokens so it does not depend on /style.css being served at the root
+   (the deployed build hashes that file under /assets/). */
+
+:root {
+	--space-3xs: 0.146rem;
+	--space-2xs: 0.236rem;
+	--space-xs: 0.382rem;
+	--space-sm: 0.618rem;
+	--space-md: 1rem;
+	--space-lg: 1.618rem;
+	--space-xl: 2.618rem;
+	--space-2xl: 4.236rem;
+
+	--text-xs: 0.618rem;
+	--text-sm: 0.764rem;
+	--text-base: 1rem;
+	--text-lg: 1.236rem;
+	--text-xl: 1.618rem;
+
+	--radius-sm: 3px;
+	--radius-md: 5px;
+	--radius-lg: 8px;
+
+	--font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+	--font-body: 'Inter', system-ui, sans-serif;
+	--font-mono: 'SF Mono', 'Fira Code', ui-monospace, monospace;
+
+	--accent: #8b5cf6;
+	--accent-soft: rgba(139, 92, 246, 0.18);
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
 
 html,
 body.studio-body {
 	height: 100%;
 	overflow: hidden;
+	margin: 0;
+	padding: 0;
+	background: #000;
+	color: #e0e0e0;
+	font-family: var(--font-body);
+	font-size: var(--text-base);
+	line-height: 1.5;
+}
+
+.studio-body .wordmark-dot {
+	display: inline-block;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--accent);
+	margin-right: var(--space-xs);
 }
 
 .studio-header {

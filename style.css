@@ -5523,7 +5523,7 @@ textarea.erc8004-code {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
- * /explore — ERC-8004 agent marketplace
+ * /discover — ERC-8004 agent marketplace
  * Lobehub-plugin-grid × etherscan-NFT-detail hybrid. Uses site tokens.
  * ───────────────────────────────────────────────────────────────────────── */
 
@@ -5922,7 +5922,7 @@ textarea.erc8004-code {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
-   Embed modal — shared by /explore + Search tab
+   Embed modal — shared by /discover + Search tab
    ─────────────────────────────────────────────────────────────────────── */
 .embed-modal {
 	position: fixed;
