@@ -37,7 +37,7 @@ Save any avatar as a **widget** — a configured, shareable view that any site c
 
 ```html
 <iframe
-	src="https://3dagent.vercel.app/#widget=wdgt_abc123"
+	src="https://3dagent.vercel.app/app#widget=wdgt_abc123"
 	width="600"
 	height="600"
 	style="border:0"
@@ -176,7 +176,7 @@ Open **http://localhost:3000** for the landing page, or **http://localhost:3000/
 │   ├── cron/                                  → erc8004-crawl, index-delegations, run-dca, run-subscriptions
 │   ├── animations/, tts/, pinning/, api-keys/ → Supporting services
 │   └── _lib/                                  → Shared server helpers + `schema.sql`
-├── public/                 → Static subapps (studio, dashboard, widgets-gallery, agent, artifact, cz, my-agents, explore, validation, hydrate, lobehub, wallet, login.html, register.html) and default avatars
+├── public/                 → Static subapps (studio, dashboard, widgets-gallery, agent, artifact, cz, my-agents, discover, validation, hydrate, lobehub, wallet, login.html, register.html) and default avatars
 ├── contracts/              → Smart contract sources
 ├── sdk/, lobehub-plugin/   → Embedding SDK + Lobehub plugin
 ├── scripts/                → Build, publish, icon, animation scripts

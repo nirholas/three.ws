@@ -48,7 +48,7 @@ Every widget has three canonical URLs.
 | URL                                              | Use it for                                                      |
 | ------------------------------------------------ | --------------------------------------------------------------- |
 | `https://3dagent.vercel.app/w/<id>`              | Sharing in Slack/Discord/X — server-rendered with rich OG card. |
-| `https://3dagent.vercel.app/#widget=<id>`        | The SPA viewer with the widget config applied.                  |
+| `https://3dagent.vercel.app/app#widget=<id>`     | The SPA viewer with the widget config applied.                  |
 | `https://3dagent.vercel.app/api/widgets/<id>/og` | The 1200×630 preview image.                                     |
 
 `/w/<id>` is the recommended share URL — bots get an OG preview, browsers fall through to the SPA.
@@ -73,7 +73,7 @@ The viewer supports the following hash params (combine with `&`):
 
 ```html
 <iframe
-	src="https://3dagent.vercel.app/#widget=wdgt_abc123def456&kiosk=true"
+	src="https://3dagent.vercel.app/app#widget=wdgt_abc123def456&kiosk=true"
 	width="600"
 	height="600"
 	style="border:0;border-radius:12px;max-width:100%"
@@ -200,7 +200,7 @@ Returns standard [oEmbed v1.0](https://oembed.com) JSON, type `rich`.
 }
 ```
 
-Accepts both `https://host/w/<id>` and `https://host/#widget=<id>` forms. Optional `maxwidth` / `maxheight` clamp the returned iframe dimensions.
+Accepts both `https://host/w/<id>` and `https://host/app#widget=<id>` forms. Optional `maxwidth` / `maxheight` clamp the returned iframe dimensions.
 
 ---
 

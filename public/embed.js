@@ -41,7 +41,7 @@
 		var radius   = attr(scriptEl, 'data-radius', '12');
 		var border   = attr(scriptEl, 'data-border', '0');
 
-		var src = ORIGIN + '/#widget=' + encodeURIComponent(widgetId) + '&kiosk=true';
+		var src = ORIGIN + '/app#widget=' + encodeURIComponent(widgetId) + '&kiosk=true';
 
 		var iframe = document.createElement('iframe');
 		iframe.src = src;

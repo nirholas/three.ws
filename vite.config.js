@@ -39,6 +39,7 @@ const appConfig = {
 				hydrate: resolve(__dirname, 'public/hydrate/index.html'),
 				// BEGIN:DISCOVER_ROUTE
 				'my-agents': resolve(__dirname, 'public/my-agents/index.html'),
+				discover: resolve(__dirname, 'public/discover/index.html'),
 				// END:DISCOVER_ROUTE
 			},
 		},
@@ -52,8 +53,6 @@ const appConfig = {
 					'/app': resolve(root, 'app.html'),
 					'/login': resolve(root, 'public/login.html'),
 					'/deploy': resolve(root, 'app.html'),
-					'/discover': resolve(root, 'public/discover/index.html'),
-					'/discover/': resolve(root, 'public/discover/index.html'),
 					'/agents': resolve(root, 'public/agents/index.html'),
 					'/agents/': resolve(root, 'public/agents/index.html'),
 					'/features': resolve(root, 'features.html'),
@@ -73,6 +72,10 @@ const appConfig = {
 					// BEGIN:DISCOVER_ROUTE
 					'/my-agents': resolve(root, 'public/my-agents/index.html'),
 					'/my-agents/': resolve(root, 'public/my-agents/index.html'),
+					'/discover': resolve(root, 'public/discover/index.html'),
+					'/discover/': resolve(root, 'public/discover/index.html'),
+					'/explore': resolve(root, 'public/discover/index.html'),
+					'/explore/': resolve(root, 'public/discover/index.html'),
 					// END:DISCOVER_ROUTE
 					'/agent': resolve(root, 'agent-home.html'),
 				};

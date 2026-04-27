@@ -136,7 +136,6 @@ class App {
 			widget: hash.widget || '',
 			deploy: hash.deploy !== undefined || location.pathname === '/deploy',
 			onchain, // { chainId, agentId, registry? } | null
-			explore: location.pathname === '/explore',
 			showcase: location.pathname === '/showcase' || location.pathname === '/showcase/',
 			// pending=1 signals a post-login save round-trip
 			pending: qp.get('pending') === '1',
@@ -195,13 +194,6 @@ class App {
 			this.view(isDecentralizedURI(model) ? resolveURI(model) : model, '', new Map())
 				.catch(() => {})
 				.finally(() => this._showDeployPage());
-			this._initAgentSystem();
-			return;
-		}
-
-		// /explore — gallery of on-chain agents with 3D avatars.
-		if (options.explore) {
-			this._showExplorePage();
 			this._initAgentSystem();
 			return;
 		}
@@ -1340,29 +1332,6 @@ class App {
 			<div class="onchain-card__sub">#${escHtml(onchain.agentId)} · ${escHtml(chainLabel)}</div>
 			${desc ? `<div class="onchain-card__desc">${escHtml(desc)}</div>` : ''}
 		`;
-	}
-
-	async _showExplorePage() {
-		try {
-			const main = this.el.querySelector('main.wrap') || this.el;
-			this.dropEl?.classList.add('hidden');
-			const dropzone = this.el.querySelector('.dropzone');
-			if (dropzone) dropzone.style.display = 'none';
-			if (this.viewerContainerEl) this.viewerContainerEl.style.display = 'none';
-			const authGate = this.el.querySelector('#auth-gate');
-			if (authGate) authGate.style.display = 'none';
-			const presence = this.el.querySelector('.agent-presence-sidebar');
-			if (presence) presence.style.display = 'none';
-
-			const page = document.createElement('section');
-			page.className = 'explore-page';
-			main.appendChild(page);
-
-			const { renderExplorePage } = await import('./erc8004/explore.js');
-			renderExplorePage(page);
-		} catch (err) {
-			console.error('[3d-agent] explore page load failed', err);
-		}
 	}
 
 	async _showShowcasePage() {

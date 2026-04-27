@@ -7,7 +7,6 @@
  * results ready to render as a gallery.
  *
  * Used by:
- *   - src/erc8004/explore.js  (the public /explore gallery page)
  *   - src/erc8004/register-ui.js  ("Find Avatar" tab for creators)
  *
  * Chain reads happen through public RPCs (CHAIN_META) so no wallet required.

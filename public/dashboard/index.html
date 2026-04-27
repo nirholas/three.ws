@@ -121,10 +121,76 @@
 				place-items: center;
 				color: #555;
 				font-size: 12px;
+				position: relative;
 			}
 			.preview model-viewer {
 				width: 100%;
 				height: 100%;
+			}
+			.preview img.thumb {
+				width: 100%;
+				height: 100%;
+				object-fit: cover;
+				display: block;
+			}
+			.preview .ph {
+				padding: 12px;
+				text-align: center;
+				color: #666;
+			}
+			.preview .ph button {
+				margin-top: 8px;
+				padding: 6px 12px;
+				border-radius: 7px;
+				border: 1px solid var(--border);
+				background: #1a1a24;
+				color: #ddd;
+				font-size: 12px;
+				cursor: pointer;
+			}
+			.preview .ph button:hover {
+				background: #22222e;
+			}
+			.preview .spinner {
+				width: 22px;
+				height: 22px;
+				border: 2px solid #2a2a36;
+				border-top-color: var(--accent);
+				border-radius: 50%;
+				animation: spin 0.7s linear infinite;
+			}
+			@keyframes spin {
+				to {
+					transform: rotate(360deg);
+				}
+			}
+			.card .footer {
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+			}
+			.card .footer select[data-vis] {
+				align-self: flex-start;
+				padding: 6px 10px;
+				font-size: 12px;
+			}
+			.card .actions {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 6px;
+			}
+			.card .actions .btn,
+			.card .actions a.btn {
+				padding: 6px 10px;
+				font-size: 12px;
+				border-radius: 7px;
+				font-weight: 500;
+			}
+			.card .actions .danger {
+				color: #ffb3b3;
+			}
+			.card .actions .danger:hover {
+				background: rgba(204, 64, 64, 0.18);
 			}
 			.row {
 				display: flex;
@@ -628,6 +694,173 @@
 					opacity: 1;
 					transform: translateX(-50%);
 				}
+			}
+
+			/* ── Animations tab ──────────────────────────────────────────────── */
+			.anim-cols {
+				display: grid;
+				grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+				gap: 28px;
+				align-items: start;
+			}
+			@media (max-width: 880px) {
+				.anim-cols {
+					grid-template-columns: 1fr;
+				}
+			}
+			.anim-cols h3 {
+				margin: 0 0 12px;
+				font-size: 14px;
+				font-weight: 600;
+				color: #ddd;
+			}
+			.anim-notice {
+				background: rgba(106, 92, 255, 0.08);
+				border: 1px solid rgba(106, 92, 255, 0.35);
+				color: #d6cffd;
+				border-radius: 10px;
+				padding: 12px 14px;
+				margin-bottom: 18px;
+				font-size: 13px;
+				line-height: 1.55;
+			}
+			.anim-notice strong {
+				color: #fff;
+			}
+			.clip-row {
+				display: grid;
+				grid-template-columns: minmax(0, 1fr) auto auto auto;
+				align-items: center;
+				gap: 10px;
+				padding: 10px 12px;
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				margin-bottom: 8px;
+			}
+			.clip-row .clip-name {
+				font-size: 13px;
+				color: #eee;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+			.clip-row .clip-source {
+				font-size: 11px;
+				padding: 2px 8px;
+				border-radius: 99px;
+				background: #20202c;
+				color: #aaa;
+				text-transform: capitalize;
+			}
+			.clip-row .loop-toggle {
+				display: inline-flex;
+				align-items: center;
+				gap: 5px;
+				font-size: 12px;
+				color: #aaa;
+				cursor: pointer;
+				user-select: none;
+			}
+			.clip-row .loop-toggle input {
+				margin: 0;
+				accent-color: var(--accent);
+			}
+			.clip-row .clip-actions {
+				display: inline-flex;
+				gap: 6px;
+			}
+			.clip-row .clip-actions button {
+				padding: 5px 10px;
+				border-radius: 7px;
+				border: 1px solid var(--border);
+				background: #1a1a24;
+				color: #ddd;
+				font-size: 12px;
+				cursor: pointer;
+			}
+			.clip-row .clip-actions button:hover {
+				background: #22222e;
+			}
+			.clip-row .clip-actions button.danger:hover {
+				background: rgba(204, 64, 64, 0.18);
+				border-color: rgba(204, 64, 64, 0.5);
+				color: #ffb3b3;
+			}
+			.preset-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+				gap: 10px;
+			}
+			.preset-tile {
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				padding: 12px 8px;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: 6px;
+				cursor: pointer;
+				transition:
+					border-color 0.15s,
+					background 0.15s,
+					transform 0.15s;
+				user-select: none;
+				position: relative;
+			}
+			.preset-tile:hover {
+				border-color: var(--accent);
+				background: rgba(106, 92, 255, 0.08);
+				transform: translateY(-1px);
+			}
+			.preset-tile .icon {
+				font-size: 26px;
+				line-height: 1;
+			}
+			.preset-tile .label {
+				font-size: 12px;
+				color: #ddd;
+				text-align: center;
+			}
+			.preset-tile.attached {
+				opacity: 0.45;
+				cursor: default;
+			}
+			.preset-tile.attached:hover {
+				border-color: var(--border);
+				background: var(--panel);
+				transform: none;
+			}
+			.preset-tile.attached::after {
+				content: '✓';
+				position: absolute;
+				top: 4px;
+				right: 6px;
+				font-size: 11px;
+				color: #6a5cff;
+			}
+			.anim-upload {
+				display: flex;
+				flex-direction: column;
+				gap: 6px;
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				padding: 14px;
+			}
+			.anim-upload label {
+				font-size: 12px;
+				color: #aaa;
+			}
+			.anim-upload input[type='text'],
+			.anim-upload input[type='file'] {
+				font-size: 13px;
+			}
+			.anim-inline-err {
+				color: #ffb3b3;
+				font-size: 12px;
+				min-height: 16px;
 			}
 
 			/* visually-hidden utility for screen-reader-only labels */

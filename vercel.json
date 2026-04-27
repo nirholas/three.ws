@@ -124,9 +124,9 @@
 		{ "src": "/my-agents", "dest": "/my-agents/index.html" },
 		{ "src": "/my-agents/", "dest": "/my-agents/index.html" },
 		{ "src": "/my-agents/(.*)", "dest": "/my-agents/$1" },
-		{ "src": "/discover", "status": 301, "headers": { "Location": "/my-agents" } },
-		{ "src": "/discover/", "status": 301, "headers": { "Location": "/my-agents" } },
-		{ "src": "/discover/(.*)", "status": 301, "headers": { "Location": "/my-agents" } },
+		{ "src": "/discover", "dest": "/discover/index.html" },
+		{ "src": "/discover/", "dest": "/discover/index.html" },
+		{ "src": "/discover/(.*)", "dest": "/discover/$1" },
 
 		{ "src": "/api/(.*)", "dest": "/api/$1" },
 

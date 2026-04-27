@@ -110,7 +110,7 @@ export default wrap(async (req, res) => {
 		return;
 	}
 
-	const embedUrl = `${origin}/#widget=${widget.id}&kiosk=true`;
+	const embedUrl = `${origin}/app#widget=${widget.id}&kiosk=true`;
 	const oembedJs = `${origin}/api/widgets/oembed?url=${encodeURIComponent(pageUrl)}&format=json`;
 	const title = widget.name || 'Widget';
 	const typeLbl = TYPE_LABEL[widget.type] || 'Widget';

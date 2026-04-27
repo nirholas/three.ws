@@ -1,7 +1,8 @@
 /**
  * /discover — ERC-8004 agent marketplace grid.
  *
- * Pulls from GET /api/explore. Filters + infinite pagination via cursor.
+ * Pulls from GET /api/explore (legacy endpoint name, indexes ERC-8004 directory).
+ * Filters + infinite pagination via cursor.
  * Clicking a card opens the on-chain token page on the source chain's
  * explorer; clicking the 3D preview (when present) loads the GLB in the
  * main viewer via /#model=<url>.
@@ -41,7 +42,15 @@ const els = {
 	loadMore: document.querySelector('[data-role="load-more"]'),
 	statAll: document.querySelector('[data-role="stat-all"]'),
 	stat3d: document.querySelector('[data-role="stat-3d"]'),
+	myAgentsChip: document.querySelector('[data-role="my-agents-chip"]'),
 };
+
+// Reveal "View my agents" chip when signed in. Same probe as index.html.
+fetch('/api/auth/me', { credentials: 'include' })
+	.then((r) => {
+		if (r.ok && els.myAgentsChip) els.myAgentsChip.hidden = false;
+	})
+	.catch(() => {});
 
 // Populate chain dropdown.
 for (const c of CHAINS) {

@@ -2,9 +2,9 @@
  * /showcase — browsable directory of every ERC-8004 agent with a 3D avatar.
  *
  * Reads from GET /api/showcase (backed by erc8004_agents_index, populated by
- * api/cron/erc8004-crawl.js). Unlike /explore (search-by-input), this page is
- * pure browse: pick a net + chains, scroll a grid of newest-minted agents,
- * click a card to open its 3D viewer at /a/<chainId>/<agentId>.
+ * api/cron/erc8004-crawl.js). Unlike /discover (search-by-input via /api/explore),
+ * this page is pure browse: pick a net + chains, scroll a grid of newest-minted
+ * agents, click a card to open its 3D viewer at /a/<chainId>/<agentId>.
  *
  * Lazy-loaded by src/app.js `_showShowcasePage`.
  */

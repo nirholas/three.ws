@@ -229,7 +229,7 @@
 						<td>Sharing in Slack/Discord/X — server-rendered with rich OG card.</td>
 					</tr>
 					<tr>
-						<td><code>/#widget=&lt;id&gt;</code></td>
+						<td><code>/app#widget=&lt;id&gt;</code></td>
 						<td>The SPA viewer with the widget config applied.</td>
 					</tr>
 					<tr>
@@ -282,7 +282,7 @@
 			<h2 id="embedding">Embedding</h2>
 			<h3>iframe (recommended)</h3>
 			<pre><code>&lt;iframe
-  src="https://3dagent.vercel.app/#widget=wdgt_abc123def456&amp;kiosk=true"
+  src="https://3dagent.vercel.app/app#widget=wdgt_abc123def456&amp;kiosk=true"
   width="600"
   height="600"
   style="border:0;border-radius:12px;max-width:100%"
@@ -387,7 +387,7 @@
 			<p>
 				Returns standard <a href="https://oembed.com">oEmbed v1.0</a> JSON, type
 				<code>rich</code>. Accepts both <code>/w/&lt;id&gt;</code> and
-				<code>/#widget=&lt;id&gt;</code> forms.
+				<code>/app#widget=&lt;id&gt;</code> forms.
 			</p>
 
 			<h2 id="csp-cors">CSP / CORS</h2>

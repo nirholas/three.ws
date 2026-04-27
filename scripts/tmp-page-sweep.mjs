@@ -28,7 +28,7 @@ const paths = [
 	'/public/dashboard/embed-policy.html',
 	'/public/hydrate/index.html',
 	'/public/studio/index.html',
-	'/public/explore/index.html',
+	'/public/discover/index.html',
 	'/public/artifact/index.html',
 	'/public/widgets-gallery/index.html',
 	'/public/docs-widgets.html',

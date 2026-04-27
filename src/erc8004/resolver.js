@@ -146,7 +146,7 @@ export function resolveUrlCandidates(uri) {
 // ---------------------------------------------------------------------------
 
 // Lightweight in-memory cache keyed by canonical ref string. The resolver is
-// a hot path on /explore and in consumer embeds; don't hit the chain twice
+// a hot path on /discover and in consumer embeds; don't hit the chain twice
 // for the same agent within a page session.
 const _cache = new Map();
 function cacheKey(ref) {

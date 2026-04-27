@@ -487,6 +487,24 @@
 				}
 			}
 		</style>
+		<script>
+			// Legacy embed redirect: pre-`/app` widget iframes used `/#widget=<id>`
+			// (and `?kiosk=true&...`) directly against the marketing landing.
+			// Keep those working by forwarding to the SPA viewer at /app.
+			(function () {
+				try {
+					var h = window.location.hash || '';
+					var s = window.location.search || '';
+					if (
+						/(?:^|[#&?])widget=[A-Za-z0-9_-]+/.test(h) ||
+						/(?:^|[#&?])kiosk=true\b/.test(h) ||
+						/(?:^|[?&])kiosk=true\b/.test(s)
+					) {
+						window.location.replace('/app' + s + h);
+					}
+				} catch (e) {}
+			})();
+		</script>
 	</head>
 	<body class="features-page">
 		<a href="#main-content" class="skip-link">Skip to main content</a>

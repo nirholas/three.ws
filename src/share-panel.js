@@ -1,5 +1,21 @@
 import { renderQRToCanvas, renderQRToSVG } from './erc8004/qr.js';
+import {
+	DEFAULT_OPTIONS,
+	SIZES,
+	buildEmbedUrl,
+	buildIframeSnippet,
+	buildWebComponentSnippet,
+} from './share-panel-builders.js';
 import './share-panel.css';
+
+// Re-export the pure helpers so existing imports keep working.
+export {
+	buildEmbedUrl,
+	buildIframeSnippet,
+	buildWebComponentSnippet,
+	DEFAULT_OPTIONS,
+	SIZES,
+} from './share-panel-builders.js';
 
 /**
  * One-click share modal for an agent: link, customisable iframe + web-component
@@ -12,18 +28,6 @@ import './share-panel.css';
  * });
  * panel.open();
  */
-
-const DEFAULT_OPTIONS = Object.freeze({
-	bg: 'transparent', // 'transparent' | 'dark' | 'light'
-	name: true, // show name plate
-	size: 'medium', // 'small' | 'medium' | 'large'
-});
-
-const SIZES = {
-	small: { width: 320, height: 420 },
-	medium: { width: 420, height: 520 },
-	large: { width: 520, height: 680 },
-};
 
 export class SharePanel {
 	/**
@@ -198,55 +202,14 @@ export class SharePanel {
 		this._opener = null;
 	}
 
-	// ── Snippet building ─────────────────────────────────────────────────────────
-
-	/**
-	 * Build the canonical embed URL with current options as query params.
-	 * Defaults are omitted to keep the URL readable.
-	 *
-	 * @returns {string}
-	 */
-	_buildEmbedUrl() {
-		const id = this._agent.id;
-		const url = new URL(`${this._origin}/agent/${id}/embed`);
-		if (this._opts.bg !== DEFAULT_OPTIONS.bg) url.searchParams.set('bg', this._opts.bg);
-		if (this._opts.name !== DEFAULT_OPTIONS.name) url.searchParams.set('name', '0');
-		return url.toString();
-	}
-
-	_buildIframeSnippet() {
-		const { width, height } = SIZES[this._opts.size];
-		const allow = 'autoplay; xr-spatial-tracking; microphone; camera';
-		return (
-			`<iframe\n` +
-			`    src="${this._buildEmbedUrl()}"\n` +
-			`    width="${width}" height="${height}"\n` +
-			`    style="border:0;border-radius:12px;background:transparent"\n` +
-			`    allow="${allow}"\n` +
-			`    loading="lazy"\n` +
-			`    referrerpolicy="strict-origin-when-cross-origin"\n` +
-			`></iframe>`
-		);
-	}
-
-	_buildWebComponentSnippet() {
-		const { width, height } = SIZES[this._opts.size];
-		const id = this._agent.id;
-		return (
-			`<script type="module" src="${this._origin}/dist-lib/agent-3d.js"><\/script>\n` +
-			`<agent-3d agent-id="${id}"\n` +
-			`    style="display:block;width:${width}px;height:${height}px"\n` +
-			`></agent-3d>`
-		);
-	}
+	// ── Snippet rendering ────────────────────────────────────────────────────────
 
 	_renderSnippets() {
 		const m = this._backdrop;
 		if (!m) return;
-		const iframeCode = this._buildIframeSnippet();
-		const wcCode = this._buildWebComponentSnippet();
-		m.querySelector('[data-role="iframe-code"]').textContent = iframeCode;
-		m.querySelector('[data-role="wc-code"]').textContent = wcCode;
+		const args = { origin: this._origin, agentId: this._agent.id, opts: this._opts };
+		m.querySelector('[data-role="iframe-code"]').textContent = buildIframeSnippet(args);
+		m.querySelector('[data-role="wc-code"]').textContent = buildWebComponentSnippet(args);
 	}
 
 	// ── Live preview ─────────────────────────────────────────────────────────────
@@ -262,7 +225,13 @@ export class SharePanel {
 	_renderPreview() {
 		if (!this._previewMount) return;
 		const { width, height } = SIZES[this._opts.size];
-		const url = new URL(this._buildEmbedUrl());
+		const url = new URL(
+			buildEmbedUrl({
+				origin: this._origin,
+				agentId: this._agent.id,
+				opts: this._opts,
+			}),
+		);
 		// Always set preview=1 so the embed page skips its origin allow-list
 		// gate when the dialog runs on a non-allowlisted host.
 		url.searchParams.set('preview', '1');
@@ -352,63 +321,6 @@ export class SharePanel {
 			_handleTabTrap(e, this._backdrop.querySelector('.share-panel-modal'));
 		}
 	}
-}
-
-// ── Pure helpers (exported for tests) ────────────────────────────────────────────
-
-/**
- * Build an embed URL for the given agent and options. Pure / side-effect-free.
- * Defaults are omitted from the query string so canonical URLs stay short.
- *
- * @param {{ origin: string, agentId: string, opts?: { bg?: string, name?: boolean } }} args
- */
-export function buildEmbedUrl({ origin, agentId, opts = {} }) {
-	const merged = { ...DEFAULT_OPTIONS, ...opts };
-	const url = new URL(`${origin}/agent/${agentId}/embed`);
-	if (merged.bg !== DEFAULT_OPTIONS.bg) url.searchParams.set('bg', merged.bg);
-	if (merged.name !== DEFAULT_OPTIONS.name) url.searchParams.set('name', '0');
-	return url.toString();
-}
-
-/**
- * Build the iframe snippet string. Pure / side-effect-free.
- *
- * @param {{ origin: string, agentId: string, opts?: { bg?: string, name?: boolean, size?: string } }} args
- */
-export function buildIframeSnippet({ origin, agentId, opts = {} }) {
-	const merged = { ...DEFAULT_OPTIONS, ...opts };
-	const { width, height } = SIZES[merged.size] || SIZES.medium;
-	const src = buildEmbedUrl({ origin, agentId, opts: merged });
-	const allow = 'autoplay; xr-spatial-tracking; microphone; camera';
-	return (
-		`<iframe\n` +
-		`    src="${src}"\n` +
-		`    width="${width}" height="${height}"\n` +
-		`    style="border:0;border-radius:12px;background:transparent"\n` +
-		`    allow="${allow}"\n` +
-		`    loading="lazy"\n` +
-		`    referrerpolicy="strict-origin-when-cross-origin"\n` +
-		`></iframe>`
-	);
-}
-
-/**
- * Build the web-component snippet string. Pure / side-effect-free.
- *
- * @param {{ origin: string, agentId: string, opts?: { bg?: string, name?: boolean, size?: string } }} args
- */
-export function buildWebComponentSnippet({ origin, agentId, opts = {} }) {
-	const merged = { ...DEFAULT_OPTIONS, ...opts };
-	const { width, height } = SIZES[merged.size] || SIZES.medium;
-	const attrs = [`agent-id="${agentId}"`];
-	if (merged.bg !== DEFAULT_OPTIONS.bg) attrs.push(`background="${merged.bg}"`);
-	if (merged.name !== DEFAULT_OPTIONS.name) attrs.push(`name-plate="off"`);
-	return (
-		`<script type="module" src="${origin}/dist-lib/agent-3d.js"><\/script>\n` +
-		`<agent-3d ${attrs.join(' ')}\n` +
-		`    style="display:block;width:${width}px;height:${height}px"\n` +
-		`></agent-3d>`
-	);
 }
 
 // ── Internal helpers ─────────────────────────────────────────────────────────────

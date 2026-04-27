@@ -104,27 +104,28 @@ async function renderAvatars(root) {
 function avatarCard(a) {
 	const el = document.createElement('div');
 	el.className = 'card';
-	const preview = a.model_url
-		? `<model-viewer src="${attr(a.model_url)}" camera-controls auto-rotate shadow-intensity="1" exposure="1" tone-mapping="aces"></model-viewer>`
-		: `<span>Private · preview requires signed URL</span>`;
 	el.innerHTML = `
-		<div class="preview">${preview}</div>
+		<div class="preview" data-preview></div>
 		<h3>${esc(a.name)}</h3>
 		<p class="meta">${a.size_bytes ? fmtSize(a.size_bytes) : ''} · ${esc(a.visibility)} · ${new Date(a.created_at).toLocaleDateString()}</p>
-		<div class="row" style="gap:6px; margin-bottom:10px">${a.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>
-		<div class="row" style="justify-content:space-between">
-			<select data-vis>${['private', 'unlisted', 'public'].map((v) => `<option ${v === a.visibility ? 'selected' : ''} value="${v}">${v}</option>`).join('')}</select>
-			<div class="row" style="gap:6px">
+		<div class="row" style="gap:6px; margin-bottom:10px; flex-wrap:wrap">${a.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>
+		<div class="footer">
+			<select data-vis aria-label="Visibility">${['private', 'unlisted', 'public'].map((v) => `<option ${v === a.visibility ? 'selected' : ''} value="${v}">${v}</option>`).join('')}</select>
+			<div class="actions">
 				<a class="btn sec" href="#edit/${encodeURIComponent(a.id)}">Edit</a>
 				<button class="btn sec" data-replace>Replace GLB</button>
 				<a class="btn sec" href="/deploy?avatar=${encodeURIComponent(a.id)}" title="Mint as ERC-8004 agent">Deploy on-chain</a>
-				<button class="btn sec" data-del>Delete</button>
+				<button class="btn sec danger" data-del>Delete</button>
 			</div>
 		</div>
 	`;
+	const previewEl = el.querySelector('[data-preview]');
+	mountAvatarPreview(previewEl, a);
+
 	el.querySelector('[data-vis]').addEventListener('change', async (e) => {
 		try {
 			await api.patchAvatar(a.id, { visibility: e.target.value });
+			a.visibility = e.target.value;
 		} catch (err) {
 			alert(err.message);
 		}
@@ -140,6 +141,71 @@ function avatarCard(a) {
 	});
 	el.querySelector('[data-replace]').addEventListener('click', () => replaceGlbFlow(a, el));
 	return el;
+}
+
+// Lazy-load preview when card scrolls into view. For private avatars, fetch
+// a short-lived signed URL via /api/avatars/:id. Falls back to a thumbnail or
+// placeholder if no preview is available.
+function mountAvatarPreview(host, a) {
+	const showPlaceholder = (msg) => {
+		host.innerHTML = `<div class="ph">${esc(msg)}</div>`;
+	};
+	const showSpinner = () => {
+		host.innerHTML = '<div class="spinner" aria-label="Loading preview"></div>';
+	};
+	const showModel = (url) => {
+		host.innerHTML = `<model-viewer src="${attr(url)}" camera-controls auto-rotate shadow-intensity="1" exposure="1" tone-mapping="aces" loading="lazy" reveal="auto"></model-viewer>`;
+	};
+	const showThumb = (url) => {
+		host.innerHTML = `<img class="thumb" src="${attr(url)}" alt="${attr(a.name)} thumbnail" loading="lazy">`;
+	};
+
+	let loaded = false;
+	const load = async () => {
+		if (loaded) return;
+		loaded = true;
+		if (a.model_url) {
+			showModel(a.model_url);
+			return;
+		}
+		// Private — request a signed URL.
+		showSpinner();
+		try {
+			const { avatar } = await api.getAvatar(a.id);
+			const url = avatar?.url || avatar?.model_url;
+			if (url) {
+				showModel(url);
+			} else if (avatar?.thumbnail_url) {
+				showThumb(avatar.thumbnail_url);
+			} else {
+				showPlaceholder('Preview unavailable');
+			}
+		} catch (err) {
+			loaded = false;
+			host.innerHTML = `<div class="ph">Preview unavailable<br><button data-retry>Retry</button></div>`;
+			host.querySelector('[data-retry]').addEventListener('click', load);
+		}
+	};
+
+	if (a.thumbnail_url) showThumb(a.thumbnail_url);
+	else host.innerHTML = '<div class="ph">Loading preview…</div>';
+
+	if ('IntersectionObserver' in window) {
+		const io = new IntersectionObserver(
+			(entries) => {
+				for (const entry of entries) {
+					if (entry.isIntersecting) {
+						io.disconnect();
+						load();
+					}
+				}
+			},
+			{ rootMargin: '200px' },
+		);
+		io.observe(host);
+	} else {
+		load();
+	}
 }
 
 // ── Replace GLB ─────────────────────────────────────────────────────────────
@@ -775,7 +841,7 @@ function renderMcp(root) {
 async function renderEmbed(root) {
 	root.innerHTML = `
 		<h1>Embed your agent</h1>
-		<p class="sub">Drop your agent into Lobehub, Claude Artifacts, your site, or anywhere that can render an iframe. The agent reacts to chat messages via a postMessage bridge.</p>
+		<p class="sub">Drop your agent into chat hosts, Claude Artifacts, your site, or anywhere that can render an iframe. The agent reacts to chat messages via a postMessage bridge.</p>
 		<div id="embed-body"><div class="muted">Loading your agent…</div></div>
 	`;
 	const body = root.querySelector('#embed-body');
@@ -800,7 +866,7 @@ async function renderEmbed(root) {
 	const homeUrl = `${origin}/agent/${encodeURIComponent(agent.id)}`;
 	const iframeSnippet = `<iframe src="${embedUrl}" allow="camera; microphone" style="width:320px;height:420px;border:0;border-radius:16px;overflow:hidden" title="${esc(agent.name || 'Agent')}"></iframe>`;
 	const lobehubSnippet = [
-		'// Drop into a Lobehub fork — renders the agent alongside the chat panel',
+		'// Drop into a chat host — renders the agent alongside the chat panel',
 		'// and forwards assistant messages to it so the avatar speaks/emotes.',
 		"import { useEffect, useRef } from 'react';",
 		'',
@@ -885,13 +951,13 @@ async function renderEmbed(root) {
 			</div>
 			<div>
 				${snippetBlock('Universal iframe (any site)', iframeSnippet, 'html')}
-				${snippetBlock('Lobehub React sidecar', lobehubSnippet, 'tsx')}
+				${snippetBlock('Chat host React sidecar', lobehubSnippet, 'tsx')}
 				${snippetBlock('Claude Artifact', claudeSnippet, 'html')}
 				${snippetBlock('postMessage bridge (speak + listen)', postMessageSnippet, 'js')}
 				${snippetBlock('Custom embed (Agent3D SDK · Bridge v1)', sdkSnippet, 'html')}
 				<div class="card" style="margin-top:14px">
 					<h3 style="margin:0 0 6px">Who can embed?</h3>
-					<p class="muted" style="margin:0 0 10px">By default anyone. Lock it down to specific hosts (your Lobehub deploy, your Substack…) on the <a href="/dashboard/embed-policy?agent=${encodeURIComponent(agent.id)}">embed-policy page</a>.</p>
+					<p class="muted" style="margin:0 0 10px">By default anyone. Lock it down to specific hosts (your chat app, your Substack…) on the <a href="/dashboard/embed-policy?agent=${encodeURIComponent(agent.id)}">embed-policy page</a>.</p>
 				</div>
 				${onchainCard(agent)}
 				${myAgentsCard()}
@@ -928,7 +994,7 @@ function snippetBlock(title, code, _lang) {
 				<strong>${esc(title)}</strong>
 				<button class="btn sec" data-copy="#${id}" type="button">Copy</button>
 			</div>
-			<pre id="${id}" style="margin:0; max-height:260px">${esc(code)}</pre>
+			<pre id="${id}" style="margin:0; max-height:260px; overflow:auto; white-space:pre">${esc(code)}</pre>
 		</div>
 	`;
 }
@@ -1515,7 +1581,7 @@ function widgetCard(w, ctx) {
 	card.className = 'widget-card card';
 	card.dataset.id = w.id;
 
-	const previewSrc = `/#widget=${encodeURIComponent(w.id)}&kiosk=true&preview=1`;
+	const previewSrc = `/app#widget=${encodeURIComponent(w.id)}&kiosk=true&preview=1`;
 	const previewHtml = w.avatar
 		? `<iframe data-src="${attr(previewSrc)}" loading="lazy" tabindex="-1" title="Preview of ${attr(w.name || 'widget')}"></iframe>`
 		: `<div class="placeholder">Avatar unavailable.<br>Edit to pick a replacement.</div>`;
@@ -1689,7 +1755,7 @@ async function openWidgetDrawer(w, ctx) {
 	drawer.setAttribute('aria-label', `Widget details — ${w.name || 'untitled'}`);
 	drawer.tabIndex = -1;
 
-	const previewSrc = `/#widget=${encodeURIComponent(w.id)}&kiosk=true&preview=1`;
+	const previewSrc = `/app#widget=${encodeURIComponent(w.id)}&kiosk=true&preview=1`;
 	const pageUrl = `${location.origin}/w/${encodeURIComponent(w.id)}`;
 	const iframeSnippet = makeIframeSnippet(w, pageUrl, 600, 600);
 	const scriptSnippet = `<script async src="${location.origin}/embed.js" data-widget="${esc(w.id)}"></script>`;
@@ -1904,7 +1970,7 @@ function openShareModal(w) {
 		const maxW = 320,
 			maxH = 320;
 		const scale = Math.min(maxW / dim.width, maxH / dim.height, 1);
-		previewEl.innerHTML = `<iframe src="/#widget=${encodeURIComponent(w.id)}&kiosk=true&preview=1" style="width:${dim.width}px; height:${dim.height}px; border:0; transform:scale(${scale}); transform-origin:center" title="Preview"></iframe>`;
+		previewEl.innerHTML = `<iframe src="/app#widget=${encodeURIComponent(w.id)}&kiosk=true&preview=1" style="width:${dim.width}px; height:${dim.height}px; border:0; transform:scale(${scale}); transform-origin:center" title="Preview"></iframe>`;
 		previewEl.style.width = `${dim.width * scale}px`;
 		previewEl.style.height = `${dim.height * scale}px`;
 	}

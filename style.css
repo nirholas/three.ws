@@ -1193,11 +1193,11 @@ footer .separator {
 	color: #ff7a7a;
 }
 
-/* /explore — cross-chain on-chain avatar browser.
+/* /discover — cross-chain on-chain avatar browser.
  *
  * Search ANY input (address / ENS / tx / agent ID / agent:// URI) and see every
  * matching ERC-8004 registered 3D avatar as a gallery, grouped by chain.
- * Implementation: src/erc8004/explore.js → src/erc8004/resolve-avatar.js.
+ * Implementation: public/discover/discover.js → src/erc8004/resolve-avatar.js.
  */
 .explore-shell {
 	max-width: 1200px;
@@ -5552,6 +5552,12 @@ textarea.erc8004-code {
 	font-size: 15px;
 	line-height: 1.55;
 }
+.explore-hero-chips {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	justify-content: center;
+}
 .explore-hero-chip {
 	display: inline-flex;
 	align-items: center;
@@ -5565,6 +5571,22 @@ textarea.erc8004-code {
 	font-weight: 600;
 	letter-spacing: 0.02em;
 	text-transform: uppercase;
+}
+.explore-hero-chip--link {
+	text-decoration: none;
+	background: transparent;
+	border-color: rgba(255, 255, 255, 0.18);
+	color: rgba(255, 255, 255, 0.78);
+	transition:
+		border-color 0.15s ease,
+		color 0.15s ease,
+		background 0.15s ease;
+}
+.explore-hero-chip--link:hover,
+.explore-hero-chip--link:focus-visible {
+	border-color: var(--accent);
+	color: var(--accent);
+	background: var(--accent-soft);
 }
 .explore-hero-dot {
 	width: 6px;

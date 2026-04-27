@@ -492,7 +492,7 @@ async function save({ generate }) {
 function openEmbedModal(widget) {
 	const origin = location.origin;
 	const shareUrl = `${origin}/w/${widget.id}`;
-	const embedUrl = `${origin}/#widget=${widget.id}&kiosk=true`;
+	const embedUrl = `${origin}/app#widget=${widget.id}&kiosk=true`;
 	$('#embed-share-url').value = shareUrl;
 	$('#embed-iframe-snippet').value =
 		`<iframe src="${embedUrl}" width="600" height="600" style="border:0;border-radius:12px" allow="autoplay; xr-spatial-tracking" loading="lazy"></iframe>`;

@@ -211,6 +211,7 @@ async function loadAgents() {
 				'🔭',
 				'No on-chain agents yet',
 				'No ERC-8004 agents found in your linked wallets.',
+				{ label: 'Browse community agents →', href: '/discover' },
 			);
 			return;
 		}
