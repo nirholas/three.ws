@@ -12,6 +12,7 @@
 import { sql } from '../_lib/db.js';
 import { env } from '../_lib/env.js';
 import { cors, wrap, error } from '../_lib/http.js';
+import { isDemoWidgetId, getDemoWidget } from './_demo-fixtures.js';
 
 const DEFAULT_W = 600;
 const DEFAULT_H = 600;
@@ -87,6 +88,11 @@ export default wrap(async (req, res) => {
 });
 
 async function loadWidget(id) {
+	if (isDemoWidgetId(id)) {
+		const demo = getDemoWidget(id);
+		if (!demo) return null;
+		return { id: demo.id, name: demo.name, type: demo.type, avatar_id: null };
+	}
 	try {
 		const [row] = await sql`
 			select id, name, type, avatar_id

@@ -407,6 +407,52 @@ class Agent3DElement extends HTMLElement {
 		return `clamp(${min}px, ${vwPct}vw, ${px}px)`;
 	}
 
+	/**
+	 * Apply the `background` attribute. Mirrors the iframe embed semantics so
+	 * the snippet builder's options translate cleanly: 'transparent' → renderer
+	 * clears with alpha=0 and the scene background is unset; 'dark' / 'light' →
+	 * scene background is painted in the corresponding color so the agent
+	 * composites over it. The host element's CSS background is driven by the
+	 * `:host([background="..."])` rules in BASE_STYLE.
+	 *
+	 * Safe to call before the viewer exists — it no-ops in that case and is
+	 * re-run automatically once `_boot()` constructs the viewer.
+	 */
+	_applyBackground() {
+		const v = this._viewer;
+		if (!v) return;
+		const mode = this.getAttribute('background') || 'transparent';
+		if (mode === 'transparent') {
+			v.renderer?.setClearAlpha?.(0);
+			if (v.scene) v.scene.background = null;
+		} else if (mode === 'dark') {
+			v.renderer?.setClearAlpha?.(1);
+			if (v.scene?.background?.set) v.scene.background.set('#0b0d10');
+		} else if (mode === 'light') {
+			v.renderer?.setClearAlpha?.(1);
+			if (v.scene?.background?.set) v.scene.background.set('#f5f5f5');
+		}
+	}
+
+	/**
+	 * Apply the `name-plate` attribute. Visibility is purely CSS-driven via
+	 * `:host([name-plate="off"])`, so this method only needs to ensure the
+	 * element exists in the shadow DOM (it does, see `_renderShell`).
+	 *
+	 * Kept as a separate method so attributeChangedCallback has a clear hook,
+	 * and so future changes to plate position/style stay localised here.
+	 */
+	_applyNamePlate() {
+		// CSS handles visibility via the `name-plate="off"` host selector.
+		// Method exists so the attribute observer has a hook + future-proofing.
+	}
+
+	/** Update the plate text. Empty string hides the plate (`.name-plate:empty`). */
+	_setNamePlateText(name) {
+		if (!this._nameplateEl) return;
+		this._nameplateEl.textContent = name || '';
+	}
+
 	_clampHeight(val) {
 		const px = _parsePx(val);
 		if (!px) return val;

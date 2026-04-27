@@ -43,7 +43,13 @@ const els = {
 	statAll: document.querySelector('[data-role="stat-all"]'),
 	stat3d: document.querySelector('[data-role="stat-3d"]'),
 	myAgentsChip: document.querySelector('[data-role="my-agents-chip"]'),
+	searchClear: document.querySelector('[data-role="search-clear"]'),
 };
+
+function updateSearchClearVisibility() {
+	if (!els.searchClear) return;
+	els.searchClear.hidden = !els.search.value;
+}
 
 // Reveal "View my agents" chip when signed in. Same probe as index.html.
 fetch('/api/auth/me', { credentials: 'include' })

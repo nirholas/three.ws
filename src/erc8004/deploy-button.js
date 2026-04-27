@@ -155,9 +155,7 @@ export class DeployButton {
 		// Use the registry contract URL on the explorer — it's the most
 		// universally available link, since some chains' explorers don't
 		// surface tx hashes for arbitrary contracts.
-		const explorerUrl = contractAddress
-			? addressExplorerUrl(chainId, contractAddress)
-			: '#';
+		const explorerUrl = contractAddress ? addressExplorerUrl(chainId, contractAddress) : '#';
 		this._root.innerHTML = `
 			<a class="deploy-chip deploy-chip--success" href="${_esc(explorerUrl)}" target="_blank" rel="noopener noreferrer"
 			   aria-label="View this agent's registry on the ${_esc(chainName)} block explorer">
@@ -217,7 +215,8 @@ export class DeployButton {
 		if (!agent.avatarId && !agent.avatar_id) {
 			this._renderError('This agent has no avatar attached. Add a body before deploying.', {
 				label: 'Open editor',
-				handler: () => (window.location.href = `/app?agent=${encodeURIComponent(agent.id)}`),
+				handler: () =>
+					(window.location.href = `/app?agent=${encodeURIComponent(agent.id)}`),
 			});
 			return;
 		}
@@ -304,7 +303,8 @@ export class DeployButton {
 				'Could not parse Registered event from the receipt. The tx is on-chain — please retry "Save".',
 				{
 					label: 'Retry save',
-					handler: () => this._confirmAndFinish(prep, walletChainId, tx, null, deployment),
+					handler: () =>
+						this._confirmAndFinish(prep, walletChainId, tx, null, deployment),
 				},
 			);
 			return;
@@ -384,7 +384,9 @@ export class DeployButton {
 			});
 			if (!resp.ok) {
 				const data = await resp.json().catch(() => ({}));
-				throw new Error(data.error_description || `register-confirm returned ${resp.status}`);
+				throw new Error(
+					data.error_description || `register-confirm returned ${resp.status}`,
+				);
 			}
 		} catch (err) {
 			this._renderError(
@@ -448,9 +450,7 @@ function _isUserRejection(err) {
 	if (err.code === 4001) return true;
 	if (err.code === 'ACTION_REJECTED') return true;
 	if (err?.info?.error?.code === 4001) return true;
-	return /user rejected|user denied|rejected by user|user cancel/i.test(
-		err.message || '',
-	);
+	return /user rejected|user denied|rejected by user|user cancel/i.test(err.message || '');
 }
 
 function _isInsufficientFunds(err) {
@@ -460,9 +460,7 @@ function _isInsufficientFunds(err) {
 		// Some RPCs surface insufficient funds via -32000 + body text.
 		return /insufficient funds/i.test(err?.info?.error?.message || '');
 	}
-	return /insufficient funds|insufficient balance|not enough.*funds/i.test(
-		err.message || '',
-	);
+	return /insufficient funds|insufficient balance|not enough.*funds/i.test(err.message || '');
 }
 
 function _isReplacementUnderpriced(err) {
@@ -475,7 +473,9 @@ function _isReplacementUnderpriced(err) {
 function _humanError(err) {
 	if (!err) return 'unknown error';
 	const inner = err?.info?.error?.message || err?.shortMessage || err?.message;
-	return String(inner || 'unknown error').replace(/\s+/g, ' ').slice(0, 240);
+	return String(inner || 'unknown error')
+		.replace(/\s+/g, ' ')
+		.slice(0, 240);
 }
 
 /** Decode the Registered event's agentId from a confirmed receipt. */
