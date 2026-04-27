@@ -83,14 +83,16 @@ function showSkeletons(n = 6) {
  * @param {string} title
  * @param {string} msg
  * @param {{ label: string, href: string }|null} [cta]
+ * @param {{ label: string, href: string }|null} [secondary]
  */
-function showState(icon, title, msg, cta = null) {
+function showState(icon, title, msg, cta = null, secondary = null) {
 	grid.innerHTML = `
 		<div class="discover-state" style="grid-column: 1 / -1" role="status">
 			<div class="discover-state__icon" aria-hidden="true">${icon}</div>
 			<p class="discover-state__title">${escapeHtml(title)}</p>
 			<p class="discover-state__msg">${escapeHtml(msg)}</p>
 			${cta ? `<a class="discover-btn" style="display:inline-block;width:auto;padding:9px 22px" href="${escapeHtml(cta.href)}">${escapeHtml(cta.label)}</a>` : ''}
+			${secondary ? `<div><a class="my-agents-secondary" href="${escapeHtml(secondary.href)}">${escapeHtml(secondary.label)}</a></div>` : ''}
 		</div>`;
 }
 
@@ -210,8 +212,8 @@ async function loadAgents() {
 			showState(
 				'🔭',
 				'No on-chain agents yet',
-				'No ERC-8004 agents found in your linked wallets.',
-				{ label: 'Browse community agents →', href: '/discover' },
+				'No agents found in your linked wallets yet.',
+				{ label: 'Browse the community directory →', href: '/discover' },
 			);
 			return;
 		}
@@ -256,6 +258,7 @@ async function loadAgents() {
 					'No wallets linked',
 					'Link a wallet to see your on-chain agents.',
 					{ label: 'Link a wallet', href: '/dashboard/wallets.html' },
+					{ label: 'Or browse community agents →', href: '/discover' },
 				);
 				return;
 			}

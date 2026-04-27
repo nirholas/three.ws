@@ -69,13 +69,21 @@ describe('share-panel — buildIframeSnippet', () => {
 	});
 
 	it('uses small size 320x420', () => {
-		const snippet = buildIframeSnippet({ origin: ORIGIN, agentId: ID, opts: { size: 'small' } });
+		const snippet = buildIframeSnippet({
+			origin: ORIGIN,
+			agentId: ID,
+			opts: { size: 'small' },
+		});
 		expect(snippet).toContain('width="320"');
 		expect(snippet).toContain('height="420"');
 	});
 
 	it('uses large size 520x680', () => {
-		const snippet = buildIframeSnippet({ origin: ORIGIN, agentId: ID, opts: { size: 'large' } });
+		const snippet = buildIframeSnippet({
+			origin: ORIGIN,
+			agentId: ID,
+			opts: { size: 'large' },
+		});
 		expect(snippet).toContain('width="520"');
 		expect(snippet).toContain('height="680"');
 	});

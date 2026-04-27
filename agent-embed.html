@@ -249,10 +249,7 @@
 					'*',
 				);
 				// Legacy envelope for pre-v1 hosts.
-				parent?.postMessage(
-					{ __agent: agentId, type: 'ready', name: identityName },
-					'*',
-				);
+				parent?.postMessage({ __agent: agentId, type: 'ready', name: identityName }, '*');
 			}
 
 			function postResize(height) {

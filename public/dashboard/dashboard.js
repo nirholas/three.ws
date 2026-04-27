@@ -931,7 +931,7 @@ async function renderEmbed(root) {
 	body.innerHTML = `
 		<div style="display:grid; grid-template-columns:minmax(260px,1fr) minmax(320px,1.4fr); gap:20px; align-items:start">
 			<div class="card" style="padding:8px">
-				<iframe src="${attr(embedUrl + '?preview=1')}" style="width:100%;aspect-ratio:3/4;border:0;border-radius:10px;background:#0f0f17" title="Preview"></iframe>
+				<iframe src="${attr(embedUrl + '?preview=1&bg=dark')}" style="width:100%;aspect-ratio:3/4;border:0;border-radius:10px;background:#0f0f17" title="Preview"></iframe>
 				<div class="row" style="justify-content:space-between; padding:10px 6px 4px">
 					<strong>${esc(agent.name || 'My Agent')}</strong>
 					<a href="${attr(homeUrl)}" target="_blank" class="muted">Home page →</a>
@@ -957,7 +957,7 @@ async function renderEmbed(root) {
 				${snippetBlock('Custom embed (Agent3D SDK · Bridge v1)', sdkSnippet, 'html')}
 				<div class="card" style="margin-top:14px">
 					<h3 style="margin:0 0 6px">Who can embed?</h3>
-					<p class="muted" style="margin:0 0 10px">By default anyone. Lock it down to specific hosts (your chat app, your Substack…) on the <a href="/dashboard/embed-policy?agent=${encodeURIComponent(agent.id)}">embed-policy page</a>.</p>
+					<p class="muted" style="margin:0 0 10px">By default anyone. Lock it down to specific hosts (your chat host, your Substack…) on the <a href="/dashboard/embed-policy?agent=${encodeURIComponent(agent.id)}">embed-policy page</a>.</p>
 				</div>
 				${onchainCard(agent)}
 				${myAgentsCard()}
