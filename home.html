@@ -53,68 +53,103 @@
 			</nav>
 		</header>
 
-		<main id="main-content" class="home-main">
-			<!-- ── Hero ── -->
-			<section class="h-hero">
-				<div class="h-hero-bg" aria-hidden="true">
-					<div class="h-hero-mesh"></div>
+		<main id="main-content" class="home-parallax">
+			<!-- ── Hero (parallax act) ── -->
+			<section class="h-hero-act">
+				<!-- Depth 8: stars + nebula -->
+				<div class="h-layer" style="--depth: 8" aria-hidden="true">
+					<div class="h-layer-nebula"></div>
+					<canvas class="h-star-canvas" data-role="star-canvas" data-tint="255,220,130" data-count="260"></canvas>
+				</div>
+				<!-- Depth 4: perspective grid -->
+				<div class="h-layer" style="--depth: 4" aria-hidden="true">
 					<div class="h-hero-grid"></div>
+				</div>
+				<!-- Depth 3: ghost model -->
+				<div class="h-layer" style="--depth: 3" aria-hidden="true">
+					<model-viewer
+						class="h-ghost-model"
+						src="/animations/robotexpressive.glb"
+						auto-rotate
+						auto-rotate-delay="0"
+						rotation-per-second="5deg"
+						interaction-prompt="none"
+						camera-controls="false"
+						disable-zoom
+						shadow-intensity="0"
+						exposure="0.5"
+						environment-image="neutral"
+						camera-orbit="15deg 80deg 4m"
+						field-of-view="45deg"
+						loading="lazy"
+					></model-viewer>
+				</div>
+				<!-- Depth 2: mesh + glows -->
+				<div class="h-layer" style="--depth: 2" aria-hidden="true">
+					<div class="h-hero-mesh"></div>
 					<div class="h-hero-glow-a"></div>
 					<div class="h-hero-glow-b"></div>
 				</div>
-
-				<div class="h-hero-content">
-					<div class="h-eyebrow h-reveal">
-						<span class="h-eyebrow-dot"></span>
-						<span>Browser-native · No install</span>
-					</div>
-					<h2 class="h-title h-reveal">Give your AI<br />agent a <em>body</em>.</h2>
-					<p class="h-subtitle h-reveal">
-						Drop any GLB model into 3D Agent — view it, animate it, embed it anywhere,
-						and give it a verifiable on-chain identity. No plugins. No server uploads.
-						Just open and go.
-					</p>
-					<div class="h-cta-row h-reveal">
-						<a href="/" class="h-btn-primary">
-							<span>Launch Viewer</span>
-							<span class="arrow">→</span>
-						</a>
-						<a href="/widgets" class="h-btn-ghost">Explore Widgets</a>
-					</div>
-					<ul class="h-standards h-reveal" aria-label="Supported formats and standards">
-						<li>glTF 2.0</li>
-						<li>GLB</li>
-						<li>ERC-8004</li>
-						<li>A2A</li>
-						<li>MCP</li>
-					</ul>
+				<!-- Depth 0.5: vignette -->
+				<div class="h-layer" style="--depth: 0.5" aria-hidden="true">
+					<div class="h-vignette"></div>
 				</div>
 
-				<div class="h-hero-visual h-reveal" aria-hidden="true">
-					<div class="h-avatar-ring"></div>
-					<div class="h-avatar-glow"></div>
-					<model-viewer
-						class="h-avatar-viewer"
-						src="/avatars/cz.glb"
-						alt="3D Agent avatar"
-						camera-controls
-						disable-zoom
-						auto-rotate
-						auto-rotate-delay="0"
-						rotation-per-second="18deg"
-						interaction-prompt="none"
-						shadow-intensity="0.8"
-						shadow-softness="1"
-						exposure="1.05"
-						tone-mapping="aces"
-						environment-image="neutral"
-						camera-orbit="20deg 68deg 3.4m"
-						field-of-view="28deg"
-						loading="eager"
-					></model-viewer>
-					<div class="h-avatar-badge">
-						<span class="h-avatar-badge-label">agent</span>
-						<span>0x3d…a9f</span>
+				<!-- Sticky overlay: 2-column text + avatar -->
+				<div class="h-hero-sticky">
+					<div class="h-hero-content">
+						<div class="h-eyebrow h-reveal">
+							<span class="h-eyebrow-dot"></span>
+							<span>Browser-native · No install</span>
+						</div>
+						<h2 class="h-title h-reveal">Give your AI<br />agent a <em>body</em>.</h2>
+						<p class="h-subtitle h-reveal">
+							Drop any GLB model into 3D Agent — view it, animate it, embed it anywhere,
+							and give it a verifiable on-chain identity. No plugins. No server uploads.
+							Just open and go.
+						</p>
+						<div class="h-cta-row h-reveal">
+							<a href="/" class="h-btn-primary">
+								<span>Launch Viewer</span>
+								<span class="arrow">→</span>
+							</a>
+							<a href="/widgets" class="h-btn-ghost">Explore Widgets</a>
+						</div>
+						<ul class="h-standards h-reveal" aria-label="Supported formats and standards">
+							<li>glTF 2.0</li>
+							<li>GLB</li>
+							<li>ERC-8004</li>
+							<li>A2A</li>
+							<li>MCP</li>
+						</ul>
+					</div>
+
+					<div class="h-hero-visual h-reveal" aria-hidden="true">
+						<div class="h-avatar-ring"></div>
+						<div class="h-avatar-glow"></div>
+						<model-viewer
+							class="h-avatar-viewer"
+							src="/avatars/cz.glb"
+							alt="3D Agent avatar"
+							camera-controls
+							disable-zoom
+							auto-rotate
+							auto-rotate-delay="0"
+							rotation-per-second="18deg"
+							interaction-prompt="none"
+							shadow-intensity="0.8"
+							shadow-softness="1"
+							exposure="1.05"
+							tone-mapping="aces"
+							environment-image="neutral"
+							camera-orbit="20deg 68deg 3.4m"
+							field-of-view="28deg"
+							loading="eager"
+						></model-viewer>
+						<div class="h-avatar-badge">
+							<span class="h-avatar-badge-label">agent</span>
+							<span>0x3d…a9f</span>
+						</div>
 					</div>
 				</div>
 
@@ -315,8 +350,10 @@
 				} catch (_) {}
 			})();
 
-			// Scroll reveal
+			// Scroll reveal — use .home-parallax as root so IntersectionObserver
+			// fires against the perspective scroll container, not the window.
 			(function () {
+				const root = document.querySelector('.home-parallax');
 				const els = document.querySelectorAll('.h-reveal');
 				const observer = new IntersectionObserver(
 					(entries) => {
@@ -327,14 +364,47 @@
 							}
 						});
 					},
-					{ threshold: 0.12, rootMargin: '0px 0px -50px 0px' },
+					{ root, threshold: 0.12, rootMargin: '0px 0px -50px 0px' },
 				);
-				els.forEach((el, i) => {
+				els.forEach((el) => {
 					const siblings = Array.from(el.parentElement.querySelectorAll('.h-reveal'));
 					const idx = siblings.indexOf(el);
 					el.style.transitionDelay = idx * 0.09 + 's';
 					observer.observe(el);
 				});
+			})();
+
+			// Star field canvas
+			(function () {
+				for (const canvas of document.querySelectorAll('[data-role="star-canvas"]')) {
+					const dpr = Math.min(window.devicePixelRatio || 1, 2);
+					const w = window.innerWidth * dpr;
+					const h = window.innerHeight * 8 * dpr;
+					canvas.width = w;
+					canvas.height = h;
+					const ctx = canvas.getContext('2d');
+					const tint = canvas.dataset.tint || '255,255,255';
+					const count = parseInt(canvas.dataset.count || '250', 10);
+					for (let i = 0; i < count; i++) {
+						const x = Math.random() * w;
+						const y = Math.random() * h;
+						const r = (Math.random() * 1.4 + 0.3) * dpr;
+						ctx.beginPath();
+						ctx.arc(x, y, r, 0, Math.PI * 2);
+						ctx.fillStyle = `rgba(${tint},${Math.random() * 0.65 + 0.2})`;
+						ctx.fill();
+					}
+					for (let i = 0; i < 10; i++) {
+						const x = Math.random() * w, y = Math.random() * h;
+						const g = ctx.createRadialGradient(x, y, 0, x, y, 6 * dpr);
+						g.addColorStop(0, `rgba(${tint},0.9)`);
+						g.addColorStop(1, `rgba(${tint},0)`);
+						ctx.beginPath();
+						ctx.arc(x, y, 6 * dpr, 0, Math.PI * 2);
+						ctx.fillStyle = g;
+						ctx.fill();
+					}
+				}
 			})();
 		</script>
 	</body>

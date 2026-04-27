@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Edit Agent — 3D Agent</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="robots" content="noindex" />
+		<meta name="theme-color" content="#000000" />
+
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link rel="stylesheet" href="/style.css" />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap"
+			rel="stylesheet"
+		/>
+		<script
+			type="module"
+			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
+		></script>
+
+		<style>
+			body {
+				overflow: auto;
+				display: flex;
+				flex-direction: column;
+				min-height: 100vh;
+			}
+
+			.ce-page-header {
+				display: flex;
+				align-items: center;
+				gap: 1rem;
+				padding: 1rem 1.618rem;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+			}
+
+			.ce-page-header a {
+				color: rgba(255, 255, 255, 0.4);
+				text-decoration: none;
+				font-size: 0.764rem;
+			}
+
+			.ce-page-header a:hover {
+				color: rgba(255, 255, 255, 0.8);
+			}
+
+			.ce-root {
+				max-width: 520px;
+				margin: 0 auto;
+				padding: 2.5rem 1.5rem 5rem;
+				width: 100%;
+			}
+
+			/* ── Title ───────────────────────────────────────────────────────── */
+			.ce-title {
+				font-size: 1.25rem;
+				font-weight: 300;
+				color: #e5e5e5;
+				letter-spacing: -0.02em;
+				margin: 0 0 1.5rem;
+			}
+
+			.ce-chain-label {
+				font-size: 0.75rem;
+				color: rgba(255, 215, 0, 0.5);
+				font-weight: 400;
+				margin-left: 0.5rem;
+			}
+
+			/* ── Viewer preview ──────────────────────────────────────────────── */
+			.ce-viewer {
+				width: 100%;
+				height: clamp(240px, 40vh, 360px);
+				background: radial-gradient(
+					ellipse at center,
+					rgba(255, 215, 0, 0.04) 0%,
+					transparent 70%
+				);
+				border: 1px solid rgba(255, 255, 255, 0.06);
+				border-radius: 12px;
+				margin-bottom: 1.5rem;
+				--poster-color: transparent;
+			}
+
+			/* ── Status ──────────────────────────────────────────────────────── */
+			.ce-status {
+				font-size: 0.764rem;
+				color: rgba(255, 255, 255, 0.4);
+				min-height: 1.4em;
+				margin-bottom: 1.25rem;
+				line-height: 1.5;
+			}
+
+			.ce-status--error {
+				color: #f87171;
+			}
+
+			.ce-status--success {
+				color: #4ade80;
+			}
+
+			.ce-link {
+				color: rgba(255, 215, 0, 0.8);
+				text-decoration: none;
+			}
+
+			.ce-link:hover {
+				color: #ffd700;
+			}
+
+			/* ── Form ────────────────────────────────────────────────────────── */
+			#ce-form {
+				display: flex;
+				flex-direction: column;
+				gap: 1rem;
+			}
+
+			.ce-label {
+				display: block;
+				font-size: 0.618rem;
+				text-transform: uppercase;
+				letter-spacing: 0.08em;
+				color: rgba(255, 255, 255, 0.35);
+				font-weight: 500;
+				margin-bottom: 0.382rem;
+			}
+
+			.ce-optional {
+				text-transform: none;
+				letter-spacing: 0;
+				color: rgba(255, 255, 255, 0.2);
+				font-weight: 400;
+			}
+
+			.ce-input {
+				width: 100%;
+				background: rgba(255, 255, 255, 0.04);
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				border-radius: 8px;
+				color: rgba(255, 255, 255, 0.85);
+				font-family: inherit;
+				font-size: 0.875rem;
+				padding: 0.618rem 0.875rem;
+				box-sizing: border-box;
+				transition: border-color 0.15s;
+				outline: none;
+			}
+
+			.ce-input:focus {
+				border-color: rgba(255, 215, 0, 0.3);
+			}
+
+			.ce-textarea {
+				resize: vertical;
+				line-height: 1.5;
+				min-height: 80px;
+			}
+
+			.ce-file {
+				font-size: 0.764rem;
+				color: rgba(255, 255, 255, 0.4);
+				padding: 0.5rem 0.75rem;
+				cursor: pointer;
+			}
+
+			.ce-file::file-selector-button {
+				background: rgba(255, 255, 255, 0.06);
+				border: 1px solid rgba(255, 255, 255, 0.12);
+				border-radius: 6px;
+				color: rgba(255, 255, 255, 0.6);
+				font-family: inherit;
+				font-size: 0.764rem;
+				padding: 0.25rem 0.618rem;
+				cursor: pointer;
+				margin-right: 0.618rem;
+				transition: background 0.15s;
+			}
+
+			.ce-file::file-selector-button:hover {
+				background: rgba(255, 255, 255, 0.1);
+			}
+
+			/* ── Actions ─────────────────────────────────────────────────────── */
+			.ce-actions {
+				display: flex;
+				gap: 0.618rem;
+				margin-top: 0.382rem;
+				flex-wrap: wrap;
+			}
+
+			.ce-btn {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.4em;
+				padding: 0.618em 1.1em;
+				border-radius: 8px;
+				font-size: 0.875rem;
+				font-family: inherit;
+				font-weight: 500;
+				cursor: pointer;
+				border: 1px solid transparent;
+				transition: background 0.15s, border-color 0.15s, color 0.15s;
+			}
+
+			.ce-btn:disabled {
+				opacity: 0.4;
+				cursor: not-allowed;
+			}
+
+			.ce-btn--primary {
+				background: rgba(255, 215, 0, 0.9);
+				color: #000;
+			}
+
+			.ce-btn--primary:hover:not(:disabled) {
+				background: #ffd700;
+			}
+
+			.ce-btn--ghost {
+				background: transparent;
+				color: rgba(255, 255, 255, 0.7);
+				border-color: rgba(255, 255, 255, 0.18);
+			}
+
+			.ce-btn--ghost:hover:not(:disabled) {
+				color: #fff;
+				border-color: rgba(255, 255, 255, 0.35);
+			}
+
+			.ce-btn--connected {
+				color: #4ade80;
+				border-color: rgba(74, 222, 128, 0.3);
+			}
+
+			/* ── Error ───────────────────────────────────────────────────────── */
+			.ce-error {
+				color: #f87171;
+				font-size: 0.85rem;
+				padding: 3rem 0;
+				text-align: center;
+			}
+		</style>
+	</head>
+	<body>
+		<header class="ce-page-header">
+			<a id="back-link" href="/discover">← Back</a>
+		</header>
+
+		<main>
+			<div class="ce-root" id="ce-root">
+				<div class="ce-status">Loading…</div>
+			</div>
+		</main>
+
+		<script type="module">
+			import { mountChainEdit } from './src/erc8004/chain-edit.js';
+
+			// URL: /a/:chainId/:agentId/edit
+			const parts = location.pathname.split('/').filter(Boolean);
+			// parts = ['a', chainId, agentId, 'edit']
+			const chainId = Number(parts[1]);
+			const agentId = parts[2];
+
+			const root = document.getElementById('ce-root');
+			const backLink = document.getElementById('back-link');
+
+			if (!chainId || !agentId) {
+				root.innerHTML = `<div class="ce-error">Invalid URL — expected /a/:chainId/:agentId/edit</div>`;
+			} else {
+				backLink.href = `/a/${chainId}/${agentId}`;
+				document.title = `Edit Agent #${agentId} — 3D Agent`;
+
+				mountChainEdit(root, chainId, agentId).catch((err) => {
+					root.innerHTML = `<div class="ce-error">${err.message}</div>`;
+				});
+			}
+		</script>
+	</body>
+</html>

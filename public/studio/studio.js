@@ -71,8 +71,6 @@ function defaultConfig(type) {
 const $ = (sel, root = document) => root.querySelector(sel);
 
 const layoutEl = $('#studio-layout');
-const blockerEl = $('#auth-blocker');
-const signinLink = $('#signin-link');
 const formEl = $('#config-form');
 const errEl = $('#form-error');
 const previewIfr = $('#preview-iframe');
@@ -104,13 +102,8 @@ if (pickType && WIDGET_TYPES[pickType]) state.type = pickType;
 if (preModel) state.preselectedModel = preModel;
 
 (async function boot() {
-	signinLink.href = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
 	const me = await fetchMe();
-	if (!me) {
-		blockerEl.classList.add('visible');
-		return;
-	}
-	state.user = me;
+	state.user = me || null;
 	layoutEl.hidden = false;
 
 	renderTypeGrid();
@@ -141,15 +134,19 @@ async function fetchMe() {
 
 async function loadAvatars() {
 	const list = $('#avatar-list');
+	list.removeAttribute('aria-busy');
+	if (!state.user) {
+		const loginHref = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
+		list.innerHTML = `<div class="empty"><a href="${attr(loginHref)}">Sign in</a> to pick from your avatars.</div>`;
+		return;
+	}
 	try {
 		const res = await fetch('/api/avatars?limit=100', { credentials: 'include' });
 		if (!res.ok) throw new Error(`avatars: ${res.status}`);
 		const { avatars = [] } = await res.json();
 		state.avatars = avatars;
-		list.removeAttribute('aria-busy');
 		renderAvatarList();
 	} catch (err) {
-		list.removeAttribute('aria-busy');
 		list.innerHTML = `<div class="empty">Couldn't load avatars: ${escapeHtml(err.message)}</div>`;
 	}
 }
@@ -162,6 +159,7 @@ async function loadForEdit(id) {
 		if (!res.ok) return;
 		const { widget } = await res.json();
 		state.editingId = widget.id;
+		state.preselectedModel = null;
 		state.type = widget.type;
 		state.avatarId = widget.avatar_id;
 		state.name = widget.name || '';
@@ -189,7 +187,7 @@ async function cloneTemplate(id) {
 		renderTypeGrid();
 		renderTypeFields();
 	} catch {
-		/* ignore */
+		toast("Couldn't load template");
 	}
 }
 
@@ -197,7 +195,7 @@ async function cloneTemplate(id) {
 function renderAvatarList() {
 	const list = $('#avatar-list');
 	if (!state.avatars.length) {
-		list.innerHTML = `<div class="empty">No avatars yet. <a href="/dashboard#upload">Upload one →</a></div>`;
+		list.innerHTML = `<div class="empty">No avatars yet. <a href="/dashboard#upload" target="_blank" rel="noopener">Upload one →</a></div>`;
 		return;
 	}
 	list.innerHTML = '';
@@ -298,6 +296,7 @@ function selectByModelUrl(url) {
 		}
 	});
 	if (found) selectAvatar(found.id);
+	else toast('Pre-selected model not found in your avatar library');
 }
 
 function selectType(key) {
@@ -341,7 +340,16 @@ function hydrateForm() {
 }
 
 function wireButtons() {
-	$('#signout-btn').addEventListener('click', async () => {
+	const signoutBtn = $('#signout-btn');
+	const signinLink = $('#signin-link');
+	if (state.user) {
+		signoutBtn.hidden = false;
+		signinLink.hidden = true;
+	} else {
+		signoutBtn.hidden = true;
+		signinLink.hidden = false;
+	}
+	signoutBtn.addEventListener('click', async () => {
 		await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
 		try {
 			localStorage.removeItem('3dagent:auth-hint');
@@ -369,6 +377,12 @@ function wireButtons() {
 
 	$('#embed-modal-close').addEventListener('click', () => {
 		$('#embed-modal').hidden = true;
+	});
+
+	document.addEventListener('keydown', (e) => {
+		if (e.key === 'Escape' && !$('#embed-modal').hidden) {
+			$('#embed-modal').hidden = true;
+		}
 	});
 
 	for (const btn of document.querySelectorAll('[data-copy]')) {
@@ -412,6 +426,7 @@ function updatePreview(forceReload) {
 	const key = src;
 	if (forceReload || key !== previewSrcKey) {
 		previewSrcKey = key;
+		previewSt.textContent = 'Loading preview…';
 		previewIfr.src = src;
 	}
 	postConfigToPreview();
@@ -433,6 +448,10 @@ function postConfigToPreview() {
 async function save({ generate }) {
 	errEl.hidden = true;
 
+	if (!state.user) {
+		location.href = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
+		return;
+	}
 	if (!state.name?.trim()) return showError('Name is required');
 	if (!state.avatarId) return showError('Pick an avatar first');
 	if (!WIDGET_TYPES[state.type]) return showError('Pick a widget type');

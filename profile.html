@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Agent Profile</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="description" content="On-chain agent identity profile." />
+		<meta name="theme-color" content="#000000" />
+
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link rel="stylesheet" href="/style.css" />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap"
+			rel="stylesheet"
+		/>
+		<script
+			type="module"
+			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
+		></script>
+
+		<meta property="og:type" content="profile" />
+		<meta property="og:title" content="Agent Profile" id="og-title" />
+		<meta property="og:description" content="On-chain agent identity." id="og-description" />
+		<meta name="twitter:card" content="summary" />
+
+		<style>
+			body {
+				overflow: auto;
+				display: flex;
+				flex-direction: column;
+				min-height: 100vh;
+			}
+
+			.profile-page-header {
+				display: flex;
+				align-items: center;
+				gap: 1rem;
+				padding: 1rem 1.618rem;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+				justify-content: space-between;
+			}
+
+			.profile-page-header a {
+				color: rgba(255, 255, 255, 0.4);
+				text-decoration: none;
+				font-size: 0.764rem;
+			}
+
+			.profile-page-header a:hover {
+				color: rgba(255, 255, 255, 0.8);
+			}
+
+			.profile-root {
+				max-width: 960px;
+				margin: 0 auto;
+				padding: 2.5rem 1.5rem 5rem;
+				width: 100%;
+			}
+
+			/* ── Hero ────────────────────────────────────────────────────────── */
+			.up-hero {
+				display: flex;
+				align-items: center;
+				gap: 1.5rem;
+				margin-bottom: 2.5rem;
+			}
+
+			.up-avatar-ring {
+				width: 72px;
+				height: 72px;
+				border-radius: 50%;
+				border: 1px solid rgba(255, 255, 255, 0.12);
+				background: radial-gradient(ellipse at center, rgba(255, 215, 0, 0.06) 0%, transparent 70%);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				flex-shrink: 0;
+			}
+
+			.up-avatar-glyph {
+				font-size: 1.618rem;
+				color: rgba(255, 215, 0, 0.5);
+			}
+
+			.up-address {
+				font-size: 1.382rem;
+				font-weight: 300;
+				color: #e5e5e5;
+				letter-spacing: -0.02em;
+				margin: 0 0 0.25rem;
+			}
+
+			.up-muted {
+				color: rgba(255, 255, 255, 0.3);
+				font-size: 0.764rem;
+				margin: 0;
+				line-height: 1.5;
+			}
+
+			.up-full-address {
+				font-family: monospace;
+				font-size: 0.618rem;
+				word-break: break-all;
+			}
+
+			/* ── Chain filter pills ───────────────────────────────────────────── */
+			.up-chain-bar {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.382rem;
+				margin-bottom: 1.618rem;
+			}
+
+			.up-chain-pill {
+				background: transparent;
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				color: rgba(255, 255, 255, 0.4);
+				font-size: 0.618rem;
+				padding: 0.25rem 0.618rem;
+				border-radius: 999px;
+				cursor: pointer;
+				font-family: inherit;
+				transition: color 0.15s, border-color 0.15s, background 0.15s;
+			}
+
+			.up-chain-pill:hover {
+				color: rgba(255, 255, 255, 0.8);
+				border-color: rgba(255, 255, 255, 0.2);
+			}
+
+			.up-chain-pill--active {
+				background: rgba(255, 215, 0, 0.1);
+				border-color: rgba(255, 215, 0, 0.3);
+				color: rgba(255, 215, 0, 0.9);
+			}
+
+			/* ── Agent grid ──────────────────────────────────────────────────── */
+			.up-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+				gap: 1rem;
+			}
+
+			.up-empty {
+				color: rgba(255, 255, 255, 0.3);
+				font-size: 0.85rem;
+				grid-column: 1 / -1;
+				text-align: center;
+				padding: 3rem 0;
+			}
+
+			.up-empty a {
+				color: rgba(255, 215, 0, 0.7);
+				text-decoration: none;
+			}
+
+			.up-empty a:hover {
+				color: #ffd700;
+			}
+
+			/* ── Card ────────────────────────────────────────────────────────── */
+			.up-card {
+				background: rgba(255, 255, 255, 0.02);
+				border: 1px solid rgba(255, 255, 255, 0.07);
+				border-radius: 12px;
+				overflow: hidden;
+				transition: border-color 0.15s, background 0.15s;
+				display: flex;
+				flex-direction: column;
+			}
+
+			.up-card:hover {
+				border-color: rgba(255, 255, 255, 0.14);
+				background: rgba(255, 255, 255, 0.04);
+			}
+
+			.up-card-thumb-link {
+				display: block;
+				text-decoration: none;
+			}
+
+			.up-card-thumb {
+				width: 100%;
+				aspect-ratio: 1;
+				background: radial-gradient(ellipse at center, rgba(255, 215, 0, 0.03) 0%, transparent 70%);
+				overflow: hidden;
+				position: relative;
+			}
+
+			.up-card-thumb-placeholder {
+				width: 100%;
+				height: 100%;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 2.5rem;
+				color: rgba(255, 255, 255, 0.08);
+			}
+
+			.up-card-body {
+				padding: 0.75rem 0.875rem 0.875rem;
+				display: flex;
+				flex-direction: column;
+				gap: 0.25rem;
+				flex: 1;
+			}
+
+			.up-card-chain {
+				font-size: 0.55rem;
+				text-transform: uppercase;
+				letter-spacing: 0.1em;
+				color: rgba(255, 215, 0, 0.5);
+				font-weight: 500;
+			}
+
+			.up-card-name {
+				font-size: 0.875rem;
+				font-weight: 500;
+				color: rgba(255, 255, 255, 0.85);
+				text-decoration: none;
+				line-height: 1.3;
+				display: -webkit-box;
+				-webkit-line-clamp: 2;
+				-webkit-box-orient: vertical;
+				overflow: hidden;
+			}
+
+			.up-card-name:hover {
+				color: #fff;
+			}
+
+			.up-card-desc {
+				font-size: 0.618rem;
+				color: rgba(255, 255, 255, 0.3);
+				margin: 0;
+				line-height: 1.5;
+				display: -webkit-box;
+				-webkit-line-clamp: 2;
+				-webkit-box-orient: vertical;
+				overflow: hidden;
+			}
+
+			.up-card-footer {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				margin-top: auto;
+				padding-top: 0.382rem;
+			}
+
+			.up-card-id {
+				font-size: 0.55rem;
+				font-family: monospace;
+				color: rgba(255, 255, 255, 0.18);
+			}
+
+			.up-card-edit {
+				font-size: 0.618rem;
+				color: rgba(255, 215, 0, 0.4);
+				text-decoration: none;
+				transition: color 0.15s;
+			}
+
+			.up-card-edit:hover {
+				color: rgba(255, 215, 0, 0.8);
+			}
+
+			/* ── Error / loading ─────────────────────────────────────────────── */
+			.up-error {
+				text-align: center;
+				color: rgba(255, 255, 255, 0.3);
+				font-size: 0.85rem;
+				padding: 4rem 1rem;
+			}
+
+			/* ── Copy button ─────────────────────────────────────────────────── */
+			.profile-copy-btn {
+				background: transparent;
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				color: rgba(255, 255, 255, 0.4);
+				font-size: 0.618rem;
+				padding: 0.25rem 0.618rem;
+				border-radius: 6px;
+				cursor: pointer;
+				font-family: inherit;
+				transition: color 0.15s, border-color 0.15s;
+			}
+
+			.profile-copy-btn:hover {
+				color: rgba(255, 255, 255, 0.8);
+				border-color: rgba(255, 255, 255, 0.2);
+			}
+
+			.profile-copy-btn.copied {
+				color: #4ade80;
+				border-color: rgba(74, 222, 128, 0.3);
+			}
+
+			@media (max-width: 480px) {
+				.up-hero {
+					flex-direction: column;
+					align-items: flex-start;
+				}
+
+				.up-grid {
+					grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<header class="profile-page-header">
+			<a href="/" aria-label="Back to 3D Agent home">← 3D Agent</a>
+			<button class="profile-copy-btn" id="copy-profile-btn" aria-label="Copy profile link">
+				copy link
+			</button>
+		</header>
+
+		<main>
+			<div class="profile-root" id="profile-root">
+				<div class="up-error">Loading profile…</div>
+			</div>
+		</main>
+
+		<script type="module">
+			import { mountUserProfile } from './src/erc8004/user-profile.js';
+
+			// Address comes from the URL: /u/0x...
+			const segments = location.pathname.split('/').filter(Boolean);
+			const address = segments[1]; // /u/<address>
+
+			const root = document.getElementById('profile-root');
+			const copyBtn = document.getElementById('copy-profile-btn');
+
+			if (!address || !/^0x[0-9a-fA-F]{40}$/.test(address)) {
+				root.innerHTML = `<div class="up-error">Invalid address. Use /u/0x…</div>`;
+			} else {
+				// Update page title and OG
+				const short = address.slice(0, 6) + '…' + address.slice(-4);
+				document.title = `${short} — Agents`;
+				document.querySelector('#og-title')?.setAttribute('content', `${short} — Agents`);
+				document.querySelector('#og-description')?.setAttribute(
+					'content',
+					`On-chain agent identity profile for ${address}`,
+				);
+
+				mountUserProfile(root, address).catch((err) => {
+					root.innerHTML = `<div class="up-error">Could not load profile: ${err.message}</div>`;
+				});
+			}
+
+			// Copy profile URL to clipboard
+			copyBtn.addEventListener('click', async () => {
+				try {
+					await navigator.clipboard.writeText(location.href);
+					copyBtn.textContent = 'copied ✓';
+					copyBtn.classList.add('copied');
+					setTimeout(() => {
+						copyBtn.textContent = 'copy link';
+						copyBtn.classList.remove('copied');
+					}, 1800);
+				} catch {}
+			});
+		</script>
+	</body>
+</html>

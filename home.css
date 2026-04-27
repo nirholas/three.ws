@@ -7,6 +7,138 @@
 	scroll-behavior: smooth;
 }
 
+/* ── Parallax scroll container ──────────────────────────────────────────── */
+
+.home-parallax {
+	position: relative;
+	height: 100vh;
+	width: 100vw;
+	overflow-x: hidden;
+	overflow-y: auto;
+	overscroll-behavior-y: none;
+	perspective: 2.4rem;
+	perspective-origin: 50% 0%;
+	scroll-behavior: smooth;
+	scrollbar-width: none;
+}
+
+.home-parallax::-webkit-scrollbar {
+	width: 0;
+	height: 0;
+}
+
+/* ── Hero parallax act ───────────────────────────────────────────────────── */
+
+.h-hero-act {
+	position: relative;
+	height: 200vh;
+	transform-style: preserve-3d;
+	overflow: hidden;
+	isolation: isolate;
+}
+
+/* ── Parallax depth layers ───────────────────────────────────────────────── */
+
+.h-layer {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	transform-origin: 50% 50%;
+	transform: translateZ(calc(2.4rem * var(--depth) * -1)) scale(calc(var(--depth) + 1));
+	z-index: calc(10 - var(--depth, 0));
+}
+
+/* ── Nebula background ───────────────────────────────────────────────────── */
+
+.h-layer-nebula {
+	position: absolute;
+	inset: 0;
+	background:
+		radial-gradient(ellipse at 20% 30%, rgba(255, 215, 106, 0.13) 0%, transparent 55%),
+		radial-gradient(ellipse at 80% 70%, rgba(103, 232, 249, 0.1) 0%, transparent 55%),
+		linear-gradient(180deg, #0a0c12 0%, #06070b 100%);
+}
+
+/* ── Star canvas ─────────────────────────────────────────────────────────── */
+
+.h-star-canvas {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 200%;
+	pointer-events: none;
+	animation: h-star-drift 120s linear infinite;
+}
+
+@keyframes h-star-drift {
+	from { transform: translateY(0); }
+	to   { transform: translateY(-50%); }
+}
+
+/* ── Ghost model (depth 3) ───────────────────────────────────────────────── */
+
+.h-ghost-model {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	background: transparent;
+	--poster-color: transparent;
+	opacity: 0.1;
+	filter: blur(0.5px);
+	pointer-events: none;
+}
+
+/* ── Vignette ────────────────────────────────────────────────────────────── */
+
+.h-vignette {
+	position: absolute;
+	inset: 0;
+	background: radial-gradient(ellipse at 50% 50%, transparent 35%, rgba(6, 7, 11, 0.7) 100%);
+	pointer-events: none;
+}
+
+/* ── Sticky 2-column hero overlay ───────────────────────────────────────── */
+
+.h-hero-sticky {
+	position: sticky;
+	top: 0;
+	height: 100vh;
+	margin-bottom: -100vh;
+	z-index: 20;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+	align-items: center;
+	gap: var(--space-2xl);
+	max-width: 1280px;
+	margin-left: auto;
+	margin-right: auto;
+	padding: calc(var(--space-2xl) + 2rem) var(--space-lg) var(--space-2xl);
+	pointer-events: none;
+}
+
+.h-hero-sticky > * {
+	pointer-events: auto;
+}
+
+/* ── Flat sections below hero need explicit bg to cover star layer ───────── */
+
+.home-parallax .h-section,
+.home-parallax .h-section-dark,
+.home-parallax .h-cta-section,
+.home-parallax .h-footer {
+	position: relative;
+	z-index: 30;
+	background: #06070b;
+}
+
+.home-parallax .h-section-dark {
+	background: rgba(255, 255, 255, 0.018);
+}
+
 /* ── Skip to content (a11y) ── */
 
 .h-skip-link {
@@ -608,7 +740,7 @@
 	margin-bottom: var(--space-sm);
 }
 
-.h-step h4 {
+.h-step h3 {
 	color: #fff;
 	font-size: var(--text-lg);
 	font-weight: 500;
@@ -840,9 +972,11 @@
 /* ── Footer ── */
 
 .h-footer {
+	position: static;
 	text-align: center;
 	padding: var(--space-xl) var(--space-lg);
 	border-top: 1px solid rgba(255, 255, 255, 0.04);
+	pointer-events: auto;
 }
 
 .h-footer p {
@@ -872,13 +1006,35 @@
 	.h-avatar-glow,
 	.h-eyebrow-dot,
 	.h-title em,
-	.h-scroll-line {
+	.h-scroll-line,
+	.h-star-canvas {
 		animation: none !important;
+	}
+
+	.home-parallax {
+		perspective: none;
+		height: auto;
+		overflow: visible;
+	}
+
+	.h-hero-act {
+		height: auto;
+		min-height: 100vh;
+	}
+
+	.h-layer {
+		transform: none;
+	}
+
+	.h-hero-sticky {
+		position: relative;
+		height: auto;
+		margin-bottom: 0;
 	}
 }
 
 @media screen and (max-width: 1024px) {
-	.h-hero {
+	.h-hero-sticky {
 		grid-template-columns: 1fr 1fr;
 		gap: var(--space-xl);
 	}
@@ -889,9 +1045,28 @@
 }
 
 @media screen and (max-width: 768px) {
-	.h-hero {
+	.home-parallax {
+		perspective: none;
+		height: auto;
+		overflow: visible;
+	}
+
+	.h-hero-act {
+		height: auto;
+		min-height: 100vh;
+	}
+
+	.h-layer {
+		transform: none;
+		position: absolute;
+	}
+
+	.h-hero-sticky {
+		position: relative;
+		height: auto;
+		margin-bottom: 0;
 		grid-template-columns: 1fr;
-		min-height: auto;
+		min-height: 100vh;
 		padding: calc(var(--space-xl) + 1rem) var(--space-md) var(--space-xl);
 		text-align: center;
 	}

@@ -72,6 +72,8 @@
 		{ "src": "/api/agent/([^/]+)/og", "dest": "/api/agent-og?id=$1" },
 		{ "src": "/api/a/(\\d+)/(\\d+)/og", "dest": "/api/a-og?chain=$1&id=$2" },
 		{ "src": "/api/oembed", "dest": "/api/agent-oembed" },
+		{ "src": "/u/([^/]+)", "dest": "/profile.html" },
+		{ "src": "/a/(\\d+)/(\\d+)/edit", "dest": "/a-edit.html" },
 		{ "src": "/agent/([^/]+)/edit", "dest": "/agent-edit.html" },
 		{
 			"src": "/agent/([^/]+)/embed",
