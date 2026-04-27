@@ -124,6 +124,22 @@
 	pointer-events: auto;
 }
 
+/* ── Scroll-driven float on the avatar column ───────────────────────────── */
+
+@supports (animation-timeline: scroll()) {
+	.h-hero-visual {
+		animation: hero-visual-float linear both;
+		animation-timeline: scroll(nearest);
+		animation-range: 0vh 160vh;
+	}
+
+	@keyframes hero-visual-float {
+		0%   { transform: translateY(0)    scale(1); }
+		60%  { transform: translateY(-28px) scale(1.02); }
+		100% { transform: translateY(-60px) scale(0.96); opacity: 0.4; }
+	}
+}
+
 /* ── Flat sections below hero need explicit bg to cover star layer ───────── */
 
 .home-parallax .h-section,

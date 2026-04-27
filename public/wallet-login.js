@@ -1,10 +1,11 @@
-// Client-side wallet authentication (SIWE / MetaMask).
+// Client-side wallet authentication for both EVM (SIWE) and Solana (SIWS).
 // Loaded as a module from login.html — imports from CDN so it works outside Vite.
 
 import { createConnectWalletButton } from '/wallet/connect-button.js';
+import { createSolanaWalletButton } from '/wallet/connect-button-solana.js';
 
 const params = new URLSearchParams(location.search);
-const next = params.get('next') || '/dashboard/';
+const next   = params.get('next') || '/dashboard/';
 
 function setErr(m) {
 	const el = document.getElementById('err');
@@ -15,19 +16,22 @@ function clearErr() {
 	if (el) el.style.display = 'none';
 }
 
-const walletMount = document.getElementById('wallet-mount');
-if (walletMount) {
-	const ctrl = createConnectWalletButton(walletMount, {
-		verifyUrl: '/api/auth/siwe/verify',
-		onSuccess: () => {
-			try {
-				localStorage.setItem('3dagent:auth-hint', JSON.stringify({ authed: true, ts: Date.now() }));
-			} catch { /* ignore */ }
-			location.href = next;
-		},
-	});
+function onSuccess() {
+	try {
+		localStorage.setItem('3dagent:auth-hint', JSON.stringify({ authed: true, ts: Date.now() }));
+	} catch { /* ignore */ }
+	location.href = next;
+}
 
-	ctrl.addEventListener('change', (e) => {
+// ─── EVM wallet button ────────────────────────────────────────────────────────
+
+const evmMount = document.getElementById('wallet-mount');
+if (evmMount) {
+	const evmCtrl = createConnectWalletButton(evmMount, {
+		verifyUrl: '/api/auth/siwe/verify',
+		onSuccess,
+	});
+	evmCtrl.addEventListener('change', (e) => {
 		const { status, error } = e.detail;
 		if (status === 'error') {
 			const msg = error?.message || 'Sign in failed.';
@@ -37,3 +41,51 @@ if (walletMount) {
 		}
 	});
 }
+
+// ─── Solana wallet button ─────────────────────────────────────────────────────
+
+let solanaCtrl = null;
+
+function mountSolanaButton(preferredWallet = null) {
+	const mount = document.getElementById('solana-wallet-mount');
+	if (!mount) return;
+	if (solanaCtrl) solanaCtrl.disconnect();
+
+	solanaCtrl = createSolanaWalletButton(mount, {
+		preferredWallet,
+		verifyUrl: '/api/auth/siws/verify',
+		onSuccess,
+	});
+	solanaCtrl.addEventListener('change', (e) => {
+		const { status, error } = e.detail;
+		if (status === 'error') {
+			setErr(error?.message || 'Sign in failed.');
+		} else {
+			clearErr();
+		}
+	});
+}
+
+mountSolanaButton();
+
+// Wallet hint buttons (Phantom / Backpack / Solflare)
+document.querySelectorAll('.wallet-hint-btn').forEach((btn) => {
+	btn.addEventListener('click', () => {
+		document.querySelectorAll('.wallet-hint-btn').forEach((b) => b.classList.remove('active'));
+		btn.classList.add('active');
+		mountSolanaButton(btn.dataset.wallet);
+	});
+});
+
+// ─── Chain tab switcher ───────────────────────────────────────────────────────
+
+document.querySelectorAll('.chain-tab').forEach((tab) => {
+	tab.addEventListener('click', () => {
+		const chain = tab.dataset.chain;
+		document.querySelectorAll('.chain-tab').forEach((t) => t.classList.remove('active'));
+		document.querySelectorAll('.chain-panel').forEach((p) => p.classList.remove('active'));
+		tab.classList.add('active');
+		document.getElementById(`${chain}-panel`)?.classList.add('active');
+		clearErr();
+	});
+});
