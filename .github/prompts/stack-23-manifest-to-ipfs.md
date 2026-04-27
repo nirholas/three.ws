@@ -17,7 +17,7 @@ Conform to [specs/AGENT_MANIFEST.md](specs/AGENT_MANIFEST.md). Minimum fields:
 
 ```json
 {
-  "$schema": "https://3dagent.vercel.app/specs/agent-manifest-v1.json",
+  "$schema": "https://three.ws/specs/agent-manifest-v1.json",
   "version": 1,
   "name": "Satoshi",
   "bio": "...",

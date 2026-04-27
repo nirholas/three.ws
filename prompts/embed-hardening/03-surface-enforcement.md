@@ -58,7 +58,7 @@ Implement once, in a small helper next to wherever you do the check (or in `api/
 - Hosts are case-insensitive ASCII.
 - Exact match: `example.com` matches `example.com` only.
 - Wildcard prefix: `*.foo.com` matches `bar.foo.com` and `baz.bar.foo.com`, but **not** `foo.com` itself.
-- The agent's own origin (`env.APP_ORIGIN`, plus `3dagent.vercel.app` and `localhost`-with-any-port for dev) is always allowed regardless of `origins.hosts`.
+- The agent's own origin (`env.APP_ORIGIN`, plus `three.ws` and `localhost`-with-any-port for dev) is always allowed regardless of `origins.hosts`.
 - An empty `origins.hosts` with `mode === 'allowlist'` means **first-party only** — third-party origins are denied.
 
 ```js
@@ -97,7 +97,7 @@ if (res.ok) {
 			this._fail('embed_denied_surface', 'This agent disallows the script-tag embed.');
 			return;
 		}
-		const firstParty = ['3dagent.vercel.app', 'localhost'];
+		const firstParty = ['three.ws', 'localhost'];
 		if (
 			!originAllowed(hostOrigin, policy, firstParty) &&
 			!hostOrigin.startsWith('http://localhost')
@@ -158,11 +158,11 @@ Use the file's existing error helper / response shape — don't invent a new one
 
 In [agent-embed.html](../../agent-embed.html) the page is static HTML. To set CSP, you have two options — pick **one**:
 
-**Option A (preferred):** Add a `<meta http-equiv="Content-Security-Policy" content="frame-ancestors 'self' https://3dagent.vercel.app ...">` tag inside `<head>`. The hosts list must reflect the policy. Build this `<meta>` element dynamically in the existing inline script after the policy fetch, so the allowlist is per-agent.
+**Option A (preferred):** Add a `<meta http-equiv="Content-Security-Policy" content="frame-ancestors 'self' https://three.ws/ ...">` tag inside `<head>`. The hosts list must reflect the policy. Build this `<meta>` element dynamically in the existing inline script after the policy fetch, so the allowlist is per-agent.
 
 **Option B (fallback):** Add a header in [vercel.json](../../vercel.json) for `/agent-embed.html` and `/agent/*/embed`. This is global, not per-agent, so use only if you can't set the meta dynamically.
 
-Go with Option A. Build the meta tag's content from `policy.origins.hosts` (translating wildcards to CSP form: `*.foo.com` → `https://*.foo.com`), always include `'self'` and `https://3dagent.vercel.app`. Insert before the first `<script>` tag in `<head>`.
+Go with Option A. Build the meta tag's content from `policy.origins.hosts` (translating wildcards to CSP form: `*.foo.com` → `https://*.foo.com`), always include `'self'` and `https://three.ws/`. Insert before the first `<script>` tag in `<head>`.
 
 ## Independence fallbacks
 
@@ -244,7 +244,7 @@ If the helper file appears later, the file's owner (prompt 02) is responsible fo
     - **Surface deny on script:** Set `surfaces.script = false`. Reload the host page → element renders error, `code: 'embed_denied_surface'`.
     - **Iframe surface deny:** Set `surfaces.iframe = false`. `/agent/:id/embed` shows the iframe-disabled error.
     - **Widget surface deny:** Set `surfaces.widget = false` and visit a widget that's tied to that agent → 403 page.
-    - **CSP frame-ancestors:** With a non-empty allowlist, view-source on `/agent/:id/embed` and confirm a `<meta http-equiv="Content-Security-Policy" content="frame-ancestors 'self' https://3dagent.vercel.app https://example.com">` is present.
+    - **CSP frame-ancestors:** With a non-empty allowlist, view-source on `/agent/:id/embed` and confirm a `<meta http-equiv="Content-Security-Policy" content="frame-ancestors 'self' https://three.ws/ https://example.com">` is present.
     - **MCP:** Call the `render_avatar` MCP tool with an agent whose `surfaces.mcp = false` → returns the embed_denied_surface error.
 
 If you can't run a particular surface (e.g. no MCP client handy), say so — do not skip it silently.

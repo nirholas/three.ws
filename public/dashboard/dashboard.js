@@ -2218,7 +2218,7 @@ function openShareModal(w) {
 				<pre id="m-snip" style="margin:0"></pre>
 			</div>
 			<div class="row" style="justify-content:space-between; margin-top:14px">
-				<a class="muted" style="font-size:12px" href="mailto:abuse@3dagent.vercel.app?subject=Report+widget+${encodeURIComponent(w.id)}">Report this widget</a>
+				<a class="muted" style="font-size:12px" href="mailto:abuse@three.ws?subject=Report+widget+${encodeURIComponent(w.id)}">Report this widget</a>
 				<button class="btn sec" id="m-close" type="button">Close</button>
 			</div>
 		</div>

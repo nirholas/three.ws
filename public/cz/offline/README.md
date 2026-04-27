@@ -10,7 +10,7 @@ This directory contains the offline fallback for the CZ demo — a self-containe
 
 **Network:** Zero external dependencies after initial page load. Avatar and state are served from origin only.
 
-**Usage:** Open `https://3dagent.vercel.app/cz/offline/` in a browser, or `http://localhost:3000/cz/offline/` for local dev.
+**Usage:** Open `https://three.ws/cz/offline/` in a browser, or `http://localhost:3000/cz/offline/` for local dev.
 
 ---
 

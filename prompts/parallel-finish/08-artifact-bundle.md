@@ -6,7 +6,7 @@ Repo root: `/workspaces/3D-Agent`. Read [/CLAUDE.md](../../CLAUDE.md) and [specs
 
 Claude Artifacts run inside a sandboxed iframe. The dashboard currently generates a snippet that puts _another_ iframe inside — nested iframes work poorly and break the postMessage bridge. We want a **zero-dependency, self-contained bundle** the user can paste as a single `<script>` + `<div>` and get a live agent inside a Claude Artifact.
 
-The bundle lives at `https://3dagent.vercel.app/artifact.js`. It includes three.js + GLTFLoader inlined (or fetched from a CDN the Artifact sandbox allows — `esm.sh`), reads config from a `<script type="application/json" id="agent3d-config">` block, resolves the agent via `GET /api/agents/:id`, loads the GLB, renders it with basic controls + a caption line (no chat).
+The bundle lives at `https://three.ws/artifact.js`. It includes three.js + GLTFLoader inlined (or fetched from a CDN the Artifact sandbox allows — `esm.sh`), reads config from a `<script type="application/json" id="agent3d-config">` block, resolves the agent via `GET /api/agents/:id`, loads the GLB, renders it with basic controls + a caption line (no chat).
 
 ## Files you own (exclusive — all new)
 
@@ -22,7 +22,7 @@ The bundle lives at `https://3dagent.vercel.app/artifact.js`. It includes three.
 
 - **Single file**, target ES2020, IIFE format, all deps bundled.
 - **Self-booting:** reads config from `<script type="application/json" id="agent3d-config">{"agentId": "...", "theme": "dark"}</script>` or data attributes on the root div (`<div id="agent3d" data-agent-id="..."></div>`).
-- **Fetches** `GET /api/agents/:id` from `https://3dagent.vercel.app` (configurable via `data-origin`). Falls back to a `poster` image if the fetch fails.
+- **Fetches** `GET /api/agents/:id` from `https://three.ws/` (configurable via `data-origin`). Falls back to a `poster` image if the fetch fails.
 - **Renders** the GLB with OrbitControls, auto-rotate, basic lighting.
 - **Caption line** below the canvas — shows `agent.name`. No chat. No TTS. (Artifacts are a viewer-only surface.)
 - **Size budget:** < 500KB gzipped after Three is bundled. If it's bigger, document why.

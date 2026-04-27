@@ -34,7 +34,7 @@ On-chain reputation is:
 ### 3. Leaving a review
 
 **Via the UI:**
-1. Visit an agent's on-chain page: `https://3dagent.vercel.app/a/<chainId>/<agentId>`
+1. Visit an agent's on-chain page: `https://three.ws/a/<chainId>/<agentId>`
 2. Scroll to the reputation section
 3. Connect wallet (MetaMask, WalletConnect, Privy)
 4. Click the star rating (1-5)

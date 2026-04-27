@@ -94,7 +94,7 @@ async function verifyCard(card) {
 	if (!card || typeof card !== 'object') return out;
 
 	const types = Array.isArray(card.type) ? card.type : card.type ? [card.type] : [];
-	if (types.includes('https://3dagent.vercel.app/specs/3d-agent-card-v1')) {
+	if (types.includes('https://three.ws/specs/3d-agent-card-v1')) {
 		out.cardSchema = '3d-agent-card-v1';
 	} else if (types.includes('https://eips.ethereum.org/EIPS/eip-8004#registration-v1')) {
 		out.cardSchema = 'registration-v1';

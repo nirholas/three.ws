@@ -94,8 +94,8 @@ The full registration UI is at `/src/erc8004/register-ui.js` and `/src/erc8004/d
 
 **Step 5: Get your agent URL**
 After registration, your agent is accessible at:
-- `https://3dagent.vercel.app/a/<chainId>/<agentId>`
-- Example: `https://3dagent.vercel.app/a/8453/42`
+- `https://three.ws/a/<chainId>/<agentId>`
+- Example: `https://three.ws/a/8453/42`
 
 ### 6. Resolving an agent
 Agents can be resolved multiple ways:
@@ -163,8 +163,8 @@ This creates a verifiable audit trail of your model's technical quality.
 3D Agent supports a special route for on-chain agents:
 
 ```
-https://3dagent.vercel.app/a/<chainId>/<agentId>
-https://3dagent.vercel.app/a/<chainId>/<registryAddress>/<agentId>
+https://three.ws/a/<chainId>/<agentId>
+https://three.ws/a/<chainId>/<registryAddress>/<agentId>
 ```
 
 This page:

@@ -12,7 +12,7 @@ Run this **before** touching 01–08. It unblocks the experience now; the rest p
 
 - Repo: this repo (`nirholas/3D-Agent`). The user has a **LobeHub fork** checked out separately.
 - We do NOT edit this repo in most of the task — we edit the fork. The one edit here is optional: an opt-in URL parameter on our embed to dim/brighten when chat is idle vs. streaming.
-- Our embed URL already works: `https://3dagent.vercel.app/agent/:id/embed?bg=transparent`. See [public/agent/embed.html](../../public/agent/embed.html).
+- Our embed URL already works: `https://three.ws/agent/:id/embed?bg=transparent`. See [public/agent/embed.html](../../public/agent/embed.html).
 - LobeHub is Next.js 14+ / React 18 / Zustand / Ant Design. Layout lives in `src/app/(main)/` (or `packages/web/src/` in some forks — read the fork's `package.json` and `next.config.js` before assuming).
 
 ## Goal
@@ -43,7 +43,7 @@ Create `src/features/AgentDock/index.tsx` (or wherever the fork groups feature c
 import { useEffect, useRef, useState } from 'react';
 import { useAgentDockStore } from './store';
 
-const ORIGIN = process.env.NEXT_PUBLIC_AGENT_ORIGIN ?? 'https://3dagent.vercel.app';
+const ORIGIN = process.env.NEXT_PUBLIC_AGENT_ORIGIN ?? 'https://three.ws/';
 
 export function AgentDock() {
 	const { agentId, collapsed, toggleCollapsed } = useAgentDockStore();
@@ -244,7 +244,7 @@ Keep the change to under 25 lines. Do **not** change the `AgentAvatar` decay rat
 - **Empathy Layer untouched.** You do not edit [src/agent-avatar.js](../../src/agent-avatar.js). The dim-on-idle is a viewer-exposure tweak, not an emotion change.
 - **Origin discipline on postMessage.** Target origin is always `ORIGIN`, never `'*'`. Inbound listeners (if you add any) check `event.origin`.
 - **Mobile hidden, not broken.** The `@media (max-width: 900px)` rule hides the dock entirely so the LobeHub chat stays usable on phones. Flag a follow-up for a proper mobile treatment — don't build it here.
-- **CSP compatibility.** LobeHub likely sets a strict CSP. Verify `3dagent.vercel.app` is allowed in `frame-src` and `connect-src`. If not, add it in the fork's `next.config.js` CSP headers. Paste the CSP you saw before editing.
+- **CSP compatibility.** LobeHub likely sets a strict CSP. Verify `three.ws` is allowed in `frame-src` and `connect-src`. If not, add it in the fork's `next.config.js` CSP headers. Paste the CSP you saw before editing.
 - **Dark-mode first.** Match the fork's dark theme. If the fork has light mode, the dock's background should inherit via CSS variables — don't hard-code `rgba(10,10,10,0.6)` if a theme variable exists.
 - **Collapsed affordance.** The collapsed state must still show a visible grab tab (the `‹` button remains visible) — otherwise users lose the dock forever.
 
@@ -260,7 +260,7 @@ Keep the change to under 25 lines. Do **not** change the `AgentAvatar` decay rat
 
 1. Start the fork locally (`pnpm dev` or `npm run dev` depending on the fork).
 2. Open the app → dock is visible on the right with the demo agent.
-3. Open browser devtools → Network tab → filter by `3dagent.vercel.app` → iframe loaded, `/agent/:id/embed` returns 200.
+3. Open browser devtools → Network tab → filter by `three.ws` → iframe loaded, `/agent/:id/embed` returns 200.
 4. Click the collapse chevron → dock slides right, grab tab remains visible.
 5. Reload → collapsed state persists (localStorage).
 6. Send a chat message → avatar does a small nod (inbound `gesture` event).

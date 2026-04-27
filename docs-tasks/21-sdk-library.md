@@ -30,13 +30,13 @@ npm install @3dagent/sdk
 **CDN (ESM):**
 ```html
 <script type="module">
-  import { AgentAPI } from 'https://cdn.3dagent.vercel.app/sdk.esm.js';
+  import { AgentAPI } from 'https://cdn.three.wssdk.esm.js';
 </script>
 ```
 
 **CDN (web component only):**
 ```html
-<script type="module" src="https://cdn.3dagent.vercel.app/agent-3d.js"></script>
+<script type="module" src="https://cdn.three.wsagent-3d.js"></script>
 ```
 
 ### 3. The web component (lib.js)
@@ -47,7 +47,7 @@ The CDN-distributable single-file build includes:
 - Self-contained — no other imports needed
 
 ```html
-<script type="module" src="https://cdn.3dagent.vercel.app/agent-3d.js"></script>
+<script type="module" src="https://cdn.three.wsagent-3d.js"></script>
 <agent-3d model="./avatar.glb"></agent-3d>
 ```
 
@@ -61,7 +61,7 @@ import { AgentAPI } from '@3dagent/sdk';
 
 const api = new AgentAPI({
   apiKey: '3da_live_xxxxx',        // or use sessionToken
-  baseUrl: 'https://3dagent.vercel.app/api'  // default
+  baseUrl: 'https://three.ws/api'  // default
 });
 
 // List agents

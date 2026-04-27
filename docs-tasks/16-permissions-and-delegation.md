@@ -93,7 +93,7 @@ The context's `permissions.check()` method:
 
 ### 6. Revoking permissions
 **Via the manage panel (UI):**
-At https://3dagent.vercel.app/dashboard → Permissions:
+At https://three.ws/dashboard → Permissions:
 - Lists all active delegations
 - Revoke individual permissions or all permissions for an agent
 - View expiry dates and rate limit usage

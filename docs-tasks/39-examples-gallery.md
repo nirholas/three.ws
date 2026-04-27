@@ -34,8 +34,8 @@ Reference: `/examples/minimal.html`
   </style>
 </head>
 <body>
-  <script type="module" src="https://cdn.3dagent.vercel.app/agent-3d.js"></script>
-  <agent-3d model="https://cdn.3dagent.vercel.app/models/sample.glb"></agent-3d>
+  <script type="module" src="https://cdn.three.wsagent-3d.js"></script>
+  <agent-3d model="https://cdn.three.wsmodels/sample.glb"></agent-3d>
 </body>
 </html>
 ```
@@ -61,10 +61,10 @@ What to change:
   </style>
 </head>
 <body>
-  <script type="module" src="https://cdn.3dagent.vercel.app/agent-3d.js"></script>
+  <script type="module" src="https://cdn.three.wsagent-3d.js"></script>
   <agent-3d
     widget="turntable"
-    model="https://cdn.3dagent.vercel.app/models/sample.glb"
+    model="https://cdn.three.wsmodels/sample.glb"
     auto-rotate-speed="0.5"
     kiosk
     preset="neutral"
@@ -98,8 +98,8 @@ What to change:
   </style>
 </head>
 <body>
-  <script type="module" src="https://cdn.3dagent.vercel.app/agent-3d.js"></script>
-  <agent-3d id="aria" model="https://cdn.3dagent.vercel.app/models/aria.glb" brain style="height:calc(100vh - 60px);display:block">
+  <script type="module" src="https://cdn.three.wsagent-3d.js"></script>
+  <agent-3d id="aria" model="https://cdn.three.wsmodels/aria.glb" brain style="height:calc(100vh - 60px);display:block">
     <script type="application/json" slot="manifest">
     {
       "name": "Aria",
@@ -203,7 +203,7 @@ export function AgentViewer({ agentId, model, mode = 'inline', onSpeak, style })
 <div id="transcript" style="max-height:200px;overflow-y:auto;padding:16px;background:#111;color:#ddd;font-size:14px"></div>
 
 <script type="module">
-  import 'https://cdn.3dagent.vercel.app/agent-3d.js';
+  import 'https://cdn.three.wsagent-3d.js';
 
   const agent = document.getElementById('agent');
   const transcript = document.getElementById('transcript');
@@ -247,13 +247,13 @@ export function AgentViewer({ agentId, model, mode = 'inline', onSpeak, style })
 <agent-3d id="viewer" style="width:400px;height:400px;display:block"></agent-3d>
 
 <div style="display:flex;gap:8px;margin-top:12px">
-  <button onclick="load('https://cdn.3dagent.vercel.app/models/avatar1.glb')">Avatar 1</button>
-  <button onclick="load('https://cdn.3dagent.vercel.app/models/avatar2.glb')">Avatar 2</button>
-  <button onclick="load('https://cdn.3dagent.vercel.app/models/product.glb')">Product</button>
+  <button onclick="load('https://cdn.three.wsmodels/avatar1.glb')">Avatar 1</button>
+  <button onclick="load('https://cdn.three.wsmodels/avatar2.glb')">Avatar 2</button>
+  <button onclick="load('https://cdn.three.wsmodels/product.glb')">Product</button>
 </div>
 
 <script type="module">
-  import 'https://cdn.3dagent.vercel.app/agent-3d.js';
+  import 'https://cdn.three.wsagent-3d.js';
   window.load = async (url) => {
     const el = document.getElementById('viewer');
     await el.loadGLB(url);
@@ -271,7 +271,7 @@ export function AgentViewer({ agentId, model, mode = 'inline', onSpeak, style })
 <button onclick="capture()">Download Screenshot</button>
 
 <script type="module">
-  import 'https://cdn.3dagent.vercel.app/agent-3d.js';
+  import 'https://cdn.three.wsagent-3d.js';
   window.capture = () => {
     const el = document.getElementById('viewer');
     const dataUrl = el.screenshot();
@@ -290,7 +290,7 @@ export function AgentViewer({ agentId, model, mode = 'inline', onSpeak, style })
 
 ```html
 <!-- host.html -->
-<iframe id="embed" src="https://3dagent.vercel.app/agent-embed?id=your-id" width="400" height="500"></iframe>
+<iframe id="embed" src="https://three.ws/agent-embed?id=your-id" width="400" height="500"></iframe>
 
 <button onclick="greet()">Say Hello</button>
 <button onclick="screenshot()">Screenshot</button>
@@ -299,15 +299,15 @@ export function AgentViewer({ agentId, model, mode = 'inline', onSpeak, style })
   const iframe = document.getElementById('embed');
 
   function greet() {
-    iframe.contentWindow.postMessage({ type: '3dagent:speak', text: 'Hello from the host!' }, 'https://3dagent.vercel.app');
+    iframe.contentWindow.postMessage({ type: '3dagent:speak', text: 'Hello from the host!' }, 'https://three.ws/');
   }
 
   function screenshot() {
-    iframe.contentWindow.postMessage({ type: '3dagent:screenshot' }, 'https://3dagent.vercel.app');
+    iframe.contentWindow.postMessage({ type: '3dagent:screenshot' }, 'https://three.ws/');
   }
 
   window.addEventListener('message', e => {
-    if (e.origin !== 'https://3dagent.vercel.app') return;
+    if (e.origin !== 'https://three.ws/') return;
     if (e.data.type === '3dagent:screenshot') {
       const img = document.createElement('img');
       img.src = e.data.dataUrl;

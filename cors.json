@@ -2,7 +2,7 @@
 	{
 		"method": ["GET"],
 		"origin": [
-			"https://3dagent.vercel.app",
+			"https://three.ws/",
 			"https://chat.sperax.io",
 			"https://sperax-jam2emun9-moomsi.vercel.app",
 			"https://sperax-iota.vercel.app",

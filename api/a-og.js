@@ -29,7 +29,7 @@ export default wrap(async (req, res) => {
 	const agent = await resolveOnChainAgent({ chainId, agentId });
 
 	if (format === 'json') {
-		const origin = url.searchParams.get('origin') || 'https://3dagent.vercel.app';
+		const origin = url.searchParams.get('origin') || 'https://three.ws/';
 		const pageUrl = `${origin}/a/${chainId}/${agentId}`;
 		const imageUrl = `${origin}/api/a-og?chain=${chainId}&id=${encodeURIComponent(agentId)}`;
 		const status = agent.error && !agent.name ? 404 : 200;

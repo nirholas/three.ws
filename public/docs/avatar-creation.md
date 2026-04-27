@@ -31,7 +31,7 @@ Good lighting and a plain background give the best results. Photos can be JPEG o
 
 ### Steps
 
-1. Go to **https://3dagent.vercel.app/create**
+1. Go to **https://three.ws/create**
 2. Choose **Camera** (to take live photos in-browser) or **Upload** (to pick files from your device)
 3. Fill in all three slots — frontal, left, right
 4. Select your preferred **body type** and **avatar style** (v1 = photorealistic, v2 = stylized)
@@ -64,7 +64,7 @@ Character Studio is a browser-based avatar builder for full creative control, no
 
 ### Access
 
-Open **https://3dagent.vercel.app/studio**
+Open **https://three.ws/studio**
 
 The studio opens in a modal inside the main app and runs as a separate React application embedded via iframe.
 
@@ -99,7 +99,7 @@ If you already have a 3D model — from Blender, Maya, Mixamo, Ready Player Me, 
 
 ### Steps
 
-1. Open **https://3dagent.vercel.app/app**
+1. Open **https://three.ws/app**
 2. Drag and drop your `.glb` file onto the viewer, or use the file picker in the editor
 3. The model loads and validates automatically
 4. Save to your account via the editor toolbar

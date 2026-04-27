@@ -2,7 +2,7 @@
 
 Widget Studio is the no-code builder for creating embeddable 3D widgets. Pick an avatar, choose a widget type, configure your brand settings, and get a one-line embed snippet — no code required.
 
-**Access Widget Studio:** [3dagent.vercel.app/studio](https://3dagent.vercel.app/studio)
+**Access Widget Studio:** [three.wsstudio](https://three.ws/studio)
 
 ---
 
@@ -34,7 +34,7 @@ Widget Studio requires an account. When you open the Studio without signing in, 
 
 ### Create a new widget from scratch
 
-1. Go to [3dagent.vercel.app/studio](https://3dagent.vercel.app/studio)
+1. Go to [three.wsstudio](https://three.ws/studio)
 2. Sign in if prompted
 3. The Studio opens with the default type (Turntable Showcase) pre-selected
 4. Follow the three steps described below
@@ -127,7 +127,7 @@ The modal contains:
 
 ```html
 <iframe
-  src="https://3dagent.vercel.app/app#widget=wdgt_abc123&kiosk=true"
+  src="https://three.ws/app#widget=wdgt_abc123&kiosk=true"
   width="600"
   height="600"
   style="border:0;border-radius:12px;max-width:100%"
@@ -139,7 +139,7 @@ The modal contains:
 **Script-tag embed** (under a disclosure triangle) — auto-resizes to fit its container:
 
 ```html
-<script async src="https://3dagent.vercel.app/embed.js" data-widget="wdgt_abc123"></script>
+<script async src="https://three.ws/embed.js" data-widget="wdgt_abc123"></script>
 ```
 
 Click **Copy** next to either snippet. The code is ready to paste immediately.
@@ -148,7 +148,7 @@ Click **Copy** next to either snippet. The code is ready to paste immediately.
 
 ## Embedding in popular platforms
 
-Once you have a widget URL (`https://3dagent.vercel.app/w/<id>`), paste it into:
+Once you have a widget URL (`https://three.ws/w/<id>`), paste it into:
 
 - **Notion** — paste the URL on its own line, press Enter. Notion detects the oEmbed endpoint and turns it into a live viewer automatically.
 - **Substack** — use an embed block and paste the URL.
@@ -162,7 +162,7 @@ The oEmbed protocol handles the conversion automatically — no plugin needed.
 
 ## Managing your widgets
 
-Go to [3dagent.vercel.app/dashboard](https://3dagent.vercel.app/dashboard) and click the **Widgets** tab.
+Go to [three.wsdashboard](https://three.ws/dashboard) and click the **Widgets** tab.
 
 From the dashboard you can:
 
@@ -188,7 +188,7 @@ Chat message content from Talking Agent widgets is never logged.
 
 ## Widget gallery
 
-Public widgets are listed at [3dagent.vercel.app/widgets](https://3dagent.vercel.app/widgets). Browse the gallery to find inspiration, discover what other creators have built, and copy embed snippets for any listed widget.
+Public widgets are listed at [three.wswidgets](https://three.ws/widgets). Browse the gallery to find inspiration, discover what other creators have built, and copy embed snippets for any listed widget.
 
 Filter by widget type, search by name, or sort by popularity or recency.
 

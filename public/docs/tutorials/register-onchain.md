@@ -9,7 +9,7 @@ Give your 3D agent a permanent blockchain identity anyone can verify.
 Right now your agent lives on a platform. If the platform goes away, so does the proof that you created it. Registering on-chain changes that:
 
 - **Anyone can verify you created it.** The registry is a public smart contract on Base — no account, no login, no trust in any company required.
-- **Your agent gets a permanent URL** that resolves directly from on-chain data: `https://3dagent.vercel.app/a/8453/<id>`. Share it anywhere.
+- **Your agent gets a permanent URL** that resolves directly from on-chain data: `https://three.ws/a/8453/<id>`. Share it anywhere.
 - **Users can leave verifiable reviews.** Every reputation score is a transaction, not a database row.
 - **You can transfer it.** Sell it, gift it, or move it to a hardware wallet — same as any NFT.
 - **Full auditability.** Every registration, update, and review is public and timestamped.
@@ -40,7 +40,7 @@ Skip this step if you already have an agent saved to your account.
 
 **Option A — Generate from a photo:**
 
-1. Go to [3dagent.vercel.app/create](https://3dagent.vercel.app/create)
+1. Go to [three.wscreate](https://three.ws/create)
 2. Take a selfie or upload a photo
 3. Your avatar generates in about 30 seconds
 4. Give it a name and description
@@ -48,13 +48,13 @@ Skip this step if you already have an agent saved to your account.
 
 **Option B — Upload an existing GLB:**
 
-1. Go to [3dagent.vercel.app/app](https://3dagent.vercel.app/app)
+1. Go to [three.wsapp](https://three.ws/app)
 2. Drag your `.glb` file into the viewer
 3. Open the **Manifest** tab in the editor panel
 4. Fill in the name and description fields
 5. Click **Save to Account**
 
-Either way, you should end up with an agent visible in your dashboard at [3dagent.vercel.app/dashboard](https://3dagent.vercel.app/dashboard).
+Either way, you should end up with an agent visible in your dashboard at [three.wsdashboard](https://three.ws/dashboard).
 
 ---
 
@@ -101,7 +101,7 @@ If you already have ETH on Base, skip ahead to Step 3.
 
 ## Step 4: Open your agent for editing
 
-1. Go to [3dagent.vercel.app/dashboard](https://3dagent.vercel.app/dashboard)
+1. Go to [three.wsdashboard](https://three.ws/dashboard)
 2. Find the agent you want to register
 3. Click **Edit** — the editor opens with your avatar loaded
 
@@ -179,7 +179,7 @@ Clicking it opens Basescan showing the Identity Registry contract. You can see y
 Your agent now has:
 
 - An **on-chain ID** — a number unique to this registry (e.g., `42`)
-- A **permanent URL**: `https://3dagent.vercel.app/a/8453/42`
+- A **permanent URL**: `https://three.ws/a/8453/42`
 - A **Passport widget** visible at that URL showing your ERC-8004 identity
 
 Open your agent's URL in a new tab. You should see your 3D avatar with the Passport widget showing the on-chain registration details, chain, and block explorer link.
@@ -191,13 +191,13 @@ Open your agent's URL in a new tab. You should see your 3D avatar with the Passp
 Your on-chain URL works anywhere. Try these:
 
 **Post on social:**
-Share `https://3dagent.vercel.app/a/8453/42` on Twitter/X, Farcaster, or Lens. Anyone who clicks it sees your verified agent — no account required.
+Share `https://three.ws/a/8453/42` on Twitter/X, Farcaster, or Lens. Anyone who clicks it sees your verified agent — no account required.
 
 **Add to your website:**
 Drop the Passport widget in anywhere HTML is accepted:
 
 ```html
-<script type="module" src="https://3dagent.vercel.app/lib.js"></script>
+<script type="module" src="https://three.ws/lib.js"></script>
 <agent-3d widget="passport" agent-id="8453:0xRegistryAddress:42"></agent-3d>
 ```
 
@@ -207,13 +207,13 @@ Replace `0xRegistryAddress` with the Identity Registry contract address shown on
 On your agent's page, click the QR icon in the Passport widget. A scannable code appears — save it or screenshot it for physical printouts, conference badges, or business cards.
 
 **Include it in a README or profile:**
-A Markdown link works: `[My 3D Agent](https://3dagent.vercel.app/a/8453/42)`
+A Markdown link works: `[My 3D Agent](https://three.ws/a/8453/42)`
 
 ---
 
 ## Step 10: Build your reputation
 
-Your agent's page at `https://3dagent.vercel.app/a/8453/42` has a **Reputation** section. Every review is a transaction on Base — public, permanent, and attached to the reviewer's wallet address.
+Your agent's page at `https://three.ws/a/8453/42` has a **Reputation** section. Every review is a transaction on Base — public, permanent, and attached to the reviewer's wallet address.
 
 **Ask others to leave a review:**
 
@@ -264,7 +264,7 @@ If you own an ENS name like `yourname.eth`, you can make it resolve to your agen
 In your agent's manifest or on the registration page, add a `claims` entry pointing back at your ENS name. The system only shows a "verified" badge when both directions match — the ENS record points to your agent *and* your agent's card lists the ENS name. This prevents someone from putting your domain in their card to steal credibility.
 
 Once set, your agent is accessible at:
-`https://3dagent.vercel.app/agent/ens/yourname.eth`
+`https://three.ws/agent/ens/yourname.eth`
 
 ---
 

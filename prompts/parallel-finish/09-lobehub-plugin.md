@@ -28,7 +28,7 @@ lobehub-plugin/
 
 ## Plugin behavior
 
-- **Settings:** `agentId` (string, required) and `apiOrigin` (defaults to `https://3dagent.vercel.app`). Expose these via `config-schema.ts`.
+- **Settings:** `agentId` (string, required) and `apiOrigin` (defaults to `https://three.ws/`). Expose these via `config-schema.ts`.
 - **Render:** a fixed 320×420 pane (sidebar or floating — Lobe decides) containing an `<iframe>` pointing at `${apiOrigin}/agent/${agentId}/embed`.
 - **Bridge:** on Lobe's assistant-message event, call `bridge.speak(text)` which posts `{ __agent: agentId, type: 'action', action: { type: 'speak', payload: { text } } }` to the iframe — matching the FROZEN v1 bridge in [public/agent/embed.html](../../public/agent/embed.html).
 - **Lobe hooks used:** `usePluginStore`, `onAssistantMessage`. If the exact API differs, write against what's published in `@lobehub/ui@latest` or `lobehub-plugin-sdk` — if neither exists at time of writing, mock the hooks with clear TODO comments and document in README.
@@ -43,7 +43,7 @@ lobehub-plugin/
 	"meta": {
 		"title": "3D Agent",
 		"description": "Render a 3D avatar that reacts to the chat.",
-		"avatar": "https://3dagent.vercel.app/favicon.ico",
+		"avatar": "https://three.ws/favicon.ico",
 		"tags": ["avatar", "3d", "agent"]
 	},
 	"ui": {
@@ -52,7 +52,7 @@ lobehub-plugin/
 	},
 	"settings": [
 		{ "name": "agentId", "type": "string", "required": true, "title": "Agent ID" },
-		{ "name": "apiOrigin", "type": "string", "default": "https://3dagent.vercel.app" }
+		{ "name": "apiOrigin", "type": "string", "default": "https://three.ws/" }
 	]
 }
 ```

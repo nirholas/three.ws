@@ -2,7 +2,7 @@
 
 ## Why this exists
 
-When anyone pastes an agent URL like `https://3dagent.vercel.app/agent/ab12cd` into Slack, X, Discord, iMessage, or Notion, it should unfurl into a rich card with a thumbnail of the avatar, the agent's name, and its description. Today it shows the generic site favicon. That is the single highest-leverage discovery surface for embodied agents — fix it.
+When anyone pastes an agent URL like `https://three.ws/agent/ab12cd` into Slack, X, Discord, iMessage, or Notion, it should unfurl into a rich card with a thumbnail of the avatar, the agent's name, and its description. Today it shows the generic site favicon. That is the single highest-leverage discovery surface for embodied agents — fix it.
 
 ## Shared context
 

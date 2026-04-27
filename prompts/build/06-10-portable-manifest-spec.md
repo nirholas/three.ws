@@ -23,7 +23,7 @@ The `agentURI` field in IdentityRegistry currently points to a JSON document wit
 1. Add `specs/AGENT_MANIFEST.md` documenting v1 schema:
     ```jsonc
     {
-    	"$schema": "https://3dagent.vercel.app/schemas/agent-manifest-v1.json",
+    	"$schema": "https://three.ws/schemas/agent-manifest-v1.json",
     	"version": 1,
     	"id": "did:erc8004:1:42",
     	"name": "Coach Leo",
@@ -35,7 +35,7 @@ The `agentURI` field in IdentityRegistry currently points to a JSON document wit
     	"skills": [{ "id": "greet", "version": "1.0.0", "danger": "safe" }],
     	"memory": { "mode": "encrypted-ipfs", "root": "ipfs://..." },
     	"wallet": "0x...",
-    	"homepage": "https://3dagent.vercel.app/agent/leo",
+    	"homepage": "https://three.ws/agent/leo",
     	"created_at": "2026-04-15T00:00:00Z",
     	"signature": "0x...", // wallet-signed hash of the rest of the doc
     }
@@ -63,5 +63,5 @@ The `agentURI` field in IdentityRegistry currently points to a JSON document wit
 
 1. `node scripts/validate-manifest.mjs examples/coach-leo/agent.json` → exit 0.
 2. Pass a manifest with `version: 2` → exit 1, error mentions version.
-3. Pass `https://3dagent.vercel.app/api/agents/<id>/manifest` → expect ok.
+3. Pass `https://three.ws/api/agents/<id>/manifest` → expect ok.
 4. Open `/schemas/agent-manifest-v1.json` in browser — JSON renders.

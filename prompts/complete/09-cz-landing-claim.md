@@ -61,7 +61,7 @@ The embed-copy CTA writes this to clipboard:
 
 ```html
 <agent-3d agent="cz" chain="84532" src="/avatars/cz.glb" eager></agent-3d>
-<script src="https://3dagent.vercel.app/dist-lib/agent-3d.umd.cjs"></script>
+<script src="https://three.ws/dist-lib/agent-3d.umd.cjs"></script>
 ```
 
 When `state.chainId` / `state.agentId` are present, interpolate them in.

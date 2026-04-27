@@ -25,7 +25,7 @@ The novel unlock of pillar 5. A Claude user pastes an agent URL into a chat → 
 1. **Claude-friendly HTML snippet** — produce a canonical Artifact-ready snippet and display it on `/agent/:id` under Share → "Claude Artifact":
     ```html
     <iframe
-    	src="https://3dagent.vercel.app/agent/<ID>/embed?kiosk=1&bg=transparent"
+    	src="https://three.ws/agent/<ID>/embed?kiosk=1&bg=transparent"
     	width="100%"
     	height="520"
     	style="border:0;border-radius:16px"

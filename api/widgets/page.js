@@ -253,7 +253,7 @@ ${escapeJsonLd({
 	url: pageUrl,
 	image: ogUrl,
 	identifier: widgetId,
-	provider: { '@type': 'Organization', name: '3D Agent', url: 'https://3dagent.vercel.app' },
+	provider: { '@type': 'Organization', name: '3D Agent', url: 'https://three.ws/' },
 })}
 	</script>
 </body>

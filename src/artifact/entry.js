@@ -37,7 +37,7 @@
 	);
 	const config = scriptTag ? JSON.parse(scriptTag.textContent) : {};
 	const agentId = config.agentId || container.dataset.agentId;
-	const origin = config.origin || container.dataset.origin || 'https://3dagent.vercel.app';
+	const origin = config.origin || container.dataset.origin || 'https://three.ws/';
 
 	if (!agentId) {
 		caption.textContent = 'Missing agent ID';

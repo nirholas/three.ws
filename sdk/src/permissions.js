@@ -5,11 +5,11 @@
  *
  * Quick start:
  *   import { PermissionsClient } from '@nirholas/agent-kit/permissions';
- *   const client = new PermissionsClient({ baseUrl: 'https://3dagent.vercel.app' });
+ *   const client = new PermissionsClient({ baseUrl: 'https://three.ws/' });
  *   const { delegations } = await client.getMetadata(agentId);
  */
 
-const DEFAULT_BASE = 'https://3dagent.vercel.app';
+const DEFAULT_BASE = 'https://three.ws/';
 
 /**
  * Typed error class for permission operations.
@@ -39,7 +39,7 @@ export class PermissionError extends Error {
 export class PermissionsClient {
 	/**
 	 * @param {object} [opts]
-	 * @param {string} [opts.baseUrl]  API base URL (default: https://3dagent.vercel.app)
+	 * @param {string} [opts.baseUrl]  API base URL (default: https://three.ws/)
 	 * @param {string} [opts.bearer]  Bearer token for authenticated endpoints (redeem, private list)
 	 */
 	constructor({ baseUrl = DEFAULT_BASE, bearer } = {}) {

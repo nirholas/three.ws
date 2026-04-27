@@ -31,12 +31,12 @@ New static file + new endpoint. No edits to anything existing.
 	"meta": {
 		"title": "3D Agent",
 		"description": "Embed any on-chain or off-chain 3D agent as an embodied avatar inside your chat.",
-		"avatar": "https://3dagent.vercel.app/favicon.png",
+		"avatar": "https://three.ws/favicon.png",
 		"tags": ["3d", "avatar", "embodied-agent", "erc-8004"]
 	},
 	"ui": {
 		"mode": "iframe",
-		"url": "https://3dagent.vercel.app/agent-embed.html",
+		"url": "https://three.ws/agent-embed.html",
 		"height": 640,
 		"settings": {
 			"agentId": {
@@ -48,7 +48,7 @@ New static file + new endpoint. No edits to anything existing.
 	},
 	"author": "3d-agent",
 	"createdAt": "2026-04-17",
-	"homepage": "https://3dagent.vercel.app",
+	"homepage": "https://three.ws/",
 	"version": "1.0.0"
 }
 ```

@@ -21,7 +21,7 @@ You need a GLB file — the standard format for 3D models on the web. Here are t
 There's a hosted sample avatar ready to use. Just copy the URL below and you're done for this step:
 
 ```
-https://cdn.3dagent.vercel.app/models/sample-avatar.glb
+https://cdn.three.wsmodels/sample-avatar.glb
 ```
 
 Come back and swap this for your own character later. That's what Step 9 is for.
@@ -43,7 +43,7 @@ Come back and swap this for your own character later. That's what Step 9 is for.
 
 ### Option C: Generate one from a selfie (~5 minutes)
 
-Go to [https://3dagent.vercel.app/create](https://3dagent.vercel.app/create), upload a photo, and download the resulting GLB.
+Go to [https://three.ws/create](https://three.ws/create), upload a photo, and download the resulting GLB.
 
 ---
 
@@ -81,10 +81,10 @@ Create a new folder somewhere on your computer. Inside it, create a file called 
   </style>
 </head>
 <body>
-  <script type="module" src="https://cdn.3dagent.vercel.app/agent-3d.js"></script>
+  <script type="module" src="https://cdn.three.wsagent-3d.js"></script>
 
   <agent-3d
-    body="https://cdn.3dagent.vercel.app/models/sample-avatar.glb"
+    body="https://cdn.three.wsmodels/sample-avatar.glb"
     width="400px"
     height="600px"
   ></agent-3d>
@@ -129,7 +129,7 @@ Update the `<agent-3d>` tag to add the `brain` and `instructions` attributes:
 
 ```html
 <agent-3d
-  body="https://cdn.3dagent.vercel.app/models/sample-avatar.glb"
+  body="https://cdn.three.wsmodels/sample-avatar.glb"
   brain="claude-sonnet-4-6"
   name="Aria"
   instructions="You are Aria, a friendly and enthusiastic AI guide. You love helping people explore the 3D world. Be concise, warm, and occasionally playful. When someone greets you, wave at them. Keep replies to 2–3 sentences unless asked for more."
@@ -182,7 +182,7 @@ Create `agent.json` in the same folder as `index.html`:
     "mode": "local"
   },
   "skills": [
-    { "uri": "https://cdn.3dagent.vercel.app/skills/wave/" }
+    { "uri": "https://cdn.three.wsskills/wave/" }
   ],
   "version": "0.1.0"
 }
@@ -200,7 +200,7 @@ Then update `index.html` to load from the manifest instead of using inline attri
 
 The manifest approach is cleaner for anything beyond a one-liner: you can version it in git, keep the instructions in one place, and load it by URL from anywhere.
 
-> **Note:** If you used the sample avatar URL, replace `./your-character.glb` in the manifest with `https://cdn.3dagent.vercel.app/models/sample-avatar.glb`.
+> **Note:** If you used the sample avatar URL, replace `./your-character.glb` in the manifest with `https://cdn.three.wsmodels/sample-avatar.glb`.
 
 ---
 
@@ -395,7 +395,7 @@ All three options are free for personal projects, include HTTPS (required for vo
 
 Once the page is live, swap in your own GLB:
 
-1. Go to [https://3dagent.vercel.app/app](https://3dagent.vercel.app/app)
+1. Go to [https://three.ws/app](https://three.ws/app)
 2. Drag your GLB into the viewer to confirm it loads correctly.
 3. Sign up for a free account, then click **Save to Account** to get a hosted URL.
 4. Copy that URL.
@@ -429,7 +429,7 @@ Here's the complete `index.html` all in one place:
   </style>
 </head>
 <body>
-  <script type="module" src="https://cdn.3dagent.vercel.app/agent-3d.js"></script>
+  <script type="module" src="https://cdn.three.wsagent-3d.js"></script>
 
   <agent-3d
     manifest="./agent.json"
@@ -507,4 +507,4 @@ Now that you have a working agent, here's what to explore next:
 | Model loads but no chat response | Missing or invalid `brain=` attribute | Confirm the model ID is spelled correctly (e.g., `claude-sonnet-4-6`) |
 | Mic button greyed out or silent | Page not on HTTPS | Deploy to Vercel/Netlify, or test on localhost (exempt from HTTPS requirement) |
 | CORS error in console | GLB hosted on a different domain without CORS headers | Upload to the platform's hosted storage, or add CORS headers to your server |
-| Model looks wrong / T-pose only | GLB missing animations, or wrong rig | Open the file in [the app](https://3dagent.vercel.app/app) to inspect; use a Mixamo-rigged character for best results |
+| Model looks wrong / T-pose only | GLB missing animations, or wrong rig | Open the file in [the app](https://three.ws/app) to inspect; use a Mixamo-rigged character for best results |

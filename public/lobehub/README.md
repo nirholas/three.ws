@@ -5,7 +5,7 @@ Embeds a rigged 3D avatar agent into any LobeHub instance via the plugin manifes
 ## Install into a LobeHub fork
 
 1. Open your LobeHub instance → Settings → Plugins → Custom Plugin.
-2. Enter the manifest URL: `https://3dagent.vercel.app/api/lobehub/manifest`
+2. Enter the manifest URL: `https://three.ws/api/lobehub/manifest`
 3. Install. LobeHub fetches the manifest, registers the four tools (`render_agent`, `speak`, `gesture`, `emote`), and renders the iframe at `/lobehub/iframe/` inside chat messages.
 4. Optionally pre-validate an agent before rendering: `POST /api/lobehub/handshake` with `{ agentId, hostOrigin }`.
 

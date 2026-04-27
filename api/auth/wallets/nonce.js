@@ -21,7 +21,7 @@ export default wrap(async (req, res) => {
 		``,
 		`Link this wallet to 3D Agent account ${session.email}`,
 		``,
-		`URI: ${process.env.APP_ORIGIN || 'https://3dagent.vercel.app'}`,
+		`URI: ${process.env.APP_ORIGIN || 'https://three.ws/'}`,
 		`Version: 1`,
 		`Chain ID: (will be set by wallet)`,
 		`Nonce: ${nonce}`,

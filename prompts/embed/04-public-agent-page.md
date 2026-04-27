@@ -30,7 +30,7 @@ This is the canonical URL a user shares when they want the world to see their ag
 ### Embed modal content
 
 ```html
-<script src="https://3dagent.vercel.app/dist/lib.js" defer></script>
+<script src="https://three.ws/dist/lib.js" defer></script>
 <agent-3d id="{{agentId}}" style="width:100%; height:500px"></agent-3d>
 ```
 
@@ -38,7 +38,7 @@ Plus iframe fallback:
 
 ```html
 <iframe
-	src="https://3dagent.vercel.app/agent/{{agentId}}?kiosk=1"
+	src="https://three.ws/agent/{{agentId}}?kiosk=1"
 	width="100%"
 	height="500"
 	allow="accelerometer; gyroscope; camera"

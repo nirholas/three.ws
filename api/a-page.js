@@ -171,7 +171,7 @@ ${escapeJsonLd({
 	image: p.ogUrl,
 	identifier: `eip155:${p.chainId}:${p.agentId}`,
 	sameAs: p.manifestURI ? [p.manifestURI] : undefined,
-	provider: { '@type': 'Organization', name: '3D Agent', url: 'https://3dagent.vercel.app' },
+	provider: { '@type': 'Organization', name: '3D Agent', url: 'https://three.ws/' },
 })}
 	</script>
 </body>

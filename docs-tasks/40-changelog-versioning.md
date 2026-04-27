@@ -62,16 +62,16 @@ Read the git log to generate real entries — don't invent version history.
 The SDK (`@3dagent/sdk`) is versioned separately from the platform:
 - SDK version in `/sdk/CHANGELOG.md`
 - Platform releases may not always bump the SDK version (if no public API changed)
-- The CDN URL includes the version: `https://cdn.3dagent.vercel.app/agent-3d@1.5.1.js`
-- The unversioned URL `https://cdn.3dagent.vercel.app/agent-3d.js` always points to latest stable
+- The CDN URL includes the version: `https://cdn.three.wsagent-3d@1.5.1.js`
+- The unversioned URL `https://cdn.three.wsagent-3d.js` always points to latest stable
 
 Using versioned CDN URLs is recommended for production:
 ```html
 <!-- Pinned to 1.5.1 — won't break if 2.0.0 releases -->
-<script type="module" src="https://cdn.3dagent.vercel.app/agent-3d@1.5.1.js"></script>
+<script type="module" src="https://cdn.three.wsagent-3d@1.5.1.js"></script>
 
 <!-- Always latest — convenient for dev, risky for production -->
-<script type="module" src="https://cdn.3dagent.vercel.app/agent-3d.js"></script>
+<script type="module" src="https://cdn.three.wsagent-3d.js"></script>
 ```
 
 ### 5. Smart contract versioning
@@ -90,7 +90,7 @@ When new contracts are deployed:
 ### 6. Manifest format versioning
 Agent manifests include a `$schema` field:
 ```json
-{ "$schema": "https://3dagent.vercel.app/schemas/agent-manifest-v1.json" }
+{ "$schema": "https://three.ws/schemas/agent-manifest-v1.json" }
 ```
 
 Current: v1. Rules:

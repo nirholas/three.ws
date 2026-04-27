@@ -3,7 +3,7 @@
 User flow this band ships:
 
 ```
-[ user visits 3dagent.vercel.app ]
+[ user visits three.ws ]
          │
          ▼
 [ drops a .glb / .gltf ] ──── or ────► [ #model=<url> deep link ]

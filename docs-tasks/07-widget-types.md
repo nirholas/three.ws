@@ -108,7 +108,7 @@ Or with inline config:
   widget="talking-agent"
   model="./avatar.glb"
   brain
-  skills='[{"url":"https://cdn.3dagent.vercel.app/skills/help.json"}]'
+  skills='[{"url":"https://cdn.three.wsskills/help.json"}]'
 ></agent-3d>
 ```
 
@@ -206,7 +206,7 @@ Hotspot object schema:
 ---
 
 ### 3. Widget Studio (no-code builder)
-Users can build widget configs visually at https://3dagent.vercel.app/studio:
+Users can build widget configs visually at https://three.ws/studio:
 - Upload or link a GLB
 - Select widget type
 - Configure options via form
@@ -218,7 +218,7 @@ After creating a widget in Studio, copy the embed snippet:
 ```html
 <!-- Hosted iframe embed -->
 <iframe
-  src="https://3dagent.vercel.app/widgets/view?id=<widget-id>"
+  src="https://three.ws/widgets/view?id=<widget-id>"
   width="400"
   height="500"
   frameborder="0"
@@ -226,7 +226,7 @@ After creating a widget in Studio, copy the embed snippet:
 ></iframe>
 
 <!-- Or web component (loads faster, no iframe overhead) -->
-<script type="module" src="https://cdn.3dagent.vercel.app/agent-3d.js"></script>
+<script type="module" src="https://cdn.three.wsagent-3d.js"></script>
 <agent-3d widget-id="<widget-id>"></agent-3d>
 ```
 
@@ -234,14 +234,14 @@ After creating a widget in Studio, copy the embed snippet:
 Widgets can be:
 - **Private** — only accessible by the creator
 - **Unlisted** — accessible by anyone with the URL
-- **Public** — listed in the widget gallery at https://3dagent.vercel.app/widgets
+- **Public** — listed in the widget gallery at https://three.ws/widgets
 
 Publish via Widget Studio or the API (`POST /api/widgets`).
 
 ### 6. oEmbed support
 All public widgets support oEmbed for automatic rich previews in Notion, Twitter, Substack, etc.:
 ```
-GET https://3dagent.vercel.app/api/widgets/oembed?url=https://3dagent.vercel.app/widgets/view?id=<id>
+GET https://three.ws/api/widgets/oembed?url=https://three.ws/widgets/view?id=<id>
 ```
 
 ### 7. Widget API

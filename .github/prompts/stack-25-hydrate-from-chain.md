@@ -7,7 +7,7 @@ description: 'Hydrate an embodied agent into any host directly from its on-chain
 
 ## Problem
 
-The novel unlock: a host app (LobeHub, Claude, any site) can render an embodied agent given only a chain id + agent id, with zero dependency on 3dagent.vercel.app for data. The JS library reads the chain record, fetches the manifest from IPFS, renders the agent.
+The novel unlock: a host app (LobeHub, Claude, any site) can render an embodied agent given only a chain id + agent id, with zero dependency on three.ws for data. The JS library reads the chain record, fetches the manifest from IPFS, renders the agent.
 
 ## Implementation
 
@@ -16,7 +16,7 @@ The novel unlock: a host app (LobeHub, Claude, any site) can render an embodied 
 Web component usage:
 
 ```html
-<script src="https://3dagent.vercel.app/dist-lib/agent-3d.js"></script>
+<script src="https://three.ws/dist-lib/agent-3d.js"></script>
 <agent-3d chain="base-sepolia" agent-id="42"></agent-3d>
 ```
 
@@ -41,7 +41,7 @@ Inside [src/agent-resolver.js](src/agent-resolver.js):
 
 ### Zero-infra path
 
-Note the critical property: once registered, an agent can be rendered in a host even if **3dagent.vercel.app is offline**. Everything needed lives on-chain + IPFS + the library JS (bundlable into host).
+Note the critical property: once registered, an agent can be rendered in a host even if **three.ws is offline**. Everything needed lives on-chain + IPFS + the library JS (bundlable into host).
 
 ### Caching
 
@@ -59,12 +59,12 @@ Start with Base Sepolia (dev) and Base (mainnet). Extensible: map chain name →
 ## Validation
 
 - `<agent-3d chain="base-sepolia" agent-id="42">` on a blank HTML page → avatar renders, animates, responds to local skills.
-- Disable network to 3dagent.vercel.app (block in devtools) → agent still renders from IPFS.
+- Disable network to three.ws (block in devtools) → agent still renders from IPFS.
 - Tampered manifest (wrong signature) → refuses to render, shows "Unverified".
 - `npm run build:lib` produces a working `dist-lib/agent-3d.js` that supports chain hydration.
 - `npm run build` passes.
 
 ## Do not do this
 
-- Do NOT require a 3dagent.vercel.app API key for public chain-hydrated render.
+- Do NOT require a three.ws API key for public chain-hydrated render.
 - Do NOT hardcode one IPFS gateway — use fallbacks.

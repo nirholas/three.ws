@@ -9,7 +9,7 @@ description: 3D Agent is an open-source, browser-native 3D model viewer built on
 </video>
 
 <p align="center">
-  <a href="https://3dagent.vercel.app"><strong>🌐 Live at 3dagent.vercel.app</strong></a>&nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="https://three.ws/"><strong>🌐 Live at three.ws</strong></a>&nbsp;&nbsp;·&nbsp;&nbsp;
   <a href="#-quickstart"><strong>Get Started</strong></a>&nbsp;&nbsp;·&nbsp;&nbsp;
   <a href="#-features"><strong>Features</strong></a>&nbsp;&nbsp;·&nbsp;&nbsp;
   <a href="#-tutorials"><strong>Tutorials</strong></a>&nbsp;&nbsp;·&nbsp;&nbsp;
@@ -21,7 +21,7 @@ description: 3D Agent is an open-source, browser-native 3D model viewer built on
 
 ## 🧠 What is 3D Agent?
 
-**3D Agent** is an open-source, browser-native 3D model viewer built on [three.js](https://threejs.org/) (r176). It renders **glTF 2.0** and **GLB** files directly in WebGL — no plugins, no server uploads, no installs. Just open [3dagent.vercel.app](https://3dagent.vercel.app), drop a file, and inspect your model instantly.
+**3D Agent** is an open-source, browser-native 3D model viewer built on [three.js](https://threejs.org/) (r176). It renders **glTF 2.0** and **GLB** files directly in WebGL — no plugins, no server uploads, no installs. Just open [three.ws](https://three.ws/), drop a file, and inspect your model instantly.
 
 It's built for **3D artists** previewing exports, **game developers** debugging assets, **web developers** integrating models, and **anyone curious** about 3D on the web.
 
@@ -37,16 +37,16 @@ Save any avatar as a **widget** — a configured, shareable view that any site c
 
 ```html
 <iframe
-	src="https://3dagent.vercel.app/app#widget=wdgt_abc123"
+	src="https://three.ws/app#widget=wdgt_abc123"
 	width="600"
 	height="600"
 	style="border:0"
 ></iframe>
 ```
 
-- **[Open the Studio →](https://3dagent.vercel.app/studio)** — pick avatar, pick type, generate embed.
-- **[Browse the gallery →](https://3dagent.vercel.app/widgets)** — live demos of every widget type.
-- **[Read the docs →](https://3dagent.vercel.app/docs/widgets)** — URL params, postMessage API, oEmbed, privacy.
+- **[Open the Studio →](https://three.ws/studio)** — pick avatar, pick type, generate embed.
+- **[Browse the gallery →](https://three.ws/widgets)** — live demos of every widget type.
+- **[Read the docs →](https://three.ws/docs/widgets)** — URL params, postMessage API, oEmbed, privacy.
 
 Widget URLs (`/w/<id>`) get rich Open Graph cards in Slack/Discord/X and auto-embed via oEmbed in WordPress, Ghost, and Notion.
 
@@ -217,7 +217,7 @@ Open **http://localhost:3000** for the landing page, or **http://localhost:3000/
 Load models and configure the viewer directly via URL hash parameters. This is useful for embedding, sharing specific views, or automated testing.
 
 ```
-https://3dagent.vercel.app/#model=URL&kiosk=true&preset=assetgenerator&cameraPosition=1,2,3
+https://three.ws/#model=URL&kiosk=true&preset=assetgenerator&cameraPosition=1,2,3
 ```
 
 | Parameter        | Type      | Description                                                   |
@@ -230,7 +230,7 @@ https://3dagent.vercel.app/#model=URL&kiosk=true&preset=assetgenerator&cameraPos
 **Example — embed a model in kiosk mode:**
 
 ```
-https://3dagent.vercel.app/#model=https://example.com/model.glb&kiosk=true
+https://three.ws/#model=https://example.com/model.glb&kiosk=true
 ```
 
 <br/>
@@ -306,7 +306,7 @@ Scheduled in `vercel.json` → `crons`:
 ### 1. Preview a Local Model
 
 <p align="center">
-  <img src="assets/tutorial-steps.svg" width="500" height="80" alt="Step 1: Open 3dagent.vercel.app · Step 2: Drop .glb file · Step 3: Inspect"/>
+  <img src="assets/tutorial-steps.svg" width="500" height="80" alt="Step 1: Open three.ws · Step 2: Drop .glb file · Step 3: Inspect"/>
 </p>
 
 Just drag any `.glb` or `.gltf` file (along with its textures and `.bin` if separate) onto the page. The viewer auto-detects the root glTF file and resolves all relative resource URIs.
@@ -365,7 +365,7 @@ Use an `<iframe>` with kiosk mode for clean embedding:
 
 ```html
 <iframe
-	src="https://3dagent.vercel.app/#model=https://your-cdn.com/model.glb&kiosk=true"
+	src="https://three.ws/#model=https://your-cdn.com/model.glb&kiosk=true"
 	width="800"
 	height="600"
 	frameborder="0"
@@ -373,7 +373,7 @@ Use an `<iframe>` with kiosk mode for clean embedding:
 ></iframe>
 ```
 
-> **CORS note:** The model URL must allow cross-origin requests. If you hit CORS errors, serve the model from the same domain or configure your CDN to allow `https://3dagent.vercel.app` as an origin.
+> **CORS note:** The model URL must allow cross-origin requests. If you hit CORS errors, serve the model from the same domain or configure your CDN to allow `https://three.ws/` as an origin.
 
 <br/>
 
@@ -416,15 +416,15 @@ Use an `<iframe>` with kiosk mode for clean embedding:
 The glTF working group maintains a library of test models. Try these:
 
 ```
-https://3dagent.vercel.app/#model=https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/DamagedHelmet/glTF-Binary/DamagedHelmet.glb
+https://three.ws/#model=https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/DamagedHelmet/glTF-Binary/DamagedHelmet.glb
 ```
 
 ```
-https://3dagent.vercel.app/#model=https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/FlightHelmet/glTF/FlightHelmet.gltf
+https://three.ws/#model=https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/FlightHelmet/glTF/FlightHelmet.gltf
 ```
 
 ```
-https://3dagent.vercel.app/#model=https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/Fox/glTF-Binary/Fox.glb
+https://three.ws/#model=https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/Fox/glTF-Binary/Fox.glb
 ```
 
 ### Use the JavaScript API (Advanced)

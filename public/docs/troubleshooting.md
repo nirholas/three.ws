@@ -211,7 +211,7 @@ Organized by symptom. Find your problem, check the likely causes, follow the fix
 **Fix steps:**
 
 1. Verify the `<script>` tag loads before the `<agent-3d>` element in the DOM, or that it uses `defer`/`async` correctly.
-2. Check the Console for CSP violations. The CDN origin (`cdn.3dagent.vercel.app`) must appear in your `script-src` policy.
+2. Check the Console for CSP violations. The CDN origin (`cdn.three.ws`) must appear in your `script-src` policy.
 3. For **Next.js**: web components use browser APIs (`window`, `document`, `SpeechSynthesis`) that don't exist server-side. Mark the component file with `'use client'` and disable SSR for the wrapper:
    ```js
    import dynamic from 'next/dynamic';
@@ -238,11 +238,11 @@ Organized by symptom. Find your problem, check the likely causes, follow the fix
 
 **Fix steps:**
 
-1. Target the correct origin: `'https://3dagent.vercel.app'` (or your self-hosted origin).
+1. Target the correct origin: `'https://three.ws/'` (or your self-hosted origin).
 2. Listen for `message` events on `window`, not on the iframe element itself:
    ```js
    window.addEventListener('message', (e) => {
-     if (e.origin !== 'https://3dagent.vercel.app') return;
+     if (e.origin !== 'https://three.ws/') return;
      console.log(e.data);
    });
    ```
@@ -372,7 +372,7 @@ Organized by symptom. Find your problem, check the likely causes, follow the fix
 **Fix steps:**
 
 1. Wait 1–2 minutes. The indexer polls the chain periodically.
-2. Access the agent directly by URL: `https://3dagent.vercel.app/a/<chainId>/<agentId>` — this bypasses the index.
+2. Access the agent directly by URL: `https://three.ws/a/<chainId>/<agentId>` — this bypasses the index.
 3. Confirm the transaction was actually confirmed (not just submitted) on the block explorer for Base.
 
 ---
@@ -385,7 +385,7 @@ Organized by symptom. Find your problem, check the likely causes, follow the fix
 
 1. Verify the `3dagent` text record is set on the ENS name. In the ENS manager, add a text record with key `3dagent` and value set to your agent's on-chain ID.
 2. ENS records can take 30+ minutes to propagate after being set.
-3. Test direct resolution: `https://3dagent.vercel.app/agent/ens/yourname.eth`
+3. Test direct resolution: `https://three.ws/agent/ens/yourname.eth`
 
 ---
 

@@ -11,10 +11,10 @@ Render an embodied 3D avatar in the LobeChat sidebar. The avatar reacts to the L
 1. In LobeChat, open **Plugins → Plugin Store → Custom plugins**.
 2. Paste the manifest URL:
     ```
-    https://3dagent.vercel.app/.well-known/lobehub-plugin.json
+    https://three.ws/.well-known/lobehub-plugin.json
     ```
 3. Click **Install**. LobeChat will show the plugin settings dialog.
-4. Enter your **Agent ID** (UUID from the 3D Agent dashboard at `https://3dagent.vercel.app/dashboard`).
+4. Enter your **Agent ID** (UUID from the 3D Agent dashboard at `https://three.ws/dashboard`).
 5. Click **Save**. The 3D avatar appears in the right sidebar.
 
 ---
@@ -24,7 +24,7 @@ Render an embodied 3D avatar in the LobeChat sidebar. The avatar reacts to the L
 | Setting     | Type     | Required | Default                      | Description                            |
 | ----------- | -------- | -------- | ---------------------------- | -------------------------------------- |
 | `agentId`   | `string` | Yes      | —                            | Agent UUID from the 3D Agent dashboard |
-| `apiOrigin` | `string` | No       | `https://3dagent.vercel.app` | Override for self-hosted instances     |
+| `apiOrigin` | `string` | No       | `https://three.ws/` | Override for self-hosted instances     |
 
 ---
 

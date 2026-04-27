@@ -70,7 +70,7 @@ Reference skills by URI in the agent's `manifest.json`. The runtime fetches and 
 ```json
 {
   "skills": [
-    { "uri": "https://cdn.3dagent.vercel.app/skills/wave/", "version": "0.1.0" },
+    { "uri": "https://cdn.three.wsskills/wave/", "version": "0.1.0" },
     { "uri": "ipfs://bafy.../validate-model/", "version": "^1.0.0" }
   ]
 }
@@ -85,7 +85,7 @@ Pass a JSON array to the `skills` attribute:
 ```html
 <agent-3d
   agent-id="my-agent"
-  skills='[{"uri":"https://cdn.3dagent.vercel.app/skills/wave/","version":"0.1.0"}]'
+  skills='[{"uri":"https://cdn.three.wsskills/wave/","version":"0.1.0"}]'
 ></agent-3d>
 ```
 
@@ -121,7 +121,7 @@ await el.agent.skills.install({ uri: 'https://example.com/skills/weather/' });
 
   // Skill dependencies — installed recursively before this skill
   "dependencies": {
-    "https://cdn.3dagent.vercel.app/skills/gesture-base/": "^1.0.0"
+    "https://cdn.three.wsskills/gesture-base/": "^1.0.0"
   },
 
   // What this skill adds to the agent
@@ -396,8 +396,8 @@ Skills can depend on other skills. The registry installs dependencies recursivel
   "name": "full-coaching-kit",
   "version": "1.0.0",
   "dependencies": {
-    "https://cdn.3dagent.vercel.app/skills/wave/": "^0.1.0",
-    "https://cdn.3dagent.vercel.app/skills/validate-model/": "^1.0.0"
+    "https://cdn.three.wsskills/wave/": "^0.1.0",
+    "https://cdn.three.wsskills/validate-model/": "^1.0.0"
   },
   "provides": { "tools": [] }
 }

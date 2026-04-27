@@ -25,7 +25,7 @@ Live event runbook for the CZ agent demo. This is the operator's edge — when t
 
 - [ ] Fresh browser window opened (not a tab in existing profile)
 - [ ] MetaMask imported from seed or hardware wallet connected
-- [ ] DNS cached: run `nslookup 3dagent.vercel.app` twice, confirm same IP both times
+- [ ] DNS cached: run `nslookup three.ws` twice, confirm same IP both times
 - [ ] Hotspot phone ready (venue wifi fallback)
 - [ ] `/cz` preloaded and avatar fully rendered; camera responds
 - [ ] Dry-run entire demo flow with a throwaway wallet:

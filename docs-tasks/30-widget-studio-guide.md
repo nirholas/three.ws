@@ -14,10 +14,10 @@ Non-technical users and developers who want to create embeddable 3D widgets with
 ### 1. What is Widget Studio?
 Widget Studio is the visual builder for creating embeddable 3D agent widgets. No code required — configure your widget through a form, preview it live, and copy the embed code.
 
-Access: https://3dagent.vercel.app/studio
+Access: https://three.ws/studio
 
 ### 2. Getting started
-1. Go to https://3dagent.vercel.app/studio
+1. Go to https://three.ws/studio
 2. Sign in (required to save and publish)
 3. Click "New Widget"
 4. Choose your widget type
@@ -102,14 +102,14 @@ Two embed options:
 
 **Web component (recommended for developers):**
 ```html
-<script type="module" src="https://cdn.3dagent.vercel.app/agent-3d.js"></script>
+<script type="module" src="https://cdn.three.wsagent-3d.js"></script>
 <agent-3d widget-id="abc123" style="width:400px;height:500px"></agent-3d>
 ```
 
 **iframe (works everywhere):**
 ```html
 <iframe
-  src="https://3dagent.vercel.app/widgets/view?id=abc123"
+  src="https://three.ws/widgets/view?id=abc123"
   width="400"
   height="500"
   frameborder="0"
@@ -120,7 +120,7 @@ Two embed options:
 Click "Copy" next to either snippet. The code is immediately ready to paste.
 
 ### 5. Widget gallery
-Public widgets appear at https://3dagent.vercel.app/widgets. Browse to:
+Public widgets appear at https://three.ws/widgets. Browse to:
 - Find inspiration
 - Copy embed codes for community widgets
 - Discover what other creators have built
@@ -128,7 +128,7 @@ Public widgets appear at https://3dagent.vercel.app/widgets. Browse to:
 Filter by widget type, search by name, sort by popularity or recency.
 
 ### 6. Managing your widgets
-In your dashboard (https://3dagent.vercel.app/dashboard → Widgets):
+In your dashboard (https://three.ws/dashboard → Widgets):
 - See all your widgets with preview thumbnails
 - Edit widget settings
 - Change visibility
@@ -176,7 +176,7 @@ Once your widget is published, paste the widget URL into:
 The oEmbed protocol handles the rest automatically.
 
 ### 10. Troubleshooting
-- Widget preview is blank: check that your GLB URL is accessible (CORS must allow 3dagent.vercel.app)
+- Widget preview is blank: check that your GLB URL is accessible (CORS must allow three.ws)
 - Can't save: make sure you're signed in
 - Hotspot pins disappear after save: known issue with very large scenes — try reducing the model
 - Talking Agent doesn't respond: LLM requires an API key configured in agent settings

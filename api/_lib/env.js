@@ -18,7 +18,7 @@ function trimSlash(s) {
 
 export const env = {
 	get APP_ORIGIN() {
-		return trimSlash(opt('PUBLIC_APP_ORIGIN', 'https://3dagent.vercel.app'));
+		return trimSlash(opt('PUBLIC_APP_ORIGIN', 'https://three.ws/'));
 	},
 
 	get DATABASE_URL() {

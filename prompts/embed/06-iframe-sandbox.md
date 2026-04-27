@@ -27,7 +27,7 @@ In the embed entry script:
 Document required CSP:
 
 ```
-default-src 'self' https://3dagent.vercel.app;
+default-src 'self' https://three.ws/;
 img-src 'self' data: blob: https:;
 media-src 'self' blob:;
 connect-src 'self' https://api.anthropic.com https://*.infura.io https://*.alchemyapi.io https://ipfs.io https://dweb.link https://cloudflare-ipfs.com;
@@ -38,7 +38,7 @@ Add a section to [specs/EMBED_SPEC.md](../../specs/EMBED_SPEC.md) listing these 
 
 ### Kiosk auto-detection
 
-If inside an iframe AND hostname is not the main `3dagent.vercel.app` → default to `kiosk=1` behavior regardless of URL param. Allow host to override with `kiosk=0`.
+If inside an iframe AND hostname is not the main `three.ws` → default to `kiosk=1` behavior regardless of URL param. Allow host to override with `kiosk=0`.
 
 ## Out of scope
 

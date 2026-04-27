@@ -4,15 +4,15 @@
 	"version": "1.0.0",
 	"author": "3D Agent",
 	"createdAt": "2026-04-17",
-	"homepage": "https://3dagent.vercel.app",
+	"homepage": "https://three.ws/",
 	"meta": {
 		"title": "3D Agent",
 		"description": "Embed any on-chain or off-chain 3D agent as an embodied avatar inside your chat.",
-		"avatar": "https://3dagent.vercel.app/favicon.png",
+		"avatar": "https://three.ws/favicon.png",
 		"tags": ["3d", "avatar", "embodied-agent", "erc-8004"]
 	},
 	"ui": {
-		"url": "https://3dagent.vercel.app/lobehub/iframe/",
+		"url": "https://three.ws/lobehub/iframe/",
 		"height": 640,
 		"settings": {
 			"agentId": {
@@ -24,7 +24,7 @@
 	},
 	"api": [
 		{
-			"url": "https://3dagent.vercel.app/api/mcp",
+			"url": "https://three.ws/api/mcp",
 			"name": "render_agent",
 			"description": "Mount the 3D avatar for a given agent id.",
 			"parameters": {
@@ -39,7 +39,7 @@
 			}
 		},
 		{
-			"url": "https://3dagent.vercel.app/api/mcp",
+			"url": "https://three.ws/api/mcp",
 			"name": "speak",
 			"description": "Make the avatar speak with optional emotional valence.",
 			"parameters": {
@@ -60,7 +60,7 @@
 			}
 		},
 		{
-			"url": "https://3dagent.vercel.app/api/mcp",
+			"url": "https://three.ws/api/mcp",
 			"name": "gesture",
 			"description": "Trigger a named gesture on the avatar.",
 			"parameters": {
@@ -75,7 +75,7 @@
 			}
 		},
 		{
-			"url": "https://3dagent.vercel.app/api/mcp",
+			"url": "https://three.ws/api/mcp",
 			"name": "emote",
 			"description": "Inject an emotion into the avatar's Empathy Layer blend.",
 			"parameters": {

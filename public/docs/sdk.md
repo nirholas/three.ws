@@ -18,14 +18,14 @@ Both are MIT-licensed. Neither requires the other.
 **CDN (recommended for most projects):**
 
 ```html
-<script type="module" src="https://3dagent.vercel.app/agent-3d/latest/agent-3d.js"></script>
+<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
 <agent-3d model="./avatar.glb"></agent-3d>
 ```
 
 **UMD (legacy bundlers or `<script>` without `type="module"`):**
 
 ```html
-<script src="https://3dagent.vercel.app/agent-3d/latest/agent-3d.umd.cjs"></script>
+<script src="https://three.ws/agent-3d/latest/agent-3d.umd.cjs"></script>
 ```
 
 **npm (if you want to import programmatic APIs and bundle yourself):**
@@ -282,7 +282,7 @@ Grant, verify, and revoke scoped spending delegations:
 ```js
 import { PermissionsClient } from '@nirholas/agent-kit/permissions';
 
-const client = new PermissionsClient({ baseUrl: 'https://3dagent.vercel.app' });
+const client = new PermissionsClient({ baseUrl: 'https://three.ws/' });
 
 // List active delegations for an agent
 const { spec, delegations } = await client.getMetadata(agentId);
@@ -396,7 +396,7 @@ A pre-built integration that embeds a live 3D avatar in the LobeChat sidebar. Th
 ### One-click install
 
 1. In LobeChat, open **Plugins → Plugin Store → Custom plugins**.
-2. Paste the manifest URL: `https://3dagent.vercel.app/.well-known/lobehub-plugin.json`
+2. Paste the manifest URL: `https://three.ws/.well-known/lobehub-plugin.json`
 3. Click **Install** and enter your Agent ID from the dashboard.
 
 The plugin exposes four LLM-callable tools:

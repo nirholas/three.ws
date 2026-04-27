@@ -33,7 +33,7 @@ A public endpoint `GET /api/agents/:id/lobe-plugin.json` that returns a **Lobehu
 	"identifier": "3d-agent-<agentId>",
 	"api": [
 		{
-			"url": "https://3dagent.vercel.app/api/agents/<agentId>/lobe/tool/<name>",
+			"url": "https://three.ws/api/agents/<agentId>/lobe/tool/<name>",
 			"name": "emote",
 			"description": "Have the agent express an emotion: celebrate, concern, curiosity, empathy, patience, neutral.",
 			"parameters": {
@@ -43,7 +43,7 @@ A public endpoint `GET /api/agents/:id/lobe-plugin.json` that returns a **Lobehu
 			}
 		},
 		{
-			"url": "https://3dagent.vercel.app/api/agents/<agentId>/lobe/tool/gesture",
+			"url": "https://three.ws/api/agents/<agentId>/lobe/tool/gesture",
 			"name": "gesture",
 			"description": "Trigger a one-shot gesture.",
 			"parameters": {
@@ -54,7 +54,7 @@ A public endpoint `GET /api/agents/:id/lobe-plugin.json` that returns a **Lobehu
 		}
 	],
 	"ui": {
-		"url": "https://3dagent.vercel.app/api/agents/<agentId>/lobe-ui.html",
+		"url": "https://three.ws/api/agents/<agentId>/lobe-ui.html",
 		"height": 420
 	},
 	"meta": {
@@ -95,7 +95,7 @@ Simplest implementation: the tool endpoint returns `{ ok: true, forward: { __age
 Share panel (`04-06`) `lobehub-plugin` target outputs the manifest URL:
 
 ```
-https://3dagent.vercel.app/api/agents/<id>/lobe-plugin.json
+https://three.ws/api/agents/<id>/lobe-plugin.json
 ```
 
 Plus the install instructions ("Paste this URL in Lobehub → Settings → Plugins → Add custom plugin").
@@ -122,7 +122,7 @@ Plus the install instructions ("Paste this URL in Lobehub → Settings → Plugi
 
 ## Acceptance
 
-- [ ] `curl https://3dagent.vercel.app/api/agents/<id>/lobe-plugin.json` returns valid JSON.
+- [ ] `curl https://three.ws/api/agents/<id>/lobe-plugin.json` returns valid JSON.
 - [ ] Pasting that URL in Lobehub's plugin installer (user's fork) registers the plugin.
 - [ ] After a message in Lobehub chat, the UI iframe updates — agent reacts to the assistant's reply.
 - [ ] Tool invocation from Lobehub chat (`/emote celebrate`) reaches the agent and animates.

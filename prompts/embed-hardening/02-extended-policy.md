@@ -59,7 +59,7 @@ Four deliverables:
 }
 ```
 
-Note: an empty allowlist would lock the agent out of every site. Treat `origins.mode === 'allowlist' && origins.hosts.length === 0` as **"first-party only"** — i.e. `3dagent.vercel.app` and any value of `env.APP_ORIGIN` are always allowed regardless of the list.
+Note: an empty allowlist would lock the agent out of every site. Treat `origins.mode === 'allowlist' && origins.hosts.length === 0` as **"first-party only"** — i.e. `three.ws` and any value of `env.APP_ORIGIN` are always allowed regardless of the list.
 
 ### Backwards-compat (`normalizeLegacyPolicy(input)`)
 

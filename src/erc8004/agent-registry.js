@@ -148,7 +148,7 @@ export function buildRegistrationJSON({
 		});
 		baseServices.push({
 			name: '3D',
-			endpoint: `https://3dagent.vercel.app/#model=${encodeURIComponent(glbUrl)}`,
+			endpoint: `https://three.ws/#model=${encodeURIComponent(glbUrl)}`,
 			version: '1.0',
 		});
 	}

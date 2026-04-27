@@ -55,7 +55,7 @@ export interface MountOptions {
 	agentAddress?: string;
 	agentName?: string;
 	src?: string; // manifest URL alternative
-	origin?: string; // default 'https://3dagent.vercel.app'
+	origin?: string; // default 'https://three.ws/'
 	transparentBg?: boolean;
 	kiosk?: boolean;
 	width?: string; // default '100%'
@@ -102,7 +102,7 @@ Whole package: **≤ 3 KB gzipped**. If you exceed, you've over-engineered.
 Also produce an IIFE build at `packages/embed/dist/embed.iife.js` and host under `/dist-lib/embed.iife.js` (copy as part of the main `npm run build:all` step) so hosts without a bundler can do:
 
 ```html
-<script src="https://3dagent.vercel.app/dist-lib/embed.iife.js"></script>
+<script src="https://three.ws/dist-lib/embed.iife.js"></script>
 <script>
 	window.Agent3D.mountAgent(document.getElementById('stage'), { agentAddress: '0xabc…' });
 </script>
@@ -122,7 +122,7 @@ Also produce an IIFE build at `packages/embed/dist/embed.iife.js` and host under
 ## Acceptance
 
 - [ ] `cd packages/embed && node build.mjs` produces both bundles.
-- [ ] `packages/embed/demo.html` mounts an agent against prod (`3dagent.vercel.app`).
+- [ ] `packages/embed/demo.html` mounts an agent against prod (`three.ws`).
 - [ ] Gzipped bundle < 3 KB.
 - [ ] `.d.ts` types load in VSCode intellisense.
 - [ ] `npm run build` at root still works.

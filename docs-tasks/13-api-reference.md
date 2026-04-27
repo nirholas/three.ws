@@ -12,7 +12,7 @@ Developers integrating with the 3D Agent platform programmatically — fetching 
 ## What this document must cover
 
 ### 1. Overview
-Base URL: `https://3dagent.vercel.app/api`
+Base URL: `https://three.ws/api`
 
 Authentication: Bearer token (API key) or session cookie.
 ```
@@ -114,7 +114,7 @@ Create a new widget.
   "visibility": "public"
 }
 ```
-Response: `{ "id": "widget-id", "embed_url": "https://3dagent.vercel.app/widgets/view?id=..." }`
+Response: `{ "id": "widget-id", "embed_url": "https://three.ws/widgets/view?id=..." }`
 
 **PUT /api/widgets/:id** (auth required, owner only)
 Update widget config.
@@ -131,7 +131,7 @@ GET /api/widgets/og?id=widget-id
 **GET /api/widgets/oembed**
 oEmbed endpoint for rich embeds in Notion, Substack, etc.
 ```
-GET /api/widgets/oembed?url=https://3dagent.vercel.app/widgets/view?id=widget-id
+GET /api/widgets/oembed?url=https://three.ws/widgets/view?id=widget-id
 ```
 
 ### 4. Agent Actions API

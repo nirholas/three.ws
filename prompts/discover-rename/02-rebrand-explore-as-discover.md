@@ -23,7 +23,7 @@ If 01 isn't done, stop and run 01 first.
 3. The `/discover` → `/my-agents` redirect from task 01 is **removed** (it would now shadow the community page).
 4. Page `<title>` becomes "Discover · 3D Agent". `<h2>` text "Every agent, every chain." is preserved (good copy).
 5. The "ERC-8004 Agent Directory" chip stays — it's a useful sub-label.
-6. Canonical URL `<link rel="canonical">` is updated to `https://3dagent.vercel.app/discover`.
+6. Canonical URL `<link rel="canonical">` is updated to `https://three.ws/discover`.
 7. All nav surfaces show "Discover" pointing to `/discover` — no leftover "Explore" links.
 8. Static asset paths inside the page (CSS, JS, images) all resolve.
 

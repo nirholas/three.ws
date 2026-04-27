@@ -7,13 +7,13 @@ description: "Lobehub plugin manifest + renderer so agents embody in the user's 
 
 ## Problem
 
-User maintains a LobeHub fork. Per priority stack, an agent from 3dagent.vercel.app must appear as an embodied 3D presence inside LobeHub chats — not a JSON blob. LobeHub plugins are the right extension point.
+User maintains a LobeHub fork. Per priority stack, an agent from three.ws must appear as an embodied 3D presence inside LobeHub chats — not a JSON blob. LobeHub plugins are the right extension point.
 
 ## Implementation
 
 ### Plugin manifest
 
-Host at `https://3dagent.vercel.app/.well-known/lobehub-plugin.json`:
+Host at `https://three.ws/.well-known/lobehub-plugin.json`:
 
 ```json
 {
@@ -22,14 +22,14 @@ Host at `https://3dagent.vercel.app/.well-known/lobehub-plugin.json`:
 	"meta": {
 		"title": "3D Agent",
 		"description": "Embodied 3D agents — identity, memory, skills, emotional presence",
-		"avatar": "https://3dagent.vercel.app/icon.png",
+		"avatar": "https://three.ws/icon.png",
 		"tags": ["3d", "agent", "avatar"]
 	},
 	"api": [
 		{
 			"name": "renderAgent",
 			"description": "Render an embodied agent by slug or agent card URL",
-			"url": "https://3dagent.vercel.app/api/lobehub/render-agent",
+			"url": "https://three.ws/api/lobehub/render-agent",
 			"parameters": {
 				"type": "object",
 				"properties": { "slug": { "type": "string" } },
@@ -39,7 +39,7 @@ Host at `https://3dagent.vercel.app/.well-known/lobehub-plugin.json`:
 		{
 			"name": "summonAgent",
 			"description": "Ask the 3D agent to perform a skill and return the result + rendering",
-			"url": "https://3dagent.vercel.app/api/lobehub/summon-agent",
+			"url": "https://three.ws/api/lobehub/summon-agent",
 			"parameters": {
 				"type": "object",
 				"properties": {
@@ -54,7 +54,7 @@ Host at `https://3dagent.vercel.app/.well-known/lobehub-plugin.json`:
 	"ui": [
 		{
 			"name": "agent-embed",
-			"url": "https://3dagent.vercel.app/lobehub/embed.html"
+			"url": "https://three.ws/lobehub/embed.html"
 		}
 	]
 }
@@ -67,7 +67,7 @@ Host at `https://3dagent.vercel.app/.well-known/lobehub-plugin.json`:
 ```json
 {
 	"type": "embed",
-	"url": "https://3dagent.vercel.app/agent/satoshi?kiosk=1&theme=auto",
+	"url": "https://three.ws/agent/satoshi?kiosk=1&theme=auto",
 	"width": 480,
 	"height": 480,
 	"fallbackText": "3D Agent: Satoshi — open in browser to interact"

@@ -8,7 +8,7 @@ argument-hint: 'Describe what you want to do'
 
 ## Overview
 
-**3D Agent** started as a glTF 2.0 / GLB viewer and grew into a full embodied-agent platform. Live at [3dagent.vercel.app](https://3dagent.vercel.app/). Read [/CLAUDE.md](../../../CLAUDE.md) first — this skill is an index; the CLAUDE.md files are the source of truth.
+**3D Agent** started as a glTF 2.0 / GLB viewer and grew into a full embodied-agent platform. Live at [three.ws](https://three.ws/). Read [/CLAUDE.md](../../../CLAUDE.md) first — this skill is an index; the CLAUDE.md files are the source of truth.
 
 ## Two halves
 

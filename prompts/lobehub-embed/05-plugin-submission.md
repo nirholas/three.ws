@@ -20,7 +20,7 @@ Produce everything needed to (a) reproduce a green local smoke test of the plugi
 ## Deliverable
 
 1. **Local-test harness** under `prompts/lobehub-embed/fixtures/`:
-    - `sample-lobehub-config.json` — a LobeHub plugin-install descriptor pointing at `https://3dagent.vercel.app/.well-known/lobehub-plugin.json` (or a local dev URL).
+    - `sample-lobehub-config.json` — a LobeHub plugin-install descriptor pointing at `https://three.ws/.well-known/lobehub-plugin.json` (or a local dev URL).
     - `mock-host.html` — a standalone page that mimics the LobeHub host frame: iframes our embed, sends the full handshake sequence (`host:hello` → `host:identity` → `host:action` samples), logs replies. Use for offline testing.
     - `smoke.md` — a step-by-step manual smoke test script (10–15 steps) covering: install, open agent, chat sends tool call, avatar speaks with emotion, wallet link prompt, signed action surfaces back to transcript.
 2. **Submission bundle** under `prompts/lobehub-embed/submission/`:

@@ -75,7 +75,7 @@ Third-party developers integrating agents into their own apps need a typed SDK e
 5. **`sdk/README.md`** — add a **Permissions** section with a 10-line example:
 
     ```ts
-    const client = new AgentSdk({ baseUrl: 'https://3dagent.vercel.app' }).permissions;
+    const client = new AgentSdk({ baseUrl: 'https://three.ws/' }).permissions;
     const metadata = await client.getMetadata(agentId);
     // ...
     ```

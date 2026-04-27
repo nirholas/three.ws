@@ -37,8 +37,8 @@ Skills are installed via the agent manifest:
 ```json
 {
   "skills": [
-    { "url": "https://cdn.3dagent.vercel.app/skills/wave.json" },
-    { "url": "https://cdn.3dagent.vercel.app/skills/validate-model.json" }
+    { "url": "https://cdn.three.wsskills/wave.json" },
+    { "url": "https://cdn.three.wsskills/validate-model.json" }
   ]
 }
 ```
@@ -47,7 +47,7 @@ Or at runtime via the web component:
 ```html
 <agent-3d
   agent-id="my-agent"
-  skills='[{"url":"https://cdn.3dagent.vercel.app/skills/wave.json"}]'
+  skills='[{"url":"https://cdn.three.wsskills/wave.json"}]'
 ></agent-3d>
 ```
 
@@ -79,7 +79,7 @@ A skill is described by a JSON manifest:
   ],
   "handlers": "./handlers.js",
   "dependencies": [
-    { "url": "https://cdn.3dagent.vercel.app/skills/wave.json" }
+    { "url": "https://cdn.three.wsskills/wave.json" }
   ]
 }
 ```
@@ -152,8 +152,8 @@ Skills can declare dependencies on other skills:
 {
   "name": "full-agent-kit",
   "dependencies": [
-    { "url": "https://cdn.3dagent.vercel.app/skills/wave.json" },
-    { "url": "https://cdn.3dagent.vercel.app/skills/validate-model.json" }
+    { "url": "https://cdn.three.wsskills/wave.json" },
+    { "url": "https://cdn.three.wsskills/validate-model.json" }
   ],
   "tools": []
 }

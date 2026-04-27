@@ -81,7 +81,7 @@ Organize into sections by symptom category. Each problem should have: **Symptom*
 
 **Embedded agent doesn't appear**
 - Confirm the script tag is loaded before the `<agent-3d>` element
-- Check if CSP blocks the CDN script: `cdn.3dagent.vercel.app` must be in `script-src`
+- Check if CSP blocks the CDN script: `cdn.three.ws` must be in `script-src`
 - For Next.js: must be a client component with `'use client'`
 - SSR: web component uses browser APIs — disable SSR for the component
 
@@ -91,7 +91,7 @@ Organize into sections by symptom category. Each problem should have: **Symptom*
 - Ensure you're not embedding an edit-mode URL (those block framing for security)
 
 **postMessage not working**
-- Check that you're targeting the correct origin: `'https://3dagent.vercel.app'`
+- Check that you're targeting the correct origin: `'https://three.ws/'`
 - Listen for `message` events on `window`, not on the iframe element
 - Verify the message type prefix: all messages use `'3dagent:'` prefix
 
@@ -141,13 +141,13 @@ Organize into sections by symptom category. Each problem should have: **Symptom*
 
 **Agent doesn't appear on-chain page**
 - The on-chain indexer may take 1-2 minutes to pick up new registrations
-- Try the direct URL: `https://3dagent.vercel.app/a/<chainId>/<agentId>`
+- Try the direct URL: `https://three.ws/a/<chainId>/<agentId>`
 - Verify the transaction was confirmed on the block explorer
 
 **ENS resolution not working**
 - The `3dagent` text record must be set on the ENS name
 - ENS records can take 30+ minutes to propagate
-- Try resolving directly: `https://3dagent.vercel.app/agent/ens/yourname.eth`
+- Try resolving directly: `https://three.ws/agent/ens/yourname.eth`
 
 ### Section 6: Memory issues
 

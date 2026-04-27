@@ -23,7 +23,7 @@ function genId() {
  *   { v:1, source:'agent-host'|'agent-3d', id, inReplyTo?, kind, op, payload }
  *
  * @example
- * const bridge = new EmbedHostBridge({ iframe, agentId: 'abc', allowedOrigin: 'https://3dagent.vercel.app' });
+ * const bridge = new EmbedHostBridge({ iframe, agentId: 'abc', allowedOrigin: 'https://three.ws/' });
  * await bridge.ready;
  * await bridge.speak('Hello world');
  * const unsub = bridge.on('action', (a) => console.log(a));

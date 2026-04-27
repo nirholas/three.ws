@@ -15,10 +15,10 @@ Users who want to edit an agent's 3D model, materials, textures, and publish the
 Two ways to access the editor:
 
 **Edit an existing agent:**
-`https://3dagent.vercel.app/agent-edit?agent=<agent-id>` (requires authentication)
+`https://three.ws/agent-edit?agent=<agent-id>` (requires authentication)
 
 **Open the general editor:**
-`https://3dagent.vercel.app/app` — drag and drop any GLB file
+`https://three.ws/app` — drag and drop any GLB file
 
 ### 2. The editor layout
 Describe the main UI regions:
@@ -149,9 +149,9 @@ The dirty flag triggers a "Unsaved changes" warning if you try to navigate away.
 
 ### 12. Edit mode URL routing
 Access specific agents in edit mode via URL:
-- `https://3dagent.vercel.app/agent/<id>/edit` — public agent edit (owner only)
-- `https://3dagent.vercel.app/app?agent=<id>` — app with agent loaded in edit mode
-- `https://3dagent.vercel.app/agent-edit?agent=<id>` — full editor for authenticated users
+- `https://three.ws/agent/<id>/edit` — public agent edit (owner only)
+- `https://three.ws/app?agent=<id>` — app with agent loaded in edit mode
+- `https://three.ws/agent-edit?agent=<id>` — full editor for authenticated users
 
 ### 13. Programmatic editing (advanced)
 The editor exposes a JS API for programmatic modifications:

@@ -13,7 +13,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, '..');
 const p = (...parts) => resolve(repoRoot, ...parts);
 
-const ORIGIN = 'https://3dagent.vercel.app';
+const ORIGIN = 'https://three.ws/';
 const ID = '9fc7f1ba-2f34-4d79-843b-9b34c27e0d72';
 
 describe('share-panel — buildEmbedUrl', () => {

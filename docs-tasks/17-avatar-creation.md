@@ -24,7 +24,7 @@ Three paths to a 3D avatar for your agent:
 The quickest way to get a personalized 3D avatar.
 
 **How it works:**
-1. Go to https://3dagent.vercel.app/create
+1. Go to https://three.ws/create
 2. Grant camera access
 3. Take a selfie (or upload a photo)
 4. Avaturn's AI generates a 3D avatar based on your face
@@ -53,7 +53,7 @@ The quickest way to get a personalized 3D avatar.
 ### 3. Path 2: Character Studio
 For users who want full creative control without a selfie.
 
-**Access:** https://3dagent.vercel.app/studio
+**Access:** https://three.ws/studio
 
 Character Studio is a React-based avatar builder:
 - Choose body type, skin tone, hair, eyes
@@ -78,7 +78,7 @@ Character Studio includes a library of:
 ### 4. Path 3: Upload your own GLB
 If you have a 3D model (from Blender, Maya, Mixamo, Ready Player Me, etc.):
 
-1. Open the 3D Agent app: https://3dagent.vercel.app/app
+1. Open the 3D Agent app: https://three.ws/app
 2. Drag and drop your GLB file into the viewer
 3. The model loads and validates automatically
 4. Save to your account via the editor

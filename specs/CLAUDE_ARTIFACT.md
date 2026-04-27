@@ -5,7 +5,7 @@ Endpoint that returns a single self-contained HTML document suitable for renderi
 ## URL shape
 
 ```
-GET https://3dagent.vercel.app/api/artifact
+GET https://three.ws/api/artifact
 ```
 
 ### Parameters
@@ -27,7 +27,7 @@ Exactly one of `agent` or `model` must be supplied; both or neither → 400.
 - `*.cloudfront.net`
 - `storage.googleapis.com`
 - `*.blob.core.windows.net`
-- `3dagent.vercel.app`
+- `three.ws`
 - `*.vercel.app`
 
 Any other origin, or non-`https:` scheme → 400.
@@ -41,8 +41,8 @@ Any other origin, or non-`https:` scheme → 400.
 ### Content-Security-Policy
 
 ```
-default-src 'self' https://3dagent.vercel.app;
-script-src 'self' 'unsafe-inline' https://3dagent.vercel.app;
+default-src 'self' https://three.ws/;
+script-src 'self' 'unsafe-inline' https://three.ws/;
 img-src * data: blob:;
 connect-src *;
 style-src 'self' 'unsafe-inline';

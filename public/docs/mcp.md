@@ -24,7 +24,7 @@ For 3D Agent specifically, this means Claude can:
 
 | Property          | Value                                        |
 |-------------------|----------------------------------------------|
-| **URL**           | `https://3dagent.vercel.app/api/mcp`         |
+| **URL**           | `https://three.ws/api/mcp`         |
 | **Transport**     | Streamable HTTP (`POST /api/mcp`)            |
 | **Protocol**      | MCP `2025-06-18`, JSON-RPC 2.0               |
 | **Auth**          | OAuth 2.1 (end-user) or API key (server-to-server) |
@@ -66,7 +66,7 @@ On a `401`, the `WWW-Authenticate` header points clients at the protected-resour
 For scripts, CI, and server agents, generate a key at **Dashboard → API Keys** and pass it as a bearer token:
 
 ```bash
-curl -X POST https://3dagent.vercel.app/api/mcp \
+curl -X POST https://three.ws/api/mcp \
   -H "Authorization: Bearer 3da_live_xxxxx" \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
@@ -84,7 +84,7 @@ Claude Code auto-discovers `.mcp.json` at the project root. Add your key to that
 {
   "mcpServers": {
     "3d-agent": {
-      "url": "https://3dagent.vercel.app/api/mcp",
+      "url": "https://three.ws/api/mcp",
       "headers": {
         "Authorization": "Bearer 3da_live_xxxxx"
       }
@@ -104,7 +104,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
   "mcpServers": {
     "3dagent": {
       "command": "npx",
-      "args": ["-y", "@3dagent/mcp-server", "--url", "https://3dagent.vercel.app"]
+      "args": ["-y", "@3dagent/mcp-server", "--url", "https://three.ws/"]
     }
   }
 }
@@ -349,7 +349,7 @@ Here is a realistic conversation showing how Claude uses the MCP tools end-to-en
 
 1. `get_avatar({ slug: "storm-mage" })` — resolves the UUID and model URL.
 
-2. `validate_model({ url: "https://cdn.3dagent.vercel.app/u/…/storm-mage.glb" })` — runs the Khronos validator.
+2. `validate_model({ url: "https://cdn.three.wsu/…/storm-mage.glb" })` — runs the Khronos validator.
 
    Response:
    ```
@@ -358,7 +358,7 @@ Here is a realistic conversation showing how Claude uses the MCP tools end-to-en
      [WRN] NODE_EMPTY: node "Armature" has no mesh and no children
    ```
 
-3. `inspect_model({ url: "https://cdn.3dagent.vercel.app/u/…/storm-mage.glb" })` — structural overview.
+3. `inspect_model({ url: "https://cdn.three.wsu/…/storm-mage.glb" })` — structural overview.
 
    Response:
    ```

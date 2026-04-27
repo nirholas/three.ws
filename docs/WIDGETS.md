@@ -2,7 +2,7 @@
 
 Embeddable 3D — a configured, shareable view of an avatar that any site can drop in with one line of HTML.
 
-A widget is a saved bundle of: an avatar (GLB stored in R2), a widget type (turntable, animation gallery, talking agent, ERC-8004 passport, hotspot tour), and brand config (background, accent, caption, controls, camera). Widgets are created in the [Widget Studio](https://3dagent.vercel.app/studio) and shared via short URLs.
+A widget is a saved bundle of: an avatar (GLB stored in R2), a widget type (turntable, animation gallery, talking agent, ERC-8004 passport, hotspot tour), and brand config (background, accent, caption, controls, camera). Widgets are created in the [Widget Studio](https://three.ws/studio) and shared via short URLs.
 
 ---
 
@@ -22,8 +22,8 @@ A widget is a saved bundle of: an avatar (GLB stored in R2), a widget type (turn
 
 ## Quick start
 
-1. Sign in at [3dagent.vercel.app](https://3dagent.vercel.app).
-2. Open the [Studio](https://3dagent.vercel.app/studio).
+1. Sign in at [three.ws](https://three.ws/).
+2. Open the [Studio](https://three.ws/studio).
 3. Pick an avatar, pick a widget type, tweak brand colors and controls, click **Generate Embed**.
 4. Copy the iframe snippet into any HTML page, blog post, Notion doc, or CMS.
 
@@ -47,9 +47,9 @@ Every widget has three canonical URLs.
 
 | URL                                              | Use it for                                                      |
 | ------------------------------------------------ | --------------------------------------------------------------- |
-| `https://3dagent.vercel.app/w/<id>`              | Sharing in Slack/Discord/X — server-rendered with rich OG card. |
-| `https://3dagent.vercel.app/app#widget=<id>`     | The SPA viewer with the widget config applied.                  |
-| `https://3dagent.vercel.app/api/widgets/<id>/og` | The 1200×630 preview image.                                     |
+| `https://three.ws/w/<id>`              | Sharing in Slack/Discord/X — server-rendered with rich OG card. |
+| `https://three.ws/app#widget=<id>`     | The SPA viewer with the widget config applied.                  |
+| `https://three.ws/api/widgets/<id>/og` | The 1200×630 preview image.                                     |
 
 `/w/<id>` is the recommended share URL — bots get an OG preview, browsers fall through to the SPA.
 
@@ -73,7 +73,7 @@ The viewer supports the following hash params (combine with `&`):
 
 ```html
 <iframe
-	src="https://3dagent.vercel.app/app#widget=wdgt_abc123def456&kiosk=true"
+	src="https://three.ws/app#widget=wdgt_abc123def456&kiosk=true"
 	width="600"
 	height="600"
 	style="border:0;border-radius:12px;max-width:100%"
@@ -104,20 +104,20 @@ Keyboard: ↑/↓ (or `k`/`j`) to move, Home/End to jump, Enter or Space to (re)
 ### Script embed
 
 ```html
-<script async src="https://3dagent.vercel.app/embed.js" data-widget="wdgt_abc123def456"></script>
+<script async src="https://three.ws/embed.js" data-widget="wdgt_abc123def456"></script>
 ```
 
 The script injects a sandboxed iframe at the script tag's location and forwards size/postMessage events to the parent. Use this when you want auto-resize behavior; use a raw iframe when you want full control.
 
 ### oEmbed (WordPress, Ghost, Notion)
 
-Most CMSes auto-detect oEmbed. Paste a `https://3dagent.vercel.app/w/<id>` URL on its own line and the editor should turn it into a live embed automatically. If not, use the iframe snippet above.
+Most CMSes auto-detect oEmbed. Paste a `https://three.ws/w/<id>` URL on its own line and the editor should turn it into a live embed automatically. If not, use the iframe snippet above.
 
 ---
 
 ## postMessage API
 
-Widgets communicate with the parent page via `window.postMessage`. **Always check `event.origin === 'https://3dagent.vercel.app'` (or your custom domain) before trusting any message.**
+Widgets communicate with the parent page via `window.postMessage`. **Always check `event.origin === 'https://three.ws/'` (or your custom domain) before trusting any message.**
 
 ### iframe → parent
 
@@ -132,7 +132,7 @@ Widgets communicate with the parent page via `window.postMessage`. **Always chec
 
 ```js
 window.addEventListener('message', (e) => {
-	if (e.origin !== 'https://3dagent.vercel.app') return;
+	if (e.origin !== 'https://three.ws/') return;
 	if (e.data?.type === 'widget:ready') {
 		console.log('Widget mounted:', e.data.id);
 	}
@@ -150,7 +150,7 @@ window.addEventListener('message', (e) => {
 const iframe = document.querySelector('iframe');
 iframe.contentWindow.postMessage(
 	{ type: 'widget:config', config: { background: '#ff00aa' } },
-	'https://3dagent.vercel.app',
+	'https://three.ws/',
 );
 ```
 
@@ -167,12 +167,12 @@ Every widget URL serves rich-preview metadata.
 ```html
 <meta property="og:title" content="…" />
 <meta property="og:description" content="…" />
-<meta property="og:image" content="https://3dagent.vercel.app/api/widgets/<id>/og" />
+<meta property="og:image" content="https://three.ws/api/widgets/<id>/og" />
 <meta name="twitter:card" content="summary_large_image" />
 <link
 	rel="alternate"
 	type="application/json+oembed"
-	href="https://3dagent.vercel.app/api/widgets/oembed?url=…"
+	href="https://three.ws/api/widgets/oembed?url=…"
 />
 ```
 
@@ -189,7 +189,7 @@ Returns standard [oEmbed v1.0](https://oembed.com) JSON, type `rich`.
 	"type": "rich",
 	"version": "1.0",
 	"provider_name": "3D Agent",
-	"provider_url": "https://3dagent.vercel.app",
+	"provider_url": "https://three.ws/",
 	"title": "…",
 	"html": "<iframe …></iframe>",
 	"width": 600,
@@ -215,11 +215,11 @@ Widgets run in a sandboxed iframe with these `allow` flags:
 If your site uses a strict Content Security Policy, allow:
 
 ```
-frame-src https://3dagent.vercel.app;
-img-src https://3dagent.vercel.app data:;
+frame-src https://three.ws/;
+img-src https://three.ws/ data:;
 ```
 
-The widget iframe makes outbound requests to `3dagent.vercel.app` and (for some widgets) to public RPC endpoints / R2 storage CDNs. None of these require parent-side CORS configuration.
+The widget iframe makes outbound requests to `three.ws` and (for some widgets) to public RPC endpoints / R2 storage CDNs. None of these require parent-side CORS configuration.
 
 ---
 
@@ -243,7 +243,7 @@ We **do not** log:
 - Chat message content (talking-agent transcripts stay between visitor and agent brain)
 - Full URLs (only the host)
 
-The widget owner can see aggregated counts in their [Dashboard](https://3dagent.vercel.app/dashboard). No cross-widget tracking.
+The widget owner can see aggregated counts in their [Dashboard](https://three.ws/dashboard). No cross-widget tracking.
 
 ---
 

@@ -23,8 +23,8 @@ const ALLOWED_MODEL_ORIGINS = [
 ];
 
 const CSP = [
-	"default-src 'self' https://3dagent.vercel.app",
-	"script-src 'self' 'unsafe-inline' https://3dagent.vercel.app",
+	"default-src 'self' https://three.ws/",
+	"script-src 'self' 'unsafe-inline' https://three.ws/",
 	'img-src * data: blob:',
 	'connect-src *',
 	"style-src 'self' 'unsafe-inline'",

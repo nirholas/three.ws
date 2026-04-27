@@ -49,7 +49,7 @@ Key routes:
 - `/robots.txt`, `/sitemap.xml` — Served from `public/`
 - `/avatars/*` — Served from `public/avatars/`
 
-**Domain**: [3dagent.vercel.app](https://3dagent.vercel.app/)
+**Domain**: [three.ws](https://three.ws/)
 
 ## CORS Configuration
 
@@ -57,7 +57,7 @@ Key routes:
 
 Allowed origins:
 
-- `https://3dagent.vercel.app` and subdomains
+- `https://three.ws/` and subdomains
 - `http://localhost:*` / `https://localhost:*`
 - Specific partner domains
 
@@ -83,7 +83,7 @@ public/
 
 1. `npm run build` — verify no build errors
 2. `npm run deploy` — builds and deploys to Vercel
-3. Verify at [3dagent.vercel.app](https://3dagent.vercel.app/)
+3. Verify at [three.ws](https://three.ws/)
 
 ### Adding Static Assets
 

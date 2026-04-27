@@ -43,7 +43,7 @@ If any of the three is missing or broken, fix it referencing [prompts/embed/01-o
 
 ## Acceptance
 
-- `curl https://3dagent.vercel.app/api/agent-og?id=...` returns a PNG.
-- `curl https://3dagent.vercel.app/api/agent-oembed?url=https://3dagent.vercel.app/agent/...` returns valid oEmbed JSON.
+- `curl https://three.ws/api/agent-og?id=...` returns a PNG.
+- `curl https://three.ws/api/agent-oembed?url=https://three.ws/agent/...` returns valid oEmbed JSON.
 - Slack unfurl preview renders.
 - `npm run build` passes.
