@@ -13,14 +13,23 @@
 		<meta name="theme-color" content="#000000" />
 
 		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:title" content="three.ws — Give Your AI a Body" />
 		<meta
 			property="og:description"
-			content="Drop any GLB model into three.ws — view it, animate it, embed it anywhere."
+			content="Drop any GLB model into three.ws — view it, animate it, embed it anywhere, and give it a verifiable on-chain identity."
 		/>
-		<meta property="og:url" content="https://three.ws/home" />
+		<meta property="og:url" content="https://three.ws/" />
+		<meta property="og:image" content="https://three.ws/og-image.png" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
 
-		<link rel="canonical" href="https://three.ws/home" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="three.ws — Give Your AI a Body" />
+		<meta name="twitter:description" content="Drop any GLB model into three.ws — view it, animate it, embed it anywhere, and give it a verifiable on-chain identity." />
+		<meta name="twitter:image" content="https://three.ws/og-image.png" />
+
+		<link rel="canonical" href="https://three.ws/" />
 		<link rel="shortcut icon" href="/favicon.ico" />
 		<link rel="apple-touch-icon" href="/pwa-192x192.png" />
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -531,7 +540,7 @@
 				if (!scrollEl || !canvas || !heroAct) return;
 
 				let mouseX = 0, mouseY = 0, scrollProgress = 0;
-				const BASE_THETA = -45, BASE_PHI = 80, BASE_R = 8.5;
+				const BASE_THETA = -45, BASE_PHI = 80, BASE_R = 14;
 				let curTheta = BASE_THETA, curPhi = BASE_PHI, curR = BASE_R;
 
 				window.addEventListener('mousemove', (e) => {
@@ -550,27 +559,57 @@
 
 				whenReady(() => {
 					const viewer = new window.Act2Viewer(canvas, { fov: 18 });
+					let orbitActive = false;
 
-					/* cursor + scroll orbit loop — matches original model-viewer camera-orbit params */
+					/* cursor + scroll orbit loop — starts after model loads to avoid camera snap */
 					(function tick() {
-						const scrollTheta = scrollProgress * 90;
-						const scrollPhi   = -scrollProgress * 8;
-						const scrollR     = scrollProgress * 0.8;
-						curTheta += (BASE_THETA + scrollTheta + mouseX * 16 - curTheta) * 0.07;
-						curPhi   += (BASE_PHI   + scrollPhi  + mouseY * 6  - curPhi)   * 0.07;
-						curR     += (BASE_R     + scrollR                  - curR)     * 0.12;
-						viewer.setOrbit(curTheta, curPhi, curR);
+						if (orbitActive) {
+							const scrollTheta = scrollProgress * 90;
+							const scrollPhi   = -scrollProgress * 8;
+							const scrollR     = scrollProgress * 0.8;
+							curTheta += (BASE_THETA + scrollTheta + mouseX * 16 - curTheta) * 0.07;
+							curPhi   += (BASE_PHI   + scrollPhi  + mouseY * 6  - curPhi)   * 0.07;
+							curR     += (BASE_R     + scrollR                  - curR)     * 0.12;
+							viewer.setOrbit(curTheta, curPhi, curR);
+						}
 						requestAnimationFrame(tick);
 					})();
 
-					viewer.loadModel('/avatars/cz.glb')
-						.then(async () => {
-							await viewer.playClip('falling').catch(() => {});
-							setTimeout(() => viewer.playClip('dance').catch(() => {}), 2600);
+					const wrap = canvas.closest('.h-avatar-wrap');
+
+					/* falling: expand to full hero width and slide model across the scene */
+					function doFalling() {
+						wrap.classList.add('h-avatar-wrap--traversing');
+						viewer.playClip('falling').catch(() => {});
+						const dur = 2800;
+						const t0 = performance.now();
+						(function step(now) {
+							const t = Math.min((now - t0) / dur, 1);
+							const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+							const x = -4.5 + 9 * ease;
+							if (viewer.model) viewer.model.position.x = x;
+							viewer._focusX = x;
+							if (t < 1) {
+								requestAnimationFrame(step);
+							} else {
+								if (viewer.model) viewer.model.position.x = 0;
+								viewer._focusX = 0;
+								wrap.classList.remove('h-avatar-wrap--traversing');
+								viewer.playClip('dance').catch(() => {});
+							}
+						})(performance.now());
+					}
+
+					viewer.loadModel('/avatars/cz.glb', { autoPlay: false })
+						.then(() => {
+							/* snap camera to orbit position before first render — no jump */
+							viewer.setOrbit(curTheta, curPhi, curR);
+							orbitActive = true;
+							doFalling();
 						})
 						.catch(console.error);
 
-					/* click → random manifest animation; non-looping ones return to dance */
+					/* click → random manifest animation; falling gets full traverse treatment */
 					const FUN = ['falling', 'wave', 'dance', 'celebrate', 'jump', 'rumba', 'capoeira', 'thriller', 'kiss', 'taunt', 'pray'];
 					let lastAnim = null;
 					canvas.style.cursor = 'pointer';
@@ -578,6 +617,10 @@
 						const pool = FUN.filter(a => a !== lastAnim);
 						const name = pool[Math.floor(Math.random() * pool.length)];
 						lastAnim = name;
+						if (name === 'falling') {
+							doFalling();
+							return;
+						}
 						try {
 							await viewer.playClip(name);
 							const def = viewer._manifest.find(d => d.name === name);
@@ -633,8 +676,8 @@
 
 					viewer.onClipsReady = rebuildChips;
 
-					/* default avatar */
-					viewer.loadModel('/avatars/cz.glb').catch(console.error);
+					/* default avatar — Robot (matches aria-pressed="true" in HTML) */
+					viewer.loadModel('/animations/robotexpressive.glb').catch(console.error);
 
 					/* avatar picker */
 					opts.forEach((btn) => {
@@ -644,12 +687,6 @@
 							try { await viewer.loadModel(btn.dataset.src); } catch (e) { console.error(e); }
 						});
 					});
-					/* highlight CZ as default */
-					const czBtn = Array.from(opts).find((b) => b.dataset.src === '/avatars/cz.glb');
-					if (czBtn) {
-						opts.forEach((b) => b.setAttribute('aria-pressed', 'false'));
-						czBtn.setAttribute('aria-pressed', 'true');
-					}
 
 					/* click on canvas to toggle zoom (default → extra-wide) */
 					let wider = false;

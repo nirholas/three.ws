@@ -985,6 +985,28 @@
 	border-radius: 0 24px 24px 0;
 }
 
+/* ── Hero avatar traversing mode (falling animation) ────────────────────── */
+
+.h-avatar-wrap--traversing {
+	position: absolute !important;
+	inset: 0 !important;
+	width: 100% !important;
+	height: 100% !important;
+	aspect-ratio: unset !important;
+	border-radius: 0 !important;
+	pointer-events: none;
+}
+
+.h-avatar-wrap--traversing #hero-avatar {
+	border-radius: 0 !important;
+}
+
+.h-avatar-wrap--traversing .h-avatar-ring,
+.h-avatar-wrap--traversing .h-avatar-glow,
+.h-avatar-wrap--traversing .h-avatar-badge {
+	display: none;
+}
+
 /* ── Ghost avatar (Act 3, depth 1) ──────────────────────────────────────── */
 
 .h-avatar-wrap--ghost {

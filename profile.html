@@ -21,14 +21,17 @@
 		></script>
 
 		<meta property="og:type" content="profile" />
-		<meta property="og:url" content="https://three.ws/profile">
+		<meta property="og:site_name" content="three.ws">
+		<meta property="og:url" content="" id="og-url">
 		<meta property="og:title" content="Agent Profile" id="og-title" />
 		<meta property="og:description" content="On-chain agent identity." id="og-description" />
-		<meta property="og:image" content="https://three.ws/assets/og-image.png">
+		<meta property="og:image" content="https://three.ws/assets/og-image.png" id="og-image">
 		<meta property="og:image:width" content="1200">
 		<meta property="og:image:height" content="630">
 		<meta name="twitter:card" content="summary_large_image">
-		<meta name="twitter:image" content="https://three.ws/assets/og-image.png">
+		<meta name="twitter:title" content="Agent Profile" id="tw-title">
+		<meta name="twitter:description" content="On-chain agent identity." id="tw-description">
+		<meta name="twitter:image" content="https://three.ws/assets/og-image.png" id="tw-image">
 
 		<style>
 			body {
@@ -345,11 +348,12 @@
 				// Update page title and OG
 				const short = address.slice(0, 6) + '…' + address.slice(-4);
 				document.title = `${short} — Agents`;
+				const profileUrl = `${location.origin}/u/${address}`;
 				document.querySelector('#og-title')?.setAttribute('content', `${short} — Agents`);
-				document.querySelector('#og-description')?.setAttribute(
-					'content',
-					`On-chain agent identity profile for ${address}`,
-				);
+				document.querySelector('#og-description')?.setAttribute('content', `On-chain agent identity profile for ${address}`);
+				document.querySelector('#og-url')?.setAttribute('content', profileUrl);
+				document.querySelector('#tw-title')?.setAttribute('content', `${short} — Agents`);
+				document.querySelector('#tw-description')?.setAttribute('content', `On-chain agent identity profile for ${address}`);
 
 				mountUserProfile(root, address).catch((err) => {
 					root.innerHTML = `<div class="up-error">Could not load profile: ${err.message}</div>`;

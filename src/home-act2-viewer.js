@@ -66,6 +66,7 @@ export class Act2Viewer {
 		this._clock = new Clock();
 		this._modelYaw = 0;
 		this._modelFocusY = 1.0;
+		this._focusX = 0;
 		this._externalOrbit = false;
 
 		/** Optional callback when the chip list changes (manifest + GLB-baked combined). */
@@ -118,28 +119,39 @@ export class Act2Viewer {
 		return this._manifestPromise;
 	}
 
-	/** Returns combined: GLB-baked clips + project animation manifest, deduped by name. */
+	/** Returns combined: GLB-baked clips + project animation manifest, deduped by name.
+	 *  When the model ships its own rich animation set (robot, etc.) those are shown
+	 *  exclusively — manifest clips are Mixamo-retargeted and won't work on a different skeleton.
+	 */
 	listAvailableClips() {
+		const IDLE_RE = /idle/i;
+		const glbGoodNames = [...this.clips.keys()].filter((n) => !IDLE_RE.test(n));
+
+		/* Model has its own animations — skip manifest entirely */
+		if (glbGoodNames.length >= 3) {
+			return [...this.clips.keys()].map((name) => ({
+				name,
+				label: name,
+				icon: '✨',
+				loop: true,
+				source: 'glb',
+			}));
+		}
+
 		const out = [];
 		const seen = new Set();
-		/* manifest first (these are the "preset" controls /app shows) */
+		/* manifest first (humanoid / Mixamo models like CZ) */
 		for (const def of this._manifest) {
 			if (!seen.has(def.name)) {
 				out.push({ ...def, source: 'manifest' });
 				seen.add(def.name);
 			}
 		}
-		/* then GLB-baked names not already in manifest */
+		/* then any extra GLB clips not already in manifest */
 		for (const name of this.clips.keys()) {
 			if (seen.has(name)) continue;
 			seen.add(name);
-			out.push({
-				name,
-				label: name,
-				icon: '✨',
-				loop: true,
-				source: 'glb',
-			});
+			out.push({ name, label: name, icon: '✨', loop: true, source: 'glb' });
 		}
 		return out;
 	}
@@ -151,7 +163,7 @@ export class Act2Viewer {
 		return AnimationClip.parse(json);
 	}
 
-	async loadModel(url) {
+	async loadModel(url, { autoPlay = true } = {}) {
 		/* swap out previous model */
 		if (this.model) {
 			if (this.mixer) this.mixer.stopAllAction();
@@ -197,21 +209,33 @@ export class Act2Viewer {
 			this.onClipsReady(this.listAvailableClips());
 		}
 
-		/* auto-play first idle if available */
-		const startName = this._pickStartName();
-		if (startName) await this.playClip(startName);
+		/* auto-play first clip unless caller wants to handle it */
+		if (autoPlay) {
+			const startName = this._pickStartName();
+			if (startName) await this.playClip(startName);
+		}
 
 		return this.model;
 	}
 
 	_pickStartName() {
-		const SKIP = ['idle', 'silly'];
+		const SKIP_RE = /idle|silly/i;
 		const all = this.listAvailableClips();
+		/* When model uses its own GLB clips, pick a lively one from those */
+		if (all.length && all[0].source === 'glb') {
+			const PREFERRED = ['Dance', 'Wave', 'Jump', 'Punch', 'Running', 'ThumbsUp'];
+			for (const p of PREFERRED) {
+				const match = all.find((c) => c.name === p);
+				if (match) return match.name;
+			}
+			return all.find((c) => !SKIP_RE.test(c.name))?.name || all[0]?.name || null;
+		}
+		/* Humanoid / manifest models */
 		for (const preferred of ['dance', 'rumba', 'capoeira', 'wave', 'thriller']) {
 			const match = all.find((c) => c.name === preferred);
 			if (match) return match.name;
 		}
-		return all.find((c) => !SKIP.some(s => c.name.toLowerCase().includes(s)))?.name || all[0]?.name || null;
+		return all.find((c) => !SKIP_RE.test(c.name))?.name || all[0]?.name || null;
 	}
 
 	async playClip(name) {
@@ -254,7 +278,7 @@ export class Act2Viewer {
 			this._modelFocusY + radius * cosPhi,
 			radius * sinPhi * Math.cos(theta),
 		);
-		this.camera.lookAt(0, this._modelFocusY, 0);
+		this.camera.lookAt(this._focusX, this._modelFocusY, 0);
 	}
 
 	setExposure(v) {
