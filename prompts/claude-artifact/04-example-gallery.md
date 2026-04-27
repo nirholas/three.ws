@@ -4,7 +4,7 @@
 
 Repo: `/workspaces/3D`. Tasks [./01-artifact-snippet.md](./01-artifact-snippet.md), [./02-zero-dep-viewer-bundle.md](./02-zero-dep-viewer-bundle.md), and [./03-idle-animation-loop.md](./03-idle-animation-loop.md) together produce:
 
-- A hosted bundle at `https://3dagent.vercel.app/artifact.js` exposing `Agent3D.mount(target, opts)`.
+- A hosted bundle at `https://three.ws/artifact.js` exposing `Agent3D.mount(target, opts)`.
 - A single minimal HTML snippet users paste into a Claude chat to render their own agent.
 
 This task extends that with a **curated gallery of ready-to-paste templates** for the four main use cases. The goal is that a Claude user (or, meta-circle, a Claude instance generating HTML for its user) can pick the closest template and paste it verbatim.
@@ -27,7 +27,7 @@ Produce four self-contained Claude Artifact HTML templates, each &lt;3 KB, hoste
 The trivial case — the signed-in user's own agent.
 
 ```html
-<script src="https://3dagent.vercel.app/artifact.js"></script>
+<script src="https://three.ws/artifact.js"></script>
 <script>
 	Agent3D.mount('#a', { agentId: 'AGENT_ID_HERE' });
 </script>
@@ -40,7 +40,7 @@ _Already delivered by task 01. Just reference it from the gallery._
 Resolve the primary agent for a given Ethereum address.
 
 ```html
-<script src="https://3dagent.vercel.app/artifact.js"></script>
+<script src="https://three.ws/artifact.js"></script>
 <script>
 	Agent3D.mount('#a', { wallet: '0xWALLET_HERE' });
 </script>
@@ -53,7 +53,7 @@ _Depends on the bundle's `wallet` mode (task 02). If the wallet has no registere
 Look up directly by onchain agent id.
 
 ```html
-<script src="https://3dagent.vercel.app/artifact.js"></script>
+<script src="https://three.ws/artifact.js"></script>
 <script>
 	Agent3D.mount('#a', { chain: 'base', onchainId: 42 });
 </script>
@@ -66,7 +66,7 @@ _`chain` accepts keys from `REGISTRY_DEPLOYMENTS` in [../../src/erc8004/abi.js](
 The novel template. The Artifact sandbox receives `postMessage` from its parent (Claude's chat UI) or from a sibling Artifact, and the avatar responds by speaking the text (routing through the Empathy Layer so the face reacts).
 
 ```html
-<script src="https://3dagent.vercel.app/artifact.js"></script>
+<script src="https://three.ws/artifact.js"></script>
 <script>
 	const agent = Agent3D.mount('#a', { agentId: 'AGENT_ID_HERE' });
 	window.addEventListener('message', (ev) => {
@@ -91,7 +91,7 @@ _Caveat: Claude's chat UI does not currently post arbitrary messages into Artifa
 
 2. **Files created** — `public/artifact/preview-a.html`, `preview-b.html`, `preview-c.html`, `preview-d.html`. Each is a rendering of the corresponding template with a working placeholder id/wallet/onchainId so visitors can see what the result looks like before pasting into Claude.
 
-3. **Files created** — `public/artifact/tpl-a.html`, `tpl-b.html`, `tpl-c.html`, `tpl-d.html`. The raw exact snippet served at `https://3dagent.vercel.app/artifact/tpl-{a,b,c,d}.html`. Text/html; the gallery copy button fetches these and writes to clipboard.
+3. **Files created** — `public/artifact/tpl-a.html`, `tpl-b.html`, `tpl-c.html`, `tpl-d.html`. The raw exact snippet served at `https://three.ws/artifact/tpl-{a,b,c,d}.html`. Text/html; the gallery copy button fetches these and writes to clipboard.
 
 4. **Edit** — add a section to [../../public/agent/index.html](../../public/agent/index.html)'s share panel linking to `/artifact/gallery` from the existing "Claude Artifact" tab (introduced in task 01). Do not duplicate the templates there.
 

@@ -35,7 +35,7 @@ const MODEL_ALLOWLIST = new Set([
 ]);
 
 // First-party hostnames always pass origin checks (same as element.js).
-const FIRST_PARTY = ['3dagent.vercel.app', 'localhost'];
+const FIRST_PARTY = ['three.ws', 'localhost'];
 
 // Default per-agent monthly token budget when policy.brain.cost_limit_cents is unset.
 const DEFAULT_MONTHLY_TOKEN_BUDGET = 1_000_000;

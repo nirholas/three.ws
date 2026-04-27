@@ -71,7 +71,7 @@ After success:
     - If the backend endpoint isn't available (local static preview), fail silently with a console warning — don't block the success UX.
 2. In the result card, add three buttons:
     - **"View agent"** → `window.location.href = '/agent/' + agentId` (the page consumes [01-hydrate-agent-from-chain.md](./01-hydrate-agent-from-chain.md) for chain-only data).
-    - **"Copy share link"** → copies `https://3dagent.vercel.app/agent/{agentId}?chain={chainId}`.
+    - **"Copy share link"** → copies `https://three.ws/agent/{agentId}?chain={chainId}`.
     - **"View tx on explorer"** → uses a new `explorerTxURL(chainId, txHash)` helper in [src/erc8004/explorers.js](../../src/erc8004/explorers.js).
 3. Emit a DOM event on `window`: `window.dispatchEvent(new CustomEvent('agent:registered', { detail: { agentId, chainId, registrationCID, txHash } }))`. Dashboard / other surfaces can listen and refresh.
 

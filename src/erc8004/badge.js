@@ -2,13 +2,13 @@
  * <three-d-agent-badge> — embeddable trust badge for an ERC-8004 / 3D Agent Card v1 agent.
  *
  * Usage:
- *   <script type="module" src="https://3dagent.vercel.app/erc8004/badge.js"></script>
+ *   <script type="module" src="https://three.ws/erc8004/badge.js"></script>
  *   <three-d-agent-badge agent="eip155:8453:0x8004A818BFB912233c491871b3d84c89A494BD9e/1"></three-d-agent-badge>
  *
  * Attributes:
  *   - agent     CAIP-style ref: "eip155:<chainId>:<registry>/<tokenId>"
  *   - card-url  Direct URL to a 3D Agent Card v1 JSON (alternative to `agent`)
- *   - resolver  Resolver base URL (default: https://3dagent.vercel.app)
+ *   - resolver  Resolver base URL (default: https://three.ws/)
  *
  * Verification performed (client-side):
  *   1. Card JSON fetched and parsed.
@@ -18,7 +18,7 @@
  * Renders a pill: verified / partial / unverified / error.
  */
 
-const DEFAULT_RESOLVER = 'https://3dagent.vercel.app';
+const DEFAULT_RESOLVER = 'https://three.ws/';
 
 const STYLES = `
 :host { display: inline-block; font: 500 12px/1.4 system-ui, sans-serif; }

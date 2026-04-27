@@ -25,7 +25,7 @@ Think of it as making your 3D Agent a tool that Claude can use.
 ### 2. Starting the MCP server
 The MCP server is exposed at:
 ```
-POST https://3dagent.vercel.app/api/mcp
+POST https://three.ws/api/mcp
 ```
 
 For local development:
@@ -42,7 +42,7 @@ Add to your Claude Code configuration (`~/.claude/settings.json`):
 {
   "mcpServers": {
     "3dagent": {
-      "url": "https://3dagent.vercel.app/api/mcp",
+      "url": "https://three.ws/api/mcp",
       "headers": {
         "Authorization": "Bearer your-api-key"
       }
@@ -102,7 +102,7 @@ The MCP endpoint requires authentication:
 - API key in Authorization header (`Bearer 3da_live_xxxxx`)
 - Session cookie (for browser-based use)
 
-Generate an API key at https://3dagent.vercel.app/dashboard → API Keys.
+Generate an API key at https://three.ws/dashboard → API Keys.
 
 ### 8. Using with other MCP clients
 Any MCP-compatible client works:
@@ -116,7 +116,7 @@ Show the Claude Desktop config:
   "mcpServers": {
     "3dagent": {
       "command": "npx",
-      "args": ["-y", "@3dagent/mcp-server", "--url", "https://3dagent.vercel.app"]
+      "args": ["-y", "@3dagent/mcp-server", "--url", "https://three.ws/"]
     }
   }
 }

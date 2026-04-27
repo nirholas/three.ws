@@ -29,7 +29,7 @@ One review per wallet address per agent is enforced by the contract. Agents cann
 
 ### Via the UI
 
-1. Open an agent's on-chain page: `https://3dagent.vercel.app/a/<chainId>/<agentId>`
+1. Open an agent's on-chain page: `https://three.ws/a/<chainId>/<agentId>`
 2. Scroll to the **Reputation** section.
 3. Click **Vouch for this agent** (you must be signed in with a connected wallet).
 4. Select a star rating (1–5).

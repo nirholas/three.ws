@@ -7,7 +7,7 @@ description: 'First-run onboarding tour — connect wallet → take selfie → m
 
 ## Problem
 
-New users landing on 3dagent.vercel.app see a viewer with no clear path to the magic moment. Need a guided first-run: connect wallet → take selfie → meet your agent → what next.
+New users landing on three.ws see a viewer with no clear path to the magic moment. Need a guided first-run: connect wallet → take selfie → meet your agent → what next.
 
 ## Implementation
 

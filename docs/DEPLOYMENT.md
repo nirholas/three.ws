@@ -122,8 +122,8 @@ The `public: true` flag allows listing of the deployment.
 	{
 		"method": ["GET"],
 		"origin": [
-			"https://3dagent.vercel.app",
-			"https://*.3dagent.vercel.app",
+			"https://three.ws/",
+			"https://*.three.ws",
 			"https://chat.sperax.io",
 			"https://sperax-jam2emun9-moomsi.vercel.app",
 			"https://sperax-iota.vercel.app",
@@ -155,7 +155,7 @@ To allow a new domain to embed 3D Agent:
 
 ## Custom Domain
 
-The production deployment uses `3dagent.vercel.app`. To use a custom domain:
+The production deployment uses `three.ws`. To use a custom domain:
 
 1. Add the domain in the Vercel dashboard under **Settings → Domains**
 2. Configure DNS:
@@ -171,7 +171,7 @@ The production deployment uses `3dagent.vercel.app`. To use a custom domain:
 
 ```html
 <iframe
-	src="https://3dagent.vercel.app/#model=https://your-cdn.com/model.glb&kiosk=true"
+	src="https://three.ws/#model=https://your-cdn.com/model.glb&kiosk=true"
 	width="100%"
 	height="600"
 	frameborder="0"

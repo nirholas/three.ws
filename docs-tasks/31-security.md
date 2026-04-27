@@ -47,7 +47,7 @@ Security-conscious developers and organizations evaluating 3D Agent for their ap
 The iframe embed supports sandboxed contexts:
 ```html
 <iframe
-  src="https://3dagent.vercel.app/agent-embed?id=..."
+  src="https://three.ws/agent-embed?id=..."
   sandbox="allow-scripts allow-same-origin allow-popups"
   allow="camera;microphone"
 ></iframe>
@@ -66,10 +66,10 @@ The web component (`<agent-3d>`) is CSP-compatible:
 Recommended CSP for the embed:
 ```
 Content-Security-Policy:
-  script-src 'self' https://cdn.3dagent.vercel.app;
+  script-src 'self' https://cdn.three.ws;
   worker-src blob:;
   img-src 'self' data: blob: https:;
-  connect-src 'self' https://3dagent.vercel.app https://api.anthropic.com;
+  connect-src 'self' https://three.ws/ https://api.anthropic.com;
 ```
 
 **Origin allow-list:**
@@ -88,7 +88,7 @@ Unknown origins are blocked (403 response) — prevents embedding on unauthorize
 Always verify the origin in postMessage handlers:
 ```js
 window.addEventListener('message', e => {
-  if (e.origin !== 'https://3dagent.vercel.app') return; // reject unknown origins
+  if (e.origin !== 'https://three.ws/') return; // reject unknown origins
   // handle message
 });
 ```
@@ -189,7 +189,7 @@ The `/cors.json` file configures the API's CORS policy:
 ### 10. Responsible disclosure
 Found a security vulnerability? Please report it at:
 - GitHub Security Advisory: https://github.com/3dagent/3dagent/security/advisories/new
-- Email: security@3dagent.vercel.app
+- Email: security@three.ws
 
 We aim to respond within 48 hours and patch critical issues within 7 days.
 

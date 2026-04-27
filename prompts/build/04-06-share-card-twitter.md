@@ -28,7 +28,7 @@ When someone pastes `/agent/<id>` into Twitter, iMessage, WhatsApp, Slack, the u
 2. OG image:
     - 1200×630, agent thumbnail centered on left, name + first sentence of description on right.
     - Reputation stars if on-chain.
-    - Watermark `3dagent.vercel.app` bottom-right.
+    - Watermark `three.ws` bottom-right.
 3. Validate with the official validators in the test plan.
 4. For widget pages (`/w/<id>`), do the same with widget-flavored copy.
 5. Cache the OG image in CDN with `s-maxage=3600, stale-while-revalidate=86400`. Bust by appending `?v=<updated_at>`.

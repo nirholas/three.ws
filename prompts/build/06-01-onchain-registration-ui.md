@@ -31,7 +31,7 @@ New tab on an agent's detail view: **"Onchain Identity"**. Three states:
     - Summary of what registration does ("Your agent gets a portable, verifiable identity on-chain…").
     - Chain picker (default to Base Sepolia if available in `REGISTRY_DEPLOYMENTS`, switchable to mainnet).
     - "Connect wallet" — reuse the Privy flow from 01-01.
-    - "Register" button → builds the registration JSON (name, bio, avatar URL, skills, web presence URL = `https://3dagent.vercel.app/agent/<slug>`), pins to IPFS via [agent-registry.js](../../src/erc8004/agent-registry.js)'s `pinToIPFS()`, then calls `registerAgent()`.
+    - "Register" button → builds the registration JSON (name, bio, avatar URL, skills, web presence URL = `https://three.ws/agent/<slug>`), pins to IPFS via [agent-registry.js](../../src/erc8004/agent-registry.js)'s `pinToIPFS()`, then calls `registerAgent()`.
     - Progress states: pinning → signing → waiting confirmation → complete.
 
 2. **Pending.**

@@ -1,6 +1,6 @@
 # Citing a 3D Agent artifact in Claude.ai
 
-`GET https://3dagent.vercel.app/api/artifact?agent=<agentId>`
+`GET https://three.wsapi/artifact?agent=<agentId>`
 
 Paste the URL into a Claude.ai conversation. Claude recognises it as an HTML artifact and renders the interactive 3D agent inline.
 
@@ -8,7 +8,7 @@ Paste the URL into a Claude.ai conversation. Claude recognises it as an HTML art
 
 ```
 Here's my agent for this conversation:
-https://3dagent.vercel.app/api/artifact?agent=alice
+https://three.wsapi/artifact?agent=alice
 ```
 
 Claude will embed the artifact and display the live 3D character.

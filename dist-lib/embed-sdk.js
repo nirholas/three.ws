@@ -1,7 +1,7 @@
 /*
  * Agent3D embed SDK — Bridge v1
  * -----------------------------
- *   <script src="https://3dagent.vercel.app/embed-sdk.js"></script>
+ *   <script src="https://three.wsembed-sdk.js"></script>
  *   const bridge = Agent3D.connect(iframeEl, {
  *     agentId,
  *     onReady,    // ({ version, capabilities, name }) => void

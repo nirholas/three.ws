@@ -27,8 +27,8 @@ The fastest path. No npm, no bundler, no build step.
   </style>
 </head>
 <body>
-  <script type="module" src="https://cdn.3dagent.vercel.app/agent-3d.js"></script>
-  <agent-3d body="https://cdn.3dagent.vercel.app/models/sample-avatar.glb"></agent-3d>
+  <script type="module" src="https://cdn.three.wsagent-3d.js"></script>
+  <agent-3d body="https://cdn.three.wsmodels/sample-avatar.glb"></agent-3d>
 </body>
 </html>
 ```
@@ -150,11 +150,11 @@ The element fetches the agent manifest — which includes the model URL, instruc
 
 ## Using a Pre-Built Widget
 
-The fastest path to an embeddable 3D experience is an iframe widget. Build one in [Widget Studio](https://3dagent.vercel.app/studio), then embed the snippet:
+The fastest path to an embeddable 3D experience is an iframe widget. Build one in [Widget Studio](https://three.ws/studio), then embed the snippet:
 
 ```html
 <iframe
-  src="https://3dagent.vercel.app/app#widget=wdgt_YOUR_ID&kiosk=true"
+  src="https://three.ws/app#widget=wdgt_YOUR_ID&kiosk=true"
   width="600"
   height="600"
   style="border:0;border-radius:12px;max-width:100%"
@@ -256,7 +256,7 @@ The browser's `getUserMedia` API (microphone access for push-to-talk) requires H
 If your page has a strict `Content-Security-Policy`, the script embed needs:
 
 ```
-script-src 'self' https://cdn.3dagent.vercel.app;
+script-src 'self' https://cdn.three.ws;
 ```
 
 If you're embedding inside a sandboxed iframe, make sure the parent grants `allow-scripts allow-same-origin`. For sandboxed environments where the script embed won't work, use the iframe widget instead — it runs in its own browsing context and is unaffected by the parent CSP.
@@ -264,7 +264,7 @@ If you're embedding inside a sandboxed iframe, make sure the parent grants `allo
 ### Model doesn't appear
 
 - Open the browser console. A CORS or 404 error will be logged with the URL.
-- Confirm the file is valid GLB by dragging it into [the app](https://3dagent.vercel.app) — it runs the full glTF-Validator.
+- Confirm the file is valid GLB by dragging it into [the app](https://three.ws/) — it runs the full glTF-Validator.
 - Very large or complex scenes may exceed mobile GPU limits. Test with a simpler model first.
 
 ---

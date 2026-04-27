@@ -47,11 +47,11 @@ Add `resolveFromChain({ chainId, onchainId, rpcUrl })`. Cache the registration J
 A static HTML file (not a new endpoint — just something committed under `examples/onchain/`) that includes only:
 
 ```html
-<script type="module" src="https://3dagent.vercel.app/dist-lib/agent-3d.js"></script>
+<script type="module" src="https://three.ws/dist-lib/agent-3d.js"></script>
 <agent-3d chain-id="84532" onchain-id="<known-registered-id>"></agent-3d>
 ```
 
-Open this file in a fresh browser profile. The agent must render using only the committed HTML and on-chain data — no cookies, no login, no 3dagent.vercel.app session.
+Open this file in a fresh browser profile. The agent must render using only the committed HTML and on-chain data — no cookies, no login, no three.ws session.
 
 ### Failure modes
 
@@ -69,6 +69,6 @@ Open this file in a fresh browser profile. The agent must render using only the 
 
 - [ ] Open the committed `examples/onchain/<sample>.html` in a private window; agent renders.
 - [ ] Agent renders the same across Claude Artifact, Lobehub, and the raw HTML test — same attributes, same result.
-- [ ] Turning off the 3dagent.vercel.app backend (simulate by blocking the domain in devtools) does **not** break the render, because all data comes from chain + IPFS + the raw `avatarUrl`.
+- [ ] Turning off the three.ws backend (simulate by blocking the domain in devtools) does **not** break the render, because all data comes from chain + IPFS + the raw `avatarUrl`.
 - [ ] Unknown onchain id → friendly error, not a broken canvas.
 - [ ] `npm run build:lib` bundles the new resolver without growing the lib over 500 KB gzipped.

@@ -19,7 +19,7 @@ Output is a new static file under `public/`. No edits to `src/app.js` or the lib
 
 - Import Three.js + GLTFLoader from a pinned CDN (`https://esm.sh/three@0.160.0`, `https://esm.sh/three@0.160.0/examples/jsm/loaders/GLTFLoader.js`). Pin exact versions. No dynamic unpkg.
 - Exports an auto-mount IIFE: scans the document for `<div data-agent-id="..."></div>` elements on `DOMContentLoaded` and mounts a viewer into each.
-- Fetches `https://3dagent.vercel.app/api/agents/${id}` → gets `manifest_url` → fetches manifest → loads `avatar.glb`.
+- Fetches `https://three.ws/api/agents/${id}` → gets `manifest_url` → fetches manifest → loads `avatar.glb`.
 - Renders: transparent background (`alpha: true`), orbit controls off, a subtle auto-rotate + breathing idle (inline, no idle-animation.js dep), responsive to container size.
 - If fetch fails, shows an inline error div with the CDN-safe CSS injected at the top of the mount.
 
@@ -43,7 +43,7 @@ A minimal HTML document a user can paste into a Claude.ai Artifact:
 	</head>
 	<body>
 		<div data-agent-id="demo" style="width:100%;height:100vh"></div>
-		<script type="module" src="https://3dagent.vercel.app/artifact.js"></script>
+		<script type="module" src="https://three.ws/artifact.js"></script>
 	</body>
 </html>
 ```

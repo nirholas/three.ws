@@ -42,7 +42,7 @@ Show the complete JSON structure with annotations:
 
 ```json
 {
-  "$schema": "https://3dagent.vercel.app/schemas/agent-manifest-v1.json",
+  "$schema": "https://three.ws/schemas/agent-manifest-v1.json",
   "name": "Aria",
   "description": "A helpful product guide for Acme Corp",
   "creator": {
@@ -74,10 +74,10 @@ Show the complete JSON structure with annotations:
   },
   "skills": [
     {
-      "url": "https://cdn.3dagent.vercel.app/skills/wave.json"
+      "url": "https://cdn.three.wsskills/wave.json"
     },
     {
-      "url": "https://cdn.3dagent.vercel.app/skills/validate-model.json"
+      "url": "https://cdn.three.wsskills/validate-model.json"
     },
     {
       "name": "search-catalog",
@@ -188,7 +188,7 @@ The platform validates manifests against the JSON schema on load. Common errors:
 - Invalid URI scheme for `memory.provider`
 - `identity.chainId` not a supported chain
 
-Use the validator at https://3dagent.vercel.app/validation to check before publishing.
+Use the validator at https://three.ws/validation to check before publishing.
 
 ### 8. Versioning
 The `$schema` field identifies the manifest version. Current: v1. Future versions will be backwards-compatible (new fields only, no removals without major version bump).
@@ -206,7 +206,7 @@ The `$schema` field identifies the manifest version. Current: v1. Future version
   "name": "Leo", "avatar": { "url": "./leo.glb" },
   "personality": { "prompt": "You are Leo, a fitness coach." },
   "memory": { "mode": "ipfs", "provider": "pinata" },
-  "skills": [{ "url": "https://cdn.3dagent.vercel.app/skills/wave.json" }]
+  "skills": [{ "url": "https://cdn.three.wsskills/wave.json" }]
 }
 ```
 

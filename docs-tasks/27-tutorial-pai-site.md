@@ -151,7 +151,7 @@ agent.addEventListener('ready', async () => {
   </div>
 
   <div class="agent-panel">
-    <script type="module" src="https://cdn.3dagent.vercel.app/agent-3d.js"></script>
+    <script type="module" src="https://cdn.three.wsagent-3d.js"></script>
     <agent-3d
       id="maya"
       agent-id="your-agent-id"

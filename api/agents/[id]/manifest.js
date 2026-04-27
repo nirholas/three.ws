@@ -91,6 +91,6 @@ function _origin(req) {
 	const env = process.env.PUBLIC_APP_ORIGIN;
 	if (env) return env.replace(/\/$/, '');
 	const proto = req.headers['x-forwarded-proto'] || 'https';
-	const host = req.headers['x-forwarded-host'] || req.headers.host || '3dagent.vercel.app';
+	const host = req.headers['x-forwarded-host'] || req.headers.host || 'three.ws';
 	return `${proto}://${host}`;
 }

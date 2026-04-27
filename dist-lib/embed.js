@@ -1,5 +1,5 @@
 // 3D Agent — script-tag embed.
-// <script async src="https://3dagent.vercel.app/embed.js" data-widget="wdgt_..."></script>
+// <script async src="https://three.wsembed.js" data-widget="wdgt_..."></script>
 //
 // Injects a sandboxed iframe at the script tag's location, sized via data-*
 // attributes (or the type's default), then forwards widget:resize events from

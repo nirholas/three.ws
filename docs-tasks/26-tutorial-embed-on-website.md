@@ -21,7 +21,7 @@ By the end, the reader will know how to:
 
 ### Path 1: Get your embed code (no-code)
 The fastest path — no coding required:
-1. Go to https://3dagent.vercel.app/studio
+1. Go to https://three.ws/studio
 2. Select an agent or create a new one
 3. Pick a widget type (Talking Agent is most popular)
 4. Click "Get Embed Code"
@@ -35,7 +35,7 @@ Show both snippets side by side with explanation:
 Complete working example for a static site:
 ```html
 <!-- Add to your <head> -->
-<script type="module" src="https://cdn.3dagent.vercel.app/agent-3d.js"></script>
+<script type="module" src="https://cdn.three.wsagent-3d.js"></script>
 
 <!-- Add where you want the agent to appear -->
 <agent-3d
@@ -109,7 +109,7 @@ Webflow supports custom HTML via Embed blocks:
 
 For the floating mode (appears site-wide):
 1. In Webflow project settings → Custom Code → Head Code
-2. Paste: `<script type="module" src="https://cdn.3dagent.vercel.app/agent-3d.js"></script>`
+2. Paste: `<script type="module" src="https://cdn.three.wsagent-3d.js"></script>`
 3. In Body Code (before `</body>`): paste the `<agent-3d mode="floating" agent-id="...">` tag
 4. Publish → agent appears on all pages
 
@@ -126,7 +126,7 @@ For the floating mode (appears site-wide):
 Add to `functions.php`:
 ```php
 function add_3dagent_script() {
-    echo '<script type="module" src="https://cdn.3dagent.vercel.app/agent-3d.js"></script>';
+    echo '<script type="module" src="https://cdn.three.wsagent-3d.js"></script>';
 }
 add_action('wp_head', 'add_3dagent_script');
 ```
@@ -137,13 +137,13 @@ Then use a Custom HTML block in the editor with the `<agent-3d>` element.
 1. Go to Pages → Edit → Add Block → Code
 2. Paste the complete snippet (script + element together):
 ```html
-<script type="module" src="https://cdn.3dagent.vercel.app/agent-3d.js"></script>
+<script type="module" src="https://cdn.three.wsagent-3d.js"></script>
 <agent-3d agent-id="your-id" style="width:100%;height:500px"></agent-3d>
 ```
 
 For floating mode across all pages: Settings → Advanced → Code Injection → Footer, paste:
 ```html
-<script type="module" src="https://cdn.3dagent.vercel.app/agent-3d.js"></script>
+<script type="module" src="https://cdn.three.wsagent-3d.js"></script>
 <agent-3d agent-id="your-id" mode="floating"></agent-3d>
 ```
 

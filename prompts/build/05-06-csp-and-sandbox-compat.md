@@ -28,10 +28,10 @@ Strict hosts apply Content-Security-Policy and `<iframe sandbox>` restrictions. 
 2. If three.js / dat.gui pull in any of the above, gate them behind a build flag (`TARGET=embed`) or replace the offender. Document any unavoidable exception in the spec.
 3. Add a recommended host CSP block to [specs/EMBED_SPEC.md](../../specs/EMBED_SPEC.md):
     ```
-    frame-src 'self' https://3dagent.vercel.app https://3d.irish;
-    script-src 'self' https://3dagent.vercel.app;
-    img-src 'self' https://3dagent.vercel.app data: blob:;
-    connect-src 'self' https://3dagent.vercel.app https://*.r2.cloudflarestorage.com;
+    frame-src 'self' https://three.ws/ https://3d.irish;
+    script-src 'self' https://three.ws/;
+    img-src 'self' https://three.ws/ data: blob:;
+    connect-src 'self' https://three.ws/ https://*.r2.cloudflarestorage.com;
     ```
 4. Add a recommended `iframe sandbox` block:
     ```

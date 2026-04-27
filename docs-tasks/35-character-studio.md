@@ -14,12 +14,12 @@ Users who want to create custom 3D avatars using the Character Studio — a visu
 ### 1. What is Character Studio?
 Character Studio is a browser-based 3D avatar builder included with 3D Agent. It lets you create a fully customized humanoid avatar without any 3D modeling experience.
 
-Access: https://3dagent.vercel.app/studio (avatar tab)
+Access: https://three.ws/studio (avatar tab)
 
 It's a separate React SPA (in `/character-studio/`) that outputs a GLB file compatible with all 3D Agent features — animations, emotion system, AR viewing, and embedding.
 
 ### 2. Getting started
-1. Go to https://3dagent.vercel.app/studio
+1. Go to https://three.ws/studio
 2. Click "Create Avatar"
 3. Character Studio opens in a new panel
 4. Start customizing

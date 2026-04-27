@@ -75,7 +75,7 @@ el.viewer.playAnimation('dance');
 **Via URL hash:**
 No programmatic control needed — deep link to a state with a clip playing.
 ```
-https://3dagent.vercel.app/app#model=./avatar.glb&animation=idle
+https://three.ws/app#model=./avatar.glb&animation=idle
 ```
 
 ### 4. The AnimationMixer

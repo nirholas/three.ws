@@ -24,7 +24,7 @@ By the end, the reader will have:
 Three options ranked by effort:
 1. Use the provided sample avatar (zero effort)
 2. Get a free avatar from Mixamo (account required, ~10 min)
-3. Generate one from a selfie at https://3dagent.vercel.app/create (5 min)
+3. Generate one from a selfie at https://three.ws/create (5 min)
 
 Show the Mixamo path briefly: go to mixamo.com → Characters → pick one → Download → select "FBX for Unity" → convert to GLB using the provided script.
 
@@ -44,9 +44,9 @@ For beginners: just use the sample avatar URL and come back to this later.
   </style>
 </head>
 <body>
-  <script type="module" src="https://cdn.3dagent.vercel.app/agent-3d.js"></script>
+  <script type="module" src="https://cdn.three.wsagent-3d.js"></script>
   <agent-3d
-    model="https://cdn.3dagent.vercel.app/models/sample-avatar.glb"
+    model="https://cdn.three.wsmodels/sample-avatar.glb"
     style="width:400px;height:600px"
   ></agent-3d>
 </body>
@@ -73,8 +73,8 @@ Create `agent.json` in the same folder:
     "mode": "local"
   },
   "skills": [
-    { "url": "https://cdn.3dagent.vercel.app/skills/wave.json" },
-    { "url": "https://cdn.3dagent.vercel.app/skills/validate-model.json" }
+    { "url": "https://cdn.three.wsskills/wave.json" },
+    { "url": "https://cdn.three.wsskills/validate-model.json" }
   ]
 }
 ```
@@ -83,7 +83,7 @@ Create `agent.json` in the same folder:
 Update the HTML to load the manifest and enable the LLM:
 ```html
 <agent-3d
-  model="https://cdn.3dagent.vercel.app/models/sample-avatar.glb"
+  model="https://cdn.three.wsmodels/sample-avatar.glb"
   brain
   style="width:400px;height:600px"
 >
@@ -94,7 +94,7 @@ Update the HTML to load the manifest and enable the LLM:
         "prompt": "You are Aria, a friendly AI guide. Be warm, helpful, and enthusiastic about 3D content."
       },
       "skills": [
-        { "url": "https://cdn.3dagent.vercel.app/skills/wave.json" }
+        { "url": "https://cdn.three.wsskills/wave.json" }
       ]
     }
   </script>
@@ -172,7 +172,7 @@ npx vercel
 
 **Step 9: Upload your custom GLB**
 Replace the sample model with your own:
-1. Go to https://3dagent.vercel.app/app
+1. Go to https://three.ws/app
 2. Drag your GLB into the viewer
 3. Click "Save to Account" (requires free account)
 4. Copy the GLB URL from the editor

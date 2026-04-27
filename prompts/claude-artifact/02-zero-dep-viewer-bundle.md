@@ -5,7 +5,7 @@
 Repo: `/workspaces/3D`. Task [./01-artifact-snippet.md](./01-artifact-snippet.md) defines a minimal HTML snippet users paste into Claude.ai Artifacts. That snippet pulls **one script** from our CDN:
 
 ```
-<script src="https://3dagent.vercel.app/artifact.js"></script>
+<script src="https://three.ws/artifact.js"></script>
 ```
 
 This task produces `artifact.js` — a single self-contained, zero-install, CDN-ready bundle that:
@@ -72,7 +72,7 @@ Agent3D.mount(target, opts) → Promise<Instance>
 - three.js is loaded once even if `mount()` is called repeatedly.
 - Bundle size (gzipped, three.js excluded) ≤ 150 KB. Report the actual number.
 - Empathy Layer's per-frame tick is wired into the mini-viewer's render loop — check by logging emotion state briefly during dev.
-- When `agentId` is missing or `AGENT_ID_HERE`, render an instruction overlay inside the target element ("Set `agentId` to an agent — get one at 3dagent.vercel.app").
+- When `agentId` is missing or `AGENT_ID_HERE`, render an instruction overlay inside the target element ("Set `agentId` to an agent — get one at three.ws").
 - When the GLB fails to load, render a static stand-in avatar (embed a tiny base64 GLB in the bundle OR a CSS silhouette — your call, document it).
 - Errors never throw out of `mount()`; they resolve with `onError(err)` called and the overlay set.
 - No usage of `localStorage` / `sessionStorage` / `IndexedDB` / `document.cookie`. The Artifact sandbox may block these.

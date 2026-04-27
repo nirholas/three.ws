@@ -314,7 +314,7 @@ The editor's "Copy Embed" output is a plain `<agent-3d>` with no `editor` attrib
 
 ## Install / CDN
 
-The bundle is published from the main app's deploy at `https://3dagent.vercel.app/agent-3d/`. Three URL channels, pick based on how strict you need updates:
+The bundle is published from the main app's deploy at `https://three.ws/agent-3d/`. Three URL channels, pick based on how strict you need updates:
 
 | Path                                            | Cache                         | Use when                                                  |
 | ----------------------------------------------- | ----------------------------- | --------------------------------------------------------- |
@@ -328,7 +328,7 @@ The bundle is published from the main app's deploy at `https://3dagent.vercel.ap
 ```html
 <script
 	type="module"
-	src="https://3dagent.vercel.app/agent-3d/1.5.1/agent-3d.js"
+	src="https://three.ws/agent-3d/1.5.1/agent-3d.js"
 	integrity="sha384-…"
 	crossorigin="anonymous"
 ></script>
@@ -399,7 +399,7 @@ The iframe at `/a/:chain/:id/embed` reads an optional `embedPolicy` from the age
 - `mode: "allowlist"`: iframe refuses to render unless the parent host matches at least one entry.
 - `mode: "denylist"`: iframe refuses to render if the parent host matches any entry.
 
-Parent host is determined from `window.location.ancestorOrigins` (Chromium) or `document.referrer`. When the iframe refuses, it posts `{ __agent, type: 'blocked', host }` to its parent and shows a link to open the agent on `3dagent.vercel.app`.
+Parent host is determined from `window.location.ancestorOrigins` (Chromium) or `document.referrer`. When the iframe refuses, it posts `{ __agent, type: 'blocked', host }` to its parent and shows a link to open the agent on `three.ws`.
 
 **We ship permissionless by default.** On-chain identity is public — any embedder can show any agent unless the owner has explicitly set a policy. The policy path exists so owners _can_ restrict later; it doesn't gate the default experience.
 

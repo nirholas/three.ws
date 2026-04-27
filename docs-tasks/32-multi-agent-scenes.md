@@ -23,7 +23,7 @@ A scene with two or more agents loaded simultaneously. Use cases:
 Multiple `<agent-3d>` elements on the same page — each is independent:
 
 ```html
-<script type="module" src="https://cdn.3dagent.vercel.app/agent-3d.js"></script>
+<script type="module" src="https://cdn.three.wsagent-3d.js"></script>
 
 <div style="display:flex;gap:16px">
   <!-- Agent 1: Host -->

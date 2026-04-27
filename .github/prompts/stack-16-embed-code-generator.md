@@ -32,7 +32,7 @@ Live-update three snippets in tabs as settings change:
 
 ```html
 <iframe
-	src="https://3dagent.vercel.app/agent/satoshi?kiosk=1&theme=dark"
+	src="https://three.ws/agent/satoshi?kiosk=1&theme=dark"
 	width="600"
 	height="600"
 	style="border:0"
@@ -43,14 +43,14 @@ Live-update three snippets in tabs as settings change:
 **Web component** (using [src/element.js](src/element.js)):
 
 ```html
-<script src="https://3dagent.vercel.app/dist-lib/agent-3d.js"></script>
+<script src="https://three.ws/dist-lib/agent-3d.js"></script>
 <agent-3d slug="satoshi" theme="dark" mode="kiosk"></agent-3d>
 ```
 
 **React** (thin wrapper note — the lib is framework-agnostic):
 
 ```jsx
-<iframe src="https://3dagent.vercel.app/agent/satoshi?kiosk=1" width={600} height={600} />
+<iframe src="https://three.ws/agent/satoshi?kiosk=1" width={600} height={600} />
 ```
 
 ### Copy button

@@ -26,7 +26,7 @@ The recommended approach for developers with control over their page.
 
 ```html
 <!-- 1. Load the library -->
-<script type="module" src="https://cdn.3dagent.vercel.app/agent-3d.js"></script>
+<script type="module" src="https://cdn.three.wsagent-3d.js"></script>
 
 <!-- 2. Place the element -->
 <agent-3d
@@ -61,7 +61,7 @@ For third-party pages where you can't load external scripts, or CMS platforms wi
 
 ```html
 <iframe
-  src="https://3dagent.vercel.app/agent-embed?id=your-agent-id"
+  src="https://three.ws/agent-embed?id=your-agent-id"
   width="400"
   height="500"
   frameborder="0"
@@ -92,13 +92,13 @@ const iframe = document.getElementById('my-agent-iframe');
 iframe.contentWindow.postMessage({
   type: '3dagent:load',
   model: 'https://example.com/new-model.glb'
-}, 'https://3dagent.vercel.app');
+}, 'https://three.ws/');
 
 // Speak
 iframe.contentWindow.postMessage({
   type: '3dagent:speak',
   text: 'Hello from the host page!'
-}, 'https://3dagent.vercel.app');
+}, 'https://three.ws/');
 
 // Take screenshot
 iframe.contentWindow.postMessage({ type: '3dagent:screenshot' }, '*');
@@ -107,7 +107,7 @@ iframe.contentWindow.postMessage({ type: '3dagent:screenshot' }, '*');
 **Embed â†’ Host:**
 ```js
 window.addEventListener('message', e => {
-  if (e.origin !== 'https://3dagent.vercel.app') return; // always verify origin
+  if (e.origin !== 'https://three.ws/') return; // always verify origin
 
   switch (e.data.type) {
     case '3dagent:ready':
@@ -147,13 +147,13 @@ Many platforms (Notion, Substack, WordPress, Ghost, Loom, etc.) support oEmbed â
 
 To embed via oEmbed:
 1. Publish your widget (make it public in Widget Studio)
-2. Get the widget URL: `https://3dagent.vercel.app/widgets/view?id=<widget-id>`
+2. Get the widget URL: `https://three.ws/widgets/view?id=<widget-id>`
 3. Paste the URL directly into Notion, Substack, etc.
 4. The platform auto-fetches the oEmbed endpoint and renders an iframe
 
 oEmbed endpoint:
 ```
-GET https://3dagent.vercel.app/api/widgets/oembed?url=<widget-url>
+GET https://three.ws/api/widgets/oembed?url=<widget-url>
 ```
 
 ### 7. Method 4: Claude Artifact
@@ -162,7 +162,7 @@ GET https://3dagent.vercel.app/api/widgets/oembed?url=<widget-url>
 The artifact bundle is a zero-dependency, self-contained file:
 ```html
 <!-- In a Claude artifact -->
-<script src="https://cdn.3dagent.vercel.app/artifact.js"></script>
+<script src="https://cdn.three.wsartifact.js"></script>
 <agent-3d model="./avatar.glb"></agent-3d>
 ```
 

@@ -22,7 +22,7 @@ By the end, the reader will have:
 ### Why register on-chain?
 Start with motivation — concrete benefits:
 - Anyone can verify you created the agent (no platform lock-in)
-- Your agent gets a permanent URL: `https://3dagent.vercel.app/a/8453/<id>`
+- Your agent gets a permanent URL: `https://three.ws/a/8453/<id>`
 - Users can leave verifiable on-chain reviews
 - Agent can be transferred (sold, gifted) to another wallet
 - Glasslike auditability — all registrations public on-chain
@@ -35,14 +35,14 @@ Start with motivation — concrete benefits:
 
 ### Step 1: Create your agent
 If you haven't already:
-1. Go to https://3dagent.vercel.app/create
+1. Go to https://three.ws/create
 2. Take a selfie or upload a photo
 3. Your avatar is generated (takes ~30 seconds)
 4. Give it a name and description
 5. Click "Save"
 
 Or upload an existing GLB:
-1. Go to https://3dagent.vercel.app/app
+1. Go to https://three.ws/app
 2. Drag your GLB into the viewer
 3. Go to the Manifest tab in the editor
 4. Fill in name and description
@@ -75,7 +75,7 @@ Use Coinbase (they support Base natively) or any exchange that supports Base wit
 4. Your address appears in the header
 
 ### Step 4: Open your agent for editing
-1. Go to https://3dagent.vercel.app/dashboard
+1. Go to https://three.ws/dashboard
 2. Find your agent → click "Edit"
 3. You should see the editor with your avatar loaded
 
@@ -116,7 +116,7 @@ If the transaction fails:
 ### Step 8: Celebrate! Your agent is on-chain
 After confirmation:
 - Your agent ID is shown: `#42` (a number unique to the registry)
-- Your on-chain URL: `https://3dagent.vercel.app/a/8453/42`
+- Your on-chain URL: `https://three.ws/a/8453/42`
 - Open this URL in a new tab — it shows your agent with the ERC-8004 Passport widget
 
 ### Step 9: Share your agent
@@ -130,7 +130,7 @@ Your on-chain agent URL works anywhere:
 - Generate a QR code (built into the passport page)
 
 ### Step 10: Build your reputation
-Your agent now has a reputation page at `https://3dagent.vercel.app/a/8453/42#reputation`.
+Your agent now has a reputation page at `https://three.ws/a/8453/42#reputation`.
 
 Ask friends to leave reviews:
 1. Visit your agent's page
@@ -151,7 +151,7 @@ If you own an ENS name (e.g., `yourname.eth`):
 3. Add text record: key `3dagent`, value `8453:42`
 4. Save (requires gas)
 
-Now `yourname.eth` resolves to your agent. Share as: `https://3dagent.vercel.app/agent/ens/yourname.eth`
+Now `yourname.eth` resolves to your agent. Share as: `https://three.ws/agent/ens/yourname.eth`
 
 ### Troubleshooting
 Common issues and solutions:

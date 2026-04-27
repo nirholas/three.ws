@@ -1,6 +1,6 @@
 # API Reference
 
-Base URL: `https://3dagent.vercel.app/api`
+Base URL: `https://three.ws/api`
 
 ---
 
@@ -303,7 +303,7 @@ Requires auth. Bearer token must have `avatars:write` scope.
 ```json
 {
   "id": "wdgt_abc123def456",
-  "embed_url": "https://3dagent.vercel.app/widgets/view?id=wdgt_abc123def456"
+  "embed_url": "https://three.ws/widgets/view?id=wdgt_abc123def456"
 }
 ```
 
@@ -350,7 +350,7 @@ Returns Open Graph metadata for a widget, used by social preview scrapers (Twitt
 ### oEmbed
 
 ```
-GET /api/widgets/oembed?url=https%3A%2F%2F3dagent.vercel.app%2Fwidgets%2Fview%3Fid%3Dwdgt_abc123
+GET /api/widgets/oembed?url=https%3A%2F%2Fthree.ws%2Fwidgets%2Fview%3Fid%3Dwdgt_abc123
 ```
 
 oEmbed endpoint for rich embeds in Notion, Substack, and other oEmbed-compatible platforms. No auth required.

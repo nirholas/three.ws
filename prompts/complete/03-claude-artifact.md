@@ -41,7 +41,7 @@ Output shape — a minimal HTML document inline-styled and inline-scripted, usin
 	</head>
 	<body>
 		<agent-3d agent="{agentId}" eager></agent-3d>
-		<script src="https://3dagent.vercel.app/dist-lib/agent-3d.umd.cjs"></script>
+		<script src="https://three.ws/dist-lib/agent-3d.umd.cjs"></script>
 	</body>
 </html>
 ```
@@ -49,7 +49,7 @@ Output shape — a minimal HTML document inline-styled and inline-scripted, usin
 Requirements:
 
 - Validate `agentId` / `glbUrl` — reject anything that doesn't match `/^[a-z0-9-]{3,64}$/i` for agent, or a whitelisted https origin for model (reuse [api/\_lib/fetch-model.js](../../api/_lib/fetch-model.js) if it has a URL-validation helper).
-- `Content-Security-Policy: default-src 'self' https://3dagent.vercel.app; script-src 'self' 'unsafe-inline' https://3dagent.vercel.app; img-src * data: blob:; connect-src *; style-src 'self' 'unsafe-inline'; frame-ancestors *` — permissive enough to embed in Claude.ai's artifact iframe.
+- `Content-Security-Policy: default-src 'self' https://three.ws/; script-src 'self' 'unsafe-inline' https://three.ws/; img-src * data: blob:; connect-src *; style-src 'self' 'unsafe-inline'; frame-ancestors *` — permissive enough to embed in Claude.ai's artifact iframe.
 - Use [api/\_lib/http.js](../../api/_lib/http.js) to set headers; output via `res.end(html)` is OK here _only_ because we're returning HTML, not JSON (the "no res.end" rule is for JSON responses). Document this exception inline.
 - Rate-limit via `limits.publicRead` from [api/\_lib/limits.js](../../api/_lib/limits.js) if the preset exists.
 

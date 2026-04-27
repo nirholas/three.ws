@@ -64,7 +64,7 @@ A registered agent's GLB contains illegal or platform-violating content.
 
 ### V9 — Supply-chain on the badge / resolver
 
-Attacker compromises `3dagent.vercel.app` and serves a malicious badge bundle that lies about verification.
+Attacker compromises `three.ws` and serves a malicious badge bundle that lies about verification.
 
 - **Mitigation:** badge source is open in [src/erc8004/badge.js](../src/erc8004/badge.js); embedders SHOULD self-host or pin to a known SRI hash. Resolver responses are signed (open) so a tampered response can be detected client-side.
 - **Status:** partial. SRI guidance documented; resolver signing is open.

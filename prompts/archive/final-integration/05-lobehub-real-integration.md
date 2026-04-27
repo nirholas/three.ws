@@ -27,7 +27,7 @@ Ship an installable LobeHub plugin with:
 Everything under:
 
 - `lobehub-plugin/**` (except `node_modules/`)
-- `public/.well-known/lobehub-plugin.json` (the manifest served from the 3dagent.vercel.app origin for remote-plugin installs)
+- `public/.well-known/lobehub-plugin.json` (the manifest served from the three.ws origin for remote-plugin installs)
 - `public/lobehub/iframe/**` (the iframe target referenced by the manifest — create if it doesn't fully exist yet)
 
 ## Files read-only
@@ -44,7 +44,7 @@ Everything under:
     - `identifier` is globally unique (`3d-agent` is reasonable).
     - `$schema` points to the canonical URL.
     - `api` entries either all resolve to real endpoints or the `api` array is omitted if this is iframe-only.
-    - `ui.url` points to `https://3dagent.vercel.app/lobehub/iframe/` and that route actually serves HTML.
+    - `ui.url` points to `https://three.ws/lobehub/iframe/` and that route actually serves HTML.
     - `settings` schema matches what the React component reads (`agentId`, `apiOrigin`).
 2. **Iframe host.** `public/lobehub/iframe/index.html` renders `<agent-3d agent-id="{{agentId}}">` with correct styling for a 420–640px sidebar frame. Transparent background, no scrollbars, respects the `agentId` query param (the LobeHub host passes settings as querystring or fragment — implement whichever the real manifest spec requires).
 3. **React plugin package.** `lobehub-plugin/src/`:

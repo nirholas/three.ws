@@ -11,7 +11,7 @@ The 3D Agent editor lets you inspect and modify an agent's 3D model, adjust mate
 If you own an agent and are authenticated:
 
 ```
-https://3dagent.vercel.app/agent-edit?agent=<agent-id>
+https://three.ws/agent-edit?agent=<agent-id>
 ```
 
 This opens the full editor pre-loaded with your agent's GLB and manifest. You must be signed in — the platform checks ownership at the storage layer when you attempt to save or publish.
@@ -19,8 +19,8 @@ This opens the full editor pre-loaded with your agent's GLB and manifest. You mu
 Alternative URL forms that also work:
 
 ```
-https://3dagent.vercel.app/agent/<id>/edit     ← owner-only edit page
-https://3dagent.vercel.app/app?agent=<id>      ← app shell with agent in edit mode
+https://three.ws/agent/<id>/edit     ← owner-only edit page
+https://three.ws/app?agent=<id>      ← app shell with agent in edit mode
 ```
 
 ### Open any GLB file (no account required)
@@ -28,7 +28,7 @@ https://3dagent.vercel.app/app?agent=<id>      ← app shell with agent in edit 
 Navigate to:
 
 ```
-https://3dagent.vercel.app/app
+https://three.ws/app
 ```
 
 Then drag and drop any `.glb` file onto the viewport. The editor loads the file locally — nothing is uploaded until you explicitly publish. Unauthenticated users can freely inspect and modify the model in the viewport; publishing requires signing in.

@@ -327,7 +327,7 @@ class App {
 				manifest: {
 					name: this.identity.name || 'Agent',
 					instructions: [
-						`You are ${this.identity.name || 'Agent'}, an AI agent embedded in a 3D model viewer at 3dagent.vercel.app.`,
+						`You are ${this.identity.name || 'Agent'}, an AI agent embedded in a 3D model viewer at three.ws.`,
 						'You can control the 3D scene, remember things, and help users with their 3D work.',
 						'Be concise, clear, and helpful. You are present and embodied — act like it.',
 					].join(' '),

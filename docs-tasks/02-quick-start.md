@@ -29,8 +29,8 @@ Show the absolute fastest path. Complete working HTML file:
   </style>
 </head>
 <body>
-  <script type="module" src="https://cdn.3dagent.vercel.app/agent-3d.js"></script>
-  <agent-3d model="https://cdn.3dagent.vercel.app/models/sample-avatar.glb"></agent-3d>
+  <script type="module" src="https://cdn.three.wsagent-3d.js"></script>
+  <agent-3d model="https://cdn.three.wsmodels/sample-avatar.glb"></agent-3d>
 </body>
 </html>
 ```

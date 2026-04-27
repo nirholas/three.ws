@@ -40,7 +40,7 @@ Document:
     - `state` `{ emotion: { concern, celebration, patience, curiosity, empathy }, currentClip?: string }` — throttled to 10 Hz.
     - `action-done` `{ type, ok: boolean, detail? }` — ack for inbound messages.
     - `pong` `{}` — response to ping.
-- **Origin allowlist:** `https://claude.ai`, `https://*.lobehub.com`, `https://3dagent.vercel.app`, and the embedding page's origin itself. Anything else → log + ignore.
+- **Origin allowlist:** `https://claude.ai`, `https://*.lobehub.com`, `https://three.ws/`, and the embedding page's origin itself. Anything else → log + ignore.
 - **Version negotiation:** `v` defaults to 1. If host sends `v: 2` we don't know, reply with `{ type: 'error', code: 'unsupported_version' }` and ignore the payload.
 
 ### 2. Helper — `src/lib/embed-bridge.js`

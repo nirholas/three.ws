@@ -114,7 +114,7 @@ await fetch('/api/auth/session', { method: 'DELETE' });
 For server-to-server or programmatic access, use API keys instead of session cookies.
 
 **Creating an API key:**
-Via dashboard: https://3dagent.vercel.app/dashboard → API Keys → Create Key
+Via dashboard: https://three.ws/dashboard → API Keys → Create Key
 
 Or via API (authenticated):
 ```js

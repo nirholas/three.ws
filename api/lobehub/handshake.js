@@ -35,7 +35,7 @@ export default wrap(async (req, res) => {
 
 	return json(res, 200, {
 		ok: true,
-		iframeUrl: `https://3dagent.vercel.app/lobehub/iframe/?agent=${encodeURIComponent(agent.id)}`,
+		iframeUrl: `https://three.ws/lobehub/iframe/?agent=${encodeURIComponent(agent.id)}`,
 		embedPolicy: {
 			origins: { mode: 'allowlist', hosts: allowedHosts },
 		},

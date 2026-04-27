@@ -15,7 +15,7 @@ describe('discover page — cross-links and new features', () => {
 		expect(discoverHtml).toContain('property="og:title"');
 		expect(discoverHtml).toContain('property="og:image"');
 		expect(discoverHtml).toContain('name="twitter:card"');
-		expect(discoverHtml).toContain('https://3dagent.vercel.app/og-image.png');
+		expect(discoverHtml).toContain('https://three.ws/og-image.png');
 	});
 
 	it('/discover has a hidden "View my agents" chip linking to /my-agents', () => {

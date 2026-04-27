@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 Disallow: /my-agents
-Sitemap: https://3dagent.vercel.app/sitemap.xml
+Sitemap: https://three.wssitemap.xml

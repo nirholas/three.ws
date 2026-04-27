@@ -3,5 +3,5 @@
 
 Contact: mailto:hello@3d.irish
 Preferred-Languages: en
-Canonical: https://3dagent.vercel.app/.well-known/security.txt
+Canonical: https://three.ws.well-known/security.txt
 Expires: 2027-04-14T00:00:00.000Z

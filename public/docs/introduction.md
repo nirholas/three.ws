@@ -9,8 +9,8 @@ The result is an agent that doesn't just respond in a chat box. It occupies a th
 **Key facts:**
 
 - **License:** MIT — use it, fork it, self-host it
-- **Hosted platform:** [https://3dagent.vercel.app](https://3dagent.vercel.app)
-- **CDN library:** `https://cdn.3dagent.vercel.app/agent-3d.js`
+- **Hosted platform:** [https://three.ws/](https://three.ws/)
+- **CDN library:** `https://cdn.three.wsagent-3d.js`
 - **No server required** for basic use — the viewer, agent runtime, and skill system all run in the browser via WebGL 2.0
 - **glTF 2.0 / GLB** with Draco, KTX2, and Meshopt decompression supported out of the box
 
@@ -74,7 +74,7 @@ A widget is a pre-built, embeddable view built on top of the agent and viewer pr
 | **ERC-8004 Passport** | On-chain identity card for a registered agent |
 | **Hotspot Tour** | Annotated model with interactive camera waypoints |
 
-Widgets can be embedded via iframe with a single line of HTML from Widget Studio at [https://3dagent.vercel.app/studio](https://3dagent.vercel.app/studio).
+Widgets can be embedded via iframe with a single line of HTML from Widget Studio at [https://three.ws/studio](https://three.ws/studio).
 
 ### Manifest
 
@@ -177,7 +177,7 @@ Game engine WebGL exports ship a large runtime (~10–50 MB) and require their o
 The minimum to get a 3D agent on screen is two lines of HTML:
 
 ```html
-<script type="module" src="https://cdn.3dagent.vercel.app/agent-3d.js"></script>
+<script type="module" src="https://cdn.three.wsagent-3d.js"></script>
 <agent-3d body="https://example.com/avatar.glb"></agent-3d>
 ```
 
@@ -212,4 +212,4 @@ Once you have the basics working, the following guides go deeper:
 - **[Manifest Reference](../specs/AGENT_MANIFEST.md)** — full JSON schema with examples
 - **[API Reference](./api-reference.md)** — complete JS API for `Agent3DElement`
 
-If you want to look at what's already in the hosted platform — browsing agents, using Widget Studio, or registering on-chain — visit [https://3dagent.vercel.app](https://3dagent.vercel.app).
+If you want to look at what's already in the hosted platform — browsing agents, using Widget Studio, or registering on-chain — visit [https://three.ws/](https://three.ws/).

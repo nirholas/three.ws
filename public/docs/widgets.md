@@ -1,13 +1,13 @@
 # Widget Types
 
-A widget is a saved, shareable 3D experience you can embed on any web page. Instead of wiring up a viewer from scratch, you pick a widget type, configure it in the no-code [Widget Studio](https://3dagent.vercel.app/studio), and paste one line of HTML wherever you want it to appear — a blog post, a product page, a Notion doc, a CMS.
+A widget is a saved, shareable 3D experience you can embed on any web page. Instead of wiring up a viewer from scratch, you pick a widget type, configure it in the no-code [Widget Studio](https://three.ws/studio), and paste one line of HTML wherever you want it to appear — a blog post, a product page, a Notion doc, a CMS.
 
 Each widget bundles three things: an avatar or 3D model (a `.glb` file stored in the cloud), a **widget type** that controls the runtime behavior, and **brand config** (background color, accent, caption, camera position, environment). Change the config in Studio and every embed updates automatically.
 
 ```html
 <!-- The simplest possible embed — drop this anywhere -->
 <iframe
-  src="https://3dagent.vercel.app/app#widget=wdgt_abc123def456&kiosk=true"
+  src="https://three.ws/app#widget=wdgt_abc123def456&kiosk=true"
   width="600"
   height="600"
   style="border:0;border-radius:12px"
@@ -62,7 +62,7 @@ All [brand options](#the-five-widget-types) apply (background, accent, caption, 
 
 ```html
 <iframe
-  src="https://3dagent.vercel.app/app#widget=wdgt_abc123def456&kiosk=true"
+  src="https://three.ws/app#widget=wdgt_abc123def456&kiosk=true"
   width="600"
   height="600"
   style="border:0;border-radius:12px;max-width:100%"
@@ -103,7 +103,7 @@ All brand options apply.
 const iframe = document.querySelector('iframe');
 iframe.contentWindow.postMessage(
   { type: 'widget:command', command: 'play_clip', args: { name: 'Wave' } },
-  'https://3dagent.vercel.app'
+  'https://three.ws/'
 );
 ```
 
@@ -153,7 +153,7 @@ All brand options apply.
 
 ```html
 <iframe
-  src="https://3dagent.vercel.app/app#widget=wdgt_abc123def456&kiosk=true"
+  src="https://three.ws/app#widget=wdgt_abc123def456&kiosk=true"
   width="420"
   height="600"
   style="border:0;border-radius:16px"
@@ -213,7 +213,7 @@ All brand options apply.
 
 ```html
 <iframe
-  src="https://3dagent.vercel.app/app#widget=wdgt_abc123def456&kiosk=true"
+  src="https://three.ws/app#widget=wdgt_abc123def456&kiosk=true"
   width="480"
   height="560"
   style="border:0;border-radius:16px"
@@ -275,10 +275,10 @@ All brand options apply.
 
 ## Widget Studio (no-code builder)
 
-The fastest way to create a widget is [Widget Studio](https://3dagent.vercel.app/studio):
+The fastest way to create a widget is [Widget Studio](https://three.ws/studio):
 
-1. Sign in at [3dagent.vercel.app](https://3dagent.vercel.app).
-2. Open [Studio](https://3dagent.vercel.app/studio).
+1. Sign in at [three.ws](https://three.ws/).
+2. Open [Studio](https://three.ws/studio).
 3. Upload a `.glb` file or paste a public URL to an existing model.
 4. Select a widget type from the five options.
 5. Use the form to configure brand options and type-specific settings.
@@ -296,7 +296,7 @@ After creating a widget, copy the iframe snippet from Studio or construct it man
 ```html
 <!-- iframe embed (recommended) -->
 <iframe
-  src="https://3dagent.vercel.app/app#widget=wdgt_abc123def456&kiosk=true"
+  src="https://three.ws/app#widget=wdgt_abc123def456&kiosk=true"
   width="600"
   height="600"
   style="border:0;border-radius:12px;max-width:100%"
@@ -305,7 +305,7 @@ After creating a widget, copy the iframe snippet from Studio or construct it man
 ></iframe>
 
 <!-- Script embed (auto-sizes, no iframe overhead) -->
-<script async src="https://3dagent.vercel.app/embed.js" data-widget="wdgt_abc123def456"></script>
+<script async src="https://three.ws/embed.js" data-widget="wdgt_abc123def456"></script>
 ```
 
 The **script embed** injects a sandboxed iframe at the script tag's location and handles auto-resize. Use it when you want the widget to grow and shrink with its container. Use a raw **iframe** when you need full control over dimensions.
@@ -335,7 +335,7 @@ The **script embed** injects a sandboxed iframe at the script tag's location and
 Widgets have a visibility setting controlled by the `is_public` flag:
 
 - **Private** (`is_public: false`) — only accessible by the creator. Embed links still work for the signed-in owner but won't appear in public listings.
-- **Public** (`is_public: true`) — accessible by anyone with the embed URL and listed in the [widget gallery](https://3dagent.vercel.app/widgets).
+- **Public** (`is_public: true`) — accessible by anyone with the embed URL and listed in the [widget gallery](https://three.ws/widgets).
 
 Set visibility in Widget Studio using the toggle before saving, or update it at any time via the Widget API.
 
@@ -345,12 +345,12 @@ Set visibility in Widget Studio using the toggle before saving, or update it at 
 
 All public widgets support [oEmbed](https://oembed.com), which enables automatic rich previews in Notion, Ghost, Substack, WordPress, Discord, and other platforms that follow the oEmbed spec.
 
-**To use oEmbed in a supported CMS:** paste a share URL (`https://3dagent.vercel.app/w/<id>`) on its own line. The editor detects the oEmbed endpoint automatically and replaces the URL with a live embed.
+**To use oEmbed in a supported CMS:** paste a share URL (`https://three.ws/w/<id>`) on its own line. The editor detects the oEmbed endpoint automatically and replaces the URL with a live embed.
 
 **To query oEmbed manually:**
 
 ```
-GET https://3dagent.vercel.app/api/widgets/oembed?url=https://3dagent.vercel.app/w/wdgt_abc123def456&format=json
+GET https://three.ws/api/widgets/oembed?url=https://three.ws/w/wdgt_abc123def456&format=json
 ```
 
 Response:
@@ -360,12 +360,12 @@ Response:
   "type": "rich",
   "version": "1.0",
   "provider_name": "3D Agent",
-  "provider_url": "https://3dagent.vercel.app",
+  "provider_url": "https://three.ws/",
   "title": "My Widget",
   "html": "<iframe …></iframe>",
   "width": 600,
   "height": 600,
-  "thumbnail_url": "https://3dagent.vercel.app/api/widgets/wdgt_abc123def456/og",
+  "thumbnail_url": "https://three.ws/api/widgets/wdgt_abc123def456/og",
   "thumbnail_width": 1200,
   "thumbnail_height": 630
 }
@@ -390,7 +390,7 @@ Widgets have a full REST CRUD API. All write endpoints require authentication (s
 **Create a widget:**
 
 ```bash
-curl -X POST https://3dagent.vercel.app/api/widgets \
+curl -X POST https://three.ws/api/widgets \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -404,7 +404,7 @@ curl -X POST https://3dagent.vercel.app/api/widgets \
 
 The `config` object is validated against the type's schema (see [widget-types.js](../../src/widget-types.js)). Invalid fields return `400 validation_error`.
 
-**Widget share URL:** Every widget has a canonical share URL at `https://3dagent.vercel.app/w/<id>`. This URL is server-rendered with Open Graph metadata and a 1200×630 preview image, making it safe to post in Slack, Discord, X, or any link-preview-aware surface.
+**Widget share URL:** Every widget has a canonical share URL at `https://three.ws/w/<id>`. This URL is server-rendered with Open Graph metadata and a 1200×630 preview image, making it safe to post in Slack, Discord, X, or any link-preview-aware surface.
 
 For the full API reference including request/response shapes, error codes, and pagination, see [API.md](../docs/API.md).
 
@@ -418,7 +418,7 @@ Widgets communicate with the embedding page using `window.postMessage`. Always v
 
 ```js
 window.addEventListener('message', (e) => {
-  if (e.origin !== 'https://3dagent.vercel.app') return;
+  if (e.origin !== 'https://three.ws/') return;
 
   switch (e.data?.type) {
     case 'widget:ready':
@@ -451,13 +451,13 @@ const iframe = document.querySelector('iframe');
 // Live-update brand config (same options as the config object above)
 iframe.contentWindow.postMessage(
   { type: 'widget:config', config: { background: '#ff00aa', accent: '#ffffff' } },
-  'https://3dagent.vercel.app'
+  'https://three.ws/'
 );
 
 // Trigger a runtime action (animation-gallery and talking-agent)
 iframe.contentWindow.postMessage(
   { type: 'widget:command', command: 'play_clip', args: { name: 'Wave' } },
-  'https://3dagent.vercel.app'
+  'https://three.ws/'
 );
 ```
 
@@ -468,8 +468,8 @@ iframe.contentWindow.postMessage(
 If your site uses a Content Security Policy, add these directives:
 
 ```
-frame-src https://3dagent.vercel.app;
-img-src https://3dagent.vercel.app data:;
+frame-src https://three.ws/;
+img-src https://three.ws/ data:;
 ```
 
 The required `allow` attributes for the iframe are:
@@ -495,4 +495,4 @@ Each widget load records one minimal analytics event:
 | `referer_host` | Hostname of the embedding page (no path, no query string) |
 | `created_at` | Timestamp |
 
-No IP addresses, no user-agent strings, no cookies, no chat message content. The widget owner can see aggregated view counts in their [Dashboard](https://3dagent.vercel.app/dashboard).
+No IP addresses, no user-agent strings, no cookies, no chat message content. The widget owner can see aggregated view counts in their [Dashboard](https://three.ws/dashboard).

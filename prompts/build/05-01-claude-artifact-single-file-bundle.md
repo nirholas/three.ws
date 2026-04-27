@@ -109,7 +109,7 @@ Respect `?size=bubble|card|banner|full&bg=transparent|#hex` query params (same v
 
 ## Acceptance
 
-- [ ] Visiting `https://3dagent.vercel.app/api/agents/<id>/artifact.html` directly renders the avatar in the browser.
+- [ ] Visiting `https://three.ws/api/agents/<id>/artifact.html` directly renders the avatar in the browser.
 - [ ] Embedding that URL inside a Claude Artifact sandbox renders the avatar, no errors in the artifact's console.
 - [ ] Posting `{ __agent, type: 'emote', payload: { trigger: 'celebrate', weight: 0.7 } }` from the parent → avatar reacts.
 - [ ] Private avatars return 403.
@@ -122,7 +122,7 @@ Respect `?size=bubble|card|banner|full&bg=transparent|#hex` query params (same v
 3. Paste this into a Claude Artifact:
     ```html
     <iframe
-    	src="https://3dagent.vercel.app/api/agents/<id>/artifact.html"
+    	src="https://three.ws/api/agents/<id>/artifact.html"
     	style="width:100%;height:400px;border:0;background:transparent"
     ></iframe>
     ```

@@ -120,7 +120,7 @@ Grant, list, redeem, and revoke ERC-7710 scoped delegations via the `Permissions
 import { AgentKit } from '@nirholas/agent-kit';
 import { PermissionsClient } from '@nirholas/agent-kit/permissions';
 
-const client = new PermissionsClient({ baseUrl: 'https://3dagent.vercel.app' });
+const client = new PermissionsClient({ baseUrl: 'https://three.ws/' });
 
 // Fetch active delegations for an agent
 const { spec, delegations } = await client.getMetadata(agentId);

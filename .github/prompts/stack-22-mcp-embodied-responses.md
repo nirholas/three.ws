@@ -21,7 +21,7 @@ description: 'MCP tools that return embodied agent renderings, not just text'
     		{
     			"type": "resource",
     			"resource": {
-    				"uri": "https://3dagent.vercel.app/agent/satoshi?kiosk=1&skill=greet",
+    				"uri": "https://three.ws/agent/satoshi?kiosk=1&skill=greet",
     				"mimeType": "text/html"
     			}
     		}

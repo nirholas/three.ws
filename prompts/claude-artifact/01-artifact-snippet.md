@@ -36,7 +36,7 @@ Create a copy-pasteable HTML template, &lt;2 KB, that a Claude user drops into c
 	</head>
 	<body style="margin:0;background:#0b0d10">
 		<div id="a" style="width:100%;height:100vh"></div>
-		<script src="https://3dagent.vercel.app/artifact.js"></script>
+		<script src="https://three.ws/artifact.js"></script>
 		<script>
 			Agent3D.mount('#a', { agentId: 'AGENT_ID_HERE' });
 		</script>
@@ -53,7 +53,7 @@ Create a copy-pasteable HTML template, &lt;2 KB, that a Claude user drops into c
 
 The snippet must handle:
 
-1. Bundle script fails to load (CDN blocked) → show one-line text fallback inside `#a` saying "Agent viewer couldn't load. See: https://3dagent.vercel.app/agent/AGENT_ID_HERE".
+1. Bundle script fails to load (CDN blocked) → show one-line text fallback inside `#a` saying "Agent viewer couldn't load. See: https://three.ws/agent/AGENT_ID_HERE".
 2. `agentId` not found → the bundle should render an empty sad-face stand-in; the snippet just passes the id through.
 3. Avatar GLB fails to load → bundle handles; snippet just doesn't crash.
 
@@ -88,7 +88,7 @@ Implement (1) inline with a small `onerror` handler on the script tag. (2) and (
 
 ## Scope boundaries — do NOT do these
 
-- Do not build the bundle. Task 02 owns `https://3dagent.vercel.app/artifact.js`.
+- Do not build the bundle. Task 02 owns `https://three.ws/artifact.js`.
 - Do not design the idle animation. Task 03 owns it.
 - Do not write an ERC-8004 lookup path here. Task 04 covers the onchain template.
 - Do not add Claude-specific telemetry, postMessage handshake, or branding beyond a single HTML comment naming the project.

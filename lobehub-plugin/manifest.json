@@ -4,7 +4,7 @@
 	"meta": {
 		"title": "3D Agent",
 		"description": "Render a 3D avatar that reacts to the chat.",
-		"avatar": "https://3dagent.vercel.app/favicon.ico",
+		"avatar": "https://three.ws/favicon.ico",
 		"tags": ["avatar", "3d", "agent"]
 	},
 	"ui": {
@@ -16,7 +16,7 @@
 		{
 			"name": "apiOrigin",
 			"type": "string",
-			"default": "https://3dagent.vercel.app",
+			"default": "https://three.ws/",
 			"title": "API Origin"
 		}
 	]

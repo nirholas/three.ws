@@ -15,7 +15,7 @@ Developers embedding `<agent-3d>` in their own pages or apps. Needs to be a comp
 `<agent-3d>` is a custom HTML element (Web Component) that encapsulates the entire 3D Agent stack. Drop a script tag, use the element — no framework required.
 
 ```html
-<script type="module" src="https://cdn.3dagent.vercel.app/agent-3d.js"></script>
+<script type="module" src="https://cdn.three.wsagent-3d.js"></script>
 <agent-3d model="./avatar.glb" style="width:400px;height:500px"></agent-3d>
 ```
 
@@ -229,7 +229,7 @@ Works out of the box with custom elements.
 
 **Vanilla JS (ESM):**
 ```js
-import 'https://cdn.3dagent.vercel.app/agent-3d.js';
+import 'https://cdn.three.wsagent-3d.js';
 ```
 
 ## Tone

@@ -13,7 +13,7 @@ Claude.ai renders each `html` Artifact in a sandboxed iframe. A Claude user shou
 Not code. The deliverable for this directory is _prompts_ that a future Claude Code session will execute to produce:
 
 1. A copy-pasteable minimal HTML snippet (task 01).
-2. A hosted single-file bundle, `https://3dagent.vercel.app/artifact.js`, that the snippet loads (task 02).
+2. A hosted single-file bundle, `https://three.ws/artifact.js`, that the snippet loads (task 02).
 3. An idle-animation loop so the avatar looks alive in the Artifact viewer — Artifacts often have no pointer input (task 03).
 4. A curated gallery of ready-to-paste templates covering the main use cases (task 04).
 
@@ -23,7 +23,7 @@ The tasks below reference these constraints. The author of each task MUST verify
 
 - Artifacts run in a **sandboxed iframe** — treat it like a hostile environment.
 - CDN `<script src="...">` loading from major CDNs (cdnjs, unpkg, jsdelivr, esm.sh) is expected to work but must be verified per-CDN — start with `cdnjs.cloudflare.com` as the most commonly cited.
-- `fetch()` to external origins is expected to work for CORS-permitted endpoints. Our API at `https://3dagent.vercel.app/api/...` must return permissive CORS. Verify in task 02.
+- `fetch()` to external origins is expected to work for CORS-permitted endpoints. Our API at `https://three.ws/api/...` must return permissive CORS. Verify in task 02.
 - `postMessage` to `window.parent` (Claude's chat UI) is expected to work but Claude chat does not listen — postMessage is useful for cross-artifact tricks, not host integration.
 - `localStorage` / `IndexedDB` may be blocked or ephemeral per session. Assume no persistence.
 - No import maps. No Node-style imports. Plain `<script>` only, or `type="module"` with fully-qualified URLs.

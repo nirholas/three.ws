@@ -17,14 +17,14 @@ Public agent pages are the only surface we expose to search. Without structured 
 - `GET` → `application/xml`. Streams from `agents where visibility = 'public' and deleted_at is null` ordered by `updated_at desc`. One `<url>` per agent:
     ```xml
     <url>
-      <loc>https://3dagent.vercel.app/a/{id}</loc>
+      <loc>https://three.ws/a/{id}</loc>
       <lastmod>{updated_at iso}</lastmod>
       <changefreq>weekly</changefreq>
     </url>
     ```
 - Add the landing page, `/features`, `/docs-widgets`, and the top-level `/` explicitly.
 - Cache: `public, max-age=3600`.
-- Update [public/robots.txt](../../public/robots.txt) to point at the dynamic path: `Sitemap: https://3dagent.vercel.app/sitemap.xml`. Wire `/sitemap.xml` in [vercel.json](../../vercel.json) to the serverless function.
+- Update [public/robots.txt](../../public/robots.txt) to point at the dynamic path: `Sitemap: https://three.ws/sitemap.xml`. Wire `/sitemap.xml` in [vercel.json](../../vercel.json) to the serverless function.
 
 ### Structured data on the agent page
 
@@ -36,7 +36,7 @@ Inject a `<script type="application/ld+json">` block into [public/agent/index.ht
 	"@type": "Person",
 	"name": "<agent name>",
 	"image": "<og-image url>",
-	"url": "https://3dagent.vercel.app/a/<id>",
+	"url": "https://three.ws/a/<id>",
 	"identifier": "<agentId>",
 	"sameAs": ["<erc8004 explorer url if onchain>"]
 }

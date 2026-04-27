@@ -15,7 +15,7 @@ Create `public/lobehub/plugin.json` — follows the LobeHub plugin manifest v1 s
 - `identifier`: `3d-agent`
 - `version`: `0.1.0`
 - `api[]`: one entry pointing at our MCP-compatible endpoints
-- `ui.iframe.url`: `https://3dagent.vercel.app/lobehub/iframe`
+- `ui.iframe.url`: `https://three.ws/lobehub/iframe`
 - `ui.iframe.height`: `480`
 - `meta`: title, description, avatar (use our repo avatar), tags
 

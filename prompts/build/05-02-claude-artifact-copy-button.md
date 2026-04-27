@@ -15,7 +15,7 @@ Format (this goes in the clipboard):
 ```
 Please create an artifact that embeds this 3D agent:
 
-<iframe src="https://3dagent.vercel.app/api/agents/<id>/artifact.html?size=card&bg=transparent" style="width:100%;height:520px;border:0;background:transparent"></iframe>
+<iframe src="https://three.ws/api/agents/<id>/artifact.html?size=card&bg=transparent" style="width:100%;height:520px;border:0;background:transparent"></iframe>
 
 Show it prominently. Let me interact with it by posting window messages to the iframe: `{ __agent: '<id>', type: 'emote', payload: { trigger: 'celebrate', weight: 0.7 } }` for example. Types are `speak`, `emote`, `gesture`, `look-at`.
 ```

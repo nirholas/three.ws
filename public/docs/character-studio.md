@@ -4,7 +4,7 @@ Character Studio is a browser-based 3D avatar builder built into 3D Agent. It le
 
 The result is a GLB/VRM file that works with every 3D Agent feature: animations, the emotion system, AR viewing, and web embedding.
 
-**Access:** [https://3dagent.vercel.app/studio](https://3dagent.vercel.app/studio) → Avatar tab
+**Access:** [https://three.ws/studio](https://three.ws/studio) → Avatar tab
 
 Character Studio is open-source (MIT license) and built on the [M3-org CharacterStudio](https://github.com/M3-org/CharacterStudio) project.
 
@@ -12,7 +12,7 @@ Character Studio is open-source (MIT license) and built on the [M3-org Character
 
 ## Getting Started
 
-1. Go to [https://3dagent.vercel.app/studio](https://3dagent.vercel.app/studio)
+1. Go to [https://three.ws/studio](https://three.ws/studio)
 2. Click **Avatar** in the top navigation
 3. Click **Create Avatar** — Character Studio opens in a new panel
 4. Start customizing using the sections in the left panel

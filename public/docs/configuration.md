@@ -428,7 +428,7 @@ The default `cors.json` restricts GET requests to a specific list of origins:
   {
     "method": ["GET"],
     "origin": [
-      "https://3dagent.vercel.app",
+      "https://three.ws/",
       "http://localhost:*",
       "https://localhost:*"
     ],
@@ -454,7 +454,7 @@ The production configuration points to the hosted MCP endpoint and authenticates
 {
   "mcpServers": {
     "3d-agent": {
-      "url": "https://3dagent.vercel.app/api/mcp",
+      "url": "https://three.ws/api/mcp",
       "headers": {
         "Authorization": "Bearer <your-api-key>"
       }

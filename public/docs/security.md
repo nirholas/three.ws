@@ -80,7 +80,7 @@ Minimum `sandbox` permissions for the `<agent-3d>` web component:
 
 ```html
 <iframe
-  src="https://3dagent.vercel.app/a/8453/42/embed"
+  src="https://three.ws/a/8453/42/embed"
   sandbox="allow-scripts allow-same-origin allow-popups"
   allow="camera; microphone; xr-spatial-tracking"
 ></iframe>
@@ -104,10 +104,10 @@ Recommended CSP for pages embedding the web component:
 
 ```
 Content-Security-Policy:
-  script-src 'self' https://3dagent.vercel.app;
+  script-src 'self' https://three.ws/;
   worker-src blob:;
   img-src 'self' data: blob: https:;
-  connect-src 'self' https://3dagent.vercel.app https://api.anthropic.com;
+  connect-src 'self' https://three.ws/ https://api.anthropic.com;
 ```
 
 ### Supply-chain integrity for the bundle
@@ -117,7 +117,7 @@ Pin the exact bundle version and validate with Subresource Integrity:
 ```html
 <script
   type="module"
-  src="https://3dagent.vercel.app/agent-3d/1.5.1/agent-3d.js"
+  src="https://three.ws/agent-3d/1.5.1/agent-3d.js"
   integrity="sha384-…"
   crossorigin="anonymous"
 ></script>
@@ -131,7 +131,7 @@ Always verify the `origin` before trusting messages from the embed:
 
 ```js
 window.addEventListener('message', e => {
-  if (e.origin !== 'https://3dagent.vercel.app') return;
+  if (e.origin !== 'https://three.ws/') return;
   // handle message
 });
 ```
@@ -289,7 +289,7 @@ The `clientIp()` helper reads `x-vercel-forwarded-for` → `x-real-ip` → socke
 
 The API's CORS configuration allows cross-origin reads from a named set of trusted origins:
 
-- `https://3dagent.vercel.app`
+- `https://three.ws/`
 - `https://chat.sperax.io` and associated Sperax staging origins
 - `http://localhost:*` and `https://localhost:*` (development only)
 
@@ -326,7 +326,7 @@ Admin and write endpoints accept only same-site requests, enforced by checking t
 
 ### Bundle hosting
 
-Self-hosters should either pin the CDN URL with an SRI hash, or mirror the bundle on infrastructure they control. A CDN compromise at `3dagent.vercel.app` could serve a malicious bundle to users of the default CDN path. SRI hashes prevent execution of tampered files even if the CDN is compromised.
+Self-hosters should either pin the CDN URL with an SRI hash, or mirror the bundle on infrastructure they control. A CDN compromise at `three.ws` could serve a malicious bundle to users of the default CDN path. SRI hashes prevent execution of tampered files even if the CDN is compromised.
 
 ---
 
@@ -335,7 +335,7 @@ Self-hosters should either pin the CDN URL with an SRI hash, or mirror the bundl
 Found a vulnerability? Report it privately:
 
 - **Email:** hello@3d.irish
-- **Security policy:** [https://3dagent.vercel.app/.well-known/security.txt](https://3dagent.vercel.app/.well-known/security.txt)
+- **Security policy:** [https://three.ws/.well-known/security.txt](https://three.ws/.well-known/security.txt)
 
 We aim to acknowledge reports within 48 hours and ship patches for critical issues within 7 days. Please do not publicly disclose a vulnerability before a fix is available. We ask that you give us a reasonable window to address the issue before disclosure.
 

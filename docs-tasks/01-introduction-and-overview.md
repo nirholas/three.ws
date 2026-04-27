@@ -13,7 +13,7 @@ Developers and product builders discovering 3D Agent for the first time. They ma
 
 ### 1. What is 3D Agent?
 Describe 3D Agent as a browser-native platform for creating, hosting, and embedding interactive 3D AI agents. Emphasize:
-- Open-source (MIT licensed), hosted at https://3dagent.vercel.app
+- Open-source (MIT licensed), hosted at https://three.ws
 - Combines a WebGL 3D viewer (three.js, glTF 2.0 / GLB) with an integrated AI agent runtime
 - Agents have personality, memory, skills, and blockchain identity
 - Can be embedded anywhere as a web component (`<agent-3d>`) or iframe
@@ -61,7 +61,7 @@ Brief, honest comparison to adjacent tools:
 ### 7. Quick start preview
 Show the absolute minimum to get something on screen — a 2-3 line code snippet using the CDN:
 ```html
-<script type="module" src="https://cdn.3dagent.vercel.app/agent-3d.js"></script>
+<script type="module" src="https://cdn.three.wsagent-3d.js"></script>
 <agent-3d model="https://example.com/avatar.glb"></agent-3d>
 ```
 Then link to the full Quick Start guide.

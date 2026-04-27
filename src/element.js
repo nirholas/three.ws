@@ -700,7 +700,7 @@ class Agent3DElement extends HTMLElement {
 								);
 								return;
 							}
-							const _fp = ['3dagent.vercel.app', 'localhost'];
+							const _fp = ['three.ws', 'localhost'];
 							const _host = window.location.origin;
 							if (
 								!_host.startsWith('http://localhost') &&

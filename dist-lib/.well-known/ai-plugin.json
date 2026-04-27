@@ -9,9 +9,9 @@
 	},
 	"api": {
 		"type": "openapi",
-		"url": "https://3dagent.vercel.app/.well-known/openapi.yaml"
+		"url": "https://three.ws.well-known/openapi.yaml"
 	},
-	"logo_url": "https://3dagent.vercel.app/favicon.ico",
+	"logo_url": "https://three.wsfavicon.ico",
 	"contact_email": "hello@3d.irish",
-	"legal_info_url": "https://3dagent.vercel.app/"
+	"legal_info_url": "https://three.ws"
 }

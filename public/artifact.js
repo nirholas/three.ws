@@ -1,12 +1,12 @@
 // artifact.js — zero-dep 3D Agent viewer for Claude.ai Artifacts
 // Self-contained ES module. No imports from this repo.
 // Usage: <div data-agent-id="YOUR_ID"></div>
-//        <script type="module" src="https://3dagent.vercel.app/artifact.js"></script>
+//        <script type="module" src="https://three.ws/artifact.js"></script>
 
 import * as THREE from 'https://esm.sh/three@0.160.0';
 import { GLTFLoader } from 'https://esm.sh/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
 
-const BASE = 'https://3dagent.vercel.app';
+const BASE = 'https://three.ws/';
 const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const CSS = `

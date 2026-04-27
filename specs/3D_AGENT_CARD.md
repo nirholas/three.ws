@@ -2,7 +2,7 @@
 
 A strict superset of the [ERC-8004 registration card](https://eips.ethereum.org/EIPS/eip-8004#registration-v1) for agents whose primary embodiment is a 3D model. This is the JSON document the ERC-721 `tokenURI` resolves to on the Identity Registry.
 
-- **Type URI:** `https://3dagent.vercel.app/specs/3d-agent-card-v1`
+- **Type URI:** `https://three.ws/specs/3d-agent-card-v1`
 - **JSON Schema:** [/.well-known/3d-agent-card.schema.json](../public/.well-known/3d-agent-card.schema.json)
 - **Base spec:** ERC-8004 registration v1
 - **Companion specs:** [AGENT_MANIFEST.md](AGENT_MANIFEST.md) (rich off-chain bundle), [REPORT_FORMAT.md](../public/validation/REPORT_FORMAT.md) (validation reports)
@@ -51,7 +51,7 @@ A document conforms to 3D Agent Card v1 if:
 1. It validates against the JSON Schema linked above.
 2. Its `type` field includes both:
     - `https://eips.ethereum.org/EIPS/eip-8004#registration-v1`
-    - `https://3dagent.vercel.app/specs/3d-agent-card-v1`
+    - `https://three.ws/specs/3d-agent-card-v1`
 3. The bytes at `model.uri` hash to `model.sha256`.
 
 Consumers MUST treat any document missing point 3 as unverified, regardless of validation reports.
@@ -62,7 +62,7 @@ Consumers MUST treat any document missing point 3 as unverified, regardless of v
 {
 	"type": [
 		"https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
-		"https://3dagent.vercel.app/specs/3d-agent-card-v1"
+		"https://three.ws/specs/3d-agent-card-v1"
 	],
 	"name": "Coach Leo",
 	"description": "A football coach who reviews your form.",

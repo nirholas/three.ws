@@ -19,7 +19,7 @@ This is the payoff for Layer 6. Given an onchain agent id, any host — Lobehub,
 Accept any of:
 
 - `erc8004://<chain>:<onchain_id>`
-- `https://3dagent.vercel.app/a/<uuid>` (database-backed shortcut — still works, but redirects to the chain form if the agent is onchain)
+- `https://three.ws/a/<uuid>` (database-backed shortcut — still works, but redirects to the chain form if the agent is onchain)
 - A raw hex `onchain_id` with chain explicit in an attribute
 
 ### Resolver function — `src/agent-resolver.js` (extend)

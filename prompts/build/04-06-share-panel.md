@@ -36,7 +36,7 @@ Three tabs:
     - **iframe** — for static sites.
         ```html
         <iframe
-        	src="https://3dagent.vercel.app/agent/ID/embed"
+        	src="https://three.ws/agent/ID/embed"
         	width="400"
         	height="500"
         	frameborder="0"
@@ -45,7 +45,7 @@ Three tabs:
         ```
     - **web component** — for modern sites.
         ```html
-        <script type="module" src="https://3dagent.vercel.app/agent-3d.js"></script>
+        <script type="module" src="https://three.ws/agent-3d.js"></script>
         <agent-avatar agent-id="ID" height="500px"></agent-avatar>
         ```
     - **Markdown** — for GitHub READMEs (falls back to an image link to the OG card).

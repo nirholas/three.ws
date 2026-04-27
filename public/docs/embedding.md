@@ -27,7 +27,7 @@ The `<agent-3d>` custom element is the recommended approach for any page where y
 <!-- 1. Load the library (pinned version + SRI) -->
 <script
   type="module"
-  src="https://3dagent.vercel.app/agent-3d/1.5.1/agent-3d.js"
+  src="https://three.ws/agent-3d/1.5.1/agent-3d.js"
   integrity="sha384-…"
   crossorigin="anonymous"
 ></script>
@@ -244,7 +244,7 @@ For third-party pages, CMS platforms with strict CSP, or any context where you c
 
 ```html
 <iframe
-  src="https://3dagent.vercel.app/agent/{agent-id}/embed"
+  src="https://three.ws/agent/{agent-id}/embed"
   width="400"
   height="500"
   frameborder="0"
@@ -280,19 +280,19 @@ const agentId = 'a_abc123'; // must match the id in the iframe src
 // Handshake — send once after iframe load
 iframe.contentWindow.postMessage(
   { type: 'agent:hello', agentId },
-  'https://3dagent.vercel.app'
+  'https://three.ws/'
 );
 
 // Trigger an action
 iframe.contentWindow.postMessage(
   { type: 'agent:action', agentId, action: { type: 'speak', text: 'Hello!' } },
-  'https://3dagent.vercel.app'
+  'https://three.ws/'
 );
 
 // Liveness probe
 iframe.contentWindow.postMessage(
   { type: 'agent:ping', agentId, id: 'probe_1' },
-  'https://3dagent.vercel.app'
+  'https://three.ws/'
 );
 ```
 
@@ -301,7 +301,7 @@ iframe.contentWindow.postMessage(
 ```js
 window.addEventListener('message', e => {
   // Always verify origin before trusting the message
-  if (e.origin !== 'https://3dagent.vercel.app') return;
+  if (e.origin !== 'https://three.ws/') return;
 
   const { type, agentId } = e.data;
 
@@ -375,7 +375,7 @@ By default, any origin can embed any agent. To restrict which domains can embed 
 | `allowlist` | Only listed hosts can embed |
 | `denylist` | All hosts can embed except listed ones |
 
-Wildcard patterns (`*.example.com`) match all subdomains. When the iframe is blocked, it posts `{ type: 'agent:blocked', agentId }` to the parent and shows a link to open the agent directly on `3dagent.vercel.app`.
+Wildcard patterns (`*.example.com`) match all subdomains. When the iframe is blocked, it posts `{ type: 'agent:blocked', agentId }` to the parent and shows a link to open the agent directly on `three.ws`.
 
 You can also configure embed policy via Dashboard → Agent Settings → Embed Policy, or via `PUT /api/agents/{id}/embed-policy`.
 
@@ -390,14 +390,14 @@ Supported platforms include: Notion, Substack, Ghost, WordPress, Medium, and any
 ### Steps
 
 1. Publish your widget — make it public in Widget Studio.
-2. Get the widget's public URL: `https://3dagent.vercel.app/w/{widget-id}`
+2. Get the widget's public URL: `https://three.ws/w/{widget-id}`
 3. Paste the URL directly into Notion, Substack, etc.
 4. The platform fetches the oEmbed endpoint and renders a sandboxed iframe.
 
 ### oEmbed endpoint
 
 ```
-GET https://3dagent.vercel.app/api/widgets/oembed?url={widget-url}
+GET https://three.ws/api/widgets/oembed?url={widget-url}
 ```
 
 Optional parameters: `format=json|xml`, `maxwidth`, `maxheight`.
@@ -410,7 +410,7 @@ Widget pages include the oEmbed discovery link tag, so platforms that scan `<hea
 
 ```html
 <link rel="alternate" type="application/json+oembed"
-  href="https://3dagent.vercel.app/api/widgets/oembed?url=https://3dagent.vercel.app/w/{id}"
+  href="https://three.ws/api/widgets/oembed?url=https://three.ws/w/{id}"
   title="Widget name" />
 ```
 
@@ -425,7 +425,7 @@ Widget pages include the oEmbed discovery link tag, so platforms that scan `<hea
 The simplest approach is the hosted artifact endpoint, which returns a complete self-contained HTML document:
 
 ```
-GET https://3dagent.vercel.app/api/artifact?agent={agent-id}
+GET https://three.ws/api/artifact?agent={agent-id}
 ```
 
 | Parameter | Required | Notes |
@@ -446,12 +446,12 @@ For custom artifact HTML where you want to control the container:
 
 ```html
 <!-- In a Claude artifact -->
-<script src="https://3dagent.vercel.app/dist-lib/agent-3d.umd.cjs"></script>
+<script src="https://three.ws/dist-lib/agent-3d.umd.cjs"></script>
 
 <div id="agent3d" data-agent-id="your-agent-id"
      style="width: 100%; height: 400px;"></div>
 
-<script src="https://3dagent.vercel.app/src/artifact/entry.js"></script>
+<script src="https://three.ws/src/artifact/entry.js"></script>
 ```
 
 Or configure via JSON:
@@ -460,7 +460,7 @@ Or configure via JSON:
 <script type="application/json" id="agent3d-config">
 {
   "agentId": "your-agent-id",
-  "origin": "https://3dagent.vercel.app"
+  "origin": "https://three.ws/"
 }
 </script>
 ```
@@ -522,7 +522,7 @@ Load the library script once in your app's `index.html` or root layout:
 
 ```html
 <script type="module"
-  src="https://3dagent.vercel.app/agent-3d/1.5.1/agent-3d.js"
+  src="https://three.ws/agent-3d/1.5.1/agent-3d.js"
   crossorigin="anonymous">
 </script>
 ```
@@ -557,7 +557,7 @@ Also add the script tag to `pages/_document.js` or your root layout:
 
 ```jsx
 <Script
-  src="https://3dagent.vercel.app/agent-3d/1.5.1/agent-3d.js"
+  src="https://three.ws/agent-3d/1.5.1/agent-3d.js"
   type="module"
   strategy="beforeInteractive"
 />
@@ -569,7 +569,7 @@ Use an **Embed** block with the iframe method — Webflow's custom code can load
 
 ```html
 <script type="module"
-  src="https://3dagent.vercel.app/agent-3d/1.5.1/agent-3d.js">
+  src="https://three.ws/agent-3d/1.5.1/agent-3d.js">
 </script>
 ```
 

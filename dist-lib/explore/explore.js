@@ -216,7 +216,7 @@ function escapeAttr(s) {
 }
 
 // ─── Embed modal ──────────────────────────────────────────────────────────
-const LIB_CDN_URL = 'https://3dagent.vercel.app/agent-3d/latest/agent-3d.js';
+const LIB_CDN_URL = 'https://three.wsagent-3d/latest/agent-3d.js';
 
 function openEmbedModal({ chainId, agentId, name }) {
 	document.querySelector('.embed-modal')?.remove();
