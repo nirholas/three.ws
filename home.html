@@ -252,24 +252,15 @@
 					<div class="h-layer-orb h-layer-orb--mint"></div>
 				</div>
 				<div class="h-layer" style="--depth: 1" aria-hidden="true">
-					<div class="h-avatar-stage">
-						<div class="h-avatar-wrap h-avatar-wrap--ghost">
-							<model-viewer
-								class="h-avatar-viewer"
-								src="/avatars/cz.glb"
-								auto-rotate
-								auto-rotate-delay="0"
-								rotation-per-second="8deg"
-								interaction-prompt="none"
-								camera-controls="false"
-								disable-zoom
-								shadow-intensity="0"
-								exposure="0.6"
-								environment-image="neutral"
-								camera-orbit="0deg 75deg 3.5m"
-								field-of-view="30deg"
-								loading="lazy"
-							></model-viewer>
+					<div class="h-avatar-stage h-avatar-stage--trio">
+						<div class="h-avatar-wrap h-avatar-wrap--ghost h-avatar-wrap--trio">
+							<canvas id="act3-avatar-a" class="h-avatar-viewer h-avatar-viewer--tall"></canvas>
+						</div>
+						<div class="h-avatar-wrap h-avatar-wrap--ghost h-avatar-wrap--trio">
+							<canvas id="act3-avatar-b" class="h-avatar-viewer h-avatar-viewer--tall"></canvas>
+						</div>
+						<div class="h-avatar-wrap h-avatar-wrap--ghost h-avatar-wrap--trio">
+							<canvas id="act3-avatar-c" class="h-avatar-viewer h-avatar-viewer--tall"></canvas>
 						</div>
 					</div>
 				</div>
@@ -479,12 +470,13 @@
 					</div>
 					<nav class="h-footer-links" aria-label="Footer">
 						<a href="https://github.com/nirholas/3D" target="_blank" rel="noopener">GitHub</a>
-						<a href="/features">Features</a>
+						<a href="/create">Create</a>
+						<a href="/studio">Studio</a>
 						<a href="/widgets">Widgets</a>
+						<a href="/features">Features</a>
 						<a href="/discover">Discover</a>
+						<a href="/docs/widgets">Docs</a>
 						<a href="https://eips.ethereum.org/EIPS/eip-8004" target="_blank" rel="noopener">ERC-8004</a>
-						<a href="/legal/privacy">Privacy</a>
-						<a href="/legal/tos">Terms</a>
 					</nav>
 					<p class="h-footer-copy">Open source · MIT license</p>
 				</div>
@@ -571,10 +563,15 @@
 						requestAnimationFrame(tick);
 					})();
 
-					viewer.loadModel('/avatars/cz.glb').catch(console.error);
+					viewer.loadModel('/avatars/cz.glb')
+						.then(async () => {
+							await viewer.playClip('falling').catch(() => {});
+							setTimeout(() => viewer.playClip('dance').catch(() => {}), 2600);
+						})
+						.catch(console.error);
 
-					/* click → random manifest animation; non-looping ones return to idle */
-					const FUN = ['wave', 'dance', 'celebrate', 'jump', 'silly', 'rumba', 'capoeira', 'thriller'];
+					/* click → random manifest animation; non-looping ones return to dance */
+					const FUN = ['falling', 'wave', 'dance', 'celebrate', 'jump', 'rumba', 'capoeira', 'thriller', 'kiss', 'taunt', 'pray'];
 					let lastAnim = null;
 					canvas.style.cursor = 'pointer';
 					canvas.addEventListener('click', async () => {
@@ -585,7 +582,7 @@
 							await viewer.playClip(name);
 							const def = viewer._manifest.find(d => d.name === name);
 							if (def && !def.loop) {
-								setTimeout(() => viewer.playClip('idle').catch(() => {}), 2600);
+								setTimeout(() => viewer.playClip('dance').catch(() => {}), 2600);
 							}
 						} catch (_) {}
 					});
@@ -712,7 +709,9 @@
 					}
 
 					viewer.onClipsReady = buildButtons;
-					viewer.loadModel('/avatars/cz.glb').catch(console.error);
+					viewer.loadModel('/avatars/cz.glb')
+						.then(() => viewer.playClip('capoeira').catch(() => {}))
+						.catch(console.error);
 
 					if (stopBtn) {
 						stopBtn.addEventListener('click', () => {
@@ -728,7 +727,7 @@
 			(function () {
 				const ribbon = document.querySelector('[data-role="home-chain-ribbon"]');
 				if (!ribbon) return;
-				const labels = ['Solana','Base','Ethereum','Optimism','Polygon','Avalanche','Celo','Linea','zkSync','Scroll','Blast','Mode'];
+				const labels = ['Solana','Base','Ethereum','BSC','Arbitrum','Avalanche','Celo','Linea','zkSync','Scroll','Optimism','Mode'];
 				ribbon.replaceChildren(...labels.map(l => {
 					const s = document.createElement('span');
 					s.className = 'chain-pill';
@@ -755,6 +754,31 @@
 					cursor.style.transform = `translate(${cx}px,${cy}px) translate(-50%,-50%)`;
 					requestAnimationFrame(loop);
 				})();
+			})();
+
+			// Act 3 — animated trio of ghost avatars (robot, CZ, soldier)
+			(function () {
+				const configs = [
+					{ id: 'act3-avatar-a', src: '/animations/robotexpressive.glb', anim: 'capoeira' },
+					{ id: 'act3-avatar-b', src: '/avatars/cz.glb',                 anim: 'rumba'    },
+					{ id: 'act3-avatar-c', src: '/animations/soldier.glb',         anim: 'wave'     },
+				];
+
+				function whenReady(cb) {
+					if (window.Act2Viewer) return cb();
+					setTimeout(() => whenReady(cb), 60);
+				}
+
+				whenReady(() => {
+					configs.forEach(({ id, src, anim }) => {
+						const canvas = document.getElementById(id);
+						if (!canvas) return;
+						const viewer = new window.Act2Viewer(canvas, { fov: 22 });
+						viewer.loadModel(src)
+							.then(() => viewer.playClip(anim).catch(() => {}))
+							.catch(() => {});
+					});
+				});
 			})();
 
 			// Star field canvas
