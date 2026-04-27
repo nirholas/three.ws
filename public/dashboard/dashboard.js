@@ -2608,26 +2608,26 @@ async function renderAnimations(root) {
 	rightCol.appendChild(rh);
 
 	if (presets.length) {
-		const presetsHeader = document.createElement(‘div’);
-		presetsHeader.className = ‘presets-header’;
-		const pl = document.createElement(‘p’);
-		pl.className = ‘muted’;
-		pl.style.margin = ‘0’;
-		pl.textContent = ‘Presets’;
-		const addAllBtn = document.createElement(‘button’);
-		addAllBtn.className = ‘btn sec add-all-btn’;
-		addAllBtn.textContent = ‘Add all’;
-		addAllBtn.addEventListener(‘click’, addAllPresets);
+		const presetsHeader = document.createElement('div');
+		presetsHeader.className = 'presets-header';
+		const pl = document.createElement('p');
+		pl.className = 'muted';
+		pl.style.margin = '0';
+		pl.textContent = 'Presets';
+		const addAllBtn = document.createElement('button');
+		addAllBtn.className = 'btn sec add-all-btn';
+		addAllBtn.textContent = 'Add all';
+		addAllBtn.addEventListener('click', addAllPresets);
 		presetsHeader.appendChild(pl);
 		presetsHeader.appendChild(addAllBtn);
 		rightCol.appendChild(presetsHeader);
-		presetGridEl = document.createElement(‘div’);
-		presetGridEl.className = ‘preset-grid’;
+		presetGridEl = document.createElement('div');
+		presetGridEl.className = 'preset-grid';
 		rightCol.appendChild(presetGridEl);
 	} else if (presetsError) {
-		const pe = document.createElement(‘div’);
-		pe.className = ‘anim-inline-err’;
-		pe.style.marginBottom = ‘12px’;
+		const pe = document.createElement('div');
+		pe.className = 'anim-inline-err';
+		pe.style.marginBottom = '12px';
 		pe.textContent = `Couldn’t load presets (${presetsError}).`;
 		rightCol.appendChild(pe);
 	}
