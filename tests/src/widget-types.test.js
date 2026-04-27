@@ -36,12 +36,10 @@ describe('WIDGET_TYPES', () => {
 describe('isReady', () => {
 	it('returns true for ready widgets', () => {
 		expect(isReady('turntable')).toBe(true);
+		expect(isReady('animation-gallery')).toBe(true);
 		expect(isReady('talking-agent')).toBe(true);
 		expect(isReady('passport')).toBe(true);
-	});
-
-	it('returns false for pending widgets', () => {
-		expect(isReady('hotspot-tour')).toBe(false);
+		expect(isReady('hotspot-tour')).toBe(true);
 	});
 
 	it('returns false for unknown types', () => {

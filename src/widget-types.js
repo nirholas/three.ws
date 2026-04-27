@@ -35,7 +35,7 @@ export const WIDGET_TYPES = {
 	'hotspot-tour': {
 		label: 'Hotspot Tour',
 		desc: 'Annotated 3D scene with clickable points of interest.',
-		status: 'pending',
+		status: 'ready',
 		icon: '⌖',
 	},
 };

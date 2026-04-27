@@ -15,13 +15,13 @@ const WIDGET_TYPES = {
 	'animation-gallery': {
 		label: 'Animation Gallery',
 		desc: 'Click through every clip on a rigged avatar.',
-		status: 'pending',
+		status: 'ready',
 		icon: '▶',
 	},
 	'talking-agent': {
 		label: 'Talking Agent',
 		desc: 'Embodied chat — your agent on your site.',
-		status: 'pending',
+		status: 'ready',
 		icon: '◐',
 	},
 	passport: {
@@ -33,7 +33,7 @@ const WIDGET_TYPES = {
 	'hotspot-tour': {
 		label: 'Hotspot Tour',
 		desc: 'Annotated 3D scene with clickable POIs.',
-		status: 'pending',
+		status: 'ready',
 		icon: '⌖',
 	},
 };

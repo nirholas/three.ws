@@ -98,8 +98,10 @@ function buildCorsAllowlist(policy) {
 			out.add(`http://${lower}`);
 		}
 	}
-	// Always allow localhost in dev for the proxy (matches isAllowedOrigin default).
-	out.add(/^https?:\/\/localhost(:\d+)?$/);
+	// Allow localhost only outside production, matching isAllowedOrigin's default.
+	if (process.env.NODE_ENV !== 'production') {
+		out.add(/^https?:\/\/localhost(:\d+)?$/);
+	}
 	return Array.from(out);
 }
 

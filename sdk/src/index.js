@@ -34,7 +34,7 @@ export {
 	buildRegistrationJSON,
 	getIdentityRegistry,
 } from './erc8004/registry.js';
-export { IDENTITY_REGISTRY_ABI, REGISTRY_DEPLOYMENTS, agentRegistryId } from './erc8004/abi.js';
+export { IDENTITY_REGISTRY_ABI, REPUTATION_REGISTRY_ABI, VALIDATION_REGISTRY_ABI, REGISTRY_DEPLOYMENTS, agentRegistryId } from './erc8004/abi.js';
 export { PermissionsClient, PermissionError } from './permissions.js';
 
 // ─── Solana (SIWS auth, Metaplex identity, Solana Pay) ───────────────────────

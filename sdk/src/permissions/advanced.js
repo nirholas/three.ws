@@ -15,4 +15,4 @@ export {
 	isDelegationValid,
 	delegationToManifestEntry,
 	PermissionError,
-} from '../../../src/permissions/toolkit.js';
+} from './toolkit.js';

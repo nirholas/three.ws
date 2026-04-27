@@ -1,10 +1,11 @@
 // Transactional email via Resend. All sends are fire-and-forget — never await
 // them on the critical path. Import sendEmail and call without await.
 //
-// Required env: RESEND_API_KEY, EMAIL_FROM (e.g. "three.ws <noreply@3dagent.xyz>")
+// Required env: RESEND_API_KEY, EMAIL_FROM (e.g. "three.ws <noreply@three.ws>")
 // Optional env: EMAIL_REPLY_TO
 
 import { Resend } from 'resend';
+import { captureException } from './sentry.js';
 
 let _client = null;
 function client() {
@@ -12,9 +13,9 @@ function client() {
 	return _client;
 }
 
-const FROM    = process.env.EMAIL_FROM    || 'three.ws <noreply@3dagent.xyz>';
+const FROM    = process.env.EMAIL_FROM    || 'three.ws <noreply@three.ws>';
 const REPLY   = process.env.EMAIL_REPLY_TO || null;
-const APP_URL = process.env.APP_ORIGIN    || 'https://3dagent.xyz';
+const APP_URL = process.env.APP_ORIGIN    || 'https://three.ws';
 
 // ─── Low-level send ───────────────────────────────────────────────────────────
 
@@ -31,6 +32,9 @@ export async function sendEmail({ to, subject, html, text }) {
 		});
 	} catch (err) {
 		console.error('[email] send failed', err?.message);
+		captureException(err, { to, subject });
+		// Re-throw so callers can return 5xx instead of silently succeeding.
+		throw err;
 	}
 }
 

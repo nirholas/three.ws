@@ -19,7 +19,7 @@ export default wrap(async (req, res) => {
 		// Username-only registration — synthetic email kept internal, never shown.
 		const body = parse(usernameRegisterBody, raw);
 		const safe = body.username.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
-		email = `${safe}@users.3dagent.local`;
+		email = `${safe}@users.three.ws.local`;
 		displayName = body.username;
 		password = body.password;
 

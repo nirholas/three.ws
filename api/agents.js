@@ -14,6 +14,7 @@
 import { getSessionUser, authenticateBearer, extractBearer } from './_lib/auth.js';
 import { sql } from './_lib/db.js';
 import { cors, json, method, readJson, wrap, error } from './_lib/http.js';
+import { limits, clientIp } from './_lib/rate-limit.js';
 import { generateAgentWallet } from './_lib/agent-wallet.js';
 import { z } from 'zod';
 
@@ -157,6 +158,9 @@ export async function handleGetOne(req, res, id) {
 	if (!method(req, res, ['GET', 'PUT', 'PATCH', 'DELETE'])) return;
 
 	if (req.method === 'GET') {
+		const rl = await limits.publicIp(clientIp(req));
+		if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
+
 		const auth = await resolveAuth(req);
 		const [row] = await sql`
 			SELECT * FROM agent_identities WHERE id = ${id} AND deleted_at IS NULL
@@ -226,7 +230,14 @@ async function handleDelete(req, res, id, auth) {
 	if (!existing) return error(res, 404, 'not_found', 'agent not found');
 	if (existing.user_id !== auth.userId) return error(res, 403, 'forbidden', 'not your agent');
 
-	await sql`UPDATE agent_identities SET deleted_at = now() WHERE id = ${id}`;
+	// Soft-delete the agent and purge dependent records in a single transaction.
+	// agent_actions / agent_memories have ON DELETE CASCADE FKs but the soft-delete
+	// leaves the row in place, so we delete dependents explicitly.
+	await sql.transaction([
+		sql`UPDATE agent_identities SET deleted_at = now() WHERE id = ${id}`,
+		sql`DELETE FROM agent_actions  WHERE agent_id = ${id}`,
+		sql`DELETE FROM agent_memories WHERE agent_id = ${id}`,
+	]);
 	return json(res, 200, { ok: true });
 }
 

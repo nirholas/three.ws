@@ -11,6 +11,7 @@ import { cors, json, method, readJson, wrap, error } from './_lib/http.js';
 import { parse } from './_lib/validate.js';
 import { limits } from './_lib/rate-limit.js';
 import { recordEvent } from './_lib/usage.js';
+import { captureException } from './_lib/sentry.js';
 import { z } from 'zod';
 
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
@@ -199,13 +200,23 @@ export default wrap(async (req, res) => {
 			}),
 		});
 	} catch (err) {
-		console.warn('[chat] upstream fetch failed:', err.message);
+		captureException(err, { route: 'chat', stage: 'fetch' });
+		if (process.env.DEBUG === 'true') {
+			console.warn('[chat] upstream fetch failed:', err.message);
+		}
 		return error(res, 502, 'upstream_unavailable', 'chat backend unreachable');
 	}
 
 	if (!upstream.ok) {
 		const text = await upstream.text().catch(() => '');
-		console.warn('[chat] anthropic', upstream.status, text.slice(0, 400));
+		captureException(new Error(`anthropic upstream ${upstream.status}`), {
+			route: 'chat',
+			status: upstream.status,
+			body: text.slice(0, 400),
+		});
+		if (process.env.DEBUG === 'true') {
+			console.warn('[chat] anthropic', upstream.status, text.slice(0, 400));
+		}
 		const status = upstream.status === 429 ? 429 : 502;
 		return error(res, status, 'upstream_error', `chat backend returned ${upstream.status}`);
 	}

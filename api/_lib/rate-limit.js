@@ -78,6 +78,8 @@ export const limits = {
 	chatIp: (ip) => getLimiter('chat:ip', { limit: 40, window: '1 m' }).limit(ip),
 	checkName: (ip) => getLimiter('check-name:ip', { limit: 60, window: '1 m' }).limit(ip),
 	ensResolve: (ip) => getLimiter('ens:resolve:ip', { limit: 60, window: '1 m' }).limit(ip),
+	// Generic public read endpoints (explore, showcase, public agent fetch). 60/min per IP.
+	publicIp: (ip) => getLimiter('public:ip', { limit: 60, window: '1 m' }).limit(ip),
 	widgetWrite: (userId) => getLimiter('widget:write', { limit: 60, window: '1 m' }).limit(userId),
 	widgetRead: (ip) => getLimiter('widget:read', { limit: 600, window: '1 m' }).limit(ip),
 	// Per-widget visitor chat. Limit is dynamic — one bucket per (widgetId, perMinute).
@@ -109,6 +111,11 @@ export const limits = {
 		getLimiter('permissions:revoke', { limit: 20, window: '1 h' }).limit(userId),
 	apiKeyManage: (userId) =>
 		getLimiter('api-key:manage', { limit: 30, window: '1 h' }).limit(userId),
+	verifyEmailIp: (ip) => getLimiter('verify-email:ip', { limit: 10, window: '15 m' }).limit(ip),
+	forgotPasswordEmail: (email) =>
+		getLimiter('forgot-password:email', { limit: 3, window: '15 m' }).limit(email),
+	resendVerifyUser: (userId) =>
+		getLimiter('resend-verify:user', { limit: 2, window: '10 m' }).limit(userId),
 };
 
 // Trust only proxy headers that Vercel itself sets and signs. Naively reading

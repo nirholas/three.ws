@@ -50,7 +50,7 @@ export default wrap(async (req, res) => {
 	// 2. Domain + URI must match this deployment. Prevents signature replay from
 	//    a phishing site using a valid nonce issued here.
 	//    VERCEL_URL is the deployment-specific hostname Vercel injects automatically
-	//    (e.g. "3dagent-git-main-moomsi.vercel.app") — allows preview deployments.
+	//    (e.g. "three-ws-git-main-moomsi.vercel.app") — allows preview deployments.
 	const appOrigin = env.APP_ORIGIN;
 	const appHost = new URL(appOrigin).host;
 	const vercelHost = process.env.VERCEL_URL || null;

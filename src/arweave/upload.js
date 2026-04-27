@@ -11,8 +11,6 @@
  *   // → 'ar://abc123txId'
  */
 
-import { TurboFactory, EthereumSigner } from '@ardrive/turbo-sdk/web';
-
 /**
  * Upload a blob to Arweave via Turbo and return an ar:// URI.
  *
@@ -23,6 +21,10 @@ import { TurboFactory, EthereumSigner } from '@ardrive/turbo-sdk/web';
  */
 export async function uploadToArweave(data, ethSigner, opts = {}) {
 	const { name = 'upload', contentType = 'application/octet-stream' } = opts;
+
+	// Lazy import — keeps @ardrive/turbo-sdk out of the main bundle until called.
+	// Install when ready: npm install @ardrive/turbo-sdk
+	const { TurboFactory, EthereumSigner } = await import('@ardrive/turbo-sdk/web');
 
 	const privateKey = await _signerToPrivateKey(ethSigner);
 	const turboSigner = new EthereumSigner(privateKey);
@@ -54,6 +56,7 @@ export async function uploadToArweave(data, ethSigner, opts = {}) {
  * @returns {Promise<{winc: string}>}  Winston credits needed
  */
 export async function estimateUploadCost(bytes) {
+	const { TurboFactory } = await import('@ardrive/turbo-sdk/web');
 	const turbo = TurboFactory.unauthenticated();
 	return turbo.getUploadCosts({ bytes: [bytes] });
 }

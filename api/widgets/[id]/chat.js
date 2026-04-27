@@ -26,6 +26,7 @@ import { getSessionUser } from '../../_lib/auth.js';
 import { cors, json, method, readJson, wrap, error } from '../../_lib/http.js';
 import { parse } from '../../_lib/validate.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
+import { captureException } from '../../_lib/sentry.js';
 
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
 const DEFAULT_MODEL = 'claude-sonnet-4-6';
@@ -155,7 +156,10 @@ export default wrap(async (req, res) => {
 		writeSse(res, 'message', { reply: result.reply || '', actions: result.actions || [] });
 		writeSse(res, 'done', {});
 	} catch (err) {
-		console.warn('[widget-chat] dispatch failed', err?.message);
+		captureException(err, { route: 'widget-chat', stage: 'dispatch', widgetId });
+		if (process.env.DEBUG === 'true') {
+			console.warn('[widget-chat] dispatch failed', err?.message);
+		}
 		writeSse(res, 'error', { message: 'chat backend unavailable' });
 	} finally {
 		res.end();
@@ -215,7 +219,14 @@ async function callAnthropic({
 	});
 	if (!upstream.ok) {
 		const text = await upstream.text().catch(() => '');
-		console.warn('[widget-chat] anthropic', upstream.status, text.slice(0, 400));
+		captureException(new Error(`anthropic upstream ${upstream.status}`), {
+			route: 'widget-chat',
+			status: upstream.status,
+			body: text.slice(0, 400),
+		});
+		if (process.env.DEBUG === 'true') {
+			console.warn('[widget-chat] anthropic', upstream.status, text.slice(0, 400));
+		}
 		return {
 			reply: 'I had trouble thinking of a response. Try again in a moment.',
 			actions: [],

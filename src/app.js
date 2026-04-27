@@ -11,6 +11,9 @@ import { resolveURI, isDecentralizedURI } from './ipfs.js';
 import { saveRemoteGlbToAccount, getMe, readAuthHint } from './account.js';
 import { getWidget } from './widgets.js';
 import { mountAnimationGallery } from './widgets/animation-gallery.js';
+import { mountTalkingAgent } from './widgets/talking-agent.js';
+import { mountTurntable } from './widgets/turntable.js';
+import { mountHotspotTour } from './widgets/hotspot-tour.js';
 import queryString from 'query-string';
 
 // Agent system — the new primitive layer
@@ -853,7 +856,7 @@ class App {
 		queueMicrotask(() => this._applyWidgetConfig(cfg));
 
 		// Type-specific mount (runs after viewer + content come up).
-		queueMicrotask(() => this._mountWidgetByType(widget.type, cfg));
+		queueMicrotask(() => this._mountWidgetByType(widget.type, cfg, widget.id));
 
 		// Caption overlay — render once, simple.
 		if (cfg.caption) this._renderWidgetCaption(cfg.caption);
@@ -862,11 +865,25 @@ class App {
 		this._postToParent({ type: 'widget:ready', id: widget.id, widgetType: widget.type });
 	}
 
-	async _mountWidgetByType(type, cfg) {
+	async _mountWidgetByType(type, cfg, widgetId) {
 		try {
 			if (type === 'animation-gallery') {
 				const container = document.body;
 				const ctl = await mountAnimationGallery(this.viewer, cfg, container);
+				this._widgetController = ctl;
+			} else if (type === 'talking-agent') {
+				const ctl = await mountTalkingAgent(this.viewer, cfg, document.body, {
+					widgetId,
+					getSceneCtrl: () => this.sceneCtrl || window.VIEWER?.scene_ctrl || null,
+					protocol,
+					identity: this.identity,
+				});
+				this._widgetController = ctl;
+			} else if (type === 'turntable') {
+				const ctl = await mountTurntable(this.viewer, cfg);
+				this._widgetController = ctl;
+			} else if (type === 'hotspot-tour') {
+				const ctl = await mountHotspotTour(this.viewer, cfg, document.body);
 				this._widgetController = ctl;
 			}
 		} catch (e) {
