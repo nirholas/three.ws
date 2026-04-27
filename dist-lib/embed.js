@@ -20,7 +20,7 @@
 
 	var ORIGIN = (function () {
 		try { return new URL(document.currentScript.src).origin; }
-		catch (e) { return 'https://3dagent.vercel.app'; }
+		catch (e) { return 'https://three.ws'; }
 	})();
 
 	function attr(el, name, fallback) {

@@ -51355,7 +51355,7 @@ class ny extends HTMLElement {
                   );
                   return;
                 }
-                const d = ["3dagent.vercel.app", "localhost"], f = window.location.origin;
+                const d = ["three.ws", "localhost"], f = window.location.origin;
                 if (!f.startsWith("http://localhost") && !IP(f, u, d)) {
                   this._fail(
                     "embed_denied_origin",

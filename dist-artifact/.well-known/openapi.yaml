@@ -14,7 +14,7 @@ info:
     url: https://opensource.org/licenses/MIT
 
 servers:
-  - url: https://3dagent.vercel.app
+  - url: https://three.ws
 
 tags:
   - name: Auth

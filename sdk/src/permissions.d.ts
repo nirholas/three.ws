@@ -95,7 +95,7 @@ export class PermissionError extends Error {
 // ---------------------------------------------------------------------------
 
 export interface PermissionsClientOptions {
-	/** API base URL (default: https://3dagent.vercel.app) */
+	/** API base URL (default: https://three.ws) */
 	baseUrl?: string;
 	/** Bearer token for authenticated endpoints */
 	bearer?: string;

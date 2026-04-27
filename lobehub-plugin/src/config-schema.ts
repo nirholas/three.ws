@@ -7,7 +7,7 @@ export interface PluginSettings {
 	apiOrigin: string;
 }
 
-export const DEFAULT_API_ORIGIN = 'https://3dagent.vercel.app';
+export const DEFAULT_API_ORIGIN = 'https://three.ws';
 
 export const settingsSchema = {
 	agentId: {
