@@ -942,6 +942,57 @@
 				font-size: 12px;
 				min-height: 16px;
 			}
+			/* presets header row */
+			.presets-header {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				margin-bottom: 10px;
+			}
+			.add-all-btn {
+				padding: 4px 10px;
+				font-size: 12px;
+				border-radius: 7px;
+			}
+			/* drag handle + reorder indicators */
+			.drag-handle {
+				color: #555;
+				cursor: grab;
+				font-size: 14px;
+				padding: 0 4px;
+				user-select: none;
+				flex-shrink: 0;
+			}
+			.drag-handle:active {
+				cursor: grabbing;
+			}
+			.clip-row.dragging {
+				opacity: 0.4;
+			}
+			.clip-row.drop-above {
+				border-top: 2px solid var(--accent);
+			}
+			.clip-row.drop-below {
+				border-bottom: 2px solid var(--accent);
+			}
+			/* inline clip rename */
+			.clip-name {
+				cursor: pointer;
+			}
+			.clip-name:hover {
+				color: #fff;
+				text-decoration: underline dotted;
+			}
+			.clip-name-input {
+				padding: 2px 6px;
+				font-size: 13px;
+				width: 100%;
+				min-width: 80px;
+			}
+			/* clip-row grid: handle name source loop actions */
+			.clip-row {
+				grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+			}
 			.preview-stage {
 				width: 100%;
 				aspect-ratio: 1 / 1;

@@ -60,7 +60,12 @@ export default wrap(async (req, res) => {
 		return error(res, 404, 'not_found', `agent ${agentId} not found on chain ${chainId}`);
 	}
 	if (result.registry?.toLowerCase() !== registry.toLowerCase()) {
-		return error(res, 400, 'registry_mismatch', 'CAIP registry differs from canonical deployment');
+		return error(
+			res,
+			400,
+			'registry_mismatch',
+			'CAIP registry differs from canonical deployment',
+		);
 	}
 
 	const card = result.manifest || null;

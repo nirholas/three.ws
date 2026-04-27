@@ -127,7 +127,7 @@ function setupEmotionChips() {
 	wrap.addEventListener('click', (e) => {
 		const btn = e.target.closest('.emotion-chip');
 		if (!btn) return;
-		const trigger = btn.dataset.emotion;
+		const trigger = btn.getAttribute('data-emotion');
 		if (!trigger) return;
 
 		// Visual feedback (works even if agent hasn't booted yet)

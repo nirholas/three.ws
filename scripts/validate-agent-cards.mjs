@@ -26,7 +26,10 @@ const validate = ajv.compile(schema);
 const targets = [resolve(repoRoot, 'public/.well-known/agent-registration.json')];
 
 try {
-	const tracked = execSync('git ls-files "*.agent-card.json"', { cwd: repoRoot, encoding: 'utf8' })
+	const tracked = execSync('git ls-files "*.agent-card.json"', {
+		cwd: repoRoot,
+		encoding: 'utf8',
+	})
 		.split('\n')
 		.filter(Boolean)
 		.map((p) => resolve(repoRoot, p));

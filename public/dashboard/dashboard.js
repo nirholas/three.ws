@@ -1621,9 +1621,67 @@ function renderAgentRows(list, onchainAgents, dbAgents) {
 	}
 }
 
-// ── Billing placeholder ─────────────────────────────────────────────────────
-function renderBilling(root) {
-	root.innerHTML = `<h1>Plan &amp; usage</h1><p class="sub">You're on the <b>${esc(state.user.plan)}</b> plan.</p><div class="card muted">Detailed usage analytics coming soon.</div>`;
+// ── Billing & usage ─────────────────────────────────────────────────────────
+async function renderBilling(root) {
+	root.innerHTML = `
+		<h1>Plan &amp; usage</h1>
+		<p class="sub">You're on the <b>${esc(state.user.plan)}</b> plan.</p>
+		<div id="billing-body"><div class="muted">Loading…</div></div>
+	`;
+	const body = root.querySelector('#billing-body');
+	let data;
+	try {
+		const r = await fetch('/api/billing/summary', { credentials: 'include' });
+		if (r.ok) data = await r.json();
+	} catch {}
+	if (!data) { body.innerHTML = '<div class="card muted">Could not load usage data.</div>'; return; }
+	const { plan, quotas, usage } = data;
+	function fmtBytes(n) {
+		if (n >= 1e9) return (n / 1e9).toFixed(1) + ' GB';
+		if (n >= 1e6) return (n / 1e6).toFixed(1) + ' MB';
+		if (n >= 1e3) return Math.round(n / 1e3) + ' KB';
+		return n + ' B';
+	}
+	function meter(label, used, max, fmt = String) {
+		const pct = max ? Math.min(100, (used / max) * 100) : 0;
+		const c = pct > 90 ? '#ff5c5c' : pct > 70 ? '#f0c14b' : '#6c5cff';
+		return `<div style="margin-bottom:16px">
+			<div class="row" style="justify-content:space-between;margin-bottom:4px">
+				<span>${esc(label)}</span>
+				<span class="muted" style="font-size:12px">${esc(fmt(used))} / ${max ? esc(fmt(max)) : '∞'}</span>
+			</div>
+			<div style="height:6px;border-radius:3px;background:var(--border);overflow:hidden">
+				<div style="height:100%;width:${pct.toFixed(1)}%;background:${c};border-radius:3px;transition:width .4s"></div>
+			</div></div>`;
+	}
+	const C = { free: '#6b7280', pro: '#6c5cff', team: '#00e5a0', enterprise: '#f0c14b' };
+	const bc = C[plan] || '#6b7280';
+	body.innerHTML = `
+		<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
+			<div class="card">
+				<div class="row" style="justify-content:space-between;margin-bottom:16px">
+					<h3 style="margin:0">Current plan</h3>
+					<span style="padding:3px 12px;border-radius:999px;background:${bc}22;color:${bc};font-weight:600;font-size:13px;text-transform:capitalize">${esc(plan)}</span>
+				</div>
+				${meter('Avatars', usage.avatar_count, quotas?.max_avatars)}
+				${meter('Storage', usage.total_bytes, quotas?.max_total_bytes, fmtBytes)}
+				${meter('MCP calls (24 h)', usage.mcp_calls_24h, quotas?.mcp_calls_per_day)}
+			</div>
+			<div class="card">
+				<h3 style="margin:0 0 16px">Activity</h3>
+				<div class="row" style="justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+					<span class="muted">Agents</span><strong>${esc(String(usage.agent_count ?? 0))}</strong>
+				</div>
+				<div class="row" style="justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+					<span class="muted">LLM calls this month</span><strong>${esc(String(usage.llm_calls_month ?? 0))}</strong>
+				</div>
+				<div class="row" style="justify-content:space-between;padding:10px 0">
+					<span class="muted">MCP calls today</span><strong>${esc(String(usage.mcp_calls_24h ?? 0))}</strong>
+				</div>
+				${plan === 'free' ? `<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)"><a class="btn" href="mailto:nicholas.usd@gmail.com?subject=Upgrade" style="display:block;text-align:center">Upgrade plan →</a></div>` : ''}
+			</div>
+		</div>
+	`;
 }
 
 // ── Widgets ─────────────────────────────────────────────────────────────────
@@ -2550,18 +2608,26 @@ async function renderAnimations(root) {
 	rightCol.appendChild(rh);
 
 	if (presets.length) {
-		const pl = document.createElement('p');
-		pl.className = 'muted';
-		pl.style.margin = '0 0 8px';
-		pl.textContent = 'Presets';
-		rightCol.appendChild(pl);
-		presetGridEl = document.createElement('div');
-		presetGridEl.className = 'preset-grid';
+		const presetsHeader = document.createElement(‘div’);
+		presetsHeader.className = ‘presets-header’;
+		const pl = document.createElement(‘p’);
+		pl.className = ‘muted’;
+		pl.style.margin = ‘0’;
+		pl.textContent = ‘Presets’;
+		const addAllBtn = document.createElement(‘button’);
+		addAllBtn.className = ‘btn sec add-all-btn’;
+		addAllBtn.textContent = ‘Add all’;
+		addAllBtn.addEventListener(‘click’, addAllPresets);
+		presetsHeader.appendChild(pl);
+		presetsHeader.appendChild(addAllBtn);
+		rightCol.appendChild(presetsHeader);
+		presetGridEl = document.createElement(‘div’);
+		presetGridEl.className = ‘preset-grid’;
 		rightCol.appendChild(presetGridEl);
 	} else if (presetsError) {
-		const pe = document.createElement('div');
-		pe.className = 'anim-inline-err';
-		pe.style.marginBottom = '12px';
+		const pe = document.createElement(‘div’);
+		pe.className = ‘anim-inline-err’;
+		pe.style.marginBottom = ‘12px’;
 		pe.textContent = `Couldn’t load presets (${presetsError}).`;
 		rightCol.appendChild(pe);
 	}

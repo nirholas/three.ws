@@ -929,6 +929,8 @@
 								el.textContent = 'Dashboard';
 								el.href = '/dashboard';
 							}
+							const myAgents = document.getElementById('nav-my-agents');
+							if (myAgents) myAgents.hidden = false;
 							const heroSignin = document.getElementById('hero-signin-hint');
 							if (heroSignin) heroSignin.hidden = true;
 						}
