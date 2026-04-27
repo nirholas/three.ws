@@ -196,13 +196,26 @@ export const CHAIN_META = {
 	},
 };
 
-export const DEFAULT_CHAIN_ID = 97; // BSC Testnet
+export const DEFAULT_CHAIN_ID = 8453; // Base mainnet
 
 /** @returns {number[]} All chain IDs where both CHAIN_META and REGISTRY_DEPLOYMENTS exist. */
 export function supportedChainIds() {
 	return Object.keys(CHAIN_META)
 		.map(Number)
 		.filter((id) => REGISTRY_DEPLOYMENTS[id]);
+}
+
+/**
+ * Same set as supportedChainIds() but split into mainnets and testnets.
+ * @returns {{ mainnets: number[], testnets: number[] }}
+ */
+export function supportedChainIdsGrouped() {
+	const mainnets = [];
+	const testnets = [];
+	for (const id of supportedChainIds()) {
+		(CHAIN_META[id]?.testnet ? testnets : mainnets).push(id);
+	}
+	return { mainnets, testnets };
 }
 
 /** @param {number} chainId */

@@ -6,6 +6,59 @@
 	font-family: inherit;
 }
 
+/* ── Chain select + deploy row ───────────────────────────────────────────── */
+
+.deploy-chain-row {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5em;
+	flex-wrap: wrap;
+}
+
+.deploy-chain-select {
+	padding: 0.4em 0.65em;
+	border: 1.5px solid #6c63ff;
+	border-radius: 6px;
+	background: transparent;
+	color: #a89fff;
+	font-family: inherit;
+	font-size: 0.82rem;
+	font-weight: 500;
+	cursor: pointer;
+	transition:
+		background 0.15s,
+		border-color 0.15s,
+		color 0.15s;
+	max-width: 12em;
+}
+
+.deploy-chain-select:hover:not(:disabled) {
+	background: #6c63ff15;
+	color: #fff;
+	border-color: #a89fff;
+}
+
+.deploy-chain-select:focus-visible {
+	outline: 2px solid #a89fff;
+	outline-offset: 2px;
+}
+
+.deploy-chain-select:disabled {
+	opacity: 0.6;
+	cursor: progress;
+}
+
+.deploy-chain-select optgroup {
+	color: #888;
+	font-style: italic;
+}
+
+.deploy-chain-select option {
+	background: #14141c;
+	color: #e6e6e6;
+	font-style: normal;
+}
+
 /* ── Deploy button ───────────────────────────────────────────────────────── */
 
 .deploy-btn {
@@ -153,6 +206,22 @@
 /* ── Light-mode overrides ────────────────────────────────────────────────── */
 
 @media (prefers-color-scheme: light) {
+	.deploy-chain-select {
+		border-color: #4f46e5;
+		color: #4f46e5;
+	}
+
+	.deploy-chain-select:hover:not(:disabled) {
+		background: #4f46e511;
+		color: #312e81;
+		border-color: #4f46e5;
+	}
+
+	.deploy-chain-select option {
+		background: #fff;
+		color: #1e1b4b;
+	}
+
 	.deploy-btn {
 		border-color: #4f46e5;
 		color: #4f46e5;
