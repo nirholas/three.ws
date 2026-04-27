@@ -88,7 +88,7 @@
 			},
 			"dest": "/agent-embed.html"
 		},
-		{ "src": "/agent/([^/]+)", "dest": "/agent-home.html" },
+		{ "src": "/agent/([^/]+)", "dest": "/api/agent-page?id=$1" },
 		{ "src": "/agent", "dest": "/agent-home.html" },
 
 		{ "src": "/api/widgets/oembed", "dest": "/api/widgets/oembed" },
@@ -201,7 +201,8 @@
 		{ "src": "/features/(.*)", "dest": "/features/$1" },
 		{ "src": "/create", "dest": "/create.html" },
 		{ "src": "/create/", "dest": "/create.html" },
-		{ "src": "/home", "dest": "/home.html" },
+		{ "src": "/", "dest": "/home.html" },
+		{ "src": "/home", "status": 301, "headers": { "Location": "/" } },
 		{ "src": "/explore", "status": 301, "headers": { "Location": "/discover" } },
 		{ "src": "/explore/", "status": 301, "headers": { "Location": "/discover" } },
 		{

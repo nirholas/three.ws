@@ -312,6 +312,10 @@ export class Viewer {
 		const target = new Vector3(bbCenter.x, focusY, bbCenter.z);
 		const pos = new Vector3(bbCenter.x + dist * 0.12, focusY, bbCenter.z + dist);
 
+		const bias = this._panelBiasY(dist);
+		target.y -= bias;
+		pos.y -= bias;
+
 		if (animate) {
 			this._tweenCamera(pos, target, durationMs);
 		} else {
@@ -320,6 +324,17 @@ export class Viewer {
 			this.controls.update();
 			this.invalidate();
 		}
+	}
+
+	/** Returns the Y world-space shift needed to keep the model above the animation panel. */
+	_panelBiasY(dist) {
+		if (!this._animPanelEl) return 0;
+		const panelH = this._animPanelEl.offsetHeight;
+		const bottom = parseFloat(getComputedStyle(this._animPanelEl).bottom) || 0;
+		const canvasH = this.renderer.domElement.clientHeight;
+		if (!canvasH) return 0;
+		const frac = (panelH + bottom) / canvasH;
+		return frac * Math.tan((this.defaultCamera.fov / 2) * (Math.PI / 180)) * dist;
 	}
 
 	// Smooth ease-out camera tween. Both position and OrbitControls.target
@@ -605,6 +620,19 @@ export class Viewer {
 		// Attach external animation manager to the new content
 		this.animationManager.attach(this.content);
 		this._setupAnimationPanel();
+
+		// Shift camera down to offset the animation panel overlay so the model
+		// isn't clipped by the panel on first load and after each model swap.
+		const panelBias = this._panelBiasY(dist);
+		if (panelBias > 0) {
+			this.controls.target.y -= panelBias;
+			this.defaultCamera.position.y -= panelBias;
+			if (this._pendingReveal) {
+				this._pendingReveal.framedPos.y -= panelBias;
+				this._pendingReveal.target.y -= panelBias;
+			}
+			this.controls.update();
+		}
 
 		this.updateLights();
 		this.updateGUI();
