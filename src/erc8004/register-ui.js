@@ -1400,7 +1400,7 @@ export class RegisterUI {
 		})
 			.then(async (res) => {
 				if (res.count === 0) {
-					list.innerHTML = `<div class="erc8004-muted">No agents registered on this chain yet. <a class="erc8004-link" data-role="goto-create">Create one →</a> or <a class="erc8004-link" href="/explore" target="_blank" rel="noopener">browse other on-chain agents ↗</a>.</div>`;
+					list.innerHTML = `<div class="erc8004-muted">No agents registered on this chain yet. <a class="erc8004-link" data-role="goto-create">Create one →</a> or <a class="erc8004-link" href="/discover" target="_blank" rel="noopener">browse other on-chain agents ↗</a>.</div>`;
 					list.querySelector('[data-role="goto-create"]').addEventListener(
 						'click',
 						(e) => {
@@ -2097,7 +2097,7 @@ export class RegisterUI {
 			<h3 class="erc8004-h3">Agent Search</h3>
 			<p class="erc8004-p">
 				Look up agents on <b>${chainName}</b> by ID, wallet address, ENS name, tx hash, or <code>agent://</code> URI.
-				Need cross-chain? <a class="erc8004-link" href="/explore" target="_blank" rel="noopener">Open /explore ↗</a>.
+				Need cross-chain? <a class="erc8004-link" href="/discover" target="_blank" rel="noopener">Open /discover ↗</a>.
 			</p>
 			<div class="erc8004-row">
 				<input class="erc8004-input" name="q" placeholder="Agent ID · 0x address · ENS · tx hash · agent://chain/id" />
@@ -2155,7 +2155,7 @@ export class RegisterUI {
 					if (uriChain !== this.selectedChainId) {
 						out.innerHTML = `<div class="erc8004-log-error">
 							This agent is on <b>${esc(CHAIN_META[uriChain]?.name || `Chain ${uriChain}`)}</b>, not the selected chain.
-							<a class="erc8004-link" href="/explore?q=${encodeURIComponent(raw)}" target="_blank" rel="noopener">Open in /explore ↗</a>
+							<a class="erc8004-link" href="/discover?q=${encodeURIComponent(raw)}" target="_blank" rel="noopener">Open in /discover ↗</a>
 						</div>`;
 						return;
 					}
@@ -2191,7 +2191,7 @@ export class RegisterUI {
 					out.innerHTML = `
 						<div class="erc8004-muted">
 							No agents resolved on ${chainName} for <code>${esc(raw)}</code>.
-							<a class="erc8004-link" href="/explore?q=${encodeURIComponent(raw)}" target="_blank" rel="noopener">Try across all chains ↗</a>
+							<a class="erc8004-link" href="/discover?q=${encodeURIComponent(raw)}" target="_blank" rel="noopener">Try across all chains ↗</a>
 						</div>
 					`;
 					return;

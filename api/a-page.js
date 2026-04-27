@@ -78,7 +78,7 @@ function notFound(res, reason) {
 	res.end(
 		`<!doctype html><meta charset="utf-8"><title>Agent not found — 3D Agent</title>
 <style>body{font-family:Inter,system-ui,sans-serif;background:#0a0a0a;color:#e0e0e0;display:grid;place-items:center;min-height:100vh;margin:0}main{text-align:center;padding:2rem;max-width:520px}a{color:#8b5cf6}</style>
-<main><h1>Agent not found</h1><p>${escapeHtml(reason)}</p><p><a href="/explore">Browse all on-chain agents</a> · <a href="/">Open viewer</a></p></main>`,
+<main><h1>Agent not found</h1><p>${escapeHtml(reason)}</p><p><a href="/discover">Browse all on-chain agents</a> · <a href="/">Open viewer</a></p></main>`,
 	);
 }
 
@@ -121,9 +121,9 @@ function renderHtml(p) {
 	<meta property="fc:frame:button:1" content="View 3D">
 	<meta property="fc:frame:button:1:action" content="link">
 	<meta property="fc:frame:button:1:target" content="${escapeAttr(p.viewerUrl)}">
-	<meta property="fc:frame:button:2" content="Explore">
+	<meta property="fc:frame:button:2" content="Discover">
 	<meta property="fc:frame:button:2:action" content="link">
-	<meta property="fc:frame:button:2:target" content="${escapeAttr(p.origin)}/explore">
+	<meta property="fc:frame:button:2:target" content="${escapeAttr(p.origin)}/discover">
 
 	<link rel="canonical" href="${escapeAttr(p.pageUrl)}">
 	<link rel="alternate" type="application/json+oembed" href="${escapeAttr(p.oembedJs)}" title="${t}">
@@ -144,7 +144,7 @@ function renderHtml(p) {
 		<div class="shell">
 			<h1>${t}</h1>
 			<p>${d}</p>
-			<p><a href="${escapeAttr(p.embedUrl)}">Open 3D viewer</a> · <a href="/explore">Browse agents</a></p>
+			<p><a href="${escapeAttr(p.embedUrl)}">Open 3D viewer</a> · <a href="/discover">Browse agents</a></p>
 		</div>
 	</noscript>
 	<div class="shell" id="loading" aria-live="polite">

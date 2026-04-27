@@ -176,7 +176,7 @@ Open **http://localhost:3000** for the landing page, or **http://localhost:3000/
 │   ├── cron/                                  → erc8004-crawl, index-delegations, run-dca, run-subscriptions
 │   ├── animations/, tts/, pinning/, api-keys/ → Supporting services
 │   └── _lib/                                  → Shared server helpers + `schema.sql`
-├── public/                 → Static subapps (studio, dashboard, widgets-gallery, agent, artifact, cz, discover, explore, validation, hydrate, lobehub, wallet, login.html, register.html) and default avatars
+├── public/                 → Static subapps (studio, dashboard, widgets-gallery, agent, artifact, cz, my-agents, explore, validation, hydrate, lobehub, wallet, login.html, register.html) and default avatars
 ├── contracts/              → Smart contract sources
 ├── sdk/, lobehub-plugin/   → Embedding SDK + Lobehub plugin
 ├── scripts/                → Build, publish, icon, animation scripts
@@ -257,7 +257,7 @@ Routing is driven by [`vercel.json`](vercel.json). High-level map:
 | `/studio`, `/widgets`, `/widgets/...`                            | Widget Studio + gallery                  |
 | `/w/<id>`                                                        | Rendered widget page (with OG + oEmbed)  |
 | `/dashboard`, `/dashboard/...`                                   | Authenticated dashboard (storage, usage) |
-| `/discover`, `/explore`                                          | Directories                              |
+| `/my-agents`, `/discover`                                        | Directories                              |
 | `/artifact`, `/hydrate`, `/cz`, `/validation`, `/lobehub/iframe` | Standalone subapps                       |
 | `/login`, `/register`                                            | Auth pages                               |
 | `/docs/widgets`                                                  | Widgets documentation                    |

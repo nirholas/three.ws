@@ -1,5 +1,5 @@
 /**
- * /explore — ERC-8004 agent marketplace grid.
+ * /discover — ERC-8004 agent marketplace grid.
  *
  * Pulls from GET /api/explore. Filters + infinite pagination via cursor.
  * Clicking a card opens the on-chain token page on the source chain's
