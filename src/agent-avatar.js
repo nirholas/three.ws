@@ -162,6 +162,8 @@ export class AgentAvatar {
 		// Morph target current values (lerped each frame)
 		this._morphCurrent = {};
 		this._morphTarget = {};
+		// Cached list of meshes with morph targets — rebuilt on attach() to avoid per-frame traversal
+		this._morphMeshes = null;
 
 		// Listeners stored so we can detach later
 		this._listeners = [];
@@ -175,6 +177,12 @@ export class AgentAvatar {
 
 	/** Call after viewer.setContent() loads the avatar model */
 	attach() {
+		// Reset emotion to neutral so re-attaching a previously emotional avatar starts clean
+		this._emotion = { neutral: 1.0, concern: 0, celebration: 0, patience: 0, curiosity: 0, empathy: 0 };
+
+		// Build the morph mesh cache once instead of traversing every frame
+		this._buildMorphCache();
+
 		// Hook into the viewer's per-frame loop
 		if (!this.viewer._afterAnimateHooks) this.viewer._afterAnimateHooks = [];
 		this.viewer._afterAnimateHooks.push(this._tickBound);
@@ -530,6 +538,8 @@ export class AgentAvatar {
 			// Decay any residual follow-mode values if mode was switched off
 			this._keystrokePitch = 0;
 			this._keystrokeYaw = _lerp(this._keystrokeYaw, 0, dt * 2.0);
+			this._mouseGaze.x = _lerp(this._mouseGaze.x, 0, dt * 2.0);
+			this._mouseGaze.y = _lerp(this._mouseGaze.y, 0, dt * 2.0);
 		}
 		this._currentLean = _lerp(this._currentLean, this._targetLean, dt * 2.0);
 
@@ -547,13 +557,21 @@ export class AgentAvatar {
 		if (!(name in this._morphCurrent)) this._morphCurrent[name] = 0;
 	}
 
+	/** Collect all meshes with morph targets once per content load. */
+	_buildMorphCache() {
+		this._morphMeshes = [];
+		if (!this.viewer?.content) return;
+		this.viewer.content.traverse((node) => {
+			if (node.isMesh && node.morphTargetDictionary && node.morphTargetInfluences) {
+				this._morphMeshes.push(node);
+			}
+		});
+	}
+
 	/** Lerp all tracked morph target influences toward their targets */
 	_lerpMorphTargets(speed) {
-		if (!this.viewer?.content) return;
-
-		this.viewer.content.traverse((node) => {
-			if (!node.isMesh || !node.morphTargetDictionary || !node.morphTargetInfluences) return;
-
+		if (!this._morphMeshes?.length) return;
+		for (const node of this._morphMeshes) {
 			for (const [name, target] of Object.entries(this._morphTarget)) {
 				const idx = node.morphTargetDictionary[name];
 				if (idx === undefined) continue;
@@ -562,7 +580,7 @@ export class AgentAvatar {
 				node.morphTargetInfluences[idx] = next;
 				this._morphCurrent[name] = next;
 			}
-		});
+		}
 	}
 
 	// ── Head Transform ────────────────────────────────────────────────────────
@@ -712,17 +730,17 @@ export class AgentAvatar {
 	 */
 	_analyzeSentiment(text) {
 		const lower = text.toLowerCase();
-		const words = lower.split(/\s+/);
-		const total = Math.max(words.length, 1);
+		const wordSet = new Set(lower.split(/\s+/));
+		const total = Math.max(wordSet.size, 1);
 
 		let valence = 0;
 		let arousal = 0;
 
-		// Score each emotion bucket
+		// Score each emotion bucket — single words use Set for O(1); phrases fall back to includes
 		for (const [emotion, keywords] of Object.entries(VOCAB)) {
 			let hits = 0;
 			for (const kw of keywords) {
-				if (lower.includes(kw)) hits++;
+				if (kw.includes(' ') ? lower.includes(kw) : wordSet.has(kw)) hits++;
 			}
 			if (!hits) continue;
 			const score = Math.min((hits / total) * 3.0, 1.0);
@@ -752,17 +770,6 @@ export class AgentAvatar {
 		this._listeners.push([type, handler]);
 	}
 
-	_selectDominantEmotion() {
-		let max = 0,
-			dominant = 'neutral';
-		for (const [key, val] of Object.entries(this._emotion)) {
-			if (val > max) {
-				max = val;
-				dominant = key;
-			}
-		}
-		return dominant;
-	}
 }
 
 function _lerp(a, b, t) {

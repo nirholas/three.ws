@@ -102,7 +102,7 @@ export class Viewer {
 		this.scene.background = this.backgroundColor;
 
 		const fov = options.preset === Preset.ASSET_GENERATOR ? (0.8 * 180) / Math.PI : 60;
-		const aspect = el.clientWidth / el.clientHeight;
+		const aspect = el.clientHeight > 0 ? el.clientWidth / el.clientHeight : 1;
 		this.defaultCamera = new PerspectiveCamera(fov, aspect, 0.01, 1000);
 		this.activeCamera = this.defaultCamera;
 		this.scene.add(this.defaultCamera);
@@ -296,15 +296,21 @@ export class Viewer {
 	frameContent({ animate = false, durationMs = 600 } = {}) {
 		if (!this.content || !this.defaultCamera || !this.controls) return;
 		const box = new Box3().setFromObject(this.content);
-		const size = box.getSize(new Vector3()).length();
+		const bbSize = box.getSize(new Vector3());
+		const size = bbSize.length();
 		if (!isFinite(size) || size === 0) return;
-		const center = box.getCenter(new Vector3());
+		const bbCenter = box.getCenter(new Vector3());
 
-		const target = center.clone();
-		const pos = center.clone();
-		pos.x += size / 4.0;
-		pos.y += size / 8.0;
-		pos.z += size * 0.85;
+		const vFovRad = this.defaultCamera.fov * (Math.PI / 180);
+		const aspect = Math.max(this.defaultCamera.aspect, 0.01);
+		const hFovRad = 2 * Math.atan(Math.tan(vFovRad / 2) * aspect);
+		const distV = (bbSize.y / 2 * 1.15) / Math.tan(vFovRad / 2);
+		const distH = (bbSize.x / 2 * 1.15) / Math.tan(hFovRad / 2);
+		const dist = Math.max(distV, distH);
+
+		const focusY = bbCenter.y + bbSize.y * 0.1;
+		const target = new Vector3(bbCenter.x, focusY, bbCenter.z);
+		const pos = new Vector3(bbCenter.x + dist * 0.12, focusY, bbCenter.z + dist);
 
 		if (animate) {
 			this._tweenCamera(pos, target, durationMs);
@@ -420,6 +426,7 @@ export class Viewer {
 
 	resize() {
 		const { clientHeight, clientWidth } = this.el;
+		if (clientWidth === 0 || clientHeight === 0) return;
 
 		this.defaultCamera.aspect = clientWidth / clientHeight;
 		this.defaultCamera.updateProjectionMatrix();
@@ -524,16 +531,30 @@ export class Viewer {
 		this.defaultCamera.far = size * 100;
 		this.defaultCamera.updateProjectionMatrix();
 
+		// Compute exact camera distance to fit the full bounding box using FOV math.
+		// This replaces magic multipliers and correctly accounts for aspect ratio.
+		const bbSize = box.getSize(new Vector3());
+		const vFovRad = this.defaultCamera.fov * (Math.PI / 180);
+		const aspect = Math.max(this.defaultCamera.aspect, 0.01);
+		const hFovRad = 2 * Math.atan(Math.tan(vFovRad / 2) * aspect);
+		const distV = (bbSize.y / 2 * 1.15) / Math.tan(vFovRad / 2);
+		const distH = (bbSize.x / 2 * 1.15) / Math.tan(hFovRad / 2);
+		const dist = Math.max(distV, distH);
+
+		// Orbital focus: 10% above bbox centre — upper-chest framing for humanoids.
+		const focusY = bbSize.y * 0.1;
+
 		// Final framed camera (the position the user should end up at).
 		const framedPos = new Vector3();
 		if (this.options.cameraPosition) {
 			framedPos.fromArray(this.options.cameraPosition);
 		} else {
-			framedPos.copy(center);
-			framedPos.x += size / 4.0;
-			framedPos.y += size / 8.0;
-			framedPos.z += size * 0.85;
+			// 3/4 angle: slight x offset for depth; z is the FOV-derived distance.
+			framedPos.set(dist * 0.12, focusY, dist);
 		}
+		const orbitalTarget = this.options.cameraPosition
+			? new Vector3()
+			: new Vector3(0, focusY, 0);
 
 		// In kiosk / embed modes (and on subsequent loads), snap straight to
 		// the framed position. On the first interactive load we tween in from
@@ -543,17 +564,17 @@ export class Viewer {
 
 		if (skipReveal) {
 			this.defaultCamera.position.copy(framedPos);
-			this.defaultCamera.lookAt(this.options.cameraPosition ? new Vector3() : center);
+			this.defaultCamera.lookAt(orbitalTarget);
 		} else {
 			// Start ~40% wider and slightly higher, then ease into the framed pose.
 			const startPos = new Vector3()
-				.subVectors(framedPos, center)
+				.subVectors(framedPos, orbitalTarget)
 				.multiplyScalar(1.4)
-				.add(center);
+				.add(orbitalTarget);
 			startPos.y += size / 8;
 			this.defaultCamera.position.copy(startPos);
-			this.defaultCamera.lookAt(center);
-			this._pendingReveal = { framedPos: framedPos.clone(), target: center.clone() };
+			this.defaultCamera.lookAt(orbitalTarget);
+			this._pendingReveal = { framedPos: framedPos.clone(), target: orbitalTarget.clone() };
 			this._hasRevealed = true;
 		}
 

@@ -108,7 +108,14 @@ export class AnimationManager {
 	async loadAnimation(name, url, opts = {}) {
 		if (this.clips.has(name)) return this.clips.get(name);
 
-		const res = await fetch(url);
+		const controller = new AbortController();
+		const timeoutId = setTimeout(() => controller.abort(), 10_000);
+		let res;
+		try {
+			res = await fetch(url, { signal: controller.signal });
+		} finally {
+			clearTimeout(timeoutId);
+		}
 		if (!res.ok) throw new Error(`HTTP ${res.status} loading animation ${name}`);
 		const json = await res.json();
 		const clip = AnimationClip.parse(json);
@@ -131,16 +138,20 @@ export class AnimationManager {
 	 * Failed clips are logged and added to _failed; they do not throw.
 	 */
 	async loadAll() {
-		await Promise.all(
-			this._animationDefs.map(async (def) => {
+		const CONCURRENCY = 4;
+		const queue = [...this._animationDefs];
+		const worker = async () => {
+			let def;
+			while ((def = queue.shift())) {
 				try {
 					await this.loadAnimation(def.name, def.url, { loop: def.loop !== false });
 				} catch (err) {
 					console.warn(`[AnimationManager] failed to load "${def.name}":`, err.message);
 					this._failed.add(def.name);
 				}
-			}),
-		);
+			}
+		};
+		await Promise.all(Array.from({ length: CONCURRENCY }, worker));
 	}
 
 	/**
@@ -185,7 +196,7 @@ export class AnimationManager {
 		action.reset().fadeIn(0.01).play();
 		this.currentAction = action;
 		this.currentName = name;
-		this.onChange?.(name);
+		try { this.onChange?.(name); } catch (e) { console.warn('[AnimationManager] onChange threw:', e); }
 	}
 
 	/**
@@ -195,6 +206,7 @@ export class AnimationManager {
 	 * @param {number} [duration] seconds
 	 */
 	async crossfadeTo(name, duration = DEFAULT_CROSSFADE) {
+		duration = Math.max(0, Math.min(duration, 5));
 		if (name === this.currentName) return;
 		const ready = await this.ensureLoaded(name);
 		if (!ready) {
@@ -212,7 +224,7 @@ export class AnimationManager {
 		}
 		this.currentAction = next;
 		this.currentName = name;
-		this.onChange?.(name);
+		try { this.onChange?.(name); } catch (e) { console.warn('[AnimationManager] onChange threw:', e); }
 	}
 
 	/** Stop all animations. */
@@ -220,7 +232,7 @@ export class AnimationManager {
 		this.mixer?.stopAllAction();
 		this.currentAction = null;
 		this.currentName = null;
-		this.onChange?.(null);
+		try { this.onChange?.(null); } catch (e) { console.warn('[AnimationManager] onChange threw:', e); }
 	}
 
 	/**
