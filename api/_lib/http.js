@@ -1,6 +1,7 @@
 // HTTP helpers for Vercel Node handlers. Keeps handlers small + consistent.
 
 import { env } from './env.js';
+import { captureException } from './sentry.js';
 
 export function json(res, status, body, headers = {}) {
 	res.statusCode = status;
@@ -108,7 +109,10 @@ export function wrap(handler) {
 			await handler(req, res);
 		} catch (err) {
 			const status = err.status || 500;
-			if (status >= 500) console.error('[api] unhandled', err);
+			if (status >= 500) {
+				console.error('[api] unhandled', err);
+				captureException(err, { url: req.url, method: req.method });
+			}
 			if (!res.writableEnded) {
 				error(
 					res,

@@ -1,7 +1,7 @@
 {
-	"name": "@nirholas/agent-kit",
+	"name": "@three-ws/sdk",
 	"version": "0.1.0",
-	"description": "Ship an ERC-8004 agent with on-chain identity, a chat panel, and discoverable .well-known endpoints in minutes.",
+	"description": "Ship a cross-chain 3D AI agent with EVM + Solana identity, a chat panel, and discoverable .well-known endpoints.",
 	"type": "module",
 	"main": "./src/index.js",
 	"module": "./src/index.js",
@@ -31,22 +31,16 @@
 		"test": "node --test 'test/**/*.test.js'"
 	},
 	"keywords": [
-		"erc-8004",
-		"agent",
-		"blockchain",
-		"a2a",
-		"mcp",
-		"ethereum",
-		"web3",
-		"identity"
+		"erc-8004", "agent", "blockchain", "a2a", "mcp",
+		"ethereum", "solana", "web3", "identity", "3d", "ai", "nft", "metaplex"
 	],
 	"license": "MIT",
 	"peerDependencies": {
-		"ethers": "^6.0.0"
+		"ethers": "^6.0.0",
+		"@solana/web3.js": "^1.0.0"
 	},
 	"peerDependenciesMeta": {
-		"ethers": {
-			"optional": true
-		}
+		"ethers": { "optional": true },
+		"@solana/web3.js": { "optional": true }
 	}
 }

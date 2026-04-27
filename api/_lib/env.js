@@ -112,6 +112,13 @@ export const env = {
 		return opt('AGENT_RELAYER_ADDRESS');
 	},
 
+	// Comma-separated wallet addresses (EVM or Solana) that have admin access.
+	// Bootstrap: set to your own wallet address. Can also be promoted via DB is_admin flag.
+	get ADMIN_ADDRESSES() {
+		const raw = opt('ADMIN_ADDRESSES', '');
+		return new Set(raw.split(',').map((a) => a.trim().toLowerCase()).filter(Boolean));
+	},
+
 	// Feature flag. Set to "true" to enable POST /api/permissions/redeem.
 	// Defaults to false so the endpoint is opt-in per environment.
 	get PERMISSIONS_RELAYER_ENABLED() {

@@ -1,7 +1,7 @@
 /**
- * @nirholas/agent-kit
+ * @three-ws/sdk
  *
- * Ship an ERC-8004 agent with on-chain identity, a chat panel,
+ * Ship a cross-chain 3D AI agent with EVM + Solana identity, a chat panel,
  * and discoverable .well-known endpoints in minutes.
  *
  * Quick start:
@@ -36,6 +36,15 @@ export {
 } from './erc8004/registry.js';
 export { IDENTITY_REGISTRY_ABI, REGISTRY_DEPLOYMENTS, agentRegistryId } from './erc8004/abi.js';
 export { PermissionsClient, PermissionError } from './permissions.js';
+
+// ─── Solana (SIWS auth, Metaplex identity, Solana Pay) ───────────────────────
+export {
+	detectSolanaProvider,
+	signInWithSolana,
+	registerSolanaAgent,
+	startSolanaCheckout,
+	confirmSolanaPayment,
+} from './solana.js';
 
 import { AgentPanel } from './panel.js';
 import { agentRegistration, agentCard, aiPlugin } from './manifests.js';

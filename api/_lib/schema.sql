@@ -23,6 +23,7 @@ create table if not exists users (
 
 -- Additive migration for deployments that pre-date the wallet_address column.
 alter table users add column if not exists wallet_address text;
+alter table users add column if not exists is_admin boolean not null default false;
 create unique index if not exists users_wallet_unique on users(wallet_address) where wallet_address is not null;
 
 -- ── avatars (GLBs stored in R2) ─────────────────────────────────────────────
@@ -538,3 +539,55 @@ create table if not exists dca_executions (
 );
 
 create index if not exists idx_dca_executions_strategy on dca_executions(strategy_id);
+
+-- ── subscriptions — platform plan subscriptions paid on-chain ────────────────
+-- chain_type: 'evm' | 'solana'. One active row per user (upserted on payment).
+-- EVM payments use USDC on any supported chain; Solana payments use SPL USDC.
+create table if not exists subscriptions (
+    id              uuid primary key default gen_random_uuid(),
+    user_id         uuid not null references users(id) on delete cascade,
+    plan            text not null check (plan in ('pro', 'team', 'enterprise')),
+    chain_type      text not null check (chain_type in ('evm', 'solana')),
+    chain_id        integer,                -- EVM chain ID; null for Solana
+    token_address   text,                  -- EVM: USDC contract; Solana: USDC mint address
+    tx_hash         text,                  -- most recent payment tx hash / signature
+    amount_usd      numeric(12,2),         -- USD value at time of payment
+    status          text not null default 'active' check (status in ('active','expired','cancelled')),
+    active_until    timestamptz not null,
+    created_at      timestamptz not null default now(),
+    updated_at      timestamptz not null default now(),
+    cancelled_at    timestamptz
+);
+
+create unique index if not exists subscriptions_user_active
+    on subscriptions(user_id) where status = 'active';
+create index if not exists subscriptions_expiry
+    on subscriptions(active_until) where status = 'active';
+
+do $$ begin
+    create trigger subscriptions_set_updated_at before update on subscriptions
+        for each row execute function set_updated_at();
+exception when duplicate_object then null; end $$;
+
+-- ── plan_payment_intents — tracks checkout sessions before on-chain confirmation ──
+-- Created when user initiates checkout; confirmed when tx lands on-chain.
+create table if not exists plan_payment_intents (
+    id              uuid primary key default gen_random_uuid(),
+    user_id         uuid not null references users(id) on delete cascade,
+    plan            text not null check (plan in ('pro', 'team', 'enterprise')),
+    chain_type      text not null check (chain_type in ('evm', 'solana')),
+    chain_id        integer,
+    amount_usdc     numeric(12,6) not null, -- exact USDC amount expected
+    recipient       text not null,          -- address/pubkey that should receive payment
+    nonce           text not null unique,   -- random, prevents replay
+    memo            text,                   -- Solana Pay memo / EVM calldata hint
+    status          text not null default 'pending' check (status in ('pending','confirmed','expired','failed')),
+    tx_hash         text,
+    created_at      timestamptz not null default now(),
+    expires_at      timestamptz not null,
+    confirmed_at    timestamptz
+);
+
+create index if not exists payment_intents_user on plan_payment_intents(user_id);
+create index if not exists payment_intents_expiry on plan_payment_intents(expires_at) where status = 'pending';
+create index if not exists payment_intents_nonce on plan_payment_intents(nonce);
