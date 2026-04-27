@@ -106,7 +106,10 @@ export class AgentHome {
 						<span class="agent-home-dot online"></span>
 						<span id="agent-home-emotion-label">present</span>
 						<span class="agent-home-status-sep" aria-hidden="true">·</span>
-						<span class="agent-home-address" id="agent-home-address">${id.walletAddress ? _shortAddr(id.walletAddress) : 'no wallet'}</span>
+						${id.walletAddress
+							? `<span class="agent-home-address" id="agent-home-address">${_shortAddr(id.walletAddress)}</span>`
+							: `<button class="agent-home-address agent-home-address--cta" id="agent-home-address" title="Connect wallet to register on-chain">no wallet</button>`
+						}
 					</div>
 					<p
 						class="agent-home-description agent-home-editable"
@@ -170,27 +173,63 @@ export class AgentHome {
 				.catch(() => {});
 		}
 
-		// Copy link button
+		// Copy link button — use registered agent URL when available, else current page URL.
 		panel.querySelector('#agent-copy-link')?.addEventListener('click', () => {
-			const url = `${location.origin}${id.homeUrl || `/agent/${id.id}`}`;
+			const url = id.homeUrl
+				? `${location.origin}${id.homeUrl}`
+				: location.href;
 			navigator.clipboard?.writeText(url).catch(() => {});
 			this._flashBtn(panel.querySelector('#agent-copy-link'), '✓');
 		});
 
-		// Inline name + description editing — debounced auto-save with optimistic
-		// rollback on backend rejection (e.g. anonymous viewer hits PUT 401).
+		// Wallet CTA button — fire a document event so app.js can handle it.
+		panel.querySelector('.agent-home-address--cta')?.addEventListener('click', () => {
+			document.dispatchEvent(new CustomEvent('agent-home:connect-wallet', { bubbles: true }));
+		});
+
+		// Inline name + description editing — auto-save with local-first fallback.
 		panel.querySelectorAll('.agent-home-editable').forEach((el) => {
 			this._wireInlineEdit(el);
 		});
 	}
 
 	_wireInlineEdit(el) {
-		if (!el || !this.identity?.id) return;
+		if (!el) return;
 		const field = el.dataset.field;
 		if (!field) return;
 
-		// Track the last server-confirmed value for rollback / no-op detection.
+		const MAX_LEN = field === 'name' ? 40 : 160;
+
+		// Track the last server-confirmed (or locally-saved) value for rollback.
 		el._lastSaved = el.textContent.trim();
+
+		// Counter element shown while editing
+		const counter = document.createElement('span');
+		counter.className = 'agent-edit-counter';
+		counter.setAttribute('aria-live', 'polite');
+		el.parentNode.insertBefore(counter, el.nextSibling);
+
+		const _updateCounter = (len) => {
+			counter.textContent = `${len}/${MAX_LEN}`;
+			counter.classList.toggle('agent-edit-counter--warn', len > MAX_LEN * 0.85);
+			counter.classList.toggle('agent-edit-counter--over', len >= MAX_LEN);
+		};
+
+		// Enforce char limit and update counter on input.
+		el.addEventListener('input', () => {
+			const text = el.textContent;
+			if (text.length > MAX_LEN) {
+				// Truncate and restore cursor to end
+				el.textContent = text.slice(0, MAX_LEN);
+				const range = document.createRange();
+				const sel = window.getSelection();
+				range.selectNodeContents(el);
+				range.collapse(false);
+				sel?.removeAllRanges();
+				sel?.addRange(range);
+			}
+			_updateCounter(el.textContent.length);
+		});
 
 		// Enter blurs (saves) instead of inserting a newline. Escape reverts.
 		el.addEventListener('keydown', (e) => {
@@ -206,16 +245,33 @@ export class AgentHome {
 
 		el.addEventListener('focus', () => {
 			el.classList.add('is-editing');
+			counter.classList.add('agent-edit-counter--visible');
+			_updateCounter(el.textContent.length);
 		});
 
 		el.addEventListener('blur', async () => {
 			el.classList.remove('is-editing');
+			counter.classList.remove('agent-edit-counter--visible');
 			const next = el.textContent.replace(/\s+/g, ' ').trim();
 			if (next === (el._lastSaved || '')) return; // no change
 
-			// Optimistic update
 			const previous = el._lastSaved || '';
 			el._lastSaved = next;
+
+			// Always persist locally first — works for anonymous and registered alike.
+			if (this.identity._record) {
+				this.identity._record[field] = next;
+				this.identity._persist?.();
+			}
+
+			// If no backend id, show local-save feedback and maybe show wallet nudge.
+			if (!this.identity.id) {
+				el.classList.add('is-saved-local');
+				setTimeout(() => el.classList.remove('is-saved-local'), 1400);
+				this._maybeShowWalletNudge();
+				return;
+			}
+
 			el.classList.add('is-saving');
 
 			try {
@@ -225,7 +281,18 @@ export class AgentHome {
 					headers: { 'content-type': 'application/json' },
 					body: JSON.stringify({ [field]: next }),
 				});
+
+				// Not authenticated — save is local-only, don't treat as an error.
+				if (resp.status === 401 || resp.status === 403) {
+					el.classList.remove('is-saving');
+					el.classList.add('is-saved-local');
+					setTimeout(() => el.classList.remove('is-saved-local'), 1400);
+					this._maybeShowWalletNudge();
+					return;
+				}
+
 				if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
 				const { agent } = await resp.json().catch(() => ({}));
 				// Reflect any server-side normalisation (trimmed, capped, etc.)
 				if (agent && typeof agent[field] === 'string' && agent[field] !== next) {
@@ -245,6 +312,33 @@ export class AgentHome {
 				setTimeout(() => el.classList.remove('is-error'), 1500);
 			}
 		});
+	}
+
+	_maybeShowWalletNudge() {
+		if (this.identity.walletAddress) return; // already connected
+		const panel = this._panel;
+		if (!panel || panel.querySelector('.agent-wallet-nudge')) return; // already shown
+
+		const id = this.identity;
+		const nameCustomised = id.name && id.name !== 'Agent';
+		const descCustomised = id.description && id.description !== 'A 3D AI agent';
+		if (!nameCustomised && !descCustomised) return;
+
+		const nudge = document.createElement('div');
+		nudge.className = 'agent-wallet-nudge';
+		nudge.innerHTML =
+			`<span class="agent-wallet-nudge-text">Connect wallet to register on-chain</span>` +
+			`<button class="agent-wallet-nudge-btn" id="agent-wallet-nudge-btn">Connect →</button>`;
+		nudge.querySelector('#agent-wallet-nudge-btn').addEventListener('click', () => {
+			document.dispatchEvent(new CustomEvent('agent-home:connect-wallet', { bubbles: true }));
+		});
+
+		// Insert before the memory bar
+		const memBar = panel.querySelector('#agent-memory-bar');
+		if (memBar) panel.insertBefore(nudge, memBar);
+		else panel.appendChild(nudge);
+
+		requestAnimationFrame(() => nudge.classList.add('agent-wallet-nudge--visible'));
 	}
 
 	// ── Memory Bar ────────────────────────────────────────────────────────────

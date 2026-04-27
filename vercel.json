@@ -2,6 +2,14 @@
 	"public": true,
 	"routes": [
 		{
+			"src": "/openapi\\.json",
+			"dest": "/api/openapi-json"
+		},
+		{
+			"src": "/\\.well-known/x402",
+			"dest": "/api/wk-x402"
+		},
+		{
 			"src": "/\\.well-known/oauth-authorization-server",
 			"dest": "/api/wk-oauth-authorization-server"
 		},

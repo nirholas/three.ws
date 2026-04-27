@@ -961,6 +961,62 @@
 					observer.observe(el);
 				});
 			})();
+
+			// Avatar mouse-follow
+			(function () {
+				const viewer = document.querySelector('.hero-avatar-viewer');
+				if (!viewer) return;
+
+				const BASE_AZIMUTH = 20;
+				const BASE_POLAR = 88;
+				const AZIMUTH_RANGE = 35;
+				const POLAR_RANGE = 12;
+
+				let animFrame = null;
+				let targetAz = BASE_AZIMUTH;
+				let targetPol = BASE_POLAR;
+				let currentAz = BASE_AZIMUTH;
+				let currentPol = BASE_POLAR;
+				let hovering = false;
+				let resumeTimeout = null;
+
+				function lerp(a, b, t) { return a + (b - a) * t; }
+
+				function animate() {
+					currentAz = lerp(currentAz, targetAz, 0.08);
+					currentPol = lerp(currentPol, targetPol, 0.08);
+					viewer.setAttribute('camera-orbit', `${currentAz}deg ${currentPol}deg 4.8m`);
+					animFrame = requestAnimationFrame(animate);
+				}
+
+				viewer.closest('.hero-avatar').addEventListener('mouseenter', function () {
+					hovering = true;
+					clearTimeout(resumeTimeout);
+					viewer.removeAttribute('auto-rotate');
+					if (!animFrame) animFrame = requestAnimationFrame(animate);
+				});
+
+				viewer.closest('.hero-avatar').addEventListener('mousemove', function (e) {
+					const rect = this.getBoundingClientRect();
+					const nx = (e.clientX - rect.left) / rect.width - 0.5;   // -0.5 → 0.5
+					const ny = (e.clientY - rect.top)  / rect.height - 0.5;
+					targetAz  = BASE_AZIMUTH - nx * AZIMUTH_RANGE * 2;
+					targetPol = BASE_POLAR   + ny * POLAR_RANGE * 2;
+				});
+
+				viewer.closest('.hero-avatar').addEventListener('mouseleave', function () {
+					hovering = false;
+					targetAz = BASE_AZIMUTH;
+					targetPol = BASE_POLAR;
+					// wait until lerp is close enough, then restore auto-rotate
+					resumeTimeout = setTimeout(function () {
+						cancelAnimationFrame(animFrame);
+						animFrame = null;
+						viewer.setAttribute('camera-orbit', `${BASE_AZIMUTH}deg ${BASE_POLAR}deg 4.8m`);
+						viewer.setAttribute('auto-rotate', '');
+					}, 800);
+				});
+			})();
 		</script>
 		<script type="module">
 			import { wireSigninButton } from '/src/wallet-auth.js';
