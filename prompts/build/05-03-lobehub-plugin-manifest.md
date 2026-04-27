@@ -4,7 +4,7 @@
 
 ## Why it matters
 
-User has a Lobehub fork and it's the _primary_ integration target per the priority stack. Lobehub plugins are installed via a plugin manifest (JSON) that registers tools + UI surfaces. Our avatar needs to show up in Lobehub as an installable plugin so any Lobehub user can add their 3D agent to their chat.
+User has a Lobehub fork and it's the _primary_ integration target per the priority stack. Lobehub plugins are installed via a plugin manifest (JSON) that registers tools + UI surfaces. Our avatar needs to show up in Lobehub as an installable plugin so any Lobehub user can add their three.ws to their chat.
 
 ## What to build
 

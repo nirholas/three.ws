@@ -1,8 +1,8 @@
 # Character Studio
 
-Character Studio is a browser-based 3D avatar builder built into 3D Agent. It lets you design a fully customized humanoid avatar — body, hair, face, clothing, and accessories — using a point-and-click interface with no 3D modeling experience required.
+Character Studio is a browser-based 3D avatar builder built into three.ws. It lets you design a fully customized humanoid avatar — body, hair, face, clothing, and accessories — using a point-and-click interface with no 3D modeling experience required.
 
-The result is a GLB/VRM file that works with every 3D Agent feature: animations, the emotion system, AR viewing, and web embedding.
+The result is a GLB/VRM file that works with every three.ws feature: animations, the emotion system, AR viewing, and web embedding.
 
 **Access:** [https://three.ws/studio](https://three.ws/studio) → Avatar tab
 
@@ -99,7 +99,7 @@ Every customization change updates the preview instantly — no waiting for asse
 
 1. Click **Export** → **Download GLB**
 2. The file downloads to your computer
-3. Drag and drop it into the 3D Agent editor, or host it on your own CDN
+3. Drag and drop it into the three.ws editor, or host it on your own CDN
 
 ### Save to Your Account
 
@@ -124,7 +124,7 @@ Optimized avatars render faster and use less GPU memory, which matters in scenes
 
 ## Morph Targets and the Emotion System
 
-Every avatar created in Character Studio includes the full set of morph targets required by the 3D Agent emotion system. These are baked into the exported file automatically — you don't need to add them manually.
+Every avatar created in Character Studio includes the full set of morph targets required by the three.ws emotion system. These are baked into the exported file automatically — you don't need to add them manually.
 
 The included morph targets are:
 
@@ -159,7 +159,7 @@ RightUpperLeg → RightLowerLeg → RightFoot
 This means:
 
 - **Mixamo animations work directly** — download any animation from Mixamo and attach it
-- **The 3D Agent animation library is fully compatible** — all built-in clips (idle, wave, gesture, walk) work out of the box
+- **The three.ws animation library is fully compatible** — all built-in clips (idle, wave, gesture, walk) work out of the box
 - **Retargeting** is handled automatically by the animation manager
 
 ---
@@ -204,7 +204,7 @@ The core of the system is `CharacterManager` in `character-studio/src/library/ch
 
 ## Character Studio vs. Avaturn
 
-3D Agent supports two avatar creation paths. They're complementary, not competing:
+three.ws supports two avatar creation paths. They're complementary, not competing:
 
 | | Character Studio | Avaturn |
 |---|---|---|
@@ -213,7 +213,7 @@ The core of the system is `CharacterManager` in `character-studio/src/library/ch
 | Customization | Full control over every feature | Limited post-generation edits |
 | Account needed to start | No | Yes |
 
-**Using both together:** Generate an Avaturn avatar from a selfie to get a photorealistic starting point, import the resulting GLB into the 3D Agent editor, then adjust clothing colors and accessories manually.
+**Using both together:** Generate an Avaturn avatar from a selfie to get a photorealistic starting point, import the resulting GLB into the three.ws editor, then adjust clothing colors and accessories manually.
 
 ---
 
@@ -224,4 +224,4 @@ The core of the system is `CharacterManager` in `character-studio/src/library/ch
 - **Asset library scope.** Customization is limited to items in the included asset library. Adding entirely new clothing shapes requires creating a 3D asset and submitting it to the library.
 - **Granular face morphing.** Individual face feature morphing (e.g., nose width, cheekbone height via sliders) is not yet available — face customization is preset-based.
 
-For cases that need more control than Character Studio provides, create your avatar in Blender or another 3D tool and import the GLB directly into the 3D Agent editor.
+For cases that need more control than Character Studio provides, create your avatar in Blender or another 3D tool and import the GLB directly into the three.ws editor.

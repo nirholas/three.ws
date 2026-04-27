@@ -95,7 +95,7 @@ Ship a small preset pack of outfits and accessories, plus a dashboard panel to a
     - Open `#edit/<agentId>/outfits`.
     - Apply a hat → dashboard preview shows it parented to the head bone. PATCH persists `meta.appearance.accessories` with the hat id.
     - Apply an outfit preset bound to a morph target → morph influence is set. Persisted.
-    - Reload main app with `<agent-3d agent-id="...">` — the same hat + outfit re-apply on boot.
+    - Reload main app with `<agent-three.ws-id="...">` — the same hat + outfit re-apply on boot.
     - Remove the hat → disposed, gone from the record.
     - Apply a second hat → replaces the first (not additive).
     - Apply earrings → two accessories allowed.

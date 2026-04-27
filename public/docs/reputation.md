@@ -1,6 +1,6 @@
 # Reputation System
 
-The reputation system lets anyone leave a permanent, publicly verifiable score for a registered 3D Agent. Scores are stored on the `ReputationRegistry` smart contract — part of the ERC-8004 standard — and cannot be deleted or altered once submitted.
+The reputation system lets anyone leave a permanent, publicly verifiable score for a registered three.ws. Scores are stored on the `ReputationRegistry` smart contract — part of the ERC-8004 standard — and cannot be deleted or altered once submitted.
 
 ---
 

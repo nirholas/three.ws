@@ -1,6 +1,6 @@
 # Development Guide
 
-Everything you need to know to work on 3D Agent locally.
+Everything you need to know to work on three.ws locally.
 
 ---
 

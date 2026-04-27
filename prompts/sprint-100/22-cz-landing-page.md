@@ -26,7 +26,7 @@ Entirely new folder + routes. No edits to existing app code.
 
 `/cz` route:
 
-- Full-bleed dark theme with a 3D agent embed front-and-center (uses `<agent-3d agent-id="cz-preview">` or similar hardcoded agent id).
+- Full-bleed dark theme with a three.ws embed front-and-center (uses `<agent-three.ws-id="cz-preview">` or similar hardcoded agent id).
 - Copy: `Welcome, CZ. Claim your on-chain agent.`
 - Button: `Connect wallet to claim` → uses the wallet flow from [src/wallet-auth.js](../../src/wallet-auth.js) if present, else falls back to `connectWallet()` from `erc8004/agent-registry.js`.
 - After connection, show `[ ⬢ Sign claim transaction ]`.

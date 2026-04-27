@@ -76,7 +76,7 @@
   </g>
 
   <!-- Title -->
-  <text x="72" y="82" font-family="SF Pro Display, Inter, system-ui, -apple-system, sans-serif" font-size="66" font-weight="800" letter-spacing="5" fill="url(#tg)" filter="url(#glow)">3D AGENT</text>
+  <text x="72" y="82" font-family="SF Pro Display, Inter, system-ui, -apple-system, sans-serif" font-size="66" font-weight="800" letter-spacing="5" fill="url(#tg)" filter="url(#glow)">three.ws</text>
 
   <!-- Subtitle -->
   <text x="75" y="114" font-family="SF Pro Text, Inter, system-ui, sans-serif" font-size="12.5" fill="#6a7f94" letter-spacing="2.5">BROWSER-NATIVE · DRAG &amp; DROP · glTF / GLB · WebGL 2.0 · THREE.JS r176</text>

@@ -1,6 +1,6 @@
 {
 	"type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
-	"name": "3D Agent",
+	"name": "three.ws",
 	"description": "AI-powered 3D model viewer and validation agent. Drag and drop glTF, GLB, and 3D files to preview instantly in your browser. Supports real-time rendering, model validation, environment maps, and animation playback via Three.js and WebGL.",
 	"image": "https://three.wsog-image.png",
 	"active": true,

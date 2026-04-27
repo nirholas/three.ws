@@ -39,7 +39,7 @@ Good lighting and a plain background give the best results. Photos can be JPEG o
 
 The photos are prepared and sent to the Avaturn pipeline. After a brief processing step, an Avaturn editor opens in a modal where you can adjust clothing, accessories, and other details before exporting.
 
-When you click export, the GLB is fetched and saved to your 3D Agent account automatically.
+When you click export, the GLB is fetched and saved to your three.ws account automatically.
 
 ### What if camera access doesn't work?
 
@@ -104,7 +104,7 @@ If you already have a 3D model — from Blender, Maya, Mixamo, Ready Player Me, 
 3. The model loads and validates automatically
 4. Save to your account via the editor toolbar
 
-The 3D Agent viewer accepts any valid glTF 2.0 binary (`.glb`) file. If your model has features like facial blend shapes and a humanoid skeleton, the full emotion and gesture system activates. If it doesn't, the viewer degrades gracefully — no crash, just no facial animation.
+The three.ws viewer accepts any valid glTF 2.0 binary (`.glb`) file. If your model has features like facial blend shapes and a humanoid skeleton, the full emotion and gesture system activates. If it doesn't, the viewer degrades gracefully — no crash, just no facial animation.
 
 ### Converting from other formats
 
@@ -268,7 +268,7 @@ For permanent, verifiable identity, you can register the agent on-chain under ER
 
 ## Developer spec: targeting the avatar format
 
-If you are building a tool that generates avatars for 3D Agent (a pipeline, a custom studio, a converter), target this specification:
+If you are building a tool that generates avatars for three.ws (a pipeline, a custom studio, a converter), target this specification:
 
 | Property | Target |
 |----------|--------|

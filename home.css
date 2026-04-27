@@ -101,26 +101,44 @@
 	pointer-events: none;
 }
 
-/* ── Sticky 2-column hero overlay ───────────────────────────────────────── */
+/* ── Avatar centered in its depth-1 parallax layer ─────────────────────── */
 
-.h-hero-sticky {
+.h-avatar-stage {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	pointer-events: none;
+}
+
+.h-avatar-wrap {
+	position: relative;
+	width: clamp(340px, 42vw, 560px);
+	aspect-ratio: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	pointer-events: auto;
+}
+
+/* ── Sticky text pinned bottom-left (same as features page act-content) ─── */
+
+.h-hero-text {
 	position: sticky;
 	top: 0;
 	height: 100vh;
 	margin-bottom: -100vh;
 	z-index: 20;
-	display: grid;
-	grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
-	align-items: center;
-	gap: var(--space-2xl);
-	max-width: 1280px;
-	margin-left: auto;
-	margin-right: auto;
-	padding: calc(var(--space-2xl) + 2rem) var(--space-lg) var(--space-2xl);
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	padding: 0 var(--space-lg) clamp(2.5rem, 6vh, 5rem);
 	pointer-events: none;
+	max-width: 640px;
 }
 
-.h-hero-sticky > * {
+.h-hero-text > * {
 	pointer-events: auto;
 }
 

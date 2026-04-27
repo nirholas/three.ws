@@ -1,6 +1,6 @@
 # Configuration Reference
 
-3D Agent is configured through a combination of environment variables and a handful of configuration files. This document is a complete reference for self-hosters and developers setting up a local development environment.
+three.ws is configured through a combination of environment variables and a handful of configuration files. This document is a complete reference for self-hosters and developers setting up a local development environment.
 
 **Configuration files at a glance:**
 

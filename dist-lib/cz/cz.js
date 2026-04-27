@@ -109,7 +109,7 @@ function showSuccess() {
 	agentNameDisplay.textContent = AGENT_NAME;
 	const origin = location.origin;
 	snippetScript.textContent = `<script type="module"\n  src="${origin}/agent-3d/latest/agent-3d.js">\n<\/script>`;
-	snippetTag.textContent = `<agent-3d agent-id="${AGENT_ID}" kiosk></agent-3d>`;
+	snippetTag.textContent = `<agent-three.ws-id="${AGENT_ID}" kiosk></agent-3d>`;
 	snippetIframe.textContent = `<iframe\n  src="${origin}/agent/${AGENT_ID}/embed"\n  allow="microphone"\n  width="400" height="600">\n</iframe>`;
 	show(stepSuccess);
 }

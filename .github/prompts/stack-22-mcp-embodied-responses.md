@@ -49,11 +49,11 @@ Split skills into `pure` and `presentational` in their manifest.
 ### Auth
 
 - Public avatars: any MCP caller can summon/describe.
-- Private skills or owner-only: require a 3D Agent API key via Bearer (already in [api/keys/](api/keys/)).
+- Private skills or owner-only: require a three.ws API key via Bearer (already in [api/keys/](api/keys/)).
 
 ### Tool descriptions
 
-Each tool's description should tell Claude when to use it ("Use `summon_agent` when the user references a 3D Agent by slug or wants to see an embodied response.").
+Each tool's description should tell Claude when to use it ("Use `summon_agent` when the user references a three.ws by slug or wants to see an embodied response.").
 
 ## Validation
 

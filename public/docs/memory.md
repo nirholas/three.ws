@@ -1,6 +1,6 @@
 # Memory System
 
-Agent memory lets a 3D agent remember things between sessions. Without it, every conversation starts fresh — the agent has no idea who you are, what you talked about last time, or what preferences you've stated. With memory, the agent builds up a persistent model of the user and context that it draws on automatically at the start of each conversation.
+Agent memory lets a three.ws remember things between sessions. Without it, every conversation starts fresh — the agent has no idea who you are, what you talked about last time, or what preferences you've stated. With memory, the agent builds up a persistent model of the user and context that it draws on automatically at the start of each conversation.
 
 This document covers how agent memory works, how to configure storage modes, and how to read and write memories from code.
 
@@ -8,7 +8,7 @@ This document covers how agent memory works, how to configure storage modes, and
 
 ## Two layers
 
-Memory in the 3D Agent runtime has two distinct layers:
+Memory in the three.ws runtime has two distinct layers:
 
 **In-memory store** ([agent-memory.js](../../src/agent-memory.js)) — A fast, typed, salience-ranked store that lives in the JavaScript runtime. Loaded on boot, queried during conversations, written as things happen. Persists to `localStorage` immediately and optionally syncs to a backend API.
 

@@ -29,8 +29,8 @@ New static file + new endpoint. No edits to anything existing.
 	"api": [],
 	"identifier": "3d-agent",
 	"meta": {
-		"title": "3D Agent",
-		"description": "Embed any on-chain or off-chain 3D agent as an embodied avatar inside your chat.",
+		"title": "three.ws",
+		"description": "Embed any on-chain or off-chain three.ws as an embodied avatar inside your chat.",
 		"avatar": "https://three.ws/favicon.png",
 		"tags": ["3d", "avatar", "embodied-agent", "erc-8004"]
 	},
@@ -42,7 +42,7 @@ New static file + new endpoint. No edits to anything existing.
 			"agentId": {
 				"type": "string",
 				"title": "Agent ID",
-				"description": "Paste a 3D Agent ID or ENS name"
+				"description": "Paste a three.ws ID or ENS name"
 			}
 		}
 	},

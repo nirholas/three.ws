@@ -104,7 +104,7 @@ export async function signInWithWalletConnect({ projectId, chains } = {}) {
 		`${domain} wants you to sign in with your Ethereum account:`,
 		address,
 		'',
-		'Sign in to 3D Agent.',
+		'Sign in to three.ws.',
 		'',
 		`URI: ${uri}`,
 		'Version: 1',

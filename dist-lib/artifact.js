@@ -1,4 +1,4 @@
-// artifact.js — zero-dep 3D Agent viewer for Claude.ai Artifacts
+// artifact.js — zero-dep three.ws viewer for Claude.ai Artifacts
 // Self-contained ES module. No imports from this repo.
 // Usage: <div data-agent-id="YOUR_ID"></div>
 //        <script type="module" src="https://three.wsartifact.js"></script>

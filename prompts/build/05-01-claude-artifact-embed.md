@@ -18,7 +18,7 @@ The novel unlock of pillar 5. A Claude user pastes an agent URL into a chat → 
 
 - [public/agent/embed.html](../../public/agent/embed.html)
 - Claude Artifacts documentation — find the CSP / iframe / allowed-source rules that apply. Link them in the PR description.
-- [src/agent-resolver.js](../../src/agent-resolver.js) — lets `<agent-3d agent-id="X">` resolve without a manifest URL.
+- [src/agent-resolver.js](../../src/agent-resolver.js) — lets `<agent-three.ws-id="X">` resolve without a manifest URL.
 
 ## Build this
 

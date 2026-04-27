@@ -876,7 +876,7 @@ function renderMcp(root) {
 		<pre><code>${esc(origin)}/api/mcp</code></pre>
 
 		<h3 class="section">Claude Desktop / Claude Code (remote)</h3>
-		<p class="muted">Add a Custom Connector in Claude. When prompted, sign in with your 3D Agent account.</p>
+		<p class="muted">Add a Custom Connector in Claude. When prompted, sign in with your three.ws account.</p>
 		<pre><code>${esc(
 			JSON.stringify(
 				{
@@ -1003,7 +1003,7 @@ async function renderEmbed(root) {
 	const webComponentSnippet = [
 		'<!-- Zero-install web component. Works in plain HTML, React, Vue, Svelte. -->',
 		`<script type="module" src="${origin}/lib.js"></script>`,
-		`<agent-3d agent-id="${esc(agent.id)}"`,
+		`<agent-three.ws-id="${esc(agent.id)}"`,
 		'          style="width:320px;height:420px;display:block;border-radius:16px;overflow:hidden">',
 		'</agent-3d>',
 	].join('\n');
@@ -1276,7 +1276,7 @@ function bindOnchainDeploy(body, agent) {
 			const result = await registerAgent({
 				glbFile,
 				name: agent.name || 'Agent',
-				description: agent.description || `3D agent ${agent.id}`,
+				description: agent.description || `three.ws ${agent.id}`,
 				apiToken: token.value.trim() || undefined,
 				onStatus: (msg) => say(msg),
 			});

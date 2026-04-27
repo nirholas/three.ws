@@ -359,7 +359,7 @@ Response:
 {
   "type": "rich",
   "version": "1.0",
-  "provider_name": "3D Agent",
+  "provider_name": "three.ws",
   "provider_url": "https://three.ws/",
   "title": "My Widget",
   "html": "<iframe …></iframe>",

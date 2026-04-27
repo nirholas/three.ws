@@ -2,10 +2,10 @@
 	"$schema": "https://lobehub.com/schema/plugin-manifest/v1.json",
 	"identifier": "3d-agent",
 	"version": "0.1.0",
-	"author": "3D Agent",
+	"author": "three.ws",
 	"homepage": "https://3dagent.vercel.app",
 	"meta": {
-		"title": "3D Agent",
+		"title": "three.ws",
 		"description": "Embodied 3D avatar agent with continuous emotion blending. Renders a rigged glTF avatar inside chat, responds with gestures, speech, and on-chain ERC-8004 identity.",
 		"avatar": "https://three.wsicon.svg",
 		"tags": ["3d", "avatar", "agent", "embodied", "empathy", "erc-8004"]

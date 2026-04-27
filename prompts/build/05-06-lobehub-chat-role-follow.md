@@ -83,7 +83,7 @@ When idle (no chat activity for 5s), gently look back to the camera and settle t
 
 ## Test plan
 
-1. Start Lobehub fork locally. Enable the 3D agent plugin for a chat.
+1. Start Lobehub fork locally. Enable the three.ws plugin for a chat.
 2. Type slowly in the box → agent gaze follows, patience blend visible.
 3. Send → user pulse brief.
 4. Assistant streams a cheerful reply → celebration grows over tokens.

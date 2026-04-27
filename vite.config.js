@@ -112,8 +112,8 @@ const appConfig = {
 			registerType: 'autoUpdate',
 			includeAssets: ['favicon.ico', 'pwa-192x192.png', 'pwa-512x512.png', 'pwa-icon.svg'],
 			manifest: {
-				name: '3D Agent — AI-Powered 3D Model Viewer',
-				short_name: '3D Agent',
+				name: 'three.ws — AI-Powered 3D Model Viewer',
+				short_name: 'three.ws',
 				description:
 					'Drag and drop glTF, GLB, and 3D files to preview instantly in your browser.',
 				theme_color: '#000000',

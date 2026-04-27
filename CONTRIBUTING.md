@@ -1,4 +1,4 @@
-# Contributing to 3D Agent
+# Contributing to three.ws
 
 Thanks for your interest in contributing! This guide covers everything you need to get started.
 

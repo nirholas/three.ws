@@ -1,6 +1,6 @@
 # Examples Gallery
 
-Copy-paste ready code for common 3D Agent use cases. Each example runs as-is — swap your own model URL and go.
+Copy-paste ready code for common three.ws use cases. Each example runs as-is — swap your own model URL and go.
 
 ---
 

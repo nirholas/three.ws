@@ -915,9 +915,9 @@ class Agent3DElement extends HTMLElement {
 				brain: {
 					provider: this.getAttribute('brain') ? 'anthropic' : 'none',
 					model: this.getAttribute('brain') || undefined,
-					instructions: instructionsAttr || 'You are an embodied 3D agent.',
+					instructions: instructionsAttr || 'You are an embodied three.ws.',
 				},
-				instructions: instructionsAttr || 'You are an embodied 3D agent.',
+				instructions: instructionsAttr || 'You are an embodied three.ws.',
 				voice: { tts: { provider: 'browser' }, stt: { provider: 'browser' } },
 				skills: (this.getAttribute('skills') || '')
 					.split(',')

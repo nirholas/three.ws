@@ -1,12 +1,12 @@
 # Deployment & Self-Hosting
 
-This guide covers everything you need to run your own instance of 3D Agent — from a one-click Vercel deploy to a fully self-hosted setup on any Node.js infrastructure.
+This guide covers everything you need to run your own instance of three.ws — from a one-click Vercel deploy to a fully self-hosted setup on any Node.js infrastructure.
 
 ---
 
 ## Platform overview
 
-3D Agent is a full-stack platform. A complete deployment has six moving parts:
+three.ws is a full-stack platform. A complete deployment has six moving parts:
 
 | Layer | What it does | Recommended provider |
 |---|---|---|
@@ -77,7 +77,7 @@ Without `ANTHROPIC_API_KEY`, the chat API falls back to client-side pattern matc
 
 ### Object storage (required for GLB/asset uploads)
 
-3D Agent uses an S3-compatible interface. Cloudflare R2 is recommended because it has zero egress fees — even a viral spike only costs you storage and requests.
+three.ws uses an S3-compatible interface. Cloudflare R2 is recommended because it has zero egress fees — even a viral spike only costs you storage and requests.
 
 ```env
 S3_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
@@ -202,7 +202,7 @@ Each script reads `DATABASE_URL` from `.env.local` then `.env` then the process 
 
 ## S3-compatible storage setup
 
-3D Agent stores GLB model files and generated thumbnails in your S3 bucket. The API uses the `@aws-sdk/client-s3` package, which works with any S3-compatible endpoint.
+three.ws stores GLB model files and generated thumbnails in your S3 bucket. The API uses the `@aws-sdk/client-s3` package, which works with any S3-compatible endpoint.
 
 ### Cloudflare R2 (recommended)
 

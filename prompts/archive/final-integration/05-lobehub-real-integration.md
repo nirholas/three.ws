@@ -2,7 +2,7 @@
 
 ## Context
 
-[lobehub-plugin/](../../lobehub-plugin/) is the package that lets LobeChat users drop a 3D Agent avatar into their chat sidebar. Today it is **scaffolding only**: a manifest that looks right, a React component with `TODO: Hook into Lobe's onAssistantMessage event`, and a bridge that posts messages into a void because the host receiver didn't exist.
+[lobehub-plugin/](../../lobehub-plugin/) is the package that lets LobeChat users drop a three.ws avatar into their chat sidebar. Today it is **scaffolding only**: a manifest that looks right, a React component with `TODO: Hook into Lobe's onAssistantMessage event`, and a bridge that posts messages into a void because the host receiver didn't exist.
 
 By the time you run this prompt, the receiver side (prompt 01 — `EmbedActionBridge`) may or may not be complete:
 
@@ -46,7 +46,7 @@ Everything under:
     - `api` entries either all resolve to real endpoints or the `api` array is omitted if this is iframe-only.
     - `ui.url` points to `https://three.ws/lobehub/iframe/` and that route actually serves HTML.
     - `settings` schema matches what the React component reads (`agentId`, `apiOrigin`).
-2. **Iframe host.** `public/lobehub/iframe/index.html` renders `<agent-3d agent-id="{{agentId}}">` with correct styling for a 420–640px sidebar frame. Transparent background, no scrollbars, respects the `agentId` query param (the LobeHub host passes settings as querystring or fragment — implement whichever the real manifest spec requires).
+2. **Iframe host.** `public/lobehub/iframe/index.html` renders `<agent-three.ws-id="{{agentId}}">` with correct styling for a 420–640px sidebar frame. Transparent background, no scrollbars, respects the `agentId` query param (the LobeHub host passes settings as querystring or fragment — implement whichever the real manifest spec requires).
 3. **React plugin package.** `lobehub-plugin/src/`:
     - `AgentPane.tsx` — remove the `TODO: Hook into Lobe's onAssistantMessage` placeholder. Use whatever `@lobehub/ui` / `@lobehub/chat-plugin-sdk` package exposes for assistant-message observation. If the SDK shape is unstable, document fallback to the `window.addEventListener('lobe:assistantMessage', …)` path explicitly with a README note + a clear code comment explaining why this fallback exists.
     - `bridge.ts` — align with the final wire protocol from prompt 01. Every `op` in the manifest's `api` array (`render_agent`, `speak`, `gesture`, `emote`) has a matching bridge method. Handshake, timeout, origin check.

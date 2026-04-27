@@ -255,7 +255,7 @@ export async function my_tool(args, ctx) {
 
 ### Step 10: Publishing your skill to the community
 Skills are just static files — share your manifest URL in:
-- The 3D Agent Discord #skills channel
+- The three.ws Discord #skills channel
 - GitHub as a topic: `3dagent-skill`
 - The community skill registry (coming soon)
 

@@ -1,4 +1,4 @@
-# Build Your First 3D Agent
+# Build Your First three.ws
 
 By the end of this tutorial you will have a live, talking 3D character on a page you can share with anyone. No build tools, no framework, no prior 3D experience required — just a text editor and a browser.
 
@@ -61,7 +61,7 @@ Create a new folder somewhere on your computer. Inside it, create a file called 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My 3D Agent</title>
+  <title>My three.ws</title>
   <style>
     body {
       margin: 0;
@@ -415,7 +415,7 @@ Here's the complete `index.html` all in one place:
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My 3D Agent</title>
+  <title>My three.ws</title>
   <style>
     body {
       margin: 0;
@@ -490,7 +490,7 @@ Now that you have a working agent, here's what to explore next:
 - [Memory system](../memory.md) — the agent can remember things across conversations using local storage or IPFS.
 
 **Make it permanent:**
-- [ERC-8004 registration](../erc8004.md) — register your agent on-chain for a permanent, decentralized identity. Once registered, anyone can load your agent by its on-chain ID: `<agent-3d agent-id="42" chain-id="8453">`.
+- [ERC-8004 registration](../erc8004.md) — register your agent on-chain for a permanent, decentralized identity. Once registered, anyone can load your agent by its on-chain ID: `<agent-three.ws-id="42" chain-id="8453">`.
 
 **Embed it anywhere:**
 - [Embedding guide](../embedding.md) — embed Aria as a floating bubble in the corner of any existing website, or as an iframe widget with a single line of code.

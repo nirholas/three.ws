@@ -18,7 +18,7 @@ The validator checks a GLB or glTF 2.0 file against the official Khronos specifi
 - **Hints** — best practice suggestions
 - **Info** — informational messages (not problems)
 
-3D Agent integrates `gltf-validator@2.0.0-dev.3.10` (the official Khronos CLI tool compiled to WASM).
+three.ws integrates `gltf-validator@2.0.0-dev.3.10` (the official Khronos CLI tool compiled to WASM).
 
 ### 2. Running validation
 **In the viewer (UI):**
@@ -175,7 +175,7 @@ if (report.issues.numErrors > 0) process.exit(1);
 - **Textures:** PNG for albedo with transparency, JPG for opaque maps; use KTX2 for GPU compression
 - **Animations:** Name clips descriptively ("idle", "wave", "run") — agents use names to find clips
 - **Clean up:** Remove unused materials, textures, shape keys before exporting
-- **Test in multiple viewers:** model-viewer.dev, Babylon.js sandbox, and 3D Agent
+- **Test in multiple viewers:** model-viewer.dev, Babylon.js sandbox, and three.ws
 
 ## Tone
 Technical but accessible to 3D artists who may not be coders. Clear error table with actionable fixes. The on-chain section can be more technical.

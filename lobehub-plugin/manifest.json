@@ -2,7 +2,7 @@
 	"identifier": "3dagent",
 	"schemaVersion": 1,
 	"meta": {
-		"title": "3D Agent",
+		"title": "three.ws",
 		"description": "Render a 3D avatar that reacts to the chat.",
 		"avatar": "https://three.ws/favicon.ico",
 		"tags": ["avatar", "3d", "agent"]

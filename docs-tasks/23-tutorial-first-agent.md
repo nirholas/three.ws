@@ -1,10 +1,10 @@
-# Agent Task: Write Tutorial — "Build Your First 3D Agent"
+# Agent Task: Write Tutorial — "Build Your First three.ws"
 
 ## Output file
 `public/docs/tutorials/first-agent.md`
 
 ## Target audience
-Complete beginners to 3D Agent. They have basic web development knowledge (HTML, JS). They want to end up with a live, talking 3D agent on a page they control. Step-by-step tutorial, not a reference doc.
+Complete beginners to three.ws. They have basic web development knowledge (HTML, JS). They want to end up with a live, talking three.ws on a page they control. Step-by-step tutorial, not a reference doc.
 
 ## Word count
 2000–3000 words
@@ -37,7 +37,7 @@ For beginners: just use the sample avatar URL and come back to this later.
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My 3D Agent</title>
+  <title>My three.ws</title>
   <style>
     body { margin: 0; background: #0a0a0a; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
     agent-3d { width: 400px; height: 600px; border-radius: 16px; overflow: hidden; }

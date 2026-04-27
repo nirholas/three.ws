@@ -1,4 +1,4 @@
-# Contributing to 3D Agent
+# Contributing to three.ws
 
 Thanks for your interest in contributing. This guide covers everything you need to get started — from setting up a local environment to submitting a pull request that will get merged.
 
@@ -233,7 +233,7 @@ test: add coverage for manifest normalization edge cases
 
 ## Contributing a Skill
 
-Skills are the best way to extend 3D Agent without touching core code. A skill is a hosted directory of assets and a manifest — it runs in an isolated context and communicates via a defined message protocol.
+Skills are the best way to extend three.ws without touching core code. A skill is a hosted directory of assets and a manifest — it runs in an isolated context and communicates via a defined message protocol.
 
 1. **Use the template.** Copy `examples/skills/wave/` as your starting point — it demonstrates the minimal structure a skill needs.
 

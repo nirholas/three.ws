@@ -26,7 +26,7 @@ Serve a valid LobeChat plugin manifest with:
 
 - `identifier`: `3dagent`
 - `version`: from `package.json`
-- `api`: a single tool — `showAgent(agentId: string)` — that returns a `text/html` widget embedding `<agent-3d agent-id="<id>" host="lobehub"></agent-3d>`.
+- `api`: a single tool — `showAgent(agentId: string)` — that returns a `text/html` widget embedding `<agent-three.ws-id="<id>" host="lobehub"></agent-3d>`.
 - `ui`: if LobeChat supports an inline widget mode, declare it. Otherwise use a standard iframe.
 
 ### Endpoint — `POST /api/lobehub/show-agent`
@@ -61,6 +61,6 @@ No new secrets unless absolutely needed. If LobeChat requires a signed plugin to
 ## Acceptance
 
 - [ ] `GET /api/lobehub/manifest.json` validates against the LobeChat plugin schema (paste into LobeChat plugin installer → no errors).
-- [ ] In the user's Lobehub fork, invoking the `3dagent.showAgent(<id>)` tool renders the 3D agent in the chat pane.
+- [ ] In the user's Lobehub fork, invoking the `3dagent.showAgent(<id>)` tool renders the three.ws in the chat pane.
 - [ ] A blocked embed policy yields a friendly error, not a silent failure.
 - [ ] `host=lobehub` responds to LobeChat's theme postMessage.

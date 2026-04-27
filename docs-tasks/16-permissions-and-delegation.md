@@ -19,7 +19,7 @@ Without a permission system:
 - An agent given your API key could make unlimited requests
 - There's no way for a user to revoke what they previously granted
 
-3D Agent uses **ERC-7710 delegation** as its permission model — a standard for granting on-chain capabilities to agents (or any address) with specific constraints.
+three.ws uses **ERC-7710 delegation** as its permission model — a standard for granting on-chain capabilities to agents (or any address) with specific constraints.
 
 ### 2. ERC-7710 overview
 ERC-7710 defines a "delegation" standard:

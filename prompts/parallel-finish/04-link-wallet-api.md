@@ -29,7 +29,7 @@ The linking flow is: authenticated user requests a nonce → signs a SIWE-like m
 
 ### `POST /api/auth/wallets/nonce` (authenticated)
 
-Input: `{}`. Output: `{ nonce, message }` — `message` is the exact string the wallet must sign. Include `issuedAt`, `domain`, `address: null` (filled by client), and a human-readable purpose line `Link this wallet to 3D Agent account <email>`.
+Input: `{}`. Output: `{ nonce, message }` — `message` is the exact string the wallet must sign. Include `issuedAt`, `domain`, `address: null` (filled by client), and a human-readable purpose line `Link this wallet to three.ws account <email>`.
 
 ### `GET /api/auth/wallets`
 

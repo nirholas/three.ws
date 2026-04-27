@@ -1,6 +1,6 @@
-# Quick Start — 3D Agent
+# Quick Start — three.ws
 
-Get a live 3D agent on your page in under 10 minutes.
+Get a live three.ws on your page in under 10 minutes.
 
 ---
 
@@ -21,7 +21,7 @@ The fastest path. No npm, no bundler, no build step.
 <html>
 <head>
   <meta charset="utf-8">
-  <title>My 3D Agent</title>
+  <title>My three.ws</title>
   <style>
     agent-3d { width: 400px; height: 500px; display: block; }
   </style>
@@ -141,7 +141,7 @@ The chat input and microphone button appear automatically when `brain` is set. T
 If you've registered an agent on the platform, load it by its UUID instead:
 
 ```html
-<agent-3d agent-id="a1b2c3d4-e5f6-7890-abcd-ef1234567890"></agent-3d>
+<agent-three.ws-id="a1b2c3d4-e5f6-7890-abcd-ef1234567890"></agent-3d>
 ```
 
 The element fetches the agent manifest — which includes the model URL, instructions, skills, and memory configuration — from the API. No other attributes needed.

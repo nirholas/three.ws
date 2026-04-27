@@ -1,8 +1,8 @@
-# Citing a 3D Agent artifact in Claude.ai
+# Citing a three.ws artifact in Claude.ai
 
 `GET https://three.wsapi/artifact?agent=<agentId>`
 
-Paste the URL into a Claude.ai conversation. Claude recognises it as an HTML artifact and renders the interactive 3D agent inline.
+Paste the URL into a Claude.ai conversation. Claude recognises it as an HTML artifact and renders the interactive three.ws inline.
 
 ## Worked example
 

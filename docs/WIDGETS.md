@@ -188,7 +188,7 @@ Returns standard [oEmbed v1.0](https://oembed.com) JSON, type `rich`.
 {
 	"type": "rich",
 	"version": "1.0",
-	"provider_name": "3D Agent",
+	"provider_name": "three.ws",
 	"provider_url": "https://three.ws/",
 	"title": "…",
 	"html": "<iframe …></iframe>",

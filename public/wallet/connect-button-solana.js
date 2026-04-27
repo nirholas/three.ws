@@ -51,7 +51,7 @@ function buildSiwsMessage(address, nonce, { domain, uri, issuedAt, expirationTim
 		`${domain} wants you to sign in with your Solana account:`,
 		address,
 		'',
-		'Sign in to 3D Agent. This request will not trigger any blockchain transaction or cost any fees.',
+		'Sign in to three.ws. This request will not trigger any blockchain transaction or cost any fees.',
 		'',
 		`URI: ${uri}`,
 		'Version: 1',

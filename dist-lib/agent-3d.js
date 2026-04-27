@@ -51497,9 +51497,9 @@ class ny extends HTMLElement {
         brain: {
           provider: this.getAttribute("brain") ? "anthropic" : "none",
           model: this.getAttribute("brain") || void 0,
-          instructions: a || "You are an embodied 3D agent."
+          instructions: a || "You are an embodied three.ws."
         },
-        instructions: a || "You are an embodied 3D agent.",
+        instructions: a || "You are an embodied three.ws.",
         voice: { tts: { provider: "browser" }, stt: { provider: "browser" } },
         skills: (this.getAttribute("skills") || "").split(",").map((o) => o.trim()).filter(Boolean).map((o) => ({ uri: o })),
         memory: { mode: this.getAttribute("memory") || "local" },

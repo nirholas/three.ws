@@ -1,6 +1,6 @@
 {
 	"schema_version": "v1",
-	"name_for_human": "3D Agent",
+	"name_for_human": "three.ws",
 	"name_for_model": "3d_agent",
 	"description_for_human": "AI-powered 3D model viewer. Drag and drop glTF, GLB, and 3D files to preview instantly in your browser.",
 	"description_for_model": "A web-based 3D model viewer that supports glTF and GLB file formats. Users can drag-and-drop 3D models to preview them with real-time rendering powered by Three.js and WebGL.",

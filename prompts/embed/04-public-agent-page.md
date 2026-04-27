@@ -14,7 +14,7 @@ This is the canonical URL a user shares when they want the world to see their ag
 
 ### Metadata
 
-- `<title>` — "{{name}} · 3D Agent".
+- `<title>` — "{{name}} · three.ws".
 - `<meta name="description">` — agent's description or fallback.
 - Open Graph + Twitter card: image (OG endpoint), URL, title, description. See existing `api/agent-og.js`.
 

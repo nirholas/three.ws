@@ -166,7 +166,7 @@ export class AgentSkills {
 			description: 'Greet the user and introduce the agent',
 			instruction: 'Say hello warmly, offer to help with 3D models or agent configuration',
 			animationHint: 'wave',
-			voicePattern: "Hey! I'm {{name}}, your 3D agent. Drop a model or ask me anything.",
+			voicePattern: "Hey! I'm {{name}}, your three.ws. Drop a model or ask me anything.",
 			mcpExposed: true,
 			inputSchema: { type: 'object', properties: { userName: { type: 'string' } } },
 			handler: async (args, ctx) => {

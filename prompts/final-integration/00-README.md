@@ -1,6 +1,6 @@
 # Final Integration — Close the 28% Gap to 100%
 
-This folder contains **7 parallel-safe prompts** that finish the 3D Agent platform: they build the 3 sprint-100 modules that were never created, wire the 4 orphan modules that shipped without integration, and close out the LobeHub plugin integration, camera-capture decision, and end-to-end smoke test.
+This folder contains **7 parallel-safe prompts** that finish the three.ws platform: they build the 3 sprint-100 modules that were never created, wire the 4 orphan modules that shipped without integration, and close out the LobeHub plugin integration, camera-capture decision, and end-to-end smoke test.
 
 The audit that produced these prompts found that ~72% of the stated work is wired and functional. Files exist for most sprint-100 deliverables but many are orphans — real code, zero import sites. Three files mapped in the sprint-100 plan were never written at all.
 

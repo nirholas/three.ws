@@ -2,7 +2,7 @@
 
 As agents become more capable — signing blockchain transactions, calling external APIs, spending tokens on behalf of users — the question of *what the agent is allowed to do* becomes critical. Without a permission system, any skill a user installs could make unlimited on-chain actions. There would be no way to limit scope, set an expiry, or revoke access after the fact.
 
-3D Agent solves this with **ERC-7710 delegation**: a standard for granting on-chain capabilities to agents with precise, enforceable constraints. Think of it as OAuth scopes, but for blockchain operations — the user signs once, the delegation encodes the full scope, and smart contracts enforce it on every redemption.
+three.ws solves this with **ERC-7710 delegation**: a standard for granting on-chain capabilities to agents with precise, enforceable constraints. Think of it as OAuth scopes, but for blockchain operations — the user signs once, the delegation encodes the full scope, and smart contracts enforce it on every redemption.
 
 ---
 

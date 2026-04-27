@@ -2,7 +2,7 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<title>Agent Home — 3D Agent</title>
+		<title>Agent Home — three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta
 			name="description"
@@ -22,7 +22,7 @@
 		<!-- unfurl (populated at runtime from identity) -->
 		<meta property="og:type" content="website" />
 		<meta property="og:title" content="Agent" id="og-title" />
-		<meta property="og:description" content="An embodied 3D agent." id="og-description" />
+		<meta property="og:description" content="An embodied three.ws." id="og-description" />
 		<meta property="og:image" content="" id="og-image" />
 		<meta property="og:url" content="" id="og-url" />
 		<meta name="twitter:card" content="summary_large_image" />
@@ -655,7 +655,7 @@
 	</head>
 	<body>
 		<div class="agent-page-header">
-			<a href="/">← 3D Agent</a>
+			<a href="/">← three.ws</a>
 		</div>
 
 		<div class="agent-page-hero">
@@ -796,7 +796,7 @@
 				const snippets = {
 					iframe: `<iframe src="${embedUrl}" width="420" height="520" style="border:0;border-radius:12px" allow="autoplay; xr-spatial-tracking"></iframe>`,
 					link: agentUrl,
-					webcomponent: `<script type="module" src="${origin}/dist-lib/agent-3d.js"><\/script>\n<agent-3d agent-id="${identity.id}" style="width:420px;height:520px"></agent-3d>`,
+					webcomponent: `<script type="module" src="${origin}/dist-lib/agent-3d.js"><\/script>\n<agent-three.ws-id="${identity.id}" style="width:420px;height:520px"></agent-3d>`,
 				};
 
 				let current = 'iframe';
@@ -840,7 +840,7 @@
 				if (!id) return;
 				const origin = location.origin;
 				const name = identity.name || 'Agent';
-				const desc = identity.description || 'An embodied 3D agent.';
+				const desc = identity.description || 'An embodied three.ws.';
 				const agentUrl = `${origin}/agent/${id}`;
 				const img = `${origin}/api/agent/${id}/og`;
 				const setAttr = (elId, attr, value) => {
@@ -859,7 +859,7 @@
 					'href',
 					`${origin}/api/oembed?url=${encodeURIComponent(agentUrl)}`,
 				);
-				document.title = `${name} — 3D Agent`;
+				document.title = `${name} — three.ws`;
 			}
 
 			main().catch((err) => {

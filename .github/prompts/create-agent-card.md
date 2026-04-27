@@ -21,11 +21,11 @@ Create `public/.well-known/agent-card.json` with the full A2A agent card spec:
 
 ```json
 {
-	"name": "3D Agent",
+	"name": "three.ws",
 	"description": "AI-powered 3D model viewer and validation agent. Load glTF/GLB models, run validation, inspect materials, and manage avatar assets.",
 	"url": "https://three.ws/",
 	"provider": {
-		"organization": "3D Agent",
+		"organization": "three.ws",
 		"url": "https://three.ws/"
 	},
 	"version": "1.5.1",

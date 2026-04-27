@@ -23,7 +23,7 @@ Do not touch `api/auth/login.js`, `api/auth/register.js`, `api/auth/me.js`, or `
 - Inserts into `auth_nonces` with `purpose` defaulting to `'siwe-login'` and `issued_to` = lowercased `address` if provided.
 - Responds `200 { nonce, expiresAt, domain, statement, chainId, version }` — include the full SIWE message fields so the client can build the exact string to sign.
 
-Suggested `statement`: `"Sign in to 3D Agent. This request will not trigger a transaction or cost gas."`
+Suggested `statement`: `"Sign in to three.ws. This request will not trigger a transaction or cost gas."`
 
 Include `domain = new URL(env.APP_ORIGIN).host` and `chainId` as a server-advertised number (1 for mainnet, or whatever matches `env.SIWE_CHAIN_ID` — add that env var with a default of 1).
 

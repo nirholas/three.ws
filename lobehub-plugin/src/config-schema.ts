@@ -13,14 +13,14 @@ export const settingsSchema = {
 	agentId: {
 		type: 'string' as const,
 		title: 'Agent ID',
-		description: 'The ID of the 3D agent to render',
+		description: 'The ID of the three.ws to render',
 		placeholder: 'e.g., agent-xyz-123',
 		required: true,
 	},
 	apiOrigin: {
 		type: 'string' as const,
 		title: 'API Origin',
-		description: 'Base URL of the 3D Agent server',
+		description: 'Base URL of the three.ws server',
 		default: DEFAULT_API_ORIGIN,
 		placeholder: DEFAULT_API_ORIGIN,
 		required: false,

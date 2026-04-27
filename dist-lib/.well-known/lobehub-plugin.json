@@ -2,12 +2,12 @@
 	"$schema": "https://lobehub.com/schema/plugin-manifest/v1.json",
 	"identifier": "3d-agent",
 	"version": "1.0.0",
-	"author": "3D Agent",
+	"author": "three.ws",
 	"createdAt": "2026-04-17",
 	"homepage": "https://3dagent.vercel.app",
 	"meta": {
-		"title": "3D Agent",
-		"description": "Embed any on-chain or off-chain 3D agent as an embodied avatar inside your chat.",
+		"title": "three.ws",
+		"description": "Embed any on-chain or off-chain three.ws as an embodied avatar inside your chat.",
 		"avatar": "https://three.wsfavicon.png",
 		"tags": ["3d", "avatar", "embodied-agent", "erc-8004"]
 	},
@@ -18,7 +18,7 @@
 			"agentId": {
 				"type": "string",
 				"title": "Agent ID",
-				"description": "Paste a 3D Agent ID or ENS name"
+				"description": "Paste a three.ws ID or ENS name"
 			}
 		}
 	},

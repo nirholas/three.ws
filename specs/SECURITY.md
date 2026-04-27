@@ -1,8 +1,8 @@
-# Security & Threat Model — 3D Agent Card v1
+# Security & Threat Model — three.ws Card v1
 
-Scope: agents registered under [3D Agent Card v1](3D_AGENT_CARD.md) on the ERC-8004 Identity, Reputation, and Validation registries. For general site security contact info, see [/.well-known/security.txt](../public/.well-known/security.txt).
+Scope: agents registered under [three.ws Card v1](3D_AGENT_CARD.md) on the ERC-8004 Identity, Reputation, and Validation registries. For general site security contact info, see [/.well-known/security.txt](../public/.well-known/security.txt).
 
-This document enumerates abuse vectors specific to 3D agent registration and lists the current mitigation (or marks it open).
+This document enumerates abuse vectors specific to three.ws registration and lists the current mitigation (or marks it open).
 
 ## Vectors
 

@@ -1,6 +1,6 @@
 # Agents Directory
 
-Public directory of registered agents across the 3D Agent ecosystem.
+Public directory of registered agents across the three.ws ecosystem.
 
 ## Features
 

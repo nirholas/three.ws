@@ -37,7 +37,7 @@ For widgets with no avatar thumbnail:
 - Render a server-side SVG (served as `image/svg+xml`) with:
     - Dark background `#0b0d10`.
     - Widget name in large text (truncate at ~40 chars).
-    - A small `◎` glyph (match the `3D Agent` brand — same glyph used in the Widget Studio type-picker).
+    - A small `◎` glyph (match the `three.ws` brand — same glyph used in the Widget Studio type-picker).
     - Dimensions `1200x630` (Open Graph sweet spot).
 - Slack, Discord, X, and iMessage accept SVG for OG. WordPress sometimes strips SVG — acceptable trade-off; note it.
 - Cache header: `public, max-age=3600, s-maxage=86400`.
@@ -53,7 +53,7 @@ Verify the oEmbed endpoint returns, at minimum:
 {
 	"type": "rich",
 	"version": "1.0",
-	"provider_name": "3D Agent",
+	"provider_name": "three.ws",
 	"provider_url": "https://three.ws/",
 	"title": "<widget.name>",
 	"html": "<iframe src=\"https://three.ws/w/<id>\" width=\"600\" height=\"600\" frameborder=\"0\" allow=\"autoplay; fullscreen\" allowfullscreen></iframe>",

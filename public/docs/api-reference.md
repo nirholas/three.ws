@@ -822,7 +822,7 @@ GET  /api/mcp
 DELETE /api/mcp
 ```
 
-Model Context Protocol endpoint — exposes 3D Agent as a JSON-RPC 2.0 tool server compatible with Claude and other MCP clients.
+Model Context Protocol endpoint — exposes three.ws as a JSON-RPC 2.0 tool server compatible with Claude and other MCP clients.
 
 **Authentication:** Bearer OAuth access token or API key.
 

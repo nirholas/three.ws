@@ -1,6 +1,6 @@
 # Claude Artifact embed task prompts
 
-Self-contained prompt files for shipping an embodied 3D Agent avatar as a **Claude.ai Artifact**. Each file is designed to be dropped into a fresh Claude Code session without extra context.
+Self-contained prompt files for shipping an embodied three.ws avatar as a **Claude.ai Artifact**. Each file is designed to be dropped into a fresh Claude Code session without extra context.
 
 Priority 5 in the overall stack (see [../README.md](../README.md)). Sibling to [../lobehub-embed/](../lobehub-embed/).
 

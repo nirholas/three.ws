@@ -1,4 +1,4 @@
-# 12 — `<agent-3d agent-id="...">` attribute resolver
+# 12 — `<agent-three.ws-id="...">` attribute resolver
 
 ## Why
 
@@ -57,7 +57,7 @@ Also observe `attributeChangedCallback` for `agent-id` (add to `observedAttribut
 
 - `node --check` clean on all edited files.
 - `npm run build:lib` rebuilds `dist-lib/agent-3d.js` cleanly.
-- `<agent-3d agent-id="demo">` on a test page boots the demo agent. Removing the attribute and setting a new one re-boots.
+- `<agent-three.ws-id="demo">` on a test page boots the demo agent. Removing the attribute and setting a new one re-boots.
 
 ## Report
 

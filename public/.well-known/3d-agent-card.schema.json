@@ -1,13 +1,13 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "https://three.ws/.well-known/3d-agent-card.schema.json",
-	"title": "3D Agent Card v1",
+	"title": "three.ws Card v1",
 	"description": "Strict superset of the ERC-8004 registration card (https://eips.ethereum.org/EIPS/eip-8004#registration-v1) for agents whose primary embodiment is a 3D model. Pointed to by the ERC-721 tokenURI on the Identity Registry.",
 	"type": "object",
 	"required": ["type", "name", "description", "model"],
 	"properties": {
 		"type": {
-			"description": "Conformance URI. MUST include the ERC-8004 registration-v1 URI; SHOULD include the 3D Agent Card v1 URI.",
+			"description": "Conformance URI. MUST include the ERC-8004 registration-v1 URI; SHOULD include the three.ws Card v1 URI.",
 			"oneOf": [
 				{ "type": "string" },
 				{ "type": "array", "items": { "type": "string" }, "minItems": 1 }
@@ -60,7 +60,7 @@
 
 		"model": {
 			"type": "object",
-			"description": "3D embodiment. Required for 3D Agent Card v1.",
+			"description": "3D embodiment. Required for three.ws Card v1.",
 			"required": ["uri", "format", "sha256"],
 			"properties": {
 				"uri": {

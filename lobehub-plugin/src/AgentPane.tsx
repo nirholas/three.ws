@@ -7,7 +7,7 @@ export interface AgentPaneProps {
 }
 
 /**
- * Sidebar plugin component that renders a 3D agent avatar and
+ * Sidebar plugin component that renders a three.ws avatar and
  * forwards LobeChat tool-call payloads to the agent via the bridge.
  *
  * LobeChat delivers tool calls by postMessage into the plugin iframe:
@@ -142,7 +142,7 @@ export const AgentPane: React.FC<AgentPaneProps> = ({ settings }) => {
 			<iframe
 				ref={iframeRef}
 				src={embedUrl}
-				title={`3D Agent ${settings.agentId}`}
+				title={`three.ws ${settings.agentId}`}
 				style={{
 					width: '100%',
 					height: '100%',

@@ -193,7 +193,7 @@ Walk through the wave skill as a minimal working example.
 Skills can be published:
 - As static files on any CDN (GitHub Releases, Vercel, S3)
 - Via npm as part of a package
-- Via the 3D Agent platform (coming soon)
+- Via the three.ws platform (coming soon)
 
 Convention: name the manifest `manifest.json` and co-locate `handlers.js` in the same directory.
 

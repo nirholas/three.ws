@@ -1,6 +1,6 @@
 # Tutorial: Register Your Agent On-Chain
 
-Give your 3D agent a permanent blockchain identity anyone can verify.
+Give your three.ws a permanent blockchain identity anyone can verify.
 
 ---
 
@@ -30,7 +30,7 @@ Base is a Layer 2 network built on Ethereum. Transactions cost a fraction of a c
 - **Buy directly on Base** — Coinbase supports Base withdrawals natively. Any exchange that supports Base works.
 - **Use the testnet for free practice** — Base Sepolia (chain ID 84532) is a test network where ETH has no real value. Get free testnet ETH from the [Coinbase Base Sepolia faucet](https://www.coinbase.com/faucets/base-ethereum-sepolia-faucet). This is the best option if you want to try the flow before spending real money.
 
-**A 3D agent.** Step 1 covers creating one if you don't have one yet.
+**A three.ws.** Step 1 covers creating one if you don't have one yet.
 
 ---
 
@@ -83,7 +83,7 @@ If you already have ETH on Base, skip ahead to Step 3.
 
 ## Step 3: Connect your wallet
 
-1. In the 3D Agent app, click **Connect Wallet** in the top-right corner
+1. In the three.ws app, click **Connect Wallet** in the top-right corner
 2. Choose how you want to connect:
    - **MetaMask** — click the MetaMask icon and approve in the extension
    - **Coinbase Wallet** — click the Coinbase icon
@@ -91,7 +91,7 @@ If you already have ETH on Base, skip ahead to Step 3.
    - **Email login** — enter your email address; a self-custodied embedded wallet is created automatically via Privy (no browser extension needed)
    - **Google login** — same as email, just faster
 
-3. If you're prompted to sign a message ("Sign in to 3D Agent..."), sign it — this proves wallet ownership and costs no gas.
+3. If you're prompted to sign a message ("Sign in to three.ws..."), sign it — this proves wallet ownership and costs no gas.
 
 4. Your shortened address appears in the header: `0xABcd…EF12 · Base`
 
@@ -207,7 +207,7 @@ Replace `0xRegistryAddress` with the Identity Registry contract address shown on
 On your agent's page, click the QR icon in the Passport widget. A scannable code appears — save it or screenshot it for physical printouts, conference badges, or business cards.
 
 **Include it in a README or profile:**
-A Markdown link works: `[My 3D Agent](https://three.ws/a/8453/42)`
+A Markdown link works: `[My three.ws](https://three.ws/a/8453/42)`
 
 ---
 

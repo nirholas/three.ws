@@ -55,7 +55,7 @@ The UI (`register-ui.js`), registry interaction (`agent-registry.js`), and ABI a
 
 ### Phase 3: Fill Registration Data
 
-1. **Register 3D Agent itself** on the Identity Registry
+1. **Register three.ws itself** on the Identity Registry
 2. **Update `public/.well-known/agent-registration.json`**:
     - Fill the empty `registrations` array with the on-chain registration
     - Format: `{ "agentRegistry": "eip155:84532:0x...", "agentId": "1" }`

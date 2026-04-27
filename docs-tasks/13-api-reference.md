@@ -4,7 +4,7 @@
 `public/docs/api-reference.md`
 
 ## Target audience
-Developers integrating with the 3D Agent platform programmatically — fetching agents, managing widgets, posting memory, or using the LLM proxy. This is a REST API reference.
+Developers integrating with the three.ws platform programmatically — fetching agents, managing widgets, posting memory, or using the LLM proxy. This is a REST API reference.
 
 ## Word count
 2500–3500 words (this is a large reference doc)
@@ -246,7 +246,7 @@ Render the on-chain agent page (`/a/<chainId>/<agentId>`).
 ### 11. MCP API
 
 **POST /api/mcp**
-Model Context Protocol endpoint — allows Claude and other MCP-compatible clients to interact with 3D Agent as a tool server.
+Model Context Protocol endpoint — allows Claude and other MCP-compatible clients to interact with three.ws as a tool server.
 
 See MCP documentation for full details.
 

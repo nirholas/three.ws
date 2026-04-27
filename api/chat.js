@@ -1,4 +1,4 @@
-// POST /api/chat — AI-powered chat for the 3D Agent.
+// POST /api/chat — AI-powered chat for the three.ws.
 //
 // Takes a user message + viewer context, forwards to Anthropic with a set of
 // viewer-control tools exposed as function-calls, and returns:
@@ -243,7 +243,7 @@ function buildSystemPrompt(ctx = {}) {
 	const settings = `Viewer settings — wireframe:${fmtBool(ctx.wireframe)}, skeleton:${fmtBool(ctx.skeleton)}, grid:${fmtBool(ctx.grid)}, autoRotate:${fmtBool(ctx.autoRotate)}, transparentBg:${fmtBool(ctx.transparentBg)}, bgColor:${ctx.bgColor || '?'}, environment:${ctx.currentEnvironment || '?'}.`;
 
 	return [
-		'You are the 3D Agent — an embodied AI assistant embedded inside a browser-native glTF/GLB viewer at three.ws.',
+		'You are the three.ws — an embodied AI assistant embedded inside a browser-native glTF/GLB viewer at three.ws.',
 		'Your job is to help the user inspect, understand, and modify the 3D scene. You have deep glTF 2.0, PBR materials, and three.js expertise.',
 		'When the user asks you to change the viewer (e.g. "enable wireframe", "make the background dark blue", "turn on auto rotate"), USE the provided tools to perform the change — do not just describe it.',
 		'When asked about the loaded model, use the context below as ground truth. Do not invent stats.',

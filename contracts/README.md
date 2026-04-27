@@ -58,14 +58,14 @@ forge test -vv
 
 Same as above but with `$BASE_RPC_URL`, and update the `8453` entry in `abi.js`.
 
-## After deploy: register the 3D Agent itself
+## After deploy: register the three.ws itself
 
 ```js
 // Browser console on three.ws with wallet connected to Base Sepolia:
 import { registerAgent } from './src/erc8004/index.js';
 const r = await registerAgent({
     glbFile: /* your GLB File */,
-    name: '3D Agent',
+    name: 'three.ws',
     description: 'AI-powered 3D model viewer & validation agent',
     apiToken: 'YOUR_WEB3STORAGE_TOKEN',
     onStatus: console.log,
@@ -83,7 +83,7 @@ Then update [`../public/.well-known/agent-registration.json`](../public/.well-kn
 
 ## Allow-list a validator (for on-chain validation records)
 
-After deploy, the deployer owns the ValidationRegistry. Add the 3D Agent's own wallet (or a dedicated validator key) with:
+After deploy, the deployer owns the ValidationRegistry. Add the three.ws's own wallet (or a dedicated validator key) with:
 
 ```bash
 cast send $VALIDATION_REGISTRY \

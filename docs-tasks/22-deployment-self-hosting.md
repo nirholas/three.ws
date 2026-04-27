@@ -4,7 +4,7 @@
 `public/docs/deployment.md`
 
 ## Target audience
-Developers and organizations who want to self-host the 3D Agent platform — either for privacy, compliance, customization, or cost control. Assumes comfort with Vercel/cloud deployment and environment variables.
+Developers and organizations who want to self-host the three.ws platform — either for privacy, compliance, customization, or cost control. Assumes comfort with Vercel/cloud deployment and environment variables.
 
 ## Word count
 2000–3000 words
@@ -12,7 +12,7 @@ Developers and organizations who want to self-host the 3D Agent platform — eit
 ## What this document must cover
 
 ### 1. Deployment overview
-3D Agent is designed to deploy on Vercel but will work on any Node.js host that supports serverless functions. The platform consists of:
+three.ws is designed to deploy on Vercel but will work on any Node.js host that supports serverless functions. The platform consists of:
 - **Frontend** — Vite-built multi-page SPA (static files)
 - **API routes** — Node.js serverless functions (in `/api/`)
 - **Database** — PostgreSQL (Neon DB recommended)
@@ -122,7 +122,7 @@ node scripts/apply-delegations-schema.js
 - `delegations` table — ERC-7710 permission grants
 
 ### 5. S3 storage setup
-3D Agent stores GLB files and generated thumbnails in S3:
+three.ws stores GLB files and generated thumbnails in S3:
 
 ```bash
 # Create bucket

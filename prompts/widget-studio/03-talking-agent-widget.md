@@ -62,7 +62,7 @@ const TALKING_AGENT_DEFAULTS = {
 	voiceInput: true, // enable mic button
 	voiceOutput: true, // text-to-speech responses
 	chatPosition: 'right', // 'right' | 'bottom' | 'overlay'
-	poweredByBadge: true, // tasteful "powered by 3D Agent" badge
+	poweredByBadge: true, // tasteful "powered by three.ws" badge
 	// Rate limits (visitor side)
 	visitorRateLimit: { msgsPerMinute: 8, msgsPerSession: 50 },
 };

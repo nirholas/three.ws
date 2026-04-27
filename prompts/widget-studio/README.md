@@ -1,6 +1,6 @@
 # Widget Studio — Build Prompts
 
-A no-code Widget Studio for the 3D Agent platform. Users pick an avatar, choose a widget type, brand it, and get a stable embed URL tied to their account. No code required — but the generated HTML is always shown and copyable.
+A no-code Widget Studio for the three.ws platform. Users pick an avatar, choose a widget type, brand it, and get a stable embed URL tied to their account. No code required — but the generated HTML is always shown and copyable.
 
 ## Why these prompts exist
 

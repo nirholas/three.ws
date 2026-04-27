@@ -3,20 +3,20 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>3D Agent — Give Your AI a Body</title>
+		<title>three.ws — Give Your AI a Body</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="author" content="nirholas" />
 		<meta
 			name="description"
-			content="Drop any GLB model into 3D Agent — view it, animate it, embed it anywhere, and give it a verifiable on-chain identity."
+			content="Drop any GLB model into three.ws — view it, animate it, embed it anywhere, and give it a verifiable on-chain identity."
 		/>
 		<meta name="theme-color" content="#000000" />
 
 		<meta property="og:type" content="website" />
-		<meta property="og:title" content="3D Agent — Give Your AI a Body" />
+		<meta property="og:title" content="three.ws — Give Your AI a Body" />
 		<meta
 			property="og:description"
-			content="Drop any GLB model into 3D Agent — view it, animate it, embed it anywhere."
+			content="Drop any GLB model into three.ws — view it, animate it, embed it anywhere."
 		/>
 		<meta property="og:url" content="https://three.ws/home" />
 
@@ -40,8 +40,8 @@
 		<a href="#main-content" class="h-skip-link">Skip to main content</a>
 		<header>
 			<h1>
-				<a href="/" aria-label="3D Agent home"
-					><span class="wordmark-dot" aria-hidden="true"></span>3D Agent</a
+				<a href="/" aria-label="three.ws home"
+					><span class="wordmark-dot" aria-hidden="true"></span>three.ws</a
 				>
 			</h1>
 			<nav class="home-nav" aria-label="Primary">
@@ -65,7 +65,7 @@
 				<div class="h-layer" style="--depth: 4" aria-hidden="true">
 					<div class="h-hero-grid"></div>
 				</div>
-				<!-- Depth 3: ghost model -->
+				<!-- Depth 3: ghost model drifting in background -->
 				<div class="h-layer" style="--depth: 3" aria-hidden="true">
 					<model-viewer
 						class="h-ghost-model"
@@ -84,73 +84,72 @@
 						loading="lazy"
 					></model-viewer>
 				</div>
-				<!-- Depth 2: mesh + glows -->
+				<!-- Depth 2: atmosphere -->
 				<div class="h-layer" style="--depth: 2" aria-hidden="true">
 					<div class="h-hero-mesh"></div>
 					<div class="h-hero-glow-a"></div>
 					<div class="h-hero-glow-b"></div>
 				</div>
-				<!-- Depth 0.5: vignette -->
+				<!-- Depth 1: main avatar centered in its own parallax layer -->
+				<div class="h-layer" style="--depth: 1">
+					<div class="h-avatar-stage">
+						<div class="h-avatar-wrap">
+							<div class="h-avatar-ring"></div>
+							<div class="h-avatar-glow"></div>
+							<model-viewer
+								class="h-avatar-viewer"
+								src="/avatars/cz.glb"
+								alt="3D Agent avatar"
+								camera-controls
+								disable-zoom
+								rotation-per-second="18deg"
+								interaction-prompt="none"
+								shadow-intensity="0.8"
+								shadow-softness="1"
+								exposure="1.05"
+								tone-mapping="aces"
+								environment-image="neutral"
+								camera-orbit="20deg 68deg 3.4m"
+								field-of-view="28deg"
+								loading="eager"
+							></model-viewer>
+							<div class="h-avatar-badge">
+								<span class="h-avatar-badge-label">agent</span>
+								<span>0x3d…a9f</span>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!-- Depth 0.5: vignette closest to camera -->
 				<div class="h-layer" style="--depth: 0.5" aria-hidden="true">
 					<div class="h-vignette"></div>
 				</div>
 
-				<!-- Sticky overlay: 2-column text + avatar -->
-				<div class="h-hero-sticky">
-					<div class="h-hero-content">
-						<div class="h-eyebrow h-reveal">
-							<span class="h-eyebrow-dot"></span>
-							<span>Browser-native · No install</span>
-						</div>
-						<h2 class="h-title h-reveal">Give your AI<br />agent a <em>body</em>.</h2>
-						<p class="h-subtitle h-reveal">
-							Drop any GLB model into 3D Agent — view it, animate it, embed it anywhere,
-							and give it a verifiable on-chain identity. No plugins. No server uploads.
-							Just open and go.
-						</p>
-						<div class="h-cta-row h-reveal">
-							<a href="/" class="h-btn-primary">
-								<span>Launch Viewer</span>
-								<span class="arrow">→</span>
-							</a>
-							<a href="/widgets" class="h-btn-ghost">Explore Widgets</a>
-						</div>
-						<ul class="h-standards h-reveal" aria-label="Supported formats and standards">
-							<li>glTF 2.0</li>
-							<li>GLB</li>
-							<li>ERC-8004</li>
-							<li>A2A</li>
-							<li>MCP</li>
-						</ul>
+				<!-- Sticky text pinned to bottom-left — same pattern as features page -->
+				<div class="h-hero-text">
+					<div class="h-eyebrow h-reveal">
+						<span class="h-eyebrow-dot"></span>
+						<span>Browser-native · No install</span>
 					</div>
-
-					<div class="h-hero-visual h-reveal" aria-hidden="true">
-						<div class="h-avatar-ring"></div>
-						<div class="h-avatar-glow"></div>
-						<model-viewer
-							class="h-avatar-viewer"
-							src="/avatars/cz.glb"
-							alt="3D Agent avatar"
-							camera-controls
-							disable-zoom
-							auto-rotate
-							auto-rotate-delay="0"
-							rotation-per-second="18deg"
-							interaction-prompt="none"
-							shadow-intensity="0.8"
-							shadow-softness="1"
-							exposure="1.05"
-							tone-mapping="aces"
-							environment-image="neutral"
-							camera-orbit="20deg 68deg 3.4m"
-							field-of-view="28deg"
-							loading="eager"
-						></model-viewer>
-						<div class="h-avatar-badge">
-							<span class="h-avatar-badge-label">agent</span>
-							<span>0x3d…a9f</span>
-						</div>
+					<h2 class="h-title h-reveal">Give your AI<br />agent a <em>body</em>.</h2>
+					<p class="h-subtitle h-reveal">
+						Drop any GLB — view it, animate it, embed it anywhere, and give it a
+						verifiable on-chain identity. No plugins. No server uploads.
+					</p>
+					<div class="h-cta-row h-reveal">
+						<a href="/" class="h-btn-primary">
+							<span>Launch Viewer</span>
+							<span class="arrow">→</span>
+						</a>
+						<a href="/features" class="h-btn-ghost">See features →</a>
 					</div>
+					<ul class="h-standards h-reveal" aria-label="Supported formats and standards">
+						<li>glTF 2.0</li>
+						<li>GLB</li>
+						<li>ERC-8004</li>
+						<li>A2A</li>
+						<li>MCP</li>
+					</ul>
 				</div>
 
 				<div class="h-scroll-hint" aria-hidden="true">
@@ -288,7 +287,7 @@
 							</div>
 							<div class="h-id-row">
 								<span class="h-id-key">name</span>
-								<span class="h-id-val">"3D Agent"</span>
+								<span class="h-id-val">"three.ws"</span>
 							</div>
 							<div class="h-id-row">
 								<span class="h-id-key">agentId</span>
@@ -326,7 +325,7 @@
 
 			<footer class="h-footer">
 				<p>
-					3D Agent ·
+					three.ws ·
 					<a href="https://github.com/nirholas/3D" target="_blank" rel="noopener">GitHub</a>
 					· <a href="/features">Docs</a> ·
 					<a href="https://eips.ethereum.org/EIPS/eip-8004" target="_blank" rel="noopener">ERC-8004</a>

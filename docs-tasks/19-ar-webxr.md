@@ -4,7 +4,7 @@
 `public/docs/ar.md`
 
 ## Target audience
-Developers who want to add AR (Augmented Reality) viewing to their 3D Agent embeds. Brief and practical — covers all three AR methods.
+Developers who want to add AR (Augmented Reality) viewing to their three.ws embeds. Brief and practical — covers all three AR methods.
 
 ## Word count
 1000–1500 words
@@ -12,7 +12,7 @@ Developers who want to add AR (Augmented Reality) viewing to their 3D Agent embe
 ## What this document must cover
 
 ### 1. AR overview
-3D Agent supports three AR methods:
+three.ws supports three AR methods:
 | Method | Platform | How it works |
 |--------|----------|-------------|
 | iOS QuickLook | iPhone/iPad (Safari) | Opens native AR viewer via `.usdz` or `.reality` |

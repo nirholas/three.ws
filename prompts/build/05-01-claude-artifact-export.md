@@ -25,7 +25,7 @@ Claude Artifacts are self-contained HTML documents. A user pastes the artifact i
 - **Auth:** public; rate-limited.
 - **Output:** a single, self-contained HTML document (content-type `text/html; charset=utf-8`) that:
     1. Loads the built web-component bundle from the production origin (`<script type="module" src="https://three.ws/dist-lib/agent-3d.js">`).
-    2. Renders `<agent-3d agent-id="<id>" host="claude"></agent-3d>`.
+    2. Renders `<agent-three.ws-id="<id>" host="claude"></agent-3d>`.
     3. Sets a viewport meta tag, a dark background, and sane mobile defaults.
     4. Includes Open Graph meta tags (reusing the 04-01 OG image) so previews of the artifact render correctly outside Claude too.
 

@@ -93,7 +93,7 @@ describe('discover/my-agents rename — static page contents', () => {
 		const path = p('public/discover/index.html');
 		expect(existsSync(path)).toBe(true);
 		const html = readFileSync(path, 'utf8');
-		expect(html).toContain('<title>Discover · 3D Agent</title>');
+		expect(html).toContain('<title>Discover · three.ws</title>');
 		expect(html).toContain('ERC-8004 Agent Directory');
 	});
 
@@ -101,7 +101,7 @@ describe('discover/my-agents rename — static page contents', () => {
 		const path = p('public/my-agents/index.html');
 		expect(existsSync(path)).toBe(true);
 		const html = readFileSync(path, 'utf8');
-		expect(html).toContain('<title>My Agents · 3D Agent</title>');
+		expect(html).toContain('<title>My Agents · three.ws</title>');
 		expect(html).toContain('On-chain Agents');
 	});
 

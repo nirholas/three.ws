@@ -1,4 +1,4 @@
-# 3D Agent Card v1
+# three.ws Card v1
 
 A strict superset of the [ERC-8004 registration card](https://eips.ethereum.org/EIPS/eip-8004#registration-v1) for agents whose primary embodiment is a 3D model. This is the JSON document the ERC-721 `tokenURI` resolves to on the Identity Registry.
 
@@ -9,7 +9,7 @@ A strict superset of the [ERC-8004 registration card](https://eips.ethereum.org/
 
 ## Why
 
-ERC-8004 is format-agnostic — the agent card can describe anything. That works for text/LLM agents but says nothing about 3D. Without a shared schema, every 3D agent registry and viewer reinvents the same fields (model URI, hash, bounding box, license) incompatibly. v1 pins those fields so any 3D-aware consumer can:
+ERC-8004 is format-agnostic — the agent card can describe anything. That works for text/LLM agents but says nothing about 3D. Without a shared schema, every three.ws registry and viewer reinvents the same fields (model URI, hash, bounding box, license) incompatibly. v1 pins those fields so any 3D-aware consumer can:
 
 1. Render the agent without parsing vendor-specific JSON.
 2. Verify the model bytes match the card (`sha256`).
@@ -46,7 +46,7 @@ Only `model` is new and required. The block is intentionally small:
 
 ## Conformance
 
-A document conforms to 3D Agent Card v1 if:
+A document conforms to three.ws Card v1 if:
 
 1. It validates against the JSON Schema linked above.
 2. Its `type` field includes both:

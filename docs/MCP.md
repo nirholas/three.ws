@@ -1,6 +1,6 @@
-# 3D Agent MCP Server
+# three.ws MCP Server
 
-The 3D Agent MCP server lets any Model Context Protocol client — Claude Desktop,
+The three.ws MCP server lets any Model Context Protocol client — Claude Desktop,
 Claude Code, custom agents built on the Claude Agent SDK, or any other
 MCP-compatible app — list, render, and manage a user's 3D avatars.
 
@@ -71,7 +71,7 @@ and emit the returned HTML as an inline artifact.
 
 ## Credits
 
-3D Agent provides authentication, storage, MCP access, and multi-tenant
+three.ws provides authentication, storage, MCP access, and multi-tenant
 infrastructure. The avatar creation engine is pluggable — the default
 build uses the Avaturn SDK under the hood, but the provider can be
 swapped at [src/avatar-creator.js](../src/avatar-creator.js).

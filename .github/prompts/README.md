@@ -1,6 +1,6 @@
 # Prompts
 
-Task specs for agents working on 3D Agent. Each prompt is a self-contained brief: problem, implementation steps, validation, and what **not** to do.
+Task specs for agents working on three.ws. Each prompt is a self-contained brief: problem, implementation steps, validation, and what **not** to do.
 
 Prompts are prioritized by the product stack from [memory/project_vision.md](../../.. /home/codespace/.claude/projects/-workspaces-3D/memory/project_vision.md). When in doubt, work the lowest-numbered unfinished `stack-*` prompt first.
 

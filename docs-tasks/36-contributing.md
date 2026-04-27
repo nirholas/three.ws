@@ -4,7 +4,7 @@
 `public/docs/contributing.md`
 
 ## Target audience
-Developers who want to contribute to the 3D Agent open-source project — bug fixes, features, documentation, skill contributions. Covers the full contribution workflow.
+Developers who want to contribute to the three.ws open-source project — bug fixes, features, documentation, skill contributions. Covers the full contribution workflow.
 
 ## Word count
 1500–2000 words
@@ -136,7 +136,7 @@ Follow conventional commits:
 One subject line, imperative mood ("add" not "added"), no period at end. Under 72 characters.
 
 ### 10. Contributing a skill
-Skills are the best way to extend 3D Agent without touching core code:
+Skills are the best way to extend three.ws without touching core code:
 
 1. Create your skill directory (see Skills documentation for format)
 2. Host it on GitHub Pages, Vercel, or any CDN

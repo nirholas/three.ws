@@ -4,7 +4,7 @@
 `public/docs/embedding.md`
 
 ## Target audience
-Developers and no-code builders who want to embed a 3D agent or widget on their website, app, or platform. Covers all embedding methods from one-liner to advanced iframe.
+Developers and no-code builders who want to embed a three.ws or widget on their website, app, or platform. Covers all embedding methods from one-liner to advanced iframe.
 
 ## Word count
 1500–2500 words
@@ -12,7 +12,7 @@ Developers and no-code builders who want to embed a 3D agent or widget on their 
 ## What this document must cover
 
 ### 1. Overview of embedding options
-Four ways to embed a 3D agent:
+Four ways to embed a three.ws:
 
 | Method | Complexity | Control | Use case |
 |--------|-----------|---------|---------|
@@ -66,7 +66,7 @@ For third-party pages where you can't load external scripts, or CMS platforms wi
   height="500"
   frameborder="0"
   allow="camera; microphone; xr-spatial-tracking"
-  title="3D Agent"
+  title="three.ws"
 ></iframe>
 ```
 
@@ -157,7 +157,7 @@ GET https://three.ws/api/widgets/oembed?url=<widget-url>
 ```
 
 ### 7. Method 4: Claude Artifact
-3D Agent can be embedded inside Claude.ai artifacts — useful for AI-generated interactive demos.
+three.ws can be embedded inside Claude.ai artifacts — useful for AI-generated interactive demos.
 
 The artifact bundle is a zero-dependency, self-contained file:
 ```html

@@ -1,6 +1,6 @@
 # AR & WebXR
 
-3D Agent supports three AR methods, each targeting a different platform:
+three.ws supports three AR methods, each targeting a different platform:
 
 | Method | Platform | Mechanism |
 |--------|----------|-----------|

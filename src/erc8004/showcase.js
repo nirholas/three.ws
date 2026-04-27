@@ -112,7 +112,7 @@ class ShowcasePage {
 				<header class="showcase-hero">
 					<div class="showcase-hero-inner">
 						<div class="showcase-eyebrow">ERC-8004 · Directory</div>
-						<h1 class="showcase-title">Every 3D agent on-chain.</h1>
+						<h1 class="showcase-title">Every three.ws on-chain.</h1>
 						<p class="showcase-subtitle">
 							Browse every ERC-8004 agent with a <code>gltf</code> body — discovered across
 							${supportedChainIds().length} chains and indexed from canonical registries. Click any
@@ -121,7 +121,7 @@ class ShowcasePage {
 						<div class="showcase-stats" data-role="stats">
 							<div class="showcase-stat">
 								<span class="showcase-stat-value" data-role="statTotal">—</span>
-								<span class="showcase-stat-label">3D agents</span>
+								<span class="showcase-stat-label">three.wss</span>
 							</div>
 							<div class="showcase-stat">
 								<span class="showcase-stat-value">${splitChains().mainnet.length}+${splitChains().testnet.length}</span>
@@ -422,7 +422,7 @@ class ShowcasePage {
 			out.innerHTML = `
 				<div class="showcase-empty">
 					<div class="showcase-empty-art">✨</div>
-					<h3>No 3D agents found.</h3>
+					<h3>No three.wss found.</h3>
 					<p class="showcase-muted">
 						Try a different chain filter, flip to ${this._net === 'mainnet' ? 'Testnet' : 'Mainnet'}, or
 						<a href="/deploy">deploy your own</a>.

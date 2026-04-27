@@ -4,7 +4,7 @@
 `public/docs/troubleshooting.md`
 
 ## Target audience
-Anyone having problems with 3D Agent — developers debugging integrations, users whose agents aren't working, self-hosters with server issues. Organized by symptom, not by system.
+Anyone having problems with three.ws — developers debugging integrations, users whose agents aren't working, self-hosters with server issues. Organized by symptom, not by system.
 
 ## Word count
 2000–3000 words
@@ -195,7 +195,7 @@ Organize into sections by symptom category. Each problem should have: **Symptom*
 
 ### FAQ
 
-**Is 3D Agent free?**
+**Is three.ws free?**
 The core platform is free to use. API costs (Anthropic, ElevenLabs) are passed through at cost. IPFS pinning requires your own provider keys.
 
 **Can I use any 3D model, or does it have to be a humanoid?**

@@ -1,8 +1,8 @@
 # Introduction & Overview
 
-## What is 3D Agent?
+## What is three.ws?
 
-3D Agent is an open-source, browser-native platform for creating, hosting, and embedding interactive AI agents that live inside 3D avatars. It combines a WebGL 3D viewer — built on [three.js](https://threejs.org) with full glTF 2.0 / GLB support — with an AI agent runtime that gives each avatar personality, memory, skills, and optionally an on-chain identity.
+three.ws is an open-source, browser-native platform for creating, hosting, and embedding interactive AI agents that live inside 3D avatars. It combines a WebGL 3D viewer — built on [three.js](https://threejs.org) with full glTF 2.0 / GLB support — with an AI agent runtime that gives each avatar personality, memory, skills, and optionally an on-chain identity.
 
 The result is an agent that doesn't just respond in a chat box. It occupies a three-dimensional body, plays animations, responds to voice, and can be embedded into any web page with a single script tag and a custom HTML element.
 
@@ -20,7 +20,7 @@ The result is an agent that doesn't just respond in a chat box. It occupies a th
 
 ### Embodied AI
 
-Most AI interfaces are text boxes. 3D Agent is different: the AI runtime is bound to a 3D avatar that expresses emotion, plays animations, and exists inside a rendered scene. When an agent speaks, a talk animation plays. When something goes wrong, the avatar can express that state visually. The connection between what an agent says and what it does in 3D space is a first-class concern, not an afterthought.
+Most AI interfaces are text boxes. three.ws is different: the AI runtime is bound to a 3D avatar that expresses emotion, plays animations, and exists inside a rendered scene. When an agent speaks, a talk animation plays. When something goes wrong, the avatar can express that state visually. The connection between what an agent says and what it does in 3D space is a first-class concern, not an afterthought.
 
 This matters in product contexts where trust, presence, and brand identity are important — a 3D character carrying your brand is more memorable than a floating modal.
 
@@ -38,7 +38,7 @@ The element exposes a full JavaScript API (`say()`, `ask()`, `installSkill()`, `
 
 ### Decentralized
 
-Agent identity can be registered on-chain using ERC-8004, the standard for 3D agent identity. Once registered, an agent has a canonical address — `agent://base/42`, for example — that resolves to an IPFS-hosted manifest bundle containing the avatar, skills, memory config, and persona. Memories can be stored on IPFS. Signed ERC-7710 delegations let agents perform scoped, time-bound on-chain actions without per-transaction signing prompts.
+Agent identity can be registered on-chain using ERC-8004, the standard for three.ws identity. Once registered, an agent has a canonical address — `agent://base/42`, for example — that resolves to an IPFS-hosted manifest bundle containing the avatar, skills, memory config, and persona. Memories can be stored on IPFS. Signed ERC-7710 delegations let agents perform scoped, time-bound on-chain actions without per-transaction signing prompts.
 
 For developers who don't need any of this, on-chain identity is entirely optional. A bare GLB URL is enough to get started.
 
@@ -99,13 +99,13 @@ The `<agent-3d>` element accepts a manifest via the `src`, `manifest`, or `agent
 
 ### ERC-8004
 
-ERC-8004 is the on-chain standard used to register 3D agent identity. A registered agent has a numeric ID tied to a specific chain (e.g., Base), an owner address, and a content-addressed pointer to its manifest bundle on IPFS. Registration makes an agent discoverable at a canonical URI (`agent://base/42`) and enables sharing, oEmbed previews, and delegated permissions. Registration is optional — agents work entirely without it.
+ERC-8004 is the on-chain standard used to register three.ws identity. A registered agent has a numeric ID tied to a specific chain (e.g., Base), an owner address, and a content-addressed pointer to its manifest bundle on IPFS. Registration makes an agent discoverable at a canonical URI (`agent://base/42`) and enables sharing, oEmbed previews, and delegated permissions. Registration is optional — agents work entirely without it.
 
 ---
 
 ## Architecture at a Glance
 
-3D Agent is organized into four layers, each building on the one below.
+three.ws is organized into four layers, each building on the one below.
 
 ### Viewer Layer
 
@@ -160,21 +160,21 @@ The embed layer is what developers interact with. `Agent3DElement` (`<agent-3d>`
 
 ### vs. `<model-viewer>` (Google)
 
-[`<model-viewer>`](https://modelviewer.dev) is a solid, well-maintained web component for displaying glTF models with AR support. It excels at simple 3D display and is the right choice if that's all you need. 3D Agent adds the entire AI agent stack on top: LLM runtime, skill system, memory, voice I/O, emotion system, and on-chain identity. It also adds Widget Studio for no-code embeds and a manifest format for portable agent definitions. If you want a talking, interactive character rather than a static viewer, 3D Agent is the right tool.
+[`<model-viewer>`](https://modelviewer.dev) is a solid, well-maintained web component for displaying glTF models with AR support. It excels at simple 3D display and is the right choice if that's all you need. three.ws adds the entire AI agent stack on top: LLM runtime, skill system, memory, voice I/O, emotion system, and on-chain identity. It also adds Widget Studio for no-code embeds and a manifest format for portable agent definitions. If you want a talking, interactive character rather than a static viewer, three.ws is the right tool.
 
 ### vs. General LLM Chatbots
 
-General-purpose chat interfaces (embedded or hosted) are text-first. They have no awareness of 3D space, no avatar, and no ability to control a scene. 3D Agent's agent layer is purpose-built to bridge LLM outputs to three.js operations: the model can trigger animations, adjust camera position, highlight hotspots, and express emotions through the avatar. It also has native glTF understanding — the LLM can reason about the loaded model's structure via the validator tool.
+General-purpose chat interfaces (embedded or hosted) are text-first. They have no awareness of 3D space, no avatar, and no ability to control a scene. three.ws's agent layer is purpose-built to bridge LLM outputs to three.js operations: the model can trigger animations, adjust camera position, highlight hotspots, and express emotions through the avatar. It also has native glTF understanding — the LLM can reason about the loaded model's structure via the validator tool.
 
 ### vs. Unity / Unreal WebGL Exports
 
-Game engine WebGL exports ship a large runtime (~10–50 MB) and require their own asset pipeline. They are not designed to be embedded as lightweight web components. 3D Agent is browser-native: no game engine, no plugin, no proprietary format. The CDN bundle is compact, the element self-initializes with a script tag, and the viewer runs on standard WebGL 2.0 available in every modern browser. The trade-off is that 3D Agent is not a general-purpose game engine — it is optimized for avatar-centric, interactive AI agent experiences.
+Game engine WebGL exports ship a large runtime (~10–50 MB) and require their own asset pipeline. They are not designed to be embedded as lightweight web components. three.ws is browser-native: no game engine, no plugin, no proprietary format. The CDN bundle is compact, the element self-initializes with a script tag, and the viewer runs on standard WebGL 2.0 available in every modern browser. The trade-off is that three.ws is not a general-purpose game engine — it is optimized for avatar-centric, interactive AI agent experiences.
 
 ---
 
 ## Quick Start
 
-The minimum to get a 3D agent on screen is two lines of HTML:
+The minimum to get a three.ws on screen is two lines of HTML:
 
 ```html
 <script type="module" src="https://cdn.three.wsagent-3d.js"></script>

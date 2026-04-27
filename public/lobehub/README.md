@@ -1,4 +1,4 @@
-# 3D Agent — LobeHub Plugin
+# three.ws — LobeHub Plugin
 
 Embeds a rigged 3D avatar agent into any LobeHub instance via the plugin manifest + iframe bridge.
 

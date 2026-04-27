@@ -21,7 +21,7 @@ If 01 isn't done, stop and run 01 first.
 1. `/discover` renders the community ERC-8004 directory (the page formerly at `/explore`).
 2. `/explore` returns a **301** to `/discover`.
 3. The `/discover` → `/my-agents` redirect from task 01 is **removed** (it would now shadow the community page).
-4. Page `<title>` becomes "Discover · 3D Agent". `<h2>` text "Every agent, every chain." is preserved (good copy).
+4. Page `<title>` becomes "Discover · three.ws". `<h2>` text "Every agent, every chain." is preserved (good copy).
 5. The "ERC-8004 Agent Directory" chip stays — it's a useful sub-label.
 6. Canonical URL `<link rel="canonical">` is updated to `https://three.ws/discover`.
 7. All nav surfaces show "Discover" pointing to `/discover` — no leftover "Explore" links.
@@ -38,7 +38,7 @@ If 01 isn't done, stop and run 01 first.
 
 2. **Update page chrome** in the new `public/discover/index.html`:
 
-    - `<title>Explore · 3D Agent</title>` → `<title>Discover · 3D Agent</title>`
+    - `<title>Explore · three.ws</title>` → `<title>Discover · three.ws</title>`
     - `<meta name="description">` — replace "Browse every ERC-8004 agent…" with the same sentence but starting "Discover every ERC-8004 agent registered on-chain across 20+ EVM networks." (keeps SEO weight).
     - `<link rel="canonical" href="…/explore">` → `…/discover`.
     - Update `<script src="/explore/explore.js">` → `<script src="/discover/discover.js">`.

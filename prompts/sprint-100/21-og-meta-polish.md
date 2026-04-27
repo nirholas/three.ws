@@ -27,8 +27,8 @@ Additive edits to two existing server files, plus optionally a new thumbnail ren
 
 ```html
 <meta property="og:type" content="profile" />
-<meta property="og:title" content="${agent.name} — 3D Agent" />
-<meta property="og:description" content="${agent.bio || 'An embodied 3D agent'}" />
+<meta property="og:title" content="${agent.name} — three.ws" />
+<meta property="og:description" content="${agent.bio || 'An embodied three.ws'}" />
 <meta property="og:image" content="${ogImageUrl}" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />

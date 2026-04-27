@@ -1,4 +1,4 @@
-// Lightweight client helpers for talking to the 3D Agent backend from the viewer.
+// Lightweight client helpers for talking to the three.ws backend from the viewer.
 // Keeps the UI code in app.js/avatar-creator.js clean.
 
 const API = ''; // same origin

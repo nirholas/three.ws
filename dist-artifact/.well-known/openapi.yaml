@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  title: 3D Agent API
+  title: three.ws API
   description: >
     AI-powered 3D avatar management platform. Supports OAuth 2.1 (with PKCE),
     session cookies, and API keys for authentication. Avatars are stored as

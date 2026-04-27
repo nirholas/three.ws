@@ -12,7 +12,7 @@ Developers embedding `<agent-3d>` in their own pages or apps. Needs to be a comp
 ## What this document must cover
 
 ### 1. Overview
-`<agent-3d>` is a custom HTML element (Web Component) that encapsulates the entire 3D Agent stack. Drop a script tag, use the element — no framework required.
+`<agent-3d>` is a custom HTML element (Web Component) that encapsulates the entire three.ws stack. Drop a script tag, use the element — no framework required.
 
 ```html
 <script type="module" src="https://cdn.three.wsagent-3d.js"></script>

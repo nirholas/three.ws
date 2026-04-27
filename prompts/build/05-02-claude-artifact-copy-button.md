@@ -13,7 +13,7 @@ Extend the SnippetPicker (`04-06`) for the `claude-artifact` target to generate 
 Format (this goes in the clipboard):
 
 ```
-Please create an artifact that embeds this 3D agent:
+Please create an artifact that embeds this three.ws:
 
 <iframe src="https://three.ws/api/agents/<id>/artifact.html?size=card&bg=transparent" style="width:100%;height:520px;border:0;background:transparent"></iframe>
 
@@ -38,7 +38,7 @@ In `src/components/snippet-picker.jsx`, `claude-artifact` target:
 
 ```js
 case 'claude-artifact':
-  return `Please create an artifact that embeds this 3D agent:\n\n<iframe src="${origin}/api/agents/${agent.id}/artifact.html?size=${size}&bg=${bg}" style="width:100%;height:520px;border:0;background:transparent"></iframe>\n\nShow it prominently. Let me interact with it by posting messages to the iframe — types are speak, emote, gesture, look-at.`;
+  return `Please create an artifact that embeds this three.ws:\n\n<iframe src="${origin}/api/agents/${agent.id}/artifact.html?size=${size}&bg=${bg}" style="width:100%;height:520px;border:0;background:transparent"></iframe>\n\nShow it prominently. Let me interact with it by posting messages to the iframe — types are speak, emote, gesture, look-at.`;
 ```
 
 Size/bg flow through from the picker controls.

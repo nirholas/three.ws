@@ -17,7 +17,7 @@ The minimum suite for "verified" status:
 | `glb-schema`         | File parses as valid glTF/GLB; all required chunks present.       |
 | `gltf-validator`     | Khronos `gltf-validator` reports zero errors (warnings allowed).  |
 | `manifest-integrity` | Card `model.sha256` matches the bytes at `model.uri`.             |
-| `card-schema`        | Card validates against [3D Agent Card v1](3D_AGENT_CARD.md).      |
+| `card-schema`        | Card validates against [three.ws Card v1](3D_AGENT_CARD.md).      |
 | `services-reachable` | Each `services[].endpoint` returns 2xx within 5s (informational). |
 
 A `pass` verdict requires zero `fail` suites. `warn` is allowed.

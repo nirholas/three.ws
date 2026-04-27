@@ -1,6 +1,6 @@
 # 3D Viewer
 
-The viewer is the rendering layer of 3D Agent — a full-featured three.js WebGL scene manager. It handles model loading, camera control, animation playback, lighting, and more. You interact with it directly via the `<agent-3d>` web component or programmatically through the `Viewer` class.
+The viewer is the rendering layer of three.ws — a full-featured three.js WebGL scene manager. It handles model loading, camera control, animation playback, lighting, and more. You interact with it directly via the `<agent-3d>` web component or programmatically through the `Viewer` class.
 
 ## Overview
 

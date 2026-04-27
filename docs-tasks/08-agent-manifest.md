@@ -21,19 +21,19 @@ The manifest is the configuration file that defines an agent — its identity, a
 ### 2. Loading a manifest
 ```html
 <!-- By platform agent ID (resolves via /api/agents/:id) -->
-<agent-3d agent-id="aria-guide"></agent-3d>
+<agent-three.ws-id="aria-guide"></agent-3d>
 
 <!-- By HTTPS URL -->
-<agent-3d agent-id="https://example.com/aria/manifest.json"></agent-3d>
+<agent-three.ws-id="https://example.com/aria/manifest.json"></agent-3d>
 
 <!-- By IPFS CID -->
-<agent-3d agent-id="ipfs://QmXyz..."></agent-3d>
+<agent-three.ws-id="ipfs://QmXyz..."></agent-3d>
 
 <!-- By Arweave ID -->
-<agent-3d agent-id="ar://txid..."></agent-3d>
+<agent-three.ws-id="ar://txid..."></agent-3d>
 
 <!-- On-chain (ERC-8004): chainId:registryAddress:agentId -->
-<agent-3d agent-id="8453:0x1234...:42"></agent-3d>
+<agent-three.ws-id="8453:0x1234...:42"></agent-3d>
 ```
 
 ### 3. Full manifest schema
@@ -177,7 +177,7 @@ Works the same for IPFS: `ipfs://<manifest-cid>` → relative URLs resolved agai
 Options:
 - **HTTPS** — host on any CDN (GitHub Pages, S3, Vercel)
 - **IPFS** — pin with Pinata, Filebase, or Web3.Storage
-- **3D Agent Platform** — upload via the editor; platform hosts it for you
+- **three.ws Platform** — upload via the editor; platform hosts it for you
 - **Arweave** — permanent storage
 
 Minimum CORS requirements: manifest file must be accessible cross-origin (CORS header: `Access-Control-Allow-Origin: *`).

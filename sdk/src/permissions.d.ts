@@ -102,7 +102,7 @@ export interface PermissionsClientOptions {
 }
 
 /**
- * HTTP client for the 3D Agent permissions API.
+ * HTTP client for the three.ws permissions API.
  *
  * `grant` and `revoke` are browser-only — they require a wallet-connected
  * `ethers.Signer` and will throw `PermissionError('browser_only', …)` in Node.js.

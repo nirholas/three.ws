@@ -40,7 +40,7 @@ Extend [src/agent-resolver.js](../../src/agent-resolver.js):
 export async function resolveAgentByAddress(addr, opts) { … }
 ```
 
-`<agent-3d agent-address="0x…">` — add support in [src/element.js](../../src/element.js). If present and no `agent-id` / `src`, resolve via address and render.
+`<agent-three.ws-address="0x…">` — add support in [src/element.js](../../src/element.js). If present and no `agent-id` / `src`, resolve via address and render.
 
 ### 3. Caching
 
@@ -63,7 +63,7 @@ If `addr` looks like an ENS name (`*.eth`), resolve to address first using `ethe
 - [ ] `curl /api/agents/by-address/0xabc…` returns an agent record sourced from chain.
 - [ ] Second call is served from cache (measure with server timing header `X-Cache: HIT`).
 - [ ] `/refresh` forces a re-read.
-- [ ] `<agent-3d agent-address="0x…">` in an HTML page renders the avatar.
+- [ ] `<agent-three.ws-address="0x…">` in an HTML page renders the avatar.
 - [ ] Unregistered address → 404 JSON.
 - [ ] `npm run build` passes.
 

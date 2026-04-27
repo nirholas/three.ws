@@ -7,7 +7,7 @@ When anyone pastes an agent URL like `https://three.ws/agent/ab12cd` into Slack,
 ## Shared context
 
 - Routes already exist: `/agent/:id` (home card) and `/agent/:id/embed` (bare avatar). Do not change those.
-- [public/agent/index.html](../../public/agent/index.html) is the HTML shell the home route renders. It currently has static `<title>Agent Home — 3D Agent</title>` and no OG / Twitter / oEmbed meta tags.
+- [public/agent/index.html](../../public/agent/index.html) is the HTML shell the home route renders. It currently has static `<title>Agent Home — three.ws</title>` and no OG / Twitter / oEmbed meta tags.
 - The share panel on that page is already built and works. You only need to improve what link-previewers see — do not touch the share-panel UI.
 - Agent records are fetched via `GET /api/agents/:id` → `{ agent: { id, name, description, avatar_id, ... } }` (see [api/agents/[id].js](../../api/agents/[id].js)).
 - Avatar records: `GET /api/avatars/:id` → `{ avatar: { url, thumbnail_url, ... } }`. Use `thumbnail_url` if present; otherwise render the OG image from the GLB (see "OG image implementation" below).
@@ -30,7 +30,7 @@ New file: `api/agent-og.js`.
 New file: `api/agent-oembed.js`.
 
 - Spec: https://oembed.com/ — type `rich` with an HTML payload that is a sandboxed iframe pointing at `/agent/:id/embed`.
-- Required fields: `type`, `version: "1.0"`, `provider_name: "3D Agent"`, `provider_url`, `title`, `html`, `width`, `height`, `thumbnail_url`, `thumbnail_width`, `thumbnail_height`, `author_name` (agent name).
+- Required fields: `type`, `version: "1.0"`, `provider_name: "three.ws"`, `provider_url`, `title`, `html`, `width`, `height`, `thumbnail_url`, `thumbnail_width`, `thumbnail_height`, `author_name` (agent name).
 - Validate `url` is on the same origin and matches `/agent/[A-Za-z0-9_-]+` — reject otherwise with 404.
 - If `format=xml`, return oEmbed XML. Otherwise JSON. Default JSON.
 - Cache header: `public, max-age=900`.
@@ -45,7 +45,7 @@ Add these tags. Use placeholder `__AGENT__` tokens for any per-agent values — 
 <!-- unfurl (populated at runtime from identity) -->
 <meta property="og:type" content="website" />
 <meta property="og:title" content="Agent" id="og-title" />
-<meta property="og:description" content="An embodied 3D agent." id="og-description" />
+<meta property="og:description" content="An embodied three.ws." id="og-description" />
 <meta property="og:image" content="" id="og-image" />
 <meta property="og:url" content="" id="og-url" />
 <meta name="twitter:card" content="summary_large_image" />

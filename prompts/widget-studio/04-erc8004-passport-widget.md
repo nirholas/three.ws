@@ -134,7 +134,7 @@ The badge layout is meant for embedding inline in a website header or sidebar â€
 
 Must render cleanly at small sizes. Use CSS `container-type: inline-size` and `@container` queries to adapt layout.
 
-### 7. "Powered by 3D Agent" link
+### 7. "Powered by three.ws" link
 
 In badge layout only, show a subtle 10px "3dagent" link in the bottom corner. In portrait/landscape, make it optional via config (default on).
 

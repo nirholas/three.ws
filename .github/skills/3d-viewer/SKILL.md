@@ -1,14 +1,14 @@
 ---
 name: 3d-viewer
-description: 'Full project workflow for the 3D Agent platform. Use when: developing features, debugging, modifying UI, understanding architecture, running dev server, or making code changes anywhere in the repo (viewer, agent runtime, API, contracts).'
+description: 'Full project workflow for the three.ws platform. Use when: developing features, debugging, modifying UI, understanding architecture, running dev server, or making code changes anywhere in the repo (viewer, agent runtime, API, contracts).'
 argument-hint: 'Describe what you want to do'
 ---
 
-# 3D Agent — Project Workflow
+# three.ws — Project Workflow
 
 ## Overview
 
-**3D Agent** started as a glTF 2.0 / GLB viewer and grew into a full embodied-agent platform. Live at [three.ws](https://three.ws/). Read [/CLAUDE.md](../../../CLAUDE.md) first — this skill is an index; the CLAUDE.md files are the source of truth.
+**three.ws** started as a glTF 2.0 / GLB viewer and grew into a full embodied-agent platform. Live at [three.ws](https://three.ws/). Read [/CLAUDE.md](../../../CLAUDE.md) first — this skill is an index; the CLAUDE.md files are the source of truth.
 
 ## Two halves
 

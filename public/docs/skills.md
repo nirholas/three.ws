@@ -1,6 +1,6 @@
 # Skills System
 
-Skills are the extension mechanism for 3D agents — modular, portable capability bundles that tell an agent *what it can do* and *how to do it*. A skill packages together the LLM instructions, the tool schema, and the JavaScript handler that runs when the tool is called. Because a skill is just a directory of files served from any URL, the same wave skill can be installed in every agent you build without copying any code.
+Skills are the extension mechanism for three.wss — modular, portable capability bundles that tell an agent *what it can do* and *how to do it*. A skill packages together the LLM instructions, the tool schema, and the JavaScript handler that runs when the tool is called. Because a skill is just a directory of files served from any URL, the same wave skill can be installed in every agent you build without copying any code.
 
 This document covers how to install skills, how to write them, the full context API available to handlers, the security model, and the lifecycle events that let host pages observe skill execution.
 

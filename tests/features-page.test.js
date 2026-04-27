@@ -21,7 +21,7 @@ describe('/features page — structure', () => {
 	});
 
 	it('has metadata: title, canonical, og:image', () => {
-		expect(html).toContain('<title>Features · 3D Agent</title>');
+		expect(html).toContain('<title>Features · three.ws</title>');
 		expect(html).toContain('rel="canonical"');
 		expect(html).toContain('og:image');
 	});

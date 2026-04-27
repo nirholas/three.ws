@@ -38,7 +38,7 @@ export default wrap(async (req, res) => {
 	if (widget.is_public === false) {
 		sendCardSvg(res, 200, CACHE_CARD, {
 			name: 'Private widget',
-			type: '3D Agent',
+			type: 'three.ws',
 		});
 		return;
 	}
@@ -80,7 +80,7 @@ async function loadWidget(id) {
 function sendNotFound(res) {
 	sendCardSvg(res, 404, 'public, max-age=60', {
 		name: 'Widget not found',
-		type: '3D Agent',
+		type: 'three.ws',
 	});
 }
 
@@ -101,7 +101,7 @@ function renderCardSvg({ name, type }) {
 	<text x="170" y="104" fill="#c4b5fd" font-family="Inter, -apple-system, system-ui, sans-serif" font-size="16" font-weight="500" letter-spacing="2" text-anchor="middle">${safeType.toUpperCase()}</text>
 	<text x="80" y="320" fill="#e5e5e5" font-family="Inter, -apple-system, system-ui, sans-serif" font-size="76" font-weight="300" letter-spacing="-2">${safeName}</text>
 	<text x="80" y="380" fill="rgba(229,229,229,0.55)" font-family="Inter, -apple-system, system-ui, sans-serif" font-size="24" font-weight="400">Embeddable 3D — no code.</text>
-	<text x="80" y="570" fill="rgba(229,229,229,0.3)" font-family="Inter, -apple-system, system-ui, sans-serif" font-size="20" font-weight="400" letter-spacing="4">3D AGENT</text>
+	<text x="80" y="570" fill="rgba(229,229,229,0.3)" font-family="Inter, -apple-system, system-ui, sans-serif" font-size="20" font-weight="400" letter-spacing="4">three.ws</text>
 </svg>`;
 }
 

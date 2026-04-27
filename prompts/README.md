@@ -1,6 +1,6 @@
 # Build prompts — priority stack
 
-Self-contained task prompts for building the 3D Agent platform toward the **CZ demo**: a user (starting with CZ) signs in with their wallet, sees their own embodied avatar agent, can embed it into LobeHub / Claude, and its identity lives onchain.
+Self-contained task prompts for building the three.ws platform toward the **CZ demo**: a user (starting with CZ) signs in with their wallet, sees their own embodied avatar agent, can embed it into LobeHub / Claude, and its identity lives onchain.
 
 Each file is designed to be dropped into a fresh Claude Code agent without extra context.
 

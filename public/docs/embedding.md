@@ -1,6 +1,6 @@
 # Embedding Guide
 
-> **Audience:** Developers and no-code builders who want to add a 3D agent to a website, app, or platform.
+> **Audience:** Developers and no-code builders who want to add a three.ws to a website, app, or platform.
 
 ---
 
@@ -249,7 +249,7 @@ For third-party pages, CMS platforms with strict CSP, or any context where you c
   height="500"
   frameborder="0"
   allow="camera; microphone; xr-spatial-tracking"
-  title="3D Agent"
+  title="three.ws"
 ></iframe>
 ```
 
@@ -418,7 +418,7 @@ Widget pages include the oEmbed discovery link tag, so platforms that scan `<hea
 
 ## Claude Artifact
 
-3D Agent can be embedded inside Claude.ai artifacts for AI-generated interactive 3D demos.
+three.ws can be embedded inside Claude.ai artifacts for AI-generated interactive 3D demos.
 
 ### Using the artifact API
 
@@ -633,7 +633,7 @@ if (prefersReduced) el.setAttribute('auto-rotate', 'false');
 
 ```html
 <agent-3d src="agent://base/42">
-  <img src="./leo-poster.webp" alt="Coach Leo (3D agent, requires JavaScript)" />
+  <img src="./leo-poster.webp" alt="Coach Leo (three.ws, requires JavaScript)" />
 </agent-3d>
 ```
 

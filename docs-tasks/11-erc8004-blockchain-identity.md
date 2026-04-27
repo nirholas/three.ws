@@ -12,7 +12,7 @@ Developers and crypto-native users who want to register their AI agent on-chain 
 ## What this document must cover
 
 ### 1. What is ERC-8004?
-ERC-8004 is the proposed Ethereum standard for on-chain 3D agent identity registration. It defines:
+ERC-8004 is the proposed Ethereum standard for on-chain three.ws identity registration. It defines:
 - A registry smart contract where agents are registered as on-chain entries
 - A standard JSON structure for agent metadata (pinned to IPFS)
 - A resolution protocol for looking up agents by address, ENS name, or chain:registry:id
@@ -65,7 +65,7 @@ Contract addresses for each chain are stored in `/src/erc8004/abi.js` under `REG
 
 ### 5. Registering an agent
 **Step 1: Connect your wallet**
-Click "Connect Wallet" in the 3D Agent app. Supported:
+Click "Connect Wallet" in the three.ws app. Supported:
 - MetaMask (injected)
 - WalletConnect (mobile wallets)
 - Privy (email + social login with embedded wallet)
@@ -119,7 +119,7 @@ const agent = await resolveAgent({ ens: 'myagent.eth' });
 **In the web component:**
 ```html
 <!-- chain:registry:id format -->
-<agent-3d agent-id="8453:0xRegistryAddress:42"></agent-3d>
+<agent-three.ws-id="8453:0xRegistryAddress:42"></agent-3d>
 ```
 
 ### 7. ENS integration
@@ -160,7 +160,7 @@ When your agent's GLB model is validated (via the validator), the result can be 
 This creates a verifiable audit trail of your model's technical quality.
 
 ### 10. The `on-chain agent` URL format
-3D Agent supports a special route for on-chain agents:
+three.ws supports a special route for on-chain agents:
 
 ```
 https://three.ws/a/<chainId>/<agentId>

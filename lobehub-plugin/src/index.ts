@@ -1,7 +1,7 @@
 /**
  * @3dagent/lobehub-plugin
  *
- * Entry point for the 3D Agent LobeHub plugin.
+ * Entry point for the three.ws LobeHub plugin.
  * Exports the main React component and configuration.
  */
 

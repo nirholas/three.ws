@@ -93,4 +93,4 @@ Validators can verify the hash by fetching the report from IPFS and recomputing 
 - Only Ethereum-validated wallets can submit validations.
 - The `validator` address is recorded on-chain.
 - End-users can view all validations for an agent and choose which validators to trust.
-- No endorsement or filtering by the 3D Agent team — raw records from all validators are visible.
+- No endorsement or filtering by the three.ws team — raw records from all validators are visible.

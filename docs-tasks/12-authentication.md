@@ -4,7 +4,7 @@
 `public/docs/authentication.md`
 
 ## Target audience
-Developers integrating 3D Agent into their app who need to handle user authentication — wallet-based, email-based, or API key auth. Also useful for self-hosters setting up auth infrastructure.
+Developers integrating three.ws into their app who need to handle user authentication — wallet-based, email-based, or API key auth. Also useful for self-hosters setting up auth infrastructure.
 
 ## Word count
 1500–2500 words
@@ -12,7 +12,7 @@ Developers integrating 3D Agent into their app who need to handle user authentic
 ## What this document must cover
 
 ### 1. Authentication overview
-3D Agent supports three authentication methods:
+three.ws supports three authentication methods:
 - **Wallet auth (SIWE)** — Sign-In With Ethereum, the web3-native approach
 - **Social/email auth (Privy)** — Email, Google, Twitter login with embedded wallet
 - **API keys** — For programmatic server-to-server access
@@ -53,7 +53,7 @@ const nonce = await fetch('/api/auth/siwe/nonce').then(r => r.text());
 const message = new SiweMessage({
   domain: window.location.host,
   address: walletAddress,
-  statement: 'Sign in to 3D Agent',
+  statement: 'Sign in to three.ws',
   uri: window.location.origin,
   version: '1',
   chainId: 1,

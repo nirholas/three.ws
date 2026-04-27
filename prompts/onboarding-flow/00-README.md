@@ -2,7 +2,7 @@
 
 ## Goal
 
-Restructure the 3D Agent user journey into a clear funnel: **anonymous playground → sign in → create avatar → customize → embed** (with optional on-chain).
+Restructure the three.ws user journey into a clear funnel: **anonymous playground → sign in → create avatar → customize → embed** (with optional on-chain).
 
 Current state is fragmented: the homepage advertises a 3-step flow that doesn't match what actually works, the `/create` page is wired to a selfie-to-GLB pipeline that isn't functional, and the Avaturn iframe entry point (which _did_ work) was removed from the UI during a rewrite. This band of tasks fixes all of it.
 

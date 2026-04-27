@@ -14,7 +14,7 @@
  *   never snapping between moods, always drifting. Morph targets and head
  *   orientation are updated every animation frame.
  *
- *   Nobody has done this before in a 3D agent system:
+ *   Nobody has done this before in a three.ws system:
  *   you can feel 40% concerned + 30% curious + 30% neutral simultaneously,
  *   and the avatar's face reflects all three at once — exactly as humans do.
  */

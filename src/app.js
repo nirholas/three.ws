@@ -198,7 +198,7 @@ class App {
 			return;
 		}
 
-		// /showcase — browsable marketplace of every indexed 3D agent.
+		// /showcase — browsable marketplace of every indexed three.ws.
 		if (options.showcase) {
 			this._showShowcasePage();
 			this._initAgentSystem();
@@ -1430,5 +1430,5 @@ document.body.innerHTML += Footer();
 document.addEventListener('DOMContentLoaded', () => {
 	const app = new App(document.body, location);
 	window.VIEWER.app = app;
-	console.info('[3D Agent] Debugging data exported as `window.VIEWER`.');
+	console.info('[three.ws] Debugging data exported as `window.VIEWER`.');
 });

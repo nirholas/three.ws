@@ -1,6 +1,6 @@
 # Deployment Guide
 
-This guide covers building and deploying 3D Agent to production.
+This guide covers building and deploying three.ws to production.
 
 ---
 
@@ -146,7 +146,7 @@ This allows:
 
 ### Adding a New Origin
 
-To allow a new domain to embed 3D Agent:
+To allow a new domain to embed three.ws:
 
 1. Add the origin to the `origin` array in `cors.json`
 2. Redeploy
@@ -167,7 +167,7 @@ The production deployment uses `three.ws`. To use a custom domain:
 
 ## Embedding
 
-3D Agent supports embedding via `<iframe>` with kiosk mode for a clean, UI-free experience:
+three.ws supports embedding via `<iframe>` with kiosk mode for a clean, UI-free experience:
 
 ```html
 <iframe
@@ -193,7 +193,7 @@ Add `kiosk=true` to the hash to:
 The model URL **must** allow cross-origin requests from the embedding page. If the model is on a different domain:
 
 - Configure the CDN/server to include `Access-Control-Allow-Origin` headers
-- Or serve the model from the same domain as 3D Agent
+- Or serve the model from the same domain as three.ws
 
 ### Custom Camera Position
 
@@ -209,7 +209,7 @@ The coordinates are in Three.js world space (x, y, z).
 
 ## Self-Hosting
 
-To host 3D Agent on your own infrastructure:
+To host three.ws on your own infrastructure:
 
 ### With a Static File Server
 
@@ -308,7 +308,7 @@ For self-hosting, download these files and update the paths in `src/environments
 
 ## Environment Variables
 
-3D Agent does not require any environment variables. All configuration is done via:
+three.ws does not require any environment variables. All configuration is done via:
 
 - URL hash parameters (runtime)
 - `src/environments.js` (build-time)

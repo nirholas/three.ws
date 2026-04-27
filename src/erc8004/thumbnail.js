@@ -2,7 +2,7 @@
  * Client-side GLB → PNG thumbnail renderer.
  *
  * ERC-8004's `image` field is for 2D ERC-721 marketplace compatibility
- * (OpenSea, wallets) which can't render GLB. When a user deploys a 3D agent
+ * (OpenSea, wallets) which can't render GLB. When a user deploys a three.ws
  * without supplying a 2D poster, we render one from the GLB in an offscreen
  * canvas and pin it alongside the body.
  */

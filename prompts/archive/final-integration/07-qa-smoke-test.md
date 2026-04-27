@@ -137,7 +137,7 @@ Run each flow in the dev server (`npm run dev`) against a real browser. Chrome/E
 ## `docs/SMOKE_TEST.md` structure
 
 ```markdown
-# 3D Agent — Smoke Test Report
+# three.ws — Smoke Test Report
 
 **Run date:** YYYY-MM-DD
 **Commit:** <git sha>

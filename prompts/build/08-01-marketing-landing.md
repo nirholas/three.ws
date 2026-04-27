@@ -29,7 +29,7 @@ This is the marketing surface that turns shared agent links into new signups. Lo
 Structure above the fold:
 
 1. **Headline (1 line)**: "Your agent, with a face. Embeddable anywhere."
-2. **Sub (1 line)**: "Take a selfie, get a 3D agent with identity, memory, and wallet. Drop it into Claude, Lobehub, your portfolio — same body, anywhere."
+2. **Sub (1 line)**: "Take a selfie, get a three.ws with identity, memory, and wallet. Drop it into Claude, Lobehub, your portfolio — same body, anywhere."
 3. **Live hero** — a real embedded agent ([public/agent/embed.html](../../public/agent/embed.html) as an iframe, or `<agent-avatar>` with a curated `agent-id`) doing a slow idle. Must actually load, not a video.
 4. **Primary CTA**: "Make yours →" → `/register` (or `/dashboard/selfie` if signed in).
 5. **Secondary CTA**: "See one in Claude" → opens the Claude Artifact link (prompt `05-01`).
@@ -52,7 +52,7 @@ Footer: small, with links to docs (if they exist), GitHub, pricing (defer until 
 ### SEO
 
 - `<meta>` description summarizing the product.
-- OG image that actually shows a 3D agent, not a logo.
+- OG image that actually shows a three.ws, not a logo.
 - JSON-LD structured data for SoftwareApplication.
 - `robots.txt` already allows; confirm sitemap.xml includes `/`.
 

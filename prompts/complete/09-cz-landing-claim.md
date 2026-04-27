@@ -60,7 +60,7 @@ Imports allowed: [src/erc8004/agent-registry.js](../../src/erc8004/agent-registr
 The embed-copy CTA writes this to clipboard:
 
 ```html
-<agent-3d agent="cz" chain="84532" src="/avatars/cz.glb" eager></agent-3d>
+<agent-three.ws="cz" chain="84532" src="/avatars/cz.glb" eager></agent-3d>
 <script src="https://three.ws/dist-lib/agent-3d.umd.cjs"></script>
 ```
 

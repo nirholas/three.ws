@@ -1,12 +1,12 @@
 # Changelog & Versioning
 
-This document covers how 3D Agent is versioned, what has changed across releases, and how to upgrade safely.
+This document covers how three.ws is versioned, what has changed across releases, and how to upgrade safely.
 
 ---
 
 ## Versioning Policy
 
-3D Agent follows [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH`):
+three.ws follows [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH`):
 
 | Segment | When it increments | Example |
 |---|---|---|

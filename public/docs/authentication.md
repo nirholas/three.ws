@@ -1,6 +1,6 @@
 # Authentication
 
-3D Agent supports three authentication methods. Which one you need depends on how you're building:
+three.ws supports three authentication methods. Which one you need depends on how you're building:
 
 | Method | Best for |
 |--------|----------|
@@ -105,7 +105,7 @@ const { nonce, csrf, expiresAt } = await fetch('/api/auth/siwe/nonce', {
 const message = new SiweMessage({
   domain: window.location.host,
   address: walletAddress,
-  statement: 'Sign in to 3D Agent. This does not cost anything and proves wallet ownership.',
+  statement: 'Sign in to three.ws. This does not cost anything and proves wallet ownership.',
   uri: window.location.origin,
   version: '1',
   chainId: 1,
@@ -300,7 +300,7 @@ Or revoke via the dashboard. Revocation takes effect immediately — the key wil
 
 ## OAuth 2.1 (Third-Party App Integration)
 
-If you're building a third-party app that users authorize to access their 3D Agent account — similar to how OAuth works with GitHub or Google — use the OAuth 2.1 endpoints. This is distinct from API keys (which you create for yourself).
+If you're building a third-party app that users authorize to access their three.ws account — similar to how OAuth works with GitHub or Google — use the OAuth 2.1 endpoints. This is distinct from API keys (which you create for yourself).
 
 | Endpoint | Description |
 |----------|-------------|
@@ -313,7 +313,7 @@ If you're building a third-party app that users authorize to access their 3D Age
 
 PKCE (S256) is mandatory. The authorization server metadata is at `/.well-known/oauth-authorization-server`.
 
-For most use cases, API keys are simpler. OAuth is the right choice when you're building a product where your users grant your app access to their 3D Agent data.
+For most use cases, API keys are simpler. OAuth is the right choice when you're building a product where your users grant your app access to their three.ws data.
 
 ---
 
@@ -332,7 +332,7 @@ const { nonce } = await fetch('/api/auth/wallets/nonce', {
 }).then(r => r.json());
 
 // 2. Sign the nonce with the new wallet
-const message = `Link wallet to 3D Agent\nNonce: ${nonce}`;
+const message = `Link wallet to three.ws\nNonce: ${nonce}`;
 const signature = await signer.signMessage(message);
 
 // 3. Submit

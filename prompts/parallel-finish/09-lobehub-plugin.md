@@ -4,7 +4,7 @@
 
 Repo root: `/workspaces/3D-Agent`. Read [/CLAUDE.md](../../CLAUDE.md) first.
 
-LobeHub is a self-hostable chat UI fork. We want to publish a standalone plugin under `lobehub-plugin/` that users can install into their Lobe fork to get a 3D agent pane that reacts to assistant messages. Today the dashboard only shows a copy-paste React snippet — insufficient for a real plugin.
+LobeHub is a self-hostable chat UI fork. We want to publish a standalone plugin under `lobehub-plugin/` that users can install into their Lobe fork to get a three.ws pane that reacts to assistant messages. Today the dashboard only shows a copy-paste React snippet — insufficient for a real plugin.
 
 This is a **new top-level package**, fully isolated from the rest of the monorepo. It does not need to be published to npm in this task; just produce a working, locally-installable TS-React package with a manifest.
 
@@ -41,7 +41,7 @@ lobehub-plugin/
 	"identifier": "3dagent",
 	"schemaVersion": 1,
 	"meta": {
-		"title": "3D Agent",
+		"title": "three.ws",
 		"description": "Render a 3D avatar that reacts to the chat.",
 		"avatar": "https://three.ws/favicon.ico",
 		"tags": ["avatar", "3d", "agent"]

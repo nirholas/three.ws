@@ -113,7 +113,7 @@ async function completeSignIn(provider, btn) {
 		`${domain} wants you to sign in with your Ethereum account:`,
 		address,
 		'',
-		'Sign in to 3D Agent. This does not cost anything and proves wallet ownership.',
+		'Sign in to three.ws. This does not cost anything and proves wallet ownership.',
 		'',
 		`URI: ${uri}`,
 		'Version: 1',

@@ -19,7 +19,7 @@ Run this **before** touching 01–08. It unblocks the experience now; the rest p
 
 After this task ships, the user opens their LobeHub fork in the browser and sees:
 
-- A **right-hand sidebar panel** (fixed width, collapsible) that renders their 3D agent inside an iframe for the whole session.
+- A **right-hand sidebar panel** (fixed width, collapsible) that renders their three.ws inside an iframe for the whole session.
 - The avatar reacts to the currently active chat: when the LLM streams a token, the avatar mouths / sways; when the user sends, the avatar does a subtle acknowledgment.
 - The panel has a header with the agent's name + a chevron to collapse/expand + a gear icon that opens the full agent page in a new tab.
 - Closing/reopening the app remembers collapsed state (localStorage).
@@ -69,7 +69,7 @@ export function AgentDock() {
 				<iframe
 					ref={iframeRef}
 					src={`${ORIGIN}/agent/${agentId}/embed?bg=transparent&host=lobehub`}
-					title="3D Agent"
+					title="three.ws"
 					allow="autoplay; microphone"
 					style={{ border: 0, width: '100%', height: '100%', background: 'transparent' }}
 				/>
@@ -218,7 +218,7 @@ Push the main content left by `360px` when the dock is expanded (search the fork
 Add an input in the fork's settings page for the user to set their `agentId`. Persisting via the Zustand store above. One-line addition in the existing Settings form — do not build a whole settings panel.
 
 ```tsx
-<SettingsField label="3D Agent ID">
+<SettingsField label="three.ws ID">
 	<input
 		type="text"
 		placeholder="agt_xxxxx"

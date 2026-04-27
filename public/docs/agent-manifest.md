@@ -44,7 +44,7 @@ The `<agent-3d>` element accepts several source forms. Priority when multiple at
 <agent-3d manifest="https://cdn.acme.com/aria/manifest.json"></agent-3d>
 
 <!-- Backend agent ID (platform-hosted) -->
-<agent-3d agent-id="aria-guide"></agent-3d>
+<agent-three.ws-id="aria-guide"></agent-3d>
 
 <!-- Bare GLB — no manifest, viewer mode only -->
 <agent-3d body="./product.glb"></agent-3d>
@@ -515,7 +515,7 @@ Supported chain aliases for `agent://` URIs: `base` (8453), `base-mainnet` (8453
 | **HTTPS (CDN)** | Host on any CDN — GitHub Pages, S3, Vercel, Cloudflare R2. CORS header required: `Access-Control-Allow-Origin: *`. |
 | **IPFS** | Pin with Pinata, Filebase, or Web3.Storage. Use `ipfs://` URIs for all bundle-relative assets so they travel with the CID. |
 | **Arweave** | Permanent storage. Use `ar://` prefix. |
-| **Platform editor** | Upload via the 3D Agent editor; the platform pins to IPFS and hosts the manifest for you. |
+| **Platform editor** | Upload via the three.ws editor; the platform pins to IPFS and hosts the manifest for you. |
 
 Minimum CORS requirement: the manifest JSON itself (and any files fetched at runtime from the same origin) must include `Access-Control-Allow-Origin: *` or the browser will block the fetch.
 

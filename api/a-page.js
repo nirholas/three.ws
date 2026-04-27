@@ -47,7 +47,7 @@ export default wrap(async (req, res) => {
 	const ownerShort = agent.owner ? shortenAddr(agent.owner) : '';
 	const desc =
 		agent.description ||
-		`An embodied 3D agent on ${chainLabel}${ownerShort ? ` · owned by ${ownerShort}` : ''}.`;
+		`An embodied three.ws on ${chainLabel}${ownerShort ? ` · owned by ${ownerShort}` : ''}.`;
 
 	res.statusCode = 200;
 	res.setHeader('content-type', 'text/html; charset=utf-8');
@@ -76,7 +76,7 @@ function notFound(res, reason) {
 	res.setHeader('content-type', 'text/html; charset=utf-8');
 	res.setHeader('cache-control', 'public, max-age=60');
 	res.end(
-		`<!doctype html><meta charset="utf-8"><title>Agent not found — 3D Agent</title>
+		`<!doctype html><meta charset="utf-8"><title>Agent not found — three.ws</title>
 <style>body{font-family:Inter,system-ui,sans-serif;background:#0a0a0a;color:#e0e0e0;display:grid;place-items:center;min-height:100vh;margin:0}main{text-align:center;padding:2rem;max-width:520px}a{color:#8b5cf6}</style>
 <main><h1>Agent not found</h1><p>${escapeHtml(reason)}</p><p><a href="/discover">Browse all on-chain agents</a> · <a href="/">Open viewer</a></p></main>`,
 	);
@@ -91,13 +91,13 @@ function renderHtml(p) {
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>${t} · ${chainL} — 3D Agent</title>
+	<title>${t} · ${chainL} — three.ws</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 	<meta name="description" content="${d}">
 	<meta name="theme-color" content="#0a0a0a">
 
 	<meta property="og:type" content="profile">
-	<meta property="og:site_name" content="3D Agent">
+	<meta property="og:site_name" content="three.ws">
 	<meta property="og:title" content="${t}">
 	<meta property="og:description" content="${d}">
 	<meta property="og:url" content="${escapeAttr(p.pageUrl)}">
@@ -171,7 +171,7 @@ ${escapeJsonLd({
 	image: p.ogUrl,
 	identifier: `eip155:${p.chainId}:${p.agentId}`,
 	sameAs: p.manifestURI ? [p.manifestURI] : undefined,
-	provider: { '@type': 'Organization', name: '3D Agent', url: 'https://three.ws/' },
+	provider: { '@type': 'Organization', name: 'three.ws', url: 'https://three.ws/' },
 })}
 	</script>
 </body>

@@ -12,7 +12,7 @@ Developers adding voice capabilities to their agents — both text-to-speech (ag
 ## What this document must cover
 
 ### 1. Overview
-3D Agent supports bidirectional voice:
+three.ws supports bidirectional voice:
 - **Text-to-Speech (TTS)** — the agent speaks responses aloud
 - **Speech-to-Text (STT)** — users speak instead of typing
 
@@ -79,10 +79,10 @@ The `<agent-3d>` element shows a mic button automatically when:
 
 ```html
 <!-- Voice enabled (default) -->
-<agent-3d agent-id="my-agent"></agent-3d>
+<agent-three.ws-id="my-agent"></agent-3d>
 
 <!-- Voice disabled -->
-<agent-3d agent-id="my-agent" voice="false"></agent-3d>
+<agent-three.ws-id="my-agent" voice="false"></agent-3d>
 ```
 
 **Programmatic control:**
@@ -175,7 +175,7 @@ button.addEventListener('click', () => {
 ### 9. Disabling audio
 To run the agent silently (text only):
 ```html
-<agent-3d agent-id="my-agent" muted></agent-3d>
+<agent-three.ws-id="my-agent" muted></agent-3d>
 ```
 
 Or programmatically:

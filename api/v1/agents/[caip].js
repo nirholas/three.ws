@@ -1,7 +1,7 @@
 /**
  * GET /api/v1/agents/:caip
  *
- * Public, gateway-cached resolver for an ERC-8004 / 3D Agent Card v1 agent.
+ * Public, gateway-cached resolver for an ERC-8004 / three.ws Card v1 agent.
  * Consumers (badge web component, indexers, third-party sites) call this so
  * they don't have to do RPC + IPFS + sha256 verification themselves.
  *

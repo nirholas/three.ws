@@ -501,7 +501,7 @@ Organized by symptom. Find your problem, check the likely causes, follow the fix
 
 ## FAQ
 
-**Is 3D Agent free?**
+**Is three.ws free?**
 
 The core platform is free. API usage costs (Anthropic for LLM, ElevenLabs for TTS) are charged at cost — you supply your own API keys. IPFS pinning for on-chain registration requires a Pinata JWT or uses the default R2 backend.
 

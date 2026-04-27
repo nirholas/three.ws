@@ -42,10 +42,10 @@ The quickest way to get a personalized 3D avatar.
 - Facial blend shapes for expressions
 - Skin, hair, eye color matched to photo
 - Clothing options during generation
-- GLB format ready for 3D Agent
+- GLB format ready for three.ws
 
 **Customization after generation:**
-- Load the GLB in the 3D Agent editor
+- Load the GLB in the three.ws editor
 - Adjust materials (skin tone, clothing color)
 - Add accessories
 - The avatar rig is compatible with standard animation clips
@@ -65,7 +65,7 @@ Character Studio is a React-based avatar builder:
 **Technical implementation:**
 - Located in `/character-studio/` — separate React SPA
 - Built with Vite
-- Exports a GLB that conforms to the 3D Agent avatar spec (compatible skeleton and blend shapes)
+- Exports a GLB that conforms to the three.ws avatar spec (compatible skeleton and blend shapes)
 
 **Asset library:**
 Character Studio includes a library of:
@@ -78,7 +78,7 @@ Character Studio includes a library of:
 ### 4. Path 3: Upload your own GLB
 If you have a 3D model (from Blender, Maya, Mixamo, Ready Player Me, etc.):
 
-1. Open the 3D Agent app: https://three.ws/app
+1. Open the three.ws app: https://three.ws/app
 2. Drag and drop your GLB file into the viewer
 3. The model loads and validates automatically
 4. Save to your account via the editor
@@ -136,14 +136,14 @@ After creating the avatar, set the agent's name:
 
 ### 9. Saving and publishing
 Once your avatar is created:
-1. **Save to account** — stores GLB and manifest to your 3D Agent account (free)
+1. **Save to account** — stores GLB and manifest to your three.ws account (free)
 2. **Publish** — makes the agent publicly discoverable (optional)
 3. **Register on-chain** — creates permanent ERC-8004 identity (optional, gas required)
 
 The publish modal is at `/src/editor/publish-modal.js`.
 
 ### 10. Avatar spec for developers
-If you're building tools that output avatars for 3D Agent, target this spec:
+If you're building tools that output avatars for three.ws, target this spec:
 - **Format:** GLB (binary glTF 2.0)
 - **Skeleton:** Humanoid rig (Mixamo or VRM-compatible naming)
 - **Animations:** Named clips at the root level of the GLB

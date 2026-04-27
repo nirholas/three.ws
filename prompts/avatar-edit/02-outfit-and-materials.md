@@ -53,7 +53,7 @@ Two buttons. Reset removes the key from the patch (PATCH with `null` on that fie
 
 ### 6. Embed consistency
 
-`<agent-3d agent-id="…">` embeds MUST apply the same overrides. Verify that [src/element.js](../../src/element.js) routes through the resolver which includes `meta.edits`, and that the viewer applies them.
+`<agent-three.ws-id="…">` embeds MUST apply the same overrides. Verify that [src/element.js](../../src/element.js) routes through the resolver which includes `meta.edits`, and that the viewer applies them.
 
 ## Don't do this
 
@@ -66,7 +66,7 @@ Two buttons. Reset removes the key from the patch (PATCH with `null` on that fie
 
 - [ ] Open `/agent/:id/edit` → Outfit tab → change "Shirt" color to red → save → preview updates.
 - [ ] Refresh `/agent/:id` → shirt still red.
-- [ ] `<agent-3d agent-id="…">` in a separate HTML file → shirt red.
+- [ ] `<agent-three.ws-id="…">` in a separate HTML file → shirt red.
 - [ ] Reset → shirt returns to GLB default.
 - [ ] Download the base GLB → it has NOT been modified.
 - [ ] `npm run build` passes.

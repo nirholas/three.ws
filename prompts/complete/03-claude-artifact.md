@@ -24,7 +24,7 @@ Output shape — a minimal HTML document inline-styled and inline-scripted, usin
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<title>CZ — 3D Agent</title>
+		<title>CZ — three.ws</title>
 		<style>
 			html,
 			body {
@@ -40,7 +40,7 @@ Output shape — a minimal HTML document inline-styled and inline-scripted, usin
 		</style>
 	</head>
 	<body>
-		<agent-3d agent="{agentId}" eager></agent-3d>
+		<agent-three.ws="{agentId}" eager></agent-3d>
 		<script src="https://three.ws/dist-lib/agent-3d.umd.cjs"></script>
 	</body>
 </html>

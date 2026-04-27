@@ -16,10 +16,10 @@ export default wrap(async (req, res) => {
 
 	// Generate SIWE-like message for signing.
 	const message = [
-		`3D Agent wants you to sign in with your Ethereum account:`,
+		`three.ws wants you to sign in with your Ethereum account:`,
 		`Address to link (will be filled by wallet):`,
 		``,
-		`Link this wallet to 3D Agent account ${session.email}`,
+		`Link this wallet to three.ws account ${session.email}`,
 		``,
 		`URI: ${process.env.APP_ORIGIN || 'https://three.ws/'}`,
 		`Version: 1`,

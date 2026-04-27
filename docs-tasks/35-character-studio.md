@@ -12,11 +12,11 @@ Users who want to create custom 3D avatars using the Character Studio — a visu
 ## What this document must cover
 
 ### 1. What is Character Studio?
-Character Studio is a browser-based 3D avatar builder included with 3D Agent. It lets you create a fully customized humanoid avatar without any 3D modeling experience.
+Character Studio is a browser-based 3D avatar builder included with three.ws. It lets you create a fully customized humanoid avatar without any 3D modeling experience.
 
 Access: https://three.ws/studio (avatar tab)
 
-It's a separate React SPA (in `/character-studio/`) that outputs a GLB file compatible with all 3D Agent features — animations, emotion system, AR viewing, and embedding.
+It's a separate React SPA (in `/character-studio/`) that outputs a GLB file compatible with all three.ws features — animations, emotion system, AR viewing, and embedding.
 
 ### 2. Getting started
 1. Go to https://three.ws/studio
@@ -100,14 +100,14 @@ Character Studio avatars use a Mixamo-compatible skeleton:
 
 This means:
 - Mixamo animations work directly on Character Studio avatars
-- The 3D Agent animation library is compatible
+- The three.ws animation library is compatible
 - You can download animations from Mixamo and attach them
 
 ### 7. Exporting your avatar
 After customizing:
 1. Click "Export" → "Download GLB"
 2. The GLB downloads to your computer
-3. Import it into the 3D Agent editor (drag-and-drop)
+3. Import it into the three.ws editor (drag-and-drop)
 4. Or host it on your own CDN
 
 Alternatively:
@@ -152,7 +152,7 @@ Character Studio and the Avaturn selfie-to-avatar pipeline are complementary:
 - **Avaturn**: photorealistic avatar from a selfie, less customization
 - **Character Studio**: fully customizable but stylized, no selfie needed
 
-You can also combine them: generate an Avaturn avatar, then modify it in the 3D Agent editor to change clothing, colors, and accessories.
+You can also combine them: generate an Avaturn avatar, then modify it in the three.ws editor to change clothing, colors, and accessories.
 
 ## Tone
 User-friendly guide — non-technical users are the primary audience. Walk through the UI clearly. The limitations section sets expectations honestly.

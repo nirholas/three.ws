@@ -1,8 +1,8 @@
 # Architecture Overview
 
-This document describes how 3D Agent is put together, how data moves through it, and where the seams are if you want to extend, self-host, or integrate it with another stack. It assumes familiarity with modern JavaScript, WebGL/three.js at a high level, and the basics of EVM blockchains and content-addressed storage.
+This document describes how three.ws is put together, how data moves through it, and where the seams are if you want to extend, self-host, or integrate it with another stack. It assumes familiarity with modern JavaScript, WebGL/three.js at a high level, and the basics of EVM blockchains and content-addressed storage.
 
-3D Agent is simultaneously a glTF viewer, an LLM-driven character runtime, an on-chain identity layer, and a distributable web component. These concerns are split into four layers that communicate through a single event bus rather than direct method calls. Most of the interesting design decisions live at the seams.
+three.ws is simultaneously a glTF viewer, an LLM-driven character runtime, an on-chain identity layer, and a distributable web component. These concerns are split into four layers that communicate through a single event bus rather than direct method calls. Most of the interesting design decisions live at the seams.
 
 ---
 

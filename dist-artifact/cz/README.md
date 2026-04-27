@@ -2,7 +2,7 @@
 
 The CZ landing page is served at `/cz/` and provides:
 
-- Full-bleed dark landing page with centered 3D agent avatar
+- Full-bleed dark landing page with centered three.ws avatar
 - **Claim CZ** button — initiates wallet connection and claim flow
 - **Copy embed** button — copies `<agent-3d>` snippet to clipboard
 - Footer — displays on-chain state (chain, agentId, metadataURI)

@@ -42,7 +42,7 @@ export function wireSigninButton(buttonEl) // attaches click handler + swaps UI 
     ${location.host} wants you to sign in with your Ethereum account:
     ${address}
 
-    Sign in to 3D Agent.
+    Sign in to three.ws.
 
     URI: ${location.origin}
     Version: 1

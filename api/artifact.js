@@ -107,7 +107,7 @@ export default wrap(async (req, res) => {
 			.join(' ');
 
 		html = buildHtml({
-			title: `${row.name} — 3D Agent`,
+			title: `${row.name} — three.ws`,
 			element: `<agent-3d ${attrs}></agent-3d>`,
 			appOrigin,
 		});
@@ -131,7 +131,7 @@ export default wrap(async (req, res) => {
 			.join(' ');
 
 		html = buildHtml({
-			title: '3D Agent Viewer',
+			title: 'three.ws Viewer',
 			element: `<agent-3d ${attrs}></agent-3d>`,
 			appOrigin,
 		});

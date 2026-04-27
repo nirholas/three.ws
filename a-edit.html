@@ -2,7 +2,7 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<title>Edit Agent — 3D Agent</title>
+		<title>Edit Agent — three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="robots" content="noindex" />
 		<meta name="theme-color" content="#000000" />
@@ -270,7 +270,7 @@
 				root.innerHTML = `<div class="ce-error">Invalid URL — expected /a/:chainId/:agentId/edit</div>`;
 			} else {
 				backLink.href = `/a/${chainId}/${agentId}`;
-				document.title = `Edit Agent #${agentId} — 3D Agent`;
+				document.title = `Edit Agent #${agentId} — three.ws`;
 
 				mountChainEdit(root, chainId, agentId).catch((err) => {
 					root.innerHTML = `<div class="ce-error">${err.message}</div>`;

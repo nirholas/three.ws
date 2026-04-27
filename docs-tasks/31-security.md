@@ -4,7 +4,7 @@
 `public/docs/security.md`
 
 ## Target audience
-Security-conscious developers and organizations evaluating 3D Agent for their applications. Covers the security model, what data is processed where, and how to configure secure deployments.
+Security-conscious developers and organizations evaluating three.ws for their applications. Covers the security model, what data is processed where, and how to configure secure deployments.
 
 ## Word count
 1500–2000 words
@@ -12,7 +12,7 @@ Security-conscious developers and organizations evaluating 3D Agent for their ap
 ## What this document must cover
 
 ### 1. Security overview
-3D Agent is designed with these security principles:
+three.ws is designed with these security principles:
 - **Client-side processing** — 3D files never leave the browser
 - **Defense in depth** — multiple independent security layers
 - **Least privilege** — agents only access what's explicitly granted
@@ -22,7 +22,7 @@ Security-conscious developers and organizations evaluating 3D Agent for their ap
 ### 2. Data handling
 
 **3D models (GLB files):**
-- Loaded directly in the browser — never uploaded to 3D Agent servers unless you explicitly save to your account
+- Loaded directly in the browser — never uploaded to three.ws servers unless you explicitly save to your account
 - Canvas rendering happens entirely in WebGL on the client
 - Screenshots are generated client-side (canvas.toDataURL())
 
@@ -33,7 +33,7 @@ Security-conscious developers and organizations evaluating 3D Agent for their ap
 
 **Wallet data:**
 - Private keys never leave the wallet (MetaMask, Privy, WalletConnect)
-- 3D Agent only receives wallet addresses and signed messages
+- three.ws only receives wallet addresses and signed messages
 - SIWE auth uses signed challenges — password-free
 
 **Memory:**

@@ -2,7 +2,7 @@
 
 ## The end state
 
-Anyone with the share URL sees a public, interactive 3D agent page. Anyone with the embed snippet can paste it into their Substack / blog / docs / README and the avatar loads with chrome-free styling. Owners can get a one-click snippet from the agent's page.
+Anyone with the share URL sees a public, interactive three.ws page. Anyone with the embed snippet can paste it into their Substack / blog / docs / README and the avatar loads with chrome-free styling. Owners can get a one-click snippet from the agent's page.
 
 ## Current state
 

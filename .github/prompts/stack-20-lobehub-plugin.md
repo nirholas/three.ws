@@ -20,8 +20,8 @@ Host at `https://three.ws/.well-known/lobehub-plugin.json`:
 	"identifier": "3d-agent",
 	"version": "1.0.0",
 	"meta": {
-		"title": "3D Agent",
-		"description": "Embodied 3D agents — identity, memory, skills, emotional presence",
+		"title": "three.ws",
+		"description": "Embodied three.wss — identity, memory, skills, emotional presence",
 		"avatar": "https://three.ws/icon.png",
 		"tags": ["3d", "agent", "avatar"]
 	},
@@ -38,7 +38,7 @@ Host at `https://three.ws/.well-known/lobehub-plugin.json`:
 		},
 		{
 			"name": "summonAgent",
-			"description": "Ask the 3D agent to perform a skill and return the result + rendering",
+			"description": "Ask the three.ws to perform a skill and return the result + rendering",
 			"url": "https://three.ws/api/lobehub/summon-agent",
 			"parameters": {
 				"type": "object",
@@ -70,7 +70,7 @@ Host at `https://three.ws/.well-known/lobehub-plugin.json`:
 	"url": "https://three.ws/agent/satoshi?kiosk=1&theme=auto",
 	"width": 480,
 	"height": 480,
-	"fallbackText": "3D Agent: Satoshi — open in browser to interact"
+	"fallbackText": "three.ws: Satoshi — open in browser to interact"
 }
 ```
 
@@ -93,7 +93,7 @@ Document in repo: how the user installs the plugin in their fork. Either:
 
 ### Auth
 
-Plugin does NOT require auth to render public avatars. If the LobeHub user wants their _own_ agents listed, they pass a 3D Agent API key (see [api/keys/](api/keys/)) in a settings field.
+Plugin does NOT require auth to render public avatars. If the LobeHub user wants their _own_ agents listed, they pass a three.ws API key (see [api/keys/](api/keys/)) in a settings field.
 
 ## Validation
 
@@ -106,4 +106,4 @@ Plugin does NOT require auth to render public avatars. If the LobeHub user wants
 ## Do not do this
 
 - Do NOT fork LobeHub code — integrate only via the plugin API.
-- Do NOT require a 3D Agent login to view public agents.
+- Do NOT require a three.ws login to view public agents.

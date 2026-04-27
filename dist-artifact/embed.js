@@ -1,4 +1,4 @@
-// 3D Agent — script-tag embed.
+// three.ws — script-tag embed.
 // <script async src="https://three.ws/embed.js" data-widget="wdgt_..."></script>
 //
 // Injects a sandboxed iframe at the script tag's location, sized via data-*
@@ -45,7 +45,7 @@
 
 		var iframe = document.createElement('iframe');
 		iframe.src = src;
-		iframe.title = '3D Agent widget ' + widgetId;
+		iframe.title = 'three.ws widget ' + widgetId;
 		iframe.loading = 'lazy';
 		iframe.allow = 'autoplay; xr-spatial-tracking; clipboard-write';
 		iframe.setAttribute('width',  width);

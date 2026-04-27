@@ -14,7 +14,7 @@ Render an embodied 3D avatar in the LobeChat sidebar. The avatar reacts to the L
     https://three.ws/.well-known/lobehub-plugin.json
     ```
 3. Click **Install**. LobeChat will show the plugin settings dialog.
-4. Enter your **Agent ID** (UUID from the 3D Agent dashboard at `https://three.ws/dashboard`).
+4. Enter your **Agent ID** (UUID from the three.ws dashboard at `https://three.ws/dashboard`).
 5. Click **Save**. The 3D avatar appears in the right sidebar.
 
 ---
@@ -23,7 +23,7 @@ Render an embodied 3D avatar in the LobeChat sidebar. The avatar reacts to the L
 
 | Setting     | Type     | Required | Default                      | Description                            |
 | ----------- | -------- | -------- | ---------------------------- | -------------------------------------- |
-| `agentId`   | `string` | Yes      | —                            | Agent UUID from the 3D Agent dashboard |
+| `agentId`   | `string` | Yes      | —                            | Agent UUID from the three.ws dashboard |
 | `apiOrigin` | `string` | No       | `https://three.ws/` | Override for self-hosted instances     |
 
 ---
@@ -134,7 +134,7 @@ Output: `dist/bundle.js` — tree-shaken, browser-targeted. React and react-dom 
 | Avatar never appears   | Wrong `agentId`                      | Copy UUID from dashboard; ensure agent has an avatar                             |
 | "Loading agent…" stuck | Bridge handshake failed              | Check browser console for `[3d-agent]` messages; verify `apiOrigin` is reachable |
 | `speak` does nothing   | LobeChat hasn't installed the plugin | Confirm plugin is active in LobeChat Plugin Store                                |
-| CORS error             | Self-hosted origin not allowed       | Add origin to `CORS_ORIGINS` in your 3D Agent deployment                         |
+| CORS error             | Self-hosted origin not allowed       | Add origin to `CORS_ORIGINS` in your three.ws deployment                         |
 | Timeout errors         | Network latency                      | The bridge has a 10 s timeout; the iframe may still be loading the web component |
 
 ---

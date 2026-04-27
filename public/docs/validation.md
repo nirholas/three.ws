@@ -1,6 +1,6 @@
 # glTF Validation
 
-3D Agent integrates the official [Khronos glTF-Validator](https://github.com/KhronosGroup/glTF-Validator) (compiled to WebAssembly) to check every GLB or glTF 2.0 file against the specification before it is presented or registered. Validation runs automatically after a model loads, and its result drives both the UI and the agent's emotional response.
+three.ws integrates the official [Khronos glTF-Validator](https://github.com/KhronosGroup/glTF-Validator) (compiled to WebAssembly) to check every GLB or glTF 2.0 file against the specification before it is presented or registered. Validation runs automatically after a model loads, and its result drives both the UI and the agent's emotional response.
 
 ---
 
@@ -183,7 +183,7 @@ The minimum check suite for a `pass` verdict includes:
 - `glb-schema` — file parses as valid GLB with all required chunks
 - `gltf-validator` — Khronos validator reports zero errors
 - `manifest-integrity` — the agent card's `model.sha256` matches the actual bytes
-- `card-schema` — the card validates against the 3D Agent Card v1 spec
+- `card-schema` — the card validates against the three.ws Card v1 spec
 
 ### Signed attestation (off-chain)
 
@@ -264,7 +264,7 @@ Following these guidelines before exporting will avoid the most common validatio
 Check your file in at least two other viewers before registering it:
 - [model-viewer.dev](https://modelviewer.dev/) — good baseline for web use
 - [Babylon.js sandbox](https://sandbox.babylonjs.com/) — strict PBR interpretation
-- 3D Agent itself — run validation and read the report
+- three.ws itself — run validation and read the report
 
 ---
 

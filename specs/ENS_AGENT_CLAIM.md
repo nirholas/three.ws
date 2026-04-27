@@ -1,10 +1,10 @@
 # ENS / DNS Agent Claim — v1
 
-A convention for letting a domain prove it owns a 3D Agent (and vice versa). Bidirectional binding between human-readable names and on-chain agent identities.
+A convention for letting a domain prove it owns a three.ws (and vice versa). Bidirectional binding between human-readable names and on-chain agent identities.
 
 ## Why
 
-ERC-8004 gives an agent a CAIP-10 reference. Humans don't memorize `eip155:8453:0x8004A169…/42`. Without a name binding, every "this is the official 3D Agent for example.com" claim is just an unverifiable assertion in a card.
+ERC-8004 gives an agent a CAIP-10 reference. Humans don't memorize `eip155:8453:0x8004A169…/42`. Without a name binding, every "this is the official three.ws for example.com" claim is just an unverifiable assertion in a card.
 
 This spec defines two records that are cheap to set, easy to verify, and require no new on-chain infrastructure.
 

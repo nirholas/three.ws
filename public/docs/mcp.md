@@ -1,6 +1,6 @@
 # MCP Integration
 
-Model Context Protocol (MCP) lets Claude and other MCP-compatible AI systems interact with your 3D Agent account directly. When connected, Claude can list your avatars, render them as interactive 3D viewers, validate and inspect glTF files, and generate optimization suggestions — all through natural language.
+Model Context Protocol (MCP) lets Claude and other MCP-compatible AI systems interact with your three.ws account directly. When connected, Claude can list your avatars, render them as interactive 3D viewers, validate and inspect glTF files, and generate optimization suggestions — all through natural language.
 
 This document covers the MCP server's tools, authentication, client configuration, and how to test locally.
 
@@ -8,9 +8,9 @@ This document covers the MCP server's tools, authentication, client configuratio
 
 ## What is MCP?
 
-[Model Context Protocol](https://modelcontextprotocol.io) is an open standard that connects AI assistants to external tool servers via JSON-RPC 2.0. Once your MCP client points at the 3D Agent server, the LLM sees a curated set of tools it can call autonomously during a conversation.
+[Model Context Protocol](https://modelcontextprotocol.io) is an open standard that connects AI assistants to external tool servers via JSON-RPC 2.0. Once your MCP client points at the three.ws server, the LLM sees a curated set of tools it can call autonomously during a conversation.
 
-For 3D Agent specifically, this means Claude can:
+For three.ws specifically, this means Claude can:
 
 - Browse and search your avatar library without you copy-pasting URLs
 - Render any avatar inline as an interactive `<model-viewer>` HTML artifact

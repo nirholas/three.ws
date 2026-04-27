@@ -1,10 +1,10 @@
 # ERC-8004 Smart Contracts
 
-Three Solidity contracts make up the ERC-8004 registry system for 3D agent identities. This document covers the contract interfaces, deployed addresses, how to read from and write to each registry using ethers.js v6, and how to deploy your own instance.
+Three Solidity contracts make up the ERC-8004 registry system for three.ws identities. This document covers the contract interfaces, deployed addresses, how to read from and write to each registry using ethers.js v6, and how to deploy your own instance.
 
 | Contract | Source | Purpose |
 |---|---|---|
-| `IdentityRegistry` | `contracts/src/IdentityRegistry.sol` | ERC-721 token registry — register and resolve 3D agent identities on-chain |
+| `IdentityRegistry` | `contracts/src/IdentityRegistry.sol` | ERC-721 token registry — register and resolve three.ws identities on-chain |
 | `ReputationRegistry` | `contracts/src/ReputationRegistry.sol` | Submit and aggregate signed feedback scores for agents |
 | `ValidationRegistry` | `contracts/src/ValidationRegistry.sol` | Record immutable attestations of off-chain validation results (glTF schema, behavioral tests, etc.) |
 
@@ -49,7 +49,7 @@ const { identityRegistry, reputationRegistry, validationRegistry } =
 
 ## IdentityRegistry
 
-`IdentityRegistry` is the canonical on-chain registry for 3D agent identities. Each agent is minted as an ERC-721 token; the token URI points to an ERC-8004 registration JSON (typically hosted on IPFS). The contract extends `ERC721Enumerable`, so all standard ERC-721 enumeration methods work.
+`IdentityRegistry` is the canonical on-chain registry for three.ws identities. Each agent is minted as an ERC-721 token; the token URI points to an ERC-8004 registration JSON (typically hosted on IPFS). The contract extends `ERC721Enumerable`, so all standard ERC-721 enumeration methods work.
 
 ### Registration
 

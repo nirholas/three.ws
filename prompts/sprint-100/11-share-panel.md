@@ -40,7 +40,7 @@ Renders a modal with these rows:
 3. **Web-component snippet**:
     ```html
     <script type="module" src="${embedOrigin}/dist-lib/agent-3d.js"></script>
-    <agent-3d agent-id="${agent.id}"></agent-3d>
+    <agent-three.ws-id="${agent.id}"></agent-3d>
     ```
 4. **OG preview** — render an `<img src="${embedOrigin}/api/a-og?id=${agent.id}">` at 1200×630 scaled down, with copy-OG-URL button.
 5. **QR code** — generate client-side (see constraint) pointing to the Link row.

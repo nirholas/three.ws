@@ -16,7 +16,7 @@ Dispatch **task 00 first** — it ships the demo today. Then pick plugin, SDK, o
 
 ## Why this series matters
 
-LobeHub is the **primary** integration target for embodied-agent rendering inside a host chat. When a LobeHub chat talks to a 3D Agent, the agent should render **embodied** — a 3D avatar driven by the [Empathy Layer](../../src/agent-avatar.js) — inside the chat UI, not as invisible JSON.
+LobeHub is the **primary** integration target for embodied-agent rendering inside a host chat. When a LobeHub chat talks to a three.ws, the agent should render **embodied** — a 3D avatar driven by the [Empathy Layer](../../src/agent-avatar.js) — inside the chat UI, not as invisible JSON.
 
 ## Task index
 

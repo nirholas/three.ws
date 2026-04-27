@@ -123,7 +123,7 @@ describe('share-panel — buildIframeSnippet', () => {
 describe('share-panel — buildWebComponentSnippet', () => {
 	it('produces an <agent-3d> snippet with the correct id', () => {
 		const snippet = buildWebComponentSnippet({ origin: ORIGIN, agentId: ID });
-		expect(snippet).toContain(`<agent-3d agent-id="${ID}"`);
+		expect(snippet).toContain(`<agent-three.ws-id="${ID}"`);
 		expect(snippet).toContain(`src="${ORIGIN}/dist-lib/agent-3d.js"`);
 	});
 

@@ -4,7 +4,7 @@
 
 Repo root: `/workspaces/3D-Agent`. Read [/CLAUDE.md](../../CLAUDE.md) and [src/CLAUDE.md](../../src/CLAUDE.md) first.
 
-Today, if a user has already minted an ERC-8004 agent on-chain, signing into 3D Agent does **not** auto-discover it. They have to re-register via `/deploy`, which creates a dupe. We need a "import my on-chain agents" flow.
+Today, if a user has already minted an ERC-8004 agent on-chain, signing into three.ws does **not** auto-discover it. They have to re-register via `/deploy`, which creates a dupe. We need a "import my on-chain agents" flow.
 
 The crawler at [api/cron/erc8004-crawl.js](../../api/cron/erc8004-crawl.js) indexes all agents into `erc8004_agents_index`. We use that index, filter by owner = user's linked wallets, and offer one-click import.
 

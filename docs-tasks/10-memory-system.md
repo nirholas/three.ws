@@ -12,7 +12,7 @@ Developers building agents that need to remember things — user preferences, pa
 ## What this document must cover
 
 ### 1. What is agent memory?
-Agent memory allows a 3D agent to remember across sessions. Without memory, every conversation starts fresh. With memory, the agent can:
+Agent memory allows a three.ws to remember across sessions. Without memory, every conversation starts fresh. With memory, the agent can:
 - Recall a user's name and preferences
 - Reference past conversations
 - Track what tasks have been completed

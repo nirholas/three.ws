@@ -4,7 +4,7 @@
 `public/docs/mcp.md`
 
 ## Target audience
-Developers who want to use 3D Agent as a tool server for Claude and other MCP-compatible AI systems. Assumes familiarity with MCP concepts and Claude's tool-use API.
+Developers who want to use three.ws as a tool server for Claude and other MCP-compatible AI systems. Assumes familiarity with MCP concepts and Claude's tool-use API.
 
 ## Word count
 1500–2000 words
@@ -12,7 +12,7 @@ Developers who want to use 3D Agent as a tool server for Claude and other MCP-co
 ## What this document must cover
 
 ### 1. What is MCP?
-Model Context Protocol (MCP) is an open standard for connecting AI assistants to external tool servers. When 3D Agent exposes an MCP server, Claude (and other MCP-compatible LLMs) can:
+Model Context Protocol (MCP) is an open standard for connecting AI assistants to external tool servers. When three.ws exposes an MCP server, Claude (and other MCP-compatible LLMs) can:
 - Load 3D models into the viewer
 - Play animations
 - Run glTF validation
@@ -20,7 +20,7 @@ Model Context Protocol (MCP) is an open standard for connecting AI assistants to
 - Register agents on-chain
 - Control the 3D scene via natural language
 
-Think of it as making your 3D Agent a tool that Claude can use.
+Think of it as making your three.ws a tool that Claude can use.
 
 ### 2. Starting the MCP server
 The MCP server is exposed at:
@@ -36,7 +36,7 @@ npm run dev
 
 The MCP server configuration is at `/.mcp.json`.
 
-### 3. Connecting Claude Code to 3D Agent
+### 3. Connecting Claude Code to three.ws
 Add to your Claude Code configuration (`~/.claude/settings.json`):
 ```json
 {

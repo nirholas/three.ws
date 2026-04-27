@@ -736,7 +736,7 @@ function renderMcp(root) {
 		<pre><code>${esc(origin)}/api/mcp</code></pre>
 
 		<h3 class="section">Claude Desktop / Claude Code (remote)</h3>
-		<p class="muted">Add a Custom Connector in Claude. When prompted, sign in with your 3D Agent account.</p>
+		<p class="muted">Add a Custom Connector in Claude. When prompted, sign in with your three.ws account.</p>
 		<pre><code>${esc(
 			JSON.stringify(
 				{
@@ -999,7 +999,7 @@ function bindOnchainDeploy(body, agent) {
 			const result = await registerAgent({
 				glbFile,
 				name: agent.name || 'Agent',
-				description: agent.description || `3D agent ${agent.id}`,
+				description: agent.description || `three.ws ${agent.id}`,
 				apiToken: token.value.trim() || undefined,
 				onStatus: (msg) => say(msg),
 			});

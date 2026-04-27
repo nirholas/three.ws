@@ -12,7 +12,7 @@ Ship a standalone dashboard at `/reputation/` that works against **any** agent i
 
 Create `public/reputation/index.html` — a self-contained page with:
 
-- Header: agent avatar (pulled via `<agent-3d agent="{id}">` small inline), name, chain + agentId.
+- Header: agent avatar (pulled via `<agent-three.ws="{id}">` small inline), name, chain + agentId.
 - Stats row: total reviews, avg rating, last-review timestamp.
 - Review list: paginated, newest-first, shows reviewer address (truncated), rating, comment, tx link to the chain's explorer.
 - Submit form: star rating (1–5), comment textarea, submit button. Gated on wallet connection (reuse [src/erc8004/agent-registry.js](../../src/erc8004/agent-registry.js) `connectWallet()`).

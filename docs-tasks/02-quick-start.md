@@ -4,7 +4,7 @@
 `public/docs/quick-start.md`
 
 ## Target audience
-A developer who wants to go from zero to a working 3D agent on their page in under 10 minutes. They have basic HTML/JS knowledge. They may or may not have a 3D model yet.
+A developer who wants to go from zero to a working three.ws on their page in under 10 minutes. They have basic HTML/JS knowledge. They may or may not have a 3D model yet.
 
 ## Word count
 1200–2000 words
@@ -23,7 +23,7 @@ Show the absolute fastest path. Complete working HTML file:
 <html>
 <head>
   <meta charset="utf-8">
-  <title>My 3D Agent</title>
+  <title>My three.ws</title>
   <style>
     agent-3d { width: 400px; height: 500px; display: block; }
   </style>

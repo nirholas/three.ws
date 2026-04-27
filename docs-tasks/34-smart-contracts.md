@@ -16,7 +16,7 @@ Three Solidity contracts make up the ERC-8004 registry:
 
 | Contract | Purpose |
 |----------|---------|
-| `IdentityRegistry.sol` | Register and resolve 3D agents on-chain |
+| `IdentityRegistry.sol` | Register and resolve three.wss on-chain |
 | `ReputationRegistry.sol` | Submit and read on-chain agent reviews |
 | `ValidationRegistry.sol` | Record glTF validation attestations |
 
@@ -26,7 +26,7 @@ Built with Foundry. Source in `/contracts/src/`.
 
 ### 2. IdentityRegistry
 
-**Purpose:** The canonical on-chain registry for 3D agent identities. Stores IPFS CIDs pointing to agent manifests.
+**Purpose:** The canonical on-chain registry for three.ws identities. Stores IPFS CIDs pointing to agent manifests.
 
 **Key functions:**
 

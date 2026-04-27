@@ -12,7 +12,7 @@ Developers using the viewer component directly — loading models, controlling a
 ## What this document must cover
 
 ### 1. Overview
-The viewer is the rendering layer of 3D Agent — a full-featured three.js WebGL scene manager. Key capabilities:
+The viewer is the rendering layer of three.ws — a full-featured three.js WebGL scene manager. Key capabilities:
 - Load glTF 2.0 and GLB files (including Draco-compressed meshes and KTX2 textures)
 - Interactive orbit camera (drag to rotate, scroll to zoom, right-click to pan)
 - Full animation playback with speed control

@@ -1,6 +1,6 @@
 # Editor Guide
 
-The 3D Agent editor lets you inspect and modify an agent's 3D model, adjust materials and textures, build the agent manifest, and publish the result to the platform. This guide covers the full workflow from opening a file through publishing.
+The three.ws editor lets you inspect and modify an agent's 3D model, adjust materials and textures, build the agent manifest, and publish the result to the platform. This guide covers the full workflow from opening a file through publishing.
 
 ---
 

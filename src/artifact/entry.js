@@ -1,4 +1,4 @@
-// 3D Agent Claude Artifact Bundle
+// three.ws Claude Artifact Bundle
 // Lightweight viewer for agents inside Claude Artifacts
 // Loads three.js from CDN (esm.sh is allowed in artifact sandboxes)
 // Usage: <script src="artifact.js"></script>

@@ -29,7 +29,7 @@ Add a primary actions row to the agent hub page with four CTAs. Each CTA either 
 - **Icon:** code brackets `</>`
 - **Action:** open an "Embed" modal with copy-to-clipboard for:
     - **iframe snippet** — `<iframe src="https://three.ws/agent/:id" width="400" height="600" frameborder="0"></iframe>`
-    - **web component snippet** — `<agent-3d agent-id=":id"></agent-3d>` plus `<script src="https://three.ws/agent-3d.js"></script>`
+    - **web component snippet** — `<agent-three.ws-id=":id"></agent-3d>` plus `<script src="https://three.ws/agent-3d.js"></script>`
 - **Always enabled** — never gated behind on-chain or wallet
 - Uses existing `<agent-3d>` component at [src/element.js:183](../../src/element.js#L183)
 

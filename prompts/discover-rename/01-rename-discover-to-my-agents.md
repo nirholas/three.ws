@@ -12,7 +12,7 @@ Move the personal "On-chain Agents in your linked wallets" page from `/discover`
 1. Visiting `/my-agents` renders the page that `/discover` used to render.
 2. Visiting `/discover` returns a **301** to `/my-agents` (server-side redirect via `vercel.json`, not client JS).
 3. The nav link in `index.html` (`#discoverLink`) labels the link **"My Agents"** and points to `/my-agents`.
-4. The page `<title>` is "My Agents · 3D Agent".
+4. The page `<title>` is "My Agents · three.ws".
 5. Page heading stays "On-chain Agents" (this is accurate — it describes the content), but the **subtitle** becomes "Agents owned by your linked wallets" (drops the word "discover").
 6. Empty-state copy: "No wallets linked / Link a wallet to see your on-chain agents." (replaces "discover your on-chain agents").
 7. Every other reference to `/discover` in the repo is either updated to `/my-agents` OR is the redirect rule itself.
@@ -29,7 +29,7 @@ Move the personal "On-chain Agents in your linked wallets" page from `/discover`
 
 2. **Update page chrome** in `public/my-agents/index.html`:
 
-    - `<title>On-chain Agents · 3D Agent</title>` → `<title>My Agents · 3D Agent</title>`
+    - `<title>On-chain Agents · three.ws</title>` → `<title>My Agents · three.ws</title>`
     - `<meta name="description">` → "Your ERC-8004 agents across every supported chain."
     - Update subtitle and (downstream) any empty-state strings emitted by `my-agents.js`.
 

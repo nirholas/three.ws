@@ -1,6 +1,6 @@
 # API Reference
 
-Complete reference for all public classes, methods, and properties in 3D Agent.
+Complete reference for all public classes, methods, and properties in three.ws.
 
 ---
 

@@ -28,7 +28,7 @@ Pillar 5's reach. Any MCP-compatible host (Claude, Claude Desktop, Lobehub) that
         ```json
         {
         	"content": [
-        		{ "type": "text", "text": "Render this 3D agent: <name>" },
+        		{ "type": "text", "text": "Render this three.ws: <name>" },
         		{
         			"type": "resource",
         			"resource": {

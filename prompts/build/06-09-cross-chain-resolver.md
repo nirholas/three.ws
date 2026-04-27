@@ -33,7 +33,7 @@ An agent identifier in the wild looks like `did:erc8004:<chainId>:<tokenId>` or 
     - If input parses as a chain-qualified ID, hit `/api/onchain/agent/:chain/:token` first.
     - On miss, fall back to live RPC read of `tokenURI(tokenId)` from IdentityRegistry on that chain.
     - Cache hits in `sessionStorage` for 5 minutes.
-4. Update `<agent-3d agent-id="…">` to accept the qualified format.
+4. Update `<agent-three.ws-id="…">` to accept the qualified format.
 5. Bare numeric IDs (no chain) default to the production primary chain (configurable via env, default `1`).
 
 ## Out of scope
@@ -46,13 +46,13 @@ An agent identifier in the wild looks like `did:erc8004:<chainId>:<tokenId>` or 
 
 - [ ] `parseAgentId('did:erc8004:1:42')` → `{ chainId: 1, tokenId: 42n }`.
 - [ ] `parseAgentId('base:7')` → `{ chainId: 8453, tokenId: 7n }`.
-- [ ] `<agent-3d agent-id="did:erc8004:11155111:1">` resolves via indexer.
+- [ ] `<agent-three.ws-id="did:erc8004:11155111:1">` resolves via indexer.
 - [ ] Indexer miss falls back to RPC and caches.
 - [ ] `npm run build` passes.
 
 ## Test plan
 
 1. Boot anvil; mint a test agent on chain 31337; index it.
-2. `<agent-3d agent-id="did:erc8004:31337:1">` resolves.
+2. `<agent-three.ws-id="did:erc8004:31337:1">` resolves.
 3. Visit a hardcoded `did:erc8004:1:99999` (does not exist) — graceful "not found" UI.
 4. Confirm cache hit on a second resolution within 5 min.

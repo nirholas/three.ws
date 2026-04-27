@@ -28,7 +28,7 @@ Ship a `/cz` route with a curated layout, strong hero copy, and the CZ avatar re
     - Wires up the first-interaction hook: `window.addEventListener('cz:viewer-ready', ...)` fires a `CustomEvent('cz:greet')` exactly once after viewer.load completes and 300ms settle — consumed by [03](./03-scripted-first-interaction.md).
     - If the on-chain hydrate from [onchain/01-hydrate-agent-from-chain.md](../onchain/01-hydrate-agent-from-chain.md) is available, hydrates name/description from `(chainId, agentId)` provided in `opts`. Falls back to hard-coded copy if not (the demo works without the onchain hydration being live).
 3. Hero copy (final, ship as-is; tweak if the reviewer asks):
-    - Eyebrow: `A 3D agent with a passport`
+    - Eyebrow: `A three.ws with a passport`
     - H1: `This is CZ. Say hi.`
     - Subtitle: `A signed, embodied, portable agent you can embed anywhere — inside a Claude Artifact, a chat sidebar, or your own site.`
     - CTAs: `Chat with CZ` · `Embed this agent` · `Register your own`
@@ -43,7 +43,7 @@ Ship a `/cz` route with a curated layout, strong hero copy, and the CZ avatar re
 - Visiting `/cz` cold (cleared cache) shows the poster PNG within 500ms and the GLB first frame within 2s on a cabled connection.
 - No `/api/` calls block the first paint. Any API call is fire-and-forget + cached.
 - No `console.error` on load.
-- `document.title` set to `CZ — 3D Agent`.
+- `document.title` set to `CZ — three.ws`.
 - OG meta tags present: `og:title`, `og:description`, `og:image`, `og:url`, `twitter:card=summary_large_image`.
 - Copy exact match to the final strings above.
 - Escape route: URL param `?raw=1` (or `#cz&raw=1`) disables the landing overlay and shows the bare viewer — useful for debugging / recording.
@@ -65,7 +65,7 @@ Ship a `/cz` route with a curated layout, strong hero copy, and the CZ avatar re
 2. `npx vite build` passes.
 3. `npx vite` then open `/cz` (or `/#cz` depending on variant):
     - Poster visible → GLB loads → poster fades.
-    - Window title is `CZ — 3D Agent`.
+    - Window title is `CZ — three.ws`.
     - DevTools Lighthouse on mobile: LCP under 2.5s.
     - `window.dispatchEvent(new Event('cz:greet'))` and nothing crashes (proper hook even before [03](./03-scripted-first-interaction.md) lands).
 4. Test with `#cz&raw=1`: landing UI gone; bare viewer behind.

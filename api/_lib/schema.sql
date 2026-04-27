@@ -1,5 +1,5 @@
 -- ─────────────────────────────────────────────────────────────────────────────
--- 3D Agent — Postgres schema (Neon)
+-- three.ws — Postgres schema (Neon)
 -- Idempotent migrations. Apply with:  psql "$DATABASE_URL" -f api/_lib/schema.sql
 -- ─────────────────────────────────────────────────────────────────────────────
 

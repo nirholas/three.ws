@@ -1,6 +1,6 @@
 # `<agent-3d>` Web Component API Reference
 
-`<agent-3d>` is a custom HTML element that ships the entire 3D Agent stack in a single script tag. Drop the loader, use the element — no build step, no framework required.
+`<agent-3d>` is a custom HTML element that ships the entire three.ws stack in a single script tag. Drop the loader, use the element — no build step, no framework required.
 
 ```html
 <script type="module" src="https://three.ws/agent-3d/1.5.1/agent-3d.js"

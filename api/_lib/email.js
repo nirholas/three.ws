@@ -1,7 +1,7 @@
 // Transactional email via Resend. All sends are fire-and-forget — never await
 // them on the critical path. Import sendEmail and call without await.
 //
-// Required env: RESEND_API_KEY, EMAIL_FROM (e.g. "3D Agent <noreply@3dagent.xyz>")
+// Required env: RESEND_API_KEY, EMAIL_FROM (e.g. "three.ws <noreply@3dagent.xyz>")
 // Optional env: EMAIL_REPLY_TO
 
 import { Resend } from 'resend';
@@ -12,7 +12,7 @@ function client() {
 	return _client;
 }
 
-const FROM    = process.env.EMAIL_FROM    || '3D Agent <noreply@3dagent.xyz>';
+const FROM    = process.env.EMAIL_FROM    || 'three.ws <noreply@3dagent.xyz>';
 const REPLY   = process.env.EMAIL_REPLY_TO || null;
 const APP_URL = process.env.APP_ORIGIN    || 'https://3dagent.xyz';
 
@@ -40,7 +40,7 @@ export function sendWelcomeEmail({ to, displayName }) {
 	const name = displayName || 'there';
 	return sendEmail({
 		to,
-		subject: 'Welcome to 3D Agent',
+		subject: 'Welcome to three.ws',
 		html: welcomeHtml(name),
 		text: welcomeText(name),
 	});
@@ -58,7 +58,7 @@ export function sendVerificationEmail({ to, code, expiresInMinutes = 30 }) {
 export function sendPasswordResetEmail({ to, resetUrl, expiresInMinutes = 60 }) {
 	return sendEmail({
 		to,
-		subject: 'Reset your 3D Agent password',
+		subject: 'Reset your three.ws password',
 		html: resetHtml(resetUrl, expiresInMinutes),
 		text: resetText(resetUrl, expiresInMinutes),
 	});
@@ -67,7 +67,7 @@ export function sendPasswordResetEmail({ to, resetUrl, expiresInMinutes = 60 }) 
 export function sendSubscriptionConfirmEmail({ to, plan, chain, txId }) {
 	return sendEmail({
 		to,
-		subject: `3D Agent ${capitalize(plan)} plan activated`,
+		subject: `three.ws ${capitalize(plan)} plan activated`,
 		html: subscriptionHtml(plan, chain, txId),
 		text: subscriptionText(plan, chain, txId),
 	});
@@ -95,7 +95,7 @@ function layout(body) {
 
 function welcomeHtml(name) {
 	return layout(`
-    <p class="brand">3D Agent</p>
+    <p class="brand">three.ws</p>
     <h1>Welcome, ${esc(name)} 👋</h1>
     <p>Your account is ready. Start by uploading your first 3D avatar or connecting an on-chain agent identity.</p>
     <a class="btn" href="${APP_URL}/dashboard/">Open Dashboard</a>
@@ -105,12 +105,12 @@ function welcomeHtml(name) {
 }
 
 function welcomeText(name) {
-	return `Welcome to 3D Agent, ${name}!\n\nYour account is ready. Open your dashboard: ${APP_URL}/dashboard/\n\nQuestions? Reply to this email.`;
+	return `Welcome to three.ws, ${name}!\n\nYour account is ready. Open your dashboard: ${APP_URL}/dashboard/\n\nQuestions? Reply to this email.`;
 }
 
 function verifyHtml(code, mins) {
 	return layout(`
-    <p class="brand">3D Agent</p>
+    <p class="brand">three.ws</p>
     <h1>Verify your email</h1>
     <p>Enter this code to verify your email address. It expires in ${mins} minutes.</p>
     <div class="code">${esc(code)}</div>
@@ -119,12 +119,12 @@ function verifyHtml(code, mins) {
 }
 
 function verifyText(code, mins) {
-	return `Your 3D Agent verification code is: ${code}\n\nExpires in ${mins} minutes.`;
+	return `Your three.ws verification code is: ${code}\n\nExpires in ${mins} minutes.`;
 }
 
 function resetHtml(url, mins) {
 	return layout(`
-    <p class="brand">3D Agent</p>
+    <p class="brand">three.ws</p>
     <h1>Reset your password</h1>
     <p>Click below to set a new password. This link expires in ${mins} minutes.</p>
     <a class="btn" href="${esc(url)}">Reset password</a>
@@ -133,12 +133,12 @@ function resetHtml(url, mins) {
 }
 
 function resetText(url, mins) {
-	return `Reset your 3D Agent password:\n${url}\n\nExpires in ${mins} minutes.`;
+	return `Reset your three.ws password:\n${url}\n\nExpires in ${mins} minutes.`;
 }
 
 function subscriptionHtml(plan, chain, txId) {
 	return layout(`
-    <p class="brand">3D Agent</p>
+    <p class="brand">three.ws</p>
     <h1>${capitalize(plan)} plan activated 🎉</h1>
     <p>Your <strong>${capitalize(plan)}</strong> subscription is now active on ${capitalize(chain)}.</p>
     ${txId ? `<p class="muted">Transaction: <code>${esc(txId)}</code></p>` : ''}
@@ -147,7 +147,7 @@ function subscriptionHtml(plan, chain, txId) {
 }
 
 function subscriptionText(plan, chain, txId) {
-	return `Your 3D Agent ${plan} plan is now active on ${chain}.\n${txId ? `Transaction: ${txId}\n` : ''}Open dashboard: ${APP_URL}/dashboard/`;
+	return `Your three.ws ${plan} plan is now active on ${chain}.\n${txId ? `Transaction: ${txId}\n` : ''}Open dashboard: ${APP_URL}/dashboard/`;
 }
 
 function esc(s) {

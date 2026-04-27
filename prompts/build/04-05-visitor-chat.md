@@ -66,7 +66,7 @@ In [public/agent/index.html](../../public/agent/index.html):
 - File / image upload in chat.
 - Multi-turn tool use (the brain has a single system + user turn in v1).
 - Memory writes from chat — the agent doesn't learn from strangers in v1.
-- A "powered by 3D Agent" badge in the chat UI (covered elsewhere).
+- A "powered by three.ws" badge in the chat UI (covered elsewhere).
 
 ## Acceptance
 

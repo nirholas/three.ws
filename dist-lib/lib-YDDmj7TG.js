@@ -50635,9 +50635,9 @@ class Av extends HTMLElement {
         brain: {
           provider: this.getAttribute("brain") ? "anthropic" : "none",
           model: this.getAttribute("brain") || void 0,
-          instructions: o || "You are an embodied 3D agent."
+          instructions: o || "You are an embodied three.ws."
         },
-        instructions: o || "You are an embodied 3D agent.",
+        instructions: o || "You are an embodied three.ws.",
         voice: { tts: { provider: "browser" }, stt: { provider: "browser" } },
         skills: (this.getAttribute("skills") || "").split(",").map((a) => a.trim()).filter(Boolean).map((a) => ({ uri: a })),
         memory: { mode: this.getAttribute("memory") || "local" },

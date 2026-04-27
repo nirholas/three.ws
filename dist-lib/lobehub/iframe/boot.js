@@ -1,4 +1,4 @@
-// LobeHub iframe bridge for 3D Agent.
+// LobeHub iframe bridge for three.ws.
 //
 // Primary protocol: v1 spec envelope
 //   { v: 1, source: 'agent-host'|'agent-3d', id, inReplyTo?, kind, op, payload }

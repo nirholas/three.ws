@@ -148,7 +148,7 @@ function renderConsent(res, { client, user, params, csrf }) {
 	res.end(`<!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Authorize ${esc(client.name)} · 3D Agent</title>
+<title>Authorize ${esc(client.name)} · three.ws</title>
 <style>
 	:root { color-scheme: light dark; }
 	body { font: 16px/1.5 -apple-system,system-ui,Segoe UI,Roboto,sans-serif; background:#0b0b10; color:#eee; margin:0; min-height:100vh; display:grid; place-items:center; padding:24px; }
@@ -170,7 +170,7 @@ function renderConsent(res, { client, user, params, csrf }) {
 </style>
 </head><body><form class="card" method="post" action="/api/oauth/authorize">
 	<h1>Authorize <b>${esc(client.name)}</b></h1>
-	<p class="sub">Grant this application access to your 3D Agent account.</p>
+	<p class="sub">Grant this application access to your three.ws account.</p>
 	<div class="who"><div class="dot">${esc((user.display_name || user.email)[0].toUpperCase())}</div><div><div>${esc(user.display_name || user.email)}</div><div style="color:#888;font-size:13px">${esc(user.email)}</div></div></div>
 	<p style="margin:0 0 4px"><b>${esc(client.name)}</b> will be able to:</p>
 	<ul>${scopeList.map((s) => `<li>${scopeLabel(s)}</li>`).join('')}</ul>

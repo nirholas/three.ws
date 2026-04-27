@@ -18,7 +18,7 @@ On the public agent page, a new panel labeled "Share this agent" with three tabs
 
 1. **Link** — `https://three.ws/a/:id` with copy button.
 2. **iframe** — `<iframe src="https://three.ws/a/:id/embed" width="480" height="540" style="border:0" allow="xr-spatial-tracking; fullscreen"></iframe>` with copy button.
-3. **Web component** — `<script type="module" src="https://three.ws/lib/agent-3d.js"></script>\n<agent-3d agent="<id>"></agent-3d>` with copy button.
+3. **Web component** — `<script type="module" src="https://three.ws/lib/agent-3d.js"></script>\n<agent-three.ws="<id>"></agent-3d>` with copy button.
 
 Each tab shows a live preview of what the embed will look like (for web component and iframe). All three are read-only `<textarea>` or `<pre>` with a copy button that confirms with a 1s "Copied" pill.
 

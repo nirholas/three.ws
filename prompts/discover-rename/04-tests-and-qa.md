@@ -23,8 +23,8 @@ Lock in the rename with automated checks and a manual QA pass so the next deploy
 
 2. **Add or extend route tests** in the appropriate test file:
 
-    - Static check (always works): assert `public/discover/index.html` exists and contains `Discover · 3D Agent` and `ERC-8004 Agent Directory`.
-    - Static check: assert `public/my-agents/index.html` exists and contains `My Agents · 3D Agent`.
+    - Static check (always works): assert `public/discover/index.html` exists and contains `Discover · three.ws` and `ERC-8004 Agent Directory`.
+    - Static check: assert `public/my-agents/index.html` exists and contains `My Agents · three.ws`.
     - Static check: assert `public/explore/` directory does not exist (was moved).
     - `vercel.json` parse test: assert a redirect from `/explore` → `/discover` (permanent) exists, and assert no redirect from `/discover` → `/my-agents` exists (would shadow the page).
 

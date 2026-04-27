@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Validate every agent card in the repo against the 3D Agent Card v1 schema.
+ * Validate every agent card in the repo against the three.ws Card v1 schema.
  *
  * Inputs:
  *   - public/.well-known/3d-agent-card.schema.json  (the schema)

@@ -1,10 +1,10 @@
-# Agent Task: Write Tutorial — "Embed a 3D Agent on Your Website"
+# Agent Task: Write Tutorial — "Embed a three.ws on Your Website"
 
 ## Output file
 `public/docs/tutorials/embed-on-website.md`
 
 ## Target audience
-Developers and no-code builders who have a website and want to add a 3D agent to it. Multiple paths covered: code-based embedding and platform-generated snippets.
+Developers and no-code builders who have a website and want to add a three.ws to it. Multiple paths covered: code-based embedding and platform-generated snippets.
 
 ## Word count
 1500–2000 words
@@ -13,7 +13,7 @@ Developers and no-code builders who have a website and want to add a 3D agent to
 
 ### Learning objectives
 By the end, the reader will know how to:
-- Add a 3D agent to a static HTML page
+- Add a three.ws to a static HTML page
 - Add it to a React/Next.js app
 - Add it to WordPress, Webflow, or Squarespace (no-code)
 - Use the iframe widget (simplest path for non-developers)
@@ -92,7 +92,7 @@ export default function Page() {
   return (
     <main>
       <h1>Welcome</h1>
-      <Agent3D agentId="your-agent-id" mode="floating" />
+      <Agentthree.wsId="your-agent-id" mode="floating" />
     </main>
   );
 }
@@ -138,13 +138,13 @@ Then use a Custom HTML block in the editor with the `<agent-3d>` element.
 2. Paste the complete snippet (script + element together):
 ```html
 <script type="module" src="https://cdn.three.wsagent-3d.js"></script>
-<agent-3d agent-id="your-id" style="width:100%;height:500px"></agent-3d>
+<agent-three.ws-id="your-id" style="width:100%;height:500px"></agent-3d>
 ```
 
 For floating mode across all pages: Settings → Advanced → Code Injection → Footer, paste:
 ```html
 <script type="module" src="https://cdn.three.wsagent-3d.js"></script>
-<agent-3d agent-id="your-id" mode="floating"></agent-3d>
+<agent-three.ws-id="your-id" mode="floating"></agent-3d>
 ```
 
 ### Controlling when the agent appears

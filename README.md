@@ -1,6 +1,6 @@
 ---
-title: 3D Agent
-description: 3D Agent is an open-source, browser-native 3D model viewer built on three.js. It renders glTF 2.0 and GLB files directly in WebGL. No plugins, no server uploads, no installs. Create your own models and agents or just open the site, drop a file, and inspect your model instantly.
+title: three.ws
+description: three.ws is an open-source, browser-native 3D model viewer built on three.js. It renders glTF 2.0 and GLB files directly in WebGL. No plugins, no server uploads, no installs. Create your own models and agents or just open the site, drop a file, and inspect your model instantly.
 ---
 
 <video width="100%" height="auto" autoplay loop muted playsinline>
@@ -19,9 +19,9 @@ description: 3D Agent is an open-source, browser-native 3D model viewer built on
 
 ---
 
-## 🧠 What is 3D Agent?
+## 🧠 What is three.ws?
 
-**3D Agent** is an open-source, browser-native 3D model viewer built on [three.js](https://threejs.org/) (r176). It renders **glTF 2.0** and **GLB** files directly in WebGL — no plugins, no server uploads, no installs. Just open [three.ws](https://three.ws/), drop a file, and inspect your model instantly.
+**three.ws** is an open-source, browser-native 3D model viewer built on [three.js](https://threejs.org/) (r176). It renders **glTF 2.0** and **GLB** files directly in WebGL — no plugins, no server uploads, no installs. Just open [three.ws](https://three.ws/), drop a file, and inspect your model instantly.
 
 It's built for **3D artists** previewing exports, **game developers** debugging assets, **web developers** integrating models, and **anyone curious** about 3D on the web.
 

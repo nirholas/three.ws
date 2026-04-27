@@ -4,7 +4,7 @@
 `public/docs/configuration.md`
 
 ## Target audience
-Developers setting up a self-hosted 3D Agent instance or configuring their development environment. This is a complete reference for all environment variables and configuration files.
+Developers setting up a self-hosted three.ws instance or configuring their development environment. This is a complete reference for all environment variables and configuration files.
 
 ## Word count
 1500–2000 words
@@ -12,7 +12,7 @@ Developers setting up a self-hosted 3D Agent instance or configuring their devel
 ## What this document must cover
 
 ### 1. Overview
-3D Agent is configured via:
+three.ws is configured via:
 - **Environment variables** (`.env` / `.env.local`) — server secrets and API keys
 - **`vercel.json`** — routing, headers, and edge config
 - **`vite.config.js`** — build configuration

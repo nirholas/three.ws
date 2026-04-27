@@ -12,7 +12,7 @@ Developers and non-technical users who want to embed pre-built 3D experiences on
 ## What this document must cover
 
 ### 1. What is a widget?
-A widget is a pre-configured, embeddable view of a 3D agent or model. Unlike the raw `<agent-3d>` element (which requires you to configure everything), widgets are opinionated — each one is built for a specific use case. You pick a widget type, supply your model URL and options, and get a polished embed.
+A widget is a pre-configured, embeddable view of a three.ws or model. Unlike the raw `<agent-3d>` element (which requires you to configure everything), widgets are opinionated — each one is built for a specific use case. You pick a widget type, supply your model URL and options, and get a polished embed.
 
 ```html
 <agent-3d widget="turntable" model="./product.glb"></agent-3d>

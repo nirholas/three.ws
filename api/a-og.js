@@ -38,8 +38,8 @@ export default wrap(async (req, res) => {
 		res.setHeader('cache-control', status === 200 ? CACHE_CARD : 'public, max-age=60');
 		res.end(
 			JSON.stringify({
-				title: (agent.name || `Agent #${agentId}`) + ' — 3D Agent',
-				description: agent.description || 'An embodied 3D agent.',
+				title: (agent.name || `Agent #${agentId}`) + ' — three.ws',
+				description: agent.description || 'An embodied three.ws.',
 				image: imageUrl,
 				url: pageUrl,
 				type: 'profile',
@@ -76,7 +76,7 @@ export default wrap(async (req, res) => {
 
 function renderCard(agent) {
 	const name = agent.name || `Agent #${agent.agentId}`;
-	const desc = agent.description || 'An embodied 3D agent on-chain.';
+	const desc = agent.description || 'An embodied three.ws on-chain.';
 	const chain = agent.chainName || `Chain ${agent.chainId}`;
 	const short = agent.chainShort || '';
 	const owner = agent.owner ? shortenAddr(agent.owner) : '';
@@ -127,7 +127,7 @@ function renderCard(agent) {
 	<!-- Brand footer -->
 	<g transform="translate(80, 550)">
 		<circle cx="12" cy="12" r="10" fill="none" stroke="${accent}" stroke-width="2"/>
-		<text x="34" y="19" fill="rgba(229,229,229,0.45)" font-family="Inter, -apple-system, system-ui, sans-serif" font-size="18" font-weight="500" letter-spacing="3">3D AGENT</text>
+		<text x="34" y="19" fill="rgba(229,229,229,0.45)" font-family="Inter, -apple-system, system-ui, sans-serif" font-size="18" font-weight="500" letter-spacing="3">three.ws</text>
 	</g>
 	<text x="1120" y="569" text-anchor="end" fill="rgba(229,229,229,0.3)" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16">eip155:${agent.chainId}${safeShort ? ` · ${safeShort}` : ''}</text>
 </svg>`;

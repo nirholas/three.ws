@@ -1,6 +1,6 @@
 # Onchain (priority 6) — task prompts
 
-Self-contained prompt files for wiring the 3D Agent platform to its on-chain identity. Each file is designed to be dropped into a fresh Claude Code session without extra context.
+Self-contained prompt files for wiring the three.ws platform to its on-chain identity. Each file is designed to be dropped into a fresh Claude Code session without extra context.
 
 ## The big thing that is already done
 

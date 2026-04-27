@@ -291,7 +291,7 @@ If the script fails to load, the element falls back to:
 ```html
 <agent-3d src="agent://base/42">
 	<!-- this content shows if JS disabled or script blocked -->
-	<img src="./leo-poster.webp" alt="Coach Leo (3D agent, requires JavaScript)" />
+	<img src="./leo-poster.webp" alt="Coach Leo (three.ws, requires JavaScript)" />
 </agent-3d>
 ```
 

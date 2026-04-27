@@ -4,7 +4,7 @@
 `public/docs/animation-system.md`
 
 ## Target audience
-3D artists and developers who want to understand how animations work in 3D Agent — from loading clips to the agent emotion system and how animations blend.
+3D artists and developers who want to understand how animations work in three.ws — from loading clips to the agent emotion system and how animations blend.
 
 ## Word count
 2000–2500 words
@@ -12,7 +12,7 @@
 ## What this document must cover
 
 ### 1. Overview
-3D Agent's animation system has three layers:
+three.ws's animation system has three layers:
 1. **Clip playback** — standard glTF animation clips (walk, wave, idle, etc.) played by the AnimationMixer
 2. **Morph target blending** — per-frame facial expression control driven by the emotion system
 3. **Procedural animation** — head tilt, lean, and gaze control driven by emotion state (no clips needed)
@@ -188,7 +188,7 @@ el.agent.protocol.dispatch('gesture', { name: 'wave' });
 
 Or via the LLM `wave` tool (built-in).
 
-### 9. Building animations for 3D Agent
+### 9. Building animations for three.ws
 For 3D artists creating avatars:
 
 **Recommended clip set:**

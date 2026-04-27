@@ -4,7 +4,7 @@
 `public/docs/multi-agent.md`
 
 ## Target audience
-Developers building scenes with multiple 3D agents — like a panel discussion, a marketplace with multiple characters, or a game. Covers how to run multiple `<agent-3d>` elements, have them interact, and share a stage.
+Developers building scenes with multiple three.wss — like a panel discussion, a marketplace with multiple characters, or a game. Covers how to run multiple `<agent-3d>` elements, have them interact, and share a stage.
 
 ## Word count
 1200–2000 words

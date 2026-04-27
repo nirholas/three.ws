@@ -1,10 +1,10 @@
 # Security
 
-3D Agent is designed for developers and organizations that need to reason carefully about what data goes where, who can call what, and how identities are established. This document covers the full security model: data handling, embed isolation, authentication, on-chain identity, and operational guidance for self-hosters.
+three.ws is designed for developers and organizations that need to reason carefully about what data goes where, who can call what, and how identities are established. This document covers the full security model: data handling, embed isolation, authentication, on-chain identity, and operational guidance for self-hosters.
 
 ## Security principles
 
-**Client-side processing** — 3D files (GLB/GLTF) are loaded directly in the browser via WebGL. They never transit 3D Agent servers unless you explicitly save to your account. Screenshots are generated client-side via `canvas.toDataURL()`.
+**Client-side processing** — 3D files (GLB/GLTF) are loaded directly in the browser via WebGL. They never transit three.ws servers unless you explicitly save to your account. Screenshots are generated client-side via `canvas.toDataURL()`.
 
 **Defense in depth** — authentication, rate limiting, CORS, CSP, cookie hardening, and on-chain validation operate as independent layers. No single bypass compromises the whole system.
 
@@ -25,7 +25,7 @@ Models loaded into the viewer are processed entirely on your device:
 - The browser fetches and decodes the GLB file directly — no proxy, no server touch
 - WebGL rendering runs in your GPU via a sandboxed canvas context
 - Screenshots (`canvas.toDataURL()`) are generated client-side and never uploaded automatically
-- Models are only sent to 3D Agent servers if you explicitly use the avatar registration flow (which pins to IPFS via Storacha)
+- Models are only sent to three.ws servers if you explicitly use the avatar registration flow (which pins to IPFS via Storacha)
 
 ### Conversation data
 
@@ -39,7 +39,7 @@ Conversation history lives in `localStorage` by default. Cloud memory sync is op
 
 ### Wallet data
 
-Private keys never leave your wallet (MetaMask, Privy, WalletConnect). 3D Agent receives only:
+Private keys never leave your wallet (MetaMask, Privy, WalletConnect). three.ws receives only:
 
 - Your wallet address (public by design)
 - Signed messages and SIWE challenges

@@ -13,7 +13,7 @@ Users and developers who want to give their agent a permanent blockchain identit
 
 ### Learning objectives
 By the end, the reader will have:
-- Created a 3D agent on the platform
+- Created a three.ws on the platform
 - Connected an Ethereum wallet
 - Registered the agent on Base (chain ID 8453)
 - An on-chain agent URL they can share
@@ -31,7 +31,7 @@ Start with motivation — concrete benefits:
 - An Ethereum wallet with ~$1 worth of ETH on Base
   - No Base ETH? Bridge from Ethereum at bridge.base.org (costs ~$2 in ETH gas)
   - Or use a faucet: base-sepolia-faucet.com (testnet, free)
-- Your agent created on 3D Agent (covered in Step 1)
+- Your agent created on three.ws (covered in Step 1)
 
 ### Step 1: Create your agent
 If you haven't already:
@@ -65,7 +65,7 @@ Use Coinbase (they support Base natively) or any exchange that supports Base wit
 3. Register on Base Sepolia first to practice
 
 ### Step 3: Connect your wallet
-1. In the 3D Agent app, click "Connect Wallet" (top right)
+1. In the three.ws app, click "Connect Wallet" (top right)
 2. Choose your wallet:
    - MetaMask — click MetaMask icon
    - WalletConnect — scan QR with mobile wallet

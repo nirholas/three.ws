@@ -1,4 +1,4 @@
-# Task 01 — LobeHub plugin manifest for 3D Agent
+# Task 01 — LobeHub plugin manifest for three.ws
 
 ## Context
 
@@ -14,7 +14,7 @@ We already publish an A2A-style card at `.well-known/agent-card.json` ([agent-ca
 
 ## Goal
 
-Produce a LobeHub plugin manifest, hosted at a stable public URL under this deployment, that lets any LobeHub instance install the 3D Agent plugin and get an embodied avatar in chat.
+Produce a LobeHub plugin manifest, hosted at a stable public URL under this deployment, that lets any LobeHub instance install the three.ws plugin and get an embodied avatar in chat.
 
 ## Deliverable
 

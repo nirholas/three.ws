@@ -1,12 +1,12 @@
 # Architecture
 
-This document provides a deep technical overview of how 3D Agent is structured, how data flows through the system, and how each module fulfills its responsibilities.
+This document provides a deep technical overview of how three.ws is structured, how data flows through the system, and how each module fulfills its responsibilities.
 
 ---
 
 ## High-Level Overview
 
-3D Agent is a single-page application (SPA) that runs entirely in the browser. There is no backend server — all model parsing, rendering, and validation happens client-side using WebGL 2.0.
+three.ws is a single-page application (SPA) that runs entirely in the browser. There is no backend server — all model parsing, rendering, and validation happens client-side using WebGL 2.0.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐

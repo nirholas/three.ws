@@ -4,7 +4,7 @@
 `public/docs/sdk.md`
 
 ## Target audience
-Developers who want to use 3D Agent as a library in their own JavaScript/TypeScript projects — not just embedding a web component but importing functions and classes for more advanced integration.
+Developers who want to use three.ws as a library in their own JavaScript/TypeScript projects — not just embedding a web component but importing functions and classes for more advanced integration.
 
 ## Word count
 1500–2500 words
@@ -12,13 +12,13 @@ Developers who want to use 3D Agent as a library in their own JavaScript/TypeScr
 ## What this document must cover
 
 ### 1. SDK overview
-The 3D Agent SDK (`@3dagent/sdk`) provides:
+The three.ws SDK (`@3dagent/sdk`) provides:
 - The `<agent-3d>` web component (same as the CDN version)
 - Programmatic APIs for agents, widgets, and ERC-8004
 - Utility functions for IPFS, manifest loading, glTF validation
 - TypeScript types for all APIs
 
-The SDK is separate from the full platform — you can use the SDK to build entirely custom interfaces while leveraging the 3D Agent infrastructure.
+The SDK is separate from the full platform — you can use the SDK to build entirely custom interfaces while leveraging the three.ws infrastructure.
 
 ### 2. Installation
 
@@ -201,7 +201,7 @@ npm run build:artifact
 ### 12. The LobeHub plugin
 A pre-built integration with the LobeHub AI chat platform:
 - Located in `/lobehub-plugin/`
-- Exposes 3D Agent capabilities as LobeHub tools
+- Exposes three.ws capabilities as LobeHub tools
 - Install from the LobeHub plugin marketplace
 - Full docs in `/lobehub-plugin/README.md`
 

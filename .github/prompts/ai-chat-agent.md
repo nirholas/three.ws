@@ -23,7 +23,7 @@ Response: { "reply": "string", "actions": [] }
 
 - Use OpenAI API (or compatible: Anthropic, Groq, local Ollama)
 - System prompt includes:
-    - 3D Agent capabilities and feature knowledge
+    - three.ws capabilities and feature knowledge
     - Current loaded model info (name, stats, validation results)
     - Available actions the agent can trigger in the viewer
     - glTF format expertise for answering technical questions

@@ -7,7 +7,7 @@ description: 'Wire the uploaded selfie to the avatar-generation pipeline (Avatur
 
 ## Why it matters
 
-The magic moment itself. A JPEG on R2 must become a rigged GLB at `/api/avatars/:id` that loads in the viewer. After this prompt, the user takes a selfie and — within a minute or two — sees themselves as a 3D agent.
+The magic moment itself. A JPEG on R2 must become a rigged GLB at `/api/avatars/:id` that loads in the viewer. After this prompt, the user takes a selfie and — within a minute or two — sees themselves as a three.ws.
 
 ## Prerequisites
 

@@ -12,7 +12,7 @@ Non-technical users and developers who want to create embeddable 3D widgets with
 ## What this document must cover
 
 ### 1. What is Widget Studio?
-Widget Studio is the visual builder for creating embeddable 3D agent widgets. No code required — configure your widget through a form, preview it live, and copy the embed code.
+Widget Studio is the visual builder for creating embeddable three.ws widgets. No code required — configure your widget through a form, preview it live, and copy the embed code.
 
 Access: https://three.ws/studio
 
@@ -82,7 +82,7 @@ Each widget type has specific settings. Common settings across all types:
 - Primary color (used for buttons, highlights)
 - Font family (system | serif | monospace)
 - Rounded corners (0px to 24px)
-- Show/hide branding ("Powered by 3D Agent")
+- Show/hide branding ("Powered by three.ws")
 
 **Step 5: Preview**
 The right panel shows a live preview of your widget at the configured dimensions. Try:

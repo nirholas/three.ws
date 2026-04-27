@@ -1,7 +1,7 @@
 /**
  * @nirholas/agent-kit — Permissions module
  *
- * ERC-7710 scoped delegation client for 3D Agent.
+ * ERC-7710 scoped delegation client for three.ws.
  *
  * Quick start:
  *   import { PermissionsClient } from '@nirholas/agent-kit/permissions';
@@ -31,7 +31,7 @@ export class PermissionError extends Error {
 }
 
 /**
- * HTTP client for the 3D Agent permissions API.
+ * HTTP client for the three.ws permissions API.
  *
  * Methods `grant` and `revoke` require a browser-connected ethers v6 Signer and will
  * throw `PermissionError('browser_only', ...)` when called in a Node.js environment.

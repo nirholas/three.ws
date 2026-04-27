@@ -2,7 +2,7 @@
 
 ## Context
 
-The `<agent-3d>` web component is the sole distribution channel for the 3D Agent product. It's embedded inside third-party sites (Claude.ai artifacts, LobeHub plugins, customer pages). When an agent lives inside an iframe, the host page has no way to talk to it and vice versa — you can't tell the agent to speak, change avatar, or react to chat messages. You also can't hear the agent's events (skill calls, action logs, state changes) from the parent.
+The `<agent-3d>` web component is the sole distribution channel for the three.ws product. It's embedded inside third-party sites (Claude.ai artifacts, LobeHub plugins, customer pages). When an agent lives inside an iframe, the host page has no way to talk to it and vice versa — you can't tell the agent to speak, change avatar, or react to chat messages. You also can't hear the agent's events (skill calls, action logs, state changes) from the parent.
 
 Sprint-100 mapped two bridge modules to fill this gap:
 

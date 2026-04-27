@@ -52,7 +52,7 @@ export default wrap(async (req, res) => {
 	const payload = {
 		type: 'rich',
 		version: '1.0',
-		provider_name: '3D Agent',
+		provider_name: 'three.ws',
 		provider_url: origin,
 		title,
 		author_name: title,
@@ -134,7 +134,7 @@ async function sendOnChain(res, format, { chainId, agentId }) {
 	const payload = {
 		type: 'rich',
 		version: '1.0',
-		provider_name: '3D Agent',
+		provider_name: 'three.ws',
 		provider_url: origin,
 		title,
 		author_name: title,

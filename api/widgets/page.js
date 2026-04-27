@@ -115,7 +115,7 @@ export default wrap(async (req, res) => {
 	const oembedJs = `${origin}/api/widgets/oembed?url=${encodeURIComponent(pageUrl)}&format=json`;
 	const title = widget.name || 'Widget';
 	const typeLbl = TYPE_LABEL[widget.type] || 'Widget';
-	const desc = `${typeLbl} · embeddable 3D, no code. Powered by 3D Agent.`;
+	const desc = `${typeLbl} · embeddable 3D, no code. Powered by three.ws.`;
 
 	res.statusCode = 200;
 	res.setHeader('content-type', 'text/html; charset=utf-8');
@@ -167,7 +167,7 @@ function forbidden(res, msg) {
 	const m = escapeHtml(msg || 'Access denied.');
 	res.end(`<!doctype html><meta charset="utf-8"><title>Access denied</title>
 <style>body{font-family:Inter,system-ui,sans-serif;background:#0a0a0a;color:#e0e0e0;display:grid;place-items:center;min-height:100vh;margin:0}main{text-align:center;padding:2rem}a{color:#8b5cf6}</style>
-<main><h1>Access denied</h1><p>${m}</p><p><a href="/">Open 3D Agent</a></p></main>`);
+<main><h1>Access denied</h1><p>${m}</p><p><a href="/">Open three.ws</a></p></main>`);
 }
 
 function notFound(res) {
@@ -187,13 +187,13 @@ function renderHtml({ title, desc, pageUrl, embedUrl, ogUrl, oembedJs, widgetId 
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>${t} — 3D Agent</title>
+	<title>${t} — three.ws</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 	<meta name="description" content="${d}">
 	<meta name="theme-color" content="#0a0a0a">
 
 	<meta property="og:type" content="website">
-	<meta property="og:site_name" content="3D Agent">
+	<meta property="og:site_name" content="three.ws">
 	<meta property="og:title" content="${t}">
 	<meta property="og:description" content="${d}">
 	<meta property="og:url" content="${escapeAttr(pageUrl)}">
@@ -253,7 +253,7 @@ ${escapeJsonLd({
 	url: pageUrl,
 	image: ogUrl,
 	identifier: widgetId,
-	provider: { '@type': 'Organization', name: '3D Agent', url: 'https://three.ws/' },
+	provider: { '@type': 'Organization', name: 'three.ws', url: 'https://three.ws/' },
 })}
 	</script>
 </body>
@@ -267,14 +267,14 @@ function renderPrivateHtml({ pageUrl, ogUrl }) {
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>${title} — 3D Agent</title>
+	<title>${title} — three.ws</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta name="description" content="${desc}">
 	<meta name="robots" content="noindex, nofollow">
 	<meta name="theme-color" content="#0a0a0a">
 
 	<meta property="og:type" content="website">
-	<meta property="og:site_name" content="3D Agent">
+	<meta property="og:site_name" content="three.ws">
 	<meta property="og:title" content="${title}">
 	<meta property="og:description" content="${desc}">
 	<meta property="og:url" content="${escapeAttr(pageUrl)}">
@@ -301,7 +301,7 @@ function renderPrivateHtml({ pageUrl, ogUrl }) {
 	<main>
 		<h1>${title}</h1>
 		<p>${desc} The owner hasn't shared it publicly.</p>
-		<p><a href="/">Open 3D Agent</a></p>
+		<p><a href="/">Open three.ws</a></p>
 	</main>
 </body>
 </html>`;

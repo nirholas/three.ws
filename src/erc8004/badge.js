@@ -1,5 +1,5 @@
 /**
- * <three-d-agent-badge> — embeddable trust badge for an ERC-8004 / 3D Agent Card v1 agent.
+ * <three-d-agent-badge> — embeddable trust badge for an ERC-8004 / three.ws Card v1 agent.
  *
  * Usage:
  *   <script type="module" src="https://three.ws/erc8004/badge.js"></script>
@@ -7,7 +7,7 @@
  *
  * Attributes:
  *   - agent     CAIP-style ref: "eip155:<chainId>:<registry>/<tokenId>"
- *   - card-url  Direct URL to a 3D Agent Card v1 JSON (alternative to `agent`)
+ *   - card-url  Direct URL to a three.ws Card v1 JSON (alternative to `agent`)
  *   - resolver  Resolver base URL (default: https://three.ws/)
  *
  * Verification performed (client-side):
@@ -96,10 +96,10 @@ function statusFor(checks) {
 
 const LABELS = {
 	loading: 'Verifying…',
-	verified: '3D Agent · Verified',
-	partial: '3D Agent · Partial',
-	unverified: '3D Agent · Unverified',
-	error: '3D Agent · Error',
+	verified: 'three.ws · Verified',
+	partial: 'three.ws · Partial',
+	unverified: 'three.ws · Unverified',
+	error: 'three.ws · Error',
 };
 
 class ThreeDAgentBadge extends HTMLElement {

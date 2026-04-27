@@ -1,10 +1,10 @@
-# Task 02 — `<agent-3d agent-id="...">` native resolver
+# Task 02 — `<agent-three.ws-id="...">` native resolver
 
 ## Why this exists
 
 The `<agent-3d>` web component in [src/element.js](../../src/element.js) today only accepts `src="agent://chain/id"` or a manifest URL. The share panel on `/agent/:id` exposes a web-component snippet, but for a fresh hosted agent (no on-chain record, no manifest file yet), there is no way to embed via the component — only iframe works.
 
-We want: `<agent-3d agent-id="ab12cd">` resolves directly against the hosted API (`/api/agents/:id` + `/api/avatars/:avatarId`) and builds an in-memory manifest on the fly. Zero on-chain dependency. Zero filesystem manifest required.
+We want: `<agent-three.ws-id="ab12cd">` resolves directly against the hosted API (`/api/agents/:id` + `/api/avatars/:avatarId`) and builds an in-memory manifest on the fly. Zero on-chain dependency. Zero filesystem manifest required.
 
 ## Shared context
 
@@ -73,7 +73,7 @@ webcomponent: `<script type="module" src="${origin}/dist-lib/agent-3d.js"><\/scr
 Change it to use `agent-id`:
 
 ```js
-webcomponent: `<script type="module" src="${origin}/dist-lib/agent-3d.js"><\/script>\n<agent-3d agent-id="${identity.id}" style="width:420px;height:520px"></agent-3d>`,
+webcomponent: `<script type="module" src="${origin}/dist-lib/agent-3d.js"><\/script>\n<agent-three.ws-id="${identity.id}" style="width:420px;height:520px"></agent-3d>`,
 ```
 
 **Only this one line.** Do not touch anything else in `public/agent/index.html` — task 01 is editing `<head>` there.
@@ -93,11 +93,11 @@ webcomponent: `<script type="module" src="${origin}/dist-lib/agent-3d.js"><\/scr
 
 1. `node --check src/agent-resolver.js src/element.js` passes.
 2. `npx vite build` — note result (the web-component bundle should still build).
-3. Manual test — write a tiny ad-hoc HTML page (do not commit it) that loads `<agent-3d agent-id="REAL_AGENT_ID">` against a local or deployed backend and confirm:
+3. Manual test — write a tiny ad-hoc HTML page (do not commit it) that loads `<agent-three.ws-id="REAL_AGENT_ID">` against a local or deployed backend and confirm:
     - Avatar GLB loads in the stage
     - Agent name appears in the chrome
     - Console shows no unhandled errors
-4. Edge case: `<agent-3d agent-id="does-not-exist">` — confirm it dispatches the manifest-error event without throwing uncaught.
+4. Edge case: `<agent-three.ws-id="does-not-exist">` — confirm it dispatches the manifest-error event without throwing uncaught.
 
 ## Reporting
 

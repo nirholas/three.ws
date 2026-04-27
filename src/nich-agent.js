@@ -1,7 +1,7 @@
 /**
  * NichAgent — Voice + Chat Interface
  * ------------------------------------
- * The conversational surface of the 3D agent.
+ * The conversational surface of the three.ws.
  * Now protocol-aware: responses go through the AgentProtocol bus,
  * which drives the avatar's Empathy Layer and action timeline.
  *
@@ -22,7 +22,7 @@ const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecogni
  * @property {string}  [title]                  Override identity.name in the panel header.
  * @property {{accent?:string, background?:string, caption?:string}} [theme]
  *                                              CSS custom-property overrides (--nich-accent, --nich-bg, --nich-fg).
- * @property {boolean} [showPoweredBy]          Show "powered by 3D Agent" footer link.
+ * @property {boolean} [showPoweredBy]          Show "powered by three.ws" footer link.
  * @property {boolean} [voiceInput]             Enable mic button (default true).
  * @property {boolean} [voiceOutput]            Speak replies via speechSynthesis (default true).
  * @property {(text:string)=>Promise<{reply?:string,actions?:any[]}>} [onSend]
@@ -188,7 +188,7 @@ export class NichAgent {
 			this.container.appendChild(this.panel);
 			this.toggleBtn = document.createElement('button');
 			this.toggleBtn.className = 'nich-toggle';
-			this.toggleBtn.setAttribute('aria-label', 'Talk to 3D Agent');
+			this.toggleBtn.setAttribute('aria-label', 'Talk to three.ws');
 			this.toggleBtn.title = 'Talk to Agent';
 			this.toggleBtn.innerHTML = `
 				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -602,7 +602,7 @@ export class NichAgent {
 			return 'Open the Performance folder in the controls panel for live FPS/MS/MB stats.';
 		}
 		if (lower.match(/\b(who|what).*(you|this|agent)\b/)) {
-			return `I'm ${this.identity?.name || '3D Agent'} — present, embodied, and here to help with your 3D work.`;
+			return `I'm ${this.identity?.name || 'three.ws'} — present, embodied, and here to help with your 3D work.`;
 		}
 		if (lower.match(/\b(memory|remember|memories)\b/)) {
 			const stats = this.identity?.memory?.stats;

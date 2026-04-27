@@ -1,7 +1,7 @@
 {
 	"name": "@3dagent/lobehub-plugin",
 	"version": "1.0.0",
-	"description": "3D Agent for LobeHub — sidebar plugin that renders an embodied avatar",
+	"description": "three.ws for LobeHub — sidebar plugin that renders an embodied avatar",
 	"private": true,
 	"type": "module",
 	"main": "dist/index.js",
@@ -31,6 +31,6 @@
 		"avatar",
 		"agent"
 	],
-	"author": "3D Agent",
+	"author": "three.ws",
 	"license": "MIT"
 }

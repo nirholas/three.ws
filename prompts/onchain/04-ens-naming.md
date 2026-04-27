@@ -27,7 +27,7 @@ Task 03 must be shipped.
 ### 2. Web component attribute
 
 ```html
-<agent-3d agent-name="vitalik.eth"></agent-3d>
+<agent-three.ws-name="vitalik.eth"></agent-3d>
 ```
 
 In [src/element.js](../../src/element.js), add this as a fourth resolution path (after `src`, `agent-id`, `agent-address`).
@@ -51,7 +51,7 @@ URL shapes:
 
 ## Acceptance
 
-- [ ] `curl /api/agents/by-name/vitalik.eth` — 404 `not_registered` (expected, Vitalik has no 3D agent yet) but shows the resolved address in the body.
+- [ ] `curl /api/agents/by-name/vitalik.eth` — 404 `not_registered` (expected, Vitalik has no three.ws yet) but shows the resolved address in the body.
 - [ ] An agent registered under an address with an ENS name resolves via name + renders the name in the header.
 - [ ] Unknown name → 404.
 - [ ] Basenames resolve via Base mainnet resolver.

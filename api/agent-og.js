@@ -45,7 +45,7 @@ export default wrap(async (req, res) => {
 
 	sendCardSvg(res, 200, CACHE_CARD, {
 		name: agent.name || 'Agent',
-		description: agent.description || 'An embodied 3D agent.',
+		description: agent.description || 'An embodied three.ws.',
 	});
 });
 
@@ -72,7 +72,7 @@ function renderCardSvg({ name, description }) {
 	<text x="80" y="140" fill="#e5e5e5" font-family="Inter, -apple-system, system-ui, sans-serif" font-size="56" font-weight="300">◎</text>
 	<text x="80" y="320" fill="#e5e5e5" font-family="Inter, -apple-system, system-ui, sans-serif" font-size="76" font-weight="300" letter-spacing="-2">${safeName}</text>
 	<text x="80" y="390" fill="rgba(229,229,229,0.55)" font-family="Inter, -apple-system, system-ui, sans-serif" font-size="28" font-weight="400">${safeDesc}</text>
-	<text x="80" y="570" fill="rgba(229,229,229,0.3)" font-family="Inter, -apple-system, system-ui, sans-serif" font-size="20" font-weight="400" letter-spacing="4">3D AGENT</text>
+	<text x="80" y="570" fill="rgba(229,229,229,0.3)" font-family="Inter, -apple-system, system-ui, sans-serif" font-size="20" font-weight="400" letter-spacing="4">three.ws</text>
 </svg>`;
 }
 

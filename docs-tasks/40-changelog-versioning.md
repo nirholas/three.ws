@@ -12,7 +12,7 @@ Developers who want to know what changed between versions, how to migrate, and h
 ## What this document must cover
 
 ### 1. Versioning policy
-3D Agent uses Semantic Versioning (semver):
+three.ws uses Semantic Versioning (semver):
 - **Major** (X.0.0) — breaking changes to the web component API, agent manifest format, or SDK
 - **Minor** (1.X.0) — new features, backwards-compatible
 - **Patch** (1.5.X) — bug fixes, no API changes

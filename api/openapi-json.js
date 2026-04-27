@@ -16,7 +16,7 @@ export default wrap(async (req, res) => {
 		{
 			openapi: '3.1.0',
 			info: {
-				title: '3D Agent API',
+				title: 'three.ws API',
 				version: '1.0.0',
 				description:
 					'API for 3D avatar management, AI agent identity, and MCP tool access.',

@@ -1,6 +1,6 @@
 # EMBED_HOST_PROTOCOL — v1
 
-Versioned postMessage bus between a host page (Claude.ai, LobeHub, blog) and an embedded 3D Agent iframe.
+Versioned postMessage bus between a host page (Claude.ai, LobeHub, blog) and an embedded three.ws iframe.
 
 ---
 

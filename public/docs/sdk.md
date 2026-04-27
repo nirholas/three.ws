@@ -1,6 +1,6 @@
 # SDK & Library
 
-This document covers programmatic use of 3D Agent beyond simple embedding. There are two distributable artifacts you can import into your own project:
+This document covers programmatic use of three.ws beyond simple embedding. There are two distributable artifacts you can import into your own project:
 
 | Artifact | Package | Use case |
 |---|---|---|
