@@ -896,20 +896,14 @@ export class Viewer {
 		// Render buttons
 		this._renderAnimButtons();
 
-		// Load all animations in background
+		// Load all animations in background. We deliberately do NOT auto-play
+		// the first animation: external Mixamo-rigged FBX clips often retarget
+		// imperfectly onto Ready Player Me / Avaturn avatars, which collapses
+		// the rig and makes the model look "disappeared" on first load. Show
+		// the authored pose instead and let the user pick an animation when
+		// they want one.
 		this.animationManager.loadAll().then(() => {
 			this._renderAnimButtons();
-			// Auto-play the first animation if nothing is playing
-			if (!this.animationManager.currentName && defs.length > 0) {
-				const firstName = defs[0].name;
-				if (this.animationManager.isLoaded(firstName)) {
-					this.animationManager.play(firstName);
-					this._renderAnimButtons();
-					this.invalidate();
-					this._recomputeAnimating();
-					this._updateRenderLoop();
-				}
-			}
 		});
 
 		// Stop button
