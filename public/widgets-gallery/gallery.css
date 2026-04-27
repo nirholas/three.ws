@@ -53,7 +53,7 @@ body.gallery-body {
 }
 
 .gallery-main {
-	max-width: 1080px;
+	max-width: 1400px;
 	margin: 0 auto;
 	padding: var(--space-2xl) var(--space-lg);
 	display: flex;
@@ -169,6 +169,7 @@ body.gallery-body {
 	overflow: hidden;
 	background: #050505;
 	aspect-ratio: 1 / 1;
+	min-height: 480px;
 }
 .showcase-frame iframe {
 	position: absolute;
