@@ -498,7 +498,7 @@
 			</h1>
 			<nav class="features-nav" aria-label="Primary">
 				<a href="/app">Viewer</a>
-				<a href="/explore">Explore</a>
+				<a href="/discover">Discover</a>
 				<a href="/features">Features</a>
 				<a href="/widgets">Widgets</a>
 				<a href="/dashboard" class="nav-dashboard">Dashboard</a>
@@ -948,8 +948,8 @@
 			if (btn) wireSigninButton(btn);
 		</script>
 		<!-- BEGIN:DISCOVER_LINK -->
-		<a href="/discover" id="discoverLink" class="discover-cta" hidden
-			>Find my on-chain agents →</a
+		<a href="/my-agents" id="discoverLink" class="discover-cta" hidden
+			>My Agents →</a
 		>
 		<script type="module">
 			fetch('/api/auth/me', { credentials: 'include' })

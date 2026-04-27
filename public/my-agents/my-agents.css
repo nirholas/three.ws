@@ -1,4 +1,5 @@
-/* discover.css — On-chain agent discovery page styles */
+/* my-agents.css — My on-chain agents page styles */
+/* TODO: rename `discover-*` class prefix to `my-agents-*` (deferred — JS selectors use these names). */
 
 /* ── Design tokens (mirrored from dashboard) ─────────────────────────── */
 :root {

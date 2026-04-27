@@ -253,7 +253,7 @@ async function loadAgents() {
 				showState(
 					'👛',
 					'No wallets linked',
-					'Link a wallet to discover your on-chain agents.',
+					'Link a wallet to see your on-chain agents.',
 					{ label: 'Link a wallet', href: '/dashboard/wallets.html' },
 				);
 				return;

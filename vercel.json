@@ -112,8 +112,11 @@
 		{ "src": "/api/dca-strategies/([^/]+)", "dest": "/api/dca-strategies?id=$1" },
 		{ "src": "/api/dca-strategies", "dest": "/api/dca-strategies" },
 
+		{ "src": "/my-agents", "dest": "/my-agents/index.html" },
+		{ "src": "/my-agents/", "dest": "/my-agents/index.html" },
 		{ "src": "/discover", "dest": "/discover/index.html" },
 		{ "src": "/discover/", "dest": "/discover/index.html" },
+		{ "src": "/discover/(.*)", "dest": "/discover/$1" },
 
 		{ "src": "/api/(.*)", "dest": "/api/$1" },
 
@@ -165,9 +168,8 @@
 		{ "src": "/create", "dest": "/create.html" },
 		{ "src": "/create/", "dest": "/create.html" },
 		{ "src": "/home", "dest": "/home.html" },
-		{ "src": "/explore", "dest": "/explore/index.html" },
-		{ "src": "/explore/", "dest": "/explore/index.html" },
-		{ "src": "/explore/(.*)", "dest": "/explore/$1" },
+		{ "src": "/explore", "status": 301, "headers": { "Location": "/discover" } },
+		{ "src": "/explore/", "status": 301, "headers": { "Location": "/discover" } },
 		{ "src": "/a/(\\d+)/(\\d+)/embed", "dest": "/a-embed.html" },
 		{ "src": "/a/(\\d+)/(\\d+)", "dest": "/api/a-page?chain=$1&id=$2" },
 		{ "src": "/a/(.*)", "dest": "/app.html" },

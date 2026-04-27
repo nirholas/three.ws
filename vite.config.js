@@ -38,7 +38,7 @@ const appConfig = {
 				reputation: resolve(__dirname, 'public/reputation/index.html'),
 				hydrate: resolve(__dirname, 'public/hydrate/index.html'),
 				// BEGIN:DISCOVER_ROUTE
-				discover: resolve(__dirname, 'public/discover/index.html'),
+				'my-agents': resolve(__dirname, 'public/my-agents/index.html'),
 				// END:DISCOVER_ROUTE
 			},
 		},
@@ -52,8 +52,8 @@ const appConfig = {
 					'/app': resolve(root, 'app.html'),
 					'/login': resolve(root, 'public/login.html'),
 					'/deploy': resolve(root, 'app.html'),
-					'/explore': resolve(root, 'public/explore/index.html'),
-					'/explore/': resolve(root, 'public/explore/index.html'),
+					'/discover': resolve(root, 'public/discover/index.html'),
+					'/discover/': resolve(root, 'public/discover/index.html'),
 					'/agents': resolve(root, 'public/agents/index.html'),
 					'/agents/': resolve(root, 'public/agents/index.html'),
 					'/features': resolve(root, 'features.html'),
@@ -71,8 +71,8 @@ const appConfig = {
 					'/hydrate': resolve(root, 'public/hydrate/index.html'),
 					'/hydrate/': resolve(root, 'public/hydrate/index.html'),
 					// BEGIN:DISCOVER_ROUTE
-					'/discover': resolve(root, 'public/discover/index.html'),
-					'/discover/': resolve(root, 'public/discover/index.html'),
+					'/my-agents': resolve(root, 'public/my-agents/index.html'),
+					'/my-agents/': resolve(root, 'public/my-agents/index.html'),
 					// END:DISCOVER_ROUTE
 					'/agent': resolve(root, 'agent-home.html'),
 				};
