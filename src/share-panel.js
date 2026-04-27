@@ -2,16 +2,36 @@ import { renderQRToCanvas, renderQRToSVG } from './erc8004/qr.js';
 import './share-panel.css';
 
 /**
- * One-click share modal for an agent: link, iframe snippet, web-component
- * snippet, OG preview, and QR code.
+ * One-click share modal for an agent: link, customisable iframe + web-component
+ * snippets with a live preview, OG card, and QR code.
  *
  * @example
- * const panel = new SharePanel({ agent: { id, slug, name, thumbnailUrl }, container: document.body });
+ * const panel = new SharePanel({
+ *   agent: { id, slug, name },
+ *   container: document.body,
+ * });
  * panel.open();
  */
+
+const DEFAULT_OPTIONS = Object.freeze({
+	bg: 'transparent', // 'transparent' | 'dark' | 'light'
+	name: true, // show name plate
+	size: 'medium', // 'small' | 'medium' | 'large'
+});
+
+const SIZES = {
+	small: { width: 320, height: 420 },
+	medium: { width: 420, height: 520 },
+	large: { width: 520, height: 680 },
+};
+
 export class SharePanel {
 	/**
-	 * @param {{ agent: { id: string, slug?: string, name?: string, thumbnailUrl?: string }, container?: HTMLElement, embedOrigin?: string }} opts
+	 * @param {{
+	 *   agent: { id: string, slug?: string, name?: string, thumbnailUrl?: string },
+	 *   container?: HTMLElement,
+	 *   embedOrigin?: string,
+	 * }} opts
 	 */
 	constructor({ agent, container = document.body, embedOrigin = location.origin }) {
 		this._agent = agent;
@@ -19,6 +39,7 @@ export class SharePanel {
 		this._origin = embedOrigin;
 		this._backdrop = null;
 		this._opener = null;
+		this._opts = { ...DEFAULT_OPTIONS };
 		this._onKeyDown = this._onKeyDown.bind(this);
 	}
 
@@ -27,21 +48,14 @@ export class SharePanel {
 		this._opener = document.activeElement;
 
 		const { id, slug, name } = this._agent;
-		const origin = this._origin;
-		const link = `${origin}/a/${slug || id}`;
-		const iframeSnippet =
-			`<iframe src="${origin}/agent-embed.html?id=${id}"\n` +
-			`    width="480" height="640" frameborder="0" allow="microphone; camera"></iframe>`;
-		const wcSnippet =
-			`<script type="module" src="${origin}/dist-lib/agent-3d.js"><\/script>\n` +
-			`<agent-3d agent-id="${id}"></agent-3d>`;
-		const ogUrl = `${origin}/api/a-og?id=${id}`;
+		const link = `${this._origin}/a/${slug || id}`;
+		const ogUrl = `${this._origin}/api/a-og?id=${id}`;
+		const modalId = `share-panel-title-${id}`;
 
 		const backdrop = document.createElement('div');
 		backdrop.className = 'share-panel-backdrop';
 		backdrop.setAttribute('role', 'presentation');
 
-		const modalId = `share-panel-title-${id}`;
 		const modal = document.createElement('div');
 		modal.className = 'share-panel-modal';
 		modal.setAttribute('role', 'dialog');
@@ -58,20 +72,54 @@ export class SharePanel {
 			<div class="share-panel-row" data-section="link">
 				<div class="share-panel-label">Link</div>
 				<div class="share-panel-field">
-					<div class="share-panel-code">${_esc(link)}</div>
+					<div class="share-panel-code" data-role="link-code">${_esc(link)}</div>
 					<div class="share-panel-actions">
-						<button class="share-panel-btn" data-copy="${_esc(link)}">Copy</button>
+						<button class="share-panel-btn" data-copy-target="link-code">Copy</button>
 						<a class="share-panel-btn" href="${_esc(link)}" target="_blank" rel="noopener">Open ↗</a>
 					</div>
 				</div>
 			</div>
 
+			<div class="share-panel-row" data-section="customise">
+				<div class="share-panel-label">Customise embed</div>
+				<div class="share-panel-controls">
+					<fieldset class="share-panel-fieldset">
+						<legend>Background</legend>
+						<div class="share-panel-segments" role="radiogroup" aria-label="Background">
+							${_segmentBtn('bg', 'transparent', 'Transparent', this._opts.bg)}
+							${_segmentBtn('bg', 'dark', 'Dark', this._opts.bg)}
+							${_segmentBtn('bg', 'light', 'Light', this._opts.bg)}
+						</div>
+					</fieldset>
+					<fieldset class="share-panel-fieldset">
+						<legend>Name plate</legend>
+						<div class="share-panel-segments" role="radiogroup" aria-label="Name plate">
+							${_segmentBtn('name', 'true', 'On', String(this._opts.name))}
+							${_segmentBtn('name', 'false', 'Off', String(this._opts.name))}
+						</div>
+					</fieldset>
+					<fieldset class="share-panel-fieldset">
+						<legend>Size</legend>
+						<div class="share-panel-segments" role="radiogroup" aria-label="Size">
+							${_segmentBtn('size', 'small', 'Small', this._opts.size)}
+							${_segmentBtn('size', 'medium', 'Medium', this._opts.size)}
+							${_segmentBtn('size', 'large', 'Large', this._opts.size)}
+						</div>
+					</fieldset>
+				</div>
+			</div>
+
+			<div class="share-panel-row" data-section="preview">
+				<div class="share-panel-label">Live preview</div>
+				<div class="share-panel-preview" data-role="preview-frame-mount"></div>
+			</div>
+
 			<div class="share-panel-row" data-section="iframe">
 				<div class="share-panel-label">iframe embed</div>
 				<div class="share-panel-field">
-					<div class="share-panel-code">${_esc(iframeSnippet)}</div>
+					<div class="share-panel-code" data-role="iframe-code"></div>
 					<div class="share-panel-actions">
-						<button class="share-panel-btn" data-copy="${_esc(iframeSnippet)}">Copy</button>
+						<button class="share-panel-btn" data-copy-target="iframe-code">Copy</button>
 					</div>
 				</div>
 			</div>
@@ -79,9 +127,9 @@ export class SharePanel {
 			<div class="share-panel-row" data-section="wc">
 				<div class="share-panel-label">Web component</div>
 				<div class="share-panel-field">
-					<div class="share-panel-code">${_esc(wcSnippet)}</div>
+					<div class="share-panel-code" data-role="wc-code"></div>
 					<div class="share-panel-actions">
-						<button class="share-panel-btn" data-copy="${_esc(wcSnippet)}">Copy</button>
+						<button class="share-panel-btn" data-copy-target="wc-code">Copy</button>
 					</div>
 				</div>
 			</div>
@@ -94,9 +142,9 @@ export class SharePanel {
 					alt="OG preview for ${_esc(name || id)}"
 					style="aspect-ratio:1200/630;">
 				<div class="share-panel-field" style="margin-top:6px;">
-					<div class="share-panel-code">${_esc(ogUrl)}</div>
+					<div class="share-panel-code" data-role="og-code">${_esc(ogUrl)}</div>
 					<div class="share-panel-actions">
-						<button class="share-panel-btn" data-copy="${_esc(ogUrl)}">Copy URL</button>
+						<button class="share-panel-btn" data-copy-target="og-code">Copy URL</button>
 					</div>
 				</div>
 			</div>
@@ -109,15 +157,18 @@ export class SharePanel {
 			</div>
 		`;
 
-		// Attach close handler
 		modal.querySelector('.share-panel-close').addEventListener('click', () => this.close());
 
-		// Copy buttons
-		modal.querySelectorAll('[data-copy]').forEach((btn) => {
+		// Segment-button toggles
+		modal.querySelectorAll('.share-panel-segment').forEach((btn) => {
+			btn.addEventListener('click', () => this._onSegmentClick(btn));
+		});
+
+		// Copy buttons (resolve target text on click for live snippet content)
+		modal.querySelectorAll('[data-copy-target]').forEach((btn) => {
 			btn.addEventListener('click', () => this._copy(btn));
 		});
 
-		// Dismiss on backdrop click (outside modal)
 		backdrop.addEventListener('click', (e) => {
 			if (e.target === backdrop) this.close();
 		});
@@ -126,26 +177,13 @@ export class SharePanel {
 		this._container.appendChild(backdrop);
 		this._backdrop = backdrop;
 
-		// Render QR — prefer canvas; fall back to inline SVG when canvas isn't
-		// available (older browsers, jsdom, restricted contexts).
-		const qrMount = modal.querySelector('#share-panel-qr-mount');
-		try {
-			const canvas = renderQRToCanvas(link, { scale: 6, margin: 2 });
-			qrMount.appendChild(canvas);
-		} catch {
-			try {
-				qrMount.innerHTML = renderQRToSVG(link, { scale: 6, margin: 2 });
-			} catch {
-				qrMount.textContent = link;
-			}
-		}
+		this._renderSnippets();
+		this._mountPreview();
+		this._renderQR(link);
 
-		// Focus trap + keyboard
 		document.addEventListener('keydown', this._onKeyDown);
-		// Focus modal so Esc works immediately; focus first button for usability
 		const firstBtn = modal.querySelector('button');
 		(firstBtn || modal).focus();
-
 		_trapFocus(modal);
 	}
 
@@ -160,18 +198,140 @@ export class SharePanel {
 		this._opener = null;
 	}
 
-	_onKeyDown(e) {
-		if (e.key === 'Escape') {
-			e.preventDefault();
-			this.close();
+	// ── Snippet building ─────────────────────────────────────────────────────────
+
+	/**
+	 * Build the canonical embed URL with current options as query params.
+	 * Defaults are omitted to keep the URL readable.
+	 *
+	 * @returns {string}
+	 */
+	_buildEmbedUrl() {
+		const id = this._agent.id;
+		const url = new URL(`${this._origin}/agent/${id}/embed`);
+		if (this._opts.bg !== DEFAULT_OPTIONS.bg) url.searchParams.set('bg', this._opts.bg);
+		if (this._opts.name !== DEFAULT_OPTIONS.name) url.searchParams.set('name', '0');
+		return url.toString();
+	}
+
+	_buildIframeSnippet() {
+		const { width, height } = SIZES[this._opts.size];
+		const allow = 'autoplay; xr-spatial-tracking; microphone; camera';
+		return (
+			`<iframe\n` +
+			`    src="${this._buildEmbedUrl()}"\n` +
+			`    width="${width}" height="${height}"\n` +
+			`    style="border:0;border-radius:12px;background:transparent"\n` +
+			`    allow="${allow}"\n` +
+			`    loading="lazy"\n` +
+			`    referrerpolicy="strict-origin-when-cross-origin"\n` +
+			`></iframe>`
+		);
+	}
+
+	_buildWebComponentSnippet() {
+		const { width, height } = SIZES[this._opts.size];
+		const id = this._agent.id;
+		return (
+			`<script type="module" src="${this._origin}/dist-lib/agent-3d.js"><\/script>\n` +
+			`<agent-3d agent-id="${id}"\n` +
+			`    style="display:block;width:${width}px;height:${height}px"\n` +
+			`></agent-3d>`
+		);
+	}
+
+	_renderSnippets() {
+		const m = this._backdrop;
+		if (!m) return;
+		const iframeCode = this._buildIframeSnippet();
+		const wcCode = this._buildWebComponentSnippet();
+		m.querySelector('[data-role="iframe-code"]').textContent = iframeCode;
+		m.querySelector('[data-role="wc-code"]').textContent = wcCode;
+	}
+
+	// ── Live preview ─────────────────────────────────────────────────────────────
+
+	_mountPreview() {
+		const mount = this._backdrop?.querySelector('[data-role="preview-frame-mount"]');
+		if (!mount) return;
+		mount.innerHTML = '';
+		this._previewMount = mount;
+		this._renderPreview();
+	}
+
+	_renderPreview() {
+		if (!this._previewMount) return;
+		const { width, height } = SIZES[this._opts.size];
+		const url = new URL(this._buildEmbedUrl());
+		// Always set preview=1 so the embed page skips its origin allow-list
+		// gate when the dialog runs on a non-allowlisted host.
+		url.searchParams.set('preview', '1');
+
+		const frame = document.createElement('iframe');
+		frame.className = 'share-panel-preview-frame';
+		frame.src = url.toString();
+		frame.width = String(width);
+		frame.height = String(height);
+		frame.setAttribute('loading', 'lazy');
+		frame.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+		frame.setAttribute('allow', 'autoplay; xr-spatial-tracking');
+		frame.setAttribute(
+			'aria-label',
+			`Live preview of ${this._agent.name || 'agent'} embed`,
+		);
+		// Visualise the chosen background while the iframe paints.
+		frame.dataset.bg = this._opts.bg;
+		this._previewMount.replaceChildren(frame);
+	}
+
+	// ── Segment toggles ──────────────────────────────────────────────────────────
+
+	_onSegmentClick(btn) {
+		const group = btn.dataset.group;
+		const value = btn.dataset.value;
+		if (!group) return;
+
+		// Update opts
+		if (group === 'name') {
+			this._opts.name = value === 'true';
+		} else {
+			this._opts[group] = value;
 		}
-		if (e.key === 'Tab' && this._backdrop) {
-			_handleTabTrap(e, this._backdrop.querySelector('.share-panel-modal'));
+
+		// Update aria-checked + active class for the group
+		const groupRoot = btn.closest('.share-panel-segments');
+		groupRoot.querySelectorAll('.share-panel-segment').forEach((b) => {
+			const active = b === btn;
+			b.classList.toggle('share-panel-segment--active', active);
+			b.setAttribute('aria-checked', String(active));
+		});
+
+		this._renderSnippets();
+		this._renderPreview();
+	}
+
+	// ── Misc ─────────────────────────────────────────────────────────────────────
+
+	_renderQR(link) {
+		const qrMount = this._backdrop?.querySelector('#share-panel-qr-mount');
+		if (!qrMount) return;
+		try {
+			const canvas = renderQRToCanvas(link, { scale: 6, margin: 2 });
+			qrMount.appendChild(canvas);
+		} catch {
+			try {
+				qrMount.innerHTML = renderQRToSVG(link, { scale: 6, margin: 2 });
+			} catch {
+				qrMount.textContent = link;
+			}
 		}
 	}
 
 	_copy(btn) {
-		const text = btn.getAttribute('data-copy');
+		const targetRole = btn.getAttribute('data-copy-target');
+		const node = this._backdrop?.querySelector(`[data-role="${targetRole}"]`);
+		if (!node) return;
+		const text = node.textContent || '';
 		navigator.clipboard.writeText(text).then(() => {
 			const orig = btn.textContent;
 			btn.textContent = 'Copied ✓';
@@ -182,9 +342,86 @@ export class SharePanel {
 			}, 1200);
 		});
 	}
+
+	_onKeyDown(e) {
+		if (e.key === 'Escape') {
+			e.preventDefault();
+			this.close();
+		}
+		if (e.key === 'Tab' && this._backdrop) {
+			_handleTabTrap(e, this._backdrop.querySelector('.share-panel-modal'));
+		}
+	}
 }
 
-// ── helpers ──────────────────────────────────────────────────────────────────
+// ── Pure helpers (exported for tests) ────────────────────────────────────────────
+
+/**
+ * Build an embed URL for the given agent and options. Pure / side-effect-free.
+ * Defaults are omitted from the query string so canonical URLs stay short.
+ *
+ * @param {{ origin: string, agentId: string, opts?: { bg?: string, name?: boolean } }} args
+ */
+export function buildEmbedUrl({ origin, agentId, opts = {} }) {
+	const merged = { ...DEFAULT_OPTIONS, ...opts };
+	const url = new URL(`${origin}/agent/${agentId}/embed`);
+	if (merged.bg !== DEFAULT_OPTIONS.bg) url.searchParams.set('bg', merged.bg);
+	if (merged.name !== DEFAULT_OPTIONS.name) url.searchParams.set('name', '0');
+	return url.toString();
+}
+
+/**
+ * Build the iframe snippet string. Pure / side-effect-free.
+ *
+ * @param {{ origin: string, agentId: string, opts?: { bg?: string, name?: boolean, size?: string } }} args
+ */
+export function buildIframeSnippet({ origin, agentId, opts = {} }) {
+	const merged = { ...DEFAULT_OPTIONS, ...opts };
+	const { width, height } = SIZES[merged.size] || SIZES.medium;
+	const src = buildEmbedUrl({ origin, agentId, opts: merged });
+	const allow = 'autoplay; xr-spatial-tracking; microphone; camera';
+	return (
+		`<iframe\n` +
+		`    src="${src}"\n` +
+		`    width="${width}" height="${height}"\n` +
+		`    style="border:0;border-radius:12px;background:transparent"\n` +
+		`    allow="${allow}"\n` +
+		`    loading="lazy"\n` +
+		`    referrerpolicy="strict-origin-when-cross-origin"\n` +
+		`></iframe>`
+	);
+}
+
+/**
+ * Build the web-component snippet string. Pure / side-effect-free.
+ *
+ * @param {{ origin: string, agentId: string, opts?: { bg?: string, name?: boolean, size?: string } }} args
+ */
+export function buildWebComponentSnippet({ origin, agentId, opts = {} }) {
+	const merged = { ...DEFAULT_OPTIONS, ...opts };
+	const { width, height } = SIZES[merged.size] || SIZES.medium;
+	const attrs = [`agent-id="${agentId}"`];
+	if (merged.bg !== DEFAULT_OPTIONS.bg) attrs.push(`background="${merged.bg}"`);
+	if (merged.name !== DEFAULT_OPTIONS.name) attrs.push(`name-plate="off"`);
+	return (
+		`<script type="module" src="${origin}/dist-lib/agent-3d.js"><\/script>\n` +
+		`<agent-3d ${attrs.join(' ')}\n` +
+		`    style="display:block;width:${width}px;height:${height}px"\n` +
+		`></agent-3d>`
+	);
+}
+
+// ── Internal helpers ─────────────────────────────────────────────────────────────
+
+function _segmentBtn(group, value, label, currentValue) {
+	const active = String(currentValue) === String(value);
+	return (
+		`<button type="button"` +
+		` class="share-panel-segment${active ? ' share-panel-segment--active' : ''}"` +
+		` role="radio" aria-checked="${active}"` +
+		` data-group="${_esc(group)}" data-value="${_esc(value)}">${_esc(label)}</button>`
+	);
+}
 
 function _esc(str) {
 	return String(str)
@@ -198,7 +435,6 @@ const FOCUSABLE =
 	'a[href],button:not([disabled]),input,select,textarea,[tabindex]:not([tabindex="-1"])';
 
 function _trapFocus(modal) {
-	// Initial focus on first focusable element
 	const els = modal.querySelectorAll(FOCUSABLE);
 	if (els.length) els[0].focus();
 }

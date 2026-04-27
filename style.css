@@ -2751,6 +2751,59 @@ footer .separator {
 	}
 }
 
+.deploy-onchain-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-xs);
+	padding: var(--space-sm) var(--space-lg);
+	background: rgba(108, 99, 255, 0.1);
+	border: 1px solid rgba(108, 99, 255, 0.4);
+	border-radius: var(--radius-lg);
+	color: rgba(255, 255, 255, 0.92);
+	font-family: inherit;
+	font-size: var(--text-sm);
+	font-weight: 500;
+	text-decoration: none;
+	cursor: pointer;
+	transition: all 0.25s ease;
+	letter-spacing: 0.02em;
+}
+.deploy-onchain-btn:hover {
+	background: rgba(108, 99, 255, 0.22);
+	color: #fff;
+	border-color: rgba(108, 99, 255, 0.65);
+}
+.deploy-onchain-btn:focus-visible {
+	outline: 2px solid rgba(108, 99, 255, 0.7);
+	outline-offset: 2px;
+}
+.deploy-onchain-btn[hidden] {
+	display: none;
+}
+.deploy-onchain-btn svg {
+	width: 1em;
+	height: 1em;
+}
+/* "Deployed ✓" success state — replaces the call-to-action once on-chain. */
+.deploy-onchain-btn.is-deployed {
+	background: rgba(74, 222, 128, 0.1);
+	border-color: rgba(74, 222, 128, 0.42);
+	color: #86efac;
+}
+.deploy-onchain-btn.is-deployed:hover {
+	background: rgba(74, 222, 128, 0.2);
+	color: #d1fae5;
+	border-color: rgba(74, 222, 128, 0.7);
+}
+@media screen and (max-width: 700px) {
+	.deploy-onchain-btn span {
+		display: none;
+	}
+	.deploy-onchain-btn {
+		padding: var(--space-xs) var(--space-sm);
+	}
+}
+
 .view-public-profile-btn {
 	display: inline-flex;
 	align-items: center;

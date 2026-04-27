@@ -459,6 +459,72 @@ class App {
 		btn.hidden = !hasModel;
 	}
 
+	// Surface the right deploy CTA next to the public-profile link in /app:
+	//   • "Deploy on-chain" → /deploy?avatar=<id>   (un-registered agent)
+	//   • "Deployed ✓"      → block-explorer URL    (already on-chain)
+	// Falls back to the bare /deploy page if we can't read the agent record
+	// (fetch error, anonymous, etc.) so the affordance never disappears once
+	// we know there's an agent in scope.
+	async _refreshDeployButton(agentId) {
+		const btn = document.getElementById('deploy-onchain-btn');
+		if (!btn || !agentId) return;
+
+		const label = btn.querySelector('[data-state-label]');
+		btn.classList.remove('is-deployed');
+		btn.removeAttribute('target');
+		btn.removeAttribute('rel');
+		if (label) label.textContent = 'Deploy on-chain';
+		btn.setAttribute('aria-label', 'Publish this agent on-chain');
+		btn.setAttribute('title', 'Publish this agent on-chain (ERC-8004)');
+		btn.href = `/deploy?agent=${encodeURIComponent(agentId)}`;
+		btn.hidden = false;
+
+		try {
+			const resp = await fetch(`/api/agents/${agentId}`, { credentials: 'include' });
+			if (!resp.ok) return;
+			const { agent } = await resp.json();
+			if (!agent) return;
+
+			if (agent.avatar_id && !btn.dataset.avatarPrefilled) {
+				btn.href = `/deploy?avatar=${encodeURIComponent(agent.avatar_id)}`;
+				btn.dataset.avatarPrefilled = '1';
+			}
+
+			const isDeployed = agent.erc8004_agent_id && agent.chain_id;
+			if (!isDeployed) return;
+
+			const { CHAIN_META, addressExplorerUrl, tokenExplorerUrl } = await import(
+				'./erc8004/chain-meta.js'
+			);
+			const chainName = CHAIN_META[agent.chain_id]?.name || `chain ${agent.chain_id}`;
+			let url = '';
+			if (agent.erc8004_registry) {
+				url = tokenExplorerUrl(
+					agent.chain_id,
+					agent.erc8004_registry,
+					agent.erc8004_agent_id,
+				);
+			}
+			if (!url && agent.erc8004_registry) {
+				url = addressExplorerUrl(agent.chain_id, agent.erc8004_registry);
+			}
+			if (!url) url = `/agent/${agentId}`;
+
+			btn.classList.add('is-deployed');
+			btn.href = url;
+			btn.target = '_blank';
+			btn.rel = 'noopener';
+			if (label) label.textContent = `Deployed ✓ ${chainName}`;
+			btn.setAttribute(
+				'aria-label',
+				`This agent is registered on ${chainName}. Open block explorer in a new tab.`,
+			);
+			btn.setAttribute('title', `On-chain on ${chainName} — view on explorer`);
+		} catch {
+			/* keep the un-deployed CTA */
+		}
+	}
+
 	_setupSaveToAccount() {
 		const btn = document.getElementById('save-to-account-btn');
 		if (!btn) return;
@@ -725,6 +791,8 @@ class App {
 			publicLink.href = `/agent/${agentId}`;
 			publicLink.hidden = false;
 		}
+
+		this._refreshDeployButton(agentId);
 
 		this._maybeShowOnboarding(agentId);
 
