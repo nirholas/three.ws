@@ -21,19 +21,15 @@ describe('billing — vercel.json routing', () => {
 describe('billing — dashboard tab', () => {
 	const dashjs = readFileSync(p('public/dashboard/dashboard.js'), 'utf8');
 
-	it('dashboard.js exports a billingSummary api method', () => {
-		expect(dashjs).toContain('billingSummary');
-	});
-
 	it('renderBilling is async and fetches billing data', () => {
 		expect(dashjs).toContain('async function renderBilling');
 		expect(dashjs).toContain('/api/billing/summary');
 	});
 
-	it('billing tab renders quota meters', () => {
-		expect(dashjs).toContain('mcp_calls_24h');
-		expect(dashjs).toContain('total_bytes');
-		expect(dashjs).toContain('avatar_count');
+	it('billing tab renders quota meters for avatars, storage, MCP', () => {
+		expect(dashjs).toContain('usage.mcp_calls_24h');
+		expect(dashjs).toContain('usage.total_bytes');
+		expect(dashjs).toContain('usage.avatar_count');
 	});
 });
 

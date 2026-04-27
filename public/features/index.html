@@ -317,5 +317,14 @@
 		</main>
 
 		<script type="module" src="/features/features.js"></script>
+		<script>
+			try {
+				const raw = localStorage.getItem('3dagent:auth-hint');
+				if (raw && JSON.parse(raw).authed) {
+					const el = document.getElementById('nav-my-agents');
+					if (el) el.hidden = false;
+				}
+			} catch (_) {}
+		</script>
 	</body>
 </html>

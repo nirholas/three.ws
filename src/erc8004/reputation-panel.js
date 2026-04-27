@@ -18,11 +18,7 @@
 import { JsonRpcProvider, BrowserProvider } from 'ethers';
 import { CHAIN_META, switchChain, txExplorerUrl } from './chain-meta.js';
 import { REGISTRY_DEPLOYMENTS } from './abi.js';
-import {
-	submitReputation,
-	getReputation,
-	getRecentReviews,
-} from './reputation.js';
+import { submitReputation, getReputation, getRecentReviews } from './reputation.js';
 
 // Look back ~50k blocks (~7 days on most L2s, ~7 days on Ethereum mainnet).
 // Some RPCs reject huge ranges; this is a conservative default that still
@@ -111,13 +107,14 @@ export class ReputationPanel {
 		const meta = CHAIN_META[this._agent.chainId];
 		const chainName = meta?.name || `Chain ${this._agent.chainId}`;
 
-		const summary = stats.count > 0
-			? `<span class="agent-reputation__avg">${_fmtAvg(stats.average)}</span>
+		const summary =
+			stats.count > 0
+				? `<span class="agent-reputation__avg">${_fmtAvg(stats.average)}</span>
 				 <span class="agent-reputation__sep">·</span>
 				 <span class="agent-reputation__count">${stats.count} ${
-				stats.count === 1 ? 'vouch' : 'vouches'
-			}</span>`
-			: `<span class="agent-reputation__empty">No reputation submitted yet.</span>`;
+						stats.count === 1 ? 'vouch' : 'vouches'
+					}</span>`
+				: `<span class="agent-reputation__empty">No reputation submitted yet.</span>`;
 
 		const canVouch = this._canVouch();
 		const vouchHtml = canVouch

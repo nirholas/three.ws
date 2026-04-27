@@ -35,7 +35,8 @@
 	"scripts": {
 		"dev": "vite --port 3000",
 		"dev:lib": "TARGET=lib vite",
-		"build": "vite build",
+		"build": "npm run build:animations && vite build",
+		"build:animations": "node scripts/build-animations.mjs",
 		"build:lib": "TARGET=lib vite build",
 		"build:artifact": "vite build --config vite.config.artifact.js",
 		"publish:lib": "node scripts/publish-lib.mjs",

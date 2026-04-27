@@ -26,7 +26,7 @@ describe('discover page — cross-links and new features', () => {
 
 	it('/discover JS reveals chip on successful auth probe', () => {
 		expect(discoverJs).toContain('/api/auth/me');
-		expect(discoverJs).toContain("els.myAgentsChip.hidden = false");
+		expect(discoverJs).toContain('els.myAgentsChip.hidden = false');
 	});
 
 	it('/discover JS syncs filters to URL params', () => {

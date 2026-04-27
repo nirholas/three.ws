@@ -14,9 +14,7 @@ const dist = resolve(repoRoot, 'dist');
 describe('build asset paths', () => {
 	beforeAll(() => {
 		if (!existsSync(dist)) {
-			throw new Error(
-				`dist/ not found — run \`npm run build\` before running this test.`,
-			);
+			throw new Error(`dist/ not found — run \`npm run build\` before running this test.`);
 		}
 	});
 

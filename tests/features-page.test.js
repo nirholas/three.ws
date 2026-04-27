@@ -44,15 +44,9 @@ describe('/features page — structure', () => {
 
 	it('Act 1 boots eagerly; Acts 2 and 3 lazy-boot', () => {
 		// Act 1 carries the eager attr; the others do not.
-		const act1 = html.match(
-			/<agent-3d\b[^>]*data-role="act1-agent"[^>]*>/,
-		)?.[0];
-		const act2 = html.match(
-			/<agent-3d\b[^>]*data-role="act2-agent"[^>]*>/,
-		)?.[0];
-		const act3 = html.match(
-			/<agent-3d\b[^>]*data-role="act3-agent"[^>]*>/,
-		)?.[0];
+		const act1 = html.match(/<agent-3d\b[^>]*data-role="act1-agent"[^>]*>/)?.[0];
+		const act2 = html.match(/<agent-3d\b[^>]*data-role="act2-agent"[^>]*>/)?.[0];
+		const act3 = html.match(/<agent-3d\b[^>]*data-role="act3-agent"[^>]*>/)?.[0];
 		expect(act1).toBeTruthy();
 		expect(act2).toBeTruthy();
 		expect(act3).toBeTruthy();

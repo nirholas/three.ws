@@ -1,27 +1,27 @@
 name: Validate agent cards
 
 on:
-  pull_request:
-    paths:
-      - 'public/.well-known/agent-registration.json'
-      - 'public/.well-known/3d-agent-card.schema.json'
-      - 'specs/3D_AGENT_CARD.md'
-      - '**/*.agent-card.json'
-      - 'scripts/validate-agent-cards.mjs'
-      - '.github/workflows/validate-agent-cards.yml'
-      - 'package.json'
-      - 'package-lock.json'
-  push:
-    branches: [main]
+    pull_request:
+        paths:
+            - 'public/.well-known/agent-registration.json'
+            - 'public/.well-known/3d-agent-card.schema.json'
+            - 'specs/3D_AGENT_CARD.md'
+            - '**/*.agent-card.json'
+            - 'scripts/validate-agent-cards.mjs'
+            - '.github/workflows/validate-agent-cards.yml'
+            - 'package.json'
+            - 'package-lock.json'
+    push:
+        branches: [main]
 
 jobs:
-  validate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - run: npm ci --no-audit --no-fund
-      - run: npm run validate:cards
+    validate:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: '20'
+                  cache: 'npm'
+            - run: npm ci --no-audit --no-fund
+            - run: npm run validate:cards

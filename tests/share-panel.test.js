@@ -188,7 +188,7 @@ describe('agent-3d web component — attribute surface', () => {
 	});
 
 	it('paints the scene background for dark/light modes and clears alpha for transparent', () => {
-		expect(elementSrc).toContain("v.renderer?.setClearAlpha?.(0)");
+		expect(elementSrc).toContain('v.renderer?.setClearAlpha?.(0)');
 		expect(elementSrc).toContain("v.scene.background.set('#0b0d10')");
 		expect(elementSrc).toContain("v.scene.background.set('#f5f5f5')");
 	});

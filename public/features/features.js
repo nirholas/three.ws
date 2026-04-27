@@ -77,9 +77,7 @@ function onAgentReady(agentEl, fn) {
 // ── Lazy-boot Acts 2 & 3 when their stage scrolls into view ──────────────
 
 function setupLazyBoot() {
-	const lazyEls = ROOT.querySelectorAll(
-		'agent-3d:not([eager])[data-role^="act"]',
-	);
+	const lazyEls = ROOT.querySelectorAll('agent-3d:not([eager])[data-role^="act"]');
 	if (!lazyEls.length) return;
 
 	const io = new IntersectionObserver(
