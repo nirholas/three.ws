@@ -27,6 +27,7 @@ const appConfig = {
 				main: resolve(__dirname, 'index.html'),
 				app: resolve(__dirname, 'app.html'),
 				features: resolve(__dirname, 'features.html'),
+				home: resolve(__dirname, 'home.html'),
 				embed: resolve(__dirname, 'embed.html'),
 				create: resolve(__dirname, 'create.html'),
 				'agent-home': resolve(__dirname, 'agent-home.html'),
