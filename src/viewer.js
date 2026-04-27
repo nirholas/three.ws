@@ -174,18 +174,170 @@ export class Viewer {
 
 		this._onResize = this.resize.bind(this);
 		this._onKeyDown = (e) => {
-			if ((e.key === 'p' || e.key === 'P') && !this.isInputFocused()) this.takeScreenshot();
+			if (this.isInputFocused()) return;
+			if (e.key === 'p' || e.key === 'P') {
+				this.takeScreenshot();
+			} else if (e.code === 'Space') {
+				e.preventDefault();
+				this.toggleAnimationPlayback();
+			} else if (e.key === 'f' || e.key === 'F') {
+				this.frameContent();
+			}
 		};
+
+		this._onDblClick = () => this.frameContent({ animate: true });
 
 		this._updateRenderLoop();
 		window.addEventListener('resize', this._onResize, false);
 		window.addEventListener('keydown', this._onKeyDown);
+		this.renderer.domElement.addEventListener('dblclick', this._onDblClick);
 	}
 
 	invalidate() {
 		if (this._disposed) return;
 		this._needsRender = true;
 		this._updateRenderLoop();
+	}
+
+	// Per-agent scene preferences (background, environment, exposure, etc.)
+	// persisted to localStorage. Call attachScenePrefs(agentId) once per
+	// session — it restores the saved values into state and starts auto-saving
+	// future tweaks.
+	attachScenePrefs(agentId) {
+		if (!agentId || typeof window === 'undefined') return;
+		this._prefsKey = `3dagent:scene:${agentId}`;
+
+		try {
+			const raw = localStorage.getItem(this._prefsKey);
+			if (raw) {
+				const saved = JSON.parse(raw);
+				const KEYS = [
+					'background',
+					'transparentBg',
+					'bgColor',
+					'autoRotate',
+					'exposure',
+					'environment',
+				];
+				let touched = false;
+				for (const key of KEYS) {
+					if (saved[key] !== undefined && saved[key] !== this.state[key]) {
+						this.state[key] = saved[key];
+						touched = true;
+					}
+				}
+				if (touched) {
+					this.backgroundColor.set(this.state.bgColor);
+					this.updateLights();
+					this.updateEnvironment();
+					this.updateDisplay();
+					this.updateBackground();
+					this.updateGUI?.();
+				}
+			}
+		} catch {
+			/* ignore corrupt prefs */
+		}
+
+		const save = () => {
+			if (!this._prefsKey) return;
+			try {
+				const snapshot = {
+					background: this.state.background,
+					transparentBg: this.state.transparentBg,
+					bgColor: this.state.bgColor,
+					autoRotate: this.state.autoRotate,
+					exposure: this.state.exposure,
+					environment: this.state.environment,
+				};
+				localStorage.setItem(this._prefsKey, JSON.stringify(snapshot));
+			} catch {
+				/* quota or disabled storage */
+			}
+		};
+		// Debounce to avoid hammering localStorage while users drag a slider.
+		let timer = null;
+		this._scenePrefsSave = () => {
+			if (timer) clearTimeout(timer);
+			timer = setTimeout(save, 250);
+		};
+	}
+
+	// Public hook — controllers (dat.gui, drawer UI) call this after a state
+	// change so we persist the latest value.
+	notifyScenePrefChange() {
+		if (this._scenePrefsSave) this._scenePrefsSave();
+	}
+
+	// Spacebar handler: pause/resume the active animation, or play the first
+	// available one if nothing is currently selected.
+	toggleAnimationPlayback() {
+		const a = this.animationManager;
+		if (!a) return;
+		if (a.currentAction) {
+			a.currentAction.paused = !a.currentAction.paused;
+			this.invalidate();
+			this._recomputeAnimating();
+			this._updateRenderLoop();
+			return;
+		}
+		const defs = a.getAnimationDefs?.() || [];
+		const first = defs.find((d) => a.isLoaded?.(d.name));
+		if (first) {
+			a.play(first.name);
+			this.invalidate();
+			this._recomputeAnimating();
+			this._updateRenderLoop();
+		}
+	}
+
+	// Frame the loaded model with a flattering 3/4 angle. Optionally animates
+	// the camera over a short duration ("F" key snaps; double-click animates).
+	frameContent({ animate = false, durationMs = 600 } = {}) {
+		if (!this.content || !this.defaultCamera || !this.controls) return;
+		const box = new Box3().setFromObject(this.content);
+		const size = box.getSize(new Vector3()).length();
+		if (!isFinite(size) || size === 0) return;
+		const center = box.getCenter(new Vector3());
+
+		const target = center.clone();
+		const pos = center.clone();
+		pos.x += size / 2.0;
+		pos.y += size / 5.0;
+		pos.z += size / 2.0;
+
+		if (animate) {
+			this._tweenCamera(pos, target, durationMs);
+		} else {
+			this.defaultCamera.position.copy(pos);
+			this.controls.target.copy(target);
+			this.controls.update();
+			this.invalidate();
+		}
+	}
+
+	// Smooth ease-out camera tween. Both position and OrbitControls.target
+	// are interpolated together so the framing stays correct mid-flight.
+	_tweenCamera(toPos, toTarget, durationMs = 600) {
+		if (this._cameraTweenRaf) cancelAnimationFrame(this._cameraTweenRaf);
+		const fromPos = this.defaultCamera.position.clone();
+		const fromTarget = this.controls.target.clone();
+		const start = performance.now();
+		const ease = (t) => 1 - Math.pow(1 - t, 3); // cubic ease-out
+		const step = (now) => {
+			const t = Math.min(1, (now - start) / durationMs);
+			const k = ease(t);
+			this.defaultCamera.position.lerpVectors(fromPos, toPos, k);
+			this.controls.target.lerpVectors(fromTarget, toTarget, k);
+			this.controls.update();
+			this.invalidate();
+			if (t < 1 && !this._disposed) {
+				this._cameraTweenRaf = requestAnimationFrame(step);
+			} else {
+				this._cameraTweenRaf = null;
+			}
+		};
+		this._cameraTweenRaf = requestAnimationFrame(step);
 	}
 
 	_recomputeAnimating() {
@@ -372,15 +524,39 @@ export class Viewer {
 		this.defaultCamera.far = size * 100;
 		this.defaultCamera.updateProjectionMatrix();
 
+		// Final framed camera (the position the user should end up at).
+		const framedPos = new Vector3();
 		if (this.options.cameraPosition) {
-			this.defaultCamera.position.fromArray(this.options.cameraPosition);
-			this.defaultCamera.lookAt(new Vector3());
+			framedPos.fromArray(this.options.cameraPosition);
 		} else {
-			this.defaultCamera.position.copy(center);
-			this.defaultCamera.position.x += size / 2.0;
-			this.defaultCamera.position.y += size / 5.0;
-			this.defaultCamera.position.z += size / 2.0;
+			framedPos.copy(center);
+			framedPos.x += size / 2.0;
+			framedPos.y += size / 5.0;
+			framedPos.z += size / 2.0;
+		}
+
+		// In kiosk / embed modes (and on subsequent loads), snap straight to
+		// the framed position. On the first interactive load we tween in from
+		// a slightly wider angle so the reveal feels intentional.
+		const skipReveal =
+			this.options.kiosk ||
+			this.options.cameraPosition ||
+			this._hasRevealed === true;
+
+		if (skipReveal) {
+			this.defaultCamera.position.copy(framedPos);
+			this.defaultCamera.lookAt(this.options.cameraPosition ? new Vector3() : center);
+		} else {
+			// Start ~40% wider and slightly higher, then ease into the framed pose.
+			const startPos = new Vector3()
+				.subVectors(framedPos, center)
+				.multiplyScalar(1.4)
+				.add(center);
+			startPos.y += size / 8;
+			this.defaultCamera.position.copy(startPos);
 			this.defaultCamera.lookAt(center);
+			this._pendingReveal = { framedPos: framedPos.clone(), target: center.clone() };
+			this._hasRevealed = true;
 		}
 
 		this.setCamera(DEFAULT_CAMERA);
@@ -421,6 +597,14 @@ export class Viewer {
 		window.VIEWER.scene = this.content;
 
 		this.invalidate();
+
+		// Smooth first-load camera reveal — runs after the scene is fully wired
+		// so OrbitControls and damping pick it up cleanly.
+		if (this._pendingReveal) {
+			const { framedPos, target } = this._pendingReveal;
+			this._pendingReveal = null;
+			this._tweenCamera(framedPos, target, 1500);
+		}
 	}
 
 	setClips(clips) {
@@ -655,9 +839,15 @@ export class Viewer {
 		// Display controls.
 		const dispFolder = gui.addFolder('Display');
 		const envBackgroundCtrl = dispFolder.add(this.state, 'background');
-		envBackgroundCtrl.onChange(() => this.updateEnvironment());
+		envBackgroundCtrl.onChange(() => {
+			this.updateEnvironment();
+			this.notifyScenePrefChange();
+		});
 		const autoRotateCtrl = dispFolder.add(this.state, 'autoRotate');
-		autoRotateCtrl.onChange(() => this.updateDisplay());
+		autoRotateCtrl.onChange(() => {
+			this.updateDisplay();
+			this.notifyScenePrefChange();
+		});
 		const wireframeCtrl = dispFolder.add(this.state, 'wireframe');
 		wireframeCtrl.onChange(() => this.updateDisplay());
 		const skeletonCtrl = dispFolder.add(this.state, 'skeleton');
@@ -668,9 +858,15 @@ export class Viewer {
 		const pointSizeCtrl = dispFolder.add(this.state, 'pointSize', 1, 16);
 		pointSizeCtrl.onChange(() => this.updateDisplay());
 		const transparentCtrl = dispFolder.add(this.state, 'transparentBg').name('transparent bg');
-		transparentCtrl.onChange(() => this.updateBackground());
+		transparentCtrl.onChange(() => {
+			this.updateBackground();
+			this.notifyScenePrefChange();
+		});
 		const bgColorCtrl = dispFolder.addColor(this.state, 'bgColor');
-		bgColorCtrl.onChange(() => this.updateBackground());
+		bgColorCtrl.onChange(() => {
+			this.updateBackground();
+			this.notifyScenePrefChange();
+		});
 		dispFolder
 			.add({ screenshot: () => this.takeScreenshot() }, 'screenshot')
 			.name('Screenshot [P]');
@@ -686,13 +882,20 @@ export class Viewer {
 			'environment',
 			environments.map((env) => env.name),
 		);
-		envMapCtrl.onChange(() => this.updateEnvironment());
+		envMapCtrl.onChange(() => {
+			this.updateEnvironment();
+			this.notifyScenePrefChange();
+		});
+		const exposureCtrl = lightFolder.add(this.state, 'exposure', -10, 10, 0.01);
+		exposureCtrl.onChange(() => {
+			this.updateLights();
+			this.notifyScenePrefChange();
+		});
 		[
 			lightFolder.add(this.state, 'toneMapping', {
 				Linear: LinearToneMapping,
 				'ACES Filmic': ACESFilmicToneMapping,
 			}),
-			lightFolder.add(this.state, 'exposure', -10, 10, 0.01),
 			lightFolder.add(this.state, 'punctualLights').listen(),
 			lightFolder.add(this.state, 'ambientIntensity', 0, 2),
 			lightFolder.addColor(this.state, 'ambientColor'),
@@ -1071,6 +1274,10 @@ export class Viewer {
 		document.removeEventListener('visibilitychange', this._onVisibilityChange);
 		window.removeEventListener('resize', this._onResize, false);
 		window.removeEventListener('keydown', this._onKeyDown);
+		if (this._onDblClick && this.renderer?.domElement) {
+			this.renderer.domElement.removeEventListener('dblclick', this._onDblClick);
+		}
+		if (this._cameraTweenRaf) cancelAnimationFrame(this._cameraTweenRaf);
 		if (this._onAnimHotkey) {
 			document.removeEventListener('keydown', this._onAnimHotkey);
 			this._onAnimHotkey = null;

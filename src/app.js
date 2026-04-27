@@ -713,6 +713,13 @@ class App {
 			this._maybeResumeOrLoad(this.options);
 		}
 
+		// Restore + auto-save per-agent scene preferences (background, env,
+		// exposure, auto-rotate) so the editor feels like coming back to
+		// "your studio" rather than a generic default each time.
+		if (this.viewer && this.viewer.attachScenePrefs) {
+			this.viewer.attachScenePrefs(agentId);
+		}
+
 		const publicLink = document.getElementById('view-public-profile-btn');
 		if (publicLink) {
 			publicLink.href = `/agent/${agentId}`;
