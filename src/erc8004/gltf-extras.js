@@ -9,9 +9,9 @@
  *   const manifest = await readAgentExtras(glb);
  */
 
-import { Document, NodeIO } from '@gltf-transform/core';
+import { WebIO } from '@gltf-transform/core';
 
-const io = new NodeIO();
+const io = new WebIO();
 
 /**
  * Embed an agent manifest into a GLB's extras field.
