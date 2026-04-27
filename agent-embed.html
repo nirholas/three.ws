@@ -28,9 +28,7 @@
 			}
 			#stage .gui-wrap,
 			#stage .gui-toggle,
-			#stage .annotation-canvas {
-				display: none !important;
-			}
+			#stage .annotation-canvas,
 			#stage .model-info {
 				display: none !important;
 			}
@@ -62,6 +60,10 @@
 			body.bg-light {
 				background: #f5f5f5;
 			}
+			body.bg-light #name-plate {
+				color: rgba(0, 0, 0, 0.55);
+				text-shadow: none;
+			}
 		</style>
 	</head>
 	<body>
@@ -70,10 +72,49 @@
 		<div id="error"></div>
 
 		<script type="module">
+			/*
+			 * ─── Host ↔ agent postMessage bridge — v1 (FROZEN) ───────────────────
+			 *
+			 * Wire format. All payloads are JSON-serializable. All messages MUST
+			 * include `agentId` so a single host page with multiple iframes can
+			 * route deterministically. Unknown `type` values are ignored.
+			 *
+			 * Host  → iframe:
+			 *   { type: 'agent:hello',  agentId, host? }     Handshake. Iframe replies
+			 *                                                with agent:ready (now or
+			 *                                                when init completes).
+			 *   { type: 'agent:action', agentId, action }    Forward action onto the
+			 *                                                iframe's protocol bus.
+			 *                                                See src/agent-protocol.js
+			 *                                                for action.type vocabulary.
+			 *   { type: 'agent:ping',   agentId, id }        Liveness probe; iframe
+			 *                                                replies with agent:pong{id}.
+			 *
+			 * Iframe → host:
+			 *   { type: 'agent:ready',  agentId, version, capabilities: [string], name }
+			 *                                                Sent once init succeeds and
+			 *                                                in response to agent:hello.
+			 *   { type: 'agent:action', agentId, action }    Echo of every protocol
+			 *                                                action the iframe emits.
+			 *   { type: 'agent:resize', agentId, height }    Preferred CSS pixel height
+			 *                                                of the iframe content box.
+			 *   { type: 'agent:pong',   agentId, id }        Reply to agent:ping.
+			 *   { type: 'agent:blocked', agentId }           Embed policy denied this host.
+			 *
+			 * Legacy envelope `{ __agent, type: 'action'|'ready'|'blocked' }` is still
+			 * accepted on input and emitted on output for backwards compatibility with
+			 * pre-v1 hosts. New consumers SHOULD prefer the v1 envelope above.
+			 *
+			 * Future bumps go to v2 — DO NOT change v1 wire shapes in place.
+			 */
+
 			import { Viewer } from './src/viewer.js';
 			import { AgentIdentity } from './src/agent-identity.js';
 			import { AgentAvatar } from './src/agent-avatar.js';
 			import { protocol } from './src/agent-protocol.js';
+
+			const BRIDGE_VERSION = '1';
+			const CAPABILITIES = ['speak', 'gesture', 'look-at', 'emote', 'present-model'];
 
 			const params = new URL(location.href).searchParams;
 			const bg = params.get('bg') || 'transparent';
@@ -82,8 +123,19 @@
 
 			const plateOn = params.get('name') !== '0';
 			const preview = params.get('preview') === '1';
-			const parts = location.pathname.split('/').filter(Boolean);
-			const agentId = parts[parts.indexOf('agent') + 1];
+
+			// Resolve agentId from either:
+			//   1. /agent/{id}/embed         (Vercel rewrite + vite middleware)
+			//   2. /agent-embed.html?id={id} (direct file access — share snippet legacy form)
+			//   3. ?id={id}                  (any path — explicit override)
+			const agentId = (() => {
+				const parts = location.pathname.split('/').filter(Boolean);
+				const idx = parts.indexOf('agent');
+				if (idx !== -1 && parts[idx + 1] && parts[idx + 1] !== 'embed') {
+					return parts[idx + 1];
+				}
+				return params.get('id') || null;
+			})();
 
 			function hostMatches(host, pattern) {
 				if (!host || !pattern) return false;
@@ -97,6 +149,10 @@
 			}
 
 			function embeddingHost() {
+				// Prefer ancestorOrigins (Chromium/Safari) for the true top-level
+				// origin; fall back to document.referrer which is the cross-browser
+				// signal for a first-party iframe's parent. Firefox has no
+				// ancestorOrigins today.
 				try {
 					const anc = window.location.ancestorOrigins;
 					if (anc && anc.length) return new URL(anc[0]).hostname;
@@ -107,11 +163,11 @@
 				return null;
 			}
 
-			// Normalise policy to extended shape; returns null when no policy is set.
+			// Normalize legacy { mode, hosts } policy shape to the extended shape.
+			// Returns null when the agent has no policy at all.
 			function normalisePolicy(raw) {
 				if (!raw) return null;
 				if (!('version' in raw) && ('mode' in raw || 'hosts' in raw)) {
-					// Old flat { mode, hosts } shape — only origins were configured.
 					return {
 						version: 1,
 						origins: {
@@ -124,31 +180,8 @@
 				return raw;
 			}
 
-			function buildCspContent(policy) {
-				const base = ["'self'", 'https://3dagent.vercel.app'];
-				if (policy?.origins?.hosts?.length) {
-					for (const h of policy.origins.hosts) {
-						const lower = h.toLowerCase();
-						// CSP wildcard format: *.foo.com → https://*.foo.com
-						base.push(lower.startsWith('*.') ? `https://${lower}` : `https://${lower}`);
-					}
-				}
-				return `frame-ancestors ${[...new Set(base)].join(' ')}`;
-			}
-
-			function insertCspMeta(policy) {
-				const existing = document.querySelector(
-					'meta[http-equiv="Content-Security-Policy"]',
-				);
-				if (existing) existing.remove();
-				const meta = document.createElement('meta');
-				meta.httpEquiv = 'Content-Security-Policy';
-				meta.content = buildCspContent(policy);
-				document.head.insertBefore(meta, document.head.querySelector('script'));
-			}
-
 			async function checkPolicy() {
-				if (preview) return true;
+				if (preview) return { ok: true };
 				const sameOrigin =
 					!window.parent ||
 					window.parent === window ||
@@ -159,6 +192,7 @@
 							return false;
 						}
 					})();
+
 				let rawPolicy = null;
 				try {
 					const r = await fetch(`/api/agents/${agentId}/embed-policy`, {
@@ -168,30 +202,26 @@
 				} catch {}
 
 				const policy = normalisePolicy(rawPolicy);
-				insertCspMeta(policy);
+				if (policy === null) return { ok: true };
 
-				if (policy === null) return true;
 				if (sameOrigin) {
-					// surfaces.iframe gate still runs even for same-origin embeds
-					if (policy.surfaces && policy.surfaces.iframe === false) return false;
-					return true;
+					if (policy.surfaces && policy.surfaces.iframe === false) {
+						return { ok: false, reason: 'iframe-disabled' };
+					}
+					return { ok: true };
 				}
 
-				// Origin check (existing logic, extended shape)
 				const host = embeddingHost();
 				const hosts = policy.origins?.hosts ?? [];
 				const mode = policy.origins?.mode ?? 'allowlist';
 				const matched = host ? hosts.some((p) => hostMatches(host, p)) : false;
 				const originOk = mode === 'allowlist' ? matched : !matched;
-				if (!originOk) return false;
+				if (!originOk) return { ok: false, reason: 'origin-not-allowed' };
 
-				// surfaces.iframe gate — fail-closed
 				if (policy.surfaces && policy.surfaces.iframe === false) {
-					showError("This agent's iframe embed is disabled.");
-					return false;
+					return { ok: false, reason: 'iframe-disabled' };
 				}
-
-				return true;
+				return { ok: true };
 			}
 
 			function showError(msg) {
@@ -200,15 +230,91 @@
 				el.style.display = 'flex';
 			}
 
+			// ── Bridge state. The handshake handler is installed *before* main()
+			// runs so a host that sends agent:hello early gets a reply once we're
+			// ready, even if init takes a few seconds (network + GLB parse).
+			let bridgeReady = false;
+			let identityName = null;
+			const pendingHellos = [];
+
+			function postReady() {
+				parent?.postMessage(
+					{
+						type: 'agent:ready',
+						agentId,
+						version: BRIDGE_VERSION,
+						capabilities: CAPABILITIES,
+						name: identityName,
+					},
+					'*',
+				);
+				// Legacy envelope for pre-v1 hosts.
+				parent?.postMessage(
+					{ __agent: agentId, type: 'ready', name: identityName },
+					'*',
+				);
+			}
+
+			function postResize(height) {
+				parent?.postMessage({ type: 'agent:resize', agentId, height }, '*');
+			}
+
+			function handleAction(action) {
+				if (!action || typeof action !== 'object') return;
+				protocol.emit(action);
+			}
+
+			window.addEventListener('message', (ev) => {
+				const msg = ev.data;
+				if (!msg || typeof msg !== 'object') return;
+
+				// v1 envelope
+				if (msg.agentId && msg.agentId === agentId && typeof msg.type === 'string') {
+					switch (msg.type) {
+						case 'agent:hello':
+							if (bridgeReady) postReady();
+							else pendingHellos.push(true);
+							return;
+						case 'agent:action':
+							if (bridgeReady) handleAction(msg.action);
+							return;
+						case 'agent:ping':
+							if (bridgeReady)
+								parent?.postMessage(
+									{ type: 'agent:pong', agentId, id: msg.id },
+									'*',
+								);
+							return;
+					}
+				}
+
+				// Legacy envelope. Kept until all known hosts migrate.
+				if (msg.__agent === agentId) {
+					if (msg.type === 'action' && msg.action) handleAction(msg.action);
+				}
+			});
+
 			async function main() {
-				if (!(await checkPolicy())) {
-					showError('This agent can only be embedded on approved sites.');
+				if (!agentId) {
+					showError('Missing agent id.');
+					return;
+				}
+
+				const policyCheck = await checkPolicy();
+				if (!policyCheck.ok) {
+					const msg =
+						policyCheck.reason === 'iframe-disabled'
+							? "This agent's iframe embed is disabled."
+							: 'This agent can only be embedded on approved sites.';
+					showError(msg);
+					parent?.postMessage({ type: 'agent:blocked', agentId }, '*');
 					parent?.postMessage({ __agent: agentId, type: 'blocked' }, '*');
 					return;
 				}
 
 				const identity = new AgentIdentity({ agentId, autoLoad: false });
 				await identity.load();
+				identityName = identity.name;
 
 				if (plateOn && identity.name) {
 					document.getElementById('name-plate').textContent = identity.name;
@@ -232,83 +338,82 @@
 				}
 				await viewer.load(glbUrl, '', new Map());
 
-				if (bg !== 'transparent') {
+				if (bg === 'dark') {
+					// Midnight-blue atmosphere with volumetric clouds.
 					const { Clouds, Cloud } = await import('./src/cloud.js');
-					// Midnight-blue atmosphere — set three.js scene background to match body
-					viewer.scene.background.set('#070b18');
+					if (viewer.scene.background?.set) viewer.scene.background.set('#070b18');
 
 					const clouds = new Clouds({ limit: 350 });
-
-					// Deep background sweep — wide, slow, anchors the scene
-					const back = new Cloud({
-						seed: 1,
-						segments: 40,
-						bounds: [14, 5, 4],
-						volume: 4,
-						color: '#7a9ad8',
-						fade: 32,
-						opacity: 0.9,
-						speed: 0.012,
-					});
-					back.position.set(0, 1.5, -9);
-					clouds.add(back);
-
-					// Mid left — cool blue wisps
-					const left = new Cloud({
-						seed: 7,
-						segments: 25,
-						bounds: [6, 2.5, 2],
-						volume: 3,
-						color: '#b8ccff',
-						fade: 20,
-						opacity: 0.65,
-						speed: 0.038,
-					});
-					left.position.set(-3.5, 0.8, -5);
-					clouds.add(left);
-
-					// Mid right — slightly warmer, offset depth
-					const right = new Cloud({
-						seed: 13,
-						segments: 25,
-						bounds: [6, 2, 2],
-						volume: 3,
-						color: '#ccd8ff',
-						fade: 22,
-						opacity: 0.6,
-						speed: 0.05,
-					});
-					right.position.set(3.2, 1.2, -6);
-					clouds.add(right);
-
-					// Foreground haze — etheral and close, fades fast
-					const fore = new Cloud({
-						seed: 42,
-						segments: 15,
-						bounds: [4, 1.5, 1],
-						volume: 2,
-						color: 'white',
-						fade: 7,
-						opacity: 0.28,
-						speed: 0.07,
-					});
-					fore.position.set(0, -0.8, -2);
-					clouds.add(fore);
-
-					// Upper accent — gives vertical depth
-					const top = new Cloud({
-						seed: 99,
-						segments: 18,
-						bounds: [8, 2, 2],
-						volume: 3.5,
-						color: '#a0b8f0',
-						fade: 25,
-						opacity: 0.5,
-						speed: 0.025,
-					});
-					top.position.set(-1, 4, -7);
-					clouds.add(top);
-
+					clouds.add(
+						_makeCloud({
+							seed: 1,
+							segments: 40,
+							bounds: [14, 5, 4],
+							volume: 4,
+							color: '#7a9ad8',
+							fade: 32,
+							opacity: 0.9,
+							speed: 0.012,
+							pos: [0, 1.5, -9],
+							Cloud,
+						}),
+					);
+					clouds.add(
+						_makeCloud({
+							seed: 7,
+							segments: 25,
+							bounds: [6, 2.5, 2],
+							volume: 3,
+							color: '#b8ccff',
+							fade: 20,
+							opacity: 0.65,
+							speed: 0.038,
+							pos: [-3.5, 0.8, -5],
+							Cloud,
+						}),
+					);
+					clouds.add(
+						_makeCloud({
+							seed: 13,
+							segments: 25,
+							bounds: [6, 2, 2],
+							volume: 3,
+							color: '#ccd8ff',
+							fade: 22,
+							opacity: 0.6,
+							speed: 0.05,
+							pos: [3.2, 1.2, -6],
+							Cloud,
+						}),
+					);
+					clouds.add(
+						_makeCloud({
+							seed: 42,
+							segments: 15,
+							bounds: [4, 1.5, 1],
+							volume: 2,
+							color: 'white',
+							fade: 7,
+							opacity: 0.28,
+							speed: 0.07,
+							pos: [0, -0.8, -2],
+							Cloud,
+						}),
+					);
+					clouds.add(
+						_makeCloud({
+							seed: 99,
+							segments: 18,
+							bounds: [8, 2, 2],
+							volume: 3.5,
+							color: '#a0b8f0',
+							fade: 25,
+							opacity: 0.5,
+							speed: 0.025,
+							pos: [-1, 4, -7],
+							Cloud,
+						}),
+					);
 					viewer.scene.add(clouds);
 					if (!viewer._afterAnimateHooks) viewer._afterAnimateHooks = [];
 					viewer._afterAnimateHooks.push((dt) => clouds.update(viewer.activeCamera, dt));
@@ -317,12 +422,43 @@
 				const avatarCtl = new AgentAvatar(viewer, protocol, identity);
 				avatarCtl.attach();
 
-				window.addEventListener('message', (ev) => {
-					const msg = ev.data;
-					if (!msg || msg.__agent !== agentId) return;
-					if (msg.type === 'action' && msg.action) protocol.emit(msg.action);
+				// Echo every protocol action onto the bridge so hosts can mirror state
+				// (chat UIs, telemetry, host-side animation triggers).
+				protocol.on('*', (action) => {
+					parent?.postMessage({ type: 'agent:action', agentId, action }, '*');
 				});
-				parent?.postMessage({ __agent: agentId, type: 'ready', name: identity.name }, '*');
+
+				// Report content height to host so embed-sdk can auto-fit the iframe.
+				// Coalesce into rAF so a runaway resize observer can't flood the host.
+				let pendingPost = false;
+				const reportSize = () => {
+					if (pendingPost) return;
+					pendingPost = true;
+					requestAnimationFrame(() => {
+						pendingPost = false;
+						const h = Math.ceil(
+							document.documentElement.scrollHeight || stage.clientHeight || 0,
+						);
+						if (h > 0) postResize(h);
+					});
+				};
+				if (typeof ResizeObserver !== 'undefined') {
+					new ResizeObserver(reportSize).observe(document.documentElement);
+				}
+				reportSize();
+
+				bridgeReady = true;
+				postReady();
+				while (pendingHellos.length) {
+					pendingHellos.pop();
+					postReady();
+				}
+			}
+
+			function _makeCloud({ pos, Cloud, ...opts }) {
+				const c = new Cloud(opts);
+				c.position.set(pos[0], pos[1], pos[2]);
+				return c;
 			}
 
 			main().catch((err) => {
