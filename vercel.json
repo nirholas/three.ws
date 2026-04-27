@@ -31,6 +31,8 @@
 
 		{ "src": "/login", "dest": "/login.html" },
 		{ "src": "/register", "dest": "/register.html" },
+		{ "src": "/forgot-password", "dest": "/forgot-password.html" },
+		{ "src": "/reset-password", "dest": "/reset-password.html" },
 		{ "src": "/wallet-login.js", "dest": "/wallet-login.js" },
 		{ "src": "/wallet/(.*)", "dest": "/wallet/$1" },
 		{ "src": "/deploy", "dest": "/app.html" },
@@ -97,6 +99,7 @@
 			"dest": "/api/widgets/[id]/duplicate?id=$1"
 		},
 		{ "src": "/api/widgets/([A-Za-z0-9_-]+)/stats", "dest": "/api/widgets/[id]/stats?id=$1" },
+		{ "src": "/api/widgets/([A-Za-z0-9_-]+)/chat", "dest": "/api/widgets/[id]/chat?id=$1" },
 		{ "src": "/api/widgets", "dest": "/api/widgets" },
 		{ "src": "/api/widgets/([A-Za-z0-9_-]+)", "dest": "/api/widgets/[id]?id=$1" },
 		{ "src": "/w/([A-Za-z0-9_-]+)", "dest": "/api/widgets/page?id=$1" },
