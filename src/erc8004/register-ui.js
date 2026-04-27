@@ -420,27 +420,27 @@ export class RegisterUI {
 	_populateChainSelect() {
 		const sel = this.el.querySelector('.erc8004-chain-select');
 		const ids = supportedChainIds();
-		// Testnets first (default-friendly), then mainnets
-		const testnets = ids.filter((id) => CHAIN_META[id].testnet);
+		// Mainnets first (production-default), then testnets
 		const mainnets = ids.filter((id) => !CHAIN_META[id].testnet);
-		const groupT = document.createElement('optgroup');
-		groupT.label = 'Testnets';
+		const testnets = ids.filter((id) => CHAIN_META[id].testnet);
 		const groupM = document.createElement('optgroup');
 		groupM.label = 'Mainnets';
-		for (const id of testnets) {
-			const opt = document.createElement('option');
-			opt.value = String(id);
-			opt.textContent = CHAIN_META[id].name;
-			groupT.appendChild(opt);
-		}
+		const groupT = document.createElement('optgroup');
+		groupT.label = 'Testnets';
 		for (const id of mainnets) {
 			const opt = document.createElement('option');
 			opt.value = String(id);
 			opt.textContent = CHAIN_META[id].name;
 			groupM.appendChild(opt);
 		}
-		sel.appendChild(groupT);
+		for (const id of testnets) {
+			const opt = document.createElement('option');
+			opt.value = String(id);
+			opt.textContent = CHAIN_META[id].name;
+			groupT.appendChild(opt);
+		}
 		sel.appendChild(groupM);
+		sel.appendChild(groupT);
 		sel.value = String(this.selectedChainId);
 	}
 

@@ -8,10 +8,14 @@
 
 import { connectWallet, getIdentityRegistry } from './agent-registry.js';
 import { REGISTRY_DEPLOYMENTS } from './abi.js';
-import { CHAIN_META, switchChain, txExplorerUrl } from './chain-meta.js';
+import {
+	CHAIN_META,
+	DEFAULT_CHAIN_ID,
+	supportedChainIdsGrouped,
+	switchChain,
+	txExplorerUrl,
+} from './chain-meta.js';
 import { BrowserProvider } from 'ethers';
-
-const BASE_SEPOLIA = 84532;
 
 // Faucet links per testnet chainId
 const FAUCETS = {
@@ -29,9 +33,9 @@ export class DeployButton {
 	 * @param {object} opts
 	 * @param {object} opts.agent              Agent object (must have .id and optionally .chainId, .txHash, .manifestUrl, .name)
 	 * @param {HTMLElement} opts.container     Where to mount
-	 * @param {number} [opts.preferredChainId] Defaults to Base Sepolia (84532)
+	 * @param {number} [opts.preferredChainId] Defaults to DEFAULT_CHAIN_ID
 	 */
-	constructor({ agent, container, preferredChainId = BASE_SEPOLIA }) {
+	constructor({ agent, container, preferredChainId = DEFAULT_CHAIN_ID }) {
 		this._agent = agent;
 		this._container = container;
 		this._chainId = preferredChainId;
@@ -66,11 +70,47 @@ export class DeployButton {
 	}
 
 	_renderDeployButton() {
+		const { mainnets, testnets } = supportedChainIdsGrouped();
+		const optionsFor = (ids) =>
+			ids
+				.map(
+					(id) =>
+						`<option value="${id}"${id === this._chainId ? ' selected' : ''}>${_esc(
+							CHAIN_META[id]?.name || `Chain ${id}`,
+						)}</option>`,
+				)
+				.join('');
+
 		this._root.innerHTML = `
-			<button class="deploy-btn" title="Deploy this agent as an ERC-8004 token on-chain">
-				&#x2B22; Deploy on-chain
-			</button>
+			<div class="deploy-chain-row">
+				<select class="deploy-chain-select" title="Choose chain to deploy to" aria-label="Target chain">
+					<optgroup label="Mainnets">${optionsFor(mainnets)}</optgroup>
+					<optgroup label="Testnets">${optionsFor(testnets)}</optgroup>
+				</select>
+				<button class="deploy-btn" title="Deploy this agent as an ERC-8004 token on-chain">
+					&#x2B22; Deploy on-chain
+				</button>
+			</div>
 		`;
+
+		const select = this._root.querySelector('.deploy-chain-select');
+		select.addEventListener('change', async (ev) => {
+			const newChainId = Number(ev.target.value);
+			this._chainId = newChainId;
+			if (typeof window !== 'undefined' && window.ethereum) {
+				select.disabled = true;
+				try {
+					await switchChain(newChainId);
+				} catch (err) {
+					if (!/rejected|denied/i.test(err?.message || '')) {
+						console.warn('[deploy-button] switchChain failed:', err?.message);
+					}
+				} finally {
+					select.disabled = false;
+				}
+			}
+		});
+
 		this._root
 			.querySelector('.deploy-btn')
 			.addEventListener('click', () => this._startDeploy());
