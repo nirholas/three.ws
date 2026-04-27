@@ -967,13 +967,38 @@ async function renderEmbed(root) {
 		"  bridge.ready.then(() => bridge.send({ type: 'speak', payload: { text: 'Hi from host' } }));",
 		'</script>',
 	].join('\n');
+	const webComponentSnippet = [
+		'<!-- Zero-install web component. Works in plain HTML, React, Vue, Svelte. -->',
+		`<script type="module" src="${origin}/lib.js"></script>`,
+		`<agent-3d agent-id="${esc(agent.id)}"`,
+		'          style="width:320px;height:420px;display:block;border-radius:16px;overflow:hidden">',
+		'</agent-3d>',
+	].join('\n');
+	const onchainSnippet = agent.erc8004_agent_id
+		? [
+				'// Resolve any ERC-8004 agent by chain + tokenId — no central registry needed.',
+				"import { resolveOnchainAgent, toPublicUrl } from '@3dagent/sdk/erc8004';",
+				'',
+				`const ref = { chainId: ${Number(agent.chain_id) || 0}, agentId: ${JSON.stringify(String(agent.erc8004_agent_id))} };`,
+				'const record  = await resolveOnchainAgent(ref);     // { manifest, glbUrl, owner, uri }',
+				'const embedAt = toPublicUrl(ref, { embed: true });  // canonical iframe URL',
+				'',
+				'// Drop into any host:',
+				"const iframe = document.createElement('iframe');",
+				'iframe.src   = embedAt;',
+				"iframe.allow = 'camera; microphone';",
+				'document.body.appendChild(iframe);',
+			].join('\n')
+		: null;
 
 	const tabs = [
 		{ label: 'SDK · recommended', code: sdkSnippet },
+		{ label: 'Web component', code: webComponentSnippet },
 		{ label: 'Universal iframe', code: iframeSnippet },
 		{ label: 'React sidecar', code: sidecarSnippet },
 		{ label: 'Claude Artifact', code: claudeSnippet },
 		{ label: 'Raw postMessage', code: postMessageSnippet },
+		...(onchainSnippet ? [{ label: 'ERC-8004 resolve', code: onchainSnippet }] : []),
 	];
 
 	body.innerHTML = `
@@ -985,7 +1010,10 @@ async function renderEmbed(root) {
 						<button class="btn sec" type="button" data-tryit="speak">Speak</button>
 						<button class="btn sec" type="button" data-tryit="emote">Emote</button>
 						<button class="btn sec" type="button" data-tryit="gesture">Wave</button>
+						<button class="btn sec" type="button" id="embed-verify-btn" title="Run a handshake check against the embedded iframe.">Verify</button>
 					</div>
+					<div id="embed-capabilities" class="row" style="gap:4px; flex-wrap:wrap; padding:8px 6px 0; min-height:22px"></div>
+					<div id="embed-verify-out" class="muted" style="padding:6px 6px 0; font-size:12px; min-height:16px"></div>
 					<div class="row" style="justify-content:space-between; padding:10px 6px 4px">
 						<strong>${esc(agent.name || 'My Agent')}</strong>
 						<a href="${attr(homeUrl)}" target="_blank" class="muted">Home page →</a>
