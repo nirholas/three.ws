@@ -374,6 +374,38 @@
 				});
 			})();
 
+			// Scroll-driven avatar orbit
+			(function () {
+				const scrollEl = document.querySelector('.home-parallax');
+				const mv = document.querySelector('.h-avatar-viewer');
+				const heroAct = document.querySelector('.h-hero-act');
+				if (!scrollEl || !mv || !heroAct) return;
+
+				// Disable auto-rotate — scroll drives the camera instead
+				mv.removeAttribute('auto-rotate');
+
+				const startOrbit = { theta: 20, phi: 68, r: 3.4 };
+				const endOrbit   = { theta: 300, phi: 62, r: 4.0 };
+
+				function lerp(a, b, t) { return a + (b - a) * t; }
+				function ease(t) { return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; }
+
+				let ticking = false;
+				scrollEl.addEventListener('scroll', function () {
+					if (ticking) return;
+					ticking = true;
+					requestAnimationFrame(function () {
+						const progress = Math.min(scrollEl.scrollTop / heroAct.offsetHeight, 1);
+						const t = ease(progress);
+						const theta = lerp(startOrbit.theta, endOrbit.theta, t);
+						const phi   = lerp(startOrbit.phi,   endOrbit.phi,   t);
+						const r     = lerp(startOrbit.r,     endOrbit.r,     t);
+						mv.setAttribute('camera-orbit', theta.toFixed(1) + 'deg ' + phi.toFixed(1) + 'deg ' + r.toFixed(2) + 'm');
+						ticking = false;
+					});
+				}, { passive: true });
+			})();
+
 			// Star field canvas
 			(function () {
 				for (const canvas of document.querySelectorAll('[data-role="star-canvas"]')) {

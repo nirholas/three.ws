@@ -10,6 +10,7 @@ import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { env } from '../../_lib/env.js';
 import { parse } from '../../_lib/validate.js';
 import { hmacSha256, constantTimeEquals } from '../../_lib/crypto.js';
+import { sendWelcomeEmail } from '../../_lib/email.js';
 
 const verifyBody = z.object({
 	message: z.string().min(64).max(4000),
