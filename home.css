@@ -27,6 +27,16 @@
 	}
 }
 
+/* ── Act 2 Three.js canvas (full-area, transparent) ─────────────────────── */
+
+#home-act2-canvas.h-avatar-viewer {
+	display: block;
+	width: 100%;
+	height: 100%;
+	background: transparent;
+	cursor: pointer;
+}
+
 /* ── Fluid canvas ────────────────────────────────────────────────────────── */
 
 .h-fluid-canvas {
