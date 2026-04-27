@@ -27,8 +27,9 @@
 	}
 }
 
-/* ── Act 2 Three.js canvas (full-area, transparent) ─────────────────────── */
+/* ── Three.js canvas viewers (hero + Act 2) ─────────────────────────────── */
 
+#hero-avatar.h-avatar-viewer,
 #home-act2-canvas.h-avatar-viewer {
 	display: block;
 	width: 100%;
@@ -223,8 +224,8 @@
 
 .h-bento-grid {
 	display: grid;
-	grid-template-columns: repeat(3, 1fr);
-	grid-template-rows: auto auto;
+	grid-template-columns: 2fr 1fr;
+	grid-auto-rows: auto;
 	gap: 1rem;
 }
 
@@ -244,24 +245,137 @@
 }
 
 .h-bento-card--lg {
-	grid-column: span 2;
-	grid-row: span 2;
+	grid-column: 1;
+	grid-row: 1 / span 4;
 	display: grid;
-	grid-template-rows: 1fr auto;
+	grid-template-rows: 1fr auto auto;
 }
 
 .h-bento-visual {
 	position: relative;
-	min-height: 280px;
+	min-height: 360px;
 	background: rgba(255, 255, 255, 0.02);
 }
 
 .h-bento-visual model-viewer {
 	width: 100%;
 	height: 100%;
-	min-height: 280px;
+	min-height: 360px;
 	background: transparent;
 	--poster-color: transparent;
+}
+
+.h-bento-cz-canvas {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	display: block;
+	cursor: grab;
+}
+
+.h-bento-anim-panel {
+	border-top: 1px solid rgba(255, 255, 255, 0.06);
+	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+	background: rgba(0, 0, 0, 0.28);
+	padding: 0.7rem 1rem 0.6rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.45rem;
+}
+
+.h-bento-anim-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.h-bento-anim-title {
+	font-size: 0.62rem;
+	font-weight: 600;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: rgba(255, 255, 255, 0.4);
+	font-family: 'Space Grotesk', 'Inter', sans-serif;
+}
+
+.h-bento-anim-stop {
+	background: none;
+	border: none;
+	color: rgba(255, 255, 255, 0.35);
+	font-size: 0.85rem;
+	cursor: pointer;
+	padding: 2px 6px;
+	border-radius: 4px;
+	transition: color 0.2s, background 0.2s;
+	line-height: 1;
+}
+
+.h-bento-anim-stop:hover {
+	color: #f87171;
+	background: rgba(248, 113, 113, 0.1);
+}
+
+.h-bento-anim-grid {
+	display: flex;
+	gap: 0.4rem;
+	overflow-x: auto;
+	scrollbar-width: thin;
+	scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+	padding-bottom: 4px;
+}
+
+.h-bento-anim-grid::-webkit-scrollbar { height: 4px; }
+.h-bento-anim-grid::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); border-radius: 2px; }
+
+.h-bento-anim-btn {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 2px;
+	padding: 0.45rem 0.55rem;
+	min-width: 56px;
+	background: rgba(255, 255, 255, 0.04);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	border-radius: 8px;
+	color: rgba(255, 255, 255, 0.6);
+	font-family: inherit;
+	cursor: pointer;
+	transition: all 0.18s ease;
+	flex-shrink: 0;
+}
+
+.h-bento-anim-btn:hover:not(:disabled) {
+	background: rgba(255, 255, 255, 0.08);
+	border-color: rgba(255, 255, 255, 0.18);
+	color: #fff;
+}
+
+.h-bento-anim-btn--active {
+	background: rgba(167, 139, 250, 0.18);
+	border-color: rgba(167, 139, 250, 0.5);
+	color: #fff;
+	box-shadow: 0 0 14px rgba(167, 139, 250, 0.18);
+}
+
+.h-bento-anim-btn--loading {
+	opacity: 0.4;
+	cursor: wait;
+}
+
+.h-bento-anim-btn__icon {
+	font-size: 1.15rem;
+	line-height: 1;
+}
+
+.h-bento-anim-btn__label {
+	font-size: 9px;
+	font-weight: 500;
+	letter-spacing: 0.03em;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 64px;
 }
 
 .h-bento-body {
@@ -508,6 +622,7 @@
 	}
 	.h-bento-card--lg {
 		grid-column: span 2;
+		grid-row: auto;
 	}
 	.h-dev-inner {
 		grid-template-columns: 1fr;
@@ -520,7 +635,7 @@
 	}
 	.h-bento-card--lg {
 		grid-column: span 1;
-		grid-row: span 1;
+		grid-row: auto;
 	}
 	.h-trust-inner {
 		gap: 1rem;

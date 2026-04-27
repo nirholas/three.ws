@@ -32,7 +32,6 @@
 			rel="stylesheet"
 		/>
 		<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
-		<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
 	</head>
 	<body class="features-page features-parallax-page">
 		<a href="#deploy" class="skip-link">Skip to deploy</a>
@@ -115,13 +114,29 @@
 				</div>
 				<div class="parallax-layer parallax-layer--front" style="--depth: 1">
 					<div class="act-stage" data-role="act1-stage">
-						<agent-3d
-							class="act-agent"
-							data-role="act1-agent"
-							kiosk
-							eager
-							aria-label="Live 3D avatar — drag to rotate"
-						></agent-3d>
+						<div class="act-agent-wrap">
+							<div class="act-agent-ring"></div>
+							<div class="act-agent-glow act-agent-glow--gold"></div>
+							<model-viewer
+								class="act-agent"
+								data-role="act1-agent"
+								src="/avatars/cz.glb"
+								alt="Live 3D avatar — drag to rotate"
+								animation-name="IdleV4.2(maya_head)"
+								autoplay
+								camera-controls
+								disable-zoom
+								interaction-prompt="none"
+								shadow-intensity="0.9"
+								shadow-softness="1"
+								exposure="1.1"
+								tone-mapping="aces"
+								environment-image="neutral"
+								camera-orbit="-25deg 80deg 8.5m"
+								field-of-view="18deg"
+								loading="eager"
+							></model-viewer>
+						</div>
 					</div>
 				</div>
 				<div class="parallax-layer" style="--depth: 0.5" aria-hidden="true">
@@ -212,12 +227,27 @@
 				</div>
 				<div class="parallax-layer parallax-layer--front" style="--depth: 1">
 					<div class="act-stage" data-role="act2-stage">
-						<agent-3d
-							class="act-agent"
-							data-role="act2-agent"
-							kiosk
-							aria-label="3D avatar reacting to emotion triggers"
-						></agent-3d>
+						<div class="act-agent-wrap">
+							<div class="act-agent-ring act-agent-ring--violet"></div>
+							<div class="act-agent-glow act-agent-glow--violet"></div>
+							<model-viewer
+								class="act-agent"
+								data-role="act2-agent"
+								src="/animations/robotexpressive.glb"
+								alt="3D avatar reacting to emotion triggers"
+								animation-name="Idle"
+								autoplay
+								camera-controls
+								disable-zoom
+								interaction-prompt="none"
+								shadow-intensity="0.7"
+								exposure="1.0"
+								environment-image="neutral"
+								camera-orbit="0deg 78deg 22m"
+								field-of-view="14deg"
+								loading="lazy"
+							></model-viewer>
+						</div>
 					</div>
 				</div>
 				<div class="parallax-layer" style="--depth: 0.5" aria-hidden="true">
@@ -304,12 +334,27 @@
 				</div>
 				<div class="parallax-layer parallax-layer--front" style="--depth: 1">
 					<div class="act-stage" data-role="act3-stage">
-						<agent-3d
-							class="act-agent"
-							data-role="act3-agent"
-							kiosk
-							aria-label="A registered on-chain ERC-8004 agent"
-						></agent-3d>
+						<div class="act-agent-wrap">
+							<div class="act-agent-ring act-agent-ring--mint"></div>
+							<div class="act-agent-glow act-agent-glow--mint"></div>
+							<model-viewer
+								class="act-agent"
+								data-role="act3-agent"
+								src="/animations/soldier.glb"
+								alt="A registered on-chain ERC-8004 agent"
+								animation-name="Idle"
+								autoplay
+								camera-controls
+								disable-zoom
+								interaction-prompt="none"
+								shadow-intensity="0.8"
+								exposure="1.0"
+								environment-image="neutral"
+								camera-orbit="10deg 82deg 4m"
+								field-of-view="28deg"
+								loading="lazy"
+							></model-viewer>
+						</div>
 						<div class="act-passport" data-role="passport" hidden>
 							<span class="passport-label">agentId</span>
 							<span class="passport-value" data-role="passport-id">—</span>

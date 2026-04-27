@@ -1,15 +1,12 @@
 /**
  * /features — page wiring.
  *
- * - Lazy-boots Act 2 and Act 3 <agent-3d> elements when scrolled into view
- *   (Act 1 has [eager] in markup so it boots immediately).
- * - Wires Act 2 emotion chips → element.expressEmotion(trigger).
- * - Fetches a real on-chain agent for Act 3 and shows its passport tag.
+ * - Wires Act 2 emotion chips → robotexpressive animation playback.
+ * - Fetches a real on-chain agent and shows its passport tag on Act 3.
  * - Populates the chain ribbon (Act 3 background) from a fixed list — kept
  *   in sync visually with src/erc8004/chains.js but not imported (this page
  *   is a static asset, no module graph connection to /src).
  * - Wires the embed-snippet copy button.
- * - Reveals the agent (fade in) once it dispatches `agent:ready`.
  *
  * No build step. Plain ES module loaded via <script type="module">.
  */
@@ -70,52 +67,15 @@ function chainLabel(chainId) {
 	return SHORT_NAME_BY_CHAIN.get(Number(chainId)) || `chain ${chainId}`;
 }
 
-function onAgentReady(agentEl, fn) {
-	agentEl.addEventListener('agent:ready', fn, { once: true });
-}
+// ── Act 2: emotion chip → robotexpressive animation ──────────────────────
 
-// ── Lazy-boot Acts 2 & 3 when their stage scrolls into view ──────────────
-
-function setupLazyBoot() {
-	const lazyEls = ROOT.querySelectorAll('agent-3d:not([eager])[data-role^="act"]');
-	if (!lazyEls.length) return;
-
-	const io = new IntersectionObserver(
-		(entries) => {
-			for (const entry of entries) {
-				if (!entry.isIntersecting) continue;
-				const el = entry.target;
-				// Setting `eager` triggers an internal boot path on agent-3d,
-				// or we just rely on the existing IntersectionObserver inside
-				// the element. Setting `eager` is a belt-and-braces nudge.
-				el.setAttribute('eager', '');
-				io.unobserve(el);
-			}
-		},
-		{ rootMargin: '200px 0px', threshold: 0.05 },
-	);
-
-	for (const el of lazyEls) io.observe(el);
-}
-
-// ── Reveal each agent on `agent:ready` ───────────────────────────────────
-
-function setupReveal() {
-	for (const el of ROOT.querySelectorAll('agent-3d.act-agent')) {
-		// If the agent dispatched agent:ready before this listener attached,
-		// the data-ready guard catches the case via mutation fallback.
-		onAgentReady(el, () => {
-			el.dataset.ready = 'true';
-		});
-		// Safety: reveal after 6s even if ready never fires (network failure
-		// shouldn't leave a perpetually invisible blob on the page).
-		setTimeout(() => {
-			if (!el.dataset.ready) el.dataset.ready = 'true';
-		}, 6000);
-	}
-}
-
-// ── Act 2: emotion chip → expressEmotion ─────────────────────────────────
+const EMOTION_TO_ANIM = {
+	celebration: 'Dance',
+	curiosity: 'Wave',
+	empathy: 'ThumbsUp',
+	concern: 'No',
+	patience: 'Yes',
+};
 
 function setupEmotionChips() {
 	const wrap = ROOT.querySelector('[data-role="emotion-chips"]');
@@ -128,23 +88,13 @@ function setupEmotionChips() {
 		const trigger = btn.getAttribute('data-emotion');
 		if (!trigger) return;
 
-		// Visual feedback (works even if agent hasn't booted yet)
 		btn.dataset.active = 'true';
 		setTimeout(() => delete btn.dataset.active, 600);
 
-		// Trigger on the live avatar via the public API added in src/element.js.
-		// Falls back silently if the method isn't defined (e.g. very old CDN
-		// bundle); chips still feel responsive thanks to the visual feedback.
-		if (typeof agentEl.expressEmotion === 'function') {
-			agentEl.expressEmotion(trigger, 0.95);
-		} else {
-			// Fallback: dispatch a custom event the integrator can hook on.
-			agentEl.dispatchEvent(
-				new CustomEvent('emote', {
-					detail: { trigger, weight: 0.95 },
-					bubbles: true,
-				}),
-			);
+		const animName = EMOTION_TO_ANIM[trigger];
+		if (animName && (agentEl.availableAnimations || []).includes(animName)) {
+			agentEl.animationName = animName;
+			agentEl.play();
 		}
 	});
 }
@@ -170,7 +120,6 @@ async function loadOnChainAgent() {
 	const chainEl = ROOT.querySelector('[data-role="passport-chain"]');
 	const codeIdEl = ROOT.querySelector('[data-role="code-agent-id"]');
 	const statAgents = ROOT.querySelector('[data-role="stat-agents"]');
-	const act3Agent = ROOT.querySelector('[data-role="act3-agent"]');
 
 	try {
 		// Fetch a recently-registered on-chain agent. /api/agents/suggest needs
@@ -185,9 +134,6 @@ async function loadOnChainAgent() {
 
 		const onChain = agents.find((a) => a.onChain);
 		if (!onChain) return;
-
-		// Load the chosen agent into the Act 3 avatar.
-		if (act3Agent) act3Agent.setAttribute('agent-id', onChain.id);
 
 		// Update the embed-code snippet to show a real id.
 		if (codeIdEl) codeIdEl.textContent = shortAddr(onChain.id);
@@ -294,8 +240,6 @@ function setupProgressDots() {
 function init() {
 	initStarFields();
 	paintChainRibbon();
-	setupReveal();
-	setupLazyBoot();
 	setupEmotionChips();
 	setupCopyEmbed();
 	setupProgressDots();
