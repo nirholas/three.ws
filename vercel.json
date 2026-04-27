@@ -65,8 +65,8 @@
 		{ "src": "/api/oembed", "dest": "/api/agent-oembed" },
 		{ "src": "/agent/([^/]+)/edit", "dest": "/agent-edit.html" },
 		{ "src": "/agent/([^/]+)/embed", "dest": "/agent-embed.html" },
-		{ "src": "/agent/([^/]+)", "dest": "/agent/index.html" },
-		{ "src": "/agent", "dest": "/agent/index.html" },
+		{ "src": "/agent/([^/]+)", "dest": "/agent-home.html" },
+		{ "src": "/agent", "dest": "/agent-home.html" },
 
 		{ "src": "/api/widgets/oembed", "dest": "/api/widgets/oembed" },
 		{ "src": "/api/widgets/page", "dest": "/api/widgets/page" },
