@@ -1,0 +1,7 @@
+{
+	"$schema": "https://3dagent.vercel.app/specs/validators-v1",
+	"description": "Allow-listed ERC-8004 ValidationRegistry validators for 3D Agent Card v1 attestations. See specs/VALIDATORS.md.",
+	"updatedAt": "2026-04-27",
+	"mainnet": [],
+	"testnet": []
+}
