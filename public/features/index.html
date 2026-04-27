@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+		<title>Features · 3D Agent</title>
+		<meta name="author" content="nirholas" />
+		<meta
+			name="description"
+			content="3D Agent: a verifiable, on-chain identity for every AI avatar. ERC-8004 native, with a built-in empathy layer and one-click deploy across 20+ EVM chains."
+		/>
+		<meta name="theme-color" content="#000000" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content="Features · 3D Agent" />
+		<meta
+			property="og:description"
+			content="ERC-8004 native 3D agents with an empathy layer. Deploy on-chain in one transaction."
+		/>
+		<meta property="og:url" content="https://3dagent.vercel.app/features" />
+		<meta property="og:image" content="https://3dagent.vercel.app/og-image.png" />
+
+		<link rel="canonical" href="https://3dagent.vercel.app/features" />
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/features/features.css" />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap"
+			rel="stylesheet"
+		/>
+		<script
+			type="module"
+			src="https://3dagent.vercel.app/agent-3d/latest/agent-3d.js"
+		></script>
+	</head>
+	<body class="features-page features-parallax-page">
+		<a href="#deploy" class="skip-link">Skip to deploy</a>
+
+		<header>
+			<h1>
+				<a href="/"><span class="wordmark-dot" aria-hidden="true"></span>3D Agent</a>
+			</h1>
+			<nav class="features-nav" aria-label="Primary">
+				<a href="/app">Viewer</a>
+				<a href="/discover">Discover</a>
+				<a href="/features" class="active" aria-current="page">Features</a>
+				<a href="/widgets">Widgets</a>
+				<a href="/dashboard" class="nav-dashboard">Dashboard</a>
+				<a href="/login" class="nav-sign-in">Sign in</a>
+			</nav>
+		</header>
+
+		<main class="parallax" data-role="parallax-root">
+			<!-- ─── ACT 1 — Live 3D, in your browser ─────────────────────────── -->
+			<section class="parallax-act" data-act="1" aria-labelledby="act1-title">
+				<div class="parallax-layer" style="--depth: 8" aria-hidden="true">
+					<div class="layer-bg layer-bg--nebula"></div>
+				</div>
+				<div class="parallax-layer" style="--depth: 5" aria-hidden="true">
+					<div class="layer-grid"></div>
+				</div>
+				<div class="parallax-layer" style="--depth: 2" aria-hidden="true">
+					<div class="layer-orb layer-orb--gold"></div>
+					<div class="layer-orb layer-orb--cyan"></div>
+				</div>
+				<div class="parallax-layer parallax-layer--front" style="--depth: 1">
+					<div class="act-stage" data-role="act1-stage">
+						<agent-3d
+							class="act-agent"
+							data-role="act1-agent"
+							kiosk
+							eager
+							aria-label="Live 3D avatar — drag to rotate"
+						></agent-3d>
+					</div>
+				</div>
+
+				<div class="act-content act-content--bottom">
+					<div class="act-eyebrow">
+						<span class="act-eyebrow-dot"></span>
+						<span>Live, in your browser</span>
+					</div>
+					<h2 id="act1-title">
+						A 3D agent is <em>one tag</em> away.
+					</h2>
+					<p class="act-lede">
+						No SDK. No iframe. Drop a single web component into any page and you have a
+						lazy-loading, render-anywhere AI avatar with built-in identity, memory, and
+						emotion.
+					</p>
+					<div class="act-code" aria-label="Embed code">
+						<pre><code>&lt;script type=&quot;module&quot; src=&quot;https://3dagent.vercel.app/agent-3d/latest/agent-3d.js&quot;&gt;&lt;/script&gt;
+&lt;agent-3d agent-id=&quot;<span class="code-em" data-role="code-agent-id">0x3d…a9f</span>&quot;&gt;&lt;/agent-3d&gt;</code></pre>
+						<button
+							type="button"
+							class="act-code-copy"
+							data-role="copy-embed"
+							aria-label="Copy embed code"
+						>
+							Copy
+						</button>
+					</div>
+					<div class="act-cta">
+						<a href="#act-empathy" class="btn-primary">
+							<span>See the empathy layer</span>
+							<span class="btn-arrow" aria-hidden="true">↓</span>
+						</a>
+						<a href="/widgets" class="btn-ghost">Browse embeds</a>
+					</div>
+				</div>
+			</section>
+
+			<!-- ─── ACT 2 — Empathy layer ───────────────────────────────────── -->
+			<section
+				class="parallax-act parallax-act--empathy"
+				data-act="2"
+				id="act-empathy"
+				aria-labelledby="act2-title"
+			>
+				<div class="parallax-layer" style="--depth: 8" aria-hidden="true">
+					<div class="layer-bg layer-bg--violet"></div>
+				</div>
+				<div class="parallax-layer" style="--depth: 5" aria-hidden="true">
+					<svg
+						class="layer-glyphs"
+						viewBox="0 0 1600 900"
+						preserveAspectRatio="xMidYMid slice"
+						role="presentation"
+					>
+						<g class="layer-glyphs-g">
+							<text x="120" y="220" class="glyph">celebration</text>
+							<text x="980" y="160" class="glyph">curiosity</text>
+							<text x="220" y="640" class="glyph">empathy</text>
+							<text x="1180" y="720" class="glyph">concern</text>
+							<text x="640" y="420" class="glyph glyph--big">neutral</text>
+							<text x="60" y="820" class="glyph">patience</text>
+						</g>
+					</svg>
+				</div>
+				<div class="parallax-layer" style="--depth: 2" aria-hidden="true">
+					<div class="layer-orb layer-orb--violet"></div>
+				</div>
+				<div class="parallax-layer parallax-layer--front" style="--depth: 1">
+					<div class="act-stage" data-role="act2-stage">
+						<agent-3d
+							class="act-agent"
+							data-role="act2-agent"
+							kiosk
+							aria-label="3D avatar reacting to emotion triggers"
+						></agent-3d>
+					</div>
+				</div>
+
+				<div class="act-content act-content--bottom">
+					<div class="act-eyebrow">
+						<span class="act-eyebrow-dot"></span>
+						<span>Empathy layer</span>
+					</div>
+					<h2 id="act2-title">
+						Six emotions. Continuous blend. <em>Real time.</em>
+					</h2>
+					<p class="act-lede">
+						Every avatar runs an emotion engine that reacts to the agent's own actions —
+						speaking, thinking, succeeding, failing. Tap a chip to see it move.
+					</p>
+					<div
+						class="emotion-chips"
+						data-role="emotion-chips"
+						role="group"
+						aria-label="Emotion triggers"
+					>
+						<button type="button" class="emotion-chip" data-emotion="celebration">
+							<span class="emotion-chip-glyph">✦</span>celebration
+						</button>
+						<button type="button" class="emotion-chip" data-emotion="curiosity">
+							<span class="emotion-chip-glyph">?</span>curiosity
+						</button>
+						<button type="button" class="emotion-chip" data-emotion="empathy">
+							<span class="emotion-chip-glyph">♥</span>empathy
+						</button>
+						<button type="button" class="emotion-chip" data-emotion="concern">
+							<span class="emotion-chip-glyph">!</span>concern
+						</button>
+						<button type="button" class="emotion-chip" data-emotion="patience">
+							<span class="emotion-chip-glyph">…</span>patience
+						</button>
+					</div>
+					<div class="act-cta">
+						<a href="/app" class="btn-primary">
+							<span>Talk to it</span>
+							<span class="btn-arrow" aria-hidden="true">→</span>
+						</a>
+						<a href="#act-onchain" class="btn-ghost">Deploy on-chain ↓</a>
+					</div>
+				</div>
+			</section>
+
+			<!-- ─── ACT 3 — On-chain (ERC-8004) ─────────────────────────────── -->
+			<section
+				class="parallax-act parallax-act--onchain"
+				data-act="3"
+				id="act-onchain"
+				aria-labelledby="act3-title"
+			>
+				<div class="parallax-layer" style="--depth: 8" aria-hidden="true">
+					<div class="layer-bg layer-bg--mint"></div>
+				</div>
+				<div class="parallax-layer" style="--depth: 5" aria-hidden="true">
+					<div class="layer-chains" data-role="chain-ribbon"></div>
+				</div>
+				<div class="parallax-layer" style="--depth: 2" aria-hidden="true">
+					<div class="layer-orb layer-orb--mint"></div>
+				</div>
+				<div class="parallax-layer parallax-layer--front" style="--depth: 1">
+					<div class="act-stage" data-role="act3-stage">
+						<agent-3d
+							class="act-agent"
+							data-role="act3-agent"
+							kiosk
+							aria-label="A registered on-chain ERC-8004 agent"
+						></agent-3d>
+						<div class="act-passport" data-role="passport" hidden>
+							<span class="passport-label">agentId</span>
+							<span class="passport-value" data-role="passport-id">—</span>
+							<span class="passport-divider" aria-hidden="true">·</span>
+							<span class="passport-chain" data-role="passport-chain">—</span>
+						</div>
+					</div>
+				</div>
+
+				<div class="act-content act-content--bottom">
+					<div class="act-eyebrow">
+						<span class="act-eyebrow-dot"></span>
+						<span>ERC-8004 native</span>
+					</div>
+					<h2 id="act3-title">One transaction. <em>One identity.</em> Every chain.</h2>
+					<p class="act-lede">
+						Mint an ERC-721 on any of <span data-role="chain-count">20+</span> EVM
+						networks. Your avatar gets a portable, verifiable agentId — discoverable by
+						any A2A or MCP client, anywhere.
+					</p>
+					<dl class="act-stats" aria-label="Agent registry stats">
+						<div>
+							<dt>Chains supported</dt>
+							<dd data-role="stat-chains">20+</dd>
+						</div>
+						<div>
+							<dt>Agents indexed</dt>
+							<dd data-role="stat-agents">—</dd>
+						</div>
+						<div>
+							<dt>Standards</dt>
+							<dd>ERC-721 · A2A · MCP</dd>
+						</div>
+					</dl>
+					<div class="act-cta" id="deploy">
+						<a href="/deploy" class="btn-primary">
+							<span>Deploy your agent</span>
+							<span class="btn-arrow" aria-hidden="true">→</span>
+						</a>
+						<a href="/discover" class="btn-ghost">See who's already on-chain</a>
+					</div>
+				</div>
+			</section>
+
+			<!-- ─── Flat outro ──────────────────────────────────────────────── -->
+			<section class="features-outro" aria-labelledby="outro-title">
+				<h3 id="outro-title">Everything an agent needs.</h3>
+				<ul class="outro-grid">
+					<li>
+						<h4>Identity Registry</h4>
+						<p>
+							ERC-721 based. Each agent has an <code>agentId</code> and a URI that
+							resolves to its registration JSON.
+						</p>
+					</li>
+					<li>
+						<h4>Reputation Registry</h4>
+						<p>
+							Signed feedback on quality, uptime, and response time. On-chain
+							composability + off-chain aggregation.
+						</p>
+					</li>
+					<li>
+						<h4>Validation Registry</h4>
+						<p>
+							Stake-secured re-execution, zkML proofs, TEE attestations. Trust
+							proportional to value at risk.
+						</p>
+					</li>
+					<li>
+						<h4>Memory + skills</h4>
+						<p>
+							Frontmatter-`.md` memory, recursive skill bundles, signed action history.
+							Portable across hosts.
+						</p>
+					</li>
+				</ul>
+				<footer class="features-footer">
+					<p>
+						3D Agent ·
+						<a
+							href="https://github.com/nirholas/3D"
+							target="_blank"
+							rel="noopener"
+							aria-label="3D Agent on GitHub (opens in a new tab)"
+							>GitHub</a
+						>
+						· Built on
+						<a
+							href="https://eips.ethereum.org/EIPS/eip-8004"
+							target="_blank"
+							rel="noopener"
+							aria-label="ERC-8004 specification (opens in a new tab)"
+							>ERC-8004</a
+						>
+					</p>
+				</footer>
+			</section>
+		</main>
+
+		<script type="module" src="/features/features.js"></script>
+	</body>
+</html>

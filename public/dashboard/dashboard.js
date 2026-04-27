@@ -865,7 +865,7 @@ async function renderEmbed(root) {
 	const embedUrl = `${origin}/agent/${encodeURIComponent(agent.id)}/embed`;
 	const homeUrl = `${origin}/agent/${encodeURIComponent(agent.id)}`;
 	const iframeSnippet = `<iframe src="${embedUrl}" allow="camera; microphone" style="width:320px;height:420px;border:0;border-radius:16px;overflow:hidden" title="${esc(agent.name || 'Agent')}"></iframe>`;
-	const lobehubSnippet = [
+	const sidecarSnippet = [
 		'// Drop into a chat host — renders the agent alongside the chat panel',
 		'// and forwards assistant messages to it so the avatar speaks/emotes.',
 		"import { useEffect, useRef } from 'react';",
@@ -928,33 +928,39 @@ async function renderEmbed(root) {
 		'</script>',
 	].join('\n');
 
+	const tabs = [
+		{ label: 'SDK · recommended', code: sdkSnippet },
+		{ label: 'Universal iframe', code: iframeSnippet },
+		{ label: 'React sidecar', code: sidecarSnippet },
+		{ label: 'Claude Artifact', code: claudeSnippet },
+		{ label: 'Raw postMessage', code: postMessageSnippet },
+	];
+
 	body.innerHTML = `
-		<div style="display:grid; grid-template-columns:minmax(260px,1fr) minmax(320px,1.4fr); gap:20px; align-items:start">
-			<div class="card" style="padding:8px">
-				<iframe src="${attr(embedUrl + '?preview=1&bg=dark')}" style="width:100%;aspect-ratio:3/4;border:0;border-radius:10px;background:#0f0f17" title="Preview"></iframe>
-				<div class="row" style="justify-content:space-between; padding:10px 6px 4px">
-					<strong>${esc(agent.name || 'My Agent')}</strong>
-					<a href="${attr(homeUrl)}" target="_blank" class="muted">Home page →</a>
+		<div class="embed-grid">
+			<div class="embed-preview-col">
+				<div class="card" style="padding:8px">
+					<iframe src="${attr(embedUrl + '?preview=1&bg=dark')}" style="width:100%;aspect-ratio:3/4;border:0;border-radius:10px;background:#0f0f17" title="Preview"></iframe>
+					<div class="row" style="justify-content:space-between; padding:10px 6px 4px">
+						<strong>${esc(agent.name || 'My Agent')}</strong>
+						<a href="${attr(homeUrl)}" target="_blank" class="muted">Home page →</a>
+					</div>
+					<p class="muted" style="padding:0 6px">Agent ID <code>${esc(agent.id)}</code></p>
+					${
+						agent.wallet_address
+							? `
+						<p class="muted" style="padding:0 6px; margin-top:6px; line-height:1.4">
+							Agent wallet<br>
+							<code style="font-size:11px; word-break:break-all">${esc(agent.wallet_address)}</code><br>
+							<span style="font-size:11px">Server-held. Agents sign autonomously via <code style="font-size:11px; word-break:break-all">POST /api/agents/${esc(agent.id)}/sign</code>.</span>
+						</p>
+					`
+							: ''
+					}
 				</div>
-				<p class="muted" style="padding:0 6px">Agent ID <code>${esc(agent.id)}</code></p>
-				${
-					agent.wallet_address
-						? `
-					<p class="muted" style="padding:0 6px; margin-top:6px; line-height:1.4">
-						Agent wallet<br>
-						<code style="font-size:11px; word-break:break-all">${esc(agent.wallet_address)}</code><br>
-						<span style="font-size:11px">Server-held. Agents sign autonomously via <code style="font-size:11px">POST /api/agents/${esc(agent.id)}/sign</code>.</span>
-					</p>
-				`
-						: ''
-				}
 			</div>
 			<div>
-				${snippetBlock('Universal iframe (any site)', iframeSnippet, 'html')}
-				${snippetBlock('Chat host React sidecar', lobehubSnippet, 'tsx')}
-				${snippetBlock('Claude Artifact', claudeSnippet, 'html')}
-				${snippetBlock('postMessage bridge (speak + listen)', postMessageSnippet, 'js')}
-				${snippetBlock('Custom embed (Agent3D SDK · Bridge v1)', sdkSnippet, 'html')}
+				${snippetTabs(tabs)}
 				<div class="card" style="margin-top:14px">
 					<h3 style="margin:0 0 6px">Who can embed?</h3>
 					<p class="muted" style="margin:0 0 10px">By default anyone. Lock it down to specific hosts (your chat host, your Substack…) on the <a href="/dashboard/embed-policy?agent=${encodeURIComponent(agent.id)}">embed-policy page</a>.</p>
@@ -963,7 +969,39 @@ async function renderEmbed(root) {
 				${myAgentsCard()}
 			</div>
 		</div>
+		<style>
+			.embed-grid {
+				display: grid;
+				grid-template-columns: minmax(260px, 1fr) minmax(320px, 1.4fr);
+				gap: 20px;
+				align-items: start;
+			}
+			.embed-preview-col { position: sticky; top: 16px; }
+			@media (max-width: 760px) {
+				.embed-grid { grid-template-columns: 1fr; }
+				.embed-preview-col { position: static; }
+			}
+			.embed-tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; }
+			.embed-tab {
+				background: transparent;
+				border: 1px solid var(--border);
+				color: inherit;
+				padding: 6px 10px;
+				border-radius: 8px;
+				font: inherit;
+				font-size: 12px;
+				cursor: pointer;
+			}
+			.embed-tab[aria-selected="true"] {
+				background: var(--panel);
+				border-color: #6c5cff;
+				color: #fff;
+			}
+			.embed-tab-panel[hidden] { display: none; }
+		</style>
 	`;
+
+	bindSnippetTabs(body);
 
 	for (const btn of body.querySelectorAll('[data-copy]')) {
 		btn.addEventListener('click', async () => {
@@ -997,6 +1035,49 @@ function snippetBlock(title, code, _lang) {
 			<pre id="${id}" style="margin:0; max-height:260px; overflow:auto; white-space:pre">${esc(code)}</pre>
 		</div>
 	`;
+}
+
+function snippetTabs(tabs) {
+	const groupId = 'tabs-' + Math.random().toString(36).slice(2, 8);
+	const buttons = tabs
+		.map(
+			(t, i) =>
+				`<button class="embed-tab" role="tab" type="button" data-tab-index="${i}" aria-selected="${i === 0}">${esc(t.label)}</button>`,
+		)
+		.join('');
+	const panels = tabs
+		.map((t, i) => {
+			const preId = `${groupId}-pre-${i}`;
+			return `
+				<div class="embed-tab-panel" role="tabpanel" data-panel-index="${i}"${i === 0 ? '' : ' hidden'}>
+					<div class="row" style="justify-content:flex-end; margin-bottom:8px">
+						<button class="btn sec" data-copy="#${preId}" type="button">Copy</button>
+					</div>
+					<pre id="${preId}" style="margin:0; max-height:340px; overflow:auto; white-space:pre">${esc(t.code)}</pre>
+				</div>
+			`;
+		})
+		.join('');
+	return `
+		<div class="card" data-tabs="${groupId}">
+			<div class="embed-tabs" role="tablist">${buttons}</div>
+			${panels}
+		</div>
+	`;
+}
+
+function bindSnippetTabs(root) {
+	for (const group of root.querySelectorAll('[data-tabs]')) {
+		const tabs = group.querySelectorAll('.embed-tab');
+		const panels = group.querySelectorAll('.embed-tab-panel');
+		for (const tab of tabs) {
+			tab.addEventListener('click', () => {
+				const idx = tab.dataset.tabIndex;
+				for (const t of tabs) t.setAttribute('aria-selected', t === tab);
+				for (const p of panels) p.hidden = p.dataset.panelIndex !== idx;
+			});
+		}
+	}
 }
 
 // ── Onchain deploy card ─────────────────────────────────────────────────────
@@ -2148,10 +2229,13 @@ async function renderAnimations(root) {
 
 	let animations = Array.isArray(agent.meta?.animations) ? [...agent.meta.animations] : [];
 	let presets = [];
+	let presetsError = null;
 	try {
-		presets = await fetch('/animations/presets.json').then((r) => r.json());
-	} catch {
-		/* presets unavailable */
+		const r = await fetch('/animations/presets.json');
+		if (!r.ok) throw new Error(`HTTP ${r.status}`);
+		presets = await r.json();
+	} catch (e) {
+		presetsError = e.message || 'Could not load presets';
 	}
 
 	let saveTimer;
@@ -2211,10 +2295,18 @@ async function renderAnimations(root) {
 				debounceSync();
 			});
 			row.querySelector('.detach-btn').addEventListener('click', () => {
-				animations = animations.filter((a) => a !== clip);
+				const idx = animations.indexOf(clip);
+				if (idx === -1) return;
+				animations.splice(idx, 1);
 				renderClipList();
 				renderPresetGrid();
 				debounceSync();
+				toastUndo(`Removed "${clip.name}"`, () => {
+					animations.splice(idx, 0, clip);
+					renderClipList();
+					renderPresetGrid();
+					debounceSync();
+				});
 			});
 			row.querySelector('.preview-btn').addEventListener('click', () =>
 				openAnimPreview(clip, avatarUrl),
@@ -2291,6 +2383,12 @@ async function renderAnimations(root) {
 		presetGridEl = document.createElement('div');
 		presetGridEl.className = 'preset-grid';
 		rightCol.appendChild(presetGridEl);
+	} else if (presetsError) {
+		const pe = document.createElement('div');
+		pe.className = 'anim-inline-err';
+		pe.style.marginBottom = '12px';
+		pe.textContent = `Couldn’t load presets (${presetsError}).`;
+		rightCol.appendChild(pe);
 	}
 
 	const uploadDiv = document.createElement('div');

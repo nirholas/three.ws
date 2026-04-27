@@ -1,0 +1,791 @@
+/******************************************************************************
+ * /features — pure-CSS 3D parallax across three acts.
+ *
+ * Technique: <main class="parallax"> establishes a perspective scroll
+ * container. Each <section class="parallax-act"> is a stacking context with
+ * absolutely-positioned .parallax-layer children. Each layer is pushed back
+ * in Z by `--depth * --perspective` and scaled up by `--depth + 1` to
+ * compensate, so it still fills the viewport but drifts slower than the
+ * front layer during scroll. Zero JS drives the parallax — the browser's
+ * native 3D projection during scroll does the work.
+ *
+ * Live <agent-3d> elements live on the front-most layer of each act and
+ * lazy-boot via IntersectionObserver in features.js.
+ *
+ * Honors prefers-reduced-motion (collapses to flat) and narrow viewports
+ * (single-column flat layout, parallax disabled).
+ ******************************************************************************/
+
+:root {
+	--features-perspective: 2.4rem;
+	--features-act-height: 140vh;
+	--features-content-pad: clamp(1rem, 4vw, 3rem);
+	--features-bg: #06070b;
+	--features-fg: #f1efe9;
+	--features-gold: #ffd76a;
+	--features-violet: #a78bfa;
+	--features-mint: #6ee7b7;
+	--features-cyan: #67e8f9;
+}
+
+/* ── Page shell ─────────────────────────────────────────────────────────── */
+
+.features-parallax-page {
+	background: var(--features-bg);
+	color: var(--features-fg);
+	margin: 0;
+	overflow: hidden;
+	height: 100vh;
+}
+
+.features-parallax-page header {
+	position: fixed;
+	inset: 0 0 auto 0;
+	z-index: 50;
+	background: linear-gradient(
+		to bottom,
+		rgba(6, 7, 11, 0.85) 0%,
+		rgba(6, 7, 11, 0) 100%
+	);
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
+}
+
+/* ── The scroll container — establishes perspective ─────────────────────── */
+
+.parallax {
+	position: relative;
+	height: 100vh;
+	width: 100vw;
+	overflow-x: hidden;
+	overflow-y: auto;
+	overscroll-behavior-y: none;
+	perspective: var(--features-perspective);
+	perspective-origin: 50% 0%;
+	scroll-behavior: smooth;
+}
+
+/* Hide WebKit scrollbar without affecting scroll behavior. */
+.parallax::-webkit-scrollbar {
+	width: 0;
+	height: 0;
+}
+
+.parallax {
+	scrollbar-width: none;
+}
+
+/* ── Each act: a perspective-aware stacking context ─────────────────────── */
+
+.parallax-act {
+	position: relative;
+	display: block;
+	height: var(--features-act-height);
+	transform-style: preserve-3d;
+	overflow: hidden;
+	isolation: isolate;
+}
+
+.parallax-act + .parallax-act {
+	border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+/* ── Layers: pushed back in Z, scaled up to compensate ──────────────────── */
+
+.parallax-layer {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	transform-origin: 50% 50%;
+	transform: translateZ(calc(var(--features-perspective) * var(--depth) * -1))
+		scale(calc(var(--depth) + 1));
+	z-index: calc(10 - var(--depth, 0));
+}
+
+.parallax-layer--front {
+	pointer-events: auto;
+}
+
+/* ── Background layer styles (pure CSS, no images) ──────────────────────── */
+
+.layer-bg {
+	position: absolute;
+	inset: 0;
+}
+
+.layer-bg--nebula {
+	background:
+		radial-gradient(
+			ellipse at 20% 30%,
+			rgba(255, 215, 106, 0.12) 0%,
+			transparent 55%
+		),
+		radial-gradient(
+			ellipse at 80% 70%,
+			rgba(103, 232, 249, 0.1) 0%,
+			transparent 55%
+		),
+		linear-gradient(180deg, #0a0c12 0%, #06070b 100%);
+}
+
+.layer-bg--violet {
+	background:
+		radial-gradient(
+			ellipse at 70% 30%,
+			rgba(167, 139, 250, 0.18) 0%,
+			transparent 55%
+		),
+		radial-gradient(
+			ellipse at 25% 75%,
+			rgba(236, 72, 153, 0.08) 0%,
+			transparent 60%
+		),
+		linear-gradient(180deg, #0c0915 0%, #06070b 100%);
+}
+
+.layer-bg--mint {
+	background:
+		radial-gradient(
+			ellipse at 30% 40%,
+			rgba(110, 231, 183, 0.14) 0%,
+			transparent 55%
+		),
+		radial-gradient(
+			ellipse at 80% 80%,
+			rgba(255, 215, 106, 0.08) 0%,
+			transparent 55%
+		),
+		linear-gradient(180deg, #06120e 0%, #06070b 100%);
+}
+
+/* ── Mid-depth: grid lines ──────────────────────────────────────────────── */
+
+.layer-grid {
+	position: absolute;
+	inset: 0;
+	background-image:
+		linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+		linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+	background-size: 64px 64px;
+	mask-image: radial-gradient(ellipse at center, #000 30%, transparent 70%);
+	-webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 70%);
+}
+
+/* ── Mid-depth: floating glow orbs ──────────────────────────────────────── */
+
+.layer-orb {
+	position: absolute;
+	width: clamp(280px, 38vw, 560px);
+	aspect-ratio: 1;
+	border-radius: 50%;
+	filter: blur(60px);
+	opacity: 0.55;
+}
+
+.layer-orb--gold {
+	background: radial-gradient(circle, var(--features-gold), transparent 70%);
+	top: 12%;
+	left: 8%;
+}
+
+.layer-orb--cyan {
+	background: radial-gradient(circle, var(--features-cyan), transparent 70%);
+	bottom: 14%;
+	right: 6%;
+}
+
+.layer-orb--violet {
+	background: radial-gradient(circle, var(--features-violet), transparent 70%);
+	top: 20%;
+	right: 10%;
+}
+
+.layer-orb--mint {
+	background: radial-gradient(circle, var(--features-mint), transparent 70%);
+	top: 18%;
+	left: 12%;
+}
+
+/* ── Mid-depth: emotion glyphs (Act 2) ──────────────────────────────────── */
+
+.layer-glyphs {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+}
+
+.layer-glyphs .glyph {
+	font-family: 'Space Grotesk', 'Inter', sans-serif;
+	font-size: 48px;
+	font-weight: 600;
+	fill: rgba(167, 139, 250, 0.18);
+	letter-spacing: 0.04em;
+}
+
+.layer-glyphs .glyph--big {
+	font-size: 96px;
+	fill: rgba(255, 255, 255, 0.08);
+}
+
+/* ── Mid-depth: chain ribbon (Act 3, populated by features.js) ──────────── */
+
+.layer-chains {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-wrap: wrap;
+	align-content: center;
+	justify-content: center;
+	gap: 1.5rem 2.5rem;
+	padding: 6rem 4rem;
+}
+
+.layer-chains .chain-pill {
+	font-family: 'Space Grotesk', sans-serif;
+	font-size: 18px;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	color: rgba(110, 231, 183, 0.32);
+	text-transform: uppercase;
+	border: 1px solid rgba(110, 231, 183, 0.2);
+	border-radius: 999px;
+	padding: 0.4rem 1rem;
+	white-space: nowrap;
+}
+
+/* ── Front-layer stage (where the live agent lives) ─────────────────────── */
+
+.act-stage {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	pointer-events: none;
+}
+
+.act-agent {
+	display: block;
+	width: clamp(280px, 32vw, 480px);
+	aspect-ratio: 4 / 5;
+	pointer-events: auto;
+	filter: drop-shadow(0 24px 48px rgba(0, 0, 0, 0.5));
+	opacity: 0;
+	transition: opacity 0.6s ease 0.1s;
+}
+
+.act-agent[data-ready='true'] {
+	opacity: 1;
+}
+
+/* Passport tag (Act 3) */
+.act-passport {
+	position: absolute;
+	bottom: 16%;
+	left: 50%;
+	transform: translateX(-50%);
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.4rem 0.9rem;
+	background: rgba(6, 7, 11, 0.7);
+	border: 1px solid rgba(110, 231, 183, 0.4);
+	border-radius: 999px;
+	color: var(--features-mint);
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 13px;
+	letter-spacing: 0.04em;
+	pointer-events: auto;
+	backdrop-filter: blur(6px);
+	-webkit-backdrop-filter: blur(6px);
+}
+
+.act-passport[hidden] {
+	display: none;
+}
+
+.passport-label {
+	color: rgba(255, 255, 255, 0.55);
+}
+
+.passport-divider {
+	opacity: 0.4;
+}
+
+/* ── Act content (sticky-positioned text overlay) ───────────────────────── */
+
+.act-content {
+	position: sticky;
+	top: 0;
+	height: 100vh;
+	margin-bottom: -100vh;
+	z-index: 20;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	padding: 0 var(--features-content-pad) clamp(2rem, 5vh, 4rem);
+	pointer-events: none;
+	max-width: 720px;
+}
+
+.act-content > * {
+	pointer-events: auto;
+}
+
+.act-eyebrow {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-family: 'Space Grotesk', sans-serif;
+	font-size: 13px;
+	font-weight: 500;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: rgba(255, 255, 255, 0.65);
+	margin-bottom: 1rem;
+	width: fit-content;
+}
+
+.act-eyebrow-dot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--features-gold);
+	box-shadow: 0 0 12px var(--features-gold);
+	animation: features-pulse 2.4s ease-in-out infinite;
+}
+
+.parallax-act--empathy .act-eyebrow-dot {
+	background: var(--features-violet);
+	box-shadow: 0 0 12px var(--features-violet);
+}
+
+.parallax-act--onchain .act-eyebrow-dot {
+	background: var(--features-mint);
+	box-shadow: 0 0 12px var(--features-mint);
+}
+
+@keyframes features-pulse {
+	0%,
+	100% {
+		opacity: 1;
+		transform: scale(1);
+	}
+	50% {
+		opacity: 0.55;
+		transform: scale(0.85);
+	}
+}
+
+.act-content h2 {
+	font-family: 'Space Grotesk', 'Inter', sans-serif;
+	font-size: clamp(2rem, 5.5vw, 4rem);
+	font-weight: 600;
+	line-height: 1.05;
+	letter-spacing: -0.02em;
+	margin: 0 0 1rem;
+	color: #fff;
+	text-wrap: balance;
+}
+
+.act-content h2 em {
+	font-style: italic;
+	font-weight: 500;
+	color: var(--features-gold);
+}
+
+.parallax-act--empathy h2 em {
+	color: var(--features-violet);
+}
+
+.parallax-act--onchain h2 em {
+	color: var(--features-mint);
+}
+
+.act-lede {
+	font-size: clamp(1rem, 1.5vw, 1.2rem);
+	line-height: 1.5;
+	color: rgba(241, 239, 233, 0.78);
+	max-width: 56ch;
+	margin: 0 0 1.5rem;
+	text-wrap: pretty;
+}
+
+/* ── Embed code block (Act 1) ───────────────────────────────────────────── */
+
+.act-code {
+	position: relative;
+	background: rgba(0, 0, 0, 0.45);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	border-radius: 10px;
+	padding: 1rem 1.2rem;
+	margin: 0 0 1.5rem;
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 13px;
+	line-height: 1.55;
+	color: rgba(241, 239, 233, 0.88);
+	overflow-x: auto;
+	max-width: 100%;
+	backdrop-filter: blur(6px);
+	-webkit-backdrop-filter: blur(6px);
+}
+
+.act-code pre {
+	margin: 0;
+	white-space: pre;
+}
+
+.act-code code {
+	font: inherit;
+}
+
+.act-code .code-em {
+	color: var(--features-gold);
+}
+
+.act-code-copy {
+	position: absolute;
+	top: 0.6rem;
+	right: 0.6rem;
+	background: rgba(255, 255, 255, 0.06);
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	color: rgba(255, 255, 255, 0.78);
+	font-family: 'Space Grotesk', sans-serif;
+	font-size: 12px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	padding: 0.3rem 0.6rem;
+	border-radius: 6px;
+	cursor: pointer;
+	transition: background 0.15s ease, color 0.15s ease;
+}
+
+.act-code-copy:hover,
+.act-code-copy:focus-visible {
+	background: rgba(255, 215, 106, 0.16);
+	color: var(--features-gold);
+	outline: none;
+}
+
+.act-code-copy[data-copied='true'] {
+	color: var(--features-mint);
+	border-color: var(--features-mint);
+}
+
+/* ── Emotion chips (Act 2) ──────────────────────────────────────────────── */
+
+.emotion-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin: 0 0 1.5rem;
+}
+
+.emotion-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.5rem 0.9rem;
+	background: rgba(255, 255, 255, 0.04);
+	border: 1px solid rgba(167, 139, 250, 0.28);
+	border-radius: 999px;
+	color: rgba(241, 239, 233, 0.9);
+	font: inherit;
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.emotion-chip:hover,
+.emotion-chip:focus-visible {
+	background: rgba(167, 139, 250, 0.16);
+	border-color: var(--features-violet);
+	outline: none;
+}
+
+.emotion-chip[data-active='true'] {
+	background: rgba(167, 139, 250, 0.24);
+	border-color: var(--features-violet);
+	transform: scale(0.98);
+}
+
+.emotion-chip-glyph {
+	color: var(--features-violet);
+	font-weight: 700;
+}
+
+/* ── Stats (Act 3) ──────────────────────────────────────────────────────── */
+
+.act-stats {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 1rem 2rem;
+	margin: 0 0 1.5rem;
+	padding: 0;
+	max-width: 540px;
+}
+
+.act-stats > div {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.act-stats dt {
+	font-family: 'Space Grotesk', sans-serif;
+	font-size: 11px;
+	font-weight: 500;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: rgba(255, 255, 255, 0.55);
+}
+
+.act-stats dd {
+	font-family: 'Space Grotesk', sans-serif;
+	font-size: clamp(1.1rem, 1.8vw, 1.5rem);
+	font-weight: 600;
+	color: var(--features-mint);
+	margin: 0;
+}
+
+/* ── CTAs ───────────────────────────────────────────────────────────────── */
+
+.act-cta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+}
+
+.btn-primary,
+.btn-ghost {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.85rem 1.4rem;
+	border-radius: 10px;
+	font-family: 'Space Grotesk', 'Inter', sans-serif;
+	font-size: 15px;
+	font-weight: 500;
+	letter-spacing: 0.01em;
+	text-decoration: none;
+	transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-primary {
+	background: var(--features-gold);
+	color: #1a1610;
+	border: 1px solid var(--features-gold);
+}
+
+.parallax-act--empathy .btn-primary {
+	background: var(--features-violet);
+	color: #1a1530;
+	border-color: var(--features-violet);
+}
+
+.parallax-act--onchain .btn-primary {
+	background: var(--features-mint);
+	color: #04201a;
+	border-color: var(--features-mint);
+}
+
+.btn-primary:hover,
+.btn-primary:focus-visible {
+	transform: translateY(-1px);
+	outline: none;
+}
+
+.btn-ghost {
+	background: transparent;
+	color: rgba(255, 255, 255, 0.85);
+	border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-ghost:hover,
+.btn-ghost:focus-visible {
+	background: rgba(255, 255, 255, 0.06);
+	border-color: rgba(255, 255, 255, 0.4);
+	outline: none;
+}
+
+.btn-arrow {
+	transition: transform 0.15s ease;
+}
+
+.btn-primary:hover .btn-arrow,
+.btn-ghost:hover .btn-arrow {
+	transform: translateX(2px);
+}
+
+/* ── Outro (flat) ───────────────────────────────────────────────────────── */
+
+.features-outro {
+	position: relative;
+	background: var(--features-bg);
+	color: var(--features-fg);
+	padding: clamp(3rem, 8vh, 6rem) var(--features-content-pad)
+		clamp(2rem, 5vh, 4rem);
+	z-index: 30;
+}
+
+.features-outro h3 {
+	font-family: 'Space Grotesk', sans-serif;
+	font-size: clamp(1.6rem, 3.2vw, 2.4rem);
+	font-weight: 600;
+	letter-spacing: -0.01em;
+	margin: 0 0 2rem;
+	color: #fff;
+}
+
+.outro-grid {
+	list-style: none;
+	margin: 0 0 3rem;
+	padding: 0;
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+	gap: 1.5rem;
+	max-width: 1200px;
+}
+
+.outro-grid li {
+	background: rgba(255, 255, 255, 0.025);
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	border-radius: 12px;
+	padding: 1.4rem 1.5rem;
+}
+
+.outro-grid h4 {
+	font-family: 'Space Grotesk', sans-serif;
+	font-size: 1.05rem;
+	font-weight: 600;
+	margin: 0 0 0.5rem;
+	color: #fff;
+}
+
+.outro-grid p {
+	font-size: 14px;
+	line-height: 1.55;
+	color: rgba(241, 239, 233, 0.7);
+	margin: 0;
+}
+
+.outro-grid code {
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 12px;
+	color: var(--features-gold);
+	background: rgba(255, 215, 106, 0.08);
+	padding: 0.1rem 0.35rem;
+	border-radius: 4px;
+}
+
+.features-footer {
+	border-top: 1px solid rgba(255, 255, 255, 0.06);
+	padding-top: 1.5rem;
+	font-size: 13px;
+	color: rgba(255, 255, 255, 0.5);
+}
+
+.features-footer a {
+	color: rgba(255, 255, 255, 0.7);
+	text-decoration: none;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.features-footer a:hover {
+	color: var(--features-gold);
+	border-color: var(--features-gold);
+}
+
+/* ── Responsive: narrow viewports collapse to flat layout ───────────────── */
+
+@media (max-width: 768px) {
+	.features-parallax-page {
+		overflow: auto;
+		height: auto;
+	}
+
+	.parallax {
+		perspective: none;
+		height: auto;
+		overflow: visible;
+		scroll-behavior: auto;
+	}
+
+	.parallax-act {
+		height: auto;
+		min-height: 100vh;
+		padding: 7rem 0 2rem;
+	}
+
+	.parallax-layer {
+		transform: none;
+		position: absolute;
+	}
+
+	.parallax-layer--front {
+		position: relative;
+	}
+
+	.act-stage {
+		position: relative;
+		height: 50vh;
+		padding: 1rem;
+	}
+
+	.act-content {
+		position: relative;
+		height: auto;
+		margin-bottom: 0;
+		padding: 1.5rem var(--features-content-pad) 2rem;
+	}
+
+	.act-stats {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+/* ── Reduced motion: disable parallax + animation, keep agents ──────────── */
+
+@media (prefers-reduced-motion: reduce) {
+	.features-parallax-page {
+		overflow: auto;
+		height: auto;
+	}
+
+	.parallax {
+		perspective: none;
+		height: auto;
+		overflow: visible;
+		scroll-behavior: auto;
+	}
+
+	.parallax-act {
+		height: auto;
+		min-height: 100vh;
+		padding: 6rem 0 2rem;
+	}
+
+	.parallax-layer {
+		transform: none;
+	}
+
+	.act-stage,
+	.act-content {
+		position: relative;
+		height: auto;
+		margin-bottom: 0;
+	}
+
+	.act-eyebrow-dot {
+		animation: none;
+	}
+
+	.act-agent {
+		opacity: 1;
+		transition: none;
+	}
+}

@@ -1,0 +1,21 @@
+[
+	{ "name": "idle", "source": "Old Man Idle.fbx", "label": "Idle", "icon": "🧍", "loop": true },
+	{ "name": "dance", "source": "Hip Hop Dancing.fbx", "label": "Dance", "icon": "💃", "loop": true },
+	{ "name": "celebrate", "source": "Joyful Jump.fbx", "label": "Celebrate", "icon": "🎉", "loop": false },
+	{ "name": "angry", "source": "Angry.fbx", "label": "Angry", "icon": "😡", "loop": false },
+	{ "name": "defeated", "source": "Defeated.fbx", "label": "Defeated", "icon": "😞", "loop": false },
+	{ "name": "dying", "source": "Dying.fbx", "label": "Dying", "icon": "💀", "loop": false },
+	{ "name": "falling", "source": "Falling.fbx", "label": "Falling", "icon": "🪂", "loop": false },
+	{ "name": "jump", "source": "Joyful Jump.fbx", "label": "Jump", "icon": "🦘", "loop": false },
+	{ "name": "kiss", "source": "Kiss.fbx", "label": "Kiss", "icon": "💋", "loop": false },
+	{ "name": "pray", "source": "Praying.fbx", "label": "Pray", "icon": "🙏", "loop": false },
+	{ "name": "reaction", "source": "Reaction.fbx", "label": "Reaction", "icon": "😲", "loop": false },
+	{ "name": "rumba", "source": "Rumba Dancing.fbx", "label": "Rumba", "icon": "🕺", "loop": true },
+	{ "name": "silly", "source": "Silly Dancing.fbx", "label": "Silly Dance", "icon": "🤪", "loop": true },
+	{ "name": "sitclap", "source": "Sitting Clap.fbx", "label": "Sit Clap", "icon": "👏", "loop": false },
+	{ "name": "sitlaugh", "source": "Sitting Laughing.fbx", "label": "Sit Laugh", "icon": "😂", "loop": false },
+	{ "name": "taunt", "source": "Taunt.fbx", "label": "Taunt", "icon": "😝", "loop": false },
+	{ "name": "thriller", "source": "Thriller Part 3.fbx", "label": "Thriller", "icon": "🧟", "loop": true },
+	{ "name": "capoeira", "source": "Capoeira.fbx", "label": "Capoeira", "icon": "🥋", "loop": true },
+	{ "name": "wave", "source": "Standing Cover Turn.fbx", "label": "Wave", "icon": "👋", "loop": false }
+]

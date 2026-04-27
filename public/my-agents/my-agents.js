@@ -240,9 +240,10 @@ async function loadAgents() {
 	if (!user) {
 		showState(
 			'🔐',
-			'Sign in to discover your agents',
+			'Sign in to see your agents',
 			'Link a wallet and sign in to see your on-chain agents.',
 			{ label: 'Sign in', href: '/login.html' },
+			{ label: 'Or browse community agents →', href: '/discover' },
 		);
 		return;
 	}

@@ -36,15 +36,6 @@
 		"icon": "🚫"
 	},
 	{
-		"name": "thinking",
-		"url": "/animations/robotexpressive.glb",
-		"clipName": "Sitting",
-		"loop": true,
-		"source": "preset",
-		"label": "Thinking",
-		"icon": "🤔"
-	},
-	{
 		"name": "celebrate",
 		"url": "/animations/robotexpressive.glb",
 		"clipName": "ThumbsUp",
@@ -54,13 +45,13 @@
 		"icon": "🎉"
 	},
 	{
-		"name": "typing",
+		"name": "jump",
 		"url": "/animations/robotexpressive.glb",
-		"clipName": "Standing",
-		"loop": true,
+		"clipName": "Jump",
+		"loop": false,
 		"source": "preset",
-		"label": "Typing",
-		"icon": "⌨️"
+		"label": "Jump",
+		"icon": "⤴️"
 	},
 	{
 		"name": "walking",
@@ -88,5 +79,14 @@
 		"source": "preset",
 		"label": "Dance",
 		"icon": "💃"
+	},
+	{
+		"name": "sitting",
+		"url": "/animations/robotexpressive.glb",
+		"clipName": "Sitting",
+		"loop": true,
+		"source": "preset",
+		"label": "Sitting",
+		"icon": "🪑"
 	}
 ]
