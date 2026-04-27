@@ -235,22 +235,22 @@ class App {
 		}
 
 		// Editing an existing agent: ?agent=<uuid> (authenticated editing surface)
-		// _loadAgentForEdit owns its own _initAgentSystem call — early-return to
-		// avoid mounting AgentHome twice into the same container.
 		if (options.agentEdit) {
 			this._loadAgentForEdit(options.agentEdit);
-			this._initWidgetBridge();
-			return;
+		} else {
+			// Resume a stashed editor session (post-login round-trip), else
+			// load the model named in the URL or fall back to the CZ avatar.
+			this._maybeResumeOrLoad(options);
 		}
-
-		this._maybeResumeOrLoad(options);
 
 		// After sign-in redirect, check for a pending_save stash.
 		if (options.pending) {
 			this._maybePendingSave();
 		}
 
-		// Boot the agent system once identity is ready
+		// Boot the agent system once identity is ready. _loadAgentForEdit also
+		// triggers _initAgentSystem at its tail; the AgentHome render is
+		// idempotent so the second pass tears down and re-mounts cleanly.
 		this._initAgentSystem();
 
 		// Studio preview iframes use postMessage to live-update brand config.
