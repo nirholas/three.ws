@@ -75,7 +75,9 @@ export function cors(
 	{ origins = null, methods = 'GET,POST,OPTIONS', credentials = false } = {},
 ) {
 	const origin = req.headers.origin;
-	if (origin && isAllowedOrigin(origin, origins)) {
+	if (origins === '*') {
+		res.setHeader('access-control-allow-origin', '*');
+	} else if (origin && isAllowedOrigin(origin, origins)) {
 		res.setHeader('access-control-allow-origin', origin);
 		res.setHeader('vary', 'origin');
 		if (credentials) res.setHeader('access-control-allow-credentials', 'true');

@@ -142,18 +142,36 @@ create table if not exists siwe_nonces (
 
 create index if not exists siwe_nonces_expiry on siwe_nonces(expires_at);
 
--- Link ethereum addresses to users. A user may have multiple wallets; address is unique.
+-- ── SIWS (Sign-In with Solana) ───────────────────────────────────────────────
+-- Parallel to siwe_nonces; same burn-on-verify replay protection.
+create table if not exists siws_nonces (
+    nonce        text primary key,
+    address      text,                       -- base58, set on verify attempt (audit only)
+    issued_at    timestamptz not null default now(),
+    expires_at   timestamptz not null,
+    consumed_at  timestamptz
+);
+
+create index if not exists siws_nonces_expiry on siws_nonces(expires_at);
+
+-- Link addresses to users. A user may have multiple wallets across chains; address is unique.
+-- chain_type: 'evm' for 0x-prefixed hex addresses, 'solana' for base58 addresses.
 create table if not exists user_wallets (
     id           uuid primary key default gen_random_uuid(),
     user_id      uuid not null references users(id) on delete cascade,
-    address      text not null unique,       -- lowercased 0x-prefixed
-    chain_id     int,
+    address      text not null unique,       -- lowercased 0x-prefixed (EVM) or base58 (Solana)
+    chain_type   text not null default 'evm' check (chain_type in ('evm', 'solana')),
+    chain_id     int,                        -- EVM chain ID; null for Solana
     is_primary   boolean not null default false,
     created_at   timestamptz not null default now(),
     last_used_at timestamptz
 );
 
 create index if not exists user_wallets_user on user_wallets(user_id);
+
+-- Additive migration for deployments that pre-date chain_type.
+alter table user_wallets add column if not exists chain_type text not null default 'evm'
+    check (chain_type in ('evm', 'solana'));
 
 -- ── Sessions (browser cookie auth) ──────────────────────────────────────────
 create table if not exists sessions (
