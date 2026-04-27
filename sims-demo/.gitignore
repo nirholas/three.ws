@@ -1,0 +1,7 @@
+node_modules
+.DS_Store
+dist
+.vscode
+exampleDist
+.idea
+package-lock.json

@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>three.ws — Give Your AI a Body</title>
+		<title>three.ws — The 3D layer for your AI agent</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="author" content="nirholas" />
 		<meta
@@ -28,15 +28,17 @@
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/home.css" />
 		<link
-			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400&display=swap"
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400&family=Space+Grotesk:wght@500;600;700&display=swap"
 			rel="stylesheet"
 		/>
 		<script
 			type="module"
 			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
 		></script>
+		<script src="/fluid-particles.js" defer></script>
 	</head>
 	<body class="home-page">
+		<div class="cursor" id="cursor" aria-hidden="true"></div>
 		<a href="#main-content" class="h-skip-link">Skip to main content</a>
 		<header>
 			<h1>
@@ -56,10 +58,10 @@
 		<main id="main-content" class="home-parallax">
 			<!-- ── Hero (parallax act) ── -->
 			<section class="h-hero-act">
-				<!-- Depth 8: stars + nebula -->
+				<!-- Depth 8: fluid particles + nebula -->
 				<div class="h-layer" style="--depth: 8" aria-hidden="true">
 					<div class="h-layer-nebula"></div>
-					<canvas class="h-star-canvas" data-role="star-canvas" data-tint="255,220,130" data-count="260"></canvas>
+					<canvas id="home-fluid-canvas" class="h-fluid-canvas"></canvas>
 				</div>
 				<!-- Depth 4: perspective grid -->
 				<div class="h-layer" style="--depth: 4" aria-hidden="true">
@@ -90,31 +92,32 @@
 					<div class="h-hero-glow-a"></div>
 					<div class="h-hero-glow-b"></div>
 				</div>
-				<!-- Depth 1: main avatar centered in its own parallax layer -->
+				<!-- Depth 1: main avatar that waves on load and tracks the cursor -->
 				<div class="h-layer" style="--depth: 1">
 					<div class="h-avatar-stage">
 						<div class="h-avatar-wrap">
 							<div class="h-avatar-ring"></div>
 							<div class="h-avatar-glow"></div>
 							<model-viewer
+								id="hero-avatar"
 								class="h-avatar-viewer"
-								src="/avatars/cz.glb"
-								alt="3D Agent avatar"
-								camera-controls
+								src="/animations/robotexpressive.glb"
+								alt="three.ws — interactive 3D agent that waves hello"
+								animation-name="Wave"
+								autoplay
 								disable-zoom
-								rotation-per-second="18deg"
 								interaction-prompt="none"
-								shadow-intensity="0.8"
+								shadow-intensity="0.9"
 								shadow-softness="1"
-								exposure="1.05"
+								exposure="1.1"
 								tone-mapping="aces"
 								environment-image="neutral"
-								camera-orbit="20deg 68deg 3.4m"
-								field-of-view="28deg"
+								camera-orbit="0deg 75deg 3.2m"
+								field-of-view="30deg"
 								loading="eager"
 							></model-viewer>
 							<div class="h-avatar-badge">
-								<span class="h-avatar-badge-label">agent</span>
+								<span class="h-avatar-badge-label">live agent</span>
 								<span>0x3d…a9f</span>
 							</div>
 						</div>
@@ -129,19 +132,20 @@
 				<div class="h-hero-text">
 					<div class="h-eyebrow h-reveal">
 						<span class="h-eyebrow-dot"></span>
-						<span>Browser-native · No install</span>
+						<span>Hi there 👋 — I'm a real 3D agent</span>
 					</div>
-					<h2 class="h-title h-reveal">Give your AI<br />agent a <em>body</em>.</h2>
+					<h2 class="h-title h-reveal">Give your AI<br />a <em>body</em>.</h2>
 					<p class="h-subtitle h-reveal">
-						Drop any GLB — view it, animate it, embed it anywhere, and give it a
-						verifiable on-chain identity. No plugins. No server uploads.
+						Drop a 3D model. Add a brain. Embed it anywhere.
+						Your agent gets a face — and an identity
+						every A2A or MCP client can verify on-chain.
 					</p>
 					<div class="h-cta-row h-reveal">
-						<a href="/" class="h-btn-primary">
-							<span>Launch Viewer</span>
+						<a href="/create" class="h-btn-primary">
+							<span>Build your agent — free</span>
 							<span class="arrow">→</span>
 						</a>
-						<a href="/features" class="h-btn-ghost">See features →</a>
+						<a href="#pick-animate" class="h-btn-ghost">Try one live ↓</a>
 					</div>
 					<ul class="h-standards h-reveal" aria-label="Supported formats and standards">
 						<li>glTF 2.0</li>
@@ -317,178 +321,184 @@
 				</div>
 			</section>
 
-			<!-- ── How it works ── -->
-			<section class="h-section">
-				<p class="h-section-label h-reveal">How It Works</p>
-				<h2 class="h-section-title h-reveal">
-					From file to deployed agent<br />in three steps.
-				</h2>
-				<p class="h-section-sub h-reveal">
-					No account required to start. Drop a model, explore the viewer, then sign in
-					when you're ready to save and share.
-				</p>
-				<div class="h-steps">
-					<div class="h-step h-reveal">
-						<div class="h-step-num" aria-hidden="true">01</div>
-						<h3>Drop your model</h3>
-						<p>
-							Drag a GLB or glTF 2.0 file directly into the browser. Instant WebGL
-							rendering — no upload, no install, no waiting.
-						</p>
+			<!-- ── Trust strip ── -->
+			<div class="h-trust-strip">
+				<div class="h-trust-inner">
+					<div class="h-trust-item">
+						<span class="h-trust-num">20+</span>
+						<span class="h-trust-label">EVM chains</span>
 					</div>
-					<div class="h-step h-reveal">
-						<div class="h-step-num" aria-hidden="true">02</div>
-						<h3>Animate &amp; configure</h3>
-						<p>
-							Pick animations, add an AI chat agent, adjust lighting and camera. Save
-							your avatar to your account for reuse.
-						</p>
+					<span class="h-trust-sep" aria-hidden="true">·</span>
+					<div class="h-trust-item">
+						<span class="h-trust-num">ERC-8004</span>
+						<span class="h-trust-label">on-chain standard</span>
 					</div>
-					<div class="h-step h-reveal">
-						<div class="h-step-num" aria-hidden="true">03</div>
-						<h3>Embed anywhere</h3>
-						<p>
-							Generate a widget — one iframe, any site. Turntable, talking agent,
-							animation gallery. Works in Notion, Ghost, WordPress.
-						</p>
+					<span class="h-trust-sep" aria-hidden="true">·</span>
+					<div class="h-trust-item">
+						<span class="h-trust-num">5</span>
+						<span class="h-trust-label">widget types</span>
+					</div>
+					<span class="h-trust-sep" aria-hidden="true">·</span>
+					<div class="h-trust-item">
+						<span class="h-trust-num">A2A + MCP</span>
+						<span class="h-trust-label">interoperability</span>
+					</div>
+					<span class="h-trust-sep" aria-hidden="true">·</span>
+					<div class="h-trust-item">
+						<span class="h-trust-num">MIT</span>
+						<span class="h-trust-label">open source</span>
+					</div>
+				</div>
+			</div>
+
+			<!-- ── Bento feature grid ── -->
+			<section class="h-bento-section">
+				<div class="h-bento-header h-reveal">
+					<p class="h-section-label">What you get</p>
+					<h2 class="h-section-title">Everything an agent needs<br />to exist in the world.</h2>
+				</div>
+				<div class="h-bento-grid">
+					<!-- Large card: 3D viewer -->
+					<div class="h-bento-card h-bento-card--lg h-reveal">
+						<div class="h-bento-visual">
+							<model-viewer
+								src="/avatars/cz.glb"
+								auto-rotate
+								auto-rotate-delay="0"
+								rotation-per-second="14deg"
+								interaction-prompt="none"
+								camera-controls
+								disable-zoom
+								shadow-intensity="0.7"
+								exposure="1.0"
+								environment-image="neutral"
+								camera-orbit="0deg 72deg 2.8m"
+								field-of-view="30deg"
+								loading="lazy"
+							></model-viewer>
+						</div>
+						<div class="h-bento-body">
+							<span class="h-bento-tag">Viewer</span>
+							<h3>WebGL rendering, zero install.</h3>
+							<p>Drag any GLB into the browser. Full animations, lighting, and materials — instantly, on any device.</p>
+							<a href="/app" class="h-feature-link">Open viewer →</a>
+						</div>
+					</div>
+					<!-- Small cards -->
+					<div class="h-bento-card h-reveal">
+						<div class="h-bento-body">
+							<span class="h-bento-tag">Embed</span>
+							<h3>One iframe. Any site.</h3>
+							<p>Notion, Ghost, WordPress, Framer. No SDK on the consumer side.</p>
+							<div class="h-bento-code">
+								<span class="tag">&lt;agent-3d</span>
+								<br />&nbsp;&nbsp;<span class="attr">agent-id</span>=<span class="val">"0x3d…"</span>
+								<br /><span class="tag">&gt;&lt;/agent-3d&gt;</span>
+							</div>
+						</div>
+					</div>
+					<div class="h-bento-card h-reveal">
+						<div class="h-bento-body">
+							<span class="h-bento-tag h-bento-tag--mint">On-chain</span>
+							<h3>Verifiable identity.</h3>
+							<p>ERC-8004 registration. One transaction. Discoverable by any A2A or MCP client on 20+ chains.</p>
+							<div class="h-bento-id">
+								<span class="h-id-dot" style="background:#6ee7b7;box-shadow:0 0 8px #6ee7b7"></span>
+								<span style="font-family:monospace;font-size:12px;color:rgba(255,255,255,0.6)">0x3d…a9f · Base</span>
+							</div>
+						</div>
+					</div>
+					<div class="h-bento-card h-reveal">
+						<div class="h-bento-body">
+							<span class="h-bento-tag h-bento-tag--violet">AI</span>
+							<h3>Six emotions. Real time.</h3>
+							<p>Built-in empathy layer. Your agent reacts — speaking, thinking, succeeding, failing.</p>
+							<div class="h-bento-emotions">
+								<span>✦ celebration</span>
+								<span>? curiosity</span>
+								<span>♥ empathy</span>
+								<span>! concern</span>
+							</div>
+						</div>
+					</div>
+					<div class="h-bento-card h-reveal">
+						<div class="h-bento-body">
+							<span class="h-bento-tag">Widgets</span>
+							<h3>5 widget types.</h3>
+							<p>Turntable · Talking Agent · Animation Gallery · ERC-8004 Passport · Hotspot Tour</p>
+							<a href="/studio" class="h-feature-link">Widget Studio →</a>
+						</div>
 					</div>
 				</div>
 			</section>
 
-			<!-- ── Feature: Viewer ── -->
-			<div class="h-section-dark">
-				<div class="h-feature h-section-inner">
-					<div class="h-feature-text h-reveal">
-						<h3>Instant 3D viewer,<br />no install.</h3>
-						<p>
-							Built on three.js r176. Drag a GLB file onto the page and see it
-							rendered in WebGL with full lighting, animations, and material
-							inspection — on any device, any browser.
+			<!-- ── Developer section ── -->
+			<div class="h-dev-section h-reveal">
+				<div class="h-dev-inner">
+					<div class="h-dev-text">
+						<p class="h-section-label">For developers</p>
+						<h2>Drop one tag.<br />Ship a 3D agent.</h2>
+						<p class="h-dev-sub">
+							The <code>&lt;agent-3d&gt;</code> web component lazy-loads, renders anywhere,
+							and connects to your existing AI stack via MCP or A2A.
+							No framework. No build step.
 						</p>
-						<a href="/" class="h-feature-link">Open the viewer →</a>
+						<div class="h-dev-links">
+							<a href="/features" class="h-feature-link">Read the docs →</a>
+							<a href="https://github.com/nirholas/3D" target="_blank" rel="noopener" class="h-feature-link">GitHub →</a>
+						</div>
 					</div>
-					<div class="h-feature-visual h-reveal">
-						<model-viewer
-							src="/avatars/cz.glb"
-							alt="3D model preview"
-							camera-controls
-							auto-rotate
-							auto-rotate-delay="0"
-							rotation-per-second="12deg"
-							interaction-prompt="none"
-							shadow-intensity="0.6"
-							exposure="1.0"
-							tone-mapping="aces"
-							environment-image="neutral"
-							camera-orbit="0deg 75deg 2.8m"
-							field-of-view="30deg"
-							loading="lazy"
-						></model-viewer>
-					</div>
-				</div>
-			</div>
+					<div class="h-dev-code">
+						<div class="h-dev-code-bar">
+							<span class="h-dev-code-dot"></span>
+							<span class="h-dev-code-dot"></span>
+							<span class="h-dev-code-dot"></span>
+							<span class="h-dev-code-filename">index.html</span>
+						</div>
+						<pre class="h-dev-pre"><code><span class="c">&lt;!-- 1. Load the component --&gt;</span>
+<span class="tag">&lt;script</span> <span class="attr">type</span>=<span class="val">"module"</span>
+  <span class="attr">src</span>=<span class="val">"https://three.ws/agent-3d/latest/agent-3d.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
 
-			<!-- ── Feature: Widget Studio ── -->
-			<div class="h-feature h-reveal" style="max-width: 1080px; margin: 0 auto">
-				<div class="h-feature-text">
-					<h3>Embeddable widgets.<br />One line of HTML.</h3>
-					<p>
-						Save any avatar as a widget — a configured, shareable view that any site can
-						drop in with a single iframe. Five types: Turntable, Animation Gallery,
-						Talking Agent, ERC-8004 Passport, Hotspot Tour.
-					</p>
-					<a href="/studio" class="h-feature-link">Open Widget Studio →</a>
-				</div>
-				<div class="h-feature-visual">
-					<div class="h-widget-preview">
-						<div class="h-widget-card h-reveal">
-							<div class="h-widget-card-label">Turntable</div>
-							<div class="h-widget-card-title">Auto-rotating hero banner</div>
-							<div class="h-widget-card-desc">
-								360° display, configurable speed and background.
-							</div>
-						</div>
-						<div class="h-widget-card h-reveal">
-							<div class="h-widget-card-label">Talking Agent</div>
-							<div class="h-widget-card-title">Embodied AI chat</div>
-							<div class="h-widget-card-desc">
-								Your 3D avatar speaks. Powered by your LLM of choice.
-							</div>
-						</div>
-						<div class="h-embed-code h-reveal">
-							<span class="tag">&lt;iframe</span>
-							<span class="attr"> src</span>=<span class="attr"
-								>"https://three.ws/app#widget=wdgt_abc123"</span
-							>
-							<span class="tag">/&gt;</span>
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<!-- ── Feature: Agent Identity ── -->
-			<div class="h-section-dark">
-				<div class="h-feature h-feature-flip h-section-inner">
-					<div class="h-feature-text h-reveal">
-						<h3>On-chain identity<br />for every agent.</h3>
-						<p>
-							Register your avatar on Ethereum via ERC-8004 — a verifiable, portable
-							identity discoverable by any A2A or MCP client. Your 3D model becomes
-							your agent's on-chain passport.
-						</p>
-						<a href="/features" class="h-feature-link">Read the spec →</a>
-					</div>
-					<div class="h-feature-visual h-reveal">
-						<div class="h-identity-card">
-							<div class="h-id-header">
-								<div class="h-id-dot"></div>
-								<span class="h-id-title">agent-registration.json</span>
-							</div>
-							<div class="h-id-row">
-								<span class="h-id-key">name</span>
-								<span class="h-id-val">"three.ws"</span>
-							</div>
-							<div class="h-id-row">
-								<span class="h-id-key">agentId</span>
-								<span class="h-id-val gold">0x3d…a9f</span>
-							</div>
-							<div class="h-id-row">
-								<span class="h-id-key">type</span>
-								<span class="h-id-val">ERC-8004</span>
-							</div>
-							<div class="h-id-row">
-								<span class="h-id-key">services</span>
-								<span class="h-id-val">A2A · MCP · web</span>
-							</div>
-							<div class="h-id-row">
-								<span class="h-id-key">active</span>
-								<span class="h-id-val gold">true</span>
-							</div>
-						</div>
+<span class="c">&lt;!-- 2. Drop the tag --&gt;</span>
+<span class="tag">&lt;agent-3d</span>
+  <span class="attr">agent-id</span>=<span class="val">"0x3d…a9f"</span>
+  <span class="attr">kiosk</span>
+<span class="tag">&gt;&lt;/agent-3d&gt;</span></code></pre>
 					</div>
 				</div>
 			</div>
 
 			<!-- ── Final CTA ── -->
-			<section class="h-cta-section h-reveal">
-				<h2>Ready to give your<br />agent a presence?</h2>
-				<p>Drop a 3D model. Add AI. Ship in minutes.</p>
-				<div class="h-cta-row-center">
-					<a href="/" class="h-btn-primary">
-						<span>Launch Viewer</span>
-						<span class="arrow">→</span>
-					</a>
-					<a href="/register" class="h-btn-ghost">Create account</a>
+			<section class="h-cta-section">
+				<div class="h-cta-inner h-reveal">
+					<h2>Your agent deserves<br />a face.</h2>
+					<p>Free to start. No credit card. No install.</p>
+					<div class="h-cta-row-center">
+						<a href="/create" class="h-btn-primary">
+							<span>Create your agent</span>
+							<span class="arrow">→</span>
+						</a>
+						<a href="/app" class="h-btn-ghost">Try the viewer</a>
+					</div>
 				</div>
 			</section>
 
 			<footer class="h-footer">
-				<p>
-					three.ws ·
-					<a href="https://github.com/nirholas/3D" target="_blank" rel="noopener">GitHub</a>
-					· <a href="/features">Docs</a> ·
-					<a href="https://eips.ethereum.org/EIPS/eip-8004" target="_blank" rel="noopener">ERC-8004</a>
-				</p>
+				<div class="h-footer-inner">
+					<div class="h-footer-brand">
+						<span class="wordmark-dot" aria-hidden="true"></span>
+						<span>three.ws</span>
+					</div>
+					<nav class="h-footer-links" aria-label="Footer">
+						<a href="https://github.com/nirholas/3D" target="_blank" rel="noopener">GitHub</a>
+						<a href="/features">Docs</a>
+						<a href="/features">Features</a>
+						<a href="/studio">Widgets</a>
+						<a href="/discover">Discover</a>
+						<a href="https://eips.ethereum.org/EIPS/eip-8004" target="_blank" rel="noopener">ERC-8004</a>
+					</nav>
+					<p class="h-footer-copy">Open source · MIT license</p>
+				</div>
 			</footer>
 		</main>
 
@@ -532,36 +542,64 @@
 				});
 			})();
 
-			// Scroll-driven avatar orbit
+			// Hero avatar — wave on load, then idle, then track cursor + scroll
 			(function () {
 				const scrollEl = document.querySelector('.home-parallax');
-				const mv = document.querySelector('.h-avatar-viewer');
+				const mv = document.getElementById('hero-avatar');
 				const heroAct = document.querySelector('.h-hero-act');
 				if (!scrollEl || !mv || !heroAct) return;
 
-				// Disable auto-rotate — scroll drives the camera instead
-				mv.removeAttribute('auto-rotate');
+				// Cursor + scroll state
+				let mouseX = 0, mouseY = 0;
+				let scrollProgress = 0;
+				let baseTheta = 0, basePhi = 75;
+				let curTheta = 0, curPhi = 75, curR = 3.2;
+				let targetTheta = 0, targetPhi = 75, targetR = 3.2;
 
-				const startOrbit = { theta: 20, phi: 68, r: 3.4 };
-				const endOrbit   = { theta: 300, phi: 62, r: 4.0 };
-
-				function lerp(a, b, t) { return a + (b - a) * t; }
-				function ease(t) { return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; }
-
-				let ticking = false;
-				scrollEl.addEventListener('scroll', function () {
-					if (ticking) return;
-					ticking = true;
-					requestAnimationFrame(function () {
-						const progress = Math.min(scrollEl.scrollTop / heroAct.offsetHeight, 1);
-						const t = ease(progress);
-						const theta = lerp(startOrbit.theta, endOrbit.theta, t);
-						const phi   = lerp(startOrbit.phi,   endOrbit.phi,   t);
-						const r     = lerp(startOrbit.r,     endOrbit.r,     t);
-						mv.setAttribute('camera-orbit', theta.toFixed(1) + 'deg ' + phi.toFixed(1) + 'deg ' + r.toFixed(2) + 'm');
-						ticking = false;
-					});
+				// Track cursor in -1..1 NDC
+				window.addEventListener('mousemove', (e) => {
+					mouseX = (e.clientX / innerWidth) * 2 - 1;
+					mouseY = (e.clientY / innerHeight) * 2 - 1;
 				}, { passive: true });
+
+				// Scroll progress
+				scrollEl.addEventListener('scroll', () => {
+					scrollProgress = Math.min(scrollEl.scrollTop / heroAct.offsetHeight, 1);
+				}, { passive: true });
+
+				// After wave finishes (~2.5s), settle to Idle
+				mv.addEventListener('load', () => {
+					setTimeout(() => {
+						const anims = mv.availableAnimations || [];
+						if (anims.includes('Idle')) {
+							mv.animationName = 'Idle';
+							mv.play();
+						}
+					}, 2600);
+				}, { once: true });
+
+				// Smoothly drive camera-orbit each frame
+				function tick() {
+					// scroll: orbit around as you scroll through hero
+					const scrollTheta = scrollProgress * 240;
+					const scrollPhi   = 75 - scrollProgress * 12;
+					const scrollR     = 3.2 + scrollProgress * 0.6;
+					// cursor: subtle tracking — the avatar looks at you
+					const cursorTheta = mouseX * 18;
+					const cursorPhi   = 8 * mouseY;
+					targetTheta = scrollTheta + cursorTheta;
+					targetPhi   = scrollPhi   + cursorPhi;
+					targetR     = scrollR;
+					curTheta += (targetTheta - curTheta) * 0.08;
+					curPhi   += (targetPhi   - curPhi)   * 0.08;
+					curR     += (targetR     - curR)     * 0.06;
+					mv.setAttribute('camera-orbit',
+						curTheta.toFixed(1) + 'deg ' +
+						curPhi.toFixed(1)   + 'deg ' +
+						curR.toFixed(2)     + 'm');
+					requestAnimationFrame(tick);
+				}
+				tick();
 			})();
 
 			// Avatar picker + animation chips (Act 2)
@@ -618,6 +656,26 @@
 					s.textContent = l;
 					return s;
 				}));
+			})();
+
+			// Custom cursor
+			(function () {
+				const cursor = document.getElementById('cursor');
+				if (!cursor || window.matchMedia('(hover: none)').matches) return;
+				let cx = -100, cy = -100, tx = -100, ty = -100;
+				document.addEventListener('mousemove', e => { tx = e.clientX; ty = e.clientY; });
+				document.addEventListener('mouseleave', () => { tx = cy = -100; });
+				const hover = 'a,button,[role="button"],.h-av-opt,.h-anim-chip';
+				document.querySelectorAll(hover).forEach(el => {
+					el.addEventListener('mouseenter', () => cursor.classList.add('cursor--hover'));
+					el.addEventListener('mouseleave', () => cursor.classList.remove('cursor--hover'));
+				});
+				(function loop() {
+					cx += (tx - cx) * 0.18;
+					cy += (ty - cy) * 0.18;
+					cursor.style.transform = `translate(${cx}px,${cy}px) translate(-50%,-50%)`;
+					requestAnimationFrame(loop);
+				})();
 			})();
 
 			// Star field canvas

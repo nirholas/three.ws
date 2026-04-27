@@ -1,0 +1,61 @@
+{
+  "name": "bvhecctrl",
+  "version": "0.0.18",
+  "author": "Erdong Chen",
+  "license": "MIT",
+  "description": "A simple bvh character controller for R3F",
+  "keywords": [
+    "react",
+    "three",
+    "threejs",
+    "react-three-fiber",
+    "control",
+    "character-control"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pmndrs/BVHEcctrl.git"
+  },
+  "files": [
+    "dist/*"
+  ],
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "sideEffects": false,
+  "dependencies": {
+    "three-mesh-bvh": "^0.9.0",
+    "three-stdlib": "^2.36.1",
+    "zustand": "^5.0.3"
+  },
+  "devDependencies": {
+    "@react-three/drei": "^10.0.5",
+    "@react-three/fiber": "^9.1.1",
+    "@types/react": "^19.0.12",
+    "@types/react-dom": "^19.0.4",
+    "@vitejs/plugin-react": "^4.3.4",
+    "leva": "^0.10.0",
+    "typescript": "^5.8.2",
+    "vite": "^6.2.4"
+  },
+  "peerDependencies": {
+    "@react-three/drei": ">=9.0",
+    "@react-three/fiber": ">=8.0",
+    "react": ">=19.1.0",
+    "react-dom": ">=19.1.0",
+    "three": ">=0.177.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && tsc",
+    "preview": "vite preview"
+  }
+}
