@@ -176,6 +176,75 @@ export class AgentHome {
 			navigator.clipboard?.writeText(url).catch(() => {});
 			this._flashBtn(panel.querySelector('#agent-copy-link'), '✓');
 		});
+
+		// Inline name + description editing — debounced auto-save with optimistic
+		// rollback on backend rejection (e.g. anonymous viewer hits PUT 401).
+		panel.querySelectorAll('.agent-home-editable').forEach((el) => {
+			this._wireInlineEdit(el);
+		});
+	}
+
+	_wireInlineEdit(el) {
+		if (!el || !this.identity?.id) return;
+		const field = el.dataset.field;
+		if (!field) return;
+
+		// Track the last server-confirmed value for rollback / no-op detection.
+		el._lastSaved = el.textContent.trim();
+
+		// Enter blurs (saves) instead of inserting a newline. Escape reverts.
+		el.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter') {
+				e.preventDefault();
+				el.blur();
+			} else if (e.key === 'Escape') {
+				e.preventDefault();
+				el.textContent = el._lastSaved || '';
+				el.blur();
+			}
+		});
+
+		el.addEventListener('focus', () => {
+			el.classList.add('is-editing');
+		});
+
+		el.addEventListener('blur', async () => {
+			el.classList.remove('is-editing');
+			const next = el.textContent.replace(/\s+/g, ' ').trim();
+			if (next === (el._lastSaved || '')) return; // no change
+
+			// Optimistic update
+			const previous = el._lastSaved || '';
+			el._lastSaved = next;
+			el.classList.add('is-saving');
+
+			try {
+				const resp = await fetch(`/api/agents/${this.identity.id}`, {
+					method: 'PUT',
+					credentials: 'include',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({ [field]: next }),
+				});
+				if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+				const { agent } = await resp.json().catch(() => ({}));
+				// Reflect any server-side normalisation (trimmed, capped, etc.)
+				if (agent && typeof agent[field] === 'string' && agent[field] !== next) {
+					el.textContent = agent[field];
+					el._lastSaved = agent[field];
+				}
+				if (this.identity._record) this.identity._record[field] = el._lastSaved;
+				el.classList.remove('is-saving');
+				el.classList.add('is-saved');
+				setTimeout(() => el.classList.remove('is-saved'), 1100);
+			} catch {
+				// Roll back to the last known good value.
+				el.textContent = previous;
+				el._lastSaved = previous;
+				el.classList.remove('is-saving');
+				el.classList.add('is-error');
+				setTimeout(() => el.classList.remove('is-error'), 1500);
+			}
+		});
 	}
 
 	// ── Memory Bar ────────────────────────────────────────────────────────────

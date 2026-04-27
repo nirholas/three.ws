@@ -3081,6 +3081,54 @@ footer .separator {
 	text-overflow: ellipsis;
 }
 
+/* ── Inline-editable fields (name, description) ─────────────────────────── */
+.agent-home-editable {
+	cursor: text;
+	border-radius: 4px;
+	padding: 1px 4px;
+	margin: -1px -4px;
+	transition:
+		background 0.15s,
+		box-shadow 0.15s;
+	outline: none;
+}
+.agent-home-editable:hover:not(.is-editing) {
+	background: rgba(255, 255, 255, 0.04);
+}
+.agent-home-editable.is-editing,
+.agent-home-editable:focus-visible {
+	background: rgba(255, 255, 255, 0.08);
+	box-shadow: 0 0 0 1px rgba(255, 215, 0, 0.5);
+}
+.agent-home-editable.is-saving {
+	box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18);
+	opacity: 0.7;
+}
+.agent-home-editable.is-saved {
+	box-shadow: 0 0 0 1px rgba(74, 222, 128, 0.6);
+}
+.agent-home-editable.is-error {
+	box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.7);
+}
+/* Empty-state placeholder (no actual <input>, so we render via :before). */
+.agent-home-editable:empty:not(.is-editing):before {
+	content: attr(data-placeholder);
+	color: rgba(255, 255, 255, 0.28);
+	font-style: italic;
+}
+
+.agent-home-description {
+	margin: 4px 0 0;
+	font-size: var(--text-xs);
+	font-weight: 400;
+	color: rgba(255, 255, 255, 0.55);
+	line-height: 1.45;
+	white-space: normal;
+}
+.agent-home-description.agent-home-editable {
+	cursor: text;
+}
+
 .agent-home-status-sep {
 	color: rgba(255, 255, 255, 0.2);
 	margin: 0 2px;
