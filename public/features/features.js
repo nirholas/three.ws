@@ -228,9 +228,47 @@ function setupCopyEmbed() {
 	});
 }
 
+// ── Star field canvas renderer ───────────────────────────────────────────
+
+function initStarFields() {
+	for (const canvas of ROOT.querySelectorAll('[data-role="star-canvas"]')) {
+		const dpr = Math.min(window.devicePixelRatio || 1, 2);
+		const w = window.innerWidth * dpr;
+		const h = window.innerHeight * 4 * dpr; // tall enough to cover 140vh act
+		canvas.width = w;
+		canvas.height = h;
+		const ctx = canvas.getContext('2d');
+		const tint = canvas.dataset.tint || '255,255,255';
+		const count = parseInt(canvas.dataset.count || '250', 10);
+		for (let i = 0; i < count; i++) {
+			const x = Math.random() * w;
+			const y = Math.random() * h;
+			const r = (Math.random() * 1.4 + 0.3) * dpr;
+			const a = Math.random() * 0.65 + 0.2;
+			ctx.beginPath();
+			ctx.arc(x, y, r, 0, Math.PI * 2);
+			ctx.fillStyle = `rgba(${tint},${a})`;
+			ctx.fill();
+		}
+		// A handful of brighter "star clusters"
+		for (let i = 0; i < 12; i++) {
+			const x = Math.random() * w;
+			const y = Math.random() * h;
+			const grd = ctx.createRadialGradient(x, y, 0, x, y, 6 * dpr);
+			grd.addColorStop(0, `rgba(${tint},0.9)`);
+			grd.addColorStop(1, `rgba(${tint},0)`);
+			ctx.beginPath();
+			ctx.arc(x, y, 6 * dpr, 0, Math.PI * 2);
+			ctx.fillStyle = grd;
+			ctx.fill();
+		}
+	}
+}
+
 // ── Boot ─────────────────────────────────────────────────────────────────
 
 function init() {
+	initStarFields();
 	paintChainRibbon();
 	setupReveal();
 	setupLazyBoot();
