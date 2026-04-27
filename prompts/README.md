@@ -25,6 +25,51 @@ Do not open these while anything in the priority stack above is broken:
 - [widget-studio/](./widget-studio/) — turntable, animation gallery, passport, hotspot tour
 - [embed/03-embed-allowlist.md](./embed/03-embed-allowlist.md) — referrer allowlist
 
+## Active vs. archival
+
+**None of these files are imported by application code.** All files in this directory are planning prompts (markdown) consumed by AI agents, not by the runtime.
+
+### Active (in-flight or upcoming)
+
+Directories corresponding to unshipped or partially-shipped work:
+
+| Directory | Status |
+|---|---|
+| `wallet-auth/` | Active — SIWE auth foundation |
+| `selfie-agent/` | Active — photo-to-avatar pipeline |
+| `selfie-onboarding/` | Active — onboarding UX |
+| `avatar-platform/` | Active — avatar platform backend |
+| `avatar-edit/` | Active — post-creation editing |
+| `avatar-editing/` | Active — material/texture editing |
+| `drop-edit-embed/` | Active — anyone-can-drop-and-embed flow |
+| `embed/` | Active — embed polish |
+| `portable-embed/` | Active — portable embed (Claude/LobeHub) |
+| `claude-artifact/` | Active — Claude artifact integration |
+| `claude-lobehub/` | Active — LobeHub integration |
+| `lobehub-embed/` | Active — LobeHub embed |
+| `onchain/` | Active — ERC-8004 on-chain deployment |
+| `cz-demo/` | Active — ship target demo |
+| `embed-hardening/` | Active — embed security hardening |
+| `widget-studio/` | Side lane — not a blocker |
+| `scalability/` | Side lane — revisit when traffic shape known |
+| `pretext/` | Side lane — shipped/shelved |
+
+### Archival (completed work, kept for reference)
+
+| Directory | Status |
+|---|---|
+| `archive/` | Completed prompts no longer actionable |
+| `complete/` | Finished sprints |
+| `build/` | Master flat index (bands 1–5); use as alternative dispatch |
+| `agent-3d/` | agent-3d component prompts — shipped |
+| `discover-rename/` | Discover page rename — shipped |
+| `erc8004-parity/` | ERC-8004 parity work — shipped |
+| `final-integration/` | Final integration pass — shipped |
+| `onboarding-flow/` | Onboarding flow — shipped |
+| `parallel-finish/` | Parallel finish tasks — shipped |
+| `permissions/` | Permissions model — shipped |
+| `sprint-100/` | Sprint 100 tasks — shipped |
+
 ## Rules that apply to every task
 
 - No new runtime dependencies unless the task file explicitly allows them.

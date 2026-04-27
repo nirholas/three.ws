@@ -106,6 +106,8 @@
 		{ "src": "/widgets", "dest": "/widgets-gallery/index.html" },
 		{ "src": "/widgets/", "dest": "/widgets-gallery/index.html" },
 		{ "src": "/widgets/(.*)", "dest": "/widgets-gallery/$1" },
+		{ "src": "/docs", "dest": "/docs/index.html" },
+		{ "src": "/docs/", "dest": "/docs/index.html" },
 		{ "src": "/docs/widgets", "dest": "/docs-widgets.html" },
 
 		{ "src": "/artifact", "dest": "/artifact/index.html" },

@@ -132,8 +132,9 @@
 				maxlength="30"
 				pattern="[a-zA-Z0-9_-]+"
 				placeholder="e.g. cool_agent"
+				aria-describedby="username-hint err"
 			/>
-			<p class="hint">3–30 characters, letters, numbers, _ or -</p>
+			<p class="hint" id="username-hint">3–30 characters, letters, numbers, _ or -</p>
 			<label for="password">Password</label>
 			<input
 				id="password"
@@ -142,10 +143,11 @@
 				required
 				minlength="10"
 				maxlength="200"
+				aria-describedby="password-hint err"
 			/>
-			<p class="hint">Minimum 10 characters</p>
+			<p class="hint" id="password-hint">Minimum 10 characters</p>
 			<button id="submit" type="submit">Create account</button>
-			<div class="err" id="err"></div>
+			<div class="err" id="err" role="alert" aria-live="polite"></div>
 			<p class="foot">Already have an account? <a href="/login">Sign in</a></p>
 		</form>
 		<script>
