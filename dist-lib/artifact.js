@@ -6,7 +6,7 @@
 import * as THREE from 'https://esm.sh/three@0.160.0';
 import { GLTFLoader } from 'https://esm.sh/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
 
-const BASE = 'https://3dagent.vercel.app';
+const BASE = 'https://three.ws';
 const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const CSS = `

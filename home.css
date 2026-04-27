@@ -142,19 +142,19 @@
 	pointer-events: auto;
 }
 
-/* ── Scroll-driven float on the avatar column ───────────────────────────── */
+/* ── Scroll-driven float on the avatar wrap ─────────────────────────────── */
 
 @supports (animation-timeline: scroll()) {
-	.h-hero-visual {
-		animation: hero-visual-float linear both;
+	.h-avatar-wrap {
+		animation: hero-avatar-float linear both;
 		animation-timeline: scroll(nearest);
 		animation-range: 0vh 160vh;
 	}
 
-	@keyframes hero-visual-float {
-		0%   { transform: translateY(0)    scale(1); }
-		60%  { transform: translateY(-28px) scale(1.02); }
-		100% { transform: translateY(-60px) scale(0.96); opacity: 0.4; }
+	@keyframes hero-avatar-float {
+		0%   { transform: translateY(0) scale(1); }
+		60%  { transform: translateY(-24px) scale(1.03); }
+		100% { transform: translateY(-56px) scale(0.94); opacity: 0.3; }
 	}
 }
 
@@ -1060,21 +1060,10 @@
 		transform: none;
 	}
 
-	.h-hero-sticky {
+	.h-hero-text {
 		position: relative;
 		height: auto;
 		margin-bottom: 0;
-	}
-}
-
-@media screen and (max-width: 1024px) {
-	.h-hero-sticky {
-		grid-template-columns: 1fr 1fr;
-		gap: var(--space-xl);
-	}
-
-	.h-hero-visual {
-		max-width: 400px;
 	}
 }
 
@@ -1095,25 +1084,30 @@
 		position: absolute;
 	}
 
-	.h-hero-sticky {
+	.h-avatar-stage {
+		position: relative;
+		height: 55vw;
+		min-height: 280px;
+	}
+
+	.h-avatar-wrap {
+		width: clamp(240px, 70vw, 360px);
+	}
+
+	.h-hero-text {
 		position: relative;
 		height: auto;
 		margin-bottom: 0;
-		grid-template-columns: 1fr;
-		min-height: 100vh;
-		padding: calc(var(--space-xl) + 1rem) var(--space-md) var(--space-xl);
+		padding: var(--space-lg) var(--space-md) var(--space-xl);
 		text-align: center;
 	}
 
-	.h-hero-content {
-		order: 2;
+	.h-cta-row {
+		justify-content: center;
 	}
 
-	.h-hero-visual {
-		order: 1;
-		max-width: 320px;
-		margin: 0 auto;
-		justify-self: center;
+	.h-standards {
+		justify-content: center;
 	}
 
 	.h-cta-row {

@@ -13,7 +13,7 @@ const [user] = await sql`
 
 const [agent] = await sql`
 	INSERT INTO agent_identities (user_id, name, description, home_url)
-	VALUES (${user.id}, 'Demo Agent', 'Seed agent for dev harness testing', 'https://3dagent.vercel.app')
+	VALUES (${user.id}, 'Demo Agent', 'Seed agent for dev harness testing', 'https://three.ws')
 	RETURNING id
 `;
 

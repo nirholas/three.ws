@@ -3,7 +3,7 @@
 	"identifier": "3d-agent",
 	"version": "0.1.0",
 	"author": "three.ws",
-	"homepage": "https://3dagent.vercel.app",
+	"homepage": "https://three.ws",
 	"meta": {
 		"title": "three.ws",
 		"description": "Embodied 3D avatar agent with continuous emotion blending. Renders a rigged glTF avatar inside chat, responds with gestures, speech, and on-chain ERC-8004 identity.",
