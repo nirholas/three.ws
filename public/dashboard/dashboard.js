@@ -765,9 +765,25 @@ async function renderKeys(root) {
 	root.innerHTML = `
 		<h1>API keys</h1><p class="sub">Server-side keys for calling the MCP server without OAuth. Treat like passwords.</p>
 		<div class="card" style="margin-bottom:16px">
-			<form id="new" class="row" style="flex-wrap:wrap;gap:10px">
+			<form id="new" class="row" style="flex-wrap:wrap;gap:10px;align-items:flex-start">
 				<input id="kname" placeholder="Key name (e.g. my-app prod)" required>
-				<select id="kenv"><option value="live">live</option><option value="test">test</option></select>
+				<select id="kenv" title="Environment">
+					<option value="live">live</option>
+					<option value="test">test</option>
+				</select>
+				<select id="kexp" title="Expires">
+					<option value="">Never expires</option>
+					<option value="30">30 days</option>
+					<option value="90">90 days</option>
+					<option value="365">1 year</option>
+				</select>
+				<fieldset id="kscope" style="border:1px solid var(--border,#333);border-radius:6px;padding:6px 10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0">
+					<legend style="padding:0 4px;font-size:12px" class="muted">Scopes</legend>
+					<label><input type="checkbox" name="scope" value="avatars:read" checked> read</label>
+					<label><input type="checkbox" name="scope" value="avatars:write" checked> write</label>
+					<label><input type="checkbox" name="scope" value="avatars:delete"> delete</label>
+					<label><input type="checkbox" name="scope" value="profile"> profile</label>
+				</fieldset>
 				<button class="btn" type="submit">Create key</button>
 			</form>
 			<div id="reveal"></div>
@@ -783,17 +799,23 @@ async function renderKeys(root) {
 				return;
 			}
 			klist.innerHTML = keys
-				.map(
-					(k) => `
+				.map((k) => {
+					const created = new Date(k.created_at).toLocaleDateString();
+					const expired = k.expires_at && new Date(k.expires_at) < new Date();
+					const expiresLabel = k.expires_at
+						? ` · ${expired ? '<b style="color:#f88">expired</b>' : `expires ${new Date(k.expires_at).toLocaleDateString()}`}`
+						: '';
+					const revokedLabel = k.revoked_at ? ' · <b style="color:#f88">revoked</b>' : '';
+					return `
 				<div class="key-row">
 					<div>
 						<div><code>${esc(k.prefix)}…</code> — ${esc(k.name)}</div>
-						<div class="muted">scope: ${esc(k.scope)} · created ${new Date(k.created_at).toLocaleDateString()}${k.revoked_at ? ` · <b style="color:#f88">revoked</b>` : ''}</div>
+						<div class="muted">scope: ${esc(k.scope)} · created ${created}${expiresLabel}${revokedLabel}</div>
 					</div>
 					${k.revoked_at ? '' : `<button class="btn sec" data-id="${esc(k.id)}">Revoke</button>`}
 				</div>
-			`,
-				)
+			`;
+				})
 				.join('');
 			klist.querySelectorAll('button[data-id]').forEach((b) =>
 				b.addEventListener('click', async () => {
@@ -813,10 +835,21 @@ async function renderKeys(root) {
 	root.querySelector('#new').addEventListener('submit', async (e) => {
 		e.preventDefault();
 		try {
-			const { key } = await api.createKey({
+			const scopes = Array.from(
+				root.querySelectorAll('#kscope input[name=scope]:checked'),
+			).map((el) => el.value);
+			if (!scopes.length) {
+				alert('Select at least one scope.');
+				return;
+			}
+			const expDays = parseInt(root.querySelector('#kexp').value, 10);
+			const payload = {
 				name: root.querySelector('#kname').value,
 				environment: root.querySelector('#kenv').value,
-			});
+				scope: scopes.join(' '),
+			};
+			if (Number.isFinite(expDays) && expDays > 0) payload.expires_in_days = expDays;
+			const { key } = await api.createKey(payload);
 			root.querySelector('#reveal').innerHTML = `
 				<div style="margin-top:10px">
 					<p class="muted">Copy this key now — you won't see it again.</p>
@@ -1037,6 +1070,11 @@ async function renderEmbed(root) {
 				<div class="card" style="margin-top:14px">
 					<h3 style="margin:0 0 6px">Who can embed?</h3>
 					<p class="muted" style="margin:0 0 10px">By default anyone. Lock it down to specific hosts (your chat host, your Substack…) on the <a href="/dashboard/embed-policy?agent=${encodeURIComponent(agent.id)}">embed-policy page</a>.</p>
+				</div>
+				<div class="card" style="margin-top:14px">
+					<h3 style="margin:0 0 6px">Browser permissions &amp; CSP</h3>
+					<p class="muted" style="margin:0 0 6px">The iframe needs <code>allow="camera; microphone"</code> for speech I/O. Drop either or both if your host doesn't use them.</p>
+					<p class="muted" style="margin:0">If your host enforces a Content-Security-Policy, allow this origin: <code>frame-src ${esc(origin)}</code> and <code>connect-src ${esc(origin)}</code>.</p>
 				</div>
 				${onchainCard(agent)}
 				${myAgentsCard()}
@@ -2369,19 +2407,25 @@ async function renderAnimations(root) {
 	statusEl.className = 'muted';
 	statusEl.style.cssText = 'margin:4px 0 0;font-size:12px;min-height:18px;';
 
+	let saveSeq = 0;
+	let clearTimer;
 	function debounceSync() {
 		clearTimeout(saveTimer);
+		clearTimeout(clearTimer);
 		saveTimer = setTimeout(async () => {
+			const seq = ++saveSeq;
 			statusEl.style.color = '#888';
 			statusEl.textContent = 'Saving…';
 			try {
 				await api.patchAgentAnimations(agent.id, animations);
+				if (seq !== saveSeq) return;
 				statusEl.style.color = '#9a8cff';
 				statusEl.textContent = 'Saved.';
-				setTimeout(() => {
-					if (statusEl.textContent === 'Saved.') statusEl.textContent = '';
+				clearTimer = setTimeout(() => {
+					if (seq === saveSeq && statusEl.textContent === 'Saved.') statusEl.textContent = '';
 				}, 2000);
 			} catch (err) {
+				if (seq !== saveSeq) return;
 				statusEl.style.color = '#ffb3b3';
 				statusEl.textContent = err.message || 'Save failed.';
 			}
@@ -2390,6 +2434,11 @@ async function renderAnimations(root) {
 
 	function isAttached(name) {
 		return animations.some((a) => a.name.toLowerCase() === name.toLowerCase());
+	}
+
+	function nameTaken(name, except) {
+		const lower = name.toLowerCase();
+		return animations.some((a) => a !== except && a.name.toLowerCase() === lower);
 	}
 
 	let listEl, presetGridEl;

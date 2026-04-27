@@ -26,7 +26,6 @@ const appConfig = {
 			input: {
 				main: resolve(__dirname, 'index.html'),
 				app: resolve(__dirname, 'app.html'),
-				features: resolve(__dirname, 'features.html'),
 				home: resolve(__dirname, 'home.html'),
 				embed: resolve(__dirname, 'embed.html'),
 				create: resolve(__dirname, 'create.html'),
@@ -55,7 +54,6 @@ const appConfig = {
 					'/deploy': resolve(root, 'app.html'),
 					'/agents': resolve(root, 'public/agents/index.html'),
 					'/agents/': resolve(root, 'public/agents/index.html'),
-					'/features': resolve(root, 'features.html'),
 					'/create': resolve(root, 'create.html'),
 					'/dashboard': resolve(root, 'public/dashboard/index.html'),
 					'/studio': resolve(root, 'public/studio/index.html'),

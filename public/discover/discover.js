@@ -128,6 +128,7 @@ els.chain.addEventListener('change', () => {
 });
 
 els.search.addEventListener('input', () => {
+	updateSearchClearVisibility();
 	clearTimeout(searchDebounce);
 	searchDebounce = setTimeout(() => {
 		state.query = els.search.value.trim();
@@ -135,6 +136,18 @@ els.search.addEventListener('input', () => {
 		resetAndLoad();
 	}, 250);
 });
+
+els.searchClear?.addEventListener('click', () => {
+	els.search.value = '';
+	state.query = '';
+	updateSearchClearVisibility();
+	syncUrl();
+	resetAndLoad();
+	els.search.focus();
+});
+
+// Initial visibility (covers ?q= deep links).
+updateSearchClearVisibility();
 
 els.loadMore.addEventListener('click', () => loadPage());
 
@@ -220,6 +233,7 @@ function clearAllFilters() {
 	state.query = '';
 	els.search.value = '';
 	els.chain.value = '';
+	updateSearchClearVisibility();
 	for (const b of els.filters.querySelectorAll('[data-filter]')) {
 		b.classList.toggle('active', b.dataset.filter === 'all');
 	}

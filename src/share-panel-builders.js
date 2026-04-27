@@ -61,9 +61,9 @@ export function buildIframeSnippet({ origin, agentId, opts = {} }) {
 }
 
 /**
- * Build the <agent-3d> web-component embed snippet. The web component renders
- * a richer surface (chat shell + viewer) than the iframe page, so the bg /
- * name-plate toggles intentionally do not propagate here.
+ * Build the <agent-3d> web-component embed snippet. The bg / name-plate toggles
+ * propagate through `background="..."` and `name-plate="off"` attributes which
+ * the element observes (see element.js → _applyBackground / _applyNamePlate).
  *
  * @param {{ origin: string, agentId: string, opts?: Partial<typeof DEFAULT_OPTIONS> }} args
  * @returns {string}
@@ -71,9 +71,12 @@ export function buildIframeSnippet({ origin, agentId, opts = {} }) {
 export function buildWebComponentSnippet({ origin, agentId, opts = {} }) {
 	const merged = { ...DEFAULT_OPTIONS, ...opts };
 	const { width, height } = SIZES[merged.size] || SIZES.medium;
+	const attrs = [`agent-id="${agentId}"`];
+	if (merged.bg !== DEFAULT_OPTIONS.bg) attrs.push(`background="${merged.bg}"`);
+	if (merged.name !== DEFAULT_OPTIONS.name) attrs.push(`name-plate="off"`);
 	return (
 		`<script type="module" src="${origin}/dist-lib/agent-3d.js"><\/script>\n` +
-		`<agent-3d agent-id="${agentId}"\n` +
+		`<agent-3d ${attrs.join(' ')}\n` +
 		`    style="display:block;width:${width}px;height:${height}px"\n` +
 		`></agent-3d>`
 	);
