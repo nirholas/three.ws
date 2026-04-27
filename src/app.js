@@ -235,13 +235,15 @@ class App {
 		}
 
 		// Editing an existing agent: ?agent=<uuid> (authenticated editing surface)
+		// _loadAgentForEdit owns its own _initAgentSystem call — early-return to
+		// avoid mounting AgentHome twice into the same container.
 		if (options.agentEdit) {
 			this._loadAgentForEdit(options.agentEdit);
-		} else {
-			// Resume a stashed editor session (post-login round-trip), else
-			// load the model named in the URL or fall back to the CZ avatar.
-			this._maybeResumeOrLoad(options);
+			this._initWidgetBridge();
+			return;
 		}
+
+		this._maybeResumeOrLoad(options);
 
 		// After sign-in redirect, check for a pending_save stash.
 		if (options.pending) {
@@ -372,9 +374,13 @@ class App {
 				agentId: this.identity.id,
 			});
 
-			// Render the agent home panel (identity card + timeline)
+			// Render the agent home panel (identity card + timeline). Idempotent —
+			// if a previous boot already rendered, tear it down before re-mounting
+			// so we never stack multiple cards in the sidebar.
 			const homeEl = document.getElementById('agent-home-container');
 			if (homeEl) {
+				if (this.agentHome) this.agentHome.destroy();
+				homeEl.innerHTML = '';
 				this.agentHome = new AgentHome(homeEl, this.identity, protocol, this.avatar);
 				await this.agentHome.render();
 			}
@@ -713,8 +719,47 @@ class App {
 			publicLink.hidden = false;
 		}
 
+		this._maybeShowOnboarding(agentId);
+
 		this._initAgentSystem();
 		this._initWidgetBridge();
+	}
+
+	// First-time orientation overlay for a freshly created (or freshly loaded)
+	// agent. Localstorage-keyed per agent so it never reappears once dismissed.
+	_maybeShowOnboarding(agentId) {
+		if (typeof window === 'undefined' || !agentId) return;
+		const key = `3dagent:onboarded:${agentId}`;
+		try {
+			if (localStorage.getItem(key)) return;
+		} catch {
+			return;
+		}
+
+		const banner = document.getElementById('agent-onboarding');
+		if (!banner) return;
+
+		const closeBtn = document.getElementById('agent-onboarding-close');
+		const deployLink = document.getElementById('agent-onboarding-deploy');
+		const shareLink = document.getElementById('agent-onboarding-share');
+
+		if (deployLink) deployLink.href = `/deploy?agent=${agentId}`;
+		if (shareLink) shareLink.href = `/agent/${agentId}`;
+
+		const dismiss = () => {
+			banner.hidden = true;
+			try {
+				localStorage.setItem(key, '1');
+			} catch {}
+		};
+
+		if (closeBtn) closeBtn.addEventListener('click', dismiss);
+		// Auto-dismiss when the user clicks any of the CTAs — they've engaged.
+		[deployLink, shareLink].forEach((el) => {
+			if (el) el.addEventListener('click', dismiss);
+		});
+
+		banner.hidden = false;
 	}
 
 	async _loadWidget(widgetId) {

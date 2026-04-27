@@ -4157,6 +4157,140 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 	z-index: 50;
 }
 
+/* ── First-time onboarding banner ─────────────────────────────────────────── */
+
+.agent-onboarding {
+	position: fixed;
+	right: var(--space-md);
+	bottom: calc(var(--space-md) + 80px);
+	width: min(360px, calc(100vw - var(--space-md) * 2));
+	z-index: 60;
+	animation: agent-onboarding-rise 0.32s ease-out;
+}
+
+.agent-onboarding[hidden] {
+	display: none;
+}
+
+@keyframes agent-onboarding-rise {
+	from {
+		opacity: 0;
+		transform: translateY(12px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.agent-onboarding__inner {
+	position: relative;
+	background: rgba(12, 12, 18, 0.96);
+	border: 1px solid rgba(255, 215, 0, 0.28);
+	border-radius: 12px;
+	padding: var(--space-lg) var(--space-lg) var(--space-md);
+	box-shadow:
+		0 12px 36px rgba(0, 0, 0, 0.55),
+		0 0 0 1px rgba(255, 215, 0, 0.06);
+	color: rgba(255, 255, 255, 0.92);
+}
+
+.agent-onboarding__close {
+	position: absolute;
+	top: 0.4rem;
+	right: 0.55rem;
+	background: transparent;
+	border: 0;
+	color: rgba(255, 255, 255, 0.45);
+	font-size: 1.4rem;
+	line-height: 1;
+	cursor: pointer;
+	width: 32px;
+	height: 32px;
+	border-radius: 6px;
+	transition:
+		color 0.15s,
+		background 0.15s;
+}
+
+.agent-onboarding__close:hover {
+	color: #fff;
+	background: rgba(255, 255, 255, 0.06);
+}
+
+.agent-onboarding__close:focus-visible {
+	outline: 2px solid rgba(255, 215, 0, 0.7);
+	outline-offset: 2px;
+}
+
+.agent-onboarding__title {
+	margin: 0 0 var(--space-xs);
+	font-size: 1.05rem;
+	font-weight: 500;
+	letter-spacing: -0.01em;
+}
+
+.agent-onboarding__desc {
+	margin: 0 0 var(--space-md);
+	font-size: 0.82rem;
+	color: rgba(255, 255, 255, 0.62);
+	line-height: 1.55;
+}
+
+.agent-onboarding__actions {
+	display: flex;
+	gap: var(--space-sm);
+	flex-wrap: wrap;
+}
+
+.agent-onboarding__btn {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.5em 0.95em;
+	border-radius: 7px;
+	font-size: 0.78rem;
+	font-weight: 500;
+	font-family: inherit;
+	text-decoration: none;
+	border: 1px solid rgba(255, 255, 255, 0.16);
+	background: transparent;
+	color: rgba(255, 255, 255, 0.78);
+	cursor: pointer;
+	transition: all 0.15s;
+}
+
+.agent-onboarding__btn:hover {
+	color: #fff;
+	border-color: rgba(255, 255, 255, 0.36);
+	background: rgba(255, 255, 255, 0.04);
+}
+
+.agent-onboarding__btn:focus-visible {
+	outline: 2px solid rgba(255, 215, 0, 0.7);
+	outline-offset: 2px;
+}
+
+.agent-onboarding__btn--primary {
+	background: rgba(255, 215, 0, 0.92);
+	border-color: rgba(255, 215, 0, 0.92);
+	color: #000;
+}
+
+.agent-onboarding__btn--primary:hover {
+	background: #ffd700;
+	color: #000;
+	border-color: #ffd700;
+}
+
+@media (max-width: 700px) {
+	.agent-onboarding {
+		left: var(--space-md);
+		right: var(--space-md);
+		bottom: calc(var(--space-md) + 90px);
+		width: auto;
+	}
+}
+
 .auth-gate__inner {
 	background: linear-gradient(180deg, rgba(18, 18, 26, 0.94) 0%, rgba(10, 10, 16, 0.94) 100%);
 	border: 1px solid rgba(255, 255, 255, 0.1);
