@@ -19,7 +19,7 @@ import { BrowserProvider } from 'ethers';
 
 // Faucet links per testnet chainId
 const FAUCETS = {
-	84532: 'https://www.coinbase.com/faucets/base-ethereum-goerli-faucet',
+	84532: 'https://www.coinbase.com/faucets/base-ethereum-sepolia-faucet',
 	11155111: 'https://sepoliafaucet.com/',
 	421614: 'https://www.alchemy.com/faucets/arbitrum-sepolia',
 	11155420: 'https://app.optimism.io/faucet',
@@ -27,6 +27,12 @@ const FAUCETS = {
 	43113: 'https://faucet.avax.network/',
 	97: 'https://testnet.bnbchain.org/faucet-smart',
 };
+
+const WALLET_INSTALL_URL = 'https://metamask.io/download/';
+
+function _hasWallet() {
+	return typeof window !== 'undefined' && !!window.ethereum;
+}
 
 export class DeployButton {
 	/**
@@ -141,9 +147,11 @@ export class DeployButton {
 			const cls = i < activeIdx ? 'done' : i === activeIdx ? 'active' : 'pending';
 			return `<span class="progress-step progress-step--${cls}">${_esc(s)}</span>`;
 		});
+		const liveText = activeIdx < steps.length ? `${steps[activeIdx]}…` : 'Done';
 		this._root.innerHTML = `
-			<div class="deploy-progress">
-				${labels.join('<span class="progress-sep">&#x2192;</span>')}
+			<div class="deploy-progress" role="status" aria-live="polite" aria-label="Deployment progress">
+				${labels.join('<span class="progress-sep" aria-hidden="true">&#x2192;</span>')}
+				<span class="visually-hidden">${_esc(liveText)}</span>
 			</div>
 		`;
 	}
@@ -167,6 +175,16 @@ export class DeployButton {
 	}
 
 	async _startDeploy() {
+		// Friendly handling for visitors with no wallet installed — give them a
+		// link instead of a cryptic "No wallet provider available" error.
+		if (!_hasWallet()) {
+			this._renderError('No wallet detected. Install one to deploy on-chain.', {
+				label: 'Install MetaMask',
+				handler: () => window.open(WALLET_INSTALL_URL, '_blank', 'noopener'),
+			});
+			return;
+		}
+
 		const steps = ['Estimating gas', 'Sign tx', 'Waiting confirmation', 'Done'];
 		this._renderProgress(steps, 0);
 

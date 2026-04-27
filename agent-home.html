@@ -198,6 +198,26 @@
 				border-color: rgba(255, 255, 255, 0.4);
 			}
 
+			.agent-stage-cta:focus-visible {
+				outline: 2px solid rgba(255, 215, 0, 0.7);
+				outline-offset: 3px;
+			}
+
+			.agent-stage-empty {
+				text-align: center;
+				color: rgba(255, 255, 255, 0.4);
+				font-size: 0.85rem;
+				margin: 1rem 0 0;
+			}
+
+			.agent-stage-share-status {
+				text-align: center;
+				color: #4ade80;
+				font-size: 0.75rem;
+				min-height: 1.2em;
+				margin: 0.6rem 0 0;
+			}
+
 			.agent-page-hero {
 				max-width: 520px;
 				margin: 2rem auto 2rem;
@@ -405,7 +425,7 @@
 		</header>
 
 		<main id="main">
-			<section class="agent-stage" aria-label="Agent body">
+			<section class="agent-stage" aria-label="Agent body" aria-busy="true">
 				<model-viewer
 					id="agent-stage-viewer"
 					class="agent-stage-viewer"
@@ -417,20 +437,32 @@
 					interaction-prompt="none"
 					ar
 					ar-modes="webxr scene-viewer quick-look"
-					alt="Agent avatar"
+					alt="Loading agent avatar"
 				></model-viewer>
+				<p class="agent-stage-empty" id="agent-stage-empty" hidden>
+					This agent doesn't have a body yet.
+				</p>
 				<div class="agent-stage-cta-row" id="agent-stage-ctas" hidden>
 					<a
 						class="agent-stage-cta agent-stage-cta--primary"
 						id="agent-stage-edit"
-						href="#"
 						hidden
 						>Open in editor →</a
 					>
-					<button class="agent-stage-cta agent-stage-cta--ghost" id="agent-stage-share">
+					<button
+						class="agent-stage-cta agent-stage-cta--ghost"
+						id="agent-stage-share"
+						aria-describedby="agent-stage-share-status"
+					>
 						Copy share link
 					</button>
 				</div>
+				<p
+					id="agent-stage-share-status"
+					class="agent-stage-share-status"
+					role="status"
+					aria-live="polite"
+				></p>
 			</section>
 
 			<div class="agent-page-hero">
@@ -649,35 +681,54 @@
 			}
 
 			async function mountStage(identity) {
+				const stage = document.querySelector('.agent-stage');
 				const viewer = document.getElementById('agent-stage-viewer');
+				const empty = document.getElementById('agent-stage-empty');
 				const ctaRow = document.getElementById('agent-stage-ctas');
 				const editLink = document.getElementById('agent-stage-edit');
 				const shareBtn = document.getElementById('agent-stage-share');
+				const shareStatus = document.getElementById('agent-stage-share-status');
 				const agentUrl = `${location.origin}/agent/${identity.id}`;
+				const friendlyName = identity.name || 'Agent';
 
+				viewer.setAttribute('alt', `${friendlyName} avatar`);
 				ctaRow.hidden = false;
 
 				shareBtn.addEventListener('click', async () => {
 					try {
 						await navigator.clipboard.writeText(agentUrl);
-						const original = shareBtn.textContent;
 						shareBtn.textContent = 'Copied ✓';
+						shareStatus.textContent = `Copied ${agentUrl} to clipboard`;
 						setTimeout(() => {
-							shareBtn.textContent = original;
-						}, 1400);
-					} catch {}
+							shareBtn.textContent = 'Copy share link';
+							shareStatus.textContent = '';
+						}, 1800);
+					} catch {
+						shareStatus.textContent =
+							'Could not copy automatically. Press Ctrl+C / Cmd+C to copy the URL above.';
+					}
 				});
 
 				try {
 					const me = await fetch('/api/auth/me', { credentials: 'include' });
 					if (me.ok) {
 						editLink.href = `/app?agent=${identity.id}`;
+						editLink.setAttribute(
+							'aria-label',
+							`Open ${friendlyName} in the editor`,
+						);
 						editLink.hidden = false;
 					}
 				} catch {}
 
 				const glbUrl = await resolveAgentGlb(identity);
-				if (glbUrl) viewer.src = glbUrl;
+				if (glbUrl) {
+					viewer.src = glbUrl;
+				} else {
+					empty.hidden = false;
+					viewer.style.display = 'none';
+				}
+				stage.setAttribute('aria-busy', 'false');
 			}
 
 			async function resolveAgentGlb(identity) {
