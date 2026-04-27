@@ -70,7 +70,8 @@ async function main() {
 	renderForm(agent.meta?.persona || DEFAULT_PERSONA);
 	initVoicePicker();
 	bindEvents();
-	document.getElementById('save-btn').disabled = false;
+	// Save button stays disabled until the user edits a field; input listeners
+	// re-enable it via markDirty().
 }
 
 function showForbidden() {
@@ -127,6 +128,7 @@ function renderTemplates() {
 
 function applyTemplate(tpl) {
 	renderForm({ ...DEFAULT_PERSONA, ...tpl.persona });
+	markDirty();
 	toast('Template applied — review and save.');
 }
 
@@ -275,6 +277,7 @@ function setVoiceProvider(p) {
 		.querySelectorAll('.vp-toggle-btn')
 		.forEach((b) => b.classList.toggle('active', b.dataset.vp === p));
 	renderVoiceSection();
+	scheduleSave();
 }
 
 function renderVoiceSection() {
@@ -419,6 +422,7 @@ function selectVoiceItem(el, vid) {
 		.forEach((i) => i.classList.remove('selected'));
 	el.classList.add('selected');
 	_voiceId = vid;
+	scheduleSave();
 }
 
 function previewWebVoice(name, btn) {
@@ -488,18 +492,53 @@ function readForm() {
 
 // ── Save ───────────────────────────────────────────────────────────────────
 
-function scheduleSave() {
-	// Not auto-saving — just here for future use if needed.
+function setSaveStatus(state) {
+	const el = document.getElementById('save-status');
+	if (!el) return;
+	el.classList.remove('saving', 'saved');
+	if (state === 'saving') {
+		el.classList.add('saving');
+		el.textContent = 'Saving…';
+	} else if (state === 'saved') {
+		el.classList.add('saved');
+		el.textContent = 'Saved';
+		clearTimeout(setSaveStatus._t);
+		setSaveStatus._t = setTimeout(() => {
+			if (el.classList.contains('saved')) el.textContent = '';
+		}, 2000);
+	} else {
+		el.textContent = '';
+	}
 }
 
-async function save() {
+function markDirty() {
+	const btn = document.getElementById('save-btn');
+	if (btn) btn.disabled = false;
+	setSaveStatus('');
+}
+
+function scheduleSave() {
+	markDirty();
+	clearTimeout(_saveDebounce);
+	_saveDebounce = setTimeout(() => {
+		save({ auto: true });
+	}, 2000);
+}
+
+async function save({ auto = false } = {}) {
+	clearTimeout(_saveDebounce);
 	const btn = document.getElementById('save-btn');
 	btn.disabled = true;
+	const prevLabel = btn.textContent;
 	btn.textContent = 'Saving…';
+	setSaveStatus('saving');
 	try {
 		const persona = readForm();
 		if (!persona.name) {
-			toast('Name is required.', true);
+			if (!auto) toast('Name is required.', true);
+			setSaveStatus('');
+			btn.disabled = false;
+			btn.textContent = prevLabel;
 			return;
 		}
 
@@ -524,11 +563,21 @@ async function save() {
 		// Update local agent reference so subsequent saves carry forward the new meta.
 		agent = { ...agent, name: persona.name, description: persona.bio, meta: newMeta };
 
-		toast('Saved!');
-		reloadPreview();
+		setSaveStatus('saved');
+		btn.textContent = 'Save';
+		btn.disabled = true; // clean — re-enabled by next edit
+		if (!auto) {
+			toast('Saved!');
+			reloadPreview();
+		}
 	} catch (err) {
-		toast(err.message || 'Save failed.', true);
-	} finally {
+		if (auto) {
+			console.warn('Autosave failed:', err);
+			setSaveStatus('');
+		} else {
+			toast(err.message || 'Save failed.', true);
+			setSaveStatus('');
+		}
 		btn.disabled = false;
 		btn.textContent = 'Save';
 	}
@@ -537,16 +586,20 @@ async function save() {
 // ── Events ─────────────────────────────────────────────────────────────────
 
 function bindEvents() {
-	document.getElementById('save-btn').addEventListener('click', save);
+	document.getElementById('save-btn').addEventListener('click', () => save({ auto: false }));
 
-	// Char counts
+	// Char counts + dirty tracking + autosave
 	['f-name', 'f-bio', 'f-system-prompt'].forEach((id) => {
-		document.getElementById(id)?.addEventListener('input', updateCharCounts);
+		const el = document.getElementById(id);
+		if (!el) return;
+		el.addEventListener('input', updateCharCounts);
+		el.addEventListener('input', scheduleSave);
 	});
 
 	// Sentiment bias label
 	document.getElementById('f-sentiment-bias').addEventListener('input', (e) => {
 		document.getElementById('bias-value').textContent = Number(e.target.value).toFixed(2);
+		scheduleSave();
 	});
 
 	// Add catchphrase
@@ -563,11 +616,13 @@ function bindEvents() {
 			if (word && !_doNotSay.includes(word)) {
 				_doNotSay.push(word);
 				rebuildChipDom();
+				scheduleSave();
 			}
 			e.target.value = '';
 		} else if (e.key === 'Backspace' && !e.target.value && _doNotSay.length) {
 			_doNotSay.pop();
 			rebuildChipDom();
+			scheduleSave();
 		}
 	});
 
@@ -577,6 +632,7 @@ function bindEvents() {
 		if (existing?.systemPrompt) {
 			document.getElementById('f-system-prompt').value = existing.systemPrompt;
 			updateCharCounts();
+			markDirty();
 			toast('Reset to last saved prompt.');
 		} else {
 			toast('No saved prompt to reset to.', false);

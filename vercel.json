@@ -45,6 +45,7 @@
 		{ "src": "/studio/", "dest": "/studio/index.html" },
 		{ "src": "/studio/(.*)", "dest": "/studio/$1" },
 
+		{ "src": "/api/dashboard/prefs", "dest": "/api/dashboard/prefs" },
 		{ "src": "/api/agents/me", "dest": "/api/agents" },
 		{ "src": "/api/agents/suggest", "dest": "/api/agents/suggest" },
 		{ "src": "/api/agents/by-wallet", "dest": "/api/agents/by-wallet" },

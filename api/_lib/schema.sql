@@ -620,3 +620,10 @@ create table if not exists password_resets (
 
 create index if not exists password_resets_user on password_resets(user_id) where consumed_at is null;
 create index if not exists password_resets_expiry on password_resets(expires_at);
+
+-- ── user_prefs — per-user UI preferences (dashboard layout, filters, etc.) ──
+create table if not exists user_prefs (
+    user_id     uuid primary key references users(id) on delete cascade,
+    prefs       jsonb not null default '{}'::jsonb,
+    updated_at  timestamptz not null default now()
+);

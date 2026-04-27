@@ -1714,9 +1714,45 @@ function saveWidgetPrefs(prefs) {
 	try {
 		localStorage.setItem(WIDGET_PREFS_KEY, JSON.stringify(prefs));
 	} catch {}
+	scheduleRemotePrefsSync(prefs);
+}
+
+// ── Remote prefs sync (best-effort backup) ─────────────────────────────────
+let _remotePrefsTimer = null;
+function scheduleRemotePrefsSync(prefs) {
+	clearTimeout(_remotePrefsTimer);
+	_remotePrefsTimer = setTimeout(() => {
+		fetch('/api/dashboard/prefs', {
+			method: 'POST',
+			credentials: 'include',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ prefs: { widgets: prefs } }),
+		}).catch(() => {});
+	}, 500);
+}
+
+let _remotePrefsHydrated = false;
+async function hydrateWidgetPrefsFromRemote() {
+	if (_remotePrefsHydrated) return;
+	_remotePrefsHydrated = true;
+	try {
+		const res = await fetch('/api/dashboard/prefs', { credentials: 'include' });
+		if (!res.ok) return;
+		const data = await res.json();
+		const remote = data?.prefs?.widgets;
+		if (remote && typeof remote === 'object') {
+			localStorage.setItem(
+				WIDGET_PREFS_KEY,
+				JSON.stringify({ ...DEFAULT_WIDGET_PREFS, ...remote }),
+			);
+		}
+	} catch {
+		// Network/auth failure → fall back to localStorage silently.
+	}
 }
 
 async function renderWidgets(root) {
+	await hydrateWidgetPrefsFromRemote();
 	const prefs = loadWidgetPrefs();
 	root.innerHTML = `
 		<div class="widgets-header">

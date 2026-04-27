@@ -230,8 +230,8 @@
 								shadow-intensity="0.6"
 								exposure="1.0"
 								environment-image="neutral"
-								camera-orbit="0deg 75deg 4.5m"
-								field-of-view="28deg"
+								camera-orbit="0deg 78deg 12m"
+								field-of-view="16deg"
 								loading="lazy"
 							></model-viewer>
 						</div>
@@ -573,9 +573,9 @@
 
 				let mouseX = 0, mouseY = 0;
 				let scrollProgress = 0;
+				let dollyOffset = 0; /* additive zoom from click reaction */
 				const BASE_THETA = -45, BASE_PHI = 80, BASE_R = 8.5;
 				let curTheta = BASE_THETA, curPhi = BASE_PHI, curR = BASE_R;
-				let trickActive = false;
 
 				window.addEventListener('mousemove', (e) => {
 					mouseX = (e.clientX / innerWidth) * 2 - 1;
@@ -596,10 +596,10 @@
 					const cursorPhi   = mouseY * 6;
 					const targetTheta = BASE_THETA + scrollTheta + cursorTheta;
 					const targetPhi   = BASE_PHI   + scrollPhi   + cursorPhi;
-					const targetR     = BASE_R     + scrollR;
+					const targetR     = BASE_R     + scrollR + dollyOffset;
 					curTheta += (targetTheta - curTheta) * 0.07;
 					curPhi   += (targetPhi   - curPhi)   * 0.07;
-					curR     += (targetR     - curR)     * 0.06;
+					curR     += (targetR     - curR)     * 0.12;
 					mv.setAttribute('camera-orbit',
 						curTheta.toFixed(1) + 'deg ' +
 						curPhi.toFixed(1)   + 'deg ' +
@@ -611,83 +611,110 @@
 				/* Click → random fun trick (CZ has no extra animations, so we do
 				   it with CSS transforms on the wrap: fall over, spin, push-up,
 				   jump). State is auto-cleared. */
-				/* clicks always trigger something fun and energetic — dance or jump.
-				   idle easter eggs can mix in spins / falls / push-ups for variety. */
-				const CLICK_TRICKS = ['cz-dance', 'cz-jump'];
-				const IDLE_TRICKS  = ['cz-dance', 'cz-jump', 'cz-spin', 'cz-fall', 'cz-pushup'];
-				function playTrick(name) {
-					if (trickActive) return;
-					trickActive = true;
-					/* apply animation to the model-viewer only, NOT the wrap.
-					   the ring/glow/badge stay static — the avatar appears to
-					   move *within* its frame, not tilt the whole page. */
-					mv.classList.add(name);
-					const onEnd = () => {
-						mv.classList.remove(name);
-						trickActive = false;
-						mv.removeEventListener('animationend', onEnd);
-					};
-					mv.addEventListener('animationend', onEnd);
-				}
+				/* CZ has only one baked animation in his GLB (Idle), so faking
+				   skeletal motion with CSS transforms looks plastic. Instead,
+				   clicking does a real camera dolly-zoom — actual rendering
+				   on the real animated model = looks natural, like /app. */
+				let dollyActive = false;
 				mv.style.cursor = 'pointer';
 				mv.addEventListener('click', () => {
-					playTrick(CLICK_TRICKS[Math.floor(Math.random() * CLICK_TRICKS.length)]);
+					if (dollyActive) return;
+					dollyActive = true;
+					const t0 = performance.now();
+					const dur = 700;
+					function step(now) {
+						const t = Math.min((now - t0) / dur, 1);
+						const wave = Math.sin(t * Math.PI); /* 0 → 1 → 0 */
+						dollyOffset = -3.2 * wave; /* zoom in 3.2m closer at peak */
+						if (t < 1) requestAnimationFrame(step);
+						else { dollyOffset = 0; dollyActive = false; }
+					}
+					requestAnimationFrame(step);
 				});
-
-				/* Idle easter egg: every 18-32s, CZ does something fun on his own */
-				function scheduleIdleTrick() {
-					const delay = 18000 + Math.random() * 14000;
-					setTimeout(() => {
-						if (!trickActive && document.visibilityState === 'visible') {
-							playTrick(IDLE_TRICKS[Math.floor(Math.random() * IDLE_TRICKS.length)]);
-						}
-						scheduleIdleTrick();
-					}, delay);
-				}
-				scheduleIdleTrick();
 			})();
 
-			// Avatar picker + animation chips (Act 2)
+			// Avatar picker + dynamic animation chips (Act 2) — same UX as /app
 			(function () {
 				const mv = document.getElementById('home-act2-mv');
 				const opts = document.querySelectorAll('.h-av-opt');
-				const chips = document.querySelectorAll('.h-anim-chip');
-				if (!mv) return;
+				const chipsWrap = document.querySelector('[data-role="anim-chips"]');
+				if (!mv || !chipsWrap) return;
 
-				function syncChips() {
-					const avail = mv.availableAnimations || [];
-					chips.forEach(c => {
-						c.hidden = avail.length > 0 && !avail.includes(c.dataset.anim);
-					});
+				const ANIM_EMOJI = {
+					Dance: '💃', Wave: '👋', Jump: '⬆', ThumbsUp: '👍',
+					Punch: '🥊', No: '🙅', Yes: '🙆', Idle: '😐',
+					Walk: '🚶', Walking: '🚶', Run: '🏃', Running: '🏃',
+					TPose: '🧍', Sitting: '💺', Standing: '🧍',
+					WalkJump: '🤸', Death: '💀',
+				};
+
+				function prettyLabel(name) {
+					/* Strip stuff like "V4.2(maya_head)" or anything in parens */
+					let clean = name.replace(/\s*\([^)]*\)/g, '')
+					                .replace(/V\d+(\.\d+)?$/, '')
+					                .replace(/_/g, ' ')
+					                .trim();
+					if (!clean) clean = name;
+					const key = clean.replace(/\s+/g, '');
+					const emoji = ANIM_EMOJI[key] || '✨';
+					return emoji + ' ' + clean;
 				}
 
-				// Avatar switch
+				/* Generate one chip per available animation in the loaded model */
+				function rebuildChips() {
+					const avail = mv.availableAnimations || [];
+					chipsWrap.innerHTML = '';
+					if (!avail.length) return;
+					for (const animName of avail) {
+						const btn = document.createElement('button');
+						btn.type = 'button';
+						btn.className = 'h-anim-chip';
+						btn.dataset.anim = animName;
+						btn.textContent = prettyLabel(animName);
+						btn.addEventListener('click', () => {
+							chipsWrap.querySelectorAll('.h-anim-chip').forEach(c => delete c.dataset.active);
+							btn.dataset.active = 'true';
+							mv.animationName = animName;
+							mv.play();
+						});
+						chipsWrap.appendChild(btn);
+					}
+					/* mark first chip active to mirror the auto-played animation */
+					const first = chipsWrap.querySelector('.h-anim-chip');
+					if (first) first.dataset.active = 'true';
+				}
+
+				/* Avatar switch — load model, rebuild chips for whatever animations it has */
 				opts.forEach(btn => {
 					btn.addEventListener('click', () => {
 						opts.forEach(b => b.setAttribute('aria-pressed', 'false'));
 						btn.setAttribute('aria-pressed', 'true');
-						chips.forEach(c => delete c.dataset.active);
-						mv.src = btn.dataset.src;
 						mv.addEventListener('load', () => {
-							syncChips();
-							mv.animationName = mv.availableAnimations?.[0] || '';
-							mv.play();
+							rebuildChips();
+							const first = (mv.availableAnimations || [])[0];
+							if (first) {
+								mv.animationName = first;
+								mv.play();
+							}
 						}, { once: true });
+						mv.src = btn.dataset.src;
 					});
 				});
 
-				// Animation chips
-				chips.forEach(chip => {
-					chip.addEventListener('click', () => {
-						chips.forEach(c => delete c.dataset.active);
-						chip.dataset.active = 'true';
-						mv.animationName = chip.dataset.anim;
-						mv.play();
-					});
+				/* Click-to-zoom toggle — default is wide so the full body is visible,
+				   click zooms in closer for a portrait shot, click again to reset. */
+				const ORBIT_DEFAULT = '0deg 78deg 12m';
+				const ORBIT_ZOOMED  = '0deg 78deg 6m';
+				let zoomed = false;
+				mv.addEventListener('click', (e) => {
+					/* don't fire when interacting with the chip area */
+					if (e.target.closest('.h-anim-chip, .h-av-opt')) return;
+					zoomed = !zoomed;
+					mv.cameraOrbit = zoomed ? ORBIT_ZOOMED : ORBIT_DEFAULT;
 				});
 
-				// Initial sync once model loads
-				mv.addEventListener('load', syncChips, { once: true });
+				/* Initial chip build once model loads */
+				mv.addEventListener('load', rebuildChips, { once: true });
 			})();
 
 			// Chain ribbon (Act 3)

@@ -496,6 +496,7 @@ For deeper technical detail, see the `docs/` directory:
 | **[Development](docs/DEVELOPMENT.md)**   | Local setup, code style, how-things-work guide, common tasks (new GUI controls, components, environments), debugging techniques, browser compatibility, and performance notes |
 | **[Backend Setup](docs/SETUP.md)**       | Environment variables, Neon/R2/Upstash provisioning, schema migration, CORS, and deploy                                                                                       |
 | **[Widgets](docs/WIDGETS.md)**           | Widget types, URL params, postMessage API, oEmbed, and privacy model                                                                                                          |
+| **[Pages](docs/PAGES.md)**               | Full audit of every user-facing page URL (marketing, app, dashboard, agent, studio, widgets, legal, etc.)                                                                     |
 | **[MCP](docs/MCP.md)**                   | Model Context Protocol endpoint (`/api/mcp`) + OAuth integration                                                                                                              |
 | **[Contributing](CONTRIBUTING.md)**      | Bug reporting, feature requests, PR workflow, commit conventions, code guidelines, and testing checklist                                                                      |
 
