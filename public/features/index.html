@@ -237,6 +237,7 @@
 				id="act-onchain"
 				aria-labelledby="act3-title"
 			>
+				<div class="act-warp act-warp--mint" aria-hidden="true"></div>
 				<div class="parallax-layer" style="--depth: 10" aria-hidden="true">
 					<div class="layer-bg layer-bg--mint"></div>
 					<canvas class="layer-stars-canvas" data-role="star-canvas" data-tint="110,231,183" data-count="240"></canvas>
@@ -262,6 +263,9 @@
 							<span class="passport-chain" data-role="passport-chain">—</span>
 						</div>
 					</div>
+				</div>
+				<div class="parallax-layer" style="--depth: 0.5" aria-hidden="true">
+					<div class="layer-vignette"></div>
 				</div>
 
 				<div class="act-content act-content--bottom">
@@ -354,6 +358,12 @@
 				</footer>
 			</section>
 		</main>
+
+		<nav class="act-nav" aria-label="Section navigation">
+			<a href="#main-content" class="act-dot" data-act="1" data-active="true" aria-label="Act 1: Live 3D"></a>
+			<a href="#act-empathy" class="act-dot" data-act="2" aria-label="Act 2: Empathy layer"></a>
+			<a href="#act-onchain" class="act-dot" data-act="3" aria-label="Act 3: On-chain identity"></a>
+		</nav>
 
 		<script type="module" src="/features/features.js"></script>
 		<script>

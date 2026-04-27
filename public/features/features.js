@@ -234,7 +234,7 @@ function initStarFields() {
 	for (const canvas of ROOT.querySelectorAll('[data-role="star-canvas"]')) {
 		const dpr = Math.min(window.devicePixelRatio || 1, 2);
 		const w = window.innerWidth * dpr;
-		const h = window.innerHeight * 4 * dpr; // tall enough to cover 140vh act
+		const h = window.innerHeight * 8 * dpr; // double-tall so 120s drift loops cleanly
 		canvas.width = w;
 		canvas.height = h;
 		const ctx = canvas.getContext('2d');
@@ -265,6 +265,30 @@ function initStarFields() {
 	}
 }
 
+// ── Progress dots ────────────────────────────────────────────────────────
+
+function setupProgressDots() {
+	const dots = ROOT.querySelectorAll('.act-dot[data-act]');
+	const acts = ROOT.querySelectorAll('.parallax-act[data-act]');
+	const scroll = ROOT.querySelector('.parallax');
+	if (!dots.length || !acts.length || !scroll) return;
+
+	const io = new IntersectionObserver(
+		(entries) => {
+			for (const entry of entries) {
+				if (!entry.isIntersecting) continue;
+				const actNum = entry.target.dataset.act;
+				dots.forEach((d) => {
+					d.dataset.active = d.dataset.act === actNum ? 'true' : 'false';
+				});
+			}
+		},
+		{ root: scroll, threshold: 0.5 },
+	);
+
+	acts.forEach((act) => io.observe(act));
+}
+
 // ── Boot ─────────────────────────────────────────────────────────────────
 
 function init() {
@@ -274,6 +298,7 @@ function init() {
 	setupLazyBoot();
 	setupEmotionChips();
 	setupCopyEmbed();
+	setupProgressDots();
 	loadOnChainAgent();
 }
 
