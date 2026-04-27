@@ -265,6 +265,9 @@ export function createConnectWalletButton(mountEl, opts = {}) {
 	ctrl.addEventListener('change', (e) => {
 		render(e.detail);
 		updateClickHandler(e.detail.status);
+		if (e.detail.status === STATES.CONNECTED) {
+			ctrl.signAndVerify();
+		}
 	});
 
 	render({ status: ctrl.state, address: ctrl.address, chainId: ctrl.chainId, error: ctrl.error });

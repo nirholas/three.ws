@@ -11,6 +11,7 @@ import { env } from '../../_lib/env.js';
 import { parse } from '../../_lib/validate.js';
 import { hmacSha256, constantTimeEquals } from '../../_lib/crypto.js';
 import { parseSiwsMessage, verifySiwsSignature } from '../../_lib/siws.js';
+import { sendWelcomeEmail } from '../../_lib/email.js';
 
 const verifyBody = z.object({
 	message: z.string().min(32).max(4000),
@@ -145,6 +146,7 @@ export default wrap(async (req, res) => {
 			insert into user_wallets (user_id, address, chain_type, is_primary)
 			values (${userId}, ${addr}, 'solana', true)
 		`;
+		queueMicrotask(() => sendWelcomeEmail({ to: placeholderEmail, displayName: shortAddr(addr) }));
 	}
 
 	// 8. Issue session.

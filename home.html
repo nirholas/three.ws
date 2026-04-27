@@ -158,6 +158,165 @@
 				</div>
 			</section>
 
+			<!-- ── Act 2: Pick & Animate ── -->
+			<section class="h-act h-act--animate" data-act="2" id="pick-animate">
+				<div class="h-act-warp h-act-warp--amber" aria-hidden="true"></div>
+				<div class="h-layer" style="--depth: 8" aria-hidden="true">
+					<div class="h-layer-bg h-layer-bg--amber"></div>
+					<canvas class="h-star-canvas" data-role="star-canvas" data-tint="255,190,80" data-count="200"></canvas>
+				</div>
+				<div class="h-layer" style="--depth: 4" aria-hidden="true">
+					<svg class="h-layer-words" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" role="presentation">
+						<g fill="rgba(255,200,80,0.13)" font-family="'Space Grotesk','Inter',sans-serif" font-weight="600">
+							<text x="80"   y="200" font-size="52">Dance</text>
+							<text x="1100" y="160" font-size="44">Wave</text>
+							<text x="200"  y="710" font-size="44">Jump</text>
+							<text x="980"  y="760" font-size="40">ThumbsUp</text>
+							<text x="560"  y="440" font-size="96" fill="rgba(255,255,255,0.05)">Idle</text>
+							<text x="55"   y="860" font-size="40">Punch</text>
+							<text x="1260" y="520" font-size="48">Run</text>
+						</g>
+					</svg>
+				</div>
+				<div class="h-layer" style="--depth: 2" aria-hidden="true">
+					<div class="h-layer-orb h-layer-orb--amber"></div>
+				</div>
+				<div class="h-layer" style="--depth: 1">
+					<div class="h-avatar-stage">
+						<div class="h-avatar-wrap">
+							<model-viewer
+								id="home-act2-mv"
+								class="h-avatar-viewer"
+								src="/animations/robotexpressive.glb"
+								animation-name="Idle"
+								autoplay
+								camera-controls
+								disable-zoom
+								interaction-prompt="none"
+								shadow-intensity="0.6"
+								exposure="1.0"
+								environment-image="neutral"
+								camera-orbit="0deg 75deg 3m"
+								field-of-view="30deg"
+								loading="lazy"
+							></model-viewer>
+						</div>
+					</div>
+				</div>
+				<div class="h-layer" style="--depth: 0.5" aria-hidden="true">
+					<div class="h-vignette"></div>
+				</div>
+
+				<div class="h-act-text">
+					<div class="h-act-eyebrow">
+						<span class="h-act-dot"></span>
+						<span>Pick &amp; animate</span>
+					</div>
+					<h2 class="h-act-title">Your agent.<br /><em>Any move.</em></h2>
+					<p class="h-act-lede">Choose an avatar, trigger an animation. This is exactly what lives on your site.</p>
+
+					<div class="h-avatar-picker" role="group" aria-label="Choose avatar">
+						<button class="h-av-opt" data-src="/animations/robotexpressive.glb" aria-pressed="true">Robot</button>
+						<button class="h-av-opt" data-src="/animations/soldier.glb" aria-pressed="false">Soldier</button>
+						<button class="h-av-opt" data-src="/avatars/cz.glb" aria-pressed="false">CZ</button>
+					</div>
+
+					<div class="h-anim-chips" role="group" aria-label="Trigger animation" data-role="anim-chips">
+						<button class="h-anim-chip" data-anim="Dance">💃 Dance</button>
+						<button class="h-anim-chip" data-anim="Wave">👋 Wave</button>
+						<button class="h-anim-chip" data-anim="Jump">⬆ Jump</button>
+						<button class="h-anim-chip" data-anim="ThumbsUp">👍 ThumbsUp</button>
+						<button class="h-anim-chip" data-anim="Punch">🥊 Punch</button>
+						<button class="h-anim-chip" data-anim="No">🙅 No</button>
+						<button class="h-anim-chip" data-anim="Yes">🙆 Yes</button>
+						<button class="h-anim-chip" data-anim="Idle">😐 Idle</button>
+					</div>
+
+					<div class="h-act-cta">
+						<a href="/app" class="h-btn-primary"><span>Open full viewer</span><span class="arrow">→</span></a>
+						<a href="/create" class="h-btn-ghost">Create your agent</a>
+					</div>
+				</div>
+			</section>
+
+			<!-- ── Act 3: Deploy on-chain ── -->
+			<section class="h-act h-act--deploy" data-act="3" id="deploy-act">
+				<div class="h-act-warp h-act-warp--mint" aria-hidden="true"></div>
+				<div class="h-layer" style="--depth: 8" aria-hidden="true">
+					<div class="h-layer-bg h-layer-bg--mint"></div>
+					<canvas class="h-star-canvas" data-role="star-canvas" data-tint="110,231,183" data-count="200"></canvas>
+				</div>
+				<div class="h-layer" style="--depth: 4" aria-hidden="true">
+					<div class="h-layer-chains" data-role="home-chain-ribbon"></div>
+				</div>
+				<div class="h-layer" style="--depth: 2" aria-hidden="true">
+					<div class="h-layer-orb h-layer-orb--mint"></div>
+				</div>
+				<div class="h-layer" style="--depth: 1" aria-hidden="true">
+					<div class="h-avatar-stage">
+						<div class="h-avatar-wrap h-avatar-wrap--ghost">
+							<model-viewer
+								class="h-avatar-viewer"
+								src="/avatars/cz.glb"
+								auto-rotate
+								auto-rotate-delay="0"
+								rotation-per-second="8deg"
+								interaction-prompt="none"
+								camera-controls="false"
+								disable-zoom
+								shadow-intensity="0"
+								exposure="0.6"
+								environment-image="neutral"
+								camera-orbit="0deg 75deg 3.5m"
+								field-of-view="30deg"
+								loading="lazy"
+							></model-viewer>
+						</div>
+					</div>
+				</div>
+				<div class="h-layer" style="--depth: 0.5" aria-hidden="true">
+					<div class="h-vignette"></div>
+				</div>
+
+				<div class="h-act-text">
+					<div class="h-act-eyebrow">
+						<span class="h-act-dot h-act-dot--mint"></span>
+						<span>ERC-8004 native</span>
+					</div>
+					<h2 class="h-act-title h-act-title--mint">One transaction.<br /><em>One identity.</em></h2>
+					<p class="h-act-lede">Register on Ethereum. Get a portable, verifiable agentId discoverable by any A2A or MCP client.</p>
+
+					<form class="h-deploy-form" id="home-deploy-form" action="/deploy" method="get">
+						<div class="h-form-row">
+							<label class="h-form-label" for="agent-name-home">Agent name</label>
+							<input id="agent-name-home" name="name" class="h-form-input" type="text" placeholder="my-agent" autocomplete="off" spellcheck="false" />
+						</div>
+						<div class="h-form-row">
+							<label class="h-form-label" for="chain-home">Chain</label>
+							<select id="chain-home" name="chain" class="h-form-select">
+								<option value="8453" selected>Base</option>
+								<option value="1">Ethereum</option>
+								<option value="10">Optimism</option>
+								<option value="137">Polygon</option>
+								<option value="42161">Arbitrum</option>
+								<option value="43114">Avalanche</option>
+								<option value="59144">Linea</option>
+								<option value="534352">Scroll</option>
+							</select>
+						</div>
+						<div class="h-deploy-stats">
+							<div><span class="h-stat-label">Chains</span><span class="h-stat-val">20+</span></div>
+							<div><span class="h-stat-label">Standard</span><span class="h-stat-val">ERC-721</span></div>
+							<div><span class="h-stat-label">Protocol</span><span class="h-stat-val">ERC-8004</span></div>
+						</div>
+						<button type="submit" class="h-btn-primary h-btn-deploy">
+							<span>Deploy your agent</span>
+							<span class="arrow">→</span>
+						</button>
+					</form>
+				</div>
+			</section>
+
 			<!-- ── How it works ── -->
 			<section class="h-section">
 				<p class="h-section-label h-reveal">How It Works</p>
@@ -403,6 +562,62 @@
 						ticking = false;
 					});
 				}, { passive: true });
+			})();
+
+			// Avatar picker + animation chips (Act 2)
+			(function () {
+				const mv = document.getElementById('home-act2-mv');
+				const opts = document.querySelectorAll('.h-av-opt');
+				const chips = document.querySelectorAll('.h-anim-chip');
+				if (!mv) return;
+
+				function syncChips() {
+					const avail = mv.availableAnimations || [];
+					chips.forEach(c => {
+						c.hidden = avail.length > 0 && !avail.includes(c.dataset.anim);
+					});
+				}
+
+				// Avatar switch
+				opts.forEach(btn => {
+					btn.addEventListener('click', () => {
+						opts.forEach(b => b.setAttribute('aria-pressed', 'false'));
+						btn.setAttribute('aria-pressed', 'true');
+						chips.forEach(c => delete c.dataset.active);
+						mv.src = btn.dataset.src;
+						mv.addEventListener('load', () => {
+							syncChips();
+							mv.animationName = mv.availableAnimations?.[0] || '';
+							mv.play();
+						}, { once: true });
+					});
+				});
+
+				// Animation chips
+				chips.forEach(chip => {
+					chip.addEventListener('click', () => {
+						chips.forEach(c => delete c.dataset.active);
+						chip.dataset.active = 'true';
+						mv.animationName = chip.dataset.anim;
+						mv.play();
+					});
+				});
+
+				// Initial sync once model loads
+				mv.addEventListener('load', syncChips, { once: true });
+			})();
+
+			// Chain ribbon (Act 3)
+			(function () {
+				const ribbon = document.querySelector('[data-role="home-chain-ribbon"]');
+				if (!ribbon) return;
+				const labels = ['Ethereum','Base','Optimism','Polygon','Arbitrum','Avalanche','Celo','Linea','zkSync','Scroll','Blast','Mantle','Mode','opBNB'];
+				ribbon.replaceChildren(...labels.map(l => {
+					const s = document.createElement('span');
+					s.className = 'chain-pill';
+					s.textContent = l;
+					return s;
+				}));
 			})();
 
 			// Star field canvas

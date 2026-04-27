@@ -155,6 +155,7 @@ export default wrap(async (req, res) => {
 			insert into user_wallets (user_id, address, chain_id, is_primary)
 			values (${userId}, ${addrLower}, ${chainId}, true)
 		`;
+		queueMicrotask(() => sendWelcomeEmail({ to: placeholderEmail, displayName: shortAddr(claimed) }));
 	}
 
 	// 7. Issue session.
