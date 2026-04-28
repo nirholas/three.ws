@@ -154,17 +154,19 @@
 				color: #444;
 			}
 			.brand {
-				font-size: 11px;
-				letter-spacing: 0.14em;
-				text-transform: uppercase;
-				color: #444;
-				margin: 0 0 10px;
-				font-weight: 500;
+				margin: 0 0 18px;
 				text-decoration: none;
 				display: inline-block;
+				opacity: 0.85;
+				transition: opacity 0.15s;
+			}
+			.brand img {
+				height: 40px;
+				width: auto;
+				display: block;
 			}
 			.brand:hover {
-				color: #888;
+				opacity: 1;
 			}
 			.divider {
 				display: flex;
@@ -305,7 +307,7 @@
 			></model-viewer>
 		</div>
 		<form class="card" id="f">
-			<a href="/" class="brand">three.ws</a>
+			<a href="/" class="brand"><img src="/three.svg" alt="three.ws" /></a>
 			<h1>Welcome back</h1>
 			<p class="sub">Sign in to manage your avatars.</p>
 			<label for="email">Email or username</label>
