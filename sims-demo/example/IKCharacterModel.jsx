@@ -43,8 +43,6 @@ export default function IKCharacterModel(props) {
     const newBones = [...nodes.QuadShell_Body.skeleton.bones, FLEffectBone];
     nodes.QuadShell_Body.skeleton = new THREE.Skeleton(newBones);
 
-    console.log(nodes, nodes.QuadShell_Body.skeleton.bones);
-
     // yAxis.applyMatrix4(nodes["Front_Leg1L"].matrixWorld);
     nodes["Front_Leg1L"].localToWorld(yAxis);
     const FLIKs = [
