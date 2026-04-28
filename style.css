@@ -236,6 +236,13 @@ header h1 .wordmark-dot {
 	display: inline-block;
 }
 
+header h1 .wordmark-logo {
+	width: 28px;
+	height: 28px;
+	display: inline-block;
+	vertical-align: middle;
+}
+
 .features-nav {
 	margin-left: auto;
 	display: flex;

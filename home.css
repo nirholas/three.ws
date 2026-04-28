@@ -88,6 +88,12 @@
 	box-shadow: 0 0 12px rgba(255, 143, 77, 0.6);
 }
 
+.home-page header h1 a .wordmark-logo {
+	width: 28px;
+	height: 28px;
+	display: inline-block;
+}
+
 
 /* ── Loading flash on page reveal ────────────────────────────────────────── */
 
