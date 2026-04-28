@@ -396,29 +396,99 @@
 		<script type="module">
 			import { mountUserProfile } from './src/erc8004/user-profile.js';
 
-			// Address comes from the URL: /u/0x...
+			const esc = (s) =>
+				String(s ?? '').replace(
+					/[&<>"']/g,
+					(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+				);
+			const attr = (s) => esc(s).replace(/"/g, '&quot;');
+
 			const segments = location.pathname.split('/').filter(Boolean);
-			const address = segments[1]; // /u/<address>
+			const slug = segments[1]; // /u/<slug>
 
 			const root = document.getElementById('profile-root');
 			const copyBtn = document.getElementById('copy-profile-btn');
 
-			if (!address || !/^0x[0-9a-fA-F]{40}$/.test(address)) {
-				root.innerHTML = `<div class="up-error">Invalid address. Use /u/0x…</div>`;
-			} else {
-				// Update page title and OG
-				const short = address.slice(0, 6) + '…' + address.slice(-4);
+			if (!slug) {
+				root.innerHTML = `<div class="up-error">No profile specified.</div>`;
+			} else if (/^0x[0-9a-fA-F]{40}$/.test(slug)) {
+				// Legacy: on-chain wallet address profile
+				const short = slug.slice(0, 6) + '…' + slug.slice(-4);
 				document.title = `${short} — Agents`;
-				const profileUrl = `${location.origin}/u/${address}`;
+				const profileUrl = `${location.origin}/u/${slug}`;
 				document.querySelector('#og-title')?.setAttribute('content', `${short} — Agents`);
-				document.querySelector('#og-description')?.setAttribute('content', `On-chain agent identity profile for ${address}`);
+				document.querySelector('#og-description')?.setAttribute('content', `On-chain agent identity profile for ${slug}`);
 				document.querySelector('#og-url')?.setAttribute('content', profileUrl);
 				document.querySelector('#tw-title')?.setAttribute('content', `${short} — Agents`);
-				document.querySelector('#tw-description')?.setAttribute('content', `On-chain agent identity profile for ${address}`);
-
-				mountUserProfile(root, address).catch((err) => {
-					root.innerHTML = `<div class="up-error">Could not load profile: ${err.message}</div>`;
+				document.querySelector('#tw-description')?.setAttribute('content', `On-chain agent identity profile for ${slug}`);
+				mountUserProfile(root, slug).catch((err) => {
+					root.innerHTML = `<div class="up-error">Could not load profile: ${esc(err.message)}</div>`;
 				});
+			} else {
+				// Username-based profile
+				mountUsernameProfile(root, slug).catch((err) => {
+					root.innerHTML = `<div class="up-error">Could not load profile: ${esc(err.message)}</div>`;
+				});
+			}
+
+			async function mountUsernameProfile(rootEl, username) {
+				rootEl.innerHTML = `<div class="up-error">Loading…</div>`;
+
+				const res = await fetch(`/api/users/${encodeURIComponent(username)}`);
+				if (!res.ok) {
+					const data = await res.json().catch(() => ({}));
+					const msg = res.status === 404 ? 'User not found.' : (data.error_description || res.statusText);
+					rootEl.innerHTML = `<div class="up-error">${esc(msg)}</div>`;
+					return;
+				}
+				const { user, avatars } = await res.json();
+
+				// Update page meta
+				const title = `@${user.username} — three.ws`;
+				document.title = title;
+				const profileUrl = `${location.origin}/u/${encodeURIComponent(user.username)}`;
+				document.querySelector('#og-title')?.setAttribute('content', title);
+				document.querySelector('#og-description')?.setAttribute('content', `${user.display_name || user.username}'s avatars on three.ws`);
+				document.querySelector('#og-url')?.setAttribute('content', profileUrl);
+				document.querySelector('#tw-title')?.setAttribute('content', title);
+				document.querySelector('#tw-description')?.setAttribute('content', `${user.display_name || user.username}'s public avatars on three.ws`);
+
+				const avatarCards = avatars.map((a) => {
+					const thumb = a.thumbnail_url
+						? `<img src="${attr(a.thumbnail_url)}" alt="${attr(a.name)}" style="width:100%;height:100%;object-fit:cover">`
+						: `<div class="up-card-thumb-placeholder">◎</div>`;
+					const tags = (a.tags || []).slice(0, 3).map((t) => `<span style="font-size:0.55rem;color:rgba(154,140,255,0.6);margin-right:4px">#${esc(t)}</span>`).join('');
+					return `
+						<article class="up-card">
+							<a href="/avatars/${attr(a.id)}" class="up-card-thumb-link" tabindex="-1" aria-hidden="true">
+								<div class="up-card-thumb">${thumb}</div>
+							</a>
+							<div class="up-card-body">
+								<a href="/avatars/${attr(a.id)}" class="up-card-name">${esc(a.name)}</a>
+								${a.description ? `<p class="up-card-desc">${esc(a.description)}</p>` : ''}
+								<div class="up-card-footer">
+									<div>${tags}</div>
+								</div>
+							</div>
+						</article>
+					`;
+				}).join('');
+
+				rootEl.innerHTML = `
+					<div class="up-hero">
+						<div class="up-avatar-ring">
+							<span class="up-avatar-glyph">◎</span>
+						</div>
+						<div class="up-hero-info">
+							<h1 class="up-address">${esc(user.display_name || user.username)}</h1>
+							<p class="up-muted">@${esc(user.username)}</p>
+							<p class="up-muted" style="margin-top:4px">${avatars.length} public avatar${avatars.length === 1 ? '' : 's'}</p>
+						</div>
+					</div>
+					<div class="up-grid">
+						${avatarCards || `<p class="up-empty">No public avatars yet.</p>`}
+					</div>
+				`;
 			}
 
 			// Copy profile URL to clipboard

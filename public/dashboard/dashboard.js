@@ -85,6 +85,7 @@ const tabs = {
 	keys: renderKeys,
 	mcp: renderMcp,
 	billing: renderBilling,
+	account: renderAccount,
 };
 
 // ── Avatars ─────────────────────────────────────────────────────────────────
@@ -496,94 +497,19 @@ async function getAvaturnSDK() {
 
 function renderCreate(root) {
 	root.innerHTML = `
-		<div class="toolbar">
-			<div>
-				<h1>Create avatar</h1>
-				<p class="sub">Design a 3D avatar and save it to your account.</p>
-			</div>
-			<button class="btn sec" id="avaturn-restart" type="button" style="display:none">Start over</button>
+		<div>
+			<h1>Create avatar</h1>
+			<p class="sub">Design a 3D avatar from a selfie.</p>
 		</div>
-		<div id="avaturn-stage" class="card" style="padding:0; overflow:hidden; min-height:640px; position:relative">
-			<div id="avaturn-intro" style="padding:32px; text-align:center">
-				<div style="font-size:42px; line-height:1; margin-bottom:12px">🧍</div>
-				<p style="margin:0 0 18px; color:#ccc">
-					Customize your 3D avatar — body type, outfit, hair, and more.
-					It auto-saves here when you click Export.
-				</p>
-				<button class="btn" id="avaturn-launch" type="button">Open avatar editor</button>
-			</div>
-			<div id="avaturn-container" style="display:none; width:100%; height:640px; position:relative"></div>
-			<div id="avaturn-progress" class="muted" style="padding:16px 20px; border-top:1px solid var(--border); display:none"></div>
+		<div class="empty" style="margin-top:24px; padding:60px 32px">
+			<div style="font-size:48px; line-height:1; margin-bottom:16px">🧍</div>
+			<div style="font-size:18px; font-weight:600; margin-bottom:8px; color:#eee">Coming soon</div>
+			<p style="margin:0 0 20px; color:#888; max-width:380px; margin-left:auto; margin-right:auto; font-size:14px">
+				Avatar creation from a selfie is under development. In the meantime you can upload an existing .glb file.
+			</p>
+			<a href="#upload" class="btn">Upload a .glb instead</a>
 		</div>
 	`;
-
-	const launchBtn = root.querySelector('#avaturn-launch');
-	const restartBtn = root.querySelector('#avaturn-restart');
-	const intro = root.querySelector('#avaturn-intro');
-	const container = root.querySelector('#avaturn-container');
-	const progress = root.querySelector('#avaturn-progress');
-
-	const say = (msg, isError = false) => {
-		progress.style.display = 'block';
-		progress.style.color = isError ? '#ffb3b3' : '#888';
-		progress.textContent = msg;
-	};
-
-	let sdk = null;
-
-	const start = async () => {
-		launchBtn.disabled = true;
-		launchBtn.textContent = 'Loading…';
-		try {
-			const AvaturnSDK = await getAvaturnSDK();
-			sdk = new AvaturnSDK();
-			await sdk.init(container, {});
-			intro.style.display = 'none';
-			container.style.display = 'block';
-			restartBtn.style.display = 'inline-block';
-			progress.style.display = 'none';
-
-			sdk.on('export', async (data) => {
-				const glbUrl = data?.url;
-				if (!glbUrl) {
-					say('No avatar URL returned', true);
-					return;
-				}
-				say('Saving avatar…');
-				try {
-					const blob = await fetchGlbBlob(glbUrl, data?.urlType);
-					const avatar = await saveAvaturnAvatar(blob);
-					say(`Saved "${avatar.name}". Redirecting…`);
-					setTimeout(() => {
-						location.hash = 'avatars';
-					}, 600);
-				} catch (err) {
-					say(err.message || 'Failed to save avatar', true);
-				}
-			});
-		} catch (err) {
-			say(err.message || 'Failed to load editor', true);
-			launchBtn.disabled = false;
-			launchBtn.textContent = 'Open avatar editor';
-		}
-	};
-
-	const stop = () => {
-		if (sdk) {
-			sdk.destroy();
-			sdk = null;
-		}
-		container.style.display = 'none';
-		container.innerHTML = '';
-		intro.style.display = 'block';
-		restartBtn.style.display = 'none';
-		progress.style.display = 'none';
-		launchBtn.disabled = false;
-		launchBtn.textContent = 'Open avatar editor';
-	};
-
-	launchBtn.addEventListener('click', start);
-	restartBtn.addEventListener('click', stop);
 }
 
 async function fetchGlbBlob(url, urlType) {
@@ -707,6 +633,13 @@ async function renderEdit(root, params = []) {
 					</select>
 				</label>
 				<label style="display:block;margin-top:12px">Tags (comma separated)<input id="etags" value="${attr((avatar.tags || []).join(', '))}" style="width:100%"></label>
+				<div id="epublink" style="margin-top:16px;${avatar.visibility === 'private' ? 'display:none' : ''}">
+					<p class="muted" style="margin:0 0 6px;font-size:11px">Public link</p>
+					<div class="row" style="gap:6px;align-items:center">
+						<input id="epublinkval" readonly value="${attr(location.origin + '/avatars/' + avatar.id)}" style="width:100%;font-size:12px;color:#9a8cff;cursor:text">
+						<button id="ecopybtn" class="btn sec" type="button" style="white-space:nowrap;flex-shrink:0">Copy</button>
+					</div>
+				</div>
 				<div id="emsg" class="muted" style="margin-top:12px"></div>
 				<div class="row" style="gap:8px; margin-top:16px">
 					<button class="btn" type="submit">Save changes</button>
@@ -738,6 +671,24 @@ async function renderEdit(root, params = []) {
 			msg.style.color = '#ffb3b3';
 			msg.textContent = err.message;
 		}
+	});
+
+	// Show/hide public link when visibility changes
+	body.querySelector('#evis').addEventListener('change', (e) => {
+		const publink = body.querySelector('#epublink');
+		if (publink) publink.style.display = e.target.value === 'private' ? 'none' : '';
+	});
+
+	// Copy public link
+	body.querySelector('#ecopybtn')?.addEventListener('click', async () => {
+		const btn = body.querySelector('#ecopybtn');
+		const val = body.querySelector('#epublinkval')?.value;
+		if (!val) return;
+		try {
+			await navigator.clipboard.writeText(val);
+			btn.textContent = 'Copied ✓';
+			setTimeout(() => (btn.textContent = 'Copy'), 1800);
+		} catch {}
 	});
 
 	body.querySelector('#euse').addEventListener('click', async () => {
@@ -1749,6 +1700,104 @@ async function hydrateWidgetPrefsFromRemote() {
 	} catch {
 		// Network/auth failure → fall back to localStorage silently.
 	}
+}
+
+// ── Account ──────────────────────────────────────────────────────────────────
+async function renderAccount(root) {
+	root.innerHTML = `
+		<h1>Account</h1>
+		<p class="sub">Set your username to get a public profile at three.ws/u/username.</p>
+		<div class="card" style="max-width:480px" id="acct-form-wrap">
+			<div class="muted">Loading…</div>
+		</div>
+	`;
+
+	const wrap = root.querySelector('#acct-form-wrap');
+	let user;
+	try {
+		const data = await api.me();
+		user = data.user;
+	} catch (err) {
+		wrap.innerHTML = `<div class="err">${esc(err.message)}</div>`;
+		return;
+	}
+
+	const profileUrl = user.username
+		? `${location.origin}/u/${encodeURIComponent(user.username)}`
+		: null;
+
+	wrap.innerHTML = `
+		<form id="acct-form">
+			<label style="display:block">
+				Display name
+				<input id="acct-name" value="${attr(user.display_name || '')}" maxlength="60" placeholder="Your name" style="width:100%">
+			</label>
+			<label style="display:block;margin-top:12px">
+				Username
+				<input id="acct-username" value="${attr(user.username || '')}" maxlength="30" placeholder="e.g. nirholas" style="width:100%" autocomplete="off" spellcheck="false">
+				<span class="muted" style="font-size:11px;display:block;margin-top:4px">Letters, numbers, _ and - only. 3–30 characters.</span>
+			</label>
+			${profileUrl ? `
+				<div style="margin-top:12px">
+					<p class="muted" style="font-size:11px;margin:0 0 4px">Your public profile</p>
+					<div class="row" style="gap:6px;align-items:center">
+						<a href="${attr(profileUrl)}" target="_blank" style="font-size:12px;color:#9a8cff;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(profileUrl)}</a>
+						<button id="acct-copy" class="btn sec" type="button" style="flex-shrink:0;white-space:nowrap">Copy</button>
+					</div>
+				</div>
+			` : ''}
+			<div id="acct-msg" class="muted" style="margin-top:12px"></div>
+			<div class="row" style="gap:8px;margin-top:16px">
+				<button class="btn" type="submit">Save</button>
+			</div>
+		</form>
+	`;
+
+	const msg = wrap.querySelector('#acct-msg');
+
+	wrap.querySelector('#acct-form').addEventListener('submit', async (e) => {
+		e.preventDefault();
+		msg.style.color = '#888';
+		msg.textContent = 'Saving…';
+		const username = wrap.querySelector('#acct-username').value.trim();
+		const display_name = wrap.querySelector('#acct-name').value.trim();
+		const patch = {};
+		if (username) patch.username = username;
+		if (display_name) patch.display_name = display_name;
+		if (!Object.keys(patch).length) {
+			msg.style.color = '#ffb3b3';
+			msg.textContent = 'No changes.';
+			return;
+		}
+		try {
+			const res = await fetch('/api/auth/profile', {
+				method: 'PATCH',
+				credentials: 'include',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify(patch),
+			});
+			const data = await res.json();
+			if (!res.ok) throw new Error(data.error_description || res.statusText);
+			msg.style.color = '#9a8cff';
+			msg.textContent = 'Saved.';
+			if (data.user.username) {
+				const url = `${location.origin}/u/${encodeURIComponent(data.user.username)}`;
+				msg.innerHTML = `Saved. Your profile is at <a href="${attr(url)}" target="_blank" style="color:#9a8cff">${esc(url)}</a>`;
+			}
+		} catch (err) {
+			msg.style.color = '#ffb3b3';
+			msg.textContent = err.message;
+		}
+	});
+
+	wrap.querySelector('#acct-copy')?.addEventListener('click', async () => {
+		const btn = wrap.querySelector('#acct-copy');
+		try {
+			await navigator.clipboard.writeText(profileUrl);
+			btn.textContent = 'Copied ✓';
+			setTimeout(() => (btn.textContent = 'Copy'), 1800);
+		} catch {}
+	});
 }
 
 async function renderWidgets(root) {

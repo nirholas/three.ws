@@ -13,9 +13,12 @@
 
 - [What is three.ws?](#what-is-threews)
 - [Key Features](#key-features)
+- [Screenshots](#screenshots)
 - [Architecture](#architecture)
 - [Tech Stack](#tech-stack)
 - [Getting Started](#getting-started)
+- [Examples](#examples)
+- [Tutorials](#tutorials)
 - [Project Structure](#project-structure)
 - [The Agent System](#the-agent-system)
   - [Event Bus (Agent Protocol)](#event-bus-agent-protocol)
@@ -97,6 +100,18 @@ three.ws is production-ready and serves [three.ws](https://three.ws) live. The e
 - Ready Player Me, Avaturn (photo-to-avatar), and Privy (embedded wallet) integrations
 - DCA strategy execution and on-chain subscription scheduling via cron jobs
 - OpenAPI 3.1 spec generated at `/openapi.json`
+
+---
+
+## Screenshots
+
+| Viewer | Widget Studio |
+|--------|--------------|
+| ![Viewer](public/screenshots/viewer.png) | ![Widget Studio](public/screenshots/studio.png) |
+
+| Agent Discovery | Avatar Creation |
+|----------------|----------------|
+| ![Discover](public/screenshots/discover.png) | ![Create](public/screenshots/create.png) |
 
 ---
 
@@ -234,6 +249,239 @@ Opens at `http://localhost:3000`. The viewer is at `/app`, the dashboard at `/ho
 Navigate to `http://localhost:3000/app` and drag any GLB file onto the canvas. The model loads instantly with PBR materials, animations, and full glTF validation.
 
 To try the agent, navigate to `/create`, upload a GLB, and configure a brain (requires `ANTHROPIC_API_KEY` in your env).
+
+---
+
+## Examples
+
+Copy-paste ready snippets for the most common use cases. Swap in your own GLB URL and go.
+
+### 1. Minimal viewer (no AI)
+
+The simplest possible setup — one script tag, one element, zero build step.
+
+```html
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>3D Viewer</title>
+  <style>
+    body { margin: 0; background: #0a0a0a; display: flex; align-items: center; justify-content: center; height: 100vh; }
+    agent-3d { width: 400px; height: 560px; display: block; }
+  </style>
+</head>
+<body>
+  <script type="module" src="https://three.ws/agent-3d/1.5.1/agent-3d.js"></script>
+  <agent-3d body="https://cdn.three.ws/models/sample-avatar.glb"></agent-3d>
+</body>
+</html>
+```
+
+Drag-to-rotate, scroll-to-zoom, full PBR rendering — no API key, no account required. Swap `body=` for any publicly accessible `.glb` URL.
+
+---
+
+### 2. Talking agent with inline instructions
+
+Add `brain=` and `instructions=` to turn the viewer into a conversational agent.
+
+```html
+<script type="module" src="https://three.ws/agent-3d/1.5.1/agent-3d.js"></script>
+
+<agent-3d
+  body="https://cdn.three.ws/models/sample-avatar.glb"
+  brain="claude-sonnet-4-6"
+  name="Aria"
+  instructions="You are Aria, a friendly AI guide. Be warm, concise, and occasionally playful.
+                When someone greets you, wave at them. Keep replies to 2–3 sentences."
+  mode="inline"
+  width="400px"
+  height="560px"
+></agent-3d>
+```
+
+The chat input and mic button appear automatically when `brain` is set. No UI to build.
+
+---
+
+### 3. Floating bubble (support widget style)
+
+Pin the agent to a corner of the page so it persists as users scroll.
+
+```html
+<script type="module" src="https://three.ws/agent-3d/1.5.1/agent-3d.js"></script>
+
+<agent-3d
+  body="https://cdn.three.ws/models/sample-avatar.glb"
+  brain="claude-sonnet-4-6"
+  instructions="You are a helpful product assistant. Answer questions about our features."
+  mode="floating"
+  position="bottom-right"
+  width="320px"
+  height="420px"
+></agent-3d>
+```
+
+`position` accepts `bottom-right`, `bottom-left`, `top-right`, or `top-left`.
+
+---
+
+### 4. Load a registered agent by ID
+
+If you've registered an agent on the platform, load it entirely from its manifest — no inline attributes needed.
+
+```html
+<!-- By platform agent ID -->
+<agent-3d agent-id="a_abc123def456"></agent-3d>
+
+<!-- By on-chain ERC-8004 ID -->
+<agent-3d agent-id="42" chain-id="8453"></agent-3d>
+```
+
+The element fetches the manifest (model URL, instructions, skills, memory config) automatically.
+
+---
+
+### 5. Custom chat UI with JavaScript API
+
+Hide the built-in chrome and wire in your own input using the element's JS API.
+
+```html
+<script type="module" src="https://three.ws/agent-3d/1.5.1/agent-3d.js"></script>
+
+<agent-3d id="agent" body="./avatar.glb" brain="claude-sonnet-4-6" kiosk
+  style="width:400px;height:560px;display:block"></agent-3d>
+
+<input id="msg" type="text" placeholder="Ask something…">
+<button onclick="send()">Send</button>
+
+<script>
+  const agent = document.getElementById('agent');
+  const input = document.getElementById('msg');
+
+  async function send() {
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    await agent.say(text);
+  }
+
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
+
+  // Auto-greet on load
+  agent.addEventListener('agent:ready', () => {
+    setTimeout(() => agent.say('Hello! How can I help you today?'), 1200);
+  });
+
+  // Listen to replies
+  agent.addEventListener('brain:message', e => {
+    if (e.detail.role === 'assistant') console.log('Agent:', e.detail.content);
+  });
+</script>
+```
+
+**Full JS API:**
+
+| Method | Description |
+|---|---|
+| `agent.say(text)` | Send a message; agent speaks and animates the reply |
+| `agent.ask(text)` | Same as `say()`, returns reply text as a string |
+| `agent.wave()` | Trigger the wave gesture directly |
+| `agent.lookAt(target)` | `'camera'`, `'model'`, or `'user'` |
+| `agent.play(clipName)` | Play a named animation clip |
+| `agent.clearConversation()` | Reset conversation history |
+| `agent.expressEmotion(trigger, weight)` | Manually inject an emotion blend |
+
+**Key events:** `agent:ready`, `brain:message`, `brain:thinking`, `skill:tool-called`, `voice:transcript`
+
+---
+
+### 6. iframe widget (works in Notion, Substack, Webflow)
+
+Use a widget URL directly — no script tag needed.
+
+```html
+<iframe
+  src="https://three.ws/a/8453/42/embed"
+  width="400"
+  height="560"
+  frameborder="0"
+  allow="microphone"
+  style="border-radius:16px;"
+></iframe>
+```
+
+Generate the `src` URL from [Widget Studio](https://three.ws/studio) — pick an avatar, choose a widget type, and copy the snippet.
+
+---
+
+### 7. Agent manifest JSON
+
+For anything beyond a quick one-liner, define the agent in a manifest file and reference it with `manifest=`.
+
+**agent.json:**
+```json
+{
+  "spec": "agent-manifest/0.2",
+  "name": "Aria",
+  "description": "A friendly AI guide",
+  "body": {
+    "uri": "./avatar.glb",
+    "format": "gltf-binary"
+  },
+  "brain": {
+    "provider": "anthropic",
+    "model": "claude-sonnet-4-6",
+    "instructions": "You are Aria, a warm and curious AI guide. Wave when greeted.",
+    "temperature": 0.8,
+    "maxTokens": 1024
+  },
+  "voice": {
+    "tts": { "provider": "browser", "rate": 1.05 },
+    "stt": { "provider": "browser", "language": "en-US" }
+  },
+  "memory": { "mode": "local" },
+  "skills": [
+    { "uri": "https://cdn.three.ws/skills/wave/" }
+  ]
+}
+```
+
+```html
+<agent-3d manifest="./agent.json" width="400px" height="560px"></agent-3d>
+```
+
+---
+
+## Tutorials
+
+Step-by-step guides in [`docs/tutorials/`](docs/tutorials/):
+
+| Tutorial | What you'll build | Time |
+|---|---|---|
+| [Build Your First Agent](docs/tutorials/first-agent.md) | A talking 3D character on a shareable page, from zero | ~20 min |
+| [Embed on Your Website](docs/tutorials/embed-on-website.md) | Add an agent to any page — plain HTML, React, Webflow, WordPress | ~15 min |
+| [Write a Custom Skill](docs/tutorials/custom-skill.md) | A new tool the agent can call (e.g., fetch live weather data) | ~30 min |
+| [Register On-Chain](docs/tutorials/register-onchain.md) | Mint your agent as an ERC-8004 token with permanent identity | ~20 min |
+| [Build a Personal AI Site](docs/tutorials/personal-ai-site.md) | A full personal site with an embedded AI version of yourself | ~45 min |
+
+### Common gotchas
+
+**CORS** — if your GLB is hosted on a different domain, the server must send `Access-Control-Allow-Origin: *`. Without it the fetch is blocked and the canvas stays blank. Uploading via the platform's storage sets this automatically.
+
+**File size** — models over ~50 MB load slowly. Compress with Draco:
+```bash
+npx gltf-transform draco input.glb output.glb
+```
+
+**Voice on HTTPS** — `getUserMedia` (microphone) requires HTTPS. Localhost is exempt; any remote deployment needs TLS. Vercel and Netlify both provide it automatically.
+
+**CSP** — if your page has a strict Content Security Policy, add:
+```
+script-src 'self' https://three.ws;
+```
+For sandboxed iframes use the widget embed path instead — it runs in its own browsing context.
 
 ---
 
