@@ -1158,6 +1158,12 @@ class App {
 				// Configure external animations (Mixamo-style) for skinned models
 				this._configureAnimations(viewer);
 
+				// Update AR button target (GLB URL only; no USDZ companion in this project)
+				if (viewer.setARTarget) {
+					const glbUrl = typeof rootFile === 'string' ? fileURL : null;
+					viewer.setARTarget(glbUrl);
+				}
+
 				if (!this.options.kiosk) {
 					this.validator.validate(fileURL, rootPath, fileMap, gltf);
 				}

@@ -24,6 +24,9 @@ import { GUI } from 'dat.gui';
 
 import { environments } from './environments.js';
 import { createModelInfo } from './model-info.js';
+import { canUseQuickLook, openQuickLook } from './ar/quick-look.js';
+import { canUseSceneViewer, openSceneViewer } from './ar/scene-viewer.js';
+import { WebXRSession } from './ar/webxr.js';
 import { buildAnnotations, renderAnnotationCanvas } from './annotations.js';
 import {
 	DEFAULT_CAMERA,
@@ -437,6 +440,51 @@ export class Viewer {
 
 	takeScreenshot() {
 		takeScreenshot(this);
+	}
+
+	/**
+	 * Update the AR button visibility and target URLs after a model loads.
+	 * @param {string|null} glbUrl  — absolute or relative URL to the GLB (for Android/WebXR)
+	 * @param {string|null} usdzUrl — absolute or relative URL to a USDZ (for iOS Quick Look)
+	 */
+	async setARTarget(glbUrl, usdzUrl = null) {
+		this._arGlbUrl = glbUrl;
+		this._arUsdzUrl = usdzUrl;
+
+		if (!this._arBtn) return;
+
+		const hasGlb = !!glbUrl;
+		const hasUsdz = !!usdzUrl;
+
+		const iosOk = hasUsdz && canUseQuickLook();
+		const androidOk = hasGlb && canUseSceneViewer();
+		const webxrOk = hasGlb && (await WebXRSession.isSupported());
+
+		this._arBtn.hidden = !(iosOk || androidOk || webxrOk);
+	}
+
+	async _launchAR() {
+		if (canUseQuickLook() && this._arUsdzUrl) {
+			openQuickLook(this._arUsdzUrl);
+		} else if (canUseSceneViewer() && this._arGlbUrl) {
+			openSceneViewer(this._arGlbUrl);
+		} else if (this._arGlbUrl) {
+			// Desktop WebXR
+			if (this._xrSession) {
+				await this._xrSession.end();
+				this._xrSession = null;
+				this._arBtn.classList.remove('ar-btn--active');
+				return;
+			}
+			this._xrSession = new WebXRSession(this, {
+				onEnd: () => {
+					this._xrSession = null;
+					this._arBtn.classList.remove('ar-btn--active');
+				},
+			});
+			await this._xrSession.start();
+			this._arBtn.classList.add('ar-btn--active');
+		}
 	}
 
 	resize() {
@@ -1009,6 +1057,29 @@ export class Viewer {
 		});
 		this.el.appendChild(toggle);
 		this._guiToggle = toggle;
+
+		// AR button — hidden until setARTarget() is called with a supported URL
+		const arBtn = document.createElement('button');
+		arBtn.className = 'ar-btn';
+		arBtn.setAttribute('title', 'View in AR');
+		arBtn.setAttribute('aria-label', 'View in AR');
+		arBtn.innerHTML =
+			'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+			'<path d="M1 6l5-3 5 3v5l-5 3-5-3z"></path>' +
+			'<path d="M11 3l5 3v5l-5-3z"></path>' +
+			'<path d="M1 11l5 3 5-3"></path>' +
+			'<path d="M6 9v5"></path>' +
+			'<path d="M16 6v5l5 3v-5z"></path>' +
+			'<path d="M11 8l5 3"></path>' +
+			'</svg>' +
+			'<span class="ar-btn__label">AR</span>';
+		arBtn.hidden = true;
+		arBtn.addEventListener('click', () => this._launchAR());
+		this.el.appendChild(arBtn);
+		this._arBtn = arBtn;
+		this._arGlbUrl = null;
+		this._arUsdzUrl = null;
+		this._xrSession = null;
 
 		if (isMobile) {
 			gui.close();

@@ -19,7 +19,6 @@ export default function Map(props) {
   const mapMeshRef = useRef(null);
   // Load map model
   const bakeInnModel = useGLTF("./fantasy_game_inn.glb");
-  const su7Model = useGLTF("./SU7.glb");
 
   // useEffect(()=>{
   // console.log(mapMeshRef.current.geometry.boundsTree);

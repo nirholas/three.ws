@@ -13,6 +13,9 @@ import BVHEcctrl, {
 import Lights from "./Lights";
 import AgentCharacterModel from "./AgentCharacterModel";
 import CozyTavernMap from "./CozyTavernMap";
+import LargeFloorMap from "./LargeFloorMap";
+import HintzeHall from "./HintzeHall";
+import InstancedMap from "./InstancedMap";
 
 const keyboardMap = [
   { name: "forward", keys: ["ArrowUp", "KeyW"] },
@@ -23,12 +26,21 @@ const keyboardMap = [
   { name: "run", keys: ["Shift"] },
 ];
 
-export default function SimsExperience() {
+const MAP_CONFIG = {
+  cozy_tavern: { component: CozyTavernMap, props: { position: [0, -3, 0] }, env: "apartment" },
+  large_floor: { component: LargeFloorMap, props: {}, env: "city" },
+  hintze_hall: { component: HintzeHall, props: { position: [0, -1, 0] }, env: "warehouse" },
+  fantasy_inn: { component: InstancedMap, props: { position: [0, -1, 0] }, env: "forest" },
+};
+
+export default function SimsExperience({ mapName = "cozy_tavern" }) {
   const camControlRef = useRef(null);
   const ecctrlRef = useRef(null);
   const colliderMeshesArray = useEcctrlStore(
     (state) => state.colliderMeshesArray
   );
+
+  const { component: MapComponent, props: mapProps, env } = MAP_CONFIG[mapName] ?? MAP_CONFIG.cozy_tavern;
 
   useFrame(() => {
     if (camControlRef.current && ecctrlRef.current?.group) {
@@ -50,7 +62,7 @@ export default function SimsExperience() {
         makeDefault
       />
       <Lights />
-      <Environment preset="apartment" environmentIntensity={0.6} />
+      <Environment preset={env} environmentIntensity={0.6} />
 
       <KeyboardControls map={keyboardMap}>
         <BVHEcctrl
@@ -64,7 +76,7 @@ export default function SimsExperience() {
       </KeyboardControls>
 
       <StaticCollider>
-        <CozyTavernMap position={[0, -3, 0]} />
+        <MapComponent {...mapProps} />
       </StaticCollider>
     </>
   );
