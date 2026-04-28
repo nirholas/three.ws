@@ -13,8 +13,6 @@
 		<style>
 			:root {
 				color-scheme: dark;
-				--accent: #6a5cff;
-				--accent2: #ff5ca8;
 			}
 			* {
 				box-sizing: border-box;
@@ -26,8 +24,8 @@
 					Segoe UI,
 					Roboto,
 					sans-serif;
-				background: radial-gradient(1200px 600px at 50% -100px, #1a1a2e 0, #080814 60%);
-				color: #eee;
+				background: #000;
+				color: #f0f0f0;
 				margin: 0;
 				min-height: 100vh;
 				display: flex;
@@ -56,51 +54,67 @@
 				bottom: -2px;
 				width: 90px;
 				height: 10px;
-				background: radial-gradient(ellipse, rgba(106, 92, 255, 0.35), transparent 70%);
+				background: radial-gradient(ellipse, rgba(220, 230, 255, 0.25), transparent 70%);
 				transform: translateX(-50%);
-				filter: blur(4px);
+				filter: blur(6px);
 			}
 			a {
-				color: #9a8cff;
+				color: #c8d0e0;
+				text-decoration: none;
+			}
+			a:hover {
+				color: #fff;
 			}
 			.card {
-				background: #14141c;
-				border: 1px solid #2a2a36;
-				border-radius: 16px;
-				padding: 32px;
+				background: #0c0c0c;
+				border: 1px solid rgba(255, 255, 255, 0.08);
+				border-radius: 20px;
+				padding: 36px;
 				max-width: 400px;
 				width: 100%;
-				box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+				box-shadow:
+					0 0 0 1px rgba(255, 255, 255, 0.03),
+					0 20px 60px rgba(0, 0, 0, 0.8),
+					0 0 80px rgba(200, 210, 255, 0.03);
 			}
 			h1 {
 				font-size: 22px;
+				font-weight: 600;
 				margin: 0 0 4px;
-				letter-spacing: -0.01em;
+				letter-spacing: -0.02em;
+				color: #fff;
 			}
 			.sub {
-				color: #888;
-				margin: 0 0 24px;
+				color: #555;
+				margin: 0 0 28px;
 				font-size: 14px;
 			}
 			label {
 				display: block;
-				font-size: 13px;
-				color: #aaa;
-				margin: 14px 0 6px;
+				font-size: 12px;
+				font-weight: 500;
+				letter-spacing: 0.02em;
+				color: #666;
+				margin: 16px 0 6px;
+				text-transform: uppercase;
 			}
 			input {
 				width: 100%;
-				padding: 11px 13px;
-				background: #0f0f17;
-				border: 1px solid #2a2a36;
-				border-radius: 9px;
-				color: #eee;
+				padding: 11px 14px;
+				background: #060606;
+				border: 1px solid rgba(255, 255, 255, 0.07);
+				border-radius: 10px;
+				color: #f0f0f0;
 				font-size: 15px;
+				transition: border-color 0.15s, box-shadow 0.15s;
+			}
+			input::placeholder {
+				color: #333;
 			}
 			input:focus {
 				outline: none;
-				border-color: var(--accent);
-				box-shadow: 0 0 0 3px rgba(106, 92, 255, 0.15);
+				border-color: rgba(255, 255, 255, 0.3);
+				box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
 			}
 			button {
 				width: 100%;
@@ -108,62 +122,68 @@
 				padding: 12px 16px;
 				border: 0;
 				border-radius: 10px;
-				background: linear-gradient(135deg, var(--accent), var(--accent2));
-				color: #fff;
+				background: #fff;
+				color: #000;
 				font-weight: 600;
 				font-size: 15px;
 				cursor: pointer;
+				letter-spacing: -0.01em;
+				transition: background 0.15s, opacity 0.15s;
+			}
+			button:hover:not(:disabled) {
+				background: #e8ecf4;
 			}
 			button:disabled {
-				opacity: 0.6;
+				opacity: 0.35;
 				cursor: default;
 			}
 			.err {
 				margin-top: 14px;
 				padding: 10px 12px;
-				background: rgba(255, 92, 92, 0.1);
-				border: 1px solid rgba(255, 92, 92, 0.3);
+				background: rgba(255, 255, 255, 0.04);
+				border: 1px solid rgba(255, 255, 255, 0.1);
 				border-radius: 8px;
-				color: #ffb3b3;
+				color: #aaa;
 				font-size: 13px;
 				display: none;
 			}
 			.foot {
-				margin-top: 20px;
+				margin-top: 22px;
 				text-align: center;
 				font-size: 13px;
-				color: #888;
+				color: #444;
 			}
 			.brand {
-				font-size: 12px;
-				letter-spacing: 0.1em;
+				font-size: 11px;
+				letter-spacing: 0.14em;
 				text-transform: uppercase;
-				color: var(--accent);
-				margin: 0 0 8px;
+				color: #444;
+				margin: 0 0 10px;
+				font-weight: 500;
 			}
 			.divider {
 				display: flex;
 				align-items: center;
 				gap: 12px;
-				margin: 22px 0 4px;
-				color: #555;
-				font-size: 12px;
+				margin: 24px 0 8px;
+				color: #333;
+				font-size: 11px;
 				text-transform: uppercase;
-				letter-spacing: 0.08em;
+				letter-spacing: 0.1em;
 			}
 			.divider::before,
 			.divider::after {
 				content: '';
 				flex: 1;
 				height: 1px;
-				background: #2a2a36;
+				background: rgba(255, 255, 255, 0.06);
 			}
 			/* Wallet chain tabs */
 			.chain-tabs {
 				display: flex;
-				gap: 4px;
-				background: #0f0f17;
-				border: 1px solid #2a2a36;
+				gap: 3px;
+				background: #060606;
+				border: 1px solid rgba(255, 255, 255, 0.06);
 				border-radius: 10px;
 				padding: 3px;
 				margin-bottom: 4px;
@@ -174,21 +194,22 @@
 				border: none;
 				border-radius: 7px;
 				background: transparent;
-				color: #888;
+				color: #444;
 				font-size: 13px;
 				font-weight: 500;
 				cursor: pointer;
 				transition: background 0.15s, color 0.15s;
 				margin-top: 0;
 				width: auto;
+				letter-spacing: 0.01em;
 			}
 			.chain-tab.active {
-				background: #1e1e2e;
-				color: #eee;
-				border: 1px solid #2a2a36;
+				background: #1a1a1a;
+				color: #e0e0e0;
+				border: 1px solid rgba(255, 255, 255, 0.08);
 			}
 			.chain-tab:hover:not(.active) {
-				color: #bbb;
+				color: #888;
 			}
 			.chain-panel { display: none; }
 			.chain-panel.active { display: block; }
@@ -229,7 +250,7 @@
 				minlength="10"
 				aria-describedby="err"
 			/>
-			<p class="hint" style="font-size:12px;color:#666;margin-top:4px;text-align:right">
+			<p class="hint" style="font-size:12px;color:#444;margin-top:4px;text-align:right">
 				<a href="/forgot-password">Forgot password?</a>
 			</p>
 			<button id="submit" type="submit">Sign in</button>
@@ -240,10 +261,11 @@
 			</div>
 			<div id="evm-panel" class="chain-panel active" role="tabpanel">
 				<div id="wallet-mount"></div>
+				<p class="wallet-step-hint">Your wallet will prompt twice — once to connect, once to sign.</p>
 			</div>
 			<div id="solana-panel" class="chain-panel" role="tabpanel">
 				<div id="solana-wallet-mount"></div>
-				<div class="chain-hints" id="solana-hints" style="margin-top:8px;font-size:12px;color:#555;display:flex;gap:8px;justify-content:center;">
+				<div class="chain-hints" id="solana-hints" style="margin-top:8px;font-size:12px;color:#444;display:flex;gap:8px;justify-content:center;">
 					<button type="button" class="wallet-hint-btn" data-wallet="phantom">Phantom</button>
 					<button type="button" class="wallet-hint-btn" data-wallet="backpack">Backpack</button>
 					<button type="button" class="wallet-hint-btn" data-wallet="solflare">Solflare</button>
@@ -253,20 +275,27 @@
 			<p class="foot">No account? <a href="/register">Create one</a></p>
 		</form>
 		<style>
+			.wallet-step-hint {
+				margin: 6px 0 0;
+				font-size: 12px;
+				color: #444;
+				text-align: center;
+			}
 			.wallet-hint-btn {
 				width: auto;
 				margin-top: 0;
 				padding: 4px 10px;
 				background: transparent;
-				border: 1px solid #2a2a36;
+				border: 1px solid rgba(255, 255, 255, 0.08);
 				border-radius: 6px;
-				color: #666;
+				color: #444;
 				font-size: 11px;
 				font-weight: 400;
 				cursor: pointer;
+				transition: border-color 0.15s, color 0.15s;
 			}
-			.wallet-hint-btn:hover { border-color: #6a5cff; color: #9a8cff; }
-			.wallet-hint-btn.active { border-color: #6a5cff; color: #9a8cff; background: rgba(106,92,255,0.08); }
+			.wallet-hint-btn:hover { border-color: rgba(255,255,255,0.25); color: #bbb; }
+			.wallet-hint-btn.active { border-color: rgba(255,255,255,0.2); color: #ccc; background: rgba(255,255,255,0.04); }
 		</style>
 		<script type="module" src="/wallet-login.js"></script>
 		<script>
@@ -311,12 +340,16 @@
 				params.get('next') || sessionStorage.getItem('login_redirect') || '/create';
 			sessionStorage.removeItem('login_redirect');
 
-			// If already signed in, skip the login form entirely.
-			fetch('/api/auth/me', { credentials: 'include' })
-				.then((r) => {
-					if (r.ok) location.replace(next);
-				})
-				.catch(() => {});
+			// If already signed in, skip the login form — but not when the user
+			// navigated back here intentionally (back/forward navigation).
+			const navType = performance.getEntriesByType('navigation')[0]?.type;
+			if (navType !== 'back_forward') {
+				fetch('/api/auth/me', { credentials: 'include' })
+					.then((r) => {
+						if (r.ok) location.replace(next);
+					})
+					.catch(() => {});
+			}
 
 			const form = document.getElementById('f');
 			const err = document.getElementById('err');

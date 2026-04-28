@@ -467,7 +467,7 @@ function updatePreview(forceReload) {
 		state.config.envPreset && state.config.envPreset !== 'none'
 			? `&preset=${encodeURIComponent(state.config.envPreset)}`
 			: '';
-	const src = `/?widget-preview=1#model=${encodeURIComponent(modelUrl)}&kiosk=true${camStr}${presetStr}`;
+	const src = `/app#model=${encodeURIComponent(modelUrl)}&kiosk=true${camStr}${presetStr}`;
 	const key = src;
 	if (forceReload || key !== previewSrcKey) {
 		previewSrcKey = key;
