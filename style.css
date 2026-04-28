@@ -5747,10 +5747,10 @@ textarea.erc8004-code {
 	align-items: center;
 	gap: 8px;
 	padding: 6px 14px;
-	background: var(--accent-soft);
-	border: 1px solid var(--accent);
+	background: rgba(255, 255, 255, 0.06);
+	border: 1px solid rgba(255, 255, 255, 0.2);
 	border-radius: 99px;
-	color: var(--accent);
+	color: rgba(255, 255, 255, 0.85);
 	font-size: 12px;
 	font-weight: 600;
 	letter-spacing: 0.02em;
@@ -5768,16 +5768,16 @@ textarea.erc8004-code {
 }
 .explore-hero-chip--link:hover,
 .explore-hero-chip--link:focus-visible {
-	border-color: var(--accent);
-	color: var(--accent);
-	background: var(--accent-soft);
+	border-color: rgba(255, 255, 255, 0.4);
+	color: #fff;
+	background: rgba(255, 255, 255, 0.08);
 }
 .explore-hero-dot {
 	width: 6px;
 	height: 6px;
 	border-radius: 50%;
-	background: var(--accent);
-	box-shadow: 0 0 10px var(--accent);
+	background: #3b82f6;
+	box-shadow: 0 0 10px #3b82f6;
 }
 
 .explore-stats {
