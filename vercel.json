@@ -150,8 +150,8 @@
 
 		{ "src": "/api/billing/summary", "dest": "/api/billing/summary" },
 
-		{ "src": "/my-agents", "dest": "/my-agents/index.html" },
-		{ "src": "/my-agents/", "dest": "/my-agents/index.html" },
+		{ "src": "/my-agents", "dest": "/public/my-agents/index.html" },
+		{ "src": "/my-agents/", "dest": "/public/my-agents/index.html" },
 		{ "src": "/my-agents/(.*)", "dest": "/my-agents/$1" },
 		{ "src": "/discover", "dest": "/discover/index.html" },
 		{ "src": "/discover/", "dest": "/discover/index.html" },

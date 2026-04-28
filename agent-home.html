@@ -121,12 +121,17 @@
 			}
 
 			.agent-page-header {
+				position: sticky;
+				top: 0;
+				z-index: 100;
 				display: flex;
 				align-items: center;
 				gap: 1rem;
 				padding: 0.75rem 1.618rem;
 				border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-				background: #000;
+				background: rgba(0, 0, 0, 0.85);
+				backdrop-filter: blur(12px);
+				-webkit-backdrop-filter: blur(12px);
 			}
 
 			.agent-page-header a {
@@ -135,6 +140,7 @@
 				font-size: 0.764rem;
 				display: inline-flex;
 				align-items: center;
+				transition: color 0.15s;
 			}
 
 			.agent-page-header a:hover {
@@ -145,6 +151,22 @@
 				height: 28px;
 				width: auto;
 				display: block;
+			}
+
+			.agent-header-nav {
+				display: flex;
+				align-items: center;
+				gap: 1.25rem;
+				margin-left: 1.5rem;
+			}
+
+			.agent-header-nav a {
+				font-size: 0.8rem;
+				color: rgba(255, 255, 255, 0.45);
+			}
+
+			.agent-header-nav a:hover {
+				color: rgba(255, 255, 255, 0.9);
 			}
 
 			.agent-stage {
@@ -238,16 +260,28 @@
 			}
 
 			.agent-page-title {
-				font-size: 1.618rem;
+				font-size: 2rem;
 				font-weight: 300;
-				color: #fff;
-				letter-spacing: -0.02em;
+				background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.7) 100%);
+				-webkit-background-clip: text;
+				-webkit-text-fill-color: transparent;
+				background-clip: text;
+				letter-spacing: -0.03em;
 				margin: 0 0 0.618rem;
 			}
 
+			.agent-page-hero::after {
+				content: '';
+				display: block;
+				width: 40px;
+				height: 1px;
+				background: rgba(255, 255, 255, 0.15);
+				margin: 1rem auto 0;
+			}
+
 			.agent-page-subtitle {
-				font-size: 0.764rem;
-				color: rgba(255, 255, 255, 0.55);
+				font-size: 0.82rem;
+				color: rgba(255, 255, 255, 0.5);
 				line-height: 1.618;
 			}
 
@@ -263,8 +297,9 @@
 
 			.agent-page-card-wrap .agent-home-panel {
 				background: rgba(12, 12, 18, 0.98);
-				border: 1px solid rgba(255, 255, 255, 0.08);
+				border: 1px solid rgba(255, 255, 255, 0.1);
 				border-radius: 12px;
+				box-shadow: 0 0 0 1px rgba(255,255,255,0.03), 0 8px 32px rgba(0,0,0,0.6);
 			}
 
 			.agent-embed-hint {
@@ -360,10 +395,12 @@
 			}
 
 			.agent-embed-label {
-				font-size: 0.618rem;
-				color: rgba(255, 255, 255, 0.25);
-				margin: 0 0 0.382rem;
-				font-weight: 400;
+				font-size: 0.7rem;
+				color: rgba(255, 255, 255, 0.4);
+				margin: 0 0 0.618rem;
+				font-weight: 500;
+				text-transform: uppercase;
+				letter-spacing: 0.1em;
 			}
 
 			.agent-embed-preview-link {
@@ -385,12 +422,12 @@
 			}
 
 			.agent-skills-title {
-				font-size: 0.618rem;
-				color: rgba(255, 255, 255, 0.25);
-				margin: 0 0 0.618rem;
+				font-size: 0.7rem;
+				color: rgba(255, 255, 255, 0.4);
+				margin: 0 0 0.75rem;
 				text-transform: uppercase;
-				letter-spacing: 0.08em;
-				font-weight: 400;
+				letter-spacing: 0.1em;
+				font-weight: 500;
 			}
 
 			.agent-skills-grid {
@@ -401,21 +438,27 @@
 
 			.agent-skill-card {
 				background: rgba(255, 255, 255, 0.04);
-				border: 1px solid rgba(255, 255, 255, 0.07);
+				border: 1px solid rgba(255, 255, 255, 0.08);
 				border-radius: 8px;
-				padding: 0.618rem;
+				padding: 0.75rem;
+				transition: border-color 0.15s, background 0.15s;
+			}
+
+			.agent-skill-card:hover {
+				border-color: rgba(255, 255, 255, 0.2);
+				background: rgba(255, 255, 255, 0.07);
 			}
 
 			.agent-skill-card-name {
 				font-size: 0.764rem;
 				font-weight: 500;
-				color: rgba(255, 255, 255, 0.7);
+				color: rgba(255, 255, 255, 0.85);
 				margin-bottom: 0.236rem;
 			}
 
 			.agent-skill-card-desc {
 				font-size: 0.618rem;
-				color: rgba(255, 255, 255, 0.3);
+				color: rgba(255, 255, 255, 0.4);
 				line-height: 1.382;
 			}
 
@@ -430,9 +473,17 @@
 	<body>
 		<a href="#main" class="skip-link">Skip to main content</a>
 		<header class="agent-page-header" style="justify-content: space-between">
-			<a href="/" aria-label="Back to three.ws home">
-				<img src="/three.svg" alt="three.ws" class="agent-header-logo" />
-			</a>
+			<div style="display:inline-flex;align-items:center">
+				<a href="/" aria-label="Back to three.ws home">
+					<img src="/three.svg" alt="three.ws" class="agent-header-logo" />
+				</a>
+				<nav class="agent-header-nav" aria-label="Primary">
+					<a href="/discover">Discover</a>
+					<a href="/create">Create</a>
+					<a href="/features">Features</a>
+					<a href="/studio">Studio</a>
+				</nav>
+			</div>
 			<!-- BEGIN:AGENT_HOME_ORPHANS_DOM -->
 			<div id="agent-share-btn-mount"></div>
 			<!-- END:AGENT_HOME_ORPHANS_DOM -->

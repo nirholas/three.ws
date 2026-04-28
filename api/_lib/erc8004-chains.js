@@ -21,6 +21,7 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://basescan.org',
+		rpcUrl: 'https://mainnet.base.org',
 	},
 	{
 		id: 42161,
@@ -28,6 +29,7 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://arbiscan.io',
+		rpcUrl: 'https://arb1.arbitrum.io/rpc',
 	},
 	{
 		id: 56,
@@ -35,6 +37,7 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://bscscan.com',
+		rpcUrl: 'https://bsc-dataseed1.binance.org',
 	},
 	{
 		id: 1,
@@ -42,6 +45,7 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://etherscan.io',
+		rpcUrl: 'https://eth.llamarpc.com',
 	},
 	{
 		id: 10,
@@ -49,6 +53,7 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://optimistic.etherscan.io',
+		rpcUrl: 'https://mainnet.optimism.io',
 	},
 	{
 		id: 137,
@@ -56,6 +61,7 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://polygonscan.com',
+		rpcUrl: 'https://polygon-rpc.com',
 	},
 	{
 		id: 43114,
@@ -63,6 +69,7 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://snowtrace.io',
+		rpcUrl: 'https://api.avax.network/ext/bc/C/rpc',
 	},
 	{
 		id: 100,
@@ -70,6 +77,7 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://gnosisscan.io',
+		rpcUrl: 'https://rpc.gnosischain.com',
 	},
 	{
 		id: 250,
@@ -77,6 +85,7 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://ftmscan.com',
+		rpcUrl: 'https://rpc.ankr.com/fantom',
 	},
 	{
 		id: 42220,
@@ -84,6 +93,7 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://celoscan.io',
+		rpcUrl: 'https://forno.celo.org',
 	},
 	{
 		id: 59144,
@@ -91,6 +101,7 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://lineascan.build',
+		rpcUrl: 'https://rpc.linea.build',
 	},
 	{
 		id: 534352,
@@ -98,6 +109,7 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://scrollscan.com',
+		rpcUrl: 'https://rpc.scroll.io',
 	},
 	{
 		id: 5000,
@@ -105,6 +117,7 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://explorer.mantle.xyz',
+		rpcUrl: 'https://rpc.mantle.xyz',
 	},
 	{
 		id: 324,
@@ -112,6 +125,7 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://explorer.zksync.io',
+		rpcUrl: 'https://mainnet.era.zksync.io',
 	},
 	{
 		id: 1284,
@@ -119,6 +133,7 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://moonbeam.moonscan.io',
+		rpcUrl: 'https://rpc.api.moonbeam.network',
 	},
 	{
 		id: 97,
@@ -126,6 +141,7 @@ export const CHAINS = [
 		testnet: true,
 		registry: IDENTITY_REGISTRY_TESTNET,
 		explorer: 'https://testnet.bscscan.com',
+		rpcUrl: 'https://data-seed-prebsc-1-s1.bnbchain.org:8545',
 	},
 	{
 		id: 84532,
@@ -133,6 +149,7 @@ export const CHAINS = [
 		testnet: true,
 		registry: IDENTITY_REGISTRY_TESTNET,
 		explorer: 'https://sepolia.basescan.org',
+		rpcUrl: 'https://sepolia.base.org',
 	},
 	{
 		id: 421614,
@@ -140,6 +157,7 @@ export const CHAINS = [
 		testnet: true,
 		registry: IDENTITY_REGISTRY_TESTNET,
 		explorer: 'https://sepolia.arbiscan.io',
+		rpcUrl: 'https://sepolia-rollup.arbitrum.io/rpc',
 	},
 	{
 		id: 11155111,
@@ -147,6 +165,7 @@ export const CHAINS = [
 		testnet: true,
 		registry: IDENTITY_REGISTRY_TESTNET,
 		explorer: 'https://sepolia.etherscan.io',
+		rpcUrl: 'https://rpc2.sepolia.org',
 	},
 	{
 		id: 11155420,
@@ -154,6 +173,7 @@ export const CHAINS = [
 		testnet: true,
 		registry: IDENTITY_REGISTRY_TESTNET,
 		explorer: 'https://sepolia-optimism.etherscan.io',
+		rpcUrl: 'https://sepolia.optimism.io',
 	},
 	{
 		id: 80002,
@@ -161,6 +181,7 @@ export const CHAINS = [
 		testnet: true,
 		registry: IDENTITY_REGISTRY_TESTNET,
 		explorer: 'https://amoy.polygonscan.com',
+		rpcUrl: 'https://rpc-amoy.polygon.technology',
 	},
 	{
 		id: 43113,
@@ -168,6 +189,7 @@ export const CHAINS = [
 		testnet: true,
 		registry: IDENTITY_REGISTRY_TESTNET,
 		explorer: 'https://testnet.snowtrace.io',
+		rpcUrl: 'https://api.avax-test.network/ext/bc/C/rpc',
 	},
 ];
 

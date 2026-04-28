@@ -76,29 +76,78 @@ const CHAINS = [
 	{ id: 43113,    name: 'Avalanche Fuji',    publicRpc: 'https://api.avax-test.network/ext/bc/C/rpc',      registry: '0x8004A818BFB912233c491871b3d84c89A494BD9e' },
 ];
 
+// Alchemy free tier limits eth_getLogs to 10 blocks — useless for a backfill.
+// Use public RPCs for scanning; Alchemy is better suited for the live cron.
 function rpcUrl(chain) {
-	if (ALCHEMY_KEY && ALCHEMY_SLUGS[chain.id]) {
-		return `https://${ALCHEMY_SLUGS[chain.id]}.g.alchemy.com/v2/${ALCHEMY_KEY}`;
-	}
 	return chain.publicRpc;
 }
 
-async function getLogs(chain) {
-	const url = rpcUrl(chain);
+async function jsonRpc(url, method, params) {
 	const res = await fetch(url, {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
-		body: JSON.stringify({
-			jsonrpc: '2.0', id: 1,
-			method: 'eth_getLogs',
-			params: [{ address: chain.registry, topics: [REGISTERED_TOPIC], fromBlock: '0x0', toBlock: 'latest' }],
-		}),
+		body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
 		signal: AbortSignal.timeout(30_000),
 	});
+	// Always try to parse JSON — some RPCs return a JSON-RPC error body with a non-200 status.
+	let body;
+	try { body = await res.json(); } catch { throw new Error(`HTTP ${res.status}`); }
+	if (body?.error) throw new Error(`RPC ${body.error.code}: ${body.error.message}`);
 	if (!res.ok) throw new Error(`HTTP ${res.status}`);
-	const body = await res.json();
-	if (body.error) throw new Error(`RPC ${body.error.code}: ${body.error.message}`);
 	return body.result;
+}
+
+async function getLogs(chain) {
+	const preferred = rpcUrl(chain);
+	// If Alchemy fails (network not enabled in app), fall back to public RPC.
+	const urls = preferred !== chain.publicRpc ? [preferred, chain.publicRpc] : [chain.publicRpc];
+	const url = urls[0];
+	const filter = { address: chain.registry, topics: [REGISTERED_TOPIC], fromBlock: '0x0', toBlock: 'latest' };
+
+	for (const endpoint of urls) {
+		try {
+			return await jsonRpc(endpoint, 'eth_getLogs', [filter]);
+		} catch (e) {
+			const isHttpErr = /HTTP \d/.test(e.message);
+			const isRangeErr = /range|limit/i.test(e.message);
+
+			// HTTP errors (400, 413, 429…) mean this endpoint won't work — try next.
+			if (isHttpErr && endpoint !== urls.at(-1)) continue;
+
+			// JSON-RPC range error — chunk with this endpoint.
+			if (isRangeErr && !isHttpErr) {
+				const match = e.message.match(/([\d,_]+)\s*(?:block|range)/i);
+				const chunkSize = match ? parseInt(match[1].replace(/[,_]/g, ''), 10) : 2000;
+				const latestHex = await jsonRpc(endpoint, 'eth_blockNumber', []);
+				const latest = Number(latestHex);
+				const logs = [];
+				for (let from = 0; from <= latest; from += chunkSize) {
+					const to = Math.min(from + chunkSize - 1, latest);
+					let retries = 3;
+					while (retries-- > 0) {
+						try {
+							const chunk = await jsonRpc(endpoint, 'eth_getLogs', [{
+								...filter,
+								fromBlock: '0x' + from.toString(16),
+								toBlock: '0x' + to.toString(16),
+							}]);
+							logs.push(...chunk);
+							break;
+						} catch (re) {
+							if (/rate.limit|429/i.test(re.message) && retries > 0) {
+								await new Promise(r => setTimeout(r, 1000));
+							} else throw re;
+						}
+					}
+					await new Promise(r => setTimeout(r, 80)); // avoid hammering the RPC
+					process.stdout.write(`\r  chunking ${Math.round(to / latest * 100)}%… `);
+				}
+				return logs;
+			}
+
+			throw e;
+		}
+	}
 }
 
 async function backfillChain(chain) {
