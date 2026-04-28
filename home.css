@@ -232,7 +232,7 @@
 .h-bento-card {
 	background: rgba(255, 255, 255, 0.025);
 	border: 1px solid rgba(255, 255, 255, 0.06);
-	border-radius: 16px;
+	border-radius: 8px;
 	overflow: hidden;
 	transition: border-color 0.3s ease, transform 0.3s ease;
 	display: flex;
@@ -452,7 +452,7 @@
 	color: rgba(167, 139, 250, 0.65);
 	font-family: 'Space Grotesk', sans-serif;
 	border: 1px solid rgba(167, 139, 250, 0.2);
-	border-radius: 999px;
+	border-radius: 4px;
 	padding: 0.2rem 0.55rem;
 }
 
@@ -516,7 +516,7 @@
 .h-dev-code {
 	background: #0a0a0e;
 	border: 1px solid rgba(255, 255, 255, 0.07);
-	border-radius: 14px;
+	border-radius: 8px;
 	overflow: hidden;
 }
 
@@ -767,7 +767,7 @@
 	align-items: center;
 	gap: 0.4rem;
 	padding: 0.32rem 0.7rem;
-	border-radius: 999px;
+	border-radius: 6px;
 	border: 1px solid rgba(255, 255, 255, 0.09);
 	background: rgba(255, 255, 255, 0.025);
 	color: rgba(255, 255, 255, 0.62);
@@ -1148,8 +1148,8 @@
 
 .h-layer-orb--mint {
 	background: radial-gradient(circle, color-mix(in srgb, #6ee7b7 60%, #38bdf8 40%), transparent 70%);
-	top: 18%;
-	right: 8%;
+	top: 33%;
+	right: 36%;
 }
 
 /* ── Floating word glyphs (Act 2 depth 4) ───────────────────────────────── */
@@ -1182,7 +1182,7 @@
 	color: rgba(110, 231, 183, 0.18);
 	text-transform: uppercase;
 	border: 1px solid rgba(110, 231, 183, 0.1);
-	border-radius: 999px;
+	border-radius: 6px;
 	padding: 0.4rem 1rem;
 	white-space: nowrap;
 }
@@ -1347,7 +1347,7 @@
 	padding: 0.45rem 1.1rem;
 	background: rgba(255, 255, 255, 0.04);
 	border: 1px solid rgba(255, 255, 255, 0.12);
-	border-radius: 999px;
+	border-radius: 6px;
 	color: rgba(255, 255, 255, 0.65);
 	font-size: 13px;
 	font-weight: 500;
@@ -1383,7 +1383,7 @@
 	padding: 0.5rem 0.9rem;
 	background: rgba(255, 255, 255, 0.04);
 	border: 1px solid rgba(255, 215, 106, 0.2);
-	border-radius: 999px;
+	border-radius: 6px;
 	color: rgba(255, 255, 255, 0.8);
 	font-size: 13px;
 	font-weight: 500;
@@ -1572,7 +1572,7 @@
 	padding: 0.5rem 1.2rem;
 	background: linear-gradient(135deg, #ffd76a 0%, #ff8f4d 100%);
 	color: #1a0f08;
-	border-radius: 999px;
+	border-radius: 6px;
 	font-weight: 600;
 	font-size: 0.9rem;
 	box-shadow: 0 4px 18px -6px rgba(255, 143, 77, 0.6);
@@ -1721,7 +1721,7 @@
 	padding: 0.5rem 1.1rem;
 	background: rgba(255, 175, 60, 0.08);
 	border: 1px solid rgba(255, 175, 60, 0.25);
-	border-radius: 999px;
+	border-radius: 6px;
 	font-size: 0.85rem;
 	color: rgba(255, 220, 150, 0.9);
 	letter-spacing: 0.01em;
@@ -1809,7 +1809,7 @@
 	color: #1a0f08;
 	font-size: 0.95rem;
 	font-weight: 600;
-	border-radius: 999px;
+	border-radius: 8px;
 	text-decoration: none;
 	letter-spacing: 0.005em;
 	font-family: 'Space Grotesk', 'Inter', sans-serif;
@@ -1842,7 +1842,7 @@
 	letter-spacing: 0.005em;
 	font-family: 'Space Grotesk', 'Inter', sans-serif;
 	border: 1px solid rgba(255, 255, 255, 0.18);
-	border-radius: 999px;
+	border-radius: 8px;
 	transition: all 0.3s cubic-bezier(.2,.9,.3,1);
 	background: rgba(255, 255, 255, 0.03);
 	backdrop-filter: blur(8px);
