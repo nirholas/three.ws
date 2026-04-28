@@ -463,6 +463,7 @@ class App {
 		try {
 			const user = await getMe();
 			if (link && user) link.classList.add('signed-in');
+			if (user) this._initUserMenu(user);
 			if (document.body.dataset.viewerMode === 'main') {
 				document.body.dataset.authed = user ? 'true' : 'false';
 			}
@@ -470,6 +471,46 @@ class App {
 			if (document.body.dataset.viewerMode === 'main') {
 				document.body.dataset.authed = 'false';
 			}
+		}
+	}
+
+	_initUserMenu(user) {
+		const wrap = document.getElementById('nav-user-wrap');
+		const btn = document.getElementById('nav-user-btn');
+		const menu = document.getElementById('nav-user-menu');
+		const label = document.getElementById('nav-user-label');
+		const profileLink = document.getElementById('nav-my-profile-link');
+		const signOutBtn = document.getElementById('nav-sign-out-btn');
+		if (!wrap || !btn || !menu) return;
+
+		if (label) label.textContent = user.email || user.username || 'Account';
+		if (profileLink && user.address) profileLink.href = `/u/${user.address}`;
+
+		wrap.hidden = false;
+
+		btn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			const open = menu.hidden === false;
+			menu.hidden = open;
+			btn.setAttribute('aria-expanded', String(!open));
+		});
+
+		document.addEventListener('click', () => {
+			if (!menu.hidden) {
+				menu.hidden = true;
+				btn.setAttribute('aria-expanded', 'false');
+			}
+		});
+
+		menu.addEventListener('click', (e) => e.stopPropagation());
+
+		if (signOutBtn) {
+			signOutBtn.addEventListener('click', () => {
+				fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).finally(() => {
+					try { localStorage.removeItem('3dagent:auth-hint'); } catch { /* ignore */ }
+					location.href = '/';
+				});
+			});
 		}
 	}
 

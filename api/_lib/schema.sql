@@ -24,7 +24,9 @@ create table if not exists users (
 -- Additive migration for deployments that pre-date the wallet_address column.
 alter table users add column if not exists wallet_address text;
 alter table users add column if not exists is_admin boolean not null default false;
+alter table users add column if not exists username text;
 create unique index if not exists users_wallet_unique on users(wallet_address) where wallet_address is not null;
+create unique index if not exists users_username_unique on users(lower(username)) where username is not null;
 
 -- ── avatars (GLBs stored in R2) ─────────────────────────────────────────────
 create table if not exists avatars (

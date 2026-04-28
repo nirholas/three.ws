@@ -76,6 +76,9 @@
 		{ "src": "/api/a/(\\d+)/(\\d+)/og", "dest": "/api/a-og?chain=$1&id=$2" },
 		{ "src": "/api/oembed", "dest": "/api/agent-oembed" },
 		{ "src": "/u/([^/]+)", "dest": "/profile.html" },
+		{ "src": "/avatars/([^/]+)", "dest": "/avatar-page.html" },
+		{ "src": "/api/users/([^/]+)", "dest": "/api/users/[username]?username=$1" },
+		{ "src": "/api/auth/profile", "dest": "/api/auth/profile" },
 		{ "src": "/a/(\\d+)/(\\d+)/edit", "dest": "/a-edit.html" },
 		{ "src": "/agent/([^/]+)/edit", "dest": "/agent-edit.html" },
 		{
