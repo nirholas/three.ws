@@ -1493,6 +1493,49 @@ class App {
 		}
 	}
 
+	_upgradeToHorizonFooter() {
+		const existing = document.querySelector('footer');
+		if (!existing) return;
+		existing.outerHTML = `<footer class="h-footer h-footer-horizon">
+			<div class="h-footer-glow-line" aria-hidden="true"></div>
+			<div class="h-footer-floor" aria-hidden="true"></div>
+			<div class="h-footer-haze" aria-hidden="true"></div>
+			<div class="h-footer-watermark" aria-hidden="true">three.ws</div>
+			<div class="h-footer-inner">
+				<div class="h-footer-brand-col">
+					<div class="h-footer-brand">
+						<span class="wordmark-dot" aria-hidden="true"></span>
+						<span>three.ws</span>
+					</div>
+					<p class="h-footer-tagline">Give your AI a body.</p>
+				</div>
+				<nav class="h-footer-links" aria-label="Footer">
+					<a href="https://github.com/nirholas/3D" target="_blank" rel="noopener">GitHub</a>
+					<a href="/create">Create</a>
+					<a href="/studio">Studio</a>
+					<a href="/widgets">Widgets</a>
+					<a href="/features">Features</a>
+					<a href="/discover">Discover</a>
+					<a href="/docs/widgets">Docs</a>
+					<a href="https://eips.ethereum.org/EIPS/eip-8004" target="_blank" rel="noopener">ERC-8004</a>
+				</nav>
+			</div>
+			<div class="h-footer-bottom">
+				<p class="h-footer-legal">© 2026 three.ws — All rights reserved.</p>
+				<div class="h-footer-badges">
+					<span class="h-footer-badge" aria-label="System status">
+						<span class="h-footer-status-dot" aria-hidden="true"></span>
+						<span>All systems normal</span>
+					</span>
+					<a class="h-footer-badge" href="https://github.com/nirholas/3D" target="_blank" rel="noopener" aria-label="View source on GitHub">
+						<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+						<span>Open source</span>
+					</a>
+				</div>
+			</div>
+		</footer>`;
+	}
+
 	showSpinner() {
 		this.spinnerEl.style.display = '';
 	}
