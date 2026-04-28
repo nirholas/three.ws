@@ -143,6 +143,9 @@ if (preModel) state.preselectedModel = preModel;
 	else if (state.preselectedModel) selectByModelUrl(state.preselectedModel);
 	else if (!state.avatarId) selectAvatar(DEMO_AVATAR.id);
 
+	// Re-send config after every iframe navigation so brand settings apply on load.
+	previewIfr.addEventListener('load', postConfigToPreview);
+
 	updatePreview(true);
 })();
 
@@ -433,6 +436,9 @@ function wireButtons() {
 	for (const btn of document.querySelectorAll('[data-copy]')) {
 		btn.addEventListener('click', () => copyFromSelector(btn.dataset.copy, btn));
 	}
+
+	$('#embed-width').addEventListener('input', _refreshEmbedSnippet);
+	$('#embed-height').addEventListener('input', _refreshEmbedSnippet);
 }
 
 // ── preview ──────────────────────────────────────────────────────────────────
@@ -467,7 +473,7 @@ function updatePreview(forceReload) {
 		state.config.envPreset && state.config.envPreset !== 'none'
 			? `&preset=${encodeURIComponent(state.config.envPreset)}`
 			: '';
-	const src = `/app#model=${encodeURIComponent(modelUrl)}&kiosk=true${camStr}${presetStr}`;
+	const src = `/app#model=${encodeURIComponent(modelUrl)}&kiosk=true&type=${encodeURIComponent(state.type)}${camStr}${presetStr}`;
 	const key = src;
 	if (forceReload || key !== previewSrcKey) {
 		previewSrcKey = key;
@@ -557,16 +563,24 @@ async function save({ generate }) {
 	}
 }
 
+let _currentEmbedUrl = '';
+
+function _refreshEmbedSnippet() {
+	if (!_currentEmbedUrl) return;
+	const w = parseInt($('#embed-width').value) || 600;
+	const h = parseInt($('#embed-height').value) || 600;
+	$('#embed-iframe-snippet').value = `<iframe src="${_currentEmbedUrl}" width="${w}" height="${h}" style="border:0;border-radius:12px" allow="autoplay; xr-spatial-tracking" loading="lazy"></iframe>`;
+}
+
 function openEmbedModal(widget) {
 	const origin = location.origin;
 	const shareUrl = `${origin}/w/${widget.id}`;
-	const embedUrl = `${origin}/app#widget=${widget.id}&kiosk=true`;
+	_currentEmbedUrl = `${origin}/app#widget=${widget.id}&kiosk=true`;
 	$('#embed-share-url').value = shareUrl;
-	$('#embed-iframe-snippet').value =
-		`<iframe src="${embedUrl}" width="600" height="600" style="border:0;border-radius:12px" allow="autoplay; xr-spatial-tracking" loading="lazy"></iframe>`;
+	_refreshEmbedSnippet();
 	$('#embed-script-snippet').value =
 		`<script async src="${origin}/embed.js" data-widget="${widget.id}"></` + 'script>';
-	$('#embed-preview-iframe').src = embedUrl;
+	$('#embed-preview-iframe').src = _currentEmbedUrl;
 	$('#embed-modal').hidden = false;
 }
 

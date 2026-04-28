@@ -47,6 +47,12 @@
 	-webkit-backdrop-filter: blur(8px);
 }
 
+.features-parallax-page .wordmark-logo {
+	height: 1.75rem;
+	width: auto;
+	display: block;
+}
+
 /* ── The scroll container — establishes perspective ─────────────────────── */
 
 .parallax {

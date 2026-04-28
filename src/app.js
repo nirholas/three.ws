@@ -130,6 +130,7 @@ class App {
 		this.options = {
 			kiosk: Boolean(hash.kiosk) || !!(onchain && onchain.embed),
 			model: hash.model || '',
+			type: hash.type || '',
 			preset: hash.preset || '',
 			cameraPosition: hash.cameraPosition ? hash.cameraPosition.split(',').map(Number) : null,
 			brain: hash.brain || 'none',
@@ -149,6 +150,7 @@ class App {
 		this.el = el;
 		this.viewer = null;
 		this.editor = null;
+		this._previewMounted = false;
 		this.viewerEl = null;
 		this.spinnerEl = el.querySelector('.spinner');
 		this.dropEl = el.querySelector('.wrap');
@@ -929,6 +931,16 @@ class App {
 		if (!this.viewer) return;
 		try {
 			if (cfg.background) this.viewer.setBackgroundColor(cfg.background);
+			if (cfg.accent) {
+				document.documentElement.style.setProperty('--accent', cfg.accent);
+				const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(cfg.accent);
+				if (m) {
+					document.documentElement.style.setProperty(
+						'--accent-soft',
+						`rgba(${parseInt(m[1], 16)},${parseInt(m[2], 16)},${parseInt(m[3], 16)},0.18)`,
+					);
+				}
+			}
 			if (typeof cfg.autoRotate === 'boolean' && this.viewer.controls) {
 				this.viewer.controls.autoRotate = cfg.autoRotate;
 				if (typeof cfg.rotationSpeed === 'number') {
@@ -975,6 +987,11 @@ class App {
 				this._applyWidgetConfig(data.config);
 				if (typeof data.config.caption === 'string') {
 					this._renderWidgetCaption(data.config.caption);
+				}
+				// Preview mode (#model= + type=): mount widget runtime on first config message.
+				if (this.options.type && !this._previewMounted) {
+					this._previewMounted = true;
+					this._mountWidgetByType(this.options.type, data.config, null).catch(() => {});
 				}
 				return;
 			}
