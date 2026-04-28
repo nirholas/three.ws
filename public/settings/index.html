@@ -1,0 +1,711 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Settings · three.ws</title>
+		<link rel="icon" href="/favicon.ico" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+		<link rel="stylesheet" href="/footer.css" />
+		<style>
+			:root {
+				color-scheme: dark;
+				--accent: #6a5cff;
+				--accent2: #ff5ca8;
+				--border: #22222e;
+				--bg: #0b0b10;
+				--panel: #14141c;
+			}
+			* { box-sizing: border-box; }
+			body {
+				font: 15px/1.55 -apple-system, system-ui, Segoe UI, Roboto, sans-serif;
+				color: #eee;
+				margin: 0;
+				background: var(--bg);
+				min-height: 100vh;
+			}
+			a { color: #9a8cff; text-decoration: none; }
+			header {
+				display: flex;
+				align-items: center;
+				gap: 12px;
+				padding: 0 24px;
+				border-bottom: 1px solid var(--border);
+				position: sticky;
+				top: 0;
+				background: rgba(11, 11, 16, 0.92);
+				backdrop-filter: blur(16px);
+				-webkit-backdrop-filter: blur(16px);
+				z-index: 5;
+				height: 60px;
+			}
+			header h1 { margin: 0; font-size: inherit; font-weight: inherit; flex-shrink: 0; }
+			header h1 a { display: flex; align-items: center; }
+			.wordmark-logo { height: 1.55rem; width: auto; display: block; }
+			.dash-header-nav {
+				display: flex;
+				align-items: center;
+				gap: 2px;
+				margin-left: 4px;
+				flex: 1;
+				overflow-x: auto;
+				scrollbar-width: none;
+			}
+			.dash-header-nav::-webkit-scrollbar { display: none; }
+			.dash-header-nav a {
+				padding: 6px 10px;
+				border-radius: 6px;
+				color: #888;
+				font-size: 13px;
+				text-decoration: none;
+				transition: color 0.15s, background 0.15s;
+				white-space: nowrap;
+			}
+			.dash-header-nav a:hover { color: #eee; background: rgba(255,255,255,0.05); }
+			.dash-header-nav a.active { color: #fff; background: rgba(106,92,255,0.12); }
+			.dash-header-user {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				flex-shrink: 0;
+				margin-left: auto;
+			}
+			.layout {
+				display: grid;
+				grid-template-columns: 220px 1fr;
+				min-height: calc(100vh - 60px);
+			}
+			aside {
+				border-right: 1px solid var(--border);
+				padding: 20px 0;
+			}
+			.aside-section {
+				padding: 8px 20px 4px;
+				font-size: 11px;
+				text-transform: uppercase;
+				letter-spacing: 0.08em;
+				color: #555;
+				font-weight: 600;
+			}
+			aside a {
+				display: block;
+				padding: 9px 20px;
+				color: #aaa;
+				font-size: 14px;
+				border-left: 2px solid transparent;
+				transition: color 0.12s, background 0.12s;
+			}
+			aside a:hover { color: #eee; background: rgba(255,255,255,0.03); }
+			aside a.active {
+				color: #fff;
+				background: rgba(106,92,255,0.08);
+				border-left-color: var(--accent);
+			}
+			main {
+				padding: 32px 36px;
+				max-width: 680px;
+			}
+			.page { display: none; }
+			.page.active { display: block; }
+			h2 { font-size: 20px; margin: 0 0 4px; letter-spacing: -0.01em; }
+			.sub { color: #888; margin: 0 0 28px; font-size: 14px; }
+			.section { margin-bottom: 32px; }
+			.section h3 {
+				font-size: 13px;
+				font-weight: 600;
+				text-transform: uppercase;
+				letter-spacing: 0.07em;
+				color: #666;
+				margin: 0 0 14px;
+			}
+			.field { margin-bottom: 16px; }
+			.field label {
+				display: block;
+				font-size: 13px;
+				color: #aaa;
+				margin-bottom: 6px;
+				font-weight: 500;
+			}
+			.field .hint {
+				font-size: 12px;
+				color: #666;
+				margin-top: 5px;
+			}
+			input, textarea, select {
+				background: #0f0f17;
+				border: 1px solid var(--border);
+				color: #eee;
+				padding: 9px 11px;
+				border-radius: 8px;
+				font-size: 14px;
+				font-family: inherit;
+				width: 100%;
+				max-width: 400px;
+				display: block;
+			}
+			input:focus, textarea:focus, select:focus {
+				outline: none;
+				border-color: var(--accent);
+			}
+			input[readonly], input:disabled {
+				opacity: 0.5;
+				cursor: not-allowed;
+			}
+			.btn {
+				padding: 9px 18px;
+				border-radius: 9px;
+				border: 0;
+				font-size: 13px;
+				font-weight: 600;
+				cursor: pointer;
+				background: var(--accent);
+				color: #fff;
+				font-family: inherit;
+				transition: filter 0.12s;
+			}
+			.btn:hover { filter: brightness(1.1); }
+			.btn:disabled { opacity: 0.5; cursor: not-allowed; filter: none; }
+			.btn.sec {
+				background: #222230;
+				color: #ddd;
+			}
+			.btn.sec:hover { background: #2a2a3a; filter: none; }
+			.btn.danger { background: #cc4040; }
+			.divider {
+				border: none;
+				border-top: 1px solid var(--border);
+				margin: 28px 0;
+			}
+			.row {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				flex-wrap: wrap;
+			}
+			.tag {
+				font-size: 11px;
+				padding: 2px 8px;
+				border-radius: 99px;
+				background: #20202c;
+				color: #ccc;
+			}
+			.tag.green { background: rgba(74,222,128,0.12); color: #4ade80; }
+			.tag.red { background: rgba(248,113,113,0.12); color: #f87171; }
+			.tag.yellow { background: rgba(251,191,36,0.12); color: #fbbf24; }
+			.inline-msg {
+				font-size: 13px;
+				padding: 9px 12px;
+				border-radius: 8px;
+				margin-top: 10px;
+				display: none;
+			}
+			.inline-msg.ok { background: rgba(74,222,128,0.1); color: #4ade80; border: 1px solid rgba(74,222,128,0.25); }
+			.inline-msg.err { background: rgba(248,113,113,0.1); color: #f87171; border: 1px solid rgba(248,113,113,0.25); }
+			.danger-zone {
+				border: 1px solid rgba(204,64,64,0.4);
+				border-radius: 12px;
+				padding: 18px;
+				background: rgba(204,64,64,0.04);
+			}
+			.danger-zone h3 { color: #ffb3b3; text-transform: none; letter-spacing: 0; font-size: 14px; margin: 0 0 6px; }
+			.danger-zone p { color: #888; font-size: 13px; margin: 0 0 14px; }
+			.confirm-delete { display: none; margin-top: 12px; }
+			.confirm-delete input { margin-bottom: 10px; }
+			.confirm-delete p { font-size: 13px; color: #888; margin: 0 0 10px; }
+			.muted { color: #888; font-size: 13px; }
+			.session-row {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: 12px 14px;
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				margin-bottom: 8px;
+				gap: 12px;
+			}
+			.session-row .meta { font-size: 12px; color: #888; margin-top: 2px; }
+			.session-row .current-badge {
+				font-size: 11px;
+				padding: 2px 7px;
+				border-radius: 99px;
+				background: rgba(106,92,255,0.15);
+				color: #a78bfa;
+				white-space: nowrap;
+			}
+			.link-row {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: 12px 0;
+				border-bottom: 1px solid var(--border);
+				font-size: 14px;
+			}
+			.link-row:last-child { border-bottom: none; }
+			.link-row .label { color: #ccc; }
+			.link-row .val { color: #888; font-size: 13px; }
+			.link-row a.action {
+				font-size: 13px;
+				color: #9a8cff;
+				font-weight: 500;
+			}
+			.link-row a.action:hover { color: #c4b8ff; }
+			@media (max-width: 768px) {
+				.layout { grid-template-columns: 1fr; }
+				aside {
+					border-right: none;
+					border-bottom: 1px solid var(--border);
+					padding: 8px 0;
+					display: flex;
+					flex-wrap: wrap;
+					overflow-x: auto;
+				}
+				aside a {
+					padding: 8px 14px;
+					border-left: none;
+					border-bottom: 2px solid transparent;
+					white-space: nowrap;
+				}
+				aside a.active {
+					border-left: none;
+					border-bottom-color: var(--accent);
+				}
+				.aside-section { display: none; }
+				main { padding: 20px 16px; }
+				input, textarea, select { max-width: 100%; }
+			}
+		</style>
+	</head>
+	<body>
+		<header>
+			<h1>
+				<a href="/"><img src="/three.svg" alt="three.ws" class="wordmark-logo" /></a>
+			</h1>
+			<nav class="dash-header-nav" aria-label="Primary">
+				<a href="/app">Viewer</a>
+				<a href="/create">Create</a>
+				<a href="/discover">Discover</a>
+				<a href="/features">Features</a>
+				<a href="/widgets">Widgets</a>
+				<a href="/studio">Studio</a>
+				<a href="/docs/widgets">Docs</a>
+				<a href="/my-agents">My Agents</a>
+				<a href="/dashboard">Dashboard</a>
+				<a href="/settings" class="active" aria-current="page">Settings</a>
+			</nav>
+			<div class="dash-header-user">
+				<span id="user-email" class="muted"></span>
+				<button class="btn sec" id="sign-out-btn">Sign out</button>
+			</div>
+		</header>
+
+		<div class="layout">
+			<aside id="sidebar">
+				<div class="aside-section">Account</div>
+				<a href="#profile" data-tab="profile" class="active">Profile</a>
+				<a href="#account" data-tab="account">Account</a>
+				<a href="#privacy" data-tab="privacy">Privacy</a>
+				<a href="#sessions" data-tab="sessions">Sessions</a>
+				<div class="aside-section">Workspace</div>
+				<a href="/dashboard#keys">API Keys ↗</a>
+				<a href="/dashboard#mcp">MCP ↗</a>
+				<a href="/dashboard#billing">Plan &amp; Billing ↗</a>
+				<a href="/dashboard/wallets">Wallets ↗</a>
+				<div class="aside-section">More</div>
+				<a href="#danger" data-tab="danger">Danger Zone</a>
+			</aside>
+
+			<main>
+				<!-- ── Profile ───────────────────────────────────────────── -->
+				<div class="page active" id="tab-profile">
+					<h2>Profile</h2>
+					<p class="sub">Your public-facing identity on three.ws</p>
+
+					<div class="section">
+						<div class="field">
+							<label for="inp-display-name">Display name</label>
+							<input id="inp-display-name" type="text" placeholder="Your name" maxlength="80" autocomplete="name" />
+							<p class="hint">Shown on your public profile and agent cards.</p>
+						</div>
+						<div class="field">
+							<label for="inp-username">Username</label>
+							<div class="row" style="align-items:flex-start;flex-direction:column;gap:6px">
+								<input id="inp-username" type="text" placeholder="yourhandle" maxlength="30" autocomplete="off" pattern="[a-zA-Z0-9_\-]{3,30}" style="max-width:400px" />
+								<p class="hint" style="margin:0">Letters, numbers, _ and - only, 3–30 chars. Your profile URL: <span id="profile-url-preview" style="color:#9a8cff">three.ws/u/yourhandle</span></p>
+							</div>
+						</div>
+						<div class="row">
+							<button class="btn" id="save-profile-btn">Save changes</button>
+							<span class="inline-msg" id="profile-msg" style="display:none"></span>
+						</div>
+					</div>
+
+					<hr class="divider" />
+
+					<div class="section">
+						<h3>Public profile</h3>
+						<p class="muted" style="margin-bottom:14px;font-size:14px">Your agents and public avatars are visible on your profile page.</p>
+						<a id="view-profile-link" href="#" target="_blank" rel="noopener" class="btn sec" style="display:inline-block;text-decoration:none">View public profile ↗</a>
+					</div>
+				</div>
+
+				<!-- ── Account ───────────────────────────────────────────── -->
+				<div class="page" id="tab-account">
+					<h2>Account</h2>
+					<p class="sub">Email, password, and authentication</p>
+
+					<div class="section">
+						<div class="link-row">
+							<div>
+								<div class="label">Email address</div>
+								<div class="val" id="account-email">—</div>
+							</div>
+							<span id="email-verified-badge" class="tag">—</span>
+						</div>
+						<div class="link-row">
+							<div>
+								<div class="label">Password</div>
+								<div class="val">Change your password</div>
+							</div>
+							<a href="/forgot-password" class="action">Reset via email ↗</a>
+						</div>
+						<div class="link-row">
+							<div>
+								<div class="label">Connected wallets</div>
+								<div class="val" id="wallet-count">—</div>
+							</div>
+							<a href="/dashboard/wallets" class="action">Manage ↗</a>
+						</div>
+						<div class="link-row">
+							<div>
+								<div class="label">Plan</div>
+								<div class="val" id="account-plan">—</div>
+							</div>
+							<a href="/dashboard#billing" class="action">Manage ↗</a>
+						</div>
+					</div>
+
+					<hr class="divider" />
+
+					<div class="section">
+						<h3>Sign-in methods</h3>
+						<p class="muted" style="font-size:14px">Sign out of all devices at once, including any OAuth clients.</p>
+						<button class="btn sec" id="sign-out-everywhere-btn">Sign out everywhere</button>
+						<span class="inline-msg" id="soe-msg" style="display:none"></span>
+					</div>
+				</div>
+
+				<!-- ── Privacy ───────────────────────────────────────────── -->
+				<div class="page" id="tab-privacy">
+					<h2>Privacy</h2>
+					<p class="sub">Control what others can see about you</p>
+
+					<div class="section">
+						<div class="field">
+							<label for="sel-default-vis">Default avatar visibility</label>
+							<select id="sel-default-vis" style="max-width:240px">
+								<option value="private">Private — only me</option>
+								<option value="unlisted">Unlisted — anyone with link</option>
+								<option value="public">Public — listed on my profile</option>
+							</select>
+							<p class="hint">New avatars you upload will default to this visibility. Existing avatars are not affected.</p>
+						</div>
+						<button class="btn" id="save-privacy-btn">Save</button>
+						<span class="inline-msg" id="privacy-msg" style="display:none"></span>
+					</div>
+
+					<hr class="divider" />
+
+					<div class="section">
+						<h3>Public profile</h3>
+						<div class="link-row">
+							<div>
+								<div class="label">Profile visibility</div>
+								<div class="val">Your profile page is always public. Only public avatars and agents appear on it.</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- ── Sessions ──────────────────────────────────────────── -->
+				<div class="page" id="tab-sessions">
+					<h2>Sessions</h2>
+					<p class="sub">Devices and browsers signed in to your account</p>
+
+					<div id="sessions-list">
+						<p class="muted">Loading sessions…</p>
+					</div>
+
+					<hr class="divider" />
+
+					<div>
+						<p class="muted" style="font-size:14px;margin-bottom:12px">This revokes all other sessions but keeps your current one active.</p>
+						<button class="btn sec" id="revoke-others-btn">Revoke all other sessions</button>
+						<span class="inline-msg" id="sessions-msg" style="display:none"></span>
+					</div>
+				</div>
+
+				<!-- ── Danger ────────────────────────────────────────────── -->
+				<div class="page" id="tab-danger">
+					<h2>Danger Zone</h2>
+					<p class="sub">Irreversible actions — proceed with care</p>
+
+					<div class="danger-zone">
+						<h3>Delete account</h3>
+						<p>Permanently deletes your account, all avatars, agents, and API keys. This cannot be undone.</p>
+						<button class="btn danger" id="show-delete-btn">Delete my account…</button>
+						<div class="confirm-delete" id="confirm-delete-wrap">
+							<p>Type <strong style="color:#eee">delete my account</strong> to confirm:</p>
+							<input id="delete-confirm-input" type="text" placeholder="delete my account" style="max-width:300px;margin-bottom:12px" />
+							<div class="row">
+								<button class="btn danger" id="confirm-delete-btn" disabled>Permanently delete</button>
+								<button class="btn sec" id="cancel-delete-btn">Cancel</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</main>
+		</div>
+
+		<script type="module">
+			const API = '';
+
+			async function apiFetch(path, opts = {}) {
+				const res = await fetch(path, { credentials: 'include', ...opts });
+				if (res.status === 401) {
+					location.href = '/login?next=' + encodeURIComponent(location.pathname + location.hash);
+					throw new Error('unauthenticated');
+				}
+				return res;
+			}
+
+			async function apiJson(path, opts = {}) {
+				const res = await apiFetch(path, opts);
+				const ct = res.headers.get('content-type') || '';
+				const data = ct.includes('application/json') ? await res.json() : null;
+				if (!res.ok) throw Object.assign(new Error(data?.error_description || res.statusText), { status: res.status, data });
+				return data;
+			}
+
+			function showMsg(el, type, text) {
+				el.className = 'inline-msg ' + type;
+				el.textContent = text;
+				el.style.display = 'inline-block';
+				setTimeout(() => { el.style.display = 'none'; }, 4000);
+			}
+
+			// ── Auth & user ──────────────────────────────────────────────
+			let user = null;
+
+			async function loadUser() {
+				const data = await apiJson('/api/auth/me');
+				user = data.user;
+				document.getElementById('user-email').textContent = user.email || user.display_name || '';
+				document.getElementById('inp-display-name').value = user.display_name || '';
+				document.getElementById('inp-username').value = user.username || '';
+				updateProfileUrlPreview();
+
+				document.getElementById('account-email').textContent = user.email || '—';
+				const badge = document.getElementById('email-verified-badge');
+				if (user.email_verified) {
+					badge.textContent = 'Verified';
+					badge.className = 'tag green';
+				} else {
+					badge.textContent = 'Unverified';
+					badge.className = 'tag yellow';
+				}
+				document.getElementById('account-plan').textContent = user.plan || 'free';
+
+				const profileHref = user.username ? `/u/${user.username}` : (user.address ? `/u/${user.address}` : '#');
+				document.getElementById('view-profile-link').href = profileHref;
+			}
+
+			function updateProfileUrlPreview() {
+				const val = document.getElementById('inp-username').value.trim();
+				const preview = document.getElementById('profile-url-preview');
+				preview.textContent = val ? `three.ws/u/${val}` : 'three.ws/u/yourhandle';
+			}
+			document.getElementById('inp-username').addEventListener('input', updateProfileUrlPreview);
+
+			// ── Wallets count ────────────────────────────────────────────
+			async function loadWallets() {
+				try {
+					const data = await apiJson('/api/auth/wallets');
+					const count = Array.isArray(data?.wallets) ? data.wallets.length : 0;
+					document.getElementById('wallet-count').textContent = count === 0 ? 'None linked' : `${count} wallet${count === 1 ? '' : 's'} linked`;
+				} catch {
+					document.getElementById('wallet-count').textContent = '—';
+				}
+			}
+
+			// ── Save profile ─────────────────────────────────────────────
+			document.getElementById('save-profile-btn').addEventListener('click', async () => {
+				const btn = document.getElementById('save-profile-btn');
+				const msg = document.getElementById('profile-msg');
+				const displayName = document.getElementById('inp-display-name').value.trim();
+				const username = document.getElementById('inp-username').value.trim();
+				if (!displayName && !username) return showMsg(msg, 'err', 'Enter a display name or username.');
+				btn.disabled = true;
+				try {
+					const body = {};
+					if (displayName) body.display_name = displayName;
+					if (username) body.username = username;
+					await apiJson('/api/auth/profile', {
+						method: 'PATCH',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify(body),
+					});
+					showMsg(msg, 'ok', 'Saved!');
+					updateProfileUrlPreview();
+				} catch (e) {
+					showMsg(msg, 'err', e.data?.error_description || 'Failed to save.');
+				} finally {
+					btn.disabled = false;
+				}
+			});
+
+			// ── Privacy (stored in localStorage until backend supports it) ──
+			const PRIV_KEY = '3dagent:default-vis';
+			document.getElementById('sel-default-vis').value = localStorage.getItem(PRIV_KEY) || 'private';
+			document.getElementById('save-privacy-btn').addEventListener('click', () => {
+				const val = document.getElementById('sel-default-vis').value;
+				localStorage.setItem(PRIV_KEY, val);
+				showMsg(document.getElementById('privacy-msg'), 'ok', 'Saved preference.');
+			});
+
+			// ── Sessions ─────────────────────────────────────────────────
+			async function loadSessions() {
+				const list = document.getElementById('sessions-list');
+				try {
+					const data = await apiJson('/api/auth/sessions');
+					const sessions = data.sessions || [];
+					if (!sessions.length) {
+						list.innerHTML = '<p class="muted">No sessions found.</p>';
+						return;
+					}
+					list.innerHTML = sessions.map(s => {
+						const date = new Date(s.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+						const ua = s.user_agent ? s.user_agent.slice(0, 60) : 'Unknown device';
+						const current = s.is_current ? '<span class="current-badge">Current</span>' : `<button class="btn sec" style="font-size:12px;padding:5px 10px" data-revoke="${s.id}">Revoke</button>`;
+						return `<div class="session-row">
+							<div>
+								<div style="font-size:13px;color:#ddd">${ua}</div>
+								<div class="meta">${s.ip || ''} · Signed in ${date}</div>
+							</div>
+							${current}
+						</div>`;
+					}).join('');
+
+					list.querySelectorAll('[data-revoke]').forEach(btn => {
+						btn.addEventListener('click', async () => {
+							btn.disabled = true;
+							try {
+								await apiFetch(`/api/auth/sessions/${btn.dataset.revoke}`, { method: 'DELETE' });
+								btn.closest('.session-row').remove();
+							} catch {
+								btn.disabled = false;
+							}
+						});
+					});
+				} catch {
+					list.innerHTML = '<p class="muted">Could not load sessions.</p>';
+				}
+			}
+
+			document.getElementById('revoke-others-btn').addEventListener('click', async () => {
+				const btn = document.getElementById('revoke-others-btn');
+				const msg = document.getElementById('sessions-msg');
+				btn.disabled = true;
+				try {
+					await apiFetch('/api/auth/sessions', { method: 'DELETE' });
+					showMsg(msg, 'ok', 'All other sessions revoked.');
+					loadSessions();
+				} catch {
+					showMsg(msg, 'err', 'Failed to revoke sessions.');
+				} finally {
+					btn.disabled = false;
+				}
+			});
+
+			// ── Sign out ──────────────────────────────────────────────────
+			document.getElementById('sign-out-btn').addEventListener('click', () => {
+				fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).finally(() => {
+					try { localStorage.removeItem('3dagent:auth-hint'); } catch {}
+					location.href = '/';
+				});
+			});
+
+			document.getElementById('sign-out-everywhere-btn').addEventListener('click', async () => {
+				const btn = document.getElementById('sign-out-everywhere-btn');
+				btn.disabled = true;
+				await fetch('/api/auth/logout-everywhere', { method: 'POST', credentials: 'include' }).finally(() => {
+					try { localStorage.removeItem('3dagent:auth-hint'); } catch {}
+					location.href = '/login';
+				});
+			});
+
+			// ── Delete account ────────────────────────────────────────────
+			document.getElementById('show-delete-btn').addEventListener('click', () => {
+				document.getElementById('confirm-delete-wrap').style.display = 'block';
+				document.getElementById('show-delete-btn').style.display = 'none';
+			});
+			document.getElementById('cancel-delete-btn').addEventListener('click', () => {
+				document.getElementById('confirm-delete-wrap').style.display = 'none';
+				document.getElementById('show-delete-btn').style.display = 'inline-block';
+				document.getElementById('delete-confirm-input').value = '';
+				document.getElementById('confirm-delete-btn').disabled = true;
+			});
+			document.getElementById('delete-confirm-input').addEventListener('input', (e) => {
+				document.getElementById('confirm-delete-btn').disabled = e.target.value !== 'delete my account';
+			});
+			document.getElementById('confirm-delete-btn').addEventListener('click', async () => {
+				const btn = document.getElementById('confirm-delete-btn');
+				btn.disabled = true;
+				btn.textContent = 'Deleting…';
+				try {
+					await apiFetch('/api/auth/me', { method: 'DELETE' });
+					try { localStorage.removeItem('3dagent:auth-hint'); } catch {}
+					location.href = '/?deleted=1';
+				} catch (e) {
+					btn.textContent = 'Permanently delete';
+					alert(e.data?.error_description || 'Failed to delete account. Please contact support.');
+				}
+			});
+
+			// ── Tab routing ───────────────────────────────────────────────
+			function navigate(tab) {
+				document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+				document.querySelectorAll('aside a[data-tab]').forEach(a => a.classList.remove('active'));
+				const page = document.getElementById('tab-' + tab);
+				if (!page) return;
+				page.classList.add('active');
+				const link = document.querySelector(`aside a[data-tab="${tab}"]`);
+				if (link) link.classList.add('active');
+				if (tab === 'sessions') loadSessions();
+			}
+
+			document.querySelectorAll('aside a[data-tab]').forEach(a => {
+				a.addEventListener('click', (e) => {
+					e.preventDefault();
+					history.pushState(null, '', '#' + a.dataset.tab);
+					navigate(a.dataset.tab);
+				});
+			});
+
+			window.addEventListener('popstate', () => navigate(location.hash.slice(1) || 'profile'));
+
+			// ── Init ──────────────────────────────────────────────────────
+			(async () => {
+				try {
+					await loadUser();
+					loadWallets();
+				} catch {
+					return; // redirect already fired
+				}
+				navigate(location.hash.slice(1) || 'profile');
+			})();
+		</script>
+	</body>
+</html>
