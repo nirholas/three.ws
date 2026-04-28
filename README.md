@@ -530,5 +530,5 @@ For deeper technical detail, see the `docs/` directory:
 </p>
 
 <p align="center">
-  <sub>MIT License · Made with three.js · Hosted on Vercel</sub>
+  <sub>Apache 2.0 License · Made with three.js · Hosted on Vercel</sub>
 </p>

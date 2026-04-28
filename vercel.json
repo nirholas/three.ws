@@ -147,6 +147,8 @@
 		{ "src": "/api/dca-strategies/([^/]+)", "dest": "/api/dca-strategies?id=$1" },
 		{ "src": "/api/dca-strategies", "dest": "/api/dca-strategies" },
 
+		{ "src": "/api/billing/summary", "dest": "/api/billing/summary" },
+
 		{ "src": "/my-agents", "dest": "/my-agents/index.html" },
 		{ "src": "/my-agents/", "dest": "/my-agents/index.html" },
 		{ "src": "/my-agents/(.*)", "dest": "/my-agents/$1" },

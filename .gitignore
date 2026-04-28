@@ -15,6 +15,7 @@ character-studio/node_modules
 character-studio/build
 character-studio/public/loot-assets
 .mcp.json
+.claude/worktrees/
 
 # Animation build cache
 public/animations/clips/.input-hashes.json
