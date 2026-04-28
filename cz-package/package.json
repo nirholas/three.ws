@@ -1,0 +1,11 @@
+{
+  "name": "cz-avatar",
+  "version": "1.0.0",
+  "description": "CZ 3D avatar GLB model",
+  "files": ["cz.glb"],
+  "main": "cz.glb",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}

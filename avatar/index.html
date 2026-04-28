@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #070714; overflow: hidden; font-family: sans-serif; }
+    canvas { display: block; }
+    #loader {
+      position: fixed; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; color: #6699ff;
+      font-size: 14px; letter-spacing: 0.1em; gap: 16px; z-index: 10;
+    }
+    #loader-bar-wrap {
+      width: 200px; height: 3px; background: #1a1a3a; border-radius: 2px; overflow: hidden;
+    }
+    #loader-bar { height: 100%; width: 0%; background: #6699ff; transition: width 0.2s; }
+    #loader.done { opacity: 0; pointer-events: none; transition: opacity 0.6s; }
+  </style>
+</head>
+<body>
+<div id="loader">
+  <span>LOADING MODEL</span>
+  <div id="loader-bar-wrap"><div id="loader-bar"></div></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+
+<script>
+const GLB_URL = 'https://raw.githubusercontent.com/overstepping/-/main/cz.glb';
+
+// ─── Scene ────────────────────────────────────────────────────────────────────
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x070714, 0.045);
+
+const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.01, 100);
+camera.position.set(0, 1.4, 3.5);
+camera.lookAt(0, 1.2, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
+document.body.appendChild(renderer.domElement);
+
+// ─── Lights ───────────────────────────────────────────────────────────────────
+scene.add(new THREE.AmbientLight(0x2a2a5a, 1.0));
+
+const key = new THREE.DirectionalLight(0xaabbff, 2.0);
+key.position.set(2, 5, 4);
+key.castShadow = true;
+key.shadow.mapSize.set(1024, 1024);
+scene.add(key);
+
+const rim = new THREE.PointLight(0xff4488, 1.2, 12);
+rim.position.set(-3, 2, -2);
+scene.add(rim);
+
+const fill = new THREE.PointLight(0x4466ff, 0.7, 10);
+fill.position.set(3, 0, 2);
+scene.add(fill);
+
+// ─── Ground ───────────────────────────────────────────────────────────────────
+const ground = new THREE.Mesh(
+  new THREE.CircleGeometry(4, 64),
+  new THREE.MeshStandardMaterial({ color: 0x0a0a20, roughness: 0.9 })
+);
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// ─── Particles ────────────────────────────────────────────────────────────────
+const pCount = 150;
+const pPos = new Float32Array(pCount * 3);
+const pVel = new Float32Array(pCount);
+for (let i = 0; i < pCount; i++) {
+  pPos[i*3]   = (Math.random() - 0.5) * 10;
+  pPos[i*3+1] = Math.random() * 6;
+  pPos[i*3+2] = (Math.random() - 0.5) * 10;
+  pVel[i] = 0.003 + Math.random() * 0.007;
+}
+const pGeo = new THREE.BufferGeometry();
+pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+const pts = new THREE.Points(pGeo, new THREE.PointsMaterial({ color: 0x5588ff, size: 0.04, transparent: true, opacity: 0.5 }));
+scene.add(pts);
+
+// ─── Mouse ────────────────────────────────────────────────────────────────────
+const mouse = { x: 0, y: 0 };
+window.addEventListener('mousemove', e => {
+  mouse.x = (e.clientX / innerWidth  - 0.5) * 2;
+  mouse.y = (e.clientY / innerHeight - 0.5) * 2;
+});
+
+// ─── Load GLB ─────────────────────────────────────────────────────────────────
+const loaderEl  = document.getElementById('loader');
+const barEl     = document.getElementById('loader-bar');
+
+let model = null;
+let mixer = null;
+let headBone = null;
+const targetRot = { x: 0, y: 0 };
+const currentRot = { x: 0, y: 0 };
+
+const loader = new THREE.GLTFLoader();
+loader.load(
+  GLB_URL,
+  (gltf) => {
+    model = gltf.scene;
+
+    // Auto-center and scale to fit
+    const box = new THREE.Box3().setFromObject(model);
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const scale = 2.0 / maxDim;
+    model.scale.setScalar(scale);
+    model.position.sub(center.multiplyScalar(scale));
+    model.position.y += size.y * scale * 0.5; // sit on ground
+
+    model.traverse(obj => {
+      if (obj.isMesh) {
+        obj.castShadow = true;
+        obj.receiveShadow = true;
+      }
+      // Find head bone for mouse tracking
+      const name = (obj.name || '').toLowerCase();
+      if (!headBone && (name.includes('head') || name.includes('neck'))) {
+        headBone = obj;
+      }
+    });
+
+    scene.add(model);
+
+    // Play first animation if present
+    if (gltf.animations.length > 0) {
+      mixer = new THREE.AnimationMixer(model);
+      mixer.clipAction(gltf.animations[0]).play();
+    }
+
+    loaderEl.classList.add('done');
+  },
+  (xhr) => {
+    if (xhr.total) barEl.style.width = (xhr.loaded / xhr.total * 100) + '%';
+  },
+  (err) => {
+    loaderEl.innerHTML = '<span style="color:#ff4466">Failed to load model</span><small>' + err.message + '</small>';
+  }
+);
+
+// ─── Animate ──────────────────────────────────────────────────────────────────
+const clock = new THREE.Clock();
+
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = clock.getDelta();
+  const t  = clock.elapsedTime;
+
+  if (mixer) mixer.update(dt);
+
+  if (model) {
+    // Idle sway
+    model.rotation.y = Math.sin(t * 0.4) * 0.06;
+
+    // Head tracks mouse
+    targetRot.y =  mouse.x * 0.3;
+    targetRot.x = -mouse.y * 0.18;
+    currentRot.x += (targetRot.x - currentRot.x) * 0.05;
+    currentRot.y += (targetRot.y - currentRot.y) * 0.05;
+
+    if (headBone) {
+      headBone.rotation.x = currentRot.x;
+      headBone.rotation.y = currentRot.y;
+    } else {
+      // No head bone found — tilt whole model subtly
+      model.rotation.x = currentRot.x * 0.3;
+    }
+  }
+
+  // Particles drift
+  const pa = pGeo.attributes.position;
+  for (let i = 0; i < pCount; i++) {
+    pa.array[i*3+1] += pVel[i];
+    if (pa.array[i*3+1] > 6) pa.array[i*3+1] = 0;
+  }
+  pa.needsUpdate = true;
+  pts.rotation.y += 0.0005;
+
+  renderer.render(scene, camera);
+}
+animate();
+
+window.addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #070714; overflow: hidden; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const W = window.innerWidth, H = window.innerHeight;
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(42, W / H, 0.1, 100);
+camera.position.set(0, 1.6, 4.2);
+camera.lookAt(0, 1.6, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setSize(W, H);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+document.body.appendChild(renderer.domElement);
+
+// Lights
+scene.add(new THREE.AmbientLight(0x2a2a5a, 1.2));
+
+const key = new THREE.DirectionalLight(0x99aaff, 2.2);
+key.position.set(2, 5, 4);
+key.castShadow = true;
+scene.add(key);
+
+const rim = new THREE.PointLight(0xff4488, 1.4, 10);
+rim.position.set(-3, 2, -1);
+scene.add(rim);
+
+const fill = new THREE.PointLight(0x4488ff, 0.8, 8);
+fill.position.set(3, 0, 2);
+scene.add(fill);
+
+// Materials
+const skinMat  = new THREE.MeshStandardMaterial({ color: 0x7ba3d4, roughness: 0.25, metalness: 0.05 });
+const darkMat  = new THREE.MeshStandardMaterial({ color: 0x0d1a2e, roughness: 0.2, metalness: 0.6 });
+const irisMat  = new THREE.MeshStandardMaterial({ color: 0x55aaff, roughness: 0.05, metalness: 0.3, emissive: 0x1144cc, emissiveIntensity: 0.6 });
+const suitMat  = new THREE.MeshStandardMaterial({ color: 0x1a2540, roughness: 0.6, metalness: 0.3 });
+const glareMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0, metalness: 0, transparent: true, opacity: 0.55 });
+
+// ─── Avatar ───────────────────────────────────────────────────────────────────
+const avatar = new THREE.Group();
+scene.add(avatar);
+
+// Torso
+const torsoMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.32, 1.0, 20), suitMat);
+torsoMesh.position.y = 0.82;
+torsoMesh.castShadow = true;
+avatar.add(torsoMesh);
+
+// Neck
+const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.19, 0.28, 16), skinMat);
+neck.position.y = 1.47;
+avatar.add(neck);
+
+// Head group (rotates for mouse tracking)
+const headGroup = new THREE.Group();
+headGroup.position.y = 1.94;
+avatar.add(headGroup);
+
+const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.52, 40, 40), skinMat);
+headMesh.scale.set(1, 1.08, 0.96);
+headMesh.castShadow = true;
+headGroup.add(headMesh);
+
+// Eye sockets (slight indents via dark spheres behind eyes)
+function makeEye(x) {
+  const group = new THREE.Group();
+  group.position.set(x, 0.06, 0.44);
+
+  // White
+  const white = new THREE.Mesh(new THREE.SphereGeometry(0.105, 20, 20), new THREE.MeshStandardMaterial({ color: 0xddeeff, roughness: 0.3, metalness: 0 }));
+  group.add(white);
+
+  // Iris
+  const iris = new THREE.Mesh(new THREE.SphereGeometry(0.065, 16, 16), irisMat);
+  iris.position.z = 0.055;
+  group.add(iris);
+
+  // Pupil
+  const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.036, 12, 12), darkMat);
+  pupil.position.z = 0.088;
+  group.add(pupil);
+
+  // Glare
+  const glare = new THREE.Mesh(new THREE.SphereGeometry(0.014, 8, 8), glareMat);
+  glare.position.set(0.022, 0.025, 0.1);
+  group.add(glare);
+
+  return group;
+}
+
+const leftEyeGroup  = makeEye(-0.185);
+const rightEyeGroup = makeEye( 0.185);
+headGroup.add(leftEyeGroup, rightEyeGroup);
+
+// Eyelids (scale Y to blink)
+function makeLid(x) {
+  const lid = new THREE.Mesh(
+    new THREE.SphereGeometry(0.112, 20, 10, 0, Math.PI * 2, 0, Math.PI * 0.5),
+    new THREE.MeshStandardMaterial({ color: 0x6a95c0, roughness: 0.3, side: THREE.FrontSide })
+  );
+  lid.position.set(x, 0.06, 0.43);
+  lid.rotation.x = Math.PI;
+  lid.scale.y = 0.01; // starts closed-ish (will animate open)
+  return lid;
+}
+const leftLid  = makeLid(-0.185);
+const rightLid = makeLid( 0.185);
+headGroup.add(leftLid, rightLid);
+
+// Eyebrows
+function makeBrow(x) {
+  const geo = new THREE.BoxGeometry(0.16, 0.03, 0.04);
+  const brow = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0x3a6090, roughness: 0.5 }));
+  brow.position.set(x, 0.215, 0.455);
+  brow.rotation.z = x > 0 ? -0.12 : 0.12;
+  return brow;
+}
+headGroup.add(makeBrow(-0.185), makeBrow(0.185));
+
+// Nose
+const noseMesh = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 12), skinMat);
+noseMesh.scale.set(0.7, 0.65, 0.8);
+noseMesh.position.set(0, -0.07, 0.5);
+headGroup.add(noseMesh);
+
+// Mouth
+const mouthGeo = new THREE.TorusGeometry(0.1, 0.025, 8, 20, Math.PI);
+const mouth = new THREE.Mesh(mouthGeo, new THREE.MeshStandardMaterial({ color: 0x3a5a80, roughness: 0.5 }));
+mouth.position.set(0, -0.2, 0.46);
+mouth.rotation.z = Math.PI;
+headGroup.add(mouth);
+
+// Shoulders / arms
+function makeArm(x) {
+  const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.09, 0.75, 14), suitMat);
+  arm.position.set(x, 0.85, 0);
+  arm.rotation.z = x > 0 ? -0.35 : 0.35;
+  arm.castShadow = true;
+  return arm;
+}
+avatar.add(makeArm(-0.52), makeArm(0.52));
+
+// Shoulder pads
+function makePad(x) {
+  const pad = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 16), suitMat);
+  pad.scale.set(1, 0.7, 1);
+  pad.position.set(x, 1.3, 0);
+  return pad;
+}
+avatar.add(makePad(-0.52), makePad(0.52));
+
+// Chest detail (glowing panel)
+const panelMat = new THREE.MeshStandardMaterial({ color: 0x1155cc, emissive: 0x0033aa, emissiveIntensity: 1.2, roughness: 0.2 });
+const panel = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.14, 0.04), panelMat);
+panel.position.set(0, 0.88, 0.37);
+avatar.add(panel);
+
+// Ground plane (subtle)
+const ground = new THREE.Mesh(
+  new THREE.CircleGeometry(3, 48),
+  new THREE.MeshStandardMaterial({ color: 0x0a0a20, roughness: 0.9, metalness: 0.1 })
+);
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// Fog
+scene.fog = new THREE.FogExp2(0x070714, 0.06);
+
+// Particles
+const pCount = 120;
+const pPos = new Float32Array(pCount * 3);
+const pVel = new Float32Array(pCount);
+for (let i = 0; i < pCount; i++) {
+  pPos[i*3]   = (Math.random() - 0.5) * 8;
+  pPos[i*3+1] = Math.random() * 5;
+  pPos[i*3+2] = (Math.random() - 0.5) * 8;
+  pVel[i] = 0.003 + Math.random() * 0.008;
+}
+const pGeo = new THREE.BufferGeometry();
+pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+const pMat = new THREE.PointsMaterial({ color: 0x6699ff, size: 0.04, transparent: true, opacity: 0.55 });
+const pts = new THREE.Points(pGeo, pMat);
+scene.add(pts);
+
+// ─── Mouse tracking ───────────────────────────────────────────────────────────
+const mouse = { x: 0, y: 0 };
+window.addEventListener('mousemove', e => {
+  mouse.x = (e.clientX / window.innerWidth  - 0.5) * 2;
+  mouse.y = (e.clientY / window.innerHeight - 0.5) * 2;
+});
+
+// ─── Animate ──────────────────────────────────────────────────────────────────
+let t = 0;
+let blinkTimer = 0;
+let blinkInterval = 3 + Math.random() * 3;
+let blinking = false;
+let blinkT = 0;
+
+const targetHeadRot = { x: 0, y: 0 };
+const currentHeadRot = { x: 0, y: 0 };
+
+function animate() {
+  requestAnimationFrame(animate);
+  t += 0.016;
+
+  // Breathing
+  const breathe = Math.sin(t * 1.15) * 0.025;
+  torsoMesh.scale.y = 1 + breathe;
+  torsoMesh.position.y = 0.82 + breathe * 0.3;
+
+  // Chest glow pulse
+  panelMat.emissiveIntensity = 1.0 + Math.sin(t * 2.3) * 0.3;
+
+  // Head follows mouse (smoothed)
+  targetHeadRot.y =  mouse.x * 0.35;
+  targetHeadRot.x = -mouse.y * 0.2;
+  currentHeadRot.x += (targetHeadRot.x - currentHeadRot.x) * 0.06;
+  currentHeadRot.y += (targetHeadRot.y - currentHeadRot.y) * 0.06;
+  headGroup.rotation.x = currentHeadRot.x;
+  headGroup.rotation.y = currentHeadRot.y;
+
+  // Idle body sway
+  avatar.rotation.y = Math.sin(t * 0.35) * 0.06;
+
+  // Blink
+  blinkTimer += 0.016;
+  if (!blinking && blinkTimer > blinkInterval) {
+    blinking = true;
+    blinkT = 0;
+    blinkInterval = 2.5 + Math.random() * 4;
+    blinkTimer = 0;
+  }
+  if (blinking) {
+    blinkT += 0.016;
+    const half = 0.09;
+    const progress = blinkT < half
+      ? blinkT / half
+      : blinkT < half * 2 ? 1 - (blinkT - half) / half : -1;
+    if (progress < 0) {
+      leftLid.scale.y  = 0.01;
+      rightLid.scale.y = 0.01;
+      blinking = false;
+    } else {
+      leftLid.scale.y  = progress;
+      rightLid.scale.y = progress;
+    }
+  }
+
+  // Particles drift upward
+  const pos = pGeo.attributes.position;
+  for (let i = 0; i < pCount; i++) {
+    pos.array[i*3+1] += pVel[i];
+    if (pos.array[i*3+1] > 5) pos.array[i*3+1] = 0;
+  }
+  pos.needsUpdate = true;
+  pts.rotation.y += 0.0006;
+
+  renderer.render(scene, camera);
+}
+animate();
+
+window.addEventListener('resize', () => {
+  const w = window.innerWidth, h = window.innerHeight;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+});
+</script>
+</body>
+</html>
