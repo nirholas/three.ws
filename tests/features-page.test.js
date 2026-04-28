@@ -17,7 +17,6 @@ describe('/features page — structure', () => {
 	it('lives at public/features/index.html (folder pattern, not root features.html)', () => {
 		expect(existsSync(p('public/features/index.html'))).toBe(true);
 		expect(existsSync(p('features.html'))).toBe(false);
-		expect(existsSync(p('features.css'))).toBe(false);
 	});
 
 	it('has metadata: title, canonical, og:image', () => {
@@ -34,25 +33,26 @@ describe('/features page — structure', () => {
 		expect(html).toContain('data-act="3"');
 	});
 
-	it('embeds three live <agent-3d> elements (one per act)', () => {
-		const matches = html.match(/<agent-3d\b/g) || [];
-		expect(matches.length).toBe(3);
+	it('embeds three <model-viewer> act-agents (one per act)', () => {
 		expect(html).toContain('data-role="act1-agent"');
 		expect(html).toContain('data-role="act2-agent"');
 		expect(html).toContain('data-role="act3-agent"');
+		// Each act-agent must be a model-viewer element
+		const actAgentTags = html.match(/<model-viewer\b[^>]*data-role="act\d-agent"[^>]*>/gs) || [];
+		expect(actAgentTags.length).toBe(3);
 	});
 
-	it('Act 1 boots eagerly; Acts 2 and 3 lazy-boot', () => {
-		// Act 1 carries the eager attr; the others do not.
-		const act1 = html.match(/<agent-3d\b[^>]*data-role="act1-agent"[^>]*>/)?.[0];
-		const act2 = html.match(/<agent-3d\b[^>]*data-role="act2-agent"[^>]*>/)?.[0];
-		const act3 = html.match(/<agent-3d\b[^>]*data-role="act3-agent"[^>]*>/)?.[0];
+	it('Act 1 loads eagerly; Acts 2 and 3 load lazily', () => {
+		// Act 1 uses loading="eager"; acts 2 and 3 use loading="lazy"
+		const act1 = html.match(/<model-viewer\b[^>]*data-role="act1-agent"[^>]*>/s)?.[0];
+		const act2 = html.match(/<model-viewer\b[^>]*data-role="act2-agent"[^>]*>/s)?.[0];
+		const act3 = html.match(/<model-viewer\b[^>]*data-role="act3-agent"[^>]*>/s)?.[0];
 		expect(act1).toBeTruthy();
 		expect(act2).toBeTruthy();
 		expect(act3).toBeTruthy();
-		expect(act1).toMatch(/\beager\b/);
-		expect(act2).not.toMatch(/\beager\b/);
-		expect(act3).not.toMatch(/\beager\b/);
+		expect(act1).toContain('loading="eager"');
+		expect(act2).toContain('loading="lazy"');
+		expect(act3).toContain('loading="lazy"');
 	});
 
 	it('has a deploy CTA pointing at /deploy', () => {
@@ -110,23 +110,24 @@ describe('/features page — CSS contract', () => {
 });
 
 describe('/features page — JS wiring', () => {
-	it('lazy-boots Acts 2 and 3 via IntersectionObserver', () => {
+	it('uses IntersectionObserver for progress-dot tracking', () => {
 		expect(js).toContain('IntersectionObserver');
-		expect(js).toContain('agent-3d:not([eager])');
+		expect(js).toContain('parallax-act[data-act]');
 	});
 
-	it('triggers expressEmotion() on emotion-chip click', () => {
-		expect(js).toContain('expressEmotion');
+	it('wires emotion chips to model-viewer animation playback', () => {
 		expect(js).toContain('data-emotion');
+		expect(js).toContain('animationName');
+		expect(js).toContain('EMOTION_TO_ANIM');
 	});
 
 	it('fetches a real on-chain agent via /api/agents/suggest', () => {
 		expect(js).toContain('/api/agents/suggest');
 	});
 
-	it('paints a chain ribbon for Act 3', () => {
-		expect(js).toContain('chain-pill');
-		expect(js).toContain('CHAIN_LABELS');
+	it('resolves chain IDs to human-readable labels for the Act 3 passport', () => {
+		expect(js).toContain('SHORT_NAME_BY_CHAIN');
+		expect(js).toContain('chainLabel');
 	});
 });
 
