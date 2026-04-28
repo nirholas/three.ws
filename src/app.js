@@ -1446,6 +1446,8 @@ class App {
 			page.className = 'deploy-page';
 			main.appendChild(page);
 
+			this._upgradeToHorizonFooter();
+
 			const initial = await this._resolveDeployInitial();
 
 			const { RegisterUI } = await import('./erc8004/register-ui.js');
