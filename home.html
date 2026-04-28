@@ -577,27 +577,37 @@
 
 					const wrap = canvas.closest('.h-avatar-wrap');
 
-					/* falling: expand to full hero width and slide model across the scene */
-					function doFalling() {
+					/* falling: play clip in the circle, then expand and slowly slide across */
+					async function doFalling() {
+						try { await viewer.playClip('falling'); } catch (_) {}
+
+						/* wait for the actual clip to finish on the ground */
+						const clipDur = viewer.currentAction
+							? viewer.currentAction.getClip().duration * 1000
+							: 2200;
+						await new Promise(r => setTimeout(r, clipDur));
+
+						/* expand to full-width and slide the model slowly across the ground */
 						wrap.classList.add('h-avatar-wrap--traversing');
-						viewer.playClip('falling').catch(() => {});
-						const dur = 2800;
+						const SLIDE_DUR = 3200;
+						const SLIDE_DIST = 8;
 						const t0 = performance.now();
-						(function step(now) {
-							const t = Math.min((now - t0) / dur, 1);
-							const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-							const x = -4.5 + 9 * ease;
-							if (viewer.model) viewer.model.position.x = x;
-							viewer._focusX = x;
-							if (t < 1) {
-								requestAnimationFrame(step);
-							} else {
-								if (viewer.model) viewer.model.position.x = 0;
-								viewer._focusX = 0;
-								wrap.classList.remove('h-avatar-wrap--traversing');
-								viewer.playClip('dance').catch(() => {});
-							}
-						})(performance.now());
+						await new Promise(r => {
+							(function step(now) {
+								const t = Math.min((now - t0) / SLIDE_DUR, 1);
+								const x = SLIDE_DIST * t;
+								if (viewer.model) viewer.model.position.x = x;
+								viewer._focusX = x;
+								if (t < 1) { requestAnimationFrame(step); }
+								else { r(); }
+							})(performance.now());
+						});
+
+						/* reset + back to dance */
+						if (viewer.model) viewer.model.position.x = 0;
+						viewer._focusX = 0;
+						wrap.classList.remove('h-avatar-wrap--traversing');
+						viewer.playClip('dance').catch(() => {});
 					}
 
 					viewer.loadModel('/avatars/cz.glb', { autoPlay: false })

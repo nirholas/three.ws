@@ -88,6 +88,11 @@
 			},
 			"dest": "/agent-embed.html"
 		},
+		{
+			"src": "/agent/([^/]+)",
+			"has": [{ "type": "query", "key": "_spa", "value": "1" }],
+			"dest": "/agent-home.html"
+		},
 		{ "src": "/agent/([^/]+)", "dest": "/api/agent-page?id=$1" },
 		{ "src": "/agent", "dest": "/agent-home.html" },
 

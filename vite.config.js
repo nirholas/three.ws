@@ -133,6 +133,7 @@ const appConfig = {
 				],
 			},
 			workbox: {
+				maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
 				globPatterns: ['**/*.{js,css,ico,png,svg,woff2}'],
 				navigateFallback: null,
 				skipWaiting: true,
