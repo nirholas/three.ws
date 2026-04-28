@@ -58,10 +58,10 @@
 			</h1>
 			<nav class="home-nav" aria-label="Primary">
 				<a href="/app">Viewer</a>
-				<a href="/create">Create</a>
-				<a href="/studio">Studio</a>
+				<a href="/discover">Discover</a>
+				<a href="/features">Features</a>
 				<a href="/widgets">Widgets</a>
-				<a href="/features">Docs</a>
+				<a href="/my-agents" id="home-nav-my-agents" hidden>My Agents</a>
 				<a href="/login" class="nav-cta" id="home-nav-cta">Get started</a>
 			</nav>
 		</header>
@@ -254,9 +254,7 @@
 					<div class="h-layer-bg h-layer-bg--mint"></div>
 					<canvas class="h-star-canvas" data-role="star-canvas" data-tint="110,231,183" data-count="200"></canvas>
 				</div>
-				<div class="h-layer" style="--depth: 4" aria-hidden="true">
-					<div class="h-layer-chains" data-role="home-chain-ribbon"></div>
-				</div>
+
 				<div class="h-layer" style="--depth: 2" aria-hidden="true">
 					<div class="h-layer-orb h-layer-orb--mint"></div>
 				</div>
@@ -471,11 +469,36 @@
 				</div>
 			</section>
 
-			<footer class="h-footer">
+			<footer class="h-footer h-footer-horizon">
+				<div class="h-footer-glow-line" aria-hidden="true"></div>
+				<div class="h-footer-floor" aria-hidden="true"></div>
+				<div class="h-footer-haze" aria-hidden="true"></div>
+				<div class="h-footer-watermark" aria-hidden="true">three.ws</div>
+				<div class="h-footer-avatar" aria-hidden="true">
+					<model-viewer
+						src="/animations/robotexpressive.glb"
+						auto-rotate
+						auto-rotate-delay="0"
+						rotation-per-second="20deg"
+						interaction-prompt="none"
+						camera-controls="false"
+						disable-zoom
+						shadow-intensity="0"
+						exposure="0.7"
+						environment-image="neutral"
+						camera-orbit="0deg 80deg 4m"
+						field-of-view="35deg"
+						loading="lazy"
+					></model-viewer>
+				</div>
+
 				<div class="h-footer-inner">
-					<div class="h-footer-brand">
-						<span class="wordmark-dot" aria-hidden="true"></span>
-						<span>three.ws</span>
+					<div class="h-footer-brand-col">
+						<div class="h-footer-brand">
+							<span class="wordmark-dot" aria-hidden="true"></span>
+							<span>three.ws</span>
+						</div>
+						<p class="h-footer-tagline">Give your AI a body.</p>
 					</div>
 					<nav class="h-footer-links" aria-label="Footer">
 						<a href="https://github.com/nirholas/3D" target="_blank" rel="noopener">GitHub</a>
@@ -487,8 +510,9 @@
 						<a href="/docs/widgets">Docs</a>
 						<a href="https://eips.ethereum.org/EIPS/eip-8004" target="_blank" rel="noopener">ERC-8004</a>
 					</nav>
-					<p class="h-footer-copy">Open source · MIT license</p>
 				</div>
+
+				<p class="h-footer-copy">$ three.ws · open source · MIT license</p>
 			</footer>
 		</main>
 
@@ -505,6 +529,8 @@
 						cta.textContent = 'Dashboard';
 						cta.href = '/dashboard';
 					}
+					const myAgents = document.getElementById('home-nav-my-agents');
+					if (myAgents) myAgents.hidden = false;
 				} catch (_) {}
 			})();
 
@@ -577,9 +603,12 @@
 
 					const wrap = canvas.closest('.h-avatar-wrap');
 
-					/* falling: play clip in the circle, then expand and slowly slide across */
-					async function doFalling() {
-						try { await viewer.playClip('falling'); } catch (_) {}
+					/* falling: wait for clip to play out, then expand and slide across.
+					   alreadyPlaying=true skips the playClip call (used on first load). */
+					async function doFalling(alreadyPlaying = false) {
+						if (!alreadyPlaying) {
+							try { await viewer.playClip('falling'); } catch (_) {}
+						}
 
 						/* wait for the actual clip to finish on the ground */
 						const clipDur = viewer.currentAction
@@ -610,12 +639,17 @@
 						viewer.playClip('dance').catch(() => {});
 					}
 
+					canvas.style.opacity = '0';
 					viewer.loadModel('/avatars/cz.glb', { autoPlay: false })
-						.then(() => {
-							/* snap camera to orbit position before first render — no jump */
+						.then(async () => {
 							viewer.setOrbit(curTheta, curPhi, curR);
 							orbitActive = true;
-							doFalling();
+							/* fetch + start the falling clip before revealing — no T-pose flash */
+							try { await viewer.playClip('falling'); } catch (_) {}
+							canvas.style.transition = 'opacity 0.15s';
+							canvas.style.opacity = '1';
+							/* clip is already playing — pass flag so doFalling skips the restart */
+							doFalling(true);
 						})
 						.catch(console.error);
 
@@ -757,7 +791,13 @@
 
 					viewer.onClipsReady = buildButtons;
 					viewer.loadModel('/avatars/cz.glb')
-						.then(() => viewer.playClip('capoeira').catch(() => {}))
+						.then(() => {
+							if (viewer.model) {
+								viewer.model.position.x -= 0.15;
+								viewer.model.position.z -= 0.25;
+							}
+							return viewer.playClip('capoeira').catch(() => {});
+						})
 						.catch(console.error);
 
 					if (stopBtn) {
