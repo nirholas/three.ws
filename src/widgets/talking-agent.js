@@ -30,7 +30,7 @@ import { ACTION_TYPES } from '../agent-protocol.js';
  */
 export async function mountTalkingAgent(viewer, config, container, ctx) {
 	const { widgetId, getSceneCtrl, protocol = null, identity = null } = ctx || {};
-	if (!widgetId) throw new Error('mountTalkingAgent: widgetId required');
+	const isPreview = !widgetId;
 
 	const history = [];
 	let destroyed = false;
@@ -46,6 +46,9 @@ export async function mountTalkingAgent(viewer, config, container, ctx) {
 		voiceOutput: config.voiceOutput !== false,
 		skipDefaultListeners: true,
 		onSend: async (text) => {
+			if (isPreview) {
+				return { reply: 'Preview mode — save your widget to enable live chat.' };
+			}
 			try {
 				const result = await dispatchChat(widgetId, text, history.slice(-20));
 				if (result.reply) {
