@@ -1142,13 +1142,13 @@
 
 .h-layer-orb--amber {
 	background: radial-gradient(circle, #ffb347, transparent 70%);
-	top: 12%;
-	left: 8%;
+	top: 37%;
+	left: 36%;
 }
 
 .h-layer-orb--mint {
 	background: radial-gradient(circle, color-mix(in srgb, #6ee7b7 60%, #38bdf8 40%), transparent 70%);
-	top: 33%;
+	top: 39%;
 	right: 36%;
 }
 
