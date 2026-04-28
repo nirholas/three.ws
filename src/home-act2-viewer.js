@@ -273,12 +273,13 @@ export class Act2Viewer {
 		const phi = phiDeg * (Math.PI / 180);
 		const sinPhi = Math.sin(phi);
 		const cosPhi = Math.cos(phi);
+		const fx = this._focusX;
 		this.camera.position.set(
-			radius * sinPhi * Math.sin(theta),
+			fx + radius * sinPhi * Math.sin(theta),
 			this._modelFocusY + radius * cosPhi,
 			radius * sinPhi * Math.cos(theta),
 		);
-		this.camera.lookAt(this._focusX, this._modelFocusY, 0);
+		this.camera.lookAt(fx, this._modelFocusY, 0);
 	}
 
 	setExposure(v) {

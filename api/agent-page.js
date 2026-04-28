@@ -126,7 +126,7 @@ function renderHtml(p) {
 	</div>
 	<script>
 		(function () {
-			window.location.replace(${JSON.stringify(p.pageUrl)});
+			window.location.replace(${JSON.stringify(p.pageUrl)} + '?_spa=1');
 		})();
 	</script>
 	<script type="application/ld+json">

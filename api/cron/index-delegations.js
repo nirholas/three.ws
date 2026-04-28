@@ -34,18 +34,49 @@ const BLOCKS_PER_DAY = {
 	11155111: 7200, // Sepolia ~12 s/block
 };
 
-// Public RPC fallbacks — override per chain via env RPC_<chainId>.
-const PUBLIC_RPC = {
-	1: 'https://cloudflare-eth.com',
-	8453: 'https://mainnet.base.org',
-	84532: 'https://sepolia.base.org',
-	11155111: 'https://rpc.sepolia.org',
-	421614: 'https://sepolia-rollup.arbitrum.io/rpc',
-	11155420: 'https://sepolia.optimism.io',
+// Public RPC fallbacks per chain — tried in order. Override primary via env RPC_<chainId>.
+const PUBLIC_RPCS = {
+	1: [
+		'https://cloudflare-eth.com',
+		'https://eth.llamarpc.com',
+		'https://rpc.ankr.com/eth',
+		'https://ethereum.publicnode.com',
+		'https://1rpc.io/eth',
+	],
+	8453: [
+		'https://mainnet.base.org',
+		'https://base.llamarpc.com',
+		'https://rpc.ankr.com/base',
+		'https://base.publicnode.com',
+		'https://1rpc.io/base',
+	],
+	84532: [
+		'https://sepolia.base.org',
+		'https://base-sepolia-rpc.publicnode.com',
+		'https://rpc.ankr.com/base_sepolia',
+	],
+	11155111: [
+		'https://rpc.sepolia.org',
+		'https://ethereum-sepolia-rpc.publicnode.com',
+		'https://rpc.ankr.com/eth_sepolia',
+		'https://1rpc.io/sepolia',
+	],
+	421614: [
+		'https://sepolia-rollup.arbitrum.io/rpc',
+		'https://arbitrum-sepolia.publicnode.com',
+		'https://rpc.ankr.com/arbitrum_sepolia',
+	],
+	11155420: [
+		'https://sepolia.optimism.io',
+		'https://optimism-sepolia.publicnode.com',
+		'https://rpc.ankr.com/optimism_sepolia',
+	],
 };
 
-function rpcUrl(chainId) {
-	return process.env[`RPC_${chainId}`] ?? PUBLIC_RPC[chainId] ?? null;
+function rpcUrls(chainId) {
+	const envUrl = process.env[`RPC_${chainId}`];
+	const fallbacks = PUBLIC_RPCS[chainId] ?? [];
+	return envUrl ? [envUrl, ...fallbacks] : fallbacks;
 }
 
 export default wrap(async (req, res) => {
@@ -107,10 +138,10 @@ export default wrap(async (req, res) => {
 // ─── Chain indexer ────────────────────────────────────────────────────────────
 
 async function indexChain(chainId, contract) {
-	const url = rpcUrl(chainId);
-	if (!url) throw new Error(`no RPC URL configured for chain ${chainId}`);
+	const urls = rpcUrls(chainId);
+	if (!urls.length) throw new Error(`no RPC URL configured for chain ${chainId}`);
 
-	const latestHex = await rpc(url, 'eth_blockNumber', []);
+	const latestHex = await rpc(urls, 'eth_blockNumber', []);
 	const latestBlock = parseInt(latestHex, 16);
 
 	const [cursor] = await sql`
@@ -129,7 +160,7 @@ async function indexChain(chainId, contract) {
 	while (fromBlock <= latestBlock) {
 		toBlock = Math.min(fromBlock + BLOCK_CAP - 1, latestBlock);
 
-		const logs = await rpc(url, 'eth_getLogs', [
+		const logs = await rpc(urls, 'eth_getLogs', [
 			{
 				address: contract,
 				topics: [[DISABLED_TOPIC, REDEEMED_TOPIC]],
@@ -143,7 +174,7 @@ async function indexChain(chainId, contract) {
 			const uniqueBlocks = [...new Set(logs.map((l) => l.blockNumber))];
 			const blockTs = {};
 			for (const bn of uniqueBlocks) {
-				const block = await rpc(url, 'eth_getBlockByNumber', [bn, false]);
+				const block = await rpc(urls, 'eth_getBlockByNumber', [bn, false]);
 				blockTs[bn] = new Date(parseInt(block.timestamp, 16) * 1000).toISOString();
 			}
 
@@ -192,25 +223,31 @@ async function indexChain(chainId, contract) {
 
 // ─── RPC helper ──────────────────────────────────────────────────────────────
 
-async function rpc(url, method, params) {
-	const ac = new AbortController();
-	const t = setTimeout(() => ac.abort(), RPC_TIMEOUT_MS);
-	try {
-		const res = await fetch(url, {
-			method: 'POST',
-			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
-			signal: ac.signal,
-		});
-		if (!res.ok) throw new Error(`RPC HTTP ${res.status} from ${url}`);
-		const data = await res.json();
-		if (data.error) {
-			throw new Error(
-				`RPC ${method} error: ${data.error.message ?? JSON.stringify(data.error)}`,
-			);
+async function rpc(urls, method, params) {
+	let lastErr;
+	for (const url of urls) {
+		const ac = new AbortController();
+		const t = setTimeout(() => ac.abort(), RPC_TIMEOUT_MS);
+		try {
+			const res = await fetch(url, {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
+				signal: ac.signal,
+			});
+			if (!res.ok) throw new Error(`RPC HTTP ${res.status} from ${url}`);
+			const data = await res.json();
+			if (data.error) {
+				throw new Error(
+					`RPC ${method} error: ${data.error.message ?? JSON.stringify(data.error)}`,
+				);
+			}
+			return data.result;
+		} catch (err) {
+			lastErr = err;
+		} finally {
+			clearTimeout(t);
 		}
-		return data.result;
-	} finally {
-		clearTimeout(t);
 	}
+	throw lastErr;
 }
