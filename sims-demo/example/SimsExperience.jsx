@@ -16,6 +16,13 @@ import CozyTavernMap from "./CozyTavernMap";
 import LargeFloorMap from "./LargeFloorMap";
 import HintzeHall from "./HintzeHall";
 import InstancedMap from "./InstancedMap";
+import { useGLTF } from "@react-three/drei";
+
+function IbizoneMap(props) {
+  const { scene } = useGLTF("./ibizone_2021_multiuse_location.glb");
+  return <primitive object={scene} {...props} />;
+}
+useGLTF.preload("./ibizone_2021_multiuse_location.glb");
 
 const keyboardMap = [
   { name: "forward", keys: ["ArrowUp", "KeyW"] },
@@ -31,6 +38,7 @@ const MAP_CONFIG = {
   large_floor: { component: LargeFloorMap, props: {}, env: "city" },
   hintze_hall: { component: HintzeHall, props: { position: [0, -1, 0] }, env: "warehouse" },
   fantasy_inn: { component: InstancedMap, props: { position: [0, -1, 0] }, env: "forest" },
+  ibizone: { component: IbizoneMap, props: { position: [0, 0, 0] }, env: "city" },
 };
 
 export default function SimsExperience({ mapName = "cozy_tavern" }) {

@@ -14,11 +14,12 @@ const MAPS = [
   { id: "large_floor", label: "Large Floor" },
   { id: "hintze_hall", label: "Hintze Hall" },
   { id: "fantasy_inn", label: "Fantasy Inn" },
+  { id: "ibizone", label: "Ibizone" },
 ];
 
 const App = () => {
   const [isTouchScreen, setIsTouchScreen] = useState(false);
-  const [mapName, setMapName] = useState("cozy_tavern");
+  const [mapName, setMapName] = useState("ibizone");
 
   useEffect(() => {
     if ("ontouchstart" in window || navigator.maxTouchPoints > 0) {

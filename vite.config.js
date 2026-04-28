@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
-import { readFileSync } from 'fs';
+import { readFileSync, cpSync } from 'fs';
 import { VitePWA } from 'vite-plugin-pwa';
 
 // The build emits two targets controlled by the TARGET env var:
@@ -80,6 +80,8 @@ const appConfig = {
 					'/features/': resolve(root, 'public/features/index.html'),
 					'/home': resolve(root, 'home.html'),
 					'/agent': resolve(root, 'agent-home.html'),
+					'/docs': resolve(root, 'docs/index.html'),
+					'/docs/': resolve(root, 'docs/index.html'),
 				};
 				server.middlewares.use(async (req, res, next) => {
 					const path = (req.url || '/').split('?')[0];
@@ -105,6 +107,14 @@ const appConfig = {
 					} catch {
 						next();
 					}
+				});
+			},
+		},
+		{
+			name: 'copy-static-docs',
+			closeBundle() {
+				cpSync(resolve(__dirname, 'docs'), resolve(__dirname, 'dist/docs'), {
+					recursive: true,
 				});
 			},
 		},
