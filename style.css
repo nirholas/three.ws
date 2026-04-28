@@ -356,6 +356,49 @@ header h1 .wordmark-dot {
 	font-size: 11px;
 }
 
+/* AR button — sits below the Controls toggle, same corner */
+.ar-btn {
+	position: absolute;
+	top: calc(var(--space-sm) + 38px);
+	right: var(--space-sm);
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 10px;
+	background: rgba(18, 18, 26, 0.85);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	border-radius: var(--radius-md);
+	color: rgba(255, 255, 255, 0.6);
+	font-family: var(--font-body);
+	font-size: var(--text-xs);
+	font-weight: 500;
+	letter-spacing: 0.02em;
+	cursor: pointer;
+	backdrop-filter: blur(12px);
+	-webkit-backdrop-filter: blur(12px);
+	transition:
+		color 0.18s,
+		background 0.18s,
+		border-color 0.18s;
+	z-index: 30;
+}
+
+.ar-btn:hover {
+	color: #fff;
+	background: rgba(28, 28, 38, 0.9);
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+.ar-btn--active {
+	color: #fff;
+	background: var(--accent-soft);
+	border-color: rgba(139, 92, 246, 0.45);
+}
+
+.ar-btn__label {
+	font-size: 11px;
+}
+
 .dg li.gui-stats:not(.folder) {
 	height: auto;
 }

@@ -21,6 +21,30 @@ export function Footer() {
 				|
 			</span>
 
+			<a class="item" href="/showcase">
+				showcase
+			</a>
+
+			<span class="separator" aria-hidden="true">
+				|
+			</span>
+
+			<a class="item" href="/validation/">
+				validation
+			</a>
+
+			<span class="separator" aria-hidden="true">
+				|
+			</span>
+
+			<a class="item" href="/reputation/">
+				reputation
+			</a>
+
+			<span class="separator" aria-hidden="true">
+				|
+			</span>
+
 			<a class="item" target="_blank" href="https://github.com/nirholas/3d-agent/issues/new">
 				help & feedback
 			</a>

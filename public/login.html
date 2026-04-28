@@ -160,6 +160,11 @@
 				color: #444;
 				margin: 0 0 10px;
 				font-weight: 500;
+				text-decoration: none;
+				display: inline-block;
+			}
+			.brand:hover {
+				color: #888;
 			}
 			.divider {
 				display: flex;
@@ -213,6 +218,70 @@
 			}
 			.chain-panel { display: none; }
 			.chain-panel.active { display: block; }
+
+			/* ── Interactions ── */
+			@keyframes card-in {
+				from { opacity: 0; transform: translateY(14px) scale(0.985); }
+				to   { opacity: 1; transform: translateY(0) scale(1); }
+			}
+			.card {
+				animation: card-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+			}
+			input {
+				transition: border-color 0.08s ease, box-shadow 0.08s ease, background 0.08s ease;
+			}
+			input:focus {
+				border-color: rgba(255, 255, 255, 0.45);
+				box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06);
+				background: #080808;
+			}
+			label {
+				transition: color 0.1s ease;
+			}
+			label.lit {
+				color: #bbb;
+			}
+			#submit {
+				position: relative;
+				overflow: hidden;
+				transition: background 0.1s ease, transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.15s;
+			}
+			#submit:active:not(:disabled) {
+				transform: scale(0.965);
+			}
+			#submit::after {
+				content: '';
+				position: absolute;
+				inset: 0;
+				background: linear-gradient(100deg, transparent 20%, rgba(0, 0, 0, 0.08) 50%, transparent 80%);
+				transform: translateX(-150%);
+			}
+			#submit:hover:not(:disabled)::after {
+				transform: translateX(150%);
+				transition: transform 0.55s ease;
+			}
+			.chain-tab {
+				transition: background 0.1s ease, color 0.1s ease, transform 0.08s cubic-bezier(0.34, 1.56, 0.64, 1);
+			}
+			.chain-tab:active {
+				transform: scale(0.93);
+			}
+			.wallet-hint-btn {
+				transition: border-color 0.1s ease, color 0.1s ease, transform 0.08s cubic-bezier(0.34, 1.56, 0.64, 1);
+			}
+			.wallet-hint-btn:active {
+				transform: scale(0.91);
+			}
+			@keyframes err-shake {
+				0%, 100% { transform: translateX(0); }
+				20%       { transform: translateX(-6px); }
+				40%       { transform: translateX(5px); }
+				65%       { transform: translateX(-3px); }
+				85%       { transform: translateX(2px); }
+			}
+			.err.shaking {
+				animation: err-shake 0.32s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+			}
 		</style>
 	</head>
 	<body>
@@ -236,7 +305,7 @@
 			></model-viewer>
 		</div>
 		<form class="card" id="f">
-			<p class="brand">three.ws</p>
+			<a href="/" class="brand">three.ws</a>
 			<h1>Welcome back</h1>
 			<p class="sub">Sign in to manage your avatars.</p>
 			<label for="email">Email or username</label>
@@ -383,9 +452,20 @@
 				} catch (e) {
 					err.textContent = e.message;
 					err.style.display = 'block';
+					err.classList.remove('shaking');
+					void err.offsetWidth;
+					err.classList.add('shaking');
 					btn.disabled = false;
 					btn.textContent = 'Sign in';
 				}
+			});
+		</script>
+		<script>
+			document.querySelectorAll('#f input').forEach((input) => {
+				const label = document.querySelector(`label[for="${input.id}"]`);
+				if (!label) return;
+				input.addEventListener('focus', () => label.classList.add('lit'));
+				input.addEventListener('blur', () => label.classList.remove('lit'));
 			});
 		</script>
 	</body>

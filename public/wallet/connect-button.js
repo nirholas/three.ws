@@ -228,6 +228,9 @@ export function createConnectWalletButton(mountEl, opts = {}) {
 		btn.setAttribute('data-state', s);
 		btn.disabled = ASYNC_STATES.has(s) || s === STATES.SUCCESS;
 		btn.setAttribute('aria-busy', ASYNC_STATES.has(s) ? 'true' : 'false');
+		btn.title = s === STATES.IDLE
+			? 'Your wallet will prompt twice — once to connect, once to sign'
+			: '';
 
 		if (s === STATES.CONNECTED || s === STATES.WRONG_CHAIN) {
 			const addr = detail.address || '';

@@ -5,6 +5,11 @@
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
 		<title>Create account · three.ws</title>
 		<link rel="icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/wallet-connect.css" />
+		<script
+			type="module"
+			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
+		></script>
 		<style>
 			:root {
 				color-scheme: dark;
@@ -25,9 +30,35 @@
 				color: #eee;
 				margin: 0;
 				min-height: 100vh;
-				display: grid;
-				place-items: center;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				gap: 8px;
 				padding: 24px;
+			}
+			.agent-avatar {
+				position: relative;
+				width: 160px;
+				height: 160px;
+				pointer-events: none;
+			}
+			.agent-avatar model-viewer {
+				width: 100%;
+				height: 100%;
+				--poster-color: transparent;
+				background: transparent;
+			}
+			.agent-avatar::after {
+				content: '';
+				position: absolute;
+				left: 50%;
+				bottom: -2px;
+				width: 90px;
+				height: 10px;
+				background: radial-gradient(ellipse, rgba(106, 92, 255, 0.35), transparent 70%);
+				transform: translateX(-50%);
+				filter: blur(4px);
 			}
 			a {
 				color: #9a8cff;
@@ -50,6 +81,24 @@
 				color: #888;
 				margin: 0 0 24px;
 				font-size: 14px;
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				flex-wrap: wrap;
+			}
+			.badge {
+				display: inline-flex;
+				align-items: center;
+				gap: 4px;
+				font-size: 11px;
+				font-weight: 600;
+				padding: 2px 8px;
+				border-radius: 20px;
+				background: rgba(106, 92, 255, 0.15);
+				border: 1px solid rgba(106, 92, 255, 0.3);
+				color: #a899ff;
+				letter-spacing: 0.02em;
+				white-space: nowrap;
 			}
 			label {
 				display: block;
@@ -65,6 +114,7 @@
 				border-radius: 9px;
 				color: #eee;
 				font-size: 15px;
+				transition: border-color 0.15s, box-shadow 0.15s;
 			}
 			input:focus {
 				outline: none;
@@ -76,7 +126,26 @@
 				color: #666;
 				margin-top: 4px;
 			}
-			button {
+			.strength-bar {
+				height: 3px;
+				border-radius: 2px;
+				background: #2a2a36;
+				margin-top: 6px;
+				overflow: hidden;
+			}
+			.strength-fill {
+				height: 100%;
+				width: 0%;
+				border-radius: 2px;
+				transition: width 0.2s, background 0.2s;
+			}
+			.strength-label {
+				font-size: 11px;
+				margin-top: 3px;
+				color: #555;
+				transition: color 0.2s;
+			}
+			button[type="submit"] {
 				width: 100%;
 				margin-top: 20px;
 				padding: 12px 16px;
@@ -87,8 +156,17 @@
 				font-weight: 600;
 				font-size: 15px;
 				cursor: pointer;
+				transition: filter 0.15s, transform 0.1s;
 			}
-			button:disabled {
+			button[type="submit"]:hover:not(:disabled) {
+				filter: brightness(1.12);
+				transform: translateY(-1px);
+			}
+			button[type="submit"]:active:not(:disabled) {
+				transform: translateY(0);
+				filter: brightness(0.95);
+			}
+			button[type="submit"]:disabled {
 				opacity: 0.6;
 				cursor: default;
 			}
@@ -108,20 +186,114 @@
 				font-size: 13px;
 				color: #888;
 			}
+			.legal {
+				margin-top: 10px;
+				text-align: center;
+				font-size: 11px;
+				color: #555;
+			}
 			.brand {
 				font-size: 12px;
 				letter-spacing: 0.1em;
 				text-transform: uppercase;
 				color: var(--accent);
 				margin: 0 0 8px;
+				text-decoration: none;
+				display: inline-block;
 			}
+			.brand:hover {
+				color: #9a8cff;
+			}
+			.divider {
+				display: flex;
+				align-items: center;
+				gap: 12px;
+				margin: 22px 0 4px;
+				color: #555;
+				font-size: 12px;
+				text-transform: uppercase;
+				letter-spacing: 0.08em;
+			}
+			.divider::before,
+			.divider::after {
+				content: '';
+				flex: 1;
+				height: 1px;
+				background: #2a2a36;
+			}
+			.chain-tabs {
+				display: flex;
+				gap: 4px;
+				background: #0f0f17;
+				border: 1px solid #2a2a36;
+				border-radius: 10px;
+				padding: 3px;
+				margin-bottom: 4px;
+			}
+			.chain-tab {
+				flex: 1;
+				padding: 7px 10px;
+				border: none;
+				border-radius: 7px;
+				background: transparent;
+				color: #888;
+				font-size: 13px;
+				font-weight: 500;
+				cursor: pointer;
+				transition: background 0.15s, color 0.15s;
+				margin-top: 0;
+				width: auto;
+			}
+			.chain-tab.active {
+				background: #1e1e2e;
+				color: #eee;
+				border: 1px solid #2a2a36;
+			}
+			.chain-tab:hover:not(.active) {
+				color: #bbb;
+			}
+			.chain-panel { display: none; }
+			.chain-panel.active { display: block; }
+			.wallet-hint-btn {
+				width: auto;
+				margin-top: 0;
+				padding: 4px 10px;
+				background: transparent;
+				border: 1px solid #2a2a36;
+				border-radius: 6px;
+				color: #666;
+				font-size: 11px;
+				font-weight: 400;
+				cursor: pointer;
+			}
+			.wallet-hint-btn:hover { border-color: #6a5cff; color: #9a8cff; }
+			.wallet-hint-btn.active { border-color: #6a5cff; color: #9a8cff; background: rgba(106,92,255,0.08); }
 		</style>
 	</head>
 	<body>
+		<div class="agent-avatar" aria-hidden="true">
+			<model-viewer
+				id="register-avatar"
+				src="/avatars/cz.glb"
+				alt=""
+				autoplay
+				animation-name="IdleV4.2(maya_head)"
+				disable-zoom
+				interaction-prompt="none"
+				shadow-intensity="0.6"
+				shadow-softness="1"
+				exposure="1.05"
+				tone-mapping="aces"
+				environment-image="neutral"
+				camera-orbit="0deg 88deg 4.8m"
+				field-of-view="32deg"
+				loading="eager"
+			></model-viewer>
+		</div>
 		<form class="card" id="f">
-			<p class="brand">three.ws</p>
+			<a href="/" class="brand">three.ws</a>
 			<h1>Create account</h1>
-			<p class="sub">Pick a username and password — no email needed.</p>
+			<p class="sub">Get started free. <span class="badge">✓ No email needed</span></p>
 			<label for="username">Username</label>
 			<input
 				id="username"
@@ -145,15 +317,102 @@
 				maxlength="200"
 				aria-describedby="password-hint err"
 			/>
-			<p class="hint" id="password-hint">Minimum 10 characters</p>
+			<div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
+			<p class="strength-label" id="strength-label">Minimum 10 characters</p>
 			<button id="submit" type="submit">Create account</button>
 			<div class="err" id="err" role="alert" aria-live="polite"></div>
+			<div class="divider">or connect wallet</div>
+			<div class="chain-tabs" role="tablist" aria-label="Wallet chain">
+				<button type="button" class="chain-tab active" data-chain="evm" role="tab" aria-selected="true" aria-controls="evm-panel">EVM</button>
+				<button type="button" class="chain-tab" data-chain="solana" role="tab" aria-selected="false" aria-controls="solana-panel">Solana</button>
+			</div>
+			<div id="evm-panel" class="chain-panel active" role="tabpanel">
+				<div id="wallet-mount"></div>
+			</div>
+			<div id="solana-panel" class="chain-panel" role="tabpanel">
+				<div id="solana-wallet-mount"></div>
+				<div class="chain-hints" id="solana-hints" style="margin-top:8px;font-size:12px;color:#555;display:flex;gap:8px;justify-content:center;">
+					<button type="button" class="wallet-hint-btn" data-wallet="phantom">Phantom</button>
+					<button type="button" class="wallet-hint-btn" data-wallet="backpack">Backpack</button>
+					<button type="button" class="wallet-hint-btn" data-wallet="solflare">Solflare</button>
+				</div>
+			</div>
 			<p class="foot">Already have an account? <a href="/login">Sign in</a></p>
+			<p class="legal">By creating an account you agree to our <a href="/legal/tos">Terms of Service</a> and <a href="/legal/privacy">Privacy Policy</a>.</p>
 		</form>
+
+		<script type="module" src="/wallet-login.js"></script>
+
 		<script>
+			// Avatar mouse tracking
+			(function () {
+				const viewer = document.getElementById('register-avatar');
+				if (!viewer) return;
+				const BASE_AZ = 0, BASE_POL = 88, AZ_RANGE = 30, POL_RANGE = 14;
+				let targetAz = BASE_AZ, targetPol = BASE_POL;
+				let curAz = BASE_AZ, curPol = BASE_POL;
+				let nod = 0;
+				const lerp = (a, b, t) => a + (b - a) * t;
+				function tick() {
+					curAz = lerp(curAz, targetAz, 0.1);
+					curPol = lerp(curPol, targetPol + nod, 0.18);
+					nod *= 0.85;
+					viewer.setAttribute('camera-orbit', `${curAz}deg ${curPol}deg 4.8m`);
+					requestAnimationFrame(tick);
+				}
+				requestAnimationFrame(tick);
+				window.addEventListener('mousemove', (e) => {
+					const nx = e.clientX / window.innerWidth - 0.5;
+					const ny = e.clientY / window.innerHeight - 0.5;
+					targetAz = BASE_AZ - nx * AZ_RANGE * 2;
+					targetPol = BASE_POL + ny * POL_RANGE * 2;
+				}, { passive: true });
+				document.querySelectorAll('#f input').forEach((el) => {
+					el.addEventListener('keydown', (e) => {
+						if (e.key.length === 1 || e.key === 'Backspace') {
+							nod = (nod >= 0 ? -1 : 1) * 4;
+						}
+					});
+				});
+			})();
+
+			// Password strength indicator
+			(function () {
+				const pw = document.getElementById('password');
+				const fill = document.getElementById('strength-fill');
+				const label = document.getElementById('strength-label');
+				const levels = [
+					{ color: '#ff5c5c', text: 'Too short' },
+					{ color: '#ff9a3c', text: 'Weak' },
+					{ color: '#f0c040', text: 'Fair' },
+					{ color: '#7ddf7d', text: 'Strong' },
+					{ color: '#4fc66a', text: 'Very strong' },
+				];
+				function score(v) {
+					if (v.length < 10) return 0;
+					let s = 1;
+					if (v.length >= 14) s++;
+					if (/[A-Z]/.test(v) && /[a-z]/.test(v)) s++;
+					if (/[0-9]/.test(v)) s++;
+					if (/[^A-Za-z0-9]/.test(v)) s++;
+					return Math.min(s, 4);
+				}
+				pw.addEventListener('input', () => {
+					const v = pw.value;
+					if (!v) { fill.style.width = '0%'; label.textContent = 'Minimum 10 characters'; label.style.color = '#555'; return; }
+					const s = score(v);
+					const pct = [15, 35, 55, 75, 100][s];
+					const lvl = levels[s];
+					fill.style.width = pct + '%';
+					fill.style.background = lvl.color;
+					label.textContent = lvl.text;
+					label.style.color = lvl.color;
+				});
+			})();
+
+			// Registration form submit
 			const params = new URLSearchParams(location.search);
-			const next =
-				params.get('next') || sessionStorage.getItem('login_redirect') || '/create';
+			const next = params.get('next') || sessionStorage.getItem('login_redirect') || '/create';
 			sessionStorage.removeItem('login_redirect');
 			const form = document.getElementById('f');
 			const err = document.getElementById('err');
@@ -176,13 +435,8 @@
 					const data = await res.json();
 					if (!res.ok) throw new Error(data.error_description || 'Registration failed');
 					try {
-						localStorage.setItem(
-							'3dagent:auth-hint',
-							JSON.stringify({ authed: true, ts: Date.now() }),
-						);
-					} catch {
-						/* ignore */
-					}
+						localStorage.setItem('3dagent:auth-hint', JSON.stringify({ authed: true, ts: Date.now() }));
+					} catch { /* ignore */ }
 					location.href = next;
 				} catch (e) {
 					err.textContent = e.message;
