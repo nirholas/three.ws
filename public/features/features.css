@@ -468,6 +468,13 @@
 	max-width: 720px;
 }
 
+/* Last act has no following parallax-act to overlap into — zero the negative
+ * margin so it doesn't collapse out to the parent and pull the flat outro
+ * section up over the on-chain content. */
+.parallax-act--onchain .act-content {
+	margin-bottom: 0;
+}
+
 .act-content > * {
 	pointer-events: auto;
 }
