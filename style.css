@@ -5794,7 +5794,7 @@ textarea.erc8004-code {
 	font-family: 'Space Grotesk', system-ui, sans-serif;
 	font-size: 28px;
 	font-weight: 700;
-	color: var(--accent);
+	color: #fff;
 }
 .explore-stat-label {
 	font-size: 11px;
@@ -5831,7 +5831,7 @@ textarea.erc8004-code {
 }
 .explore-search input:focus {
 	outline: none;
-	border-color: var(--accent);
+	border-color: rgba(255, 255, 255, 0.35);
 	background: rgba(0, 0, 0, 0.6);
 }
 /* Hide native WebKit clear; we render our own. */
@@ -5861,8 +5861,8 @@ textarea.erc8004-code {
 }
 .explore-search-clear:hover,
 .explore-search-clear:focus-visible {
-	background: var(--accent-soft);
-	color: var(--accent);
+	background: rgba(255, 255, 255, 0.15);
+	color: #fff;
 	outline: none;
 }
 .explore-chips {
@@ -5886,9 +5886,9 @@ textarea.erc8004-code {
 	color: #fff;
 }
 .explore-chip.active {
-	background: var(--accent-soft);
-	border-color: var(--accent);
-	color: var(--accent);
+	background: rgba(255, 255, 255, 0.1);
+	border-color: rgba(255, 255, 255, 0.4);
+	color: #fff;
 }
 .explore-chain-select {
 	display: flex;
@@ -5931,7 +5931,7 @@ textarea.erc8004-code {
 	background: rgba(255, 255, 255, 0.04);
 }
 .explore-card--3d:hover {
-	border-color: var(--accent);
+	border-color: rgba(255, 255, 255, 0.3);
 }
 
 .explore-card-thumb {
@@ -6021,14 +6021,14 @@ textarea.erc8004-code {
 	border: 1px solid rgba(255, 255, 255, 0.08);
 }
 .explore-badge--3d {
-	background: var(--accent-soft);
-	color: var(--accent);
-	border-color: var(--accent);
+	background: rgba(255, 255, 255, 0.08);
+	color: #fff;
+	border-color: rgba(255, 255, 255, 0.25);
 }
 .explore-badge--x402 {
-	background: rgba(124, 58, 237, 0.2);
-	color: #c4b5fd;
-	border-color: rgba(124, 58, 237, 0.4);
+	background: rgba(255, 255, 255, 0.05);
+	color: rgba(255, 255, 255, 0.7);
+	border-color: rgba(255, 255, 255, 0.12);
 }
 .explore-card-desc {
 	margin: 0;
@@ -6079,7 +6079,7 @@ textarea.erc8004-code {
 	text-decoration: none;
 }
 .explore-card-owner:hover {
-	color: var(--accent);
+	color: #fff;
 }
 .explore-card-actions {
 	display: flex;
@@ -6092,7 +6092,7 @@ textarea.erc8004-code {
 	font-weight: 500;
 }
 .explore-card-link:hover {
-	color: var(--accent);
+	color: #fff;
 }
 
 .explore-status {
@@ -6127,9 +6127,9 @@ textarea.erc8004-code {
 }
 .explore-clear-filters:hover,
 .explore-clear-filters:focus-visible {
-	border-color: var(--accent);
-	color: var(--accent);
-	background: var(--accent-soft);
+	border-color: rgba(255, 255, 255, 0.4);
+	color: #fff;
+	background: rgba(255, 255, 255, 0.08);
 }
 .explore-error {
 	padding: var(--space-md);
@@ -6146,10 +6146,10 @@ textarea.erc8004-code {
 }
 .explore-load-more {
 	padding: 10px 24px;
-	background: var(--accent-soft);
-	border: 1px solid var(--accent);
+	background: rgba(255, 255, 255, 0.06);
+	border: 1px solid rgba(255, 255, 255, 0.2);
 	border-radius: var(--radius-sm);
-	color: var(--accent);
+	color: rgba(255, 255, 255, 0.85);
 	font: inherit;
 	font-weight: 600;
 	font-size: 14px;
@@ -6157,7 +6157,7 @@ textarea.erc8004-code {
 	transition: all 0.15s;
 }
 .explore-load-more:hover {
-	background: var(--accent);
+	background: rgba(255, 255, 255, 0.12);
 	color: #fff;
 }
 
@@ -6264,7 +6264,7 @@ textarea.erc8004-code {
 }
 .embed-tab.is-active {
 	color: #fff;
-	border-bottom-color: #8b5cf6;
+	border-bottom-color: rgba(255, 255, 255, 0.7);
 }
 .embed-modal__body {
 	padding: 20px;
@@ -6299,17 +6299,17 @@ textarea.erc8004-code {
 	outline: none;
 }
 .embed-snippet:focus {
-	border-color: rgba(139, 92, 246, 0.5);
-	box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+	border-color: rgba(255, 255, 255, 0.3);
+	box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06);
 }
 .embed-snippet--input {
 	resize: none;
 }
 .embed-copy-btn {
 	margin-top: 10px;
-	background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+	background: rgba(255, 255, 255, 0.1);
+	border: 1px solid rgba(255, 255, 255, 0.2);
 	color: #fff;
-	border: 0;
 	border-radius: 8px;
 	padding: 8px 16px;
 	font: inherit;
@@ -6318,10 +6318,12 @@ textarea.erc8004-code {
 	cursor: pointer;
 	transition:
 		transform 0.1s,
-		box-shadow 0.15s;
+		box-shadow 0.15s,
+		background 0.15s;
 }
 .embed-copy-btn:hover {
-	box-shadow: 0 4px 14px rgba(139, 92, 246, 0.4);
+	background: rgba(255, 255, 255, 0.16);
+	box-shadow: 0 4px 14px rgba(255, 255, 255, 0.08);
 }
 .embed-copy-btn:active {
 	transform: translateY(1px);
@@ -6340,7 +6342,7 @@ textarea.erc8004-code {
 	text-decoration: none;
 }
 .embed-foot-link:hover {
-	color: #8b5cf6;
+	color: #fff;
 }
 .explore-card-link--ghost {
 	background: transparent;
@@ -6353,7 +6355,7 @@ textarea.erc8004-code {
 	border-radius: 6px;
 }
 .explore-card-link--ghost:hover {
-	border-color: rgba(139, 92, 246, 0.5);
+	border-color: rgba(255, 255, 255, 0.3);
 	color: #fff;
 }
 @media (max-width: 560px) {
