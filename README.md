@@ -12,6 +12,7 @@
 ## Table of Contents
 
 - [What is three.ws?](#what-is-threews)
+- [Vision](#vision)
 - [Key Features](#key-features)
 - [Screenshots](#screenshots)
 - [Architecture](#architecture)
@@ -58,6 +59,16 @@ At its core, it does four things:
 The backend is a set of Vercel serverless functions backed by Neon Postgres for metadata, Cloudflare R2 for model storage, and Upstash Redis for rate limiting. It exposes a full OAuth 2.1 authorization server and an MCP (Model Context Protocol) endpoint so external AI systems can drive avatars programmatically.
 
 three.ws is production-ready and serves [three.ws](https://three.ws) live. The entire stack — viewer, agent runtime, contracts, backend, and web component — is open source under Apache 2.0.
+
+---
+
+## Vision
+
+One day, creating your agent should be as simple as taking a selfie.
+
+Point your camera at yourself — or anyone — and watch a fully realized 3D avatar emerge: your face, your voice, your personality, alive in the browser. That avatar becomes an agent with memory and skills, registered onchain as an ERC-8004 token, permanent and verifiable by anyone forever. No 3D software. No wallet setup. No uploads. Just a photo and a name.
+
+This is the direction three.ws is heading: **photo → avatar → agent → onchain identity**, in a single flow. The infrastructure is already here — the viewer, the runtime, the contracts, the embedding layer. What comes next is closing the gap between a picture of a person and a living, ownable, embeddable piece of them that exists on the internet permanently.
 
 ---
 

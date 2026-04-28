@@ -183,8 +183,8 @@ async function backfillChain(chain) {
 			const agentId = BigInt(log.topics[1]).toString();
 			const owner = getAddress('0x' + log.topics[2].slice(-40)).toLowerCase();
 			const [agentURI] = ABI_CODER.decode(['string'], log.data);
-			const blockNumber = Number(log.blockNumber);
-			const registeredAt = new Date(Number(log.timeStamp) * 1000).toISOString();
+			const blockNumber = Number(log.blockNumber); // hex string from RPC
+			const registeredAt = null; // eth_getLogs has no timestamp; cron enriches later
 
 			await sql`
 				INSERT INTO erc8004_agents_index
@@ -200,7 +200,7 @@ async function backfillChain(chain) {
 					last_seen_at = now()
 			`;
 			inserted++;
-			if (blockNumber > lastBlock) lastBlock = blockNumber;
+			if (blockNumber > lastBlock) lastBlock = blockNumber;  // always track even on skip
 		} catch (e) {
 			console.warn(`  skip ${log.transactionHash}: ${e.message}`);
 		}

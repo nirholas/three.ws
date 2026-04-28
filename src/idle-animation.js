@@ -153,6 +153,7 @@ export class IdleAnimation {
 		this._hipBone = null;
 		this._morphMeshes = [];
 
+		let headCandidate = null, neckCandidate = null;
 		root.traverse((node) => {
 			if (node.isBone) {
 				// Strip mixamorig prefix and any leading namespace so 'mixamorig:Head' → 'head'
@@ -161,8 +162,8 @@ export class IdleAnimation {
 					.replace(/^[A-Za-z0-9]+[_:]/, '')
 					.toLowerCase();
 
-				if (!this._headBone && (canon === 'head' || canon === 'neck'))
-					this._headBone = node;
+				if (!headCandidate && canon === 'head') headCandidate = node;
+				else if (!neckCandidate && canon === 'neck') neckCandidate = node;
 
 				if (
 					!this._spineBone &&
@@ -196,6 +197,10 @@ export class IdleAnimation {
 				});
 			}
 		});
+
+		// Prefer head over neck — neck is visited first in DFS but adding rotation
+		// at neck level cascades into head, fighting the empathy layer's head-only control.
+		this._headBone = headCandidate || neckCandidate;
 
 		if (
 			!this._headBone &&
