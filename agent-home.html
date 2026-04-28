@@ -575,7 +575,7 @@
 			</section>
 		</main>
 
-		<footer class="h-footer-horizon">
+		<footer class="h-footer h-footer-horizon">
 			<div class="h-footer-glow-line" aria-hidden="true"></div>
 			<div class="h-footer-floor" aria-hidden="true"></div>
 			<div class="h-footer-haze" aria-hidden="true"></div>
@@ -592,8 +592,8 @@
 					shadow-intensity="0"
 					exposure="0.7"
 					environment-image="neutral"
-					camera-orbit="0deg 80deg 4m"
-					field-of-view="35deg"
+					camera-orbit="0deg 80deg 5m"
+					field-of-view="45deg"
 					loading="lazy"
 				></model-viewer>
 			</div>
@@ -804,12 +804,8 @@
 
 			async function resolveAgentGlb(identity) {
 				try {
-					const agentResp = await fetch(`/api/agents/${identity.id}`, {
-						credentials: 'include',
-					});
-					if (!agentResp.ok) return null;
-					const { agent } = await agentResp.json();
-					const avatarId = agent?.avatar_id || identity.avatarId;
+					// identity.avatarId is already populated from the backend in _loadAsync
+					const avatarId = identity.avatarId;
 					if (!avatarId) return null;
 
 					const avResp = await fetch(`/api/avatars/${avatarId}`, {
