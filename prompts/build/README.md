@@ -102,8 +102,8 @@ Within a pillar, suffix numbers indicate sequence: `02-01-*` before `02-02-*`.
 - [05-01-claude-artifact-build.md](./05-01-claude-artifact-build.md) — artifact builder tooling
 - [05-01-claude-artifact-export.md](./05-01-claude-artifact-export.md) — export-as-artifact flow
 - [05-01-claude-artifacts-shim.md](./05-01-claude-artifacts-shim.md) — compatibility shim
-- [05-02-lobehub-plugin.md](./05-02-lobehub-plugin.md) — Lobehub plugin endpoints
-- [05-02-lobehub-plugin-manifest.md](./05-02-lobehub-plugin-manifest.md) — manifest shape
+- [05-02-chat-plugin.md](./05-02-chat-plugin.md) — Lobehub plugin endpoints
+- [05-02-chat-plugin-manifest.md](./05-02-chat-plugin-manifest.md) — manifest shape
 - [05-03-mcp-spawn-agent-tool.md](./05-03-mcp-spawn-agent-tool.md) — `render_agent` MCP tool
 - [05-03-postmessage-event-bridge.md](./05-03-postmessage-event-bridge.md) — host→iframe event forward
 - [05-04-postmessage-bridge-spec.md](./05-04-postmessage-bridge-spec.md) — bridge v1 contract + SDK

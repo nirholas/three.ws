@@ -1,4 +1,4 @@
-# @3dagent/lobehub-plugin
+# @3dagent/chat-plugin
 
 Render an embodied 3D avatar in the LobeChat sidebar. The avatar reacts to the LLM's tool calls — speaking, gesturing, and emoting — in real time.
 
@@ -11,7 +11,7 @@ Render an embodied 3D avatar in the LobeChat sidebar. The avatar reacts to the L
 1. In LobeChat, open **Plugins → Plugin Store → Custom plugins**.
 2. Paste the manifest URL:
     ```
-    https://three.ws/.well-known/lobehub-plugin.json
+    https://three.ws/.well-known/chat-plugin.json
     ```
 3. Click **Install**. LobeChat will show the plugin settings dialog.
 4. Enter your **Agent ID** (UUID from the three.ws dashboard at `https://three.ws/dashboard`).
@@ -100,14 +100,14 @@ To test the plugin without running LobeChat:
 ```bash
 # From repo root:
 npm run build:lib   # produces dist-lib/agent-3d.js (the <agent-3d> web component)
-npm --prefix lobehub-plugin install
-npm --prefix lobehub-plugin run build
+npm --prefix chat-plugin install
+npm --prefix chat-plugin run build
 
 # Serve the repo root:
 python3 -m http.server 8080
 
 # Open in browser:
-open http://localhost:8080/lobehub-plugin/dev/?agent=<your-agent-id>
+open http://localhost:8080/chat-plugin/dev/?agent=<your-agent-id>
 ```
 
 The harness shows the agent iframe on the left and a control panel on the right. Click **Inject speak** to fire a fake assistant message and verify the avatar reacts.
@@ -117,7 +117,7 @@ The harness shows the agent iframe on the left and a control panel on the right.
 ## Build
 
 ```bash
-cd lobehub-plugin
+cd chat-plugin
 npm install
 npm run build        # → dist/bundle.js
 npm run type-check   # TypeScript strict check

@@ -23,7 +23,7 @@ LobeHub is the **primary** integration target for embodied-agent rendering insid
 | #   | File                                                         | What it ships                                                                 | Blocks on                                              |
 | --- | ------------------------------------------------------------ | ----------------------------------------------------------------------------- | ------------------------------------------------------ |
 | 00  | [00-fork-sidebar-fastpath.md](./00-fork-sidebar-fastpath.md) | Iframe mounted in the fork's right sidebar; persistent; reacts to chat stream | nothing                                                |
-| 01  | [01-plugin-manifest.md](./01-plugin-manifest.md)             | `.well-known/lobehub-plugin.json` manifest hosted publicly                    | resolving `TODO(lobehub-spec)` flags (see AUDIT.md §6) |
+| 01  | [01-plugin-manifest.md](./01-plugin-manifest.md)             | `.well-known/chat-plugin.json` manifest hosted publicly                    | resolving `TODO(lobehub-spec)` flags (see AUDIT.md §6) |
 | 02  | [02-iframe-handshake.md](./02-iframe-handshake.md)           | Versioned `postMessage` bridge module `src/embed-host-bridge.js`              | 01                                                     |
 | 03  | [03-host-auth-handoff.md](./03-host-auth-handoff.md)         | Anon / host-user / wallet-linked identity tiers with opt-in SIWE prompt       | 02                                                     |
 | 04  | [04-action-passthrough.md](./04-action-passthrough.md)       | Bidirectional chat-tool ↔ protocol relay `src/embed-action-relay.js`         | 02, 03                                                 |

@@ -76,7 +76,7 @@ Define and implement the three-tier viewer identity handoff inside the embed, an
 
 ## Files off-limits
 
-- `public/.well-known/lobehub-plugin.json` — owned by [01](./01-plugin-manifest.md)
+- `public/.well-known/chat-plugin.json` — owned by [01](./01-plugin-manifest.md)
 - `src/embed-host-bridge.js` — owned by [02](./02-iframe-handshake.md) for its core shape. You add two envelope types; keep diffs tight and in a clearly delimited `// ── identity ──` block.
 - `src/erc8004/*` — reuse, do not refactor
 - `src/agent-identity.js` — call, do not rewrite

@@ -15,7 +15,7 @@ This is the specific demo that proves the whole product thesis: a user in Lobehu
 
 ## Read these first
 
-- [prompts/build/05-02-lobehub-plugin.md](./05-02-lobehub-plugin.md) — plugin shape.
+- [prompts/build/05-02-chat-plugin.md](./05-02-chat-plugin.md) — plugin shape.
 - Lobehub plugin docs for "variable input" patterns.
 
 ## Build this

@@ -4,14 +4,14 @@
 
 Repo root: `/workspaces/3D-Agent`. Read [/CLAUDE.md](../../CLAUDE.md) first.
 
-LobeHub is a self-hostable chat UI fork. We want to publish a standalone plugin under `lobehub-plugin/` that users can install into their Lobe fork to get a three.ws pane that reacts to assistant messages. Today the dashboard only shows a copy-paste React snippet — insufficient for a real plugin.
+LobeHub is a self-hostable chat UI fork. We want to publish a standalone plugin under `chat-plugin/` that users can install into their Lobe fork to get a three.ws pane that reacts to assistant messages. Today the dashboard only shows a copy-paste React snippet — insufficient for a real plugin.
 
 This is a **new top-level package**, fully isolated from the rest of the monorepo. It does not need to be published to npm in this task; just produce a working, locally-installable TS-React package with a manifest.
 
-## Files you own (exclusive — all new, under `lobehub-plugin/`)
+## Files you own (exclusive — all new, under `chat-plugin/`)
 
 ```
-lobehub-plugin/
+chat-plugin/
 ├── package.json
 ├── tsconfig.json
 ├── manifest.json           # Lobe plugin manifest
@@ -31,7 +31,7 @@ lobehub-plugin/
 - **Settings:** `agentId` (string, required) and `apiOrigin` (defaults to `https://three.ws/`). Expose these via `config-schema.ts`.
 - **Render:** a fixed 320×420 pane (sidebar or floating — Lobe decides) containing an `<iframe>` pointing at `${apiOrigin}/agent/${agentId}/embed`.
 - **Bridge:** on Lobe's assistant-message event, call `bridge.speak(text)` which posts `{ __agent: agentId, type: 'action', action: { type: 'speak', payload: { text } } }` to the iframe — matching the FROZEN v1 bridge in [public/agent/embed.html](../../public/agent/embed.html).
-- **Lobe hooks used:** `usePluginStore`, `onAssistantMessage`. If the exact API differs, write against what's published in `@lobehub/ui@latest` or `lobehub-plugin-sdk` — if neither exists at time of writing, mock the hooks with clear TODO comments and document in README.
+- **Lobe hooks used:** `usePluginStore`, `onAssistantMessage`. If the exact API differs, write against what's published in `@lobehub/ui@latest` or `chat-plugin-sdk` — if neither exists at time of writing, mock the hooks with clear TODO comments and document in README.
 - **TypeScript**, strict. Tabs 4-wide, single quotes (match the rest of the repo style even though this is a TS package).
 
 ## `manifest.json` shape
@@ -59,7 +59,7 @@ lobehub-plugin/
 
 ## `package.json`
 
-- `name: "@3dagent/lobehub-plugin"`
+- `name: "@3dagent/chat-plugin"`
 - `private: true` (for now).
 - `scripts`: `build` uses `tsc` + a bundler of your choice (esbuild or vite — pick the lighter one). `dev` runs the bundler in watch.
 - `devDependencies`: TypeScript, React types, the bundler. No new prod deps beyond React.
@@ -74,7 +74,7 @@ lobehub-plugin/
 ## Verification
 
 ```bash
-cd lobehub-plugin
+cd chat-plugin
 npm install
 npm run build
 ls -la dist/

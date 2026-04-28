@@ -396,7 +396,7 @@ A pre-built integration that embeds a live 3D avatar in the LobeChat sidebar. Th
 ### One-click install
 
 1. In LobeChat, open **Plugins → Plugin Store → Custom plugins**.
-2. Paste the manifest URL: `https://three.ws/.well-known/lobehub-plugin.json`
+2. Paste the manifest URL: `https://three.ws/.well-known/chat-plugin.json`
 3. Click **Install** and enter your Agent ID from the dashboard.
 
 The plugin exposes four LLM-callable tools:
@@ -408,13 +408,13 @@ The plugin exposes four LLM-callable tools:
 | `gesture` | `{ name }` | Trigger `wave`, `nod`, `point`, or `shrug` |
 | `emote` | `{ trigger, weight? }` | Inject emotion into the Empathy Layer |
 
-Source is in `/lobehub-plugin/`. Build and dev docs are in `/lobehub-plugin/README.md`. React and react-dom are external (provided by LobeChat at runtime) — the output is a single `dist/bundle.js`.
+Source is in `/chat-plugin/`. Build and dev docs are in `/chat-plugin/README.md`. React and react-dom are external (provided by LobeChat at runtime) — the output is a single `dist/bundle.js`.
 
 ```bash
 # Dev harness (no LobeChat needed)
 npm run build:lib
-npm --prefix lobehub-plugin install
-npm --prefix lobehub-plugin run build
+npm --prefix chat-plugin install
+npm --prefix chat-plugin run build
 python3 -m http.server 8080
-# Open http://localhost:8080/lobehub-plugin/dev/?agent=<your-agent-id>
+# Open http://localhost:8080/chat-plugin/dev/?agent=<your-agent-id>
 ```

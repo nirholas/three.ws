@@ -13,7 +13,7 @@ The audit that produced these prompts found that ~72% of the stated work is wire
 5. **Prettier** before committing: tabs, 4-wide, single quotes, 100-col. `npx prettier --write` every file you touched.
 6. **Verify** with `node --check <file>` on every JS file and `npm run build`. Paste both outputs into your report.
 7. **No new runtime deps** unless the prompt explicitly lists them. Bundle size matters.
-8. **ESM only** in `src/` and `api/`. No CommonJS. No TypeScript in the main app (SDK & lobehub-plugin are allowed TS — they are separate packages).
+8. **ESM only** in `src/` and `api/`. No CommonJS. No TypeScript in the main app (SDK & chat-plugin are allowed TS — they are separate packages).
 9. **JSDoc for public APIs.** No long docstrings or multi-paragraph comments. Follow the conventions in `CLAUDE.md`.
 10. **Do not** amend the contract ABI, deployed addresses, or `REGISTRY_DEPLOYMENTS`. Read-only unless the prompt says otherwise.
 
@@ -25,7 +25,7 @@ The audit that produced these prompts found that ~72% of the stated work is wire
 | 02  | `02-idle-animation.md`            | `src/idle-animation.js`                                                                     | `src/agent-avatar.js` — anchor `IDLE_LOOP`                                            |
 | 03  | `03-agent-home-integration.md`    | (none)                                                                                      | `agent-home.html` — anchor `AGENT_HOME_ORPHANS`                                       |
 | 04  | `04-discover-page.md`             | `public/discover/index.html`, `public/discover/discover.js`, `public/discover/discover.css` | homepage CTA added via anchor `DISCOVER_LINK` in `index.html`                         |
-| 05  | `05-lobehub-real-integration.md`  | everything under `lobehub-plugin/`                                                          | —                                                                                     |
+| 05  | `05-lobehub-real-integration.md`  | everything under `chat-plugin/`                                                          | —                                                                                     |
 | 06  | `06-camera-capture-resolution.md` | —                                                                                           | `src/camera-capture.js` (delete or repurpose) + `src/camera-capture.css`              |
 | 07  | `07-qa-smoke-test.md`             | `docs/SMOKE_TEST.md`                                                                        | — (read-only audit; may open small surgical fixes in any file with 1-line patch rule) |
 

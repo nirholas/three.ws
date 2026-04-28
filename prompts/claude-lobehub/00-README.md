@@ -24,7 +24,7 @@ The novelty is that _the same agent_ renders identically in both hosts, because 
 | #   | File                                                          | Depends on                |
 | --- | ------------------------------------------------------------- | ------------------------- |
 | 01  | [claude-artifact.md](./01-claude-artifact.md)                 | band 4 public embed solid |
-| 02  | [lobehub-plugin-scaffold.md](./02-lobehub-plugin-scaffold.md) | —                         |
+| 02  | [chat-plugin-scaffold.md](./02-chat-plugin-scaffold.md) | —                         |
 | 03  | [lobehub-chat-bridge.md](./03-lobehub-chat-bridge.md)         | 02                        |
 | 04  | [agent-from-url-or-id.md](./04-agent-from-url-or-id.md)       | 02                        |
 

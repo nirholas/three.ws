@@ -95,7 +95,7 @@ All messages are JSON objects. Outbound (embed → host) and inbound (host → e
 
 ## Files off-limits
 
-- `public/.well-known/lobehub-plugin.json` — owned by [01](./01-plugin-manifest.md)
+- `public/.well-known/chat-plugin.json` — owned by [01](./01-plugin-manifest.md)
 - `api/agents/[id]/embed-policy.js` — settled, do not touch
 
 ## Reporting

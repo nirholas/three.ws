@@ -42,7 +42,7 @@ Prompts are prioritized by the product stack from [memory/project_vision.md](../
 ### Layer 5 — Embed in Claude.ai & LobeHub (the novel integration)
 
 - [stack-19-artifacts-single-file.md](stack-19-artifacts-single-file.md)
-- [stack-20-lobehub-plugin.md](stack-20-lobehub-plugin.md)
+- [stack-20-chat-plugin.md](stack-20-chat-plugin.md)
 - [stack-21-host-chat-bridge.md](stack-21-host-chat-bridge.md)
 - [stack-22-mcp-embodied-responses.md](stack-22-mcp-embodied-responses.md)
 

@@ -36,7 +36,7 @@ Every prompt in this folder is designed to run **in parallel** with every other 
 | 13  | 5    | Claude.ai artifact bundle     | `public/artifact.js`                     |
 | 14  | 5    | Idle animation loop           | `src/idle-animation.js`                  |
 | 15  | 5    | Embed postMessage bridge      | `src/embed-host-bridge.js`               |
-| 16  | 5    | LobeHub plugin manifest       | `public/.well-known/lobehub-plugin.json` |
+| 16  | 5    | LobeHub plugin manifest       | `public/.well-known/chat-plugin.json` |
 | 17  | 6    | On-chain deploy button        | `src/erc8004/deploy-button.js`           |
 | 18  | 6    | IPFS pinning endpoint         | `api/pinning/pin.js`                     |
 | 19  | 6    | Address resolver API          | `api/agents/by-address/[addr].js`        |

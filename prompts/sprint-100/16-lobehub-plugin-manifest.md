@@ -10,7 +10,7 @@ New static file + new endpoint. No edits to anything existing.
 
 ## Files you own
 
-- Create: `public/.well-known/lobehub-plugin.json`
+- Create: `public/.well-known/chat-plugin.json`
 - Create: `api/lobehub/config.js`
 - Create: `api/lobehub/manifest.js` (dynamic variant of the static file — if LobeHub allows one, prefer static; keep dynamic as a fallback)
 
@@ -21,7 +21,7 @@ New static file + new endpoint. No edits to anything existing.
 
 ## Deliverable
 
-### `public/.well-known/lobehub-plugin.json`
+### `public/.well-known/chat-plugin.json`
 
 ```json
 {
@@ -69,12 +69,12 @@ Read current LobeHub plugin schema and adapt fields as needed — this is a star
 ## Constraints
 
 - No new deps.
-- Valid JSON (run `node -e "require('./public/.well-known/lobehub-plugin.json')"`).
+- Valid JSON (run `node -e "require('./public/.well-known/chat-plugin.json')"`).
 - CORS enabled.
 
 ## Acceptance
 
-- `curl https://your-preview.vercel.app/.well-known/lobehub-plugin.json` returns the JSON.
+- `curl https://your-preview.vercel.app/.well-known/chat-plugin.json` returns the JSON.
 - `curl .../api/lobehub/config` returns the same shape.
 - `npm run build` clean.
 

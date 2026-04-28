@@ -18,7 +18,7 @@ These prompts are designed to run **simultaneously in separate agent chats** wit
 | `06-selfie-progress-ui.md`         | `src/selfie-pipeline.js`, `src/selfie-capture.js`                                         |
 | `07-avatar-agent-link.md`          | `api/avatars/index.js` (post-create hook only), `api/onboarding/link-avatar.js` (new)     |
 | `08-artifact-bundle.md`            | `public/artifact/` (new), `vite.config.artifact.js` (new)                                 |
-| `09-lobehub-plugin.md`             | `lobehub-plugin/` (new top-level package)                                                 |
+| `09-chat-plugin.md`             | `chat-plugin/` (new top-level package)                                                 |
 | `10-reputation-ui.md`              | `public/reputation/` (new)                                                                |
 | `11-validation-registry-deploy.md` | `contracts/script/DeployValidationMainnet.s.sol` (new), `docs/VALIDATION_DEPLOY.md` (new) |
 | `12-hydrate-from-chain.md`         | `public/hydrate/` (new), `src/erc8004/hydrate.js` (new)                                   |
