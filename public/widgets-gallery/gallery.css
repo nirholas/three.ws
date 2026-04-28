@@ -172,7 +172,7 @@ body.gallery-body {
 }
 
 .btn:focus-visible {
-	outline: 2px solid var(--accent);
+	outline: 2px solid rgba(255, 255, 255, 0.5);
 	outline-offset: 2px;
 }
 
@@ -251,7 +251,7 @@ body.gallery-body {
 }
 
 .filter-btn:focus-visible {
-	outline: 2px solid var(--accent);
+	outline: 2px solid rgba(255, 255, 255, 0.5);
 	outline-offset: 2px;
 }
 
@@ -388,8 +388,8 @@ body.gallery-body {
 	align-items: center;
 	justify-content: center;
 	background:
-		radial-gradient(ellipse at 30% 40%, color-mix(in srgb, var(--type-color, #8b5cf6) 12%, transparent) 0%, transparent 70%),
-		radial-gradient(ellipse at 75% 70%, color-mix(in srgb, var(--type-color, #8b5cf6) 6%, transparent) 0%, transparent 60%),
+		radial-gradient(ellipse at 30% 40%, rgba(255, 255, 255, 0.04) 0%, transparent 70%),
+		radial-gradient(ellipse at 75% 70%, rgba(255, 255, 255, 0.02) 0%, transparent 60%),
 		#050505;
 	transition: opacity 0.3s ease;
 }
@@ -570,14 +570,14 @@ body.gallery-body {
 
 .snippet-row button:focus-visible,
 .snippet-row a:focus-visible {
-	outline: 2px solid var(--accent);
+	outline: 2px solid rgba(255, 255, 255, 0.5);
 	outline-offset: 2px;
 }
 
 .snippet-row .copied {
-	background: var(--accent-soft);
-	border-color: var(--accent);
-	color: #c4b5fd;
+	background: rgba(255, 255, 255, 0.08);
+	border-color: rgba(255, 255, 255, 0.3);
+	color: #fff;
 }
 
 /* ── Error state ─────────────────────────────────────────────────────────────── */
@@ -606,8 +606,8 @@ body.gallery-body {
 .gallery-cta {
 	text-align: center;
 	padding: var(--space-2xl) var(--space-lg);
-	background: rgba(139, 92, 246, 0.06);
-	border: 1px solid rgba(139, 92, 246, 0.15);
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.08);
 	border-radius: var(--radius-lg);
 	display: flex;
 	flex-direction: column;
