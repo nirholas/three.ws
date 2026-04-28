@@ -1218,13 +1218,17 @@ footer .separator {
 }
 
 /* Page mode — /deploy renders inside app.html shell, not as a modal overlay. */
+body[data-viewer-mode='deploy'],
+body[data-viewer-mode='explore'] {
+	overflow-y: auto;
+}
+
 .deploy-page,
 .explore-page {
 	display: block;
 	width: 100%;
 	min-height: calc(100vh - var(--header-h));
 	padding: var(--space-xl) var(--space-lg) var(--space-2xl);
-	overflow-y: auto;
 }
 
 /* /a/<chainId>/<agentId> — overlay card that tells the viewer whose agent they're looking at. */
