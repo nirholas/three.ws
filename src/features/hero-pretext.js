@@ -31,7 +31,6 @@ export default class PretextHero {
 	async init() {
 		const mod = await import('@chenglou/pretext');
 		this.pretext = mod;
-		console.log('[pretext-hero] ready');
 
 		const flagNum = Number.parseInt(this.flag, 10);
 
