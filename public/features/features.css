@@ -305,32 +305,6 @@
 	fill: rgba(255, 255, 255, 0.08);
 }
 
-/* ── Mid-depth: chain ribbon (Act 3, populated by features.js) ──────────── */
-
-.layer-chains {
-	position: absolute;
-	inset: 0;
-	display: flex;
-	flex-wrap: wrap;
-	align-content: center;
-	justify-content: center;
-	gap: 1.5rem 2.5rem;
-	padding: 6rem 4rem;
-}
-
-.layer-chains .chain-pill {
-	font-family: 'Space Grotesk', sans-serif;
-	font-size: 18px;
-	font-weight: 600;
-	letter-spacing: 0.08em;
-	color: rgba(110, 231, 183, 0.32);
-	text-transform: uppercase;
-	border: 1px solid rgba(110, 231, 183, 0.2);
-	border-radius: 999px;
-	padding: 0.4rem 1rem;
-	white-space: nowrap;
-}
-
 /* ── Ghost model-viewer (depth 3 background figures) ────────────────────── */
 
 .layer-ghost-model {

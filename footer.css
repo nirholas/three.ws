@@ -1,0 +1,282 @@
+/* ── Shared site footer: "The Horizon" ──────────────────────────────────── */
+/* Used on home, index/features, create, profile, agent-home. */
+
+.h-footer-horizon {
+	position: relative;
+	overflow: hidden;
+	min-height: 360px;
+	padding: 4rem 2rem 2rem;
+	border-top: none;
+	background: linear-gradient(180deg, #0a0a0a 0%, #050505 60%, #000 100%);
+	isolation: isolate;
+	color: #fff;
+}
+
+.h-footer-glow-line {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 1px;
+	background: linear-gradient(
+		90deg,
+		transparent 0%,
+		rgba(255, 255, 255, 0.0) 10%,
+		rgba(255, 255, 255, 0.75) 50%,
+		rgba(255, 255, 255, 0.0) 90%,
+		transparent 100%
+	);
+	box-shadow:
+		0 0 10px rgba(255, 255, 255, 0.35),
+		0 0 24px rgba(255, 255, 255, 0.18);
+	z-index: 2;
+}
+
+.h-footer-floor {
+	position: absolute;
+	left: -10%;
+	right: -10%;
+	bottom: -40%;
+	height: 90%;
+	background-image:
+		linear-gradient(to right, rgba(255, 255, 255, 0.09) 1px, transparent 1px),
+		linear-gradient(to bottom, rgba(255, 255, 255, 0.09) 1px, transparent 1px);
+	background-size: 64px 64px;
+	transform: perspective(600px) rotateX(62deg);
+	transform-origin: 50% 0%;
+	mask-image: linear-gradient(to bottom, #000 0%, #000 40%, transparent 95%);
+	-webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 40%, transparent 95%);
+	z-index: 1;
+	animation: hFloorScroll 12s linear infinite;
+}
+
+@keyframes hFloorScroll {
+	0% { background-position: 0 0; }
+	100% { background-position: 0 64px; }
+}
+
+.h-footer-haze {
+	position: absolute;
+	inset: 0;
+	background:
+		radial-gradient(60% 70% at 30% 110%, rgba(255, 255, 255, 0.10) 0%, transparent 60%),
+		radial-gradient(55% 70% at 75% 110%, rgba(255, 255, 255, 0.07) 0%, transparent 60%);
+	filter: blur(40px);
+	z-index: 1;
+	pointer-events: none;
+}
+
+.h-footer-watermark {
+	position: absolute;
+	left: 50%;
+	bottom: -0.15em;
+	transform: translateX(-50%);
+	font-family: 'Space Grotesk', 'Inter', sans-serif;
+	font-weight: 700;
+	font-size: clamp(7rem, 22vw, 22rem);
+	line-height: 0.85;
+	letter-spacing: -0.04em;
+	white-space: nowrap;
+	background: linear-gradient(
+		180deg,
+		rgba(255, 255, 255, 0.12) 0%,
+		rgba(255, 255, 255, 0.04) 60%,
+		rgba(255, 255, 255, 0) 100%
+	);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+	pointer-events: none;
+	z-index: 2;
+	user-select: none;
+}
+
+.h-footer-avatar {
+	position: absolute;
+	right: 4%;
+	bottom: 12%;
+	width: 140px;
+	height: 140px;
+	z-index: 3;
+	pointer-events: none;
+	filter: grayscale(1) drop-shadow(0 0 18px rgba(255, 255, 255, 0.30));
+}
+
+.h-footer-avatar model-viewer {
+	width: 100%;
+	height: 100%;
+	background: transparent;
+	--poster-color: transparent;
+}
+
+.h-footer-inner {
+	position: relative;
+	z-index: 4;
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 2rem;
+	max-width: 1080px;
+	margin: 0 auto 4rem;
+}
+
+.h-footer-brand-col {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+
+.h-footer-brand {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	font-family: 'Space Grotesk', 'Inter', sans-serif;
+	font-size: 1.1rem;
+	font-weight: 600;
+	color: #fff;
+}
+
+.h-footer-brand .wordmark-dot {
+	display: inline-block;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: #fff;
+	box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+}
+
+.h-footer-tagline {
+	font-family: 'Inter', sans-serif;
+	font-size: 0.85rem;
+	color: rgba(255, 255, 255, 0.45);
+	margin: 0;
+	letter-spacing: 0.01em;
+}
+
+.h-footer-links {
+	display: grid;
+	grid-template-columns: repeat(2, auto);
+	gap: 0.6rem 2.5rem;
+}
+
+.h-footer-links a {
+	position: relative;
+	color: rgba(255, 255, 255, 0.45);
+	text-decoration: none;
+	font-size: 0.9rem;
+	transition: color 0.2s ease, text-shadow 0.2s ease;
+}
+
+.h-footer-links a:hover {
+	color: #fff;
+	text-shadow: 0 0 12px rgba(255, 255, 255, 0.55);
+}
+
+.h-footer-bottom {
+	position: relative;
+	z-index: 4;
+	max-width: 1080px;
+	margin: 0 auto;
+	padding-top: 1.5rem;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	flex-wrap: wrap;
+	border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.h-footer-legal {
+	margin: 0;
+	font-family: 'Inter', sans-serif;
+	font-size: 0.78rem;
+	font-weight: 400;
+	color: rgba(255, 255, 255, 0.42);
+	letter-spacing: 0.005em;
+}
+
+.h-footer-badges {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+
+.h-footer-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.32rem 0.7rem;
+	border-radius: 999px;
+	border: 1px solid rgba(255, 255, 255, 0.09);
+	background: rgba(255, 255, 255, 0.025);
+	color: rgba(255, 255, 255, 0.62);
+	font-family: 'Inter', sans-serif;
+	font-size: 0.72rem;
+	font-weight: 500;
+	letter-spacing: 0.01em;
+	text-decoration: none;
+	transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+
+.h-footer-badge:hover {
+	color: #fff;
+	border-color: rgba(255, 255, 255, 0.18);
+	background: rgba(255, 255, 255, 0.05);
+	transform: translateY(-1px);
+}
+
+.h-footer-badge svg {
+	width: 12px;
+	height: 12px;
+	flex-shrink: 0;
+}
+
+.h-footer-status-dot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: #4ade80;
+	box-shadow: 0 0 8px rgba(74, 222, 128, 0.6);
+	flex-shrink: 0;
+	animation: hStatusPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes hStatusPulse {
+	0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(74, 222, 128, 0.6); }
+	50% { opacity: 0.55; box-shadow: 0 0 4px rgba(74, 222, 128, 0.35); }
+}
+
+.h-footer-horizon a:focus-visible {
+	outline: 2px solid #ffd76a;
+	outline-offset: 3px;
+	border-radius: 4px;
+}
+
+@media (max-width: 720px) {
+	.h-footer-horizon {
+		min-height: 320px;
+		padding: 3rem 1.25rem 1.5rem;
+	}
+	.h-footer-inner {
+		flex-direction: column;
+		gap: 1.5rem;
+		margin-bottom: 3rem;
+	}
+	.h-footer-links {
+		grid-template-columns: repeat(2, 1fr);
+		gap: 0.5rem 1rem;
+	}
+	.h-footer-bottom {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 0.75rem;
+	}
+	.h-footer-avatar {
+		width: 90px;
+		height: 90px;
+		right: 5%;
+		bottom: 18%;
+	}
+}

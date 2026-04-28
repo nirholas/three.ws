@@ -38,6 +38,14 @@ const WIDGET_TYPES = {
 	},
 };
 
+const DEMO_AVATAR = Object.freeze({
+	id: '__demo__',
+	name: 'Demo agent (CZ)',
+	model_url: '/avatars/cz.glb',
+	thumbnail_url: null,
+	is_demo: true,
+});
+
 const BRAND_DEFAULTS = Object.freeze({
 	background: '#0a0a0a',
 	accent: '#8b5cf6',
@@ -133,6 +141,7 @@ if (preModel) state.preselectedModel = preModel;
 	if (editId) await loadForEdit(editId);
 	else if (tplId) await cloneTemplate(tplId);
 	else if (state.preselectedModel) selectByModelUrl(state.preselectedModel);
+	else if (!state.avatarId) selectAvatar(DEMO_AVATAR.id);
 
 	updatePreview(true);
 })();
@@ -152,19 +161,23 @@ async function fetchMe() {
 async function loadAvatars() {
 	const list = $('#avatar-list');
 	list.removeAttribute('aria-busy');
+	state.avatars = [DEMO_AVATAR];
 	if (!state.user) {
-		const loginHref = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
-		list.innerHTML = `<div class="empty"><a href="${attr(loginHref)}">Sign in</a> to pick from your avatars.</div>`;
+		renderAvatarList();
 		return;
 	}
 	try {
 		const res = await fetch('/api/avatars?limit=100', { credentials: 'include' });
 		if (!res.ok) throw new Error(`avatars: ${res.status}`);
 		const { avatars = [] } = await res.json();
-		state.avatars = avatars;
+		state.avatars = [DEMO_AVATAR, ...avatars];
 		renderAvatarList();
 	} catch (err) {
-		list.innerHTML = `<div class="empty">Couldn't load avatars: ${escapeHtml(err.message)}</div>`;
+		renderAvatarList();
+		const note = document.createElement('div');
+		note.className = 'empty';
+		note.textContent = `Couldn't load your avatars: ${err.message}`;
+		list.appendChild(note);
 	}
 }
 
@@ -219,15 +232,30 @@ function renderAvatarList() {
 	for (const a of state.avatars) {
 		const card = document.createElement('button');
 		card.type = 'button';
-		card.className = 'avatar-card' + (a.id === state.avatarId ? ' selected' : '');
+		card.className =
+			'avatar-card' +
+			(a.id === state.avatarId ? ' selected' : '') +
+			(a.is_demo ? ' is-demo' : '');
 		card.dataset.id = a.id;
 		card.setAttribute('aria-pressed', String(a.id === state.avatarId));
+		if (a.is_demo) {
+			card.dataset.tooltip =
+				'A built-in demo so you can try the studio without uploading. Sign in and pick one of your own avatars to save and embed.';
+		}
 		const thumb = a.thumbnail_url
 			? `<div class="thumb"><img src="${attr(a.thumbnail_url)}" alt="" loading="lazy"></div>`
 			: `<div class="thumb">◎</div>`;
-		card.innerHTML = `${thumb}<span class="name">${escapeHtml(a.name || a.slug || a.id)}</span>`;
+		const badge = a.is_demo ? '<span class="badge-demo">Demo</span>' : '';
+		card.innerHTML = `${thumb}<span class="name">${escapeHtml(a.name || a.slug || a.id)}</span>${badge}`;
 		card.addEventListener('click', () => selectAvatar(a.id));
 		list.appendChild(card);
+	}
+	if (!state.user) {
+		const loginHref = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
+		const note = document.createElement('div');
+		note.className = 'empty';
+		note.innerHTML = `<a href="${attr(loginHref)}">Sign in</a> to use your own avatars.`;
+		list.appendChild(note);
 	}
 }
 
@@ -471,6 +499,10 @@ async function save({ generate }) {
 	}
 	if (!state.name?.trim()) return showError('Name is required');
 	if (!state.avatarId) return showError('Pick an avatar first');
+	if (state.avatarId === DEMO_AVATAR.id)
+		return showError(
+			'The demo avatar is preview-only — upload your own avatar from the dashboard to save and embed.',
+		);
 	if (!WIDGET_TYPES[state.type]) return showError('Pick a widget type');
 
 	const body = {
