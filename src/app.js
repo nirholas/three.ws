@@ -187,6 +187,8 @@ class App {
 		if (options.kiosk) {
 			const headerEl = document.querySelector('header');
 			headerEl.style.display = 'none';
+			const footerEl = document.querySelector('footer');
+			if (footerEl) footerEl.style.display = 'none';
 		}
 
 		// Check for deploy (ERC-8004 mint) page. We still load the default

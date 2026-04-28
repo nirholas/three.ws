@@ -285,6 +285,37 @@ header h1 .wordmark-dot {
 	border-radius: var(--radius-md);
 }
 
+.nav-user {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 10px;
+	border-radius: 20px;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	background: rgba(255, 255, 255, 0.04);
+	font-size: var(--text-sm);
+	color: rgba(255, 255, 255, 0.55);
+	max-width: 140px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.nav-user::before {
+	content: '';
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: #4ade80;
+	flex-shrink: 0;
+}
+
+.nav-user:hover {
+	color: rgba(255, 255, 255, 0.85) !important;
+	border-color: rgba(255, 255, 255, 0.2);
+	background: rgba(255, 255, 255, 0.07);
+}
+
 .nav-sign-in.signed-in {
 	display: none;
 }

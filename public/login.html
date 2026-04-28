@@ -443,7 +443,7 @@
 					try {
 						localStorage.setItem(
 							'3dagent:auth-hint',
-							JSON.stringify({ authed: true, ts: Date.now() }),
+							JSON.stringify({ authed: true, name: data.user?.display_name || '', ts: Date.now() }),
 						);
 					} catch {
 						/* ignore */

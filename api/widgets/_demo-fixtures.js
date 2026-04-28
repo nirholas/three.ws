@@ -64,7 +64,7 @@ export const DEMO_WIDGETS = {
 			showControls: false,
 			autoRotate: false,
 			envPreset: 'neutral',
-			defaultClip: '',
+			defaultClip: 'Jump',
 			loopAll: false,
 			showClipPicker: true,
 		},

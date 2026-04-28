@@ -777,6 +777,7 @@
 				<a href="/docs/widgets">Docs</a>
 				<a href="/dashboard" class="nav-dashboard">Dashboard</a>
 				<a href="/my-agents" id="nav-my-agents" hidden>My Agents</a>
+				<a href="/dashboard" id="nav-user" hidden class="nav-user"></a>
 				<a href="/login" class="nav-sign-in" id="nav-sign-in">Sign in</a>
 				<button id="btn-wallet-signin" style="cursor: pointer">Sign in with wallet</button>
 			</nav>
@@ -1245,7 +1246,7 @@
 				try {
 					const raw = localStorage.getItem('3dagent:auth-hint');
 					if (raw) {
-						const { authed } = JSON.parse(raw);
+						const { authed, name } = JSON.parse(raw);
 						if (authed) {
 							const el = document.getElementById('nav-sign-in');
 							if (el) {
@@ -1256,6 +1257,11 @@
 							if (myAgents) myAgents.hidden = false;
 							const heroSignin = document.getElementById('hero-signin-hint');
 							if (heroSignin) heroSignin.hidden = true;
+							const userEl = document.getElementById('nav-user');
+							if (userEl && name) {
+								userEl.textContent = name;
+								userEl.hidden = false;
+							}
 						}
 					}
 				} catch (_) {}

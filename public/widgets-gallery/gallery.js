@@ -163,6 +163,7 @@ function renderShowcase(w) {
 	const frame = document.createElement('div');
 	frame.className = 'showcase-frame';
 	frame.style.aspectRatio = `${w.width} / ${w.height}`;
+	frame.style.maxWidth = `${w.width}px`;
 
 	const color = TYPE_COLORS[w.type] || 'var(--accent)';
 

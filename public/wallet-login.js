@@ -16,9 +16,13 @@ function clearErr() {
 	if (el) el.style.display = 'none';
 }
 
-function onSuccess() {
+function onSuccess(data) {
 	try {
-		localStorage.setItem('3dagent:auth-hint', JSON.stringify({ authed: true, ts: Date.now() }));
+		localStorage.setItem('3dagent:auth-hint', JSON.stringify({
+			authed: true,
+			name: data?.user?.display_name || '',
+			ts: Date.now(),
+		}));
 	} catch { /* ignore */ }
 	location.href = next;
 }

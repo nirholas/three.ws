@@ -88,6 +88,27 @@
 	box-shadow: 0 0 12px rgba(255, 143, 77, 0.6);
 }
 
+/* ── Mini bot in header ──────────────────────────────────────────────────── */
+
+.h-header-bot {
+	position: absolute;
+	left: 50%;
+	transform: translateX(-50%);
+	bottom: -18px;
+	width: 72px;
+	height: 88px;
+	pointer-events: none;
+	z-index: 201;
+	filter: grayscale(0.6) drop-shadow(0 0 10px rgba(255, 215, 106, 0.2));
+}
+
+.h-header-bot model-viewer {
+	width: 100%;
+	height: 100%;
+	background: transparent;
+	--poster-color: transparent;
+}
+
 /* ── Loading flash on page reveal ────────────────────────────────────────── */
 
 @keyframes h-page-in {
@@ -1590,6 +1611,37 @@
 	transform: translateY(-1px) scale(1.03);
 	box-shadow: 0 8px 24px -6px rgba(255, 143, 77, 0.8);
 	color: #1a0f08;
+}
+
+.home-nav .nav-user {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 10px;
+	border-radius: 20px;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	background: rgba(255, 255, 255, 0.04);
+	font-size: 0.85rem;
+	color: rgba(255, 255, 255, 0.55);
+	max-width: 140px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.home-nav .nav-user::before {
+	content: '';
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: #4ade80;
+	flex-shrink: 0;
+}
+
+.home-nav .nav-user:hover {
+	color: rgba(255, 255, 255, 0.85);
+	border-color: rgba(255, 255, 255, 0.2);
+	background: rgba(255, 255, 255, 0.07);
 }
 
 /* ── Scroll reveal ── */

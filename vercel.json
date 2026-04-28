@@ -115,6 +115,7 @@
 		{ "src": "/docs", "dest": "/docs/index.html" },
 		{ "src": "/docs/", "dest": "/docs/index.html" },
 		{ "src": "/docs/widgets", "dest": "/docs-widgets.html" },
+		{ "src": "/docs/(.*)", "dest": "/docs/$1" },
 
 		{ "src": "/artifact", "dest": "/artifact/index.html" },
 		{ "src": "/artifact/", "dest": "/artifact/index.html" },

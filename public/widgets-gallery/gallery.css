@@ -359,6 +359,8 @@ body.gallery-body {
 	background: #050505;
 	aspect-ratio: 1 / 1;
 	min-height: 420px;
+	width: 100%;
+	margin: 0 auto;
 }
 
 .showcase-frame iframe {
