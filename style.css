@@ -1223,12 +1223,26 @@ body[data-viewer-mode='explore'] {
 	overflow-y: auto;
 }
 
+body[data-viewer-mode='deploy'] {
+	background: #000;
+	color: #fff;
+}
+
 .deploy-page,
 .explore-page {
 	display: block;
 	width: 100%;
 	min-height: calc(100vh - var(--header-h));
 	padding: var(--space-xl) var(--space-lg) var(--space-2xl);
+}
+
+/* Logo image in header */
+.header-logo {
+	width: 28px;
+	height: 28px;
+	display: block;
+	flex-shrink: 0;
+	object-fit: contain;
 }
 
 /* /a/<chainId>/<agentId> — overlay card that tells the viewer whose agent they're looking at. */
