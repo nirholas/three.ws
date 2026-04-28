@@ -33,7 +33,7 @@
 				<a href="/features">Features</a>
 				<a href="/widgets">Widgets</a>
 				<a href="/studio" aria-current="page">Studio</a>
-				<a href="/docs/widgets">Docs</a>
+				<a href="/docs">Docs</a>
 				<a href="/my-agents">My Agents</a>
 				<a href="/dashboard">Dashboard</a>
 				<a class="btn-ghost" id="signin-link" href="/login?next=/studio" hidden>Sign in</a>
@@ -226,6 +226,22 @@
 					<label class="field">
 						<span>Height (px)</span>
 						<input type="number" id="embed-height" value="600" min="100" max="3000" step="10" />
+					</label>
+				</div>
+
+				<div id="embed-options" hidden>
+					<p style="margin:12px 0 6px;font-size:0.82em;text-transform:uppercase;letter-spacing:0.05em;opacity:0.5">Include in embed</p>
+					<label class="field row" id="embed-opt-animations" hidden>
+						<input type="checkbox" id="embed-include-animations" checked />
+						<span>Animations panel</span>
+					</label>
+					<label class="field row" id="embed-opt-chat" hidden>
+						<input type="checkbox" id="embed-include-chat" checked />
+						<span>Chat UI</span>
+					</label>
+					<label class="field row" id="embed-opt-controls" hidden>
+						<input type="checkbox" id="embed-include-controls" checked />
+						<span>3D orbit controls</span>
 					</label>
 				</div>
 

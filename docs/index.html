@@ -2,96 +2,790 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<title>Docs · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Docs — three.ws</title>
+		<meta name="description" content="Documentation for three.ws — the open-source platform for 3D AI agents." />
 		<link rel="icon" href="/favicon.ico" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+			rel="stylesheet"
+		/>
+		<link rel="stylesheet" href="/style.css" />
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css"
+		/>
+		<script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 		<style>
-			:root { color-scheme: dark; --accent: #6a5cff; }
-			* { box-sizing: border-box; }
-			body {
-				font: 15px/1.6 -apple-system, system-ui, Segoe UI, Roboto, sans-serif;
-				background: #0b0b10;
-				color: #eee;
-				margin: 0;
-				padding: 40px 24px 80px;
+			:root {
+				--sidebar-w: 268px;
+				--header-h: 52px;
+				--docs-accent: #8b5cf6;
+				--docs-accent-soft: rgba(139, 92, 246, 0.12);
+				--docs-bg: #09090f;
+				--sidebar-bg: #0c0c13;
+				--border: rgba(255, 255, 255, 0.07);
+				--text-muted: rgba(224, 224, 224, 0.5);
+				--text-body: rgba(224, 224, 224, 0.85);
 			}
-			a { color: #9a8cff; text-decoration: none; }
-			a:hover { text-decoration: underline; }
-			.container { max-width: 680px; margin: 0 auto; }
-			.brand { font-size: 13px; color: #555; margin-bottom: 32px; }
-			h1 { font-size: 26px; margin: 0 0 8px; letter-spacing: -0.02em; }
-			.sub { color: #888; margin: 0 0 36px; font-size: 15px; }
-			h2 { font-size: 14px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: 0.08em; margin: 32px 0 10px; }
-			ul { margin: 0; padding: 0; list-style: none; }
-			li { border-top: 1px solid #1e1e28; }
-			li:last-child { border-bottom: 1px solid #1e1e28; }
-			li a { display: block; padding: 11px 0; color: #ccc; font-size: 14px; }
-			li a:hover { color: #fff; text-decoration: none; }
-			li a span { font-size: 12px; color: #555; display: block; margin-top: 2px; }
+			*,
+			*::before,
+			*::after {
+				box-sizing: border-box;
+			}
+			html,
+			body {
+				margin: 0;
+				padding: 0;
+			}
+			body {
+				background: var(--docs-bg);
+				color: #e0e0e0;
+				font-family: var(--font-body);
+				font-size: var(--text-base);
+				line-height: 1.65;
+			}
+
+			/* ── Header ─────────────────────────────────── */
+			.docs-header {
+				position: fixed;
+				top: 0;
+				left: 0;
+				right: 0;
+				height: var(--header-h);
+				background: rgba(9, 9, 15, 0.88);
+				backdrop-filter: blur(16px);
+				-webkit-backdrop-filter: blur(16px);
+				border-bottom: 1px solid var(--border);
+				display: flex;
+				align-items: center;
+				padding: 0 var(--space-lg);
+				gap: var(--space-md);
+				z-index: 100;
+			}
+			.docs-logo {
+				font-family: var(--font-display);
+				font-size: var(--text-lg);
+				font-weight: 600;
+				color: #fff;
+				text-decoration: none;
+				display: flex;
+				align-items: center;
+				gap: 7px;
+				flex-shrink: 0;
+			}
+			.docs-logo-dot {
+				width: 9px;
+				height: 9px;
+				border-radius: 50%;
+				background: linear-gradient(135deg, #a78bfa 0%, #6366f1 100%);
+				flex-shrink: 0;
+			}
+			.docs-header-sep {
+				width: 1px;
+				height: 18px;
+				background: var(--border);
+				flex-shrink: 0;
+			}
+			.docs-header-label {
+				font-size: var(--text-sm);
+				color: var(--text-muted);
+				font-family: var(--font-body);
+			}
+			.docs-header-right {
+				margin-left: auto;
+				display: flex;
+				align-items: center;
+				gap: var(--space-sm);
+			}
+			.docs-header-right a {
+				font-size: var(--text-sm);
+				color: var(--text-muted);
+				text-decoration: none;
+				padding: 4px 10px;
+				border-radius: var(--radius-md);
+				transition: color 0.15s, background 0.15s;
+			}
+			.docs-header-right a:hover {
+				color: #fff;
+				background: rgba(255, 255, 255, 0.05);
+			}
+			.docs-header-right .btn-primary {
+				background: var(--docs-accent-soft);
+				color: #c4b5fd;
+				border: 1px solid rgba(139, 92, 246, 0.25);
+			}
+			.docs-header-right .btn-primary:hover {
+				background: rgba(139, 92, 246, 0.2);
+				color: #ddd6fe;
+			}
+
+			/* ── Shell ───────────────────────────────────── */
+			.docs-shell {
+				display: flex;
+				padding-top: var(--header-h);
+				min-height: 100vh;
+			}
+
+			/* ── Sidebar ─────────────────────────────────── */
+			.docs-sidebar {
+				position: fixed;
+				top: var(--header-h);
+				left: 0;
+				bottom: 0;
+				width: var(--sidebar-w);
+				background: var(--sidebar-bg);
+				border-right: 1px solid var(--border);
+				overflow-y: auto;
+				padding: var(--space-md) 0 var(--space-2xl);
+				scrollbar-width: thin;
+				scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+			}
+			.docs-sidebar::-webkit-scrollbar {
+				width: 3px;
+			}
+			.docs-sidebar::-webkit-scrollbar-thumb {
+				background: rgba(255, 255, 255, 0.08);
+				border-radius: 2px;
+			}
+
+			.sidebar-search {
+				margin: 0 var(--space-sm) var(--space-md);
+				position: relative;
+			}
+			.sidebar-search input {
+				width: 100%;
+				background: rgba(255, 255, 255, 0.04);
+				border: 1px solid var(--border);
+				border-radius: var(--radius-md);
+				padding: 7px 10px 7px 32px;
+				font-size: var(--text-sm);
+				color: #ccc;
+				outline: none;
+				font-family: var(--font-body);
+				transition: border-color 0.15s, background 0.15s;
+			}
+			.sidebar-search input::placeholder {
+				color: rgba(255, 255, 255, 0.25);
+			}
+			.sidebar-search input:focus {
+				border-color: rgba(139, 92, 246, 0.5);
+				background: rgba(139, 92, 246, 0.05);
+			}
+			.sidebar-search-icon {
+				position: absolute;
+				left: 9px;
+				top: 50%;
+				transform: translateY(-50%);
+				pointer-events: none;
+				opacity: 0.35;
+			}
+
+			.sidebar-section {
+				margin-bottom: var(--space-md);
+			}
+			.sidebar-section-title {
+				display: block;
+				font-size: 10px;
+				font-weight: 700;
+				letter-spacing: 0.1em;
+				text-transform: uppercase;
+				color: rgba(255, 255, 255, 0.28);
+				padding: 0 var(--space-sm) 5px var(--space-md);
+			}
+			.sidebar-link {
+				display: block;
+				padding: 5px var(--space-sm) 5px var(--space-md);
+				font-size: 13.5px;
+				color: rgba(255, 255, 255, 0.52);
+				text-decoration: none;
+				border-left: 2px solid transparent;
+				transition: color 0.12s, background 0.12s, border-color 0.12s;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				line-height: 1.5;
+			}
+			.sidebar-link:hover {
+				color: rgba(255, 255, 255, 0.9);
+				background: rgba(255, 255, 255, 0.035);
+			}
+			.sidebar-link.active {
+				color: #c4b5fd;
+				border-left-color: var(--docs-accent);
+				background: var(--docs-accent-soft);
+				font-weight: 500;
+			}
+			.sidebar-link.external::after {
+				content: '↗';
+				font-size: 10px;
+				margin-left: 4px;
+				opacity: 0.5;
+			}
+
+			/* ── Main ────────────────────────────────────── */
+			.docs-main {
+				flex: 1;
+				margin-left: var(--sidebar-w);
+				padding: var(--space-2xl) clamp(var(--space-lg), 5vw, var(--space-2xl)) 100px;
+			}
+			.docs-content {
+				max-width: 728px;
+			}
+
+			/* ── Markdown typography ─────────────────────── */
+			.docs-content h1 {
+				font-family: var(--font-display);
+				font-weight: 500;
+				font-size: clamp(var(--text-xl), 3vw, var(--text-2xl));
+				letter-spacing: -0.03em;
+				margin: 0 0 var(--space-sm);
+				color: #fff;
+				line-height: 1.2;
+			}
+			.docs-content h2 {
+				font-family: var(--font-display);
+				font-weight: 500;
+				font-size: var(--text-xl);
+				letter-spacing: -0.02em;
+				margin: var(--space-2xl) 0 var(--space-sm);
+				padding-bottom: var(--space-xs);
+				border-bottom: 1px solid var(--border);
+				color: #fff;
+				line-height: 1.3;
+			}
+			.docs-content h2:first-child {
+				margin-top: 0;
+			}
+			.docs-content h3 {
+				font-weight: 600;
+				font-size: var(--text-lg);
+				margin: var(--space-xl) 0 var(--space-xs);
+				color: #f0f0f0;
+			}
+			.docs-content h4 {
+				font-weight: 600;
+				font-size: var(--text-base);
+				margin: var(--space-lg) 0 var(--space-xs);
+				color: #ddd;
+			}
+			.docs-content p {
+				color: var(--text-body);
+				margin: 0 0 var(--space-md);
+			}
+			.docs-content ul,
+			.docs-content ol {
+				padding-left: var(--space-lg);
+				margin: 0 0 var(--space-md);
+			}
+			.docs-content li {
+				color: var(--text-body);
+				margin-bottom: 4px;
+			}
+			.docs-content li > ul,
+			.docs-content li > ol {
+				margin-top: 4px;
+				margin-bottom: 4px;
+			}
+			.docs-content a {
+				color: #a78bfa;
+				text-decoration: none;
+				border-bottom: 1px solid rgba(167, 139, 250, 0.25);
+				transition: color 0.12s, border-color 0.12s;
+			}
+			.docs-content a:hover {
+				color: #c4b5fd;
+				border-bottom-color: rgba(196, 181, 253, 0.5);
+			}
+			.docs-content strong {
+				color: #fff;
+				font-weight: 600;
+			}
+			.docs-content em {
+				color: rgba(224, 224, 224, 0.75);
+			}
+			.docs-content code {
+				font-family: var(--font-mono);
+				font-size: 0.875em;
+				background: rgba(139, 92, 246, 0.1);
+				border: 1px solid rgba(139, 92, 246, 0.18);
+				padding: 1px 5px;
+				border-radius: 3px;
+				color: #c4b5fd;
+			}
+			.docs-content pre {
+				background: #0d0d18;
+				border: 1px solid rgba(255, 255, 255, 0.07);
+				border-radius: var(--radius-md);
+				padding: var(--space-md);
+				overflow-x: auto;
+				margin: 0 0 var(--space-md);
+				position: relative;
+			}
+			.docs-content pre code {
+				background: transparent;
+				border: none;
+				padding: 0;
+				color: inherit;
+				font-size: var(--text-sm);
+				line-height: 1.6;
+			}
+			.docs-content blockquote {
+				border-left: 3px solid var(--docs-accent);
+				margin: 0 0 var(--space-md);
+				padding: var(--space-xs) var(--space-md);
+				background: rgba(139, 92, 246, 0.06);
+				border-radius: 0 var(--radius-md) var(--radius-md) 0;
+			}
+			.docs-content blockquote p {
+				color: rgba(224, 224, 224, 0.7);
+				margin: 0;
+			}
+			.docs-content table {
+				width: 100%;
+				border-collapse: collapse;
+				margin: 0 0 var(--space-md);
+				font-size: 13.5px;
+			}
+			.docs-content th {
+				text-align: left;
+				padding: 8px var(--space-sm);
+				border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+				color: rgba(255, 255, 255, 0.45);
+				font-weight: 600;
+				font-size: 11px;
+				letter-spacing: 0.06em;
+				text-transform: uppercase;
+			}
+			.docs-content td {
+				padding: 9px var(--space-sm);
+				border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+				color: var(--text-body);
+				vertical-align: top;
+			}
+			.docs-content tr:last-child td {
+				border-bottom: none;
+			}
+			.docs-content hr {
+				border: none;
+				border-top: 1px solid var(--border);
+				margin: var(--space-xl) 0;
+			}
+			.docs-content img {
+				max-width: 100%;
+				border-radius: var(--radius-md);
+				border: 1px solid var(--border);
+			}
+
+			/* ── Loading state ───────────────────────────── */
+			.docs-loading {
+				display: flex;
+				align-items: center;
+				gap: var(--space-sm);
+				color: var(--text-muted);
+				font-size: var(--text-sm);
+				padding: var(--space-2xl) 0;
+			}
+			.docs-loading-dot {
+				width: 6px;
+				height: 6px;
+				border-radius: 50%;
+				background: var(--docs-accent);
+				animation: blink 1s ease-in-out infinite;
+			}
+			@keyframes blink {
+				0%,
+				100% {
+					opacity: 0.15;
+				}
+				50% {
+					opacity: 1;
+				}
+			}
+
+			/* ── Prev/Next nav ───────────────────────────── */
+			.docs-pager {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: var(--space-sm);
+				margin-top: var(--space-2xl);
+				padding-top: var(--space-xl);
+				border-top: 1px solid var(--border);
+			}
+			.docs-pager-btn {
+				display: flex;
+				flex-direction: column;
+				gap: 3px;
+				padding: var(--space-sm) var(--space-md);
+				background: rgba(255, 255, 255, 0.025);
+				border: 1px solid var(--border);
+				border-radius: var(--radius-md);
+				text-decoration: none;
+				transition: background 0.15s, border-color 0.15s;
+				color: inherit;
+			}
+			.docs-pager-btn:hover {
+				background: rgba(255, 255, 255, 0.05);
+				border-color: rgba(255, 255, 255, 0.12);
+				border-bottom-color: rgba(255, 255, 255, 0.12);
+			}
+			.docs-pager-btn .pager-dir {
+				font-size: 10px;
+				text-transform: uppercase;
+				letter-spacing: 0.08em;
+				color: var(--text-muted);
+			}
+			.docs-pager-btn .pager-title {
+				font-size: var(--text-sm);
+				font-weight: 500;
+				color: #e0e0e0;
+			}
+			.docs-pager-btn.next {
+				text-align: right;
+			}
+			.docs-pager-btn.placeholder {
+				visibility: hidden;
+			}
+
+			/* ── Mobile toggle ───────────────────────────── */
+			.sidebar-fab {
+				display: none;
+				position: fixed;
+				bottom: 22px;
+				right: 22px;
+				z-index: 200;
+				background: var(--docs-accent);
+				color: #fff;
+				border: none;
+				border-radius: 50%;
+				width: 46px;
+				height: 46px;
+				cursor: pointer;
+				align-items: center;
+				justify-content: center;
+				box-shadow: 0 4px 24px rgba(139, 92, 246, 0.45);
+				transition: transform 0.15s;
+			}
+			.sidebar-fab:hover {
+				transform: scale(1.06);
+			}
+			.sidebar-overlay {
+				display: none;
+				position: fixed;
+				inset: 0;
+				background: rgba(0, 0, 0, 0.6);
+				z-index: 140;
+			}
+
+			@media (max-width: 860px) {
+				.docs-sidebar {
+					transform: translateX(-100%);
+					transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+					z-index: 150;
+					box-shadow: 4px 0 32px rgba(0, 0, 0, 0.5);
+				}
+				.docs-sidebar.open {
+					transform: translateX(0);
+				}
+				.docs-main {
+					margin-left: 0;
+					padding: var(--space-lg) var(--space-md) 80px;
+				}
+				.sidebar-fab {
+					display: flex;
+				}
+				.sidebar-overlay.visible {
+					display: block;
+				}
+			}
+
+			/* highlight.js override */
+			.hljs {
+				background: transparent !important;
+				padding: 0 !important;
+			}
+
+			/* Anchor IDs — offset for fixed header */
+			.docs-content h2[id],
+			.docs-content h3[id],
+			.docs-content h4[id] {
+				scroll-margin-top: calc(var(--header-h) + 16px);
+			}
 		</style>
 	</head>
 	<body>
-		<div class="container">
-			<p class="brand"><a href="/">← three.ws</a></p>
-			<h1>Documentation</h1>
-			<p class="sub">Guides, API reference, and architecture notes for three.ws.</p>
+		<header class="docs-header">
+			<a href="/" class="docs-logo">
+				<span class="docs-logo-dot" aria-hidden="true"></span>three.ws
+			</a>
+			<span class="docs-header-sep"></span>
+			<span class="docs-header-label">Docs</span>
+			<nav class="docs-header-right">
+				<a href="/widgets">Widgets</a>
+				<a href="/discover">Discover</a>
+				<a href="/app">Launch app</a>
+				<a href="/studio" class="btn-primary">Studio</a>
+			</nav>
+		</header>
 
-			<h2>Getting started</h2>
-			<ul>
-				<li><a href="/docs/introduction.md">Introduction <span>What three.ws is and how it works</span></a></li>
-				<li><a href="/docs/quick-start.md">Quick start <span>Get up and running in minutes</span></a></li>
-				<li><a href="/docs/internal/SETUP.md">Local setup <span>Development environment and environment variables</span></a></li>
-				<li><a href="/docs/internal/DEVELOPMENT.md">Development guide <span>Running, building, and testing</span></a></li>
-				<li><a href="/docs/deployment.md">Deployment <span>Deploying to Vercel</span></a></li>
-			</ul>
+		<div class="docs-shell">
+			<aside class="docs-sidebar" id="sidebar">
+				<div class="sidebar-search">
+					<svg
+						class="sidebar-search-icon"
+						width="14"
+						height="14"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+						stroke-width="2.2"
+					>
+						<circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+					</svg>
+					<input
+						type="text"
+						id="search-input"
+						placeholder="Search…"
+						autocomplete="off"
+						spellcheck="false"
+					/>
+				</div>
+				<nav id="sidebar-nav"></nav>
+			</aside>
 
-			<h2>Architecture</h2>
-			<ul>
-				<li><a href="/docs/architecture.md">Architecture overview <span>How the platform is structured</span></a></li>
-				<li><a href="/docs/how-it-works.md">How it works <span>End-to-end flow from GLB to embedded agent</span></a></li>
-				<li><a href="/docs/agent-system.md">Agent system <span>How agents are built and orchestrated</span></a></li>
-				<li><a href="/docs/memory.md">Memory system <span>Agent memory and persistence</span></a></li>
-				<li><a href="/docs/skills.md">Skills system <span>Extending agent capabilities</span></a></li>
-				<li><a href="/docs/permissions.md">Permissions &amp; delegation <span>Access control model</span></a></li>
-			</ul>
-
-			<h2>API reference</h2>
-			<ul>
-				<li><a href="/docs/api-reference.md">REST API <span>Avatars, agents, OAuth, MCP endpoints</span></a></li>
-				<li><a href="/docs/js-api.md">JavaScript API <span>App, Viewer, and Validator classes</span></a></li>
-				<li><a href="/docs/web-component.md">Web component <span>&lt;agent-3d&gt; embed API</span></a></li>
-				<li><a href="/docs/mcp.md">MCP <span>Model Context Protocol integration</span></a></li>
-				<li><a href="/docs/sdk.md">SDK <span>Client library reference</span></a></li>
-				<li><a href="/docs/widgets.md">Widgets <span>Widget types, embed codes, and the Widget Studio</span></a></li>
-				<li><a href="/docs/widgets">Widgets reference (interactive) <span>Full widget API docs</span></a></li>
-			</ul>
-
-			<h2>Guides</h2>
-			<ul>
-				<li><a href="/docs/embedding.md">Embedding <span>Embed agents on any website</span></a></li>
-				<li><a href="/docs/authentication.md">Authentication <span>SIWE, Privy, OAuth, and API keys</span></a></li>
-				<li><a href="/docs/avatar-creation.md">Avatar creation <span>Creating and customizing avatars</span></a></li>
-				<li><a href="/docs/avaturn.md">Avaturn integration <span>Selfie-to-avatar via Avaturn</span></a></li>
-				<li><a href="/docs/layers.md">Custom layers <span>Adding your own scene layers</span></a></li>
-				<li><a href="/docs/erc8004.md">ERC-8004 <span>On-chain agent identity standard</span></a></li>
-				<li><a href="/docs/security.md">Security <span>Security model and best practices</span></a></li>
-			</ul>
-
-			<h2>Tutorials</h2>
-			<ul>
-				<li><a href="/docs/tutorials/first-agent.md">Build your first agent <span>Step-by-step from zero to deployed</span></a></li>
-				<li><a href="/docs/tutorials/personal-ai-site.md">Build a personal AI site <span>Deploy a personal AI agent site</span></a></li>
-				<li><a href="/docs/tutorials/custom-skill.md">Create a custom skill <span>Extend your agent with new capabilities</span></a></li>
-				<li><a href="/docs/tutorials/embed-on-website.md">Embed on a website <span>Add your agent to any page</span></a></li>
-				<li><a href="/docs/tutorials/register-onchain.md">Register on-chain <span>Mint your agent as an ERC-8004 token</span></a></li>
-			</ul>
-
-			<h2>Operations</h2>
-			<ul>
-				<li><a href="/docs/internal/SMOKE_TEST.md">Smoke test <span>Manual verification checklist</span></a></li>
-				<li><a href="/docs/internal/VALIDATION_DEPLOY.md">Validation deployment <span>Pre-release checklist</span></a></li>
-				<li><a href="/docs/internal/api-inventory.md">API inventory <span>Full list of API endpoints</span></a></li>
-			</ul>
+			<main class="docs-main">
+				<div class="docs-content" id="docs-content"></div>
+			</main>
 		</div>
+
+		<div class="sidebar-overlay" id="sidebar-overlay"></div>
+		<button class="sidebar-fab" id="sidebar-fab" aria-label="Open navigation">
+			<svg
+				width="20"
+				height="20"
+				fill="none"
+				viewBox="0 0 24 24"
+				stroke="currentColor"
+				stroke-width="2"
+			>
+				<path d="M4 6h16M4 12h10M4 18h16" />
+			</svg>
+		</button>
+
+		<script>
+			const NAV = [
+				{
+					title: 'Getting started',
+					links: [
+						{ label: 'Introduction', path: 'introduction' },
+						{ label: 'Quick start', path: 'quick-start' },
+						{ label: 'Deployment', path: 'deployment' },
+						{ label: 'Local setup', path: 'internal/SETUP' },
+						{ label: 'Development guide', path: 'internal/DEVELOPMENT' },
+					],
+				},
+				{
+					title: 'Architecture',
+					links: [
+						{ label: 'Architecture overview', path: 'architecture' },
+						{ label: 'How it works', path: 'how-it-works' },
+						{ label: 'Agent system', path: 'agent-system' },
+						{ label: 'Memory system', path: 'memory' },
+						{ label: 'Skills system', path: 'skills' },
+						{ label: 'Multi-agent', path: 'multi-agent' },
+						{ label: 'Permissions', path: 'permissions' },
+						{ label: 'Layers', path: 'layers' },
+					],
+				},
+				{
+					title: 'API reference',
+					links: [
+						{ label: 'REST API', path: 'api-reference' },
+						{ label: 'JavaScript API', path: 'js-api' },
+						{ label: 'Web component', path: 'web-component' },
+						{ label: 'MCP', path: 'mcp' },
+						{ label: 'SDK', path: 'sdk' },
+						{ label: 'Widgets', path: 'widgets' },
+						{ label: 'Widget Studio', path: 'widget-studio' },
+						{ label: 'Widget reference', href: '/docs/widgets', external: true },
+					],
+				},
+				{
+					title: 'Guides',
+					links: [
+						{ label: 'Embedding', path: 'embedding' },
+						{ label: 'Authentication', path: 'authentication' },
+						{ label: 'Avatar creation', path: 'avatar-creation' },
+						{ label: 'Avaturn integration', path: 'avaturn' },
+						{ label: 'ERC-8004', path: 'erc8004' },
+						{ label: 'Security', path: 'security' },
+						{ label: 'Configuration', path: 'configuration' },
+						{ label: 'Contributing', path: 'contributing' },
+					],
+				},
+				{
+					title: 'Tutorials',
+					links: [
+						{ label: 'Build your first agent', path: 'tutorials/first-agent' },
+						{ label: 'Personal AI site', path: 'tutorials/personal-ai-site' },
+						{ label: 'Create a custom skill', path: 'tutorials/custom-skill' },
+						{ label: 'Embed on a website', path: 'tutorials/embed-on-website' },
+						{ label: 'Register on-chain', path: 'tutorials/register-onchain' },
+					],
+				},
+				{
+					title: 'Reference',
+					links: [
+						{ label: 'Examples', path: 'examples' },
+						{ label: 'Troubleshooting', path: 'troubleshooting' },
+						{ label: 'Changelog', path: 'changelog' },
+					],
+				},
+				{
+					title: 'Operations',
+					links: [
+						{ label: 'Smoke test', path: 'internal/SMOKE_TEST' },
+						{ label: 'Validation deployment', path: 'internal/VALIDATION_DEPLOY' },
+						{ label: 'API inventory', path: 'internal/api-inventory' },
+					],
+				},
+			];
+
+			const ALL_PAGES = NAV.flatMap(s => s.links.filter(l => l.path));
+
+			function currentPath() {
+				return (location.hash.slice(1) || 'introduction').replace(/^\//, '');
+			}
+
+			function buildSidebar(filter) {
+				const q = (filter || '').toLowerCase();
+				const current = currentPath();
+				const nav = document.getElementById('sidebar-nav');
+				nav.innerHTML = NAV.map(section => {
+					const links = section.links.filter(
+						l => !q || l.label.toLowerCase().includes(q),
+					);
+					if (!links.length) return '';
+					return `<div class="sidebar-section">
+						<span class="sidebar-section-title">${section.title}</span>
+						${links
+							.map(l => {
+								const href = l.href || '#' + l.path;
+								const active = !l.href && l.path === current ? ' active' : '';
+								const external = l.external ? ' external' : '';
+								const target = l.href ? ' target="_blank" rel="noopener"' : '';
+								return `<a href="${href}" class="sidebar-link${active}${external}"${target}>${l.label}</a>`;
+							})
+							.join('')}
+					</div>`;
+				}).join('');
+			}
+
+			marked.setOptions({
+				highlight: (code, lang) => {
+					if (lang && hljs.getLanguage(lang)) {
+						return hljs.highlight(code, { language: lang }).value;
+					}
+					return hljs.highlightAuto(code).value;
+				},
+				gfm: true,
+				breaks: false,
+			});
+
+			async function loadPage(path) {
+				const content = document.getElementById('docs-content');
+				content.innerHTML =
+					'<div class="docs-loading"><span class="docs-loading-dot"></span> Loading…</div>';
+
+				try {
+					const url = '/docs/' + path + '.md';
+					const res = await fetch(url);
+					if (!res.ok) throw new Error(res.status);
+					const md = await res.text();
+
+					const html = marked.parse(md);
+					content.innerHTML = html;
+
+					content.querySelectorAll('pre code').forEach(block => {
+						hljs.highlightElement(block);
+					});
+
+					// Rewrite internal .md links → hash routing
+					content.querySelectorAll('a[href]').forEach(a => {
+						const h = a.getAttribute('href');
+						if (!h || h.startsWith('http') || h.startsWith('#') || h.startsWith('mailto:'))
+							return;
+						if (h.endsWith('.md')) {
+							const rel = h.replace(/^\/docs\//, '').replace(/\.md$/, '');
+							a.href = '#' + rel;
+						}
+					});
+
+					// Add IDs to headings for anchor links
+					content.querySelectorAll('h2, h3, h4').forEach(h => {
+						if (!h.id) {
+							h.id = h.textContent
+								.toLowerCase()
+								.replace(/[^a-z0-9]+/g, '-')
+								.replace(/^-|-$/g, '');
+						}
+					});
+
+					// Prev / Next
+					const idx = ALL_PAGES.findIndex(p => p.path === path);
+					const prev = idx > 0 ? ALL_PAGES[idx - 1] : null;
+					const next = idx < ALL_PAGES.length - 1 ? ALL_PAGES[idx + 1] : null;
+
+					const pager = document.createElement('div');
+					pager.className = 'docs-pager';
+					pager.innerHTML = `
+						${prev ? `<a href="#${prev.path}" class="docs-pager-btn prev"><span class="pager-dir">← Previous</span><span class="pager-title">${prev.label}</span></a>` : '<div class="docs-pager-btn placeholder"></div>'}
+						${next ? `<a href="#${next.path}" class="docs-pager-btn next"><span class="pager-dir">Next →</span><span class="pager-title">${next.label}</span></a>` : '<div class="docs-pager-btn placeholder"></div>'}
+					`;
+					content.appendChild(pager);
+				} catch {
+					content.innerHTML =
+						'<p style="color:rgba(255,255,255,0.35);padding-top:2rem">Page not found.</p>';
+				}
+
+				window.scrollTo({ top: 0 });
+				buildSidebar(document.getElementById('search-input').value);
+			}
+
+			function navigate() {
+				loadPage(currentPath());
+			}
+
+			window.addEventListener('hashchange', navigate);
+
+			document.getElementById('search-input').addEventListener('input', e => {
+				buildSidebar(e.target.value);
+			});
+
+			const fab = document.getElementById('sidebar-fab');
+			const sidebar = document.getElementById('sidebar');
+			const overlay = document.getElementById('sidebar-overlay');
+
+			fab.addEventListener('click', () => {
+				sidebar.classList.add('open');
+				overlay.classList.add('visible');
+			});
+			overlay.addEventListener('click', () => {
+				sidebar.classList.remove('open');
+				overlay.classList.remove('visible');
+			});
+			sidebar.addEventListener('click', e => {
+				if (e.target.closest('.sidebar-link') && window.innerWidth <= 860) {
+					sidebar.classList.remove('open');
+					overlay.classList.remove('visible');
+				}
+			});
+
+			buildSidebar();
+			navigate();
+		</script>
 	</body>
 </html>
