@@ -9,7 +9,7 @@
  *
  * Flow per chain:
  *  1. Read last scanned block from erc8004_crawl_cursor.
- *  2. Etherscan V2 getLogs → Registered events since that block.
+ *  2. eth_getLogs via the chain's public RPC — Registered events since that block.
  *  3. Decode agentId (topic1), owner (topic2), agentURI (data) and upsert.
  *  4. Advance cursor.
  *
@@ -22,15 +22,12 @@ import { sql } from '../_lib/db.js';
 import { cors, error, json, wrap } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import { CHAINS } from '../_lib/erc8004-chains.js';
+import { SERVER_CHAIN_META } from '../_lib/onchain.js';
 
 const REGISTERED_TOPIC = keccakId('Registered(uint256,string,address)');
-const ETHERSCAN_BASE = 'https://api.etherscan.io/v2/api';
 const ABI_CODER = AbiCoder.defaultAbiCoder();
 
-// Per-chain log page size. Etherscan V2 caps `offset` at 1000.
-const LOG_PAGE_SIZE = 1000;
-
-// Metadata enrichment per invocation. Keep modest — each fetch hits IPFS/R2.
+// Metadata enrichment per invocation.
 const METADATA_BATCH = 25;
 
 // Per-request timeout so one stuck chain can't eat the whole cron budget.
@@ -39,16 +36,11 @@ const FETCH_TIMEOUT_MS = 8_000;
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
 
-	// Vercel Cron sends `Authorization: Bearer $CRON_SECRET`. Allow GET/POST
-	// from the Vercel cron runner and from a manually-authorized caller.
 	const auth = req.headers['authorization'] || '';
 	const expected = env.CRON_SECRET ? `Bearer ${env.CRON_SECRET}` : null;
 	const fromCron = req.headers['x-vercel-cron'] === '1';
 	if (!fromCron && expected && auth !== expected) {
 		return error(res, 401, 'unauthorized', 'cron secret required');
-	}
-	if (!env.ETHERSCAN_API_KEY) {
-		return error(res, 500, 'missing_env', 'ETHERSCAN_API_KEY not configured');
 	}
 
 	const report = { chains: [], enriched: 0, errors: [] };
@@ -76,46 +68,36 @@ export default wrap(async (req, res) => {
 // ─── Log crawl ───────────────────────────────────────────────────────────
 
 async function crawlChain(chain) {
+	const meta = SERVER_CHAIN_META[chain.id];
+	if (!meta?.rpc) return { inserted: 0, skipped: true, reason: 'no_rpc' };
+
 	const [cursor] = await sql`
 		SELECT last_block FROM erc8004_crawl_cursor WHERE chain_id = ${chain.id}
 	`;
 	const fromBlock = cursor ? Number(cursor.last_block) + 1 : 0;
 
-	const url = new URL(ETHERSCAN_BASE);
-	url.searchParams.set('chainid', String(chain.id));
-	url.searchParams.set('module', 'logs');
-	url.searchParams.set('action', 'getLogs');
-	url.searchParams.set('address', chain.registry);
-	url.searchParams.set('topic0', REGISTERED_TOPIC);
-	url.searchParams.set('fromBlock', String(fromBlock));
-	url.searchParams.set('toBlock', 'latest');
-	url.searchParams.set('page', '1');
-	url.searchParams.set('offset', String(LOG_PAGE_SIZE));
-	url.searchParams.set('apikey', env.ETHERSCAN_API_KEY);
+	const latestHex = await rpc(meta.rpc, 'eth_blockNumber', []);
+	const latest = Number(latestHex);
+	if (fromBlock > latest) return { inserted: 0, lastBlock: latest, fromBlock };
 
-	const body = await fetchJson(url.toString());
-	// Etherscan returns `status:"1"` with `result:[...]` OR `status:"0"` with
-	// `message:"No records found"` when empty. Anything else is an error.
-	if (body.status === '0' && /no records/i.test(body.message || '')) {
-		return { inserted: 0, lastBlock: fromBlock - 1, fromBlock };
-	}
-	if (body.status !== '1' || !Array.isArray(body.result)) {
-		throw new Error(
-			`etherscan ${chain.id}: ${body.message || 'unknown'} — ${String(body.result).slice(0, 120)}`,
-		);
-	}
+	const logs = await rpc(meta.rpc, 'eth_getLogs', [{
+		address: chain.registry,
+		topics: [REGISTERED_TOPIC],
+		fromBlock: '0x' + fromBlock.toString(16),
+		toBlock: '0x' + latest.toString(16),
+	}]);
 
 	let lastBlock = fromBlock - 1;
 	let inserted = 0;
 
-	for (const log of body.result) {
+	for (const log of logs) {
 		try {
 			const agentId = BigInt(log.topics[1]).toString();
 			const ownerHex = '0x' + log.topics[2].slice(-40);
 			const owner = getAddress(ownerHex).toLowerCase();
 			const [agentURI] = ABI_CODER.decode(['string'], log.data);
-			const blockNumber = Number.parseInt(log.blockNumber, 16);
-			const timestamp = Number.parseInt(log.timeStamp, 16);
+			const blockNumber = Number(log.blockNumber);
+			const timestamp = Number(log.timeStamp);
 			const registeredAt = new Date(timestamp * 1000).toISOString();
 
 			await sql`
@@ -127,20 +109,18 @@ async function crawlChain(chain) {
 					 ${agentURI || null}, ${blockNumber}, ${log.transactionHash},
 					 ${registeredAt}, now())
 				ON CONFLICT (chain_id, agent_id) DO UPDATE SET
-					owner = excluded.owner,
+					owner     = excluded.owner,
 					agent_uri = COALESCE(excluded.agent_uri, erc8004_agents_index.agent_uri),
 					last_seen_at = now()
 			`;
 			inserted += 1;
 			if (blockNumber > lastBlock) lastBlock = blockNumber;
 		} catch (decodeErr) {
-			// Skip malformed log; continue.
 			console.warn('[crawl] decode failed', chain.id, log.transactionHash, decodeErr.message);
 		}
 	}
 
-	// Update cursor (even on zero inserts — keeps fromBlock monotonic).
-	const newCursor = Math.max(lastBlock, fromBlock - 1);
+	const newCursor = Math.max(lastBlock, fromBlock - 1, latest);
 	await sql`
 		INSERT INTO erc8004_crawl_cursor (chain_id, last_block, updated_at)
 		VALUES (${chain.id}, ${newCursor}, now())
@@ -155,7 +135,6 @@ async function crawlChain(chain) {
 // ─── Metadata enrichment ─────────────────────────────────────────────────
 
 async function enrichMetadata(limit) {
-	// Rows with no metadata yet, or metadata older than 7d.
 	const rows = await sql`
 		SELECT chain_id, agent_id, agent_uri
 		FROM erc8004_agents_index
@@ -172,8 +151,7 @@ async function enrichMetadata(limit) {
 			if (!meta) {
 				await sql`
 					UPDATE erc8004_agents_index
-					SET metadata_error = 'fetch failed',
-					    last_metadata_at = now()
+					SET metadata_error = 'fetch failed', last_metadata_at = now()
 					WHERE chain_id = ${row.chain_id} AND agent_id = ${row.agent_id}
 				`;
 				continue;
@@ -219,16 +197,17 @@ async function enrichMetadata(limit) {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────
 
-async function fetchJson(url) {
-	const ac = new AbortController();
-	const t = setTimeout(() => ac.abort(), FETCH_TIMEOUT_MS);
-	try {
-		const res = await fetch(url, { signal: ac.signal });
-		if (!res.ok) throw new Error(`HTTP ${res.status}`);
-		return await res.json();
-	} finally {
-		clearTimeout(t);
-	}
+async function rpc(url, method, params) {
+	const res = await fetch(url, {
+		method: 'POST',
+		headers: { 'content-type': 'application/json' },
+		body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
+		signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+	});
+	if (!res.ok) throw new Error(`HTTP ${res.status}`);
+	const body = await res.json();
+	if (body.error) throw new Error(`RPC ${body.error.code}: ${body.error.message}`);
+	return body.result;
 }
 
 async function fetchAgentMetadata(uri) {

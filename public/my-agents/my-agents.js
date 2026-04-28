@@ -4,6 +4,31 @@
  * as importable cards.
  */
 
+async function fetchDiscoveredAgents() {
+	const res = await fetch('/api/erc8004/hydrate', { method: 'GET', credentials: 'include' });
+	if (!res.ok) {
+		const error = await res.json().catch(() => ({}));
+		throw new Error(error.error_description || `HTTP ${res.status}`);
+	}
+	const data = await res.json();
+	return data.agents || [];
+}
+
+async function importAgent({ chainId, agentId }) {
+	const res = await fetch('/api/erc8004/import', {
+		method: 'POST',
+		credentials: 'include',
+		headers: { 'content-type': 'application/json' },
+		body: JSON.stringify({ chainId, agentId }),
+	});
+	if (!res.ok) {
+		const error = await res.json().catch(() => ({}));
+		throw new Error(error.error_description || `HTTP ${res.status}`);
+	}
+	const data = await res.json();
+	return data.agent;
+}
+
 /** @type {Record<number, string>} Minimal chain name map to avoid importing chain-meta.js deps. */
 const CHAIN_NAMES = {
 	1: 'Ethereum',
