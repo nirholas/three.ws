@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 	<head>
 		<meta charset="UTF-8" />
@@ -278,9 +278,7 @@
 			</div>
 
 			<h1>Import My Agents</h1>
-			<p class="subtitle">
-				Discover and import agents you've already registered on-chain
-			</p>
+			<p class="subtitle">Discover and import agents you've already registered on-chain</p>
 
 			<div id="alert" class="alert"></div>
 
@@ -301,12 +299,38 @@
 			<div id="emptyState" class="empty-state" style="display: none">
 				<p>No on-chain agents found for your wallets.</p>
 				<p style="font-size: 12px; color: #999">
-					Register a new agent at <a href="/deploy" style="color: var(--primary)">Deploy</a>
+					Register a new agent at
+					<a href="/deploy" style="color: var(--primary)">Deploy</a>
 				</p>
 			</div>
 		</div>
 
 		<script type="module">
+			async function fetchDiscoveredAgents() {
+				const res = await fetch('/api/erc8004/hydrate', { method: 'GET', credentials: 'include' });
+				if (!res.ok) {
+					const error = await res.json().catch(() => ({}));
+					throw new Error(error.error_description || `HTTP ${res.status}`);
+				}
+				const data = await res.json();
+				return data.agents || [];
+			}
+
+			async function importAgentApi({ chainId, agentId }) {
+				const res = await fetch('/api/erc8004/import', {
+					method: 'POST',
+					credentials: 'include',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({ chainId, agentId }),
+				});
+				if (!res.ok) {
+					const error = await res.json().catch(() => ({}));
+					throw new Error(error.error_description || `HTTP ${res.status}`);
+				}
+				const data = await res.json();
+				return data.agent;
+			}
+
 			const alertEl = document.getElementById('alert');
 			const authPrompt = document.getElementById('authPrompt');
 			const loadingState = document.getElementById('loadingState');
@@ -363,7 +387,6 @@
 				loadingState.style.display = 'block';
 
 				try {
-					const { fetchDiscoveredAgents } = await import('/src/erc8004/hydrate.js');
 					const agents = await fetchDiscoveredAgents();
 
 					loadingState.style.display = 'none';
@@ -387,22 +410,14 @@
 						(agent) => `
 					<div class="agent-card">
 						<div class="agent-image">
-							${
-								agent.image
-									? `<img src="${escapeHtml(agent.image)}" alt="${escapeHtml(agent.name)}" />`
-									: '📦'
-							}
+							${agent.image ? `<img src="${escapeHtml(agent.image)}" alt="${escapeHtml(agent.name)}" />` : '📦'}
 						</div>
 						<div class="agent-info">
 							<div class="agent-header">
 								<div class="agent-name">${escapeHtml(agent.name)}</div>
 								<span class="chain-badge">Chain ${agent.chainId}</span>
 							</div>
-							${
-								agent.description
-									? `<p class="agent-description">${escapeHtml(agent.description)}</p>`
-									: ''
-							}
+							${agent.description ? `<p class="agent-description">${escapeHtml(agent.description)}</p>` : ''}
 							<div class="agent-id">Agent ID: ${escapeHtml(agent.agentId)}</div>
 						</div>
 						<div class="agent-actions">
@@ -432,8 +447,7 @@
 				hideAlert();
 
 				try {
-					const { importAgent: doImport } = await import('/src/erc8004/hydrate.js');
-					const agent = await doImport({
+					const agent = await importAgentApi({
 						chainId: parseInt(chainId),
 						agentId,
 					});

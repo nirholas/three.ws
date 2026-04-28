@@ -207,13 +207,13 @@ export class AgentIdentity {
 	// ── Internal ──────────────────────────────────────────────────────────────
 
 	async _loadAsync() {
-		// 1. Try localStorage first (instant)
+		// 1. Try localStorage first (instant) — backendSync disabled until confirmed
 		const local = this._readLocal();
 		if (local) {
 			this._record = local;
 			this._agentId = local.id;
 			this._loaded = true;
-			this.memory = new AgentMemory(local.id, { backendSync: true });
+			this.memory = new AgentMemory(local.id, { backendSync: false });
 		}
 
 		// 2. Try backend (authoritative if user is signed in)
@@ -233,6 +233,10 @@ export class AgentIdentity {
 					this._persist();
 					if (!this.memory) {
 						this.memory = new AgentMemory(this._record.id, { backendSync: true });
+					} else {
+						// Agent confirmed in backend — enable sync and pull latest
+						this.memory.backendSync = true;
+						this.memory._syncFromBackend();
 					}
 					return;
 				}

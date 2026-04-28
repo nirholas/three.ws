@@ -210,7 +210,6 @@ async function _handleImport(btn, wrap, agent) {
 	if (prev) prev.remove();
 
 	try {
-		const { importAgent } = await import('/src/erc8004/hydrate.js');
 		const result = await importAgent({ chainId: agent.chainId, agentId: agent.agentId });
 		_renderCardAction(wrap, { ...agent, alreadyImported: true }, result.id);
 	} catch (err) {
@@ -230,7 +229,6 @@ async function loadAgents() {
 	showSkeletons();
 
 	try {
-		const { fetchDiscoveredAgents } = await import('/src/erc8004/hydrate.js');
 		const agents = await fetchDiscoveredAgents();
 
 		grid.innerHTML = '';

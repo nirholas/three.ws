@@ -306,6 +306,31 @@
 		</div>
 
 		<script type="module">
+			async function fetchDiscoveredAgents() {
+				const res = await fetch('/api/erc8004/hydrate', { method: 'GET', credentials: 'include' });
+				if (!res.ok) {
+					const error = await res.json().catch(() => ({}));
+					throw new Error(error.error_description || `HTTP ${res.status}`);
+				}
+				const data = await res.json();
+				return data.agents || [];
+			}
+
+			async function importAgentApi({ chainId, agentId }) {
+				const res = await fetch('/api/erc8004/import', {
+					method: 'POST',
+					credentials: 'include',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({ chainId, agentId }),
+				});
+				if (!res.ok) {
+					const error = await res.json().catch(() => ({}));
+					throw new Error(error.error_description || `HTTP ${res.status}`);
+				}
+				const data = await res.json();
+				return data.agent;
+			}
+
 			const alertEl = document.getElementById('alert');
 			const authPrompt = document.getElementById('authPrompt');
 			const loadingState = document.getElementById('loadingState');
@@ -362,7 +387,6 @@
 				loadingState.style.display = 'block';
 
 				try {
-					const { fetchDiscoveredAgents } = await import('/src/erc8004/hydrate.js');
 					const agents = await fetchDiscoveredAgents();
 
 					loadingState.style.display = 'none';
@@ -423,8 +447,7 @@
 				hideAlert();
 
 				try {
-					const { importAgent: doImport } = await import('/src/erc8004/hydrate.js');
-					const agent = await doImport({
+					const agent = await importAgentApi({
 						chainId: parseInt(chainId),
 						agentId,
 					});

@@ -1,8 +1,9 @@
 /**
  * One-shot ERC-8004 historical backfill.
  *
- * Fetches all Registered events from the Identity Registry contract address
- * on each chain via eth_getLogs, then upserts into erc8004_agents_index.
+ * Fetches all Registered events from the Identity Registry contract on each
+ * chain via eth_getLogs. Uses Alchemy when ALCHEMY_API_KEY is set (recommended
+ * — no block range limits), falls back to public RPCs otherwise.
  *
  * Usage:
  *   node scripts/backfill-erc8004.mjs
@@ -30,37 +31,61 @@ if (!process.env.DATABASE_URL) { console.error('Missing DATABASE_URL'); process.
 const sql = neon(process.env.DATABASE_URL);
 const REGISTERED_TOPIC = keccakId('Registered(uint256,string,address)');
 const ABI_CODER = AbiCoder.defaultAbiCoder();
+const ALCHEMY_KEY = process.env.ALCHEMY_API_KEY;
+
+// Alchemy network slugs for supported chains. Others fall back to publicRpc.
+const ALCHEMY_SLUGS = {
+	1:        'eth-mainnet',
+	10:       'opt-mainnet',
+	137:      'polygon-mainnet',
+	324:      'zksync-mainnet',
+	8453:     'base-mainnet',
+	42161:    'arb-mainnet',
+	43114:    'avax-mainnet',
+	59144:    'linea-mainnet',
+	534352:   'scroll-mainnet',
+	11155111: 'eth-sepolia',
+	11155420: 'opt-sepolia',
+	80002:    'polygon-amoy',
+	84532:    'base-sepolia',
+	421614:   'arb-sepolia',
+};
 
 const CHAINS = [
-	{ id: 8453,     name: 'Base',             rpc: 'https://mainnet.base.org',                       registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
-	{ id: 42161,    name: 'Arbitrum One',      rpc: 'https://arb1.arbitrum.io/rpc',                   registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
-	{ id: 56,       name: 'BNB Chain',         rpc: 'https://bsc-dataseed.bnbchain.org',               registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
-	{ id: 1,        name: 'Ethereum',          rpc: 'https://eth.llamarpc.com',                        registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
-	{ id: 10,       name: 'Optimism',          rpc: 'https://mainnet.optimism.io',                     registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
-	{ id: 137,      name: 'Polygon',           rpc: 'https://polygon-rpc.com',                         registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
-	{ id: 43114,    name: 'Avalanche',         rpc: 'https://api.avax.network/ext/bc/C/rpc',           registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
-	{ id: 100,      name: 'Gnosis',            rpc: 'https://rpc.gnosischain.com',                     registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
-	{ id: 250,      name: 'Fantom',            rpc: 'https://rpc.ftm.tools',                           registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
-	{ id: 42220,    name: 'Celo',              rpc: 'https://forno.celo.org',                          registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
-	{ id: 59144,    name: 'Linea',             rpc: 'https://rpc.linea.build',                         registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
-	{ id: 534352,   name: 'Scroll',            rpc: 'https://rpc.scroll.io',                           registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
-	{ id: 5000,     name: 'Mantle',            rpc: 'https://rpc.mantle.xyz',                          registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
-	{ id: 324,      name: 'zkSync Era',        rpc: 'https://mainnet.era.zksync.io',                   registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
-	{ id: 1284,     name: 'Moonbeam',          rpc: 'https://rpc.api.moonbeam.network',                registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
-	{ id: 97,       name: 'BSC Testnet',       rpc: 'https://data-seed-prebsc-1-s1.bnbchain.org:8545', registry: '0x8004A818BFB912233c491871b3d84c89A494BD9e' },
-	{ id: 84532,    name: 'Base Sepolia',      rpc: 'https://sepolia.base.org',                        registry: '0x8004A818BFB912233c491871b3d84c89A494BD9e' },
-	{ id: 421614,   name: 'Arbitrum Sepolia',  rpc: 'https://sepolia-rollup.arbitrum.io/rpc',           registry: '0x8004A818BFB912233c491871b3d84c89A494BD9e' },
-	{ id: 11155111, name: 'Ethereum Sepolia',  rpc: 'https://rpc.sepolia.org',                         registry: '0x8004A818BFB912233c491871b3d84c89A494BD9e' },
-	{ id: 11155420, name: 'Optimism Sepolia',  rpc: 'https://sepolia.optimism.io',                     registry: '0x8004A818BFB912233c491871b3d84c89A494BD9e' },
-	{ id: 80002,    name: 'Polygon Amoy',      rpc: 'https://rpc-amoy.polygon.technology',             registry: '0x8004A818BFB912233c491871b3d84c89A494BD9e' },
-	{ id: 43113,    name: 'Avalanche Fuji',    rpc: 'https://api.avax-test.network/ext/bc/C/rpc',      registry: '0x8004A818BFB912233c491871b3d84c89A494BD9e' },
+	{ id: 8453,     name: 'Base',             publicRpc: 'https://mainnet.base.org',                       registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
+	{ id: 42161,    name: 'Arbitrum One',      publicRpc: 'https://arb1.arbitrum.io/rpc',                   registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
+	{ id: 56,       name: 'BNB Chain',         publicRpc: 'https://bsc-dataseed.bnbchain.org',               registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
+	{ id: 1,        name: 'Ethereum',          publicRpc: 'https://eth.llamarpc.com',                        registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
+	{ id: 10,       name: 'Optimism',          publicRpc: 'https://mainnet.optimism.io',                     registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
+	{ id: 137,      name: 'Polygon',           publicRpc: 'https://polygon-rpc.com',                         registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
+	{ id: 43114,    name: 'Avalanche',         publicRpc: 'https://api.avax.network/ext/bc/C/rpc',           registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
+	{ id: 100,      name: 'Gnosis',            publicRpc: 'https://rpc.gnosischain.com',                     registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
+	{ id: 250,      name: 'Fantom',            publicRpc: 'https://rpc.ftm.tools',                           registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
+	{ id: 42220,    name: 'Celo',              publicRpc: 'https://forno.celo.org',                          registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
+	{ id: 59144,    name: 'Linea',             publicRpc: 'https://rpc.linea.build',                         registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
+	{ id: 534352,   name: 'Scroll',            publicRpc: 'https://rpc.scroll.io',                           registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
+	{ id: 5000,     name: 'Mantle',            publicRpc: 'https://rpc.mantle.xyz',                          registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
+	{ id: 324,      name: 'zkSync Era',        publicRpc: 'https://mainnet.era.zksync.io',                   registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
+	{ id: 1284,     name: 'Moonbeam',          publicRpc: 'https://rpc.api.moonbeam.network',                registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
+	{ id: 97,       name: 'BSC Testnet',       publicRpc: 'https://data-seed-prebsc-1-s1.bnbchain.org:8545', registry: '0x8004A818BFB912233c491871b3d84c89A494BD9e' },
+	{ id: 84532,    name: 'Base Sepolia',      publicRpc: 'https://sepolia.base.org',                        registry: '0x8004A818BFB912233c491871b3d84c89A494BD9e' },
+	{ id: 421614,   name: 'Arbitrum Sepolia',  publicRpc: 'https://sepolia-rollup.arbitrum.io/rpc',           registry: '0x8004A818BFB912233c491871b3d84c89A494BD9e' },
+	{ id: 11155111, name: 'Ethereum Sepolia',  publicRpc: 'https://rpc.sepolia.org',                         registry: '0x8004A818BFB912233c491871b3d84c89A494BD9e' },
+	{ id: 11155420, name: 'Optimism Sepolia',  publicRpc: 'https://sepolia.optimism.io',                     registry: '0x8004A818BFB912233c491871b3d84c89A494BD9e' },
+	{ id: 80002,    name: 'Polygon Amoy',      publicRpc: 'https://rpc-amoy.polygon.technology',             registry: '0x8004A818BFB912233c491871b3d84c89A494BD9e' },
+	{ id: 43113,    name: 'Avalanche Fuji',    publicRpc: 'https://api.avax-test.network/ext/bc/C/rpc',      registry: '0x8004A818BFB912233c491871b3d84c89A494BD9e' },
 ];
 
-const onlyIds = process.argv.slice(2).map(Number).filter(Boolean);
-const chains = onlyIds.length ? CHAINS.filter((c) => onlyIds.includes(c.id)) : CHAINS;
+function rpcUrl(chain) {
+	if (ALCHEMY_KEY && ALCHEMY_SLUGS[chain.id]) {
+		return `https://${ALCHEMY_SLUGS[chain.id]}.g.alchemy.com/v2/${ALCHEMY_KEY}`;
+	}
+	return chain.publicRpc;
+}
 
 async function getLogs(chain) {
-	const res = await fetch(chain.rpc, {
+	const url = rpcUrl(chain);
+	const res = await fetch(url, {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
 		body: JSON.stringify({
@@ -122,14 +147,18 @@ async function backfillChain(chain) {
 	return { found: logs.length, inserted, lastBlock };
 }
 
-console.log(`Backfilling ${chains.length} chain(s)…\n`);
+const onlyIds = process.argv.slice(2).map(Number).filter(Boolean);
+const chains = onlyIds.length ? CHAINS.filter((c) => onlyIds.includes(c.id)) : CHAINS;
+
+console.log(`Backfilling ${chains.length} chain(s) ${ALCHEMY_KEY ? '(Alchemy)' : '(public RPCs)'}…\n`);
 for (const chain of chains) {
-	process.stdout.write(`[${chain.name}] fetching logs…`);
+	const via = ALCHEMY_KEY && ALCHEMY_SLUGS[chain.id] ? 'alchemy' : 'public';
+	process.stdout.write(`[${chain.name}] fetching via ${via}…`);
 	try {
 		const { found, inserted, lastBlock } = await backfillChain(chain);
-		console.log(`\r[${chain.name}] ${inserted} upserted (${found} events, last block ${lastBlock})`);
+		console.log(`\r[${chain.name}] ${inserted} upserted (${found} events, last block ${lastBlock})        `);
 	} catch (e) {
-		console.error(`\r[${chain.name}] ERROR: ${e.message}`);
+		console.error(`\r[${chain.name}] ERROR: ${e.message}                              `);
 	}
 }
 console.log('\nDone.');
