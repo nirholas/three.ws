@@ -145,6 +145,10 @@ class App {
 			pending: qp.get('pending') === '1',
 			// avatarSession: selfie pipeline passes a session URL here after processing photos
 			avatarSession: hash.avatarSession ? decodeURIComponent(hash.avatarSession) : '',
+			// Per-embed overrides (appended to iframe URL by Studio embed modal)
+			noAnimations: Boolean(hash.noAnimations),
+			noChat: Boolean(hash.noChat),
+			noControls: Boolean(hash.noControls),
 		};
 
 		this.el = el;
@@ -869,8 +873,13 @@ class App {
 		}
 		window.VIEWER.widget = widget;
 
-		const cfg = widget.config || {};
+		const cfg = { ...(widget.config || {}) };
 		const modelUrl = widget.avatar?.model_url || '/avatars/cz.glb';
+
+		// Apply per-embed URL overrides (set by Studio embed modal checkboxes).
+		if (this.options.noAnimations) cfg.showClipPicker = false;
+		if (this.options.noChat) cfg._noChat = true;
+		if (this.options.noControls) cfg.showControls = false;
 
 		// Apply config to options BEFORE creating the viewer so first frame is right.
 		if (Array.isArray(cfg.cameraPosition) && cfg.cameraPosition.length === 3) {
@@ -907,7 +916,7 @@ class App {
 				const container = document.body;
 				const ctl = await mountAnimationGallery(this.viewer, cfg, container);
 				this._widgetController = ctl;
-			} else if (type === 'talking-agent') {
+			} else if (type === 'talking-agent' && !cfg._noChat) {
 				const ctl = await mountTalkingAgent(this.viewer, cfg, document.body, {
 					widgetId,
 					getSceneCtrl: () => this.sceneCtrl || window.VIEWER?.scene_ctrl || null,
@@ -1516,7 +1525,7 @@ class App {
 					<a href="/widgets">Widgets</a>
 					<a href="/features">Features</a>
 					<a href="/discover">Discover</a>
-					<a href="/docs/widgets">Docs</a>
+					<a href="/docs">Docs</a>
 					<a href="https://eips.ethereum.org/EIPS/eip-8004" target="_blank" rel="noopener">ERC-8004</a>
 				</nav>
 			</div>

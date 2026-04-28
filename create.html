@@ -75,47 +75,6 @@
 					),
 					#05060a;
 			}
-			header.topbar {
-				display: flex;
-				align-items: center;
-				justify-content: space-between;
-				padding: 18px 28px;
-				border-bottom: 1px solid var(--border);
-			}
-			.back {
-				display: inline-flex;
-				align-items: center;
-				gap: 6px;
-				color: var(--muted);
-				background: transparent;
-				border: 0;
-				cursor: pointer;
-				text-decoration: none;
-				font: inherit;
-				font-size: 14px;
-				padding: 6px 10px;
-				border-radius: 8px;
-				transition:
-					background 0.15s,
-					color 0.15s;
-			}
-			.back:hover {
-				background: rgba(255, 255, 255, 0.04);
-				color: var(--text);
-			}
-			.brand {
-				font-weight: 600;
-				letter-spacing: -0.01em;
-				font-size: 15px;
-			}
-			.brand a {
-				color: var(--text);
-				text-decoration: none;
-			}
-			.spacer {
-				width: 72px;
-			}
-
 			main.stage {
 				max-width: 1100px;
 				margin: 0 auto;
@@ -425,6 +384,161 @@
 			}
 		</style>
 		<link rel="stylesheet" href="/footer.css" />
+		<style>
+			/* ── Site nav (shared with index.html) ── */
+			:root {
+				--space-xs: 0.382rem;
+				--space-sm: 0.618rem;
+				--space-md: 1rem;
+				--space-lg: 1.618rem;
+				--text-sm: 0.764rem;
+				--text-lg: 1.236rem;
+				--radius-md: 5px;
+				--header-h: 3.5rem;
+				--font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+			}
+			.skip-link {
+				position: absolute;
+				left: -9999px;
+				top: auto;
+				width: 1px;
+				height: 1px;
+				overflow: hidden;
+			}
+			.skip-link:focus {
+				left: 1rem;
+				top: 1rem;
+				width: auto;
+				height: auto;
+				padding: 0.5rem 1rem;
+				background: var(--bg);
+				border: 1px solid var(--border);
+				border-radius: 6px;
+				z-index: 9999;
+			}
+			header.site-header {
+				display: flex;
+				background: rgba(0, 0, 0, 0.8);
+				backdrop-filter: blur(20px);
+				-webkit-backdrop-filter: blur(20px);
+				padding: 0 var(--space-lg);
+				height: var(--header-h);
+				align-items: center;
+				overflow-x: auto;
+				overflow-y: hidden;
+				white-space: nowrap;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+				z-index: 10;
+			}
+			header.site-header h1 {
+				color: #fff;
+				font-family: var(--font-display);
+				font-size: var(--text-lg);
+				font-weight: 600;
+				margin: 0;
+				letter-spacing: -0.01em;
+				display: flex;
+				align-items: center;
+				gap: var(--space-xs);
+				line-height: var(--header-h);
+			}
+			header.site-header h1 > a {
+				color: inherit;
+				font-size: inherit;
+				text-decoration: none;
+				display: flex;
+				align-items: center;
+				gap: 0.5rem;
+			}
+			.wordmark-dot {
+				width: 8px;
+				height: 8px;
+				border-radius: 50%;
+				background: linear-gradient(135deg, #a78bfa 0%, #6366f1 100%);
+				box-shadow: 0 0 10px rgba(139, 92, 246, 0.6);
+				display: inline-block;
+			}
+			.features-nav {
+				margin-left: auto;
+				display: flex;
+				gap: var(--space-md);
+				align-items: center;
+			}
+			.features-nav a {
+				color: rgba(255, 255, 255, 0.5);
+				text-decoration: none;
+				font-size: var(--text-sm);
+				font-weight: 500;
+				letter-spacing: -0.005em;
+				padding: 0.35rem 0.7rem;
+				border-radius: var(--radius-md);
+				transition: color 0.18s ease, background 0.18s ease;
+				position: relative;
+			}
+			.features-nav a:hover {
+				color: #fff;
+				background: rgba(255, 255, 255, 0.04);
+			}
+			.features-nav a.active {
+				color: #fff;
+				background: rgba(255, 255, 255, 0.06);
+			}
+			.nav-sign-in {
+				border: 1px solid rgba(255, 255, 255, 0.12);
+				border-radius: var(--radius-md);
+			}
+			.nav-user {
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				padding: 4px 10px;
+				border-radius: 20px;
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				background: rgba(255, 255, 255, 0.04);
+				font-size: var(--text-sm);
+				color: rgba(255, 255, 255, 0.55);
+				max-width: 140px;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+			.nav-user::before {
+				content: '';
+				width: 6px;
+				height: 6px;
+				border-radius: 50%;
+				background: #4ade80;
+				flex-shrink: 0;
+			}
+			.nav-user:hover {
+				color: rgba(255, 255, 255, 0.85) !important;
+				border-color: rgba(255, 255, 255, 0.2);
+				background: rgba(255, 255, 255, 0.07);
+			}
+			#btn-wallet-signin {
+				background: none;
+				border: 1px solid rgba(255, 255, 255, 0.12);
+				color: rgba(255, 255, 255, 0.5);
+				font-size: var(--text-sm);
+				font-weight: 500;
+				padding: 0.35rem 0.7rem;
+				border-radius: var(--radius-md);
+				cursor: pointer;
+				transition: color 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+				font-family: inherit;
+			}
+			#btn-wallet-signin:hover {
+				color: #fff;
+				background: rgba(255, 255, 255, 0.04);
+				border-color: rgba(255, 255, 255, 0.2);
+			}
+			@media (max-width: 700px) {
+				.features-nav a:not(.nav-sign-in):not(.nav-user):not(#nav-sign-in) {
+					display: none;
+				}
+				#btn-wallet-signin { display: none; }
+			}
+		</style>
 		<script
 			type="module"
 			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
@@ -439,28 +553,30 @@
 		</script>
 	</head>
 	<body>
-		<header class="topbar">
-			<button class="back" id="back-btn" type="button" aria-label="Go back">
-				<svg
-					width="16"
-					height="16"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					aria-hidden="true"
+		<a href="#main-content" class="skip-link">Skip to main content</a>
+		<header class="site-header">
+			<h1>
+				<a href="/" aria-label="three.ws home"
+					><span class="wordmark-dot" aria-hidden="true"></span>three.ws</a
 				>
-					<polyline points="15 18 9 12 15 6" />
-				</svg>
-				<span>Back</span>
-			</button>
-			<div class="brand"><a href="/">three.ws</a></div>
-			<div class="spacer" aria-hidden="true"></div>
+			</h1>
+			<nav class="features-nav" aria-label="Primary">
+				<a href="/app">Viewer</a>
+				<a href="/create" class="active">Create</a>
+				<a href="/discover">Discover</a>
+				<a href="/features">Features</a>
+				<a href="/widgets">Widgets</a>
+				<a href="/studio">Studio</a>
+				<a href="/docs/widgets">Docs</a>
+				<a href="/dashboard" class="nav-dashboard">Dashboard</a>
+				<a href="/my-agents" id="nav-my-agents" hidden>My Agents</a>
+				<a href="/dashboard" id="nav-user" hidden class="nav-user"></a>
+				<a href="/login" class="nav-sign-in" id="nav-sign-in">Sign in</a>
+				<button id="btn-wallet-signin" style="cursor: pointer">Sign in with wallet</button>
+			</nav>
 		</header>
 
-		<main class="stage">
+		<main class="stage" id="main-content">
 			<div class="picker-heading">
 				<h1>Create new avatar</h1>
 			</div>
@@ -654,8 +770,11 @@
 					<a href="/widgets">Widgets</a>
 					<a href="/features">Features</a>
 					<a href="/discover">Discover</a>
+					<a href="/showcase">Showcase</a>
 					<a href="/docs/widgets">Docs</a>
 					<a href="https://eips.ethereum.org/EIPS/eip-8004" target="_blank" rel="noopener">ERC-8004</a>
+					<a href="/legal/privacy">Privacy</a>
+					<a href="/legal/tos">Terms</a>
 				</nav>
 			</div>
 			<div class="h-footer-bottom">
@@ -711,5 +830,28 @@
 		></div>
 
 		<script type="module" src="/src/create.js"></script>
+		<script>
+			(function () {
+				try {
+					const raw = localStorage.getItem('3dagent:auth-hint');
+					if (raw) {
+						const { authed, name } = JSON.parse(raw);
+						if (authed) {
+							const el = document.getElementById('nav-sign-in');
+							if (el) { el.textContent = 'Dashboard'; el.href = '/dashboard'; }
+							const myAgents = document.getElementById('nav-my-agents');
+							if (myAgents) myAgents.hidden = false;
+							const userEl = document.getElementById('nav-user');
+							if (userEl && name) { userEl.textContent = name; userEl.hidden = false; }
+						}
+					}
+				} catch (_) {}
+			})();
+		</script>
+		<script type="module">
+			import { wireSigninButton } from '/src/wallet-auth.js';
+			const btn = document.getElementById('btn-wallet-signin');
+			if (btn) wireSigninButton(btn);
+		</script>
 	</body>
 </html>

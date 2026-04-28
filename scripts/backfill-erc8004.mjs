@@ -52,7 +52,7 @@ const ALCHEMY_SLUGS = {
 };
 
 const CHAINS = [
-	{ id: 8453,     name: 'Base',             publicRpc: 'https://mainnet.base.org',                       registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
+	{ id: 8453,     name: 'Base',             publicRpc: 'https://base-rpc.publicnode.com',                 registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
 	{ id: 42161,    name: 'Arbitrum One',      publicRpc: 'https://arb1.arbitrum.io/rpc',                   registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
 	{ id: 56,       name: 'BNB Chain',         publicRpc: 'https://bsc-dataseed.bnbchain.org',               registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
 	{ id: 1,        name: 'Ethereum',          publicRpc: 'https://eth.llamarpc.com',                        registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' },
@@ -97,57 +97,80 @@ async function jsonRpc(url, method, params) {
 	return body.result;
 }
 
-async function getLogs(chain) {
-	const preferred = rpcUrl(chain);
-	// If Alchemy fails (network not enabled in app), fall back to public RPC.
-	const urls = preferred !== chain.publicRpc ? [preferred, chain.publicRpc] : [chain.publicRpc];
-	const url = urls[0];
-	const filter = { address: chain.registry, topics: [REGISTERED_TOPIC], fromBlock: '0x0', toBlock: 'latest' };
-
-	for (const endpoint of urls) {
-		try {
-			return await jsonRpc(endpoint, 'eth_getLogs', [filter]);
-		} catch (e) {
-			const isHttpErr = /HTTP \d/.test(e.message);
-			const isRangeErr = /range|limit/i.test(e.message);
-
-			// HTTP errors (400, 413, 429…) mean this endpoint won't work — try next.
-			if (isHttpErr && endpoint !== urls.at(-1)) continue;
-
-			// JSON-RPC range error — chunk with this endpoint.
-			if (isRangeErr && !isHttpErr) {
-				const match = e.message.match(/([\d,_]+)\s*(?:block|range)/i);
-				const chunkSize = match ? parseInt(match[1].replace(/[,_]/g, ''), 10) : 2000;
-				const latestHex = await jsonRpc(endpoint, 'eth_blockNumber', []);
-				const latest = Number(latestHex);
-				const logs = [];
-				for (let from = 0; from <= latest; from += chunkSize) {
-					const to = Math.min(from + chunkSize - 1, latest);
-					let retries = 3;
-					while (retries-- > 0) {
-						try {
-							const chunk = await jsonRpc(endpoint, 'eth_getLogs', [{
-								...filter,
-								fromBlock: '0x' + from.toString(16),
-								toBlock: '0x' + to.toString(16),
-							}]);
-							logs.push(...chunk);
-							break;
-						} catch (re) {
-							if (/rate.limit|429/i.test(re.message) && retries > 0) {
-								await new Promise(r => setTimeout(r, 1000));
-							} else throw re;
-						}
-					}
-					await new Promise(r => setTimeout(r, 80)); // avoid hammering the RPC
-					process.stdout.write(`\r  chunking ${Math.round(to / latest * 100)}%… `);
-				}
-				return logs;
-			}
-
-			throw e;
-		}
+function alchemyUrl(chain) {
+	if (ALCHEMY_KEY && ALCHEMY_SLUGS[chain.id]) {
+		return `https://${ALCHEMY_SLUGS[chain.id]}.g.alchemy.com/v2/${ALCHEMY_KEY}`;
 	}
+	return chain.publicRpc;
+}
+
+async function findDeployBlock(chain) {
+	// Use Alchemy for binary search — eth_getCode has no range limit on free tier.
+	const url = alchemyUrl(chain);
+	const latestHex = await jsonRpc(url, 'eth_blockNumber', []);
+	const latest = Number(latestHex);
+	const hasCode = async (block) => {
+		const code = await jsonRpc(url, 'eth_getCode', [chain.registry, '0x' + block.toString(16)]);
+		return code && code !== '0x';
+	};
+	if (!(await hasCode(latest))) return null;
+	let lo = 0, hi = latest;
+	while (lo < hi) {
+		const mid = Math.floor((lo + hi) / 2);
+		if (await hasCode(mid)) hi = mid; else lo = mid + 1;
+	}
+	return lo;
+}
+
+async function getLogs(chain) {
+	const url = chain.publicRpc;
+
+	process.stdout.write(' detecting deploy block…');
+	const deployBlock = await findDeployBlock(chain);
+	if (deployBlock === null) {
+		process.stdout.write(' not deployed, skipping.');
+		return [];
+	}
+
+	const filter = { address: chain.registry, topics: [REGISTERED_TOPIC], fromBlock: '0x' + deployBlock.toString(16), toBlock: 'latest' };
+
+	try {
+		return await jsonRpc(url, 'eth_getLogs', [filter]);
+	} catch (e) {
+		const isRangeErr = /range|limit/i.test(e.message) && !/HTTP/.test(e.message);
+		if (!isRangeErr) throw e;
+
+		// RPC caps block range — chunk from deploy block.
+		const match = e.message.match(/([\d,_]+)\s*(?:block|range)/i);
+		const chunkSize = match ? parseInt(match[1].replace(/[,_]/g, ''), 10) : 2000;
+		const latestHex = await jsonRpc(url, 'eth_blockNumber', []);
+		const latest = Number(latestHex);
+		const span = latest - deployBlock;
+		const logs = [];
+		for (let from = deployBlock; from <= latest; from += chunkSize) {
+			const to = Math.min(from + chunkSize - 1, latest);
+			let retries = 3;
+			while (retries-- > 0) {
+				try {
+					const chunk = await jsonRpc(url, 'eth_getLogs', [{
+						...filter,
+						fromBlock: '0x' + from.toString(16),
+						toBlock: '0x' + to.toString(16),
+					}]);
+					logs.push(...chunk);
+					break;
+				} catch (re) {
+					if (/rate.limit|429/i.test(re.message) && retries > 0) {
+						await new Promise(r => setTimeout(r, 1500));
+					} else throw re;
+				}
+			}
+			await new Promise(r => setTimeout(r, 150));
+			process.stdout.write(`\r  chunking ${Math.round((from - deployBlock) / span * 100)}%… `);
+		}
+		return logs;
+	}
+
 }
 
 async function backfillChain(chain) {

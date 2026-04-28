@@ -439,6 +439,10 @@ function wireButtons() {
 
 	$('#embed-width').addEventListener('input', _refreshEmbedSnippet);
 	$('#embed-height').addEventListener('input', _refreshEmbedSnippet);
+
+	for (const id of ['embed-include-animations', 'embed-include-chat', 'embed-include-controls']) {
+		$(`#${id}`).addEventListener('change', _refreshEmbedSnippet);
+	}
 }
 
 // ── preview ──────────────────────────────────────────────────────────────────
@@ -564,23 +568,52 @@ async function save({ generate }) {
 }
 
 let _currentEmbedUrl = '';
+let _currentWidgetType = '';
+
+function _buildEmbedUrl(baseUrl) {
+	const params = [];
+	if ($('#embed-opt-animations')?.hidden === false && !$('#embed-include-animations').checked)
+		params.push('noAnimations=1');
+	if ($('#embed-opt-chat')?.hidden === false && !$('#embed-include-chat').checked)
+		params.push('noChat=1');
+	if ($('#embed-opt-controls')?.hidden === false && !$('#embed-include-controls').checked)
+		params.push('noControls=1');
+	return params.length ? `${baseUrl}&${params.join('&')}` : baseUrl;
+}
 
 function _refreshEmbedSnippet() {
 	if (!_currentEmbedUrl) return;
+	const url = _buildEmbedUrl(_currentEmbedUrl);
 	const w = parseInt($('#embed-width').value) || 600;
 	const h = parseInt($('#embed-height').value) || 600;
-	$('#embed-iframe-snippet').value = `<iframe src="${_currentEmbedUrl}" width="${w}" height="${h}" style="border:0;border-radius:12px" allow="autoplay; xr-spatial-tracking" loading="lazy"></iframe>`;
+	$('#embed-iframe-snippet').value = `<iframe src="${url}" width="${w}" height="${h}" style="border:0;border-radius:12px" allow="autoplay; xr-spatial-tracking" loading="lazy"></iframe>`;
+	$('#embed-preview-iframe').src = url;
 }
 
 function openEmbedModal(widget) {
 	const origin = location.origin;
 	const shareUrl = `${origin}/w/${widget.id}`;
 	_currentEmbedUrl = `${origin}/app#widget=${widget.id}&kiosk=true`;
+	_currentWidgetType = widget.type || state.type;
+
+	// Show relevant embed-option checkboxes for this widget type, reset to checked.
+	const hasAnimations = _currentWidgetType === 'animation-gallery';
+	const hasChat = _currentWidgetType === 'talking-agent';
+	const hasControls = ['turntable', 'animation-gallery', 'passport'].includes(_currentWidgetType);
+	$('#embed-opt-animations').hidden = !hasAnimations;
+	$('#embed-opt-chat').hidden = !hasChat;
+	$('#embed-opt-controls').hidden = !hasControls;
+	const anyOption = hasAnimations || hasChat || hasControls;
+	$('#embed-options').hidden = !anyOption;
+	// Reset checkboxes to "include everything" each time modal opens.
+	$('#embed-include-animations').checked = true;
+	$('#embed-include-chat').checked = true;
+	$('#embed-include-controls').checked = true;
+
 	$('#embed-share-url').value = shareUrl;
 	_refreshEmbedSnippet();
 	$('#embed-script-snippet').value =
 		`<script async src="${origin}/embed.js" data-widget="${widget.id}"></` + 'script>';
-	$('#embed-preview-iframe').src = _currentEmbedUrl;
 	$('#embed-modal').hidden = false;
 }
 
