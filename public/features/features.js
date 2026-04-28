@@ -13,30 +13,6 @@
 
 const ROOT = document;
 
-// Mirror of the mainnet labels in src/erc8004/chains.js — visual ribbon only.
-const CHAIN_LABELS = [
-	'Ethereum',
-	'Optimism',
-	'BNB',
-	'Gnosis',
-	'Polygon',
-	'Fantom',
-	'zkSync',
-	'Moonbeam',
-	'Mantle',
-	'Base',
-	'Arbitrum',
-	'Celo',
-	'Avalanche',
-	'Linea',
-	'Scroll',
-	'Mode',
-	'Blast',
-	'opBNB',
-	'Sepolia',
-	'Holesky',
-];
-
 const SHORT_NAME_BY_CHAIN = new Map([
 	[1, 'Ethereum'],
 	[10, 'Optimism'],
@@ -99,20 +75,7 @@ function setupEmotionChips() {
 	});
 }
 
-// ── Act 3: chain ribbon + on-chain passport ──────────────────────────────
-
-function paintChainRibbon() {
-	const host = ROOT.querySelector('[data-role="chain-ribbon"]');
-	if (!host) return;
-	host.replaceChildren(
-		...CHAIN_LABELS.map((label) => {
-			const span = document.createElement('span');
-			span.className = 'chain-pill';
-			span.textContent = label;
-			return span;
-		}),
-	);
-}
+// ── Act 3: on-chain passport ─────────────────────────────────────────────
 
 async function loadOnChainAgent() {
 	const passport = ROOT.querySelector('[data-role="passport"]');
@@ -239,7 +202,6 @@ function setupProgressDots() {
 
 function init() {
 	initStarFields();
-	paintChainRibbon();
 	setupEmotionChips();
 	setupCopyEmbed();
 	setupProgressDots();

@@ -6,6 +6,10 @@
 		<title>Sign in · three.ws</title>
 		<link rel="icon" href="/favicon.ico" />
 		<link rel="stylesheet" href="/wallet-connect.css" />
+		<script
+			type="module"
+			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
+		></script>
 		<style>
 			:root {
 				color-scheme: dark;
@@ -26,9 +30,35 @@
 				color: #eee;
 				margin: 0;
 				min-height: 100vh;
-				display: grid;
-				place-items: center;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				gap: 8px;
 				padding: 24px;
+			}
+			.agent-avatar {
+				position: relative;
+				width: 160px;
+				height: 160px;
+				pointer-events: none;
+			}
+			.agent-avatar model-viewer {
+				width: 100%;
+				height: 100%;
+				--poster-color: transparent;
+				background: transparent;
+			}
+			.agent-avatar::after {
+				content: '';
+				position: absolute;
+				left: 50%;
+				bottom: -2px;
+				width: 90px;
+				height: 10px;
+				background: radial-gradient(ellipse, rgba(106, 92, 255, 0.35), transparent 70%);
+				transform: translateX(-50%);
+				filter: blur(4px);
 			}
 			a {
 				color: #9a8cff;
@@ -165,6 +195,25 @@
 		</style>
 	</head>
 	<body>
+		<div class="agent-avatar" aria-hidden="true">
+			<model-viewer
+				id="login-avatar"
+				src="/avatars/cz.glb"
+				alt=""
+				autoplay
+				animation-name="IdleV4.2(maya_head)"
+				disable-zoom
+				interaction-prompt="none"
+				shadow-intensity="0.6"
+				shadow-softness="1"
+				exposure="1.05"
+				tone-mapping="aces"
+				environment-image="neutral"
+				camera-orbit="0deg 88deg 4.8m"
+				field-of-view="32deg"
+				loading="eager"
+			></model-viewer>
+		</div>
 		<form class="card" id="f">
 			<p class="brand">three.ws</p>
 			<h1>Welcome back</h1>
@@ -220,6 +269,42 @@
 			.wallet-hint-btn.active { border-color: #6a5cff; color: #9a8cff; background: rgba(106,92,255,0.08); }
 		</style>
 		<script type="module" src="/wallet-login.js"></script>
+		<script>
+			(function () {
+				const viewer = document.getElementById('login-avatar');
+				if (!viewer) return;
+				const BASE_AZ = 0;
+				const BASE_POL = 88;
+				const AZ_RANGE = 30;
+				const POL_RANGE = 14;
+				let targetAz = BASE_AZ, targetPol = BASE_POL;
+				let curAz = BASE_AZ, curPol = BASE_POL;
+				let nod = 0;
+				const lerp = (a, b, t) => a + (b - a) * t;
+				function tick() {
+					curAz = lerp(curAz, targetAz, 0.1);
+					curPol = lerp(curPol, targetPol + nod, 0.18);
+					nod *= 0.85;
+					viewer.setAttribute('camera-orbit', `${curAz}deg ${curPol}deg 4.8m`);
+					requestAnimationFrame(tick);
+				}
+				requestAnimationFrame(tick);
+				window.addEventListener('mousemove', (e) => {
+					const nx = e.clientX / window.innerWidth - 0.5;
+					const ny = e.clientY / window.innerHeight - 0.5;
+					targetAz = BASE_AZ - nx * AZ_RANGE * 2;
+					targetPol = BASE_POL + ny * POL_RANGE * 2;
+				}, { passive: true });
+				const inputs = document.querySelectorAll('#f input');
+				inputs.forEach((el) => {
+					el.addEventListener('keydown', (e) => {
+						if (e.key.length === 1 || e.key === 'Backspace') {
+							nod = (nod >= 0 ? -1 : 1) * 4;
+						}
+					});
+				});
+			})();
+		</script>
 		<script>
 			const params = new URLSearchParams(location.search);
 			const next =

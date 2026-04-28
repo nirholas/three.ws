@@ -302,7 +302,39 @@ class App {
 
 		const model = options.model || '/avatars/cz.glb';
 		const resolvedModel = isDecentralizedURI(model) ? resolveURI(model) : model;
-		this.view(resolvedModel, '', new Map());
+		const isDefaultCz = !options.model;
+		const loadPromise = this.view(resolvedModel, '', new Map());
+		if (isDefaultCz) {
+			loadPromise?.then?.(() => this._playDefaultLandingClip('taunt'));
+		}
+	}
+
+	/**
+	 * After the default CZ avatar loads on /app, stop the baked-in idle clip
+	 * (which fights the manifest animations on the same skeleton and looks
+	 * glitchy) and crossfade into a manifest clip once it's ready.
+	 * @param {string} clipName
+	 */
+	_playDefaultLandingClip(clipName) {
+		const viewer = this.viewer;
+		if (!viewer) return;
+		if (viewer.mixer) viewer.mixer.stopAllAction();
+		const am = viewer.animationManager;
+		if (!am) return;
+		const start = performance.now();
+		const tryPlay = () => {
+			if (!this.viewer || this.viewer !== viewer) return;
+			if (viewer.mixer) viewer.mixer.stopAllAction();
+			const defs = am.getAnimationDefs();
+			const hasDef = defs.some((d) => d.name === clipName);
+			if (hasDef) {
+				am.crossfadeTo(clipName).catch(() => {});
+				return;
+			}
+			if (performance.now() - start > 8000) return;
+			setTimeout(tryPlay, 200);
+		};
+		tryPlay();
 	}
 
 	// ── Agent System Init ─────────────────────────────────────────────────────

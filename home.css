@@ -576,7 +576,7 @@
 	min-height: 360px;
 	padding: 4rem 2rem 2rem !important;
 	border-top: none !important;
-	background: linear-gradient(180deg, #06070b 0%, #02030a 60%, #000 100%) !important;
+	background: linear-gradient(180deg, #0a0a0a 0%, #050505 60%, #000 100%) !important;
 	isolation: isolate;
 }
 
@@ -589,15 +589,14 @@
 	background: linear-gradient(
 		90deg,
 		transparent 0%,
-		rgba(124, 58, 237, 0.0) 10%,
-		rgba(124, 58, 237, 0.85) 35%,
-		rgba(37, 99, 235, 0.85) 65%,
-		rgba(37, 99, 235, 0.0) 90%,
+		rgba(255, 255, 255, 0.0) 10%,
+		rgba(255, 255, 255, 0.75) 50%,
+		rgba(255, 255, 255, 0.0) 90%,
 		transparent 100%
 	);
 	box-shadow:
-		0 0 12px rgba(124, 58, 237, 0.55),
-		0 0 28px rgba(37, 99, 235, 0.35);
+		0 0 10px rgba(255, 255, 255, 0.35),
+		0 0 24px rgba(255, 255, 255, 0.18);
 	z-index: 2;
 }
 
@@ -608,8 +607,8 @@
 	bottom: -40%;
 	height: 90%;
 	background-image:
-		linear-gradient(to right, rgba(180, 180, 255, 0.10) 1px, transparent 1px),
-		linear-gradient(to bottom, rgba(180, 180, 255, 0.10) 1px, transparent 1px);
+		linear-gradient(to right, rgba(255, 255, 255, 0.09) 1px, transparent 1px),
+		linear-gradient(to bottom, rgba(255, 255, 255, 0.09) 1px, transparent 1px);
 	background-size: 64px 64px;
 	transform: perspective(600px) rotateX(62deg);
 	transform-origin: 50% 0%;
@@ -628,8 +627,8 @@
 	position: absolute;
 	inset: 0;
 	background:
-		radial-gradient(60% 70% at 30% 110%, rgba(124, 58, 237, 0.22) 0%, transparent 60%),
-		radial-gradient(55% 70% at 75% 110%, rgba(37, 99, 235, 0.20) 0%, transparent 60%);
+		radial-gradient(60% 70% at 30% 110%, rgba(255, 255, 255, 0.10) 0%, transparent 60%),
+		radial-gradient(55% 70% at 75% 110%, rgba(255, 255, 255, 0.07) 0%, transparent 60%);
 	filter: blur(40px);
 	z-index: 1;
 	pointer-events: none;
@@ -668,7 +667,7 @@
 	height: 140px;
 	z-index: 3;
 	pointer-events: none;
-	filter: drop-shadow(0 0 24px rgba(124, 58, 237, 0.45));
+	filter: grayscale(1) drop-shadow(0 0 18px rgba(255, 255, 255, 0.30));
 }
 
 .h-footer-avatar model-viewer {
@@ -730,18 +729,82 @@
 
 .h-footer-links a:hover {
 	color: #fff;
-	text-shadow: 0 0 12px rgba(124, 58, 237, 0.7);
+	text-shadow: 0 0 12px rgba(255, 255, 255, 0.55);
 }
 
-.h-footer-copy {
+.h-footer-bottom {
 	position: relative;
 	z-index: 4;
-	text-align: center;
-	font-size: 0.7rem;
-	color: rgba(255, 255, 255, 0.32);
-	letter-spacing: 0.08em;
-	font-family: 'JetBrains Mono', monospace;
+	max-width: 1080px;
+	margin: 0 auto;
+	padding-top: 1.5rem;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	flex-wrap: wrap;
+	border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.h-footer-legal {
 	margin: 0;
+	font-family: 'Inter', sans-serif;
+	font-size: 0.78rem;
+	font-weight: 400;
+	color: rgba(255, 255, 255, 0.42);
+	letter-spacing: 0.005em;
+}
+
+.h-footer-badges {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+
+.h-footer-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.32rem 0.7rem;
+	border-radius: 999px;
+	border: 1px solid rgba(255, 255, 255, 0.09);
+	background: rgba(255, 255, 255, 0.025);
+	color: rgba(255, 255, 255, 0.62);
+	font-family: 'Inter', sans-serif;
+	font-size: 0.72rem;
+	font-weight: 500;
+	letter-spacing: 0.01em;
+	text-decoration: none;
+	transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+
+.h-footer-badge:hover {
+	color: #fff;
+	border-color: rgba(255, 255, 255, 0.18);
+	background: rgba(255, 255, 255, 0.05);
+	transform: translateY(-1px);
+}
+
+.h-footer-badge svg {
+	width: 12px;
+	height: 12px;
+	flex-shrink: 0;
+}
+
+.h-footer-status-dot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: #4ade80;
+	box-shadow: 0 0 8px rgba(74, 222, 128, 0.6);
+	flex-shrink: 0;
+	animation: hStatusPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes hStatusPulse {
+	0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(74, 222, 128, 0.6); }
+	50% { opacity: 0.55; box-shadow: 0 0 4px rgba(74, 222, 128, 0.35); }
 }
 
 @media (max-width: 720px) {
@@ -757,6 +820,11 @@
 	.h-footer-links {
 		grid-template-columns: repeat(2, 1fr);
 		gap: 0.5rem 1rem;
+	}
+	.h-footer-bottom {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 0.75rem;
 	}
 	.h-footer-avatar {
 		width: 90px;

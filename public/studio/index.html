@@ -38,11 +38,15 @@
 		<main class="studio-layout" id="studio-layout" hidden>
 			<section class="studio-col-left" aria-label="Pick avatar and widget type">
 				<div class="panel">
-					<h2>1. Pick avatar</h2>
+					<h2 data-tooltip="The 3D model your widget will display. We've pre-loaded a demo agent so you can try the studio right away — sign in to use your own.">
+						1. Pick avatar
+					</h2>
 					<div class="avatar-list" id="avatar-list" aria-busy="true"></div>
 				</div>
 				<div class="panel">
-					<h2>2. Pick widget type</h2>
+					<h2 data-tooltip="Each widget type is a different layout — Turntable for hero banners, Talking Agent for chat, Passport for on-chain identity, etc. Click to switch and watch the preview update.">
+						2. Pick widget type
+					</h2>
 					<div class="type-grid" id="type-grid"></div>
 				</div>
 			</section>
@@ -63,6 +67,7 @@
 							class="btn-ghost btn-sm"
 							id="capture-camera-btn"
 							type="button"
+							data-tooltip="Drag to frame the avatar exactly how you want, then click to lock in that camera angle as the widget's default."
 							disabled
 						>
 							Use current view
@@ -73,14 +78,19 @@
 
 			<section class="studio-col-right" aria-label="Brand and config">
 				<div class="panel">
-					<h2>3. Brand</h2>
+					<h2 data-tooltip="Style the widget to match your site — colors, environment, captions, and behavior. Changes update the preview live.">
+						3. Brand
+					</h2>
 					<form
 						id="config-form"
 						class="config-form"
 						autocomplete="off"
 						onsubmit="return false"
 					>
-						<label class="field">
+						<label
+							class="field"
+							data-tooltip="Internal name for this widget. Shows up in your dashboard — visitors never see it."
+						>
 							<span>Name</span>
 							<input
 								type="text"
@@ -90,15 +100,24 @@
 								placeholder="My turntable widget"
 							/>
 						</label>
-						<label class="field">
+						<label
+							class="field"
+							data-tooltip="Backdrop color behind the avatar. Pick something close to your site's background for a seamless embed."
+						>
 							<span>Background</span>
 							<input type="color" name="background" value="#0a0a0a" />
 						</label>
-						<label class="field">
+						<label
+							class="field"
+							data-tooltip="Highlight color used for buttons, focus rings, and the chat bubble. Match your brand."
+						>
 							<span>Accent</span>
 							<input type="color" name="accent" value="#8b5cf6" />
 						</label>
-						<label class="field">
+						<label
+							class="field"
+							data-tooltip="Optional text overlay shown below the avatar — great for a tagline or call-to-action."
+						>
 							<span>Caption (optional)</span>
 							<input
 								type="text"
@@ -107,15 +126,24 @@
 								placeholder="Hello, world."
 							/>
 						</label>
-						<label class="field row">
+						<label
+							class="field row"
+							data-tooltip="Show the orbit/zoom controls so visitors can rotate the avatar themselves. Turn off for a hands-off hero shot."
+						>
 							<input type="checkbox" name="showControls" checked />
 							<span>Show controls</span>
 						</label>
-						<label class="field row">
+						<label
+							class="field row"
+							data-tooltip="Slowly spin the avatar on its own. Pauses when the visitor interacts."
+						>
 							<input type="checkbox" name="autoRotate" checked />
 							<span>Auto-rotate</span>
 						</label>
-						<label class="field">
+						<label
+							class="field"
+							data-tooltip="HDR lighting environment that affects how the avatar is lit and reflects. Try a few — they change the mood instantly."
+						>
 							<span>Environment</span>
 							<select name="envPreset">
 								<option value="none">None</option>
@@ -124,7 +152,10 @@
 								<option value="footprint-court">Footprint court</option>
 							</select>
 						</label>
-						<label class="field row">
+						<label
+							class="field row"
+							data-tooltip="Public widgets load for anyone with the URL or embed snippet. Uncheck to keep it private to your account."
+						>
 							<input type="checkbox" name="is_public" checked />
 							<span>Public widget (anyone with the URL can load it)</span>
 						</label>
@@ -134,8 +165,20 @@
 				</div>
 
 				<div class="action-row">
-					<button type="button" class="btn-ghost" id="save-draft-btn">Save draft</button>
-					<button type="button" class="btn-primary" id="generate-btn">
+					<button
+						type="button"
+						class="btn-ghost"
+						id="save-draft-btn"
+						data-tooltip="Save your config to your dashboard without generating embed code. You can come back and tweak it later."
+					>
+						Save draft
+					</button>
+					<button
+						type="button"
+						class="btn-primary"
+						id="generate-btn"
+						data-tooltip="Save and produce a shareable URL plus the iframe/script snippets you can paste into your site."
+					>
 						Generate embed
 					</button>
 				</div>
