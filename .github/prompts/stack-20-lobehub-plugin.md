@@ -13,7 +13,7 @@ User maintains a LobeHub fork. Per priority stack, an agent from three.ws must a
 
 ### Plugin manifest
 
-Host at `https://three.ws/.well-known/lobehub-plugin.json`:
+Host at `https://three.ws/.well-known/chat-plugin.json`:
 
 ```json
 {

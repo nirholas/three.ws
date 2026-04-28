@@ -32,7 +32,7 @@ Matches the constraints Claude's Artifact iframe imposes (no external scripts be
 
 ### 4. Lobehub example — `examples/host-lobehub/`
 
-A minimal plugin that wraps `<agent-3d>` for inline rendering in a Lobehub chat. Includes a README explaining how to drop it into the user's Lobehub fork. Uses the plugin manifest shape from `05-02-lobehub-plugin.md`.
+A minimal plugin that wraps `<agent-3d>` for inline rendering in a Lobehub chat. Includes a README explaining how to drop it into the user's Lobehub fork. Uses the plugin manifest shape from `05-02-chat-plugin.md`.
 
 ### 5. Docs page — `public/docs-embed.html`
 

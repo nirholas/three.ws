@@ -13,7 +13,7 @@ Each prompt only creates new files under a unique path, or edits exactly one fil
 | 01  | [WalletConnect SIWE bridge](01-walletconnect-siwe.md)                  | 1       | `src/auth/walletconnect-bridge.js`                            |
 | 02  | [EDITOR_SPEC spec doc](02-editor-spec.md)                              | 3, 4    | `specs/EDITOR_SPEC.md`                                        |
 | 03  | [Claude.ai artifact HTML](03-claude-artifact.md)                       | 5       | `api/artifact.js`, `public/artifact/`                         |
-| 04  | [LobeHub plugin manifest + handshake](04-lobehub-plugin.md)            | 5       | `public/lobehub/`, `api/lobehub/*`                            |
+| 04  | [LobeHub plugin manifest + handshake](04-chat-plugin.md)            | 5       | `public/lobehub/`, `api/lobehub/*`                            |
 | 05  | [Reputation dashboard UI](05-reputation-dashboard.md)                  | 6       | `public/reputation/`, `src/reputation-ui.js`                  |
 | 06  | [Validation dashboard UI](06-validation-dashboard.md)                  | 6       | `public/validation/`, `src/validation-ui.js`                  |
 | 07  | [Avatar regenerate endpoint + UI](07-avatar-regenerate.md)             | 3       | `api/avatars/regenerate.js`, `src/editor/regenerate-panel.js` |

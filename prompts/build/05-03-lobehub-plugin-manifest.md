@@ -92,7 +92,7 @@ Simplest implementation: the tool endpoint returns `{ ok: true, forward: { __age
 
 ### 4. Install button on agent page
 
-Share panel (`04-06`) `lobehub-plugin` target outputs the manifest URL:
+Share panel (`04-06`) `chat-plugin` target outputs the manifest URL:
 
 ```
 https://three.ws/api/agents/<id>/lobe-plugin.json
@@ -117,7 +117,7 @@ Plus the install instructions ("Paste this URL in Lobehub → Settings → Plugi
 
 **Modified:**
 
-- `src/components/snippet-picker.jsx` (from 04-06) — `lobehub-plugin` target returns the manifest URL + install instructions.
+- `src/components/snippet-picker.jsx` (from 04-06) — `chat-plugin` target returns the manifest URL + install instructions.
 - `vercel.json` — routes.
 
 ## Acceptance

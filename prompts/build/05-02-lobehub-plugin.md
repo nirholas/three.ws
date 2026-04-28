@@ -25,7 +25,7 @@ The user maintains a Lobehub fork. The product's killer demo is: paste an agent 
 
 ## Build this
 
-1. **New endpoint** `GET /.well-known/lobehub-plugin.json` (or the exact path Lobehub requires — confirm from the docs):
+1. **New endpoint** `GET /.well-known/chat-plugin.json` (or the exact path Lobehub requires — confirm from the docs):
     - Describes the plugin: name, description, icon, author, homepage.
     - Declares a `renderer` of type `iframe` pointing at `/agent/{id}/embed?kiosk=1`.
     - Inputs: `agent_id` (string).
@@ -45,14 +45,14 @@ The user maintains a Lobehub fork. The product's killer demo is: paste an agent 
 
 ## Deliverables
 
-- `api/lobehub/plugin.js` (well-known manifest) or static JSON at `public/.well-known/lobehub-plugin.json`.
+- `api/lobehub/plugin.js` (well-known manifest) or static JSON at `public/.well-known/chat-plugin.json`.
 - `api/lobehub/resolve.js`.
 - Share-panel "Lobehub" tab.
 
 ## Acceptance
 
 - Installing the plugin in a fresh Lobehub instance and pasting an agent URL renders the iframe embodied in the chat.
-- `curl /.well-known/lobehub-plugin.json` returns a valid manifest.
+- `curl /.well-known/chat-plugin.json` returns a valid manifest.
 - `npm run build` passes.
 
 ## Report

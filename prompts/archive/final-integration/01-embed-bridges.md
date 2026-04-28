@@ -9,7 +9,7 @@ Sprint-100 mapped two bridge modules to fill this gap:
 - `src/embed-host-bridge.js` — iframe ↔ parent `postMessage` transport. Handshake, origin check, request/response routing.
 - `src/embed-action-bridge.js` — translates bridge messages into `AgentProtocol` events on the agent side and back out on the parent side.
 
-**Neither file was ever written.** The [lobehub-plugin/](../../lobehub-plugin/) already assumes these exist — `AgentBridge` in `lobehub-plugin/src/bridge.ts` calls `postMessage` with a schema that needs a matching receiver on the `<agent-3d>` side. Ship both files.
+**Neither file was ever written.** The [chat-plugin/](../../chat-plugin/) already assumes these exist — `AgentBridge` in `chat-plugin/src/bridge.ts` calls `postMessage` with a schema that needs a matching receiver on the `<agent-3d>` side. Ship both files.
 
 ## Goal
 
@@ -30,7 +30,7 @@ Edit (inside uniquely-named anchor only):
 
 - `src/agent-protocol.js` — learn the `ACTION_TYPES` set.
 - `src/agent-avatar.js` — learn what actions the performer honors.
-- `lobehub-plugin/src/bridge.ts` — reference for the wire protocol the plugin side already expects.
+- `chat-plugin/src/bridge.ts` — reference for the wire protocol the plugin side already expects.
 - `specs/EMBED_SPEC.md` — the embed contract.
 
 ## Wire protocol
@@ -128,14 +128,14 @@ if (window !== window.parent) {
 
 Also add a matching `this._embedBridge?.stop()` call inside the existing `disconnectedCallback`, still within the anchor block. The import line belongs outside the `connectedCallback` function — place it inside the anchor block near the existing imports at top of file (use a second anchor `EMBED_BRIDGES_IMPORT` if cleaner).
 
-Do not import `EmbedHostBridge` here — that's the parent-page side and is consumed externally (from `lobehub-plugin/src/bridge.ts` et al.).
+Do not import `EmbedHostBridge` here — that's the parent-page side and is consumed externally (from `chat-plugin/src/bridge.ts` et al.).
 
 ## Deliverables checklist
 
 - [ ] `src/embed-host-bridge.js` created, ~150–250 LOC, JSDoc typed, class `EmbedHostBridge` exported.
 - [ ] `src/embed-action-bridge.js` created, ~150–250 LOC, class `EmbedActionBridge` exported.
 - [ ] `src/element.js` has exactly one `BEGIN:EMBED_BRIDGES` / `END:EMBED_BRIDGES` anchor block; no edits outside it.
-- [ ] `lobehub-plugin/src/bridge.ts` works against the new wire format (verify by reading — do not edit, that's prompt 05's turf).
+- [ ] `chat-plugin/src/bridge.ts` works against the new wire format (verify by reading — do not edit, that's prompt 05's turf).
 - [ ] Handshake, timeout, origin check, subscribe/unsubscribe, error propagation all implemented.
 - [ ] No new runtime deps. Use crypto.randomUUID for ids (polyfill only if `typeof crypto.randomUUID !== 'function'`).
 - [ ] Prettier pass on all touched files.
@@ -147,7 +147,7 @@ Do not import `EmbedHostBridge` here — that's the parent-page side and is cons
 - `node --check src/element.js` passes.
 - `npm run build` succeeds with no new warnings.
 - Manual check: `git grep -n "EMBED_BRIDGES" src/element.js` returns exactly 2 lines (BEGIN + END) for each anchor (import + mount).
-- Manual check: `git grep -n "EmbedActionBridge\|EmbedHostBridge" src/ lobehub-plugin/src/` shows both modules referenced.
+- Manual check: `git grep -n "EmbedActionBridge\|EmbedHostBridge" src/ chat-plugin/src/` shows both modules referenced.
 - Manual sanity: in a browser console at `localhost:3000/agent-embed.html?agent=<id>` inside an iframe, the parent can `postMessage({v:1,source:'agent-host',id:'x',kind:'request',op:'ping'})` and receive a `pong` response.
 
 ## Report + archive

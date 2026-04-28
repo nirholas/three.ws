@@ -1,5 +1,5 @@
 {
-	"name": "@3dagent/lobehub-plugin",
+	"name": "@3dagent/chat-plugin",
 	"version": "1.0.0",
 	"description": "three.ws for LobeHub — sidebar plugin that renders an embodied avatar",
 	"private": true,

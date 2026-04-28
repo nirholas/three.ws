@@ -1,5 +1,5 @@
 /**
- * @3dagent/lobehub-plugin
+ * @3dagent/chat-plugin
  *
  * Entry point for the three.ws LobeHub plugin.
  * Exports the main React component and configuration.

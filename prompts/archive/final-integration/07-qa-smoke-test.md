@@ -111,8 +111,8 @@ Run each flow in the dev server (`npm run dev`) against a real browser. Chrome/E
 
 ### Flow I — LobeHub plugin dev harness
 
-1. `cd lobehub-plugin && npm install && npm run build`.
-2. Open `lobehub-plugin/dev/index.html` via `python3 -m http.server 5555`.
+1. `cd chat-plugin && npm install && npm run build`.
+2. Open `chat-plugin/dev/index.html` via `python3 -m http.server 5555`.
 3. Inject a fake assistant message.
 4. Avatar in the iframe visibly speaks.
 

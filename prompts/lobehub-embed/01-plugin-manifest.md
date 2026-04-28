@@ -18,7 +18,7 @@ Produce a LobeHub plugin manifest, hosted at a stable public URL under this depl
 
 ## Deliverable
 
-1. **Manifest file** at `public/.well-known/lobehub-plugin.json` (served at `https://<host>/.well-known/lobehub-plugin.json`) that declares:
+1. **Manifest file** at `public/.well-known/chat-plugin.json` (served at `https://<host>/.well-known/chat-plugin.json`) that declares:
     - `identifier` — kebab-case, e.g. `3d-agent`
     - `meta` — `{ title, description, avatar, tags }`
     - `author`, `homepage`, `version` (read from `package.json`'s version at build if trivial; otherwise hard-code `0.1.0` and note)
@@ -51,9 +51,9 @@ Produce a LobeHub plugin manifest, hosted at a stable public URL under this depl
 
 ## Verification
 
-1. `node --check` is not applicable (JSON). Run `node -e "JSON.parse(require('fs').readFileSync('public/.well-known/lobehub-plugin.json','utf8'))"` to confirm parseable.
-2. `npx vite build` succeeds and copies the file to `dist/.well-known/lobehub-plugin.json`.
-3. `curl -I https://localhost:5173/.well-known/lobehub-plugin.json` (or deployed URL) returns `Content-Type: application/json`.
+1. `node --check` is not applicable (JSON). Run `node -e "JSON.parse(require('fs').readFileSync('public/.well-known/chat-plugin.json','utf8'))"` to confirm parseable.
+2. `npx vite build` succeeds and copies the file to `dist/.well-known/chat-plugin.json`.
+3. `curl -I https://localhost:5173/.well-known/chat-plugin.json` (or deployed URL) returns `Content-Type: application/json`.
 4. Load it in a LobeHub dev instance — see [05-plugin-submission.md](./05-plugin-submission.md) for the full flow. For this task, you may stop at schema validity.
 5. `ajv validate` each `api.*.parameters` against its own schema with a sample payload.
 

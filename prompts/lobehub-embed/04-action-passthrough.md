@@ -86,7 +86,7 @@ Wire bidirectional, lossless relay between LobeHub's chat tool-call surface and 
 
 - `src/agent-protocol.js` — do not extend
 - `src/agent-avatar.js` — do not touch
-- `public/.well-known/lobehub-plugin.json` — owned by [01](./01-plugin-manifest.md)
+- `public/.well-known/chat-plugin.json` — owned by [01](./01-plugin-manifest.md)
 - `src/embed-host-bridge.js` — owned by [02](./02-iframe-handshake.md). You may read its `postToHost` surface; do not refactor it.
 
 ## Reporting

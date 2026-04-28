@@ -4,7 +4,7 @@
 
 Repo: `/workspaces/3D`. Tasks [01](./01-plugin-manifest.md) through [04](./04-action-passthrough.md) have produced:
 
-- A public plugin manifest at `/.well-known/lobehub-plugin.json`
+- A public plugin manifest at `/.well-known/chat-plugin.json`
 - A versioned `postMessage` bridge between our iframe and a LobeHub host
 - An identity handoff for LobeHub-auth'd viewers (with optional wallet link)
 - Bidirectional tool-call ↔ protocol relay that preserves the Empathy Layer
@@ -20,7 +20,7 @@ Produce everything needed to (a) reproduce a green local smoke test of the plugi
 ## Deliverable
 
 1. **Local-test harness** under `prompts/lobehub-embed/fixtures/`:
-    - `sample-lobehub-config.json` — a LobeHub plugin-install descriptor pointing at `https://three.ws/.well-known/lobehub-plugin.json` (or a local dev URL).
+    - `sample-lobehub-config.json` — a LobeHub plugin-install descriptor pointing at `https://three.ws/.well-known/chat-plugin.json` (or a local dev URL).
     - `mock-host.html` — a standalone page that mimics the LobeHub host frame: iframes our embed, sends the full handshake sequence (`host:hello` → `host:identity` → `host:action` samples), logs replies. Use for offline testing.
     - `smoke.md` — a step-by-step manual smoke test script (10–15 steps) covering: install, open agent, chat sends tool call, avatar speaks with emotion, wallet link prompt, signed action surfaces back to transcript.
 2. **Submission bundle** under `prompts/lobehub-embed/submission/`:
@@ -33,7 +33,7 @@ Produce everything needed to (a) reproduce a green local smoke test of the plugi
         - Maintainer contact
     - `SCREENSHOTS.md` — a script (not actual images) describing the five screenshots to capture: (1) install dialog, (2) agent rendered in a chat bubble, (3) avatar mid-gesture, (4) emotion blend visible (concerned face), (5) signed-action receipt in transcript. For each, list the URL, window size, and visible elements.
     - `DEMO_SCRIPT.md` — 60-second walkthrough script for recording a demo GIF/MP4. Word-for-word spoken lines optional.
-3. **Tracking metadata** — add a single line to `public/.well-known/lobehub-plugin.json` (if not already present): `"marketplaceStatus": "pending"` (string), updated to `"listed"` post-acceptance.
+3. **Tracking metadata** — add a single line to `public/.well-known/chat-plugin.json` (if not already present): `"marketplaceStatus": "pending"` (string), updated to `"listed"` post-acceptance.
 4. **Release notes stub** — append a `## v0.1.0 — LobeHub plugin` section to the repo's existing CHANGELOG if one exists; otherwise note its absence in the report.
 
 ## Audit checklist

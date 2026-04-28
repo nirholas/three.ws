@@ -1,6 +1,6 @@
 # 05-02 — Lobehub plugin: render the agent embodied in LobeChat
 
-**Branch:** `feat/lobehub-plugin`
+**Branch:** `feat/chat-plugin`
 **Stack layer:** 5 (Host embed — Lobehub — the user's primary integration target)
 **Depends on:** 04-02 (embed policy), 04-03 (public decorate), 05-01 (web component bundle)
 **Blocks:** 06-\* (onchain → Lobehub demo)
