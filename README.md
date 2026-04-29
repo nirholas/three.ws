@@ -668,9 +668,25 @@ For sandboxed iframes use the widget embed path instead — it runs in its own b
 │
 ├── public/                     # Static subapps + assets
 │   ├── studio/                 # Widget Studio SPA
-│   ├── dashboard/              # User dashboard SPA
+│   ├── dashboard/              # User dashboard SPA (actions, sessions, storage, usage, wallets, embed-policy, agent-pumpfun)
+│   ├── settings/               # Account settings
+│   ├── admin/                  # Staff admin surface
 │   ├── validation/             # glTF validator tool
 │   ├── discover/               # Agent discovery SPA
+│   ├── my-agents/              # Owner agent list
+│   ├── reputation/             # Reputation registry browser
+│   ├── widgets-gallery/        # Public widget gallery
+│   ├── hydrate/                # Import on-chain agent
+│   ├── features/               # Features marketing page
+│   ├── first-meet/             # First-time-user onboarding
+│   ├── artifact/               # Claude Artifact viewer bundle
+│   ├── cz/                     # CZ demo experience
+│   ├── lobehub/iframe/         # LobeHub plugin surface
+│   ├── pumpfun.html            # pump.fun token launcher
+│   ├── vanity-wallet.html      # Solana vanity-address grinder
+│   ├── strategy-lab.html       # DCA strategy designer
+│   ├── agent-passport.html     # Solana agent passport
+│   ├── login.html, register.html, forgot-password.html, reset-password.html
 │   └── animations/             # Animation clip library
 │
 ├── contracts/                  # Foundry + Solidity (ERC-8004)
@@ -682,7 +698,7 @@ For sandboxed iframes use the widget embed path instead — it runs in its own b
 │   ├── test/IdentityRegistry.test.sol
 │   └── DEPLOYMENTS.md          # Chain deployment addresses
 │
-├── docs/                       # Architecture, API, deployment guides
+├── docs/                       # Architecture, API, deployment guides (see internal/PAGES.md for full route audit)
 ├── specs/                      # Formal specs (manifest, embed, skill, memory...)
 ├── tests/                      # Vitest test suite (~30 files)
 ├── scripts/                    # Build tools (publish, icon gen, animations)
