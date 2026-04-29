@@ -1,32 +1,58 @@
 /**
  * Pump.fun card on the agent home panel
  * --------------------------------------
- * Two states:
+ * States:
+ *   - skeleton                          (loading)
+ *   - cta            (no token yet)     → one-click launch
+ *   - active         (token launched)   → live status + inline trade panel
+ *   - graduated      (curve complete)   → AMM badge
  *
- *   1. Agent has NOT launched a token  → "Launch coin" CTA
- *      Triggers pumpfun-self-launch-from-identity (server-signed).
+ * Trade UX:
+ *   - Inline trade panel (no window.prompt). Live-quotes via pumpfun-curve-quote
+ *     while the user types (debounced). Shows expected output and price impact.
+ *   - Skill toasts: every successful pumpfun-* result surfaces a transient
+ *     toast with the tx signature linking to the explorer.
  *
- *   2. Agent HAS launched a token      → Live status card
- *      Shows mint, market cap, % to graduation, buy/sell links.
- *      Refreshes every 30s by calling pumpfun-watch-curve.
+ * Mobile: action buttons wrap; trade panel collapses to a single column.
  *
- * Detection: we read the agent's memory for the `pumpfun:launch` tag
- * (written by agent-skills-pumpfun-hooks.js). If absent, we also try
- * /api/agents/:id (in case the launch happened from a different device
- * and was persisted to meta.pumpfun_mint).
+ * Mint click: opens the existing pumpfun-feed widget filtered to that mint
+ * inside the host page (when available) instead of leaving for pump.fun.
  */
 
-const REFRESH_MS = 30_000;
+import { ACTION_TYPES } from './agent-protocol.js';
 
-export function mountPumpFunCard({ panel, identity, skills, memory }) {
+const REFRESH_MS = 30_000;
+const QUOTE_DEBOUNCE_MS = 250;
+
+export function mountPumpFunCard({ panel, identity, skills, memory, protocol }) {
 	if (!panel || !identity?.id) return null;
+	protocol = protocol || (typeof window !== 'undefined' ? window.VIEWER?.agent_protocol : null);
 
 	const root = document.createElement('section');
 	root.className = 'agent-home-pumpfun';
 	panel.appendChild(root);
 
-	let state = { mint: null, symbol: null, network: 'mainnet', loading: true };
+	const toastTray = document.createElement('div');
+	toastTray.className = 'pumpfun-toasts';
+	root.appendChild(toastTray);
+
+	let state = {
+		mint: null,
+		symbol: null,
+		network: 'mainnet',
+		loading: true,
+		tradeOpen: null, // null | 'buy' | 'sell'
+		tradeAmount: '',
+		quote: null,
+		quoting: false,
+	};
 	let refreshTimer = null;
+	let quoteTimer = null;
+	let unsubProtocol = null;
+
+	const cardBody = document.createElement('div');
+	cardBody.className = 'pumpfun-card-body';
+	root.appendChild(cardBody);
 
 	const launchCard = () => `
 		<div class="pumpfun-card pumpfun-card--cta">
@@ -45,16 +71,17 @@ export function mountPumpFunCard({ panel, identity, skills, memory }) {
 	const statusCard = (s) => {
 		const pct = s.progressPct != null ? `${s.progressPct.toFixed(1)}%` : '—';
 		const cap = s.marketCap ? formatLamports(s.marketCap) : '—';
-		const explorer = s.network === 'devnet'
-			? `https://pump.fun/coin/${s.mint}?cluster=devnet`
-			: `https://pump.fun/coin/${s.mint}`;
+		const explorer =
+			s.network === 'devnet'
+				? `https://pump.fun/coin/${s.mint}?cluster=devnet`
+				: `https://pump.fun/coin/${s.mint}`;
 		const grad = s.graduated;
 		return `
 			<div class="pumpfun-card ${grad ? 'pumpfun-card--graduated' : ''}">
 				<div class="pumpfun-card-head">
 					<span class="pumpfun-card-icon">${grad ? '🎓' : '◎'}</span>
 					<span class="pumpfun-card-title">${escapeHtml(s.symbol || 'Token')}</span>
-					<a class="pumpfun-card-link" href="${explorer}" target="_blank" rel="noopener" title="View on pump.fun">↗</a>
+					<a class="pumpfun-card-link" href="${explorer}" target="_blank" rel="noopener" title="Open on pump.fun">↗</a>
 				</div>
 				<div class="pumpfun-stats">
 					<div class="pumpfun-stat">
@@ -66,12 +93,56 @@ export function mountPumpFunCard({ panel, identity, skills, memory }) {
 						<span class="pumpfun-stat-value">${grad ? 'Graduated' : pct}</span>
 					</div>
 				</div>
-				${grad ? '' : `<div class="pumpfun-progress"><div class="pumpfun-progress-bar" style="width:${Math.min(100, s.progressPct || 0)}%"></div></div>`}
-				<div class="pumpfun-card-mint" title="${escapeAttr(s.mint)}">${shortMint(s.mint)}</div>
+				${grad ? '' : `<div class="pumpfun-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${(s.progressPct || 0).toFixed(1)}"><div class="pumpfun-progress-bar" style="width:${Math.min(100, s.progressPct || 0)}%"></div></div>`}
+				<button class="pumpfun-card-mint" data-action="open-feed" title="Open live feed for this mint">${shortMint(s.mint)}</button>
 				<div class="pumpfun-card-actions">
-					<button class="pumpfun-btn" data-action="buy">Buy</button>
-					<button class="pumpfun-btn" data-action="sell">Sell</button>
+					<button class="pumpfun-btn ${s.tradeOpen === 'buy' ? 'pumpfun-btn--active' : ''}" data-action="toggle-buy">Buy</button>
+					<button class="pumpfun-btn ${s.tradeOpen === 'sell' ? 'pumpfun-btn--active' : ''}" data-action="toggle-sell">Sell</button>
 					<button class="pumpfun-btn pumpfun-btn--ghost" data-action="claim">Claim fees</button>
+				</div>
+				${s.tradeOpen ? tradePanel(s) : ''}
+			</div>
+		`;
+	};
+
+	const tradePanel = (s) => {
+		const isBuy = s.tradeOpen === 'buy';
+		const placeholder = isBuy ? '0.1' : '1000000';
+		const unit = isBuy ? 'SOL' : 'units';
+		const q = s.quote;
+		let preview = '';
+		if (s.quoting) {
+			preview = `<span class="pumpfun-quote-status">Quoting…</span>`;
+		} else if (q && q.success) {
+			const out = isBuy
+				? `≈ ${formatNumber(q.data?.tokensOut)} ${escapeHtml(s.symbol || 'tokens')}`
+				: `≈ ${formatLamports(q.data?.solOut)}`;
+			preview = `<span class="pumpfun-quote-out">${out}</span>`;
+		} else if (q && !q.success) {
+			preview = `<span class="pumpfun-quote-err">${escapeHtml(q.output || 'No quote')}</span>`;
+		}
+		return `
+			<div class="pumpfun-trade">
+				<label class="pumpfun-trade-label">
+					<span>${isBuy ? 'Spend' : 'Sell'}</span>
+					<input
+						class="pumpfun-trade-input"
+						id="pf-trade-amount"
+						type="text"
+						inputmode="decimal"
+						placeholder="${placeholder}"
+						value="${escapeAttr(s.tradeAmount)}"
+						autocomplete="off"
+						spellcheck="false"
+					>
+					<span class="pumpfun-trade-unit">${unit}</span>
+				</label>
+				<div class="pumpfun-quote">${preview}</div>
+				<div class="pumpfun-trade-actions">
+					<button class="pumpfun-btn pumpfun-btn--ghost" data-action="close-trade">Cancel</button>
+					<button class="pumpfun-btn pumpfun-btn--primary" data-action="confirm-trade" ${isExecutable(s) ? '' : 'disabled'}>
+						${isBuy ? 'Buy' : 'Sell'}${q?.success ? '' : ''}
+					</button>
 				</div>
 			</div>
 		`;
@@ -81,67 +152,231 @@ export function mountPumpFunCard({ panel, identity, skills, memory }) {
 
 	const render = () => {
 		if (state.loading) {
-			root.innerHTML = skeleton();
+			cardBody.innerHTML = skeleton();
 			return;
 		}
-		root.innerHTML = state.mint ? statusCard(state) : launchCard();
+		cardBody.innerHTML = state.mint ? statusCard(state) : launchCard();
 		bind();
+		// Restore focus to the input after re-render so typing stays uninterrupted.
+		if (state.tradeOpen) {
+			const el = cardBody.querySelector('#pf-trade-amount');
+			if (el) {
+				el.focus();
+				const len = el.value.length;
+				try { el.setSelectionRange(len, len); } catch {/*ignore*/}
+			}
+		}
 	};
 
 	const bind = () => {
-		const launchBtn = root.querySelector('#pf-launch-btn');
+		const launchBtn = cardBody.querySelector('#pf-launch-btn');
 		if (launchBtn) {
-			launchBtn.addEventListener('click', async () => {
-				launchBtn.disabled = true;
-				launchBtn.textContent = 'Launching…';
-				try {
-					const r = await skills?.perform(
-						'pumpfun-self-launch-from-identity',
-						{ network: state.network },
-						{ identity },
-					);
-					if (r?.success && r.data?.mint) {
-						state = { ...state, mint: r.data.mint, symbol: r.data.symbol, loading: true };
-						await refresh();
-					} else {
-						launchBtn.disabled = false;
-						launchBtn.textContent = `Retry launch ${deriveSymbol(identity.name)}`;
-					}
-				} catch {
-					launchBtn.disabled = false;
-					launchBtn.textContent = 'Launch failed — retry';
+			launchBtn.addEventListener('click', () => doLaunch(launchBtn));
+		}
+		cardBody.querySelectorAll('[data-action]').forEach((btn) => {
+			btn.addEventListener('click', (e) => handleAction(btn.dataset.action, e));
+		});
+		const input = cardBody.querySelector('#pf-trade-amount');
+		if (input) {
+			input.addEventListener('input', (e) => {
+				state.tradeAmount = e.target.value;
+				scheduleQuote();
+				const btn = cardBody.querySelector('[data-action="confirm-trade"]');
+				if (btn) btn.disabled = !isExecutable(state);
+			});
+			input.addEventListener('keydown', (e) => {
+				if (e.key === 'Enter' && isExecutable(state)) {
+					e.preventDefault();
+					executeTrade();
+				} else if (e.key === 'Escape') {
+					closeTrade();
 				}
 			});
 		}
-		root.querySelectorAll('[data-action]').forEach((btn) => {
-			btn.addEventListener('click', () => handleAction(btn.dataset.action));
-		});
 	};
 
-	const handleAction = async (action) => {
-		if (!state.mint || !skills) return;
-		if (action === 'claim') {
-			await skills.perform('pumpfun-claim-fees', { network: state.network }, { identity });
+	async function doLaunch(launchBtn) {
+		launchBtn.disabled = true;
+		launchBtn.textContent = 'Launching…';
+		try {
+			const r = await skills?.perform(
+				'pumpfun-launch-and-narrate',
+				{ network: state.network },
+				{ identity },
+			);
+			if (r?.success && r.data?.mint) {
+				toast(`Launched ${r.data.symbol || ''}`, r.data.signature, state.network, 'success');
+				state = { ...state, mint: r.data.mint, symbol: r.data.symbol, loading: true };
+				await refresh();
+			} else {
+				launchBtn.disabled = false;
+				launchBtn.textContent = `Retry launch ${deriveSymbol(identity.name)}`;
+				toast(r?.output || 'Launch failed', null, null, 'error');
+			}
+		} catch (err) {
+			launchBtn.disabled = false;
+			launchBtn.textContent = 'Launch failed — retry';
+			toast(err.message || 'Launch failed', null, null, 'error');
+		}
+	}
+
+	const handleAction = (action) => {
+		if (action === 'open-feed') return openFeed();
+		if (action === 'claim') return doClaim();
+		if (action === 'toggle-buy') return toggleTrade('buy');
+		if (action === 'toggle-sell') return toggleTrade('sell');
+		if (action === 'close-trade') return closeTrade();
+		if (action === 'confirm-trade') return executeTrade();
+	};
+
+	const toggleTrade = (side) => {
+		state.tradeOpen = state.tradeOpen === side ? null : side;
+		state.tradeAmount = '';
+		state.quote = null;
+		render();
+	};
+
+	const closeTrade = () => {
+		state.tradeOpen = null;
+		state.tradeAmount = '';
+		state.quote = null;
+		render();
+	};
+
+	const scheduleQuote = () => {
+		if (quoteTimer) clearTimeout(quoteTimer);
+		const amt = state.tradeAmount?.trim();
+		if (!amt || !isFinite(parseFloat(amt))) {
+			state.quote = null;
+			updateQuoteDOM();
 			return;
 		}
-		const amount = window.prompt(
-			action === 'buy' ? 'Buy how many SOL?' : 'Sell how many tokens (raw units)?',
-		);
-		if (!amount) return;
-		if (action === 'buy') {
-			await skills.perform(
-				'pumpfun-buy',
-				{ mint: state.mint, solAmount: Number(amount), network: state.network },
-				{ identity },
-			);
+		state.quoting = true;
+		updateQuoteDOM();
+		quoteTimer = setTimeout(async () => {
+			try {
+				const isBuy = state.tradeOpen === 'buy';
+				const r = await skills.perform(
+					'pumpfun-curve-quote',
+					{
+						mint: state.mint,
+						side: isBuy ? 'buy' : 'sell',
+						solAmount: isBuy ? parseFloat(amt) : undefined,
+						tokenAmount: isBuy ? undefined : amt.replace(/\D/g, ''),
+						network: state.network,
+					},
+					{ identity },
+				);
+				state.quote = r;
+				state.quoting = false;
+				updateQuoteDOM();
+			} catch {
+				state.quote = { success: false, output: 'Quote unavailable' };
+				state.quoting = false;
+				updateQuoteDOM();
+			}
+		}, QUOTE_DEBOUNCE_MS);
+	};
+
+	const updateQuoteDOM = () => {
+		const slot = cardBody.querySelector('.pumpfun-quote');
+		const btn = cardBody.querySelector('[data-action="confirm-trade"]');
+		if (!slot) return;
+		const q = state.quote;
+		if (state.quoting) {
+			slot.innerHTML = `<span class="pumpfun-quote-status">Quoting…</span>`;
+		} else if (q && q.success) {
+			const isBuy = state.tradeOpen === 'buy';
+			const out = isBuy
+				? `≈ ${formatNumber(q.data?.tokensOut)} ${escapeHtml(state.symbol || 'tokens')}`
+				: `≈ ${formatLamports(q.data?.solOut)}`;
+			slot.innerHTML = `<span class="pumpfun-quote-out">${out}</span>`;
+		} else if (q && !q.success) {
+			slot.innerHTML = `<span class="pumpfun-quote-err">${escapeHtml(q.output || 'No quote')}</span>`;
 		} else {
-			await skills.perform(
-				'pumpfun-sell',
-				{ mint: state.mint, tokenAmount: amount, network: state.network },
+			slot.innerHTML = '';
+		}
+		if (btn) btn.disabled = !isExecutable(state);
+	};
+
+	const executeTrade = async () => {
+		if (!isExecutable(state)) return;
+		const isBuy = state.tradeOpen === 'buy';
+		const btn = cardBody.querySelector('[data-action="confirm-trade"]');
+		if (btn) {
+			btn.disabled = true;
+			btn.textContent = 'Sending…';
+		}
+		try {
+			const r = await skills.perform(
+				isBuy ? 'pumpfun-buy-with-quote' : 'pumpfun-sell',
+				isBuy
+					? { mint: state.mint, solAmount: parseFloat(state.tradeAmount), network: state.network }
+					: {
+							mint: state.mint,
+							tokenAmount: state.tradeAmount.replace(/\D/g, ''),
+							network: state.network,
+					  },
 				{ identity },
 			);
+			if (r?.success) {
+				toast(
+					isBuy ? `Bought ${state.tradeAmount} SOL` : `Sold ${state.tradeAmount} units`,
+					r.data?.signature,
+					state.network,
+					'success',
+				);
+				closeTrade();
+				await refresh();
+			} else {
+				toast(r?.output || 'Trade failed', null, null, 'error');
+				if (btn) {
+					btn.disabled = false;
+					btn.textContent = isBuy ? 'Buy' : 'Sell';
+				}
+			}
+		} catch (err) {
+			toast(err.message || 'Trade failed', null, null, 'error');
+			if (btn) {
+				btn.disabled = false;
+				btn.textContent = isBuy ? 'Buy' : 'Sell';
+			}
 		}
-		await refresh();
+	};
+
+	const doClaim = async () => {
+		try {
+			const r = await skills.perform(
+				'pumpfun-claim-fees',
+				{ network: state.network },
+				{ identity },
+			);
+			toast(
+				r?.output || (r?.success ? 'Fees claimed' : 'Claim failed'),
+				r?.data?.signature,
+				state.network,
+				r?.success ? 'success' : 'error',
+			);
+		} catch (err) {
+			toast(err.message || 'Claim failed', null, null, 'error');
+		}
+	};
+
+	const openFeed = () => {
+		// If host has the pumpfun-feed widget mounted, expose mint via custom event.
+		// Otherwise fall back to opening pump.fun in a new tab.
+		const ev = new CustomEvent('pumpfun-feed:focus-mint', {
+			detail: { mint: state.mint, network: state.network },
+			bubbles: true,
+		});
+		const handled = !root.dispatchEvent(ev) || ev.defaultPrevented;
+		if (!handled) {
+			const url =
+				state.network === 'devnet'
+					? `https://pump.fun/coin/${state.mint}?cluster=devnet`
+					: `https://pump.fun/coin/${state.mint}`;
+			window.open(url, '_blank', 'noopener');
+		}
 	};
 
 	const refresh = async () => {
@@ -159,29 +394,82 @@ export function mountPumpFunCard({ panel, identity, skills, memory }) {
 					state = { ...state, ...r.data };
 					render();
 				}
-			} catch {
-				/* swallow */
-			}
+			} catch {/* swallow */}
 		}
 	};
 
+	// ── Toasts ───────────────────────────────────────────────────────────────
+	function toast(message, signature, network, level = 'info') {
+		const el = document.createElement('div');
+		el.className = `pumpfun-toast pumpfun-toast--${level}`;
+		const explorer = signature
+			? network === 'devnet'
+				? `https://explorer.solana.com/tx/${signature}?cluster=devnet`
+				: `https://solscan.io/tx/${signature}`
+			: null;
+		el.innerHTML = `
+			<span class="pumpfun-toast-msg">${escapeHtml(message)}</span>
+			${explorer ? `<a class="pumpfun-toast-link" href="${explorer}" target="_blank" rel="noopener">↗</a>` : ''}
+		`;
+		toastTray.appendChild(el);
+		// Trigger entry animation on next frame.
+		requestAnimationFrame(() => el.classList.add('is-in'));
+		setTimeout(() => {
+			el.classList.remove('is-in');
+			setTimeout(() => el.remove(), 240);
+		}, 5500);
+	}
+
+	// Subscribe to skill-done events globally so non-card-initiated trades
+	// (e.g. from the LLM tool loop or chat) also surface as toasts here.
+	if (protocol?.on) {
+		const handler = (ev) => {
+			const skill = ev.detail?.payload?.skill;
+			const result = ev.detail?.payload?.result;
+			if (!skill || !skill.startsWith('pumpfun-') || !result) return;
+			// Skip the ones that are reads or already toasted by direct caller.
+			if (skill === 'pumpfun-watch-curve' || skill === 'pumpfun-curve-quote' || skill === 'pumpfun-status')
+				return;
+			if (result.success && result.data?.signature) {
+				toast(result.output || 'Done', result.data.signature, result.data.network || state.network, 'success');
+			}
+		};
+		protocol.on(ACTION_TYPES.SKILL_DONE, handler);
+		unsubProtocol = () => protocol.off?.(ACTION_TYPES.SKILL_DONE, handler);
+	}
+
 	refresh();
-	refreshTimer = setInterval(() => state.mint && refresh(), REFRESH_MS);
+	refreshTimer = setInterval(() => state.mint && !state.tradeOpen && refresh(), REFRESH_MS);
 
 	return {
 		destroy() {
 			if (refreshTimer) clearInterval(refreshTimer);
+			if (quoteTimer) clearTimeout(quoteTimer);
+			if (unsubProtocol) unsubProtocol();
 			root.remove();
 		},
 		refresh,
 	};
 }
 
+// ── helpers ─────────────────────────────────────────────────────────────────
+
+function isExecutable(s) {
+	if (!s.tradeOpen || !s.tradeAmount) return false;
+	const n = parseFloat(s.tradeAmount);
+	if (!isFinite(n) || n <= 0) return false;
+	if (s.quoting) return false;
+	if (s.quote && s.quote.success === false) return false;
+	return true;
+}
+
 function resolveMintFrom(memory, identity) {
 	try {
 		if (memory?.recall) {
 			const hits = memory.recall('pumpfun:launch') || [];
-			const latest = hits.sort((a, b) => (b.context?.launchedAt || 0) - (a.context?.launchedAt || 0))[0];
+			const latest = hits.sort(
+				(a, b) => (b.context?.launchedAt || 0) - (a.context?.launchedAt || 0),
+			)[0];
 			if (latest?.context?.mint) {
 				return {
 					mint: latest.context.mint,
@@ -190,9 +478,7 @@ function resolveMintFrom(memory, identity) {
 				};
 			}
 		}
-	} catch {
-		/* ignore */
-	}
+	} catch {/* ignore */}
 	const meta = identity?.meta || {};
 	if (meta.pumpfun_mint) {
 		return {
@@ -220,9 +506,20 @@ function shortMint(m) {
 
 function formatLamports(lamports) {
 	const n = Number(lamports) / 1e9;
+	if (!isFinite(n)) return '—';
 	if (n >= 1000) return `${(n / 1000).toFixed(1)}K SOL`;
 	if (n >= 1) return `${n.toFixed(2)} SOL`;
 	return `${n.toFixed(4)} SOL`;
+}
+
+function formatNumber(s) {
+	if (s == null) return '—';
+	const n = Number(s);
+	if (!isFinite(n)) return String(s);
+	if (n >= 1e9) return `${(n / 1e9).toFixed(2)}B`;
+	if (n >= 1e6) return `${(n / 1e6).toFixed(2)}M`;
+	if (n >= 1e3) return `${(n / 1e3).toFixed(2)}K`;
+	return String(Math.round(n));
 }
 
 function escapeHtml(s) {

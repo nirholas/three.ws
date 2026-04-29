@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Agent badge</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<style>
+		* { box-sizing: border-box; }
+		html, body { margin: 0; padding: 0; background: transparent; }
+		body { font: 12px/1.35 system-ui, -apple-system, sans-serif; color: #111; }
+		body[data-theme="dark"] { color: #f5f5f5; }
+		.badge {
+			display: inline-flex; align-items: center; gap: .65rem;
+			padding: .55rem .75rem; border: 1px solid #e5e5e5; border-radius: 10px;
+			background: #fff; min-width: 240px; max-width: 320px;
+			text-decoration: none; color: inherit;
+		}
+		body[data-theme="dark"] .badge { background: #18181b; border-color: #2a2a2e; }
+		.grade { font-size: 1.6rem; font-weight: 700; line-height: 1; min-width: 1.4rem; text-align: center; }
+		.grade.A  { color: #1b5e20; } .grade.B  { color: #2e7d32; }
+		.grade.C  { color: #855008; } .grade.D  { color: #c62828; }
+		.grade.NA { color: #888; }
+		body[data-theme="dark"] .grade.A { color: #81c784; }
+		body[data-theme="dark"] .grade.B { color: #a5d6a7; }
+		body[data-theme="dark"] .grade.C { color: #ffd180; }
+		body[data-theme="dark"] .grade.D { color: #ef9a9a; }
+		.body { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+		.title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+		.meta { color: #666; font-size: 11px; }
+		body[data-theme="dark"] .meta { color: #a1a1aa; }
+		.chain { display: inline-block; padding: 0 .35rem; border-radius: 999px; font-size: 10px; line-height: 16px; height: 16px; vertical-align: 1px; }
+		.chain.devnet  { background: #fff3cd; color: #855008; }
+		.chain.mainnet { background: #e7f5e9; color: #1b5e20; }
+		.error { color: #c62828; padding: .4rem .55rem; font-size: 11px; }
+	</style>
+</head>
+<body>
+	<div id="root"><div class="badge"><div class="grade NA">…</div><div class="body"><div class="title">loading</div></div></div></div>
+
+	<script type="module">
+		const params = new URLSearchParams(location.search);
+		const asset   = (params.get('asset') || '').trim();
+		const network = params.get('network') === 'mainnet' ? 'mainnet' : 'devnet';
+		const theme   = params.get('theme') === 'dark' ? 'dark' : 'light';
+		const link    = params.get('link') !== '0';
+		document.body.dataset.theme = theme;
+
+		const PUBKEY_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+		const $root = document.getElementById('root');
+
+		function fmt(n) { return (typeof n === 'number' && n > 0) ? n.toFixed(2) : '—'; }
+
+		function computeTrust(rep) {
+			const f = rep?.feedback || {};
+			const v = rep?.validation || {};
+			const tiers = [
+				{ score: f.score_avg_weighted_credentialed, n: f.unique_credentialed_attesters, tier: 'credentialed' },
+				{ score: f.score_avg_weighted_verified,      n: f.unique_verified_attesters,    tier: 'verified' },
+				{ score: f.score_avg_event_attested,         n: f.event_attested,                tier: 'event' },
+				{ score: f.score_avg_weighted,               n: f.unique_attesters,              tier: 'community' },
+			];
+			const best = tiers.find((t) => t.score > 0 && (t.n || 0) > 0);
+			if (!best) return { grade: '—', cls: 'NA', tier: '—', score: 0, n: 0 };
+			const passed = v.audited_passed || v.self_passed || 0;
+			const failed = v.audited_failed || v.self_failed || 0;
+			const passRate = (passed + failed) ? passed / (passed + failed) : 1;
+			const adjust = best.score - (f.disputed > 0 ? 0.5 : 0) - (passRate < 0.5 ? 1 : 0);
+			const grade = adjust >= 4.5 ? 'A' : adjust >= 3.8 ? 'B' : adjust >= 3.0 ? 'C' : 'D';
+			return { grade, cls: grade, tier: best.tier, score: best.score, n: best.n };
+		}
+
+		function escapeHtml(s) {
+			return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
+		}
+
+		function render(card, rep) {
+			const t = computeTrust(rep);
+			const name = card?.name || '(agent)';
+			const passportUrl = `/agent-passport.html?asset=${encodeURIComponent(asset)}&network=${network}`;
+			const inner = `
+				<div class="grade ${t.cls}">${t.grade}</div>
+				<div class="body">
+					<div class="title">${escapeHtml(name)}</div>
+					<div class="meta">
+						<span class="chain ${network}">${network}</span>
+						${t.grade !== '—' ? `· ${t.tier} ${fmt(t.score)} · ${t.n} attester${t.n === 1 ? '' : 's'}` : '· no attestations'}
+					</div>
+				</div>`;
+			$root.innerHTML = link
+				? `<a class="badge" href="${passportUrl}" target="_blank" rel="noopener">${inner}</a>`
+				: `<div class="badge">${inner}</div>`;
+		}
+
+		async function load() {
+			if (!PUBKEY_RE.test(asset)) {
+				$root.innerHTML = `<div class="error">invalid asset</div>`;
+				return;
+			}
+			try {
+				const [card, rep] = await Promise.all([
+					fetch(`/api/agents/solana-card?asset=${asset}`).then((r) => r.ok ? r.json() : null).catch(() => null),
+					fetch(`/api/agents/solana-reputation?asset=${asset}&network=${network}`).then((r) => r.json()),
+				]);
+				render(card, rep);
+			} catch (e) {
+				$root.innerHTML = `<div class="error">${escapeHtml(e.message || 'load failed')}</div>`;
+			}
+		}
+		load();
+	</script>
+</body>
+</html>

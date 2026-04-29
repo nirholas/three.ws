@@ -293,6 +293,44 @@ describe('POST /api/pump/withdraw-prep', () => {
 	});
 });
 
+describe('GET /api/pump/by-agent', () => {
+	beforeEach(resetAll);
+
+	it('returns null when no mint exists', async () => {
+		sqlState.queue = [[]];
+		const { default: handler } = await import('../../api/pump/by-agent.js');
+		const { res, json } = await invoke(handler, {
+			method: 'GET',
+			url: '/api/pump/by-agent?agent_id=00000000-0000-0000-0000-000000000001',
+		});
+		expect(res.statusCode).toBe(200);
+		expect(json.data).toBe(null);
+	});
+
+	it('returns mint with stats and burns', async () => {
+		sqlState.queue = [
+			[{ id: 'mint-1', mint: mintB58, network: 'mainnet', name: 'Foo', symbol: 'FOO', buyback_bps: 500, agent_authority: walletB58 }],
+			[{ confirmed_payments: 3, unique_payers: 2, total_atomics: '1500000', last_payment_at: '2026-04-29T10:00:00Z' }],
+			[{ runs: 1, total_burned: '50000', last_burn_at: '2026-04-29T11:00:00Z' }],
+		];
+		const { default: handler } = await import('../../api/pump/by-agent.js');
+		const { res, json } = await invoke(handler, {
+			method: 'GET',
+			url: '/api/pump/by-agent?agent_id=00000000-0000-0000-0000-000000000001',
+		});
+		expect(res.statusCode).toBe(200);
+		expect(json.data.mint).toBe(mintB58);
+		expect(json.data.stats.confirmed_payments).toBe(3);
+		expect(json.data.burns.total_burned).toBe('50000');
+	});
+
+	it('400s without agent_id', async () => {
+		const { default: handler } = await import('../../api/pump/by-agent.js');
+		const { res } = await invoke(handler, { method: 'GET', url: '/api/pump/by-agent' });
+		expect(res.statusCode).toBe(400);
+	});
+});
+
 describe('GET /.well-known/x402', () => {
 	beforeEach(resetAll);
 
