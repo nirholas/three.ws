@@ -58,8 +58,26 @@
 			}
 			main {
 				padding: 28px;
-				max-width: 980px;
+				max-width: 1280px;
 				margin: 0 auto;
+			}
+			.layout {
+				display: grid;
+				grid-template-columns: 360px 1fr;
+				gap: 18px;
+				align-items: start;
+			}
+			.layout > .col-side {
+				position: sticky;
+				top: 110px;
+			}
+			@media (max-width: 900px) {
+				.layout {
+					grid-template-columns: 1fr;
+				}
+				.layout > .col-side {
+					position: static;
+				}
 			}
 			h1 {
 				font-size: 22px;
@@ -148,6 +166,45 @@
 				background: #3a1d22;
 				color: var(--err);
 				border: 1px solid #4a2329;
+			}
+			.btn.buy {
+				background: #16a34a;
+				color: #fff;
+			}
+			.btn.sell {
+				background: #3a1d22;
+				color: #fca5a5;
+				border: 1px solid #6b2530;
+			}
+			.btn.sell:hover {
+				background: #4a2329;
+			}
+			.subnav {
+				display: flex;
+				gap: 4px;
+				flex-wrap: wrap;
+				padding: 8px 24px;
+				border-bottom: 1px solid var(--border);
+				background: var(--bg);
+				position: sticky;
+				top: 57px;
+				z-index: 4;
+			}
+			.subnav a {
+				font-size: 13px;
+				padding: 6px 11px;
+				border-radius: 7px;
+				color: #bbb;
+			}
+			.subnav a:hover {
+				background: var(--panel);
+				text-decoration: none;
+				color: #eee;
+			}
+			.subnav a.active {
+				background: var(--panel);
+				color: #fff;
+				border: 1px solid var(--border);
 			}
 			.kv {
 				display: grid;
@@ -244,7 +301,55 @@
 			.tag.devnet {
 				color: var(--warn);
 				border-color: #4a3a18;
+				background: #2a200a;
 			}
+			.tag.mainnet {
+				color: var(--ok);
+				border-color: #1f4232;
+				background: #0e1f17;
+			}
+			.net-badge {
+				font-size: 11px;
+				padding: 2px 8px;
+				border-radius: 999px;
+				margin-left: 8px;
+				vertical-align: middle;
+				letter-spacing: 0.04em;
+				text-transform: uppercase;
+			}
+			.skeleton {
+				display: inline-block;
+				min-width: 80px;
+				height: 12px;
+				border-radius: 4px;
+				background: linear-gradient(90deg, #1a1a24 0%, #24242e 50%, #1a1a24 100%);
+				background-size: 200% 100%;
+				animation: shimmer 1.2s linear infinite;
+				vertical-align: middle;
+			}
+			@keyframes shimmer {
+				0% { background-position: 200% 0; }
+				100% { background-position: -200% 0; }
+			}
+			.empty-cta {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: 6px;
+				padding: 24px 12px;
+				color: var(--muted);
+				font-size: 13px;
+			}
+			.empty-cta b { color: #ddd; font-weight: 600; }
+			details.debug summary {
+				cursor: pointer;
+				color: var(--muted);
+				font-size: 12px;
+				text-transform: uppercase;
+				letter-spacing: 0.04em;
+				user-select: none;
+			}
+			details.debug[open] summary { margin-bottom: 10px; }
 			#signals-grid .signal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
 			#signals-grid .card { background: var(--panel2); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; }
 			#signals-grid .card.bad { background: #1f1418; border-color: #4a1f23; }
@@ -265,14 +370,25 @@
 			</div>
 		</header>
 
+		<nav class="subnav" aria-label="Agent wallet tools">
+			<a href="/dashboard/agent-pumpfun" class="active" aria-current="page">Pump.fun</a>
+			<a href="/dashboard/wallets">Wallets</a>
+			<a href="/vanity-wallet">Vanity ✦</a>
+			<a href="/strategy-lab">Strategy lab</a>
+			<a href="/reputation">Reputation</a>
+			<a href="/pumpfun" target="_blank" rel="noopener">Live feed ↗</a>
+		</nav>
+
 		<main>
-			<h1>Agent control panel</h1>
+			<h1>Agent control panel<span class="tag net-badge mainnet" id="net-badge">mainnet</span></h1>
 			<p class="sub">
 				Each agent has its own Solana wallet. Launch tokens, trade on the bonding curve, and
 				watch positions — the agent signs every transaction from its server-held keypair
 				(subject to its spend policy).
 			</p>
 
+			<div class="layout">
+			<div class="col-side">
 			<section class="panel" id="agent-panel">
 				<h2>Agent</h2>
 				<div class="row">
@@ -372,7 +488,9 @@
 					</div>
 				</div>
 			</section>
+			</div>
 
+			<div class="col-main">
 			<section class="panel">
 				<h2>Launch a pump.fun token</h2>
 				<div class="row">
@@ -444,14 +562,14 @@
 						<input id="buy-sol" type="number" min="0" step="0.001" placeholder="0.05" />
 					</div>
 					<div style="flex: 0 0 auto; padding-top: 19px">
-						<button class="btn" id="buy-btn">Buy</button>
+						<button class="btn buy" id="buy-btn">Buy</button>
 					</div>
 					<div class="field">
 						<label for="sell-tokens">Sell tokens (base units)</label>
 						<input id="sell-tokens" placeholder="1000000000" />
 					</div>
 					<div style="flex: 0 0 auto; padding-top: 19px">
-						<button class="btn ghost" id="sell-btn">Sell</button>
+						<button class="btn sell" id="sell-btn">Sell</button>
 					</div>
 				</div>
 			</section>
@@ -532,6 +650,8 @@
 				<h2>Last response</h2>
 				<pre id="log">—</pre>
 			</section>
+			</div>
+			</div>
 		</main>
 
 		<div class="toast" id="toast"></div>
