@@ -23,6 +23,18 @@ The `<agent-3d>` custom element is the recommended approach for any page where y
 
 ### Basic setup
 
+Install from npm:
+
+```bash
+npm install three.ws
+```
+
+```js
+import 'three.ws';
+```
+
+Or load via CDN:
+
 ```html
 <!-- 1. Load the library (pinned version + SRI) -->
 <script
@@ -31,6 +43,9 @@ The `<agent-3d>` custom element is the recommended approach for any page where y
   integrity="sha384-…"
   crossorigin="anonymous"
 ></script>
+
+<!-- or via unpkg -->
+<script type="module" src="https://unpkg.com/three.ws"></script>
 
 <!-- 2. Place the element -->
 <agent-3d

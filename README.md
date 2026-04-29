@@ -319,7 +319,31 @@ The backend is stateless serverless functions. All persistent state lives in Pos
 
 ## Getting Started
 
-### Prerequisites
+### Use the embeddable web component (no setup)
+
+Install from npm:
+
+```bash
+npm install three.ws
+```
+
+```js
+import 'three.ws';
+// <agent-3d src="/path/to/avatar.glb"></agent-3d>
+```
+
+Or load via CDN:
+
+```html
+<script type="module" src="https://unpkg.com/three.ws"></script>
+<agent-3d src="/path/to/avatar.glb"></agent-3d>
+```
+
+Package: https://www.npmjs.com/package/three.ws
+
+### Run the full platform locally
+
+#### Prerequisites
 
 - Node.js 20+
 - npm 10+
@@ -327,7 +351,7 @@ The backend is stateless serverless functions. All persistent state lives in Pos
 - A Cloudflare R2 bucket (or any S3-compatible store)
 - An Anthropic API key (for the LLM backend)
 
-### Installation
+#### Installation
 
 ```bash
 git clone https://github.com/nirholas/3D-Agent.git
