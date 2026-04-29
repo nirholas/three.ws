@@ -1,0 +1,16 @@
+github.com/byte-sat/eplus-tools v0.0.0-20250311185834-4f80523b4a1d h1:sZM+gosp/548xtzscipEKgYsIZwvuSDsd0KjfOuB3vY=
+github.com/byte-sat/eplus-tools v0.0.0-20250311185834-4f80523b4a1d/go.mod h1:71P8FzmPd/+CptOBnZuHGoFdTH48RFENxRDgAoahD7M=
+github.com/byte-sat/eplus-tools v0.1.0 h1:MpFxy+dHo2hsiYR4TWsogSnmicLWJU8pM0qu5gOZ/Fg=
+github.com/byte-sat/eplus-tools v0.1.0/go.mod h1:71P8FzmPd/+CptOBnZuHGoFdTH48RFENxRDgAoahD7M=
+github.com/go-chi/chi/v5 v5.2.1 h1:KOIHODQj58PmL80G2Eak4WdvUzjSJSm0vG72crDCqb8=
+github.com/go-chi/chi/v5 v5.2.1/go.mod h1:L2yAIGWB3H+phAw1NxKwWM+7eUH/lU8pOMm5hHcoops=
+github.com/go-chi/cors v1.2.1 h1:xEC8UT3Rlp2QuWNEr4Fs/c2EAGVKBwy/1vHx3bppil4=
+github.com/go-chi/cors v1.2.1/go.mod h1:sSbTewc+6wYHBBCW7ytsFSn836hqM7JxpglAy2Vzc58=
+github.com/noonien/codoc v0.1.0 h1:inVQA4/YpnZxhrVuVQcy9TMxSdGCwu7vL5bFLB/KRJs=
+github.com/noonien/codoc v0.1.0/go.mod h1:wbGX1qrUzQ6sy9rN05dwaD69TwRhP7RH1GOEog2J7Ww=
+golang.org/x/sys v0.31.0 h1:ioabZlmFYtWhL+TRYpcnNlLwhyxaM9kWTDEmfnprqik=
+golang.org/x/sys v0.31.0/go.mod h1:BJP2sWEmIv4KK5OTEluFJCKSidICx8ciO85XgH3Ak8k=
+golang.org/x/term v0.30.0 h1:PQ39fJZ+mfadBm0y5WlL4vlM7Sx1Hgf13sMIY2+QS9Y=
+golang.org/x/term v0.30.0/go.mod h1:NYYFdzHoI5wRh/h5tDMdMqCqPJZEuNqVR5xJLd/n67g=
+mvdan.cc/sh/v3 v3.11.0 h1:q5h+XMDRfUGUedCqFFsjoFjrhwf2Mvtt1rkMvVz0blw=
+mvdan.cc/sh/v3 v3.11.0/go.mod h1:LRM+1NjoYCzuq/WZ6y44x14YNAI0NK7FLPeQSaFagGg=
