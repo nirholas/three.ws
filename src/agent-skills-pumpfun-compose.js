@@ -218,49 +218,60 @@ export function registerPumpFunComposeSkills(skills) {
 				durationSec: { type: 'integer', minimum: 10, maximum: 3600 },
 				perTradeSol: { type: 'number' },
 				sessionId: { type: 'string' },
-				simulate: { type: 'boolean' },
+				dryRun: { type: 'boolean' },
 			},
 			required: ['durationSec'],
 		},
 		handler: async (args, ctx) => {
-			const simulate = !!args.simulate;
+			const dryRun = !!args.dryRun;
+			const onProgress = args.onProgress;
+			const signal = args.signal;
 			const sessionId = args.sessionId;
 			const deadline = Date.now() + args.durationSec * 1000;
 			const perTrade = args.perTradeSol ?? cfg(ctx, 'perTradeSol');
 			const cap = cfg(ctx, 'sessionSpendCapSol');
 			const state = await loadState(ctx?.memory, sessionId, { seen: new Set(), spent: 0, log: [] });
+			emit(onProgress, { type: 'start', mode: 'auto-snipe', spent: state.spent, cap });
 
-			while (!args.signal?.aborted && Date.now() < deadline && state.spent + perTrade <= cap) {
+			while (!signal?.aborted && Date.now() < deadline && state.spent + perTrade <= cap) {
 				const fresh = await mcp('getNewTokens', { limit: 20 }).catch(() => null);
 				const items = fresh?.tokens ?? fresh ?? [];
 				for (const t of items) {
+					if (signal?.aborted) break;
 					const mint = t.mint ?? t.address;
 					if (!mint || state.seen.has(mint)) continue;
 					state.seen.add(mint);
+					emit(onProgress, { type: 'vet', mint });
 					const v = await vetMint(mint).catch((e) => ({ verdict: { ok: false, reason: e.message } }));
 					const verdict = v.verdict || passesFilters(ctx, v);
 					if (!verdict.ok) {
 						state.log.push({ mint, action: 'skip', reason: verdict.reason });
+						emit(onProgress, { type: 'skip', mint, reason: verdict.reason, spent: state.spent });
 						continue;
 					}
 					try {
-						const buy = await maybeBuy(skills, ctx, simulate, mint, perTrade);
+						const buy = await doBuy(skills, ctx, dryRun, mint, perTrade);
 						state.spent += perTrade;
-						state.log.push({ mint, action: simulate ? 'simulate-buy' : 'buy', sig: buy.signature, spent: state.spent });
+						state.log.push({ mint, action: dryRun ? 'dry-buy' : 'buy', sig: buy.signature, spent: state.spent });
 						saveState(ctx?.memory, sessionId, state);
+						emit(onProgress, { type: dryRun ? 'dry-buy' : 'buy', mint, sig: buy.signature, spent: state.spent });
 						if (state.spent + perTrade > cap) break;
 					} catch (e) {
 						state.log.push({ mint, action: 'error', reason: e.message });
+						emit(onProgress, { type: 'error', mint, reason: e.message });
 					}
 				}
 				saveState(ctx?.memory, sessionId, state);
-				await new Promise((r) => setTimeout(r, cfg(ctx, 'pollMs')));
+				if (signal?.aborted || Date.now() >= deadline || state.spent + perTrade > cap) break;
+				emit(onProgress, { type: 'poll-sleep', ms: cfg(ctx, 'pollMs') });
+				await abortableSleep(cfg(ctx, 'pollMs'), signal);
 			}
+			const reason = signal?.aborted ? 'aborted' : Date.now() >= deadline ? 'duration' : 'cap';
 			return {
 				success: true,
-				output: `${simulate ? 'Dry-run' : 'Snipe'} done. Spent ${state.spent} SOL across ${state.log.length} events.`,
+				output: `${dryRun ? 'Dry-run' : 'Snipe'} done (${reason}). Spent ${state.spent} SOL across ${state.log.length} events.`,
 				sentiment: 0.4,
-				data: { spent: state.spent, trades: state.log, simulate, sessionId },
+				data: { spent: state.spent, trades: state.log, dryRun, sessionId, reason },
 			};
 		},
 	});

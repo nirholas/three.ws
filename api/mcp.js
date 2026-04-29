@@ -30,6 +30,15 @@ import { crawlAgentAttestations, KIND_MAP } from './_lib/solana-attestations.js'
 import { pumpfunMcp, pumpfunBotEnabled } from './_lib/pumpfun-mcp.js';
 import { inspectModel, suggestOptimizations } from './_lib/model-inspect.js';
 import { validateBytes } from 'gltf-validator';
+import {
+	X402Error,
+	paymentRequirements,
+	verifyPayment,
+	settlePayment,
+	encodePaymentResponseHeader,
+	send402,
+	resolveResourceUrl,
+} from './_lib/x402-spec.js';
 
 const PROTOCOL_VERSION = '2025-06-18';
 const SERVER_INFO = { name: '3d-agent-mcp', version: '1.0.0' };
@@ -701,7 +710,63 @@ const TOOLS = {
 			};
 		},
 	},
+
+	pumpfun_recent_claims: {
+		async handler(args) {
+			return pumpfunToolResult(
+				await pumpfunMcp.recentClaims({ limit: clamp(args?.limit, 1, 50, 10) }),
+			);
+		},
+	},
+
+	pumpfun_token_intel: {
+		async handler(args) {
+			if (!args?.mint) throw Object.assign(new Error('mint required'), { status: 400 });
+			return pumpfunToolResult(await pumpfunMcp.tokenIntel({ mint: args.mint }));
+		},
+	},
+
+	pumpfun_creator_intel: {
+		async handler(args) {
+			if (!args?.wallet) throw Object.assign(new Error('wallet required'), { status: 400 });
+			return pumpfunToolResult(await pumpfunMcp.creatorIntel({ wallet: args.wallet }));
+		},
+	},
+
+	pumpfun_recent_graduations: {
+		async handler(args) {
+			return pumpfunToolResult(
+				await pumpfunMcp.graduations({ limit: clamp(args?.limit, 1, 50, 10) }),
+			);
+		},
+	},
 };
+
+function pumpfunToolResult(r) {
+	if (!pumpfunBotEnabled()) {
+		return {
+			content: [{ type: 'text', text: 'pump.fun feed is not configured on this server.' }],
+			isError: true,
+		};
+	}
+	if (!r.ok) {
+		return {
+			content: [{ type: 'text', text: `pump.fun upstream error: ${r.error}` }],
+			isError: true,
+		};
+	}
+	const payload = Array.isArray(r.data) ? { items: r.data } : r.data;
+	return {
+		content: [{ type: 'text', text: JSON.stringify(payload, null, 2) }],
+		structuredContent: payload,
+	};
+}
+
+function clamp(n, lo, hi, fallback) {
+	const x = Number(n);
+	if (!Number.isFinite(x)) return fallback;
+	return Math.max(lo, Math.min(hi, x));
+}
 
 // ─── Solana attestation tool helpers ────────────────────────────────────────
 

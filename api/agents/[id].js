@@ -2,6 +2,8 @@
  * /api/agents/:id                 — agent CRUD
  * /api/agents/:id/wallet          — link / update EVM wallet
  * /api/agents/:id/solana          — agent's Solana wallet (address + balance, provision)
+ * /api/agents/:id/solana/activity — recent on-chain signatures for the wallet
+ * /api/agents/:id/solana/airdrop  — devnet airdrop (1 SOL)
  * /api/agents/:id/sns             — list owned .sol domains and attach one as the agent's SNS id
  * /api/agents/:id/pumpfun/launch  — create a pump.fun token from this agent
  * /api/agents/:id/pumpfun/buy     — bonding-curve buy
@@ -28,6 +30,14 @@ export default wrap(async function handler(req, res) {
 	if (sub === 'wallet') return handleWallet(req, res, id);
 
 	if (sub === 'solana') {
+		if (action === 'activity') {
+			const mod = await import('./solana-activity.js');
+			return mod.default(req, res, id);
+		}
+		if (action === 'airdrop') {
+			const mod = await import('./solana-airdrop.js');
+			return mod.default(req, res, id);
+		}
 		const mod = await import('./solana-wallet.js');
 		return mod.default(req, res, id);
 	}
