@@ -1,0 +1,1513 @@
+// <agent-3d> — the web component that ships the whole framework in one tag.
+// See specs/EMBED_SPEC.md
+
+import { Viewer } from './viewer.js';
+import { Runtime } from './runtime/index.js';
+import { SceneController } from './runtime/scene.js';
+import { SkillRegistry } from './skills/index.js';
+import { Memory } from './memory/index.js';
+import { loadManifest, fetchRelative } from './manifest.js';
+import { resolveURI } from './ipfs.js';
+import { resolveAgentById, resolveByAgentId, AgentResolveError } from './agent-resolver.js';
+import { parseAgentRef, resolveOnchainAgent, toManifest } from './erc8004/resolver.js';
+// BEGIN:EMBED_BRIDGES_IMPORT
+import { EmbedActionBridge } from './embed-action-bridge.js';
+import { protocol, ACTION_TYPES } from './agent-protocol.js';
+// END:EMBED_BRIDGES_IMPORT
+
+const MODES = ['inline', 'floating', 'section', 'fullscreen'];
+
+// Derive the origin of the script itself so cross-origin embeds hit the right API.
+const _scriptOrigin = (() => {
+	try {
+		return new URL(import.meta.url).origin;
+	} catch {
+		return '';
+	}
+})();
+
+function originAllowed(originUrl, policy, firstParty = []) {
+	if (!originUrl) return false;
+	let host;
+	try {
+		host = new URL(originUrl).hostname.toLowerCase();
+	} catch {
+		return false;
+	}
+	if (firstParty.some((fp) => host === fp || host.endsWith('.' + fp))) return true;
+	const hosts = policy?.origins?.hosts ?? [];
+	const mode = policy?.origins?.mode ?? 'allowlist';
+	const matches = hosts.some((h) => {
+		const lower = h.toLowerCase();
+		if (lower.startsWith('*.')) return host.endsWith(lower.slice(1)) && host !== lower.slice(2);
+		return host === lower;
+	});
+	return mode === 'allowlist' ? matches : !matches;
+}
+
+const BASE_STYLE = `
+	:host {
+		display: block;
+		position: relative;
+		width: 100%;
+		height: 480px;
+		--agent-bubble-radius: 16px;
+		--agent-accent: #3b82f6;
+		--agent-surface: rgba(17, 24, 39, 0.92);
+		--agent-on-surface: #f9fafb;
+		--agent-chat-font: system-ui, -apple-system, sans-serif;
+		--agent-mic-glow: #22c55e;
+		--agent-shadow: 0 20px 60px rgba(0,0,0,0.3);
+		contain: layout style;
+	}
+	:host([mode="floating"]) {
+		position: fixed;
+		z-index: 2147483000;
+		width: var(--agent-width, 320px);
+		height: var(--agent-height, 420px);
+		border-radius: var(--agent-bubble-radius);
+		overflow: hidden;
+		box-shadow: var(--agent-shadow);
+		transition:
+			width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+			height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+			border-radius 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	}
+	@media (prefers-reduced-motion: reduce) {
+		:host([mode="floating"]) { transition: none; }
+	}
+	/* Inline responsive: height follows width at a 3:4 portrait ratio */
+	:host([mode="inline"][data-responsive]) {
+		height: auto;
+		aspect-ratio: var(--agent-aspect, 3/4);
+	}
+	:host([mode="fullscreen"]) {
+		position: fixed;
+		inset: 0;
+		width: 100vw;
+		height: 100vh;
+		z-index: 2147483000;
+	}
+	:host([hidden]) { display: none; }
+	.stage {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+	}
+	.stage canvas { display: block; }
+	/* Pill tap target — shown when collapsed to pill on narrow viewports */
+	.pill-btn {
+		display: none;
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		background: none;
+		border: 0;
+		cursor: pointer;
+		border-radius: inherit;
+		z-index: 10;
+	}
+	/* Swipe-down handle visible when bottom-sheet is expanded */
+	.pill-drag {
+		display: none;
+		position: absolute;
+		top: 8px;
+		left: 50%;
+		transform: translateX(-50%);
+		width: 36px;
+		height: 4px;
+		border-radius: 2px;
+		background: rgba(255,255,255,0.25);
+		pointer-events: none;
+		z-index: 20;
+	}
+	.chrome {
+		position: absolute;
+		left: 12px;
+		right: 12px;
+		bottom: 12px;
+		display: flex;
+		gap: 8px;
+		align-items: flex-end;
+		pointer-events: none;
+	}
+	.chrome > * { pointer-events: auto; }
+	.chat {
+		flex: 1;
+		max-height: 40%;
+		overflow-y: auto;
+		background: var(--agent-surface);
+		color: var(--agent-on-surface);
+		font: 14px/1.4 var(--agent-chat-font);
+		border-radius: 12px;
+		padding: 10px 12px;
+		backdrop-filter: blur(12px);
+	}
+	.chat:empty { display: none; }
+	.msg { margin: 6px 0; padding: 8px 10px; border-radius: 10px; border-left: 3px solid transparent; transition: border-color .2s; }
+	.msg.celebration { border-left-color: rgba(34,197,94,0.85); background: rgba(34,197,94,0.06); }
+	.msg.concern { border-left-color: rgba(239,68,68,0.85); background: rgba(239,68,68,0.06); }
+	.msg.curiosity { border-left-color: rgba(59,130,246,0.7); background: rgba(59,130,246,0.05); }
+	.msg .role { opacity: 0.55; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+	.msg .body { white-space: pre-wrap; }
+	/* Suggestion chips when the conversation is empty */
+	.suggest-row { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 0 0; }
+	.suggest-chip { font: 600 11px/1 var(--agent-chat-font); color: var(--agent-on-surface); background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); padding: 6px 10px; border-radius: 999px; cursor: pointer; transition: all .12s; }
+	.suggest-chip:hover { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.18); }
+	/* Tool-call indicator near the bottom of the canvas */
+	.tool-indicator { position: absolute; left: 50%; bottom: 96px; transform: translateX(-50%); display: none; align-items: center; gap: 8px; padding: 6px 12px; background: var(--agent-surface); color: var(--agent-on-surface); border-radius: 999px; font: 12px var(--agent-chat-font); backdrop-filter: blur(12px); pointer-events: none; opacity: 0; transition: opacity .15s; z-index: 3; }
+	.tool-indicator[data-active="true"] { display: inline-flex; opacity: 1; }
+	.tool-indicator .spin { width: 10px; height: 10px; border-radius: 50%; border: 2px solid rgba(255,255,255,.25); border-top-color: var(--agent-accent); animation: spin .9s linear infinite; }
+	@keyframes spin { to { transform: rotate(360deg); } }
+	/* Sticky alert banner (e.g. rug flag) */
+	.alert-banner { position: absolute; top: 12px; left: 12px; right: 12px; padding: 8px 12px; border-radius: 10px; font: 600 12px/1.4 var(--agent-chat-font); display: none; align-items: center; gap: 8px; backdrop-filter: blur(12px); z-index: 3; }
+	.alert-banner[data-active="true"] { display: flex; }
+	.alert-banner.warn { background: rgba(234,179,8,.15); color: #fde68a; border: 1px solid rgba(234,179,8,.4); }
+	.alert-banner.danger { background: rgba(239,68,68,.18); color: #fecaca; border: 1px solid rgba(239,68,68,.4); }
+	.alert-banner button { background: none; border: 0; color: inherit; font: 600 14px var(--agent-chat-font); cursor: pointer; padding: 0 4px; opacity: .7; }
+	.alert-banner button:hover { opacity: 1; }
+	/* Rich token card unfurl rendered inline in chat */
+	.token-card { margin: 6px 0; padding: 10px 12px; background: rgba(0,0,0,.25); border: 1px solid rgba(255,255,255,.08); border-radius: 10px; font: 12px var(--agent-chat-font); color: var(--agent-on-surface); }
+	.token-card.solana { border-left: 3px solid #c084fc; }
+	.token-card-header { display: flex; align-items: center; gap: 8px; }
+	.token-card-symbol { font: 700 14px var(--agent-chat-font); }
+	.token-card-name { opacity: .7; }
+	.token-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; margin-top: 8px; }
+	.token-card-stat { display: flex; flex-direction: column; gap: 2px; }
+	.token-card-stat .label { font: 600 9px/1 var(--agent-chat-font); letter-spacing: .06em; text-transform: uppercase; opacity: .5; }
+	.token-card-stat .value { font: 600 13px var(--agent-chat-font); font-variant-numeric: tabular-nums; }
+	.token-card-bar { margin-top: 8px; height: 6px; background: rgba(255,255,255,.08); border-radius: 999px; overflow: hidden; }
+	.token-card-bar .fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #c084fc); transition: width .4s; }
+	.token-card-bar .fill.danger { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+	.token-card .flags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+	.token-card .flag { font: 600 9px/1 var(--agent-chat-font); letter-spacing: .04em; text-transform: uppercase; padding: 3px 6px; border-radius: 4px; background: rgba(239,68,68,.18); color: #fecaca; border: 1px solid rgba(239,68,68,.32); }
+	.input-row {
+		display: flex;
+		gap: 6px;
+		background: var(--agent-surface);
+		border-radius: 999px;
+		padding: 4px 4px 4px 14px;
+		backdrop-filter: blur(12px);
+		flex: 1;
+	}
+	.input-row input {
+		flex: 1;
+		background: transparent;
+		border: 0;
+		color: var(--agent-on-surface);
+		font: 14px var(--agent-chat-font);
+		outline: none;
+	}
+	button.icon {
+		width: 36px;
+		height: 36px;
+		border-radius: 50%;
+		border: 0;
+		background: var(--agent-accent);
+		color: white;
+		cursor: pointer;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
+	button.icon.mic[data-listening="true"] { box-shadow: 0 0 0 4px var(--agent-mic-glow); }
+	.poster {
+		position: absolute;
+		inset: 0;
+		background-size: contain;
+		background-position: center;
+		background-repeat: no-repeat;
+		transition: opacity 0.4s;
+		pointer-events: none;
+	}
+	.loading {
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		transform: translate(-50%, -50%);
+		color: var(--agent-on-surface);
+		font: 14px var(--agent-chat-font);
+		background: var(--agent-surface);
+		padding: 8px 14px;
+		border-radius: 999px;
+	}
+	.error, .agent-3d-error {
+		position: absolute;
+		inset: 16px;
+		display: grid;
+		place-items: center;
+		color: var(--agent-on-surface);
+		background: var(--agent-surface);
+		border-radius: 12px;
+		padding: 16px;
+		font: 14px var(--agent-chat-font);
+	}
+	/* Optional name plate overlay — toggled by the name-plate attribute. */
+	.name-plate {
+		position: absolute;
+		left: 12px;
+		bottom: 10px;
+		z-index: 2;
+		pointer-events: none;
+		font: 11px/1 var(--agent-chat-font);
+		letter-spacing: 0.04em;
+		color: rgba(255, 255, 255, 0.6);
+		text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+	}
+	.name-plate:empty,
+	:host([name-plate="off"]) .name-plate { display: none; }
+	/* Background variants — set on :host so the canvas composites over them. */
+	:host([background="transparent"]) { background: transparent; }
+	:host([background="dark"]) { background: #0b0d10; }
+	:host([background="light"]) { background: #f5f5f5; }
+	:host([background="light"]) .name-plate {
+		color: rgba(0, 0, 0, 0.55);
+		text-shadow: none;
+	}
+`;
+
+class Agent3DElement extends HTMLElement {
+	static get observedAttributes() {
+		return [
+			'src',
+			'manifest',
+			'body',
+			'agent-id',
+			'mode',
+			'position',
+			'width',
+			'height',
+			'voice',
+			'api-key',
+			'key-proxy',
+			'responsive',
+			'background',
+			'name-plate',
+		];
+	}
+
+	constructor() {
+		super();
+		this.attachShadow({ mode: 'open' });
+		this._viewer = null;
+		this._scene = null;
+		this._runtime = null;
+		this._memory = null;
+		this._skills = null;
+		this._manifest = null;
+		this._mounted = false;
+		this._booting = false;
+		this._listening = false;
+		this._pillActive = false;
+		this._mqNarrow = null;
+		this._mqNarrowHandler = null;
+		this._ro = null;
+		this._outsideTapHandler = null;
+		this._autoResolvedManifest = false;
+		this._suppressAttrChange = false;
+	}
+
+	connectedCallback() {
+		this._renderShell();
+		this._applyLayout();
+		this._setupResponsive();
+		this._observeViewport();
+		// Defer boot until visible unless `eager` attr is present.
+		// Skip boot entirely if no source — wait for src/manifest/body/agent-id
+		// to be set, which triggers reboot via attributeChangedCallback.
+		if (this.hasAttribute('eager') && this._hasSource()) this._boot();
+	}
+
+	_hasSource() {
+		return (
+			this.hasAttribute('src') ||
+			this.hasAttribute('manifest') ||
+			this.hasAttribute('body') ||
+			this.hasAttribute('agent-id')
+		);
+	}
+
+	disconnectedCallback() {
+		this._teardown();
+	}
+
+	attributeChangedCallback(name, oldVal, newVal) {
+		if (this._suppressAttrChange) return;
+		// Source attribute set on a not-yet-booted (eager but no source) element
+		// — boot now instead of rebooting.
+		if (
+			!this._mounted &&
+			!this._booting &&
+			this.isConnected &&
+			['src', 'manifest', 'body', 'agent-id'].includes(name) &&
+			newVal
+		) {
+			this._boot();
+			return;
+		}
+		if (!this._mounted) return;
+		if (['mode', 'position', 'width', 'height', 'responsive'].includes(name))
+			this._applyLayout();
+		if (name === 'background') this._applyBackground();
+		if (name === 'name-plate') this._applyNamePlate();
+		if (['src', 'manifest', 'body', 'agent-id'].includes(name)) {
+			// Source change — reboot
+			this._teardown();
+			this._boot();
+		}
+	}
+
+	_renderShell() {
+		const style = document.createElement('style');
+		style.textContent = BASE_STYLE;
+		this.shadowRoot.appendChild(style);
+
+		const stage = document.createElement('div');
+		stage.className = 'stage';
+		stage.part = 'stage';
+		this.shadowRoot.appendChild(stage);
+		this._stageEl = stage;
+
+		const poster = document.createElement('div');
+		poster.className = 'poster';
+		if (this.getAttribute('poster')) {
+			poster.style.backgroundImage = `url(${this.getAttribute('poster')})`;
+		}
+		this.shadowRoot.appendChild(poster);
+		this._posterEl = poster;
+
+		const loading = document.createElement('div');
+		loading.className = 'loading';
+		loading.textContent = 'Loading...';
+		loading.hidden = true;
+		this.shadowRoot.appendChild(loading);
+		this._loadingEl = loading;
+
+		// Optional name-plate overlay. Hidden until a name is set on boot, and
+		// toggled off entirely when the host carries `name-plate="off"`. The CSS
+		// hides `.name-plate:empty`, so we don't have to manage `hidden` here.
+		const namePlate = document.createElement('div');
+		namePlate.className = 'name-plate';
+		namePlate.part = 'name-plate';
+		this.shadowRoot.appendChild(namePlate);
+		this._nameplateEl = namePlate;
+
+		// Pill button — tap/keyboard target when floating collapses to pill on narrow viewports
+		const pillBtn = document.createElement('button');
+		pillBtn.className = 'pill-btn';
+		pillBtn.setAttribute('aria-label', 'Open agent');
+		pillBtn.addEventListener('click', () => this._expandPill());
+		pillBtn.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter' || e.key === ' ') {
+				e.preventDefault();
+				this._expandPill();
+			}
+		});
+		this.shadowRoot.appendChild(pillBtn);
+		this._pillBtn = pillBtn;
+
+		// Drag handle shown when bottom-sheet is expanded
+		const pillDrag = document.createElement('div');
+		pillDrag.className = 'pill-drag';
+		this.shadowRoot.appendChild(pillDrag);
+		this._pillDrag = pillDrag;
+
+		// Chat + input chrome (omitted in kiosk mode)
+		if (!this.hasAttribute('kiosk')) {
+			const chrome = document.createElement('div');
+			chrome.className = 'chrome';
+			chrome.part = 'chrome';
+
+			const chat = document.createElement('div');
+			chat.className = 'chat';
+			chat.part = 'chat';
+
+			const row = document.createElement('div');
+			row.className = 'input-row';
+			const input = document.createElement('input');
+			input.type = 'text';
+			input.placeholder = 'Say something...';
+			input.addEventListener('keydown', (e) => {
+				if (e.key === 'Enter' && input.value.trim()) {
+					const v = input.value.trim();
+					input.value = '';
+					this.say(v);
+				}
+			});
+			const micBtn = document.createElement('button');
+			micBtn.className = 'icon mic';
+			micBtn.title = 'Push to talk';
+			micBtn.innerHTML = '🎙';
+			micBtn.addEventListener('click', () => this._toggleMic());
+			row.appendChild(input);
+			row.appendChild(micBtn);
+
+			chrome.appendChild(chat);
+			chrome.appendChild(row);
+			this.shadowRoot.appendChild(chrome);
+			this._chatEl = chat;
+			this._inputEl = input;
+			this._micEl = micBtn;
+
+			// Tool-call indicator ("Checking the chain…").
+			const toolInd = document.createElement('div');
+			toolInd.className = 'tool-indicator';
+			toolInd.part = 'tool-indicator';
+			toolInd.innerHTML = '<span class="spin"></span><span class="label">Working…</span>';
+			this.shadowRoot.appendChild(toolInd);
+			this._toolIndicatorEl = toolInd;
+
+			// Sticky alert banner (rug flags etc.).
+			const banner = document.createElement('div');
+			banner.className = 'alert-banner';
+			banner.part = 'alert-banner';
+			banner.innerHTML = '<span class="msg-text"></span><button aria-label="Dismiss">×</button>';
+			banner.querySelector('button').addEventListener('click', () => {
+				banner.dataset.active = 'false';
+			});
+			this.shadowRoot.appendChild(banner);
+			this._alertBannerEl = banner;
+
+			// Suggestion chips visible while the chat is empty.
+			this._renderSuggestions();
+		}
+	}
+
+	_renderSuggestions() {
+		if (!this._chatEl) return;
+		const existing = this._chatEl.querySelector('.suggest-row');
+		if (existing) existing.remove();
+		const row = document.createElement('div');
+		row.className = 'suggest-row';
+		const chips = this._suggestionChips();
+		for (const c of chips) {
+			const btn = document.createElement('button');
+			btn.className = 'suggest-chip';
+			btn.textContent = c.label;
+			btn.addEventListener('click', () => {
+				row.remove();
+				this.say(c.prompt);
+			});
+			row.appendChild(btn);
+		}
+		this._chatEl.appendChild(row);
+	}
+
+	_suggestionChips() {
+		// Tailor the chip set to which skills are installed; fall back to a
+		// generic greeting set otherwise. Skill names come from the manifest,
+		// not the registry, so this works even before runtime boot.
+		const installed = new Set(
+			(this._manifest?.skills || []).map((s) => {
+				if (typeof s === 'string') return s.replace(/\/$/, '').split('/').pop();
+				if (s?.id) return s.id;
+				if (s?.uri) return String(s.uri).replace(/\/$/, '').split('/').pop();
+				return '';
+			}),
+		);
+		const chips = [];
+		if (installed.has('pump-fun')) {
+			chips.push(
+				{ label: '🔥 Trending now', prompt: 'What are the trending tokens on pump.fun right now?' },
+				{ label: '👑 King of the hill', prompt: "Who's the king of the hill on pump.fun?" },
+				{ label: '🆕 New launches', prompt: 'Show me the newest pump.fun launches.' },
+			);
+		}
+		if (installed.has('dca')) {
+			chips.push({ label: '💸 Set up DCA', prompt: 'Help me set up a weekly USDC → WETH DCA.' });
+		}
+		if (chips.length === 0) {
+			chips.push(
+				{ label: '👋 Say hi', prompt: 'Hi! Who are you?' },
+				{ label: '🎬 Show your animations', prompt: 'What animations can you do?' },
+			);
+		}
+		return chips.slice(0, 4);
+	}
+
+	_isResponsive() {
+		// Default on; opt out with responsive="false"
+		return this.getAttribute('responsive') !== 'false';
+	}
+
+	_clampWidth(val) {
+		const px = _parsePx(val);
+		if (!px) return val;
+		const min = Math.round(Math.max(160, px * 0.65));
+		const vwPct = Math.round((px / 1440) * 100);
+		return `clamp(${min}px, ${vwPct}vw, ${px}px)`;
+	}
+
+	/**
+	 * Apply the `background` attribute. Mirrors the iframe embed semantics so
+	 * the snippet builder's options translate cleanly: 'transparent' → renderer
+	 * clears with alpha=0 and the scene background is unset; 'dark' / 'light' →
+	 * scene background is painted in the corresponding color so the agent
+	 * composites over it. The host element's CSS background is driven by the
+	 * `:host([background="..."])` rules in BASE_STYLE.
+	 *
+	 * Safe to call before the viewer exists — it no-ops in that case and is
+	 * re-run automatically once `_boot()` constructs the viewer.
+	 */
+	_applyBackground() {
+		const v = this._viewer;
+		if (!v) return;
+		const mode = this.getAttribute('background') || 'transparent';
+		if (mode === 'transparent') {
+			v.renderer?.setClearAlpha?.(0);
+			if (v.scene) v.scene.background = null;
+		} else if (mode === 'dark') {
+			v.renderer?.setClearAlpha?.(1);
+			if (v.scene?.background?.set) v.scene.background.set('#0b0d10');
+		} else if (mode === 'light') {
+			v.renderer?.setClearAlpha?.(1);
+			if (v.scene?.background?.set) v.scene.background.set('#f5f5f5');
+		}
+	}
+
+	/**
+	 * Apply the `name-plate` attribute. Visibility is purely CSS-driven via
+	 * `:host([name-plate="off"])`, so this method only needs to ensure the
+	 * element exists in the shadow DOM (it does, see `_renderShell`).
+	 *
+	 * Kept as a separate method so attributeChangedCallback has a clear hook,
+	 * and so future changes to plate position/style stay localised here.
+	 */
+	_applyNamePlate() {
+		// CSS handles visibility via the `name-plate="off"` host selector.
+		// Method exists so the attribute observer has a hook + future-proofing.
+	}
+
+	/** Update the plate text. Empty string hides the plate (`.name-plate:empty`). */
+	_setNamePlateText(name) {
+		if (!this._nameplateEl) return;
+		this._nameplateEl.textContent = name || '';
+	}
+
+	_clampHeight(val) {
+		const px = _parsePx(val);
+		if (!px) return val;
+		const min = Math.round(Math.max(200, px * 0.65));
+		const vhPct = Math.round((px / 900) * 100);
+		return `clamp(${min}px, ${vhPct}vh, ${px}px)`;
+	}
+
+	_applyLayout() {
+		const mode = this.getAttribute('mode') || 'inline';
+		if (!MODES.includes(mode)) return;
+		const responsive = this._isResponsive();
+
+		if (mode === 'floating') {
+			if (!this._pillActive) {
+				const pos = this.getAttribute('position') || 'bottom-right';
+				const offset = (this.getAttribute('offset') || '24px 24px').split(/\s+/);
+				const [vOff, hOff] = [offset[0], offset[1] || offset[0]];
+				this.style.top = this.style.bottom = this.style.left = this.style.right = '';
+				if (pos.includes('top')) this.style.top = vOff;
+				else this.style.bottom = vOff;
+				if (pos.includes('left')) this.style.left = hOff;
+				else if (pos.includes('right')) this.style.right = hOff;
+				else if (pos.includes('center')) {
+					this.style.left = '50%';
+					this.style.transform = 'translateX(-50%)';
+				}
+			}
+
+			const width = this.getAttribute('width') || '320px';
+			const height = this.getAttribute('height') || '420px';
+			this.style.setProperty('--agent-width', responsive ? this._clampWidth(width) : width);
+			this.style.setProperty(
+				'--agent-height',
+				responsive ? this._clampHeight(height) : height,
+			);
+		} else {
+			this.style.top =
+				this.style.bottom =
+				this.style.left =
+				this.style.right =
+				this.style.transform =
+					'';
+
+			const width = this.getAttribute('width');
+			const height = this.getAttribute('height');
+
+			if (mode === 'inline') {
+				if (width) this.style.width = responsive ? this._clampWidth(width) : width;
+				if (height) {
+					this.style.height = height;
+					this.removeAttribute('data-responsive');
+				} else if (responsive && width) {
+					// No explicit height: aspect-ratio preserves 3:4 portrait via CSS
+					this.style.height = '';
+					this.setAttribute('data-responsive', '');
+				}
+			}
+
+			if (width)
+				this.style.setProperty(
+					'--agent-width',
+					responsive ? this._clampWidth(width) : width,
+				);
+			if (height)
+				this.style.setProperty(
+					'--agent-height',
+					responsive ? this._clampHeight(height) : height,
+				);
+		}
+	}
+
+	_setupResponsive() {
+		const mode = this.getAttribute('mode') || 'inline';
+
+		// ResizeObserver on this — reacts to container changes without a viewport listener
+		if (mode === 'inline' && typeof ResizeObserver !== 'undefined') {
+			this._ro = new ResizeObserver(() => this._applyLayout());
+			this._ro.observe(this);
+		}
+
+		// matchMedia for floating pill collapse at narrow viewports
+		if (mode === 'floating' && this._isResponsive() && typeof window !== 'undefined') {
+			this._mqNarrow = window.matchMedia('(max-width: 479px)');
+			this._mqNarrowHandler = (e) => this._updatePillState(e.matches);
+			this._mqNarrow.addEventListener('change', this._mqNarrowHandler);
+			this._updatePillState(this._mqNarrow.matches);
+		}
+
+		// Swipe-down to close the bottom-sheet (CSS transitions handle the animation)
+		let touchStartY = 0;
+		this.shadowRoot.addEventListener(
+			'touchstart',
+			(e) => {
+				touchStartY = e.touches[0].clientY;
+			},
+			{ passive: true },
+		);
+		this.shadowRoot.addEventListener(
+			'touchend',
+			(e) => {
+				const dy = e.changedTouches[0].clientY - touchStartY;
+				if (dy > 60 && this._pillActive && this.getAttribute('aria-expanded') === 'true') {
+					this._collapsePill();
+				}
+			},
+			{ passive: true },
+		);
+	}
+
+	_updatePillState(narrow) {
+		if (narrow && !this._pillActive) {
+			this._pillActive = true;
+			this._collapsePill();
+		} else if (!narrow && this._pillActive) {
+			this._pillActive = false;
+			this._restoreFromPill();
+		}
+	}
+
+	_collapsePill() {
+		this.style.width = '56px';
+		this.style.height = '56px';
+		this.style.borderRadius = '50%';
+		this.setAttribute('aria-expanded', 'false');
+		this._pillBtn.style.display = 'block';
+		this._pillDrag.style.display = 'none';
+		const chrome = this.shadowRoot.querySelector('.chrome');
+		if (chrome) chrome.style.display = 'none';
+		this._stageEl.style.display = 'none';
+		if (this._outsideTapHandler) {
+			document.removeEventListener('pointerdown', this._outsideTapHandler);
+			this._outsideTapHandler = null;
+		}
+	}
+
+	_expandPill() {
+		if (!this._pillActive) return;
+		this.style.width = '100vw';
+		this.style.height = '70vh';
+		this.style.borderRadius = '16px 16px 0 0';
+		this.style.bottom = '0';
+		this.style.top = 'auto';
+		this.style.left = '0';
+		this.style.right = '0';
+		this.style.transform = 'none';
+		this.setAttribute('aria-expanded', 'true');
+		this._pillBtn.style.display = 'none';
+		this._pillDrag.style.display = 'block';
+		const chrome = this.shadowRoot.querySelector('.chrome');
+		if (chrome) chrome.style.display = '';
+		this._stageEl.style.display = '';
+
+		// Close on outside tap
+		this._outsideTapHandler = (e) => {
+			if (!e.composedPath().includes(this)) this._collapsePill();
+		};
+		setTimeout(() => document.addEventListener('pointerdown', this._outsideTapHandler), 0);
+	}
+
+	_restoreFromPill() {
+		this.removeAttribute('aria-expanded');
+		this._pillBtn.style.display = 'none';
+		this._pillDrag.style.display = 'none';
+		const chrome = this.shadowRoot.querySelector('.chrome');
+		if (chrome) chrome.style.display = '';
+		this._stageEl.style.display = '';
+		// Clear pill inline overrides, re-apply proper floating layout
+		this.style.width = this.style.height = this.style.borderRadius = '';
+		this.style.bottom =
+			this.style.top =
+			this.style.left =
+			this.style.right =
+			this.style.transform =
+				'';
+		this._applyLayout();
+		if (this._outsideTapHandler) {
+			document.removeEventListener('pointerdown', this._outsideTapHandler);
+			this._outsideTapHandler = null;
+		}
+	}
+
+	_observeViewport() {
+		if (this.hasAttribute('eager')) return;
+		if (typeof IntersectionObserver === 'undefined') {
+			this._boot();
+			return;
+		}
+		this._io = new IntersectionObserver((entries) => {
+			if (entries.some((e) => e.isIntersecting)) {
+				this._io.disconnect();
+				this._boot();
+			}
+		});
+		this._io.observe(this);
+	}
+
+	async _boot() {
+		if (this._booting || this._mounted) return;
+		this._booting = true;
+		try {
+			this._loadingEl.hidden = false;
+			this.dispatchEvent(
+				new CustomEvent('agent:load-progress', { detail: { phase: 'manifest', pct: 0.1 } }),
+			);
+
+			const manifest = await this._resolveManifest();
+			this._manifest = manifest;
+			this.dispatchEvent(
+				new CustomEvent('agent:load-progress', { detail: { phase: 'manifest', pct: 0.3 } }),
+			);
+
+			// Hydrate instructions.md if referenced
+			if (
+				typeof manifest.brain?.instructions === 'string' &&
+				manifest.brain.instructions.endsWith('.md')
+			) {
+				const text = await fetchRelative(manifest, manifest.brain.instructions);
+				if (text) manifest.instructions = stripFrontmatter(text);
+			} else if (manifest.brain?.instructions) {
+				manifest.instructions = manifest.brain.instructions;
+			}
+
+			// Embed-policy surface + origin gate (fail-open on infra errors)
+			const _backendId = (() => {
+				const a = this.getAttribute('agent-id') || manifest.id?.agentId || '';
+				return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(a)
+					? a
+					: null;
+			})();
+			if (_backendId) {
+				try {
+					const _policyBase = _scriptOrigin || window.location.origin;
+					const _pr = await fetch(
+						`${_policyBase}/api/agents/${_backendId}/embed-policy`,
+						{ credentials: 'omit' },
+					);
+					if (_pr.ok) {
+						const { policy } = await _pr.json();
+						if (policy) {
+							if (policy.surfaces?.script === false) {
+								this._fail(
+									'embed_denied_surface',
+									'This agent disallows the script-tag embed.',
+								);
+								return;
+							}
+							const _fp = ['three.ws', 'localhost'];
+							const _host = window.location.origin;
+							if (
+								!_host.startsWith('http://localhost') &&
+								!originAllowed(_host, policy, _fp)
+							) {
+								this._fail(
+									'embed_denied_origin',
+									`This agent isn't permitted on ${_host}.`,
+								);
+								return;
+							}
+						}
+					}
+				} catch (_e) {
+					console.warn('[agent-3d] embed-policy fetch failed; continuing', _e);
+				}
+			}
+
+			// Build Viewer
+			this.dispatchEvent(
+				new CustomEvent('agent:load-progress', { detail: { phase: 'body', pct: 0.45 } }),
+			);
+			const viewer = new Viewer(this._stageEl, { kiosk: this.hasAttribute('kiosk') });
+			this._viewer = viewer;
+			// Apply the embed surface attributes (`background`, `name-plate`) now
+			// that the viewer exists. They are also re-applied on attribute change.
+			this._applyBackground();
+			this._setNamePlateText(manifest.name || '');
+			this._applyNamePlate();
+			const bodyURI = resolveURI(manifest.body?.uri);
+			if (bodyURI) {
+				await viewer.load(bodyURI, '', new Map());
+			}
+			this._scene = new SceneController(viewer);
+
+			// Memory
+			this.dispatchEvent(
+				new CustomEvent('agent:load-progress', { detail: { phase: 'memory', pct: 0.6 } }),
+			);
+			const memoryNamespace =
+				manifest.id?.agentId || this.getAttribute('memory-key') || manifest.name || 'anon';
+			this._memory = await Memory.load({
+				mode: this.getAttribute('memory') || manifest.memory?.mode || 'local',
+				namespace: memoryNamespace,
+				manifestURI: manifest._baseURI + 'manifest.json',
+				fetchFn: fetch.bind(globalThis),
+			});
+
+			// Skills
+			this.dispatchEvent(
+				new CustomEvent('agent:load-progress', { detail: { phase: 'skills', pct: 0.75 } }),
+			);
+			this._skills = new SkillRegistry({
+				trust: this.getAttribute('skill-trust') || 'owned-only',
+				ownerAddress: manifest.id?.owner,
+			});
+			const skillList = manifest.skills || [];
+			for (const spec of skillList) {
+				try {
+					const skill = await this._skills.install(spec, {
+						bundleBase: manifest._baseURI,
+					});
+					this.dispatchEvent(
+						new CustomEvent('skill:loaded', {
+							detail: { name: skill.name, uri: skill.uri },
+						}),
+					);
+				} catch (e) {
+					console.warn('[agent-3d] skill load failed', spec, e);
+				}
+			}
+
+			// Runtime
+			this.dispatchEvent(
+				new CustomEvent('agent:load-progress', { detail: { phase: 'brain', pct: 0.9 } }),
+			);
+			const providerConfig = {
+				apiKey: this.getAttribute('api-key') || undefined,
+				proxyURL: this.getAttribute('key-proxy') || undefined,
+				agentId: _backendId || undefined,
+				apiOrigin: _scriptOrigin || window.location.origin,
+			};
+			this._runtime = new Runtime({
+				manifest,
+				viewer: this._scene,
+				memory: this._memory,
+				skills: this._skills,
+				providerConfig,
+			});
+			// Re-dispatch runtime events on the host
+			for (const ev of [
+				'brain:thinking',
+				'brain:message',
+				'skill:tool-called',
+				'voice:speech-start',
+				'voice:speech-end',
+				'voice:transcript',
+				'voice:listen-start',
+				'memory:write',
+			]) {
+				this._runtime.addEventListener(ev, (e) => {
+					this.dispatchEvent(
+						new CustomEvent(ev, { detail: e.detail, bubbles: true, composed: true }),
+					);
+					if (ev === 'brain:message' && this._chatEl) {
+						// Transfer sentiment from the most recent tool call to
+						// this assistant message so the bubble tints correctly.
+						const detail = { ...e.detail };
+						if (
+							detail.role === 'assistant' &&
+							detail.sentiment === undefined &&
+							this._lastToolSentiment !== undefined
+						) {
+							detail.sentiment = this._lastToolSentiment;
+							this._lastToolSentiment = undefined;
+						}
+						this._renderMessage(detail);
+					}
+					if (ev === 'brain:thinking' && this._toolIndicatorEl) {
+						if (e.detail?.thinking) this._setToolIndicator('thinking');
+						else this._clearToolIndicator();
+					}
+					if (ev === 'skill:tool-called') {
+						const { tool, result } = e.detail || {};
+						this._setToolIndicator(tool);
+						this._clearToolIndicator();
+						if (typeof result?.sentiment === 'number') {
+							this._lastToolSentiment = result.sentiment;
+						}
+						this._renderToolCallCard({ tool, result });
+					}
+				});
+			}
+
+			this._mounted = true;
+			// BEGIN:EMBED_BRIDGES
+			if (window !== window.parent) {
+				this._embedBridge = new EmbedActionBridge({
+					protocol,
+					manifest: this._manifest,
+					window,
+				});
+				this._embedBridge.start();
+			}
+			// END:EMBED_BRIDGES
+			this._loadingEl.hidden = true;
+			if (!this._pillActive) this._posterEl.style.opacity = '0';
+			this.dispatchEvent(
+				new CustomEvent('agent:ready', {
+					detail: { agent: this, manifest },
+					bubbles: true,
+					composed: true,
+				}),
+			);
+		} catch (err) {
+			console.error('[agent-3d] boot failed', err);
+			this._loadingEl.hidden = true;
+			if (err instanceof AgentResolveError && err.code === 'not-found') {
+				const el = document.createElement('div');
+				el.className = 'agent-3d-error';
+				el.textContent = 'Agent not found';
+				this.shadowRoot.appendChild(el);
+			} else {
+				this._showError(err);
+			}
+			this.dispatchEvent(
+				new CustomEvent('agent:error', {
+					detail: { phase: 'boot', error: err },
+					bubbles: true,
+					composed: true,
+				}),
+			);
+		} finally {
+			this._booting = false;
+		}
+	}
+
+	async _resolveManifest() {
+		const src = this.getAttribute('src');
+		const manifestAttr = this.getAttribute('manifest');
+		const body = this.getAttribute('body');
+		const agentIdAttr = this.getAttribute('agent-id');
+		const chainIdAttr = this.getAttribute('chain-id');
+		if (src) {
+			if (agentIdAttr) console.warn('[agent-3d] both src and agent-id provided; using src');
+			// Plain .glb / .gltf URLs are bare bodies, not manifests — treat
+			// them as if `body=` had been set so users don't need to know the
+			// distinction.
+			if (/\.(glb|gltf)(\?|$)/i.test(src)) {
+				return {
+					spec: 'agent-manifest/0.1',
+					_baseURI: '',
+					name: this.getAttribute('name') || 'Agent',
+					body: { uri: src, format: 'gltf-binary' },
+					brain: { provider: 'none' },
+					voice: { tts: { provider: 'browser' }, stt: { provider: 'browser' } },
+					skills: [],
+				};
+			}
+			return loadManifest(src, {
+				rpcURL: this.getAttribute('rpc-url'),
+				registry: this.getAttribute('registry'),
+			});
+		}
+		if (agentIdAttr) {
+			// On-chain reference? Supported forms:
+			//   agent-id="eip155:8453:0xabc...:42"   full CAIP-10 + token
+			//   agent-id="onchain:8453:42"           shorthand, canonical registry
+			//   agent-id="42" chain-id="8453"        numeric id + explicit chain
+			//   agent-id="agent://8453/42"           agent URI
+			const caipInput = chainIdAttr
+				? {
+						chainId: Number(chainIdAttr),
+						agentId: agentIdAttr,
+						registry: this.getAttribute('registry') || undefined,
+					}
+				: agentIdAttr;
+			const ref = parseAgentRef(caipInput);
+			if (ref) {
+				const resolved = await resolveOnchainAgent(ref);
+				if (resolved.error && !resolved.glbUrl)
+					throw new Error(`On-chain resolve failed: ${resolved.error}`);
+				return toManifest(resolved);
+			}
+			// Explicit manifest= wins over backend UUID resolution.
+			if (manifestAttr) return loadManifest(manifestAttr);
+			// Resolve agent-id → manifestUrl via backend, then load that manifest.
+			const manifestUrl = await resolveByAgentId(agentIdAttr);
+			if (manifestUrl) {
+				this._autoResolvedManifest = true;
+				this.setAttribute('manifest', manifestUrl);
+				return loadManifest(manifestUrl);
+			}
+			// No manifestUrl on agent record — build inline manifest from avatar data.
+			return resolveAgentById(agentIdAttr);
+		}
+		if (manifestAttr) return loadManifest(manifestAttr);
+		if (body) {
+			// Ad-hoc agent from a bare GLB
+			const instructionsAttr = this.getAttribute('instructions');
+			return {
+				spec: 'agent-manifest/0.1',
+				_baseURI: '',
+				name: this.getAttribute('name') || 'Agent',
+				body: { uri: body, format: 'gltf-binary' },
+				brain: {
+					provider: this.getAttribute('brain') ? 'anthropic' : 'none',
+					model: this.getAttribute('brain') || undefined,
+					instructions: instructionsAttr || 'You are an embodied three.ws.',
+				},
+				instructions: instructionsAttr || 'You are an embodied three.ws.',
+				voice: { tts: { provider: 'browser' }, stt: { provider: 'browser' } },
+				skills: (this.getAttribute('skills') || '')
+					.split(',')
+					.map((s) => s.trim())
+					.filter(Boolean)
+					.map((uri) => ({ uri })),
+				memory: { mode: this.getAttribute('memory') || 'local' },
+				tools: ['wave', 'lookAt', 'play_clip', 'setExpression', 'speak', 'remember'],
+				version: '0.1.0',
+			};
+		}
+		throw new Error('<agent-3d> requires src=, manifest=, or body= attribute');
+	}
+
+	_renderMessage({ role, content, sentiment }) {
+		if (!this._chatEl) return;
+		if (!content) return;
+		// Hide the suggestion chips once a real conversation starts.
+		this._chatEl.querySelector('.suggest-row')?.remove();
+		const msg = document.createElement('div');
+		msg.className = 'msg';
+		const tone = this._sentimentTone(sentiment);
+		if (tone) msg.classList.add(tone);
+		msg.innerHTML = `<div class="role"></div><div class="body"></div>`;
+		msg.querySelector('.role').textContent = role;
+		msg.querySelector('.body').textContent = content;
+		this._chatEl.appendChild(msg);
+		this._chatEl.scrollTop = this._chatEl.scrollHeight;
+	}
+
+	_sentimentTone(s) {
+		if (typeof s !== 'number') return null;
+		if (s > 0.3) return 'celebration';
+		if (s < -0.2) return 'concern';
+		if (s > 0.05) return 'curiosity';
+		return null;
+	}
+
+	_setToolIndicator(toolName) {
+		if (!this._toolIndicatorEl) return;
+		clearTimeout(this._toolIndicatorHideTimer);
+		const label = this._toolIndicatorLabel(toolName);
+		this._toolIndicatorEl.querySelector('.label').textContent = label;
+		this._toolIndicatorEl.dataset.active = 'true';
+	}
+
+	_clearToolIndicator() {
+		if (!this._toolIndicatorEl) return;
+		clearTimeout(this._toolIndicatorHideTimer);
+		this._toolIndicatorHideTimer = setTimeout(() => {
+			if (this._toolIndicatorEl) this._toolIndicatorEl.dataset.active = 'false';
+		}, 350);
+	}
+
+	_toolIndicatorLabel(toolName) {
+		const map = {
+			searchTokens: 'Searching pump.fun…',
+			getTokenDetails: 'Fetching token details…',
+			getBondingCurve: 'Reading bonding curve…',
+			getTokenTrades: 'Pulling recent trades…',
+			getTrendingTokens: 'Loading trending tokens…',
+			getNewTokens: 'Loading new launches…',
+			getGraduatedTokens: 'Loading graduated tokens…',
+			getKingOfTheHill: 'Crowning the king…',
+			getCreatorProfile: 'Auditing the creator…',
+			getTokenHolders: 'Inspecting holders…',
+			wave: 'Waving…',
+			remember: 'Saving to memory…',
+			play_clip: 'Playing animation…',
+		};
+		return map[toolName] || `Running ${toolName}…`;
+	}
+
+	_showAlertBanner({ level = 'warn', text } = {}) {
+		if (!this._alertBannerEl || !text) return;
+		this._alertBannerEl.classList.remove('warn', 'danger');
+		this._alertBannerEl.classList.add(level === 'danger' ? 'danger' : 'warn');
+		this._alertBannerEl.querySelector('.msg-text').textContent = text;
+		this._alertBannerEl.dataset.active = 'true';
+	}
+
+	_renderToolCallCard({ tool, result }) {
+		if (!this._chatEl || !result || result.ok === false) return;
+		const data = result.data ?? result;
+		const card = this._buildTokenCard(tool, data);
+		if (!card) return;
+		this._chatEl.querySelector('.suggest-row')?.remove();
+		this._chatEl.appendChild(card);
+		this._chatEl.scrollTop = this._chatEl.scrollHeight;
+
+		// Surface a sticky banner for clearly dangerous signals.
+		if (tool === 'getCreatorProfile') {
+			const flags = data?.rugFlags ?? data?.risk_flags ?? data?.flags ?? [];
+			const rugged = data?.rugCount ?? data?.rug_count ?? 0;
+			if (rugged > 0 || (Array.isArray(flags) && flags.length >= 2)) {
+				this._showAlertBanner({
+					level: 'danger',
+					text: `⚠️ Creator has ${flags.length || rugged} rug indicator${(flags.length || rugged) > 1 ? 's' : ''} — be cautious.`,
+				});
+			} else if (Array.isArray(flags) && flags.length === 1) {
+				this._showAlertBanner({
+					level: 'warn',
+					text: `One risk flag on this creator: ${flags[0]}`,
+				});
+			}
+		}
+	}
+
+	_buildTokenCard(tool, data) {
+		if (!data || typeof data !== 'object') return null;
+		const fmt = (n, opts = {}) => {
+			const v = Number(n);
+			if (!Number.isFinite(v)) return '—';
+			if (opts.usd) {
+				if (v >= 1e6) return `$${(v / 1e6).toFixed(2)}M`;
+				if (v >= 1e3) return `$${(v / 1e3).toFixed(1)}K`;
+				return `$${v.toFixed(2)}`;
+			}
+			if (opts.pct) return `${v.toFixed(1)}%`;
+			return v.toLocaleString();
+		};
+
+		const card = document.createElement('div');
+		card.className = 'token-card solana';
+
+		if (tool === 'getTokenDetails' || tool === 'getKingOfTheHill') {
+			const t = data.token || data;
+			const symbol = t.symbol || t.ticker || 'TOKEN';
+			const name = t.name || '';
+			const mcap = t.marketCapUsd ?? t.market_cap_usd ?? t.usd_market_cap;
+			const price = t.priceUsd ?? t.price_usd ?? t.usd_price;
+			const grad = t.graduationPercent ?? t.graduation_percent ?? t.progress;
+			card.innerHTML = `
+				<div class="token-card-header">
+					<span class="token-card-symbol">$${this._esc(symbol)}</span>
+					<span class="token-card-name">${this._esc(name)}</span>
+				</div>
+				<div class="token-card-grid">
+					<div class="token-card-stat"><div class="label">Market cap</div><div class="value">${fmt(mcap, { usd: true })}</div></div>
+					<div class="token-card-stat"><div class="label">Price</div><div class="value">${fmt(price, { usd: true })}</div></div>
+				</div>
+				${
+					Number.isFinite(Number(grad))
+						? `<div class="token-card-bar"><div class="fill" style="width:${Math.min(100, Math.max(0, Number(grad)))}%"></div></div>
+						   <div class="token-card-stat" style="margin-top:4px"><div class="label">Graduation</div><div class="value">${fmt(grad, { pct: true })}</div></div>`
+						: ''
+				}
+			`;
+			return card;
+		}
+
+		if (tool === 'getBondingCurve') {
+			const grad = data.graduationPercent ?? data.graduation_percent ?? data.progress;
+			const reserves = data.solReserves ?? data.sol_reserves;
+			const tokenReserves = data.tokenReserves ?? data.token_reserves;
+			const danger = Number(grad) < 5;
+			card.innerHTML = `
+				<div class="token-card-header">
+					<span class="token-card-symbol">Bonding curve</span>
+				</div>
+				<div class="token-card-grid">
+					${reserves !== undefined ? `<div class="token-card-stat"><div class="label">SOL reserves</div><div class="value">${fmt(reserves)}</div></div>` : ''}
+					${tokenReserves !== undefined ? `<div class="token-card-stat"><div class="label">Token reserves</div><div class="value">${fmt(tokenReserves)}</div></div>` : ''}
+				</div>
+				${
+					Number.isFinite(Number(grad))
+						? `<div class="token-card-bar"><div class="fill ${danger ? 'danger' : ''}" style="width:${Math.min(100, Math.max(0, Number(grad)))}%"></div></div>
+						   <div class="token-card-stat" style="margin-top:4px"><div class="label">Graduation</div><div class="value">${fmt(grad, { pct: true })}</div></div>`
+						: ''
+				}
+			`;
+			return card;
+		}
+
+		if (tool === 'getCreatorProfile') {
+			const flags = data.rugFlags ?? data.risk_flags ?? data.flags ?? [];
+			const tokenCount = data.tokenCount ?? data.token_count ?? data.tokens?.length;
+			const rugged = data.rugCount ?? data.rug_count ?? 0;
+			card.innerHTML = `
+				<div class="token-card-header">
+					<span class="token-card-symbol">Creator audit</span>
+				</div>
+				<div class="token-card-grid">
+					<div class="token-card-stat"><div class="label">Tokens launched</div><div class="value">${fmt(tokenCount)}</div></div>
+					<div class="token-card-stat"><div class="label">Rugs</div><div class="value">${fmt(rugged)}</div></div>
+				</div>
+				${
+					Array.isArray(flags) && flags.length
+						? `<div class="flags">${flags.map((f) => `<span class="flag">${this._esc(String(f))}</span>`).join('')}</div>`
+						: ''
+				}
+			`;
+			return card;
+		}
+
+		if (tool === 'getTrendingTokens' || tool === 'getNewTokens' || tool === 'getGraduatedTokens') {
+			const list = data.tokens || data.results || data.items || (Array.isArray(data) ? data : []);
+			if (!list.length) return null;
+			const top = list.slice(0, 5);
+			card.innerHTML = `
+				<div class="token-card-header">
+					<span class="token-card-symbol">${tool === 'getTrendingTokens' ? '🔥 Trending' : tool === 'getNewTokens' ? '🆕 New' : '🎓 Graduated'}</span>
+				</div>
+				<div style="margin-top:8px;display:flex;flex-direction:column;gap:4px">
+					${top
+						.map((t) => {
+							const sym = t.symbol || t.ticker || '?';
+							const mc = t.marketCapUsd ?? t.market_cap_usd ?? t.usd_market_cap;
+							return `<div style="display:flex;justify-content:space-between"><span>$${this._esc(sym)}</span><span style="font-variant-numeric:tabular-nums;opacity:.8">${fmt(mc, { usd: true })}</span></div>`;
+						})
+						.join('')}
+				</div>
+			`;
+			return card;
+		}
+
+		return null;
+	}
+
+	_esc(s) {
+		return String(s ?? '').replace(/[&<>"]/g, (c) =>
+			({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c],
+		);
+	}
+
+	_showError(err) {
+		const el = document.createElement('div');
+		el.className = 'error';
+		el.textContent = `Couldn't load agent: ${err.message || err}`;
+		this.shadowRoot.appendChild(el);
+	}
+
+	_fail(code, message) {
+		this._loadingEl.hidden = true;
+		const el = document.createElement('div');
+		el.className = 'error';
+		el.textContent = message;
+		this.shadowRoot.appendChild(el);
+		this.dispatchEvent(
+			new CustomEvent('agent:error', {
+				detail: { phase: 'policy', error: { code, message } },
+				bubbles: true,
+				composed: true,
+			}),
+		);
+	}
+
+	async _toggleMic() {
+		if (!this._runtime) return;
+		if (this._listening) {
+			this._runtime.stt?.stop();
+			this._listening = false;
+			this._micEl.dataset.listening = 'false';
+			return;
+		}
+		this._listening = true;
+		this._micEl.dataset.listening = 'true';
+		try {
+			const text = await this._runtime.listen();
+			if (text) await this.say(text, { voice: true });
+		} catch (e) {
+			console.warn('[agent-3d] listen failed', e);
+		} finally {
+			this._listening = false;
+			this._micEl.dataset.listening = 'false';
+		}
+	}
+
+	_teardown() {
+		// Clear manifest that was auto-resolved from agent-id so the next boot resolves fresh.
+		// Suppress attributeChangedCallback to avoid a reboot loop.
+		if (this._autoResolvedManifest) {
+			this._suppressAttrChange = true;
+			try {
+				this.removeAttribute('manifest');
+			} finally {
+				this._suppressAttrChange = false;
+			}
+			this._autoResolvedManifest = false;
+		}
+		try {
+			this._io?.disconnect();
+		} catch {}
+		try {
+			this._ro?.disconnect();
+		} catch {}
+		try {
+			if (this._mqNarrow && this._mqNarrowHandler) {
+				this._mqNarrow.removeEventListener('change', this._mqNarrowHandler);
+			}
+		} catch {}
+		if (this._outsideTapHandler) {
+			document.removeEventListener('pointerdown', this._outsideTapHandler);
+			this._outsideTapHandler = null;
+		}
+		this._embedBridge?.stop();
+		this._embedBridge = null;
+		try {
+			this._runtime?.destroy();
+		} catch {}
+		try {
+			this._viewer?.dispose?.();
+		} catch {}
+		this._mounted = false;
+		this._pillActive = false;
+		this._runtime = this._viewer = this._scene = this._memory = this._skills = null;
+	}
+
+	// --- Public JS API ---
+
+	async say(text, opts = {}) {
+		if (!this._runtime) await this._waitForReady();
+		return this._runtime.send(text, { voice: opts.voice ?? this.hasAttribute('voice') });
+	}
+
+	// Play speak animation — tries 'talk', falls back to 'yes', then 'wave'.
+	speak(text, opts = {}) {
+		const duration = Math.max(1.5, (text?.split(' ').length ?? 3) * 0.3);
+		const sc = this._scene;
+		if (!sc) return;
+		sc.playAnimationByHint('talk', { duration }) ||
+			sc.playAnimationByHint('yes', { duration }) ||
+			sc.playAnimationByHint('wave', { duration });
+	}
+
+	async ask(text, opts = {}) {
+		const reply = await this.say(text, opts);
+		return reply?.text || '';
+	}
+
+	clearConversation() {
+		this._runtime?.clearConversation();
+	}
+
+	async wave(opts) {
+		return this._scene?.playAnimationByHint('wave', opts);
+	}
+	async lookAt(target) {
+		return this._scene?.lookAt(target);
+	}
+	async play(name, opts) {
+		return this._scene?.playClipByName(name, opts);
+	}
+
+	async installSkill(uri) {
+		if (!this._skills) throw new Error('Agent not mounted');
+		return this._skills.install({ uri });
+	}
+	uninstallSkill(name) {
+		return this._skills?.uninstall(name);
+	}
+	get skills() {
+		return this._skills?.all() || [];
+	}
+	get memory() {
+		return this._memory;
+	}
+	get manifest() {
+		return this._manifest;
+	}
+	get runtime() {
+		return this._runtime;
+	}
+
+	setMode(mode) {
+		this.setAttribute('mode', mode);
+	}
+	setPosition(pos, offset) {
+		this.setAttribute('position', pos);
+		if (offset) this.setAttribute('offset', offset);
+	}
+	setSize(w, h) {
+		this.setAttribute('width', w);
+		this.setAttribute('height', h);
+	}
+
+	pause() {
+		this._runtime?.pause();
+	}
+	resume() {
+		/* viewer resumes via IntersectionObserver */
+	}
+	destroy() {
+		this._teardown();
+	}
+
+	/**
+	 * Trigger an emotion stimulus on the running avatar(s) via the protocol bus.
+	 * Trigger names match the avatar's emotion vocabulary:
+	 *   'celebration' | 'concern' | 'curiosity' | 'empathy' | 'patience'
+	 * Weight is clamped to [0, 1] by the avatar; defaults to 0.7.
+	 * No-op if the agent hasn't booted yet.
+	 */
+	expressEmotion(trigger, weight = 0.7) {
+		if (!trigger) return false;
+		protocol.emit(ACTION_TYPES.EMOTE, {
+			trigger,
+			weight: Math.max(0, Math.min(1, Number(weight) || 0)),
+			agentId: this._manifest?.id?.agentId,
+		});
+		return true;
+	}
+
+	_waitForReady() {
+		if (this._mounted) return Promise.resolve();
+		return new Promise((resolve) => {
+			const on = () => {
+				this.removeEventListener('agent:ready', on);
+				resolve();
+			};
+			this.addEventListener('agent:ready', on);
+			if (!this._booting) this._boot();
+		});
+	}
+}
+
+function stripFrontmatter(text) {
+	const m = text.match(/^---\n[\s\S]*?\n---\n?([\s\S]*)$/);
+	return m ? m[1] : text;
+}
+
+if (!customElements.get('agent-3d')) {
+	customElements.define('agent-3d', Agent3DElement);
+}
+
+export { Agent3DElement };
