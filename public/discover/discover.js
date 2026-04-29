@@ -160,11 +160,19 @@ els.grid.addEventListener('click', (e) => {
 	if (!btn) return;
 	e.preventDefault();
 	e.stopPropagation();
-	openEmbedModal({
-		chainId: Number(btn.dataset.chainId),
-		agentId: btn.dataset.agentId,
-		name: btn.dataset.name,
-	});
+	if (btn.dataset.kind === 'avatar') {
+		openAvatarEmbedModal({
+			avatarId: btn.dataset.avatarId,
+			glbUrl: btn.dataset.glbUrl,
+			name: btn.dataset.name,
+		});
+	} else {
+		openEmbedModal({
+			chainId: Number(btn.dataset.chainId),
+			agentId: btn.dataset.agentId,
+			name: btn.dataset.name,
+		});
+	}
 });
 
 function resetAndLoad() {
@@ -245,6 +253,11 @@ function clearAllFilters() {
 }
 
 function renderCard(item) {
+	if (item.kind === 'avatar') return renderAvatarCard(item);
+	return renderOnchainCard(item);
+}
+
+function renderOnchainCard(item) {
 	const card = document.createElement('article');
 	card.className = 'explore-card' + (item.has3d ? ' explore-card--3d' : '');
 
@@ -267,7 +280,6 @@ function renderCard(item) {
 		.join('');
 
 	const primaryHref = item.viewerUrl || item.tokenExplorerUrl || '#';
-	const primaryLabel = item.viewerUrl ? 'Load in viewer' : 'View on explorer';
 	const primaryTarget = item.viewerUrl ? '_self' : '_blank';
 
 	card.innerHTML = `
@@ -291,9 +303,58 @@ function renderCard(item) {
 					${item.viewerUrl ? `<a class="explore-card-link" href="${escapeAttr(item.viewerUrl)}">View 3D</a>` : ''}
 					<a class="explore-card-link" href="${escapeAttr(item.tokenExplorerUrl || '#')}" target="_blank" rel="noopener">On-chain ↗</a>
 					<button type="button" class="explore-card-link explore-card-link--ghost" data-role="card-embed"
+						data-kind="onchain"
 						data-chain-id="${escapeAttr(String(item.chainId))}"
 						data-agent-id="${escapeAttr(String(item.agentId))}"
 						data-name="${escapeAttr(item.name || `Agent #${item.agentId}`)}">Embed</button>
+				</div>
+			</div>
+		</div>
+	`;
+	return card;
+}
+
+function renderAvatarCard(item) {
+	const card = document.createElement('article');
+	card.className = 'explore-card explore-card--3d explore-card--avatar';
+
+	const thumb = item.image
+		? `<img src="${escapeAttr(item.image)}" alt="" loading="lazy" />`
+		: `<div class="explore-card-ph">🎭</div>`;
+
+	const badges = [
+		`<span class="explore-badge explore-badge--avatar">Public avatar</span>`,
+		`<span class="explore-badge explore-badge--3d">3D</span>`,
+	];
+
+	const tagChips = (item.tags || [])
+		.slice(0, 3)
+		.map((t) => `<span class="explore-svc">${escapeHtml(t)}</span>`)
+		.join('');
+
+	const viewerUrl = item.viewerUrl || '#';
+
+	card.innerHTML = `
+		<a class="explore-card-thumb" href="${escapeAttr(viewerUrl)}">
+			${thumb}
+			<span class="explore-card-play">▶</span>
+		</a>
+		<div class="explore-card-body">
+			<div class="explore-card-head">
+				<h3 class="explore-card-name">${escapeHtml(item.name)}</h3>
+			</div>
+			<div class="explore-card-badges">${badges.join('')}</div>
+			${item.description ? `<p class="explore-card-desc">${escapeHtml(item.description)}</p>` : ''}
+			${tagChips ? `<div class="explore-card-svcs">${tagChips}</div>` : ''}
+			<div class="explore-card-foot">
+				<span class="explore-card-owner" title="Avatar made public by its creator">@${escapeHtml(item.slug || 'avatar')}</span>
+				<div class="explore-card-actions">
+					<a class="explore-card-link" href="${escapeAttr(viewerUrl)}">View 3D</a>
+					<button type="button" class="explore-card-link explore-card-link--ghost" data-role="card-embed"
+						data-kind="avatar"
+						data-avatar-id="${escapeAttr(String(item.avatarId))}"
+						data-glb-url="${escapeAttr(item.glbUrl || '')}"
+						data-name="${escapeAttr(item.name || 'Avatar')}">Embed</button>
 				</div>
 			</div>
 		</div>

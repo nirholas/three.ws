@@ -22,6 +22,8 @@
 			"dest": "/api/wk-oauth-protected-resource"
 		},
 
+		{ "src": "/api/newsletter/subscribe", "dest": "/api/newsletter-subscribe" },
+
 		{ "src": "/oauth/authorize", "dest": "/api/oauth/authorize" },
 		{ "src": "/oauth/consent", "dest": "/api/oauth/authorize" },
 		{ "src": "/oauth/token", "dest": "/api/oauth/token" },

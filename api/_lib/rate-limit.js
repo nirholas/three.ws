@@ -116,6 +116,7 @@ export const limits = {
 		getLimiter('forgot-password:email', { limit: 3, window: '15 m' }).limit(email),
 	resendVerifyUser: (userId) =>
 		getLimiter('resend-verify:user', { limit: 2, window: '10 m' }).limit(userId),
+	newsletterIp: (ip) => getLimiter('newsletter:ip', { limit: 5, window: '1 h' }).limit(ip),
 };
 
 // Trust only proxy headers that Vercel itself sets and signs. Naively reading
