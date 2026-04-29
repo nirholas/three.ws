@@ -124,6 +124,7 @@ export class DeployButton {
 		const solanaOptionFor = (id) =>
 			`<option value="${id}"${id === this._chainId ? ' selected' : ''}>${_esc(SOLANA_LABELS[id])}</option>`;
 
+		const showVanity = _isSolana(this._chainId);
 		this._root.innerHTML = `
 			<div class="deploy-chain-row">
 				<select class="deploy-chain-select" title="Choose chain to deploy to" aria-label="Target chain">
@@ -135,13 +136,49 @@ export class DeployButton {
 					&#x2B22; Deploy on-chain
 				</button>
 			</div>
+			<div class="deploy-vanity-row" style="${showVanity ? '' : 'display:none'};margin-top:6px;font-size:12px;">
+				<input class="deploy-vanity-input" type="text" maxlength="6" placeholder="Vanity prefix (optional)"
+					title="Grind a Solana address that starts with these Base58 characters. 5+ chars requires a paid plan."
+					aria-label="Vanity address prefix"
+					style="font-family:monospace;width:14ch" />
+				<span class="deploy-vanity-status" style="margin-left:8px;color:var(--muted,#888)"></span>
+			</div>
 		`;
 
 		const select = this._root.querySelector('.deploy-chain-select');
+		const vanityRow = this._root.querySelector('.deploy-vanity-row');
+		const vanityInput = this._root.querySelector('.deploy-vanity-input');
+		const vanityStatus = this._root.querySelector('.deploy-vanity-status');
+
+		// Restore prior vanity value if user toggled chains.
+		if (this._vanityPrefix) vanityInput.value = this._vanityPrefix;
+
+		vanityInput.addEventListener('input', (ev) => {
+			const raw = ev.target.value;
+			this._vanityPrefix = raw;
+			if (!raw) { vanityStatus.textContent = ''; return; }
+			if (!/^[1-9A-HJ-NP-Za-km-z]+$/.test(raw)) {
+				vanityStatus.textContent = 'invalid base58 char';
+				vanityStatus.style.color = 'var(--danger,#c33)';
+				return;
+			}
+			vanityStatus.style.color = '';
+			// 58^n expected attempts; rough rate ~5k/s/core, assume 4 cores → ~20k/s.
+			const attempts = Math.pow(58, raw.length);
+			const seconds = attempts / 20000;
+			const human = seconds < 1 ? '<1s'
+				: seconds < 60 ? `~${Math.round(seconds)}s`
+				: seconds < 3600 ? `~${Math.round(seconds / 60)}m`
+				: `~${Math.round(seconds / 3600)}h`;
+			const paid = raw.length >= 5 ? ' (paid plan)' : '';
+			vanityStatus.textContent = `est. ${human}${paid}`;
+		});
+
 		select.addEventListener('change', async (ev) => {
 			const raw = ev.target.value;
 			const newChainId = _isSolana(raw) ? raw : Number(raw);
 			this._chainId = newChainId;
+			vanityRow.style.display = _isSolana(newChainId) ? '' : 'none';
 			if (!_isSolana(newChainId) && _hasWallet()) {
 				select.disabled = true;
 				try {

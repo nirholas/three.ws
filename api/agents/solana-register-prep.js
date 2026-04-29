@@ -28,6 +28,11 @@ import { env } from '../_lib/env.js';
 
 const SOLANA_RPC = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
 
+// Base58 alphabet excluding 0/O/I/l. Mirrors src/solana/vanity/validation.js.
+const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]+$/;
+// Vanity prefixes >= this length require a paid plan.
+const VANITY_FREE_THRESHOLD = 5;
+
 const bodySchema = z.object({
 	name:           z.string().trim().min(1).max(60),
 	description:    z.string().trim().max(280).default(''),
@@ -35,6 +40,11 @@ const bodySchema = z.object({
 	wallet_address: z.string().min(32).max(44), // Solana base58 pubkey
 	metadata_uri:   z.string().url().optional(), // pre-pinned IPFS or HTTPS URI
 	network:        z.enum(['mainnet', 'devnet']).default('mainnet'),
+	// Optional client-grinded vanity asset pubkey. When provided, the server
+	// builds the tx against this pubkey (noop signer) and the client must
+	// sign the tx with the matching keypair before submitting.
+	asset_pubkey:   z.string().min(32).max(44).optional(),
+	vanity_prefix:  z.string().min(1).max(6).optional(),
 });
 
 export default wrap(async (req, res) => {
@@ -48,7 +58,7 @@ export default wrap(async (req, res) => {
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
 	const body = parse(bodySchema, await readJson(req));
-	const { name, description, avatar_id, wallet_address, network } = body;
+	const { name, description, avatar_id, wallet_address, network, asset_pubkey, vanity_prefix } = body;
 
 	// Verify wallet belongs to this user.
 	const [walletRow] = await sql`
@@ -64,6 +74,29 @@ export default wrap(async (req, res) => {
 		if (!av) return error(res, 404, 'not_found', 'avatar not found');
 	}
 
+	// Vanity validation + paywall. Both fields are optional but must agree
+	// when present (we don't trust the client to honestly report length).
+	if (vanity_prefix && !asset_pubkey) {
+		return error(res, 400, 'validation_error', 'vanity_prefix requires asset_pubkey');
+	}
+	if (asset_pubkey) {
+		if (!BASE58_RE.test(asset_pubkey)) {
+			return error(res, 400, 'validation_error', 'asset_pubkey is not valid base58');
+		}
+		if (vanity_prefix) {
+			if (!BASE58_RE.test(vanity_prefix)) {
+				return error(res, 400, 'validation_error', 'vanity_prefix is not valid base58');
+			}
+			if (!asset_pubkey.startsWith(vanity_prefix)) {
+				return error(res, 400, 'validation_error', 'asset_pubkey does not start with vanity_prefix');
+			}
+			if (vanity_prefix.length >= VANITY_FREE_THRESHOLD && (user.plan ?? 'free') === 'free') {
+				return error(res, 402, 'payment_required',
+					`vanity prefixes of ${VANITY_FREE_THRESHOLD}+ characters require a paid plan`);
+			}
+		}
+	}
+
 	const rpcEndpoint = network === 'devnet'
 		? (process.env.SOLANA_RPC_URL_DEVNET || 'https://api.devnet.solana.com')
 		: SOLANA_RPC;
@@ -71,8 +104,11 @@ export default wrap(async (req, res) => {
 	// Build Umi instance. We use a noop signer since the user's wallet will sign.
 	const umi = createUmi(rpcEndpoint).use(mplCore());
 	const ownerPubkey = umiPublicKey(wallet_address);
-	// Create a throwaway mint keypair — the actual signer will be the user's wallet for the asset account.
-	const assetSigner = generateSigner(umi);
+	// Asset signer: either the client-supplied vanity pubkey (noop — client signs)
+	// or a freshly-generated server-side throwaway keypair.
+	const assetSigner = asset_pubkey
+		? createNoopSigner(umiPublicKey(asset_pubkey))
+		: generateSigner(umi);
 	// Set the owner as a noop signer so Umi treats them as a required signer.
 	umi.use(signerIdentity(createNoopSigner(ownerPubkey)));
 
@@ -108,6 +144,7 @@ export default wrap(async (req, res) => {
 				asset_pubkey: assetSigner.publicKey,
 				network,
 				prep_id: prepId,
+				vanity_prefix: vanity_prefix || null,
 			})}::jsonb,
 			${expiresAt}
 		)

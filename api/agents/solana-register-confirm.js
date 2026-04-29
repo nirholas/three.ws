@@ -109,6 +109,7 @@ export default wrap(async (req, res) => {
 				network,
 				sol_mint_address: asset_pubkey,
 				tx_signature,
+				...(payload.vanity_prefix ? { vanity_prefix: payload.vanity_prefix } : {}),
 			})}::jsonb
 		)
 		returning id, name, description, wallet_address, meta, created_at

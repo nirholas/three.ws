@@ -1,6 +1,10 @@
 /**
- * /api/agents/:id  and  /api/agents/:id/wallet
- * Routes to the appropriate handler in api/agents.js
+ * /api/agents/:id                 — agent CRUD
+ * /api/agents/:id/wallet          — link / update EVM wallet
+ * /api/agents/:id/solana          — agent's Solana wallet (address + balance, provision)
+ * /api/agents/:id/pumpfun/launch  — create a pump.fun token from this agent
+ * /api/agents/:id/pumpfun/swap    — swap via @pump-fun/pump-swap-sdk
+ * /api/agents/:id/pumpfun/pay     — agent payment via @pump-fun/agent-payments-sdk
  */
 import { handleGetOne, handleWallet } from '../agents.js';
 import { cors, error, wrap } from '../_lib/http.js';
@@ -8,9 +12,9 @@ import { cors, error, wrap } from '../_lib/http.js';
 export default wrap(async function handler(req, res) {
 	const url = new URL(req.url, 'http://x');
 	const parts = url.pathname.split('/').filter(Boolean);
-	// parts: ['api', 'agents', ':id'] or ['api', 'agents', ':id', 'wallet']
 	const id = parts[2];
 	const sub = parts[3];
+	const action = parts[4];
 
 	if (!id) {
 		if (cors(req, res)) return;
@@ -18,5 +22,19 @@ export default wrap(async function handler(req, res) {
 	}
 
 	if (sub === 'wallet') return handleWallet(req, res, id);
+
+	if (sub === 'solana') {
+		const mod = await import('./solana-wallet.js');
+		return mod.default(req, res, id);
+	}
+
+	if (sub === 'pumpfun') {
+		if (action === 'launch') return (await import('./pumpfun/launch.js')).default(req, res, id);
+		if (action === 'swap') return (await import('./pumpfun/swap.js')).default(req, res, id);
+		if (action === 'pay') return (await import('./pumpfun/pay.js')).default(req, res, id);
+		if (cors(req, res)) return;
+		return error(res, 404, 'not_found', 'unknown pumpfun action');
+	}
+
 	return handleGetOne(req, res, id);
 });

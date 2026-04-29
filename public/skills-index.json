@@ -31,5 +31,14 @@
 		"uri": "skills/dca/",
 		"author": "3d-agent",
 		"tags": ["defi", "uniswap", "metamask", "permissions"]
+	},
+	{
+		"id": "pump-fun",
+		"name": "Pump.fun Market Intel",
+		"description": "Read-only Solana market intel: search tokens, inspect bonding curves, surface trending/new/graduated tokens, and flag rug-pull risk.",
+		"version": "0.1.0",
+		"uri": "skills/pump-fun/",
+		"author": "3d-agent",
+		"tags": ["solana", "pump.fun", "market-data", "mcp", "read-only"]
 	}
 ]
