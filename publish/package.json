@@ -1,0 +1,42 @@
+{
+	"name": "three.ws",
+	"version": "0.1.0",
+	"description": "3D AI agent platform for the browser. Load any GLB/glTF avatar, give it an LLM brain, and embed it as a web component.",
+	"author": "nirholas",
+	"license": "Apache-2.0",
+	"homepage": "https://github.com/nirholas/three.ws#readme",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nirholas/three.ws.git"
+	},
+	"bugs": {
+		"url": "https://github.com/nirholas/three.ws/issues"
+	},
+	"keywords": [
+		"3d",
+		"threejs",
+		"gltf",
+		"glb",
+		"avatar",
+		"ai-agent",
+		"web-component",
+		"llm",
+		"webgl"
+	],
+	"type": "module",
+	"main": "./agent-3d.umd.cjs",
+	"module": "./agent-3d.js",
+	"exports": {
+		".": {
+			"import": "./agent-3d.js",
+			"require": "./agent-3d.umd.cjs"
+		}
+	},
+	"files": [
+		"agent-3d.js",
+		"agent-3d.umd.cjs",
+		"LICENSE",
+		"README.md"
+	],
+	"sideEffects": false
+}
