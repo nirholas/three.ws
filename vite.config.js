@@ -83,8 +83,31 @@ const appConfig = {
 					'/docs': resolve(root, 'docs/index.html'),
 					'/docs/': resolve(root, 'docs/index.html'),
 				};
+				// Routes that resolve to public/<dir>/index.html — these need a
+				// trailing slash so relative imports (./foo.js) inside the HTML
+				// resolve to /<dir>/foo.js rather than /foo.js at the root.
+				const dirRoutes = new Set([
+					'/agents',
+					'/dashboard',
+					'/studio',
+					'/widgets',
+					'/cz',
+					'/validation',
+					'/reputation',
+					'/hydrate',
+					'/my-agents',
+					'/discover',
+					'/explore',
+					'/features',
+					'/docs',
+				]);
 				server.middlewares.use(async (req, res, next) => {
 					const path = (req.url || '/').split('?')[0];
+					if (dirRoutes.has(path)) {
+						res.statusCode = 301;
+						res.setHeader('Location', path + '/' + (req.url.slice(path.length) || ''));
+						return res.end();
+					}
 					let filePath = fileMap[path];
 					if (!filePath && /^\/agent\/[^/]+\/edit$/.test(path))
 						filePath = resolve(root, 'agent-edit.html');
