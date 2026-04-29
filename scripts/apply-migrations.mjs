@@ -20,7 +20,9 @@ import { readFile, readdir } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { neon } from '@neondatabase/serverless';
+import { neon, Pool, neonConfig } from '@neondatabase/serverless';
+import ws from 'ws';
+neonConfig.webSocketConstructor = ws;
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const MIG_DIR = path.resolve(HERE, '..', 'api', '_lib', 'migrations');
@@ -36,6 +38,7 @@ if (!process.env.DATABASE_URL) {
 }
 
 const sql = neon(process.env.DATABASE_URL);
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 async function ensureTrackingTable() {
 	await sql`
@@ -71,13 +74,8 @@ async function applyOne({ fname, body, hash }) {
 	// single multi-statement string. We fall back to splitting on bare ';' at
 	// line ends; the migrations in this repo are written to be split-safe
 	// (no procedural blocks, no embedded semicolons in literals).
-	const stmts = body
-		.split(/;\s*$/m)
-		.map((s) => s.trim())
-		.filter((s) => s && !/^--/.test(s));
-	for (const stmt of stmts) {
-		await sql.query(stmt);
-	}
+	// Use websocket Pool for multi-statement execution (HTTP driver is single-stmt only).
+	await pool.query(body);
 	await sql`
 		insert into schema_migrations (filename, sha256)
 		values (${fname}, ${hash})
@@ -139,7 +137,9 @@ function maskUrl(url) {
 	}
 }
 
-main().catch((e) => {
-	console.error('FAILED:', e.message);
-	process.exit(1);
-});
+main()
+	.catch((e) => {
+		console.error('FAILED:', e.message);
+		process.exitCode = 1;
+	})
+	.finally(() => pool.end());
