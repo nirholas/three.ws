@@ -13,7 +13,7 @@
 		feEdit2,
 		feTerminal,
 		feMoreHorizontal,
-		fthree.ws-chat,
+		feStar,
 		feRefreshCw,
 		feUser,
 		feX,
@@ -581,7 +581,7 @@
 				? 'group-hover:opacity-100'
 				: ''} z-1 absolute bottom-0 left-1/2 flex h-6 w-6 -translate-x-1/2 translate-y-1/2 items-center justify-center rounded-md border border-slate-200 bg-white opacity-0 transition-opacity hover:bg-gray-200"
 		>
-			<Icon icon={fthree.ws-chat} class="m-auto h-3 w-3 text-slate-600" />
+			<Icon icon={feStar} class="m-auto h-3 w-3 text-slate-600" />
 		</button>
 	</li>
 {/if}

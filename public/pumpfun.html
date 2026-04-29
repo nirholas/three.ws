@@ -228,12 +228,11 @@
 		}
 
 		function renderMint(ev) {
-			const cap = ev.usd_market_cap != null ? `$${Number(ev.usd_market_cap).toLocaleString(undefined,{maximumFractionDigits:0})}` : '';
+			const cap = ev.market_cap_sol != null ? `${Number(ev.market_cap_sol).toFixed(1)} SOL` : '';
 			return `<div class="evt">
 				<div class="evt-row"><span class="evt-kind">🌱 new token</span><span class="evt-time">${cap}</span></div>
 				<div class="evt-who">${escapeHtml(ev.name || ev.symbol || ev.mint || '—')}</div>
 				${ev.symbol ? `<div class="evt-amt">$${escapeHtml(ev.symbol)}</div>` : ''}
-				${ev.description ? `<div class="evt-take">${escapeHtml(ev.description.slice(0,80))}</div>` : ''}
 			</div>`;
 		}
 

@@ -1,7 +1,7 @@
 import { getAPIKeysAsObject, setAPIKeysFromObject, syncServer } from './stores.js';
 import { get } from 'svelte/store';
 
-export const three.ws-chatHostedAddress = 'https://sync.three.ws';
+export const syncHostedAddress = 'https://sync.three.ws';
 
 // Encryption state
 let encryptionKey = null;

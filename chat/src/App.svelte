@@ -43,7 +43,7 @@
 		feTerminal,
 		feMoreHorizontal,
 		fePaperclip,
-		fthree.ws-chat,
+		feStar,
 		feRefreshCw,
 		feSettings,
 		feShare,
@@ -422,6 +422,7 @@
 		}
 		$controller.abort();
 		generating = false;
+		speakLastMessage();
 		// Stop thinking
 		const i = convo.messages.length - 1;
 		if (convo.messages[i].reasoning) {
@@ -1134,6 +1135,25 @@
 
 	let savedTime = 0;
 	let video;
+
+	// Floating 3D agent
+	let agentEl;
+	let agentVisible = true;
+	let agentScriptLoaded = false;
+
+	$: if ($brandConfig.agent_id && !agentScriptLoaded) {
+		agentScriptLoaded = true;
+		const s = document.createElement('script');
+		s.type = 'module';
+		s.src = '/agent-3d/latest/agent-3d.js';
+		document.head.appendChild(s);
+	}
+
+	function speakLastMessage() {
+		if (!agentEl || !$brandConfig.agent_id) return;
+		const last = [...convo.messages].reverse().find((m) => m.role === 'assistant' && m.content);
+		if (last?.content) agentEl.speak(last.content);
+	}
 </script>
 
 <svelte:window
@@ -1176,7 +1196,7 @@
 			on:click={newConversation}
 			class="flex rounded-full p-2 transition-colors hover:bg-gray-100"
 		>
-			<Icon icon={fthree.ws-chat} strokeWidth={3} class="ml-auto h-4 w-4 text-slate-700" />
+			<Icon icon={feStar} strokeWidth={3} class="ml-auto h-4 w-4 text-slate-700" />
 		</button>
 		<button
 			data-trigger="history"
@@ -1232,7 +1252,7 @@
 					class="flex w-full items-center rounded-[10px] border py-2.5 pl-3 pr-4 text-left text-sm font-medium hover:bg-gray-100"
 				>
 					New chat
-					<Icon icon={fthree.ws-chat} strokeWidth={3} class="ml-auto h-3.5 w-3.5 text-slate-700" />
+					<Icon icon={feStar} strokeWidth={3} class="ml-auto h-3.5 w-3.5 text-slate-700" />
 				</button>
 			</div>
 			<ol
@@ -1509,6 +1529,30 @@
 			}}
 		/>
 	</Modal>
+{/if}
+
+{#if $brandConfig.agent_id}
+	<div class="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2">
+		{#if agentVisible}
+			<!-- svelte-ignore custom-element-no-implicit-ns -->
+			<agent-3d
+				bind:this={agentEl}
+				agent-id={$brandConfig.agent_id}
+				mode="embed"
+				width="220"
+				height="220"
+				background="transparent"
+				style="width:220px;height:220px;border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.18);"
+			></agent-3d>
+		{/if}
+		<button
+			class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-gray-200 transition hover:bg-gray-50"
+			title={agentVisible ? 'Hide agent' : 'Show agent'}
+			on:click={() => (agentVisible = !agentVisible)}
+		>
+			<Icon icon={agentVisible ? feX : feCpu} class="h-3.5 w-3.5 text-slate-600" />
+		</button>
+	</div>
 {/if}
 
 <style lang="postcss">

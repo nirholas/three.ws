@@ -9,6 +9,7 @@ const DEFAULTS = {
 	accent_color: '#6366f1',
 	tagline: 'Chat with any AI model',
 	default_model: 'google/gemini-2.0-flash-exp:free',
+	agent_id: null,
 };
 
 const bodySchema = z.object({
@@ -17,6 +18,7 @@ const bodySchema = z.object({
 	accent_color: z.string().regex(/^#[0-9a-fA-F]{6}$/).default('#6366f1'),
 	tagline: z.string().trim().max(200).optional(),
 	default_model: z.string().trim().min(1).max(100).optional(),
+	agent_id: z.string().trim().max(100).nullable().optional(),
 });
 
 export default wrap(async (req, res) => {
@@ -25,7 +27,7 @@ export default wrap(async (req, res) => {
 
 	// GET — fully public, returns current brand config
 	if (req.method === 'GET') {
-		const [row] = await sql`SELECT name, logo_url, accent_color, tagline, default_model FROM chat_brand_config WHERE key = 'global'`;
+		const [row] = await sql`SELECT name, logo_url, accent_color, tagline, default_model, agent_id FROM chat_brand_config WHERE key = 'global'`;
 		return json(res, 200, { data: row ?? DEFAULTS });
 	}
 
@@ -55,9 +57,10 @@ export default wrap(async (req, res) => {
 			accent_color  = ${body.accent_color},
 			tagline       = ${body.tagline ?? DEFAULTS.tagline},
 			default_model = ${body.default_model ?? DEFAULTS.default_model},
+			agent_id      = ${body.agent_id ?? null},
 			updated_at    = now()
 		WHERE key = 'global'
-		RETURNING name, logo_url, accent_color, tagline, default_model, updated_at
+		RETURNING name, logo_url, accent_color, tagline, default_model, agent_id, updated_at
 	`;
 
 	return json(res, 200, { data: row });

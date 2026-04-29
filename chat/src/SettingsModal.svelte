@@ -22,7 +22,7 @@
 		feHardDrive,
 		feKey,
 		feLayout,
-		fthree.ws-chat,
+		feStar,
 		feRefreshCw,
 		feTool,
 		feUsers,
@@ -59,6 +59,7 @@
 			accent_color: $brandConfig.accent_color,
 			tagline: $brandConfig.tagline,
 			default_model: $brandConfig.default_model,
+			agent_id: $brandConfig.agent_id ?? '',
 		};
 	}
 
@@ -73,6 +74,7 @@
 				body: JSON.stringify({
 					...brandDraft,
 					logo_url: brandDraft.logo_url || null,
+					agent_id: brandDraft.agent_id || null,
 				}),
 			});
 			const json = await res.json();
@@ -473,7 +475,7 @@
 								});
 							}}
 						>
-							<Icon icon={fthree.ws-chat} strokeWidth={3} class="mr-2 h-3 w-3 text-slate-700" />
+							<Icon icon={feStar} strokeWidth={3} class="mr-2 h-3 w-3 text-slate-700" />
 							Add new tool
 						</Button>
 					</div>
@@ -545,6 +547,15 @@
 									<option value={m.id}>{m.name}</option>
 								{/each}
 							</select>
+						</label>
+						<label class="flex flex-col text-[10px] uppercase tracking-wide">
+							<span class="mb-2 ml-[3px]">Floating agent ID</span>
+							<input
+								type="text"
+								bind:value={brandDraft.agent_id}
+								class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] outline-none focus:border-indigo-400"
+								placeholder="e.g. agent-abc123 (leave blank to hide)"
+							/>
 						</label>
 						<label class="flex flex-col text-[10px] uppercase tracking-wide">
 							<span class="mb-2 ml-[3px]">Accent color</span>

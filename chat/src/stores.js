@@ -1,7 +1,7 @@
 import { writable, get } from 'svelte/store';
 import { persisted } from './localstorage.js';
 import { v4 as uuidv4 } from 'uuid';
-import { three.ws-chatHostedAddress } from './sync.js';
+import { syncHostedAddress } from './sync.js';
 
 export const brandConfig = writable({
 	name: 'three.ws chat',
@@ -9,6 +9,7 @@ export const brandConfig = writable({
 	accent_color: '#6366f1',
 	tagline: 'Chat with any AI model',
 	default_model: 'google/gemini-2.0-flash-exp:free',
+	agent_id: null,
 });
 
 export const controller = writable(null);
@@ -53,7 +54,7 @@ export function setAPIKeysFromObject(obj) {
 
 export const remoteServer = persisted('remoteServer', { address: 'http://localhost:8081', password: '' });
 export const syncServer = persisted('syncServer', {
-	address: three.ws-chatHostedAddress,
+	address: syncHostedAddress,
 	token: uuidv4(),
 	password: '',
 });
