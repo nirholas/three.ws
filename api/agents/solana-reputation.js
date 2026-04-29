@@ -32,9 +32,13 @@ export default wrap(async (req, res) => {
 	try { new PublicKey(asset); }
 	catch { return error(res, 400, 'validation_error', 'invalid asset pubkey'); }
 
-	// One pass: feedback aggregates split by verified-task-acceptance.
-	// Sybil-weighting: collapse multiple feedbacks from the same attester to
-	// their average so one wallet leaving 100 ratings doesn't dominate.
+	// One pass: feedback aggregates split by verified-task-acceptance and by
+	// SAS credentialing. Three layers of trust:
+	//   1. Raw — every memo feedback counts equally.
+	//   2. Verified — feedback whose task_id has a matching task.accepted.
+	//   3. Credentialed — feedback from attesters who additionally hold a
+	//      threews.verified-client.v1 SAS credential. This is the strongest
+	//      Sybil resistance: an outsider can't fabricate a credential.
 	const [fb] = await sql`
 		with feedback as (
 			select
@@ -48,7 +52,15 @@ export default wrap(async (req, res) => {
 					  and a.payload->>'task_id' = f.payload->>'task_id'
 					  and a.verified = true
 					  and f.payload->>'task_id' is not null
-				) as task_accepted
+				) as task_accepted,
+				exists (
+					select 1 from solana_credentials c
+					where c.subject = f.attester
+					  and c.network = f.network
+					  and c.kind = 'threews.verified-client.v1'
+					  and c.closed = false
+					  and (c.expiry is null or c.expiry > now())
+				) as credentialed
 			from solana_attestations f
 			where f.agent_asset = ${asset}
 			  and f.network = ${network}
@@ -57,19 +69,24 @@ export default wrap(async (req, res) => {
 		),
 		per_attester as (
 			select attester, avg(score)::float as score_avg,
-				bool_or(task_accepted) as any_verified
+				bool_or(task_accepted) as any_verified,
+				bool_or(credentialed)  as any_credentialed
 			from feedback group by attester
 		)
 		select
 			(select count(*)::int from feedback)                                as total,
 			(select count(*) filter (where task_accepted)::int from feedback)   as verified,
+			(select count(*) filter (where credentialed)::int from feedback)    as credentialed,
 			(select count(*) filter (where disputed)::int from feedback)        as disputed,
 			(select coalesce(avg(score), 0)::float from feedback)               as score_avg,
 			(select coalesce(avg(score) filter (where task_accepted), 0)::float from feedback) as score_avg_verified,
+			(select coalesce(avg(score) filter (where credentialed), 0)::float from feedback)  as score_avg_credentialed,
 			(select count(*)::int from per_attester)                            as unique_attesters,
 			(select count(*) filter (where any_verified)::int from per_attester) as unique_verified_attesters,
+			(select count(*) filter (where any_credentialed)::int from per_attester) as unique_credentialed_attesters,
 			(select coalesce(avg(score_avg), 0)::float from per_attester)       as score_avg_weighted,
-			(select coalesce(avg(score_avg) filter (where any_verified), 0)::float from per_attester) as score_avg_weighted_verified
+			(select coalesce(avg(score_avg) filter (where any_verified), 0)::float from per_attester) as score_avg_weighted_verified,
+			(select coalesce(avg(score_avg) filter (where any_credentialed), 0)::float from per_attester) as score_avg_weighted_credentialed
 	`;
 
 	const [val] = await sql`
@@ -79,6 +96,17 @@ export default wrap(async (req, res) => {
 		from solana_attestations
 		where agent_asset = ${asset} and network = ${network}
 		  and kind = 'threews.validation.v1' and revoked = false
+	`;
+
+	// Audited validations from authorized validators (SAS-credentialed).
+	const [auditedVal] = await sql`
+		select
+			count(*) filter (where (data->>'passed')::bool)::int     as passed,
+			count(*) filter (where not (data->>'passed')::bool)::int as failed
+		from solana_credentials
+		where subject = ${asset} and network = ${network}
+		  and kind = 'threews.audited-validation.v1'
+		  and closed = false and (expiry is null or expiry > now())
 	`;
 
 	const [counts] = await sql`
@@ -99,19 +127,25 @@ export default wrap(async (req, res) => {
 		agent: asset,
 		network,
 		feedback: {
-			total:                       fb.total,
-			verified:                    fb.verified,
-			disputed:                    fb.disputed,
-			unique_attesters:            fb.unique_attesters,
-			unique_verified_attesters:   fb.unique_verified_attesters,
-			score_avg:                   Number(fb.score_avg.toFixed(3)),
-			score_avg_verified:          Number(fb.score_avg_verified.toFixed(3)),
-			score_avg_weighted:          Number(fb.score_avg_weighted.toFixed(3)),
-			score_avg_weighted_verified: Number(fb.score_avg_weighted_verified.toFixed(3)),
+			total:                            fb.total,
+			verified:                         fb.verified,
+			credentialed:                     fb.credentialed,
+			disputed:                         fb.disputed,
+			unique_attesters:                 fb.unique_attesters,
+			unique_verified_attesters:        fb.unique_verified_attesters,
+			unique_credentialed_attesters:    fb.unique_credentialed_attesters,
+			score_avg:                        Number(fb.score_avg.toFixed(3)),
+			score_avg_verified:               Number(fb.score_avg_verified.toFixed(3)),
+			score_avg_credentialed:           Number(fb.score_avg_credentialed.toFixed(3)),
+			score_avg_weighted:               Number(fb.score_avg_weighted.toFixed(3)),
+			score_avg_weighted_verified:      Number(fb.score_avg_weighted_verified.toFixed(3)),
+			score_avg_weighted_credentialed:  Number(fb.score_avg_weighted_credentialed.toFixed(3)),
 		},
 		validation: {
-			passed: val.passed,
-			failed: val.failed,
+			self_passed:    val.passed,
+			self_failed:    val.failed,
+			audited_passed: auditedVal.passed,
+			audited_failed: auditedVal.failed,
 		},
 		tasks: {
 			offered:  counts.tasks_offered,
