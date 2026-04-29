@@ -24,6 +24,7 @@ import { getRadarSignals } from '../src/kol/radar.js';
 import { TOOLS, rpcError, rpcEnvelope } from '../src/pump/mcp-tools.js';
 import { generateVanityKey } from '../src/pump/vanity-keygen.js';
 import bs58 from 'bs58';
+import { resolveSnsName, reverseLookupAddress } from '../src/solana/sns.js';
 
 // ── On-chain handlers ──────────────────────────────────────────────────────
 
@@ -164,6 +165,22 @@ async function handleKolRadar({ category = 'pump-fun', limit = 20 }) {
 
 async function handleKolLeaderboard({ window = '7d', limit = 25 }) {
 	return getLeaderboard({ window, limit });
+}
+
+// ── SNS handlers ──────────────────────────────────────────────────────────
+
+async function handleSnsResolve({ name }) {
+	if (!name) throw rpcError(-32602, 'name is required');
+	const address = await resolveSnsName(name);
+	if (!address) throw rpcError(-32004, `domain "${name}" not found`);
+	return { name, address };
+}
+
+async function handleSnsReverseLookup({ address }) {
+	if (!address) throw rpcError(-32602, 'address is required');
+	const name = await reverseLookupAddress(address);
+	if (!name) throw rpcError(-32004, `no .sol domain found for address`);
+	return { address, name };
 }
 
 // ── Indexer-backed handlers (route through pumpfunMcp) ─────────────────────

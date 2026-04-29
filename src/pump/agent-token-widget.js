@@ -17,6 +17,8 @@
  * recent payment feed, owner withdraw button, governance explainer.
  */
 
+import { mountBondingCurve } from '../components/bonding-curve.js';
+
 const POLL_MS = 10_000;
 
 function fmtUsdc(atomics) {
@@ -87,13 +89,8 @@ const STYLES = `
 	font-size: 0.72rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em; text-transform: uppercase;
 }
 
-.atok-grad-bar {
-	height: 4px; background: rgba(255,255,255,0.05); border-radius: 999px;
-	margin: 0.9rem 0 0.3rem; overflow: hidden;
-}
-.atok-grad-fill {
-	height: 100%; background: linear-gradient(90deg, #6a93ff, #a4f0bc);
-	transition: width 0.6s cubic-bezier(.2,.8,.2,1);
+.atok-curve-wrap {
+	margin: 0.9rem 0 0;
 }
 .atok-grad-label {
 	font-size: 0.7rem; color: rgba(255,255,255,0.5); display: flex; justify-content: space-between;
@@ -256,6 +253,7 @@ export class AgentTokenWidget {
 		this.lastPrice = null;
 		this.lastVaults = null;
 		this.lastFeedTop = null;
+		this._curve = null;
 		this._mobileStrip = null;
 		this._poll = null;
 		this._destroyed = false;
@@ -281,6 +279,7 @@ export class AgentTokenWidget {
 		this._destroyed = true;
 		if (this._poll) clearInterval(this._poll);
 		this._teardownRealtime();
+		if (this._curve) { this._curve.destroy(); this._curve = null; }
 		if (this._mobileStrip?.parentNode) this._mobileStrip.parentNode.removeChild(this._mobileStrip);
 	}
 
@@ -634,8 +633,8 @@ export class AgentTokenWidget {
 
 				${
 					progressPct != null
-						? `<div class="atok-grad-bar"><div class="atok-grad-fill" style="width:${progressPct.toFixed(1)}%"></div></div>
-							<div class="atok-grad-label"><span>${progressPct.toFixed(1)}% to graduation</span><span>${graduated ? 'AMM' : 'curve'}</span></div>`
+						? `<div class="atok-curve-wrap"></div>
+							<div class="atok-grad-label"><span>${progressPct.toFixed(1)}% to graduation</span><span>curve</span></div>`
 						: graduated
 							? `<div class="atok-grad-label" style="margin-top:0.6rem"><span>🎓 Graduated to AMM</span><span></span></div>`
 							: ''

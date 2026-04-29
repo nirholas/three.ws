@@ -658,3 +658,95 @@ body.studio-body {
 	border-radius: 3px;
 	width: fit-content;
 }
+
+/* ── right-column tabs (Brand / Launch) ─────────────────────────────────── */
+.studio-right-tabs {
+	display: flex;
+	gap: 0;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+	margin: 0 calc(var(--space-md) * -1) var(--space-md);
+	padding: 0 var(--space-md);
+}
+.studio-right-tab {
+	padding: var(--space-xs) var(--space-sm);
+	font-size: var(--text-sm);
+	font-family: inherit;
+	font-weight: 500;
+	background: transparent;
+	border: none;
+	border-bottom: 2px solid transparent;
+	color: rgba(229, 229, 229, 0.45);
+	cursor: pointer;
+	margin-bottom: -1px;
+	transition: color 0.15s, border-color 0.15s;
+}
+.studio-right-tab:hover {
+	color: rgba(229, 229, 229, 0.85);
+}
+.studio-right-tab[aria-selected='true'] {
+	color: #e5e5e5;
+	border-bottom-color: var(--accent);
+}
+
+/* ── launch panel ───────────────────────────────────────────────────────── */
+.launch-panel {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-sm);
+}
+.launch-panel-desc {
+	font-size: var(--text-sm);
+	margin: 0;
+}
+.launch-req {
+	color: rgba(255, 100, 100, 0.8);
+}
+.launch-field-err {
+	font-size: var(--text-xs);
+	color: #ffb3b3;
+}
+.launch-file-input {
+	background: #0a0a0a;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	color: #e5e5e5;
+	padding: 4px 8px;
+	border-radius: var(--radius-md);
+	font-size: var(--text-sm);
+	font-family: inherit;
+	cursor: pointer;
+}
+
+/* Bonding-curve progress — ported from solana-launchpad-ui styles.css */
+.bonding-curve-preview {
+	margin-top: var(--space-xs);
+}
+.bonding-curve-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 5px;
+}
+.bonding-curve-pct {
+	font-size: 0.78rem;
+	color: #7bff69;
+	font-weight: 500;
+}
+.bonding-curve-track {
+	height: 4px;
+	background: rgba(255, 255, 255, 0.06);
+	border-radius: 2px;
+	overflow: hidden;
+}
+.bonding-curve-fill {
+	height: 100%;
+	background: linear-gradient(90deg, #5bd94d, #7bff69);
+	border-radius: 2px;
+	transition: width 0.5s ease;
+}
+.bonding-curve-labels {
+	display: flex;
+	justify-content: space-between;
+	font-size: 0.7rem;
+	color: rgba(255, 255, 255, 0.3);
+	margin-top: 4px;
+}

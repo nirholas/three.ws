@@ -201,7 +201,45 @@ export const TOOLS = [
 			required: ['address'],
 		},
 	},
+	{
+		name: 'kol_leaderboard',
+		description:
+			'Top KOL traders ranked by P&L for a given time window. Returns wallet, pnlUsd, winRate, trades, rank.',
+		inputSchema: {
+			type: 'object',
+			properties: {
+				window: { type: 'string', enum: ['24h', '7d', '30d'], default: '7d' },
+				limit: { type: 'integer', minimum: 1, maximum: 100, default: 25 },
+			},
+		},
+	},
 ];
+
+	{
+		name: 'social_cashtag_sentiment',
+		description:
+			'Score social-post sentiment for a cashtag using a deterministic lexicon. Returns score (-1..1), positive/negative/neutral percentages, and example posts.',
+		inputSchema: {
+			type: 'object',
+			properties: {
+				posts: {
+					type: 'array',
+					description: 'Array of post objects. Each must have a text field; id, ts, and author are optional.',
+					items: {
+						type: 'object',
+						properties: {
+							id: { type: 'string' },
+							ts: { type: 'string' },
+							text: { type: 'string' },
+							author: { type: 'string' },
+						},
+						required: ['text'],
+					},
+				},
+			},
+			required: ['posts'],
+		},
+	},
 
 export function rpcError(code, message) {
 	const err = new Error(message);
