@@ -29,6 +29,7 @@ const bodySchema = z.object({
 	vanityPrefix: z.string().min(1).max(6).optional(),
 	vanitySuffix: z.string().min(1).max(6).optional(),
 	vanityIgnoreCase: z.boolean().optional(),
+	mintSecretKey: z.array(z.number().int().min(0).max(255)).length(64).optional(),
 	network: z.enum(['mainnet', 'devnet']).default('mainnet'),
 });
 
@@ -69,17 +70,34 @@ export default async function handler(req, res, id) {
 	let mint;
 	let vanityIterations = 1;
 	let vanityDurationMs = 0;
-	try {
-		const ground = await grindMintKeypair({
-			prefix: body.vanityPrefix,
-			suffix: body.vanitySuffix,
-			ignoreCase: body.vanityIgnoreCase,
-		});
-		mint = ground.keypair;
-		vanityIterations = ground.iterations;
-		vanityDurationMs = ground.durationMs;
-	} catch (err) {
-		return error(res, err.status || 500, err.code || 'internal', err.message);
+	if (body.mintSecretKey) {
+		try {
+			mint = Keypair.fromSecretKey(Uint8Array.from(body.mintSecretKey));
+		} catch (e) {
+			return error(res, 400, 'validation_error', 'mintSecretKey did not parse as a valid Solana keypair');
+		}
+		const addr = mint.publicKey.toBase58();
+		const ic = !!body.vanityIgnoreCase;
+		const cmp = (a, b) => (ic ? a.toLowerCase() === b.toLowerCase() : a === b);
+		if (body.vanityPrefix && !cmp(addr.slice(0, body.vanityPrefix.length), body.vanityPrefix)) {
+			return error(res, 400, 'validation_error', 'mintSecretKey does not match vanityPrefix');
+		}
+		if (body.vanitySuffix && !cmp(addr.slice(-body.vanitySuffix.length), body.vanitySuffix)) {
+			return error(res, 400, 'validation_error', 'mintSecretKey does not match vanitySuffix');
+		}
+	} else {
+		try {
+			const ground = await grindMintKeypair({
+				prefix: body.vanityPrefix,
+				suffix: body.vanitySuffix,
+				ignoreCase: body.vanityIgnoreCase,
+			});
+			mint = ground.keypair;
+			vanityIterations = ground.iterations;
+			vanityDurationMs = ground.durationMs;
+		} catch (err) {
+			return error(res, err.status || 500, err.code || 'internal', err.message);
+		}
 	}
 	const solLamports = new BN(Math.floor((body.solAmount || 0) * 1e9));
 	const tokenAmount = new BN(body.tokenAmount || 0);

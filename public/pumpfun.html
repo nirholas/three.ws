@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<title>Pump.fun live · three.ws</title>
+	<title>PumpFun migrations · three.ws</title>
 	<link rel="icon" href="/favicon.ico" />
 	<style>
 		:root { color-scheme: dark; --accent: #6a5cff; --border: #1f1f29; --bg: #0a0a0f; --panel: #14141c; --muted: #888; }
@@ -72,7 +72,7 @@
 </head>
 <body>
 	<header>
-		<h1>✦ Pump.fun live</h1>
+		<h1>✦ PumpFun migrations</h1>
 		<span class="status-pill" id="status-pill"><span class="dot connecting" id="status-dot"></span><span id="status-label">connecting…</span></span>
 		<div class="ctl">
 			<input id="ctl-asset" type="text" placeholder="Solana asset pubkey (optional)" size="22" />
@@ -116,7 +116,7 @@
 		const params = {
 			asset: url.searchParams.get('asset') || '',
 			mint: url.searchParams.get('mint') || '',
-			kind: url.searchParams.get('kind') || 'all',
+			kind: url.searchParams.get('kind') || 'graduations',
 			minTier: url.searchParams.get('minTier') || '',
 			network: url.searchParams.get('network') || 'mainnet',
 			narrate: url.searchParams.get('narrate') !== '0',

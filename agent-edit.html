@@ -430,6 +430,16 @@
 			>
 				Outfit
 			</button>
+			<button
+				class="edit-tab"
+				data-tab="publish"
+				role="tab"
+				aria-selected="false"
+				aria-controls="panel-publish"
+				id="tab-publish"
+			>
+				Publish
+			</button>
 		</div>
 
 		<main id="main">
@@ -487,6 +497,56 @@
 					<div id="mat-list">
 						<div class="no-named-mats">Loading preview…</div>
 					</div>
+				</div>
+			</section>
+			<!-- Publish tab -->
+			<section
+				class="edit-panel persona-panel"
+				id="panel-publish"
+				role="tabpanel"
+				aria-labelledby="tab-publish"
+				hidden
+			>
+				<div class="form-group">
+					<label class="form-label" for="f-category">Category</label>
+					<select class="form-input" id="f-category">
+						<option value="">— Select —</option>
+						<option value="academic">Academic</option>
+						<option value="career">Career</option>
+						<option value="copywriting">Copywriting</option>
+						<option value="design">Design</option>
+						<option value="education">Education</option>
+						<option value="emotions">Emotions</option>
+						<option value="entertainment">Entertainment</option>
+						<option value="games">Games</option>
+						<option value="general">General</option>
+						<option value="life">Life</option>
+						<option value="marketing">Marketing</option>
+						<option value="office">Office</option>
+						<option value="programming">Programming</option>
+						<option value="translation">Translation</option>
+					</select>
+				</div>
+				<div class="form-group">
+					<label class="form-label" for="f-tags">Tags (comma-separated, max 12)</label>
+					<input class="form-input" id="f-tags" type="text" placeholder="thesis, polishing, academic-writing" />
+				</div>
+				<div class="form-group">
+					<label class="form-label" for="f-prompt">Agent Profile (system prompt)</label>
+					<textarea class="form-textarea" id="f-prompt" rows="8" maxlength="16000" placeholder="You are a professor of computer science…"></textarea>
+				</div>
+				<div class="form-group">
+					<label class="form-label" for="f-greeting">Greeting (demo first message)</label>
+					<textarea class="form-textarea" id="f-greeting" rows="3" maxlength="1000" placeholder="Hello! I am your computer science thesis polishing assistant…"></textarea>
+				</div>
+				<div class="form-group">
+					<label class="form-label" for="f-changelog">Changelog (optional, for this version)</label>
+					<input class="form-input" id="f-changelog" type="text" maxlength="1000" placeholder="Initial publish" />
+				</div>
+				<div class="form-actions">
+					<button class="btn-primary" id="publish-save">Publish to Marketplace</button>
+					<a id="publish-view" href="#" target="_blank" rel="noopener" style="margin-left:1rem;font-size:0.764rem;color:rgba(255,255,255,0.55);" hidden>View on marketplace ›</a>
+					<span class="form-status" id="publish-status" role="status" aria-live="polite"></span>
 				</div>
 			</section>
 		</main>
@@ -550,6 +610,7 @@
 					else p.setAttribute('hidden', '');
 				});
 				if (name === 'outfit') initOutfitTab();
+				if (name === 'publish') initPublishTab();
 			}
 
 			const editTabs = document.querySelectorAll('.edit-tab');
@@ -600,6 +661,74 @@
 					document.getElementById('agent-title').textContent = `Edit — ${agent.name}`;
 					status.textContent = 'Saved.';
 					status.className = 'form-status ok';
+				} catch (err) {
+					status.textContent = err.message;
+					status.className = 'form-status err';
+				} finally {
+					btn.disabled = false;
+				}
+			});
+
+			// ── Publish tab ───────────────────────────────────────────────────────────
+			let publishInitialized = false;
+
+			async function initPublishTab() {
+				if (publishInitialized) return;
+				publishInitialized = true;
+				const meta = agent.meta || {};
+				document.getElementById('f-category').value = meta.category || agent.category || '';
+				document.getElementById('f-tags').value = (meta.tags || agent.tags || []).join(', ');
+				document.getElementById('f-prompt').value = meta.system_prompt || agent.system_prompt || '';
+				document.getElementById('f-greeting').value = meta.greeting || agent.greeting || '';
+				if (meta.is_published || agent.is_published) {
+					const link = document.getElementById('publish-view');
+					link.hidden = false;
+					link.href = `/marketplace/agents/${agentId}`;
+					document.getElementById('publish-save').textContent = 'Publish New Version';
+				}
+			}
+
+			document.getElementById('publish-save').addEventListener('click', async () => {
+				const btn = document.getElementById('publish-save');
+				const status = document.getElementById('publish-status');
+				const category = document.getElementById('f-category').value;
+				if (!category) {
+					status.textContent = 'Pick a category.';
+					status.className = 'form-status err';
+					return;
+				}
+				const tags = document
+					.getElementById('f-tags')
+					.value.split(',')
+					.map((t) => t.trim().toLowerCase())
+					.filter(Boolean)
+					.slice(0, 12);
+				const body = {
+					category,
+					tags,
+					system_prompt: document.getElementById('f-prompt').value.trim(),
+					greeting: document.getElementById('f-greeting').value.trim(),
+					changelog: document.getElementById('f-changelog').value.trim() || null,
+				};
+				btn.disabled = true;
+				status.textContent = 'Publishing…';
+				status.className = 'form-status';
+				try {
+					const r = await fetch(`/api/marketplace/agents/${agentId}/publish`, {
+						method: 'POST',
+						credentials: 'include',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify(body),
+					});
+					const j = await r.json();
+					if (!r.ok) throw new Error(j.error_description || `HTTP ${r.status}`);
+					status.textContent = `Published v${j.data.version}.`;
+					status.className = 'form-status ok';
+					const link = document.getElementById('publish-view');
+					link.hidden = false;
+					link.href = `/marketplace/agents/${agentId}`;
+					btn.textContent = 'Publish New Version';
+					document.getElementById('f-changelog').value = '';
 				} catch (err) {
 					status.textContent = err.message;
 					status.className = 'form-status err';

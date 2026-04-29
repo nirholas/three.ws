@@ -546,6 +546,58 @@
 				</p>
 			</section>
 
+			<section class="panel" id="vanity-panel">
+				<h2>Vanity grinder ✦</h2>
+				<p class="muted" style="margin: 0 0 10px; font-size: 13px">
+					Grind a Solana keypair entirely in your browser — keys never leave this tab.
+					Use the result for your next pump.fun launch, or assign it as the agent's wallet.
+					Base58 only (no <code>0/O/I/l</code>). 5–6 chars can take minutes; 7+ is impractical.
+				</p>
+				<div class="row">
+					<div class="field" style="flex: 0 0 140px">
+						<label for="vg-prefix">Prefix</label>
+						<input id="vg-prefix" placeholder="PUMP" maxlength="6" autocomplete="off" />
+					</div>
+					<div class="field" style="flex: 0 0 140px">
+						<label for="vg-suffix">Suffix</label>
+						<input id="vg-suffix" placeholder="pump" maxlength="6" autocomplete="off" />
+					</div>
+					<div class="field" style="flex: 0 0 auto; padding-top: 22px">
+						<label style="display:flex;align-items:center;gap:6px;color:#ddd">
+							<input type="checkbox" id="vg-ic" /> ignore case
+						</label>
+					</div>
+					<div style="flex: 0 0 auto; padding-top: 19px">
+						<button class="btn" id="vg-start">Start grinding</button>
+					</div>
+					<div style="flex: 0 0 auto; padding-top: 19px">
+						<button class="btn ghost" id="vg-stop" hidden>Stop</button>
+					</div>
+				</div>
+				<div id="vg-progress" class="muted" style="margin-top:10px;font-size:13px;font-family:ui-monospace,Menlo,monospace">
+					Idle. Estimated attempts shown after you enter a pattern.
+				</div>
+				<div id="vg-result" hidden style="margin-top:12px">
+					<dl class="kv">
+						<dt>Address</dt>
+						<dd id="vg-address" class="mono"></dd>
+						<dt>Attempts</dt>
+						<dd id="vg-attempts"></dd>
+						<dt>Duration</dt>
+						<dd id="vg-duration"></dd>
+					</dl>
+					<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap">
+						<button class="btn" id="vg-use-launch">Use for next launch</button>
+						<button class="btn ghost" id="vg-assign">Assign as agent wallet</button>
+						<button class="btn ghost" id="vg-copy">Copy secret JSON</button>
+						<button class="btn ghost" id="vg-discard">Discard</button>
+					</div>
+					<p class="muted" style="margin:8px 0 0;font-size:12px">
+						The secret is held in this tab only. Closing or refreshing this page erases it.
+					</p>
+				</div>
+			</section>
+
 			<section class="panel">
 				<h2>Trade on the bonding curve</h2>
 				<div class="row">
@@ -1127,6 +1179,9 @@
 				if (vanity) body.vanityPrefix = vanity;
 				if (vanitySuffix) body.vanitySuffix = vanitySuffix;
 				if (els.launchVanityIc.checked) body.vanityIgnoreCase = true;
+				if (window.__pendingMintSecret) {
+					body.mintSecretKey = Array.from(window.__pendingMintSecret);
+				}
 				const sol = parseFloat(els.launchSol.value);
 				if (sol > 0) body.solAmount = sol;
 				els.launchBtn.disabled = true;
@@ -1142,6 +1197,11 @@
 						`Launched ${data.mint.slice(0, 12)}… (${data.vanity_iterations.toLocaleString()} attempts in ${data.vanity_duration_ms}ms)`,
 					);
 					els.tradeMint.value = data.mint;
+					if (window.__pendingMintSecret) {
+						window.__pendingMintSecret = null;
+						const banner = document.getElementById('vg-launch-banner');
+						if (banner) banner.remove();
+					}
 					await refreshAgent();
 					await refreshPortfolio();
 				} catch (err) {
