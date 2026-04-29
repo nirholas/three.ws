@@ -87,24 +87,20 @@ function _mountShareButton(mount, identity) {
 	mount.appendChild(btn);
 }
 
-/** Insert a chip mount span inline after the agent name heading. */
+/** Insert a chip mount in its own row beneath the hero (below the subtitle). */
 function _createChipMount() {
+	const subtitle = document.getElementById('page-agent-desc');
 	const titleEl = document.getElementById('page-agent-name');
-	if (!titleEl) {
+	const anchor = subtitle || titleEl;
+	if (!anchor) {
 		const fallback = document.createElement('div');
 		document.body.appendChild(fallback);
 		return fallback;
 	}
 
-	// Wrap h1 + chip in a flex row so the chip sits inline at 12px gap
-	const wrapper = document.createElement('div');
-	wrapper.className = 'agent-title-row';
-	titleEl.parentNode.insertBefore(wrapper, titleEl);
-	wrapper.appendChild(titleEl);
-
 	const chipMount = document.createElement('div');
 	chipMount.className = 'agent-deploy-chip-mount';
-	wrapper.appendChild(chipMount);
+	anchor.parentNode.insertBefore(chipMount, anchor.nextSibling);
 	return chipMount;
 }
 
