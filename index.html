@@ -779,7 +779,6 @@
 				<a href="/my-agents" id="nav-my-agents" hidden>My Agents</a>
 				<a href="/dashboard" id="nav-user" hidden class="nav-user"></a>
 				<a href="/login" class="nav-sign-in" id="nav-sign-in">Sign in</a>
-				<button id="btn-wallet-signin" style="cursor: pointer">Sign in with wallet</button>
 			</nav>
 		</header>
 
@@ -1627,11 +1626,5 @@
 				});
 			})();
 		</script>
-		<script type="module">
-			import { wireSigninButton } from '/src/wallet-auth.js';
-			const btn = document.getElementById('btn-wallet-signin');
-			if (btn) wireSigninButton(btn);
-		</script>
-
 	</body>
 </html>
