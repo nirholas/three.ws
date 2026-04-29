@@ -88,7 +88,7 @@ In order of Sybil resistance (strongest first):
 
 1. **Credentialed** — feedback from attesters holding `threews.verified-client.v1` SAS credentials.
 2. **Verified** — feedback whose `task_id` has a matching `threews.accept.v1` from the agent owner.
-3. **Event-attested** — feedback whose `payload.source` starts with `pumpkit.` (issued by this webhook).
+3. **Event-attested** — feedback whose `payload.source` starts with `pumpkit.` (external webhook) or `pumpfun.` (in-house monitor cron).
 4. **Community** — raw memo feedback.
 
 The passport (`/agent-passport.html`) renders all four tiers and computes a top-level **A/B/C/D trust grade** from the strongest available tier, penalised by disputes and validation-failure rate.
