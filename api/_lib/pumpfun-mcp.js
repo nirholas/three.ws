@@ -1,22 +1,18 @@
-// Thin client for the upstream `pumpfun-claims-bot` MCP server.
+// Pumpfun feed source.
 //
-// The bot is run as a long-lived service (e.g. Railway) that exposes a JSON-RPC
-// 2.0 MCP endpoint over HTTPS. This module fans calls out to its `tools/call`
-// method and caches the result in Upstash Redis when available so each Vercel
-// function cold start does not re-fetch the same data.
+// Reads graduation events from an Upstash Redis list populated by the
+// `services/pump-graduations` worker. Claim/intel ops are stubbed out — the
+// three.ws/pumpfun page only needs graduations to announce migrations.
 //
-// Configure via env:
-//   PUMPFUN_BOT_URL       Full URL to the bot's MCP endpoint (required to enable)
-//   PUMPFUN_BOT_TOKEN     Optional bearer for authenticated MCP transports
-//
-// All exported helpers return `{ ok, data, error }`. They never throw on
-// network failure — callers degrade gracefully.
+// Env:
+//   UPSTASH_REDIS_REST_URL    required to enable the feed
+//   UPSTASH_REDIS_REST_TOKEN  required
+//   GRADUATIONS_LIST_KEY      default: pf:graduations
 
 import { Redis } from '@upstash/redis';
 import { env } from './env.js';
 
-const TOOL_TIMEOUT_MS = 8000;
-const CACHE_TTL_S = 60;
+const LIST_KEY = process.env.GRADUATIONS_LIST_KEY || 'pf:graduations';
 
 let _redis = null;
 function redis() {
@@ -33,89 +29,70 @@ function redis() {
 }
 
 export function pumpfunBotEnabled() {
-	return !!process.env.PUMPFUN_BOT_URL;
+	return !!(env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN);
 }
 
-function botUrl() {
-	const u = process.env.PUMPFUN_BOT_URL;
-	if (!u) throw Object.assign(new Error('pumpfun bot not configured'), { status: 503 });
-	return u.replace(/\/$/, '');
-}
-
-async function rpc(method, params) {
-	const ctrl = new AbortController();
-	const timer = setTimeout(() => ctrl.abort(), TOOL_TIMEOUT_MS);
-	try {
-		const headers = { 'content-type': 'application/json', accept: 'application/json' };
-		if (process.env.PUMPFUN_BOT_TOKEN) {
-			headers.authorization = `Bearer ${process.env.PUMPFUN_BOT_TOKEN}`;
-		}
-		const r = await fetch(botUrl(), {
-			method: 'POST',
-			headers,
-			body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
-			signal: ctrl.signal,
-		});
-		if (!r.ok) return { ok: false, error: `bot ${r.status}` };
-		const j = await r.json();
-		if (j.error) return { ok: false, error: j.error.message || 'rpc error' };
-		return { ok: true, data: j.result };
-	} catch (err) {
-		return { ok: false, error: err?.name === 'AbortError' ? 'timeout' : err?.message || 'fetch failed' };
-	} finally {
-		clearTimeout(timer);
-	}
-}
-
-async function callTool(name, args, { ttl = CACHE_TTL_S } = {}) {
-	const cacheKey = `pf:${name}:${JSON.stringify(args || {})}`;
+async function readGraduations(limit = 20) {
 	const r = redis();
-	if (r) {
-		try {
-			const cached = await r.get(cacheKey);
-			if (cached) return { ok: true, data: cached, cached: true };
-		} catch {}
+	if (!r) return [];
+	try {
+		const items = await r.lrange(LIST_KEY, 0, Math.max(0, limit - 1));
+		return items
+			.map((x) => (typeof x === 'string' ? safeJson(x) : x))
+			.filter(Boolean)
+			.map(toFeedShape);
+	} catch (err) {
+		console.error('[pumpfun-mcp] redis read failed:', err?.message || err);
+		return [];
 	}
-	const res = await rpc('tools/call', { name, arguments: args || {} });
-	if (!res.ok) return res;
-	// MCP tool result envelope → unwrap structuredContent if present.
-	const payload = res.data?.structuredContent ?? res.data?.content ?? res.data;
-	if (r && payload) {
-		try {
-			await r.set(cacheKey, payload, { ex: ttl });
-		} catch {}
-	}
-	return { ok: true, data: payload };
+}
+
+function toFeedShape(g) {
+	// Worker pushes { signature, mint, tokenName, tokenSymbol, poolAddress, timestamp }
+	// Feed/widget consume { tx_signature, mint, name, symbol, ... }.
+	return {
+		tx_signature: g.signature,
+		signature: g.signature,
+		mint: g.mint,
+		name: g.tokenName || null,
+		symbol: g.tokenSymbol || null,
+		pool_address: g.poolAddress || null,
+		final_mcap: g.finalMcap ?? null,
+		timestamp: g.timestamp,
+	};
+}
+
+function safeJson(s) {
+	try { return JSON.parse(s); } catch { return null; }
 }
 
 export const pumpfunMcp = {
 	enabled: pumpfunBotEnabled,
 
-	listTools() {
-		return rpc('tools/list', {});
+	async listTools() {
+		return { ok: true, data: { tools: ['getGraduations'] } };
 	},
 
-	recentClaims({ limit = 20 } = {}) {
-		return callTool('getRecentClaims', { limit }, { ttl: 30 });
+	async recentClaims() {
+		// Not implemented in the migrations-only feed.
+		return { ok: true, data: [] };
 	},
 
-	graduations({ limit = 20 } = {}) {
-		return callTool('getGraduations', { limit }, { ttl: 60 });
+	async graduations({ limit = 20 } = {}) {
+		const items = await readGraduations(limit);
+		return { ok: true, data: items };
 	},
 
-	tokenIntel({ mint }) {
-		if (!mint) return Promise.resolve({ ok: false, error: 'mint required' });
-		return callTool('getTokenIntel', { mint }, { ttl: 120 });
+	async tokenIntel() {
+		return { ok: false, error: 'token intel not available' };
 	},
 
-	creatorIntel({ wallet }) {
-		if (!wallet) return Promise.resolve({ ok: false, error: 'wallet required' });
-		return callTool('getCreatorIntel', { wallet }, { ttl: 300 });
+	async creatorIntel() {
+		return { ok: false, error: 'creator intel not available' };
 	},
 
-	// Polling helper: serverless cannot hold a long-lived subscription, so the
-	// browser-side watch skill polls this and dedupes by tx signature.
-	claimsSince({ sinceSig = null, limit = 50 } = {}) {
-		return callTool('getClaimsSince', { sinceSig, limit }, { ttl: 5 });
+	async claimsSince() {
+		// No claim source — return empty list so the SSE loop just keeps polling.
+		return { ok: true, data: [] };
 	},
 };
