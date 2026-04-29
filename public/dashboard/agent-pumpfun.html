@@ -195,13 +195,22 @@
 						<label for="launch-symbol">Symbol</label>
 						<input id="launch-symbol" placeholder="AGENT" maxlength="10" />
 					</div>
-					<div class="field" style="flex: 0 0 140px">
+					<div class="field" style="flex: 0 0 120px">
 						<label for="launch-vanity">Vanity prefix</label>
 						<input id="launch-vanity" placeholder="PUMP" maxlength="6" />
 					</div>
-					<div class="field" style="flex: 0 0 140px">
+					<div class="field" style="flex: 0 0 120px">
+						<label for="launch-vanity-suffix">Vanity suffix</label>
+						<input id="launch-vanity-suffix" placeholder="pump" maxlength="6" />
+					</div>
+					<div class="field" style="flex: 0 0 130px">
 						<label for="launch-sol">Initial buy (SOL)</label>
 						<input id="launch-sol" type="number" min="0" step="0.001" placeholder="0" />
+					</div>
+					<div class="field" style="flex: 0 0 auto; padding-top: 22px">
+						<label style="display:flex; align-items:center; gap:6px; color:#ddd">
+							<input type="checkbox" id="launch-vanity-ic" /> ignore case
+						</label>
 					</div>
 				</div>
 				<div class="row" style="margin-top: 10px">
@@ -214,7 +223,8 @@
 					</div>
 				</div>
 				<p class="muted" style="margin: 10px 0 0; font-size: 12px">
-					Vanity prefix uses base58 (no 0/O/I/l). 4 chars = seconds. 5+ may time out — keep it short for the demo.
+					Base58 only (no 0/O/I/l). Combined prefix+suffix length: 3 chars ≈ instant, 4 ≈ seconds, 5 ≈ minutes, 6+ may time out. Powered by
+					<a href="https://github.com/nirholas/solana-wallet-toolkit" target="_blank" rel="noopener">solana-wallet-toolkit</a>.
 				</p>
 			</section>
 

@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Vanity wallet generator · three.ws</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="Grind a custom Solana wallet address for your agent. Runs entirely in your browser — keys never leave your device.">
+	<style>
+		* { box-sizing: border-box; }
+		:root {
+			--fg: #111; --muted: #555; --border: #e5e5e5; --bg: #fafafa;
+			--accent: #111; --accent-fg: #fff;
+			--ok-bg: #e7f5e9; --ok-fg: #1b5e20;
+			--warn-bg: #fff3cd; --warn-fg: #855008;
+			--bad-bg: #fce8e8; --bad-fg: #b71c1c;
+		}
+		body { font: 15px/1.5 system-ui, -apple-system, sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem; color: var(--fg); }
+		h1 { font-size: 1.5rem; margin: 0 0 .25rem; }
+		p.lede { color: var(--muted); margin: 0 0 1.25rem; }
+		label { display: block; font-size: .8rem; color: var(--muted); margin: 1rem 0 .25rem; }
+
+		.card { border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem 1.25rem; background: #fff; }
+
+		input[type=text] { font: inherit; font-family: ui-monospace, monospace; padding: .55rem .7rem; width: 100%; border: 1px solid #ccc; border-radius: 6px; }
+		input.invalid { border-color: var(--bad-fg); background: #fff8f8; }
+
+		.preview { font-family: ui-monospace, monospace; font-size: .9rem; padding: .65rem .75rem; background: var(--bg); border-radius: 6px; margin-top: .55rem; word-break: break-all; min-height: 2.4em; line-height: 1.4; }
+		.preview .pfx { background: linear-gradient(90deg,#ffd54f,#ff8a65); color: #1a1a1a; padding: 0 3px; border-radius: 3px; font-weight: 700; }
+		.preview .rest { color: #888; }
+
+		.meter { display: flex; gap: 4px; margin-top: .65rem; }
+		.meter .seg { flex: 1; height: 7px; border-radius: 4px; background: #eee; transition: background .15s; }
+		.lit-1, .lit-2, .lit-3, .lit-4 { background: #4caf50 !important; }
+		.lit-5 { background: #fb8c00 !important; }
+		.lit-6 { background: #d32f2f !important; }
+
+		.row { display: flex; justify-content: space-between; align-items: center; margin-top: .55rem; font-size: .85rem; color: var(--muted); }
+
+		.chips { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .9rem; }
+		.chip { background: #f0f0f2; border: 1px solid #ddd; border-radius: 999px; padding: .3rem .75rem; cursor: pointer; font-family: ui-monospace, monospace; font-size: .8rem; color: #333; }
+		.chip:hover { background: #e6e6e8; }
+		.chip-est { color: #888; margin-left: .35rem; font-family: system-ui, sans-serif; }
+
+		.actions { display: flex; gap: .55rem; margin-top: 1.25rem; align-items: center; flex-wrap: wrap; }
+		.btn { font: inherit; padding: .55rem 1.1rem; border-radius: 6px; border: 1px solid #ccc; background: #fff; cursor: pointer; }
+		.btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); font-weight: 600; }
+		.btn:disabled { opacity: .4; cursor: not-allowed; }
+
+		.progress { margin-top: 1.25rem; padding: .9rem 1.1rem; background: var(--bg); border-radius: 8px; border: 1px solid var(--border); font-family: ui-monospace, monospace; font-size: .85rem; }
+		.progress .live { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+		.progress .stat { font-size: 1.1rem; font-weight: 600; color: #111; }
+		.progress .scan { font-family: ui-monospace, monospace; font-size: .85rem; color: #888; margin-top: .35rem; word-break: break-all; min-height: 1.4em; }
+
+		.result { margin-top: 1.25rem; padding: 1.1rem 1.25rem; background: linear-gradient(135deg, #fffaf0, #fff5e0); border: 1px solid #ffd54f; border-radius: 10px; }
+		.result h3 { margin: 0 0 .4rem; font-size: 1rem; }
+		.result .addr { font-family: ui-monospace, monospace; font-size: .9rem; word-break: break-all; padding: .5rem; background: #fff; border-radius: 6px; border: 1px solid #ffe5a0; }
+		.result .addr .pfx { background: linear-gradient(90deg,#ffd54f,#ff8a65); color: #1a1a1a; padding: 0 3px; border-radius: 3px; font-weight: 700; }
+		.result .meta { font-size: .8rem; color: var(--muted); margin: .55rem 0 1rem; }
+
+		.warn { background: var(--warn-bg); color: var(--warn-fg); padding: .6rem .85rem; border-radius: 6px; margin-top: 1rem; font-size: .8rem; }
+		.warn strong { color: var(--bad-fg); }
+
+		.error { background: #fff5f5; color: var(--bad-fg); padding: .6rem .85rem; border-radius: 6px; margin-top: 1rem; font-size: .85rem; border: 1px solid #f5c6c6; }
+
+		footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: .78rem; color: var(--muted); }
+		footer a { color: #0066cc; }
+		.tier-tag { padding: .15rem .55rem; border-radius: 999px; font-size: .75rem; font-weight: 600; }
+		.tier-free { background: #e7f5e9; color: #1b5e20; }
+		.tier-paid { background: linear-gradient(90deg,#ffd54f,#ff8a65); color: #1a1a1a; }
+	</style>
+</head>
+<body>
+	<h1>✦ Vanity wallet generator</h1>
+	<p class="lede">
+		Grind a Solana wallet address starting with characters of your choice — for your agent, treasury, or anywhere a memorable address matters.
+		<strong>Runs entirely in your browser.</strong> The secret key never leaves your device.
+	</p>
+
+	<div class="card">
+		<label for="prefix">Prefix (Base58, max 6)</label>
+		<input id="prefix" type="text" maxlength="6" placeholder="e.g. AGNT" autocomplete="off" spellcheck="false" />
+
+		<div class="preview" id="preview" aria-live="polite"></div>
+
+		<div class="meter" aria-hidden="true">
+			<div class="seg" data-seg="1"></div>
+			<div class="seg" data-seg="2"></div>
+			<div class="seg" data-seg="3"></div>
+			<div class="seg" data-seg="4"></div>
+			<div class="seg" data-seg="5"></div>
+			<div class="seg" data-seg="6"></div>
+		</div>
+
+		<div class="row">
+			<span id="est">type a prefix to see estimated time</span>
+			<span id="tier"></span>
+		</div>
+
+		<div class="chips" aria-label="Suggested prefixes">
+			<button class="chip" data-prefix="AGNT" type="button">AGNT<span class="chip-est"></span></button>
+			<button class="chip" data-prefix="BOT"  type="button">BOT<span class="chip-est"></span></button>
+			<button class="chip" data-prefix="AI"   type="button">AI<span class="chip-est"></span></button>
+			<button class="chip" data-prefix="GOOD" type="button">GOOD<span class="chip-est"></span></button>
+			<button class="chip" data-prefix="WISE" type="button">WISE<span class="chip-est"></span></button>
+			<button class="chip" data-prefix="NPC"  type="button">NPC<span class="chip-est"></span></button>
+		</div>
+
+		<div class="actions">
+			<button id="grind" class="btn primary" type="button" disabled>Generate wallet</button>
+			<button id="cancel" class="btn" type="button" hidden>Cancel</button>
+		</div>
+
+		<div id="progress" hidden class="progress">
+			<div class="live">
+				<div>
+					<div class="stat" id="rate">0/s</div>
+					<div style="font-size:.75rem;color:#888">tries/sec across <span id="cores">?</span> cores</div>
+				</div>
+				<div style="text-align:right">
+					<div class="stat"><span id="attempts">0</span></div>
+					<div style="font-size:.75rem;color:#888">attempts · eta <span id="eta">—</span></div>
+				</div>
+			</div>
+			<div class="scan" id="scan"></div>
+		</div>
+
+		<div id="error" hidden class="error"></div>
+		<div id="result" hidden></div>
+	</div>
+
+	<footer>
+		<p>
+			Built on <a href="https://github.com/nirholas/solana-wallet-toolkit" target="_blank" rel="noopener">solana-wallet-toolkit</a>.
+			Use this wallet as your agent's <strong>operator/treasury</strong> account, or as the owner of a Metaplex Core agent NFT (see <a href="/docs/solana.md" target="_blank">Solana docs</a>).
+		</p>
+		<p>
+			<strong>Security:</strong> the downloaded JSON file contains your private key.
+			Treat it like a password. Never share it. Anyone with this file can spend any funds the address holds.
+		</p>
+	</footer>
+
+	<script type="module">
+		import { grindVanity } from '/src/solana/vanity/grinder.js';
+		import { validatePattern, estimateAttempts, formatTimeEstimate } from '/src/solana/vanity/validation.js';
+
+		const $ = (id) => document.getElementById(id);
+		const BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+		const RATE_PER_CORE = 5000;
+		const cores = Math.max(1, Math.min(navigator.hardwareConcurrency || 4, 8));
+		$('cores').textContent = cores;
+
+		function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]); }
+		function sample(prefix = '') {
+			let out = prefix;
+			for (let i = prefix.length; i < 44; i++) out += BASE58[Math.floor(Math.random() * BASE58.length)];
+			return out;
+		}
+		function fmtTime(seconds) {
+			if (seconds < 1) return '<1s';
+			if (seconds < 60) return `~${Math.round(seconds)}s`;
+			if (seconds < 3600) return `~${Math.round(seconds / 60)}m`;
+			if (seconds < 86400) return `~${Math.round(seconds / 3600)}h`;
+			return '>1d';
+		}
+		function estSeconds(len) {
+			return len <= 0 ? 0 : Math.pow(58, len) / (RATE_PER_CORE * cores);
+		}
+
+		// Seed chip estimates.
+		document.querySelectorAll('.chip').forEach((c) => {
+			c.querySelector('.chip-est').textContent = ' ' + fmtTime(estSeconds(c.dataset.prefix.length));
+			c.addEventListener('click', () => {
+				$('prefix').value = c.dataset.prefix;
+				$('prefix').dispatchEvent(new Event('input'));
+				$('prefix').focus();
+			});
+		});
+
+		// Live preview animation while idle.
+		let previewLoop = null;
+		function startPreviewLoop() {
+			stopPreviewLoop();
+			previewLoop = setInterval(() => {
+				const raw = $('prefix').value;
+				if (!raw || $('prefix').classList.contains('invalid')) return;
+				const rest = $('preview').querySelector('.rest');
+				if (rest) rest.textContent = sample(raw).slice(raw.length);
+			}, 700);
+		}
+		function stopPreviewLoop() { if (previewLoop) clearInterval(previewLoop); previewLoop = null; }
+
+		function update() {
+			const raw = $('prefix').value;
+			const valid = !raw || /^[1-9A-HJ-NP-Za-km-z]+$/.test(raw);
+			$('prefix').classList.toggle('invalid', !valid);
+
+			document.querySelectorAll('.meter .seg').forEach((s, i) => {
+				s.className = 'seg' + (raw.length > i ? ` lit-${raw.length}` : '');
+			});
+
+			if (!raw) {
+				$('preview').innerHTML = `<span class="rest">${esc(sample())}</span>`;
+				$('est').textContent = 'type a prefix to see estimated time';
+				$('tier').innerHTML = '';
+				$('grind').disabled = true;
+			} else if (!valid) {
+				$('preview').textContent = 'invalid Base58 — avoid 0, O, I, l';
+				$('est').textContent = '';
+				$('tier').innerHTML = '';
+				$('grind').disabled = true;
+			} else {
+				const s = sample(raw);
+				$('preview').innerHTML = `<span class="pfx">${esc(raw)}</span><span class="rest">${esc(s.slice(raw.length))}</span>`;
+				$('est').textContent = `est. ${fmtTime(estSeconds(raw.length))} on ${cores} cores`;
+				$('tier').innerHTML = raw.length >= 5
+					? '<span class="tier-tag tier-paid">slow — minutes+</span>'
+					: '<span class="tier-tag tier-free">fast</span>';
+				$('grind').disabled = false;
+			}
+		}
+
+		$('prefix').addEventListener('input', update);
+		$('prefix').addEventListener('keydown', (e) => {
+			if (e.key === 'Enter' && !$('grind').disabled) $('grind').click();
+		});
+		update();
+		startPreviewLoop();
+
+		// ── Grind ──────────────────────────────────────────────────────────
+		let abort = null;
+
+		$('grind').addEventListener('click', async () => {
+			const prefix = $('prefix').value.trim();
+			const v = validatePattern(prefix);
+			if (!v.valid) {
+				$('error').textContent = v.errors.join('; ');
+				$('error').hidden = false;
+				return;
+			}
+
+			$('grind').hidden = true;
+			$('cancel').hidden = false;
+			$('progress').hidden = false;
+			$('result').hidden = true;
+			$('error').hidden = true;
+			$('attempts').textContent = '0';
+			$('rate').textContent = '0/s';
+			$('eta').textContent = fmtTime(estSeconds(prefix.length));
+			$('scan').innerHTML = `<span class="pfx" style="background:linear-gradient(90deg,#ffd54f,#ff8a65);padding:0 3px;border-radius:3px;font-weight:700">${esc(prefix)}</span><span style="color:#888">${esc(sample(prefix).slice(prefix.length))}</span>`;
+			stopPreviewLoop();
+
+			// Animate the scan line during grind.
+			const scanLoop = setInterval(() => {
+				const restNode = $('scan').lastElementChild;
+				if (restNode) restNode.textContent = sample(prefix).slice(prefix.length);
+			}, 100);
+
+			abort = new AbortController();
+			try {
+				const result = await grindVanity({
+					prefix,
+					signal: abort.signal,
+					onProgress: ({ attempts, rate, eta }) => {
+						$('attempts').textContent = attempts.toLocaleString();
+						$('rate').textContent = `${Math.round(rate).toLocaleString()}/s`;
+						$('eta').textContent = eta;
+					},
+				});
+				clearInterval(scanLoop);
+				renderResult(result, prefix);
+			} catch (err) {
+				clearInterval(scanLoop);
+				if (err?.name !== 'AbortError') {
+					$('error').textContent = `Grind failed: ${err.message || err}`;
+					$('error').hidden = false;
+				}
+				$('grind').hidden = false;
+				$('cancel').hidden = true;
+				$('progress').hidden = true;
+				startPreviewLoop();
+			}
+		});
+
+		$('cancel').addEventListener('click', () => abort?.abort());
+
+		function renderResult(result, prefix) {
+			$('cancel').hidden = true;
+			$('grind').hidden = false;
+			$('grind').textContent = 'Generate another';
+			$('progress').hidden = true;
+
+			const addr = result.publicKey;
+			const rest = addr.slice(prefix.length);
+			$('result').hidden = false;
+			$('result').innerHTML = `
+				<div class="result">
+					<h3>✦ Wallet ready</h3>
+					<div class="addr"><span class="pfx">${esc(prefix)}</span>${esc(rest)}</div>
+					<div class="meta">
+						${result.attempts.toLocaleString()} attempts in ${(result.durationMs / 1000).toFixed(1)}s
+						across ${result.workers} cores
+						(${Math.round(result.attempts / (result.durationMs / 1000)).toLocaleString()}/s)
+					</div>
+					<div class="actions">
+						<button id="download" class="btn primary" type="button">⬇ Download keypair (Solana CLI format)</button>
+						<button id="copy-pubkey" class="btn" type="button">Copy public key</button>
+					</div>
+					<div class="warn">
+						<strong>Save this file somewhere safe before navigating away.</strong>
+						Once you close this tab the secret key is gone — we don't store it.
+						Anyone with the file can spend funds at this address.
+					</div>
+				</div>
+			`;
+
+			const filename = `${addr.slice(0, 8)}.json`;
+			$('download').addEventListener('click', () => {
+				// Solana CLI keypair format: JSON array of 64 bytes.
+				const json = JSON.stringify(Array.from(result.secretKey));
+				const blob = new Blob([json], { type: 'application/json' });
+				const url = URL.createObjectURL(blob);
+				const a = document.createElement('a');
+				a.href = url;
+				a.download = filename;
+				document.body.appendChild(a);
+				a.click();
+				a.remove();
+				URL.revokeObjectURL(url);
+			});
+
+			$('copy-pubkey').addEventListener('click', async () => {
+				try {
+					await navigator.clipboard.writeText(addr);
+					$('copy-pubkey').textContent = 'Copied!';
+					setTimeout(() => { $('copy-pubkey').textContent = 'Copy public key'; }, 1500);
+				} catch {}
+			});
+		}
+	</script>
+</body>
+</html>
