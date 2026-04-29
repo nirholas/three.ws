@@ -1,0 +1,99 @@
+// Whale-trade watcher for pump.fun tokens.
+//
+// Subscribes to on-chain logs for the pump bonding-curve program, decodes
+// TradeEvent with the Anchor Borsh coder, and fires onTrade() for any trade
+// whose USD value meets the minUsd threshold.
+//
+// All heavy imports are lazy so the module cold-starts cheaply.
+
+const RPC_MAINNET = 'https://api.mainnet-beta.solana.com';
+const PUMP_PROGRAM = '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P';
+const LAMPORTS_PER_SOL = 1_000_000_000;
+const NATIVE_SOL = 'So11111111111111111111111111111111111111112';
+const PRICE_URL = `https://api.jup.ag/price/v2?ids=${NATIVE_SOL}`;
+const PRICE_TTL_MS = 60_000;
+
+let _cachedSolPrice = 0;
+let _priceAt = 0;
+
+async function fetchSolPrice() {
+	if (Date.now() - _priceAt < PRICE_TTL_MS && _cachedSolPrice > 0) return _cachedSolPrice;
+	try {
+		const r = await fetch(PRICE_URL);
+		const d = await r.json();
+		const p = Number(d?.data?.[NATIVE_SOL]?.price ?? 0);
+		if (p > 0) {
+			_cachedSolPrice = p;
+			_priceAt = Date.now();
+		}
+	} catch {}
+	return _cachedSolPrice || 150; // rough fallback if price API is down
+}
+
+/**
+ * Subscribe to pump.fun trade events for a specific mint.
+ * Calls onTrade for every buy/sell whose USD value is >= minUsd.
+ * Returns after the subscription is set up; runs until signal fires.
+ *
+ * @param {{ mint: string, minUsd?: number, onTrade: Function, signal: AbortSignal }} opts
+ */
+export async function watchWhaleTrades({ mint, minUsd = 5000, onTrade, signal }) {
+	const [{ Connection, PublicKey }, { EventParser, BorshCoder }, { PUMP_PROGRAM_ID, pumpIdl }] =
+		await Promise.all([
+			import('@solana/web3.js'),
+			import('@coral-xyz/anchor'),
+			import('@nirholas/pump-sdk'),
+		]);
+
+	if (signal?.aborted) return;
+
+	const connection = new Connection(RPC_MAINNET, 'confirmed');
+	const coder = new BorshCoder(pumpIdl);
+	const parser = new EventParser(PUMP_PROGRAM_ID, coder);
+	const mintStr = mint instanceof PublicKey ? mint.toBase58() : String(mint);
+	const programPk = new PublicKey(PUMP_PROGRAM);
+
+	const solPrice = await fetchSolPrice();
+	if (signal?.aborted) return;
+
+	let subId = null;
+
+	const cleanup = () => {
+		if (subId !== null) {
+			connection.removeOnLogsListener(subId).catch(() => {});
+			subId = null;
+		}
+	};
+
+	signal?.addEventListener('abort', cleanup);
+
+	subId = connection.onLogs(
+		programPk,
+		(logInfo) => {
+			if (signal?.aborted) {
+				cleanup();
+				return;
+			}
+			if (logInfo.err) return;
+			try {
+				for (const event of parser.parseLogs(logInfo.logs)) {
+					if (event.name !== 'TradeEvent') continue;
+					const { mint: evMint, isBuy, solAmount, user, timestamp } = event.data;
+					if (evMint.toString() !== mintStr) continue;
+					const sol = Number(solAmount.toString()) / LAMPORTS_PER_SOL;
+					const usd = sol * solPrice;
+					if (usd < minUsd) continue;
+					onTrade({
+						signature: logInfo.signature,
+						wallet: user.toString(),
+						sideBuy: isBuy,
+						usd,
+						sol,
+						ts: Number(timestamp.toString()) * 1000,
+					});
+				}
+			} catch {}
+		},
+		'confirmed',
+	);
+}

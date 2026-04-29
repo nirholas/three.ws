@@ -18,6 +18,10 @@
  */
 
 import { detectSolanaWallet, SOLANA_RPC } from './erc8004/solana-deploy.js';
+import { fetchChannelFeed } from './pump/channel-feed.js';
+import { listRecentClaims } from './pump/pumpkit-claims.js';
+import { getWalletPnl } from './kol/wallet-pnl.js';
+import { getRadarSignals } from './kol/radar.js';
 
 const DEFAULT_NETWORK = 'mainnet';
 const DEFAULT_SLIPPAGE_BPS = 500;
@@ -745,6 +749,100 @@ export function registerPumpFunSkills(skills) {
 		},
 	});
 
+	// ── pumpfun.channelFeed ───────────────────────────────────────────────────
+	skills.register({
+		name: 'pumpfun.channelFeed',
+		description: 'Fetch recent pump.fun signals (new mints, whale buys, creator claims) as a digest the LLM can summarize.',
+		instruction: 'Read-only. No wallet required. Returns latest channel-feed items.',
+		animationHint: 'inspect',
+		voicePattern: 'Fetching pump.fun signal feed…',
+		mcpExposed: true,
+		inputSchema: {
+			type: 'object',
+			properties: {
+				limit: { type: 'integer', minimum: 1, maximum: 200, default: 20 },
+				kinds: {
+					type: 'string',
+					description: 'Comma-separated filter: mint, whale, claim (default: all)',
+				},
+			},
+		},
+		handler: async (args, _ctx) => {
+			const limit = args.limit ?? 20;
+			const kinds = args.kinds ?? undefined;
+			let data;
+			try {
+				data = await fetchChannelFeed({ limit, kinds });
+			} catch (err) {
+				return {
+					success: false,
+					output: `Failed to fetch channel feed: ${err.message}`,
+					sentiment: -0.2,
+				};
+			}
+			const items = data.items ?? [];
+			if (!items.length) {
+				return {
+					success: true,
+					output: 'No recent pump.fun signals found.',
+					sentiment: 0,
+					data: { items: [] },
+				};
+			}
+			const digest = items
+				.slice(0, 10)
+				.map((i) => `[${i.kind}] ${i.mint?.slice(0, 8) ?? '?'}… ${i.summary}`.trimEnd())
+				.join('\n');
+			return {
+				success: true,
+				output: `${items.length} signal${items.length !== 1 ? 's' : ''}:\n${digest}`,
+				sentiment: 0.3,
+				data: { items },
+			};
+		},
+	});
+
+	// ── kol.radar ─────────────────────────────────────────────────────────────
+	skills.register({
+		name: 'kol.radar',
+		description:
+			'Return gmgn radar signals: early-detection patterns by category, sorted by score.',
+		instruction: 'Read-only. Returns fixture data from src/kol/radar-fixture.json.',
+		animationHint: 'inspect',
+		voicePattern: 'Checking radar for {{category}} signals…',
+		mcpExposed: true,
+		inputSchema: {
+			type: 'object',
+			properties: {
+				category: {
+					type: 'string',
+					enum: ['pump-fun', 'new-mints', 'volume-spike'],
+					default: 'pump-fun',
+					description: 'Signal category to filter by',
+				},
+				limit: {
+					type: 'integer',
+					minimum: 1,
+					maximum: 100,
+					default: 20,
+					description: 'Max results (capped at 100)',
+				},
+			},
+		},
+		handler: async (args, _ctx) => {
+			const signals = await getRadarSignals({
+				category: args.category ?? 'pump-fun',
+				limit: args.limit ?? 20,
+			});
+			return {
+				success: true,
+				output: `Found ${signals.length} radar signal(s) for "${args.category ?? 'pump-fun'}".`,
+				sentiment: signals.length > 0 ? 0.6 : 0.1,
+				data: { signals, category: args.category ?? 'pump-fun', count: signals.length },
+			};
+		},
+	});
+
 	// ── pumpfun-accept-payment ────────────────────────────────────────────────
 	skills.register({
 		name: 'pumpfun-accept-payment',
@@ -821,4 +919,297 @@ export function registerPumpFunSkills(skills) {
 			};
 		},
 	});
+
+	// ── pumpfun-verify-payment ────────────────────────────────────────────────
+	skills.register({
+		name: 'pumpfun-verify-payment',
+		description:
+			'Verify that a pump.fun agent payment invoice was settled on-chain. Returns verified:true/false. No wallet required.',
+		instruction:
+			'Calls PumpAgent.validateInvoicePayment. Queries Pump HTTP API with RPC fallback. All seven invoice fields must match exactly.',
+		animationHint: 'inspect',
+		voicePattern: 'Verifying invoice {{memo}}…',
+		mcpExposed: true,
+		inputSchema: {
+			type: 'object',
+			properties: {
+				agentMint: { type: 'string', description: 'The agent token mint' },
+				user: { type: 'string', description: 'Payer wallet address (base58)' },
+				currencyMint: { type: 'string', description: 'Currency mint (USDC, wSOL, etc.)' },
+				amount: { type: 'number', description: 'Amount in base units (6 decimals USDC, 9 for wSOL)' },
+				memo: { type: 'number', description: 'Invoice memo / nonce (uint)' },
+				startTime: { type: 'number', description: 'Invoice validity window start (Unix seconds)' },
+				endTime: { type: 'number', description: 'Invoice validity window end (Unix seconds)' },
+				network: { type: 'string', enum: ['mainnet', 'devnet'] },
+			},
+			required: ['agentMint', 'user', 'currencyMint', 'amount', 'memo', 'startTime', 'endTime'],
+		},
+		handler: async (args, _ctx) => {
+			if (!(args.amount > 0)) {
+				return { success: false, output: 'amount must be > 0', sentiment: -0.2 };
+			}
+			if (args.endTime <= args.startTime) {
+				return { success: false, output: 'endTime must be after startTime', sentiment: -0.2 };
+			}
+			const network = args.network || DEFAULT_NETWORK;
+			const { pay, web3 } = await loadAgentPayments();
+			const connection = getConnection(web3, network);
+			const agentMint = new web3.PublicKey(args.agentMint);
+			const env = network === 'devnet' ? 'devnet' : 'mainnet';
+			const agent = new pay.PumpAgent(agentMint, env, connection);
+			const verified = await agent.validateInvoicePayment({
+				user: new web3.PublicKey(args.user),
+				currencyMint: new web3.PublicKey(args.currencyMint),
+				amount: args.amount,
+				memo: args.memo,
+				startTime: args.startTime,
+				endTime: args.endTime,
+			});
+			return {
+				success: true,
+				output: verified
+					? `Invoice ${args.memo} verified — payment confirmed.`
+					: `Invoice ${args.memo} not confirmed yet.`,
+				sentiment: verified ? 0.7 : 0.0,
+				data: {
+					verified,
+					memo: args.memo,
+					agentMint: args.agentMint,
+					network,
+				},
+			};
+		},
+	});
+
+	// ── kol.walletPnl ────────────────────────────────────────────────────────
+	skills.register({
+		name: 'kol.walletPnl',
+		description: 'Compute realized + unrealized P&L for a Solana wallet over a time window.',
+		instruction: 'FIFO cost-basis P&L. Returns realizedUsd, unrealizedUsd, totalUsd, winRate, openPositions.',
+		animationHint: 'inspect',
+		voicePattern: 'Checking P&L for {{wallet}}…',
+		mcpExposed: true,
+		inputSchema: {
+			type: 'object',
+			properties: {
+				wallet: { type: 'string', description: 'Solana wallet address (base58)' },
+				window: {
+					type: 'string',
+					enum: ['24h', '7d', '30d', 'all'],
+					description: 'Time window (default 7d)',
+				},
+			},
+			required: ['wallet'],
+		},
+		handler: async (args, _ctx) => {
+			const pnl = await getWalletPnl({ wallet: args.wallet, window: args.window ?? '7d' });
+			const sign = pnl.totalUsd >= 0 ? '+' : '';
+			return {
+				success: true,
+				output: `Wallet ${args.wallet.slice(0, 8)}… P&L (${pnl.window}): ${sign}$${pnl.totalUsd.toFixed(2)} total (realized ${sign}$${pnl.realizedUsd.toFixed(2)}, unrealized $${pnl.unrealizedUsd.toFixed(2)}). Win rate: ${(pnl.winRate * 100).toFixed(0)}% over ${pnl.trades} trades.`,
+				sentiment: pnl.totalUsd > 0 ? 0.6 : pnl.totalUsd < 0 ? -0.2 : 0.1,
+				data: pnl,
+			};
+		},
+	});
+
+	// ── pumpfun-invoice-pda ───────────────────────────────────────────────────
+	skills.register({
+		name: 'pumpfun-invoice-pda',
+		description:
+			'Derive the deterministic on-chain Invoice ID PDA. Use before building a payment tx to pre-check duplicate invoices.',
+		instruction:
+			'Calls getInvoiceIdPDA from @pump-fun/agent-payments-sdk. Pure offline computation — no wallet or network call.',
+		animationHint: 'inspect',
+		voicePattern: 'Deriving invoice PDA…',
+		mcpExposed: true,
+		inputSchema: {
+			type: 'object',
+			properties: {
+				agentMint: { type: 'string', description: 'The agent token mint (tokenMint)' },
+				currencyMint: { type: 'string', description: 'Currency mint' },
+				amount: { type: 'number' },
+				memo: { type: 'number' },
+				startTime: { type: 'number', description: 'Unix seconds' },
+				endTime: { type: 'number', description: 'Unix seconds' },
+			},
+			required: ['agentMint', 'currencyMint', 'amount', 'memo', 'startTime', 'endTime'],
+		},
+		handler: async (args, _ctx) => {
+			const { pay, web3 } = await loadAgentPayments();
+			const [pda, bump] = pay.getInvoiceIdPDA(
+				new web3.PublicKey(args.agentMint),
+				new web3.PublicKey(args.currencyMint),
+				args.amount,
+				args.memo,
+				args.startTime,
+				args.endTime,
+			);
+			return {
+				success: true,
+				output: `Invoice PDA: ${pda.toBase58()} (bump ${bump}).`,
+				sentiment: 0.1,
+				data: {
+					pda: pda.toBase58(),
+					bump,
+					agentMint: args.agentMint,
+				},
+			};
+		},
+	});
+
+	// ── pumpfun-list-claims ───────────────────────────────────────────────────
+	skills.register({
+		name: 'pumpfun-list-claims',
+		description:
+			'List recent pump.fun fee-claim events for a specific creator wallet. Returns signature, mint, lamports, and timestamp for each claim.',
+		instruction: 'Read-only. Polls Solana RPC directly — no indexer needed.',
+		animationHint: 'think',
+		voicePattern: 'Fetching claims for {{creator}}…',
+		mcpExposed: true,
+		inputSchema: {
+			type: 'object',
+			properties: {
+				creator: { type: 'string', description: 'Creator wallet address (base58)' },
+				limit: { type: 'integer', minimum: 1, maximum: 50, default: 20 },
+				network: { type: 'string', enum: ['mainnet', 'devnet'] },
+			},
+			required: ['creator'],
+		},
+		handler: async (args, _ctx) => {
+			if (!args?.creator) {
+				return { success: false, output: 'creator wallet required', sentiment: -0.2 };
+			}
+			const limit = Math.min(50, Math.max(1, Number(args.limit) || 20));
+			try {
+				const claims = await listRecentClaims({
+					creator: args.creator,
+					limit,
+					network: args.network || DEFAULT_NETWORK,
+				});
+				return {
+					success: true,
+					output: claims.length
+						? `${claims.length} recent claim${claims.length === 1 ? '' : 's'} for ${args.creator.slice(0, 8)}…\n` +
+							claims
+								.map((c) => `  ${c.signature.slice(0, 8)}… — ${(c.lamports / 1e9).toFixed(4)} SOL`)
+								.join('\n')
+						: `No recent claims found for ${args.creator.slice(0, 8)}…`,
+					sentiment: claims.length ? 0.3 : 0,
+					data: { claims },
+				};
+			} catch (err) {
+				return {
+					success: false,
+					output: `Could not fetch claims: ${err.message}`,
+					sentiment: -0.3,
+				};
+			}
+		},
+	});
+
+	// ── pumpfun.vanityMint ────────────────────────────────────────────────────
+	skills.register({
+		name: 'pumpfun.vanityMint',
+		description:
+			'Generate a Solana keypair whose address matches a vanity suffix/prefix. Returns { publicKey, secretKey: base58, attempts, ms }. Caller must save the secret key — it is never stored.',
+		instruction:
+			'Searches for a Solana address ending/starting with the requested pattern. May take seconds to minutes depending on length.',
+		animationHint: 'gesture',
+		voicePattern: 'Searching for a vanity address ending in {{suffix}}…',
+		mcpExposed: true,
+		inputSchema: {
+			type: 'object',
+			properties: {
+				suffix: { type: 'string', description: 'Desired address suffix (case-insensitive by default)' },
+				prefix: { type: 'string', description: 'Desired address prefix (case-insensitive by default)' },
+				caseSensitive: { type: 'boolean', default: false },
+				maxAttempts: { type: 'integer', default: 5000000 },
+			},
+		},
+		handler: async (args, _ctx) => {
+			const { generateVanityKey } = await import('./pump/vanity-keygen.js');
+			const bs58 = (await import('bs58')).default;
+
+			const ac = new AbortController();
+			const timer = setTimeout(() => ac.abort(), 58_000);
+			let result;
+			try {
+				result = await generateVanityKey({
+					suffix: args.suffix || '',
+					prefix: args.prefix || '',
+					caseSensitive: args.caseSensitive ?? false,
+					maxAttempts: args.maxAttempts ?? 5_000_000,
+					signal: ac.signal,
+				});
+			} finally {
+				clearTimeout(timer);
+			}
+
+			if (!result) {
+				return {
+					success: false,
+					output: 'No matching address found within the attempt limit.',
+					sentiment: -0.2,
+				};
+			}
+			return {
+				success: true,
+				output: `Found vanity address: ${result.publicKey} (${result.attempts} attempts, ${result.ms} ms)`,
+				sentiment: 0.8,
+				data: {
+					publicKey: result.publicKey,
+					secretKey: bs58.encode(result.secretKey),
+					attempts: result.attempts,
+					ms: result.ms,
+				},
+			};
+		},
+	});
+
+	// ── kol.leaderboard ──────────────────────────────────────────────────────
+	skills.register({
+		name: 'kol.leaderboard',
+		description: 'Show the top KOL traders ranked by P&L. Returns wallet, pnlUsd, winRate, trades, rank.',
+		instruction: 'Fetch the KOL leaderboard for a given time window and limit. No wallet required.',
+		animationHint: 'inspect',
+		voicePattern: 'Fetching top KOLs for {{window}}…',
+		mcpExposed: true,
+		inputSchema: {
+			type: 'object',
+			properties: {
+				window: { type: 'string', enum: ['24h', '7d', '30d'], description: 'Time window (default 7d)' },
+				limit: { type: 'number', description: 'Max entries to return, 1–100 (default 25)' },
+			},
+		},
+		handler: async (args, _ctx) => {
+			const origin = (typeof window !== 'undefined' && window.location?.origin) || '';
+			const params = new URLSearchParams({
+				window: args.window || '7d',
+				limit: String(Math.min(Math.max(1, Math.floor(Number(args.limit) || 25)), 100)),
+			});
+			const res = await fetch(`${origin}/api/kol/leaderboard?${params}`);
+			const body = await res.json();
+			if (!res.ok) {
+				return {
+					success: false,
+					output: body.error_description || body.error || 'leaderboard fetch failed',
+					sentiment: -0.1,
+				};
+			}
+			const items = body.items || [];
+			const top3 = items.slice(0, 3).map((e) =>
+				`#${e.rank} ${e.wallet.slice(0, 8)}… $${e.pnlUsd.toLocaleString()} (${(e.winRate * 100).toFixed(0)}% wr)`
+			).join(', ');
+			return {
+				success: true,
+				output: items.length
+					? `Top ${items.length} KOLs (${args.window || '7d'}): ${top3}${items.length > 3 ? '…' : ''}`
+					: 'No leaderboard data available.',
+				sentiment: 0.3,
+				data: { items },
+			};
+		},
+	});
+
 }

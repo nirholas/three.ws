@@ -219,6 +219,164 @@ export function registerPumpFunWatchSkills(skills) {
 			};
 		},
 	});
+
+	// ── pumpfun.watchWhales ───────────────────────────────────────────────────
+	skills.register({
+		name: 'pumpfun.watchWhales',
+		description:
+			'Watch for whale buys/sells on a pump.fun token. Streams alert messages as trades arrive.',
+		instruction:
+			'Subscribes to live pump.fun bonding-curve trades and speaks each trade that meets minUsd.',
+		animationHint: 'curiosity',
+		voicePattern: 'Watching {{mint}} for whale trades…',
+		mcpExposed: false, // browser-only WebSocket; MCP variant is pumpfun_watch_whales in pump-fun-mcp.js
+		inputSchema: {
+			type: 'object',
+			properties: {
+				mint: { type: 'string', description: 'SPL mint pubkey (base58)' },
+				minUsd: { type: 'number', description: 'Minimum trade value in USD (default 5000)' },
+				durationMs: {
+					type: 'number',
+					description: 'Watch window in ms (default 300000, max 1800000)',
+				},
+			},
+			required: ['mint'],
+		},
+		handler: async (args, ctx) => {
+			if (typeof window === 'undefined') {
+				return { success: false, output: 'Whale watch requires a browser.', sentiment: -0.3 };
+			}
+			const mint = args?.mint;
+			if (!mint) return { success: false, output: 'mint required', sentiment: -0.2 };
+
+			if (_whaleWatchers.has(mint)) {
+				return {
+					success: true,
+					output: `Already watching ${mint.slice(0, 8)}… for whales.`,
+					sentiment: 0.1,
+				};
+			}
+
+			const minUsd = Math.max(1, Number(args?.minUsd) || 5000);
+			const durationMs = Math.min(
+				1_800_000,
+				Math.max(5_000, Number(args?.durationMs) || 300_000),
+			);
+
+			const ac = new AbortController();
+			_whaleWatchers.set(mint, ac);
+
+			const protocol = ctx.protocol;
+			const speak = (text, sentiment = 0) =>
+				protocol?.emit({ type: ACTION_TYPES.SPEAK, payload: { text, sentiment } });
+
+			const stop = () => {
+				ac.abort();
+				_whaleWatchers.delete(mint);
+			};
+			const timer = setTimeout(stop, durationMs);
+			ac.signal.addEventListener('abort', () => clearTimeout(timer));
+
+			try {
+				const { watchWhaleTrades } = await import('./pump/pumpkit-whale.js');
+				watchWhaleTrades({
+					mint,
+					minUsd,
+					signal: ac.signal,
+					onTrade(trade) {
+						const side = trade.sideBuy ? 'bought' : 'sold';
+						speak(
+							`🐋 Whale ${side} $${Math.round(trade.usd).toLocaleString()} (${trade.sol.toFixed(2)} SOL) — ${trade.wallet.slice(0, 8)}…`,
+							trade.sideBuy ? 0.7 : -0.2,
+						);
+					},
+				}).catch(stop);
+			} catch (err) {
+				stop();
+				return {
+					success: false,
+					output: `Failed to start whale watch: ${err.message}`,
+					sentiment: -0.4,
+				};
+			}
+
+			speak(
+				`Watching ${mint.slice(0, 8)}… for trades ≥ $${minUsd.toLocaleString()}.`,
+				0.3,
+			);
+
+			return {
+				success: true,
+				output: `Started whale watch on ${mint.slice(0, 8)}… — min $${minUsd.toLocaleString()}, ${Math.round(durationMs / 60_000)} min.`,
+				sentiment: 0.4,
+				data: { mint, minUsd, durationMs },
+			};
+		},
+	});
+
+	skills.register({
+		name: 'pumpfun-watch-claims',
+		description:
+			'Watch for pump.fun fee-claim events from a specific creator wallet and react as they arrive.',
+		instruction:
+			'Polls Solana RPC for fee-claim transactions. Emits speak/emote per claim. Resolves after durationMs.',
+		animationHint: 'curiosity',
+		voicePattern: 'Watching {{creator}} for claims…',
+		mcpExposed: false, // long-running poll — not suitable for MCP request/response
+		inputSchema: {
+			type: 'object',
+			properties: {
+				creator: { type: 'string', description: 'Creator wallet address (base58)' },
+				durationMs: {
+					type: 'number',
+					description: 'Watch window in ms (default 300000, max 1800000)',
+				},
+				network: { type: 'string', enum: ['mainnet', 'devnet'] },
+			},
+			required: ['creator'],
+		},
+		handler: async (args, ctx) => {
+			if (!args?.creator) {
+				return { success: false, output: 'creator wallet required', sentiment: -0.2 };
+			}
+			const duration = Math.min(1_800_000, Math.max(5_000, Number(args.durationMs) || 300_000));
+			const ctrl = new AbortController();
+			const timeout = setTimeout(() => ctrl.abort(), duration);
+
+			const protocol = ctx?.protocol;
+			const speak = (text, sentiment = 0) =>
+				protocol?.emit({ type: ACTION_TYPES.SPEAK, payload: { text, sentiment } });
+			const emote = (trigger, weight) =>
+				protocol?.emit({ type: ACTION_TYPES.EMOTE, payload: { trigger, weight } });
+
+			const claims = [];
+			try {
+				await watchClaims({
+					creator: args.creator,
+					signal: ctrl.signal,
+					network: args.network || 'mainnet',
+					onClaim: (claim) => {
+						claims.push(claim);
+						const sol = (claim.lamports / 1e9).toFixed(4);
+						const tag = claim.mint ? ` (${claim.mint.slice(0, 8)}…)` : '';
+						emote('curiosity', 0.6);
+						speak(`Claim detected: ${sol} SOL${tag}`, 0.4);
+					},
+				});
+			} finally {
+				clearTimeout(timeout);
+			}
+
+			return {
+				success: true,
+				output: claims.length
+					? `Saw ${claims.length} claim${claims.length === 1 ? '' : 's'} in ${duration / 1000}s.`
+					: `No claims from ${args.creator.slice(0, 8)}… in ${duration / 1000}s.`,
+				sentiment: claims.length ? 0.4 : 0,
+				data: { claims },
+			};
+		},
+	});
 }
 
 function safeJson(s) {

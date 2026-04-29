@@ -179,6 +179,12 @@ export const env = {
 		return opt('X402_FACILITATOR_TOKEN_BASE');
 	},
 
+	// zauthx402 SDK — optional telemetry for x402 endpoints. When unset,
+	// the SDK is not initialized and request monitoring is skipped.
+	get ZAUTH_API_KEY() {
+		return opt('ZAUTH_API_KEY');
+	},
+
 	// Solana RPC URL used for SNS reads/writes. Falls back to public mainnet RPC.
 	get SOLANA_RPC_URL() {
 		return opt('SOLANA_RPC_URL', 'https://api.mainnet-beta.solana.com');

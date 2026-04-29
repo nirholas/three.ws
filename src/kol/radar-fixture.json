@@ -1,0 +1,82 @@
+[
+	{
+		"mint": "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+		"name": "Mooncat",
+		"symbol": "MCAT",
+		"signalType": "pump-fun",
+		"score": 92,
+		"ts": 1714300800000
+	},
+	{
+		"mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+		"name": "RocketDoge",
+		"symbol": "RDOGE",
+		"signalType": "pump-fun",
+		"score": 88,
+		"ts": 1714297200000
+	},
+	{
+		"mint": "So11111111111111111111111111111111111111112",
+		"name": "SolFloki",
+		"symbol": "SFLOKI",
+		"signalType": "pump-fun",
+		"score": 75,
+		"ts": 1714293600000
+	},
+	{
+		"mint": "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+		"name": "FreshApe",
+		"symbol": "FAPE",
+		"signalType": "new-mints",
+		"score": 85,
+		"ts": 1714300000000
+	},
+	{
+		"mint": "9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E",
+		"name": "NovaCoin",
+		"symbol": "NOVA",
+		"signalType": "new-mints",
+		"score": 78,
+		"ts": 1714296400000
+	},
+	{
+		"mint": "2FPyTwcZLUgjTrXjX7sHFxCB2pDV3tNVBUwWnDUZaRqo",
+		"name": "ZeroGrav",
+		"symbol": "ZGRAV",
+		"signalType": "new-mints",
+		"score": 61,
+		"ts": 1714292800000
+	},
+	{
+		"mint": "3uetDDizgTtadDHZzyy9yWe3TwFmkpAfwzeut5HkPeRZ",
+		"name": "TurboVol",
+		"symbol": "TVOL",
+		"signalType": "volume-spike",
+		"score": 97,
+		"ts": 1714301000000
+	},
+	{
+		"mint": "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
+		"name": "SpikeKing",
+		"symbol": "SPKNG",
+		"signalType": "volume-spike",
+		"score": 91,
+		"ts": 1714299500000
+	},
+	{
+		"mint": "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So",
+		"name": "PumpBurst",
+		"symbol": "PBURST",
+		"signalType": "volume-spike",
+		"score": 83,
+		"ts": 1714295000000
+	},
+	{
+		"mint": "7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs",
+		"name": "AlphaRaid",
+		"symbol": "ARAID",
+		"signalType": "volume-spike",
+		"score": 70,
+		"ts": 1714291000000
+	}
+]

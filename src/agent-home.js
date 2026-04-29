@@ -12,6 +12,7 @@ import { ACTION_TYPES } from './agent-protocol.js';
 import { MEMORY_TYPES } from './agent-memory.js';
 import { mountPumpFunCard } from './agent-home-pumpfun.js';
 import { mountAgentSolanaWalletCard } from './agent-solana-wallet.js';
+import { mountClaimsPanel } from './agent-home-claims.js';
 
 const ACTION_ICONS = {
 	[ACTION_TYPES.SPEAK]: '💬',
@@ -53,6 +54,7 @@ export class AgentHome {
 		this._timeline = [];
 		this._maxTimeline = 30;
 		this._emotionInterval = null;
+		this._destroyClaims = null;
 	}
 
 	// ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -65,6 +67,7 @@ export class AgentHome {
 	}
 
 	destroy() {
+		if (this._destroyClaims) this._destroyClaims();
 		if (this._panel) this._panel.remove();
 		clearInterval(this._emotionInterval);
 		this.protocol.off('*', this._onAnyAction);
@@ -213,6 +216,20 @@ export class AgentHome {
 		}
 
 		mountPumpIfReady();
+
+		// Claims panel — only when creatorWallet is set on the agent profile.
+		const creatorWallet =
+			this.identity.creatorWallet ||
+			this.identity.meta?.creator_wallet ||
+			this.identity.meta?.creatorWallet;
+		if (creatorWallet) {
+			const claimsNetwork = this.identity.meta?.pumpfun_network || 'mainnet';
+			try {
+				this._destroyClaims = mountClaimsPanel(panel, { creator: creatorWallet, network: claimsNetwork });
+			} catch {
+				/* panel is optional */
+			}
+		}
 
 		// Permissions manage panel — lazy load; degrades gracefully if unauthenticated
 		const agentId = this.identity.id;

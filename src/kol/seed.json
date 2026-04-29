@@ -1,0 +1,242 @@
+[
+  {
+    "wallet": "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM",
+    "windows": {
+      "24h": { "pnlUsd": 14820.50, "winRate": 0.81, "trades": 22 },
+      "7d":  { "pnlUsd": 97400.00, "winRate": 0.76, "trades": 134 },
+      "30d": { "pnlUsd": 312000.00, "winRate": 0.72, "trades": 480 }
+    }
+  },
+  {
+    "wallet": "DRpbCBMxVnDK7maPM5tGv6MvB3v1sRMC86PZ8okm21hy",
+    "windows": {
+      "24h": { "pnlUsd": 9150.25, "winRate": 0.74, "trades": 18 },
+      "7d":  { "pnlUsd": 71200.00, "winRate": 0.70, "trades": 112 },
+      "30d": { "pnlUsd": 248000.00, "winRate": 0.68, "trades": 390 }
+    }
+  },
+  {
+    "wallet": "H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4AQJEG",
+    "windows": {
+      "24h": { "pnlUsd": 7640.00, "winRate": 0.78, "trades": 14 },
+      "7d":  { "pnlUsd": 58900.00, "winRate": 0.73, "trades": 98 },
+      "30d": { "pnlUsd": 201500.00, "winRate": 0.70, "trades": 340 }
+    }
+  },
+  {
+    "wallet": "3DxttfkLFJ2URMFjnFwNEDBzE8aGGmBR9xbSVdLJcTFG",
+    "windows": {
+      "24h": { "pnlUsd": 6200.75, "winRate": 0.69, "trades": 19 },
+      "7d":  { "pnlUsd": 44700.00, "winRate": 0.65, "trades": 121 },
+      "30d": { "pnlUsd": 178000.00, "winRate": 0.63, "trades": 430 }
+    }
+  },
+  {
+    "wallet": "7YttLkHDoNj9wyDur5pM1ejNaAvT9X4eqaYcHQqg9GsX",
+    "windows": {
+      "24h": { "pnlUsd": 5480.20, "winRate": 0.72, "trades": 11 },
+      "7d":  { "pnlUsd": 38200.00, "winRate": 0.68, "trades": 76 },
+      "30d": { "pnlUsd": 142000.00, "winRate": 0.65, "trades": 280 }
+    }
+  },
+  {
+    "wallet": "FWznbcNXWQuHTawe9RxvQ37LyqZJAe7sK4nSt7FgPhJM",
+    "windows": {
+      "24h": { "pnlUsd": 4320.60, "winRate": 0.67, "trades": 16 },
+      "7d":  { "pnlUsd": 31500.00, "winRate": 0.63, "trades": 103 },
+      "30d": { "pnlUsd": 118000.00, "winRate": 0.61, "trades": 365 }
+    }
+  },
+  {
+    "wallet": "A8yNzT4A2JkB3F5MpQ7vR9cHsLeX6wGdKbNmUjZiPeVY",
+    "windows": {
+      "24h": { "pnlUsd": 3890.40, "winRate": 0.75, "trades": 8 },
+      "7d":  { "pnlUsd": 27800.00, "winRate": 0.71, "trades": 55 },
+      "30d": { "pnlUsd": 99000.00, "winRate": 0.69, "trades": 210 }
+    }
+  },
+  {
+    "wallet": "BqZxVp3JmW1rY5nC8hTkAeLf2dNsoGiU4cRbMy6KjXwD",
+    "windows": {
+      "24h": { "pnlUsd": 3100.00, "winRate": 0.65, "trades": 20 },
+      "7d":  { "pnlUsd": 23400.00, "winRate": 0.62, "trades": 130 },
+      "30d": { "pnlUsd": 84500.00, "winRate": 0.60, "trades": 458 }
+    }
+  },
+  {
+    "wallet": "EjKL9pNqR3sT6uV1wX4yZ7aBcDeFgHiJkMnOpQrStUvW",
+    "windows": {
+      "24h": { "pnlUsd": 2750.80, "winRate": 0.70, "trades": 10 },
+      "7d":  { "pnlUsd": 19900.00, "winRate": 0.66, "trades": 67 },
+      "30d": { "pnlUsd": 73000.00, "winRate": 0.64, "trades": 245 }
+    }
+  },
+  {
+    "wallet": "Cz2mN8bPqA5tY1vD4wG7hJ3kL6oR9sF0eXiBjMnKpUcV",
+    "windows": {
+      "24h": { "pnlUsd": 2300.00, "winRate": 0.62, "trades": 13 },
+      "7d":  { "pnlUsd": 16800.00, "winRate": 0.59, "trades": 87 },
+      "30d": { "pnlUsd": 62000.00, "winRate": 0.57, "trades": 312 }
+    }
+  },
+  {
+    "wallet": "GuWz4bA7cQ9dRpNeX2sJ5kM8nT1oVyF3hLiKjBePqCxZ",
+    "windows": {
+      "24h": { "pnlUsd": 1980.50, "winRate": 0.68, "trades": 9 },
+      "7d":  { "pnlUsd": 14200.00, "winRate": 0.64, "trades": 59 },
+      "30d": { "pnlUsd": 52000.00, "winRate": 0.62, "trades": 214 }
+    }
+  },
+  {
+    "wallet": "P3kRtYuIoHgFdSaWqZxCvBnMlKjHgFdSaWqZxCvBnMlK",
+    "windows": {
+      "24h": { "pnlUsd": 1650.30, "winRate": 0.64, "trades": 12 },
+      "7d":  { "pnlUsd": 11900.00, "winRate": 0.61, "trades": 80 },
+      "30d": { "pnlUsd": 43000.00, "winRate": 0.59, "trades": 287 }
+    }
+  },
+  {
+    "wallet": "LmNoPqRsTuVwXyZ1AbCdEfGhIjKlMnOpQrStUvWxYzAb",
+    "windows": {
+      "24h": { "pnlUsd": 1420.00, "winRate": 0.60, "trades": 15 },
+      "7d":  { "pnlUsd": 9800.00, "winRate": 0.57, "trades": 96 },
+      "30d": { "pnlUsd": 35500.00, "winRate": 0.55, "trades": 345 }
+    }
+  },
+  {
+    "wallet": "RsTuVwXyZ2BcDeFgHiJkLmNoPqRsTuVwXyZ2BcDeFgHi",
+    "windows": {
+      "24h": { "pnlUsd": 1180.60, "winRate": 0.58, "trades": 17 },
+      "7d":  { "pnlUsd": 8300.00, "winRate": 0.55, "trades": 109 },
+      "30d": { "pnlUsd": 29000.00, "winRate": 0.53, "trades": 390 }
+    }
+  },
+  {
+    "wallet": "XyZ3CdEfGhIjKlMnOpQrStUvWxYzAbCdEfGhIjKlMnOp",
+    "windows": {
+      "24h": { "pnlUsd": 980.40, "winRate": 0.63, "trades": 8 },
+      "7d":  { "pnlUsd": 6900.00, "winRate": 0.59, "trades": 52 },
+      "30d": { "pnlUsd": 24500.00, "winRate": 0.57, "trades": 189 }
+    }
+  },
+  {
+    "wallet": "AbCdEfGhIjKlMnOpQrStUvWxYzAbCdEfGhIjKlMnOpQr",
+    "windows": {
+      "24h": { "pnlUsd": 820.00, "winRate": 0.56, "trades": 14 },
+      "7d":  { "pnlUsd": 5700.00, "winRate": 0.53, "trades": 90 },
+      "30d": { "pnlUsd": 20000.00, "winRate": 0.51, "trades": 322 }
+    }
+  },
+  {
+    "wallet": "FgHiJkLmNoPqRsTuVwXyZ4DeFgHiJkLmNoPqRsTuVwXy",
+    "windows": {
+      "24h": { "pnlUsd": 690.50, "winRate": 0.61, "trades": 7 },
+      "7d":  { "pnlUsd": 4600.00, "winRate": 0.57, "trades": 45 },
+      "30d": { "pnlUsd": 16500.00, "winRate": 0.55, "trades": 162 }
+    }
+  },
+  {
+    "wallet": "KlMnOpQrStUvWxYzAbCdEfGhIjKlMnOpQrStUvWxYzAb",
+    "windows": {
+      "24h": { "pnlUsd": 560.20, "winRate": 0.55, "trades": 11 },
+      "7d":  { "pnlUsd": 3800.00, "winRate": 0.52, "trades": 72 },
+      "30d": { "pnlUsd": 13500.00, "winRate": 0.50, "trades": 259 }
+    }
+  },
+  {
+    "wallet": "PqRsTuVwXyZ5EfGhIjKlMnOpQrStUvWxYzAbCdEfGhIj",
+    "windows": {
+      "24h": { "pnlUsd": 440.80, "winRate": 0.59, "trades": 6 },
+      "7d":  { "pnlUsd": 3100.00, "winRate": 0.55, "trades": 38 },
+      "30d": { "pnlUsd": 11000.00, "winRate": 0.53, "trades": 137 }
+    }
+  },
+  {
+    "wallet": "UvWxYzAbCdEfGhIjKlMnOpQrStUvWxYzAbCdEfGhIjKl",
+    "windows": {
+      "24h": { "pnlUsd": 340.00, "winRate": 0.52, "trades": 10 },
+      "7d":  { "pnlUsd": 2400.00, "winRate": 0.49, "trades": 64 },
+      "30d": { "pnlUsd": 8500.00, "winRate": 0.47, "trades": 229 }
+    }
+  },
+  {
+    "wallet": "ZAbCdEfGhIjKlMnOpQrStUvWxYzAbCdEfGhIjKlMnOpQ",
+    "windows": {
+      "24h": { "pnlUsd": 250.60, "winRate": 0.57, "trades": 5 },
+      "7d":  { "pnlUsd": 1800.00, "winRate": 0.54, "trades": 32 },
+      "30d": { "pnlUsd": 6400.00, "winRate": 0.51, "trades": 115 }
+    }
+  },
+  {
+    "wallet": "EfGhIjKlMnOpQrStUvWxYzAbCdEfGhIjKlMnOpQrStUv",
+    "windows": {
+      "24h": { "pnlUsd": 180.40, "winRate": 0.50, "trades": 8 },
+      "7d":  { "pnlUsd": 1300.00, "winRate": 0.48, "trades": 51 },
+      "30d": { "pnlUsd": 4600.00, "winRate": 0.46, "trades": 183 }
+    }
+  },
+  {
+    "wallet": "JkLmNoPqRsTuVwXyZ6AbCdEfGhIjKlMnOpQrStUvWxYz",
+    "windows": {
+      "24h": { "pnlUsd": 120.00, "winRate": 0.54, "trades": 4 },
+      "7d":  { "pnlUsd": 890.00, "winRate": 0.51, "trades": 26 },
+      "30d": { "pnlUsd": 3100.00, "winRate": 0.49, "trades": 93 }
+    }
+  },
+  {
+    "wallet": "OpQrStUvWxYzAbCdEfGhIjKlMnOpQrStUvWxYzAbCdEf",
+    "windows": {
+      "24h": { "pnlUsd": 80.20, "winRate": 0.48, "trades": 6 },
+      "7d":  { "pnlUsd": 620.00, "winRate": 0.45, "trades": 40 },
+      "30d": { "pnlUsd": 2200.00, "winRate": 0.43, "trades": 143 }
+    }
+  },
+  {
+    "wallet": "TuVwXyZ7BcDeFgHiJkLmNoPqRsTuVwXyZ7BcDeFgHiJk",
+    "windows": {
+      "24h": { "pnlUsd": 50.00, "winRate": 0.52, "trades": 3 },
+      "7d":  { "pnlUsd": 380.00, "winRate": 0.49, "trades": 21 },
+      "30d": { "pnlUsd": 1400.00, "winRate": 0.47, "trades": 75 }
+    }
+  },
+  {
+    "wallet": "YzAbCdEfGhIjKlMnOpQrStUvWxYzAbCdEfGhIjKlMnOp",
+    "windows": {
+      "24h": { "pnlUsd": 30.50, "winRate": 0.45, "trades": 5 },
+      "7d":  { "pnlUsd": 240.00, "winRate": 0.43, "trades": 32 },
+      "30d": { "pnlUsd": 860.00, "winRate": 0.41, "trades": 115 }
+    }
+  },
+  {
+    "wallet": "DeFgHiJkLmNoPqRsTuVwXyZAbCdEfGhIjKlMnOpQrSt",
+    "windows": {
+      "24h": { "pnlUsd": 15.80, "winRate": 0.43, "trades": 4 },
+      "7d":  { "pnlUsd": 140.00, "winRate": 0.40, "trades": 26 },
+      "30d": { "pnlUsd": 510.00, "winRate": 0.38, "trades": 93 }
+    }
+  },
+  {
+    "wallet": "IjKlMnOpQrStUvWxYzAbCdEfGhIjKlMnOpQrStUvWxYz",
+    "windows": {
+      "24h": { "pnlUsd": 8.20, "winRate": 0.40, "trades": 3 },
+      "7d":  { "pnlUsd": 75.00, "winRate": 0.38, "trades": 18 },
+      "30d": { "pnlUsd": 280.00, "winRate": 0.36, "trades": 65 }
+    }
+  },
+  {
+    "wallet": "NoPqRsTuVwXyZAbCdEfGhIjKlMnOpQrStUvWxYzAbCdE",
+    "windows": {
+      "24h": { "pnlUsd": 3.50, "winRate": 0.38, "trades": 2 },
+      "7d":  { "pnlUsd": 32.00, "winRate": 0.36, "trades": 14 },
+      "30d": { "pnlUsd": 120.00, "winRate": 0.34, "trades": 50 }
+    }
+  },
+  {
+    "wallet": "StUvWxYzAbCdEfGhIjKlMnOpQrStUvWxYzAbCdEfGhIj",
+    "windows": {
+      "24h": { "pnlUsd": 1.10, "winRate": 0.35, "trades": 2 },
+      "7d":  { "pnlUsd": 12.00, "winRate": 0.33, "trades": 10 },
+      "30d": { "pnlUsd": 45.00, "winRate": 0.31, "trades": 36 }
+    }
+  }
+]

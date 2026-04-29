@@ -2,6 +2,7 @@
 
 import { env } from './env.js';
 import { captureException } from './sentry.js';
+import { instrument as zauthInstrument } from './zauth.js';
 
 export function json(res, status, body, headers = {}) {
 	res.statusCode = status;
@@ -115,6 +116,7 @@ function isAllowedOrigin(origin, allowed) {
 // Wrap async handlers so uncaught errors return a consistent JSON envelope.
 export function wrap(handler) {
 	return async (req, res) => {
+		zauthInstrument(req, res);
 		try {
 			await handler(req, res);
 		} catch (err) {
