@@ -129,6 +129,9 @@ export class AgentHome {
 				<button class="agent-home-btn" id="agent-copy-link" title="Copy agent link">
 					<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
 				</button>
+				<button class="agent-home-btn" id="agent-home-hide" title="Hide panel" aria-label="Hide agent panel">
+					<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13H5v-2h14v2z"/></svg>
+				</button>
 			</div>
 
 			${
@@ -236,6 +239,10 @@ export class AgentHome {
 			this._flashBtn(panel.querySelector('#agent-copy-link'), '✓');
 		});
 
+		// Hide / show toggle — collapses the whole sidebar to a small pill.
+		// Preference persisted in localStorage so it sticks across reloads.
+		this._wireHideToggle(panel);
+
 		// Wallet CTA button — fire a document event so app.js can handle it.
 		panel.querySelector('.agent-home-address--cta')?.addEventListener('click', () => {
 			document.dispatchEvent(new CustomEvent('agent-home:connect-wallet', { bubbles: true }));
@@ -244,6 +251,45 @@ export class AgentHome {
 		// Inline name + description editing — auto-save with local-first fallback.
 		panel.querySelectorAll('.agent-home-editable').forEach((el) => {
 			this._wireInlineEdit(el);
+		});
+	}
+
+	_wireHideToggle(panel) {
+		const sidebar = this.container.closest('.agent-presence-sidebar') || this.container.parentElement;
+		if (!sidebar) return;
+
+		const STORAGE_KEY = 'agent3d:home-hidden';
+
+		// Show-pill — appears only when sidebar is collapsed. Click to restore.
+		let pill = sidebar.querySelector('.agent-home-show-pill');
+		if (!pill) {
+			pill = document.createElement('button');
+			pill.type = 'button';
+			pill.className = 'agent-home-show-pill';
+			pill.title = 'Show agent panel';
+			pill.setAttribute('aria-label', 'Show agent panel');
+			pill.innerHTML = '<span aria-hidden="true">◎</span>';
+			sidebar.appendChild(pill);
+		}
+
+		const apply = (hidden) => {
+			sidebar.dataset.collapsed = hidden ? 'true' : 'false';
+		};
+
+		try {
+			apply(localStorage.getItem(STORAGE_KEY) === '1');
+		} catch {
+			apply(false);
+		}
+
+		panel.querySelector('#agent-home-hide')?.addEventListener('click', () => {
+			apply(true);
+			try { localStorage.setItem(STORAGE_KEY, '1'); } catch {}
+		});
+
+		pill.addEventListener('click', () => {
+			apply(false);
+			try { localStorage.setItem(STORAGE_KEY, '0'); } catch {}
 		});
 	}
 
