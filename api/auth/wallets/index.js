@@ -6,13 +6,13 @@ import { sql } from '../../_lib/db.js';
 import { getSessionUser } from '../../_lib/auth.js';
 import { cors, json, method, readJson, wrap, error } from '../../_lib/http.js';
 import { parse } from '../../_lib/validate.js';
+import { parseSiweMessage } from '../../_lib/siwe.js';
+import { env } from '../../_lib/env.js';
 import { consumeNonce } from './_link-nonces.js';
 
 const linkBody = z.object({
-	address: z.string().regex(/^0x[a-fA-F0-9]{40}$/i),
 	message: z.string().min(64).max(4000),
 	signature: z.string().regex(/^0x[a-fA-F0-9]+$/),
-	nonce: z.string().min(8).max(32),
 });
 
 export default wrap(async (req, res) => {
@@ -49,43 +49,78 @@ async function handleListWallets(userId, res) {
 async function handleLinkWallet(userId, req, res) {
 	const body = parse(linkBody, await readJson(req));
 
-	// 1. Verify nonce exists and is not expired.
-	const nonceData = consumeNonce(body.nonce, userId);
+	// 1. Parse SIWE message.
+	const fields = parseSiweMessage(body.message);
+	if (!fields) return error(res, 400, 'invalid_message', 'malformed SIWE message');
+
+	// 2. Domain + URI must match this deployment.
+	const appOrigin = env.APP_ORIGIN;
+	const appHost = new URL(appOrigin).host;
+	const vercelHost = process.env.VERCEL_URL || null;
+	const isLocalDev =
+		process.env.VERCEL_ENV !== 'production' && process.env.VERCEL_ENV !== 'preview';
+	const allowedHosts = new Set([appHost, vercelHost].filter(Boolean));
+	const domainOk =
+		allowedHosts.has(fields.domain) || (isLocalDev && /^localhost(:\d+)?$/.test(fields.domain));
+	if (!domainOk) return error(res, 400, 'invalid_domain', `domain must be ${appHost}`);
+	try {
+		const u = new URL(fields.uri);
+		const allowedOrigins = new Set(
+			[appOrigin, vercelHost ? `https://${vercelHost}` : null].filter(Boolean),
+		);
+		const originOk =
+			allowedOrigins.has(u.origin) ||
+			(isLocalDev && /^https?:\/\/localhost(:\d+)?$/.test(u.origin));
+		if (!originOk) return error(res, 400, 'invalid_uri', 'uri origin mismatch');
+	} catch {
+		return error(res, 400, 'invalid_uri', 'uri not a valid URL');
+	}
+
+	// 3. Temporal checks.
+	const now = Date.now();
+	if (fields.expirationTime && Date.parse(fields.expirationTime) < now) {
+		return error(res, 400, 'expired', 'message expired');
+	}
+	if (fields.notBefore && Date.parse(fields.notBefore) > now) {
+		return error(res, 400, 'not_yet_valid', 'message not yet valid');
+	}
+
+	// 4. Verify nonce was issued to this user and burn it.
+	const nonceData = consumeNonce(fields.nonce, userId);
 	if (!nonceData) {
 		return error(res, 400, 'invalid_nonce', 'unknown, expired, or invalid nonce');
 	}
 
-	// 2. Verify signature recovers the claimed address.
+	// 5. Verify signature recovers the address claimed in the message.
 	let recovered;
 	try {
 		recovered = verifyMessage(body.message, body.signature);
 	} catch {
 		return error(res, 401, 'invalid_signature', 'signature verification failed');
 	}
-
 	let claimed;
 	try {
-		claimed = getAddress(body.address);
+		claimed = getAddress(fields.address);
 	} catch {
 		return error(res, 400, 'invalid_address', 'address not checksummed correctly');
 	}
-
 	if (recovered.toLowerCase() !== claimed.toLowerCase()) {
 		return error(res, 401, 'invalid_signature', 'signer does not match address');
 	}
 
 	const addrLower = claimed.toLowerCase();
+	const chainId = fields.chainId || null;
 
-	// 3. Check if this address is already linked to this user (idempotent).
+	// 6. Check if this address is already linked to this user (idempotent).
 	const existing = await sql`
 		select id from user_wallets
 		where user_id = ${userId} and address = ${addrLower}
 	`;
 	if (existing.length > 0) {
-		return json(res, 200, { wallet: { address: claimed, chain_id: null } });
+		return json(res, 200, { wallet: { address: claimed, chain_id: chainId } });
 	}
 
-	// 4. Check if this address is already linked to a different user.
+	// 7. Check if this address is already linked to a different user.
 	const conflict = await sql`
 		select user_id from user_wallets
 		where address = ${addrLower}
@@ -99,11 +134,11 @@ async function handleLinkWallet(userId, req, res) {
 		);
 	}
 
-	// 5. Insert the new wallet.
+	// 8. Insert the new wallet.
 	await sql`
 		insert into user_wallets (user_id, address, chain_id, is_primary)
-		values (${userId}, ${addrLower}, null, false)
+		values (${userId}, ${addrLower}, ${chainId}, false)
 	`;
 
-	return json(res, 201, { wallet: { address: claimed, chain_id: null } });
+	return json(res, 201, { wallet: { address: claimed, chain_id: chainId } });
 }
