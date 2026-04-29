@@ -19,6 +19,14 @@ character-studio/public/loot-assets
 .mcp.json
 .claude/worktrees/
 
+# Local env files
+.env.xspace
+
+# Demo/scratch scripts (contain credentials)
+xspace-agent/demo-join.ts
+xspace-agent/join-space.js
+xspace-agent/start-demo.sh
+
 # Animation build cache
 public/animations/clips/.input-hashes.json
 Handshake
