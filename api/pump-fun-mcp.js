@@ -18,7 +18,7 @@
 
 import { cors, json, method, wrap, readJson, error } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
-import { getPumpSdk, getConnection, solanaPubkey } from './_lib/pump.js';
+import { getPumpSdk, getConnection, solanaPubkey, getAmmPoolState } from './_lib/pump.js';
 import { pumpfunMcp, pumpfunBotEnabled } from './_lib/pumpfun-mcp.js';
 import { getRadarSignals } from '../src/kol/radar.js';
 import { TOOLS, rpcError, rpcEnvelope } from '../src/pump/mcp-tools.js';
@@ -164,6 +164,7 @@ async function handleKolRadar({ category = 'pump-fun', limit = 20 }) {
 }
 
 async function handleKolLeaderboard({ window = '7d', limit = 25 }) {
+	const { getLeaderboard } = await import('../src/kol/leaderboard.js');
 	return getLeaderboard({ window, limit });
 }
 

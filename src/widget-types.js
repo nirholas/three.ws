@@ -44,6 +44,12 @@ export const WIDGET_TYPES = {
 		status: 'ready',
 		icon: '✦',
 	},
+	'kol-trades': {
+		label: 'Smart Money Feed',
+		desc: 'Live buy/sell activity from KOL and whale wallets for a single token.',
+		status: 'ready',
+		icon: '◈',
+	},
 };
 
 export const WIDGET_TYPE_KEYS = Object.keys(WIDGET_TYPES);
@@ -100,6 +106,11 @@ const TYPE_DEFAULTS = {
 		minTier: '',
 		autoNarrate: true,
 		maxCards: 8,
+	},
+	'kol-trades': {
+		mint: '',
+		limit: 20,
+		refreshMs: 30_000,
 	},
 };
 
@@ -214,6 +225,11 @@ const TYPE_SCHEMAS = {
 		minTier: z.enum(['', 'notable', 'influencer', 'mega']).default(''),
 		autoNarrate: z.boolean().default(true),
 		maxCards: z.number().int().min(1).max(50).default(8),
+	}),
+	'kol-trades': z.object({
+		mint: z.string().default(''),
+		limit: z.number().int().min(1).max(100).default(20),
+		refreshMs: z.number().int().min(1000).max(300_000).default(30_000),
 	}),
 };
 

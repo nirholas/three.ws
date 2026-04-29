@@ -15,6 +15,7 @@ import { mountTalkingAgent } from './widgets/talking-agent.js';
 import { mountTurntable } from './widgets/turntable.js';
 import { mountHotspotTour } from './widgets/hotspot-tour.js';
 import { mountPumpfunFeed } from './widgets/pumpfun-feed.js';
+import { mountKolTradesWidget } from './widgets/kol-trades.js';
 import queryString from 'query-string';
 
 // Agent system — the new primitive layer
@@ -1005,6 +1006,13 @@ class App {
 				this._widgetController = ctl;
 			} else if (type === 'pumpfun-feed') {
 				const ctl = await mountPumpfunFeed(this.viewer, cfg, document.body, { protocol });
+				this._widgetController = ctl;
+			} else if (type === 'kol-trades') {
+				const ctl = mountKolTradesWidget(document.body, {
+					mint: cfg.mint,
+					limit: cfg.limit,
+					refreshMs: cfg.refreshMs,
+				});
 				this._widgetController = ctl;
 			}
 		} catch (e) {

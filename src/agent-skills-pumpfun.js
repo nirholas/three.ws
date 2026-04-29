@@ -1323,4 +1323,38 @@ export function registerPumpFunSkills(skills) {
 		},
 	});
 
+	// ── pumpfun.quoteSwap ─────────────────────────────────────────────────────
+	skills.register({
+		name: 'pumpfun.quoteSwap',
+		description: 'Get a read-only price quote for a pump.fun AMM swap. No signing or tx sending.',
+		instruction: 'Quote only — safe during demos. One of inputMint/outputMint must be wSOL.',
+		animationHint: 'inspect',
+		voicePattern: 'Quoting swap of {{amountIn}} {{inputMint}}…',
+		mcpExposed: true,
+		inputSchema: {
+			type: 'object',
+			properties: {
+				inputMint: { type: 'string', description: 'Input token mint (base58). wSOL = So11111111111111111111111111111111111111112' },
+				outputMint: { type: 'string', description: 'Output token mint (base58).' },
+				amountIn: { type: 'number', description: 'Input amount in raw base units (lamports for SOL).' },
+				slippageBps: { type: 'number', description: 'Slippage tolerance in basis points (default 100 = 1%).' },
+			},
+			required: ['inputMint', 'outputMint', 'amountIn'],
+		},
+		handler: async (args, _ctx) => {
+			const result = await quoteSwap({
+				inputMint: args.inputMint,
+				outputMint: args.outputMint,
+				amountIn: args.amountIn,
+				slippageBps: args.slippageBps,
+			});
+			return {
+				success: true,
+				output: `Quote: ${result.amountOut} out for ${args.amountIn} in. Impact: ${result.priceImpactBps} bps.`,
+				sentiment: 0.1,
+				data: result,
+			};
+		},
+	});
+
 }
