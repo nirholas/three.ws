@@ -176,6 +176,18 @@ const appConfig = {
 				});
 			},
 		},
+		{
+			// Several static pages (dashboard, vanity-wallet, …) import ESM
+			// directly from `/src/*.js`. Vite's dev server serves these from
+			// the project root, but production needs them under dist/. Mirror
+			// the tree so the runtime URLs resolve.
+			name: 'copy-src-to-dist',
+			closeBundle() {
+				cpSync(resolve(__dirname, 'src'), resolve(__dirname, 'dist/src'), {
+					recursive: true,
+				});
+			},
+		},
 		VitePWA({
 			registerType: 'autoUpdate',
 			includeAssets: ['favicon.ico', 'pwa-192x192.png', 'pwa-512x512.png', 'pwa-icon.svg'],

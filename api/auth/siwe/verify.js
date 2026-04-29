@@ -146,8 +146,9 @@ export default wrap(async (req, res) => {
 		// before user_wallets existed, or by a different flow that only set the
 		// users column. Reconcile by backfilling user_wallets.
 		const placeholderEmail = `wallet-${addrLower}@wallet.local`;
-		// Include soft-deleted rows so we can reject them with a clear error
-		// instead of colliding on the email unique constraint.
+		// Include soft-deleted rows so we don't collide on the email unique
+		// constraint. Re-signing-in with the same wallet restores the account —
+		// the placeholder email is wallet-derived, so SIWE proves ownership.
 		const [existingUser] = await sql`
 			select id, deleted_at from users
 			where wallet_address = ${addrLower} or email = ${placeholderEmail}
@@ -155,18 +156,13 @@ export default wrap(async (req, res) => {
 		`;
 
 		if (existingUser) {
-			if (existingUser.deleted_at) {
-				return error(
-					res,
-					403,
-					'account_deleted',
-					'this wallet is linked to a deleted account',
-				);
-			}
 			userId = existingUser.id;
 			await sql`
-				update users set wallet_address = ${addrLower}
-				where id = ${userId} and wallet_address is distinct from ${addrLower}
+				update users
+				set wallet_address = ${addrLower},
+					deleted_at = null
+				where id = ${userId}
+					and (wallet_address is distinct from ${addrLower} or deleted_at is not null)
 			`;
 			await sql`
 				insert into user_wallets (user_id, address, chain_id, is_primary)
@@ -183,7 +179,8 @@ export default wrap(async (req, res) => {
 				insert into users (email, display_name, wallet_address)
 				values (${placeholderEmail}, ${shortAddr(claimed)}, ${addrLower})
 				on conflict (email) do update
-					set wallet_address = ${addrLower}
+					set wallet_address = ${addrLower},
+						deleted_at = null
 				returning id, (xmax = 0) as inserted
 			`;
 			userId = user.id;

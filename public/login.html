@@ -785,6 +785,7 @@
 				const next =
 					params.get('next') || sessionStorage.getItem('login_redirect') || '/create';
 				sessionStorage.removeItem('login_redirect');
+				window.__loginNext = next;
 				const navType = performance.getEntriesByType('navigation')[0]?.type;
 				if (navType !== 'back_forward') {
 					fetch('/api/auth/me', { credentials: 'include' })

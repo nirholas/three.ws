@@ -5,7 +5,7 @@ import { createConnectWalletButton } from '/wallet/connect-button.js';
 import { createSolanaWalletButton } from '/wallet/connect-button-solana.js';
 
 const params = new URLSearchParams(location.search);
-const next   = params.get('next') || sessionStorage.getItem('login_redirect') || '/dashboard/';
+const next   = window.__loginNext || params.get('next') || sessionStorage.getItem('login_redirect') || '/create';
 sessionStorage.removeItem('login_redirect');
 
 function setErr(m) {

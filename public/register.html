@@ -600,6 +600,7 @@
 			const params = new URLSearchParams(location.search);
 			const next = params.get('next') || sessionStorage.getItem('login_redirect') || '/create';
 			sessionStorage.removeItem('login_redirect');
+			window.__loginNext = next;
 			const form = document.getElementById('f');
 			const err = document.getElementById('err');
 			const btn = document.getElementById('submit');

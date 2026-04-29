@@ -136,17 +136,48 @@ export default wrap(async (req, res) => {
 		`;
 	} else {
 		const placeholderEmail = `sol-${addr.slice(0, 8).toLowerCase()}@wallet.local`;
-		const [user] = await sql`
-			insert into users (email, display_name)
-			values (${placeholderEmail}, ${shortAddr(addr)})
-			returning id
+		const [existingUser] = await sql`
+			select id, deleted_at from users
+			where email = ${placeholderEmail}
+			limit 1
 		`;
-		userId = user.id;
-		await sql`
-			insert into user_wallets (user_id, address, chain_type, is_primary)
-			values (${userId}, ${addr}, 'solana', true)
-		`;
-		queueMicrotask(() => sendWelcomeEmail({ to: placeholderEmail, displayName: shortAddr(addr) }));
+
+		if (existingUser) {
+			if (existingUser.deleted_at) {
+				return error(
+					res,
+					403,
+					'account_deleted',
+					'this wallet is linked to a deleted account',
+				);
+			}
+			userId = existingUser.id;
+			await sql`
+				insert into user_wallets (user_id, address, chain_type, is_primary)
+				values (${userId}, ${addr}, 'solana', true)
+				on conflict (address) do update
+					set last_used_at = now()
+			`;
+		} else {
+			const [user] = await sql`
+				insert into users (email, display_name)
+				values (${placeholderEmail}, ${shortAddr(addr)})
+				on conflict (email) do update set email = excluded.email
+				returning id, (xmax = 0) as inserted
+			`;
+			userId = user.id;
+			await sql`
+				insert into user_wallets (user_id, address, chain_type, is_primary)
+				values (${userId}, ${addr}, 'solana', true)
+				on conflict (address) do update
+					set last_used_at = now()
+			`;
+			if (user.inserted) {
+				queueMicrotask(() =>
+					sendWelcomeEmail({ to: placeholderEmail, displayName: shortAddr(addr) }),
+				);
+			}
+		}
 	}
 
 	// 8. Issue session.
