@@ -31,17 +31,52 @@
 				margin: 0;
 				min-height: 100vh;
 				display: flex;
-				flex-direction: column;
 				align-items: center;
 				justify-content: center;
-				gap: 8px;
 				padding: 24px;
+			}
+			.shell {
+				display: flex;
+				width: 100%;
+				max-width: 1080px;
+				min-height: 640px;
+				border-radius: 24px;
+				overflow: hidden;
+				background: #14141c;
+				border: 1px solid #2a2a36;
+				box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+			}
+			.panel {
+				flex: 1;
+				position: relative;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				background:
+					radial-gradient(120% 90% at 30% 20%, rgba(154, 140, 255, 0.6), transparent 60%),
+					radial-gradient(120% 90% at 80% 90%, rgba(255, 92, 168, 0.4), transparent 55%),
+					linear-gradient(135deg, #2a2350 0%, #1a1a2e 100%);
+				overflow: hidden;
 			}
 			.agent-avatar {
 				position: relative;
-				width: 160px;
-				height: 160px;
+				width: 320px;
+				height: 320px;
 				pointer-events: none;
+			}
+			@media (max-width: 860px) {
+				.shell {
+					flex-direction: column;
+					min-height: 0;
+				}
+				.panel {
+					min-height: 220px;
+					order: -1;
+				}
+				.agent-avatar {
+					width: 180px;
+					height: 180px;
+				}
 			}
 			.agent-avatar model-viewer {
 				width: 100%;
@@ -65,12 +100,23 @@
 			}
 			.card {
 				background: #14141c;
-				border: 1px solid #2a2a36;
-				border-radius: 16px;
-				padding: 32px;
-				max-width: 400px;
+				border: 0;
+				border-radius: 0;
+				padding: 56px 56px;
+				flex: 1;
 				width: 100%;
-				box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+				max-width: 520px;
+				box-shadow: none;
+				display: flex;
+				flex-direction: column;
+				justify-content: center;
+				overflow-y: auto;
+			}
+			@media (max-width: 860px) {
+				.card {
+					padding: 32px 28px;
+					max-width: none;
+				}
 			}
 			h1 {
 				font-size: 22px;
@@ -271,26 +317,8 @@
 		</style>
 	</head>
 	<body>
-		<div class="agent-avatar" aria-hidden="true">
-			<model-viewer
-				id="register-avatar"
-				src="/avatars/cz.glb"
-				alt=""
-				autoplay
-				animation-name="IdleV4.2(maya_head)"
-				disable-zoom
-				interaction-prompt="none"
-				shadow-intensity="0.6"
-				shadow-softness="1"
-				exposure="1.05"
-				tone-mapping="aces"
-				environment-image="neutral"
-				camera-orbit="0deg 88deg 4.8m"
-				field-of-view="32deg"
-				loading="eager"
-			></model-viewer>
-		</div>
-		<form class="card" id="f">
+		<div class="shell">
+			<form class="card" id="f">
 			<a href="/" class="brand">three.ws</a>
 			<h1>Create account</h1>
 			<p class="sub">Get started free. <span class="badge">✓ No email needed</span></p>
@@ -340,6 +368,28 @@
 			<p class="foot">Already have an account? <a href="/login">Sign in</a></p>
 			<p class="legal">By creating an account you agree to our <a href="/legal/tos">Terms of Service</a> and <a href="/legal/privacy">Privacy Policy</a>.</p>
 		</form>
+			<div class="panel" aria-hidden="true">
+				<div class="agent-avatar">
+					<model-viewer
+						id="register-avatar"
+						src="/avatars/cz.glb"
+						alt=""
+						autoplay
+						animation-name="IdleV4.2(maya_head)"
+						disable-zoom
+						interaction-prompt="none"
+						shadow-intensity="0.6"
+						shadow-softness="1"
+						exposure="1.05"
+						tone-mapping="aces"
+						environment-image="neutral"
+						camera-orbit="0deg 88deg 4.8m"
+						field-of-view="32deg"
+						loading="eager"
+					></model-viewer>
+				</div>
+			</div>
+		</div>
 
 		<script type="module" src="/wallet-login.js"></script>
 

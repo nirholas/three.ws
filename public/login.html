@@ -29,16 +29,40 @@
 				margin: 0;
 				min-height: 100vh;
 				display: flex;
-				flex-direction: column;
 				align-items: center;
 				justify-content: center;
-				gap: 8px;
 				padding: 24px;
+			}
+			.shell {
+				display: flex;
+				width: 100%;
+				max-width: 1080px;
+				min-height: 640px;
+				border-radius: 24px;
+				overflow: hidden;
+				background: #0c0c0c;
+				border: 1px solid rgba(255, 255, 255, 0.08);
+				box-shadow:
+					0 0 0 1px rgba(255, 255, 255, 0.03),
+					0 30px 80px rgba(0, 0, 0, 0.85),
+					0 0 120px rgba(200, 210, 255, 0.04);
+			}
+			.panel {
+				flex: 1;
+				position: relative;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				background:
+					radial-gradient(120% 90% at 30% 20%, rgba(154, 140, 255, 0.55), transparent 60%),
+					radial-gradient(120% 90% at 80% 90%, rgba(255, 140, 200, 0.35), transparent 55%),
+					linear-gradient(135deg, #2a2350 0%, #1a1a2e 100%);
+				overflow: hidden;
 			}
 			.agent-avatar {
 				position: relative;
-				width: 160px;
-				height: 160px;
+				width: 320px;
+				height: 320px;
 				pointer-events: none;
 			}
 			.agent-avatar model-viewer {
@@ -67,15 +91,35 @@
 			}
 			.card {
 				background: #0c0c0c;
-				border: 1px solid rgba(255, 255, 255, 0.08);
-				border-radius: 20px;
-				padding: 36px;
-				max-width: 400px;
+				border: 0;
+				border-radius: 0;
+				padding: 56px 56px;
+				flex: 1;
 				width: 100%;
-				box-shadow:
-					0 0 0 1px rgba(255, 255, 255, 0.03),
-					0 20px 60px rgba(0, 0, 0, 0.8),
-					0 0 80px rgba(200, 210, 255, 0.03);
+				max-width: 520px;
+				box-shadow: none;
+				display: flex;
+				flex-direction: column;
+				justify-content: center;
+				overflow-y: auto;
+			}
+			@media (max-width: 860px) {
+				.shell {
+					flex-direction: column;
+					min-height: 0;
+				}
+				.panel {
+					min-height: 220px;
+					order: -1;
+				}
+				.card {
+					padding: 32px 28px;
+					max-width: none;
+				}
+				.agent-avatar {
+					width: 180px;
+					height: 180px;
+				}
 			}
 			h1 {
 				font-size: 22px;
@@ -226,7 +270,7 @@
 				from { opacity: 0; transform: translateY(14px) scale(0.985); }
 				to   { opacity: 1; transform: translateY(0) scale(1); }
 			}
-			.card {
+			.shell {
 				animation: card-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
 			}
 			input {
@@ -287,26 +331,8 @@
 		</style>
 	</head>
 	<body>
-		<div class="agent-avatar" aria-hidden="true">
-			<model-viewer
-				id="login-avatar"
-				src="/avatars/cz.glb"
-				alt=""
-				autoplay
-				animation-name="IdleV4.2(maya_head)"
-				disable-zoom
-				interaction-prompt="none"
-				shadow-intensity="0.6"
-				shadow-softness="1"
-				exposure="1.05"
-				tone-mapping="aces"
-				environment-image="neutral"
-				camera-orbit="0deg 88deg 4.8m"
-				field-of-view="32deg"
-				loading="eager"
-			></model-viewer>
-		</div>
-		<form class="card" id="f">
+		<div class="shell">
+			<form class="card" id="f">
 			<a href="/" class="brand"><img src="/three.svg" alt="three.ws" /></a>
 			<h1>Welcome back</h1>
 			<p class="sub">Sign in to manage your avatars.</p>
@@ -345,6 +371,28 @@
 			<div class="err" id="err" role="alert" aria-live="polite"></div>
 			<p class="foot">No account? <a href="/register">Create one</a></p>
 		</form>
+			<div class="panel" aria-hidden="true">
+				<div class="agent-avatar">
+					<model-viewer
+						id="login-avatar"
+						src="/avatars/cz.glb"
+						alt=""
+						autoplay
+						animation-name="IdleV4.2(maya_head)"
+						disable-zoom
+						interaction-prompt="none"
+						shadow-intensity="0.6"
+						shadow-softness="1"
+						exposure="1.05"
+						tone-mapping="aces"
+						environment-image="neutral"
+						camera-orbit="0deg 88deg 4.8m"
+						field-of-view="32deg"
+						loading="eager"
+					></model-viewer>
+				</div>
+			</div>
+		</div>
 		<style>
 			.wallet-step-hint {
 				margin: 6px 0 0;

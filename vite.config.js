@@ -97,7 +97,6 @@ const appConfig = {
 					'/hydrate',
 					'/my-agents',
 					'/discover',
-					'/explore',
 					'/features',
 					'/docs',
 				]);
@@ -106,6 +105,12 @@ const appConfig = {
 					if (dirRoutes.has(path)) {
 						res.statusCode = 301;
 						res.setHeader('Location', path + '/' + (req.url.slice(path.length) || ''));
+						return res.end();
+					}
+					// /explore is an alias for /discover — share the same JS bundle
+					if (path === '/explore' || path === '/explore/') {
+						res.statusCode = 301;
+						res.setHeader('Location', '/discover/');
 						return res.end();
 					}
 					let filePath = fileMap[path];
@@ -124,7 +129,13 @@ const appConfig = {
 					if (!filePath) return next();
 					try {
 						const html = readFileSync(filePath, 'utf8');
-						const transformed = await server.transformIndexHtml(req.url, html);
+						// Use the file's path-relative URL (not req.url) so Vite can
+						// resolve html-proxy modules (inline <script type="module">)
+						// back to a real file. Otherwise virtual module IDs derived
+						// from req.url (e.g. /agent/0xfoo) 500 because nothing on
+						// disk matches.
+						const fileUrl = '/' + filePath.slice(root.length + 1).replace(/\\/g, '/');
+						const transformed = await server.transformIndexHtml(fileUrl, html);
 						res.setHeader('Content-Type', 'text/html; charset=utf-8');
 						res.end(transformed);
 					} catch {
