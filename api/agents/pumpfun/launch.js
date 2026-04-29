@@ -15,6 +15,7 @@ import { getSessionUser, authenticateBearer, extractBearer } from '../../_lib/au
 import { cors, json, method, readJson, error } from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { loadAgentForSigning, solanaConnection } from '../../_lib/agent-pumpfun.js';
+import { grindMintKeypair } from '../../_lib/pump-vanity.js';
 import { sql } from '../../_lib/db.js';
 import { Keypair, Transaction, SystemProgram } from '@solana/web3.js';
 import { z } from 'zod';
@@ -25,6 +26,7 @@ const bodySchema = z.object({
 	uri: z.string().url().max(2048),
 	solAmount: z.number().nonnegative().max(1000).optional(),
 	tokenAmount: z.number().nonnegative().optional(),
+	vanityPrefix: z.string().min(1).max(6).optional(),
 	network: z.enum(['mainnet', 'devnet']).default('mainnet'),
 });
 
@@ -62,7 +64,15 @@ export default async function handler(req, res, id) {
 	const online = new OnlinePumpSdk(conn);
 	const sdk = new PumpSdk();
 
-	const mint = Keypair.generate();
+	let mint;
+	let vanityIterations = 1;
+	try {
+		const ground = grindMintKeypair({ prefix: body.vanityPrefix });
+		mint = ground.keypair;
+		vanityIterations = ground.iterations;
+	} catch (err) {
+		return error(res, err.status || 500, err.code || 'internal', err.message);
+	}
 	const solLamports = new BN(Math.floor((body.solAmount || 0) * 1e9));
 	const tokenAmount = new BN(body.tokenAmount || 0);
 
@@ -121,6 +131,8 @@ export default async function handler(req, res, id) {
 				uri: body.uri,
 				signature,
 				network: body.network,
+				vanity_prefix: body.vanityPrefix || null,
+				vanity_iterations: vanityIterations,
 			})}::jsonb,
 			${'pumpfun'}
 		)
@@ -132,6 +144,8 @@ export default async function handler(req, res, id) {
 			signature,
 			explorer: `https://solscan.io/tx/${signature}${body.network === 'devnet' ? '?cluster=devnet' : ''}`,
 			pumpfun_url: `https://pump.fun/${mint.publicKey.toBase58()}`,
+			vanity_prefix: body.vanityPrefix || null,
+			vanity_iterations: vanityIterations,
 		},
 	});
 }

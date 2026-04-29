@@ -15,10 +15,8 @@
 
 import { Connection, PublicKey } from '@solana/web3.js';
 
-const RPC_MAINNET = () =>
-	process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
-const RPC_DEVNET = () =>
-	process.env.SOLANA_RPC_URL_DEVNET || 'https://api.devnet.solana.com';
+const RPC_MAINNET = () => process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+const RPC_DEVNET = () => process.env.SOLANA_RPC_URL_DEVNET || 'https://api.devnet.solana.com';
 
 export function getConnection({ network = 'mainnet', commitment = 'confirmed' } = {}) {
 	const url = network === 'devnet' ? RPC_DEVNET() : RPC_MAINNET();
@@ -41,9 +39,7 @@ export async function getPumpSdk({ network = 'mainnet' } = {}) {
 		import('bn.js').then((m) => m.default || m),
 	]);
 	const connection = getConnection({ network });
-	const sdk = new OnlinePumpSdk
-		? new OnlinePumpSdk(connection)
-		: new PumpSdk(connection);
+	const sdk = new OnlinePumpSdk() ? new OnlinePumpSdk(connection) : new PumpSdk(connection);
 	return { sdk, connection, BN, web3, PumpSdk, OnlinePumpSdk };
 }
 
@@ -55,17 +51,13 @@ export async function getPumpSwapSdk({ network = 'mainnet' } = {}) {
 	]);
 	const connection = getConnection({ network });
 	const sdk = new PumpAmmSdk(connection);
-	const internalSdk = new PumpAmmInternalSdk ? new PumpAmmInternalSdk(connection) : null;
+	const internalSdk = new PumpAmmInternalSdk() ? new PumpAmmInternalSdk(connection) : null;
 	return { sdk, internalSdk, connection, BN, web3 };
 }
 
 export async function getPumpAgent({ network = 'mainnet', mint } = {}) {
 	if (!mint) throw Object.assign(new Error('mint required'), { status: 400 });
-	const [
-		{ PumpAgent, getTokenAgentPaymentsPDA },
-		web3,
-		BN,
-	] = await Promise.all([
+	const [{ PumpAgent, getTokenAgentPaymentsPDA }, web3, BN] = await Promise.all([
 		import('@pump-fun/agent-payments-sdk'),
 		import('@solana/web3.js'),
 		import('bn.js').then((m) => m.default || m),
@@ -75,30 +67,23 @@ export async function getPumpAgent({ network = 'mainnet', mint } = {}) {
 	// PumpAgent is an Anchor-backed online SDK. Construction signature can
 	// shift between 3.x patches; pass connection + mint and let it error if not.
 	const agent = new PumpAgent(mintPk, connection);
-	const [agentPda] = getTokenAgentPaymentsPDA
-		? getTokenAgentPaymentsPDA(mintPk)
-		: [null];
+	const [agentPda] = getTokenAgentPaymentsPDA ? getTokenAgentPaymentsPDA(mintPk) : [null];
 	return { agent, connection, BN, web3, agentPda };
 }
 
 export async function getPumpAgentOffline({ network = 'mainnet', mint } = {}) {
 	if (!mint) throw Object.assign(new Error('mint required'), { status: 400 });
-	const [
-		{ PumpAgentOffline, getTokenAgentPaymentsPDA, getInvoiceIdPDA },
-		web3,
-		BN,
-	] = await Promise.all([
-		import('@pump-fun/agent-payments-sdk'),
-		import('@solana/web3.js'),
-		import('bn.js').then((m) => m.default || m),
-	]);
+	const [{ PumpAgentOffline, getTokenAgentPaymentsPDA, getInvoiceIdPDA }, web3, BN] =
+		await Promise.all([
+			import('@pump-fun/agent-payments-sdk'),
+			import('@solana/web3.js'),
+			import('bn.js').then((m) => m.default || m),
+		]);
 	const mintPk = mint instanceof PublicKey ? mint : new PublicKey(mint);
 	const offline = PumpAgentOffline.load
 		? PumpAgentOffline.load(mintPk, getConnection({ network }))
 		: new PumpAgentOffline(mintPk);
-	const [agentPda] = getTokenAgentPaymentsPDA
-		? getTokenAgentPaymentsPDA(mintPk)
-		: [null];
+	const [agentPda] = getTokenAgentPaymentsPDA ? getTokenAgentPaymentsPDA(mintPk) : [null];
 	return { offline, getInvoiceIdPDA, BN, web3, agentPda };
 }
 
@@ -140,21 +125,13 @@ export async function verifySignature({ network, signature }) {
 // Throws { status: 404, code: 'pool_not_found' } if no pool exists yet.
 export async function getAmmPoolState({ network = 'mainnet', mint } = {}) {
 	if (!mint) throw Object.assign(new Error('mint required'), { status: 400 });
-	const [
-		{
-			canonicalPumpPoolPda,
-			OnlinePumpAmmSdk,
-			PumpAmmSdk,
-		},
-		web3,
-		BN,
-		spl,
-	] = await Promise.all([
-		import('@pump-fun/pump-swap-sdk'),
-		import('@solana/web3.js'),
-		import('bn.js').then((m) => m.default || m),
-		import('@solana/spl-token'),
-	]);
+	const [{ canonicalPumpPoolPda, OnlinePumpAmmSdk, PumpAmmSdk }, web3, BN, spl] =
+		await Promise.all([
+			import('@pump-fun/pump-swap-sdk'),
+			import('@solana/web3.js'),
+			import('bn.js').then((m) => m.default || m),
+			import('@solana/spl-token'),
+		]);
 	const connection = getConnection({ network });
 	const mintPk = mint instanceof PublicKey ? mint : new PublicKey(mint);
 	const poolKey = canonicalPumpPoolPda(mintPk);
@@ -189,16 +166,12 @@ export async function getAmmPoolState({ network = 'mainnet', mint } = {}) {
 
 	const offline = new PumpAmmSdk();
 	const [globalConfigInfo, feeConfigInfo] = await Promise.all([
-		connection.getAccountInfo(
-			(await import('@pump-fun/pump-swap-sdk')).GLOBAL_CONFIG_PDA,
-		),
+		connection.getAccountInfo((await import('@pump-fun/pump-swap-sdk')).GLOBAL_CONFIG_PDA),
 		connection.getAccountInfo(
 			(await import('@pump-fun/pump-swap-sdk')).PUMP_AMM_FEE_CONFIG_PDA,
 		),
 	]);
-	const globalConfig = globalConfigInfo
-		? offline.decodeGlobalConfig(globalConfigInfo)
-		: null;
+	const globalConfig = globalConfigInfo ? offline.decodeGlobalConfig(globalConfigInfo) : null;
 	const feeConfig = feeConfigInfo ? offline.decodeFeeConfig(feeConfigInfo) : null;
 
 	return {

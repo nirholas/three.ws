@@ -43,9 +43,7 @@ export default wrap(async (req, res) => {
 		return error(res, e.status || 422, e.code || 'tx_failed', e.message);
 	}
 
-	const accountKeys = tx.transaction.message.accountKeys.map((k) =>
-		(k.pubkey || k).toString(),
-	);
+	const accountKeys = tx.transaction.message.accountKeys.map((k) => (k.pubkey || k).toString());
 	if (!accountKeys.includes(body.mint)) {
 		return error(res, 422, 'mint_not_in_tx', 'mint not present in tx accounts');
 	}

@@ -18,6 +18,8 @@
 		.ok    { background: #e7f5e9; color: #1b5e20; }
 		.warn  { background: #fff3cd; color: #855008; }
 		.bad   { background: #fce8e8; color: #b71c1c; }
+		.vanity { background: linear-gradient(90deg, #ffd54f, #ff8a65); color: #1a1a1a; font-weight: 600; }
+		.addr-prefix { background: #fff7c2; padding: 0 2px; border-radius: 2px; font-weight: 600; }
 		.atts { border-top: 1px solid #eee; }
 		.att  { padding: .6rem 0; border-bottom: 1px solid #eee; display: grid; grid-template-columns: 80px 1fr auto; gap: .75rem; align-items: baseline; }
 		.att code { font-size: .75rem; color: #555; }
@@ -87,16 +89,29 @@
 			renderAttestations(atts.data || [], network);
 		}
 
+		function escapeHtml(s) {
+			return String(s).replace(/[&<>"']/g, (c) => ({
+				'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+			})[c]);
+		}
+
 		function renderIdentity(card, asset, network) {
 			const id = card?.identity || {};
 			const name = card?.name || '(unindexed agent)';
+			const vanity = id.vanity_prefix;
+			const addrHtml = vanity && asset.startsWith(vanity)
+				? `<span class="addr-prefix">${escapeHtml(vanity)}</span>${escapeHtml(asset.slice(vanity.length))}`
+				: escapeHtml(asset);
+			const vanityBadge = vanity
+				? ` ${pill(`✦ vanity ${escapeHtml(vanity)}`, 'vanity')}`
+				: '';
 			$('identity').innerHTML = `
 				<div class="card" style="background:white;">
-					<div style="font-size:1.2rem;font-weight:600">${name}</div>
-					<div class="muted">${card?.description || ''}</div>
+					<div style="font-size:1.2rem;font-weight:600">${escapeHtml(name)}${vanityBadge}</div>
+					<div class="muted">${escapeHtml(card?.description || '')}</div>
 					<div class="muted" style="margin-top:.4rem;font-size:.8rem">
-						<code>${asset}</code> · <span class="pill ${network === 'mainnet' ? 'ok' : 'warn'}">${network}</span>
-						${id.owner ? ` · owner <code>${id.owner.slice(0, 6)}…${id.owner.slice(-4)}</code>` : ''}
+						<code>${addrHtml}</code> · <span class="pill ${network === 'mainnet' ? 'ok' : 'warn'}">${network}</span>
+						${id.owner ? ` · owner <code>${escapeHtml(id.owner.slice(0, 6))}…${escapeHtml(id.owner.slice(-4))}</code>` : ''}
 					</div>
 				</div>`;
 		}

@@ -3,6 +3,8 @@
  * /api/agents/:id/wallet          — link / update EVM wallet
  * /api/agents/:id/solana          — agent's Solana wallet (address + balance, provision)
  * /api/agents/:id/pumpfun/launch  — create a pump.fun token from this agent
+ * /api/agents/:id/pumpfun/buy     — bonding-curve buy
+ * /api/agents/:id/pumpfun/sell    — bonding-curve sell
  * /api/agents/:id/pumpfun/swap    — swap via @pump-fun/pump-swap-sdk
  * /api/agents/:id/pumpfun/pay     — agent payment via @pump-fun/agent-payments-sdk
  */

@@ -48,8 +48,7 @@ export default wrap(async (req, res) => {
 		}
 
 		if (curve && !curve.complete) {
-			const global =
-				typeof sdk.fetchGlobal === 'function' ? await sdk.fetchGlobal() : null;
+			const global = typeof sdk.fetchGlobal === 'function' ? await sdk.fetchGlobal() : null;
 			const pumpSdk = await import('@pump-fun/pump-sdk');
 			let quote = null;
 
@@ -102,7 +101,15 @@ export default wrap(async (req, res) => {
 			throw e;
 		}
 
-		const { pool, poolKey, baseReserve, quoteReserve, baseMintAccount, globalConfig, feeConfig } = amm;
+		const {
+			pool,
+			poolKey,
+			baseReserve,
+			quoteReserve,
+			baseMintAccount,
+			globalConfig,
+			feeConfig,
+		} = amm;
 		const LAMPORTS_PER_SOL_AMM = 1_000_000_000;
 		const ammSdk = await import('@pump-fun/pump-swap-sdk');
 		let quote = null;
@@ -148,11 +155,12 @@ export default wrap(async (req, res) => {
 			quote = {
 				tokens_in: tokenRaw,
 				sol_out:
-					lamportsOut != null ? Number(lamportsOut.toString()) / LAMPORTS_PER_SOL_AMM : null,
-				min_sol_out:
-					(r.minQuote ?? r.uiQuote)?.toString
-						? Number((r.minQuote ?? r.uiQuote).toString()) / LAMPORTS_PER_SOL_AMM
+					lamportsOut != null
+						? Number(lamportsOut.toString()) / LAMPORTS_PER_SOL_AMM
 						: null,
+				min_sol_out: (r.minQuote ?? r.uiQuote)?.toString
+					? Number((r.minQuote ?? r.uiQuote).toString()) / LAMPORTS_PER_SOL_AMM
+					: null,
 				slippage_bps: slippageBps,
 				source: 'amm',
 			};
@@ -173,6 +181,11 @@ export default wrap(async (req, res) => {
 			quote,
 		});
 	} catch (err) {
-		return error(res, err.status || 502, err.code || 'pump_sdk_error', err.message || 'pump.fun SDK error');
+		return error(
+			res,
+			err.status || 502,
+			err.code || 'pump_sdk_error',
+			err.message || 'pump.fun SDK error',
+		);
 	}
 });
