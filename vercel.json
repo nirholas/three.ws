@@ -46,6 +46,8 @@
 		{ "src": "/reset-password", "dest": "/reset-password.html" },
 		{ "src": "/wallet-login.js", "dest": "/wallet-login.js" },
 		{ "src": "/wallet/(.*)", "dest": "/wallet/$1" },
+		{ "src": "/pumpfun", "dest": "/pumpfun-demo.html" },
+		{ "src": "/pumpfun/", "dest": "/pumpfun-demo.html" },
 		{ "src": "/deploy", "dest": "/app.html" },
 		{ "src": "/dashboard", "dest": "/dashboard/index.html" },
 		{ "src": "/dashboard/", "dest": "/dashboard/index.html" },
@@ -158,6 +160,7 @@
 		{ "src": "/api/llm/anthropic", "dest": "/api/llm/anthropic.js" },
 		{ "src": "/api/agents/([^/]+)/usage", "dest": "/api/agents/[id]/usage?id=$1" },
 		{ "src": "/dashboard/usage", "dest": "/dashboard/usage.html" },
+		{ "src": "/dashboard/agent-pumpfun", "dest": "/dashboard/agent-pumpfun.html" },
 		{ "src": "/api/erc8004/hydrate", "dest": "/api/erc8004/hydrate.js" },
 		{ "src": "/api/erc8004/import", "dest": "/api/erc8004/import.js" },
 

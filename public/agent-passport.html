@@ -309,7 +309,7 @@
 					<div class="identity-meta">
 						<code>${shortAddrHtml}</code>
 						<button class="copy-btn" data-copy="${escapeHtml(asset)}">copy</button>
-						${id.owner ? `<span>· owner</span> <code>${escapeHtml(shortKey(id.owner))}</code> <button class="copy-btn" data-copy="${escapeHtml(id.owner)}">copy</button>` : ''}
+						${id.owner ? `<span>· owner</span> <code>${escapeHtml(shortKey(id.owner))}</code> <button class="copy-btn" data-copy="${escapeHtml(id.owner)}">copy</button> <span class="pill" id="owner-balance" title="Live SOL balance of agent owner">… SOL</span>` : ''}
 						<span>· ${escapeHtml(lastIndexed)}</span>
 					</div>
 					<div class="trust-bar">
@@ -324,11 +324,37 @@
 			$('identity').querySelectorAll('[data-copy]').forEach((b) => {
 				b.addEventListener('click', () => copyText(b.dataset.copy, b));
 			});
+			if (id.owner) loadOwnerBalance(id.owner, network);
+		}
+
+		async function loadOwnerBalance(owner, network) {
+			const el = document.getElementById('owner-balance');
+			if (!el) return;
+			try {
+				const rpc = network === 'devnet'
+					? 'https://api.devnet.solana.com'
+					: 'https://api.mainnet-beta.solana.com';
+				const r = await fetch(rpc, {
+					method: 'POST',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getBalance', params: [owner] }),
+				}).then((x) => x.json());
+				const lamports = r?.result?.value;
+				if (typeof lamports === 'number') {
+					el.textContent = `${(lamports / 1e9).toFixed(3)} SOL`;
+					el.classList.add(lamports > 0 ? 'ok' : 'warn');
+				} else {
+					el.textContent = '— SOL';
+				}
+			} catch {
+				el.textContent = '— SOL';
+			}
 		}
 
 		function renderReputation(r) {
 			if (!r || r.error) { $('reputation').innerHTML = `<p class="muted">no data</p>`; return; }
 			const f = r.feedback || {}, v = r.validation || {}, p = r.pump_payments || {};
+			const pf = r.pumpfun_signals || { count: 0, weight: 0, by_kind: {} };
 			$('rep-hint').textContent = 'higher tiers are more Sybil-resistant';
 
 			const cards = [
@@ -362,6 +388,17 @@
 					{ cls: 'tier-pump', value: `${p.confirmed_count}<small>/${p.unique_payers || 0}</small>`,
 						label: 'pump payments / unique payers',
 						tooltip: 'Confirmed acceptPayment receipts. Volume-weighted reputation lane.' },
+				] : []),
+				...(Number(pf.count) ? [
+					{ cls: 'tier-pump', value: `${pf.count}<small> ${pf.weight >= 0 ? '+' : ''}${pf.weight.toFixed(2)}</small>`,
+						label: 'pump.fun signals (weight)',
+						tooltip: 'Off-chain pump.fun activity tied to this agent\'s wallet — first claims, graduations, fake claims, and influencer tier. Weighted positive/negative.' },
+					...Object.entries(pf.by_kind || {}).map(([kind, info]) => ({
+						cls: info.weight < 0 ? 'danger' : 'tier-pump',
+						value: info.count,
+						label: `pf · ${kind.replace('_', ' ')}`,
+						tooltip: `Aggregate weight ${info.weight >= 0 ? '+' : ''}${info.weight}`,
+					})),
 				] : []),
 				...(f.disputed ? [{ cls: 'danger', value: f.disputed, label: 'disputed' }] : []),
 				...(r.revoked_count ? [{ cls: 'danger', value: r.revoked_count, label: 'revoked' }] : []),

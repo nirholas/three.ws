@@ -66,8 +66,10 @@ export function makeRuntime(opts = {}) {
 
 	async function invoke(qualified, args) {
 		const [skillName, toolName] = qualified.split('.');
-		if (!skillName || !toolName) throw new Error(`bad tool: ${qualified}`);
-		const mod = await loadSkill(skillName);
+		if (!skillName || !toolName) return { ok: false, error: `bad tool: ${qualified}` };
+		let mod;
+		try { mod = await loadSkill(skillName); }
+		catch (e) { return { ok: false, error: e.message }; }
 		const fn = mod[toolName];
 		if (typeof fn !== 'function') {
 			return { ok: false, error: `tool not found: ${qualified}` };

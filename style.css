@@ -6801,3 +6801,45 @@ textarea.erc8004-code {
 	}
 	.pumpfun-toast { max-width: none; }
 }
+
+/* ── Vanity launch row ─────────────────────────────────────────────────── */
+.pumpfun-vanity-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 12px;
+	margin: 8px 0;
+	flex-wrap: wrap;
+}
+.pumpfun-vanity-row input[type="text"],
+.pumpfun-vanity-row input[type="number"] { width: 80px; }
+.pumpfun-vanity-input {
+	padding: 4px 8px;
+	border-radius: 6px;
+	border: 1px solid rgba(255,255,255,0.15);
+	background: rgba(0,0,0,0.25);
+	color: inherit;
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.pumpfun-vanity-progress {
+	font-size: 11px;
+	opacity: 0.7;
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	margin-bottom: 6px;
+}
+
+/* ── Auto-Trader (bot) panel ───────────────────────────────────────────── */
+.pumpfun-bot { gap: 8px; }
+.pumpfun-bot-modes {
+	display: flex;
+	gap: 6px;
+	flex-wrap: wrap;
+	margin-bottom: 6px;
+}
+.pumpfun-bot-modes .pumpfun-btn { flex: 1 1 calc(50% - 3px); min-width: 0; font-size: 11.5px; }
+.pumpfun-bot-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+	gap: 6px;
+}
+.pumpfun-bot-grid .pumpfun-trade-label { margin: 0; }
