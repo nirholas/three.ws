@@ -1,7 +1,17 @@
 // Dashboard single-file app. Uses native DOM — no framework.
 // Keeps bundle small and ensures anything rendering <model-viewer> works without bundler.
 
-import { mountAgentSolanaWalletCard } from '/src/agent-solana-wallet.js';
+// Lazy: /src/ isn't on the production static surface, so a top-level import here
+// would 404 and break every tab. Resolve on first use, swallow failures.
+let _solanaWalletPromise = null;
+function loadSolanaWalletCard() {
+	if (!_solanaWalletPromise) {
+		_solanaWalletPromise = import('/src/agent-solana-wallet.js')
+			.then((m) => m.mountAgentSolanaWalletCard)
+			.catch(() => null);
+	}
+	return _solanaWalletPromise;
+}
 
 export const state = { user: null };
 
@@ -227,9 +237,12 @@ function mountAvatarWalletSection(host, a) {
 			} catch {}
 		});
 	}
-	mountAgentSolanaWalletCard({
-		panel: host.querySelector('[data-sol-wallet]'),
-		identity: { id: a.agent_id, name: a.name },
+	loadSolanaWalletCard().then((mount) => {
+		if (!mount) return;
+		mount({
+			panel: host.querySelector('[data-sol-wallet]'),
+			identity: { id: a.agent_id, name: a.name },
+		});
 	});
 }
 
