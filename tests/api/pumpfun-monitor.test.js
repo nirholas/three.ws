@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { detectEvents } from '../../api/cron/pumpfun-monitor.js';
+import { detectEvents } from '../../api/cron/[name].js';
 import { deriveEventId } from '../../api/_lib/attest-event.js';
 
 const baseRow = {

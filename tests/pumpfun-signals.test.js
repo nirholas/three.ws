@@ -17,7 +17,9 @@ vi.mock('../api/_lib/env.js', () => ({
 	env: { APP_ORIGIN: 'http://test', ISSUER: 'http://test', MCP_RESOURCE: 'http://test' },
 }));
 
-const { default: handler } = await import('../api/cron/pumpfun-signals.js');
+const { default: dispatcher } = await import('../api/cron/[name].js');
+const handler = (req, res) =>
+	dispatcher({ ...req, query: { ...(req.query || {}), name: 'pumpfun-signals' } }, res);
 
 function mockRes() {
 	const res = {
