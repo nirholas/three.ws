@@ -66,6 +66,9 @@ export function registerPumpFunAutonomousSkills(skills) {
 				uri: { type: 'string', description: 'Pre-uploaded metadata URI' },
 				solAmount: { type: 'number', description: 'Optional initial dev-buy in SOL' },
 				network: { type: 'string', enum: ['mainnet', 'devnet'] },
+				vanityPrefix: { type: 'string', maxLength: 6 },
+				vanitySuffix: { type: 'string', maxLength: 6 },
+				vanityIgnoreCase: { type: 'boolean' },
 			},
 			required: ['symbol', 'uri'],
 		},
@@ -77,6 +80,9 @@ export function registerPumpFunAutonomousSkills(skills) {
 				uri: args.uri,
 				solAmount: args.solAmount,
 				network: args.network,
+				vanityPrefix: args.vanityPrefix,
+				vanitySuffix: args.vanitySuffix,
+				vanityIgnoreCase: args.vanityIgnoreCase,
 			});
 			return {
 				success: true,
@@ -103,6 +109,9 @@ export function registerPumpFunAutonomousSkills(skills) {
 				symbol: { type: 'string' },
 				solAmount: { type: 'number' },
 				network: { type: 'string', enum: ['mainnet', 'devnet'] },
+				vanityPrefix: { type: 'string', maxLength: 6 },
+				vanitySuffix: { type: 'string', maxLength: 6 },
+				vanityIgnoreCase: { type: 'boolean' },
 			},
 		},
 		handler: async (args, ctx) => {
@@ -118,7 +127,16 @@ export function registerPumpFunAutonomousSkills(skills) {
 				'AGENT';
 			return skills.perform(
 				'pumpfun-self-launch',
-				{ name: ctx.identity?.name, symbol, uri, solAmount: args.solAmount, network: args.network },
+				{
+					name: ctx.identity?.name,
+					symbol,
+					uri,
+					solAmount: args.solAmount,
+					network: args.network,
+					vanityPrefix: args.vanityPrefix,
+					vanitySuffix: args.vanitySuffix,
+					vanityIgnoreCase: args.vanityIgnoreCase,
+				},
 				ctx,
 			);
 		},

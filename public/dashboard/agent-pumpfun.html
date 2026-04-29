@@ -184,6 +184,23 @@
 				</div>
 			</section>
 
+			<section class="panel" id="sns-panel">
+				<h2>SNS identity <span class="muted" style="font-size: 13px; font-weight: normal">(Solana Name Service)</span></h2>
+				<p class="muted" style="margin: 0 0 10px; font-size: 13px">
+					Attach a <code>.sol</code> domain owned by this agent's wallet so it can be referenced by name.
+				</p>
+				<dl class="kv">
+					<dt>Current</dt>
+					<dd id="sns-current" class="muted">—</dd>
+				</dl>
+				<div id="sns-domain-list" class="row" style="margin-top: 8px; flex-wrap: wrap; gap: 6px"></div>
+				<div class="row" style="margin-top: 10px">
+					<button class="btn ghost" id="sns-refresh-btn">Refresh domains</button>
+					<button class="btn ghost" id="sns-clear-btn" hidden>Clear SNS id</button>
+					<a id="sns-register-link" class="muted" href="https://www.sns.id" target="_blank" rel="noopener">Register a name on sns.id</a>
+				</div>
+			</section>
+
 			<section class="panel">
 				<h2>Launch a pump.fun token</h2>
 				<div class="row">
@@ -287,6 +304,11 @@
 				agentAddress: $('#agent-address'),
 				agentBalance: $('#agent-balance'),
 				explorerLink: $('#explorer-link'),
+				snsCurrent: $('#sns-current'),
+				snsDomainList: $('#sns-domain-list'),
+				snsRefreshBtn: $('#sns-refresh-btn'),
+				snsClearBtn: $('#sns-clear-btn'),
+				snsRegisterLink: $('#sns-register-link'),
 				launchName: $('#launch-name'),
 				launchSymbol: $('#launch-symbol'),
 				launchVanity: $('#launch-vanity'),
