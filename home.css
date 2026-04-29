@@ -71,6 +71,10 @@
 	align-items: center;
 	justify-content: space-between;
 	padding: 0.9rem clamp(1rem, 4vw, 2rem);
+	height: auto;
+	line-height: normal;
+	overflow: visible;
+	white-space: normal;
 	background: linear-gradient(
 		to bottom,
 		rgba(10, 8, 6, 0.78) 0%,
