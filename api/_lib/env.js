@@ -136,31 +136,65 @@ export const env = {
 	// Pattern: RPC_URL_<CHAINID> e.g. RPC_URL_84532 for Base Sepolia.
 	// Falls back to public RPC nodes when unset; set Alchemy/Infura URLs for production.
 	// ── x402 (HTTP 402 micropayments) ───────────────────────────────────────
-	// Solana mainnet payTo wallet that receives USDC for paid /api/mcp calls.
-	get X402_PAY_TO() {
-		return opt('X402_PAY_TO', 'BUrwd1nK6tFeeJMyzRHDo6AuVbnSfUULfvwq21X93nSN');
+	// Per-network payTo wallets that receive USDC for paid /api/mcp calls.
+	get X402_PAY_TO_SOLANA() {
+		return opt(
+			'X402_PAY_TO_SOLANA',
+			opt('X402_PAY_TO', 'BUrwd1nK6tFeeJMyzRHDo6AuVbnSfUULfvwq21X93nSN'),
+		);
 	},
-	// USDC mint on the configured network.
-	get X402_ASSET_MINT() {
-		return opt('X402_ASSET_MINT', 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
+	get X402_PAY_TO_BASE() {
+		return opt('X402_PAY_TO_BASE', '0x0C70c0e8453C5667739E41acdF6eC5787B8ff542');
 	},
-	// Network ID per x402 spec.
-	get X402_NETWORK() {
-		return opt('X402_NETWORK', 'solana');
+	// USDC asset addresses per network.
+	get X402_ASSET_MINT_SOLANA() {
+		return opt(
+			'X402_ASSET_MINT_SOLANA',
+			opt('X402_ASSET_MINT', 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'),
+		);
 	},
-	// Price per /api/mcp call, expressed in the asset's base units (USDC has 6 decimals,
-	// so "1000" = 0.001 USDC).
+	get X402_ASSET_ADDRESS_BASE() {
+		return opt('X402_ASSET_ADDRESS_BASE', '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913');
+	},
+	// Price per /api/mcp call, in the asset's base units (USDC = 6 decimals; "1000" = 0.001 USDC).
 	get X402_MAX_AMOUNT_REQUIRED() {
 		return opt('X402_MAX_AMOUNT_REQUIRED', '1000');
 	},
-	// Facilitator service that verifies and settles signed payment payloads.
-	// Public Solana facilitator: https://facilitator.payai.network
-	get X402_FACILITATOR_URL() {
-		return trimSlash(opt('X402_FACILITATOR_URL', 'https://facilitator.payai.network'));
+	// Per-network facilitators. PayAI for Solana, x402.org reference for Base.
+	get X402_FACILITATOR_URL_SOLANA() {
+		return trimSlash(
+			opt(
+				'X402_FACILITATOR_URL_SOLANA',
+				opt('X402_FACILITATOR_URL', 'https://facilitator.payai.network'),
+			),
+		);
 	},
-	// Optional bearer token for self-hosted/private facilitators.
-	get X402_FACILITATOR_TOKEN() {
-		return opt('X402_FACILITATOR_TOKEN');
+	get X402_FACILITATOR_URL_BASE() {
+		return trimSlash(opt('X402_FACILITATOR_URL_BASE', 'https://x402.org/facilitator'));
+	},
+	get X402_FACILITATOR_TOKEN_SOLANA() {
+		return opt('X402_FACILITATOR_TOKEN_SOLANA', opt('X402_FACILITATOR_TOKEN'));
+	},
+	get X402_FACILITATOR_TOKEN_BASE() {
+		return opt('X402_FACILITATOR_TOKEN_BASE');
+	},
+
+	// ── SNS subdomain registrar ─────────────────────────────────────────────
+	// Project-owned parent .sol that we mint subdomains under (e.g. "agents"
+	// to issue {label}.agents.sol). The platform pays rent + tx fees.
+	// Optional — when unset, /api/agents/:id/sns/register returns 503.
+	get SNS_PARENT_DOMAIN() {
+		// label only, no .sol suffix (e.g. "agents")
+		return opt('SNS_PARENT_DOMAIN');
+	},
+	// Base64-encoded 64-byte secret key of the parent domain owner.
+	// Used to sign the createSubdomain + transferNameOwnership ixs.
+	get SNS_PARENT_OWNER_SECRET() {
+		return opt('SNS_PARENT_OWNER_SECRET');
+	},
+	// Solana RPC URL used for SNS reads/writes. Falls back to public mainnet RPC.
+	get SOLANA_RPC_URL() {
+		return opt('SOLANA_RPC_URL', 'https://api.mainnet-beta.solana.com');
 	},
 
 	getRpcUrl(chainId) {

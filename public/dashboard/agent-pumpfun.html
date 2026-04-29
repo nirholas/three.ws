@@ -842,18 +842,25 @@
 					toast('Mint and SOL amount required', 'err');
 					return;
 				}
+				const slippageBps = parseInt(els.tradeSlippage.value, 10) || 500;
+				const network = currentNetwork();
 				els.buyBtn.disabled = true;
 				try {
-					const { data } = await api(`/api/agents/${id}/pumpfun/swap`, {
-						method: 'POST',
-						body: JSON.stringify({
-							mint,
-							side: 'buy',
-							solAmount,
-							slippageBps: parseInt(els.tradeSlippage.value, 10) || 500,
-							network: currentNetwork(),
-						}),
-					});
+					let data;
+					try {
+						({ data } = await api(`/api/agents/${id}/pumpfun/swap`, {
+							method: 'POST',
+							body: JSON.stringify({ mint, side: 'buy', solAmount, slippageBps, network }),
+						}));
+					} catch (err) {
+						if (err.body?.error === 'not_graduated') {
+							({ data } = await api(`/api/agents/${id}/pumpfun/buy`, {
+								method: 'POST',
+								body: JSON.stringify({ mint, solAmount, slippageBps, network }),
+							}));
+							data.venue = 'curve';
+						} else throw err;
+					}
 					logResponse('buy', data);
 					toast(`Bought ${solAmount} SOL of ${mint.slice(0, 8)}… (${data.venue || 'curve'})`);
 					await refreshAgent();
@@ -874,18 +881,25 @@
 					toast('Mint and token amount required', 'err');
 					return;
 				}
+				const slippageBps = parseInt(els.tradeSlippage.value, 10) || 500;
+				const network = currentNetwork();
 				els.sellBtn.disabled = true;
 				try {
-					const { data } = await api(`/api/agents/${id}/pumpfun/swap`, {
-						method: 'POST',
-						body: JSON.stringify({
-							mint,
-							side: 'sell',
-							tokenAmount,
-							slippageBps: parseInt(els.tradeSlippage.value, 10) || 500,
-							network: currentNetwork(),
-						}),
-					});
+					let data;
+					try {
+						({ data } = await api(`/api/agents/${id}/pumpfun/swap`, {
+							method: 'POST',
+							body: JSON.stringify({ mint, side: 'sell', tokenAmount, slippageBps, network }),
+						}));
+					} catch (err) {
+						if (err.body?.error === 'not_graduated') {
+							({ data } = await api(`/api/agents/${id}/pumpfun/sell`, {
+								method: 'POST',
+								body: JSON.stringify({ mint, tokenAmount, slippageBps, network }),
+							}));
+							data.venue = 'curve';
+						} else throw err;
+					}
 					logResponse('sell', data);
 					toast(`Sold ${tokenAmount} of ${mint.slice(0, 8)}… (${data.venue || 'curve'})`);
 					await refreshAgent();

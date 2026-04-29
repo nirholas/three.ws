@@ -25,19 +25,44 @@ export class X402Error extends Error {
 	}
 }
 
+// One PaymentRequirements entry per supported network.
 export function paymentRequirements({ resource, description = '' } = {}) {
-	return {
+	const common = {
 		scheme: 'exact',
-		network: env.X402_NETWORK,
 		maxAmountRequired: env.X402_MAX_AMOUNT_REQUIRED,
 		resource,
 		description,
 		mimeType: 'application/json',
-		payTo: env.X402_PAY_TO,
 		maxTimeoutSeconds: 60,
-		asset: env.X402_ASSET_MINT,
 		extra: { name: 'USDC', decimals: 6 },
 	};
+	const out = [];
+	if (env.X402_PAY_TO_SOLANA) {
+		out.push({
+			...common,
+			network: 'solana',
+			payTo: env.X402_PAY_TO_SOLANA,
+			asset: env.X402_ASSET_MINT_SOLANA,
+		});
+	}
+	if (env.X402_PAY_TO_BASE) {
+		out.push({
+			...common,
+			network: 'base',
+			payTo: env.X402_PAY_TO_BASE,
+			asset: env.X402_ASSET_ADDRESS_BASE,
+			extra: { name: 'USDC', version: '2', decimals: 6 },
+		});
+	}
+	return out;
+}
+
+function facilitatorFor(network) {
+	if (network === 'solana')
+		return { url: env.X402_FACILITATOR_URL_SOLANA, token: env.X402_FACILITATOR_TOKEN_SOLANA };
+	if (network === 'base')
+		return { url: env.X402_FACILITATOR_URL_BASE, token: env.X402_FACILITATOR_TOKEN_BASE };
+	throw new X402Error('unsupported_network', `unsupported network: ${network}`, 400);
 }
 
 function decodePaymentHeader(header) {

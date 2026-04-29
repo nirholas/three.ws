@@ -1,5 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Readable } from 'node:stream';
+import { Keypair } from '@solana/web3.js';
+
+const VALID_PUBKEY = Keypair.generate().publicKey.toBase58();
 
 const authState = { session: null };
 vi.mock('../../api/_lib/auth.js', () => ({
@@ -79,7 +82,7 @@ describe('POST /api/agents/:id/solana/airdrop', () => {
 	});
 	it('returns signature on success', async () => {
 		authState.session = { id: 'u1' };
-		sqlState.queue.push([{ id: 'agent-1', user_id: 'u1', meta: { solana_address: 'AGNT11111111111111111111111111111111111111' } }]);
+		sqlState.queue.push([{ id: 'agent-1', user_id: 'u1', meta: { solana_address: VALID_PUBKEY } }]);
 		const { status, body } = await invoke();
 		expect(status).toBe(200);
 		expect(body.data.signature).toMatch(/^AIRDROPSIG/);
@@ -88,7 +91,7 @@ describe('POST /api/agents/:id/solana/airdrop', () => {
 	});
 	it('returns 502 when faucet fails', async () => {
 		authState.session = { id: 'u1' };
-		sqlState.queue.push([{ id: 'agent-1', user_id: 'u1', meta: { solana_address: 'AGNT11111111111111111111111111111111111111' } }]);
+		sqlState.queue.push([{ id: 'agent-1', user_id: 'u1', meta: { solana_address: VALID_PUBKEY } }]);
 		conn.requestAirdrop.mockRejectedValueOnce(new Error('429 Too Many Requests'));
 		const { status, body } = await invoke();
 		expect(status).toBe(502);
