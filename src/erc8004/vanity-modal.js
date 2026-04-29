@@ -94,6 +94,15 @@ const STYLE = `
 .vm-btn.primary { background: #111; color: #fff; border-color: #111; }
 .vm-btn:disabled { opacity: .4; cursor: not-allowed; }
 .vm-skip { background: none; border: none; color: #666; font-size: .75rem; cursor: pointer; margin-top: .5rem; padding: 0; }
+.vm-cli { margin-top: .85rem; padding: .55rem .65rem; background: #f7f7f8; border: 1px solid #eee; border-radius: 6px; font-size: .72rem; color: #555; }
+.vm-cli code { background: #fff; padding: .1rem .3rem; border-radius: 3px; border: 1px solid #e0e0e0; font-family: ui-monospace, monospace; }
+.vm-cli a { color: #0d47a1; }
+.vm-cli .vm-paste-toggle { background: none; border: none; color: #0d47a1; cursor: pointer; padding: 0; font-size: .72rem; text-decoration: underline; }
+.vm-paste { margin-top: .55rem; }
+.vm-paste textarea { font: inherit; font-family: ui-monospace, monospace; font-size: .7rem; width: 100%; min-height: 70px; box-sizing: border-box; padding: .4rem .5rem; border: 1px solid #ccc; border-radius: 6px; resize: vertical; }
+.vm-paste-status { margin-top: .35rem; font-size: .72rem; min-height: 1em; }
+.vm-paste-status.ok  { color: #1b5e20; }
+.vm-paste-status.bad { color: #b71c1c; }
 `;
 
 let _styleInjected = false;
@@ -112,7 +121,12 @@ function _injectStyle() {
  * @param {object} opts
  * @param {string} [opts.agentName]  Used to seed suggestion chips.
  * @param {string} [opts.initial]    Pre-fill (e.g. from localStorage).
- * @returns {Promise<string|null>}   Selected prefix, or null on dismiss.
+ * @returns {Promise<string | { prefix: string, secretKey: Uint8Array } | null>}
+ *   - `null`  → user dismissed
+ *   - `''`    → user chose "skip"
+ *   - `string` → prefix to grind in the browser
+ *   - `{ prefix, secretKey }` → pre-ground keypair from a CLI tool
+ *      (e.g. nirholas/solana-wallet-toolkit); skip the in-browser grinder.
  */
 export function openVanityModal({ agentName = '', initial = '' } = {}) {
 	_injectStyle();
@@ -156,6 +170,17 @@ export function openVanityModal({ agentName = '', initial = '' } = {}) {
 
 				${isMobile ? `<div class="vm-warn">⚠️ Vanity addresses work best on desktop — your device has limited CPU cores.</div>` : ''}
 
+				<div class="vm-cli">
+					Got a long prefix? Grind offline with
+					<a href="https://github.com/nirholas/solana-wallet-toolkit" target="_blank" rel="noopener">solana-wallet-toolkit</a>
+					(50–100k keys/s/core), then
+					<button class="vm-paste-toggle" id="vm-paste-toggle" type="button">paste the keypair JSON</button>.
+					<div class="vm-paste" id="vm-paste" hidden>
+						<textarea id="vm-paste-input" placeholder="[12, 34, 56, ... ] — solana-keygen JSON, 64 bytes"></textarea>
+						<div class="vm-paste-status" id="vm-paste-status"></div>
+					</div>
+				</div>
+
 				<div class="vm-actions">
 					<button class="vm-btn" id="vm-cancel" type="button">Cancel</button>
 					<button class="vm-btn primary" id="vm-ok" type="button" disabled>Use prefix</button>
@@ -171,6 +196,61 @@ export function openVanityModal({ agentName = '', initial = '' } = {}) {
 		const estEl    = overlay.querySelector('#vm-est');
 		const tierEl   = overlay.querySelector('#vm-tier');
 		const okBtn    = overlay.querySelector('#vm-ok');
+		const pasteToggle = overlay.querySelector('#vm-paste-toggle');
+		const pastePanel  = overlay.querySelector('#vm-paste');
+		const pasteInput  = overlay.querySelector('#vm-paste-input');
+		const pasteStatus = overlay.querySelector('#vm-paste-status');
+
+		/** @type {{ secretKey: Uint8Array, publicKey: string } | null} */
+		let pasteResult = null;
+
+		pasteToggle.addEventListener('click', () => {
+			const open = pastePanel.hasAttribute('hidden');
+			pastePanel.toggleAttribute('hidden', !open);
+			if (open) pasteInput.focus();
+		});
+
+		pasteInput.addEventListener('input', async () => {
+			pasteResult = null;
+			const raw = pasteInput.value.trim();
+			if (!raw) {
+				pasteStatus.textContent = '';
+				pasteStatus.className = 'vm-paste-status';
+				update();
+				return;
+			}
+			let bytes;
+			try {
+				const arr = JSON.parse(raw);
+				if (!Array.isArray(arr) || arr.length !== 64) throw new Error('expected a 64-element JSON array');
+				if (!arr.every((n) => Number.isInteger(n) && n >= 0 && n <= 255)) throw new Error('values must be 0–255');
+				bytes = new Uint8Array(arr);
+			} catch (e) {
+				pasteStatus.textContent = `invalid: ${e.message}`;
+				pasteStatus.className = 'vm-paste-status bad';
+				update();
+				return;
+			}
+			try {
+				const { Keypair } = await import('@solana/web3.js');
+				const kp = Keypair.fromSecretKey(bytes);
+				const pubkey = kp.publicKey.toBase58();
+				const wantedPrefix = input.value.trim();
+				if (wantedPrefix && !pubkey.startsWith(wantedPrefix)) {
+					pasteStatus.textContent = `address ${pubkey.slice(0, 8)}… does not start with "${wantedPrefix}"`;
+					pasteStatus.className = 'vm-paste-status bad';
+					update();
+					return;
+				}
+				pasteResult = { secretKey: bytes, publicKey: pubkey };
+				pasteStatus.textContent = `✓ ${pubkey.slice(0, 12)}… ready`;
+				pasteStatus.className = 'vm-paste-status ok';
+			} catch (e) {
+				pasteStatus.textContent = `invalid keypair: ${e.message || e}`;
+				pasteStatus.className = 'vm-paste-status bad';
+			}
+			update();
+		});
 
 		let previewTimer = null;
 		function update() {
@@ -181,6 +261,16 @@ export function openVanityModal({ agentName = '', initial = '' } = {}) {
 			meter.forEach((seg, idx) => {
 				seg.className = 'seg' + (raw.length > idx ? ` lit-${raw.length}` : '');
 			});
+
+			if (pasteResult) {
+				preview.innerHTML = `<span class="pfx">${_esc(pasteResult.publicKey.slice(0, raw.length || 0))}</span><span class="rest">${_esc(pasteResult.publicKey.slice(raw.length || 0))}</span>`;
+				estEl.textContent = `pre-ground (no browser grind)`;
+				tierEl.innerHTML = `<span style="color:#1b5e20;font-weight:600">CLI</span>`;
+				okBtn.disabled = false;
+				okBtn.textContent = 'Use pre-ground keypair';
+				return;
+			}
+			okBtn.textContent = 'Use prefix';
 
 			if (!raw) {
 				preview.innerHTML = '<span class="rest">' + _esc(_sampleAddress()) + '</span>';
@@ -238,13 +328,18 @@ export function openVanityModal({ agentName = '', initial = '' } = {}) {
 			document.removeEventListener('keydown', onKey);
 			resolve(value);
 		}
+		function resolveValue() {
+			const prefix = input.value.trim();
+			if (pasteResult) return { prefix, secretKey: pasteResult.secretKey };
+			return prefix;
+		}
 		function onKey(e) {
 			if (e.key === 'Escape') close(null);
-			if (e.key === 'Enter' && !okBtn.disabled) close(input.value.trim());
+			if (e.key === 'Enter' && !okBtn.disabled && document.activeElement !== pasteInput) close(resolveValue());
 		}
 		overlay.querySelector('#vm-cancel').addEventListener('click', () => close(null));
 		overlay.querySelector('#vm-skip').addEventListener('click', () => close(''));
-		overlay.querySelector('#vm-ok').addEventListener('click', () => close(input.value.trim()));
+		overlay.querySelector('#vm-ok').addEventListener('click', () => close(resolveValue()));
 		overlay.addEventListener('click', (e) => { if (e.target === overlay) close(null); });
 		document.addEventListener('keydown', onKey);
 

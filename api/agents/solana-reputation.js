@@ -156,6 +156,34 @@ export default wrap(async (req, res) => {
 		// pumpfun_signals table may not exist yet — silently ignore.
 	}
 
+	// Pump.fun token activity from indexer snapshot: graduation + recent tx
+	// count contribute small positive weights to overall agent reputation.
+	let tokenActivity = { graduated: false, recent_tx_count: 0, trade_count: 0, weight: 0 };
+	try {
+		const [row] = await sql`
+			select s.graduated, s.recent_tx_count,
+			       (select count(*)::int from pump_agent_trades t where t.mint_id = m.id) as trade_count
+			from pump_agent_stats s
+			join pump_agent_mints m on m.id = s.mint_id
+			where m.mint = ${asset} and m.network = ${network}
+			limit 1
+		`;
+		if (row) {
+			const w =
+				(row.graduated ? 0.3 : 0) +
+				Math.min(0.4, (row.recent_tx_count || 0) * 0.005) +
+				Math.min(0.3, (row.trade_count || 0) * 0.01);
+			tokenActivity = {
+				graduated: !!row.graduated,
+				recent_tx_count: row.recent_tx_count || 0,
+				trade_count: row.trade_count || 0,
+				weight: Number(w.toFixed(3)),
+			};
+		}
+	} catch {
+		// tables not present
+	}
+
 	// Pump.fun agent-payments signal: confirmed acceptPayment receipts add a
 	// volume-weighted, Sybil-resistant reputation lane on top of memo attestations.
 	let pumpPayments = { confirmed_count: 0, unique_payers: 0, total_atomics: '0' };
@@ -180,6 +208,7 @@ export default wrap(async (req, res) => {
 		network,
 		pump_payments: pumpPayments,
 		pumpfun_signals: pumpfunSignals,
+		token_activity: tokenActivity,
 		feedback: {
 			total:                            fb.total,
 			verified:                         fb.verified,

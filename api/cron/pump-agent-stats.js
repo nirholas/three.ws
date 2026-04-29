@@ -35,10 +35,17 @@ export default wrap(async (req, res) => {
 		order by id limit ${MAX_PER_RUN}
 	`;
 
-	const report = { scanned: mints.length, updated: 0, errors: 0 };
+	const report = { scanned: mints.length, updated: 0, errors: 0, graduations: 0 };
 	for (const m of mints) {
 		try {
 			const stats = await snapshotMint(m);
+
+			// Detect graduation flip false→true vs prior snapshot.
+			const [prior] = await sql`
+				select graduated from pump_agent_stats where mint_id=${m.id} limit 1
+			`;
+			const justGraduated = stats.graduated && prior && !prior.graduated;
+
 			await sql`
 				insert into pump_agent_stats
 					(mint_id, network, mint, graduated, bonding_curve, amm,
@@ -60,6 +67,34 @@ export default wrap(async (req, res) => {
 					refreshed_at      = now(),
 					error             = null
 			`;
+
+			// Price-point time series.
+			const price = derivePrice(stats);
+			if (price) {
+				await sql`
+					insert into pump_agent_price_points (mint_id, sol_per_token, market_cap_lamports, source)
+					values (${m.id}, ${price.sol_per_token}, ${price.market_cap_lamports?.toString() ?? null}, ${price.source})
+				`;
+			}
+
+			// Emit a self-sourced graduation signal (no upstream bot needed).
+			if (justGraduated) {
+				report.graduations++;
+				try {
+					await sql`
+						insert into pumpfun_signals (wallet, agent_asset, kind, weight, payload, tx_signature)
+						values (
+							null, ${m.mint}, 'graduation', 0.3,
+							${JSON.stringify({ source: 'pump-agent-stats', network: m.network })}::jsonb,
+							${`graduated:${m.mint}:${Date.now()}`}
+						)
+						on conflict (tx_signature) do nothing
+					`;
+				} catch {
+					// pumpfun_signals table optional
+				}
+			}
+
 			report.updated++;
 		} catch (e) {
 			report.errors++;
@@ -149,4 +184,31 @@ async function snapshotMint({ network, mint }) {
 	}
 
 	return out;
+}
+
+// Compute coarse sol-per-token + market_cap_lamports from a stats snapshot.
+// Bonding curve: virtual_sol / virtual_token (the AMM-style invariant pump uses).
+// AMM: quote_reserve / base_reserve.
+function derivePrice(stats) {
+	if (stats.bonding_curve) {
+		const vSol = Number(stats.bonding_curve.virtual_sol || 0);
+		const vTok = Number(stats.bonding_curve.virtual_token || 0);
+		if (vSol > 0 && vTok > 0) {
+			const sol_per_token = vSol / vTok;
+			// total supply ≈ virtual_token + real_token (heuristic, sufficient for charting)
+			const totalTok =
+				BigInt(stats.bonding_curve.virtual_token || 0) +
+				BigInt(stats.bonding_curve.real_token || 0);
+			const market_cap_lamports = totalTok > 0n ? BigInt(Math.floor(sol_per_token * Number(totalTok))) : null;
+			return { sol_per_token, market_cap_lamports, source: 'bonding_curve' };
+		}
+	}
+	if (stats.amm) {
+		const q = Number(stats.amm.quote_reserve || 0);
+		const b = Number(stats.amm.base_reserve || 0);
+		if (q > 0 && b > 0) {
+			return { sol_per_token: q / b, market_cap_lamports: null, source: 'amm' };
+		}
+	}
+	return null;
 }
