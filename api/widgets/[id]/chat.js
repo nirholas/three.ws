@@ -27,6 +27,7 @@ import { cors, json, method, readJson, wrap, error } from '../../_lib/http.js';
 import { parse } from '../../_lib/validate.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { captureException } from '../../_lib/sentry.js';
+import { isDemoWidgetId, getDemoWidget } from '../_demo-fixtures.js';
 
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
 const DEFAULT_MODEL = 'claude-sonnet-4-6';
@@ -318,6 +319,7 @@ function filterSkills(skillsConfig) {
 }
 
 async function loadWidget(id) {
+	if (isDemoWidgetId(id)) return getDemoWidget(id);
 	try {
 		const [row] = await sql`
 			select id, user_id, type, name, config, is_public
