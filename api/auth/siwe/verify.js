@@ -146,14 +146,23 @@ export default wrap(async (req, res) => {
 		// before user_wallets existed, or by a different flow that only set the
 		// users column. Reconcile by backfilling user_wallets.
 		const placeholderEmail = `wallet-${addrLower}@wallet.local`;
+		// Include soft-deleted rows so we can reject them with a clear error
+		// instead of colliding on the email unique constraint.
 		const [existingUser] = await sql`
-			select id from users
-			where (wallet_address = ${addrLower} or email = ${placeholderEmail})
-				and deleted_at is null
+			select id, deleted_at from users
+			where wallet_address = ${addrLower} or email = ${placeholderEmail}
 			limit 1
 		`;
 
 		if (existingUser) {
+			if (existingUser.deleted_at) {
+				return error(
+					res,
+					403,
+					'account_deleted',
+					'this wallet is linked to a deleted account',
+				);
+			}
 			userId = existingUser.id;
 			await sql`
 				update users set wallet_address = ${addrLower}
@@ -168,20 +177,28 @@ export default wrap(async (req, res) => {
 			`;
 		} else {
 			// Create a new passwordless user. Email is synthesized and placeholder —
-			// user can set a real email + password later.
+			// user can set a real email + password later. ON CONFLICT guards
+			// against two concurrent verifies racing past the lookup above.
 			const [user] = await sql`
 				insert into users (email, display_name, wallet_address)
 				values (${placeholderEmail}, ${shortAddr(claimed)}, ${addrLower})
-				returning id
+				on conflict (email) do update
+					set wallet_address = ${addrLower}
+				returning id, (xmax = 0) as inserted
 			`;
 			userId = user.id;
 			await sql`
 				insert into user_wallets (user_id, address, chain_id, is_primary)
 				values (${userId}, ${addrLower}, ${chainId}, true)
+				on conflict (address) do update
+					set last_used_at = now(),
+						chain_id = coalesce(${chainId}, user_wallets.chain_id)
 			`;
-			queueMicrotask(() =>
-				sendWelcomeEmail({ to: placeholderEmail, displayName: shortAddr(claimed) }),
-			);
+			if (user.inserted) {
+				queueMicrotask(() =>
+					sendWelcomeEmail({ to: placeholderEmail, displayName: shortAddr(claimed) }),
+				);
+			}
 		}
 	}
 

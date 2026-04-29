@@ -10,7 +10,7 @@
 		"serialize-javascript": ">=7.0.5"
 	},
 	"engines": {
-		"node": ">=20.0.0"
+		"node": "22.x"
 	},
 	"keywords": [
 		"3d-viewer",
