@@ -148,7 +148,7 @@
 			const cfgPart = `&type=pumpfun-feed&kind=${encodeURIComponent(params.kind)}` +
 				(params.minTier ? `&minTier=${encodeURIComponent(params.minTier)}` : '') +
 				(params.narrate ? '' : '&narrate=0');
-			let modelHash = '';
+			let modelHash = '&model=' + encodeURIComponent('/avatars/cz.glb');
 			const widgetId = 'wdgt_demo_pumpfun';
 			if (params.asset) {
 				try {
@@ -163,7 +163,7 @@
 					if (repR.ok) renderSignals(await repR.json());
 				} catch {}
 			} else {
-				$('agent-card').innerHTML = `<div class="empty">Default narrator avatar. Paste a Solana asset pubkey above to bind a specific agent.</div>`;
+				$('agent-card').innerHTML = `<div class="empty">CZ narrator. Paste a Solana asset pubkey above to bind a different agent.</div>`;
 				$('signals-section').hidden = true;
 			}
 			iframe.src = `/app#widget=${widgetId}&kiosk=true${cfgPart}${modelHash}`;

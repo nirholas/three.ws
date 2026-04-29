@@ -1494,6 +1494,215 @@
 			document.getElementById('indexer-refresh').addEventListener('click', refreshIndexer);
 			els.tradeMint.addEventListener('change', refreshIndexer);
 
+			// ── Vanity grinder (browser-side) ───────────────────────────────
+			const BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+			const BASE58_SET = new Set(BASE58);
+			const vg = {
+				prefix: document.getElementById('vg-prefix'),
+				suffix: document.getElementById('vg-suffix'),
+				ic: document.getElementById('vg-ic'),
+				start: document.getElementById('vg-start'),
+				stop: document.getElementById('vg-stop'),
+				progress: document.getElementById('vg-progress'),
+				result: document.getElementById('vg-result'),
+				address: document.getElementById('vg-address'),
+				attempts: document.getElementById('vg-attempts'),
+				duration: document.getElementById('vg-duration'),
+				useLaunch: document.getElementById('vg-use-launch'),
+				assign: document.getElementById('vg-assign'),
+				copy: document.getElementById('vg-copy'),
+				discard: document.getElementById('vg-discard'),
+			};
+			let vgRunning = false;
+			let vgAbort = false;
+			let vgHit = null; // { address, secretKey: Uint8Array, iterations, durationMs, prefix, suffix, ignoreCase }
+
+			function vgValidPattern(p) {
+				if (!p) return true;
+				if (p.length > 6) return false;
+				for (const c of p) if (!BASE58_SET.has(c)) return false;
+				return true;
+			}
+			function vgEstimate(prefix, suffix, ic) {
+				const len = (prefix?.length || 0) + (suffix?.length || 0);
+				if (!len) return 1;
+				return Math.pow(ic ? 33 : 58, len);
+			}
+			function vgUpdateIdle() {
+				if (vgRunning) return;
+				const p = vg.prefix.value.trim();
+				const s = vg.suffix.value.trim();
+				if (!vgValidPattern(p) || !vgValidPattern(s)) {
+					vg.progress.textContent = 'Invalid pattern: base58 only (no 0/O/I/l), max 6 chars each.';
+					return;
+				}
+				if (!p && !s) {
+					vg.progress.textContent = 'Idle. Enter a prefix and/or suffix.';
+					return;
+				}
+				const est = vgEstimate(p, s, vg.ic.checked);
+				vg.progress.textContent = `Estimated ~${Math.round(est).toLocaleString()} attempts.`;
+			}
+			vg.prefix.addEventListener('input', vgUpdateIdle);
+			vg.suffix.addEventListener('input', vgUpdateIdle);
+			vg.ic.addEventListener('change', vgUpdateIdle);
+			vgUpdateIdle();
+
+			async function vgRun() {
+				const prefix = vg.prefix.value.trim();
+				const suffix = vg.suffix.value.trim();
+				const ic = vg.ic.checked;
+				if (!vgValidPattern(prefix) || !vgValidPattern(suffix)) {
+					toast('Invalid pattern', 'err');
+					return;
+				}
+				if (!prefix && !suffix) {
+					toast('Enter a prefix or suffix', 'err');
+					return;
+				}
+				const { Keypair } = await import('https://esm.sh/@solana/web3.js@1.98.4');
+				vgRunning = true;
+				vgAbort = false;
+				vg.start.hidden = true;
+				vg.stop.hidden = false;
+				vg.result.hidden = true;
+				vgHit = null;
+				const target = { p: ic ? prefix.toLowerCase() : prefix, s: ic ? suffix.toLowerCase() : suffix };
+				const pLen = prefix.length, sLen = suffix.length;
+				const start = performance.now();
+				let attempts = 0;
+				let lastTick = start;
+				let lastAttempts = 0;
+				const BATCH = 1500;
+				try {
+					while (!vgAbort) {
+						for (let i = 0; i < BATCH; i++) {
+							attempts++;
+							const kp = Keypair.generate();
+							const addr = kp.publicKey.toBase58();
+							if (pLen) {
+								const head = ic ? addr.slice(0, pLen).toLowerCase() : addr.slice(0, pLen);
+								if (head !== target.p) continue;
+							}
+							if (sLen) {
+								const tail = ic ? addr.slice(-sLen).toLowerCase() : addr.slice(-sLen);
+								if (tail !== target.s) continue;
+							}
+							const dur = performance.now() - start;
+							vgHit = {
+								address: addr,
+								secretKey: kp.secretKey,
+								iterations: attempts,
+								durationMs: Math.round(dur),
+								prefix, suffix, ignoreCase: ic,
+							};
+							vg.address.textContent = addr;
+							vg.attempts.textContent = attempts.toLocaleString();
+							vg.duration.textContent = `${(dur / 1000).toFixed(2)}s`;
+							vg.result.hidden = false;
+							vg.progress.textContent = `Found a match in ${attempts.toLocaleString()} attempts.`;
+							vgRunning = false;
+							vg.start.hidden = false;
+							vg.stop.hidden = true;
+							return;
+						}
+						const now = performance.now();
+						if (now - lastTick > 250) {
+							const rate = ((attempts - lastAttempts) / (now - lastTick)) * 1000;
+							lastTick = now;
+							lastAttempts = attempts;
+							vg.progress.textContent =
+								`Grinding… ${attempts.toLocaleString()} attempts · ${Math.round(rate).toLocaleString()}/s · ${((now - start) / 1000).toFixed(1)}s elapsed`;
+							await new Promise((r) => setTimeout(r, 0));
+						}
+					}
+					vg.progress.textContent = `Stopped after ${attempts.toLocaleString()} attempts.`;
+				} catch (err) {
+					vg.progress.textContent = `Error: ${err.message}`;
+				} finally {
+					vgRunning = false;
+					vg.start.hidden = false;
+					vg.stop.hidden = true;
+				}
+			}
+
+			vg.start.addEventListener('click', vgRun);
+			vg.stop.addEventListener('click', () => { vgAbort = true; });
+
+			vg.useLaunch.addEventListener('click', () => {
+				if (!vgHit) return;
+				window.__pendingMintSecret = vgHit.secretKey;
+				els.launchVanity.value = vgHit.prefix || '';
+				els.launchVanitySuffix.value = vgHit.suffix || '';
+				els.launchVanityIc.checked = !!vgHit.ignoreCase;
+				let banner = document.getElementById('vg-launch-banner');
+				if (!banner) {
+					banner = document.createElement('div');
+					banner.id = 'vg-launch-banner';
+					banner.style.cssText =
+						'margin-top:10px;padding:8px 12px;background:#0e1f17;border:1px solid #1f4232;border-radius:8px;font-size:13px;color:var(--ok)';
+					els.launchBtn.closest('.panel').appendChild(banner);
+				}
+				banner.innerHTML = `✦ Pre-ground mint <code>${vgHit.address.slice(0, 12)}…</code> will be used for the next launch.`;
+				toast('Pre-ground mint armed for launch');
+				els.launchName.scrollIntoView({ behavior: 'smooth', block: 'center' });
+			});
+
+			vg.copy.addEventListener('click', async () => {
+				if (!vgHit) return;
+				const s = JSON.stringify(Array.from(vgHit.secretKey));
+				try {
+					await navigator.clipboard.writeText(s);
+					toast('Secret JSON copied');
+				} catch {
+					toast('Clipboard blocked — secret in console', 'err');
+					console.log(s);
+				}
+			});
+
+			vg.discard.addEventListener('click', () => {
+				if (vgHit) vgHit.secretKey.fill(0);
+				vgHit = null;
+				vg.result.hidden = true;
+				vg.progress.textContent = 'Discarded.';
+			});
+
+			vg.assign.addEventListener('click', async () => {
+				if (!vgHit) return;
+				const id = currentAgentId();
+				if (!id) return toast('Select an agent first', 'err');
+				const ok = confirm(
+					`Assign ${vgHit.address.slice(0, 16)}… as this agent's wallet?\n\n` +
+					`If the agent already has a wallet, you must remove it first ` +
+					`(this dialog will tell you to). Funds in the old wallet are NOT migrated automatically.`,
+				);
+				if (!ok) return;
+				vg.assign.disabled = true;
+				vg.assign.textContent = 'Assigning…';
+				try {
+					const body = { secret_key: Array.from(vgHit.secretKey) };
+					if (vgHit.prefix) body.vanity_prefix = vgHit.prefix;
+					await api(`/api/agents/${id}/solana`, {
+						method: 'POST',
+						body: JSON.stringify(body),
+					});
+					toast('Wallet assigned');
+					vgHit.secretKey.fill(0);
+					vgHit = null;
+					vg.result.hidden = true;
+					await refreshAgent();
+				} catch (err) {
+					if (err.body?.error === 'conflict') {
+						toast('Agent already has a wallet — remove it first via DELETE', 'err');
+					} else {
+						toast(err.body?.error_description || err.message, 'err');
+					}
+				} finally {
+					vg.assign.disabled = false;
+					vg.assign.textContent = 'Assign as agent wallet';
+				}
+			});
+
 			(async () => {
 				await loadAgents();
 				if (currentAgentId()) {
