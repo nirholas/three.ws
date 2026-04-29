@@ -1,18 +1,20 @@
 /**
- * GET /api/explore — paginated directory of every ERC-8004 agent we've indexed.
+ * GET /api/explore — paginated directory of ERC-8004 agents + public avatars.
  *
  * Query params:
- *   only3d=1       — only rows where has_3d = true
- *   chain=<id>     — filter by chainId
+ *   only3d=1       — only rows where has_3d = true (avatars are always 3D)
+ *   chain=<id>     — filter by chainId (excludes public avatars; they're off-chain)
  *   q=<text>       — name/description substring
- *   cursor=<iso>   — registered_at ISO string for pagination (older rows)
+ *   cursor=<iso>   — created_at/registered_at ISO string for pagination
  *   limit=<int>    — page size, default 24, max 60
+ *   source=<all|onchain|avatar> — restrict feed to one source. Default 'all'.
  */
 
 import { sql } from './_lib/db.js';
 import { cors, json, method, wrap, error } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { CHAIN_BY_ID, tokenExplorerUrl, addressExplorerUrl } from './_lib/erc8004-chains.js';
+import { publicUrl } from './_lib/r2.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
@@ -27,16 +29,22 @@ export default wrap(async (req, res) => {
 	const q = (url.searchParams.get('q') || '').trim().slice(0, 80);
 	const cursor = url.searchParams.get('cursor');
 	const limit = Math.min(Math.max(parseInt(url.searchParams.get('limit') || '24', 10), 1), 60);
+	const sourceFilter = url.searchParams.get('source') || 'all';
 
 	const cursorDate = cursor ? new Date(cursor) : null;
 	if (cursor && isNaN(cursorDate?.getTime())) {
 		return error(res, 400, 'validation_error', 'cursor must be an ISO date');
 	}
 
+	// Setting a chainId implicitly excludes avatars (they're off-chain).
+	const includeOnchain = sourceFilter !== 'avatar';
+	const includeAvatars = sourceFilter !== 'onchain' && !Number.isFinite(chainId);
+
 	// Filter construction via template fragments kept inline because Neon's
 	// tagged-template driver doesn't compose them the way pg.Client does; a
 	// single query with optional predicates guarded by nulls is clearer.
-	const rows = await sql`
+	const onchainRows = includeOnchain
+		? await sql`
 		SELECT chain_id, agent_id, owner, name, description, image, glb_url,
 		       has_3d, x402_support, registered_at, registered_tx,
 		       services, agent_uri
@@ -51,14 +59,30 @@ export default wrap(async (req, res) => {
 		  AND (${cursorDate ? cursorDate.toISOString() : null}::timestamptz IS NULL OR registered_at < ${cursorDate ? cursorDate.toISOString() : null}::timestamptz)
 		ORDER BY registered_at DESC NULLS LAST
 		LIMIT ${limit + 1}
-	`;
+	`
+		: [];
 
-	const hasMore = rows.length > limit;
-	const page = rows.slice(0, limit);
+	const avatarRows = includeAvatars
+		? await sql`
+		SELECT id, slug, name, description, storage_key, thumbnail_key, tags, created_at
+		FROM avatars
+		WHERE deleted_at IS NULL
+		  AND visibility = 'public'
+		  AND (${q || null}::text IS NULL OR (
+		       coalesce(name,'') ILIKE ${'%' + q + '%'}
+		    OR coalesce(description,'') ILIKE ${'%' + q + '%'}
+		  ))
+		  AND (${cursorDate ? cursorDate.toISOString() : null}::timestamptz IS NULL OR created_at < ${cursorDate ? cursorDate.toISOString() : null}::timestamptz)
+		ORDER BY created_at DESC
+		LIMIT ${limit + 1}
+	`
+		: [];
 
-	const items = page.map((r) => {
+	const onchainItems = onchainRows.map((r) => {
 		const chain = CHAIN_BY_ID[r.chain_id];
 		return {
+			kind: 'onchain',
+			sortDate: r.registered_at,
 			chainId: r.chain_id,
 			chainName: chain?.name || `Chain ${r.chain_id}`,
 			chainShortName: chain?.name || `#${r.chain_id}`,
@@ -83,20 +107,54 @@ export default wrap(async (req, res) => {
 		};
 	});
 
-	const nextCursor = hasMore && page.length > 0 ? page[page.length - 1].registered_at : null;
+	const avatarItems = avatarRows.map((r) => {
+		const glb = publicUrl(r.storage_key);
+		return {
+			kind: 'avatar',
+			sortDate: r.created_at,
+			avatarId: r.id,
+			slug: r.slug,
+			name: r.name,
+			description: r.description || '',
+			image: r.thumbnail_key ? publicUrl(r.thumbnail_key) : null,
+			glbUrl: glb,
+			has3d: true,
+			tags: r.tags || [],
+			createdAt: r.created_at,
+			viewerUrl: `/#model=${encodeURIComponent(glb)}`,
+		};
+	});
 
-	// Totals (cheap: single bool-filtered count).
-	const [{ total }] = await sql`
+	// Merge by date desc and trim to page size; cursor is the date of the last item.
+	const merged = [...onchainItems, ...avatarItems].sort(
+		(a, b) => new Date(b.sortDate).getTime() - new Date(a.sortDate).getTime(),
+	);
+	const hasMore = merged.length > limit;
+	const items = merged.slice(0, limit);
+	const nextCursor = hasMore && items.length > 0 ? items[items.length - 1].sortDate : null;
+
+	// Totals (cheap counts; merged feed total = onchain + public avatars).
+	const [{ total: onchainTotal }] = await sql`
 		SELECT count(*)::text as total FROM erc8004_agents_index WHERE active = true
 	`;
-	const [{ total3d }] = await sql`
+	const [{ total3d: onchain3d }] = await sql`
 		SELECT count(*)::text as total3d FROM erc8004_agents_index WHERE active = true AND has_3d = true
 	`;
+	const [{ total: avatarTotal }] = await sql`
+		SELECT count(*)::text as total FROM avatars WHERE deleted_at IS NULL AND visibility = 'public'
+	`;
+	const allTotal = Number(onchainTotal) + Number(avatarTotal);
+	const threeDTotal = Number(onchain3d) + Number(avatarTotal);
 
 	return json(res, 200, {
 		items,
 		nextCursor,
-		totals: { all: Number(total), threeD: Number(total3d) },
+		totals: {
+			all: allTotal,
+			threeD: threeDTotal,
+			onchain: Number(onchainTotal),
+			avatars: Number(avatarTotal),
+		},
 	});
 });
 
