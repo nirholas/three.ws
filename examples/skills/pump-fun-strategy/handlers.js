@@ -70,16 +70,24 @@ export async function runStrategy(args, ctx) {
 	const cap = compiled.caps.sessionSpendCapSol ?? ctx?.skillConfig?.defaultSessionSpendCapSol ?? 1.0;
 	const perTrade = compiled.entry.amountSol ?? ctx?.skillConfig?.defaultPerTradeSol ?? 0.05;
 	const pollMs = ctx?.skillConfig?.defaultPollMs ?? 5000;
+	const onLog = typeof args.onLog === 'function' ? args.onLog : () => {};
 
 	const seen = new Set();
-	const positions = new Map();           // mint -> { amountTokens, entryPriceSol, openedAt }
+	const positions = new Map();
 	const log = [];
 	let spent = 0;
 
+	const emit = (entry) => { log.push(entry); try { onLog(entry); } catch {} };
+
 	while (Date.now() < deadline) {
+		emit({ action: 'tick', t: Date.now(), open: positions.size, spent });
+
 		// 1. Watch exits on open positions.
 		for (const [mint, pos] of positions) {
-			const snap = await snapshotMint(ctx, mint).catch(() => null);
+			const snap = await snapshotMint(ctx, mint).catch((e) => {
+				emit({ mint, action: 'snapshot-error', error: e.message });
+				return null;
+			});
 			if (!snap) continue;
 			const view = buildView({ ...snap, position: pos });
 			const exit = compiled.shouldExit(view);
@@ -90,17 +98,20 @@ export async function runStrategy(args, ctx) {
 						percent: exit.percent,
 						amountTokens: exit.amountTokens,
 					});
-					log.push({ mint, action: 'exit', rule: exit, sig: r.sig, view });
+					emit({ mint, action: 'exit', rule: exit, sig: r.sig, pnlPct: view.position?.pnlPct });
 					positions.delete(mint);
 				} catch (e) {
-					log.push({ mint, action: 'exit-error', error: e.message });
+					emit({ mint, action: 'exit-error', error: e.message });
 				}
 			}
 		}
 
 		// 2. Hunt for new entries while under cap.
 		if (spent + perTrade <= cap && positions.size < (compiled.caps.maxOpenPositions ?? Infinity)) {
-			const candidates = await fetchCandidates(ctx, compiled.scan);
+			const candidates = await fetchCandidates(ctx, compiled.scan).catch((e) => {
+				emit({ action: 'scan-error', error: e.message });
+				return [];
+			});
 			for (const t of candidates) {
 				const mint = t.mint ?? t.address;
 				if (!mint || seen.has(mint) || positions.has(mint)) continue;
@@ -109,7 +120,7 @@ export async function runStrategy(args, ctx) {
 				if (!snap) continue;
 				const view = buildView(snap);
 				if (!compiled.passes(view)) {
-					log.push({ mint, action: 'skip', view });
+					emit({ mint, action: 'skip', view });
 					continue;
 				}
 				try {
@@ -120,10 +131,10 @@ export async function runStrategy(args, ctx) {
 						entryPriceSol: snap.curve?.priceSol ?? 0,
 						openedAt: Date.now(),
 					});
-					log.push({ mint, action: 'enter', sig: buy.sig, spent });
+					emit({ mint, action: 'enter', sig: buy.sig, spent, entryPriceSol: snap.curve?.priceSol ?? 0 });
 					if (spent + perTrade > cap) break;
 				} catch (e) {
-					log.push({ mint, action: 'enter-error', error: e.message });
+					emit({ mint, action: 'enter-error', error: e.message });
 				}
 			}
 		}

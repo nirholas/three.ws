@@ -105,25 +105,60 @@ function openModal() {
 	return { back, inner, close };
 }
 
-async function signAndSend(txBase64, extraSigners = []) {
+// Bundled, not loaded from a CDN: same @solana/web3.js + spl-token versions
+// the rest of the app uses.
+import {
+	VersionedTransaction,
+	Connection,
+	PublicKey,
+	Keypair,
+} from '@solana/web3.js';
+import {
+	getAssociatedTokenAddress,
+	createAssociatedTokenAccountInstruction,
+	getAccount,
+	TOKEN_PROGRAM_ID,
+	ASSOCIATED_TOKEN_PROGRAM_ID,
+} from '@solana/spl-token';
+
+const RPC = (network) =>
+	network === 'devnet'
+		? 'https://api.devnet.solana.com'
+		: 'https://api.mainnet-beta.solana.com';
+
+const USDC_MINT = {
+	mainnet: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+	devnet: '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
+};
+
+/**
+ * Derive the user's USDC associated token account. If the ATA does not yet
+ * exist, returns null for `existing` so the caller can prepend a creation ix.
+ */
+export async function resolveUsdcAta({ owner, network = 'mainnet', currencyMint } = {}) {
+	const ownerPk = owner instanceof PublicKey ? owner : new PublicKey(owner);
+	const mint = new PublicKey(currencyMint || USDC_MINT[network] || USDC_MINT.mainnet);
+	const ata = await getAssociatedTokenAddress(mint, ownerPk, false);
+	const conn = new Connection(RPC(network), 'confirmed');
+	let existing = null;
+	try {
+		existing = await getAccount(conn, ata);
+	} catch {
+		existing = null;
+	}
+	return { ata, mint, owner: ownerPk, existing, connection: conn };
+}
+
+async function signAndSend(txBase64, { extraSigners = [], network = 'mainnet' } = {}) {
 	const wallet = detectSolanaWallet();
 	if (!wallet) throw new Error('No Solana wallet detected. Install Phantom.');
 	if (!wallet.isConnected) await wallet.connect?.();
-	const [{ VersionedTransaction, Connection }, _] = await Promise.all([
-		import('https://esm.sh/@solana/web3.js@1.98.4?bundle'),
-		Promise.resolve(),
-	]);
 	const tx = VersionedTransaction.deserialize(
 		Uint8Array.from(atob(txBase64), (c) => c.charCodeAt(0)),
 	);
 	for (const kp of extraSigners) tx.sign([kp]);
 	const signed = await wallet.signTransaction(tx);
-	const conn = new Connection(
-		wallet.network === 'devnet'
-			? 'https://api.devnet.solana.com'
-			: 'https://api.mainnet-beta.solana.com',
-		'confirmed',
-	);
+	const conn = new Connection(RPC(network), 'confirmed');
 	const sig = await conn.sendRawTransaction(signed.serialize(), {
 		skipPreflight: false,
 	});
@@ -178,10 +213,15 @@ function openPay({ mint, network }) {
 		try {
 			if (!wallet.isConnected) await wallet.connect?.();
 			const payer = wallet.publicKey?.toBase58?.() || wallet.publicKey?.toString();
-			// User's USDC ATA — we ask the wallet for it via getTokenAccountsByOwner.
-			// For simplicity here, we accept the wallet auto-routing and let prep
-			// validate. Many wallets resolve this client-side; we send user_token_account
-			// as the wallet pubkey and let backend reject with a clear error.
+			btn.textContent = 'Resolving ATA…';
+			const { ata, existing } = await resolveUsdcAta({ owner: payer, network });
+			if (!existing) {
+				err.textContent =
+					'Your USDC token account does not exist on this wallet yet. Receive any amount of USDC first, then try again.';
+				btn.disabled = false;
+				btn.textContent = 'Pay';
+				return;
+			}
 			btn.textContent = 'Preparing…';
 			const prep = await fetch('/api/pump/accept-payment-prep', {
 				method: 'POST',
@@ -190,7 +230,7 @@ function openPay({ mint, network }) {
 				body: JSON.stringify({
 					mint,
 					payer_wallet: payer,
-					user_token_account: payer, // server should be tolerant; ATA derivation is wallet-specific
+					user_token_account: ata.toBase58(),
 					amount_usdc: amt,
 					duration_seconds: win,
 					tool_name: tool || undefined,
@@ -199,7 +239,7 @@ function openPay({ mint, network }) {
 			}).then((r) => r.json());
 			if (prep.error) throw new Error(prep.error_description || prep.error);
 			btn.textContent = 'Sign in wallet…';
-			const sig = await signAndSend(prep.tx_base64);
+			const sig = await signAndSend(prep.tx_base64, { network });
 			btn.textContent = 'Confirming…';
 			const confirm = await fetch('/api/pump/accept-payment-confirm', {
 				method: 'POST',
@@ -273,7 +313,7 @@ function openGovernance({ mint, currentBps }) {
 			}).then((r) => r.json());
 			if (prep.error) throw new Error(prep.error_description || prep.error);
 			btn.textContent = 'Sign in wallet…';
-			const sig = await signAndSend(prep.tx_base64);
+			const sig = await signAndSend(prep.tx_base64, { network: 'mainnet' });
 			btn.textContent = `Done · ${sig.slice(0, 6)}…`;
 		} catch (e) {
 			err.textContent = e.message || String(e);
@@ -417,14 +457,16 @@ function openLaunch({ identity, agentId }) {
 					}).then((r) => r.json());
 					if (prep.error) throw new Error(prep.error_description || prep.error);
 
-					const [{ Keypair }] = await Promise.all([
-						import('https://esm.sh/@solana/web3.js@1.98.4?bundle'),
-					]);
-					const mintKp = Keypair.fromSecretKey(
-						Uint8Array.from(atob(prep.mint_secret_key_b64), (c) => c.charCodeAt(0)),
-					);
+					const mintKp = prep.mint_secret_key_b64
+						? Keypair.fromSecretKey(
+								Uint8Array.from(atob(prep.mint_secret_key_b64), (c) => c.charCodeAt(0)),
+							)
+						: null;
 					btn.textContent = 'Sign in wallet…';
-					const sig = await signAndSend(prep.tx_base64, [mintKp]);
+					const sig = await signAndSend(prep.tx_base64, {
+						extraSigners: mintKp ? [mintKp] : [],
+						network: 'mainnet',
+					});
 					btn.textContent = 'Confirming…';
 					const confirm = await fetch('/api/pump/launch-confirm', {
 						method: 'POST',

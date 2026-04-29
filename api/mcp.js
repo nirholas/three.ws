@@ -27,6 +27,7 @@ import {
 } from './_lib/avatars.js';
 import { fetchModel, FetchModelError } from './_lib/fetch-model.js';
 import { crawlAgentAttestations, KIND_MAP } from './_lib/solana-attestations.js';
+import { pumpfunMcp, pumpfunBotEnabled } from './_lib/pumpfun-mcp.js';
 import { inspectModel, suggestOptimizations } from './_lib/model-inspect.js';
 import { validateBytes } from 'gltf-validator';
 
@@ -419,6 +420,60 @@ const TOOL_CATALOG = [
 				network: { type: 'string', enum: ['mainnet', 'devnet'], default: 'devnet' },
 			},
 			required: ['asset'],
+			additionalProperties: false,
+		},
+	},
+	{
+		name: 'pumpfun_recent_claims',
+		title: 'Recent pump.fun claims',
+		description:
+			"Fetch the most recent pump.fun GitHub social-fee claim events with full enrichment: GitHub profile, X/Twitter follower data, influencer tier, first-time-claim flag, fake-claim detection, and AI summary. Use to answer 'what's happening on pump.fun right now?'.",
+		inputSchema: {
+			type: 'object',
+			properties: {
+				limit: { type: 'integer', minimum: 1, maximum: 50, default: 10 },
+			},
+			additionalProperties: false,
+		},
+	},
+	{
+		name: 'pumpfun_token_intel',
+		title: 'Pump.fun token intel',
+		description:
+			'Full intel on a pump.fun token: graduation status, bonding-curve progress, creator profile, top holders, volume, bundle detection, and trust signals.',
+		inputSchema: {
+			type: 'object',
+			properties: {
+				mint: { type: 'string', description: 'SPL mint pubkey (base58).' },
+			},
+			required: ['mint'],
+			additionalProperties: false,
+		},
+	},
+	{
+		name: 'pumpfun_creator_intel',
+		title: 'Pump.fun creator intel',
+		description:
+			'Reputation profile for a pump.fun creator wallet: prior launches, graduation rate, claim activity, and behavioural trust signals.',
+		inputSchema: {
+			type: 'object',
+			properties: {
+				wallet: { type: 'string', description: 'Solana wallet pubkey (base58).' },
+			},
+			required: ['wallet'],
+			additionalProperties: false,
+		},
+	},
+	{
+		name: 'pumpfun_recent_graduations',
+		title: 'Recent pump.fun graduations',
+		description:
+			'Tokens that recently graduated from the bonding curve to PumpAMM, with creator + holder analysis.',
+		inputSchema: {
+			type: 'object',
+			properties: {
+				limit: { type: 'integer', minimum: 1, maximum: 50, default: 10 },
+			},
 			additionalProperties: false,
 		},
 	},

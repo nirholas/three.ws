@@ -179,6 +179,7 @@
 					</dl>
 					<div class="row" style="margin-top: 10px">
 						<button class="btn ghost" id="provision-btn" hidden>Provision Solana wallet</button>
+						<a class="btn ghost" id="vanity-link" href="/vanity-wallet" target="_blank" rel="noopener">Grind vanity address ✦</a>
 						<a id="explorer-link" class="muted" href="#" target="_blank" rel="noopener" hidden>Open on Solscan ↗</a>
 					</div>
 				</div>
@@ -419,6 +420,81 @@
 					} else {
 						els.agentAddress.textContent = err.message;
 					}
+				}
+				refreshSns();
+			}
+
+			function renderSnsList(data) {
+				const cur = data.sns_domain;
+				if (cur) {
+					els.snsCurrent.textContent = `${cur}.sol`;
+					els.snsCurrent.classList.remove('muted');
+					els.snsClearBtn.hidden = false;
+				} else {
+					els.snsCurrent.textContent = '— none attached —';
+					els.snsCurrent.classList.add('muted');
+					els.snsClearBtn.hidden = true;
+				}
+				const owned = Array.isArray(data.domains) ? data.domains : [];
+				if (!owned.length) {
+					els.snsDomainList.innerHTML = '<span class="muted" style="font-size:13px">This wallet does not own any .sol domains yet. Register one on sns.id, then refresh.</span>';
+					return;
+				}
+				els.snsDomainList.innerHTML = '';
+				for (const d of owned) {
+					const btn = document.createElement('button');
+					btn.className = 'btn ghost';
+					btn.style.fontSize = '12px';
+					btn.textContent = d === cur ? `★ ${d}.sol` : `${d}.sol`;
+					btn.disabled = d === cur;
+					btn.addEventListener('click', () => attachSns(d));
+					els.snsDomainList.appendChild(btn);
+				}
+				if (data.favorite && !owned.includes(data.favorite)) {
+					const fav = document.createElement('span');
+					fav.className = 'muted';
+					fav.style.fontSize = '12px';
+					fav.textContent = `(favorite: ${data.favorite}.sol)`;
+					els.snsDomainList.appendChild(fav);
+				}
+			}
+
+			async function refreshSns() {
+				const id = currentAgentId();
+				if (!id) return;
+				els.snsCurrent.textContent = '…';
+				els.snsDomainList.innerHTML = '';
+				try {
+					const { data } = await api(`/api/agents/${id}/sns`);
+					renderSnsList(data);
+				} catch (err) {
+					els.snsCurrent.textContent = err.body?.error === 'conflict' ? 'Provision a Solana wallet first' : err.message;
+					els.snsDomainList.innerHTML = '';
+					els.snsClearBtn.hidden = true;
+				}
+			}
+
+			async function attachSns(domain) {
+				const id = currentAgentId();
+				if (!id) return;
+				try {
+					await api(`/api/agents/${id}/sns`, { method: 'POST', body: JSON.stringify({ domain }) });
+					toast(`Attached ${domain}.sol`);
+					await refreshSns();
+				} catch (err) {
+					toast(err.message, 'err');
+				}
+			}
+
+			async function clearSns() {
+				const id = currentAgentId();
+				if (!id) return;
+				try {
+					await api(`/api/agents/${id}/sns`, { method: 'DELETE' });
+					toast('SNS id cleared');
+					await refreshSns();
+				} catch (err) {
+					toast(err.message, 'err');
 				}
 			}
 

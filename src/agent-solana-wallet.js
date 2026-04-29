@@ -150,27 +150,91 @@ export function mountAgentSolanaWalletCard({ panel, identity, onProvisioned }) {
 
 	const root = document.createElement('section');
 	root.className = 'agent-sol-wallet';
+	root.hidden = true; // unhide once we know the user is allowed to see it
 	panel.appendChild(root);
 
 	let state = {
-		address: identity.solana_address || identity.meta?.solana_address || null,
-		vanityPrefix: identity.meta?.solana_vanity_prefix || null,
-		source: identity.meta?.solana_wallet_source || null,
+		loaded: false,
+		address: null,
+		vanityPrefix: null,
+		source: null,
+		network: 'mainnet',
+		sol: null,
+		lamports: null,
 		busy: false,
 		progress: null,
 		err: null,
 	};
 	let abort = null;
+	let balanceTimer = null;
+
+	async function loadFromServer() {
+		const r = await fetchAgentSolanaWallet(identity.id, state.network);
+		if (r.status === 'forbidden') {
+			root.remove();
+			return false;
+		}
+		root.hidden = false;
+		if (r.status === 'ok') {
+			state.address = r.data.address;
+			state.vanityPrefix = r.data.vanity_prefix || null;
+			state.source = r.data.source || null;
+			state.lamports = r.data.lamports;
+			state.sol = r.data.sol;
+			_propagate(identity, r.data);
+		} else if (r.status === 'none') {
+			state.address = null;
+		} else {
+			state.err = r.error || 'failed to load wallet';
+		}
+		state.loaded = true;
+		render();
+		return true;
+	}
+
+	async function refreshBalance() {
+		if (!state.address) return;
+		const r = await fetchAgentSolanaWallet(identity.id, state.network);
+		if (r.status === 'ok') {
+			state.lamports = r.data.lamports;
+			state.sol = r.data.sol;
+			render();
+		}
+	}
+
+	function startBalancePoll() {
+		stopBalancePoll();
+		balanceTimer = setInterval(refreshBalance, 30_000);
+	}
+	function stopBalancePoll() {
+		if (balanceTimer) clearInterval(balanceTimer);
+		balanceTimer = null;
+	}
 
 	function render() {
+		if (!state.loaded) {
+			root.innerHTML = `<div class="skel">Loading Solana wallet…</div>`;
+			return;
+		}
 		if (state.address) {
 			const pfx = state.vanityPrefix || '';
 			const rest = state.address.slice(pfx.length);
+			const solDisplay = state.sol == null ? '—' : `${state.sol.toFixed(4)} SOL`;
 			root.innerHTML = `
 				<h3>Solana wallet${state.source ? `<span class="src">· ${_esc(state.source)}</span>` : ''}</h3>
 				<div class="addr"><span class="pfx">${_esc(pfx)}</span>${_esc(rest)}</div>
+				<div class="balance">
+					<span class="sol">${_esc(solDisplay)}</span>
+					<span class="net">
+						<select data-act="network" aria-label="Network">
+							<option value="mainnet" ${state.network === 'mainnet' ? 'selected' : ''}>Mainnet</option>
+							<option value="devnet" ${state.network === 'devnet' ? 'selected' : ''}>Devnet</option>
+						</select>
+					</span>
+				</div>
 				<div class="row">
-					<button data-act="copy">Copy</button>
+					<button data-act="copy">Copy address</button>
+					<button data-act="explorer">Explorer</button>
 					<button data-act="replace">Replace</button>
 				</div>
 				${state.err ? `<div class="err">${_esc(state.err)}</div>` : ''}
@@ -178,9 +242,19 @@ export function mountAgentSolanaWalletCard({ panel, identity, onProvisioned }) {
 			root.querySelector('[data-act="copy"]').addEventListener('click', () => {
 				navigator.clipboard?.writeText(state.address).catch(() => {});
 			});
+			root.querySelector('[data-act="explorer"]').addEventListener('click', () => {
+				const cluster = state.network === 'devnet' ? '?cluster=devnet' : '';
+				window.open(`https://explorer.solana.com/address/${state.address}${cluster}`, '_blank', 'noopener');
+			});
 			root.querySelector('[data-act="replace"]').addEventListener('click', onReplace);
+			root.querySelector('[data-act="network"]').addEventListener('change', (e) => {
+				state.network = e.target.value;
+				refreshBalance();
+			});
+			startBalancePoll();
 			return;
 		}
+		stopBalancePoll();
 
 		root.innerHTML = `
 			<h3>Solana wallet</h3>
@@ -206,8 +280,11 @@ export function mountAgentSolanaWalletCard({ panel, identity, onProvisioned }) {
 			state.address = data.address;
 			state.vanityPrefix = data.vanity_prefix || null;
 			state.source = data.source || 'generated';
+			state.lamports = data.lamports ?? 0;
+			state.sol = data.sol ?? 0;
 			_propagate(identity, data);
 			onProvisioned?.(data);
+			refreshBalance();
 		} catch (e) {
 			state.err = e.message;
 		} finally {
@@ -238,9 +315,12 @@ export function mountAgentSolanaWalletCard({ panel, identity, onProvisioned }) {
 			state.address = data.address;
 			state.vanityPrefix = data.vanity_prefix || prefix || null;
 			state.source = data.source || 'imported_vanity';
+			state.lamports = data.lamports ?? 0;
+			state.sol = data.sol ?? 0;
 			state.progress = null;
 			_propagate(identity, data);
 			onProvisioned?.(data);
+			refreshBalance();
 		} catch (e) {
 			state.err = e.name === 'AbortError' ? 'cancelled' : e.message;
 			state.progress = null;
@@ -257,6 +337,9 @@ export function mountAgentSolanaWalletCard({ panel, identity, onProvisioned }) {
 			state.address = null;
 			state.vanityPrefix = null;
 			state.source = null;
+			state.lamports = null;
+			state.sol = null;
+			_propagate(identity, { address: null, vanity_prefix: null, source: null });
 		} catch (e) {
 			state.err = e.message;
 		} finally {
@@ -265,7 +348,20 @@ export function mountAgentSolanaWalletCard({ panel, identity, onProvisioned }) {
 	}
 
 	render();
-	return { destroy: () => root.remove() };
+	loadFromServer().catch((e) => {
+		state.err = e.message || 'failed to load wallet';
+		state.loaded = true;
+		root.hidden = false;
+		render();
+	});
+
+	return {
+		destroy: () => {
+			stopBalancePoll();
+			abort?.abort();
+			root.remove();
+		},
+	};
 }
 
 function _propagate(identity, data) {
