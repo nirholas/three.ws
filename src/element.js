@@ -10,6 +10,7 @@ import { loadManifest, fetchRelative } from './manifest.js';
 import { resolveURI } from './ipfs.js';
 import { resolveAgentById, resolveByAgentId, AgentResolveError } from './agent-resolver.js';
 import { parseAgentRef, resolveOnchainAgent, toManifest } from './erc8004/resolver.js';
+import { attachTradeReactions } from './pump/trade-reactions.js';
 // BEGIN:EMBED_BRIDGES_IMPORT
 import { EmbedActionBridge } from './embed-action-bridge.js';
 import { protocol, ACTION_TYPES } from './agent-protocol.js';
@@ -285,6 +286,7 @@ class Agent3DElement extends HTMLElement {
 			'responsive',
 			'background',
 			'name-plate',
+			'tracked-mint',
 		];
 	}
 
@@ -307,6 +309,7 @@ class Agent3DElement extends HTMLElement {
 		this._outsideTapHandler = null;
 		this._autoResolvedManifest = false;
 		this._suppressAttrChange = false;
+		this._detachTradeReactions = null;
 	}
 
 	connectedCallback() {
@@ -352,6 +355,12 @@ class Agent3DElement extends HTMLElement {
 			this._applyLayout();
 		if (name === 'background') this._applyBackground();
 		if (name === 'name-plate') this._applyNamePlate();
+		if (name === 'tracked-mint') {
+			this._detachTradeReactions?.();
+			this._detachTradeReactions = newVal
+				? attachTradeReactions(this, { mint: newVal })
+				: null;
+		}
 		if (['src', 'manifest', 'body', 'agent-id'].includes(name)) {
 			// Source change — reboot
 			this._teardown();
@@ -969,6 +978,10 @@ class Agent3DElement extends HTMLElement {
 			}
 
 			this._mounted = true;
+			const _trackedMint = this.getAttribute('tracked-mint');
+			if (_trackedMint) {
+				this._detachTradeReactions = attachTradeReactions(this, { mint: _trackedMint });
+			}
 			// BEGIN:EMBED_BRIDGES
 			if (window !== window.parent) {
 				this._embedBridge = new EmbedActionBridge({
@@ -1382,6 +1395,8 @@ class Agent3DElement extends HTMLElement {
 		}
 		this._embedBridge?.stop();
 		this._embedBridge = null;
+		this._detachTradeReactions?.();
+		this._detachTradeReactions = null;
 		try {
 			this._runtime?.destroy();
 		} catch {}
@@ -1417,6 +1432,41 @@ class Agent3DElement extends HTMLElement {
 
 	clearConversation() {
 		this._runtime?.clearConversation();
+	}
+
+	/**
+	 * Play a named emote. Tries a fallback hint chain before head-bobbing.
+	 * Emote names: 'cheer', 'flinch', 'celebrate'
+	 */
+	playEmote(name, intensity = 1) {
+		const sc = this._scene;
+		if (!sc) return false;
+		const fallbacks = { cheer: ['cheer', 'celebrate', 'wave'], flinch: ['flinch', 'defeated', 'concern', 'shake'], celebrate: ['celebrate', 'wave'] };
+		for (const h of (fallbacks[name] || [name])) {
+			if (sc.playAnimationByHint(h)) return true;
+		}
+		this._headBob(intensity);
+		return false;
+	}
+
+	_headBob(intensity = 1) {
+		const sc = this._scene;
+		if (!sc) return;
+		const bone = sc._findBone(['Head', 'head', 'mixamorigHead']);
+		if (!bone) return;
+		const start = performance.now();
+		const origX = bone.rotation.x;
+		const tick = () => {
+			const t = (performance.now() - start) / 800;
+			if (t >= 1) {
+				bone.rotation.x = origX;
+				sc._removeHook(tick);
+				return;
+			}
+			bone.rotation.x = origX + 0.15 * intensity * Math.sin(t * Math.PI * 3);
+			sc.viewer.invalidate();
+		};
+		sc._addHook(tick);
 	}
 
 	async wave(opts) {

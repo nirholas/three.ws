@@ -117,6 +117,90 @@ export const TOOLS = [
 			required: ['mint'],
 		},
 	},
+	{
+		name: 'pumpfun_vanity_mint',
+		description:
+			'Generate a Solana keypair whose address ends/starts with a vanity pattern. Returns publicKey + secretKey (base58). Caller must save the secret key immediately — it is never stored. Hard timeout: 60 s.',
+		inputSchema: {
+			type: 'object',
+			properties: {
+				suffix: { type: 'string', description: 'Desired address suffix (case-insensitive by default)' },
+				prefix: { type: 'string', description: 'Desired address prefix (case-insensitive by default)' },
+				caseSensitive: { type: 'boolean', default: false },
+				maxAttempts: { type: 'integer', default: 5000000 },
+			},
+		},
+	},
+	{
+		name: 'pumpfun_watch_whales',
+		description:
+			'Collect whale trades on a pump.fun token for a short window (max 10 s). Returns all trades whose USD value meets minUsd.',
+		inputSchema: {
+			type: 'object',
+			properties: {
+				mint: { type: 'string', description: 'SPL mint pubkey (base58)' },
+				minUsd: { type: 'number', description: 'Minimum trade value in USD (default 5000)' },
+				durationMs: {
+					type: 'number',
+					description: 'Collection window in ms (default 5000, max 10000)',
+				},
+			},
+			required: ['mint'],
+		},
+	},
+	{
+		name: 'pumpfun_list_claims',
+		description:
+			'List recent pump.fun fee-claim events for a creator wallet (on-chain, no indexer needed). Returns signature, mint, lamports, and Unix timestamp for each claim.',
+		inputSchema: {
+			type: 'object',
+			properties: {
+				creator: { type: 'string', description: 'Creator wallet address (base58)' },
+				limit: { type: 'integer', minimum: 1, maximum: 50, default: 20 },
+				network: { type: 'string', enum: ['mainnet', 'devnet'], default: 'mainnet' },
+			},
+			required: ['creator'],
+		},
+	},
+	{
+		name: 'pumpfun_watch_claims',
+		description:
+			'Return all pump.fun fee-claim events for a creator wallet within a look-back window (durationMs). Useful for batch collection after a delay.',
+		inputSchema: {
+			type: 'object',
+			properties: {
+				creator: { type: 'string', description: 'Creator wallet address (base58)' },
+				durationMs: {
+					type: 'number',
+					description: 'Look-back window in ms (default 300000 = 5 min, max 1800000)',
+				},
+				network: { type: 'string', enum: ['mainnet', 'devnet'], default: 'mainnet' },
+			},
+			required: ['creator'],
+		},
+	},
+	{
+		name: 'sns_resolve',
+		description: 'Resolve a .sol Solana Name Service domain to its owner wallet address.',
+		inputSchema: {
+			type: 'object',
+			properties: {
+				name: { type: 'string', description: '.sol domain name, e.g. "bonfida.sol"' },
+			},
+			required: ['name'],
+		},
+	},
+	{
+		name: 'sns_reverseLookup',
+		description: 'Reverse-lookup a Solana wallet address to its primary .sol domain name.',
+		inputSchema: {
+			type: 'object',
+			properties: {
+				address: { type: 'string', description: 'Base58 Solana wallet address' },
+			},
+			required: ['address'],
+		},
+	},
 ];
 
 export function rpcError(code, message) {

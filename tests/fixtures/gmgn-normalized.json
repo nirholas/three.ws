@@ -1,0 +1,50 @@
+{
+	"meta": {
+		"startedAt": "2024-01-15T10:00:00.000Z",
+		"finishedAt": "2024-01-15T10:00:45.000Z",
+		"chain": "sol",
+		"mode": "all",
+		"version": "v4.0",
+		"success": true,
+		"durationMs": 45000,
+		"errors": [],
+		"missingScripts": []
+	},
+	"smartMoney": {
+		"wallets": {
+			"smart_money": [
+				{
+					"address": "BVxyYhm498L79r4HMQ9sxZ5bi41DmJmeWZ7SCS7Cyvna",
+					"pnl_7d": 54321.0,
+					"winrate": 0.81,
+					"tags": ["smart_money"]
+				},
+				{
+					"address": "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM",
+					"pnl_7d": 19876.5,
+					"winrate": 0.70,
+					"tags": ["smart_money", "top_trader"]
+				}
+			]
+		},
+		"walletDetails": {},
+		"walletHoldings": {}
+	},
+	"kol": {
+		"wallets": {
+			"kol": [
+				{
+					"address": "H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4AQJEG",
+					"pnl_7d": 7500.0,
+					"winrate": 0.65,
+					"tags": ["kol"],
+					"twitter_name": "kolAlpha"
+				}
+			]
+		},
+		"twitterUsers": [],
+		"walletDetails": {},
+		"walletHoldings": {}
+	},
+	"tokens": {}
+}

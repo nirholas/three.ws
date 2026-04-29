@@ -22,6 +22,7 @@ import { fetchChannelFeed } from './pump/channel-feed.js';
 import { listRecentClaims } from './pump/pumpkit-claims.js';
 import { getWalletPnl } from './kol/wallet-pnl.js';
 import { getRadarSignals } from './kol/radar.js';
+import { resolveSnsName, reverseLookupAddress } from './solana/sns.js';
 
 const DEFAULT_NETWORK = 'mainnet';
 const DEFAULT_SLIPPAGE_BPS = 500;
@@ -1208,6 +1209,116 @@ export function registerPumpFunSkills(skills) {
 					: 'No leaderboard data available.',
 				sentiment: 0.3,
 				data: { items },
+			};
+		},
+	});
+
+	// ── social.cashtagSentiment ───────────────────────────────────────────────
+	skills.register({
+		name: 'social.cashtagSentiment',
+		description:
+			'Score sentiment for a batch of cashtag posts. Accepts posts as { id?, ts?, text, author? }[] and returns a digest with score (-1..1), % breakdown, and examples.',
+		instruction:
+			'Runs a deterministic lexicon-based sentiment analysis on social posts about a cashtag. No external API required.',
+		animationHint: 'inspect',
+		voicePattern: 'Analyzing sentiment…',
+		mcpExposed: false,
+		inputSchema: {
+			type: 'object',
+			properties: {
+				posts: {
+					type: 'array',
+					description: 'Array of post objects, each with at minimum a `text` field.',
+					items: {
+						type: 'object',
+						properties: {
+							id: { type: 'string' },
+							ts: { type: 'string' },
+							text: { type: 'string' },
+							author: { type: 'string' },
+						},
+						required: ['text'],
+					},
+				},
+			},
+			required: ['posts'],
+		},
+		handler: async (args, _ctx) => {
+			const { scoreSentiment } = await import('./social/sentiment.js');
+			const result = scoreSentiment(args.posts || []);
+			const label =
+				result.score > 0.2 ? 'bullish' : result.score < -0.2 ? 'bearish' : 'neutral';
+			return {
+				success: true,
+				output: `Sentiment: ${label} (score ${result.score}, ${result.count} posts — ${result.posPct}% positive, ${result.negPct}% negative, ${result.neuPct}% neutral).`,
+				sentiment: result.score,
+				data: result,
+			};
+		},
+	});
+
+	// ── solana.resolveSns ─────────────────────────────────────────────────────
+	skills.register({
+		name: 'solana.resolveSns',
+		description: 'Resolve a .sol Solana Name Service domain to its owner wallet address.',
+		instruction: 'Forward SNS lookup. Read-only. Returns the owner public key for a .sol name.',
+		animationHint: 'inspect',
+		voicePattern: 'Resolving {{name}}…',
+		mcpExposed: true,
+		inputSchema: {
+			type: 'object',
+			properties: {
+				name: { type: 'string', description: '.sol domain name, e.g. "bonfida.sol"' },
+			},
+			required: ['name'],
+		},
+		handler: async (args, _ctx) => {
+			const address = await resolveSnsName(args.name);
+			if (!address) {
+				return {
+					success: false,
+					output: `Could not resolve "${args.name}". Domain may not exist.`,
+					sentiment: -0.1,
+				};
+			}
+			return {
+				success: true,
+				output: `${args.name} → ${address}`,
+				sentiment: 0.4,
+				data: { name: args.name, address },
+			};
+		},
+	});
+
+	// ── solana.reverseSns ─────────────────────────────────────────────────────
+	skills.register({
+		name: 'solana.reverseSns',
+		description: 'Reverse-lookup a Solana wallet address to its primary .sol domain name.',
+		instruction: 'Reverse SNS lookup via the primary/favourite domain. Read-only.',
+		animationHint: 'inspect',
+		voicePattern: 'Reverse-looking up {{address}}…',
+		mcpExposed: true,
+		inputSchema: {
+			type: 'object',
+			properties: {
+				address: { type: 'string', description: 'Base58 Solana wallet address' },
+			},
+			required: ['address'],
+		},
+		handler: async (args, _ctx) => {
+			const name = await reverseLookupAddress(args.address);
+			if (!name) {
+				return {
+					success: false,
+					output: `No .sol domain found for ${args.address.slice(0, 8)}…`,
+					sentiment: -0.1,
+				};
+			}
+			return {
+				success: true,
+				output: `${args.address.slice(0, 8)}… → ${name}`,
+				sentiment: 0.4,
+				data: { address: args.address, name },
 			};
 		},
 	});
