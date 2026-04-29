@@ -30,5 +30,49 @@
 			src="https://three.ws/api/avatars/bdef4d68-710e-4fa6-8a8d-d5c00857b85c"
 			style="width: 600px; height: 600px"
 		></agent-3d>
+
+		<hr style="margin: 40px 0; border-color: #333" />
+
+		<h2 style="margin-bottom: 8px">KOL Smart Money Widget</h2>
+		<p>
+			Replace <code>mint</code> with a Solana token mint address to see smart-money activity.
+			Polls <code>/api/kol/trades</code> every 30 s.
+		</p>
+
+		<script type="module" src="/src/widgets/kol-trades.js"></script>
+		<three-ws-widget
+			type="kol-trades"
+			mint="EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+			limit="20"
+			refresh-ms="30000"
+			style="display:block; max-width:520px; background:#1a1a1a; border-radius:12px; padding:12px"
+		></three-ws-widget>
+
+		<hr style="margin: 40px 0; border-color: #333" />
+
+		<h2 style="margin-bottom: 8px">Live Trades Canvas</h2>
+		<p>
+			Replace <code>mint</code> with an active pump.fun token mint to see buy/sell particles.
+			Polls <code>/api/pump-fun-mcp</code> every 6 s.
+		</p>
+		<three-ws-widget
+			type="live-trades-canvas"
+			mint="So11111111111111111111111111111111111111112"
+			bg="#0d0d14"
+			min-usd="0"
+			style="display:block; width:600px; height:400px; border-radius:12px; overflow:hidden; position:relative"
+		></three-ws-widget>
+		<script type="module">
+			import { mountLiveTradesCanvas } from '/src/widgets/live-trades-canvas.js';
+			const host = document.querySelector('[type="live-trades-canvas"]');
+			if (host && !host.dataset.mounted) {
+				host.dataset.mounted = '1';
+				mountLiveTradesCanvas(host, {
+					mint: host.getAttribute('mint'),
+					bg: host.getAttribute('bg') || '#0d0d14',
+					minUsd: Number(host.getAttribute('min-usd') || 0),
+				});
+			}
+		</script>
 	</body>
 </html>

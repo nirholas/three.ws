@@ -18,11 +18,13 @@
  */
 
 import { detectSolanaWallet, SOLANA_RPC } from './erc8004/solana-deploy.js';
+import { quoteSwap } from './pump/pump-swap-quote.js';
 import { fetchChannelFeed } from './pump/channel-feed.js';
 import { listRecentClaims } from './pump/pumpkit-claims.js';
 import { getWalletPnl } from './kol/wallet-pnl.js';
 import { getRadarSignals } from './kol/radar.js';
 import { resolveSnsName, reverseLookupAddress } from './solana/sns.js';
+import { correlateXPost } from './social/x-post-impact.js';
 
 const DEFAULT_NETWORK = 'mainnet';
 const DEFAULT_SLIPPAGE_BPS = 500;
@@ -1352,6 +1354,56 @@ export function registerPumpFunSkills(skills) {
 				success: true,
 				output: `Quote: ${result.amountOut} out for ${args.amountIn} in. Impact: ${result.priceImpactBps} bps.`,
 				sentiment: 0.1,
+				data: result,
+			};
+		},
+	});
+
+	// ── social.xPostImpact ────────────────────────────────────────────────────
+	skills.register({
+		name: 'social.xPostImpact',
+		description:
+			'Correlate an X post to a memecoin price impact. Returns post metadata, price before/after, and delta %.',
+		instruction: 'Fetch oEmbed metadata for an X post and compute price delta in a ±windowMin window.',
+		animationHint: 'inspect',
+		voicePattern: 'Analyzing price impact of that post…',
+		mcpExposed: true,
+		inputSchema: {
+			type: 'object',
+			properties: {
+				postUrl: {
+					type: 'string',
+					description: 'X post URL (e.g. https://x.com/user/status/123)',
+				},
+				mint: { type: 'string', description: 'Solana token mint address (base58)' },
+				windowMin: {
+					type: 'integer',
+					default: 30,
+					description: '±window in minutes around the post time',
+				},
+			},
+			required: ['postUrl', 'mint'],
+		},
+		handler: async (args, _ctx) => {
+			let result;
+			try {
+				result = await correlateXPost({
+					postUrl: args.postUrl,
+					mint: args.mint,
+					windowMin: args.windowMin ?? 30,
+				});
+			} catch (err) {
+				return { success: false, output: err.message, sentiment: -0.2 };
+			}
+			const delta = result.deltaPct;
+			const sign = delta != null && delta > 0 ? '+' : '';
+			const deltaStr = delta != null ? `${sign}${delta.toFixed(2)}%` : 'n/a';
+			const who = result.post?.author ?? 'unknown';
+			const snippet = result.post?.text?.slice(0, 80) ?? '(post unavailable)';
+			return {
+				success: true,
+				output: `@${who}: "${snippet}" → ${deltaStr} price change.`,
+				sentiment: delta != null ? Math.max(-1, Math.min(1, delta / 20)) : 0,
 				data: result,
 			};
 		},

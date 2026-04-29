@@ -344,6 +344,188 @@ async function handleSocialCashtagSentiment({ posts }) {
 	const { scoreSentiment } = await import('../src/social/sentiment.js');
 	return scoreSentiment(posts);
 }
+
+async function handleGetFirstClaims({ sinceMinutes = 60, limit = 20 }) {
+	const sinceTs = Math.floor(Date.now() / 1000) - Math.max(1, Math.min(1440, sinceMinutes)) * 60;
+	const items = await scanFirstClaims({ sinceTs, limit: Math.max(1, Math.min(50, limit)) });
+	return { items };
+}
+
+async function handleQuoteSwap({ inputMint, outputMint, amountIn, slippageBps, network = 'mainnet' }) {
+	if (!solanaPubkey(inputMint)) throw rpcError(-32602, 'invalid inputMint');
+	if (!solanaPubkey(outputMint)) throw rpcError(-32602, 'invalid outputMint');
+	const WSOL = 'So11111111111111111111111111111111111111112';
+	if (inputMint !== WSOL && outputMint !== WSOL) {
+		throw rpcError(-32602, `one of inputMint or outputMint must be wSOL (${WSOL})`);
+	}
+	const baseMint = inputMint === WSOL ? outputMint : inputMint;
+	let state;
+	try {
+		state = await getAmmPoolState({ network, mint: baseMint });
+	} catch (err) {
+		throw rpcError(err.status === 404 ? -32004 : -32603, err.message || 'pool unavailable');
+	}
+	const { buyQuoteInput, sellBaseInput } = await import('@pump-fun/pump-swap-sdk');
+	const BNMod = await import('bn.js');
+	const BN = BNMod.default || BNMod;
+	const { poolKey, pool, baseReserve, quoteReserve, baseMintAccount, globalConfig, feeConfig } = state;
+	const amountBn = new BN(String(amountIn));
+	const slip = (slippageBps ?? 100) / 10_000;
+	const shared = {
+		slippage: slip,
+		baseReserve,
+		quoteReserve,
+		globalConfig,
+		baseMintAccount,
+		baseMint: pool.baseMint,
+		coinCreator: pool.coinCreator,
+		creator: pool.creator,
+		feeConfig,
+	};
+	let amountOut, priceImpactBps;
+	if (inputMint === WSOL) {
+		const r = buyQuoteInput({ quote: amountBn, ...shared });
+		amountOut = r.base;
+		const num = amountBn.mul(baseReserve);
+		const denom = amountOut.mul(quoteReserve);
+		priceImpactBps = denom.isZero() ? 0 : Math.max(0, num.muln(10_000).div(denom).subn(10_000).toNumber());
+	} else {
+		const r = sellBaseInput({ base: amountBn, ...shared });
+		amountOut = r.uiQuote;
+		const spot = quoteReserve.mul(amountBn);
+		const exec = amountOut.mul(baseReserve);
+		priceImpactBps = spot.isZero() ? 0 : Math.max(0, spot.sub(exec).muln(10_000).div(spot).toNumber());
+	}
+	return {
+		amountOut: amountOut.toString(),
+		priceImpactBps,
+		route: poolKey.toBase58(),
+		expiresAtMs: Date.now() + 10_000,
+	};
+}
+
+async function handleSocialXPostImpact({ postUrl, mint, windowMin = 30, network = 'mainnet' }) {
+	if (!postUrl) throw rpcError(-32602, 'postUrl is required');
+	const pk = solanaPubkey(mint);
+	if (!pk) throw rpcError(-32602, `invalid mint: ${mint}`);
+
+	let post = null;
+	const postId = String(postUrl).match(/\/status(?:es)?\/(\d+)/)?.[1] ?? null;
+	try {
+		const oRes = await fetch(
+			`https://publish.twitter.com/oembed?url=${encodeURIComponent(postUrl)}&omit_script=true`,
+			{ signal: AbortSignal.timeout(5000) },
+		);
+		if (oRes.ok) {
+			const od = await oRes.json();
+			const ts = postId ? Number(BigInt(postId) >> 22n) + 1288834974657 : null;
+			post = {
+				id: postId,
+				ts,
+				author: od.author_name ?? null,
+				text: od.html?.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() ?? null,
+			};
+		}
+	} catch {}
+
+	const { sdk } = await getPumpSdk({ network });
+	let curve;
+	try {
+		if (sdk.fetchBuyState) {
+			const state = await sdk.fetchBuyState(pk, pk);
+			curve = state.bondingCurve;
+		} else if (sdk.fetchBondingCurve) {
+			curve = await sdk.fetchBondingCurve(pk);
+		}
+	} catch (e) {
+		throw rpcError(-32004, `bonding curve unavailable: ${e?.message ?? 'unknown'}`);
+	}
+	if (!curve) throw rpcError(-32004, 'no bonding curve found for this mint');
+
+	const virtSol = Number(curve.virtualSolReserves?.toString?.() ?? '0');
+	const virtToken = Number(curve.virtualTokenReserves?.toString?.() ?? '0');
+	const realSolLamports = Number(curve.realSolReserves?.toString?.() ?? '0');
+	const priceRaw = virtToken > 0 ? virtSol / virtToken : null;
+	const volSol = realSolLamports / 1e9;
+
+	return {
+		post,
+		priceBefore: priceRaw,
+		priceAfter: priceRaw,
+		deltaPct: 0,
+		volBefore: volSol,
+		volAfter: volSol,
+		deltaVolPct: 0,
+		note: 'priceBefore/After reflect current bonding curve state; historical delta requires trade data.',
+	};
+}
+
+
+// ── pumpfun_watch_whales ───────────────────────────────────────────────────
+
+const NATIVE_SOL_MINT = 'So11111111111111111111111111111111111111112';
+
+async function handleWatchWhales({ mint, minUsd = 5000, durationMs = 5000 }) {
+	const pk = solanaPubkey(mint);
+	if (!pk) throw rpcError(-32602, 'invalid mint');
+
+	// Cap at 10 s — serverless max execution time.
+	const windowMs = Math.min(10_000, Math.max(1_000, Number(durationMs) || 5_000));
+	const minUsdNum = Math.max(0, Number(minUsd) || 5000);
+
+	const [{ BorshCoder, EventParser }, { PUMP_PROGRAM_ID, pumpIdl }] = await Promise.all([
+		import('@coral-xyz/anchor'),
+		import('@pump-fun/pump-sdk'),
+	]);
+
+	let solPrice = 150;
+	try {
+		const pr = await fetch(`https://api.jup.ag/price/v2?ids=${NATIVE_SOL_MINT}`, {
+			signal: AbortSignal.timeout(3000),
+		});
+		const pd = await pr.json();
+		const p = Number(pd?.data?.[NATIVE_SOL_MINT]?.price ?? 0);
+		if (p > 0) solPrice = p;
+	} catch {}
+
+	const connection = getConnection({ network: 'mainnet' });
+	const coder = new BorshCoder(pumpIdl);
+	const parser = new EventParser(PUMP_PROGRAM_ID, coder);
+	const mintStr = pk.toString();
+	const trades = [];
+
+	const subId = connection.onLogs(
+		PUMP_PROGRAM_ID,
+		(logInfo) => {
+			if (logInfo.err) return;
+			try {
+				for (const event of parser.parseLogs(logInfo.logs)) {
+					if (event.name !== 'TradeEvent') continue;
+					const { mint: evMint, isBuy, solAmount, user, timestamp } = event.data;
+					if (evMint.toString() !== mintStr) continue;
+					const sol = Number(solAmount.toString()) / 1_000_000_000;
+					const usd = sol * solPrice;
+					if (usd < minUsdNum) continue;
+					trades.push({
+						signature: logInfo.signature,
+						wallet: user.toString(),
+						sideBuy: isBuy,
+						usd,
+						sol,
+						ts: Number(timestamp.toString()) * 1000,
+					});
+				}
+			} catch {}
+		},
+		'confirmed',
+	);
+
+	await new Promise((resolve) => setTimeout(resolve, windowMs));
+	await connection.removeOnLogsListener(subId).catch(() => {});
+
+	return { mint, minUsd: minUsdNum, durationMs: windowMs, count: trades.length, trades };
+}
+
 // ── Dispatch ───────────────────────────────────────────────────────────────
 
 const HANDLERS = {
@@ -359,10 +541,14 @@ const HANDLERS = {
 	getGraduatedTokens: indexerOrUnavailable('getGraduatedTokens'),
 	getKingOfTheHill: indexerOrUnavailable('getKingOfTheHill'),
 	social_cashtag_sentiment: handleSocialCashtagSentiment,
+	social_x_post_impact: handleSocialXPostImpact,
 	getCreatorProfile: indexerOrUnavailable('getCreatorProfile'),
 	pumpfun_list_claims: handleListClaims,
 	pumpfun_watch_claims: handleWatchClaims,
+	pumpfun_first_claims: handleGetFirstClaims,
 	pumpfun_vanity_mint: handleVanityMint,
+	pumpfun_watch_whales: handleWatchWhales,
+	pumpfun_quote_swap: handleQuoteSwap,
 	sns_resolve: handleSnsResolve,
 	sns_reverseLookup: handleSnsReverseLookup,
 };

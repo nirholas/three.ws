@@ -50,6 +50,12 @@ export const WIDGET_TYPES = {
 		status: 'ready',
 		icon: '◈',
 	},
+	'live-trades-canvas': {
+		label: 'Live Trades Canvas',
+		desc: 'Particle visualization of live pump.fun buy/sell trades for a token.',
+		status: 'ready',
+		icon: '⬡',
+	},
 };
 
 export const WIDGET_TYPE_KEYS = Object.keys(WIDGET_TYPES);
@@ -111,6 +117,12 @@ const TYPE_DEFAULTS = {
 		mint: '',
 		limit: 20,
 		refreshMs: 30_000,
+	},
+	'live-trades-canvas': {
+		mint: '',
+		chain: 'solana',
+		bg: '#0a0a0a',
+		minUsd: 0,
 	},
 };
 
@@ -230,6 +242,12 @@ const TYPE_SCHEMAS = {
 		mint: z.string().default(''),
 		limit: z.number().int().min(1).max(100).default(20),
 		refreshMs: z.number().int().min(1000).max(300_000).default(30_000),
+	}),
+	'live-trades-canvas': brandSchema.extend({
+		mint: z.string().min(1, 'mint is required'),
+		chain: z.enum(['solana']).default('solana'),
+		bg: hexColor.default('#0a0a0a'),
+		minUsd: z.number().min(0).default(0),
 	}),
 };
 

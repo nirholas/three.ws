@@ -16,6 +16,7 @@ import { mountTurntable } from './widgets/turntable.js';
 import { mountHotspotTour } from './widgets/hotspot-tour.js';
 import { mountPumpfunFeed } from './widgets/pumpfun-feed.js';
 import { mountKolTradesWidget } from './widgets/kol-trades.js';
+import { mountLiveTradesCanvas } from './widgets/live-trades-canvas.js';
 import queryString from 'query-string';
 
 // Agent system — the new primitive layer
@@ -1012,6 +1013,14 @@ class App {
 					mint: cfg.mint,
 					limit: cfg.limit,
 					refreshMs: cfg.refreshMs,
+				});
+				this._widgetController = ctl;
+			} else if (type === 'live-trades-canvas') {
+				const ctl = mountLiveTradesCanvas(document.body, {
+					mint: cfg.mint,
+					chain: cfg.chain,
+					bg: cfg.bg || cfg.background,
+					minUsd: cfg.minUsd,
 				});
 				this._widgetController = ctl;
 			}

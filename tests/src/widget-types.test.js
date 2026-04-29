@@ -22,6 +22,7 @@ describe('WIDGET_TYPES', () => {
 				'hotspot-tour',
 				'pumpfun-feed',
 				'kol-trades',
+				'live-trades-canvas',
 			].sort(),
 		);
 	});

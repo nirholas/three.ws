@@ -28,7 +28,7 @@ vi.mock('@coral-xyz/anchor', () => ({
 	})),
 }));
 
-vi.mock('@nirholas/pump-sdk', () => ({
+vi.mock('@pump-fun/pump-sdk', () => ({
 	PUMP_PROGRAM_ID: { toString: () => '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P' },
 	pumpIdl: {},
 }));

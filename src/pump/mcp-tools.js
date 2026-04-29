@@ -180,6 +180,24 @@ export const TOOLS = [
 		},
 	},
 	{
+		name: 'pumpfun_first_claims',
+		description:
+			'First-ever pump.fun creator fee claims in a time window — a cash-out signal. Returns creators who have never claimed before, with creator wallet, mint, lamports, and timestamp.',
+		inputSchema: {
+			type: 'object',
+			properties: {
+				sinceMinutes: {
+					type: 'integer',
+					minimum: 1,
+					maximum: 1440,
+					default: 60,
+					description: 'How far back to look for new claimers (minutes)',
+				},
+				limit: { type: 'integer', minimum: 1, maximum: 50, default: 20 },
+			},
+		},
+	},
+	{
 		name: 'sns_resolve',
 		description: 'Resolve a .sol Solana Name Service domain to its owner wallet address.',
 		inputSchema: {
@@ -236,6 +254,41 @@ export const TOOLS = [
 				window: { type: 'string', enum: ['24h', '7d', '30d'], default: '7d' },
 				limit: { type: 'integer', minimum: 1, maximum: 100, default: 25 },
 			},
+		},
+	},
+	{
+		name: 'pumpfun_quote_swap',
+		description:
+			'Read-only price quote for a pump.fun AMM swap. No signing or tx sending. One of inputMint/outputMint must be wSOL (So11111111111111111111111111111111111111112). Returns amountOut, priceImpactBps, route, expiresAtMs.',
+		inputSchema: {
+			type: 'object',
+			properties: {
+				inputMint: { type: 'string', description: 'Input token mint (base58).' },
+				outputMint: { type: 'string', description: 'Output token mint (base58).' },
+				amountIn: { type: 'number', description: 'Input amount in raw base units (lamports for SOL).' },
+				slippageBps: { type: 'number', description: 'Slippage tolerance in basis points (default 100 = 1%).' },
+				network: { type: 'string', enum: ['mainnet', 'devnet'], default: 'mainnet' },
+			},
+			required: ['inputMint', 'outputMint', 'amountIn'],
+		},
+	},
+	{
+		name: 'social_x_post_impact',
+		description:
+			'Correlate an X (Twitter) post to a memecoin price impact. Fetches post metadata via oEmbed (no API key) and computes price delta from the pump.fun bonding curve in a ±windowMin window around the post.',
+		inputSchema: {
+			type: 'object',
+			properties: {
+				postUrl: { type: 'string', description: 'X post URL (e.g. https://x.com/user/status/123)' },
+				mint: { type: 'string', description: 'Solana token mint address (base58)' },
+				windowMin: {
+					type: 'integer',
+					default: 30,
+					description: '±window in minutes around the post time',
+				},
+				network: { type: 'string', enum: ['mainnet', 'devnet'], default: 'mainnet' },
+			},
+			required: ['postUrl', 'mint'],
 		},
 	},
 ];

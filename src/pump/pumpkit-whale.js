@@ -42,7 +42,7 @@ export async function watchWhaleTrades({ mint, minUsd = 5000, onTrade, signal })
 		await Promise.all([
 			import('@solana/web3.js'),
 			import('@coral-xyz/anchor'),
-			import('@nirholas/pump-sdk'),
+			import('@pump-fun/pump-sdk'),
 		]);
 
 	if (signal?.aborted) return;
