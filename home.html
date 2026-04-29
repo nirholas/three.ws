@@ -213,19 +213,11 @@
 					<li class="nav-item" role="none">
 						<a href="/features" role="menuitem">Features</a>
 					</li>
-					<li class="nav-item" role="none">
-						<a href="/my-agents" id="home-nav-my-agents" hidden role="menuitem"
-							>My Agents</a
-						>
+					<li class="nav-item" id="home-nav-my-agents-li" role="none" hidden>
+						<a href="/my-agents" id="home-nav-my-agents" role="menuitem">My Agents</a>
 					</li>
-					<li class="nav-item" role="none">
-						<a
-							href="/dashboard"
-							id="home-nav-user"
-							hidden
-							class="nav-user"
-							role="menuitem"
-						></a>
+					<li class="nav-item" id="home-nav-user-li" role="none" hidden>
+						<a href="/dashboard" id="home-nav-user" class="nav-user" role="menuitem"></a>
 					</li>
 					<li class="nav-item" role="none">
 						<a href="/login" class="nav-cta" id="home-nav-cta" role="menuitem"
@@ -929,12 +921,13 @@
 						cta.textContent = 'Dashboard';
 						cta.href = '/dashboard';
 					}
-					const myAgents = document.getElementById('home-nav-my-agents');
-					if (myAgents) myAgents.hidden = false;
+					const myAgentsLi = document.getElementById('home-nav-my-agents-li');
+					if (myAgentsLi) myAgentsLi.hidden = false;
+					const userLi = document.getElementById('home-nav-user-li');
 					const userEl = document.getElementById('home-nav-user');
-					if (userEl && name) {
+					if (userEl && userLi && name) {
 						userEl.textContent = name;
-						userEl.hidden = false;
+						userLi.hidden = false;
 					}
 				} catch (_) {}
 			})();
