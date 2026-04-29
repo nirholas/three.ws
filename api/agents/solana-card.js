@@ -75,6 +75,7 @@ export default wrap(async (req, res) => {
 			asset_pubkey: asset,                 // Metaplex Core NFT = agent ID
 			owner:        a.owner,
 			passport_url: `${origin}/agent-passport.html?asset=${asset}&network=${network}`,
+			...(a.meta?.vanity_prefix ? { vanity_prefix: a.meta.vanity_prefix } : {}),
 		},
 		skills: a.skills || [],
 		endpoints: {

@@ -15,6 +15,8 @@ import { MEMORY_TYPES } from './agent-memory.js';
 import { registerPumpFunSkills } from './agent-skills-pumpfun.js';
 import { registerPumpFunWatchSkills } from './agent-skills-pumpfun-watch.js';
 import { registerPumpFunAutonomousSkills } from './agent-skills-pumpfun-autonomous.js';
+import { registerPumpFunComposeSkills } from './agent-skills-pumpfun-compose.js';
+import { attachPumpFunMemoryHooks } from './agent-skills-pumpfun-hooks.js';
 
 /**
  * @typedef {Object} SkillContext
@@ -59,6 +61,8 @@ export class AgentSkills {
 		registerPumpFunSkills(this);
 		registerPumpFunWatchSkills(this);
 		registerPumpFunAutonomousSkills(this);
+		registerPumpFunComposeSkills(this);
+		attachPumpFunMemoryHooks(protocol, memory);
 	}
 
 	// ── Registry ──────────────────────────────────────────────────────────────

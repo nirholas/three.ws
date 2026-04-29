@@ -142,21 +142,38 @@ export default wrap(async (req, res) => {
 	`;
 	if (!agent) return error(res, 404, 'not_found', 'agent_asset not registered');
 
-	// Idempotency: short-circuit if we've already attested this event_id.
-	const [existing] = await sql`
-		select signature from solana_attestations
-		where agent_asset = ${body.agent_asset}
-		  and network = ${body.network}
-		  and payload->>'event_id' = ${body.event_id}
-		limit 1
+	const attester = loadAttesterKeypair();
+	const attesterPubkey = attester.publicKey.toBase58();
+
+	// Pre-tx claim: INSERT ... ON CONFLICT DO NOTHING serialises retries.
+	// The first delivery wins the row and proceeds to send the on-chain tx.
+	// Concurrent retries get rowCount === 0, then poll the existing row.
+	const claim = await sql`
+		insert into solana_attest_event_claims (agent_asset, network, event_id, attester)
+		values (${body.agent_asset}, ${body.network}, ${body.event_id}, ${attesterPubkey})
+		on conflict (agent_asset, network, event_id) do nothing
+		returning claimed_at
 	`;
-	if (existing) return json(res, 200, { data: { signature: existing.signature, deduped: true } });
+	const wonClaim = claim.length > 0;
+
+	if (!wonClaim) {
+		const [winner] = await sql`
+			select signature from solana_attest_event_claims
+			where agent_asset = ${body.agent_asset}
+			  and network = ${body.network}
+			  and event_id = ${body.event_id}
+		`;
+		if (winner?.signature) {
+			return json(res, 200, { data: { signature: winner.signature, deduped: true } });
+		}
+		// Leader is still processing — caller should retry shortly.
+		return json(res, 202, { data: { deduped: true, status: 'in_progress' } });
+	}
 
 	const payload = buildPayload(body);
 	const memo = JSON.stringify(payload);
 
 	const conn = new Connection(RPC[body.network], 'confirmed');
-	const attester = loadAttesterKeypair();
 	const agentKey = new PublicKey(body.agent_asset);
 
 	// Memo includes the agent asset as a non-signer key so
@@ -171,7 +188,29 @@ export default wrap(async (req, res) => {
 	});
 
 	const tx = new Transaction().add(ix);
-	const signature = await sendAndConfirmTransaction(conn, tx, [attester], { commitment: 'confirmed' });
+	let signature;
+	try {
+		signature = await sendAndConfirmTransaction(conn, tx, [attester], { commitment: 'confirmed' });
+	} catch (e) {
+		// Release the claim so a future retry can try again.
+		await sql`
+			delete from solana_attest_event_claims
+			where agent_asset = ${body.agent_asset}
+			  and network = ${body.network}
+			  and event_id = ${body.event_id}
+			  and signature is null
+		`;
+		throw e;
+	}
+
+	// Record the winning signature on the claim so racing retries can return it.
+	await sql`
+		update solana_attest_event_claims
+		set signature = ${signature}, completed_at = now()
+		where agent_asset = ${body.agent_asset}
+		  and network = ${body.network}
+		  and event_id = ${body.event_id}
+	`;
 
 	// Mirror into the index immediately; crawler dedupes via unique signature.
 	// Verified semantics match _lib/solana-attestations.js#computeVerified for

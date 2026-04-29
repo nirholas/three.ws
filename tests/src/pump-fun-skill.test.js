@@ -76,6 +76,51 @@ describe('pump-fun skill bundle', () => {
 		expect(captured.body.params.arguments).toEqual({ query: 'pepe', limit: 3 });
 	});
 
+	it('getCreatorProfile returns negative sentiment when rug flags present', async () => {
+		const handlers = await import(resolve(BUNDLE, 'handlers.js'));
+		const ctx = {
+			fetch: async () => ({
+				ok: true,
+				json: async () => ({
+					jsonrpc: '2.0',
+					id: 1,
+					result: {
+						content: [{
+							type: 'text',
+							text: JSON.stringify({ rugFlags: ['mintAuthorityNotRevoked', 'topHolderConcentration'] }),
+						}],
+					},
+				}),
+			}),
+			memory: { note: () => {} },
+		};
+		const result = await handlers.getCreatorProfile({ creator: 'x' }, ctx);
+		expect(result.ok).toBe(true);
+		expect(result.sentiment).toBeLessThan(-0.5);
+	});
+
+	it('getBondingCurve returns positive sentiment near graduation', async () => {
+		const handlers = await import(resolve(BUNDLE, 'handlers.js'));
+		const ctx = {
+			fetch: async () => ({
+				ok: true,
+				json: async () => ({
+					jsonrpc: '2.0',
+					id: 1,
+					result: {
+						content: [{
+							type: 'text',
+							text: JSON.stringify({ graduationPercent: 92 }),
+						}],
+					},
+				}),
+			}),
+			memory: { note: () => {} },
+		};
+		const result = await handlers.getBondingCurve({ mint: 'x' }, ctx);
+		expect(result.sentiment).toBeGreaterThan(0.5);
+	});
+
 	it('handlers return { ok:false } on non-2xx responses', async () => {
 		const handlers = await import(resolve(BUNDLE, 'handlers.js'));
 		const ctx = {
