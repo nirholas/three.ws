@@ -807,12 +807,6 @@ class Agent3DElement extends HTMLElement {
 				agentId: _backendId || undefined,
 				apiOrigin: _scriptOrigin || window.location.origin,
 			};
-			// Apply tts="..." attribute shorthand on top of the manifest's voice config.
-			const ttsOverride = this._parseTTSAttribute();
-			if (ttsOverride) {
-				manifest.voice = manifest.voice || {};
-				manifest.voice.tts = { ...(manifest.voice.tts || {}), ...ttsOverride };
-			}
 			this._runtime = new Runtime({
 				manifest,
 				viewer: this._scene,

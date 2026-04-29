@@ -102,6 +102,7 @@
 	transform: translateZ(calc(var(--features-perspective) * var(--depth) * -1))
 		scale(calc(var(--depth) + 1));
 	z-index: calc(10 - var(--depth, 0));
+	overflow: hidden;
 }
 
 .parallax-layer--front {
@@ -787,6 +788,12 @@
 	color: var(--features-fg);
 	padding: clamp(3rem, 8vh, 6rem) var(--features-content-pad) clamp(2rem, 5vh, 4rem);
 	z-index: 30;
+}
+
+/* Footer must stack above the z-index:30 outro on this page. */
+.features-parallax-page .h-footer-horizon {
+	position: relative;
+	z-index: 31;
 }
 
 .features-outro h3 {

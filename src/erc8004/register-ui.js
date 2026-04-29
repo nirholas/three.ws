@@ -1287,9 +1287,7 @@ export class RegisterUI {
 
 			const view3D = body.querySelector('[data-role="view-3d"]');
 			view3D.addEventListener('click', () => {
-				// Jump to the viewer with this model loaded
-				window.location.hash = `agent=${result.agentId}`;
-				window.location.reload();
+				window.location.href = `/a/${this.selectedChainId}/${result.agentId}`;
 			});
 			body.querySelector('[data-role="view-explorer"]').href = txExplorerUrl(
 				this.selectedChainId,

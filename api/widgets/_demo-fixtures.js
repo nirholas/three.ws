@@ -83,7 +83,7 @@ export const DEMO_WIDGETS = {
 			autoRotate: false,
 			envPreset: 'neutral',
 			greeting: 'Hi! What would you like to know?',
-			brain: 'none',
+			brainProvider: 'none',
 			proxyURL: '',
 		},
 	}),
