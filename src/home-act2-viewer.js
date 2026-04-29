@@ -196,9 +196,23 @@ export class Act2Viewer {
 
 		this.mixer = new AnimationMixer(this.model);
 
-		/* register baked-in clips */
+		/* collect node names available on this skeleton so we can drop
+		 * tracks that target bones the current model doesn't have — otherwise
+		 * three.js floods the console with "No target node found" warnings
+		 * for every mismatched bone, every frame the clip plays. */
+		const knownNodes = new Set();
+		this.model.traverse((n) => {
+			if (n.name) knownNodes.add(n.name);
+		});
+
+		/* register baked-in clips, filtering tracks to those that bind */
 		for (const clip of gltf.animations || []) {
-			this.clips.set(clip.name, clip);
+			const tracks = clip.tracks.filter((t) => {
+				const nodeName = t.name.split('.')[0];
+				return knownNodes.has(nodeName);
+			});
+			if (tracks.length === 0) continue;
+			this.clips.set(clip.name, new AnimationClip(clip.name, clip.duration, tracks));
 		}
 
 		/* ensure manifest is fetched */
@@ -247,6 +261,14 @@ export class Act2Viewer {
 			const def = this._manifest.find((d) => d.name === name);
 			if (!def) return;
 			clip = await this._fetchClip(def.url);
+			const knownNodes = new Set();
+			this.model?.traverse((n) => {
+				if (n.name) knownNodes.add(n.name);
+			});
+			const tracks = clip.tracks.filter((t) =>
+				knownNodes.has(t.name.split('.')[0]),
+			);
+			clip = new AnimationClip(clip.name, clip.duration, tracks);
 			this.clips.set(name, clip);
 		}
 
