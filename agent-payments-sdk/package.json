@@ -1,0 +1,79 @@
+{
+  "name": "@pump-fun/agent-payments-sdk",
+  "version": "3.0.1",
+  "description": "TypeScript SDK for Pump Agent Payments",
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "Pump Fun",
+  "license": "ISC",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./x402": {
+      "types": "./dist/x402/index.d.ts",
+      "import": "./dist/x402/index.js",
+      "require": "./dist/x402/index.cjs"
+    },
+    "./solana-agent-kit": {
+      "types": "./dist/solana-agent-kit/index.d.ts",
+      "import": "./dist/solana-agent-kit/index.js",
+      "require": "./dist/solana-agent-kit/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "build:prod": "tsup --minify",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/ --cache --quiet",
+    "lint:fix": "eslint src/ --cache --fix --quiet",
+    "clean": "rm -rf dist",
+    "test": "node --experimental-vm-modules node_modules/.bin/jest",
+    "prepublishOnly": "npm run typecheck && npm run build:prod"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.31.1",
+    "@solana/spl-token": "^0.4.9",
+    "@solana/web3.js": "^1.98.0",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.3.1",
+    "helmet": "^8.1.0"
+  },
+  "peerDependencies": {
+    "zod": "^3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "zod": {
+      "optional": true
+    }
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "*"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@types/bn.js": "^5.2.0",
+    "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^22.0.0",
+    "eslint": "^9.17.0",
+    "eslint-config-prettier": "^9.1.0",
+    "jest": "^30.3.0",
+    "ts-jest": "^29.4.6",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.18.0",
+    "zod": "^3.25.76"
+  }
+}
