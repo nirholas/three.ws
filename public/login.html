@@ -342,49 +342,22 @@
 				margin: 6px 0 0;
 				text-align: right;
 			}
-			/* ── Top-level method tabs (Email / Wallet) ── */
-			.method-tabs {
+			/* ── "or" divider between wallet and email ── */
+			.or-divider {
 				display: flex;
-				gap: 3px;
-				background: #060606;
-				border: 1px solid rgba(255, 255, 255, 0.06);
-				border-radius: 10px;
-				padding: 3px;
-				margin: 0 0 16px;
+				align-items: center;
+				gap: 10px;
+				margin: 18px 0;
+				color: #333;
+				font-size: 12px;
+				letter-spacing: 0.04em;
 			}
-			.method-tab {
+			.or-divider::before,
+			.or-divider::after {
+				content: '';
 				flex: 1;
-				margin-top: 0;
-				padding: 9px 10px;
-				border: 1px solid transparent;
-				border-radius: 7px;
-				background: transparent;
-				color: #555;
-				font-size: 14px;
-				font-weight: 500;
-				cursor: pointer;
-				transition: background 0.1s, color 0.1s, transform 0.08s cubic-bezier(0.34, 1.56, 0.64, 1);
-				width: auto;
-			}
-			.method-tab.active {
-				background: #1a1a1a;
-				color: #f0f0f0;
-				border-color: rgba(255, 255, 255, 0.08);
-			}
-			.method-tab:hover:not(.active) {
-				color: #aaa;
-			}
-			.method-tab:active {
-				transform: scale(0.97);
-			}
-			.method-panel { display: none; }
-			.method-panel.active {
-				display: block;
-				animation: panel-fade-in 0.18s ease-out both;
-			}
-			@keyframes panel-fade-in {
-				from { opacity: 0; transform: translateY(4px); }
-				to   { opacity: 1; transform: translateY(0); }
+				height: 1px;
+				background: rgba(255, 255, 255, 0.06);
 			}
 			.chain-tab[disabled] {
 				opacity: 0.4;
@@ -405,7 +378,6 @@
 				100% { background-position: -200% 0; }
 			}
 			@media (prefers-reduced-motion: reduce) {
-				.method-panel.active,
 				#wallet-mount:empty::before,
 				#solana-wallet-mount:empty::before {
 					animation: none;
@@ -531,57 +503,50 @@
 				<h1>Welcome back</h1>
 				<p class="sub">Sign in to manage your avatars.</p>
 
-				<div class="method-tabs" role="tablist" aria-label="Sign-in method">
-					<button type="button" class="method-tab active" data-method="email" role="tab" aria-selected="true" aria-controls="email-panel">Email</button>
-					<button type="button" class="method-tab" data-method="wallet" role="tab" aria-selected="false" aria-controls="wallet-panel">Wallet</button>
+				<div class="chain-tabs" role="tablist" aria-label="Wallet chain">
+					<button type="button" class="chain-tab active" data-chain="evm" role="tab" aria-selected="true" aria-controls="evm-panel">EVM</button>
+					<button type="button" class="chain-tab" data-chain="solana" role="tab" aria-selected="false" aria-controls="solana-panel">Solana</button>
 				</div>
-
-				<div id="email-panel" class="method-panel active" role="tabpanel">
-					<label for="email">Email or username</label>
-					<input id="email" name="username" type="text" inputmode="email" autocapitalize="none" autocomplete="username email" autofocus required aria-describedby="email-err" />
-					<p class="field-err" id="email-err" role="alert"></p>
-
-					<label for="password">Password</label>
-					<div class="password-wrap">
-						<input
-							id="password"
-							name="password"
-							type="password"
-							autocomplete="current-password"
-							required
-							minlength="10"
-							aria-describedby="password-err caps-warn"
-						/>
-						<button type="button" class="password-toggle" id="password-toggle" aria-label="Show password" aria-pressed="false">
-							<svg id="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-								<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
-								<circle cx="12" cy="12" r="3" />
-							</svg>
-						</button>
-					</div>
-					<p class="caps-warn" id="caps-warn">Caps Lock is on</p>
-					<p class="field-err" id="password-err" role="alert"></p>
-
-					<div class="remember-row">
-						<label><input type="checkbox" id="remember" /> Remember me</label>
-						<a href="/forgot-password" class="forgot">Forgot password?</a>
-					</div>
-					<button id="submit" type="submit">Sign in</button>
+				<div id="evm-panel" class="chain-panel active" role="tabpanel">
+					<div id="wallet-mount"></div>
 				</div>
-
-				<div id="wallet-panel" class="method-panel" role="tabpanel">
-					<div class="chain-tabs" role="tablist" aria-label="Wallet chain">
-						<button type="button" class="chain-tab active" data-chain="evm" role="tab" aria-selected="true" aria-controls="evm-panel">EVM</button>
-						<button type="button" class="chain-tab" data-chain="solana" role="tab" aria-selected="false" aria-controls="solana-panel">Solana</button>
-					</div>
-					<div id="evm-panel" class="chain-panel active" role="tabpanel">
-						<div id="wallet-mount"></div>
-					</div>
-					<div id="solana-panel" class="chain-panel" role="tabpanel">
-						<div id="solana-wallet-mount"></div>
-					</div>
-					<p class="wallet-step-hint" title="Your wallet will prompt twice — once to connect, once to sign.">Wallet prompts to connect, then to sign.</p>
+				<div id="solana-panel" class="chain-panel" role="tabpanel">
+					<div id="solana-wallet-mount"></div>
 				</div>
+				<p class="wallet-step-hint" title="Your wallet will prompt twice — once to connect, once to sign.">Wallet prompts to connect, then to sign.</p>
+
+				<div class="or-divider">or</div>
+
+				<label for="email">Email or username</label>
+				<input id="email" name="username" type="text" inputmode="email" autocapitalize="none" autocomplete="username email" autofocus required aria-describedby="email-err" />
+				<p class="field-err" id="email-err" role="alert"></p>
+
+				<label for="password">Password</label>
+				<div class="password-wrap">
+					<input
+						id="password"
+						name="password"
+						type="password"
+						autocomplete="current-password"
+						required
+						minlength="10"
+						aria-describedby="password-err caps-warn"
+					/>
+					<button type="button" class="password-toggle" id="password-toggle" aria-label="Show password" aria-pressed="false">
+						<svg id="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+							<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
+							<circle cx="12" cy="12" r="3" />
+						</svg>
+					</button>
+				</div>
+				<p class="caps-warn" id="caps-warn">Caps Lock is on</p>
+				<p class="field-err" id="password-err" role="alert"></p>
+
+				<div class="remember-row">
+					<label><input type="checkbox" id="remember" /> Remember me</label>
+					<a href="/forgot-password" class="forgot">Forgot password?</a>
+				</div>
+				<button id="submit" type="submit">Sign in</button>
 
 				<div class="err" id="err" role="alert" aria-live="polite"></div>
 				<p class="foot">No account? <a href="/register">Create one</a></p>
@@ -736,42 +701,6 @@
 				const capsWarn = document.getElementById('caps-warn');
 				const pwToggle = document.getElementById('password-toggle');
 
-				// ── Method tabs (Email / Wallet) ──
-				const methodTabs = document.querySelectorAll('.method-tab');
-				const methodPanels = {
-					email: document.getElementById('email-panel'),
-					wallet: document.getElementById('wallet-panel'),
-				};
-				let activeMethod = 'email';
-				const METHOD_KEY = '3dagent:login-method';
-				function setMethod(name, persist = true) {
-					if (!methodPanels[name]) return;
-					activeMethod = name;
-					methodTabs.forEach((t) => {
-						const on = t.dataset.method === name;
-						t.classList.toggle('active', on);
-						t.setAttribute('aria-selected', on ? 'true' : 'false');
-					});
-					Object.entries(methodPanels).forEach(([k, el]) => {
-						el.classList.toggle('active', k === name);
-					});
-					// Toggle required so wallet-tab Enter doesn't trip browser validation.
-					const emailActive = name === 'email';
-					emailInput.required = emailActive;
-					passwordInput.required = emailActive;
-					if (persist) {
-						try { localStorage.setItem(METHOD_KEY, name); } catch { /* ignore */ }
-					}
-					if (emailActive && !emailInput.value) emailInput.focus();
-				}
-				methodTabs.forEach((t) =>
-					t.addEventListener('click', () => setMethod(t.dataset.method)),
-				);
-				try {
-					const saved = localStorage.getItem(METHOD_KEY);
-					if (saved === 'wallet') setMethod('wallet', false);
-				} catch { /* ignore */ }
-
 				// ── Wallet chain tabs ──
 				const solanaTab = document.querySelector('.chain-tab[data-chain="solana"]');
 				const hasSolana = !!(window.solana || window.phantom?.solana || window.backpack || window.solflare);
@@ -868,7 +797,6 @@
 				// ── Submit ──
 				form.addEventListener('submit', async (e) => {
 					e.preventDefault();
-					if (activeMethod !== 'email') return;
 					err.style.display = 'none';
 					setFieldError(emailInput, emailErr, '');
 					setFieldError(passwordInput, passwordErr, '');
