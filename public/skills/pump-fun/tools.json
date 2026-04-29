@@ -1,0 +1,102 @@
+{
+	"tools": [
+		{
+			"name": "searchTokens",
+			"description": "Search pump.fun tokens by name, symbol, or mint address.",
+			"input_schema": {
+				"type": "object",
+				"properties": {
+					"query": { "type": "string" },
+					"limit": { "type": "integer", "minimum": 1, "maximum": 50, "default": 10 }
+				},
+				"required": ["query"]
+			}
+		},
+		{
+			"name": "getTokenDetails",
+			"description": "Full details for a specific pump.fun token by mint address.",
+			"input_schema": {
+				"type": "object",
+				"properties": { "mint": { "type": "string" } },
+				"required": ["mint"]
+			}
+		},
+		{
+			"name": "getBondingCurve",
+			"description": "Bonding curve analysis: reserves, current price, and graduation progress.",
+			"input_schema": {
+				"type": "object",
+				"properties": { "mint": { "type": "string" } },
+				"required": ["mint"]
+			}
+		},
+		{
+			"name": "getTokenTrades",
+			"description": "Recent trade history (buys & sells) for a token.",
+			"input_schema": {
+				"type": "object",
+				"properties": {
+					"mint": { "type": "string" },
+					"limit": { "type": "integer", "minimum": 1, "maximum": 200, "default": 50 }
+				},
+				"required": ["mint"]
+			}
+		},
+		{
+			"name": "getTrendingTokens",
+			"description": "Top pump.fun tokens by market cap.",
+			"input_schema": {
+				"type": "object",
+				"properties": {
+					"limit": { "type": "integer", "minimum": 1, "maximum": 50, "default": 10 }
+				}
+			}
+		},
+		{
+			"name": "getNewTokens",
+			"description": "Most recently launched pump.fun tokens.",
+			"input_schema": {
+				"type": "object",
+				"properties": {
+					"limit": { "type": "integer", "minimum": 1, "maximum": 50, "default": 10 }
+				}
+			}
+		},
+		{
+			"name": "getGraduatedTokens",
+			"description": "Tokens that have graduated from the bonding curve to Raydium AMM.",
+			"input_schema": {
+				"type": "object",
+				"properties": {
+					"limit": { "type": "integer", "minimum": 1, "maximum": 50, "default": 10 }
+				}
+			}
+		},
+		{
+			"name": "getKingOfTheHill",
+			"description": "Highest-market-cap token still on the bonding curve.",
+			"input_schema": { "type": "object", "properties": {} }
+		},
+		{
+			"name": "getCreatorProfile",
+			"description": "All tokens by a creator wallet, with rug-pull risk flags.",
+			"input_schema": {
+				"type": "object",
+				"properties": { "creator": { "type": "string" } },
+				"required": ["creator"]
+			}
+		},
+		{
+			"name": "getTokenHolders",
+			"description": "Top holders of a token with concentration analysis.",
+			"input_schema": {
+				"type": "object",
+				"properties": {
+					"mint": { "type": "string" },
+					"limit": { "type": "integer", "minimum": 1, "maximum": 100, "default": 20 }
+				},
+				"required": ["mint"]
+			}
+		}
+	]
+}
