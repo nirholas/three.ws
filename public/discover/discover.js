@@ -36,6 +36,7 @@ const CHAINS = [
 const els = {
 	search: document.querySelector('[data-role="search"]'),
 	filters: document.querySelector('[data-role="filters"]'),
+	sources: document.querySelector('[data-role="sources"]'),
 	chain: document.querySelector('[data-role="chain"]'),
 	grid: document.querySelector('[data-role="grid"]'),
 	status: document.querySelector('[data-role="status"]'),
@@ -75,9 +76,13 @@ const initialParams = new URLSearchParams(location.search);
 const initialFilter = initialParams.get('only3d') === '1' ? '3d' : 'all';
 const initialChain = initialParams.get('chain') || '';
 const initialQuery = initialParams.get('q') || '';
+const initialSource = ['onchain', 'avatar'].includes(initialParams.get('source'))
+	? initialParams.get('source')
+	: 'all';
 
 const state = {
 	filter: initialFilter, // 'all' | '3d'
+	source: initialSource, // 'all' | 'onchain' | 'avatar'
 	chainId: initialChain,
 	query: initialQuery,
 	cursor: null,
@@ -97,11 +102,17 @@ if (initialFilter !== 'all') {
 		b.classList.toggle('active', b.dataset.filter === initialFilter);
 	}
 }
+if (els.sources && initialSource !== 'all') {
+	for (const b of els.sources.querySelectorAll('[data-source]')) {
+		b.classList.toggle('active', b.dataset.source === initialSource);
+	}
+}
 
 /** Sync state into URL via replaceState (no history spam). */
 function syncUrl() {
 	const p = new URLSearchParams();
 	if (state.filter === '3d') p.set('only3d', '1');
+	if (state.source !== 'all') p.set('source', state.source);
 	if (state.chainId) p.set('chain', state.chainId);
 	if (state.query) p.set('q', state.query);
 	const qs = p.toString();
@@ -119,6 +130,17 @@ els.filters.addEventListener('click', (e) => {
 	state.filter = btn.dataset.filter;
 	for (const b of els.filters.querySelectorAll('[data-filter]')) {
 		b.classList.toggle('active', b.dataset.filter === state.filter);
+	}
+	syncUrl();
+	resetAndLoad();
+});
+
+els.sources?.addEventListener('click', (e) => {
+	const btn = e.target.closest('[data-source]');
+	if (!btn) return;
+	state.source = btn.dataset.source;
+	for (const b of els.sources.querySelectorAll('[data-source]')) {
+		b.classList.toggle('active', b.dataset.source === state.source);
 	}
 	syncUrl();
 	resetAndLoad();
@@ -189,6 +211,7 @@ async function loadPage() {
 
 	const params = new URLSearchParams();
 	if (state.filter === '3d') params.set('only3d', '1');
+	if (state.source !== 'all') params.set('source', state.source);
 	if (state.chainId) params.set('chain', state.chainId);
 	if (state.query) params.set('q', state.query);
 	if (state.cursor) params.set('cursor', state.cursor);
@@ -240,6 +263,7 @@ els.status.addEventListener('click', (e) => {
 
 function clearAllFilters() {
 	state.filter = 'all';
+	state.source = 'all';
 	state.chainId = '';
 	state.query = '';
 	els.search.value = '';
@@ -247,6 +271,11 @@ function clearAllFilters() {
 	updateSearchClearVisibility();
 	for (const b of els.filters.querySelectorAll('[data-filter]')) {
 		b.classList.toggle('active', b.dataset.filter === 'all');
+	}
+	if (els.sources) {
+		for (const b of els.sources.querySelectorAll('[data-source]')) {
+			b.classList.toggle('active', b.dataset.source === 'all');
+		}
 	}
 	syncUrl();
 	resetAndLoad();

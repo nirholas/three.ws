@@ -52,6 +52,9 @@ const IGNORE_PATTERNS = [
 	/blocked by CORS policy/,
 	/three\.ws\/dist-lib/,
 	/localhost:\d+\/api\//, // serverless functions need `vercel dev`, not `vite dev`
+	/\/wallet\/connect-button.*\.js/, // cascades from esm.sh import in connect-button.js
+	/\/node_modules\/vite\/dist\/client\/env\.mjs/, // Vite dev injection 404s in some flows
+	/rpc\.\d+\.io/, // placeholder RPC URL from sample agent IDs
 ];
 
 function shouldIgnore(text) {

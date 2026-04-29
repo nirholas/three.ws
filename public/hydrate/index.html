@@ -360,13 +360,19 @@
 						return { authenticated: false, wallets: [] };
 					}
 
+					const ct = res.headers.get('content-type') || '';
+					if (!ct.includes('application/json')) {
+						// API not running (e.g. `vite dev` without `vercel dev`).
+						return { authenticated: false, wallets: [] };
+					}
+
 					const data = await res.json();
 					return {
 						authenticated: true,
 						wallets: data.wallets || [],
 					};
 				} catch (err) {
-					console.error('[hydrate] auth check failed', err);
+					console.warn('[hydrate] auth check skipped:', err.message);
 					return { authenticated: false, wallets: [] };
 				}
 			}
