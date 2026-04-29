@@ -2,7 +2,7 @@ package toolfns
 
 import (
 	"fmt"
-	"github.com/byte-sat/eplus-tools/tools"
+	"github.com/byte-sat/three.ws-chat-tools/tools"
 	"log"
 	"os"
 	"os/exec"

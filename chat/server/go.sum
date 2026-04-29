@@ -1,7 +1,7 @@
-github.com/byte-sat/eplus-tools v0.0.0-20250311185834-4f80523b4a1d h1:sZM+gosp/548xtzscipEKgYsIZwvuSDsd0KjfOuB3vY=
-github.com/byte-sat/eplus-tools v0.0.0-20250311185834-4f80523b4a1d/go.mod h1:71P8FzmPd/+CptOBnZuHGoFdTH48RFENxRDgAoahD7M=
-github.com/byte-sat/eplus-tools v0.1.0 h1:MpFxy+dHo2hsiYR4TWsogSnmicLWJU8pM0qu5gOZ/Fg=
-github.com/byte-sat/eplus-tools v0.1.0/go.mod h1:71P8FzmPd/+CptOBnZuHGoFdTH48RFENxRDgAoahD7M=
+github.com/byte-sat/three.ws-chat-tools v0.0.0-20250311185834-4f80523b4a1d h1:sZM+gosp/548xtzscipEKgYsIZwvuSDsd0KjfOuB3vY=
+github.com/byte-sat/three.ws-chat-tools v0.0.0-20250311185834-4f80523b4a1d/go.mod h1:71P8FzmPd/+CptOBnZuHGoFdTH48RFENxRDgAoahD7M=
+github.com/byte-sat/three.ws-chat-tools v0.1.0 h1:MpFxy+dHo2hsiYR4TWsogSnmicLWJU8pM0qu5gOZ/Fg=
+github.com/byte-sat/three.ws-chat-tools v0.1.0/go.mod h1:71P8FzmPd/+CptOBnZuHGoFdTH48RFENxRDgAoahD7M=
 github.com/go-chi/chi/v5 v5.2.1 h1:KOIHODQj58PmL80G2Eak4WdvUzjSJSm0vG72crDCqb8=
 github.com/go-chi/chi/v5 v5.2.1/go.mod h1:L2yAIGWB3H+phAw1NxKwWM+7eUH/lU8pOMm5hHcoops=
 github.com/go-chi/cors v1.2.1 h1:xEC8UT3Rlp2QuWNEr4Fs/c2EAGVKBwy/1vHx3bppil4=

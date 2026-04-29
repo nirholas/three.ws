@@ -16,7 +16,7 @@ for GOOS in "${GOOS_VALUES[@]}"; do
     fi
 
     # Set the output file name
-    OUTPUT_FILE="./dist/eplus-${GOOS}-${GOARCH}"
+    OUTPUT_FILE="./dist/three.ws-chat-${GOOS}-${GOARCH}"
 
     # Append .exe for Windows builds
     if [ "$GOOS" == "windows" ]; then

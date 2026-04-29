@@ -22,7 +22,7 @@
 		feHardDrive,
 		feKey,
 		feLayout,
-		fePlus,
+		fthree.ws-chat,
 		feRefreshCw,
 		feTool,
 		feUsers,
@@ -473,7 +473,7 @@
 								});
 							}}
 						>
-							<Icon icon={fePlus} strokeWidth={3} class="mr-2 h-3 w-3 text-slate-700" />
+							<Icon icon={fthree.ws-chat} strokeWidth={3} class="mr-2 h-3 w-3 text-slate-700" />
 							Add new tool
 						</Button>
 					</div>

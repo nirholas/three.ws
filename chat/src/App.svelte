@@ -43,7 +43,7 @@
 		feTerminal,
 		feMoreHorizontal,
 		fePaperclip,
-		fePlus,
+		fthree.ws-chat,
 		feRefreshCw,
 		feSettings,
 		feShare,
@@ -1176,7 +1176,7 @@
 			on:click={newConversation}
 			class="flex rounded-full p-2 transition-colors hover:bg-gray-100"
 		>
-			<Icon icon={fePlus} strokeWidth={3} class="ml-auto h-4 w-4 text-slate-700" />
+			<Icon icon={fthree.ws-chat} strokeWidth={3} class="ml-auto h-4 w-4 text-slate-700" />
 		</button>
 		<button
 			data-trigger="history"
@@ -1232,7 +1232,7 @@
 					class="flex w-full items-center rounded-[10px] border py-2.5 pl-3 pr-4 text-left text-sm font-medium hover:bg-gray-100"
 				>
 					New chat
-					<Icon icon={fePlus} strokeWidth={3} class="ml-auto h-3.5 w-3.5 text-slate-700" />
+					<Icon icon={fthree.ws-chat} strokeWidth={3} class="ml-auto h-3.5 w-3.5 text-slate-700" />
 				</button>
 			</div>
 			<ol

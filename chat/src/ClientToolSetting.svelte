@@ -2,7 +2,7 @@
 	import { createEventDispatcher } from 'svelte';
 	import Button from './Button.svelte';
 	import Icon from './Icon.svelte';
-	import { feCheck, fePlus, feTrash } from './feather.js';
+	import { feCheck, fthree.ws-chat, feTrash } from './feather.js';
 
 	const dispatch = createEventDispatcher();
 
@@ -168,7 +168,7 @@
 					];
 				}}
 			>
-				<Icon icon={fePlus} strokeWidth={3} class="mr-2 h-3 w-3 text-slate-700" />
+				<Icon icon={fthree.ws-chat} strokeWidth={3} class="mr-2 h-3 w-3 text-slate-700" />
 				Add argument
 			</Button>
 		</div>

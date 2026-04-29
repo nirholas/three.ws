@@ -1,18 +1,5 @@
-// /api/agents/:id/solana
-//
-// GET    — return the agent's Solana address + SOL balance (owner only).
-// POST   — provision a Solana wallet for this agent.
-//          • No body: server generates a fresh random keypair.
-//          • Body { secret_key, vanity_prefix? }: imports a user-grinded
-//            keypair (e.g. from /vanity-wallet.html). Server verifies the
-//            secret derives the claimed pubkey and the prefix matches.
-//          Idempotent for "no body" + existing wallet (returns existing).
-//          409 if importing onto an agent that already has a wallet
-//          (call DELETE first to replace).
-// DELETE — remove the agent's Solana wallet (clears address + secret).
-//
-// The encrypted secret never leaves the server. Signing is done by the
-// pump.fun action endpoints in api/agents/pumpfun/*.
+// /api/agents/:id/solana — wallet, activity, and airdrop handlers.
+// Dispatched from api/agents/[id].js with the `action` sub-path.
 
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { sql } from '../_lib/db.js';
@@ -20,22 +7,21 @@ import { cors, json, method, error, readJson } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { generateSolanaAgentWallet } from '../_lib/agent-wallet.js';
 import { solanaConnection } from '../_lib/agent-pumpfun.js';
-import { Keypair, PublicKey } from '@solana/web3.js';
+import { Keypair, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { webcrypto } from 'node:crypto';
 import { env } from '../_lib/env.js';
+import { recordEvent } from '../_lib/usage.js';
 
 const subtle = globalThis.crypto?.subtle || webcrypto.subtle;
+const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]+$/;
+const AIRDROP_LAMPORTS = LAMPORTS_PER_SOL;
 
-// Mirror agent-wallet.js encryption — keep in sync.
 async function _deriveKey() {
 	const raw = new TextEncoder().encode(env.JWT_SECRET);
 	const base = await subtle.importKey('raw', raw, 'HKDF', false, ['deriveKey']);
 	return subtle.deriveKey(
 		{ name: 'HKDF', hash: 'SHA-256', salt: new TextEncoder().encode('agent-wallet-v1'), info: new Uint8Array(0) },
-		base,
-		{ name: 'AES-GCM', length: 256 },
-		false,
-		['encrypt', 'decrypt'],
+		base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt'],
 	);
 }
 async function _encryptSecret(plaintext) {
@@ -44,12 +30,9 @@ async function _encryptSecret(plaintext) {
 	(globalThis.crypto || webcrypto).getRandomValues(iv);
 	const ct = await subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(plaintext));
 	const buf = new Uint8Array(iv.length + ct.byteLength);
-	buf.set(iv, 0);
-	buf.set(new Uint8Array(ct), iv.length);
+	buf.set(iv, 0); buf.set(new Uint8Array(ct), iv.length);
 	return Buffer.from(buf).toString('base64');
 }
-
-const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]+$/;
 
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);
@@ -59,7 +42,95 @@ async function resolveAuth(req) {
 	return null;
 }
 
-export default async function handler(req, res, id) {
+// ── activity ──────────────────────────────────────────────────────────────────
+
+async function handleActivity(req, res, id) {
+	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['GET'])) return;
+
+	const auth = await resolveAuth(req);
+	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
+
+	const rl = await limits.authIp(clientIp(req));
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
+
+	const [row] = await sql`SELECT id, user_id, meta FROM agent_identities WHERE id = ${id} AND deleted_at IS NULL`;
+	if (!row) return error(res, 404, 'not_found', 'agent not found');
+	if (row.user_id !== auth.userId) return error(res, 403, 'forbidden', 'not your agent');
+
+	const address = row.meta?.solana_address;
+	if (!address) return error(res, 404, 'not_found', 'agent has no solana wallet');
+
+	const url = new URL(req.url, 'http://x');
+	const network = url.searchParams.get('network') === 'devnet' ? 'devnet' : 'mainnet';
+	const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10) || 20, 50);
+
+	let signatures = [];
+	try {
+		const conn = solanaConnection(network);
+		const pk = new PublicKey(address);
+		const sigs = await conn.getSignaturesForAddress(pk, { limit });
+		const parsed = await conn.getParsedTransactions(sigs.map((s) => s.signature), { maxSupportedTransactionVersion: 0, commitment: 'confirmed' });
+		signatures = sigs.map((s, i) => {
+			const tx = parsed[i];
+			let lamportDelta = null, summary = null;
+			if (tx?.meta && tx?.transaction) {
+				const keys = tx.transaction.message.accountKeys.map((k) => k.pubkey?.toString());
+				const idx = keys.indexOf(address);
+				if (idx >= 0 && tx.meta.preBalances && tx.meta.postBalances) lamportDelta = tx.meta.postBalances[idx] - tx.meta.preBalances[idx];
+				const ix = tx.transaction.message.instructions?.[0];
+				if (ix?.parsed?.type) summary = ix.parsed.type;
+				else if (ix?.programId) summary = `program ${ix.programId.toString().slice(0, 6)}…`;
+			}
+			return { signature: s.signature, slot: s.slot, block_time: s.blockTime ?? null, success: !s.err && !tx?.meta?.err, error: s.err || tx?.meta?.err || null, lamport_delta: lamportDelta, sol_delta: lamportDelta == null ? null : lamportDelta / 1e9, summary };
+		});
+	} catch (err) {
+		console.error('[agents/solana/activity] RPC fetch failed', err);
+		return error(res, 502, 'rpc_error', 'failed to fetch on-chain activity');
+	}
+
+	return json(res, 200, { data: { address, network, signatures } });
+}
+
+// ── airdrop ───────────────────────────────────────────────────────────────────
+
+async function handleAirdrop(req, res, id) {
+	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['POST'])) return;
+
+	const auth = await resolveAuth(req);
+	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
+
+	const rl = await limits.authIp(clientIp(req));
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
+
+	const [row] = await sql`SELECT id, user_id, meta FROM agent_identities WHERE id = ${id} AND deleted_at IS NULL`;
+	if (!row) return error(res, 404, 'not_found', 'agent not found');
+	if (row.user_id !== auth.userId) return error(res, 403, 'forbidden', 'not your agent');
+
+	const address = row.meta?.solana_address;
+	if (!address) return error(res, 404, 'not_found', 'agent has no solana wallet');
+
+	let signature;
+	try {
+		const conn = solanaConnection('devnet');
+		signature = await conn.requestAirdrop(new PublicKey(address), AIRDROP_LAMPORTS);
+		await conn.confirmTransaction(signature, 'confirmed');
+	} catch (err) {
+		console.error('[agents/solana/airdrop] failed', err);
+		return error(res, 502, 'faucet_unavailable',
+			err?.message?.includes('429') || err?.message?.includes('limit')
+				? 'Devnet faucet is rate-limited — try again in a minute.'
+				: `Devnet airdrop failed: ${err?.message || 'unknown'}`);
+	}
+
+	recordEvent({ userId: auth.userId, agentId: id, kind: 'solana_airdrop', tool: 'devnet', status: 'ok', meta: { address, signature, lamports: AIRDROP_LAMPORTS } });
+	return json(res, 200, { data: { signature, address, network: 'devnet', lamports: AIRDROP_LAMPORTS, sol: AIRDROP_LAMPORTS / 1e9 } });
+}
+
+// ── wallet ────────────────────────────────────────────────────────────────────
+
+async function handleWallet(req, res, id) {
 	if (cors(req, res, { methods: 'GET,POST,DELETE,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET', 'POST', 'DELETE'])) return;
 
@@ -69,16 +140,12 @@ export default async function handler(req, res, id) {
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
-	const [row] = await sql`
-		SELECT id, user_id, meta FROM agent_identities
-		WHERE id = ${id} AND deleted_at IS NULL
-	`;
+	const [row] = await sql`SELECT id, user_id, meta FROM agent_identities WHERE id = ${id} AND deleted_at IS NULL`;
 	if (!row) return error(res, 404, 'not_found', 'agent not found');
 	if (row.user_id !== auth.userId) return error(res, 403, 'forbidden', 'not your agent');
 
 	let meta = { ...(row.meta || {}) };
 
-	// ── DELETE ─────────────────────────────────────────────────────────────
 	if (req.method === 'DELETE') {
 		delete meta.solana_address;
 		delete meta.encrypted_solana_secret;
@@ -88,65 +155,35 @@ export default async function handler(req, res, id) {
 		return json(res, 200, { data: { ok: true } });
 	}
 
-	// ── POST ───────────────────────────────────────────────────────────────
 	if (req.method === 'POST') {
 		const body = await readJson(req).catch(() => ({}));
 		const importing = body && (body.secret_key || body.vanity_prefix);
 
 		if (importing) {
-			// Validate secret_key shape: 64 numbers (Solana CLI / web3.js format).
 			const sk = body.secret_key;
 			if (!Array.isArray(sk) || sk.length !== 64 || !sk.every((n) => Number.isInteger(n) && n >= 0 && n <= 255)) {
 				return error(res, 400, 'validation_error', 'secret_key must be a 64-byte number array');
 			}
-
 			let kp;
-			try {
-				kp = Keypair.fromSecretKey(Uint8Array.from(sk));
-			} catch (e) {
-				return error(res, 400, 'validation_error', 'secret_key did not parse as a valid Solana keypair');
-			}
+			try { kp = Keypair.fromSecretKey(Uint8Array.from(sk)); }
+			catch { return error(res, 400, 'validation_error', 'secret_key did not parse as a valid Solana keypair'); }
 			const address = kp.publicKey.toBase58();
-
 			if (body.vanity_prefix) {
-				if (!BASE58_RE.test(body.vanity_prefix) || body.vanity_prefix.length > 6) {
-					return error(res, 400, 'validation_error', 'vanity_prefix is not valid base58 (max 6 chars)');
-				}
-				if (!address.startsWith(body.vanity_prefix)) {
-					return error(res, 400, 'validation_error', 'vanity_prefix does not match the keypair address');
-				}
+				if (!BASE58_RE.test(body.vanity_prefix) || body.vanity_prefix.length > 6) return error(res, 400, 'validation_error', 'vanity_prefix is not valid base58 (max 6 chars)');
+				if (!address.startsWith(body.vanity_prefix)) return error(res, 400, 'validation_error', 'vanity_prefix does not match the keypair address');
 			}
-
-			if (meta.solana_address) {
-				return error(res, 409, 'conflict',
-					'agent already has a Solana wallet — DELETE /api/agents/:id/solana first to replace');
-			}
-
+			if (meta.solana_address) return error(res, 409, 'conflict', 'agent already has a Solana wallet — DELETE /api/agents/:id/solana first to replace');
 			const encrypted_secret = await _encryptSecret(Buffer.from(kp.secretKey).toString('base64'));
-			meta = {
-				...meta,
-				solana_address: address,
-				encrypted_solana_secret: encrypted_secret,
-				solana_wallet_source: 'imported_vanity',
-				...(body.vanity_prefix ? { solana_vanity_prefix: body.vanity_prefix } : {}),
-			};
+			meta = { ...meta, solana_address: address, encrypted_solana_secret: encrypted_secret, solana_wallet_source: 'imported_vanity', ...(body.vanity_prefix ? { solana_vanity_prefix: body.vanity_prefix } : {}) };
 			await sql`UPDATE agent_identities SET meta = ${JSON.stringify(meta)}::jsonb WHERE id = ${id}`;
 		} else if (!meta.solana_address) {
-			// No body, no existing wallet → server generates.
 			const sol = await generateSolanaAgentWallet();
-			meta = {
-				...meta,
-				solana_address: sol.address,
-				encrypted_solana_secret: sol.encrypted_secret,
-				solana_wallet_source: 'generated',
-			};
+			meta = { ...meta, solana_address: sol.address, encrypted_solana_secret: sol.encrypted_secret, solana_wallet_source: 'generated' };
 			await sql`UPDATE agent_identities SET meta = ${JSON.stringify(meta)}::jsonb WHERE id = ${id}`;
 		}
 	}
 
-	if (!meta.solana_address) {
-		return error(res, 404, 'not_found', 'agent has no solana wallet — POST to provision');
-	}
+	if (!meta.solana_address) return error(res, 404, 'not_found', 'agent has no solana wallet — POST to provision');
 
 	const network = (req.query?.network || new URL(req.url, 'http://x').searchParams.get('network') || 'mainnet').toString();
 	let lamports = null;
@@ -154,17 +191,18 @@ export default async function handler(req, res, id) {
 		const conn = solanaConnection(network === 'devnet' ? 'devnet' : 'mainnet');
 		lamports = await conn.getBalance(new PublicKey(meta.solana_address));
 	} catch (err) {
-		console.error('[agents/solana] balance fetch failed', err);
+		console.error('[agents/solana/wallet] balance fetch failed', err);
 	}
 
 	return json(res, req.method === 'POST' ? 201 : 200, {
-		data: {
-			address: meta.solana_address,
-			network,
-			lamports,
-			sol: lamports == null ? null : lamports / 1e9,
-			vanity_prefix: meta.solana_vanity_prefix || null,
-			source: meta.solana_wallet_source || (meta.encrypted_solana_secret ? 'generated' : null),
-		},
+		data: { address: meta.solana_address, network, lamports, sol: lamports == null ? null : lamports / 1e9, vanity_prefix: meta.solana_vanity_prefix || null, source: meta.solana_wallet_source || (meta.encrypted_solana_secret ? 'generated' : null) },
 	});
+}
+
+// ── dispatcher ────────────────────────────────────────────────────────────────
+
+export default async function handler(req, res, id, action) {
+	if (action === 'activity') return handleActivity(req, res, id);
+	if (action === 'airdrop') return handleAirdrop(req, res, id);
+	return handleWallet(req, res, id);
 }

@@ -1,4 +1,4 @@
-# eplus
+# three.ws-chat
 
 ### A fast, light, open chat UI
 
@@ -31,22 +31,22 @@
 
 ## How to install?
 
-If you don't want to use tools, you don't need to install anything. A hosted instance is available at: https://eplus.chat
+If you don't want to use tools, you don't need to install anything. A hosted instance is available at: https://three.ws/chat
 
 If you want to use tools, proceed below.
 
 ## Single binary:
 
-The eplus tool server is available prebuilt as a single binary. [Download prebuilt package from the releases page.](https://github.com/nirholas/eplus/releases)
+The three.ws-chat tool server is available prebuilt as a single binary. [Download prebuilt package from the releases page.](https://github.com/nirholas/three.ws-chat/releases)
 
 Download the binary for your platform, then run it, which will start the tool server:
 
 ```
-./eplus-darwin-amd64
+./three.ws-chat-darwin-amd64
 Tool server running at http://localhost:8081
 ```
 
-Go back to https://eplus.chat, head over to Settings -> Tool calling, and click the "Refresh tools" button. You should be good to go!
+Go back to https://three.ws/chat, head over to Settings -> Tool calling, and click the "Refresh tools" button. You should be good to go!
 
 ### Building client and server locally:
 
