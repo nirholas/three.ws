@@ -488,7 +488,7 @@
 		</div>
 
 		<script type="module">
-			import { ValidationDashboard } from '/validation/boot.js';
+			const { ValidationDashboard } = await import(/* @vite-ignore */ '/validation/boot.js');
 
 			const dashboard = new ValidationDashboard(document.getElementById('main'), {
 				agentInput: document.getElementById('agent-input'),

@@ -6,6 +6,9 @@ import { setTimeout as wait } from 'timers/promises';
 const PORT = 3100;
 const BASE = `http://localhost:${PORT}`;
 
+// Routes to visit. Some need params (template pages) — pass a placeholder
+// agent id so they can boot.
+const SAMPLE_AGENT = '0xdeadbeef';
 const ROUTES = [
 	'/',
 	'/app',
@@ -13,7 +16,9 @@ const ROUTES = [
 	'/create',
 	'/profile',
 	'/login',
-	'/agent',
+	`/agent/${SAMPLE_AGENT}`,
+	`/agent/${SAMPLE_AGENT}/edit`,
+	`/agent/${SAMPLE_AGENT}/embed`,
 	'/agents',
 	'/dashboard',
 	'/studio',
@@ -28,16 +33,29 @@ const ROUTES = [
 	'/discover',
 	'/explore',
 	'/features',
-	'/embed.html',
+	'/embed.html?model=/avatar/avatar.glb',
 	'/embed-test.html',
 	'/avatar-page.html',
 	'/avatar-artifact.html',
-	'/agent-home.html',
-	'/agent-edit.html',
 	'/agent-embed.html',
 	'/a-edit.html',
 	'/a-embed.html',
 ];
+
+// Dev-only failure patterns to ignore (CDN URLs, third-party CORS, etc).
+// These work in production but not when running `vite dev` against localhost.
+const IGNORE_PATTERNS = [
+	/three\.ws\/.*agent-3d/, // hardcoded prod CDN URL
+	/ajax\.googleapis\.com/, // CDN script
+	/esm\.sh/, // CDN module
+	/marketplace\.olas\.network/, // third-party API, no CORS for localhost
+	/blocked by CORS policy/,
+	/three\.ws\/dist-lib/,
+];
+
+function shouldIgnore(text) {
+	return IGNORE_PATTERNS.some((re) => re.test(text));
+}
 
 function startServer() {
 	const proc = spawn('npx', ['vite', '--port', String(PORT), '--strictPort'], {
@@ -64,18 +82,25 @@ async function checkRoute(browser, route) {
 	const page = await ctx.newPage();
 	const errors = [];
 	const failures = [];
-	page.on('pageerror', (err) => errors.push(`pageerror: ${err.message}`));
+	page.on('pageerror', (err) => {
+		const msg = `pageerror: ${err.message}`;
+		if (!shouldIgnore(msg)) errors.push(msg);
+	});
 	page.on('console', (msg) => {
-		if (msg.type() === 'error') errors.push(`console.error: ${msg.text()}`);
+		if (msg.type() !== 'error') return;
+		const text = `console.error: ${msg.text()}`;
+		if (!shouldIgnore(text)) errors.push(text);
 	});
 	page.on('requestfailed', (req) => {
 		const url = req.url();
 		if (url.startsWith('chrome-extension://')) return;
+		if (shouldIgnore(url)) return;
 		failures.push(`requestfailed: ${url} — ${req.failure()?.errorText}`);
 	});
 	page.on('response', (res) => {
-		if (res.status() >= 400 && !res.url().includes('favicon')) {
-			failures.push(`http ${res.status()}: ${res.url()}`);
+		const url = res.url();
+		if (res.status() >= 400 && !url.includes('favicon') && !shouldIgnore(url)) {
+			failures.push(`http ${res.status()}: ${url}`);
 		}
 	});
 	let loadError = null;
