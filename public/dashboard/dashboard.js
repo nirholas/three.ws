@@ -2663,6 +2663,30 @@ async function renderAnimations(root) {
 		}
 	}
 
+	function addAllPresets() {
+		let added = 0;
+		for (const p of presets) {
+			if (isAttached(p.name)) continue;
+			animations.push({
+				name: p.name,
+				url: p.url,
+				loop: p.loop !== false,
+				clipName: p.clipName || undefined,
+				source: 'preset',
+				addedAt: new Date().toISOString(),
+			});
+			added++;
+		}
+		if (!added) {
+			toast('All presets already attached');
+			return;
+		}
+		renderClipList();
+		renderPresetGrid();
+		debounceSync();
+		toast(`Added ${added} preset${added === 1 ? '' : 's'}`);
+	}
+
 	body.innerHTML = '';
 
 	if (agent.is_registered) {

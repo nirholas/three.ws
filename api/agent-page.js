@@ -20,6 +20,7 @@ export default wrap(async (req, res) => {
 	const agentId = url.searchParams.get('id');
 
 	if (!agentId) return notFound(res, 'Invalid agent URL');
+	if (!isUuid(agentId)) return notFound(res, 'Agent not found');
 
 	const [agent] = await sql`
 		SELECT id, name, description
@@ -142,6 +143,10 @@ ${escapeJsonLd({
 	</script>
 </body>
 </html>`;
+}
+
+function isUuid(s) {
+	return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(s));
 }
 
 function escapeHtml(s) {

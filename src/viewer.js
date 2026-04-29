@@ -1043,6 +1043,8 @@ export class Viewer {
 		// Toggle button — hides dat.GUI behind an "Advanced" control
 		const toggle = document.createElement('button');
 		toggle.className = 'gui-toggle';
+		// In kiosk/embed there's no GUI surface to expose.
+		if (this.options.kiosk) toggle.hidden = true;
 		toggle.setAttribute('title', 'Toggle advanced controls');
 		toggle.setAttribute('aria-label', 'Toggle advanced controls');
 		toggle.innerHTML =

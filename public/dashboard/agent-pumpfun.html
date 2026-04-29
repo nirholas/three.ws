@@ -350,11 +350,13 @@
 				user-select: none;
 			}
 			details.debug[open] summary { margin-bottom: 10px; }
-			#signals-grid .signal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
-			#signals-grid .card { background: var(--panel2); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; }
-			#signals-grid .card.bad { background: #1f1418; border-color: #4a1f23; }
-			#signals-grid .card .v { font-size: 20px; font-weight: 600; }
-			#signals-grid .card .l { font-size: 11px; color: var(--muted); margin-top: 2px; }
+			.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+			.stat-card { background: var(--panel2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+			.stat-card.bad { background: #1f1418; border-color: #4a1f23; }
+			.stat-card.good { background: #0e1f17; border-color: #1f4232; }
+			.stat-card .v { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; color: #f1f1f1; }
+			.stat-card .l { font-size: 11px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+			.stat-card .l .delta { text-transform: none; letter-spacing: 0; margin-left: 4px; color: #aaa; }
 		</style>
 	</head>
 	<body>
@@ -831,15 +833,18 @@
 							'<span class="muted">No pump.fun signals yet. The crawler runs every 15 minutes; signals appear here when this wallet is the claimer or creator on a pump.fun event.</span>';
 						return;
 					}
+					const wKind = pf.weight > 0 ? ' good' : pf.weight < 0 ? ' bad' : '';
 					const cards = [
-						`<div class="card"><div class="v">${pf.count}</div><div class="l">total signals</div></div>`,
-						`<div class="card${pf.weight < 0 ? ' bad' : ''}"><div class="v">${pf.weight >= 0 ? '+' : ''}${pf.weight.toFixed(2)}</div><div class="l">aggregate weight</div></div>`,
+						`<div class="stat-card"><div class="v">${pf.count}</div><div class="l">Total signals</div></div>`,
+						`<div class="stat-card${wKind}"><div class="v">${pf.weight >= 0 ? '+' : ''}${pf.weight.toFixed(2)}</div><div class="l">Aggregate weight</div></div>`,
 						...Object.entries(pf.by_kind).map(
-							([k, info]) =>
-								`<div class="card${info.weight < 0 ? ' bad' : ''}"><div class="v">${info.count}</div><div class="l">${k.replace('_', ' ')} <span class="muted">(${info.weight >= 0 ? '+' : ''}${info.weight})</span></div></div>`,
+							([k, info]) => {
+								const kk = info.weight > 0 ? ' good' : info.weight < 0 ? ' bad' : '';
+								return `<div class="stat-card${kk}"><div class="v">${info.count}</div><div class="l">${k.replace(/_/g, ' ')}<span class="delta">(${info.weight >= 0 ? '+' : ''}${info.weight})</span></div></div>`;
+							},
 						),
 					];
-					grid.innerHTML = `<div class="signal-grid">${cards.join('')}</div>`;
+					grid.innerHTML = `<div class="stat-grid">${cards.join('')}</div>`;
 				} catch (err) {
 					grid.innerHTML = `<span class="muted">Could not load signals: ${err.message}</span>`;
 				}
@@ -1354,12 +1359,12 @@
 						if (ts.graduated) {
 							const a = ts.amm || {};
 							body =
-								`<span class="tag" style="background:#5c8fff22;color:#9bf">graduated · AMM</span>` +
+								`<span class="tag" style="background:#5c8fff22;color:#9bf;border-color:#2a3a55">graduated · AMM</span>` +
 								` <span class="muted">refreshed ${refreshedAgo}</span>` +
-								`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:8px">` +
-								`<div><div class="muted">Pool quote</div><b>${fmtSolLamports(a.quote_reserve)}</b></div>` +
-								`<div><div class="muted">Pool base (tokens)</div><b>${a.base_reserve ? Number(a.base_reserve).toExponential(2) : '—'}</b></div>` +
-								`<div><div class="muted">Recent tx (50-tail)</div><b>${ts.recent_tx_count || 0}</b></div>` +
+								`<div class="stat-grid" style="margin-top:10px">` +
+								`<div class="stat-card"><div class="v">${fmtSolLamports(a.quote_reserve)}</div><div class="l">Pool quote</div></div>` +
+								`<div class="stat-card"><div class="v">${a.base_reserve ? Number(a.base_reserve).toExponential(2) : '—'}</div><div class="l">Pool base (tokens)</div></div>` +
+								`<div class="stat-card"><div class="v">${ts.recent_tx_count || 0}</div><div class="l">Recent tx (50-tail)</div></div>` +
 								`</div>`;
 						} else if (ts.bonding_curve) {
 							const c = ts.bonding_curve;
@@ -1367,10 +1372,10 @@
 							body =
 								`<div>Curve · <b>${pct.toFixed(1)}%</b> to graduation <span class="muted">refreshed ${refreshedAgo}</span></div>` +
 								`<div style="background:#222;border-radius:6px;height:10px;overflow:hidden;margin:6px 0 10px"><div style="background:linear-gradient(90deg,#5c8fff,#00d4ff);width:${Math.min(100, pct)}%;height:100%"></div></div>` +
-								`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px">` +
-								`<div><div class="muted">Real SOL reserves</div><b>${fmtSolLamports(c.real_sol)}</b></div>` +
-								`<div><div class="muted">Real token reserves</div><b>${c.real_token ? Number(c.real_token).toExponential(2) : '—'}</b></div>` +
-								`<div><div class="muted">Recent tx (50-tail)</div><b>${ts.recent_tx_count || 0}</b></div>` +
+								`<div class="stat-grid">` +
+								`<div class="stat-card"><div class="v">${fmtSolLamports(c.real_sol)}</div><div class="l">Real SOL reserves</div></div>` +
+								`<div class="stat-card"><div class="v">${c.real_token ? Number(c.real_token).toExponential(2) : '—'}</div><div class="l">Real token reserves</div></div>` +
+								`<div class="stat-card"><div class="v">${ts.recent_tx_count || 0}</div><div class="l">Recent tx (50-tail)</div></div>` +
 								`</div>`;
 						} else {
 							body = `<div class="muted">No bonding curve or AMM pool detected.</div>`;

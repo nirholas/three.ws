@@ -164,9 +164,13 @@ async function handleCreate(req, res) {
 
 // ── Get One ───────────────────────────────────────────────────────────────
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function handleGetOne(req, res, id) {
 	if (cors(req, res, { methods: 'GET,PUT,PATCH,DELETE,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET', 'PUT', 'PATCH', 'DELETE'])) return;
+
+	if (!UUID_RE.test(String(id || ''))) return error(res, 404, 'not_found', 'agent not found');
 
 	if (req.method === 'GET') {
 		const rl = await limits.publicIp(clientIp(req));

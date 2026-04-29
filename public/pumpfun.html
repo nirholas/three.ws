@@ -10,64 +10,85 @@
 		* { box-sizing: border-box; }
 		html, body { margin: 0; height: 100%; background: var(--bg); color: #eee;
 			font: 14px/1.55 -apple-system, system-ui, Segoe UI, Roboto, sans-serif; }
-		header { padding: 12px 18px; border-bottom: 1px solid var(--border);
-			display: flex; align-items: center; gap: 14px; flex-wrap: wrap; background: var(--panel); }
-		header h1 { margin: 0; font-size: 15px; font-weight: 600; }
+		header { padding: 10px 18px; border-bottom: 1px solid var(--border);
+			display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: var(--panel); }
+		header h1 { margin: 0; font-size: 15px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; }
+		.dot { width: 8px; height: 8px; border-radius: 50%; background: #555; box-shadow: 0 0 0 0 currentColor; }
+		.dot.live { background: #4ade80; animation: pulse 1.6s ease-in-out infinite; }
+		.dot.connecting { background: #fbbf24; }
+		.dot.down { background: #f87171; }
+		@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+		.status-pill { font-size: 11px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px;
+			padding: 3px 8px; border: 1px solid var(--border); border-radius: 999px; }
 		header .desc { color: var(--muted); font-size: 12px; }
 		header .ctl { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 		header label { font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
-		header select, header input[type="text"], header button {
+		header input[type="text"], header select, header button {
 			background: #161620; color: #eee; border: 1px solid #2a2a36;
 			border-radius: 6px; padding: 6px 10px; font-size: 13px; }
 		header button { cursor: pointer; }
 		header button:hover { background: #20202c; }
-		header button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-		main { position: relative; height: calc(100% - 52px); display: grid; grid-template-columns: 1fr 360px; }
+		header button.toggle[data-on="0"] { color: var(--muted); }
+		main { position: relative; height: calc(100% - 48px); display: grid; grid-template-columns: 1fr 360px; }
 		#stage { position: relative; }
 		iframe { width: 100%; height: 100%; border: 0; display: block; background: var(--bg); }
-		#side { border-left: 1px solid var(--border); background: var(--panel); display: flex; flex-direction: column; overflow-y: auto; }
-		#side h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em;
-			color: var(--muted); margin: 14px 16px 8px; font-weight: 600; }
-		#agent-card, #signals { padding: 4px 16px 12px; border-bottom: 1px solid var(--border); }
-		.kv { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; gap: 8px; }
+		#side { border-left: 1px solid var(--border); background: var(--panel); display: flex; flex-direction: column; overflow: hidden; }
+		#side h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
+			color: var(--muted); margin: 12px 16px 6px; font-weight: 600; display: flex; align-items: center; justify-content: space-between; }
+		#agent-card { padding: 4px 16px 12px; border-bottom: 1px solid var(--border); }
+		#feed-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+		#feed { flex: 1; overflow-y: auto; padding: 0 12px 12px; }
+		.kv { display: flex; justify-content: space-between; padding: 3px 0; font-size: 13px; gap: 8px; }
 		.kv span:first-child { color: var(--muted); }
 		.kv code { font-size: 11px; background: #1a1a24; padding: 1px 5px; border-radius: 3px; }
-		.signal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+		.signal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 0 16px 12px; }
 		.signal { background: #1a1a24; border: 1px solid #232330; border-radius: 6px; padding: 8px; }
 		.signal .v { font-size: 18px; font-weight: 600; }
 		.signal .l { font-size: 11px; color: var(--muted); margin-top: 2px; }
 		.signal.neg { border-color: #4a1f23; background: #1f1418; }
-		.empty { color: var(--muted); font-size: 12px; padding: 8px 0; }
-		a { color: #9a8cff; }
+		.empty { color: var(--muted); font-size: 12px; padding: 8px 16px; }
+		a { color: #9a8cff; text-decoration: none; }
+		a:hover { text-decoration: underline; }
 		.warn { background: #2a1f0d; border: 1px solid #463a14; padding: 8px 10px; border-radius: 6px;
 			color: #fbbf24; font-size: 12px; margin: 12px 16px; }
+
+		/* Event cards */
+		.evt { border: 1px solid #232330; background: #15151d; border-radius: 8px; padding: 9px 11px; margin: 6px 0;
+			animation: evt-in 0.35s ease; }
+		.evt.first { border-color: #1f4232; background: #0e1f17; }
+		.evt.fake { border-color: #4a1f23; background: #1f1418; }
+		.evt.grad { border-color: #2c1f4a; background: #18142a; }
+		.evt-row { display: flex; justify-content: space-between; gap: 6px; align-items: baseline; }
+		.evt-kind { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+		.evt-tier { font-size: 10px; color: #fbbf24; }
+		.evt-who { font-weight: 600; font-size: 13px; margin-top: 3px; word-break: break-all; }
+		.evt-amt { font-size: 12px; color: #cbd5e1; }
+		.evt-take { font-size: 11px; color: var(--muted); margin-top: 4px; font-style: italic; }
+		.evt-time { font-size: 10px; color: #555; }
+		@keyframes evt-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
 		@media (max-width: 720px) { main { grid-template-columns: 1fr; } #side { display: none; } }
 	</style>
 </head>
 <body>
 	<header>
 		<h1>✦ Pump.fun live</h1>
-		<span class="desc">3D Solana agent narrating live pump.fun activity.</span>
+		<span class="status-pill" id="status-pill"><span class="dot connecting" id="status-dot"></span><span id="status-label">connecting…</span></span>
 		<div class="ctl">
-			<label>Agent
-				<input id="ctl-asset" type="text" placeholder="Solana asset pubkey" size="22" />
-			</label>
-			<label>Mint
-				<input id="ctl-mint" type="text" placeholder="Filter mint…" size="20" />
-			</label>
-			<select id="ctl-kind">
+			<input id="ctl-asset" type="text" placeholder="Solana asset pubkey (optional)" size="22" />
+			<input id="ctl-mint" type="text" placeholder="Filter mint…" size="18" />
+			<select id="ctl-kind" title="Event type">
 				<option value="all">All events</option>
 				<option value="claims">Claims only</option>
 				<option value="graduations">Graduations only</option>
 			</select>
-			<select id="ctl-tier" title="Minimum tier for claim cards">
-				<option value="">Tier: any</option>
+			<select id="ctl-tier" title="Minimum tier">
+				<option value="">Any tier</option>
 				<option value="notable">Notable+</option>
 				<option value="influencer">Influencer+</option>
 				<option value="mega">Mega only</option>
 			</select>
-			<button id="ctl-narrate" type="button" data-on="1">Narration: on</button>
-			<button id="ctl-apply" class="primary" type="button">Apply</button>
+			<button id="ctl-narrate" class="toggle" type="button" data-on="1" title="Toggle agent narration">🔊 Narration</button>
 		</div>
 	</header>
 	<main>
@@ -76,9 +97,15 @@
 		</div>
 		<aside id="side">
 			<h2>Agent</h2>
-			<div id="agent-card"><div class="empty">Paste a Solana asset pubkey above to bind a specific agent. Without one, the default narrator avatar is shown.</div></div>
-			<h2>Reputation signals</h2>
-			<div id="signals"><div class="empty">Bind a Solana agent to see live pump.fun signals.</div></div>
+			<div id="agent-card"><div class="empty">Default narrator avatar. Paste a Solana asset pubkey above to bind a specific agent.</div></div>
+			<div id="signals-section" hidden>
+				<h2>Reputation signals</h2>
+				<div class="signal-grid" id="signals"></div>
+			</div>
+			<div id="feed-wrap">
+				<h2><span id="feed-title">Live feed</span></h2>
+				<div id="feed"><div class="empty">Waiting for events…</div></div>
+			</div>
 		</aside>
 	</main>
 	<script>
@@ -99,14 +126,30 @@
 		$('ctl-kind').value = params.kind;
 		$('ctl-tier').value = params.minTier;
 		$('ctl-narrate').dataset.on = params.narrate ? '1' : '0';
-		$('ctl-narrate').textContent = params.narrate ? 'Narration: on' : 'Narration: off';
+
+		function setStatus(state, label) {
+			const dot = $('status-dot');
+			dot.className = 'dot ' + state;
+			$('status-label').textContent = label;
+		}
+
+		function syncURL() {
+			const u = new URL(location.href);
+			const set = (k, v) => v ? u.searchParams.set(k, v) : u.searchParams.delete(k);
+			set('asset', params.asset);
+			set('mint', params.mint);
+			set('kind', params.kind === 'all' ? '' : params.kind);
+			set('minTier', params.minTier);
+			set('narrate', params.narrate ? '' : '0');
+			history.replaceState(null, '', u.toString());
+		}
 
 		async function mountAgent() {
 			const cfgPart = `&type=pumpfun-feed&kind=${encodeURIComponent(params.kind)}` +
 				(params.minTier ? `&minTier=${encodeURIComponent(params.minTier)}` : '') +
 				(params.narrate ? '' : '&narrate=0');
 			let modelHash = '';
-			let widgetId = 'wdgt_demo_pumpfun';
+			const widgetId = 'wdgt_demo_pumpfun';
 			if (params.asset) {
 				try {
 					const r = await fetch(`/api/agents/solana-card?asset=${encodeURIComponent(params.asset)}`);
@@ -119,14 +162,16 @@
 					const repR = await fetch(`/api/agents/solana-reputation?asset=${encodeURIComponent(params.asset)}&network=${params.network}`);
 					if (repR.ok) renderSignals(await repR.json());
 				} catch {}
+			} else {
+				$('agent-card').innerHTML = `<div class="empty">Default narrator avatar. Paste a Solana asset pubkey above to bind a specific agent.</div>`;
+				$('signals-section').hidden = true;
 			}
 			iframe.src = `/app#widget=${widgetId}&kiosk=true${cfgPart}${modelHash}`;
 		}
 
 		function renderAgentCard(card) {
 			const id = card?.identity || {};
-			const el = $('agent-card');
-			el.innerHTML = `
+			$('agent-card').innerHTML = `
 				<div class="kv"><span>Name</span><strong>${escapeHtml(card?.name || '—')}</strong></div>
 				<div class="kv"><span>Network</span><code>${escapeHtml(id.network || '—')}</code></div>
 				<div class="kv"><span>Asset</span><code>${shortKey(id.asset_pubkey || '')}</code></div>
@@ -137,56 +182,126 @@
 
 		function renderSignals(rep) {
 			const pf = rep?.pumpfun_signals || { count: 0, weight: 0, by_kind: {} };
+			const section = $('signals-section');
 			const el = $('signals');
-			if (!pf.count) {
-				el.innerHTML = `<div class="empty">No pump.fun signals tied to this agent yet.</div>`;
-				return;
-			}
+			if (!pf.count) { section.hidden = true; return; }
+			section.hidden = false;
 			const cards = [
 				`<div class="signal"><div class="v">${pf.count}</div><div class="l">total signals</div></div>`,
 				`<div class="signal ${pf.weight < 0 ? 'neg' : ''}"><div class="v">${pf.weight >= 0 ? '+' : ''}${pf.weight.toFixed(2)}</div><div class="l">aggregate weight</div></div>`,
 				...Object.entries(pf.by_kind).map(([k, info]) =>
 					`<div class="signal ${info.weight < 0 ? 'neg' : ''}"><div class="v">${info.count}</div><div class="l">${escapeHtml(k.replace('_', ' '))}</div></div>`),
 			];
-			el.innerHTML = `<div class="signal-grid">${cards.join('')}</div>`;
+			el.innerHTML = cards.join('');
 		}
 
+		// ── Live event feed (host-side, mirrors what the iframe receives) ────
+		let es = null;
+		const TIER_BADGE = { mega: '🔥🔥', influencer: '🔥', notable: '⭐' };
+		const MAX_EVENTS = 30;
+
+		function eventMatchesMint(ev) {
+			if (!params.mint) return true;
+			return ev?.mint === params.mint || ev?.token_mint === params.mint;
+		}
+
+		function renderClaim(ev) {
+			const cls = ev.fake_claim ? 'fake' : ev.first_time_claim ? 'first' : '';
+			const tier = ev.tier ? `${TIER_BADGE[ev.tier] || ''} ${ev.tier}` : '';
+			const sol = ev.amount_sol != null ? `${Number(ev.amount_sol).toFixed(3)} SOL` : '';
+			const who = ev.github_user ? '@' + ev.github_user : (ev.claimer ? shortKey(ev.claimer) : '—');
+			return `<div class="evt ${cls}">
+				<div class="evt-row"><span class="evt-kind">${ev.first_time_claim ? '🚨 first claim' : 'claim'}</span><span class="evt-tier">${escapeHtml(tier)}</span></div>
+				<div class="evt-who">${escapeHtml(who)}</div>
+				<div class="evt-amt">${escapeHtml(sol)}${ev.token_symbol ? ' · $' + escapeHtml(ev.token_symbol) : ''}</div>
+				${ev.ai_take ? `<div class="evt-take">${escapeHtml(ev.ai_take)}</div>` : ''}
+			</div>`;
+		}
+
+		function renderGraduation(ev) {
+			return `<div class="evt grad">
+				<div class="evt-row"><span class="evt-kind">🎓 graduation</span></div>
+				<div class="evt-who">${escapeHtml(ev.name || ev.symbol || ev.mint || '—')}</div>
+				${ev.symbol ? `<div class="evt-amt">$${escapeHtml(ev.symbol)}</div>` : ''}
+			</div>`;
+		}
+
+		function pushEvent(html) {
+			const feed = $('feed');
+			if (feed.querySelector('.empty')) feed.innerHTML = '';
+			feed.insertAdjacentHTML('afterbegin', html);
+			while (feed.children.length > MAX_EVENTS) feed.lastChild?.remove();
+		}
+
+		function connectFeed() {
+			if (es) { try { es.close(); } catch {} }
+			const qs = new URLSearchParams();
+			qs.set('kind', params.kind);
+			if (params.minTier) qs.set('minTier', params.minTier);
+			setStatus('connecting', 'connecting…');
+			es = new EventSource(`/api/agents/pumpfun-feed?${qs.toString()}`, { withCredentials: true });
+			es.addEventListener('open', () => setStatus('live', 'live'));
+			es.addEventListener('error', () => {
+				if (es.readyState === EventSource.CLOSED) setStatus('down', 'disconnected');
+				else setStatus('connecting', 'reconnecting…');
+			});
+			es.addEventListener('claim', (msg) => {
+				const ev = safeJson(msg.data); if (!ev || !eventMatchesMint(ev)) return;
+				pushEvent(renderClaim(ev));
+			});
+			es.addEventListener('graduation', (msg) => {
+				const ev = safeJson(msg.data); if (!ev || !eventMatchesMint(ev)) return;
+				pushEvent(renderGraduation(ev));
+			});
+		}
+
+		function safeJson(s) { try { return JSON.parse(s); } catch { return null; } }
 		function shortKey(s) { s = String(s || ''); return s.length > 12 ? `${s.slice(0,4)}…${s.slice(-4)}` : s; }
 		function escapeHtml(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
 		function attr(s) { return escapeHtml(s); }
 
+		// ── Filter changes apply instantly. Mint filter only re-filters; asset/kind/tier remount. ──
 		$('ctl-mint').addEventListener('input', (e) => {
-			const mint = e.target.value.trim() || null;
-			iframe.contentWindow?.postMessage({ type: 'pumpfun-feed:focus-mint', mint }, '*');
+			params.mint = e.target.value.trim();
+			syncURL();
+			iframe.contentWindow?.postMessage({ type: 'pumpfun-feed:focus-mint', mint: params.mint || null }, '*');
 		});
 
 		$('ctl-narrate').addEventListener('click', (e) => {
-			const on = e.target.dataset.on !== '1';
-			e.target.dataset.on = on ? '1' : '0';
-			e.target.textContent = on ? 'Narration: on' : 'Narration: off';
-			iframe.contentWindow?.postMessage({ type: 'pumpfun-feed:set-narrate', on }, '*');
+			params.narrate = e.currentTarget.dataset.on !== '1';
+			e.currentTarget.dataset.on = params.narrate ? '1' : '0';
+			syncURL();
+			iframe.contentWindow?.postMessage({ type: 'pumpfun-feed:set-narrate', on: params.narrate }, '*');
 		});
 
-		$('ctl-apply').addEventListener('click', () => {
-			const u = new URL(location.href);
-			u.searchParams.set('kind', $('ctl-kind').value);
-			if ($('ctl-tier').value) u.searchParams.set('minTier', $('ctl-tier').value);
-			else u.searchParams.delete('minTier');
-			const asset = $('ctl-asset').value.trim();
-			if (asset) u.searchParams.set('asset', asset);
-			else u.searchParams.delete('asset');
-			u.searchParams.set('narrate', $('ctl-narrate').dataset.on === '1' ? '1' : '0');
-			location.href = u.toString();
-		});
+		let kindTimer;
+		const onFilterChange = () => {
+			clearTimeout(kindTimer);
+			kindTimer = setTimeout(() => {
+				params.kind = $('ctl-kind').value;
+				params.minTier = $('ctl-tier').value;
+				params.asset = $('ctl-asset').value.trim();
+				syncURL();
+				connectFeed();
+				mountAgent();
+			}, 200);
+		};
+		$('ctl-kind').addEventListener('change', onFilterChange);
+		$('ctl-tier').addEventListener('change', onFilterChange);
+		$('ctl-asset').addEventListener('change', onFilterChange);
 
+		// Initial load
 		fetch('/api/agents/pumpfun?op=claims&limit=1', { credentials: 'include' }).then((r) => {
 			if (r.status === 503) {
 				const w = document.createElement('div');
 				w.className = 'warn';
 				w.innerHTML = 'Pump.fun feed is not configured on this server. Set <code>PUMPFUN_BOT_URL</code> to enable. See <a href="/docs/solana-pumpfun.md">solana-pumpfun.md</a>.';
 				document.querySelector('header').insertAdjacentElement('afterend', w);
+				setStatus('down', 'unconfigured');
+				return;
 			}
-		}).catch(() => {});
+			connectFeed();
+		}).catch(() => connectFeed());
 
 		mountAgent();
 	</script>

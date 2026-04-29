@@ -1302,6 +1302,16 @@ body[data-viewer-mode='explore'] {
 	overflow-y: auto;
 }
 
+/* Embed/kiosk — strip every owner-mode surface. The /app page is loaded inside
+ * a host iframe (e.g. /pumpfun) and only the 3D stage should show. */
+body[data-viewer-mode='embed'] #agent-presence-sidebar,
+body[data-viewer-mode='embed'] .dropzone,
+body[data-viewer-mode='embed'] .auth-gate,
+body[data-viewer-mode='embed'] .agent-onboarding,
+body[data-viewer-mode='embed'] .dg.main {
+	display: none !important;
+}
+
 /* Hide viewer-only action buttons in non-viewer modes — they're meaningless on
  * /deploy and /explore where the viewer is hidden. */
 body[data-viewer-mode='deploy'] .save-to-account-btn,

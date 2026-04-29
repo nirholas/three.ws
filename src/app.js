@@ -424,8 +424,9 @@ class App {
 			// Render the agent home panel (identity card + timeline). Idempotent —
 			// if a previous boot already rendered, tear it down before re-mounting
 			// so we never stack multiple cards in the sidebar.
+			// Skip entirely in kiosk/embed — the panel belongs to owner/edit views.
 			const homeEl = document.getElementById('agent-home-container');
-			if (homeEl) {
+			if (homeEl && !this.options.kiosk) {
 				if (this.agentHome) this.agentHome.destroy();
 				homeEl.innerHTML = '';
 				this.agentHome = new AgentHome(homeEl, this.identity, protocol, this.avatar, {
