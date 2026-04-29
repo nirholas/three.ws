@@ -63,7 +63,6 @@
 		"@metaplex-foundation/umi-bundle-defaults": "^1.5.1",
 		"@neondatabase/serverless": "^0.10.1",
 		"@noble/curves": "^2.2.0",
-		"@privy-io/js-sdk-core": "latest",
 		"@sentry/node": "^10.50.0",
 		"@solana/web3.js": "^1.98.4",
 		"@upstash/ratelimit": "^2.0.5",
