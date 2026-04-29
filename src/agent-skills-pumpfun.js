@@ -74,6 +74,78 @@ async function sendIxs({ web3, connection, wallet, payer, instructions, extraSig
 	return sig;
 }
 
+/**
+ * Run the prep → wallet-sign → confirm round-trip against three.ws server-side
+ * pump.fun endpoints. The server validates ownership + builds the unsigned tx;
+ * the wallet only signs. Useful for clients that want server-enforced policy
+ * (rate-limit, agent ownership) without re-implementing pump SDK glue.
+ *
+ * @param {Object} opts
+ * @param {string} opts.prepPath — e.g. '/api/pump/buy-prep'
+ * @param {Object} opts.body — request body for the prep endpoint
+ * @param {string} [opts.confirmPath] — e.g. '/api/pump/launch-confirm'; if set,
+ *                 calls confirm with `{ tx_signature, ...confirmExtra }`
+ * @param {Object} [opts.confirmExtra] — additional fields to include in confirm body
+ * @param {string} [opts.origin] — defaults to current page origin
+ * @returns {Promise<{ signature: string, prep: Object, confirm: Object|null }>}
+ */
+export async function runServerFlow({
+	prepPath,
+	body,
+	confirmPath,
+	confirmExtra = {},
+	origin = '',
+}) {
+	const [{ VersionedTransaction }] = await Promise.all([import('@solana/web3.js')]);
+	const { wallet } = await requireWallet();
+	const network = body.network || DEFAULT_NETWORK;
+
+	const prepRes = await fetch(`${origin}${prepPath}`, {
+		method: 'POST',
+		credentials: 'include',
+		headers: { 'content-type': 'application/json' },
+		body: JSON.stringify(body),
+	});
+	const prep = await prepRes.json();
+	if (!prepRes.ok) {
+		throw new Error(prep.error_description || prep.error || `prep failed: ${prepRes.status}`);
+	}
+	if (!prep.tx_base64) throw new Error('prep response missing tx_base64');
+
+	const tx = VersionedTransaction.deserialize(
+		Uint8Array.from(atob(prep.tx_base64), (c) => c.charCodeAt(0)),
+	);
+	const signed = await wallet.signTransaction(tx);
+
+	const { Connection } = await import('@solana/web3.js');
+	const url = SOLANA_RPC[network] || SOLANA_RPC[DEFAULT_NETWORK];
+	const connection = new Connection(url, 'confirmed');
+	const sig = await connection.sendRawTransaction(signed.serialize(), { skipPreflight: false });
+	const latest = await connection.getLatestBlockhash();
+	await connection.confirmTransaction(
+		{ signature: sig, blockhash: latest.blockhash, lastValidBlockHeight: latest.lastValidBlockHeight },
+		'confirmed',
+	);
+
+	let confirmJson = null;
+	if (confirmPath) {
+		const confirmRes = await fetch(`${origin}${confirmPath}`, {
+			method: 'POST',
+			credentials: 'include',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ tx_signature: sig, ...confirmExtra }),
+		});
+		confirmJson = await confirmRes.json();
+		if (!confirmRes.ok) {
+			throw new Error(
+				confirmJson.error_description || confirmJson.error || `confirm failed: ${confirmRes.status}`,
+			);
+		}
+	}
+
+	return { signature: sig, prep, confirm: confirmJson };
+}
+
 function deriveSymbol(name) {
 	return (
 		String(name || 'AGENT')
@@ -239,6 +311,27 @@ export function registerPumpFunSkills(skills) {
 		handler: async (args, _ctx) => {
 			const network = args.network || DEFAULT_NETWORK;
 			const slippageBps = args.slippageBps ?? DEFAULT_SLIPPAGE_BPS;
+
+			if (args.serverFlow) {
+				const { wallet: _w, pubkey: pk } = await requireWallet();
+				const r = await runServerFlow({
+					prepPath: '/api/pump/buy-prep',
+					body: {
+						mint: args.mint,
+						network,
+						sol: args.solAmount,
+						slippage_bps: slippageBps,
+						wallet_address: pk.toBase58(),
+					},
+				});
+				return {
+					success: true,
+					output: `Bought ~${args.solAmount} SOL of ${args.mint.slice(0, 8)}… via ${r.prep.route}.`,
+					sentiment: 0.6,
+					data: { signature: r.signature, route: r.prep.route, mint: args.mint, network },
+				};
+			}
+
 			const { pump, web3, BN } = await loadCore();
 			const { wallet, pubkey } = await requireWallet();
 			const connection = getConnection(web3, network);
@@ -308,6 +401,27 @@ export function registerPumpFunSkills(skills) {
 		handler: async (args, _ctx) => {
 			const network = args.network || DEFAULT_NETWORK;
 			const slippageBps = args.slippageBps ?? DEFAULT_SLIPPAGE_BPS;
+
+			if (args.serverFlow) {
+				const { pubkey: pk } = await requireWallet();
+				const r = await runServerFlow({
+					prepPath: '/api/pump/sell-prep',
+					body: {
+						mint: args.mint,
+						network,
+						tokens: String(args.tokenAmount),
+						slippage_bps: slippageBps,
+						wallet_address: pk.toBase58(),
+					},
+				});
+				return {
+					success: true,
+					output: `Sold ${args.tokenAmount} of ${args.mint.slice(0, 8)}… via ${r.prep.route}.`,
+					sentiment: 0.4,
+					data: { signature: r.signature, route: r.prep.route, mint: args.mint, network },
+				};
+			}
+
 			const { pump, web3, BN } = await loadCore();
 			const { wallet, pubkey } = await requireWallet();
 			const connection = getConnection(web3, network);

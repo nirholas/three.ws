@@ -58,13 +58,32 @@ export async function mountPumpfunFeed(viewer, config, container, ctx = {}) {
 	const maxCards = Math.max(1, Math.min(50, config.maxCards || 8));
 	const protocol = ctx.protocol || (typeof window !== 'undefined' ? window.VIEWER?.agent_protocol : null);
 
+	let focusMint = null;
+	const matchesFocus = (ev) =>
+		!focusMint || ev?.mint === focusMint || ev?.token_mint === focusMint;
+
+	const onFocus = (e) => {
+		focusMint = e.detail?.mint || null;
+		// Mark visually when a filter is active.
+		status.textContent = focusMint
+			? `Live · pump.fun · ${focusMint.slice(0, 6)}…${focusMint.slice(-4)}`
+			: 'Live · pump.fun';
+		// Highlight: pulse the badge once.
+		status.style.transition = 'color .2s';
+		status.style.color = focusMint ? '#6ce0c8' : '';
+	};
+	(container || document.body).addEventListener('pumpfun-feed:focus-mint', onFocus);
+
 	es.addEventListener('open', () => {
-		status.textContent = 'Live · pump.fun';
+		status.textContent = focusMint
+			? `Live · pump.fun · ${focusMint.slice(0, 6)}…${focusMint.slice(-4)}`
+			: 'Live · pump.fun';
 	});
 
 	es.addEventListener('claim', (msg) => {
 		const ev = safeJson(msg.data);
 		if (!ev) return;
+		if (!matchesFocus(ev)) return;
 		addCard(stack, renderClaim(ev), maxCards);
 		if (config.autoNarrate) narrateClaim(protocol, ev);
 	});
@@ -72,6 +91,7 @@ export async function mountPumpfunFeed(viewer, config, container, ctx = {}) {
 	es.addEventListener('graduation', (msg) => {
 		const ev = safeJson(msg.data);
 		if (!ev) return;
+		if (!matchesFocus(ev)) return;
 		addCard(stack, renderGraduation(ev), maxCards);
 		if (config.autoNarrate) narrateGraduation(protocol, ev);
 	});
@@ -91,6 +111,7 @@ export async function mountPumpfunFeed(viewer, config, container, ctx = {}) {
 			try {
 				es.close();
 			} catch {}
+			(container || document.body).removeEventListener('pumpfun-feed:focus-mint', onFocus);
 			root.remove();
 		},
 	};
