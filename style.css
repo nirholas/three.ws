@@ -1330,13 +1330,19 @@ body[data-viewer-mode='deploy'] {
 	color: #fff;
 }
 
-.deploy-page,
-.explore-page {
+html:has(body.explore-page),
+html:has(body.deploy-page) {
+	height: auto;
+	overflow: auto;
+}
+
+body.deploy-page,
+body.explore-page {
 	display: block;
 	width: 100%;
 	min-height: calc(100vh - var(--header-h));
 	height: auto;
-	overflow: auto;
+	overflow: visible;
 	padding: var(--space-xl) var(--space-lg) var(--space-2xl);
 }
 
