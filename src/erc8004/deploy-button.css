@@ -173,18 +173,30 @@
 .deploy-error {
 	display: inline-flex;
 	align-items: center;
-	gap: 0.6em;
-	padding: 0.4em 0.75em;
-	border: 1.5px solid #7a2a2a;
-	border-radius: 6px;
-	background: #2e0f0f;
-	font-size: 0.8rem;
-	color: #f87171;
-	max-width: 400px;
+	gap: 0.55em;
+	padding: 0.32em 0.32em 0.32em 0.75em;
+	border: 1px solid rgba(248, 113, 113, 0.28);
+	border-radius: 999px;
+	background: rgba(127, 29, 29, 0.18);
+	font-size: 0.72rem;
+	color: rgba(252, 165, 165, 0.95);
+	max-width: 100%;
+	line-height: 1.4;
+}
+
+.deploy-error::before {
+	content: '';
+	flex-shrink: 0;
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: #f87171;
+	box-shadow: 0 0 8px rgba(248, 113, 113, 0.6);
 }
 
 .deploy-error-msg {
 	flex: 1;
+	min-width: 0;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -192,18 +204,24 @@
 
 .deploy-action-btn {
 	flex-shrink: 0;
-	padding: 0.25em 0.7em;
-	border: 1px solid #f87171;
-	border-radius: 4px;
-	background: transparent;
-	color: #f87171;
-	font-size: 0.8rem;
+	padding: 0.18em 0.65em;
+	border: 1px solid rgba(248, 113, 113, 0.35);
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.02);
+	color: rgba(252, 165, 165, 0.95);
+	font-size: 0.7rem;
+	font-family: inherit;
 	cursor: pointer;
-	transition: background 0.15s;
+	transition:
+		background 0.15s,
+		border-color 0.15s,
+		color 0.15s;
 }
 
 .deploy-action-btn:hover {
-	background: #f8717122;
+	background: rgba(248, 113, 113, 0.12);
+	border-color: rgba(248, 113, 113, 0.6);
+	color: #fecaca;
 }
 
 /* ── Tooltip ─────────────────────────────────────────────────────────────── */

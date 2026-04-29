@@ -74,16 +74,14 @@
 				outline-offset: 2px;
 			}
 
-			/* ── Agent title row (name + deploy chip) ─────────────────────────── */
-			.agent-title-row {
-				display: inline-flex;
-				align-items: center;
-				gap: 12px;
-				justify-content: center;
-			}
+			/* ── Deploy chip / status (sits below the hero, never inline) ────── */
 			.agent-deploy-chip-mount {
-				display: inline-flex;
-				align-items: center;
+				display: flex;
+				justify-content: center;
+				margin-top: 0.85rem;
+			}
+			.agent-deploy-chip-mount:empty {
+				display: none;
 			}
 
 			/* ── Toast ────────────────────────────────────────────────────────── */
@@ -468,6 +466,166 @@
 				font-size: 0.764rem;
 				text-align: center;
 				padding: 2rem;
+			}
+
+			/* ── Manage Permissions Panel ─────────────────────────────────────── */
+			.mp-panel {
+				padding: 0.85rem 1rem 1rem;
+				border-top: 1px solid rgba(255, 255, 255, 0.06);
+			}
+			.mp-header {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				margin-bottom: 0.5rem;
+			}
+			.mp-title {
+				font-size: 0.62rem;
+				color: rgba(255, 255, 255, 0.4);
+				text-transform: uppercase;
+				letter-spacing: 0.1em;
+				font-weight: 500;
+			}
+			.mp-header-actions {
+				display: flex;
+				align-items: center;
+				gap: 0.382rem;
+			}
+			.mp-refresh-btn {
+				background: none;
+				border: none;
+				color: rgba(255, 255, 255, 0.3);
+				cursor: pointer;
+				padding: 0.25rem;
+				border-radius: 4px;
+				line-height: 0;
+				transition: color 0.15s;
+			}
+			.mp-refresh-btn:hover {
+				color: rgba(255, 255, 255, 0.8);
+			}
+			.mp-grant-header-btn {
+				background: rgba(255, 255, 255, 0.06);
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				color: rgba(255, 255, 255, 0.7);
+				font-size: 0.65rem;
+				font-family: inherit;
+				padding: 0.2rem 0.6rem;
+				border-radius: 999px;
+				cursor: pointer;
+				transition: background 0.15s, color 0.15s;
+			}
+			.mp-grant-header-btn:hover {
+				background: rgba(255, 255, 255, 0.1);
+				color: #fff;
+			}
+			.mp-loading,
+			.mp-empty,
+			.mp-error {
+				font-size: 0.72rem;
+				color: rgba(255, 255, 255, 0.35);
+				padding: 0.75rem 0 0.25rem;
+				text-align: center;
+			}
+			.mp-error { color: #fca5a5; }
+			.mp-empty p { margin: 0 0 0.55rem; }
+			.mp-empty-hint {
+				font-size: 0.68rem;
+				color: rgba(255, 255, 255, 0.3);
+				margin: 0.382rem 0 0;
+				font-style: italic;
+			}
+			.mp-grant-btn {
+				background: rgba(255, 255, 255, 0.06);
+				border: 1px solid rgba(255, 255, 255, 0.12);
+				color: rgba(255, 255, 255, 0.85);
+				font-size: 0.72rem;
+				font-family: inherit;
+				padding: 0.4rem 0.85rem;
+				border-radius: 999px;
+				cursor: pointer;
+				transition: background 0.15s, border-color 0.15s, color 0.15s;
+			}
+			.mp-grant-btn:hover {
+				background: rgba(255, 255, 255, 0.1);
+				border-color: rgba(255, 255, 255, 0.25);
+				color: #fff;
+			}
+			.mp-card {
+				background: rgba(255, 255, 255, 0.04);
+				border: 1px solid rgba(255, 255, 255, 0.07);
+				border-radius: 10px;
+				padding: 0.6rem 0.85rem;
+				margin-bottom: 0.5rem;
+				transition: border-color 0.2s;
+			}
+			.mp-card--active { border-color: rgba(134, 239, 172, 0.18); }
+			.mp-card--revoked { opacity: 0.5; }
+			.mp-card--expired { border-color: rgba(251, 191, 36, 0.18); }
+			.mp-card-top {
+				display: flex;
+				align-items: center;
+				gap: 0.382rem;
+				margin-bottom: 0.382rem;
+			}
+			.mp-badge {
+				font-size: 0.6rem;
+				padding: 0.1rem 0.45rem;
+				border-radius: 999px;
+				font-weight: 500;
+			}
+			.mp-badge--active { background: rgba(134, 239, 172, 0.15); color: #86efac; }
+			.mp-badge--revoked { background: rgba(255, 255, 255, 0.07); color: rgba(255, 255, 255, 0.4); }
+			.mp-badge--expired { background: rgba(251, 191, 36, 0.12); color: #fbbf24; }
+			.mp-chain-chip {
+				font-size: 0.6rem;
+				background: rgba(255, 255, 255, 0.07);
+				color: rgba(255, 255, 255, 0.5);
+				padding: 0.1rem 0.45rem;
+				border-radius: 999px;
+			}
+			.mp-card-scope { font-size: 0.74rem; color: rgba(255, 255, 255, 0.85); margin-bottom: 0.236rem; line-height: 1.4; }
+			.mp-card-hash { font-size: 0.6rem; font-family: monospace; color: rgba(255, 255, 255, 0.25); margin-bottom: 0.236rem; }
+			.mp-card-usage { font-size: 0.6rem; color: rgba(255, 255, 255, 0.35); margin-bottom: 0.5rem; }
+			.mp-card-addresses { display: flex; align-items: center; gap: 0.382rem; margin-bottom: 0.5rem; }
+			.mp-addr-link { font-size: 0.6rem; font-family: monospace; color: rgba(255, 255, 255, 0.4); text-decoration: none; }
+			.mp-addr-link:hover { color: rgba(255, 255, 255, 0.85); }
+			.mp-addr-arrow { font-size: 0.6rem; color: rgba(255, 255, 255, 0.2); }
+			.mp-card-actions { display: flex; gap: 0.5rem; }
+			.mp-revoke-btn {
+				background: rgba(239, 68, 68, 0.1);
+				border: 1px solid rgba(239, 68, 68, 0.25);
+				color: #f87171;
+				font-size: 0.68rem;
+				font-family: inherit;
+				padding: 0.25rem 0.65rem;
+				border-radius: 999px;
+				cursor: pointer;
+				transition: background 0.15s;
+			}
+			.mp-revoke-btn:hover:not(:disabled) { background: rgba(239, 68, 68, 0.2); }
+			.mp-revoke-btn:disabled { opacity: 0.5; cursor: default; }
+			.mp-card-error { font-size: 0.6rem; color: #fca5a5; margin-top: 0.382rem; }
+			.mp-card-pending {
+				display: flex;
+				align-items: center;
+				gap: 0.382rem;
+				font-size: 0.6rem;
+				color: rgba(255, 255, 255, 0.5);
+				margin-top: 0.382rem;
+			}
+			.mp-tx-link { color: rgba(255, 255, 255, 0.4); text-decoration: none; }
+			.mp-tx-link:hover { color: rgba(255, 255, 255, 0.8); }
+			.mp-indexer-pending { font-size: 0.6rem; color: rgba(251, 191, 36, 0.7); font-style: italic; }
+			@keyframes mp-spin { to { transform: rotate(360deg); } }
+			.mp-spinner {
+				display: inline-block;
+				width: 10px;
+				height: 10px;
+				border: 1.5px solid rgba(255, 255, 255, 0.15);
+				border-top-color: rgba(255, 255, 255, 0.6);
+				border-radius: 50%;
+				animation: mp-spin 0.7s linear infinite;
 			}
 		</style>
 	</head>

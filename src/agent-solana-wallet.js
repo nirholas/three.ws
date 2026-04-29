@@ -124,35 +124,37 @@ export async function requestAgentSolanaAirdrop(agentId) {
 // ── UI card ─────────────────────────────────────────────────────────────────
 
 const STYLE = `
-.agent-sol-wallet { border: 1px solid #e6e6ea; border-radius: 10px; padding: .85rem 1rem; margin: .85rem 0; font: 13px/1.4 system-ui, sans-serif; background: #fff; }
-.agent-sol-wallet h3 { margin: 0 0 .25rem; font-size: .95rem; font-weight: 600; color: #1a1a1a; }
-.agent-sol-wallet .sub { color: #666; font-size: .78rem; margin: 0 0 .65rem; }
-.agent-sol-wallet .addr { font-family: ui-monospace, monospace; font-size: .8rem; background: #f7f7f8; padding: .4rem .55rem; border-radius: 5px; word-break: break-all; }
+.agent-sol-wallet { border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: .85rem 1rem; margin: .85rem 0; font: 13px/1.4 system-ui, sans-serif; background: rgba(255,255,255,0.03); color: #e6e6ea; }
+.agent-sol-wallet h3 { margin: 0 0 .25rem; font-size: .95rem; font-weight: 600; color: #f2f2f5; }
+.agent-sol-wallet .sub { color: rgba(230,230,234,0.6); font-size: .78rem; margin: 0 0 .65rem; }
+.agent-sol-wallet .addr { font-family: ui-monospace, monospace; font-size: .8rem; background: rgba(255,255,255,0.05); color: #e6e6ea; padding: .4rem .55rem; border-radius: 5px; word-break: break-all; border: 1px solid rgba(255,255,255,0.06); }
 .agent-sol-wallet .addr .pfx { background: linear-gradient(90deg,#ffd54f,#ff8a65); color: #1a1a1a; padding: 0 2px; border-radius: 2px; font-weight: 600; }
 .agent-sol-wallet .row { display: flex; gap: .5rem; align-items: center; margin-top: .65rem; flex-wrap: wrap; }
-.agent-sol-wallet button { font: inherit; padding: .4rem .8rem; border-radius: 6px; border: 1px solid #ccc; background: #fff; cursor: pointer; }
-.agent-sol-wallet button.primary { background: #111; color: #fff; border-color: #111; }
+.agent-sol-wallet button { font: inherit; padding: .4rem .8rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); color: #e6e6ea; cursor: pointer; }
+.agent-sol-wallet button:hover:not(:disabled) { background: rgba(255,255,255,0.08); }
+.agent-sol-wallet button.primary { background: #f2f2f5; color: #111; border-color: #f2f2f5; }
+.agent-sol-wallet button.primary:hover:not(:disabled) { background: #fff; }
 .agent-sol-wallet button:disabled { opacity: .5; cursor: not-allowed; }
-.agent-sol-wallet .progress { font-size: .75rem; color: #555; margin-top: .55rem; font-family: ui-monospace, monospace; }
-.agent-sol-wallet .err { color: #b71c1c; font-size: .75rem; margin-top: .5rem; }
-.agent-sol-wallet .src { font-size: .7rem; color: #888; margin-left: .35rem; }
-.agent-sol-wallet .balance { display: flex; align-items: center; gap: .5rem; margin-top: .55rem; font-size: .8rem; color: #333; }
+.agent-sol-wallet .progress { font-size: .75rem; color: rgba(230,230,234,0.7); margin-top: .55rem; font-family: ui-monospace, monospace; }
+.agent-sol-wallet .err { color: #ff8a80; font-size: .75rem; margin-top: .5rem; }
+.agent-sol-wallet .src { font-size: .7rem; color: rgba(230,230,234,0.5); margin-left: .35rem; }
+.agent-sol-wallet .balance { display: flex; align-items: center; gap: .5rem; margin-top: .55rem; font-size: .8rem; color: rgba(230,230,234,0.85); }
 .agent-sol-wallet .balance .sol { font-family: ui-monospace, monospace; font-weight: 600; }
 .agent-sol-wallet .balance .net { margin-left: auto; font-size: .7rem; }
-.agent-sol-wallet .balance select { font: inherit; font-size: .7rem; padding: .15rem .25rem; border: 1px solid #ddd; border-radius: 4px; background: #fff; }
-.agent-sol-wallet .skel { color: #999; font-size: .75rem; padding: .35rem 0; }
-.agent-sol-wallet .activity { margin-top: .65rem; border-top: 1px solid #f0f0f0; padding-top: .5rem; }
-.agent-sol-wallet .activity-h { font-size: .72rem; color: #888; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .35rem; display: flex; align-items: center; gap: .35rem; }
+.agent-sol-wallet .balance select { font: inherit; font-size: .7rem; padding: .15rem .25rem; border: 1px solid rgba(255,255,255,0.12); border-radius: 4px; background: rgba(255,255,255,0.04); color: #e6e6ea; }
+.agent-sol-wallet .skel { color: rgba(230,230,234,0.4); font-size: .75rem; padding: .35rem 0; }
+.agent-sol-wallet .activity { margin-top: .65rem; border-top: 1px solid rgba(255,255,255,0.06); padding-top: .5rem; }
+.agent-sol-wallet .activity-h { font-size: .72rem; color: rgba(230,230,234,0.5); text-transform: uppercase; letter-spacing: .05em; margin-bottom: .35rem; display: flex; align-items: center; gap: .35rem; }
 .agent-sol-wallet .activity-h button { padding: .1rem .4rem; font-size: .7rem; line-height: 1; }
-.agent-sol-wallet .activity-row { display: flex; align-items: center; gap: .5rem; font-size: .75rem; padding: .25rem 0; border-bottom: 1px dashed #eee; }
+.agent-sol-wallet .activity-row { display: flex; align-items: center; gap: .5rem; font-size: .75rem; padding: .25rem 0; border-bottom: 1px dashed rgba(255,255,255,0.06); }
 .agent-sol-wallet .activity-row:last-child { border-bottom: none; }
-.agent-sol-wallet .activity-row .sig { font-family: ui-monospace, monospace; color: #555; }
+.agent-sol-wallet .activity-row .sig { font-family: ui-monospace, monospace; color: rgba(230,230,234,0.7); }
 .agent-sol-wallet .activity-row .delta { font-family: ui-monospace, monospace; margin-left: auto; }
-.agent-sol-wallet .activity-row .delta.pos { color: #1b5e20; }
-.agent-sol-wallet .activity-row .delta.neg { color: #c62828; }
-.agent-sol-wallet .activity-row .ts { color: #999; font-size: .7rem; }
-.agent-sol-wallet .activity-empty { color: #aaa; font-size: .75rem; padding: .35rem 0; }
-.agent-sol-wallet .badge-airdrop { background: #e7f5e9; color: #1b5e20; padding: .1rem .45rem; border-radius: 999px; font-size: .65rem; font-weight: 600; margin-left: .35rem; }
+.agent-sol-wallet .activity-row .delta.pos { color: #81c784; }
+.agent-sol-wallet .activity-row .delta.neg { color: #ff8a80; }
+.agent-sol-wallet .activity-row .ts { color: rgba(230,230,234,0.4); font-size: .7rem; }
+.agent-sol-wallet .activity-empty { color: rgba(230,230,234,0.4); font-size: .75rem; padding: .35rem 0; }
+.agent-sol-wallet .badge-airdrop { background: rgba(129,199,132,0.15); color: #81c784; padding: .1rem .45rem; border-radius: 999px; font-size: .65rem; font-weight: 600; margin-left: .35rem; }
 `;
 
 let _styleInjected = false;
