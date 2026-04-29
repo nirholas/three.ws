@@ -11,6 +11,7 @@
 import { ACTION_TYPES } from './agent-protocol.js';
 import { MEMORY_TYPES } from './agent-memory.js';
 import { mountPumpFunCard } from './agent-home-pumpfun.js';
+import { mountAgentSolanaWalletCard } from './agent-solana-wallet.js';
 
 const ACTION_ICONS = {
 	[ACTION_TYPES.SPEAK]: '💬',
@@ -165,8 +166,10 @@ export class AgentHome {
 		this.container.appendChild(panel);
 		this._panel = panel;
 
-		// Pump.fun card — only meaningful for Solana-registered agents.
-		if (this.identity?.meta?.chain_type === 'solana' || this.identity?.solana_address) {
+		let _pumpMounted = false;
+		const mountPumpIfReady = () => {
+			if (_pumpMounted) return;
+			if (!(this.identity?.meta?.chain_type === 'solana' || this.identity?.solana_address)) return;
 			try {
 				const skills =
 					this.skills ||
@@ -185,10 +188,28 @@ export class AgentHome {
 					memory,
 					protocol: this.protocol,
 				});
+				_pumpMounted = true;
+			} catch {
+				/* card is optional */
+			}
+		};
+
+		// Solana wallet card — owner only. Lets the user provision a random
+		// or vanity Solana wallet for the agent. On success, lazy-mount the
+		// pump.fun card if it wasn't already mounted.
+		if (this.identity?.id && this.identity?.isOwner !== false) {
+			try {
+				mountAgentSolanaWalletCard({
+					panel,
+					identity: this.identity,
+					onProvisioned: () => mountPumpIfReady(),
+				});
 			} catch {
 				/* card is optional */
 			}
 		}
+
+		mountPumpIfReady();
 
 		// Permissions manage panel — lazy load; degrades gracefully if unauthenticated
 		const agentId = this.identity.id;

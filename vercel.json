@@ -75,6 +75,7 @@
 		},
 		{ "src": "/api/avatars/([^/]+)/pin-ipfs", "dest": "/api/avatars/[id]/pin-ipfs?id=$1" },
 		{ "src": "/dashboard/storage", "dest": "/dashboard/storage.html" },
+		{ "src": "/dashboard/pump-relay", "dest": "/dashboard/pump-relay.html" },
 		{
 			"src": "/api/agents/([^/]+)/embed-policy",
 			"dest": "/api/agents/[id]/embed-policy?id=$1"
