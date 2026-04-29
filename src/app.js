@@ -428,7 +428,10 @@ class App {
 			if (homeEl) {
 				if (this.agentHome) this.agentHome.destroy();
 				homeEl.innerHTML = '';
-				this.agentHome = new AgentHome(homeEl, this.identity, protocol, this.avatar);
+				this.agentHome = new AgentHome(homeEl, this.identity, protocol, this.avatar, {
+					skills: this.agent_skills || window.VIEWER?.agent_skills,
+					memory: this.agent_memory || window.VIEWER?.agent_memory,
+				});
 				await this.agentHome.render();
 			}
 

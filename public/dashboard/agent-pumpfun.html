@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Agent · Pump.fun · Dashboard · three.ws</title>
+		<link rel="icon" href="/favicon.ico" />
+		<style>
+			:root {
+				color-scheme: dark;
+				--accent: #6a5cff;
+				--accent2: #ff5ca8;
+				--ok: #4ade80;
+				--warn: #fbbf24;
+				--err: #f87171;
+				--border: #22222e;
+				--bg: #0b0b10;
+				--panel: #14141c;
+				--panel2: #1a1a24;
+				--muted: #888;
+			}
+			* { box-sizing: border-box; }
+			body {
+				font: 15px/1.55 -apple-system, system-ui, Segoe UI, Roboto, sans-serif;
+				color: #eee;
+				margin: 0;
+				background: var(--bg);
+				min-height: 100vh;
+			}
+			a { color: #9a8cff; text-decoration: none; }
+			a:hover { text-decoration: underline; }
+			header {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: 16px 24px;
+				border-bottom: 1px solid var(--border);
+				position: sticky;
+				top: 0;
+				background: var(--bg);
+				z-index: 5;
+			}
+			.brand { font-weight: 600; letter-spacing: -0.01em; }
+			main { padding: 28px; max-width: 980px; margin: 0 auto; }
+			h1 { font-size: 22px; margin: 0 0 6px; letter-spacing: -0.01em; }
+			.sub { color: var(--muted); margin: 0 0 22px; font-size: 14px; }
+			.panel {
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 14px;
+				padding: 18px 20px;
+				margin: 0 0 18px;
+			}
+			.panel h2 {
+				margin: 0 0 12px;
+				font-size: 15px;
+				font-weight: 600;
+				letter-spacing: 0.02em;
+				color: #ddd;
+				text-transform: uppercase;
+			}
+			.row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+			.col { display: flex; flex-direction: column; gap: 10px; }
+			label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+			input, select {
+				background: var(--panel2);
+				color: #eee;
+				border: 1px solid var(--border);
+				border-radius: 8px;
+				padding: 9px 11px;
+				font: inherit;
+				min-width: 0;
+			}
+			input:focus, select:focus { outline: none; border-color: var(--accent); }
+			.field { flex: 1 1 180px; min-width: 0; }
+			.btn {
+				padding: 9px 14px;
+				border-radius: 9px;
+				border: 0;
+				font: inherit;
+				font-weight: 600;
+				cursor: pointer;
+				background: var(--accent);
+				color: #fff;
+			}
+			.btn:hover { filter: brightness(1.1); }
+			.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+			.btn.ghost { background: transparent; border: 1px solid var(--border); color: #ddd; }
+			.btn.danger { background: #3a1d22; color: var(--err); border: 1px solid #4a2329; }
+			.kv { display: grid; grid-template-columns: 140px 1fr; gap: 6px 14px; font-size: 13px; }
+			.kv dt { color: var(--muted); }
+			.kv dd { margin: 0; word-break: break-all; font-family: ui-monospace, Menlo, monospace; }
+			pre {
+				background: var(--panel2);
+				border: 1px solid var(--border);
+				border-radius: 8px;
+				padding: 10px 12px;
+				overflow-x: auto;
+				font-size: 12px;
+				color: #cbd5e1;
+				white-space: pre-wrap;
+				word-break: break-all;
+			}
+			.toast {
+				position: fixed;
+				right: 22px;
+				bottom: 22px;
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				padding: 11px 14px;
+				font-size: 13px;
+				max-width: 400px;
+				box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+				opacity: 0;
+				transform: translateY(8px);
+				transition: opacity 0.18s, transform 0.18s;
+				pointer-events: none;
+			}
+			.toast.show { opacity: 1; transform: none; }
+			.toast.ok { border-color: #1f4232; }
+			.toast.err { border-color: #4a2329; color: var(--err); }
+			table { width: 100%; border-collapse: collapse; font-size: 13px; }
+			th, td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; }
+			th { color: var(--muted); font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+			td.mono { font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+			.pnl-pos { color: var(--ok); }
+			.pnl-neg { color: var(--err); }
+			.muted { color: var(--muted); }
+			.tag { font-size: 11px; padding: 2px 7px; border-radius: 999px; background: var(--panel2); border: 1px solid var(--border); }
+			.tag.devnet { color: var(--warn); border-color: #4a3a18; }
+		</style>
+	</head>
+	<body>
+		<header>
+			<div class="row">
+				<a class="brand" href="/dashboard">← Dashboard</a>
+				<span class="muted">/</span>
+				<span class="brand">Agent · Pump.fun</span>
+			</div>
+			<div class="row">
+				<a href="/dashboard/wallets">Wallets</a>
+				<a href="/discover">Discover</a>
+			</div>
+		</header>
+
+		<main>
+			<h1>Agent control panel</h1>
+			<p class="sub">
+				Each agent has its own Solana wallet. Launch tokens, trade on the bonding curve, and watch
+				positions — the agent signs every transaction from its server-held keypair (subject to
+				its spend policy).
+			</p>
+
+			<section class="panel" id="agent-panel">
+				<h2>Agent</h2>
+				<div class="row">
+					<div class="field">
+						<label for="agent-select">Identity</label>
+						<select id="agent-select"></select>
+					</div>
+					<div class="field" style="flex: 0 0 160px">
+						<label for="network-select">Network</label>
+						<select id="network-select">
+							<option value="mainnet">mainnet</option>
+							<option value="devnet">devnet</option>
+						</select>
+					</div>
+					<div style="flex: 0 0 auto; padding-top: 19px">
+						<button class="btn ghost" id="refresh-btn">Refresh</button>
+					</div>
+				</div>
+				<div style="margin-top: 14px">
+					<dl class="kv">
+						<dt>Address</dt>
+						<dd id="agent-address" class="muted">—</dd>
+						<dt>Balance</dt>
+						<dd id="agent-balance" class="muted">—</dd>
+					</dl>
+					<div class="row" style="margin-top: 10px">
+						<button class="btn ghost" id="provision-btn" hidden>Provision Solana wallet</button>
+						<a id="explorer-link" class="muted" href="#" target="_blank" rel="noopener" hidden>Open on Solscan ↗</a>
+					</div>
+				</div>
+			</section>
+
+			<section class="panel">
+				<h2>Launch a pump.fun token</h2>
+				<div class="row">
+					<div class="field">
+						<label for="launch-name">Name</label>
+						<input id="launch-name" placeholder="My Agent Coin" />
+					</div>
+					<div class="field" style="flex: 0 0 160px">
+						<label for="launch-symbol">Symbol</label>
+						<input id="launch-symbol" placeholder="AGENT" maxlength="10" />
+					</div>
+					<div class="field" style="flex: 0 0 140px">
+						<label for="launch-vanity">Vanity prefix</label>
+						<input id="launch-vanity" placeholder="PUMP" maxlength="6" />
+					</div>
+					<div class="field" style="flex: 0 0 140px">
+						<label for="launch-sol">Initial buy (SOL)</label>
+						<input id="launch-sol" type="number" min="0" step="0.001" placeholder="0" />
+					</div>
+				</div>
+				<div class="row" style="margin-top: 10px">
+					<div class="field">
+						<label for="launch-uri">Metadata URI <span class="muted">(auto-filled to agent metadata)</span></label>
+						<input id="launch-uri" />
+					</div>
+					<div style="flex: 0 0 auto; padding-top: 19px">
+						<button class="btn" id="launch-btn">Launch</button>
+					</div>
+				</div>
+				<p class="muted" style="margin: 10px 0 0; font-size: 12px">
+					Vanity prefix uses base58 (no 0/O/I/l). 4 chars = seconds. 5+ may time out — keep it short for the demo.
+				</p>
+			</section>
+
+			<section class="panel">
+				<h2>Trade on the bonding curve</h2>
+				<div class="row">
+					<div class="field">
+						<label for="trade-mint">Mint</label>
+						<input id="trade-mint" placeholder="Mint address" />
+					</div>
+					<div class="field" style="flex: 0 0 140px">
+						<label for="trade-slippage">Slippage (bps)</label>
+						<input id="trade-slippage" type="number" min="0" max="10000" value="500" />
+					</div>
+				</div>
+				<div class="row" style="margin-top: 10px">
+					<div class="field">
+						<label for="buy-sol">Buy with SOL</label>
+						<input id="buy-sol" type="number" min="0" step="0.001" placeholder="0.05" />
+					</div>
+					<div style="flex: 0 0 auto; padding-top: 19px">
+						<button class="btn" id="buy-btn">Buy</button>
+					</div>
+					<div class="field">
+						<label for="sell-tokens">Sell tokens (base units)</label>
+						<input id="sell-tokens" placeholder="1000000000" />
+					</div>
+					<div style="flex: 0 0 auto; padding-top: 19px">
+						<button class="btn ghost" id="sell-btn">Sell</button>
+					</div>
+				</div>
+			</section>
+
+			<section class="panel">
+				<div class="row" style="justify-content: space-between">
+					<h2 style="margin: 0">Portfolio</h2>
+					<button class="btn ghost" id="portfolio-btn">Refresh portfolio</button>
+				</div>
+				<div id="portfolio-totals" class="muted" style="margin: 10px 0; font-size: 13px">—</div>
+				<div id="portfolio-table-wrap"><table id="portfolio-table"><thead><tr>
+					<th>Mint</th><th>SOL in</th><th>SOL out</th><th>Token bal</th><th>Est. value (SOL)</th><th>Unrealized PnL</th><th></th>
+				</tr></thead><tbody><tr><td colspan="7" class="muted">No positions yet.</td></tr></tbody></table></div>
+			</section>
+
+			<section class="panel">
+				<h2>Last response</h2>
+				<pre id="log">—</pre>
+			</section>
+		</main>
+
+		<div class="toast" id="toast"></div>
+
+		<script type="module">
+			const $ = (sel) => document.querySelector(sel);
+			const els = {
+				agentSelect: $('#agent-select'),
+				networkSelect: $('#network-select'),
+				refreshBtn: $('#refresh-btn'),
+				provisionBtn: $('#provision-btn'),
+				agentAddress: $('#agent-address'),
+				agentBalance: $('#agent-balance'),
+				explorerLink: $('#explorer-link'),
+				launchName: $('#launch-name'),
+				launchSymbol: $('#launch-symbol'),
+				launchVanity: $('#launch-vanity'),
+				launchSol: $('#launch-sol'),
+				launchUri: $('#launch-uri'),
+				launchBtn: $('#launch-btn'),
+				tradeMint: $('#trade-mint'),
+				tradeSlippage: $('#trade-slippage'),
+				buySol: $('#buy-sol'),
+				buyBtn: $('#buy-btn'),
+				sellTokens: $('#sell-tokens'),
+				sellBtn: $('#sell-btn'),
+				portfolioBtn: $('#portfolio-btn'),
+				portfolioTotals: $('#portfolio-totals'),
+				portfolioTable: $('#portfolio-table tbody'),
+				log: $('#log'),
+				toast: $('#toast'),
+			};
+
+			let toastTimer;
+			function toast(msg, kind = 'ok') {
+				els.toast.textContent = msg;
+				els.toast.className = `toast show ${kind}`;
+				clearTimeout(toastTimer);
+				toastTimer = setTimeout(() => (els.toast.className = 'toast'), 3500);
+			}
+
+			function logResponse(label, body) {
+				els.log.textContent = `[${label}]\n` + JSON.stringify(body, null, 2);
+			}
+
+			function explorerTxUrl(sig, network) {
+				return `https://solscan.io/tx/${sig}${network === 'devnet' ? '?cluster=devnet' : ''}`;
+			}
+
+			function explorerAddrUrl(addr, network) {
+				return `https://solscan.io/account/${addr}${network === 'devnet' ? '?cluster=devnet' : ''}`;
+			}
+
+			async function api(path, opts = {}) {
+				const res = await fetch(path, {
+					credentials: 'include',
+					headers: { 'content-type': 'application/json' },
+					...opts,
+				});
+				const body = await res.json().catch(() => ({}));
+				if (!res.ok) {
+					const code = body.error || res.status;
+					const msg = body.error_description || res.statusText;
+					throw Object.assign(new Error(`${code}: ${msg}`), { body });
+				}
+				return body;
+			}
+
+			function currentAgentId() {
+				return els.agentSelect.value || '';
+			}
+			function currentNetwork() {
+				return els.networkSelect.value;
+			}
+
+			async function loadAgents() {
+				try {
+					const { agents = [] } = await api('/api/agents');
+					els.agentSelect.innerHTML = '';
+					if (!agents.length) {
+						const opt = document.createElement('option');
+						opt.textContent = 'No agents — create one in the dashboard';
+						opt.disabled = true;
+						els.agentSelect.appendChild(opt);
+						return;
+					}
+					for (const a of agents) {
+						const opt = document.createElement('option');
+						opt.value = a.id;
+						opt.textContent = `${a.name || 'Untitled'} · ${a.id.slice(0, 8)}`;
+						els.agentSelect.appendChild(opt);
+					}
+				} catch (err) {
+					toast(err.message, 'err');
+				}
+			}
+
+			async function refreshAgent() {
+				const id = currentAgentId();
+				if (!id) return;
+				const network = currentNetwork();
+				const origin = window.location.origin;
+				els.launchUri.value = `${origin}/api/agents/pumpfun-metadata?id=${encodeURIComponent(id)}`;
+				els.agentAddress.textContent = '…';
+				els.agentBalance.textContent = '…';
+				els.explorerLink.hidden = true;
+				els.provisionBtn.hidden = true;
+				try {
+					const { data } = await api(`/api/agents/${id}/solana?network=${network}`);
+					els.agentAddress.textContent = data.address;
+					els.agentAddress.classList.remove('muted');
+					els.agentBalance.textContent = data.sol == null ? 'unknown' : `${data.sol.toFixed(6)} SOL`;
+					els.agentBalance.classList.remove('muted');
+					els.explorerLink.href = explorerAddrUrl(data.address, network);
+					els.explorerLink.hidden = false;
+				} catch (err) {
+					if (err.body?.error === 'not_found') {
+						els.agentAddress.textContent = 'No Solana wallet yet';
+						els.provisionBtn.hidden = false;
+					} else {
+						els.agentAddress.textContent = err.message;
+					}
+				}
+			}
+
+			async function provision() {
+				const id = currentAgentId();
+				if (!id) return;
+				try {
+					await api(`/api/agents/${id}/solana`, { method: 'POST' });
+					toast('Wallet provisioned');
+					await refreshAgent();
+				} catch (err) {
+					toast(err.message, 'err');
+				}
+			}
+
+			async function launchToken() {
+				const id = currentAgentId();
+				if (!id) return;
+				const body = {
+					name: els.launchName.value.trim(),
+					symbol: els.launchSymbol.value.trim().toUpperCase(),
+					uri: els.launchUri.value.trim(),
+					network: currentNetwork(),
+				};
+				if (!body.name || !body.symbol || !body.uri) {
+					toast('Name, symbol, and metadata URI are required', 'err');
+					return;
+				}
+				const vanity = els.launchVanity.value.trim();
+				if (vanity) body.vanityPrefix = vanity;
+				const sol = parseFloat(els.launchSol.value);
+				if (sol > 0) body.solAmount = sol;
+				els.launchBtn.disabled = true;
+				els.launchBtn.textContent = vanity ? 'Grinding & launching…' : 'Launching…';
+				try {
+					const { data } = await api(`/api/agents/${id}/pumpfun/launch`, {
+						method: 'POST',
+						body: JSON.stringify(body),
+					});
+					logResponse('launch', data);
+					toast(`Launched ${data.mint.slice(0, 8)}… (${data.vanity_iterations} attempts)`);
+					els.tradeMint.value = data.mint;
+					await refreshAgent();
+					await refreshPortfolio();
+				} catch (err) {
+					logResponse('launch error', err.body || { error: err.message });
+					toast(err.message, 'err');
+				} finally {
+					els.launchBtn.disabled = false;
+					els.launchBtn.textContent = 'Launch';
+				}
+			}
+
+			async function buy() {
+				const id = currentAgentId();
+				const mint = els.tradeMint.value.trim();
+				const solAmount = parseFloat(els.buySol.value);
+				if (!id || !mint || !solAmount) {
+					toast('Mint and SOL amount required', 'err');
+					return;
+				}
+				els.buyBtn.disabled = true;
+				try {
+					const { data } = await api(`/api/agents/${id}/pumpfun/buy`, {
+						method: 'POST',
+						body: JSON.stringify({
+							mint,
+							solAmount,
+							slippageBps: parseInt(els.tradeSlippage.value, 10) || 500,
+							network: currentNetwork(),
+						}),
+					});
+					logResponse('buy', data);
+					toast(`Bought ${solAmount} SOL of ${mint.slice(0, 8)}…`);
+					await refreshAgent();
+					await refreshPortfolio();
+				} catch (err) {
+					logResponse('buy error', err.body || { error: err.message });
+					toast(err.message, 'err');
+				} finally {
+					els.buyBtn.disabled = false;
+				}
+			}
+
+			async function sell() {
+				const id = currentAgentId();
+				const mint = els.tradeMint.value.trim();
+				const tokenAmount = els.sellTokens.value.trim();
+				if (!id || !mint || !tokenAmount) {
+					toast('Mint and token amount required', 'err');
+					return;
+				}
+				els.sellBtn.disabled = true;
+				try {
+					const { data } = await api(`/api/agents/${id}/pumpfun/sell`, {
+						method: 'POST',
+						body: JSON.stringify({
+							mint,
+							tokenAmount,
+							slippageBps: parseInt(els.tradeSlippage.value, 10) || 500,
+							network: currentNetwork(),
+						}),
+					});
+					logResponse('sell', data);
+					toast(`Sold ${tokenAmount} of ${mint.slice(0, 8)}…`);
+					await refreshAgent();
+					await refreshPortfolio();
+				} catch (err) {
+					logResponse('sell error', err.body || { error: err.message });
+					toast(err.message, 'err');
+				} finally {
+					els.sellBtn.disabled = false;
+				}
+			}
+
+			function pnlClass(n) {
+				if (n == null) return 'muted';
+				if (n > 0.000001) return 'pnl-pos';
+				if (n < -0.000001) return 'pnl-neg';
+				return '';
+			}
+			function fmtSol(n) {
+				if (n == null || Number.isNaN(n)) return '—';
+				return Number(n).toFixed(6);
+			}
+
+			async function refreshPortfolio() {
+				const id = currentAgentId();
+				if (!id) return;
+				const network = currentNetwork();
+				try {
+					const { data } = await api(`/api/agents/${id}/pumpfun/portfolio?network=${network}`);
+					logResponse('portfolio', data);
+					const t = data.totals || {};
+					els.portfolioTotals.innerHTML =
+						`SOL in: <b>${fmtSol(t.sol_in)}</b> · SOL out: <b>${fmtSol(t.sol_out)}</b> · ` +
+						`Est. value: <b>${fmtSol(t.estimated_value_sol)}</b> · Unrealized: ` +
+						`<b class="${pnlClass(t.unrealized_pnl_sol)}">${fmtSol(t.unrealized_pnl_sol)}</b>`;
+
+					const tbody = els.portfolioTable;
+					if (!data.positions.length) {
+						tbody.innerHTML = '<tr><td colspan="7" class="muted">No positions yet.</td></tr>';
+						return;
+					}
+					tbody.innerHTML = '';
+					for (const p of data.positions) {
+						const tr = document.createElement('tr');
+						const grad = p.graduated ? ' <span class="tag">graduated</span>' : '';
+						const err = p.error ? ` <span class="tag" style="color:var(--err)">${p.error}</span>` : '';
+						tr.innerHTML =
+							`<td class="mono"><a href="https://pump.fun/${p.mint}" target="_blank" rel="noopener">${p.mint.slice(0, 12)}…</a>${grad}${err}</td>` +
+							`<td>${fmtSol(p.sol_in)}</td>` +
+							`<td>${fmtSol(p.sol_out)}</td>` +
+							`<td class="mono">${p.token_balance}</td>` +
+							`<td>${fmtSol(p.estimated_sol_value)}</td>` +
+							`<td class="${pnlClass(p.unrealized_pnl_sol)}">${fmtSol(p.unrealized_pnl_sol)}</td>` +
+							`<td><button class="btn ghost" data-mint="${p.mint}" data-action="use">Use</button></td>`;
+						tbody.appendChild(tr);
+					}
+					tbody.querySelectorAll('button[data-action="use"]').forEach((b) => {
+						b.addEventListener('click', () => {
+							els.tradeMint.value = b.dataset.mint;
+							toast('Mint copied to trade panel');
+						});
+					});
+				} catch (err) {
+					els.portfolioTotals.textContent = err.message;
+				}
+			}
+
+			els.agentSelect.addEventListener('change', async () => {
+				await refreshAgent();
+				await refreshPortfolio();
+			});
+			els.networkSelect.addEventListener('change', async () => {
+				const isDev = currentNetwork() === 'devnet';
+				document.querySelectorAll('.network-tag').forEach((e) => (e.className = `tag${isDev ? ' devnet' : ''}`));
+				await refreshAgent();
+				await refreshPortfolio();
+			});
+			els.refreshBtn.addEventListener('click', () => {
+				refreshAgent();
+				refreshPortfolio();
+			});
+			els.provisionBtn.addEventListener('click', provision);
+			els.launchBtn.addEventListener('click', launchToken);
+			els.buyBtn.addEventListener('click', buy);
+			els.sellBtn.addEventListener('click', sell);
+			els.portfolioBtn.addEventListener('click', refreshPortfolio);
+
+			(async () => {
+				await loadAgents();
+				if (currentAgentId()) {
+					await refreshAgent();
+					await refreshPortfolio();
+				}
+			})();
+		</script>
+	</body>
+</html>

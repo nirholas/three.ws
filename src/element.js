@@ -146,8 +146,43 @@ const BASE_STYLE = `
 		backdrop-filter: blur(12px);
 	}
 	.chat:empty { display: none; }
-	.msg { margin: 4px 0; }
+	.msg { margin: 6px 0; padding: 8px 10px; border-radius: 10px; border-left: 3px solid transparent; transition: border-color .2s; }
+	.msg.celebration { border-left-color: rgba(34,197,94,0.85); background: rgba(34,197,94,0.06); }
+	.msg.concern { border-left-color: rgba(239,68,68,0.85); background: rgba(239,68,68,0.06); }
+	.msg.curiosity { border-left-color: rgba(59,130,246,0.7); background: rgba(59,130,246,0.05); }
 	.msg .role { opacity: 0.55; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+	.msg .body { white-space: pre-wrap; }
+	/* Suggestion chips when the conversation is empty */
+	.suggest-row { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 0 0; }
+	.suggest-chip { font: 600 11px/1 var(--agent-chat-font); color: var(--agent-on-surface); background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); padding: 6px 10px; border-radius: 999px; cursor: pointer; transition: all .12s; }
+	.suggest-chip:hover { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.18); }
+	/* Tool-call indicator near the bottom of the canvas */
+	.tool-indicator { position: absolute; left: 50%; bottom: 96px; transform: translateX(-50%); display: none; align-items: center; gap: 8px; padding: 6px 12px; background: var(--agent-surface); color: var(--agent-on-surface); border-radius: 999px; font: 12px var(--agent-chat-font); backdrop-filter: blur(12px); pointer-events: none; opacity: 0; transition: opacity .15s; z-index: 3; }
+	.tool-indicator[data-active="true"] { display: inline-flex; opacity: 1; }
+	.tool-indicator .spin { width: 10px; height: 10px; border-radius: 50%; border: 2px solid rgba(255,255,255,.25); border-top-color: var(--agent-accent); animation: spin .9s linear infinite; }
+	@keyframes spin { to { transform: rotate(360deg); } }
+	/* Sticky alert banner (e.g. rug flag) */
+	.alert-banner { position: absolute; top: 12px; left: 12px; right: 12px; padding: 8px 12px; border-radius: 10px; font: 600 12px/1.4 var(--agent-chat-font); display: none; align-items: center; gap: 8px; backdrop-filter: blur(12px); z-index: 3; }
+	.alert-banner[data-active="true"] { display: flex; }
+	.alert-banner.warn { background: rgba(234,179,8,.15); color: #fde68a; border: 1px solid rgba(234,179,8,.4); }
+	.alert-banner.danger { background: rgba(239,68,68,.18); color: #fecaca; border: 1px solid rgba(239,68,68,.4); }
+	.alert-banner button { background: none; border: 0; color: inherit; font: 600 14px var(--agent-chat-font); cursor: pointer; padding: 0 4px; opacity: .7; }
+	.alert-banner button:hover { opacity: 1; }
+	/* Rich token card unfurl rendered inline in chat */
+	.token-card { margin: 6px 0; padding: 10px 12px; background: rgba(0,0,0,.25); border: 1px solid rgba(255,255,255,.08); border-radius: 10px; font: 12px var(--agent-chat-font); color: var(--agent-on-surface); }
+	.token-card.solana { border-left: 3px solid #c084fc; }
+	.token-card-header { display: flex; align-items: center; gap: 8px; }
+	.token-card-symbol { font: 700 14px var(--agent-chat-font); }
+	.token-card-name { opacity: .7; }
+	.token-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; margin-top: 8px; }
+	.token-card-stat { display: flex; flex-direction: column; gap: 2px; }
+	.token-card-stat .label { font: 600 9px/1 var(--agent-chat-font); letter-spacing: .06em; text-transform: uppercase; opacity: .5; }
+	.token-card-stat .value { font: 600 13px var(--agent-chat-font); font-variant-numeric: tabular-nums; }
+	.token-card-bar { margin-top: 8px; height: 6px; background: rgba(255,255,255,.08); border-radius: 999px; overflow: hidden; }
+	.token-card-bar .fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #c084fc); transition: width .4s; }
+	.token-card-bar .fill.danger { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+	.token-card .flags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+	.token-card .flag { font: 600 9px/1 var(--agent-chat-font); letter-spacing: .04em; text-transform: uppercase; padding: 3px 6px; border-radius: 4px; background: rgba(239,68,68,.18); color: #fecaca; border: 1px solid rgba(239,68,68,.32); }
 	.input-row {
 		display: flex;
 		gap: 6px;
@@ -415,7 +450,81 @@ class Agent3DElement extends HTMLElement {
 			this._chatEl = chat;
 			this._inputEl = input;
 			this._micEl = micBtn;
+
+			// Tool-call indicator ("Checking the chain…").
+			const toolInd = document.createElement('div');
+			toolInd.className = 'tool-indicator';
+			toolInd.part = 'tool-indicator';
+			toolInd.innerHTML = '<span class="spin"></span><span class="label">Working…</span>';
+			this.shadowRoot.appendChild(toolInd);
+			this._toolIndicatorEl = toolInd;
+
+			// Sticky alert banner (rug flags etc.).
+			const banner = document.createElement('div');
+			banner.className = 'alert-banner';
+			banner.part = 'alert-banner';
+			banner.innerHTML = '<span class="msg-text"></span><button aria-label="Dismiss">×</button>';
+			banner.querySelector('button').addEventListener('click', () => {
+				banner.dataset.active = 'false';
+			});
+			this.shadowRoot.appendChild(banner);
+			this._alertBannerEl = banner;
+
+			// Suggestion chips visible while the chat is empty.
+			this._renderSuggestions();
 		}
+	}
+
+	_renderSuggestions() {
+		if (!this._chatEl) return;
+		const existing = this._chatEl.querySelector('.suggest-row');
+		if (existing) existing.remove();
+		const row = document.createElement('div');
+		row.className = 'suggest-row';
+		const chips = this._suggestionChips();
+		for (const c of chips) {
+			const btn = document.createElement('button');
+			btn.className = 'suggest-chip';
+			btn.textContent = c.label;
+			btn.addEventListener('click', () => {
+				row.remove();
+				this.say(c.prompt);
+			});
+			row.appendChild(btn);
+		}
+		this._chatEl.appendChild(row);
+	}
+
+	_suggestionChips() {
+		// Tailor the chip set to which skills are installed; fall back to a
+		// generic greeting set otherwise. Skill names come from the manifest,
+		// not the registry, so this works even before runtime boot.
+		const installed = new Set(
+			(this._manifest?.skills || []).map((s) => {
+				if (typeof s === 'string') return s.replace(/\/$/, '').split('/').pop();
+				if (s?.id) return s.id;
+				if (s?.uri) return String(s.uri).replace(/\/$/, '').split('/').pop();
+				return '';
+			}),
+		);
+		const chips = [];
+		if (installed.has('pump-fun')) {
+			chips.push(
+				{ label: '🔥 Trending now', prompt: 'What are the trending tokens on pump.fun right now?' },
+				{ label: '👑 King of the hill', prompt: "Who's the king of the hill on pump.fun?" },
+				{ label: '🆕 New launches', prompt: 'Show me the newest pump.fun launches.' },
+			);
+		}
+		if (installed.has('dca')) {
+			chips.push({ label: '💸 Set up DCA', prompt: 'Help me set up a weekly USDC → WETH DCA.' });
+		}
+		if (chips.length === 0) {
+			chips.push(
+				{ label: '👋 Say hi', prompt: 'Hi! Who are you?' },
+				{ label: '🎬 Show your animations', prompt: 'What animations can you do?' },
+			);
+		}
+		return chips.slice(0, 4);
 	}
 
 	_isResponsive() {

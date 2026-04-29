@@ -326,7 +326,7 @@ export function registerPumpFunComposeSkills(skills) {
 			const devSellLimit = cfg(ctx, 'exitOnDevSellPct');
 			const state = await loadState(ctx?.memory, sessionId, { exited: new Set(), log: [] });
 
-			while (Date.now() < deadline && state.exited.size < args.mints.length) {
+			while (!args.signal?.aborted && Date.now() < deadline && state.exited.size < args.mints.length) {
 				for (const mint of args.mints) {
 					if (state.exited.has(mint)) continue;
 					const [holders, trades, details] = await Promise.all([

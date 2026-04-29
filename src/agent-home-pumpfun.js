@@ -46,7 +46,23 @@ export function mountPumpFunCard({ panel, identity, skills, memory, protocol }) 
 		quote: null,
 		quoting: false,
 		signer: 'agent', // 'agent' = server-side agent wallet; 'owner' = browser wallet
+		// vanity launch
+		vanityEnabled: false,
+		vanitySuffix: 'pump',
+		vanityProgress: null,
+		// auto-trader
+		botOpen: false,
+		botMode: 'auto-snipe',
+		botSimulate: true,
+		botDurationSec: 60,
+		botPerTradeSol: 0.05,
+		botCapSol: 0.5,
+		botQuery: '',
+		botWallet: '',
+		botSessionId: `s-${Date.now().toString(36)}`,
+		botRunning: false,
 	};
+	let botAbort = null;
 	let refreshTimer = null;
 	let quoteTimer = null;
 	let unsubProtocol = null;
@@ -62,6 +78,12 @@ export function mountPumpFunCard({ panel, identity, skills, memory, protocol }) 
 				<span class="pumpfun-card-title">Launch coin on pump.fun</span>
 			</div>
 			<p class="pumpfun-card-sub">Mint a token whose metadata is your 3D avatar. The agent signs from its own wallet.</p>
+			<label class="pumpfun-vanity-row" title="Grind a custom mint address ending in your suffix. Slower, but distinctive.">
+				<input type="checkbox" data-action="toggle-vanity" ${state.vanityEnabled ? 'checked' : ''}>
+				<span>Vanity address ends with</span>
+				<input type="text" data-action="vanity-suffix" value="${escapeAttr(state.vanitySuffix)}" maxlength="6" ${state.vanityEnabled ? '' : 'disabled'} class="pumpfun-vanity-input">
+			</label>
+			${state.vanityProgress ? `<div class="pumpfun-vanity-progress">grinding… ${formatNumber(state.vanityProgress.rate)}/s · eta ${escapeHtml(state.vanityProgress.eta)}</div>` : ''}
 			<button class="pumpfun-btn pumpfun-btn--primary" id="pf-launch-btn">
 				Launch ${deriveSymbol(identity.name)}
 			</button>
@@ -100,8 +122,47 @@ export function mountPumpFunCard({ panel, identity, skills, memory, protocol }) 
 					<button class="pumpfun-btn ${s.tradeOpen === 'buy' ? 'pumpfun-btn--active' : ''}" data-action="toggle-buy">Buy</button>
 					<button class="pumpfun-btn ${s.tradeOpen === 'sell' ? 'pumpfun-btn--active' : ''}" data-action="toggle-sell">Sell</button>
 					<button class="pumpfun-btn pumpfun-btn--ghost" data-action="claim">Claim fees</button>
+					<button class="pumpfun-btn ${s.botOpen ? 'pumpfun-btn--active' : ''}" data-action="toggle-bot">🤖 Auto</button>
 				</div>
 				${s.tradeOpen ? tradePanel(s) : ''}
+				${s.botOpen ? botPanel(s) : ''}
+			</div>
+		`;
+	};
+
+	const botPanel = (s) => {
+		const modes = [
+			['research-and-buy', 'Research & Buy'],
+			['auto-snipe', 'Auto-Snipe'],
+			['copy-trade', 'Copy-Trade'],
+			['rug-exit-watch', 'Rug Exit'],
+		];
+		const needsQuery = s.botMode === 'research-and-buy';
+		const needsWallet = s.botMode === 'copy-trade';
+		const isExitWatch = s.botMode === 'rug-exit-watch';
+		return `
+			<div class="pumpfun-trade pumpfun-bot">
+				<div class="pumpfun-bot-modes">
+					${modes.map(([k, label]) => `<button class="pumpfun-btn ${s.botMode === k ? 'pumpfun-btn--active' : ''}" data-action="bot-mode" data-mode="${k}" ${s.botRunning ? 'disabled' : ''}>${label}</button>`).join('')}
+				</div>
+				${needsQuery ? `<label class="pumpfun-trade-label"><span>Query</span><input class="pumpfun-trade-input" data-bot-field="query" type="text" placeholder="name, symbol, or mint" value="${escapeAttr(s.botQuery)}" ${s.botRunning ? 'disabled' : ''}></label>` : ''}
+				${needsWallet ? `<label class="pumpfun-trade-label"><span>Wallet</span><input class="pumpfun-trade-input" data-bot-field="wallet" type="text" placeholder="creator/wallet pubkey" value="${escapeAttr(s.botWallet)}" ${s.botRunning ? 'disabled' : ''}></label>` : ''}
+				<div class="pumpfun-bot-grid">
+					<label class="pumpfun-trade-label"><span>Duration (s)</span><input class="pumpfun-trade-input" data-bot-field="durationSec" type="number" min="10" max="3600" value="${s.botDurationSec}" ${s.botRunning ? 'disabled' : ''}></label>
+					${isExitWatch ? '' : `<label class="pumpfun-trade-label"><span>Per-trade SOL</span><input class="pumpfun-trade-input" data-bot-field="perTradeSol" type="number" min="0.001" step="0.001" value="${s.botPerTradeSol}" ${s.botRunning ? 'disabled' : ''}></label>`}
+					${isExitWatch ? '' : `<label class="pumpfun-trade-label"><span>Cap SOL</span><input class="pumpfun-trade-input" data-bot-field="capSol" type="number" min="0.001" step="0.01" value="${s.botCapSol}" ${s.botRunning ? 'disabled' : ''}></label>`}
+				</div>
+				<label class="pumpfun-vanity-row">
+					<input type="checkbox" data-bot-field="simulate" ${s.botSimulate ? 'checked' : ''} ${s.botRunning ? 'disabled' : ''}>
+					<span>Simulate (dry-run, no signing)</span>
+				</label>
+				<div class="pumpfun-trade-actions">
+					<button class="pumpfun-btn pumpfun-btn--ghost" data-action="close-bot" ${s.botRunning ? 'disabled' : ''}>Close</button>
+					${s.botRunning
+						? `<button class="pumpfun-btn pumpfun-btn--primary" data-action="bot-stop">Stop</button>`
+						: `<button class="pumpfun-btn pumpfun-btn--primary" data-action="bot-run">${s.botSimulate ? 'Run dry-run' : 'Run live'}</button>`}
+				</div>
+				${s.botRunning ? `<div class="pumpfun-quote"><span class="pumpfun-quote-status">Running ${escapeHtml(s.botMode)} (session ${escapeHtml(s.botSessionId)})…</span></div>` : ''}
 			</div>
 		`;
 	};

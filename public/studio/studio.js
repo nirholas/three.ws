@@ -61,6 +61,7 @@ const DEMO_WIDGET_IDS = Object.freeze({
 	'talking-agent': 'wdgt_demo_talking',
 	passport: 'wdgt_demo_passprt',
 	'hotspot-tour': 'wdgt_demo_hotspot',
+	'pumpfun-feed': 'wdgt_demo_pumpfun',
 });
 
 const BRAND_DEFAULTS = Object.freeze({
@@ -104,6 +105,7 @@ const TYPE_DEFAULTS = {
 		rotationSpeed: 0.6,
 	},
 	'hotspot-tour': { hotspots: [] },
+	'pumpfun-feed': { kind: 'all', minTier: '', autoNarrate: true, maxCards: 8 },
 };
 
 function defaultConfig(type) {
@@ -318,6 +320,62 @@ function renderTypeFields() {
 			}),
 		);
 	}
+	if (state.type === 'pumpfun-feed') {
+		wrap.appendChild(
+			selectField('kind', 'Event kind', state.config.kind ?? 'all', [
+				['all', 'All events'],
+				['claims', 'Claims only'],
+				['graduations', 'Graduations only'],
+			]),
+		);
+		wrap.appendChild(
+			selectField('minTier', 'Minimum tier (claims)', state.config.minTier ?? '', [
+				['', 'Any'],
+				['notable', 'Notable+'],
+				['influencer', 'Influencer+'],
+				['mega', 'Mega only'],
+			]),
+		);
+		wrap.appendChild(
+			boolField('autoNarrate', 'Avatar narrates events', state.config.autoNarrate !== false),
+		);
+		wrap.appendChild(
+			numberField('maxCards', 'Max cards on screen', state.config.maxCards ?? 8, {
+				min: 1,
+				max: 50,
+				step: 1,
+			}),
+		);
+	}
+}
+
+function selectField(name, label, value, options) {
+	const f = document.createElement('label');
+	f.className = 'field';
+	const opts = options
+		.map(
+			([v, l]) =>
+				`<option value="${attr(v)}"${v === value ? ' selected' : ''}>${escapeHtml(l)}</option>`,
+		)
+		.join('');
+	f.innerHTML = `<span>${escapeHtml(label)}</span><select name="${attr(name)}">${opts}</select>`;
+	f.querySelector('select').addEventListener('change', (e) => {
+		state.config[name] = e.target.value;
+		schedulePreview();
+	});
+	return f;
+}
+
+function boolField(name, label, checked) {
+	const f = document.createElement('label');
+	f.className = 'field';
+	f.innerHTML = `<input type="checkbox" name="${attr(name)}"${checked ? ' checked' : ''}>
+		<span>${escapeHtml(label)}</span>`;
+	f.querySelector('input').addEventListener('change', (e) => {
+		state.config[name] = e.target.checked;
+		schedulePreview();
+	});
+	return f;
 }
 
 function numberField(name, label, value, { min, max, step }) {

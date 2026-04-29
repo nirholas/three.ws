@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>Pump.fun live feed — three.ws demo</title>
+	<style>
+		:root { color-scheme: dark; }
+		html, body { margin: 0; height: 100%; background: #0a0a0a; color: #f0f0f0;
+			font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
+		header { padding: 14px 20px; border-bottom: 1px solid #1f1f1f;
+			display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+		header h1 { margin: 0; font-size: 16px; font-weight: 600; }
+		header .desc { color: #888; font-size: 13px; }
+		header .ctl { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+		header select, header input[type="text"], header button {
+			background: #161616; color: #f0f0f0; border: 1px solid #2a2a2a;
+			border-radius: 6px; padding: 6px 10px; font-size: 13px; }
+		header button { cursor: pointer; }
+		header button:hover { background: #222; }
+		main { position: relative; height: calc(100% - 56px); }
+		#stage { position: absolute; inset: 0; }
+		.notice { position: absolute; left: 16px; bottom: 16px; max-width: 360px;
+			background: #161616; border: 1px solid #2a2a2a; border-radius: 8px;
+			padding: 10px 12px; font-size: 12px; color: #aaa; z-index: 10; }
+		.notice b { color: #f0f0f0; }
+		a { color: #8b5cf6; }
+	</style>
+</head>
+<body>
+	<header>
+		<h1>✦ Pump.fun Live Feed</h1>
+		<span class="desc">3D agent narrates pump.fun activity in real time.</span>
+		<div class="ctl">
+			<label style="font-size:12px;color:#888">Filter mint
+				<input id="ctl-mint" type="text" placeholder="(any)" size="22" />
+			</label>
+			<select id="ctl-tier" title="Minimum tier for claim cards">
+				<option value="">Tier: any</option>
+				<option value="notable">Notable+</option>
+				<option value="influencer">Influencer+</option>
+				<option value="mega">Mega only</option>
+			</select>
+			<button id="ctl-toggle" type="button">Pause narration</button>
+		</div>
+	</header>
+	<main>
+		<div id="stage">
+			<agent-3d
+				id="pumpfun-agent"
+				model="/avatars/cz.glb"
+				widget="wdgt_demo_pumpfun"
+				kiosk="true"
+				eager
+				style="display:block;width:100%;height:100%;background:#0a0a0a"
+			></agent-3d>
+		</div>
+		<div class="notice">
+			<b>Heads up:</b> set <code>PUMPFUN_BOT_URL</code> in your env to enable the live feed.
+			Without it the SSE stream returns 503 and no cards stream in. See
+			<a href="/docs/solana-pumpfun.md">solana-pumpfun.md</a>.
+		</div>
+	</main>
+	<script type="module">
+		import './agent-3d/latest/agent-3d.js?demo=pumpfun';
+	</script>
+	<script>
+		// Wire the toolbar to the live-mounted widget overlay.
+		const stage = document.querySelector('main');
+
+		document.getElementById('ctl-mint').addEventListener('input', (e) => {
+			const mint = e.target.value.trim();
+			stage.dispatchEvent(
+				new CustomEvent('pumpfun-feed:focus-mint', {
+					detail: { mint: mint || null },
+					bubbles: true,
+				}),
+			);
+		});
+
+		document.getElementById('ctl-tier').addEventListener('change', (e) => {
+			// Tier filter requires reconnecting the SSE; reload the agent element.
+			const a = document.getElementById('pumpfun-agent');
+			const tier = e.target.value;
+			const url = new URL(location.href);
+			if (tier) url.searchParams.set('minTier', tier);
+			else url.searchParams.delete('minTier');
+			history.replaceState(null, '', url);
+			location.reload();
+		});
+
+		const toggle = document.getElementById('ctl-toggle');
+		let muted = false;
+		toggle.addEventListener('click', () => {
+			muted = !muted;
+			toggle.textContent = muted ? 'Resume narration' : 'Pause narration';
+			// The agent protocol bus is exposed via window.VIEWER.agent_protocol once mounted.
+			const proto = window.VIEWER?.agent_protocol;
+			if (!proto) return;
+			if (muted) {
+				proto._mutedSpeak = (e) => e.stopImmediatePropagation();
+				proto.addEventListener('speak', proto._mutedSpeak, true);
+			} else if (proto._mutedSpeak) {
+				proto.removeEventListener('speak', proto._mutedSpeak, true);
+				proto._mutedSpeak = null;
+			}
+		});
+	</script>
+</body>
+</html>

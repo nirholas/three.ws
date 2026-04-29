@@ -125,6 +125,25 @@ export const DEMO_WIDGETS = {
 			hotspots: [],
 		},
 	}),
+
+	wdgt_demo_pumpfun: fixture({
+		id: 'wdgt_demo_pumpfun',
+		type: 'pumpfun-feed',
+		name: 'Pump.fun Live Feed',
+		modelUrl: SOLDIER,
+		config: {
+			background: '#0a0a0a',
+			accent: '#8b5cf6',
+			caption: '',
+			showControls: false,
+			autoRotate: true,
+			envPreset: 'neutral',
+			kind: 'all',
+			minTier: '',
+			autoNarrate: true,
+			maxCards: 8,
+		},
+	}),
 };
 
 export function isDemoWidgetId(id) {

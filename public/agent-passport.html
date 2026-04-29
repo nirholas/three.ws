@@ -200,6 +200,7 @@
 			if (!asset) { showError('identity', 'Enter an asset pubkey above.'); return; }
 			if (!PUBKEY_RE.test(asset)) { showError('identity', 'That doesn’t look like a Solana pubkey.'); return; }
 
+			stopPolling();
 			history.replaceState({}, '', `?asset=${asset}&network=${network}`);
 			$('load').disabled = true;
 			showSkeletons('identity', 1);
@@ -209,17 +210,25 @@
 			$('filters').hidden = true;
 
 			try {
-				const [card, rep, atts] = await Promise.all([
+				const [card, rep, atts, hist] = await Promise.all([
 					fetch(`/api/agents/solana-card?asset=${asset}`).then((r) => r.ok ? r.json() : null).catch(() => null),
 					fetch(`/api/agents/solana-reputation?asset=${asset}&network=${network}`).then((r) => r.json()),
 					fetch(`/api/agents/solana-attestations?asset=${asset}&network=${network}&limit=25`).then((r) => r.json()),
+					fetch(`/api/agents/solana-reputation-history?asset=${asset}&network=${network}&days=30`).then((r) => r.json()).catch(() => ({ series: [] })),
 				]);
 
-				renderIdentity(card, rep, asset, network);
+				const initialRows = atts.data || [];
+				renderIdentity(card, rep, asset, network, hist?.series || []);
 				renderReputation(rep);
-				cache = { rows: atts.data || [], net: network };
+				cache = {
+					rows: initialRows,
+					net: network,
+					knownSigs: new Set(initialRows.map((r) => r.signature)),
+					freshSigs: new Set(),
+				};
 				$('filters').hidden = false;
 				renderAttestations();
+				startPolling(asset, network);
 			} catch (e) {
 				showError('identity', `Failed to load: ${e.message || e}`);
 			} finally {
@@ -227,13 +236,64 @@
 			}
 		}
 
-		function renderIdentity(card, rep, asset, network) {
+		// -- Live polling --------------------------------------------------
+
+		function startPolling(asset, network) {
+			stopPolling();
+			setLive(true);
+			const tick = async () => {
+				if (document.hidden) return;
+				try {
+					const [atts, rep] = await Promise.all([
+						fetch(`/api/agents/solana-attestations?asset=${asset}&network=${network}&limit=25`).then((r) => r.json()),
+						fetch(`/api/agents/solana-reputation?asset=${asset}&network=${network}`).then((r) => r.json()),
+					]);
+					const rows = atts.data || [];
+					const freshSigs = new Set();
+					for (const r of rows) {
+						if (!cache.knownSigs.has(r.signature)) freshSigs.add(r.signature);
+					}
+					if (freshSigs.size > 0) {
+						cache.rows = rows;
+						cache.knownSigs = new Set(rows.map((r) => r.signature));
+						cache.freshSigs = freshSigs;
+						renderAttestations();
+						renderReputation(rep);
+						// clear the highlight class after the animation
+						setTimeout(() => { cache.freshSigs = new Set(); }, 4500);
+					}
+				} catch {
+					// transient — stay live, try again next tick
+				}
+			};
+			pollTimer = setInterval(tick, POLL_MS);
+		}
+
+		function stopPolling() {
+			if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+			setLive(false);
+		}
+
+		function setLive(on) {
+			const el = $('live');
+			el.classList.toggle('on', on);
+			el.classList.toggle('off', !on);
+			el.textContent = on ? 'live' : 'off';
+		}
+
+		document.addEventListener('visibilitychange', () => {
+			if (!pollTimer) return;
+			setLive(!document.hidden);
+		});
+
+		function renderIdentity(card, rep, asset, network, history = []) {
 			const id = card?.identity || {};
 			const name = card?.name || '(unindexed agent)';
 			const trust = computeTrust(rep);
 			const lastIndexed = rep?.last_indexed_at
 				? `indexed ${new Date(rep.last_indexed_at).toLocaleString()}`
 				: 'never indexed';
+			const sparkSvg = renderSparkline(history);
 			const vanity = id.vanity_prefix && asset.startsWith(id.vanity_prefix) ? id.vanity_prefix : null;
 			const shortAddrHtml = vanity
 				? `<span class="addr-prefix">${escapeHtml(vanity)}</span>${escapeHtml(asset.slice(vanity.length, 4))}…${escapeHtml(asset.slice(-4))}`
@@ -258,6 +318,7 @@
 							<div style="font-weight:600">Trust grade</div>
 							<div class="trust-summary">${escapeHtml(trust.summary)}</div>
 						</div>
+						<div class="spark" title="30-day score history">${sparkSvg}</div>
 					</div>
 				</div>`;
 			$('identity').querySelectorAll('[data-copy]').forEach((b) => {
@@ -327,8 +388,9 @@
 				if (row.disputed) flags.push(pill('disputed', 'warn'));
 				if (row.revoked)  flags.push(pill('revoked',  'bad'));
 				if (row.payload?.source?.startsWith?.('pumpkit.')) flags.push(pill(row.payload.source, 'info'));
+				const fresh = cache.freshSigs.has(row.signature) ? ' fresh' : '';
 				return `
-					<div class="att">
+					<div class="att${fresh}">
 						<div class="kind-${k}"><strong>${escapeHtml(k)}</strong></div>
 						<div>
 							<div>${escapeHtml(describe(row))}</div>
@@ -368,6 +430,28 @@
 			return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
 		}
 
+		// SVG sparkline of historical scores (1..5 fixed y-axis).
+		function renderSparkline(series) {
+			if (!series || series.length < 2) {
+				return `<div class="spark-empty">${series?.length ? '1 day' : 'no history'}</div>`;
+			}
+			const W = 120, H = 32, P = 2;
+			const xs = series.map((_, i) => P + (i * (W - 2 * P)) / (series.length - 1));
+			const ys = series.map((d) => {
+				const score = Math.max(1, Math.min(5, d.score || 0));
+				return P + (1 - (score - 1) / 4) * (H - 2 * P);
+			});
+			const path = xs.map((x, i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${ys[i].toFixed(1)}`).join(' ');
+			const lastScore = series[series.length - 1].score;
+			const stroke = lastScore >= 4 ? '#1b5e20' : lastScore >= 3 ? '#855008' : '#c62828';
+			const fillPath = `${path} L${xs[xs.length-1].toFixed(1)},${H - P} L${xs[0].toFixed(1)},${H - P} Z`;
+			return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-label="score history">
+				<path d="${fillPath}" fill="${stroke}" opacity=".12" />
+				<path d="${path}" fill="none" stroke="${stroke}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" />
+				<circle cx="${xs[xs.length-1].toFixed(1)}" cy="${ys[ys.length-1].toFixed(1)}" r="2" fill="${stroke}" />
+			</svg>`;
+		}
+
 		async function copyText(text, btn) {
 			try {
 				await navigator.clipboard.writeText(text);
@@ -381,6 +465,14 @@
 		$('asset').addEventListener('keydown', (e) => { if (e.key === 'Enter') load(); });
 		$('network').addEventListener('change', () => { if ($('asset').value.trim()) load(); });
 		$('share').onclick = () => copyText(location.href, $('share'));
+		$('embed').onclick = () => {
+			const asset = $('asset').value.trim();
+			const network = $('network').value;
+			if (!asset || !PUBKEY_RE.test(asset)) return;
+			const src = `${location.origin}/agent-badge.html?asset=${asset}&network=${network}`;
+			const snippet = `<iframe src="${src}" width="320" height="80" style="border:0" loading="lazy"></iframe>`;
+			copyText(snippet, $('embed'));
+		};
 		$('filters').addEventListener('click', (e) => {
 			const btn = e.target.closest('.chip');
 			if (!btn) return;

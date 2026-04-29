@@ -40,11 +40,13 @@ export class AgentHome {
 	 * @param {import('./agent-protocol.js').AgentProtocol}   protocol
 	 * @param {import('./agent-avatar.js').AgentAvatar}        [avatar]
 	 */
-	constructor(containerEl, identity, protocol, avatar = null) {
+	constructor(containerEl, identity, protocol, avatar = null, opts = {}) {
 		this.container = containerEl;
 		this.identity = identity;
 		this.protocol = protocol;
 		this.avatar = avatar;
+		this.skills = opts.skills || null;
+		this.memory = opts.memory || null;
 
 		this._panel = null;
 		this._timeline = [];
@@ -166,11 +168,22 @@ export class AgentHome {
 		// Pump.fun card — only meaningful for Solana-registered agents.
 		if (this.identity?.meta?.chain_type === 'solana' || this.identity?.solana_address) {
 			try {
+				const skills =
+					this.skills ||
+					(typeof window !== 'undefined'
+						? window.VIEWER?.agent_skills || window.VIEWER?.app?.agent_skills
+						: null);
+				const memory =
+					this.memory ||
+					(typeof window !== 'undefined'
+						? window.VIEWER?.agent_memory || window.VIEWER?.app?.agent_memory
+						: null);
 				mountPumpFunCard({
 					panel,
 					identity: this.identity,
-					skills: this.skills || (typeof window !== 'undefined' ? window.VIEWER?.agent_skills : null),
-					memory: this.memory,
+					skills,
+					memory,
+					protocol: this.protocol,
 				});
 			} catch {
 				/* card is optional */
