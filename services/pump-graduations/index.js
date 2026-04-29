@@ -15,11 +15,15 @@
  *   UPSTASH_REDIS_REST_TOKEN
  *   GRADUATIONS_LIST_KEY        default: pf:graduations
  *   GRADUATIONS_MAX_LEN         default: 500
+ *   PUMP_GRADUATIONS_SOURCE     "legacy" (default) | "carbon"
+ *                               Selects the graduation event source at startup.
+ *                               Both sources emit the same events to Redis.
  */
 
 import { Connection, PublicKey } from '@solana/web3.js';
 import { Redis } from '@upstash/redis';
 import bs58 from 'bs58';
+import { CarbonGraduationSource } from './carbon-source.js';
 
 const PUMP_PROGRAM_ID = new PublicKey('6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P');
 
@@ -31,6 +35,7 @@ const RPC = required('SOLANA_RPC_URL');
 const WS = required('SOLANA_WS_URL');
 const LIST_KEY = process.env.GRADUATIONS_LIST_KEY || 'pf:graduations';
 const MAX_LEN = Number(process.env.GRADUATIONS_MAX_LEN || 500);
+const SOURCE = process.env.PUMP_GRADUATIONS_SOURCE || 'legacy';
 
 const redis = new Redis({
 	url: required('UPSTASH_REDIS_REST_URL'),
@@ -40,31 +45,47 @@ const redis = new Redis({
 const conn = new Connection(RPC, { wsEndpoint: WS, commitment: 'confirmed' });
 const seen = new Set();
 
-console.log('[pump-graduations] starting; program=%s', PUMP_PROGRAM_ID.toBase58());
+console.log('[pump-graduations] starting; program=%s source=%s', PUMP_PROGRAM_ID.toBase58(), SOURCE);
 
-conn.onLogs(
-	PUMP_PROGRAM_ID,
-	async (entry) => {
+if (SOURCE === 'carbon') {
+	const src = new CarbonGraduationSource({ connection: conn });
+	src.start(async ({ mint, signature, ts }) => {
 		try {
-			if (entry.err) return;
-			const sig = entry.signature;
-			if (seen.has(sig)) return;
-			if (!entry.logs?.some((l) => l.includes('Program data:'))) return;
-
-			const ev = await tryParseGraduation(sig, entry.logs);
-			if (!ev) return;
-			seen.add(sig);
+			if (seen.has(signature)) return;
+			seen.add(signature);
 			if (seen.size > 5000) seen.clear();
-
-			const enriched = await enrichToken(ev);
+			const enriched = await enrichToken({ signature, mint, timestamp: ts });
 			await pushGraduation(enriched);
-			console.log('[pump-graduations] pushed', enriched.symbol || enriched.mint, sig);
+			console.log('[pump-graduations] pushed (carbon)', enriched.mint, signature);
 		} catch (err) {
-			console.error('[pump-graduations] handler error:', err?.message || err);
+			console.error('[pump-graduations] handler error (carbon):', err?.message || err);
 		}
-	},
-	'confirmed',
-);
+	});
+} else {
+	conn.onLogs(
+		PUMP_PROGRAM_ID,
+		async (entry) => {
+			try {
+				if (entry.err) return;
+				const sig = entry.signature;
+				if (seen.has(sig)) return;
+				if (!entry.logs?.some((l) => l.includes('Program data:'))) return;
+
+				const ev = await tryParseGraduation(sig, entry.logs);
+				if (!ev) return;
+				seen.add(sig);
+				if (seen.size > 5000) seen.clear();
+
+				const enriched = await enrichToken(ev);
+				await pushGraduation(enriched);
+				console.log('[pump-graduations] pushed', enriched.symbol || enriched.mint, sig);
+			} catch (err) {
+				console.error('[pump-graduations] handler error:', err?.message || err);
+			}
+		},
+		'confirmed',
+	);
+}
 
 async function tryParseGraduation(sig, logs) {
 	for (const line of logs) {

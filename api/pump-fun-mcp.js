@@ -337,6 +337,12 @@ async function handleWatchClaims({ creator, durationMs = 300_000, network = 'mai
 	return { creator, network, windowMs: window, claims };
 }
 
+
+async function handleSocialCashtagSentiment({ posts }) {
+	if (!Array.isArray(posts) || posts.length === 0) throw rpcError(-32602, 'posts must be a non-empty array');
+	const { scoreSentiment } = await import('../src/social/sentiment.js');
+	return scoreSentiment(posts);
+}
 // ── Dispatch ───────────────────────────────────────────────────────────────
 
 const HANDLERS = {
@@ -351,10 +357,13 @@ const HANDLERS = {
 	getNewTokens: indexerOrUnavailable('getNewTokens'),
 	getGraduatedTokens: indexerOrUnavailable('getGraduatedTokens'),
 	getKingOfTheHill: indexerOrUnavailable('getKingOfTheHill'),
+	social_cashtag_sentiment: handleSocialCashtagSentiment,
 	getCreatorProfile: indexerOrUnavailable('getCreatorProfile'),
 	pumpfun_list_claims: handleListClaims,
 	pumpfun_watch_claims: handleWatchClaims,
 	pumpfun_vanity_mint: handleVanityMint,
+	sns_resolve: handleSnsResolve,
+	sns_reverseLookup: handleSnsReverseLookup,
 };
 
 // ── HTTP entrypoint ────────────────────────────────────────────────────────

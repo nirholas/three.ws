@@ -1,1 +1,22 @@
-[]
+[
+	{
+		"wallet": "So11111111111111111111111111111111111111112",
+		"source": "gmgn",
+		"label": "SmartTrader1",
+		"pnlUsd": 12345.67,
+		"winRate": 0.75
+	},
+	{
+		"wallet": "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+		"source": "gmgn",
+		"label": "KolTrader2",
+		"pnlUsd": 8901.23,
+		"winRate": 0.62
+	},
+	{
+		"wallet": "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263",
+		"source": "gmgn",
+		"pnlUsd": 3200,
+		"winRate": 0.55
+	}
+]
