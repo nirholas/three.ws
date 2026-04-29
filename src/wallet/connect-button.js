@@ -8,6 +8,7 @@
 
 import { BrowserProvider } from 'ethers';
 import { STATES, initialState, reduce } from './state.js';
+import { eagerConnectWallet, getWalletState } from '../erc8004/agent-registry.js';
 
 /** Chain IDs that match known ERC-8004 registry deployments. */
 const DEFAULT_CHAIN_IDS = [1, 8453, 10, 42161, 11155111, 84532];
@@ -107,6 +108,38 @@ export class ConnectWalletController extends EventTarget {
 		if (window.ethereum) {
 			window.ethereum.on('accountsChanged', this.#onAccountsChanged);
 			window.ethereum.on('chainChanged', this.#onChainChanged);
+		}
+
+		// Hydrate from any already-resolved silent reconnect (fired during app
+		// boot). If the shared registry has a connected address, jump straight
+		// to CONNECTED so the button renders the address instead of "Connect
+		// wallet" on first paint. If not yet resolved, attempt the silent path
+		// here too (idempotent — no popup).
+		this.#tryEagerHydrate();
+	}
+
+	async #tryEagerHydrate() {
+		const existing = getWalletState();
+		if (existing.address && existing.chainId) {
+			this.#dispatch({
+				type: 'ACCOUNTS_RESOLVED',
+				address: existing.address,
+				chainId: existing.chainId,
+			});
+			if (!this.#opts.allowedChainIds.includes(existing.chainId)) {
+				this.#dispatch({ type: 'WRONG_CHAIN' });
+			}
+			return;
+		}
+		const eager = await eagerConnectWallet();
+		if (!eager) return;
+		this.#dispatch({
+			type: 'ACCOUNTS_RESOLVED',
+			address: eager.address,
+			chainId: eager.chainId,
+		});
+		if (!this.#opts.allowedChainIds.includes(eager.chainId)) {
+			this.#dispatch({ type: 'WRONG_CHAIN' });
 		}
 	}
 

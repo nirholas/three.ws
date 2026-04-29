@@ -1,6 +1,10 @@
 /* Shared auth-page styling: shell layout, avatar panel, password toggle,
    caps-lock warning, remember-me row, inline-validation hints. */
 
+[hidden] {
+	display: none !important;
+}
+
 * { box-sizing: border-box; }
 
 body {

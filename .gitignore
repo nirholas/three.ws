@@ -1,5 +1,7 @@
 node_modules
 dist
+dist-lib
+dist-artifact
 .cache
 .vercel
 .DS_Store

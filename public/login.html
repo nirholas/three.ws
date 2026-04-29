@@ -280,7 +280,39 @@
 				transform: scale(0.97);
 			}
 			.method-panel { display: none; }
-			.method-panel.active { display: block; }
+			.method-panel.active {
+				display: block;
+				animation: panel-fade-in 0.18s ease-out both;
+			}
+			@keyframes panel-fade-in {
+				from { opacity: 0; transform: translateY(4px); }
+				to   { opacity: 1; transform: translateY(0); }
+			}
+			.chain-tab[disabled] {
+				opacity: 0.4;
+				cursor: not-allowed;
+			}
+			#wallet-mount:empty::before,
+			#solana-wallet-mount:empty::before {
+				content: '';
+				display: block;
+				height: 44px;
+				border-radius: 10px;
+				background: linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 100%);
+				background-size: 200% 100%;
+				animation: wallet-skel 1.4s linear infinite;
+			}
+			@keyframes wallet-skel {
+				0%   { background-position: 200% 0; }
+				100% { background-position: -200% 0; }
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.method-panel.active,
+				#wallet-mount:empty::before,
+				#solana-wallet-mount:empty::before {
+					animation: none;
+				}
+			}
 
 			/* ── Password field ── */
 			.password-wrap {
@@ -420,7 +452,7 @@
 
 				<div id="email-panel" class="method-panel active" role="tabpanel">
 					<label for="email">Email or username</label>
-					<input id="email" name="username" type="text" autocomplete="username email" required aria-describedby="email-err" />
+					<input id="email" name="username" type="text" inputmode="email" autocapitalize="none" autocomplete="username email" autofocus required aria-describedby="email-err" />
 					<p class="field-err" id="email-err" role="alert"></p>
 
 					<label for="password">Password</label>
@@ -511,7 +543,8 @@
 					wallet: document.getElementById('wallet-panel'),
 				};
 				let activeMethod = 'email';
-				function setMethod(name) {
+				const METHOD_KEY = '3dagent:login-method';
+				function setMethod(name, persist = true) {
 					if (!methodPanels[name]) return;
 					activeMethod = name;
 					methodTabs.forEach((t) => {
@@ -526,14 +559,29 @@
 					const emailActive = name === 'email';
 					emailInput.required = emailActive;
 					passwordInput.required = emailActive;
+					if (persist) {
+						try { localStorage.setItem(METHOD_KEY, name); } catch { /* ignore */ }
+					}
+					if (emailActive && !emailInput.value) emailInput.focus();
 				}
 				methodTabs.forEach((t) =>
 					t.addEventListener('click', () => setMethod(t.dataset.method)),
 				);
+				try {
+					const saved = localStorage.getItem(METHOD_KEY);
+					if (saved === 'wallet') setMethod('wallet', false);
+				} catch { /* ignore */ }
 
 				// ── Wallet chain tabs ──
+				const solanaTab = document.querySelector('.chain-tab[data-chain="solana"]');
+				const hasSolana = !!(window.solana || window.phantom?.solana || window.backpack || window.solflare);
+				if (solanaTab && !hasSolana) {
+					solanaTab.disabled = true;
+					solanaTab.title = 'Install Phantom, Backpack, or Solflare to use Solana';
+				}
 				document.querySelectorAll('.chain-tab').forEach((t) => {
 					t.addEventListener('click', () => {
+						if (t.disabled) return;
 						const chain = t.dataset.chain;
 						document.querySelectorAll('.chain-tab').forEach((x) => {
 							const on = x.dataset.chain === chain;
@@ -580,16 +628,31 @@
 				emailInput.addEventListener('input', () => setFieldError(emailInput, emailErr, ''));
 				passwordInput.addEventListener('input', () => setFieldError(passwordInput, passwordErr, ''));
 
-				// ── Label "lit" on focus ──
+				// ── Label "lit" on focus + mobile scroll-into-view ──
+				const isTouch = matchMedia('(hover: none)').matches;
 				document.querySelectorAll('#f input').forEach((input) => {
 					const label = document.querySelector(`label[for="${input.id}"]`);
-					if (!label) return;
-					input.addEventListener('focus', () => label.classList.add('lit'));
-					input.addEventListener('blur', () => label.classList.remove('lit'));
+					input.addEventListener('focus', () => {
+						if (label) label.classList.add('lit');
+						if (isTouch) {
+							setTimeout(() => input.scrollIntoView({ block: 'center', behavior: 'smooth' }), 250);
+						}
+					});
+					if (label) input.addEventListener('blur', () => label.classList.remove('lit'));
 				});
 
-				// ── Auth redirect ──
+				// ── Email prefill ──
 				const params = new URLSearchParams(location.search);
+				const LAST_EMAIL_KEY = '3dagent:last-email';
+				const prefillEmail = params.get('email') || (() => {
+					try { return localStorage.getItem(LAST_EMAIL_KEY) || ''; } catch { return ''; }
+				})();
+				if (prefillEmail) {
+					emailInput.value = prefillEmail;
+					passwordInput.focus();
+				}
+
+				// ── Auth redirect ──
 				const next =
 					params.get('next') || sessionStorage.getItem('login_redirect') || '/create';
 				sessionStorage.removeItem('login_redirect');
@@ -632,9 +695,16 @@
 							headers: { 'content-type': 'application/json' },
 							body: JSON.stringify({ email, password, remember: document.getElementById('remember')?.checked || false }),
 						});
-						const data = await res.json();
-						if (!res.ok) throw new Error(data.error_description || 'Sign-in failed');
+						const data = await res.json().catch(() => ({}));
+						if (!res.ok) {
+							const err429 = res.status === 429;
+							const msg = err429
+								? 'Too many attempts. Try again in a moment.'
+								: 'Email or password is incorrect.';
+							throw new Error(msg);
+						}
 						try {
+							localStorage.setItem(LAST_EMAIL_KEY, email);
 							localStorage.setItem(
 								'3dagent:auth-hint',
 								JSON.stringify({

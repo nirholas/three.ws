@@ -29,6 +29,12 @@ import { Runtime } from './runtime/index.js';
 import { Memory } from './memory/index.js';
 import { SkillRegistry } from './skills/index.js';
 
+// Wallet — kick off a silent reconnect on app boot. Any page that later mounts
+// a wallet UI (deploy, reputation, validation, permissions, etc.) reads from
+// the shared signer + onWalletChange bus, so this single call surfaces an
+// already-authorized wallet site-wide without any popup.
+import { eagerConnectWallet } from './erc8004/agent-registry.js';
+
 window.THREE = THREE;
 window.VIEWER = {};
 
@@ -150,6 +156,11 @@ class App {
 			noChat: Boolean(hash.noChat),
 			noControls: Boolean(hash.noControls),
 		};
+
+		// Fire-and-forget silent wallet reconnect. Cheap (single `eth_accounts`
+		// RPC), never throws, never prompts. If the user has previously authorized
+		// the site, this populates the shared signer before any wallet UI mounts.
+		eagerConnectWallet();
 
 		this.el = el;
 		this.viewer = null;
@@ -506,10 +517,16 @@ class App {
 
 		if (signOutBtn) {
 			signOutBtn.addEventListener('click', () => {
-				fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).finally(() => {
-					try { localStorage.removeItem('3dagent:auth-hint'); } catch { /* ignore */ }
-					location.href = '/';
-				});
+				fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).finally(
+					() => {
+						try {
+							localStorage.removeItem('3dagent:auth-hint');
+						} catch {
+							/* ignore */
+						}
+						location.href = '/';
+					},
+				);
 			});
 		}
 	}

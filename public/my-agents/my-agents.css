@@ -1,5 +1,9 @@
 /* my-agents.css — My on-chain agents page styles */
 
+[hidden] {
+	display: none !important;
+}
+
 /* ── Design tokens (mirrored from dashboard) ─────────────────────────── */
 :root {
 	color-scheme: dark;

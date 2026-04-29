@@ -3,6 +3,10 @@
  * φ = 1.618 — all spacing and type follow a phi-based scale
  */
 
+[hidden] {
+	display: none !important;
+}
+
 .save-toast {
 	position: fixed;
 	bottom: 20px;
@@ -1328,7 +1332,9 @@ body[data-viewer-mode='deploy'] {
 .header-logo {
 	width: 28px;
 	height: 28px;
-	display: block;
+	display: inline-block;
+	vertical-align: middle;
+	margin-right: 0.5rem;
 	flex-shrink: 0;
 	object-fit: contain;
 }

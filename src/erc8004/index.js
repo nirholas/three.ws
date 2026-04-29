@@ -9,7 +9,7 @@ export {
 	connectWallet,
 	registerAgent,
 	buildRegistrationJSON,
-	pinToIPFS,
+	pinFile,
 } from './agent-registry.js';
 export { RegisterUI } from './register-ui.js';
 export { submitReputation, submitFeedback, getReputation, getRecentReviews } from './reputation.js';

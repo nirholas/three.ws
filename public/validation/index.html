@@ -394,7 +394,7 @@
 	</head>
 	<body>
 		<header>
-			<div class="brand"><a href="/">three.ws</a></div>
+			<div class="brand"><a href="/"><img src="/three.svg" alt="" class="header-logo" aria-hidden="true" />three.ws</a></div>
 			<nav>
 				<a href="/">Home</a>
 				<a href="/dashboard">Dashboard</a>
@@ -488,7 +488,7 @@
 		</div>
 
 		<script type="module">
-			const { ValidationDashboard } = await import(/* @vite-ignore */ '/validation/boot.js');
+			import { ValidationDashboard } from '/src/validation-ui.js';
 
 			const dashboard = new ValidationDashboard(document.getElementById('main'), {
 				agentInput: document.getElementById('agent-input'),

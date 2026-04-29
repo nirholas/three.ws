@@ -323,7 +323,7 @@
 	<body>
 		<div class="shell">
 			<form class="card" id="f">
-			<a href="/" class="brand">three.ws</a>
+			<a href="/" class="brand"><img src="/three.svg" alt="" class="header-logo" aria-hidden="true" />three.ws</a>
 			<h1>Create account</h1>
 			<p class="sub">Get started free. <span class="badge">✓ No email needed</span></p>
 			<label for="username">Username</label>
@@ -382,7 +382,7 @@
 			<p class="legal">By creating an account you agree to our <a href="/legal/tos">Terms of Service</a> and <a href="/legal/privacy">Privacy Policy</a>.</p>
 		</form>
 			<div class="panel">
-				<a href="/" class="panel-brand" aria-label="three.ws home">three.ws</a>
+				<a href="/" class="panel-brand" aria-label="three.ws home"><img src="/three.svg" alt="" class="header-logo" aria-hidden="true" />three.ws</a>
 				<div class="agent-avatar loading" id="register-avatar-wrap" aria-hidden="true">
 					<model-viewer
 						id="register-avatar"
@@ -408,28 +408,38 @@
 		<script type="module" src="/wallet-login.js"></script>
 
 		<script>
-			// Avatar mouse tracking
+			// Avatar mouse tracking + parallax + skeleton
 			(function () {
 				const viewer = document.getElementById('register-avatar');
+				const wrap = document.getElementById('register-avatar-wrap');
 				if (!viewer) return;
+				viewer.addEventListener('load', () => wrap?.classList.remove('loading'));
+				const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 				const BASE_AZ = 0, BASE_POL = 88, AZ_RANGE = 30, POL_RANGE = 14;
 				let targetAz = BASE_AZ, targetPol = BASE_POL;
 				let curAz = BASE_AZ, curPol = BASE_POL;
+				let targetTx = 0, targetTy = 0, curTx = 0, curTy = 0;
 				let nod = 0;
 				const lerp = (a, b, t) => a + (b - a) * t;
 				function tick() {
 					curAz = lerp(curAz, targetAz, 0.1);
 					curPol = lerp(curPol, targetPol + nod, 0.18);
+					curTx = lerp(curTx, targetTx, 0.08);
+					curTy = lerp(curTy, targetTy, 0.08);
 					nod *= 0.85;
 					viewer.setAttribute('camera-orbit', `${curAz}deg ${curPol}deg 4.8m`);
+					if (wrap) wrap.style.transform = `translate(${curTx.toFixed(2)}px, ${curTy.toFixed(2)}px)`;
 					requestAnimationFrame(tick);
 				}
+				if (reducedMotion) return;
 				requestAnimationFrame(tick);
 				window.addEventListener('mousemove', (e) => {
 					const nx = e.clientX / window.innerWidth - 0.5;
 					const ny = e.clientY / window.innerHeight - 0.5;
 					targetAz = BASE_AZ - nx * AZ_RANGE * 2;
 					targetPol = BASE_POL + ny * POL_RANGE * 2;
+					targetTx = -nx * 10;
+					targetTy = -ny * 8;
 				}, { passive: true });
 				document.querySelectorAll('#f input').forEach((el) => {
 					el.addEventListener('keydown', (e) => {
@@ -437,6 +447,54 @@
 							nod = (nod >= 0 ? -1 : 1) * 4;
 						}
 					});
+				});
+			})();
+
+			// Password show/hide toggle
+			(function () {
+				const pw = document.getElementById('password');
+				const tog = document.getElementById('password-toggle');
+				if (!pw || !tog) return;
+				tog.addEventListener('click', () => {
+					const show = pw.type === 'password';
+					pw.type = show ? 'text' : 'password';
+					tog.setAttribute('aria-pressed', show ? 'true' : 'false');
+					tog.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+				});
+			})();
+
+			// Caps Lock warning on password
+			(function () {
+				const pw = document.getElementById('password');
+				const warn = document.getElementById('caps-warn');
+				if (!pw || !warn) return;
+				function check(e) {
+					const on = e.getModifierState && e.getModifierState('CapsLock');
+					warn.classList.toggle('show', !!on);
+				}
+				pw.addEventListener('keydown', check);
+				pw.addEventListener('keyup', check);
+				pw.addEventListener('blur', () => warn.classList.remove('show'));
+			})();
+
+			// Inline username validation
+			(function () {
+				const u = document.getElementById('username');
+				const hint = document.getElementById('username-hint');
+				if (!u || !hint) return;
+				const re = /^[a-zA-Z0-9_-]{3,30}$/;
+				u.addEventListener('input', () => {
+					const v = u.value;
+					if (!v) { hint.classList.remove('valid', 'invalid'); hint.textContent = '3–30 characters, letters, numbers, _ or -'; return; }
+					if (re.test(v)) {
+						hint.classList.add('valid'); hint.classList.remove('invalid');
+						hint.textContent = '✓ Looks good';
+					} else {
+						hint.classList.add('invalid'); hint.classList.remove('valid');
+						if (v.length < 3) hint.textContent = 'Too short — 3 characters minimum.';
+						else if (v.length > 30) hint.textContent = 'Too long — 30 characters maximum.';
+						else hint.textContent = 'Only letters, numbers, _ and - allowed.';
+					}
 				});
 			})();
 

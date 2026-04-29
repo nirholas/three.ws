@@ -1,5 +1,9 @@
 /* Widget gallery — black/white palette, single blue accent on primary CTA. */
 
+[hidden] {
+	display: none !important;
+}
+
 /* Local token overrides — keep purple out of this page */
 .gallery-body {
 	--accent: #ffffff;

@@ -2,7 +2,7 @@
  * CZ demo claim flow — manages wallet connection, claiming, and transfer flows.
  */
 
-import { connectWallet, getIdentityRegistry } from './erc8004/agent-registry.js';
+import { ensureWallet, getIdentityRegistry } from './erc8004/agent-registry.js';
 import { REGISTRY_DEPLOYMENTS } from './erc8004/abi.js';
 
 /**

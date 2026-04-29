@@ -511,7 +511,7 @@ export class Viewer {
 			MANAGER.setURLModifier((url, path) => {
 				// URIs in a glTF file may be escaped, or not. Assume that assetMap is
 				// from an un-escaped source, and decode all URIs before lookups.
-				// See: https://github.com/nirholas/3d-agent/issues/146
+				// See: https://github.com/nirholas/three.ws/issues/146
 				const normalizedURL =
 					rootPath +
 					decodeURI(url)

@@ -9,7 +9,7 @@
 
 import { Contract, keccak256, toUtf8Bytes } from 'ethers';
 import { REGISTRY_DEPLOYMENTS, VALIDATION_REGISTRY_ABI } from './abi.js';
-import { pinToIPFS } from './agent-registry.js';
+import { pinFile } from './agent-registry.js';
 
 const KIND_GLB_SCHEMA = 'glb-schema';
 
@@ -70,7 +70,7 @@ export async function recordValidation({
 	let proofURI = '';
 	if (pin && apiToken) {
 		const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
-		const cid = await pinToIPFS(blob, apiToken);
+		const cid = await pinFile(blob, apiToken);
 		proofURI = `ipfs://${cid}`;
 	}
 

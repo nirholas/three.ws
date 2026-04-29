@@ -194,6 +194,45 @@ export function getSigner() {
 	return _signer;
 }
 
+/**
+ * Get a usable wallet for an action, preferring an existing connection.
+ *
+ * Resolution order:
+ *   1. Already-connected signer (no popup)
+ *   2. Eager `eth_accounts` reconnect (no popup)
+ *   3. Explicit `connectWallet()` (popup if user hasn't authorized yet)
+ *
+ * Use this in any flow that needs `{ signer, address, chainId }` — instead of
+ * calling `connectWallet()` directly, which always shows a popup if the
+ * wallet's internal session has been forgotten.
+ *
+ * @returns {Promise<{signer: import('ethers').Signer, address: string, chainId: number}>}
+ */
+export async function ensureWallet() {
+	if (_signer && _address && _chainId) {
+		return { signer: _signer, address: _address, chainId: _chainId };
+	}
+	const eager = await eagerConnectWallet();
+	if (eager) return eager;
+	const fresh = await connectWallet();
+	return { signer: fresh.signer, address: fresh.address, chainId: fresh.chainId };
+}
+
+/**
+ * Tear down the in-memory wallet state and clear the eager-reconnect hint.
+ * Does NOT revoke wallet-side permissions — there is no standard EIP-1193 RPC
+ * for that; users must revoke from their wallet UI. After calling this, the
+ * next `ensureWallet()` will prompt unless they re-authorize.
+ */
+export function disconnectWallet() {
+	_provider = null;
+	_signer = null;
+	_address = null;
+	_chainId = null;
+	setHint(false);
+	notify('disconnected');
+}
+
 // ---------------------------------------------------------------------------
 // File upload — backend R2 (default) or Pinata (if token supplied)
 // ---------------------------------------------------------------------------
@@ -422,9 +461,10 @@ export async function registerAgent({
 	}
 	imageUrl = imageUrl || '';
 
-	// ── 3. Wallet + contract.
+	// ── 3. Wallet + contract. ensureWallet() reuses any prior connection
+	// (no popup) and only prompts for a brand-new authorization.
 	log('Connecting wallet...');
-	const { signer, chainId } = await connectWallet();
+	const { signer, chainId } = await ensureWallet();
 	const registry = getIdentityRegistry(chainId, signer);
 
 	// ── 4. Mint with seed URI (useful metadata in the Registered event even if

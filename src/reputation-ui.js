@@ -8,7 +8,7 @@
 
 import { JsonRpcProvider } from 'ethers';
 import { getReputation, getRecentReviews, submitReputation } from './erc8004/reputation.js';
-import { connectWallet } from './erc8004/agent-registry.js';
+import { ensureWallet } from './erc8004/agent-registry.js';
 import { REGISTRY_DEPLOYMENTS } from './erc8004/abi.js';
 
 const CHAIN_NAMES = {
@@ -158,7 +158,7 @@ export class ReputationDashboard {
 		}
 
 		try {
-			const walletInfo = await connectWallet();
+			const walletInfo = await ensureWallet();
 			this.connectedAddress = walletInfo.address;
 
 			const txHash = await submitReputation({

@@ -1,3 +1,7 @@
+[hidden] {
+	display: none !important;
+}
+
 :root {
 	color-scheme: dark;
 	--accent: #f0b429;

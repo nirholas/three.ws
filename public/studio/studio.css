@@ -2,6 +2,10 @@
    tokens so it does not depend on /style.css being served at the root
    (the deployed build hashes that file under /assets/). */
 
+[hidden] {
+	display: none !important;
+}
+
 :root {
 	--space-3xs: 0.146rem;
 	--space-2xs: 0.236rem;
