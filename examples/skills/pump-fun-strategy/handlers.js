@@ -71,6 +71,10 @@ export async function runStrategy(args, ctx) {
 	const perTrade = compiled.entry.amountSol ?? ctx?.skillConfig?.defaultPerTradeSol ?? 0.05;
 	const pollMs = ctx?.skillConfig?.defaultPollMs ?? 5000;
 	const onLog = typeof args.onLog === 'function' ? args.onLog : () => {};
+	// Optional async guard: returns null to allow, or { code, msg } to block.
+	const policyGuard = typeof args.policyGuard === 'function' ? args.policyGuard : null;
+	// Optional abort signal: when set, the loop terminates at the next safe point.
+	const abortSignal = args.abortSignal ?? null;
 
 	const seen = new Set();
 	const positions = new Map();
@@ -80,6 +84,7 @@ export async function runStrategy(args, ctx) {
 	const emit = (entry) => { log.push(entry); try { onLog(entry); } catch {} };
 
 	while (Date.now() < deadline) {
+		if (abortSignal?.aborted) { emit({ action: 'aborted' }); break; }
 		emit({ action: 'tick', t: Date.now(), open: positions.size, spent });
 
 		// 1. Watch exits on open positions.
@@ -122,6 +127,13 @@ export async function runStrategy(args, ctx) {
 				if (!compiled.passes(view)) {
 					emit({ mint, action: 'skip', view });
 					continue;
+				}
+				if (policyGuard && !simulate) {
+					const block = await policyGuard({ mint, amountSol: perTrade });
+					if (block) {
+						emit({ mint, action: 'policy-block', code: block.code, reason: block.msg });
+						continue;
+					}
 				}
 				try {
 					const buy = await maybeBuy(ctx, simulate, mint, perTrade);

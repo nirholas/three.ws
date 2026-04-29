@@ -66,16 +66,27 @@ async function loadManifest(name) {
 export function makeRuntime(opts = {}) {
 	const { configOverrides = {}, wallet, onEvent, fetch = globalThis.fetch, agentId, signerAddress } = opts;
 	let _sql;
+	// Map skill-internal tags to canonical action types so existing
+	// aggregations (spend-policy, portfolio cost-basis) keep working.
+	function canonicalType(skillName, tag) {
+		const [, op] = (tag ?? '').split(':');
+		if (skillName === 'pump-fun-trade') {
+			if (op === 'buy') return 'pumpfun.buy';
+			if (op === 'sell') return 'pumpfun.sell';
+			if (op === 'create') return 'pumpfun.create';
+		}
+		return op || tag || 'note';
+	}
+
 	async function persistAction(skillName, tag, value) {
 		if (!agentId) return;
 		try {
 			if (!_sql) _sql = (await import('./db.js')).sql;
-			const [, type] = (tag ?? '').split(':'); // e.g. 'pump-fun-trade:buy' → 'buy'
 			await _sql`
 				INSERT INTO agent_actions (agent_id, type, payload, source_skill, signature, signer_address)
 				VALUES (
 					${agentId},
-					${type || tag || 'note'},
+					${canonicalType(skillName, tag)},
 					${JSON.stringify(value ?? {})}::jsonb,
 					${skillName},
 					${value?.sig ?? null},

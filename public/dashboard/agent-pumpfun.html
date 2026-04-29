@@ -355,6 +355,18 @@
 						>Register a name on sns.id</a
 					>
 				</div>
+				<div id="sns-registrar" class="row" style="margin-top: 14px; align-items: flex-end" hidden>
+					<div class="field">
+						<label for="sns-register-label">Claim a free subdomain</label>
+						<div class="row" style="gap: 6px">
+							<input id="sns-register-label" placeholder="myagent" maxlength="63" />
+							<span id="sns-register-suffix" class="muted" style="font-family: ui-monospace, Menlo, monospace; font-size: 13px"></span>
+						</div>
+					</div>
+					<div style="flex: 0 0 auto">
+						<button class="btn" id="sns-register-btn">Claim</button>
+					</div>
+				</div>
 			</section>
 
 			<section class="panel">
@@ -535,6 +547,10 @@
 				snsRefreshBtn: $('#sns-refresh-btn'),
 				snsClearBtn: $('#sns-clear-btn'),
 				snsRegisterLink: $('#sns-register-link'),
+				snsRegistrar: $('#sns-registrar'),
+				snsRegisterLabel: $('#sns-register-label'),
+				snsRegisterSuffix: $('#sns-register-suffix'),
+				snsRegisterBtn: $('#sns-register-btn'),
 				launchName: $('#launch-name'),
 				launchSymbol: $('#launch-symbol'),
 				launchVanity: $('#launch-vanity'),
@@ -738,9 +754,14 @@
 				if (!id) return;
 				els.snsCurrent.textContent = '…';
 				els.snsDomainList.innerHTML = '';
+				els.snsRegistrar.hidden = true;
 				try {
 					const { data } = await api(`/api/agents/${id}/sns`);
 					renderSnsList(data);
+					if (data.registrar?.enabled) {
+						els.snsRegistrar.hidden = false;
+						els.snsRegisterSuffix.textContent = `.${data.registrar.parent}.sol`;
+					}
 				} catch (err) {
 					els.snsCurrent.textContent =
 						err.body?.error === 'conflict'
@@ -748,6 +769,32 @@
 							: err.message;
 					els.snsDomainList.innerHTML = '';
 					els.snsClearBtn.hidden = true;
+				}
+			}
+
+			async function registerSns() {
+				const id = currentAgentId();
+				if (!id) return;
+				const label = els.snsRegisterLabel.value.trim().toLowerCase();
+				if (!/^[a-z0-9-]{1,63}$/.test(label)) {
+					toast('Label must be a–z, 0–9, or hyphen (max 63 chars)', 'err');
+					return;
+				}
+				els.snsRegisterBtn.disabled = true;
+				els.snsRegisterBtn.textContent = 'Claiming…';
+				try {
+					const { data } = await api(`/api/agents/${id}/sns/register`, {
+						method: 'POST',
+						body: JSON.stringify({ label }),
+					});
+					toast(`Registered ${data.sns_domain}.sol`);
+					els.snsRegisterLabel.value = '';
+					await refreshSns();
+				} catch (err) {
+					toast(err.message, 'err');
+				} finally {
+					els.snsRegisterBtn.disabled = false;
+					els.snsRegisterBtn.textContent = 'Claim';
 				}
 			}
 
@@ -991,6 +1038,7 @@
 			els.provisionBtn.addEventListener('click', provision);
 			els.snsRefreshBtn.addEventListener('click', refreshSns);
 			els.snsClearBtn.addEventListener('click', clearSns);
+			els.snsRegisterBtn.addEventListener('click', registerSns);
 			els.launchBtn.addEventListener('click', launchToken);
 			els.buyBtn.addEventListener('click', buy);
 			els.sellBtn.addEventListener('click', sell);

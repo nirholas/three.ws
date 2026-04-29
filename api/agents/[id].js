@@ -5,6 +5,7 @@
  * /api/agents/:id/solana/activity — recent on-chain signatures for the wallet
  * /api/agents/:id/solana/airdrop  — devnet airdrop (1 SOL)
  * /api/agents/:id/sns             — list owned .sol domains and attach one as the agent's SNS id
+ * /api/agents/:id/sns/register    — mint a free subdomain under the platform's parent .sol
  * /api/agents/:id/pumpfun/launch  — create a pump.fun token from this agent
  * /api/agents/:id/pumpfun/buy     — bonding-curve buy
  * /api/agents/:id/pumpfun/sell    — bonding-curve sell
@@ -44,7 +45,7 @@ export default wrap(async function handler(req, res) {
 
 	if (sub === 'sns') {
 		const mod = await import('./sns.js');
-		return mod.default(req, res, id);
+		return mod.default(req, res, id, action);
 	}
 
 	if (sub === 'pumpfun') {
