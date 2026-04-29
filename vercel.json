@@ -153,6 +153,17 @@
 		{ "src": "/lobehub/iframe/", "dest": "/lobehub/iframe/index.html" },
 		{ "src": "/lobehub/iframe/(.*)", "dest": "/lobehub/iframe/$1" },
 
+		{ "src": "/strategy-lab", "dest": "/strategy-lab.html" },
+		{ "src": "/reputation", "dest": "/reputation/index.html" },
+		{ "src": "/reputation/", "dest": "/reputation/index.html" },
+		{ "src": "/reputation/(.*)", "dest": "/reputation/$1" },
+		{ "src": "/settings", "dest": "/settings/index.html" },
+		{ "src": "/settings/", "dest": "/settings/index.html" },
+		{ "src": "/settings/(.*)", "dest": "/settings/$1" },
+		{ "src": "/admin", "dest": "/admin/index.html" },
+		{ "src": "/admin/", "dest": "/admin/index.html" },
+		{ "src": "/admin/(.*)", "dest": "/admin/$1" },
+
 		{ "src": "/api/auth/logout-everywhere", "dest": "/api/auth/logout-everywhere" },
 		{ "src": "/api/auth/verify-email", "dest": "/api/auth/verify-email" },
 		{ "src": "/api/auth/forgot-password", "dest": "/api/auth/forgot-password" },

@@ -68,8 +68,7 @@ export default wrap(async (req, res) => {
 		sql`
 			SELECT payload, created_at FROM agent_actions
 			WHERE agent_id = ${agentId}
-			  AND source_skill = 'pump-fun-trade'
-			  AND type = 'buy'
+			  AND type IN ('pumpfun.buy', 'buy')
 			ORDER BY created_at DESC
 			LIMIT 500
 		`.catch(() => []),
