@@ -293,9 +293,9 @@
 }
 
 .h-footer-links {
-	display: grid;
-	grid-template-columns: repeat(3, auto);
-	gap: 0.6rem 3rem;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1.5rem 3rem;
 }
 
 .h-footer-link-col {
