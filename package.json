@@ -57,7 +57,6 @@
 		"validate:cards": "node scripts/validate-agent-cards.mjs",
 		"db:migrate": "node scripts/apply-migrations.mjs --apply",
 		"db:status": "node scripts/apply-migrations.mjs",
-		"pump:keygen": "node scripts/pump-relayer-keygen.mjs",
 		"pump:smoke": "node scripts/pumpfun-lifecycle-smoke.js"
 	},
 	"dependencies": {

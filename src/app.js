@@ -841,6 +841,16 @@ class App {
 	}
 
 	async _loadAgentForEdit(agentId) {
+		// Swap this.identity to the agent being edited so AgentHome (and the
+		// Solana wallet card) render for *this* agent rather than the viewer's
+		// default identity.
+		this.identity = new AgentIdentity({ agentId, autoLoad: false });
+		try {
+			await this.identity.load();
+		} catch {
+			/* fall through; identity getter still returns _agentId */
+		}
+
 		// Fetch the agent record and load its GLB into the editor (main UI, not embed)
 		let glbUrl = null;
 		try {

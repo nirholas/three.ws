@@ -2,6 +2,7 @@
  * /api/agents/:id                 — agent CRUD
  * /api/agents/:id/wallet          — link / update EVM wallet
  * /api/agents/:id/solana          — agent's Solana wallet (address + balance, provision)
+ * /api/agents/:id/sns             — list owned .sol domains and attach one as the agent's SNS id
  * /api/agents/:id/pumpfun/launch  — create a pump.fun token from this agent
  * /api/agents/:id/pumpfun/buy     — bonding-curve buy
  * /api/agents/:id/pumpfun/sell    — bonding-curve sell
@@ -28,6 +29,11 @@ export default wrap(async function handler(req, res) {
 
 	if (sub === 'solana') {
 		const mod = await import('./solana-wallet.js');
+		return mod.default(req, res, id);
+	}
+
+	if (sub === 'sns') {
+		const mod = await import('./sns.js');
 		return mod.default(req, res, id);
 	}
 
