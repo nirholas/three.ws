@@ -13,6 +13,7 @@
 
 - [What is three.ws?](#what-is-threews)
 - [Vision](#vision)
+- [Roadmap](#roadmap)
 - [Key Features](#key-features)
 - [Screenshots](#screenshots)
 - [Architecture](#architecture)
@@ -69,6 +70,118 @@ One day, creating your agent should be as simple as taking a selfie.
 Point your camera at yourself — or anyone — and watch a fully realized 3D avatar emerge: your face, your voice, your personality, alive in the browser. That avatar becomes an agent with memory and skills, registered onchain as an ERC-8004 token, permanent and verifiable by anyone forever. No 3D software. No wallet setup. No uploads. Just a photo and a name.
 
 This is the direction three.ws is heading: **photo → avatar → agent → onchain identity**, in a single flow. The infrastructure is already here — the viewer, the runtime, the contracts, the embedding layer. What comes next is closing the gap between a picture of a person and a living, ownable, embeddable piece of them that exists on the internet permanently.
+
+---
+
+## Roadmap
+
+three.ws ships in four phases. Each phase closes a specific gap between the current platform and the end-state vision: **anyone can mint a 3D agent of themselves, own it onchain, and embed it anywhere on the internet.**
+
+| Phase | Theme | Status |
+|---|---|---|
+| **0** | Platform foundations (viewer, runtime, ERC-8004, embed layer) | ✅ Shipped |
+| **1** | Selfie → Avatar engine (3-photo capture, hosted inference) | 🟡 In progress |
+| **2** | Agent personalization + voice cloning | ⏳ Next |
+| **3** | Onchain economy (agent tokens, reputation markets, royalties) | ⏳ Next |
+| **4** | Open inference network (decentralized GPU layer) | 🔮 Future |
+
+---
+
+### Phase 0 — Foundations *(Shipped)*
+
+The full stack is live at [three.ws](https://three.ws): WebGL viewer, LLM agent runtime, ERC-8004 identity contracts, OAuth 2.1 server, MCP endpoint, and the `<agent-3d>` web component. Anyone can register an agent today — but the avatar still has to come from a 3D artist or a third-party tool.
+
+**What works:** model upload, agent runtime, onchain registration, embedding, signed action history, reputation scores.
+**What doesn't:** there is no automated path from a real human face to a usable 3D avatar.
+
+---
+
+### Phase 1 — Selfie → Avatar Engine
+
+**Goal:** any user takes 3 selfies (left, center, right) and receives a rigged, animatable 3D avatar in under 60 seconds.
+
+**Deliverables**
+- Mobile-first capture UX with realtime quality gates (lighting, framing, blur)
+- Multi-view face reconstruction pipeline (FLAME / 3DMM fitting on top of a base body mesh)
+- Hosted inference workers (GPU-backed) for sub-minute generation
+- Output written directly to R2 + minted as a draft ERC-8004 token
+
+**Compute requirements**
+- A100/H100-class GPUs for inference, sized to ~10k avatars/day at launch
+- Training budget for fine-tuning a stylized face-fitter on a curated dataset
+- CDN egress scaling for high-res GLB delivery
+
+**Verification:** 1,000 test users complete capture and mint an onchain agent of themselves end-to-end with ≥4/5 likeness score.
+
+---
+
+### Phase 2 — Agent Personalization
+
+**Goal:** the avatar isn't just *you* — the agent *acts* like you.
+
+**Deliverables**
+- Voice cloning (3–10 seconds of speech → ElevenLabs custom voice bound to the agent)
+- Persona extraction from a short onboarding interview (tone, vocabulary, interests)
+- Memory seeding from connected accounts (X, GitHub, Farcaster) with explicit user consent
+- Per-agent fine-tuned system prompt stored in the manifest, signed and pinned to IPFS
+
+**Verification:** users return to converse with their own agent; ≥30% week-2 retention on minted agents.
+
+---
+
+### Phase 3 — Onchain Economy
+
+**Goal:** agents are real economic objects on EVM and Solana, not just collectibles.
+
+**Deliverables**
+- **Agent tokens** — ERC-8004 mints with bonding-curve pricing or fair launch options
+- **Reputation markets** — stake on agents, earn from their action history (extends `ReputationRegistry.sol`)
+- **Skill royalties** — skill authors earn per-call fees through EIP-7710 delegated permissions
+- **Agent-to-agent payments** — agents transact autonomously via their delegated signer wallets
+- **Subscriptions & DCA** — recurring onchain payments to creators (cron infra already in place)
+
+**Funding requirements**
+- Smart contract audits (multi-firm) for the reputation, royalty, and delegation contracts
+- Liquidity for agent token launches
+- Indexer infrastructure across Base, Solana, and additional EVM chains
+
+**Verification:** ≥1,000 agents minted with active onchain reputation; ≥$X in cumulative skill royalties paid out.
+
+---
+
+### Phase 4 — Open Inference Network
+
+**Goal:** decouple agent inference from any single provider. Anyone can run a node; agents pay nodes onchain for compute.
+
+**Deliverables**
+- Open protocol for agent inference (model weights, GPU runtime, signed responses)
+- Node operator client (Docker + GPU drivers) with onchain registration
+- Onchain settlement for inference jobs — pay-per-token with cryptographic receipts
+- Federation with existing decentralized compute networks where appropriate
+
+**Compute requirements**
+- Bootstrap GPU credits for early node operators
+- Cryptoeconomic security model (slashing, validator set) — research + audit budget
+
+**Verification:** ≥50% of production agent traffic served by independent node operators; latency parity with centralized inference.
+
+---
+
+### What we need
+
+| Resource | Used for | Phase |
+|---|---|---|
+| **Inference GPUs** | Avatar generation, agent conversations | 1, 2 |
+| **Training compute** | Fine-tuned face-fitter, voice models | 1, 2 |
+| **Smart contract audits** | Reputation, royalty, delegation contracts | 3 |
+| **Token launch liquidity** | Agent token markets | 3 |
+| **Indexer infrastructure** | Multi-chain crawl + reputation aggregation | 3 |
+| **Node operator credits** | Bootstrap the open inference network | 4 |
+| **Engineering headcount** | Capture pipeline, contracts, indexer, ops | 1–4 |
+
+Phases 1 and 2 unblock the consumer story — *anyone gets an agent of themselves*. Phases 3 and 4 unblock the onchain story — *those agents are real economic actors that don't depend on any one company to keep running*. Both are required for the vision; neither is funded yet.
+
+If you want to support the project — compute credits, grants, partnerships, or contributions — open an issue or reach out via [three.ws](https://three.ws).
 
 ---
 
