@@ -1,0 +1,33 @@
+{
+	"_comment": "SAS credential + schema PDAs for three.ws. Populated by `node scripts/sas-bootstrap.js <network>`. Do not edit by hand — re-run bootstrap to refresh.",
+	"credentialName": "threews",
+	"schemas": {
+		"threews.verified-client.v1": {
+			"name": "verified-client",
+			"version": 1,
+			"description": "Wallet has been verified by three.ws (KYC, payment history, or trusted introduction). Subject = client wallet pubkey (nonce). Used to weight feedback attestations.",
+			"layout": [12, 12],
+			"fieldNames": ["method", "reference"],
+			"_doc": {
+				"method": "string — verification method, e.g. 'kyc-tier-1', 'payment-history', 'partner:auditor-x'",
+				"reference": "string — opaque reference id (off-chain record)"
+			}
+		},
+		"threews.audited-validation.v1": {
+			"name": "audited-validation",
+			"version": 1,
+			"description": "Validation of an agent task result, issued by an authorized validator. Subject = agent asset pubkey (nonce). Carries higher weight than self-attested validations.",
+			"layout": [12, 10, 12],
+			"fieldNames": ["task_hash", "passed", "report_uri"],
+			"_doc": {
+				"task_hash": "string — hash of the task input/output bundle",
+				"passed": "bool — whether the validator considers the work acceptable",
+				"report_uri": "string — link to the validator's full report (Arweave/IPFS/HTTPS)"
+			}
+		}
+	},
+	"pdas": {
+		"devnet":  { "credential": null, "schemas": {} },
+		"mainnet": { "credential": null, "schemas": {} }
+	}
+}
