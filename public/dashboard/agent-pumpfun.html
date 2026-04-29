@@ -245,6 +245,11 @@
 				color: var(--warn);
 				border-color: #4a3a18;
 			}
+			#signals-grid .signal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+			#signals-grid .card { background: var(--panel2); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; }
+			#signals-grid .card.bad { background: #1f1418; border-color: #4a1f23; }
+			#signals-grid .card .v { font-size: 20px; font-weight: 600; }
+			#signals-grid .card .l { font-size: 11px; color: var(--muted); margin-top: 2px; }
 		</style>
 	</head>
 	<body>
@@ -643,6 +648,53 @@
 					}
 				}
 				refreshSns();
+				refreshSignals();
+			}
+
+			async function refreshSignals() {
+				const grid = document.getElementById('signals-grid');
+				const passportLink = document.getElementById('open-passport');
+				const id = currentAgentId();
+				const network = currentNetwork();
+				if (!id) {
+					grid.textContent = 'Select an agent.';
+					return;
+				}
+				grid.textContent = 'Loading…';
+				try {
+					// Resolve the agent's Solana asset pubkey, then pull reputation aggregates.
+					const agentRes = await fetch(`/api/agents/${encodeURIComponent(id)}`, { credentials: 'include' });
+					const agent = agentRes.ok ? await agentRes.json() : null;
+					const asset = agent?.data?.meta?.sol_mint_address || agent?.meta?.sol_mint_address;
+					if (!asset) {
+						grid.innerHTML =
+							'<span class="muted">This agent has no Solana identity yet — register on Solana to start collecting pump.fun signals.</span>';
+						passportLink.removeAttribute('href');
+						return;
+					}
+					passportLink.href = `/agent-passport.html?asset=${encodeURIComponent(asset)}&network=${network}`;
+					const repRes = await fetch(
+						`/api/agents/solana-reputation?asset=${encodeURIComponent(asset)}&network=${network}`,
+					);
+					const rep = repRes.ok ? await repRes.json() : null;
+					const pf = rep?.pumpfun_signals || { count: 0, weight: 0, by_kind: {} };
+					if (!pf.count) {
+						grid.innerHTML =
+							'<span class="muted">No pump.fun signals yet. The crawler runs every 15 minutes; signals appear here when this wallet is the claimer or creator on a pump.fun event.</span>';
+						return;
+					}
+					const cards = [
+						`<div class="card"><div class="v">${pf.count}</div><div class="l">total signals</div></div>`,
+						`<div class="card${pf.weight < 0 ? ' bad' : ''}"><div class="v">${pf.weight >= 0 ? '+' : ''}${pf.weight.toFixed(2)}</div><div class="l">aggregate weight</div></div>`,
+						...Object.entries(pf.by_kind).map(
+							([k, info]) =>
+								`<div class="card${info.weight < 0 ? ' bad' : ''}"><div class="v">${info.count}</div><div class="l">${k.replace('_', ' ')} <span class="muted">(${info.weight >= 0 ? '+' : ''}${info.weight})</span></div></div>`,
+						),
+					];
+					grid.innerHTML = `<div class="signal-grid">${cards.join('')}</div>`;
+				} catch (err) {
+					grid.innerHTML = `<span class="muted">Could not load signals: ${err.message}</span>`;
+				}
 			}
 
 			function renderSnsList(data) {
@@ -792,17 +844,18 @@
 				}
 				els.buyBtn.disabled = true;
 				try {
-					const { data } = await api(`/api/agents/${id}/pumpfun/buy`, {
+					const { data } = await api(`/api/agents/${id}/pumpfun/swap`, {
 						method: 'POST',
 						body: JSON.stringify({
 							mint,
+							side: 'buy',
 							solAmount,
 							slippageBps: parseInt(els.tradeSlippage.value, 10) || 500,
 							network: currentNetwork(),
 						}),
 					});
 					logResponse('buy', data);
-					toast(`Bought ${solAmount} SOL of ${mint.slice(0, 8)}…`);
+					toast(`Bought ${solAmount} SOL of ${mint.slice(0, 8)}… (${data.venue || 'curve'})`);
 					await refreshAgent();
 					await refreshPortfolio();
 				} catch (err) {
@@ -823,17 +876,18 @@
 				}
 				els.sellBtn.disabled = true;
 				try {
-					const { data } = await api(`/api/agents/${id}/pumpfun/sell`, {
+					const { data } = await api(`/api/agents/${id}/pumpfun/swap`, {
 						method: 'POST',
 						body: JSON.stringify({
 							mint,
+							side: 'sell',
 							tokenAmount,
 							slippageBps: parseInt(els.tradeSlippage.value, 10) || 500,
 							network: currentNetwork(),
 						}),
 					});
 					logResponse('sell', data);
-					toast(`Sold ${tokenAmount} of ${mint.slice(0, 8)}…`);
+					toast(`Sold ${tokenAmount} of ${mint.slice(0, 8)}… (${data.venue || 'curve'})`);
 					await refreshAgent();
 					await refreshPortfolio();
 				} catch (err) {

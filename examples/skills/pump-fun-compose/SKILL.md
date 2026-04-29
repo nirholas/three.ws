@@ -17,10 +17,14 @@ Agent-level loops that compose `pump-fun` (read) and `pump-fun-trade` (sign).
 - `exitOnConcentrationPct` / `exitOnDevSellPct` — exit triggers
 - `sessionSpendCapSol` / `perTradeSol` — hard spend caps
 
-## Safety
+## Args supported by every loop
 
-- Pass `simulate: true` on any tool to dry-run: filters/quotes still execute, but `buyToken` / `sellToken` are skipped and a `SIMULATED:*` sig is returned. Spend caps still tick as if real so the simulated session terminates the same way a live one would.
-- Pass `sessionId: "<stable-string>"` to persist `seen` / `mirrored` / `spent` / `exited` between calls. A restart with the same `sessionId` resumes — preventing a crash mid-loop from re-spending up to the cap. State is written via `ctx.memory.note` and falls back to an in-process Map if memory is unavailable.
+- `dryRun: true` — vet/quote runs, `buyToken` / `sellToken` are skipped and `sig: null` is returned. Spend cap still ticks so a dry-run terminates the same way a live one would. Use it to validate filters before going live.
+- `sessionId: "<stable-string>"` — persists `seen` / `mirrored` / `spent` / `exited` to `ctx.memory` (in-process `Map` fallback). Reusing the same id resumes a prior session — preventing a crash mid-loop from re-spending up to the cap.
+- `signal: AbortSignal` — every poll, sleep, inner-loop, and outer-loop checks `signal.aborted`. Stop is responsive (≤ ~1 RPC call) regardless of `pollMs`.
+- `onProgress(evt)` — called on every state change with `{ type, mint?, sig?, spent?, reason? }`. Drive a live UI off it.
+
+The result `data.reason` indicates why the loop exited: `'aborted' | 'duration' | 'cap' | 'all-exited'`.
 
 ## Wiring
 

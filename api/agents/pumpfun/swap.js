@@ -115,6 +115,18 @@ export default async function handler(req, res, id) {
 			const baseAmount = new BN(body.tokenAmount);
 			instructions = await amm.sellBaseInput(swapState, baseAmount, slippage);
 			quotedAmount = { base_amount: baseAmount.toString() };
+			// Best-effort expected-SOL-out via constant-product on pool reserves.
+			try {
+				const pool = swapState.pool || {};
+				const baseReserve = pool.baseReserve || pool.virtualBaseReserves;
+				const quoteReserve = pool.quoteReserve || pool.virtualQuoteReserves;
+				if (baseReserve && quoteReserve) {
+					const out = baseAmount.mul(quoteReserve).div(baseReserve.add(baseAmount));
+					quotedAmount.expectedSolLamports = out.toString();
+				}
+			} catch (e) {
+				console.error('[pumpfun/swap] sell quote failed', e);
+			}
 		}
 	} catch (err) {
 		console.error('[pumpfun/swap] build failed', err);

@@ -702,6 +702,21 @@
 						${id.owner ? `<span>· owner</span> <code>${escapeHtml(shortKey(id.owner))}</code> <button class="copy-btn" data-copy="${escapeHtml(id.owner)}">copy</button> <span class="pill" id="owner-balance" title="Live SOL balance of agent owner">… SOL</span>` : ''}
 						<span>· ${escapeHtml(lastIndexed)}</span>
 					</div>
+					${id.operator_wallet ? (() => {
+						const op = id.operator_wallet;
+						const opVanity = op.vanity_prefix && op.address.startsWith(op.vanity_prefix) ? op.vanity_prefix : null;
+						const opAddrHtml = opVanity
+							? `<span class="addr-prefix">${escapeHtml(opVanity)}</span>${escapeHtml(op.address.slice(opVanity.length, 4))}…${escapeHtml(op.address.slice(-4))}`
+							: escapeHtml(shortKey(op.address));
+						return `
+						<div class="identity-meta" style="margin-top:.45rem">
+							<span title="Wallet the agent uses to sign on-chain actions (pumpfun, attestations, payments)">🤖 operator</span>
+							<code>${opAddrHtml}</code>
+							<button class="copy-btn" data-copy="${escapeHtml(op.address)}">copy</button>
+							${opVanity ? `<span class="pill vanity" title="Vanity wallet">✦ ${escapeHtml(opVanity)}</span>` : ''}
+							<span class="pill" id="operator-balance" title="Live SOL balance">… SOL</span>
+						</div>`;
+					})() : ''}
 					<div class="trust-bar">
 						<div class="trust-grade trust-${trust.cls}">${trust.grade}</div>
 						<div>
@@ -717,6 +732,26 @@
 						b.addEventListener('click', () => copyText(b.dataset.copy, b));
 					});
 				if (id.owner) loadOwnerBalance(id.owner, network);
+				if (id.operator_wallet?.address) loadOperatorBalance(id.operator_wallet.address, network);
+			}
+
+			async function loadOperatorBalance(address, network) {
+				const el = document.getElementById('operator-balance');
+				if (!el) return;
+				try {
+					const rpc = network === 'devnet'
+						? 'https://api.devnet.solana.com'
+						: 'https://api.mainnet-beta.solana.com';
+					const r = await fetch(rpc, {
+						method: 'POST',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getBalance', params: [address] }),
+					}).then((x) => x.json());
+					const lamports = r?.result?.value ?? 0;
+					el.textContent = `${(lamports / 1e9).toFixed(3)} SOL`;
+				} catch {
+					el.textContent = '—';
+				}
 			}
 
 			async function loadOwnerBalance(owner, network) {
