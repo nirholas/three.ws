@@ -1,0 +1,41 @@
+{
+  "tools": [
+    {
+      "name": "pumpfun_build_payment",
+      "description": "Build a Solana payment instruction for a tokenized pump.fun agent. Returns transaction instructions the user wallet must sign.",
+      "input_schema": {
+        "type": "object",
+        "required": ["agentMint", "payer", "amount", "currencyMint"],
+        "properties": {
+          "agentMint": { "type": "string", "description": "The agent's token mint address on pump.fun" },
+          "payer": { "type": "string", "description": "User wallet public key" },
+          "amount": {
+            "type": "number",
+            "description": "Payment amount in smallest units (6 decimals for USDC, 9 for SOL)"
+          },
+          "currencyMint": {
+            "type": "string",
+            "description": "Payment currency mint. USDC: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v, SOL: So11111111111111111111111111111111111111112"
+          },
+          "invoiceId": { "type": "number", "description": "Unique invoice ID (integer)" },
+          "startTime": { "type": "number", "description": "Invoice start Unix timestamp" },
+          "endTime": { "type": "number", "description": "Invoice expiry Unix timestamp" }
+        }
+      }
+    },
+    {
+      "name": "pumpfun_verify_payment",
+      "description": "Verify on-chain that a tokenized agent invoice has been paid.",
+      "input_schema": {
+        "type": "object",
+        "required": ["agentMint", "payer", "invoiceId"],
+        "properties": {
+          "agentMint": { "type": "string" },
+          "payer": { "type": "string" },
+          "invoiceId": { "type": "number" },
+          "rpcUrl": { "type": "string", "description": "Solana RPC URL (optional)" }
+        }
+      }
+    }
+  ]
+}
