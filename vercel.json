@@ -238,6 +238,7 @@
 			"dest": "/a-embed.html"
 		},
 		{ "src": "/a/(\\d+)/(\\d+)", "dest": "/api/a-page?chain=$1&id=$2" },
+		{ "src": "/a/sol/([^/]+)", "dest": "/agent-passport.html?asset=$1" },
 		{ "src": "/a/(.*)", "dest": "/app.html" },
 		{ "src": "/(.*)", "dest": "/$1" }
 	],

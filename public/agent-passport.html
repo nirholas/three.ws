@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Agent passport · three.ws</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<style>
+		* { box-sizing: border-box; }
+		body { font: 14px/1.5 system-ui, sans-serif; max-width: 880px; margin: 2rem auto; padding: 0 1rem; color: #111; }
+		h1 { font-size: 1.4rem; margin: 0 0 .25rem; }
+		.muted { color: #666; }
+		.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: .75rem; margin: 1rem 0; }
+		.card { border: 1px solid #e5e5e5; border-radius: 8px; padding: .75rem 1rem; background: #fafafa; }
+		.card .v { font-size: 1.6rem; font-weight: 600; }
+		.card .l { font-size: .8rem; color: #666; }
+		.row { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin: .5rem 0 1.5rem; }
+		.pill { display: inline-block; padding: .15rem .55rem; border-radius: 999px; font-size: .75rem; }
+		.ok    { background: #e7f5e9; color: #1b5e20; }
+		.warn  { background: #fff3cd; color: #855008; }
+		.bad   { background: #fce8e8; color: #b71c1c; }
+		.atts { border-top: 1px solid #eee; }
+		.att  { padding: .6rem 0; border-bottom: 1px solid #eee; display: grid; grid-template-columns: 80px 1fr auto; gap: .75rem; align-items: baseline; }
+		.att code { font-size: .75rem; color: #555; }
+		.kind-feedback   { color: #1b5e20; }
+		.kind-validation { color: #0d47a1; }
+		.kind-task       { color: #6a1b9a; }
+		.kind-accept     { color: #4527a0; }
+		.kind-revoke     { color: #b71c1c; }
+		.kind-dispute    { color: #ef6c00; }
+		input { font: inherit; padding: .35rem .5rem; width: 100%; }
+		button { font: inherit; padding: .35rem .75rem; border: 1px solid #ccc; background: #fff; border-radius: 6px; cursor: pointer; }
+		details { margin-top: .25rem; }
+		details pre { font-size: .75rem; background: #f4f4f4; padding: .4rem; border-radius: 4px; overflow: auto; }
+		a { color: #0d47a1; }
+	</style>
+</head>
+<body>
+	<h1>Solana agent passport</h1>
+	<p class="muted">ERC-8004-style identity, reputation, and validation — no deployed program. <a href="/.well-known/agent-attestation-schemas" target="_blank">View schemas</a></p>
+
+	<div class="row">
+		<input id="asset" placeholder="Metaplex Core asset pubkey…">
+		<select id="network"><option value="devnet">devnet</option><option value="mainnet">mainnet</option></select>
+		<button id="load">Load</button>
+	</div>
+
+	<div id="identity"></div>
+
+	<h2 style="font-size: 1rem; margin: 1.5rem 0 .25rem;">Reputation</h2>
+	<div id="reputation" class="grid"></div>
+
+	<h2 style="font-size: 1rem; margin: 1.5rem 0 .25rem;">Recent attestations</h2>
+	<div id="atts" class="atts"></div>
+
+	<script type="module">
+		const $ = (id) => document.getElementById(id);
+		const params = new URLSearchParams(location.search);
+		$('asset').value   = params.get('asset')   || '';
+		$('network').value = params.get('network') || 'devnet';
+
+		function pill(text, cls = '') { return `<span class="pill ${cls}">${text}</span>`; }
+		function explorer(sig, net) {
+			return `https://explorer.solana.com/tx/${sig}${net === 'devnet' ? '?cluster=devnet' : ''}`;
+		}
+
+		async function load() {
+			const asset = $('asset').value.trim();
+			const network = $('network').value;
+			if (!asset) return;
+			history.replaceState({}, '', `?asset=${asset}&network=${network}`);
+
+			$('identity').innerHTML = '<p class="muted">loading…</p>';
+
+			let card;
+			try {
+				card = await (await fetch(`/api/agents/solana-card?asset=${asset}`)).json();
+			} catch {}
+
+			let rep, atts;
+			[rep, atts] = await Promise.all([
+				fetch(`/api/agents/solana-reputation?asset=${asset}&network=${network}`).then((r) => r.json()),
+				fetch(`/api/agents/solana-attestations?asset=${asset}&network=${network}&limit=25`).then((r) => r.json()),
+			]);
+
+			renderIdentity(card, asset, network);
+			renderReputation(rep);
+			renderAttestations(atts.data || [], network);
+		}
+
+		function renderIdentity(card, asset, network) {
+			const id = card?.identity || {};
+			const name = card?.name || '(unindexed agent)';
+			$('identity').innerHTML = `
+				<div class="card" style="background:white;">
+					<div style="font-size:1.2rem;font-weight:600">${name}</div>
+					<div class="muted">${card?.description || ''}</div>
+					<div class="muted" style="margin-top:.4rem;font-size:.8rem">
+						<code>${asset}</code> · <span class="pill ${network === 'mainnet' ? 'ok' : 'warn'}">${network}</span>
+						${id.owner ? ` · owner <code>${id.owner.slice(0, 6)}…${id.owner.slice(-4)}</code>` : ''}
+					</div>
+				</div>`;
+		}
+
+		function renderReputation(r) {
+			if (!r || r.error) { $('reputation').innerHTML = `<p class="muted">no data</p>`; return; }
+			const f = r.feedback || {}, v = r.validation || {};
+			const verifiedPct = f.total ? Math.round((f.verified / f.total) * 100) : 0;
+			$('reputation').innerHTML = `
+				<div class="card"><div class="v">${f.score_avg_weighted_verified?.toFixed(2) || '—'}</div><div class="l">verified weighted score (1–5)</div></div>
+				<div class="card"><div class="v">${f.score_avg_weighted?.toFixed(2) || '—'}</div><div class="l">all weighted score</div></div>
+				<div class="card"><div class="v">${f.unique_verified_attesters || 0}<span class="muted" style="font-size:1rem">/${f.unique_attesters || 0}</span></div><div class="l">verified attesters / unique</div></div>
+				<div class="card"><div class="v">${f.verified || 0}<span class="muted" style="font-size:1rem">/${f.total || 0}</span></div><div class="l">verified / total feedback (${verifiedPct}%)</div></div>
+				<div class="card"><div class="v">${v.passed || 0}<span class="muted" style="font-size:1rem">/${(v.passed||0)+(v.failed||0)}</span></div><div class="l">validation passed</div></div>
+				<div class="card"><div class="v">${f.disputed || 0}</div><div class="l">disputed</div></div>
+				<div class="card"><div class="v">${r.tasks?.accepted || 0}<span class="muted" style="font-size:1rem">/${r.tasks?.offered || 0}</span></div><div class="l">tasks accepted / offered</div></div>
+				<div class="card"><div class="v">${r.revoked_count || 0}</div><div class="l">revoked</div></div>
+			`;
+		}
+
+		function renderAttestations(rows, net) {
+			if (!rows.length) { $('atts').innerHTML = `<p class="muted">no attestations yet</p>`; return; }
+			$('atts').innerHTML = rows.map((row) => {
+				const k = row.kind.split('.')[1];
+				const flags = [];
+				if (row.verified) flags.push(pill('verified', 'ok'));
+				if (row.disputed) flags.push(pill('disputed', 'warn'));
+				return `
+					<div class="att">
+						<div class="kind-${k}"><strong>${k}</strong></div>
+						<div>
+							<div>${describe(row)}</div>
+							<div class="muted" style="font-size:.75rem">
+								by <code>${row.attester?.slice(0,6)}…${row.attester?.slice(-4) || ''}</code>
+								· slot ${row.slot}
+								· <a href="${explorer(row.signature, net)}" target="_blank">tx</a>
+								${flags.join(' ')}
+							</div>
+							<details><summary class="muted" style="font-size:.75rem">payload</summary><pre>${JSON.stringify(row.payload, null, 2)}</pre></details>
+						</div>
+						<div></div>
+					</div>`;
+			}).join('');
+		}
+
+		function describe(row) {
+			const p = row.payload || {};
+			switch (row.kind) {
+				case 'threews.feedback.v1':   return `score ${p.score}/5${p.task_id ? ` for task ${p.task_id}` : ''}`;
+				case 'threews.validation.v1': return `validation ${p.passed ? '✓ passed' : '✗ failed'} (task hash ${p.task_hash?.slice(0,12)}…)`;
+				case 'threews.task.v1':       return `task offered: ${p.task_id}`;
+				case 'threews.accept.v1':     return `task accepted: ${p.task_id}`;
+				case 'threews.revoke.v1':     return `revoked ${p.target_signature?.slice(0,12)}…`;
+				case 'threews.dispute.v1':    return `disputed ${p.target_signature?.slice(0,12)}…${p.reason ? ` — ${p.reason}` : ''}`;
+				default: return row.kind;
+			}
+		}
+
+		$('load').onclick = load;
+		if ($('asset').value) load();
+	</script>
+</body>
+</html>

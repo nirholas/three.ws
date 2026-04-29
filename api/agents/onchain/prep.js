@@ -138,10 +138,9 @@ function buildManifest({ name, description, avatar_id, skills }) {
 async function prepEvm({ chainId, metadataUri }) {
 	// EVM: client builds its own tx via ethers; we just hand back the metadata
 	// URI and the registry address (looked up from the existing chain config).
-	const { REGISTRY_DEPLOYMENTS } = await import('../../_lib/erc8004-chains.js').catch(() => ({}));
-	const deployment = REGISTRY_DEPLOYMENTS?.[chainId];
+	const { CHAIN_BY_ID } = await import('../../_lib/erc8004-chains.js');
 	return {
-		contractAddress: deployment?.identityRegistry || null,
+		contractAddress: CHAIN_BY_ID?.[chainId]?.registry || null,
 		metadataUri,
 	};
 }
