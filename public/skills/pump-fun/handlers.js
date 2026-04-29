@@ -1,17 +1,33 @@
-// pump-fun skill — proxies tool calls to the pump-fun-workers MCP server.
-// https://github.com/nirholas/pump-fun-workers
+// pump-fun skill — proxies tool calls to the in-house MCP route at
+// /api/pump-fun-mcp. The route is implemented in api/pump-fun-mcp.js and
+// serves on-chain reads (bonding curve, token details, holders) via the
+// official @pump-fun/* SDKs + Solana RPC. Indexer-backed tools (search,
+// trending, new, graduated, king-of-the-hill, creator profile, trades) are
+// proxied through the upstream pumpfun-claims-bot MCP and return a clear
+// JSON-RPC error when PUMPFUN_BOT_URL is not configured.
+//
+// Endpoint resolution: we resolve /api/pump-fun-mcp against the *page*
+// origin (window.location.origin) so the skill works whether the host page
+// is three.ws, a self-hosted deployment, or localhost during development.
 //
 // Some handlers return a `sentiment` (-1..1) so the Empathy Layer reacts
 // (rug flags → concern, near-graduation → celebration). _onSkillDone in
 // agent-avatar.js consumes result.sentiment automatically.
 
-const ENDPOINT = 'https://pump-fun-sdk.modelcontextprotocol.name/mcp';
+function _endpoint() {
+	if (typeof globalThis !== 'undefined' && globalThis.location?.origin) {
+		return `${globalThis.location.origin}/api/pump-fun-mcp`;
+	}
+	// Skill workers run without window — fall back to a same-origin relative
+	// fetch which the host shell will resolve.
+	return '/api/pump-fun-mcp';
+}
 
 let _rpcId = 0;
 
 async function callMcp(name, args, ctx) {
 	const fetchImpl = ctx?.fetch ?? globalThis.fetch;
-	const res = await fetchImpl(ENDPOINT, {
+	const res = await fetchImpl(_endpoint(), {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({

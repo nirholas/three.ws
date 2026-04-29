@@ -34,7 +34,7 @@ export default wrap(async (req, res) => {
 		? await sql`
 			select id, payer_wallet, currency_mint, amount_atomics, invoice_id,
 			       start_time, end_time, status, skill_id, tool_name,
-			       tx_signature, created_at, confirmed_at
+			       invoice_pda, tx_signature, created_at, confirmed_at
 			from pump_agent_payments
 			where mint_id=${agent.id}
 			order by created_at desc limit ${limit}
@@ -42,11 +42,36 @@ export default wrap(async (req, res) => {
 		: await sql`
 			select id, payer_wallet, currency_mint, amount_atomics, invoice_id,
 			       start_time, end_time, status, skill_id, tool_name,
-			       tx_signature, created_at, confirmed_at
+			       invoice_pda, tx_signature, created_at, confirmed_at
 			from pump_agent_payments
 			where mint_id=${agent.id} and status='confirmed'
 			order by confirmed_at desc nulls last limit ${limit}
 		`;
+
+	// Derive invoice PDAs for any rows that lack one (older rows pre-PDA backfill).
+	// We do it lazily here so the widget can deep-link without a backfill cron.
+	let pdaErrored = false;
+	const needsPda = rows.filter((r) => !r.invoice_pda && r.invoice_id);
+	if (needsPda.length > 0) {
+		try {
+			const [{ getInvoiceIdPDA }, { PublicKey }] = await Promise.all([
+				import('@pump-fun/agent-payments-sdk'),
+				import('@solana/web3.js'),
+			]);
+			const BN = (await import('bn.js')).default || (await import('bn.js'));
+			const mintPk = new PublicKey(mint);
+			for (const r of needsPda) {
+				try {
+					const [pda] = getInvoiceIdPDA(mintPk, new BN(r.invoice_id));
+					r.invoice_pda = pda.toBase58();
+				} catch {
+					/* skip individual failures */
+				}
+			}
+		} catch {
+			pdaErrored = true;
+		}
+	}
 
 	const [agg] = await sql`
 		select

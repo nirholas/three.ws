@@ -23,10 +23,13 @@ export function solanaConnection(network = 'mainnet') {
  * (older rows from before pump-fun integration), one is generated and
  * persisted into meta in-place.
  *
+ * `audit` is passed through to `recoverSolanaAgentKeypair` so every key
+ * decrypt is recorded in usage_events. Always pass `{ reason }` at minimum.
+ *
  * Returns { agent, keypair, meta }. Caller is responsible for calling
  * agent-payments / pump-sdk / pump-swap-sdk with `keypair`.
  */
-export async function loadAgentForSigning(agentId, userId) {
+export async function loadAgentForSigning(agentId, userId, audit = null) {
 	const [row] = await sql`
 		SELECT * FROM agent_identities
 		WHERE id = ${agentId} AND deleted_at IS NULL
@@ -38,7 +41,12 @@ export async function loadAgentForSigning(agentId, userId) {
 	let meta = { ...(row.meta || {}) };
 	if (!meta.encrypted_solana_secret || !meta.solana_address) {
 		const sol = await generateSolanaAgentWallet();
-		meta = { ...meta, solana_address: sol.address, encrypted_solana_secret: sol.encrypted_secret };
+		meta = {
+			...meta,
+			solana_address: sol.address,
+			encrypted_solana_secret: sol.encrypted_secret,
+			solana_wallet_source: 'auto_provisioned',
+		};
 		await sql`
 			UPDATE agent_identities
 			SET meta = ${JSON.stringify(meta)}::jsonb
@@ -46,6 +54,11 @@ export async function loadAgentForSigning(agentId, userId) {
 		`;
 	}
 
-	const keypair = await recoverSolanaAgentKeypair(meta.encrypted_solana_secret);
+	const keypair = await recoverSolanaAgentKeypair(meta.encrypted_solana_secret, {
+		agentId,
+		userId,
+		reason: audit?.reason || 'pumpfun_action',
+		meta: audit?.meta,
+	});
 	return { agent: row, keypair, meta };
 }

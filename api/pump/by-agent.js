@@ -42,11 +42,22 @@ export default wrap(async (req, res) => {
 		from pump_buyback_runs where mint_id=${row.id}
 	`;
 
+	// Burns feed (separate from payments feed) — recent confirmed buyback runs
+	// for the dashboard / passport "🔥 burns" stream.
+	const burnsFeed = await sql`
+		select id, currency_mint, tx_signature, burn_amount, created_at
+		from pump_buyback_runs
+		where mint_id=${row.id} and status='confirmed'
+		order by created_at desc
+		limit 10
+	`;
+
 	return json(res, 200, {
 		data: {
 			...row,
 			stats: stats || { confirmed_payments: 0, unique_payers: 0, total_atomics: '0' },
 			burns:  burnRow || { runs: 0, total_burned: '0' },
+			burns_feed: burnsFeed,
 		},
 	});
 });

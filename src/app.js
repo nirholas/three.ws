@@ -1094,6 +1094,14 @@ class App {
 					}),
 				);
 			}
+			if (data.type === 'pumpfun-feed:set-narrate') {
+				document.body.dispatchEvent(
+					new CustomEvent('pumpfun-feed:set-narrate', {
+						detail: { on: !!data.on },
+						bubbles: true,
+					}),
+				);
+			}
 		});
 	}
 

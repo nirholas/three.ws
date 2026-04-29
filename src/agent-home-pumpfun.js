@@ -53,16 +53,25 @@ export function mountPumpFunCard({ panel, identity, skills, memory, protocol }) 
 		// auto-trader
 		botOpen: false,
 		botMode: 'auto-snipe',
-		botSimulate: true,
+		botDryRun: false,
 		botDurationSec: 60,
 		botPerTradeSol: 0.05,
 		botCapSol: 0.5,
 		botQuery: '',
 		botWallet: '',
-		botSessionId: `s-${Date.now().toString(36)}`,
 		botRunning: false,
+		botProgress: null, // last onProgress event
+		botSpent: 0,
+		botEventCount: 0,
 	};
 	let botAbort = null;
+	// Stable per-mode session ids — re-running the same mode resumes prior state.
+	const botSessionIds = {
+		'research-and-buy': `pf-research-${identity.id}`,
+		'auto-snipe': `pf-snipe-${identity.id}`,
+		'copy-trade': `pf-copy-${identity.id}`,
+		'rug-exit-watch': `pf-exit-${identity.id}`,
+	};
 	let refreshTimer = null;
 	let quoteTimer = null;
 	let unsubProtocol = null;
@@ -156,20 +165,30 @@ export function mountPumpFunCard({ panel, identity, skills, memory, protocol }) 
 					${isExitWatch ? '' : `<label class="pumpfun-trade-label"><span>Per-trade SOL</span><input class="pumpfun-trade-input" data-bot-field="perTradeSol" type="number" min="0.001" step="0.001" value="${s.botPerTradeSol}" ${s.botRunning ? 'disabled' : ''}></label>`}
 					${isExitWatch ? '' : `<label class="pumpfun-trade-label"><span>Cap SOL</span><input class="pumpfun-trade-input" data-bot-field="capSol" type="number" min="0.001" step="0.01" value="${s.botCapSol}" ${s.botRunning ? 'disabled' : ''}></label>`}
 				</div>
-				<label class="pumpfun-vanity-row">
-					<input type="checkbox" data-bot-field="simulate" ${s.botSimulate ? 'checked' : ''} ${s.botRunning ? 'disabled' : ''}>
-					<span>Simulate (dry-run, no signing)</span>
+				<label class="pumpfun-vanity-row" title="Run filters/quotes only — no signing or SOL spent. Useful for tuning before going live.">
+					<input type="checkbox" data-bot-field="dryRun" ${s.botDryRun ? 'checked' : ''} ${s.botRunning ? 'disabled' : ''}>
+					<span>Dry run</span>
 				</label>
 				<div class="pumpfun-trade-actions">
 					<button class="pumpfun-btn pumpfun-btn--ghost" data-action="close-bot" ${s.botRunning ? 'disabled' : ''}>Close</button>
 					${s.botRunning
 						? `<button class="pumpfun-btn pumpfun-btn--primary" data-action="bot-stop">Stop</button>`
-						: `<button class="pumpfun-btn pumpfun-btn--primary" data-action="bot-run">${s.botSimulate ? 'Run dry-run' : 'Run live'}</button>`}
+						: `<button class="pumpfun-btn pumpfun-btn--primary" data-action="bot-run">${s.botDryRun ? 'Run dry-run' : 'Run live'}</button>`}
 				</div>
-				${s.botRunning ? `<div class="pumpfun-quote"><span class="pumpfun-quote-status">Running ${escapeHtml(s.botMode)} (session ${escapeHtml(s.botSessionId)})…</span></div>` : ''}
+				<div class="pumpfun-bot-progress" id="pf-bot-progress">${botProgressLine(s)}</div>
 			</div>
 		`;
 	};
+
+	function botProgressLine(s) {
+		if (!s.botRunning && !s.botProgress) return '';
+		const e = s.botProgress;
+		const head = s.botRunning
+			? `<span class="pumpfun-quote-status">${escapeHtml(s.botMode)} · ${s.botEventCount} events · ${s.botSpent.toFixed(4)} SOL</span>`
+			: `<span class="pumpfun-quote-out">done · ${s.botEventCount} events · ${s.botSpent.toFixed(4)} SOL</span>`;
+		const last = e ? `<span class="pumpfun-quote-out"> · last: ${escapeHtml(e.type)}${e.mint ? ` ${shortMint(e.mint)}` : ''}${e.reason ? ` (${escapeHtml(e.reason)})` : ''}</span>` : '';
+		return head + last;
+	}
 
 	const tradePanel = (s) => {
 		const isBuy = s.tradeOpen === 'buy';
@@ -278,7 +297,7 @@ export function mountPumpFunCard({ panel, identity, skills, memory, protocol }) 
 				const v = el.type === 'checkbox' ? e.target.checked
 					: el.type === 'number' ? parseFloat(e.target.value) || 0
 					: e.target.value;
-				const map = { simulate: 'botSimulate', durationSec: 'botDurationSec', perTradeSol: 'botPerTradeSol', capSol: 'botCapSol', query: 'botQuery', wallet: 'botWallet' };
+				const map = { dryRun: 'botDryRun', durationSec: 'botDurationSec', perTradeSol: 'botPerTradeSol', capSol: 'botCapSol', query: 'botQuery', wallet: 'botWallet' };
 				if (map[field]) state[map[field]] = v;
 			});
 		});
@@ -350,11 +369,22 @@ export function mountPumpFunCard({ panel, identity, skills, memory, protocol }) 
 
 	async function runBot() {
 		if (state.botRunning) return;
+		const skillConfig = {
+			sessionSpendCapSol: parseFloat(state.botCapSol) || 0.5,
+			perTradeSol: parseFloat(state.botPerTradeSol) || 0.05,
+		};
 		const skillName = `pumpfun-${state.botMode}`;
 		const args = {
-			sessionId: state.botSessionId,
-			simulate: !!state.botSimulate,
+			sessionId: botSessionIds[state.botMode],
+			dryRun: !!state.botDryRun,
 			durationSec: Math.max(10, parseInt(state.botDurationSec, 10) || 60),
+			onProgress: (evt) => {
+				state.botProgress = evt;
+				state.botEventCount += 1;
+				if (typeof evt.spent === 'number') state.botSpent = evt.spent;
+				const slot = cardBody.querySelector('#pf-bot-progress');
+				if (slot) slot.innerHTML = botProgressLine(state);
+			},
 		};
 		if (state.botMode === 'research-and-buy') {
 			if (!state.botQuery?.trim()) return toast('Query required', null, null, 'error');
@@ -373,12 +403,15 @@ export function mountPumpFunCard({ panel, identity, skills, memory, protocol }) 
 		botAbort = new AbortController();
 		args.signal = botAbort.signal;
 		state.botRunning = true;
+		state.botSpent = 0;
+		state.botEventCount = 0;
+		state.botProgress = null;
 		render();
 		try {
-			const r = await skills.perform(skillName, args, { identity, memory });
+			const r = await skills.perform(skillName, args, { identity, memory, skillConfig });
 			if (r?.success) {
-				const summary = r.output || `${state.botMode} done`;
-				toast(`${state.botSimulate ? '[dry-run] ' : ''}${summary}`, null, null, 'success');
+				if (typeof r.data?.spent === 'number') state.botSpent = r.data.spent;
+				toast(`${state.botDryRun ? '[dry-run] ' : ''}${r.output || `${state.botMode} done`}`, null, null, 'success');
 			} else {
 				toast(r?.output || `${state.botMode} failed`, null, null, 'error');
 			}
@@ -387,7 +420,6 @@ export function mountPumpFunCard({ panel, identity, skills, memory, protocol }) 
 		} finally {
 			state.botRunning = false;
 			botAbort = null;
-			state.botSessionId = `s-${Date.now().toString(36)}`;
 			render();
 		}
 	}

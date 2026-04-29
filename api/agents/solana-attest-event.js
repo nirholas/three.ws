@@ -30,6 +30,7 @@ import { cors, json, method, wrap, error } from '../_lib/http.js';
 import { parse } from '../_lib/validate.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { RPC, KIND_MAP } from '../_lib/solana-attestations.js';
+import { recordEvent } from '../_lib/usage.js';
 
 const MEMO_PROGRAM_ID = new PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr');
 const REPLAY_WINDOW_SECS = 5 * 60;
@@ -113,6 +114,8 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
 	if (!method(req, res, ['POST'])) return;
 
+	const startedAt = Date.now();
+
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
@@ -135,7 +138,7 @@ export default wrap(async (req, res) => {
 
 	// Confirm the agent exists in our registry on the declared network.
 	const [agent] = await sql`
-		select id from agent_identities
+		select id, user_id from agent_identities
 		where meta->'onchain'->>'sol_asset' = ${body.agent_asset}
 		   or meta->>'sol_mint_address'      = ${body.agent_asset}
 		limit 1
@@ -243,8 +246,26 @@ export default wrap(async (req, res) => {
 			  and payload->>'event_id' = ${body.event_id}
 			limit 1
 		`;
+		recordEvent({
+			userId:    agent.user_id,
+			agentId:   agent.id,
+			kind:      'attest_event',
+			tool:      `pumpkit.${body.event_type}`,
+			status:    'deduped',
+			latencyMs: Date.now() - startedAt,
+			meta:      { network: body.network, event_id: body.event_id, signature: winner?.signature ?? null },
+		});
 		return json(res, 200, { data: { signature: winner?.signature ?? null, deduped: true } });
 	}
 
+	recordEvent({
+		userId:    agent.user_id,
+		agentId:   agent.id,
+		kind:      'attest_event',
+		tool:      `pumpkit.${body.event_type}`,
+		status:    'ok',
+		latencyMs: Date.now() - startedAt,
+		meta:      { network: body.network, event_id: body.event_id, signature, kind: payload.kind },
+	});
 	return json(res, 201, { data: { signature, kind: payload.kind, deduped: false } });
 });

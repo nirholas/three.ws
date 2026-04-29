@@ -140,6 +140,7 @@ export default async function handler(req, res, id) {
 				uri: body.uri,
 				signature,
 				network: body.network,
+				solAmount: body.solAmount || 0,
 				vanity_prefix: body.vanityPrefix || null,
 				vanity_suffix: body.vanitySuffix || null,
 				vanity_ignore_case: body.vanityIgnoreCase || false,

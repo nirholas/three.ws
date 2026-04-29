@@ -65,7 +65,7 @@ describe('pump-fun compose ↔ MCP contract', () => {
 		expect(skills._performed).toContainEqual({ name: 'pumpfun-buy', args: { mint: 'MINT1', solAmount: 0.1 } });
 	});
 
-	it('researchAndBuy with simulate:true skips signing but still vets', async () => {
+	it('researchAndBuy with dryRun:true skips signing but still vets', async () => {
 		const skills = makeSkills();
 		registerPumpFunComposeSkills(skills);
 		const skill = skills.get('pumpfun-research-and-buy');
@@ -75,10 +75,10 @@ describe('pump-fun compose ↔ MCP contract', () => {
 		fetchMock.mockResolvedValueOnce(jsonRpc({ total: 100, topHolderPct: 5 }));
 		fetchMock.mockResolvedValueOnce(jsonRpc({ rugCount: 0 }));
 
-		const r = await skill.handler({ query: 'bar', amountSol: 0.05, simulate: true }, {});
+		const r = await skill.handler({ query: 'bar', amountSol: 0.05, dryRun: true }, {});
 		expect(r.data.decision).toBe('buy');
-		expect(r.data.simulate).toBe(true);
-		expect(r.data.sig).toMatch(/^SIMULATED:buy:/);
+		expect(r.data.dryRun).toBe(true);
+		expect(r.data.sig).toBe(null);
 		expect(skills.perform).not.toHaveBeenCalledWith('pumpfun-buy', expect.anything(), expect.anything());
 	});
 
@@ -121,7 +121,7 @@ describe('pump-fun compose ↔ MCP contract', () => {
 		fetchMock.mockResolvedValueOnce(jsonRpc({ trades: [] })); // trades
 		fetchMock.mockResolvedValueOnce(jsonRpc({ creator: 'DEV' })); // details
 
-		const r = await skill.handler({ mints: ['MINT_X'], durationSec: 1, simulate: false }, { skillConfig: { pollMs: 0 } });
+		const r = await skill.handler({ mints: ['MINT_X'], durationSec: 1, dryRun: false }, { skillConfig: { pollMs: 0 } });
 		expect(r.data.exited).toEqual(['MINT_X']);
 		expect(r.data.events[0].trigger).toMatch(/top holder 60/);
 		expect(skills.perform).toHaveBeenCalledWith('pumpfun-sell', { mint: 'MINT_X', tokenAmount: '12345' }, expect.anything());
@@ -170,5 +170,63 @@ describe('pump-fun compose ↔ MCP contract', () => {
 		fetchMock.mockResolvedValueOnce(jsonRpc({ tokens: [{ mint: 'A' }] }));
 		const r2 = await snipe.handler({ durationSec: 1, sessionId: 'S1' }, ctx);
 		expect(r2.data.spent).toBe(0.05); // unchanged — A was already seen
+	});
+
+	it('rugExitWatch skips (no `exited` mark) when userBalance is 0', async () => {
+		const skills = makeSkills();
+		// Override pumpfun-status to return zero balance
+		skills.perform = vi.fn(async (name) => {
+			if (name === 'pumpfun-status') return { success: true, data: { userBalance: '0' } };
+			return { success: false };
+		});
+		registerPumpFunComposeSkills(skills);
+		const skill = skills.get('pumpfun-rug-exit-watch');
+
+		fetchMock.mockResolvedValueOnce(jsonRpc({ topHolderPct: 60 }));
+		fetchMock.mockResolvedValueOnce(jsonRpc({ trades: [] }));
+		fetchMock.mockResolvedValueOnce(jsonRpc({ creator: 'DEV' }));
+
+		const r = await skill.handler(
+			{ mints: ['MINT_Z'], durationSec: 1, dryRun: false },
+			{ skillConfig: { pollMs: 0 } },
+		);
+		expect(r.data.exited).toEqual([]); // not marked as exited — we never owned it
+		expect(r.data.events[0].action).toBe('skipped-no-balance');
+		expect(skills.perform).not.toHaveBeenCalledWith('pumpfun-sell', expect.anything(), expect.anything());
+	});
+
+	it('autoSnipe aborts promptly via signal', async () => {
+		const skills = makeSkills();
+		registerPumpFunComposeSkills(skills);
+		const snipe = skills.get('pumpfun-auto-snipe');
+		const ctrl = new AbortController();
+
+		// Pre-abort the signal — loop should bail before any MCP call.
+		ctrl.abort();
+		const start = Date.now();
+		const r = await snipe.handler(
+			{ durationSec: 60, signal: ctrl.signal },
+			{ skillConfig: { pollMs: 100, perTradeSol: 0.05, sessionSpendCapSol: 1 } },
+		);
+		expect(Date.now() - start).toBeLessThan(200); // would otherwise wait pollMs+
+		expect(r.data.reason).toBe('aborted');
+	});
+
+	it('compose progress events fire on every state change', async () => {
+		const skills = makeSkills();
+		registerPumpFunComposeSkills(skills);
+		const skill = skills.get('pumpfun-research-and-buy');
+
+		fetchMock.mockResolvedValueOnce(jsonRpc({ results: [{ mint: 'MINT3' }] }));
+		fetchMock.mockResolvedValueOnce(jsonRpc({ creator: 'C3' }));
+		fetchMock.mockResolvedValueOnce(jsonRpc({ total: 100, topHolderPct: 5 }));
+		fetchMock.mockResolvedValueOnce(jsonRpc({ rugCount: 0 }));
+
+		const events = [];
+		const onProgress = (e) => events.push(e.type);
+		await skill.handler({ query: 'foo', dryRun: true, onProgress }, {});
+		expect(events).toContain('search');
+		expect(events).toContain('vet');
+		expect(events).toContain('dry-buy');
 	});
 });

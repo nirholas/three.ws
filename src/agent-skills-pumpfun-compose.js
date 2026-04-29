@@ -359,20 +359,24 @@ export function registerPumpFunComposeSkills(skills) {
 				mints: { type: 'array', items: { type: 'string' } },
 				durationSec: { type: 'integer', minimum: 10, maximum: 86400 },
 				sessionId: { type: 'string' },
-				simulate: { type: 'boolean' },
+				dryRun: { type: 'boolean' },
 			},
 			required: ['mints', 'durationSec'],
 		},
 		handler: async (args, ctx) => {
-			const simulate = !!args.simulate;
+			const dryRun = !!args.dryRun;
+			const onProgress = args.onProgress;
+			const signal = args.signal;
 			const sessionId = args.sessionId;
 			const deadline = Date.now() + args.durationSec * 1000;
 			const concentrationLimit = cfg(ctx, 'exitOnConcentrationPct');
 			const devSellLimit = cfg(ctx, 'exitOnDevSellPct');
 			const state = await loadState(ctx?.memory, sessionId, { exited: new Set(), log: [] });
+			emit(onProgress, { type: 'start', mode: 'rug-exit-watch', mints: args.mints });
 
-			while (!args.signal?.aborted && Date.now() < deadline && state.exited.size < args.mints.length) {
+			while (!signal?.aborted && Date.now() < deadline && state.exited.size < args.mints.length) {
 				for (const mint of args.mints) {
+					if (signal?.aborted) break;
 					if (state.exited.has(mint)) continue;
 					const [holders, trades, details] = await Promise.all([
 						mcp('getTokenHolders', { mint, limit: 10 }).catch(() => null),
@@ -387,25 +391,38 @@ export function registerPumpFunComposeSkills(skills) {
 					let trigger = null;
 					if (top >= concentrationLimit) trigger = `top holder ${top}%`;
 					else if (devSellPct >= devSellLimit) trigger = `dev sold ${devSellPct}%`;
-					if (!trigger) continue;
+					if (!trigger) {
+						emit(onProgress, { type: 'tick', mint, top, devSellPct });
+						continue;
+					}
 
 					try {
-						const sell = await maybeSell(skills, ctx, simulate, mint);
-						state.exited.add(mint);
-						state.log.push({ mint, trigger, sig: sell.signature, simulate });
+						const sell = await doSell(skills, ctx, dryRun, mint);
+						if (sell.skipped === 'no-balance') {
+							state.log.push({ mint, trigger, action: 'skipped-no-balance' });
+							emit(onProgress, { type: 'skip', mint, reason: 'no-balance' });
+						} else {
+							state.exited.add(mint);
+							state.log.push({ mint, trigger, sig: sell.signature, tokenAmount: sell.tokenAmount, dryRun });
+							emit(onProgress, { type: dryRun ? 'dry-sell' : 'sell', mint, sig: sell.signature, trigger });
+						}
 						saveState(ctx?.memory, sessionId, state);
 					} catch (e) {
 						state.log.push({ mint, trigger, error: e.message });
+						emit(onProgress, { type: 'error', mint, reason: e.message });
 					}
 				}
 				saveState(ctx?.memory, sessionId, state);
-				await new Promise((r) => setTimeout(r, cfg(ctx, 'pollMs')));
+				if (signal?.aborted || Date.now() >= deadline || state.exited.size >= args.mints.length) break;
+				emit(onProgress, { type: 'poll-sleep', ms: cfg(ctx, 'pollMs') });
+				await abortableSleep(cfg(ctx, 'pollMs'), signal);
 			}
+			const reason = signal?.aborted ? 'aborted' : Date.now() >= deadline ? 'duration' : 'all-exited';
 			return {
 				success: true,
-				output: `Exit watch done. Exited ${state.exited.size}/${args.mints.length} positions.`,
+				output: `Exit watch done (${reason}). Exited ${state.exited.size}/${args.mints.length} positions.`,
 				sentiment: state.exited.size > 0 ? -0.2 : 0.2,
-				data: { exited: [...state.exited], events: state.log, simulate, sessionId },
+				data: { exited: [...state.exited], events: state.log, dryRun, sessionId, reason },
 			};
 		},
 	});
