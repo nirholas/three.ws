@@ -1,34 +1,52 @@
 /**
  * Pump.fun skills for Solana agents
  * ---------------------------------
- * Wraps @nirholas/pump-sdk so an agent can launch its own coin, buy, sell,
- * and report bonding-curve state through chat / MCP.
- *
- * Skills registered:
- *   - pumpfun-create   → mint a new token whose metadata points at the agent
- *   - pumpfun-buy      → buy on the bonding curve with SOL
- *   - pumpfun-sell     → sell tokens back to the curve
- *   - pumpfun-status   → market cap + graduation progress for a mint
+ * Wraps the official @pump-fun SDKs so an agent can:
+ *   - launch a token (bonding curve)        → pumpfun-create
+ *   - launch one auto-derived from identity → pumpfun-launch-from-agent
+ *   - trade on the curve                    → pumpfun-buy / pumpfun-sell
+ *   - trade on the AMM (post-graduation)    → pumpfun-amm-buy / pumpfun-amm-sell
+ *   - read live curve state                 → pumpfun-status
+ *   - claim creator fees                    → pumpfun-claim-fees
+ *   - accept paid invocations               → pumpfun-accept-payment
  *
  * Wallet: uses the same injected Solana wallet as src/erc8004/solana-deploy.js
  * (Phantom / Backpack / Solflare). All txs are signed by the agent owner;
  * this module never holds keys.
  *
- * SDK is loaded lazily so non-Solana agents don't pay the import cost.
+ * SDKs are loaded lazily so non-Solana agents don't pay the import cost.
  */
 
 import { detectSolanaWallet, SOLANA_RPC } from './erc8004/solana-deploy.js';
 
 const DEFAULT_NETWORK = 'mainnet';
+const DEFAULT_SLIPPAGE_BPS = 500;
 
-async function loadSdk() {
-	const [{ OnlinePumpSdk, PUMP_SDK, getBuyTokenAmountFromSolAmount }, web3, BN] =
-		await Promise.all([
-			import('@nirholas/pump-sdk'),
-			import('@solana/web3.js'),
-			import('bn.js').then((m) => m.default || m),
-		]);
-	return { OnlinePumpSdk, PUMP_SDK, getBuyTokenAmountFromSolAmount, web3, BN };
+async function loadCore() {
+	const [pump, web3, BN, splToken] = await Promise.all([
+		import('@pump-fun/pump-sdk'),
+		import('@solana/web3.js'),
+		import('bn.js').then((m) => m.default || m),
+		import('@solana/spl-token').catch(() => null),
+	]);
+	return { pump, web3, BN, splToken };
+}
+
+async function loadAmm() {
+	const [amm, web3, BN] = await Promise.all([
+		import('@pump-fun/pump-swap-sdk'),
+		import('@solana/web3.js'),
+		import('bn.js').then((m) => m.default || m),
+	]);
+	return { amm, web3, BN };
+}
+
+async function loadAgentPayments() {
+	const [pay, web3] = await Promise.all([
+		import('@pump-fun/agent-payments-sdk'),
+		import('@solana/web3.js'),
+	]);
+	return { pay, web3 };
 }
 
 function getConnection(web3, network) {
@@ -51,11 +69,18 @@ async function sendIxs({ web3, connection, wallet, payer, instructions, extraSig
 	tx.add(...instructions);
 	if (extraSigners.length) tx.partialSign(...extraSigners);
 	const signed = await wallet.signTransaction(tx);
-	const sig = await connection.sendRawTransaction(signed.serialize(), {
-		skipPreflight: false,
-	});
+	const sig = await connection.sendRawTransaction(signed.serialize(), { skipPreflight: false });
 	await connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight });
 	return sig;
+}
+
+function deriveSymbol(name) {
+	return (
+		String(name || 'AGENT')
+			.toUpperCase()
+			.replace(/[^A-Z0-9]/g, '')
+			.slice(0, 10) || 'AGENT'
+	);
 }
 
 /**
@@ -63,54 +88,75 @@ async function sendIxs({ web3, connection, wallet, payer, instructions, extraSig
  * @param {import('./agent-skills.js').AgentSkills} skills
  */
 export function registerPumpFunSkills(skills) {
+	// ── pumpfun-create ────────────────────────────────────────────────────────
 	skills.register({
 		name: 'pumpfun-create',
 		description:
-			'Launch a pump.fun token on Solana whose metadata points at this agent. Returns the mint address and tx signature.',
-		instruction:
-			'Mint a new pump.fun token. The agent owner signs. Name/symbol default to the agent identity.',
+			'Launch a pump.fun token on Solana. Owner signs. Returns mint address + tx signature.',
+		instruction: 'Mint a new pump.fun token using the official @pump-fun/pump-sdk.',
 		animationHint: 'celebrate',
 		voicePattern: 'Launching {{symbol}} on pump.fun…',
 		mcpExposed: true,
 		inputSchema: {
 			type: 'object',
 			properties: {
-				name: { type: 'string', description: 'Token name (defaults to agent name)' },
-				symbol: { type: 'string', description: 'Ticker, ≤10 chars' },
-				uri: {
-					type: 'string',
-					description: 'Metadata JSON URI (Arweave/IPFS). Should reference the agent GLB + bio.',
-				},
+				name: { type: 'string' },
+				symbol: { type: 'string', description: '≤10 chars' },
+				uri: { type: 'string', description: 'Metaplex metadata URI' },
 				network: { type: 'string', enum: ['mainnet', 'devnet'] },
+				initialBuySol: { type: 'number', description: 'Optional dev-buy in same tx (SOL)' },
 			},
 			required: ['symbol', 'uri'],
 		},
 		handler: async (args, ctx) => {
 			const network = args.network || DEFAULT_NETWORK;
 			const tokenName = args.name || ctx.identity?.name || 'Agent';
-			const symbol = String(args.symbol).toUpperCase().slice(0, 10);
+			const symbol = deriveSymbol(args.symbol);
 
-			const { PUMP_SDK, web3 } = await loadSdk();
+			const { pump, web3, BN } = await loadCore();
 			const { wallet, pubkey } = await requireWallet();
 			const connection = getConnection(web3, network);
 
 			const mintKeypair = web3.Keypair.generate();
-			const createIx = await PUMP_SDK.createV2Instruction({
-				mint: mintKeypair.publicKey,
-				name: tokenName,
-				symbol,
-				uri: args.uri,
-				creator: pubkey,
-				user: pubkey,
-				mayhemMode: false,
-			});
+			const offline = new pump.PumpSdk();
+			let instructions;
+
+			if (args.initialBuySol && args.initialBuySol > 0) {
+				const onlineSdk = new pump.OnlinePumpSdk(connection);
+				const global = await onlineSdk.fetchGlobal();
+				const solLamports = new BN(Math.floor(args.initialBuySol * web3.LAMPORTS_PER_SOL));
+				instructions = await offline.createV2AndBuyInstructions({
+					global,
+					mint: mintKeypair.publicKey,
+					name: tokenName,
+					symbol,
+					uri: args.uri,
+					creator: pubkey,
+					user: pubkey,
+					amount: new BN(0),
+					solAmount: solLamports,
+					mayhemMode: false,
+				});
+			} else {
+				instructions = [
+					await offline.createV2Instruction({
+						mint: mintKeypair.publicKey,
+						name: tokenName,
+						symbol,
+						uri: args.uri,
+						creator: pubkey,
+						user: pubkey,
+						mayhemMode: false,
+					}),
+				];
+			}
 
 			const sig = await sendIxs({
 				web3,
 				connection,
 				wallet,
 				payer: pubkey,
-				instructions: [createIx],
+				instructions,
 				extraSigners: [mintKeypair],
 			});
 
@@ -129,131 +175,21 @@ export function registerPumpFunSkills(skills) {
 		},
 	});
 
-	skills.register({
-		name: 'pumpfun-buy',
-		description: 'Buy a pump.fun token with SOL on the bonding curve.',
-		instruction: 'Buy tokens for the agent owner.',
-		animationHint: 'gesture',
-		voicePattern: 'Buying {{solAmount}} SOL of {{mint}}…',
-		mcpExposed: true,
-		inputSchema: {
-			type: 'object',
-			properties: {
-				mint: { type: 'string' },
-				solAmount: { type: 'number', description: 'Amount of SOL to spend' },
-				slippageBps: { type: 'number', description: 'Slippage tolerance, bps (default 500)' },
-				network: { type: 'string', enum: ['mainnet', 'devnet'] },
-			},
-			required: ['mint', 'solAmount'],
-		},
-		handler: async (args, _ctx) => {
-			const network = args.network || DEFAULT_NETWORK;
-			const slippageBps = args.slippageBps ?? 500;
-			const { OnlinePumpSdk, getBuyTokenAmountFromSolAmount, web3, BN } = await loadSdk();
-			const { wallet, pubkey } = await requireWallet();
-			const connection = getConnection(web3, network);
-
-			const mint = new web3.PublicKey(args.mint);
-			const sdk = new OnlinePumpSdk(connection);
-			const lamports = new BN(Math.floor(args.solAmount * web3.LAMPORTS_PER_SOL));
-
-			const curve = await sdk.fetchBondingCurve(mint);
-			const expectedTokens = getBuyTokenAmountFromSolAmount({
-				bondingCurve: curve,
-				solAmount: lamports,
-			});
-
-			const buyIxs = await sdk.buyInstructions({
-				mint,
-				user: pubkey,
-				solAmount: lamports,
-				tokenAmount: expectedTokens,
-				slippageBps,
-			});
-
-			const sig = await sendIxs({
-				web3,
-				connection,
-				wallet,
-				payer: pubkey,
-				instructions: buyIxs,
-			});
-
-			return {
-				success: true,
-				output: `Bought ~${expectedTokens.toString()} units of ${args.mint.slice(0, 8)}… for ${args.solAmount} SOL.`,
-				sentiment: 0.6,
-				data: { signature: sig, mint: args.mint, solAmount: args.solAmount, network },
-			};
-		},
-	});
-
-	skills.register({
-		name: 'pumpfun-sell',
-		description: 'Sell a pump.fun token back to the bonding curve for SOL.',
-		instruction: 'Sell tokens held by the agent owner.',
-		animationHint: 'gesture',
-		voicePattern: 'Selling {{tokenAmount}} of {{mint}}…',
-		mcpExposed: true,
-		inputSchema: {
-			type: 'object',
-			properties: {
-				mint: { type: 'string' },
-				tokenAmount: { type: 'string', description: 'Token amount as base-unit integer string' },
-				slippageBps: { type: 'number' },
-				network: { type: 'string', enum: ['mainnet', 'devnet'] },
-			},
-			required: ['mint', 'tokenAmount'],
-		},
-		handler: async (args, _ctx) => {
-			const network = args.network || DEFAULT_NETWORK;
-			const slippageBps = args.slippageBps ?? 500;
-			const { OnlinePumpSdk, web3, BN } = await loadSdk();
-			const { wallet, pubkey } = await requireWallet();
-			const connection = getConnection(web3, network);
-
-			const mint = new web3.PublicKey(args.mint);
-			const sdk = new OnlinePumpSdk(connection);
-			const tokenAmount = new BN(args.tokenAmount);
-
-			const sellIxs = await sdk.sellInstructions({
-				mint,
-				user: pubkey,
-				tokenAmount,
-				slippageBps,
-			});
-
-			const sig = await sendIxs({
-				web3,
-				connection,
-				wallet,
-				payer: pubkey,
-				instructions: sellIxs,
-			});
-
-			return {
-				success: true,
-				output: `Sold ${args.tokenAmount} of ${args.mint.slice(0, 8)}…`,
-				sentiment: 0.4,
-				data: { signature: sig, mint: args.mint, network },
-			};
-		},
-	});
-
+	// ── pumpfun-launch-from-agent ─────────────────────────────────────────────
 	skills.register({
 		name: 'pumpfun-launch-from-agent',
 		description:
 			'One-shot: launch a pump.fun token whose metadata is auto-generated from this agent (name, GLB, bio).',
-		instruction:
-			'Resolves the agent metadata URL, then calls pumpfun-create. The agent owner signs the launch tx.',
+		instruction: 'Resolves the agent metadata URL, then calls pumpfun-create.',
 		animationHint: 'celebrate',
 		voicePattern: 'Launching myself on pump.fun…',
 		mcpExposed: true,
 		inputSchema: {
 			type: 'object',
 			properties: {
-				symbol: { type: 'string', description: 'Override symbol; defaults to derived from name' },
+				symbol: { type: 'string' },
 				network: { type: 'string', enum: ['mainnet', 'devnet'] },
+				initialBuySol: { type: 'number' },
 			},
 		},
 		handler: async (args, ctx) => {
@@ -265,19 +201,9 @@ export function registerPumpFunSkills(skills) {
 					sentiment: -0.3,
 				};
 			}
-
-			const origin =
-				(typeof window !== 'undefined' && window.location?.origin) || '';
+			const origin = (typeof window !== 'undefined' && window.location?.origin) || '';
 			const uri = `${origin}/api/agents/pumpfun-metadata?id=${encodeURIComponent(id)}`;
-
-			const symbol =
-				args.symbol ||
-				String(ctx.identity?.name || 'AGENT')
-					.toUpperCase()
-					.replace(/[^A-Z0-9]/g, '')
-					.slice(0, 10) ||
-				'AGENT';
-
+			const symbol = args.symbol || deriveSymbol(ctx.identity?.name);
 			return skills.perform(
 				'pumpfun-create',
 				{
@@ -285,19 +211,158 @@ export function registerPumpFunSkills(skills) {
 					symbol,
 					uri,
 					network: args.network,
+					initialBuySol: args.initialBuySol,
 				},
 				ctx,
 			);
 		},
 	});
 
+	// ── pumpfun-buy ───────────────────────────────────────────────────────────
+	skills.register({
+		name: 'pumpfun-buy',
+		description: 'Buy a pump.fun token with SOL on the bonding curve.',
+		instruction: 'Bonding-curve buy. Reverts if the token has graduated — use pumpfun-amm-buy.',
+		animationHint: 'gesture',
+		voicePattern: 'Buying {{solAmount}} SOL of {{mint}}…',
+		mcpExposed: true,
+		inputSchema: {
+			type: 'object',
+			properties: {
+				mint: { type: 'string' },
+				solAmount: { type: 'number' },
+				slippageBps: { type: 'number' },
+				network: { type: 'string', enum: ['mainnet', 'devnet'] },
+			},
+			required: ['mint', 'solAmount'],
+		},
+		handler: async (args, _ctx) => {
+			const network = args.network || DEFAULT_NETWORK;
+			const slippageBps = args.slippageBps ?? DEFAULT_SLIPPAGE_BPS;
+			const { pump, web3, BN } = await loadCore();
+			const { wallet, pubkey } = await requireWallet();
+			const connection = getConnection(web3, network);
+
+			const mint = new web3.PublicKey(args.mint);
+			const onlineSdk = new pump.OnlinePumpSdk(connection);
+			const offline = new pump.PumpSdk();
+
+			const global = await onlineSdk.fetchGlobal();
+			const state = await onlineSdk.fetchBuyState(mint, pubkey);
+			const solLamports = new BN(Math.floor(args.solAmount * web3.LAMPORTS_PER_SOL));
+			const expected = pump.getBuyTokenAmountFromSolAmount({
+				global,
+				feeConfig: null,
+				mintSupply: state.bondingCurve.tokenTotalSupply,
+				bondingCurve: state.bondingCurve,
+				amount: solLamports,
+			});
+
+			const buyIxs = await offline.buyInstructions({
+				global,
+				bondingCurveAccountInfo: state.bondingCurveAccountInfo,
+				bondingCurve: state.bondingCurve,
+				associatedUserAccountInfo: state.associatedUserAccountInfo,
+				mint,
+				user: pubkey,
+				amount: expected,
+				solAmount: solLamports,
+				slippage: slippageBps / 10_000,
+				tokenProgram: web3.TOKEN_PROGRAM_ID || (await import('@solana/spl-token')).TOKEN_PROGRAM_ID,
+			});
+
+			const sig = await sendIxs({
+				web3,
+				connection,
+				wallet,
+				payer: pubkey,
+				instructions: buyIxs,
+			});
+			return {
+				success: true,
+				output: `Bought ~${expected.toString()} units of ${args.mint.slice(0, 8)}… for ${args.solAmount} SOL.`,
+				sentiment: 0.6,
+				data: { signature: sig, mint: args.mint, solAmount: args.solAmount, network },
+			};
+		},
+	});
+
+	// ── pumpfun-sell ──────────────────────────────────────────────────────────
+	skills.register({
+		name: 'pumpfun-sell',
+		description: 'Sell a pump.fun token back to the bonding curve for SOL.',
+		instruction: 'Bonding-curve sell. Reverts if graduated — use pumpfun-amm-sell.',
+		animationHint: 'gesture',
+		voicePattern: 'Selling {{tokenAmount}} of {{mint}}…',
+		mcpExposed: true,
+		inputSchema: {
+			type: 'object',
+			properties: {
+				mint: { type: 'string' },
+				tokenAmount: { type: 'string', description: 'Base-unit integer string' },
+				slippageBps: { type: 'number' },
+				network: { type: 'string', enum: ['mainnet', 'devnet'] },
+			},
+			required: ['mint', 'tokenAmount'],
+		},
+		handler: async (args, _ctx) => {
+			const network = args.network || DEFAULT_NETWORK;
+			const slippageBps = args.slippageBps ?? DEFAULT_SLIPPAGE_BPS;
+			const { pump, web3, BN } = await loadCore();
+			const { wallet, pubkey } = await requireWallet();
+			const connection = getConnection(web3, network);
+
+			const mint = new web3.PublicKey(args.mint);
+			const onlineSdk = new pump.OnlinePumpSdk(connection);
+			const offline = new pump.PumpSdk();
+			const global = await onlineSdk.fetchGlobal();
+			const state = await onlineSdk.fetchSellState(mint, pubkey);
+
+			const tokenAmount = new BN(args.tokenAmount);
+			const expectedSol = pump.getSellSolAmountFromTokenAmount({
+				global,
+				feeConfig: null,
+				mintSupply: state.bondingCurve.tokenTotalSupply,
+				bondingCurve: state.bondingCurve,
+				amount: tokenAmount,
+			});
+
+			const sellIxs = await offline.sellInstructions({
+				global,
+				bondingCurveAccountInfo: state.bondingCurveAccountInfo,
+				bondingCurve: state.bondingCurve,
+				mint,
+				user: pubkey,
+				amount: tokenAmount,
+				solAmount: expectedSol,
+				slippage: slippageBps / 10_000,
+				tokenProgram: (await import('@solana/spl-token')).TOKEN_PROGRAM_ID,
+				mayhemMode: false,
+			});
+
+			const sig = await sendIxs({
+				web3,
+				connection,
+				wallet,
+				payer: pubkey,
+				instructions: sellIxs,
+			});
+			return {
+				success: true,
+				output: `Sold ${args.tokenAmount} of ${args.mint.slice(0, 8)}…`,
+				sentiment: 0.4,
+				data: { signature: sig, mint: args.mint, network },
+			};
+		},
+	});
+
+	// ── pumpfun-status ────────────────────────────────────────────────────────
 	skills.register({
 		name: 'pumpfun-status',
-		description:
-			'Read live bonding-curve state for a pump.fun mint: market cap, graduation progress.',
-		instruction: 'Read-only. Safe to call without a connected wallet.',
+		description: 'Read live state for a pump.fun mint: market cap, graduation status.',
+		instruction: 'Read-only. No wallet required.',
 		animationHint: 'inspect',
-		voicePattern: '{{symbol}} is at {{progress}}% to graduation.',
+		voicePattern: '{{mint}} status',
 		mcpExposed: true,
 		inputSchema: {
 			type: 'object',
@@ -309,25 +374,258 @@ export function registerPumpFunSkills(skills) {
 		},
 		handler: async (args, _ctx) => {
 			const network = args.network || DEFAULT_NETWORK;
-			const { OnlinePumpSdk, web3 } = await loadSdk();
+			const { pump, web3 } = await loadCore();
 			const connection = getConnection(web3, network);
-			const sdk = new OnlinePumpSdk(connection);
+			const onlineSdk = new pump.OnlinePumpSdk(connection);
+			const mint = new web3.PublicKey(args.mint);
 
-			const summary = await sdk.fetchBondingCurveSummary(new web3.PublicKey(args.mint));
-			const progressPct = (summary.progressBps ?? 0) / 100;
-			const graduated = !!summary.isGraduated;
+			const curve = await onlineSdk.fetchBondingCurve(mint);
+			const global = await onlineSdk.fetchGlobal();
+			const graduated = !!curve.complete;
+			const marketCap = pump.bondingCurveMarketCap({
+				global,
+				bondingCurve: curve,
+			});
 
 			return {
 				success: true,
 				output: graduated
-					? `Graduated to AMM. Market cap ~${summary.marketCap?.toString()} lamports.`
-					: `${progressPct.toFixed(1)}% to graduation. Market cap ~${summary.marketCap?.toString()} lamports.`,
+					? `Graduated to AMM. Market cap ~${marketCap.toString()} lamports.`
+					: `On bonding curve. Market cap ~${marketCap.toString()} lamports.`,
 				sentiment: graduated ? 0.7 : 0.2,
 				data: {
 					mint: args.mint,
-					marketCap: summary.marketCap?.toString(),
-					progressBps: summary.progressBps,
+					marketCap: marketCap.toString(),
 					graduated,
+					network,
+				},
+			};
+		},
+	});
+
+	// ── pumpfun-amm-buy ───────────────────────────────────────────────────────
+	skills.register({
+		name: 'pumpfun-amm-buy',
+		description: 'Buy a graduated pump.fun token from the AMM pool with SOL.',
+		instruction: 'AMM buy via @pump-fun/pump-swap-sdk. Use after graduation.',
+		animationHint: 'gesture',
+		voicePattern: 'AMM buy {{solAmount}} SOL of {{mint}}…',
+		mcpExposed: true,
+		inputSchema: {
+			type: 'object',
+			properties: {
+				mint: { type: 'string' },
+				solAmount: { type: 'number' },
+				slippageBps: { type: 'number' },
+				network: { type: 'string', enum: ['mainnet', 'devnet'] },
+			},
+			required: ['mint', 'solAmount'],
+		},
+		handler: async (args, _ctx) => {
+			const network = args.network || DEFAULT_NETWORK;
+			const slippage = (args.slippageBps ?? DEFAULT_SLIPPAGE_BPS) / 10_000;
+			const { amm, web3, BN } = await loadAmm();
+			const { wallet, pubkey } = await requireWallet();
+			const connection = getConnection(web3, network);
+
+			const mint = new web3.PublicKey(args.mint);
+			const sdk = new amm.OnlinePumpAmmSdk(connection);
+			const solLamports = new BN(Math.floor(args.solAmount * web3.LAMPORTS_PER_SOL));
+
+			const ixs = await sdk.swapAutocompleteBaseFromQuote({
+				pool: amm.canonicalPumpPoolPda(mint)[0],
+				quote: solLamports,
+				slippage,
+				direction: 'quoteToBase',
+				user: pubkey,
+			});
+
+			const sig = await sendIxs({
+				web3,
+				connection,
+				wallet,
+				payer: pubkey,
+				instructions: Array.isArray(ixs) ? ixs : ixs.instructions || [],
+			});
+
+			return {
+				success: true,
+				output: `AMM-bought ${args.mint.slice(0, 8)}… for ${args.solAmount} SOL.`,
+				sentiment: 0.6,
+				data: { signature: sig, mint: args.mint, network },
+			};
+		},
+	});
+
+	// ── pumpfun-amm-sell ──────────────────────────────────────────────────────
+	skills.register({
+		name: 'pumpfun-amm-sell',
+		description: 'Sell a graduated pump.fun token to the AMM pool for SOL.',
+		instruction: 'AMM sell via @pump-fun/pump-swap-sdk.',
+		animationHint: 'gesture',
+		voicePattern: 'AMM sell {{tokenAmount}} of {{mint}}…',
+		mcpExposed: true,
+		inputSchema: {
+			type: 'object',
+			properties: {
+				mint: { type: 'string' },
+				tokenAmount: { type: 'string' },
+				slippageBps: { type: 'number' },
+				network: { type: 'string', enum: ['mainnet', 'devnet'] },
+			},
+			required: ['mint', 'tokenAmount'],
+		},
+		handler: async (args, _ctx) => {
+			const network = args.network || DEFAULT_NETWORK;
+			const slippage = (args.slippageBps ?? DEFAULT_SLIPPAGE_BPS) / 10_000;
+			const { amm, web3, BN } = await loadAmm();
+			const { wallet, pubkey } = await requireWallet();
+			const connection = getConnection(web3, network);
+
+			const mint = new web3.PublicKey(args.mint);
+			const sdk = new amm.OnlinePumpAmmSdk(connection);
+			const tokenAmount = new BN(args.tokenAmount);
+
+			const ixs = await sdk.swapAutocompleteQuoteFromBase({
+				pool: amm.canonicalPumpPoolPda(mint)[0],
+				base: tokenAmount,
+				slippage,
+				direction: 'baseToQuote',
+				user: pubkey,
+			});
+
+			const sig = await sendIxs({
+				web3,
+				connection,
+				wallet,
+				payer: pubkey,
+				instructions: Array.isArray(ixs) ? ixs : ixs.instructions || [],
+			});
+
+			return {
+				success: true,
+				output: `AMM-sold ${args.tokenAmount} of ${args.mint.slice(0, 8)}…`,
+				sentiment: 0.4,
+				data: { signature: sig, mint: args.mint, network },
+			};
+		},
+	});
+
+	// ── pumpfun-claim-fees ────────────────────────────────────────────────────
+	skills.register({
+		name: 'pumpfun-claim-fees',
+		description:
+			'Claim accumulated creator fees from the agent-creator vault to the agent owner wallet.',
+		instruction: 'Calls collectCoinCreatorFeeInstructions on OnlinePumpSdk.',
+		animationHint: 'celebrate',
+		voicePattern: 'Claiming creator fees…',
+		mcpExposed: true,
+		inputSchema: {
+			type: 'object',
+			properties: { network: { type: 'string', enum: ['mainnet', 'devnet'] } },
+		},
+		handler: async (args, _ctx) => {
+			const network = args.network || DEFAULT_NETWORK;
+			const { pump, web3 } = await loadCore();
+			const { wallet, pubkey } = await requireWallet();
+			const connection = getConnection(web3, network);
+
+			const onlineSdk = new pump.OnlinePumpSdk(connection);
+			const balance = await onlineSdk.getCreatorVaultBalanceBothPrograms(pubkey);
+			if (balance.isZero?.() || balance.toString() === '0') {
+				return {
+					success: true,
+					output: 'No creator fees to claim right now.',
+					sentiment: 0.1,
+					data: { lamports: '0' },
+				};
+			}
+
+			const ixs = await onlineSdk.collectCoinCreatorFeeInstructions(pubkey, pubkey);
+			const sig = await sendIxs({
+				web3,
+				connection,
+				wallet,
+				payer: pubkey,
+				instructions: ixs,
+			});
+			return {
+				success: true,
+				output: `Claimed ${balance.toString()} lamports of creator fees.`,
+				sentiment: 0.8,
+				data: { signature: sig, lamports: balance.toString(), network },
+			};
+		},
+	});
+
+	// ── pumpfun-accept-payment ────────────────────────────────────────────────
+	skills.register({
+		name: 'pumpfun-accept-payment',
+		description:
+			'Accept a paid invocation of this agent via @pump-fun/agent-payments-sdk. Splits revenue per the on-chain sharing config.',
+		instruction:
+			'Builds an accept_payment tx for a fixed price in a given currency mint. Caller signs as `user`.',
+		animationHint: 'gesture',
+		voicePattern: 'Invoicing {{amount}} for service {{memo}}…',
+		mcpExposed: true,
+		inputSchema: {
+			type: 'object',
+			properties: {
+				agentMint: {
+					type: 'string',
+					description: 'The agent token mint registered with PumpAgent',
+				},
+				currencyMint: {
+					type: 'string',
+					description: 'Currency mint (USDC, SOL wrapper, etc.)',
+				},
+				amount: { type: 'string', description: 'Amount in base units (string-encoded bigint)' },
+				memo: { type: 'string', description: 'Invoice memo / nonce (uint)' },
+				durationSeconds: { type: 'number', description: 'Validity window (default 600)' },
+				network: { type: 'string', enum: ['mainnet', 'devnet'] },
+			},
+			required: ['agentMint', 'currencyMint', 'amount', 'memo'],
+		},
+		handler: async (args, _ctx) => {
+			const network = args.network || DEFAULT_NETWORK;
+			const duration = args.durationSeconds ?? 600;
+			const { pay, web3 } = await loadAgentPayments();
+			const { wallet, pubkey } = await requireWallet();
+			const connection = getConnection(web3, network);
+
+			const agentMint = new web3.PublicKey(args.agentMint);
+			const currencyMint = new web3.PublicKey(args.currencyMint);
+			const env = network === 'devnet' ? 'devnet' : 'mainnet-beta';
+
+			const agent = new pay.PumpAgent(agentMint, env, connection);
+			const now = Math.floor(Date.now() / 1000);
+
+			const ixs = await agent.buildAcceptPaymentInstructions({
+				user: pubkey,
+				currencyMint,
+				amount: args.amount,
+				memo: args.memo,
+				startTime: now,
+				endTime: now + duration,
+			});
+
+			const sig = await sendIxs({
+				web3,
+				connection,
+				wallet,
+				payer: pubkey,
+				instructions: ixs,
+			});
+			return {
+				success: true,
+				output: `Payment of ${args.amount} accepted. Memo ${args.memo}.`,
+				sentiment: 0.7,
+				data: {
+					signature: sig,
+					agentMint: args.agentMint,
+					currencyMint: args.currencyMint,
+					amount: args.amount,
+					memo: args.memo,
 					network,
 				},
 			};

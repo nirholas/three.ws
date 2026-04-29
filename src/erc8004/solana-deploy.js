@@ -12,7 +12,8 @@
  * returns 403 otherwise.
  */
 
-import { Connection, Transaction, VersionedTransaction } from '@solana/web3.js';
+import { Connection, Keypair, Transaction, VersionedTransaction } from '@solana/web3.js';
+import { grindVanity } from '../solana/vanity/grinder.js';
 
 /** Detect an injected Solana wallet (Phantom / Backpack / Solflare). */
 export function detectSolanaWallet() {
@@ -55,9 +56,13 @@ function decodeBase64Tx(b64) {
  * @param {object} opts
  * @param {object} opts.agent       Agent record. Required: id, name. Optional: avatarId, description.
  * @param {'mainnet'|'devnet'} opts.network
- * @returns {Promise<{ assetPubkey: string, txSignature: string, network: string, agent: object }>}
+ * @param {object} [opts.vanity]    Optional vanity prefix config.
+ * @param {string} [opts.vanity.prefix]                            Base58 prefix to grind.
+ * @param {(p: { attempts: number, rate: number, eta: string }) => void} [opts.vanity.onProgress]
+ * @param {AbortSignal} [opts.vanity.signal]
+ * @returns {Promise<{ assetPubkey: string, txSignature: string, network: string, agent: object, vanityPrefix?: string }>}
  */
-export async function runSolanaDeploy({ agent, network }) {
+export async function runSolanaDeploy({ agent, network, vanity }) {
 	const wallet = detectSolanaWallet();
 	if (!wallet) {
 		const err = new Error('No Solana wallet detected. Install Phantom to continue.');
@@ -69,6 +74,17 @@ export async function runSolanaDeploy({ agent, network }) {
 	const walletAddress = (conn?.publicKey || wallet.publicKey)?.toString();
 	if (!walletAddress) throw new Error('Could not read Solana wallet address.');
 
+	// Optional: grind a vanity asset keypair before asking the server to build the tx.
+	let vanityKeypair = null;
+	if (vanity?.prefix) {
+		const result = await grindVanity({
+			prefix: vanity.prefix,
+			onProgress: vanity.onProgress,
+			signal: vanity.signal,
+		});
+		vanityKeypair = Keypair.fromSecretKey(result.secretKey);
+	}
+
 	const prepResp = await fetch('/api/agents/solana-register-prep', {
 		method: 'POST',
 		credentials: 'include',
@@ -79,6 +95,10 @@ export async function runSolanaDeploy({ agent, network }) {
 			avatar_id: agent.avatarId || agent.avatar_id,
 			wallet_address: walletAddress,
 			network,
+			...(vanityKeypair ? {
+				asset_pubkey: vanityKeypair.publicKey.toBase58(),
+				vanity_prefix: vanity.prefix,
+			} : {}),
 		}),
 	});
 	if (!prepResp.ok) {
@@ -92,6 +112,16 @@ export async function runSolanaDeploy({ agent, network }) {
 	}
 	const prep = await prepResp.json();
 	const tx = decodeBase64Tx(prep.tx_base64);
+
+	// If we used a vanity keypair, the server built the tx with a noop signer
+	// for the asset slot — we must fill it in here before the wallet signs.
+	// VersionedTransaction.sign() only modifies signatures whose pubkey matches
+	// a provided signer, so the wallet sig slot is preserved as zero for Phantom.
+	if (vanityKeypair && tx instanceof VersionedTransaction) {
+		tx.sign([vanityKeypair]);
+	} else if (vanityKeypair && tx instanceof Transaction) {
+		tx.partialSign(vanityKeypair);
+	}
 
 	// Phantom + Backpack expose signAndSendTransaction; Solflare does too.
 	const endpoint = RPC[network] || RPC.mainnet;
@@ -140,5 +170,6 @@ export async function runSolanaDeploy({ agent, network }) {
 		txSignature: signature,
 		network,
 		agent: confirmed.agent,
+		...(vanity?.prefix ? { vanityPrefix: vanity.prefix } : {}),
 	};
 }

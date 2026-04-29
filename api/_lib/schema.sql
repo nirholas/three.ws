@@ -681,3 +681,21 @@ create table if not exists user_prefs (
     prefs       jsonb not null default '{}'::jsonb,
     updated_at  timestamptz not null default now()
 );
+
+-- ── pumpfun_signals — off-chain pump.fun activity signals attached to a wallet ─
+-- Not an on-chain attestation — these are crawled from the upstream
+-- pumpfun-claims-bot enrichment pipeline. Used to weight Solana reputation
+-- and surface trust signals on the agent passport.
+create table if not exists pumpfun_signals (
+    id                bigserial primary key,
+    wallet            text        not null,         -- claimer / creator base58 pubkey
+    agent_asset       text,                          -- linked Solana agent if known
+    kind              text        not null,         -- 'first_claim' | 'fake_claim' | 'graduation' | 'influencer' | 'new_account'
+    weight            real        not null default 0,-- reputation impact, -1..1
+    payload           jsonb       not null default '{}'::jsonb,
+    tx_signature      text        unique,
+    seen_at           timestamptz not null default now()
+);
+create index if not exists pumpfun_signals_wallet on pumpfun_signals(wallet, seen_at desc);
+create index if not exists pumpfun_signals_agent  on pumpfun_signals(agent_asset, seen_at desc) where agent_asset is not null;
+create index if not exists pumpfun_signals_kind   on pumpfun_signals(kind, seen_at desc);

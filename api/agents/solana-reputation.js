@@ -133,9 +133,53 @@ export default wrap(async (req, res) => {
 		select last_indexed_at from solana_attestations_cursor where agent_asset = ${asset} limit 1
 	`;
 
+	// Pump.fun off-chain signals: claim/graduation activity attached to the
+	// agent's wallet. Aggregated as a positive/negative weight contribution.
+	let pumpfunSignals = { count: 0, weight: 0, by_kind: {} };
+	try {
+		const rows = await sql`
+			select kind, count(*)::int as n, coalesce(sum(weight), 0)::float as w
+			from pumpfun_signals
+			where agent_asset = ${asset}
+			group by kind
+		`;
+		const byKind = {};
+		let total = 0,
+			weight = 0;
+		for (const r of rows) {
+			byKind[r.kind] = { count: r.n, weight: Number(r.w.toFixed(3)) };
+			total += r.n;
+			weight += r.w;
+		}
+		pumpfunSignals = { count: total, weight: Number(weight.toFixed(3)), by_kind: byKind };
+	} catch {
+		// pumpfun_signals table may not exist yet — silently ignore.
+	}
+
+	// Pump.fun agent-payments signal: confirmed acceptPayment receipts add a
+	// volume-weighted, Sybil-resistant reputation lane on top of memo attestations.
+	let pumpPayments = { confirmed_count: 0, unique_payers: 0, total_atomics: '0' };
+	try {
+		const [row] = await sql`
+			select
+				count(*) filter (where p.status='confirmed')::int                       as confirmed_count,
+				count(distinct p.payer_wallet) filter (where p.status='confirmed')::int as unique_payers,
+				coalesce(sum(p.amount_atomics) filter (where p.status='confirmed'), 0)::text as total_atomics
+			from pump_agent_payments p
+			join pump_agent_mints m on m.id = p.mint_id
+			join agent_identities a on a.id = m.agent_id
+			where (a.meta->>'sol_mint_address') = ${asset} and m.network = ${network}
+		`;
+		if (row) pumpPayments = row;
+	} catch {
+		// pump_agent_payments table may not exist yet (migration not applied) — silently ignore.
+	}
+
 	return json(res, 200, {
 		agent: asset,
 		network,
+		pump_payments: pumpPayments,
+		pumpfun_signals: pumpfunSignals,
 		feedback: {
 			total:                            fb.total,
 			verified:                         fb.verified,
