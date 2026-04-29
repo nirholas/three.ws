@@ -118,6 +118,7 @@
 			},
 			"dest": "/agent-embed.html"
 		},
+		{ "src": "/agent/index.html", "dest": "/agent/index.html" },
 		{
 			"src": "/agent/([^/]+)",
 			"has": [{ "type": "query", "key": "_spa", "value": "1" }],
