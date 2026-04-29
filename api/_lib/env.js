@@ -135,6 +135,34 @@ export const env = {
 	// Per-chain RPC URLs for on-chain delegation calls.
 	// Pattern: RPC_URL_<CHAINID> e.g. RPC_URL_84532 for Base Sepolia.
 	// Falls back to public RPC nodes when unset; set Alchemy/Infura URLs for production.
+	// ── x402 (HTTP 402 micropayments) ───────────────────────────────────────
+	// Solana mainnet payTo wallet that receives USDC for paid /api/mcp calls.
+	get X402_PAY_TO() {
+		return opt('X402_PAY_TO', 'BUrwd1nK6tFeeJMyzRHDo6AuVbnSfUULfvwq21X93nSN');
+	},
+	// USDC mint on the configured network.
+	get X402_ASSET_MINT() {
+		return opt('X402_ASSET_MINT', 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
+	},
+	// Network ID per x402 spec.
+	get X402_NETWORK() {
+		return opt('X402_NETWORK', 'solana');
+	},
+	// Price per /api/mcp call, expressed in the asset's base units (USDC has 6 decimals,
+	// so "1000" = 0.001 USDC).
+	get X402_MAX_AMOUNT_REQUIRED() {
+		return opt('X402_MAX_AMOUNT_REQUIRED', '1000');
+	},
+	// Facilitator service that verifies and settles signed payment payloads.
+	// Public Solana facilitator: https://facilitator.payai.network
+	get X402_FACILITATOR_URL() {
+		return trimSlash(opt('X402_FACILITATOR_URL', 'https://facilitator.payai.network'));
+	},
+	// Optional bearer token for self-hosted/private facilitators.
+	get X402_FACILITATOR_TOKEN() {
+		return opt('X402_FACILITATOR_TOKEN');
+	},
+
 	getRpcUrl(chainId) {
 		return (
 			opt(`RPC_URL_${chainId}`) ||

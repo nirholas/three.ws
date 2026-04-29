@@ -8,13 +8,36 @@
  *                          vanity_prefix }. Server verifies and stores the
  *                          encrypted secret.
  *
+ * On mount the card pulls fresh state from GET /api/agents/:id/solana.
+ * Server-side ownership is enforced; a 403 hides the card. A 404 means
+ * no wallet yet → show the provisioning UI.
+ *
  * Existing wallets are non-destructive: a "Replace" button calls DELETE first.
  */
 
 import { openVanityModal } from './erc8004/vanity-modal.js';
 import { grindVanity } from './solana/vanity/grinder.js';
 
-const ENDPOINT = (id) => `/api/agents/${encodeURIComponent(id)}/solana`;
+const ENDPOINT = (id, qs = '') =>
+	`/api/agents/${encodeURIComponent(id)}/solana${qs ? `?${qs}` : ''}`;
+
+/**
+ * Fetch current wallet state from the server.
+ * @returns {Promise<{ status: 'ok'|'none'|'forbidden'|'error',
+ *                     data?: { address: string, lamports: number|null, sol: number|null,
+ *                              vanity_prefix: string|null, source: string|null, network: string },
+ *                     error?: string }>}
+ */
+export async function fetchAgentSolanaWallet(agentId, network = 'mainnet') {
+	const resp = await fetch(ENDPOINT(agentId, `network=${encodeURIComponent(network)}`), {
+		credentials: 'include',
+	});
+	if (resp.status === 403) return { status: 'forbidden' };
+	const json = await resp.json().catch(() => ({}));
+	if (resp.status === 404) return { status: 'none' };
+	if (!resp.ok) return { status: 'error', error: json?.error?.message || `HTTP ${resp.status}` };
+	return { status: 'ok', data: json.data };
+}
 
 /**
  * Provision (or replace) the agent's Solana wallet.
@@ -90,6 +113,11 @@ const STYLE = `
 .agent-sol-wallet .progress { font-size: .75rem; color: #555; margin-top: .55rem; font-family: ui-monospace, monospace; }
 .agent-sol-wallet .err { color: #b71c1c; font-size: .75rem; margin-top: .5rem; }
 .agent-sol-wallet .src { font-size: .7rem; color: #888; margin-left: .35rem; }
+.agent-sol-wallet .balance { display: flex; align-items: center; gap: .5rem; margin-top: .55rem; font-size: .8rem; color: #333; }
+.agent-sol-wallet .balance .sol { font-family: ui-monospace, monospace; font-weight: 600; }
+.agent-sol-wallet .balance .net { margin-left: auto; font-size: .7rem; }
+.agent-sol-wallet .balance select { font: inherit; font-size: .7rem; padding: .15rem .25rem; border: 1px solid #ddd; border-radius: 4px; background: #fff; }
+.agent-sol-wallet .skel { color: #999; font-size: .75rem; padding: .35rem 0; }
 `;
 
 let _styleInjected = false;

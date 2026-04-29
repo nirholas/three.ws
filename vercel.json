@@ -51,6 +51,7 @@
 		{ "src": "/deploy", "dest": "/app.html" },
 		{ "src": "/dashboard", "dest": "/dashboard/index.html" },
 		{ "src": "/dashboard/", "dest": "/dashboard/index.html" },
+		{ "src": "/dashboard/agent-pumpfun", "dest": "/dashboard/agent-pumpfun.html" },
 		{ "src": "/dashboard/(.*)", "dest": "/dashboard/$1" },
 		{ "src": "/hydrate", "dest": "/hydrate/index.html" },
 		{ "src": "/hydrate/", "dest": "/hydrate/index.html" },
