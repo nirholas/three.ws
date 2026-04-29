@@ -98,6 +98,13 @@ export default wrap(async (req, res) => {
 										maxAmountRequired: '1000',
 									},
 								},
+								{
+									mpp: {
+										method: 'solana-pay',
+										intent: 'purchase',
+										currency: 'USDC',
+									},
+								},
 							],
 						},
 					},
@@ -147,6 +154,25 @@ export default wrap(async (req, res) => {
 						responses: {
 							201: { description: 'Avatar created' },
 							401: { description: 'Unauthorized' },
+						},
+					},
+				},
+				'/api/avatars/public': {
+					get: {
+						operationId: 'browse_public_avatars',
+						summary: 'Browse public avatars',
+						security: [],
+						parameters: [
+							{ name: 'q', in: 'query', schema: { type: 'string' } },
+							{
+								name: 'limit',
+								in: 'query',
+								schema: { type: 'integer', default: 20, maximum: 100 },
+							},
+							{ name: 'cursor', in: 'query', schema: { type: 'string' } },
+						],
+						responses: {
+							200: { description: 'Paginated list of public avatars' },
 						},
 					},
 				},

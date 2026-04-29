@@ -153,56 +153,6 @@ export async function runServerFlow({
 	return { signature: sig, prep, confirm: confirmJson };
 }
 
-/**
- * Build the SIWS message that authorizes the three.ws relayer to trade
- * pump.fun on the user's behalf. Caller must sign + POST to /api/pump/relay-authorize.
- *
- * @param {Object} opts
- * @param {string} opts.userWallet — base58 pubkey signing the authz
- * @param {string} opts.relayerPubkey — server pubkey from /api/pump/relayer-info
- * @param {number} opts.maxSol — cumulative spend cap (SOL)
- * @param {string} [opts.mint] — optional lock to a single mint
- * @param {('buy'|'sell'|'both')} [opts.direction='both']
- * @param {string} [opts.network='mainnet']
- * @param {number} [opts.ttlHours=24]
- * @param {string} [opts.domain] — defaults to current page host
- * @returns {{ message: string, nonce: string, expiresAt: string }}
- */
-export function buildRelayAuthorizationMessage({
-	userWallet,
-	relayerPubkey,
-	maxSol,
-	mint,
-	direction = 'both',
-	network = 'mainnet',
-	ttlHours = 24,
-	domain = typeof location !== 'undefined' ? location.host : 'three.ws',
-}) {
-	const issuedAt = new Date().toISOString();
-	const expiresAt = new Date(Date.now() + ttlHours * 3600 * 1000).toISOString();
-	const nonce = Math.random().toString(36).slice(2, 14);
-	const statement =
-		`Authorize three.ws relayer ${relayerPubkey} to trade pump.fun on my behalf.\n` +
-		`max=${maxSol}\n` +
-		`expires=${expiresAt}\n` +
-		`direction=${direction}` +
-		(mint ? `\nmint=${mint}` : '');
-	const message = [
-		`${domain} wants you to sign in with your Solana account:`,
-		userWallet,
-		'',
-		statement,
-		'',
-		`URI: https://${domain}/api/pump/relay-authorize`,
-		'Version: 1',
-		`Chain ID: ${network}`,
-		`Nonce: ${nonce}`,
-		`Issued At: ${issuedAt}`,
-		`Expiration Time: ${expiresAt}`,
-	].join('\n');
-	return { message, nonce, expiresAt };
-}
-
 function deriveSymbol(name) {
 	return (
 		String(name || 'AGENT')
