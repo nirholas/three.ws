@@ -33,6 +33,8 @@ export default wrap(async (req, res) => {
 	catch { return error(res, 400, 'validation_error', 'invalid asset pubkey'); }
 
 	// One pass: feedback aggregates split by verified-task-acceptance.
+	// Sybil-weighting: collapse multiple feedbacks from the same attester to
+	// their average so one wallet leaving 100 ratings doesn't dominate.
 	const [fb] = await sql`
 		with feedback as (
 			select
@@ -52,14 +54,22 @@ export default wrap(async (req, res) => {
 			  and f.network = ${network}
 			  and f.kind = 'threews.feedback.v1'
 			  and f.revoked = false
+		),
+		per_attester as (
+			select attester, avg(score)::float as score_avg,
+				bool_or(task_accepted) as any_verified
+			from feedback group by attester
 		)
 		select
-			count(*)::int                                         as total,
-			count(*) filter (where task_accepted)::int            as verified,
-			count(*) filter (where disputed)::int                 as disputed,
-			coalesce(avg(score), 0)::float                        as score_avg,
-			coalesce(avg(score) filter (where task_accepted), 0)::float as score_avg_verified
-		from feedback
+			(select count(*)::int from feedback)                                as total,
+			(select count(*) filter (where task_accepted)::int from feedback)   as verified,
+			(select count(*) filter (where disputed)::int from feedback)        as disputed,
+			(select coalesce(avg(score), 0)::float from feedback)               as score_avg,
+			(select coalesce(avg(score) filter (where task_accepted), 0)::float from feedback) as score_avg_verified,
+			(select count(*)::int from per_attester)                            as unique_attesters,
+			(select count(*) filter (where any_verified)::int from per_attester) as unique_verified_attesters,
+			(select coalesce(avg(score_avg), 0)::float from per_attester)       as score_avg_weighted,
+			(select coalesce(avg(score_avg) filter (where any_verified), 0)::float from per_attester) as score_avg_weighted_verified
 	`;
 
 	const [val] = await sql`
@@ -89,11 +99,15 @@ export default wrap(async (req, res) => {
 		agent: asset,
 		network,
 		feedback: {
-			total:               fb.total,
-			verified:            fb.verified,
-			disputed:            fb.disputed,
-			score_avg:           Number(fb.score_avg.toFixed(3)),
-			score_avg_verified:  Number(fb.score_avg_verified.toFixed(3)),
+			total:                       fb.total,
+			verified:                    fb.verified,
+			disputed:                    fb.disputed,
+			unique_attesters:            fb.unique_attesters,
+			unique_verified_attesters:   fb.unique_verified_attesters,
+			score_avg:                   Number(fb.score_avg.toFixed(3)),
+			score_avg_verified:          Number(fb.score_avg_verified.toFixed(3)),
+			score_avg_weighted:          Number(fb.score_avg_weighted.toFixed(3)),
+			score_avg_weighted_verified: Number(fb.score_avg_weighted_verified.toFixed(3)),
 		},
 		validation: {
 			passed: val.passed,

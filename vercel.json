@@ -15,6 +15,10 @@
 			"dest": "/api/wk-agent-attestation-schemas"
 		},
 		{
+			"src": "/a/sol/([^/]+)/\\.well-known/agent-card\\.json",
+			"dest": "/api/agents/solana-card?asset=$1"
+		},
+		{
 			"src": "/\\.well-known/oauth-authorization-server",
 			"dest": "/api/wk-oauth-authorization-server"
 		},
