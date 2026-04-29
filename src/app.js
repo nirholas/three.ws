@@ -1073,6 +1073,17 @@ class App {
 			if (data.type === 'widget:command' && data.command) {
 				this._handleWidgetCommand(data.command, data.args || {});
 			}
+
+			// Forward pumpfun-feed focus changes from the parent frame to the
+			// mounted widget overlay (which listens on document.body).
+			if (data.type === 'pumpfun-feed:focus-mint') {
+				document.body.dispatchEvent(
+					new CustomEvent('pumpfun-feed:focus-mint', {
+						detail: { mint: data.mint || null },
+						bubbles: true,
+					}),
+				);
+			}
 		});
 	}
 

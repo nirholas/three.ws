@@ -183,6 +183,8 @@ export function registerPumpFunSkills(skills) {
 				uri: { type: 'string', description: 'Metaplex metadata URI' },
 				network: { type: 'string', enum: ['mainnet', 'devnet'] },
 				initialBuySol: { type: 'number', description: 'Optional dev-buy in same tx (SOL)' },
+				mintPublicKey: { type: 'string', description: 'Optional pre-ground vanity mint pubkey' },
+				mintSecretKeyB64: { type: 'string', description: 'Base64 64-byte secret key paired with mintPublicKey' },
 			},
 			required: ['symbol', 'uri'],
 		},
@@ -195,7 +197,14 @@ export function registerPumpFunSkills(skills) {
 			const { wallet, pubkey } = await requireWallet();
 			const connection = getConnection(web3, network);
 
-			const mintKeypair = web3.Keypair.generate();
+			let mintKeypair;
+			if (args.mintPublicKey && args.mintSecretKeyB64) {
+				const bin = atob(args.mintSecretKeyB64);
+				const secret = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+				mintKeypair = web3.Keypair.fromSecretKey(secret);
+			} else {
+				mintKeypair = web3.Keypair.generate();
+			}
 			const offline = new pump.PumpSdk();
 			let instructions;
 
@@ -268,6 +277,8 @@ export function registerPumpFunSkills(skills) {
 				symbol: { type: 'string' },
 				network: { type: 'string', enum: ['mainnet', 'devnet'] },
 				initialBuySol: { type: 'number' },
+				mintPublicKey: { type: 'string' },
+				mintSecretKeyB64: { type: 'string' },
 			},
 		},
 		handler: async (args, ctx) => {
@@ -290,6 +301,8 @@ export function registerPumpFunSkills(skills) {
 					uri,
 					network: args.network,
 					initialBuySol: args.initialBuySol,
+					mintPublicKey: args.mintPublicKey,
+					mintSecretKeyB64: args.mintSecretKeyB64,
 				},
 				ctx,
 			);

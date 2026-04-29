@@ -259,15 +259,61 @@ export function mountPumpFunCard({ panel, identity, skills, memory, protocol }) 
 				}
 			});
 		}
+		// Vanity suffix input
+		const vinput = cardBody.querySelector('[data-action="vanity-suffix"]');
+		if (vinput) {
+			vinput.addEventListener('input', (e) => {
+				state.vanitySuffix = e.target.value;
+			});
+		}
+		// Bot field inputs
+		cardBody.querySelectorAll('[data-bot-field]').forEach((el) => {
+			const field = el.dataset.botField;
+			const evt = el.type === 'checkbox' ? 'change' : 'input';
+			el.addEventListener(evt, (e) => {
+				const v = el.type === 'checkbox' ? e.target.checked
+					: el.type === 'number' ? parseFloat(e.target.value) || 0
+					: e.target.value;
+				const map = { simulate: 'botSimulate', durationSec: 'botDurationSec', perTradeSol: 'botPerTradeSol', capSol: 'botCapSol', query: 'botQuery', wallet: 'botWallet' };
+				if (map[field]) state[map[field]] = v;
+			});
+		});
 	};
 
 	async function doLaunch(launchBtn) {
 		launchBtn.disabled = true;
-		launchBtn.textContent = 'Launching…';
+		launchBtn.textContent = state.vanityEnabled ? 'Grinding vanity…' : 'Launching…';
 		try {
+			let vanityArgs = null;
+			if (state.vanityEnabled && state.vanitySuffix?.trim()) {
+				try {
+					const { grindVanity } = await import('./solana/vanity/grinder.js');
+					const ground = await grindVanity({
+						suffix: state.vanitySuffix.trim(),
+						onProgress: (p) => {
+							state.vanityProgress = { rate: p.rate, eta: p.eta };
+							const slot = cardBody.querySelector('.pumpfun-vanity-progress');
+							if (slot) slot.textContent = `grinding… ${formatNumber(p.rate)}/s · eta ${p.eta}`;
+						},
+					});
+					vanityArgs = {
+						mintPublicKey: ground.publicKey,
+						mintSecretKeyB64: btoa(String.fromCharCode(...ground.secretKey)),
+					};
+					state.vanityProgress = null;
+					launchBtn.textContent = `Launching ${shortMint(ground.publicKey)}…`;
+				} catch (err) {
+					state.vanityProgress = null;
+					launchBtn.disabled = false;
+					launchBtn.textContent = `Retry launch ${deriveSymbol(identity.name)}`;
+					toast(err.message || 'Vanity grind failed', null, null, 'error');
+					render();
+					return;
+				}
+			}
 			const r = await skills?.perform(
-				'pumpfun-launch-and-narrate',
-				{ network: state.network },
+				'pumpfun-launch-from-agent',
+				{ network: state.network, ...(vanityArgs || {}) },
 				{ identity },
 			);
 			if (r?.success && r.data?.mint) {
@@ -286,7 +332,57 @@ export function mountPumpFunCard({ panel, identity, skills, memory, protocol }) 
 		}
 	}
 
-	const handleAction = (action) => {
+	async function runBot() {
+		if (state.botRunning) return;
+		const skillName = `pumpfun-${state.botMode}`;
+		const args = {
+			sessionId: state.botSessionId,
+			simulate: !!state.botSimulate,
+			durationSec: Math.max(10, parseInt(state.botDurationSec, 10) || 60),
+		};
+		if (state.botMode === 'research-and-buy') {
+			if (!state.botQuery?.trim()) return toast('Query required', null, null, 'error');
+			args.query = state.botQuery.trim();
+			args.amountSol = parseFloat(state.botPerTradeSol) || 0.05;
+			delete args.durationSec;
+		} else if (state.botMode === 'auto-snipe') {
+			args.perTradeSol = parseFloat(state.botPerTradeSol) || 0.05;
+		} else if (state.botMode === 'copy-trade') {
+			if (!state.botWallet?.trim()) return toast('Wallet required', null, null, 'error');
+			args.wallet = state.botWallet.trim();
+		} else if (state.botMode === 'rug-exit-watch') {
+			if (!state.mint) return toast('No mint to watch', null, null, 'error');
+			args.mints = [state.mint];
+		}
+		botAbort = new AbortController();
+		args.signal = botAbort.signal;
+		state.botRunning = true;
+		render();
+		try {
+			const r = await skills.perform(skillName, args, { identity, memory });
+			if (r?.success) {
+				const summary = r.output || `${state.botMode} done`;
+				toast(`${state.botSimulate ? '[dry-run] ' : ''}${summary}`, null, null, 'success');
+			} else {
+				toast(r?.output || `${state.botMode} failed`, null, null, 'error');
+			}
+		} catch (err) {
+			toast(err.message || `${state.botMode} failed`, null, null, 'error');
+		} finally {
+			state.botRunning = false;
+			botAbort = null;
+			state.botSessionId = `s-${Date.now().toString(36)}`;
+			render();
+		}
+	}
+
+	function stopBot() {
+		if (botAbort) {
+			try { botAbort.abort(); } catch {}
+		}
+	}
+
+	const handleAction = (action, e) => {
 		if (action === 'open-feed') return openFeed();
 		if (action === 'claim') return doClaim();
 		if (action === 'toggle-buy') return toggleTrade('buy');
@@ -295,6 +391,18 @@ export function mountPumpFunCard({ panel, identity, skills, memory, protocol }) 
 		if (action === 'confirm-trade') return executeTrade();
 		if (action === 'signer-agent') return setSigner('agent');
 		if (action === 'signer-owner') return setSigner('owner');
+		if (action === 'toggle-bot') { state.botOpen = !state.botOpen; return render(); }
+		if (action === 'close-bot') { state.botOpen = false; return render(); }
+		if (action === 'bot-mode') {
+			state.botMode = e?.currentTarget?.dataset?.mode || state.botMode;
+			return render();
+		}
+		if (action === 'bot-run') return runBot();
+		if (action === 'bot-stop') return stopBot();
+		if (action === 'toggle-vanity') {
+			state.vanityEnabled = !state.vanityEnabled;
+			return render();
+		}
 	};
 
 	const setSigner = (signer) => {

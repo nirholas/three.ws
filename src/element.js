@@ -938,7 +938,33 @@ class Agent3DElement extends HTMLElement {
 					this.dispatchEvent(
 						new CustomEvent(ev, { detail: e.detail, bubbles: true, composed: true }),
 					);
-					if (ev === 'brain:message' && this._chatEl) this._renderMessage(e.detail);
+					if (ev === 'brain:message' && this._chatEl) {
+						// Transfer sentiment from the most recent tool call to
+						// this assistant message so the bubble tints correctly.
+						const detail = { ...e.detail };
+						if (
+							detail.role === 'assistant' &&
+							detail.sentiment === undefined &&
+							this._lastToolSentiment !== undefined
+						) {
+							detail.sentiment = this._lastToolSentiment;
+							this._lastToolSentiment = undefined;
+						}
+						this._renderMessage(detail);
+					}
+					if (ev === 'brain:thinking' && this._toolIndicatorEl) {
+						if (e.detail?.thinking) this._setToolIndicator('thinking');
+						else this._clearToolIndicator();
+					}
+					if (ev === 'skill:tool-called') {
+						const { tool, result } = e.detail || {};
+						this._setToolIndicator(tool);
+						this._clearToolIndicator();
+						if (typeof result?.sentiment === 'number') {
+							this._lastToolSentiment = result.sentiment;
+						}
+						this._renderToolCallCard({ tool, result });
+					}
 				});
 			}
 
@@ -1073,15 +1099,215 @@ class Agent3DElement extends HTMLElement {
 		throw new Error('<agent-3d> requires src=, manifest=, or body= attribute');
 	}
 
-	_renderMessage({ role, content }) {
+	_renderMessage({ role, content, sentiment }) {
 		if (!this._chatEl) return;
 		if (!content) return;
+		// Hide the suggestion chips once a real conversation starts.
+		this._chatEl.querySelector('.suggest-row')?.remove();
 		const msg = document.createElement('div');
 		msg.className = 'msg';
-		msg.innerHTML = `<div class="role">${role}</div><div class="body"></div>`;
+		const tone = this._sentimentTone(sentiment);
+		if (tone) msg.classList.add(tone);
+		msg.innerHTML = `<div class="role"></div><div class="body"></div>`;
+		msg.querySelector('.role').textContent = role;
 		msg.querySelector('.body').textContent = content;
 		this._chatEl.appendChild(msg);
 		this._chatEl.scrollTop = this._chatEl.scrollHeight;
+	}
+
+	_sentimentTone(s) {
+		if (typeof s !== 'number') return null;
+		if (s > 0.3) return 'celebration';
+		if (s < -0.2) return 'concern';
+		if (s > 0.05) return 'curiosity';
+		return null;
+	}
+
+	_setToolIndicator(toolName) {
+		if (!this._toolIndicatorEl) return;
+		clearTimeout(this._toolIndicatorHideTimer);
+		const label = this._toolIndicatorLabel(toolName);
+		this._toolIndicatorEl.querySelector('.label').textContent = label;
+		this._toolIndicatorEl.dataset.active = 'true';
+	}
+
+	_clearToolIndicator() {
+		if (!this._toolIndicatorEl) return;
+		clearTimeout(this._toolIndicatorHideTimer);
+		this._toolIndicatorHideTimer = setTimeout(() => {
+			if (this._toolIndicatorEl) this._toolIndicatorEl.dataset.active = 'false';
+		}, 350);
+	}
+
+	_toolIndicatorLabel(toolName) {
+		const map = {
+			searchTokens: 'Searching pump.fun…',
+			getTokenDetails: 'Fetching token details…',
+			getBondingCurve: 'Reading bonding curve…',
+			getTokenTrades: 'Pulling recent trades…',
+			getTrendingTokens: 'Loading trending tokens…',
+			getNewTokens: 'Loading new launches…',
+			getGraduatedTokens: 'Loading graduated tokens…',
+			getKingOfTheHill: 'Crowning the king…',
+			getCreatorProfile: 'Auditing the creator…',
+			getTokenHolders: 'Inspecting holders…',
+			wave: 'Waving…',
+			remember: 'Saving to memory…',
+			play_clip: 'Playing animation…',
+		};
+		return map[toolName] || `Running ${toolName}…`;
+	}
+
+	_showAlertBanner({ level = 'warn', text } = {}) {
+		if (!this._alertBannerEl || !text) return;
+		this._alertBannerEl.classList.remove('warn', 'danger');
+		this._alertBannerEl.classList.add(level === 'danger' ? 'danger' : 'warn');
+		this._alertBannerEl.querySelector('.msg-text').textContent = text;
+		this._alertBannerEl.dataset.active = 'true';
+	}
+
+	_renderToolCallCard({ tool, result }) {
+		if (!this._chatEl || !result || result.ok === false) return;
+		const data = result.data ?? result;
+		const card = this._buildTokenCard(tool, data);
+		if (!card) return;
+		this._chatEl.querySelector('.suggest-row')?.remove();
+		this._chatEl.appendChild(card);
+		this._chatEl.scrollTop = this._chatEl.scrollHeight;
+
+		// Surface a sticky banner for clearly dangerous signals.
+		if (tool === 'getCreatorProfile') {
+			const flags = data?.rugFlags ?? data?.risk_flags ?? data?.flags ?? [];
+			const rugged = data?.rugCount ?? data?.rug_count ?? 0;
+			if (rugged > 0 || (Array.isArray(flags) && flags.length >= 2)) {
+				this._showAlertBanner({
+					level: 'danger',
+					text: `⚠️ Creator has ${flags.length || rugged} rug indicator${(flags.length || rugged) > 1 ? 's' : ''} — be cautious.`,
+				});
+			} else if (Array.isArray(flags) && flags.length === 1) {
+				this._showAlertBanner({
+					level: 'warn',
+					text: `One risk flag on this creator: ${flags[0]}`,
+				});
+			}
+		}
+	}
+
+	_buildTokenCard(tool, data) {
+		if (!data || typeof data !== 'object') return null;
+		const fmt = (n, opts = {}) => {
+			const v = Number(n);
+			if (!Number.isFinite(v)) return '—';
+			if (opts.usd) {
+				if (v >= 1e6) return `$${(v / 1e6).toFixed(2)}M`;
+				if (v >= 1e3) return `$${(v / 1e3).toFixed(1)}K`;
+				return `$${v.toFixed(2)}`;
+			}
+			if (opts.pct) return `${v.toFixed(1)}%`;
+			return v.toLocaleString();
+		};
+
+		const card = document.createElement('div');
+		card.className = 'token-card solana';
+
+		if (tool === 'getTokenDetails' || tool === 'getKingOfTheHill') {
+			const t = data.token || data;
+			const symbol = t.symbol || t.ticker || 'TOKEN';
+			const name = t.name || '';
+			const mcap = t.marketCapUsd ?? t.market_cap_usd ?? t.usd_market_cap;
+			const price = t.priceUsd ?? t.price_usd ?? t.usd_price;
+			const grad = t.graduationPercent ?? t.graduation_percent ?? t.progress;
+			card.innerHTML = `
+				<div class="token-card-header">
+					<span class="token-card-symbol">$${this._esc(symbol)}</span>
+					<span class="token-card-name">${this._esc(name)}</span>
+				</div>
+				<div class="token-card-grid">
+					<div class="token-card-stat"><div class="label">Market cap</div><div class="value">${fmt(mcap, { usd: true })}</div></div>
+					<div class="token-card-stat"><div class="label">Price</div><div class="value">${fmt(price, { usd: true })}</div></div>
+				</div>
+				${
+					Number.isFinite(Number(grad))
+						? `<div class="token-card-bar"><div class="fill" style="width:${Math.min(100, Math.max(0, Number(grad)))}%"></div></div>
+						   <div class="token-card-stat" style="margin-top:4px"><div class="label">Graduation</div><div class="value">${fmt(grad, { pct: true })}</div></div>`
+						: ''
+				}
+			`;
+			return card;
+		}
+
+		if (tool === 'getBondingCurve') {
+			const grad = data.graduationPercent ?? data.graduation_percent ?? data.progress;
+			const reserves = data.solReserves ?? data.sol_reserves;
+			const tokenReserves = data.tokenReserves ?? data.token_reserves;
+			const danger = Number(grad) < 5;
+			card.innerHTML = `
+				<div class="token-card-header">
+					<span class="token-card-symbol">Bonding curve</span>
+				</div>
+				<div class="token-card-grid">
+					${reserves !== undefined ? `<div class="token-card-stat"><div class="label">SOL reserves</div><div class="value">${fmt(reserves)}</div></div>` : ''}
+					${tokenReserves !== undefined ? `<div class="token-card-stat"><div class="label">Token reserves</div><div class="value">${fmt(tokenReserves)}</div></div>` : ''}
+				</div>
+				${
+					Number.isFinite(Number(grad))
+						? `<div class="token-card-bar"><div class="fill ${danger ? 'danger' : ''}" style="width:${Math.min(100, Math.max(0, Number(grad)))}%"></div></div>
+						   <div class="token-card-stat" style="margin-top:4px"><div class="label">Graduation</div><div class="value">${fmt(grad, { pct: true })}</div></div>`
+						: ''
+				}
+			`;
+			return card;
+		}
+
+		if (tool === 'getCreatorProfile') {
+			const flags = data.rugFlags ?? data.risk_flags ?? data.flags ?? [];
+			const tokenCount = data.tokenCount ?? data.token_count ?? data.tokens?.length;
+			const rugged = data.rugCount ?? data.rug_count ?? 0;
+			card.innerHTML = `
+				<div class="token-card-header">
+					<span class="token-card-symbol">Creator audit</span>
+				</div>
+				<div class="token-card-grid">
+					<div class="token-card-stat"><div class="label">Tokens launched</div><div class="value">${fmt(tokenCount)}</div></div>
+					<div class="token-card-stat"><div class="label">Rugs</div><div class="value">${fmt(rugged)}</div></div>
+				</div>
+				${
+					Array.isArray(flags) && flags.length
+						? `<div class="flags">${flags.map((f) => `<span class="flag">${this._esc(String(f))}</span>`).join('')}</div>`
+						: ''
+				}
+			`;
+			return card;
+		}
+
+		if (tool === 'getTrendingTokens' || tool === 'getNewTokens' || tool === 'getGraduatedTokens') {
+			const list = data.tokens || data.results || data.items || (Array.isArray(data) ? data : []);
+			if (!list.length) return null;
+			const top = list.slice(0, 5);
+			card.innerHTML = `
+				<div class="token-card-header">
+					<span class="token-card-symbol">${tool === 'getTrendingTokens' ? '🔥 Trending' : tool === 'getNewTokens' ? '🆕 New' : '🎓 Graduated'}</span>
+				</div>
+				<div style="margin-top:8px;display:flex;flex-direction:column;gap:4px">
+					${top
+						.map((t) => {
+							const sym = t.symbol || t.ticker || '?';
+							const mc = t.marketCapUsd ?? t.market_cap_usd ?? t.usd_market_cap;
+							return `<div style="display:flex;justify-content:space-between"><span>$${this._esc(sym)}</span><span style="font-variant-numeric:tabular-nums;opacity:.8">${fmt(mc, { usd: true })}</span></div>`;
+						})
+						.join('')}
+				</div>
+			`;
+			return card;
+		}
+
+		return null;
+	}
+
+	_esc(s) {
+		return String(s ?? '').replace(/[&<>"]/g, (c) =>
+			({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c],
+		);
 	}
 
 	_showError(err) {

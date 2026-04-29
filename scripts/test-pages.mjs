@@ -40,6 +40,7 @@ const ROUTES = [
 	'/agent-embed.html',
 	'/a-edit.html',
 	'/a-embed.html',
+	'/strategy-lab.html',
 ];
 
 // Dev-only failure patterns to ignore (CDN URLs, third-party CORS, etc).

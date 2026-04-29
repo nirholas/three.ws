@@ -190,6 +190,76 @@ Pump.fun specifics:
 - Mainnet only after deploy. Devnet works for QA via Pump.fun's devnet-tagged
   SDK builds (`@pump-fun/pump-sdk@*-devnet.*`).
 
+### Cost preview
+
+`GET /api/agents/tokens/launch-quote?initial_buy_sol=0.5&cluster=mainnet` →
+`{ fixed_total_sol, initial_buy: { tokens_out, protocol_fee_sol }, total_sol }`.
+Returns conservative upper-bound rent costs + a live curve quote when an
+initial buy is requested. Surface in any UI that asks the user to launch.
+
+### Migrations
+
+Apply migrations with the bundled runner:
+
+```bash
+DATABASE_URL=postgres://… node scripts/apply-migrations.mjs           # dry-run
+DATABASE_URL=postgres://… node scripts/apply-migrations.mjs --apply   # execute
+```
+
+Tracks state in `schema_migrations` (filename + sha256). Refuses to proceed
+if a previously-applied file has been edited after the fact (drift) — roll
+forward with a new migration instead.
+
+## Agent payments (Pump.fun agent-payments-sdk)
+
+Layered on top of token launches. Same prep/sign/submit/confirm pattern.
+
+Two flows:
+
+- **Owner enables payments** — once the agent has a launched token, the owner
+  signs a one-time `create` tx that registers the agent's TokenAgentPayments
+  PDA. Persists `meta.payments` on the agent record.
+- **Anyone pays the agent** — signed-in user picks a currency mint + amount,
+  signs an `agent_accept_payment` tx, server verifies via the SDK's
+  `validateInvoicePayment` and writes `agent_payment_intents.status='paid'`.
+
+```js
+import {
+  EnablePaymentsButton,
+  PayAgentButton,
+} from 'src/onchain/payments-buttons.js';
+
+new EnablePaymentsButton({ agent, container }).mount(); // owner-only
+new PayAgentButton({ agent, container }).mount();       // any signed-in user
+```
+
+Endpoints: `/api/agents/payments/{create-prep,create-confirm,pay-prep,pay-confirm}`.
+Schema: `payment_configs_pending` + `agent_payment_intents` (see migration
+`2026-04-29-agent-payments.sql`).
+
+`meta.payments` shape (returned at top level on `/api/agents/:id` as
+`agent.payments` when configured):
+
+```json
+{
+  "payments": {
+    "configured":      true,
+    "provider":        "pumpfun",
+    "mint":            "<token mint base58>",
+    "token_agent_pda": "<TokenAgentPayments PDA base58>",
+    "receiver":        "<owner wallet base58>",
+    "cluster":         "mainnet" | "devnet",
+    "tx_signature":    "<base58>",
+    "configured_at":   "2026-...",
+    "accepted_tokens": []
+  }
+}
+```
+
+Note: the agent-payments-sdk is published as a restricted npm package. If
+`npm install` fails with 403, contact Pump.fun for access. The pump-sdk used
+for token launches is public and unaffected.
+
 Adding another launchpad:
 1. Implement `TokenAdapter` in `src/onchain/tokens/<provider>.js`.
 2. Add to `getTokenAdapter()` in `src/onchain/tokens/index.js`.

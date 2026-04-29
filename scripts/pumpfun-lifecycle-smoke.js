@@ -22,9 +22,8 @@
  * Each phase is a no-op if its prereq fails — the script reports per-phase.
  */
 
-import { Connection, Keypair, PublicKey, VersionedTransaction } from '@solana/web3.js';
+import { Connection, Keypair, VersionedTransaction } from '@solana/web3.js';
 import bs58 from 'bs58';
-import BN from 'bn.js';
 
 const BASE = process.env.SMOKE_BASE_URL || 'http://localhost:3000';
 const OWNER_K = process.env.SMOKE_OWNER_KEY;
