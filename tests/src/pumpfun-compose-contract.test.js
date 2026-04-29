@@ -89,7 +89,7 @@ describe('pump-fun compose ↔ MCP contract', () => {
 
 		fetchMock.mockResolvedValueOnce(jsonRpc({ results: [{ mint: 'WHALE' }] }));
 		fetchMock.mockResolvedValueOnce(jsonRpc({ creator: 'C' }));
-		fetchMock.mockResolvedValueOnce(jsonRpc({ holders: [{ pct: 80 }] })); // topHolderPct via fallback path
+		fetchMock.mockResolvedValueOnce(jsonRpc({ total: 100, topHolderPct: 80 }));
 		fetchMock.mockResolvedValueOnce(jsonRpc({ rugCount: 0 }));
 
 		const r = await skill.handler({ query: 'x' }, {});
@@ -121,7 +121,7 @@ describe('pump-fun compose ↔ MCP contract', () => {
 		fetchMock.mockResolvedValueOnce(jsonRpc({ trades: [] })); // trades
 		fetchMock.mockResolvedValueOnce(jsonRpc({ creator: 'DEV' })); // details
 
-		const r = await skill.handler({ mints: ['MINT_X'], durationSec: 1, simulate: false }, {});
+		const r = await skill.handler({ mints: ['MINT_X'], durationSec: 1, simulate: false }, { skillConfig: { pollMs: 0 } });
 		expect(r.data.exited).toEqual(['MINT_X']);
 		expect(r.data.events[0].trigger).toMatch(/top holder 60/);
 		expect(skills.perform).toHaveBeenCalledWith('pumpfun-sell', { mint: 'MINT_X', tokenAmount: '12345' }, expect.anything());
@@ -136,7 +136,7 @@ describe('pump-fun compose ↔ MCP contract', () => {
 		fetchMock.mockResolvedValueOnce(jsonRpc({ trades: [{ side: 'sell', wallet: 'DEV', pctOfSupply: 30 }] }));
 		fetchMock.mockResolvedValueOnce(jsonRpc({ creator: 'DEV' }));
 
-		const r = await skill.handler({ mints: ['MINT_Y'], durationSec: 1 }, {});
+		const r = await skill.handler({ mints: ['MINT_Y'], durationSec: 1 }, { skillConfig: { pollMs: 0 } });
 		expect(r.data.exited).toEqual(['MINT_Y']);
 		expect(r.data.events[0].trigger).toMatch(/dev sold 30/);
 	});

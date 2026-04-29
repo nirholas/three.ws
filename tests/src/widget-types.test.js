@@ -12,9 +12,16 @@ import {
 } from '../../src/widget-types.js';
 
 describe('WIDGET_TYPES', () => {
-	it('exposes the five known widget types', () => {
+	it('exposes the known widget types', () => {
 		expect(WIDGET_TYPE_KEYS.sort()).toEqual(
-			['turntable', 'animation-gallery', 'talking-agent', 'passport', 'hotspot-tour'].sort(),
+			[
+				'turntable',
+				'animation-gallery',
+				'talking-agent',
+				'passport',
+				'hotspot-tour',
+				'pumpfun-feed',
+			].sort(),
 		);
 	});
 

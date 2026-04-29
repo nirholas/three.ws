@@ -128,6 +128,7 @@ export class LaunchTokenButton {
 					<label>Initial buy (SOL, optional)
 						<input name="initial_buy" type="number" min="0" max="50" step="0.01" value="0">
 					</label>
+					<div class="launch-token-quote" aria-live="polite">Loading cost estimate…</div>
 					<div class="launch-token-modal-actions">
 						<button type="button" class="launch-token-cancel">Cancel</button>
 						<button type="submit" class="launch-token-submit">Launch</button>
@@ -142,6 +143,32 @@ export class LaunchTokenButton {
 		overlay.addEventListener('click', (e) => {
 			if (e.target === overlay) close();
 		});
+
+		const cluster = this._agent.onchain?.cluster || 'mainnet';
+		const quoteEl = overlay.querySelector('.launch-token-quote');
+		const buyInput = overlay.querySelector('input[name="initial_buy"]');
+		const refreshQuote = this._debounce(async () => {
+			const sol = Number(buyInput.value) || 0;
+			quoteEl.textContent = 'Estimating cost…';
+			try {
+				const res = await fetch(
+					`/api/agents/tokens/launch-quote?initial_buy_sol=${sol}&cluster=${cluster}`,
+					{ credentials: 'include' },
+				);
+				if (!res.ok) throw new Error(`quote ${res.status}`);
+				const q = await res.json();
+				const fixed = q.fixed_total_sol.toFixed(5);
+				const total = q.total_sol.toFixed(5);
+				const tokensOut = q.initial_buy?.tokens_out
+					? ` &middot; ~${Number(q.initial_buy.tokens_out).toLocaleString()} tokens`
+					: '';
+				quoteEl.innerHTML = `Estimated cost: <strong>${total} SOL</strong> (launch fees ${fixed} + buy ${sol})${tokensOut}`;
+			} catch {
+				quoteEl.textContent = 'Cost estimate unavailable.';
+			}
+		}, 300);
+		buyInput.addEventListener('input', refreshQuote);
+		refreshQuote();
 
 		overlay.querySelector('.launch-token-form').addEventListener('submit', async (ev) => {
 			ev.preventDefault();
@@ -158,6 +185,14 @@ export class LaunchTokenButton {
 			close();
 			await this._launch(params);
 		});
+	}
+
+	_debounce(fn, ms) {
+		let t = null;
+		return (...args) => {
+			clearTimeout(t);
+			t = setTimeout(() => fn(...args), ms);
+		};
 	}
 
 	async _launch(params) {

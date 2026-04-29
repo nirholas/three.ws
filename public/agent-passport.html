@@ -59,6 +59,8 @@
 		.warn  { background: var(--warn-bg); color: var(--warn-fg); }
 		.bad   { background: var(--bad-bg);  color: var(--bad-fg); }
 		.info  { background: var(--info-bg); color: var(--info-fg); }
+		.vanity { background: linear-gradient(90deg,#ffd54f,#ff8a65); color: #1a1a1a; font-weight: 600; }
+		.addr-prefix { background: #fff7c2; padding: 0 2px; border-radius: 2px; font-weight: 600; }
 
 		.filters { display: flex; gap: .35rem; flex-wrap: wrap; margin: .5rem 0 .75rem; }
 		.chip { padding: .2rem .65rem; border: 1px solid var(--border); border-radius: 999px; cursor: pointer; font-size: .75rem; background: #fff; user-select: none; }
@@ -219,15 +221,20 @@
 			const lastIndexed = rep?.last_indexed_at
 				? `indexed ${new Date(rep.last_indexed_at).toLocaleString()}`
 				: 'never indexed';
+			const vanity = id.vanity_prefix && asset.startsWith(id.vanity_prefix) ? id.vanity_prefix : null;
+			const shortAddrHtml = vanity
+				? `<span class="addr-prefix">${escapeHtml(vanity)}</span>${escapeHtml(asset.slice(vanity.length, 4))}…${escapeHtml(asset.slice(-4))}`
+				: escapeHtml(shortKey(asset));
 			$('identity').innerHTML = `
 				<div class="identity-card">
 					<div class="identity-row">
 						<div class="identity-name">${escapeHtml(name)}</div>
 						<span class="pill ${network === 'mainnet' ? 'ok' : 'warn'}">${network}</span>
+						${vanity ? `<span class="pill vanity" title="Custom vanity address">✦ ${escapeHtml(vanity)}</span>` : ''}
 					</div>
 					${card?.description ? `<div class="muted" style="margin-top:.2rem">${escapeHtml(card.description)}</div>` : ''}
 					<div class="identity-meta">
-						<code>${escapeHtml(shortKey(asset))}</code>
+						<code>${shortAddrHtml}</code>
 						<button class="copy-btn" data-copy="${escapeHtml(asset)}">copy</button>
 						${id.owner ? `<span>· owner</span> <code>${escapeHtml(shortKey(id.owner))}</code> <button class="copy-btn" data-copy="${escapeHtml(id.owner)}">copy</button>` : ''}
 						<span>· ${escapeHtml(lastIndexed)}</span>

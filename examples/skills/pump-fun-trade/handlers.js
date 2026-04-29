@@ -1,9 +1,8 @@
-// pump-fun-trade — signing actions via @pump-fun/pump-swap-sdk + @pump-fun/pump-sdk.
-// Wallet is supplied by the host runtime via ctx.wallet (Keypair-like + signTransaction).
+// pump-fun-trade — signing actions. All upstream SDK quirks are isolated to
+// sdk-adapter.js so a SDK upgrade only ripples through one file.
 
 import { Connection, PublicKey, ComputeBudgetProgram } from '@solana/web3.js';
-import { PumpSdk } from '@pump-fun/pump-sdk';
-import { PumpAmmSdk } from '@pump-fun/pump-swap-sdk';
+import { makeAdapter } from './sdk-adapter.js';
 
 function getConn(ctx) {
 	const rpc = ctx?.skillConfig?.rpc ?? 'https://api.mainnet-beta.solana.com';
@@ -11,13 +10,8 @@ function getConn(ctx) {
 }
 
 function getWallet(ctx) {
-	if (!ctx?.wallet) throw new Error('pump-fun-trade requires ctx.wallet');
+	if (!ctx?.wallet?.publicKey) throw new Error('pump-fun-trade requires ctx.wallet');
 	return ctx.wallet;
-}
-
-async function isGraduated(sdk, mintPk) {
-	const curve = await sdk.fetchBondingCurve(mintPk).catch(() => null);
-	return !curve || curve.complete === true;
 }
 
 function priorityIxs(ctx) {
@@ -27,18 +21,16 @@ function priorityIxs(ctx) {
 
 export async function quoteTrade(args, ctx) {
 	const conn = getConn(ctx);
+	const sdk = await makeAdapter(conn);
 	const mintPk = new PublicKey(args.mint);
-	const pump = new PumpSdk(conn);
-	const amm = new PumpAmmSdk(conn);
-	const graduated = await isGraduated(pump, mintPk);
-	const venue = graduated ? amm : pump;
-	const quote = await venue.quote({
-		mint: mintPk,
+	const route = (await sdk.isGraduated(mintPk)) ? 'pumpswap' : 'curve';
+	const quote = await sdk.quote({
+		mintPk,
 		side: args.side,
 		amountSol: args.amountSol,
 		amountTokens: args.amountTokens,
 	});
-	return { ok: true, data: { route: graduated ? 'pumpswap' : 'curve', ...quote } };
+	return { ok: true, data: { route, ...quote } };
 }
 
 export async function buyToken(args, ctx) {
@@ -48,14 +40,13 @@ export async function buyToken(args, ctx) {
 	}
 	const conn = getConn(ctx);
 	const wallet = getWallet(ctx);
+	const sdk = await makeAdapter(conn);
 	const mintPk = new PublicKey(args.mint);
-	const pump = new PumpSdk(conn);
-	const amm = new PumpAmmSdk(conn);
 	const slippageBps = args.slippageBps ?? ctx?.skillConfig?.slippageBps ?? 100;
-	const venue = (await isGraduated(pump, mintPk)) ? amm : pump;
-	const tx = await venue.buyTx({
-		payer: wallet.publicKey,
-		mint: mintPk,
+
+	const tx = await sdk.buyTx({
+		mintPk,
+		payerPk: wallet.publicKey,
 		amountSol: args.amountSol,
 		slippageBps,
 		extraIxs: priorityIxs(ctx),
@@ -68,22 +59,20 @@ export async function buyToken(args, ctx) {
 export async function sellToken(args, ctx) {
 	const conn = getConn(ctx);
 	const wallet = getWallet(ctx);
+	const sdk = await makeAdapter(conn);
 	const mintPk = new PublicKey(args.mint);
-	const pump = new PumpSdk(conn);
-	const amm = new PumpAmmSdk(conn);
 	const slippageBps = args.slippageBps ?? ctx?.skillConfig?.slippageBps ?? 100;
 
 	let amountTokens = args.amountTokens;
 	if (!amountTokens && args.percent) {
-		const bal = await pump.fetchTokenBalance(wallet.publicKey, mintPk);
+		const bal = await sdk.fetchTokenBalance(wallet.publicKey, mintPk);
 		amountTokens = (bal * args.percent) / 100;
 	}
 	if (!amountTokens) return { ok: false, error: 'amountTokens or percent required' };
 
-	const venue = (await isGraduated(pump, mintPk)) ? amm : pump;
-	const tx = await venue.sellTx({
-		payer: wallet.publicKey,
-		mint: mintPk,
+	const tx = await sdk.sellTx({
+		mintPk,
+		payerPk: wallet.publicKey,
 		amountTokens,
 		slippageBps,
 		extraIxs: priorityIxs(ctx),
@@ -96,9 +85,9 @@ export async function sellToken(args, ctx) {
 export async function createToken(args, ctx) {
 	const conn = getConn(ctx);
 	const wallet = getWallet(ctx);
-	const pump = new PumpSdk(conn);
-	const { tx, mint } = await pump.createTx({
-		creator: wallet.publicKey,
+	const sdk = await makeAdapter(conn);
+	const { tx, mint } = await sdk.createTx({
+		creatorPk: wallet.publicKey,
 		name: args.name,
 		symbol: args.symbol,
 		description: args.description,

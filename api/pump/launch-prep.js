@@ -32,6 +32,11 @@ const bodySchema = z.object({
 	network: z.enum(['mainnet', 'devnet']).default('mainnet'),
 	buyback_bps: z.number().int().min(0).max(10_000).default(0),
 	sol_buy_in: z.number().nonnegative().max(50).default(0), // optional creator initial buy, capped 50 SOL
+	// Optional client-ground vanity mint address. When provided, the client
+	// already holds the secret key locally and will co-sign in the wallet —
+	// the server never sees the secret. When omitted, the server falls back
+	// to a fresh Keypair.generate() and returns the secret key for co-sign.
+	mint_address: z.string().min(32).max(44).optional(),
 });
 
 export default wrap(async (req, res) => {
@@ -63,10 +68,17 @@ export default wrap(async (req, res) => {
 	`;
 	if (!agent) return error(res, 404, 'not_found', 'agent not found');
 
-	// Generate fresh mint keypair. Frontend must include it as an additional
-	// signer when submitting (we return the secret key b64).
-	const mintKeypair = Keypair.generate();
-	const mint = mintKeypair.publicKey;
+	// Mint pubkey: client-supplied (vanity-ground) or freshly generated.
+	let mintKeypair = null;
+	let mint;
+	if (body.mint_address) {
+		const supplied = solanaPubkey(body.mint_address);
+		if (!supplied) return error(res, 400, 'validation_error', 'invalid mint_address');
+		mint = supplied;
+	} else {
+		mintKeypair = Keypair.generate();
+		mint = mintKeypair.publicKey;
+	}
 
 	const { sdk, BN } = await getPumpSdk({ network: body.network });
 	const LAMPORTS_PER_SOL = 1_000_000_000;
