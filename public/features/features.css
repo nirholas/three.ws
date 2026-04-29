@@ -159,6 +159,52 @@
 	background: linear-gradient(to bottom, rgba(6, 7, 11, 1) 0%, rgba(110, 231, 183, 0.04) 60%, transparent 100%);
 }
 
+/* ── Scroll hint ────────────────────────────────────────────────────────── */
+
+.scroll-hint {
+	position: fixed;
+	bottom: 2rem;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 100;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 6px;
+	opacity: 1;
+	transition: opacity 0.6s ease;
+	pointer-events: none;
+}
+
+.scroll-hint[hidden] {
+	display: none;
+}
+
+.scroll-hint--hidden {
+	opacity: 0;
+}
+
+.scroll-hint-label {
+	font-family: 'Space Grotesk', sans-serif;
+	font-size: 10px;
+	font-weight: 500;
+	letter-spacing: 0.18em;
+	text-transform: uppercase;
+	color: rgba(255, 255, 255, 0.35);
+}
+
+.scroll-hint-chevron {
+	width: 20px;
+	height: 20px;
+	color: rgba(255, 255, 255, 0.3);
+	animation: scroll-hint-bounce 1.6s ease-in-out infinite;
+}
+
+@keyframes scroll-hint-bounce {
+	0%, 100% { transform: translateY(0); opacity: 0.3; }
+	50%       { transform: translateY(5px); opacity: 0.7; }
+}
+
 /* ── Section progress dots (fixed right rail) ───────────────────────────── */
 
 .act-nav {
@@ -955,6 +1001,7 @@
 	}
 
 	.act-nav { display: none; }
+	.scroll-hint { display: none; }
 
 	.layer-stars-canvas {
 		animation: none;

@@ -15,6 +15,7 @@ import { cors, json, method, wrap, error } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { CHAIN_BY_ID, tokenExplorerUrl, addressExplorerUrl } from './_lib/erc8004-chains.js';
 import { publicUrl } from './_lib/r2.js';
+import { DEMO_AVATARS } from './_lib/demo-avatars.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
@@ -125,6 +126,20 @@ export default wrap(async (req, res) => {
 		};
 	});
 
+	// Inject demo avatars on the first page when the source allows avatars.
+	// Filter by query if one is set so search still feels correct.
+	if (includeAvatars && !cursorDate) {
+		const qLower = q.toLowerCase();
+		const matching = q
+			? DEMO_AVATARS.filter(
+					(a) =>
+						a.name.toLowerCase().includes(qLower) ||
+						a.description.toLowerCase().includes(qLower),
+				)
+			: DEMO_AVATARS;
+		avatarItems.push(...matching);
+	}
+
 	// Merge by date desc and trim to page size; cursor is the date of the last item.
 	const merged = [...onchainItems, ...avatarItems].sort(
 		(a, b) => new Date(b.sortDate).getTime() - new Date(a.sortDate).getTime(),
@@ -143,8 +158,9 @@ export default wrap(async (req, res) => {
 	const [{ total: avatarTotal }] = await sql`
 		SELECT count(*)::text as total FROM avatars WHERE deleted_at IS NULL AND visibility = 'public'
 	`;
-	const allTotal = Number(onchainTotal) + Number(avatarTotal);
-	const threeDTotal = Number(onchain3d) + Number(avatarTotal);
+	const avatarCount = Number(avatarTotal) + DEMO_AVATARS.length;
+	const allTotal = Number(onchainTotal) + avatarCount;
+	const threeDTotal = Number(onchain3d) + avatarCount;
 
 	return json(res, 200, {
 		items,
@@ -153,7 +169,7 @@ export default wrap(async (req, res) => {
 			all: allTotal,
 			threeD: threeDTotal,
 			onchain: Number(onchainTotal),
-			avatars: Number(avatarTotal),
+			avatars: avatarCount,
 		},
 	});
 });

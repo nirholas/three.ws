@@ -505,12 +505,32 @@
 			</footer>
 		</main>
 
+		<div class="scroll-hint" aria-hidden="true" data-role="scroll-hint">
+			<span class="scroll-hint-label">Scroll</span>
+			<svg class="scroll-hint-chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+				<polyline points="4,7 10,13 16,7"/>
+			</svg>
+		</div>
+
 		<nav class="act-nav" aria-label="Section navigation">
 			<a href="#main-content" class="act-dot" data-act="1" data-active="true" aria-label="Act 1: Live 3D"></a>
 			<a href="#act-empathy" class="act-dot" data-act="2" aria-label="Act 2: Empathy layer"></a>
 			<a href="#act-onchain" class="act-dot" data-act="3" aria-label="Act 3: On-chain identity"></a>
 		</nav>
 
+		<script>
+			(function () {
+				const hint = document.querySelector('[data-role="scroll-hint"]');
+				if (!hint) return;
+				const container = document.querySelector('.parallax') || window;
+				function hide() {
+					hint.classList.add('scroll-hint--hidden');
+					hint.addEventListener('transitionend', () => { hint.hidden = true; }, { once: true });
+					container.removeEventListener('scroll', hide);
+				}
+				container.addEventListener('scroll', hide, { passive: true });
+			})();
+		</script>
 		<script type="module" src="/features/features.js"></script>
 		<script>
 			try {
