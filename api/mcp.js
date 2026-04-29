@@ -608,7 +608,135 @@ const TOOLS = {
 			};
 		},
 	},
+
+	solana_agent_reputation: {
+		async handler(args) {
+			const data = await solanaReputation(args.asset, args.network || 'devnet');
+			return {
+				content: [{ type: 'text', text: JSON.stringify(data, null, 2) }],
+				structuredContent: data,
+			};
+		},
+	},
+
+	solana_agent_attestations: {
+		async handler(args) {
+			const data = await solanaAttestations({
+				asset:   args.asset,
+				kind:    args.kind || 'all',
+				network: args.network || 'devnet',
+				limit:   args.limit || 50,
+			});
+			return {
+				content: [{ type: 'text', text: JSON.stringify(data, null, 2) }],
+				structuredContent: data,
+			};
+		},
+	},
+
+	solana_agent_passport: {
+		async handler(args) {
+			const data = await solanaPassport(args.asset, args.network || 'devnet');
+			return {
+				content: [{ type: 'text', text: JSON.stringify(data, null, 2) }],
+				structuredContent: data,
+			};
+		},
+	},
 };
+
+// ─── Solana attestation tool helpers ────────────────────────────────────────
+
+async function ensureWarm({ asset, network }) {
+	const [c] = await sql`select 1 from solana_attestations_cursor where agent_asset = ${asset} limit 1`;
+	if (c) return;
+	const [agent] = await sql`
+		select wallet_address as owner from agent_identities
+		where meta->>'sol_mint_address' = ${asset} and deleted_at is null limit 1
+	`;
+	try { await crawlAgentAttestations({ agentAsset: asset, network, ownerWallet: agent?.owner || null }); }
+	catch { /* return cached (empty) */ }
+}
+
+async function solanaReputation(asset, network) {
+	await ensureWarm({ asset, network });
+	const [fb] = await sql`
+		with feedback as (
+			select
+				f.disputed, (f.payload->>'score')::int as score,
+				exists (
+					select 1 from solana_attestations a
+					where a.agent_asset = f.agent_asset and a.kind='threews.accept.v1'
+					  and a.payload->>'task_id' = f.payload->>'task_id'
+					  and a.verified = true and f.payload->>'task_id' is not null
+				) as task_accepted
+			from solana_attestations f
+			where f.agent_asset=${asset} and f.network=${network}
+			  and f.kind='threews.feedback.v1' and f.revoked=false
+		)
+		select count(*)::int total,
+			count(*) filter (where task_accepted)::int verified,
+			count(*) filter (where disputed)::int disputed,
+			coalesce(avg(score),0)::float score_avg,
+			coalesce(avg(score) filter (where task_accepted),0)::float score_avg_verified
+		from feedback
+	`;
+	const [val] = await sql`
+		select count(*) filter (where (payload->>'passed')::bool)::int passed,
+			count(*) filter (where not (payload->>'passed')::bool)::int failed
+		from solana_attestations
+		where agent_asset=${asset} and network=${network}
+		  and kind='threews.validation.v1' and revoked=false
+	`;
+	return {
+		agent: asset, network,
+		feedback: { ...fb,
+			score_avg: Number(fb.score_avg.toFixed(3)),
+			score_avg_verified: Number(fb.score_avg_verified.toFixed(3)) },
+		validation: val,
+	};
+}
+
+async function solanaAttestations({ asset, kind, network, limit }) {
+	await ensureWarm({ asset, network });
+	const wantKind = kind === 'all' ? null : KIND_MAP[kind];
+	const rows = wantKind
+		? await sql`
+			select signature, slot, block_time, attester, kind, payload, verified, revoked, disputed
+			from solana_attestations
+			where agent_asset=${asset} and network=${network} and kind=${wantKind} and revoked=false
+			order by slot desc limit ${limit}
+		`
+		: await sql`
+			select signature, slot, block_time, attester, kind, payload, verified, revoked, disputed
+			from solana_attestations
+			where agent_asset=${asset} and network=${network} and revoked=false
+			order by slot desc limit ${limit}
+		`;
+	return { agent: asset, network, kind, count: rows.length, data: rows };
+}
+
+async function solanaPassport(asset, network) {
+	const [agent] = await sql`
+		select id, name, description, wallet_address as owner, meta
+		from agent_identities
+		where meta->>'sol_mint_address' = ${asset} and deleted_at is null limit 1
+	`;
+	const reputation = await solanaReputation(asset, network);
+	const recent = await solanaAttestations({ asset, kind: 'all', network, limit: 10 });
+	return {
+		agent: asset,
+		identity: agent ? {
+			id: agent.id, name: agent.name, description: agent.description,
+			owner: agent.owner, asset_pubkey: asset,
+			network: agent.meta?.network || network,
+		} : { agent_off_index: true, asset_pubkey: asset, network },
+		reputation: reputation.feedback,
+		validation: reputation.validation,
+		recent_attestations: recent.data,
+		schemas_url: `${env.APP_ORIGIN}/.well-known/agent-attestation-schemas`,
+	};
+}
 
 async function safeFetchModel(url) {
 	try {
