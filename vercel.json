@@ -67,6 +67,16 @@
 		{ "src": "/studio/(.*)", "dest": "/studio/$1" },
 
 		{ "src": "/api/dashboard/prefs", "dest": "/api/dashboard/prefs" },
+
+		{ "src": "/api/marketplace/categories", "dest": "/api/marketplace/[action]?action=categories" },
+		{ "src": "/api/marketplace/agents", "dest": "/api/marketplace/[action]?action=agents" },
+		{ "src": "/api/marketplace/agents/([^/]+)", "dest": "/api/marketplace/[action]?action=agents&id=$1" },
+		{ "src": "/api/marketplace/agents/([^/]+)/([^/]+)", "dest": "/api/marketplace/[action]?action=agents&id=$1&sub=$2" },
+
+		{ "src": "/marketplace", "dest": "/marketplace.html" },
+		{ "src": "/marketplace/", "dest": "/marketplace.html" },
+		{ "src": "/marketplace/agents/([^/]+)", "dest": "/marketplace.html" },
+
 		{ "src": "/api/agents/me", "dest": "/api/agents" },
 		{ "src": "/api/agents/suggest", "dest": "/api/agents/suggest" },
 		{ "src": "/api/agents/by-wallet", "dest": "/api/agents/by-wallet" },

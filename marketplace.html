@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Agent Marketplace · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta
+			name="description"
+			content="Discover, fork, and chat with community-published AI agents. Browse by category, search by keyword."
+		/>
+		<meta name="theme-color" content="#000000" />
+		<link rel="canonical" href="https://three.ws/marketplace" />
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/marketplace.css" />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+			rel="stylesheet"
+		/>
+
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content="Agent Marketplace · three.ws" />
+		<meta
+			property="og:description"
+			content="Discover, fork, and chat with community-published AI agents."
+		/>
+		<meta property="og:url" content="https://three.ws/marketplace" />
+		<meta property="og:image" content="https://three.ws/og-image.png" />
+	</head>
+	<body class="market-page">
+		<aside class="market-sidebar" id="market-sidebar">
+			<a href="/" class="market-logo">
+				<img src="/three.svg" alt="three.ws" />
+				<span>Community</span>
+			</a>
+			<nav class="market-nav">
+				<a href="/" data-nav="home"><span class="ico">⌂</span> Home</a>
+				<a href="/marketplace" data-nav="agent" class="active"><span class="ico">▣</span> Agent</a>
+				<a href="/features" data-nav="skills"><span class="ico">≡</span> Skills</a>
+				<a href="/dashboard" data-nav="model"><span class="ico">◉</span> Model</a>
+			</nav>
+		</aside>
+
+		<main class="market-main" id="market-main">
+			<!-- Discovery view -->
+			<section class="market-discovery" id="market-discovery">
+				<header class="market-topbar">
+					<input
+						id="market-search"
+						type="search"
+						placeholder="Search by name, description, or keywords…"
+						autocomplete="off"
+					/>
+					<select id="market-sort" class="market-sort">
+						<option value="recommended">Recommended</option>
+						<option value="recent">Recent</option>
+						<option value="popular">Popular</option>
+					</select>
+				</header>
+
+				<div class="market-body">
+					<aside class="market-cats" id="market-cats" aria-label="Categories"></aside>
+					<div class="market-grid" id="market-grid"></div>
+				</div>
+				<div class="market-loadmore">
+					<button id="market-loadmore" hidden>Load more</button>
+				</div>
+			</section>
+
+			<!-- Detail view -->
+			<section class="market-detail" id="market-detail" hidden>
+				<button class="market-back" id="market-back" aria-label="Back">←</button>
+				<div class="market-detail-head">
+					<div class="market-detail-avatar" id="d-avatar">▣</div>
+					<div class="market-detail-meta">
+						<h1 id="d-name">—</h1>
+						<div class="market-detail-author">
+							<span id="d-author">—</span>
+							<span class="dot">·</span>
+							<span id="d-published">—</span>
+							<span id="d-forks-pill" class="forks-pill" hidden></span>
+						</div>
+						<div class="market-detail-stats">
+							<span id="d-category" class="cat-pill"></span>
+							<span id="d-views" class="stat-pill"></span>
+						</div>
+					</div>
+					<button class="market-bookmark" id="d-bookmark" aria-label="Bookmark">☆</button>
+				</div>
+
+				<nav class="market-tabs" role="tablist">
+					<button data-tab="overview" class="active" role="tab">Overview</button>
+					<button data-tab="profile" role="tab">Agent Profile</button>
+					<button data-tab="capabilities" role="tab">Agent Capabilities</button>
+					<button data-tab="versions" role="tab">Version History</button>
+					<button data-tab="similar" role="tab">Similar Agents</button>
+				</nav>
+
+				<div class="market-detail-body">
+					<div class="market-detail-content">
+						<div data-panel="overview" class="market-panel active">
+							<div class="market-card">
+								<h3>What can you do with this Agent?</h3>
+								<p id="d-overview">—</p>
+							</div>
+							<h2 class="market-section-title">Agent Demo</h2>
+							<div class="market-demo">
+								<div class="market-demo-bubble" id="d-greeting">—</div>
+							</div>
+						</div>
+
+						<div data-panel="profile" class="market-panel">
+							<h2>Agent Profile</h2>
+							<pre class="market-prose" id="d-profile">—</pre>
+							<h3>Capabilities</h3>
+							<ul id="d-capabilities-list"></ul>
+						</div>
+
+						<div data-panel="capabilities" class="market-panel">
+							<h2>Built-in Skills <span class="muted" id="d-skills-count">0</span></h2>
+							<div id="d-skills" class="market-skills"></div>
+							<h2>Library <span class="muted" id="d-library-count">0</span></h2>
+							<div id="d-library" class="market-library"></div>
+						</div>
+
+						<div data-panel="versions" class="market-panel">
+							<h2>Version History</h2>
+							<ul id="d-versions" class="market-versions"></ul>
+						</div>
+
+						<div data-panel="similar" class="market-panel">
+							<h2>Related Agents</h2>
+							<div id="d-similar" class="market-grid"></div>
+						</div>
+					</div>
+
+					<aside class="market-detail-side">
+						<button class="market-fork" id="d-fork">Fork &amp; Chat</button>
+						<div class="market-card market-overview-card">
+							<div class="row">
+								<span>What can you do with this Agent?</span>
+							</div>
+							<p id="d-overview-side">—</p>
+						</div>
+						<div class="market-related-side" id="d-related-side"></div>
+					</aside>
+				</div>
+			</section>
+		</main>
+
+		<script type="module" src="/src/marketplace.js"></script>
+	</body>
+</html>

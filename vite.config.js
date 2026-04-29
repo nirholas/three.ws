@@ -30,6 +30,7 @@ const appConfig = {
 				embed: resolve(__dirname, 'embed.html'),
 				create: resolve(__dirname, 'create.html'),
 				'agent-home': resolve(__dirname, 'agent-home.html'),
+				marketplace: resolve(__dirname, 'marketplace.html'),
 				'agent-edit': resolve(__dirname, 'agent-edit.html'),
 				'agent-embed': resolve(__dirname, 'agent-embed.html'),
 				'a-embed': resolve(__dirname, 'a-embed.html'),
@@ -73,6 +74,8 @@ const appConfig = {
 					'/my-agents/': resolve(root, 'public/my-agents/index.html'),
 					'/discover': resolve(root, 'public/discover/index.html'),
 					'/discover/': resolve(root, 'public/discover/index.html'),
+					'/marketplace': resolve(root, 'marketplace.html'),
+					'/marketplace/': resolve(root, 'marketplace.html'),
 					'/explore': resolve(root, 'public/discover/index.html'),
 					'/explore/': resolve(root, 'public/discover/index.html'),
 					// END:DISCOVER_ROUTE
@@ -119,7 +122,9 @@ const appConfig = {
 						return res.end();
 					}
 					let filePath = fileMap[path];
-					if (!filePath && /^\/agent\/[^/]+\/edit$/.test(path))
+					if (!filePath && /^\/marketplace\/agents\/[^/]+\/?$/.test(path))
+						filePath = resolve(root, 'marketplace.html');
+					else if (!filePath && /^\/agent\/[^/]+\/edit$/.test(path))
 						filePath = resolve(root, 'agent-edit.html');
 					else if (!filePath && /^\/agent\/[^/]+\/embed$/.test(path))
 						filePath = resolve(root, 'agent-embed.html');
