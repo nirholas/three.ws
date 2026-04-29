@@ -87,6 +87,14 @@
 				background: linear-gradient(135deg, #a78bfa 0%, #6366f1 100%);
 				flex-shrink: 0;
 			}
+			.docs-logo-mark {
+				width: 24px;
+				height: 24px;
+				flex-shrink: 0;
+				filter: grayscale(1) contrast(1.05) brightness(1.08)
+					drop-shadow(0 0 5px rgba(139, 92, 246, 0.45))
+					drop-shadow(0 0 1px rgba(99, 102, 241, 0.55));
+			}
 			.docs-header-sep {
 				width: 1px;
 				height: 18px;
@@ -522,7 +530,7 @@
 	<body>
 		<header class="docs-header">
 			<a href="/" class="docs-logo">
-				<span class="docs-logo-dot" aria-hidden="true"></span>three.ws
+				<img src="/three.svg" class="docs-logo-mark" alt="" aria-hidden="true" />three.ws
 			</a>
 			<span class="docs-header-sep"></span>
 			<span class="docs-header-label">Docs</span>
