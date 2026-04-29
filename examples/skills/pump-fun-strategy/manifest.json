@@ -1,0 +1,21 @@
+{
+	"spec": "skill/0.1",
+	"name": "pump-fun-strategy",
+	"version": "0.1.0",
+	"description": "Strategy DSL for pump.fun: declarative spec (scan/filters/entry/exit) compiled into live runs or backtests. Same evaluator powers both — live and backtest cannot drift.",
+	"license": "MIT",
+	"tags": ["solana", "pump.fun", "strategy", "dsl", "backtest"],
+	"requires": {
+		"runtime": ">=0.1.0",
+		"skills": ["pump-fun@^0.1", "pump-fun-trade@^0.1"]
+	},
+	"provides": {
+		"tools": ["validateStrategy", "runStrategy", "backtestStrategy"],
+		"triggers": ["strategy_run", "strategy_backtest"]
+	},
+	"config": {
+		"defaultPollMs": 5000,
+		"defaultSessionSpendCapSol": 1.0,
+		"defaultPerTradeSol": 0.05
+	}
+}

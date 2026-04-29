@@ -45,12 +45,6 @@ describe('pumpfun-signals cron', () => {
 		delete process.env.CRON_SECRET;
 	});
 
-	it('skips when bot disabled', async () => {
-		const mod = await import('../api/_lib/pumpfun-mcp.js');
-		mod.pumpfunBotEnabled = () => false;
-		// No way to swap export at runtime cleanly — just exercise the run with empty data instead.
-	});
-
 	it('writes typed signals only for linked wallets', async () => {
 		recentClaimsMock.mockResolvedValueOnce({
 			ok: true,

@@ -6490,3 +6490,147 @@ textarea.erc8004-code {
 		padding-right: 14px;
 	}
 }
+
+/* ── Pump.fun card on agent home ───────────────────────────────────────── */
+.agent-home-pumpfun {
+	margin: 14px 0 4px;
+}
+.pumpfun-card {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: 14px 14px 12px;
+	border-radius: 14px;
+	background: linear-gradient(135deg, rgba(120, 80, 220, 0.18), rgba(0, 200, 180, 0.14));
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	color: var(--agent-home-fg, #fff);
+	box-shadow: 0 6px 20px -10px rgba(0, 0, 0, 0.4);
+}
+.pumpfun-card--graduated {
+	background: linear-gradient(135deg, rgba(0, 200, 130, 0.22), rgba(0, 120, 200, 0.18));
+}
+.pumpfun-card--cta {
+	background: linear-gradient(135deg, rgba(150, 100, 255, 0.18), rgba(255, 120, 180, 0.14));
+}
+.pumpfun-card--skeleton {
+	height: 96px;
+	background: rgba(255, 255, 255, 0.04);
+	animation: pumpfun-skeleton 1.4s infinite;
+}
+@keyframes pumpfun-skeleton {
+	0%, 100% { opacity: 0.5; }
+	50%      { opacity: 0.8; }
+}
+.pumpfun-card-head {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+.pumpfun-card-icon {
+	font-size: 18px;
+	line-height: 1;
+}
+.pumpfun-card-title {
+	font-weight: 600;
+	font-size: 14px;
+	letter-spacing: 0.02em;
+	flex: 1;
+}
+.pumpfun-card-link {
+	color: inherit;
+	opacity: 0.6;
+	text-decoration: none;
+	font-size: 13px;
+	padding: 2px 6px;
+	border-radius: 6px;
+	transition: opacity .15s, background .15s;
+}
+.pumpfun-card-link:hover { opacity: 1; background: rgba(255,255,255,0.08); }
+.pumpfun-card-sub {
+	font-size: 12.5px;
+	opacity: 0.78;
+	margin: 0;
+	line-height: 1.4;
+}
+.pumpfun-stats {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 10px;
+}
+.pumpfun-stat {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+.pumpfun-stat-label {
+	font-size: 10.5px;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	opacity: 0.55;
+}
+.pumpfun-stat-value {
+	font-size: 15px;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+.pumpfun-progress {
+	height: 4px;
+	background: rgba(255, 255, 255, 0.08);
+	border-radius: 999px;
+	overflow: hidden;
+}
+.pumpfun-progress-bar {
+	height: 100%;
+	background: linear-gradient(90deg, #b27dff, #6ce0c8);
+	transition: width .6s ease;
+}
+.pumpfun-card-mint {
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-size: 11.5px;
+	opacity: 0.55;
+}
+.pumpfun-card-actions {
+	display: flex;
+	gap: 6px;
+	flex-wrap: wrap;
+}
+.pumpfun-btn {
+	flex: 1;
+	min-width: 64px;
+	padding: 7px 10px;
+	font-size: 12.5px;
+	font-weight: 500;
+	border-radius: 8px;
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	background: rgba(255, 255, 255, 0.06);
+	color: inherit;
+	cursor: pointer;
+	transition: background .15s, transform .05s;
+}
+.pumpfun-btn:hover { background: rgba(255, 255, 255, 0.12); }
+.pumpfun-btn:active { transform: translateY(1px); }
+.pumpfun-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.pumpfun-btn--primary {
+	background: linear-gradient(135deg, #b27dff, #6ce0c8);
+	border: none;
+	color: #0e0a18;
+	font-weight: 600;
+}
+.pumpfun-btn--primary:hover { filter: brightness(1.06); background: linear-gradient(135deg, #b27dff, #6ce0c8); }
+.pumpfun-btn--ghost {
+	background: transparent;
+}
+.pumpfun-card-foot {
+	display: inline-block;
+	font-size: 11.5px;
+	opacity: 0.55;
+	color: inherit;
+	text-decoration: underline;
+	text-decoration-color: rgba(255,255,255,0.2);
+}
+.pumpfun-card-foot:hover { opacity: 0.85; }
+@media (prefers-reduced-motion: reduce) {
+	.pumpfun-progress-bar { transition: none; }
+	.pumpfun-card--skeleton { animation: none; }
+}

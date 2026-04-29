@@ -374,7 +374,7 @@ export function registerPumpFunSkills(skills) {
 		},
 		handler: async (args, _ctx) => {
 			const network = args.network || DEFAULT_NETWORK;
-			const { pump, web3 } = await loadCore();
+			const { pump, web3, splToken } = await loadCore();
 			const connection = getConnection(web3, network);
 			const onlineSdk = new pump.OnlinePumpSdk(connection);
 			const mint = new web3.PublicKey(args.mint);
@@ -387,6 +387,18 @@ export function registerPumpFunSkills(skills) {
 				bondingCurve: curve,
 			});
 
+			let userBalance = '0';
+			let owner = null;
+			try {
+				const wallet = detectSolanaWallet();
+				if (wallet?.publicKey && splToken) {
+					owner = wallet.publicKey;
+					const ata = await splToken.getAssociatedTokenAddress(mint, owner);
+					const acct = await connection.getTokenAccountBalance(ata).catch(() => null);
+					userBalance = acct?.value?.amount ?? '0';
+				}
+			} catch {}
+
 			return {
 				success: true,
 				output: graduated
@@ -397,6 +409,8 @@ export function registerPumpFunSkills(skills) {
 					mint: args.mint,
 					marketCap: marketCap.toString(),
 					graduated,
+					userBalance,
+					owner: owner ? owner.toBase58() : null,
 					network,
 				},
 			};

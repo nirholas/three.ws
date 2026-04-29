@@ -32,6 +32,8 @@ export default wrap(async function handler(req, res) {
 
 	if (sub === 'pumpfun') {
 		if (action === 'launch') return (await import('./pumpfun/launch.js')).default(req, res, id);
+		if (action === 'buy') return (await import('./pumpfun/buy.js')).default(req, res, id);
+		if (action === 'sell') return (await import('./pumpfun/sell.js')).default(req, res, id);
 		if (action === 'swap') return (await import('./pumpfun/swap.js')).default(req, res, id);
 		if (action === 'pay') return (await import('./pumpfun/pay.js')).default(req, res, id);
 		if (cors(req, res)) return;

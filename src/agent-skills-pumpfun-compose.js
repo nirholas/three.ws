@@ -99,10 +99,9 @@ async function maybeBuy(skills, ctx, simulate, mint, solAmount) {
 }
 
 async function maybeSell(skills, ctx, simulate, mint) {
-	if (simulate) return { signature: `SIMULATED:sell:${mint}:100%`, simulated: true };
-	// pumpfun-sell needs a tokenAmount; query holdings first.
 	const status = await skills.perform('pumpfun-status', { mint }, ctx);
 	const tokenAmount = status?.data?.userBalance ?? '0';
+	if (simulate) return { signature: `SIMULATED:sell:${mint}:${tokenAmount}`, simulated: true };
 	if (tokenAmount === '0') return { signature: 'NOOP:no-balance', simulated: false };
 	const r = await skills.perform('pumpfun-sell', { mint, tokenAmount }, ctx);
 	if (!r?.success) throw new Error(r?.output || 'pumpfun-sell failed');

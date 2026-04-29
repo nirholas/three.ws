@@ -1,0 +1,40 @@
+{
+	"tools": [
+		{
+			"name": "validateStrategy",
+			"description": "Parse and type-check a strategy spec without running it. Returns parsed predicates or the first error.",
+			"input_schema": {
+				"type": "object",
+				"properties": { "strategy": { "type": "object" } },
+				"required": ["strategy"]
+			}
+		},
+		{
+			"name": "runStrategy",
+			"description": "Execute a strategy live. Scans, filters, enters, and watches exits until durationSec or sessionSpendCapSol is hit. Pass simulate:true for a dry-run that skips signing.",
+			"input_schema": {
+				"type": "object",
+				"properties": {
+					"strategy": { "type": "object" },
+					"durationSec": { "type": "integer", "minimum": 10, "maximum": 86400 },
+					"simulate": { "type": "boolean" },
+					"sessionId": { "type": "string" }
+				},
+				"required": ["strategy", "durationSec"]
+			}
+		},
+		{
+			"name": "backtestStrategy",
+			"description": "Replay a strategy against historical token trade history. No signing, no RPC. Returns per-trade PnL and aggregate stats (win rate, total return, max drawdown).",
+			"input_schema": {
+				"type": "object",
+				"properties": {
+					"strategy": { "type": "object" },
+					"mints": { "type": "array", "items": { "type": "string" }, "description": "Mints to replay; defaults to scan.mints." },
+					"sinceMs": { "type": "integer", "description": "Only consider trades after this unix-ms cutoff." }
+				},
+				"required": ["strategy"]
+			}
+		}
+	]
+}
