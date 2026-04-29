@@ -81,6 +81,11 @@ body.studio-body {
 	align-items: center;
 	gap: var(--space-xs);
 }
+.studio-header .wordmark-logo {
+	height: 1.75rem;
+	width: auto;
+	display: block;
+}
 .studio-tag {
 	font-size: var(--text-sm);
 	font-weight: 500;

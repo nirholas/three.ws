@@ -51,6 +51,7 @@ const IGNORE_PATTERNS = [
 	/marketplace\.olas\.network/, // third-party API, no CORS for localhost
 	/blocked by CORS policy/,
 	/three\.ws\/dist-lib/,
+	/localhost:\d+\/api\//, // serverless functions need `vercel dev`, not `vite dev`
 ];
 
 function shouldIgnore(text) {
@@ -106,13 +107,14 @@ async function checkRoute(browser, route) {
 	let loadError = null;
 	try {
 		const resp = await page.goto(`${BASE}${route}`, {
-			waitUntil: 'networkidle',
-			timeout: 20000,
+			waitUntil: 'load',
+			timeout: 15000,
 		});
+		// Give async boot code a moment to throw before we close the page.
+		await wait(1500);
 		if (!resp || resp.status() >= 400) {
 			loadError = `nav status ${resp?.status() ?? 'none'}`;
 		}
-		await wait(500);
 	} catch (e) {
 		loadError = e.message;
 	}
