@@ -1,0 +1,217 @@
+/* Shared auth-page styling: shell layout, avatar panel, password toggle,
+   caps-lock warning, remember-me row, inline-validation hints. */
+
+* { box-sizing: border-box; }
+
+body {
+	font:
+		15px/1.5 -apple-system,
+		system-ui,
+		Segoe UI,
+		Roboto,
+		sans-serif;
+	margin: 0;
+	min-height: 100vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 24px;
+}
+
+.shell {
+	display: flex;
+	width: 100%;
+	max-width: 1080px;
+	min-height: 640px;
+	border-radius: 24px;
+	overflow: hidden;
+	animation: auth-shell-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.panel {
+	flex: 1;
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background:
+		radial-gradient(120% 90% at 30% 20%, rgba(154, 140, 255, 0.55), transparent 60%),
+		radial-gradient(120% 90% at 80% 90%, rgba(255, 140, 200, 0.35), transparent 55%),
+		linear-gradient(135deg, #2a2350 0%, #1a1a2e 100%);
+	overflow: hidden;
+}
+
+.panel-brand {
+	position: absolute;
+	bottom: 22px;
+	left: 28px;
+	font-size: 11px;
+	letter-spacing: 0.2em;
+	text-transform: uppercase;
+	color: rgba(255, 255, 255, 0.55);
+	text-decoration: none;
+	font-weight: 500;
+	z-index: 2;
+}
+.panel-brand:hover { color: rgba(255, 255, 255, 0.9); }
+
+.agent-avatar {
+	position: relative;
+	width: 320px;
+	height: 320px;
+	pointer-events: none;
+	will-change: transform;
+}
+.agent-avatar model-viewer {
+	width: 100%;
+	height: 100%;
+	--poster-color: transparent;
+	background: transparent;
+}
+.agent-avatar::after {
+	content: '';
+	position: absolute;
+	left: 50%;
+	bottom: 4px;
+	width: 180px;
+	height: 18px;
+	background: radial-gradient(ellipse, rgba(0, 0, 0, 0.45), transparent 70%);
+	transform: translateX(-50%);
+	filter: blur(8px);
+	pointer-events: none;
+}
+.agent-avatar.loading::before {
+	content: '';
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 120px;
+	height: 140px;
+	border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%;
+	background: rgba(255, 255, 255, 0.06);
+	transform: translate(-50%, -55%);
+	animation: auth-skel-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes auth-skel-pulse {
+	0%, 100% { opacity: 0.4; }
+	50% { opacity: 0.85; }
+}
+
+@keyframes auth-shell-in {
+	from { opacity: 0; transform: translateY(14px) scale(0.985); }
+	to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes auth-err-shake {
+	0%, 100% { transform: translateX(0); }
+	20% { transform: translateX(-6px); }
+	40% { transform: translateX(5px); }
+	65% { transform: translateX(-3px); }
+	85% { transform: translateX(2px); }
+}
+.err.shaking {
+	animation: auth-err-shake 0.32s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+/* Password input + toggle */
+.password-wrap { position: relative; }
+.password-wrap input { padding-right: 44px !important; }
+.password-toggle {
+	position: absolute;
+	right: 4px;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 36px;
+	height: 36px;
+	margin: 0 !important;
+	padding: 0 !important;
+	background: transparent !important;
+	border: 0 !important;
+	border-radius: 6px !important;
+	color: #666 !important;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 0 !important;
+	font-weight: 400 !important;
+	box-shadow: none !important;
+	width: 36px !important;
+}
+.password-toggle:hover { color: #ccc !important; background: rgba(255, 255, 255, 0.04) !important; }
+.password-toggle:active { transform: translateY(-50%) scale(0.92); }
+.password-toggle svg { width: 18px; height: 18px; display: block; }
+
+/* Caps-lock warning */
+.caps-warn {
+	display: none;
+	margin-top: 6px;
+	font-size: 12px;
+	color: #f0c040;
+}
+.caps-warn.show { display: block; }
+
+/* Inline validation hint state */
+.field-hint.invalid { color: #ff7a7a !important; }
+.field-hint.valid { color: #7ddf7d !important; }
+
+/* Remember-me row */
+.remember-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	margin-top: 14px;
+	font-size: 13px;
+	color: #888;
+	user-select: none;
+}
+.remember-row label {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0;
+	font-size: 13px;
+	color: #888;
+	text-transform: none;
+	letter-spacing: normal;
+	font-weight: 400;
+	cursor: pointer;
+}
+.remember-row input[type="checkbox"] {
+	width: 14px;
+	height: 14px;
+	margin: 0;
+	padding: 0;
+	accent-color: #fff;
+	cursor: pointer;
+}
+
+@media (max-width: 860px) {
+	.shell {
+		flex-direction: column;
+		min-height: 0;
+	}
+	.panel {
+		min-height: 220px;
+		order: -1;
+	}
+	.agent-avatar {
+		width: 180px;
+		height: 180px;
+	}
+	.panel-brand {
+		bottom: 12px;
+		left: 16px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*, *::before, *::after {
+		animation-duration: 0.001ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.001ms !important;
+		scroll-behavior: auto !important;
+	}
+}

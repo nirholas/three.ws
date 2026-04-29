@@ -507,4 +507,117 @@ function openEmbedModal({ chainId, agentId, name }) {
 	}, 50);
 }
 
+function openAvatarEmbedModal({ avatarId, glbUrl, name }) {
+	document.querySelector('.embed-modal')?.remove();
+	const origin = location.origin;
+	const viewerUrl = `${origin}/#model=${encodeURIComponent(glbUrl)}`;
+	const apiUrl = `${origin}/api/avatars/${avatarId}`;
+	const displayName = name || 'Avatar';
+
+	const snippets = {
+		webComponent: `<script type="module" src="${LIB_CDN_URL}"></script>\n<agent-3d src="${apiUrl}" mode="inline" width="480px" responsive></agent-3d>`,
+		iframe: `<iframe src="${viewerUrl}" width="480" height="600" style="border:0;border-radius:12px" allow="autoplay; xr-spatial-tracking" sandbox="allow-scripts allow-same-origin allow-popups" title="${displayName}"></iframe>`,
+		link: viewerUrl,
+		markdown: `[${displayName}](${viewerUrl})`,
+	};
+
+	const modal = document.createElement('div');
+	modal.className = 'embed-modal';
+	modal.setAttribute('role', 'dialog');
+	modal.setAttribute('aria-modal', 'true');
+	modal.innerHTML = `
+		<div class="embed-modal__backdrop" data-role="close"></div>
+		<div class="embed-modal__panel" role="document">
+			<header class="embed-modal__head">
+				<div>
+					<h2 class="embed-modal__title">Embed ${escapeHtml(displayName)}</h2>
+					<p class="embed-modal__sub">Public avatar — drop it in any page or doc.</p>
+				</div>
+				<button type="button" class="embed-modal__close" data-role="close" aria-label="Close">×</button>
+			</header>
+			<div class="embed-modal__tabs" role="tablist">
+				<button type="button" class="embed-tab is-active" data-tab="webComponent" role="tab" aria-selected="true">Web component</button>
+				<button type="button" class="embed-tab" data-tab="iframe" role="tab" aria-selected="false">iframe</button>
+				<button type="button" class="embed-tab" data-tab="link" role="tab" aria-selected="false">Link</button>
+				<button type="button" class="embed-tab" data-tab="markdown" role="tab" aria-selected="false">Markdown</button>
+			</div>
+			<div class="embed-modal__body">
+				<div class="embed-pane is-active" data-pane="webComponent">
+					<p class="embed-pane__hint">Renders the avatar via the &lt;agent-3d&gt; web component.</p>
+					<textarea class="embed-snippet" readonly rows="3">${escapeHtml(snippets.webComponent)}</textarea>
+					<button type="button" class="embed-copy-btn" data-role="copy" data-key="webComponent">Copy</button>
+				</div>
+				<div class="embed-pane" data-pane="iframe">
+					<p class="embed-pane__hint">Works in Notion, Substack, Ghost, blogs.</p>
+					<textarea class="embed-snippet" readonly rows="3">${escapeHtml(snippets.iframe)}</textarea>
+					<button type="button" class="embed-copy-btn" data-role="copy" data-key="iframe">Copy</button>
+				</div>
+				<div class="embed-pane" data-pane="link">
+					<p class="embed-pane__hint">Direct link to the viewer.</p>
+					<input class="embed-snippet embed-snippet--input" readonly value="${escapeAttr(snippets.link)}" />
+					<button type="button" class="embed-copy-btn" data-role="copy" data-key="link">Copy</button>
+				</div>
+				<div class="embed-pane" data-pane="markdown">
+					<p class="embed-pane__hint">For READMEs and Markdown blogs.</p>
+					<textarea class="embed-snippet" readonly rows="2">${escapeHtml(snippets.markdown)}</textarea>
+					<button type="button" class="embed-copy-btn" data-role="copy" data-key="markdown">Copy</button>
+				</div>
+			</div>
+			<footer class="embed-modal__foot">
+				<a href="${escapeAttr(viewerUrl)}" target="_blank" rel="noopener" class="embed-foot-link">Open viewer ↗</a>
+			</footer>
+		</div>
+	`;
+	document.body.appendChild(modal);
+
+	const close = () => {
+		modal.remove();
+		document.removeEventListener('keydown', onEsc);
+	};
+	const onEsc = (e) => {
+		if (e.key === 'Escape') close();
+	};
+	document.addEventListener('keydown', onEsc);
+	modal.querySelectorAll('[data-role="close"]').forEach((el) => el.addEventListener('click', close));
+
+	modal.querySelectorAll('.embed-tab').forEach((tab) => {
+		tab.addEventListener('click', () => {
+			modal.querySelectorAll('.embed-tab').forEach((t) => {
+				t.classList.toggle('is-active', t === tab);
+				t.setAttribute('aria-selected', t === tab ? 'true' : 'false');
+			});
+			modal.querySelectorAll('.embed-pane').forEach((p) => {
+				p.classList.toggle('is-active', p.dataset.pane === tab.dataset.tab);
+			});
+		});
+	});
+
+	modal.querySelectorAll('[data-role="copy"]').forEach((btn) => {
+		btn.addEventListener('click', () => {
+			const key = btn.dataset.key;
+			const text = snippets[key];
+			if (!text) return;
+			const done = (ok) => {
+				btn.textContent = ok ? 'Copied ✓' : 'Copy failed';
+				setTimeout(() => (btn.textContent = 'Copy'), 1400);
+			};
+			if (navigator.clipboard?.writeText) {
+				navigator.clipboard.writeText(text).then(
+					() => done(true),
+					() => done(false),
+				);
+			} else {
+				const ta = modal.querySelector(`[data-pane="${key}"] .embed-snippet`);
+				ta?.select();
+				try {
+					document.execCommand('copy');
+					done(true);
+				} catch {
+					done(false);
+				}
+			}
+		});
+	});
+}
+
 loadPage();

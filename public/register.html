@@ -6,6 +6,7 @@
 		<title>Create account · three.ws</title>
 		<link rel="icon" href="/favicon.ico" />
 		<link rel="stylesheet" href="/wallet-connect.css" />
+		<link rel="stylesheet" href="/auth.css" />
 		<script
 			type="module"
 			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
@@ -171,7 +172,10 @@
 				font-size: 12px;
 				color: #666;
 				margin-top: 4px;
+				transition: color 0.15s;
 			}
+			.hint.invalid { color: #ff7a7a; }
+			.hint.valid { color: #7ddf7d; }
 			.strength-bar {
 				height: 3px;
 				border-radius: 2px;
@@ -336,15 +340,24 @@
 			/>
 			<p class="hint" id="username-hint">3–30 characters, letters, numbers, _ or -</p>
 			<label for="password">Password</label>
-			<input
-				id="password"
-				type="password"
-				autocomplete="new-password"
-				required
-				minlength="10"
-				maxlength="200"
-				aria-describedby="password-hint err"
-			/>
+			<div class="password-wrap">
+				<input
+					id="password"
+					type="password"
+					autocomplete="new-password"
+					required
+					minlength="10"
+					maxlength="200"
+					aria-describedby="strength-label caps-warn err"
+				/>
+				<button type="button" class="password-toggle" id="password-toggle" aria-label="Show password" aria-pressed="false">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
+						<circle cx="12" cy="12" r="3" />
+					</svg>
+				</button>
+			</div>
+			<p class="caps-warn" id="caps-warn">Caps Lock is on</p>
 			<div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
 			<p class="strength-label" id="strength-label">Minimum 10 characters</p>
 			<button id="submit" type="submit">Create account</button>
@@ -368,8 +381,9 @@
 			<p class="foot">Already have an account? <a href="/login">Sign in</a></p>
 			<p class="legal">By creating an account you agree to our <a href="/legal/tos">Terms of Service</a> and <a href="/legal/privacy">Privacy Policy</a>.</p>
 		</form>
-			<div class="panel" aria-hidden="true">
-				<div class="agent-avatar">
+			<div class="panel">
+				<a href="/" class="panel-brand" aria-label="three.ws home">three.ws</a>
+				<div class="agent-avatar loading" id="register-avatar-wrap" aria-hidden="true">
 					<model-viewer
 						id="register-avatar"
 						src="/avatars/cz.glb"

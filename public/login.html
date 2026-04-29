@@ -6,6 +6,7 @@
 		<title>Sign in · three.ws</title>
 		<link rel="icon" href="/favicon.ico" />
 		<link rel="stylesheet" href="/wallet-connect.css" />
+		<link rel="stylesheet" href="/auth.css" />
 		<script
 			type="module"
 			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
@@ -443,7 +444,10 @@
 					<p class="caps-warn" id="caps-warn" hidden>Caps Lock is on</p>
 					<p class="field-err" id="password-err" role="alert"></p>
 
-					<p class="forgot"><a href="/forgot-password">Forgot password?</a></p>
+					<div class="remember-row">
+						<label><input type="checkbox" id="remember" /> Remember me</label>
+						<a href="/forgot-password" class="forgot">Forgot password?</a>
+					</div>
 					<button id="submit" type="submit">Sign in</button>
 				</div>
 
@@ -464,8 +468,9 @@
 				<div class="err" id="err" role="alert" aria-live="polite"></div>
 				<p class="foot">No account? <a href="/register">Create one</a></p>
 			</form>
-			<div class="panel" aria-hidden="true">
-				<div class="agent-avatar">
+			<div class="panel">
+				<a href="/" class="panel-brand" aria-label="three.ws home">three.ws</a>
+				<div class="agent-avatar loading" id="login-avatar-wrap" aria-hidden="true">
 					<model-viewer
 						id="login-avatar"
 						src="/avatars/cz.glb"
@@ -625,7 +630,7 @@
 							method: 'POST',
 							credentials: 'include',
 							headers: { 'content-type': 'application/json' },
-							body: JSON.stringify({ email, password }),
+							body: JSON.stringify({ email, password, remember: document.getElementById('remember')?.checked || false }),
 						});
 						const data = await res.json();
 						if (!res.ok) throw new Error(data.error_description || 'Sign-in failed');
@@ -649,38 +654,49 @@
 					}
 				});
 
-				// ── Avatar look-around ──
+				// ── Avatar look-around + parallax + skeleton ──
 				const viewer = document.getElementById('login-avatar');
+				const wrap = document.getElementById('login-avatar-wrap');
 				if (viewer) {
+					viewer.addEventListener('load', () => wrap?.classList.remove('loading'));
+					const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 					const BASE_AZ = 0;
 					const BASE_POL = 88;
 					const AZ_RANGE = 30;
 					const POL_RANGE = 14;
 					let targetAz = BASE_AZ, targetPol = BASE_POL;
 					let curAz = BASE_AZ, curPol = BASE_POL;
+					let targetTx = 0, targetTy = 0, curTx = 0, curTy = 0;
 					let nod = 0;
 					const lerp = (a, b, t) => a + (b - a) * t;
 					function tick() {
 						curAz = lerp(curAz, targetAz, 0.1);
 						curPol = lerp(curPol, targetPol + nod, 0.18);
+						curTx = lerp(curTx, targetTx, 0.08);
+						curTy = lerp(curTy, targetTy, 0.08);
 						nod *= 0.85;
 						viewer.setAttribute('camera-orbit', `${curAz}deg ${curPol}deg 4.8m`);
+						if (wrap) wrap.style.transform = `translate(${curTx.toFixed(2)}px, ${curTy.toFixed(2)}px)`;
 						requestAnimationFrame(tick);
 					}
-					requestAnimationFrame(tick);
-					window.addEventListener('mousemove', (e) => {
-						const nx = e.clientX / window.innerWidth - 0.5;
-						const ny = e.clientY / window.innerHeight - 0.5;
-						targetAz = BASE_AZ - nx * AZ_RANGE * 2;
-						targetPol = BASE_POL + ny * POL_RANGE * 2;
-					}, { passive: true });
-					document.querySelectorAll('#f input').forEach((el) => {
-						el.addEventListener('keydown', (ev) => {
-							if (ev.key.length === 1 || ev.key === 'Backspace') {
-								nod = (nod >= 0 ? -1 : 1) * 4;
-							}
+					if (!reducedMotion) {
+						requestAnimationFrame(tick);
+						window.addEventListener('mousemove', (e) => {
+							const nx = e.clientX / window.innerWidth - 0.5;
+							const ny = e.clientY / window.innerHeight - 0.5;
+							targetAz = BASE_AZ - nx * AZ_RANGE * 2;
+							targetPol = BASE_POL + ny * POL_RANGE * 2;
+							targetTx = -nx * 10;
+							targetTy = -ny * 8;
+						}, { passive: true });
+						document.querySelectorAll('#f input').forEach((el) => {
+							el.addEventListener('keydown', (ev) => {
+								if (ev.key.length === 1 || ev.key === 'Backspace') {
+									nod = (nod >= 0 ? -1 : 1) * 4;
+								}
+							});
 						});
-					});
+					}
 				}
 			})();
 		</script>

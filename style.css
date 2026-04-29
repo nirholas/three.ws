@@ -6136,6 +6136,11 @@ textarea.erc8004-code {
 	color: rgba(255, 255, 255, 0.7);
 	border-color: rgba(255, 255, 255, 0.12);
 }
+.explore-badge--avatar {
+	background: rgba(139, 92, 246, 0.15);
+	color: #c4b5fd;
+	border-color: rgba(139, 92, 246, 0.4);
+}
 .explore-card-desc {
 	margin: 0;
 	font-size: 13px;

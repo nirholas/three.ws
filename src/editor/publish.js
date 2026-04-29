@@ -110,7 +110,7 @@ export async function publishEditedGLB(
 			storage_key: presign.storage_key,
 			content_type: 'model/gltf-binary',
 			size_bytes: bytes.byteLength,
-			visibility: isPublic ? 'unlisted' : 'private',
+			visibility: isPublic ? 'public' : 'private',
 			source: 'upload',
 			source_meta: { origin: 'editor-publish' },
 		},
