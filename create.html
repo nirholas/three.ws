@@ -42,7 +42,6 @@
 			body {
 				margin: 0;
 				padding: 0;
-				height: 100%;
 			}
 			body {
 				font:
@@ -459,6 +458,12 @@
 				box-shadow: 0 0 10px rgba(139, 92, 246, 0.6);
 				display: inline-block;
 			}
+			.nav-logo-img {
+				width: 28px;
+				height: 28px;
+				object-fit: contain;
+				border-radius: 6px;
+			}
 			.features-nav {
 				margin-left: auto;
 				display: flex;
@@ -558,7 +563,7 @@
 		<header class="site-header">
 			<h1>
 				<a href="/" aria-label="three.ws home"
-					><span class="wordmark-dot" aria-hidden="true"></span>three.ws</a
+					><img src="/three.svg" alt="" aria-hidden="true" class="nav-logo-img" />three.ws</a
 				>
 			</h1>
 			<nav class="features-nav" aria-label="Primary">

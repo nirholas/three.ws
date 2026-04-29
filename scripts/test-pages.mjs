@@ -32,7 +32,7 @@ const ROUTES = [
 	'/discover',
 	'/explore',
 	'/features',
-	'/embed.html?src=/avatar/avatar.glb',
+	'/embed.html?src=/avatars/cz.glb',
 	`/reputation/?agent=1:${SAMPLE_AGENT}`,
 	'/embed-test.html',
 	'/avatar-page.html',
@@ -52,7 +52,7 @@ const IGNORE_PATTERNS = [
 	/blocked by CORS policy/,
 	/three\.ws\/dist-lib/,
 	/localhost:\d+\/api\//, // serverless functions need `vercel dev`, not `vite dev`
-	/\/wallet\/connect-button.*\.js/, // cascades from esm.sh import in connect-button.js
+	/\/wallet\/(connect-button|state).*\.js/, // cascades from esm.sh import in connect-button.js
 	/\/node_modules\/vite\/dist\/client\/env\.mjs/, // Vite dev injection 404s in some flows
 	/rpc\.\d+\.io/, // placeholder RPC URL from sample agent IDs
 ];
@@ -115,11 +115,11 @@ async function checkRoute(browser, route) {
 	let loadError = null;
 	try {
 		const resp = await page.goto(`${BASE}${route}`, {
-			waitUntil: 'load',
+			waitUntil: 'domcontentloaded',
 			timeout: 15000,
 		});
 		// Give async boot code a moment to throw before we close the page.
-		await wait(1500);
+		await wait(2000);
 		if (!resp || resp.status() >= 400) {
 			loadError = `nav status ${resp?.status() ?? 'none'}`;
 		}

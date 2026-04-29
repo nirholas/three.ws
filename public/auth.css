@@ -39,9 +39,9 @@ body {
 	align-items: center;
 	justify-content: center;
 	background:
-		radial-gradient(120% 90% at 30% 20%, rgba(154, 140, 255, 0.55), transparent 60%),
-		radial-gradient(120% 90% at 80% 90%, rgba(255, 140, 200, 0.35), transparent 55%),
-		linear-gradient(135deg, #2a2350 0%, #1a1a2e 100%);
+		radial-gradient(120% 90% at 30% 20%, rgba(255, 255, 255, 0.06), transparent 60%),
+		radial-gradient(120% 90% at 80% 90%, rgba(255, 255, 255, 0.04), transparent 55%),
+		linear-gradient(135deg, #111 0%, #000 100%);
 	overflow: hidden;
 }
 
