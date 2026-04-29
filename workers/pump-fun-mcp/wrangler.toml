@@ -1,0 +1,10 @@
+name = "pump-fun-mcp"
+main = "worker.js"
+compatibility_date = "2025-01-15"
+compatibility_flags = ["nodejs_compat"]
+
+# Secrets — set with: wrangler secret put <NAME>
+# SOLANA_RPC_URL          mainnet RPC (default: public endpoint)
+# SOLANA_RPC_URL_DEVNET   devnet  RPC (default: public endpoint)
+# PUMPFUN_BOT_URL         upstream indexer MCP endpoint (optional)
+# PUMPFUN_BOT_TOKEN       bearer token for indexer (optional)
