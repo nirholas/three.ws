@@ -44,6 +44,12 @@ body.gallery-body {
 	gap: var(--space-xs);
 }
 
+.gallery-header .wordmark-logo {
+	height: 1.75rem;
+	width: auto;
+	display: block;
+}
+
 .gallery-header .features-nav {
 	display: flex;
 	gap: var(--space-md);

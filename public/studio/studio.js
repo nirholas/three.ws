@@ -46,6 +46,17 @@ const DEMO_AVATAR = Object.freeze({
 	is_demo: true,
 });
 
+// Maps studio widget types to the baked-in demo fixtures in
+// /api/widgets/_demo-fixtures.js — lets the demo avatar emit a real
+// embeddable URL without requiring a DB row.
+const DEMO_WIDGET_IDS = Object.freeze({
+	turntable: 'wdgt_demo_turntab',
+	'animation-gallery': 'wdgt_demo_animgal',
+	'talking-agent': 'wdgt_demo_talking',
+	passport: 'wdgt_demo_passprt',
+	'hotspot-tour': 'wdgt_demo_hotspot',
+});
+
 const BRAND_DEFAULTS = Object.freeze({
 	background: '#0a0a0a',
 	accent: '#8b5cf6',
@@ -503,17 +514,29 @@ function postConfigToPreview() {
 async function save({ generate }) {
 	errEl.hidden = true;
 
+	if (!state.avatarId) return showError('Pick an avatar first');
+	if (!WIDGET_TYPES[state.type]) return showError('Pick a widget type');
+
+	// Demo avatar: no DB row, just open the embed modal pointed at the
+	// canonical demo fixture for this widget type. Studio tweaks aren't
+	// persisted (there's nowhere to store them) — the modal flags this.
+	if (state.avatarId === DEMO_AVATAR.id) {
+		if (!generate) {
+			return showError(
+				'The demo avatar can be embedded but not saved — sign in and upload your own avatar to save drafts.',
+			);
+		}
+		const demoId = DEMO_WIDGET_IDS[state.type];
+		if (!demoId) return showError('No demo embed available for this widget type yet.');
+		openEmbedModal({ id: demoId, type: state.type, is_demo: true });
+		return;
+	}
+
 	if (!state.user) {
 		location.href = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
 		return;
 	}
 	if (!state.name?.trim()) return showError('Name is required');
-	if (!state.avatarId) return showError('Pick an avatar first');
-	if (state.avatarId === DEMO_AVATAR.id)
-		return showError(
-			'The demo avatar is preview-only — upload your own avatar from the dashboard to save and embed.',
-		);
-	if (!WIDGET_TYPES[state.type]) return showError('Pick a widget type');
 
 	const body = {
 		type: state.type,
@@ -595,6 +618,9 @@ function openEmbedModal(widget) {
 	const shareUrl = `${origin}/w/${widget.id}`;
 	_currentEmbedUrl = `${origin}/app#widget=${widget.id}&kiosk=true`;
 	_currentWidgetType = widget.type || state.type;
+
+	const demoNote = $('#embed-demo-note');
+	if (demoNote) demoNote.hidden = !widget.is_demo;
 
 	// Show relevant embed-option checkboxes for this widget type, reset to checked.
 	const hasAnimations = _currentWidgetType === 'animation-gallery';

@@ -101,7 +101,12 @@ const appConfig = {
 					'/docs',
 				]);
 				server.middlewares.use(async (req, res, next) => {
-					const path = (req.url || '/').split('?')[0];
+					const url = req.url || '/';
+					// Don't intercept Vite's internal html-proxy / module requests —
+					// it needs to serve the inline-script content for our HTML.
+					if (url.includes('html-proxy') || url.includes('@id/') || url.includes('@vite/'))
+						return next();
+					const path = url.split('?')[0];
 					if (dirRoutes.has(path)) {
 						res.statusCode = 301;
 						res.setHeader('Location', path + '/' + (req.url.slice(path.length) || ''));
@@ -134,7 +139,14 @@ const appConfig = {
 						// back to a real file. Otherwise virtual module IDs derived
 						// from req.url (e.g. /agent/0xfoo) 500 because nothing on
 						// disk matches.
-						const fileUrl = '/' + filePath.slice(root.length + 1).replace(/\\/g, '/');
+						// Use the file's path-relative URL (not req.url) so Vite can
+						// resolve html-proxy modules (inline <script type="module">)
+						// back to a real file. Otherwise virtual module IDs derived
+						// from req.url (e.g. /agent/0xfoo) 500 because nothing on
+						// disk matches. Files in /public stay on req.url since they
+						// can't be import-analyzed by Vite anyway.
+						const rel = filePath.slice(root.length + 1).replace(/\\/g, '/');
+						const fileUrl = rel.startsWith('public/') ? url : '/' + rel;
 						const transformed = await server.transformIndexHtml(fileUrl, html);
 						res.setHeader('Content-Type', 'text/html; charset=utf-8');
 						res.end(transformed);
