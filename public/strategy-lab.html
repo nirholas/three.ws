@@ -464,6 +464,29 @@
 		renderPortfolio(r?.data);
 	}
 	$('refreshPortfolio').onclick = refreshPortfolio;
+	$('closeAll').onclick = async () => {
+		const id = agentSel.value;
+		if (!id) { setStatus('Select an agent first.', 'bad'); return; }
+		const net = netSel.value;
+		if (!confirm(`STOP all activity and SELL every position on ${net}?\n\nThis aborts any running strategy and sells 100% of every SPL holding the wallet owns.`)) return;
+		// Abort any running stream first.
+		activeRun?.abort();
+		pushLog('error', '■ STOP — closing all positions');
+		setStatus('Selling all positions…', 'warn');
+		const r = await fetch('/api/pump/strategy-close-all', {
+			method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ agentId: id, network: net }),
+		}).then((r) => r.json()).catch((e) => ({ error: e.message }));
+		if (r.error) { setStatus('Close-all failed: ' + (r.error_description || r.error), 'bad'); return; }
+		(r.data?.log || []).forEach((e) => {
+			if (e.action === 'sold')        pushLog('exit', `× sold   ${e.mint}  → ${e.sig?.slice(0, 12) ?? ''}…`);
+			else if (e.action === 'sell-error') pushLog('error', `! sell-error  ${e.mint}: ${e.error}`);
+			else pushLog('skip', `${e.action}  ${e.mint}`);
+		});
+		pushLog('done', `✓ closed ${r.data.sold}/${r.data.total} (${r.data.errors} errors)`);
+		setStatus(`Closed ${r.data.sold}/${r.data.total}` + (r.data.errors ? ` — ${r.data.errors} errors` : ''), r.data.errors ? 'warn' : 'ok');
+		refreshPortfolio();
+	};
 
 	function renderPortfolio(d) {
 		const el = $('portfolio');

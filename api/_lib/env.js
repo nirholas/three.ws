@@ -179,19 +179,6 @@ export const env = {
 		return opt('X402_FACILITATOR_TOKEN_BASE');
 	},
 
-	// ── SNS subdomain registrar ─────────────────────────────────────────────
-	// Project-owned parent .sol that we mint subdomains under (e.g. "agents"
-	// to issue {label}.agents.sol). The platform pays rent + tx fees.
-	// Optional — when unset, /api/agents/:id/sns/register returns 503.
-	get SNS_PARENT_DOMAIN() {
-		// label only, no .sol suffix (e.g. "agents")
-		return opt('SNS_PARENT_DOMAIN');
-	},
-	// Base64-encoded 64-byte secret key of the parent domain owner.
-	// Used to sign the createSubdomain + transferNameOwnership ixs.
-	get SNS_PARENT_OWNER_SECRET() {
-		return opt('SNS_PARENT_OWNER_SECRET');
-	},
 	// Solana RPC URL used for SNS reads/writes. Falls back to public mainnet RPC.
 	get SOLANA_RPC_URL() {
 		return opt('SOLANA_RPC_URL', 'https://api.mainnet-beta.solana.com');

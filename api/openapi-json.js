@@ -88,25 +88,12 @@ export default wrap(async (req, res) => {
 								currency: 'USD',
 								amount: '0.001',
 							},
+							// Per spec, protocols lists protocol *support* (one entry per
+							// protocol). Per-network payment lanes are advertised at runtime
+							// in the 402 challenge `accepts[]` array — see api/_lib/x402-spec.js
+							// `paymentRequirements()` which emits Solana USDC + Base USDC.
 							protocols: [
-								{
-									x402: {
-										network: 'solana',
-										asset: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
-										payTo: 'BUrwd1nK6tFeeJMyzRHDo6AuVbnSfUULfvwq21X93nSN',
-										scheme: 'exact',
-										maxAmountRequired: '1000',
-									},
-								},
-								{
-									x402: {
-										network: 'base',
-										asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-										payTo: '0x0C70c0e8453C5667739E41acdF6eC5787B8ff542',
-										scheme: 'exact',
-										maxAmountRequired: '1000',
-									},
-								},
+								{ x402: {} },
 								{
 									mpp: {
 										method: 'solana-pay',

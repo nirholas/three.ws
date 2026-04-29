@@ -5,7 +5,9 @@
  * /api/agents/:id/solana/activity — recent on-chain signatures for the wallet
  * /api/agents/:id/solana/airdrop  — devnet airdrop (1 SOL)
  * /api/agents/:id/sns             — list owned .sol domains and attach one as the agent's SNS id
- * /api/agents/:id/sns/register    — mint a free subdomain under the platform's parent .sol
+ * /api/agents/:id/sns/register    — register a .sol; agent wallet pays USDC
+ * /api/agents/:id/sns/register-prep    — build unsigned tx for user wallet to sign
+ * /api/agents/:id/sns/register-confirm — confirm a user-wallet registration and attach
  * /api/agents/:id/pumpfun/launch  — create a pump.fun token from this agent
  * /api/agents/:id/pumpfun/buy     — bonding-curve buy
  * /api/agents/:id/pumpfun/sell    — bonding-curve sell

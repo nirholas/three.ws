@@ -66,7 +66,7 @@ export default wrap(async (req, res) => {
 					  and c.closed = false
 					  and (c.expiry is null or c.expiry > now())
 				) as credentialed,
-				(f.payload->>'source' like 'pumpkit.%') as event_attested
+				(f.payload->>'source' like 'pumpkit.%' or f.payload->>'source' like 'pumpfun.%') as event_attested
 			from solana_attestations f
 			where f.agent_asset = ${asset}
 			  and f.network = ${network}
@@ -103,9 +103,9 @@ export default wrap(async (req, res) => {
 			count(*) filter (where (payload->>'passed')::bool)::int     as passed,
 			count(*) filter (where not (payload->>'passed')::bool)::int as failed,
 			count(*) filter (where (payload->>'passed')::bool
-				and payload->>'source' like 'pumpkit.%')::int             as event_passed,
+				and (payload->>'source' like 'pumpkit.%' or payload->>'source' like 'pumpfun.%'))::int             as event_passed,
 			count(*) filter (where not (payload->>'passed')::bool
-				and payload->>'source' like 'pumpkit.%')::int             as event_failed
+				and (payload->>'source' like 'pumpkit.%' or payload->>'source' like 'pumpfun.%'))::int             as event_failed
 		from solana_attestations
 		where agent_asset = ${asset} and network = ${network}
 		  and kind = 'threews.validation.v1' and revoked = false

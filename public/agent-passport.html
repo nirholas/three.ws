@@ -971,7 +971,7 @@
 						if (row.verified) flags.push(pill('verified', 'ok'));
 						if (row.disputed) flags.push(pill('disputed', 'warn'));
 						if (row.revoked) flags.push(pill('revoked', 'bad'));
-						if (row.payload?.source?.startsWith?.('pumpkit.'))
+						if (isEventSource(row.payload?.source))
 							flags.push(pill(row.payload.source, 'info'));
 						const fresh = cache.freshSigs.has(row.signature) ? ' fresh' : '';
 						return `
@@ -992,11 +992,15 @@
 					.join('');
 			}
 
+			function isEventSource(s) {
+				return typeof s === 'string' && (s.startsWith('pumpkit.') || s.startsWith('pumpfun.'));
+			}
+
 			function filterRows(rows, filter) {
 				if (filter === 'all') return rows;
 				if (filter === 'disputed') return rows.filter((r) => r.disputed || r.revoked);
 				if (filter === 'event')
-					return rows.filter((r) => r.payload?.source?.startsWith?.('pumpkit.'));
+					return rows.filter((r) => isEventSource(r.payload?.source));
 				return rows.filter((r) => r.kind?.includes(`.${filter}.`));
 			}
 

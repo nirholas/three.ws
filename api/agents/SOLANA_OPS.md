@@ -34,8 +34,9 @@ Single source of truth for what's deployed, what env vars enable it, what cron s
 |---|---|---|
 | `/api/cron/solana-attestations-crawl` | `*/5 * * * *` | Crawl SPL Memo attestations into `solana_attestations`. |
 | `/api/cron/erc8004-crawl` | `*/15 * * * *` | EVM IdentityRegistry crawler. |
-| `/api/cron/pumpfun-signals` | `*/15 * * * *` | Pull claim/graduation signals from upstream MCP. |
-| `/api/cron/pump-agent-stats` | `*/10 * * * *` | Refresh pump.fun token state per agent. |
+| `/api/cron/pumpfun-signals` | `*/15 * * * *` | Pull claim/graduation signals from upstream MCP. *Optional* — only enabled if `PUMPFUN_BOT_URL` is set. |
+| `/api/cron/pump-agent-stats` | `*/10 * * * *` | Refresh pump.fun token state per agent (graduation flag, AMM/curve snapshots, recent trades). |
+| `/api/cron/pumpfun-monitor` | `*/3 * * * *` | **In-house event-attested source.** Diffs `pump_agent_stats` vs cursor; mints real on-chain `threews.*` memos with `payload.source = 'pumpfun.*'` whenever graduation or authority flips. No upstream bot required. |
 | `/api/cron/solana-attest-event-cleanup` | `*/10 * * * *` | Reap stale claim rows (>1h, signature null). |
 
 ## Database tables
@@ -47,6 +48,7 @@ psql "$DATABASE_URL" -f api/_lib/migrations/<file>.sql
 
 The new ones are:
 - `2026-04-29-attest-event-bridge.sql` — `solana_attest_event_claims` + the partial unique index `solana_attestations_event_id_uniq`.
+- `2026-04-29-pumpfun-monitor-cursor.sql` — `pumpfun_monitor_cursor` for the in-house monitor.
 
 Pre-existing relevant tables: `solana_attestations`, `solana_attestations_cursor`, `solana_credentials`, `pump_agent_mints`, `pump_agent_payments`, `pump_agent_stats`, `pump_agent_trades`, `pumpfun_signals`, `agent_identities`, `usage_events`.
 
