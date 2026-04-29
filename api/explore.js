@@ -140,30 +140,9 @@ export default wrap(async (req, res) => {
 		avatarItems.push(...matching);
 	}
 
-	// Merge by date desc, but guarantee avatars surface on page 1 so the
-	// onchain firehose doesn't drown them. Reserve up to a third of the page
-	// for avatars when both sources are present and this is the first page.
-	const onchainSorted = [...onchainItems].sort(
+	const merged = [...onchainItems, ...avatarItems].sort(
 		(a, b) => new Date(b.sortDate).getTime() - new Date(a.sortDate).getTime(),
 	);
-	const avatarSorted = [...avatarItems].sort(
-		(a, b) => new Date(b.sortDate).getTime() - new Date(a.sortDate).getTime(),
-	);
-
-	let merged;
-	if (!cursorDate && onchainSorted.length && avatarSorted.length) {
-		const avatarQuota = Math.min(avatarSorted.length, Math.max(1, Math.ceil(limit / 3)));
-		const avatarHead = avatarSorted.slice(0, avatarQuota);
-		const avatarTail = avatarSorted.slice(avatarQuota);
-		const rest = [...onchainSorted, ...avatarTail].sort(
-			(a, b) => new Date(b.sortDate).getTime() - new Date(a.sortDate).getTime(),
-		);
-		merged = [...avatarHead, ...rest];
-	} else {
-		merged = [...onchainSorted, ...avatarSorted].sort(
-			(a, b) => new Date(b.sortDate).getTime() - new Date(a.sortDate).getTime(),
-		);
-	}
 
 	const hasMore = merged.length > limit;
 	const items = merged.slice(0, limit);
