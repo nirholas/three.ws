@@ -186,6 +186,7 @@ body {
 
 header {
 	display: flex;
+	flex-shrink: 0;
 	background: rgba(0, 0, 0, 0.8);
 	backdrop-filter: blur(20px);
 	-webkit-backdrop-filter: blur(20px);
@@ -1295,6 +1296,19 @@ footer .separator {
 body[data-viewer-mode='deploy'],
 body[data-viewer-mode='explore'] {
 	overflow-y: auto;
+}
+
+/* Hide viewer-only action buttons in non-viewer modes — they're meaningless on
+ * /deploy and /explore where the viewer is hidden. */
+body[data-viewer-mode='deploy'] .save-to-account-btn,
+body[data-viewer-mode='deploy'] .make-widget-btn,
+body[data-viewer-mode='deploy'] .deploy-onchain-btn,
+body[data-viewer-mode='deploy'] .view-public-profile-btn,
+body[data-viewer-mode='explore'] .save-to-account-btn,
+body[data-viewer-mode='explore'] .make-widget-btn,
+body[data-viewer-mode='explore'] .deploy-onchain-btn,
+body[data-viewer-mode='explore'] .view-public-profile-btn {
+	display: none !important;
 }
 
 body[data-viewer-mode='deploy'] {

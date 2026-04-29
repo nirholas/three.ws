@@ -3,6 +3,7 @@
 
 .h-footer-horizon {
 	position: relative;
+	flex-shrink: 0;
 	overflow: hidden;
 	min-height: 360px;
 	padding: 4rem 2rem 2rem;
