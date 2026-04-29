@@ -98,13 +98,16 @@ export default async function handler(req, res, id) {
 	}
 
 	const conn = solanaConnection(network);
-	const [{ PumpSdk, OnlinePumpSdk, getSellSolAmountFromTokenAmount }, splToken, BN] =
+	const [{ PumpSdk, OnlinePumpSdk, getSellSolAmountFromTokenAmount }, ammMod, splToken, BN] =
 		await Promise.all([
 			import('@pump-fun/pump-sdk'),
+			import('@pump-fun/pump-swap-sdk'),
 			import('@solana/spl-token'),
 			import('bn.js').then((m) => m.default || m),
 		]);
 	const online = new OnlinePumpSdk(conn);
+	const onlineAmm = new ammMod.OnlinePumpAmmSdk(conn);
+	const ammSdk = new ammMod.PumpAmmSdk();
 	let global;
 	try {
 		global = await online.fetchGlobal();
@@ -141,21 +144,51 @@ export default async function handler(req, res, id) {
 			try {
 				const state = await online.fetchSellState(mintPk, keypair.publicKey);
 				out.graduated = !!state.bondingCurve.complete;
-				if (out.graduated) {
-					// AMM pricing path not implemented here; surface graduation
-					out.estimated_sol_value = null;
-					out.unrealized_pnl_sol = null;
-					return out;
+				if (!out.graduated) {
+					const expectedSol = getSellSolAmountFromTokenAmount({
+						global,
+						feeConfig: null,
+						mintSupply: state.bondingCurve.tokenTotalSupply,
+						bondingCurve: state.bondingCurve,
+						amount: new BN(out.token_balance),
+					});
+					out.estimated_sol_value = lamportsToSol(expectedSol);
+					out.venue = 'curve';
+				} else {
+					// AMM quote: simulate sellBaseInput to get expected SOL out.
+					try {
+						const poolKey = ammMod.canonicalPumpPoolPda(mintPk);
+						const swapState = await onlineAmm.swapSolanaState(poolKey, keypair.publicKey);
+						const result = ammSdk.sellAutocompleteQuoteFromBase
+							? ammSdk.sellAutocompleteQuoteFromBase(swapState, new BN(out.token_balance), 0)
+							: null;
+						if (result && result.uiQuote != null) {
+							out.estimated_sol_value = lamportsToSol(result.uiQuote);
+						} else {
+							const pool = swapState.pool;
+							const baseReserve = pool.baseReserve || pool.virtualBaseReserves;
+							const quoteReserve = pool.quoteReserve || pool.virtualQuoteReserves;
+							if (baseReserve && quoteReserve) {
+								const bal = new BN(out.token_balance);
+								const out_q = bal.mul(quoteReserve).div(baseReserve.add(bal));
+								out.estimated_sol_value = lamportsToSol(out_q);
+							} else {
+								out.estimated_sol_value = null;
+							}
+						}
+						out.venue = 'amm';
+						out.pool = poolKey.toBase58();
+					} catch (e) {
+						console.error('[pumpfun/portfolio] amm quote failed', e);
+						out.estimated_sol_value = null;
+						out.error = 'amm_quote_failed';
+					}
 				}
-				const expectedSol = getSellSolAmountFromTokenAmount({
-					global,
-					feeConfig: null,
-					mintSupply: state.bondingCurve.tokenTotalSupply,
-					bondingCurve: state.bondingCurve,
-					amount: new BN(out.token_balance),
-				});
-				out.estimated_sol_value = lamportsToSol(expectedSol);
-				out.unrealized_pnl_sol = out.estimated_sol_value + out.sol_out - out.sol_in;
+				if (typeof out.estimated_sol_value === 'number') {
+					out.unrealized_pnl_sol = out.estimated_sol_value + out.sol_out - out.sol_in;
+				} else {
+					out.unrealized_pnl_sol = null;
+				}
 			} catch (err) {
 				out.error = out.error || 'curve_quote_failed';
 			}

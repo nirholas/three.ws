@@ -1,26 +1,28 @@
 // POST /api/agents/:id/pumpfun/swap
-// Buy or sell a pump.fun token from the agent's Solana wallet.
-// While the token is on the bonding curve, uses @pump-fun/pump-sdk.
-// After graduation (AMM), uses @pump-fun/pump-swap-sdk.
+// AMM swap for graduated pump.fun tokens via @pump-fun/pump-swap-sdk.
+// If the requested mint has not graduated yet, the request is auto-routed
+// to the bonding-curve buy/sell endpoint so callers don't need to know.
 //
 // Body: { mint, side: 'buy'|'sell', solAmount?, tokenAmount?, slippageBps?, network? }
-//   - For buy: provide solAmount (SOL to spend). tokenAmount can be 0 (sdk computes).
-//   - For sell: provide tokenAmount (raw smallest-units). solAmount is min-out.
-//   - slippageBps: 0–10000 (default 500 = 5%)
+//   side='buy'  → spend `solAmount` SOL (decimal) for `mint`
+//   side='sell' → sell `tokenAmount` (base-unit integer string) for SOL
+//   slippageBps: 0–10_000 (default 500 = 5%)
 
 import { getSessionUser, authenticateBearer, extractBearer } from '../../_lib/auth.js';
 import { cors, json, method, readJson, error } from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { loadAgentForSigning, solanaConnection } from '../../_lib/agent-pumpfun.js';
-import { PublicKey, Transaction } from '@solana/web3.js';
+import { checkBuyAllowed } from '../../_lib/agent-spend-policy.js';
+import { sql } from '../../_lib/db.js';
+import { Transaction, PublicKey } from '@solana/web3.js';
 import { z } from 'zod';
 
 const bodySchema = z.object({
-	mint: z.string().trim().min(32).max(64),
+	mint: z.string().min(32).max(64),
 	side: z.enum(['buy', 'sell']),
-	solAmount: z.number().nonnegative().optional(),
+	solAmount: z.number().nonnegative().max(1000).optional(),
 	tokenAmount: z.string().regex(/^\d+$/).optional(),
-	slippageBps: z.number().int().min(0).max(10000).default(500),
+	slippageBps: z.number().int().min(0).max(10_000).default(500),
 	network: z.enum(['mainnet', 'devnet']).default('mainnet'),
 });
 
@@ -47,82 +49,76 @@ export default async function handler(req, res, id) {
 	} catch (e) {
 		return error(res, 400, 'validation_error', e.errors?.[0]?.message || 'invalid body');
 	}
+	if (body.side === 'buy' && !body.solAmount)
+		return error(res, 400, 'validation_error', 'side=buy requires solAmount');
+	if (body.side === 'sell' && !body.tokenAmount)
+		return error(res, 400, 'validation_error', 'side=sell requires tokenAmount');
 
-	const loaded = await loadAgentForSigning(id, auth.userId);
+	const loaded = await loadAgentForSigning(id, auth.userId, {
+		reason: `pumpfun.swap.${body.side}`,
+		meta: { mint: body.mint, network: body.network },
+	});
 	if (loaded.error) return error(res, loaded.error.status, loaded.error.code, loaded.error.msg);
-	const { keypair } = loaded;
+	const { keypair, meta } = loaded;
+
+	if (body.side === 'buy') {
+		const blocked = await checkBuyAllowed({
+			agentId: id, meta, mint: body.mint, solAmount: body.solAmount,
+		});
+		if (blocked) return error(res, blocked.status, blocked.code, blocked.msg);
+	}
 
 	const conn = solanaConnection(body.network);
 	const mint = new PublicKey(body.mint);
-	const BN = (await import('bn.js')).default;
-	const { TOKEN_PROGRAM_ID } = await import('@solana/spl-token').catch(() => ({}));
-	const tokenProgram = TOKEN_PROGRAM_ID || new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
 
-	const { PumpSdk } = await import('@pump-fun/pump-sdk');
-	const sdk = new PumpSdk();
-
-	// Read bonding curve to decide bonding-curve vs AMM path.
-	const { bondingCurvePda } = await import('@pump-fun/pump-sdk');
+	// Detect graduation. If still on bonding curve, delegate to /buy or /sell.
+	const { PumpSdk, bondingCurvePda } = await import('@pump-fun/pump-sdk');
+	const pumpSdk = new PumpSdk();
 	const bcInfo = await conn.getAccountInfo(bondingCurvePda(mint));
+	const bc = bcInfo ? pumpSdk.decodeBondingCurveNullable(bcInfo) : null;
+	const graduated = !bc || bc.complete;
+
+	if (!graduated) {
+		return error(
+			res,
+			409,
+			'not_graduated',
+			`mint is still on the bonding curve — use /api/agents/${id}/pumpfun/${body.side} instead`,
+		);
+	}
+
+	// AMM path.
+	const { PumpAmmSdk, OnlinePumpAmmSdk, canonicalPumpPoolPda } = await import(
+		'@pump-fun/pump-swap-sdk'
+	);
+	const BN = (await import('bn.js')).default;
+	const amm = new PumpAmmSdk();
+	const online = new OnlinePumpAmmSdk(conn);
+
+	const poolKey = canonicalPumpPoolPda(mint);
+	const swapState = await online.swapSolanaState(poolKey, keypair.publicKey).catch(async (err) => {
+		// Fall back: pool account may not be initialized (race after graduation).
+		console.error('[pumpfun/swap] swapSolanaState failed', err);
+		return online.swapSolanaStateNoPool(poolKey, keypair.publicKey);
+	});
+
+	const slippage = body.slippageBps / 10_000;
 
 	let instructions;
-	if (bcInfo && !sdk.decodeBondingCurveNullable(bcInfo)?.complete) {
-		const { OnlinePumpSdk } = await import('@pump-fun/pump-sdk');
-		const online = new OnlinePumpSdk(conn);
-		const global = await online.fetchGlobal();
-		const bondingCurve = sdk.decodeBondingCurve(bcInfo);
-		const slip = body.slippageBps / 100; // sdk takes a percentage
-
+	let quotedAmount;
+	try {
 		if (body.side === 'buy') {
-			const { associatedUserAccountInfo } = await online.fetchBuyState(mint, keypair.publicKey, tokenProgram);
-			instructions = await sdk.buyInstructions({
-				global,
-				bondingCurveAccountInfo: bcInfo,
-				bondingCurve,
-				associatedUserAccountInfo,
-				mint,
-				user: keypair.publicKey,
-				amount: new BN(body.tokenAmount || '0'),
-				solAmount: new BN(Math.floor((body.solAmount || 0) * 1e9)),
-				slippage: slip,
-				tokenProgram,
-			});
+			const quoteLamports = new BN(Math.floor(body.solAmount * 1e9));
+			instructions = await amm.buyQuoteInput(swapState, quoteLamports, slippage);
+			quotedAmount = { quote_lamports: quoteLamports.toString() };
 		} else {
-			instructions = await sdk.sellInstructions({
-				global,
-				bondingCurveAccountInfo: bcInfo,
-				bondingCurve,
-				mint,
-				user: keypair.publicKey,
-				amount: new BN(body.tokenAmount || '0'),
-				solAmount: new BN(Math.floor((body.solAmount || 0) * 1e9)),
-				slippage: slip,
-				tokenProgram,
-				mayhemMode: false,
-			});
+			const baseAmount = new BN(body.tokenAmount);
+			instructions = await amm.sellBaseInput(swapState, baseAmount, slippage);
+			quotedAmount = { base_amount: baseAmount.toString() };
 		}
-	} else {
-		// Graduated → AMM swap via pump-swap-sdk.
-		const swap = await import('@pump-fun/pump-swap-sdk');
-		const { OnlinePumpAmmSdk } = swap;
-		const amm = new OnlinePumpAmmSdk(conn);
-		if (body.side === 'buy') {
-			instructions = await swap.buyQuoteInput({
-				amm,
-				baseMint: mint,
-				user: keypair.publicKey,
-				quoteAmount: new BN(Math.floor((body.solAmount || 0) * 1e9)),
-				slippageBps: body.slippageBps,
-			});
-		} else {
-			instructions = await swap.sellBaseInput({
-				amm,
-				baseMint: mint,
-				user: keypair.publicKey,
-				baseAmount: new BN(body.tokenAmount || '0'),
-				slippageBps: body.slippageBps,
-			});
-		}
+	} catch (err) {
+		console.error('[pumpfun/swap] build failed', err);
+		return error(res, 422, 'build_failed', err.message || 'could not build swap ix');
 	}
 
 	const tx = new Transaction().add(...instructions);
@@ -140,11 +136,34 @@ export default async function handler(req, res, id) {
 		return error(res, 502, 'rpc_error', err.message || 'transaction failed');
 	}
 
+	await sql`
+		INSERT INTO agent_actions (agent_id, type, payload, source_skill)
+		VALUES (
+			${id},
+			${`pumpfun.swap.${body.side}`},
+			${JSON.stringify({
+				mint: body.mint,
+				side: body.side,
+				...(body.side === 'buy'
+					? { solAmount: body.solAmount }
+					: { tokenAmount: body.tokenAmount }),
+				slippageBps: body.slippageBps,
+				signature,
+				network: body.network,
+				venue: 'amm',
+				...quotedAmount,
+			})}::jsonb,
+			${'pumpfun'}
+		)
+	`.catch((e) => console.error('[pumpfun/swap] log failed', e));
+
 	return json(res, 200, {
 		data: {
 			signature,
 			mint: body.mint,
 			side: body.side,
+			venue: 'amm',
+			pool: poolKey.toBase58(),
 			explorer: `https://solscan.io/tx/${signature}${body.network === 'devnet' ? '?cluster=devnet' : ''}`,
 		},
 	});

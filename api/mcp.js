@@ -72,10 +72,16 @@ export default wrap(async (req, res) => {
 		} catch (err) {
 			return sendX402Error(res, requirements, err);
 		}
-		// Anonymous paid caller — synthesize an auth principal scoped to MCP read tools.
+		// Anonymous paid caller — synthesize an auth principal scoped to public-read tools.
+		// userId is null because usage_events.user_id is a UUID FK; the payer wallet is
+		// kept on the auth object so handlers and rate limits can key off of it.
 		auth = {
-			userId: `x402:${x402Ctx.payer || 'unknown'}`,
-			scope: 'avatars:read profile',
+			userId: null,
+			rateKey: `x402:${x402Ctx.payer || 'anon'}`,
+			// Pay-per-call callers have no user account, so they cannot read or
+			// write account-scoped data. They get only the no-scope public tools
+			// (search_public_avatars, validate/inspect/optimize_model, solana_*).
+			scope: '',
 			source: 'x402',
 			payer: x402Ctx.payer,
 		};
@@ -94,7 +100,7 @@ export default wrap(async (req, res) => {
 		return sendJsonRpcError(res, null, -32000, 'rate_limited', {
 			retry_after: Math.ceil((ipRl.reset - Date.now()) / 1000),
 		});
-	const userRl = await limits.mcpUser(auth.userId);
+	const userRl = await limits.mcpUser(auth.userId || auth.rateKey || clientIp(req));
 	if (!userRl.success)
 		return sendJsonRpcError(res, null, -32000, 'rate_limited', {
 			retry_after: Math.ceil((userRl.reset - Date.now()) / 1000),
@@ -669,7 +675,7 @@ const TOOLS = {
 
 	validate_model: {
 		async handler(args, auth) {
-			const rl = await limits.mcpValidate(auth.userId);
+			const rl = await limits.mcpValidate(auth.userId || auth.rateKey);
 			if (!rl.success)
 				throw rpcError(-32000, 'rate_limited', {
 					retry_after: Math.ceil((rl.reset - Date.now()) / 1000),
@@ -705,7 +711,7 @@ const TOOLS = {
 
 	inspect_model: {
 		async handler(args, auth) {
-			const rl = await limits.mcpInspect(auth.userId);
+			const rl = await limits.mcpInspect(auth.userId || auth.rateKey);
 			if (!rl.success)
 				throw rpcError(-32000, 'rate_limited', {
 					retry_after: Math.ceil((rl.reset - Date.now()) / 1000),
@@ -721,7 +727,7 @@ const TOOLS = {
 
 	optimize_model: {
 		async handler(args, auth) {
-			const rl = await limits.mcpOptimize(auth.userId);
+			const rl = await limits.mcpOptimize(auth.userId || auth.rateKey);
 			if (!rl.success)
 				throw rpcError(-32000, 'rate_limited', {
 					retry_after: Math.ceil((rl.reset - Date.now()) / 1000),
@@ -1040,7 +1046,15 @@ async function handleSse(req, res) {
 	// Unauthenticated callers without an X-PAYMENT header get an x402 challenge
 	// so x402scan / x402 clients can discover the price. Invalid bearers still
 	// get 401 with WWW-Authenticate so OAuth clients can re-auth correctly.
-	if (!bearer && !req.headers['x-payment']) return sendX402Challenge(req, res);
+	if (!bearer && !req.headers['x-payment']) {
+		return send402(
+			res,
+			paymentRequirements({
+				resource: resolveResourceUrl(req, '/api/mcp'),
+				description: 'MCP tool call',
+			}),
+		);
+	}
 	const auth = await authenticateBearer(bearer, { audience: env.MCP_RESOURCE });
 	if (!auth) return send401(res, 'missing or invalid access token');
 	res.statusCode = 405;
@@ -1057,39 +1071,6 @@ async function handleTerminate(_req, res) {
 // ── error helpers ────────────────────────────────────────────────────────────
 function quoteString(s) {
 	return `"${String(s).replace(/[\\"]/g, '\\$&')}"`;
-}
-
-// x402 payment-required challenge (spec: https://x402.org).
-// Solana USDC, fixed price 0.001 USDC = 1000 base units (6 decimals).
-const X402_PAY_TO = 'BUrwd1nK6tFeeJMyzRHDo6AuVbnSfUULfvwq21X93nSN';
-const X402_USDC_SOLANA_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
-
-function sendX402Challenge(req, res) {
-	const proto = (req.headers['x-forwarded-proto'] || 'https').toString().split(',')[0].trim();
-	const host = (req.headers['x-forwarded-host'] || req.headers.host || '').toString();
-	const resource = host ? `${proto}://${host}/api/mcp` : `${env.APP_ORIGIN}/api/mcp`;
-	res.statusCode = 402;
-	res.setHeader('content-type', 'application/json; charset=utf-8');
-	res.end(
-		JSON.stringify({
-			x402Version: 1,
-			error: 'X-PAYMENT header is required',
-			accepts: [
-				{
-					scheme: 'exact',
-					network: 'solana',
-					maxAmountRequired: '1000',
-					resource,
-					description: 'MCP tool call',
-					mimeType: 'application/json',
-					payTo: X402_PAY_TO,
-					maxTimeoutSeconds: 60,
-					asset: X402_USDC_SOLANA_MINT,
-					extra: { name: 'USDC', decimals: 6 },
-				},
-			],
-		}),
-	);
 }
 
 function send401(res, msg) {

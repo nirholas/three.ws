@@ -74,6 +74,9 @@ describe('pump-fun skill bundle', () => {
 		expect(captured.body.method).toBe('tools/call');
 		expect(captured.body.params.name).toBe('searchTokens');
 		expect(captured.body.params.arguments).toEqual({ query: 'pepe', limit: 3 });
+		// Endpoint must resolve against the page origin (or the same-origin
+		// fallback) and target our in-house MCP route, never an external host.
+		expect(captured.url.endsWith('/api/pump-fun-mcp')).toBe(true);
 	});
 
 	it('getCreatorProfile returns negative sentiment when rug flags present', async () => {

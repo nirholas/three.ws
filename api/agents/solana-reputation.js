@@ -136,75 +136,58 @@ export default wrap(async (req, res) => {
 		select last_indexed_at from solana_attestations_cursor where agent_asset = ${asset} limit 1
 	`;
 
-	// Pump.fun off-chain signals: claim/graduation activity attached to the
-	// agent's wallet. Aggregated as a positive/negative weight contribution.
-	let pumpfunSignals = { count: 0, weight: 0, by_kind: {} };
-	try {
-		const rows = await sql`
-			select kind, count(*)::int as n, coalesce(sum(weight), 0)::float as w
-			from pumpfun_signals
-			where agent_asset = ${asset}
-			group by kind
-		`;
-		const byKind = {};
-		let total = 0,
-			weight = 0;
-		for (const r of rows) {
-			byKind[r.kind] = { count: r.n, weight: Number(r.w.toFixed(3)) };
-			total += r.n;
-			weight += r.w;
-		}
-		pumpfunSignals = { count: total, weight: Number(weight.toFixed(3)), by_kind: byKind };
-	} catch {
-		// pumpfun_signals table may not exist yet — silently ignore.
+	// Pump.fun off-chain signals (claim/graduation activity).
+	const pumpfunRows = await sql`
+		select kind, count(*)::int as n, coalesce(sum(weight), 0)::float as w
+		from pumpfun_signals
+		where agent_asset = ${asset}
+		group by kind
+	`;
+	const pumpfunByKind = {};
+	let pumpfunTotal = 0, pumpfunWeight = 0;
+	for (const r of pumpfunRows) {
+		pumpfunByKind[r.kind] = { count: r.n, weight: Number(r.w.toFixed(3)) };
+		pumpfunTotal += r.n;
+		pumpfunWeight += r.w;
 	}
+	const pumpfunSignals = {
+		count: pumpfunTotal,
+		weight: Number(pumpfunWeight.toFixed(3)),
+		by_kind: pumpfunByKind,
+	};
 
-	// Pump.fun token activity from indexer snapshot: graduation + recent tx
-	// count contribute small positive weights to overall agent reputation.
-	let tokenActivity = { graduated: false, recent_tx_count: 0, trade_count: 0, weight: 0 };
-	try {
-		const [row] = await sql`
-			select s.graduated, s.recent_tx_count,
-			       (select count(*)::int from pump_agent_trades t where t.mint_id = m.id) as trade_count
-			from pump_agent_stats s
-			join pump_agent_mints m on m.id = s.mint_id
-			where m.mint = ${asset} and m.network = ${network}
-			limit 1
-		`;
-		if (row) {
-			const w =
-				(row.graduated ? 0.3 : 0) +
-				Math.min(0.4, (row.recent_tx_count || 0) * 0.005) +
-				Math.min(0.3, (row.trade_count || 0) * 0.01);
-			tokenActivity = {
-				graduated: !!row.graduated,
-				recent_tx_count: row.recent_tx_count || 0,
-				trade_count: row.trade_count || 0,
-				weight: Number(w.toFixed(3)),
-			};
-		}
-	} catch {
-		// tables not present
-	}
+	// Pump.fun token activity (graduation + recent tx + trade counts).
+	const [actRow] = await sql`
+		select s.graduated, s.recent_tx_count,
+		       (select count(*)::int from pump_agent_trades t where t.mint_id = m.id) as trade_count
+		from pump_agent_stats s
+		join pump_agent_mints m on m.id = s.mint_id
+		where m.mint = ${asset} and m.network = ${network}
+		limit 1
+	`;
+	const tokenActivity = actRow ? {
+		graduated:        !!actRow.graduated,
+		recent_tx_count:  actRow.recent_tx_count || 0,
+		trade_count:      actRow.trade_count || 0,
+		weight: Number((
+			(actRow.graduated ? 0.3 : 0)
+			+ Math.min(0.4, (actRow.recent_tx_count || 0) * 0.005)
+			+ Math.min(0.3, (actRow.trade_count || 0) * 0.01)
+		).toFixed(3)),
+	} : { graduated: false, recent_tx_count: 0, trade_count: 0, weight: 0 };
 
-	// Pump.fun agent-payments signal: confirmed acceptPayment receipts add a
-	// volume-weighted, Sybil-resistant reputation lane on top of memo attestations.
-	let pumpPayments = { confirmed_count: 0, unique_payers: 0, total_atomics: '0' };
-	try {
-		const [row] = await sql`
-			select
-				count(*) filter (where p.status='confirmed')::int                       as confirmed_count,
-				count(distinct p.payer_wallet) filter (where p.status='confirmed')::int as unique_payers,
-				coalesce(sum(p.amount_atomics) filter (where p.status='confirmed'), 0)::text as total_atomics
-			from pump_agent_payments p
-			join pump_agent_mints m on m.id = p.mint_id
-			join agent_identities a on a.id = m.agent_id
-			where (a.meta->>'sol_mint_address') = ${asset} and m.network = ${network}
-		`;
-		if (row) pumpPayments = row;
-	} catch {
-		// pump_agent_payments table may not exist yet (migration not applied) — silently ignore.
-	}
+	// Pump.fun agent-payments signal: confirmed acceptPayment receipts.
+	const [payRow] = await sql`
+		select
+			count(*) filter (where p.status='confirmed')::int                                  as confirmed_count,
+			count(distinct p.payer_wallet) filter (where p.status='confirmed')::int            as unique_payers,
+			coalesce(sum(p.amount_atomics) filter (where p.status='confirmed'), 0)::text       as total_atomics
+		from pump_agent_payments p
+		join pump_agent_mints m on m.id = p.mint_id
+		join agent_identities a on a.id = m.agent_id
+		where (a.meta->>'sol_mint_address') = ${asset} and m.network = ${network}
+	`;
+	const pumpPayments = payRow || { confirmed_count: 0, unique_payers: 0, total_atomics: '0' };
 
 	return json(res, 200, {
 		agent: asset,

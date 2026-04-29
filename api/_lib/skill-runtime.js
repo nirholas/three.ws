@@ -60,9 +60,33 @@ async function loadManifest(name) {
  * @param {object} [opts.wallet] - solana wallet contract for signing skills
  * @param {(event: object) => void} [opts.onEvent] - notified on every memory.note call
  * @param {object} [opts.fetch] - fetch impl (defaults to globalThis.fetch)
+ * @param {string} [opts.agentId] - if set, every memory.note is persisted to agent_actions
+ * @param {string} [opts.signerAddress] - persisted with each agent_actions row when agentId is set
  */
 export function makeRuntime(opts = {}) {
-	const { configOverrides = {}, wallet, onEvent, fetch = globalThis.fetch } = opts;
+	const { configOverrides = {}, wallet, onEvent, fetch = globalThis.fetch, agentId, signerAddress } = opts;
+	let _sql;
+	async function persistAction(skillName, tag, value) {
+		if (!agentId) return;
+		try {
+			if (!_sql) _sql = (await import('./db.js')).sql;
+			const [, type] = (tag ?? '').split(':'); // e.g. 'pump-fun-trade:buy' → 'buy'
+			await _sql`
+				INSERT INTO agent_actions (agent_id, type, payload, source_skill, signature, signer_address)
+				VALUES (
+					${agentId},
+					${type || tag || 'note'},
+					${JSON.stringify(value ?? {})}::jsonb,
+					${skillName},
+					${value?.sig ?? null},
+					${signerAddress ?? null}
+				)
+			`;
+		} catch (e) {
+			// Persistence is best-effort; never break the strategy on a DB hiccup.
+			console.error('[skill-runtime] persistAction failed', e?.message);
+		}
+	}
 
 	async function invoke(qualified, args) {
 		const [skillName, toolName] = qualified.split('.');
@@ -83,9 +107,9 @@ export function makeRuntime(opts = {}) {
 			fetch,
 			memory: {
 				note: (tag, value) => {
-					try {
-						onEvent?.({ skill: skillName, tool: toolName, tag, value, t: Date.now() });
-					} catch {}
+					try { onEvent?.({ skill: skillName, tool: toolName, tag, value, t: Date.now() }); } catch {}
+					// Fire and forget — don't block the strategy loop on disk writes.
+					persistAction(skillName, tag, value);
 				},
 				recall: async () => null,
 			},

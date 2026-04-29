@@ -98,6 +98,29 @@ export async function deleteAgentSolanaWallet(agentId) {
 	}
 }
 
+/** Fetch the agent wallet's recent on-chain activity. */
+export async function fetchAgentSolanaActivity(agentId, network = 'mainnet', limit = 10) {
+	const url = `/api/agents/${encodeURIComponent(agentId)}/solana/activity?network=${encodeURIComponent(network)}&limit=${limit}`;
+	const resp = await fetch(url, { credentials: 'include' });
+	if (!resp.ok) {
+		const j = await resp.json().catch(() => ({}));
+		throw new Error(j?.error_description || j?.error?.message || `activity fetch failed (${resp.status})`);
+	}
+	const json = await resp.json();
+	return json.data;
+}
+
+/** Request a 1 SOL devnet airdrop into the agent's wallet. */
+export async function requestAgentSolanaAirdrop(agentId) {
+	const url = `/api/agents/${encodeURIComponent(agentId)}/solana/airdrop`;
+	const resp = await fetch(url, { method: 'POST', credentials: 'include' });
+	const json = await resp.json().catch(() => ({}));
+	if (!resp.ok) {
+		throw new Error(json?.error_description || json?.error?.message || `airdrop failed (${resp.status})`);
+	}
+	return json.data;
+}
+
 // ── UI card ─────────────────────────────────────────────────────────────────
 
 const STYLE = `
@@ -118,6 +141,18 @@ const STYLE = `
 .agent-sol-wallet .balance .net { margin-left: auto; font-size: .7rem; }
 .agent-sol-wallet .balance select { font: inherit; font-size: .7rem; padding: .15rem .25rem; border: 1px solid #ddd; border-radius: 4px; background: #fff; }
 .agent-sol-wallet .skel { color: #999; font-size: .75rem; padding: .35rem 0; }
+.agent-sol-wallet .activity { margin-top: .65rem; border-top: 1px solid #f0f0f0; padding-top: .5rem; }
+.agent-sol-wallet .activity-h { font-size: .72rem; color: #888; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .35rem; display: flex; align-items: center; gap: .35rem; }
+.agent-sol-wallet .activity-h button { padding: .1rem .4rem; font-size: .7rem; line-height: 1; }
+.agent-sol-wallet .activity-row { display: flex; align-items: center; gap: .5rem; font-size: .75rem; padding: .25rem 0; border-bottom: 1px dashed #eee; }
+.agent-sol-wallet .activity-row:last-child { border-bottom: none; }
+.agent-sol-wallet .activity-row .sig { font-family: ui-monospace, monospace; color: #555; }
+.agent-sol-wallet .activity-row .delta { font-family: ui-monospace, monospace; margin-left: auto; }
+.agent-sol-wallet .activity-row .delta.pos { color: #1b5e20; }
+.agent-sol-wallet .activity-row .delta.neg { color: #c62828; }
+.agent-sol-wallet .activity-row .ts { color: #999; font-size: .7rem; }
+.agent-sol-wallet .activity-empty { color: #aaa; font-size: .75rem; padding: .35rem 0; }
+.agent-sol-wallet .badge-airdrop { background: #e7f5e9; color: #1b5e20; padding: .1rem .45rem; border-radius: 999px; font-size: .65rem; font-weight: 600; margin-left: .35rem; }
 `;
 
 let _styleInjected = false;
@@ -134,6 +169,40 @@ function _esc(s) {
 	return String(s ?? '').replace(/[&<>"']/g, (c) => ({
 		'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
 	})[c]);
+}
+
+function _shortSig(sig) { return sig ? `${sig.slice(0, 6)}…${sig.slice(-4)}` : ''; }
+function _ago(ts) {
+	if (!ts) return '';
+	const sec = Math.max(0, Math.floor(Date.now() / 1000 - ts));
+	if (sec < 60)    return `${sec}s ago`;
+	if (sec < 3600)  return `${Math.floor(sec / 60)}m ago`;
+	if (sec < 86400) return `${Math.floor(sec / 3600)}h ago`;
+	return `${Math.floor(sec / 86400)}d ago`;
+}
+function _explorerTxUrl(sig, network) {
+	return network === 'devnet'
+		? `https://explorer.solana.com/tx/${sig}?cluster=devnet`
+		: `https://solscan.io/tx/${sig}`;
+}
+function _renderActivityRow(a, network) {
+	const sigShort = _shortSig(a.signature);
+	const url = _explorerTxUrl(a.signature, network);
+	const delta = a.sol_delta;
+	let deltaCls = '', deltaText = '—';
+	if (typeof delta === 'number') {
+		deltaCls = delta > 0 ? 'pos' : delta < 0 ? 'neg' : '';
+		deltaText = `${delta > 0 ? '+' : ''}${delta.toFixed(4)} SOL`;
+	}
+	const failed = a.success === false ? '<span class="ts" style="color:#c62828">·failed</span>' : '';
+	const summary = a.summary ? `<span class="ts">· ${_esc(a.summary)}</span>` : '';
+	return `
+		<div class="activity-row">
+			<a class="sig" href="${_esc(url)}" target="_blank" rel="noopener">${_esc(sigShort)}</a>
+			<span class="ts">${_esc(_ago(a.block_time))}</span>
+			${summary}${failed}
+			<span class="delta ${deltaCls}">${_esc(deltaText)}</span>
+		</div>`;
 }
 
 /**
@@ -164,6 +233,10 @@ export function mountAgentSolanaWalletCard({ panel, identity, onProvisioned }) {
 		busy: false,
 		progress: null,
 		err: null,
+		activity: [],
+		activityLoaded: false,
+		airdropping: false,
+		airdropMsg: null,
 	};
 	let abort = null;
 	let balanceTimer = null;
@@ -211,6 +284,49 @@ export function mountAgentSolanaWalletCard({ panel, identity, onProvisioned }) {
 		balanceTimer = null;
 	}
 
+	async function refreshActivity() {
+		if (!state.address) return;
+		try {
+			const data = await fetchAgentSolanaActivity(identity.id, state.network, 10);
+			state.activity = data?.signatures || [];
+			state.activityLoaded = true;
+			const host = root.querySelector('[data-host="activity-list"]');
+			if (host) {
+				host.innerHTML = state.activity.length
+					? state.activity.map((a) => _renderActivityRow(a, state.network)).join('')
+					: '<div class="activity-empty">No on-chain activity yet.</div>';
+			}
+		} catch (e) {
+			state.activityLoaded = true;
+			const host = root.querySelector('[data-host="activity-list"]');
+			if (host) host.innerHTML = `<div class="activity-empty" style="color:#b71c1c">Could not load activity: ${_esc(e.message)}</div>`;
+		}
+	}
+
+	async function onAirdrop() {
+		state.airdropping = true;
+		state.airdropMsg = 'Requesting devnet airdrop…';
+		state.err = null;
+		render();
+		try {
+			const data = await requestAgentSolanaAirdrop(identity.id);
+			state.airdropMsg = `Airdrop confirmed: +${data.sol} SOL`;
+			// Wait a moment for RPC to reflect, then refresh.
+			setTimeout(() => {
+				refreshBalance();
+				refreshActivity();
+				state.airdropMsg = null;
+				render();
+			}, 1500);
+		} catch (e) {
+			state.err = e.message;
+			state.airdropMsg = null;
+		} finally {
+			state.airdropping = false;
+			render();
+		}
+	}
+
 	function render() {
 		if (!state.loaded) {
 			root.innerHTML = `<div class="skel">Loading Solana wallet…</div>`;
@@ -220,6 +336,7 @@ export function mountAgentSolanaWalletCard({ panel, identity, onProvisioned }) {
 			const pfx = state.vanityPrefix || '';
 			const rest = state.address.slice(pfx.length);
 			const solDisplay = state.sol == null ? '—' : `${state.sol.toFixed(4)} SOL`;
+			const isDevnet = state.network === 'devnet';
 			root.innerHTML = `
 				<h3>Solana wallet${state.source ? `<span class="src">· ${_esc(state.source)}</span>` : ''}</h3>
 				<div class="addr"><span class="pfx">${_esc(pfx)}</span>${_esc(rest)}</div>
@@ -233,25 +350,54 @@ export function mountAgentSolanaWalletCard({ panel, identity, onProvisioned }) {
 					</span>
 				</div>
 				<div class="row">
-					<button data-act="copy">Copy address</button>
-					<button data-act="explorer">Explorer</button>
+					<button data-act="copy">Copy</button>
+					<button data-act="explorer">Explorer ↗</button>
+					${isDevnet ? `<button data-act="airdrop" ${state.airdropping ? 'disabled' : ''}>${state.airdropping ? 'Requesting…' : 'Airdrop 1 SOL'}</button>` : ''}
+					<button data-act="refresh-activity">Refresh</button>
 					<button data-act="replace">Replace</button>
 				</div>
+				${state.airdropMsg ? `<div class="progress">${_esc(state.airdropMsg)}</div>` : ''}
 				${state.err ? `<div class="err">${_esc(state.err)}</div>` : ''}
+				<div class="activity" data-host="activity">
+					<div class="activity-h">Recent activity <button data-act="refresh-activity-mini" type="button">↻</button></div>
+					<div data-host="activity-list">
+						${state.activityLoaded
+							? (state.activity.length
+								? state.activity.map((a) => _renderActivityRow(a, state.network)).join('')
+								: '<div class="activity-empty">No on-chain activity yet.</div>')
+							: '<div class="activity-empty">Loading…</div>'}
+					</div>
+				</div>
 			`;
-			root.querySelector('[data-act="copy"]').addEventListener('click', () => {
+			root.querySelector('[data-act="copy"]').addEventListener('click', (e) => {
 				navigator.clipboard?.writeText(state.address).catch(() => {});
+				e.currentTarget.textContent = 'Copied';
+				setTimeout(() => { const b = root.querySelector('[data-act="copy"]'); if (b) b.textContent = 'Copy'; }, 1200);
 			});
 			root.querySelector('[data-act="explorer"]').addEventListener('click', () => {
-				const cluster = state.network === 'devnet' ? '?cluster=devnet' : '';
+				const cluster = isDevnet ? '?cluster=devnet' : '';
 				window.open(`https://explorer.solana.com/address/${state.address}${cluster}`, '_blank', 'noopener');
 			});
 			root.querySelector('[data-act="replace"]').addEventListener('click', onReplace);
 			root.querySelector('[data-act="network"]').addEventListener('change', (e) => {
 				state.network = e.target.value;
+				state.activityLoaded = false;
+				state.activity = [];
 				refreshBalance();
+				refreshActivity();
 			});
+			root.querySelector('[data-act="refresh-activity"]')?.addEventListener('click', () => {
+				refreshBalance();
+				refreshActivity();
+			});
+			root.querySelector('[data-act="refresh-activity-mini"]')?.addEventListener('click', () => {
+				refreshActivity();
+			});
+			if (isDevnet) {
+				root.querySelector('[data-act="airdrop"]').addEventListener('click', onAirdrop);
+			}
 			startBalancePoll();
+			if (!state.activityLoaded) refreshActivity();
 			return;
 		}
 		stopBalancePoll();

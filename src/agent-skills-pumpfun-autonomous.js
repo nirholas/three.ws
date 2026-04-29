@@ -168,7 +168,7 @@ export function registerPumpFunAutonomousSkills(skills) {
 		},
 		handler: async (args, ctx) => {
 			const id = requireAgentId(ctx);
-			const data = await postJson(ENDPOINT(id, 'swap'), {
+			const resp = await postJson(ENDPOINT(id, 'swap'), {
 				mint: args.mint,
 				side: args.side,
 				solAmount: args.solAmount,
@@ -176,6 +176,7 @@ export function registerPumpFunAutonomousSkills(skills) {
 				slippageBps: args.slippageBps ?? 500,
 				network: args.network || 'mainnet',
 			});
+			const payload = resp?.data || resp;
 			return {
 				success: true,
 				output:
@@ -183,7 +184,7 @@ export function registerPumpFunAutonomousSkills(skills) {
 						? `Bought ${args.mint.slice(0, 8)}… for ${args.solAmount} SOL.`
 						: `Sold ${args.tokenAmount} of ${args.mint.slice(0, 8)}…`,
 				sentiment: 0.5,
-				data,
+				data: { ...payload, mint: args.mint, side: args.side, network: args.network || 'mainnet', solAmount: args.solAmount },
 			};
 		},
 	});
@@ -214,16 +215,22 @@ export function registerPumpFunAutonomousSkills(skills) {
 		},
 		handler: async (args, ctx) => {
 			const id = requireAgentId(ctx);
-			const data = await postJson(ENDPOINT(id, 'pay'), args);
+			const resp = await postJson(ENDPOINT(id, 'pay'), args);
+			const payload = resp?.data || resp;
 			let output;
 			if (args.action === 'balances') {
-				output = `Balances: ${JSON.stringify(data.balances || data)}`;
+				output = `Balances: ${JSON.stringify(payload.balances || payload)}`;
 			} else if (args.action === 'accept') {
 				output = `Payment accepted (${args.amount}).`;
 			} else {
 				output = `Withdraw complete.`;
 			}
-			return { success: true, output, sentiment: 0.5, data };
+			return {
+				success: true,
+				output,
+				sentiment: 0.5,
+				data: { ...payload, network: args.network || 'mainnet' },
+			};
 		},
 	});
 }

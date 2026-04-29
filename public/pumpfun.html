@@ -3,38 +3,57 @@
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<title>Pump.fun live feed — three.ws demo</title>
+	<title>Pump.fun live · three.ws</title>
+	<link rel="icon" href="/favicon.ico" />
 	<style>
-		:root { color-scheme: dark; }
-		html, body { margin: 0; height: 100%; background: #0a0a0a; color: #f0f0f0;
-			font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
-		header { padding: 14px 20px; border-bottom: 1px solid #1f1f1f;
-			display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-		header h1 { margin: 0; font-size: 16px; font-weight: 600; }
-		header .desc { color: #888; font-size: 13px; }
-		header .ctl { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+		:root { color-scheme: dark; --accent: #6a5cff; --border: #1f1f29; --bg: #0a0a0f; --panel: #14141c; --muted: #888; }
+		* { box-sizing: border-box; }
+		html, body { margin: 0; height: 100%; background: var(--bg); color: #eee;
+			font: 14px/1.55 -apple-system, system-ui, Segoe UI, Roboto, sans-serif; }
+		header { padding: 12px 18px; border-bottom: 1px solid var(--border);
+			display: flex; align-items: center; gap: 14px; flex-wrap: wrap; background: var(--panel); }
+		header h1 { margin: 0; font-size: 15px; font-weight: 600; }
+		header .desc { color: var(--muted); font-size: 12px; }
+		header .ctl { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+		header label { font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
 		header select, header input[type="text"], header button {
-			background: #161616; color: #f0f0f0; border: 1px solid #2a2a2a;
+			background: #161620; color: #eee; border: 1px solid #2a2a36;
 			border-radius: 6px; padding: 6px 10px; font-size: 13px; }
 		header button { cursor: pointer; }
-		header button:hover { background: #222; }
-		main { position: relative; height: calc(100% - 56px); }
-		#stage { position: absolute; inset: 0; }
-		iframe { width: 100%; height: 100%; border: 0; display: block; background: #0a0a0a; }
-		.notice { position: absolute; left: 16px; bottom: 16px; max-width: 360px;
-			background: #161616; border: 1px solid #2a2a2a; border-radius: 8px;
-			padding: 10px 12px; font-size: 12px; color: #aaa; z-index: 10; }
-		.notice b { color: #f0f0f0; }
-		a { color: #8b5cf6; }
+		header button:hover { background: #20202c; }
+		header button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+		main { position: relative; height: calc(100% - 52px); display: grid; grid-template-columns: 1fr 360px; }
+		#stage { position: relative; }
+		iframe { width: 100%; height: 100%; border: 0; display: block; background: var(--bg); }
+		#side { border-left: 1px solid var(--border); background: var(--panel); display: flex; flex-direction: column; overflow-y: auto; }
+		#side h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em;
+			color: var(--muted); margin: 14px 16px 8px; font-weight: 600; }
+		#agent-card, #signals { padding: 4px 16px 12px; border-bottom: 1px solid var(--border); }
+		.kv { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; gap: 8px; }
+		.kv span:first-child { color: var(--muted); }
+		.kv code { font-size: 11px; background: #1a1a24; padding: 1px 5px; border-radius: 3px; }
+		.signal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+		.signal { background: #1a1a24; border: 1px solid #232330; border-radius: 6px; padding: 8px; }
+		.signal .v { font-size: 18px; font-weight: 600; }
+		.signal .l { font-size: 11px; color: var(--muted); margin-top: 2px; }
+		.signal.neg { border-color: #4a1f23; background: #1f1418; }
+		.empty { color: var(--muted); font-size: 12px; padding: 8px 0; }
+		a { color: #9a8cff; }
+		.warn { background: #2a1f0d; border: 1px solid #463a14; padding: 8px 10px; border-radius: 6px;
+			color: #fbbf24; font-size: 12px; margin: 12px 16px; }
+		@media (max-width: 720px) { main { grid-template-columns: 1fr; } #side { display: none; } }
 	</style>
 </head>
 <body>
 	<header>
-		<h1>✦ Pump.fun Live Feed</h1>
-		<span class="desc">3D agent narrates pump.fun activity in real time.</span>
+		<h1>✦ Pump.fun live</h1>
+		<span class="desc">3D Solana agent narrating live pump.fun activity.</span>
 		<div class="ctl">
-			<label style="font-size:12px;color:#888">Filter mint
-				<input id="ctl-mint" type="text" placeholder="(any)" size="22" />
+			<label>Agent
+				<input id="ctl-asset" type="text" placeholder="Solana asset pubkey" size="22" />
+			</label>
+			<label>Mint
+				<input id="ctl-mint" type="text" placeholder="Filter mint…" size="20" />
 			</label>
 			<select id="ctl-kind">
 				<option value="all">All events</option>
@@ -48,58 +67,128 @@
 				<option value="mega">Mega only</option>
 			</select>
 			<button id="ctl-narrate" type="button" data-on="1">Narration: on</button>
-			<button id="ctl-reload" type="button">Apply</button>
+			<button id="ctl-apply" class="primary" type="button">Apply</button>
 		</div>
 	</header>
 	<main>
 		<div id="stage">
-			<iframe id="agent" src="/app#widget=wdgt_demo_pumpfun&kiosk=true" allow="autoplay"></iframe>
+			<iframe id="agent" allow="autoplay" title="3D agent"></iframe>
 		</div>
-		<div class="notice">
-			<b>Heads up:</b> set <code>PUMPFUN_BOT_URL</code> in your environment to enable the live feed.
-			Without it the SSE stream returns <code>503</code> and no cards arrive. See
-			<a href="/docs/solana-pumpfun.md">solana-pumpfun.md</a>.
-		</div>
+		<aside id="side">
+			<h2>Agent</h2>
+			<div id="agent-card"><div class="empty">Paste a Solana asset pubkey above to bind a specific agent. Without one, the default narrator avatar is shown.</div></div>
+			<h2>Reputation signals</h2>
+			<div id="signals"><div class="empty">Bind a Solana agent to see live pump.fun signals.</div></div>
+		</aside>
 	</main>
 	<script>
-		const iframe = document.getElementById('agent');
+		const url = new URL(location.href);
+		const $ = (id) => document.getElementById(id);
+		const iframe = $('agent');
 
-		// Build hash from current toolbar state.
-		const params = new URLSearchParams(location.search);
-		const $kind = document.getElementById('ctl-kind');
-		const $tier = document.getElementById('ctl-tier');
-		const $narr = document.getElementById('ctl-narrate');
-		$kind.value = params.get('kind') || 'all';
-		$tier.value = params.get('minTier') || '';
-		const narrate = params.get('narrate') !== '0';
-		$narr.dataset.on = narrate ? '1' : '0';
-		$narr.textContent = narrate ? 'Narration: on' : 'Narration: off';
+		const params = {
+			asset: url.searchParams.get('asset') || '',
+			mint: url.searchParams.get('mint') || '',
+			kind: url.searchParams.get('kind') || 'all',
+			minTier: url.searchParams.get('minTier') || '',
+			network: url.searchParams.get('network') || 'mainnet',
+			narrate: url.searchParams.get('narrate') !== '0',
+		};
+		$('ctl-asset').value = params.asset;
+		$('ctl-mint').value = params.mint;
+		$('ctl-kind').value = params.kind;
+		$('ctl-tier').value = params.minTier;
+		$('ctl-narrate').dataset.on = params.narrate ? '1' : '0';
+		$('ctl-narrate').textContent = params.narrate ? 'Narration: on' : 'Narration: off';
 
-		document.getElementById('ctl-narrate').addEventListener('click', (e) => {
+		async function mountAgent() {
+			const cfgPart = `&type=pumpfun-feed&kind=${encodeURIComponent(params.kind)}` +
+				(params.minTier ? `&minTier=${encodeURIComponent(params.minTier)}` : '') +
+				(params.narrate ? '' : '&narrate=0');
+			let modelHash = '';
+			let widgetId = 'wdgt_demo_pumpfun';
+			if (params.asset) {
+				try {
+					const r = await fetch(`/api/agents/solana-card?asset=${encodeURIComponent(params.asset)}`);
+					if (r.ok) {
+						const card = await r.json();
+						renderAgentCard(card);
+						const avatarUrl = card?.identity?.avatar_url || card?.avatar_url;
+						if (avatarUrl) modelHash = `&model=${encodeURIComponent(avatarUrl)}`;
+					}
+					const repR = await fetch(`/api/agents/solana-reputation?asset=${encodeURIComponent(params.asset)}&network=${params.network}`);
+					if (repR.ok) renderSignals(await repR.json());
+				} catch {}
+			}
+			iframe.src = `/app#widget=${widgetId}&kiosk=true${cfgPart}${modelHash}`;
+		}
+
+		function renderAgentCard(card) {
+			const id = card?.identity || {};
+			const el = $('agent-card');
+			el.innerHTML = `
+				<div class="kv"><span>Name</span><strong>${escapeHtml(card?.name || '—')}</strong></div>
+				<div class="kv"><span>Network</span><code>${escapeHtml(id.network || '—')}</code></div>
+				<div class="kv"><span>Asset</span><code>${shortKey(id.asset_pubkey || '')}</code></div>
+				${id.owner ? `<div class="kv"><span>Owner</span><code>${shortKey(id.owner)}</code></div>` : ''}
+				${id.passport_url ? `<div class="kv"><span>Passport</span><a href="${attr(id.passport_url)}" target="_blank">open ↗</a></div>` : ''}
+			`;
+		}
+
+		function renderSignals(rep) {
+			const pf = rep?.pumpfun_signals || { count: 0, weight: 0, by_kind: {} };
+			const el = $('signals');
+			if (!pf.count) {
+				el.innerHTML = `<div class="empty">No pump.fun signals tied to this agent yet.</div>`;
+				return;
+			}
+			const cards = [
+				`<div class="signal"><div class="v">${pf.count}</div><div class="l">total signals</div></div>`,
+				`<div class="signal ${pf.weight < 0 ? 'neg' : ''}"><div class="v">${pf.weight >= 0 ? '+' : ''}${pf.weight.toFixed(2)}</div><div class="l">aggregate weight</div></div>`,
+				...Object.entries(pf.by_kind).map(([k, info]) =>
+					`<div class="signal ${info.weight < 0 ? 'neg' : ''}"><div class="v">${info.count}</div><div class="l">${escapeHtml(k.replace('_', ' '))}</div></div>`),
+			];
+			el.innerHTML = `<div class="signal-grid">${cards.join('')}</div>`;
+		}
+
+		function shortKey(s) { s = String(s || ''); return s.length > 12 ? `${s.slice(0,4)}…${s.slice(-4)}` : s; }
+		function escapeHtml(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+		function attr(s) { return escapeHtml(s); }
+
+		$('ctl-mint').addEventListener('input', (e) => {
+			const mint = e.target.value.trim() || null;
+			iframe.contentWindow?.postMessage({ type: 'pumpfun-feed:focus-mint', mint }, '*');
+		});
+
+		$('ctl-narrate').addEventListener('click', (e) => {
 			const on = e.target.dataset.on !== '1';
 			e.target.dataset.on = on ? '1' : '0';
 			e.target.textContent = on ? 'Narration: on' : 'Narration: off';
+			iframe.contentWindow?.postMessage({ type: 'pumpfun-feed:set-narrate', on }, '*');
 		});
 
-		document.getElementById('ctl-reload').addEventListener('click', () => {
+		$('ctl-apply').addEventListener('click', () => {
 			const u = new URL(location.href);
-			u.searchParams.set('kind', $kind.value);
-			if ($tier.value) u.searchParams.set('minTier', $tier.value);
+			u.searchParams.set('kind', $('ctl-kind').value);
+			if ($('ctl-tier').value) u.searchParams.set('minTier', $('ctl-tier').value);
 			else u.searchParams.delete('minTier');
-			u.searchParams.set('narrate', $narr.dataset.on === '1' ? '1' : '0');
+			const asset = $('ctl-asset').value.trim();
+			if (asset) u.searchParams.set('asset', asset);
+			else u.searchParams.delete('asset');
+			u.searchParams.set('narrate', $('ctl-narrate').dataset.on === '1' ? '1' : '0');
 			location.href = u.toString();
 		});
 
-		// Live mint focus — postMessage into the iframe so the widget filters
-		// without reloading. The widget listens for a CustomEvent on its
-		// container; we proxy via the iframe's window.
-		document.getElementById('ctl-mint').addEventListener('input', (e) => {
-			const mint = e.target.value.trim() || null;
-			iframe.contentWindow?.postMessage(
-				{ type: 'pumpfun-feed:focus-mint', mint },
-				'*',
-			);
-		});
+		fetch('/api/agents/pumpfun?op=claims&limit=1', { credentials: 'include' }).then((r) => {
+			if (r.status === 503) {
+				const w = document.createElement('div');
+				w.className = 'warn';
+				w.innerHTML = 'Pump.fun feed is not configured on this server. Set <code>PUMPFUN_BOT_URL</code> to enable. See <a href="/docs/solana-pumpfun.md">solana-pumpfun.md</a>.';
+				document.querySelector('header').insertAdjacentElement('afterend', w);
+			}
+		}).catch(() => {});
+
+		mountAgent();
 	</script>
 </body>
 </html>

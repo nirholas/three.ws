@@ -1,109 +1,132 @@
 // POST /api/pump/strategy-run  (Server-Sent Events)
-// Body: { strategy, durationSec, useStub?: boolean }
 //
-// Streams a simulated live run as SSE. Each line of activity (skip / enter /
-// exit / error) is emitted as `event: log` with a JSON payload. A final
-// `event: done` carries the summary. Always simulate=true on this endpoint —
-// no real signing from the browser-facing surface.
+// Body:
+//   strategy:    <spec>                     required
+//   durationSec: number                     5..600
+//   mode:        'simulate' | 'live'        default 'simulate'
+//   agentId:     string                     required when mode='live'
+//   network:     'mainnet' | 'devnet'       default 'mainnet'
+//
+// In 'simulate' mode the read-only pump-fun MCP is queried for real holder /
+// curve / creator data, but trades are not signed (a SIMULATED:* sig is
+// returned so the orchestrator state machine still progresses). This is a
+// genuine dry-run against live chain state.
+//
+// In 'live' mode the caller must own an agent identity with a provisioned
+// Solana wallet (see /api/agents/:id/solana). The encrypted secret is loaded
+// server-side and used to actually sign + send buys/sells via the
+// pump-fun-trade skill.
+//
+// Each scan/exit/entry decision is streamed as it happens via SSE. A final
+// `event: done` carries the summary.
 
+import { sql } from '../_lib/db.js';
+import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { cors, method, error, readJson } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { makeRuntime } from '../_lib/skill-runtime.js';
+import { loadWallet } from '../_lib/solana-wallet.js';
 
-function stubInvoke(tool, args) {
-	const t0 = Date.now();
-	if (tool === 'pump-fun.getNewTokens' || tool === 'pump-fun.getTrendingTokens') {
-		const limit = args?.limit ?? 5;
-		return { ok: true, data: { tokens: Array.from({ length: limit }, (_, i) => ({ mint: `MINT${Math.floor(t0 / 1000)}_${i}` })) } };
-	}
-	if (tool === 'pump-fun.getTokenDetails') {
-		return { ok: true, data: { creator: `CREATOR_${args.mint.slice(0, 4)}`, createdAt: new Date().toISOString(), marketCapSol: 12 } };
-	}
-	if (tool === 'pump-fun.getTokenHolders') {
-		const seed = [...args.mint].reduce((s, c) => s + c.charCodeAt(0), 0);
-		return { ok: true, data: { total: 30 + (seed % 200), holders: [{ pct: 5 + (seed % 35) }] } };
-	}
-	if (tool === 'pump-fun.getCreatorProfile') {
-		return { ok: true, data: { rugCount: 0 } };
-	}
-	if (tool === 'pump-fun.getBondingCurve') {
-		const seed = [...(args?.mint ?? '')].reduce((s, c) => s + c.charCodeAt(0), 0);
-		// Drift price up over time so exits eventually trigger.
-		const drift = ((Date.now() / 5000) % 30) * 0.00002 * (seed % 3 === 0 ? 1 : -1);
-		return { ok: true, data: { priceSol: Math.max(0.0001, 0.001 + drift), graduationPct: 12 } };
-	}
-	if (tool === 'pump-fun.getTokenTrades') {
-		return { ok: true, data: { trades: [] } };
-	}
-	return { ok: true, data: {} };
+const RPC = {
+	mainnet: process.env.SOLANA_MAINNET_RPC || 'https://api.mainnet-beta.solana.com',
+	devnet: process.env.SOLANA_DEVNET_RPC || 'https://api.devnet.solana.com',
+};
+
+async function resolveAuth(req) {
+	const session = await getSessionUser(req);
+	if (session) return { userId: session.id };
+	const bearer = await authenticateBearer(extractBearer(req));
+	if (bearer) return { userId: bearer.userId };
+	return null;
+}
+
+async function loadAgentWallet(agentId, userId) {
+	const [row] = await sql`
+		SELECT user_id, meta FROM agent_identities
+		WHERE id = ${agentId} AND deleted_at IS NULL
+	`;
+	if (!row) throw Object.assign(new Error('agent not found'), { status: 404 });
+	if (row.user_id !== userId) throw Object.assign(new Error('not your agent'), { status: 403 });
+	const enc = row.meta?.encrypted_solana_secret;
+	if (!enc) throw Object.assign(new Error('agent has no solana wallet — provision via /api/agents/:id/solana'), { status: 409 });
+	const wallet = await loadWallet(enc);
+	return { wallet, address: wallet.publicKey.toBase58() };
 }
 
 export default async function handler(req, res) {
-	if (cors(req, res, { methods: 'POST,OPTIONS', origins: '*' })) return;
+	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
 	let body;
-	try { body = await readJson(req); } catch (e) { return error(res, 400, 'validation_error', e.message); }
+	try { body = await readJson(req); }
+	catch (e) { return error(res, 400, 'validation_error', e.message); }
+
 	if (!body?.strategy) return error(res, 400, 'validation_error', 'strategy required');
-	const durationSec = Math.max(5, Math.min(120, Number(body.durationSec) || 30));
+	const durationSec = Math.max(5, Math.min(600, Number(body.durationSec) || 30));
+	const mode = body.mode === 'live' ? 'live' : 'simulate';
+	const network = body.network === 'devnet' ? 'devnet' : 'mainnet';
+
+	let wallet = null, walletAddress = null;
+	if (mode === 'live') {
+		const auth = await resolveAuth(req);
+		if (!auth) return error(res, 401, 'unauthorized', 'sign in required for live mode');
+		if (!body.agentId) return error(res, 400, 'validation_error', 'agentId required for live mode');
+		try {
+			const r = await loadAgentWallet(body.agentId, auth.userId);
+			wallet = r.wallet;
+			walletAddress = r.address;
+		} catch (e) {
+			return error(res, e.status ?? 500, e.status === 409 ? 'conflict' : 'unauthorized', e.message);
+		}
+	}
 
 	res.statusCode = 200;
 	res.setHeader('content-type', 'text/event-stream');
 	res.setHeader('cache-control', 'no-cache, no-transform');
 	res.setHeader('connection', 'keep-alive');
 	res.setHeader('access-control-allow-origin', '*');
-
 	const send = (event, data) => {
 		res.write(`event: ${event}\n`);
 		res.write(`data: ${JSON.stringify(data)}\n\n`);
 	};
 
-	const useStub = body.useStub === true || !process.env.PUMPFUN_BOT_URL;
-	const rt = makeRuntime({ onEvent: (e) => send('memory', e) });
+	let aborted = false;
+	req.on('close', () => { aborted = true; });
 
-	let invoke = rt.invoke;
-	if (useStub) {
-		invoke = async (tool, args) => {
-			if (tool.startsWith('pump-fun.')) return stubInvoke(tool, args);
-			return rt.invoke(tool, args);
-		};
-	}
+	const rt = makeRuntime({
+		wallet,
+		agentId: mode === 'live' ? body.agentId : undefined,
+		signerAddress: walletAddress,
+		configOverrides: {
+			'pump-fun-trade': { rpc: RPC[network] },
+			'solana-wallet': { rpc: RPC[network] },
+		},
+		onEvent: (e) => send('memory', e),
+	});
 
-	send('start', { durationSec, useStub });
+	send('start', { durationSec, mode, network, walletAddress });
 
 	const { runStrategy } = await import('../../examples/skills/pump-fun-strategy/handlers.js');
 	const ctx = {
-		skills: { invoke },
-		skillConfig: { defaultPollMs: 1500 },
+		skills: { invoke: rt.invoke },
+		skillConfig: { defaultPollMs: Math.max(1500, Number(body.pollMs) || 3000) },
 		memory: { note: (tag, value) => send('memory', { tag, value }) },
-	};
-
-	// Patch the log via a Proxy on the strategy state isn't trivial — instead
-	// run with a short poll interval and stream the final log piece-by-piece by
-	// wrapping invoke to forward enter/skip/exit decisions live.
-	const wrappedCtx = {
-		...ctx,
-		skills: {
-			invoke: async (tool, args) => {
-				const r = await invoke(tool, args);
-				if (tool === 'pump-fun-trade.buyToken' || tool === 'pump-fun-trade.sellToken') {
-					send('trade', { tool, args, result: r });
-				}
-				return r;
-			},
-		},
+		wallet,
 	};
 
 	try {
 		const result = await runStrategy(
-			{ strategy: body.strategy, durationSec, simulate: true },
-			wrappedCtx,
+			{
+				strategy: body.strategy,
+				durationSec,
+				simulate: mode === 'simulate',
+				onLog: (entry) => { if (!aborted) send('log', entry); },
+			},
+			ctx,
 		);
-		// Stream the trade log as discrete events for the UI.
-		for (const entry of result.data?.log ?? []) send('log', entry);
 		send('done', result.data);
 	} catch (e) {
 		send('error', { message: e.message });

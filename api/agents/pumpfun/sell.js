@@ -125,6 +125,25 @@ export default async function handler(req, res, id) {
 		)
 	`.catch((e) => console.error('[pumpfun/sell] log failed', e));
 
+	try {
+		const [m] = await sql`
+			select id from pump_agent_mints where mint=${body.mint} and network=${body.network} limit 1
+		`;
+		if (m) {
+			await sql`
+				INSERT INTO pump_agent_trades
+					(mint_id, user_id, wallet, direction, route, sol_amount, token_amount, slippage_bps, tx_signature, network)
+				VALUES
+					(${m.id}, ${auth.userId}, ${keypair.publicKey.toBase58()}, 'sell',
+					 'bonding_curve', ${expectedSolStr || null}, ${body.tokenAmount},
+					 ${body.slippageBps || null}, ${signature}, ${body.network})
+				ON CONFLICT (tx_signature, network) DO NOTHING
+			`;
+		}
+	} catch (e) {
+		console.error('[pumpfun/sell] trade index failed', e);
+	}
+
 	return json(res, 200, {
 		data: {
 			signature,

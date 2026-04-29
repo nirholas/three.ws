@@ -46,8 +46,8 @@
 		{ "src": "/reset-password", "dest": "/reset-password.html" },
 		{ "src": "/wallet-login.js", "dest": "/wallet-login.js" },
 		{ "src": "/wallet/(.*)", "dest": "/wallet/$1" },
-		{ "src": "/pumpfun", "dest": "/pumpfun-demo.html" },
-		{ "src": "/pumpfun/", "dest": "/pumpfun-demo.html" },
+		{ "src": "/pumpfun", "dest": "/pumpfun.html" },
+		{ "src": "/pumpfun/", "dest": "/pumpfun.html" },
 		{ "src": "/deploy", "dest": "/app.html" },
 		{ "src": "/dashboard", "dest": "/dashboard/index.html" },
 		{ "src": "/dashboard/", "dest": "/dashboard/index.html" },
@@ -256,6 +256,7 @@
 		{ "path": "/api/cron/run-dca", "schedule": "0 * * * *" },
 		{ "path": "/api/cron/run-subscriptions", "schedule": "0 * * * *" },
 		{ "path": "/api/cron/pumpfun-signals", "schedule": "*/15 * * * *" },
-		{ "path": "/api/cron/pump-agent-stats", "schedule": "*/10 * * * *" }
+		{ "path": "/api/cron/pump-agent-stats", "schedule": "*/10 * * * *" },
+		{ "path": "/api/cron/solana-attest-event-cleanup", "schedule": "*/10 * * * *" }
 	]
 }

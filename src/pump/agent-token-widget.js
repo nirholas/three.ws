@@ -189,6 +189,15 @@ const STYLES = `
 }
 .atok-gov b { color: rgba(255,200,140,0.85); font-weight: 500; }
 
+.atok-rep {
+	margin-top: 0.7rem; padding: 0.45rem 0.7rem; border-radius: 8px;
+	background: rgba(255,200,140,0.05); display: flex; align-items: center; gap: 0.5rem;
+	font-size: 0.82rem; color: rgba(255,220,180,0.95);
+}
+.atok-rep-stars { letter-spacing: 0.04em; color: #ffd57a; }
+.atok-rep-num   { font-variant-numeric: tabular-nums; color: #fff; }
+.atok-rep-meta  { color: rgba(255,255,255,0.5); font-size: 0.75rem; }
+
 .atok-mobile-strip {
 	display: none;
 }
@@ -243,12 +252,15 @@ export class AgentTokenWidget {
 		this.balances = null;
 		this.quote = null;
 		this.feed = [];
+		this.reputation = null;     // /api/agents/solana-reputation snapshot
 		this.lastPrice = null;
 		this.lastVaults = null;
 		this.lastFeedTop = null;
 		this._mobileStrip = null;
 		this._poll = null;
 		this._destroyed = false;
+		this._wsUnsubs = [];        // realtime onAccountChange subscriptions
+		this._wsConn = null;
 		injectStyles();
 	}
 
@@ -257,14 +269,79 @@ export class AgentTokenWidget {
 		this.mount.innerHTML = `<div class="atok"><div class="atok-empty">Loading $AGENT…</div></div>`;
 		await this._refresh();
 		if (this.token) {
-			this._poll = setInterval(() => this._refresh().catch(() => {}), POLL_MS);
+			// Polling is the fallback. Real-time vault subscription kicks in via
+			// _ensureRealtime() and shrinks the polling interval to a long beat
+			// (60s) used only for stats/feed/quote that lack account-subscriptions.
+			this._poll = setInterval(() => this._refresh().catch(() => {}), 60_000);
+			this._ensureRealtime().catch(() => {});
 		}
 	}
 
 	destroy() {
 		this._destroyed = true;
 		if (this._poll) clearInterval(this._poll);
+		this._teardownRealtime();
 		if (this._mobileStrip?.parentNode) this._mobileStrip.parentNode.removeChild(this._mobileStrip);
+	}
+
+	async _ensureRealtime() {
+		if (!this.token || !this.balances) return;
+		if (this._wsUnsubs.length) return; // already subscribed
+		try {
+			const [{ Connection, PublicKey }] = await Promise.all([import('@solana/web3.js')]);
+			const url =
+				this.token.network === 'devnet'
+					? 'https://api.devnet.solana.com'
+					: 'https://api.mainnet-beta.solana.com';
+			const conn = new Connection(url, 'confirmed');
+			this._wsConn = conn;
+			const subscribe = (addr, name) => {
+				if (!addr) return;
+				try {
+					const id = conn.onAccountChange(
+						new PublicKey(addr),
+						() => this._refreshBalancesOnly().catch(() => {}),
+						'confirmed',
+					);
+					this._wsUnsubs.push({ id, conn });
+				} catch {
+					/* ignore subscription failures, polling fallback covers it */
+				}
+			};
+			subscribe(this.balances.payment?.address, 'payment');
+			subscribe(this.balances.buyback?.address, 'buyback');
+			subscribe(this.balances.withdraw?.address, 'withdraw');
+		} catch {
+			/* RPC may not support websocket; polling continues */
+		}
+	}
+
+	_teardownRealtime() {
+		for (const sub of this._wsUnsubs) {
+			try {
+				sub.conn.removeAccountChangeListener(sub.id);
+			} catch {
+				/* swallow */
+			}
+		}
+		this._wsUnsubs = [];
+		this._wsConn = null;
+	}
+
+	async _refreshBalancesOnly() {
+		if (this._destroyed || !this.token) return;
+		try {
+			const balRes = await fetch(
+				`/api/pump/balances?mint=${this.token.mint}&network=${this.token.network}`,
+			).then((r) => r.json());
+			if (balRes.balances) {
+				this._compareAndEmit(balRes.balances, this.feed);
+				this.balances = balRes.balances;
+				this._renderLive();
+			}
+		} catch {
+			/* silent */
+		}
 	}
 
 	async _refresh() {
@@ -284,9 +361,12 @@ export class AgentTokenWidget {
 			return;
 		}
 
-		// Live state: parallel fetch balances, quote, feed.
+		// Live state: parallel fetch balances, quote, feed, and reputation
+		// overlay. Reputation lookup keys off the agent's metaplex-core asset
+		// pubkey from the parent identity (passed in via the `identity` prop).
 		try {
-			const [balRes, quoteRes, feedRes] = await Promise.all([
+			const repAsset = this.identity?.meta?.sol_mint_address || this.identity?.meta?.onchain?.onchain_id || null;
+			const [balRes, quoteRes, feedRes, repRes] = await Promise.all([
 				fetch(
 					`/api/pump/balances?mint=${this.token.mint}&network=${this.token.network}`,
 				).then((r) => r.json()),
@@ -296,12 +376,21 @@ export class AgentTokenWidget {
 				fetch(
 					`/api/pump/payments-list?mint=${this.token.mint}&network=${this.token.network}&limit=8`,
 				).then((r) => r.json()),
+				repAsset
+					? fetch(
+							`/api/agents/solana-reputation?asset=${repAsset}&network=${this.token.network}`,
+						)
+							.then((r) => r.json())
+							.catch(() => null)
+					: Promise.resolve(null),
 			]);
 			this._compareAndEmit(balRes.balances, feedRes.data);
 			this.balances = balRes.balances || null;
 			this.quote = quoteRes || null;
 			this.feed = feedRes.data || [];
+			this.reputation = repRes || null;
 			this._renderLive();
+			this._ensureRealtime().catch(() => {});
 		} catch (e) {
 			this._renderError(e.message);
 		}
@@ -436,6 +525,7 @@ export class AgentTokenWidget {
 				? `${fmtUsdc((BigInt(stats.total_atomics || '0') * BigInt(buybackBps)) / 10_000n)} routed to buyback so far across <b>${stats.unique_payers}</b> unique payer${stats.unique_payers === 1 ? '' : 's'}.`
 				: `If this agent earns <b>$10/mo</b>, buyback burns <b>${fmtUsdc((10_000_000n * BigInt(buybackBps)) / 10_000n)}/mo</b> of $${symbol}.`;
 
+		const solscanCluster = this.token.network === 'devnet' ? '?cluster=devnet' : '';
 		const feedRows = (this.feed || [])
 			.slice(0, 5)
 			.map((p) => {
@@ -445,17 +535,55 @@ export class AgentTokenWidget {
 						? `<code>${p.skill_id}</code>`
 						: 'paid call';
 				const buybackShare = (BigInt(p.amount_atomics || '0') * BigInt(buybackBps)) / 10_000n;
+				const pdaLink = p.invoice_pda
+					? `<a href="https://solscan.io/account/${p.invoice_pda}${solscanCluster}" target="_blank" rel="noopener" title="Open on-chain invoice receipt" style="color:rgba(180,210,255,0.7);text-decoration:none;font-size:0.7rem;">PDA↗</a>`
+					: '';
+				const txLink = p.tx_signature
+					? `<a href="https://solscan.io/tx/${p.tx_signature}${solscanCluster}" target="_blank" rel="noopener" title="Open settlement tx" style="color:rgba(180,210,255,0.7);text-decoration:none;font-size:0.7rem;">tx↗</a>`
+					: '';
 				return `
 					<div class="atok-feed-row">
 						<div>${shortAddr(p.payer_wallet, 4)} · ${why}</div>
 						<div style="display:flex;gap:0.5rem;align-items:center;">
 							<span>${fmtUsdc(p.amount_atomics)}</span>
 							${buybackBps > 0 ? `<span class="atok-buyback-pill">+${fmtUsdc(buybackShare)} 🔥</span>` : ''}
+							${pdaLink}
+							${txLink}
 							<span style="color:rgba(255,255,255,0.35);font-size:0.7rem;">${timeAgo(p.confirmed_at || p.created_at)}</span>
 						</div>
 					</div>`;
 			})
 			.join('');
+
+		// Burns feed (separate from payments)
+		const burnsFeedRows = (t.burns_feed || [])
+			.slice(0, 5)
+			.map((b) => `
+				<div class="atok-feed-row">
+					<div>🔥 burn</div>
+					<div style="display:flex;gap:0.5rem;align-items:center;">
+						<span>${fmtUsdc(b.burn_amount || '0')}</span>
+						${b.tx_signature ? `<a href="https://solscan.io/tx/${b.tx_signature}${solscanCluster}" target="_blank" rel="noopener" style="color:rgba(180,210,255,0.7);text-decoration:none;font-size:0.7rem;">tx↗</a>` : ''}
+						<span style="color:rgba(255,255,255,0.35);font-size:0.7rem;">${timeAgo(b.created_at)}</span>
+					</div>
+				</div>`)
+			.join('');
+		const burnsBlock = burnsFeedRows
+			? `<div class="atok-feed">
+					<div class="atok-feed-title">Buybacks</div>
+					${burnsFeedRows}
+				</div>`
+			: '';
+
+		// Reputation overlay
+		const rep = this.reputation;
+		const repBlock = rep && rep.feedback?.total > 0
+			? `<div class="atok-rep" title="Reputation drives auto-governance of buyback share.">
+					<span class="atok-rep-stars">${'★'.repeat(Math.round(rep.feedback.score_avg_weighted || rep.feedback.score_avg || 0))}${'☆'.repeat(5 - Math.round(rep.feedback.score_avg_weighted || rep.feedback.score_avg || 0))}</span>
+					<span class="atok-rep-num">${(rep.feedback.score_avg_weighted || rep.feedback.score_avg || 0).toFixed(2)}</span>
+					<span class="atok-rep-meta">· ${rep.feedback.total} review${rep.feedback.total === 1 ? '' : 's'}${rep.feedback.unique_attesters ? ` · ${rep.feedback.unique_attesters} unique` : ''}</span>
+				</div>`
+			: '';
 
 		const feedBlock = feedRows
 			? `<div class="atok-feed">
@@ -535,8 +663,10 @@ export class AgentTokenWidget {
 				</div>
 
 				${totalBurned}
+				${repBlock}
 				${govExplain}
 				${feedBlock}
+				${burnsBlock}
 				${ownerActions}
 			</div>
 		`;

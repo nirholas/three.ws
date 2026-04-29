@@ -111,6 +111,13 @@ export default wrap(async (req, res) => {
 				owner: a.owner,
 				passport_url: `${origin}/agent-passport.html?asset=${asset}&network=${network}`,
 				...(a.meta?.vanity_prefix ? { vanity_prefix: a.meta.vanity_prefix } : {}),
+				...(a.meta?.solana_address ? {
+					operator_wallet: {
+						address: a.meta.solana_address,
+						...(a.meta.solana_vanity_prefix ? { vanity_prefix: a.meta.solana_vanity_prefix } : {}),
+						...(a.meta.solana_wallet_source ? { source: a.meta.solana_wallet_source } : {}),
+					},
+				} : {}),
 			},
 			skills: a.skills || [],
 			endpoints: {

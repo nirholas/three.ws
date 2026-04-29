@@ -130,6 +130,29 @@ export default async function handler(req, res, id) {
 		)
 	`.catch((e) => console.error('[pumpfun/buy] log failed', e));
 
+	// Mirror into pump_agent_trades for cross-feature analytics (reputation,
+	// admin health, strategy backtests). Best-effort — agent may not have a
+	// pump_agent_mints row yet if the mint was launched outside three.ws.
+	try {
+		const [m] = await sql`
+			select id from pump_agent_mints where mint=${body.mint} and network=${body.network} limit 1
+		`;
+		if (m) {
+			const lamports = BigInt(Math.floor(body.solAmount * 1_000_000_000));
+			await sql`
+				INSERT INTO pump_agent_trades
+					(mint_id, user_id, wallet, direction, route, sol_amount, slippage_bps, tx_signature, network)
+				VALUES
+					(${m.id}, ${auth.userId}, ${keypair.publicKey.toBase58()}, 'buy',
+					 'bonding_curve', ${lamports.toString()}, ${body.slippageBps || null},
+					 ${signature}, ${body.network})
+				ON CONFLICT (tx_signature, network) DO NOTHING
+			`;
+		}
+	} catch (e) {
+		console.error('[pumpfun/buy] trade index failed', e);
+	}
+
 	return json(res, 200, {
 		data: {
 			signature,

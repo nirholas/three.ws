@@ -19,16 +19,28 @@
 				--panel2: #1a1a24;
 				--muted: #888;
 			}
-			* { box-sizing: border-box; }
+			* {
+				box-sizing: border-box;
+			}
 			body {
-				font: 15px/1.55 -apple-system, system-ui, Segoe UI, Roboto, sans-serif;
+				font:
+					15px/1.55 -apple-system,
+					system-ui,
+					Segoe UI,
+					Roboto,
+					sans-serif;
 				color: #eee;
 				margin: 0;
 				background: var(--bg);
 				min-height: 100vh;
 			}
-			a { color: #9a8cff; text-decoration: none; }
-			a:hover { text-decoration: underline; }
+			a {
+				color: #9a8cff;
+				text-decoration: none;
+			}
+			a:hover {
+				text-decoration: underline;
+			}
 			header {
 				display: flex;
 				align-items: center;
@@ -40,10 +52,25 @@
 				background: var(--bg);
 				z-index: 5;
 			}
-			.brand { font-weight: 600; letter-spacing: -0.01em; }
-			main { padding: 28px; max-width: 980px; margin: 0 auto; }
-			h1 { font-size: 22px; margin: 0 0 6px; letter-spacing: -0.01em; }
-			.sub { color: var(--muted); margin: 0 0 22px; font-size: 14px; }
+			.brand {
+				font-weight: 600;
+				letter-spacing: -0.01em;
+			}
+			main {
+				padding: 28px;
+				max-width: 980px;
+				margin: 0 auto;
+			}
+			h1 {
+				font-size: 22px;
+				margin: 0 0 6px;
+				letter-spacing: -0.01em;
+			}
+			.sub {
+				color: var(--muted);
+				margin: 0 0 22px;
+				font-size: 14px;
+			}
 			.panel {
 				background: var(--panel);
 				border: 1px solid var(--border);
@@ -59,10 +86,25 @@
 				color: #ddd;
 				text-transform: uppercase;
 			}
-			.row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-			.col { display: flex; flex-direction: column; gap: 10px; }
-			label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
-			input, select {
+			.row {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				flex-wrap: wrap;
+			}
+			.col {
+				display: flex;
+				flex-direction: column;
+				gap: 10px;
+			}
+			label {
+				display: block;
+				font-size: 12px;
+				color: var(--muted);
+				margin-bottom: 4px;
+			}
+			input,
+			select {
 				background: var(--panel2);
 				color: #eee;
 				border: 1px solid var(--border);
@@ -71,8 +113,15 @@
 				font: inherit;
 				min-width: 0;
 			}
-			input:focus, select:focus { outline: none; border-color: var(--accent); }
-			.field { flex: 1 1 180px; min-width: 0; }
+			input:focus,
+			select:focus {
+				outline: none;
+				border-color: var(--accent);
+			}
+			.field {
+				flex: 1 1 180px;
+				min-width: 0;
+			}
 			.btn {
 				padding: 9px 14px;
 				border-radius: 9px;
@@ -83,13 +132,37 @@
 				background: var(--accent);
 				color: #fff;
 			}
-			.btn:hover { filter: brightness(1.1); }
-			.btn:disabled { opacity: 0.45; cursor: not-allowed; }
-			.btn.ghost { background: transparent; border: 1px solid var(--border); color: #ddd; }
-			.btn.danger { background: #3a1d22; color: var(--err); border: 1px solid #4a2329; }
-			.kv { display: grid; grid-template-columns: 140px 1fr; gap: 6px 14px; font-size: 13px; }
-			.kv dt { color: var(--muted); }
-			.kv dd { margin: 0; word-break: break-all; font-family: ui-monospace, Menlo, monospace; }
+			.btn:hover {
+				filter: brightness(1.1);
+			}
+			.btn:disabled {
+				opacity: 0.45;
+				cursor: not-allowed;
+			}
+			.btn.ghost {
+				background: transparent;
+				border: 1px solid var(--border);
+				color: #ddd;
+			}
+			.btn.danger {
+				background: #3a1d22;
+				color: var(--err);
+				border: 1px solid #4a2329;
+			}
+			.kv {
+				display: grid;
+				grid-template-columns: 140px 1fr;
+				gap: 6px 14px;
+				font-size: 13px;
+			}
+			.kv dt {
+				color: var(--muted);
+			}
+			.kv dd {
+				margin: 0;
+				word-break: break-all;
+				font-family: ui-monospace, Menlo, monospace;
+			}
 			pre {
 				background: var(--panel2);
 				border: 1px solid var(--border);
@@ -114,21 +187,64 @@
 				box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
 				opacity: 0;
 				transform: translateY(8px);
-				transition: opacity 0.18s, transform 0.18s;
+				transition:
+					opacity 0.18s,
+					transform 0.18s;
 				pointer-events: none;
 			}
-			.toast.show { opacity: 1; transform: none; }
-			.toast.ok { border-color: #1f4232; }
-			.toast.err { border-color: #4a2329; color: var(--err); }
-			table { width: 100%; border-collapse: collapse; font-size: 13px; }
-			th, td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; }
-			th { color: var(--muted); font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
-			td.mono { font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
-			.pnl-pos { color: var(--ok); }
-			.pnl-neg { color: var(--err); }
-			.muted { color: var(--muted); }
-			.tag { font-size: 11px; padding: 2px 7px; border-radius: 999px; background: var(--panel2); border: 1px solid var(--border); }
-			.tag.devnet { color: var(--warn); border-color: #4a3a18; }
+			.toast.show {
+				opacity: 1;
+				transform: none;
+			}
+			.toast.ok {
+				border-color: #1f4232;
+			}
+			.toast.err {
+				border-color: #4a2329;
+				color: var(--err);
+			}
+			table {
+				width: 100%;
+				border-collapse: collapse;
+				font-size: 13px;
+			}
+			th,
+			td {
+				padding: 8px 10px;
+				border-bottom: 1px solid var(--border);
+				text-align: left;
+			}
+			th {
+				color: var(--muted);
+				font-weight: 500;
+				font-size: 12px;
+				text-transform: uppercase;
+				letter-spacing: 0.04em;
+			}
+			td.mono {
+				font-family: ui-monospace, Menlo, monospace;
+				font-size: 12px;
+			}
+			.pnl-pos {
+				color: var(--ok);
+			}
+			.pnl-neg {
+				color: var(--err);
+			}
+			.muted {
+				color: var(--muted);
+			}
+			.tag {
+				font-size: 11px;
+				padding: 2px 7px;
+				border-radius: 999px;
+				background: var(--panel2);
+				border: 1px solid var(--border);
+			}
+			.tag.devnet {
+				color: var(--warn);
+				border-color: #4a3a18;
+			}
 		</style>
 	</head>
 	<body>
@@ -147,9 +263,9 @@
 		<main>
 			<h1>Agent control panel</h1>
 			<p class="sub">
-				Each agent has its own Solana wallet. Launch tokens, trade on the bonding curve, and watch
-				positions — the agent signs every transaction from its server-held keypair (subject to
-				its spend policy).
+				Each agent has its own Solana wallet. Launch tokens, trade on the bonding curve, and
+				watch positions — the agent signs every transaction from its server-held keypair
+				(subject to its spend policy).
 			</p>
 
 			<section class="panel" id="agent-panel">
@@ -178,27 +294,61 @@
 						<dd id="agent-balance" class="muted">—</dd>
 					</dl>
 					<div class="row" style="margin-top: 10px">
-						<button class="btn ghost" id="provision-btn" hidden>Provision Solana wallet</button>
-						<a class="btn ghost" id="vanity-link" href="/vanity-wallet" target="_blank" rel="noopener">Grind vanity address ✦</a>
-						<a id="explorer-link" class="muted" href="#" target="_blank" rel="noopener" hidden>Open on Solscan ↗</a>
+						<button class="btn ghost" id="provision-btn" hidden>
+							Provision Solana wallet
+						</button>
+						<a
+							class="btn ghost"
+							id="vanity-link"
+							href="/vanity-wallet"
+							target="_blank"
+							rel="noopener"
+							>Grind vanity address ✦</a
+						>
+						<a
+							id="explorer-link"
+							class="muted"
+							href="#"
+							target="_blank"
+							rel="noopener"
+							hidden
+							>Open on Solscan ↗</a
+						>
 					</div>
 				</div>
 			</section>
 
 			<section class="panel" id="sns-panel">
-				<h2>SNS identity <span class="muted" style="font-size: 13px; font-weight: normal">(Solana Name Service)</span></h2>
+				<h2>
+					SNS identity
+					<span class="muted" style="font-size: 13px; font-weight: normal"
+						>(Solana Name Service)</span
+					>
+				</h2>
 				<p class="muted" style="margin: 0 0 10px; font-size: 13px">
-					Attach a <code>.sol</code> domain owned by this agent's wallet so it can be referenced by name.
+					Attach a <code>.sol</code> domain owned by this agent's wallet so it can be
+					referenced by name.
 				</p>
 				<dl class="kv">
 					<dt>Current</dt>
 					<dd id="sns-current" class="muted">—</dd>
 				</dl>
-				<div id="sns-domain-list" class="row" style="margin-top: 8px; flex-wrap: wrap; gap: 6px"></div>
+				<div
+					id="sns-domain-list"
+					class="row"
+					style="margin-top: 8px; flex-wrap: wrap; gap: 6px"
+				></div>
 				<div class="row" style="margin-top: 10px">
 					<button class="btn ghost" id="sns-refresh-btn">Refresh domains</button>
 					<button class="btn ghost" id="sns-clear-btn" hidden>Clear SNS id</button>
-					<a id="sns-register-link" class="muted" href="https://www.sns.id" target="_blank" rel="noopener">Register a name on sns.id</a>
+					<a
+						id="sns-register-link"
+						class="muted"
+						href="https://www.sns.id"
+						target="_blank"
+						rel="noopener"
+						>Register a name on sns.id</a
+					>
 				</div>
 			</section>
 
@@ -226,14 +376,17 @@
 						<input id="launch-sol" type="number" min="0" step="0.001" placeholder="0" />
 					</div>
 					<div class="field" style="flex: 0 0 auto; padding-top: 22px">
-						<label style="display:flex; align-items:center; gap:6px; color:#ddd">
+						<label style="display: flex; align-items: center; gap: 6px; color: #ddd">
 							<input type="checkbox" id="launch-vanity-ic" /> ignore case
 						</label>
 					</div>
 				</div>
 				<div class="row" style="margin-top: 10px">
 					<div class="field">
-						<label for="launch-uri">Metadata URI <span class="muted">(auto-filled to agent metadata)</span></label>
+						<label for="launch-uri"
+							>Metadata URI
+							<span class="muted">(auto-filled to agent metadata)</span></label
+						>
 						<input id="launch-uri" />
 					</div>
 					<div style="flex: 0 0 auto; padding-top: 19px">
@@ -241,8 +394,14 @@
 					</div>
 				</div>
 				<p class="muted" style="margin: 10px 0 0; font-size: 12px">
-					Base58 only (no 0/O/I/l). Combined prefix+suffix length: 3 chars ≈ instant, 4 ≈ seconds, 5 ≈ minutes, 6+ may time out. Powered by
-					<a href="https://github.com/nirholas/solana-wallet-toolkit" target="_blank" rel="noopener">solana-wallet-toolkit</a>.
+					Base58 only (no 0/O/I/l). Combined prefix+suffix length: 3 chars ≈ instant, 4 ≈
+					seconds, 5 ≈ minutes, 6+ may time out. Powered by
+					<a
+						href="https://github.com/nirholas/solana-wallet-toolkit"
+						target="_blank"
+						rel="noopener"
+						>solana-wallet-toolkit</a
+					>.
 				</p>
 			</section>
 
@@ -281,10 +440,71 @@
 					<h2 style="margin: 0">Portfolio</h2>
 					<button class="btn ghost" id="portfolio-btn">Refresh portfolio</button>
 				</div>
-				<div id="portfolio-totals" class="muted" style="margin: 10px 0; font-size: 13px">—</div>
-				<div id="portfolio-table-wrap"><table id="portfolio-table"><thead><tr>
-					<th>Mint</th><th>SOL in</th><th>SOL out</th><th>Token bal</th><th>Est. value (SOL)</th><th>Unrealized PnL</th><th></th>
-				</tr></thead><tbody><tr><td colspan="7" class="muted">No positions yet.</td></tr></tbody></table></div>
+				<div id="portfolio-totals" class="muted" style="margin: 10px 0; font-size: 13px">
+					—
+				</div>
+				<div id="portfolio-table-wrap">
+					<table id="portfolio-table">
+						<thead>
+							<tr>
+								<th>Mint</th>
+								<th>SOL in</th>
+								<th>SOL out</th>
+								<th>Token bal</th>
+								<th>Est. value (SOL)</th>
+								<th>Unrealized PnL</th>
+								<th></th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td colspan="7" class="muted">No positions yet.</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</section>
+
+			<section class="panel" id="indexer-panel" hidden>
+				<div style="display: flex; justify-content: space-between; align-items: center">
+					<h2 style="margin: 0">Token indexer</h2>
+					<button class="btn ghost" id="indexer-refresh">Refresh</button>
+				</div>
+				<div class="muted" style="font-size: 13px; margin: 6px 0 12px">
+					Live snapshot from <code>/api/cron/pump-agent-stats</code> + price history.
+				</div>
+				<div id="token-stats">Pick a launched mint above (Trade panel) to see stats.</div>
+				<canvas
+					id="price-chart"
+					width="640"
+					height="120"
+					style="
+						display: block;
+						margin-top: 12px;
+						max-width: 100%;
+						border: 1px solid var(--border);
+						border-radius: 8px;
+						background: #0a0a12;
+					"
+				></canvas>
+			</section>
+
+			<section class="panel" id="signals-panel">
+				<h2>
+					Live pump.fun signals
+					<span class="muted" style="font-weight:400;font-size:13px">
+						— off-chain claim/graduation activity tied to your agent's wallet
+					</span>
+				</h2>
+				<div id="signals-grid" class="muted">No signals yet. The crawler runs every 15 minutes.</div>
+				<div class="row" style="margin-top: 12px">
+					<a class="btn ghost" id="open-live-feed" href="/pumpfun" target="_blank" rel="noopener">
+						Open live feed ↗
+					</a>
+					<a class="btn ghost" id="open-passport" href="#" target="_blank" rel="noopener">
+						Open agent passport ↗
+					</a>
+				</div>
 			</section>
 
 			<section class="panel">
@@ -409,7 +629,8 @@
 					const { data } = await api(`/api/agents/${id}/solana?network=${network}`);
 					els.agentAddress.textContent = data.address;
 					els.agentAddress.classList.remove('muted');
-					els.agentBalance.textContent = data.sol == null ? 'unknown' : `${data.sol.toFixed(6)} SOL`;
+					els.agentBalance.textContent =
+						data.sol == null ? 'unknown' : `${data.sol.toFixed(6)} SOL`;
 					els.agentBalance.classList.remove('muted');
 					els.explorerLink.href = explorerAddrUrl(data.address, network);
 					els.explorerLink.hidden = false;
@@ -437,7 +658,8 @@
 				}
 				const owned = Array.isArray(data.domains) ? data.domains : [];
 				if (!owned.length) {
-					els.snsDomainList.innerHTML = '<span class="muted" style="font-size:13px">This wallet does not own any .sol domains yet. Register one on sns.id, then refresh.</span>';
+					els.snsDomainList.innerHTML =
+						'<span class="muted" style="font-size:13px">This wallet does not own any .sol domains yet. Register one on sns.id, then refresh.</span>';
 					return;
 				}
 				els.snsDomainList.innerHTML = '';
@@ -468,7 +690,10 @@
 					const { data } = await api(`/api/agents/${id}/sns`);
 					renderSnsList(data);
 				} catch (err) {
-					els.snsCurrent.textContent = err.body?.error === 'conflict' ? 'Provision a Solana wallet first' : err.message;
+					els.snsCurrent.textContent =
+						err.body?.error === 'conflict'
+							? 'Provision a Solana wallet first'
+							: err.message;
 					els.snsDomainList.innerHTML = '';
 					els.snsClearBtn.hidden = true;
 				}
@@ -478,7 +703,10 @@
 				const id = currentAgentId();
 				if (!id) return;
 				try {
-					await api(`/api/agents/${id}/sns`, { method: 'POST', body: JSON.stringify({ domain }) });
+					await api(`/api/agents/${id}/sns`, {
+						method: 'POST',
+						body: JSON.stringify({ domain }),
+					});
 					toast(`Attached ${domain}.sol`);
 					await refreshSns();
 				} catch (err) {
@@ -531,7 +759,8 @@
 				const sol = parseFloat(els.launchSol.value);
 				if (sol > 0) body.solAmount = sol;
 				els.launchBtn.disabled = true;
-				els.launchBtn.textContent = vanity || vanitySuffix ? 'Grinding & launching…' : 'Launching…';
+				els.launchBtn.textContent =
+					vanity || vanitySuffix ? 'Grinding & launching…' : 'Launching…';
 				try {
 					const { data } = await api(`/api/agents/${id}/pumpfun/launch`, {
 						method: 'POST',
@@ -631,7 +860,9 @@
 				if (!id) return;
 				const network = currentNetwork();
 				try {
-					const { data } = await api(`/api/agents/${id}/pumpfun/portfolio?network=${network}`);
+					const { data } = await api(
+						`/api/agents/${id}/pumpfun/portfolio?network=${network}`,
+					);
 					logResponse('portfolio', data);
 					const t = data.totals || {};
 					els.portfolioTotals.innerHTML =
@@ -641,14 +872,17 @@
 
 					const tbody = els.portfolioTable;
 					if (!data.positions.length) {
-						tbody.innerHTML = '<tr><td colspan="7" class="muted">No positions yet.</td></tr>';
+						tbody.innerHTML =
+							'<tr><td colspan="7" class="muted">No positions yet.</td></tr>';
 						return;
 					}
 					tbody.innerHTML = '';
 					for (const p of data.positions) {
 						const tr = document.createElement('tr');
 						const grad = p.graduated ? ' <span class="tag">graduated</span>' : '';
-						const err = p.error ? ` <span class="tag" style="color:var(--err)">${p.error}</span>` : '';
+						const err = p.error
+							? ` <span class="tag" style="color:var(--err)">${p.error}</span>`
+							: '';
 						tr.innerHTML =
 							`<td class="mono"><a href="https://pump.fun/${p.mint}" target="_blank" rel="noopener">${p.mint.slice(0, 12)}…</a>${grad}${err}</td>` +
 							`<td>${fmtSol(p.sol_in)}</td>` +
@@ -676,7 +910,9 @@
 			});
 			els.networkSelect.addEventListener('change', async () => {
 				const isDev = currentNetwork() === 'devnet';
-				document.querySelectorAll('.network-tag').forEach((e) => (e.className = `tag${isDev ? ' devnet' : ''}`));
+				document
+					.querySelectorAll('.network-tag')
+					.forEach((e) => (e.className = `tag${isDev ? ' devnet' : ''}`));
 				await refreshAgent();
 				await refreshPortfolio();
 			});
@@ -691,6 +927,116 @@
 			els.buyBtn.addEventListener('click', buy);
 			els.sellBtn.addEventListener('click', sell);
 			els.portfolioBtn.addEventListener('click', refreshPortfolio);
+
+			// ── Token indexer panel ──────────────────────────────────────────
+			const indexerPanel = document.getElementById('indexer-panel');
+			const tokenStatsEl = document.getElementById('token-stats');
+			const chartEl = document.getElementById('price-chart');
+
+			function fmtSolLamports(s) {
+				if (s == null) return '—';
+				return (Number(s) / 1e9).toFixed(4) + ' SOL';
+			}
+
+			async function refreshIndexer() {
+				const mint = els.tradeMint.value.trim();
+				const network = currentNetwork();
+				if (!mint) {
+					indexerPanel.hidden = true;
+					return;
+				}
+				indexerPanel.hidden = false;
+				tokenStatsEl.innerHTML = '<div class="muted">Loading…</div>';
+				try {
+					const card = await fetch(`/api/agents/solana-card?asset=${mint}`)
+						.then((r) => (r.ok ? r.json() : null))
+						.catch(() => null);
+					const ts = card?.token_stats;
+					if (!ts) {
+						tokenStatsEl.innerHTML =
+							'<div class="muted">No indexed stats yet — pump-agent-stats cron runs every 10 min after launch.</div>';
+					} else {
+						const refreshedAgo = ts.refreshed_at
+							? `${Math.max(0, Math.round((Date.now() - new Date(ts.refreshed_at)) / 60000))}m ago`
+							: '—';
+						let body;
+						if (ts.graduated) {
+							const a = ts.amm || {};
+							body =
+								`<span class="tag" style="background:#5c8fff22;color:#9bf">graduated · AMM</span>` +
+								` <span class="muted">refreshed ${refreshedAgo}</span>` +
+								`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:8px">` +
+								`<div><div class="muted">Pool quote</div><b>${fmtSolLamports(a.quote_reserve)}</b></div>` +
+								`<div><div class="muted">Pool base (tokens)</div><b>${a.base_reserve ? Number(a.base_reserve).toExponential(2) : '—'}</b></div>` +
+								`<div><div class="muted">Recent tx (50-tail)</div><b>${ts.recent_tx_count || 0}</b></div>` +
+								`</div>`;
+						} else if (ts.bonding_curve) {
+							const c = ts.bonding_curve;
+							const pct = Number(c.progress_pct || 0);
+							body =
+								`<div>Curve · <b>${pct.toFixed(1)}%</b> to graduation <span class="muted">refreshed ${refreshedAgo}</span></div>` +
+								`<div style="background:#222;border-radius:6px;height:10px;overflow:hidden;margin:6px 0 10px"><div style="background:linear-gradient(90deg,#5c8fff,#00d4ff);width:${Math.min(100, pct)}%;height:100%"></div></div>` +
+								`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px">` +
+								`<div><div class="muted">Real SOL reserves</div><b>${fmtSolLamports(c.real_sol)}</b></div>` +
+								`<div><div class="muted">Real token reserves</div><b>${c.real_token ? Number(c.real_token).toExponential(2) : '—'}</b></div>` +
+								`<div><div class="muted">Recent tx (50-tail)</div><b>${ts.recent_tx_count || 0}</b></div>` +
+								`</div>`;
+						} else {
+							body = `<div class="muted">No bonding curve or AMM pool detected.</div>`;
+						}
+						tokenStatsEl.innerHTML = body;
+					}
+
+					const hist = await fetch(
+						`/api/agents/solana-price-history?asset=${mint}&network=${network}&hours=72`,
+					)
+						.then((r) => (r.ok ? r.json() : null))
+						.catch(() => null);
+					drawSparkline(chartEl, hist?.points || []);
+				} catch (e) {
+					tokenStatsEl.innerHTML = `<div class="muted">${e.message}</div>`;
+				}
+			}
+
+			function drawSparkline(canvas, points) {
+				const ctx = canvas.getContext('2d');
+				const w = canvas.width,
+					h = canvas.height;
+				ctx.clearRect(0, 0, w, h);
+				if (!points.length) {
+					ctx.fillStyle = '#666';
+					ctx.font = '12px system-ui';
+					ctx.fillText('No price points yet (cron runs every 10 min).', 10, h / 2);
+					return;
+				}
+				const xs = points.map((_, i) => i);
+				const ys = points.map((p) => Number(p.sol_per_token) || 0);
+				const min = Math.min(...ys),
+					max = Math.max(...ys);
+				const span = max - min || 1;
+				const sx = (i) => (i / Math.max(1, xs.length - 1)) * (w - 16) + 8;
+				const sy = (v) => h - 8 - ((v - min) / span) * (h - 16);
+				ctx.strokeStyle = '#6a5cff';
+				ctx.lineWidth = 2;
+				ctx.beginPath();
+				ys.forEach((v, i) => {
+					const x = sx(i),
+						y = sy(v);
+					if (i === 0) ctx.moveTo(x, y);
+					else ctx.lineTo(x, y);
+				});
+				ctx.stroke();
+				ctx.fillStyle = '#888';
+				ctx.font = '11px system-ui';
+				ctx.fillText(
+					`${ys[0].toExponential(2)} → ${ys[ys.length - 1].toExponential(2)} SOL/tok`,
+					8,
+					14,
+				);
+			}
+
+			document.getElementById('indexer-refresh').addEventListener('click', refreshIndexer);
+			els.tradeMint.addEventListener('change', refreshIndexer);
 
 			(async () => {
 				await loadAgents();

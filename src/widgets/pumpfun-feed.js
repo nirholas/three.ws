@@ -57,6 +57,12 @@ export async function mountPumpfunFeed(viewer, config, container, ctx = {}) {
 
 	const maxCards = Math.max(1, Math.min(50, config.maxCards || 8));
 	const protocol = ctx.protocol || (typeof window !== 'undefined' ? window.VIEWER?.agent_protocol : null);
+	let narrateOn = config.autoNarrate !== false;
+
+	const onNarrateToggle = (e) => {
+		narrateOn = !!e.detail?.on;
+	};
+	(container || document.body).addEventListener('pumpfun-feed:set-narrate', onNarrateToggle);
 
 	let focusMint = null;
 	const matchesFocus = (ev) =>
@@ -85,7 +91,7 @@ export async function mountPumpfunFeed(viewer, config, container, ctx = {}) {
 		if (!ev) return;
 		if (!matchesFocus(ev)) return;
 		addCard(stack, renderClaim(ev), maxCards);
-		if (config.autoNarrate) narrateClaim(protocol, ev);
+		if (narrateOn) narrateClaim(protocol, ev);
 	});
 
 	es.addEventListener('graduation', (msg) => {
@@ -93,7 +99,7 @@ export async function mountPumpfunFeed(viewer, config, container, ctx = {}) {
 		if (!ev) return;
 		if (!matchesFocus(ev)) return;
 		addCard(stack, renderGraduation(ev), maxCards);
-		if (config.autoNarrate) narrateGraduation(protocol, ev);
+		if (narrateOn) narrateGraduation(protocol, ev);
 	});
 
 	es.addEventListener('error', () => {
@@ -112,6 +118,7 @@ export async function mountPumpfunFeed(viewer, config, container, ctx = {}) {
 				es.close();
 			} catch {}
 			(container || document.body).removeEventListener('pumpfun-feed:focus-mint', onFocus);
+			(container || document.body).removeEventListener('pumpfun-feed:set-narrate', onNarrateToggle);
 			root.remove();
 		},
 	};
