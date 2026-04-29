@@ -73,7 +73,12 @@ export default wrap(async (req, res) => {
 		});
 		try {
 			const verified = await verifyPayment({ paymentHeader, requirements });
-			x402Ctx = { requirements, paymentPayload: verified.paymentPayload, payer: verified.payer };
+			x402Ctx = {
+				requirements,
+				requirement: verified.requirement,
+				paymentPayload: verified.paymentPayload,
+				payer: verified.payer,
+			};
 		} catch (err) {
 			return sendX402Error(res, requirements, err);
 		}
@@ -131,7 +136,7 @@ export default wrap(async (req, res) => {
 		try {
 			const settled = await settlePayment({
 				paymentPayload: x402Ctx.paymentPayload,
-				requirements: x402Ctx.requirements,
+				requirement: x402Ctx.requirement,
 			});
 			res.setHeader('x-payment-response', encodePaymentResponseHeader(settled));
 		} catch (err) {

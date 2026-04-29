@@ -1,31 +1,32 @@
 # pump-fun
 
-Read-only Solana market intel for three.ws agents. Proxies the
-[pump-fun-workers](https://github.com/nirholas/pump-fun-workers) MCP server
-(Cloudflare Worker) so any agent can search, inspect, and rug-check pump.fun
-tokens during conversation.
+Read-only Solana market intel for three.ws agents. The skill calls the
+in-house MCP route at `/api/pump-fun-mcp` (not an external host), so it
+works on any deployment of three.ws without third-party DNS or proxies.
 
-## Tools
+## Tools (10)
 
-| Tool | Use it for |
-|---|---|
-| `searchTokens` | Find a token by name, symbol, or mint |
-| `getTokenDetails` | Full metadata for a mint |
-| `getBondingCurve` | Reserves, price, graduation % |
-| `getTokenTrades` | Recent buy/sell history |
-| `getTrendingTokens` | Top by market cap |
-| `getNewTokens` | Most recent launches |
-| `getGraduatedTokens` | Tokens that hit Raydium |
-| `getKingOfTheHill` | Highest mcap still on the curve |
-| `getCreatorProfile` | Creator's tokens + rug flags |
-| `getTokenHolders` | Top holders + concentration |
+| Tool | Backed by | Notes |
+|---|---|---|
+| `getBondingCurve` | `@pump-fun/pump-sdk` on-chain | Real reserves + graduation %. Always available. |
+| `getTokenDetails` | Solana RPC + Metaplex metadata | Mint, supply, decimals, name, symbol. Always available. |
+| `getTokenHolders` | `connection.getTokenLargestAccounts` | Top holders + concentration. Always available. |
+| `searchTokens` | upstream pumpfun-claims-bot | Requires `PUMPFUN_BOT_URL`. |
+| `getTokenTrades` | upstream pumpfun-claims-bot | Requires `PUMPFUN_BOT_URL`. |
+| `getTrendingTokens` | upstream pumpfun-claims-bot | Requires `PUMPFUN_BOT_URL`. |
+| `getNewTokens` | upstream pumpfun-claims-bot | Requires `PUMPFUN_BOT_URL`. |
+| `getGraduatedTokens` | upstream pumpfun-claims-bot | Requires `PUMPFUN_BOT_URL`. |
+| `getKingOfTheHill` | upstream pumpfun-claims-bot | Requires `PUMPFUN_BOT_URL`. |
+| `getCreatorProfile` | upstream pumpfun-claims-bot | Requires `PUMPFUN_BOT_URL`. |
 
-All tools are read-only. No wallet keys are required or accepted.
+Tools requiring the indexer return JSON-RPC error `-32004` (with a clear
+configuration message) when the bot URL is not set — they never return
+fabricated or placeholder data.
 
-## Endpoint
+## Endpoint resolution
 
-Defaults to `https://pump-fun-sdk.modelcontextprotocol.name/mcp`. Override per
-install via `manifest.config.endpoint` to point at a self-hosted Worker.
+The skill resolves `/api/pump-fun-mcp` against the page origin
+(`window.location.origin`) at call time. No build-step configuration needed.
 
 ## Install
 
@@ -34,14 +35,24 @@ Reference the bundle from your agent manifest:
 ```json
 {
   "skills": [
-    { "uri": "https://cdn.three.ws/skills/pump-fun/" }
+    { "uri": "skills/pump-fun/" }
   ]
 }
 ```
 
-## Suggested instructions
+## Sentiment hooks
+
+Some handlers attach a `sentiment` (-1..1) to their result so the avatar's
+Empathy Layer reacts:
+
+- `getCreatorProfile` with rug flags → negative (concern)
+- `getBondingCurve` near graduation → positive (celebration)
+- `getTokenHolders` with whale concentration → negative (concern)
+- `getKingOfTheHill` → mild positive (curiosity)
+
+## Suggested system prompt
 
 > When the user mentions a token name, symbol, or mint address, call
-> `searchTokens` first, then `getBondingCurve` and `getTokenHolders` before
-> giving an opinion. Always check `getCreatorProfile` for rug flags before
-> recommending a buy.
+> `searchTokens` first, then `getBondingCurve` and `getTokenHolders`
+> before giving an opinion. Always check `getCreatorProfile` for rug
+> flags before recommending a buy.

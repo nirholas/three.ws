@@ -99,6 +99,15 @@ export default wrap(async (req, res) => {
 									},
 								},
 								{
+									x402: {
+										network: 'base',
+										asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+										payTo: '0x0C70c0e8453C5667739E41acdF6eC5787B8ff542',
+										scheme: 'exact',
+										maxAmountRequired: '1000',
+									},
+								},
+								{
 									mpp: {
 										method: 'solana-pay',
 										intent: 'purchase',

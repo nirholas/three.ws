@@ -331,6 +331,98 @@ describe('GET /api/pump/by-agent', () => {
 	});
 });
 
+describe('POST /api/pump/withdraw-confirm', () => {
+	beforeEach(resetAll);
+
+	it('confirms withdraw tx for owner', async () => {
+		authState.session = { id: 'user-1' };
+		sqlState.queue = [
+			[{ id: 'mint-1', mint: mintB58, user_id: 'user-1', agent_authority: walletB58, network: 'mainnet' }],
+		];
+		const pumpMod = await import('../../api/_lib/pump.js');
+		pumpMod.verifySignature.mockResolvedValueOnce({
+			transaction: { message: { accountKeys: [
+				{ pubkey: { toString: () => mintB58 } },
+				{ pubkey: { toString: () => walletB58 } },
+			] } },
+			meta: {},
+			slot: 12345,
+			blockTime: 1714492800,
+		});
+		const { default: handler } = await import('../../api/pump/withdraw-confirm.js');
+		const { res, json } = await invoke(handler, {
+			method: 'POST',
+			url: '/api/pump/withdraw-confirm',
+			body: {
+				mint: mintB58,
+				network: 'mainnet',
+				tx_signature: 'a'.repeat(88),
+			},
+		});
+		expect(res.statusCode).toBe(200);
+		expect(json.ok).toBe(true);
+		expect(json.slot).toBe(12345);
+	});
+
+	it('forbids non-owner', async () => {
+		authState.session = { id: 'other' };
+		sqlState.queue = [
+			[{ id: 'mint-1', mint: mintB58, user_id: 'user-1', agent_authority: walletB58, network: 'mainnet' }],
+		];
+		const { default: handler } = await import('../../api/pump/withdraw-confirm.js');
+		const { res } = await invoke(handler, {
+			method: 'POST',
+			url: '/api/pump/withdraw-confirm',
+			body: { mint: mintB58, network: 'mainnet', tx_signature: 'a'.repeat(88) },
+		});
+		expect(res.statusCode).toBe(403);
+	});
+});
+
+describe('pump-pricing helpers', () => {
+	beforeEach(resetAll);
+
+	it('priceFor returns null for unknown tools', async () => {
+		const { priceFor, isFreeTool } = await import('../../api/_lib/pump-pricing.js');
+		expect(priceFor('nonexistent_tool')).toBe(null);
+		expect(isFreeTool('list_my_avatars')).toBe(true);
+	});
+
+	it('priceFor returns price for paid tools', async () => {
+		const { priceFor } = await import('../../api/_lib/pump-pricing.js');
+		const p = priceFor('optimize_model');
+		expect(p).not.toBe(null);
+		expect(p.amount_usdc).toBeGreaterThan(0);
+	});
+
+	it('findActiveSubscription queries on (mint, network, payer, tool)', async () => {
+		sqlState.queue = [
+			[{ id: 'sub-1', invoice_id: '42', amount_atomics: '1000000', end_time: '2099-01-01', tool_name: 'optimize_model' }],
+		];
+		const { findActiveSubscription } = await import('../../api/_lib/pump-pricing.js');
+		const sub = await findActiveSubscription({
+			mint: mintB58,
+			network: 'mainnet',
+			payerWallet: walletB58,
+			toolName: 'optimize_model',
+		});
+		expect(sub).not.toBe(null);
+		expect(sub.invoice_id).toBe('42');
+	});
+
+	it('findActiveSubscription returns null when no row', async () => {
+		sqlState.queue = [[]];
+		const { findActiveSubscription } = await import('../../api/_lib/pump-pricing.js');
+		const sub = await findActiveSubscription({
+			mint: mintB58,
+			network: 'mainnet',
+			payerWallet: walletB58,
+			toolName: 'optimize_model',
+		});
+		expect(sub).toBe(null);
+	});
+});
+
 describe('GET /.well-known/x402', () => {
 	beforeEach(resetAll);
 

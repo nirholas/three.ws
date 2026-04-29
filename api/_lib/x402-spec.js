@@ -85,12 +85,11 @@ function decodePaymentHeader(header) {
 	return payload;
 }
 
-async function callFacilitator(path, body) {
-	const url = `${env.X402_FACILITATOR_URL}${path}`;
+async function callFacilitator(network, path, body) {
+	const { url: base, token } = facilitatorFor(network);
+	const url = `${base}${path}`;
 	const headers = { 'content-type': 'application/json', accept: 'application/json' };
-	if (env.X402_FACILITATOR_TOKEN) {
-		headers.authorization = `Bearer ${env.X402_FACILITATOR_TOKEN}`;
-	}
+	if (token) headers.authorization = `Bearer ${token}`;
 	let res;
 	try {
 		res = await fetch(url, {
@@ -129,14 +128,33 @@ async function callFacilitator(path, body) {
 	return data;
 }
 
-// Verify a base64 X-PAYMENT header against payment requirements.
-// Returns { paymentPayload, payer } on success; throws X402Error on failure.
+// Match the decoded payload to one of the offered requirements (by network).
+// Falls back to the first requirement when the payload omits an explicit network field.
+function selectRequirement(paymentPayload, allRequirements) {
+	const network = paymentPayload?.network || paymentPayload?.paymentRequirements?.network;
+	if (network) {
+		const found = allRequirements.find((r) => r.network === network);
+		if (!found)
+			throw new X402Error(
+				'unsupported_network',
+				`payment network "${network}" is not offered`,
+				402,
+			);
+		return found;
+	}
+	return allRequirements[0];
+}
+
+// Verify a base64 X-PAYMENT header against the offered requirements.
+// Returns { paymentPayload, requirement, payer } on success.
 export async function verifyPayment({ paymentHeader, requirements }) {
+	const all = Array.isArray(requirements) ? requirements : [requirements];
 	const paymentPayload = decodePaymentHeader(paymentHeader);
-	const result = await callFacilitator('/verify', {
+	const requirement = selectRequirement(paymentPayload, all);
+	const result = await callFacilitator(requirement.network, '/verify', {
 		x402Version: X402_VERSION,
 		paymentPayload,
-		paymentRequirements: requirements,
+		paymentRequirements: requirement,
 	});
 	if (!result.isValid) {
 		throw new X402Error(
@@ -145,15 +163,15 @@ export async function verifyPayment({ paymentHeader, requirements }) {
 			402,
 		);
 	}
-	return { paymentPayload, payer: result.payer || null };
+	return { paymentPayload, requirement, payer: result.payer || null };
 }
 
-// Settle the verified payment on-chain via the facilitator.
-export async function settlePayment({ paymentPayload, requirements }) {
-	const result = await callFacilitator('/settle', {
+// Settle the verified payment on-chain via the matching facilitator.
+export async function settlePayment({ paymentPayload, requirement }) {
+	const result = await callFacilitator(requirement.network, '/settle', {
 		x402Version: X402_VERSION,
 		paymentPayload,
-		paymentRequirements: requirements,
+		paymentRequirements: requirement,
 	});
 	if (!result.success) {
 		throw new X402Error(
@@ -176,6 +194,7 @@ export function encodePaymentResponseHeader(settleResult) {
 }
 
 export function send402(res, requirements, error = 'X-PAYMENT header is required') {
+	const accepts = Array.isArray(requirements) ? requirements : [requirements];
 	res.statusCode = 402;
 	res.setHeader('content-type', 'application/json; charset=utf-8');
 	res.setHeader('cache-control', 'no-store');
@@ -183,7 +202,7 @@ export function send402(res, requirements, error = 'X-PAYMENT header is required
 		JSON.stringify({
 			x402Version: X402_VERSION,
 			error,
-			accepts: [requirements],
+			accepts,
 		}),
 	);
 }
