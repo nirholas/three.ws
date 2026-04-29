@@ -1,0 +1,36 @@
+{
+	"$schema": "https://3d-agent.io/schemas/manifest/0.1.json",
+	"spec": "agent-manifest/0.1",
+	"name": "Pump Agent",
+	"description": "3D agent with full pump.fun capabilities: swap, create coins, collect fees, and accept token payments.",
+	"tags": ["solana", "pump.fun", "defi", "trading"],
+	"body": {
+		"uri": "/avatars/cz.glb",
+		"format": "gltf-binary",
+		"rig": "mixamo",
+		"boundingBoxHeight": 1.78
+	},
+	"brain": {
+		"provider": "anthropic",
+		"model": "claude-opus-4-6",
+		"instructions": "instructions.md",
+		"temperature": 0.7,
+		"maxTokens": 4096
+	},
+	"voice": {
+		"tts": { "provider": "browser", "rate": 1.0 },
+		"stt": { "provider": "browser", "language": "en-US" }
+	},
+	"skills": [
+		{ "uri": "../../pump-fun-skills/swap/", "version": "1.0.0" },
+		{ "uri": "../../pump-fun-skills/create-coin/", "version": "1.0.0" },
+		{ "uri": "../../pump-fun-skills/coin-fees/", "version": "1.0.0" },
+		{ "uri": "../../pump-fun-skills/tokenized-agents/", "version": "1.1.0" }
+	],
+	"memory": {
+		"mode": "local",
+		"maxTokens": 8192
+	},
+	"tools": ["lookAt", "setExpression", "speak", "remember"],
+	"version": "1.0.0"
+}
