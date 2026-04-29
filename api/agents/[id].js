@@ -30,16 +30,8 @@ export default wrap(async function handler(req, res) {
 	if (sub === 'wallet') return handleWallet(req, res, id);
 
 	if (sub === 'solana') {
-		if (action === 'activity') {
-			const mod = await import('./solana-activity.js');
-			return mod.default(req, res, id);
-		}
-		if (action === 'airdrop') {
-			const mod = await import('./solana-airdrop.js');
-			return mod.default(req, res, id);
-		}
 		const mod = await import('./solana-wallet.js');
-		return mod.default(req, res, id);
+		return mod.default(req, res, id, action);
 	}
 
 	if (sub === 'sns') {

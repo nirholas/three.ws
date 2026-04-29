@@ -1,23 +1,23 @@
 /**
  * GET /api/agents/pumpfun-feed
  * ---------------------------------
- * Live pump.fun activity feed for Solana agents. Streams `claim` and
- * `graduation` events as Server-Sent Events.
+ * Live pump.fun activity feed. Streams `mint`, `graduation`, and `claim`
+ * events as Server-Sent Events.
  *
  * Auth: session OR bearer (scope `mcp` or `profile`).
- * Query: ?kind=claims|graduations|all  (default all)
- *        ?minTier=notable|influencer|mega   (claim filter, optional)
+ * Query: ?kind=all|mint|graduation|claims  (default all)
+ *        ?minTier=notable|influencer|mega  (claim filter, optional)
  *
- * Implementation: serverless functions cannot hold long-lived connections
- * efficiently, so we run a bounded poll loop (every 4s, up to 90s) and let
- * the browser EventSource auto-reconnect. Each tick fetches `claimsSince`
- * from the upstream pumpfun-claims-bot and emits new events.
+ * Sources (in priority order):
+ *   1. pump.fun public WebSocket (always available — mint + graduation)
+ *   2. Redis/pumpfun-bot (optional — adds claim events when configured)
  */
 
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
 import { cors, method, error, wrap } from '../_lib/http.js';
-import { limits, clientIp } from '../_lib/rate-limit.js';
+import { limits } from '../_lib/rate-limit.js';
 import { pumpfunMcp, pumpfunBotEnabled } from '../_lib/pumpfun-mcp.js';
+import { connectPumpFunFeed } from '../_lib/pumpfun-ws-feed.js';
 
 const POLL_MS = 4000;
 const MAX_DURATION_MS = 90_000;
@@ -50,58 +50,64 @@ export default wrap(async (req, res) => {
 	res.setHeader('x-accel-buffering', 'no');
 	res.flushHeaders?.();
 
-	// When the upstream feed isn't provisioned, open the SSE stream and close
-	// it cleanly — a 503 here would trigger EventSource auto-reconnect storms.
-	if (!pumpfunBotEnabled()) {
-		writeSse(res, 'disabled', { reason: 'pumpfun feed not configured' });
-		writeSse(res, 'close', { reason: 'not_configured' });
-		res.end();
-		return;
-	}
-
-	writeSse(res, 'open', { kind, minTier: minTierParam || null });
-
-	const seen = new Set();
-	let lastSig = null;
 	const started = Date.now();
 	let active = true;
-	req.on('close', () => {
-		active = false;
+	req.on('close', () => { active = false; });
+
+	const wsAbort = new AbortController();
+	req.on('close', () => wsAbort.abort());
+
+	// Event queue fed by the pump.fun WebSocket
+	const queue = [];
+	const wsKind = kind === 'claims' ? 'graduation' : kind; // claims come from bot only
+	const stopWs = connectPumpFunFeed({
+		kind: wsKind,
+		signal: wsAbort.signal,
+		onEvent: ({ kind: evKind, data }) => {
+			if (active) queue.push({ evKind, data });
+		},
 	});
 
-	const tick = async () => {
-		const tasks = [];
-		if (kind === 'claims' || kind === 'all') {
-			tasks.push(pumpfunMcp.claimsSince({ sinceSig: lastSig, limit: 25 }).then((r) => ({ t: 'claim', r })));
-		}
-		if (kind === 'graduations' || kind === 'all') {
-			tasks.push(pumpfunMcp.graduations({ limit: 10 }).then((r) => ({ t: 'graduation', r })));
-		}
-		const results = await Promise.all(tasks);
-		for (const { t, r } of results) {
-			if (!r.ok) continue;
-			const items = Array.isArray(r.data) ? r.data : r.data?.items || [];
-			for (const ev of items) {
-				const id = ev.tx_signature || ev.signature || ev.id;
-				if (!id || seen.has(id)) continue;
-				seen.add(id);
-				if (t === 'claim') {
+	writeSse(res, 'open', { kind, minTier: minTierParam || null, source: 'websocket' });
+
+	// Optional: also poll Redis/bot for claim events if configured
+	const seen = new Set();
+	let lastSig = null;
+
+	const tickClaims = pumpfunBotEnabled()
+		? async () => {
+				if (kind !== 'claims' && kind !== 'all') return;
+				const r = await pumpfunMcp.claimsSince({ sinceSig: lastSig, limit: 25 });
+				if (!r.ok) return;
+				const items = Array.isArray(r.data) ? r.data : r.data?.items || [];
+				for (const ev of items) {
+					const id = ev.tx_signature || ev.signature || ev.id;
+					if (!id || seen.has(id)) continue;
+					seen.add(id);
 					if (minTier && TIER_RANK[(ev.tier || '').toLowerCase()] < minTier) continue;
 					lastSig = id;
+					writeSse(res, 'claim', ev);
 				}
-				writeSse(res, t, ev);
-			}
-		}
-	};
+		  }
+		: null;
 
 	while (active && Date.now() - started < MAX_DURATION_MS) {
-		try {
-			await tick();
-		} catch {}
+		// Drain WebSocket event queue
+		while (queue.length > 0 && active) {
+			const { evKind, data } = queue.shift();
+			writeSse(res, evKind, data);
+		}
+
+		// Pull claim events from Redis/bot if available
+		if (tickClaims) {
+			try { await tickClaims(); } catch {}
+		}
+
 		writeSse(res, 'ping', { t: Date.now() });
 		await sleep(POLL_MS);
 	}
 
+	stopWs();
 	writeSse(res, 'close', { reason: 'duration_limit' });
 	res.end();
 });

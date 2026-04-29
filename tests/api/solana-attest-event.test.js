@@ -5,7 +5,7 @@ import {
 	buildPayload,
 	taskHash,
 	verifyPumpkitSignature,
-} from '../../api/agents/solana-attest-event.js';
+} from '../../api/agents/solana/_handlers.js';
 
 const SECRET = 'test-secret';
 const AGENT  = 'AgentAssetPubkey1111111111111111111111111111';

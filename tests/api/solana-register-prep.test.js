@@ -60,7 +60,7 @@ vi.mock('@metaplex-foundation/umi', () => ({
 	createNoopSigner: vi.fn((pk) => ({ publicKey: pk })),
 }));
 
-const { default: handler } = await import('../../api/agents/solana-register-prep.js');
+const { handleRegisterPrep: handler } = await import('../../api/agents/solana/_handlers.js');
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 

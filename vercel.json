@@ -6,39 +6,31 @@
 			"src": "/openapi\\.json",
 			"dest": "/api/openapi-json"
 		},
-		{
-			"src": "/\\.well-known/x402",
-			"dest": "/api/wk-x402"
-		},
-		{
-			"src": "/\\.well-known/agent-attestation-schemas",
-			"dest": "/api/wk-agent-attestation-schemas"
-		},
-		{
-			"src": "/a/sol/([^/]+)/\\.well-known/agent-card\\.json",
-			"dest": "/api/agents/solana-card?asset=$1"
-		},
-		{
-			"src": "/\\.well-known/oauth-authorization-server",
-			"dest": "/api/wk-oauth-authorization-server"
-		},
-		{
-			"src": "/\\.well-known/oauth-protected-resource",
-			"dest": "/api/wk-oauth-protected-resource"
-		},
-		{
-			"src": "/api/mcp/\\.well-known/oauth-protected-resource",
-			"dest": "/api/wk-oauth-protected-resource"
-		},
+		{ "src": "/\\.well-known/x402", "dest": "/api/wk?name=x402" },
+		{ "src": "/\\.well-known/agent-attestation-schemas", "dest": "/api/wk?name=agent-attestation-schemas" },
+		{ "src": "/\\.well-known/oauth-authorization-server", "dest": "/api/wk?name=oauth-authorization-server" },
+		{ "src": "/\\.well-known/oauth-protected-resource", "dest": "/api/wk?name=oauth-protected-resource" },
+		{ "src": "/api/mcp/\\.well-known/oauth-protected-resource", "dest": "/api/wk?name=oauth-protected-resource" },
+
+		{ "src": "/a/sol/([^/]+)/\\.well-known/agent-card\\.json", "dest": "/api/agents/solana/[action]?action=card&asset=$1" },
+
+		{ "src": "/api/agents/solana-attestations", "dest": "/api/agents/solana/[action]?action=attestations" },
+		{ "src": "/api/agents/solana-attest-event", "dest": "/api/agents/solana/[action]?action=attest-event" },
+		{ "src": "/api/agents/solana-card", "dest": "/api/agents/solana/[action]?action=card" },
+		{ "src": "/api/agents/solana-price-history", "dest": "/api/agents/solana/[action]?action=price-history" },
+		{ "src": "/api/agents/solana-register-prep", "dest": "/api/agents/solana/[action]?action=register-prep" },
+		{ "src": "/api/agents/solana-register-confirm", "dest": "/api/agents/solana/[action]?action=register-confirm" },
+		{ "src": "/api/agents/solana-reputation", "dest": "/api/agents/solana/[action]?action=reputation" },
+		{ "src": "/api/agents/solana-reputation-history", "dest": "/api/agents/solana/[action]?action=reputation-history" },
 
 		{ "src": "/api/newsletter/subscribe", "dest": "/api/newsletter-subscribe" },
 
-		{ "src": "/oauth/authorize", "dest": "/api/oauth/authorize" },
-		{ "src": "/oauth/consent", "dest": "/api/oauth/authorize" },
-		{ "src": "/oauth/token", "dest": "/api/oauth/token" },
-		{ "src": "/oauth/register", "dest": "/api/oauth/register" },
-		{ "src": "/oauth/revoke", "dest": "/api/oauth/revoke" },
-		{ "src": "/oauth/introspect", "dest": "/api/oauth/introspect" },
+		{ "src": "/oauth/authorize", "dest": "/api/oauth/[action]?action=authorize" },
+		{ "src": "/oauth/consent", "dest": "/api/oauth/[action]?action=authorize" },
+		{ "src": "/oauth/token", "dest": "/api/oauth/[action]?action=token" },
+		{ "src": "/oauth/register", "dest": "/api/oauth/[action]?action=register" },
+		{ "src": "/oauth/revoke", "dest": "/api/oauth/[action]?action=revoke" },
+		{ "src": "/oauth/introspect", "dest": "/api/oauth/[action]?action=introspect" },
 
 		{ "src": "/login", "dest": "/login.html" },
 		{ "src": "/register", "dest": "/register.html" },
@@ -192,11 +184,6 @@
 		{ "src": "/admin/", "dest": "/admin/index.html" },
 		{ "src": "/admin/(.*)", "dest": "/admin/$1" },
 
-		{ "src": "/api/auth/logout-everywhere", "dest": "/api/auth/logout-everywhere" },
-		{ "src": "/api/auth/verify-email", "dest": "/api/auth/verify-email" },
-		{ "src": "/api/auth/forgot-password", "dest": "/api/auth/forgot-password" },
-		{ "src": "/api/auth/reset-password", "dest": "/api/auth/reset-password" },
-		{ "src": "/api/auth/resend-verification", "dest": "/api/auth/resend-verification" },
 
 		{ "src": "/api/llm/anthropic", "dest": "/api/llm/anthropic.js" },
 		{ "src": "/api/agents/([^/]+)/usage", "dest": "/api/agents/[id]/usage?id=$1" },

@@ -79,8 +79,9 @@
 			<input id="ctl-mint" type="text" placeholder="Filter mint…" size="18" />
 			<select id="ctl-kind" title="Event type">
 				<option value="all">All events</option>
+				<option value="mint">New tokens</option>
+				<option value="graduation">Graduations</option>
 				<option value="claims">Claims only</option>
-				<option value="graduations">Graduations only</option>
 			</select>
 			<select id="ctl-tier" title="Minimum tier">
 				<option value="">Any tier</option>
@@ -116,7 +117,7 @@
 		const params = {
 			asset: url.searchParams.get('asset') || '',
 			mint: url.searchParams.get('mint') || '',
-			kind: url.searchParams.get('kind') || 'graduations',
+			kind: url.searchParams.get('kind') || 'all',
 			minTier: url.searchParams.get('minTier') || '',
 			network: url.searchParams.get('network') || 'mainnet',
 			narrate: url.searchParams.get('narrate') !== '0',
@@ -226,6 +227,16 @@
 			</div>`;
 		}
 
+		function renderMint(ev) {
+			const cap = ev.usd_market_cap != null ? `$${Number(ev.usd_market_cap).toLocaleString(undefined,{maximumFractionDigits:0})}` : '';
+			return `<div class="evt">
+				<div class="evt-row"><span class="evt-kind">🌱 new token</span><span class="evt-time">${cap}</span></div>
+				<div class="evt-who">${escapeHtml(ev.name || ev.symbol || ev.mint || '—')}</div>
+				${ev.symbol ? `<div class="evt-amt">$${escapeHtml(ev.symbol)}</div>` : ''}
+				${ev.description ? `<div class="evt-take">${escapeHtml(ev.description.slice(0,80))}</div>` : ''}
+			</div>`;
+		}
+
 		function pushEvent(html) {
 			const feed = $('feed');
 			if (feed.querySelector('.empty')) feed.innerHTML = '';
@@ -252,6 +263,10 @@
 			es.addEventListener('graduation', (msg) => {
 				const ev = safeJson(msg.data); if (!ev || !eventMatchesMint(ev)) return;
 				pushEvent(renderGraduation(ev));
+			});
+			es.addEventListener('mint', (msg) => {
+				const ev = safeJson(msg.data); if (!ev || !eventMatchesMint(ev)) return;
+				pushEvent(renderMint(ev));
 			});
 		}
 
@@ -291,17 +306,7 @@
 		$('ctl-asset').addEventListener('change', onFilterChange);
 
 		// Initial load
-		fetch('/api/agents/pumpfun?op=claims&limit=1', { credentials: 'include' }).then((r) => {
-			if (r.status === 503) {
-				const w = document.createElement('div');
-				w.className = 'warn';
-				w.innerHTML = 'Pump.fun feed is not configured on this server. Set <code>PUMPFUN_BOT_URL</code> to enable. See <a href="/docs/solana-pumpfun.md">solana-pumpfun.md</a>.';
-				document.querySelector('header').insertAdjacentElement('afterend', w);
-				setStatus('down', 'unconfigured');
-				return;
-			}
-			connectFeed();
-		}).catch(() => connectFeed());
+		connectFeed();
 
 		mountAgent();
 	</script>
