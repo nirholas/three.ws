@@ -8,12 +8,9 @@
  * /api/agents/:id/sns/register    — register a .sol; agent wallet pays USDC
  * /api/agents/:id/sns/register-prep    — build unsigned tx for user wallet to sign
  * /api/agents/:id/sns/register-confirm — confirm a user-wallet registration and attach
- * /api/agents/:id/pumpfun/launch  — create a pump.fun token from this agent
- * /api/agents/:id/pumpfun/buy     — bonding-curve buy
- * /api/agents/:id/pumpfun/sell    — bonding-curve sell
- * /api/agents/:id/pumpfun/portfolio — aggregated positions + live PnL
- * /api/agents/:id/pumpfun/swap    — swap via @pump-fun/pump-swap-sdk
- * /api/agents/:id/pumpfun/pay     — agent payment via @pump-fun/agent-payments-sdk
+ *
+ * /api/agents/:id/pumpfun/* is routed directly to api/agents/pumpfun/[action].js
+ * by vercel.json — see the rewrite for that path family.
  */
 import { handleGetOne, handleWallet } from '../agents.js';
 import { cors, error, wrap } from '../_lib/http.js';
@@ -48,17 +45,6 @@ export default wrap(async function handler(req, res) {
 	if (sub === 'sns') {
 		const mod = await import('./sns.js');
 		return mod.default(req, res, id, action);
-	}
-
-	if (sub === 'pumpfun') {
-		if (action === 'launch') return (await import('./pumpfun/launch.js')).default(req, res, id);
-		if (action === 'buy') return (await import('./pumpfun/buy.js')).default(req, res, id);
-		if (action === 'sell') return (await import('./pumpfun/sell.js')).default(req, res, id);
-		if (action === 'portfolio') return (await import('./pumpfun/portfolio.js')).default(req, res, id);
-		if (action === 'swap') return (await import('./pumpfun/swap.js')).default(req, res, id);
-		if (action === 'pay') return (await import('./pumpfun/pay.js')).default(req, res, id);
-		if (cors(req, res)) return;
-		return error(res, 404, 'not_found', 'unknown pumpfun action');
 	}
 
 	return handleGetOne(req, res, id);
