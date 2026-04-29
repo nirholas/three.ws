@@ -33,6 +33,36 @@ export default wrap(async (req, res) => {
 	const network = a.meta?.network || 'mainnet';
 	const origin  = env.APP_ORIGIN;
 
+	// Pump.fun off-chain signals — most-recent + per-kind counts. Best-effort:
+	// the table is optional and may not exist in every deployment.
+	let pumpfun = null;
+	try {
+		const rows = await sql`
+			select kind, count(*)::int as n, max(seen_at) as last_seen
+			from pumpfun_signals
+			where agent_asset = ${asset}
+			group by kind
+		`;
+		if (rows.length > 0) {
+			const byKind = {};
+			let total = 0;
+			let last = null;
+			for (const r of rows) {
+				byKind[r.kind] = { count: r.n, last_seen: r.last_seen };
+				total += r.n;
+				if (!last || (r.last_seen && r.last_seen > last)) last = r.last_seen;
+			}
+			pumpfun = {
+				signal_count: total,
+				by_kind: byKind,
+				last_seen: last,
+				feed_url: `${origin}/api/agents/pumpfun-feed`,
+			};
+		}
+	} catch {
+		// pumpfun_signals table not present — omit the block entirely.
+	}
+
 	return json(res, 200, {
 		schema_version: '1.0',
 		// A2A core
@@ -58,5 +88,6 @@ export default wrap(async (req, res) => {
 			memo_program: 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr',
 			usage: 'Sign an SPL Memo tx with one of the published schemas as JSON, including this asset_pubkey as a non-signer key.',
 		},
+		...(pumpfun ? { pumpfun } : {}),
 	}, { 'cache-control': 'public, max-age=120', 'access-control-allow-origin': '*' });
 });

@@ -6,7 +6,7 @@
 
 import { cors, json, method, wrap, error } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { getPumpSdk, getPumpSwapSdk, solanaPubkey } from '../_lib/pump.js';
+import { getPumpSdk, getAmmPoolState, solanaPubkey } from '../_lib/pump.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
@@ -21,6 +21,11 @@ export default wrap(async (req, res) => {
 	const direction = url.searchParams.get('direction') === 'sell' ? 'sell' : 'buy';
 	const solRaw = url.searchParams.get('sol');
 	const tokenRaw = url.searchParams.get('token');
+	const slippageRaw = url.searchParams.get('slippage_bps');
+	const slippageBps = Number.isFinite(Number(slippageRaw))
+		? Math.max(0, Math.min(5000, Number(slippageRaw)))
+		: 100;
+	const slippage = slippageBps / 10_000;
 
 	const mint = solanaPubkey(mintStr);
 	if (!mint) return error(res, 400, 'validation_error', 'invalid mint');
@@ -79,34 +84,95 @@ export default wrap(async (req, res) => {
 			});
 		}
 
-		// Post-graduation: AMM
-		const { sdk: ammSdk, BN: BN2 } = await getPumpSwapSdk({ network });
-		// Find pool for this mint vs WSOL (or USDC). Pool discovery is left to
-		// caller for now — if not implemented, return graduated:true with no quote.
-		let pool = null;
+		// Post-graduation: AMM via canonical pump.fun pool (quote = WSOL).
+		let amm;
 		try {
-			if (ammSdk.findPoolByMint) {
-				pool = await ammSdk.findPoolByMint(mint);
+			amm = await getAmmPoolState({ network, mint });
+		} catch (e) {
+			if (e.code === 'pool_not_found') {
+				return json(res, 200, {
+					mint: mintStr,
+					network,
+					graduated: true,
+					pool: null,
+					quote: null,
+					note: 'No bonding curve and no canonical AMM pool — token may not be a pump.fun mint or has not graduated yet',
+				});
 			}
-		} catch {
-			pool = null;
+			throw e;
+		}
+
+		const { pool, poolKey, baseReserve, quoteReserve, baseMintAccount, globalConfig, feeConfig } = amm;
+		const LAMPORTS_PER_SOL_AMM = 1_000_000_000;
+		const ammSdk = await import('@pump-fun/pump-swap-sdk');
+		let quote = null;
+
+		if (direction === 'buy' && solRaw) {
+			const sol = Number(solRaw);
+			if (!(sol > 0)) return error(res, 400, 'validation_error', 'sol must be > 0');
+			const lamports = new BN(Math.floor(sol * LAMPORTS_PER_SOL_AMM));
+			const r = ammSdk.buyQuoteInput({
+				quote: lamports,
+				slippage,
+				baseReserve,
+				quoteReserve,
+				globalConfig,
+				baseMintAccount,
+				baseMint: pool.baseMint,
+				coinCreator: pool.coinCreator,
+				creator: pool.creator,
+				feeConfig,
+			});
+			quote = {
+				sol_in: sol,
+				tokens_out: r.base?.toString?.() ?? null,
+				min_tokens_out: r.uiBase?.toString?.() ?? r.minBase?.toString?.() ?? null,
+				slippage_bps: slippageBps,
+				source: 'amm',
+			};
+		} else if (direction === 'sell' && tokenRaw) {
+			const tokens = new BN(tokenRaw);
+			const r = ammSdk.sellBaseInput({
+				base: tokens,
+				slippage,
+				baseReserve,
+				quoteReserve,
+				globalConfig,
+				baseMintAccount,
+				baseMint: pool.baseMint,
+				coinCreator: pool.coinCreator,
+				creator: pool.creator,
+				feeConfig,
+			});
+			const lamportsOut = r.quote ?? r.uiQuote ?? r.minQuote;
+			quote = {
+				tokens_in: tokenRaw,
+				sol_out:
+					lamportsOut != null ? Number(lamportsOut.toString()) / LAMPORTS_PER_SOL_AMM : null,
+				min_sol_out:
+					(r.minQuote ?? r.uiQuote)?.toString
+						? Number((r.minQuote ?? r.uiQuote).toString()) / LAMPORTS_PER_SOL_AMM
+						: null,
+				slippage_bps: slippageBps,
+				source: 'amm',
+			};
 		}
 
 		return json(res, 200, {
 			mint: mintStr,
 			network,
 			graduated: true,
-			pool: pool
-				? {
-						address: pool.address?.toString?.() ?? String(pool.address),
-						base: pool.baseMint?.toString?.() ?? null,
-						quote: pool.quoteMint?.toString?.() ?? null,
-					}
-				: null,
-			quote: null,
-			note: pool ? null : 'Post-graduation pool lookup requires explicit pool key',
+			pool: {
+				address: poolKey.toString(),
+				base: pool.baseMint.toString(),
+				quote: pool.quoteMint.toString(),
+				base_reserve: baseReserve.toString(),
+				quote_reserve: quoteReserve.toString(),
+				lp_supply: pool.lpSupply?.toString?.() ?? null,
+			},
+			quote,
 		});
 	} catch (err) {
-		return error(res, 502, 'pump_sdk_error', err.message || 'pump.fun SDK error');
+		return error(res, err.status || 502, err.code || 'pump_sdk_error', err.message || 'pump.fun SDK error');
 	}
 });

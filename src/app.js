@@ -14,6 +14,7 @@ import { mountAnimationGallery } from './widgets/animation-gallery.js';
 import { mountTalkingAgent } from './widgets/talking-agent.js';
 import { mountTurntable } from './widgets/turntable.js';
 import { mountHotspotTour } from './widgets/hotspot-tour.js';
+import { mountPumpfunFeed } from './widgets/pumpfun-feed.js';
 import queryString from 'query-string';
 
 // Agent system — the new primitive layer
@@ -987,6 +988,9 @@ class App {
 				this._widgetController = ctl;
 			} else if (type === 'hotspot-tour') {
 				const ctl = await mountHotspotTour(this.viewer, cfg, document.body);
+				this._widgetController = ctl;
+			} else if (type === 'pumpfun-feed') {
+				const ctl = await mountPumpfunFeed(this.viewer, cfg, document.body, { protocol });
 				this._widgetController = ctl;
 			}
 		} catch (e) {

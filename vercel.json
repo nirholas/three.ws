@@ -247,6 +247,7 @@
 		{ "path": "/api/cron/solana-attestations-crawl", "schedule": "*/5 * * * *" },
 		{ "path": "/api/cron/index-delegations", "schedule": "*/5 * * * *" },
 		{ "path": "/api/cron/run-dca", "schedule": "0 * * * *" },
-		{ "path": "/api/cron/run-subscriptions", "schedule": "0 * * * *" }
+		{ "path": "/api/cron/run-subscriptions", "schedule": "0 * * * *" },
+		{ "path": "/api/cron/pumpfun-signals", "schedule": "*/15 * * * *" }
 	]
 }

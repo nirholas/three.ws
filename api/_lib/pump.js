@@ -133,6 +133,88 @@ export async function verifySignature({ network, signature }) {
 	return tx;
 }
 
+// Resolve the canonical pump.fun AMM pool for `mint` (post-graduation) and
+// return everything `buyQuoteInput` / `sellBaseInput` need to price a swap.
+// Quote currency is WSOL on the canonical pool.
+//
+// Throws { status: 404, code: 'pool_not_found' } if no pool exists yet.
+export async function getAmmPoolState({ network = 'mainnet', mint } = {}) {
+	if (!mint) throw Object.assign(new Error('mint required'), { status: 400 });
+	const [
+		{
+			canonicalPumpPoolPda,
+			OnlinePumpAmmSdk,
+			PumpAmmSdk,
+		},
+		web3,
+		BN,
+		spl,
+	] = await Promise.all([
+		import('@pump-fun/pump-swap-sdk'),
+		import('@solana/web3.js'),
+		import('bn.js').then((m) => m.default || m),
+		import('@solana/spl-token'),
+	]);
+	const connection = getConnection({ network });
+	const mintPk = mint instanceof PublicKey ? mint : new PublicKey(mint);
+	const poolKey = canonicalPumpPoolPda(mintPk);
+
+	const online = new OnlinePumpAmmSdk(connection);
+	let pool;
+	try {
+		pool = await online.fetchPool(poolKey);
+	} catch {
+		const e = new Error('pump.fun AMM pool not found for mint');
+		e.status = 404;
+		e.code = 'pool_not_found';
+		throw e;
+	}
+
+	const [baseAccInfo, quoteAccInfo, baseMintInfo] = await Promise.all([
+		connection.getAccountInfo(pool.poolBaseTokenAccount),
+		connection.getAccountInfo(pool.poolQuoteTokenAccount),
+		connection.getAccountInfo(pool.baseMint),
+	]);
+	if (!baseAccInfo || !quoteAccInfo || !baseMintInfo) {
+		const e = new Error('pool token accounts unavailable');
+		e.status = 502;
+		e.code = 'pool_accounts_missing';
+		throw e;
+	}
+	const baseAcc = spl.AccountLayout.decode(baseAccInfo.data);
+	const quoteAcc = spl.AccountLayout.decode(quoteAccInfo.data);
+	const baseMintAccount = spl.MintLayout.decode(baseMintInfo.data);
+	const baseReserve = new BN(baseAcc.amount.toString());
+	const quoteReserve = new BN(quoteAcc.amount.toString());
+
+	const offline = new PumpAmmSdk();
+	const [globalConfigInfo, feeConfigInfo] = await Promise.all([
+		connection.getAccountInfo(
+			(await import('@pump-fun/pump-swap-sdk')).GLOBAL_CONFIG_PDA,
+		),
+		connection.getAccountInfo(
+			(await import('@pump-fun/pump-swap-sdk')).PUMP_AMM_FEE_CONFIG_PDA,
+		),
+	]);
+	const globalConfig = globalConfigInfo
+		? offline.decodeGlobalConfig(globalConfigInfo)
+		: null;
+	const feeConfig = feeConfigInfo ? offline.decodeFeeConfig(feeConfigInfo) : null;
+
+	return {
+		connection,
+		poolKey,
+		pool,
+		baseReserve,
+		quoteReserve,
+		baseMintAccount,
+		globalConfig,
+		feeConfig,
+		BN,
+		web3,
+	};
+}
+
 // Build a versioned tx from a list of instructions, return base64 (unsigned).
 // Mirrors the pattern used in api/agents/solana-register-prep.js so frontends
 // can decode via VersionedTransaction.deserialize and submit via injected wallet.

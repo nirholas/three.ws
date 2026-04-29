@@ -2,49 +2,56 @@
 	"tools": [
 		{
 			"name": "researchAndBuy",
-			"description": "Research a token (curve, holders, creator rug flags), then buy if it passes filters. Returns decision + sig.",
+			"description": "Research a token (curve, holders, creator rug flags), then buy if it passes filters. Returns decision + sig. Pass simulate:true for a dry-run that skips signing.",
 			"input_schema": {
 				"type": "object",
 				"properties": {
 					"query": { "type": "string", "description": "name, symbol, or mint" },
-					"amountSol": { "type": "number" }
+					"amountSol": { "type": "number" },
+					"simulate": { "type": "boolean", "description": "Dry-run: vet + quote but skip the actual buy." }
 				},
 				"required": ["query"]
 			}
 		},
 		{
 			"name": "autoSnipe",
-			"description": "Poll getNewTokens, filter by rug/holder rules, buy each pass with perTradeSol until sessionSpendCapSol is hit.",
+			"description": "Poll getNewTokens, filter by rug/holder rules, buy each pass with perTradeSol until sessionSpendCapSol is hit. State (seen, spent) is persisted under sessionId so a restart resumes where it left off.",
 			"input_schema": {
 				"type": "object",
 				"properties": {
 					"durationSec": { "type": "integer", "minimum": 10, "maximum": 3600 },
-					"perTradeSol": { "type": "number" }
+					"perTradeSol": { "type": "number" },
+					"sessionId": { "type": "string", "description": "Stable id to persist & resume seen/spent state. Reusing an id continues a prior session within the cap." },
+					"simulate": { "type": "boolean", "description": "Dry-run: vet + log intended buys but skip signing. Spend cap still enforced as if real." }
 				},
 				"required": ["durationSec"]
 			}
 		},
 		{
 			"name": "copyTrade",
-			"description": "Watch a creator/wallet's recent trades and mirror their buys with size scaling.",
+			"description": "Watch a creator/wallet's recent trades and mirror their buys with size scaling. State (mirrored sigs, spent) persisted under sessionId.",
 			"input_schema": {
 				"type": "object",
 				"properties": {
 					"wallet": { "type": "string" },
 					"sizeMultiplier": { "type": "number", "minimum": 0.001, "maximum": 10 },
-					"durationSec": { "type": "integer", "minimum": 10, "maximum": 7200 }
+					"durationSec": { "type": "integer", "minimum": 10, "maximum": 7200 },
+					"sessionId": { "type": "string" },
+					"simulate": { "type": "boolean" }
 				},
 				"required": ["wallet", "durationSec"]
 			}
 		},
 		{
 			"name": "rugExitWatch",
-			"description": "Monitor held positions; auto-sell when top-holder concentration or dev-wallet sells cross thresholds.",
+			"description": "Monitor held positions; auto-sell when top-holder concentration or dev-wallet sells cross thresholds. State (exited mints) persisted under sessionId.",
 			"input_schema": {
 				"type": "object",
 				"properties": {
 					"mints": { "type": "array", "items": { "type": "string" } },
-					"durationSec": { "type": "integer", "minimum": 10, "maximum": 86400 }
+					"durationSec": { "type": "integer", "minimum": 10, "maximum": 86400 },
+					"sessionId": { "type": "string" },
+					"simulate": { "type": "boolean" }
 				},
 				"required": ["mints", "durationSec"]
 			}

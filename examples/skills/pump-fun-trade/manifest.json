@@ -7,7 +7,7 @@
 	"tags": ["solana", "pump.fun", "trading", "signing"],
 	"requires": {
 		"runtime": ">=0.1.0",
-		"tools": [],
+		"skills": ["solana-wallet@^0.1"],
 		"capabilities": ["wallet.sign", "solana.rpc"]
 	},
 	"provides": {

@@ -142,3 +142,57 @@ No UI changes required.
 `tests/src/onchain.test.js` — pure-logic coverage of `chain-ref` + adapter
 factory dispatch. Wallet I/O is integration-tested via Playwright (not yet
 written for this module — TODO).
+
+## Token launches (Pump.fun, …)
+
+Layered on top of the deploy stack. Same pattern: a `TokenAdapter` interface
+under `src/onchain/tokens/` with one impl today (`PumpfunTokenAdapter`) and
+two endpoints (`/api/agents/tokens/launch-prep` + `launch-confirm`) writing a
+canonical `meta.token` block on the agent record:
+
+```json
+{
+  "token": {
+    "provider":     "pumpfun",
+    "mint":         "<base58>",
+    "symbol":       "AGT",
+    "name":         "Agent",
+    "metadata_uri": "ipfs://...",
+    "cluster":      "mainnet" | "devnet",
+    "creator":      "<base58>",
+    "tx_signature": "<base58>",
+    "launched_at":  "2026-...",
+    "pumpfun_url":  "https://pump.fun/<mint>"
+  }
+}
+```
+
+Mounting:
+
+```js
+import { LaunchTokenButton } from 'src/onchain/launch-token-button.js';
+new LaunchTokenButton({ agent, container }).mount();
+```
+
+The button auto-hides itself unless the agent is deployed on Solana. After a
+launch, it rehydrates as a chip linking to the Pump.fun page (mainnet) or
+Solana Explorer (devnet).
+
+Schema migration: `api/_lib/migrations/2026-04-29-token-launches.sql`.
+
+Pump.fun specifics:
+- The mint Keypair is generated server-side and partial-signs the launch tx.
+  Its secret key never touches the client and is dropped after partial-signing.
+- Optional `initial_buy_sol` (0–50) buys the first slot on the bonding curve
+  in the same transaction as the create.
+- Compute budget is bumped to 350k units — coin creation routinely overflows
+  the 200k default and reverts otherwise.
+- Mainnet only after deploy. Devnet works for QA via Pump.fun's devnet-tagged
+  SDK builds (`@pump-fun/pump-sdk@*-devnet.*`).
+
+Adding another launchpad:
+1. Implement `TokenAdapter` in `src/onchain/tokens/<provider>.js`.
+2. Add to `getTokenAdapter()` in `src/onchain/tokens/index.js`.
+3. Branch on `provider` in `api/agents/tokens/launch-prep.js`.
+4. UI auto-extends if you make the dropdown provider-aware (single provider
+   today, no dropdown).

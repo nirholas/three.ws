@@ -17,6 +17,11 @@ Agent-level loops that compose `pump-fun` (read) and `pump-fun-trade` (sign).
 - `exitOnConcentrationPct` / `exitOnDevSellPct` — exit triggers
 - `sessionSpendCapSol` / `perTradeSol` — hard spend caps
 
+## Safety
+
+- Pass `simulate: true` on any tool to dry-run: filters/quotes still execute, but `buyToken` / `sellToken` are skipped and a `SIMULATED:*` sig is returned. Spend caps still tick as if real so the simulated session terminates the same way a live one would.
+- Pass `sessionId: "<stable-string>"` to persist `seen` / `mirrored` / `spent` / `exited` between calls. A restart with the same `sessionId` resumes — preventing a crash mid-loop from re-spending up to the cap. State is written via `ctx.memory.note` and falls back to an in-process Map if memory is unavailable.
+
 ## Wiring
 
 The host runtime injects:
