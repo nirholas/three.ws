@@ -27,6 +27,26 @@ import {
 	addressExplorerUrl,
 } from './chain-meta.js';
 import { runSolanaDeploy, solanaTxExplorerUrl, detectSolanaWallet } from './solana-deploy.js';
+import { openVanityModal } from './vanity-modal.js';
+
+const VANITY_LS_KEY = (agentId) => `3dagent:vanity-prefix:${agentId}`;
+const VANITY_TTL_MS = 30 * 60 * 1000;
+
+function _loadVanity(agentId) {
+	try {
+		const raw = localStorage.getItem(VANITY_LS_KEY(agentId));
+		if (!raw) return '';
+		const { prefix, ts } = JSON.parse(raw);
+		if (Date.now() - ts > VANITY_TTL_MS) return '';
+		return prefix || '';
+	} catch { return ''; }
+}
+function _saveVanity(agentId, prefix) {
+	try {
+		if (prefix) localStorage.setItem(VANITY_LS_KEY(agentId), JSON.stringify({ prefix, ts: Date.now() }));
+		else localStorage.removeItem(VANITY_LS_KEY(agentId));
+	} catch {}
+}
 
 // Sentinel chain selections for non-EVM targets. The chain dropdown stores
 // these as option values; _chainId may be a number (EVM chainId) or one of
@@ -125,6 +145,9 @@ export class DeployButton {
 			`<option value="${id}"${id === this._chainId ? ' selected' : ''}>${_esc(SOLANA_LABELS[id])}</option>`;
 
 		const showVanity = _isSolana(this._chainId);
+		// Hydrate from localStorage on first render.
+		if (this._vanityPrefix == null) this._vanityPrefix = _loadVanity(this._agent?.id) || '';
+
 		this._root.innerHTML = `
 			<div class="deploy-chain-row">
 				<select class="deploy-chain-select" title="Choose chain to deploy to" aria-label="Target chain">
@@ -136,49 +159,36 @@ export class DeployButton {
 					&#x2B22; Deploy on-chain
 				</button>
 			</div>
-			<div class="deploy-vanity-row" style="${showVanity ? '' : 'display:none'};margin-top:6px;font-size:12px;">
-				<input class="deploy-vanity-input" type="text" maxlength="6" placeholder="Vanity prefix (optional)"
-					title="Grind a Solana address that starts with these Base58 characters. 5+ chars requires a paid plan."
-					aria-label="Vanity address prefix"
-					style="font-family:monospace;width:14ch" />
-				<span class="deploy-vanity-status" style="margin-left:8px;color:var(--muted,#888)"></span>
+			<div class="deploy-vanity-link-row" style="${showVanity ? '' : 'display:none'};margin-top:4px;font-size:12px;">
+				<button type="button" class="deploy-vanity-link"
+					style="background:none;border:none;color:#0066cc;cursor:pointer;padding:0;font-size:12px;text-decoration:underline">
+					${this._vanityPrefix
+						? `&#10024; Vanity: <span style="font-family:monospace;font-weight:600">${_esc(this._vanityPrefix)}</span> &middot; change`
+						: '&#10024; Customize address (optional)'}
+				</button>
 			</div>
 		`;
 
 		const select = this._root.querySelector('.deploy-chain-select');
-		const vanityRow = this._root.querySelector('.deploy-vanity-row');
-		const vanityInput = this._root.querySelector('.deploy-vanity-input');
-		const vanityStatus = this._root.querySelector('.deploy-vanity-status');
+		const vanityLinkRow = this._root.querySelector('.deploy-vanity-link-row');
+		const vanityLink = this._root.querySelector('.deploy-vanity-link');
 
-		// Restore prior vanity value if user toggled chains.
-		if (this._vanityPrefix) vanityInput.value = this._vanityPrefix;
-
-		vanityInput.addEventListener('input', (ev) => {
-			const raw = ev.target.value;
-			this._vanityPrefix = raw;
-			if (!raw) { vanityStatus.textContent = ''; return; }
-			if (!/^[1-9A-HJ-NP-Za-km-z]+$/.test(raw)) {
-				vanityStatus.textContent = 'invalid base58 char';
-				vanityStatus.style.color = 'var(--danger,#c33)';
-				return;
-			}
-			vanityStatus.style.color = '';
-			// 58^n expected attempts; rough rate ~5k/s/core, assume 4 cores → ~20k/s.
-			const attempts = Math.pow(58, raw.length);
-			const seconds = attempts / 20000;
-			const human = seconds < 1 ? '<1s'
-				: seconds < 60 ? `~${Math.round(seconds)}s`
-				: seconds < 3600 ? `~${Math.round(seconds / 60)}m`
-				: `~${Math.round(seconds / 3600)}h`;
-			const paid = raw.length >= 5 ? ' (paid plan)' : '';
-			vanityStatus.textContent = `est. ${human}${paid}`;
+		vanityLink.addEventListener('click', async () => {
+			const chosen = await openVanityModal({
+				agentName: this._agent?.name || '',
+				initial: this._vanityPrefix || '',
+			});
+			if (chosen === null) return; // dismissed
+			this._vanityPrefix = chosen;
+			_saveVanity(this._agent?.id, chosen);
+			this._renderDeployButton(); // re-render to update label
 		});
 
 		select.addEventListener('change', async (ev) => {
 			const raw = ev.target.value;
 			const newChainId = _isSolana(raw) ? raw : Number(raw);
 			this._chainId = newChainId;
-			vanityRow.style.display = _isSolana(newChainId) ? '' : 'none';
+			vanityLinkRow.style.display = _isSolana(newChainId) ? '' : 'none';
 			if (!_isSolana(newChainId) && _hasWallet()) {
 				select.disabled = true;
 				try {
