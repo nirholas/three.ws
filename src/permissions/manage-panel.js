@@ -4,21 +4,28 @@
  * Renders a list of all delegations granted for an agent, with revoke support.
  *
  * Public API:
- *   mountManagePanel({ container, agentId }) → { unmount }
+ *   mountManagePanel({ container, agentId, agentWalletAddress?, agentChainId? })
+ *     → { unmount }
  */
 
 import { BrowserProvider, Contract } from 'ethers';
 import { CHAIN_META, addressExplorerUrl, txExplorerUrl } from '../erc8004/chain-meta.js';
 import { DELEGATION_MANAGER_DEPLOYMENTS, DELEGATION_MANAGER_ABI } from '../erc7710/abi.js';
+import { GrantPermissionsModal } from './grant-modal.js';
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
 /**
- * @param {{ container: HTMLElement, agentId: string }} opts
+ * @param {{
+ *   container: HTMLElement,
+ *   agentId: string,
+ *   agentWalletAddress?: string,  // The agent's on-chain address (used as delegate)
+ *   agentChainId?: number,        // Default chain to grant on; if absent the modal asks
+ * }} opts
  * @returns {{ unmount: () => void }}
  */
-export function mountManagePanel({ container, agentId }) {
-	const panel = new ManagePanel(container, agentId);
+export function mountManagePanel({ container, agentId, agentWalletAddress, agentChainId }) {
+	const panel = new ManagePanel(container, agentId, { agentWalletAddress, agentChainId });
 	panel.mount();
 	return { unmount: () => panel.unmount() };
 }
@@ -26,9 +33,11 @@ export function mountManagePanel({ container, agentId }) {
 // ── Panel class ───────────────────────────────────────────────────────────────
 
 class ManagePanel {
-	constructor(container, agentId) {
+	constructor(container, agentId, { agentWalletAddress, agentChainId } = {}) {
 		this._container = container;
 		this._agentId = agentId;
+		this._agentWalletAddress = agentWalletAddress || null;
+		this._agentChainId = agentChainId || null;
 		this._root = null;
 		this._delegations = [];
 		this._onFocus = null;
@@ -40,11 +49,16 @@ class ManagePanel {
 		this._root.innerHTML = `
 			<div class="mp-header">
 				<span class="mp-title">Permissions</span>
-				<button class="mp-refresh-btn" title="Refresh">
-					<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-						<path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
-					</svg>
-				</button>
+				<div class="mp-header-actions">
+					<button class="mp-grant-header-btn" id="mp-grant-header-btn" title="Grant new permission" hidden>
+						+ Grant
+					</button>
+					<button class="mp-refresh-btn" title="Refresh">
+						<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+							<path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+						</svg>
+					</button>
+				</div>
 			</div>
 			<div class="mp-list" id="mp-list-${this._agentId}">
 				<div class="mp-loading">Loading…</div>
@@ -53,6 +67,9 @@ class ManagePanel {
 		this._container.appendChild(this._root);
 
 		this._root.querySelector('.mp-refresh-btn').addEventListener('click', () => this._load());
+		this._root
+			.querySelector('#mp-grant-header-btn')
+			.addEventListener('click', () => this._openGrantModal());
 
 		this._onFocus = () => this._load();
 		window.addEventListener('focus', this._onFocus);
@@ -83,24 +100,54 @@ class ManagePanel {
 
 	_render() {
 		const el = this._listEl();
+		const headerGrantBtn = this._root.querySelector('#mp-grant-header-btn');
+
 		if (!this._delegations.length) {
-			el.innerHTML = `
-				<div class="mp-empty">
-					<p>No permissions granted yet.</p>
-					<button class="mp-grant-btn" id="mp-grant-btn">Grant permissions</button>
-				</div>
-			`;
-			el.querySelector('#mp-grant-btn').addEventListener('click', () => {
-				if (typeof window.openGrantPermissions === 'function') {
-					window.openGrantPermissions(this._agentId);
+			if (headerGrantBtn) headerGrantBtn.hidden = true;
+			const canGrant = Boolean(this._agentWalletAddress);
+			const empty = document.createElement('div');
+			empty.className = 'mp-empty';
+			empty.innerHTML = `
+				<p>No permissions granted yet.</p>
+				${
+					canGrant
+						? `<button class="mp-grant-btn" id="mp-grant-btn">Grant permissions</button>`
+						: `<p class="mp-empty-hint">Register the agent on-chain first to grant it permissions.</p>`
 				}
-			});
+			`;
+			el.innerHTML = '';
+			el.appendChild(empty);
+			el.querySelector('#mp-grant-btn')?.addEventListener('click', () =>
+				this._openGrantModal(),
+			);
 			return;
 		}
+
+		if (headerGrantBtn) headerGrantBtn.hidden = !this._agentWalletAddress;
 
 		el.innerHTML = '';
 		for (const d of this._delegations) {
 			el.appendChild(this._buildCard(d));
+		}
+	}
+
+	async _openGrantModal() {
+		if (!this._agentWalletAddress) {
+			// Defensive: button shouldn't be visible without an agent wallet,
+			// but fail loud just in case.
+			console.warn('[manage-panel] cannot grant: agent has no wallet address');
+			return;
+		}
+
+		const result = await new GrantPermissionsModal({
+			agentId: this._agentId,
+			chainId: this._agentChainId || undefined,
+			delegateAddress: this._agentWalletAddress,
+			// delegatorAddress is filled by ensureWallet() inside the modal
+		}).open();
+
+		if (result?.ok) {
+			this._load();
 		}
 	}
 

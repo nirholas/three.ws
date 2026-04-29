@@ -33,6 +33,12 @@ const TOKENS = {
 	],
 };
 
+const SUPPORTED_CHAINS = [
+	{ id: 84532, name: 'Base Sepolia', testnet: true },
+	{ id: 11155111, name: 'Sepolia', testnet: true },
+	{ id: 1, name: 'Ethereum Mainnet', testnet: false },
+];
+
 const KNOWN_CONTRACTS = {
 	84532: [{ name: 'Uniswap V3 Router', address: '0x94cC0AaC535CCDB3C01d6787D6413C739ae12bc4' }],
 	11155111: [{ name: 'Uniswap V3 Router', address: '0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48' }],
@@ -267,6 +273,13 @@ function injectStyles() {
   background:rgba(0,0,0,.3);padding:var(--space-xs);border-radius:var(--radius-md);
   max-width:100%}
 .gm-custom-token-row{margin-top:var(--space-xs)}
+.gm-chain-group{flex-direction:column;gap:var(--space-xs)}
+.gm-chain-row{padding:var(--space-xs) var(--space-sm);background:rgba(255,255,255,.04);
+  border-radius:var(--radius-md);border:1px solid rgba(255,255,255,.08);width:100%}
+.gm-chain-row:hover{border-color:var(--accent)}
+.gm-chain-name{flex:1}
+.gm-chain-testnet{font-size:var(--text-xs);color:rgba(255,255,255,.45);
+  background:rgba(255,255,255,.06);padding:1px 6px;border-radius:8px;margin-left:auto}
 `;
 	document.head.appendChild(style);
 }
@@ -280,11 +293,12 @@ export class GrantPermissionsModal {
 	 */
 	constructor({ agentId, chainId, delegatorAddress, delegateAddress, presets = {} }) {
 		this._agentId = agentId;
-		this._chainId = chainId;
-		this._delegatorAddress = delegatorAddress;
-		this._delegateAddress = delegateAddress;
+		this._chainId = chainId ?? null;
+		this._delegatorAddress = delegatorAddress ?? null;
+		this._delegateAddress = delegateAddress ?? null;
 
-		this._step = 1;
+		// If chainId is missing, start with network picker (step 0).
+		this._step = this._chainId ? 1 : 0;
 		this._form = {
 			token: presets.token ?? 'native',
 			customToken: '',
@@ -321,7 +335,7 @@ export class GrantPermissionsModal {
 			injectStyles();
 			this._build();
 			this._wireGlobal();
-			this._renderStep(1);
+			this._renderStep(this._chainId ? 1 : 0);
 			this._focusFirst();
 		});
 	}
@@ -346,6 +360,8 @@ export class GrantPermissionsModal {
 					<button type="button" class="gm-close" aria-label="Close">&times;</button>
 				</div>
 				<nav class="gm-breadcrumb" aria-label="Steps">
+					<span class="gm-bc-step" data-step="0" hidden>0. Network</span>
+					<span class="gm-bc-sep gm-bc-sep--0" aria-hidden="true" hidden>›</span>
 					<span class="gm-bc-step" data-step="1">1. Scope</span>
 					<span class="gm-bc-sep" aria-hidden="true">›</span>
 					<span class="gm-bc-step" data-step="2">2. Review</span>
@@ -424,14 +440,73 @@ export class GrantPermissionsModal {
 		this._step = n;
 		this._body.innerHTML = '';
 		this._updateBreadcrumb(n);
-		if (n === 1) this._renderStep1();
+		if (n === 0) this._renderStep0();
+		else if (n === 1) this._renderStep1();
 		else if (n === 2) this._renderStep2();
 		else this._renderStep3();
 	}
 
 	_updateBreadcrumb(active) {
+		// Reveal step 0 in breadcrumb only if it's part of this flow.
+		const showStep0 = !this._chainId || active === 0;
+		const step0El = this.overlay.querySelector('.gm-bc-step[data-step="0"]');
+		const step0Sep = this.overlay.querySelector('.gm-bc-sep--0');
+		if (step0El) step0El.hidden = !showStep0;
+		if (step0Sep) step0Sep.hidden = !showStep0;
+
 		this.overlay.querySelectorAll('.gm-bc-step').forEach((el) => {
 			el.classList.toggle('gm-bc-step--active', Number(el.dataset.step) === active);
+		});
+	}
+
+	// ── Step 0: Network picker ────────────────────────────────────────────────
+
+	_renderStep0() {
+		const chainOptions = SUPPORTED_CHAINS.map(
+			(c) => `
+				<label class="gm-radio-label gm-chain-row">
+					<input type="radio" name="gm-chain" value="${c.id}">
+					<span class="gm-chain-name">${escapeHtml(c.name)}</span>
+					${c.testnet ? '<span class="gm-chain-testnet">testnet</span>' : ''}
+				</label>`,
+		).join('');
+
+		this._body.innerHTML = `
+			<form id="gm-chain-form" novalidate>
+				<fieldset class="gm-fieldset">
+					<legend class="gm-legend">Choose a network</legend>
+					<div class="gm-radio-group gm-chain-group">${chainOptions}</div>
+				</fieldset>
+				<div class="gm-actions">
+					<button type="button" class="gm-btn gm-btn--ghost" id="gm-cancel-btn-0">
+						Cancel
+					</button>
+					<button type="submit" class="gm-btn gm-btn--primary" id="gm-chain-next" disabled>
+						Continue →
+					</button>
+				</div>
+			</form>
+		`;
+
+		const form = this._body.querySelector('#gm-chain-form');
+		const nextBtn = form.querySelector('#gm-chain-next');
+
+		form.querySelectorAll('input[name="gm-chain"]').forEach((radio) => {
+			radio.addEventListener('change', () => {
+				nextBtn.disabled = false;
+			});
+		});
+
+		form.querySelector('#gm-cancel-btn-0').addEventListener('click', () => this.close());
+
+		form.addEventListener('submit', (e) => {
+			e.preventDefault();
+			const checked = form.querySelector('input[name="gm-chain"]:checked');
+			if (!checked) return;
+			this._chainId = parseInt(checked.value, 10);
+			// Reset token to native since per-chain token list changes.
+			this._form.token = 'native';
+			this._renderStep(1);
 		});
 	}
 
@@ -763,6 +838,10 @@ export class GrantPermissionsModal {
 		try {
 			const wallet = await ensureWallet();
 			signer = wallet.signer;
+			// If we don't have a delegator yet, this connection provides it.
+			if (!this._delegatorAddress) {
+				this._delegatorAddress = wallet.address;
+			}
 		} catch (err) {
 			this._setStatus('✗', `Wallet connection failed: ${err.message}`, 'gm-status--error');
 			this._setActions(
@@ -771,6 +850,21 @@ export class GrantPermissionsModal {
 			this._body
 				.querySelector('#gm-retry-conn')
 				?.addEventListener('click', () => this._signAndSubmit());
+			return;
+		}
+
+		if (!this._delegateAddress) {
+			this._setStatus(
+				'✗',
+				'Agent has no on-chain address yet. Register the agent first, then grant permissions.',
+				'gm-status--error',
+			);
+			this._setActions(
+				`<button class="gm-btn gm-btn--ghost" id="gm-close-no-delegate">Close</button>`,
+			);
+			this._body
+				.querySelector('#gm-close-no-delegate')
+				?.addEventListener('click', () => this.close());
 			return;
 		}
 
@@ -924,10 +1018,8 @@ export class GrantPermissionsModal {
 
 // ── Convenience global (debug or explicit import only) ─────────────────────────
 
-if (typeof window !== 'undefined') {
-	if (window.AGENT_DEBUG && !window.openGrantPermissions) {
-		window.openGrantPermissions = (opts) => new GrantPermissionsModal(opts).open();
-	}
+if (typeof window !== 'undefined' && !window.openGrantPermissions) {
+	window.openGrantPermissions = (opts) => new GrantPermissionsModal(opts).open();
 }
 
 // ── openGrantModal — skill-facing convenience function ────────────────────────

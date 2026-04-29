@@ -168,7 +168,12 @@ export class AgentHome {
 			const permContainer = panel.querySelector('#agent-permissions-container');
 			import('./permissions/manage-panel.js')
 				.then(({ mountManagePanel }) =>
-					mountManagePanel({ container: permContainer, agentId }),
+					mountManagePanel({
+						container: permContainer,
+						agentId,
+						agentWalletAddress: this.identity.walletAddress,
+						agentChainId: this.identity.chainId,
+					}),
 				)
 				.catch(() => {});
 		}
