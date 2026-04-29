@@ -26,6 +26,7 @@ import {
 	deleteAvatar,
 } from './_lib/avatars.js';
 import { fetchModel, FetchModelError } from './_lib/fetch-model.js';
+import { crawlAgentAttestations, KIND_MAP } from './_lib/solana-attestations.js';
 import { inspectModel, suggestOptimizations } from './_lib/model-inspect.js';
 import { validateBytes } from 'gltf-validator';
 
@@ -364,6 +365,57 @@ const TOOL_CATALOG = [
 				},
 			},
 			required: ['url'],
+			additionalProperties: false,
+		},
+	},
+	{
+		name: 'solana_agent_reputation',
+		title: 'Get Solana agent reputation',
+		description:
+			'Computed reputation summary for a Solana-registered three.ws agent. Returns total/verified feedback counts, score averages (raw + verified-only), validation pass/fail, task acceptance, and dispute counts. Verified score only includes feedback whose task was acknowledged on-chain by the agent owner. Public; no auth required.',
+		inputSchema: {
+			type: 'object',
+			properties: {
+				asset: { type: 'string', description: 'Metaplex Core asset pubkey (the agent ID)' },
+				network: { type: 'string', enum: ['mainnet', 'devnet'], default: 'devnet' },
+			},
+			required: ['asset'],
+			additionalProperties: false,
+		},
+	},
+	{
+		name: 'solana_agent_attestations',
+		title: 'List Solana agent attestations',
+		description:
+			'List recent on-chain attestations about a Solana-registered agent (feedback, validation, task offers, acceptances, disputes). Backed by the three.ws indexer for sub-100ms reads. Each row includes verified/disputed/revoked flags. Public; no auth required.',
+		inputSchema: {
+			type: 'object',
+			properties: {
+				asset: { type: 'string' },
+				kind: {
+					type: 'string',
+					enum: ['feedback', 'validation', 'task', 'accept', 'revoke', 'dispute', 'all'],
+					default: 'all',
+				},
+				network: { type: 'string', enum: ['mainnet', 'devnet'], default: 'devnet' },
+				limit: { type: 'integer', minimum: 1, maximum: 200, default: 50 },
+			},
+			required: ['asset'],
+			additionalProperties: false,
+		},
+	},
+	{
+		name: 'solana_agent_passport',
+		title: 'Get Solana agent passport',
+		description:
+			'Full discovery card for a Solana agent: identity (Metaplex Core asset), owner wallet, reputation summary, latest validation result, and attestation schema endpoint. Equivalent to an ERC-8004 passport — use this when one tool call should answer "who is this agent and can I trust them?".',
+		inputSchema: {
+			type: 'object',
+			properties: {
+				asset: { type: 'string' },
+				network: { type: 'string', enum: ['mainnet', 'devnet'], default: 'devnet' },
+			},
+			required: ['asset'],
 			additionalProperties: false,
 		},
 	},
