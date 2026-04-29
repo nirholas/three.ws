@@ -1,21 +1,27 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock SOLANA_RPC so the module can be imported in Node without the full browser env.
-vi.mock('../src/erc8004/solana-deploy.js', () => ({
-	detectSolanaWallet: vi.fn(),
-	SOLANA_RPC: { mainnet: 'https://api.mainnet-beta.solana.com', devnet: 'https://api.devnet.solana.com' },
+// vi.mock is hoisted; use vi.hoisted for variables referenced inside factory.
+const { getSignaturesForAddressMock, getParsedTransactionMock } = vi.hoisted(() => ({
+	getSignaturesForAddressMock: vi.fn(),
+	getParsedTransactionMock: vi.fn(),
 }));
 
-// Shared mocks for Connection methods.
-const getSignaturesForAddressMock = vi.fn();
-const getParsedTransactionMock = vi.fn();
+vi.mock('../src/erc8004/solana-deploy.js', () => ({
+	detectSolanaWallet: vi.fn(),
+	SOLANA_RPC: {
+		mainnet: 'https://api.mainnet-beta.solana.com',
+		devnet: 'https://api.devnet.solana.com',
+	},
+}));
 
 vi.mock('@solana/web3.js', () => ({
-	Connection: vi.fn(() => ({
-		getSignaturesForAddress: getSignaturesForAddressMock,
-		getParsedTransaction: getParsedTransactionMock,
-	})),
-	PublicKey: vi.fn((s) => ({ toString: () => s })),
+	Connection: function Connection() {
+		this.getSignaturesForAddress = getSignaturesForAddressMock;
+		this.getParsedTransaction = getParsedTransactionMock;
+	},
+	PublicKey: function PublicKey(s) {
+		this.toString = () => s;
+	},
 }));
 
 const { listRecentClaims, watchClaims } = await import('../src/pump/pumpkit-claims.js');
@@ -25,7 +31,14 @@ const { listRecentClaims, watchClaims } = await import('../src/pump/pumpkit-clai
 const CREATOR = 'CREatorWALLet111111111111111111111111111111111';
 const PUMP_PROGRAM = '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P';
 
-function makeTx({ creator = CREATOR, programId = PUMP_PROGRAM, preBalance = 0, postBalance = 500_000_000, blockTime = 1_700_000_000, mint = 'MINT1111111111111111111111111111111111111111' } = {}) {
+function makeTx({
+	creator = CREATOR,
+	programId = PUMP_PROGRAM,
+	preBalance = 0,
+	postBalance = 500_000_000,
+	blockTime = 1_700_000_000,
+	mint = 'MINTTTT1111111111111111111111111111111111111',
+} = {}) {
 	return {
 		transaction: {
 			message: {
@@ -58,7 +71,9 @@ describe('listRecentClaims', () => {
 	});
 
 	it('filters out transactions without pump.fun program involvement', async () => {
-		getSignaturesForAddressMock.mockResolvedValue([{ signature: 'sig1', blockTime: 1_700_000_000 }]);
+		getSignaturesForAddressMock.mockResolvedValue([
+			{ signature: 'sig1', blockTime: 1_700_000_000 },
+		]);
 		getParsedTransactionMock.mockResolvedValue(
 			makeTx({ programId: 'SomeOtherProgram111111111111111111111111111' }),
 		);
@@ -67,8 +82,9 @@ describe('listRecentClaims', () => {
 	});
 
 	it('filters out transactions where creator lamports did not increase', async () => {
-		getSignaturesForAddressMock.mockResolvedValue([{ signature: 'sig1', blockTime: 1_700_000_000 }]);
-		// preBalance > postBalance → outflow, not a claim
+		getSignaturesForAddressMock.mockResolvedValue([
+			{ signature: 'sig1', blockTime: 1_700_000_000 },
+		]);
 		getParsedTransactionMock.mockResolvedValue(
 			makeTx({ preBalance: 1_000_000_000, postBalance: 500_000_000 }),
 		);
@@ -77,9 +93,11 @@ describe('listRecentClaims', () => {
 	});
 
 	it('returns a claim event for a matching pump.fun transaction', async () => {
-		getSignaturesForAddressMock.mockResolvedValue([{ signature: 'sigABC', blockTime: 1_700_000_100 }]);
+		getSignaturesForAddressMock.mockResolvedValue([
+			{ signature: 'sigABC', blockTime: 1_700_000_100 },
+		]);
 		getParsedTransactionMock.mockResolvedValue(
-			makeTx({ preBalance: 0, postBalance: 500_000_000, mint: 'MINTTTT' }),
+			makeTx({ preBalance: 0, postBalance: 500_000_000, mint: 'MINTTTT', blockTime: 1_700_000_100 }),
 		);
 		const result = await listRecentClaims({ creator: CREATOR });
 		expect(result).toHaveLength(1);
@@ -117,10 +135,10 @@ describe('listRecentClaims', () => {
 
 	it('recognises inner-instruction pump.fun program calls', async () => {
 		const tx = makeTx({ programId: 'SystemProgram' });
-		tx.meta.innerInstructions = [
-			{ instructions: [{ programId: PUMP_PROGRAM }] },
-		];
-		getSignaturesForAddressMock.mockResolvedValue([{ signature: 'inner', blockTime: 1_700_000_000 }]);
+		tx.meta.innerInstructions = [{ instructions: [{ programId: PUMP_PROGRAM }] }];
+		getSignaturesForAddressMock.mockResolvedValue([
+			{ signature: 'inner', blockTime: 1_700_000_000 },
+		]);
 		getParsedTransactionMock.mockResolvedValue(tx);
 		const result = await listRecentClaims({ creator: CREATOR });
 		expect(result).toHaveLength(1);
@@ -136,12 +154,14 @@ describe('watchClaims', () => {
 	});
 
 	it('calls onClaim for each new claim on the initial poll', async () => {
-		getSignaturesForAddressMock.mockResolvedValue([{ signature: 'sig1', blockTime: 1_700_000_100 }]);
+		getSignaturesForAddressMock.mockResolvedValue([
+			{ signature: 'sig1', blockTime: 1_700_000_100 },
+		]);
 		getParsedTransactionMock.mockResolvedValue(makeTx({ blockTime: 1_700_000_100 }));
 
 		const received = [];
 		const ctrl = new AbortController();
-		ctrl.abort(); // abort immediately so no polling interval fires
+		ctrl.abort(); // abort immediately — no polling interval fires
 
 		await watchClaims({
 			creator: CREATOR,
@@ -153,9 +173,11 @@ describe('watchClaims', () => {
 		expect(received[0].signature).toBe('sig1');
 	});
 
-	it('deduplicates: does not call onClaim twice for the same signature', async () => {
-		getSignaturesForAddressMock.mockResolvedValue([{ signature: 'dup', blockTime: 1_700_000_100 }]);
-		getParsedTransactionMock.mockResolvedValue(makeTx({ blockTime: 1_700_000_100 }));
+	it('filters events at or before sinceTs', async () => {
+		getSignaturesForAddressMock.mockResolvedValue([
+			{ signature: 'old', blockTime: 1_700_000_000 },
+		]);
+		getParsedTransactionMock.mockResolvedValue(makeTx({ blockTime: 1_700_000_000 }));
 
 		const received = [];
 		const ctrl = new AbortController();
@@ -163,24 +185,12 @@ describe('watchClaims', () => {
 
 		await watchClaims({
 			creator: CREATOR,
+			sinceTs: 1_700_000_000, // event ts == sinceTs → filtered out
 			signal: ctrl.signal,
 			onClaim: (c) => received.push(c),
 		});
 
-		// Call again — same sig should not fire again because it's already in `seen`.
-		// Re-run with a fresh watch but sinceTs set past the event ts.
-		const received2 = [];
-		const ctrl2 = new AbortController();
-		ctrl2.abort();
-		await watchClaims({
-			creator: CREATOR,
-			sinceTs: 1_700_000_100, // event ts == sinceTs → filtered
-			signal: ctrl2.signal,
-			onClaim: (c) => received2.push(c),
-		});
-
-		expect(received).toHaveLength(1);
-		expect(received2).toHaveLength(0); // filtered by sinceTs
+		expect(received).toHaveLength(0);
 	});
 
 	it('aborts cleanly when signal fires before polling interval', async () => {
@@ -189,25 +199,27 @@ describe('watchClaims', () => {
 		const ctrl = new AbortController();
 		ctrl.abort();
 
-		// Should not throw and should resolve quickly.
 		await expect(
 			watchClaims({ creator: CREATOR, signal: ctrl.signal, onClaim: vi.fn() }),
 		).resolves.toBeUndefined();
 	});
 
-	it('survives onClaim throwing without stopping the watch', async () => {
-		getSignaturesForAddressMock.mockResolvedValue([{ signature: 'err', blockTime: 1_700_000_200 }]);
+	it('survives onClaim throwing without propagating the error', async () => {
+		getSignaturesForAddressMock.mockResolvedValue([
+			{ signature: 'err', blockTime: 1_700_000_200 },
+		]);
 		getParsedTransactionMock.mockResolvedValue(makeTx({ blockTime: 1_700_000_200 }));
 
 		const ctrl = new AbortController();
 		ctrl.abort();
 
-		// Should not propagate the error from onClaim.
 		await expect(
 			watchClaims({
 				creator: CREATOR,
 				signal: ctrl.signal,
-				onClaim: () => { throw new Error('handler error'); },
+				onClaim: () => {
+					throw new Error('handler error');
+				},
 			}),
 		).resolves.toBeUndefined();
 	});

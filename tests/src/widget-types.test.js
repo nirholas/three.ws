@@ -21,6 +21,7 @@ describe('WIDGET_TYPES', () => {
 				'passport',
 				'hotspot-tour',
 				'pumpfun-feed',
+				'kol-trades',
 			].sort(),
 		);
 	});
