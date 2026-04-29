@@ -1,6 +1,6 @@
 {
 	"name": "three.ws",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "3D AI agent platform for the browser. Load any GLB/glTF avatar, give it an LLM brain, and embed it as a web component.",
 	"author": "nirholas",
 	"license": "Apache-2.0",
