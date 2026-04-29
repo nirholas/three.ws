@@ -127,13 +127,14 @@ export default async function handler(req, res, id) {
 		return error(res, 502, 'rpc_error', err.message || 'transaction failed');
 	}
 
+	const mintAddr = mint.publicKey.toBase58();
 	await sql`
 		INSERT INTO agent_actions (agent_id, type, payload, source_skill)
 		VALUES (
 			${id},
 			${'pumpfun.launch'},
 			${JSON.stringify({
-				mint: mint.publicKey.toBase58(),
+				mint: mintAddr,
 				name: body.name,
 				symbol: body.symbol,
 				uri: body.uri,
@@ -148,6 +149,16 @@ export default async function handler(req, res, id) {
 			${'pumpfun'}
 		)
 	`.catch((e) => console.error('[pumpfun/launch] log failed', e));
+
+	// Register the mint in the indexer table so pump-agent-stats cron picks it up.
+	await sql`
+		INSERT INTO pump_agent_mints
+			(agent_id, user_id, network, mint, name, symbol, metadata_uri, agent_authority)
+		VALUES
+			(${id}, ${auth.userId}, ${body.network}, ${mintAddr},
+			 ${body.name}, ${body.symbol}, ${body.uri}, ${keypair.publicKey.toBase58()})
+		ON CONFLICT (mint, network) DO NOTHING
+	`.catch((e) => console.error('[pumpfun/launch] mint index failed', e));
 
 	return json(res, 201, {
 		data: {

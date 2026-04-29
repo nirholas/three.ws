@@ -74,7 +74,7 @@ export function registerPumpFunAutonomousSkills(skills) {
 		},
 		handler: async (args, ctx) => {
 			const id = requireAgentId(ctx);
-			const data = await postJson(ENDPOINT(id, 'launch'), {
+			const resp = await postJson(ENDPOINT(id, 'launch'), {
 				name: args.name || ctx.identity?.name,
 				symbol: args.symbol,
 				uri: args.uri,
@@ -84,11 +84,13 @@ export function registerPumpFunAutonomousSkills(skills) {
 				vanitySuffix: args.vanitySuffix,
 				vanityIgnoreCase: args.vanityIgnoreCase,
 			});
+			// Server uses { data: {...} } envelope per api/_lib/http.json convention.
+			const payload = resp?.data || resp;
 			return {
 				success: true,
-				output: `Launched ${data.symbol || args.symbol}. Mint: ${data.mint}`,
+				output: `Launched ${args.symbol}. Mint: ${payload.mint}`,
 				sentiment: 0.9,
-				data,
+				data: { ...payload, symbol: args.symbol, network: args.network || 'mainnet' },
 			};
 		},
 	});

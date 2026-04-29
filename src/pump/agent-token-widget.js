@@ -567,36 +567,89 @@ export class AgentTokenWidget {
 	}
 
 	async _onWithdraw() {
-		// Triggers the prep endpoint and surfaces a wallet popup expectation.
-		// The actual signing path lives in src/onchain/launch-token-button.js
-		// patterns and on-chain wallet adapters; here we just kick off prep.
 		const wd = this.mount.querySelector('.atok-withdraw');
 		const orig = wd.textContent;
 		wd.disabled = true;
 		wd.textContent = 'Preparing…';
 		try {
-			const resp = await fetch('/api/pump/withdraw-prep', {
+			// Lazy-import so non-owner views don't pay the bundle cost.
+			const [
+				{ resolveUsdcAta, signAndSendVTx },
+			] = await Promise.all([import('./pump-modals.js')]);
+			const wallet =
+				typeof window !== 'undefined' &&
+				(window.solana || window.phantom?.solana || window.backpack || window.solflare);
+			if (!wallet) throw new Error('No Solana wallet detected. Install Phantom.');
+			if (!wallet.isConnected) await wallet.connect?.();
+			const authority =
+				wallet.publicKey?.toBase58?.() || wallet.publicKey?.toString();
+			if (authority !== this.token.agent_authority) {
+				throw new Error('Connected wallet is not the agent authority.');
+			}
+			wd.textContent = 'Resolving ATA…';
+			const { ata, existing, connection } = await resolveUsdcAta({
+				owner: authority,
+				network: this.token.network,
+			});
+			// If owner has no USDC ATA yet, prepend a creation ix; the offline SDK
+			// withdraw ix expects the receiver ATA to exist.
+			let createAtaPrep = null;
+			if (!existing) {
+				const { createAssociatedTokenAccountInstruction, ASSOCIATED_TOKEN_PROGRAM_ID } =
+					await import('@solana/spl-token');
+				const { PublicKey } = await import('@solana/web3.js');
+				createAtaPrep = createAssociatedTokenAccountInstruction(
+					new PublicKey(authority),
+					ata,
+					new PublicKey(authority),
+					new PublicKey(
+						this.token.network === 'devnet'
+							? '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU'
+							: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+					),
+				);
+			}
+			wd.textContent = 'Building tx…';
+			const prep = await fetch('/api/pump/withdraw-prep', {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
 				credentials: 'include',
 				body: JSON.stringify({
 					mint: this.token.mint,
-					authority_wallet: this.token.agent_authority,
-					receiver_ata: this.token.agent_authority, // owner self-ATA, frontend resolves
+					authority_wallet: authority,
+					receiver_ata: ata.toBase58(),
 					network: this.token.network,
 				}),
 			}).then((r) => r.json());
-			if (resp.error) throw new Error(resp.error_description || resp.error);
-			window.dispatchEvent(
-				new CustomEvent('pump-withdraw-prepared', { detail: resp }),
-			);
+			if (prep.error) throw new Error(prep.error_description || prep.error);
 			wd.textContent = 'Sign in wallet…';
+			const sig = await signAndSendVTx(prep.tx_base64, {
+				network: this.token.network,
+				prependIxs: createAtaPrep ? [createAtaPrep] : [],
+				wallet,
+				connection,
+			});
+			wd.textContent = 'Confirming…';
+			const conf = await fetch('/api/pump/withdraw-confirm', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				credentials: 'include',
+				body: JSON.stringify({
+					mint: this.token.mint,
+					authority_wallet: authority,
+					tx_signature: sig,
+					network: this.token.network,
+				}),
+			}).then((r) => r.json());
+			if (conf.error) throw new Error(conf.error_description || conf.error);
+			wd.textContent = 'Done 🎉';
+			setTimeout(() => this._refresh().catch(() => {}), 1200);
 		} catch (e) {
-			wd.textContent = `Failed: ${e.message}`;
+			wd.textContent = `Failed: ${(e.message || String(e)).slice(0, 32)}`;
 			setTimeout(() => {
 				wd.textContent = orig;
 				wd.disabled = false;
-			}, 2400);
+			}, 3000);
 		}
 	}
 

@@ -166,6 +166,52 @@ async function signAndSend(txBase64, { extraSigners = [], network = 'mainnet' } 
 	return sig;
 }
 
+/**
+ * Sign + send a server-prepared VersionedTransaction. Optionally prepend
+ * additional instructions (e.g. ATA creation) before submission. Used by the
+ * widget's withdraw flow which needs a CreateATA + Withdraw atomic.
+ *
+ * Note: prepending ixs requires recompiling to a v0 message because the server
+ * already finalized the message. We prepend by deserialising, building a fresh
+ * message with the original blockhash + payer + (extra + original) ixs is not
+ * possible without reading the original ixs from the message — which we do via
+ * `getMessage()` decompile. Fallback: if prependIxs is empty, just re-sign.
+ */
+export async function signAndSendVTx(
+	txBase64,
+	{ extraSigners = [], network = 'mainnet', prependIxs = [], wallet, connection } = {},
+) {
+	const w = wallet || detectSolanaWallet();
+	if (!w) throw new Error('No Solana wallet detected. Install Phantom.');
+	if (!w.isConnected) await w.connect?.();
+	const conn = connection || new Connection(RPC(network), 'confirmed');
+
+	const original = VersionedTransaction.deserialize(
+		Uint8Array.from(atob(txBase64), (c) => c.charCodeAt(0)),
+	);
+
+	let toSign = original;
+	if (prependIxs && prependIxs.length) {
+		// Decompile original message → splice in prepend ixs → recompile.
+		const { TransactionMessage } = await import('@solana/web3.js');
+		const decompiled = TransactionMessage.decompile(original.message);
+		const merged = new TransactionMessage({
+			payerKey: decompiled.payerKey,
+			recentBlockhash: decompiled.recentBlockhash,
+			instructions: [...prependIxs, ...decompiled.instructions],
+		}).compileToV0Message();
+		toSign = new VersionedTransaction(merged);
+	}
+
+	for (const kp of extraSigners) toSign.sign([kp]);
+	const signed = await w.signTransaction(toSign);
+	const sig = await conn.sendRawTransaction(signed.serialize(), {
+		skipPreflight: false,
+	});
+	await conn.confirmTransaction(sig, 'confirmed');
+	return sig;
+}
+
 // ── Pay modal ───────────────────────────────────────────────────────────────
 function openPay({ mint, network }) {
 	const { inner, close } = openModal();
