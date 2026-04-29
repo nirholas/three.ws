@@ -21,7 +21,7 @@ export async function startClaim({ state, onProgress }) {
 	try {
 		// Step 1: Connect wallet
 		log('connect_wallet', 'connecting');
-		const { address, chainId, signer } = await connectWallet();
+		const { address, chainId, signer } = await ensureWallet();
 		log('connect_wallet', 'connected', { address, chainId });
 
 		// Step 2: Check state

@@ -11,7 +11,7 @@
  * helpers already exported by agent-registry.js.
  */
 
-import { connectWallet, getIdentityRegistry } from './agent-registry.js';
+import { ensureWallet, getIdentityRegistry } from './agent-registry.js';
 import { REGISTRY_DEPLOYMENTS } from './abi.js';
 import { CHAIN_META, switchChain, txExplorerUrl } from './chain-meta.js';
 
@@ -197,7 +197,7 @@ Agent 2,Does more,MCP,https://agent2.com</pre>
 			}
 		}
 
-		const { signer } = await connectWallet();
+		const { signer } = await ensureWallet();
 		const registry = getIdentityRegistry(chainId, signer);
 		const identityAddr = REGISTRY_DEPLOYMENTS[chainId].identityRegistry;
 

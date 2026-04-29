@@ -17,7 +17,7 @@
  * one-click chip surfaced on the agent's profile page for the owner.
  */
 
-import { connectWallet, getIdentityRegistry } from './agent-registry.js';
+import { ensureWallet, getIdentityRegistry } from './agent-registry.js';
 import { REGISTRY_DEPLOYMENTS } from './abi.js';
 import {
 	CHAIN_META,
@@ -238,9 +238,7 @@ export class DeployButton {
 		// ── Connect wallet on the selected chain ───────────────────────────
 		let signer, walletChainId;
 		try {
-			({ signer, chainId: walletChainId } = await connectWallet({
-				chainId: this._chainId,
-			}));
+			({ signer, chainId: walletChainId } = await ensureWallet());
 		} catch (err) {
 			if (_isUserRejection(err)) return this._renderDeployButton();
 			this._renderError(`Wallet connection failed: ${_humanError(err)}`);

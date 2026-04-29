@@ -7,6 +7,12 @@ export {
 } from './abi.js';
 export {
 	connectWallet,
+	eagerConnectWallet,
+	ensureWallet,
+	disconnectWallet,
+	getWalletState,
+	getSigner,
+	onWalletChange,
 	registerAgent,
 	buildRegistrationJSON,
 	pinFile,

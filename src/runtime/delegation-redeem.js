@@ -153,8 +153,8 @@ async function _redeemClient(delegation, calls, chainId) {
 		throw new Error('no_redemption_path');
 	}
 
-	const { connectWallet } = await import('../erc8004/agent-registry.js');
-	const { signer } = await connectWallet();
+	const { ensureWallet } = await import('../erc8004/agent-registry.js');
+	const { signer } = await ensureWallet();
 
 	const { redeemDelegation } = await import('../permissions/toolkit.js');
 	const { txHash } = await redeemDelegation({ delegation, calls, signer, chainId });

@@ -9,7 +9,7 @@
  */
 
 import { AbiCoder, getAddress } from 'ethers';
-import { connectWallet } from '../erc8004/agent-registry.js';
+import { ensureWallet } from '../erc8004/agent-registry.js';
 import { encodeScopedDelegation, signDelegation } from './toolkit.js';
 import { CAVEAT_ENFORCERS } from '../erc7710/abi.js';
 
@@ -761,7 +761,7 @@ export class GrantPermissionsModal {
 
 		let signer;
 		try {
-			const wallet = await connectWallet();
+			const wallet = await ensureWallet();
 			signer = wallet.signer;
 		} catch (err) {
 			this._setStatus('✗', `Wallet connection failed: ${err.message}`, 'gm-status--error');
@@ -958,7 +958,7 @@ export async function openGrantModal({ agentId, chainId, preset, delegateAddress
 	// 1. Connect wallet — delegator is whoever is currently signed in
 	let delegatorAddress;
 	try {
-		const { address } = await connectWallet();
+		const { address } = await ensureWallet();
 		delegatorAddress = address;
 	} catch (err) {
 		return { ok: false, reason: `wallet_connection_failed: ${err.message}` };

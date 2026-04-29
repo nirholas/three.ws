@@ -48,39 +48,13 @@
 					0 30px 80px rgba(0, 0, 0, 0.85),
 					0 0 120px rgba(200, 210, 255, 0.04);
 			}
-			.panel {
-				flex: 1;
-				position: relative;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				background:
-					radial-gradient(120% 90% at 30% 20%, rgba(154, 140, 255, 0.55), transparent 60%),
-					radial-gradient(120% 90% at 80% 90%, rgba(255, 140, 200, 0.35), transparent 55%),
-					linear-gradient(135deg, #2a2350 0%, #1a1a2e 100%);
-				overflow: hidden;
-			}
-			.agent-avatar {
-				position: relative;
-				width: 320px;
-				height: 320px;
-				pointer-events: none;
-			}
-			.agent-avatar model-viewer {
-				width: 100%;
-				height: 100%;
-				--poster-color: transparent;
-				background: transparent;
-			}
+			/* .panel, .agent-avatar, .agent-avatar model-viewer come from /auth.css.
+			   Override only what's specific to this page below. */
 			.agent-avatar::after {
-				content: '';
-				position: absolute;
-				left: 50%;
-				bottom: -2px;
 				width: 90px;
 				height: 10px;
 				background: radial-gradient(ellipse, rgba(220, 230, 255, 0.25), transparent 70%);
-				transform: translateX(-50%);
+				bottom: -2px;
 				filter: blur(6px);
 			}
 			a {
@@ -104,22 +78,11 @@
 				justify-content: center;
 				overflow-y: auto;
 			}
+			/* Mobile shell/panel/agent-avatar adjustments come from /auth.css. */
 			@media (max-width: 860px) {
-				.shell {
-					flex-direction: column;
-					min-height: 0;
-				}
-				.panel {
-					min-height: 220px;
-					order: -1;
-				}
 				.card {
 					padding: 32px 28px;
 					max-width: none;
-				}
-				.agent-avatar {
-					width: 180px;
-					height: 180px;
 				}
 			}
 			@media (max-height: 720px) and (min-width: 861px) {
@@ -201,11 +164,6 @@
 			}
 			.field-err.show {
 				display: block;
-			}
-			.caps-warn {
-				margin: 6px 0 0;
-				font-size: 12px;
-				color: #d8c074;
 			}
 			.err {
 				margin-top: 14px;
@@ -314,40 +272,7 @@
 				}
 			}
 
-			/* ── Password field ── */
-			.password-wrap {
-				position: relative;
-			}
-			.password-wrap input {
-				padding-right: 44px;
-			}
-			.password-toggle {
-				position: absolute;
-				top: 50%;
-				right: 6px;
-				transform: translateY(-50%);
-				width: 32px;
-				height: 32px;
-				margin: 0;
-				padding: 0;
-				background: transparent;
-				color: #666;
-				border: 0;
-				border-radius: 6px;
-				cursor: pointer;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				transition: color 0.1s ease, background 0.1s ease;
-			}
-			.password-toggle:hover {
-				color: #ddd;
-				background: rgba(255, 255, 255, 0.04);
-			}
-			.password-toggle svg {
-				width: 18px;
-				height: 18px;
-			}
+			/* .password-wrap, .password-toggle, .caps-warn come from /auth.css. */
 
 			/* ── Wallet chain tabs ── */
 			.chain-tabs {
@@ -473,7 +398,7 @@
 							</svg>
 						</button>
 					</div>
-					<p class="caps-warn" id="caps-warn" hidden>Caps Lock is on</p>
+					<p class="caps-warn" id="caps-warn">Caps Lock is on</p>
 					<p class="field-err" id="password-err" role="alert"></p>
 
 					<div class="remember-row">
@@ -604,11 +529,11 @@
 				// ── Caps lock warn ──
 				function checkCaps(e) {
 					const on = e.getModifierState && e.getModifierState('CapsLock');
-					capsWarn.hidden = !on;
+					capsWarn.classList.toggle('show', !!on);
 				}
 				passwordInput.addEventListener('keydown', checkCaps);
 				passwordInput.addEventListener('keyup', checkCaps);
-				passwordInput.addEventListener('blur', () => { capsWarn.hidden = true; });
+				passwordInput.addEventListener('blur', () => { capsWarn.classList.remove('show'); });
 
 				// ── Inline field errors ──
 				function setFieldError(input, errEl, msg) {

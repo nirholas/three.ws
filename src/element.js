@@ -279,8 +279,19 @@ class Agent3DElement extends HTMLElement {
 		this._applyLayout();
 		this._setupResponsive();
 		this._observeViewport();
-		// Defer boot until visible unless `eager` attr is present
-		if (this.hasAttribute('eager')) this._boot();
+		// Defer boot until visible unless `eager` attr is present.
+		// Skip boot entirely if no source — wait for src/manifest/body/agent-id
+		// to be set, which triggers reboot via attributeChangedCallback.
+		if (this.hasAttribute('eager') && this._hasSource()) this._boot();
+	}
+
+	_hasSource() {
+		return (
+			this.hasAttribute('src') ||
+			this.hasAttribute('manifest') ||
+			this.hasAttribute('body') ||
+			this.hasAttribute('agent-id')
+		);
 	}
 
 	disconnectedCallback() {
@@ -288,7 +299,20 @@ class Agent3DElement extends HTMLElement {
 	}
 
 	attributeChangedCallback(name, oldVal, newVal) {
-		if (!this._mounted || this._suppressAttrChange) return;
+		if (this._suppressAttrChange) return;
+		// Source attribute set on a not-yet-booted (eager but no source) element
+		// — boot now instead of rebooting.
+		if (
+			!this._mounted &&
+			!this._booting &&
+			this.isConnected &&
+			['src', 'manifest', 'body', 'agent-id'].includes(name) &&
+			newVal
+		) {
+			this._boot();
+			return;
+		}
+		if (!this._mounted) return;
 		if (['mode', 'position', 'width', 'height', 'responsive'].includes(name))
 			this._applyLayout();
 		if (name === 'background') this._applyBackground();

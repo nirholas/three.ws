@@ -275,6 +275,14 @@
 	color: #fff;
 }
 
+.h-footer-brand .wordmark-logo {
+	width: 22px;
+	height: 22px;
+	display: inline-block;
+	vertical-align: middle;
+	flex-shrink: 0;
+}
+
 .h-footer-brand .wordmark-dot {
 	display: inline-block;
 	width: 8px;

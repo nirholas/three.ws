@@ -89,8 +89,13 @@ async function checkRoute(browser, route) {
 	});
 	page.on('console', (msg) => {
 		if (msg.type() !== 'error') return;
-		const text = `console.error: ${msg.text()}`;
-		if (!shouldIgnore(text)) errors.push(text);
+		const text = msg.text();
+		// "Failed to load resource: …" is a cascade message from a failed
+		// request — the actual URL is already captured by requestfailed/response
+		// handlers below, where ignore patterns can be applied properly.
+		if (text.startsWith('Failed to load resource')) return;
+		const formatted = `console.error: ${text}`;
+		if (!shouldIgnore(formatted)) errors.push(formatted);
 	});
 	page.on('requestfailed', (req) => {
 		const url = req.url();

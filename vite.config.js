@@ -250,7 +250,11 @@ const libConfig = {
 		},
 		rollupOptions: {
 			// No externals — we want a self-contained drop-in embed.
-			output: { inlineDynamicImports: false },
+			// inlineDynamicImports must be true: UMD output is incompatible
+			// with code-splitting, and the lib is meant to be a single drop-in
+			// bundle anyway. Splitting can come later via a separate ES-only
+			// build target.
+			output: { inlineDynamicImports: true },
 		},
 	},
 };

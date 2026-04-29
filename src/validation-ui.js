@@ -9,7 +9,7 @@
  * - ethers for wallet connection
  */
 
-import { connectWallet } from './erc8004/agent-registry.js';
+import { ensureWallet } from './erc8004/agent-registry.js';
 import {
 	getLatestValidation,
 	recordValidation,
@@ -239,7 +239,7 @@ export class ValidationDashboard {
 			this.els.submitReportBtn.disabled = true;
 			this.showToast('Connecting wallet...');
 
-			const wallet = await connectWallet();
+			const wallet = await ensureWallet();
 			const signer = wallet.signer;
 
 			this.showToast('Submitting validation record on-chain...');

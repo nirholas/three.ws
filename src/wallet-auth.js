@@ -1,12 +1,21 @@
-import { connectWallet } from './erc8004/agent-registry.js';
+import { ensureWallet } from './erc8004/agent-registry.js';
 
 // ─── Public API ─────────────────────────────────────────────────────────────
 
 /**
- * @returns {Promise<{user: object, wallet: object}>}
+ * Sign in with Ethereum (EIP-4361). If a valid session cookie already exists,
+ * skip the wallet prompt entirely and return the current user — keeps the user
+ * authenticated across the whole site without re-signing.
+ *
+ * @returns {Promise<{user: object, wallet?: object}>}
  */
 export async function signInWithWallet() {
-	const { signer, address, chainId } = await connectWallet();
+	// Short-circuit: if the session cookie is still valid, no need to prompt
+	// the wallet or re-sign anything.
+	const existing = await getCurrentUser();
+	if (existing) return { user: existing };
+
+	const { signer, address, chainId } = await ensureWallet();
 
 	// GET nonce — sets __Host-csrf-siwe cookie, returns csrf token
 	const nonceRes = await fetch('/api/auth/siwe/nonce', {
