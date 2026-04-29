@@ -198,11 +198,36 @@ const STYLE = `
 	.drop-zone.filled { border-style: solid; border-color: #374151; color: #9ca3af; }
 	.drop-zone input[type="file"] { display: none; }
 
-	.skill-item { display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: #111827; border: 1px solid #1f2937; border-radius: 6px; margin: 4px 0; font-size: 12px; }
-	.skill-item-info .skill-item-name { font-weight: 600; color: #e5e7eb; }
-	.skill-item-info .skill-item-desc { color: #6b7280; font-size: 11px; margin-top: 1px; }
-	.skill-toggle { background: transparent; border: 1px solid #374151; color: #9ca3af; border-radius: 5px; padding: 3px 9px; font: 12px system-ui; cursor: pointer; flex-shrink: 0; }
+	.skill-item { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 8px 10px; background: #111827; border: 1px solid #1f2937; border-radius: 8px; margin: 6px 0; font-size: 12px; transition: border-color .15s, transform .15s; }
+	.skill-item:hover { border-color: #374151; }
+	.skill-item.installed { border-color: #2563eb; background: linear-gradient(180deg, rgba(37,99,235,.08), #111827); }
+	.skill-item-info { flex: 1; min-width: 0; }
+	.skill-item-info .skill-item-name { font-weight: 600; color: #e5e7eb; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+	.skill-item-info .skill-item-desc { color: #9ca3af; font-size: 11px; margin-top: 3px; line-height: 1.4; }
+	.skill-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+	.skill-tag { font: 600 9px/1 system-ui; letter-spacing: .04em; text-transform: uppercase; color: #93c5fd; background: rgba(59,130,246,.12); border: 1px solid rgba(59,130,246,.25); padding: 3px 6px; border-radius: 4px; }
+	.skill-tag[data-chain="solana"] { color: #c4b5fd; background: rgba(139,92,246,.14); border-color: rgba(139,92,246,.28); }
+	.skill-tag[data-chain="evm"] { color: #93c5fd; background: rgba(59,130,246,.14); border-color: rgba(59,130,246,.28); }
+	.skill-tag[data-kind="readonly"] { color: #6ee7b7; background: rgba(16,185,129,.12); border-color: rgba(16,185,129,.28); }
+	.skill-tag[data-kind="payments"] { color: #fbbf24; background: rgba(234,179,8,.12); border-color: rgba(234,179,8,.28); }
+	.skill-actions { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; align-items: flex-end; }
+	.skill-toggle { background: transparent; border: 1px solid #374151; color: #9ca3af; border-radius: 5px; padding: 4px 10px; font: 600 11px system-ui; cursor: pointer; flex-shrink: 0; transition: all .12s; }
+	.skill-toggle:hover { border-color: #6b7280; color: #d1d5db; }
 	.skill-toggle.on { background: #1e3a5f; border-color: #3b82f6; color: #93c5fd; }
+	.skill-toggle.on:hover { background: #1e40af; }
+	.skill-preview-btn { font: 10px system-ui; color: #6b7280; background: none; border: 0; cursor: pointer; padding: 0; }
+	.skill-preview-btn:hover { color: #9ca3af; }
+	.skill-tools-preview { margin-top: 8px; padding: 8px; background: #0b1220; border: 1px solid #1f2937; border-radius: 6px; display: none; }
+	.skill-tools-preview.open { display: block; }
+	.skill-tools-preview h5 { font: 600 9px/1 system-ui; letter-spacing: .08em; text-transform: uppercase; color: #6b7280; margin: 0 0 6px; }
+	.skill-tools-preview ul { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 4px; }
+	.skill-tools-preview li { font: 11px ui-monospace, SFMono-Regular, monospace; color: #cbd5e1; background: #1f2937; padding: 2px 6px; border-radius: 4px; }
+	.skill-tools-preview .example { margin-top: 6px; font-size: 11px; color: #9ca3af; font-style: italic; }
+	.skill-filters { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+	.skill-chip { font: 600 10px/1 system-ui; letter-spacing: .04em; text-transform: uppercase; color: #9ca3af; background: #1f2937; border: 1px solid #1f2937; padding: 5px 9px; border-radius: 999px; cursor: pointer; transition: all .12s; }
+	.skill-chip:hover { color: #d1d5db; border-color: #374151; }
+	.skill-chip.active { color: #93c5fd; background: rgba(59,130,246,.18); border-color: rgba(59,130,246,.38); }
+	.skill-empty { font-size: 12px; color: #4b5563; padding: 12px; text-align: center; border: 1px dashed #1f2937; border-radius: 6px; }
 	.skill-custom-row { display: flex; gap: 6px; margin-top: 8px; }
 	.skill-custom-row input { flex: 1; background: #111827; color: #f4f4f5; border: 1px solid #1f2937; border-radius: 6px; padding: 6px 8px; font: 12px system-ui; }
 	.skill-custom-row input:focus { outline: none; border-color: #3b82f6; }
@@ -576,6 +601,7 @@ export function mountManifestBuilder(rootEl, options = {}) {
 			<summary>Skills</summary>
 			<div class="section-body">
 				<input id="skill-search" type="text" placeholder="Search skills…" style="width:100%;background:#111827;color:#f4f4f5;border:1px solid #1f2937;border-radius:6px;padding:6px 8px;font:13px system-ui;margin-bottom:8px">
+				<div id="skill-filters" class="skill-filters"></div>
 				<div id="skills-list"></div>
 				<div style="font:600 11px system-ui;letter-spacing:.06em;text-transform:uppercase;color:#4b5563;margin:10px 0 4px">Custom skill URI</div>
 				<div class="skill-custom-row">
@@ -887,31 +913,118 @@ export function mountManifestBuilder(rootEl, options = {}) {
 		if (sec) sec.style.display = state.sttProvider === 'none' ? 'none' : '';
 	}
 
+	// Active tag filter (only one at a time keeps the UI simple).
+	let activeSkillFilter = null;
+	// Memoized tool previews keyed by skill id (lazy-loaded on first expand).
+	const _skillPreviews = new Map();
+
+	function _skillTagKind(tag) {
+		const t = String(tag || '').toLowerCase();
+		if (t === 'solana' || t.includes('pump.fun')) return { chain: 'solana' };
+		if (t === 'evm' || t === 'uniswap' || t === 'metamask' || t === 'erc7710') return { chain: 'evm' };
+		if (t === 'read-only' || t === 'readonly') return { kind: 'readonly' };
+		if (t === 'payments' || t === 'tip' || t === 'usdc') return { kind: 'payments' };
+		return {};
+	}
+
+	function _collectFilterTags() {
+		const seen = new Set();
+		for (const s of allSkills) for (const t of s.tags || []) seen.add(String(t).toLowerCase());
+		// Surface the curated set first if present, then alphabetical extras.
+		const curated = ['solana', 'evm', 'defi', 'payments', 'read-only', 'mcp', 'pump.fun'];
+		const ordered = [
+			...curated.filter((t) => seen.has(t)),
+			...[...seen].filter((t) => !curated.includes(t)).sort(),
+		];
+		return ordered;
+	}
+
+	function refreshSkillFilters() {
+		const wrap = $('#skill-filters');
+		if (!wrap) return;
+		const tags = _collectFilterTags();
+		if (tags.length === 0) { wrap.innerHTML = ''; return; }
+		wrap.innerHTML = ['all', ...tags]
+			.map((t) => {
+				const active = (t === 'all' && !activeSkillFilter) || t === activeSkillFilter;
+				return `<button class="skill-chip${active ? ' active' : ''}" data-tag="${esc(t)}">${esc(t)}</button>`;
+			})
+			.join('');
+		wrap.querySelectorAll('.skill-chip').forEach((btn) =>
+			btn.addEventListener('click', () => {
+				const tag = btn.dataset.tag;
+				activeSkillFilter = tag === 'all' ? null : tag;
+				refreshSkillFilters();
+				const q = $('#skill-search')?.value || '';
+				refreshSkillsList(q);
+			}),
+		);
+	}
+
+	async function _loadSkillPreview(sk) {
+		if (_skillPreviews.has(sk.id)) return _skillPreviews.get(sk.id);
+		// Resolve relative bundle URIs against the site origin.
+		const base = sk.uri.endsWith('/') ? sk.uri : `${sk.uri}/`;
+		try {
+			const res = await fetch(`${base}tools.json`);
+			if (!res.ok) throw new Error(String(res.status));
+			const json = await res.json();
+			const preview = { tools: (json.tools || []).map((t) => t.name).filter(Boolean) };
+			_skillPreviews.set(sk.id, preview);
+			return preview;
+		} catch {
+			const preview = { tools: [], error: true };
+			_skillPreviews.set(sk.id, preview);
+			return preview;
+		}
+	}
+
 	function refreshSkillsList(query = '') {
 		const list = $('#skills-list');
 		if (!list) return;
+		refreshSkillFilters();
 		const q = query.toLowerCase();
-		const filtered = q
+		let filtered = q
 			? allSkills.filter(
 					(s) =>
-						s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q),
+						s.name.toLowerCase().includes(q) ||
+						s.description.toLowerCase().includes(q) ||
+						(s.tags || []).some((t) => t.toLowerCase().includes(q)),
 				)
-			: allSkills;
+			: allSkills.slice();
+		if (activeSkillFilter) {
+			filtered = filtered.filter((s) =>
+				(s.tags || []).map((t) => t.toLowerCase()).includes(activeSkillFilter),
+			);
+		}
 		if (filtered.length === 0) {
-			list.innerHTML = `<div style="font-size:12px;color:#4b5563;padding:4px 0">No skills found</div>`;
+			list.innerHTML = `<div class="skill-empty">No skills match this filter.</div>`;
 			return;
 		}
 		list.innerHTML = '';
 		for (const sk of filtered) {
 			const installed = !!state.installedSkills[sk.id];
+			const tags = sk.tags || [];
+			const tagsHtml = tags
+				.map((t) => {
+					const kind = _skillTagKind(t);
+					const attrs = Object.entries(kind).map(([k, v]) => ` data-${k}="${esc(v)}"`).join('');
+					return `<span class="skill-tag"${attrs}>${esc(t)}</span>`;
+				})
+				.join('');
 			const item = document.createElement('div');
-			item.className = 'skill-item';
+			item.className = `skill-item${installed ? ' installed' : ''}`;
 			item.innerHTML = `
 				<div class="skill-item-info">
 					<div class="skill-item-name">${esc(sk.name)} <span style="color:#4b5563;font-weight:400;font-size:10px">v${esc(sk.version)}</span></div>
 					<div class="skill-item-desc">${esc(sk.description)}</div>
+					${tagsHtml ? `<div class="skill-tags">${tagsHtml}</div>` : ''}
+					<div class="skill-tools-preview" data-preview-for="${esc(sk.id)}"></div>
 				</div>
-				<button class="skill-toggle ${installed ? 'on' : ''}" data-skill-id="${esc(sk.id)}">${installed ? 'Installed' : 'Install'}</button>
+				<div class="skill-actions">
+					<button class="skill-toggle ${installed ? 'on' : ''}" data-skill-id="${esc(sk.id)}">${installed ? 'Installed' : 'Install'}</button>
+					<button class="skill-preview-btn" data-preview-toggle="${esc(sk.id)}">What can it do?</button>
+				</div>
 			`;
 			item.querySelector('.skill-toggle').addEventListener('click', () => {
 				if (state.installedSkills[sk.id]) {
@@ -922,8 +1035,45 @@ export function mountManifestBuilder(rootEl, options = {}) {
 				refreshSkillsList(query);
 				scheduleDraft();
 			});
+			const previewEl = item.querySelector(`[data-preview-for="${sk.id}"]`);
+			item.querySelector('[data-preview-toggle]').addEventListener('click', async () => {
+				if (previewEl.classList.contains('open')) {
+					previewEl.classList.remove('open');
+					return;
+				}
+				if (!previewEl.dataset.loaded) {
+					previewEl.innerHTML = `<div class="example">Loading…</div>`;
+					const preview = await _loadSkillPreview(sk);
+					if (preview.error) {
+						previewEl.innerHTML = `<div class="example">Tool list unavailable for this bundle.</div>`;
+					} else if (preview.tools.length === 0) {
+						previewEl.innerHTML = `<div class="example">This skill exposes UI actions, not LLM tools.</div>`;
+					} else {
+						const example = _exampleForSkill(sk);
+						previewEl.innerHTML = `
+							<h5>Tools (${preview.tools.length})</h5>
+							<ul>${preview.tools.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>
+							${example ? `<div class="example">Try: <em>${esc(example)}</em></div>` : ''}
+						`;
+					}
+					previewEl.dataset.loaded = '1';
+				}
+				previewEl.classList.add('open');
+			});
 			list.appendChild(item);
 		}
+	}
+
+	// Curated example prompts keyed by skill id. Falls back to nothing.
+	function _exampleForSkill(sk) {
+		const examples = {
+			'pump-fun': "what's the king of the hill on pump.fun right now?",
+			wave: 'wave at me!',
+			dance: 'dance for me',
+			'explain-gltf': "tell me about this model's animations",
+			dca: 'set up a weekly $50 USDC → WETH DCA',
+		};
+		return examples[sk.id] || '';
 	}
 
 	function refreshCustomSkillsList() {

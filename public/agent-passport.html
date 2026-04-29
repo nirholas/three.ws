@@ -6,52 +6,118 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<style>
 		* { box-sizing: border-box; }
-		body { font: 14px/1.5 system-ui, sans-serif; max-width: 880px; margin: 2rem auto; padding: 0 1rem; color: #111; }
+		:root {
+			--fg: #111; --muted: #555; --border: #e5e5e5; --bg: #fafafa;
+			--ok-bg: #e7f5e9; --ok-fg: #1b5e20;
+			--warn-bg: #fff3cd; --warn-fg: #855008;
+			--bad-bg: #fce8e8; --bad-fg: #b71c1c;
+			--info-bg: #e3f2fd; --info-fg: #0d47a1;
+		}
+		body { font: 14px/1.5 system-ui, -apple-system, sans-serif; max-width: 880px; margin: 1.5rem auto; padding: 0 1rem; color: var(--fg); }
 		h1 { font-size: 1.4rem; margin: 0 0 .25rem; }
-		.muted { color: #666; }
-		.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: .75rem; margin: 1rem 0; }
-		.card { border: 1px solid #e5e5e5; border-radius: 8px; padding: .75rem 1rem; background: #fafafa; }
-		.card .v { font-size: 1.6rem; font-weight: 600; }
-		.card .l { font-size: .8rem; color: #666; }
-		.row { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin: .5rem 0 1.5rem; }
-		.pill { display: inline-block; padding: .15rem .55rem; border-radius: 999px; font-size: .75rem; }
-		.ok    { background: #e7f5e9; color: #1b5e20; }
-		.warn  { background: #fff3cd; color: #855008; }
-		.bad   { background: #fce8e8; color: #b71c1c; }
-		.vanity { background: linear-gradient(90deg, #ffd54f, #ff8a65); color: #1a1a1a; font-weight: 600; }
-		.addr-prefix { background: #fff7c2; padding: 0 2px; border-radius: 2px; font-weight: 600; }
+		h2 { font-size: 1rem; margin: 1.5rem 0 .5rem; display: flex; align-items: baseline; gap: .5rem; }
+		h2 .hint { font-weight: 400; font-size: .8rem; color: var(--muted); }
+		.muted { color: var(--muted); }
+		.row { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin: .5rem 0 1rem; }
+		.row input { font: inherit; padding: .4rem .55rem; border: 1px solid var(--border); border-radius: 6px; flex: 1 1 320px; min-width: 0; }
+		.row input.invalid { border-color: var(--bad-fg); background: #fff8f8; }
+		.row select, .row button { font: inherit; padding: .4rem .65rem; border: 1px solid #ccc; background: #fff; border-radius: 6px; cursor: pointer; }
+		.row button.primary { background: #111; color: #fff; border-color: #111; }
+		.row button:disabled { opacity: .5; cursor: wait; }
+
+		.identity-card { border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.1rem; background: #fff; }
+		.identity-row { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+		.identity-name { font-size: 1.2rem; font-weight: 600; }
+		.identity-meta { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; font-size: .8rem; color: var(--muted); margin-top: .35rem; }
+		.identity-meta code { background: #f3f3f3; padding: .1rem .35rem; border-radius: 4px; font-size: .75rem; }
+		.copy-btn { padding: .1rem .35rem; font-size: .7rem; line-height: 1.4; cursor: pointer; border: 1px solid var(--border); background: #fff; border-radius: 4px; }
+		.copy-btn:hover { background: #f3f3f3; }
+
+		.trust-bar { display: flex; align-items: center; gap: .75rem; margin-top: .75rem; padding: .65rem .85rem; border-radius: 8px; background: var(--bg); border: 1px solid var(--border); }
+		.trust-grade { font-size: 1.6rem; font-weight: 700; min-width: 2rem; text-align: center; }
+		.trust-A { color: var(--ok-fg); }
+		.trust-B { color: #2e7d32; }
+		.trust-C { color: var(--warn-fg); }
+		.trust-D { color: #c62828; }
+		.trust-NA { color: var(--muted); }
+		.trust-summary { font-size: .85rem; color: var(--muted); }
+
+		.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: .65rem; margin: .75rem 0; }
+		.card { border: 1px solid var(--border); border-radius: 8px; padding: .65rem .85rem; background: var(--bg); position: relative; }
+		.card .v { font-size: 1.55rem; font-weight: 600; line-height: 1.1; }
+		.card .v small { font-size: 1rem; color: var(--muted); font-weight: 400; }
+		.card .l { font-size: .75rem; color: var(--muted); margin-top: .15rem; display: flex; align-items: center; gap: .25rem; }
+		.card.tier-credentialed { border-color: #b8d8e8; background: #f4faff; }
+		.card.tier-event        { border-color: #d4c5f0; background: #f8f4ff; }
+		.card.tier-pump         { border-color: #ffd8b8; background: #fff8f0; }
+		.card.danger            { border-color: #f5c6c6; background: #fff5f5; }
+
+		.tip { display: inline-block; cursor: help; color: var(--muted); border: 1px solid var(--border); border-radius: 50%; width: 13px; height: 13px; font-size: 9px; line-height: 11px; text-align: center; }
+
+		.pill { display: inline-block; padding: .1rem .55rem; border-radius: 999px; font-size: .7rem; line-height: 1.5; }
+		.ok    { background: var(--ok-bg);   color: var(--ok-fg); }
+		.warn  { background: var(--warn-bg); color: var(--warn-fg); }
+		.bad   { background: var(--bad-bg);  color: var(--bad-fg); }
+		.info  { background: var(--info-bg); color: var(--info-fg); }
+
+		.filters { display: flex; gap: .35rem; flex-wrap: wrap; margin: .5rem 0 .75rem; }
+		.chip { padding: .2rem .65rem; border: 1px solid var(--border); border-radius: 999px; cursor: pointer; font-size: .75rem; background: #fff; user-select: none; }
+		.chip[aria-pressed="true"] { background: #111; color: #fff; border-color: #111; }
+
 		.atts { border-top: 1px solid #eee; }
-		.att  { padding: .6rem 0; border-bottom: 1px solid #eee; display: grid; grid-template-columns: 80px 1fr auto; gap: .75rem; align-items: baseline; }
-		.att code { font-size: .75rem; color: #555; }
-		.kind-feedback   { color: #1b5e20; }
-		.kind-validation { color: #0d47a1; }
+		.att  { padding: .55rem .25rem; border-bottom: 1px solid #eee; display: grid; grid-template-columns: 92px 1fr; gap: .5rem .75rem; align-items: baseline; }
+		.att code { font-size: .72rem; color: #555; }
+		.kind-feedback   { color: var(--ok-fg); }
+		.kind-validation { color: var(--info-fg); }
 		.kind-task       { color: #6a1b9a; }
 		.kind-accept     { color: #4527a0; }
-		.kind-revoke     { color: #b71c1c; }
+		.kind-revoke     { color: var(--bad-fg); }
 		.kind-dispute    { color: #ef6c00; }
-		input { font: inherit; padding: .35rem .5rem; width: 100%; }
-		button { font: inherit; padding: .35rem .75rem; border: 1px solid #ccc; background: #fff; border-radius: 6px; cursor: pointer; }
+
+		.skeleton { background: linear-gradient(90deg, #eee 0%, #f6f6f6 50%, #eee 100%); background-size: 200% 100%; animation: shimmer 1.2s infinite; border-radius: 6px; }
+		@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+		.sk-row  { height: 76px; margin: .65rem 0; }
+
+		.error-box { padding: .65rem .85rem; border: 1px solid #f5c6c6; background: #fff5f5; color: var(--bad-fg); border-radius: 6px; }
+
 		details { margin-top: .25rem; }
-		details pre { font-size: .75rem; background: #f4f4f4; padding: .4rem; border-radius: 4px; overflow: auto; }
-		a { color: #0d47a1; }
+		details pre { font-size: .72rem; background: #f4f4f4; padding: .4rem; border-radius: 4px; overflow: auto; max-height: 240px; }
+		a { color: var(--info-fg); }
+
+		@media (max-width: 520px) {
+			.att { grid-template-columns: 1fr; }
+			.identity-name { font-size: 1.05rem; }
+		}
 	</style>
 </head>
 <body>
 	<h1>Solana agent passport</h1>
-	<p class="muted">ERC-8004-style identity, reputation, and validation — no deployed program. <a href="/.well-known/agent-attestation-schemas" target="_blank">View schemas</a></p>
+	<p class="muted">ERC-8004-style identity, reputation, and validation. <a href="/.well-known/agent-attestation-schemas" target="_blank">View schemas</a></p>
 
 	<div class="row">
-		<input id="asset" placeholder="Metaplex Core asset pubkey…">
-		<select id="network"><option value="devnet">devnet</option><option value="mainnet">mainnet</option></select>
-		<button id="load">Load</button>
+		<input id="asset" placeholder="Metaplex Core asset pubkey…" autocomplete="off" spellcheck="false">
+		<select id="network">
+			<option value="devnet">devnet</option>
+			<option value="mainnet">mainnet</option>
+		</select>
+		<button id="load" class="primary">Load</button>
+		<button id="share" title="Copy shareable link">Share</button>
 	</div>
 
 	<div id="identity"></div>
 
-	<h2 style="font-size: 1rem; margin: 1.5rem 0 .25rem;">Reputation</h2>
-	<div id="reputation" class="grid"></div>
+	<h2>Reputation <span class="hint" id="rep-hint"></span></h2>
+	<div id="reputation"></div>
 
-	<h2 style="font-size: 1rem; margin: 1.5rem 0 .25rem;">Recent attestations</h2>
+	<h2>Recent attestations <span class="hint" id="atts-count"></span></h2>
+	<div class="filters" id="filters" hidden>
+		<button class="chip" data-filter="all"           aria-pressed="true">all</button>
+		<button class="chip" data-filter="feedback"      aria-pressed="false">feedback</button>
+		<button class="chip" data-filter="validation"    aria-pressed="false">validation</button>
+		<button class="chip" data-filter="task"          aria-pressed="false">task</button>
+		<button class="chip" data-filter="event"         aria-pressed="false">event-attested</button>
+		<button class="chip" data-filter="disputed"      aria-pressed="false">disputed</button>
+	</div>
 	<div id="atts" class="atts"></div>
 
 	<script type="module">
@@ -60,119 +126,249 @@
 		$('asset').value   = params.get('asset')   || '';
 		$('network').value = params.get('network') || 'devnet';
 
-		function pill(text, cls = '') { return `<span class="pill ${cls}">${text}</span>`; }
+		let cache = { rows: [], net: 'devnet' };
+		let activeFilter = 'all';
+
+		const PUBKEY_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
+		function pill(text, cls = '') { return `<span class="pill ${cls}">${escapeHtml(text)}</span>`; }
+		function tip(text) { return `<span class="tip" title="${escapeHtml(text)}">?</span>`; }
 		function explorer(sig, net) {
 			return `https://explorer.solana.com/tx/${sig}${net === 'devnet' ? '?cluster=devnet' : ''}`;
+		}
+		function shortKey(k) { return k ? `${k.slice(0,4)}…${k.slice(-4)}` : ''; }
+		function fmtScore(n) { return (typeof n === 'number' && n > 0) ? n.toFixed(2) : '—'; }
+
+		// Trust grade. Order: credentialed > verified > event-attested > raw.
+		function computeTrust(rep) {
+			const f = rep?.feedback || {};
+			const v = rep?.validation || {};
+			const tiers = [
+				{ score: f.score_avg_weighted_credentialed, n: f.unique_credentialed_attesters, tier: 'credentialed' },
+				{ score: f.score_avg_weighted_verified,      n: f.unique_verified_attesters,    tier: 'verified' },
+				{ score: f.score_avg_event_attested,         n: f.event_attested,                tier: 'event-attested' },
+				{ score: f.score_avg_weighted,               n: f.unique_attesters,              tier: 'community' },
+			];
+			const best = tiers.find((t) => t.score > 0 && (t.n || 0) > 0);
+			if (!best) return { grade: '—', cls: 'NA', summary: 'no attestations yet' };
+
+			const passed = v.audited_passed || v.self_passed || 0;
+			const failed = v.audited_failed || v.self_failed || 0;
+			const passRate = (passed + failed) ? passed / (passed + failed) : 1;
+
+			const adjust = best.score
+				- (f.disputed > 0 ? 0.5 : 0)
+				- (passRate < 0.5 ? 1 : 0);
+
+			const grade =
+				adjust >= 4.5 ? 'A' :
+				adjust >= 3.8 ? 'B' :
+				adjust >= 3.0 ? 'C' : 'D';
+			return {
+				grade,
+				cls: grade,
+				summary: `${best.tier} ${best.score.toFixed(2)} from ${best.n} attester${best.n === 1 ? '' : 's'}`
+					+ (f.disputed ? ` · ${f.disputed} disputed` : '')
+					+ (failed ? ` · ${failed} failed validation${failed === 1 ? '' : 's'}` : ''),
+			};
+		}
+
+		function showError(target, message) { $(target).innerHTML = `<div class="error-box">${escapeHtml(message)}</div>`; }
+		function showSkeletons(target, count = 1) {
+			$(target).innerHTML = Array.from({ length: count }, () => `<div class="skeleton sk-row"></div>`).join('');
 		}
 
 		async function load() {
 			const asset = $('asset').value.trim();
 			const network = $('network').value;
-			if (!asset) return;
+			$('asset').classList.toggle('invalid', !!asset && !PUBKEY_RE.test(asset));
+			if (!asset) { showError('identity', 'Enter an asset pubkey above.'); return; }
+			if (!PUBKEY_RE.test(asset)) { showError('identity', 'That doesn’t look like a Solana pubkey.'); return; }
+
 			history.replaceState({}, '', `?asset=${asset}&network=${network}`);
+			$('load').disabled = true;
+			showSkeletons('identity', 1);
+			showSkeletons('reputation', 1);
+			$('atts').innerHTML = '';
+			$('atts-count').textContent = '';
+			$('filters').hidden = true;
 
-			$('identity').innerHTML = '<p class="muted">loading…</p>';
-
-			let card;
 			try {
-				card = await (await fetch(`/api/agents/solana-card?asset=${asset}`)).json();
-			} catch {}
+				const [card, rep, atts] = await Promise.all([
+					fetch(`/api/agents/solana-card?asset=${asset}`).then((r) => r.ok ? r.json() : null).catch(() => null),
+					fetch(`/api/agents/solana-reputation?asset=${asset}&network=${network}`).then((r) => r.json()),
+					fetch(`/api/agents/solana-attestations?asset=${asset}&network=${network}&limit=25`).then((r) => r.json()),
+				]);
 
-			let rep, atts;
-			[rep, atts] = await Promise.all([
-				fetch(`/api/agents/solana-reputation?asset=${asset}&network=${network}`).then((r) => r.json()),
-				fetch(`/api/agents/solana-attestations?asset=${asset}&network=${network}&limit=25`).then((r) => r.json()),
-			]);
-
-			renderIdentity(card, asset, network);
-			renderReputation(rep);
-			renderAttestations(atts.data || [], network);
+				renderIdentity(card, rep, asset, network);
+				renderReputation(rep);
+				cache = { rows: atts.data || [], net: network };
+				$('filters').hidden = false;
+				renderAttestations();
+			} catch (e) {
+				showError('identity', `Failed to load: ${e.message || e}`);
+			} finally {
+				$('load').disabled = false;
+			}
 		}
 
-		function escapeHtml(s) {
-			return String(s).replace(/[&<>"']/g, (c) => ({
-				'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-			})[c]);
-		}
-
-		function renderIdentity(card, asset, network) {
+		function renderIdentity(card, rep, asset, network) {
 			const id = card?.identity || {};
 			const name = card?.name || '(unindexed agent)';
-			const vanity = id.vanity_prefix;
-			const addrHtml = vanity && asset.startsWith(vanity)
-				? `<span class="addr-prefix">${escapeHtml(vanity)}</span>${escapeHtml(asset.slice(vanity.length))}`
-				: escapeHtml(asset);
-			const vanityBadge = vanity
-				? ` ${pill(`✦ vanity ${escapeHtml(vanity)}`, 'vanity')}`
-				: '';
+			const trust = computeTrust(rep);
+			const lastIndexed = rep?.last_indexed_at
+				? `indexed ${new Date(rep.last_indexed_at).toLocaleString()}`
+				: 'never indexed';
 			$('identity').innerHTML = `
-				<div class="card" style="background:white;">
-					<div style="font-size:1.2rem;font-weight:600">${escapeHtml(name)}${vanityBadge}</div>
-					<div class="muted">${escapeHtml(card?.description || '')}</div>
-					<div class="muted" style="margin-top:.4rem;font-size:.8rem">
-						<code>${addrHtml}</code> · <span class="pill ${network === 'mainnet' ? 'ok' : 'warn'}">${network}</span>
-						${id.owner ? ` · owner <code>${escapeHtml(id.owner.slice(0, 6))}…${escapeHtml(id.owner.slice(-4))}</code>` : ''}
+				<div class="identity-card">
+					<div class="identity-row">
+						<div class="identity-name">${escapeHtml(name)}</div>
+						<span class="pill ${network === 'mainnet' ? 'ok' : 'warn'}">${network}</span>
+					</div>
+					${card?.description ? `<div class="muted" style="margin-top:.2rem">${escapeHtml(card.description)}</div>` : ''}
+					<div class="identity-meta">
+						<code>${escapeHtml(shortKey(asset))}</code>
+						<button class="copy-btn" data-copy="${escapeHtml(asset)}">copy</button>
+						${id.owner ? `<span>· owner</span> <code>${escapeHtml(shortKey(id.owner))}</code> <button class="copy-btn" data-copy="${escapeHtml(id.owner)}">copy</button>` : ''}
+						<span>· ${escapeHtml(lastIndexed)}</span>
+					</div>
+					<div class="trust-bar">
+						<div class="trust-grade trust-${trust.cls}">${trust.grade}</div>
+						<div>
+							<div style="font-weight:600">Trust grade</div>
+							<div class="trust-summary">${escapeHtml(trust.summary)}</div>
+						</div>
 					</div>
 				</div>`;
+			$('identity').querySelectorAll('[data-copy]').forEach((b) => {
+				b.addEventListener('click', () => copyText(b.dataset.copy, b));
+			});
 		}
 
 		function renderReputation(r) {
 			if (!r || r.error) { $('reputation').innerHTML = `<p class="muted">no data</p>`; return; }
-			const f = r.feedback || {}, v = r.validation || {};
-			const verifiedPct = f.total ? Math.round((f.verified / f.total) * 100) : 0;
-			$('reputation').innerHTML = `
-				<div class="card"><div class="v">${f.score_avg_weighted_credentialed?.toFixed(2) || '—'}</div><div class="l">credentialed weighted score (1–5)</div></div>
-				<div class="card"><div class="v">${f.score_avg_weighted_verified?.toFixed(2) || '—'}</div><div class="l">verified weighted score</div></div>
-				<div class="card"><div class="v">${f.score_avg_weighted?.toFixed(2) || '—'}</div><div class="l">all weighted score</div></div>
-				<div class="card"><div class="v">${f.unique_credentialed_attesters || 0}<span class="muted" style="font-size:1rem">/${f.unique_attesters || 0}</span></div><div class="l">credentialed / unique attesters</div></div>
-				<div class="card"><div class="v">${f.verified || 0}<span class="muted" style="font-size:1rem">/${f.total || 0}</span></div><div class="l">verified / total feedback (${verifiedPct}%)</div></div>
-				<div class="card"><div class="v">${v.audited_passed || 0}<span class="muted" style="font-size:1rem">/${(v.audited_passed||0)+(v.audited_failed||0)}</span></div><div class="l">audited validation passed</div></div>
-				<div class="card"><div class="v">${v.self_passed || 0}<span class="muted" style="font-size:1rem">/${(v.self_passed||0)+(v.self_failed||0)}</span></div><div class="l">self validation passed</div></div>
-				<div class="card"><div class="v">${f.disputed || 0}</div><div class="l">disputed</div></div>
-				<div class="card"><div class="v">${r.tasks?.accepted || 0}<span class="muted" style="font-size:1rem">/${r.tasks?.offered || 0}</span></div><div class="l">tasks accepted / offered</div></div>
-				<div class="card"><div class="v">${r.revoked_count || 0}</div><div class="l">revoked</div></div>
-			`;
+			const f = r.feedback || {}, v = r.validation || {}, p = r.pump_payments || {};
+			$('rep-hint').textContent = 'higher tiers are more Sybil-resistant';
+
+			const cards = [
+				{ cls: 'tier-credentialed', value: fmtScore(f.score_avg_weighted_credentialed),
+					label: 'credentialed score',
+					tooltip: 'Average from attesters holding a threews.verified-client.v1 SAS credential. Strongest Sybil resistance.' },
+				{ cls: 'tier-credentialed', value: `${f.unique_credentialed_attesters || 0}<small>/${f.unique_attesters || 0}</small>`,
+					label: 'credentialed / unique attesters' },
+				{ cls: '', value: fmtScore(f.score_avg_weighted_verified),
+					label: 'verified score',
+					tooltip: 'Feedback whose task_id has a matching threews.accept.v1 from the agent owner.' },
+				{ cls: 'tier-event', value: fmtScore(f.score_avg_event_attested),
+					label: 'event-attested score',
+					tooltip: 'Feedback sourced from on-chain event monitors (e.g. pumpkit). Sybil-resistant via the event.' },
+				{ cls: 'tier-event', value: `${f.event_attested || 0}`,
+					label: 'event-attested feedback' },
+				{ cls: '', value: fmtScore(f.score_avg_weighted),
+					label: 'all-feedback score',
+					tooltip: 'Per-attester average then averaged. Raw signal.' },
+				{ cls: '', value: `${f.verified || 0}<small>/${f.total || 0}</small>`,
+					label: 'verified / total feedback' },
+				{ cls: '', value: `${v.audited_passed || 0}<small>/${(v.audited_passed||0)+(v.audited_failed||0)}</small>`,
+					label: 'audited validation passed',
+					tooltip: 'From SAS-credentialed validators.' },
+				{ cls: '', value: `${v.event_passed || 0}<small>/${(v.event_passed||0)+(v.event_failed||0)}</small>`,
+					label: 'event validation passed',
+					tooltip: 'From on-chain event monitors (graduations vs CTOs).' },
+				{ cls: '', value: `${r.tasks?.accepted || 0}<small>/${r.tasks?.offered || 0}</small>`,
+					label: 'tasks accepted / offered' },
+				...(Number(p.confirmed_count) ? [
+					{ cls: 'tier-pump', value: `${p.confirmed_count}<small>/${p.unique_payers || 0}</small>`,
+						label: 'pump payments / unique payers',
+						tooltip: 'Confirmed acceptPayment receipts. Volume-weighted reputation lane.' },
+				] : []),
+				...(f.disputed ? [{ cls: 'danger', value: f.disputed, label: 'disputed' }] : []),
+				...(r.revoked_count ? [{ cls: 'danger', value: r.revoked_count, label: 'revoked' }] : []),
+			];
+
+			$('reputation').innerHTML = `<div class="grid">${cards.map((c) => `
+				<div class="card ${c.cls}">
+					<div class="v">${c.value}</div>
+					<div class="l">${escapeHtml(c.label)}${c.tooltip ? ' ' + tip(c.tooltip) : ''}</div>
+				</div>`).join('')}</div>`;
 		}
 
-		function renderAttestations(rows, net) {
-			if (!rows.length) { $('atts').innerHTML = `<p class="muted">no attestations yet</p>`; return; }
+		function renderAttestations() {
+			const rows = filterRows(cache.rows, activeFilter);
+			$('atts-count').textContent = `${rows.length} of ${cache.rows.length}`;
+			if (!rows.length) {
+				$('atts').innerHTML = `<p class="muted" style="padding:.75rem 0">no matching attestations</p>`;
+				return;
+			}
 			$('atts').innerHTML = rows.map((row) => {
-				const k = row.kind.split('.')[1];
+				const k = row.kind?.split('.')[1] || 'unknown';
 				const flags = [];
 				if (row.verified) flags.push(pill('verified', 'ok'));
 				if (row.disputed) flags.push(pill('disputed', 'warn'));
+				if (row.revoked)  flags.push(pill('revoked',  'bad'));
+				if (row.payload?.source?.startsWith?.('pumpkit.')) flags.push(pill(row.payload.source, 'info'));
 				return `
 					<div class="att">
-						<div class="kind-${k}"><strong>${k}</strong></div>
+						<div class="kind-${k}"><strong>${escapeHtml(k)}</strong></div>
 						<div>
-							<div>${describe(row)}</div>
-							<div class="muted" style="font-size:.75rem">
-								by <code>${row.attester?.slice(0,6)}…${row.attester?.slice(-4) || ''}</code>
-								· slot ${row.slot}
-								· <a href="${explorer(row.signature, net)}" target="_blank">tx</a>
-								${flags.join(' ')}
+							<div>${escapeHtml(describe(row))}</div>
+							<div class="muted" style="font-size:.72rem; margin-top:.15rem">
+								by <code>${escapeHtml(shortKey(row.attester))}</code>
+								· slot ${row.slot ?? '—'}
+								· <a href="${explorer(row.signature, cache.net)}" target="_blank" rel="noopener">tx ↗</a>
+								${flags.length ? ' ' + flags.join(' ') : ''}
 							</div>
-							<details><summary class="muted" style="font-size:.75rem">payload</summary><pre>${JSON.stringify(row.payload, null, 2)}</pre></details>
+							<details><summary class="muted" style="font-size:.72rem">payload</summary><pre>${escapeHtml(JSON.stringify(row.payload, null, 2))}</pre></details>
 						</div>
-						<div></div>
 					</div>`;
 			}).join('');
+		}
+
+		function filterRows(rows, filter) {
+			if (filter === 'all') return rows;
+			if (filter === 'disputed') return rows.filter((r) => r.disputed || r.revoked);
+			if (filter === 'event')    return rows.filter((r) => r.payload?.source?.startsWith?.('pumpkit.'));
+			return rows.filter((r) => r.kind?.includes(`.${filter}.`));
 		}
 
 		function describe(row) {
 			const p = row.payload || {};
 			switch (row.kind) {
-				case 'threews.feedback.v1':   return `score ${p.score}/5${p.task_id ? ` for task ${p.task_id}` : ''}`;
-				case 'threews.validation.v1': return `validation ${p.passed ? '✓ passed' : '✗ failed'} (task hash ${p.task_hash?.slice(0,12)}…)`;
+				case 'threews.feedback.v1':   return `score ${p.score}/5${p.task_id ? ` for task ${p.task_id}` : ''}${p.source ? ` (${p.source})` : ''}`;
+				case 'threews.validation.v1': return `validation ${p.passed ? '✓ passed' : '✗ failed'}${p.task_hash ? ` (task hash ${String(p.task_hash).slice(0,12)}…)` : ''}`;
 				case 'threews.task.v1':       return `task offered: ${p.task_id}`;
 				case 'threews.accept.v1':     return `task accepted: ${p.task_id}`;
-				case 'threews.revoke.v1':     return `revoked ${p.target_signature?.slice(0,12)}…`;
-				case 'threews.dispute.v1':    return `disputed ${p.target_signature?.slice(0,12)}…${p.reason ? ` — ${p.reason}` : ''}`;
+				case 'threews.revoke.v1':     return `revoked ${String(p.target_signature || '').slice(0,12)}…`;
+				case 'threews.dispute.v1':    return `disputed ${String(p.target_signature || '').slice(0,12)}…${p.reason ? ` — ${p.reason}` : ''}`;
 				default: return row.kind;
 			}
 		}
 
+		function escapeHtml(s) {
+			return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
+		}
+
+		async function copyText(text, btn) {
+			try {
+				await navigator.clipboard.writeText(text);
+				const prev = btn.textContent;
+				btn.textContent = 'copied';
+				setTimeout(() => { btn.textContent = prev; }, 1200);
+			} catch {}
+		}
+
 		$('load').onclick = load;
+		$('asset').addEventListener('keydown', (e) => { if (e.key === 'Enter') load(); });
+		$('network').addEventListener('change', () => { if ($('asset').value.trim()) load(); });
+		$('share').onclick = () => copyText(location.href, $('share'));
+		$('filters').addEventListener('click', (e) => {
+			const btn = e.target.closest('.chip');
+			if (!btn) return;
+			activeFilter = btn.dataset.filter;
+			$('filters').querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', c === btn ? 'true' : 'false'));
+			renderAttestations();
+		});
+
 		if ($('asset').value) load();
 	</script>
 </body>

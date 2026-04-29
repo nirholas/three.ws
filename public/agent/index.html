@@ -735,6 +735,9 @@
 			</div>
 		</div>
 
+		<!-- $AGENT pump.fun token widget (rendered when this agent has a launched mint) -->
+		<div id="agent-token-widget"></div>
+
 		<!-- Permissions panel (owner only, mounted by JS) -->
 		<div id="agent-permissions-mount"></div>
 
@@ -781,6 +784,8 @@
 			import { protocol } from '/src/agent-protocol.js';
 			import { renderHubActions } from '/src/agent-hub-actions.js';
 			import { mountManagePanel } from '/src/permissions/manage-panel.js';
+			import { AgentTokenWidget } from '/src/pump/agent-token-widget.js';
+			import { mountPumpModals } from '/src/pump/pump-modals.js';
 
 			// Pull agent id from URL: /agent/:id
 			const agentId = location.pathname.split('/').filter(Boolean).pop();
@@ -820,6 +825,35 @@
 
 				// Inject hub actions if the viewer is the owner (user_id present = owner)
 				const isOwner = Boolean(rawAgent?.user_id);
+
+				// Mount the $AGENT pump.fun token widget. Renders empty-state for
+				// not-yet-launched agents (with a "Launch" CTA for owners) and full
+				// live state when a mint exists. Wires avatar emotion to bus events.
+				const tokenMount = document.getElementById('agent-token-widget');
+				if (tokenMount && agentId) {
+					const widget = new AgentTokenWidget({
+						mount: tokenMount,
+						agentId,
+						isOwner,
+						protocol,
+						identity,
+					});
+					widget.render().catch(() => {});
+
+					// Avatar reactions: a new payment is curiosity+celebration; a
+					// graduation is a one-shot celebration emote.
+					protocol.on?.('pump-payment', () => {
+						protocol.emit?.('emote', { trigger: 'celebration', weight: 0.6 });
+						protocol.emit?.('emote', { trigger: 'curiosity', weight: 0.4 });
+					});
+					protocol.on?.('pump-graduated', () => {
+						protocol.emit?.('emote', { trigger: 'celebration', weight: 0.95 });
+						protocol.emit?.('gesture', { name: 'celebrate', duration: 2400 });
+					});
+
+					// Pay / governance / withdraw modals listen on window CustomEvents.
+					mountPumpModals({ identity, agentId });
+				}
 				if (isOwner) {
 					const panel = container.querySelector('.agent-home-panel');
 					if (panel) renderHubActions(panel, identity, rawAgent);

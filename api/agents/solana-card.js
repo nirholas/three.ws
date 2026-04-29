@@ -63,6 +63,35 @@ export default wrap(async (req, res) => {
 		// pumpfun_signals table not present — omit the block entirely.
 	}
 
+	// Live token stats from the pump-agent-stats cron snapshot. Joined to
+	// pump_agent_mints so we only return data for mints we actually track.
+	let token_stats = null;
+	try {
+		const [s] = await sql`
+			select s.graduated, s.bonding_curve, s.amm,
+			       s.last_signature, s.last_signature_at,
+			       s.recent_tx_count, s.refreshed_at, m.mint, m.network
+			from pump_agent_stats s
+			join pump_agent_mints m on m.id = s.mint_id
+			where m.mint = ${asset} limit 1
+		`;
+		if (s) {
+			token_stats = {
+				mint: s.mint,
+				network: s.network,
+				graduated: s.graduated,
+				bonding_curve: s.bonding_curve,
+				amm: s.amm,
+				last_signature: s.last_signature,
+				last_signature_at: s.last_signature_at,
+				recent_tx_count: s.recent_tx_count,
+				refreshed_at: s.refreshed_at,
+			};
+		}
+	} catch {
+		// table missing — skip
+	}
+
 	return json(res, 200, {
 		schema_version: '1.0',
 		// A2A core
@@ -90,5 +119,6 @@ export default wrap(async (req, res) => {
 			usage: 'Sign an SPL Memo tx with one of the published schemas as JSON, including this asset_pubkey as a non-signer key.',
 		},
 		...(pumpfun ? { pumpfun } : {}),
+		...(token_stats ? { token_stats } : {}),
 	}, { 'cache-control': 'public, max-age=120', 'access-control-allow-origin': '*' });
 });

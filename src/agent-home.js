@@ -10,6 +10,7 @@
 
 import { ACTION_TYPES } from './agent-protocol.js';
 import { MEMORY_TYPES } from './agent-memory.js';
+import { mountPumpFunCard } from './agent-home-pumpfun.js';
 
 const ACTION_ICONS = {
 	[ACTION_TYPES.SPEAK]: '💬',
@@ -161,6 +162,20 @@ export class AgentHome {
 
 		this.container.appendChild(panel);
 		this._panel = panel;
+
+		// Pump.fun card — only meaningful for Solana-registered agents.
+		if (this.identity?.meta?.chain_type === 'solana' || this.identity?.solana_address) {
+			try {
+				mountPumpFunCard({
+					panel,
+					identity: this.identity,
+					skills: this.skills || (typeof window !== 'undefined' ? window.VIEWER?.agent_skills : null),
+					memory: this.memory,
+				});
+			} catch {
+				/* card is optional */
+			}
+		}
 
 		// Permissions manage panel — lazy load; degrades gracefully if unauthenticated
 		const agentId = this.identity.id;

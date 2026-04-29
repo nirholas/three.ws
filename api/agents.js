@@ -310,6 +310,23 @@ function decorate(row, isOwner = true) {
 	delete meta.encrypted_wallet_key;
 	delete meta.encrypted_solana_secret;
 
+	// Surface canonical blocks at the top level so the frontend doesn't need to
+	// know they live under `meta`. Treat `meta.*` as the source of truth for
+	// new code; legacy fields (chain_id, erc8004_agent_id) are still emitted
+	// for backwards compat below.
+	const onchain = meta.onchain || null;
+	const token = meta.token || null;
+	const payments = meta.payments
+		? {
+				// Public-safe view: the receiver address is intended to be public,
+				// but anything secret (bot keys, configured webhook secrets, etc.)
+				// must never leave the server. Whitelist explicitly.
+				receiver: meta.payments.receiver,
+				accepted_tokens: meta.payments.accepted_tokens || [],
+				configured_at: meta.payments.configured_at,
+			}
+		: null;
+
 	const base = {
 		id: row.id,
 		name: row.name,
@@ -318,7 +335,10 @@ function decorate(row, isOwner = true) {
 		home_url: row.home_url || `/agent/${row.id}`,
 		skills: row.skills || [],
 		meta,
-		is_registered: Boolean(row.erc8004_agent_id),
+		onchain,
+		token,
+		payments,
+		is_registered: Boolean(row.erc8004_agent_id) || !!onchain,
 		created_at: row.created_at,
 	};
 	if (isOwner) {

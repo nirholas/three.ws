@@ -8,6 +8,7 @@ import { getSessionUser, authenticateBearer, extractBearer } from '../../_lib/au
 import { cors, json, method, readJson, error } from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { loadAgentForSigning, solanaConnection } from '../../_lib/agent-pumpfun.js';
+import { checkBuyAllowed } from '../../_lib/agent-spend-policy.js';
 import { sql } from '../../_lib/db.js';
 import { Transaction, PublicKey } from '@solana/web3.js';
 import { z } from 'zod';
@@ -45,7 +46,15 @@ export default async function handler(req, res, id) {
 
 	const loaded = await loadAgentForSigning(id, auth.userId);
 	if (loaded.error) return error(res, loaded.error.status, loaded.error.code, loaded.error.msg);
-	const { keypair } = loaded;
+	const { keypair, meta } = loaded;
+
+	const blocked = await checkBuyAllowed({
+		agentId: id,
+		meta,
+		mint: body.mint,
+		solAmount: body.solAmount,
+	});
+	if (blocked) return error(res, blocked.status, blocked.code, blocked.msg);
 
 	const [{ PumpSdk, OnlinePumpSdk, getBuyTokenAmountFromSolAmount }, BN, splToken] =
 		await Promise.all([

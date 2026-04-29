@@ -206,7 +206,7 @@ There is no global Solana registry to query — discovery happens via the platfo
 
 ## What's intentionally not on Solana yet
 
-- **Reputation**: ERC-8004's `ReputationRegistry` is EVM-only. Solana agents have no on-chain feedback aggregation today. Reviews would need to live in the platform DB or in a future Anchor program.
+- **Reputation**: ERC-8004's `ReputationRegistry` is EVM-only. Solana agents have no on-chain feedback aggregation today. Reviews live in the platform DB. Off-chain pump.fun behavior signals are crawled into `pumpfun_signals` and surfaced through `solana-reputation` — see [solana-pumpfun.md](solana-pumpfun.md).
 - **Validation**: Same. The `ValidationRegistry` is EVM testnet only; there is no Solana analog.
 - **Delegated wallet (EIP-712)**: There is no equivalent for Solana agents. Owner = the wallet that signed the mint.
 - **Cross-chain identifier**: EVM agents use `eip155:<chainId>:<registry>:<agentId>` (CAIP-10). Solana agents use the asset pubkey directly; a CAIP-10 form (`solana:<cluster-genesis>:<asset-pubkey>`) is not currently emitted by the platform.
