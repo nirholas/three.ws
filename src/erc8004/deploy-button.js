@@ -26,6 +26,23 @@ import {
 	switchChain,
 	addressExplorerUrl,
 } from './chain-meta.js';
+import { runSolanaDeploy, solanaTxExplorerUrl, detectSolanaWallet } from './solana-deploy.js';
+
+// Sentinel chain selections for non-EVM targets. The chain dropdown stores
+// these as option values; _chainId may be a number (EVM chainId) or one of
+// these strings.
+const SOLANA_MAINNET = 'solana-mainnet';
+const SOLANA_DEVNET = 'solana-devnet';
+const SOLANA_LABELS = {
+	[SOLANA_MAINNET]: 'Solana',
+	[SOLANA_DEVNET]: 'Solana Devnet',
+};
+function _isSolana(id) {
+	return id === SOLANA_MAINNET || id === SOLANA_DEVNET;
+}
+function _solanaNetwork(id) {
+	return id === SOLANA_DEVNET ? 'devnet' : 'mainnet';
+}
 
 // Faucet links for testnets where users commonly run out of gas.
 const FAUCETS = {
@@ -86,7 +103,7 @@ export class DeployButton {
 
 		if (agent.chainId && agent.txHash) {
 			this._renderSuccessChip(agent.chainId, agent.txHash, agent.contractAddress);
-		} else if (!REGISTRY_DEPLOYMENTS[this._chainId]) {
+		} else if (!_isSolana(this._chainId) && !REGISTRY_DEPLOYMENTS[this._chainId]) {
 			this._renderDisabled('No registry on this chain');
 		} else {
 			this._renderDeployButton();
@@ -95,7 +112,7 @@ export class DeployButton {
 
 	_renderDeployButton() {
 		const { mainnets, testnets } = supportedChainIdsGrouped();
-		const optionsFor = (ids) =>
+		const evmOptionsFor = (ids) =>
 			ids
 				.map(
 					(id) =>
@@ -104,12 +121,15 @@ export class DeployButton {
 						)}</option>`,
 				)
 				.join('');
+		const solanaOptionFor = (id) =>
+			`<option value="${id}"${id === this._chainId ? ' selected' : ''}>${_esc(SOLANA_LABELS[id])}</option>`;
 
 		this._root.innerHTML = `
 			<div class="deploy-chain-row">
 				<select class="deploy-chain-select" title="Choose chain to deploy to" aria-label="Target chain">
-					<optgroup label="Mainnets">${optionsFor(mainnets)}</optgroup>
-					<optgroup label="Testnets">${optionsFor(testnets)}</optgroup>
+					<optgroup label="Mainnets">${evmOptionsFor(mainnets)}</optgroup>
+					<optgroup label="Testnets">${evmOptionsFor(testnets)}</optgroup>
+					<optgroup label="Solana (beta)">${solanaOptionFor(SOLANA_MAINNET)}${solanaOptionFor(SOLANA_DEVNET)}</optgroup>
 				</select>
 				<button class="deploy-btn" title="Deploy this agent as an ERC-8004 token on-chain">
 					&#x2B22; Deploy on-chain
@@ -119,9 +139,10 @@ export class DeployButton {
 
 		const select = this._root.querySelector('.deploy-chain-select');
 		select.addEventListener('change', async (ev) => {
-			const newChainId = Number(ev.target.value);
+			const raw = ev.target.value;
+			const newChainId = _isSolana(raw) ? raw : Number(raw);
 			this._chainId = newChainId;
-			if (_hasWallet()) {
+			if (!_isSolana(newChainId) && _hasWallet()) {
 				select.disabled = true;
 				try {
 					await switchChain(newChainId);
@@ -150,12 +171,19 @@ export class DeployButton {
 	}
 
 	_renderSuccessChip(chainId, txHash, contractAddress) {
-		const meta = CHAIN_META[chainId];
-		const chainName = meta ? meta.name : `Chain ${chainId}`;
-		// Use the registry contract URL on the explorer — it's the most
-		// universally available link, since some chains' explorers don't
-		// surface tx hashes for arbitrary contracts.
-		const explorerUrl = contractAddress ? addressExplorerUrl(chainId, contractAddress) : '#';
+		let chainName, explorerUrl;
+		if (_isSolana(chainId)) {
+			const network = _solanaNetwork(chainId);
+			chainName = SOLANA_LABELS[chainId];
+			explorerUrl = solanaTxExplorerUrl(network, txHash);
+		} else {
+			const meta = CHAIN_META[chainId];
+			chainName = meta ? meta.name : `Chain ${chainId}`;
+			// Use the registry contract URL on the explorer — it's the most
+			// universally available link, since some chains' explorers don't
+			// surface tx hashes for arbitrary contracts.
+			explorerUrl = contractAddress ? addressExplorerUrl(chainId, contractAddress) : '#';
+		}
 		this._root.innerHTML = `
 			<a class="deploy-chip deploy-chip--success" href="${_esc(explorerUrl)}" target="_blank" rel="noopener noreferrer"
 			   aria-label="View this agent's registry on the ${_esc(chainName)} block explorer">
@@ -198,7 +226,55 @@ export class DeployButton {
 
 	// ─── Deploy state machine ──────────────────────────────────────────────
 
+	async _startSolanaDeploy() {
+		if (!detectSolanaWallet()) {
+			this._renderError('No Solana wallet detected. Install Phantom to continue.', {
+				label: 'Install Phantom',
+				handler: () => window.open('https://phantom.app', '_blank', 'noopener'),
+			});
+			return;
+		}
+
+		const agent = this._agent;
+		if (!agent?.id) {
+			this._renderError('This agent is missing an ID — cannot deploy.');
+			return;
+		}
+
+		const network = _solanaNetwork(this._chainId);
+		const steps = ['Connecting wallet', 'Sign tx', 'Confirming on-chain', 'Saving'];
+		this._renderProgress(steps, 0);
+
+		let result;
+		try {
+			this._renderProgress(steps, 1);
+			result = await runSolanaDeploy({ agent, network });
+			this._renderProgress(steps, 3);
+		} catch (err) {
+			if (_isUserRejection(err)) return this._renderDeployButton();
+			if (err.code === 'forbidden') {
+				this._renderError(
+					'Your Solana wallet is not linked to this account. Sign in with your Solana wallet first.',
+					{
+						label: 'Open wallet sign-in',
+						handler: () => (window.location.href = '/login.html'),
+					},
+				);
+				return;
+			}
+			this._renderError(`Solana deploy failed: ${_humanError(err)}`);
+			return;
+		}
+
+		this._agent.chainId = this._chainId;
+		this._agent.txHash = result.txSignature;
+		this._agent.contractAddress = result.assetPubkey;
+		this._renderSuccessChip(this._chainId, result.txSignature, result.assetPubkey);
+	}
+
 	async _startDeploy() {
+		if (_isSolana(this._chainId)) return this._startSolanaDeploy();
+
 		if (!_hasWallet()) {
 			this._renderError('No wallet detected. Install one to deploy on-chain.', {
 				label: 'Install MetaMask',
