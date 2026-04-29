@@ -672,6 +672,17 @@ export class AgentTokenWidget {
 
 		this._wireActions();
 		this._updateMobileStrip(symbol, priceText);
+
+		// Mount bonding curve SVG into the wrapper (replaces old progress bar).
+		if (this._curve) { this._curve.destroy(); this._curve = null; }
+		const curveWrap = this.mount.querySelector('.atok-curve-wrap');
+		if (curveWrap && progressPct != null) {
+			this._curve = mountBondingCurve(curveWrap, {
+				progressPct,
+				marketCapUsd: q.bonding_curve?.market_cap_usd ?? 0,
+				graduationCapUsd: 69_000,
+			});
+		}
 	}
 
 	_tickClassFor(name, newBal) {

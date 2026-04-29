@@ -5,6 +5,8 @@
 // /public/* is served verbatim by Vercel — the build doesn't transform it.
 // Keep this list in sync with src/widget-types.js as new types light up.
 
+import { mountLaunchPanel } from './launch-panel.js';
+
 const WIDGET_TYPES = {
 	turntable: {
 		label: 'Turntable Showcase',
@@ -501,6 +503,30 @@ function wireButtons() {
 	$('#embed-modal-close').addEventListener('click', () => {
 		$('#embed-modal').hidden = true;
 	});
+
+	// Right-column tab switching: Brand ↔ Launch
+	const tabBrand = $('#tab-brand');
+	const tabLaunch = $('#tab-launch');
+	const panelBrand = $('#panel-brand');
+	const panelLaunch = $('#panel-launch');
+	const actionRow = $('.action-row');
+	const formError = $('#form-error');
+
+	mountLaunchPanel(panelLaunch);
+
+	function switchTab(active) {
+		const toBrand = active === 'brand';
+		tabBrand.setAttribute('aria-selected', String(toBrand));
+		tabLaunch.setAttribute('aria-selected', String(!toBrand));
+		panelBrand.hidden = !toBrand;
+		panelLaunch.hidden = toBrand;
+		// Hide save/generate buttons and errors when on Launch tab
+		if (actionRow) actionRow.hidden = !toBrand;
+		if (formError) formError.hidden = true;
+	}
+
+	tabBrand.addEventListener('click', () => switchTab('brand'));
+	tabLaunch.addEventListener('click', () => switchTab('launch'));
 
 	document.addEventListener('keydown', (e) => {
 		if (e.key === 'Escape' && !$('#embed-modal').hidden) {
