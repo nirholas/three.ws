@@ -411,6 +411,37 @@ create table if not exists erc8004_crawl_cursor (
     updated_at     timestamptz not null default now()
 );
 
+-- ── Solana on-chain attestations (ERC-8004 analog, no deployed program) ─────
+-- Each row is one signed SPL Memo tx referencing an agent's Metaplex Core
+-- asset pubkey. Schemas: threews.{feedback,validation,task,accept,revoke,dispute}.v1
+create table if not exists solana_attestations (
+    signature        text        primary key,
+    network          text        not null,                      -- 'mainnet' | 'devnet'
+    slot             bigint      not null,
+    block_time       timestamptz,
+    agent_asset      text        not null,                      -- referenced agent pubkey
+    attester         text        not null,                      -- fee payer / signer
+    kind             text        not null,                      -- e.g. threews.feedback.v1
+    payload          jsonb       not null,
+    task_id          text,                                      -- denormalized for fast joins
+    target_signature text,                                      -- for revoke/dispute → original
+    verified         boolean     not null default false,        -- payload schema-valid + task linkage if required
+    revoked          boolean     not null default false,
+    disputed         boolean     not null default false,
+    indexed_at       timestamptz not null default now()
+);
+create index if not exists solana_att_agent_kind_time on solana_attestations(agent_asset, kind, slot desc);
+create index if not exists solana_att_attester       on solana_attestations(attester);
+create index if not exists solana_att_task_id        on solana_attestations(task_id) where task_id is not null;
+create index if not exists solana_att_target         on solana_attestations(target_signature) where target_signature is not null;
+
+create table if not exists solana_attestations_cursor (
+    agent_asset       text primary key,
+    network           text not null,
+    last_signature    text,
+    last_indexed_at   timestamptz not null default now()
+);
+
 -- Additive migrations for usage_events.
 alter table usage_events add column if not exists agent_id uuid references agent_identities(id) on delete set null;
 create index if not exists usage_events_agent_time on usage_events(agent_id, created_at desc) where agent_id is not null;

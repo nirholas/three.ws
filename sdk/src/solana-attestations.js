@@ -128,6 +128,129 @@ export async function attestValidation({
 }
 
 /**
+ * Client posts a task offer to an agent. Counterpart to acceptTask.
+ */
+export async function createTask({
+	agentAsset, taskId, scopeHash, uri,
+	network = 'devnet', preferred = null,
+} = {}) {
+	if (!agentAsset || !taskId || !scopeHash) throw new Error('agentAsset, taskId, scopeHash required');
+	const provider = detectSolanaProvider(preferred);
+	if (!provider) throw new Error('No Solana wallet detected');
+	const { publicKey } = await provider.connect();
+	const memo = {
+		v: 1, kind: 'threews.task.v1', agent: agentAsset,
+		task_id: taskId, scope_hash: scopeHash,
+		...(uri ? { uri } : {}), ts: Math.floor(Date.now() / 1000),
+	};
+	const ix = buildMemoIx(JSON.stringify(memo), new PublicKey(agentAsset));
+	const signature = await signAndSend({ network, preferred, ix, feePayer: publicKey });
+	return { signature, memo };
+}
+
+/**
+ * Agent owner accepts a task. Required for matching feedback to be "verified".
+ * Must be signed by the wallet that owns the agent NFT.
+ */
+export async function acceptTask({
+	agentAsset, taskId,
+	network = 'devnet', preferred = null,
+} = {}) {
+	if (!agentAsset || !taskId) throw new Error('agentAsset, taskId required');
+	const provider = detectSolanaProvider(preferred);
+	if (!provider) throw new Error('No Solana wallet detected');
+	const { publicKey } = await provider.connect();
+	const memo = {
+		v: 1, kind: 'threews.accept.v1', agent: agentAsset, task_id: taskId,
+		ts: Math.floor(Date.now() / 1000),
+	};
+	const ix = buildMemoIx(JSON.stringify(memo), new PublicKey(agentAsset));
+	const signature = await signAndSend({ network, preferred, ix, feePayer: publicKey });
+	return { signature, memo };
+}
+
+/**
+ * Revoke one of YOUR OWN previous attestations. Indexer flips the original's
+ * `revoked` bit only if the revoke is signed by the same attester.
+ */
+export async function attestRevoke({
+	agentAsset, targetSignature, reason,
+	network = 'devnet', preferred = null,
+} = {}) {
+	if (!agentAsset || !targetSignature) throw new Error('agentAsset, targetSignature required');
+	const provider = detectSolanaProvider(preferred);
+	if (!provider) throw new Error('No Solana wallet detected');
+	const { publicKey } = await provider.connect();
+	const memo = {
+		v: 1, kind: 'threews.revoke.v1', agent: agentAsset,
+		target_signature: targetSignature,
+		...(reason ? { reason } : {}), ts: Math.floor(Date.now() / 1000),
+	};
+	const ix = buildMemoIx(JSON.stringify(memo), new PublicKey(agentAsset));
+	const signature = await signAndSend({ network, preferred, ix, feePayer: publicKey });
+	return { signature, memo };
+}
+
+/**
+ * Agent owner disputes someone else's attestation. Doesn't delete; flags
+ * `disputed=true` in the indexer.
+ */
+export async function attestDispute({
+	agentAsset, targetSignature, reason, uri,
+	network = 'devnet', preferred = null,
+} = {}) {
+	if (!agentAsset || !targetSignature) throw new Error('agentAsset, targetSignature required');
+	const provider = detectSolanaProvider(preferred);
+	if (!provider) throw new Error('No Solana wallet detected');
+	const { publicKey } = await provider.connect();
+	const memo = {
+		v: 1, kind: 'threews.dispute.v1', agent: agentAsset,
+		target_signature: targetSignature,
+		...(reason ? { reason } : {}),
+		...(uri ? { uri } : {}),
+		ts: Math.floor(Date.now() / 1000),
+	};
+	const ix = buildMemoIx(JSON.stringify(memo), new PublicKey(agentAsset));
+	const signature = await signAndSend({ network, preferred, ix, feePayer: publicKey });
+	return { signature, memo };
+}
+
+/**
+ * Fetch indexed attestations for an agent from the three.ws indexer.
+ * Prefer this over `listAttestations` (RPC) — sub-100ms vs seconds, and
+ * includes verified/disputed/revoked flags.
+ *
+ * @param {object} opts
+ * @param {string} opts.agentAsset
+ * @param {string} [opts.kind='all']
+ * @param {string} [opts.network='devnet']
+ * @param {string} [opts.apiOrigin]   Defaults to current origin
+ */
+export async function fetchAttestations({
+	agentAsset, kind = 'all', network = 'devnet', apiOrigin = '',
+} = {}) {
+	const u = `${apiOrigin}/api/agents/solana-attestations?asset=${encodeURIComponent(agentAsset)}&kind=${encodeURIComponent(kind)}&network=${network}`;
+	const res = await fetch(u);
+	const data = await res.json();
+	if (!res.ok) throw new Error(data.error_description || 'fetch failed');
+	return data;
+}
+
+/**
+ * Fetch computed reputation summary (verified vs unverified scores, disputes,
+ * task acceptance counts) from the three.ws indexer.
+ */
+export async function fetchReputation({
+	agentAsset, network = 'devnet', apiOrigin = '',
+} = {}) {
+	const u = `${apiOrigin}/api/agents/solana-reputation?asset=${encodeURIComponent(agentAsset)}&network=${network}`;
+	const res = await fetch(u);
+	const data = await res.json();
+	if (!res.ok) throw new Error(data.error_description || 'fetch failed');
+	return data;
+}
+
+/**
  * Read attestations about an agent directly from RPC.
  *
  * Walks recent signatures for the agent asset pubkey, fetches each transaction,

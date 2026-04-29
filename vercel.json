@@ -11,6 +11,10 @@
 			"dest": "/api/wk-x402"
 		},
 		{
+			"src": "/\\.well-known/agent-attestation-schemas",
+			"dest": "/api/wk-agent-attestation-schemas"
+		},
+		{
 			"src": "/\\.well-known/oauth-authorization-server",
 			"dest": "/api/wk-oauth-authorization-server"
 		},
@@ -235,6 +239,7 @@
 	],
 	"crons": [
 		{ "path": "/api/cron/erc8004-crawl", "schedule": "*/15 * * * *" },
+		{ "path": "/api/cron/solana-attestations-crawl", "schedule": "*/5 * * * *" },
 		{ "path": "/api/cron/index-delegations", "schedule": "*/5 * * * *" },
 		{ "path": "/api/cron/run-dca", "schedule": "0 * * * *" },
 		{ "path": "/api/cron/run-subscriptions", "schedule": "0 * * * *" }

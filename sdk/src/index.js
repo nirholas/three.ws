@@ -45,6 +45,17 @@ export {
 	startSolanaCheckout,
 	confirmSolanaPayment,
 } from './solana.js';
+export {
+	attestFeedback,
+	attestValidation,
+	createTask,
+	acceptTask,
+	attestRevoke,
+	attestDispute,
+	listAttestations,
+	fetchAttestations,
+	fetchReputation,
+} from './solana-attestations.js';
 
 import { AgentPanel } from './panel.js';
 import { agentRegistration, agentCard, aiPlugin } from './manifests.js';

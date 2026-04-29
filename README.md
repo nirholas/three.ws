@@ -1110,6 +1110,27 @@ The agent is now an ERC-721 token. Its manifest lives on IPFS. Its action histor
 
 `api/cron/erc8004-crawl.js` runs every 15 minutes to index new IdentityRegistry mint events. Indexed agents appear in `/discover` and can be imported via `/hydrate`.
 
+### Solana variant — same shape, no deployed program
+
+Solana ships an ERC-8004 analog without any custom on-chain program:
+
+- **Identity** — Metaplex Core NFT minted via `registerSolanaAgent()` (the asset pubkey is the agent ID).
+- **Reputation + Validation** — signed SPL Memo transactions referencing the agent asset pubkey, with a JSON envelope (`threews.feedback.v1` / `threews.validation.v1`). Anyone can read every attestation about an agent via `getSignaturesForAddress(assetPubkey)`.
+
+SDK:
+
+```js
+import { attestFeedback, attestValidation, listAttestations } from '@nirholas/agent-kit';
+
+await attestFeedback({ agentAsset, score: 5, network: 'devnet' });
+await attestValidation({ agentAsset, taskHash: '0x…', passed: true, network: 'devnet' });
+const rows = await listAttestations({ agentAsset, kind: 'all', network: 'devnet' });
+```
+
+Server read endpoint: `GET /api/agents/solana-attestations?asset=<pubkey>&kind=feedback|validation|all&network=devnet|mainnet`.
+
+Demo page: [sdk/example/solana-attest.html](sdk/example/solana-attest.html).
+
 ---
 
 ## Database Schema

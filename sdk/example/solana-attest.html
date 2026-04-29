@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>three.ws · Solana Agent Attestations (8004 analog)</title>
+	<style>
+		body { font: 14px/1.5 system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+		input, button { font: inherit; padding: .4rem .6rem; }
+		input { width: 100%; box-sizing: border-box; margin: .25rem 0 .75rem; }
+		.row { display: flex; gap: .5rem; }
+		.row > * { flex: 1; }
+		pre { background: #f4f4f4; padding: .75rem; border-radius: 6px; overflow: auto; max-height: 320px; }
+		.muted { color: #666; }
+	</style>
+</head>
+<body>
+	<h1>Solana agent attestations</h1>
+	<p class="muted">
+		ERC-8004 reputation + validation registries on Solana, no deployed program.
+		Attestations are signed SPL Memo transactions referencing the agent's
+		Metaplex Core asset pubkey. Devnet only.
+	</p>
+
+	<label>Agent asset pubkey
+		<input id="agent" placeholder="e.g. 7xKX...m1zP">
+	</label>
+
+	<div class="row">
+		<div>
+			<label>Feedback score (1–5)<input id="score" type="number" min="1" max="5" value="5"></label>
+			<button id="feedback">Attest feedback</button>
+		</div>
+		<div>
+			<label>Task hash<input id="taskHash" placeholder="sha256 hex"></label>
+			<button id="validation">Attest validation (passed)</button>
+		</div>
+	</div>
+
+	<button id="reload">Reload attestations</button>
+	<p class="muted">Status: <span id="status">idle</span></p>
+	<pre id="out">[]</pre>
+
+	<script type="module">
+		import { attestFeedback, attestValidation, listAttestations }
+			from '../src/solana-attestations.js';
+
+		const $ = (id) => document.getElementById(id);
+		const setStatus = (s) => $('status').textContent = s;
+		const NET = 'devnet';
+
+		async function refresh() {
+			const agent = $('agent').value.trim();
+			if (!agent) return;
+			setStatus('loading…');
+			try {
+				const rows = await listAttestations({ agentAsset: agent, network: NET });
+				$('out').textContent = JSON.stringify(rows, null, 2);
+				setStatus(`loaded ${rows.length}`);
+			} catch (e) { setStatus('error: ' + e.message); }
+		}
+
+		$('feedback').onclick = async () => {
+			try {
+				setStatus('signing feedback…');
+				const r = await attestFeedback({
+					agentAsset: $('agent').value.trim(),
+					score: Number($('score').value),
+					network: NET,
+				});
+				setStatus('sent ' + r.signature.slice(0, 12) + '…');
+				setTimeout(refresh, 2500);
+			} catch (e) { setStatus('error: ' + e.message); }
+		};
+
+		$('validation').onclick = async () => {
+			try {
+				setStatus('signing validation…');
+				const r = await attestValidation({
+					agentAsset: $('agent').value.trim(),
+					taskHash: $('taskHash').value.trim() || 'demo',
+					passed: true,
+					network: NET,
+				});
+				setStatus('sent ' + r.signature.slice(0, 12) + '…');
+				setTimeout(refresh, 2500);
+			} catch (e) { setStatus('error: ' + e.message); }
+		};
+
+		$('reload').onclick = refresh;
+	</script>
+</body>
+</html>
