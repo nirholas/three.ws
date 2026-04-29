@@ -1,0 +1,141 @@
+/* first-meet.css — scoped under .first-meet-root */
+
+.first-meet-root {
+	position: fixed;
+	inset: 0;
+	z-index: 9900;
+	pointer-events: none;
+	font-family: system-ui, sans-serif;
+}
+
+/* ── Fade overlay ─────────────────────────────────────────────────────────── */
+
+.fm-fade-overlay {
+	position: absolute;
+	inset: 0;
+	background: #000;
+	opacity: 1;
+	transition: opacity 0.4s ease;
+}
+
+.fm-fade-overlay.fm-faded {
+	opacity: 0;
+}
+
+/* ── Subtitle ─────────────────────────────────────────────────────────────── */
+
+.fm-subtitle {
+	position: absolute;
+	bottom: 30%;
+	left: 50%;
+	transform: translateX(-50%);
+	background: rgba(0, 0, 0, 0.55);
+	color: #fff;
+	font-size: clamp(18px, 3vw, 26px);
+	font-weight: 500;
+	letter-spacing: 0.01em;
+	padding: 10px 24px;
+	border-radius: 8px;
+	white-space: nowrap;
+	opacity: 0;
+	transition: opacity 0.5s ease;
+	backdrop-filter: blur(4px);
+}
+
+.fm-subtitle.fm-visible {
+	opacity: 1;
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────────────── */
+
+.fm-actions {
+	position: absolute;
+	bottom: 18%;
+	left: 50%;
+	transform: translateX(-50%);
+	display: flex;
+	gap: 12px;
+	opacity: 0;
+	transition: opacity 0.45s ease;
+	pointer-events: none;
+}
+
+.fm-actions.fm-visible {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.fm-btn {
+	padding: 11px 28px;
+	border-radius: 8px;
+	font-size: 15px;
+	font-weight: 600;
+	cursor: pointer;
+	border: none;
+	transition:
+		background 0.15s,
+		transform 0.1s;
+}
+
+.fm-btn:active {
+	transform: scale(0.96);
+}
+
+.fm-btn-share {
+	background: #fff;
+	color: #111;
+}
+
+.fm-btn-share:hover {
+	background: #e8e8e8;
+}
+
+.fm-btn-continue {
+	background: #3d7eff;
+	color: #fff;
+}
+
+.fm-btn-continue:hover {
+	background: #2d6fee;
+}
+
+/* ── Confetti ─────────────────────────────────────────────────────────────── */
+
+.fm-confetti-piece {
+	position: absolute;
+	top: -20px;
+	border-radius: 2px;
+	pointer-events: none;
+	animation: fm-fall linear forwards;
+}
+
+@keyframes fm-fall {
+	0% {
+		transform: translateY(0) rotate(0deg);
+		opacity: 1;
+	}
+	70% {
+		opacity: 1;
+	}
+	100% {
+		transform: translateY(110vh) rotate(720deg);
+		opacity: 0;
+	}
+}
+
+/* ── Reduced motion overrides ─────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+	.fm-fade-overlay {
+		transition: none;
+	}
+	.fm-subtitle {
+		transition: none;
+	}
+	.fm-actions {
+		transition: none;
+	}
+	.fm-confetti-piece {
+		display: none;
+	}
+}

@@ -1,0 +1,1657 @@
+import * as THREE from 'three';
+import WebGL from 'three/addons/capabilities/WebGL.js';
+import { Viewer } from './viewer.js';
+import { Editor } from './editor/index.js';
+import { SimpleDropzone } from 'simple-dropzone';
+import { Validator } from './validator.js';
+import { Footer } from './components/footer';
+import { NichAgent } from './nich-agent.js';
+import { AvatarCreator } from './avatar-creator.js';
+import { resolveURI, isDecentralizedURI } from './ipfs.js';
+import { saveRemoteGlbToAccount, getMe, readAuthHint } from './account.js';
+import { getWidget } from './widgets.js';
+import { mountAnimationGallery } from './widgets/animation-gallery.js';
+import { mountTalkingAgent } from './widgets/talking-agent.js';
+import { mountTurntable } from './widgets/turntable.js';
+import { mountHotspotTour } from './widgets/hotspot-tour.js';
+import { mountPumpfunFeed } from './widgets/pumpfun-feed.js';
+import queryString from 'query-string';
+
+// Agent system — the new primitive layer
+import { protocol, ACTION_TYPES } from './agent-protocol.js';
+import { AgentIdentity } from './agent-identity.js';
+import { AgentSkills } from './agent-skills.js';
+import { AgentAvatar } from './agent-avatar.js';
+import { AgentHome } from './agent-home.js';
+
+// Runtime — LLM brain, scene control, file-based memory, skill bundles
+import { SceneController } from './runtime/scene.js';
+import { Runtime } from './runtime/index.js';
+import { Memory } from './memory/index.js';
+import { SkillRegistry } from './skills/index.js';
+
+// Wallet — kick off a silent reconnect on app boot. Any page that later mounts
+// a wallet UI (deploy, reputation, validation, permissions, etc.) reads from
+// the shared signer + onWalletChange bus, so this single call surfaces an
+// already-authorized wallet site-wide without any popup.
+import { eagerConnectWallet } from './erc8004/agent-registry.js';
+
+window.THREE = THREE;
+window.VIEWER = {};
+
+function _blobToBase64(blob) {
+	return new Promise((resolve, reject) => {
+		const reader = new FileReader();
+		reader.onload = () => {
+			const s = reader.result;
+			const comma = s.indexOf(',');
+			resolve(comma >= 0 ? s.slice(comma + 1) : s);
+		};
+		reader.onerror = () => reject(reader.error);
+		reader.readAsDataURL(blob);
+	});
+}
+
+function _base64ToFile(b64, name, type) {
+	const bin = atob(b64);
+	const bytes = new Uint8Array(bin.length);
+	for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+	return new File([bytes], name, { type });
+}
+
+/**
+ * Parse an on-chain agent URL path. Accepts:
+ *   /a/<chainId>/<agentId>                       (canonical — registry inferred)
+ *   /a/<chainId>/<agentId>/embed                 (chromeless iframe variant)
+ *   /a/<chainId>/<registry>/<agentId>            (explicit registry, for non-canonical deployments)
+ *   /a/<chainId>/<registry>/<agentId>/embed
+ *   /a/eip155:<chainId>:<registry>/<agentId>     (full CAIP)
+ */
+function parseOnchainPath(pathname) {
+	// Strip trailing /embed (capturing) then peel remaining segments.
+	const embedMatch = pathname.match(/^(\/a\/.+?)\/embed\/?$/);
+	const embed = !!embedMatch;
+	const base = embed ? embedMatch[1] : pathname;
+	const m = base.match(/^\/a\/([^/]+)(?:\/([^/]+))?(?:\/([^/]+))?\/?$/);
+	if (!m) return null;
+	const [, a, b, c] = m;
+
+	// /a/eip155:chainId:registry/<agentId>
+	const caipMatch = a.match(/^eip155:(\d+):(0x[a-fA-F0-9]{40})$/);
+	if (caipMatch && b && /^\d+$/.test(b) && !c) {
+		return { chainId: Number(caipMatch[1]), registry: caipMatch[2], agentId: b, embed };
+	}
+
+	// /a/<chainId>/<registry>/<agentId>
+	if (b && c && /^\d+$/.test(a) && /^0x[a-fA-F0-9]{40}$/.test(b) && /^\d+$/.test(c)) {
+		return { chainId: Number(a), registry: b, agentId: c, embed };
+	}
+
+	// /a/<chainId>/<agentId> (canonical: registry inferred from REGISTRY_DEPLOYMENTS)
+	if (b && !c && /^\d+$/.test(a) && /^\d+$/.test(b)) {
+		return { chainId: Number(a), agentId: b, embed };
+	}
+
+	return null;
+}
+
+function escHtml(s) {
+	return String(s ?? '').replace(
+		/[&<>"']/g,
+		(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+	);
+}
+
+/** Parse #onchain=<chainId>:<agentId> for embed mode. */
+function parseOnchainHash(value) {
+	if (!value) return null;
+	const m = String(value).match(/^(\d+):(\d+)$/);
+	if (!m) return null;
+	return { chainId: Number(m[1]), agentId: m[2] };
+}
+
+if (!(window.File && window.FileReader && window.FileList && window.Blob)) {
+	console.error('The File APIs are not fully supported in this browser.');
+} else if (!WebGL.isWebGL2Available()) {
+	console.error('WebGL is not supported in this browser.');
+}
+
+class App {
+	/**
+	 * @param  {Element} el
+	 * @param  {Location} location
+	 */
+	constructor(el, location) {
+		const hash = location.hash ? queryString.parse(location.hash) : {};
+		const qp = new URLSearchParams(location.search);
+		// agentQuery: from ?agent= query param → editing mode (main UI with save-back)
+		// agentHash:  from #agent= hash → legacy embed mode
+		const agentQuery = qp.get('agent') || '';
+		const agentHash = hash.agent || '';
+
+		// On-chain CAIP-style route: /a/<chainId>/<agentId> [ /<registry> optional ]
+		// Parses to { chainId, agentId, registry? } when matched. Renders the agent's
+		// 3D avatar by resolving its registration file → `avatar` service endpoint.
+		const onchain = parseOnchainPath(location.pathname) || parseOnchainHash(hash.onchain);
+
+		this.options = {
+			kiosk: Boolean(hash.kiosk) || !!(onchain && onchain.embed),
+			model: hash.model || '',
+			type: hash.type || '',
+			preset: hash.preset || '',
+			cameraPosition: hash.cameraPosition ? hash.cameraPosition.split(',').map(Number) : null,
+			brain: hash.brain || 'none',
+			proxyURL: hash.proxyURL || '',
+			agent: agentHash, // hash-based agent keeps legacy embed behaviour
+			agentEdit: agentQuery, // query-param agent → editing surface
+			widget: hash.widget || '',
+			deploy: hash.deploy !== undefined || location.pathname === '/deploy',
+			onchain, // { chainId, agentId, registry? } | null
+			showcase: location.pathname === '/showcase' || location.pathname === '/showcase/',
+			// pending=1 signals a post-login save round-trip
+			pending: qp.get('pending') === '1',
+			// avatarSession: selfie pipeline passes a session URL here after processing photos
+			avatarSession: hash.avatarSession ? decodeURIComponent(hash.avatarSession) : '',
+			// Per-embed overrides (appended to iframe URL by Studio embed modal)
+			noAnimations: Boolean(hash.noAnimations),
+			noChat: Boolean(hash.noChat),
+			noControls: Boolean(hash.noControls),
+		};
+
+		// Fire-and-forget silent wallet reconnect. Cheap (single `eth_accounts`
+		// RPC), never throws, never prompts. If the user has previously authorized
+		// the site, this populates the shared signer before any wallet UI mounts.
+		eagerConnectWallet();
+
+		this.el = el;
+		this.viewer = null;
+		this.editor = null;
+		this._previewMounted = false;
+		this.viewerEl = null;
+		this.spinnerEl = el.querySelector('.spinner');
+		this.dropEl = el.querySelector('.wrap');
+		this.inputEl = el.querySelector('#file-input');
+		this.viewerContainerEl = el.querySelector('#viewer-container');
+		this.validator = new Validator(el);
+
+		// ── Agent System ──────────────────────────────────────────────────────
+		this.identity = new AgentIdentity({ autoLoad: true });
+		this.skills = null; // initialised after identity loads
+		this.avatar = null; // initialised after viewer + content load
+		this.agentHome = null;
+		this.sceneCtrl = null; // SceneController — created when viewer is ready
+		this.runtime = null; // LLM Runtime — created after identity + memory load
+		this.fileMemory = null; // file-based Memory for LLM context
+		this.skillRegistry = null; // external skill bundle loader
+
+		// Wire validator results into the protocol
+		this._hookValidator();
+
+		this._editingAgentId = this.options.agentEdit || null;
+
+		this.createDropzone();
+		this.setupAvatarCreator();
+		if (this.options.avatarSession) {
+			this.avatarCreator.open(this.options.avatarSession);
+		}
+		this.hideSpinner();
+		this._applyViewerMode();
+		this._updateSignInLink();
+		this._setupSaveToAccount();
+		this._setupMakeWidgetButton();
+
+		const options = this.options;
+
+		if (options.kiosk) {
+			const headerEl = document.querySelector('header');
+			headerEl.style.display = 'none';
+			const footerEl = document.querySelector('footer');
+			if (footerEl) footerEl.style.display = 'none';
+		}
+
+		// Check for deploy (ERC-8004 mint) page. We still load the default
+		// avatar in the background so `_currentModelUrl` is populated for the
+		// RegisterUI pre-fill — it reflects the viewer's current model.
+		if (options.deploy) {
+			const model = options.model || '/avatars/cz.glb';
+			this.view(isDecentralizedURI(model) ? resolveURI(model) : model, '', new Map())
+				.catch(() => {})
+				.finally(() => this._showDeployPage());
+			this._initAgentSystem();
+			return;
+		}
+
+		// /showcase — browsable marketplace of every indexed three.ws.
+		if (options.showcase) {
+			this._showShowcasePage();
+			this._initAgentSystem();
+			return;
+		}
+
+		// /a/<chainId>/<agentId> — resolve an on-chain agent to its 3D avatar.
+		if (options.onchain) {
+			this._loadOnChainAgent(options.onchain);
+			this._initAgentSystem();
+			return;
+		}
+
+		// Load a specific agent by ID: /#agent=<uuid> (embed mode)
+		if (options.agent) {
+			this._loadAgent(options.agent);
+			return;
+		}
+
+		// Load a saved widget by ID: /app#widget=<wdgt_...>
+		if (options.widget) {
+			this._loadWidget(options.widget);
+			this._initAgentSystem();
+			this._initWidgetBridge();
+			return;
+		}
+
+		// Editing an existing agent: ?agent=<uuid> (authenticated editing surface)
+		if (options.agentEdit) {
+			this._loadAgentForEdit(options.agentEdit);
+		} else {
+			// Resume a stashed editor session (post-login round-trip), else
+			// load the model named in the URL or fall back to the CZ avatar.
+			this._maybeResumeOrLoad(options);
+		}
+
+		// After sign-in redirect, check for a pending_save stash.
+		if (options.pending) {
+			this._maybePendingSave();
+		}
+
+		// Boot the agent system once identity is ready. _loadAgentForEdit also
+		// triggers _initAgentSystem at its tail; the AgentHome render is
+		// idempotent so the second pass tears down and re-mounts cleanly.
+		this._initAgentSystem();
+
+		// Studio preview iframes use postMessage to live-update brand config.
+		this._initWidgetBridge();
+	}
+
+	/**
+	 * If the URL carries ?resume=<token>, restore the stashed editor session
+	 * (load source + replay edits + optionally auto-open Publish). Otherwise
+	 * load the model from #model= or the default CZ avatar.
+	 */
+	async _maybeResumeOrLoad(options) {
+		const params = new URLSearchParams(location.search);
+		const resumeToken = params.get('resume');
+
+		if (resumeToken) {
+			try {
+				const { restoreSession, clearStash } = await import('./editor/edit-persistence.js');
+				const stashed = await restoreSession(resumeToken);
+				if (stashed) {
+					if (stashed.source.url) {
+						await this.view(stashed.source.url, '', new Map());
+					} else if (stashed.source.file) {
+						const f = stashed.source.file;
+						await this.load(new Map([[f.name, f]]));
+					}
+
+					if (this.editor && this.editor.session) {
+						this.editor.session.restoreEdits(stashed.edits);
+						// Panels snapshotted the original material values before
+						// restoreEdits mutated them — rebuild so the GUI mirrors
+						// the restored state.
+						this.editor.materialEditor?.rebuild?.();
+						this.editor.textureInspector?.rebuild?.();
+						this.editor.sceneExplorer?.rebuild?.();
+					}
+
+					if (params.get('publish') === '1') {
+						this.editor?._openPublishModal?.();
+					}
+
+					await clearStash(resumeToken);
+
+					const clean = new URL(location.href);
+					clean.searchParams.delete('resume');
+					clean.searchParams.delete('publish');
+					history.replaceState(null, '', clean.toString());
+					return;
+				}
+			} catch (err) {
+				console.warn('[3d-agent] resume failed', err);
+			}
+		}
+
+		const model = options.model || '/avatars/cz.glb';
+		const resolvedModel = isDecentralizedURI(model) ? resolveURI(model) : model;
+		const isDefaultCz = !options.model;
+		const loadPromise = this.view(resolvedModel, '', new Map());
+		if (isDefaultCz) {
+			loadPromise?.then?.(() => this._playDefaultLandingClip('taunt'));
+		}
+	}
+
+	/**
+	 * After the default CZ avatar loads on /app, stop the baked-in idle clip
+	 * (which fights the manifest animations on the same skeleton and looks
+	 * glitchy) and crossfade into a manifest clip once it's ready.
+	 * @param {string} clipName
+	 */
+	_playDefaultLandingClip(clipName) {
+		const viewer = this.viewer;
+		if (!viewer) return;
+		if (viewer.mixer) viewer.mixer.stopAllAction();
+		const am = viewer.animationManager;
+		if (!am) return;
+		const start = performance.now();
+		const tryPlay = () => {
+			if (!this.viewer || this.viewer !== viewer) return;
+			if (viewer.mixer) viewer.mixer.stopAllAction();
+			const defs = am.getAnimationDefs();
+			const hasDef = defs.some((d) => d.name === clipName);
+			if (hasDef) {
+				am.crossfadeTo(clipName).catch(() => {});
+				return;
+			}
+			if (performance.now() - start > 8000) return;
+			setTimeout(tryPlay, 200);
+		};
+		tryPlay();
+	}
+
+	// ── Agent System Init ─────────────────────────────────────────────────────
+
+	async _initAgentSystem() {
+		try {
+			// Wait for identity to resolve (uses local storage immediately, backend async)
+			await this.identity.load();
+
+			// Skills need identity + memory
+			this.skills = new AgentSkills(protocol, this.identity.memory);
+
+			// File-based memory for LLM context injection
+			this.fileMemory = await Memory.load({
+				mode: 'local',
+				namespace: this.identity.id,
+			});
+
+			// External skill bundle loader (empty initially — skills load on demand)
+			this.skillRegistry = new SkillRegistry({ trust: 'owned-only' });
+
+			// LLM Runtime — the agent's brain. Defaults to 'none' provider
+			// (NichAgent pattern matching). Configure with #brain=anthropic&proxyURL=...
+			this.runtime = new Runtime({
+				manifest: {
+					name: this.identity.name || 'Agent',
+					instructions: [
+						`You are ${this.identity.name || 'Agent'}, an AI agent embedded in a 3D model viewer at three.ws.`,
+						'You can control the 3D scene, remember things, and help users with their 3D work.',
+						'Be concise, clear, and helpful. You are present and embodied — act like it.',
+					].join(' '),
+					brain: {
+						provider: this.options.brain,
+						proxyURL: this.options.proxyURL || undefined,
+					},
+					tools: ['wave', 'lookAt', 'play_clip', 'setExpression', 'speak', 'remember'],
+				},
+				viewer: this.sceneCtrl, // null until viewer loads
+				memory: this.fileMemory,
+				skills: this.skillRegistry,
+			});
+
+			// Bridge Runtime assistant messages to the protocol bus
+			this.runtime.addEventListener('brain:message', (e) => {
+				if (e.detail.role === 'assistant' && e.detail.content) {
+					protocol.emit({
+						type: ACTION_TYPES.SPEAK,
+						payload: { text: e.detail.content, sentiment: 0 },
+						agentId: this.identity.id,
+					});
+				}
+			});
+
+			// Expose agent on window for debugging
+			window.VIEWER.agent_protocol = protocol;
+			window.VIEWER.agent_identity = this.identity;
+			window.VIEWER.agent_skills = this.skills;
+			window.VIEWER.agent_runtime = this.runtime;
+
+			// Announce presence
+			protocol.emit({
+				type: ACTION_TYPES.PRESENCE,
+				payload: { status: 'online', agentId: this.identity.id },
+				agentId: this.identity.id,
+			});
+
+			// Render the agent home panel (identity card + timeline). Idempotent —
+			// if a previous boot already rendered, tear it down before re-mounting
+			// so we never stack multiple cards in the sidebar.
+			// Skip entirely in kiosk/embed — the panel belongs to owner/edit views.
+			const homeEl = document.getElementById('agent-home-container');
+			if (homeEl && !this.options.kiosk) {
+				if (this.agentHome) this.agentHome.destroy();
+				homeEl.innerHTML = '';
+				this.agentHome = new AgentHome(homeEl, this.identity, protocol, this.avatar, {
+					skills: this.agent_skills || window.VIEWER?.agent_skills,
+					memory: this.agent_memory || window.VIEWER?.agent_memory,
+				});
+				await this.agentHome.render();
+			}
+
+			// Boot the voice/chat agent with skills and runtime wired in
+			this._initNichAgent();
+
+			// Log all significant actions to identity history (fire-and-forget)
+			protocol.on('*', (action) => {
+				if (
+					[
+						ACTION_TYPES.SPEAK,
+						ACTION_TYPES.REMEMBER,
+						ACTION_TYPES.SIGN,
+						ACTION_TYPES.SKILL_DONE,
+						ACTION_TYPES.VALIDATE,
+						ACTION_TYPES.LOAD_END,
+					].includes(action.type)
+				) {
+					this.identity.recordAction(action);
+				}
+			});
+		} catch (err) {
+			console.warn('[3d-agent] Agent system init failed:', err.message);
+		}
+	}
+
+	_applyViewerMode() {
+		const { kiosk, widget, agent, deploy } = this.options;
+		let mode = 'main';
+		if (kiosk || widget || agent) mode = 'embed';
+		else if (deploy) mode = 'deploy';
+		document.body.dataset.viewerMode = mode;
+		if (mode === 'main') {
+			// Only use 'pending' (hide gate, hide sidebar) when we have a stored 'true' hint —
+			// i.e. the user was last seen logged in and may still be. For everyone else (no hint
+			// or a 'false' hint) show the auth gate immediately so it never appears after the
+			// CZ model renders (which is instant when the GLB is cached from the homepage).
+			document.body.dataset.authed = readAuthHint() === 'true' ? 'pending' : 'false';
+		}
+	}
+
+	async _updateSignInLink() {
+		const link = document.getElementById('nav-sign-in');
+		try {
+			const user = await getMe();
+			if (link && user) link.classList.add('signed-in');
+			if (user) this._initUserMenu(user);
+			if (document.body.dataset.viewerMode === 'main') {
+				document.body.dataset.authed = user ? 'true' : 'false';
+			}
+		} catch {
+			if (document.body.dataset.viewerMode === 'main') {
+				document.body.dataset.authed = 'false';
+			}
+		}
+	}
+
+	_initUserMenu(user) {
+		const wrap = document.getElementById('nav-user-wrap');
+		const btn = document.getElementById('nav-user-btn');
+		const menu = document.getElementById('nav-user-menu');
+		const label = document.getElementById('nav-user-label');
+		const profileLink = document.getElementById('nav-my-profile-link');
+		const signOutBtn = document.getElementById('nav-sign-out-btn');
+		if (!wrap || !btn || !menu) return;
+
+		if (label) label.textContent = user.email || user.username || 'Account';
+		if (profileLink && user.address) profileLink.href = `/u/${user.address}`;
+
+		wrap.hidden = false;
+
+		btn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			const open = menu.hidden === false;
+			menu.hidden = open;
+			btn.setAttribute('aria-expanded', String(!open));
+		});
+
+		document.addEventListener('click', () => {
+			if (!menu.hidden) {
+				menu.hidden = true;
+				btn.setAttribute('aria-expanded', 'false');
+			}
+		});
+
+		menu.addEventListener('click', (e) => e.stopPropagation());
+
+		if (signOutBtn) {
+			signOutBtn.addEventListener('click', () => {
+				fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).finally(
+					() => {
+						try {
+							localStorage.removeItem('3dagent:auth-hint');
+						} catch {
+							/* ignore */
+						}
+						location.href = '/';
+					},
+				);
+			});
+		}
+	}
+
+	_refreshMakeWidgetButton() {
+		const btn = document.getElementById('make-widget-btn');
+		if (!btn) return;
+		const url = this._currentModelUrl;
+		if (!url && !this._hasLocalGlb) {
+			btn.hidden = true;
+			return;
+		}
+		if (url) {
+			btn.href = `/studio?model=${encodeURIComponent(url)}`;
+		}
+		btn.hidden = false;
+	}
+
+	_refreshSaveToAccountButton() {
+		const btn = document.getElementById('save-to-account-btn');
+		if (!btn) return;
+		const hasModel = this._currentModelUrl || this._hasLocalGlb;
+		btn.hidden = !hasModel;
+	}
+
+	// Surface the right deploy CTA next to the public-profile link in /app:
+	//   • "Deploy on-chain" → /deploy?avatar=<id>   (un-registered agent)
+	//   • "Deployed ✓"      → block-explorer URL    (already on-chain)
+	// Falls back to the bare /deploy page if we can't read the agent record
+	// (fetch error, anonymous, etc.) so the affordance never disappears once
+	// we know there's an agent in scope.
+	async _refreshDeployButton(agentId) {
+		const btn = document.getElementById('deploy-onchain-btn');
+		if (!btn || !agentId) return;
+
+		const label = btn.querySelector('[data-state-label]');
+		btn.classList.remove('is-deployed');
+		btn.removeAttribute('target');
+		btn.removeAttribute('rel');
+		if (label) label.textContent = 'Deploy on-chain';
+		btn.setAttribute('aria-label', 'Publish this agent on-chain');
+		btn.setAttribute('title', 'Publish this agent on-chain (ERC-8004)');
+		btn.href = `/deploy?agent=${encodeURIComponent(agentId)}`;
+		btn.hidden = false;
+
+		try {
+			const resp = await fetch(`/api/agents/${agentId}`, { credentials: 'include' });
+			if (!resp.ok) return;
+			const { agent } = await resp.json();
+			if (!agent) return;
+
+			if (agent.avatar_id && !btn.dataset.avatarPrefilled) {
+				btn.href = `/deploy?avatar=${encodeURIComponent(agent.avatar_id)}`;
+				btn.dataset.avatarPrefilled = '1';
+			}
+
+			const isDeployed = agent.erc8004_agent_id && agent.chain_id;
+			if (!isDeployed) return;
+
+			const { CHAIN_META, addressExplorerUrl, tokenExplorerUrl } = await import(
+				'./erc8004/chain-meta.js'
+			);
+			const chainName = CHAIN_META[agent.chain_id]?.name || `chain ${agent.chain_id}`;
+			let url = '';
+			if (agent.erc8004_registry) {
+				url = tokenExplorerUrl(
+					agent.chain_id,
+					agent.erc8004_registry,
+					agent.erc8004_agent_id,
+				);
+			}
+			if (!url && agent.erc8004_registry) {
+				url = addressExplorerUrl(agent.chain_id, agent.erc8004_registry);
+			}
+			if (!url) url = `/agent/${agentId}`;
+
+			btn.classList.add('is-deployed');
+			btn.href = url;
+			btn.target = '_blank';
+			btn.rel = 'noopener';
+			if (label) label.textContent = `Deployed ✓ ${chainName}`;
+			btn.setAttribute(
+				'aria-label',
+				`This agent is registered on ${chainName}. Open block explorer in a new tab.`,
+			);
+			btn.setAttribute('title', `On-chain on ${chainName} — view on explorer`);
+		} catch {
+			/* keep the un-deployed CTA */
+		}
+	}
+
+	_setupSaveToAccount() {
+		const btn = document.getElementById('save-to-account-btn');
+		if (!btn) return;
+		btn.addEventListener('click', (e) => {
+			e.preventDefault();
+			this._triggerSaveToAccount();
+		});
+	}
+
+	_setupMakeWidgetButton() {
+		// No auth gate — /studio handles anonymous users gracefully.
+	}
+
+	async _triggerSaveToAccount() {
+		const user = await getMe();
+		if (!user) {
+			await this._stashAndRedirectToLogin();
+			return;
+		}
+		await this._performSave(user);
+	}
+
+	async _stashAndRedirectToLogin() {
+		const btn = document.getElementById('save-to-account-btn');
+		if (btn) {
+			btn.setAttribute('disabled', '');
+			btn.querySelector('span').textContent = 'Preparing…';
+		}
+
+		const stash = {
+			glbUrl: this._currentModelUrl || null,
+			fileName: this._currentLocalFile?.name || null,
+			fileB64: null,
+			returnTo: '/app',
+			agentId: this._editingAgentId || null,
+			ts: Date.now(),
+		};
+
+		// Local file drops can't be re-hydrated from a blob URL after reload.
+		// Encode as base64 and stash — sessionStorage quota is ~5MB, so this
+		// fails gracefully for oversized GLBs (user re-drops after sign-in).
+		if (this._currentLocalFile) {
+			try {
+				stash.fileB64 = await _blobToBase64(this._currentLocalFile);
+				stash.contentType = this._currentLocalFile.type || 'model/gltf-binary';
+			} catch {
+				/* fall through without file data */
+			}
+		}
+
+		try {
+			sessionStorage.setItem('pending_save', JSON.stringify(stash));
+		} catch {
+			// Quota exceeded — drop the file payload and retry with just metadata
+			delete stash.fileB64;
+			try {
+				sessionStorage.setItem('pending_save', JSON.stringify(stash));
+			} catch {
+				/* storage disabled — proceed without stash */
+			}
+		}
+		location.href = '/login?next=' + encodeURIComponent('/app?pending=1');
+	}
+
+	async _performSave(user) {
+		if (!user) return;
+		const btn = document.getElementById('save-to-account-btn');
+		if (btn) {
+			btn.setAttribute('disabled', '');
+			btn.querySelector('span').textContent = 'Saving…';
+		}
+		try {
+			let avatarId;
+			const source = this._currentLocalFile || this._currentModelUrl;
+			if (!source) {
+				// Nothing to save — reset UI and bail
+				if (btn) {
+					btn.removeAttribute('disabled');
+					btn.querySelector('span').textContent = 'Save to account';
+				}
+				return;
+			}
+			const avatar = await saveRemoteGlbToAccount(source, {
+				source: this._currentLocalFile ? 'upload' : 'import',
+				name: this._currentLocalFile?.name,
+				source_meta: this._currentLocalFile
+					? { original_filename: this._currentLocalFile.name }
+					: undefined,
+			});
+			avatarId = avatar.id;
+
+			if (this._editingAgentId) {
+				// Update existing agent's avatar
+				if (avatarId) {
+					await fetch(`/api/agents/${this._editingAgentId}`, {
+						method: 'PUT',
+						credentials: 'include',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ avatar_id: avatarId }),
+					});
+				}
+				location.href = `/agent/${this._editingAgentId}`;
+			} else {
+				// Create a new agent linked to the uploaded avatar
+				const res = await fetch('/api/agents/me', {
+					method: 'GET',
+					credentials: 'include',
+				});
+				const data = res.ok ? await res.json() : null;
+				let agentId = data?.agent?.id;
+
+				if (!agentId) {
+					const created = await fetch('/api/agents', {
+						method: 'POST',
+						credentials: 'include',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ name: 'My Agent' }),
+					});
+					const createdData = created.ok ? await created.json() : null;
+					agentId = createdData?.agent?.id;
+				}
+
+				if (agentId && avatarId) {
+					await fetch(`/api/agents/${agentId}`, {
+						method: 'PUT',
+						credentials: 'include',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ avatar_id: avatarId }),
+					});
+				}
+
+				if (agentId) {
+					location.href = `/agent/${agentId}`;
+				} else {
+					this._flashSaved({ name: 'your account' });
+					if (btn) {
+						btn.removeAttribute('disabled');
+						btn.querySelector('span').textContent = 'Save to account';
+					}
+				}
+			}
+		} catch (err) {
+			console.warn('[3d-agent] save failed:', err.message);
+			if (btn) {
+				btn.removeAttribute('disabled');
+				btn.querySelector('span').textContent = 'Save to account';
+			}
+		}
+	}
+
+	async _maybePendingSave() {
+		let stash;
+		try {
+			const raw = sessionStorage.getItem('pending_save');
+			if (!raw) return;
+			stash = JSON.parse(raw);
+		} catch {
+			return;
+		}
+
+		// Stale stashes (older than 1 hour) are discarded — the user likely
+		// abandoned the sign-in flow and we shouldn't silently replay old work.
+		if (!stash || !stash.ts || Date.now() - stash.ts > 60 * 60 * 1000) {
+			sessionStorage.removeItem('pending_save');
+			return;
+		}
+
+		const user = await getMe();
+		if (!user) return; // still not authed — leave stash intact
+
+		sessionStorage.removeItem('pending_save');
+
+		// Restore the editing context from the stash
+		if (stash.agentId) this._editingAgentId = stash.agentId;
+
+		// Re-hydrate the model: local file (base64) takes priority over remote URL
+		if (stash.fileB64 && stash.fileName) {
+			const file = _base64ToFile(
+				stash.fileB64,
+				stash.fileName,
+				stash.contentType || 'model/gltf-binary',
+			);
+			await this.load(new Map([[stash.fileName, file]]));
+		} else if (stash.glbUrl && stash.glbUrl !== this._currentModelUrl) {
+			await this.view(stash.glbUrl, '', new Map());
+		}
+
+		// Strip ?pending from URL before saving
+		const clean = new URL(location.href);
+		clean.searchParams.delete('pending');
+		history.replaceState(null, '', clean.toString());
+
+		await this._performSave(user);
+	}
+
+	async _loadAgent(agentId) {
+		this.identity = new AgentIdentity({ agentId, autoLoad: false });
+		await this.identity.load();
+
+		let glbUrl = '/avatars/cz.glb';
+		if (this.identity.avatarId) {
+			try {
+				const resp = await fetch(`/api/avatars/${this.identity.avatarId}`, {
+					credentials: 'include',
+				});
+				if (resp.ok) {
+					const { avatar } = await resp.json();
+					if (avatar?.url) glbUrl = avatar.url;
+				}
+			} catch {
+				/* fall through to default */
+			}
+		}
+
+		this.view(glbUrl, '', new Map());
+		this._initAgentSystem();
+	}
+
+	async _loadAgentForEdit(agentId) {
+		// Swap this.identity to the agent being edited so AgentHome (and the
+		// Solana wallet card) render for *this* agent rather than the viewer's
+		// default identity.
+		this.identity = new AgentIdentity({ agentId, autoLoad: false });
+		try {
+			await this.identity.load();
+		} catch {
+			/* fall through; identity getter still returns _agentId */
+		}
+
+		// Fetch the agent record and load its GLB into the editor (main UI, not embed)
+		let glbUrl = null;
+		try {
+			const resp = await fetch(`/api/agents/${agentId}`, { credentials: 'include' });
+			if (resp.ok) {
+				const { agent } = await resp.json();
+				if (agent?.avatar_id) {
+					const avatarResp = await fetch(`/api/avatars/${agent.avatar_id}`, {
+						credentials: 'include',
+					});
+					if (avatarResp.ok) {
+						const { avatar } = await avatarResp.json();
+						if (avatar?.url) glbUrl = avatar.url;
+					}
+				}
+			}
+		} catch {
+			/* fall through to default */
+		}
+
+		if (glbUrl) {
+			await this.view(glbUrl, '', new Map());
+		} else {
+			this._maybeResumeOrLoad(this.options);
+		}
+
+		// Restore + auto-save per-agent scene preferences (background, env,
+		// exposure, auto-rotate) so the editor feels like coming back to
+		// "your studio" rather than a generic default each time.
+		if (this.viewer && this.viewer.attachScenePrefs) {
+			this.viewer.attachScenePrefs(agentId);
+		}
+
+		const publicLink = document.getElementById('view-public-profile-btn');
+		if (publicLink) {
+			publicLink.href = `/agent/${agentId}`;
+			publicLink.hidden = false;
+		}
+
+		this._refreshDeployButton(agentId);
+
+		this._maybeShowOnboarding(agentId);
+
+		this._initAgentSystem();
+		this._initWidgetBridge();
+	}
+
+	// First-time orientation overlay for a freshly created (or freshly loaded)
+	// agent. Localstorage-keyed per agent so it never reappears once dismissed.
+	_maybeShowOnboarding(agentId) {
+		if (typeof window === 'undefined' || !agentId) return;
+		const key = `3dagent:onboarded:${agentId}`;
+		try {
+			if (localStorage.getItem(key)) return;
+		} catch {
+			return;
+		}
+
+		const banner = document.getElementById('agent-onboarding');
+		if (!banner) return;
+
+		const closeBtn = document.getElementById('agent-onboarding-close');
+		const deployLink = document.getElementById('agent-onboarding-deploy');
+		const shareLink = document.getElementById('agent-onboarding-share');
+
+		if (deployLink) deployLink.href = `/deploy?agent=${agentId}`;
+		if (shareLink) shareLink.href = `/agent/${agentId}`;
+
+		const dismiss = () => {
+			banner.hidden = true;
+			try {
+				localStorage.setItem(key, '1');
+			} catch {}
+		};
+
+		if (closeBtn) closeBtn.addEventListener('click', dismiss);
+		// Auto-dismiss when the user clicks any of the CTAs — they've engaged.
+		[deployLink, shareLink].forEach((el) => {
+			if (el) el.addEventListener('click', dismiss);
+		});
+
+		banner.hidden = false;
+	}
+
+	async _loadWidget(widgetId) {
+		let widget;
+		try {
+			widget = await getWidget(widgetId);
+		} catch (err) {
+			this._showWidgetError(`Widget not found: ${widgetId}`);
+			return;
+		}
+		window.VIEWER.widget = widget;
+
+		const cfg = { ...(widget.config || {}) };
+		const modelUrl = widget.avatar?.model_url || '/avatars/cz.glb';
+
+		// Apply per-embed URL overrides (set by Studio embed modal checkboxes).
+		if (this.options.noAnimations) cfg.showClipPicker = false;
+		if (this.options.noChat) cfg._noChat = true;
+		if (this.options.noControls) cfg.showControls = false;
+
+		// Apply config to options BEFORE creating the viewer so first frame is right.
+		if (Array.isArray(cfg.cameraPosition) && cfg.cameraPosition.length === 3) {
+			this.options.cameraPosition = cfg.cameraPosition;
+		}
+		if (cfg.envPreset && cfg.envPreset !== 'none') {
+			this.options.preset = cfg.envPreset;
+		}
+
+		// Kiosk + showControls drive the chrome.
+		if (cfg.showControls === false || this.options.kiosk) {
+			document.querySelector('header')?.style.setProperty('display', 'none');
+		}
+
+		const resolved = isDecentralizedURI(modelUrl) ? resolveURI(modelUrl) : modelUrl;
+		this.view(resolved, '', new Map());
+
+		// Apply post-create brand bits once viewer exists.
+		queueMicrotask(() => this._applyWidgetConfig(cfg));
+
+		// Type-specific mount (runs after viewer + content come up).
+		queueMicrotask(() => this._mountWidgetByType(widget.type, cfg, widget.id));
+
+		// Caption overlay — render once, simple.
+		if (cfg.caption) this._renderWidgetCaption(cfg.caption);
+
+		// Notify parent (script embed / Studio) that we're up.
+		this._postToParent({ type: 'widget:ready', id: widget.id, widgetType: widget.type });
+	}
+
+	async _mountWidgetByType(type, cfg, widgetId) {
+		try {
+			if (type === 'animation-gallery') {
+				const container = document.body;
+				const ctl = await mountAnimationGallery(this.viewer, cfg, container);
+				this._widgetController = ctl;
+			} else if (type === 'talking-agent' && !cfg._noChat) {
+				const ctl = await mountTalkingAgent(this.viewer, cfg, document.body, {
+					widgetId,
+					getSceneCtrl: () => this.sceneCtrl || window.VIEWER?.scene_ctrl || null,
+					protocol,
+					identity: this.identity,
+				});
+				this._widgetController = ctl;
+			} else if (type === 'turntable') {
+				const ctl = await mountTurntable(this.viewer, cfg);
+				this._widgetController = ctl;
+			} else if (type === 'hotspot-tour') {
+				const ctl = await mountHotspotTour(this.viewer, cfg, document.body);
+				this._widgetController = ctl;
+			} else if (type === 'pumpfun-feed') {
+				const ctl = await mountPumpfunFeed(this.viewer, cfg, document.body, { protocol });
+				this._widgetController = ctl;
+			}
+		} catch (e) {
+			console.warn('[widget] mount failed', type, e?.message);
+		}
+	}
+
+	_applyWidgetConfig(cfg) {
+		if (!this.viewer) return;
+		try {
+			if (cfg.background) this.viewer.setBackgroundColor(cfg.background);
+			if (cfg.accent) {
+				document.documentElement.style.setProperty('--accent', cfg.accent);
+				const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(cfg.accent);
+				if (m) {
+					document.documentElement.style.setProperty(
+						'--accent-soft',
+						`rgba(${parseInt(m[1], 16)},${parseInt(m[2], 16)},${parseInt(m[3], 16)},0.18)`,
+					);
+				}
+			}
+			if (typeof cfg.autoRotate === 'boolean' && this.viewer.controls) {
+				this.viewer.controls.autoRotate = cfg.autoRotate;
+				if (typeof cfg.rotationSpeed === 'number') {
+					this.viewer.controls.autoRotateSpeed = cfg.rotationSpeed;
+				}
+			}
+			if (cfg.envPreset && this.viewer.setEnvironment) {
+				this.viewer.setEnvironment(cfg.envPreset);
+			}
+		} catch (e) {
+			console.warn('[widget] applyConfig failed', e?.message);
+		}
+	}
+
+	_renderWidgetCaption(text) {
+		let el = document.getElementById('widget-caption');
+		if (!el) {
+			el = document.createElement('div');
+			el.id = 'widget-caption';
+			el.style.cssText =
+				'position:fixed;left:50%;bottom:20px;transform:translateX(-50%);padding:8px 18px;background:rgba(0,0,0,0.55);color:#fff;font-family:Inter,system-ui,sans-serif;font-size:14px;border-radius:999px;backdrop-filter:blur(8px);z-index:5;pointer-events:none;max-width:90vw;text-align:center';
+			document.body.appendChild(el);
+		}
+		el.textContent = text;
+	}
+
+	_showWidgetError(message) {
+		const el = document.createElement('div');
+		el.style.cssText =
+			'position:fixed;inset:0;display:grid;place-items:center;background:#0a0a0a;color:#e0e0e0;font-family:Inter,system-ui,sans-serif;text-align:center;padding:2rem;z-index:9999';
+		el.innerHTML = `<div><h1 style="font-weight:300;margin:0 0 0.5rem">Widget unavailable</h1><p style="opacity:0.7;margin:0">${message.replace(/[<>&"]/g, '')}</p><p style="margin-top:1.5rem"><a href="/" style="color:#8b5cf6">Open viewer</a> · <a href="/widgets" style="color:#8b5cf6">Browse gallery</a></p></div>`;
+		document.body.appendChild(el);
+	}
+
+	_initWidgetBridge() {
+		// Studio sends live config updates without a full reload. Also handles
+		// runtime commands (play_clip, wave) for parent-driven embeds.
+		window.addEventListener('message', (event) => {
+			if (event.origin !== location.origin) return;
+			const data = event.data;
+			if (!data || typeof data !== 'object') return;
+
+			if (data.type === 'widget:config' && data.config) {
+				this._applyWidgetConfig(data.config);
+				if (typeof data.config.caption === 'string') {
+					this._renderWidgetCaption(data.config.caption);
+				}
+				// Preview mode (#model= + type=): mount widget runtime on first config message.
+				if (this.options.type && !this._previewMounted) {
+					this._previewMounted = true;
+					this._mountWidgetByType(this.options.type, data.config, null).catch(() => {});
+				}
+				return;
+			}
+
+			if (data.type === 'widget:command' && data.command) {
+				this._handleWidgetCommand(data.command, data.args || {});
+			}
+
+			// Forward pumpfun-feed focus changes from the parent frame to the
+			// mounted widget overlay (which listens on document.body).
+			if (data.type === 'pumpfun-feed:focus-mint') {
+				document.body.dispatchEvent(
+					new CustomEvent('pumpfun-feed:focus-mint', {
+						detail: { mint: data.mint || null },
+						bubbles: true,
+					}),
+				);
+			}
+			if (data.type === 'pumpfun-feed:set-narrate') {
+				document.body.dispatchEvent(
+					new CustomEvent('pumpfun-feed:set-narrate', {
+						detail: { on: !!data.on },
+						bubbles: true,
+					}),
+				);
+			}
+		});
+	}
+
+	_handleWidgetCommand(command, args) {
+		const sceneCtrl = this.sceneCtrl || window.VIEWER?.scene_ctrl;
+		if (!sceneCtrl) return;
+		try {
+			switch (command) {
+				case 'play_clip':
+					sceneCtrl.playClipByName?.(args.name);
+					break;
+				case 'lookAt':
+					sceneCtrl.lookAt?.(args.target);
+					break;
+				case 'setExpression':
+					sceneCtrl.setExpression?.(args.name, args.weight);
+					break;
+			}
+		} catch (e) {
+			console.warn('[widget] command failed', command, e?.message);
+		}
+	}
+
+	_postToParent(msg) {
+		if (window.parent && window.parent !== window) {
+			window.parent.postMessage(msg, '*');
+		}
+	}
+
+	_initNichAgent() {
+		const agent = new NichAgent(
+			document.body,
+			protocol,
+			this.skills,
+			this.identity,
+			this.runtime,
+		);
+		window.VIEWER.agent = agent;
+		// Greet on first open
+		agent.onFirstOpen = () => {
+			this.skills.perform('greet', {}, { identity: this.identity });
+		};
+	}
+
+	// ── Viewer setup + Avatar attachment ────────────────────────────────────
+
+	/**
+	 * Sets up the view manager.
+	 * @return {Viewer}
+	 */
+	createViewer() {
+		if (this.viewer) this.viewer.dispose();
+		this.viewerEl = this.viewerContainerEl;
+		this.viewer = new Viewer(this.viewerEl, this.options);
+		if (!this.options.kiosk) {
+			this.editor = new Editor(this.viewer);
+			this.editor.attach();
+			window.VIEWER.editor = this.editor;
+		}
+		window.VIEWER.viewer = this.viewer;
+		return this.viewer;
+	}
+
+	// ── Dropzone ─────────────────────────────────────────────────────────────
+
+	createDropzone() {
+		const dropCtrl = new SimpleDropzone(this.dropEl, this.inputEl);
+		dropCtrl.on('drop', ({ files }) => this.load(files));
+		dropCtrl.on('dropstart', () => this.showSpinner());
+		dropCtrl.on('droperror', () => this.hideSpinner());
+	}
+
+	// ── Avatar Creator ────────────────────────────────────────────────────────
+
+	setupAvatarCreator() {
+		this.avatarCreator = new AvatarCreator(document.body, async (glbSource) => {
+			this.view(glbSource, '', new Map());
+			try {
+				const avatar = await saveRemoteGlbToAccount(glbSource, {
+					source: 'avaturn',
+					source_meta: { provider: 'avaturn' },
+				});
+				this._flashSaved(avatar);
+			} catch (err) {
+				if (err.code !== 'not_signed_in') {
+					console.warn('[3d-agent] save to account failed:', err.message);
+				}
+			}
+		});
+	}
+
+	// ── File Loading ──────────────────────────────────────────────────────────
+
+	/**
+	 * @param  {Map<string, File>} fileMap
+	 */
+	load(fileMap) {
+		let rootFile, rootPath;
+		Array.from(fileMap).forEach(([path, file]) => {
+			if (file.name.match(/\.(gltf|glb)$/)) {
+				rootFile = file;
+				rootPath = path.replace(file.name, '');
+			}
+		});
+
+		if (!rootFile) {
+			this.onError('No .gltf or .glb asset found.');
+		}
+
+		return this.view(rootFile, rootPath, fileMap);
+	}
+
+	/**
+	 * @param  {File|string} rootFile
+	 * @param  {string} rootPath
+	 * @param  {Map<string, File>} fileMap
+	 */
+	view(rootFile, rootPath, fileMap) {
+		if (this.viewer) this.viewer.clear();
+
+		const viewer = this.viewer || this.createViewer();
+		const fileURL = typeof rootFile === 'string' ? rootFile : URL.createObjectURL(rootFile);
+
+		this._currentModelUrl = typeof rootFile === 'string' ? rootFile : null;
+		this._hasLocalGlb = typeof rootFile !== 'string';
+		this._currentLocalFile = typeof rootFile !== 'string' ? rootFile : null;
+		this._refreshMakeWidgetButton();
+		this._refreshSaveToAccountButton();
+
+		// Emit load start
+		protocol.emit({
+			type: ACTION_TYPES.LOAD_START,
+			payload: { url: typeof rootFile === 'string' ? rootFile : rootFile.name },
+			agentId: this.identity?.id || 'default',
+		});
+
+		const cleanup = () => {
+			this.hideSpinner();
+			if (typeof rootFile === 'object') URL.revokeObjectURL(fileURL);
+		};
+
+		return viewer
+			.load(fileURL, rootPath, fileMap)
+			.catch((e) => {
+				// Emit load error
+				protocol.emit({
+					type: ACTION_TYPES.LOAD_END,
+					payload: { error: e.message },
+					agentId: this.identity?.id || 'default',
+				});
+				this.onError(e);
+			})
+			.then((gltf) => {
+				if (!gltf) return;
+
+				// Emit load success
+				protocol.emit({
+					type: ACTION_TYPES.LOAD_END,
+					payload: { success: true },
+					agentId: this.identity?.id || 'default',
+				});
+
+				// Attach the avatar empathy system to the newly loaded content
+				this._attachAvatar(viewer);
+
+				// Notify the editor of the new model so it can rebuild panels
+				if (this.editor) {
+					const isString = typeof rootFile === 'string';
+					this.editor.onContentChanged({
+						url: isString ? rootFile : null,
+						file: isString ? null : rootFile,
+						name: isString ? rootFile.split('/').pop().split('?')[0] : rootFile.name,
+					});
+				}
+
+				// Configure external animations (Mixamo-style) for skinned models
+				this._configureAnimations(viewer);
+
+				// Update AR button target (GLB URL only; no USDZ companion in this project)
+				if (viewer.setARTarget) {
+					const glbUrl = typeof rootFile === 'string' ? fileURL : null;
+					viewer.setARTarget(glbUrl);
+				}
+
+				if (!this.options.kiosk) {
+					this.validator.validate(fileURL, rootPath, fileMap, gltf);
+				}
+				cleanup();
+			});
+	}
+
+	/** Attach (or reattach) the AgentAvatar to the viewer after content loads */
+	_attachAvatar(viewer) {
+		if (this.avatar) this.avatar.detach();
+		this.avatar = new AgentAvatar(viewer, protocol, this.identity);
+		this.avatar.attach();
+
+		// Create (or replace) the SceneController for agent scene operations
+		this.sceneCtrl = new SceneController(viewer);
+		if (this.runtime) this.runtime.viewer = this.sceneCtrl;
+
+		// Update agent-home with the live avatar reference
+		if (this.agentHome) this.agentHome.avatar = this.avatar;
+
+		window.VIEWER.agent_avatar = this.avatar;
+		window.VIEWER.scene_ctrl = this.sceneCtrl;
+
+		// Let the skills system access the viewer
+		if (this.skills) {
+			window.VIEWER.agent_skills = this.skills;
+		}
+	}
+
+	/**
+	 * Configure Mixamo-style external animations for the viewer.
+	 * Looks for animation GLBs in /animations/ and registers them.
+	 * Each GLB should contain a single animation clip exported from Mixamo
+	 * (downloaded as GLB with "Without Skin" checked).
+	 */
+	_configureAnimations(viewer) {
+		// Check if model has a skeleton
+		let hasSkeleton = false;
+		if (viewer.content) {
+			viewer.content.traverse((node) => {
+				if (node.isSkinnedMesh) hasSkeleton = true;
+			});
+		}
+		if (!hasSkeleton) return;
+
+		// Fetch the animation manifest
+		fetch('/animations/manifest.json')
+			.then((r) => {
+				if (!r.ok) throw new Error('No animation manifest');
+				return r.json();
+			})
+			.then((manifest) => {
+				if (Array.isArray(manifest) && manifest.length > 0) {
+					viewer.setAnimationDefs(manifest);
+				}
+			})
+			.catch(() => {
+				// No manifest — use sensible defaults if files exist
+				const defaults = [
+					{ name: 'idle', url: '/animations/idle.glb', label: 'Idle' },
+					{ name: 'walking', url: '/animations/walking.glb', label: 'Walking' },
+					{ name: 'running', url: '/animations/running.glb', label: 'Running' },
+					{ name: 'waving', url: '/animations/waving.glb', label: 'Waving' },
+					{ name: 'dancing', url: '/animations/dancing.glb', label: 'Dancing' },
+					{ name: 'sitting', url: '/animations/sitting.glb', label: 'Sitting' },
+					{ name: 'jumping', url: '/animations/jumping.glb', label: 'Jumping' },
+				];
+
+				// Probe which files actually exist (HEAD requests)
+				Promise.all(
+					defaults.map((def) =>
+						fetch(def.url, { method: 'HEAD' })
+							.then((r) => (r.ok ? def : null))
+							.catch(() => null),
+					),
+				).then((results) => {
+					const available = results.filter(Boolean);
+					if (available.length > 0) {
+						viewer.setAnimationDefs(available);
+					}
+				});
+			});
+	}
+
+	// ── Validator hook ────────────────────────────────────────────────────────
+
+	_hookValidator() {
+		// Intercept the validator toggle DOM node to emit validation results
+		const observer = new MutationObserver(() => {
+			const el = document.querySelector('.validator-toggle');
+			if (!el) return;
+
+			const errors = parseInt(el.dataset.errors || '0', 10);
+			const warnings = parseInt(el.dataset.warnings || '0', 10);
+			const hints = parseInt(el.dataset.hints || '0', 10);
+
+			protocol.emit({
+				type: ACTION_TYPES.VALIDATE,
+				payload: { errors, warnings, hints },
+				agentId: this.identity?.id || 'default',
+			});
+		});
+		observer.observe(document.body, { childList: true, subtree: true, attributes: true });
+	}
+
+	// ── UI Helpers ────────────────────────────────────────────────────────────
+
+	_flashSaved(avatar) {
+		const el = document.createElement('div');
+		el.className = 'save-toast';
+		el.innerHTML = `Saved to your account · <a href="/dashboard/#avatars">${avatar.name}</a>`;
+		document.body.appendChild(el);
+		setTimeout(() => el.remove(), 5000);
+	}
+
+	/**
+	 * @param  {Error} error
+	 */
+	onError(error) {
+		let message = (error || {}).message || error.toString();
+		if (message.match(/ProgressEvent/)) {
+			message = 'Unable to retrieve this file. Check JS console and browser network tab.';
+		} else if (message.match(/Unexpected token/)) {
+			message = `Unable to parse file content. Verify that this file is valid. Error: "${message}"`;
+		} else if (error && error.target && error.target instanceof Image) {
+			message = 'Missing texture: ' + error.target.src.split('/').pop();
+		}
+		window.alert(message);
+		console.error(error);
+	}
+
+	/**
+	 * Resolve an on-chain ERC-8004 agent to its 3D avatar and render it.
+	 * Public — works for anyone, no wallet required.
+	 *
+	 * @param {{ chainId: number, agentId: string, registry?: string }} onchain
+	 */
+	async _loadOnChainAgent(onchain) {
+		try {
+			const [
+				{ getAgentOnchain, fetchAgentMetadata, findAvatar3D },
+				{ REGISTRY_DEPLOYMENTS },
+			] = await Promise.all([import('./erc8004/queries.js'), import('./erc8004/abi.js')]);
+
+			if (!REGISTRY_DEPLOYMENTS[onchain.chainId]) {
+				this._showOnChainError(`Unsupported chain: ${onchain.chainId}`);
+				return;
+			}
+
+			const { uri } = await getAgentOnchain({
+				chainId: onchain.chainId,
+				agentId: onchain.agentId,
+				ethProvider: window.ethereum,
+			});
+			if (!uri) {
+				this._showOnChainError(`Agent #${onchain.agentId} has no agentURI set.`);
+				return;
+			}
+
+			const meta = await fetchAgentMetadata(uri);
+			if (!meta.ok) {
+				this._showOnChainError(`Could not fetch registration JSON: ${meta.error}`);
+				return;
+			}
+
+			this._onchainMetadata = meta.data;
+			this._updateOnChainCard(onchain, meta.data);
+
+			const glbUri = findAvatar3D(meta.data);
+			if (!glbUri) {
+				this._showOnChainError(
+					`Agent #${onchain.agentId} has no 3D avatar — no <code>avatar</code> service entry and <code>image</code> is not a GLB.`,
+				);
+				return;
+			}
+
+			const resolvedGlb = isDecentralizedURI(glbUri) ? resolveURI(glbUri) : glbUri;
+			await this.view(resolvedGlb, '', new Map());
+		} catch (err) {
+			console.warn('[3d-agent] on-chain load failed:', err);
+			this._showOnChainError(err.message || String(err));
+		}
+	}
+
+	_showOnChainError(msg) {
+		this._updateOnChainCard(this.options.onchain, null, msg);
+		this.dropEl?.classList.add('hidden');
+	}
+
+	/**
+	 * Render a small info card overlaying the viewer so users know whose agent
+	 * they're looking at. Hidden in kiosk mode.
+	 */
+	_updateOnChainCard(onchain, metadata, errorMsg = '') {
+		if (this.options.kiosk) return;
+		let card = this.el.querySelector('.onchain-card');
+		if (!card) {
+			card = document.createElement('div');
+			card.className = 'onchain-card';
+			this.el.appendChild(card);
+		}
+		const chainLabel = `chainId ${onchain.chainId}`;
+		if (errorMsg) {
+			card.innerHTML = `<div class="onchain-card__err">⚠ ${escHtml(errorMsg)}</div>
+				<div class="onchain-card__sub">Agent #${escHtml(onchain.agentId)} · ${escHtml(chainLabel)}</div>`;
+			return;
+		}
+		const name = metadata?.name ? String(metadata.name) : `Agent #${onchain.agentId}`;
+		const desc = metadata?.description ? String(metadata.description) : '';
+		card.innerHTML = `
+			<div class="onchain-card__name">${escHtml(name)}</div>
+			<div class="onchain-card__sub">#${escHtml(onchain.agentId)} · ${escHtml(chainLabel)}</div>
+			${desc ? `<div class="onchain-card__desc">${escHtml(desc)}</div>` : ''}
+		`;
+	}
+
+	async _showShowcasePage() {
+		try {
+			const main = this.el.querySelector('main.wrap') || this.el;
+			this.dropEl?.classList.add('hidden');
+			const dropzone = this.el.querySelector('.dropzone');
+			if (dropzone) dropzone.style.display = 'none';
+			if (this.viewerContainerEl) this.viewerContainerEl.style.display = 'none';
+			const authGate = this.el.querySelector('#auth-gate');
+			if (authGate) authGate.style.display = 'none';
+			const presence = this.el.querySelector('.agent-presence-sidebar');
+			if (presence) presence.style.display = 'none';
+
+			const page = document.createElement('section');
+			page.className = 'showcase-page';
+			main.appendChild(page);
+
+			const { renderShowcasePage } = await import('./erc8004/showcase.js');
+			renderShowcasePage(page);
+		} catch (err) {
+			console.error('[3d-agent] showcase page load failed', err);
+		}
+	}
+
+	async _showDeployPage() {
+		// Render /deploy as a normal page inside the app.html shell (header +
+		// footer stay visible). We hide the viewer + dropzone + auth gate and
+		// replace them with the ERC-8004 wizard, pre-filled from the user's
+		// current avatar so Step 5 flows from Steps 1–4.
+		//
+		// Deep-link support: `/deploy?avatar=<id>` pre-fills from a previously
+		// saved avatar (dashboard "Deploy on-chain" per row). That prefill
+		// overrides the viewer's current model.
+		try {
+			const main = this.el.querySelector('main.wrap') || this.el;
+			this.dropEl?.classList.add('hidden');
+			const dropzone = this.el.querySelector('.dropzone');
+			if (dropzone) dropzone.style.display = 'none';
+			if (this.viewerContainerEl) this.viewerContainerEl.style.display = 'none';
+			const authGate = this.el.querySelector('#auth-gate');
+			if (authGate) authGate.style.display = 'none';
+			const presence = this.el.querySelector('.agent-presence-sidebar');
+			if (presence) presence.style.display = 'none';
+
+			const page = document.createElement('section');
+			page.className = 'deploy-page';
+			main.appendChild(page);
+
+			this._upgradeToHorizonFooter();
+
+			const initial = await this._resolveDeployInitial();
+
+			const { RegisterUI } = await import('./erc8004/register-ui.js');
+			new RegisterUI(
+				page,
+				(result) => {
+					console.info('[ERC-8004] Agent registered:', result);
+				},
+				{ mode: 'page', initial },
+			);
+		} catch (err) {
+			console.error('[3d-agent] deploy page load failed', err);
+		}
+	}
+
+	/**
+	 * Resolve the initial state passed to RegisterUI. If `?avatar=<id>` is
+	 * present, fetch that avatar from the backend and pre-fill name /
+	 * description / image / GLB. Otherwise fall back to the current viewer
+	 * model.
+	 */
+	async _resolveDeployInitial() {
+		const qp = new URLSearchParams(location.search);
+		const avatarId = qp.get('avatar');
+		const fallback = { glbUrl: this._currentModelUrl || '' };
+		if (!avatarId) return fallback;
+		try {
+			const res = await fetch(`/api/avatars/${encodeURIComponent(avatarId)}`, {
+				credentials: 'include',
+			});
+			if (!res.ok) throw new Error(`HTTP ${res.status}`);
+			const { avatar } = await res.json();
+			if (!avatar) throw new Error('empty avatar payload');
+			return {
+				name: avatar.name || '',
+				description: avatar.description || '',
+				imageUrl: avatar.thumbnail_url || '',
+				glbUrl: avatar.url || avatar.model_url || '',
+			};
+		} catch (err) {
+			console.warn('[deploy] avatar prefill failed; falling back to viewer model', err);
+			return fallback;
+		}
+	}
+
+	_upgradeToHorizonFooter() {
+		const existing = document.querySelector('footer');
+		if (!existing) return;
+		existing.outerHTML = `<footer class="h-footer h-footer-horizon">
+			<div class="h-footer-glow-line" aria-hidden="true"></div>
+			<div class="h-footer-floor" aria-hidden="true"></div>
+			<div class="h-footer-haze" aria-hidden="true"></div>
+			<div class="h-footer-watermark" aria-hidden="true">three.ws</div>
+			<div class="h-footer-inner">
+				<div class="h-footer-brand-col">
+					<div class="h-footer-brand">
+						<span class="wordmark-dot" aria-hidden="true"></span>
+						<span>three.ws</span>
+					</div>
+					<p class="h-footer-tagline">Give your AI a body.</p>
+				</div>
+				<nav class="h-footer-links" aria-label="Footer">
+					<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener">GitHub</a>
+					<a href="/create">Create</a>
+					<a href="/studio">Studio</a>
+					<a href="/widgets">Widgets</a>
+					<a href="/features">Features</a>
+					<a href="/discover">Discover</a>
+					<a href="/docs">Docs</a>
+					<a href="https://eips.ethereum.org/EIPS/eip-8004" target="_blank" rel="noopener">ERC-8004</a>
+				</nav>
+			</div>
+			<div class="h-footer-bottom">
+				<p class="h-footer-legal">© 2026 three.ws — All rights reserved.</p>
+				<div class="h-footer-badges">
+					<span class="h-footer-badge" aria-label="System status">
+						<span class="h-footer-status-dot" aria-hidden="true"></span>
+						<span>All systems normal</span>
+					</span>
+					<a class="h-footer-badge" href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener" aria-label="View source on GitHub">
+						<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+						<span>Open source</span>
+					</a>
+				</div>
+			</div>
+		</footer>`;
+	}
+
+	showSpinner() {
+		this.spinnerEl.style.display = '';
+	}
+	hideSpinner() {
+		this.spinnerEl.style.display = 'none';
+	}
+}
+
+document.body.innerHTML += Footer();
+
+document.addEventListener('DOMContentLoaded', () => {
+	const app = new App(document.body, location);
+	window.VIEWER.app = app;
+	console.info('[three.ws] Debugging data exported as `window.VIEWER`.');
+});
