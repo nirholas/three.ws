@@ -286,5 +286,64 @@ export async function backtestStrategy(args, ctx) {
 	};
 }
 
+// ── Manual position close ───────────────────────────────────────────────────
+// Sell every SPL holding the agent currently has on-chain. Use to wind down
+// a strategy on demand or as a kill-switch when something goes wrong.
+//
+// Args:
+//   mints?: string[]   - if provided, only sell these mints; else sell all
+//                        positive-balance SPL holdings the wallet owns
+//   simulate?: boolean - dry-run; emit intended sells but skip signing
+//   onLog?: (e) => void
+//
+// Requires ctx.wallet (uses solana-wallet.getSplBalances under the hood).
+
+export async function closeAllPositions(args, ctx) {
+	const onLog = typeof args?.onLog === 'function' ? args.onLog : () => {};
+	const simulate = !!args?.simulate;
+	const log = [];
+	const emit = (e) => { log.push(e); try { onLog(e); } catch {} };
+
+	if (!ctx?.wallet?.publicKey && !simulate) {
+		return { ok: false, error: 'closeAllPositions requires ctx.wallet (or simulate:true)' };
+	}
+
+	let targets;
+	if (Array.isArray(args?.mints) && args.mints.length) {
+		targets = args.mints.map((mint) => ({ mint }));
+	} else {
+		const r = await ctx.skills.invoke('solana-wallet.getSplBalances', {});
+		if (!r?.ok) return { ok: false, error: `getSplBalances failed: ${r?.error}` };
+		targets = (r.data?.balances ?? []).filter((b) => (b.amount ?? 0) > 0);
+	}
+
+	let sold = 0, errors = 0;
+	for (const t of targets) {
+		try {
+			if (simulate) {
+				emit({ mint: t.mint, action: 'simulate-sell', amount: t.amount });
+				sold++;
+				continue;
+			}
+			const r = await ctx.skills.invoke('pump-fun-trade.sellToken', {
+				mint: t.mint,
+				percent: 100,
+			});
+			if (r?.ok) {
+				emit({ mint: t.mint, action: 'sold', sig: r.data.sig });
+				sold++;
+			} else {
+				emit({ mint: t.mint, action: 'sell-error', error: r?.error });
+				errors++;
+			}
+		} catch (e) {
+			emit({ mint: t.mint, action: 'sell-error', error: e.message });
+			errors++;
+		}
+	}
+
+	return { ok: true, data: { sold, errors, total: targets.length, simulate, log } };
+}
+
 // Re-exported for tests.
 export { parsePredicate, evalPredicate, buildView, compileStrategy };

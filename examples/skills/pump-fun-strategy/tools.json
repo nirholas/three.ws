@@ -24,6 +24,17 @@
 			}
 		},
 		{
+			"name": "closeAllPositions",
+			"description": "Sell every open SPL position the agent's wallet holds. Use to wind down a strategy or as a kill switch.",
+			"input_schema": {
+				"type": "object",
+				"properties": {
+					"mints": { "type": "array", "items": { "type": "string" }, "description": "Optional: only close these mints. Default: every positive-balance SPL holding." },
+					"simulate": { "type": "boolean" }
+				}
+			}
+		},
+		{
 			"name": "backtestStrategy",
 			"description": "Replay a strategy against historical token trade history. No signing, no RPC. Returns per-trade PnL and aggregate stats (win rate, total return, max drawdown).",
 			"input_schema": {

@@ -26,6 +26,7 @@ import { cors, method, error, readJson } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { makeRuntime } from '../_lib/skill-runtime.js';
 import { loadWallet } from '../_lib/solana-wallet.js';
+import { checkBuyAllowed } from '../_lib/agent-spend-policy.js';
 
 const RPC = {
 	mainnet: process.env.SOLANA_MAINNET_RPC || 'https://api.mainnet-beta.solana.com',
@@ -50,7 +51,7 @@ async function loadAgentWallet(agentId, userId) {
 	const enc = row.meta?.encrypted_solana_secret;
 	if (!enc) throw Object.assign(new Error('agent has no solana wallet — provision via /api/agents/:id/solana'), { status: 409 });
 	const wallet = await loadWallet(enc);
-	return { wallet, address: wallet.publicKey.toBase58() };
+	return { wallet, address: wallet.publicKey.toBase58(), meta: row.meta };
 }
 
 export default async function handler(req, res) {
@@ -69,7 +70,7 @@ export default async function handler(req, res) {
 	const mode = body.mode === 'live' ? 'live' : 'simulate';
 	const network = body.network === 'devnet' ? 'devnet' : 'mainnet';
 
-	let wallet = null, walletAddress = null;
+	let wallet = null, walletAddress = null, agentMeta = null;
 	if (mode === 'live') {
 		const auth = await resolveAuth(req);
 		if (!auth) return error(res, 401, 'unauthorized', 'sign in required for live mode');
@@ -78,6 +79,7 @@ export default async function handler(req, res) {
 			const r = await loadAgentWallet(body.agentId, auth.userId);
 			wallet = r.wallet;
 			walletAddress = r.address;
+			agentMeta = r.meta;
 		} catch (e) {
 			return error(res, e.status ?? 500, e.status === 409 ? 'conflict' : 'unauthorized', e.message);
 		}
@@ -117,6 +119,16 @@ export default async function handler(req, res) {
 		wallet,
 	};
 
+	const policyGuard = mode === 'live'
+		? async ({ mint, amountSol }) => {
+			const block = await checkBuyAllowed({ agentId: body.agentId, meta: agentMeta, mint, solAmount: amountSol });
+			return block ? { code: block.code, msg: block.msg } : null;
+		}
+		: null;
+
+	const abortController = new AbortController();
+	req.on('close', () => abortController.abort());
+
 	try {
 		const result = await runStrategy(
 			{
@@ -124,6 +136,8 @@ export default async function handler(req, res) {
 				durationSec,
 				simulate: mode === 'simulate',
 				onLog: (entry) => { if (!aborted) send('log', entry); },
+				policyGuard,
+				abortSignal: abortController.signal,
 			},
 			ctx,
 		);
