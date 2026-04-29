@@ -1,0 +1,33 @@
+{
+	"name": "eplus",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"build": "vite build",
+		"preview": "vite preview"
+	},
+	"devDependencies": {
+		"@sveltejs/vite-plugin-svelte": "^3.0.1",
+		"@tailwindcss/typography": "^0.5.10",
+		"autoprefixer": "^10.4.16",
+		"postcss": "^8.4.32",
+		"postcss-load-config": "^5.0.2",
+		"prettier": "^3.2.5",
+		"prettier-plugin-svelte": "^3.2.3",
+		"prettier-plugin-tailwindcss": "^0.5.14",
+		"svelte": "^4.2.12",
+		"svelte-fast-dimension": "^1.1.0",
+		"tailwindcss": "^3.3.6",
+		"vite": "^5.2.0",
+		"vite-plugin-compression": "^0.5.1"
+	},
+	"dependencies": {
+		"github-slugger": "^2.0.0",
+		"katex": "^0.16.10",
+		"marked": "^15.0.7",
+		"pdfjs-dist": "^4.6.82",
+		"uuid": "^11.1.0"
+	}
+}
