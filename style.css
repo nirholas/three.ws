@@ -1335,6 +1335,8 @@ body[data-viewer-mode='deploy'] {
 	display: block;
 	width: 100%;
 	min-height: calc(100vh - var(--header-h));
+	height: auto;
+	overflow: auto;
 	padding: var(--space-xl) var(--space-lg) var(--space-2xl);
 }
 
