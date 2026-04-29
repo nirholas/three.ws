@@ -100,6 +100,7 @@ export function cors(
 function isAllowedOrigin(origin, allowed) {
 	if (!allowed) {
 		if (origin === env.APP_ORIGIN) return true;
+		if (origin === 'https://x402scan.com') return true;
 		if (
 			process.env.NODE_ENV !== 'production' &&
 			/^https?:\/\/localhost(:\d+)?$/.test(origin)

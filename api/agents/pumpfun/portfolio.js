@@ -67,7 +67,8 @@ export default async function handler(req, res, id) {
 		SELECT type, payload
 		FROM agent_actions
 		WHERE agent_id = ${id}
-			AND type IN ('pumpfun.buy', 'pumpfun.sell', 'pumpfun.launch')
+			AND type IN ('pumpfun.buy', 'pumpfun.sell', 'pumpfun.launch',
+			             'pumpfun.swap.buy', 'pumpfun.swap.sell')
 			AND (payload->>'network') = ${network}
 	`;
 
@@ -78,9 +79,9 @@ export default async function handler(req, res, id) {
 		const mint = p.mint;
 		if (!mint) continue;
 		const e = byMint.get(mint) || { mint, sol_in: 0, sol_out: 0 };
-		if (row.type === 'pumpfun.buy' || row.type === 'pumpfun.launch') {
+		if (row.type === 'pumpfun.buy' || row.type === 'pumpfun.launch' || row.type === 'pumpfun.swap.buy') {
 			e.sol_in += Number(p.solAmount) || 0;
-		} else if (row.type === 'pumpfun.sell') {
+		} else if (row.type === 'pumpfun.sell' || row.type === 'pumpfun.swap.sell') {
 			e.sol_out += lamportsToSol(p.expectedSolLamports);
 		}
 		byMint.set(mint, e);
