@@ -87,6 +87,37 @@ async function resolveAuth(req) {
 	return null;
 }
 
+function priceUsdcFor(domain) {
+	const len = domain.length;
+	if (len === 1) return 750;
+	if (len === 2) return 700;
+	if (len === 3) return 640;
+	if (len === 4) return 160;
+	return 20;
+}
+
+// ── Availability check ────────────────────────────────────────────────────
+async function handleCheck(req, res) {
+	if (!method(req, res, ['GET'])) return;
+	const url = new URL(req.url, 'http://x');
+	const domain = normalizeDomain(url.searchParams.get('domain'));
+	if (!domain) return error(res, 400, 'validation_error', 'domain required (a–z, 0–9, hyphen, max 63)');
+	const conn = solanaConnection('mainnet');
+	let owner = null;
+	try {
+		owner = await getRegistryOwner(conn, domain);
+	} catch {}
+	return json(res, 200, {
+		data: {
+			domain,
+			available: !owner,
+			owner: owner || null,
+			price_usdc: priceUsdcFor(domain),
+			length: domain.length,
+		},
+	});
+}
+
 // ── Option A: agent wallet pays + auto-attach ─────────────────────────────
 async function handleRegisterAgent(req, res, id, auth) {
 	if (!method(req, res, ['POST'])) return;
@@ -231,6 +262,7 @@ export default async function handler(req, res, id, action) {
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
+	if (action === 'check') return handleCheck(req, res);
 	if (action === 'register') return handleRegisterAgent(req, res, id, auth);
 	if (action === 'register-prep') return handleRegisterPrep(req, res, id, auth);
 	if (action === 'register-confirm') return handleRegisterConfirm(req, res, id, auth);

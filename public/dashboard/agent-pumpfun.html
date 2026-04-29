@@ -410,9 +410,9 @@
 				<div style="margin-top: 14px">
 					<dl class="kv">
 						<dt>Address</dt>
-						<dd id="agent-address" class="muted">—</dd>
+						<dd id="agent-address" class="muted"><span class="skeleton" style="width:180px"></span></dd>
 						<dt>Balance</dt>
-						<dd id="agent-balance" class="muted">—</dd>
+						<dd id="agent-balance" class="muted"><span class="skeleton" style="width:80px"></span></dd>
 					</dl>
 					<div class="row" style="margin-top: 10px">
 						<button class="btn ghost" id="provision-btn" hidden>
@@ -475,16 +475,16 @@
 					<div class="field">
 						<label for="sns-register-label">Register a .sol domain</label>
 						<div class="row" style="gap: 6px; align-items: center">
-							<input id="sns-register-label" placeholder="myagent" maxlength="63" />
+							<input id="sns-register-label" placeholder="myagent" maxlength="63" autocomplete="off" />
 							<span class="muted" style="font-family: ui-monospace, Menlo, monospace; font-size: 13px">.sol</span>
 						</div>
-						<p class="muted" style="margin: 6px 0 0; font-size: 12px">
+						<p id="sns-check-status" class="muted" style="margin: 6px 0 0; font-size: 12px; min-height: 1.3em">
 							Bonfida pricing (1y): 1 char $750 · 2 $700 · 3 $640 · 4 $160 · 5+ $20. Paid in USDC.
 						</p>
 					</div>
 					<div class="row" style="margin-top: 10px; gap: 8px; flex-wrap: wrap">
-						<button class="btn" id="sns-register-agent-btn">Pay with agent wallet</button>
-						<button class="btn ghost" id="sns-register-user-btn">Pay with my wallet</button>
+						<button class="btn" id="sns-register-agent-btn" disabled>Pay with agent wallet</button>
+						<button class="btn ghost" id="sns-register-user-btn" disabled>Pay with my wallet</button>
 					</div>
 				</div>
 			</section>
@@ -597,7 +597,12 @@
 						</thead>
 						<tbody>
 							<tr>
-								<td colspan="7" class="muted">No positions yet.</td>
+								<td colspan="7">
+									<div class="empty-cta">
+										<b>No positions yet.</b>
+										<span>Launch a token above, or paste a mint into the trade panel to start tracking.</span>
+									</div>
+								</td>
 							</tr>
 						</tbody>
 					</table>
@@ -647,8 +652,10 @@
 			</section>
 
 			<section class="panel">
-				<h2>Last response</h2>
-				<pre id="log">—</pre>
+				<details class="debug">
+					<summary>Debug · last response</summary>
+					<pre id="log">—</pre>
+				</details>
 			</section>
 			</div>
 			</div>
@@ -675,6 +682,7 @@
 				snsRegisterLabel: $('#sns-register-label'),
 				snsRegisterAgentBtn: $('#sns-register-agent-btn'),
 				snsRegisterUserBtn: $('#sns-register-user-btn'),
+				snsCheckStatus: $('#sns-check-status'),
 				launchName: $('#launch-name'),
 				launchSymbol: $('#launch-symbol'),
 				launchVanity: $('#launch-vanity'),
@@ -766,8 +774,8 @@
 				const network = currentNetwork();
 				const origin = window.location.origin;
 				els.launchUri.value = `${origin}/api/agents/pumpfun-metadata?id=${encodeURIComponent(id)}`;
-				els.agentAddress.textContent = '…';
-				els.agentBalance.textContent = '…';
+				els.agentAddress.innerHTML = '<span class="skeleton" style="width:200px"></span>';
+				els.agentBalance.innerHTML = '<span class="skeleton" style="width:90px"></span>';
 				els.explorerLink.hidden = true;
 				els.provisionBtn.hidden = true;
 				try {
@@ -876,7 +884,7 @@
 			async function refreshSns() {
 				const id = currentAgentId();
 				if (!id) return;
-				els.snsCurrent.textContent = '…';
+				els.snsCurrent.innerHTML = '<span class="skeleton" style="width:120px"></span>';
 				els.snsDomainList.innerHTML = '';
 				try {
 					const { data } = await api(`/api/agents/${id}/sns`);
@@ -900,6 +908,71 @@
 				return v;
 			}
 
+			function snsPriceFor(len) {
+				if (len === 1) return 750;
+				if (len === 2) return 700;
+				if (len === 3) return 640;
+				if (len === 4) return 160;
+				return 20;
+			}
+
+			let snsCheckSeq = 0;
+			let snsCheckTimer = null;
+			function setSnsCheckStatus(html, kind) {
+				const el = els.snsCheckStatus;
+				el.innerHTML = html;
+				el.style.color =
+					kind === 'ok' ? '#3ddc84' : kind === 'bad' ? '#ff6b6b' : '';
+				if (!kind) el.classList.add('muted');
+				else el.classList.remove('muted');
+			}
+			function setSnsRegisterButtons(enabled) {
+				els.snsRegisterAgentBtn.disabled = !enabled;
+				els.snsRegisterUserBtn.disabled = !enabled;
+			}
+			function onSnsLabelInput() {
+				clearTimeout(snsCheckTimer);
+				const raw = els.snsRegisterLabel.value.trim().toLowerCase().replace(/\.sol$/, '');
+				setSnsRegisterButtons(false);
+				if (!raw) {
+					setSnsCheckStatus(
+						'Bonfida pricing (1y): 1 char $750 · 2 $700 · 3 $640 · 4 $160 · 5+ $20. Paid in USDC.',
+						null,
+					);
+					return;
+				}
+				if (!/^[a-z0-9-]{1,63}$/.test(raw)) {
+					setSnsCheckStatus('Invalid: a–z, 0–9, hyphen only (max 63 chars).', 'bad');
+					return;
+				}
+				const price = snsPriceFor(raw.length);
+				setSnsCheckStatus(`Checking ${raw}.sol… ($${price}/yr)`, null);
+				const seq = ++snsCheckSeq;
+				const id = currentAgentId();
+				if (!id) return;
+				snsCheckTimer = setTimeout(async () => {
+					try {
+						const { data } = await api(
+							`/api/agents/${id}/sns/check?domain=${encodeURIComponent(raw)}`,
+						);
+						if (seq !== snsCheckSeq) return;
+						if (data.available) {
+							setSnsCheckStatus(
+								`✓ <strong>${raw}.sol</strong> is available — $${data.price_usdc} USDC for 1 year`,
+								'ok',
+							);
+							setSnsRegisterButtons(true);
+						} else {
+							const owner = data.owner ? ` (owner: ${data.owner.slice(0, 4)}…${data.owner.slice(-4)})` : '';
+							setSnsCheckStatus(`✗ ${raw}.sol is already registered${owner}`, 'bad');
+						}
+					} catch (err) {
+						if (seq !== snsCheckSeq) return;
+						setSnsCheckStatus(`Could not check: ${err.message}`, 'bad');
+					}
+				}, 400);
+			}
+
 			async function registerWithAgent() {
 				const id = currentAgentId();
 				if (!id) return;
@@ -916,12 +989,13 @@
 					});
 					toast(`Registered ${data.sns_domain}.sol`);
 					els.snsRegisterLabel.value = '';
+					onSnsLabelInput();
 					await refreshSns();
 				} catch (err) {
 					toast(err.body?.error_description || err.message, 'err');
 				} finally {
-					btn.disabled = false;
 					btn.textContent = 'Pay with agent wallet';
+					onSnsLabelInput();
 				}
 			}
 
@@ -973,6 +1047,7 @@
 							});
 							toast(`Registered ${data.sns_domain}.sol`);
 							els.snsRegisterLabel.value = '';
+					onSnsLabelInput();
 							await refreshSns();
 							return;
 						} catch (err) {
@@ -985,8 +1060,8 @@
 				} catch (err) {
 					toast(err.body?.error_description || err.message, 'err');
 				} finally {
-					btn.disabled = false;
 					btn.textContent = 'Pay with my wallet';
+					onSnsLabelInput();
 				}
 			}
 
@@ -1180,7 +1255,7 @@
 					const tbody = els.portfolioTable;
 					if (!data.positions.length) {
 						tbody.innerHTML =
-							'<tr><td colspan="7" class="muted">No positions yet.</td></tr>';
+							'<tr><td colspan="7"><div class="empty-cta"><b>No positions yet.</b><span>Launch a token above, or paste a mint into the trade panel to start tracking.</span></div></td></tr>';
 						return;
 					}
 					tbody.innerHTML = '';
@@ -1215,14 +1290,20 @@
 				await refreshAgent();
 				await refreshPortfolio();
 			});
+			function syncNetBadge() {
+				const net = currentNetwork();
+				const badge = document.getElementById('net-badge');
+				if (badge) {
+					badge.textContent = net;
+					badge.className = `tag net-badge ${net === 'devnet' ? 'devnet' : 'mainnet'}`;
+				}
+			}
 			els.networkSelect.addEventListener('change', async () => {
-				const isDev = currentNetwork() === 'devnet';
-				document
-					.querySelectorAll('.network-tag')
-					.forEach((e) => (e.className = `tag${isDev ? ' devnet' : ''}`));
+				syncNetBadge();
 				await refreshAgent();
 				await refreshPortfolio();
 			});
+			syncNetBadge();
 			els.refreshBtn.addEventListener('click', () => {
 				refreshAgent();
 				refreshPortfolio();
@@ -1232,6 +1313,7 @@
 			els.snsClearBtn.addEventListener('click', clearSns);
 			els.snsRegisterAgentBtn.addEventListener('click', registerWithAgent);
 			els.snsRegisterUserBtn.addEventListener('click', registerWithUserWallet);
+			els.snsRegisterLabel.addEventListener('input', onSnsLabelInput);
 			els.launchBtn.addEventListener('click', launchToken);
 			els.buyBtn.addEventListener('click', buy);
 			els.sellBtn.addEventListener('click', sell);
