@@ -442,6 +442,27 @@ create table if not exists solana_attestations_cursor (
     last_indexed_at   timestamptz not null default now()
 );
 
+-- ── SAS credentials (credentialed attestations issued by three.ws authority) ──
+-- Permissionless attestations live in solana_attestations (memo-based);
+-- this table is the credentialed counterpart for things only we can issue
+-- (verified-client, audited-validation, etc.). Used to weight reputation.
+create table if not exists solana_credentials (
+    attestation_pda   text        primary key,
+    network           text        not null,
+    schema_pda        text        not null,
+    credential_pda    text        not null,
+    kind              text        not null,                -- e.g. threews.verified-client.v1
+    subject           text        not null,                -- nonce; wallet or agent asset pubkey
+    issuer_signature  text        not null,                -- tx sig of issuance
+    data              jsonb       not null default '{}'::jsonb,
+    expiry            timestamptz,
+    closed            boolean     not null default false,
+    closed_at         timestamptz,
+    issued_at         timestamptz not null default now()
+);
+create index if not exists solana_creds_subject_kind on solana_credentials(subject, kind) where closed = false;
+create index if not exists solana_creds_kind         on solana_credentials(kind, issued_at desc);
+
 -- Additive migrations for usage_events.
 alter table usage_events add column if not exists agent_id uuid references agent_identities(id) on delete set null;
 create index if not exists usage_events_agent_time on usage_events(agent_id, created_at desc) where agent_id is not null;
