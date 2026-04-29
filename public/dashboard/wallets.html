@@ -342,19 +342,23 @@
 				}
 
 				try {
-					// 1. Request accounts from MetaMask
+					// 1. Request accounts + chain from MetaMask
 					const accounts = await window.ethereum.request({
 						method: 'eth_requestAccounts',
 					});
 					const address = accounts[0];
+					const chainIdHex = await window.ethereum.request({ method: 'eth_chainId' });
+					const chainId = parseInt(chainIdHex, 16);
 
-					// 2. Get nonce from server
+					// 2. Get SIWE message + nonce from server (bound to this address + chain)
 					const nonceRes = await fetch(`${apiUrl}/auth/wallets/nonce`, {
 						method: 'POST',
 						credentials: 'include',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ address, chainId }),
 					});
 					if (!nonceRes.ok) throw new Error('Failed to get nonce');
-					const { nonce, message } = await nonceRes.json();
+					const { message } = await nonceRes.json();
 
 					// 3. Sign message with MetaMask
 					let signature;
@@ -372,12 +376,12 @@
 						return;
 					}
 
-					// 4. Send signature to server
+					// 4. Send signed message to server
 					const linkRes = await fetch(`${apiUrl}/auth/wallets`, {
 						method: 'POST',
 						credentials: 'include',
 						headers: { 'content-type': 'application/json' },
-						body: JSON.stringify({ address, message, signature, nonce }),
+						body: JSON.stringify({ message, signature }),
 					});
 					if (!linkRes.ok) {
 						const err = await linkRes.json();

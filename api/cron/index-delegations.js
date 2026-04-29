@@ -100,7 +100,7 @@ export default wrap(async (req, res) => {
 			const r = await indexChain(chainId, contract);
 			const summary = { chainId, ...r, elapsedMs: Date.now() - t0 };
 			report.chains.push(summary);
-			console.error(JSON.stringify({ stage: 'index-delegations', ...summary }));
+			console.log(JSON.stringify({ stage: 'index-delegations', ...summary }));
 		} catch (err) {
 			const entry = { chainId, error: err.message || String(err) };
 			report.errors.push(entry);
