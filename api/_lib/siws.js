@@ -1,7 +1,7 @@
 // Sign-In with Solana (CAIP-122 / SIP-0) message parser and signature verifier.
 // Message format mirrors SIWE but uses a base58 Solana address and string Chain ID.
 
-import { ed25519 } from '@noble/curves/ed25519';
+import { ed25519 } from '@noble/curves/ed25519.js';
 import bs58 from 'bs58';
 
 // ─── Parser ─────────────────────────────────────────────────────────────────
@@ -26,14 +26,30 @@ export function parseSiwsMessage(msg) {
 		const key = kv[1].trim();
 		const val = kv[2].trim();
 		switch (key) {
-			case 'URI':             out.uri = val; break;
-			case 'Version':        out.version = val; break;
-			case 'Chain ID':       out.chainId = val; break; // string: 'mainnet'|'devnet'|'testnet'
-			case 'Nonce':          out.nonce = val; break;
-			case 'Issued At':      out.issuedAt = val; break;
-			case 'Expiration Time': out.expirationTime = val; break;
-			case 'Not Before':     out.notBefore = val; break;
-			case 'Request ID':     out.requestId = val; break;
+			case 'URI':
+				out.uri = val;
+				break;
+			case 'Version':
+				out.version = val;
+				break;
+			case 'Chain ID':
+				out.chainId = val;
+				break; // string: 'mainnet'|'devnet'|'testnet'
+			case 'Nonce':
+				out.nonce = val;
+				break;
+			case 'Issued At':
+				out.issuedAt = val;
+				break;
+			case 'Expiration Time':
+				out.expirationTime = val;
+				break;
+			case 'Not Before':
+				out.notBefore = val;
+				break;
+			case 'Request ID':
+				out.requestId = val;
+				break;
 		}
 	}
 	if (!out.uri || !out.nonce || !out.version) return null;

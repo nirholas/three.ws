@@ -184,8 +184,14 @@ export function registerPumpFunSkills(skills) {
 				uri: { type: 'string', description: 'Metaplex metadata URI' },
 				network: { type: 'string', enum: ['mainnet', 'devnet'] },
 				initialBuySol: { type: 'number', description: 'Optional dev-buy in same tx (SOL)' },
-				mintPublicKey: { type: 'string', description: 'Optional pre-ground vanity mint pubkey' },
-				mintSecretKeyB64: { type: 'string', description: 'Base64 64-byte secret key paired with mintPublicKey' },
+				mintPublicKey: {
+					type: 'string',
+					description: 'Optional pre-ground vanity mint pubkey',
+				},
+				mintSecretKeyB64: {
+					type: 'string',
+					description: 'Base64 64-byte secret key paired with mintPublicKey',
+				},
 			},
 			required: ['symbol', 'uri'],
 		},

@@ -60,6 +60,14 @@
 		.warn { background: var(--warn-bg); color: var(--warn-fg); padding: .6rem .85rem; border-radius: 6px; margin-top: 1rem; font-size: .8rem; }
 		.warn strong { color: var(--bad-fg); }
 
+		.assign { margin-top: 1rem; padding: .9rem 1rem; background: #fff; border: 1px solid var(--border); border-radius: 8px; }
+		.assign h4 { margin: 0 0 .4rem; font-size: .9rem; }
+		.assign select { font: inherit; padding: .4rem .55rem; border: 1px solid #ccc; border-radius: 6px; width: 100%; }
+		.assign .custody { font-size: .72rem; color: var(--muted); margin-top: .5rem; }
+		.assign .custody label { display: flex; align-items: flex-start; gap: .4rem; cursor: pointer; }
+		.assign .custody input { margin-top: 3px; }
+		.assigned-ok { background: var(--ok-bg); color: var(--ok-fg); padding: .6rem .85rem; border-radius: 6px; margin-top: 1rem; font-size: .85rem; }
+
 		.error { background: #fff5f5; color: var(--bad-fg); padding: .6rem .85rem; border-radius: 6px; margin-top: 1rem; font-size: .85rem; border: 1px solid #f5c6c6; }
 
 		footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: .78rem; color: var(--muted); }
@@ -307,15 +315,15 @@
 					</div>
 					<div class="warn">
 						<strong>Save this file somewhere safe before navigating away.</strong>
-						Once you close this tab the secret key is gone — we don't store it.
+						Once you close this tab the secret key is gone unless you assign it to an agent below.
 						Anyone with the file can spend funds at this address.
 					</div>
 				</div>
+				<div id="assign-host"></div>
 			`;
 
 			const filename = `${addr.slice(0, 8)}.json`;
 			$('download').addEventListener('click', () => {
-				// Solana CLI keypair format: JSON array of 64 bytes.
 				const json = JSON.stringify(Array.from(result.secretKey));
 				const blob = new Blob([json], { type: 'application/json' });
 				const url = URL.createObjectURL(blob);
@@ -334,6 +342,111 @@
 					$('copy-pubkey').textContent = 'Copied!';
 					setTimeout(() => { $('copy-pubkey').textContent = 'Copy public key'; }, 1500);
 				} catch {}
+			});
+
+			renderAssignBlock(result, prefix);
+		}
+
+		// ── Assign to agent ────────────────────────────────────────────────
+		async function renderAssignBlock(result, prefix) {
+			const host = document.getElementById('assign-host');
+			let agents = [];
+			try {
+				const r = await fetch('/api/agents', { credentials: 'include' });
+				if (r.status === 401) {
+					host.innerHTML = `
+						<div class="assign">
+							<h4>Use this wallet with an agent</h4>
+							<p style="font-size:.8rem;color:#555;margin:0">
+								<a href="/login.html?next=${encodeURIComponent(location.pathname)}">Sign in</a>
+								to assign this wallet to one of your agents — they'll be able to sign transactions with it (e.g. for pump.fun trades).
+							</p>
+						</div>`;
+					return;
+				}
+				if (!r.ok) throw new Error(`agents fetch ${r.status}`);
+				const data = await r.json();
+				agents = data.agents || [];
+			} catch (e) {
+				host.innerHTML = `<div class="assign"><h4>Use this wallet with an agent</h4><p style="font-size:.8rem;color:#b71c1c;margin:0">Could not load your agents: ${esc(e.message)}</p></div>`;
+				return;
+			}
+			if (!agents.length) {
+				host.innerHTML = `
+					<div class="assign">
+						<h4>Use this wallet with an agent</h4>
+						<p style="font-size:.8rem;color:#555;margin:0">No agents yet. <a href="/create.html">Create one</a> and come back to assign this wallet.</p>
+					</div>`;
+				return;
+			}
+
+			host.innerHTML = `
+				<div class="assign">
+					<h4>Assign this wallet to an agent</h4>
+					<p style="font-size:.78rem;color:#555;margin:0 0 .5rem">
+						The agent will be able to sign Solana transactions with this address — pumpfun trades, attestations, payments. The secret key will be encrypted at rest on our server.
+					</p>
+					<select id="assign-agent">
+						<option value="">— select an agent —</option>
+						${agents.map((a) => `<option value="${esc(a.id)}">${esc(a.name)} ${a.meta?.solana_address ? '(already has wallet)' : ''}</option>`).join('')}
+					</select>
+					<div class="custody">
+						<label>
+							<input type="checkbox" id="assign-ack" />
+							<span>I understand this transfers custody — three.ws will be able to sign transactions on the agent's behalf, and the secret key will be encrypted server-side. <strong>Download the file above first as a backup.</strong></span>
+						</label>
+					</div>
+					<div class="actions">
+						<button id="assign-btn" class="btn primary" type="button" disabled>Assign to agent</button>
+					</div>
+					<div id="assign-status" style="margin-top:.5rem;font-size:.8rem"></div>
+				</div>
+			`;
+
+			const sel    = document.getElementById('assign-agent');
+			const ack    = document.getElementById('assign-ack');
+			const btn    = document.getElementById('assign-btn');
+			const status = document.getElementById('assign-status');
+
+			function refresh() { btn.disabled = !sel.value || !ack.checked; }
+			sel.addEventListener('change', refresh);
+			ack.addEventListener('change', refresh);
+
+			btn.addEventListener('click', async () => {
+				btn.disabled = true;
+				status.textContent = 'assigning…';
+				status.style.color = '#555';
+				try {
+					const r = await fetch(`/api/agents/${encodeURIComponent(sel.value)}/solana`, {
+						method: 'POST',
+						credentials: 'include',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({
+							secret_key: Array.from(result.secretKey),
+							vanity_prefix: prefix,
+						}),
+					});
+					const data = await r.json();
+					if (!r.ok) {
+						if (r.status === 409) {
+							status.innerHTML = `<span style="color:#b71c1c">${esc(data.error_description)} — pick another agent or remove the existing wallet first.</span>`;
+						} else {
+							status.innerHTML = `<span style="color:#b71c1c">Failed: ${esc(data.error_description || r.status)}</span>`;
+						}
+						btn.disabled = false;
+						return;
+					}
+					const agentName = sel.options[sel.selectedIndex].text.replace(/\s*\(already.*\)$/, '');
+					host.innerHTML = `
+						<div class="assigned-ok">
+							✦ Assigned to <strong>${esc(agentName)}</strong>.
+							The agent can now sign Solana transactions with <code style="font-family:ui-monospace,monospace">${esc(prefix)}…${esc(addr.slice(-4))}</code>.
+							<a href="/agent/${esc(sel.value)}" style="color:inherit;text-decoration:underline">Open agent →</a>
+						</div>`;
+				} catch (e) {
+					status.innerHTML = `<span style="color:#b71c1c">Network error: ${esc(e.message)}</span>`;
+					btn.disabled = false;
+				}
 			});
 		}
 	</script>

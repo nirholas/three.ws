@@ -199,7 +199,8 @@ function derivePrice(stats) {
 			const totalTok =
 				BigInt(stats.bonding_curve.virtual_token || 0) +
 				BigInt(stats.bonding_curve.real_token || 0);
-			const market_cap_lamports = totalTok > 0n ? BigInt(Math.floor(sol_per_token * Number(totalTok))) : null;
+			const market_cap_lamports =
+				totalTok > 0n ? BigInt(Math.floor(sol_per_token * Number(totalTok))) : null;
 			return { sol_per_token, market_cap_lamports, source: 'bonding_curve' };
 		}
 	}

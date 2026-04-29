@@ -24,13 +24,16 @@ export default wrap(async (req, res) => {
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
-	const url     = new URL(req.url, `http://${req.headers.host}`);
-	const asset   = url.searchParams.get('asset');
+	const url = new URL(req.url, `http://${req.headers.host}`);
+	const asset = url.searchParams.get('asset');
 	const network = url.searchParams.get('network') === 'mainnet' ? 'mainnet' : 'devnet';
 
 	if (!asset) return error(res, 400, 'validation_error', 'asset query param required');
-	try { new PublicKey(asset); }
-	catch { return error(res, 400, 'validation_error', 'invalid asset pubkey'); }
+	try {
+		new PublicKey(asset);
+	} catch {
+		return error(res, 400, 'validation_error', 'invalid asset pubkey');
+	}
 
 	// One pass: feedback aggregates split by verified-task-acceptance, by
 	// SAS credentialing, and by event-attested provenance. Trust layers:
@@ -210,36 +213,36 @@ export default wrap(async (req, res) => {
 		pumpfun_signals: pumpfunSignals,
 		token_activity: tokenActivity,
 		feedback: {
-			total:                            fb.total,
-			verified:                         fb.verified,
-			credentialed:                     fb.credentialed,
-			event_attested:                   fb.event_attested,
-			disputed:                         fb.disputed,
-			unique_attesters:                 fb.unique_attesters,
-			unique_verified_attesters:        fb.unique_verified_attesters,
-			unique_credentialed_attesters:    fb.unique_credentialed_attesters,
-			score_avg:                        Number(fb.score_avg.toFixed(3)),
-			score_avg_verified:               Number(fb.score_avg_verified.toFixed(3)),
-			score_avg_credentialed:           Number(fb.score_avg_credentialed.toFixed(3)),
-			score_avg_event_attested:         Number(fb.score_avg_event_attested.toFixed(3)),
-			score_avg_weighted:               Number(fb.score_avg_weighted.toFixed(3)),
-			score_avg_weighted_verified:      Number(fb.score_avg_weighted_verified.toFixed(3)),
-			score_avg_weighted_credentialed:  Number(fb.score_avg_weighted_credentialed.toFixed(3)),
+			total: fb.total,
+			verified: fb.verified,
+			credentialed: fb.credentialed,
+			event_attested: fb.event_attested,
+			disputed: fb.disputed,
+			unique_attesters: fb.unique_attesters,
+			unique_verified_attesters: fb.unique_verified_attesters,
+			unique_credentialed_attesters: fb.unique_credentialed_attesters,
+			score_avg: Number(fb.score_avg.toFixed(3)),
+			score_avg_verified: Number(fb.score_avg_verified.toFixed(3)),
+			score_avg_credentialed: Number(fb.score_avg_credentialed.toFixed(3)),
+			score_avg_event_attested: Number(fb.score_avg_event_attested.toFixed(3)),
+			score_avg_weighted: Number(fb.score_avg_weighted.toFixed(3)),
+			score_avg_weighted_verified: Number(fb.score_avg_weighted_verified.toFixed(3)),
+			score_avg_weighted_credentialed: Number(fb.score_avg_weighted_credentialed.toFixed(3)),
 		},
 		validation: {
-			self_passed:    val.passed,
-			self_failed:    val.failed,
-			event_passed:   val.event_passed,
-			event_failed:   val.event_failed,
+			self_passed: val.passed,
+			self_failed: val.failed,
+			event_passed: val.event_passed,
+			event_failed: val.event_failed,
 			audited_passed: auditedVal.passed,
 			audited_failed: auditedVal.failed,
 		},
 		tasks: {
-			offered:  counts.tasks_offered,
+			offered: counts.tasks_offered,
 			accepted: counts.tasks_accepted,
 		},
 		disputes_filed: counts.disputes_filed,
-		revoked_count:  counts.revoked_count,
+		revoked_count: counts.revoked_count,
 		last_indexed_at: cursor?.last_indexed_at || null,
 	});
 });

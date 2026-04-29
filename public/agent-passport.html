@@ -1,304 +1,694 @@
 <!doctype html>
 <html lang="en">
-<head>
-	<meta charset="utf-8">
-	<title>Agent passport · three.ws</title>
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<style>
-		* { box-sizing: border-box; }
-		:root {
-			--fg: #111; --muted: #555; --border: #e5e5e5; --bg: #fafafa;
-			--ok-bg: #e7f5e9; --ok-fg: #1b5e20;
-			--warn-bg: #fff3cd; --warn-fg: #855008;
-			--bad-bg: #fce8e8; --bad-fg: #b71c1c;
-			--info-bg: #e3f2fd; --info-fg: #0d47a1;
-		}
-		body { font: 14px/1.5 system-ui, -apple-system, sans-serif; max-width: 880px; margin: 1.5rem auto; padding: 0 1rem; color: var(--fg); }
-		h1 { font-size: 1.4rem; margin: 0 0 .25rem; }
-		h2 { font-size: 1rem; margin: 1.5rem 0 .5rem; display: flex; align-items: baseline; gap: .5rem; }
-		h2 .hint { font-weight: 400; font-size: .8rem; color: var(--muted); }
-		.muted { color: var(--muted); }
-		.row { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin: .5rem 0 1rem; }
-		.row input { font: inherit; padding: .4rem .55rem; border: 1px solid var(--border); border-radius: 6px; flex: 1 1 320px; min-width: 0; }
-		.row input.invalid { border-color: var(--bad-fg); background: #fff8f8; }
-		.row select, .row button { font: inherit; padding: .4rem .65rem; border: 1px solid #ccc; background: #fff; border-radius: 6px; cursor: pointer; }
-		.row button.primary { background: #111; color: #fff; border-color: #111; }
-		.row button:disabled { opacity: .5; cursor: wait; }
-
-		.identity-card { border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.1rem; background: #fff; }
-		.identity-row { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
-		.identity-name { font-size: 1.2rem; font-weight: 600; }
-		.identity-meta { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; font-size: .8rem; color: var(--muted); margin-top: .35rem; }
-		.identity-meta code { background: #f3f3f3; padding: .1rem .35rem; border-radius: 4px; font-size: .75rem; }
-		.copy-btn { padding: .1rem .35rem; font-size: .7rem; line-height: 1.4; cursor: pointer; border: 1px solid var(--border); background: #fff; border-radius: 4px; }
-		.copy-btn:hover { background: #f3f3f3; }
-
-		.trust-bar { display: flex; align-items: center; gap: .75rem; margin-top: .75rem; padding: .65rem .85rem; border-radius: 8px; background: var(--bg); border: 1px solid var(--border); }
-		.trust-bar .spark { margin-left: auto; flex: 0 0 120px; }
-		.trust-bar .spark svg { width: 120px; height: 32px; display: block; }
-		.trust-bar .spark-empty { font-size: .7rem; color: var(--muted); }
-		.trust-grade { font-size: 1.6rem; font-weight: 700; min-width: 2rem; text-align: center; }
-		.trust-A { color: var(--ok-fg); }
-		.trust-B { color: #2e7d32; }
-		.trust-C { color: var(--warn-fg); }
-		.trust-D { color: #c62828; }
-		.trust-NA { color: var(--muted); }
-		.trust-summary { font-size: .85rem; color: var(--muted); }
-
-		.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: .65rem; margin: .75rem 0; }
-		.card { border: 1px solid var(--border); border-radius: 8px; padding: .65rem .85rem; background: var(--bg); position: relative; }
-		.card .v { font-size: 1.55rem; font-weight: 600; line-height: 1.1; }
-		.card .v small { font-size: 1rem; color: var(--muted); font-weight: 400; }
-		.card .l { font-size: .75rem; color: var(--muted); margin-top: .15rem; display: flex; align-items: center; gap: .25rem; }
-		.card.tier-credentialed { border-color: #b8d8e8; background: #f4faff; }
-		.card.tier-event        { border-color: #d4c5f0; background: #f8f4ff; }
-		.card.tier-pump         { border-color: #ffd8b8; background: #fff8f0; }
-		.card.danger            { border-color: #f5c6c6; background: #fff5f5; }
-
-		.tip { display: inline-block; cursor: help; color: var(--muted); border: 1px solid var(--border); border-radius: 50%; width: 13px; height: 13px; font-size: 9px; line-height: 11px; text-align: center; }
-
-		.pill { display: inline-block; padding: .1rem .55rem; border-radius: 999px; font-size: .7rem; line-height: 1.5; }
-		.ok    { background: var(--ok-bg);   color: var(--ok-fg); }
-		.warn  { background: var(--warn-bg); color: var(--warn-fg); }
-		.bad   { background: var(--bad-bg);  color: var(--bad-fg); }
-		.info  { background: var(--info-bg); color: var(--info-fg); }
-		.vanity { background: linear-gradient(90deg,#ffd54f,#ff8a65); color: #1a1a1a; font-weight: 600; }
-		.addr-prefix { background: #fff7c2; padding: 0 2px; border-radius: 2px; font-weight: 600; }
-
-		.filters { display: flex; gap: .35rem; flex-wrap: wrap; margin: .5rem 0 .75rem; }
-		.chip { padding: .2rem .65rem; border: 1px solid var(--border); border-radius: 999px; cursor: pointer; font-size: .75rem; background: #fff; user-select: none; }
-		.chip[aria-pressed="true"] { background: #111; color: #fff; border-color: #111; }
-
-		.atts { border-top: 1px solid #eee; }
-		.att  { padding: .55rem .25rem; border-bottom: 1px solid #eee; display: grid; grid-template-columns: 92px 1fr; gap: .5rem .75rem; align-items: baseline; transition: background .8s ease; }
-		.att.fresh { background: #fffbe5; animation: fadeFresh 4s ease forwards; }
-		@keyframes fadeFresh { 0% { background: #fff3a3; } 100% { background: transparent; } }
-		.att code { font-size: .72rem; color: #555; }
-		.live-dot { display: inline-flex; align-items: center; gap: .3rem; font-size: .72rem; color: var(--muted); }
-		.live-dot::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #c8c8c8; }
-		.live-dot.on::before  { background: #43a047; box-shadow: 0 0 0 0 rgba(67,160,71,.5); animation: pulse 1.6s infinite; }
-		.live-dot.off::before { background: #aaa; }
-		@keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(67,160,71,.5); } 50% { box-shadow: 0 0 0 5px rgba(67,160,71,0); } }
-		.kind-feedback   { color: var(--ok-fg); }
-		.kind-validation { color: var(--info-fg); }
-		.kind-task       { color: #6a1b9a; }
-		.kind-accept     { color: #4527a0; }
-		.kind-revoke     { color: var(--bad-fg); }
-		.kind-dispute    { color: #ef6c00; }
-
-		.skeleton { background: linear-gradient(90deg, #eee 0%, #f6f6f6 50%, #eee 100%); background-size: 200% 100%; animation: shimmer 1.2s infinite; border-radius: 6px; }
-		@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-		.sk-row  { height: 76px; margin: .65rem 0; }
-
-		.error-box { padding: .65rem .85rem; border: 1px solid #f5c6c6; background: #fff5f5; color: var(--bad-fg); border-radius: 6px; }
-
-		details { margin-top: .25rem; }
-		details pre { font-size: .72rem; background: #f4f4f4; padding: .4rem; border-radius: 4px; overflow: auto; max-height: 240px; }
-		a { color: var(--info-fg); }
-
-		@media (max-width: 520px) {
-			.att { grid-template-columns: 1fr; }
-			.identity-name { font-size: 1.05rem; }
-		}
-	</style>
-</head>
-<body>
-	<h1>Solana agent passport</h1>
-	<p class="muted">ERC-8004-style identity, reputation, and validation. <a href="/.well-known/agent-attestation-schemas" target="_blank">View schemas</a></p>
-
-	<div class="row">
-		<input id="asset" placeholder="Metaplex Core asset pubkey…" autocomplete="off" spellcheck="false">
-		<select id="network">
-			<option value="devnet">devnet</option>
-			<option value="mainnet">mainnet</option>
-		</select>
-		<button id="load" class="primary">Load</button>
-		<button id="share" title="Copy shareable link">Share</button>
-		<button id="embed" title="Copy iframe embed snippet">Embed</button>
-	</div>
-
-	<div id="identity"></div>
-
-	<h2>Reputation <span class="hint" id="rep-hint"></span></h2>
-	<div id="reputation"></div>
-
-	<h2>Recent attestations <span class="hint" id="atts-count"></span> <span id="live" class="live-dot off" title="Live updates">off</span></h2>
-	<div class="filters" id="filters" hidden>
-		<button class="chip" data-filter="all"           aria-pressed="true">all</button>
-		<button class="chip" data-filter="feedback"      aria-pressed="false">feedback</button>
-		<button class="chip" data-filter="validation"    aria-pressed="false">validation</button>
-		<button class="chip" data-filter="task"          aria-pressed="false">task</button>
-		<button class="chip" data-filter="event"         aria-pressed="false">event-attested</button>
-		<button class="chip" data-filter="disputed"      aria-pressed="false">disputed</button>
-	</div>
-	<div id="atts" class="atts"></div>
-
-	<script type="module">
-		const $ = (id) => document.getElementById(id);
-		const params = new URLSearchParams(location.search);
-		$('asset').value   = params.get('asset')   || '';
-		$('network').value = params.get('network') || 'devnet';
-
-		let cache = { rows: [], net: 'devnet', knownSigs: new Set(), freshSigs: new Set() };
-		let activeFilter = 'all';
-		let pollTimer = null;
-		const POLL_MS = 8000;
-
-		const PUBKEY_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
-
-		function pill(text, cls = '') { return `<span class="pill ${cls}">${escapeHtml(text)}</span>`; }
-		function tip(text) { return `<span class="tip" title="${escapeHtml(text)}">?</span>`; }
-		function explorer(sig, net) {
-			return `https://explorer.solana.com/tx/${sig}${net === 'devnet' ? '?cluster=devnet' : ''}`;
-		}
-		function shortKey(k) { return k ? `${k.slice(0,4)}…${k.slice(-4)}` : ''; }
-		function fmtScore(n) { return (typeof n === 'number' && n > 0) ? n.toFixed(2) : '—'; }
-
-		// Trust grade. Order: credentialed > verified > event-attested > raw.
-		function computeTrust(rep) {
-			const f = rep?.feedback || {};
-			const v = rep?.validation || {};
-			const tiers = [
-				{ score: f.score_avg_weighted_credentialed, n: f.unique_credentialed_attesters, tier: 'credentialed' },
-				{ score: f.score_avg_weighted_verified,      n: f.unique_verified_attesters,    tier: 'verified' },
-				{ score: f.score_avg_event_attested,         n: f.event_attested,                tier: 'event-attested' },
-				{ score: f.score_avg_weighted,               n: f.unique_attesters,              tier: 'community' },
-			];
-			const best = tiers.find((t) => t.score > 0 && (t.n || 0) > 0);
-			if (!best) return { grade: '—', cls: 'NA', summary: 'no attestations yet' };
-
-			const passed = v.audited_passed || v.self_passed || 0;
-			const failed = v.audited_failed || v.self_failed || 0;
-			const passRate = (passed + failed) ? passed / (passed + failed) : 1;
-
-			const adjust = best.score
-				- (f.disputed > 0 ? 0.5 : 0)
-				- (passRate < 0.5 ? 1 : 0);
-
-			const grade =
-				adjust >= 4.5 ? 'A' :
-				adjust >= 3.8 ? 'B' :
-				adjust >= 3.0 ? 'C' : 'D';
-			return {
-				grade,
-				cls: grade,
-				summary: `${best.tier} ${best.score.toFixed(2)} from ${best.n} attester${best.n === 1 ? '' : 's'}`
-					+ (f.disputed ? ` · ${f.disputed} disputed` : '')
-					+ (failed ? ` · ${failed} failed validation${failed === 1 ? '' : 's'}` : ''),
-			};
-		}
-
-		function showError(target, message) { $(target).innerHTML = `<div class="error-box">${escapeHtml(message)}</div>`; }
-		function showSkeletons(target, count = 1) {
-			$(target).innerHTML = Array.from({ length: count }, () => `<div class="skeleton sk-row"></div>`).join('');
-		}
-
-		async function load() {
-			const asset = $('asset').value.trim();
-			const network = $('network').value;
-			$('asset').classList.toggle('invalid', !!asset && !PUBKEY_RE.test(asset));
-			if (!asset) { showError('identity', 'Enter an asset pubkey above.'); return; }
-			if (!PUBKEY_RE.test(asset)) { showError('identity', 'That doesn’t look like a Solana pubkey.'); return; }
-
-			stopPolling();
-			history.replaceState({}, '', `?asset=${asset}&network=${network}`);
-			$('load').disabled = true;
-			showSkeletons('identity', 1);
-			showSkeletons('reputation', 1);
-			$('atts').innerHTML = '';
-			$('atts-count').textContent = '';
-			$('filters').hidden = true;
-
-			try {
-				const [card, rep, atts, hist] = await Promise.all([
-					fetch(`/api/agents/solana-card?asset=${asset}`).then((r) => r.ok ? r.json() : null).catch(() => null),
-					fetch(`/api/agents/solana-reputation?asset=${asset}&network=${network}`).then((r) => r.json()),
-					fetch(`/api/agents/solana-attestations?asset=${asset}&network=${network}&limit=25`).then((r) => r.json()),
-					fetch(`/api/agents/solana-reputation-history?asset=${asset}&network=${network}&days=30`).then((r) => r.json()).catch(() => ({ series: [] })),
-				]);
-
-				const initialRows = atts.data || [];
-				renderIdentity(card, rep, asset, network, hist?.series || []);
-				renderReputation(rep);
-				cache = {
-					rows: initialRows,
-					net: network,
-					knownSigs: new Set(initialRows.map((r) => r.signature)),
-					freshSigs: new Set(),
-				};
-				$('filters').hidden = false;
-				renderAttestations();
-				startPolling(asset, network);
-			} catch (e) {
-				showError('identity', `Failed to load: ${e.message || e}`);
-			} finally {
-				$('load').disabled = false;
+	<head>
+		<meta charset="utf-8" />
+		<title>Agent passport · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<style>
+			* {
+				box-sizing: border-box;
 			}
-		}
+			:root {
+				--fg: #111;
+				--muted: #555;
+				--border: #e5e5e5;
+				--bg: #fafafa;
+				--ok-bg: #e7f5e9;
+				--ok-fg: #1b5e20;
+				--warn-bg: #fff3cd;
+				--warn-fg: #855008;
+				--bad-bg: #fce8e8;
+				--bad-fg: #b71c1c;
+				--info-bg: #e3f2fd;
+				--info-fg: #0d47a1;
+			}
+			body {
+				font:
+					14px/1.5 system-ui,
+					-apple-system,
+					sans-serif;
+				max-width: 880px;
+				margin: 1.5rem auto;
+				padding: 0 1rem;
+				color: var(--fg);
+			}
+			h1 {
+				font-size: 1.4rem;
+				margin: 0 0 0.25rem;
+			}
+			h2 {
+				font-size: 1rem;
+				margin: 1.5rem 0 0.5rem;
+				display: flex;
+				align-items: baseline;
+				gap: 0.5rem;
+			}
+			h2 .hint {
+				font-weight: 400;
+				font-size: 0.8rem;
+				color: var(--muted);
+			}
+			.muted {
+				color: var(--muted);
+			}
+			.row {
+				display: flex;
+				gap: 0.5rem;
+				align-items: center;
+				flex-wrap: wrap;
+				margin: 0.5rem 0 1rem;
+			}
+			.row input {
+				font: inherit;
+				padding: 0.4rem 0.55rem;
+				border: 1px solid var(--border);
+				border-radius: 6px;
+				flex: 1 1 320px;
+				min-width: 0;
+			}
+			.row input.invalid {
+				border-color: var(--bad-fg);
+				background: #fff8f8;
+			}
+			.row select,
+			.row button {
+				font: inherit;
+				padding: 0.4rem 0.65rem;
+				border: 1px solid #ccc;
+				background: #fff;
+				border-radius: 6px;
+				cursor: pointer;
+			}
+			.row button.primary {
+				background: #111;
+				color: #fff;
+				border-color: #111;
+			}
+			.row button:disabled {
+				opacity: 0.5;
+				cursor: wait;
+			}
 
-		// -- Live polling --------------------------------------------------
+			.identity-card {
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				padding: 1rem 1.1rem;
+				background: #fff;
+			}
+			.identity-row {
+				display: flex;
+				align-items: center;
+				gap: 0.75rem;
+				flex-wrap: wrap;
+			}
+			.identity-name {
+				font-size: 1.2rem;
+				font-weight: 600;
+			}
+			.identity-meta {
+				display: flex;
+				gap: 0.5rem;
+				flex-wrap: wrap;
+				align-items: center;
+				font-size: 0.8rem;
+				color: var(--muted);
+				margin-top: 0.35rem;
+			}
+			.identity-meta code {
+				background: #f3f3f3;
+				padding: 0.1rem 0.35rem;
+				border-radius: 4px;
+				font-size: 0.75rem;
+			}
+			.copy-btn {
+				padding: 0.1rem 0.35rem;
+				font-size: 0.7rem;
+				line-height: 1.4;
+				cursor: pointer;
+				border: 1px solid var(--border);
+				background: #fff;
+				border-radius: 4px;
+			}
+			.copy-btn:hover {
+				background: #f3f3f3;
+			}
 
-		function startPolling(asset, network) {
-			stopPolling();
-			setLive(true);
-			const tick = async () => {
-				if (document.hidden) return;
-				try {
-					const [atts, rep] = await Promise.all([
-						fetch(`/api/agents/solana-attestations?asset=${asset}&network=${network}&limit=25`).then((r) => r.json()),
-						fetch(`/api/agents/solana-reputation?asset=${asset}&network=${network}`).then((r) => r.json()),
-					]);
-					const rows = atts.data || [];
-					const freshSigs = new Set();
-					for (const r of rows) {
-						if (!cache.knownSigs.has(r.signature)) freshSigs.add(r.signature);
-					}
-					if (freshSigs.size > 0) {
-						cache.rows = rows;
-						cache.knownSigs = new Set(rows.map((r) => r.signature));
-						cache.freshSigs = freshSigs;
-						renderAttestations();
-						renderReputation(rep);
-						// clear the highlight class after the animation
-						setTimeout(() => { cache.freshSigs = new Set(); }, 4500);
-					}
-				} catch {
-					// transient — stay live, try again next tick
+			.trust-bar {
+				display: flex;
+				align-items: center;
+				gap: 0.75rem;
+				margin-top: 0.75rem;
+				padding: 0.65rem 0.85rem;
+				border-radius: 8px;
+				background: var(--bg);
+				border: 1px solid var(--border);
+			}
+			.trust-bar .spark {
+				margin-left: auto;
+				flex: 0 0 120px;
+			}
+			.trust-bar .spark svg {
+				width: 120px;
+				height: 32px;
+				display: block;
+			}
+			.trust-bar .spark-empty {
+				font-size: 0.7rem;
+				color: var(--muted);
+			}
+			.trust-grade {
+				font-size: 1.6rem;
+				font-weight: 700;
+				min-width: 2rem;
+				text-align: center;
+			}
+			.trust-A {
+				color: var(--ok-fg);
+			}
+			.trust-B {
+				color: #2e7d32;
+			}
+			.trust-C {
+				color: var(--warn-fg);
+			}
+			.trust-D {
+				color: #c62828;
+			}
+			.trust-NA {
+				color: var(--muted);
+			}
+			.trust-summary {
+				font-size: 0.85rem;
+				color: var(--muted);
+			}
+
+			.grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+				gap: 0.65rem;
+				margin: 0.75rem 0;
+			}
+			.card {
+				border: 1px solid var(--border);
+				border-radius: 8px;
+				padding: 0.65rem 0.85rem;
+				background: var(--bg);
+				position: relative;
+			}
+			.card .v {
+				font-size: 1.55rem;
+				font-weight: 600;
+				line-height: 1.1;
+			}
+			.card .v small {
+				font-size: 1rem;
+				color: var(--muted);
+				font-weight: 400;
+			}
+			.card .l {
+				font-size: 0.75rem;
+				color: var(--muted);
+				margin-top: 0.15rem;
+				display: flex;
+				align-items: center;
+				gap: 0.25rem;
+			}
+			.card.tier-credentialed {
+				border-color: #b8d8e8;
+				background: #f4faff;
+			}
+			.card.tier-event {
+				border-color: #d4c5f0;
+				background: #f8f4ff;
+			}
+			.card.tier-pump {
+				border-color: #ffd8b8;
+				background: #fff8f0;
+			}
+			.card.danger {
+				border-color: #f5c6c6;
+				background: #fff5f5;
+			}
+
+			.tip {
+				display: inline-block;
+				cursor: help;
+				color: var(--muted);
+				border: 1px solid var(--border);
+				border-radius: 50%;
+				width: 13px;
+				height: 13px;
+				font-size: 9px;
+				line-height: 11px;
+				text-align: center;
+			}
+
+			.pill {
+				display: inline-block;
+				padding: 0.1rem 0.55rem;
+				border-radius: 999px;
+				font-size: 0.7rem;
+				line-height: 1.5;
+			}
+			.ok {
+				background: var(--ok-bg);
+				color: var(--ok-fg);
+			}
+			.warn {
+				background: var(--warn-bg);
+				color: var(--warn-fg);
+			}
+			.bad {
+				background: var(--bad-bg);
+				color: var(--bad-fg);
+			}
+			.info {
+				background: var(--info-bg);
+				color: var(--info-fg);
+			}
+			.vanity {
+				background: linear-gradient(90deg, #ffd54f, #ff8a65);
+				color: #1a1a1a;
+				font-weight: 600;
+			}
+			.addr-prefix {
+				background: #fff7c2;
+				padding: 0 2px;
+				border-radius: 2px;
+				font-weight: 600;
+			}
+
+			.filters {
+				display: flex;
+				gap: 0.35rem;
+				flex-wrap: wrap;
+				margin: 0.5rem 0 0.75rem;
+			}
+			.chip {
+				padding: 0.2rem 0.65rem;
+				border: 1px solid var(--border);
+				border-radius: 999px;
+				cursor: pointer;
+				font-size: 0.75rem;
+				background: #fff;
+				user-select: none;
+			}
+			.chip[aria-pressed='true'] {
+				background: #111;
+				color: #fff;
+				border-color: #111;
+			}
+
+			.atts {
+				border-top: 1px solid #eee;
+			}
+			.att {
+				padding: 0.55rem 0.25rem;
+				border-bottom: 1px solid #eee;
+				display: grid;
+				grid-template-columns: 92px 1fr;
+				gap: 0.5rem 0.75rem;
+				align-items: baseline;
+				transition: background 0.8s ease;
+			}
+			.att.fresh {
+				background: #fffbe5;
+				animation: fadeFresh 4s ease forwards;
+			}
+			@keyframes fadeFresh {
+				0% {
+					background: #fff3a3;
 				}
-			};
-			pollTimer = setInterval(tick, POLL_MS);
-		}
+				100% {
+					background: transparent;
+				}
+			}
+			.att code {
+				font-size: 0.72rem;
+				color: #555;
+			}
+			.live-dot {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.3rem;
+				font-size: 0.72rem;
+				color: var(--muted);
+			}
+			.live-dot::before {
+				content: '';
+				width: 8px;
+				height: 8px;
+				border-radius: 50%;
+				background: #c8c8c8;
+			}
+			.live-dot.on::before {
+				background: #43a047;
+				box-shadow: 0 0 0 0 rgba(67, 160, 71, 0.5);
+				animation: pulse 1.6s infinite;
+			}
+			.live-dot.off::before {
+				background: #aaa;
+			}
+			@keyframes pulse {
+				0%,
+				100% {
+					box-shadow: 0 0 0 0 rgba(67, 160, 71, 0.5);
+				}
+				50% {
+					box-shadow: 0 0 0 5px rgba(67, 160, 71, 0);
+				}
+			}
+			.kind-feedback {
+				color: var(--ok-fg);
+			}
+			.kind-validation {
+				color: var(--info-fg);
+			}
+			.kind-task {
+				color: #6a1b9a;
+			}
+			.kind-accept {
+				color: #4527a0;
+			}
+			.kind-revoke {
+				color: var(--bad-fg);
+			}
+			.kind-dispute {
+				color: #ef6c00;
+			}
 
-		function stopPolling() {
-			if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
-			setLive(false);
-		}
+			.skeleton {
+				background: linear-gradient(90deg, #eee 0%, #f6f6f6 50%, #eee 100%);
+				background-size: 200% 100%;
+				animation: shimmer 1.2s infinite;
+				border-radius: 6px;
+			}
+			@keyframes shimmer {
+				0% {
+					background-position: 200% 0;
+				}
+				100% {
+					background-position: -200% 0;
+				}
+			}
+			.sk-row {
+				height: 76px;
+				margin: 0.65rem 0;
+			}
 
-		function setLive(on) {
-			const el = $('live');
-			el.classList.toggle('on', on);
-			el.classList.toggle('off', !on);
-			el.textContent = on ? 'live' : 'off';
-		}
+			.error-box {
+				padding: 0.65rem 0.85rem;
+				border: 1px solid #f5c6c6;
+				background: #fff5f5;
+				color: var(--bad-fg);
+				border-radius: 6px;
+			}
 
-		document.addEventListener('visibilitychange', () => {
-			if (!pollTimer) return;
-			setLive(!document.hidden);
-		});
+			details {
+				margin-top: 0.25rem;
+			}
+			details pre {
+				font-size: 0.72rem;
+				background: #f4f4f4;
+				padding: 0.4rem;
+				border-radius: 4px;
+				overflow: auto;
+				max-height: 240px;
+			}
+			a {
+				color: var(--info-fg);
+			}
 
-		function renderIdentity(card, rep, asset, network, history = []) {
-			const id = card?.identity || {};
-			const name = card?.name || '(unindexed agent)';
-			const trust = computeTrust(rep);
-			const lastIndexed = rep?.last_indexed_at
-				? `indexed ${new Date(rep.last_indexed_at).toLocaleString()}`
-				: 'never indexed';
-			const sparkSvg = renderSparkline(history);
-			const vanity = id.vanity_prefix && asset.startsWith(id.vanity_prefix) ? id.vanity_prefix : null;
-			const shortAddrHtml = vanity
-				? `<span class="addr-prefix">${escapeHtml(vanity)}</span>${escapeHtml(asset.slice(vanity.length, 4))}…${escapeHtml(asset.slice(-4))}`
-				: escapeHtml(shortKey(asset));
-			$('identity').innerHTML = `
+			@media (max-width: 520px) {
+				.att {
+					grid-template-columns: 1fr;
+				}
+				.identity-name {
+					font-size: 1.05rem;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<h1>Solana agent passport</h1>
+		<p class="muted">
+			ERC-8004-style identity, reputation, and validation.
+			<a href="/.well-known/agent-attestation-schemas" target="_blank">View schemas</a>
+		</p>
+
+		<div class="row">
+			<input
+				id="asset"
+				placeholder="Metaplex Core asset pubkey…"
+				autocomplete="off"
+				spellcheck="false"
+			/>
+			<select id="network">
+				<option value="devnet">devnet</option>
+				<option value="mainnet">mainnet</option>
+			</select>
+			<button id="load" class="primary">Load</button>
+			<button id="share" title="Copy shareable link">Share</button>
+			<button id="embed" title="Copy iframe embed snippet">Embed</button>
+		</div>
+
+		<div id="identity"></div>
+
+		<div id="token-stats" hidden></div>
+
+		<h2>Reputation <span class="hint" id="rep-hint"></span></h2>
+		<div id="reputation"></div>
+
+		<h2>
+			Recent attestations <span class="hint" id="atts-count"></span>
+			<span id="live" class="live-dot off" title="Live updates">off</span>
+		</h2>
+		<div class="filters" id="filters" hidden>
+			<button class="chip" data-filter="all" aria-pressed="true">all</button>
+			<button class="chip" data-filter="feedback" aria-pressed="false">feedback</button>
+			<button class="chip" data-filter="validation" aria-pressed="false">validation</button>
+			<button class="chip" data-filter="task" aria-pressed="false">task</button>
+			<button class="chip" data-filter="event" aria-pressed="false">event-attested</button>
+			<button class="chip" data-filter="disputed" aria-pressed="false">disputed</button>
+		</div>
+		<div id="atts" class="atts"></div>
+
+		<script type="module">
+			const $ = (id) => document.getElementById(id);
+			const params = new URLSearchParams(location.search);
+			$('asset').value = params.get('asset') || '';
+			$('network').value = params.get('network') || 'devnet';
+
+			let cache = { rows: [], net: 'devnet', knownSigs: new Set(), freshSigs: new Set() };
+			let activeFilter = 'all';
+			let pollTimer = null;
+			const POLL_MS = 8000;
+
+			const PUBKEY_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
+			function pill(text, cls = '') {
+				return `<span class="pill ${cls}">${escapeHtml(text)}</span>`;
+			}
+			function tip(text) {
+				return `<span class="tip" title="${escapeHtml(text)}">?</span>`;
+			}
+			function explorer(sig, net) {
+				return `https://explorer.solana.com/tx/${sig}${net === 'devnet' ? '?cluster=devnet' : ''}`;
+			}
+			function shortKey(k) {
+				return k ? `${k.slice(0, 4)}…${k.slice(-4)}` : '';
+			}
+			function fmtScore(n) {
+				return typeof n === 'number' && n > 0 ? n.toFixed(2) : '—';
+			}
+
+			// Trust grade. Order: credentialed > verified > event-attested > raw.
+			function computeTrust(rep) {
+				const f = rep?.feedback || {};
+				const v = rep?.validation || {};
+				const tiers = [
+					{
+						score: f.score_avg_weighted_credentialed,
+						n: f.unique_credentialed_attesters,
+						tier: 'credentialed',
+					},
+					{
+						score: f.score_avg_weighted_verified,
+						n: f.unique_verified_attesters,
+						tier: 'verified',
+					},
+					{
+						score: f.score_avg_event_attested,
+						n: f.event_attested,
+						tier: 'event-attested',
+					},
+					{ score: f.score_avg_weighted, n: f.unique_attesters, tier: 'community' },
+				];
+				const best = tiers.find((t) => t.score > 0 && (t.n || 0) > 0);
+				if (!best) return { grade: '—', cls: 'NA', summary: 'no attestations yet' };
+
+				const passed = v.audited_passed || v.self_passed || 0;
+				const failed = v.audited_failed || v.self_failed || 0;
+				const passRate = passed + failed ? passed / (passed + failed) : 1;
+
+				const adjust = best.score - (f.disputed > 0 ? 0.5 : 0) - (passRate < 0.5 ? 1 : 0);
+
+				const grade = adjust >= 4.5 ? 'A' : adjust >= 3.8 ? 'B' : adjust >= 3.0 ? 'C' : 'D';
+				return {
+					grade,
+					cls: grade,
+					summary:
+						`${best.tier} ${best.score.toFixed(2)} from ${best.n} attester${best.n === 1 ? '' : 's'}` +
+						(f.disputed ? ` · ${f.disputed} disputed` : '') +
+						(failed ? ` · ${failed} failed validation${failed === 1 ? '' : 's'}` : ''),
+				};
+			}
+
+			function showError(target, message) {
+				$(target).innerHTML = `<div class="error-box">${escapeHtml(message)}</div>`;
+			}
+			function showSkeletons(target, count = 1) {
+				$(target).innerHTML = Array.from(
+					{ length: count },
+					() => `<div class="skeleton sk-row"></div>`,
+				).join('');
+			}
+
+			async function load() {
+				const asset = $('asset').value.trim();
+				const network = $('network').value;
+				$('asset').classList.toggle('invalid', !!asset && !PUBKEY_RE.test(asset));
+				if (!asset) {
+					showError('identity', 'Enter an asset pubkey above.');
+					return;
+				}
+				if (!PUBKEY_RE.test(asset)) {
+					showError('identity', 'That doesn’t look like a Solana pubkey.');
+					return;
+				}
+
+				stopPolling();
+				history.replaceState({}, '', `?asset=${asset}&network=${network}`);
+				$('load').disabled = true;
+				showSkeletons('identity', 1);
+				showSkeletons('reputation', 1);
+				$('atts').innerHTML = '';
+				$('atts-count').textContent = '';
+				$('filters').hidden = true;
+
+				try {
+					const [card, rep, atts, hist] = await Promise.all([
+						fetch(`/api/agents/solana-card?asset=${asset}`)
+							.then((r) => (r.ok ? r.json() : null))
+							.catch(() => null),
+						fetch(
+							`/api/agents/solana-reputation?asset=${asset}&network=${network}`,
+						).then((r) => r.json()),
+						fetch(
+							`/api/agents/solana-attestations?asset=${asset}&network=${network}&limit=25`,
+						).then((r) => r.json()),
+						fetch(
+							`/api/agents/solana-reputation-history?asset=${asset}&network=${network}&days=30`,
+						)
+							.then((r) => r.json())
+							.catch(() => ({ series: [] })),
+					]);
+
+					const initialRows = atts.data || [];
+					renderIdentity(card, rep, asset, network, hist?.series || []);
+					renderTokenStats(card?.token_stats);
+					renderReputation(rep);
+					cache = {
+						rows: initialRows,
+						net: network,
+						knownSigs: new Set(initialRows.map((r) => r.signature)),
+						freshSigs: new Set(),
+					};
+					$('filters').hidden = false;
+					renderAttestations();
+					startPolling(asset, network);
+				} catch (e) {
+					showError('identity', `Failed to load: ${e.message || e}`);
+				} finally {
+					$('load').disabled = false;
+				}
+			}
+
+			// -- Live polling --------------------------------------------------
+
+			function startPolling(asset, network) {
+				stopPolling();
+				setLive(true);
+				const tick = async () => {
+					if (document.hidden) return;
+					try {
+						const [atts, rep] = await Promise.all([
+							fetch(
+								`/api/agents/solana-attestations?asset=${asset}&network=${network}&limit=25`,
+							).then((r) => r.json()),
+							fetch(
+								`/api/agents/solana-reputation?asset=${asset}&network=${network}`,
+							).then((r) => r.json()),
+						]);
+						const rows = atts.data || [];
+						const freshSigs = new Set();
+						for (const r of rows) {
+							if (!cache.knownSigs.has(r.signature)) freshSigs.add(r.signature);
+						}
+						if (freshSigs.size > 0) {
+							cache.rows = rows;
+							cache.knownSigs = new Set(rows.map((r) => r.signature));
+							cache.freshSigs = freshSigs;
+							renderAttestations();
+							renderReputation(rep);
+							// clear the highlight class after the animation
+							setTimeout(() => {
+								cache.freshSigs = new Set();
+							}, 4500);
+						}
+					} catch {
+						// transient — stay live, try again next tick
+					}
+				};
+				pollTimer = setInterval(tick, POLL_MS);
+			}
+
+			function stopPolling() {
+				if (pollTimer) {
+					clearInterval(pollTimer);
+					pollTimer = null;
+				}
+				setLive(false);
+			}
+
+			function setLive(on) {
+				const el = $('live');
+				el.classList.toggle('on', on);
+				el.classList.toggle('off', !on);
+				el.textContent = on ? 'live' : 'off';
+			}
+
+			document.addEventListener('visibilitychange', () => {
+				if (!pollTimer) return;
+				setLive(!document.hidden);
+			});
+
+			function renderIdentity(card, rep, asset, network, history = []) {
+				const id = card?.identity || {};
+				const name = card?.name || '(unindexed agent)';
+				const trust = computeTrust(rep);
+				const lastIndexed = rep?.last_indexed_at
+					? `indexed ${new Date(rep.last_indexed_at).toLocaleString()}`
+					: 'never indexed';
+				const sparkSvg = renderSparkline(history);
+				const vanity =
+					id.vanity_prefix && asset.startsWith(id.vanity_prefix)
+						? id.vanity_prefix
+						: null;
+				const shortAddrHtml = vanity
+					? `<span class="addr-prefix">${escapeHtml(vanity)}</span>${escapeHtml(asset.slice(vanity.length, 4))}…${escapeHtml(asset.slice(-4))}`
+					: escapeHtml(shortKey(asset));
+				$('identity').innerHTML = `
 				<div class="identity-card">
 					<div class="identity-row">
 						<div class="identity-name">${escapeHtml(name)}</div>
@@ -321,112 +711,235 @@
 						<div class="spark" title="30-day score history">${sparkSvg}</div>
 					</div>
 				</div>`;
-			$('identity').querySelectorAll('[data-copy]').forEach((b) => {
-				b.addEventListener('click', () => copyText(b.dataset.copy, b));
-			});
-			if (id.owner) loadOwnerBalance(id.owner, network);
-		}
+				$('identity')
+					.querySelectorAll('[data-copy]')
+					.forEach((b) => {
+						b.addEventListener('click', () => copyText(b.dataset.copy, b));
+					});
+				if (id.owner) loadOwnerBalance(id.owner, network);
+			}
 
-		async function loadOwnerBalance(owner, network) {
-			const el = document.getElementById('owner-balance');
-			if (!el) return;
-			try {
-				const rpc = network === 'devnet'
-					? 'https://api.devnet.solana.com'
-					: 'https://api.mainnet-beta.solana.com';
-				const r = await fetch(rpc, {
-					method: 'POST',
-					headers: { 'content-type': 'application/json' },
-					body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getBalance', params: [owner] }),
-				}).then((x) => x.json());
-				const lamports = r?.result?.value;
-				if (typeof lamports === 'number') {
-					el.textContent = `${(lamports / 1e9).toFixed(3)} SOL`;
-					el.classList.add(lamports > 0 ? 'ok' : 'warn');
-				} else {
+			async function loadOwnerBalance(owner, network) {
+				const el = document.getElementById('owner-balance');
+				if (!el) return;
+				try {
+					const rpc =
+						network === 'devnet'
+							? 'https://api.devnet.solana.com'
+							: 'https://api.mainnet-beta.solana.com';
+					const r = await fetch(rpc, {
+						method: 'POST',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({
+							jsonrpc: '2.0',
+							id: 1,
+							method: 'getBalance',
+							params: [owner],
+						}),
+					}).then((x) => x.json());
+					const lamports = r?.result?.value;
+					if (typeof lamports === 'number') {
+						el.textContent = `${(lamports / 1e9).toFixed(3)} SOL`;
+						el.classList.add(lamports > 0 ? 'ok' : 'warn');
+					} else {
+						el.textContent = '— SOL';
+					}
+				} catch {
 					el.textContent = '— SOL';
 				}
-			} catch {
-				el.textContent = '— SOL';
 			}
-		}
 
-		function renderReputation(r) {
-			if (!r || r.error) { $('reputation').innerHTML = `<p class="muted">no data</p>`; return; }
-			const f = r.feedback || {}, v = r.validation || {}, p = r.pump_payments || {};
-			const pf = r.pumpfun_signals || { count: 0, weight: 0, by_kind: {} };
-			$('rep-hint').textContent = 'higher tiers are more Sybil-resistant';
+			function renderTokenStats(ts) {
+				const host = $('token-stats');
+				if (!ts) {
+					host.hidden = true;
+					host.innerHTML = '';
+					return;
+				}
+				host.hidden = false;
+				const fmtSol = (lamports) =>
+					lamports == null ? '—' : (Number(lamports) / 1e9).toFixed(3) + ' SOL';
+				const lastSig = ts.last_signature
+					? `<a href="https://solscan.io/tx/${ts.last_signature}${ts.network === 'devnet' ? '?cluster=devnet' : ''}" target="_blank" rel="noopener">${ts.last_signature.slice(0, 12)}…</a>`
+					: '—';
+				const refreshedAgo = ts.refreshed_at
+					? `${Math.max(0, Math.round((Date.now() - new Date(ts.refreshed_at)) / 60000))}m ago`
+					: '—';
 
-			const cards = [
-				{ cls: 'tier-credentialed', value: fmtScore(f.score_avg_weighted_credentialed),
-					label: 'credentialed score',
-					tooltip: 'Average from attesters holding a threews.verified-client.v1 SAS credential. Strongest Sybil resistance.' },
-				{ cls: 'tier-credentialed', value: `${f.unique_credentialed_attesters || 0}<small>/${f.unique_attesters || 0}</small>`,
-					label: 'credentialed / unique attesters' },
-				{ cls: '', value: fmtScore(f.score_avg_weighted_verified),
-					label: 'verified score',
-					tooltip: 'Feedback whose task_id has a matching threews.accept.v1 from the agent owner.' },
-				{ cls: 'tier-event', value: fmtScore(f.score_avg_event_attested),
-					label: 'event-attested score',
-					tooltip: 'Feedback sourced from on-chain event monitors (e.g. pumpkit). Sybil-resistant via the event.' },
-				{ cls: 'tier-event', value: `${f.event_attested || 0}`,
-					label: 'event-attested feedback' },
-				{ cls: '', value: fmtScore(f.score_avg_weighted),
-					label: 'all-feedback score',
-					tooltip: 'Per-attester average then averaged. Raw signal.' },
-				{ cls: '', value: `${f.verified || 0}<small>/${f.total || 0}</small>`,
-					label: 'verified / total feedback' },
-				{ cls: '', value: `${v.audited_passed || 0}<small>/${(v.audited_passed||0)+(v.audited_failed||0)}</small>`,
-					label: 'audited validation passed',
-					tooltip: 'From SAS-credentialed validators.' },
-				{ cls: '', value: `${v.event_passed || 0}<small>/${(v.event_passed||0)+(v.event_failed||0)}</small>`,
-					label: 'event validation passed',
-					tooltip: 'From on-chain event monitors (graduations vs CTOs).' },
-				{ cls: '', value: `${r.tasks?.accepted || 0}<small>/${r.tasks?.offered || 0}</small>`,
-					label: 'tasks accepted / offered' },
-				...(Number(p.confirmed_count) ? [
-					{ cls: 'tier-pump', value: `${p.confirmed_count}<small>/${p.unique_payers || 0}</small>`,
-						label: 'pump payments / unique payers',
-						tooltip: 'Confirmed acceptPayment receipts. Volume-weighted reputation lane.' },
-				] : []),
-				...(Number(pf.count) ? [
-					{ cls: 'tier-pump', value: `${pf.count}<small> ${pf.weight >= 0 ? '+' : ''}${pf.weight.toFixed(2)}</small>`,
-						label: 'pump.fun signals (weight)',
-						tooltip: 'Off-chain pump.fun activity tied to this agent\'s wallet — first claims, graduations, fake claims, and influencer tier. Weighted positive/negative.' },
-					...Object.entries(pf.by_kind || {}).map(([kind, info]) => ({
-						cls: info.weight < 0 ? 'danger' : 'tier-pump',
-						value: info.count,
-						label: `pf · ${kind.replace('_', ' ')}`,
-						tooltip: `Aggregate weight ${info.weight >= 0 ? '+' : ''}${info.weight}`,
-					})),
-				] : []),
-				...(f.disputed ? [{ cls: 'danger', value: f.disputed, label: 'disputed' }] : []),
-				...(r.revoked_count ? [{ cls: 'danger', value: r.revoked_count, label: 'revoked' }] : []),
-			];
+				let body;
+				if (ts.graduated) {
+					const a = ts.amm || {};
+					body = `
+					<span class="badge tier-pump" title="Token has graduated to the pump.fun AMM pool">graduated · AMM</span>
+					<div class="grid">
+						<div class="card"><div class="v">${fmtSol(a.quote_reserve)}</div><div class="l">pool quote (SOL)</div></div>
+						<div class="card"><div class="v">${a.base_reserve ? Number(a.base_reserve).toExponential(2) : '—'}</div><div class="l">pool base (tokens)</div></div>
+						<div class="card"><div class="v">${ts.recent_tx_count || 0}</div><div class="l">recent tx (50-tail)</div></div>
+						<div class="card"><div class="v" style="font-size:.85em">${lastSig}</div><div class="l">last tx</div></div>
+					</div>
+				`;
+				} else if (ts.bonding_curve) {
+					const c = ts.bonding_curve;
+					const pct = Number(c.progress_pct || 0);
+					body = `
+					<span class="badge" title="Pre-graduation: trades go through the pump.fun bonding curve">bonding curve · ${pct.toFixed(1)}% to graduation</span>
+					<div style="background:#222; border-radius:6px; height:10px; overflow:hidden; margin:.4em 0 .8em">
+						<div style="background:linear-gradient(90deg,#5c8fff,#00d4ff); width:${Math.min(100, pct)}%; height:100%"></div>
+					</div>
+					<div class="grid">
+						<div class="card"><div class="v">${fmtSol(c.real_sol)}</div><div class="l">real SOL reserves</div></div>
+						<div class="card"><div class="v">${c.real_token ? Number(c.real_token).toExponential(2) : '—'}</div><div class="l">real token reserves</div></div>
+						<div class="card"><div class="v">${ts.recent_tx_count || 0}</div><div class="l">recent tx (50-tail)</div></div>
+						<div class="card"><div class="v" style="font-size:.85em">${lastSig}</div><div class="l">last tx</div></div>
+					</div>
+				`;
+				} else {
+					body = `<p class="muted">No bonding curve or AMM pool detected. Refreshed ${refreshedAgo}.</p>`;
+				}
 
-			$('reputation').innerHTML = `<div class="grid">${cards.map((c) => `
+				host.innerHTML = `
+				<h2>Token <span class="hint">${ts.network} · refreshed ${refreshedAgo}</span></h2>
+				${body}
+			`;
+			}
+
+			function renderReputation(r) {
+				if (!r || r.error) {
+					$('reputation').innerHTML = `<p class="muted">no data</p>`;
+					return;
+				}
+				const f = r.feedback || {},
+					v = r.validation || {},
+					p = r.pump_payments || {};
+				const pf = r.pumpfun_signals || { count: 0, weight: 0, by_kind: {} };
+				$('rep-hint').textContent = 'higher tiers are more Sybil-resistant';
+
+				const cards = [
+					{
+						cls: 'tier-credentialed',
+						value: fmtScore(f.score_avg_weighted_credentialed),
+						label: 'credentialed score',
+						tooltip:
+							'Average from attesters holding a threews.verified-client.v1 SAS credential. Strongest Sybil resistance.',
+					},
+					{
+						cls: 'tier-credentialed',
+						value: `${f.unique_credentialed_attesters || 0}<small>/${f.unique_attesters || 0}</small>`,
+						label: 'credentialed / unique attesters',
+					},
+					{
+						cls: '',
+						value: fmtScore(f.score_avg_weighted_verified),
+						label: 'verified score',
+						tooltip:
+							'Feedback whose task_id has a matching threews.accept.v1 from the agent owner.',
+					},
+					{
+						cls: 'tier-event',
+						value: fmtScore(f.score_avg_event_attested),
+						label: 'event-attested score',
+						tooltip:
+							'Feedback sourced from on-chain event monitors (e.g. pumpkit). Sybil-resistant via the event.',
+					},
+					{
+						cls: 'tier-event',
+						value: `${f.event_attested || 0}`,
+						label: 'event-attested feedback',
+					},
+					{
+						cls: '',
+						value: fmtScore(f.score_avg_weighted),
+						label: 'all-feedback score',
+						tooltip: 'Per-attester average then averaged. Raw signal.',
+					},
+					{
+						cls: '',
+						value: `${f.verified || 0}<small>/${f.total || 0}</small>`,
+						label: 'verified / total feedback',
+					},
+					{
+						cls: '',
+						value: `${v.audited_passed || 0}<small>/${(v.audited_passed || 0) + (v.audited_failed || 0)}</small>`,
+						label: 'audited validation passed',
+						tooltip: 'From SAS-credentialed validators.',
+					},
+					{
+						cls: '',
+						value: `${v.event_passed || 0}<small>/${(v.event_passed || 0) + (v.event_failed || 0)}</small>`,
+						label: 'event validation passed',
+						tooltip: 'From on-chain event monitors (graduations vs CTOs).',
+					},
+					{
+						cls: '',
+						value: `${r.tasks?.accepted || 0}<small>/${r.tasks?.offered || 0}</small>`,
+						label: 'tasks accepted / offered',
+					},
+					...(Number(p.confirmed_count)
+						? [
+								{
+									cls: 'tier-pump',
+									value: `${p.confirmed_count}<small>/${p.unique_payers || 0}</small>`,
+									label: 'pump payments / unique payers',
+									tooltip:
+										'Confirmed acceptPayment receipts. Volume-weighted reputation lane.',
+								},
+							]
+						: []),
+					...(Number(pf.count)
+						? [
+								{
+									cls: 'tier-pump',
+									value: `${pf.count}<small> ${pf.weight >= 0 ? '+' : ''}${pf.weight.toFixed(2)}</small>`,
+									label: 'pump.fun signals (weight)',
+									tooltip:
+										"Off-chain pump.fun activity tied to this agent's wallet — first claims, graduations, fake claims, and influencer tier. Weighted positive/negative.",
+								},
+								...Object.entries(pf.by_kind || {}).map(([kind, info]) => ({
+									cls: info.weight < 0 ? 'danger' : 'tier-pump',
+									value: info.count,
+									label: `pf · ${kind.replace('_', ' ')}`,
+									tooltip: `Aggregate weight ${info.weight >= 0 ? '+' : ''}${info.weight}`,
+								})),
+							]
+						: []),
+					...(f.disputed
+						? [{ cls: 'danger', value: f.disputed, label: 'disputed' }]
+						: []),
+					...(r.revoked_count
+						? [{ cls: 'danger', value: r.revoked_count, label: 'revoked' }]
+						: []),
+				];
+
+				$('reputation').innerHTML = `<div class="grid">${cards
+					.map(
+						(c) => `
 				<div class="card ${c.cls}">
 					<div class="v">${c.value}</div>
 					<div class="l">${escapeHtml(c.label)}${c.tooltip ? ' ' + tip(c.tooltip) : ''}</div>
-				</div>`).join('')}</div>`;
-		}
-
-		function renderAttestations() {
-			const rows = filterRows(cache.rows, activeFilter);
-			$('atts-count').textContent = `${rows.length} of ${cache.rows.length}`;
-			if (!rows.length) {
-				$('atts').innerHTML = `<p class="muted" style="padding:.75rem 0">no matching attestations</p>`;
-				return;
+				</div>`,
+					)
+					.join('')}</div>`;
 			}
-			$('atts').innerHTML = rows.map((row) => {
-				const k = row.kind?.split('.')[1] || 'unknown';
-				const flags = [];
-				if (row.verified) flags.push(pill('verified', 'ok'));
-				if (row.disputed) flags.push(pill('disputed', 'warn'));
-				if (row.revoked)  flags.push(pill('revoked',  'bad'));
-				if (row.payload?.source?.startsWith?.('pumpkit.')) flags.push(pill(row.payload.source, 'info'));
-				const fresh = cache.freshSigs.has(row.signature) ? ' fresh' : '';
-				return `
+
+			function renderAttestations() {
+				const rows = filterRows(cache.rows, activeFilter);
+				$('atts-count').textContent = `${rows.length} of ${cache.rows.length}`;
+				if (!rows.length) {
+					$('atts').innerHTML =
+						`<p class="muted" style="padding:.75rem 0">no matching attestations</p>`;
+					return;
+				}
+				$('atts').innerHTML = rows
+					.map((row) => {
+						const k = row.kind?.split('.')[1] || 'unknown';
+						const flags = [];
+						if (row.verified) flags.push(pill('verified', 'ok'));
+						if (row.disputed) flags.push(pill('disputed', 'warn'));
+						if (row.revoked) flags.push(pill('revoked', 'bad'));
+						if (row.payload?.source?.startsWith?.('pumpkit.'))
+							flags.push(pill(row.payload.source, 'info'));
+						const fresh = cache.freshSigs.has(row.signature) ? ' fresh' : '';
+						return `
 					<div class="att${fresh}">
 						<div class="kind-${k}"><strong>${escapeHtml(k)}</strong></div>
 						<div>
@@ -440,85 +953,112 @@
 							<details><summary class="muted" style="font-size:.72rem">payload</summary><pre>${escapeHtml(JSON.stringify(row.payload, null, 2))}</pre></details>
 						</div>
 					</div>`;
-			}).join('');
-		}
-
-		function filterRows(rows, filter) {
-			if (filter === 'all') return rows;
-			if (filter === 'disputed') return rows.filter((r) => r.disputed || r.revoked);
-			if (filter === 'event')    return rows.filter((r) => r.payload?.source?.startsWith?.('pumpkit.'));
-			return rows.filter((r) => r.kind?.includes(`.${filter}.`));
-		}
-
-		function describe(row) {
-			const p = row.payload || {};
-			switch (row.kind) {
-				case 'threews.feedback.v1':   return `score ${p.score}/5${p.task_id ? ` for task ${p.task_id}` : ''}${p.source ? ` (${p.source})` : ''}`;
-				case 'threews.validation.v1': return `validation ${p.passed ? '✓ passed' : '✗ failed'}${p.task_hash ? ` (task hash ${String(p.task_hash).slice(0,12)}…)` : ''}`;
-				case 'threews.task.v1':       return `task offered: ${p.task_id}`;
-				case 'threews.accept.v1':     return `task accepted: ${p.task_id}`;
-				case 'threews.revoke.v1':     return `revoked ${String(p.target_signature || '').slice(0,12)}…`;
-				case 'threews.dispute.v1':    return `disputed ${String(p.target_signature || '').slice(0,12)}…${p.reason ? ` — ${p.reason}` : ''}`;
-				default: return row.kind;
+					})
+					.join('');
 			}
-		}
 
-		function escapeHtml(s) {
-			return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
-		}
-
-		// SVG sparkline of historical scores (1..5 fixed y-axis).
-		function renderSparkline(series) {
-			if (!series || series.length < 2) {
-				return `<div class="spark-empty">${series?.length ? '1 day' : 'no history'}</div>`;
+			function filterRows(rows, filter) {
+				if (filter === 'all') return rows;
+				if (filter === 'disputed') return rows.filter((r) => r.disputed || r.revoked);
+				if (filter === 'event')
+					return rows.filter((r) => r.payload?.source?.startsWith?.('pumpkit.'));
+				return rows.filter((r) => r.kind?.includes(`.${filter}.`));
 			}
-			const W = 120, H = 32, P = 2;
-			const xs = series.map((_, i) => P + (i * (W - 2 * P)) / (series.length - 1));
-			const ys = series.map((d) => {
-				const score = Math.max(1, Math.min(5, d.score || 0));
-				return P + (1 - (score - 1) / 4) * (H - 2 * P);
-			});
-			const path = xs.map((x, i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${ys[i].toFixed(1)}`).join(' ');
-			const lastScore = series[series.length - 1].score;
-			const stroke = lastScore >= 4 ? '#1b5e20' : lastScore >= 3 ? '#855008' : '#c62828';
-			const fillPath = `${path} L${xs[xs.length-1].toFixed(1)},${H - P} L${xs[0].toFixed(1)},${H - P} Z`;
-			return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-label="score history">
+
+			function describe(row) {
+				const p = row.payload || {};
+				switch (row.kind) {
+					case 'threews.feedback.v1':
+						return `score ${p.score}/5${p.task_id ? ` for task ${p.task_id}` : ''}${p.source ? ` (${p.source})` : ''}`;
+					case 'threews.validation.v1':
+						return `validation ${p.passed ? '✓ passed' : '✗ failed'}${p.task_hash ? ` (task hash ${String(p.task_hash).slice(0, 12)}…)` : ''}`;
+					case 'threews.task.v1':
+						return `task offered: ${p.task_id}`;
+					case 'threews.accept.v1':
+						return `task accepted: ${p.task_id}`;
+					case 'threews.revoke.v1':
+						return `revoked ${String(p.target_signature || '').slice(0, 12)}…`;
+					case 'threews.dispute.v1':
+						return `disputed ${String(p.target_signature || '').slice(0, 12)}…${p.reason ? ` — ${p.reason}` : ''}`;
+					default:
+						return row.kind;
+				}
+			}
+
+			function escapeHtml(s) {
+				return String(s ?? '').replace(
+					/[&<>"']/g,
+					(c) =>
+						({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[
+							c
+						],
+				);
+			}
+
+			// SVG sparkline of historical scores (1..5 fixed y-axis).
+			function renderSparkline(series) {
+				if (!series || series.length < 2) {
+					return `<div class="spark-empty">${series?.length ? '1 day' : 'no history'}</div>`;
+				}
+				const W = 120,
+					H = 32,
+					P = 2;
+				const xs = series.map((_, i) => P + (i * (W - 2 * P)) / (series.length - 1));
+				const ys = series.map((d) => {
+					const score = Math.max(1, Math.min(5, d.score || 0));
+					return P + (1 - (score - 1) / 4) * (H - 2 * P);
+				});
+				const path = xs
+					.map((x, i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${ys[i].toFixed(1)}`)
+					.join(' ');
+				const lastScore = series[series.length - 1].score;
+				const stroke = lastScore >= 4 ? '#1b5e20' : lastScore >= 3 ? '#855008' : '#c62828';
+				const fillPath = `${path} L${xs[xs.length - 1].toFixed(1)},${H - P} L${xs[0].toFixed(1)},${H - P} Z`;
+				return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-label="score history">
 				<path d="${fillPath}" fill="${stroke}" opacity=".12" />
 				<path d="${path}" fill="none" stroke="${stroke}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" />
-				<circle cx="${xs[xs.length-1].toFixed(1)}" cy="${ys[ys.length-1].toFixed(1)}" r="2" fill="${stroke}" />
+				<circle cx="${xs[xs.length - 1].toFixed(1)}" cy="${ys[ys.length - 1].toFixed(1)}" r="2" fill="${stroke}" />
 			</svg>`;
-		}
+			}
 
-		async function copyText(text, btn) {
-			try {
-				await navigator.clipboard.writeText(text);
-				const prev = btn.textContent;
-				btn.textContent = 'copied';
-				setTimeout(() => { btn.textContent = prev; }, 1200);
-			} catch {}
-		}
+			async function copyText(text, btn) {
+				try {
+					await navigator.clipboard.writeText(text);
+					const prev = btn.textContent;
+					btn.textContent = 'copied';
+					setTimeout(() => {
+						btn.textContent = prev;
+					}, 1200);
+				} catch {}
+			}
 
-		$('load').onclick = load;
-		$('asset').addEventListener('keydown', (e) => { if (e.key === 'Enter') load(); });
-		$('network').addEventListener('change', () => { if ($('asset').value.trim()) load(); });
-		$('share').onclick = () => copyText(location.href, $('share'));
-		$('embed').onclick = () => {
-			const asset = $('asset').value.trim();
-			const network = $('network').value;
-			if (!asset || !PUBKEY_RE.test(asset)) return;
-			const src = `${location.origin}/agent-badge.html?asset=${asset}&network=${network}`;
-			const snippet = `<iframe src="${src}" width="320" height="80" style="border:0" loading="lazy"></iframe>`;
-			copyText(snippet, $('embed'));
-		};
-		$('filters').addEventListener('click', (e) => {
-			const btn = e.target.closest('.chip');
-			if (!btn) return;
-			activeFilter = btn.dataset.filter;
-			$('filters').querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', c === btn ? 'true' : 'false'));
-			renderAttestations();
-		});
+			$('load').onclick = load;
+			$('asset').addEventListener('keydown', (e) => {
+				if (e.key === 'Enter') load();
+			});
+			$('network').addEventListener('change', () => {
+				if ($('asset').value.trim()) load();
+			});
+			$('share').onclick = () => copyText(location.href, $('share'));
+			$('embed').onclick = () => {
+				const asset = $('asset').value.trim();
+				const network = $('network').value;
+				if (!asset || !PUBKEY_RE.test(asset)) return;
+				const src = `${location.origin}/agent-badge.html?asset=${asset}&network=${network}`;
+				const snippet = `<iframe src="${src}" width="320" height="80" style="border:0" loading="lazy"></iframe>`;
+				copyText(snippet, $('embed'));
+			};
+			$('filters').addEventListener('click', (e) => {
+				const btn = e.target.closest('.chip');
+				if (!btn) return;
+				activeFilter = btn.dataset.filter;
+				$('filters')
+					.querySelectorAll('.chip')
+					.forEach((c) => c.setAttribute('aria-pressed', c === btn ? 'true' : 'false'));
+				renderAttestations();
+			});
 
-		if ($('asset').value) load();
-	</script>
-</body>
+			if ($('asset').value) load();
+		</script>
+	</body>
 </html>
