@@ -23,8 +23,5 @@
 			"getTokenHolders"
 		],
 		"triggers": ["token_lookup", "market_check", "rug_check"]
-	},
-	"config": {
-		"endpoint": "https://pump-fun-sdk.modelcontextprotocol.name/mcp"
 	}
 }

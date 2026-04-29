@@ -38,6 +38,12 @@ export const WIDGET_TYPES = {
 		status: 'ready',
 		icon: '⌖',
 	},
+	'pumpfun-feed': {
+		label: 'Pump.fun Live Feed',
+		desc: 'Solana agent narrates live pump.fun claims and graduations.',
+		status: 'ready',
+		icon: '✦',
+	},
 };
 
 export const WIDGET_TYPE_KEYS = Object.keys(WIDGET_TYPES);
@@ -89,6 +95,12 @@ const TYPE_DEFAULTS = {
 		showPoweredBy: true,
 	},
 	'hotspot-tour': { hotspots: [] },
+	'pumpfun-feed': {
+		kind: 'all',
+		minTier: '',
+		autoNarrate: true,
+		maxCards: 8,
+	},
 };
 
 const hexColor = z.string().regex(/^#[0-9a-fA-F]{3,8}$/, 'must be a hex color');
@@ -196,6 +208,12 @@ const TYPE_SCHEMAS = {
 			)
 			.max(40)
 			.default([]),
+	}),
+	'pumpfun-feed': brandSchema.extend({
+		kind: z.enum(['all', 'claims', 'graduations']).default('all'),
+		minTier: z.enum(['', 'notable', 'influencer', 'mega']).default(''),
+		autoNarrate: z.boolean().default(true),
+		maxCards: z.number().int().min(1).max(50).default(8),
 	}),
 };
 

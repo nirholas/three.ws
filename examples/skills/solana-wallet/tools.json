@@ -1,0 +1,75 @@
+{
+	"tools": [
+		{
+			"name": "getAddress",
+			"description": "Return the wallet's public address.",
+			"input_schema": { "type": "object", "properties": {} }
+		},
+		{
+			"name": "getBalance",
+			"description": "Get SOL balance for the wallet (or a given address).",
+			"input_schema": {
+				"type": "object",
+				"properties": { "address": { "type": "string" } }
+			}
+		},
+		{
+			"name": "getSplBalances",
+			"description": "List all SPL token balances for the wallet (or address).",
+			"input_schema": {
+				"type": "object",
+				"properties": { "address": { "type": "string" } }
+			}
+		},
+		{
+			"name": "transferSol",
+			"description": "Send SOL to a recipient. Capped by manifest.config.maxTransferSol.",
+			"input_schema": {
+				"type": "object",
+				"properties": {
+					"to": { "type": "string" },
+					"amountSol": { "type": "number" }
+				},
+				"required": ["to", "amountSol"]
+			}
+		},
+		{
+			"name": "transferSpl",
+			"description": "Send an SPL token to a recipient. Auto-creates recipient ATA.",
+			"input_schema": {
+				"type": "object",
+				"properties": {
+					"mint": { "type": "string" },
+					"to": { "type": "string" },
+					"amount": { "type": "number", "description": "ui amount (decimals applied internally)" }
+				},
+				"required": ["mint", "to", "amount"]
+			}
+		},
+		{
+			"name": "wrapSol",
+			"description": "Wrap SOL into wSOL (SPL).",
+			"input_schema": {
+				"type": "object",
+				"properties": { "amountSol": { "type": "number" } },
+				"required": ["amountSol"]
+			}
+		},
+		{
+			"name": "unwrapSol",
+			"description": "Close the wSOL ATA and reclaim SOL.",
+			"input_schema": { "type": "object", "properties": {} }
+		},
+		{
+			"name": "getRecentSignatures",
+			"description": "Recent transaction signatures for the wallet (or address).",
+			"input_schema": {
+				"type": "object",
+				"properties": {
+					"address": { "type": "string" },
+					"limit": { "type": "integer", "minimum": 1, "maximum": 100, "default": 25 }
+				}
+			}
+		}
+	]
+}

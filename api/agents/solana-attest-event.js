@@ -176,19 +176,36 @@ export default wrap(async (req, res) => {
 	// Mirror into the index immediately; crawler dedupes via unique signature.
 	// Verified semantics match _lib/solana-attestations.js#computeVerified for
 	// non-owner kinds (feedback/validation/task): structurally valid -> true.
-	await sql`
-		insert into solana_attestations (
-			signature, network, slot, block_time, agent_asset, attester,
-			kind, payload, task_id, target_signature, verified
-		)
-		values (
-			${signature}, ${body.network}, null, now(),
-			${body.agent_asset}, ${attester.publicKey.toBase58()},
-			${payload.kind}, ${JSON.stringify(payload)}::jsonb,
-			${payload.task_id ?? null}, null, true
-		)
-		on conflict (signature) do nothing
-	`;
+	//
+	// The partial unique index solana_attestations_event_id_uniq closes the
+	// race window between the dedupe SELECT above and this INSERT. If a
+	// concurrent webhook delivery already inserted, we catch 23505 and
+	// return the winning signature.
+	try {
+		await sql`
+			insert into solana_attestations (
+				signature, network, slot, block_time, agent_asset, attester,
+				kind, payload, task_id, target_signature, verified
+			)
+			values (
+				${signature}, ${body.network}, null, now(),
+				${body.agent_asset}, ${attester.publicKey.toBase58()},
+				${payload.kind}, ${JSON.stringify(payload)}::jsonb,
+				${payload.task_id ?? null}, null, true
+			)
+			on conflict (signature) do nothing
+		`;
+	} catch (e) {
+		if (e?.code !== '23505') throw e;
+		const [winner] = await sql`
+			select signature from solana_attestations
+			where agent_asset = ${body.agent_asset}
+			  and network = ${body.network}
+			  and payload->>'event_id' = ${body.event_id}
+			limit 1
+		`;
+		return json(res, 200, { data: { signature: winner?.signature ?? null, deduped: true } });
+	}
 
 	return json(res, 201, { data: { signature, kind: payload.kind, deduped: false } });
 });

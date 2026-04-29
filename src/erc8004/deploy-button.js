@@ -279,13 +279,31 @@ export class DeployButton {
 		}
 
 		const network = _solanaNetwork(this._chainId);
-		const steps = ['Connecting wallet', 'Sign tx', 'Confirming on-chain', 'Saving'];
+		const vanityPrefix = (this._vanityPrefix || '').trim();
+		const steps = vanityPrefix
+			? ['Grinding vanity address', 'Sign tx', 'Confirming on-chain', 'Saving']
+			: ['Connecting wallet', 'Sign tx', 'Confirming on-chain', 'Saving'];
 		this._renderProgress(steps, 0);
 
 		let result;
 		try {
+			result = await runSolanaDeploy({
+				agent,
+				network,
+				vanity: vanityPrefix ? {
+					prefix: vanityPrefix,
+					onProgress: ({ attempts, rate, eta }) => {
+						const live = this._root.querySelector('.deploy-progress');
+						if (live) {
+							live.setAttribute(
+								'aria-label',
+								`Grinding ${vanityPrefix}: ${attempts.toLocaleString()} tries, ${Math.round(rate).toLocaleString()}/s, eta ${eta}`,
+							);
+						}
+					},
+				} : undefined,
+			});
 			this._renderProgress(steps, 1);
-			result = await runSolanaDeploy({ agent, network });
 			this._renderProgress(steps, 3);
 		} catch (err) {
 			if (_isUserRejection(err)) return this._renderDeployButton();
@@ -295,6 +313,16 @@ export class DeployButton {
 					{
 						label: 'Open wallet sign-in',
 						handler: () => (window.location.href = '/login.html'),
+					},
+				);
+				return;
+			}
+			if (err.code === 'payment_required') {
+				this._renderError(
+					`${err.message || 'Paid plan required'} — upgrade to use 5+ character vanity prefixes.`,
+					{
+						label: 'View plans',
+						handler: () => (window.location.href = '/billing.html'),
 					},
 				);
 				return;

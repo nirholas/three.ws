@@ -1,13 +1,13 @@
 // pump-fun skill — proxies tool calls to the pump-fun-workers MCP server.
 // https://github.com/nirholas/pump-fun-workers
 
-const DEFAULT_ENDPOINT = 'https://pump-fun-sdk.modelcontextprotocol.name/mcp';
+const ENDPOINT = 'https://pump-fun-sdk.modelcontextprotocol.name/mcp';
 
 let _rpcId = 0;
 
-async function callMcp(endpoint, name, args, ctx) {
+async function callMcp(name, args, ctx) {
 	const fetchImpl = ctx?.fetch ?? globalThis.fetch;
-	const res = await fetchImpl(endpoint, {
+	const res = await fetchImpl(ENDPOINT, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({
@@ -18,26 +18,28 @@ async function callMcp(endpoint, name, args, ctx) {
 		}),
 	});
 
-	if (!res.ok) throw new Error(`pump-fun MCP HTTP ${res.status}`);
+	if (!res.ok) return { ok: false, error: `pump-fun MCP HTTP ${res.status}` };
 	const body = await res.json();
-	if (body.error) throw new Error(body.error.message ?? 'pump-fun MCP error');
+	if (body.error) return { ok: false, error: body.error.message ?? 'pump-fun MCP error' };
 
 	const content = body.result?.content ?? [];
 	const text = content.find((c) => c.type === 'text')?.text;
-	if (!text) return body.result;
-	try {
-		return JSON.parse(text);
-	} catch {
-		return text;
+	let data = body.result;
+	if (text) {
+		try {
+			data = JSON.parse(text);
+		} catch {
+			data = text;
+		}
 	}
+	return { ok: true, data };
 }
 
 function makeHandler(toolName) {
 	return async (args, ctx) => {
-		const endpoint = ctx?.skillConfig?.endpoint ?? DEFAULT_ENDPOINT;
-		const data = await callMcp(endpoint, toolName, args, ctx);
-		ctx?.memory?.note?.(`pump-fun:${toolName}`, { args });
-		return { ok: true, data };
+		const result = await callMcp(toolName, args, ctx);
+		if (result.ok) ctx?.memory?.note?.(`pump-fun:${toolName}`, { args });
+		return result;
 	};
 }
 

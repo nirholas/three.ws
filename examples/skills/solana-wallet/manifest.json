@@ -1,0 +1,30 @@
+{
+	"spec": "skill/0.1",
+	"name": "solana-wallet",
+	"version": "0.1.0",
+	"description": "Generic Solana wallet primitives: balances, transfers (SOL & SPL), wrap/unwrap SOL, recent signatures. Provides the ctx.wallet contract for sibling signing skills.",
+	"license": "MIT",
+	"tags": ["solana", "wallet", "primitives"],
+	"requires": {
+		"runtime": ">=0.1.0",
+		"capabilities": ["wallet.sign", "solana.rpc"]
+	},
+	"provides": {
+		"tools": [
+			"getAddress",
+			"getBalance",
+			"getSplBalances",
+			"transferSol",
+			"transferSpl",
+			"wrapSol",
+			"unwrapSol",
+			"getRecentSignatures"
+		],
+		"triggers": ["wallet_query", "wallet_transfer"]
+	},
+	"config": {
+		"rpc": "https://api.mainnet-beta.solana.com",
+		"priorityFeeMicroLamports": 50000,
+		"maxTransferSol": 1.0
+	}
+}
