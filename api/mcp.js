@@ -52,11 +52,41 @@ export default wrap(async (req, res) => {
 	if (req.method === 'DELETE') return handleTerminate(req, res);
 	if (req.method !== 'POST') return send401(res, 'method not supported');
 
+	// Auth: either a Bearer token (OAuth/API key) OR an x402 X-PAYMENT header.
 	const bearer = extractBearer(req);
-	const auth = await authenticateBearer(bearer, { audience: env.MCP_RESOURCE });
-	if (!auth) {
-		if (!bearer && !req.headers['x-payment']) return sendX402Challenge(req, res);
-		return send401(res, 'missing or invalid access token');
+	const paymentHeader = req.headers['x-payment'];
+	let auth = null;
+	let x402Ctx = null;
+
+	if (bearer) {
+		auth = await authenticateBearer(bearer, { audience: env.MCP_RESOURCE });
+		if (!auth) return send401(res, 'missing or invalid access token');
+	} else if (paymentHeader) {
+		const requirements = paymentRequirements({
+			resource: resolveResourceUrl(req, '/api/mcp'),
+			description: 'MCP tool call',
+		});
+		try {
+			const verified = await verifyPayment({ paymentHeader, requirements });
+			x402Ctx = { requirements, paymentPayload: verified.paymentPayload, payer: verified.payer };
+		} catch (err) {
+			return sendX402Error(res, requirements, err);
+		}
+		// Anonymous paid caller — synthesize an auth principal scoped to MCP read tools.
+		auth = {
+			userId: `x402:${x402Ctx.payer || 'unknown'}`,
+			scope: 'avatars:read profile',
+			source: 'x402',
+			payer: x402Ctx.payer,
+		};
+	} else {
+		return send402(
+			res,
+			paymentRequirements({
+				resource: resolveResourceUrl(req, '/api/mcp'),
+				description: 'MCP tool call',
+			}),
+		);
 	}
 
 	const ipRl = await limits.mcpIp(clientIp(req));
@@ -82,11 +112,41 @@ export default wrap(async (req, res) => {
 		const r = await dispatch(msg, auth, req);
 		if (r !== null) responses.push(r);
 	}
+
+	// Settle the x402 payment AFTER the work succeeded — atomic from the caller's
+	// perspective: if settle fails, the payer's signed payload is not broadcast
+	// and they get a 502 instead of having paid for nothing.
+	if (x402Ctx) {
+		try {
+			const settled = await settlePayment({
+				paymentPayload: x402Ctx.paymentPayload,
+				requirements: x402Ctx.requirements,
+			});
+			res.setHeader('x-payment-response', encodePaymentResponseHeader(settled));
+		} catch (err) {
+			return sendX402Error(res, x402Ctx.requirements, err);
+		}
+	}
+
 	res.statusCode = 200;
 	res.setHeader('content-type', 'application/json; charset=utf-8');
 	res.setHeader('mcp-protocol-version', PROTOCOL_VERSION);
 	res.end(JSON.stringify(Array.isArray(body) ? responses : (responses[0] ?? null)));
 });
+
+function sendX402Error(res, requirements, err) {
+	if (err instanceof X402Error) {
+		if (err.status === 402) return send402(res, requirements, err.message);
+		res.statusCode = err.status;
+		res.setHeader('content-type', 'application/json; charset=utf-8');
+		res.end(JSON.stringify({ error: err.code, error_description: err.message }));
+		return;
+	}
+	log.error('x402_unexpected', { message: err?.message });
+	res.statusCode = 500;
+	res.setHeader('content-type', 'application/json; charset=utf-8');
+	res.end(JSON.stringify({ error: 'internal', error_description: 'x402 processing failed' }));
+}
 
 // ── JSON-RPC dispatch ────────────────────────────────────────────────────────
 async function dispatch(msg, auth, req) {

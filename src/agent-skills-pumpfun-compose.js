@@ -290,48 +290,58 @@ export function registerPumpFunComposeSkills(skills) {
 				sizeMultiplier: { type: 'number', minimum: 0.001, maximum: 10 },
 				durationSec: { type: 'integer', minimum: 10, maximum: 7200 },
 				sessionId: { type: 'string' },
-				simulate: { type: 'boolean' },
+				dryRun: { type: 'boolean' },
 			},
 			required: ['wallet', 'durationSec'],
 		},
 		handler: async (args, ctx) => {
-			const simulate = !!args.simulate;
+			const dryRun = !!args.dryRun;
+			const onProgress = args.onProgress;
+			const signal = args.signal;
 			const sessionId = args.sessionId;
 			const deadline = Date.now() + args.durationSec * 1000;
 			const mult = args.sizeMultiplier ?? 1;
 			const cap = cfg(ctx, 'sessionSpendCapSol');
 			const state = await loadState(ctx?.memory, sessionId, { mirrored: new Set(), spent: 0, log: [] });
+			emit(onProgress, { type: 'start', mode: 'copy-trade', wallet: args.wallet, spent: state.spent, cap });
 
-			while (!args.signal?.aborted && Date.now() < deadline && state.spent < cap) {
+			while (!signal?.aborted && Date.now() < deadline && state.spent < cap) {
 				const profile = await mcp('getCreatorProfile', { creator: args.wallet }).catch(() => null);
 				const recentMints = (profile?.tokens ?? []).map((t) => t.mint).filter(Boolean);
 				for (const mint of recentMints) {
+					if (signal?.aborted) break;
 					const trades = await mcp('getTokenTrades', { mint, limit: 20 }).catch(() => null);
 					const buys = (trades?.trades ?? trades ?? []).filter(
 						(t) => t.side === 'buy' && t.wallet === args.wallet && !state.mirrored.has(t.sig),
 					);
 					for (const b of buys) {
+						if (signal?.aborted) break;
 						state.mirrored.add(b.sig);
 						const amountSol = Math.min((b.solAmount ?? 0) * mult, cap - state.spent);
 						if (amountSol <= 0) break;
 						try {
-							const r = await maybeBuy(skills, ctx, simulate, mint, amountSol);
+							const r = await doBuy(skills, ctx, dryRun, mint, amountSol);
 							state.spent += amountSol;
-							state.log.push({ mint, mirroredFrom: b.sig, sig: r.signature, amountSol, simulate });
+							state.log.push({ mint, mirroredFrom: b.sig, sig: r.signature, amountSol, dryRun });
 							saveState(ctx?.memory, sessionId, state);
+							emit(onProgress, { type: dryRun ? 'dry-buy' : 'buy', mint, sig: r.signature, amountSol, spent: state.spent });
 						} catch (e) {
 							state.log.push({ mint, error: e.message });
+							emit(onProgress, { type: 'error', mint, reason: e.message });
 						}
 					}
 				}
 				saveState(ctx?.memory, sessionId, state);
-				await new Promise((r) => setTimeout(r, cfg(ctx, 'pollMs')));
+				if (signal?.aborted || Date.now() >= deadline || state.spent >= cap) break;
+				emit(onProgress, { type: 'poll-sleep', ms: cfg(ctx, 'pollMs') });
+				await abortableSleep(cfg(ctx, 'pollMs'), signal);
 			}
+			const reason = signal?.aborted ? 'aborted' : Date.now() >= deadline ? 'duration' : 'cap';
 			return {
 				success: true,
-				output: `${simulate ? 'Dry-run' : 'Copy-trade'} done. Mirrored ${state.log.length} buys, spent ${state.spent} SOL.`,
+				output: `${dryRun ? 'Dry-run' : 'Copy-trade'} done (${reason}). Mirrored ${state.log.length} buys, spent ${state.spent} SOL.`,
 				sentiment: 0.4,
-				data: { spent: state.spent, mirrors: state.log, simulate, sessionId },
+				data: { spent: state.spent, mirrors: state.log, dryRun, sessionId, reason },
 			};
 		},
 	});
