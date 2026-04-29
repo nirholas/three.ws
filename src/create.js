@@ -9,7 +9,7 @@ async function boot() {
 		saveAndRedirect(blob, { source: 'avaturn' }),
 	);
 
-	document.getElementById('back-btn').addEventListener('click', () => {
+	document.getElementById('back-btn')?.addEventListener('click', () => {
 		if (history.length > 1) history.back();
 		else window.location.href = '/';
 	});

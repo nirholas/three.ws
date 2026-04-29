@@ -18,6 +18,151 @@ import { glbFileToThumbnail } from './thumbnail.js';
 
 let _provider = null;
 let _signer = null;
+let _address = null;
+let _chainId = null;
+const _listeners = new Set();
+let _walletEventsBound = false;
+
+// localStorage hint — set after a successful explicit connect, cleared on
+// `accountsChanged → []`. Lets us decide whether to *attempt* eager reconnect
+// on a fresh page load (avoiding noisy `eth_accounts` polls for first-time
+// visitors). Not authoritative — the wallet is still the source of truth.
+const HINT_KEY = '3dagent:wallet-connected';
+
+function setHint(on) {
+	try {
+		if (on) localStorage.setItem(HINT_KEY, '1');
+		else localStorage.removeItem(HINT_KEY);
+	} catch {
+		/* private mode / storage disabled */
+	}
+}
+
+function hasHint() {
+	try {
+		return localStorage.getItem(HINT_KEY) === '1';
+	} catch {
+		return false;
+	}
+}
+
+function notify(reason) {
+	const snapshot = {
+		address: _address,
+		chainId: _chainId,
+		signer: _signer,
+		reason,
+	};
+	for (const fn of _listeners) {
+		try {
+			fn(snapshot);
+		} catch {
+			/* listener errors must not break the bus */
+		}
+	}
+}
+
+function bindWalletEvents() {
+	if (_walletEventsBound || !window.ethereum?.on) return;
+	_walletEventsBound = true;
+
+	window.ethereum.on('accountsChanged', async (accounts) => {
+		if (!accounts || accounts.length === 0) {
+			_provider = null;
+			_signer = null;
+			_address = null;
+			_chainId = null;
+			setHint(false);
+			notify('disconnected');
+			return;
+		}
+		// Re-derive signer for the new account (no popup).
+		try {
+			_provider = new BrowserProvider(window.ethereum);
+			_signer = await _provider.getSigner();
+			_address = await _signer.getAddress();
+			const net = await _provider.getNetwork();
+			_chainId = Number(net.chainId);
+			notify('account-changed');
+		} catch {
+			/* swallow — next explicit connect will recover */
+		}
+	});
+
+	window.ethereum.on('chainChanged', async (chainIdHex) => {
+		_chainId = Number(chainIdHex);
+		// Refresh provider/signer so they bind to the new network.
+		if (_address) {
+			try {
+				_provider = new BrowserProvider(window.ethereum);
+				_signer = await _provider.getSigner();
+			} catch {
+				/* signer may briefly be unavailable mid-switch */
+			}
+		}
+		notify('chain-changed');
+	});
+}
+
+/**
+ * Subscribe to wallet state changes (connect, disconnect, account/chain switch).
+ * Returns an unsubscribe function.
+ *
+ * @param {(state: { address: string|null, chainId: number|null, signer: import('ethers').Signer|null, reason: string }) => void} fn
+ * @returns {() => void}
+ */
+export function onWalletChange(fn) {
+	_listeners.add(fn);
+	bindWalletEvents();
+	return () => _listeners.delete(fn);
+}
+
+/**
+ * Snapshot of the current wallet state without triggering a connection.
+ * @returns {{ address: string|null, chainId: number|null, signer: import('ethers').Signer|null }}
+ */
+export function getWalletState() {
+	return { address: _address, chainId: _chainId, signer: _signer };
+}
+
+/**
+ * Attempt a *silent* reconnect using `eth_accounts` — no MetaMask popup.
+ * Only succeeds if the wallet has previously authorized this origin and is
+ * still unlocked. Safe to call on every page mount.
+ *
+ * @returns {Promise<{address: string, chainId: number, signer: import('ethers').Signer} | null>}
+ *   Resolves to null when no eager connection is possible (no wallet, no prior
+ *   authorization, locked, or wallet refused). Never throws.
+ */
+export async function eagerConnectWallet() {
+	if (!window.ethereum) return null;
+	// Skip the RPC roundtrip for users who've never connected — no hint, no try.
+	// (Doesn't apply if the wallet was authorized in a previous session before
+	// we shipped the hint; on first visit after deploy they get one extra
+	// silent `eth_accounts` call which is free.)
+	if (!hasHint() && _address === null) {
+		// Still attempt once — `eth_accounts` is cheap and may surface an
+		// already-authorized session that predates the hint mechanism.
+	}
+	try {
+		const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+		if (!accounts || accounts.length === 0) {
+			setHint(false);
+			return null;
+		}
+		_provider = new BrowserProvider(window.ethereum);
+		_signer = await _provider.getSigner();
+		_address = await _signer.getAddress();
+		const network = await _provider.getNetwork();
+		_chainId = Number(network.chainId);
+		setHint(true);
+		bindWalletEvents();
+		notify('eager-connected');
+		return { address: _address, chainId: _chainId, signer: _signer };
+	} catch {
+		return null;
+	}
+}
 
 /**
  * Connect a wallet via the injected EIP-1193 provider (MetaMask, Brave, etc.).
@@ -31,11 +176,15 @@ export async function connectWallet() {
 
 	_provider = new BrowserProvider(window.ethereum);
 	_signer = await _provider.getSigner();
-	const address = await _signer.getAddress();
+	_address = await _signer.getAddress();
 	const network = await _provider.getNetwork();
-	const chainId = Number(network.chainId);
+	_chainId = Number(network.chainId);
 
-	return { provider: _provider, signer: _signer, address, chainId };
+	setHint(true);
+	bindWalletEvents();
+	notify('connected');
+
+	return { provider: _provider, signer: _signer, address: _address, chainId: _chainId };
 }
 
 /**

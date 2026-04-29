@@ -18,6 +18,8 @@
 import {
 	registerAgent,
 	connectWallet,
+	eagerConnectWallet,
+	onWalletChange,
 	pinFile,
 	getIdentityRegistry,
 	buildRegistrationJSON,
@@ -288,6 +290,25 @@ export class RegisterUI {
 		this._build();
 		this._bind();
 		this._fetchBackendAgent(); // fire & forget
+		this._eagerConnectWallet(); // silent reconnect if wallet already authorized
+
+		// Keep the UI in sync when the user switches account/chain in the wallet,
+		// or when another tab/page on this origin connects/disconnects.
+		this._unsubscribeWallet = onWalletChange(({ address, chainId }) => {
+			if (!address) {
+				this.wallet = null;
+			} else {
+				this.wallet = { address, chainId: Number(chainId) };
+				if (REGISTRY_DEPLOYMENTS[this.wallet.chainId]) {
+					this.selectedChainId = this.wallet.chainId;
+					const sel = this.el.querySelector('.erc8004-chain-select');
+					if (sel) sel.value = String(this.selectedChainId);
+				}
+			}
+			this._refreshWalletButton();
+			this._renderActiveTab();
+			this._refreshMainnetBanner();
+		});
 	}
 
 	// -----------------------------------------------------------------------
@@ -379,6 +400,7 @@ export class RegisterUI {
 	}
 
 	destroy() {
+		if (this._unsubscribeWallet) this._unsubscribeWallet();
 		this.el.remove();
 	}
 
@@ -404,6 +426,23 @@ export class RegisterUI {
 		} catch (err) {
 			this._toast('Wallet: ' + err.message, true);
 		}
+	}
+
+	// Silent reconnect on mount — uses `eth_accounts` (no popup). If the wallet
+	// has previously authorized this origin and is unlocked, we restore the
+	// connection transparently so the user doesn't see "Connect MetaMask" twice.
+	async _eagerConnectWallet() {
+		const result = await eagerConnectWallet();
+		if (!result) return;
+		this.wallet = { address: result.address, chainId: Number(result.chainId) };
+		if (REGISTRY_DEPLOYMENTS[this.wallet.chainId]) {
+			this.selectedChainId = this.wallet.chainId;
+			const sel = this.el.querySelector('.erc8004-chain-select');
+			if (sel) sel.value = String(this.selectedChainId);
+		}
+		this._refreshWalletButton();
+		this._renderActiveTab();
+		this._refreshMainnetBanner();
 	}
 
 	_refreshWalletButton() {
