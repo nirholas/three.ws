@@ -1175,6 +1175,25 @@ Server read endpoint: `GET /api/agents/solana-attestations?asset=<pubkey>&kind=f
 
 Demo page: [sdk/example/solana-attest.html](sdk/example/solana-attest.html).
 
+### Pump.fun signals (Solana off-chain reputation)
+
+Solana agents can ingest live pump.fun activity (GitHub social-fee claims, token graduations) as off-chain trust signals that feed into the agent's Solana reputation score and surface through the Empathy Layer in real time.
+
+| Surface | Path | Purpose |
+|---|---|---|
+| MCP client | [api/_lib/pumpfun-mcp.js](api/_lib/pumpfun-mcp.js) | Cached JSON-RPC client to upstream `pumpfun-claims-bot` |
+| Read API | [api/agents/pumpfun.js](api/agents/pumpfun.js) | `?op=claims\|graduations\|token\|creator` |
+| SSE feed | [api/agents/pumpfun-feed.js](api/agents/pumpfun-feed.js) | Live event stream, 90s window, auto-reconnects |
+| Cron crawler | [api/cron/pumpfun-signals.js](api/cron/pumpfun-signals.js) | 15-min sweep → `pumpfun_signals` table |
+| Skills | [src/agent-skills-pumpfun-watch.js](src/agent-skills-pumpfun-watch.js) | `recent-claims`, `token-intel`, `watch-start`, `watch-stop` |
+| Widget | [src/widgets/pumpfun-feed.js](src/widgets/pumpfun-feed.js) | Live cards overlay |
+| Reputation | [api/agents/solana-reputation.js](api/agents/solana-reputation.js) | `pumpfun_signals` block in response |
+| Passport | [api/agents/solana-card.js](api/agents/solana-card.js) | `pumpfun` block on the agent card |
+
+The crawler runs on a `*/15 * * * *` schedule (see [vercel.json](vercel.json)) and writes into the `pumpfun_signals` table. Agents subscribed via `watch-start` react to incoming events through the existing protocol bus — no new event types required.
+
+Full design and configuration in [docs/solana-pumpfun.md](docs/solana-pumpfun.md).
+
 ---
 
 ## Database Schema
