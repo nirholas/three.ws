@@ -77,10 +77,14 @@ export function mountPumpFunCard({ panel, identity, skills, memory, protocol }) 
 				<span class="pumpfun-card-icon">◎</span>
 				<span class="pumpfun-card-title">Launch coin on pump.fun</span>
 			</div>
-			<p class="pumpfun-card-sub">Mint a token whose metadata is your 3D avatar. The agent signs from its own wallet.</p>
+			<p class="pumpfun-card-sub">Mint a token whose metadata is your 3D avatar.</p>
+			<div class="pumpfun-signer" role="tablist" aria-label="Signer">
+				<button class="pumpfun-signer-tab ${state.signer === 'agent' ? 'is-active' : ''}" data-action="signer-agent" role="tab" aria-selected="${state.signer === 'agent'}">Agent wallet</button>
+				<button class="pumpfun-signer-tab ${state.signer === 'owner' ? 'is-active' : ''}" data-action="signer-owner" role="tab" aria-selected="${state.signer === 'owner'}">Owner wallet</button>
+			</div>
 			<label class="pumpfun-vanity-row" title="Grind a custom mint address ending in your suffix. Slower, but distinctive.">
 				<input type="checkbox" data-action="toggle-vanity" ${state.vanityEnabled ? 'checked' : ''}>
-				<span>Vanity address ends with</span>
+				<span>Vanity ends with</span>
 				<input type="text" data-action="vanity-suffix" value="${escapeAttr(state.vanitySuffix)}" maxlength="6" ${state.vanityEnabled ? '' : 'disabled'} class="pumpfun-vanity-input">
 			</label>
 			${state.vanityProgress ? `<div class="pumpfun-vanity-progress">grinding… ${formatNumber(state.vanityProgress.rate)}/s · eta ${escapeHtml(state.vanityProgress.eta)}</div>` : ''}

@@ -1,12 +1,18 @@
 /**
  * Pump.fun composition skills — agent-level loops over read (MCP) + trade (signed).
- * Mirrors examples/skills/pump-fun-compose/handlers.js but runs inside AgentSkills
- * so it composes pumpfun-buy / pumpfun-sell instead of file-based sibling skills.
+ * Composes pumpfun-buy / pumpfun-sell / pumpfun-status in-process.
  *
- * Safety:
- *   - simulate:true       → vet/quote run, signing skipped, returns SIMULATED:* sigs
- *   - sessionId:"..."     → seen/mirrored/spent/exited persisted in agent memory,
- *                           survives crashes within the spend cap.
+ * Args supported by every loop:
+ *   - sessionId:"..."  → seen/mirrored/spent/exited persisted in agent memory,
+ *                        survives crashes within the spend cap.
+ *   - signal           → AbortSignal; loops, sleeps, and inner iterations all
+ *                        bail out promptly when aborted.
+ *   - onProgress(evt)  → called on every state change (vet/skip/buy/sell/sleep).
+ *                        Used by the UI for live counters.
+ *   - dryRun:true      → identical control flow; trade-skill calls are replaced
+ *                        with `{ signature: null, dryRun: true }`. Spend cap
+ *                        and seen/mirrored sets still tick so a dry-run
+ *                        terminates the same way a live run would.
  */
 
 const MCP_ENDPOINT = 'https://pump-fun-sdk.modelcontextprotocol.name/mcp';
@@ -91,21 +97,34 @@ function saveState(memory, sessionId, state) {
 	} catch {}
 }
 
-async function maybeBuy(skills, ctx, simulate, mint, solAmount) {
-	if (simulate) return { signature: `SIMULATED:buy:${mint}:${solAmount}`, simulated: true };
+function abortableSleep(ms, signal) {
+	return new Promise((resolve) => {
+		if (signal?.aborted) return resolve();
+		const t = setTimeout(resolve, ms);
+		const onAbort = () => { clearTimeout(t); resolve(); };
+		signal?.addEventListener?.('abort', onAbort, { once: true });
+	});
+}
+
+async function doBuy(skills, ctx, dryRun, mint, solAmount) {
+	if (dryRun) return { signature: null, dryRun: true };
 	const r = await skills.perform('pumpfun-buy', { mint, solAmount }, ctx);
 	if (!r?.success) throw new Error(r?.output || 'pumpfun-buy failed');
 	return r.data;
 }
 
-async function maybeSell(skills, ctx, simulate, mint) {
+async function doSell(skills, ctx, dryRun, mint) {
 	const status = await skills.perform('pumpfun-status', { mint }, ctx);
 	const tokenAmount = status?.data?.userBalance ?? '0';
-	if (simulate) return { signature: `SIMULATED:sell:${mint}:${tokenAmount}`, simulated: true };
-	if (tokenAmount === '0') return { signature: 'NOOP:no-balance', simulated: false };
+	if (tokenAmount === '0') return { signature: null, skipped: 'no-balance', tokenAmount };
+	if (dryRun) return { signature: null, dryRun: true, tokenAmount };
 	const r = await skills.perform('pumpfun-sell', { mint, tokenAmount }, ctx);
 	if (!r?.success) throw new Error(r?.output || 'pumpfun-sell failed');
-	return r.data;
+	return { ...r.data, tokenAmount };
+}
+
+function emit(progress, evt) {
+	try { progress?.(evt); } catch {}
 }
 
 function passesFilters(ctx, { creator, holders }) {
@@ -140,7 +159,7 @@ async function vetMint(mint) {
 export function registerPumpFunComposeSkills(skills) {
 	skills.register({
 		name: 'pumpfun-research-and-buy',
-		description: 'Research a pump.fun token, then buy if it passes rug/holder filters. Set simulate:true to dry-run.',
+		description: 'Research a pump.fun token, then buy if it passes rug/holder filters.',
 		instruction: 'search → vet (curve, holders, creator rug flags) → buy via pumpfun-buy.',
 		animationHint: 'inspect',
 		voicePattern: 'Researching {{query}}…',
@@ -150,33 +169,38 @@ export function registerPumpFunComposeSkills(skills) {
 			properties: {
 				query: { type: 'string' },
 				amountSol: { type: 'number' },
-				simulate: { type: 'boolean' },
+				dryRun: { type: 'boolean', description: 'Vet/quote but skip the actual buy.' },
 			},
 			required: ['query'],
 		},
 		handler: async (args, ctx) => {
-			const simulate = !!args.simulate;
+			const dryRun = !!args.dryRun;
+			const onProgress = args.onProgress;
+			emit(onProgress, { type: 'search', query: args.query });
 			const search = await mcp('searchTokens', { query: args.query, limit: 1 });
 			const mint = search?.results?.[0]?.mint ?? search?.[0]?.mint ?? args.query;
+			emit(onProgress, { type: 'vet', mint });
 			const v = await vetMint(mint);
 			const verdict = passesFilters(ctx, v);
 			if (!verdict.ok) {
+				emit(onProgress, { type: 'skip', mint, reason: verdict.reason });
 				return {
 					success: true,
 					output: `Skipping ${mint.slice(0, 8)}…: ${verdict.reason}`,
 					sentiment: -0.1,
-					data: { mint, decision: 'skip', reason: verdict.reason, simulate },
+					data: { mint, decision: 'skip', reason: verdict.reason, dryRun },
 				};
 			}
 			const amountSol = args.amountSol ?? cfg(ctx, 'perTradeSol');
-			const buy = await maybeBuy(skills, ctx, simulate, mint, amountSol);
+			emit(onProgress, { type: dryRun ? 'dry-buy' : 'buy', mint, amountSol });
+			const buy = await doBuy(skills, ctx, dryRun, mint, amountSol);
 			return {
 				success: true,
-				output: simulate
+				output: dryRun
 					? `Dry-run buy ${amountSol} SOL of ${mint.slice(0, 8)}….`
 					: `Bought ${amountSol} SOL of ${mint.slice(0, 8)}….`,
 				sentiment: 0.6,
-				data: { mint, decision: 'buy', amountSol, sig: buy.signature, simulate },
+				data: { mint, decision: 'buy', amountSol, sig: buy.signature, dryRun },
 			};
 		},
 	});

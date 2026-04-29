@@ -99,9 +99,25 @@ export async function generateSolanaAgentWallet() {
 /**
  * Recover a Solana Keypair from its encrypted form.
  * Only call this when the agent needs to sign a transaction.
+ *
+ * Audit hook: pass `audit: { agentId, userId, reason, meta }` and a
+ * usage_events row will be written fire-and-forget so every decrypt
+ * is traceable.
  */
-export async function recoverSolanaAgentKeypair(encryptedSecret) {
+export async function recoverSolanaAgentKeypair(encryptedSecret, audit = null) {
 	const { Keypair } = await import('@solana/web3.js');
 	const secretB64 = await decrypt(encryptedSecret);
-	return Keypair.fromSecretKey(Buffer.from(secretB64, 'base64'));
+	const kp = Keypair.fromSecretKey(Buffer.from(secretB64, 'base64'));
+	if (audit && audit.agentId) {
+		const { recordEvent } = await import('./usage.js');
+		recordEvent({
+			userId: audit.userId ?? null,
+			agentId: audit.agentId,
+			kind: 'solana_key_use',
+			tool: audit.reason || 'sign',
+			status: 'ok',
+			meta: { address: kp.publicKey.toBase58(), ...(audit.meta || {}) },
+		});
+	}
+	return kp;
 }
