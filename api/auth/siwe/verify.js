@@ -142,20 +142,47 @@ export default wrap(async (req, res) => {
 			where address = ${addrLower}
 		`;
 	} else {
-		// Create a new passwordless user. Email is synthesized and placeholder —
-		// user can set a real email + password later.
+		// Fall back to users.wallet_address — older rows may have been created
+		// before user_wallets existed, or by a different flow that only set the
+		// users column. Reconcile by backfilling user_wallets.
 		const placeholderEmail = `wallet-${addrLower}@wallet.local`;
-		const [user] = await sql`
-			insert into users (email, display_name, wallet_address)
-			values (${placeholderEmail}, ${shortAddr(claimed)}, ${addrLower})
-			returning id
+		const [existingUser] = await sql`
+			select id from users
+			where (wallet_address = ${addrLower} or email = ${placeholderEmail})
+				and deleted_at is null
+			limit 1
 		`;
-		userId = user.id;
-		await sql`
-			insert into user_wallets (user_id, address, chain_id, is_primary)
-			values (${userId}, ${addrLower}, ${chainId}, true)
-		`;
-		queueMicrotask(() => sendWelcomeEmail({ to: placeholderEmail, displayName: shortAddr(claimed) }));
+
+		if (existingUser) {
+			userId = existingUser.id;
+			await sql`
+				update users set wallet_address = ${addrLower}
+				where id = ${userId} and wallet_address is distinct from ${addrLower}
+			`;
+			await sql`
+				insert into user_wallets (user_id, address, chain_id, is_primary)
+				values (${userId}, ${addrLower}, ${chainId}, true)
+				on conflict (address) do update
+					set last_used_at = now(),
+						chain_id = coalesce(${chainId}, user_wallets.chain_id)
+			`;
+		} else {
+			// Create a new passwordless user. Email is synthesized and placeholder —
+			// user can set a real email + password later.
+			const [user] = await sql`
+				insert into users (email, display_name, wallet_address)
+				values (${placeholderEmail}, ${shortAddr(claimed)}, ${addrLower})
+				returning id
+			`;
+			userId = user.id;
+			await sql`
+				insert into user_wallets (user_id, address, chain_id, is_primary)
+				values (${userId}, ${addrLower}, ${chainId}, true)
+			`;
+			queueMicrotask(() =>
+				sendWelcomeEmail({ to: placeholderEmail, displayName: shortAddr(claimed) }),
+			);
+		}
 	}
 
 	// 7. Issue session.
