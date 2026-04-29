@@ -89,8 +89,15 @@ export default wrap(async (req, res) => {
 								amount: '0.001',
 							},
 							protocols: [
-								{ x402: {} },
-								{ mpp: { method: '', intent: '', currency: '' } },
+								{
+									x402: {
+										network: 'solana',
+										asset: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+										payTo: 'BUrwd1nK6tFeeJMyzRHDo6AuVbnSfUULfvwq21X93nSN',
+										scheme: 'exact',
+										maxAmountRequired: '1000',
+									},
+								},
 							],
 						},
 					},
@@ -140,24 +147,6 @@ export default wrap(async (req, res) => {
 						responses: {
 							201: { description: 'Avatar created' },
 							401: { description: 'Unauthorized' },
-						},
-					},
-				},
-				'/api/avatars/public': {
-					get: {
-						operationId: 'browse_public_avatars',
-						summary: 'Browse public avatars',
-						parameters: [
-							{ name: 'q', in: 'query', schema: { type: 'string' } },
-							{
-								name: 'limit',
-								in: 'query',
-								schema: { type: 'integer', default: 20, maximum: 100 },
-							},
-							{ name: 'cursor', in: 'query', schema: { type: 'string' } },
-						],
-						responses: {
-							200: { description: 'Paginated list of public avatars' },
 						},
 					},
 				},

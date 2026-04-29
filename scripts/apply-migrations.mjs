@@ -51,9 +51,7 @@ async function ensureTrackingTable() {
 }
 
 async function listPending() {
-	const all = (await readdir(MIG_DIR))
-		.filter((f) => f.endsWith('.sql'))
-		.sort();
+	const all = (await readdir(MIG_DIR)).filter((f) => f.endsWith('.sql')).sort();
 	const applied = await sql`select filename, sha256 from schema_migrations`;
 	const appliedMap = new Map(applied.map((r) => [r.filename, r.sha256]));
 
@@ -63,7 +61,12 @@ async function listPending() {
 		const body = await readFile(path.join(MIG_DIR, fname), 'utf-8');
 		const hash = createHash('sha256').update(body).digest('hex');
 		const prior = appliedMap.get(fname);
-		out.push({ fname, body, hash, status: !prior ? 'pending' : prior === hash ? 'applied' : 'drift' });
+		out.push({
+			fname,
+			body,
+			hash,
+			status: !prior ? 'pending' : prior === hash ? 'applied' : 'drift',
+		});
 	}
 	return out;
 }
@@ -122,7 +125,9 @@ async function main() {
 		return;
 	}
 
-	console.log(`\nApplying ${pending.length} migration(s) to ${maskUrl(process.env.DATABASE_URL)} …`);
+	console.log(
+		`\nApplying ${pending.length} migration(s) to ${maskUrl(process.env.DATABASE_URL)} …`,
+	);
 	for (const i of pending) await applyOne(i);
 	console.log('Done.');
 }

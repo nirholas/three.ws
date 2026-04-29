@@ -16,26 +16,113 @@
 				--panel: #14141c;
 				--muted: #888;
 			}
-			* { box-sizing: border-box; }
-			body { font: 15px/1.55 system-ui, sans-serif; color: #eee; margin: 0; background: var(--bg); }
-			header { display: flex; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid var(--border); }
-			main { padding: 28px; max-width: 880px; margin: 0 auto; }
-			h1 { font-size: 22px; margin: 0 0 6px; }
-			.sub { color: var(--muted); margin: 0 0 22px; }
-			.panel { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; margin-bottom: 18px; }
-			label { display: block; font-size: 13px; color: var(--muted); margin: 8px 0 4px; }
-			input, select { width: 100%; padding: 8px 10px; background: #0e0e14; border: 1px solid var(--border); border-radius: 8px; color: #eee; font: inherit; }
-			button { background: var(--accent); color: white; border: 0; padding: 9px 16px; border-radius: 8px; font: inherit; cursor: pointer; }
-			button:disabled { opacity: .5; cursor: not-allowed; }
-			button.ghost { background: transparent; border: 1px solid var(--border); color: #eee; }
-			.row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-			.muted { color: var(--muted); }
-			.ok { color: var(--ok); }
-			.err { color: var(--err); }
-			pre { background: #08080c; border: 1px solid var(--border); border-radius: 8px; padding: 10px; overflow: auto; font-size: 12px; }
-			table { width: 100%; border-collapse: collapse; font-size: 13px; }
-			td, th { padding: 8px 6px; border-bottom: 1px solid var(--border); text-align: left; }
-			.mono { font-family: ui-monospace, monospace; }
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				font:
+					15px/1.55 system-ui,
+					sans-serif;
+				color: #eee;
+				margin: 0;
+				background: var(--bg);
+			}
+			header {
+				display: flex;
+				justify-content: space-between;
+				padding: 16px 24px;
+				border-bottom: 1px solid var(--border);
+			}
+			main {
+				padding: 28px;
+				max-width: 880px;
+				margin: 0 auto;
+			}
+			h1 {
+				font-size: 22px;
+				margin: 0 0 6px;
+			}
+			.sub {
+				color: var(--muted);
+				margin: 0 0 22px;
+			}
+			.panel {
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 14px;
+				padding: 18px 20px;
+				margin-bottom: 18px;
+			}
+			label {
+				display: block;
+				font-size: 13px;
+				color: var(--muted);
+				margin: 8px 0 4px;
+			}
+			input,
+			select {
+				width: 100%;
+				padding: 8px 10px;
+				background: #0e0e14;
+				border: 1px solid var(--border);
+				border-radius: 8px;
+				color: #eee;
+				font: inherit;
+			}
+			button {
+				background: var(--accent);
+				color: white;
+				border: 0;
+				padding: 9px 16px;
+				border-radius: 8px;
+				font: inherit;
+				cursor: pointer;
+			}
+			button:disabled {
+				opacity: 0.5;
+				cursor: not-allowed;
+			}
+			button.ghost {
+				background: transparent;
+				border: 1px solid var(--border);
+				color: #eee;
+			}
+			.row {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 12px;
+			}
+			.muted {
+				color: var(--muted);
+			}
+			.ok {
+				color: var(--ok);
+			}
+			.err {
+				color: var(--err);
+			}
+			pre {
+				background: #08080c;
+				border: 1px solid var(--border);
+				border-radius: 8px;
+				padding: 10px;
+				overflow: auto;
+				font-size: 12px;
+			}
+			table {
+				width: 100%;
+				border-collapse: collapse;
+				font-size: 13px;
+			}
+			td,
+			th {
+				padding: 8px 6px;
+				border-bottom: 1px solid var(--border);
+				text-align: left;
+			}
+			.mono {
+				font-family: ui-monospace, monospace;
+			}
 		</style>
 	</head>
 	<body>
@@ -45,15 +132,18 @@
 		</header>
 		<main>
 			<h1>Pump.fun relay trading</h1>
-			<p class="sub">Authorize the three.ws server keypair to execute pump.fun trades on your behalf, capped by SOL and TTL. MCP clients without a wallet can then drive trades.</p>
+			<p class="sub">
+				Authorize the three.ws server keypair to execute pump.fun trades on your behalf,
+				capped by SOL and TTL. MCP clients without a wallet can then drive trades.
+			</p>
 
 			<div class="panel">
-				<h2 style="margin-top:0">Server relayer</h2>
+				<h2 style="margin-top: 0">Server relayer</h2>
 				<div id="relayer-info">Loading…</div>
 			</div>
 
 			<div class="panel">
-				<h2 style="margin-top:0">Authorize</h2>
+				<h2 style="margin-top: 0">Authorize</h2>
 				<div class="row">
 					<div>
 						<label>Wallet (base58)</label>
@@ -61,13 +151,23 @@
 					</div>
 					<div>
 						<label>Network</label>
-						<select id="network"><option>mainnet</option><option>devnet</option></select>
+						<select id="network">
+							<option>mainnet</option>
+							<option>devnet</option>
+						</select>
 					</div>
 				</div>
 				<div class="row">
 					<div>
 						<label>Max SOL (cumulative cap)</label>
-						<input id="max-sol" type="number" min="0.01" max="100" step="0.01" value="0.5" />
+						<input
+							id="max-sol"
+							type="number"
+							min="0.01"
+							max="100"
+							step="0.01"
+							value="0.5"
+						/>
 					</div>
 					<div>
 						<label>TTL (hours)</label>
@@ -77,28 +177,62 @@
 				<div class="row">
 					<div>
 						<label>Direction</label>
-						<select id="direction"><option>both</option><option>buy</option><option>sell</option></select>
+						<select id="direction">
+							<option>both</option>
+							<option>buy</option>
+							<option>sell</option>
+						</select>
 					</div>
 					<div>
 						<label>Mint filter (optional)</label>
 						<input id="mint-filter" placeholder="lock to a single mint" />
 					</div>
 				</div>
-				<div style="margin-top:14px; display:flex; gap:8px">
+				<div style="margin-top: 14px; display: flex; gap: 8px">
 					<button id="authorize">Sign + authorize</button>
 					<button id="refresh" class="ghost">Refresh delegations</button>
 				</div>
-				<div id="status" class="muted" style="margin-top:10px"></div>
+				<div id="status" class="muted" style="margin-top: 10px"></div>
 			</div>
 
 			<div class="panel">
-				<h2 style="margin-top:0">Active delegations</h2>
+				<h2 style="margin-top: 0">Active delegations</h2>
 				<div id="delegations">Loading…</div>
 			</div>
 		</main>
 
 		<script type="module">
-			import { buildRelayAuthorizationMessage } from '/src/agent-skills-pumpfun.js';
+			function buildRelayAuthorizationMessage({
+				userWallet,
+				relayerPubkey,
+				maxSol,
+				mint,
+				direction = 'both',
+				network = 'mainnet',
+				ttlHours = 24,
+				domain = location.host,
+			}) {
+				const issuedAt = new Date().toISOString();
+				const expiresAt = new Date(Date.now() + ttlHours * 3600 * 1000).toISOString();
+				const nonce = Math.random().toString(36).slice(2, 14);
+				const statement =
+					`Authorize three.ws relayer ${relayerPubkey} to trade pump.fun on my behalf.\n` +
+					`max=${maxSol}\nexpires=${expiresAt}\ndirection=${direction}` +
+					(mint ? `\nmint=${mint}` : '');
+				return [
+					`${domain} wants you to sign in with your Solana account:`,
+					userWallet,
+					'',
+					statement,
+					'',
+					`URI: https://${domain}/api/pump/relay-authorize`,
+					'Version: 1',
+					`Chain ID: ${network}`,
+					`Nonce: ${nonce}`,
+					`Issued At: ${issuedAt}`,
+					`Expiration Time: ${expiresAt}`,
+				].join('\n');
+			}
 
 			const $ = (id) => document.getElementById(id);
 			let RELAYER_PUBKEY = null;
@@ -108,9 +242,11 @@
 					const r = await fetch('/api/pump/relayer-info').then((r) => r.json());
 					if (r.relayer_pubkey) {
 						RELAYER_PUBKEY = r.relayer_pubkey;
-						$('relayer-info').innerHTML = `<div class="mono" style="word-break:break-all">${r.relayer_pubkey}</div><div class="muted" style="margin-top:4px">Fund this address with SOL to cover trade fees.</div>`;
+						$('relayer-info').innerHTML =
+							`<div class="mono" style="word-break:break-all">${r.relayer_pubkey}</div><div class="muted" style="margin-top:4px">Fund this address with SOL to cover trade fees.</div>`;
 					} else {
-						$('relayer-info').innerHTML = `<span class="err">Relayer not configured (PUMP_RELAYER_SECRET_KEY_B64 unset)</span>`;
+						$('relayer-info').innerHTML =
+							`<span class="err">Relayer not configured (PUMP_RELAYER_SECRET_KEY_B64 unset)</span>`;
 					}
 				} catch (e) {
 					$('relayer-info').innerHTML = `<span class="err">${e.message}</span>`;
@@ -119,11 +255,14 @@
 
 			async function loadDelegations() {
 				try {
-					const r = await fetch('/api/pump/relay-delegations', { credentials: 'include' });
+					const r = await fetch('/api/pump/relay-delegations', {
+						credentials: 'include',
+					});
 					if (!r.ok) throw new Error(`${r.status}`);
 					const data = await r.json();
 					if (!data.data || data.data.length === 0) {
-						$('delegations').innerHTML = '<div class="muted">No active delegations.</div>';
+						$('delegations').innerHTML =
+							'<div class="muted">No active delegations.</div>';
 						return;
 					}
 					const rows = data.data
@@ -170,7 +309,7 @@
 					const mintFilter = $('mint-filter').value.trim() || null;
 					const ttlHours = Number($('ttl-hours').value);
 
-					const { message } = buildRelayAuthorizationMessage({
+					const message = buildRelayAuthorizationMessage({
 						userWallet: wallet,
 						relayerPubkey: RELAYER_PUBKEY,
 						maxSol,

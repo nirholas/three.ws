@@ -44,7 +44,10 @@ export default wrap(async (req, res) => {
 
 	const bearer = extractBearer(req);
 	const auth = await authenticateBearer(bearer, { audience: env.MCP_RESOURCE });
-	if (!auth) return send401(res, 'missing or invalid access token');
+	if (!auth) {
+		if (!bearer && !req.headers['x-payment']) return sendX402Challenge(req, res);
+		return send401(res, 'missing or invalid access token');
+	}
 
 	const ipRl = await limits.mcpIp(clientIp(req));
 	if (!ipRl.success)
@@ -854,6 +857,10 @@ function formatAvatarList(avatars, { public: isPublic = false } = {}) {
 async function handleSse(req, res) {
 	// We don't hold long-lived server→client subscriptions yet; respond politely.
 	const bearer = extractBearer(req);
+	// Unauthenticated callers without an X-PAYMENT header get an x402 challenge
+	// so x402scan / x402 clients can discover the price. Invalid bearers still
+	// get 401 with WWW-Authenticate so OAuth clients can re-auth correctly.
+	if (!bearer && !req.headers['x-payment']) return sendX402Challenge(req, res);
 	const auth = await authenticateBearer(bearer, { audience: env.MCP_RESOURCE });
 	if (!auth) return send401(res, 'missing or invalid access token');
 	res.statusCode = 405;
@@ -870,6 +877,39 @@ async function handleTerminate(_req, res) {
 // ── error helpers ────────────────────────────────────────────────────────────
 function quoteString(s) {
 	return `"${String(s).replace(/[\\"]/g, '\\$&')}"`;
+}
+
+// x402 payment-required challenge (spec: https://x402.org).
+// Solana USDC, fixed price 0.001 USDC = 1000 base units (6 decimals).
+const X402_PAY_TO = 'BUrwd1nK6tFeeJMyzRHDo6AuVbnSfUULfvwq21X93nSN';
+const X402_USDC_SOLANA_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+
+function sendX402Challenge(req, res) {
+	const proto = (req.headers['x-forwarded-proto'] || 'https').toString().split(',')[0].trim();
+	const host = (req.headers['x-forwarded-host'] || req.headers.host || '').toString();
+	const resource = host ? `${proto}://${host}/api/mcp` : `${env.APP_ORIGIN}/api/mcp`;
+	res.statusCode = 402;
+	res.setHeader('content-type', 'application/json; charset=utf-8');
+	res.end(
+		JSON.stringify({
+			x402Version: 1,
+			error: 'X-PAYMENT header is required',
+			accepts: [
+				{
+					scheme: 'exact',
+					network: 'solana',
+					maxAmountRequired: '1000',
+					resource,
+					description: 'MCP tool call',
+					mimeType: 'application/json',
+					payTo: X402_PAY_TO,
+					maxTimeoutSeconds: 60,
+					asset: X402_USDC_SOLANA_MINT,
+					extra: { name: 'USDC', decimals: 6 },
+				},
+			],
+		}),
+	);
 }
 
 function send401(res, msg) {

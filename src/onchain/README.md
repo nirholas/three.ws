@@ -256,6 +256,77 @@ Schema: `payment_configs_pending` + `agent_payment_intents` (see migration
 }
 ```
 
+## Vanity wallets (custodial agent identities)
+
+Agents can be provisioned with a custodial Solana wallet whose address starts
+with a chosen base58 prefix. The secret key is encrypted server-side
+(AES-GCM, HKDF-derived from `JWT_SECRET`) and never leaves the server after
+provisioning.
+
+```js
+import { VanityWalletButton } from 'src/onchain/vanity-wallet-button.js';
+new VanityWalletButton({ agent, container }).mount();
+```
+
+Headless usage:
+
+```js
+import { provisionVanityForAgent } from 'src/onchain/vanity/index.js';
+await provisionVanityForAgent({
+  agentId,
+  prefix: 'AGNT',
+  ignoreCase: false,
+  onProgress: ({ rate, eta }) => console.log(rate, eta),
+});
+```
+
+Grinding happens client-side via Web Workers (one per logical core, capped
+at 8). Long prefixes take time — pass an `AbortSignal` to support a Cancel
+UX. Server-side grinding for 5+ char prefixes already exists in
+`api/_lib/pump-vanity.js` and is wired into the legacy `pumpfun/launch`
+flow.
+
+The provisioning endpoint (`POST /api/agents/:id/solana`) verifies that the
+submitted secret derives the claimed pubkey and that the prefix matches
+before storing the encrypted secret.
+
+## x402 (HTTP 402 Payment Required for paid skills)
+
+Wires the agent payments layer to per-call paywalls. Any agent endpoint can
+return `402 Payment Required` with a canonical manifest; clients pay via the
+Pump.fun agent-payments flow and retry with `x-payment-intent`.
+
+Server middleware:
+
+```js
+import { emit402, verifyPaid, consumeIntent } from 'api/_lib/x402.js';
+
+const paid = await verifyPaid(req, {
+  agentId, skill: 'summarize',
+  expectedAmount: '10000',
+  expectedCurrency: USDC_MINT,
+});
+if (!paid) return emit402(res, { agent, skill, amount, currency });
+await consumeIntent(paid.intentId);  // single-shot
+return doTheThing();
+```
+
+Reference impl: `api/agents/x402/invoke.js` (paid-skill router with `echo`
+demo skill). Manifest discovery at `GET /api/agents/x402/manifest`.
+
+Client wrapper that follows 402 automatically:
+
+```js
+import { x402Fetch } from 'src/onchain/x402/client.js';
+const res = await x402Fetch('/api/agents/x402/invoke', {
+  method: 'POST',
+  body: JSON.stringify({ agent_id, skill: 'echo', args: {} }),
+  onPaymentRequired: () => 'auto',
+});
+```
+
+Full spec at [docs/x402.md](../../docs/x402.md).
+
 Note: the agent-payments-sdk is published as a restricted npm package. If
 `npm install` fails with 403, contact Pump.fun for access. The pump-sdk used
 for token launches is public and unaffected.
