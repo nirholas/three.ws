@@ -133,11 +133,12 @@ export async function runServerFlow({
 
 	let confirmJson = null;
 	if (confirmPath) {
+		const extra = typeof confirmExtra === 'function' ? confirmExtra(prep) : confirmExtra;
 		const confirmRes = await fetch(`${origin}${confirmPath}`, {
 			method: 'POST',
 			credentials: 'include',
 			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({ tx_signature: sig, ...confirmExtra }),
+			body: JSON.stringify({ tx_signature: sig, ...extra }),
 		});
 		confirmJson = await confirmRes.json();
 		if (!confirmRes.ok) {
@@ -332,7 +333,7 @@ export function registerPumpFunSkills(skills) {
 			const slippageBps = args.slippageBps ?? DEFAULT_SLIPPAGE_BPS;
 
 			if (args.serverFlow) {
-				const { wallet: _w, pubkey: pk } = await requireWallet();
+				const { pubkey: pk } = await requireWallet();
 				const r = await runServerFlow({
 					prepPath: '/api/pump/buy-prep',
 					body: {
@@ -342,12 +343,28 @@ export function registerPumpFunSkills(skills) {
 						slippage_bps: slippageBps,
 						wallet_address: pk.toBase58(),
 					},
+					confirmPath: '/api/pump/buy-confirm',
+					confirmExtra: (prep) => ({
+						mint: args.mint,
+						network,
+						wallet_address: pk.toBase58(),
+						sol: args.solAmount,
+						slippage_bps: slippageBps,
+						route: prep.route,
+					}),
 				});
+				const route = r.prep.route;
 				return {
 					success: true,
-					output: `Bought ~${args.solAmount} SOL of ${args.mint.slice(0, 8)}… via ${r.prep.route}.`,
+					output: `Bought ~${args.solAmount} SOL of ${args.mint.slice(0, 8)}… via ${route}.`,
 					sentiment: 0.6,
-					data: { signature: r.signature, route: r.prep.route, mint: args.mint, network },
+					data: {
+						signature: r.signature,
+						route,
+						mint: args.mint,
+						network,
+						tracked: r.confirm?.tracked,
+					},
 				};
 			}
 
@@ -433,12 +450,27 @@ export function registerPumpFunSkills(skills) {
 						slippage_bps: slippageBps,
 						wallet_address: pk.toBase58(),
 					},
+					confirmPath: '/api/pump/sell-confirm',
+					confirmExtra: {
+						mint: args.mint,
+						network,
+						wallet_address: pk.toBase58(),
+						tokens: String(args.tokenAmount),
+						slippage_bps: slippageBps,
+					},
 				});
+				const route = r.prep.route;
 				return {
 					success: true,
-					output: `Sold ${args.tokenAmount} of ${args.mint.slice(0, 8)}… via ${r.prep.route}.`,
+					output: `Sold ${args.tokenAmount} of ${args.mint.slice(0, 8)}… via ${route}.`,
 					sentiment: 0.4,
-					data: { signature: r.signature, route: r.prep.route, mint: args.mint, network },
+					data: {
+						signature: r.signature,
+						route,
+						mint: args.mint,
+						network,
+						tracked: r.confirm?.tracked,
+					},
 				};
 			}
 

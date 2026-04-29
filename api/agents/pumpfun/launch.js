@@ -27,6 +27,8 @@ const bodySchema = z.object({
 	solAmount: z.number().nonnegative().max(1000).optional(),
 	tokenAmount: z.number().nonnegative().optional(),
 	vanityPrefix: z.string().min(1).max(6).optional(),
+	vanitySuffix: z.string().min(1).max(6).optional(),
+	vanityIgnoreCase: z.boolean().optional(),
 	network: z.enum(['mainnet', 'devnet']).default('mainnet'),
 });
 
@@ -66,10 +68,16 @@ export default async function handler(req, res, id) {
 
 	let mint;
 	let vanityIterations = 1;
+	let vanityDurationMs = 0;
 	try {
-		const ground = grindMintKeypair({ prefix: body.vanityPrefix });
+		const ground = await grindMintKeypair({
+			prefix: body.vanityPrefix,
+			suffix: body.vanitySuffix,
+			ignoreCase: body.vanityIgnoreCase,
+		});
 		mint = ground.keypair;
 		vanityIterations = ground.iterations;
+		vanityDurationMs = ground.durationMs;
 	} catch (err) {
 		return error(res, err.status || 500, err.code || 'internal', err.message);
 	}
@@ -132,7 +140,10 @@ export default async function handler(req, res, id) {
 				signature,
 				network: body.network,
 				vanity_prefix: body.vanityPrefix || null,
+				vanity_suffix: body.vanitySuffix || null,
+				vanity_ignore_case: body.vanityIgnoreCase || false,
 				vanity_iterations: vanityIterations,
+				vanity_duration_ms: vanityDurationMs,
 			})}::jsonb,
 			${'pumpfun'}
 		)
@@ -145,7 +156,9 @@ export default async function handler(req, res, id) {
 			explorer: `https://solscan.io/tx/${signature}${body.network === 'devnet' ? '?cluster=devnet' : ''}`,
 			pumpfun_url: `https://pump.fun/${mint.publicKey.toBase58()}`,
 			vanity_prefix: body.vanityPrefix || null,
+			vanity_suffix: body.vanitySuffix || null,
 			vanity_iterations: vanityIterations,
+			vanity_duration_ms: vanityDurationMs,
 		},
 	});
 }

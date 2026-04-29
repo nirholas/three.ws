@@ -60,6 +60,10 @@ function decodeBase64Tx(b64) {
  * @param {string} [opts.vanity.prefix]                            Base58 prefix to grind.
  * @param {(p: { attempts: number, rate: number, eta: string }) => void} [opts.vanity.onProgress]
  * @param {AbortSignal} [opts.vanity.signal]
+ * @param {Uint8Array} [opts.vanity.preGroundSecretKey]            64-byte Ed25519 secret key from a CLI grinder
+ *   (e.g. nirholas/solana-wallet-toolkit). When present, the in-browser grinder
+ *   is skipped and this keypair is used directly. The caller is responsible for
+ *   verifying the public key matches `vanity.prefix`.
  * @returns {Promise<{ assetPubkey: string, txSignature: string, network: string, agent: object, vanityPrefix?: string }>}
  */
 export async function runSolanaDeploy({ agent, network, vanity }) {
