@@ -1,0 +1,63 @@
+{
+	"tools": [
+		{
+			"name": "quoteTrade",
+			"description": "Simulate a buy or sell on the bonding curve or PumpSwap AMM. Returns expected out, price impact, route.",
+			"input_schema": {
+				"type": "object",
+				"properties": {
+					"mint": { "type": "string" },
+					"side": { "type": "string", "enum": ["buy", "sell"] },
+					"amountSol": { "type": "number", "description": "SOL in for buy" },
+					"amountTokens": { "type": "number", "description": "tokens in for sell" }
+				},
+				"required": ["mint", "side"]
+			}
+		},
+		{
+			"name": "buyToken",
+			"description": "Buy a pump.fun token. Routes via bonding curve if pre-graduation, else PumpSwap AMM. Caps at manifest.config.maxSpendSol.",
+			"input_schema": {
+				"type": "object",
+				"properties": {
+					"mint": { "type": "string" },
+					"amountSol": { "type": "number" },
+					"slippageBps": { "type": "integer", "minimum": 1, "maximum": 5000 }
+				},
+				"required": ["mint", "amountSol"]
+			}
+		},
+		{
+			"name": "sellToken",
+			"description": "Sell a pump.fun token by mint and token amount (or percent of holdings).",
+			"input_schema": {
+				"type": "object",
+				"properties": {
+					"mint": { "type": "string" },
+					"amountTokens": { "type": "number" },
+					"percent": { "type": "number", "minimum": 1, "maximum": 100 },
+					"slippageBps": { "type": "integer", "minimum": 1, "maximum": 5000 }
+				},
+				"required": ["mint"]
+			}
+		},
+		{
+			"name": "createToken",
+			"description": "Launch a new pump.fun token. Optionally do an initial dev buy in the same tx.",
+			"input_schema": {
+				"type": "object",
+				"properties": {
+					"name": { "type": "string" },
+					"symbol": { "type": "string" },
+					"description": { "type": "string" },
+					"imageUrl": { "type": "string" },
+					"twitter": { "type": "string" },
+					"telegram": { "type": "string" },
+					"website": { "type": "string" },
+					"initialBuySol": { "type": "number" }
+				},
+				"required": ["name", "symbol"]
+			}
+		}
+	]
+}

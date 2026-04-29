@@ -80,3 +80,28 @@ export async function generateAgentWallet() {
 export async function recoverAgentKey(encryptedKey) {
 	return decrypt(encryptedKey);
 }
+
+// ── Solana wallet ───────────────────────────────────────────────────────────
+
+/**
+ * Generate a new Solana keypair for an agent.
+ * Returns { address, encrypted_secret } where encrypted_secret is the base64
+ * AES-GCM ciphertext of the 64-byte secret key (also base64-encoded inside).
+ */
+export async function generateSolanaAgentWallet() {
+	const { Keypair } = await import('@solana/web3.js');
+	const kp = Keypair.generate();
+	const secretB64 = Buffer.from(kp.secretKey).toString('base64');
+	const encrypted_secret = await encrypt(secretB64);
+	return { address: kp.publicKey.toBase58(), encrypted_secret };
+}
+
+/**
+ * Recover a Solana Keypair from its encrypted form.
+ * Only call this when the agent needs to sign a transaction.
+ */
+export async function recoverSolanaAgentKeypair(encryptedSecret) {
+	const { Keypair } = await import('@solana/web3.js');
+	const secretB64 = await decrypt(encryptedSecret);
+	return Keypair.fromSecretKey(Buffer.from(secretB64, 'base64'));
+}

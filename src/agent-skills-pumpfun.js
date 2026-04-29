@@ -241,6 +241,57 @@ export function registerPumpFunSkills(skills) {
 	});
 
 	skills.register({
+		name: 'pumpfun-launch-from-agent',
+		description:
+			'One-shot: launch a pump.fun token whose metadata is auto-generated from this agent (name, GLB, bio).',
+		instruction:
+			'Resolves the agent metadata URL, then calls pumpfun-create. The agent owner signs the launch tx.',
+		animationHint: 'celebrate',
+		voicePattern: 'Launching myself on pump.fun…',
+		mcpExposed: true,
+		inputSchema: {
+			type: 'object',
+			properties: {
+				symbol: { type: 'string', description: 'Override symbol; defaults to derived from name' },
+				network: { type: 'string', enum: ['mainnet', 'devnet'] },
+			},
+		},
+		handler: async (args, ctx) => {
+			const id = ctx.identity?.id;
+			if (!id) {
+				return {
+					success: false,
+					output: 'No agent identity. Register the agent first.',
+					sentiment: -0.3,
+				};
+			}
+
+			const origin =
+				(typeof window !== 'undefined' && window.location?.origin) || '';
+			const uri = `${origin}/api/agents/pumpfun-metadata?id=${encodeURIComponent(id)}`;
+
+			const symbol =
+				args.symbol ||
+				String(ctx.identity?.name || 'AGENT')
+					.toUpperCase()
+					.replace(/[^A-Z0-9]/g, '')
+					.slice(0, 10) ||
+				'AGENT';
+
+			return skills.perform(
+				'pumpfun-create',
+				{
+					name: ctx.identity?.name,
+					symbol,
+					uri,
+					network: args.network,
+				},
+				ctx,
+			);
+		},
+	});
+
+	skills.register({
 		name: 'pumpfun-status',
 		description:
 			'Read live bonding-curve state for a pump.fun mint: market cap, graduation progress.',

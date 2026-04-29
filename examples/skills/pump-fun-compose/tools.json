@@ -1,0 +1,53 @@
+{
+	"tools": [
+		{
+			"name": "researchAndBuy",
+			"description": "Research a token (curve, holders, creator rug flags), then buy if it passes filters. Returns decision + sig.",
+			"input_schema": {
+				"type": "object",
+				"properties": {
+					"query": { "type": "string", "description": "name, symbol, or mint" },
+					"amountSol": { "type": "number" }
+				},
+				"required": ["query"]
+			}
+		},
+		{
+			"name": "autoSnipe",
+			"description": "Poll getNewTokens, filter by rug/holder rules, buy each pass with perTradeSol until sessionSpendCapSol is hit.",
+			"input_schema": {
+				"type": "object",
+				"properties": {
+					"durationSec": { "type": "integer", "minimum": 10, "maximum": 3600 },
+					"perTradeSol": { "type": "number" }
+				},
+				"required": ["durationSec"]
+			}
+		},
+		{
+			"name": "copyTrade",
+			"description": "Watch a creator/wallet's recent trades and mirror their buys with size scaling.",
+			"input_schema": {
+				"type": "object",
+				"properties": {
+					"wallet": { "type": "string" },
+					"sizeMultiplier": { "type": "number", "minimum": 0.001, "maximum": 10 },
+					"durationSec": { "type": "integer", "minimum": 10, "maximum": 7200 }
+				},
+				"required": ["wallet", "durationSec"]
+			}
+		},
+		{
+			"name": "rugExitWatch",
+			"description": "Monitor held positions; auto-sell when top-holder concentration or dev-wallet sells cross thresholds.",
+			"input_schema": {
+				"type": "object",
+				"properties": {
+					"mints": { "type": "array", "items": { "type": "string" } },
+					"durationSec": { "type": "integer", "minimum": 10, "maximum": 86400 }
+				},
+				"required": ["mints", "durationSec"]
+			}
+		}
+	]
+}

@@ -1,0 +1,26 @@
+{
+	"spec": "skill/0.1",
+	"name": "pump-fun-compose",
+	"version": "0.1.0",
+	"description": "Agent-level compositions over pump-fun (read) and pump-fun-trade (sign): research-and-buy, auto-snipe, copy-trade, and rug-exit watcher.",
+	"license": "MIT",
+	"tags": ["solana", "pump.fun", "agent", "composition"],
+	"requires": {
+		"runtime": ">=0.1.0",
+		"skills": ["pump-fun@^0.1", "pump-fun-trade@^0.1"]
+	},
+	"provides": {
+		"tools": ["researchAndBuy", "autoSnipe", "copyTrade", "rugExitWatch"],
+		"triggers": ["alpha_loop", "snipe_session", "copy_session", "exit_watch"]
+	},
+	"config": {
+		"sessionSpendCapSol": 1.0,
+		"perTradeSol": 0.05,
+		"minHoldersForBuy": 30,
+		"maxTopHolderPct": 25,
+		"rejectIfCreatorRugCount": 1,
+		"exitOnConcentrationPct": 40,
+		"exitOnDevSellPct": 25,
+		"pollMs": 5000
+	}
+}

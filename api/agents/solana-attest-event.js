@@ -135,8 +135,9 @@ export default wrap(async (req, res) => {
 		commitment: 'confirmed',
 	});
 
-	// Mirror into the index immediately. The crawler will dedupe via
-	// the unique signature constraint.
+	// Mirror into the index immediately; crawler dedupes via unique signature.
+	// Verified semantics match _lib/solana-attestations.js#computeVerified for
+	// non-owner kinds (feedback/validation/task): structurally valid -> true.
 	await sql`
 		insert into solana_attestations (
 			signature, network, slot, block_time, agent_asset, attester,
@@ -146,7 +147,7 @@ export default wrap(async (req, res) => {
 			${signature}, ${body.network}, null, now(),
 			${body.agent_asset}, ${attester.publicKey.toBase58()},
 			${payload.kind}, ${JSON.stringify(payload)}::jsonb,
-			${payload.task_id ?? null}, null, false
+			${payload.task_id ?? null}, null, true
 		)
 		on conflict (signature) do nothing
 	`;

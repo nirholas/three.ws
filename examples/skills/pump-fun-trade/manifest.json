@@ -1,0 +1,23 @@
+{
+	"spec": "skill/0.1",
+	"name": "pump-fun-trade",
+	"version": "0.1.0",
+	"description": "Signing actions for pump.fun: buy, sell, create, and quote via the official @pump-fun/pump-swap-sdk. Requires a wallet.",
+	"license": "MIT",
+	"tags": ["solana", "pump.fun", "trading", "signing"],
+	"requires": {
+		"runtime": ">=0.1.0",
+		"tools": [],
+		"capabilities": ["wallet.sign", "solana.rpc"]
+	},
+	"provides": {
+		"tools": ["quoteTrade", "buyToken", "sellToken", "createToken"],
+		"triggers": ["token_buy", "token_sell", "token_launch"]
+	},
+	"config": {
+		"rpc": "https://api.mainnet-beta.solana.com",
+		"slippageBps": 100,
+		"priorityFeeMicroLamports": 50000,
+		"maxSpendSol": 0.5
+	}
+}

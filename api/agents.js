@@ -15,7 +15,7 @@ import { getSessionUser, authenticateBearer, extractBearer } from './_lib/auth.j
 import { sql } from './_lib/db.js';
 import { cors, json, method, readJson, wrap, error } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
-import { generateAgentWallet } from './_lib/agent-wallet.js';
+import { generateAgentWallet, generateSolanaAgentWallet } from './_lib/agent-wallet.js';
 import { z } from 'zod';
 
 const animationEntrySchema = z.object({
@@ -86,6 +86,7 @@ async function handleGetOrCreateMe(req, res, auth) {
 
 		if (!agent) {
 			const wallet = await generateAgentWallet();
+			const sol = await generateSolanaAgentWallet();
 			await sql`
 				INSERT INTO agent_identities (user_id, name, skills, wallet_address, meta)
 				VALUES (
@@ -93,7 +94,11 @@ async function handleGetOrCreateMe(req, res, auth) {
 					${'Agent'},
 					${['greet', 'present-model', 'validate-model', 'remember', 'think']},
 					${wallet.address},
-					${JSON.stringify({ encrypted_wallet_key: wallet.encrypted_key })}::jsonb
+					${JSON.stringify({
+						encrypted_wallet_key: wallet.encrypted_key,
+						solana_address: sol.address,
+						encrypted_solana_secret: sol.encrypted_secret,
+					})}::jsonb
 				)
 				ON CONFLICT (user_id) WHERE deleted_at IS NULL DO NOTHING
 			`;
@@ -133,7 +138,13 @@ async function handleCreate(req, res) {
 	if (!name) return error(res, 400, 'validation_error', 'name is required');
 
 	const wallet = await generateAgentWallet();
-	const meta = { ...(body.meta || {}), encrypted_wallet_key: wallet.encrypted_key };
+	const sol = await generateSolanaAgentWallet();
+	const meta = {
+		...(body.meta || {}),
+		encrypted_wallet_key: wallet.encrypted_key,
+		solana_address: sol.address,
+		encrypted_solana_secret: sol.encrypted_secret,
+	};
 
 	const [agent] = await sql`
 		INSERT INTO agent_identities (user_id, name, description, skills, wallet_address, meta)
@@ -294,9 +305,10 @@ async function resolveAuth(req) {
 }
 
 function decorate(row, isOwner = true) {
-	// Strip encrypted_wallet_key from meta — never expose to the client.
+	// Strip encrypted secrets from meta — never expose to the client.
 	const meta = { ...(row.meta || {}) };
 	delete meta.encrypted_wallet_key;
+	delete meta.encrypted_solana_secret;
 
 	const base = {
 		id: row.id,
