@@ -267,6 +267,7 @@
 		{ "path": "/api/cron/run-subscriptions", "schedule": "0 * * * *" },
 		{ "path": "/api/cron/pumpfun-signals", "schedule": "*/15 * * * *" },
 		{ "path": "/api/cron/pump-agent-stats", "schedule": "*/10 * * * *" },
+		{ "path": "/api/cron/pumpfun-monitor", "schedule": "*/3 * * * *" },
 		{ "path": "/api/cron/solana-attest-event-cleanup", "schedule": "*/10 * * * *" }
 	]
 }
