@@ -3191,6 +3191,41 @@ body.explore-page {
 	pointer-events: none;
 }
 
+/* Collapsed state — panel hidden, only show-pill visible */
+.agent-presence-sidebar[data-collapsed='true'] .agent-home-panel {
+	display: none;
+}
+
+.agent-home-show-pill {
+	display: none;
+	pointer-events: all;
+	width: 36px;
+	height: 36px;
+	border-radius: 50%;
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	background: linear-gradient(180deg, rgba(18, 18, 26, 0.92) 0%, rgba(10, 10, 16, 0.92) 100%);
+	color: #e0e0e0;
+	font-size: 16px;
+	cursor: pointer;
+	align-items: center;
+	justify-content: center;
+	backdrop-filter: blur(16px);
+	-webkit-backdrop-filter: blur(16px);
+	box-shadow:
+		0 4px 16px rgba(0, 0, 0, 0.4),
+		inset 0 1px 0 rgba(255, 255, 255, 0.04);
+	transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.agent-home-show-pill:hover {
+	transform: scale(1.06);
+	border-color: rgba(255, 255, 255, 0.25);
+}
+
+.agent-presence-sidebar[data-collapsed='true'] .agent-home-show-pill {
+	display: flex;
+}
+
 .agent-home-panel {
 	background: linear-gradient(180deg, rgba(18, 18, 26, 0.92) 0%, rgba(10, 10, 16, 0.92) 100%);
 	border: 1px solid rgba(255, 255, 255, 0.08);
