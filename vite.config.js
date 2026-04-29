@@ -81,6 +81,7 @@ const appConfig = {
 					// END:DISCOVER_ROUTE
 					'/features': resolve(root, 'public/features/index.html'),
 					'/features/': resolve(root, 'public/features/index.html'),
+					'/': resolve(root, 'home.html'),
 					'/home': resolve(root, 'home.html'),
 					'/agent': resolve(root, 'agent-home.html'),
 					'/docs': resolve(root, 'docs/index.html'),
