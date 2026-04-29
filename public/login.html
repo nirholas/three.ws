@@ -121,6 +121,9 @@
 					height: 180px;
 				}
 			}
+			@media (max-height: 720px) and (min-width: 861px) {
+				.panel { display: none; }
+			}
 			h1 {
 				font-size: 22px;
 				font-weight: 600;
@@ -129,8 +132,8 @@
 				color: #fff;
 			}
 			.sub {
-				color: #555;
-				margin: 0 0 28px;
+				color: #888;
+				margin: 0 0 22px;
 				font-size: 14px;
 			}
 			label {
@@ -141,6 +144,10 @@
 				color: #666;
 				margin: 16px 0 6px;
 				text-transform: uppercase;
+				transition: color 0.1s ease;
+			}
+			label.lit {
+				color: #bbb;
 			}
 			input {
 				width: 100%;
@@ -150,15 +157,19 @@
 				border-radius: 10px;
 				color: #f0f0f0;
 				font-size: 15px;
-				transition: border-color 0.15s, box-shadow 0.15s;
+				transition: border-color 0.08s ease, box-shadow 0.08s ease, background 0.08s ease;
 			}
 			input::placeholder {
 				color: #333;
 			}
 			input:focus {
 				outline: none;
-				border-color: rgba(255, 255, 255, 0.3);
-				box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
+				border-color: rgba(255, 255, 255, 0.45);
+				box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06);
+				background: #080808;
+			}
+			input.invalid {
+				border-color: rgba(255, 120, 120, 0.45);
 			}
 			button {
 				width: 100%;
@@ -181,6 +192,20 @@
 				opacity: 0.35;
 				cursor: default;
 			}
+			.field-err {
+				margin: 6px 0 0;
+				font-size: 12px;
+				color: #ff9a9a;
+				display: none;
+			}
+			.field-err.show {
+				display: block;
+			}
+			.caps-warn {
+				margin: 6px 0 0;
+				font-size: 12px;
+				color: #d8c074;
+			}
 			.err {
 				margin-top: 14px;
 				padding: 10px 12px;
@@ -195,7 +220,7 @@
 				margin-top: 22px;
 				text-align: center;
 				font-size: 13px;
-				color: #444;
+				color: #666;
 			}
 			.brand {
 				margin: 0 0 18px;
@@ -212,24 +237,86 @@
 			.brand:hover {
 				opacity: 1;
 			}
-			.divider {
+			.forgot {
+				font-size: 12px;
+				color: #444;
+				margin: 6px 0 0;
+				text-align: right;
+			}
+			/* ── Top-level method tabs (Email / Wallet) ── */
+			.method-tabs {
+				display: flex;
+				gap: 3px;
+				background: #060606;
+				border: 1px solid rgba(255, 255, 255, 0.06);
+				border-radius: 10px;
+				padding: 3px;
+				margin: 0 0 16px;
+			}
+			.method-tab {
+				flex: 1;
+				margin-top: 0;
+				padding: 9px 10px;
+				border: 1px solid transparent;
+				border-radius: 7px;
+				background: transparent;
+				color: #555;
+				font-size: 14px;
+				font-weight: 500;
+				cursor: pointer;
+				transition: background 0.1s, color 0.1s, transform 0.08s cubic-bezier(0.34, 1.56, 0.64, 1);
+				width: auto;
+			}
+			.method-tab.active {
+				background: #1a1a1a;
+				color: #f0f0f0;
+				border-color: rgba(255, 255, 255, 0.08);
+			}
+			.method-tab:hover:not(.active) {
+				color: #aaa;
+			}
+			.method-tab:active {
+				transform: scale(0.97);
+			}
+			.method-panel { display: none; }
+			.method-panel.active { display: block; }
+
+			/* ── Password field ── */
+			.password-wrap {
+				position: relative;
+			}
+			.password-wrap input {
+				padding-right: 44px;
+			}
+			.password-toggle {
+				position: absolute;
+				top: 50%;
+				right: 6px;
+				transform: translateY(-50%);
+				width: 32px;
+				height: 32px;
+				margin: 0;
+				padding: 0;
+				background: transparent;
+				color: #666;
+				border: 0;
+				border-radius: 6px;
+				cursor: pointer;
 				display: flex;
 				align-items: center;
-				gap: 12px;
-				margin: 24px 0 8px;
-				color: #333;
-				font-size: 11px;
-				text-transform: uppercase;
-				letter-spacing: 0.1em;
+				justify-content: center;
+				transition: color 0.1s ease, background 0.1s ease;
 			}
-			.divider::before,
-			.divider::after {
-				content: '';
-				flex: 1;
-				height: 1px;
-				background: rgba(255, 255, 255, 0.06);
+			.password-toggle:hover {
+				color: #ddd;
+				background: rgba(255, 255, 255, 0.04);
 			}
-			/* Wallet chain tabs */
+			.password-toggle svg {
+				width: 18px;
+				height: 18px;
+			}
+
+			/* ── Wallet chain tabs ── */
 			.chain-tabs {
 				display: flex;
 				gap: 3px;
@@ -237,19 +324,19 @@
 				border: 1px solid rgba(255, 255, 255, 0.06);
 				border-radius: 10px;
 				padding: 3px;
-				margin-bottom: 4px;
+				margin-bottom: 12px;
 			}
 			.chain-tab {
 				flex: 1;
 				padding: 7px 10px;
-				border: none;
+				border: 1px solid transparent;
 				border-radius: 7px;
 				background: transparent;
 				color: #444;
 				font-size: 13px;
 				font-weight: 500;
 				cursor: pointer;
-				transition: background 0.15s, color 0.15s;
+				transition: background 0.1s ease, color 0.1s ease, transform 0.08s cubic-bezier(0.34, 1.56, 0.64, 1);
 				margin-top: 0;
 				width: auto;
 				letter-spacing: 0.01em;
@@ -257,15 +344,26 @@
 			.chain-tab.active {
 				background: #1a1a1a;
 				color: #e0e0e0;
-				border: 1px solid rgba(255, 255, 255, 0.08);
+				border-color: rgba(255, 255, 255, 0.08);
 			}
 			.chain-tab:hover:not(.active) {
 				color: #888;
 			}
+			.chain-tab:active {
+				transform: scale(0.93);
+			}
 			.chain-panel { display: none; }
 			.chain-panel.active { display: block; }
 
-			/* ── Interactions ── */
+			.wallet-step-hint {
+				margin: 10px 0 0;
+				font-size: 11px;
+				color: #555;
+				text-align: center;
+				cursor: help;
+			}
+
+			/* ── Card entrance ── */
 			@keyframes card-in {
 				from { opacity: 0; transform: translateY(14px) scale(0.985); }
 				to   { opacity: 1; transform: translateY(0) scale(1); }
@@ -273,20 +371,8 @@
 			.shell {
 				animation: card-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
 			}
-			input {
-				transition: border-color 0.08s ease, box-shadow 0.08s ease, background 0.08s ease;
-			}
-			input:focus {
-				border-color: rgba(255, 255, 255, 0.45);
-				box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06);
-				background: #080808;
-			}
-			label {
-				transition: color 0.1s ease;
-			}
-			label.lit {
-				color: #bbb;
-			}
+
+			/* ── Submit button polish ── */
 			#submit {
 				position: relative;
 				overflow: hidden;
@@ -306,18 +392,7 @@
 				transform: translateX(150%);
 				transition: transform 0.55s ease;
 			}
-			.chain-tab {
-				transition: background 0.1s ease, color 0.1s ease, transform 0.08s cubic-bezier(0.34, 1.56, 0.64, 1);
-			}
-			.chain-tab:active {
-				transform: scale(0.93);
-			}
-			.wallet-hint-btn {
-				transition: border-color 0.1s ease, color 0.1s ease, transform 0.08s cubic-bezier(0.34, 1.56, 0.64, 1);
-			}
-			.wallet-hint-btn:active {
-				transform: scale(0.91);
-			}
+
 			@keyframes err-shake {
 				0%, 100% { transform: translateX(0); }
 				20%       { transform: translateX(-6px); }
@@ -325,52 +400,70 @@
 				65%       { transform: translateX(-3px); }
 				85%       { transform: translateX(2px); }
 			}
-			.err.shaking {
+			.err.shaking, input.shaking {
 				animation: err-shake 0.32s cubic-bezier(0.36, 0.07, 0.19, 0.97);
 			}
 		</style>
 	</head>
 	<body>
 		<div class="shell">
-			<form class="card" id="f">
-			<a href="/" class="brand"><img src="/three.svg" alt="three.ws" /></a>
-			<h1>Welcome back</h1>
-			<p class="sub">Sign in to manage your avatars.</p>
-			<label for="email">Email or username</label>
-			<input id="email" type="text" autocomplete="username email" required aria-describedby="err" />
-			<label for="password">Password</label>
-			<input
-				id="password"
-				type="password"
-				autocomplete="current-password"
-				required
-				minlength="10"
-				aria-describedby="err"
-			/>
-			<p class="hint" style="font-size:12px;color:#444;margin-top:4px;text-align:right">
-				<a href="/forgot-password">Forgot password?</a>
-			</p>
-			<button id="submit" type="submit">Sign in</button>
-			<div class="divider">or connect wallet</div>
-			<div class="chain-tabs" role="tablist" aria-label="Wallet chain">
-				<button type="button" class="chain-tab active" data-chain="evm" role="tab" aria-selected="true" aria-controls="evm-panel">EVM</button>
-				<button type="button" class="chain-tab" data-chain="solana" role="tab" aria-selected="false" aria-controls="solana-panel">Solana</button>
-			</div>
-			<div id="evm-panel" class="chain-panel active" role="tabpanel">
-				<div id="wallet-mount"></div>
-				<p class="wallet-step-hint">Your wallet will prompt twice — once to connect, once to sign.</p>
-			</div>
-			<div id="solana-panel" class="chain-panel" role="tabpanel">
-				<div id="solana-wallet-mount"></div>
-				<div class="chain-hints" id="solana-hints" style="margin-top:8px;font-size:12px;color:#444;display:flex;gap:8px;justify-content:center;">
-					<button type="button" class="wallet-hint-btn" data-wallet="phantom">Phantom</button>
-					<button type="button" class="wallet-hint-btn" data-wallet="backpack">Backpack</button>
-					<button type="button" class="wallet-hint-btn" data-wallet="solflare">Solflare</button>
+			<form class="card" id="f" autocomplete="on">
+				<a href="/" class="brand"><img src="/three.svg" alt="three.ws" /></a>
+				<h1>Welcome back</h1>
+				<p class="sub">Sign in to manage your avatars.</p>
+
+				<div class="method-tabs" role="tablist" aria-label="Sign-in method">
+					<button type="button" class="method-tab active" data-method="email" role="tab" aria-selected="true" aria-controls="email-panel">Email</button>
+					<button type="button" class="method-tab" data-method="wallet" role="tab" aria-selected="false" aria-controls="wallet-panel">Wallet</button>
 				</div>
-			</div>
-			<div class="err" id="err" role="alert" aria-live="polite"></div>
-			<p class="foot">No account? <a href="/register">Create one</a></p>
-		</form>
+
+				<div id="email-panel" class="method-panel active" role="tabpanel">
+					<label for="email">Email or username</label>
+					<input id="email" name="username" type="text" autocomplete="username email" required aria-describedby="email-err" />
+					<p class="field-err" id="email-err" role="alert"></p>
+
+					<label for="password">Password</label>
+					<div class="password-wrap">
+						<input
+							id="password"
+							name="password"
+							type="password"
+							autocomplete="current-password"
+							required
+							minlength="10"
+							aria-describedby="password-err caps-warn"
+						/>
+						<button type="button" class="password-toggle" id="password-toggle" aria-label="Show password" aria-pressed="false">
+							<svg id="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+								<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
+								<circle cx="12" cy="12" r="3" />
+							</svg>
+						</button>
+					</div>
+					<p class="caps-warn" id="caps-warn" hidden>Caps Lock is on</p>
+					<p class="field-err" id="password-err" role="alert"></p>
+
+					<p class="forgot"><a href="/forgot-password">Forgot password?</a></p>
+					<button id="submit" type="submit">Sign in</button>
+				</div>
+
+				<div id="wallet-panel" class="method-panel" role="tabpanel">
+					<div class="chain-tabs" role="tablist" aria-label="Wallet chain">
+						<button type="button" class="chain-tab active" data-chain="evm" role="tab" aria-selected="true" aria-controls="evm-panel">EVM</button>
+						<button type="button" class="chain-tab" data-chain="solana" role="tab" aria-selected="false" aria-controls="solana-panel">Solana</button>
+					</div>
+					<div id="evm-panel" class="chain-panel active" role="tabpanel">
+						<div id="wallet-mount"></div>
+					</div>
+					<div id="solana-panel" class="chain-panel" role="tabpanel">
+						<div id="solana-wallet-mount"></div>
+					</div>
+					<p class="wallet-step-hint" title="Your wallet will prompt twice — once to connect, once to sign.">Wallet prompts to connect, then to sign.</p>
+				</div>
+
+				<div class="err" id="err" role="alert" aria-live="polite"></div>
+				<p class="foot">No account? <a href="/register">Create one</a></p>
+			</form>
 			<div class="panel" aria-hidden="true">
 				<div class="agent-avatar">
 					<model-viewer
@@ -393,130 +486,203 @@
 				</div>
 			</div>
 		</div>
-		<style>
-			.wallet-step-hint {
-				margin: 6px 0 0;
-				font-size: 12px;
-				color: #444;
-				text-align: center;
-			}
-			.wallet-hint-btn {
-				width: auto;
-				margin-top: 0;
-				padding: 4px 10px;
-				background: transparent;
-				border: 1px solid rgba(255, 255, 255, 0.08);
-				border-radius: 6px;
-				color: #444;
-				font-size: 11px;
-				font-weight: 400;
-				cursor: pointer;
-				transition: border-color 0.15s, color 0.15s;
-			}
-			.wallet-hint-btn:hover { border-color: rgba(255,255,255,0.25); color: #bbb; }
-			.wallet-hint-btn.active { border-color: rgba(255,255,255,0.2); color: #ccc; background: rgba(255,255,255,0.04); }
-		</style>
 		<script type="module" src="/wallet-login.js"></script>
 		<script>
 			(function () {
-				const viewer = document.getElementById('login-avatar');
-				if (!viewer) return;
-				const BASE_AZ = 0;
-				const BASE_POL = 88;
-				const AZ_RANGE = 30;
-				const POL_RANGE = 14;
-				let targetAz = BASE_AZ, targetPol = BASE_POL;
-				let curAz = BASE_AZ, curPol = BASE_POL;
-				let nod = 0;
-				const lerp = (a, b, t) => a + (b - a) * t;
-				function tick() {
-					curAz = lerp(curAz, targetAz, 0.1);
-					curPol = lerp(curPol, targetPol + nod, 0.18);
-					nod *= 0.85;
-					viewer.setAttribute('camera-orbit', `${curAz}deg ${curPol}deg 4.8m`);
-					requestAnimationFrame(tick);
+				const form = document.getElementById('f');
+				const err = document.getElementById('err');
+				const btn = document.getElementById('submit');
+				const emailInput = document.getElementById('email');
+				const passwordInput = document.getElementById('password');
+				const emailErr = document.getElementById('email-err');
+				const passwordErr = document.getElementById('password-err');
+				const capsWarn = document.getElementById('caps-warn');
+				const pwToggle = document.getElementById('password-toggle');
+
+				// ── Method tabs (Email / Wallet) ──
+				const methodTabs = document.querySelectorAll('.method-tab');
+				const methodPanels = {
+					email: document.getElementById('email-panel'),
+					wallet: document.getElementById('wallet-panel'),
+				};
+				let activeMethod = 'email';
+				function setMethod(name) {
+					if (!methodPanels[name]) return;
+					activeMethod = name;
+					methodTabs.forEach((t) => {
+						const on = t.dataset.method === name;
+						t.classList.toggle('active', on);
+						t.setAttribute('aria-selected', on ? 'true' : 'false');
+					});
+					Object.entries(methodPanels).forEach(([k, el]) => {
+						el.classList.toggle('active', k === name);
+					});
+					// Toggle required so wallet-tab Enter doesn't trip browser validation.
+					const emailActive = name === 'email';
+					emailInput.required = emailActive;
+					passwordInput.required = emailActive;
 				}
-				requestAnimationFrame(tick);
-				window.addEventListener('mousemove', (e) => {
-					const nx = e.clientX / window.innerWidth - 0.5;
-					const ny = e.clientY / window.innerHeight - 0.5;
-					targetAz = BASE_AZ - nx * AZ_RANGE * 2;
-					targetPol = BASE_POL + ny * POL_RANGE * 2;
-				}, { passive: true });
-				const inputs = document.querySelectorAll('#f input');
-				inputs.forEach((el) => {
-					el.addEventListener('keydown', (e) => {
-						if (e.key.length === 1 || e.key === 'Backspace') {
-							nod = (nod >= 0 ? -1 : 1) * 4;
-						}
+				methodTabs.forEach((t) =>
+					t.addEventListener('click', () => setMethod(t.dataset.method)),
+				);
+
+				// ── Wallet chain tabs ──
+				document.querySelectorAll('.chain-tab').forEach((t) => {
+					t.addEventListener('click', () => {
+						const chain = t.dataset.chain;
+						document.querySelectorAll('.chain-tab').forEach((x) => {
+							const on = x.dataset.chain === chain;
+							x.classList.toggle('active', on);
+							x.setAttribute('aria-selected', on ? 'true' : 'false');
+						});
+						document.getElementById('evm-panel').classList.toggle('active', chain === 'evm');
+						document.getElementById('solana-panel').classList.toggle('active', chain === 'solana');
 					});
 				});
-			})();
-		</script>
-		<script>
-			const params = new URLSearchParams(location.search);
-			const next =
-				params.get('next') || sessionStorage.getItem('login_redirect') || '/create';
-			sessionStorage.removeItem('login_redirect');
 
-			// If already signed in, skip the login form — but not when the user
-			// navigated back here intentionally (back/forward navigation).
-			const navType = performance.getEntriesByType('navigation')[0]?.type;
-			if (navType !== 'back_forward') {
-				fetch('/api/auth/me', { credentials: 'include' })
-					.then((r) => {
-						if (r.ok) location.replace(next);
-					})
-					.catch(() => {});
-			}
+				// ── Password show/hide ──
+				pwToggle.addEventListener('click', () => {
+					const show = passwordInput.type === 'password';
+					passwordInput.type = show ? 'text' : 'password';
+					pwToggle.setAttribute('aria-pressed', show ? 'true' : 'false');
+					pwToggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+				});
 
-			const form = document.getElementById('f');
-			const err = document.getElementById('err');
-			const btn = document.getElementById('submit');
-			form.addEventListener('submit', async (e) => {
-				e.preventDefault();
-				err.style.display = 'none';
-				btn.disabled = true;
-				btn.textContent = 'Signing in…';
-				try {
-					const res = await fetch('/api/auth/login', {
-						method: 'POST',
-						credentials: 'include',
-						headers: { 'content-type': 'application/json' },
-						body: JSON.stringify({
-							email: document.getElementById('email').value,
-							password: document.getElementById('password').value,
-						}),
-					});
-					const data = await res.json();
-					if (!res.ok) throw new Error(data.error_description || 'Sign-in failed');
-					try {
-						localStorage.setItem(
-							'3dagent:auth-hint',
-							JSON.stringify({ authed: true, name: data.user?.display_name || '', ts: Date.now() }),
-						);
-					} catch {
-						/* ignore */
-					}
-					location.href = next;
-				} catch (e) {
-					err.textContent = e.message;
-					err.style.display = 'block';
-					err.classList.remove('shaking');
-					void err.offsetWidth;
-					err.classList.add('shaking');
-					btn.disabled = false;
-					btn.textContent = 'Sign in';
+				// ── Caps lock warn ──
+				function checkCaps(e) {
+					const on = e.getModifierState && e.getModifierState('CapsLock');
+					capsWarn.hidden = !on;
 				}
-			});
-		</script>
-		<script>
-			document.querySelectorAll('#f input').forEach((input) => {
-				const label = document.querySelector(`label[for="${input.id}"]`);
-				if (!label) return;
-				input.addEventListener('focus', () => label.classList.add('lit'));
-				input.addEventListener('blur', () => label.classList.remove('lit'));
-			});
+				passwordInput.addEventListener('keydown', checkCaps);
+				passwordInput.addEventListener('keyup', checkCaps);
+				passwordInput.addEventListener('blur', () => { capsWarn.hidden = true; });
+
+				// ── Inline field errors ──
+				function setFieldError(input, errEl, msg) {
+					if (msg) {
+						errEl.textContent = msg;
+						errEl.classList.add('show');
+						input.classList.add('invalid');
+						input.classList.remove('shaking');
+						void input.offsetWidth;
+						input.classList.add('shaking');
+					} else {
+						errEl.textContent = '';
+						errEl.classList.remove('show');
+						input.classList.remove('invalid');
+					}
+				}
+				emailInput.addEventListener('input', () => setFieldError(emailInput, emailErr, ''));
+				passwordInput.addEventListener('input', () => setFieldError(passwordInput, passwordErr, ''));
+
+				// ── Label "lit" on focus ──
+				document.querySelectorAll('#f input').forEach((input) => {
+					const label = document.querySelector(`label[for="${input.id}"]`);
+					if (!label) return;
+					input.addEventListener('focus', () => label.classList.add('lit'));
+					input.addEventListener('blur', () => label.classList.remove('lit'));
+				});
+
+				// ── Auth redirect ──
+				const params = new URLSearchParams(location.search);
+				const next =
+					params.get('next') || sessionStorage.getItem('login_redirect') || '/create';
+				sessionStorage.removeItem('login_redirect');
+				const navType = performance.getEntriesByType('navigation')[0]?.type;
+				if (navType !== 'back_forward') {
+					fetch('/api/auth/me', { credentials: 'include' })
+						.then((r) => {
+							if (r.ok) location.replace(next);
+						})
+						.catch(() => {});
+				}
+
+				// ── Submit ──
+				form.addEventListener('submit', async (e) => {
+					e.preventDefault();
+					if (activeMethod !== 'email') return;
+					err.style.display = 'none';
+					setFieldError(emailInput, emailErr, '');
+					setFieldError(passwordInput, passwordErr, '');
+
+					const email = emailInput.value.trim();
+					const password = passwordInput.value;
+					let bad = false;
+					if (!email) {
+						setFieldError(emailInput, emailErr, 'Enter your email or username.');
+						bad = true;
+					}
+					if (!password) {
+						setFieldError(passwordInput, passwordErr, 'Enter your password.');
+						bad = true;
+					}
+					if (bad) return;
+
+					btn.disabled = true;
+					btn.textContent = 'Signing in…';
+					try {
+						const res = await fetch('/api/auth/login', {
+							method: 'POST',
+							credentials: 'include',
+							headers: { 'content-type': 'application/json' },
+							body: JSON.stringify({ email, password }),
+						});
+						const data = await res.json();
+						if (!res.ok) throw new Error(data.error_description || 'Sign-in failed');
+						try {
+							localStorage.setItem(
+								'3dagent:auth-hint',
+								JSON.stringify({
+									authed: true,
+									name: data.user?.display_name || '',
+									ts: Date.now(),
+								}),
+							);
+						} catch {
+							/* ignore */
+						}
+						location.href = next;
+					} catch (e2) {
+						setFieldError(passwordInput, passwordErr, e2.message);
+						btn.disabled = false;
+						btn.textContent = 'Sign in';
+					}
+				});
+
+				// ── Avatar look-around ──
+				const viewer = document.getElementById('login-avatar');
+				if (viewer) {
+					const BASE_AZ = 0;
+					const BASE_POL = 88;
+					const AZ_RANGE = 30;
+					const POL_RANGE = 14;
+					let targetAz = BASE_AZ, targetPol = BASE_POL;
+					let curAz = BASE_AZ, curPol = BASE_POL;
+					let nod = 0;
+					const lerp = (a, b, t) => a + (b - a) * t;
+					function tick() {
+						curAz = lerp(curAz, targetAz, 0.1);
+						curPol = lerp(curPol, targetPol + nod, 0.18);
+						nod *= 0.85;
+						viewer.setAttribute('camera-orbit', `${curAz}deg ${curPol}deg 4.8m`);
+						requestAnimationFrame(tick);
+					}
+					requestAnimationFrame(tick);
+					window.addEventListener('mousemove', (e) => {
+						const nx = e.clientX / window.innerWidth - 0.5;
+						const ny = e.clientY / window.innerHeight - 0.5;
+						targetAz = BASE_AZ - nx * AZ_RANGE * 2;
+						targetPol = BASE_POL + ny * POL_RANGE * 2;
+					}, { passive: true });
+					document.querySelectorAll('#f input').forEach((el) => {
+						el.addEventListener('keydown', (ev) => {
+							if (ev.key.length === 1 || ev.key === 'Backspace') {
+								nod = (nod >= 0 ? -1 : 1) * 4;
+							}
+						});
+					});
+				}
+			})();
 		</script>
 	</body>
 </html>
