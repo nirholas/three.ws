@@ -286,38 +286,50 @@ export function mountPumpFunCard({ panel, identity, skills, memory, protocol }) 
 
 	async function doLaunch(launchBtn) {
 		launchBtn.disabled = true;
-		launchBtn.textContent = state.vanityEnabled ? 'Grinding vanity…' : 'Launching…';
+		const useAgent = state.signer === 'agent';
+		const wantsVanity = state.vanityEnabled && state.vanitySuffix?.trim();
+		launchBtn.textContent = wantsVanity ? 'Grinding vanity…' : 'Launching…';
 		try {
-			let vanityArgs = null;
-			if (state.vanityEnabled && state.vanitySuffix?.trim()) {
-				try {
-					const { grindVanity } = await import('./solana/vanity/grinder.js');
-					const ground = await grindVanity({
-						suffix: state.vanitySuffix.trim(),
-						onProgress: (p) => {
-							state.vanityProgress = { rate: p.rate, eta: p.eta };
-							const slot = cardBody.querySelector('.pumpfun-vanity-progress');
-							if (slot) slot.textContent = `grinding… ${formatNumber(p.rate)}/s · eta ${p.eta}`;
-						},
-					});
-					vanityArgs = {
-						mintPublicKey: ground.publicKey,
-						mintSecretKeyB64: btoa(String.fromCharCode(...ground.secretKey)),
-					};
-					state.vanityProgress = null;
-					launchBtn.textContent = `Launching ${shortMint(ground.publicKey)}…`;
-				} catch (err) {
-					state.vanityProgress = null;
-					launchBtn.disabled = false;
-					launchBtn.textContent = `Retry launch ${deriveSymbol(identity.name)}`;
-					toast(err.message || 'Vanity grind failed', null, null, 'error');
-					render();
-					return;
+			let extraArgs = {};
+			if (wantsVanity) {
+				if (useAgent) {
+					// Server grinds + signs in the same request.
+					extraArgs = { vanitySuffix: state.vanitySuffix.trim() };
+					launchBtn.textContent = `Launching with …${state.vanitySuffix.trim()}…`;
+				} else {
+					// Client grinds with workers, owner wallet signs.
+					try {
+						const { grindVanity } = await import('./solana/vanity/grinder.js');
+						const ground = await grindVanity({
+							suffix: state.vanitySuffix.trim(),
+							onProgress: (p) => {
+								state.vanityProgress = { rate: p.rate, eta: p.eta };
+								const slot = cardBody.querySelector('.pumpfun-vanity-progress');
+								if (slot) slot.textContent = `grinding… ${formatNumber(p.rate)}/s · eta ${p.eta}`;
+							},
+						});
+						extraArgs = {
+							mintPublicKey: ground.publicKey,
+							mintSecretKeyB64: btoa(String.fromCharCode(...ground.secretKey)),
+						};
+						state.vanityProgress = null;
+						launchBtn.textContent = `Launching ${shortMint(ground.publicKey)}…`;
+					} catch (err) {
+						state.vanityProgress = null;
+						launchBtn.disabled = false;
+						launchBtn.textContent = `Retry launch ${deriveSymbol(identity.name)}`;
+						toast(err.message || 'Vanity grind failed', null, null, 'error');
+						render();
+						return;
+					}
 				}
 			}
+			const skillName = useAgent
+				? 'pumpfun-self-launch-from-identity'
+				: 'pumpfun-launch-from-agent';
 			const r = await skills?.perform(
-				'pumpfun-launch-from-agent',
-				{ network: state.network, ...(vanityArgs || {}) },
+				skillName,
+				{ network: state.network, ...extraArgs },
 				{ identity },
 			);
 			if (r?.success && r.data?.mint) {
