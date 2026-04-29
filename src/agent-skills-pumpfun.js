@@ -123,7 +123,11 @@ export async function runServerFlow({
 	const sig = await connection.sendRawTransaction(signed.serialize(), { skipPreflight: false });
 	const latest = await connection.getLatestBlockhash();
 	await connection.confirmTransaction(
-		{ signature: sig, blockhash: latest.blockhash, lastValidBlockHeight: latest.lastValidBlockHeight },
+		{
+			signature: sig,
+			blockhash: latest.blockhash,
+			lastValidBlockHeight: latest.lastValidBlockHeight,
+		},
 		'confirmed',
 	);
 
@@ -138,7 +142,9 @@ export async function runServerFlow({
 		confirmJson = await confirmRes.json();
 		if (!confirmRes.ok) {
 			throw new Error(
-				confirmJson.error_description || confirmJson.error || `confirm failed: ${confirmRes.status}`,
+				confirmJson.error_description ||
+					confirmJson.error ||
+					`confirm failed: ${confirmRes.status}`,
 			);
 		}
 	}
@@ -361,7 +367,8 @@ export function registerPumpFunSkills(skills) {
 				amount: expected,
 				solAmount: solLamports,
 				slippage: slippageBps / 10_000,
-				tokenProgram: web3.TOKEN_PROGRAM_ID || (await import('@solana/spl-token')).TOKEN_PROGRAM_ID,
+				tokenProgram:
+					web3.TOKEN_PROGRAM_ID || (await import('@solana/spl-token')).TOKEN_PROGRAM_ID,
 			});
 
 			const sig = await sendIxs({
@@ -707,7 +714,10 @@ export function registerPumpFunSkills(skills) {
 					type: 'string',
 					description: 'Currency mint (USDC, SOL wrapper, etc.)',
 				},
-				amount: { type: 'string', description: 'Amount in base units (string-encoded bigint)' },
+				amount: {
+					type: 'string',
+					description: 'Amount in base units (string-encoded bigint)',
+				},
 				memo: { type: 'string', description: 'Invoice memo / nonce (uint)' },
 				durationSeconds: { type: 'number', description: 'Validity window (default 600)' },
 				network: { type: 'string', enum: ['mainnet', 'devnet'] },

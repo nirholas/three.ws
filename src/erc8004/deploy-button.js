@@ -217,7 +217,7 @@ export class DeployButton {
 		`;
 	}
 
-	_renderSuccessChip(chainId, txHash, contractAddress) {
+	_renderSuccessChip(chainId, txHash, contractAddress, vanityPrefix) {
 		let chainName, explorerUrl;
 		if (_isSolana(chainId)) {
 			const network = _solanaNetwork(chainId);
@@ -231,15 +231,18 @@ export class DeployButton {
 			// surface tx hashes for arbitrary contracts.
 			explorerUrl = contractAddress ? addressExplorerUrl(chainId, contractAddress) : '#';
 		}
+		const vanityNote = vanityPrefix
+			? ` &middot; <span style="background:linear-gradient(90deg,#ffd54f,#ff8a65);color:#1a1a1a;padding:0 6px;border-radius:999px;font-weight:600">&#10024; ${_esc(vanityPrefix)}</span>`
+			: '';
 		this._root.innerHTML = `
 			<a class="deploy-chip deploy-chip--success" href="${_esc(explorerUrl)}" target="_blank" rel="noopener noreferrer"
 			   aria-label="View this agent's registry on the ${_esc(chainName)} block explorer">
-				&#x2B22; On-chain on ${_esc(chainName)} &middot; view on explorer
+				&#x2B22; On-chain on ${_esc(chainName)}${vanityNote} &middot; view on explorer
 			</a>
 		`;
 	}
 
-	_renderProgress(steps, activeIdx) {
+	_renderProgress(steps, activeIdx, extra) {
 		const labels = steps.map((s, i) => {
 			const cls = i < activeIdx ? 'done' : i === activeIdx ? 'active' : 'pending';
 			return `<span class="progress-step progress-step--${cls}">${_esc(s)}</span>`;
@@ -250,7 +253,17 @@ export class DeployButton {
 				${labels.join('<span class="progress-sep" aria-hidden="true">&#x2192;</span>')}
 				<span class="visually-hidden">${_esc(liveText)}</span>
 			</div>
+			<div class="deploy-progress-detail" aria-live="polite"
+				style="margin-top:6px;font-size:12px;color:#555;font-family:ui-monospace,monospace;min-height:1.2em">
+				${extra?.text ? _esc(extra.text) : ''}
+			</div>
+			${extra?.cancelable ? `<button class="deploy-cancel-btn" type="button"
+				style="margin-top:4px;font-size:11px;background:none;border:1px solid #ccc;border-radius:4px;padding:2px 8px;cursor:pointer">cancel</button>` : ''}
 		`;
+		if (extra?.onCancel) {
+			const cb = this._root.querySelector('.deploy-cancel-btn');
+			if (cb) cb.addEventListener('click', extra.onCancel);
+		}
 	}
 
 	_renderError(msg, action) {
@@ -293,7 +306,12 @@ export class DeployButton {
 		const steps = vanityPrefix
 			? ['Grinding vanity address', 'Sign tx', 'Confirming on-chain', 'Saving']
 			: ['Connecting wallet', 'Sign tx', 'Confirming on-chain', 'Saving'];
-		this._renderProgress(steps, 0);
+		const abort = new AbortController();
+		this._renderProgress(steps, 0, vanityPrefix ? {
+			text: `searching for "${vanityPrefix}…"`,
+			cancelable: true,
+			onCancel: () => abort.abort(),
+		} : undefined);
 
 		let result;
 		try {
@@ -302,13 +320,12 @@ export class DeployButton {
 				network,
 				vanity: vanityPrefix ? {
 					prefix: vanityPrefix,
+					signal: abort.signal,
 					onProgress: ({ attempts, rate, eta }) => {
-						const live = this._root.querySelector('.deploy-progress');
-						if (live) {
-							live.setAttribute(
-								'aria-label',
-								`Grinding ${vanityPrefix}: ${attempts.toLocaleString()} tries, ${Math.round(rate).toLocaleString()}/s, eta ${eta}`,
-							);
+						const detail = this._root.querySelector('.deploy-progress-detail');
+						if (detail) {
+							detail.textContent =
+								`🔍 "${vanityPrefix}…"  ${attempts.toLocaleString()} tries · ${Math.round(rate).toLocaleString()}/s · eta ${eta}`;
 						}
 					},
 				} : undefined,
@@ -316,7 +333,7 @@ export class DeployButton {
 			this._renderProgress(steps, 1);
 			this._renderProgress(steps, 3);
 		} catch (err) {
-			if (_isUserRejection(err)) return this._renderDeployButton();
+			if (_isUserRejection(err) || err?.name === 'AbortError') return this._renderDeployButton();
 			if (err.code === 'forbidden') {
 				this._renderError(
 					'Your Solana wallet is not linked to this account. Sign in with your Solana wallet first.',
@@ -344,7 +361,8 @@ export class DeployButton {
 		this._agent.chainId = this._chainId;
 		this._agent.txHash = result.txSignature;
 		this._agent.contractAddress = result.assetPubkey;
-		this._renderSuccessChip(this._chainId, result.txSignature, result.assetPubkey);
+		_saveVanity(this._agent?.id, ''); // clear after successful deploy
+		this._renderSuccessChip(this._chainId, result.txSignature, result.assetPubkey, result.vanityPrefix);
 	}
 
 	async _startDeploy() {

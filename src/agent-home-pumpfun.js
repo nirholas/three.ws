@@ -45,6 +45,7 @@ export function mountPumpFunCard({ panel, identity, skills, memory, protocol }) 
 		tradeAmount: '',
 		quote: null,
 		quoting: false,
+		signer: 'agent', // 'agent' = server-side agent wallet; 'owner' = browser wallet
 	};
 	let refreshTimer = null;
 	let quoteTimer = null;
@@ -123,6 +124,10 @@ export function mountPumpFunCard({ panel, identity, skills, memory, protocol }) 
 		}
 		return `
 			<div class="pumpfun-trade">
+				<div class="pumpfun-signer" role="tablist" aria-label="Signer">
+					<button class="pumpfun-signer-tab ${s.signer === 'agent' ? 'is-active' : ''}" data-action="signer-agent" role="tab" aria-selected="${s.signer === 'agent'}">Agent wallet</button>
+					<button class="pumpfun-signer-tab ${s.signer === 'owner' ? 'is-active' : ''}" data-action="signer-owner" role="tab" aria-selected="${s.signer === 'owner'}">Owner wallet</button>
+				</div>
 				<label class="pumpfun-trade-label">
 					<span>${isBuy ? 'Spend' : 'Sell'}</span>
 					<input
@@ -141,7 +146,7 @@ export function mountPumpFunCard({ panel, identity, skills, memory, protocol }) 
 				<div class="pumpfun-trade-actions">
 					<button class="pumpfun-btn pumpfun-btn--ghost" data-action="close-trade">Cancel</button>
 					<button class="pumpfun-btn pumpfun-btn--primary" data-action="confirm-trade" ${isExecutable(s) ? '' : 'disabled'}>
-						${isBuy ? 'Buy' : 'Sell'}${q?.success ? '' : ''}
+						${isBuy ? 'Buy' : 'Sell'}
 					</button>
 				</div>
 			</div>
@@ -227,6 +232,14 @@ export function mountPumpFunCard({ panel, identity, skills, memory, protocol }) 
 		if (action === 'toggle-sell') return toggleTrade('sell');
 		if (action === 'close-trade') return closeTrade();
 		if (action === 'confirm-trade') return executeTrade();
+		if (action === 'signer-agent') return setSigner('agent');
+		if (action === 'signer-owner') return setSigner('owner');
+	};
+
+	const setSigner = (signer) => {
+		if (state.signer === signer) return;
+		state.signer = signer;
+		render();
 	};
 
 	const toggleTrade = (side) => {
@@ -308,17 +321,28 @@ export function mountPumpFunCard({ panel, identity, skills, memory, protocol }) 
 			btn.textContent = 'Sending…';
 		}
 		try {
-			const r = await skills.perform(
-				isBuy ? 'pumpfun-buy-with-quote' : 'pumpfun-sell',
-				isBuy
-					? { mint: state.mint, solAmount: parseFloat(state.tradeAmount), network: state.network }
-					: {
-							mint: state.mint,
-							tokenAmount: state.tradeAmount.replace(/\D/g, ''),
-							network: state.network,
-					  },
-				{ identity },
-			);
+			const useAgent = state.signer === 'agent';
+			const skillName = useAgent
+				? 'pumpfun-self-swap'
+				: isBuy
+				? 'pumpfun-buy-with-quote'
+				: 'pumpfun-sell';
+			const args = useAgent
+				? {
+						mint: state.mint,
+						side: isBuy ? 'buy' : 'sell',
+						solAmount: isBuy ? parseFloat(state.tradeAmount) : undefined,
+						tokenAmount: isBuy ? undefined : state.tradeAmount.replace(/\D/g, ''),
+						network: state.network,
+				  }
+				: isBuy
+				? { mint: state.mint, solAmount: parseFloat(state.tradeAmount), network: state.network }
+				: {
+						mint: state.mint,
+						tokenAmount: state.tradeAmount.replace(/\D/g, ''),
+						network: state.network,
+				  };
+			const r = await skills.perform(skillName, args, { identity });
 			if (r?.success) {
 				toast(
 					isBuy ? `Bought ${state.tradeAmount} SOL` : `Sold ${state.tradeAmount} units`,

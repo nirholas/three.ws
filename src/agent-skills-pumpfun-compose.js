@@ -206,7 +206,7 @@ export function registerPumpFunComposeSkills(skills) {
 			const cap = cfg(ctx, 'sessionSpendCapSol');
 			const state = await loadState(ctx?.memory, sessionId, { seen: new Set(), spent: 0, log: [] });
 
-			while (Date.now() < deadline && state.spent + perTrade <= cap) {
+			while (!args.signal?.aborted && Date.now() < deadline && state.spent + perTrade <= cap) {
 				const fresh = await mcp('getNewTokens', { limit: 20 }).catch(() => null);
 				const items = fresh?.tokens ?? fresh ?? [];
 				for (const t of items) {
@@ -267,7 +267,7 @@ export function registerPumpFunComposeSkills(skills) {
 			const cap = cfg(ctx, 'sessionSpendCapSol');
 			const state = await loadState(ctx?.memory, sessionId, { mirrored: new Set(), spent: 0, log: [] });
 
-			while (Date.now() < deadline && state.spent < cap) {
+			while (!args.signal?.aborted && Date.now() < deadline && state.spent < cap) {
 				const profile = await mcp('getCreatorProfile', { creator: args.wallet }).catch(() => null);
 				const recentMints = (profile?.tokens ?? []).map((t) => t.mint).filter(Boolean);
 				for (const mint of recentMints) {

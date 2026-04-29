@@ -10,12 +10,7 @@
 import { sql } from '../_lib/db.js';
 import { cors, json, method, wrap, error } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
-import {
-	getConnection,
-	getPumpSdk,
-	getAmmPoolState,
-	solanaPubkey,
-} from '../_lib/pump.js';
+import { getConnection, getPumpSdk, getAmmPoolState, solanaPubkey } from '../_lib/pump.js';
 
 const MAX_PER_RUN = 100;
 

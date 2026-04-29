@@ -34,6 +34,9 @@
 		.copy-btn:hover { background: #f3f3f3; }
 
 		.trust-bar { display: flex; align-items: center; gap: .75rem; margin-top: .75rem; padding: .65rem .85rem; border-radius: 8px; background: var(--bg); border: 1px solid var(--border); }
+		.trust-bar .spark { margin-left: auto; flex: 0 0 120px; }
+		.trust-bar .spark svg { width: 120px; height: 32px; display: block; }
+		.trust-bar .spark-empty { font-size: .7rem; color: var(--muted); }
 		.trust-grade { font-size: 1.6rem; font-weight: 700; min-width: 2rem; text-align: center; }
 		.trust-A { color: var(--ok-fg); }
 		.trust-B { color: #2e7d32; }
@@ -67,8 +70,15 @@
 		.chip[aria-pressed="true"] { background: #111; color: #fff; border-color: #111; }
 
 		.atts { border-top: 1px solid #eee; }
-		.att  { padding: .55rem .25rem; border-bottom: 1px solid #eee; display: grid; grid-template-columns: 92px 1fr; gap: .5rem .75rem; align-items: baseline; }
+		.att  { padding: .55rem .25rem; border-bottom: 1px solid #eee; display: grid; grid-template-columns: 92px 1fr; gap: .5rem .75rem; align-items: baseline; transition: background .8s ease; }
+		.att.fresh { background: #fffbe5; animation: fadeFresh 4s ease forwards; }
+		@keyframes fadeFresh { 0% { background: #fff3a3; } 100% { background: transparent; } }
 		.att code { font-size: .72rem; color: #555; }
+		.live-dot { display: inline-flex; align-items: center; gap: .3rem; font-size: .72rem; color: var(--muted); }
+		.live-dot::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #c8c8c8; }
+		.live-dot.on::before  { background: #43a047; box-shadow: 0 0 0 0 rgba(67,160,71,.5); animation: pulse 1.6s infinite; }
+		.live-dot.off::before { background: #aaa; }
+		@keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(67,160,71,.5); } 50% { box-shadow: 0 0 0 5px rgba(67,160,71,0); } }
 		.kind-feedback   { color: var(--ok-fg); }
 		.kind-validation { color: var(--info-fg); }
 		.kind-task       { color: #6a1b9a; }
@@ -104,6 +114,7 @@
 		</select>
 		<button id="load" class="primary">Load</button>
 		<button id="share" title="Copy shareable link">Share</button>
+		<button id="embed" title="Copy iframe embed snippet">Embed</button>
 	</div>
 
 	<div id="identity"></div>
@@ -111,7 +122,7 @@
 	<h2>Reputation <span class="hint" id="rep-hint"></span></h2>
 	<div id="reputation"></div>
 
-	<h2>Recent attestations <span class="hint" id="atts-count"></span></h2>
+	<h2>Recent attestations <span class="hint" id="atts-count"></span> <span id="live" class="live-dot off" title="Live updates">off</span></h2>
 	<div class="filters" id="filters" hidden>
 		<button class="chip" data-filter="all"           aria-pressed="true">all</button>
 		<button class="chip" data-filter="feedback"      aria-pressed="false">feedback</button>
@@ -128,8 +139,10 @@
 		$('asset').value   = params.get('asset')   || '';
 		$('network').value = params.get('network') || 'devnet';
 
-		let cache = { rows: [], net: 'devnet' };
+		let cache = { rows: [], net: 'devnet', knownSigs: new Set(), freshSigs: new Set() };
 		let activeFilter = 'all';
+		let pollTimer = null;
+		const POLL_MS = 8000;
 
 		const PUBKEY_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 

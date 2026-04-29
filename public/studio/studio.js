@@ -36,6 +36,12 @@ const WIDGET_TYPES = {
 		status: 'ready',
 		icon: '⌖',
 	},
+	'pumpfun-feed': {
+		label: 'Pump.fun Live Feed',
+		desc: 'Solana agent narrates live pump.fun claims and graduations.',
+		status: 'ready',
+		icon: '✦',
+	},
 };
 
 const DEMO_AVATAR = Object.freeze({
