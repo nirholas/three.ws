@@ -1,0 +1,64 @@
+require('dotenv/config');
+const { AgentTeam } = require('xspace-agent');
+
+const config = {
+  auth: {
+    token: process.env.X_AUTH_TOKEN,
+  },
+  agents: [
+    {
+      name: 'host',
+      ai: {
+        provider: '{{provider}}',
+        model: '{{defaultModel}}',
+        apiKey: process.env.{{providerEnvKey}},
+        systemPrompt:
+          'You are the host of this X Space. Welcome speakers, ' +
+          'guide the conversation, and keep things on topic.',
+      },
+      voice: {
+        provider: process.env.TTS_PROVIDER || 'openai',
+        apiKey: process.env.ELEVENLABS_API_KEY,
+      },
+    },
+    {
+      name: 'expert',
+      ai: {
+        provider: '{{provider}}',
+        model: '{{defaultModel}}',
+        apiKey: process.env.{{providerEnvKey}},
+        systemPrompt:
+          'You are a subject matter expert in this X Space. ' +
+          'Provide detailed, insightful answers when the host or audience asks questions.',
+      },
+      voice: {
+        provider: process.env.TTS_PROVIDER || 'openai',
+        apiKey: process.env.ELEVENLABS_API_KEY,
+      },
+    },
+  ],
+  turnManagement: {
+    strategy: 'round-robin',
+    turnDelay: 2000,
+  },
+};
+
+const spaceUrl = process.argv[2];
+if (!spaceUrl) {
+  console.error('Usage: npm start -- <space-url>');
+  process.exit(1);
+}
+
+const team = new AgentTeam(config);
+
+team.on('status', (status) => console.log(`[team] ${status}`));
+team.on('transcription', (data) => console.log(`[${data.speaker}] ${data.text}`));
+team.on('response', (data) => console.log(`[agent] ${data.text}`));
+team.on('error', (err) => console.error('[error]', err.message));
+
+team.join(spaceUrl).catch((err) => {
+  console.error('Failed to join space:', err.message);
+  process.exit(1);
+});
+
+

@@ -1,0 +1,19 @@
+services:
+  app:
+    build:
+      context: .
+      target: builder
+    command: npm run dev
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/packages/core/node_modules
+      - /app/packages/react/node_modules
+      - /app/packages/vue/node_modules
+      - /app/packages/widget/node_modules
+    environment:
+      - NODE_ENV=development

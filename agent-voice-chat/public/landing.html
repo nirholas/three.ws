@@ -1,0 +1,1968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Voice Chat — Real-time AI Voice Conversations</title>
+  <meta name="description" content="Open-source multi-agent voice chat platform. AI agents with memory, knowledge base, and distinct personalities — all talking in real-time.">
+  <meta name="theme-color" content="#0a0a0a">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0a0a0a;
+      --bg-elevated: #111111;
+      --bg-card: #141414;
+      --bg-card-hover: #1a1a1a;
+      --border: rgba(255,255,255,0.08);
+      --border-hover: rgba(255,255,255,0.15);
+      --text: #f5f0e8;
+      --text-muted: #a8a29e;
+      --text-dim: #6b6560;
+      --accent-warm: #e8dcc8;
+      --accent-orange: #e87b35;
+      --accent-orange-muted: #c4693a;
+      --accent-cream: #f5f0e8;
+      --radius: 12px;
+      --radius-lg: 20px;
+      --radius-xl: 28px;
+    }
+
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* ── Grid Background ─────────────────────── */
+    .grid-bg {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 80px 80px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Floating Particles ──────────────────── */
+    .particles {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .particle {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      background: rgba(232, 220, 200, 0.15);
+      border-radius: 50%;
+      animation: float-particle linear infinite;
+    }
+    @keyframes float-particle {
+      0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(-10vh) translateX(30px); opacity: 0; }
+    }
+
+    /* ── Ambient Glow ────────────────────────── */
+    .glow-top {
+      position: absolute;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 500px;
+      background: radial-gradient(ellipse, rgba(232, 123, 53, 0.06) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Layout ───────────────────────────────── */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    section {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Navbar ────────────────────────────────── */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 16px 0;
+      transition: background 0.3s, backdrop-filter 0.3s;
+    }
+    .navbar.scrolled {
+      background: rgba(10, 10, 10, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .navbar .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 700;
+      font-size: 1.15rem;
+    }
+    .nav-logo svg {
+      width: 32px;
+      height: 32px;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 22px;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: all 0.25s;
+      font-family: inherit;
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover {
+      background: rgba(255,255,255,0.05);
+      border-color: var(--border-hover);
+    }
+    .btn-primary {
+      background: var(--accent-cream);
+      color: #0a0a0a;
+    }
+    .btn-primary:hover {
+      background: #fff;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px rgba(245, 240, 232, 0.2);
+    }
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border-hover);
+    }
+    .btn-outline:hover {
+      background: rgba(255,255,255,0.05);
+      border-color: rgba(255,255,255,0.25);
+    }
+
+    /* ── Hero ──────────────────────────────────── */
+    .hero {
+      padding: 180px 0 80px;
+      text-align: center;
+      position: relative;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 20px 8px 8px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      margin-bottom: 32px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .hero-badge-avatars {
+      display: flex;
+    }
+    .hero-badge-avatars span {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 600;
+      margin-left: -6px;
+      border: 2px solid var(--bg);
+    }
+    .hero-badge-avatars span:first-child { margin-left: 0; }
+    .hero-badge-avatars .av1 { background: linear-gradient(135deg, #e87b35, #c4693a); color: #fff; }
+    .hero-badge-avatars .av2 { background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; }
+    .hero-badge-avatars .av3 { background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff; }
+
+    .hero h1 {
+      font-size: clamp(3rem, 7vw, 5.5rem);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      color: var(--accent-cream);
+      margin-bottom: 24px;
+    }
+    .hero p {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto 40px;
+      line-height: 1.7;
+    }
+    .hero-cta {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 80px;
+    }
+
+    /* ── Product Mockup ───────────────────────── */
+    .mockup-wrapper {
+      position: relative;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .mockup {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.7);
+    }
+    .mockup-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .mockup-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.08);
+    }
+    .mockup-tabs {
+      display: flex;
+      gap: 4px;
+      margin-left: 24px;
+    }
+    .mockup-tab {
+      padding: 6px 16px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .mockup-tab.active {
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+    }
+    .mockup-body {
+      padding: 32px;
+      min-height: 320px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .mockup-message {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      animation: fadeUp 0.6s ease both;
+    }
+    .mockup-message:nth-child(2) { animation-delay: 0.2s; }
+    .mockup-message:nth-child(3) { animation-delay: 0.4s; }
+    .mockup-message:nth-child(4) { animation-delay: 0.6s; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .mockup-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      color: #fff;
+    }
+    .mockup-bubble {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      max-width: 600px;
+    }
+    .mockup-bubble .name {
+      font-weight: 600;
+      color: var(--text);
+      font-size: 0.8rem;
+      margin-bottom: 4px;
+    }
+    .mockup-waveform {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      margin-top: 8px;
+    }
+    .mockup-waveform span {
+      width: 3px;
+      border-radius: 3px;
+      animation: wave 1.2s ease-in-out infinite;
+    }
+    @keyframes wave {
+      0%, 100% { height: 4px; opacity: 0.3; }
+      50% { height: 16px; opacity: 1; }
+    }
+
+    /* ── Floating Cards on Hero Mockup ────────── */
+    .float-card {
+      position: absolute;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+      z-index: 2;
+    }
+    .float-card-left {
+      bottom: 40px;
+      left: -40px;
+    }
+    .float-card-right {
+      top: 60px;
+      right: -40px;
+    }
+    .float-card h4 {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      font-weight: 500;
+    }
+    .float-card .stat {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .float-card .stat sup {
+      font-size: 0.8rem;
+      color: var(--accent-orange);
+    }
+    .mini-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 32px;
+      margin-top: 8px;
+    }
+    .mini-chart span {
+      width: 6px;
+      border-radius: 2px;
+      background: var(--accent-orange);
+      opacity: 0.6;
+    }
+
+    .float-card-menu {
+      top: 40px;
+      right: -50px;
+    }
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .menu-item svg {
+      width: 16px;
+      height: 16px;
+      opacity: 0.7;
+    }
+
+    /* ── Logo Bar ─────────────────────────────── */
+    .logo-bar {
+      padding: 60px 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .logo-bar-inner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 56px;
+      flex-wrap: wrap;
+    }
+    .logo-bar-item {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ── Description Block ────────────────────── */
+    .desc-block {
+      padding: 100px 0;
+      text-align: center;
+    }
+    .desc-block p {
+      font-size: clamp(1.5rem, 3vw, 2.2rem);
+      line-height: 1.5;
+      color: var(--text-muted);
+      max-width: 900px;
+      margin: 0 auto;
+      font-weight: 400;
+    }
+    .desc-block p strong {
+      color: var(--accent-cream);
+      font-weight: 600;
+    }
+
+    /* ── Feature Sections ─────────────────────── */
+    .feature-section {
+      padding: 120px 0;
+    }
+    .feature-section .section-header {
+      text-align: center;
+      margin-bottom: 64px;
+    }
+    .feature-section h2 {
+      font-size: clamp(2.2rem, 4vw, 3.5rem);
+      font-weight: 800;
+      color: var(--accent-cream);
+      letter-spacing: -0.02em;
+      margin-bottom: 20px;
+    }
+    .feature-section .section-desc {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      max-width: 650px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    /* ── Feature Mockup ───────────────────────── */
+    .feature-mockup {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      max-width: 1000px;
+      margin: 0 auto;
+      box-shadow: 0 40px 80px -20px rgba(0,0,0,0.5);
+      position: relative;
+    }
+
+    /* Feature 1: Multi-Agent mockup */
+    .agents-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      padding: 32px;
+    }
+    .agent-mock-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      transition: border-color 0.3s;
+    }
+    .agent-mock-card:hover { border-color: var(--border-hover); }
+    .agent-mock-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .agent-mock-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: #fff;
+    }
+    .agent-mock-info h4 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .agent-mock-info span {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+    }
+    .agent-mock-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 999px;
+      margin-bottom: 12px;
+    }
+    .status-listening {
+      background: rgba(34, 197, 94, 0.1);
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+    .status-speaking {
+      background: rgba(232, 123, 53, 0.1);
+      color: #e87b35;
+      border: 1px solid rgba(232, 123, 53, 0.2);
+    }
+    .status-thinking {
+      background: rgba(99, 102, 241, 0.1);
+      color: #818cf8;
+      border: 1px solid rgba(99, 102, 241, 0.2);
+    }
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+    .agent-mock-text {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+    .waveform-inline {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      margin-top: 12px;
+    }
+    .waveform-inline span {
+      width: 3px;
+      border-radius: 2px;
+      background: var(--accent-orange);
+    }
+
+    /* Feature 2: Memory & RAG mockup */
+    .memory-layout {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 0;
+    }
+    .memory-main {
+      padding: 32px;
+      border-right: 1px solid var(--border);
+    }
+    .memory-sidebar {
+      padding: 24px;
+    }
+    .memory-entry {
+      display: flex;
+      gap: 12px;
+      padding: 16px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 12px;
+    }
+    .memory-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .memory-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+    .memory-entry h4 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .memory-entry p {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+    .memory-tag {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      margin-top: 6px;
+    }
+    .sidebar-section h4 {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 16px;
+    }
+    .knowledge-item {
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .knowledge-item:last-child { border-bottom: none; }
+    .knowledge-item .score {
+      font-size: 0.7rem;
+      color: var(--accent-orange);
+      font-weight: 600;
+    }
+    .gauge-wrap {
+      margin-top: 20px;
+      text-align: center;
+    }
+    .gauge {
+      width: 120px;
+      height: 60px;
+      margin: 0 auto;
+      position: relative;
+    }
+    .gauge-bg, .gauge-fill {
+      width: 120px;
+      height: 60px;
+      border-radius: 60px 60px 0 0;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      overflow: hidden;
+    }
+    .gauge-bg {
+      background: rgba(255,255,255,0.06);
+    }
+    .gauge-fill {
+      background: conic-gradient(from 0.75turn, var(--accent-orange) 0%, var(--accent-orange-muted) 75%, transparent 75%);
+      clip-path: polygon(0 100%, 0 0, 100% 0, 100% 100%);
+    }
+    .gauge-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-top: 8px;
+    }
+    .gauge-label {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+
+    /* Feature 3: Analytics mockup */
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      padding: 32px;
+    }
+    .analytics-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+    .analytics-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .analytics-card-header h4 {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .time-badge {
+      font-size: 0.7rem;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.05);
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+    }
+    .analytics-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+    .analytics-value sup {
+      font-size: 0.8rem;
+      color: var(--accent-orange);
+    }
+    .chart-placeholder {
+      height: 80px;
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+    }
+    .chart-placeholder span {
+      flex: 1;
+      border-radius: 2px 2px 0 0;
+    }
+    .analytics-tip {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .analytics-tip h4 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .analytics-tip p {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      line-height: 1.6;
+    }
+    .analytics-tip .tip-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 12px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .analytics-tip .tip-btn:hover {
+      background: rgba(255,255,255,0.08);
+      color: var(--text);
+    }
+    .chart-axis {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+    }
+    .chart-axis span {
+      font-size: 0.65rem;
+      color: var(--text-dim);
+    }
+
+    /* Feature 4: Collaboration / Multi-Room */
+    .collab-layout {
+      padding: 32px;
+      position: relative;
+    }
+    .collab-editor {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .collab-editor-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .collab-editor-header h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .collab-avatars {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .collab-avatars span {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: #fff;
+      border: 2px solid var(--bg-card);
+      margin-left: -6px;
+    }
+    .collab-avatars span:first-child { margin-left: 0; }
+    .collab-count {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      margin-left: 4px;
+    }
+    .room-list {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .room-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      transition: border-color 0.3s;
+    }
+    .room-card:hover { border-color: var(--border-hover); }
+    .room-card h5 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .room-card .room-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+    .room-card .room-meta .online {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .room-card .room-meta .online::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #4ade80;
+    }
+    .collab-update-panel {
+      position: absolute;
+      bottom: 50px;
+      left: 50px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      width: 260px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    }
+    .collab-update-panel h4 {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .update-entry {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+    }
+    .update-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-orange);
+      flex-shrink: 0;
+    }
+    .update-entry .update-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .update-entry .update-info {
+      font-size: 0.78rem;
+    }
+    .update-entry .update-info .name { font-weight: 600; color: var(--text); }
+    .update-entry .update-info .time { color: var(--text-dim); font-size: 0.7rem; }
+
+    /* ── Benefits ─────────────────────────────── */
+    .benefits {
+      padding: 120px 0;
+    }
+    .benefits h2 {
+      font-size: clamp(2.2rem, 4vw, 3.5rem);
+      font-weight: 800;
+      color: var(--accent-cream);
+      text-align: center;
+      letter-spacing: -0.02em;
+      margin-bottom: 64px;
+    }
+    .benefits-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .benefit-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 36px;
+      transition: border-color 0.3s, transform 0.3s;
+    }
+    .benefit-card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-4px);
+    }
+    .benefit-card h3 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 10px;
+    }
+    .benefit-card p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    .benefit-visual {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      min-height: 80px;
+    }
+
+    /* ── Testimonials ─────────────────────────── */
+    .testimonials {
+      padding: 120px 0;
+    }
+    .testimonials h2 {
+      font-size: clamp(2.2rem, 4vw, 3.5rem);
+      font-weight: 800;
+      color: var(--accent-cream);
+      text-align: center;
+      letter-spacing: -0.02em;
+      margin-bottom: 64px;
+    }
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: 280px 1fr 1fr;
+      gap: 20px;
+    }
+    .testimonial-rating {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 36px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .rating-value {
+      font-size: 3.5rem;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1;
+    }
+    .rating-star {
+      color: #fbbf24;
+      font-size: 1.5rem;
+      margin-left: 4px;
+    }
+    .rating-count {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      margin: 8px 0 20px;
+    }
+    .rating-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .rating-link:hover {
+      background: rgba(255,255,255,0.05);
+      color: var(--text);
+    }
+    .testimonial-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .testimonial-quote {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+      margin-bottom: 24px;
+    }
+    .testimonial-quote::before {
+      content: '\201C';
+      font-size: 2rem;
+      color: var(--text-dim);
+      line-height: 0;
+      vertical-align: -8px;
+      margin-right: 2px;
+    }
+    .testimonial-author {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .testimonial-author-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .testimonial-author-info .name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .testimonial-author-info .role {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+    }
+    .testimonial-nav {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 32px;
+    }
+    .testimonial-nav button {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      font-size: 1.1rem;
+    }
+    .testimonial-nav button:hover {
+      background: rgba(255,255,255,0.1);
+      color: var(--text);
+    }
+
+    /* ── CTA Section ──────────────────────────── */
+    .cta-section {
+      padding: 120px 0;
+    }
+    .cta-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 80px 40px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .cta-box::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 200px;
+      background:
+        linear-gradient(transparent, rgba(10, 10, 10, 0.3)),
+        repeating-linear-gradient(
+          90deg,
+          transparent,
+          transparent 79px,
+          rgba(255,255,255,0.03) 79px,
+          rgba(255,255,255,0.03) 80px
+        ),
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 79px,
+          rgba(255,255,255,0.03) 79px,
+          rgba(255,255,255,0.03) 80px
+        );
+      perspective: 500px;
+      transform: rotateX(45deg);
+      transform-origin: bottom;
+      pointer-events: none;
+    }
+    .cta-box .label {
+      font-size: 0.9rem;
+      color: var(--text-dim);
+      margin-bottom: 16px;
+    }
+    .cta-box h2 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 800;
+      color: var(--accent-cream);
+      letter-spacing: -0.02em;
+      margin-bottom: 32px;
+    }
+
+    /* ── Footer ───────────────────────────────── */
+    .footer {
+      border-top: 1px solid var(--border);
+      padding: 60px 0 40px;
+      position: relative;
+      z-index: 1;
+    }
+    .footer-top {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr 1fr 1fr;
+      gap: 40px;
+      margin-bottom: 48px;
+    }
+    .footer-brand p {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      line-height: 1.6;
+      margin-top: 12px;
+    }
+    .footer-col h4 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+    .footer-col a {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      text-decoration: none;
+      padding: 4px 0;
+      transition: color 0.2s;
+    }
+    .footer-col a:hover { color: var(--accent-cream); }
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      font-size: 0.8rem;
+      color: var(--text-dim);
+    }
+    .footer-bottom-links {
+      display: flex;
+      gap: 24px;
+    }
+    .footer-bottom-links a {
+      color: var(--text-dim);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-bottom-links a:hover { color: var(--text-muted); }
+
+    /* ── Responsive ───────────────────────────── */
+    @media (max-width: 900px) {
+      .nav-links { display: none; }
+      .agents-grid, .analytics-grid, .benefits-grid { grid-template-columns: 1fr; }
+      .testimonials-grid { grid-template-columns: 1fr; }
+      .memory-layout { grid-template-columns: 1fr; }
+      .memory-main { border-right: none; border-bottom: 1px solid var(--border); }
+      .room-list { grid-template-columns: 1fr; }
+      .footer-top { grid-template-columns: 1fr 1fr; }
+      .float-card { display: none; }
+      .collab-update-panel { display: none; }
+    }
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 2.5rem; }
+      .hero-cta { flex-direction: column; align-items: center; }
+      .footer-top { grid-template-columns: 1fr; }
+      .mockup-tabs { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Grid Background -->
+  <div class="grid-bg"></div>
+
+  <!-- Particles -->
+  <div class="particles" id="particles"></div>
+
+  <!-- Navbar -->
+  <nav class="navbar" id="navbar">
+    <div class="container">
+      <a href="#" class="nav-logo">
+        <svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="2"/><circle cx="16" cy="16" r="6" fill="currentColor" opacity="0.3"/><path d="M16 4 C20 10, 20 22, 16 28" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M16 4 C12 10, 12 22, 16 28" stroke="currentColor" stroke-width="1.5" fill="none"/><line x1="4" y1="16" x2="28" y2="16" stroke="currentColor" stroke-width="1.5"/></svg>
+        Agent Voice Chat
+      </a>
+      <ul class="nav-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#benefits">Benefits</a></li>
+        <li><a href="#testimonials">Community</a></li>
+        <li><a href="https://github.com" target="_blank">Docs</a></li>
+      </ul>
+      <div class="nav-actions">
+        <a href="#" class="btn btn-ghost">GitHub</a>
+        <a href="#" class="btn btn-primary">Get Started</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="glow-top"></div>
+    <div class="container">
+      <div class="hero-badge">
+        <div class="hero-badge-avatars">
+          <span class="av1">B</span>
+          <span class="av2">A</span>
+          <span class="av3">C</span>
+        </div>
+        Open source &middot; multi-agent &middot; real-time
+      </div>
+
+      <h1>Talk to AI agents<br>in real time</h1>
+
+      <p>An open-source voice chat platform where multiple AI agents with memory, knowledge, and distinct personalities converse with you — and each other.</p>
+
+      <div class="hero-cta">
+        <a href="#" class="btn btn-primary">Get started for free</a>
+        <a href="#features" class="btn btn-outline">See how it works</a>
+      </div>
+
+      <!-- Product Mockup -->
+      <div class="mockup-wrapper">
+        <div class="mockup">
+          <div class="mockup-bar">
+            <div class="mockup-dot"></div>
+            <div class="mockup-dot"></div>
+            <div class="mockup-dot"></div>
+            <div class="mockup-tabs">
+              <div class="mockup-tab active">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+                Voice Chat
+              </div>
+              <div class="mockup-tab">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Agents
+              </div>
+              <div class="mockup-tab">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                Settings
+              </div>
+            </div>
+          </div>
+          <div class="mockup-body">
+            <div class="mockup-message">
+              <div class="mockup-avatar" style="background: linear-gradient(135deg, #6366f1, #4f46e5);">A</div>
+              <div class="mockup-bubble">
+                <div class="name">Alice</div>
+                Hey, welcome to the room! I heard you wanted to discuss the product roadmap. I've pulled up some context from our last session.
+              </div>
+            </div>
+            <div class="mockup-message">
+              <div class="mockup-avatar" style="background: linear-gradient(135deg, #e87b35, #c4693a);">B</div>
+              <div class="mockup-bubble">
+                <div class="name">Bob</div>
+                Yeah, I looked at the knowledge base docs on the Q1 strategy. Want me to summarize the key points?
+                <div class="mockup-waveform">
+                  <span style="animation-delay:0s; background:#e87b35; height:8px;"></span>
+                  <span style="animation-delay:0.1s; background:#e87b35; height:12px;"></span>
+                  <span style="animation-delay:0.2s; background:#e87b35; height:6px;"></span>
+                  <span style="animation-delay:0.3s; background:#e87b35; height:16px;"></span>
+                  <span style="animation-delay:0.4s; background:#e87b35; height:10px;"></span>
+                  <span style="animation-delay:0.5s; background:#e87b35; height:4px;"></span>
+                  <span style="animation-delay:0.6s; background:#e87b35; height:14px;"></span>
+                  <span style="animation-delay:0.7s; background:#e87b35; height:8px;"></span>
+                </div>
+              </div>
+            </div>
+            <div class="mockup-message">
+              <div class="mockup-avatar" style="background: linear-gradient(135deg, #22c55e, #16a34a);">Y</div>
+              <div class="mockup-bubble">
+                <div class="name">You</div>
+                Go for it. Also, can you both cross-reference with what we discussed last Tuesday?
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Floating cards -->
+        <div class="float-card float-card-left">
+          <h4>Active Sessions</h4>
+          <div class="stat">1,284<sup>&nearr;</sup></div>
+          <div class="mini-chart">
+            <span style="height:12px;"></span>
+            <span style="height:18px;"></span>
+            <span style="height:14px;"></span>
+            <span style="height:22px;"></span>
+            <span style="height:20px;"></span>
+            <span style="height:28px;"></span>
+            <span style="height:24px;"></span>
+            <span style="height:32px;"></span>
+          </div>
+        </div>
+
+        <div class="float-card float-card-menu" style="right:-50px; top:80px;">
+          <div class="menu-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+            Voice Input
+          </div>
+          <div class="menu-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Memory Recall
+          </div>
+          <div class="menu-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Knowledge Search
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Logo / Tech Bar -->
+  <section class="logo-bar">
+    <div class="container">
+      <div class="logo-bar-inner">
+        <div class="logo-bar-item">OpenAI</div>
+        <div class="logo-bar-item">Anthropic</div>
+        <div class="logo-bar-item">Groq</div>
+        <div class="logo-bar-item">ElevenLabs</div>
+        <div class="logo-bar-item">Whisper</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Description Block -->
+  <section class="desc-block">
+    <div class="container">
+      <p><strong>Build, deploy</strong> and <strong>scale</strong> voice-first AI agents. Agent Voice Chat is designed for developers, startups and teams building <strong>conversational AI products</strong> that need real-time voice, persistent memory, and knowledge retrieval &mdash; all from one open-source platfor</p>
+    </div>
+  </section>
+
+  <!-- Feature 1: Multi-Agent Voice Chat -->
+  <section class="feature-section" id="features">
+    <div class="container">
+      <div class="section-header">
+        <h2>Multi-Agent Voice Chat</h2>
+        <p class="section-desc">Multiple AI agents with distinct personalities share the same room. Each agent listens, thinks, and speaks independently with coordinated turn-taking.</p>
+      </div>
+      <div class="feature-mockup">
+        <div class="mockup-bar">
+          <div class="mockup-dot"></div>
+          <div class="mockup-dot"></div>
+          <div class="mockup-dot"></div>
+          <div class="mockup-tabs">
+            <div class="mockup-tab active">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              Active Agents
+            </div>
+            <div class="mockup-tab">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+              Turn Queue
+            </div>
+          </div>
+        </div>
+        <div class="agents-grid">
+          <div class="agent-mock-card">
+            <div class="agent-mock-header">
+              <div class="agent-mock-avatar" style="background: linear-gradient(135deg, #6366f1, #4f46e5);">A</div>
+              <div class="agent-mock-info">
+                <h4>Alice</h4>
+                <span>Claude &middot; ElevenLabs</span>
+              </div>
+            </div>
+            <div class="agent-mock-status status-listening"><span class="status-dot"></span> Listening</div>
+            <p class="agent-mock-text">Analytical and curious. Focuses on data-driven insights and asks clarifying questions to deepen the discussion.</p>
+          </div>
+          <div class="agent-mock-card">
+            <div class="agent-mock-header">
+              <div class="agent-mock-avatar" style="background: linear-gradient(135deg, #e87b35, #c4693a);">B</div>
+              <div class="agent-mock-info">
+                <h4>Bob</h4>
+                <span>OpenAI &middot; OpenAI TTS</span>
+              </div>
+            </div>
+            <div class="agent-mock-status status-speaking"><span class="status-dot"></span> Speaking</div>
+            <p class="agent-mock-text">Bold and direct. Challenges assumptions with sharp wit and drives conversations toward action items.</p>
+            <div class="waveform-inline">
+              <span style="height:6px;"></span><span style="height:12px;"></span><span style="height:8px;"></span>
+              <span style="height:18px;"></span><span style="height:14px;"></span><span style="height:10px;"></span>
+              <span style="height:16px;"></span><span style="height:6px;"></span><span style="height:12px;"></span>
+              <span style="height:20px;"></span><span style="height:8px;"></span><span style="height:14px;"></span>
+            </div>
+          </div>
+          <div class="agent-mock-card">
+            <div class="agent-mock-header">
+              <div class="agent-mock-avatar" style="background: linear-gradient(135deg, #f43f5e, #e11d48);">C</div>
+              <div class="agent-mock-info">
+                <h4>Clara</h4>
+                <span>Groq &middot; Piper</span>
+              </div>
+            </div>
+            <div class="agent-mock-status status-thinking"><span class="status-dot"></span> Thinking</div>
+            <p class="agent-mock-text">Creative and empathetic. Brings user-centric perspective and synthesizes ideas from the group conversation.</p>
+          </div>
+          <div class="agent-mock-card">
+            <div class="agent-mock-header">
+              <div class="agent-mock-avatar" style="background: linear-gradient(135deg, #22c55e, #16a34a);">D</div>
+              <div class="agent-mock-info">
+                <h4>DevBot</h4>
+                <span>OpenAI &middot; Browser TTS</span>
+              </div>
+            </div>
+            <div class="agent-mock-status status-listening"><span class="status-dot"></span> Listening</div>
+            <p class="agent-mock-text">Technical and precise. References documentation and code snippets to provide implementation details.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Feature 2: Memory & Knowledge -->
+  <section class="feature-section">
+    <div class="container">
+      <div class="section-header">
+        <h2>Memory &amp; Knowledge</h2>
+        <p class="section-desc">Agents remember past conversations with episodic and semantic memory. RAG-powered knowledge retrieval grounds responses in your documents.</p>
+      </div>
+      <div class="feature-mockup">
+        <div class="mockup-bar">
+          <div class="mockup-dot"></div>
+          <div class="mockup-dot"></div>
+          <div class="mockup-dot"></div>
+          <div class="mockup-tabs">
+            <div class="mockup-tab active">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+              Memory Store
+            </div>
+            <div class="mockup-tab">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              Knowledge Base
+            </div>
+            <div class="mockup-tab">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              Embeddings
+            </div>
+          </div>
+        </div>
+        <div class="memory-layout">
+          <div class="memory-main">
+            <div class="memory-entry">
+              <div class="memory-icon" style="background: rgba(99, 102, 241, 0.15);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+              <div>
+                <h4>Episodic Memory</h4>
+                <p>User discussed Q1 product strategy with focus on developer experience improvements.</p>
+                <span class="memory-tag" style="background: rgba(99, 102, 241, 0.1); color: #818cf8;">3 hours ago</span>
+              </div>
+            </div>
+            <div class="memory-entry">
+              <div class="memory-icon" style="background: rgba(232, 123, 53, 0.15);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#e87b35" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              </div>
+              <div>
+                <h4>Semantic Memory</h4>
+                <p>User prefers concise, action-oriented responses. Expertise in TypeScript and distributed systems.</p>
+                <span class="memory-tag" style="background: rgba(232, 123, 53, 0.1); color: #e87b35;">User Profile</span>
+              </div>
+            </div>
+            <div class="memory-entry">
+              <div class="memory-icon" style="background: rgba(34, 197, 94, 0.15);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              </div>
+              <div>
+                <h4>Knowledge Chunk</h4>
+                <p>Retrieved from "architecture-guide.md" &mdash; similarity score 0.94. Covers microservice patterns and event-driven design.</p>
+                <span class="memory-tag" style="background: rgba(34, 197, 94, 0.1); color: #4ade80;">RAG Match</span>
+              </div>
+            </div>
+          </div>
+          <div class="memory-sidebar">
+            <div class="sidebar-section">
+              <h4>Top Matches</h4>
+              <div class="knowledge-item">
+                architecture-guide.md <span class="score">0.94</span>
+              </div>
+              <div class="knowledge-item">
+                api-reference.md <span class="score">0.87</span>
+              </div>
+              <div class="knowledge-item">
+                deployment-notes.md <span class="score">0.81</span>
+              </div>
+              <div class="knowledge-item">
+                team-decisions.md <span class="score">0.76</span>
+              </div>
+            </div>
+            <div class="gauge-wrap">
+              <h4 style="font-size:0.8rem; color: var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:12px;">Context Relevance</h4>
+              <svg width="120" height="70" viewBox="0 0 120 70">
+                <path d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="10" stroke-linecap="round"/>
+                <path d="M 10 65 A 50 50 0 0 1 100 30" fill="none" stroke="url(#gauge-gradient)" stroke-width="10" stroke-linecap="round"/>
+                <defs>
+                  <linearGradient id="gauge-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#c4693a"/>
+                    <stop offset="100%" stop-color="#e87b35"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div class="gauge-value">89%</div>
+              <div class="gauge-label">Relevance Score</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Feature 3: Real-time Analytics -->
+  <section class="feature-section">
+    <div class="container">
+      <div class="section-header">
+        <h2>Analytics &amp; Monitoring</h2>
+        <p class="section-desc">Monitor agent performance with real-time metrics. Track latency, token usage, provider health, and conversation quality.</p>
+      </div>
+      <div class="feature-mockup">
+        <div class="mockup-bar">
+          <div class="mockup-dot"></div>
+          <div class="mockup-dot"></div>
+          <div class="mockup-dot"></div>
+        </div>
+        <div class="analytics-grid">
+          <div class="analytics-card">
+            <div class="analytics-card-header">
+              <h4>Response Latency</h4>
+              <span class="time-badge">This Hour</span>
+            </div>
+            <div class="analytics-value">240ms<sup>&nearr;</sup></div>
+            <div class="chart-placeholder">
+              <span style="height:30%; background: var(--accent-orange); opacity:0.4;"></span>
+              <span style="height:45%; background: var(--accent-orange); opacity:0.5;"></span>
+              <span style="height:35%; background: var(--accent-orange); opacity:0.4;"></span>
+              <span style="height:60%; background: var(--accent-orange); opacity:0.6;"></span>
+              <span style="height:50%; background: var(--accent-orange); opacity:0.5;"></span>
+              <span style="height:40%; background: var(--accent-orange); opacity:0.5;"></span>
+              <span style="height:55%; background: var(--accent-orange); opacity:0.6;"></span>
+              <span style="height:70%; background: var(--accent-orange); opacity:0.7;"></span>
+              <span style="height:65%; background: var(--accent-orange); opacity:0.6;"></span>
+              <span style="height:80%; background: var(--accent-orange); opacity:0.8;"></span>
+              <span style="height:75%; background: rgba(255,255,255,0.1);"></span>
+              <span style="height:60%; background: rgba(255,255,255,0.08);"></span>
+            </div>
+            <div class="chart-axis">
+              <span>12:00</span><span>12:15</span><span>12:30</span><span>12:45</span><span>Now</span>
+            </div>
+          </div>
+          <div class="analytics-card">
+            <div class="analytics-card-header">
+              <h4>Conversations</h4>
+              <span class="time-badge">This Month</span>
+            </div>
+            <div class="analytics-value">1.75K<sup>&nearr;</sup></div>
+            <div class="chart-placeholder">
+              <span style="height:20%; background: rgba(255,255,255,0.08);"></span>
+              <span style="height:25%; background: rgba(255,255,255,0.08);"></span>
+              <span style="height:30%; background: rgba(255,255,255,0.1);"></span>
+              <span style="height:35%; background: rgba(255,255,255,0.1);"></span>
+              <span style="height:40%; background: rgba(255,255,255,0.1);"></span>
+              <span style="height:50%; background: rgba(255,255,255,0.12);"></span>
+              <span style="height:55%; background: rgba(255,255,255,0.12);"></span>
+              <span style="height:60%; background: rgba(255,255,255,0.14);"></span>
+              <span style="height:70%; background: rgba(255,255,255,0.14);"></span>
+              <span style="height:75%; background: rgba(255,255,255,0.16);"></span>
+              <span style="height:80%; background: rgba(255,255,255,0.16);"></span>
+              <span style="height:85%; background: rgba(255,255,255,0.18);"></span>
+            </div>
+            <div class="chart-axis">
+              <span>Week 1</span><span>Week 2</span><span>Week 3</span><span>Week 4</span>
+            </div>
+          </div>
+          <div class="analytics-tip">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-orange)" stroke-width="2" style="margin-bottom:8px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <h4>Provider Health: All Systems Go</h4>
+            <p>All 4 providers are responding within expected latency. Circuit breakers are closed. Groq Whisper is the fastest STT at 180ms average.</p>
+            <button class="tip-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              View Provider Dashboard
+            </button>
+          </div>
+          <div class="analytics-tip">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2" style="margin-bottom:8px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <h4>Optimize Turn-Taking</h4>
+            <p>Agents are averaging 2.3s response time. Consider lowering the silence threshold for faster back-and-forth in high-energy discussions.</p>
+            <button class="tip-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33"/></svg>
+              Tune Configuration
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Feature 4: Multi-Room -->
+  <section class="feature-section">
+    <div class="container">
+      <div class="section-header">
+        <h2>Multi-Room Collaboration</h2>
+        <p class="section-desc">Isolate conversations into rooms with independent agent rosters, turn queues, and TTL cleanup. Scale from one room to hundreds.</p>
+      </div>
+      <div class="feature-mockup">
+        <div class="mockup-bar">
+          <div class="mockup-dot"></div>
+          <div class="mockup-dot"></div>
+          <div class="mockup-dot"></div>
+          <div class="mockup-tabs">
+            <div class="mockup-tab active">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              Rooms
+            </div>
+            <div class="mockup-tab">Participants</div>
+          </div>
+        </div>
+        <div class="collab-layout">
+          <div class="collab-editor">
+            <div class="collab-editor-header">
+              <h3>Room: Product Strategy</h3>
+              <div style="display: flex; align-items: center; gap: 16px;">
+                <div class="collab-avatars">
+                  <span style="background: linear-gradient(135deg, #6366f1, #4f46e5);">A</span>
+                  <span style="background: linear-gradient(135deg, #e87b35, #c4693a);">B</span>
+                  <span style="background: linear-gradient(135deg, #22c55e, #16a34a);">Y</span>
+                </div>
+                <span class="collab-count">3 active</span>
+              </div>
+            </div>
+            <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.7;">Alice and Bob are debating the merits of a plugin architecture vs. a monolithic approach for the next release. Both agents have accessed the knowledge base and are referencing the architecture decision records from last sprint...</p>
+          </div>
+          <div class="room-list">
+            <div class="room-card">
+              <h5>Product Strategy</h5>
+              <div class="room-meta">
+                <span class="online">3 participants</span>
+                <span>2 agents</span>
+              </div>
+            </div>
+            <div class="room-card">
+              <h5>Code Review</h5>
+              <div class="room-meta">
+                <span class="online">5 participants</span>
+                <span>1 agent</span>
+              </div>
+            </div>
+            <div class="room-card">
+              <h5>Onboarding</h5>
+              <div class="room-meta">
+                <span class="online">2 participants</span>
+                <span>3 agents</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Floating update panel -->
+          <div class="collab-update-panel">
+            <h4>Live Activity <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></h4>
+            <div class="update-entry">
+              <div class="update-dot"></div>
+              <div class="update-avatar" style="background: linear-gradient(135deg, #6366f1, #4f46e5);">A</div>
+              <div class="update-info">
+                <div class="name">Alice</div>
+                <div class="time">Speaking &middot; 5s ago</div>
+              </div>
+            </div>
+            <div class="update-entry">
+              <div class="update-dot" style="background: #4ade80;"></div>
+              <div class="update-avatar" style="background: linear-gradient(135deg, #e87b35, #c4693a);">B</div>
+              <div class="update-info">
+                <div class="name">Bob</div>
+                <div class="time">Queued &middot; next turn</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Benefits -->
+  <section class="benefits" id="benefits">
+    <div class="container">
+      <h2>Benefits of use</h2>
+      <div class="benefits-grid">
+        <div class="benefit-card">
+          <h3>Low Latency</h3>
+          <p>WebRTC pipelines deliver ~200ms end-to-end voice latency. Socket.IO fallback keeps things running even on constrained networks.</p>
+          <div class="benefit-visual">
+            <div style="display:flex; align-items:center; gap:16px;">
+              <div style="font-size:1.8rem; font-weight:700; color:var(--text);">~200ms</div>
+              <div style="font-size:0.8rem; color:var(--text-dim);">WebRTC pipeline<br>end-to-end</div>
+            </div>
+          </div>
+        </div>
+        <div class="benefit-card">
+          <h3>Multi-Provider</h3>
+          <p>Swap between OpenAI, Claude, Groq for LLM. Mix ElevenLabs, OpenAI, Piper, or browser-native for TTS. Automatic fallback chains.</p>
+          <div class="benefit-visual">
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <span style="padding:4px 12px; border-radius:6px; background:rgba(99,102,241,0.1); color:#818cf8; font-size:0.75rem; font-weight:600;">OpenAI</span>
+              <span style="padding:4px 12px; border-radius:6px; background:rgba(232,123,53,0.1); color:#e87b35; font-size:0.75rem; font-weight:600;">Claude</span>
+              <span style="padding:4px 12px; border-radius:6px; background:rgba(34,197,94,0.1); color:#4ade80; font-size:0.75rem; font-weight:600;">Groq</span>
+              <span style="padding:4px 12px; border-radius:6px; background:rgba(244,63,94,0.1); color:#f43f5e; font-size:0.75rem; font-weight:600;">ElevenLabs</span>
+            </div>
+          </div>
+        </div>
+        <div class="benefit-card">
+          <h3>Intelligent</h3>
+          <p>Persistent memory, RAG-powered knowledge retrieval, and semantic search mean agents understand context across sessions.</p>
+          <div class="benefit-visual">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <svg width="120" height="50" viewBox="0 0 120 50">
+                <path d="M 5 45 A 55 55 0 0 1 115 45" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="8" stroke-linecap="round"/>
+                <path d="M 5 45 A 55 55 0 0 1 98 15" fill="none" stroke="url(#benefit-gauge)" stroke-width="8" stroke-linecap="round"/>
+                <defs><linearGradient id="benefit-gauge" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#c4693a"/><stop offset="100%" stop-color="#e87b35"/></linearGradient></defs>
+              </svg>
+              <div>
+                <div style="font-size:1.2rem; font-weight:700; color:var(--text);">89%</div>
+                <div style="font-size:0.7rem; color:var(--text-dim);">Context Accuracy</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="benefit-card">
+          <h3>Open Source</h3>
+          <p>MIT licensed. No vendor lock-in. Embed via React, Vue, or standalone widget. Self-host or deploy to any cloud.</p>
+          <div class="benefit-visual">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div style="display:flex; gap:-6px;">
+                <span style="width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,#6366f1,#4f46e5); display:flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:700; color:#fff;">JS</span>
+                <span style="width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,#3b82f6,#2563eb); display:flex; align-items:center; justify-content:center; font-size:0.55rem; font-weight:700; color:#fff; margin-left:-6px;">TS</span>
+                <span style="width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,#22c55e,#16a34a); display:flex; align-items:center; justify-content:center; font-size:0.55rem; font-weight:700; color:#fff; margin-left:-6px;">Vue</span>
+              </div>
+              <div style="font-size:0.8rem; color:var(--text-muted);">React, Vue &amp; Widget<br>packages included</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section class="testimonials" id="testimonials">
+    <div class="container">
+      <h2>What developers say</h2>
+      <div class="testimonials-grid">
+        <div class="testimonial-rating">
+          <div>
+            <span class="rating-value">4.9</span>
+            <span class="rating-star">&#9733;</span>
+          </div>
+          <div class="rating-count">Based on 84 Reviews</div>
+          <a href="#" class="rating-link">All Reviews &rarr;</a>
+        </div>
+        <div class="testimonial-card">
+          <p class="testimonial-quote">The multi-agent setup is incredible. We spun up three personas for our customer support bot and the turn-taking just works. Memory persistence across sessions saved us weeks of custom dev."</p>
+          <div class="testimonial-author">
+            <div class="testimonial-author-avatar">MK</div>
+            <div class="testimonial-author-info">
+              <div class="name">Maya Kim</div>
+              <div class="role">Lead Engineer at VoiceFlow Labs</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <p class="testimonial-quote">We replaced our entire voice pipeline with this. The provider fallback chains mean we've had zero downtime. Plus the RAG integration is dead simple to set up."</p>
+          <div class="testimonial-author">
+            <div class="testimonial-author-avatar">JR</div>
+            <div class="testimonial-author-info">
+              <div class="name">James Rivera</div>
+              <div class="role">CTO at SpeakAI</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial-nav">
+        <button>&larr;</button>
+        <button>&rarr;</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <div class="container">
+      <div class="cta-box">
+        <div class="label">Start building today</div>
+        <h2>What will your agents say?</h2>
+        <a href="#" class="btn btn-primary" style="font-size:1rem; padding:14px 32px;">Get started for free</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a href="#" class="nav-logo" style="margin-bottom:4px;">
+            <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="2"/><circle cx="16" cy="16" r="6" fill="currentColor" opacity="0.3"/><path d="M16 4 C20 10, 20 22, 16 28" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M16 4 C12 10, 12 22, 16 28" stroke="currentColor" stroke-width="1.5" fill="none"/><line x1="4" y1="16" x2="28" y2="16" stroke="currentColor" stroke-width="1.5"/></svg>
+            Agent Voice Chat
+          </a>
+          <p>Open-source multi-agent voice platform.<br>Build the future of conversational AI.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Product</h4>
+          <a href="#features">Features</a>
+          <a href="#">Documentation</a>
+          <a href="#">API Reference</a>
+          <a href="#">Changelog</a>
+        </div>
+        <div class="footer-col">
+          <h4>Developers</h4>
+          <a href="#">Quick Start</a>
+          <a href="#">React SDK</a>
+          <a href="#">Vue SDK</a>
+          <a href="#">Widget</a>
+        </div>
+        <div class="footer-col">
+          <h4>Community</h4>
+          <a href="#">GitHub</a>
+          <a href="#">Discord</a>
+          <a href="#">Contributing</a>
+          <a href="#">License (MIT)</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; Agent Voice Chat, 2024. All rights reserved.</span>
+        <div class="footer-bottom-links">
+          <a href="#">Terms of Service</a>
+          <a href="#">Privacy Policy</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Navbar scroll effect
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      navbar.classList.toggle('scrolled', window.scrollY > 40);
+    });
+
+    // Generate particles
+    const particlesContainer = document.getElementById('particles');
+    for (let i = 0; i < 30; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.animationDuration = (15 + Math.random() * 25) + 's';
+      p.style.animationDelay = (Math.random() * 20) + 's';
+      p.style.width = (2 + Math.random() * 2) + 'px';
+      p.style.height = p.style.width;
+      particlesContainer.appendChild(p);
+    }
+
+    // Animate waveform bars
+    document.querySelectorAll('.waveform-inline span, .mockup-waveform span').forEach((bar, i) => {
+      setInterval(() => {
+        bar.style.height = (4 + Math.random() * 18) + 'px';
+      }, 200 + i * 50);
+    });
+
+    // Intersection Observer for fade-in
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.feature-mockup, .benefit-card, .testimonial-card, .testimonial-rating').forEach(el => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(30px)';
+      el.style.transition = 'opacity 0.7s ease, transform 0.7s ease';
+      observer.observe(el);
+    });
+  </script>
+</body>
+</html>

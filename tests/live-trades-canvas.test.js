@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { fetchTrades, filterNewTrades } from '../src/widgets/live-trades-canvas.js';
 
 // ── fetchTrades ─────────────────────────────────────────────────────────────
@@ -112,7 +112,6 @@ describe('filterNewTrades', () => {
 	it('passes trades at exactly the minUsd threshold', () => {
 		const seen = new Set();
 		const incoming = [{ signature: 'z', isBuy: true, usdValue: 500 }];
-		// minUsd=500 means >= 500 passes (filter is < minUsd rejects)
 		expect(filterNewTrades(incoming, seen, 500)).toHaveLength(1);
 	});
 });

@@ -1409,4 +1409,63 @@ export function registerPumpFunSkills(skills) {
 		},
 	});
 
+	// ── pumpfun-first-claims ──────────────────────────────────────────────────
+	skills.register({
+		name: 'pumpfun-first-claims',
+		description:
+			'List creators making their first-ever pump.fun fee claim — a cash-out signal.',
+		instruction:
+			'Returns first-time claimers in the requested window. Read-only; no wallet needed.',
+		animationHint: 'curiosity',
+		voicePattern: 'Scanning for first-time fee claims in the last {{sinceMinutes}} minutes…',
+		mcpExposed: true,
+		inputSchema: {
+			type: 'object',
+			properties: {
+				sinceMinutes: {
+					type: 'integer',
+					minimum: 1,
+					maximum: 1440,
+					default: 60,
+					description: 'How far back to look (minutes)',
+				},
+				limit: { type: 'integer', minimum: 1, maximum: 50, default: 20 },
+			},
+		},
+		handler: async (args) => {
+			const sinceMinutes = Math.max(1, Math.min(1440, Number(args?.sinceMinutes) || 60));
+			const limit = Math.min(50, Math.max(1, Number(args?.limit) || 20));
+			try {
+				const r = await fetch(
+					`/api/pump/first-claims?sinceMinutes=${sinceMinutes}&limit=${limit}`,
+					{ credentials: 'include' },
+				);
+				if (!r.ok) throw new Error(`status ${r.status}`);
+				const data = await r.json();
+				const items = data?.items ?? [];
+				const summary = items.length
+					? `${items.length} first-time claim${items.length === 1 ? '' : 's'} in the last ${sinceMinutes} min:\n` +
+					  items
+							.map(
+								(c) =>
+									`${c.creator.slice(0, 8)}… ${(c.lamports / 1e9).toFixed(3)} SOL${c.mint ? ` (${c.mint.slice(0, 8)}…)` : ''}`,
+							)
+							.join('\n')
+					: `No first-time claims in the last ${sinceMinutes} minutes.`;
+				return {
+					success: true,
+					output: summary,
+					sentiment: items.length > 0 ? 0.6 : 0.0,
+					data: { items },
+				};
+			} catch (err) {
+				return {
+					success: false,
+					output: `Could not fetch first claims: ${err.message}`,
+					sentiment: -0.3,
+				};
+			}
+		},
+	});
+
 }

@@ -1,0 +1,20 @@
+{
+  "text": "Hello, this is a transcription of the audio file.",
+  "task": "transcribe",
+  "language": "english",
+  "duration": 2.4,
+  "segments": [
+    {
+      "id": 0,
+      "seek": 0,
+      "start": 0.0,
+      "end": 2.4,
+      "text": " Hello, this is a transcription of the audio file.",
+      "tokens": [50364, 2425, 11, 341, 307, 257, 65755, 295, 264, 6278, 2764, 13, 50484],
+      "temperature": 0.0,
+      "avg_logprob": -0.2,
+      "compression_ratio": 1.0,
+      "no_speech_prob": 0.01
+    }
+  ]
+}

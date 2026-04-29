@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent 2 - Alice</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #2d1b3d 0%, #1a1a2e 100%);
+      color: #fff;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container { max-width: 800px; margin: 0 auto; }
+    h1 { color: #f472b6; margin-bottom: 20px; }
+    .status-panel {
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    .status-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #ef4444;
+    }
+    .status-indicator.connected { background: #4ade80; }
+    .status-indicator.speaking { background: #4ade80; animation: pulse 1s infinite; }
+    .status-indicator.listening { background: #60a5fa; animation: pulse 1.5s infinite; }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.2); opacity: 0.7; }
+    }
+    .btn {
+      background: linear-gradient(135deg, #f093fb, #f5576c);
+      border: none;
+      border-radius: 8px;
+      padding: 12px 25px;
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .btn:hover { transform: scale(1.05); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .audio-meter {
+      height: 20px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 15px 0;
+    }
+    .audio-level {
+      height: 100%;
+      background: linear-gradient(90deg, #f472b6, #fb7185);
+      width: 0%;
+      transition: width 0.1s ease;
+    }
+    .log-panel {
+      background: rgba(0,0,0,0.3);
+      border-radius: 12px;
+      padding: 15px;
+      height: 200px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 0.85rem;
+    }
+    .log-panel p { margin-bottom: 5px; color: #9ca3af; }
+    .log-panel p.error { color: #ef4444; }
+    .log-panel p.success { color: #4ade80; }
+    .chat-panel {
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      padding: 15px;
+      margin-top: 20px;
+      height: 250px;
+      overflow-y: auto;
+    }
+    .chat-msg { margin-bottom: 10px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; }
+    .chat-msg.self { border-left: 3px solid #f472b6; }
+    .chat-msg.other { border-left: 3px solid #818cf8; }
+    .chat-msg.user { border-left: 3px solid #fbbf24; }
+    .turn-status {
+      padding: 15px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 8px;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+    .turn-status.my-turn { background: rgba(74, 222, 128, 0.2); border: 1px solid #4ade80; }
+    .turn-status.waiting { background: rgba(251, 191, 36, 0.2); border: 1px solid #fbbf24; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎤 Agent 2 - Alice</h1>
+
+    <div class="turn-status" id="turnStatus">Waiting to connect...</div>
+
+    <div class="status-panel">
+      <div class="status-row">
+        <div class="status-indicator" id="connIndicator"></div>
+        <span id="connStatus">Disconnected</span>
+        <button class="btn" id="connectBtn">Connect</button>
+      </div>
+      <div class="status-row">
+        <span>Status: </span>
+        <strong id="agentStatus">Offline</strong>
+      </div>
+      <div class="audio-meter">
+        <div class="audio-level" id="audioLevel"></div>
+      </div>
+    </div>
+
+    <div class="log-panel" id="logPanel"></div>
+    <div class="chat-panel" id="chatPanel"></div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/agent-common.js"></script>
+  <script src="/js/provider-openai-realtime.js"></script>
+  <script src="/js/provider-socket.js"></script>
+  <script>
+    window.AGENT_CONFIG = { agentId: 1, agentName: "Alice", sessionEndpoint: "/session/1" }
+  </script>
+  <script src="/js/agent-loader.js"></script>
+</body>
+</html>
+
+

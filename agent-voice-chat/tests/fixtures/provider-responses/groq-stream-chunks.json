@@ -1,0 +1,7 @@
+[
+  "data: {\"id\":\"chatcmpl-groq123\",\"object\":\"chat.completion.chunk\",\"created\":1711000000,\"model\":\"llama-3.3-70b-versatile\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"finish_reason\":null}]}\n",
+  "data: {\"id\":\"chatcmpl-groq123\",\"object\":\"chat.completion.chunk\",\"created\":1711000000,\"model\":\"llama-3.3-70b-versatile\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Hello\"},\"finish_reason\":null}]}\n",
+  "data: {\"id\":\"chatcmpl-groq123\",\"object\":\"chat.completion.chunk\",\"created\":1711000000,\"model\":\"llama-3.3-70b-versatile\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" from Groq!\"},\"finish_reason\":null}]}\n",
+  "data: {\"id\":\"chatcmpl-groq123\",\"object\":\"chat.completion.chunk\",\"created\":1711000000,\"model\":\"llama-3.3-70b-versatile\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}]}\n",
+  "data: [DONE]\n"
+]

@@ -1,0 +1,177 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Typecheck server and client
+        run: npm run typecheck
+      - name: Typecheck widget
+        run: cd packages/widget && npm install && npm run typecheck
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+      - run: npm ci
+
+      - name: Test packages/core
+        run: cd packages/core && npm install && npx vitest run --coverage
+
+      - name: Test packages/server
+        run: |
+          if node -e "const p = require('./packages/server/package.json'); process.exit(p.scripts && p.scripts.test ? 0 : 1)" 2>/dev/null; then
+            cd packages/server && npm install && npx vitest run --coverage
+          else
+            echo "No test script in packages/server, skipping"
+          fi
+
+      - name: Test packages/cli
+        run: |
+          if node -e "const p = require('./packages/cli/package.json'); process.exit(p.scripts && p.scripts.test ? 0 : 1)" 2>/dev/null; then
+            cd packages/cli && npm install && npx vitest run --coverage
+          else
+            echo "No test script in packages/cli, skipping"
+          fi
+
+      - name: Test packages/widget
+        run: |
+          if node -e "const p = require('./packages/widget/package.json'); process.exit(p.scripts && p.scripts.test ? 0 : 1)" 2>/dev/null; then
+            cd packages/widget && npm install && npx vitest run --coverage
+          else
+            echo "No test script in packages/widget, skipping"
+          fi
+
+      - name: Upload coverage (core)
+        if: matrix.node-version == 20
+        uses: codecov/codecov-action@v4
+        with:
+          files: >-
+            packages/core/coverage/lcov.info,
+            packages/server/coverage/lcov.info,
+            packages/cli/coverage/lcov.info,
+            packages/widget/coverage/lcov.info
+          flags: unit
+          fail_ci_if_error: false
+
+  e2e:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [test]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Run E2E tests (packages/core)
+        run: cd packages/core && npx vitest run src/__tests__/e2e/
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+      - name: Run E2E tests (agent-voice-chat)
+        run: cd agent-voice-chat && npm install && npm run test:e2e
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+
+  security-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+
+  dependency-review:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck, test]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+
+      - name: Build root project
+        run: npm run build
+
+      - name: Build packages/core
+        run: cd packages/core && npm install && npm run build
+
+      - name: Build packages/server
+        run: cd packages/server && npm install && npm run build
+
+      - name: Build packages/cli
+        run: cd packages/cli && npm install && npm run build
+
+      - name: Build packages/widget
+        run: cd packages/widget && npm install && npm run build
+
+      - name: Check core package size
+        run: cd packages/core && npx pkg-size --output json
+
+      - name: Verify core exports
+        run: |
+          cd packages/core
+          node -e "const pkg = require('./dist/index.js'); console.log('Core exports:', Object.keys(pkg))"
+
+      - name: Verify server exports
+        run: |
+          cd packages/server
+          node -e "const pkg = require('./dist/index.js'); console.log('Server exports:', Object.keys(pkg))"
+
+      - name: Verify CLI entry point
+        run: |
+          cd packages/cli
+          node -e "const pkg = require('./dist/index.js'); console.log('CLI loaded successfully')"
+
+

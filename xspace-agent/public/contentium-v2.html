@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Speak ai — Let your voice do the writing</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-page: #edecea;
+      --bg-container: #ffffff;
+      --bg-card: #f7f6f4;
+      --bg-card-hover: #efeeec;
+      --text-heading: #1a1a1a;
+      --text-body: #555555;
+      --text-muted: #999999;
+      --text-white: #ffffff;
+      --accent-primary: #6c5ce7;
+      --accent-primary-light: #a29bfe;
+      --accent-dark: #2d2d3f;
+      --accent-warm: #e17055;
+      --accent-green: #00b894;
+      --border-subtle: rgba(0, 0, 0, 0.06);
+      --border-card: rgba(0, 0, 0, 0.08);
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.06);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.08);
+      --font-serif: 'DM Serif Display', serif;
+      --font-sans: 'Inter', -apple-system, sans-serif;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg-page);
+      color: var(--text-body);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ─── Main Container ─── */
+    .main-container {
+      max-width: 1120px;
+      margin: 24px auto;
+      background: var(--bg-container);
+      border-radius: 24px;
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-lg);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ─── Decorative Particles ─── */
+    .particles {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .particle {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      background: rgba(108, 92, 231, 0.15);
+      border-radius: 50%;
+    }
+
+    /* ─── Navbar ─── */
+    .navbar { display: flex; align-items: center; justify-content: space-between; padding: 20px 48px; position: relative; z-index: 10; }
+    .navbar-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-heading); font-weight: 600; font-size: 18px; }
+    .navbar-logo svg { width: 28px; height: 28px; }
+    .navbar-links { display: flex; align-items: center; gap: 32px; list-style: none; }
+    .navbar-links a { color: var(--text-body); text-decoration: none; font-size: 14px; font-weight: 400; transition: color 0.2s; }
+    .navbar-links a:hover { color: var(--text-heading); }
+    .navbar-links a.active { color: var(--text-heading); font-weight: 500; }
+    .navbar-links a.active::before { content: '●'; font-size: 6px; margin-right: 6px; vertical-align: middle; }
+    .navbar-actions { display: flex; align-items: center; gap: 12px; }
+    .btn-filled {
+      padding: 10px 20px; border: none; border-radius: 100px; background: var(--accent-primary); color: var(--text-white);
+      font-size: 14px; font-weight: 500; cursor: pointer; text-decoration: none; transition: all 0.2s;
+      font-family: var(--font-sans); display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-filled:hover { background: #5b4bd6; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3); }
+
+    /* ─── Hero ─── */
+    .hero { text-align: center; padding: 40px 48px 0; position: relative; z-index: 2; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 10px; padding: 6px 16px 6px 10px;
+      border: 1px solid var(--border-card); border-radius: 100px; background: var(--bg-card);
+      margin-bottom: 28px; font-size: 14px; color: var(--text-body); box-shadow: var(--shadow-sm);
+    }
+    .hero-badge-icon { width: 24px; height: 24px; background: var(--accent-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; color: white; }
+    .hero h1 { font-family: var(--font-serif); font-size: 68px; font-weight: 400; line-height: 1.08; color: var(--text-heading); margin-bottom: 20px; letter-spacing: -1px; }
+    .hero p { font-size: 16px; color: var(--text-body); max-width: 480px; margin: 0 auto 32px; line-height: 1.7; }
+    .hero-keys { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 32px; font-size: 14px; color: var(--text-muted); }
+    .key-badge { padding: 4px 12px; background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 6px; font-size: 13px; font-weight: 500; color: var(--text-heading); box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+
+    /* Voice Orb */
+    .voice-orb-container { display: flex; justify-content: center; margin: 40px 0 24px; position: relative; }
+    .voice-orb {
+      width: 160px; height: 160px; border-radius: 50%;
+      background: radial-gradient(circle at 40% 40%, #f7f6f4 0%, #e8e6e3 60%, #d5d3d0 100%);
+      border: 1px solid var(--border-card); display: flex; align-items: center; justify-content: center;
+      position: relative; box-shadow: 0 8px 40px rgba(0,0,0,0.06);
+    }
+    .voice-orb-text { font-family: monospace; font-size: 14px; color: var(--text-heading); display: flex; align-items: center; gap: 4px; }
+    .voice-orb-text .wave { color: var(--accent-primary); letter-spacing: -1px; }
+    .orb-icon {
+      position: absolute; width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; font-size: 16px;
+      box-shadow: var(--shadow-md); border: 2px solid white;
+    }
+
+    /* Stats Bar */
+    .stats-bar { margin-top: 48px; padding: 0 20px; }
+    .stats-bar-inner { background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 16px; display: flex; overflow: hidden; box-shadow: var(--shadow-sm); }
+    .stat-item { flex: 1; padding: 24px 28px; border-right: 1px solid var(--border-card); display: flex; align-items: center; gap: 14px; }
+    .stat-item:last-child { border-right: none; }
+    .stat-icon { width: 36px; height: 36px; border-radius: 10px; background: var(--bg-card); border: 1px solid var(--border-card); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .stat-number { font-size: 28px; font-weight: 700; color: var(--text-heading); line-height: 1; }
+    .stat-label { font-size: 12px; color: var(--text-muted); }
+    .stat-arrow { font-size: 10px; color: var(--accent-green); margin-left: 2px; }
+
+    /* Pillars */
+    .pillars-section { padding: 60px 48px 0; position: relative; z-index: 2; }
+    .pillars-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border-card); border: 1px solid var(--border-card); border-radius: 16px; overflow: hidden; }
+    .pillar-card { background: var(--bg-container); padding: 36px 28px; text-align: center; }
+    .pillar-icon { width: 44px; height: 44px; margin: 0 auto 16px; background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .pillar-card h3 { font-size: 16px; font-weight: 600; color: var(--text-heading); margin-bottom: 8px; }
+    .pillar-card p { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+
+    /* Voice Demo */
+    .voice-demo-section { padding: 80px 48px; position: relative; z-index: 2; }
+    .voice-demo-text { font-size: 28px; font-weight: 300; line-height: 1.6; color: var(--text-heading); max-width: 800px; margin: 0 auto; text-align: center; }
+    .voice-demo-text .word-highlight { display: inline-block; padding: 2px 10px; background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 6px; font-weight: 400; }
+    .voice-demo-text .wave-inline { display: inline-flex; align-items: center; padding: 2px 10px; background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 6px; font-size: 16px; color: var(--accent-primary); vertical-align: middle; letter-spacing: -1px; }
+    .voice-demo-text .dimmed { color: var(--text-muted); }
+
+    /* Section Shared */
+    .section { padding: 60px 48px; position: relative; z-index: 2; }
+    .section-inner { background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 20px; padding: 60px 48px; position: relative; overflow: hidden; }
+    .section-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border: 1px solid var(--border-card); border-radius: 100px; background: var(--bg-container); margin-bottom: 20px; font-size: 13px; color: var(--text-body); box-shadow: var(--shadow-sm); }
+    .section-badge-dot { width: 18px; height: 18px; border-radius: 50%; background: var(--accent-dark); display: flex; align-items: center; justify-content: center; font-size: 10px; color: white; }
+    .section-title { font-family: var(--font-serif); font-size: 48px; font-weight: 400; color: var(--text-heading); margin-bottom: 16px; letter-spacing: -0.5px; }
+    .section-desc { font-size: 15px; color: var(--text-body); max-width: 560px; line-height: 1.7; }
+    .section-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 48px; }
+    .section-header-right { max-width: 380px; text-align: right; }
+    .section-header-right .section-desc { text-align: right; margin-left: auto; }
+    .btn-section { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border: 1px solid var(--border-card); border-radius: 100px; background: var(--bg-container); color: var(--text-heading); font-size: 14px; font-weight: 500; cursor: pointer; text-decoration: none; transition: all 0.2s; font-family: var(--font-sans); box-shadow: var(--shadow-sm); margin-top: 16px; }
+    .btn-section:hover { background: var(--bg-card); box-shadow: var(--shadow-md); }
+
+    /* Features Grid */
+    .features-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .feature-card { background: var(--bg-container); border: 1px solid var(--border-card); border-radius: 16px; padding: 32px 28px; position: relative; overflow: hidden; }
+    .feature-card h3 { font-size: 20px; font-weight: 600; color: var(--text-heading); margin-bottom: 10px; }
+    .feature-card > p { font-size: 14px; color: var(--text-body); margin-bottom: 24px; line-height: 1.6; }
+    .feature-card-visual { position: relative; border-radius: 12px; border: 1px solid var(--border-card); background: var(--bg-card); overflow: hidden; padding: 20px; min-height: 120px; }
+
+    /* Transcript lines */
+    .transcript-lines { display: flex; flex-direction: column; gap: 8px; }
+    .transcript-line { display: flex; align-items: flex-start; gap: 10px; }
+    .transcript-wave { display: flex; align-items: center; gap: 2px; padding-top: 4px; flex-shrink: 0; }
+    .transcript-wave span { width: 2px; height: 12px; background: var(--accent-primary-light); border-radius: 1px; }
+    .transcript-wave span:nth-child(odd) { height: 8px; }
+    .transcript-text { font-size: 13px; color: var(--text-body); line-height: 1.5; }
+    .transcript-text .t-highlight { color: var(--accent-primary); font-weight: 500; }
+    .transcript-text .t-colored { color: var(--accent-warm); font-weight: 500; }
+
+    /* Dict input */
+    .dict-input { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: var(--bg-container); border: 1px solid var(--border-card); border-radius: 10px; margin-bottom: 12px; }
+    .dict-input span { font-size: 13px; color: var(--text-muted); }
+    .dict-input .dict-add { margin-left: auto; width: 28px; height: 28px; background: var(--accent-primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; }
+    .dict-bars { display: flex; flex-direction: column; gap: 6px; }
+    .dict-bar-row { display: flex; gap: 4px; }
+    .dict-bar { height: 4px; border-radius: 2px; background: var(--border-card); }
+
+    /* Language icons */
+    .lang-icons { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: center; padding: 16px 0; }
+    .lang-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-card); background: var(--bg-container); }
+    .lang-icon.center-icon { width: 48px; height: 48px; background: var(--accent-dark); color: white; border-color: var(--accent-dark); }
+
+    /* History lines */
+    .history-lines { display: flex; flex-direction: column; gap: 8px; }
+    .history-line { display: flex; align-items: center; gap: 6px; }
+    .h-block { height: 8px; border-radius: 4px; background: var(--border-card); }
+    .history-clock { width: 32px; height: 32px; border-radius: 50%; background: var(--accent-primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 14px; position: absolute; bottom: 16px; right: 16px; }
+
+    /* Slack Demo */
+    .slack-demo { background: var(--bg-container); border: 1px solid var(--border-card); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow-md); }
+    .slack-header { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--border-card); }
+    .slack-dots { display: flex; gap: 6px; }
+    .slack-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .slack-dot.red { background: #ff5f56; }
+    .slack-dot.yellow { background: #ffbd2e; }
+    .slack-dot.green { background: #27ca40; }
+    .slack-body { display: flex; min-height: 240px; }
+    .slack-sidebar { width: 180px; padding: 16px; background: var(--bg-card); border-right: 1px solid var(--border-card); }
+    .sidebar-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; margin-bottom: 2px; }
+    .sidebar-item .s-check { width: 14px; height: 14px; border: 1.5px solid var(--border-card); border-radius: 3px; flex-shrink: 0; }
+    .sidebar-item .s-bar, .s-line { height: 8px; border-radius: 4px; background: var(--border-card); }
+    .slack-content { flex: 1; padding: 20px; }
+    .slack-message { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-card); }
+    .slack-date { font-size: 12px; color: var(--text-muted); padding: 4px 12px; border: 1px solid var(--border-card); border-radius: 100px; display: inline-block; }
+    .slack-msg { display: flex; gap: 10px; }
+    .slack-msg-avatar { width: 32px; height: 32px; border-radius: 6px; background: linear-gradient(135deg, var(--accent-primary), var(--accent-primary-light)); flex-shrink: 0; }
+    .slack-msg-user { font-size: 13px; font-weight: 600; color: var(--text-heading); }
+    .slack-msg-time { font-size: 11px; color: var(--text-muted); margin-left: 8px; font-weight: 400; }
+    .slack-msg-text { font-size: 13px; color: var(--text-body); line-height: 1.5; margin-top: 4px; }
+    .slack-msg-text .mention { color: var(--accent-primary); font-weight: 500; }
+    .slack-reply-box { margin-top: 14px; padding: 10px 14px; border: 1px solid var(--border-card); border-radius: 8px; font-size: 13px; color: var(--text-muted); }
+
+    /* CTA Banner */
+    .cta-banner { display: flex; align-items: center; justify-content: space-between; padding: 28px 32px; background: var(--bg-container); border: 1px solid var(--border-card); border-radius: 16px; margin-top: 40px; }
+    .cta-banner h3 { font-size: 20px; font-weight: 600; color: var(--text-heading); margin-bottom: 4px; }
+    .cta-banner p { font-size: 14px; color: var(--text-body); max-width: 440px; line-height: 1.5; }
+    .cta-banner-icons { display: flex; gap: 8px; margin-left: 20px; }
+    .cta-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-card); background: var(--bg-card); }
+    .cta-banner-right { display: flex; align-items: center; gap: 16px; }
+    .cta-keys { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; color: var(--text-muted); }
+
+    /* Pricing */
+    .pricing-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 48px; }
+    .pricing-card { background: var(--bg-container); border: 1px solid var(--border-card); border-radius: 16px; padding: 32px 28px; display: flex; flex-direction: column; text-align: left; }
+    .pricing-card.featured { border-color: var(--accent-dark); box-shadow: var(--shadow-md); }
+    .pricing-card h3 { font-size: 20px; font-weight: 600; color: var(--text-heading); margin-bottom: 8px; }
+    .pricing-card .pricing-desc { font-size: 13px; color: var(--text-body); margin-bottom: 20px; line-height: 1.5; }
+    .pricing-price { margin-bottom: 20px; }
+    .pricing-price .amount { font-size: 36px; font-weight: 700; color: var(--text-heading); }
+    .pricing-price .period { font-size: 15px; color: var(--text-muted); }
+    .btn-pricing { display: block; width: 100%; padding: 14px; border-radius: 12px; font-size: 14px; font-weight: 500; cursor: pointer; text-decoration: none; text-align: center; transition: all 0.2s; font-family: var(--font-sans); margin-bottom: 24px; }
+    .btn-pricing-outline { border: 1px solid var(--border-card); background: var(--bg-container); color: var(--text-heading); }
+    .btn-pricing-outline:hover { background: var(--bg-card); }
+    .btn-pricing-dark { border: none; background: var(--accent-dark); color: white; }
+    .btn-pricing-dark:hover { background: #1a1a2e; }
+    .btn-pricing-arrow { border: 1px solid var(--border-card); background: var(--bg-container); color: var(--text-heading); }
+    .pricing-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 16px; }
+    .pricing-features { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+    .pricing-features li { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text-body); }
+    .pricing-features .check { width: 20px; height: 20px; border-radius: 50%; background: var(--accent-dark); color: white; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; }
+
+    /* Footer */
+    .footer { padding: 48px 48px 32px; border-top: 1px solid var(--border-card); position: relative; z-index: 2; }
+    .footer-main { display: grid; grid-template-columns: 1.8fr 1fr 1fr 1fr 1fr 1fr; gap: 32px; margin-bottom: 40px; }
+    .footer-brand .brand-name { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 600; color: var(--text-heading); margin-bottom: 10px; }
+    .footer-brand .brand-name svg { width: 24px; height: 24px; }
+    .footer-brand p { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px; }
+    .footer-social-label { font-size: 13px; font-weight: 600; color: var(--text-heading); margin-bottom: 10px; }
+    .footer-social { display: flex; gap: 10px; }
+    .social-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border-card); display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--text-body); text-decoration: none; transition: all 0.2s; }
+    .social-icon:hover { background: var(--accent-dark); color: white; border-color: var(--accent-dark); }
+    .footer-col h4 { font-size: 14px; font-weight: 400; color: var(--text-heading); margin-bottom: 12px; }
+    .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .footer-col a { font-size: 13px; color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+    .footer-col a:hover { color: var(--text-heading); }
+    .footer-bottom { display: flex; align-items: center; justify-content: space-between; padding: 20px 0 0; border-top: 1px solid var(--border-card); font-size: 13px; color: var(--text-muted); }
+    .footer-bottom-left { display: flex; align-items: center; gap: 8px; }
+    .footer-bottom-left svg { width: 18px; height: 18px; }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-green); display: inline-block; margin-right: 4px; }
+    .footer-bottom-links { display: flex; gap: 24px; }
+    .footer-bottom-links a { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+    .footer-bottom-links a:hover { color: var(--text-heading); }
+  </style>
+</head>
+<body>
+
+<div class="main-container">
+  <div class="particles">
+    <div class="particle" style="top:5%;left:48%;"></div>
+    <div class="particle" style="top:12%;right:8%;"></div>
+    <div class="particle" style="top:25%;right:3%;"></div>
+    <div class="particle" style="top:35%;left:5%;"></div>
+    <div class="particle" style="top:55%;left:45%;"></div>
+    <div class="particle" style="top:75%;left:8%;"></div>
+    <div class="particle" style="top:90%;left:35%;"></div>
+  </div>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <a href="#" class="navbar-logo">
+      <svg viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="8" fill="#2d2d3f"/><path d="M8 10.5C8 10.5 10 8 14 8s6 2.5 6 2.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><path d="M9 14c0 0 1.5-1.5 5-1.5s5 1.5 5 1.5" stroke="#a29bfe" stroke-width="1.5" stroke-linecap="round"/><path d="M10.5 17.5c0 0 1-1 3.5-1s3.5 1 3.5 1" stroke="#6c5ce7" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Speak ai
+    </a>
+    <ul class="navbar-links">
+      <li><a href="#" class="active">Home</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#">User Guide</a></li>
+      <li><a href="#">News</a></li>
+      <li><a href="#">Changelog</a></li>
+      <li><a href="#">APIs</a></li>
+    </ul>
+    <div class="navbar-actions">
+      <a href="#" class="btn-filled">Download ↓</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-badge"><span class="hero-badge-icon">✦</span> Write as fast as you imagine</div>
+    <h1>We've typed for 150<br>Years. It's time to Speak</h1>
+    <p>Speak ai turns your voice into clear text in real time, for everything from AI prompts to essays.</p>
+    <div class="hero-keys">Hold <span class="key-badge">Space</span> and speak to outline a doc 📄</div>
+
+    <div class="voice-orb-container">
+      <div class="voice-orb"><span class="voice-orb-text"><span class="wave">|||||||</span>Hello!<span class="wave">|||||||</span></span></div>
+      <div class="orb-icon" style="background:#4285f4;top:10px;right:calc(50% - 120px);">➕</div>
+      <div class="orb-icon" style="background:#ea4335;top:50%;left:calc(50% - 130px);">📋</div>
+      <div class="orb-icon" style="background:#fbbc05;bottom:20px;left:calc(50% - 90px);">✉️</div>
+      <div class="orb-icon" style="background:#34a853;top:30%;right:calc(50% - 140px);">📑</div>
+      <div class="orb-icon" style="background:#7c3aed;bottom:10px;right:calc(50% - 100px);">💬</div>
+    </div>
+
+    <p style="font-family:var(--font-serif);font-style:italic;color:var(--text-muted);font-size:18px;margin-top:-8px;letter-spacing:1px;">speak ai turns your voice into clear</p>
+
+    <div class="stats-bar">
+      <div class="stats-bar-inner">
+        <div class="stat-item">
+          <div class="stat-icon">👤</div>
+          <div><div class="stat-number">250K <span class="stat-arrow">↗</span></div><div class="stat-label">Active Users</div></div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-icon">📥</div>
+          <div><div class="stat-number">2.5M <span class="stat-arrow">↗</span></div><div class="stat-label">Total Downloads</div></div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-icon">👥</div>
+          <div><div class="stat-number">4.6M</div><div class="stat-label">Total Users</div></div>
+        </div>
+        <div class="stat-item" style="border-right:none;flex:1.3;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <svg width="24" height="24" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="8" fill="#2d2d3f"/><path d="M8 10.5C8 10.5 10 8 14 8s6 2.5 6 2.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><path d="M9 14c0 0 1.5-1.5 5-1.5s5 1.5 5 1.5" stroke="#a29bfe" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <div><div style="font-size:14px;font-weight:600;color:var(--text-heading);">Speak ai</div><div style="font-size:12px;color:var(--text-muted);">Hello, how can I help?</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="height:48px;"></div>
+  </section>
+
+  <!-- FEATURE PILLARS -->
+  <section class="pillars-section">
+    <div class="pillars-grid">
+      <div class="pillar-card"><div class="pillar-icon">📱</div><h3>Works with all your apps</h3><p>Fits naturally into every app you use each day, without setup or friction.</p></div>
+      <div class="pillar-card"><div class="pillar-icon">⌘</div><h3>Your thoughts set the pace</h3><p>Keeps up with your ideas so you can focus on thinking, not typing.</p></div>
+      <div class="pillar-card"><div class="pillar-icon">👁</div><h3>Your screen is its dictionary</h3><p>Understands what's on your screen, from code syntax to everyday text.</p></div>
+    </div>
+  </section>
+
+  <!-- VOICE DEMO -->
+  <section class="voice-demo-section">
+    <div class="voice-demo-text">
+      The rain had finally eased, leaving the <span class="word-highlight">streets</span> washed in silver <span class="word-highlight">light</span>
+      <span class="dimmed">Elena pulled her coat tighter, not against the cold, but against the</span>
+      <span class="wave-inline">ᐧ||·|||||||ᐧ·</span>
+      <span class="dimmed">feeling that someone had been following her</span>
+      since she left the café 📧
+    </div>
+  </section>
+
+  <!-- STREAMING MODE -->
+  <section class="section">
+    <div class="section-inner">
+      <div class="section-header">
+        <div><div class="section-badge"><span class="section-badge-dot">✦</span> Content Editing</div><h2 class="section-title">Streaming mode built for<br>precise writing</h2></div>
+        <div class="section-header-right"><p class="section-desc">Capture your ideas as they come. Speak ai processes every word in real time, refining phrasing, fixing grammar, and formatting text without delay.</p><a href="#" class="btn-section">Content Editing Speak AI ✦</a></div>
+      </div>
+      <div class="slack-demo">
+        <div class="slack-header">
+          <span style="font-size:14px;color:var(--text-muted);">↗</span><span style="font-size:14px;color:var(--text-muted);">+</span><span style="font-size:14px;color:var(--text-muted);">❐</span>
+          <div style="flex:1;"></div>
+          <div class="slack-dots"><span class="slack-dot red"></span><span class="slack-dot yellow"></span><span class="slack-dot green"></span></div>
+          <div style="flex:1;text-align:center;font-size:12px;color:var(--text-muted);">🔒 speak.ai.app</div>
+          <div style="flex:1;display:flex;justify-content:flex-end;gap:12px;"><span style="font-size:13px;color:var(--text-muted);">↗</span><span style="font-size:13px;color:var(--text-muted);">+</span><span style="font-size:13px;color:var(--text-muted);">❐</span></div>
+        </div>
+        <div class="slack-body">
+          <div class="slack-sidebar">
+            <div class="sidebar-item"><div class="s-check"></div><div class="s-bar" style="width:60px;"></div><div class="s-bar" style="width:40px;"></div></div>
+            <div class="sidebar-item"><div class="s-check"></div><div class="s-bar" style="width:80px;"></div></div>
+            <div class="sidebar-item"><div class="s-check"></div><div class="s-bar" style="width:50px;"></div><div class="s-bar" style="width:70px;"></div></div>
+            <div class="sidebar-item"><div class="s-check"></div><div class="s-bar" style="width:90px;"></div></div>
+            <div class="sidebar-item"><div class="s-check"></div><div class="s-bar" style="width:60px;"></div></div>
+            <div class="sidebar-item"><div class="s-check"></div><div class="s-bar" style="width:70px;"></div><div class="s-bar" style="width:30px;"></div></div>
+          </div>
+          <div class="slack-content">
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;gap:8px;align-items:center;"><div class="s-line" style="width:14px;height:14px;border-radius:3px;"></div><div class="s-line" style="width:80px;"></div><div class="s-line" style="width:120px;"></div></div>
+              <div class="s-line" style="width:70%;margin-top:8px;"></div><div class="s-line" style="width:90%;"></div>
+              <div style="height:4px;"></div><div class="s-line" style="width:50%;"></div><div class="s-line" style="width:80%;"></div>
+              <div style="height:4px;"></div><div class="s-line" style="width:60%;"></div><div class="s-line" style="width:85%;"></div>
+            </div>
+            <div class="slack-message">
+              <div style="text-align:center;margin-bottom:16px;"><span class="slack-date">Today</span></div>
+              <div class="slack-msg">
+                <div class="slack-msg-avatar"></div>
+                <div><div><span class="slack-msg-user">alxdoe</span><span class="slack-msg-time">12:45 PM</span></div><div class="slack-msg-text">Morning team! 👋 This is the final week for the Symphony project, so let's make sure everything is on track. <span class="mention">@smith</span> could you share a quick status update with us?</div></div>
+              </div>
+              <div class="slack-reply-box">Message to #Acme...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="cta-banner">
+        <div><h3>Clarity at the speed of voice</h3><p>Speak your thoughts and instantly turn them into polished updates that land in Slack. Share the full context, and keep your team aligned</p></div>
+        <div class="cta-banner-right">
+          <div style="font-size:13px;color:var(--text-body);">Designed for</div>
+          <div class="cta-banner-icons"><div class="cta-icon">📝</div><div class="cta-icon" style="background:#ea4335;border-color:#ea4335;color:white;">▶</div><div class="cta-icon" style="background:#34a853;border-color:#34a853;color:white;">📊</div></div>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:24px;"><div class="cta-keys">Hold <span class="key-badge">Space</span> and try yourself &nbsp;✦</div></div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="section" style="padding-top:0;">
+    <div class="section-inner">
+      <div class="section-header">
+        <div><div class="section-badge"><span class="section-badge-dot">✦</span> How it works Speak ai</div><h2 class="section-title">Built for the way<br>you work</h2></div>
+        <div class="section-header-right"><p class="section-desc">Advanced features that give you more control, more accuracy, and a voice-to-text experience designed for the way you work.</p><a href="#" class="btn-section">Write with your Voice ✦</a></div>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <h3>Your words, perfected by AI</h3>
+          <p>Speak ai model trained on real workflows to understand natural speech, correct grammar, and preserve every word while refining your text in real time.</p>
+          <div class="feature-card-visual">
+            <div class="transcript-lines">
+              <div class="transcript-line"><div class="transcript-wave"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="transcript-text">This Speak AI listens the w...</div></div>
+              <div class="transcript-line"><div class="transcript-wave"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="transcript-text">It <span class="t-highlight">Understands</span> your words,...</div></div>
+              <div class="transcript-line"><div class="transcript-wave"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="transcript-text">As you talk, it <span class="t-colored">cleans</span> up gra...</div></div>
+              <div class="transcript-line"><div class="transcript-wave"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="transcript-text">your meaning intact, <span class="t-colored">and</span> i...</div></div>
+              <div class="transcript-line"><div class="transcript-wave"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="transcript-text">No rewriting. No <span class="t-colored">lost</span> words.</div></div>
+            </div>
+            <div style="position:absolute;top:0;left:48%;width:2px;height:100%;background:var(--accent-primary);opacity:0.5;"></div>
+          </div>
+        </div>
+        <div class="feature-card">
+          <h3>Writing style, your way</h3>
+          <p>Set your tone and rules. From lowercase Slack messages to structured docs, Speak ai adapts to your preferences automatically.</p>
+          <div class="feature-card-visual" style="padding:24px;">
+            <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:16px;">
+              <div style="width:24px;height:24px;border-radius:50%;background:var(--accent-dark);color:white;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;">✕</div>
+              <div style="font-size:13px;color:var(--text-body);line-height:1.5;background:var(--bg-container);padding:12px 14px;border-radius:10px;border:1px solid var(--border-card);">Use all lowercase (gen z) in iMessage, Slack, and Signal. Don't start sentences with 'And' or 'Because'.</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:20px;">
+              <div style="width:28px;height:28px;border-radius:8px;background:var(--bg-container);border:1px solid var(--border-card);display:flex;align-items:center;justify-content:center;font-size:12px;">✦</div>
+              <div class="s-line" style="flex:1;height:6px;"></div>
+            </div>
+          </div>
+        </div>
+        <div class="feature-card">
+          <h3>Custom dictionary</h3>
+          <p>Teach Speak ai the words you use most, like names, brands, or technical terms, and watch accuracy improve instantly.</p>
+          <div class="feature-card-visual">
+            <div class="dict-input"><span>Add new word...</span><div class="dict-add">✦</div></div>
+            <div class="dict-bars">
+              <div class="dict-bar-row"><div class="dict-bar" style="width:40px;"></div><div class="dict-bar" style="width:60px;"></div><div class="dict-bar" style="width:30px;"></div></div>
+              <div class="dict-bar-row"><div class="dict-bar" style="width:50px;"></div><div class="dict-bar" style="width:45px;"></div><div class="dict-bar" style="width:35px;"></div></div>
+              <div class="dict-bar-row"><div class="dict-bar" style="width:35px;"></div><div class="dict-bar" style="width:55px;"></div><div class="dict-bar" style="width:25px;"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="feature-card">
+          <h3>Speaks your language</h3>
+          <p>Understands 49 languages with clarity and precision, adapting naturally to how you speak.</p>
+          <div class="feature-card-visual" style="text-align:center;">
+            <div class="lang-icons">
+              <div class="lang-icon">🇬🇧</div><div class="lang-icon">🇪🇸</div><div class="lang-icon">📑</div>
+              <div class="lang-icon center-icon">🌐</div>
+              <div class="lang-icon">🇫🇷</div><div class="lang-icon">✉️</div><div class="lang-icon">🇩🇪</div>
+            </div>
+          </div>
+        </div>
+        <div class="feature-card" style="grid-column:1/-1;">
+          <div style="display:flex;gap:32px;align-items:flex-start;">
+            <div style="flex:1;"><h3>Secure transcript history</h3><p>Access your past transcripts. Nothing is stored on our servers, so your data always stays yours.</p></div>
+            <div class="feature-card-visual" style="flex:2;position:relative;">
+              <div class="history-lines">
+                <div class="history-line"><div class="h-block" style="width:80px;"></div><div class="h-block" style="width:120px;"></div><div class="h-block" style="width:60px;"></div></div>
+                <div class="history-line"><div class="h-block" style="width:100px;"></div><div class="h-block" style="width:80px;"></div><div class="h-block" style="width:40px;"></div></div>
+                <div class="history-line"><div class="h-block" style="width:60px;"></div><div class="h-block" style="width:90px;"></div><div class="h-block" style="width:110px;"></div></div>
+                <div class="history-line"><div class="h-block" style="width:70px;"></div><div class="h-block" style="width:100px;"></div><div class="h-block" style="width:50px;"></div></div>
+              </div>
+              <div class="history-clock">🕐</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section class="section" style="padding-top:0;" id="pricing">
+    <div class="section-inner" style="text-align:center;">
+      <div class="section-badge" style="display:inline-flex;"><span class="section-badge-dot">✦</span> Our Pricing Plan</div>
+      <h2 class="section-title">Get started for free</h2>
+      <div class="pricing-cards">
+        <div class="pricing-card">
+          <h3>Starter</h3>
+          <div class="pricing-desc">Your writing partner. Unlock instant, world-class Voice to Text with a simple monthly free.</div>
+          <div class="pricing-price"><span class="amount">Free Plan</span></div>
+          <a href="#" class="btn-pricing btn-pricing-outline">Download for Windows</a>
+          <div class="pricing-label">GET STARTED WITH</div>
+          <ul class="pricing-features">
+            <li><span class="check">✓</span> 1,000 free words</li>
+            <li><span class="check">✓</span> Speak ai Engine</li>
+            <li><span class="check">✓</span> 5 Custom Dictionary values</li>
+            <li><span class="check">✓</span> 10 Language translations</li>
+            <li><span class="check">✓</span> Content optimization tools</li>
+          </ul>
+        </div>
+        <div class="pricing-card featured">
+          <h3>Pro Plan</h3>
+          <div class="pricing-desc">Your writing partner. Unlock instant, world-class Voice to Text with a simple monthly fee.</div>
+          <div class="pricing-price"><span class="amount">$8.00</span> <span class="period">/Month</span></div>
+          <a href="#" class="btn-pricing btn-pricing-dark">Go Pro Plan</a>
+          <div class="pricing-label">EVERYTHING IN STARTER</div>
+          <ul class="pricing-features">
+            <li><span class="check">✓</span> Unlimited words</li>
+            <li><span class="check">✓</span> Speak ai Engine</li>
+            <li><span class="check">✓</span> Avalon model</li>
+            <li><span class="check">✓</span> 800 Custom Dictionary values</li>
+            <li><span class="check">✓</span> Tune with Custom Instructions</li>
+            <li><span class="check">✓</span> Real-time language translation</li>
+          </ul>
+        </div>
+        <div class="pricing-card">
+          <h3>Team Plan</h3>
+          <div class="pricing-desc">Your team writing partner. Unlock instant, world-class Voice to Text with a simple monthly fee.</div>
+          <div class="pricing-price"><span class="amount">$12.00</span> <span class="period">/Month</span></div>
+          <a href="#" class="btn-pricing btn-pricing-arrow">Get Started →</a>
+          <div class="pricing-label">EVERYTHING IN PRO</div>
+          <ul class="pricing-features">
+            <li><span class="check">✓</span> Avalon model</li>
+            <li><span class="check">✓</span> Centralized team billing</li>
+            <li><span class="check">✓</span> Team wide settings</li>
+            <li><span class="check">✓</span> Enforce privacy mode org-wide</li>
+            <li><span class="check">✓</span> Real-time Feedback System</li>
+            <li><span class="check">✓</span> Advanced Analytics Tools</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-main">
+      <div class="footer-brand">
+        <div class="brand-name">
+          <svg viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="8" fill="#2d2d3f"/><path d="M8 10.5C8 10.5 10 8 14 8s6 2.5 6 2.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><path d="M9 14c0 0 1.5-1.5 5-1.5s5 1.5 5 1.5" stroke="#a29bfe" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Speak ai
+        </div>
+        <p>Speak your thoughts and instantly turn them into polished updates that land in Slack. Share the full context, and keep your team aligned</p>
+        <div class="footer-social-label">Social Media</div>
+        <div class="footer-social">
+          <a href="#" class="social-icon">𝕏</a><a href="#" class="social-icon">💬</a><a href="#" class="social-icon">in</a><a href="#" class="social-icon">📷</a>
+        </div>
+      </div>
+      <div class="footer-col"><h4>Home</h4><ul><li><a href="#">User Guide</a></li><li><a href="#">News</a></li><li><a href="#">Changelog</a></li><li><a href="#">llms.txt</a></li></ul></div>
+      <div class="footer-col"><h4>About</h4><ul><li><a href="#">Documentation</a></li><li><a href="#">Updates</a></li><li><a href="#">Release Notes</a></li><li><a href="#">api_reference.md</a></li></ul></div>
+      <div class="footer-col"><h4>Pricing</h4><ul><li><a href="#">Download</a></li><li><a href="#">Manage</a></li><li><a href="#">API's</a></li><li><a href="#">Watch</a></li></ul></div>
+      <div class="footer-col"><h4>Contact</h4><ul><li><a href="#">Privacy</a></li><li><a href="#">Terms</a></li><li><a href="#">FAQs</a></li><li><a href="#">feedback.txt</a></li></ul></div>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-bottom-left">
+        <svg width="18" height="18" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="8" fill="#2d2d3f"/><path d="M8 10.5C8 10.5 10 8 14 8s6 2.5 6 2.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><path d="M9 14c0 0 1.5-1.5 5-1.5s5 1.5 5 1.5" stroke="#a29bfe" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span class="status-dot"></span> All systems operational
+      </div>
+      <div class="footer-bottom-links"><a href="#">Privacy Policy</a><a href="#">Terms &amp; Conditions</a></div>
+    </div>
+  </footer>
+</div>
+
+</body>
+</html>
+
+

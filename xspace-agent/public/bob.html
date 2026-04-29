@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bob | XSpace Agent</title>
+  <link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #09090b;
+      --bg-raised: #111113;
+      --bg-card: #16161a;
+      --border: #222228;
+      --border-subtle: #1a1a1f;
+      --border-hover: #2e2e36;
+      --text-primary: #fafafa;
+      --text-secondary: #a1a1aa;
+      --text-tertiary: #636370;
+      --violet-500: #8b5cf6;
+      --violet-400: #a78bfa;
+      --violet-900: rgba(139, 92, 246, 0.10);
+      --cyan-500: #06b6d4;
+      --cyan-400: #22d3ee;
+      --emerald-500: #10b981;
+      --rose-500: #f43f5e;
+      --amber-500: #f59e0b;
+      --agent-color: var(--violet-500);
+      --agent-soft: var(--violet-900);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    /* dot grid */
+    .dot-grid {
+      position: fixed;
+      inset: 0;
+      background-image: radial-gradient(circle, #ffffff06 1px, transparent 1px);
+      background-size: 24px 24px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* nav */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      background: rgba(9,9,11,0.8);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      color: var(--text-primary);
+      font-weight: 700;
+      font-size: 0.875rem;
+    }
+
+    .topbar-brand svg { width: 22px; height: 22px; }
+
+    .topbar-sep {
+      color: var(--text-tertiary);
+      font-size: 0.875rem;
+      font-weight: 300;
+    }
+
+    .topbar-page {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .topbar-right a {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-tertiary);
+      text-decoration: none;
+      padding: 5px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      transition: all 0.15s;
+    }
+
+    .topbar-right a:hover {
+      color: var(--text-secondary);
+      border-color: var(--border-hover);
+      background: var(--bg-card);
+    }
+
+    /* layout */
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 32px 24px 80px;
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .page-header h1 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .agent-badge {
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: var(--agent-soft);
+      color: var(--violet-400);
+    }
+
+    /* cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .card-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-header h2 {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-tertiary);
+    }
+
+    .card-body {
+      padding: 18px;
+    }
+
+    /* status row */
+    .status-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+
+    .status-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .status-item .s-label {
+      font-size: 0.6875rem;
+      font-weight: 500;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .status-item .s-value {
+      font-size: 0.875rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .indicator {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--rose-500);
+      flex-shrink: 0;
+    }
+
+    .indicator.connected { background: var(--emerald-500); box-shadow: 0 0 8px rgba(16,185,129,0.4); }
+    .indicator.speaking { background: var(--emerald-500); animation: blink 1s infinite; }
+    .indicator.listening { background: var(--cyan-500); animation: blink 1.5s infinite; }
+
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.35} }
+
+    /* audio meter */
+    .audio-meter {
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255,255,255,0.04);
+      overflow: hidden;
+      margin-top: 12px;
+    }
+
+    .audio-meter-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--violet-500), var(--cyan-500));
+      transition: width 0.1s ease;
+    }
+
+    /* buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      font-family: inherit;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary {
+      background: var(--violet-500);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #7c3aed;
+      box-shadow: 0 0 20px rgba(139,92,246,0.2);
+    }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    /* turn status */
+    .turn-bar {
+      padding: 10px 18px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-align: center;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-tertiary);
+    }
+
+    .turn-bar.my-turn {
+      background: rgba(16,185,129,0.08);
+      border-color: rgba(16,185,129,0.2);
+      color: var(--emerald-500);
+    }
+
+    .turn-bar.waiting {
+      background: rgba(245,158,11,0.08);
+      border-color: rgba(245,158,11,0.2);
+      color: var(--amber-500);
+    }
+
+    /* log panel */
+    .log-scroll {
+      height: 180px;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      line-height: 1.7;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .log-scroll p {
+      color: var(--text-tertiary);
+      padding: 2px 0;
+    }
+
+    .log-scroll p.error { color: var(--rose-500); }
+    .log-scroll p.success { color: var(--emerald-500); }
+
+    /* chat panel */
+    .chat-scroll {
+      height: 260px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .chat-msg {
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      line-height: 1.55;
+      background: rgba(255,255,255,0.02);
+      border-left: 2px solid var(--border);
+    }
+
+    .chat-msg.self { border-left-color: var(--violet-500); background: var(--violet-900); }
+    .chat-msg.other { border-left-color: var(--rose-500); background: rgba(244,63,94,0.06); }
+    .chat-msg.user { border-left-color: var(--amber-500); background: rgba(245,158,11,0.06); }
+
+    /* scrollbar */
+    .log-scroll::-webkit-scrollbar,
+    .chat-scroll::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .log-scroll::-webkit-scrollbar-thumb,
+    .chat-scroll::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 2px;
+    }
+
+    @media (max-width: 640px) {
+      .status-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="dot-grid"></div>
+
+<header class="topbar">
+  <div class="topbar-left">
+    <a href="/" class="topbar-brand">
+      <svg viewBox="0 0 32 32" fill="none">
+        <rect width="32" height="32" rx="8" fill="url(#lg1)"/>
+        <defs><linearGradient id="lg1" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#8b5cf6"/><stop offset="1" stop-color="#06b6d4"/></linearGradient></defs>
+        <rect x="10" y="10" width="3" height="12" rx="1.5" fill="#fff"/>
+        <rect x="15" y="7" width="3" height="18" rx="1.5" fill="#fff" opacity=".8"/>
+        <rect x="20" y="12" width="3" height="8" rx="1.5" fill="#fff" opacity=".6"/>
+      </svg>
+      XSpace
+    </a>
+    <span class="topbar-sep">/</span>
+    <span class="topbar-page">Bob</span>
+  </div>
+  <div class="topbar-right">
+    <a href="/">Home</a>
+    <a href="/alice">Alice</a>
+    <a href="/admin">Admin</a>
+    <a href="/builder">Builder</a>
+  </div>
+</header>
+
+<main class="page">
+  <div class="page-header">
+    <h1>Bob <span class="agent-badge">Agent</span></h1>
+    <button class="btn btn-primary" id="connectBtn">Connect</button>
+  </div>
+
+  <div class="turn-bar" id="turnStatus">Waiting to connect...</div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2>Status</h2>
+      <span id="agentStatus" style="font-size:0.75rem;font-weight:600;color:var(--text-tertiary)">Offline</span>
+    </div>
+    <div class="card-body">
+      <div class="status-grid">
+        <div class="status-item">
+          <span class="s-label">Connection</span>
+          <div class="s-value">
+            <span class="indicator" id="connIndicator"></span>
+            <span id="connStatus">Disconnected</span>
+          </div>
+        </div>
+        <div class="status-item">
+          <span class="s-label">State</span>
+          <div class="s-value" id="fsmState">--</div>
+        </div>
+        <div class="status-item">
+          <span class="s-label">Uptime</span>
+          <div class="s-value" id="uptime">--</div>
+        </div>
+      </div>
+      <div class="audio-meter">
+        <div class="audio-meter-fill" id="audioLevel"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h2>Activity Log</h2></div>
+    <div class="card-body">
+      <div class="log-scroll" id="logPanel"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h2>Conversation</h2></div>
+    <div class="card-body">
+      <div class="chat-scroll" id="chatPanel"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+  window.AGENT_CONFIG = { agentId: 0, agentName: "Bob", sessionEndpoint: "/session/0" }
+</script>
+<script type="module" src="/assets/agent.js"></script>
+</body>
+</html>
+
+

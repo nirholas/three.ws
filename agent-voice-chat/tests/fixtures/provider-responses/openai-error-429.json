@@ -1,0 +1,8 @@
+{
+  "error": {
+    "message": "Rate limit reached for model `gpt-4o-mini` in organization `org-abc` on tokens per min. Limit: 200000, Used: 199950, Requested: 300.",
+    "type": "tokens",
+    "param": null,
+    "code": "rate_limit_exceeded"
+  }
+}

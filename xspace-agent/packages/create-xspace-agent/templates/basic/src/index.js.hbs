@@ -1,0 +1,43 @@
+require('dotenv/config');
+const { XSpaceAgent } = require('xspace-agent');
+
+const config = {
+  auth: {
+    token: process.env.X_AUTH_TOKEN,
+  },
+  ai: {
+    provider: '{{provider}}',
+    model: '{{defaultModel}}',
+    apiKey: process.env.{{providerEnvKey}},
+    systemPrompt:
+      'You are a helpful AI agent participating in an X Space. ' +
+      'Keep responses concise and conversational.',
+  },
+  voice: {
+    provider: process.env.TTS_PROVIDER || 'openai',
+    apiKey: process.env.ELEVENLABS_API_KEY,
+  },
+  browser: {
+    headless: process.env.HEADLESS !== 'false',
+  },
+};
+
+const spaceUrl = process.argv[2];
+if (!spaceUrl) {
+  console.error('Usage: npm start -- <space-url>');
+  process.exit(1);
+}
+
+const agent = new XSpaceAgent(config);
+
+agent.on('status', (status) => console.log(`[status] ${status}`));
+agent.on('transcription', (data) => console.log(`[${data.speaker}] ${data.text}`));
+agent.on('response', (data) => console.log(`[agent] ${data.text}`));
+agent.on('error', (err) => console.error('[error]', err.message));
+
+agent.join(spaceUrl).catch((err) => {
+  console.error('Failed to join space:', err.message);
+  process.exit(1);
+});
+
+

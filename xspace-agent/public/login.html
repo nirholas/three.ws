@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>X Space Agent — Sign In</title>
+  <link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #0a0a0f;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-card {
+      background: #15151e;
+      border: 1px solid #2a2a3a;
+      border-radius: 12px;
+      padding: 40px;
+      width: 100%;
+      max-width: 400px;
+      margin: 20px;
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .login-header img {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 16px;
+    }
+
+    .login-header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    .login-header p {
+      font-size: 14px;
+      color: #888;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #aaa;
+      margin-bottom: 6px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 10px 12px;
+      background: #0a0a0f;
+      border: 1px solid #2a2a3a;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 14px;
+      font-family: 'Inter', system-ui, sans-serif;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .form-group input:focus {
+      border-color: #6366f1;
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 10px;
+      background: #6366f1;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      font-family: 'Inter', system-ui, sans-serif;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .login-btn:hover { background: #5558e6; }
+    .login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .error-msg {
+      background: #1a0a0a;
+      border: 1px solid #3a1a1a;
+      border-radius: 8px;
+      color: #f87171;
+      font-size: 13px;
+      padding: 10px 12px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .error-msg.visible { display: block; }
+    .back-link {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      font-size: 13px;
+      color: #666;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .back-link:hover { color: #aaa; }
+  </style>
+</head>
+<body>
+  <a href="/" class="back-link">&larr; Home</a>
+  <div class="login-card">
+    <div class="login-header">
+      <img src="/assets/logo.svg" alt="Logo">
+      <h1>X Space Agent</h1>
+      <p>Enter your API key to access the admin panel</p>
+    </div>
+
+    <div class="error-msg" id="error-msg"></div>
+
+    <form id="login-form">
+      <div class="form-group">
+        <label for="api-key">API Key</label>
+        <input type="password" id="api-key" name="api-key" placeholder="Enter your ADMIN_API_KEY" autocomplete="off" required>
+      </div>
+      <button type="submit" class="login-btn" id="login-btn">Sign In</button>
+    </form>
+  </div>
+
+  <script>
+    // If already authenticated, redirect to admin
+    if (sessionStorage.getItem('apiKey')) {
+      window.location.href = '/admin'
+    }
+
+    // Show error from redirect
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('error') === 'invalid') {
+      const el = document.getElementById('error-msg')
+      el.textContent = 'Invalid or expired API key. Please sign in again.'
+      el.classList.add('visible')
+    }
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault()
+      const btn = document.getElementById('login-btn')
+      const errorEl = document.getElementById('error-msg')
+      const key = document.getElementById('api-key').value.trim()
+
+      if (!key) return
+
+      btn.disabled = true
+      btn.textContent = 'Verifying...'
+      errorEl.classList.remove('visible')
+
+      try {
+        // Verify the key by calling /state (an authenticated endpoint)
+        const res = await fetch('/state', {
+          headers: { 'Authorization': 'Bearer ' + key }
+        })
+
+        if (res.ok) {
+          sessionStorage.setItem('apiKey', key)
+          window.location.href = '/admin'
+        } else {
+          const data = await res.json().catch(() => null)
+          errorEl.textContent = data?.error?.message || 'Invalid API key'
+          errorEl.classList.add('visible')
+        }
+      } catch {
+        errorEl.textContent = 'Could not connect to the server'
+        errorEl.classList.add('visible')
+      } finally {
+        btn.disabled = false
+        btn.textContent = 'Sign In'
+      }
+    })
+  </script>
+</body>
+</html>
+
+

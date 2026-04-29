@@ -1,0 +1,144 @@
+import 'dotenv/config';
+import express from 'express';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+import { XSpaceAgent, AgentConfig, AgentStatus } from 'xspace-agent';
+
+const app = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer);
+
+const PORT = parseInt(process.env.PORT || '3000', 10);
+
+const config: AgentConfig = {
+  auth: {
+    token: process.env.X_AUTH_TOKEN,
+  },
+  ai: {
+    provider: '{{provider}}',
+    model: '{{defaultModel}}',
+    apiKey: process.env.{{providerEnvKey}},
+    systemPrompt:
+      'You are a helpful AI agent participating in an X Space. ' +
+      'Keep responses concise and conversational.',
+  },
+  voice: {
+    provider: (process.env.TTS_PROVIDER as 'openai' | 'elevenlabs') || 'openai',
+    apiKey: process.env.ELEVENLABS_API_KEY,
+  },
+  browser: {
+    headless: process.env.HEADLESS !== 'false',
+  },
+};
+
+let agent: XSpaceAgent | null = null;
+let currentStatus: AgentStatus = 'disconnected';
+
+// ── Admin Panel ─────────────────────────────────────────────────────────────
+
+app.get('/', (_req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>{{projectName}} — Admin</title>
+      <script src="/socket.io/socket.io.js"></script>
+      <style>
+        body { font-family: system-ui; max-width: 600px; margin: 40px auto; padding: 0 20px; }
+        #log { background: #111; color: #0f0; padding: 16px; border-radius: 8px;
+               height: 400px; overflow-y: auto; font-family: monospace; font-size: 13px; }
+        .log-line { margin: 2px 0; }
+        button { padding: 8px 16px; margin: 8px 4px 8px 0; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; }
+        input { padding: 8px; width: 300px; border-radius: 4px; border: 1px solid #ccc; }
+        .status { padding: 4px 8px; border-radius: 4px; display: inline-block; margin: 8px 0; }
+      </style>
+    </head>
+    <body>
+      <h1>{{projectName}}</h1>
+      <div>Status: <span id="status" class="status">disconnected</span></div>
+      <div style="margin: 16px 0">
+        <input id="url" placeholder="https://x.com/i/spaces/..." />
+        <button onclick="start()">Join</button>
+        <button onclick="stop()">Stop</button>
+      </div>
+      <div id="log"></div>
+      <script>
+        const socket = io();
+        const log = document.getElementById('log');
+        const statusEl = document.getElementById('status');
+
+        socket.on('status', (s) => { statusEl.textContent = s; });
+        socket.on('transcription', (d) => addLog('[' + d.speaker + '] ' + d.text));
+        socket.on('response', (d) => addLog('[agent] ' + d.text));
+        socket.on('error', (msg) => addLog('[error] ' + msg));
+
+        function addLog(text) {
+          const line = document.createElement('div');
+          line.className = 'log-line';
+          line.textContent = text;
+          log.appendChild(line);
+          log.scrollTop = log.scrollHeight;
+        }
+
+        function start() {
+          const url = document.getElementById('url').value;
+          if (url) socket.emit('join', url);
+        }
+        function stop() { socket.emit('stop'); }
+      </script>
+    </body>
+    </html>
+  `);
+});
+
+// ── Socket.IO Events ────────────────────────────────────────────────────────
+
+io.on('connection', (socket) => {
+  socket.emit('status', currentStatus);
+
+  socket.on('join', async (spaceUrl: string) => {
+    if (agent) {
+      socket.emit('error', 'Agent is already running. Stop it first.');
+      return;
+    }
+
+    agent = new XSpaceAgent(config);
+
+    agent.on('status', (status) => {
+      currentStatus = status;
+      io.emit('status', status);
+    });
+    agent.on('transcription', (data) => io.emit('transcription', data));
+    agent.on('response', (data) => io.emit('response', data));
+    agent.on('error', (err) => io.emit('error', err.message));
+    agent.on('space-ended', () => {
+      agent = null;
+      currentStatus = 'disconnected';
+      io.emit('status', 'disconnected');
+    });
+
+    try {
+      await agent.join(spaceUrl);
+    } catch (err) {
+      io.emit('error', (err as Error).message);
+      agent = null;
+    }
+  });
+
+  socket.on('stop', () => {
+    if (agent) {
+      agent.stop();
+      agent = null;
+      currentStatus = 'disconnected';
+      io.emit('status', 'disconnected');
+    }
+  });
+});
+
+// ── Start Server ────────────────────────────────────────────────────────────
+
+httpServer.listen(PORT, () => {
+  console.log(`Admin panel running at http://localhost:${PORT}`);
+});
+
+

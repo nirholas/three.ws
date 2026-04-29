@@ -1,0 +1,74 @@
+# =============================================================================
+# Stress Test — Find the breaking point
+# Progressively increases load to identify max throughput and connection limits.
+# =============================================================================
+#
+# Usage:
+#   npx artillery run tests/load/stress.yml
+#
+# WARNING: This test generates very high load. Run against a dedicated test
+# instance, not production. Monitor server memory and CPU during the run.
+#
+# Requires: server running on http://localhost:3000 with ADMIN_API_KEY set
+
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 30
+      arrivalRate: 10
+      name: "Baseline (10 req/s)"
+    - duration: 30
+      arrivalRate: 50
+      name: "Moderate (50 req/s)"
+    - duration: 30
+      arrivalRate: 100
+      name: "High (100 req/s)"
+    - duration: 30
+      arrivalRate: 200
+      name: "Very high (200 req/s)"
+    - duration: 30
+      arrivalRate: 500
+      name: "Extreme (500 req/s)"
+  defaults:
+    headers:
+      X-API-Key: "{{ $processEnvironment.ADMIN_API_KEY }}"
+  # No ensure thresholds — we WANT to find where things break
+  plugins:
+    ensure: {}
+
+scenarios:
+  # Scenario 1: HTTP endpoint stress
+  - name: "HTTP stress"
+    weight: 50
+    flow:
+      - get:
+          url: "/health"
+      - get:
+          url: "/config"
+      - get:
+          url: "/state"
+
+  # Scenario 2: Socket.IO connection stress
+  - name: "Socket.IO connection churn"
+    weight: 30
+    engine: socketio-v3
+    flow:
+      - emit:
+          channel: "xspace:status"
+          data: {}
+      - think: 1
+      - emit:
+          channel: "xspace:status"
+          data: {}
+
+  # Scenario 3: Rate limit stress (intentionally exceed limits)
+  - name: "Rate limit saturation"
+    weight: 20
+    flow:
+      - loop:
+          - get:
+              url: "/health"
+          # No think — fire as fast as possible
+        count: 20
+
+

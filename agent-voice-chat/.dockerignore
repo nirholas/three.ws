@@ -1,0 +1,12 @@
+node_modules
+.git
+.env
+*.test.js
+tests/
+coverage/
+.github/
+*.md
+.husky/
+.vscode/
+memory/
+knowledge/

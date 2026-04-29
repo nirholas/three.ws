@@ -1,0 +1,839 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "X Space Agent API",
+    "version": "1.0.0",
+    "description": "Control AI agents in X/Twitter Spaces. Supports agent lifecycle management, real-time voice chat, conversation persistence, and personality presets.",
+    "contact": {
+      "name": "Agent Voice Chat"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Local development server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "API key passed as Bearer token. Set API_KEY env var to enable."
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "example": "NOT_FOUND"
+              },
+              "message": {
+                "type": "string",
+                "example": "Agent not found"
+              },
+              "details": {
+                "type": "object"
+              }
+            },
+            "required": ["code", "message"]
+          }
+        }
+      },
+      "Agent": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "bob" },
+          "name": { "type": "string", "example": "Bob" },
+          "voice": { "type": "string", "example": "verse" },
+          "avatar": { "type": "string", "example": "/assets/bob.png" },
+          "theme": {
+            "type": "object",
+            "properties": {
+              "primary": { "type": "string" },
+              "gradient": { "type": "array", "items": { "type": "string" } },
+              "background": { "type": "array", "items": { "type": "string" } }
+            }
+          },
+          "status": { "type": "string", "enum": ["offline", "idle", "listening", "speaking", "muted"] },
+          "connected": { "type": "boolean" }
+        }
+      },
+      "Message": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "agentId": { "type": "string" },
+          "name": { "type": "string" },
+          "text": { "type": "string" },
+          "timestamp": { "type": "number" },
+          "isUser": { "type": "boolean" }
+        }
+      },
+      "Personality": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "prompt": { "type": "string" },
+          "voice": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "createdAt": { "type": "number" },
+          "updatedAt": { "type": "number" }
+        }
+      },
+      "Conversation": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "agentIds": { "type": "array", "items": { "type": "string" } },
+          "messageCount": { "type": "integer" },
+          "startedAt": { "type": "number" },
+          "endedAt": { "type": "number" },
+          "createdAt": { "type": "number" }
+        }
+      },
+      "Provider": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "type": { "type": "string", "enum": ["socket", "webrtc"] },
+          "models": { "type": "array", "items": { "type": "string" } },
+          "current": { "type": "boolean" }
+        }
+      }
+    }
+  },
+  "security": [
+    { "bearerAuth": [] }
+  ],
+  "paths": {
+    "/api/agent/start": {
+      "post": {
+        "tags": ["Agent Lifecycle"],
+        "summary": "Start the agent system",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "headless": { "type": "boolean", "default": false }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Agent system launching",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "launching" },
+                    "sessionId": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/agent/join": {
+      "post": {
+        "tags": ["Agent Lifecycle"],
+        "summary": "Join an X Space",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["spaceUrl"],
+                "properties": {
+                  "spaceUrl": {
+                    "type": "string",
+                    "example": "https://x.com/i/spaces/1abc..."
+                  },
+                  "agents": {
+                    "type": "array",
+                    "items": { "$ref": "#/components/schemas/Agent" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Joining Space",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "joining" },
+                    "spaceUrl": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/agent/leave": {
+      "post": {
+        "tags": ["Agent Lifecycle"],
+        "summary": "Leave current Space",
+        "responses": {
+          "200": {
+            "description": "Disconnected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "disconnected" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/agent/stop": {
+      "post": {
+        "tags": ["Agent Lifecycle"],
+        "summary": "Stop the agent system",
+        "responses": {
+          "200": {
+            "description": "Stopped",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "stopped" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/agent/status": {
+      "get": {
+        "tags": ["Agent Lifecycle"],
+        "summary": "Get agent system status",
+        "responses": {
+          "200": {
+            "description": "Current status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "enum": ["idle", "processing"] },
+                    "spaceUrl": { "type": "string", "nullable": true },
+                    "agents": { "type": "array", "items": { "$ref": "#/components/schemas/Agent" } },
+                    "uptime": { "type": "number" },
+                    "stats": {
+                      "type": "object",
+                      "properties": {
+                        "messagesProcessed": { "type": "integer" },
+                        "currentTurn": { "type": "string", "nullable": true },
+                        "turnQueueLength": { "type": "integer" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/agent/{id}/say": {
+      "post": {
+        "tags": ["Agent Control"],
+        "summary": "Queue a message for an agent to speak",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["text"],
+                "properties": {
+                  "text": { "type": "string", "maxLength": 5000 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Message queued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "queued": { "type": "boolean" },
+                    "position": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "description": "Agent not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/agent/{id}/prompt": {
+      "post": {
+        "tags": ["Agent Control"],
+        "summary": "Update an agent's system prompt",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["systemPrompt"],
+                "properties": {
+                  "systemPrompt": { "type": "string", "maxLength": 10000 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Updated", "content": { "application/json": { "schema": { "type": "object", "properties": { "updated": { "type": "boolean" } } } } } },
+          "404": { "description": "Agent not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/agent/{id}/mute": {
+      "post": {
+        "tags": ["Agent Control"],
+        "summary": "Mute an agent",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Muted", "content": { "application/json": { "schema": { "type": "object", "properties": { "muted": { "type": "boolean" } } } } } }
+        }
+      }
+    },
+    "/api/agent/{id}/unmute": {
+      "post": {
+        "tags": ["Agent Control"],
+        "summary": "Unmute an agent",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Unmuted", "content": { "application/json": { "schema": { "type": "object", "properties": { "muted": { "type": "boolean" } } } } } }
+        }
+      }
+    },
+    "/api/agent/{id}/history": {
+      "get": {
+        "tags": ["Agent Control"],
+        "summary": "Get agent conversation history",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 20 } },
+          { "name": "offset", "in": "query", "schema": { "type": "integer", "default": 0 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conversation history",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "messages": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+                    "total": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Agent Control"],
+        "summary": "Clear agent conversation history",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Cleared", "content": { "application/json": { "schema": { "type": "object", "properties": { "cleared": { "type": "boolean" } } } } } }
+        }
+      }
+    },
+    "/api/agents": {
+      "get": {
+        "tags": ["Agents"],
+        "summary": "List all agents",
+        "responses": {
+          "200": {
+            "description": "Agent list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/Agent" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Agents"],
+        "summary": "Create a new agent",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["id", "name"],
+                "properties": {
+                  "id": { "type": "string", "pattern": "^[a-z0-9_-]+$" },
+                  "name": { "type": "string" },
+                  "personality": { "type": "string" },
+                  "voice": { "type": "string" },
+                  "avatar": { "type": "string" },
+                  "theme": { "type": "object" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Created", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Agent" } } } } } },
+          "400": { "description": "Validation error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "409": { "description": "Agent already exists", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/agents/{id}": {
+      "get": {
+        "tags": ["Agents"],
+        "summary": "Get agent details",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Agent details", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Agent" } } } } } },
+          "404": { "description": "Not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "put": {
+        "tags": ["Agents"],
+        "summary": "Update agent configuration",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "personality": { "type": "string" },
+                  "voice": { "type": "string" },
+                  "avatar": { "type": "string" },
+                  "theme": { "type": "object" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Updated" },
+          "404": { "description": "Not found" }
+        }
+      },
+      "delete": {
+        "tags": ["Agents"],
+        "summary": "Delete an agent",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Deleted" },
+          "404": { "description": "Not found" }
+        }
+      }
+    },
+    "/api/agents/{id}/message": {
+      "post": {
+        "tags": ["Agents"],
+        "summary": "Send message to agent (SSE streaming response)",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["text"],
+                "properties": {
+                  "text": { "type": "string" },
+                  "from": { "type": "string", "default": "api-user" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SSE stream of response deltas",
+            "content": {
+              "text/event-stream": {
+                "schema": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/config": {
+      "get": {
+        "tags": ["Configuration"],
+        "summary": "Get current configuration",
+        "responses": {
+          "200": {
+            "description": "Configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "provider": { "type": "string" },
+                    "model": { "type": "string" },
+                    "agents": { "type": "array", "items": { "$ref": "#/components/schemas/Agent" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Configuration"],
+        "summary": "Update configuration",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "agents": { "type": "array", "items": { "type": "object" } }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Updated" }
+        }
+      }
+    },
+    "/api/providers": {
+      "get": {
+        "tags": ["Configuration"],
+        "summary": "List available AI providers",
+        "responses": {
+          "200": {
+            "description": "Provider list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Provider" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/personalities": {
+      "get": {
+        "tags": ["Personalities"],
+        "summary": "List all personality presets",
+        "responses": {
+          "200": {
+            "description": "Personality list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/Personality" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Personalities"],
+        "summary": "Create a personality preset",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "prompt"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "description": { "type": "string" },
+                  "prompt": { "type": "string" },
+                  "voice": { "type": "string" },
+                  "tags": { "type": "array", "items": { "type": "string" } }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Created" }
+        }
+      }
+    },
+    "/api/personalities/{id}": {
+      "get": {
+        "tags": ["Personalities"],
+        "summary": "Get a personality preset",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Personality details" },
+          "404": { "description": "Not found" }
+        }
+      },
+      "put": {
+        "tags": ["Personalities"],
+        "summary": "Update a personality preset",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Updated" },
+          "404": { "description": "Not found" }
+        }
+      },
+      "delete": {
+        "tags": ["Personalities"],
+        "summary": "Delete a personality preset",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Deleted" },
+          "404": { "description": "Not found" }
+        }
+      }
+    },
+    "/api/conversations": {
+      "get": {
+        "tags": ["Conversations"],
+        "summary": "List archived conversations",
+        "parameters": [
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 10 } },
+          { "name": "offset", "in": "query", "schema": { "type": "integer", "default": 0 } },
+          { "name": "search", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conversation list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/Conversation" } },
+                    "total": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Conversations"],
+        "summary": "Archive current session as a conversation",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Archived" },
+          "400": { "description": "No messages to archive" }
+        }
+      }
+    },
+    "/api/conversations/stats": {
+      "get": {
+        "tags": ["Conversations"],
+        "summary": "Get conversation statistics",
+        "responses": {
+          "200": {
+            "description": "Statistics"
+          }
+        }
+      }
+    },
+    "/api/conversations/{id}": {
+      "get": {
+        "tags": ["Conversations"],
+        "summary": "Get a conversation",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Conversation details" },
+          "404": { "description": "Not found" }
+        }
+      },
+      "delete": {
+        "tags": ["Conversations"],
+        "summary": "Delete a conversation",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Deleted" },
+          "404": { "description": "Not found" }
+        }
+      }
+    },
+    "/api/conversations/{id}/transcript": {
+      "get": {
+        "tags": ["Conversations"],
+        "summary": "Get conversation transcript",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "format", "in": "query", "schema": { "type": "string", "enum": ["text", "json"], "default": "text" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transcript",
+            "content": {
+              "text/plain": { "schema": { "type": "string" } },
+              "application/json": { "schema": { "type": "object" } }
+            }
+          }
+        }
+      }
+    },
+    "/api/health": {
+      "get": {
+        "tags": ["Health & Metrics"],
+        "summary": "Health check",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "enum": ["ok", "degraded", "error"] },
+                    "uptime": { "type": "number" },
+                    "version": { "type": "string" },
+                    "provider": { "type": "object" },
+                    "memory": { "type": "object" },
+                    "lastError": { "type": "string", "nullable": true }
+                  }
+                }
+              }
+            }
+          },
+          "503": { "description": "Degraded" }
+        }
+      }
+    },
+    "/api/metrics": {
+      "get": {
+        "tags": ["Health & Metrics"],
+        "summary": "Get system metrics",
+        "responses": {
+          "200": {
+            "description": "Metrics snapshot",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "stt": { "type": "object" },
+                    "llm": { "type": "object" },
+                    "tts": { "type": "object" },
+                    "audio": { "type": "object" },
+                    "cost": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    { "name": "Agent Lifecycle", "description": "Start, stop, join, and leave Spaces" },
+    { "name": "Agent Control", "description": "Control individual agents (say, mute, prompt)" },
+    { "name": "Agents", "description": "Agent CRUD and messaging" },
+    { "name": "Configuration", "description": "System configuration and providers" },
+    { "name": "Personalities", "description": "Personality preset management" },
+    { "name": "Conversations", "description": "Conversation persistence and transcripts" },
+    { "name": "Health & Metrics", "description": "System health and performance metrics" }
+  ]
+}

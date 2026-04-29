@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Voice Chat — Widget Demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f0f2f5;
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .demo {
+      text-align: center;
+      max-width: 600px;
+      padding: 40px 24px;
+    }
+    h1 { font-size: 2rem; margin-bottom: 8px; }
+    p { color: #666; margin-bottom: 24px; line-height: 1.6; }
+    code {
+      display: block;
+      text-align: left;
+      background: #1a1a2e;
+      color: #e8e8e8;
+      padding: 20px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.6;
+      overflow-x: auto;
+      white-space: pre;
+    }
+    .controls {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 24px;
+      flex-wrap: wrap;
+    }
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      background: #6C63FF;
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    button:hover { background: #5A52D5; }
+    button.secondary {
+      background: transparent;
+      border: 1px solid #ddd;
+      color: #333;
+    }
+    button.secondary:hover { background: #f5f5f5; }
+  </style>
+</head>
+<body>
+  <div class="demo">
+    <h1>🎙️ Agent Voice Chat Widget</h1>
+    <p>
+      This demo shows the embeddable voice chat widget. Click the floating button
+      in the bottom-right corner to open the chat modal.
+    </p>
+
+    <code>&lt;script
+  src="https://cdn.example.com/agent-voice-chat.min.js"
+  data-server="http://localhost:3000"
+  data-agent="bob"
+  data-theme="dark"
+&gt;&lt;/script&gt;</code>
+
+    <div class="controls">
+      <button onclick="initWidget()">Init Widget</button>
+      <button class="secondary" onclick="destroyWidget()">Destroy Widget</button>
+      <button class="secondary" onclick="toggleTheme()">Toggle Theme</button>
+    </div>
+  </div>
+
+  <!-- Load Socket.IO from CDN (in production, the widget auto-loads this) -->
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+  <!-- Load the widget (Vite dev mode) -->
+  <script type="module">
+    import { AgentVoiceChat } from './src/index.ts';
+
+    let currentTheme = 'dark';
+
+    window.initWidget = function() {
+      AgentVoiceChat.init({
+        server: 'http://localhost:3000',
+        agent: 'bob',
+        theme: currentTheme,
+        position: 'bottom-right',
+        showTranscript: true,
+        onConnect: () => console.log('[Demo] Connected!'),
+        onDisconnect: () => console.log('[Demo] Disconnected'),
+        onMessage: (msg) => console.log('[Demo] Message:', msg),
+        onError: (err) => console.error('[Demo] Error:', err),
+      });
+    };
+
+    window.destroyWidget = function() {
+      AgentVoiceChat.destroy();
+    };
+
+    window.toggleTheme = function() {
+      AgentVoiceChat.destroy();
+      currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      window.initWidget();
+    };
+
+    // Auto-init on page load
+    window.initWidget();
+  </script>
+</body>
+</html>

@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>X Space Agent — Builder</title>
+  <link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/admin.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <div class="header-logo">
+          <img src="/assets/logo.svg" alt="Logo" width="28" height="28">
+          <span>X Space Agent</span>
+          <span class="version">v1.0</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <span class="badge badge-neutral" id="agent-status-badge">Offline</span>
+        <div class="connection-badge">
+          <span class="dot" id="conn-dot"></span>
+          <span id="conn-text">Connecting...</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div class="nav-section">
+        <div class="nav-section-label">Main</div>
+        <a class="nav-item" href="/admin#/">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2z"/>
+          </svg>
+          Dashboard
+        </a>
+        <a class="nav-item" href="/admin#/agents">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
+          Agents
+        </a>
+        <a class="nav-item active" href="/builder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+          </svg>
+          Builder
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-label">System</div>
+        <a class="nav-item" href="/admin#/settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z"/>
+            <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          Settings
+        </a>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main" id="main-content">
+      <div class="page">
+        <div class="page-header" style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <h1 class="page-title">Flow Builder</h1>
+            <p class="page-subtitle">Create and manage no-code agent flows</p>
+          </div>
+          <button class="btn btn-primary" id="new-flow-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 5v14m-7-7h14"/></svg>
+            New Flow
+          </button>
+        </div>
+
+        <!-- Templates Section -->
+        <div class="card" style="margin-bottom:var(--space-lg)">
+          <div class="card-header">
+            <span class="card-title">Templates</span>
+          </div>
+          <div class="card-grid card-grid-3" id="templates-grid">
+            <div class="empty-state"><p>Loading templates...</p></div>
+          </div>
+        </div>
+
+        <!-- Flows List -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Your Flows</span>
+            <span class="badge badge-neutral" id="flow-count">0</span>
+          </div>
+          <div id="flows-list">
+            <div class="empty-state">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+              <p>No flows yet. Create one from a template or start from scratch.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- New Flow Modal -->
+      <div id="flow-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;align-items:center;justify-content:center">
+        <div class="card" style="width:480px;max-width:90vw;max-height:80vh;overflow-y:auto">
+          <div class="card-header">
+            <span class="card-title">Create New Flow</span>
+            <button class="btn btn-sm" id="modal-close">&times;</button>
+          </div>
+          <form id="flow-form">
+            <div class="form-group">
+              <label class="form-label">Flow Name</label>
+              <input class="input" name="name" required placeholder="My Agent Flow">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Description</label>
+              <textarea class="textarea" name="description" rows="3" placeholder="What does this flow do?"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Template (optional)</label>
+              <select class="select" name="templateId" id="template-select">
+                <option value="">Start from scratch</option>
+              </select>
+            </div>
+            <div class="btn-row" style="justify-content:flex-end;margin-top:var(--space-lg)">
+              <button type="button" class="btn" id="modal-cancel">Cancel</button>
+              <button type="submit" class="btn btn-primary">Create Flow</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
+
+    <!-- Bottom Nav (mobile) -->
+    <div class="bottom-nav">
+      <div class="bottom-nav-items">
+        <a class="bottom-nav-item" href="/admin#/">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2z"/></svg>
+          Home
+        </a>
+        <a class="bottom-nav-item" href="/admin#/agents">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          Agents
+        </a>
+        <a class="bottom-nav-item active" href="/builder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+          Builder
+        </a>
+        <a class="bottom-nav-item" href="/admin#/settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          Settings
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    (function() {
+      'use strict'
+
+      // --- State ---
+      let flows = []
+      let templates = []
+      let socket = null
+
+      // --- DOM refs ---
+      const flowsList = document.getElementById('flows-list')
+      const templatesGrid = document.getElementById('templates-grid')
+      const flowCount = document.getElementById('flow-count')
+      const newFlowBtn = document.getElementById('new-flow-btn')
+      const flowModal = document.getElementById('flow-modal')
+      const flowForm = document.getElementById('flow-form')
+      const modalClose = document.getElementById('modal-close')
+      const modalCancel = document.getElementById('modal-cancel')
+      const templateSelect = document.getElementById('template-select')
+      const connDot = document.getElementById('conn-dot')
+      const connText = document.getElementById('conn-text')
+
+      // --- API helpers ---
+      function getApiKey() {
+        return new URLSearchParams(window.location.search).get('apiKey') || ''
+      }
+
+      async function api(path, opts = {}) {
+        const headers = { 'X-API-Key': getApiKey(), ...opts.headers }
+        if (opts.body && typeof opts.body === 'object') {
+          headers['Content-Type'] = 'application/json'
+          opts.body = JSON.stringify(opts.body)
+        }
+        const res = await fetch(path, { ...opts, headers })
+        if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+        return res.json()
+      }
+
+      // --- Rendering ---
+      function escapeHTML(str) {
+        const div = document.createElement('div')
+        div.textContent = str
+        return div.innerHTML
+      }
+
+      function renderTemplates() {
+        if (!templates.length) {
+          templatesGrid.innerHTML = '<div class="empty-state"><p>No templates available</p></div>'
+          return
+        }
+        templatesGrid.innerHTML = templates.map(t => `
+          <div class="card" style="padding:var(--space-md);cursor:pointer" onclick="document.getElementById('template-select').value='${escapeHTML(t.id)}';document.getElementById('new-flow-btn').click()">
+            <div style="font-weight:600;margin-bottom:var(--space-xs)">${escapeHTML(t.name || t.id)}</div>
+            <div style="font-size:var(--text-xs);color:var(--text-secondary)">${escapeHTML(t.description || 'No description')}</div>
+          </div>
+        `).join('')
+      }
+
+      function renderFlows() {
+        flowCount.textContent = flows.length
+        if (!flows.length) {
+          flowsList.innerHTML = `
+            <div class="empty-state">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48"><path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+              <p>No flows yet. Create one from a template or start from scratch.</p>
+            </div>`
+          return
+        }
+        flowsList.innerHTML = flows.map(f => `
+          <div class="card" style="padding:var(--space-md);margin-bottom:var(--space-sm);display:flex;align-items:center;justify-content:space-between">
+            <div style="flex:1">
+              <div style="font-weight:600">${escapeHTML(f.name)}</div>
+              <div style="font-size:var(--text-xs);color:var(--text-secondary);margin-top:2px">${escapeHTML(f.description || 'No description')}</div>
+              <div style="margin-top:var(--space-xs);display:flex;gap:var(--space-sm)">
+                <span class="badge ${f.status === 'deployed' ? 'badge-success' : f.status === 'draft' ? 'badge-neutral' : 'badge-info'}">${escapeHTML(f.status || 'draft')}</span>
+                ${f.updatedAt ? `<span style="font-size:var(--text-xs);color:var(--text-muted)">${new Date(f.updatedAt).toLocaleDateString()}</span>` : ''}
+              </div>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-sm" onclick="editFlow('${escapeHTML(f.id)}')">Edit</button>
+              <button class="btn btn-sm btn-success" onclick="deployFlow('${escapeHTML(f.id)}')">Deploy</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteFlow('${escapeHTML(f.id)}')">Delete</button>
+            </div>
+          </div>
+        `).join('')
+      }
+
+      // --- Actions ---
+      async function loadTemplates() {
+        try {
+          const data = await api('/api/builder/templates')
+          templates = Array.isArray(data) ? data : data.templates || []
+          renderTemplates()
+          templateSelect.innerHTML = '<option value="">Start from scratch</option>' +
+            templates.map(t => `<option value="${escapeHTML(t.id)}">${escapeHTML(t.name || t.id)}</option>`).join('')
+        } catch (e) {
+          templatesGrid.innerHTML = '<div class="empty-state"><p>Failed to load templates</p></div>'
+        }
+      }
+
+      async function loadFlows() {
+        try {
+          const data = await api('/api/builder/flows')
+          flows = Array.isArray(data) ? data : data.flows || []
+          renderFlows()
+        } catch (e) {
+          flowsList.innerHTML = '<div class="empty-state"><p>Failed to load flows</p></div>'
+        }
+      }
+
+      window.editFlow = function(id) {
+        alert('Flow editor coming soon. Flow ID: ' + id)
+      }
+
+      window.deployFlow = async function(id) {
+        if (!confirm('Deploy this flow to X Spaces?')) return
+        try {
+          await api(`/api/builder/flows/${id}/deploy`, { method: 'POST', body: { platform: 'x_spaces' } })
+          loadFlows()
+        } catch (e) {
+          alert('Deploy failed: ' + e.message)
+        }
+      }
+
+      window.deleteFlow = async function(id) {
+        if (!confirm('Delete this flow? This cannot be undone.')) return
+        try {
+          await api(`/api/builder/flows/${id}`, { method: 'DELETE' })
+          loadFlows()
+        } catch (e) {
+          alert('Delete failed: ' + e.message)
+        }
+      }
+
+      // --- Modal ---
+      function openModal() { flowModal.style.display = 'flex' }
+      function closeModal() { flowModal.style.display = 'none'; flowForm.reset() }
+
+      newFlowBtn.addEventListener('click', openModal)
+      modalClose.addEventListener('click', closeModal)
+      modalCancel.addEventListener('click', closeModal)
+      flowModal.addEventListener('click', (e) => { if (e.target === flowModal) closeModal() })
+
+      flowForm.addEventListener('submit', async (e) => {
+        e.preventDefault()
+        const fd = new FormData(flowForm)
+        const body = {
+          name: fd.get('name'),
+          description: fd.get('description') || '',
+        }
+        const tpl = fd.get('templateId')
+        if (tpl) body.templateId = tpl
+        try {
+          await api('/api/builder/flows', { method: 'POST', body })
+          closeModal()
+          loadFlows()
+        } catch (err) {
+          alert('Failed to create flow: ' + err.message)
+        }
+      })
+
+      // --- Socket.IO ---
+      function initSocket() {
+        try {
+          socket = io('/space', { auth: { apiKey: getApiKey() } })
+          socket.on('connect', () => {
+            connDot.classList.add('connected')
+            connDot.classList.remove('error')
+            connText.textContent = 'Connected'
+          })
+          socket.on('disconnect', () => {
+            connDot.classList.remove('connected')
+            connText.textContent = 'Disconnected'
+          })
+          socket.on('connect_error', () => {
+            connDot.classList.add('error')
+            connText.textContent = 'Error'
+          })
+          socket.on('xSpacesStatus', (data) => {
+            const badge = document.getElementById('agent-status-badge')
+            if (data && data.status) {
+              badge.textContent = data.status
+              badge.className = 'badge ' + (data.status === 'listening' ? 'badge-success' : data.status === 'error' ? 'badge-error' : 'badge-neutral')
+            }
+          })
+        } catch (e) {
+          connText.textContent = 'No Socket'
+        }
+      }
+
+      // --- Init ---
+      loadTemplates()
+      loadFlows()
+      initSocket()
+    })()
+  </script>
+</body>
+</html>
+
+
