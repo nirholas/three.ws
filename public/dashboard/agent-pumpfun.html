@@ -290,6 +290,8 @@
 				launchName: $('#launch-name'),
 				launchSymbol: $('#launch-symbol'),
 				launchVanity: $('#launch-vanity'),
+				launchVanitySuffix: $('#launch-vanity-suffix'),
+				launchVanityIc: $('#launch-vanity-ic'),
 				launchSol: $('#launch-sol'),
 				launchUri: $('#launch-uri'),
 				launchBtn: $('#launch-btn'),
@@ -424,18 +426,23 @@
 					return;
 				}
 				const vanity = els.launchVanity.value.trim();
+				const vanitySuffix = els.launchVanitySuffix.value.trim();
 				if (vanity) body.vanityPrefix = vanity;
+				if (vanitySuffix) body.vanitySuffix = vanitySuffix;
+				if (els.launchVanityIc.checked) body.vanityIgnoreCase = true;
 				const sol = parseFloat(els.launchSol.value);
 				if (sol > 0) body.solAmount = sol;
 				els.launchBtn.disabled = true;
-				els.launchBtn.textContent = vanity ? 'Grinding & launching…' : 'Launching…';
+				els.launchBtn.textContent = vanity || vanitySuffix ? 'Grinding & launching…' : 'Launching…';
 				try {
 					const { data } = await api(`/api/agents/${id}/pumpfun/launch`, {
 						method: 'POST',
 						body: JSON.stringify(body),
 					});
 					logResponse('launch', data);
-					toast(`Launched ${data.mint.slice(0, 8)}… (${data.vanity_iterations} attempts)`);
+					toast(
+						`Launched ${data.mint.slice(0, 12)}… (${data.vanity_iterations.toLocaleString()} attempts in ${data.vanity_duration_ms}ms)`,
+					);
 					els.tradeMint.value = data.mint;
 					await refreshAgent();
 					await refreshPortfolio();

@@ -117,6 +117,12 @@ export default wrap(async (req, res) => {
 				chat: `${origin}/api/agents/${a.id}/chat`,
 				attestations: `${origin}/api/agents/solana-attestations?asset=${asset}&network=${network}`,
 				reputation: `${origin}/api/agents/solana-reputation?asset=${asset}&network=${network}`,
+				...(token_stats
+					? {
+							quote: `${origin}/api/pump/quote?mint=${asset}&network=${network}`,
+							price_history: `${origin}/api/agents/solana-price-history?asset=${asset}&network=${network}`,
+						}
+					: {}),
 			},
 			attestation: {
 				schemas_url: `${origin}/.well-known/agent-attestation-schemas`,

@@ -451,13 +451,14 @@ export function registerPumpFunSkills(skills) {
 						wallet_address: pk.toBase58(),
 					},
 					confirmPath: '/api/pump/sell-confirm',
-					confirmExtra: {
+					confirmExtra: (prep) => ({
 						mint: args.mint,
 						network,
 						wallet_address: pk.toBase58(),
 						tokens: String(args.tokenAmount),
 						slippage_bps: slippageBps,
-					},
+						route: prep.route,
+					}),
 				});
 				const route = r.prep.route;
 				return {

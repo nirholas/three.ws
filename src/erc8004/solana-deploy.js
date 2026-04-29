@@ -79,8 +79,14 @@ export async function runSolanaDeploy({ agent, network, vanity }) {
 	if (!walletAddress) throw new Error('Could not read Solana wallet address.');
 
 	// Optional: grind a vanity asset keypair before asking the server to build the tx.
+	// Or accept a pre-ground keypair from a CLI grinder (faster for prefixes >=5 chars).
 	let vanityKeypair = null;
-	if (vanity?.prefix) {
+	if (vanity?.preGroundSecretKey) {
+		vanityKeypair = Keypair.fromSecretKey(vanity.preGroundSecretKey);
+		if (vanity.prefix && !vanityKeypair.publicKey.toBase58().startsWith(vanity.prefix)) {
+			throw new Error(`Pre-ground keypair does not start with prefix "${vanity.prefix}".`);
+		}
+	} else if (vanity?.prefix) {
 		const result = await grindVanity({
 			prefix: vanity.prefix,
 			onProgress: vanity.onProgress,

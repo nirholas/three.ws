@@ -179,8 +179,17 @@ export class DeployButton {
 				initial: this._vanityPrefix || '',
 			});
 			if (chosen === null) return; // dismissed
-			this._vanityPrefix = chosen;
-			_saveVanity(this._agent?.id, chosen);
+
+			// Modal returns either a string (prefix to grind in browser) or
+			// { prefix, secretKey } when the user pasted a CLI-ground keypair.
+			if (chosen && typeof chosen === 'object') {
+				this._vanityPrefix = chosen.prefix || '';
+				this._preGroundSecretKey = chosen.secretKey;
+			} else {
+				this._vanityPrefix = chosen;
+				this._preGroundSecretKey = null;
+			}
+			_saveVanity(this._agent?.id, this._vanityPrefix);
 			this._renderDeployButton(); // re-render to update label
 		});
 
@@ -303,14 +312,20 @@ export class DeployButton {
 
 		const network = _solanaNetwork(this._chainId);
 		const vanityPrefix = (this._vanityPrefix || '').trim();
-		const steps = vanityPrefix
-			? ['Grinding vanity address', 'Sign tx', 'Confirming on-chain', 'Saving']
-			: ['Connecting wallet', 'Sign tx', 'Confirming on-chain', 'Saving'];
+		const preGround    = this._preGroundSecretKey || null;
+		const willGrind    = vanityPrefix && !preGround;
+		const steps = preGround
+			? ['Loading pre-ground keypair', 'Sign tx', 'Confirming on-chain', 'Saving']
+			: willGrind
+				? ['Grinding vanity address', 'Sign tx', 'Confirming on-chain', 'Saving']
+				: ['Connecting wallet', 'Sign tx', 'Confirming on-chain', 'Saving'];
 		const abort = new AbortController();
-		this._renderProgress(steps, 0, vanityPrefix ? {
+		this._renderProgress(steps, 0, willGrind ? {
 			text: `searching for "${vanityPrefix}…"`,
 			cancelable: true,
 			onCancel: () => abort.abort(),
+		} : preGround ? {
+			text: `using CLI-ground keypair${vanityPrefix ? ` for "${vanityPrefix}…"` : ''}`,
 		} : undefined);
 
 		let result;
@@ -318,16 +333,17 @@ export class DeployButton {
 			result = await runSolanaDeploy({
 				agent,
 				network,
-				vanity: vanityPrefix ? {
-					prefix: vanityPrefix,
+				vanity: (vanityPrefix || preGround) ? {
+					prefix: vanityPrefix || undefined,
+					preGroundSecretKey: preGround || undefined,
 					signal: abort.signal,
-					onProgress: ({ attempts, rate, eta }) => {
+					onProgress: willGrind ? ({ attempts, rate, eta }) => {
 						const detail = this._root.querySelector('.deploy-progress-detail');
 						if (detail) {
 							detail.textContent =
 								`🔍 "${vanityPrefix}…"  ${attempts.toLocaleString()} tries · ${Math.round(rate).toLocaleString()}/s · eta ${eta}`;
 						}
-					},
+					} : undefined,
 				} : undefined,
 			});
 			this._renderProgress(steps, 1);
@@ -362,6 +378,7 @@ export class DeployButton {
 		this._agent.txHash = result.txSignature;
 		this._agent.contractAddress = result.assetPubkey;
 		_saveVanity(this._agent?.id, ''); // clear after successful deploy
+		this._preGroundSecretKey = null;
 		this._renderSuccessChip(this._chainId, result.txSignature, result.assetPubkey, result.vanityPrefix);
 	}
 
