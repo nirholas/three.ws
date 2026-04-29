@@ -890,6 +890,20 @@ class Agent3DElement extends HTMLElement {
 		const chainIdAttr = this.getAttribute('chain-id');
 		if (src) {
 			if (agentIdAttr) console.warn('[agent-3d] both src and agent-id provided; using src');
+			// Plain .glb / .gltf URLs are bare bodies, not manifests — treat
+			// them as if `body=` had been set so users don't need to know the
+			// distinction.
+			if (/\.(glb|gltf)(\?|$)/i.test(src)) {
+				return {
+					spec: 'agent-manifest/0.1',
+					_baseURI: '',
+					name: this.getAttribute('name') || 'Agent',
+					body: { uri: src, format: 'gltf-binary' },
+					brain: { provider: 'none' },
+					voice: { tts: { provider: 'browser' }, stt: { provider: 'browser' } },
+					skills: [],
+				};
+			}
 			return loadManifest(src, {
 				rpcURL: this.getAttribute('rpc-url'),
 				registry: this.getAttribute('registry'),

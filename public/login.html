@@ -7,6 +7,8 @@
 		<link rel="icon" href="/favicon.ico" />
 		<link rel="stylesheet" href="/wallet-connect.css" />
 		<link rel="stylesheet" href="/auth.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script defer src="/footer-newsletter.js"></script>
 		<script
 			type="module"
 			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
@@ -14,6 +16,15 @@
 		<style>
 			:root {
 				color-scheme: dark;
+				--space-xs: 0.382rem;
+				--space-sm: 0.618rem;
+				--space-md: 1rem;
+				--space-lg: 1.618rem;
+				--text-sm: 0.764rem;
+				--text-lg: 1.236rem;
+				--radius-md: 5px;
+				--header-h: 3.5rem;
+				--font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
 			}
 			* {
 				box-sizing: border-box;
@@ -30,9 +41,138 @@
 				margin: 0;
 				min-height: 100vh;
 				display: flex;
+				flex-direction: column;
+			}
+			main.auth-stage {
+				flex: 1;
+				display: flex;
 				align-items: center;
 				justify-content: center;
-				padding: 24px;
+				padding: 32px 24px;
+			}
+			/* ── Site nav (shared with other pages) ── */
+			.skip-link {
+				position: absolute;
+				left: -9999px;
+				top: auto;
+				width: 1px;
+				height: 1px;
+				overflow: hidden;
+			}
+			.skip-link:focus {
+				left: 1rem;
+				top: 1rem;
+				width: auto;
+				height: auto;
+				padding: 0.5rem 1rem;
+				background: #05060a;
+				border: 1px solid #1e1f2b;
+				border-radius: 6px;
+				z-index: 9999;
+			}
+			header.site-header {
+				display: flex;
+				background: rgba(0, 0, 0, 0.8);
+				backdrop-filter: blur(20px);
+				-webkit-backdrop-filter: blur(20px);
+				padding: 0 var(--space-lg);
+				height: var(--header-h);
+				align-items: center;
+				overflow-x: auto;
+				overflow-y: hidden;
+				white-space: nowrap;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+				z-index: 10;
+			}
+			header.site-header h1 {
+				color: #fff;
+				font-family: var(--font-display);
+				font-size: var(--text-lg);
+				font-weight: 600;
+				margin: 0;
+				letter-spacing: -0.01em;
+				display: flex;
+				align-items: center;
+				gap: var(--space-xs);
+				line-height: var(--header-h);
+			}
+			header.site-header h1 > a {
+				color: inherit;
+				font-size: inherit;
+				text-decoration: none;
+				display: flex;
+				align-items: center;
+				gap: 0.5rem;
+			}
+			.wordmark-dot {
+				width: 8px;
+				height: 8px;
+				border-radius: 50%;
+				background: linear-gradient(135deg, #a78bfa 0%, #6366f1 100%);
+				box-shadow: 0 0 10px rgba(139, 92, 246, 0.6);
+				display: inline-block;
+			}
+			.features-nav {
+				margin-left: auto;
+				display: flex;
+				gap: var(--space-md);
+				align-items: center;
+			}
+			.features-nav a {
+				color: rgba(255, 255, 255, 0.5);
+				text-decoration: none;
+				font-size: var(--text-sm);
+				font-weight: 500;
+				letter-spacing: -0.005em;
+				padding: 0.35rem 0.7rem;
+				border-radius: var(--radius-md);
+				transition: color 0.18s ease, background 0.18s ease;
+				position: relative;
+			}
+			.features-nav a:hover {
+				color: #fff;
+				background: rgba(255, 255, 255, 0.04);
+			}
+			.features-nav a.active {
+				color: #fff;
+				background: rgba(255, 255, 255, 0.06);
+			}
+			.nav-sign-in {
+				border: 1px solid rgba(255, 255, 255, 0.12);
+				border-radius: var(--radius-md);
+			}
+			.nav-user {
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				padding: 4px 10px;
+				border-radius: 20px;
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				background: rgba(255, 255, 255, 0.04);
+				font-size: var(--text-sm);
+				color: rgba(255, 255, 255, 0.55);
+				max-width: 140px;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+			.nav-user::before {
+				content: '';
+				width: 6px;
+				height: 6px;
+				border-radius: 50%;
+				background: #4ade80;
+				flex-shrink: 0;
+			}
+			.nav-user:hover {
+				color: rgba(255, 255, 255, 0.85) !important;
+				border-color: rgba(255, 255, 255, 0.2);
+				background: rgba(255, 255, 255, 0.07);
+			}
+			@media (max-width: 700px) {
+				.features-nav a:not(.nav-sign-in):not(.nav-user):not(#nav-sign-in) {
+					display: none;
+				}
 			}
 			.shell {
 				display: flex;
@@ -364,6 +504,27 @@
 		</style>
 	</head>
 	<body>
+		<a href="#main-content" class="skip-link">Skip to main content</a>
+		<header class="site-header">
+			<h1>
+				<a href="/" aria-label="three.ws home"
+					><span class="wordmark-dot" aria-hidden="true"></span>three.ws</a
+				>
+			</h1>
+			<nav class="features-nav" aria-label="Primary">
+				<a href="/app">Viewer</a>
+				<a href="/create">Create</a>
+				<a href="/discover">Discover</a>
+				<a href="/features">Features</a>
+				<a href="/widgets">Widgets</a>
+				<a href="/studio">Studio</a>
+				<a href="/docs">Docs</a>
+				<a href="/dashboard" class="nav-dashboard">Dashboard</a>
+				<a href="/my-agents" id="nav-my-agents" hidden>My Agents</a>
+				<a href="/dashboard" id="nav-user" hidden class="nav-user"></a>
+			</nav>
+		</header>
+		<main class="auth-stage" id="main-content">
 		<div class="shell">
 			<form class="card" id="f" autocomplete="on">
 				<a href="/" class="brand"><img src="/three.svg" alt="three.ws" /></a>
@@ -448,6 +609,120 @@
 				</div>
 			</div>
 		</div>
+		</main>
+		<footer class="h-footer-horizon">
+			<div class="h-footer-glow-line" aria-hidden="true"></div>
+			<div class="h-footer-floor" aria-hidden="true"></div>
+			<div class="h-footer-haze" aria-hidden="true"></div>
+			<div class="h-footer-watermark" aria-hidden="true">three.ws</div>
+			<div class="h-footer-avatar" aria-hidden="true">
+				<model-viewer
+					src="/animations/robotexpressive.glb"
+					auto-rotate
+					auto-rotate-delay="0"
+					rotation-per-second="20deg"
+					interaction-prompt="none"
+					camera-controls="false"
+					disable-zoom
+					shadow-intensity="0"
+					exposure="0.7"
+					environment-image="neutral"
+					camera-orbit="0deg 80deg 9m"
+					field-of-view="35deg"
+					loading="lazy"
+				></model-viewer>
+			</div>
+			<div class="h-footer-cta">
+				<div class="h-footer-newsletter">
+					<h3>Stay in the loop</h3>
+					<p>Get updates on new features, agent tooling, and protocol changes.</p>
+					<form class="h-footer-newsletter-form" data-newsletter-form novalidate>
+						<input
+							type="email"
+							class="h-footer-newsletter-input"
+							name="email"
+							placeholder="Enter your email"
+							aria-label="Email address"
+							autocomplete="email"
+							required
+						/>
+						<button type="submit" class="h-footer-newsletter-btn" aria-label="Subscribe">
+							<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M2 8h11m0 0L9 4m4 4l-4 4"/></svg>
+						</button>
+					</form>
+					<p class="h-footer-newsletter-msg" data-newsletter-msg aria-live="polite"></p>
+				</div>
+				<div class="h-footer-community">
+					<h3>Join the community</h3>
+					<p>Follow along for builds, demos, and conversations with the team.</p>
+					<a class="h-footer-community-btn" href="https://x.com/nichxbt" target="_blank" rel="noopener">
+						<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+						Follow on X
+					</a>
+				</div>
+			</div>
+			<div class="h-footer-inner">
+				<div class="h-footer-brand-col">
+					<div class="h-footer-brand">
+						<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />
+						<span class="wordmark-dot" aria-hidden="true"></span>
+						<span>three.ws</span>
+					</div>
+					<p class="h-footer-tagline">Give your AI a body.</p>
+					<div class="h-footer-socials">
+						<a class="h-footer-social" href="https://x.com/nichxbt" target="_blank" rel="noopener" aria-label="three.ws on X">
+							<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+						</a>
+						<a class="h-footer-social" href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener" aria-label="three.ws on GitHub">
+							<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+						</a>
+					</div>
+				</div>
+				<nav class="h-footer-links" aria-label="Footer">
+					<div class="h-footer-link-col">
+						<h4 class="h-footer-link-heading">Product</h4>
+						<a href="/create">Create</a>
+						<a href="/studio">Studio</a>
+						<a href="/widgets">Widgets</a>
+						<a href="/discover">Discover</a>
+					</div>
+					<div class="h-footer-link-col">
+						<h4 class="h-footer-link-heading">Developers</h4>
+						<a href="/docs">Docs</a>
+						<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener">GitHub</a>
+						<a href="https://eips.ethereum.org/EIPS/eip-8004" target="_blank" rel="noopener">ERC-8004</a>
+					</div>
+					<div class="h-footer-link-col">
+						<h4 class="h-footer-link-heading">Resources</h4>
+						<a href="/features">Features</a>
+						<a href="/dashboard">Dashboard</a>
+					</div>
+				</nav>
+			</div>
+			<div class="h-footer-bottom">
+				<p class="h-footer-legal">© 2026 three.ws — All rights reserved.</p>
+				<div class="h-footer-legal-links">
+					<a href="/legal/privacy">Privacy Policy</a>
+					<a href="/legal/tos">Terms of Use</a>
+				</div>
+			</div>
+		</footer>
+		<script>
+			(function () {
+				try {
+					const raw = localStorage.getItem('3dagent:auth-hint');
+					if (raw) {
+						const { authed, name } = JSON.parse(raw);
+						if (authed) {
+							const myAgents = document.getElementById('nav-my-agents');
+							if (myAgents) myAgents.hidden = false;
+							const userEl = document.getElementById('nav-user');
+							if (userEl && name) { userEl.textContent = name; userEl.hidden = false; }
+						}
+					}
+				} catch (_) {}
+			})();
+		</script>
 		<script type="module" src="/wallet-login.js"></script>
 		<script>
 			(function () {

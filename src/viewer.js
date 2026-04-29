@@ -540,7 +540,7 @@ export class Viewer {
 				loader.load(
 					url,
 					(gltf) => {
-						window.VIEWER.json = gltf;
+						if (window.VIEWER) window.VIEWER.json = gltf;
 
 						const scene = gltf.scene || gltf.scenes[0];
 						const clips = gltf.animations || [];
@@ -689,7 +689,7 @@ export class Viewer {
 		this.updateModelInfo(object, clips);
 		this.updateAnnotations();
 
-		window.VIEWER.scene = this.content;
+		if (window.VIEWER) window.VIEWER.scene = this.content;
 
 		this.invalidate();
 

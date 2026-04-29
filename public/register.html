@@ -14,8 +14,8 @@
 		<style>
 			:root {
 				color-scheme: dark;
-				--accent: #6a5cff;
-				--accent2: #ff5ca8;
+				--accent: #ffffff;
+				--accent2: #cccccc;
 			}
 			* {
 				box-sizing: border-box;
@@ -27,7 +27,7 @@
 					Segoe UI,
 					Roboto,
 					sans-serif;
-				background: radial-gradient(1200px 600px at 50% -100px, #1a1a2e 0, #080814 60%);
+				background: #000;
 				color: #eee;
 				margin: 0;
 				min-height: 100vh;
@@ -43,9 +43,9 @@
 				min-height: 640px;
 				border-radius: 24px;
 				overflow: hidden;
-				background: #14141c;
-				border: 1px solid #2a2a36;
-				box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+				background: #0a0a0a;
+				border: 1px solid #222;
+				box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8);
 			}
 			.panel {
 				flex: 1;
@@ -54,9 +54,9 @@
 				align-items: center;
 				justify-content: center;
 				background:
-					radial-gradient(120% 90% at 30% 20%, rgba(154, 140, 255, 0.6), transparent 60%),
-					radial-gradient(120% 90% at 80% 90%, rgba(255, 92, 168, 0.4), transparent 55%),
-					linear-gradient(135deg, #2a2350 0%, #1a1a2e 100%);
+					radial-gradient(120% 90% at 30% 20%, rgba(255, 255, 255, 0.06), transparent 60%),
+					radial-gradient(120% 90% at 80% 90%, rgba(255, 255, 255, 0.04), transparent 55%),
+					linear-gradient(135deg, #111 0%, #000 100%);
 				overflow: hidden;
 			}
 			.agent-avatar {
@@ -92,15 +92,15 @@
 				bottom: -2px;
 				width: 90px;
 				height: 10px;
-				background: radial-gradient(ellipse, rgba(106, 92, 255, 0.35), transparent 70%);
+				background: radial-gradient(ellipse, rgba(255, 255, 255, 0.2), transparent 70%);
 				transform: translateX(-50%);
 				filter: blur(4px);
 			}
 			a {
-				color: #9a8cff;
+				color: #fff;
 			}
 			.card {
-				background: #14141c;
+				background: #0a0a0a;
 				border: 0;
 				border-radius: 0;
 				padding: 56px 56px;
@@ -141,9 +141,9 @@
 				font-weight: 600;
 				padding: 2px 8px;
 				border-radius: 20px;
-				background: rgba(106, 92, 255, 0.15);
-				border: 1px solid rgba(106, 92, 255, 0.3);
-				color: #a899ff;
+				background: rgba(255, 255, 255, 0.08);
+				border: 1px solid rgba(255, 255, 255, 0.2);
+				color: #ccc;
 				letter-spacing: 0.02em;
 				white-space: nowrap;
 			}
@@ -156,8 +156,8 @@
 			input {
 				width: 100%;
 				padding: 11px 13px;
-				background: #0f0f17;
-				border: 1px solid #2a2a36;
+				background: #000;
+				border: 1px solid #333;
 				border-radius: 9px;
 				color: #eee;
 				font-size: 15px;
@@ -165,8 +165,8 @@
 			}
 			input:focus {
 				outline: none;
-				border-color: var(--accent);
-				box-shadow: 0 0 0 3px rgba(106, 92, 255, 0.15);
+				border-color: #fff;
+				box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
 			}
 			.hint {
 				font-size: 12px;
@@ -179,7 +179,7 @@
 			.strength-bar {
 				height: 3px;
 				border-radius: 2px;
-				background: #2a2a36;
+				background: #222;
 				margin-top: 6px;
 				overflow: hidden;
 			}
@@ -201,8 +201,8 @@
 				padding: 12px 16px;
 				border: 0;
 				border-radius: 10px;
-				background: linear-gradient(135deg, var(--accent), var(--accent2));
-				color: #fff;
+				background: #fff;
+				color: #000;
 				font-weight: 600;
 				font-size: 15px;
 				cursor: pointer;
@@ -246,20 +246,20 @@
 				font-size: 12px;
 				letter-spacing: 0.1em;
 				text-transform: uppercase;
-				color: var(--accent);
+				color: #fff;
 				margin: 0 0 8px;
 				text-decoration: none;
 				display: inline-block;
 			}
 			.brand:hover {
-				color: #9a8cff;
+				color: #ccc;
 			}
 			.divider {
 				display: flex;
 				align-items: center;
 				gap: 12px;
 				margin: 22px 0 4px;
-				color: #555;
+				color: #444;
 				font-size: 12px;
 				text-transform: uppercase;
 				letter-spacing: 0.08em;
@@ -269,13 +269,13 @@
 				content: '';
 				flex: 1;
 				height: 1px;
-				background: #2a2a36;
+				background: #222;
 			}
 			.method-tabs {
 				display: flex;
 				gap: 4px;
-				background: #0f0f17;
-				border: 1px solid #2a2a36;
+				background: #000;
+				border: 1px solid #222;
 				border-radius: 10px;
 				padding: 3px;
 				margin: 0 0 16px;
@@ -287,7 +287,7 @@
 				border: 1px solid transparent;
 				border-radius: 7px;
 				background: transparent;
-				color: #888;
+				color: #666;
 				font-size: 14px;
 				font-weight: 500;
 				cursor: pointer;
@@ -295,9 +295,9 @@
 				width: auto;
 			}
 			.method-tab.active {
-				background: #1e1e2e;
+				background: #1a1a1a;
 				color: #eee;
-				border-color: #2a2a36;
+				border-color: #333;
 			}
 			.method-tab:hover:not(.active) { color: #bbb; }
 			.method-tab:active { transform: scale(0.97); }
@@ -340,8 +340,8 @@
 			.chain-tabs {
 				display: flex;
 				gap: 4px;
-				background: #0f0f17;
-				border: 1px solid #2a2a36;
+				background: #000;
+				border: 1px solid #222;
 				border-radius: 10px;
 				padding: 3px;
 				margin-bottom: 12px;
@@ -352,7 +352,7 @@
 				border: none;
 				border-radius: 7px;
 				background: transparent;
-				color: #888;
+				color: #666;
 				font-size: 13px;
 				font-weight: 500;
 				cursor: pointer;
@@ -361,9 +361,9 @@
 				width: auto;
 			}
 			.chain-tab.active {
-				background: #1e1e2e;
+				background: #1a1a1a;
 				color: #eee;
-				border: 1px solid #2a2a36;
+				border: 1px solid #333;
 			}
 			.chain-tab:hover:not(.active) {
 				color: #bbb;
@@ -375,15 +375,15 @@
 				margin-top: 0;
 				padding: 4px 10px;
 				background: transparent;
-				border: 1px solid #2a2a36;
+				border: 1px solid #222;
 				border-radius: 6px;
-				color: #666;
+				color: #555;
 				font-size: 11px;
 				font-weight: 400;
 				cursor: pointer;
 			}
-			.wallet-hint-btn:hover { border-color: #6a5cff; color: #9a8cff; }
-			.wallet-hint-btn.active { border-color: #6a5cff; color: #9a8cff; background: rgba(106,92,255,0.08); }
+			.wallet-hint-btn:hover { border-color: #fff; color: #eee; }
+			.wallet-hint-btn.active { border-color: #fff; color: #eee; background: rgba(255,255,255,0.06); }
 		</style>
 	</head>
 	<body>
@@ -582,11 +582,11 @@
 				const fill = document.getElementById('strength-fill');
 				const label = document.getElementById('strength-label');
 				const levels = [
-					{ color: '#ff5c5c', text: 'Too short' },
-					{ color: '#ff9a3c', text: 'Weak' },
-					{ color: '#f0c040', text: 'Fair' },
-					{ color: '#7ddf7d', text: 'Strong' },
-					{ color: '#4fc66a', text: 'Very strong' },
+					{ color: '#555', text: 'Too short' },
+					{ color: '#777', text: 'Weak' },
+					{ color: '#999', text: 'Fair' },
+					{ color: '#ccc', text: 'Strong' },
+					{ color: '#fff', text: 'Very strong' },
 				];
 				function score(v) {
 					if (v.length < 10) return 0;
