@@ -1048,6 +1048,7 @@ Access tokens are short-lived JWTs (1 hour). Refresh tokens are opaque strings s
 
 **Endpoint:** `POST /api/mcp`
 **Auth:** OAuth 2.1 Bearer token with `mcp` scope
+**Registry:** Listed on the [official MCP Registry](https://registry.modelcontextprotocol.io/?q=three.ws) as `io.github.nirholas/three.ws`
 
 **Available tools:**
 

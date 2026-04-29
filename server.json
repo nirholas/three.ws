@@ -1,0 +1,16 @@
+{
+	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+	"name": "io.github.nirholas/three.ws",
+	"description": "Render 3D avatars from three.ws and validate, inspect, and optimize glTF/GLB models.",
+	"repository": {
+		"url": "https://github.com/nirholas/three.ws",
+		"source": "github"
+	},
+	"version": "1.0.0",
+	"remotes": [
+		{
+			"type": "streamable-http",
+			"url": "https://three.ws/api/mcp"
+		}
+	]
+}
