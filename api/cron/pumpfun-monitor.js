@@ -34,7 +34,9 @@ export default wrap(async (req, res) => {
 	}
 
 	if (!process.env.ATTEST_AGENT_SECRET_KEY) {
-		return error(res, 503, 'not_configured', 'ATTEST_AGENT_SECRET_KEY unset');
+		// Skip cleanly when the attester key isn't provisioned — returning 503
+		// every 3 min would mark the cron job as failing in the dashboard.
+		return json(res, 200, { skipped: true, reason: 'attester_not_configured' });
 	}
 
 	// Pull the latest stats joined with the agent's Metaplex Core asset and

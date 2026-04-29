@@ -25,10 +25,6 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET'])) return;
 
-	if (!pumpfunBotEnabled()) {
-		return error(res, 503, 'unavailable', 'pumpfun feed not configured');
-	}
-
 	const session = await getSessionUser(req);
 	const bearer = session ? null : await authenticateBearer(extractBearer(req));
 	if (!session && !bearer) return error(res, 401, 'unauthorized', 'sign in required');
@@ -43,6 +39,13 @@ export default wrap(async (req, res) => {
 	const url = new URL(req.url, 'http://x');
 	const op = url.searchParams.get('op') || 'claims';
 	const limit = clamp(Number(url.searchParams.get('limit')) || 10, 1, 50);
+
+	// Soft-degrade to empty data when the upstream feed isn't configured —
+	// callers get a usable 200 rather than a noisy 503 on every poll.
+	if (!pumpfunBotEnabled()) {
+		const empty = op === 'token' || op === 'creator' ? {} : { items: [] };
+		return json(res, 200, empty);
+	}
 
 	let result;
 	switch (op) {

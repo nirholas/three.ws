@@ -27,10 +27,6 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET'])) return;
 
-	if (!pumpfunBotEnabled()) {
-		return error(res, 503, 'unavailable', 'pumpfun feed not configured');
-	}
-
 	const session = await getSessionUser(req);
 	const bearer = session ? null : await authenticateBearer(extractBearer(req));
 	if (!session && !bearer) return error(res, 401, 'unauthorized', 'sign in required');
@@ -53,6 +49,15 @@ export default wrap(async (req, res) => {
 	res.setHeader('connection', 'keep-alive');
 	res.setHeader('x-accel-buffering', 'no');
 	res.flushHeaders?.();
+
+	// When the upstream feed isn't provisioned, open the SSE stream and close
+	// it cleanly — a 503 here would trigger EventSource auto-reconnect storms.
+	if (!pumpfunBotEnabled()) {
+		writeSse(res, 'disabled', { reason: 'pumpfun feed not configured' });
+		writeSse(res, 'close', { reason: 'not_configured' });
+		res.end();
+		return;
+	}
 
 	writeSse(res, 'open', { kind, minTier: minTierParam || null });
 

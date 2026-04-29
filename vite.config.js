@@ -20,6 +20,12 @@ const appConfig = {
 		jsxFragment: '"div"',
 		jsxDev: false,
 	},
+	resolve: {
+		// Force a single Three.js instance — addons (GLTFLoader, OrbitControls,
+		// etc.) must share the same `three` module as the app, otherwise
+		// Three's module-scoped registry warns "Multiple instances of Three.js".
+		dedupe: ['three'],
+	},
 	build: {
 		chunkSizeWarningLimit: 1000,
 		rollupOptions: {

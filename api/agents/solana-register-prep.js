@@ -16,7 +16,6 @@ import {
 	publicKey as umiPublicKey,
 	signerIdentity,
 	createNoopSigner,
-	transactionBuilder,
 } from '@metaplex-foundation/umi';
 import { sql }       from '../_lib/db.js';
 import { getSessionUser } from '../_lib/auth.js';
@@ -125,9 +124,11 @@ export default wrap(async (req, res) => {
 		// No collection — standalone asset for agent identity
 	});
 
-	// Serialize the transaction as base64 (without signatures) for the frontend.
-	const txBytes   = await builder.buildAndSign(umi);
-	const txBase64  = Buffer.from(txBytes).toString('base64');
+	// Serialize the transaction as base64 for the frontend. buildAndSign returns
+	// a Transaction object — use the Umi transaction factory to get raw bytes.
+	const tx       = await builder.buildAndSign(umi);
+	const txBytes  = umi.transactions.serialize(tx);
+	const txBase64 = Buffer.from(txBytes).toString('base64');
 
 	// Store prep record.
 	const prepId   = await randomToken(24);

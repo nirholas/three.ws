@@ -34,13 +34,22 @@ vi.mock('../../api/_lib/env.js', () => ({
 }));
 
 // Metaplex / Umi: stub out so the handler doesn't try to hit a real RPC.
+const FAKE_TX = { __tag: 'fake-tx' };
 vi.mock('@metaplex-foundation/umi-bundle-defaults', () => ({
-	createUmi: vi.fn(() => ({ use: function () { return this; } })),
+	createUmi: vi.fn(() => ({
+		use: function () { return this; },
+		transactions: {
+			serialize: vi.fn((tx) => {
+				if (tx !== FAKE_TX) throw new Error('serialize called with unexpected tx');
+				return new Uint8Array([1, 2, 3, 4]);
+			}),
+		},
+	})),
 }));
 vi.mock('@metaplex-foundation/mpl-core', () => ({
 	mplCore: vi.fn(() => () => {}),
 	createV1: vi.fn(() => ({
-		buildAndSign: vi.fn(async () => new Uint8Array([1, 2, 3, 4])),
+		buildAndSign: vi.fn(async () => FAKE_TX),
 	})),
 	fetchAsset: vi.fn(),
 }));
@@ -49,7 +58,6 @@ vi.mock('@metaplex-foundation/umi', () => ({
 	publicKey: vi.fn((s) => s),
 	signerIdentity: vi.fn(() => () => {}),
 	createNoopSigner: vi.fn((pk) => ({ publicKey: pk })),
-	transactionBuilder: vi.fn(),
 }));
 
 const { default: handler } = await import('../../api/agents/solana-register-prep.js');
