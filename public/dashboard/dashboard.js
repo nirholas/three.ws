@@ -1,6 +1,8 @@
 // Dashboard single-file app. Uses native DOM — no framework.
 // Keeps bundle small and ensures anything rendering <model-viewer> works without bundler.
 
+import { mountAgentSolanaWalletCard } from '/src/agent-solana-wallet.js';
+
 export const state = { user: null };
 
 export const api = {
@@ -159,9 +161,11 @@ function avatarCard(a) {
 				<button class="btn sec danger" data-del>Delete</button>
 			</div>
 		</div>
+		<div data-wallet-host></div>
 	`;
 	const previewEl = el.querySelector('[data-preview]');
 	mountAvatarPreview(previewEl, a);
+	mountAvatarWalletSection(el.querySelector('[data-wallet-host]'), a);
 
 	el.querySelector('[data-vis]').addEventListener('change', async (e) => {
 		try {
@@ -182,6 +186,51 @@ function avatarCard(a) {
 	});
 	el.querySelector('[data-replace]').addEventListener('click', () => replaceGlbFlow(a, el));
 	return el;
+}
+
+// Mount the agent's wallet card under an avatar. If the avatar has no linked
+// agent, show a "Create agent" CTA pointing at the on-chain deploy flow.
+function mountAvatarWalletSection(host, a) {
+	if (!host) return;
+	if (!a.agent_id) {
+		host.innerHTML = `
+			<div class="muted" style="margin-top:10px; padding:10px; border:1px dashed #2a2a36; border-radius:8px; font-size:12px">
+				No agent linked to this avatar yet.
+				<a href="/deploy?avatar=${encodeURIComponent(a.id)}" style="color:#9a8cff">Deploy on-chain</a> to mint one
+				and provision a wallet.
+			</div>
+		`;
+		return;
+	}
+	const evm = a.agent_wallet_address;
+	host.innerHTML = `
+		${
+			evm
+				? `<div style="margin-top:10px; padding:8px 10px; border:1px solid #2a2a36; border-radius:8px; font-size:12px; line-height:1.5">
+						<div class="muted" style="font-size:11px">Agent signing wallet (EVM)</div>
+						<div class="row" style="gap:6px; align-items:center">
+							<code style="font-size:11px; word-break:break-all; flex:1">${esc(evm)}</code>
+							<button class="btn sec" type="button" data-copy-evm style="font-size:11px; padding:4px 8px">Copy</button>
+						</div>
+					</div>`
+				: ''
+		}
+		<div data-sol-wallet style="margin-top:8px"></div>
+	`;
+	const copyBtn = host.querySelector('[data-copy-evm]');
+	if (copyBtn && evm) {
+		copyBtn.addEventListener('click', async () => {
+			try {
+				await navigator.clipboard.writeText(evm);
+				copyBtn.textContent = 'Copied';
+				setTimeout(() => (copyBtn.textContent = 'Copy'), 1200);
+			} catch {}
+		});
+	}
+	mountAgentSolanaWalletCard({
+		panel: host.querySelector('[data-sol-wallet]'),
+		identity: { id: a.agent_id, name: a.name },
+	});
 }
 
 // Lazy-load preview when card scrolls into view. For private avatars, fetch
@@ -647,7 +696,9 @@ async function renderEdit(root, params = []) {
 				</div>
 			</form>
 		</div>
+		<div data-wallet-host style="margin-top:20px; max-width:560px; margin-left:auto; margin-right:auto"></div>
 	`;
+	mountAvatarWalletSection(body.querySelector('[data-wallet-host]'), avatar);
 
 	const msg = body.querySelector('#emsg');
 	body.querySelector('#ef').addEventListener('submit', async (e) => {
