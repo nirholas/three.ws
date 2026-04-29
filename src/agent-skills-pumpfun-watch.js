@@ -20,6 +20,7 @@
  */
 
 import { ACTION_TYPES } from './agent-protocol.js';
+import { watchClaims } from './pump/pumpkit-claims.js';
 
 const FEED_PATH = '/api/agents/pumpfun-feed';
 const TIER_BADGE = { mega: '🔥🔥', influencer: '🔥', notable: '⭐' };

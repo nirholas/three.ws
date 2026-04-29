@@ -103,6 +103,7 @@
 	"devDependencies": {
 		"ajv": "^8.17.1",
 		"ajv-formats": "^3.0.1",
+		"jsdom": "^29.1.0",
 		"playwright": "^1.59.1",
 		"prettier": "^3.2.5",
 		"sharp": "^0.34.5",

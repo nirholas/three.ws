@@ -1,0 +1,25 @@
+{
+	"data": {
+		"rank": [
+			{
+				"wallet_address": "So11111111111111111111111111111111111111112",
+				"pnl_7d": 12345.67,
+				"winrate": 0.75,
+				"tags": ["smart_money", "top_trader"],
+				"twitter_name": "SmartTrader1"
+			},
+			{
+				"wallet_address": "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+				"pnl_7d": 8901.23,
+				"winrate": 0.62,
+				"tags": ["kol"],
+				"name": "KolTrader2"
+			},
+			{
+				"wallet_address": "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263",
+				"realized_profit_7d": 3200.0,
+				"win_rate": 0.55
+			}
+		]
+	}
+}
