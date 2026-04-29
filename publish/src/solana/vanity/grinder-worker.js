@@ -1,15 +1,48 @@
 /**
  * Vanity grinder Web Worker.
  *
- * Loops Keypair.generate() and reports matches + progress back to the host.
+ * Loops keypair generation and reports matches + progress back to the host.
  * The host owns the matcher predicate (passed as serialized config); this
  * worker only decides "does the base58 address match?".
  *
  * Algorithm parity with nirholas/solana-wallet-toolkit
  * (typescript/src/lib/generator.ts).
+ *
+ * Uses SubtleCrypto Ed25519 instead of @solana/web3.js so this file can be
+ * served as a raw ES module (no bundler / import-map required).
  */
 
-import { Keypair } from '@solana/web3.js';
+// ── Crypto helpers ────────────────────────────────────────────────────────────
+
+const _B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+
+function _base58(bytes) {
+	let n = 0n;
+	for (const b of bytes) n = (n << 8n) | BigInt(b);
+	let s = '';
+	while (n > 0n) { s = _B58[Number(n % 58n)] + s; n /= 58n; }
+	for (const b of bytes) { if (b) break; s = '1' + s; }
+	return s;
+}
+
+function _b64u(s) {
+	return Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0));
+}
+
+async function _generateKeypair() {
+	const { privateKey, publicKey } = await crypto.subtle.generateKey(
+		{ name: 'Ed25519' }, true, ['sign'],
+	);
+	const [privJwk, pubRaw] = await Promise.all([
+		crypto.subtle.exportKey('jwk', privateKey),
+		crypto.subtle.exportKey('raw', publicKey),
+	]);
+	const pub = new Uint8Array(pubRaw);
+	const sk = new Uint8Array(64);
+	sk.set(_b64u(privJwk.d)); // 32-byte seed
+	sk.set(pub, 32);           // 32-byte public key
+	return { address: _base58(pub), secretKey: sk };
+}
 
 const PROGRESS_INTERVAL = 5000;
 
@@ -41,8 +74,7 @@ async function grind(prefix, suffix, ignoreCase) {
 	let intervalAttempts = 0;
 
 	while (running) {
-		const kp = Keypair.generate();
-		const address = kp.publicKey.toBase58();
+		const { address, secretKey } = await _generateKeypair();
 		attempts++;
 		intervalAttempts++;
 
@@ -57,9 +89,9 @@ async function grind(prefix, suffix, ignoreCase) {
 			self.postMessage({
 				type: 'match',
 				publicKey: address,
-				secretKey: kp.secretKey,
+				secretKey,
 				attempts,
-			}, [kp.secretKey.buffer]);
+			}, [secretKey.buffer]);
 			running = false;
 			return;
 		}

@@ -22,6 +22,7 @@
 		"drag-and-drop",
 		"3d-agent"
 	],
+	"workspaces": ["chat"],
 	"main": "src/app.js",
 	"browserslist": [
 		">1%",
@@ -43,7 +44,8 @@
 		"build:lib": "TARGET=lib vite build",
 		"build:artifact": "vite build --config vite.config.artifact.js",
 		"publish:lib": "node scripts/publish-lib.mjs",
-		"build:all": "npm run build && npm run build:lib && npm run publish:lib",
+		"build:chat": "cd chat && npm run build",
+		"build:all": "npm run build:chat && npm run build && npm run build:lib && npm run publish:lib",
 		"clean": "rm -rf dist/* dist-lib/* || true",
 		"generate-icons": "node scripts/generate-pwa-icons.mjs",
 		"fetch-animations": "node scripts/download-animations.mjs",

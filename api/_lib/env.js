@@ -190,6 +190,18 @@ export const env = {
 		return opt('SOLANA_RPC_URL', 'https://api.mainnet-beta.solana.com');
 	},
 
+	// Admin key for three.ws chat brand config endpoint. Optional — when unset
+	// the POST /api/chat/config endpoint returns 503.
+	get CHAT_ADMIN_KEY() {
+		return opt('CHAT_ADMIN_KEY');
+	},
+
+	// OpenRouter API key used by the server-side chat proxy (/api/chat/proxy).
+	// Free-tier models are forwarded without exposing this key to the browser.
+	get OPENROUTER_API_KEY() {
+		return opt('OPENROUTER_API_KEY');
+	},
+
 	getRpcUrl(chainId) {
 		return (
 			opt(`RPC_URL_${chainId}`) ||

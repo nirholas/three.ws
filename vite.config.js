@@ -14,6 +14,15 @@ import { VitePWA } from 'vite-plugin-pwa';
 const TARGET = process.env.TARGET || 'app';
 
 const appConfig = {
+	server: {
+		proxy: {
+			'/chat': {
+				target: 'http://localhost:5174',
+				rewrite: (path) => path.replace(/^\/chat/, ''),
+				changeOrigin: true,
+			},
+		},
+	},
 	esbuild: {
 		jsx: 'transform',
 		jsxFactory: 'vhtml',
@@ -184,6 +193,9 @@ const appConfig = {
 			name: 'copy-src-to-dist',
 			closeBundle() {
 				cpSync(resolve(__dirname, 'src'), resolve(__dirname, 'dist/src'), {
+					recursive: true,
+				});
+				cpSync(resolve(__dirname, 'pump-fun-skills'), resolve(__dirname, 'dist/pump-fun-skills'), {
 					recursive: true,
 				});
 			},

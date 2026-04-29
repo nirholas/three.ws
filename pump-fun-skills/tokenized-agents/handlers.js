@@ -1,28 +1,39 @@
-const DEFAULT_RPC = 'https://rpc.solanatracker.io/public';
+function _apiBase() {
+	if (typeof globalThis !== 'undefined' && globalThis.location?.origin) {
+		return `${globalThis.location.origin}/api/agents/payments`;
+	}
+	return '/api/agents/payments';
+}
 
 export async function pumpfun_build_payment(args, ctx) {
-	const { PumpAgent } = await import('@pump-fun/agent-payments-sdk');
-	const agent = new PumpAgent(args.agentMint);
-	const instructions = await agent.buildAcceptPaymentInstructions({
-		payer: args.payer,
-		amount: args.amount,
-		currencyMint: args.currencyMint,
-		invoiceId: args.invoiceId,
-		startTime: args.startTime,
-		endTime: args.endTime,
+	const res = await ctx.fetch(`${_apiBase()}/pay-prep`, {
+		method: 'POST',
+		headers: { 'content-type': 'application/json' },
+		credentials: 'include',
+		body: JSON.stringify({
+			agent_id: args.agent_id,
+			currency_mint: args.currency_mint,
+			amount: String(args.amount),
+			wallet_address: args.wallet_address,
+			memo: args.memo ? String(args.memo) : undefined,
+			cluster: args.cluster || 'mainnet',
+		}),
 	});
-	return { instructions: instructions.map((ix) => ix.toJSON?.() ?? ix) };
+	if (!res.ok) throw new Error(`pay-prep ${res.status}: ${await res.text()}`);
+	return res.json();
 }
 
 export async function pumpfun_verify_payment(args, ctx) {
-	const { PumpAgent } = await import('@pump-fun/agent-payments-sdk');
-	const { Connection } = await import('@solana/web3.js');
-	const agent = new PumpAgent(args.agentMint);
-	const connection = new Connection(args.rpcUrl || DEFAULT_RPC);
-	const paid = await agent.validateInvoicePayment({
-		connection,
-		payer: args.payer,
-		invoiceId: args.invoiceId,
+	const res = await ctx.fetch(`${_apiBase()}/pay-confirm`, {
+		method: 'POST',
+		headers: { 'content-type': 'application/json' },
+		credentials: 'include',
+		body: JSON.stringify({
+			intent_id: args.intent_id,
+			tx_signature: args.tx_signature,
+			wallet_address: args.wallet_address,
+		}),
 	});
-	return { paid };
+	if (!res.ok) throw new Error(`pay-confirm ${res.status}: ${await res.text()}`);
+	return res.json();
 }

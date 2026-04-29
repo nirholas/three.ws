@@ -21,6 +21,15 @@ const BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvw
 const RATE_PER_CORE = 5000; // empirical lower bound for JS Keypair.generate()
 const CURATED_CHIPS = ['AGNT', 'BOT', 'NPC', 'AI', 'GOOD', 'WISE'];
 
+function _b58Encode(bytes) {
+	let n = 0n;
+	for (const b of bytes) n = (n << 8n) | BigInt(b);
+	let s = '';
+	while (n > 0n) { s = BASE58_ALPHABET[Number(n % 58n)] + s; n /= 58n; }
+	for (const b of bytes) { if (b) break; s = '1' + s; }
+	return s;
+}
+
 function _esc(s) {
 	return String(s ?? '').replace(/[&<>"']/g, (c) => ({
 		'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -232,9 +241,10 @@ export function openVanityModal({ agentName = '', initial = '' } = {}) {
 				return;
 			}
 			try {
-				const { Keypair } = await import('@solana/web3.js');
-				const kp = Keypair.fromSecretKey(bytes);
-				const pubkey = kp.publicKey.toBase58();
+				// Solana secretKey = seed(32) + pubkey(32). Read the pubkey from
+				// bytes 32–63 and base58-encode it — no @solana/web3.js needed.
+				const pub = bytes.slice(32, 64);
+				const pubkey = _b58Encode(pub);
 				const wantedPrefix = input.value.trim();
 				if (wantedPrefix && !pubkey.startsWith(wantedPrefix)) {
 					pasteStatus.textContent = `address ${pubkey.slice(0, 8)}… does not start with "${wantedPrefix}"`;

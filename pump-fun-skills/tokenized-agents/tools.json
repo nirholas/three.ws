@@ -2,38 +2,36 @@
   "tools": [
     {
       "name": "pumpfun_build_payment",
-      "description": "Build a Solana payment instruction for a tokenized pump.fun agent. Returns transaction instructions the user wallet must sign.",
+      "description": "Build a Solana payment transaction for a tokenized pump.fun agent. Returns a base64-encoded unsigned transaction and an intent_id. The user must sign and broadcast the transaction, then call pumpfun_verify_payment.",
       "input_schema": {
         "type": "object",
-        "required": ["agentMint", "payer", "amount", "currencyMint"],
+        "required": ["agent_id", "currency_mint", "amount", "wallet_address"],
         "properties": {
-          "agentMint": { "type": "string", "description": "The agent's token mint address on pump.fun" },
-          "payer": { "type": "string", "description": "User wallet public key" },
+          "agent_id": { "type": "string", "description": "The agent's ID (from the agent manifest or context)" },
+          "currency_mint": {
+            "type": "string",
+            "description": "Payment currency mint. USDC: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+          },
           "amount": {
             "type": "number",
-            "description": "Payment amount in smallest units (6 decimals for USDC, 9 for SOL)"
+            "description": "Payment amount in smallest units (e.g. 6 decimals for USDC: 1000000 = 1 USDC)"
           },
-          "currencyMint": {
-            "type": "string",
-            "description": "Payment currency mint. USDC: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v, SOL: So11111111111111111111111111111111111111112"
-          },
-          "invoiceId": { "type": "number", "description": "Unique invoice ID (integer)" },
-          "startTime": { "type": "number", "description": "Invoice start Unix timestamp" },
-          "endTime": { "type": "number", "description": "Invoice expiry Unix timestamp" }
+          "wallet_address": { "type": "string", "description": "User's Solana wallet public key (payer)" },
+          "memo": { "type": "number", "description": "Optional invoice memo/ID integer" },
+          "cluster": { "type": "string", "enum": ["mainnet", "devnet"], "description": "Solana cluster (default: mainnet)" }
         }
       }
     },
     {
       "name": "pumpfun_verify_payment",
-      "description": "Verify on-chain that a tokenized agent invoice has been paid.",
+      "description": "Confirm that a payment transaction landed on-chain and mark the invoice as paid.",
       "input_schema": {
         "type": "object",
-        "required": ["agentMint", "payer", "invoiceId"],
+        "required": ["intent_id", "tx_signature", "wallet_address"],
         "properties": {
-          "agentMint": { "type": "string" },
-          "payer": { "type": "string" },
-          "invoiceId": { "type": "number" },
-          "rpcUrl": { "type": "string", "description": "Solana RPC URL (optional)" }
+          "intent_id": { "type": "string", "description": "The intent_id returned by pumpfun_build_payment" },
+          "tx_signature": { "type": "string", "description": "The Solana transaction signature after broadcast" },
+          "wallet_address": { "type": "string", "description": "The payer's wallet public key" }
         }
       }
     }
