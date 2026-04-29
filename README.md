@@ -368,7 +368,7 @@ psql $DATABASE_URL < api/_lib/schema.sql
 npm run dev
 ```
 
-Opens at `http://localhost:3000`. The viewer is at `/app`, the dashboard at `/home`, and the agent creation flow at `/create`.
+Opens at `http://localhost:3000`. The landing page is at `/`, the viewer at `/app`, the user dashboard at `/dashboard`, and the agent creation flow at `/create`. For the full list of routes, see [docs/internal/PAGES.md](docs/internal/PAGES.md).
 
 ### Quick Viewer Test
 
@@ -615,13 +615,16 @@ For sandboxed iframes use the widget embed path instead — it runs in its own b
 
 ```
 3D-Agent/
-├── index.html                  # Marketing landing page
-├── app.html                    # Main viewer (drag-and-drop + deploy mode)
-├── home.html                   # Authenticated dashboard
+├── home.html                   # Landing page (served at /)
+├── index.html                  # Legacy marketing page
+├── app.html                    # Main viewer (drag-and-drop + /deploy alias)
 ├── create.html                 # Avatar + agent creation wizard
+├── profile.html                # User profile (/profile, /u/[username])
+├── avatar-page.html            # Public avatar detail (/avatars/[id])
 ├── agent-home.html             # Agent detail & action timeline
 ├── agent-edit.html             # Agent editing UI
 ├── agent-embed.html            # Chromeless embed variant
+├── a-edit.html                 # On-chain agent edit
 ├── a-embed.html                # On-chain agent embed
 │
 ├── src/                        # Frontend JavaScript (~80 modules, ~15k lines)

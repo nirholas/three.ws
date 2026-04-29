@@ -14,22 +14,30 @@ export async function listAvatars({
 }) {
 	limit = Math.min(Math.max(limit, 1), 200);
 	const params = [userId];
-	const conds = ['deleted_at is null'];
-	conds.push(includePublic ? `(owner_id = $1 or visibility = 'public')` : `owner_id = $1`);
+	const conds = ['a.deleted_at is null'];
+	conds.push(includePublic ? `(a.owner_id = $1 or a.visibility = 'public')` : `a.owner_id = $1`);
 	if (visibility) {
 		params.push(visibility);
-		conds.push(`visibility = $${params.length}`);
+		conds.push(`a.visibility = $${params.length}`);
 	}
 	if (cursor) {
 		params.push(new Date(cursor));
-		conds.push(`created_at < $${params.length}`);
+		conds.push(`a.created_at < $${params.length}`);
 	}
 	params.push(limit + 1);
 	const rows = await sql(
-		`select id, owner_id, slug, name, description, storage_key, thumbnail_key, size_bytes,
-		        content_type, source, visibility, tags, version, created_at, updated_at
-		 from avatars where ${conds.join(' and ')}
-		 order by created_at desc limit $${params.length}`,
+		`select a.id, a.owner_id, a.slug, a.name, a.description, a.storage_key, a.thumbnail_key,
+		        a.size_bytes, a.content_type, a.source, a.visibility, a.tags, a.version,
+		        a.created_at, a.updated_at, a.parent_avatar_id,
+		        ai.id as agent_id, ai.wallet_address as agent_wallet_address
+		 from avatars a
+		 left join lateral (
+		   select id, wallet_address from agent_identities
+		   where avatar_id = a.id and deleted_at is null
+		   order by created_at asc limit 1
+		 ) ai on true
+		 where ${conds.join(' and ')}
+		 order by a.created_at desc limit $${params.length}`,
 		params,
 	);
 	const hasMore = rows.length > limit;
@@ -42,7 +50,14 @@ export async function listAvatars({
 
 export async function getAvatar({ id, requesterId = null }) {
 	const rows = await sql`
-		select * from avatars where id = ${id} and deleted_at is null limit 1
+		select a.*, ai.id as agent_id, ai.wallet_address as agent_wallet_address
+		from avatars a
+		left join lateral (
+			select id, wallet_address from agent_identities
+			where avatar_id = a.id and deleted_at is null
+			order by created_at asc limit 1
+		) ai on true
+		where a.id = ${id} and a.deleted_at is null limit 1
 	`;
 	const row = rows[0];
 	if (!row) return null;
@@ -228,6 +243,8 @@ function decorate(row) {
 				: null,
 		parent_avatar_id: row.parent_avatar_id || null,
 		thumbnail_url: row.thumbnail_key ? publicUrl(row.thumbnail_key) : null,
+		agent_id: row.agent_id || null,
+		agent_wallet_address: row.agent_wallet_address || null,
 	};
 }
 

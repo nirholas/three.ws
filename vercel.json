@@ -94,6 +94,8 @@
 		{ "src": "/api/agents/pumpfun", "dest": "/api/agents/pumpfun" },
 		{ "src": "/api/agents/pumpfun-feed", "dest": "/api/agents/pumpfun-feed" },
 		{ "src": "/api/agents/pumpfun-metadata", "dest": "/api/agents/pumpfun-metadata" },
+		{ "src": "/api/agents/solana-register-prep", "dest": "/api/agents/solana-register-prep" },
+		{ "src": "/api/agents/solana-register-confirm", "dest": "/api/agents/solana-register-confirm" },
 		{ "src": "/api/agents/([^/]+)", "dest": "/api/agents/[id]" },
 		{ "src": "/api/agents", "dest": "/api/agents" },
 		{ "src": "/api/agent-actions", "dest": "/api/agent-actions" },
