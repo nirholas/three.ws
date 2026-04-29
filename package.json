@@ -67,6 +67,7 @@
 		"@metaplex-foundation/umi": "^1.5.1",
 		"@metaplex-foundation/umi-bundle-defaults": "^1.5.1",
 		"@neondatabase/serverless": "^0.10.1",
+		"@nirholas/pump-sdk": "^1.0.0",
 		"@noble/curves": "^2.2.0",
 		"@sentry/node": "^10.50.0",
 		"@solana/kit": "^6.8.0",

@@ -106,11 +106,13 @@
 			const f = r.feedback || {}, v = r.validation || {};
 			const verifiedPct = f.total ? Math.round((f.verified / f.total) * 100) : 0;
 			$('reputation').innerHTML = `
-				<div class="card"><div class="v">${f.score_avg_weighted_verified?.toFixed(2) || '—'}</div><div class="l">verified weighted score (1–5)</div></div>
+				<div class="card"><div class="v">${f.score_avg_weighted_credentialed?.toFixed(2) || '—'}</div><div class="l">credentialed weighted score (1–5)</div></div>
+				<div class="card"><div class="v">${f.score_avg_weighted_verified?.toFixed(2) || '—'}</div><div class="l">verified weighted score</div></div>
 				<div class="card"><div class="v">${f.score_avg_weighted?.toFixed(2) || '—'}</div><div class="l">all weighted score</div></div>
-				<div class="card"><div class="v">${f.unique_verified_attesters || 0}<span class="muted" style="font-size:1rem">/${f.unique_attesters || 0}</span></div><div class="l">verified attesters / unique</div></div>
+				<div class="card"><div class="v">${f.unique_credentialed_attesters || 0}<span class="muted" style="font-size:1rem">/${f.unique_attesters || 0}</span></div><div class="l">credentialed / unique attesters</div></div>
 				<div class="card"><div class="v">${f.verified || 0}<span class="muted" style="font-size:1rem">/${f.total || 0}</span></div><div class="l">verified / total feedback (${verifiedPct}%)</div></div>
-				<div class="card"><div class="v">${v.passed || 0}<span class="muted" style="font-size:1rem">/${(v.passed||0)+(v.failed||0)}</span></div><div class="l">validation passed</div></div>
+				<div class="card"><div class="v">${v.audited_passed || 0}<span class="muted" style="font-size:1rem">/${(v.audited_passed||0)+(v.audited_failed||0)}</span></div><div class="l">audited validation passed</div></div>
+				<div class="card"><div class="v">${v.self_passed || 0}<span class="muted" style="font-size:1rem">/${(v.self_passed||0)+(v.self_failed||0)}</span></div><div class="l">self validation passed</div></div>
 				<div class="card"><div class="v">${f.disputed || 0}</div><div class="l">disputed</div></div>
 				<div class="card"><div class="v">${r.tasks?.accepted || 0}<span class="muted" style="font-size:1rem">/${r.tasks?.offered || 0}</span></div><div class="l">tasks accepted / offered</div></div>
 				<div class="card"><div class="v">${r.revoked_count || 0}</div><div class="l">revoked</div></div>

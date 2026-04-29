@@ -24,10 +24,11 @@ export function detectSolanaWallet() {
 	return null;
 }
 
-const RPC = {
+export const SOLANA_RPC = {
 	mainnet: 'https://api.mainnet-beta.solana.com',
 	devnet: 'https://api.devnet.solana.com',
 };
+const RPC = SOLANA_RPC;
 
 export function solanaTxExplorerUrl(network, sig) {
 	return network === 'devnet'
