@@ -158,13 +158,17 @@ export default wrap(async (req, res) => {
 	return json(res, 201, {
 		prep_id: prepId,
 		mint: mint.toBase58(),
-		// Mint keypair must co-sign the tx — frontend appends it before submit.
-		mint_secret_key_b64: Buffer.from(mintKeypair.secretKey).toString('base64'),
+		// Mint keypair must co-sign the tx. When server-generated, we hand
+		// the secret to the frontend; when client-supplied (vanity), the
+		// client already holds it and the server never sees it.
+		mint_secret_key_b64: mintKeypair ? Buffer.from(mintKeypair.secretKey).toString('base64') : null,
+		client_supplied_mint: !mintKeypair,
 		tx_base64: txBase64,
 		network: body.network,
 		buyback_bps: body.buyback_bps,
 		expires_at: expiresAt.toISOString(),
-		instructions:
-			'Decode tx_base64 as VersionedTransaction. Sign with the mint keypair (mint_secret_key_b64) AND the user wallet, submit, then POST /api/pump/launch-confirm with the tx_signature.',
+		instructions: mintKeypair
+			? 'Decode tx_base64 as VersionedTransaction. Sign with the mint keypair (mint_secret_key_b64) AND the user wallet, submit, then POST /api/pump/launch-confirm with the tx_signature.'
+			: 'Decode tx_base64 as VersionedTransaction. Sign with your locally-held vanity mint keypair AND the user wallet, submit, then POST /api/pump/launch-confirm with the tx_signature.',
 	});
 });
