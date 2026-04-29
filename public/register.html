@@ -271,45 +271,6 @@
 				height: 1px;
 				background: #222;
 			}
-			.method-tabs {
-				display: flex;
-				gap: 4px;
-				background: #000;
-				border: 1px solid #222;
-				border-radius: 10px;
-				padding: 3px;
-				margin: 0 0 16px;
-			}
-			.method-tab {
-				flex: 1;
-				margin-top: 0;
-				padding: 9px 10px;
-				border: 1px solid transparent;
-				border-radius: 7px;
-				background: transparent;
-				color: #666;
-				font-size: 14px;
-				font-weight: 500;
-				cursor: pointer;
-				transition: background 0.1s, color 0.1s, transform 0.08s cubic-bezier(0.34, 1.56, 0.64, 1);
-				width: auto;
-			}
-			.method-tab.active {
-				background: #1a1a1a;
-				color: #eee;
-				border-color: #333;
-			}
-			.method-tab:hover:not(.active) { color: #bbb; }
-			.method-tab:active { transform: scale(0.97); }
-			.method-panel { display: none; }
-			.method-panel.active {
-				display: block;
-				animation: panel-fade-in 0.18s ease-out both;
-			}
-			@keyframes panel-fade-in {
-				from { opacity: 0; transform: translateY(4px); }
-				to   { opacity: 1; transform: translateY(0); }
-			}
 			.field-err {
 				margin: 6px 0 0;
 				font-size: 12px;
@@ -333,7 +294,6 @@
 				100% { background-position: -200% 0; }
 			}
 			@media (prefers-reduced-motion: reduce) {
-				.method-panel.active,
 				#wallet-mount:empty::before,
 				#solana-wallet-mount:empty::before { animation: none; }
 			}
@@ -393,67 +353,60 @@
 			<h1>Create account</h1>
 			<p class="sub">Get started free. <span class="badge">✓ No email needed</span></p>
 
-			<div class="method-tabs" role="tablist" aria-label="Sign-up method">
-				<button type="button" class="method-tab active" data-method="username" role="tab" aria-selected="true" aria-controls="username-panel">Username</button>
-				<button type="button" class="method-tab" data-method="wallet" role="tab" aria-selected="false" aria-controls="wallet-panel">Wallet</button>
+			<div class="chain-tabs" role="tablist" aria-label="Wallet chain">
+				<button type="button" class="chain-tab active" data-chain="evm" role="tab" aria-selected="true" aria-controls="evm-panel">EVM</button>
+				<button type="button" class="chain-tab" data-chain="solana" role="tab" aria-selected="false" aria-controls="solana-panel">Solana</button>
 			</div>
+			<div id="evm-panel" class="chain-panel active" role="tabpanel">
+				<div id="wallet-mount"></div>
+			</div>
+			<div id="solana-panel" class="chain-panel" role="tabpanel">
+				<div id="solana-wallet-mount"></div>
+			</div>
+			<p class="hint" style="margin-top:10px;text-align:center;font-size:11px;color:#555;cursor:help" title="Your wallet will prompt twice — once to connect, once to sign.">Wallet prompts to connect, then to sign.</p>
 
-			<div id="username-panel" class="method-panel active" role="tabpanel">
-				<label for="username">Username</label>
+			<div class="divider">or</div>
+
+			<label for="username">Username</label>
+			<input
+				id="username"
+				name="username"
+				type="text"
+				inputmode="text"
+				autocapitalize="none"
+				autocomplete="username"
+				autofocus
+				required
+				minlength="3"
+				maxlength="30"
+				pattern="[a-zA-Z0-9_-]+"
+				placeholder="e.g. cool_agent"
+				aria-describedby="username-hint err"
+			/>
+			<p class="hint" id="username-hint">3–30 characters, letters, numbers, _ or -</p>
+			<label for="password">Password</label>
+			<div class="password-wrap">
 				<input
-					id="username"
-					name="username"
-					type="text"
-					inputmode="text"
-					autocapitalize="none"
-					autocomplete="username"
-					autofocus
+					id="password"
+					name="password"
+					type="password"
+					autocomplete="new-password"
 					required
-					minlength="3"
-					maxlength="30"
-					pattern="[a-zA-Z0-9_-]+"
-					placeholder="e.g. cool_agent"
-					aria-describedby="username-hint err"
+					minlength="10"
+					maxlength="200"
+					aria-describedby="strength-label caps-warn err"
 				/>
-				<p class="hint" id="username-hint">3–30 characters, letters, numbers, _ or -</p>
-				<label for="password">Password</label>
-				<div class="password-wrap">
-					<input
-						id="password"
-						name="password"
-						type="password"
-						autocomplete="new-password"
-						required
-						minlength="10"
-						maxlength="200"
-						aria-describedby="strength-label caps-warn err"
-					/>
-					<button type="button" class="password-toggle" id="password-toggle" aria-label="Show password" aria-pressed="false">
-						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-							<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
-							<circle cx="12" cy="12" r="3" />
-						</svg>
-					</button>
-				</div>
-				<p class="caps-warn" id="caps-warn">Caps Lock is on</p>
-				<div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
-				<p class="strength-label" id="strength-label">Minimum 10 characters</p>
-				<button id="submit" type="submit">Create account</button>
+				<button type="button" class="password-toggle" id="password-toggle" aria-label="Show password" aria-pressed="false">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
+						<circle cx="12" cy="12" r="3" />
+					</svg>
+				</button>
 			</div>
-
-			<div id="wallet-panel" class="method-panel" role="tabpanel">
-				<div class="chain-tabs" role="tablist" aria-label="Wallet chain">
-					<button type="button" class="chain-tab active" data-chain="evm" role="tab" aria-selected="true" aria-controls="evm-panel">EVM</button>
-					<button type="button" class="chain-tab" data-chain="solana" role="tab" aria-selected="false" aria-controls="solana-panel">Solana</button>
-				</div>
-				<div id="evm-panel" class="chain-panel active" role="tabpanel">
-					<div id="wallet-mount"></div>
-				</div>
-				<div id="solana-panel" class="chain-panel" role="tabpanel">
-					<div id="solana-wallet-mount"></div>
-				</div>
-				<p class="hint" style="margin-top:10px;text-align:center;font-size:11px;color:#555;cursor:help" title="Your wallet will prompt twice — once to connect, once to sign.">Wallet prompts to connect, then to sign.</p>
-			</div>
+			<p class="caps-warn" id="caps-warn">Caps Lock is on</p>
+			<div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
+			<p class="strength-label" id="strength-label">Minimum 10 characters</p>
+			<button id="submit" type="submit">Create account</button>
 
 			<div class="err" id="err" role="alert" aria-live="polite"></div>
 			<p class="foot">Already have an account? <a href="/login">Sign in</a></p>
@@ -610,40 +563,8 @@
 				});
 			})();
 
-			// ── Method tabs (Username / Wallet) + Solana detection ──
+			// Wallet chain tabs + Solana detection
 			(function () {
-				const tabs = document.querySelectorAll('.method-tab');
-				const panels = {
-					username: document.getElementById('username-panel'),
-					wallet: document.getElementById('wallet-panel'),
-				};
-				const usernameInput = document.getElementById('username');
-				const passwordInput = document.getElementById('password');
-				const METHOD_KEY = '3dagent:register-method';
-				let active = 'username';
-				function setMethod(name, persist = true) {
-					if (!panels[name]) return;
-					active = name;
-					tabs.forEach((t) => {
-						const on = t.dataset.method === name;
-						t.classList.toggle('active', on);
-						t.setAttribute('aria-selected', on ? 'true' : 'false');
-					});
-					Object.entries(panels).forEach(([k, el]) => el.classList.toggle('active', k === name));
-					const usernameActive = name === 'username';
-					usernameInput.required = usernameActive;
-					passwordInput.required = usernameActive;
-					if (persist) {
-						try { localStorage.setItem(METHOD_KEY, name); } catch { /* ignore */ }
-					}
-				}
-				window.__getActiveMethod = () => active;
-				tabs.forEach((t) => t.addEventListener('click', () => setMethod(t.dataset.method)));
-				try {
-					if (localStorage.getItem(METHOD_KEY) === 'wallet') setMethod('wallet', false);
-				} catch { /* ignore */ }
-
-				// Wallet chain tabs + Solana detection
 				const solanaTab = document.querySelector('.chain-tab[data-chain="solana"]');
 				const hasSolana = !!(window.solana || window.phantom?.solana || window.backpack || window.solflare);
 				if (solanaTab && !hasSolana) {
@@ -684,7 +605,6 @@
 			const btn = document.getElementById('submit');
 			form.addEventListener('submit', async (e) => {
 				e.preventDefault();
-				if (window.__getActiveMethod && window.__getActiveMethod() !== 'username') return;
 				err.style.display = 'none';
 				btn.disabled = true;
 				btn.textContent = 'Creating account…';
