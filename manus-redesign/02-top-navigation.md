@@ -1,7 +1,7 @@
 # Task 02 — Top navigation bar
 
 ## Goal
-Add a Manus-style top navigation: serif `manus` wordmark on the left, six center nav items (`Features`, `Solutions`, `Resources`, `Events`, `Business`, `Pricing`), and `Sign in` / `Sign up` on the right. Each center item is a hover trigger for a dropdown that other tasks fill in — this task only wires up the bar and the trigger buttons (empty stubs are fine).
+Add a three.ws-style top navigation: serif `three.ws` wordmark on the left, six center nav items (`Features`, `Solutions`, `Resources`, `Events`, `Business`, `Pricing`), and `Sign in` / `Sign up` on the right. Each center item is a hover trigger for a dropdown that other tasks fill in — this task only wires up the bar and the trigger buttons (empty stubs are fine).
 
 ## Codebase context
 - Stack: Svelte 4 + Vite + Tailwind. Source root: `/workspaces/3D-Agent/chat/`.
@@ -27,19 +27,19 @@ If the design tokens above are not yet defined in Tailwind, use literal hex valu
 
 ## What to ship
 
-### Component: `chat/src/manus/TopNav.svelte`
+### Component: `chat/src/three.ws/TopNav.svelte`
 ```
 - <header> sticky top-0 z-40 bg-paper
   - max-width 1240px, mx-auto, h-14, px-6
   - flex items-center justify-between
-  - LEFT: <button> that sets route='chat' — shows a small bot/logo SVG (use any feather icon temporarily) and the wordmark "manus" in font-serif
+  - LEFT: <button> that sets route='chat' — shows a small bot/logo SVG (use any feather icon temporarily) and the wordmark "three.ws" in font-serif
   - CENTER: <nav> hidden on <md, flex on md+
     - 6 buttons: Features, Solutions, Resources, Events, Business, Pricing
     - Each: h-14 px-3 inline-flex items-center text-sm font-medium text-ink hover:text-ink-soft
     - First 5 are dropdown triggers — wire up { isOpen: bool } state per item.
       Hovering for >120ms or clicking opens the dropdown.
       Mouse-leave with 200ms grace closes it.
-      Render a placeholder <div class="manus-card shadow-pop p-4 w-[420px]">Coming soon</div>
+      Render a placeholder <div class="three.ws-card shadow-pop p-4 w-[420px]">Coming soon</div>
       anchored below the trigger (use absolute positioning inside a relative wrapper).
       Other tasks (08–11) will replace those placeholder bodies.
     - "Pricing" is a plain link: sets route='pricing'.

@@ -6,7 +6,7 @@ Build the `Solutions` dropdown in the top nav: a card listing role/industry solu
 ## Codebase context
 - Source root: `/workspaces/3D-Agent/chat/`.
 - `route` store and `TopNav` from task 02.
-- `chat/src/manus/dropdowns/` — same folder as task 08.
+- `chat/src/three.ws/dropdowns/` — same folder as task 08.
 - Icons from `chat/src/feather.js`.
 
 ## Design tokens
@@ -31,7 +31,7 @@ Identical to task 08 (Features dropdown):
 
 ## What to ship
 
-### Component: `chat/src/manus/dropdowns/SolutionsDropdown.svelte`
+### Component: `chat/src/three.ws/dropdowns/SolutionsDropdown.svelte`
 Same shape as `FeaturesDropdown.svelte` but with the items above. On click: `route.set('solutions/' + slug)`.
 
 ### Wire into `TopNav.svelte`

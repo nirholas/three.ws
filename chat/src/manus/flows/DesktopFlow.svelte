@@ -82,7 +82,7 @@
   <div class="flex flex-wrap gap-2">
     {#each platforms as p}
       <button
-        class="manus-chip {$appPlatforms.has(p.id) ? 'manus-chip-selected' : ''}"
+        class="three.ws-chip {$appPlatforms.has(p.id) ? 'three.ws-chip-selected' : ''}"
         on:click={() => togglePlatform(p.id)}
       >
         <Icon icon={p.icon} size={16} />
@@ -95,7 +95,7 @@
   <h3 class="text-sm font-semibold mt-10 mb-3">Explore ideas</h3>
   <div class="flex flex-wrap gap-2">
     {#each ideas as idea}
-      <button class="manus-chip" on:click={() => selectIdea(idea)}>
+      <button class="three.ws-chip" on:click={() => selectIdea(idea)}>
         {idea}
         <Icon icon={feArrowUpLeft} size={14} class="text-[#9C9A93]" />
       </button>

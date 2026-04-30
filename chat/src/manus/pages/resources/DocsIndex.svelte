@@ -42,20 +42,20 @@
 
   <!-- Content -->
   <main class="flex-1 min-w-0 prose prose-neutral max-w-none">
-    <h1>Welcome to Manus Docs</h1>
+    <h1>Welcome to three.ws Docs</h1>
     <p>
-      Manus is an agent-first platform for building, running, and deploying AI agents. This documentation covers everything from your first agent run to production deployments.
+      three.ws is an agent-first platform for building, running, and deploying AI agents. This documentation covers everything from your first agent run to production deployments.
     </p>
 
-    <h2>What is Manus?</h2>
+    <h2>What is three.ws?</h2>
     <p>
-      Manus gives you a powerful runtime for multi-step AI tasks. Agents can browse the web, write and run code, manage files, and call external APIs — all orchestrated through a simple chat interface or programmatic API.
+      three.ws gives you a powerful runtime for multi-step AI tasks. Agents can browse the web, write and run code, manage files, and call external APIs — all orchestrated through a simple chat interface or programmatic API.
     </p>
 
     <h2>Getting started</h2>
     <p>The fastest way to get started is with the quickstart guide:</p>
     <ol>
-      <li>Create a free account at <code>manus.ai</code></li>
+      <li>Create a free account at <code>three.ws.ai</code></li>
       <li>Pick a model from the model selector</li>
       <li>Type your first task in the composer</li>
     </ol>

@@ -1,7 +1,7 @@
-# Manus-style chat redesign — task pack
+# three.ws-style chat redesign — task pack
 
 This directory contains 22 independent prompts that, taken together, redesign
-the chat in `/workspaces/3D-Agent/chat/` to match the Manus reference design.
+the chat in `/workspaces/3D-Agent/chat/` to match the three.ws reference design.
 
 ## Rules for whoever (or whatever) executes these tasks
 
@@ -12,7 +12,7 @@ the chat in `/workspaces/3D-Agent/chat/` to match the Manus reference design.
   shared files (mostly `App.svelte` and `tailwind.config.cjs`) are expected
   and must be resolved by the integrator.
 - **Definition of done = ship-ready.** When all 22 tasks are merged the chat
-  visually matches the Manus reference, every nav link works, and every
+  visually matches the three.ws reference, every nav link works, and every
   in-product flow (Slides, Website, Design, Schedule, etc.) renders its
   intended landing UI.
 
@@ -22,7 +22,7 @@ the chat in `/workspaces/3D-Agent/chat/` to match the Manus reference design.
 |---|---|---|
 | 01 | `01-design-tokens.md` | Tailwind theme, fonts, colors, base CSS |
 | 02 | `02-top-navigation.md` | Logo, nav bar, Sign in/up buttons |
-| 03 | `03-announcement-banner.md` | "Manus is now part of Meta" strip |
+| 03 | `03-announcement-banner.md` | "three.ws is now part of Meta" strip |
 | 04 | `04-empty-state-landing.md` | Centered hero + composer + chips layout |
 | 05 | `05-composer-input.md` | Rounded textarea with `+` and send button |
 | 06 | `06-suggestion-chips.md` | Create slides / Build website / Develop apps / Design / More |

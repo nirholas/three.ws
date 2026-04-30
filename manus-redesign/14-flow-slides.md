@@ -13,12 +13,12 @@ When `$mode === 'slides'`, augment the empty-state landing with:
 - `mode` writable in `chat/src/stores.js`.
 - Composer (task 05) renders `<EmptyState>`'s `composer` slot. The empty state wrapper (task 04) lets you swap content underneath the composer based on `$mode`.
 - Wrap any new flow UI in a route-agnostic component:
-  - `chat/src/manus/flows/SlidesFlow.svelte` — renders the cards/templates section.
+  - `chat/src/three.ws/flows/SlidesFlow.svelte` — renders the cards/templates section.
   - The composer gets two new optional props: `placeholderOverride`, `extraInlinePills` (array of `{ icon, label, kind }`). Pass them in from `App.svelte` only when `$mode === 'slides'`.
 
 ## Design tokens
-- "Slides" mode pill: `manus-chip-selected` with `feLayout` icon.
-- "Professional" tone pill: `manus-chip` (white, ink text) with `feFeather` (or the existing `feZap`) icon. Clicking opens a dropdown of tones: Professional, Casual, Academic, Playful, Minimal.
+- "Slides" mode pill: `three.ws-chip-selected` with `feLayout` icon.
+- "Professional" tone pill: `three.ws-chip` (white, ink text) with `feFeather` (or the existing `feZap`) icon. Clicking opens a dropdown of tones: Professional, Casual, Academic, Playful, Minimal.
 - Image-model pill: rounded-full bg-white border, padding `px-2`, content is two 18px favicon-style icons + a chevron-down. Use simple `<img>` with these data URIs or feather circles (placeholder OK):
   - OpenAI: `feCircle` filled black.
   - Banana: a tiny SVG emoji 🍌 OR `feFeather` icon. Acceptable to use `<span class="text-base">🍌</span>` if emoji rendering is fine.
@@ -40,7 +40,7 @@ Generate 8 placeholder cards. For each, render an empty card with a faint serif 
 
 ## What to ship
 
-### 1. Component: `chat/src/manus/flows/SlidesFlow.svelte`
+### 1. Component: `chat/src/three.ws/flows/SlidesFlow.svelte`
 - Renders the "Sample prompts" grid and the "Choose a template" grid.
 - Emits `select` events for sample prompts (fills composer + submits) and template selection (sets a `slidesTemplate` writable in `stores.js`, optional).
 

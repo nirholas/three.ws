@@ -20,14 +20,14 @@
 	import { v4 as uuidv4 } from 'uuid';
 	import { readFileAsDataURL } from './util.js';
 	import { anthropicAPIKey, controller, params, remoteServer, brandConfig, mode, composerFill, flowSecondary, appPlatforms, designModel } from './stores.js';
-	import { modeConfig } from './manus/flows/utilityFlowData.js';
+	import { modeConfig } from './three.ws/flows/utilityFlowData.js';
 	import ToolPill from './ToolPill.svelte';
 	import ToolDropdown from './ToolDropdown.svelte';
 	import ModelSelector from './ModelSelector.svelte';
 	import ReasoningEffortRangeDropdown from './ReasoningEffortRangeDropdown.svelte';
 	import FilesDropdown from '$src/FilesDropdown.svelte';
 	import FilePill from '$src/FilePill.svelte';
-	import DesignModelPicker from './manus/DesignModelPicker.svelte';
+	import DesignModelPicker from './three.ws/DesignModelPicker.svelte';
 
 	const imageUrlRegex = /https?:\/\/[^\s]+?\.(png|jpe?g)(?=\s|$)/gi;
 
@@ -521,7 +521,7 @@ ${file.contents}
 				>
 					{#if $mode === 'website'}
 						<button
-							class="manus-chip manus-chip-selected h-7 px-3 text-xs"
+							class="three.ws-chip three.ws-chip-selected h-7 px-3 text-xs"
 							on:click={() => mode.set(null)}
 						>
 							Website
@@ -529,7 +529,7 @@ ${file.contents}
 					{/if}
 					{#if $mode === 'desktop'}
 						<button
-							class="manus-chip manus-chip-selected h-7 px-3 text-xs inline-flex items-center gap-1.5"
+							class="three.ws-chip three.ws-chip-selected h-7 px-3 text-xs inline-flex items-center gap-1.5"
 							on:click={() => mode.set(null)}
 						>
 							<Icon icon={feSmartphone} class="w-3.5 h-3.5" />
@@ -537,7 +537,7 @@ ${file.contents}
 						</button>
 						<div class="relative">
 							<button
-								class="manus-chip h-7 px-3 text-xs inline-flex items-center gap-1.5"
+								class="three.ws-chip h-7 px-3 text-xs inline-flex items-center gap-1.5"
 								on:click={() => { platformsOpen = !platformsOpen; }}
 							>
 								{platformsSummary}
@@ -572,7 +572,7 @@ ${file.contents}
 					{/if}
 					{#if $mode === 'slides'}
 						<button
-							class="manus-chip manus-chip-selected h-7 px-3 text-xs inline-flex items-center gap-1.5"
+							class="three.ws-chip three.ws-chip-selected h-7 px-3 text-xs inline-flex items-center gap-1.5"
 							on:click={() => mode.set(null)}
 						>
 							<Icon icon={feLayout} class="w-3.5 h-3.5" />
@@ -580,7 +580,7 @@ ${file.contents}
 						</button>
 						<div class="relative">
 							<button
-								class="manus-chip h-7 px-3 text-xs inline-flex items-center gap-1.5"
+								class="three.ws-chip h-7 px-3 text-xs inline-flex items-center gap-1.5"
 								on:click={() => { toneOpen = !toneOpen; imgModelOpen = false; }}
 							>
 								<Icon icon={feZap} class="w-3.5 h-3.5" />
@@ -625,7 +625,7 @@ ${file.contents}
 					{/if}
 					{#if $mode === 'design'}
 						<button
-							class="manus-chip manus-chip-selected h-7 px-3 text-xs inline-flex items-center gap-1.5"
+							class="three.ws-chip three.ws-chip-selected h-7 px-3 text-xs inline-flex items-center gap-1.5"
 							on:click={() => mode.set(null)}
 						>
 							<Icon icon={feZap} class="w-3.5 h-3.5" />
@@ -648,7 +648,7 @@ ${file.contents}
 					{#if $mode && modeConfig[$mode]}
 						{@const cfg = modeConfig[$mode]}
 						<button
-							class="manus-chip manus-chip-selected h-7 px-3 text-xs inline-flex items-center gap-1.5 shrink-0"
+							class="three.ws-chip three.ws-chip-selected h-7 px-3 text-xs inline-flex items-center gap-1.5 shrink-0"
 							on:click={() => mode.set(null)}
 						>
 							<Icon icon={cfg.icon} class="w-3.5 h-3.5" />
@@ -659,7 +659,7 @@ ${file.contents}
 							{@const currentVal = $flowSecondary[$mode] ?? sec.default}
 							<div class="relative">
 								<button
-									class="manus-chip h-7 px-3 text-xs inline-flex items-center gap-1.5 shrink-0"
+									class="three.ws-chip h-7 px-3 text-xs inline-flex items-center gap-1.5 shrink-0"
 									on:click={() => { secondaryOpen = secondaryOpen === $mode ? null : $mode; }}
 								>
 									{sec.prefix}: {currentVal}

@@ -6,7 +6,7 @@ Build the `Resources` dropdown matching the reference: 5 items — Blog, Docs, U
 ## Codebase context
 - Source root: `/workspaces/3D-Agent/chat/`.
 - `route` store + `TopNav` from task 02.
-- Add to `chat/src/manus/dropdowns/`.
+- Add to `chat/src/three.ws/dropdowns/`.
 
 ## Design tokens
 Same as tasks 08–09:
@@ -19,13 +19,13 @@ Same as tasks 08–09:
 | Title | Subtitle | route | Icon |
 |---|---|---|---|
 | Blog | Ideas, guides, and user stories | `resources/blog` | `feFileText` |
-| Docs | Learn about Manus and get started | `resources/docs` | `feBook` |
-| Updates | What's new with Manus? | `resources/updates` | `feList` |
+| Docs | Learn about three.ws and get started | `resources/docs` | `feBook` |
+| Updates | What's new with three.ws? | `resources/updates` | `feList` |
 | Use cases | Best practices in action | `resources/use-cases` | `feCompass` (fallback `feGlobe`) |
 | Trust center | Security and compliance | `resources/trust-center` | `feShield` |
 
 ## What to ship
-- Component `chat/src/manus/dropdowns/ResourcesDropdown.svelte` (same template as Features dropdown, items above).
+- Component `chat/src/three.ws/dropdowns/ResourcesDropdown.svelte` (same template as Features dropdown, items above).
 - Wire into `TopNav` `Resources` slot.
 - Ensure missing feather icons exist in `chat/src/feather.js`.
 

@@ -32,8 +32,8 @@
     },
     {
       date: 'November 2025',
-      title: 'Manus is open to everyone',
-      body: 'After six months in private beta we are opening Manus to the public. Free accounts include 50 runs per month — no credit card required to get started.',
+      title: 'three.ws is open to everyone',
+      body: 'After six months in private beta we are opening three.ws to the public. Free accounts include 50 runs per month — no credit card required to get started.',
       hasImage: true,
     },
   ];
@@ -41,7 +41,7 @@
 
 <div class="max-w-[1100px] mx-auto px-6 pt-16 pb-24">
   <h1 class="font-serif text-4xl font-semibold mb-2">Updates</h1>
-  <p class="text-[#6B6B6B] text-base mb-12">What's new in Manus</p>
+  <p class="text-[#6B6B6B] text-base mb-12">What's new in three.ws</p>
 
   <div class="relative">
     <!-- vertical line -->

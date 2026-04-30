@@ -1,13 +1,13 @@
 # Task 19 — Active conversation styling (post-first-message)
 
 ## Goal
-After the first user message is sent, the empty-state landing is replaced by the active conversation view. Restyle this view to match the Manus aesthetic: page bg `bg-paper`, message column centered with max-width 760px, user messages right-aligned in a soft gray bubble, assistant messages full-width with no bubble (just typography), composer pinned to the bottom with the same rounded card from task 05, and the sidebar reappearing on the left.
+After the first user message is sent, the empty-state landing is replaced by the active conversation view. Restyle this view to match the three.ws aesthetic: page bg `bg-paper`, message column centered with max-width 760px, user messages right-aligned in a soft gray bubble, assistant messages full-width with no bubble (just typography), composer pinned to the bottom with the same rounded card from task 05, and the sidebar reappearing on the left.
 
 ## Codebase context
 - Source root: `/workspaces/3D-Agent/chat/`.
 - Active view condition: `convo.messages.length > 0`.
 - Message component: `chat/src/Message.svelte` (currently 599 lines; preserve all logic, only restyle).
-- Composer: `chat/src/manus/Composer.svelte` (task 05).
+- Composer: `chat/src/three.ws/Composer.svelte` (task 05).
 - Sidebar: existing in `App.svelte`.
 
 ## Design tokens
@@ -40,7 +40,7 @@ After the first user message is sent, the empty-state landing is replaced by the
 ### 4. Sidebar
 - Restyle to `bg-paper border-r border-rule w-[260px]` on `md+` screens; collapsible to 0 on small screens.
 - Conversation list rows: `flex items-center px-3 h-9 rounded-md text-sm`, hover/active per tokens above.
-- "New chat" button at the top: `manus-btn-primary` full width with leading `+` icon.
+- "New chat" button at the top: `three.ws-btn-primary` full width with leading `+` icon.
 
 ### 5. Mode pill behavior in active chat
 - If `$mode` is set when the user lands on an active conversation, the inline mode pill stays visible inside the composer footer. Clicking the `x` on the pill clears `$mode`.

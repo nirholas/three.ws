@@ -7,8 +7,8 @@
 
   const items = [
     { title: 'Blog',         subtitle: 'Ideas, guides, and user stories',    route: 'resources/blog',         icon: feFileText },
-    { title: 'Docs',         subtitle: 'Learn about Manus and get started',  route: 'resources/docs',         icon: feBook },
-    { title: 'Updates',      subtitle: "What's new with Manus?",             route: 'resources/updates',      icon: feList },
+    { title: 'Docs',         subtitle: 'Learn about three.ws and get started',  route: 'resources/docs',         icon: feBook },
+    { title: 'Updates',      subtitle: "What's new with three.ws?",             route: 'resources/updates',      icon: feList },
     { title: 'Use cases',    subtitle: 'Best practices in action',           route: 'resources/use-cases',    icon: feCompass },
     { title: 'Trust center', subtitle: 'Security and compliance',            route: 'resources/trust-center', icon: feShield },
   ];

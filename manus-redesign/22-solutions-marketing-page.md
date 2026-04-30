@@ -1,7 +1,7 @@
 # Task 22 — Solutions / Business marketing template
 
 ## Goal
-Render the marketing template behind every `solutions/<slug>` and `business/<slug>` route, plus a generic catch-all for `events/<slug>` if no other template applies. The reference uses one tall hero pattern: huge serif headline ("Launch business applications without engineering resources"), subhead, and a centered Manus-style composer that doubles as a "describe your project" entry. Below the composer: the same "What would you like to build?" categories row from task 15, and a short logos / testimonials strip.
+Render the marketing template behind every `solutions/<slug>` and `business/<slug>` route, plus a generic catch-all for `events/<slug>` if no other template applies. The reference uses one tall hero pattern: huge serif headline ("Launch business applications without engineering resources"), subhead, and a centered three.ws-style composer that doubles as a "describe your project" entry. Below the composer: the same "What would you like to build?" categories row from task 15, and a short logos / testimonials strip.
 
 ## Codebase context
 - Source root: `/workspaces/3D-Agent/chat/`.
@@ -11,7 +11,7 @@ Render the marketing template behind every `solutions/<slug>` and `business/<slu
 ## Design tokens
 - Page bg: `bg-paper`.
 - Outer wrapper: `max-w-[1100px] mx-auto px-6 pt-24 pb-32`.
-- Headline (centered): `manus-display` — 56–80px serif. Allow 2 lines.
+- Headline (centered): `three.ws-display` — 56–80px serif. Allow 2 lines.
 - Sub: `text-[#6B6B6B] text-lg max-w-[640px] mx-auto text-center mt-6`.
 - Composer block: same component as task 05; rendered with no inline mode pill by default and a placeholder taken from the slug map.
 - Categories row: reuse `WebsiteFlow.svelte`. Render only the chips, not the "Add reference" or "Import from Figma" affordances (gate them with a prop `compact={true}`).
@@ -19,7 +19,7 @@ Render the marketing template behind every `solutions/<slug>` and `business/<slu
 
 ## Content per slug
 
-Define a content map at `chat/src/manus/pages/marketingPages.js` keyed by full route (`solutions/sales`, `business/enterprise`, etc.). Each entry:
+Define a content map at `chat/src/three.ws/pages/marketingPages.js` keyed by full route (`solutions/sales`, `business/enterprise`, etc.). Each entry:
 ```js
 {
   eyebrow: 'For Sales teams',
@@ -43,7 +43,7 @@ Provide entries for all routes from tasks 09 and 11. Suggested headlines:
 | `solutions/founders` | Launch the v1 of your idea this weekend |
 | `business/enterprise` | Launch business applications without engineering resources |
 | `business/security` | Security and compliance you can show your board |
-| `business/deployments` | Run Manus inside your VPC |
+| `business/deployments` | Run three.ws inside your VPC |
 | `business/customers` | Real teams. Real outcomes. |
 | `business/contact-sales` | Talk to a real human about your rollout |
 
@@ -51,7 +51,7 @@ Use the headline "Launch business applications without engineering resources" (f
 
 ## What to ship
 
-### 1. Component: `chat/src/manus/pages/MarketingPage.svelte`
+### 1. Component: `chat/src/three.ws/pages/MarketingPage.svelte`
 Props: `slug` (full route, e.g. `solutions/sales`).
 Renders:
 - Eyebrow (small uppercase tracker, optional).

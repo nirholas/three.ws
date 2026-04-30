@@ -44,7 +44,7 @@
     {/if}
 
     <!-- Headline -->
-    <h1 class="manus-display text-center">
+    <h1 class="three.ws-display text-center">
       {#each headlineParts as part, i}
         {part}{#if i < headlineParts.length - 1}<br />{/if}
       {/each}

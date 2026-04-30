@@ -11,9 +11,9 @@
     { title: 'Mobile app',             subtitle: 'Build native iOS & Android apps',      route: 'features/mobile-app',       icon: feSmartphone },
     { title: 'AI design',              subtitle: 'Automates the entire design journey',  route: 'features/ai-design',        icon: feZap },
     { title: 'AI slides',              subtitle: 'Use Nano Banana Pro to create slides', route: 'features/ai-slides',        icon: feLayout },
-    { title: 'Manus browser operator', subtitle: 'Lend a tab to Manus',                  route: 'features/browser-operator', icon: feMonitor },
+    { title: 'three.ws browser operator', subtitle: 'Lend a tab to three.ws',                  route: 'features/browser-operator', icon: feMonitor },
     { title: 'Wide Research',          subtitle: 'Parallel research at scale',           route: 'features/wide-research',    icon: feTarget },
-    { title: 'Mail Manus',             subtitle: 'Turn any email into action',           route: 'features/mail-manus',       icon: feMail },
+    { title: 'Mail three.ws',             subtitle: 'Turn any email into action',           route: 'features/mail-three.ws',       icon: feMail },
     { title: 'Agent Skills',           subtitle: 'Automate your expertise',              route: 'features/agent-skills',     icon: feGrid },
   ];
 </script>

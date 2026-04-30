@@ -20,7 +20,7 @@
     },
     {
       title: 'Vulnerability disclosure',
-      body: 'We operate a responsible disclosure program. Security researchers can report issues to security@manus.ai. Critical vulnerabilities are acknowledged within 24 hours and patched within 7 days where possible.',
+      body: 'We operate a responsible disclosure program. Security researchers can report issues to security@three.ws.ai. Critical vulnerabilities are acknowledged within 24 hours and patched within 7 days where possible.',
     },
   ];
 
@@ -29,7 +29,7 @@
 
 <div class="max-w-[1100px] mx-auto px-6 pt-16 pb-24">
   <h1 class="font-serif text-4xl font-semibold mb-2">Trust Center</h1>
-  <p class="text-[#6B6B6B] text-base mb-12">Security, privacy, and compliance at Manus</p>
+  <p class="text-[#6B6B6B] text-base mb-12">Security, privacy, and compliance at three.ws</p>
 
   <!-- Stats row -->
   <div class="grid md:grid-cols-3 gap-4 mb-10">

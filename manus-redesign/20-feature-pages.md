@@ -12,15 +12,15 @@ Render the 7 feature pages reachable from the Features dropdown. All share a sin
   - `features/ai-slides`
   - `features/browser-operator`
   - `features/wide-research`
-  - `features/mail-manus`
+  - `features/mail-three.ws`
   - `features/agent-skills`
 
 ## Design tokens
 - Page bg: `bg-paper`.
-- Hero headline: `manus-display` (serif, 56–80px). Centered on desktop; left-aligned on mobile.
+- Hero headline: `three.ws-display` (serif, 56–80px). Centered on desktop; left-aligned on mobile.
 - Eyebrow above headline: small uppercase tracker — `text-xs font-medium tracking-[0.16em] uppercase text-[#6B6B6B] mb-4`.
 - Sub: `text-[#6B6B6B] text-lg max-w-[640px] mx-auto mt-6`.
-- CTA primary: `manus-btn-primary` (black pill). Add a secondary "Watch demo" ghost button next to it on the hero.
+- CTA primary: `three.ws-btn-primary` (black pill). Add a secondary "Watch demo" ghost button next to it on the hero.
 - Hero image: `aspect-[16/9] rounded-2xl bg-gradient-to-br from-[#EFECE3] to-[#E5E3DC] mt-12`. If a real asset path is provided, render an `<img>`; otherwise use the gradient placeholder.
 - "What you get" section header: `font-serif text-3xl font-semibold mt-24 mb-8 text-center`.
 - Feature card: `bg-white border border-[#E5E3DC] rounded-2xl p-6`.
@@ -31,16 +31,16 @@ Render the 7 feature pages reachable from the Features dropdown. All share a sin
 
 ## What to ship
 
-### 1. Component: `chat/src/manus/pages/FeaturePage.svelte`
+### 1. Component: `chat/src/three.ws/pages/FeaturePage.svelte`
 Props: `slug` (string). Looks up content from a map and renders the template.
 
-### 2. Content map: `chat/src/manus/pages/featurePages.js`
+### 2. Content map: `chat/src/three.ws/pages/featurePages.js`
 Each entry:
 ```js
 {
   eyebrow: 'AI Web App',
   title: 'Build full-stack apps from a single prompt',
-  sub: 'Manus generates the frontend, backend, database, and deploys it — no engineering team required.',
+  sub: 'three.ws generates the frontend, backend, database, and deploys it — no engineering team required.',
   primaryCta: 'Start building',
   secondaryCta: 'Watch a 2-min demo',
   features: [
@@ -64,9 +64,9 @@ Provide a similar entry for each of the 8 feature slugs. Use these as the seeds 
 | `mobile-app` | AI Mobile App | Native iOS & Android apps, generated end-to-end |
 | `ai-design` | AI Design | From brief to brand: design that ships itself |
 | `ai-slides` | AI Slides | Decks that write, design, and rehearse with you |
-| `browser-operator` | Browser Operator | Lend Manus a tab. Watch it work. |
+| `browser-operator` | Browser Operator | Lend three.ws a tab. Watch it work. |
 | `wide-research` | Wide Research | Parallel research across hundreds of sources at once |
-| `mail-manus` | Mail Manus | Turn every inbox thread into a finished task |
+| `mail-three.ws` | Mail three.ws | Turn every inbox thread into a finished task |
 | `agent-skills` | Agent Skills | Codify your team's expertise into reusable agents |
 
 ### 3. Wire into `App.svelte` route switch
@@ -76,13 +76,13 @@ Provide a similar entry for each of the 8 feature slugs. Use these as the seeds 
 ```
 
 ### 4. Per-feature note on `agent-skills`
-The reference includes a richer hero variant for Agent Skills (tall display headline + cloud illustration). Use the same template but render an extra image strip at the bottom of the hero: `<div class="aspect-[3/1] rounded-2xl bg-[url('/manus-redesign/skills-hero.jpg')] bg-cover bg-center mt-12">`. Path doesn't need to exist; fall back to the gradient placeholder.
+The reference includes a richer hero variant for Agent Skills (tall display headline + cloud illustration). Use the same template but render an extra image strip at the bottom of the hero: `<div class="aspect-[3/1] rounded-2xl bg-[url('/three.ws-redesign/skills-hero.jpg')] bg-cover bg-center mt-12">`. Path doesn't need to exist; fall back to the gradient placeholder.
 
 ## Acceptance criteria
 - All 8 feature URLs render a complete page using the shared template.
 - Each page differs in copy and feature card content.
 - Top nav + announcement banner remain visible.
-- Visual rhythm matches the Manus reference (large serif headline, hero image, 6-card grid, dark CTA strip).
+- Visual rhythm matches the three.ws reference (large serif headline, hero image, 6-card grid, dark CTA strip).
 
 ## Out of scope
 - Real assets/illustrations.
