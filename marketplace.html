@@ -38,6 +38,7 @@
 			<nav class="market-nav">
 				<a href="/" data-nav="home"><span class="ico">⌂</span> Home</a>
 				<a href="/marketplace" data-nav="agent" class="active"><span class="ico">▣</span> Agent</a>
+				<a href="/marketplace?tab=tools" data-nav="tools"><span class="ico">⚙</span> Tools</a>
 				<a href="/features" data-nav="skills"><span class="ico">≡</span> Skills</a>
 				<a href="/dashboard" data-nav="model"><span class="ico">◉</span> Model</a>
 			</nav>
@@ -146,6 +147,53 @@
 						</div>
 						<div class="market-related-side" id="d-related-side"></div>
 					</aside>
+				</div>
+			</section>
+
+			<!-- Tools tab -->
+			<section class="market-tools" id="market-tools" hidden>
+				<header class="market-topbar">
+					<h2 class="market-tools-title">Tool Packs</h2>
+				</header>
+				<div class="market-tools-grid">
+					<div class="tool-pack-card">
+						<div class="head">
+							<div class="avatar">◈</div>
+							<div style="min-width:0;flex:1">
+								<div class="title">TradingView Charts</div>
+								<div class="author">1 tool</div>
+							</div>
+						</div>
+						<div class="desc">Live candlestick charts for any crypto or stock symbol</div>
+						<!-- TODO: wire up install handler in Svelte chat app -->
+						<a class="tool-install-btn" href="/chat?install=tradingview">Add to chat</a>
+					</div>
+
+					<div class="tool-pack-card">
+						<div class="head">
+							<div class="avatar">⊕</div>
+							<div style="min-width:0;flex:1">
+								<div class="title">Web Search</div>
+								<div class="author">1 tool</div>
+							</div>
+						</div>
+						<div class="desc">Search the web and return top results inline</div>
+						<!-- TODO: wire up install handler in Svelte chat app -->
+						<a class="tool-install-btn" href="/chat?install=web-search">Add to chat</a>
+					</div>
+
+					<div class="tool-pack-card">
+						<div class="head">
+							<div class="avatar">◷</div>
+							<div style="min-width:0;flex:1">
+								<div class="title">Date &amp; Time</div>
+								<div class="author">2 tools</div>
+							</div>
+						</div>
+						<div class="desc">Get current time and timezone in any conversation</div>
+						<!-- TODO: wire up install handler in Svelte chat app -->
+						<a class="tool-install-btn" href="/chat?install=datetime">Add to chat</a>
+					</div>
 				</div>
 			</section>
 		</main>

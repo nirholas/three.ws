@@ -42,7 +42,7 @@
 
 	<label class="mb-4 flex flex-col text-[10px] uppercase tracking-wide">
 		<div class="mb-2 ml-[3px] flex items-baseline">
-			<span>Messages context limit</span>
+			<span>Message history limit (0 = unlimited)</span>
 		</div>
 		<input
 			type="number"
@@ -52,34 +52,36 @@
 		/>
 	</label>
 
-	<!-- FIXME: -->
-	<!-- {#if convo.local}
+	<label class="mb-4 flex flex-col text-[10px] uppercase tracking-wide">
+		<div class="mb-2 ml-[3px] flex items-baseline">
+			<span>Reasoning Effort</span>
+			<span class="ml-auto">{$params.reasoningEffort['low-medium-high']}</span>
+		</div>
 		<select
-			class="{autodetectedFormat
-				? 'border-green-300/80 bg-green-50/75'
-				: 'border-red-300 bg-red-50/75'} rounded-lg text-sm"
-			value={convo.tmpl}
-			on:change={(event) => {
-				convo.tmpl = event.target.value;
-			}}
+			bind:value={$params.reasoningEffort['low-medium-high']}
+			class="rounded-lg border border-slate-300 px-2 py-1.5 text-xs text-slate-800 transition-colors focus:border-slate-400 focus:outline-none"
 		>
-			<option value={null} disabled>Select a prompt format</option>
-			{#each promptFormats as fmt}
-				<option value={fmt}>{fmt}</option>
-			{/each}
+			<option value="low">Low</option>
+			<option value="medium">Medium</option>
+			<option value="high">High</option>
 		</select>
-	{/if} -->
+	</label>
 
-	<!-- <select
-		class="w-full rounded-lg border-slate-300 text-sm"
-		value={conversationTemplate}
-		on:change={async (event) => {
-			loadConversationTemplate(event.target.value);
-		}}
-	>
-		<option value={null} disabled>Load from template</option>
-		{#each Object.keys(conversationTemplates) as name}
-			<option value={name}>{name}</option>
-		{/each}
-	</select> -->
+	<label class="mb-4 flex flex-col text-[10px] uppercase tracking-wide">
+		<div class="mb-2 ml-[3px] flex items-baseline">
+			<span>Thinking Tokens</span>
+			<span class="ml-auto">{$params.reasoningEffort['range'] === 0 ? 'off' : $params.reasoningEffort['range']}</span>
+		</div>
+		<input
+			type="range"
+			min={0}
+			max={64000}
+			step={1000}
+			bind:value={$params.reasoningEffort['range']}
+			class="appearance-none overflow-hidden rounded-full border border-slate-300
+				[&::-webkit-slider-runnable-track]:h-2.5 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-slate-100
+				[&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:w-2.5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full
+			[&::-webkit-slider-thumb]:bg-slate-700 [&::-webkit-slider-thumb]:shadow-[-407px_0_0_404px_theme('colors.slate.200')]"
+		/>
+	</label>
 </aside>

@@ -1,3 +1,130 @@
+export const curatedToolPacks = [
+	{
+		id: 'tradingview',
+		name: 'TradingView Charts',
+		description: 'Display interactive TradingView price charts for any symbol.',
+		schema: [
+			{
+				clientDefinition: {
+					id: 'tradingview-chart-001',
+					name: 'TradingViewChart',
+					description: 'Displays an interactive TradingView chart for a given symbol.',
+					arguments: [
+						{ name: 'symbol', type: 'string', description: 'Trading symbol e.g. BINANCE:BTCUSDT, NASDAQ:AAPL' },
+						{ name: 'interval', type: 'string', description: 'Chart interval: 1, 5, 15, 30, 60, D, W, M' },
+						{ name: 'theme', type: 'string', description: 'light or dark' },
+					],
+					body: `const symbol = args.symbol || 'BINANCE:BTCUSDT';
+const interval = args.interval || 'D';
+const theme = args.theme || 'light';
+const html = \`<!DOCTYPE html>
+<html>
+<head><style>html,body{margin:0;padding:0;height:100%;overflow:hidden}</style></head>
+<body>
+<div id="tv_chart" style="width:100%;height:100vh"></div>
+<script src="https://s3.tradingview.com/tv.js"><\\/script>
+<script>
+new TradingView.widget({
+  container_id:"tv_chart",
+  symbol:\${JSON.stringify(symbol)},
+  interval:\${JSON.stringify(interval)},
+  theme:\${JSON.stringify(theme)},
+  style:"1",
+  width:"100%",
+  height:"100%",
+  toolbar_bg:"#f1f3f6",
+  hide_side_toolbar:false,
+  allow_symbol_change:true
+});
+<\\/script>
+</body></html>\`;
+return { contentType: 'text/html', content: html };`,
+				},
+				type: 'function',
+				function: {
+					name: 'TradingViewChart',
+					description: 'Display an interactive TradingView chart. Use for any request to show a price chart, candlestick chart, or market data visualization.',
+					parameters: {
+						type: 'object',
+						properties: {
+							symbol: { type: 'string', description: 'Trading symbol e.g. BINANCE:BTCUSDT, NASDAQ:AAPL, FX:EURUSD' },
+							interval: { type: 'string', enum: ['1', '5', '15', '30', '60', 'D', 'W', 'M'], description: 'Chart interval' },
+							theme: { type: 'string', enum: ['light', 'dark'], description: 'Chart theme' },
+						},
+						required: ['symbol'],
+					},
+				},
+			},
+		],
+	},
+	{
+		id: 'web-search',
+		name: 'Web Search',
+		description: 'Search the web via DuckDuckGo and return a summary and top results.',
+		schema: [
+			{
+				clientDefinition: {
+					id: 'pack-websearch-001',
+					name: 'WebSearch',
+					description: 'Search the web via DuckDuckGo.',
+					arguments: [{ name: 'query', type: 'string', description: 'Search query' }],
+					body: `const res = await fetch('https://api.duckduckgo.com/?q=' + encodeURIComponent(args.query) + '&format=json&no_html=1');
+const d = await res.json();
+const topics = (d.RelatedTopics || []).slice(0, 3).map(t => t.Text).filter(Boolean);
+return JSON.stringify({ abstract: d.AbstractText || '', topics });`,
+				},
+				type: 'function',
+				function: {
+					name: 'WebSearch',
+					description: 'Search the web via DuckDuckGo and return an abstract and top related topics.',
+					parameters: {
+						type: 'object',
+						properties: { query: { type: 'string', description: 'Search query' } },
+						required: ['query'],
+					},
+				},
+			},
+		],
+	},
+	{
+		id: 'date-time',
+		name: 'Date & Time',
+		description: 'Get the current time and timezone.',
+		schema: [
+			{
+				clientDefinition: {
+					id: 'pack-datetime-001',
+					name: 'GetCurrentTime',
+					description: 'Returns the current date and time as an ISO string.',
+					arguments: [],
+					body: 'return new Date().toISOString();',
+				},
+				type: 'function',
+				function: {
+					name: 'GetCurrentTime',
+					description: 'Returns the current date and time as an ISO 8601 string.',
+					parameters: { type: 'object', properties: {} },
+				},
+			},
+			{
+				clientDefinition: {
+					id: 'pack-datetime-002',
+					name: 'GetTimezone',
+					description: "Returns the user's current timezone.",
+					arguments: [],
+					body: "return Intl.DateTimeFormat().resolvedOptions().timeZone;",
+				},
+				type: 'function',
+				function: {
+					name: 'GetTimezone',
+					description: "Returns the user's current IANA timezone string.",
+					parameters: { type: 'object', properties: {} },
+				},
+			},
+		],
+	},
+];
+
 export const defaultToolSchema = [
 	{
 		name: 'Client-side',

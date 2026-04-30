@@ -5,6 +5,7 @@
 	import Checkbox from './Checkbox.svelte';
 	import Icon from './Icon.svelte';
 	import { feChevronDown } from './feather.js';
+	import ToolPackModal from './ToolPackModal.svelte';
 
 	export let open = false;
 	export let convo;
@@ -12,6 +13,20 @@
 
 	let collapsed = {};
 	let innerWidth;
+	let query = '';
+
+	$: filteredSchema = query.trim()
+		? $toolSchema
+				.map((group) => {
+					const q = query.toLowerCase();
+					const groupMatch = group.name.toLowerCase().includes(q);
+					const tools = groupMatch
+						? group.schema
+						: group.schema.filter((t) => t.function.name.toLowerCase().includes(q));
+					return tools.length ? { ...group, schema: tools } : null;
+				})
+				.filter(Boolean)
+		: $toolSchema;
 
 	function setTools(newTools) {
 		convo.tools = convo.tools.concat(newTools);
@@ -27,6 +42,8 @@
 		convo.tools = [];
 		saveConversation(convo);
 	}
+
+	let packModalOpen = false;
 </script>
 
 <svelte:window
@@ -61,16 +78,19 @@
 						Unselect all
 					</button>
 				</div>
-<!--				<input-->
-<!--					type="text"-->
-<!--					value=""-->
-<!--					placeholder="Search for tools"-->
-<!--					class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-none"-->
-<!--					on:input={() => {}}-->
-<!--				/>-->
+				<input
+					type="text"
+					bind:value={query}
+					placeholder="Search for tools"
+					autofocus
+					class="w-full rounded-lg border border-slate-300 px-3 py-2 text-[10px] text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-none"
+				/>
 			</div>
 			<ul class="max-h-[300px] overflow-y-auto pb-1.5 scrollbar-ultraslim">
-				{#each $toolSchema as group}
+				{#if filteredSchema.length === 0 && query}
+					<li class="px-4 py-3 text-xs text-gray-500">No tools found</li>
+				{/if}
+				{#each filteredSchema as group}
 					<div class="relative w-full">
 						<!-- svelte-ignore a11y-label-has-associated-control -->
 						<label
@@ -131,6 +151,16 @@
 					{/if}
 				{/each}
 			</ul>
+			<div class="border-t border-slate-100 px-3 py-2">
+				<button
+					class="w-full rounded-lg border border-slate-200 py-1.5 text-[11px] text-slate-500 transition-colors hover:bg-gray-50 hover:text-slate-700"
+					on:click={() => (packModalOpen = true)}
+				>
+					Browse tool packs
+				</button>
+			</div>
 		</div>
 	</div>
 {/if}
+
+<ToolPackModal bind:open={packModalOpen} />

@@ -660,6 +660,93 @@ body.market-page {
 	margin-top: 3px;
 }
 
+/* ── Tools tab ───────────────────────────────────────────────────────── */
+
+.market-tools {
+	display: flex;
+	flex-direction: column;
+}
+
+.market-tools-title {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 600;
+	color: var(--mk-text);
+}
+
+.market-tools-grid {
+	padding: 18px 24px 80px;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+	gap: 16px;
+	align-content: start;
+}
+
+.tool-pack-card {
+	background: var(--mk-panel);
+	border: 1px solid var(--mk-border);
+	border-radius: var(--mk-radius);
+	padding: 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.tool-pack-card .head {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.tool-pack-card .avatar {
+	width: 36px;
+	height: 36px;
+	border-radius: 8px;
+	background: var(--mk-panel-2);
+	display: grid;
+	place-items: center;
+	font-size: 18px;
+	flex-shrink: 0;
+}
+
+.tool-pack-card .title {
+	font-weight: 600;
+	font-size: 15px;
+	margin: 0;
+	color: var(--mk-text);
+}
+
+.tool-pack-card .author {
+	font-size: 12px;
+	color: var(--mk-text-3);
+	margin-top: 2px;
+}
+
+.tool-pack-card .desc {
+	font-size: 13px;
+	color: var(--mk-text-2);
+	line-height: 1.5;
+	flex: 1;
+}
+
+.tool-install-btn {
+	display: inline-block;
+	background: var(--mk-accent);
+	color: #0a0a0a;
+	border: 0;
+	padding: 9px 16px;
+	border-radius: 10px;
+	font-size: 13px;
+	font-weight: 600;
+	cursor: pointer;
+	text-decoration: none;
+	text-align: center;
+}
+
+.tool-install-btn:hover {
+	background: #fff;
+}
+
 /* ── Empty / loading ─────────────────────────────────────────────────── */
 
 .market-empty {

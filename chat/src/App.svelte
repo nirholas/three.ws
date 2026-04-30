@@ -22,7 +22,7 @@
 	} from './providers.js';
 	import ModelSelector from './ModelSelector.svelte';
 	import CompanyLogo from './CompanyLogo.svelte';
-	import { controller, remoteServer, config, params, toolSchema, syncServer, brandConfig, ttsEnabled, localAgentId, talkingHeadEnabled, route, mode, websiteCategory } from './stores.js';
+	import { controller, remoteServer, config, params, toolSchema, syncServer, brandConfig, ttsEnabled, localAgentId, activeAgent, talkingHeadEnabled, route, mode, websiteCategory } from './stores.js';
 	import AuthPage from './manus/pages/AuthPage.svelte';
 	import Pricing from './manus/pages/Pricing.svelte';
 	import MarketingPage from './manus/pages/MarketingPage.svelte';
@@ -60,7 +60,7 @@
 		feUsers,
 		feX,
 	} from './feather.js';
-	import { defaultToolSchema, agentToolSchema, pumpToolSchema } from './tools.js';
+	import { defaultToolSchema, agentToolSchema, pumpToolSchema, curatedToolPacks } from './tools.js';
 	import { debounce, readFileAsDataURL } from './util.js';
 	import { flash } from './actions';
 	import Message from './Message.svelte';
@@ -277,11 +277,15 @@
 		for (const convo of deletedConversations) {
 			delete convosMap[convo.id];
 		}
-		// TODO: Delete messages.
-		// for (const message of deletedMessages) {
-		// 	const conversationId = con
-		// 	convosMap
-		// }
+		for (const deletedMsg of deletedMessages) {
+			for (const convoId of Object.keys(convosMap)) {
+				const idx = convosMap[convoId].messages.findIndex((m) => m.id === deletedMsg.id);
+				if (idx !== -1) {
+					convosMap[convoId].messages.splice(idx, 1);
+					break;
+				}
+			}
+		}
 		convos = convosMap;
 
 		await syncPush({
@@ -739,20 +743,11 @@
 			handleAbort();
 		};
 
-		// TODO: Consensus
-		// if (convo.models.length === 1) {
-		complete(convo, onupdate, onabort);
-		// } else {
-		// 	completeConsensus(
-		// 		convo,
-		// 		(chunk) => {
-		// 			convo.messages[i].content += chunk.choices[0].delta.content;
-		// 			saveMessage(convo.messages[i]);
-		// 			handleAbort();
-		// 		},
-		// 		() => {}
-		// 	);
-		// }
+		if (convo.models.length > 1) {
+			completeConsensus(convo, onupdate, onabort);
+		} else {
+			complete(convo, onupdate, onabort);
+		}
 	}
 
 	function startThinkingTimer(messageIndex) {
@@ -831,12 +826,36 @@
 		convo = convoData;
 
 		saveConversation(convo);
+		if ($activeAgent) applyAgentToConvo($activeAgent);
 
 		historyOpen = false;
 		if (innerWidth > 880) {
 			inputTextareaEl.focus();
 		}
 	}
+
+	function applyAgentToConvo(agent) {
+		if (!db) return;
+		if (agent.system_prompt && convo.messages.length === 0) {
+			const sysMsg = { id: uuidv4(), role: 'system', content: agent.system_prompt };
+			convo.messages = [sysMsg];
+			saveMessage(sysMsg);
+		}
+		const nonSystem = convo.messages.filter(m => m.role !== 'system');
+		if (agent.greeting && nonSystem.length === 0) {
+			const greetMsg = { id: uuidv4(), role: 'assistant', content: agent.greeting, generated: true };
+			convo.messages = [...convo.messages, greetMsg];
+			saveMessage(greetMsg);
+		}
+		saveConversation(convo);
+	}
+
+	function clearAgentFromConvo() {
+		convo.messages = convo.messages.filter(m => m.role !== 'system' && !m.generated);
+		saveConversation(convo);
+	}
+
+	$: if ($activeAgent) applyAgentToConvo($activeAgent);
 
 	// Split history at this point:
 	function saveVersion(message, i) {
@@ -989,6 +1008,8 @@
 		}
 	}
 
+	let installToastMsg = '';
+
 	let choiceHandler;
 	async function makeChoice() {
 		return new Promise((resolve) => {
@@ -1098,6 +1119,23 @@
 					}
 				}
 			}
+		}
+
+		const urlParams = new URLSearchParams(window.location.search);
+		const installId = urlParams.get('install');
+		if (installId) {
+			const pack = curatedToolPacks.find(p => p.id === installId);
+			if (pack) {
+				const alreadyInstalled = $toolSchema.some(g => g.name === pack.name);
+				if (!alreadyInstalled) {
+					$toolSchema = [...$toolSchema, { name: pack.name, schema: pack.schema }];
+					installToastMsg = `Tool pack '${pack.name}' installed.`;
+					setTimeout(() => { installToastMsg = ''; }, 3000);
+				}
+			}
+			const url = new URL(window.location.href);
+			url.searchParams.delete('install');
+			window.history.replaceState({}, '', url.toString());
 		}
 
 		initializePWAStyles();
@@ -1655,11 +1693,17 @@
 	</Modal>
 {/if}
 
+{#if installToastMsg}
+	<div transition:fade={{ duration: 200 }} class="fixed bottom-16 left-1/2 z-[200] -translate-x-1/2 rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-800 shadow-md">
+		{installToastMsg}
+	</div>
+{/if}
+
 {#if true}
 	<div class="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2">
 		{#if agentPickerOpen}
 			<div class="mb-1 w-72 rounded-xl border border-gray-200 bg-white p-3 shadow-xl">
-				<AgentPicker on:pick={() => (agentPickerOpen = false)} />
+				<AgentPicker on:pick={(e) => { agentPickerOpen = false; if (!e.detail) clearAgentFromConvo(); }} />
 			</div>
 		{/if}
 

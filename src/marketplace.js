@@ -37,6 +37,7 @@ const $ = (id) => document.getElementById(id);
 const els = {
 	discovery: $('market-discovery'),
 	detail: $('market-detail'),
+	tools: $('market-tools'),
 	cats: $('market-cats'),
 	grid: $('market-grid'),
 	search: $('market-search'),
@@ -49,7 +50,10 @@ const els = {
 
 function readRoute() {
 	const m = location.pathname.match(/^\/marketplace\/agents\/([^/]+)/);
-	return m ? { view: 'detail', id: m[1] } : { view: 'list' };
+	if (m) return { view: 'detail', id: m[1] };
+	const tab = new URLSearchParams(location.search).get('tab');
+	if (tab === 'tools') return { view: 'tools' };
+	return { view: 'list' };
 }
 
 function navTo(path, replace = false) {
@@ -429,11 +433,27 @@ function formatDate(iso) {
 
 function render() {
 	const r = readRoute();
+
+	document.querySelectorAll('.market-nav a[data-nav]').forEach((a) => {
+		const nav = a.dataset.nav;
+		const active =
+			(nav === 'agent' && (r.view === 'list' || r.view === 'detail')) ||
+			(nav === 'tools' && r.view === 'tools');
+		a.classList.toggle('active', active);
+	});
+
 	if (r.view === 'detail') {
 		loadDetail(r.id);
+		els.discovery.hidden = true;
+		els.tools.hidden = true;
+	} else if (r.view === 'tools') {
+		els.detail.hidden = true;
+		els.discovery.hidden = true;
+		els.tools.hidden = false;
 	} else {
 		els.detail.hidden = true;
 		els.discovery.hidden = false;
+		els.tools.hidden = true;
 	}
 }
 
