@@ -1681,3 +1681,175 @@ async function handleStrategyValidate(req, res) {
 	if (!r.ok) return error(res, 400, 'validation_error', r.error);
 	return json(res, 200, { data: r.data });
 }
+
+// ── channel-feed ──────────────────────────────────────────────────────────────
+
+async function handleChannelFeed(req, res) {
+	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
+	if (!method(req, res, ['GET'])) return;
+	const rl = await limits.mcpIp(clientIp(req));
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
+	const url = new URL(req.url, `http://${req.headers.host}`);
+	const limit = Math.min(Math.max(1, Number(url.searchParams.get('limit') || 50)), 200);
+	const kinds = url.searchParams.get('kinds') || null;
+	const { getMints, getWhales, getClaims } = await import('../_lib/channel-feed-sources.js');
+	const { buildFeed } = await import('../../src/pump/channel-feed.js');
+	const [mints, whales, claims] = await Promise.all([getMints(limit), getWhales(limit), getClaims(limit)]);
+	const items = buildFeed([{ kind: 'mint', items: mints }, { kind: 'whale', items: whales }, { kind: 'claim', items: claims }], { limit, kinds });
+	return json(res, 200, { items });
+}
+
+// ── deliver-telegram ──────────────────────────────────────────────────────────
+
+import { z as _z } from 'zod';
+const _deliverSchema = _z.object({
+	chatId: _z.union([_z.string(), _z.number()]),
+	signal: _z.object({ kind: _z.enum(['mint', 'whale', 'claim', 'graduation']), mint: _z.string(), summary: _z.string(), refs: _z.array(_z.string()).optional(), ts: _z.number().optional() }),
+});
+
+async function handleDeliverTelegram(req, res) {
+	if (!method(req, res, ['POST'])) return;
+	const botToken = process.env.TELEGRAM_BOT_TOKEN;
+	if (!botToken) return error(res, 500, 'misconfigured', 'TELEGRAM_BOT_TOKEN is not set');
+	const raw = await readJson(req);
+	const { chatId, signal } = parse(_deliverSchema, raw);
+	const { sendTelegramSignal } = await import('../../src/pump/telegram-delivery.js');
+	const result = await sendTelegramSignal({ botToken, chatId, signal });
+	return json(res, 200, result);
+}
+
+// ── first-claims ──────────────────────────────────────────────────────────────
+
+import bs58 from 'bs58';
+import { filterFirstClaims } from '../../src/pump/first-claims.js';
+
+const PUMP_PROGRAM = '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P';
+const CLAIM_DISCS = new Set(['e8f5c2eeeada3a59', '7a027f010ebf0caf', 'a537817004b3ca28']);
+const LOOKBACK_MULT = 8;
+
+export async function scanFirstClaims({ sinceTs, limit }) {
+	const lim = Math.max(1, Math.min(50, limit));
+	const lookbackTs = sinceTs - Math.max(3600, (Math.floor(Date.now() / 1000) - sinceTs) * LOOKBACK_MULT);
+	const allClaims = process.env.PUMPFUN_BOT_URL ? await _fetchFromBot(lookbackTs, lim * LOOKBACK_MULT) : await _fetchFromRpc(lookbackTs, lim * LOOKBACK_MULT);
+	return filterFirstClaims(allClaims, sinceTs, lim);
+}
+
+async function handleFirstClaims(req, res) {
+	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
+	if (!method(req, res, ['GET'])) return;
+	const rl = await limits.mcpIp(clientIp(req));
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
+	const url = new URL(req.url, 'http://x');
+	const limit = Math.max(1, Math.min(50, Number(url.searchParams.get('limit')) || 50));
+	let sinceTs;
+	if (url.searchParams.has('sinceTs')) { sinceTs = Number(url.searchParams.get('sinceTs')); }
+	else { const sinceMinutes = Math.max(1, Math.min(1440, Number(url.searchParams.get('sinceMinutes')) || 60)); sinceTs = Math.floor(Date.now() / 1000) - sinceMinutes * 60; }
+	if (!Number.isFinite(sinceTs) || sinceTs <= 0) return error(res, 400, 'validation_error', 'invalid sinceTs');
+	const items = await scanFirstClaims({ sinceTs, limit });
+	return json(res, 200, { items });
+}
+
+async function _fetchFromBot(lookbackTs, maxItems) {
+	const r = await _botCall('getFirstClaims', { sinceTs: lookbackTs, limit: maxItems });
+	if (r.ok) return _normalise(r.data);
+	const r2 = await _botCall('getRecentClaims', { limit: maxItems });
+	if (r2.ok) return _normalise(r2.data);
+	return [];
+}
+async function _botCall(tool, args) {
+	const url = process.env.PUMPFUN_BOT_URL;
+	if (!url) return { ok: false };
+	const headers = { 'content-type': 'application/json', accept: 'application/json' };
+	if (process.env.PUMPFUN_BOT_TOKEN) headers.authorization = `Bearer ${process.env.PUMPFUN_BOT_TOKEN}`;
+	const ctrl = new AbortController();
+	const t = setTimeout(() => ctrl.abort(), 8000);
+	try {
+		const resp = await fetch(url.replace(/\/$/, ''), { method: 'POST', headers, signal: ctrl.signal, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: tool, arguments: args || {} } }) });
+		if (!resp.ok) return { ok: false, error: `bot ${resp.status}` };
+		const j = await resp.json();
+		if (j.error) return { ok: false, error: j.error.message || 'rpc error' };
+		const data = j.result?.structuredContent ?? j.result?.content ?? j.result;
+		return { ok: true, data: Array.isArray(data) ? data : (data?.items ?? []) };
+	} catch (err) { return { ok: false, error: err?.message || 'fetch failed' }; }
+	finally { clearTimeout(t); }
+}
+function _normalise(items) {
+	return (items || []).map((x) => ({ creator: String(x.claimerWallet || x.creator || x.wallet || ''), mint: String(x.tokenMint || x.mint || ''), signature: String(x.txSignature || x.tx_signature || x.signature || ''), lamports: Number(x.amountLamports || x.lamports || 0), ts: Number(x.timestamp || x.ts || 0) })).filter((x) => x.creator && x.signature && x.ts > 0);
+}
+async function _fetchFromRpc(lookbackTs, maxItems) {
+	try {
+		const connection = getConnection({ network: 'mainnet' });
+		const { PublicKey } = await import('@solana/web3.js');
+		const sigs = await connection.getSignaturesForAddress(new PublicKey(PUMP_PROGRAM), { limit: 200 });
+		const inWindow = sigs.filter((s) => s.blockTime != null && s.blockTime >= lookbackTs && !s.err);
+		if (!inWindow.length) return [];
+		const toFetch = inWindow.slice(0, Math.min(30, maxItems * 2));
+		const settled = await Promise.allSettled(toFetch.map((s) => connection.getParsedTransaction(s.signature, { maxSupportedTransactionVersion: 0, commitment: 'confirmed' })));
+		const claims = [];
+		for (let i = 0; i < settled.length; i++) {
+			if (settled[i].status !== 'fulfilled' || !settled[i].value) continue;
+			const claim = _parseClaim(settled[i].value, toFetch[i].signature, toFetch[i].blockTime ?? 0);
+			if (claim) claims.push(claim);
+		}
+		return claims;
+	} catch { return []; }
+}
+function _parseClaim(tx, signature, ts) {
+	if (tx?.meta?.err) return null;
+	const ixs = tx?.transaction?.message?.instructions ?? [];
+	const accountKeys = tx?.transaction?.message?.accountKeys ?? [];
+	const pre = tx?.meta?.preBalances ?? [], post = tx?.meta?.postBalances ?? [];
+	for (const ix of ixs) {
+		if (!ix.data || typeof ix.data !== 'string') continue;
+		const progKey = accountKeys[ix.programIdIndex];
+		const progId = progKey?.pubkey?.toString?.() ?? String(progKey ?? '');
+		if (progId !== PUMP_PROGRAM) continue;
+		let bytes;
+		try { bytes = bs58.decode(ix.data); } catch { continue; }
+		if (bytes.length < 8) continue;
+		const disc = Buffer.from(bytes.subarray(0, 8)).toString('hex');
+		if (!CLAIM_DISCS.has(disc)) continue;
+		const creator = (accountKeys[0]?.pubkey?.toString?.() ?? String(accountKeys[0] ?? ''));
+		if (!creator) continue;
+		let lamports = 0;
+		for (let i = 0; i < accountKeys.length; i++) { const delta = (post[i] ?? 0) - (pre[i] ?? 0); if (delta > lamports) lamports = delta; }
+		let mint = '';
+		if (disc === 'a537817004b3ca28' && bytes.length >= 48) { try { mint = bs58.encode(bytes.slice(16, 48)); } catch {} }
+		return { creator, mint, signature, lamports, ts };
+	}
+	return null;
+}
+
+// ── vanity-keygen (SSE) ───────────────────────────────────────────────────────
+
+async function handleVanityKeygen(req, res) {
+	if (cors(req, res, { methods: 'POST,OPTIONS', origins: '*' })) return;
+	if (req.method !== 'POST') { res.setHeader('allow', 'POST'); return error(res, 405, 'method_not_allowed', 'method POST required'); }
+	const rl = await limits.mcpIp(clientIp(req));
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
+	let body;
+	try { body = await readJson(req); } catch (e) { return error(res, e.status || 400, 'bad_request', e.message); }
+	const { suffix = '', prefix = '', caseSensitive = false, maxAttempts = 5_000_000 } = body || {};
+	if (!suffix && !prefix) return error(res, 400, 'validation_error', 'at least one of suffix or prefix is required');
+	res.statusCode = 200;
+	res.setHeader('content-type', 'text/event-stream; charset=utf-8');
+	res.setHeader('cache-control', 'no-store');
+	res.setHeader('connection', 'keep-alive');
+	res.setHeader('x-accel-buffering', 'no');
+	const ac = new AbortController();
+	const timeout = setTimeout(() => { ac.abort(); _sse(res, 'error', { error: 'request_timeout', error_description: 'vanity search exceeded 60 s limit' }); res.statusCode = 408; res.end(); }, 60_000);
+	req.on('close', () => ac.abort());
+	const progressInterval = setInterval(() => { if (ac.signal.aborted) return clearInterval(progressInterval); _sse(res, 'progress', { elapsed: Date.now() }); }, 2_000);
+	try {
+		const { generateVanityKey } = await import('../../src/pump/vanity-keygen.js');
+		const _bs58 = (await import('bs58')).default;
+		const result = await generateVanityKey({ suffix, prefix, caseSensitive, maxAttempts, signal: ac.signal });
+		clearTimeout(timeout); clearInterval(progressInterval);
+		if (!result) _sse(res, 'error', { error: 'max_attempts_reached', error_description: `no match found in ${maxAttempts} attempts` });
+		else _sse(res, 'result', { publicKey: result.publicKey, secretKey: _bs58.encode(result.secretKey), attempts: result.attempts, ms: result.ms });
+	} catch (err) {
+		clearTimeout(timeout); clearInterval(progressInterval);
+		if (!res.writableEnded) _sse(res, 'error', { error: 'internal_error', error_description: err.message || 'unexpected error' });
+	} finally { if (!res.writableEnded) res.end(); }
+}
+function _sse(res, event, data) { res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`); }
