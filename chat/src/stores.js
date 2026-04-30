@@ -78,3 +78,5 @@ if (typeof window !== 'undefined') {
 }
 
 export const mode = writable(null);
+export const websiteCategory = writable(null);
+export const composerFill = writable(null);
