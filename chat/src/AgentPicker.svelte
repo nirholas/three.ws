@@ -1,6 +1,6 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
-	import { localAgentId } from './stores.js';
+	import { localAgentId, activeAgent } from './stores.js';
 
 	const dispatch = createEventDispatcher();
 
@@ -27,13 +27,28 @@
 		debounceTimer = setTimeout(() => search(query), 300);
 	}
 
-	function pick(agent) {
-		localAgentId.set(agent.id);
-		dispatch('pick', agent);
+	async function pick(agent) {
+		loading = true;
+		try {
+			const res = await fetch(`/api/marketplace/agents/${agent.id}`);
+			if (res.ok) {
+				const json = await res.json();
+				const detail = json.data?.agent ?? agent;
+				localAgentId.set(detail.id);
+				activeAgent.set(detail);
+				dispatch('pick', detail);
+			}
+		} catch {
+			localAgentId.set(agent.id);
+			activeAgent.set(agent);
+			dispatch('pick', agent);
+		}
+		loading = false;
 	}
 
 	function clear() {
 		localAgentId.set('');
+		activeAgent.set(null);
 		dispatch('pick', null);
 	}
 

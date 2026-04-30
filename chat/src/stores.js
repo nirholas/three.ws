@@ -8,7 +8,7 @@ export const brandConfig = writable({
 	logo_url: null,
 	accent_color: '#6366f1',
 	tagline: 'Chat with any AI model',
-	default_model: 'google/gemini-2.0-flash-exp:free',
+	default_model: 'openai/gpt-oss-120b:free',
 	agent_id: null,
 	system_prompt: '',
 });
@@ -63,6 +63,7 @@ export const toolSchema = persisted('toolSchemaGroups', []);
 
 export const ttsEnabled = persisted('ttsEnabled', false);
 export const localAgentId = persisted('localAgentId', '');
+export const activeAgent = persisted('activeAgentDetail', null);
 export const talkingHeadEnabled = persisted('talkingHeadEnabled', false);
 
 export const route = writable(
@@ -84,3 +85,18 @@ export const composerFill = writable(null);
 export const flowSecondary = persisted('flowSecondary', {});
 export const appPlatforms = writable(new Set(['macOS']));
 export const designModel = writable('gpt-image-2');
+
+export const currentUser = writable(null);
+
+export async function loadCurrentUser() {
+  try {
+    const res = await fetch('/api/auth/me', { credentials: 'include' });
+    if (!res.ok) { currentUser.set(null); return null; }
+    const { user } = await res.json();
+    currentUser.set(user ?? null);
+    return user ?? null;
+  } catch {
+    currentUser.set(null);
+    return null;
+  }
+}
