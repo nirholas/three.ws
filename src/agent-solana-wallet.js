@@ -124,8 +124,13 @@ export async function requestAgentSolanaAirdrop(agentId) {
 // ── UI card ─────────────────────────────────────────────────────────────────
 
 const STYLE = `
-.agent-sol-wallet { border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: .85rem 1rem; margin: .85rem 0; font: 13px/1.4 system-ui, sans-serif; background: rgba(255,255,255,0.03); color: #e6e6ea; }
-.agent-sol-wallet h3 { margin: 0 0 .25rem; font-size: .95rem; font-weight: 600; color: #f2f2f5; }
+.agent-sol-wallet-details { margin: .85rem 0; }
+.agent-sol-wallet-summary { font: 11px/1.4 system-ui, sans-serif; color: rgba(230,230,234,0.4); cursor: pointer; list-style: none; padding: .2rem 0; user-select: none; }
+.agent-sol-wallet-summary::-webkit-details-marker { display: none; }
+.agent-sol-wallet-summary::before { content: '▸ '; font-size: .65rem; }
+.agent-sol-wallet-details[open] .agent-sol-wallet-summary::before { content: '▾ '; }
+.agent-sol-wallet { border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: .85rem 1rem; margin: .4rem 0 0; font: 13px/1.4 system-ui, sans-serif; background: rgba(255,255,255,0.03); color: #e6e6ea; }
+.agent-sol-wallet h3 { margin: 0 0 .25rem; font-size: .85rem; font-weight: 600; color: #f2f2f5; }
 .agent-sol-wallet .sub { color: rgba(230,230,234,0.6); font-size: .78rem; margin: 0 0 .65rem; }
 .agent-sol-wallet .addr { font-family: ui-monospace, monospace; font-size: .8rem; background: rgba(255,255,255,0.05); color: #e6e6ea; padding: .4rem .55rem; border-radius: 5px; word-break: break-all; border: 1px solid rgba(255,255,255,0.06); }
 .agent-sol-wallet .addr .pfx { background: linear-gradient(90deg,#ffd54f,#ff8a65); color: #1a1a1a; padding: 0 2px; border-radius: 2px; font-weight: 600; }
@@ -507,7 +512,7 @@ export function mountAgentSolanaWalletCard({ panel, identity, onProvisioned }) {
 	loadFromServer().catch((e) => {
 		state.err = e.message || 'failed to load wallet';
 		state.loaded = true;
-		root.hidden = false;
+		wrapper.hidden = false;
 		render();
 	});
 
@@ -515,7 +520,7 @@ export function mountAgentSolanaWalletCard({ panel, identity, onProvisioned }) {
 		destroy: () => {
 			stopBalancePoll();
 			abort?.abort();
-			root.remove();
+			wrapper.remove();
 		},
 	};
 }

@@ -180,3 +180,263 @@ export const agentToolSchema = {
 		},
 	],
 };
+
+const _pumpMcp = `
+const _r = await fetch('/api/pump-fun-mcp', {method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name:_TOOL_,arguments:args}})});
+const _d = await _r.json();
+if (_d.error) return JSON.stringify({error: _d.error.message});
+const _c = _d.result?.content;
+return Array.isArray(_c) ? _c.map(x => x.text || JSON.stringify(x)).join('\\n') : JSON.stringify(_c, null, 2);
+`.trim();
+
+function pumpBody(toolName) {
+	return _pumpMcp.replace('_TOOL_', JSON.stringify(toolName));
+}
+
+export const pumpToolSchema = {
+	name: 'Pump.fun & Crypto',
+	schema: [
+		{
+			clientDefinition: {
+				id: 'pump-trending-001',
+				name: 'getTrendingTokens',
+				description: 'Top pump.fun tokens by market cap.',
+				arguments: [{ name: 'limit', type: 'number', description: 'Number of tokens (max 50, default 10)' }],
+				body: pumpBody('getTrendingTokens'),
+			},
+			type: 'function',
+			function: {
+				name: 'getTrendingTokens',
+				description: 'Get the top trending pump.fun tokens by market cap right now.',
+				parameters: {
+					type: 'object',
+					properties: { limit: { type: 'integer', default: 10, description: 'How many tokens to return (max 50)' } },
+				},
+			},
+		},
+		{
+			clientDefinition: {
+				id: 'pump-new-002',
+				name: 'getNewTokens',
+				description: 'Most recently launched pump.fun tokens.',
+				arguments: [{ name: 'limit', type: 'number', description: 'Number of tokens (max 50, default 10)' }],
+				body: pumpBody('getNewTokens'),
+			},
+			type: 'function',
+			function: {
+				name: 'getNewTokens',
+				description: 'Get the most recently launched pump.fun tokens.',
+				parameters: {
+					type: 'object',
+					properties: { limit: { type: 'integer', default: 10, description: 'How many tokens to return (max 50)' } },
+				},
+			},
+		},
+		{
+			clientDefinition: {
+				id: 'pump-koth-003',
+				name: 'getKingOfTheHill',
+				description: 'Highest-market-cap token still on the bonding curve.',
+				arguments: [],
+				body: pumpBody('getKingOfTheHill'),
+			},
+			type: 'function',
+			function: {
+				name: 'getKingOfTheHill',
+				description: 'Get the king of the hill — the highest market cap pump.fun token still on the bonding curve.',
+				parameters: { type: 'object', properties: {} },
+			},
+		},
+		{
+			clientDefinition: {
+				id: 'pump-search-004',
+				name: 'searchTokens',
+				description: 'Search pump.fun tokens by name, symbol, or mint address.',
+				arguments: [
+					{ name: 'query', type: 'string', description: 'Search query' },
+					{ name: 'limit', type: 'number', description: 'Number of results (max 50, default 10)' },
+				],
+				body: pumpBody('searchTokens'),
+			},
+			type: 'function',
+			function: {
+				name: 'searchTokens',
+				description: 'Search pump.fun tokens by name, symbol, or mint address.',
+				parameters: {
+					type: 'object',
+					properties: {
+						query: { type: 'string', description: 'Token name, symbol, or mint address' },
+						limit: { type: 'integer', default: 10, description: 'Number of results (max 50)' },
+					},
+					required: ['query'],
+				},
+			},
+		},
+		{
+			clientDefinition: {
+				id: 'pump-details-005',
+				name: 'getTokenDetails',
+				description: 'Full details for a specific pump.fun token by mint address.',
+				arguments: [{ name: 'mint', type: 'string', description: 'Token mint address (base58)' }],
+				body: pumpBody('getTokenDetails'),
+			},
+			type: 'function',
+			function: {
+				name: 'getTokenDetails',
+				description: 'Get full details for a pump.fun token: price, market cap, description, socials, creator.',
+				parameters: {
+					type: 'object',
+					properties: { mint: { type: 'string', description: 'Token mint address (base58)' } },
+					required: ['mint'],
+				},
+			},
+		},
+		{
+			clientDefinition: {
+				id: 'pump-curve-006',
+				name: 'getBondingCurve',
+				description: 'Bonding curve analysis: reserves and graduation progress.',
+				arguments: [{ name: 'mint', type: 'string', description: 'Token mint address (base58)' }],
+				body: pumpBody('getBondingCurve'),
+			},
+			type: 'function',
+			function: {
+				name: 'getBondingCurve',
+				description: 'Get bonding curve reserves and graduation progress (0-100%) for a pump.fun token.',
+				parameters: {
+					type: 'object',
+					properties: { mint: { type: 'string', description: 'Token mint address (base58)' } },
+					required: ['mint'],
+				},
+			},
+		},
+		{
+			clientDefinition: {
+				id: 'pump-trades-007',
+				name: 'getTokenTrades',
+				description: 'Recent buy/sell history for a token.',
+				arguments: [
+					{ name: 'mint', type: 'string', description: 'Token mint address (base58)' },
+					{ name: 'limit', type: 'number', description: 'Number of trades (max 200, default 50)' },
+				],
+				body: pumpBody('getTokenTrades'),
+			},
+			type: 'function',
+			function: {
+				name: 'getTokenTrades',
+				description: 'Get recent buy/sell trade history for a pump.fun token.',
+				parameters: {
+					type: 'object',
+					properties: {
+						mint: { type: 'string', description: 'Token mint address (base58)' },
+						limit: { type: 'integer', default: 50, description: 'Number of trades (max 200)' },
+					},
+					required: ['mint'],
+				},
+			},
+		},
+		{
+			clientDefinition: {
+				id: 'pump-holders-008',
+				name: 'getTokenHolders',
+				description: 'Token holder distribution and concentration.',
+				arguments: [{ name: 'mint', type: 'string', description: 'Token mint address (base58)' }],
+				body: pumpBody('getTokenHolders'),
+			},
+			type: 'function',
+			function: {
+				name: 'getTokenHolders',
+				description: 'Get top token holders and concentration metrics for a pump.fun token.',
+				parameters: {
+					type: 'object',
+					properties: { mint: { type: 'string', description: 'Token mint address (base58)' } },
+					required: ['mint'],
+				},
+			},
+		},
+		{
+			clientDefinition: {
+				id: 'pump-quote-009',
+				name: 'pumpfun_quote_swap',
+				description: 'Read-only price quote for a pump.fun swap.',
+				arguments: [
+					{ name: 'inputMint', type: 'string', description: 'Input token mint (use So11111111111111111111111111111111111111112 for SOL)' },
+					{ name: 'outputMint', type: 'string', description: 'Output token mint' },
+					{ name: 'amountIn', type: 'number', description: 'Amount in lamports (1 SOL = 1000000000)' },
+				],
+				body: pumpBody('pumpfun_quote_swap'),
+			},
+			type: 'function',
+			function: {
+				name: 'pumpfun_quote_swap',
+				description: 'Get a read-only price quote for swapping on pump.fun. Use SOL mint So11111111111111111111111111111111111111112 for SOL side.',
+				parameters: {
+					type: 'object',
+					properties: {
+						inputMint: { type: 'string', description: 'Input token mint address' },
+						outputMint: { type: 'string', description: 'Output token mint address' },
+						amountIn: { type: 'number', description: 'Input amount in raw lamports (1 SOL = 1_000_000_000)' },
+						slippageBps: { type: 'number', description: 'Slippage in basis points (default 100 = 1%)' },
+					},
+					required: ['inputMint', 'outputMint', 'amountIn'],
+				},
+			},
+		},
+		{
+			clientDefinition: {
+				id: 'pump-sns-010',
+				name: 'sns_resolve',
+				description: 'Resolve a .sol domain to a wallet address.',
+				arguments: [{ name: 'name', type: 'string', description: '.sol domain name e.g. "bonfida.sol"' }],
+				body: pumpBody('sns_resolve'),
+			},
+			type: 'function',
+			function: {
+				name: 'sns_resolve',
+				description: 'Resolve a Solana Name Service (.sol) domain to its owner wallet address.',
+				parameters: {
+					type: 'object',
+					properties: { name: { type: 'string', description: '.sol domain name, e.g. "bonfida.sol"' } },
+					required: ['name'],
+				},
+			},
+		},
+		{
+			clientDefinition: {
+				id: 'pump-sns-rev-011',
+				name: 'sns_reverseLookup',
+				description: 'Reverse-lookup a Solana wallet to its .sol domain.',
+				arguments: [{ name: 'address', type: 'string', description: 'Base58 Solana wallet address' }],
+				body: pumpBody('sns_reverseLookup'),
+			},
+			type: 'function',
+			function: {
+				name: 'sns_reverseLookup',
+				description: 'Look up the .sol domain name for a Solana wallet address.',
+				parameters: {
+					type: 'object',
+					properties: { address: { type: 'string', description: 'Base58 Solana wallet address' } },
+					required: ['address'],
+				},
+			},
+		},
+		{
+			clientDefinition: {
+				id: 'pump-kol-012',
+				name: 'kol_radar',
+				description: 'Early-detection signals for memecoins from KOL wallets.',
+				arguments: [{ name: 'limit', type: 'number', description: 'Number of signals (default 20)' }],
+				body: pumpBody('kol_radar'),
+			},
+			type: 'function',
+			function: {
+				name: 'kol_radar',
+				description: 'Get early-detection alpha signals from key opinion leader (KOL) wallets on pump.fun.',
+				parameters: {
+					type: 'object',
+					properties: { limit: { type: 'integer', default: 20, description: 'Number of signals to return' } },
+				},
+			},
+		},
+	],
+};

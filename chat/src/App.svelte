@@ -53,7 +53,7 @@
 		feUser,
 		feX,
 	} from './feather.js';
-	import { defaultToolSchema, agentToolSchema } from './tools.js';
+	import { defaultToolSchema, agentToolSchema, pumpToolSchema } from './tools.js';
 	import { debounce, readFileAsDataURL } from './util.js';
 	import { flash } from './actions';
 	import Message from './Message.svelte';
@@ -1051,9 +1051,13 @@
 
 		// Init client tools with default values
 		if ($toolSchema.length === 0 && !window.localStorage.getItem('initializedClientTools')) {
-			$toolSchema = defaultToolSchema;
+			$toolSchema = [...defaultToolSchema, pumpToolSchema];
 			window.localStorage.setItem('initializedClientTools', 'true');
 		} else {
+			// Add pump tool group for existing users who already initialized
+			if (!$toolSchema.some(g => g.name === 'Pump.fun & Crypto')) {
+				$toolSchema = [...$toolSchema, pumpToolSchema];
+			}
 			// Add any missing client tools to the client-side group
 			const clientGroup = $toolSchema.find((g) => g.name === 'Client-side');
 			const defaultClientGroup = defaultToolSchema.find((g) => g.name === 'Client-side');
@@ -1211,7 +1215,7 @@
 {#if generating && new URLSearchParams(window.location.search).get('vibe') === 'true'}
 	<video
 		transition:fade={{ duration: 1000 }}
-		src="/peace.mp4"
+		src="{import.meta.env.BASE_URL}peace.mp4"
 		class="fixed left-0 top-0 z-[1000] h-screen w-screen object-cover"
 		autoplay
 		loop

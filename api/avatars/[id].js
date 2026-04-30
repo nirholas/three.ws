@@ -1,6 +1,7 @@
-// GET    /api/avatars/:id  — fetch one (public if visibility allows, else requires auth)
-// PATCH  /api/avatars/:id  — update metadata (owner only)
-// DELETE /api/avatars/:id  — soft-delete (owner only)
+// GET    /api/avatars/:id            — fetch one (public if visibility allows, else requires auth)
+// PATCH  /api/avatars/:id            — update metadata (owner only)
+// DELETE /api/avatars/:id            — soft-delete (owner only)
+// Also dispatches: presign, public, regenerate, regenerate-status (action endpoints)
 
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
 import {
@@ -25,12 +26,21 @@ const patchSchema = z.object({
 	tags: z.array(z.string().trim().min(1).max(40)).max(20).optional(),
 });
 
-export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'GET,PATCH,DELETE,OPTIONS', credentials: true })) return;
-	if (!method(req, res, ['GET', 'PATCH', 'DELETE'])) return;
+// Action endpoints that share this file (no id needed)
+const ACTION_ENDPOINTS = new Set(['presign', 'public', 'regenerate', 'regenerate-status']);
 
+export default wrap(async (req, res) => {
 	const id = req.query?.id || new URL(req.url, 'http://x').pathname.split('/').pop();
 	if (!id) return error(res, 400, 'invalid_request', 'id required');
+
+	// Dispatch named action endpoints (presign, public, regenerate, regenerate-status)
+	if (ACTION_ENDPOINTS.has(id)) {
+		const mod = await import('./_actions.js');
+		return mod.dispatch(id, req, res);
+	}
+
+	if (cors(req, res, { methods: 'GET,PATCH,DELETE,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['GET', 'PATCH', 'DELETE'])) return;
 
 	const auth = await resolveAuth(req);
 

@@ -91,19 +91,18 @@ const wrapped = wrap(async (req, res) => {
 		case 'strategy-backtest':       return handleStrategyBacktest(req, res);
 		case 'strategy-close-all':      return handleStrategyCloseAll(req, res);
 		case 'strategy-validate':       return handleStrategyValidate(req, res);
+		case 'channel-feed':            return handleChannelFeed(req, res);
+		case 'deliver-telegram':        return handleDeliverTelegram(req, res);
+		case 'first-claims':            return handleFirstClaims(req, res);
 		default:
 			return error(res, 404, 'not_found', 'unknown pump action');
 	}
 });
 
-// strategy-run is SSE — it manages its own response writes and must bypass
-// wrap()'s JSON-error fallback once the stream is open. Route it before the
-// wrapped dispatcher to preserve the original endpoint's exported shape
-// (default async function handler).
+// strategy-run and vanity-keygen are SSE — bypass wrap()'s JSON-error fallback.
 export default async function dispatcher(req, res) {
-	if (req.query?.action === 'strategy-run') {
-		return handleStrategyRun(req, res);
-	}
+	if (req.query?.action === 'strategy-run') return handleStrategyRun(req, res);
+	if (req.query?.action === 'vanity-keygen') return handleVanityKeygen(req, res);
 	return wrapped(req, res);
 }
 
