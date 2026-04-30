@@ -61,6 +61,7 @@ vi.mock('../../api/_lib/email.js', () => ({
 }));
 
 const { default: handler } = await import('../../api/auth/[action].js');
+const authMod = await import('../../api/_lib/auth.js');
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -125,8 +126,8 @@ beforeEach(() => {
 	rlState.success = true;
 	authMock.verifyPassword = true;
 	authMock.sessionToken = 'test-session-token-abc';
-	vi.mocked((await import('../../api/_lib/auth.js')).destroySession).mockClear();
-	vi.mocked((await import('../../api/_lib/auth.js')).createSession).mockClear();
+	vi.mocked(authMod.destroySession).mockClear();
+	vi.mocked(authMod.createSession).mockClear();
 });
 
 // ── login ──────────────────────────────────────────────────────────────────────

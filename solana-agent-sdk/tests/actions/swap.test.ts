@@ -1,13 +1,12 @@
 import { jest, describe, it, expect, beforeEach, afterEach } from "@jest/globals";
-import {
-  Keypair,
-  TransactionMessage,
-  VersionedTransaction,
-  type Connection,
-} from "@solana/web3.js";
-import { jupiterSwap, getSwapQuote, SOL_MINT } from "../../src/actions/swap.js";
-import { SwapError } from "../../src/errors.js";
-import type { MetaAwareWallet, WalletProvider } from "../../src/wallet/types.js";
+import type { WalletProvider, MetaAwareWallet } from "../../src/wallet/types.js";
+
+let mockFetch = jest.fn<(url: RequestInfo | URL, init?: RequestInit) => Promise<Response>>();
+
+const { jupiterSwap, getSwapQuote, SOL_MINT } = await import("../../src/actions/swap.js");
+const { SwapError } = await import("../../src/errors.js");
+const { Keypair, TransactionMessage, VersionedTransaction } =
+  await import("@solana/web3.js") as typeof import("@solana/web3.js");
 
 const WALLET_PUBKEY = Keypair.fromSeed(new Uint8Array(32).fill(1)).publicKey;
 
@@ -38,18 +37,13 @@ function makeWallet(): WalletProvider {
 }
 
 function makeMetaWallet(): MetaAwareWallet {
-  return {
-    ...makeWallet(),
-    setNextMeta: jest.fn(),
-  } as unknown as MetaAwareWallet;
+  return { ...makeWallet(), setNextMeta: jest.fn() } as unknown as MetaAwareWallet;
 }
 
-const connection = {} as unknown as Connection;
-
-let mockFetch: jest.Mock<() => Promise<Response>>;
+const connection = {} as never;
 
 beforeEach(() => {
-  mockFetch = jest.fn<() => Promise<Response>>();
+  mockFetch = jest.fn<(url: RequestInfo | URL, init?: RequestInit) => Promise<Response>>();
   global.fetch = mockFetch as unknown as typeof fetch;
 });
 
@@ -59,10 +53,7 @@ afterEach(() => {
 
 describe("getSwapQuote", () => {
   it("constructs quote URL with inputMint, outputMint, amount, and slippageBps", async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: async () => MOCK_QUOTE,
-    } as unknown as Response);
+    mockFetch.mockResolvedValue({ ok: true, json: async () => MOCK_QUOTE } as unknown as Response);
 
     await getSwapQuote({
       inputMint: SOL_MINT,
@@ -72,7 +63,8 @@ describe("getSwapQuote", () => {
     });
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
-    const url = new URL(mockFetch.mock.calls[0]![0] as string);
+    const call = mockFetch.mock.calls[0]!;
+    const url = new URL(call[0] as string);
     expect(url.searchParams.get("inputMint")).toBe(SOL_MINT);
     expect(url.searchParams.get("outputMint")).toBe("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
     expect(url.searchParams.get("amount")).toBe("1000000000");
@@ -104,12 +96,12 @@ describe("jupiterSwap", () => {
       .mockResolvedValueOnce({ ok: true, json: async () => ({ swapTransaction: MOCK_TX_BASE64 }) } as unknown as Response);
 
     await jupiterSwap(makeWallet(), connection, {
-      inputMint: SOL_MINT,
-      outputMint: SOL_MINT,
-      amount: 1_000_000_000n,
+      inputMint: SOL_MINT, outputMint: SOL_MINT, amount: 1_000_000_000n,
     });
 
-    const [swapUrl, swapInit] = mockFetch.mock.calls[1]! as [string, RequestInit];
+    const swapCall = mockFetch.mock.calls[1]!;
+    const swapUrl = swapCall[0] as string;
+    const swapInit = swapCall[1] as RequestInit;
     expect(swapUrl).toContain("/swap");
     const body = JSON.parse(swapInit.body as string) as Record<string, unknown>;
     expect(body["quoteResponse"]).toEqual(MOCK_QUOTE);
@@ -125,32 +117,26 @@ describe("jupiterSwap", () => {
 
     await expect(
       jupiterSwap(makeWallet(), connection, {
-        inputMint: SOL_MINT,
-        outputMint: SOL_MINT,
-        amount: 1n,
+        inputMint: SOL_MINT, outputMint: SOL_MINT, amount: 1n,
       }),
     ).rejects.toThrow(SwapError);
   });
 
-  it("calls setNextMeta on MetaAwareWallet with swap metadata", async () => {
+  it("calls setNextMeta on MetaAwareWallet with swap metadata including kind: 'swap'", async () => {
     mockFetch
       .mockResolvedValueOnce({ ok: true, json: async () => MOCK_QUOTE } as unknown as Response)
       .mockResolvedValueOnce({ ok: true, json: async () => ({ swapTransaction: MOCK_TX_BASE64 }) } as unknown as Response);
 
     const w = makeMetaWallet();
     await jupiterSwap(w, connection, {
-      inputMint: SOL_MINT,
-      outputMint: SOL_MINT,
-      amount: 1_000_000_000n,
-      inputSymbol: "SOL",
-      outputSymbol: "SOL",
+      inputMint: SOL_MINT, outputMint: SOL_MINT, amount: 1_000_000_000n,
     });
 
     expect(w.setNextMeta).toHaveBeenCalledTimes(1);
-    const meta = (w.setNextMeta as jest.Mock).mock.calls[0]![0] as { kind: string; amountIn: unknown; amountOut: unknown };
-    expect(meta.kind).toBe("swap");
-    expect(meta.amountIn).toBeDefined();
-    expect(meta.amountOut).toBeDefined();
+    const meta = (w.setNextMeta as jest.Mock).mock.calls[0]![0] as Record<string, unknown>;
+    expect(meta["kind"]).toBe("swap");
+    expect(meta["amountIn"]).toBeDefined();
+    expect(meta["amountOut"]).toBeDefined();
   });
 
   it("does not throw when wallet does not implement setNextMeta", async () => {
@@ -160,9 +146,7 @@ describe("jupiterSwap", () => {
 
     await expect(
       jupiterSwap(makeWallet(), connection, {
-        inputMint: SOL_MINT,
-        outputMint: SOL_MINT,
-        amount: 1n,
+        inputMint: SOL_MINT, outputMint: SOL_MINT, amount: 1n,
       }),
     ).resolves.toBeDefined();
   });

@@ -201,7 +201,7 @@ describe('POST /api/auth/siwe/verify', () => {
 		const { status, body, res } = await invoke({
 			action: 'verify',
 			method: 'POST',
-			body: { message: SIWE_MESSAGE, signature: '0xfakesig' },
+			body: { message: SIWE_MESSAGE, signature: `0x${'ab'.repeat(65)}` },
 			headers: withCsrf(),
 		});
 
@@ -218,7 +218,7 @@ describe('POST /api/auth/siwe/verify', () => {
 		const { status, body } = await invoke({
 			action: 'verify',
 			method: 'POST',
-			body: { message: SIWE_MESSAGE, signature: '0xfakesig' },
+			body: { message: SIWE_MESSAGE, signature: `0x${'ab'.repeat(65)}` },
 			headers: withCsrf(),
 		});
 
@@ -232,7 +232,7 @@ describe('POST /api/auth/siwe/verify', () => {
 		const { status, body } = await invoke({
 			action: 'verify',
 			method: 'POST',
-			body: { message: SIWE_MESSAGE, signature: '0xfakesig' },
+			body: { message: SIWE_MESSAGE, signature: `0x${'ab'.repeat(65)}` },
 			headers: withCsrf(),
 		});
 
@@ -244,7 +244,7 @@ describe('POST /api/auth/siwe/verify', () => {
 		const { status, body } = await invoke({
 			action: 'verify',
 			method: 'POST',
-			body: { message: SIWE_MESSAGE, signature: '0xfakesig' },
+			body: { message: SIWE_MESSAGE, signature: `0x${'ab'.repeat(65)}` },
 		});
 		expect(status).toBe(403);
 		expect(body.error).toBe('invalid_request');
@@ -257,7 +257,7 @@ describe('POST /api/auth/siwe/verify', () => {
 		const { status, body } = await invoke({
 			action: 'verify',
 			method: 'POST',
-			body: { message: SIWE_MESSAGE, signature: '0xfakesig' },
+			body: { message: SIWE_MESSAGE, signature: `0x${'ab'.repeat(65)}` },
 			headers: withCsrf({ 'x-csrf-token': 'wrong-csrf-token' }),
 		});
 		expect(status).toBe(403);
