@@ -2,37 +2,31 @@
   import { route } from '../stores.js';
   import FeaturesDropdown from './dropdowns/FeaturesDropdown.svelte';
   import SolutionsDropdown from './dropdowns/SolutionsDropdown.svelte';
+  import EventsDropdown from './dropdowns/EventsDropdown.svelte';
+  import BusinessDropdown from './dropdowns/BusinessDropdown.svelte';
 
   let featuresOpen = false;
   let solutionsOpen = false;
-
-  let featuresOpenTimer = null;
-  let featuresCloseTimer = null;
-  let solutionsOpenTimer = null;
-  let solutionsCloseTimer = null;
-
-  function makeHover(getOpen, setOpen, openTimer, closeTimer) {
-    return {
-      enter() {
-        clearTimeout(closeTimer.value);
-        openTimer.value = setTimeout(() => setOpen(true), 120);
-      },
-      leave() {
-        clearTimeout(openTimer.value);
-        closeTimer.value = setTimeout(() => setOpen(false), 200);
-      },
-    };
-  }
+  let eventsOpen = false;
+  let businessOpen = false;
 
   const featOpen  = { value: null };
   const featClose = { value: null };
   const solOpen   = { value: null };
   const solClose  = { value: null };
+  const evtOpen   = { value: null };
+  const evtClose  = { value: null };
+  const bizOpen   = { value: null };
+  const bizClose  = { value: null };
 
   function onFeatEnter()  { clearTimeout(featClose.value); featOpen.value  = setTimeout(() => (featuresOpen  = true),  120); }
   function onFeatLeave()  { clearTimeout(featOpen.value);  featClose.value = setTimeout(() => (featuresOpen  = false), 200); }
   function onSolEnter()   { clearTimeout(solClose.value);  solOpen.value   = setTimeout(() => (solutionsOpen = true),  120); }
   function onSolLeave()   { clearTimeout(solOpen.value);   solClose.value  = setTimeout(() => (solutionsOpen = false), 200); }
+  function onEvtEnter()   { clearTimeout(evtClose.value);  evtOpen.value   = setTimeout(() => (eventsOpen    = true),  120); }
+  function onEvtLeave()   { clearTimeout(evtOpen.value);   evtClose.value  = setTimeout(() => (eventsOpen    = false), 200); }
+  function onBizEnter()   { clearTimeout(bizClose.value);  bizOpen.value   = setTimeout(() => (businessOpen  = true),  120); }
+  function onBizLeave()   { clearTimeout(bizOpen.value);   bizClose.value  = setTimeout(() => (businessOpen  = false), 200); }
 </script>
 
 <header class="sticky top-0 z-40 bg-white border-b border-[#E5E3DC]">
@@ -89,10 +83,48 @@
         {/if}
       </div>
 
-      <!-- Stub triggers for Resources / Events / Business -->
+      <!-- Resources stub -->
       <button class="h-14 px-3 inline-flex items-center text-sm font-medium text-[#1A1A1A] hover:text-[#6B6B6B] transition-colors">Resources</button>
-      <button class="h-14 px-3 inline-flex items-center text-sm font-medium text-[#1A1A1A] hover:text-[#6B6B6B] transition-colors">Events</button>
-      <button class="h-14 px-3 inline-flex items-center text-sm font-medium text-[#1A1A1A] hover:text-[#6B6B6B] transition-colors">Business</button>
+
+      <!-- Events -->
+      <!-- svelte-ignore a11y-no-static-element-interactions -->
+      <div class="relative" on:mouseenter={onEvtEnter} on:mouseleave={onEvtLeave}>
+        <button
+          class="h-14 px-3 inline-flex items-center text-sm font-medium text-[#1A1A1A] hover:text-[#6B6B6B] transition-colors"
+          aria-haspopup="true"
+          aria-expanded={eventsOpen}
+        >Events</button>
+        {#if eventsOpen}
+          <!-- svelte-ignore a11y-no-static-element-interactions -->
+          <div
+            class="absolute top-full mt-2 left-0 z-50"
+            on:mouseenter={onEvtEnter}
+            on:mouseleave={onEvtLeave}
+          >
+            <EventsDropdown />
+          </div>
+        {/if}
+      </div>
+
+      <!-- Business -->
+      <!-- svelte-ignore a11y-no-static-element-interactions -->
+      <div class="relative" on:mouseenter={onBizEnter} on:mouseleave={onBizLeave}>
+        <button
+          class="h-14 px-3 inline-flex items-center text-sm font-medium text-[#1A1A1A] hover:text-[#6B6B6B] transition-colors"
+          aria-haspopup="true"
+          aria-expanded={businessOpen}
+        >Business</button>
+        {#if businessOpen}
+          <!-- svelte-ignore a11y-no-static-element-interactions -->
+          <div
+            class="absolute top-full mt-2 left-0 z-50"
+            on:mouseenter={onBizEnter}
+            on:mouseleave={onBizLeave}
+          >
+            <BusinessDropdown />
+          </div>
+        {/if}
+      </div>
       <button
         class="h-14 px-3 inline-flex items-center text-sm font-medium text-[#1A1A1A] hover:text-[#6B6B6B] transition-colors"
         on:click={() => route.set('pricing')}
