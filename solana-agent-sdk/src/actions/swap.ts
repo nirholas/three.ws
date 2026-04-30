@@ -3,7 +3,7 @@ import {
   VersionedTransaction,
   type Connection,
 } from "@solana/web3.js";
-import type { WalletProvider } from "../wallet/types.js";
+import { isMetaAware, type WalletProvider } from "../wallet/types.js";
 
 const JUPITER_QUOTE_API = "https://quote-api.jup.ag/v6";
 
@@ -16,6 +16,9 @@ export interface SwapParams {
   amount: bigint;
   /** Slippage in basis points (default 50 = 0.5%) */
   slippageBps?: number;
+  /** Symbol overrides for metadata display */
+  inputSymbol?: string;
+  outputSymbol?: string;
 }
 
 /** Native SOL wrapped mint address */
@@ -45,17 +48,25 @@ export async function jupiterSwap(
     typeof params.outputMint === "string" ? params.outputMint : params.outputMint.toBase58();
   const slippageBps = params.slippageBps ?? 50;
 
-  const quoteUrl = new URL(`${JUPITER_QUOTE_API}/quote`);
-  quoteUrl.searchParams.set("inputMint", inputMint);
-  quoteUrl.searchParams.set("outputMint", outputMint);
-  quoteUrl.searchParams.set("amount", params.amount.toString());
-  quoteUrl.searchParams.set("slippageBps", slippageBps.toString());
+  const quote = await getSwapQuote({ ...params, inputMint, outputMint });
 
-  const quoteRes = await fetch(quoteUrl.toString());
-  if (!quoteRes.ok) {
-    throw new Error(`Jupiter quote failed: ${await quoteRes.text()}`);
+  // Build human-readable metadata from the quote
+  if (isMetaAware(wallet)) {
+    const inDecimals = guessDecimals(inputMint);
+    const outDecimals = guessDecimals(outputMint);
+    const inSymbol = params.inputSymbol ?? shortMint(inputMint);
+    const outSymbol = params.outputSymbol ?? shortMint(outputMint);
+    const inUi = (Number(quote.inAmount) / 10 ** inDecimals).toFixed(4);
+    const outUi = (Number(quote.outAmount) / 10 ** outDecimals).toFixed(4);
+
+    wallet.setNextMeta({
+      label: `Swap ${inSymbol} → ${outSymbol}`,
+      description: `Swap ${inUi} ${inSymbol} for ~${outUi} ${outSymbol} via Jupiter (${slippageBps / 100}% slippage)`,
+      kind: "swap",
+      amountIn: { amount: quote.inAmount, symbol: inSymbol, uiAmount: inUi },
+      amountOut: { amount: quote.outAmount, symbol: outSymbol, uiAmount: outUi },
+    });
   }
-  const quote = (await quoteRes.json()) as JupiterQuote;
 
   const swapRes = await fetch(`${JUPITER_QUOTE_API}/swap`, {
     method: "POST",
@@ -95,4 +106,23 @@ export async function getSwapQuote(params: SwapParams): Promise<JupiterQuote> {
   const res = await fetch(url.toString());
   if (!res.ok) throw new Error(`Jupiter quote failed: ${await res.text()}`);
   return res.json() as Promise<JupiterQuote>;
+}
+
+// ─── Display helpers ──────────────────────────────────────────────────────────
+
+function shortMint(mint: string): string {
+  if (mint === SOL_MINT) return "SOL";
+  return mint.slice(0, 4) + "…";
+}
+
+/** Best-effort decimal guess for well-known mints; falls back to 9 (SOL default). */
+function guessDecimals(mint: string): number {
+  const KNOWN: Record<string, number> = {
+    [SOL_MINT]: 9,
+    "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v": 6, // USDC mainnet
+    "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU": 6, // USDC devnet
+    "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB": 6, // USDT mainnet
+    "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So": 9, // mSOL
+  };
+  return KNOWN[mint] ?? 9;
 }

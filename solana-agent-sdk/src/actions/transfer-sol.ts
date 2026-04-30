@@ -21,6 +21,7 @@ export async function transferSol(
 ): Promise<string> {
   const to = typeof params.to === "string" ? new PublicKey(params.to) : params.to;
   const lamports = Math.round(params.amount * LAMPORTS_PER_SOL);
+  const shortRecipient = to.toBase58().slice(0, 4) + "…" + to.toBase58().slice(-4);
 
   const ix = SystemProgram.transfer({
     fromPubkey: wallet.publicKey,
@@ -28,5 +29,14 @@ export async function transferSol(
     lamports,
   });
 
-  return buildAndSend(wallet, connection, [ix], opts);
+  return buildAndSend(wallet, connection, [ix], {
+    ...opts,
+    meta: opts?.meta ?? {
+      label: `Send ${params.amount} SOL`,
+      description: `Transfer ${params.amount} SOL to ${shortRecipient}`,
+      kind: "transfer",
+      amountIn: { amount: lamports.toString(), symbol: "SOL", uiAmount: params.amount.toString() },
+      recipient: shortRecipient,
+    },
+  });
 }

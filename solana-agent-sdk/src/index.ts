@@ -6,9 +6,10 @@ export type { SolanaAgentConfig } from "./agent.js";
 export { KeypairWalletProvider } from "./wallet/keypair.js";
 export { BrowserWalletProvider } from "./wallet/browser-server.js";
 export { BrowserWalletClient } from "./wallet/browser-client.js";
-export type { WalletProvider } from "./wallet/types.js";
+export type { WalletProvider, TxMetadata, MetaAwareWallet } from "./wallet/types.js";
+export { isMetaAware } from "./wallet/types.js";
 export type { BrowserWalletOptions, PendingTx } from "./wallet/browser-server.js";
-export type { SignerFn } from "./wallet/browser-client.js";
+export type { SignerFn, ApprovalHandler, BrowserWalletClientOptions } from "./wallet/browser-client.js";
 
 // Actions
 export { transferSol } from "./actions/transfer-sol.js";

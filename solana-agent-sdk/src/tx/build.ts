@@ -3,7 +3,7 @@ import {
   type Connection,
   type TransactionInstruction,
 } from "@solana/web3.js";
-import type { WalletProvider } from "../wallet/types.js";
+import { isMetaAware, type WalletProvider, type TxMetadata } from "../wallet/types.js";
 import {
   estimateComputeUnits,
   estimatePriorityFee,
@@ -18,6 +18,12 @@ export interface BuildAndSendOptions {
   cuLimit?: number;
   /** Max times to retry on blockhash expiry (default 3) */
   maxRetries?: number;
+  /**
+   * Human-readable description attached to the pending tx.
+   * BrowserWalletProvider uses this to show a confirmation card
+   * before the wallet prompt appears.
+   */
+  meta?: TxMetadata;
 }
 
 export async function buildAndSend(
@@ -27,6 +33,10 @@ export async function buildAndSend(
   opts: BuildAndSendOptions = {},
 ): Promise<string> {
   const { maxRetries = 3 } = opts;
+
+  if (opts.meta && isMetaAware(wallet)) {
+    wallet.setNextMeta(opts.meta);
+  }
 
   const [fee, cuLimit] = await Promise.all([
     opts.priorityFee !== undefined
