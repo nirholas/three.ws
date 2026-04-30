@@ -100,9 +100,13 @@ async function handleUpsert(req, res) {
 	// so without it, user B could write an entry with user A's memory id and
 	// the conflict would overwrite A's content. Constrain updates to rows
 	// belonging to the same agent (ownership already verified above).
+	const entryUpdatedAt = entry.updatedAt
+		? new Date(entry.updatedAt).toISOString()
+		: new Date().toISOString();
+
 	const [row] = entry.id
 		? await sql`
-			INSERT INTO agent_memories (id, agent_id, type, content, tags, context, salience, created_at, expires_at)
+			INSERT INTO agent_memories (id, agent_id, type, content, tags, context, salience, created_at, expires_at, updated_at)
 			VALUES (
 				${entry.id},
 				${agentId},
@@ -112,17 +116,19 @@ async function handleUpsert(req, res) {
 				${JSON.stringify(entry.context || {})}::jsonb,
 				${entry.salience || 0.5},
 				${entry.createdAt ? new Date(entry.createdAt).toISOString() : new Date().toISOString()},
-				${entry.expiresAt ? new Date(entry.expiresAt).toISOString() : null}
+				${entry.expiresAt ? new Date(entry.expiresAt).toISOString() : null},
+				${entryUpdatedAt}
 			)
 			ON CONFLICT (id) DO UPDATE SET
 				content    = EXCLUDED.content,
 				salience   = EXCLUDED.salience,
-				expires_at = EXCLUDED.expires_at
+				expires_at = EXCLUDED.expires_at,
+				updated_at = EXCLUDED.updated_at
 			WHERE agent_memories.agent_id = EXCLUDED.agent_id
 			RETURNING *
 		`
 		: await sql`
-			INSERT INTO agent_memories (agent_id, type, content, tags, context, salience, expires_at)
+			INSERT INTO agent_memories (agent_id, type, content, tags, context, salience, expires_at, updated_at)
 			VALUES (
 				${agentId},
 				${memType},
@@ -130,7 +136,8 @@ async function handleUpsert(req, res) {
 				${entry.tags || []},
 				${JSON.stringify(entry.context || {})}::jsonb,
 				${entry.salience || 0.5},
-				${entry.expiresAt ? new Date(entry.expiresAt).toISOString() : null}
+				${entry.expiresAt ? new Date(entry.expiresAt).toISOString() : null},
+				${entryUpdatedAt}
 			)
 			RETURNING *
 		`;
@@ -174,6 +181,7 @@ async function resolveAuth(req) {
 }
 
 function decorateMemory(row) {
+	const createdMs = row.created_at ? new Date(row.created_at).getTime() : Date.now();
 	return {
 		id: row.id,
 		agent_id: row.agent_id,
@@ -182,7 +190,8 @@ function decorateMemory(row) {
 		tags: row.tags || [],
 		context: row.context || {},
 		salience: row.salience,
-		createdAt: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
+		createdAt: createdMs,
+		updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : createdMs,
 		expiresAt: row.expires_at ? new Date(row.expires_at).getTime() : null,
 	};
 }

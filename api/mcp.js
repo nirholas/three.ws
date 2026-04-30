@@ -44,6 +44,7 @@ import {
 	findActiveSubscription,
 	resolveBillingMint,
 } from './_lib/pump-pricing.js';
+import { normalizeLegacyPolicy } from './_lib/embed-policy.js';
 
 const PROTOCOL_VERSION = '2025-06-18';
 const SERVER_INFO = { name: '3d-agent-mcp', version: '1.0.0' };
@@ -625,6 +626,21 @@ const TOOL_CATALOG = [
 			additionalProperties: false,
 		},
 	},
+	{
+		name: 'call_agent',
+		title: 'Call agent',
+		description:
+			'Send a message to another three.ws agent and get its response. Use this to delegate specialized tasks.',
+		inputSchema: {
+			type: 'object',
+			properties: {
+				agent_id: { type: 'string', description: "The agent's ID" },
+				message: { type: 'string', description: 'The message to send' },
+			},
+			required: ['agent_id', 'message'],
+			additionalProperties: false,
+		},
+	},
 ];
 
 const TOOLS = {
@@ -891,6 +907,57 @@ const TOOLS = {
 			return pumpfunToolResult(
 				await pumpfunMcp.graduations({ limit: clamp(args?.limit, 1, 50, 10) }),
 			);
+		},
+	},
+
+	call_agent: {
+		scope: 'avatars:read',
+		async handler(args, auth) {
+			if (!args?.agent_id) throw new Error('agent_id required');
+			if (!args?.message) throw new Error('message required');
+
+			const rl = await limits.agentDelegate(auth.userId || auth.rateKey || 'anon');
+			if (!rl.success)
+				throw rpcError(-32000, 'rate_limited', {
+					retry_after: Math.ceil((rl.reset - Date.now()) / 1000),
+				});
+
+			const [agent] = await sql`
+				SELECT id, name, description, embed_policy, meta
+				FROM agent_identities
+				WHERE id = ${args.agent_id} AND deleted_at IS NULL
+			`;
+			if (!agent) throw new Error('agent not found');
+
+			const policy = normalizeLegacyPolicy(agent.embed_policy);
+			const model = policy?.brain?.model || 'claude-haiku-4-5-20251001';
+			const systemPrompt =
+				agent.meta?.brain?.instructions ||
+				`You are ${agent.name}. ${agent.description || ''}`.trim();
+
+			const upstream = await fetch('https://api.anthropic.com/v1/messages', {
+				method: 'POST',
+				headers: {
+					'content-type': 'application/json',
+					'anthropic-version': '2023-06-01',
+					'x-api-key': env.ANTHROPIC_API_KEY,
+				},
+				body: JSON.stringify({
+					model,
+					max_tokens: 1024,
+					system: systemPrompt,
+					messages: [{ role: 'user', content: args.message }],
+				}),
+			});
+
+			if (!upstream.ok) throw new Error(`LLM call failed: ${upstream.status}`);
+
+			const data = await upstream.json();
+			const response = data?.content?.[0]?.text || '';
+			return {
+				content: [{ type: 'text', text: response }],
+				structuredContent: { agentId: args.agent_id, response },
+			};
 		},
 	},
 };

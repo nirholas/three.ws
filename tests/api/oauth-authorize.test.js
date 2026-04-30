@@ -41,7 +41,7 @@ vi.mock('../../api/_lib/crypto.js', () => ({
 	randomToken: vi.fn(() => 'fixed-code-1234567890abcdef'),
 }));
 
-const { default: handler } = await import('../../api/oauth/authorize.js');
+const { default: handler } = await import('../../api/oauth/[action].js');
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 

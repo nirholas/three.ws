@@ -906,6 +906,14 @@ class Agent3DElement extends HTMLElement {
 				fetchFn: fetch.bind(globalThis),
 			});
 
+			// Pull backend memories into the shared AgentMemory localStorage store
+			// before the first LLM turn so cross-device memory is present on init.
+			if (_backendId) {
+				const { AgentMemory } = await import('./agent-memory.js');
+				const syncMem = new AgentMemory(_backendId, { backendSync: true });
+				await syncMem.pull(_backendId).catch(() => {});
+			}
+
 			// Skills
 			this.dispatchEvent(
 				new CustomEvent('agent:load-progress', { detail: { phase: 'skills', pct: 0.75 } }),

@@ -58,7 +58,7 @@ vi.mock('../../api/_lib/crypto.js', () => ({
 	constantTimeEquals: vi.fn(() => cryptoState.constTimeEqual),
 }));
 
-const { default: handler } = await import('../../api/oauth/token.js');
+const { default: handler } = await import('../../api/oauth/[action].js');
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 

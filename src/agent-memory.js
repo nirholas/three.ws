@@ -64,6 +64,7 @@ export class AgentMemory {
 			context: entry.context || {},
 			salience: _computeSalience(entry, now),
 			createdAt: now,
+			updatedAt: now,
 			expiresAt: entry.expiresAt || null,
 		};
 		this._entries.push(mem);
@@ -243,8 +244,71 @@ export class AgentMemory {
 				tags: entry.tags,
 				salience: entry.salience,
 				expiresAt: entry.expiresAt,
+				updatedAt: entry.updatedAt,
 			}),
 		}).catch(() => {});
+	}
+
+	/**
+	 * Pull all non-deleted entries from the backend and merge into local store.
+	 * Conflict resolution: last-write-wins by updatedAt timestamp.
+	 * Idempotent — calling twice produces no duplicates.
+	 * Best-effort — silently skips if network is unavailable.
+	 * @param {string} agentId
+	 * @param {string|null} [authToken]
+	 */
+	async pull(agentId, authToken = null) {
+		try {
+			const headers = {};
+			if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+			const resp = await fetch(
+				`/api/agent-memory?agentId=${encodeURIComponent(agentId)}`,
+				{ credentials: 'include', headers },
+			);
+			if (!resp.ok) return;
+			const { entries } = await resp.json();
+			if (!Array.isArray(entries)) return;
+
+			const localById = new Map(this._entries.map((m) => [m.id, m]));
+			let changed = false;
+
+			for (const remote of entries) {
+				const remoteUpdatedAt = remote.updatedAt || remote.createdAt || 0;
+				const local = localById.get(remote.id);
+
+				if (!local) {
+					this._entries.push({
+						id: remote.id,
+						type: remote.type,
+						content: remote.content,
+						tags: remote.tags || [],
+						context: remote.context || {},
+						salience: remote.salience || 0.5,
+						createdAt: remote.createdAt || Date.now(),
+						updatedAt: remoteUpdatedAt,
+						expiresAt: remote.expiresAt || null,
+					});
+					changed = true;
+				} else {
+					const localUpdatedAt = local.updatedAt || local.createdAt || 0;
+					if (remoteUpdatedAt > localUpdatedAt) {
+						Object.assign(local, {
+							content: remote.content,
+							tags: remote.tags || [],
+							context: remote.context || {},
+							salience: remote.salience || 0.5,
+							updatedAt: remoteUpdatedAt,
+							expiresAt: remote.expiresAt || null,
+						});
+						changed = true;
+					}
+				}
+			}
+
+			if (changed) this._persist();
+		} catch {
+			/* Network unavailable — localStorage state is the fallback */
+		}
 	}
 
 	async _syncForget(id) {

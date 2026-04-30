@@ -1,7 +1,6 @@
 import { jest, describe, it, expect, beforeEach, afterEach } from "@jest/globals";
 import {
   Keypair,
-  PublicKey,
   TransactionMessage,
   VersionedTransaction,
   type Connection,
@@ -10,10 +9,9 @@ import { jupiterSwap, getSwapQuote, SOL_MINT } from "../../src/actions/swap.js";
 import { SwapError } from "../../src/errors.js";
 import type { MetaAwareWallet, WalletProvider } from "../../src/wallet/types.js";
 
-// Deterministic test key
 const WALLET_PUBKEY = Keypair.fromSeed(new Uint8Array(32).fill(1)).publicKey;
 
-// Minimal valid VersionedTransaction for the mock Jupiter swap response
+// Minimal valid VersionedTransaction for mock Jupiter swap response
 const MOCK_TX_BASE64 = (() => {
   const msg = new TransactionMessage({
     payerKey: WALLET_PUBKEY,
@@ -31,28 +29,28 @@ const MOCK_QUOTE = {
   priceImpactPct: "0.01",
 };
 
-function makeWallet(publicKey = WALLET_PUBKEY): WalletProvider {
+function makeWallet(): WalletProvider {
   return {
-    publicKey,
+    publicKey: WALLET_PUBKEY,
     signTransaction: jest.fn(),
-    signAndSendTransaction: jest.fn().mockResolvedValue("mockSwapSig"),
-  };
+    signAndSendTransaction: jest.fn<() => Promise<string>>().mockResolvedValue("mockSwapSig"),
+  } as unknown as WalletProvider;
 }
 
-function makeMetaWallet(publicKey = WALLET_PUBKEY): MetaAwareWallet {
+function makeMetaWallet(): MetaAwareWallet {
   return {
-    ...makeWallet(publicKey),
+    ...makeWallet(),
     setNextMeta: jest.fn(),
-  };
+  } as unknown as MetaAwareWallet;
 }
 
 const connection = {} as unknown as Connection;
 
-let mockFetch: jest.Mock;
+let mockFetch: jest.Mock<() => Promise<Response>>;
 
 beforeEach(() => {
-  mockFetch = jest.fn();
-  global.fetch = mockFetch;
+  mockFetch = jest.fn<() => Promise<Response>>();
+  global.fetch = mockFetch as unknown as typeof fetch;
 });
 
 afterEach(() => {
@@ -61,7 +59,10 @@ afterEach(() => {
 
 describe("getSwapQuote", () => {
   it("constructs quote URL with inputMint, outputMint, amount, and slippageBps", async () => {
-    mockFetch.mockResolvedValue({ ok: true, json: async () => MOCK_QUOTE });
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => MOCK_QUOTE,
+    } as unknown as Response);
 
     await getSwapQuote({
       inputMint: SOL_MINT,
@@ -71,7 +72,7 @@ describe("getSwapQuote", () => {
     });
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
-    const url = new URL(mockFetch.mock.calls[0][0] as string);
+    const url = new URL(mockFetch.mock.calls[0]![0] as string);
     expect(url.searchParams.get("inputMint")).toBe(SOL_MINT);
     expect(url.searchParams.get("outputMint")).toBe("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
     expect(url.searchParams.get("amount")).toBe("1000000000");
@@ -79,16 +80,16 @@ describe("getSwapQuote", () => {
   });
 
   it("defaults slippageBps to 50 when not provided", async () => {
-    mockFetch.mockResolvedValue({ ok: true, json: async () => MOCK_QUOTE });
+    mockFetch.mockResolvedValue({ ok: true, json: async () => MOCK_QUOTE } as unknown as Response);
 
     await getSwapQuote({ inputMint: SOL_MINT, outputMint: SOL_MINT, amount: 1n });
 
-    const url = new URL(mockFetch.mock.calls[0][0] as string);
+    const url = new URL(mockFetch.mock.calls[0]![0] as string);
     expect(url.searchParams.get("slippageBps")).toBe("50");
   });
 
   it("throws SwapError when quote API returns non-200", async () => {
-    mockFetch.mockResolvedValue({ ok: false, text: async () => "rate limited" });
+    mockFetch.mockResolvedValue({ ok: false, text: async () => "rate limited" } as unknown as Response);
 
     await expect(
       getSwapQuote({ inputMint: SOL_MINT, outputMint: SOL_MINT, amount: 1n }),
@@ -99,29 +100,28 @@ describe("getSwapQuote", () => {
 describe("jupiterSwap", () => {
   it("sends correct POST body to swap endpoint", async () => {
     mockFetch
-      .mockResolvedValueOnce({ ok: true, json: async () => MOCK_QUOTE })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ swapTransaction: MOCK_TX_BASE64 }) });
+      .mockResolvedValueOnce({ ok: true, json: async () => MOCK_QUOTE } as unknown as Response)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ swapTransaction: MOCK_TX_BASE64 }) } as unknown as Response);
 
-    const w = makeWallet();
-    await jupiterSwap(w, connection, {
+    await jupiterSwap(makeWallet(), connection, {
       inputMint: SOL_MINT,
       outputMint: SOL_MINT,
       amount: 1_000_000_000n,
     });
 
-    const [swapUrl, swapInit] = mockFetch.mock.calls[1] as [string, RequestInit];
+    const [swapUrl, swapInit] = mockFetch.mock.calls[1]! as [string, RequestInit];
     expect(swapUrl).toContain("/swap");
-    const body = JSON.parse(swapInit.body as string);
-    expect(body.quoteResponse).toEqual(MOCK_QUOTE);
-    expect(body.userPublicKey).toBe(WALLET_PUBKEY.toBase58());
-    expect(body.dynamicComputeUnitLimit).toBe(true);
-    expect(body.prioritizationFeeLamports).toBe("auto");
+    const body = JSON.parse(swapInit.body as string) as Record<string, unknown>;
+    expect(body["quoteResponse"]).toEqual(MOCK_QUOTE);
+    expect(body["userPublicKey"]).toBe(WALLET_PUBKEY.toBase58());
+    expect(body["dynamicComputeUnitLimit"]).toBe(true);
+    expect(body["prioritizationFeeLamports"]).toBe("auto");
   });
 
   it("throws SwapError when swap API returns non-200", async () => {
     mockFetch
-      .mockResolvedValueOnce({ ok: true, json: async () => MOCK_QUOTE })
-      .mockResolvedValueOnce({ ok: false, text: async () => "swap failed" });
+      .mockResolvedValueOnce({ ok: true, json: async () => MOCK_QUOTE } as unknown as Response)
+      .mockResolvedValueOnce({ ok: false, text: async () => "swap failed" } as unknown as Response);
 
     await expect(
       jupiterSwap(makeWallet(), connection, {
@@ -134,8 +134,8 @@ describe("jupiterSwap", () => {
 
   it("calls setNextMeta on MetaAwareWallet with swap metadata", async () => {
     mockFetch
-      .mockResolvedValueOnce({ ok: true, json: async () => MOCK_QUOTE })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ swapTransaction: MOCK_TX_BASE64 }) });
+      .mockResolvedValueOnce({ ok: true, json: async () => MOCK_QUOTE } as unknown as Response)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ swapTransaction: MOCK_TX_BASE64 }) } as unknown as Response);
 
     const w = makeMetaWallet();
     await jupiterSwap(w, connection, {
@@ -147,7 +147,7 @@ describe("jupiterSwap", () => {
     });
 
     expect(w.setNextMeta).toHaveBeenCalledTimes(1);
-    const meta = (w.setNextMeta as jest.Mock).mock.calls[0][0];
+    const meta = (w.setNextMeta as jest.Mock).mock.calls[0]![0] as { kind: string; amountIn: unknown; amountOut: unknown };
     expect(meta.kind).toBe("swap");
     expect(meta.amountIn).toBeDefined();
     expect(meta.amountOut).toBeDefined();
@@ -155,12 +155,11 @@ describe("jupiterSwap", () => {
 
   it("does not throw when wallet does not implement setNextMeta", async () => {
     mockFetch
-      .mockResolvedValueOnce({ ok: true, json: async () => MOCK_QUOTE })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ swapTransaction: MOCK_TX_BASE64 }) });
+      .mockResolvedValueOnce({ ok: true, json: async () => MOCK_QUOTE } as unknown as Response)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ swapTransaction: MOCK_TX_BASE64 }) } as unknown as Response);
 
-    const w = makeWallet(); // no setNextMeta
     await expect(
-      jupiterSwap(w, connection, {
+      jupiterSwap(makeWallet(), connection, {
         inputMint: SOL_MINT,
         outputMint: SOL_MINT,
         amount: 1n,

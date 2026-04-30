@@ -123,6 +123,21 @@ export class AgentSkills {
 			...ctx,
 		};
 
+		if (!fullCtx.call) {
+			const agentId = fullCtx.identity?.id;
+			fullCtx.call = async (toAgentId, message) => {
+				const r = await fetch('/api/agent-delegate', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					credentials: 'include',
+					body: JSON.stringify({ fromAgentId: agentId, toAgentId, message }),
+				});
+				if (!r.ok) throw new Error(`Delegate call failed: ${r.status}`);
+				const { response } = await r.json();
+				return response;
+			};
+		}
+
 		// Announce the skill is starting
 		this.protocol.emit({
 			type: ACTION_TYPES.PERFORM_SKILL,
