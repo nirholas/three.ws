@@ -1,3 +1,4 @@
+import { jest, describe, it, expect, afterEach } from "@jest/globals";
 import { Keypair, Transaction } from "@solana/web3.js";
 import { BrowserWalletProvider } from "../../src/wallet/browser-server.js";
 
@@ -113,14 +114,12 @@ describe("BrowserWalletProvider", () => {
     const meta = { label: "Send 1 SOL", kind: "transfer" as const };
     provider.setNextMeta(meta);
 
-    // First call — meta should be present
     const p1 = provider.signTransaction(makeTx());
     const [e1] = provider.getPending();
     expect(e1?.meta).toEqual(meta);
     provider.submitSigned(e1!.id, makeSerializedTx());
     await p1;
 
-    // Second call — meta should be cleared
     const p2 = provider.signTransaction(makeTx());
     const [e2] = provider.getPending();
     expect(e2?.meta).toBeUndefined();
