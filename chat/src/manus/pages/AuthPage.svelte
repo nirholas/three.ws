@@ -1,13 +1,45 @@
 <script>
-  import { route } from '../../stores.js';
+  import { route, loadCurrentUser } from '../../stores.js';
+  import { signInWithEVM, signInWithSolana } from '../../walletAuth.js';
+
   export let kind = 'signin'; // 'signin' | 'signup'
 
   let email = '';
   let password = '';
   let name = '';
+  let loading = null; // 'evm' | 'sol' | null
+  let error = '';
+
+  async function connectEVM() {
+    error = '';
+    loading = 'evm';
+    try {
+      await signInWithEVM();
+      await loadCurrentUser();
+      route.set('chat');
+    } catch (e) {
+      error = e.message || 'EVM sign-in failed.';
+    } finally {
+      loading = null;
+    }
+  }
+
+  async function connectSolana() {
+    error = '';
+    loading = 'sol';
+    try {
+      await signInWithSolana();
+      await loadCurrentUser();
+      route.set('chat');
+    } catch (e) {
+      error = e.message || 'Solana sign-in failed.';
+    } finally {
+      loading = null;
+    }
+  }
 
   function submit() {
-    console.log(kind, { email, password, name });
+    // Email/password auth not yet implemented
     route.set('chat');
   }
 </script>
@@ -24,14 +56,23 @@
     </p>
 
     <div class="mt-6 space-y-3">
-      <button class="bg-white border border-[#E5E3DC] text-[#1A1A1A] rounded-xl h-11 w-full flex items-center justify-center gap-2 hover:bg-[#F5F4EF] text-sm font-medium">
-        <span class="w-4 h-4 inline-block bg-[url('https://www.google.com/favicon.ico')] bg-cover" />
-        Continue with Google
+      <button
+        disabled={loading !== null}
+        on:click={connectEVM}
+        class="bg-black text-white rounded-xl h-11 w-full flex items-center justify-center gap-2 hover:bg-[#333] text-sm font-medium disabled:opacity-50 transition-colors"
+      >
+        {loading === 'evm' ? 'Connecting…' : 'Connect EVM Wallet'}
       </button>
-      <button class="bg-white border border-[#E5E3DC] text-[#1A1A1A] rounded-xl h-11 w-full flex items-center justify-center gap-2 hover:bg-[#F5F4EF] text-sm font-medium">
-        <span class="w-4 h-4 inline-block bg-[url('https://github.com/favicon.ico')] bg-cover" />
-        Continue with GitHub
+      <button
+        disabled={loading !== null}
+        on:click={connectSolana}
+        class="bg-white border border-[#E5E3DC] text-[#1A1A1A] rounded-xl h-11 w-full flex items-center justify-center gap-2 hover:bg-[#F5F4EF] text-sm font-medium disabled:opacity-50 transition-colors"
+      >
+        {loading === 'sol' ? 'Connecting…' : 'Connect Solana Wallet'}
       </button>
+      {#if error}
+        <p class="text-xs text-red-500 text-center">{error}</p>
+      {/if}
     </div>
 
     <div class="flex items-center gap-3 text-xs text-[#9C9A93] my-4">

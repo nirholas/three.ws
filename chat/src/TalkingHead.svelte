@@ -22,17 +22,38 @@
 	export let ttsApikey = '';
 	export let lipsyncModules = ['en'];
 
+	const CDN_URL =
+		'https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@1.4/modules/talkinghead.mjs';
+
 	const dispatch = createEventDispatcher();
 
 	let container;
 	let head = null;
 	let loadError = null;
 
-	onMount(async () => {
+	function importWithTimeout(url, ms) {
+		return Promise.race([
+			import(/* @vite-ignore */ url),
+			new Promise((_, reject) =>
+				setTimeout(() => reject(new Error('CDN load timed out')), ms)
+			),
+		]);
+	}
+
+	async function loadAvatar() {
+		loadError = null;
+		if (head?.stop) head.stop();
+		head = null;
+
 		try {
-			const mod = await import(
-				/* @vite-ignore */ 'https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@1.4/modules/talkinghead.mjs'
-			);
+			let mod;
+			try {
+				mod = await importWithTimeout(CDN_URL, 15000);
+			} catch {
+				await new Promise((r) => setTimeout(r, 2000));
+				mod = await importWithTimeout(CDN_URL, 15000);
+			}
+
 			const { TalkingHead } = mod;
 			head = new TalkingHead(container, {
 				ttsEndpoint,
@@ -40,17 +61,32 @@
 				lipsyncModules,
 				cameraView: 'upper',
 			});
-			await head.showAvatar({
-				url: avatarUrl,
-				body: avatarBody,
-				avatarMood: 'neutral',
-				lipsyncLang: 'en',
-			});
+
+			await Promise.race([
+				head.showAvatar({
+					url: avatarUrl,
+					body: avatarBody,
+					avatarMood: 'neutral',
+					lipsyncLang: 'en',
+				}),
+				new Promise((_, reject) =>
+					setTimeout(() => reject(new Error('Avatar model load timed out')), 20000)
+				),
+			]);
+
 			dispatch('ready');
 		} catch (err) {
 			loadError = err?.message || String(err);
 			console.warn('[TalkingHead] failed to load', err);
 		}
+	}
+
+	export function retry() {
+		loadAvatar();
+	}
+
+	onMount(() => {
+		loadAvatar();
 	});
 
 	onDestroy(() => {
@@ -74,7 +110,11 @@
 
 <div class="talking-head" bind:this={container}>
 	{#if loadError}
-		<div class="error">avatar failed to load: {loadError}</div>
+		<div class="error">
+			<p>Avatar failed to load</p>
+			<p class="detail">{loadError}</p>
+			<button on:click={retry}>Retry</button>
+		</div>
 	{/if}
 </div>
 
@@ -90,11 +130,30 @@
 	.error {
 		position: absolute;
 		inset: 0;
-		display: grid;
-		place-items: center;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		padding: 16px;
+	}
+	.error p {
 		color: #f88;
-		font: 12px/1.4 system-ui, sans-serif;
-		padding: 12px;
+		font-size: 12px;
 		text-align: center;
+		margin: 0;
+	}
+	.error .detail {
+		color: #aaa;
+		font-size: 11px;
+	}
+	.error button {
+		background: #333;
+		color: #fff;
+		border: none;
+		border-radius: 6px;
+		padding: 4px 12px;
+		font-size: 12px;
+		cursor: pointer;
 	}
 </style>

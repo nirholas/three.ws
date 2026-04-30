@@ -2,6 +2,7 @@
 	import { route } from '../stores.js';
 	import Icon from '../Icon.svelte';
 	import { feMenu, feX } from '../feather.js';
+	import WalletConnect from '../WalletConnect.svelte';
 	import FeaturesDropdown  from './dropdowns/FeaturesDropdown.svelte';
 	import SolutionsDropdown from './dropdowns/SolutionsDropdown.svelte';
 	import ResourcesDropdown from './dropdowns/ResourcesDropdown.svelte';
@@ -154,14 +155,7 @@
 		<!-- RIGHT: auth buttons + hamburger -->
 		<div class="flex items-center gap-2">
 			<div class="hidden items-center gap-2 md:flex">
-				<button
-					class="h-9 rounded-full bg-black px-4 text-sm font-medium text-white transition-colors hover:bg-[#333]"
-					on:click={() => route.set('signin')}
-				>Sign in</button>
-				<button
-					class="h-9 rounded-full border border-rule bg-white px-4 text-sm font-medium text-ink transition-colors hover:bg-paper"
-					on:click={() => route.set('signup')}
-				>Sign up</button>
+				<WalletConnect />
 			</div>
 			<button
 				class="rounded p-2 text-ink hover:bg-paper-deep md:hidden"
@@ -183,14 +177,7 @@
 				>{label}</button>
 			{/each}
 			<div class="flex gap-2 px-6 py-4">
-				<button
-					class="h-9 flex-1 rounded-full bg-black text-sm font-medium text-white"
-					on:click={() => { route.set('signin'); mobileOpen = false; }}
-				>Sign in</button>
-				<button
-					class="h-9 flex-1 rounded-full border border-rule bg-white text-sm font-medium text-ink"
-					on:click={() => { route.set('signup'); mobileOpen = false; }}
-				>Sign up</button>
+				<WalletConnect />
 			</div>
 		</div>
 	{/if}

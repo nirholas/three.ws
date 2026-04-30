@@ -22,7 +22,7 @@
 	} from './providers.js';
 	import ModelSelector from './ModelSelector.svelte';
 	import CompanyLogo from './CompanyLogo.svelte';
-	import { controller, remoteServer, config, params, toolSchema, syncServer, brandConfig, ttsEnabled, localAgentId, activeAgent, talkingHeadEnabled, route, mode, websiteCategory } from './stores.js';
+	import { controller, remoteServer, config, params, toolSchema, syncServer, brandConfig, ttsEnabled, localAgentId, activeAgent, talkingHeadEnabled, route, mode, websiteCategory, loadCurrentUser } from './stores.js';
 	import AuthPage from './manus/pages/AuthPage.svelte';
 	import Pricing from './manus/pages/Pricing.svelte';
 	import MarketingPage from './manus/pages/MarketingPage.svelte';
@@ -1065,6 +1065,9 @@
 		syncRouteFromHash();
 		window.addEventListener('hashchange', syncRouteFromHash);
 
+		// Populate auth state from session cookie
+		await loadCurrentUser();
+
 		// Fetch global brand config from server
 		try {
 			const res = await fetch('/api/chat/config');
@@ -1207,6 +1210,8 @@
 	let talkingHead;
 	let talkingHeadReady = false;
 	let pendingSpeak = null;
+	let agentReady = false;
+	let agentPendingSpeak = null;
 	let agentVisible = true;
 	let agentScriptLoaded = false;
 	let agentPickerOpen = false;
@@ -1224,6 +1229,21 @@
 	// Expose to client tools
 	$: if (agentEl) window.__threewsAgent = agentEl;
 
+	$: if (agentEl && !agentReady) {
+		agentEl.addEventListener('agent:ready', () => {
+			agentReady = true;
+			if (agentPendingSpeak) {
+				agentEl.speak(agentPendingSpeak);
+				agentPendingSpeak = null;
+			}
+		}, { once: true });
+	}
+
+	$: if (effectiveAgentId) {
+		agentReady = false;
+		agentPendingSpeak = null;
+	}
+
 	// Inject 3D agent tools into schema when an agent is active
 	$: if (effectiveAgentId) {
 		const hasGroup = $toolSchema.some(g => g.name === '3D Agent');
@@ -1232,12 +1252,27 @@
 
 	function detectEmotion(text) {
 		const t = text.toLowerCase();
-		if (/\b(sorry|unfortunately|error|failed|can't|cannot|problem|issue|wrong)\b/.test(t)) return 'concern';
-		if (/\b(great|excellent|perfect|congrats|amazing|wonderful|fantastic|awesome)\b/.test(t)) return 'celebration';
-		if (/\b(interesting|fascinating|curious|wonder|actually|surprisingly)\b/.test(t)) return 'curiosity';
-		if (/\b(understand|feel|must be|difficult|hard|tough|challenging)\b/.test(t)) return 'empathy';
-		if (/\b(let me|one moment|working on|processing|calculating)\b/.test(t)) return 'patience';
-		return null;
+		const scores = { concern: 0, celebration: 0, curiosity: 0, empathy: 0, patience: 0 };
+
+		if (/\b(error|failed|can't|cannot|unable to|unfortunately|issue|problem|broken|doesn't work)\b/.test(t)) scores.concern += 2;
+		if (/\b(sorry|apologize|my mistake|incorrect)\b/.test(t)) scores.concern += 1;
+
+		if (/\b(great|excellent|perfect|congrats|congratulations|amazing|wonderful|fantastic|awesome|well done)\b/.test(t)) scores.celebration += 2;
+		if (/\b(success|worked|solved|fixed|done|completed)\b/.test(t)) scores.celebration += 1;
+
+		if (/\b(interesting|fascinating|curious|wonder|surprising|actually|notably|worth knowing)\b/.test(t)) scores.curiosity += 2;
+		if (/\?/.test(text)) scores.curiosity += 1;
+
+		if (/\b(understand|i see|that makes sense|must be|difficult|hard|tough|challenging|frustrating)\b/.test(t)) scores.empathy += 2;
+		if (/\b(feel|sounds like|i hear you)\b/.test(t)) scores.empathy += 1;
+
+		if (/\b(let me|one moment|working on|processing|calculating|give me a|just a)\b/.test(t)) scores.patience += 2;
+
+		if (/\bcan't wait\b/.test(t)) scores.concern -= 2;
+		if (/\bno problem\b/.test(t)) scores.concern -= 2;
+
+		const top = Object.entries(scores).sort((a, b) => b[1] - a[1])[0];
+		return top[1] >= 2 ? top[0] : null;
 	}
 
 	$: if ($mode !== 'website') websiteCategory.set(null);
@@ -1247,12 +1282,18 @@
 		if (!last?.content) return;
 
 		if (agentEl && effectiveAgentId) {
-			agentEl.speak(last.content);
-			const emotion = detectEmotion(last.content);
-			if (emotion) setTimeout(() => agentEl?.expressEmotion(emotion), 600);
+			if (agentReady) {
+				agentEl.speak(last.content);
+				const emotion = detectEmotion(last.content);
+				if (emotion) setTimeout(() => agentEl?.expressEmotion(emotion), 600);
+			} else {
+				agentPendingSpeak = last.content;
+			}
 		} else if ($talkingHeadEnabled && agentVisible) {
 			if (talkingHeadReady) {
-				talkingHead.speak({ text: last.content });
+				const mood = detectEmotion(last.content);
+				if (mood) talkingHead.setMood(mood);
+				talkingHead.speak({ text: last.content, mood: mood || 'neutral' });
 			} else {
 				pendingSpeak = last.content;
 			}

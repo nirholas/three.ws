@@ -22,6 +22,7 @@ export const ACTION_TYPES = {
 	LOAD_END: 'load-end', // model/asset loading finished
 	VALIDATE: 'validate', // validation result (errors, warnings, hints)
 	PRESENCE: 'presence', // agent came online / went idle
+	PROTOCOL_ERROR: 'protocol-error', // emitted by the rate limiter on cascade detection
 	PERMISSIONS_REDEEM_START: 'permissions.redeem.start',
 	PERMISSIONS_REDEEM_SUCCESS: 'permissions.redeem.success',
 	PERMISSIONS_REDEEM_ERROR: 'permissions.redeem.error',
@@ -41,6 +42,21 @@ export class AgentProtocol extends EventTarget {
 		super();
 		this._history = [];
 		this._maxHistory = 200;
+
+		// Rate limiter state
+		this._counters = new Map();   // eventType → { count, windowStart }
+		this._throttled = new Set();  // event types currently rate-limited
+		this._limits = {
+			'perform-skill': 10,
+			'emote': 20,
+			'speak': 5,
+			'*': 100,
+		};
+		this._windowMs = 100;
+		this._cooldownMs = 1000;
+
+		/** Set to true at runtime to log all emits instead of rate-limiting. */
+		this.debug = false;
 	}
 
 	/**
@@ -48,6 +64,13 @@ export class AgentProtocol extends EventTarget {
 	 * @param {Omit<ActionPayload, 'timestamp'>} action
 	 */
 	emit(action) {
+		if (this.debug) {
+			console.log(`[agent-protocol] ${Date.now()} ${action.type}`, action.payload);
+		} else if (this._isThrottled(action.type)) {
+			console.warn(`[agent-protocol] rate-limited: ${action.type} — too many events`);
+			return;
+		}
+
 		const full = {
 			type: action.type,
 			payload: action.payload || {},
@@ -64,6 +87,60 @@ export class AgentProtocol extends EventTarget {
 
 		this.dispatchEvent(new CustomEvent(full.type, { detail: full }));
 		// Also dispatch a wildcard so listeners can monitor all traffic
+		this.dispatchEvent(new CustomEvent('*', { detail: full }));
+	}
+
+	_isThrottled(type) {
+		if (this._throttled.has(type)) return true;
+
+		const now = Date.now();
+		const counter = this._counters.get(type) || { count: 0, windowStart: now };
+
+		if (now - counter.windowStart > this._windowMs) {
+			counter.count = 1;
+			counter.windowStart = now;
+			this._counters.set(type, counter);
+			return false;
+		}
+
+		counter.count++;
+		this._counters.set(type, counter);
+
+		const limit = this._limits[type] ?? this._limits['*'];
+		if (counter.count > limit) {
+			this._throttle(type);
+			return true;
+		}
+		return false;
+	}
+
+	_throttle(type) {
+		this._throttled.add(type);
+		if (type !== 'protocol-error') {
+			this._dispatchDirect('protocol-error', {
+				code: 'rate_limited',
+				eventType: type,
+				message: `Event type "${type}" rate-limited — too many emissions in ${this._windowMs}ms`,
+			});
+		}
+		setTimeout(() => {
+			this._throttled.delete(type);
+			this._counters.delete(type);
+		}, this._cooldownMs);
+	}
+
+	// Bypasses the rate limiter — only for internal protocol-error emission.
+	_dispatchDirect(type, payload) {
+		const full = {
+			type,
+			payload,
+			timestamp: Date.now(),
+			agentId: 'protocol',
+			sourceSkill: null,
+		};
+		this._history.push(full);
+		if (this._history.length > this._maxHistory) this._history.shift();
+		this.dispatchEvent(new CustomEvent(type, { detail: full }));
 		this.dispatchEvent(new CustomEvent('*', { detail: full }));
 	}
 
