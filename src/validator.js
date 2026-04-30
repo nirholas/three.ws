@@ -1,4 +1,4 @@
-import { LoaderUtils } from 'three';
+import { LoaderUtils, Cache } from 'three';
 import { validateBytes } from 'gltf-validator';
 
 import { ValidatorReport } from './components/validator-report';
@@ -23,17 +23,15 @@ export class Validator {
 	 * @return {Promise}
 	 */
 	validate(rootFile, rootPath, assetMap, response) {
-		// Use Three.js Cache to avoid re-downloading the model.
-		// Cache.enabled is set to true in viewer.js.
-		const fetchBuffer =
-			window.THREE && window.THREE.Cache && window.THREE.Cache.get(rootFile)
-				? Promise.resolve(window.THREE.Cache.get(rootFile)).then((data) => {
-						if (data instanceof ArrayBuffer) return data;
-						// Cache may hold string for .gltf; convert
-						if (typeof data === 'string') return new TextEncoder().encode(data).buffer;
-						return fetch(rootFile).then((r) => r.arrayBuffer());
-					})
-				: fetch(rootFile).then((r) => r.arrayBuffer());
+		// Reuse the ArrayBuffer already cached by GLTFLoader in viewer.js (Cache.enabled = true).
+		const cached = Cache.get(rootFile);
+		const fetchBuffer = cached
+			? Promise.resolve(cached).then((data) => {
+					if (data instanceof ArrayBuffer) return data;
+					if (typeof data === 'string') return new TextEncoder().encode(data).buffer;
+					return fetch(rootFile).then((r) => r.arrayBuffer());
+				})
+			: fetch(rootFile).then((r) => r.arrayBuffer());
 
 		return fetchBuffer
 			.then((buffer) =>

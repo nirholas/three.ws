@@ -240,15 +240,161 @@ export const REGISTRY_DEPLOYMENTS: Record<number, RegistryDeployment>;
 
 export function agentRegistryId(chainId: number, registryAddress: string): string;
 
+export function getSigner(): unknown | null;
+
 // ---------------------------------------------------------------------------
-// Permissions — re-exported from ./permissions.js
+// Permissions
 // ---------------------------------------------------------------------------
 
-export {
-	DelegationScope,
-	DelegationPublic,
-	ScopePreset,
-	PermissionError,
-	PermissionsClientOptions,
-	PermissionsClient,
-} from './permissions';
+export interface DelegationPublic {
+	id: string;
+	delegationHash: string;
+	agentId: string;
+	delegator: string;
+	delegate: string;
+	status: string;
+	chainId: number;
+	[key: string]: unknown;
+}
+
+export interface ScopePreset {
+	token: string;
+	maxAmount: string;
+	period: string;
+	targets: string[];
+	expiryDays: number;
+}
+
+export interface PermissionsClientOptions {
+	baseUrl?: string;
+	bearer?: string;
+}
+
+export declare class PermissionError extends Error {
+	code: string;
+	name: 'PermissionError';
+	constructor(code: string, message: string);
+}
+
+export declare class PermissionsClient {
+	constructor(opts?: PermissionsClientOptions);
+	listDelegations(params?: { agentId?: string; delegator?: string; status?: string }): Promise<DelegationPublic[]>;
+	getMetadata(agentId: string): Promise<{ spec: string; delegations: DelegationPublic[] }>;
+	grant(params: { agentId: string; chainId: number; preset: ScopePreset; delegate: string; signer: unknown }): Promise<{ id: string; delegationHash: string }>;
+	redeem(params: { id: string; calls: Array<{ to: string; value?: string; data: string }> }): Promise<{ txHash: string }>;
+	revoke(params: { id: string; delegationHash: string; signer: unknown }): Promise<{ status: 'revoked'; txHash: string }>;
+	verify(hash: string, chainId: number): Promise<{ valid: boolean; reason?: string }>;
+}
+
+// ---------------------------------------------------------------------------
+// Solana
+// ---------------------------------------------------------------------------
+
+export declare function detectSolanaProvider(preferred?: string | null): unknown | null;
+
+export declare function signInWithSolana(opts?: {
+	preferred?: string | null;
+	nonceUrl?: string;
+	verifyUrl?: string;
+	chainId?: string;
+}): Promise<{ user: object; wallet: object }>;
+
+export declare function registerSolanaAgent(opts?: {
+	name: string;
+	description?: string;
+	avatarId?: string;
+	network?: 'mainnet' | 'devnet';
+	preferred?: string | null;
+	onStatus?: (msg: string) => void;
+}): Promise<{ agent: object; sol_mint_address: string; tx_signature: string }>;
+
+export declare function startSolanaCheckout(opts?: {
+	plan: 'pro' | 'team' | 'enterprise';
+	network?: 'mainnet' | 'devnet';
+}): Promise<{ solana_pay_url: string; intent_id: string; amount_usdc: number; nonce: string }>;
+
+export declare function confirmSolanaPayment(opts?: {
+	intentId: string;
+	txSignature: string;
+	network?: 'mainnet' | 'devnet';
+}): Promise<{ ok: boolean; plan: string; active_until: string }>;
+
+// ---------------------------------------------------------------------------
+// Solana attestations
+// ---------------------------------------------------------------------------
+
+export interface AttestationResult {
+	signature: string;
+	memo: object;
+}
+
+export declare function attestFeedback(opts?: {
+	agentAsset: string;
+	score: number;
+	taskId?: string;
+	uri?: string;
+	network?: 'mainnet' | 'devnet';
+	preferred?: string | null;
+}): Promise<AttestationResult>;
+
+export declare function attestValidation(opts?: {
+	agentAsset: string;
+	taskHash: string;
+	passed: boolean;
+	uri?: string;
+	network?: 'mainnet' | 'devnet';
+	preferred?: string | null;
+}): Promise<AttestationResult>;
+
+export declare function createTask(opts?: {
+	agentAsset: string;
+	taskId: string;
+	scopeHash: string;
+	uri?: string;
+	network?: 'mainnet' | 'devnet';
+	preferred?: string | null;
+}): Promise<AttestationResult>;
+
+export declare function acceptTask(opts?: {
+	agentAsset: string;
+	taskId: string;
+	network?: 'mainnet' | 'devnet';
+	preferred?: string | null;
+}): Promise<AttestationResult>;
+
+export declare function attestRevoke(opts?: {
+	agentAsset: string;
+	targetSignature: string;
+	reason?: string;
+	network?: 'mainnet' | 'devnet';
+	preferred?: string | null;
+}): Promise<AttestationResult>;
+
+export declare function attestDispute(opts?: {
+	agentAsset: string;
+	targetSignature: string;
+	reason?: string;
+	uri?: string;
+	network?: 'mainnet' | 'devnet';
+	preferred?: string | null;
+}): Promise<AttestationResult>;
+
+export declare function listAttestations(opts?: {
+	agentAsset: string;
+	kind?: 'feedback' | 'validation' | 'all';
+	limit?: number;
+	network?: 'mainnet' | 'devnet';
+}): Promise<Array<{ signature: string; slot: number; attester: string; memo: object }>>;
+
+export declare function fetchAttestations(opts?: {
+	agentAsset: string;
+	kind?: string;
+	network?: 'mainnet' | 'devnet';
+	apiOrigin?: string;
+}): Promise<unknown>;
+
+export declare function fetchReputation(opts?: {
+	agentAsset: string;
+	network?: 'mainnet' | 'devnet';
+	apiOrigin?: string;
+}): Promise<unknown>;

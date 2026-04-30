@@ -20,19 +20,11 @@
  *   client.connect();
  */
 import { Transaction, VersionedTransaction } from "@solana/web3.js";
-import type { TxMetadata } from "./types.js";
+import type { PendingTx } from "./browser-server.js";
 
 export type SignerFn = (
   tx: Transaction | VersionedTransaction,
 ) => Promise<Transaction | VersionedTransaction>;
-
-export interface PendingTx {
-  id: string;
-  transaction: string;
-  versioned: boolean;
-  createdAt: number;
-  meta?: TxMetadata;
-}
 
 export type ApprovalHandler = (
   pending: PendingTx,

@@ -13,7 +13,7 @@ Arbitrum One (42161), Celo (42220), Avalanche (43114), Linea (59144), Scroll (53
 | -------------------- | -------------------------------------------- | -------------------- |
 | IdentityRegistry     | `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432` | TODO: fill after deployment |
 | ReputationRegistry   | `0x8004BAa17C55a88189AE136b182e5fdA19dE9b63` | TODO: fill after deployment |
-| ValidationRegistry   | _(not yet deployed on mainnet)_              | —                    |
+| ValidationRegistry   | `TODO: fill after deployment` (same address on all chains) | TODO: one tx hash per chain |
 
 ## Testnet
 
@@ -31,4 +31,6 @@ Avalanche Fuji (43113)
 
 - Addresses are authoritative in [`src/erc8004/abi.js`](../src/erc8004/abi.js) (`REGISTRY_DEPLOYMENTS`).
 - Changing any address requires redeployment and updating `REGISTRY_DEPLOYMENTS` in `abi.js` and `api/_lib/erc8004-chains.js`.
-- Deploy scripts: [`script/Deploy.s.sol`](script/Deploy.s.sol), [`script/DeployValidationMainnet.s.sol`](script/DeployValidationMainnet.s.sol).
+- Deploy scripts: [`script/Deploy.s.sol`](script/Deploy.s.sol) (testnet), [`script/DeployValidationMainnet.s.sol`](script/DeployValidationMainnet.s.sol) (mainnet ValidationRegistry).
+- 15-chain deploy command list: [`script/deploy-validation-registry.sh`](script/deploy-validation-registry.sh).
+- After deployment: run `computeAddress(DEPLOYER_ADDRESS)` in the script (dry-run) to confirm the address, then update `validationRegistry` in `src/erc8004/abi.js` and `sdk/src/erc8004/abi.js`.

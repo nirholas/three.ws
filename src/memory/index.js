@@ -1,6 +1,8 @@
 // Agent memory — file-based, human-readable, Claude-shaped.
 // See specs/MEMORY_SPEC.md
 
+import { encryptBlob, bytesToBase64, base64ToBytes } from './crypto.js';
+
 const FRONTMATTER_RE = /^---\n([\s\S]*?)\n---\n?([\s\S]*)$/;
 
 function parseFrontmatter(text) {
@@ -22,21 +24,32 @@ function stringifyFrontmatter(meta, body) {
 	return lines.join('\n');
 }
 
+// Pack { nonce: Uint8Array(12), ciphertext: Uint8Array } → single Uint8Array: [12 bytes nonce][ciphertext]
+function pack({ nonce, ciphertext }) {
+	const out = new Uint8Array(12 + ciphertext.length);
+	out.set(nonce, 0);
+	out.set(ciphertext, 12);
+	return out;
+}
+
 export class Memory {
-	constructor({ mode = 'local', namespace, index = {}, files = {}, timeline = [] } = {}) {
+	constructor({ mode = 'local', namespace, index = {}, files = {}, timeline = [], cryptoKey = null } = {}) {
 		this.mode = mode;
 		this.namespace = namespace;
 		this.files = new Map(Object.entries(files));
 		this.timeline = timeline;
 		this.indexText = index.text || '';
+		this.cryptoKey = cryptoKey;
 		this._dirty = false;
 	}
 
-	static async load({ mode = 'local', namespace, manifestURI, fetchFn }) {
+	static async load({ mode = 'local', namespace, manifestURI, fetchFn, deriveKey }) {
 		if (mode === 'none') return new Memory({ mode: 'none', namespace });
 		if (mode === 'local') return Memory._loadLocal(namespace);
 		if (mode === 'ipfs' || mode === 'encrypted-ipfs') {
-			return Memory._loadIPFS({ mode, namespace, manifestURI, fetchFn });
+			if (mode === 'encrypted-ipfs' && !deriveKey)
+				throw new Error('encrypted-ipfs mode requires a deriveKey function');
+			return Memory._loadIPFS({ mode, namespace, manifestURI, fetchFn, deriveKey });
 		}
 		throw new Error(`Unknown memory mode: ${mode}`);
 	}
@@ -53,28 +66,55 @@ export class Memory {
 		}
 	}
 
-	static async _loadIPFS({ mode, namespace, manifestURI, fetchFn }) {
-		// Minimal IPFS mode — fetch memory/ from the manifest bundle.
+	static async _loadIPFS({ mode, namespace, manifestURI, fetchFn, deriveKey }) {
+		const isEncrypted = mode === 'encrypted-ipfs';
+		const cryptoKey = isEncrypted ? await deriveKey() : null;
+
 		const base = manifestURI.replace(/manifest\.json$/, '');
 		try {
 			const idxRes = await fetchFn(`${base}memory/MEMORY.md`);
 			const indexText = idxRes.ok ? await idxRes.text() : '';
 			const files = {};
-			// Parse MEMORY.md links to discover files
-			const linkRe = /\[([^\]]+)\]\(([^)]+\.md)\)/g;
-			let m;
-			while ((m = linkRe.exec(indexText))) {
-				const file = m[2];
-				try {
-					const r = await fetchFn(`${base}memory/${file}`);
-					if (r.ok) files[file] = await r.text();
-				} catch {
-					/* skip missing */
+
+			if (isEncrypted) {
+				// For encrypted-ipfs: links are [filename.md](ipfs://QmCid)
+				// Link text is the filename key; href is the IPFS URI to fetch.
+				const linkRe = /\[([^\]]*\.md)\]\((ipfs:\/\/[^)]+)\)/g;
+				let m;
+				while ((m = linkRe.exec(indexText))) {
+					const filename = m[1];
+					const ipfsUri = m[2];
+					try {
+						const r = await fetchFn(ipfsUri);
+						if (r.ok) files[filename] = await r.text(); // base64-encoded encrypted bytes
+					} catch { /* skip missing */ }
+				}
+				// Decrypt all fetched files. Let DOMException propagate on wrong key.
+				for (const filename of Object.keys(files)) {
+					const packed = base64ToBytes(files[filename]);
+					const iv = packed.slice(0, 12);
+					const ciphertext = packed.slice(12);
+					const buf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, cryptoKey, ciphertext);
+					files[filename] = new TextDecoder().decode(buf);
+				}
+			} else {
+				// Plaintext IPFS mode (unchanged): links are [Friendly Name](filename.md)
+				const linkRe = /\[([^\]]+)\]\(([^)]+\.md)\)/g;
+				let m;
+				while ((m = linkRe.exec(indexText))) {
+					const file = m[2];
+					try {
+						const r = await fetchFn(`${base}memory/${file}`);
+						if (r.ok) files[file] = await r.text();
+					} catch { /* skip missing */ }
 				}
 			}
-			return new Memory({ mode, namespace, index: { text: indexText }, files });
-		} catch {
-			return new Memory({ mode, namespace });
+
+			return new Memory({ mode, namespace, index: { text: indexText }, files, cryptoKey });
+		} catch (err) {
+			// Re-throw decryption errors so callers can detect wrong-key; swallow fetch/parse failures.
+			if (err instanceof DOMException) throw err;
+			return new Memory({ mode, namespace, cryptoKey });
 		}
 	}
 
@@ -143,6 +183,34 @@ export class Memory {
 		this.indexText = lines.join('\n');
 	}
 
+	// Like _rebuildIndex but uses filename as link text and ipfs://cid as href.
+	_rebuildEncryptedIndex(cids) {
+		const byType = { user: [], feedback: [], project: [], reference: [] };
+		for (const [file, raw] of this.files) {
+			const { meta } = parseFrontmatter(raw);
+			const t = meta.type || 'user';
+			if (!byType[t]) byType[t] = [];
+			byType[t].push({ file, description: meta.description || '', cid: cids[file] });
+		}
+		const lines = ['# Memory', ''];
+		const headings = {
+			user: '## User',
+			feedback: '## Feedback',
+			project: '## Project',
+			reference: '## Reference',
+		};
+		for (const [t, items] of Object.entries(byType)) {
+			if (!items.length) continue;
+			lines.push(headings[t] || `## ${t}`);
+			for (const it of items) {
+				const href = it.cid ? `ipfs://${it.cid}` : it.file;
+				lines.push(`- [${it.file}](${href}) — ${it.description}`);
+			}
+			lines.push('');
+		}
+		this.indexText = lines.join('\n');
+	}
+
 	_persist() {
 		if (this.mode !== 'local' || !this.namespace) return;
 		const key = `agent:${this.namespace}:memory`;
@@ -156,6 +224,50 @@ export class Memory {
 		} catch (e) {
 			console.warn('[memory] persist failed', e);
 		}
+	}
+
+	// Encrypt all files and pin to IPFS. Returns { cids, memoryCid }.
+	// For local mode, falls back to synchronous _persist(). Noop for other modes.
+	async save() {
+		if (this.mode === 'local') {
+			this._persist();
+			return;
+		}
+		if (this.mode !== 'encrypted-ipfs') return;
+		if (!this.cryptoKey) throw new Error('No cryptoKey — derive key before calling save()');
+		if (!this.namespace) throw new Error('namespace required for encrypted-ipfs save');
+
+		const cids = {};
+		for (const [filename, content] of this.files) {
+			const plainBytes = new TextEncoder().encode(content);
+			const { nonce, ciphertext } = await encryptBlob(plainBytes, this.cryptoKey);
+			const data = bytesToBase64(pack({ nonce, ciphertext }));
+			const resp = await fetch(`/api/agents/${this.namespace}/memory/pin`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				credentials: 'include',
+				body: JSON.stringify({ filename, data }),
+			});
+			if (!resp.ok) throw new Error(`Failed to pin ${filename}: ${resp.status}`);
+			const result = await resp.json();
+			cids[filename] = result.cid;
+		}
+
+		this._rebuildEncryptedIndex(cids);
+
+		// Pin the updated MEMORY.md index (plaintext — it only lists filenames and CIDs).
+		const indexData = bytesToBase64(new TextEncoder().encode(this.indexText));
+		const indexResp = await fetch(`/api/agents/${this.namespace}/memory/pin`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			credentials: 'include',
+			body: JSON.stringify({ filename: 'MEMORY.md', data: indexData }),
+		});
+		if (!indexResp.ok) throw new Error(`Failed to pin MEMORY.md: ${indexResp.status}`);
+		const { cid: memoryCid } = await indexResp.json();
+
+		this._dirty = false;
+		return { cids, memoryCid };
 	}
 
 	// Budget-aware context serialization for LLM injection

@@ -81,7 +81,7 @@ export class Runtime extends EventTarget {
 				this.dispatchEvent(
 					new CustomEvent('voice:speech-start', { detail: { text: reply.text } }),
 				);
-				await this.tts.speak(reply.text);
+				await this.tts.speak(reply.text, { scene: this.viewer?.content });
 				this.dispatchEvent(new CustomEvent('voice:speech-end', {}));
 			}
 
@@ -184,7 +184,7 @@ export class Runtime extends EventTarget {
 			speak: async (text) => {
 				if (!this.tts) return;
 				this.dispatchEvent(new CustomEvent('voice:speech-start', { detail: { text } }));
-				await this.tts.speak(text);
+				await this.tts.speak(text, { scene: this.viewer?.content });
 				this.dispatchEvent(new CustomEvent('voice:speech-end', {}));
 			},
 			listen: (opts) => this.stt?.listen(opts),

@@ -291,6 +291,9 @@ alter table agent_identities add column if not exists erc8004_registry text;
 alter table agent_identities add column if not exists registration_cid text;
 alter table agent_identities add column if not exists home_url         text;
 alter table agent_identities add column if not exists embed_policy     jsonb;
+alter table agent_identities add column if not exists voice_provider   text default 'browser';
+alter table agent_identities add column if not exists voice_id         text;
+alter table agent_identities add column if not exists voice_cloned_at  timestamptz;
 
 -- ── agent_memories — the agent's persistent context ──────────────────────────
 create table if not exists agent_memories (

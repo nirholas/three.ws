@@ -202,6 +202,12 @@ export const env = {
 		return opt('OPENROUTER_API_KEY');
 	},
 
+	// ElevenLabs API key — used by TTS proxy and voice cloning endpoints.
+	// Never sent to the browser.
+	get ELEVENLABS_API_KEY() {
+		return opt('ELEVENLABS_API_KEY');
+	},
+
 	getRpcUrl(chainId) {
 		return (
 			opt(`RPC_URL_${chainId}`) ||

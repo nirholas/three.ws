@@ -12,11 +12,15 @@
  * /api/agents/:id/sign            — owner-only: sign message with server wallet
  * /api/agents/:id/usage           — owner-only: LLM usage stats
  *
+ * /api/agents/:id/livekit-token     — GET short-lived LiveKit room JWT
+ * /api/agents/:id/embed             — POST text → 1024-dim embedding vector
  * /api/agents/:id/pumpfun/* is routed directly to api/agents/pumpfun/[action].js
  * by vercel.json — see the rewrite for that path family.
  */
 import { handleGetOne, handleWallet } from '../agents.js';
 import { cors, error, wrap } from '../_lib/http.js';
+
+const CID_RE = /^[a-zA-Z0-9]+$/;
 
 export default wrap(async function handler(req, res) {
 	const url = new URL(req.url, 'http://x');
@@ -75,6 +79,16 @@ export default wrap(async function handler(req, res) {
 	if (sub === 'memories') {
 		const mod = await import('./_sub.js');
 		return mod.handleMemories(req, res, id, action);
+	}
+
+	if (sub === 'livekit-token') {
+		const mod = await import('./livekit-token.js');
+		return mod.handleLiveKitToken(req, res, id);
+	}
+
+	if (sub === 'embed') {
+		const mod = await import('./embed.js');
+		return mod.handleEmbed(req, res, id);
 	}
 
 	return handleGetOne(req, res, id);

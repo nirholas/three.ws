@@ -33,11 +33,12 @@ export const MEMORY_TYPES = {
 export class AgentMemory {
 	/**
 	 * @param {string} agentId
-	 * @param {{ backendSync?: boolean }} [opts]
+	 * @param {{ backendSync?: boolean, embedFn?: (text: string) => Promise<number[]> }} [opts]
 	 */
-	constructor(agentId, { backendSync = false } = {}) {
+	constructor(agentId, { backendSync = false, embedFn = null } = {}) {
 		this.agentId = agentId;
 		this.backendSync = backendSync;
+		this.embedFn = embedFn;
 		this._entries = [];
 		this._dirty = false;
 		this._syncTimer = null;
@@ -67,6 +68,10 @@ export class AgentMemory {
 		};
 		this._entries.push(mem);
 		this._scheduleSync(mem);
+		// Fire-and-forget embedding generation
+		if (this.embedFn) {
+			this.embedFn(mem.content).then((vec) => { mem.embedding = vec; }).catch(() => {});
+		}
 		return id;
 	}
 
@@ -96,6 +101,49 @@ export class AgentMemory {
 		});
 
 		return results.slice(0, limit);
+	}
+
+	/**
+	 * Semantic similarity search using embeddings, falling back to query() if unavailable.
+	 * @param {string} queryText
+	 * @param {{ type?: string, limit?: number, minScore?: number }} [opts]
+	 * @returns {Promise<MemoryEntry[]>}
+	 */
+	async recall(queryText, { type, limit = 10, minScore = 0.75 } = {}) {
+		if (!this.embedFn) return this.query({ type, limit });
+
+		const now = Date.now();
+		const active = this._entries.filter((m) => {
+			if (m.expiresAt && m.expiresAt < now) return false;
+			if (type && m.type !== type) return false;
+			return true;
+		});
+
+		const queryVec = await this.embedFn(queryText).catch(() => null);
+		if (!queryVec) return this.query({ type, limit });
+
+		const withEmbedding = [];
+		const withoutEmbedding = [];
+		for (const m of active) {
+			if (m.embedding) withEmbedding.push(m);
+			else withoutEmbedding.push(m);
+		}
+
+		const scored = withEmbedding
+			.map((m) => ({ entry: m, score: cosineSim(queryVec, m.embedding) }))
+			.filter((x) => x.score >= minScore)
+			.sort((a, b) => b.score - a.score);
+
+		// Substring fallback for entries without embeddings
+		const q = queryText.toLowerCase();
+		const fallback = withoutEmbedding.filter((m) => m.content.toLowerCase().includes(q));
+
+		const seen = new Set(scored.map((x) => x.entry.id));
+		const combined = [
+			...scored.map((x) => x.entry),
+			...fallback.filter((m) => !seen.has(m.id)),
+		];
+		return combined.slice(0, limit);
 	}
 
 	/**
@@ -240,6 +288,12 @@ export class AgentMemory {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
+
+export function cosineSim(a, b) {
+	let dot = 0, na = 0, nb = 0;
+	for (let i = 0; i < a.length; i++) { dot += a[i] * b[i]; na += a[i] * a[i]; nb += b[i] * b[i]; }
+	return dot / (Math.sqrt(na) * Math.sqrt(nb));
+}
 
 function _uuid() {
 	if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();

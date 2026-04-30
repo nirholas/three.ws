@@ -5,7 +5,9 @@
  * shared across every EVM chain (deployed via CREATE2). Source:
  * https://github.com/nirholas/erc8004-agents
  *
- * Validation Registry is only on testnets today — mainnet entry is null.
+ * ValidationRegistry mainnet deployment is pending. After running
+ * contracts/script/deploy-validation-registry.sh, fill in the address
+ * produced by computeAddress(DEPLOYER_ADDRESS) in MAINNET.validationRegistry.
  */
 
 export const IDENTITY_REGISTRY_ABI = [

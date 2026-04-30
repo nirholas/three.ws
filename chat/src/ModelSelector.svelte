@@ -75,9 +75,7 @@
 				{#if convo.models[0].modality === 'text->image'}
 					<Icon icon={feImage} class="mt-px h-3 w-3 text-slate-800" />
 				{/if}
-				{#if convo.models.length > 1}
-					<span class="rounded bg-indigo-100 px-1 py-0.5 text-[10px] font-medium text-indigo-700">Consensus</span>
-				{/if}
+
 			</div>
 			<Icon
 				icon={feChevronDown}

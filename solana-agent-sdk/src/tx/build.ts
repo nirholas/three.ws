@@ -1,5 +1,9 @@
 import {
+  PublicKey,
   Transaction,
+  VersionedTransaction,
+  TransactionMessage,
+  type AddressLookupTableAccount,
   type Connection,
   type TransactionInstruction,
 } from "@solana/web3.js";
@@ -10,6 +14,7 @@ import {
   computeUnitIx,
   priorityFeeIx,
 } from "./fees.js";
+import { memoInstruction } from "../utils/memo.js";
 
 export interface BuildAndSendOptions {
   /** microLamports per CU — omit to auto-estimate from recent fees */
@@ -24,6 +29,17 @@ export interface BuildAndSendOptions {
    * before the wallet prompt appears.
    */
   meta?: TxMetadata;
+  /**
+   * Optional UTF-8 memo string attached to the transaction.
+   * Visible in Solana Explorer and on-chain indexers.
+   */
+  memo?: string;
+  /**
+   * Address Lookup Tables to include. When provided, builds a VersionedTransaction
+   * (v0 message) instead of a legacy Transaction. Required for transactions that
+   * reference more than 32 accounts.
+   */
+  lookupTables?: AddressLookupTableAccount[];
 }
 
 export async function buildAndSend(
@@ -38,13 +54,17 @@ export async function buildAndSend(
     wallet.setNextMeta(opts.meta);
   }
 
+  const allInstructions = opts.memo
+    ? [...instructions, memoInstruction(opts.memo, [wallet.publicKey])]
+    : instructions;
+
   const [fee, cuLimit] = await Promise.all([
     opts.priorityFee !== undefined
       ? Promise.resolve(opts.priorityFee)
       : estimatePriorityFee(connection),
     opts.cuLimit !== undefined
       ? Promise.resolve(opts.cuLimit)
-      : estimateComputeUnits(connection, instructions, wallet.publicKey),
+      : estimateComputeUnits(connection, allInstructions, wallet.publicKey),
   ]);
 
   const budgetIxs: TransactionInstruction[] = [
@@ -55,10 +75,23 @@ export async function buildAndSend(
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
 
-    const tx = new Transaction();
-    tx.recentBlockhash = blockhash;
-    tx.feePayer = wallet.publicKey;
-    tx.add(...budgetIxs, ...instructions);
+    let tx: Transaction | VersionedTransaction;
+
+    if (opts.lookupTables && opts.lookupTables.length > 0) {
+      const msg = new TransactionMessage({
+        payerKey: wallet.publicKey,
+        recentBlockhash: blockhash,
+        instructions: [...budgetIxs, ...allInstructions],
+      }).compileToV0Message(opts.lookupTables);
+      tx = new VersionedTransaction(msg);
+    } else {
+      const legacyTx = new Transaction();
+      legacyTx.recentBlockhash = blockhash;
+      legacyTx.lastValidBlockHeight = lastValidBlockHeight;
+      legacyTx.feePayer = wallet.publicKey;
+      legacyTx.add(...budgetIxs, ...allInstructions);
+      tx = legacyTx;
+    }
 
     try {
       return await wallet.signAndSendTransaction(tx, connection);
@@ -77,4 +110,17 @@ export async function buildAndSend(
   }
 
   throw new Error("buildAndSend: exhausted retries");
+}
+
+export async function fetchLookupTables(
+  connection: Connection,
+  addresses: string[],
+): Promise<AddressLookupTableAccount[]> {
+  return Promise.all(
+    addresses.map(async (addr) => {
+      const res = await connection.getAddressLookupTable(new PublicKey(addr));
+      if (!res.value) throw new Error(`Lookup table not found: ${addr}`);
+      return res.value;
+    }),
+  );
 }

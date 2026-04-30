@@ -20,6 +20,7 @@ import {
   type Connection,
 } from "@solana/web3.js";
 import type { MetaAwareWallet, TxMetadata } from "./types.js";
+import { TransactionRejectedError } from "../errors.js";
 
 export interface PendingTx {
   id: string;
@@ -64,8 +65,7 @@ export class BrowserWalletProvider implements MetaAwareWallet {
     this.nextMeta = meta;
   }
 
-  async signTransaction<T extends Transaction | VersionedTransaction>(tx: T): Promise<T> {
-    const id = crypto.randomUUID();
+  private async _sign<T extends Transaction | VersionedTransaction>(tx: T, id: string): Promise<T> {
     const versioned = !(tx instanceof Transaction);
     const serialized = Buffer.from(
       tx instanceof Transaction
@@ -82,7 +82,7 @@ export class BrowserWalletProvider implements MetaAwareWallet {
     return new Promise<T>((resolve, reject) => {
       const timer = setTimeout(() => {
         this.pending.delete(id);
-        reject(new Error(`Transaction ${id} timed out after ${this.timeoutMs}ms`));
+        reject(new TransactionRejectedError("Timed out waiting for user approval"));
       }, this.timeoutMs);
 
       this.emitter.once(`signed:${id}`, (signedBase64: string) => {
@@ -98,15 +98,21 @@ export class BrowserWalletProvider implements MetaAwareWallet {
       this.emitter.once(`rejected:${id}`, () => {
         clearTimeout(timer);
         this.pending.delete(id);
-        reject(new Error(`Transaction ${id} rejected by user`));
+        reject(new TransactionRejectedError("User rejected"));
       });
     });
   }
 
+  async signTransaction<T extends Transaction | VersionedTransaction>(tx: T): Promise<T> {
+    return this._sign(tx, crypto.randomUUID());
+  }
+
   async signAndSendTransaction(tx: Transaction | VersionedTransaction, connection: Connection): Promise<string> {
-    const signed = await this.signTransaction(tx);
+    const id = crypto.randomUUID();
+    const signed = await this._sign(tx, id);
     const sig = await connection.sendRawTransaction(signed.serialize(), { skipPreflight: false });
     await connection.confirmTransaction(sig, "confirmed");
+    this.emitter.emit(`confirmed:${id}`, sig);
     return sig;
   }
 
@@ -189,8 +195,16 @@ export class BrowserWalletProvider implements MetaAwareWallet {
       // POST /sign/:id
       if (req.method === "POST" && action === "sign" && id) {
         const body = (await req.json()) as { signedTransaction: string };
+        const sigPromise = new Promise<string | null>((resolve) => {
+          const t = setTimeout(() => resolve(null), 60_000);
+          this.emitter.once(`confirmed:${id}`, (sig: string) => {
+            clearTimeout(t);
+            resolve(sig);
+          });
+        });
         this.submitSigned(id, body.signedTransaction);
-        return Response.json({ ok: true });
+        const signature = await sigPromise;
+        return Response.json(signature ? { ok: true, signature } : { ok: false });
       }
 
       // POST /reject/:id

@@ -11,6 +11,7 @@ export interface TransferSolParams {
   to: PublicKey | string;
   /** Amount in SOL (not lamports) */
   amount: number;
+  memo?: string;
 }
 
 export async function transferSol(
@@ -31,6 +32,7 @@ export async function transferSol(
 
   return buildAndSend(wallet, connection, [ix], {
     ...opts,
+    memo: params.memo ?? opts?.memo,
     meta: opts?.meta ?? {
       label: `Send ${params.amount} SOL`,
       description: `Transfer ${params.amount} SOL to ${shortRecipient}`,
