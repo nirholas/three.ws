@@ -7,6 +7,8 @@ import { cors, json, method, readJson, wrap, error } from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { parse } from '../../_lib/validate.js';
 import { emit402, verifyPaid, consumeIntent, manifestOnly } from '../../_lib/x402.js';
+import { calculateFee } from '../../_lib/fee.js';
+import { insertNotification } from '../../_lib/notify.js';
 
 const HANDLERS = { echo: async (args) => ({ ok: true, echoed: args }) };
 
@@ -43,7 +45,7 @@ async function handleInvoke(req, res) {
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
 	const body = parse(invokeSchema, await readJson(req));
-	const [agent] = await sql`select id, name, meta from agent_identities where id = ${body.agent_id} and deleted_at is null limit 1`;
+	const [agent] = await sql`select id, user_id, name, meta from agent_identities where id = ${body.agent_id} and deleted_at is null limit 1`;
 	if (!agent) return error(res, 404, 'not_found', 'agent not found');
 	if (!agent.meta?.payments?.configured) return error(res, 409, 'precondition_failed', 'agent has not enabled payments');
 	if (!HANDLERS[body.skill]) return error(res, 404, 'unknown_skill', `skill "${body.skill}" is not registered`);
@@ -53,6 +55,21 @@ async function handleInvoke(req, res) {
 	if (!paid) return emit402(res, { agent, skill: body.skill, amount: price.amount, currency: price.currency });
 
 	await consumeIntent(paid.intentId);
+	const gross = parseInt(paid.amount, 10);
+	const { fee, net } = calculateFee(gross);
+	await sql`
+		insert into agent_revenue_events
+			(agent_id, intent_id, skill, gross_amount, fee_amount, net_amount, currency_mint, chain, payer_address)
+		values
+			(${agent.id}, ${paid.intentId}, ${body.skill}, ${gross}, ${fee}, ${net}, ${paid.currency}, ${'solana'}, ${paid.payerAddress})
+	`;
+	insertNotification(agent.user_id, 'payment_received', {
+		agent_id: agent.id,
+		agent_name: agent.name,
+		skill: body.skill,
+		net_amount: net,
+		currency_mint: paid.currency,
+	});
 	const result = await HANDLERS[body.skill](body.args, { agent, caller: auth });
 	return json(res, 200, { ok: true, intent_id: paid.intentId, amount: paid.amount, currency: paid.currency, result });
 }

@@ -124,6 +124,7 @@ export async function verifyPaid(req, { agentId, skill, expectedAmount, expected
 		amount: row.amount,
 		currency: row.currency_mint,
 		paidAt: row.paid_at,
+		payerAddress: row.payload?.wallet_address ?? null,
 	};
 }
 

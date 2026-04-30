@@ -138,7 +138,11 @@ async function handleList(req, res, url) {
 	const rows = await sql`
 		SELECT ai.id, ai.name, ai.description, ai.category, ai.tags, ai.avatar_id, ai.user_id,
 		       ai.forks_count, ai.views_count, ai.published_at, ai.created_at, ai.skills,
-		       av.thumbnail_key
+		       av.thumbnail_key,
+		       EXISTS (
+		         SELECT 1 FROM agent_skill_prices asp
+		         WHERE asp.agent_id = ai.id AND asp.is_active = true
+		       ) AS has_paid_skills
 		FROM agent_identities ai
 		LEFT JOIN avatars av ON av.id = ai.avatar_id AND av.deleted_at IS NULL
 		WHERE ai.is_published = true
@@ -435,6 +439,7 @@ function toCard(row) {
 		views_count: row.views_count || 0,
 		published_at: row.published_at,
 		created_at: row.created_at,
+		has_paid_skills: row.has_paid_skills || false,
 	};
 }
 

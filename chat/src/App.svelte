@@ -46,6 +46,7 @@
 		feCpu,
 		feDownload,
 		feEdit2,
+		feGrid,
 		feMenu,
 		feTerminal,
 		feMoreHorizontal,
@@ -74,6 +75,7 @@
 	import TopNav from './manus/TopNav.svelte';
 	import WebsiteFlow from './manus/flows/WebsiteFlow.svelte';
 	import DesktopFlow from './manus/flows/DesktopFlow.svelte';
+	import RevenueDashboard from './manus/pages/RevenueDashboard.svelte';
 
 	marked.use(
 		markedKatex({
@@ -1442,6 +1444,12 @@
 			// Non-critical, fail silently
 		}
 	}
+
+	let showSkillsMarketplace = false;
+
+	function removeSkill(name) {
+		toolSchema.update(groups => groups.filter(g => g.name !== name));
+	}
 </script>
 
 <svelte:window
@@ -1497,6 +1505,11 @@
   <div class="min-h-dvh bg-paper">
     <div class="sticky top-0 z-[110]"><TopNav /></div>
     <ResourcePage slug={$route.slice('resources/'.length)} />
+  </div>
+{:else if $route === 'dashboard/revenue'}
+  <div class="min-h-dvh bg-[#F5F4EF]">
+    <div class="sticky top-0 z-[110]"><TopNav /></div>
+    <RevenueDashboard />
   </div>
 {:else if $route.startsWith('features/')}
   <div class="min-h-dvh bg-paper overflow-y-auto">
@@ -1931,6 +1944,28 @@
 						</div>
 
 						<div class="pointer-events-none absolute bottom-[72px] inset-x-0 h-8 z-[98] bg-gradient-to-t from-paper to-transparent" />
+						{#if $toolSchema.length > 0}
+							<div class="flex flex-wrap gap-1.5 px-4 pt-2 pb-0">
+								{#each $toolSchema as group}
+									<span class="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 text-[11px] font-medium text-indigo-700">
+										{group.name}
+										<button
+											class="ml-0.5 rounded-full p-0.5 text-indigo-400 hover:bg-indigo-100 hover:text-indigo-600"
+											on:click={() => removeSkill(group.name)}
+											aria-label="Remove {group.name}"
+										>
+											<Icon icon={feX} class="h-2.5 w-2.5" />
+										</button>
+									</span>
+								{/each}
+								<button
+									class="text-[11px] text-slate-400 hover:text-slate-600"
+									on:click={() => (showSkillsMarketplace = true)}
+								>
+									+ Add skill
+								</button>
+							</div>
+						{/if}
 						<Composer
 							bind:generating
 							bind:convo
