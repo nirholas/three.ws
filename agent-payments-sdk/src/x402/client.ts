@@ -14,6 +14,14 @@ import {
   PublicKey,
   Transaction,
 } from "@solana/web3.js";
+import {
+  getMint,
+  getAssociatedTokenAddressSync,
+  createAssociatedTokenAccountInstruction,
+  createTransferCheckedInstruction,
+  TOKEN_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
 import { PumpAgentOffline } from "../PumpAgentOffline";
 import {
   encodePaymentPayload,
@@ -25,6 +33,7 @@ import type {
   PaymentRequired,
   PaymentRequirements,
   PumpAgentPaymentRequirements,
+  ExactPaymentRequirements,
 } from "./types";
 import {
   X402_HEADER_PAYMENT_SIGNATURE,
@@ -147,7 +156,8 @@ async function buildPaymentProof(
   sendTransaction: (signedTxBase64: string) => Promise<string>,
   confirmationTimeoutMs: number,
 ): Promise<Record<string, unknown>> {
-  if (requirements.scheme === "pump-agent") {
+  const scheme = requirements.scheme;
+  if (scheme === "pump-agent") {
     return buildPumpAgentProof(
       requirements as PumpAgentPaymentRequirements,
       payer,
@@ -158,7 +168,18 @@ async function buildPaymentProof(
     );
   }
 
-  throw new Error(`Unsupported scheme: ${requirements.scheme}`);
+  if (scheme === "exact") {
+    return buildExactProof(
+      requirements as ExactPaymentRequirements,
+      payer,
+      connection,
+      signTransaction,
+      sendTransaction,
+      confirmationTimeoutMs,
+    );
+  }
+
+  throw new Error(`Unsupported scheme: ${scheme}`);
 }
 
 async function buildPumpAgentProof(
@@ -214,6 +235,52 @@ async function buildPumpAgentProof(
     startTime: extra.startTime,
     endTime: extra.endTime,
   };
+}
+
+async function buildExactProof(
+  requirements: ExactPaymentRequirements,
+  payer: string,
+  connection: Connection,
+  signTransaction: (txBase64: string) => Promise<string>,
+  sendTransaction: (signedTxBase64: string) => Promise<string>,
+  confirmationTimeoutMs: number,
+): Promise<Record<string, unknown>> {
+  const payerPk = new PublicKey(payer);
+  const mint = new PublicKey(requirements.asset);
+  const payTo = new PublicKey(requirements.payTo);
+  const amount = BigInt(requirements.amount);
+
+  const mintInfo = await getMint(connection, mint);
+  const senderAta = getAssociatedTokenAddressSync(mint, payerPk, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
+  const receiverAta = getAssociatedTokenAddressSync(mint, payTo, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
+
+  const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
+
+  const tx = new Transaction();
+  tx.recentBlockhash = blockhash;
+  tx.lastValidBlockHeight = lastValidBlockHeight;
+  tx.feePayer = payerPk;
+
+  const receiverInfo = await connection.getAccountInfo(receiverAta);
+  if (!receiverInfo) {
+    tx.add(createAssociatedTokenAccountInstruction(
+      payerPk, receiverAta, payTo, mint,
+      TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
+    ));
+  }
+
+  tx.add(createTransferCheckedInstruction(
+    senderAta, mint, receiverAta, payerPk,
+    amount, mintInfo.decimals, [], TOKEN_PROGRAM_ID,
+  ));
+
+  const txBase64 = Buffer.from(tx.serialize({ requireAllSignatures: false })).toString("base64");
+  const signedTxBase64 = await signTransaction(txBase64);
+  const signature = await sendTransaction(signedTxBase64);
+
+  await waitForConfirmation(connection, signature, lastValidBlockHeight, confirmationTimeoutMs);
+
+  return { signature, network: requirements.network };
 }
 
 // ─── Confirmation Helper ────────────────────────────────────────────────────

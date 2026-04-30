@@ -21,6 +21,11 @@
       "types": "./dist/x402-exact/index.d.ts",
       "import": "./dist/x402-exact/index.js",
       "require": "./dist/x402-exact/index.cjs"
+    },
+    "./solana-agent-kit": {
+      "types": "./dist/solana-agent-kit/index.d.ts",
+      "import": "./dist/solana-agent-kit/index.js",
+      "require": "./dist/solana-agent-kit/index.cjs"
     }
   },
   "files": ["dist"],
@@ -37,11 +42,18 @@
     "@solana/web3.js": "^1.98.0",
     "bs58": "^6.0.0"
   },
+  "peerDependencies": {
+    "zod": "^3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "zod": { "optional": true }
+  },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@rollup/rollup-linux-x64-gnu": "*",
     "tsup": "^8.3.5",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "zod": "^3.0.0"
   },
   "publishConfig": {
     "access": "public"
