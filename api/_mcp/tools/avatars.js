@@ -1,4 +1,3 @@
-import { sql } from '../../_lib/db.js';
 import {
 	listAvatars,
 	getAvatar,
@@ -7,126 +6,20 @@ import {
 	resolveAvatarUrl,
 	deleteAvatar,
 } from '../../_lib/avatars.js';
+import {
+	renderModelViewerHtml,
+	formatAvatarList,
+	safeCssValue,
+	safeCssLength,
+	safeHttpsUrl,
+} from '../render.js';
+import { readMcpPolicyByAvatar } from '../embed-policy.js';
 
 function rpcError(code, message, data) {
 	const e = new Error(message);
 	e.code = code;
 	e.data = data;
 	return e;
-}
-
-function _mcpDefaultPolicy() {
-	return {
-		version: 1,
-		origins: { mode: 'allowlist', hosts: [] },
-		surfaces: { script: true, iframe: true, widget: true, mcp: true },
-	};
-}
-
-function _mcpParsePolicy(p) {
-	if (!p) return null;
-	if (!('version' in p) && ('mode' in p || 'hosts' in p)) {
-		// Old flat shape — only origins were configured; all surfaces (incl. mcp) allowed.
-		return {
-			..._mcpDefaultPolicy(),
-			origins: { mode: p.mode || 'allowlist', hosts: p.hosts ?? [] },
-		};
-	}
-	return { ..._mcpDefaultPolicy(), ...p };
-}
-
-async function _readMcpPolicyByAvatar(avatarId) {
-	try {
-		const [row] = await sql`
-			SELECT embed_policy FROM agent_identities
-			WHERE avatar_id = ${avatarId} AND deleted_at IS NULL
-			LIMIT 1
-		`;
-		if (!row) return null;
-		return _mcpParsePolicy(row.embed_policy);
-	} catch (err) {
-		if (/column .* does not exist/i.test(String(err?.message))) return null;
-		throw err;
-	}
-}
-
-function esc(s) {
-	return String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
-}
-
-function attr(s) {
-	return String(s).replace(
-		/[&<>"]/g,
-		(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c],
-	);
-}
-
-// CSS inputs land inside a <style> declaration (`background: <value>`), where
-// HTML attribute-escaping does not defend against `;}body{…}` breakouts. Only
-// allow a strict character class that cannot terminate the declaration/rule.
-function safeCssValue(s, fallback) {
-	if (!s) return fallback;
-	const str = String(s).trim();
-	if (!/^[a-zA-Z0-9 .,%#()\-_/+]+$/.test(str)) return fallback;
-	if (str.length > 120) return fallback;
-	return str;
-}
-
-function safeCssLength(s, fallback) {
-	if (!s) return fallback;
-	const str = String(s).trim();
-	if (!/^[0-9]+(?:\.[0-9]+)?(?:px|em|rem|vh|vw|%)$|^auto$|^100%$/.test(str)) return fallback;
-	return str;
-}
-
-// Posters are rendered as an attribute value that the browser fetches; restrict
-// to https(:) to block `javascript:` and `data:` URLs that could execute code.
-function safeHttpsUrl(s) {
-	if (!s) return undefined;
-	try {
-		const u = new URL(String(s));
-		return u.protocol === 'https:' ? u.toString() : undefined;
-	} catch {
-		return undefined;
-	}
-}
-
-function renderModelViewerHtml({ src, name, poster, background, height, width, autoRotate, ar, cameraOrbit }) {
-	const attrs = [
-		`src="${attr(src)}"`,
-		'camera-controls',
-		'shadow-intensity="1"',
-		'exposure="1"',
-		'tone-mapping="aces"',
-		autoRotate ? 'auto-rotate' : '',
-		ar ? 'ar ar-modes="webxr scene-viewer quick-look"' : '',
-		poster ? `poster="${attr(poster)}"` : '',
-		cameraOrbit ? `camera-orbit="${attr(cameraOrbit)}"` : '',
-		`alt="${attr(name || 'Avatar')}"`,
-	]
-		.filter(Boolean)
-		.join(' ');
-	return [
-		'<!doctype html>',
-		'<html><head><meta charset="utf-8"><title>' + esc(name || 'Avatar') + '</title>',
-		'<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>',
-		'<style>html,body{margin:0;height:100%;background:' + attr(background) + '}',
-		'model-viewer{width:' + attr(width) + ';height:' + attr(height) + ';--progress-bar-color:#6a5cff}</style>',
-		'</head><body>',
-		'<model-viewer ' + attrs + '></model-viewer>',
-		'</body></html>',
-	].join('\n');
-}
-
-function formatAvatarList(avatars, { public: isPublic = false } = {}) {
-	if (!avatars.length) return 'No avatars found.';
-	return avatars
-		.map((a) => {
-			const url = a.model_url ? ` — ${a.model_url}` : '';
-			const vis = isPublic ? '' : ` [${a.visibility}]`;
-			return `• ${a.name} (slug: ${a.slug}, id: ${a.id})${vis}${url}`;
-		})
-		.join('\n');
 }
 
 export const toolDefs = [
@@ -272,7 +165,7 @@ export const toolDefs = [
 					: null;
 			if (!avatar) throw new Error('avatar not found');
 			// surfaces.mcp gate — check if a registered agent owns this avatar
-			const _mcpPolicy = await _readMcpPolicyByAvatar(avatar.id);
+			const _mcpPolicy = await readMcpPolicyByAvatar(avatar.id);
 			if (_mcpPolicy && _mcpPolicy.surfaces?.mcp === false) {
 				throw rpcError(
 					-32000,

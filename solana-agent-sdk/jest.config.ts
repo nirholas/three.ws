@@ -8,7 +8,10 @@ const config: Config = {
   transform: {
     "^.+\\.ts$": ["ts-jest", { useESM: true, tsconfig: "./tsconfig.test.json" }],
   },
-  testMatch: ["<rootDir>/tests/wallet/**/*.test.ts"],
+  testMatch: [
+    "<rootDir>/tests/wallet/**/*.test.ts",
+    "<rootDir>/tests/actions/**/*.test.ts",
+  ],
 };
 
 export default config;
