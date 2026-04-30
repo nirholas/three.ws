@@ -30,3 +30,12 @@ xspace-agent/start-demo.sh
 # Animation build cache
 public/animations/clips/.input-hashes.json
 Handshake
+
+# Sandbox clones — see experiments/README.md
+experiments/*/node_modules
+experiments/*/.next
+experiments/*/dist
+experiments/*/build
+
+# Reference repo clones (read-only)
+forks/*/
