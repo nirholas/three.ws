@@ -22,7 +22,8 @@
 	} from './providers.js';
 	import ModelSelector from './ModelSelector.svelte';
 	import CompanyLogo from './CompanyLogo.svelte';
-	import { controller, remoteServer, config, params, toolSchema, syncServer, brandConfig, ttsEnabled, localAgentId, activeAgent, talkingHeadEnabled, route, mode, websiteCategory, loadCurrentUser } from './stores.js';
+	import { controller, remoteServer, config, params, toolSchema, syncServer, brandConfig, ttsEnabled, localAgentId, activeAgent, talkingHeadEnabled, route, mode, websiteCategory, loadCurrentUser, notify } from './stores.js';
+	import Notifications from './Notifications.svelte';
 	import AuthPage from './manus/pages/AuthPage.svelte';
 	import Pricing from './manus/pages/Pricing.svelte';
 	import MarketingPage from './manus/pages/MarketingPage.svelte';
@@ -43,6 +44,7 @@
 		feChevronLeft,
 		feChevronRight,
 		feCpu,
+		feDownload,
 		feEdit2,
 		feMenu,
 		feTerminal,
@@ -161,6 +163,7 @@
 
 		transaction.onerror = () => {
 			console.error('Message save failed', transaction.error);
+			notify('Failed to save — your changes may be lost. Check browser storage settings.');
 		};
 	}, 500);
 
@@ -340,6 +343,7 @@
 
 		transaction.onerror = () => {
 			console.error('Conversation save failed', transaction.error);
+			notify('Failed to save — your changes may be lost. Check browser storage settings.');
 		};
 	}, 500);
 
@@ -363,6 +367,7 @@
 
 		transaction.onerror = () => {
 			console.error('Conversation delete failed', transaction.error);
+			notify('Failed to delete conversation. Check browser storage settings.');
 		};
 	}
 
@@ -381,6 +386,7 @@
 
 		transaction.onerror = () => {
 			console.error('Message delete failed', transaction.error);
+			notify('Failed to delete message. Check browser storage settings.');
 		};
 	}
 
@@ -404,7 +410,25 @@
 		historyBuckets.sort((a, b) => b.convos[0].time - a.convos[0].time);
 	}
 
+	let searchQuery = '';
+	$: filteredConvos = searchQuery.trim()
+		? Object.values(convos).filter(
+				(c) =>
+					!c.shared &&
+					(c.messages.some(
+						(m) =>
+							typeof m.content === 'string' &&
+							m.content.toLowerCase().includes(searchQuery.toLowerCase())
+					) ||
+						(c.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+						(c.messages.find((m) => m.role === 'user')?.content || '')
+							.toLowerCase()
+							.includes(searchQuery.toLowerCase()))
+			)
+		: null;
+
 	let generating = false;
+	let editingTitleId = null;
 
 	let historyOpen = false;
 	let knobsOpen = false;
@@ -733,6 +757,8 @@
 					}
 
 					submitCompletion();
+				} else {
+					generateTitle();
 				}
 
 				return;
@@ -947,6 +973,53 @@
 		} catch (err) {
 			await navigator.clipboard.writeText(await sharePromise);
 		}
+	}
+
+	let exportOpen = false;
+
+	function downloadFile(content, filename, type) {
+		const blob = new Blob([content], { type });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = filename;
+		a.click();
+		URL.revokeObjectURL(url);
+	}
+
+	function exportConvoAsMarkdown() {
+		exportOpen = false;
+		const lines = [];
+		for (const msg of convo.messages) {
+			if (msg.role === 'system') continue;
+			if (!msg.content && !msg.toolcalls?.length) continue;
+			const role = msg.role === 'user' ? '**You**' : '**Assistant**';
+			let body = msg.content || '';
+			if (msg.toolcalls?.length) {
+				const names = msg.toolcalls.map((tc) => tc.name || 'tool').join(', ');
+				body += (body ? '\n\n' : '') + `*[used tool: ${names}]*`;
+			}
+			lines.push(`${role}\n\n${body}\n\n---\n`);
+		}
+		downloadFile(lines.join('\n'), `conversation-${convo.id.slice(0, 8)}.md`, 'text/markdown');
+	}
+
+	function exportConvoAsJSON() {
+		exportOpen = false;
+		const data = {
+			id: convo.id,
+			time: convo.time,
+			models: convo.models,
+			messages: convo.messages
+				.filter((m) => m.role !== 'system')
+				.map((m) => ({
+					role: m.role,
+					content: m.content,
+					model: m.model,
+					time: m.time,
+				})),
+		};
+		downloadFile(JSON.stringify(data, null, 2), `conversation-${convo.id.slice(0, 8)}.json`, 'application/json');
 	}
 
 	async function restoreConversation() {
@@ -1313,6 +1386,56 @@
 			pendingSpeak = null;
 		}
 	}
+
+	async function generateTitle() {
+		if (convo.title) return;
+		const msgs = convo.messages.filter((m) => m.role === 'user' || m.role === 'assistant');
+		if (msgs.length < 2) return;
+
+		const model = convo.models[0];
+		if (!model?.id) return;
+		const provider = providers.find((p) => p.name === model.provider);
+		if (!provider) return;
+
+		const context = msgs
+			.slice(0, 4)
+			.map((m) => `${m.role}: ${(typeof m.content === 'string' ? m.content : '').slice(0, 300)}`)
+			.join('\n');
+
+		try {
+			const response = await fetch(`${provider.url}${provider.completionUrl}`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					...(model.provider === 'Anthropic'
+						? { 'x-api-key': provider.apiKeyFn(), 'anthropic-version': '2023-06-01' }
+						: { Authorization: `Bearer ${provider.apiKeyFn()}` }),
+				},
+				body: JSON.stringify({
+					model: model.id,
+					stream: false,
+					max_tokens: 20,
+					messages: [
+						{
+							role: 'user',
+							content: `Summarize this conversation in 4-6 words as a title. No quotes, no punctuation.\n\n${context}`,
+						},
+					],
+				}),
+			});
+			if (!response.ok) return;
+			const data = await response.json();
+			const title =
+				data?.choices?.[0]?.message?.content?.trim() || data?.content?.[0]?.text?.trim();
+			if (title) {
+				convo.title = title;
+				saveConversation(convo);
+				convos = { ...convos, [convo.id]: convo };
+			}
+		} catch {
+			// Non-critical, fail silently
+		}
+	}
 </script>
 
 <svelte:window
@@ -1444,71 +1567,164 @@
 					New chat
 				</button>
 			</div>
+			<input
+				type="search"
+				placeholder="Search conversations..."
+				bind:value={searchQuery}
+				class="mx-2 my-2 w-[calc(100%-16px)] rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm outline-none focus:border-indigo-400"
+			/>
 			<ol
-				class="flex list-none flex-col overflow-y-auto pb-3 pr-3 pt-3 scrollbar-invisible scrollbar-slim hover:scrollbar-white"
+				class="flex list-none flex-col overflow-y-auto pb-3 pr-3 pt-1 scrollbar-invisible scrollbar-slim hover:scrollbar-white"
 			>
-				{#each historyBuckets as { relativeDate, convos: historyConvos } (relativeDate)}
-					<li class="mb-1 ml-3 text-[11px] font-medium text-ink-soft [&:not(:first-child)]:mt-5">
-						{relativeDate}
-					</li>
-					{#each historyConvos as historyConvo (historyConvo.id)}
-						<li class="group relative">
-							<button
-								on:click={() => {
-									handleAbort();
-
-									historyOpen = false;
-									activeToolcall = null;
-
-									$convoId = historyConvo.id;
-									convo = convos[$convoId];
-
-									cleanShareLink();
-
-									tick().then(() => {
-										scrollToBottom();
-									});
-								}}
-								class="{$convoId === historyConvo.id
-									? 'bg-paper-deep'
-									: ''} flex h-9 w-full items-center rounded-md px-3 text-left text-sm text-ink hover:bg-paper-deep"
-							>
-								<span class="line-clamp-1">
-									{historyConvo.messages.length === 0
-										? 'New conversation'
-										: historyConvo.messages
-												.find((m) => m.role === 'user')
-												?.content.split(' ')
-												.slice(0, 5)
-												.join(' ') || 'Untitled'}
-								</span>
-							</button>
-							<button
-								on:click={() => {
-									if ($convoId === historyConvo.id) {
-										const newId = Object.values(convos).find(
-											(e) => e.id !== historyConvo.id && !e.shared
-										)?.id;
-										if (!newId) {
-											newConversation();
-										} else {
-											$convoId = newId;
+				{#if filteredConvos}
+					{#if filteredConvos.length === 0}
+						<li class="px-3 py-4 text-center text-sm text-slate-400">No conversations found</li>
+					{:else}
+						{#each filteredConvos.sort((a, b) => b.time - a.time) as historyConvo (historyConvo.id)}
+							{@const matchingMsg = historyConvo.messages.find(
+								(m) =>
+									typeof m.content === 'string' &&
+									m.content.toLowerCase().includes(searchQuery.toLowerCase())
+							)}
+							<li class="group relative">
+								<button
+									on:click={() => {
+										handleAbort();
+										historyOpen = false;
+										activeToolcall = null;
+										searchQuery = '';
+										$convoId = historyConvo.id;
+										convo = convos[$convoId];
+										cleanShareLink();
+										tick().then(() => { scrollToBottom(); });
+									}}
+									class="{$convoId === historyConvo.id
+										? 'bg-paper-deep'
+										: ''} flex w-full flex-col rounded-md px-3 py-1.5 text-left text-sm text-ink hover:bg-paper-deep"
+								>
+									<span class="line-clamp-1">
+										{historyConvo.title || (historyConvo.messages.length === 0
+											? 'New conversation'
+											: historyConvo.messages
+													.find((m) => m.role === 'user')
+													?.content?.split(' ')
+													.slice(0, 5)
+													.join(' ') || 'New conversation')}
+									</span>
+									{#if matchingMsg}
+										<p class="truncate text-xs text-slate-400">
+											...{matchingMsg.content.slice(
+												Math.max(0, matchingMsg.content.toLowerCase().indexOf(searchQuery.toLowerCase()) - 20),
+												matchingMsg.content.toLowerCase().indexOf(searchQuery.toLowerCase()) + 60
+											)}...
+										</p>
+									{/if}
+								</button>
+								<button
+									on:click={() => {
+										if ($convoId === historyConvo.id) {
+											const newId = Object.values(convos).find(
+												(e) => e.id !== historyConvo.id && !e.shared
+											)?.id;
+											if (!newId) {
+												newConversation();
+											} else {
+												$convoId = newId;
+											}
 										}
-									}
-									delete convos[historyConvo.id];
-									convos = convos;
-									deleteConversation(historyConvo);
-								}}
-								class="z-1 absolute right-0 top-0 flex h-full w-12 rounded-br-md rounded-tr-md bg-gradient-to-l {$convoId ===
-								historyConvo.id
-									? 'from-paper-deep'
-									: 'from-paper group-hover:from-paper-deep'} from-65% to-transparent pr-3 transition-opacity sm:from-paper-deep sm:opacity-0 sm:group-hover:opacity-100"
-							>
-								<Icon icon={feTrash} class="m-auto mr-0 h-3 w-3 shrink-0 text-ink-soft" />
-							</button>
+										delete convos[historyConvo.id];
+										convos = convos;
+										deleteConversation(historyConvo);
+									}}
+									class="z-1 absolute right-0 top-0 flex h-full w-12 rounded-br-md rounded-tr-md bg-gradient-to-l {$convoId ===
+									historyConvo.id
+										? 'from-paper-deep'
+										: 'from-paper group-hover:from-paper-deep'} from-65% to-transparent pr-3 transition-opacity sm:from-paper-deep sm:opacity-0 sm:group-hover:opacity-100"
+								>
+									<Icon icon={feTrash} class="m-auto mr-0 h-3 w-3 shrink-0 text-ink-soft" />
+								</button>
+							</li>
+						{/each}
+					{/if}
+				{:else}
+					{#each historyBuckets as { relativeDate, convos: historyConvos } (relativeDate)}
+						<li class="mb-1 ml-3 text-[11px] font-medium text-ink-soft [&:not(:first-child)]:mt-5">
+							{relativeDate}
 						</li>
+						{#each historyConvos as historyConvo (historyConvo.id)}
+							<li class="group relative">
+								{#if editingTitleId === historyConvo.id}
+									<div class="{$convoId === historyConvo.id ? 'bg-paper-deep' : ''} flex h-9 w-full items-center rounded-md px-3">
+										<input
+											class="w-full bg-transparent text-sm text-ink outline-none"
+											bind:value={historyConvo.title}
+											on:blur={() => { saveConversation(historyConvo); convos = { ...convos }; editingTitleId = null; }}
+											on:keydown={(e) => e.key === 'Enter' && e.target.blur()}
+											autofocus
+										/>
+									</div>
+								{:else}
+									<button
+										on:click={() => {
+											handleAbort();
+
+											historyOpen = false;
+											activeToolcall = null;
+
+											$convoId = historyConvo.id;
+											convo = convos[$convoId];
+
+											cleanShareLink();
+
+											tick().then(() => {
+												scrollToBottom();
+											});
+										}}
+										class="{$convoId === historyConvo.id
+											? 'bg-paper-deep'
+											: ''} flex h-9 w-full items-center rounded-md px-3 text-left text-sm text-ink hover:bg-paper-deep"
+									>
+										<span
+											class="line-clamp-1"
+											on:dblclick|stopPropagation={() => { editingTitleId = historyConvo.id; }}
+										>
+											{historyConvo.title || (historyConvo.messages.length === 0
+												? 'New conversation'
+												: historyConvo.messages
+														.find((m) => m.role === 'user')
+														?.content?.split(' ')
+														.slice(0, 5)
+														.join(' ') || 'New conversation')}
+										</span>
+									</button>
+								{/if}
+								<button
+									on:click={() => {
+										if ($convoId === historyConvo.id) {
+											const newId = Object.values(convos).find(
+												(e) => e.id !== historyConvo.id && !e.shared
+											)?.id;
+											if (!newId) {
+												newConversation();
+											} else {
+												$convoId = newId;
+											}
+										}
+										delete convos[historyConvo.id];
+										convos = convos;
+										deleteConversation(historyConvo);
+									}}
+									class="z-1 absolute right-0 top-0 flex h-full w-12 rounded-br-md rounded-tr-md bg-gradient-to-l {$convoId ===
+									historyConvo.id
+										? 'from-paper-deep'
+										: 'from-paper group-hover:from-paper-deep'} from-65% to-transparent pr-3 transition-opacity sm:from-paper-deep sm:opacity-0 sm:group-hover:opacity-100"
+								>
+									<Icon icon={feTrash} class="m-auto mr-0 h-3 w-3 shrink-0 text-ink-soft" />
+								</button>
+							</li>
+						{/each}
 					{/each}
-				{/each}
+				{/if}
 			</ol>
 
 			<div class="settings-trigger-container -ml-3 mt-auto flex pb-3">
@@ -1733,6 +1949,8 @@
 		/>
 	</Modal>
 {/if}
+
+<Notifications />
 
 {#if installToastMsg}
 	<div transition:fade={{ duration: 200 }} class="fixed bottom-16 left-1/2 z-[200] -translate-x-1/2 rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-800 shadow-md">

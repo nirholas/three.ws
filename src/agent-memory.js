@@ -156,8 +156,8 @@ export class AgentMemory {
 			this._entries = [];
 		}
 
-		// Backend sync — merge newer entries from server
-		if (this.backendSync) this._syncFromBackend();
+		// Backend sync — hydrate from server (async, non-blocking)
+		if (this.backendSync && this.agentId) this._hydrateFromBackend();
 	}
 
 	_persist() {
@@ -184,50 +184,58 @@ export class AgentMemory {
 
 	_scheduleSync(entry) {
 		this._persist();
-		if (!this.backendSync) return;
-		clearTimeout(this._syncTimer);
-		this._syncTimer = setTimeout(() => this._syncToBackend(entry), 1500);
-	}
-
-	async _syncToBackend(entry) {
-		try {
-			await fetch(`/api/agent-memory`, {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				credentials: 'include',
-				body: JSON.stringify({ agentId: this.agentId, entry }),
-			});
-		} catch {
-			/* non-critical — localStorage is authoritative */
-		}
+		if (!this.backendSync || !this.agentId) return;
+		fetch(`/api/agents/${this.agentId}/memories`, {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			credentials: 'include',
+			body: JSON.stringify({
+				type: entry.type,
+				content: entry.content,
+				tags: entry.tags,
+				salience: entry.salience,
+				expiresAt: entry.expiresAt,
+			}),
+		}).catch(() => {});
 	}
 
 	async _syncForget(id) {
 		try {
-			await fetch(`/api/agent-memory/${id}`, {
+			await fetch(`/api/agents/${this.agentId}/memories/${id}`, {
 				method: 'DELETE',
 				credentials: 'include',
 			});
 		} catch {}
 	}
 
-	async _syncFromBackend() {
+	async _hydrateFromBackend() {
 		try {
-			const resp = await fetch(`/api/agent-memory?agentId=${this.agentId}`, {
+			const resp = await fetch(`/api/agents/${this.agentId}/memories`, {
 				credentials: 'include',
 			});
 			if (!resp.ok) return;
-			const { entries } = await resp.json();
-			if (!Array.isArray(entries)) return;
+			const { data } = await resp.json();
+			if (!Array.isArray(data)) return;
 
-			// Merge: backend entries that don't exist locally win
 			const localIds = new Set(this._entries.map((m) => m.id));
-			const newEntries = entries.filter((m) => !localIds.has(m.id));
-			if (newEntries.length) {
-				this._entries.push(...newEntries);
-				this._persist();
+			for (const row of data) {
+				if (!localIds.has(row.id)) {
+					this._entries.push({
+						id: row.id,
+						type: row.type,
+						content: row.content,
+						tags: row.tags || [],
+						context: {},
+						salience: row.salience || 0.5,
+						createdAt: new Date(row.created_at).getTime(),
+						expiresAt: row.expires_at ? new Date(row.expires_at).getTime() : null,
+					});
+				}
 			}
-		} catch {}
+			this._persist();
+		} catch {
+			/* Backend unavailable — localStorage data is the fallback */
+		}
 	}
 }
 

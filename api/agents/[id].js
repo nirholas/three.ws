@@ -72,5 +72,10 @@ export default wrap(async function handler(req, res) {
 		return mod.handleUsage(req, res, id);
 	}
 
+	if (sub === 'memories') {
+		const mod = await import('./_sub.js');
+		return mod.handleMemories(req, res, id, action);
+	}
+
 	return handleGetOne(req, res, id);
 });

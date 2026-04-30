@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import styles from './Load.module.css';
 import { ethers } from 'ethers';
+// TODO: @web3-react/core v6 + InjectedConnector are incompatible with ethers v6.
+// Upgrade to @web3-react/core v8 (and replace library with BrowserProvider) to resolve.
 import { useWeb3React } from '@web3-react/core';
 import { InjectedConnector } from "@web3-react/injected-connector"
 import { ViewContext, ViewMode } from '../context/ViewContext';

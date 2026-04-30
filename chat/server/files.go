@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -54,37 +53,29 @@ func getFileTree(path string, rootFlag string) (FileInfo, error) {
 
 // ListDirectory handles the /list_directory endpoint request
 func ListDirectory(w http.ResponseWriter, r *http.Request) {
-	// Get absolute path of the directory
 	absFilesPath, err := filepath.Abs(*filesPath)
 	if err != nil {
-		http.Error(w, "Error getting absolute path: "+err.Error(), http.StatusInternalServerError)
+		writeJSON(w, http.StatusInternalServerError, map[string]any{"error": "Error getting absolute path: " + err.Error()})
 		return
 	}
 
-	// Verify the directory exists
 	info, err := os.Stat(absFilesPath)
 	if err != nil {
-		http.Error(w, "Error accessing directory: "+err.Error(), http.StatusInternalServerError)
+		writeJSON(w, http.StatusInternalServerError, map[string]any{"error": "Error accessing directory: " + err.Error()})
 		return
 	}
 	if !info.IsDir() {
-		http.Error(w, absFilesPath+" is not a directory", http.StatusInternalServerError)
+		writeJSON(w, http.StatusInternalServerError, map[string]any{"error": absFilesPath + " is not a directory"})
 		return
 	}
 
-	// Use the absolute path for getFileTree
 	tree, err := getFileTree(absFilesPath, absFilesPath)
 	if err != nil {
-		http.Error(w, "Failed to build tree: "+err.Error(), http.StatusInternalServerError)
+		writeJSON(w, http.StatusInternalServerError, map[string]any{"error": "Failed to build tree: " + err.Error()})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	encoder := json.NewEncoder(w)
-	encoder.SetIndent("", "  ") // Pretty print JSON
-	if err := encoder.Encode(tree); err != nil {
-		http.Error(w, "Failed to encode JSON: "+err.Error(), http.StatusInternalServerError)
-	}
+	writeJSON(w, http.StatusOK, tree)
 }
 
 func ReadFile(w http.ResponseWriter, r *http.Request) {

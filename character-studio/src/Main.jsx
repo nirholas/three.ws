@@ -1,3 +1,5 @@
+// TODO: @web3-react/core v6 requires @ethersproject/providers (ethers v5 fork).
+// Upgrade to @web3-react/core v8 to fully support ethers v6 BrowserProvider.
 import { Web3Provider } from "@ethersproject/providers"
 import { Web3ReactProvider } from "@web3-react/core"
 import React, { Suspense } from "react"
