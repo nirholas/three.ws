@@ -1,7 +1,7 @@
 # Task 04 — Empty-state landing layout
 
 ## Goal
-When the user has no messages in the active conversation, show a centered "What can I do for you?" hero with the composer below it and a row of suggestion chips beneath the composer. The existing sidebar collapses (or is hidden) on the empty state so the layout reads as a single centered column, just like Manus.
+When the user has no messages in the active conversation, show a centered "What can I do for you?" hero with the composer below it and a row of suggestion chips beneath the composer. The existing sidebar collapses (or is hidden) on the empty state so the layout reads as a single centered column, just like three.ws.
 
 ## Codebase context
 - Source root: `/workspaces/3D-Agent/chat/`.
@@ -11,14 +11,14 @@ When the user has no messages in the active conversation, show a centered "What 
 
 ## Design tokens (use exactly)
 - Page bg already `bg-paper` from task 01; do not set bg here.
-- Hero: class `manus-hero` (defined in task 01) — fallback inline: `font-serif text-[44px] md:text-[56px] leading-[1.05] tracking-tight font-medium text-[#1A1A1A]`.
+- Hero: class `three.ws-hero` (defined in task 01) — fallback inline: `font-serif text-[44px] md:text-[56px] leading-[1.05] tracking-tight font-medium text-[#1A1A1A]`.
 - Hero margin-bottom: 36px.
 - Column max-width: 760px; horizontal padding: 24px; centered.
 - Vertical layout: hero pushed ~22vh from the top of `<main>` so the composer sits roughly mid-screen on a 900px-tall window.
 
 ## What to ship
 
-### Component: `chat/src/manus/EmptyState.svelte`
+### Component: `chat/src/three.ws/EmptyState.svelte`
 ```svelte
 <script>
   // The composer + chips are owned by tasks 05/06.
@@ -27,7 +27,7 @@ When the user has no messages in the active conversation, show a centered "What 
 </script>
 
 <section class="w-full flex flex-col items-center px-6 pt-[18vh] md:pt-[22vh]">
-  <h1 class="manus-hero text-center mb-9">What can I do for you?</h1>
+  <h1 class="three.ws-hero text-center mb-9">What can I do for you?</h1>
   <div class="w-full max-w-[760px]">
     <slot name="composer" />
   </div>

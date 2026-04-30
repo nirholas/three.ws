@@ -20,7 +20,7 @@ Build the dropdown that opens from the `More` chip on the empty state. It contai
 
 ## What to ship
 
-### Component: `chat/src/manus/MoreDropdown.svelte`
+### Component: `chat/src/three.ws/MoreDropdown.svelte`
 ```svelte
 <script>
   import { createEventDispatcher } from 'svelte';

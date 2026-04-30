@@ -10,7 +10,7 @@ Render the row of five chips directly below the composer on the empty-state land
   import { writable } from 'svelte/store';
   export const mode = writable(null); // null | 'slides' | 'website' | 'desktop' | 'design' | 'schedule' | 'research' | 'spreadsheet' | 'visualization' | 'video' | 'audio' | 'chat' | 'playbook'
   ```
-- Icons live in `chat/src/feather.js`. The Manus chips use simple line icons; map as follows (add any missing exports to `feather.js`):
+- Icons live in `chat/src/feather.js`. The three.ws chips use simple line icons; map as follows (add any missing exports to `feather.js`):
   - Create slides → `feLayout` (or any "deck"-like icon)
   - Build website → `feCode` (the `< />` glyph)
   - Develop desktop apps → `feMonitor`
@@ -18,13 +18,13 @@ Render the row of five chips directly below the composer on the empty-state land
   - More → `feMoreHorizontal`
 
 ## Design tokens
-- Chip: class `manus-chip` (defined in task 01) — fallback: `inline-flex items-center gap-2 h-9 px-4 rounded-full border border-[#E5E3DC] bg-white text-[#1A1A1A] text-sm font-medium hover:bg-[#F0EEE6] transition-colors`.
-- Selected: `manus-chip-selected` — `bg-[#EFF6FF] border-[#BFDBFE] text-[#3B82F6]`.
+- Chip: class `three.ws-chip` (defined in task 01) — fallback: `inline-flex items-center gap-2 h-9 px-4 rounded-full border border-[#E5E3DC] bg-white text-[#1A1A1A] text-sm font-medium hover:bg-[#F0EEE6] transition-colors`.
+- Selected: `three.ws-chip-selected` — `bg-[#EFF6FF] border-[#BFDBFE] text-[#3B82F6]`.
 - Row: `flex flex-wrap gap-3 justify-center mt-4`.
 
 ## What to ship
 
-### Component: `chat/src/manus/SuggestionChips.svelte`
+### Component: `chat/src/three.ws/SuggestionChips.svelte`
 ```svelte
 <script>
   import { mode } from '../stores.js';
@@ -44,14 +44,14 @@ Render the row of five chips directly below the composer on the empty-state land
 
 <div class="flex flex-wrap gap-3 justify-center mt-4">
   {#each chips as c}
-    <button class="manus-chip {$mode === c.id ? 'manus-chip-selected' : ''}"
+    <button class="three.ws-chip {$mode === c.id ? 'three.ws-chip-selected' : ''}"
             on:click={() => pick(c.id)}>
       <Icon icon={c.icon} size={16} />
       {c.label}
     </button>
   {/each}
   <div class="relative">
-    <button class="manus-chip" on:click={() => moreOpen = !moreOpen}>
+    <button class="three.ws-chip" on:click={() => moreOpen = !moreOpen}>
       <Icon icon={feMoreHorizontal} size={16} />
       More
     </button>
@@ -67,7 +67,7 @@ Render the row of five chips directly below the composer on the empty-state land
 - Subscribe to `mode` in `App.svelte` to pass it down to the `Composer` so the inline mode pill and flow UI update.
 
 ### Stub for `MoreDropdown.svelte`
-If task 07 is not yet merged, create a placeholder `chat/src/manus/MoreDropdown.svelte` that renders an empty card so this component compiles. Task 07 will replace the body.
+If task 07 is not yet merged, create a placeholder `chat/src/three.ws/MoreDropdown.svelte` that renders an empty card so this component compiles. Task 07 will replace the body.
 
 ## Acceptance criteria
 - The five chips render below the composer on the empty state, centered.

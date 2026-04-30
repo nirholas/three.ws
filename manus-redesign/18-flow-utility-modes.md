@@ -11,7 +11,7 @@ This task ships all eight in one self-contained component bundle.
 - For `playbook`, `mode` is also set when the user lands on `route === 'playbook'` (separate route, but the empty-state composer is shown there too; in this task, treat `playbook` as a regular mode whose flow renders inline on the chat empty state).
 
 ## Design tokens
-- Mode pill (selected): `manus-chip-selected` with the corresponding icon.
+- Mode pill (selected): `three.ws-chip-selected` with the corresponding icon.
 - Sample prompt card: `bg-white border border-[#E5E3DC] rounded-xl p-4 h-[96px] text-left text-sm` with trailing `feArrowUpLeft`.
 - Section header: `text-sm font-semibold mt-10 mb-3`.
 - Cards grid: `grid md:grid-cols-2 lg:grid-cols-4 gap-3` for prompts, `flex-wrap gap-2` for chips.
@@ -38,7 +38,7 @@ This task ships all eight in one self-contained component bundle.
   - "Find every YC W24 company in dev tools with public pricing"
   - "Summarize recent papers on LLM evaluation from 2024–2026"
   - "List all Series A AI infra startups with announced rounds in Q1"
-  - "Extract feature parity matrix for Cursor, Claude Code, and Manus"
+  - "Extract feature parity matrix for Cursor, Claude Code, and three.ws"
   - "Find hiring pages of top 50 robotics startups; pull JD for SWE"
 - Inline pill: "Sources: Web ▾" (Web / Web + Docs / Web + Code / Custom URLs).
 
@@ -102,14 +102,14 @@ This task ships all eight in one self-contained component bundle.
   - "Onboard a new SDR: pull rep, send welcome email, schedule training"
   - "Triage inbound bug report: dedupe, label, assign, draft reply"
   - "Run a weekly RevOps review across CRM, Stripe, and Mixpanel"
-  - "Migrate a Notion doc tree into a Manus skill"
+  - "Migrate a Notion doc tree into a three.ws skill"
   - "Audit GitHub repos for missing CI on default branch"
   - "End-of-quarter portfolio review for a VC firm"
 - Inline pill: "Tools: Default ▾" with a sub-multi-select.
 
 ## What to ship
 
-### Component bundle: `chat/src/manus/flows/UtilityFlows.svelte`
+### Component bundle: `chat/src/three.ws/flows/UtilityFlows.svelte`
 A switch-based component:
 ```svelte
 <script>
@@ -126,8 +126,8 @@ A switch-based component:
 ```
 
 Plus:
-- `chat/src/manus/flows/SamplePromptGrid.svelte` — generic 4-up card grid that fills the composer + submits on click. Reuse this for tasks 14 and 17 if convenient.
-- `chat/src/manus/flows/utilityFlowData.js` — exports the prompt arrays above.
+- `chat/src/three.ws/flows/SamplePromptGrid.svelte` — generic 4-up card grid that fills the composer + submits on click. Reuse this for tasks 14 and 17 if convenient.
+- `chat/src/three.ws/flows/utilityFlowData.js` — exports the prompt arrays above.
 
 ### Composer wiring per mode
 For each mode listed, set:

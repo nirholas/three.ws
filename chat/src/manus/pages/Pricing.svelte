@@ -2,7 +2,7 @@
   import Icon from '../../Icon.svelte';
   import { feCheck } from '../../feather.js';
   const plans = [
-    { name: 'Free',     price: '$0',   suffix: '/mo', tag: 'Try Manus on small projects',
+    { name: 'Free',     price: '$0',   suffix: '/mo', tag: 'Try three.ws on small projects',
       features: ['50 messages / month','Single-agent runs','Community support'],
       cta: 'Get started', highlight: false },
     { name: 'Pro',      price: '$39',  suffix: '/mo', tag: 'For builders who ship daily',
@@ -21,7 +21,7 @@
 </script>
 
 <section class="pt-20 pb-24">
-  <h1 class="manus-display text-center">Simple pricing.<br/>Built for momentum.</h1>
+  <h1 class="three.ws-display text-center">Simple pricing.<br/>Built for momentum.</h1>
   <p class="text-[#6B6B6B] text-lg max-w-[640px] text-center mx-auto mt-6">
     Start free. Upgrade when your team is ready to ship more.
   </p>

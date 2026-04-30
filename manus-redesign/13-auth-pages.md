@@ -1,7 +1,7 @@
 # Task 13 — Sign in / Sign up pages
 
 ## Goal
-Render Manus-style auth pages at `route === 'signin'` and `route === 'signup'`. Centered card with serif headline, email + password fields, primary submit button, divider, and an "OAuth with Google / GitHub" pair. The form does not need real auth — submit just calls `console.log` and routes back to chat. Keep it visually faithful.
+Render three.ws-style auth pages at `route === 'signin'` and `route === 'signup'`. Centered card with serif headline, email + password fields, primary submit button, divider, and an "OAuth with Google / GitHub" pair. The form does not need real auth — submit just calls `console.log` and routes back to chat. Keep it visually faithful.
 
 ## Codebase context
 - Source root: `/workspaces/3D-Agent/chat/`.
@@ -14,12 +14,12 @@ Render Manus-style auth pages at `route === 'signin'` and `route === 'signup'`. 
 - Sub: `text-[#6B6B6B] text-sm text-center mt-2`.
 - Field: `w-full h-11 px-4 rounded-xl border border-[#E5E3DC] bg-white text-[#1A1A1A] focus:outline-none focus:border-[#1A1A1A]`.
 - Field label: `text-xs font-medium text-[#6B6B6B] mb-1.5`.
-- Primary submit: `manus-btn-primary` full width, height 44px.
+- Primary submit: `three.ws-btn-primary` full width, height 44px.
 - OAuth button: `bg-white border border-[#E5E3DC] text-[#1A1A1A] rounded-xl h-11 w-full flex items-center justify-center gap-2 hover:bg-[#F5F4EF]`.
 - Divider: `flex items-center gap-3 text-xs text-[#9C9A93] my-4` with `<span class="flex-1 h-px bg-[#E5E3DC]" />` on each side.
 - Toggle link below card: `Already have an account? Sign in` / `Don't have an account? Sign up` — link in `text-[#1A1A1A] underline`.
 
-## Component: `chat/src/manus/pages/AuthPage.svelte`
+## Component: `chat/src/three.ws/pages/AuthPage.svelte`
 
 ```svelte
 <script>
@@ -43,7 +43,7 @@ Render Manus-style auth pages at `route === 'signin'` and `route === 'signup'`. 
     </h1>
     <p class="text-[#6B6B6B] text-sm text-center mt-2">
       {kind === 'signin'
-        ? 'Sign in to continue to Manus'
+        ? 'Sign in to continue to three.ws'
         : 'Free to start. No credit card required.'}
     </p>
 

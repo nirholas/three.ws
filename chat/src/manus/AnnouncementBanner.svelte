@@ -3,9 +3,9 @@
   import Icon from '../Icon.svelte';
   import { feArrowRight, feX } from '../feather.js';
 
-  const dismissed = persisted('manusBannerDismissed_v1', false);
+  const dismissed = persisted('three.wsBannerDismissed_v1', false);
   export let href = '#';
-  export let message = 'Manus is now part of Meta — bringing AI to businesses worldwide';
+  export let message = 'three.ws is now part of Meta — bringing AI to businesses worldwide';
 </script>
 
 {#if !$dismissed}

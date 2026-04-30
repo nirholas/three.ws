@@ -13,11 +13,11 @@
     <!-- Hero -->
     <div class="text-center">
       <p class="text-xs font-medium tracking-[0.16em] uppercase text-[#6B6B6B] mb-4">{page.eyebrow}</p>
-      <h1 class="manus-display">{page.title}</h1>
+      <h1 class="three.ws-display">{page.title}</h1>
       <p class="text-[#6B6B6B] text-lg max-w-[640px] mx-auto mt-6">{page.sub}</p>
       <div class="flex items-center justify-center gap-3 mt-8">
-        <button class="manus-btn-primary">{page.primaryCta}</button>
-        <button class="manus-btn-ghost border border-[#E5E3DC]">{page.secondaryCta}</button>
+        <button class="three.ws-btn-primary">{page.primaryCta}</button>
+        <button class="three.ws-btn-ghost border border-[#E5E3DC]">{page.secondaryCta}</button>
       </div>
     </div>
 
@@ -25,7 +25,7 @@
     {#if slug === 'agent-skills'}
       <div
         class="aspect-[3/1] rounded-2xl mt-12 bg-cover bg-center"
-        style="background-image: url('/manus-redesign/skills-hero.jpg'), linear-gradient(to bottom right, #EFECE3, #E5E3DC)"
+        style="background-image: url('/three.ws-redesign/skills-hero.jpg'), linear-gradient(to bottom right, #EFECE3, #E5E3DC)"
       ></div>
     {:else}
       <div class="aspect-[16/9] rounded-2xl bg-gradient-to-br from-[#EFECE3] to-[#E5E3DC] mt-12"></div>

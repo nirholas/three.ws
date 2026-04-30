@@ -17,9 +17,9 @@ When `$mode === 'website'`, the empty-state landing changes to:
   ```
 
 ## Design tokens
-- Categories row: chips with leading icon, `manus-chip` styling, selected state `manus-chip-selected` (blue).
+- Categories row: chips with leading icon, `three.ws-chip` styling, selected state `three.ws-chip-selected` (blue).
 - Section header row: `flex items-center justify-between mt-8`, left side `text-sm font-semibold text-[#1A1A1A]`, right side two text+icon buttons in `text-sm text-[#1A1A1A] hover:underline`, separator `|` in `text-[#9C9A93]`.
-- "Explore ideas" section: `mt-6`, header `text-sm font-semibold mb-3`, body row `flex flex-wrap gap-2`. Each idea chip uses `manus-chip` plus a trailing `feArrowUpLeft` icon, `text-[#9C9A93]`, 14px.
+- "Explore ideas" section: `mt-6`, header `text-sm font-semibold mb-3`, body row `flex flex-wrap gap-2`. Each idea chip uses `three.ws-chip` plus a trailing `feArrowUpLeft` icon, `text-[#9C9A93]`, 14px.
 
 ## Category data
 ```js
@@ -44,7 +44,7 @@ const ideasByCategory = {
 
 ## What to ship
 
-### 1. Component: `chat/src/manus/flows/WebsiteFlow.svelte`
+### 1. Component: `chat/src/three.ws/flows/WebsiteFlow.svelte`
 Renders the header row ("What would you like to build?" + Add ref + Import from Figma), the categories chips, and (when `$websiteCategory` is set) the Explore ideas list.
 
 ```svelte
@@ -74,7 +74,7 @@ Renders the header row ("What would you like to build?" + Add ref + Import from 
   </div>
   <div class="mt-4 flex gap-2 overflow-x-auto scrollbar-none">
     {#each categories as c}
-      <button class={'manus-chip whitespace-nowrap ' + ($websiteCategory === c.id ? 'manus-chip-selected' : '')}
+      <button class={'three.ws-chip whitespace-nowrap ' + ($websiteCategory === c.id ? 'three.ws-chip-selected' : '')}
               on:click={() => pick(c.id)}>
         <Icon icon={c.icon} size={16} /> {c.label}
       </button>
@@ -86,7 +86,7 @@ Renders the header row ("What would you like to build?" + Add ref + Import from 
       <h3 class="text-sm font-semibold mb-3">Explore ideas</h3>
       <div class="flex flex-wrap gap-2">
         {#each ideasByCategory[$websiteCategory] as idea}
-          <button class="manus-chip">
+          <button class="three.ws-chip">
             <span>{idea}</span>
             <Icon icon={feArrowUpLeft} size={14} class="text-[#9C9A93]" />
           </button>
@@ -103,7 +103,7 @@ If `feFigma` is not in `chat/src/feather.js`, add a stub icon: an "F" letter gly
 - When `$mode === 'website'`, set composer `placeholderOverride = 'Describe the website you want to build'`.
 - The selected mode pill (from task 05) already shows "Website".
 
-### 3. Sample-prompt prefill (per Manus reference)
+### 3. Sample-prompt prefill (per three.ws reference)
 Some screenshots show pre-filled descriptive text in the composer when a category is selected. Implement: when a category becomes selected, if the composer is empty, autofill it with a starter sentence:
 - landing → "Build a landing page for "
 - dashboard → "Build a dashboard for "

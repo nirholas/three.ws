@@ -1,7 +1,7 @@
 # Task 01 — Design tokens, fonts, and global styles
 
 ## Goal
-Install the visual foundation that every other Manus-style task will rely on: warm off-white page background, serif headline font, refined gray scale, accent blue, and base typography. After this task, the rest of the chat keeps working but the page background, body font, and base color tokens already feel like Manus.
+Install the visual foundation that every other three.ws-style task will rely on: warm off-white page background, serif headline font, refined gray scale, accent blue, and base typography. After this task, the rest of the chat keeps working but the page background, body font, and base color tokens already feel like three.ws.
 
 ## Codebase context
 - Stack: Svelte 4 + Vite + Tailwind. Source root: `/workspaces/3D-Agent/chat/`.
@@ -32,7 +32,7 @@ colors: {
   ink: '#1A1A1A',            // primary text
   'ink-soft': '#6B6B6B',     // secondary text
   rule: '#E5E3DC',           // borders & hairlines
-  manus: {
+  three.ws: {
     blue: '#3B82F6',
     'blue-soft': '#EFF6FF',
     'blue-border': '#BFDBFE',
@@ -66,23 +66,23 @@ borderRadius: {
 }
 
 @layer components {
-  .manus-card {
+  .three.ws-card {
     @apply bg-white border border-rule rounded-2xl;
   }
-  .manus-chip {
+  .three.ws-chip {
     @apply inline-flex items-center gap-2 h-9 px-4 rounded-full
            border border-rule bg-white text-ink text-sm font-medium
            hover:bg-paper-deep transition-colors;
   }
-  .manus-chip-selected {
-    @apply bg-manus-blue-soft border-manus-blue-border text-manus-blue;
+  .three.ws-chip-selected {
+    @apply bg-three.ws-blue-soft border-three.ws-blue-border text-three.ws-blue;
   }
-  .manus-btn-primary {
+  .three.ws-btn-primary {
     @apply inline-flex items-center justify-center h-9 px-4
            rounded-full bg-black text-white text-sm font-medium
            hover:bg-ink transition-colors;
   }
-  .manus-btn-ghost {
+  .three.ws-btn-ghost {
     @apply inline-flex items-center justify-center h-9 px-4
            rounded-full bg-transparent text-ink text-sm font-medium
            hover:bg-paper-deep transition-colors;
@@ -93,10 +93,10 @@ borderRadius: {
 ### 4. Hero text utility
 Add to `app.pcss` `@layer components`:
 ```css
-.manus-hero {
+.three.ws-hero {
   @apply font-serif text-ink text-[44px] md:text-[56px] leading-[1.05] tracking-tight font-medium;
 }
-.manus-display {
+.three.ws-display {
   @apply font-serif text-ink text-[56px] md:text-[80px] leading-[1.02] tracking-tight font-semibold;
 }
 ```
@@ -105,7 +105,7 @@ Add to `app.pcss` `@layer components`:
 - App still builds and runs (`npm run dev` inside `chat/`).
 - Page background renders as warm off-white `#F5F4EF`.
 - Body text uses Inter; an element with class `font-display` uses Lora.
-- The classes `manus-card`, `manus-chip`, `manus-chip-selected`, `manus-btn-primary`, `manus-btn-ghost`, `manus-hero`, `manus-display` are usable from any `.svelte` file.
+- The classes `three.ws-card`, `three.ws-chip`, `three.ws-chip-selected`, `three.ws-btn-primary`, `three.ws-btn-ghost`, `three.ws-hero`, `three.ws-display` are usable from any `.svelte` file.
 - No existing chat behavior is broken; only colors/fonts changed.
 
 ## Out of scope

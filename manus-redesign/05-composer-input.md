@@ -1,7 +1,7 @@
 # Task 05 — Composer input component
 
 ## Goal
-Replace the existing chat input with a Manus-style composer: a large white rounded card containing a multi-line textarea, a "+" attach button at the bottom-left, an optional row of inline mode pills (e.g. "Slides", "Website", "Design"), and a circular send button at the bottom-right that flips from disabled gray to solid black once the textarea is non-empty.
+Replace the existing chat input with a three.ws-style composer: a large white rounded card containing a multi-line textarea, a "+" attach button at the bottom-left, an optional row of inline mode pills (e.g. "Slides", "Website", "Design"), and a circular send button at the bottom-right that flips from disabled gray to solid black once the textarea is non-empty.
 
 ## Codebase context
 - Source root: `/workspaces/3D-Agent/chat/`.
@@ -16,13 +16,13 @@ Replace the existing chat input with a Manus-style composer: a large white round
 - Textarea: transparent bg, no border, no focus ring; placeholder color `#9C9A93`, font Inter 16px, `text-ink` (`#1A1A1A`).
 - Footer row: flex items-center justify-between, mt-3.
 - "+" button: 36px circle, `border border-[#E5E3DC] bg-white text-[#1A1A1A] hover:bg-[#F0EEE6]`.
-- Inline mode pills (between "+" and the right send button): `manus-chip` style; the currently selected mode uses `manus-chip-selected`.
+- Inline mode pills (between "+" and the right send button): `three.ws-chip` style; the currently selected mode uses `three.ws-chip-selected`.
 - Send button: 36px circle. Disabled state `bg-[#E7E5DD] text-[#9C9A93]`. Enabled state `bg-black text-white hover:bg-[#1A1A1A]`. Icon `feArrowUp` size 16px.
 - Keyboard: Enter sends; Shift+Enter inserts newline; Esc clears focus.
 
 ## What to ship
 
-### Component: `chat/src/manus/Composer.svelte`
+### Component: `chat/src/three.ws/Composer.svelte`
 Props:
 ```ts
 {
@@ -55,7 +55,7 @@ Behavior:
 - The model selector, agent picker, and tool dropdown that currently sit near the input must NOT disappear. Move them to a small icon row just below the composer card on the empty state, with smaller styling (`text-xs text-ink-soft`), or into the "+" menu. Pick whichever is the smallest change.
 
 ## Acceptance criteria
-- Composer renders as a tall white rounded card matching the Manus screenshots.
+- Composer renders as a tall white rounded card matching the three.ws screenshots.
 - Typing enables the send button (color flips to black); empty disables it.
 - Enter sends, Shift+Enter newlines.
 - Attachments still work end-to-end (verify with at least one image attach + send).

@@ -1,7 +1,7 @@
 # Task 12 — Pricing page
 
 ## Goal
-Render a Manus-style pricing page at `route === 'pricing'`: serif headline, subheadline, three plan cards (Free, Pro, Business), and a small FAQ section below. The page sits below the top nav + announcement banner and uses the standard `bg-paper`.
+Render a three.ws-style pricing page at `route === 'pricing'`: serif headline, subheadline, three plan cards (Free, Pro, Business), and a small FAQ section below. The page sits below the top nav + announcement banner and uses the standard `bg-paper`.
 
 ## Codebase context
 - Source root: `/workspaces/3D-Agent/chat/`.
@@ -24,30 +24,30 @@ Render a Manus-style pricing page at `route === 'pricing'`: serif headline, subh
 
 ## Design tokens
 - Page bg: `bg-paper`.
-- Hero headline: `manus-display` (serif, 56–80px). Centered.
+- Hero headline: `three.ws-display` (serif, 56–80px). Centered.
 - Sub: `text-[#6B6B6B] text-lg max-w-[640px] text-center mx-auto mt-4`.
 - Plan card: `bg-white border border-[#E5E3DC] rounded-2xl p-8 flex flex-col`.
 - Highlighted plan (Pro): `bg-black text-white border-black`. Inside, swap text colors: heading white, body `text-white/70`, divider `border-white/20`.
 - Plan price: serif 48px font-semibold; "/mo" trailing in 16px regular `text-ink-soft`.
-- CTA: full-width `manus-btn-primary` for outlined cards; outlined-on-black for the highlighted card.
+- CTA: full-width `three.ws-btn-primary` for outlined cards; outlined-on-black for the highlighted card.
 - Feature list: ul with check icons (`feCheck`), 14px, gap-2.
 
 ## Plan content
 | Plan | Price | Tagline | Features |
 |---|---|---|---|
-| Free | $0/mo | Try Manus on small projects | 50 messages / month · Single-agent runs · Community support |
+| Free | $0/mo | Try three.ws on small projects | 50 messages / month · Single-agent runs · Community support |
 | Pro | $39/mo | For builders who ship daily | Unlimited messages · Multi-agent runs · Priority models · Email support |
 | Business | $129/mo | For teams running real workloads | Everything in Pro · Shared workspaces · SSO · SOC 2 reports · Dedicated CSM |
 
 ## What to ship
 
-### Component: `chat/src/manus/pages/Pricing.svelte`
+### Component: `chat/src/three.ws/pages/Pricing.svelte`
 ```svelte
 <script>
   import Icon from '../../Icon.svelte';
   import { feCheck } from '../../feather.js';
   const plans = [
-    { name: 'Free',     price: '$0',   suffix: '/mo', tag: 'Try Manus on small projects',
+    { name: 'Free',     price: '$0',   suffix: '/mo', tag: 'Try three.ws on small projects',
       features: ['50 messages / month','Single-agent runs','Community support'],
       cta: 'Get started', highlight: false },
     { name: 'Pro',      price: '$39',  suffix: '/mo', tag: 'For builders who ship daily',
@@ -66,7 +66,7 @@ Render a Manus-style pricing page at `route === 'pricing'`: serif headline, subh
 </script>
 
 <section class="pt-20 pb-24">
-  <h1 class="manus-display text-center">Simple pricing.<br/>Built for momentum.</h1>
+  <h1 class="three.ws-display text-center">Simple pricing.<br/>Built for momentum.</h1>
   <p class="text-[#6B6B6B] text-lg max-w-[640px] text-center mx-auto mt-6">
     Start free. Upgrade when your team is ready to ship more.
   </p>

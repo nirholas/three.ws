@@ -10,7 +10,7 @@ export const featurePages = {
   'web-app': {
     eyebrow: 'AI Web App',
     title: 'Build full-stack apps from a single prompt',
-    sub: 'Manus generates the frontend, backend, database, and deploys it — no engineering team required.',
+    sub: 'three.ws generates the frontend, backend, database, and deploys it — no engineering team required.',
     primaryCta: 'Start building',
     secondaryCta: 'Watch a 2-min demo',
     features: [
@@ -28,7 +28,7 @@ export const featurePages = {
   'mobile-app': {
     eyebrow: 'AI Mobile App',
     title: 'Native iOS & Android apps, generated end-to-end',
-    sub: 'From idea to App Store — Manus writes the code, wires the APIs, and handles the release build.',
+    sub: 'From idea to App Store — three.ws writes the code, wires the APIs, and handles the release build.',
     primaryCta: 'Build your app',
     secondaryCta: 'Watch a 2-min demo',
     features: [
@@ -46,7 +46,7 @@ export const featurePages = {
   'ai-design': {
     eyebrow: 'AI Design',
     title: 'From brief to brand: design that ships itself',
-    sub: 'Describe your product, brand, or screen — Manus delivers complete, export-ready design files.',
+    sub: 'Describe your product, brand, or screen — three.ws delivers complete, export-ready design files.',
     primaryCta: 'Start designing',
     secondaryCta: 'Watch a 2-min demo',
     features: [
@@ -64,14 +64,14 @@ export const featurePages = {
   'ai-slides': {
     eyebrow: 'AI Slides',
     title: 'Decks that write, design, and rehearse with you',
-    sub: 'Tell Manus your audience and key message. Get a polished, presentation-ready deck in minutes.',
+    sub: 'Tell three.ws your audience and key message. Get a polished, presentation-ready deck in minutes.',
     primaryCta: 'Create a deck',
     secondaryCta: 'Watch a 2-min demo',
     features: [
-      { title: 'Smart outlines',         body: 'Manus structures your narrative before designing a single slide.',                 icon: feList },
+      { title: 'Smart outlines',         body: 'three.ws structures your narrative before designing a single slide.',                 icon: feList },
       { title: 'On-brand layouts',       body: 'Themes that match your palette, fonts, and grid — automatically.',                icon: feLayout },
       { title: 'Speaker notes',          body: 'Every slide ships with talking points and transition cues.',                      icon: feEdit2 },
-      { title: 'Live data charts',       body: 'Pull in your numbers; Manus picks the right chart type automatically.',           icon: feBarChart },
+      { title: 'Live data charts',       body: 'Pull in your numbers; three.ws picks the right chart type automatically.',           icon: feBarChart },
       { title: 'Rehearsal mode',         body: 'Practice your timing with auto-advance and an inline teleprompter.',              icon: fePlayCircle },
       { title: 'Share & export',         body: 'PowerPoint, PDF, or a shareable link — one click away.',                         icon: feUpload },
     ],
@@ -81,17 +81,17 @@ export const featurePages = {
 
   'browser-operator': {
     eyebrow: 'Browser Operator',
-    title: 'Lend Manus a tab. Watch it work.',
-    sub: 'Give Manus access to a browser tab and it completes multi-step web tasks while you focus on other things.',
+    title: 'Lend three.ws a tab. Watch it work.',
+    sub: 'Give three.ws access to a browser tab and it completes multi-step web tasks while you focus on other things.',
     primaryCta: 'Try it now',
     secondaryCta: 'Watch a 2-min demo',
     features: [
       { title: 'Full page control',      body: 'Clicks, scrolls, form fills, and file uploads — no task too complex.',            icon: feMonitor },
       { title: 'Multi-tab flows',        body: 'Research across sites, compare prices, and aggregate results in one pass.',       icon: feGlobe },
-      { title: 'Authenticated sessions', body: 'Manus works inside your logged-in accounts, safely sandboxed.',                   icon: feCheckSquare },
+      { title: 'Authenticated sessions', body: 'three.ws works inside your logged-in accounts, safely sandboxed.',                   icon: feCheckSquare },
       { title: 'Parallel browsing',      body: 'Spin up multiple agents to run independent web tasks concurrently.',              icon: feGrid },
       { title: 'Audit trail',            body: 'Every action logged — see exactly what was clicked and when.',                    icon: feActivity },
-      { title: 'Scheduled runs',         body: 'Set Manus to monitor a site or submit a form on a recurring schedule.',          icon: feClock },
+      { title: 'Scheduled runs',         body: 'Set three.ws to monitor a site or submit a form on a recurring schedule.',          icon: feClock },
     ],
     closingTitle: 'Never click through a workflow again.',
     closingCta: 'Try it free',
@@ -100,7 +100,7 @@ export const featurePages = {
   'wide-research': {
     eyebrow: 'Wide Research',
     title: 'Parallel research across hundreds of sources at once',
-    sub: 'Manus dispatches a fleet of agents to explore the web, synthesising findings into a single citable report.',
+    sub: 'three.ws dispatches a fleet of agents to explore the web, synthesising findings into a single citable report.',
     primaryCta: 'Start researching',
     secondaryCta: 'Watch a 2-min demo',
     features: [
@@ -115,14 +115,14 @@ export const featurePages = {
     closingCta: 'Start free',
   },
 
-  'mail-manus': {
-    eyebrow: 'Mail Manus',
+  'mail-three.ws': {
+    eyebrow: 'Mail three.ws',
     title: 'Turn every inbox thread into a finished task',
-    sub: 'Connect your inbox and Manus drafts replies, schedules actions, and closes loops — without you lifting a finger.',
+    sub: 'Connect your inbox and three.ws drafts replies, schedules actions, and closes loops — without you lifting a finger.',
     primaryCta: 'Connect your inbox',
     secondaryCta: 'Watch a 2-min demo',
     features: [
-      { title: 'Smart triage',           body: 'Manus reads context, urgency, and intent — not just keywords.',                   icon: feInbox },
+      { title: 'Smart triage',           body: 'three.ws reads context, urgency, and intent — not just keywords.',                   icon: feInbox },
       { title: 'Draft in your voice',    body: 'Replies that sound like you, tuned to your past writing patterns.',              icon: feEdit2 },
       { title: 'Action extraction',      body: 'Meeting requests, to-dos, and follow-ups turned into calendar items.',           icon: feCheckSquare },
       { title: 'Thread summaries',       body: 'Long threads distilled into a three-line brief before you reply.',               icon: feList },
@@ -136,11 +136,11 @@ export const featurePages = {
   'agent-skills': {
     eyebrow: 'Agent Skills',
     title: 'Codify your team\'s expertise into reusable agents',
-    sub: 'Record a workflow once and Manus runs it reliably at any scale — no maintenance, no documentation drift.',
+    sub: 'Record a workflow once and three.ws runs it reliably at any scale — no maintenance, no documentation drift.',
     primaryCta: 'Build a skill',
     secondaryCta: 'Watch a 2-min demo',
     features: [
-      { title: 'Skill recorder',         body: 'Walk through a task once; Manus captures the pattern as a reusable skill.',      icon: feCpu },
+      { title: 'Skill recorder',         body: 'Walk through a task once; three.ws captures the pattern as a reusable skill.',      icon: feCpu },
       { title: 'Parameterised runs',     body: 'Swap inputs to reuse the same skill across clients, markets, or datasets.',      icon: feSliders },
       { title: 'Team library',           body: 'Share, fork, and version skills across your entire organisation.',               icon: feUsers },
       { title: 'Composable chains',      body: 'Sequence skills into multi-step pipelines with conditional branching.',          icon: feLayers },

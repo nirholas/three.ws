@@ -17,13 +17,13 @@ When `$mode === 'desktop'`, the empty-state landing changes to:
 
 ## Design tokens
 - Sample prompt card: same as task 14 (`bg-white border border-[#E5E3DC] rounded-xl p-4 h-[112px]` with trailing `feArrowUpLeft`).
-- Platforms chip: `manus-chip` with leading icon (use `feMonitor`, `feSmartphone`, `feTablet` as appropriate).
+- Platforms chip: `three.ws-chip` with leading icon (use `feMonitor`, `feSmartphone`, `feTablet` as appropriate).
 - Section heading: `text-sm font-semibold mt-10 mb-3`.
 - Grid: `grid md:grid-cols-2 lg:grid-cols-4 gap-3` for sample prompts; flex-wrap rows for chips.
 
 ## What to ship
 
-### Component: `chat/src/manus/flows/DesktopFlow.svelte`
+### Component: `chat/src/three.ws/flows/DesktopFlow.svelte`
 - Renders the three sections.
 - Clicking a sample prompt fills the composer and submits.
 - Clicking a platform chip toggles its selection in `$appPlatforms`.

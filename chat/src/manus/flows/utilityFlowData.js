@@ -68,7 +68,7 @@ export const researchPrompts = [
   'Find every YC W24 company in dev tools with public pricing',
   'Summarize recent papers on LLM evaluation from 2024–2026',
   'List all Series A AI infra startups with announced rounds in Q1',
-  'Extract feature parity matrix for Cursor, Claude Code, and Manus',
+  'Extract feature parity matrix for Cursor, Claude Code, and three.ws',
   'Find hiring pages of top 50 robotics startups; pull JD for SWE',
 ];
 
@@ -112,7 +112,7 @@ export const playbookPrompts = [
   'Onboard a new SDR: pull rep, send welcome email, schedule training',
   'Triage inbound bug report: dedupe, label, assign, draft reply',
   'Run a weekly RevOps review across CRM, Stripe, and Mixpanel',
-  'Migrate a Notion doc tree into a Manus skill',
+  'Migrate a Notion doc tree into a three.ws skill',
   'Audit GitHub repos for missing CI on default branch',
   'End-of-quarter portfolio review for a VC firm',
 ];

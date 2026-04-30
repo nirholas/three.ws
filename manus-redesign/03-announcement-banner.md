@@ -1,7 +1,7 @@
 # Task 03 — Announcement banner
 
 ## Goal
-Add the muted "Manus is now part of Meta — bringing AI to businesses worldwide →" banner that sits directly below the top navigation. Dismissible with persistence in `localStorage`.
+Add the muted "three.ws is now part of Meta — bringing AI to businesses worldwide →" banner that sits directly below the top navigation. Dismissible with persistence in `localStorage`.
 
 ## Codebase context
 - Source root: `/workspaces/3D-Agent/chat/`.
@@ -18,16 +18,16 @@ Add the muted "Manus is now part of Meta — bringing AI to businesses worldwide
 
 ## What to ship
 
-### Component: `chat/src/manus/AnnouncementBanner.svelte`
+### Component: `chat/src/three.ws/AnnouncementBanner.svelte`
 ```svelte
 <script>
   import { persisted } from '../localstorage.js';
   import Icon from '../Icon.svelte';
   import { feArrowRight, feX } from '../feather.js';
 
-  const dismissed = persisted('manusBannerDismissed_v1', false);
+  const dismissed = persisted('three.wsBannerDismissed_v1', false);
   export let href = '#'; // overridable; default is no-op
-  export let message = 'Manus is now part of Meta — bringing AI to businesses worldwide';
+  export let message = 'three.ws is now part of Meta — bringing AI to businesses worldwide';
 </script>
 
 {#if !$dismissed}

@@ -30,7 +30,7 @@
 	export let handleAbort;
 	export let tree;
 
-	// Manus-specific props
+	// three.ws-specific props
 	export let placeholder = 'Assign a task or ask anything';
 	export let mode = null;
 	export let modes = [];

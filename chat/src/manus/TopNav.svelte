@@ -53,7 +53,7 @@
 			on:click={() => route.set('chat')}
 		>
 			<Icon icon={feCpu} class="h-5 w-5" />
-			<span class="font-serif text-[22px] font-semibold lowercase tracking-tight">manus</span>
+			<span class="font-serif text-[22px] font-semibold lowercase tracking-tight">three.ws</span>
 		</button>
 
 		<!-- CENTER: desktop nav -->
@@ -197,7 +197,7 @@
 </header>
 
 <style>
-	:global(.manus-card) {
+	:global(.three.ws-card) {
 		background: #F5F4EF;
 		border: 1px solid #E5E3DC;
 		border-radius: 12px;

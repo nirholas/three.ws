@@ -15,7 +15,7 @@ When `$mode === 'design'`, the empty-state landing changes to:
 - Composer (task 05) supports `extraInlinePills`.
 
 ## Design tokens
-- Mode pill: `manus-chip-selected` with `feZap` icon and label "Design".
+- Mode pill: `three.ws-chip-selected` with `feZap` icon and label "Design".
 - Model pill: `inline-flex items-center gap-2 h-8 px-2 pr-1 rounded-full border border-[#E5E3DC] bg-white text-sm`. Inside: 16px circle dot for the model, label, then `feChevronDown` size 14.
 - "Get started with" header: `text-[#1A1A1A] font-medium mb-4 mt-10`.
 - Cards: `bg-white border border-[#E5E3DC] rounded-2xl p-5 flex gap-4 hover:bg-[#F5F4EF]`.
@@ -35,10 +35,10 @@ When `$mode === 'design'`, the empty-state landing changes to:
 
 ## What to ship
 
-### 1. Component: `chat/src/manus/flows/DesignFlow.svelte`
+### 1. Component: `chat/src/three.ws/flows/DesignFlow.svelte`
 Renders the header + 6-card grid. Clicking a card fills the composer with the card's description and submits.
 
-### 2. Model picker: `chat/src/manus/DesignModelPicker.svelte`
+### 2. Model picker: `chat/src/three.ws/DesignModelPicker.svelte`
 A small dropdown attached to the model pill in the composer. Models:
 ```js
 const models = [

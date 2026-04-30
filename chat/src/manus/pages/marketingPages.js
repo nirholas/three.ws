@@ -61,14 +61,14 @@ export const marketingPages = {
   },
   'business/deployments': {
     eyebrow: 'Private Deployments',
-    headline: 'Run Manus inside\nyour VPC',
+    headline: 'Run three.ws inside\nyour VPC',
     sub: 'Deploy on your own infrastructure. Your data never leaves your environment.',
     placeholder: 'Tell us about your deployment requirements.',
   },
   'business/customers': {
     eyebrow: 'Customer Stories',
     headline: 'Real teams.\nReal outcomes.',
-    sub: 'See how leading organizations use Manus to ship faster and eliminate bottlenecks.',
+    sub: 'See how leading organizations use three.ws to ship faster and eliminate bottlenecks.',
     placeholder: 'Describe the outcome you\'re looking for.',
   },
   'business/contact-sales': {
@@ -85,7 +85,7 @@ export function getPageContent(slug) {
   return {
     eyebrow: null,
     headline: label,
-    sub: 'Explore what Manus can do for your team.',
+    sub: 'Explore what three.ws can do for your team.',
     placeholder: 'Describe what you want to build.',
   };
 }

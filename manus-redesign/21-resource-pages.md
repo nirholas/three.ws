@@ -26,14 +26,14 @@ Each is content-shaped (lists/grids), not a marketing page. One shared `Resource
 ## Per-page spec
 
 ### `blog`
-- Header: "Blog", sub: "Ideas, guides, and stories from the Manus team".
+- Header: "Blog", sub: "Ideas, guides, and stories from the three.ws team".
 - 3-col grid of 9 article cards. Each card:
   - Tan thumbnail (`aspect-[16/9] rounded-xl bg-[#EFECE3]`)
   - Tag badge: `inline-block text-xs uppercase tracking-wide text-[#6B6B6B] mt-4`
   - Title: `font-serif text-xl mt-2`
   - 2-line excerpt: `text-sm text-[#6B6B6B] mt-2`
   - Date + read time: `text-xs text-[#9C9A93] mt-4`
-- Use placeholder titles: "How we think about agent reliability", "Designing chat for non-engineers", "Inside the Manus runtime", etc.
+- Use placeholder titles: "How we think about agent reliability", "Designing chat for non-engineers", "Inside the three.ws runtime", etc.
 
 ### `docs`
 - 240px left rail with section nav: Getting started, Concepts, API, SDKs, Tools, Skills, Deployments, FAQs.
@@ -54,7 +54,7 @@ Each is content-shaped (lists/grids), not a marketing page. One shared `Resource
 
 ## What to ship
 
-### 1. Component: `chat/src/manus/pages/ResourcePage.svelte`
+### 1. Component: `chat/src/three.ws/pages/ResourcePage.svelte`
 Props: `slug`. Switches on slug and renders one of:
 - `BlogIndex.svelte`
 - `DocsIndex.svelte`
@@ -62,7 +62,7 @@ Props: `slug`. Switches on slug and renders one of:
 - `UseCasesIndex.svelte`
 - `TrustCenter.svelte`
 
-### 2. Five sub-components in `chat/src/manus/pages/resources/`
+### 2. Five sub-components in `chat/src/three.ws/pages/resources/`
 Each implements the layout above with seed content embedded inline (so the task is self-contained, no fetching).
 
 ### 3. Wire into `App.svelte` route switch
@@ -73,7 +73,7 @@ Each implements the layout above with seed content embedded inline (so the task 
 
 ## Acceptance criteria
 - All 5 resource URLs render their dedicated layout with seed content.
-- Page widths and typography match Manus' general aesthetic from tasks 01 and 12.
+- Page widths and typography match three.ws' general aesthetic from tasks 01 and 12.
 - Top nav + announcement banner visible above each page.
 
 ## Out of scope

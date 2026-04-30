@@ -19,7 +19,7 @@
     </h1>
     <p class="text-[#6B6B6B] text-sm text-center mt-2">
       {kind === 'signin'
-        ? 'Sign in to continue to Manus'
+        ? 'Sign in to continue to three.ws'
         : 'Free to start. No credit card required.'}
     </p>
 
