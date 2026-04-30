@@ -214,6 +214,9 @@ const BASE_STYLE = `
 		justify-content: center;
 	}
 	button.icon.mic[data-listening="true"] { box-shadow: 0 0 0 4px var(--agent-mic-glow); }
+	button.icon.mic[data-voice-state="listening"] { box-shadow: 0 0 0 4px #22c55e; }
+	button.icon.mic[data-voice-state="thinking"]  { box-shadow: 0 0 0 4px #eab308; }
+	button.icon.mic[data-voice-state="speaking"]  { box-shadow: 0 0 0 4px #3b82f6; }
 	.poster {
 		position: absolute;
 		inset: 0;
@@ -311,6 +314,7 @@ class Agent3DElement extends HTMLElement {
 		this._suppressAttrChange = false;
 		this._detachTradeReactions = null;
 		this._livekitVoice = null;
+		this._voiceClient = null;
 	}
 
 	connectedCallback() {
@@ -460,6 +464,16 @@ class Agent3DElement extends HTMLElement {
 			this._chatEl = chat;
 			this._inputEl = input;
 			this._micEl = micBtn;
+
+			// Voice state ring — wired by VoiceClient when voice-server attr is set
+			this.addEventListener('voiceStateChange', (e) => {
+				if (!this._micEl) return;
+				const { state } = e.detail;
+				this._micEl.dataset.voiceState = state;
+				this._micEl.title = state === 'idle' || !state
+					? 'Push to talk'
+					: 'Voice active — click to stop';
+			});
 
 			// Tool-call indicator ("Checking the chain…").
 			const toolInd = document.createElement('div');
@@ -1365,6 +1379,12 @@ class Agent3DElement extends HTMLElement {
 	}
 
 	async _toggleMic() {
+		const voiceServer = this.getAttribute('voice-server');
+		if (voiceServer) {
+			await this._toggleVoiceClient(voiceServer);
+			return;
+		}
+		// Fallback: Web Speech API (no voice-server attribute)
 		if (!this._runtime) return;
 		if (this._listening) {
 			this._runtime.stt?.stop();
@@ -1383,6 +1403,18 @@ class Agent3DElement extends HTMLElement {
 			this._listening = false;
 			this._micEl.dataset.listening = 'false';
 		}
+	}
+
+	async _toggleVoiceClient(serverUrl) {
+		if (this._voiceClient) {
+			this._voiceClient.stop();
+			this._voiceClient = null;
+			return;
+		}
+		const { VoiceClient } = await import('./runtime/voice-client.js');
+		const agentId = this._manifest?.id?.agentId || this.getAttribute('agent-id') || null;
+		this._voiceClient = new VoiceClient({ serverUrl, element: this });
+		await this._voiceClient.start(agentId);
 	}
 
 	async _connectLiveKit(agentId) {
@@ -1436,6 +1468,10 @@ class Agent3DElement extends HTMLElement {
 		if (this._livekitVoice) {
 			this._livekitVoice.disconnect().catch(() => {});
 			this._livekitVoice = null;
+		}
+		if (this._voiceClient) {
+			this._voiceClient.stop();
+			this._voiceClient = null;
 		}
 		try {
 			this._runtime?.destroy();

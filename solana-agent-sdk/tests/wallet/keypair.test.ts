@@ -1,3 +1,4 @@
+import { jest, describe, it, expect } from "@jest/globals";
 import {
   Keypair,
   Transaction,
@@ -8,10 +9,13 @@ import {
 import bs58 from "bs58";
 import { KeypairWalletProvider } from "../../src/wallet/keypair.js";
 
-jest.mock("@solana/web3.js", () => ({
-  ...jest.requireActual("@solana/web3.js"),
-  sendAndConfirmTransaction: jest.fn().mockResolvedValue("fakeSig"),
-}));
+jest.mock("@solana/web3.js", () => {
+  const actual = jest.requireActual("@solana/web3.js") as typeof import("@solana/web3.js");
+  return {
+    ...actual,
+    sendAndConfirmTransaction: jest.fn().mockImplementation(() => Promise.resolve("fakeSig")),
+  };
+});
 
 describe("KeypairWalletProvider", () => {
   const keypair = Keypair.generate();

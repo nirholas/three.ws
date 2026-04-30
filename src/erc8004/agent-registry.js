@@ -520,5 +520,25 @@ export async function registerAgent({
 	await updateTx.wait();
 	log('Agent URI updated on-chain.');
 
+	// ── 8. Notify backend to index immediately — don't wait for the 15-min cron.
+	try {
+		log('Indexing agent...');
+		await fetch('/api/erc8004/register-confirm', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			credentials: 'include',
+			body: JSON.stringify({
+				chainId,
+				txHash: tx.hash,
+				agentId: String(agentId),
+				metadataUri: registrationUrl,
+				ownerAddress: _address,
+			}),
+		});
+		log('Agent indexed.');
+	} catch {
+		// Non-fatal — the cron crawler will pick it up within 15 minutes.
+	}
+
 	return { agentId, registrationUrl, txHash: tx.hash, chainId };
 }

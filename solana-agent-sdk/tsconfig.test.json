@@ -2,6 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "rootDir": ".",
+    "strict": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noUncheckedIndexedAccess": false

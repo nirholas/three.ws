@@ -206,6 +206,7 @@
 
 		{ "src": "/api/llm/anthropic", "dest": "/api/llm/anthropic.js" },
 		{ "src": "/dashboard/usage", "dest": "/dashboard/usage.html" },
+		{ "src": "/api/erc8004/register-confirm", "dest": "/api/erc8004/register-confirm" },
 		{ "src": "/api/erc8004/hydrate", "dest": "/api/erc8004/hydrate.js" },
 		{ "src": "/api/erc8004/import", "dest": "/api/erc8004/import.js" },
 
