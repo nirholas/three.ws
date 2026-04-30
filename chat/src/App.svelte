@@ -1069,7 +1069,7 @@
 		}
 	}
 
-	let models = [];
+	let models = [...BUILTIN_MODELS];
 
 	let loading = false;
 
@@ -1976,7 +1976,10 @@
 <SettingsModal
 	open={settingsModalOpen}
 	trigger="settings"
-	on:fetchModels={() => fetchModels({ onFinally: () => {} })}
+	on:fetchModels={async () => {
+		const fetched = await fetchModels({ onFinally: () => {} });
+		models = [...BUILTIN_MODELS, ...fetched];
+	}}
 	on:disableTool={({ detail: name }) => {
 		convo.tools = convo.tools.filter((n) => n !== name);
 		saveConversation(convo);
