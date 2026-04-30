@@ -4,6 +4,57 @@ export const defaultToolSchema = [
 		schema: [
 			{
 				clientDefinition: {
+					id: 'tradingview-chart-001',
+					name: 'TradingViewChart',
+					description: 'Displays an interactive TradingView chart for a given symbol.',
+					arguments: [
+						{ name: 'symbol', type: 'string', description: 'Trading symbol e.g. BINANCE:BTCUSDT, NASDAQ:AAPL' },
+						{ name: 'interval', type: 'string', description: 'Chart interval: 1, 5, 15, 30, 60, D, W, M' },
+						{ name: 'theme', type: 'string', description: 'light or dark' },
+					],
+					body: `const symbol = args.symbol || 'BINANCE:BTCUSDT';
+const interval = args.interval || 'D';
+const theme = args.theme || 'light';
+const html = \`<!DOCTYPE html>
+<html>
+<head><style>html,body{margin:0;padding:0;height:100%;overflow:hidden}</style></head>
+<body>
+<div id="tv_chart" style="width:100%;height:100vh"></div>
+<script src="https://s3.tradingview.com/tv.js"><\\/script>
+<script>
+new TradingView.widget({
+  container_id:"tv_chart",
+  symbol:\${JSON.stringify(symbol)},
+  interval:\${JSON.stringify(interval)},
+  theme:\${JSON.stringify(theme)},
+  style:"1",
+  width:"100%",
+  height:"100%",
+  toolbar_bg:"#f1f3f6",
+  hide_side_toolbar:false,
+  allow_symbol_change:true
+});
+<\\/script>
+</body></html>\`;
+return { contentType: 'text/html', content: html };`,
+				},
+				type: 'function',
+				function: {
+					name: 'TradingViewChart',
+					description: 'Display an interactive TradingView chart. Use for any request to show a price chart, candlestick chart, or market data visualization.',
+					parameters: {
+						type: 'object',
+						properties: {
+							symbol: { type: 'string', description: 'Trading symbol e.g. BINANCE:BTCUSDT, NASDAQ:AAPL, FX:EURUSD' },
+							interval: { type: 'string', enum: ['1', '5', '15', '30', '60', 'D', 'W', 'M'], description: 'Chart interval' },
+							theme: { type: 'string', enum: ['light', 'dark'], description: 'Chart theme' },
+						},
+						required: ['symbol'],
+					},
+				},
+			},
+			{
+				clientDefinition: {
 					id: '95c15b96-7bba-44e7-98a7-ffe268b884c5',
 					name: 'Artifact',
 					description: 'Displays the provided HTML content as a webpage to the user.',
