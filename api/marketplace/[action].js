@@ -18,6 +18,7 @@
 import { sql } from '../_lib/db.js';
 import { authenticateBearer, extractBearer, getSessionUser } from '../_lib/auth.js';
 import { cors, error, json, method, readJson, wrap } from '../_lib/http.js';
+import { publicUrl } from '../_lib/r2.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -135,17 +136,19 @@ async function handleList(req, res, url) {
 	const qLike = q ? `%${q}%` : null;
 
 	const rows = await sql`
-		SELECT id, name, description, category, tags, avatar_id, user_id,
-		       forks_count, views_count, published_at, created_at, skills
-		FROM agent_identities
-		WHERE is_published = true
-		  AND deleted_at IS NULL
-		  AND (${cat}::text IS NULL OR category = ${cat})
+		SELECT ai.id, ai.name, ai.description, ai.category, ai.tags, ai.avatar_id, ai.user_id,
+		       ai.forks_count, ai.views_count, ai.published_at, ai.created_at, ai.skills,
+		       av.thumbnail_key
+		FROM agent_identities ai
+		LEFT JOIN avatars av ON av.id = ai.avatar_id AND av.deleted_at IS NULL
+		WHERE ai.is_published = true
+		  AND ai.deleted_at IS NULL
+		  AND (${cat}::text IS NULL OR ai.category = ${cat})
 		  AND (
 		    ${qLike}::text IS NULL
-		    OR name ILIKE ${qLike}
-		    OR description ILIKE ${qLike}
-		    OR EXISTS (SELECT 1 FROM unnest(tags) t WHERE t ILIKE ${qLike})
+		    OR ai.name ILIKE ${qLike}
+		    OR ai.description ILIKE ${qLike}
+		    OR EXISTS (SELECT 1 FROM unnest(ai.tags) t WHERE t ILIKE ${qLike})
 		  )
 		ORDER BY ${orderBy}
 		LIMIT ${limit + 1} OFFSET ${offset}
@@ -235,18 +238,20 @@ async function handleSimilar(req, res, id) {
 	if (!base) return error(res, 404, 'not_found', 'agent not found');
 
 	const rows = await sql`
-		SELECT id, name, description, category, tags, avatar_id, user_id,
-		       forks_count, views_count, published_at, created_at, skills,
+		SELECT ai.id, ai.name, ai.description, ai.category, ai.tags, ai.avatar_id, ai.user_id,
+		       ai.forks_count, ai.views_count, ai.published_at, ai.created_at, ai.skills,
+		       av.thumbnail_key,
 		       (
-		         (CASE WHEN category = ${base.category} THEN 3 ELSE 0 END)
-		         + cardinality(ARRAY(SELECT unnest(tags) INTERSECT SELECT unnest(${base.tags}::text[])))
-		         + similarity(name, ${base.name})
-		         + similarity(coalesce(description,''), ${base.description || ''}) * 0.5
+		         (CASE WHEN ai.category = ${base.category} THEN 3 ELSE 0 END)
+		         + cardinality(ARRAY(SELECT unnest(ai.tags) INTERSECT SELECT unnest(${base.tags}::text[])))
+		         + similarity(ai.name, ${base.name})
+		         + similarity(coalesce(ai.description,''), ${base.description || ''}) * 0.5
 		       ) AS score
-		FROM agent_identities
-		WHERE is_published = true
-		  AND deleted_at IS NULL
-		  AND id <> ${id}
+		FROM agent_identities ai
+		LEFT JOIN avatars av ON av.id = ai.avatar_id AND av.deleted_at IS NULL
+		WHERE ai.is_published = true
+		  AND ai.deleted_at IS NULL
+		  AND ai.id <> ${id}
 		ORDER BY score DESC
 		LIMIT 8
 	`;
@@ -423,6 +428,7 @@ function toCard(row) {
 		category: row.category,
 		tags: row.tags || [],
 		avatar_id: row.avatar_id,
+		thumbnail_url: row.thumbnail_key ? publicUrl(row.thumbnail_key) : null,
 		author_id: row.user_id,
 		skills: row.skills || [],
 		forks_count: row.forks_count || 0,

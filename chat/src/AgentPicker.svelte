@@ -16,7 +16,7 @@
 			const res = await fetch(url);
 			if (res.ok) {
 				const json = await res.json();
-				agents = json.data?.agents ?? [];
+				agents = json.data?.items ?? [];
 			}
 		} catch {}
 		loading = false;
@@ -69,27 +69,32 @@
 	{/if}
 
 	{#if loading}
-		<p class="text-center text-[12px] text-slate-400">Loading…</p>
+		<p class="text-center text-[12px] text-slate-400 py-4">Loading…</p>
 	{:else if agents.length === 0}
-		<p class="text-center text-[12px] text-slate-400">No agents found</p>
+		<p class="text-center text-[12px] text-slate-400 py-4">No agents found</p>
 	{:else}
-		<div class="flex max-h-64 flex-col gap-1 overflow-y-auto">
+		<div class="grid grid-cols-3 gap-2 max-h-72 overflow-y-auto pr-0.5">
 			{#each agents as agent}
 				<button
-					class="flex items-center gap-3 rounded-lg px-2 py-2 text-left transition hover:bg-gray-50
-						{$localAgentId === agent.id ? 'bg-indigo-50 ring-1 ring-indigo-200' : ''}"
+					class="flex flex-col items-center gap-1.5 rounded-xl p-2 text-center transition hover:bg-gray-50
+						{$localAgentId === agent.id ? 'bg-indigo-50 ring-2 ring-indigo-300' : 'ring-1 ring-gray-100'}"
 					on:click={() => pick(agent)}
+					title={agent.description || agent.name}
 				>
-					<div
-						class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white"
-						style="background:{color(agent.id)}"
-					>{initials(agent.name)}</div>
-					<div class="min-w-0">
-						<p class="truncate text-[13px] font-medium text-slate-800">{agent.name}</p>
-						{#if agent.description}
-							<p class="truncate text-[11px] text-slate-500">{agent.description}</p>
-						{/if}
-					</div>
+					{#if agent.thumbnail_url}
+						<img
+							src={agent.thumbnail_url}
+							alt={agent.name}
+							class="h-14 w-14 rounded-lg object-cover"
+							loading="lazy"
+						/>
+					{:else}
+						<div
+							class="flex h-14 w-14 items-center justify-center rounded-lg text-[14px] font-bold text-white"
+							style="background:{color(agent.id)}"
+						>{initials(agent.name)}</div>
+					{/if}
+					<p class="w-full truncate text-[11px] font-medium text-slate-700 leading-tight">{agent.name}</p>
 				</button>
 			{/each}
 		</div>
