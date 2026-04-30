@@ -22,7 +22,7 @@
 	} from './providers.js';
 	import ModelSelector from './ModelSelector.svelte';
 	import CompanyLogo from './CompanyLogo.svelte';
-	import { controller, remoteServer, config, params, toolSchema, syncServer, brandConfig, ttsEnabled, localAgentId, route, mode, websiteCategory } from './stores.js';
+	import { controller, remoteServer, config, params, toolSchema, syncServer, brandConfig, ttsEnabled, localAgentId, talkingHeadEnabled, route, mode, websiteCategory } from './stores.js';
 	import AuthPage from './manus/pages/AuthPage.svelte';
 	import Pricing from './manus/pages/Pricing.svelte';
 	import MarketingPage from './manus/pages/MarketingPage.svelte';
@@ -1167,6 +1167,8 @@
 	// Floating 3D agent
 	let agentEl;
 	let talkingHead;
+	let talkingHeadReady = false;
+	let pendingSpeak = null;
 	let agentVisible = true;
 	let agentScriptLoaded = false;
 	let agentPickerOpen = false;
@@ -1210,14 +1212,26 @@
 			agentEl.speak(last.content);
 			const emotion = detectEmotion(last.content);
 			if (emotion) setTimeout(() => agentEl?.expressEmotion(emotion), 600);
-		} else if (talkingHead && agentVisible) {
-			talkingHead.speak({ text: last.content });
+		} else if ($talkingHeadEnabled && agentVisible) {
+			if (talkingHeadReady) {
+				talkingHead.speak({ text: last.content });
+			} else {
+				pendingSpeak = last.content;
+			}
 		}
 
-		if ($ttsEnabled && window.speechSynthesis && !talkingHead) {
+		if ($ttsEnabled && window.speechSynthesis && !$talkingHeadEnabled) {
 			window.speechSynthesis.cancel();
 			const utt = new SpeechSynthesisUtterance(last.content);
 			window.speechSynthesis.speak(utt);
+		}
+	}
+
+	function onTalkingHeadReady() {
+		talkingHeadReady = true;
+		if (pendingSpeak) {
+			talkingHead.speak({ text: pendingSpeak });
+			pendingSpeak = null;
 		}
 	}
 </script>
@@ -1660,8 +1674,8 @@
 				background="transparent"
 				style="width:220px;height:220px;border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.18);"
 			></agent-3d>
-		{:else if !effectiveAgentId && agentVisible}
-			<TalkingHead bind:this={talkingHead} />
+		{:else if $talkingHeadEnabled && agentVisible}
+			<TalkingHead bind:this={talkingHead} on:ready={onTalkingHeadReady} />
 		{/if}
 
 		<div class="flex items-center gap-1.5">
@@ -1675,6 +1689,22 @@
 				<Icon icon={feSpeaker} class="h-3.5 w-3.5 {$ttsEnabled ? 'text-indigo-500' : 'text-slate-400'}" />
 			</button>
 
+			<!-- TalkingHead toggle (when no agent-3d) -->
+			{#if !effectiveAgentId}
+				<button
+					class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md ring-1 transition hover:bg-gray-50
+						{$talkingHeadEnabled ? 'ring-indigo-400' : 'ring-gray-200'}"
+					title={$talkingHeadEnabled ? 'Hide avatar' : 'Show 3D avatar'}
+					on:click={() => {
+						talkingHeadEnabled.update(v => !v);
+						talkingHeadReady = false;
+						pendingSpeak = null;
+					}}
+				>
+					<Icon icon={feCpu} class="h-3.5 w-3.5 {$talkingHeadEnabled ? 'text-indigo-500' : 'text-slate-400'}" />
+				</button>
+			{/if}
+
 			<!-- Agent picker -->
 			<button
 				class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-gray-200 transition hover:bg-gray-50"
@@ -1684,7 +1714,7 @@
 				<Icon icon={feUsers} class="h-3.5 w-3.5 text-slate-600" />
 			</button>
 
-			<!-- Show/hide toggle (only when agent set) -->
+			<!-- Show/hide toggle (when agent-3d is set) -->
 			{#if effectiveAgentId}
 				<button
 					class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-gray-200 transition hover:bg-gray-50"
