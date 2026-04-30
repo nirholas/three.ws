@@ -447,7 +447,13 @@ const TOOL_CATALOG = [
 		description: 'Soft-delete an avatar you own. Requires avatars:delete scope.',
 		inputSchema: {
 			type: 'object',
-			properties: { id: { type: 'string', format: 'uuid' } },
+			properties: {
+				id: { type: 'string', format: 'uuid' },
+				confirm: {
+					type: 'boolean',
+					description: 'Must be true to confirm permanent deletion.',
+				},
+			},
 			required: ['id'],
 			additionalProperties: false,
 		},
@@ -654,11 +660,13 @@ const TOOLS = {
 	},
 
 	search_public_avatars: {
-		async handler(args) {
+		async handler(args, auth) {
+			// Unauthenticated callers (x402/anonymous) are capped at 10 to prevent bulk enumeration.
+			const maxLimit = auth.userId ? 50 : 10;
 			const result = await searchPublicAvatars({
 				q: args.q,
 				tag: args.tag,
-				limit: args.limit || 12,
+				limit: Math.min(args.limit || 12, maxLimit),
 			});
 			return {
 				content: [
@@ -727,8 +735,20 @@ const TOOLS = {
 	delete_avatar: {
 		scope: 'avatars:delete',
 		async handler(args, auth) {
+			if (!args.confirm) {
+				return {
+					content: [
+						{
+							type: 'text',
+							text: 'Set confirm: true to permanently delete this avatar.',
+						},
+					],
+					isError: true,
+				};
+			}
 			const ok = await deleteAvatar({ id: args.id, userId: auth.userId });
 			if (!ok) throw new Error('avatar not found or not yours');
+			// TODO: audit_log table needed — INSERT (user_id, action='delete_avatar', resource_id, created_at)
 			return { content: [{ type: 'text', text: `Deleted avatar ${args.id}.` }] };
 		},
 	},

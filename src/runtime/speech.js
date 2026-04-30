@@ -1,5 +1,7 @@
 // Speech I/O — TTS and STT. Browser-native by default; provider-swappable.
 
+export { LiveKitVoice } from './livekit-voice.js';
+
 export class BrowserTTS {
 	constructor({ voiceId = 'default', rate = 1, pitch = 1, lang = 'en-US' } = {}) {
 		this.voiceId = voiceId;

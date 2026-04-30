@@ -65,6 +65,7 @@ export const ttsEnabled = persisted('ttsEnabled', false);
 export const localAgentId = persisted('localAgentId', '');
 export const activeAgent = persisted('activeAgentDetail', null);
 export const talkingHeadEnabled = persisted('talkingHeadEnabled', false);
+export const talkingHeadAvatarUrl = persisted('talkingHeadAvatarUrl', '');
 
 export const route = writable(
 	typeof window !== 'undefined' ? (window.location.hash.slice(1) || 'chat') : 'chat'

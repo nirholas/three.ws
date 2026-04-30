@@ -6,6 +6,89 @@ import { fileURLToPath } from 'node:url';
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 
+// ── wallets (Birdeye P&L proxy) ───────────────────────────────────────────────
+
+const BIRDEYE_BASE = 'https://public-api.birdeye.so';
+const CACHE_TTL_MS = 60_000;
+const MAX_ADDRESSES = 20;
+const _cache = new Map(); // address → { data, ts }
+
+function _getCached(addr) {
+	const entry = _cache.get(addr);
+	if (!entry) return null;
+	if (Date.now() - entry.ts > CACHE_TTL_MS) { _cache.delete(addr); return null; }
+	return entry.data;
+}
+
+function _setCache(addr, data) { _cache.set(addr, { data, ts: Date.now() }); }
+
+async function _fetchBirdeye(addr, apiKey) {
+	const url = `${BIRDEYE_BASE}/v1/wallet/portfolio?wallet=${encodeURIComponent(addr)}&chain=solana`;
+	const ctrl = new AbortController();
+	const t = setTimeout(() => ctrl.abort(), 8000);
+	try {
+		const res = await fetch(url, { headers: { 'X-API-KEY': apiKey }, signal: ctrl.signal });
+		if (!res.ok) throw new Error(`birdeye ${res.status}`);
+		const j = await res.json();
+		if (!j.success) throw new Error('birdeye responded with success=false');
+		return j.data;
+	} finally {
+		clearTimeout(t);
+	}
+}
+
+function _normalizePortfolio(addr, portfolio) {
+	const items = portfolio?.items ?? [];
+	let topToken = null;
+	let maxVal = 0;
+	for (const item of items) {
+		const val = item.valueUsd ?? 0;
+		if (val > maxVal) { maxVal = val; topToken = { symbol: item.symbol ?? '?', pnl: val }; }
+	}
+	return {
+		address: addr,
+		realizedPnl:   portfolio?.realizedPnl   ?? 0,
+		unrealizedPnl: portfolio?.unrealizedPnl  ?? (portfolio?.totalUsd ?? 0),
+		winRate:       portfolio?.winRate        ?? 0,
+		totalTrades:   portfolio?.totalTrades    ?? 0,
+		topToken,
+	};
+}
+
+async function handleWallets(req, res) {
+	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
+	if (!method(req, res, ['GET'])) return;
+
+	const apiKey = process.env.BIRDEYE_API_KEY;
+	if (!apiKey) return error(res, 503, 'birdeye_not_configured', 'Birdeye API key not configured');
+
+	const rl = await limits.mcpIp(clientIp(req));
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
+
+	const url = new URL(req.url, `http://${req.headers.host}`);
+	const addresses = (url.searchParams.get('addresses') ?? '')
+		.split(',').map((s) => s.trim()).filter(Boolean).slice(0, MAX_ADDRESSES);
+	if (addresses.length === 0) return error(res, 400, 'validation_error', 'addresses query param is required');
+
+	const uncached = addresses.filter((a) => _getCached(a) === null);
+	const cacheHit = uncached.length === 0;
+
+	if (uncached.length > 0) {
+		await Promise.allSettled(uncached.map(async (addr) => {
+			try {
+				const portfolio = await _fetchBirdeye(addr, apiKey);
+				_setCache(addr, _normalizePortfolio(addr, portfolio));
+			} catch {
+				_setCache(addr, _normalizePortfolio(addr, null));
+			}
+		}));
+	}
+
+	const data = addresses.map((a) => _getCached(a)).filter(Boolean);
+	res.setHeader('x-cache', cacheHit ? 'HIT' : 'MISS');
+	return json(res, 200, { data });
+}
+
 const WALLETS_PATH = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../src/kol/wallets.json');
 
 async function loadWallets() {
@@ -70,6 +153,7 @@ const DISPATCH = {
 	'import-gmgn': handleImportGmgn,
 	leaderboard:   handleLeaderboard,
 	trades:        handleTrades,
+	wallets:       handleWallets,
 };
 
 export default wrap(async (req, res) => {

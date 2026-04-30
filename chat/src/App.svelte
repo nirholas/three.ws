@@ -2,7 +2,7 @@
 	import { v4 as uuidv4 } from 'uuid';
 	import { onMount, tick } from 'svelte';
 	import { fade, fly } from 'svelte/transition';
-	import { complete, completeConsensus, generateImage } from './convo.js';
+	import { complete, generateImage } from './convo.js';
 	import KnobsSidebar from './KnobsSidebar.svelte';
 	import Button from './Button.svelte';
 	import { marked } from 'marked';
@@ -22,7 +22,7 @@
 	} from './providers.js';
 	import ModelSelector from './ModelSelector.svelte';
 	import CompanyLogo from './CompanyLogo.svelte';
-	import { controller, remoteServer, config, params, toolSchema, syncServer, brandConfig, ttsEnabled, localAgentId, activeAgent, talkingHeadEnabled, route, mode, websiteCategory, loadCurrentUser, notify } from './stores.js';
+	import { controller, remoteServer, config, params, toolSchema, syncServer, brandConfig, ttsEnabled, localAgentId, activeAgent, talkingHeadEnabled, talkingHeadAvatarUrl, route, mode, websiteCategory, loadCurrentUser, notify } from './stores.js';
 	import Notifications from './Notifications.svelte';
 	import AuthPage from './manus/pages/AuthPage.svelte';
 	import Pricing from './manus/pages/Pricing.svelte';
@@ -1379,6 +1379,11 @@
 		}
 	}
 
+	$: if ($talkingHeadAvatarUrl) {
+		talkingHeadReady = false;
+		pendingSpeak = null;
+	}
+
 	function onTalkingHeadReady() {
 		talkingHeadReady = true;
 		if (pendingSpeak) {
@@ -1542,6 +1547,34 @@
 		>
 			<Icon icon={feShare} strokeWidth={3} class="m-auto h-4 w-4 text-slate-700" />
 		</button>
+		<div class="relative">
+			<button
+				class="flex rounded-full p-2 transition-colors hover:bg-gray-100 disabled:opacity-40"
+				on:click={() => (exportOpen = !exportOpen)}
+				disabled={convo.messages.length === 0}
+				title="Export conversation"
+			>
+				<Icon icon={feDownload} strokeWidth={3} class="m-auto h-4 w-4 text-slate-700" />
+			</button>
+			{#if exportOpen}
+				<button
+					class="fixed inset-0 z-20 cursor-default"
+					aria-hidden="true"
+					tabindex="-1"
+					on:click={() => (exportOpen = false)}
+				/>
+				<div class="absolute right-0 top-full mt-1 z-30 w-48 rounded-xl border border-[#E5E3DC] bg-white p-1 shadow-pop">
+					<button
+						class="flex h-9 w-full items-center rounded-lg px-3 text-sm font-medium text-[#1A1A1A] hover:bg-[#F5F4EF]"
+						on:click={exportConvoAsMarkdown}
+					>Export as Markdown</button>
+					<button
+						class="flex h-9 w-full items-center rounded-lg px-3 text-sm font-medium text-[#1A1A1A] hover:bg-[#F5F4EF]"
+						on:click={exportConvoAsJSON}
+					>Export as JSON</button>
+				</div>
+			{/if}
+		</div>
 		<button
 			data-trigger="knobs"
 			class="flex rounded-full p-2 transition-colors hover:bg-gray-100"
@@ -1768,6 +1801,34 @@
 				>
 					<Icon icon={feShare} strokeWidth={3} class="m-auto h-4 w-4 text-slate-700" />
 				</button>
+				<div class="relative">
+					<button
+						class="flex rounded-full p-3 transition-colors hover:bg-gray-100 disabled:opacity-40"
+						on:click={() => (exportOpen = !exportOpen)}
+						disabled={convo.messages.length === 0}
+						title="Export conversation"
+					>
+						<Icon icon={feDownload} strokeWidth={3} class="m-auto h-4 w-4 text-slate-700" />
+					</button>
+					{#if exportOpen}
+						<button
+							class="fixed inset-0 z-20 cursor-default"
+							aria-hidden="true"
+							tabindex="-1"
+							on:click={() => (exportOpen = false)}
+						/>
+						<div class="absolute right-0 top-full mt-1 z-30 w-48 rounded-xl border border-[#E5E3DC] bg-white p-1 shadow-pop">
+							<button
+								class="flex h-9 w-full items-center rounded-lg px-3 text-sm font-medium text-[#1A1A1A] hover:bg-[#F5F4EF]"
+								on:click={exportConvoAsMarkdown}
+							>Export as Markdown</button>
+							<button
+								class="flex h-9 w-full items-center rounded-lg px-3 text-sm font-medium text-[#1A1A1A] hover:bg-[#F5F4EF]"
+								on:click={exportConvoAsJSON}
+							>Export as JSON</button>
+						</div>
+					{/if}
+				</div>
 				<button
 					data-trigger="knobs"
 					class="flex rounded-full p-3 transition-colors hover:bg-gray-100"
@@ -1978,7 +2039,7 @@
 				style="width:220px;height:220px;border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.18);"
 			></agent-3d>
 		{:else if $talkingHeadEnabled && agentVisible}
-			<TalkingHead bind:this={talkingHead} on:ready={onTalkingHeadReady} />
+			<TalkingHead bind:this={talkingHead} on:ready={onTalkingHeadReady} avatarUrl={$talkingHeadAvatarUrl || undefined} />
 		{/if}
 
 		<div class="flex items-center gap-1.5">

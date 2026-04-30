@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -46,6 +47,7 @@ func main() {
 
 	r.Get("/list_directory", ListDirectory)
 	r.Get("/read_file", ReadFile)
+	r.Post("/api/tts/google", TTSHandler)
 
 	fmt.Println("Tool server running at http://localhost:8081")
 	httpServer := &http.Server{Addr: ":8081", Handler: r}
@@ -65,6 +67,46 @@ func main() {
 	if err := httpServer.Shutdown(context.Background()); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func TTSHandler(w http.ResponseWriter, r *http.Request) {
+	apiKey := os.Getenv("GOOGLE_TTS_API_KEY")
+	if apiKey == "" {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "TTS not configured"})
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+
+	url := "https://texttospeech.googleapis.com/v1/text:synthesize?key=" + apiKey
+	resp, err := http.Post(url, "application/json", strings.NewReader(string(body)))
+	if err != nil {
+		writeJSON(w, http.StatusBadGateway, map[string]string{"error": err.Error()})
+		return
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		AudioContent string `json:"audioContent"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		writeJSON(w, http.StatusBadGateway, map[string]string{"error": err.Error()})
+		return
+	}
+
+	audio, err := base64.StdEncoding.DecodeString(result.AudioContent)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+
+	w.Header().Set("Content-Type", "audio/mpeg")
+	w.WriteHeader(http.StatusOK)
+	w.Write(audio)
 }
 
 func authMiddleware(next http.Handler) http.Handler {

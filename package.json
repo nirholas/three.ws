@@ -22,7 +22,9 @@
 		"drag-and-drop",
 		"3d-agent"
 	],
-	"workspaces": ["chat"],
+	"workspaces": [
+		"chat"
+	],
 	"main": "src/app.js",
 	"browserslist": [
 		">1%",
@@ -93,6 +95,7 @@
 		"ethers": "^6.16.0",
 		"gltf-validator": "^2.0.0-dev.3.10",
 		"jose": "^5.9.6",
+		"livekit-client": "^2.18.8",
 		"query-string": "^8.1.0",
 		"resend": "^6.12.2",
 		"sas-lib": "^1.0.10",

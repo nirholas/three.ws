@@ -13,6 +13,7 @@
 		remoteServer,
 		syncServer,
 		toolSchema,
+		talkingHeadAvatarUrl,
 	} from './stores.js';
 	import Button from './Button.svelte';
 	import Modal from './Modal.svelte';
@@ -207,6 +208,17 @@
 						>
 							<Icon icon={feUsers} class="h-3 w-3 text-slate-700" />
 							Consensus mode
+						</button>
+					</li>
+					<li>
+						<button
+							class="{activeTab === 'avatar'
+								? 'bg-gray-100/70'
+								: ' hover:bg-gray-100/70'} flex w-full items-center gap-x-2.5 rounded-lg px-4 py-2.5 text-left text-[13px] font-medium text-slate-700 transition-colors"
+							on:click={() => (activeTab = 'avatar')}
+						>
+							<Icon icon={feStar} class="h-3 w-3 text-slate-700" />
+							Avatar
 						</button>
 					</li>
 				</ul>
