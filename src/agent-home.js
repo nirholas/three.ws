@@ -294,9 +294,10 @@ export class AgentHome {
 		};
 
 		try {
-			apply(localStorage.getItem(STORAGE_KEY) === '1');
+			// Default to collapsed; only expand if user explicitly opened it ('0').
+			apply(localStorage.getItem(STORAGE_KEY) !== '0');
 		} catch {
-			apply(false);
+			apply(true);
 		}
 
 		panel.querySelector('#agent-home-hide')?.addEventListener('click', () => {
