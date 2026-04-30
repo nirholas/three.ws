@@ -124,7 +124,7 @@
 	<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-noninteractive-element-interactions -->
 	<li
 		data-role={message.role}
-		class="group relative flex {message.role === 'user' ? 'justify-end' : 'justify-start'} py-4"
+		class="group relative flex {message.role === 'user' ? 'justify-end' : 'justify-start'} pt-4 pb-10"
 		style="z-index: {convo.messages.length - i};"
 		on:touchstart={(event) => {
 			// Make click trigger hover on mobile:
