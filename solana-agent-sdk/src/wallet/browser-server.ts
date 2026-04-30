@@ -152,18 +152,21 @@ export class BrowserWalletProvider implements MetaAwareWallet {
 
       // GET /stream — SSE push stream
       if (req.method === "GET" && action === "stream") {
-        const { readable, writable } = new TransformStream<string, string>();
+        const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
         const writer = writable.getWriter();
         const encoder = new TextEncoder();
 
+        const encode = (tx: PendingTx) =>
+          encoder.encode(`data: ${JSON.stringify(tx)}\n\n`);
+
         // Flush current pending on connect
         for (const tx of this.getPending()) {
-          await writer.write(encoder.encode(`data: ${JSON.stringify(tx)}\n\n`));
+          await writer.write(encode(tx));
         }
 
         const unsub = this.onPending(async (tx) => {
           try {
-            await writer.write(encoder.encode(`data: ${JSON.stringify(tx)}\n\n`));
+            await writer.write(encode(tx));
           } catch {
             unsub();
           }
