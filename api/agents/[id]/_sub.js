@@ -136,7 +136,7 @@ export const handleManifest = wrap(async (req, res, id) => {
 
 	if (!/^[0-9a-f-]{36}$/i.test(id)) return error(res, 400, 'invalid_request', 'agent id required');
 
-	const [row] = await sql`select a.id, a.name, a.description, a.avatar_id, a.skills, a.meta, a.chain_id, a.erc8004_agent_id, a.erc8004_registry, a.registration_cid, a.created_at, av.id as avatar_db_id, av.storage_key, av.content_type from agent_identities a left join avatars av on av.id = a.avatar_id and av.deleted_at is null where a.id = ${id} and a.deleted_at is null limit 1`;
+	const [row] = await sql`select a.id, a.name, a.description, a.avatar_id, a.skills, a.meta, a.chain_id, a.erc8004_agent_id, a.erc8004_registry, a.registration_cid, a.created_at, a.voice_provider, a.voice_id, av.id as avatar_db_id, av.storage_key, av.content_type from agent_identities a left join avatars av on av.id = a.avatar_id and av.deleted_at is null where a.id = ${id} and a.deleted_at is null limit 1`;
 	if (!row) return error(res, 404, 'not_found', 'agent not found');
 
 	let bodyUri = '';
@@ -160,6 +160,9 @@ export const handleManifest = wrap(async (req, res, id) => {
 		skills: Array.isArray(row.skills) ? row.skills : [],
 		homeUrl: `${origin}/agent/${row.id}`,
 		registrations: row.chain_id && row.erc8004_agent_id ? [{ agentRegistry: `eip155:${row.chain_id}:${row.erc8004_registry}`, agentId: row.erc8004_agent_id }] : [],
+		voice: row.voice_id
+			? { provider: row.voice_provider || 'elevenlabs', voice_id: row.voice_id }
+			: { provider: 'browser' },
 		createdAt: row.created_at,
 	};
 

@@ -274,7 +274,7 @@ export const stakeSolAction: Action = {
       {
         input: {
           voteAccount: "Vote111111111111111111111111111111111111111",
-          amount: 1,
+          amount: "1",
         },
         output: {
           signature: "5K4b...txSig",
@@ -350,7 +350,7 @@ export const getStakeAccountsAction: Action = {
       {
         input: {},
         output: {
-          accounts: [
+          accounts: JSON.stringify([
             {
               address: "Ek5G...acct",
               lamports: 1002282880,
@@ -358,7 +358,7 @@ export const getStakeAccountsAction: Action = {
               voteAccount: "Vote111111111111111111111111111111111111111",
               activationEpoch: 700,
             },
-          ],
+          ]),
         },
         explanation: "List all stake accounts for the agent wallet.",
       },

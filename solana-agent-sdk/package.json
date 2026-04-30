@@ -37,7 +37,8 @@
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist",
-    "prepublishOnly": "npm run typecheck && npm run build:prod"
+    "prepublishOnly": "npm run typecheck && npm run build:prod",
+    "test": "node --experimental-vm-modules node_modules/.bin/jest"
   },
   "dependencies": {
     "@solana/spl-token": "^0.4.9",

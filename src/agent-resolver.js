@@ -152,7 +152,17 @@ export async function resolveAgentById(
 		},
 		body: { uri: avatar.url, format: 'gltf-binary' },
 		brain: {},
-		voice: { tts: { provider: 'browser' }, stt: { provider: 'browser' } },
+		voice: {
+			tts:
+				agent.voice_id && agent.voice_provider === 'elevenlabs'
+					? {
+							provider: 'elevenlabs',
+							voiceId: agent.voice_id,
+							proxyURL: `${origin}/api/tts/eleven`,
+						}
+					: { provider: 'browser' },
+			stt: { provider: 'browser' },
+		},
 		skills,
 		memory: { mode: 'remote', namespace: agent.id },
 		tools: ['wave', 'lookAt', 'play_clip', 'setExpression', 'speak', 'remember'],

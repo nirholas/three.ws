@@ -189,7 +189,7 @@ export async function getStakeAccounts(
           {
             address: pubkey.toBase58(),
             lamports: account.lamports,
-            state: "initialized" as const,
+            state: "initialized" as StakeAccountInfo["state"],
           },
         ];
       }

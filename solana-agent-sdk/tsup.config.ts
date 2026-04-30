@@ -9,7 +9,7 @@ export default defineConfig({
     "src/solana-agent-kit/index.ts",
   ],
   format: ["cjs", "esm"],
-  dts: true,
+  dts: { compilerOptions: { noUnusedLocals: false, noUnusedParameters: false } },
   clean: true,
   sourcemap: true,
   splitting: false,

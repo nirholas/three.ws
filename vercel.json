@@ -95,6 +95,8 @@
 		{ "src": "/api/agents/([^/]+)/usage", "dest": "/api/agents/[id]" },
 		{ "src": "/api/agents/([^/]+)/memories/([^/]+)", "dest": "/api/agents/[id]" },
 		{ "src": "/api/agents/([^/]+)/memories", "dest": "/api/agents/[id]" },
+		{ "src": "/api/agents/([^/]+)/memory/pin", "dest": "/api/agents/[id]" },
+		{ "src": "/api/agents/([^/]+)/memory/([^/]+)", "dest": "/api/agents/[id]" },
 		{ "src": "/api/agents/([^/]+)/livekit-token", "dest": "/api/agents/[id]" },
 		{ "src": "/api/agents/([^/]+)/embed", "dest": "/api/agents/[id]" },
 		{ "src": "/api/agents/pumpfun-feed", "dest": "/api/agents/pumpfun?_handler=feed" },

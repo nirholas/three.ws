@@ -14,6 +14,7 @@
  *
  * /api/agents/:id/livekit-token     — GET short-lived LiveKit room JWT
  * /api/agents/:id/embed             — POST text → 1024-dim embedding vector
+ * /api/agents/:id/voice             — GET/DELETE voice status; POST /voice/clone to clone
  * /api/agents/:id/pumpfun/* is routed directly to api/agents/pumpfun/[action].js
  * by vercel.json — see the rewrite for that path family.
  */
@@ -81,6 +82,18 @@ export default wrap(async function handler(req, res) {
 		return mod.handleMemories(req, res, id, action);
 	}
 
+	if (sub === 'memory') {
+		if (action === 'pin') {
+			const mod = await import('./memory/pin.js');
+			return mod.default(req, res);
+		}
+		if (action && CID_RE.test(action)) {
+			const mod = await import('./memory/[cid].js');
+			return mod.default(req, res);
+		}
+		return error(res, 404, 'not_found', 'unknown memory sub-resource');
+	}
+
 	if (sub === 'livekit-token') {
 		const mod = await import('./livekit-token.js');
 		return mod.handleLiveKitToken(req, res, id);
@@ -89,6 +102,11 @@ export default wrap(async function handler(req, res) {
 	if (sub === 'embed') {
 		const mod = await import('./embed.js');
 		return mod.handleEmbed(req, res, id);
+	}
+
+	if (sub === 'voice') {
+		const mod = await import('./voice.js');
+		return mod.handleVoice(req, res, id, action);
 	}
 
 	return handleGetOne(req, res, id);

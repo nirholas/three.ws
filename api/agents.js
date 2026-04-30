@@ -345,6 +345,10 @@ function decorate(row, isOwner = true) {
 		is_registered: Boolean(row.erc8004_agent_id) || !!onchain,
 		created_at: row.created_at,
 	};
+	// Voice clone fields are public (voice_id is needed by the runtime to select TTS).
+	base.voice_provider = row.voice_provider || 'browser';
+	base.voice_id = row.voice_id || null;
+
 	if (isOwner) {
 		base.wallet_address = row.wallet_address;
 		base.chain_id = row.chain_id;
