@@ -48,6 +48,7 @@
 		feSettings,
 		feShare,
 		feSidebar,
+		feSpeaker,
 		feSquare,
 		feTrash,
 		feUser,

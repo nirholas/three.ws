@@ -31,8 +31,12 @@ export default wrap(async (req, res) => {
 		return json(res, 200, { data: row ?? DEFAULTS });
 	}
 
-	// POST — admin key required
-	const adminKey = env.CHAT_ADMIN_KEY;
+	// POST — admin key required (env var takes precedence, DB is fallback)
+	let adminKey = env.CHAT_ADMIN_KEY;
+	if (!adminKey) {
+		const [cfg] = await sql`SELECT admin_key FROM chat_brand_config WHERE key = 'global'`;
+		adminKey = cfg?.admin_key ?? null;
+	}
 	if (!adminKey) return error(res, 503, 'not_configured', 'CHAT_ADMIN_KEY is not set');
 
 	const provided = (req.headers['x-admin-key'] || '').trim();
