@@ -34,8 +34,17 @@
       crossorigin="anonymous"
     />
     <title>three.ws chat</title>
-    <script type="module" crossorigin src="/chat/assets/index-DtRh3XUY.js"></script>
-    <link rel="stylesheet" crossorigin href="/chat/assets/index-CVjzVYsZ.css">
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+        }
+      }
+    </script>
+    <script type="module" crossorigin src="/chat/assets/index-BCO4lpvp.js"></script>
+    <link rel="stylesheet" crossorigin href="/chat/assets/index-B3kWrhvO.css">
   </head>
   <body>
     <div id="app"></div>

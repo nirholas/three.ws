@@ -23,17 +23,17 @@
 	import ModelSelector from './ModelSelector.svelte';
 	import CompanyLogo from './CompanyLogo.svelte';
 	import { controller, remoteServer, config, params, toolSchema, syncServer, brandConfig, ttsEnabled, localAgentId, route, mode, websiteCategory } from './stores.js';
-	import AuthPage from './three.ws/pages/AuthPage.svelte';
-	import Pricing from './three.ws/pages/Pricing.svelte';
-	import MarketingPage from './three.ws/pages/MarketingPage.svelte';
-	import ResourcePage from './three.ws/pages/ResourcePage.svelte';
-	import FeaturePage from './three.ws/pages/FeaturePage.svelte';
+	import AuthPage from './manus/pages/AuthPage.svelte';
+	import Pricing from './manus/pages/Pricing.svelte';
+	import MarketingPage from './manus/pages/MarketingPage.svelte';
+	import ResourcePage from './manus/pages/ResourcePage.svelte';
+	import FeaturePage from './manus/pages/FeaturePage.svelte';
 	import SettingsModal from './SettingsModal.svelte';
 	import ToolcallButton from './ToolcallButton.svelte';
 	import MessageContent from './MessageContent.svelte';
 	import Toolcall from './Toolcall.svelte';
 	import Modal from './Modal.svelte';
-	import Composer from './three.ws/Composer.svelte';
+	import Composer from './manus/Composer.svelte';
 	import Icon from './Icon.svelte';
 	import {
 		feArrowUp,
@@ -67,12 +67,12 @@
 	import { deleteSingleItem, initEncryption, sendSingleItem, syncPull, syncPush } from './sync.js';
 	import AgentPicker from './AgentPicker.svelte';
 	import TalkingHead from './TalkingHead.svelte';
-	import EmptyState from './three.ws/EmptyState.svelte';
-	import SuggestionChips from './three.ws/SuggestionChips.svelte';
-	import AnnouncementBanner from './three.ws/AnnouncementBanner.svelte';
-	import TopNav from './three.ws/TopNav.svelte';
-	import WebsiteFlow from './three.ws/flows/WebsiteFlow.svelte';
-	import DesktopFlow from './three.ws/flows/DesktopFlow.svelte';
+	import EmptyState from './manus/EmptyState.svelte';
+	import SuggestionChips from './manus/SuggestionChips.svelte';
+	import AnnouncementBanner from './manus/AnnouncementBanner.svelte';
+	import TopNav from './manus/TopNav.svelte';
+	import WebsiteFlow from './manus/flows/WebsiteFlow.svelte';
+	import DesktopFlow from './manus/flows/DesktopFlow.svelte';
 
 	marked.use(
 		markedKatex({

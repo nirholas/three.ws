@@ -21,7 +21,7 @@
 <div class="flex flex-wrap gap-3 justify-center mt-4">
   {#each chips as c}
     <button
-      class="three.ws-chip {$mode === c.id ? 'three.ws-chip-selected' : ''}"
+      class="manus-chip {$mode === c.id ? 'manus-chip-selected' : ''}"
       on:click={() => pick(c.id)}
     >
       <Icon icon={c.icon} class="h-4 w-4" />
@@ -29,7 +29,7 @@
     </button>
   {/each}
   <div class="relative">
-    <button class="three.ws-chip" on:click={() => (moreOpen = !moreOpen)}>
+    <button class="manus-chip" on:click={() => (moreOpen = !moreOpen)}>
       <Icon icon={feMoreHorizontal} class="h-4 w-4" />
       More
     </button>

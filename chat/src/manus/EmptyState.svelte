@@ -6,7 +6,7 @@
 </script>
 
 <section class="w-full flex flex-col items-center px-6 pt-[18vh] md:pt-[22vh] pb-32">
-	<h1 class="three.ws-hero text-center mb-9">What can I do for you?</h1>
+	<h1 class="manus-hero text-center mb-9">What can I do for you?</h1>
 	<div class="w-full max-w-[760px]">
 		<slot name="composer" />
 	</div>

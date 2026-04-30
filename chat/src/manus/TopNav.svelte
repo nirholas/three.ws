@@ -1,7 +1,7 @@
 <script>
 	import { route } from '../stores.js';
 	import Icon from '../Icon.svelte';
-	import { feMenu, feX, feCpu } from '../feather.js';
+	import { feMenu, feX } from '../feather.js';
 	import FeaturesDropdown  from './dropdowns/FeaturesDropdown.svelte';
 	import SolutionsDropdown from './dropdowns/SolutionsDropdown.svelte';
 	import ResourcesDropdown from './dropdowns/ResourcesDropdown.svelte';
@@ -52,7 +52,7 @@
 			class="flex items-center gap-2 text-ink"
 			on:click={() => route.set('chat')}
 		>
-			<Icon icon={feCpu} class="h-5 w-5" />
+			<img src="{import.meta.env.BASE_URL}three.svg" alt="three.ws" class="h-5 w-5" />
 			<span class="font-serif text-[22px] font-semibold lowercase tracking-tight">three.ws</span>
 		</button>
 
@@ -197,7 +197,7 @@
 </header>
 
 <style>
-	:global(.three.ws-card) {
+	:global(.manus-card) {
 		background: #F5F4EF;
 		border: 1px solid #E5E3DC;
 		border-radius: 12px;
