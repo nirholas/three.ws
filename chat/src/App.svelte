@@ -27,6 +27,7 @@
 	import Pricing from './manus/pages/Pricing.svelte';
 	import MarketingPage from './manus/pages/MarketingPage.svelte';
 	import ResourcePage from './manus/pages/ResourcePage.svelte';
+	import FeaturePage from './manus/pages/FeaturePage.svelte';
 	import SettingsModal from './SettingsModal.svelte';
 	import ToolcallButton from './ToolcallButton.svelte';
 	import MessageContent from './MessageContent.svelte';
@@ -71,6 +72,7 @@
 	import AnnouncementBanner from './manus/AnnouncementBanner.svelte';
 	import TopNav from './manus/TopNav.svelte';
 	import WebsiteFlow from './manus/flows/WebsiteFlow.svelte';
+	import DesktopFlow from './manus/flows/DesktopFlow.svelte';
 
 	marked.use(
 		markedKatex({
@@ -1275,6 +1277,11 @@
     <div class="sticky top-0 z-[110]"><AnnouncementBanner /><TopNav /></div>
     <ResourcePage slug={$route.slice('resources/'.length)} />
   </div>
+{:else if $route.startsWith('features/')}
+  <div class="min-h-dvh bg-paper overflow-y-auto">
+    <div class="sticky top-0 z-[110]"><AnnouncementBanner /><TopNav /></div>
+    <FeaturePage slug={$route.slice('features/'.length)} />
+  </div>
 {:else}
 <main class="flex h-dvh w-screen flex-col">
 	<div class="sticky top-0 z-[110]">
@@ -1487,6 +1494,8 @@
 						<svelte:fragment slot="chips">
 							{#if $mode === 'website'}
 								<WebsiteFlow />
+							{:else if $mode === 'desktop'}
+								<DesktopFlow />
 							{:else}
 								<SuggestionChips />
 							{/if}

@@ -1,6 +1,7 @@
 <script>
   import { mode } from '../stores.js';
   import SlidesFlow from './flows/SlidesFlow.svelte';
+  import DesignFlow from './flows/DesignFlow.svelte';
 </script>
 
 <section class="w-full flex flex-col items-center px-6 pt-[18vh] md:pt-[22vh]">
@@ -13,5 +14,7 @@
 	</div>
 	{#if $mode === 'slides'}
 		<SlidesFlow />
+	{:else if $mode === 'design'}
+		<DesignFlow />
 	{/if}
 </section>

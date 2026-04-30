@@ -124,14 +124,7 @@
 	<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-noninteractive-element-interactions -->
 	<li
 		data-role={message.role}
-		class="{!message.generated &&
-		!message.submitted &&
-		message.role !== 'system' &&
-		message.role !== 'tool'
-			? 'bg-yellow-50/40'
-			: message.role === 'assistant'
-				? 'bg-slate-50/30'
-				: ''} group relative px-5 pb-10 pt-6 ld:px-8"
+		class="group relative flex {message.role === 'user' ? 'justify-end' : 'justify-start'} py-4"
 		style="z-index: {convo.messages.length - i};"
 		on:touchstart={(event) => {
 			// Make click trigger hover on mobile:
@@ -161,8 +154,11 @@
 			</Button>
 		{/if}
 		<div
-			class="relative mx-auto flex w-full max-w-[680px] gap-x-3.5 self-start md:gap-x-5 ld:max-w-[768px]"
+			class="{message.role === 'user'
+				? 'bg-[#EBE8E0] text-[#1A1A1A] rounded-2xl px-4 py-3 max-w-[78%] relative'
+				: 'relative flex w-full gap-x-3.5 self-start'}"
 		>
+			{#if message.role !== 'user'}
 			<button
 				disabled={message.role === 'system'}
 				on:click={() => {
@@ -176,11 +172,9 @@
 				class="flex h-8 w-8 shrink-0 rounded-md md:h-9 md:w-9 md:rounded-[6px] {message.role ===
 				'system'
 					? 'border border-teal-200 bg-teal-100'
-					: message.role === 'user'
-						? 'border border-slate-200 bg-white'
-						: message.role === 'assistant' && !hasLogo
-							? 'border border-teal-200 bg-teal-100 pb-px'
-							: ''}"
+					: message.role === 'assistant' && !hasLogo
+						? 'border border-teal-200 bg-teal-100 pb-px'
+						: ''}"
 			>
 				{#if isLastAssistant && effectiveAgentId}
 					<!-- svelte-ignore custom-element-no-implicit-ns -->
@@ -206,6 +200,7 @@
 					</span>
 				{/if}
 			</button>
+			{/if}
 
 			<!-- svelte-ignore a11y-no-static-element-interactions -->
 			{#if message.editing}
@@ -281,7 +276,7 @@
 								<div
 									class="{generating
 										? 'animate-pulse'
-										: ''} flex items-center gap-x-1.5 self-start rounded-full bg-gray-200 px-3.5 py-2 text-left text-xs transition-colors hover:bg-gray-300"
+										: ''} flex items-center gap-x-1.5 self-start rounded-full bg-paper-deep px-3.5 py-2 text-left text-xs text-[#9C9A93] transition-colors hover:bg-[#E0DDD5]"
 								>
 									{generating ? 'Searching' : 'Searched'} the web
 								</div>
@@ -290,7 +285,7 @@
 								<button
 									class="{message.thinking
 										? 'animate-pulse'
-										: ''} flex items-center gap-x-1.5 self-start rounded-full bg-gray-200 px-3.5 py-2 text-left text-xs transition-colors hover:bg-gray-300"
+										: ''} flex items-center gap-x-1.5 self-start rounded-full bg-paper-deep px-3.5 py-2 text-left text-xs text-[#9C9A93] transition-colors hover:bg-[#E0DDD5]"
 									on:click={() => {
 										message.thoughtsExpanded = !message.thoughtsExpanded;
 										saveMessage(message);
@@ -306,7 +301,7 @@
 											icon={feChevronDown}
 											class="{message.thoughtsExpanded
 												? 'rotate-180'
-												: ''} h-4 w-4 transition-transform"
+												: ''} h-4 w-4 text-[#9C9A93] transition-transform"
 										/>
 									{/if}
 								</button>
@@ -322,7 +317,7 @@
 										/>
 										{#if contentHeight > 400}
 											<button
-												class="sticky z-10 bottom-2 left-1/2 flex translate-x-[calc(-50%+40px)] items-center gap-x-1.5 self-start rounded-full bg-gray-200 px-3.5 py-2 text-left text-xs transition-colors hover:bg-gray-300"
+												class="sticky z-10 bottom-2 left-1/2 flex translate-x-[calc(-50%+40px)] items-center gap-x-1.5 self-start rounded-full bg-paper-deep px-3.5 py-2 text-left text-xs text-[#9C9A93] transition-colors hover:bg-[#E0DDD5]"
 												on:click={() => {
 													message.thoughtsExpanded = !message.thoughtsExpanded;
 													saveMessage(message);
@@ -450,7 +445,7 @@
 			{/if}
 			{#if !message.editing}
 				<div
-					class="absolute bottom-[-32px] left-11 flex items-center gap-x-4 md:bottom-[-28px] md:left-14"
+					class="absolute bottom-[-32px] md:bottom-[-28px] {message.role === 'user' ? 'left-0' : 'left-11 md:left-14'} flex items-center gap-x-4"
 				>
 					{#if message.role === 'user' && convo.versions?.[message.vid]}
 						{@const versions = convo.versions[message.vid]}

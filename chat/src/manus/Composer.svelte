@@ -1,5 +1,5 @@
 <script>
-	import { afterUpdate, tick } from 'svelte';
+	import { afterUpdate, onDestroy, tick } from 'svelte';
 	import { v4 as uuidv4 } from 'uuid';
 	import Icon from '../Icon.svelte';
 	import {
@@ -13,7 +13,7 @@
 		feFolder,
 	} from '../feather.js';
 	import { readFileAsDataURL } from '../util.js';
-	import { params, remoteServer, brandConfig } from '../stores.js';
+	import { params, remoteServer, brandConfig, composerFill } from '../stores.js';
 	import ToolPill from '../ToolPill.svelte';
 	import ToolDropdown from '../ToolDropdown.svelte';
 	import ReasoningEffortRangeDropdown from '../ReasoningEffortRangeDropdown.svelte';
@@ -47,6 +47,20 @@
 	let toolsOpen = false;
 	let filesOpen = false;
 	let reasoningEffortDropdownOpen = false;
+
+	const unsubFill = composerFill.subscribe((fill) => {
+		if (!fill) return;
+		composerFill.set(null);
+		const shouldFill = !fill.ifEmpty || !content;
+		if (shouldFill) {
+			content = fill.text;
+			tick().then(() => {
+				autoresizeTextarea();
+				if (fill.submit) sendMessage();
+			});
+		}
+	});
+	onDestroy(unsubFill);
 
 	$: isMultimodal = convo.models[0].modality === 'text+image->text';
 	$: canSend = content.trim().length > 0 || pendingImages.length > 0 || pendingFiles.length > 0;

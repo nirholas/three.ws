@@ -16,14 +16,14 @@
   ];
 
   const platforms = [
-    { id: 'macos',    label: 'Native macOS',              icon: feMonitor },
-    { id: 'windows',  label: 'Native Windows',            icon: feMonitor },
-    { id: 'linux',    label: 'Native Linux',              icon: feMonitor },
-    { id: 'ios',      label: 'iOS',                       icon: feSmartphone },
-    { id: 'android',  label: 'Android',                   icon: feSmartphone },
-    { id: 'tauri',    label: 'Cross-platform (Tauri)',     icon: feMonitor },
-    { id: 'electron', label: 'Cross-platform (Electron)',  icon: feMonitor },
-    { id: 'pwa',      label: 'PWA',                       icon: feGlobe },
+    { id: 'macOS',    label: 'Native macOS',              icon: feMonitor },
+    { id: 'Windows',  label: 'Native Windows',            icon: feMonitor },
+    { id: 'Linux',    label: 'Native Linux',              icon: feMonitor },
+    { id: 'iOS',      label: 'iOS',                       icon: feSmartphone },
+    { id: 'Android',  label: 'Android',                   icon: feSmartphone },
+    { id: 'Tauri',    label: 'Cross-platform (Tauri)',     icon: feMonitor },
+    { id: 'Electron', label: 'Cross-platform (Electron)',  icon: feMonitor },
+    { id: 'PWA',      label: 'PWA',                       icon: feGlobe },
   ];
 
   const ideas = [
@@ -41,13 +41,13 @@
     'Trip itinerary builder',
   ];
 
-  function togglePlatform(label) {
+  function togglePlatform(id) {
     appPlatforms.update((set) => {
       const next = new Set(set);
-      if (next.has(label)) {
-        if (next.size > 1) next.delete(label);
+      if (next.has(id)) {
+        if (next.size > 1) next.delete(id);
       } else {
-        next.add(label);
+        next.add(id);
       }
       return next;
     });
@@ -82,8 +82,8 @@
   <div class="flex flex-wrap gap-2">
     {#each platforms as p}
       <button
-        class="manus-chip {$appPlatforms.has(p.label) ? 'manus-chip-selected' : ''}"
-        on:click={() => togglePlatform(p.label)}
+        class="manus-chip {$appPlatforms.has(p.id) ? 'manus-chip-selected' : ''}"
+        on:click={() => togglePlatform(p.id)}
       >
         <Icon icon={p.icon} size={16} />
         {p.label}

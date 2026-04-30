@@ -13,18 +13,20 @@
 		feFolder,
 		feLayout,
 		feChevronDown,
+		feSmartphone,
 	} from './feather.js';
 	import { afterUpdate, onDestroy, tick } from 'svelte';
 	import { get } from 'svelte/store';
 	import { v4 as uuidv4 } from 'uuid';
 	import { readFileAsDataURL } from './util.js';
-	import { anthropicAPIKey, controller, params, remoteServer, brandConfig, mode, composerFill } from './stores.js';
+	import { anthropicAPIKey, controller, params, remoteServer, brandConfig, mode, composerFill, appPlatforms, designModel } from './stores.js';
 	import ToolPill from './ToolPill.svelte';
 	import ToolDropdown from './ToolDropdown.svelte';
 	import ModelSelector from './ModelSelector.svelte';
 	import ReasoningEffortRangeDropdown from './ReasoningEffortRangeDropdown.svelte';
 	import FilesDropdown from '$src/FilesDropdown.svelte';
 	import FilePill from '$src/FilePill.svelte';
+	import DesignModelPicker from './manus/DesignModelPicker.svelte';
 
 	const imageUrlRegex = /https?:\/\/[^\s]+?\.(png|jpe?g)(?=\s|$)/gi;
 
@@ -53,12 +55,29 @@
 		? 'Describe the website you want to build'
 		: $mode === 'slides'
 			? 'Describe your presentation topic'
-			: 'Send a message…';
+			: $mode === 'desktop'
+				? 'Describe the app you want to build'
+				: $mode === 'design'
+					? 'Describe what you want to design'
+					: 'Send a message…';
+
+	let designModelPickerOpen = false;
+
+	const DESIGN_MODEL_LABELS = {
+		'gpt-image-2': 'GPT Image 2',
+		'sdxl': 'Stable Diffusion XL',
+		'flux-1': 'Flux 1',
+		'banana': 'Banana 🍌',
+	};
 
 	let toneOpen = false;
 	let imgModelOpen = false;
 	let selectedTone = 'Professional';
 	const tones = ['Professional', 'Casual', 'Academic', 'Playful', 'Minimal'];
+
+	let platformsOpen = false;
+	const desktopPlatformOptions = ['macOS', 'Windows', 'Linux', 'iOS', 'Android', 'Tauri', 'Electron', 'PWA'];
+	$: platformsSummary = $appPlatforms.size === 0 ? 'macOS' : [...$appPlatforms].join(', ');
 
 	const unsubFill = composerFill.subscribe((fill) => {
 		if (!fill) return;
@@ -504,6 +523,49 @@ ${file.contents}
 							Website
 						</button>
 					{/if}
+					{#if $mode === 'desktop'}
+						<button
+							class="manus-chip manus-chip-selected h-7 px-3 text-xs inline-flex items-center gap-1.5"
+							on:click={() => mode.set(null)}
+						>
+							<Icon icon={feSmartphone} class="w-3.5 h-3.5" />
+							Develop apps
+						</button>
+						<div class="relative">
+							<button
+								class="manus-chip h-7 px-3 text-xs inline-flex items-center gap-1.5"
+								on:click={() => { platformsOpen = !platformsOpen; }}
+							>
+								{platformsSummary}
+								<Icon icon={feChevronDown} class="w-3 h-3" />
+							</button>
+							{#if platformsOpen}
+								<div class="absolute left-0 bottom-full mb-2 bg-white border border-[#E5E3DC] rounded-xl shadow-pop z-10 min-w-[160px] py-1">
+									{#each desktopPlatformOptions as p}
+										<label class="flex items-center gap-2 w-full px-3 py-1.5 text-sm text-[#1A1A1A] hover:bg-[#F5F4EF] cursor-pointer">
+											<input
+												type="checkbox"
+												class="accent-blue-500"
+												checked={$appPlatforms.has(p)}
+												on:change={() => {
+													appPlatforms.update((set) => {
+														const next = new Set(set);
+														if (next.has(p)) {
+															if (next.size > 1) next.delete(p);
+														} else {
+															next.add(p);
+														}
+														return next;
+													});
+												}}
+											/>
+											{p}
+										</label>
+									{/each}
+								</div>
+							{/if}
+						</div>
+					{/if}
 					{#if $mode === 'slides'}
 						<button
 							class="manus-chip manus-chip-selected h-7 px-3 text-xs inline-flex items-center gap-1.5"
@@ -554,6 +616,28 @@ ${file.contents}
 										Banana
 									</button>
 								</div>
+							{/if}
+						</div>
+					{/if}
+					{#if $mode === 'design'}
+						<button
+							class="manus-chip manus-chip-selected h-7 px-3 text-xs inline-flex items-center gap-1.5"
+							on:click={() => mode.set(null)}
+						>
+							<Icon icon={feZap} class="w-3.5 h-3.5" />
+							Design
+						</button>
+						<div class="relative">
+							<button
+								class="inline-flex items-center gap-2 h-8 px-2 pr-1 rounded-full border border-[#E5E3DC] bg-white text-sm hover:bg-[#F5F4EF] transition-colors"
+								on:click={() => (designModelPickerOpen = !designModelPickerOpen)}
+							>
+								<span class="w-4 h-4 rounded-full bg-gray-900 shrink-0 inline-block"></span>
+								<span>{DESIGN_MODEL_LABELS[$designModel] ?? $designModel}</span>
+								<Icon icon={feChevronDown} class="w-3.5 h-3.5 text-[#6B6B6B]" />
+							</button>
+							{#if designModelPickerOpen}
+								<DesignModelPicker on:close={() => (designModelPickerOpen = false)} />
 							{/if}
 						</div>
 					{/if}

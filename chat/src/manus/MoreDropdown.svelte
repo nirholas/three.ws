@@ -4,12 +4,13 @@
   import { mode } from '../stores.js';
   import {
     feSmartphone, feCalendar, feGlobe, feGrid, feBarChart2,
-    fePlay, feActivity, feMessageSquare, feBookOpen, feExternalLink,
+    fePlay, feActivity, feMessageSquare, feBookOpen, feZap,
   } from '../feather.js';
 
   const dispatch = createEventDispatcher();
 
   const items = [
+    { id: 'design',        label: 'Design',        icon: feZap },
     { id: 'desktop',       label: 'Develop apps',  icon: feSmartphone },
     { id: 'schedule',      label: 'Schedule task', icon: feCalendar },
     { id: 'research',      label: 'Wide Research', icon: feGlobe },
@@ -18,15 +19,11 @@
     { id: 'video',         label: 'Video',         icon: fePlay },
     { id: 'audio',         label: 'Audio',         icon: feActivity },
     { id: 'chat',          label: 'Chat mode',     icon: feMessageSquare },
-    { id: 'playbook',      label: 'Playbook',      icon: feBookOpen, external: true },
+    { id: 'playbook',      label: 'Playbook',      icon: feBookOpen },
   ];
 
   function pick(item) {
-    if (item.external) {
-      window.open('/playbook', '_blank');
-    } else {
-      mode.set(item.id);
-    }
+    mode.set(item.id);
     dispatch('close');
   }
 
@@ -54,11 +51,6 @@
     >
       <Icon icon={item.icon} class="h-4 w-4 shrink-0" />
       <span>{item.label}</span>
-      {#if item.external}
-        <span class="ml-auto text-[#9C9A93]">
-          <Icon icon={feExternalLink} class="h-3.5 w-3.5" />
-        </span>
-      {/if}
     </button>
   {/each}
 </div>
