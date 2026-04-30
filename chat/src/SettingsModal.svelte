@@ -99,6 +99,31 @@
 
 	let elRefreshToolSchema;
 
+	// Draft values for API keys — nothing commits until Save is clicked
+	let draftKeys = {
+		openrouter: $openrouterAPIKey,
+		anthropic: $anthropicAPIKey,
+		openai: $openaiAPIKey,
+		groq: $groqAPIKey,
+		mistral: $mistralAPIKey,
+	};
+	let savedKey = '';
+
+	const keyStores = {
+		openrouter: openrouterAPIKey,
+		anthropic: anthropicAPIKey,
+		openai: openaiAPIKey,
+		groq: groqAPIKey,
+		mistral: mistralAPIKey,
+	};
+
+	function saveKey(name) {
+		keyStores[name].set(draftKeys[name]);
+		savedKey = name;
+		onAPIKeyUpdate();
+		setTimeout(() => { if (savedKey === name) savedKey = ''; }, 2000);
+	}
+
 	async function onAPIKeyUpdate() {
 		dispatch('fetchModels');
 		if ($syncServer.token && $syncServer.password) {
@@ -190,56 +215,34 @@
 		</div>
 		<div class="flex flex-col gap-y-4 pt-1 sm:w-[400px]">
 			{#if activeTab === 'api-keys'}
-				<label class="flex flex-col text-[10px] uppercase tracking-wide">
-					<span class="mb-2 ml-[3px]">OpenRouter API Key</span>
-					<input
-						type="text"
-						bind:value={$openrouterAPIKey}
-						placeholder="Enter your API key"
-						class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-none"
-						on:change={onAPIKeyUpdate}
-					/></label
-				>
-				<label class="flex flex-col text-[10px] uppercase tracking-wide">
-					<span class="mb-2 ml-[3px] flex items-center gap-2"> Anthropic API Key </span>
-					<input
-						type="text"
-						bind:value={$anthropicAPIKey}
-						placeholder="Enter your API key"
-						class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-none"
-						on:change={onAPIKeyUpdate}
-					/></label
-				>
-				<label class="flex flex-col text-[10px] uppercase tracking-wide">
-					<span class="mb-2 ml-[3px]">OpenAI API Key</span>
-					<input
-						type="text"
-						bind:value={$openaiAPIKey}
-						placeholder="Enter your API key"
-						class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-none"
-						on:change={onAPIKeyUpdate}
-					/></label
-				>
-				<label class="flex flex-col text-[10px] uppercase tracking-wide">
-					<span class="mb-2 ml-[3px]">Groq API Key</span>
-					<input
-						type="text"
-						bind:value={$groqAPIKey}
-						placeholder="Enter your API key"
-						class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-none"
-						on:change={onAPIKeyUpdate}
-					/></label
-				>
-				<label class="flex flex-col text-[10px] uppercase tracking-wide">
-					<span class="mb-2 ml-[3px]">Mistral API Key</span>
-					<input
-						type="text"
-						bind:value={$mistralAPIKey}
-						placeholder="Enter your API key"
-						class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-none"
-						on:change={onAPIKeyUpdate}
-					/></label
-				>
+				{#each [
+					{ key: 'openrouter', label: 'OpenRouter API Key', placeholder: 'sk-or-...' },
+					{ key: 'anthropic',  label: 'Anthropic API Key',  placeholder: 'sk-ant-...' },
+					{ key: 'openai',     label: 'OpenAI API Key',     placeholder: 'sk-...' },
+					{ key: 'groq',       label: 'Groq API Key',       placeholder: 'gsk_...' },
+					{ key: 'mistral',    label: 'Mistral API Key',     placeholder: 'Enter your API key' },
+				] as { key, label, placeholder }}
+					<label class="flex flex-col text-[10px] uppercase tracking-wide">
+						<span class="mb-2 ml-[3px]">{label}</span>
+						<div class="flex gap-2">
+							<input
+								type="password"
+								bind:value={draftKeys[key]}
+								{placeholder}
+								class="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-none"
+							/>
+							<button
+								class="shrink-0 rounded-lg border px-3 py-2 text-[12px] font-medium transition-colors
+									{savedKey === key
+										? 'border-green-300 bg-green-50 text-green-700'
+										: 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100'}"
+								on:click={() => saveKey(key)}
+							>
+								{savedKey === key ? '✓ Saved' : 'Save'}
+							</button>
+						</div>
+					</label>
+				{/each}
 
 				<p class="ml-1 text-center text-xs leading-relaxed text-slate-800 sm:text-left">
 					{#if $syncServer.token && $syncServer.password}

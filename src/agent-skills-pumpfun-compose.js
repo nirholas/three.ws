@@ -15,6 +15,8 @@
  *                        terminates the same way a live run would.
  */
 
+import { WalletMonitor } from './pump/wallet-monitor.js';
+
 const MCP_ENDPOINT = 'https://pump-fun-sdk.modelcontextprotocol.name/mcp';
 const _sessions = new Map();
 let _rpcId = 0;
@@ -423,6 +425,93 @@ export function registerPumpFunComposeSkills(skills) {
 				output: `Exit watch done (${reason}). Exited ${state.exited.size}/${args.mints.length} positions.`,
 				sentiment: state.exited.size > 0 ? -0.2 : 0.2,
 				data: { exited: [...state.exited], events: state.log, dryRun, sessionId, reason },
+			};
+		},
+	});
+
+	skills.register({
+		name: 'pumpfun-copy-trade-live',
+		description:
+			"Mirror a wallet's pump.fun trades in real-time via WebSocket (~100ms latency). Mirrors both buys AND sells. Use instead of pumpfun-copy-trade when speed matters.",
+		instruction:
+			'WebSocket logsSubscribe on the target wallet. Fires doBuy on buy events, doSell on sell events (if we hold the mint). Stops at durationSec, spendCap, or abort.',
+		animationHint: 'gesture',
+		voicePattern: 'Live copy-trading {{wallet}}…',
+		mcpExposed: true,
+		inputSchema: {
+			type: 'object',
+			properties: {
+				wallet: { type: 'string', description: 'Base58 Solana address to mirror.' },
+				sizeMultiplier: { type: 'number', minimum: 0.001, maximum: 10, description: 'Scale factor applied to the target\'s trade size.' },
+				durationSec: { type: 'integer', minimum: 10, maximum: 7200 },
+				network: { type: 'string', enum: ['mainnet', 'devnet'] },
+				sessionId: { type: 'string' },
+				dryRun: { type: 'boolean' },
+			},
+			required: ['wallet', 'durationSec'],
+		},
+		handler: async (args, ctx) => {
+			const dryRun = !!args.dryRun;
+			const onProgress = args.onProgress;
+			const signal = args.signal;
+			const sessionId = args.sessionId;
+			const mult = args.sizeMultiplier ?? 1;
+			const cap = cfg(ctx, 'sessionSpendCapSol');
+			const state = await loadState(ctx?.memory, sessionId, { mirrored: new Set(), spent: 0, log: [] });
+
+			const monitor = new WalletMonitor(args.wallet, { network: args.network ?? 'mainnet' });
+
+			emit(onProgress, { type: 'start', mode: 'copy-trade-live', wallet: args.wallet, spent: state.spent, cap });
+
+			await new Promise((resolve) => {
+				if (signal?.aborted) { resolve(); return; }
+
+				const timer = setTimeout(resolve, args.durationSec * 1000);
+				signal?.addEventListener?.('abort', () => { clearTimeout(timer); resolve(); }, { once: true });
+
+				monitor.addEventListener('trade', async (evt) => {
+					if (signal?.aborted || state.spent >= cap) { clearTimeout(timer); resolve(); return; }
+
+					const { side, mint, solAmount, signature } = evt;
+
+					// Skip if we already acted on this tx
+					if (state.mirrored.has(signature)) return;
+					state.mirrored.add(signature);
+
+					try {
+						if (side === 'buy') {
+							const amount = Math.min(solAmount * mult, cap - state.spent);
+							if (amount <= 0) return;
+							emit(onProgress, { type: dryRun ? 'dry-buy' : 'buy', mint, solAmount: amount, spent: state.spent });
+							const r = await doBuy(skills, ctx, dryRun, mint, amount);
+							state.spent += amount;
+							state.log.push({ side: 'buy', mint, mirroredSig: signature, sig: r.signature, solAmount: amount, dryRun });
+						} else {
+							// Sell — only if we hold the mint
+							emit(onProgress, { type: dryRun ? 'dry-sell' : 'sell', mint });
+							const r = await doSell(skills, ctx, dryRun, mint);
+							if (r.skipped !== 'no-balance') {
+								state.log.push({ side: 'sell', mint, mirroredSig: signature, sig: r.signature, dryRun });
+							}
+						}
+						saveState(ctx?.memory, sessionId, state);
+					} catch (e) {
+						state.log.push({ side, mint, error: e.message });
+						emit(onProgress, { type: 'error', mint, reason: e.message });
+					}
+				});
+
+				monitor.start();
+			});
+
+			monitor.stop();
+
+			const reason = signal?.aborted ? 'aborted' : state.spent >= cap ? 'cap' : 'duration';
+			return {
+				success: true,
+				output: `${dryRun ? 'Dry-run' : 'Live copy-trade'} done (${reason}). Mirrored ${state.log.length} trades, spent ${state.spent.toFixed(4)} SOL.`,
+				sentiment: 0.4,
+				data: { spent: state.spent, mirrors: state.log, dryRun, sessionId, reason },
 			};
 		},
 	});

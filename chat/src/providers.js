@@ -238,7 +238,7 @@ export async function fetchModels({ onFinally }) {
 	try {
 		const promises = providers.map((provider) => {
 			const apiKey = provider.apiKeyFn();
-			if (apiKey === '') {
+			if (apiKey === '' || !provider.modelsUrl) {
 				return [];
 			}
 
