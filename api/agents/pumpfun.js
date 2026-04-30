@@ -22,6 +22,11 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { pumpfunMcp, pumpfunBotEnabled } from '../_lib/pumpfun-mcp.js';
 
 export default wrap(async (req, res) => {
+	// Dispatch pumpfun-feed and pumpfun-metadata via _handler param (set by vercel.json rewrite)
+	const _handler = req.query?._handler;
+	if (_handler === 'feed') return handleFeed(req, res);
+	if (_handler === 'metadata') return handleMetadata(req, res);
+
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET'])) return;
 
@@ -81,4 +86,92 @@ export default wrap(async (req, res) => {
 
 function clamp(n, lo, hi) {
 	return Math.max(lo, Math.min(hi, n));
+}
+
+// ── pumpfun-feed (SSE) ────────────────────────────────────────────────────────
+
+import { connectPumpFunFeed } from '../_lib/pumpfun-ws-feed.js';
+const TIER_RANK = { notable: 1, influencer: 2, mega: 3 };
+
+async function handleFeed(req, res) {
+	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['GET'])) return;
+	const session = await getSessionUser(req);
+	const bearer = session ? null : await authenticateBearer(extractBearer(req));
+	if (!session && !bearer) return error(res, 401, 'unauthorized', 'sign in required');
+	if (bearer && !hasScope(bearer.scope, 'mcp') && !hasScope(bearer.scope, 'profile')) return error(res, 403, 'insufficient_scope', 'requires mcp or profile scope');
+	const userId = session?.id ?? bearer.userId;
+	const rl = await limits.mcpUser(String(userId));
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many feed connections');
+	const url = new URL(req.url, 'http://x');
+	const kind = url.searchParams.get('kind') || 'all';
+	const minTierParam = url.searchParams.get('minTier');
+	const minTier = TIER_RANK[minTierParam] || 0;
+	res.statusCode = 200;
+	res.setHeader('content-type', 'text/event-stream; charset=utf-8');
+	res.setHeader('cache-control', 'no-store');
+	res.setHeader('connection', 'keep-alive');
+	res.setHeader('x-accel-buffering', 'no');
+	res.flushHeaders?.();
+	const started = Date.now();
+	let active = true;
+	req.on('close', () => { active = false; });
+	const wsAbort = new AbortController();
+	req.on('close', () => wsAbort.abort());
+	const queue = [];
+	const wsKind = kind === 'claims' ? 'graduation' : kind;
+	const stopWs = connectPumpFunFeed({ kind: wsKind, signal: wsAbort.signal, onEvent: ({ kind: evKind, data }) => { if (active) queue.push({ evKind, data }); } });
+	_writeSse(res, 'open', { kind, minTier: minTierParam || null, source: 'websocket' });
+	const seen = new Set();
+	let lastSig = null;
+	const tickClaims = pumpfunBotEnabled() ? async () => {
+		if (kind !== 'claims' && kind !== 'all') return;
+		const r = await pumpfunMcp.claimsSince({ sinceSig: lastSig, limit: 25 });
+		if (!r.ok) return;
+		const items = Array.isArray(r.data) ? r.data : r.data?.items || [];
+		for (const ev of items) {
+			const id = ev.tx_signature || ev.signature || ev.id;
+			if (!id || seen.has(id)) continue;
+			seen.add(id);
+			if (minTier && TIER_RANK[(ev.tier || '').toLowerCase()] < minTier) continue;
+			lastSig = id;
+			_writeSse(res, 'claim', ev);
+		}
+	} : null;
+	while (active && Date.now() - started < 90_000) {
+		while (queue.length > 0 && active) { const { evKind, data } = queue.shift(); _writeSse(res, evKind, data); }
+		if (tickClaims) { try { await tickClaims(); } catch {} }
+		_writeSse(res, 'ping', { t: Date.now() });
+		await new Promise((r) => setTimeout(r, 4000));
+	}
+	stopWs();
+	_writeSse(res, 'close', { reason: 'duration_limit' });
+	res.end();
+}
+function _writeSse(res, event, data) { res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`); }
+
+// ── pumpfun-metadata ──────────────────────────────────────────────────────────
+
+import { sql as _sql } from '../_lib/db.js';
+import { env as _env } from '../_lib/env.js';
+
+async function handleMetadata(req, res) {
+	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
+	if (!method(req, res, ['GET'])) return;
+	const url = new URL(req.url, `http://${req.headers.host}`);
+	const id = url.searchParams.get('id');
+	if (!id) return error(res, 400, 'validation_error', 'id required');
+	const [a] = await _sql`select id, name, description, avatar_id, meta, wallet_address from agent_identities where id = ${id} and deleted_at is null limit 1`;
+	if (!a) return error(res, 404, 'not_found', 'agent not found');
+	const origin = _env.APP_ORIGIN;
+	const image = a.meta?.image_url || `${origin}/api/agents/${a.id}/og`;
+	const animation = a.avatar_id ? `${origin}/api/avatars/${a.avatar_id}/glb` : null;
+	const symbol = String(a.name || 'AGENT').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10) || 'AGENT';
+	return json(res, 200, {
+		name: a.name, symbol,
+		description: a.description || `${a.name} is a 3D AI agent on three.ws with onchain identity and signed action history.`,
+		image, animation_url: animation, external_url: `${origin}/agent/${a.id}`,
+		attributes: [{ trait_type: 'platform', value: 'three.ws' }, { trait_type: 'agent_id', value: a.id }, ...(a.wallet_address ? [{ trait_type: 'owner', value: a.wallet_address }] : [])],
+		properties: { category: 'video', files: [...(animation ? [{ uri: animation, type: 'model/gltf-binary' }] : []), { uri: image, type: 'image/png' }] },
+	}, { 'cache-control': 'public, max-age=300', 'access-control-allow-origin': '*' });
 }
