@@ -93,6 +93,8 @@
 		{ "src": "/api/agents/([^/]+)/manifest", "dest": "/api/agents/[id]" },
 		{ "src": "/api/agents/([^/]+)/actions", "dest": "/api/agents/[id]" },
 		{ "src": "/api/agents/([^/]+)/usage", "dest": "/api/agents/[id]" },
+		{ "src": "/api/agents/([^/]+)/memories/([^/]+)", "dest": "/api/agents/[id]" },
+		{ "src": "/api/agents/([^/]+)/memories", "dest": "/api/agents/[id]" },
 		{ "src": "/api/agents/pumpfun-feed", "dest": "/api/agents/pumpfun?_handler=feed" },
 		{ "src": "/api/agents/pumpfun-metadata", "dest": "/api/agents/pumpfun?_handler=metadata" },
 		{ "src": "/api/agents/pumpfun", "dest": "/api/agents/pumpfun" },

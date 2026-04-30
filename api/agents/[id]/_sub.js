@@ -221,3 +221,56 @@ export const handleUsage = wrap(async (req, res, id) => {
 
 	return json(res, 200, { agentId: id, monthlyQuota, currentMonthCalls: monthRow?.total ?? 0, dailyBreakdown: dailyRows.map((r) => ({ day: r.day, calls: r.calls })) });
 });
+
+// ── memories ──────────────────────────────────────────────────────────────────
+
+const memoryBodySchema = z.object({
+	type: z.enum(['user', 'feedback', 'project', 'reference']),
+	content: z.string().trim().min(1).max(4000),
+	tags: z.array(z.string().trim().max(100)).max(20).optional().default([]),
+	salience: z.number().min(0).max(1).optional(),
+	expiresAt: z.string().datetime().optional().nullable(),
+});
+
+export const handleMemories = wrap(async (req, res, id, memoryId) => {
+	if (cors(req, res, { methods: 'GET,POST,DELETE,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['GET', 'POST', 'DELETE'])) return;
+
+	const session = await getSessionUser(req);
+	const bearer = session ? null : await authenticateBearer(extractBearer(req));
+	const userId = session?.id ?? bearer?.userId;
+	if (!userId) return error(res, 401, 'unauthorized', 'sign in required');
+
+	const [agent] = await sql`SELECT id FROM agent_identities WHERE id = ${id} AND user_id = ${userId} AND deleted_at IS NULL`;
+	if (!agent) return error(res, 404, 'not_found', 'agent not found');
+
+	if (req.method === 'GET') {
+		const rows = await sql`
+			SELECT id, type, content, tags, salience, expires_at, created_at
+			FROM agent_memories
+			WHERE agent_id = ${id}
+				AND (expires_at IS NULL OR expires_at > now())
+			ORDER BY created_at DESC
+			LIMIT 200
+		`;
+		return json(res, 200, { data: rows });
+	}
+
+	if (req.method === 'DELETE') {
+		if (!memoryId) return error(res, 400, 'bad_request', 'memory id required');
+		await sql`DELETE FROM agent_memories WHERE id = ${memoryId} AND agent_id = ${id}`;
+		return json(res, 200, { deleted: true });
+	}
+
+	// POST
+	const rl = await limits.authIp(clientIp(req));
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
+
+	const body = parse(memoryBodySchema, await readJson(req));
+	const [row] = await sql`
+		INSERT INTO agent_memories (id, agent_id, type, content, tags, salience, expires_at)
+		VALUES (gen_random_uuid(), ${id}, ${body.type}, ${body.content}, ${body.tags}, ${body.salience ?? 0.5}, ${body.expiresAt ?? null})
+		RETURNING id
+	`;
+	return json(res, 201, { id: row.id });
+});

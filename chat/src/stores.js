@@ -86,6 +86,14 @@ export const flowSecondary = persisted('flowSecondary', {});
 export const appPlatforms = writable(new Set(['macOS']));
 export const designModel = writable('gpt-image-2');
 
+export const notifications = writable([]);
+
+export function notify(message, type = 'error') {
+	const id = Math.random().toString(36).slice(2);
+	notifications.update(n => [...n, { id, message, type }]);
+	setTimeout(() => notifications.update(n => n.filter(x => x.id !== id)), 5000);
+}
+
 export const currentUser = writable(null);
 
 export async function loadCurrentUser() {

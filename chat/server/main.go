@@ -77,14 +77,17 @@ func authMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func writeJSON(w http.ResponseWriter, status int, v any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(v)
+}
+
 type ToolHandler struct {
 	Groups []*toolfns.Group
 }
 
 func (tr *ToolHandler) ToolSchema(w http.ResponseWriter, r *http.Request) {
-	enc := json.NewEncoder(w)
-	enc.SetIndent("", "  ")
-
 	type encodedGroup struct {
 		Name   string            `json:"name"`
 		Schema []schema.Function `json:"schema"`
@@ -97,11 +100,7 @@ func (tr *ToolHandler) ToolSchema(w http.ResponseWriter, r *http.Request) {
 			Schema: group.Repo.Schema(),
 		})
 	}
-	err := enc.Encode(encodedGroups)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	writeJSON(w, http.StatusOK, encodedGroups)
 }
 
 func (tr *ToolHandler) InvokeTool(w http.ResponseWriter, r *http.Request) {
@@ -111,28 +110,22 @@ func (tr *ToolHandler) InvokeTool(w http.ResponseWriter, r *http.Request) {
 		Args   map[string]any `json:"arguments"`
 	}
 	if err := json.NewDecoder(io.TeeReader(r.Body, os.Stdout)).Decode(&call); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": err.Error()})
 		return
 	}
 
-	var err error
 	for _, group := range tr.Groups {
-		var out any
-		out, err = group.Repo.Invoke(nil, call.Name, call.Args)
+		out, err := group.Repo.Invoke(nil, call.Name, call.Args)
 		if err != nil {
 			if strings.HasPrefix(err.Error(), "tool not found") {
 				continue
 			}
-			json.NewEncoder(w).Encode(map[string]any{
-				"error": err.Error(),
-			})
+			writeJSON(w, http.StatusInternalServerError, map[string]any{"error": err.Error()})
 			return
 		}
-		json.NewEncoder(w).Encode(out)
+		writeJSON(w, http.StatusOK, out)
 		return
 	}
 
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-	}
+	writeJSON(w, http.StatusNotFound, map[string]any{"error": "tool not found: " + call.Name})
 }

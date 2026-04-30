@@ -3,6 +3,7 @@ import { controller, params, toolSchema } from './stores.js';
 import { headersForFetch, providers } from './providers.js';
 
 export async function complete(convo, onupdate, onabort) {
+	try {
 	controller.set(new AbortController());
 
 	const model = convo.models[0];
@@ -141,11 +142,20 @@ export async function complete(convo, onupdate, onabort) {
 	};
 
 	const response = await completions(get(controller).signal);
+	if (!response.ok) {
+		let msg = `API error ${response.status}`;
+		try { const e = await response.json(); msg = e?.error?.message || e?.message || msg; } catch {}
+		throw new Error(msg);
+	}
 	if (stream) {
 		streamResponse(model.provider, response.body, onupdate, onabort);
 	} else {
 		const responseBody = await response.json();
 		onupdate(responseBody);
+	}
+	} catch (err) {
+		if (err.name === 'AbortError') return;
+		onabort?.(err.message || String(err));
 	}
 }
 
@@ -197,7 +207,13 @@ export async function completeConsensus(convo, onupdate, onabort) {
 				}),
 			});
 
-			const result = await response.json();
+			let result;
+			try { result = await response.json(); } catch {
+				throw new Error(`Invalid JSON from ${model.id}`);
+			}
+			if (!result?.choices?.[0]?.message?.content) {
+				throw new Error(`Unexpected response shape from ${model.id}`);
+			}
 			return {
 				model: model.id,
 				response: result.choices[0].message.content,
@@ -571,6 +587,11 @@ export async function generateImage(convo, { oncomplete }) {
 			size: '1024x1024',
 		}),
 	});
+	if (!resp.ok) {
+		let msg = `Image API error ${resp.status}`;
+		try { const e = await resp.json(); msg = e?.error?.message || e?.message || msg; } catch {}
+		throw new Error(msg);
+	}
 	const json = await resp.json();
 	oncomplete(json);
 }

@@ -947,7 +947,7 @@ class Agent3DElement extends HTMLElement {
 					this.dispatchEvent(
 						new CustomEvent(ev, { detail: e.detail, bubbles: true, composed: true }),
 					);
-					if (ev === 'brain:message' && this._chatEl) {
+					if (ev === 'brain:message') {
 						// Transfer sentiment from the most recent tool call to
 						// this assistant message so the bubble tints correctly.
 						const detail = { ...e.detail };
@@ -959,11 +959,21 @@ class Agent3DElement extends HTMLElement {
 							detail.sentiment = this._lastToolSentiment;
 							this._lastToolSentiment = undefined;
 						}
-						this._renderMessage(detail);
+						if (detail.role === 'assistant' && detail.content) {
+							protocol.emit({
+								type: ACTION_TYPES.SPEAK,
+								payload: { text: detail.content, sentiment: detail.sentiment ?? 0 },
+							});
+						}
+						if (this._chatEl) this._renderMessage(detail);
 					}
-					if (ev === 'brain:thinking' && this._toolIndicatorEl) {
-						if (e.detail?.thinking) this._setToolIndicator('thinking');
-						else this._clearToolIndicator();
+					if (ev === 'brain:thinking') {
+						if (this._toolIndicatorEl) {
+							if (e.detail?.thinking) this._setToolIndicator('thinking');
+							else this._clearToolIndicator();
+						}
+						protocol.emit({ type: ACTION_TYPES.THINK, payload: { thought: 'processing your message...' } });
+						protocol.emit({ type: ACTION_TYPES.EMOTE, payload: { trigger: 'patience', weight: 0.5 } });
 					}
 					if (ev === 'skill:tool-called') {
 						const { tool, result } = e.detail || {};
@@ -1412,7 +1422,16 @@ class Agent3DElement extends HTMLElement {
 
 	async say(text, opts = {}) {
 		if (!this._runtime) await this._waitForReady();
-		return this._runtime.send(text, { voice: opts.voice ?? this.hasAttribute('voice') });
+		protocol.emit({ type: ACTION_TYPES.LOOK_AT, payload: { target: 'user' } });
+		protocol.emit({ type: ACTION_TYPES.EMOTE, payload: { trigger: 'curiosity', weight: 0.6 } });
+		protocol.emit({ type: ACTION_TYPES.THINK, payload: { thought: 'processing your message...' } });
+		protocol.emit({ type: ACTION_TYPES.EMOTE, payload: { trigger: 'patience', weight: 0.5 } });
+		try {
+			return await this._runtime.send(text, { voice: opts.voice ?? this.hasAttribute('voice') });
+		} catch (err) {
+			protocol.emit({ type: ACTION_TYPES.EMOTE, payload: { trigger: 'concern', weight: 0.8 } });
+			throw err;
+		}
 	}
 
 	// Play speak animation — tries 'talk', falls back to 'yes', then 'wave'.
