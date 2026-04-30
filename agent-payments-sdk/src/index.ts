@@ -113,6 +113,3 @@ export { PumpAgentPaymentsPlugin } from "./solana-agent-kit";
 
 // x402 protocol
 export * as x402 from "./x402";
-
-// solana-agent-kit plugin
-export { PumpAgentPaymentsPlugin } from "./solana-agent-kit";
