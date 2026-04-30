@@ -12,11 +12,11 @@
 		feSearch,
 		feFolder,
 	} from './feather.js';
-	import { afterUpdate, tick } from 'svelte';
+	import { afterUpdate, onDestroy, tick } from 'svelte';
 	import { get } from 'svelte/store';
 	import { v4 as uuidv4 } from 'uuid';
 	import { readFileAsDataURL } from './util.js';
-	import { anthropicAPIKey, controller, params, remoteServer, brandConfig } from './stores.js';
+	import { anthropicAPIKey, controller, params, remoteServer, brandConfig, mode, composerFill } from './stores.js';
 	import ToolPill from './ToolPill.svelte';
 	import ToolDropdown from './ToolDropdown.svelte';
 	import ModelSelector from './ModelSelector.svelte';
@@ -46,6 +46,24 @@
 	let tokenCount = null;
 	let tokenLoading = false;
 	let tokenError = null;
+
+	$: effectivePlaceholder = $mode === 'website'
+		? 'Describe the website you want to build'
+		: 'Send a message…';
+
+	const unsubFill = composerFill.subscribe((fill) => {
+		if (!fill) return;
+		composerFill.set(null);
+		const shouldFill = !fill.ifEmpty || !content;
+		if (shouldFill) {
+			content = fill.text;
+			tick().then(() => {
+				autoresizeTextarea();
+				if (fill.submit) sendMessage();
+			});
+		}
+	});
+	onDestroy(unsubFill);
 
 	async function calculateTokens() {
 		if (convo.models[0]?.provider !== 'Anthropic') return;
@@ -422,6 +440,7 @@ ${file.contents}
 					: pendingFiles.length > 0
 						? '!pt-[48px]'
 						: ''} max-h-[90dvh] w-full resize-none rounded-[18px] border border-slate-200 pb-14 pl-5 pt-4 font-normal text-slate-800 shadow-sm transition-colors scrollbar-slim focus:border-slate-300 focus:outline-none"
+				placeholder={effectivePlaceholder}
 				rows={1}
 				bind:value={content}
 				on:paste={handlePaste}
@@ -468,6 +487,14 @@ ${file.contents}
 					on:scroll={updateFades}
 					class="flex max-w-[220px] gap-2 overflow-x-auto scrollbar-none sm:max-w-none sm:overflow-x-visible"
 				>
+					{#if $mode === 'website'}
+						<button
+							class="manus-chip manus-chip-selected h-7 px-3 text-xs"
+							on:click={() => mode.set(null)}
+						>
+							Website
+						</button>
+					{/if}
 					<div id="tool-dropdown" class="contents">
 						<ToolPill icon={feTool} selected={toolsOpen} on:click={() => (toolsOpen = !toolsOpen)}>
 							Tools

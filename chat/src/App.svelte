@@ -22,7 +22,7 @@
 	} from './providers.js';
 	import ModelSelector from './ModelSelector.svelte';
 	import CompanyLogo from './CompanyLogo.svelte';
-	import { controller, remoteServer, config, params, toolSchema, syncServer, brandConfig, ttsEnabled, localAgentId, route } from './stores.js';
+	import { controller, remoteServer, config, params, toolSchema, syncServer, brandConfig, ttsEnabled, localAgentId, route, mode, websiteCategory } from './stores.js';
 	import AuthPage from './manus/pages/AuthPage.svelte';
 	import Pricing from './manus/pages/Pricing.svelte';
 	import SettingsModal from './SettingsModal.svelte';
@@ -30,7 +30,7 @@
 	import MessageContent from './MessageContent.svelte';
 	import Toolcall from './Toolcall.svelte';
 	import Modal from './Modal.svelte';
-	import Input from './Input.svelte';
+	import Composer from './manus/Composer.svelte';
 	import Icon from './Icon.svelte';
 	import {
 		feArrowUp,
@@ -63,8 +63,11 @@
 	import Message from './Message.svelte';
 	import { deleteSingleItem, initEncryption, sendSingleItem, syncPull, syncPush } from './sync.js';
 	import AgentPicker from './AgentPicker.svelte';
+	import TalkingHead from './TalkingHead.svelte';
 	import EmptyState from './manus/EmptyState.svelte';
+	import SuggestionChips from './manus/SuggestionChips.svelte';
 	import AnnouncementBanner from './manus/AnnouncementBanner.svelte';
+	import TopNav from './manus/TopNav.svelte';
 
 	marked.use(
 		markedKatex({
@@ -1245,13 +1248,42 @@
 	/>
 {/if}
 
-{#if $route === 'signin' || $route === 'signup'}
+{#if $route === 'pricing'}
+  <div class="min-h-dvh bg-paper">
+    <div class="sticky top-0 z-[110]"><AnnouncementBanner /></div>
+    <Pricing />
+  </div>
+{:else if $route === 'signin' || $route === 'signup'}
   <div class="min-h-dvh bg-paper">
     <AuthPage kind={$route} />
+  </div>
+{:else if $route.startsWith('solutions/')}
+  <div class="min-h-dvh bg-[#F5F4EF]">
+    <TopNav />
+    <div class="max-w-[1240px] mx-auto px-6 py-20 text-[#1A1A1A]">
+      <div>Solutions: {$route.slice('solutions/'.length)}</div>
+    </div>
+  </div>
+{:else if $route.startsWith('events/')}
+  <div class="min-h-dvh bg-[#F5F4EF]">
+    <TopNav />
+    <div class="max-w-[760px] mx-auto px-6 pt-24 text-center">
+      <h1 class="manus-display">{$route.slice('events/'.length).replace(/-/g, ' ').replace(/^\w/, c => c.toUpperCase())}</h1>
+      <p class="text-[#6B6B6B] mt-4 text-lg">Coming soon.</p>
+    </div>
+  </div>
+{:else if $route.startsWith('business/')}
+  <div class="min-h-dvh bg-[#F5F4EF]">
+    <TopNav />
+    <div class="max-w-[760px] mx-auto px-6 pt-24 text-center">
+      <h1 class="manus-display">{$route.slice('business/'.length).replace(/-/g, ' ').replace(/^\w/, c => c.toUpperCase())}</h1>
+      <p class="text-[#6B6B6B] mt-4 text-lg">Coming soon.</p>
+    </div>
   </div>
 {:else}
 <main class="flex h-dvh w-screen flex-col">
 	<div class="sticky top-0 z-[110]">
+		<TopNav />
 		<AnnouncementBanner />
 	</div>
 	<div class="flex h-12 items-center gap-1 px-2 py-1 md:hidden">
@@ -1453,6 +1485,9 @@
 								bind:handleFileDrop
 							/>
 						</svelte:fragment>
+						<svelte:fragment slot="chips">
+							<SuggestionChips />
+						</svelte:fragment>
 					</EmptyState>
 				</div>
 			{:else}
@@ -1516,7 +1551,7 @@
 							</ul>
 						</div>
 
-						<Input
+						<Composer
 							bind:generating
 							bind:convo
 							{saveMessage}

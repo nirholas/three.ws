@@ -4,11 +4,11 @@
   import { feVideo, feMapPin, feClock, feZap, fePlay } from '../../feather.js';
 
   const items = [
-    { title: 'Webinars',         subtitle: 'Live sessions with the Manus team',           route: 'events/webinars',      icon: feVideo },
-    { title: 'Conferences',      subtitle: 'Where you can find us in person',             route: 'events/conferences',   icon: feMapPin },
-    { title: 'Office hours',     subtitle: 'Weekly Q&A with engineers',                   route: 'events/office-hours',  icon: feClock },
-    { title: 'Hackathons',       subtitle: 'Build with Manus alongside the community',    route: 'events/hackathons',    icon: feZap },
-    { title: 'Past recordings',  subtitle: 'Replay every session on demand',              route: 'events/recordings',    icon: fePlay },
+    { title: 'Webinars',        subtitle: 'Live sessions with the Manus team',        route: 'events/webinars',     icon: feVideo },
+    { title: 'Conferences',     subtitle: 'Where you can find us in person',          route: 'events/conferences',  icon: feMapPin },
+    { title: 'Office hours',    subtitle: 'Weekly Q&A with engineers',                route: 'events/office-hours', icon: feClock },
+    { title: 'Hackathons',      subtitle: 'Build with Manus alongside the community', route: 'events/hackathons',   icon: feZap },
+    { title: 'Past recordings', subtitle: 'Replay every session on demand',           route: 'events/recordings',   icon: fePlay },
   ];
 </script>
 

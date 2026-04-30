@@ -2,11 +2,13 @@
   import { route } from '../stores.js';
   import FeaturesDropdown from './dropdowns/FeaturesDropdown.svelte';
   import SolutionsDropdown from './dropdowns/SolutionsDropdown.svelte';
+  import ResourcesDropdown from './dropdowns/ResourcesDropdown.svelte';
   import EventsDropdown from './dropdowns/EventsDropdown.svelte';
   import BusinessDropdown from './dropdowns/BusinessDropdown.svelte';
 
   let featuresOpen = false;
   let solutionsOpen = false;
+  let resourcesOpen = false;
   let eventsOpen = false;
   let businessOpen = false;
 
@@ -14,6 +16,8 @@
   const featClose = { value: null };
   const solOpen   = { value: null };
   const solClose  = { value: null };
+  const resOpen   = { value: null };
+  const resClose  = { value: null };
   const evtOpen   = { value: null };
   const evtClose  = { value: null };
   const bizOpen   = { value: null };
@@ -23,6 +27,8 @@
   function onFeatLeave()  { clearTimeout(featOpen.value);  featClose.value = setTimeout(() => (featuresOpen  = false), 200); }
   function onSolEnter()   { clearTimeout(solClose.value);  solOpen.value   = setTimeout(() => (solutionsOpen = true),  120); }
   function onSolLeave()   { clearTimeout(solOpen.value);   solClose.value  = setTimeout(() => (solutionsOpen = false), 200); }
+  function onResEnter()   { clearTimeout(resClose.value);  resOpen.value   = setTimeout(() => (resourcesOpen = true),  120); }
+  function onResLeave()   { clearTimeout(resOpen.value);   resClose.value  = setTimeout(() => (resourcesOpen = false), 200); }
   function onEvtEnter()   { clearTimeout(evtClose.value);  evtOpen.value   = setTimeout(() => (eventsOpen    = true),  120); }
   function onEvtLeave()   { clearTimeout(evtOpen.value);   evtClose.value  = setTimeout(() => (eventsOpen    = false), 200); }
   function onBizEnter()   { clearTimeout(bizClose.value);  bizOpen.value   = setTimeout(() => (businessOpen  = true),  120); }
@@ -83,8 +89,25 @@
         {/if}
       </div>
 
-      <!-- Resources stub -->
-      <button class="h-14 px-3 inline-flex items-center text-sm font-medium text-[#1A1A1A] hover:text-[#6B6B6B] transition-colors">Resources</button>
+      <!-- Resources -->
+      <!-- svelte-ignore a11y-no-static-element-interactions -->
+      <div class="relative" on:mouseenter={onResEnter} on:mouseleave={onResLeave}>
+        <button
+          class="h-14 px-3 inline-flex items-center text-sm font-medium text-[#1A1A1A] hover:text-[#6B6B6B] transition-colors"
+          aria-haspopup="true"
+          aria-expanded={resourcesOpen}
+        >Resources</button>
+        {#if resourcesOpen}
+          <!-- svelte-ignore a11y-no-static-element-interactions -->
+          <div
+            class="absolute top-full mt-2 left-0 z-50"
+            on:mouseenter={onResEnter}
+            on:mouseleave={onResLeave}
+          >
+            <ResourcesDropdown />
+          </div>
+        {/if}
+      </div>
 
       <!-- Events -->
       <!-- svelte-ignore a11y-no-static-element-interactions -->

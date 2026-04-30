@@ -25,6 +25,12 @@
 	import { config, localAgentId, brandConfig } from './stores.js';
 
 	$: effectiveAgentId = $localAgentId || $brandConfig.agent_id || '';
+
+	$: lastAssistantIndex = convo.messages.reduce(
+		(last, m, idx) => (m.role === 'assistant' ? idx : last),
+		-1
+	);
+	$: isLastAssistant = message.role === 'assistant' && i === lastAssistantIndex;
 	import Toolcall from './Toolcall.svelte';
 	import ToolcallButton from './ToolcallButton.svelte';
 
@@ -176,7 +182,7 @@
 							? 'border border-teal-200 bg-teal-100 pb-px'
 							: ''}"
 			>
-				{#if message.role === 'assistant' && effectiveAgentId}
+				{#if isLastAssistant && effectiveAgentId}
 					<!-- svelte-ignore custom-element-no-implicit-ns -->
 					<agent-3d
 						agent-id={effectiveAgentId}

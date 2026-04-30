@@ -30,7 +30,7 @@
   {/each}
   <div class="relative">
     <button class="manus-chip" on:click={() => (moreOpen = !moreOpen)}>
-      <Icon icon={feLayout} class="h-4 w-4 opacity-0 w-0 overflow-hidden" />
+      <Icon icon={feMoreHorizontal} class="h-4 w-4" />
       More
     </button>
     {#if moreOpen}

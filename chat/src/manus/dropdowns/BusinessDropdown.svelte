@@ -4,11 +4,11 @@
   import { feBriefcase, feShield, feServer, feUsers, feMessageCircle } from '../../feather.js';
 
   const items = [
-    { title: 'Enterprise',            subtitle: 'Deploy Manus across your org',        route: 'business/enterprise',     icon: feBriefcase },
-    { title: 'Security & compliance', subtitle: 'SOC 2, GDPR, custom DPAs',            route: 'business/security',       icon: feShield },
-    { title: 'Custom deployments',    subtitle: 'VPC and on-prem options',             route: 'business/deployments',    icon: feServer },
-    { title: 'Customer stories',      subtitle: 'How teams ship faster with Manus',    route: 'business/customers',      icon: feUsers },
-    { title: 'Contact sales',         subtitle: 'Talk to a real human',                route: 'business/contact-sales',  icon: feMessageCircle },
+    { title: 'Enterprise',            subtitle: 'Deploy Manus across your org',     route: 'business/enterprise',    icon: feBriefcase },
+    { title: 'Security & compliance', subtitle: 'SOC 2, GDPR, custom DPAs',         route: 'business/security',      icon: feShield },
+    { title: 'Custom deployments',    subtitle: 'VPC and on-prem options',          route: 'business/deployments',   icon: feServer },
+    { title: 'Customer stories',      subtitle: 'How teams ship faster with Manus', route: 'business/customers',     icon: feUsers },
+    { title: 'Contact sales',         subtitle: 'Talk to a real human',             route: 'business/contact-sales', icon: feMessageCircle },
   ];
 </script>
 
