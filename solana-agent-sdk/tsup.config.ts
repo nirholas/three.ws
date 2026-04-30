@@ -5,6 +5,7 @@ export default defineConfig({
     "src/index.ts",
     "src/wallet/index.ts",
     "src/x402-exact/index.ts",
+    "src/solana-agent-kit/index.ts",
   ],
   format: ["cjs", "esm"],
   dts: true,
