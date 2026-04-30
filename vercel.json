@@ -111,6 +111,7 @@
 		{ "src": "/api/pump/deliver-telegram", "dest": "/api/pump/[action]?action=deliver-telegram" },
 		{ "src": "/api/pump/first-claims", "dest": "/api/pump/[action]?action=first-claims" },
 		{ "src": "/api/pump/vanity-keygen", "dest": "/api/pump/[action]?action=vanity-keygen" },
+		{ "src": "/api/pump/helius-webhook", "dest": "/api/pump/helius-webhook" },
 		{ "src": "/api/avatars/presign", "dest": "/api/avatars/[id]" },
 		{ "src": "/api/avatars/public", "dest": "/api/avatars/[id]" },
 		{ "src": "/api/avatars/regenerate-status", "dest": "/api/avatars/[id]" },
