@@ -13,7 +13,7 @@
     {#each prompts as prompt}
       <button
         class="relative bg-white border border-[#E5E3DC] rounded-xl p-4 h-[96px] text-left text-sm hover:bg-[#F5F4EF] transition-colors overflow-hidden"
-        on:click={() => composerFill.set(prompt)}
+        on:click={() => composerFill.set({ text: prompt, submit: true })}
       >
         <span class="line-clamp-3 block pr-5">{prompt}</span>
         <Icon

@@ -19,7 +19,8 @@
 	import { get } from 'svelte/store';
 	import { v4 as uuidv4 } from 'uuid';
 	import { readFileAsDataURL } from './util.js';
-	import { anthropicAPIKey, controller, params, remoteServer, brandConfig, mode, composerFill, appPlatforms, designModel } from './stores.js';
+	import { anthropicAPIKey, controller, params, remoteServer, brandConfig, mode, composerFill, flowSecondary, appPlatforms, designModel } from './stores.js';
+	import { modeConfig } from './manus/flows/utilityFlowData.js';
 	import ToolPill from './ToolPill.svelte';
 	import ToolDropdown from './ToolDropdown.svelte';
 	import ModelSelector from './ModelSelector.svelte';
@@ -59,7 +60,10 @@
 				? 'Describe the app you want to build'
 				: $mode === 'design'
 					? 'Describe what you want to design'
-					: 'Send a message…';
+					: ($mode && modeConfig[$mode]?.placeholder)
+					|| 'Send a message…';
+
+	let secondaryOpen = null;
 
 	let designModelPickerOpen = false;
 
@@ -640,6 +644,47 @@ ${file.contents}
 								<DesignModelPicker on:close={() => (designModelPickerOpen = false)} />
 							{/if}
 						</div>
+					{/if}
+					{#if $mode && modeConfig[$mode]}
+						{@const cfg = modeConfig[$mode]}
+						<button
+							class="manus-chip manus-chip-selected h-7 px-3 text-xs inline-flex items-center gap-1.5 shrink-0"
+							on:click={() => mode.set(null)}
+						>
+							<Icon icon={cfg.icon} class="w-3.5 h-3.5" />
+							{cfg.label}
+						</button>
+						{#if cfg.secondary}
+							{@const sec = cfg.secondary}
+							{@const currentVal = $flowSecondary[$mode] ?? sec.default}
+							<div class="relative">
+								<button
+									class="manus-chip h-7 px-3 text-xs inline-flex items-center gap-1.5 shrink-0"
+									on:click={() => { secondaryOpen = secondaryOpen === $mode ? null : $mode; }}
+								>
+									{sec.prefix}: {currentVal}
+									<Icon icon={feChevronDown} class="w-3 h-3" />
+								</button>
+								{#if secondaryOpen === $mode}
+									<button
+										class="fixed inset-0 z-20 cursor-default"
+										aria-hidden="true"
+										tabindex="-1"
+										on:click={() => (secondaryOpen = null)}
+									/>
+									<div class="absolute left-0 bottom-full mb-2 bg-white border border-[#E5E3DC] rounded-xl shadow-pop z-30 min-w-[160px] py-1">
+										{#each sec.options as opt}
+											<button
+												class="block w-full px-4 py-2 text-sm text-left text-[#1A1A1A] hover:bg-[#F5F4EF] {currentVal === opt ? 'font-medium' : ''} first:rounded-t-xl last:rounded-b-xl"
+												on:click={() => { $flowSecondary = { ...$flowSecondary, [$mode]: opt }; secondaryOpen = null; }}
+											>
+												{opt}
+											</button>
+										{/each}
+									</div>
+								{/if}
+							</div>
+						{/if}
 					{/if}
 					<div id="tool-dropdown" class="contents">
 						<ToolPill icon={feTool} selected={toolsOpen} on:click={() => (toolsOpen = !toolsOpen)}>

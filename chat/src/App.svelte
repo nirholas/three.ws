@@ -1342,22 +1342,22 @@
 			data-sidebar="history"
 			class="{historyOpen
 				? ''
-				: '-translate-x-full'} fixed top-0 z-[100] flex h-full w-[230px] flex-col border-r bg-white pl-3 pt-4 transition-transform duration-500 ease-in-out md:static md:translate-x-0"
+				: '-translate-x-full'} fixed top-0 z-[100] flex h-full w-[260px] flex-col border-r border-rule bg-paper pl-3 pt-4 transition-transform duration-500 ease-in-out md:static md:translate-x-0"
 		>
 			<div class="mb-1 pr-3">
 				<button
 					on:click={newConversation}
-					class="flex w-full items-center rounded-[10px] border py-2.5 pl-3 pr-4 text-left text-sm font-medium hover:bg-gray-100"
+					class="manus-btn-primary flex w-full items-center justify-start gap-2 rounded-full px-4 py-2.5"
 				>
+					<span class="text-base font-medium leading-none">+</span>
 					New chat
-					<Icon icon={feStar} strokeWidth={3} class="ml-auto h-3.5 w-3.5 text-slate-700" />
 				</button>
 			</div>
 			<ol
-				class="flex list-none flex-col overflow-y-auto pb-3 pr-3 pt-5 scrollbar-invisible scrollbar-slim hover:scrollbar-white"
+				class="flex list-none flex-col overflow-y-auto pb-3 pr-3 pt-3 scrollbar-invisible scrollbar-slim hover:scrollbar-white"
 			>
 				{#each historyBuckets as { relativeDate, convos: historyConvos } (relativeDate)}
-					<li class="mb-2 ml-3 text-xs font-medium text-slate-600 [&:not(:first-child)]:mt-6">
+					<li class="mb-1 ml-3 text-[11px] font-medium text-ink-soft [&:not(:first-child)]:mt-5">
 						{relativeDate}
 					</li>
 					{#each historyConvos as historyConvo (historyConvo.id)}
@@ -1379,8 +1379,8 @@
 									});
 								}}
 								class="{$convoId === historyConvo.id
-									? 'bg-gray-100'
-									: ''} leading-0 w-full rounded-lg px-3 py-2 text-left text-sm group-hover:bg-gray-100"
+									? 'bg-paper-deep'
+									: ''} flex h-9 w-full items-center rounded-md px-3 text-left text-sm text-ink hover:bg-paper-deep"
 							>
 								<span class="line-clamp-1">
 									{historyConvo.messages.length === 0
@@ -1408,12 +1408,12 @@
 									convos = convos;
 									deleteConversation(historyConvo);
 								}}
-								class="z-1 absolute right-0 top-0 flex h-full w-12 rounded-br-lg rounded-tr-lg bg-gradient-to-l {$convoId ===
+								class="z-1 absolute right-0 top-0 flex h-full w-12 rounded-br-md rounded-tr-md bg-gradient-to-l {$convoId ===
 								historyConvo.id
-									? 'from-gray-100'
-									: 'from-white group-hover:from-gray-100'} from-65% to-transparent pr-3 transition-opacity sm:from-gray-100 sm:opacity-0 sm:group-hover:opacity-100"
+									? 'from-paper-deep'
+									: 'from-paper group-hover:from-paper-deep'} from-65% to-transparent pr-3 transition-opacity sm:from-paper-deep sm:opacity-0 sm:group-hover:opacity-100"
 							>
-								<Icon icon={feTrash} class="m-auto mr-0 h-3 w-3 shrink-0 text-slate-700" />
+								<Icon icon={feTrash} class="m-auto mr-0 h-3 w-3 shrink-0 text-ink-soft" />
 							</button>
 						</li>
 					{/each}
@@ -1423,13 +1423,13 @@
 			<div class="settings-trigger-container -ml-3 mt-auto flex pb-3">
 				<button
 					data-trigger="settings"
-					class="mx-3 flex flex-1 items-center gap-x-4 rounded-lg border border-slate-200 px-4 py-3 text-left text-sm font-medium hover:bg-gray-100"
+					class="mx-3 flex flex-1 items-center gap-x-4 rounded-lg border border-rule px-4 py-3 text-left text-sm font-medium hover:bg-paper-deep"
 					on:click={() => {
 						historyOpen = false;
 					}}
 				>
 					Settings
-					<Icon icon={feSettings} class="ml-auto h-4 w-4 text-slate-700" />
+					<Icon icon={feSettings} class="ml-auto h-4 w-4 text-ink-soft" />
 				</button>
 			</div>
 		</aside>
@@ -1530,10 +1530,8 @@
 							}}
 						>
 							<ul
-								class="{splitView
-									? 'rounded-br-lg border-r'
-									: ''} mb-3 flex w-full !list-none flex-col divide-y divide-slate-200/50 border-b border-slate-200/50"
-							>
+							class="max-w-[760px] mx-auto w-full px-6 !list-none flex flex-col {splitView ? 'rounded-br-lg border-r' : ''}"
+						>
 								{#each convo.messages as message, i (message.id)}
 									<Message
 										{message}
@@ -1563,6 +1561,7 @@
 							</ul>
 						</div>
 
+						<div class="pointer-events-none absolute bottom-[72px] inset-x-0 h-8 z-[98] bg-gradient-to-t from-paper to-transparent" />
 						<Composer
 							bind:generating
 							bind:convo
@@ -1729,5 +1728,13 @@
 			:where(.prose > :last-child):not(:where([class~='not-prose'], [class~='not-prose'] *))
 	) {
 		@apply mb-0;
+	}
+
+	:global(.markdown.prose :where(a):not(:where([class~='not-prose'], [class~='not-prose'] *))) {
+		@apply text-ink;
+	}
+
+	:global(.markdown.prose :where(pre):not(:where([class~='not-prose'], [class~='not-prose'] *))) {
+		@apply bg-paper-deep border-rule;
 	}
 </style>

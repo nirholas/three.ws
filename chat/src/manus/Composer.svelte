@@ -276,8 +276,8 @@
 	}}
 />
 
-<div class="input-floating absolute bottom-4 left-1/2 z-[99] w-full -translate-x-1/2 px-5 ld:px-8">
-	<div class="mx-auto flex w-full max-w-[680px] flex-col ld:max-w-[768px]">
+<div class="input-floating absolute bottom-4 left-1/2 z-[99] w-full -translate-x-1/2 px-6">
+	<div class="mx-auto flex w-full max-w-[760px] flex-col">
 		<!-- Composer card -->
 		<div
 			class="bg-white border border-[#E5E3DC] rounded-[20px] shadow-composer pt-5 px-5 pb-3"
