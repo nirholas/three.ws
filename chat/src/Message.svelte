@@ -22,7 +22,9 @@
 	import Icon from './Icon.svelte';
 	import MessageContent from './MessageContent.svelte';
 	import { formatModelName, hasCompanyLogo } from './providers.js';
-	import { config } from './stores.js';
+	import { config, localAgentId, brandConfig } from './stores.js';
+
+	$: effectiveAgentId = $localAgentId || $brandConfig.agent_id || '';
 	import Toolcall from './Toolcall.svelte';
 	import ToolcallButton from './ToolcallButton.svelte';
 
@@ -174,7 +176,17 @@
 							? 'border border-teal-200 bg-teal-100 pb-px'
 							: ''}"
 			>
-				{#if message.role === 'assistant' && hasLogo}
+				{#if message.role === 'assistant' && effectiveAgentId}
+					<!-- svelte-ignore custom-element-no-implicit-ns -->
+					<agent-3d
+						agent-id={effectiveAgentId}
+						mode="embed"
+						width="36"
+						height="36"
+						background="transparent"
+						style="width:100%;height:100%;border-radius:inherit;overflow:hidden;pointer-events:none;"
+					></agent-3d>
+				{:else if message.role === 'assistant' && hasLogo}
 					<CompanyLogo model={message.model} size="w-full h-full" rounded="rounded-[inherit]" />
 				{:else}
 					<span class="m-auto">

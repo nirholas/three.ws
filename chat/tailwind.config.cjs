@@ -86,6 +86,29 @@ const config = {
 				'in-out':
 					'linear(0, 0.005, 0.02 2.2%, 0.045, 0.081 4.9%, 0.16 7.3%, 0.465 16.2%, 0.561, 0.642,0.713 25.8%, 0.773, 0.825 32.7%, 0.868 36.5%, 0.905 40.9%, 0.935 45.7%,0.958 51.1%, 0.975 57.4%, 0.986 64.4%, 0.993 73.1%, 0.997 84.1%, 0.999)',
 			},
+			fontFamily: {
+				sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+				serif: ['Lora', 'ui-serif', 'Georgia', 'serif'],
+			},
+			colors: {
+				paper: '#F5F4EF',
+				'paper-deep': '#EBE8E0',
+				ink: '#1A1A1A',
+				'ink-soft': '#6B6B6B',
+				rule: '#E5E3DC',
+				manus: {
+					blue: '#3B82F6',
+					'blue-soft': '#EFF6FF',
+					'blue-border': '#BFDBFE',
+				},
+			},
+			boxShadow: {
+				pop: '0 8px 24px -8px rgba(20,20,20,0.12), 0 2px 6px -2px rgba(20,20,20,0.06)',
+				composer: '0 1px 2px rgba(20,20,20,0.04), 0 8px 32px -16px rgba(20,20,20,0.10)',
+			},
+			borderRadius: {
+				composer: '20px',
+			},
 		},
 	},
 

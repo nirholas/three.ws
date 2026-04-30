@@ -1,3 +1,45 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html, body {
+    @apply bg-paper text-ink font-sans antialiased;
+    font-feature-settings: 'ss01', 'cv11';
+  }
+  .font-display {
+    @apply font-serif;
+    font-feature-settings: 'liga', 'dlig';
+    letter-spacing: -0.01em;
+  }
+}
+
+@layer components {
+  .manus-card {
+    @apply bg-white border border-rule rounded-2xl;
+  }
+  .manus-chip {
+    @apply inline-flex items-center gap-2 h-9 px-4 rounded-full
+           border border-rule bg-white text-ink text-sm font-medium
+           hover:bg-paper-deep transition-colors;
+  }
+  .manus-chip-selected {
+    @apply bg-manus-blue-soft border-manus-blue-border text-manus-blue;
+  }
+  .manus-btn-primary {
+    @apply inline-flex items-center justify-center h-9 px-4
+           rounded-full bg-black text-white text-sm font-medium
+           hover:bg-ink transition-colors;
+  }
+  .manus-btn-ghost {
+    @apply inline-flex items-center justify-center h-9 px-4
+           rounded-full bg-transparent text-ink text-sm font-medium
+           hover:bg-paper-deep transition-colors;
+  }
+  .manus-hero {
+    @apply font-serif text-ink text-[44px] md:text-[56px] leading-[1.05] tracking-tight font-medium;
+  }
+  .manus-display {
+    @apply font-serif text-ink text-[56px] md:text-[80px] leading-[1.02] tracking-tight font-semibold;
+  }
+}

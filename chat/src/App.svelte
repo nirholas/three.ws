@@ -22,7 +22,9 @@
 	} from './providers.js';
 	import ModelSelector from './ModelSelector.svelte';
 	import CompanyLogo from './CompanyLogo.svelte';
-	import { controller, remoteServer, config, params, toolSchema, syncServer, brandConfig, ttsEnabled, localAgentId } from './stores.js';
+	import { controller, remoteServer, config, params, toolSchema, syncServer, brandConfig, ttsEnabled, localAgentId, route } from './stores.js';
+	import AuthPage from './manus/pages/AuthPage.svelte';
+	import Pricing from './manus/pages/Pricing.svelte';
 	import SettingsModal from './SettingsModal.svelte';
 	import ToolcallButton from './ToolcallButton.svelte';
 	import MessageContent from './MessageContent.svelte';
@@ -61,6 +63,8 @@
 	import Message from './Message.svelte';
 	import { deleteSingleItem, initEncryption, sendSingleItem, syncPull, syncPush } from './sync.js';
 	import AgentPicker from './AgentPicker.svelte';
+	import EmptyState from './manus/EmptyState.svelte';
+	import AnnouncementBanner from './manus/AnnouncementBanner.svelte';
 
 	marked.use(
 		markedKatex({
@@ -1024,7 +1028,15 @@
 		document.documentElement.style.setProperty('--accent', $brandConfig.accent_color);
 	}
 
+	function syncRouteFromHash() {
+		const hash = window.location.hash.slice(1) || 'chat';
+		route.set(hash);
+	}
+
 	onMount(async () => {
+		syncRouteFromHash();
+		window.addEventListener('hashchange', syncRouteFromHash);
+
 		// Fetch global brand config from server
 		try {
 			const res = await fetch('/api/chat/config');
@@ -1233,7 +1245,15 @@
 	/>
 {/if}
 
+{#if $route === 'signin' || $route === 'signup'}
+  <div class="min-h-dvh bg-paper">
+    <AuthPage kind={$route} />
+  </div>
+{:else}
 <main class="flex h-dvh w-screen flex-col">
+	<div class="sticky top-0 z-[110]">
+		<AnnouncementBanner />
+	</div>
 	<div class="flex h-12 items-center gap-1 px-2 py-1 md:hidden">
 		<button
 			on:click={newConversation}
@@ -1283,6 +1303,7 @@
 		</button>
 	</div>
 	<div class="relative flex h-full flex-1 overflow-hidden">
+		{#if convo.messages.length > 0}
 		<aside
 			data-sidebar="history"
 			class="{historyOpen
@@ -1378,6 +1399,7 @@
 				</button>
 			</div>
 		</aside>
+		{/if}
 		<div class="flex flex-1 flex-col">
 			<div class="relative hidden items-center px-2 py-2 md:flex">
 				<ModelSelector
@@ -1414,41 +1436,52 @@
 				</button>
 			</div>
 
-			<div class="flex h-full w-full">
-				<!-- svelte-ignore a11y-no-static-element-interactions -->
-				<div
-					class="{splitView
-						? 'w-[50%]'
-						: 'w-full'} relative max-h-[calc(100vh-49px)] transition-[width] duration-500 ease-in-out"
-					on:dragover={(event) => {
-						event.preventDefault();
-					}}
-					on:drop={handleFileDrop}
-				>
+			{#if convo.messages.length === 0}
+				<div class="flex h-full w-full overflow-y-auto">
+					<EmptyState>
+						<svelte:fragment slot="composer">
+							<Input
+								bind:generating
+								bind:convo
+								{saveMessage}
+								{saveConversation}
+								{submitCompletion}
+								{scrollToBottom}
+								{handleAbort}
+								{tree}
+								bind:inputTextareaEl
+								bind:handleFileDrop
+							/>
+						</svelte:fragment>
+					</EmptyState>
+				</div>
+			{:else}
+				<div class="flex h-full w-full">
+					<!-- svelte-ignore a11y-no-static-element-interactions -->
 					<div
-						bind:this={scrollableEl}
 						class="{splitView
-							? 'scrollbar-none'
-							: 'scrollbar-ultraslim'} scrollable flex h-full w-full flex-col overflow-y-auto pb-[128px]"
-						on:scroll={() => {
-							// If direction is going up, set autoscrollCanceled to true
-							// Otherwise if we are at the bottom of the page, re-enable autoscroll
-							const { scrollTop, scrollHeight, clientHeight } = scrollableEl;
-
-							// Check if scrolling upward
-							if (scrollTop < previousScrollTop) {
-								autoscrollCanceled = true;
-							}
-							// Check if we're at the bottom of the scrollable area
-							else if (scrollHeight - scrollTop - clientHeight <= 5) {
-								autoscrollCanceled = false;
-							}
-
-							// Update for next scroll event
-							previousScrollTop = scrollTop;
+							? 'w-[50%]'
+							: 'w-full'} relative max-h-[calc(100vh-49px)] transition-[width] duration-500 ease-in-out"
+						on:dragover={(event) => {
+							event.preventDefault();
 						}}
+						on:drop={handleFileDrop}
 					>
-						{#if convo.messages.length > 0}
+						<div
+							bind:this={scrollableEl}
+							class="{splitView
+								? 'scrollbar-none'
+								: 'scrollbar-ultraslim'} scrollable flex h-full w-full flex-col overflow-y-auto pb-[128px]"
+							on:scroll={() => {
+								const { scrollTop, scrollHeight, clientHeight } = scrollableEl;
+								if (scrollTop < previousScrollTop) {
+									autoscrollCanceled = true;
+								} else if (scrollHeight - scrollTop - clientHeight <= 5) {
+									autoscrollCanceled = false;
+								}
+								previousScrollTop = scrollTop;
+							}}
+						>
 							<ul
 								class="{splitView
 									? 'rounded-br-lg border-r'
@@ -1476,59 +1509,49 @@
 										bind:activeToolcall
 										bind:textareaEls
 										on:rerender={() => {
-											// Not sure why this is needed
 											convo.messages = convo.messages;
 										}}
 									/>
 								{/each}
 							</ul>
-						{:else}
-							<Button
-								variant="outline"
-								class="z-[98] mx-auto border-dashed text-xs"
-								on:click={insertSystemPrompt}
-							>
-								<Icon icon={feTerminal} class="mr-2 h-3 w-3 text-slate-600" />
-								Add system prompt
-							</Button>
-						{/if}
-					</div>
+						</div>
 
-					<Input
-						bind:generating
-						bind:convo
-						{saveMessage}
-						{saveConversation}
-						{submitCompletion}
-						{scrollToBottom}
-						{handleAbort}
-						{tree}
-						bind:inputTextareaEl
-						bind:handleFileDrop
-					/>
-				</div>
-
-				{#if splitView}
-					{@const toolresponse = convo.messages.find((msg) => msg.toolcallId === activeToolcall.id)}
-					<div in:fade={{ duration: 500 }} class="w-[50%] p-3.5">
-						<Toolcall
-							toolcall={activeToolcall}
-							{toolresponse}
-							collapsable={false}
-							closeButton
-							bind:chose
-							{isChoosing}
-							{choiceHandler}
-							{question}
-							{choices}
-							class="!rounded-xl"
-							on:close={() => {
-								activeToolcall = null;
-							}}
+						<Input
+							bind:generating
+							bind:convo
+							{saveMessage}
+							{saveConversation}
+							{submitCompletion}
+							{scrollToBottom}
+							{handleAbort}
+							{tree}
+							bind:inputTextareaEl
+							bind:handleFileDrop
 						/>
 					</div>
-				{/if}
-			</div>
+
+					{#if splitView}
+						{@const toolresponse = convo.messages.find((msg) => msg.toolcallId === activeToolcall.id)}
+						<div in:fade={{ duration: 500 }} class="w-[50%] p-3.5">
+							<Toolcall
+								toolcall={activeToolcall}
+								{toolresponse}
+								collapsable={false}
+								closeButton
+								bind:chose
+								{isChoosing}
+								{choiceHandler}
+								{question}
+								{choices}
+								class="!rounded-xl"
+								on:close={() => {
+									activeToolcall = null;
+								}}
+							/>
+						</div>
+					{/if}
+				</div>
+			{/if}
 		</div>
 
 		<KnobsSidebar {knobsOpen} />
@@ -1627,6 +1650,7 @@
 			{/if}
 		</div>
 	</div>
+{/if}
 {/if}
 
 <style lang="postcss">

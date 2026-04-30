@@ -63,3 +63,18 @@ export const toolSchema = persisted('toolSchemaGroups', []);
 
 export const ttsEnabled = persisted('ttsEnabled', false);
 export const localAgentId = persisted('localAgentId', '');
+
+export const route = writable(
+	typeof window !== 'undefined' ? (window.location.hash.slice(1) || 'chat') : 'chat'
+);
+if (typeof window !== 'undefined') {
+	window.addEventListener('hashchange', () => {
+		route.set(window.location.hash.slice(1) || 'chat');
+	});
+	route.subscribe((r) => {
+		const h = r === 'chat' ? '' : r;
+		if (window.location.hash.slice(1) !== h) window.location.hash = h;
+	});
+}
+
+export const mode = writable(null);
