@@ -77,8 +77,27 @@ function handleX402(req, res) {
 
 // ── dispatcher ────────────────────────────────────────────────────────────────
 
+function handleChatPlugin(req, res) {
+	return json(res, 200, {
+		identifier: '3dagent',
+		schemaVersion: 1,
+		meta: {
+			title: 'three.ws',
+			description: 'Render a 3D avatar that reacts to the chat.',
+			avatar: 'https://three.ws/favicon.ico',
+			tags: ['avatar', '3d', 'agent'],
+		},
+		ui: { position: 'right', size: { width: 320, height: 420 } },
+		settings: [
+			{ name: 'agentId', type: 'string', required: true, title: 'Agent ID' },
+			{ name: 'apiOrigin', type: 'string', default: 'https://three.ws/', title: 'API Origin' },
+		],
+	}, { 'cache-control': 'public, max-age=3600' });
+}
+
 const DISPATCH = {
 	'agent-attestation-schemas':  handleAttestationSchemas,
+	'chat-plugin':                handleChatPlugin,
 	'oauth-authorization-server': handleOauthAuthServer,
 	'oauth-protected-resource':   handleOauthProtectedResource,
 	'x402':                       handleX402,

@@ -6,6 +6,7 @@
 			"src": "/openapi\\.json",
 			"dest": "/api/openapi-json"
 		},
+		{ "src": "/\\.well-known/chat-plugin\\.json", "dest": "/api/wk?name=chat-plugin" },
 		{ "src": "/\\.well-known/x402", "dest": "/api/wk?name=x402" },
 		{ "src": "/\\.well-known/agent-attestation-schemas", "dest": "/api/wk?name=agent-attestation-schemas" },
 		{ "src": "/\\.well-known/oauth-authorization-server", "dest": "/api/wk?name=oauth-authorization-server" },
