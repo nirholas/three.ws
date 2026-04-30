@@ -53,18 +53,35 @@
 			color: #fbbf24; font-size: 12px; margin: 12px 16px; }
 
 		/* Event cards */
-		.evt { border: 1px solid #232330; background: #15151d; border-radius: 8px; padding: 9px 11px; margin: 6px 0;
-			animation: evt-in 0.35s ease; }
+		.evt { border: 1px solid #232330; background: #15151d; border-radius: 8px; padding: 10px 12px; margin: 6px 0;
+			animation: evt-in 0.35s ease; font-size: 12px; }
 		.evt.first { border-color: #1f4232; background: #0e1f17; }
 		.evt.fake { border-color: #4a1f23; background: #1f1418; }
 		.evt.grad { border-color: #2c1f4a; background: #18142a; }
 		.evt-row { display: flex; justify-content: space-between; gap: 6px; align-items: baseline; }
 		.evt-kind { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
 		.evt-tier { font-size: 10px; color: #fbbf24; }
+		.evt-title { font-weight: 700; font-size: 13px; margin: 3px 0 2px; }
 		.evt-who { font-weight: 600; font-size: 13px; margin-top: 3px; word-break: break-all; }
 		.evt-amt { font-size: 12px; color: #cbd5e1; }
 		.evt-take { font-size: 11px; color: var(--muted); margin-top: 4px; font-style: italic; }
 		.evt-time { font-size: 10px; color: #555; }
+		.evt-links { margin-top: 5px; display: flex; flex-wrap: wrap; gap: 4px; }
+		.evt-links a { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #1e1e2c; border: 1px solid #2a2a3c; color: #9a8cff; text-decoration: none; }
+		.evt-links a:hover { background: #26263a; }
+		.evt-meta { margin-top: 5px; font-size: 10px; color: #555; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+		.evt-meta a { color: #666; text-decoration: none; }
+		.evt-meta a:hover { color: #9a8cff; }
+		.evt-mint { font-size: 9px; color: #444; word-break: break-all; margin-top: 4px; font-family: monospace; }
+		.evt-desc { font-size: 11px; color: #8a8a9a; margin: 2px 0; }
+		.evt-section { margin-top: 6px; padding-top: 6px; border-top: 1px solid #1e1e2c; }
+		.evt-row2 { display: flex; gap: 10px; flex-wrap: wrap; margin: 3px 0; font-size: 11px; color: #cbd5e1; }
+		.evt-stat { color: var(--muted); }
+		.evt-gh { font-size: 11px; margin: 2px 0; }
+		.evt-repo { font-size: 11px; background: #1a1a24; border-radius: 4px; padding: 4px 7px; margin-top: 4px; }
+		.evt-repo-name { font-weight: 600; color: #9a8cff; }
+		.evt-topics { display: flex; gap: 3px; flex-wrap: wrap; margin-top: 3px; }
+		.evt-topic { font-size: 9px; padding: 1px 5px; background: #1f1f30; border: 1px solid #2a2a3c; border-radius: 10px; color: #7a7aaa; }
 		@keyframes evt-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 
 		@media (max-width: 720px) { main { grid-template-columns: 1fr; } #side { display: none; } }
@@ -206,33 +223,155 @@
 			return ev?.mint === params.mint || ev?.token_mint === params.mint;
 		}
 
-		function renderClaim(ev) {
-			const cls = ev.fake_claim ? 'fake' : ev.first_time_claim ? 'first' : '';
-			const tier = ev.tier ? `${TIER_BADGE[ev.tier] || ''} ${ev.tier}` : '';
-			const sol = ev.amount_sol != null ? `${Number(ev.amount_sol).toFixed(3)} SOL` : '';
-			const who = ev.github_user ? '@' + ev.github_user : (ev.claimer ? shortKey(ev.claimer) : '—');
-			return `<div class="evt ${cls}">
-				<div class="evt-row"><span class="evt-kind">${ev.first_time_claim ? '🚨 first claim' : 'claim'}</span><span class="evt-tier">${escapeHtml(tier)}</span></div>
-				<div class="evt-who">${escapeHtml(who)}</div>
-				<div class="evt-amt">${escapeHtml(sol)}${ev.token_symbol ? ' · $' + escapeHtml(ev.token_symbol) : ''}</div>
-				${ev.ai_take ? `<div class="evt-take">${escapeHtml(ev.ai_take)}</div>` : ''}
+		function fmtUsd(n) {
+			if (n == null) return '';
+			return '$' + Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+		}
+		function fmtSol(n) {
+			if (n == null) return '';
+			return Number(n).toFixed(3) + ' SOL';
+		}
+		function timeAgo(ts) {
+			if (!ts) return '';
+			const s = Math.floor(Date.now() / 1000) - ts;
+			if (s < 60) return s + 's ago';
+			if (s < 3600) return Math.floor(s / 60) + 'm ago';
+			return Math.floor(s / 3600) + 'h ago';
+		}
+		function toolLinks(mint) {
+			const m = encodeURIComponent(mint);
+			return [
+				['pump.fun', `https://pump.fun/coin/${mint}`],
+				['DEX', `https://dexscreener.com/solana/${mint}`],
+				['Axiom', `https://axiom.trade/meme/${mint}`],
+				['GMGN', `https://gmgn.ai/sol/token/${mint}`],
+				['BullX', `https://bullx.io/terminal?chainId=1399811149&address=${mint}`],
+				['Photon', `https://photon-sol.tinyastro.io/en/r/@bonk/${mint}`],
+			].map(([label, url]) => `<a href="${attr(url)}" target="_blank" rel="noopener">${label}</a>`).join('');
+		}
+
+		function renderMint(ev) {
+			const mint = ev.mint || '';
+			const mcSol = ev.market_cap_sol != null ? Number(ev.market_cap_sol).toFixed(2) + ' SOL' : '';
+			const mcUsd = ev.market_cap_usd != null ? fmtUsd(ev.market_cap_usd) : '';
+			const mcStr = [mcUsd, mcSol].filter(Boolean).join(' / ');
+			const buyStr = ev.initial_buy_sol ? `${fmtSol(ev.initial_buy_sol)}${ev.initial_buy_usd ? ' (' + fmtUsd(ev.initial_buy_usd) + ')' : ''}` : '';
+			const social = [
+				ev.twitter ? `<a href="https://twitter.com/${encodeURIComponent(ev.twitter.replace('@',''))}" target="_blank" rel="noopener">𝕏 ${escapeHtml(ev.twitter)}</a>` : '',
+				ev.telegram ? `<a href="${attr(ev.telegram)}" target="_blank" rel="noopener">TG</a>` : '',
+				ev.website ? `<a href="${attr(ev.website)}" target="_blank" rel="noopener">🌐</a>` : '',
+			].filter(Boolean).join(' ');
+			return `<div class="evt">
+				<div class="evt-row">
+					<span class="evt-kind">🌱 new token</span>
+					<span class="evt-time">${escapeHtml(timeAgo(ev.created_at))}</span>
+				</div>
+				<div class="evt-title">${escapeHtml(ev.name || '—')} — $${escapeHtml(ev.symbol || '?')}</div>
+				${ev.description ? `<div class="evt-desc">${escapeHtml(ev.description.slice(0, 100))}</div>` : ''}
+				${mcStr ? `<div class="evt-amt">💎 MC: ${escapeHtml(mcStr)}${buyStr ? ' &nbsp;·&nbsp; initial: ' + escapeHtml(buyStr) : ''}</div>` : ''}
+				<div class="evt-links">${toolLinks(mint)}${social ? ' ' + social : ''}</div>
+				${ev.creator ? `<div class="evt-meta"><span>dev: <code>${shortKey(ev.creator)}</code></span></div>` : ''}
+				<div class="evt-mint">${escapeHtml(mint)}</div>
+				${ev.signature ? `<div class="evt-meta"><a href="https://solscan.io/tx/${encodeURIComponent(ev.signature)}" target="_blank" rel="noopener">TX ↗</a></div>` : ''}
 			</div>`;
 		}
 
 		function renderGraduation(ev) {
+			const mint = ev.mint || '';
 			return `<div class="evt grad">
-				<div class="evt-row"><span class="evt-kind">🎓 graduation</span></div>
-				<div class="evt-who">${escapeHtml(ev.name || ev.symbol || ev.mint || '—')}</div>
-				${ev.symbol ? `<div class="evt-amt">$${escapeHtml(ev.symbol)}</div>` : ''}
+				<div class="evt-row"><span class="evt-kind">🎓 graduation → Raydium</span></div>
+				<div class="evt-title">${escapeHtml(ev.name || ev.symbol || '—')}${ev.symbol ? ' — $' + escapeHtml(ev.symbol) : ''}</div>
+				<div class="evt-links">${toolLinks(mint)}</div>
+				<div class="evt-mint">${escapeHtml(mint)}</div>
+				${ev.signature ? `<div class="evt-meta"><a href="https://solscan.io/tx/${encodeURIComponent(ev.signature)}" target="_blank" rel="noopener">TX ↗</a></div>` : ''}
 			</div>`;
 		}
 
-		function renderMint(ev) {
-			const cap = ev.market_cap_sol != null ? `${Number(ev.market_cap_sol).toFixed(1)} SOL` : '';
-			return `<div class="evt">
-				<div class="evt-row"><span class="evt-kind">🌱 new token</span><span class="evt-time">${cap}</span></div>
-				<div class="evt-who">${escapeHtml(ev.name || ev.symbol || ev.mint || '—')}</div>
-				${ev.symbol ? `<div class="evt-amt">$${escapeHtml(ev.symbol)}</div>` : ''}
+		function renderClaim(ev) {
+			const mint = ev.mint || ev.token_mint || '';
+			const isFirst = ev.first_time_claim;
+			const isFake = ev.fake_claim;
+			const cls = isFake ? 'fake' : isFirst ? 'first' : '';
+			const tier = ev.tier ? `${TIER_BADGE[ev.tier] || ''} ${ev.tier}` : '';
+			const mcUsd = ev.usd_market_cap ?? ev.market_cap;
+			const athUsd = ev.ath_market_cap ?? ev.ath;
+
+			// Claim header
+			let kindLabel = isFirst ? '🚨🚨🚨 FIRST CREATOR FEE CLAIM' : '💸 creator fee claim';
+
+			// GitHub repo section
+			const repoHtml = ev.repo_name ? `
+				<div class="evt-repo">
+					<div class="evt-repo-name">🐙 ${escapeHtml(ev.repo_name)}</div>
+					${ev.repo_description ? `<div style="color:#8a8a9a;font-size:11px;margin-top:2px">${escapeHtml(ev.repo_description.slice(0,120))}</div>` : ''}
+					<div class="evt-row2" style="margin-top:4px">
+						${ev.repo_language ? `<span>🔤 ${escapeHtml(ev.repo_language)}</span>` : ''}
+						${ev.repo_stars != null ? `<span>⭐ ${ev.repo_stars}</span>` : ''}
+						${ev.repo_forks != null ? `<span>🍴 ${ev.repo_forks}</span>` : ''}
+						${ev.repo_last_push ? `<span class="evt-stat">push ${escapeHtml(ev.repo_last_push)}</span>` : ''}
+					</div>
+					${ev.repo_topics?.length ? `<div class="evt-topics">${ev.repo_topics.map(t => `<span class="evt-topic">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
+				</div>` : '';
+
+			// GitHub dev section
+			const ghUser = ev.github_user;
+			const ghHtml = ghUser ? `
+				<div class="evt-section">
+					<div class="evt-gh">👨‍💻 <strong>${escapeHtml(ev.github_name || ghUser)}</strong> (<a href="https://github.com/${encodeURIComponent(ghUser)}" target="_blank" rel="noopener">@${escapeHtml(ghUser)}</a>)
+					${ev.github_twitter ? ` &nbsp;·&nbsp; <a href="https://twitter.com/${encodeURIComponent(ev.github_twitter)}" target="_blank" rel="noopener">𝕏 ${escapeHtml(ev.github_twitter)}</a>` : ''}</div>
+					<div class="evt-row2">
+						${ev.github_repos != null ? `<span>📦 ${ev.github_repos} repos</span>` : ''}
+						${ev.github_followers != null ? `<span>👁 ${ev.github_followers} followers</span>` : ''}
+						${ev.github_account_age ? `<span class="evt-stat">${escapeHtml(ev.github_account_age)}</span>` : ''}
+						${ev.github_location ? `<span class="evt-stat">📍 ${escapeHtml(ev.github_location)}</span>` : ''}
+					</div>
+					${ev.github_bio ? `<div class="evt-desc" style="margin-top:2px">${escapeHtml(ev.github_bio.slice(0,100))}</div>` : ''}
+					${repoHtml}
+				</div>` : '';
+
+			// Creator token history
+			const creatorTokens = ev.creator_tokens?.length
+				? ev.creator_tokens.map(t => `${t.symbol ? '$' + escapeHtml(t.symbol) : '?'}${t.mc ? ' [' + fmtUsd(t.mc) + ']' : ''}`).join(' · ')
+				: '';
+			const creatorHtml = ev.creator_launches != null ? `
+				<div class="evt-section">
+					<div class="evt-gh">🧑‍💻 dev: <code>${shortKey(ev.claimer || ev.creator || '')}</code> &nbsp;·&nbsp; 🚀 ${ev.creator_launches} launches${ev.creator_graduated ? ' &nbsp;·&nbsp; 🎓 ' + ev.creator_graduated + ' graduated' : ''}</div>
+					${creatorTokens ? `<div class="evt-desc" style="margin-top:2px">${creatorTokens}</div>` : ''}
+				</div>` : '';
+
+			// Trade links
+			const tradeLinks = mint ? `<div class="evt-links">${toolLinks(mint)}</div>` : '';
+
+			return `<div class="evt ${cls}">
+				<div class="evt-row">
+					<span class="evt-kind">${kindLabel}</span>
+					${tier ? `<span class="evt-tier">${escapeHtml(tier)}</span>` : ''}
+				</div>
+				<div class="evt-title">${escapeHtml(ev.token_name || ev.name || '—')} — $${escapeHtml(ev.token_symbol || ev.symbol || '?')}</div>
+				<div class="evt-row2">
+					${mcUsd != null ? `<span>💎 MC: ${fmtUsd(mcUsd)}</span>` : ''}
+					${ev.bonding_curve_pct != null ? `<span class="evt-stat">curve ${ev.bonding_curve_pct}%</span>` : ''}
+					${athUsd != null ? `<span>🏆 ATH: ${fmtUsd(athUsd)}</span>` : ''}
+					${ev.age ? `<span class="evt-stat">created ${escapeHtml(ev.age)}</span>` : ''}
+				</div>
+				<div class="evt-section">
+					<div class="evt-row2">
+						${ev.amount_sol != null ? `<span>💸 ${fmtSol(ev.amount_sol)}${ev.amount_usd != null ? ' (' + fmtUsd(ev.amount_usd) + ')' : ''}</span>` : ''}
+						${ev.claim_number != null ? `<span class="evt-stat">claim #${ev.claim_number}</span>` : ''}
+					</div>
+					${ev.claim_type ? `<div class="evt-desc">${escapeHtml(ev.claim_type)}</div>` : ''}
+					${ev.lifetime_sol != null ? `<div class="evt-desc">lifetime: ${fmtSol(ev.lifetime_sol)}${ev.lifetime_usd != null ? ' (' + fmtUsd(ev.lifetime_usd) + ')' : ''}</div>` : ''}
+				</div>
+				${ghHtml}
+				${creatorHtml}
+				${ev.signals ? `<div class="evt-section"><div class="evt-desc">⚡ ${escapeHtml(ev.signals)}</div></div>` : ''}
+				${ev.ai_take ? `<div class="evt-desc evt-take" style="margin-top:6px">${escapeHtml(ev.ai_take)}</div>` : ''}
+				${tradeLinks}
+				<div class="evt-mint">${escapeHtml(mint)}</div>
+				<div class="evt-meta">
+					${ev.tx_signature || ev.signature ? `<a href="https://solscan.io/tx/${encodeURIComponent(ev.tx_signature || ev.signature)}" target="_blank" rel="noopener">TX ↗</a>` : ''}
+					${mint ? `<a href="https://pump.fun/coin/${encodeURIComponent(mint)}" target="_blank" rel="noopener">pump.fun</a>` : ''}
+				</div>
 			</div>`;
 		}
 

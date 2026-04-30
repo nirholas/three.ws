@@ -219,10 +219,18 @@ export function mountAgentSolanaWalletCard({ panel, identity, onProvisioned }) {
 	if (!panel || !identity?.id) return null;
 	_injectStyle();
 
+	const wrapper = document.createElement('details');
+	wrapper.className = 'agent-sol-wallet-details';
+	wrapper.hidden = true; // unhide once we know the user is allowed to see it
+	const summary = document.createElement('summary');
+	summary.className = 'agent-sol-wallet-summary';
+	summary.textContent = 'Solana wallet';
+	wrapper.appendChild(summary);
+	panel.appendChild(wrapper);
+
 	const root = document.createElement('section');
 	root.className = 'agent-sol-wallet';
-	root.hidden = true; // unhide once we know the user is allowed to see it
-	panel.appendChild(root);
+	wrapper.appendChild(root);
 
 	let state = {
 		loaded: false,
@@ -246,10 +254,10 @@ export function mountAgentSolanaWalletCard({ panel, identity, onProvisioned }) {
 	async function loadFromServer() {
 		const r = await fetchAgentSolanaWallet(identity.id, state.network);
 		if (r.status === 'forbidden') {
-			root.remove();
+			wrapper.remove();
 			return false;
 		}
-		root.hidden = false;
+		wrapper.hidden = false;
 		if (r.status === 'ok') {
 			state.address = r.data.address;
 			state.vanityPrefix = r.data.vanity_prefix || null;

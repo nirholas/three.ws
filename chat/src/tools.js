@@ -111,3 +111,72 @@ export const defaultToolSchema = [
 		],
 	},
 ];
+
+export const agentToolSchema = {
+	name: '3D Agent',
+	schema: [
+		{
+			clientDefinition: {
+				id: 'agent-wave-a1b2c3',
+				name: 'agent_wave',
+				description: 'Makes the 3D avatar wave at the user.',
+				arguments: [],
+				body: 'if (window.__threewsAgent) window.__threewsAgent.wave(); return "waved";',
+			},
+			type: 'function',
+			function: {
+				name: 'agent_wave',
+				description: 'Wave the 3D avatar at the user. Use to greet or celebrate.',
+				parameters: { type: 'object', properties: {} },
+			},
+		},
+		{
+			clientDefinition: {
+				id: 'agent-express-d4e5f6',
+				name: 'agent_express',
+				description: 'Express an emotion on the 3D avatar.',
+				arguments: [
+					{ name: 'trigger', type: 'string', description: 'celebration | concern | curiosity | empathy | patience' },
+				],
+				body: 'if (window.__threewsAgent) window.__threewsAgent.expressEmotion(args.trigger); return "expressed: " + args.trigger;',
+			},
+			type: 'function',
+			function: {
+				name: 'agent_express',
+				description: 'Make the 3D avatar express an emotion. Use to show enthusiasm, empathy, or concern.',
+				parameters: {
+					type: 'object',
+					properties: {
+						trigger: {
+							type: 'string',
+							enum: ['celebration', 'concern', 'curiosity', 'empathy', 'patience'],
+							description: 'The emotion to express.',
+						},
+					},
+					required: ['trigger'],
+				},
+			},
+		},
+		{
+			clientDefinition: {
+				id: 'agent-speak-g7h8i9',
+				name: 'agent_speak',
+				description: 'Trigger the avatar talking animation for a given text.',
+				arguments: [{ name: 'text', type: 'string', description: 'Text to animate talking for' }],
+				body: 'if (window.__threewsAgent) window.__threewsAgent.speak(args.text); return "speaking";',
+			},
+			type: 'function',
+			function: {
+				name: 'agent_speak',
+				description: 'Trigger the 3D avatar talking animation. Useful for emphasis on a key statement.',
+				parameters: {
+					type: 'object',
+					properties: {
+						text: { type: 'string', description: 'The text being spoken (used to calculate animation duration).' },
+					},
+					required: ['text'],
+				},
+			},
+		},
+	],
+};

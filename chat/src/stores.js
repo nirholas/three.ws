@@ -59,3 +59,6 @@ export const syncServer = persisted('syncServer', {
 	password: '',
 });
 export const toolSchema = persisted('toolSchemaGroups', []);
+
+export const ttsEnabled = persisted('ttsEnabled', false);
+export const localAgentId = persisted('localAgentId', '');

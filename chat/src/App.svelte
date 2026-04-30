@@ -22,7 +22,7 @@
 	} from './providers.js';
 	import ModelSelector from './ModelSelector.svelte';
 	import CompanyLogo from './CompanyLogo.svelte';
-	import { controller, remoteServer, config, params, toolSchema, syncServer, brandConfig } from './stores.js';
+	import { controller, remoteServer, config, params, toolSchema, syncServer, brandConfig, ttsEnabled, localAgentId } from './stores.js';
 	import SettingsModal from './SettingsModal.svelte';
 	import ToolcallButton from './ToolcallButton.svelte';
 	import MessageContent from './MessageContent.svelte';
@@ -53,11 +53,12 @@
 		feUser,
 		feX,
 	} from './feather.js';
-	import { defaultToolSchema } from './tools.js';
+	import { defaultToolSchema, agentToolSchema } from './tools.js';
 	import { debounce, readFileAsDataURL } from './util.js';
 	import { flash } from './actions';
 	import Message from './Message.svelte';
 	import { deleteSingleItem, initEncryption, sendSingleItem, syncPull, syncPush } from './sync.js';
+	import AgentPicker from './AgentPicker.svelte';
 
 	marked.use(
 		markedKatex({
@@ -432,6 +433,7 @@
 	}
 
 	async function submitCompletion(insertUnclosed = true) {
+		window.speechSynthesis?.cancel();
 		if (!convo.models?.[0]?.provider) {
 			const msg = {
 				id: uuidv4(),
@@ -652,11 +654,12 @@
 							return;
 						}
 
-						// Do we have a client-side tool for this?
-						const clientGroup = $toolSchema.find((g) => g.name === 'Client-side');
-						const clientToolIndex = clientGroup?.schema.findIndex(
-							(t) => t.clientDefinition && t.clientDefinition.name === toolcall.name
-						);
+						// Do we have a client-side tool for this? Search all groups.
+						let clientGroup = null, clientToolIndex = -1;
+						for (const g of $toolSchema) {
+							const idx = g.schema?.findIndex(t => t.clientDefinition && t.clientDefinition.name === toolcall.name) ?? -1;
+							if (idx !== -1) { clientGroup = g; clientToolIndex = idx; break; }
+						}
 						if (clientGroup && clientToolIndex !== -1 && convo.tools.includes(toolcall.name)) {
 							const clientTool = clientGroup.schema[clientToolIndex];
 							const AsyncFunction = async function () {}.constructor;
@@ -1140,8 +1143,11 @@
 	let agentEl;
 	let agentVisible = true;
 	let agentScriptLoaded = false;
+	let agentPickerOpen = false;
 
-	$: if ($brandConfig.agent_id && !agentScriptLoaded) {
+	$: effectiveAgentId = $localAgentId || $brandConfig.agent_id || '';
+
+	$: if (effectiveAgentId && !agentScriptLoaded) {
 		agentScriptLoaded = true;
 		const s = document.createElement('script');
 		s.type = 'module';
@@ -1149,10 +1155,41 @@
 		document.head.appendChild(s);
 	}
 
+	// Expose to client tools
+	$: if (agentEl) window.__threewsAgent = agentEl;
+
+	// Inject 3D agent tools into schema when an agent is active
+	$: if (effectiveAgentId) {
+		const hasGroup = $toolSchema.some(g => g.name === '3D Agent');
+		if (!hasGroup) $toolSchema = [...$toolSchema, agentToolSchema];
+	}
+
+	function detectEmotion(text) {
+		const t = text.toLowerCase();
+		if (/\b(sorry|unfortunately|error|failed|can't|cannot|problem|issue|wrong)\b/.test(t)) return 'concern';
+		if (/\b(great|excellent|perfect|congrats|amazing|wonderful|fantastic|awesome)\b/.test(t)) return 'celebration';
+		if (/\b(interesting|fascinating|curious|wonder|actually|surprisingly)\b/.test(t)) return 'curiosity';
+		if (/\b(understand|feel|must be|difficult|hard|tough|challenging)\b/.test(t)) return 'empathy';
+		if (/\b(let me|one moment|working on|processing|calculating)\b/.test(t)) return 'patience';
+		return null;
+	}
+
 	function speakLastMessage() {
-		if (!agentEl || !$brandConfig.agent_id) return;
+		if (!effectiveAgentId) return;
 		const last = [...convo.messages].reverse().find((m) => m.role === 'assistant' && m.content);
-		if (last?.content) agentEl.speak(last.content);
+		if (!last?.content) return;
+
+		if (agentEl) {
+			agentEl.speak(last.content);
+			const emotion = detectEmotion(last.content);
+			if (emotion) setTimeout(() => agentEl?.expressEmotion(emotion), 600);
+		}
+
+		if ($ttsEnabled && window.speechSynthesis) {
+			window.speechSynthesis.cancel();
+			const utt = new SpeechSynthesisUtterance(last.content);
+			window.speechSynthesis.speak(utt);
+		}
 	}
 </script>
 
@@ -1531,13 +1568,19 @@
 	</Modal>
 {/if}
 
-{#if $brandConfig.agent_id}
+{#if effectiveAgentId || true}
 	<div class="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2">
-		{#if agentVisible}
+		{#if agentPickerOpen}
+			<div class="mb-1 w-72 rounded-xl border border-gray-200 bg-white p-3 shadow-xl">
+				<AgentPicker on:pick={() => (agentPickerOpen = false)} />
+			</div>
+		{/if}
+
+		{#if effectiveAgentId && agentVisible}
 			<!-- svelte-ignore custom-element-no-implicit-ns -->
 			<agent-3d
 				bind:this={agentEl}
-				agent-id={$brandConfig.agent_id}
+				agent-id={effectiveAgentId}
 				mode="embed"
 				width="220"
 				height="220"
@@ -1545,13 +1588,38 @@
 				style="width:220px;height:220px;border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.18);"
 			></agent-3d>
 		{/if}
-		<button
-			class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-gray-200 transition hover:bg-gray-50"
-			title={agentVisible ? 'Hide agent' : 'Show agent'}
-			on:click={() => (agentVisible = !agentVisible)}
-		>
-			<Icon icon={agentVisible ? feX : feCpu} class="h-3.5 w-3.5 text-slate-600" />
-		</button>
+
+		<div class="flex items-center gap-1.5">
+			<!-- TTS toggle -->
+			<button
+				class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md ring-1 transition hover:bg-gray-50
+					{$ttsEnabled ? 'ring-indigo-400' : 'ring-gray-200'}"
+				title={$ttsEnabled ? 'TTS on — click to mute' : 'TTS off — click to enable voice'}
+				on:click={() => ttsEnabled.update(v => !v)}
+			>
+				<Icon icon={feSpeaker} class="h-3.5 w-3.5 {$ttsEnabled ? 'text-indigo-500' : 'text-slate-400'}" />
+			</button>
+
+			<!-- Agent picker -->
+			<button
+				class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-gray-200 transition hover:bg-gray-50"
+				title="Choose agent avatar"
+				on:click={() => (agentPickerOpen = !agentPickerOpen)}
+			>
+				<Icon icon={feUsers} class="h-3.5 w-3.5 text-slate-600" />
+			</button>
+
+			<!-- Show/hide toggle (only when agent set) -->
+			{#if effectiveAgentId}
+				<button
+					class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-gray-200 transition hover:bg-gray-50"
+					title={agentVisible ? 'Hide agent' : 'Show agent'}
+					on:click={() => (agentVisible = !agentVisible)}
+				>
+					<Icon icon={agentVisible ? feX : feCpu} class="h-3.5 w-3.5 text-slate-600" />
+				</button>
+			{/if}
+		</div>
 	</div>
 {/if}
 
