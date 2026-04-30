@@ -30,7 +30,17 @@
 			"version": "2025-06-18"
 		}
 	],
-	"x402Support": false,
+	"x402Support": true,
+	"x402Endpoints": [
+		{
+			"url": "https://three.ws/api/mcp",
+			"method": "POST",
+			"description": "MCP tool call — 3D avatar viewer, glTF model validation/inspection/optimization, and Solana agent data",
+			"networks": ["solana", "base"],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		}
+	],
 	"registrations": [],
 	"supportedTrust": ["reputation"]
 }

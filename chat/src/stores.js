@@ -80,3 +80,5 @@ if (typeof window !== 'undefined') {
 export const mode = writable(null);
 export const websiteCategory = writable(null);
 export const composerFill = writable(null);
+export const appPlatforms = writable(new Set(['macOS']));
+export const designModel = writable('gpt-image-2');

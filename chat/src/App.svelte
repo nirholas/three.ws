@@ -25,6 +25,8 @@
 	import { controller, remoteServer, config, params, toolSchema, syncServer, brandConfig, ttsEnabled, localAgentId, route, mode, websiteCategory } from './stores.js';
 	import AuthPage from './manus/pages/AuthPage.svelte';
 	import Pricing from './manus/pages/Pricing.svelte';
+	import MarketingPage from './manus/pages/MarketingPage.svelte';
+	import ResourcePage from './manus/pages/ResourcePage.svelte';
 	import SettingsModal from './SettingsModal.svelte';
 	import ToolcallButton from './ToolcallButton.svelte';
 	import MessageContent from './MessageContent.svelte';
@@ -68,6 +70,7 @@
 	import SuggestionChips from './manus/SuggestionChips.svelte';
 	import AnnouncementBanner from './manus/AnnouncementBanner.svelte';
 	import TopNav from './manus/TopNav.svelte';
+	import WebsiteFlow from './manus/flows/WebsiteFlow.svelte';
 
 	marked.use(
 		markedKatex({
@@ -1162,6 +1165,7 @@
 
 	// Floating 3D agent
 	let agentEl;
+	let talkingHead;
 	let agentVisible = true;
 	let agentScriptLoaded = false;
 	let agentPickerOpen = false;
@@ -1195,18 +1199,21 @@
 		return null;
 	}
 
+	$: if ($mode !== 'website') websiteCategory.set(null);
+
 	function speakLastMessage() {
-		if (!effectiveAgentId) return;
 		const last = [...convo.messages].reverse().find((m) => m.role === 'assistant' && m.content);
 		if (!last?.content) return;
 
-		if (agentEl) {
+		if (agentEl && effectiveAgentId) {
 			agentEl.speak(last.content);
 			const emotion = detectEmotion(last.content);
 			if (emotion) setTimeout(() => agentEl?.expressEmotion(emotion), 600);
+		} else if (talkingHead && agentVisible) {
+			talkingHead.speak({ text: last.content });
 		}
 
-		if ($ttsEnabled && window.speechSynthesis) {
+		if ($ttsEnabled && window.speechSynthesis && !talkingHead) {
 			window.speechSynthesis.cancel();
 			const utt = new SpeechSynthesisUtterance(last.content);
 			window.speechSynthesis.speak(utt);
@@ -1250,35 +1257,23 @@
 
 {#if $route === 'pricing'}
   <div class="min-h-dvh bg-paper">
-    <div class="sticky top-0 z-[110]"><AnnouncementBanner /></div>
+    <div class="sticky top-0 z-[110]"><AnnouncementBanner /><TopNav /></div>
     <Pricing />
   </div>
 {:else if $route === 'signin' || $route === 'signup'}
   <div class="min-h-dvh bg-paper">
+    <div class="sticky top-0 z-[110]"><AnnouncementBanner /><TopNav /></div>
     <AuthPage kind={$route} />
   </div>
-{:else if $route.startsWith('solutions/')}
-  <div class="min-h-dvh bg-[#F5F4EF]">
-    <TopNav />
-    <div class="max-w-[1240px] mx-auto px-6 py-20 text-[#1A1A1A]">
-      <div>Solutions: {$route.slice('solutions/'.length)}</div>
-    </div>
+{:else if $route.startsWith('solutions/') || $route.startsWith('business/') || $route.startsWith('events/')}
+  <div class="min-h-dvh bg-paper">
+    <div class="sticky top-0 z-[110]"><TopNav /></div>
+    <MarketingPage slug={$route} />
   </div>
-{:else if $route.startsWith('events/')}
-  <div class="min-h-dvh bg-[#F5F4EF]">
-    <TopNav />
-    <div class="max-w-[760px] mx-auto px-6 pt-24 text-center">
-      <h1 class="manus-display">{$route.slice('events/'.length).replace(/-/g, ' ').replace(/^\w/, c => c.toUpperCase())}</h1>
-      <p class="text-[#6B6B6B] mt-4 text-lg">Coming soon.</p>
-    </div>
-  </div>
-{:else if $route.startsWith('business/')}
-  <div class="min-h-dvh bg-[#F5F4EF]">
-    <TopNav />
-    <div class="max-w-[760px] mx-auto px-6 pt-24 text-center">
-      <h1 class="manus-display">{$route.slice('business/'.length).replace(/-/g, ' ').replace(/^\w/, c => c.toUpperCase())}</h1>
-      <p class="text-[#6B6B6B] mt-4 text-lg">Coming soon.</p>
-    </div>
+{:else if $route.startsWith('resources/')}
+  <div class="min-h-dvh bg-paper">
+    <div class="sticky top-0 z-[110]"><AnnouncementBanner /><TopNav /></div>
+    <ResourcePage slug={$route.slice('resources/'.length)} />
   </div>
 {:else}
 <main class="flex h-dvh w-screen flex-col">
@@ -1472,7 +1467,7 @@
 				<div class="flex h-full w-full overflow-y-auto">
 					<EmptyState>
 						<svelte:fragment slot="composer">
-							<Input
+							<Composer
 								bind:generating
 								bind:convo
 								{saveMessage}
@@ -1483,10 +1478,18 @@
 								{tree}
 								bind:inputTextareaEl
 								bind:handleFileDrop
+								placeholder={$mode === 'website' ? 'Describe the website you want to build' : 'Assign a task or ask anything'}
+								mode={$mode}
+								modes={[{ id: 'website', label: 'Website' }]}
+								onModeClear={() => mode.set(null)}
 							/>
 						</svelte:fragment>
 						<svelte:fragment slot="chips">
-							<SuggestionChips />
+							{#if $mode === 'website'}
+								<WebsiteFlow />
+							{:else}
+								<SuggestionChips />
+							{/if}
 						</svelte:fragment>
 					</EmptyState>
 				</div>
@@ -1651,6 +1654,8 @@
 				background="transparent"
 				style="width:220px;height:220px;border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.18);"
 			></agent-3d>
+		{:else if !effectiveAgentId && agentVisible}
+			<TalkingHead bind:this={talkingHead} />
 		{/if}
 
 		<div class="flex items-center gap-1.5">
