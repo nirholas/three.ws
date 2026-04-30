@@ -7,6 +7,9 @@ import { transferSol } from "./actions/transfer-sol.js";
 import { transferSpl } from "./actions/transfer-spl.js";
 import { jupiterSwap, getSwapQuote, type SwapParams } from "./actions/swap.js";
 import { getOrCreateAta, type GetOrCreateAtaParams, type GetOrCreateAtaResult } from "./actions/ata.js";
+import { getTokenBalance, type TokenBalanceResult } from "./actions/get-token-balance.js";
+import { getTokenAccounts, type TokenAccount } from "./actions/get-token-accounts.js";
+import { stakeSOL, unstakeSOL, getStakeAccounts, type StakeSolResult, type StakeAccountInfo } from "./actions/stake.js";
 import type { BuildAndSendOptions } from "./tx/build.js";
 
 export interface SolanaAgentConfig {
@@ -90,5 +93,30 @@ export class SolanaAgent {
   /** Current SOL balance in lamports. */
   getBalance(): Promise<number> {
     return this.connection.getBalance(this.wallet.publicKey);
+  }
+
+  /** Get SPL token balance. Returns null if the wallet has no account for that mint. */
+  getTokenBalance(mint: PublicKey | string): Promise<TokenBalanceResult | null> {
+    return getTokenBalance(this.connection, this.wallet.publicKey, mint);
+  }
+
+  /** List all SPL token accounts with non-zero balance. */
+  getTokenAccounts(): Promise<TokenAccount[]> {
+    return getTokenAccounts(this.connection, this.wallet.publicKey);
+  }
+
+  /** Stake SOL with a validator. Amount is in SOL (not lamports). */
+  stakeSOL(voteAccount: PublicKey | string, amount: number, opts?: BuildAndSendOptions): Promise<StakeSolResult> {
+    return stakeSOL(this.wallet, this.connection, { voteAccount, amount }, opts);
+  }
+
+  /** Deactivate a stake account. SOL is withdrawable after ~1 epoch (~2-3 days). */
+  unstakeSOL(stakeAccount: PublicKey | string, opts?: BuildAndSendOptions): Promise<string> {
+    return unstakeSOL(this.wallet, this.connection, { stakeAccount }, opts);
+  }
+
+  /** List all stake accounts owned by the wallet. */
+  getStakeAccounts(): Promise<StakeAccountInfo[]> {
+    return getStakeAccounts(this.connection, this.wallet.publicKey);
   }
 }

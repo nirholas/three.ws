@@ -310,10 +310,17 @@ async function onToolCall(params, auth, started) {
 			latencyMs: Date.now() - started,
 			meta: { error: err.message },
 		});
-		if (err.code) throw err;
+		// Only re-throw intentional JSON-RPC errors (integer codes); string codes are
+		// postgres SQL states (e.g. '42P01') — sanitize those rather than leaking them.
+		if (err.code && typeof err.code === 'number') throw err;
 		// Framework convention: tool errors go in result.isError, not rpc error.
+		// Detect postgres driver errors by their severity field and suppress internals.
+		if (err.severity !== undefined || err.schema !== undefined) {
+			log.error('tool_db_error', { tool: name, pg_code: err.code });
+			return { content: [{ type: 'text', text: 'Error: internal error' }], isError: true };
+		}
 		return {
-			content: [{ type: 'text', text: `Error: ${err.message}` }],
+			content: [{ type: 'text', text: `Error: ${err.message || 'tool call failed'}` }],
 			isError: true,
 		};
 	}

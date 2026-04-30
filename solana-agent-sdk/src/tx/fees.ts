@@ -6,6 +6,7 @@ import {
   type Connection,
   type TransactionInstruction,
 } from "@solana/web3.js";
+import { SimulationError } from "../errors.js";
 
 export async function estimatePriorityFee(connection: Connection): Promise<number> {
   const fees = await connection.getRecentPrioritizationFees();
@@ -31,8 +32,11 @@ export async function estimateComputeUnits(
     { sigVerify: false },
   );
 
+  if (sim.value.err) throw new SimulationError(sim.value.err);
   const units = sim.value.unitsConsumed;
-  if (!units) return 200_000;
+  if (!units) {
+    return Math.min(200_000, 10_000 + instructions.length * 20_000);
+  }
   return Math.ceil(units * 1.1);
 }
 

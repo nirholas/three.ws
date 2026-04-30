@@ -11,6 +11,8 @@
 		feTool,
 		feSearch,
 		feFolder,
+		feMic,
+		feMicOff,
 	} from '../feather.js';
 	import { readFileAsDataURL } from '../util.js';
 	import { params, remoteServer, brandConfig, composerFill } from '../stores.js';
@@ -241,6 +243,34 @@
 		}
 		// reset so the same file can be re-selected
 		event.target.value = '';
+	}
+
+	let recording = false;
+	let recognition = null;
+
+	function toggleVoiceInput() {
+		if (recording) {
+			recognition?.stop();
+			recording = false;
+			return;
+		}
+		const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+		if (!SR) {
+			alert('Speech recognition is not supported in this browser. Try Chrome or Edge.');
+			return;
+		}
+		recognition = new SR();
+		recognition.lang = 'en-US';
+		recognition.interimResults = false;
+		recognition.onresult = (e) => {
+			const transcript = e.results[0][0].transcript;
+			content = content ? content + ' ' + transcript : transcript;
+			tick().then(() => autoresizeTextarea());
+		};
+		recognition.onerror = () => { recording = false; };
+		recognition.onend = () => { recording = false; };
+		recognition.start();
+		recording = true;
 	}
 
 	let containerEl, leftFadeEl, rightFadeEl;
@@ -536,8 +566,17 @@
 					</div>
 				</div>
 
-				<!-- Right side: send / stop button -->
-				<div class="ml-3 shrink-0">
+				<!-- Right side: mic + send / stop button -->
+				<div class="ml-3 flex shrink-0 items-center gap-2">
+					<button
+						type="button"
+						title={recording ? 'Stop recording' : 'Speak a message'}
+						on:click={toggleVoiceInput}
+						class="flex h-9 w-9 items-center justify-center rounded-full transition-colors
+							{recording ? 'bg-red-500 text-white animate-pulse' : 'text-[#9C9A93] hover:text-[#1A1A1A]'}"
+					>
+						<Icon icon={recording ? feMicOff : feMic} class="h-4 w-4" />
+					</button>
 					{#if isGenerating}
 						<button
 							class="flex h-9 w-9 items-center justify-center rounded-full bg-[#1A1A1A] transition-colors hover:bg-[#333]"

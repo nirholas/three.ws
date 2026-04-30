@@ -81,7 +81,9 @@ export const VALIDATION_REGISTRY_ABI = [
 
 // Canonical ERC-8004 reference deployments — same address on every chain via
 // CREATE2. Source: https://github.com/nirholas/erc8004-agents
-// Validation Registry is testnet-only for now; mainnet entry is empty.
+// ValidationRegistry mainnet deployment is pending. After running
+// contracts/script/deploy-validation-registry.sh, fill in the address
+// produced by computeAddress(DEPLOYER_ADDRESS) in MAINNET.validationRegistry.
 
 const TESTNET = {
 	identityRegistry: '0x8004A818BFB912233c491871b3d84c89A494BD9e',

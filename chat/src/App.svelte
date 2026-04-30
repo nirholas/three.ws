@@ -714,27 +714,32 @@
 							toolPromises.push(promise);
 						} else {
 							// Otherwise, call server-side tool
-							const promise = fetch(`${$remoteServer.address}/tool`, {
-								method: 'POST',
-								headers: {
-									Authorization: `Basic ${$remoteServer.password}`,
-								},
-								body: JSON.stringify({
-									id: toolcall.id,
-									chat_id: convo.id,
-									name: toolcall.name,
-									arguments: toolcall.arguments,
-								}),
-							}).then((resp) => {
-								// Mark tool call as finished to we can display it nicely in the UI
-								// (still need to await all tool calls to deliver the final response).
-								convo.messages[i].toolcalls[ti].finished = true;
-								saveMessage(convo.messages[i]);
-
-								return resp.text().then((text) => {
-									return JSON.parse(text);
-								});
-							});
+							const promise = (async () => {
+								try {
+									const resp = await fetch(`${$remoteServer.address}/tool`, {
+										method: 'POST',
+										headers: {
+											Authorization: `Basic ${$remoteServer.password}`,
+										},
+										body: JSON.stringify({
+											id: toolcall.id,
+											chat_id: convo.id,
+											name: toolcall.name,
+											arguments: toolcall.arguments,
+										}),
+									});
+									convo.messages[i].toolcalls[ti].finished = true;
+									saveMessage(convo.messages[i]);
+									if (!resp.ok) {
+										throw new Error(`Tool server returned ${resp.status}`);
+									}
+									return JSON.parse(await resp.text());
+								} catch (err) {
+									convo.messages[i].toolcalls[ti].finished = true;
+									saveMessage(convo.messages[i]);
+									return { error: err.message || 'Tool invocation failed' };
+								}
+							})();
 
 							toolPromises.push(promise);
 						}
@@ -769,11 +774,7 @@
 			handleAbort();
 		};
 
-		if (convo.models.length > 1) {
-			completeConsensus(convo, onupdate, onabort);
-		} else {
-			complete(convo, onupdate, onabort);
-		}
+		complete(convo, onupdate, onabort);
 	}
 
 	function startThinkingTimer(messageIndex) {

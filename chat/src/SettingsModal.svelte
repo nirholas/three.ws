@@ -26,7 +26,6 @@
 		feStar,
 		feRefreshCw,
 		feTool,
-		feUsers,
 		feX,
 	} from './feather.js';
 	import { brandConfig } from './stores.js';
@@ -199,17 +198,7 @@
 							Brand
 						</button>
 					</li>
-					<li>
-						<button
-							class="{activeTab === 'consensus'
-								? 'bg-gray-100/70'
-								: ' hover:bg-gray-100/70'} flex w-full items-center gap-x-2.5 rounded-lg px-4 py-2.5 text-left text-[13px] font-medium text-slate-700 transition-colors"
-							on:click={() => (activeTab = 'consensus')}
-						>
-							<Icon icon={feUsers} class="h-3 w-3 text-slate-700" />
-							Consensus mode
-						</button>
-					</li>
+
 					<li>
 						<button
 							class="{activeTab === 'avatar'
@@ -603,15 +592,19 @@
 						>{brandSaving ? 'Saving…' : 'Save branding'}</button>
 					{/if}
 				</div>
-			{:else if activeTab === 'consensus'}
-				<div class="mt-1 flex flex-col">
-					<span class="mb-3 ml-[3px] flex items-center text-[10px] uppercase tracking-wide">
-						Consensus summary model
-						<Tooltip class="ml-2">
-							Model that summarizes outputs from the different models to gather consensus
-						</Tooltip>
-					</span>
-					<p class="text-[13px] text-slate-600">Select multiple models in the model picker to enable consensus mode. Responses will be summarized by <span class="font-medium">claude-3.5-sonnet</span> via OpenRouter.</p>
+			{:else if activeTab === 'avatar'}
+				<div class="flex flex-col gap-1">
+					<label class="text-sm font-medium text-slate-700">3D Avatar URL (Ready Player Me .glb)</label>
+					<input
+						type="url"
+						placeholder="https://models.readyplayer.me/your-avatar.glb?morphTargets=ARKit,Oculus+Visemes,..."
+						bind:value={$talkingHeadAvatarUrl}
+						class="rounded-md border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-indigo-400"
+					/>
+					<p class="text-xs text-slate-400">
+						Get your URL from <a href="https://readyplayer.me" target="_blank" class="underline">readyplayer.me</a>.
+						Must include <code>morphTargets=ARKit,Oculus+Visemes</code> query param for lipsync.
+					</p>
 				</div>
 			{/if}
 		</div>

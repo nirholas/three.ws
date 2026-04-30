@@ -9,3 +9,11 @@ export type { SwapParams, JupiterQuote } from "./swap.js";
 
 export { getOrCreateAta } from "./ata.js";
 export type { GetOrCreateAtaParams, GetOrCreateAtaResult } from "./ata.js";
+
+export { getTokenBalance } from "./get-token-balance.js";
+export type { TokenBalanceResult } from "./get-token-balance.js";
+export { getTokenAccounts } from "./get-token-accounts.js";
+export type { TokenAccount } from "./get-token-accounts.js";
+
+export { stakeSOL, unstakeSOL, getStakeAccounts } from "./stake.js";
+export type { StakeSolParams, StakeSolResult, UnstakeSolParams, StakeAccountInfo } from "./stake.js";

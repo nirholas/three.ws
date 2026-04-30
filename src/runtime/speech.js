@@ -1,6 +1,7 @@
 // Speech I/O — TTS and STT. Browser-native by default; provider-swappable.
 
 export { LiveKitVoice } from './livekit-voice.js';
+import { startLipsync } from './lipsync.js';
 
 export class BrowserTTS {
 	constructor({ voiceId = 'default', rate = 1, pitch = 1, lang = 'en-US' } = {}) {
@@ -10,9 +11,10 @@ export class BrowserTTS {
 		this.lang = lang;
 		this._queue = [];
 		this._speaking = false;
+		this._lipsync = null;
 	}
 
-	async speak(text, { onStart, onEnd } = {}) {
+	async speak(text, { onStart, onEnd, scene } = {}) {
 		if (!('speechSynthesis' in window)) return;
 		return new Promise((resolve) => {
 			const utter = new SpeechSynthesisUtterance(text);
@@ -23,15 +25,20 @@ export class BrowserTTS {
 			if (voice) utter.voice = voice;
 			utter.onstart = () => {
 				this._speaking = true;
+				if (scene) this._lipsync = startLipsync(text, scene);
 				onStart?.();
 			};
 			utter.onend = () => {
 				this._speaking = false;
+				this._lipsync?.stop();
+				this._lipsync = null;
 				onEnd?.();
 				resolve();
 			};
 			utter.onerror = () => {
 				this._speaking = false;
+				this._lipsync?.stop();
+				this._lipsync = null;
 				resolve();
 			};
 			window.speechSynthesis.speak(utter);
@@ -40,6 +47,8 @@ export class BrowserTTS {
 
 	cancel() {
 		if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+		this._lipsync?.stop();
+		this._lipsync = null;
 		this._speaking = false;
 	}
 
@@ -182,9 +191,10 @@ export class ElevenLabsTTS {
 		this._audio = null; // current <audio> element
 		this._mediaSourceURL = null; // for revocation
 		this._onEnd = null; // pending resolve
+		this._lipsync = null;
 	}
 
-	async speak(text, { onStart, onEnd } = {}) {
+	async speak(text, { onStart, onEnd, scene } = {}) {
 		this.cancel();
 		if (!text) return;
 
@@ -251,6 +261,8 @@ export class ElevenLabsTTS {
 		return new Promise((resolve) => {
 			this._onEnd = () => {
 				this._speaking = false;
+				this._lipsync?.stop();
+				this._lipsync = null;
 				this._cleanupAudio();
 				onEnd?.();
 				this._onEnd = null;
@@ -261,10 +273,15 @@ export class ElevenLabsTTS {
 				if (this._onEnd) this._onEnd();
 			};
 
+			const lipsyncOnStart = () => {
+				if (scene) this._lipsync = startLipsync(text, scene);
+				onStart?.();
+			};
+
 			if (supportsMSE && resp.body) {
-				this._playStreamingMSE(resp.body, () => playStarted(onStart), finishOnError);
+				this._playStreamingMSE(resp.body, () => playStarted(lipsyncOnStart), finishOnError);
 			} else {
-				this._playBuffered(resp, () => playStarted(onStart), finishOnError);
+				this._playBuffered(resp, () => playStarted(lipsyncOnStart), finishOnError);
 			}
 		});
 	}
@@ -276,6 +293,8 @@ export class ElevenLabsTTS {
 			} catch {}
 			this._abort = null;
 		}
+		this._lipsync?.stop();
+		this._lipsync = null;
 		this._cleanupAudio();
 		this._speaking = false;
 		// Resolve any pending speak() promise so callers don't hang
@@ -405,4 +424,10 @@ export function createSTT(config = {}) {
 	if (provider === 'none') return null;
 	if (provider === 'browser') return new BrowserSTT(config);
 	throw new Error(`STT provider "${provider}" not implemented yet`);
+}
+
+export async function createVoice(config = {}) {
+	if (config.provider !== 'livekit') return null;
+	const { LiveKitVoice } = await import('./livekit-voice.js');
+	return new LiveKitVoice(config);
 }

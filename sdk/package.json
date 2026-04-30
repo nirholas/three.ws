@@ -5,22 +5,16 @@
 	"type": "module",
 	"main": "./dist/index.js",
 	"module": "./dist/index.mjs",
-	"types": "./dist/index.d.ts",
+	"types": "./types/index.d.ts",
 	"exports": {
 		".": {
-			"types": "./dist/index.d.ts",
+			"types": "./types/index.d.ts",
 			"import": "./dist/index.mjs",
 			"require": "./dist/index.js",
 			"default": "./dist/index.mjs"
 		},
 		"./permissions": {
-			"types": "./dist/permissions.d.ts",
-			"import": "./dist/index.mjs",
-			"require": "./dist/index.js",
-			"default": "./dist/index.mjs"
-		},
-		"./permissions/advanced": {
-			"types": "./dist/permissions/advanced.d.ts",
+			"types": "./types/permissions.d.ts",
 			"import": "./dist/index.mjs",
 			"require": "./dist/index.js",
 			"default": "./dist/index.mjs"
@@ -29,6 +23,7 @@
 	},
 	"files": [
 		"dist",
+		"types",
 		"README.md",
 		"LICENSE",
 		"CHANGELOG.md"

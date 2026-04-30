@@ -3,7 +3,10 @@ import {
   VersionedTransaction,
   type Connection,
 } from "@solana/web3.js";
+import { getMint, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { isMetaAware, type WalletProvider } from "../wallet/types.js";
+import { SwapError } from "../errors.js";
+import { toUiAmount } from "../utils/format.js";
 
 const JUPITER_QUOTE_API = "https://quote-api.jup.ag/v6";
 
@@ -52,12 +55,14 @@ export async function jupiterSwap(
 
   // Build human-readable metadata from the quote
   if (isMetaAware(wallet)) {
-    const inDecimals = guessDecimals(inputMint);
-    const outDecimals = guessDecimals(outputMint);
+    const [inDecimals, outDecimals] = await Promise.all([
+      fetchDecimals(connection, inputMint),
+      fetchDecimals(connection, outputMint),
+    ]);
     const inSymbol = params.inputSymbol ?? shortMint(inputMint);
     const outSymbol = params.outputSymbol ?? shortMint(outputMint);
-    const inUi = (Number(quote.inAmount) / 10 ** inDecimals).toFixed(4);
-    const outUi = (Number(quote.outAmount) / 10 ** outDecimals).toFixed(4);
+    const inUi = toUiAmount(quote.inAmount, inDecimals);
+    const outUi = toUiAmount(quote.outAmount, outDecimals);
 
     wallet.setNextMeta({
       label: `Swap ${inSymbol} → ${outSymbol}`,
@@ -80,7 +85,7 @@ export async function jupiterSwap(
   });
 
   if (!swapRes.ok) {
-    throw new Error(`Jupiter swap failed: ${await swapRes.text()}`);
+    throw new SwapError(`Jupiter swap failed: ${await swapRes.text()}`, inputMint, outputMint);
   }
 
   const { swapTransaction } = (await swapRes.json()) as JupiterSwapResponse;
@@ -104,7 +109,7 @@ export async function getSwapQuote(params: SwapParams): Promise<JupiterQuote> {
   url.searchParams.set("slippageBps", (params.slippageBps ?? 50).toString());
 
   const res = await fetch(url.toString());
-  if (!res.ok) throw new Error(`Jupiter quote failed: ${await res.text()}`);
+  if (!res.ok) throw new SwapError(`Jupiter quote failed: ${await res.text()}`, inputMint, outputMint);
   return res.json() as Promise<JupiterQuote>;
 }
 
@@ -115,14 +120,17 @@ function shortMint(mint: string): string {
   return mint.slice(0, 4) + "…";
 }
 
-/** Best-effort decimal guess for well-known mints; falls back to 9 (SOL default). */
-function guessDecimals(mint: string): number {
-  const KNOWN: Record<string, number> = {
-    [SOL_MINT]: 9,
-    "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v": 6, // USDC mainnet
-    "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU": 6, // USDC devnet
-    "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB": 6, // USDT mainnet
-    "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So": 9, // mSOL
-  };
-  return KNOWN[mint] ?? 9;
+const decimalsCache = new Map<string, number>();
+
+async function fetchDecimals(connection: Connection, mint: string): Promise<number> {
+  if (mint === SOL_MINT) return 9;
+  const cached = decimalsCache.get(mint);
+  if (cached !== undefined) return cached;
+  try {
+    const info = await getMint(connection, new PublicKey(mint), "confirmed", TOKEN_PROGRAM_ID);
+    decimalsCache.set(mint, info.decimals);
+    return info.decimals;
+  } catch {
+    return 6;
+  }
 }

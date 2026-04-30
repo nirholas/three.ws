@@ -310,6 +310,7 @@ class Agent3DElement extends HTMLElement {
 		this._autoResolvedManifest = false;
 		this._suppressAttrChange = false;
 		this._detachTradeReactions = null;
+		this._livekitVoice = null;
 	}
 
 	connectedCallback() {
@@ -988,6 +989,14 @@ class Agent3DElement extends HTMLElement {
 			}
 
 			this._mounted = true;
+
+			// LiveKit realtime voice — connect when voice="livekit" and agent-id is set
+			if (this.getAttribute('voice') === 'livekit' && _backendId) {
+				this._connectLiveKit(_backendId).catch((err) => {
+					console.warn('[agent-3d] LiveKit connect failed', err);
+				});
+			}
+
 			const _trackedMint = this.getAttribute('tracked-mint');
 			if (_trackedMint) {
 				this._detachTradeReactions = attachTradeReactions(this, { mint: _trackedMint });
@@ -1376,6 +1385,23 @@ class Agent3DElement extends HTMLElement {
 		}
 	}
 
+	async _connectLiveKit(agentId) {
+		const base = _scriptOrigin || window.location.origin;
+		const resp = await fetch(`${base}/api/agents/${agentId}/livekit-token`, {
+			credentials: 'include',
+		});
+		if (!resp.ok) {
+			const body = await resp.json().catch(() => ({}));
+			console.warn('[agent-3d] livekit-token fetch failed', resp.status, body);
+			return;
+		}
+		const { token, serverUrl } = await resp.json();
+		const { LiveKitVoice } = await import('./runtime/livekit-voice.js');
+		const voice = new LiveKitVoice({ serverUrl, token, protocol });
+		this._livekitVoice = voice;
+		await voice.connect();
+	}
+
 	_teardown() {
 		// Clear manifest that was auto-resolved from agent-id so the next boot resolves fresh.
 		// Suppress attributeChangedCallback to avoid a reboot loop.
@@ -1407,6 +1433,10 @@ class Agent3DElement extends HTMLElement {
 		this._embedBridge = null;
 		this._detachTradeReactions?.();
 		this._detachTradeReactions = null;
+		if (this._livekitVoice) {
+			this._livekitVoice.disconnect().catch(() => {});
+			this._livekitVoice = null;
+		}
 		try {
 			this._runtime?.destroy();
 		} catch {}

@@ -5,3 +5,5 @@ export { BrowserWalletProvider } from "./browser-server.js";
 export type { BrowserWalletOptions, PendingTx } from "./browser-server.js";
 export { BrowserWalletClient } from "./browser-client.js";
 export type { SignerFn, ApprovalHandler, BrowserWalletClientOptions } from "./browser-client.js";
+export { WalletAdapterProvider } from "./wallet-adapter.js";
+export type { WalletAdapterLike } from "./wallet-adapter.js";

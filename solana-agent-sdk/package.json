@@ -28,7 +28,9 @@
       "require": "./dist/solana-agent-kit/index.cjs"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "build:prod": "tsup --minify",
@@ -46,11 +48,16 @@
     "zod": "^3.0.0"
   },
   "peerDependenciesMeta": {
-    "zod": { "optional": true }
+    "zod": {
+      "optional": true
+    }
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
     "@rollup/rollup-linux-x64-gnu": "*",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^22.0.0",
+    "jest": "^30.3.0",
+    "ts-jest": "^29.4.9",
     "tsup": "^8.3.5",
     "typescript": "^5.7.3",
     "zod": "^3.0.0"

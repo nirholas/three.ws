@@ -4,6 +4,7 @@ import { transferSol } from "../actions/transfer-sol.js";
 import { transferSpl } from "../actions/transfer-spl.js";
 import { jupiterSwap, getSwapQuote } from "../actions/swap.js";
 import { getOrCreateAta } from "../actions/ata.js";
+import { stakeSOL, unstakeSOL, getStakeAccounts } from "../actions/stake.js";
 import type { Action } from "./types.js";
 
 // ─── Transfer SOL ─────────────────────────────────────────────────────────────
@@ -32,11 +33,13 @@ export const transferSolAction: Action = {
   schema: z.object({
     to: z.string().describe("Recipient wallet address (base58)"),
     amount: z.number().positive().describe("Amount in SOL (e.g. 0.5 for 0.5 SOL)"),
+    memo: z.string().max(500).optional().describe("Optional memo string attached to the transaction (visible on-chain)"),
   }),
   handler: async (agent, input) => {
     const signature = await transferSol(agent.wallet, agent.connection, {
       to: new PublicKey(input.to as string),
       amount: input.amount as number,
+      memo: input.memo as string | undefined,
     });
     return { signature };
   },
@@ -73,12 +76,14 @@ export const transferSplAction: Action = {
     mint: z.string().describe("SPL token mint address (base58)"),
     to: z.string().describe("Recipient wallet address (base58)"),
     amount: z.string().describe("Amount in token base units (e.g. '1000000' for 1 USDC)"),
+    memo: z.string().max(500).optional().describe("Optional memo string attached to the transaction (visible on-chain)"),
   }),
   handler: async (agent, input) => {
     const signature = await transferSpl(agent.wallet, agent.connection, {
       mint: new PublicKey(input.mint as string),
       to: new PublicKey(input.to as string),
       amount: BigInt(input.amount as string),
+      memo: input.memo as string | undefined,
     });
     return { signature };
   },
@@ -250,6 +255,122 @@ export const createAtaAction: Action = {
   },
 };
 
+// ─── Stake SOL ────────────────────────────────────────────────────────────────
+
+export const stakeSolAction: Action = {
+  name: "stake_sol",
+  similes: [
+    "stake SOL",
+    "delegate SOL",
+    "earn staking rewards",
+    "stake to validator",
+    "stake native SOL",
+  ],
+  description:
+    "Stake native SOL with a validator to earn staking rewards. Creates a new stake account " +
+    "and delegates it to the given vote account. Amount is in SOL.",
+  examples: [
+    [
+      {
+        input: {
+          voteAccount: "Vote111111111111111111111111111111111111111",
+          amount: 1,
+        },
+        output: {
+          signature: "5K4b...txSig",
+          stakeAccount: "Ek5G...acct",
+        },
+        explanation: "Stake 1 SOL with the specified validator.",
+      },
+    ],
+  ],
+  schema: z.object({
+    voteAccount: z.string().describe("Validator vote account address (base58)"),
+    amount: z.number().positive().describe("Amount of SOL to stake (e.g. 1 for 1 SOL)"),
+  }),
+  handler: async (agent, input) => {
+    const result = await stakeSOL(agent.wallet, agent.connection, {
+      voteAccount: new PublicKey(input.voteAccount as string),
+      amount: input.amount as number,
+    });
+    return { signature: result.signature, stakeAccount: result.stakeAccount };
+  },
+};
+
+// ─── Unstake SOL ──────────────────────────────────────────────────────────────
+
+export const unstakeSolAction: Action = {
+  name: "unstake_sol",
+  similes: [
+    "unstake SOL",
+    "deactivate stake",
+    "stop staking",
+    "withdraw stake",
+    "undelegate SOL",
+  ],
+  description:
+    "Deactivate a stake account, beginning the ~2-3 day cooldown before SOL can be withdrawn. " +
+    "Use get_stake_accounts to find your stake account addresses.",
+  examples: [
+    [
+      {
+        input: { stakeAccount: "Ek5G...acct" },
+        output: { signature: "7Jx2...txSig" },
+        explanation: "Deactivate the given stake account.",
+      },
+    ],
+  ],
+  schema: z.object({
+    stakeAccount: z.string().describe("Stake account address to deactivate (base58)"),
+  }),
+  handler: async (agent, input) => {
+    const signature = await unstakeSOL(agent.wallet, agent.connection, {
+      stakeAccount: new PublicKey(input.stakeAccount as string),
+    });
+    return { signature };
+  },
+};
+
+// ─── Get Stake Accounts ───────────────────────────────────────────────────────
+
+export const getStakeAccountsAction: Action = {
+  name: "get_stake_accounts",
+  similes: [
+    "list stake accounts",
+    "show staked SOL",
+    "get staking positions",
+    "check stake",
+    "my validators",
+  ],
+  description:
+    "List all stake accounts owned by the agent wallet, including their balance, " +
+    "state (delegated/deactivating/inactive), and validator vote account.",
+  examples: [
+    [
+      {
+        input: {},
+        output: {
+          accounts: [
+            {
+              address: "Ek5G...acct",
+              lamports: 1002282880,
+              state: "delegated",
+              voteAccount: "Vote111111111111111111111111111111111111111",
+              activationEpoch: 700,
+            },
+          ],
+        },
+        explanation: "List all stake accounts for the agent wallet.",
+      },
+    ],
+  ],
+  schema: z.object({}),
+  handler: async (agent) => {
+    const accounts = await getStakeAccounts(agent.connection, agent.publicKey);
+    return { accounts };
+  },
+};
+
 export const allActions: Action[] = [
   transferSolAction,
   transferSplAction,
@@ -257,4 +378,7 @@ export const allActions: Action[] = [
   getSwapQuoteAction,
   getBalanceAction,
   createAtaAction,
+  stakeSolAction,
+  unstakeSolAction,
+  getStakeAccountsAction,
 ];

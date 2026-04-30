@@ -1,4 +1,4 @@
-export { buildAndSend } from "./build.js";
+export { buildAndSend, fetchLookupTables } from "./build.js";
 export type { BuildAndSendOptions } from "./build.js";
 export {
   estimatePriorityFee,

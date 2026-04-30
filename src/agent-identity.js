@@ -213,7 +213,7 @@ export class AgentIdentity {
 			this._record = local;
 			this._agentId = local.id;
 			this._loaded = true;
-			this.memory = new AgentMemory(local.id, { backendSync: false });
+			this.memory = new AgentMemory(local.id, { backendSync: false, embedFn: _makeEmbedFn(local.id) });
 		}
 
 		// 2. Try backend (authoritative if user is signed in)
@@ -232,7 +232,7 @@ export class AgentIdentity {
 					this._loaded = true;
 					this._persist();
 					if (!this.memory) {
-						this.memory = new AgentMemory(this._record.id, { backendSync: true });
+						this.memory = new AgentMemory(this._record.id, { backendSync: true, embedFn: _makeEmbedFn(this._record.id) });
 					} else {
 						// Agent confirmed in backend — enable sync and pull latest
 						this.memory.backendSync = true;
@@ -250,7 +250,7 @@ export class AgentIdentity {
 				this._agentId = this._record.id;
 				this._loaded = true;
 				this._persist();
-				this.memory = new AgentMemory(this._agentId, { backendSync: false });
+				this.memory = new AgentMemory(this._agentId, { backendSync: false, embedFn: _makeEmbedFn(this._agentId) });
 			}
 		} catch {
 			// Offline — use local record if we have one
@@ -259,7 +259,7 @@ export class AgentIdentity {
 				this._agentId = this._record.id;
 				this._loaded = true;
 				this._persist();
-				this.memory = new AgentMemory(this._agentId, { backendSync: false });
+				this.memory = new AgentMemory(this._agentId, { backendSync: false, embedFn: _makeEmbedFn(this._agentId) });
 			}
 		}
 	}
@@ -289,6 +289,20 @@ export class AgentIdentity {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
+
+function _makeEmbedFn(agentId) {
+	return async (text) => {
+		const resp = await fetch(`/api/agents/${agentId}/embed`, {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			credentials: 'include',
+			body: JSON.stringify({ text }),
+		});
+		if (!resp.ok) throw new Error(`embed ${resp.status}`);
+		const { embedding } = await resp.json();
+		return embedding;
+	};
+}
 
 function _uuid() {
 	if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();

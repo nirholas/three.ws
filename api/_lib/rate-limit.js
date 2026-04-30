@@ -117,6 +117,8 @@ export const limits = {
 	resendVerifyUser: (userId) =>
 		getLimiter('resend-verify:user', { limit: 2, window: '10 m' }).limit(userId),
 	newsletterIp: (ip) => getLimiter('newsletter:ip', { limit: 5, window: '1 h' }).limit(ip),
+	// Voice cloning: expensive ElevenLabs API call — 3 per user per day.
+	voiceClone: (userId) => getLimiter('voice:clone', { limit: 3, window: '1 d' }).limit(userId),
 };
 
 // Trust only proxy headers that Vercel itself sets and signs. Naively reading
