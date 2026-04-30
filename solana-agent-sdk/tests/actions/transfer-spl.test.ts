@@ -10,8 +10,8 @@ jest.unstable_mockModule("../../src/tx/build.js", () => ({
   buildAndSend: mockBuildAndSendFn,
 }));
 
-jest.unstable_mockModule("@solana/spl-token", async () => {
-  const actual = await import("@solana/spl-token");
+jest.unstable_mockModule("@solana/spl-token", () => {
+  const actual = jest.requireActual("@solana/spl-token") as typeof import("@solana/spl-token");
   return { ...(actual as object), getMint: mockGetMintFn };
 });
 

@@ -10,8 +10,8 @@
 
 {#if slug === 'blog'}
   <BlogIndex />
-{:else if slug === 'docs'}
-  <DocsIndex />
+{:else if slug === 'docs' || slug.startsWith('docs/')}
+  <DocsIndex docSlug={slug.startsWith('docs/') ? slug.slice(5) : ''} />
 {:else if slug === 'updates'}
   <UpdatesTimeline />
 {:else if slug === 'use-cases'}

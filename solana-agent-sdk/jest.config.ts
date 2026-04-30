@@ -12,6 +12,7 @@ const config: Config = {
     "<rootDir>/tests/wallet/**/*.test.ts",
     "<rootDir>/tests/actions/**/*.test.ts",
   ],
+  forceExit: true,
 };
 
 export default config;
