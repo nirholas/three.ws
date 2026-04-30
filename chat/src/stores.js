@@ -63,6 +63,7 @@ export const toolSchema = persisted('toolSchemaGroups', []);
 
 export const ttsEnabled = persisted('ttsEnabled', false);
 export const localAgentId = persisted('localAgentId', '');
+export const talkingHeadEnabled = persisted('talkingHeadEnabled', false);
 
 export const route = writable(
 	typeof window !== 'undefined' ? (window.location.hash.slice(1) || 'chat') : 'chat'
