@@ -69,7 +69,6 @@
 	import TalkingHead from './TalkingHead.svelte';
 	import EmptyState from './manus/EmptyState.svelte';
 	import SuggestionChips from './manus/SuggestionChips.svelte';
-	import AnnouncementBanner from './manus/AnnouncementBanner.svelte';
 	import TopNav from './manus/TopNav.svelte';
 	import WebsiteFlow from './manus/flows/WebsiteFlow.svelte';
 	import DesktopFlow from './manus/flows/DesktopFlow.svelte';
@@ -1259,12 +1258,12 @@
 
 {#if $route === 'pricing'}
   <div class="min-h-dvh bg-paper">
-    <div class="sticky top-0 z-[110]"><AnnouncementBanner /><TopNav /></div>
+    <div class="sticky top-0 z-[110]"><TopNav /></div>
     <Pricing />
   </div>
 {:else if $route === 'signin' || $route === 'signup'}
   <div class="min-h-dvh bg-paper">
-    <div class="sticky top-0 z-[110]"><AnnouncementBanner /><TopNav /></div>
+    <div class="sticky top-0 z-[110]"><TopNav /></div>
     <AuthPage kind={$route} />
   </div>
 {:else if $route.startsWith('solutions/') || $route.startsWith('business/') || $route.startsWith('events/')}
@@ -1274,19 +1273,18 @@
   </div>
 {:else if $route.startsWith('resources/')}
   <div class="min-h-dvh bg-paper">
-    <div class="sticky top-0 z-[110]"><AnnouncementBanner /><TopNav /></div>
+    <div class="sticky top-0 z-[110]"><TopNav /></div>
     <ResourcePage slug={$route.slice('resources/'.length)} />
   </div>
 {:else if $route.startsWith('features/')}
   <div class="min-h-dvh bg-paper overflow-y-auto">
-    <div class="sticky top-0 z-[110]"><AnnouncementBanner /><TopNav /></div>
+    <div class="sticky top-0 z-[110]"><TopNav /></div>
     <FeaturePage slug={$route.slice('features/'.length)} />
   </div>
 {:else}
 <main class="flex h-dvh w-screen flex-col">
 	<div class="sticky top-0 z-[110]">
 		<TopNav />
-		<AnnouncementBanner />
 	</div>
 	<div class="flex h-12 items-center gap-1 px-2 py-1 md:hidden">
 		<button
