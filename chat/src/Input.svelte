@@ -16,7 +16,7 @@
 	import { get } from 'svelte/store';
 	import { v4 as uuidv4 } from 'uuid';
 	import { readFileAsDataURL } from './util.js';
-	import { anthropicAPIKey, controller, params, remoteServer } from './stores.js';
+	import { anthropicAPIKey, controller, params, remoteServer, brandConfig } from './stores.js';
 	import ToolPill from './ToolPill.svelte';
 	import ToolDropdown from './ToolDropdown.svelte';
 	import ModelSelector from './ModelSelector.svelte';
@@ -113,8 +113,9 @@
 
 	async function sendMessage() {
 		if (content.length > 0) {
+			const _effectiveSystemPrompt = $params.customInstructions || $brandConfig.system_prompt;
 			if (
-				$params.customInstructions &&
+				_effectiveSystemPrompt &&
 				convo.messages.length === 0 &&
 				!convo.messages.find((m) => m.role === 'system')
 			) {
@@ -122,7 +123,7 @@
 					id: uuidv4(),
 					role: 'system',
 					customInstructions: true,
-					content: $params.customInstructions,
+					content: _effectiveSystemPrompt,
 				};
 				convo.messages.push(systemMsg);
 				convo.messages = convo.messages;

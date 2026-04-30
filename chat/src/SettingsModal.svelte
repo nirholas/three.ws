@@ -49,7 +49,7 @@
 	let brandSaving = false;
 	let brandSaveError = '';
 	let brandSaveOk = false;
-	let brandDraft = { name: '', logo_url: '', accent_color: '#6366f1', tagline: '' };
+	let brandDraft = { name: '', logo_url: '', accent_color: '#6366f1', tagline: '', system_prompt: '' };
 
 	function openBrandTab() {
 		activeTab = 'brand';
@@ -60,6 +60,7 @@
 			tagline: $brandConfig.tagline,
 			default_model: $brandConfig.default_model,
 			agent_id: $brandConfig.agent_id ?? '',
+			system_prompt: $brandConfig.system_prompt ?? '',
 		};
 	}
 
@@ -75,6 +76,7 @@
 					...brandDraft,
 					logo_url: brandDraft.logo_url || null,
 					agent_id: brandDraft.agent_id || null,
+					system_prompt: brandDraft.system_prompt || undefined,
 				}),
 			});
 			const json = await res.json();
@@ -563,6 +565,16 @@
 								<input type="color" bind:value={brandDraft.accent_color} class="h-9 w-10 cursor-pointer rounded border border-gray-200 p-0.5" />
 								<span class="font-mono text-[12px] text-slate-500">{brandDraft.accent_color}</span>
 							</div>
+						</label>
+						<label class="flex flex-col text-[10px] uppercase tracking-wide">
+							<span class="mb-2 ml-[3px]">System prompt</span>
+							<textarea
+								bind:value={brandDraft.system_prompt}
+								rows="8"
+								class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] leading-relaxed outline-none focus:border-indigo-400 resize-y"
+								placeholder="Default AI persona and instructions for all users…"
+							></textarea>
+							<span class="mt-1 ml-[3px] text-[10px] text-slate-400 normal-case">Users can override this with their own Custom instructions in settings.</span>
 						</label>
 						{#if brandSaveError}
 							<p class="text-[12px] text-red-500">{brandSaveError}</p>

@@ -3,6 +3,21 @@ import { env } from '../_lib/env.js';
 import { cors, json, method, wrap, error, readJson } from '../_lib/http.js';
 import { z } from 'zod';
 
+const DEFAULT_SYSTEM_PROMPT = `You are a helpful AI assistant on three.ws — a platform for 3D AI agents, Solana, and pump.fun.
+
+You have access to real-time pump.fun and Solana tools:
+- Search, analyze, and get details on any pump.fun token
+- Check bonding curve progress and graduation status
+- Get token trades, holders, and read-only price quotes
+- Resolve Solana Name Service (.sol) domains
+- Get KOL radar signals for early alpha
+
+When a 3D agent avatar is visible in the corner, you can use animation tools:
+- agent_wave — make the avatar wave
+- agent_express — express an emotion (celebration, curiosity, concern, empathy, patience)
+
+Be concise, helpful, and crypto-native.`;
+
 const DEFAULTS = {
 	name: 'three.ws chat',
 	logo_url: null,
@@ -10,6 +25,7 @@ const DEFAULTS = {
 	tagline: 'Chat with any AI model',
 	default_model: 'meta-llama/llama-3.3-70b-instruct:free',
 	agent_id: null,
+	system_prompt: DEFAULT_SYSTEM_PROMPT,
 };
 
 const bodySchema = z.object({
@@ -19,24 +35,21 @@ const bodySchema = z.object({
 	tagline: z.string().trim().max(200).optional(),
 	default_model: z.string().trim().min(1).max(100).optional(),
 	agent_id: z.string().trim().max(100).nullable().optional(),
+	system_prompt: z.string().max(4000).optional(),
 });
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
 	if (!method(req, res, ['GET', 'POST'])) return;
 
-	// GET — fully public, returns current brand config
+	// GET — fully public
 	if (req.method === 'GET') {
-		const [row] = await sql`SELECT name, logo_url, accent_color, tagline, default_model, agent_id FROM chat_brand_config WHERE key = 'global'`;
+		const [row] = await sql`SELECT name, logo_url, accent_color, tagline, default_model, agent_id, system_prompt FROM chat_brand_config WHERE key = 'global'`;
 		return json(res, 200, { data: row ?? DEFAULTS });
 	}
 
-	// POST — admin key required (env var takes precedence, DB is fallback)
-	let adminKey = env.CHAT_ADMIN_KEY;
-	if (!adminKey) {
-		const [cfg] = await sql`SELECT admin_key FROM chat_brand_config WHERE key = 'global'`;
-		adminKey = cfg?.admin_key ?? null;
-	}
+	// POST — admin key required
+	const adminKey = env.CHAT_ADMIN_KEY;
 	if (!adminKey) return error(res, 503, 'not_configured', 'CHAT_ADMIN_KEY is not set');
 
 	const provided = (req.headers['x-admin-key'] || '').trim();
@@ -62,9 +75,10 @@ export default wrap(async (req, res) => {
 			tagline       = ${body.tagline ?? DEFAULTS.tagline},
 			default_model = ${body.default_model ?? DEFAULTS.default_model},
 			agent_id      = ${body.agent_id ?? null},
+			system_prompt = ${body.system_prompt ?? DEFAULT_SYSTEM_PROMPT},
 			updated_at    = now()
 		WHERE key = 'global'
-		RETURNING name, logo_url, accent_color, tagline, default_model, agent_id, updated_at
+		RETURNING name, logo_url, accent_color, tagline, default_model, agent_id, system_prompt, updated_at
 	`;
 
 	return json(res, 200, { data: row });

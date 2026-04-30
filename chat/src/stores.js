@@ -10,6 +10,7 @@ export const brandConfig = writable({
 	tagline: 'Chat with any AI model',
 	default_model: 'google/gemini-2.0-flash-exp:free',
 	agent_id: null,
+	system_prompt: '',
 });
 
 export const controller = writable(null);
