@@ -8,7 +8,7 @@ const DEFAULTS = {
 	logo_url: null,
 	accent_color: '#6366f1',
 	tagline: 'Chat with any AI model',
-	default_model: 'google/gemini-2.0-flash-exp:free',
+	default_model: 'meta-llama/llama-3.3-70b-instruct:free',
 	agent_id: null,
 };
 

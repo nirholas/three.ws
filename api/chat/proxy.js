@@ -4,15 +4,15 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 
 // Only allow free-tier OpenRouter models to prevent abuse.
 const FREE_MODELS = new Set([
-	'google/gemini-2.0-flash-exp:free',
-	'google/gemini-flash-1.5:free',
 	'meta-llama/llama-3.3-70b-instruct:free',
-	'meta-llama/llama-3.1-8b-instruct:free',
-	'deepseek/deepseek-r1:free',
-	'deepseek/deepseek-chat:free',
-	'mistralai/mistral-7b-instruct:free',
-	'qwen/qwen-2.5-72b-instruct:free',
-	'microsoft/phi-4-reasoning:free',
+	'meta-llama/llama-3.2-3b-instruct:free',
+	'google/gemma-3-27b-it:free',
+	'google/gemma-3-12b-it:free',
+	'openai/gpt-oss-120b:free',
+	'openai/gpt-oss-20b:free',
+	'qwen/qwen3-coder:free',
+	'qwen/qwen3-next-80b-a3b-instruct:free',
+	'nousresearch/hermes-3-llama-3.1-405b:free',
 ]);
 
 export default wrap(async (req, res) => {
