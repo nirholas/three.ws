@@ -795,7 +795,16 @@
 				<div class="flex flex-col gap-2 overflow-y-auto">
 					{#each filteredLibraryPlugins as plugin (plugin.identifier)}
 						<div class="flex items-center gap-x-3 rounded-lg border border-slate-200 px-3 py-3">
-							<span class="shrink-0 text-2xl leading-none">{plugin.avatar}</span>
+							{#if typeof plugin.avatar === 'string' && /^https?:\/\//.test(plugin.avatar)}
+								<img
+									src={plugin.avatar}
+									alt=""
+									class="h-8 w-8 shrink-0 rounded-md object-cover"
+									loading="lazy"
+								/>
+							{:else}
+								<span class="shrink-0 text-2xl leading-none">{plugin.avatar}</span>
+							{/if}
 							<div class="min-w-0 flex-1">
 								<div class="flex flex-wrap items-center gap-x-1.5 gap-y-1">
 									<span class="text-[13px] font-medium text-slate-800">{plugin.name}</span>
