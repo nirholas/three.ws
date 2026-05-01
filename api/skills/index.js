@@ -110,7 +110,7 @@ async function handleList(req, res) {
 		}
 	}
 
-	const rl = await limits.publicIp(clientIp(req));
+	const rl = await limits.skillsBrowse(clientIp(req));
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
 	const auth = await resolveOptionalAuth(req);
@@ -162,10 +162,11 @@ async function handleList(req, res) {
 	const hasMore = rows.length > limit;
 	const skills = rows.slice(0, limit).map((r) => toSkill(r, { includeInstalled: userId != null }));
 
-	return json(res, 200, {
-		skills,
-		next_cursor: hasMore ? rows[limit - 1].id : null,
-	});
+	const cacheHeaders = userId
+		? {}
+		: { 'cache-control': 'public, s-maxage=15, stale-while-revalidate=30' };
+
+	return json(res, 200, { skills, next_cursor: hasMore ? rows[limit - 1].id : null }, cacheHeaders);
 }
 
 function runListQuery(p) {

@@ -170,3 +170,48 @@ export const scene3dPrompts = [
   'Create a token-gated 3D scene for my NFT holders',
   'Mint the current 3D scene as a Solana NFT',
 ];
+
+export const ticker3dPrompts = [
+  'Show a live 3D rotating coin ticker for SOL',
+  'Display a 3D ticker for Bitcoin with current price',
+  'Render a live 3D coin for ETH with 24h change',
+  'Show me a spinning 3D ticker for the top pump.fun token',
+  'Display a 3D price ticker for PEPE',
+  'Render a live 3D coin for any token by ticker symbol',
+];
+
+export const nft3dPrompts = [
+  'Import my Solana NFT [mint address] into a 3D viewer',
+  'Show this Ethereum NFT in 3D: [contract:tokenId]',
+  'Fetch and render my NFT as a rotating 3D model',
+  'Load my NFT collection item into an orbit viewer',
+  'Display this NFT in a 3D scene I can spin around',
+  'Show me what this NFT looks like in a 3D environment',
+];
+
+export const walletviewPrompts = [
+  'Visualize my Solana wallet [address] as a 3D coin stack',
+  'Show my EVM wallet [0x…] balances as a 3D chart',
+  'Render my portfolio as a 3D coin tower visualization',
+  'Show all token balances in 3D for wallet [address]',
+  'Display my wallet holdings as stacked 3D cylinders',
+  'Visualize my crypto portfolio allocation in 3D',
+];
+
+export const txexplainPrompts = [
+  'Explain this Solana transaction: [paste signature]',
+  'Decode this Ethereum tx hash and show me the flow',
+  'Show a 3D diagram of token transfers in this transaction',
+  'What happened in this swap? [tx signature]',
+  'Visualize the account flow for this on-chain transaction',
+  'Break down this transaction into plain English with a 3D flow',
+];
+
+export const mintnftPrompts = [
+  'Mint the current 3D scene as a Solana NFT',
+  'Snapshot this scene and mint it with name "My 3D World"',
+  'Create an NFT from the current 3D visualization',
+  'Mint a scene NFT and send it to my wallet',
+  'Export the current scene as GLB and mint on Solana',
+  'Turn this 3D scene into a collectible NFT',
+];

@@ -1,7 +1,7 @@
 <script>
   import { mode } from '../stores.js';
   import Icon from '../Icon.svelte';
-  import { feTrendingUp, feBarChart2, feActivity, feAlertCircle, feMoreHorizontal } from '../feather.js';
+  import { feTrendingUp, feBarChart2, feActivity, feAlertCircle, feMoreHorizontal, feBox, feLayers } from '../feather.js';
   import MoreDropdown from './MoreDropdown.svelte';
 
   let moreOpen = false;
@@ -11,6 +11,8 @@
     { id: 'track',     label: 'Track a token',      icon: feActivity },
     { id: 'portfolio', label: 'Check my portfolio', icon: feBarChart2 },
     { id: 'rugcheck',  label: 'Rug check',          icon: feAlertCircle },
+    { id: 'chart3d',   label: '3D chart',           icon: feBox },
+    { id: 'scene3d',   label: '3D scene',           icon: feLayers },
   ];
 
   function pick(id) {

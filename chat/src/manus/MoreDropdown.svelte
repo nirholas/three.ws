@@ -4,18 +4,24 @@
   import { mode } from '../stores.js';
   import {
     feZap, feBarChart2, feLink, feRotateCw, feCode, feCamera, feSliders,
+    feBox, fePackage, feHexagon, feRepeat, feGlobe,
   } from '../feather.js';
 
   const dispatch = createEventDispatcher();
 
   const items = [
-    { id: 'pumpfun',   label: 'Pump.fun live feed',  icon: feZap },
-    { id: 'curve',     label: 'Bonding curve',        icon: feBarChart2 },
-    { id: 'wallet',    label: 'Connect wallet',       icon: feLink },
-    { id: 'whale',     label: 'Wallet tracker',       icon: feCamera },
-    { id: 'mascot',    label: 'Build token mascot',   icon: feRotateCw },
-    { id: 'embed',     label: 'Embed on token site',  icon: feCode },
-    { id: 'emotions',  label: 'Mascot emotions',      icon: feSliders },
+    { id: 'pumpfun',    label: 'Pump.fun live feed',   icon: feZap },
+    { id: 'curve',      label: 'Bonding curve',         icon: feBarChart2 },
+    { id: 'wallet',     label: 'Connect wallet',        icon: feLink },
+    { id: 'whale',      label: 'Wallet tracker',        icon: feCamera },
+    { id: 'mascot',     label: 'Build token mascot',    icon: feRotateCw },
+    { id: 'embed',      label: 'Embed on token site',   icon: feCode },
+    { id: 'emotions',   label: 'Mascot emotions',       icon: feSliders },
+    { id: 'ticker3d',   label: '3D token ticker',       icon: feHexagon },
+    { id: 'nft3d',      label: 'NFT 3D viewer',         icon: fePackage },
+    { id: 'walletview', label: 'Wallet 3D viz',         icon: feGlobe },
+    { id: 'txexplain',  label: 'Explain a transaction', icon: feRepeat },
+    { id: 'mintnft',    label: 'Mint scene as NFT',     icon: feBox },
   ];
 
   function pick(item) {

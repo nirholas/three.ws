@@ -9,6 +9,7 @@
 	// Browse state
 	let skills = [];
 	let loading = false;
+	let loaded = false;
 	let fetchFailed = false;
 	let searchQuery = '';
 	let debouncedSearch = '';
@@ -131,6 +132,7 @@
 			if (sort) p.set('sort', sort);
 			if (!reset && page) p.set('cursor', page);
 			const res = await fetch(`/api/skills?${p}`);
+			if (res.status === 429) throw new Error('Too many requests — please wait a moment and try again');
 			if (!res.ok) throw new Error('Failed to load skills');
 			const data = await res.json();
 			skills = reset ? (data.skills || []) : [...skills, ...(data.skills || [])];
@@ -141,6 +143,7 @@
 			notify(e.message, 'error');
 		} finally {
 			loading = false;
+			loaded = true;
 		}
 	}
 
@@ -439,11 +442,11 @@
 
 	// init and keyboard
 
-	$: if (open && skills.length === 0 && !loading && !fetchFailed) {
+	$: if (open && !loaded && !loading) {
 		Promise.all([loadSkills(true), loadCategories()]);
 	}
 
-	$: if (!open) fetchFailed = false;
+	$: if (!open) { fetchFailed = false; loaded = false; }
 
 	$: tagPills = publishForm.tags
 		.split(',')
@@ -796,6 +799,7 @@
 									alt=""
 									class="h-8 w-8 shrink-0 rounded-md object-cover"
 									loading="lazy"
+									on:error={(e) => { e.currentTarget.style.display = 'none'; }}
 								/>
 							{:else}
 								<span class="shrink-0 text-2xl leading-none">{plugin.avatar}</span>
