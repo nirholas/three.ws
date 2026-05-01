@@ -83,5 +83,12 @@
 		"label": "Wave",
 		"icon": "👋",
 		"loop": false
+	},
+	{
+		"name": "walk",
+		"source": "Walk Strafe Left.fbx",
+		"label": "Walk",
+		"icon": "🚶",
+		"loop": true
 	}
 ]

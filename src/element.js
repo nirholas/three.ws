@@ -132,18 +132,18 @@ const BASE_STYLE = `
 	}
 	.chrome {
 		position: absolute;
-		left: 12px;
-		right: 12px;
-		bottom: 12px;
+		inset: 0;
 		display: flex;
-		gap: 8px;
-		align-items: flex-end;
+		flex-direction: column;
+		padding: 12px;
+		box-sizing: border-box;
+		gap: 0;
 		pointer-events: none;
 	}
 	.chrome > * { pointer-events: auto; }
 	.chat {
-		flex: 1;
-		max-height: 40%;
+		flex: 0 0 auto;
+		max-height: 38%;
 		overflow-y: auto;
 		background: var(--agent-surface);
 		color: var(--agent-on-surface);
@@ -153,6 +153,59 @@ const BASE_STYLE = `
 		backdrop-filter: blur(12px);
 	}
 	.chat:empty { display: none; }
+	/* Transparent window in the centre — avatar canvas shows through here */
+	.avatar-anchor {
+		flex: 1;
+		position: relative;
+		pointer-events: none;
+		min-height: 80px;
+	}
+	/* Thought bubble — appears above avatar's head while thinking */
+	.thought-bubble {
+		position: absolute;
+		top: 12%;
+		left: 50%;
+		transform: translateX(-50%);
+		background: rgba(255, 255, 255, 0.95);
+		color: #1a1a2e;
+		border-radius: 20px;
+		padding: 8px 14px;
+		font: 600 13px/1 var(--agent-chat-font);
+		white-space: nowrap;
+		pointer-events: none;
+		opacity: 0;
+		transition: opacity 0.25s ease;
+		box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+		display: flex;
+		align-items: center;
+		gap: 5px;
+		z-index: 4;
+	}
+	.thought-bubble::after {
+		content: '';
+		position: absolute;
+		bottom: -8px;
+		left: 50%;
+		transform: translateX(-50%);
+		border-left: 8px solid transparent;
+		border-right: 8px solid transparent;
+		border-top: 8px solid rgba(255, 255, 255, 0.95);
+	}
+	.thought-bubble[data-active="true"] { opacity: 1; }
+	.thought-bubble .dot {
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background: var(--agent-accent);
+		animation: thought-dot 1.4s ease-in-out infinite;
+		flex-shrink: 0;
+	}
+	.thought-bubble .dot:nth-child(2) { animation-delay: 0.2s; }
+	.thought-bubble .dot:nth-child(3) { animation-delay: 0.4s; }
+	@keyframes thought-dot {
+		0%, 60%, 100% { transform: translateY(0); opacity: 0.35; }
+		30% { transform: translateY(-4px); opacity: 1; }
+	}
 	.msg { margin: 6px 0; padding: 8px 10px; border-radius: 10px; border-left: 3px solid transparent; transition: border-color .2s; }
 	.msg.celebration { border-left-color: rgba(34,197,94,0.85); background: rgba(34,197,94,0.06); }
 	.msg.concern { border-left-color: rgba(239,68,68,0.85); background: rgba(239,68,68,0.06); }
