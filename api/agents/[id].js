@@ -48,64 +48,64 @@ export default wrap(async function handler(req, res) {
 	}
 
 	if (sub === 'actions') {
-		const mod = await import('./_sub.js');
+		const mod = await import('./_id/_sub.js');
 		return mod.handleActions(req, res, id);
 	}
 
 	if (sub === 'animations') {
-		const mod = await import('./_sub.js');
+		const mod = await import('./_id/_sub.js');
 		return mod.handleAnimations(req, res, id);
 	}
 
 	if (sub === 'embed-policy') {
-		const mod = await import('./_sub.js');
+		const mod = await import('./_id/_sub.js');
 		return mod.handleEmbedPolicy(req, res, id);
 	}
 
 	if (sub === 'manifest') {
-		const mod = await import('./_sub.js');
+		const mod = await import('./_id/_sub.js');
 		return mod.handleManifest(req, res, id);
 	}
 
 	if (sub === 'sign') {
-		const mod = await import('./_sub.js');
+		const mod = await import('./_id/_sub.js');
 		return mod.handleSign(req, res, id);
 	}
 
 	if (sub === 'usage') {
-		const mod = await import('./_sub.js');
+		const mod = await import('./_id/_sub.js');
 		return mod.handleUsage(req, res, id);
 	}
 
 	if (sub === 'memories') {
-		const mod = await import('./_sub.js');
+		const mod = await import('./_id/_sub.js');
 		return mod.handleMemories(req, res, id, action);
 	}
 
 	if (sub === 'memory') {
 		if (action === 'pin') {
-			const mod = await import('./memory/pin.js');
+			const mod = await import('./_id/memory/pin.js');
 			return mod.default(req, res);
 		}
 		if (action && CID_RE.test(action)) {
-			const mod = await import('./memory/[cid].js');
+			const mod = await import('./_id/memory/[cid].js');
 			return mod.default(req, res);
 		}
 		return error(res, 404, 'not_found', 'unknown memory sub-resource');
 	}
 
 	if (sub === 'livekit-token') {
-		const mod = await import('./livekit-token.js');
+		const mod = await import('./_id/livekit-token.js');
 		return mod.handleLiveKitToken(req, res, id);
 	}
 
 	if (sub === 'embed') {
-		const mod = await import('./embed.js');
+		const mod = await import('./_id/embed.js');
 		return mod.handleEmbed(req, res, id);
 	}
 
 	if (sub === 'voice') {
-		const mod = await import('./voice.js');
+		const mod = await import('./_id/voice.js');
 		return mod.handleVoice(req, res, id, action);
 	}
 
