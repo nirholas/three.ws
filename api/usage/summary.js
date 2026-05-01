@@ -17,24 +17,26 @@ export default wrap(async (req, res) => {
 	}
 	if (!userId) return error(res, 401, 'unauthorized', 'authentication required');
 
-	const [counts] = await sql`
+	const [row] = await sql`
 		select
+			q.*,
 			(select count(*) from avatars where owner_id = ${userId} and deleted_at is null) as avatars,
 			(select coalesce(sum(size_bytes),0) from avatars where owner_id = ${userId} and deleted_at is null) as bytes,
 			(select count(*) from usage_events where user_id = ${userId} and created_at > now() - interval '24 hours' and kind = 'tool_call') as mcp_calls_24h,
 			(select count(*) from usage_events where user_id = ${userId} and created_at > now() - interval '30 days') as events_30d
+		from users u
+		join plan_quotas q on q.plan = u.plan
+		where u.id = ${userId}
 	`;
-	const [plan] = await sql`
-		select q.* from users u join plan_quotas q on q.plan = u.plan where u.id = ${userId}
-	`;
-	if (!plan) return error(res, 500, 'internal', 'plan quota record missing for user');
+	if (!row) return error(res, 500, 'internal', 'plan quota record missing for user');
+	const { avatars, bytes, mcp_calls_24h, events_30d, ...plan } = row;
 	return json(res, 200, {
 		plan,
 		counts: {
-			avatars: Number(counts.avatars),
-			bytes: Number(counts.bytes),
-			mcp_calls_24h: Number(counts.mcp_calls_24h),
-			events_30d: Number(counts.events_30d),
+			avatars: Number(avatars),
+			bytes: Number(bytes),
+			mcp_calls_24h: Number(mcp_calls_24h),
+			events_30d: Number(events_30d),
 		},
 	});
 });

@@ -25,6 +25,7 @@ import { TOOLS, rpcError, rpcEnvelope } from '../src/pump/mcp-tools.js';
 import { generateVanityKey } from '../src/pump/vanity-keygen.js';
 import bs58 from 'bs58';
 import { resolveSnsName, reverseLookupAddress } from '../src/solana/sns.js';
+import { scanFirstClaims } from './pump/[action].js';
 
 // ── On-chain handlers ──────────────────────────────────────────────────────
 
