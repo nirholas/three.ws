@@ -244,6 +244,14 @@ export const env = {
 		return opt('OPENROUTER_API_KEY');
 	},
 
+	// Rider payment gate — Solana wallet that receives $THREE, and Helius webhook secret.
+	get RIDER_VAULT_ADDRESS() {
+		return opt('RIDER_VAULT_ADDRESS');
+	},
+	get RIDER_HELIUS_WEBHOOK_SECRET() {
+		return opt('RIDER_HELIUS_WEBHOOK_SECRET');
+	},
+
 	// Neynar API key — used by POST /api/agents/:id/memory/seed/farcaster.
 	// When unset, the endpoint returns 501 not_configured.
 	get NEYNAR_API_KEY() {
