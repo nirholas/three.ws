@@ -1,4 +1,3 @@
-var fs = require('fs');
 var ip = require('ip');
 var path = require('path');
 var webpack = require('webpack');
@@ -26,12 +25,6 @@ module.exports = {
       ? `${process.env.CODESPACE_NAME}-3000.${process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN || 'app.github.dev'}`
       : undefined,
     proxy: {
-      '/threews-api': {
-        target: 'https://three.ws',
-        changeOrigin: true,
-        secure: true,
-        pathRewrite: { '^/threews-api': '/api' }
-      },
       '/r2-proxy': {
         target: 'https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev',
         changeOrigin: true,

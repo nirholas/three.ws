@@ -47,7 +47,7 @@
 		iframe.src = src;
 		iframe.title = 'three.ws widget ' + widgetId;
 		iframe.loading = 'lazy';
-		iframe.allow = 'autoplay; xr-spatial-tracking; clipboard-write';
+		iframe.allow = 'autoplay; clipboard-write';
 		iframe.setAttribute('width',  width);
 		iframe.setAttribute('height', height);
 		iframe.style.border       = border + 'px solid transparent';
