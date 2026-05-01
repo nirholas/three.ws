@@ -1427,7 +1427,7 @@
 		// started the helper.
 		const remoteServerConfigured =
 			$remoteServer.password !== '' ||
-			$remoteServer.address !== 'http://localhost:8081';
+			$remoteServer.address !== '';
 		if ($localProvidersEnabled || remoteServerConfigured) {
 			try {
 				tree = await (

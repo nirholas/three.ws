@@ -18,6 +18,8 @@ import { registerPumpFunAutonomousSkills } from './agent-skills-pumpfun-autonomo
 import { registerPumpFunComposeSkills } from './agent-skills-pumpfun-compose.js';
 import { attachPumpFunMemoryHooks } from './agent-skills-pumpfun-hooks.js';
 import { registerJupiterSkills } from './agent-skills-jupiter.js';
+import { registerBlinksSkills } from './agent-skills-blinks.js';
+import { registerNftSkills } from './agent-skills-nfts.js';
 
 /**
  * @typedef {Object} SkillContext
@@ -65,6 +67,8 @@ export class AgentSkills {
 		registerPumpFunComposeSkills(this);
 		attachPumpFunMemoryHooks(protocol, memory);
 		registerJupiterSkills(this);
+		registerBlinksSkills(this);
+		registerNftSkills(this);
 	}
 
 	// ── Registry ──────────────────────────────────────────────────────────────

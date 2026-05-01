@@ -53,7 +53,7 @@ export function setAPIKeysFromObject(obj) {
 	mistralAPIKey.set(obj.mistral || '');
 }
 
-export const remoteServer = persisted('remoteServer', { address: 'http://localhost:8081', password: '' });
+export const remoteServer = persisted('remoteServer', { address: '', password: '' });
 export const localProvidersEnabled = persisted('localProvidersEnabled', false);
 export const syncServer = persisted('syncServer', {
 	address: syncHostedAddress,

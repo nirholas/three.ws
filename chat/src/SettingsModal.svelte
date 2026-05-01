@@ -340,14 +340,14 @@
 					<span class="mb-2 flex items-center">
 						<span class="ml-[3px]">Tool server address </span>
 						<Tooltip
-							content="Start the three.ws chat tool server, then enter the address and passphrase here. The default address is http://localhost:8081"
+							content="Start the three.ws chat tool server, then enter the address and passphrase here."
 							class="ml-2"
 						/>
 					</span>
 					<input
 						type="text"
 						bind:value={$remoteServer.address}
-						placeholder="Enter server address (default http://localhost:8081)"
+						placeholder="Enter server address"
 						class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-none"
 					/></label
 				>
