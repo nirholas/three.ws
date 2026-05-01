@@ -15,7 +15,7 @@
 		Clock,
 	} from 'three';
 	import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-	import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
+	import { clone as cloneSkeleton } from 'three/addons/utils/SkeletonUtils.js';
 
 	const gltfCache = new Map(); // url -> Promise<gltf>
 	let walkClipPromise = null;
@@ -91,7 +91,7 @@
 		if (!avatarUrl) return;
 		try {
 			const gltf = await loadGLTF(avatarUrl);
-			const root = SkeletonUtils.clone(gltf.scene);
+			const root = cloneSkeleton(gltf.scene);
 			scene = new Scene();
 			scene.add(root);
 			scene.add(new HemisphereLight(0xffffff, 0x444444, 2.0));

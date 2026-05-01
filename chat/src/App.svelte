@@ -454,8 +454,28 @@
 	let scrollableEl = null;
 	let previousScrollTop = 0;
 	let autoscrollCanceled;
+	let scrollAnimFrame = null;
 	function scrollToBottom() {
-		scrollableEl.scrollTop = scrollableEl.scrollHeight;
+		if (!scrollableEl) return;
+		const step = () => {
+			scrollAnimFrame = null;
+			if (!scrollableEl) return;
+			const target = scrollableEl.scrollHeight - scrollableEl.clientHeight;
+			const current = scrollableEl.scrollTop;
+			const delta = target - current;
+			if (delta <= 0.5) {
+				scrollableEl.scrollTop = target;
+				return;
+			}
+			// Gentle easing: move ~8% of the remaining distance per frame,
+			// capped so we never jump more than 6px in a single frame.
+			const next = current + Math.min(Math.max(delta * 0.08, 0.5), 6);
+			scrollableEl.scrollTop = next;
+			scrollAnimFrame = requestAnimationFrame(step);
+		};
+		if (scrollAnimFrame == null) {
+			scrollAnimFrame = requestAnimationFrame(step);
+		}
 	}
 	let textareaEls = [];
 	let inputTextareaEl;
