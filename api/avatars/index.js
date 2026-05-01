@@ -123,8 +123,12 @@ async function handleCreate(req, res) {
 					order by created_at asc
 					limit 1
 				`;
-			} catch {
-				// Log and ignore — don't block the response.
+			} catch (err) {
+				console.error('[avatars] auto-link to agent_identities failed', {
+					avatarId: avatar.id,
+					userId: auth.userId,
+					error: err?.message,
+				});
 			}
 		});
 	}

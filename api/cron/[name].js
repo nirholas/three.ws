@@ -7,6 +7,7 @@
  * especially around auth / CRON_SECRET checks.
  *
  * Cron paths handled (kebab-case → handler):
+ *   audit-log-cleanup             → handleAuditLogCleanup
  *   erc8004-crawl                 → handleErc8004Crawl
  *   index-delegations             → handleIndexDelegations
  *   process-subscriptions         → handleProcessSubscriptions
@@ -59,6 +60,7 @@ const HANDLERS = {
 	'run-dca': handleRunDca,
 	'run-distribute-payments': handleRunDistributePayments,
 	'run-subscriptions': handleRunSubscriptions,
+	'audit-log-cleanup': handleAuditLogCleanup,
 	'settle-royalties': handleSettleRoyalties,
 	'solana-attest-event-cleanup': handleSolanaAttestEventCleanup,
 	'solana-attestations-crawl': handleSolanaAttestationsCrawl,
@@ -2332,4 +2334,28 @@ async function handleSettleRoyalties(req, res) {
 	const { settleAllPendingRoyalties } = await import('../_lib/royalty.js');
 	const report = await settleAllPendingRoyalties();
 	return json(res, 200, { ok: true, ...report });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// audit-log-cleanup — retention policy: keep 365 days of audit_log rows.
+// ═══════════════════════════════════════════════════════════════════════════
+
+const AUDIT_LOG_RETENTION_DAYS = 365;
+
+async function handleAuditLogCleanup(req, res) {
+	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
+
+	const auth = req.headers['authorization'] || '';
+	const cronSecret = env.CRON_SECRET;
+	const fromCron = req.headers['x-vercel-cron'] === '1';
+	if (!fromCron && cronSecret && auth !== `Bearer ${cronSecret}`) {
+		return error(res, 401, 'unauthorized', 'cron secret required');
+	}
+
+	const result = await sql`
+		delete from audit_log
+		where created_at < now() - (${AUDIT_LOG_RETENTION_DAYS} || ' days')::interval
+		returning id
+	`;
+	return json(res, 200, { deleted: result.length, retention_days: AUDIT_LOG_RETENTION_DAYS });
 }

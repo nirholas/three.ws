@@ -1,6 +1,13 @@
 -- Migration: audit log for sensitive operations.
 -- Apply: psql "$DATABASE_URL" -f api/_lib/migrations/2026-05-01-audit-log.sql
 -- Idempotent.
+--
+-- Coverage: avatar deletion (MCP + REST), API key revocation,
+-- OAuth refresh-token revocation, wallet unlink. Helper: api/_lib/audit.js.
+--
+-- Backfill: not possible — events before 2026-05-01 have no row. Log starts
+-- the day this migration is applied. Retention: 365 days, enforced by the
+-- audit-log-cleanup cron (see vercel.json).
 
 create table if not exists audit_log (
     id          uuid primary key default gen_random_uuid(),

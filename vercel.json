@@ -964,6 +964,10 @@
 	],
 	"crons": [
 		{
+			"path": "/api/cron/audit-log-cleanup",
+			"schedule": "0 4 * * *"
+		},
+		{
 			"path": "/api/cron/erc8004-crawl",
 			"schedule": "*/15 * * * *"
 		},

@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import { SignJWT, jwtVerify } from 'jose';
 import { env } from './env.js';
 import { sql } from './db.js';
+import { logAudit } from './audit.js';
 import { randomToken, sha256, hmacSha256, constantTimeEquals } from './crypto.js';
 
 const ACCESS_TTL_SEC = 60 * 60; // 1h access tokens
@@ -104,8 +105,17 @@ export async function rotateRefreshToken({ oldSecret, clientId, narrowScope }) {
 
 export async function revokeRefreshToken(secret, clientId) {
 	const hash = await sha256(secret);
-	await sql`update oauth_refresh_tokens set revoked_at = now()
-	          where token_hash = ${hash} and client_id = ${clientId} and revoked_at is null`;
+	const [row] = await sql`update oauth_refresh_tokens set revoked_at = now()
+	          where token_hash = ${hash} and client_id = ${clientId} and revoked_at is null
+	          returning id, user_id`;
+	if (row) {
+		logAudit({
+			userId: row.user_id,
+			action: 'revoke_oauth_token',
+			resourceId: row.id,
+			meta: { client_id: clientId },
+		});
+	}
 }
 
 // ── browser sessions (cookie auth for the site itself) ──────────────────────
