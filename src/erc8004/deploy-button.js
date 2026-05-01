@@ -21,7 +21,6 @@ import { ensureWallet, getIdentityRegistry } from './agent-registry.js';
 import { REGISTRY_DEPLOYMENTS } from './abi.js';
 import {
 	CHAIN_META,
-	DEFAULT_CHAIN_ID,
 	supportedChainIdsGrouped,
 	switchChain,
 	addressExplorerUrl,
@@ -94,9 +93,9 @@ export class DeployButton {
 	 *                                          richer manifest: avatarId,
 	 *                                          description, skills.
 	 * @param {HTMLElement} opts.container     Where to mount.
-	 * @param {number} [opts.preferredChainId] Defaults to DEFAULT_CHAIN_ID.
+	 * @param {number|string} [opts.preferredChainId] Defaults to Solana mainnet.
 	 */
-	constructor({ agent, container, preferredChainId = DEFAULT_CHAIN_ID }) {
+	constructor({ agent, container, preferredChainId = SOLANA_MAINNET }) {
 		this._agent = agent;
 		this._container = container;
 		this._chainId = preferredChainId;
@@ -151,9 +150,9 @@ export class DeployButton {
 		this._root.innerHTML = `
 			<div class="deploy-chain-row">
 				<select class="deploy-chain-select" title="Choose chain to deploy to" aria-label="Target chain">
-					<optgroup label="Mainnets">${evmOptionsFor(mainnets)}</optgroup>
-					<optgroup label="Testnets">${evmOptionsFor(testnets)}</optgroup>
-					<optgroup label="Solana (beta)">${solanaOptionFor(SOLANA_MAINNET)}${solanaOptionFor(SOLANA_DEVNET)}</optgroup>
+					<optgroup label="Solana">${solanaOptionFor(SOLANA_MAINNET)}${solanaOptionFor(SOLANA_DEVNET)}</optgroup>
+					<optgroup label="EVM Mainnets">${evmOptionsFor(mainnets)}</optgroup>
+					<optgroup label="EVM Testnets">${evmOptionsFor(testnets)}</optgroup>
 				</select>
 				<button class="deploy-btn" title="Deploy this agent as an ERC-8004 token on-chain">
 					&#x2B22; Deploy on-chain

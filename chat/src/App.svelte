@@ -2213,7 +2213,7 @@
 							}}
 						>
 							<ul
-							class="max-w-[760px] mx-auto w-full px-6 !list-none flex flex-col {splitView ? 'rounded-br-lg border-r' : ''}"
+							class="max-w-[760px] mx-auto w-full px-6 !list-none flex flex-col relative {splitView ? 'rounded-br-lg border-r' : ''}"
 						>
 								{#each convo.messages as message, i (message.id)}
 									<Message
@@ -2241,6 +2241,103 @@
 										}}
 									/>
 								{/each}
+
+								{#if true}
+									<!-- svelte-ignore a11y-no-static-element-interactions -->
+									<div
+										class="z-[100] flex flex-col items-end gap-2 select-none"
+										class:cursor-grabbing={dragging}
+										style={dragPos.x !== null
+											? `position: fixed; left: ${dragPos.x}px; top: ${dragPos.y}px;`
+											: 'position: absolute; bottom: 0; right: 0;'}
+										on:mousedown={onAvatarDragStart}
+										role="none"
+									>
+										{#if agentPickerOpen}
+											<div class="mb-1 w-72 rounded-xl border border-gray-200 bg-white p-3 shadow-xl">
+												<AgentPicker on:pick={(e) => { agentPickerOpen = false; if (!e.detail) clearAgentFromConvo(); }} />
+											</div>
+										{/if}
+
+										{#if effectiveAgentId && agentVisible}
+											<!-- svelte-ignore custom-element-no-implicit-ns -->
+											<agent-3d
+												bind:this={agentEl}
+												agent-id={effectiveAgentId}
+												mode="inline"
+												width="220"
+												height="220"
+												background="transparent"
+												kiosk
+												name-plate="off"
+												style="width:220px;height:220px; cursor: grab;"
+											></agent-3d>
+										{:else if $talkingHeadEnabled && agentVisible}
+											<div style="cursor: grab;">
+												<TalkingHead bind:this={talkingHead} on:ready={onTalkingHeadReady} avatarUrl={$talkingHeadAvatarUrl || undefined} />
+											</div>
+										{/if}
+
+										<div class="flex items-center gap-1.5">
+											<!-- TTS toggle -->
+											<button
+												class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md ring-1 transition hover:bg-gray-50
+													{$ttsEnabled ? 'ring-indigo-400' : 'ring-gray-200'}"
+												title={$ttsEnabled ? 'TTS on — click to mute' : 'TTS off — click to enable voice'}
+												on:click={() => ttsEnabled.update(v => !v)}
+											>
+												<Icon icon={feSpeaker} class="h-3.5 w-3.5 {$ttsEnabled ? 'text-indigo-500' : 'text-slate-400'}" />
+											</button>
+
+											<!-- TalkingHead toggle (when no agent-3d) -->
+											{#if !effectiveAgentId}
+												<button
+													class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md ring-1 transition hover:bg-gray-50
+														{$talkingHeadEnabled ? 'ring-indigo-400' : 'ring-gray-200'}"
+													title={$talkingHeadEnabled ? 'Hide avatar' : 'Show 3D avatar'}
+													on:click={() => {
+														talkingHeadEnabled.update(v => !v);
+														talkingHeadReady = false;
+														pendingSpeak = null;
+													}}
+												>
+													<Icon icon={feCpu} class="h-3.5 w-3.5 {$talkingHeadEnabled ? 'text-indigo-500' : 'text-slate-400'}" />
+												</button>
+											{/if}
+
+											<!-- Agent picker -->
+											<button
+												class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-gray-200 transition hover:bg-gray-50"
+												title="Choose agent avatar"
+												on:click={() => (agentPickerOpen = !agentPickerOpen)}
+											>
+												<Icon icon={feUsers} class="h-3.5 w-3.5 text-slate-600" />
+											</button>
+
+											<!-- Agent settings (only when an agent is active) -->
+											{#if $activeAgent}
+												<button
+													class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-gray-200 transition hover:bg-gray-50"
+													title="Agent settings"
+													on:click={() => (showAgentSettings = true)}
+												>
+													<Icon icon={feSettings} class="h-3.5 w-3.5 text-slate-600" />
+												</button>
+											{/if}
+
+											<!-- Show/hide toggle (when agent-3d is set) -->
+											{#if effectiveAgentId}
+												<button
+													class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-gray-200 transition hover:bg-gray-50"
+													title={agentVisible ? 'Hide agent' : 'Show agent'}
+													on:click={() => (agentVisible = !agentVisible)}
+												>
+													<Icon icon={agentVisible ? feX : feCpu} class="h-3.5 w-3.5 text-slate-600" />
+												</button>
+											{/if}
+										</div>
+									</div>
+								{/if}
 							</ul>
 						</div>
 
@@ -2406,101 +2503,6 @@
 	</div>
 {/if}
 
-{#if true}
-	<!-- svelte-ignore a11y-no-static-element-interactions -->
-	<div
-		class="z-[100] flex flex-col items-end gap-2 select-none"
-		class:cursor-grabbing={dragging}
-		style={dragPos.x !== null
-			? `position: fixed; left: ${dragPos.x}px; top: ${dragPos.y}px;`
-			: 'position: fixed; bottom: 1rem; right: 1rem;'}
-		on:mousedown={onAvatarDragStart}
-		role="none"
-	>
-		{#if agentPickerOpen}
-			<div class="mb-1 w-72 rounded-xl border border-gray-200 bg-white p-3 shadow-xl">
-				<AgentPicker on:pick={(e) => { agentPickerOpen = false; if (!e.detail) clearAgentFromConvo(); }} />
-			</div>
-		{/if}
-
-		{#if effectiveAgentId && agentVisible}
-			<!-- svelte-ignore custom-element-no-implicit-ns -->
-			<agent-3d
-				bind:this={agentEl}
-				agent-id={effectiveAgentId}
-				mode="inline"
-				width="220"
-				height="220"
-				background="transparent"
-				kiosk
-				name-plate="off"
-				style="width:220px;height:220px; cursor: grab;"
-			></agent-3d>
-		{:else if $talkingHeadEnabled && agentVisible}
-			<div style="cursor: grab;">
-				<TalkingHead bind:this={talkingHead} on:ready={onTalkingHeadReady} avatarUrl={$talkingHeadAvatarUrl || undefined} />
-			</div>
-		{/if}
-
-		<div class="flex items-center gap-1.5">
-			<!-- TTS toggle -->
-			<button
-				class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md ring-1 transition hover:bg-gray-50
-					{$ttsEnabled ? 'ring-indigo-400' : 'ring-gray-200'}"
-				title={$ttsEnabled ? 'TTS on — click to mute' : 'TTS off — click to enable voice'}
-				on:click={() => ttsEnabled.update(v => !v)}
-			>
-				<Icon icon={feSpeaker} class="h-3.5 w-3.5 {$ttsEnabled ? 'text-indigo-500' : 'text-slate-400'}" />
-			</button>
-
-			<!-- TalkingHead toggle (when no agent-3d) -->
-			{#if !effectiveAgentId}
-				<button
-					class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md ring-1 transition hover:bg-gray-50
-						{$talkingHeadEnabled ? 'ring-indigo-400' : 'ring-gray-200'}"
-					title={$talkingHeadEnabled ? 'Hide avatar' : 'Show 3D avatar'}
-					on:click={() => {
-						talkingHeadEnabled.update(v => !v);
-						talkingHeadReady = false;
-						pendingSpeak = null;
-					}}
-				>
-					<Icon icon={feCpu} class="h-3.5 w-3.5 {$talkingHeadEnabled ? 'text-indigo-500' : 'text-slate-400'}" />
-				</button>
-			{/if}
-
-			<!-- Agent picker -->
-			<button
-				class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-gray-200 transition hover:bg-gray-50"
-				title="Choose agent avatar"
-				on:click={() => (agentPickerOpen = !agentPickerOpen)}
-			>
-				<Icon icon={feUsers} class="h-3.5 w-3.5 text-slate-600" />
-			</button>
-
-			<!-- Agent settings (only when an agent is active) -->
-			{#if $activeAgent}
-				<button
-					class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-gray-200 transition hover:bg-gray-50"
-					title="Agent settings"
-					on:click={() => (showAgentSettings = true)}
-				>
-					<Icon icon={feSettings} class="h-3.5 w-3.5 text-slate-600" />
-				</button>
-			{/if}
-
-			<!-- Show/hide toggle (when agent-3d is set) -->
-			{#if effectiveAgentId}
-				<button
-					class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-gray-200 transition hover:bg-gray-50"
-					title={agentVisible ? 'Hide agent' : 'Show agent'}
-					on:click={() => (agentVisible = !agentVisible)}
-				>
-					<Icon icon={agentVisible ? feX : feCpu} class="h-3.5 w-3.5 text-slate-600" />
-				</button>
-			{/if}
-		</div>
-	</div>
 {/if}
 {/if}
 
