@@ -145,7 +145,7 @@ export async function complete(convo, onupdate, onabort) {
 	const response = await completions(get(controller).signal);
 	if (!response.ok) {
 		let msg = `API error ${response.status}`;
-		try { const e = await response.json(); msg = e?.error?.message || e?.message || msg; } catch {}
+		try { const e = await response.json(); msg = e?.error_description || e?.error?.message || e?.message || msg; } catch {}
 		throw new Error(msg);
 	}
 	if (stream) {

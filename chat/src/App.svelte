@@ -91,7 +91,7 @@
 	const defaultConvo = {
 		id: uuidv4(),
 		time: Date.now(),
-		models: [{ id: null, name: 'Select a model', provider: null }],
+		models: [BUILTIN_MODELS[0]],
 		messages: [],
 		versions: {},
 		tools: [],

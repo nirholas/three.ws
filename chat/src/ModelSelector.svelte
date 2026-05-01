@@ -123,6 +123,9 @@
 								{#if model.modality === 'text->image'}
 									<Icon icon={feImage} class="mt-px h-3 w-3 text-slate-800" />
 								{/if}
+								{#if model.provider === 'Built-in'}
+									<span class="rounded px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide bg-green-50 text-green-700">Free</span>
+								{/if}
 
 								<Checkbox
 									checked={!!convo.models?.find((m) => m.id === model.id)}
