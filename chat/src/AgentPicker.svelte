@@ -5,30 +5,61 @@
 	const dispatch = createEventDispatcher();
 
 	let query = '';
-	let agents = [];
-	let loading = false;
+	let myAgents = [];
+	let marketAgents = [];
+	let loadingMine = false;
+	let loadingMarket = false;
 	let debounceTimer;
 
-	async function search(q) {
-		loading = true;
+	async function searchMarket(q) {
+		loadingMarket = true;
 		try {
 			const url = `/api/marketplace/agents${q ? `?q=${encodeURIComponent(q)}` : ''}`;
 			const res = await fetch(url);
 			if (res.ok) {
 				const json = await res.json();
-				agents = json.data?.items ?? [];
+				marketAgents = json.data?.items ?? [];
 			}
 		} catch {}
-		loading = false;
+		loadingMarket = false;
 	}
+
+	async function loadMine() {
+		loadingMine = true;
+		try {
+			const res = await fetch('/api/agents', { credentials: 'include' });
+			if (res.ok) {
+				const json = await res.json();
+				myAgents = json.agents ?? [];
+			}
+		} catch {}
+		loadingMine = false;
+	}
+
+	$: filteredMine = query
+		? myAgents.filter((a) =>
+				(a.name || '').toLowerCase().includes(query.toLowerCase()) ||
+				(a.description || '').toLowerCase().includes(query.toLowerCase()),
+		  )
+		: myAgents;
 
 	function onInput() {
 		clearTimeout(debounceTimer);
-		debounceTimer = setTimeout(() => search(query), 300);
+		debounceTimer = setTimeout(() => searchMarket(query), 300);
 	}
 
 	async function pick(agent) {
-		loading = true;
+		try {
+			const res = await fetch(`/api/agents/${agent.id}`, { credentials: 'include' });
+			if (res.ok) {
+				const json = await res.json();
+				const detail = json.agent ?? json.data?.agent ?? agent;
+				localAgentId.set(detail.id);
+				activeAgent.set(detail);
+				dispatch('pick', detail);
+				return;
+			}
+		} catch {}
 		try {
 			const res = await fetch(`/api/marketplace/agents/${agent.id}`);
 			if (res.ok) {
@@ -37,13 +68,12 @@
 				localAgentId.set(detail.id);
 				activeAgent.set(detail);
 				dispatch('pick', detail);
+				return;
 			}
-		} catch {
-			localAgentId.set(agent.id);
-			activeAgent.set(agent);
-			dispatch('pick', agent);
-		}
-		loading = false;
+		} catch {}
+		localAgentId.set(agent.id);
+		activeAgent.set(agent);
+		dispatch('pick', agent);
 	}
 
 	function clear() {
@@ -63,7 +93,8 @@
 		return COLORS[h % COLORS.length];
 	}
 
-	search('');
+	loadMine();
+	searchMarket('');
 </script>
 
 <div class="flex flex-col gap-3 p-1">
@@ -76,42 +107,96 @@
 		autofocus
 	/>
 
-	{#if $localAgentId}
-		<button
-			class="text-left text-[12px] text-slate-400 underline hover:text-slate-600"
-			on:click={clear}
-		>Remove agent</button>
-	{/if}
+	<div class="flex items-center justify-between">
+		{#if $localAgentId}
+			<button
+				class="text-left text-[12px] text-slate-400 underline hover:text-slate-600"
+				on:click={clear}
+			>Remove agent</button>
+		{:else}
+			<span></span>
+		{/if}
+		<a
+			href="/dashboard"
+			class="text-[12px] text-indigo-500 hover:text-indigo-700"
+			target="_blank"
+			rel="noopener"
+		>+ Create agent</a>
+	</div>
 
-	{#if loading}
-		<p class="text-center text-[12px] text-slate-400 py-4">Loading…</p>
-	{:else if agents.length === 0}
-		<p class="text-center text-[12px] text-slate-400 py-4">No agents found</p>
-	{:else}
-		<div class="grid grid-cols-3 gap-2 max-h-72 overflow-y-auto pr-0.5">
-			{#each agents as agent}
-				<button
-					class="flex flex-col items-center gap-1.5 rounded-xl p-2 text-center transition hover:bg-gray-50
-						{$localAgentId === agent.id ? 'bg-indigo-50 ring-2 ring-indigo-300' : 'ring-1 ring-gray-100'}"
-					on:click={() => pick(agent)}
-					title={agent.description || agent.name}
-				>
-					{#if agent.thumbnail_url}
-						<img
-							src={agent.thumbnail_url}
-							alt={agent.name}
-							class="h-14 w-14 rounded-lg object-cover"
-							loading="lazy"
-						/>
-					{:else}
-						<div
-							class="flex h-14 w-14 items-center justify-center rounded-lg text-[14px] font-bold text-white"
-							style="background:{color(agent.id)}"
-						>{initials(agent.name)}</div>
-					{/if}
-					<p class="w-full truncate text-[11px] font-medium text-slate-700 leading-tight">{agent.name}</p>
-				</button>
-			{/each}
+	<div class="max-h-[28rem] overflow-y-auto pr-0.5 flex flex-col gap-3">
+		<!-- My Agents -->
+		<div>
+			<p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1.5">My Agents</p>
+			{#if loadingMine}
+				<p class="text-center text-[12px] text-slate-400 py-3">Loading…</p>
+			{:else if filteredMine.length === 0}
+				<p class="text-[12px] text-slate-400 py-2">
+					{query ? 'No matches in your agents' : 'You haven\'t created any agents yet.'}
+				</p>
+			{:else}
+				<div class="grid grid-cols-3 gap-2">
+					{#each filteredMine as agent}
+						<button
+							class="flex flex-col items-center gap-1.5 rounded-xl p-2 text-center transition hover:bg-gray-50
+								{$localAgentId === agent.id ? 'bg-indigo-50 ring-2 ring-indigo-300' : 'ring-1 ring-gray-100'}"
+							on:click={() => pick(agent)}
+							title={agent.description || agent.name}
+						>
+							{#if agent.thumbnail_url}
+								<img
+									src={agent.thumbnail_url}
+									alt={agent.name}
+									class="h-14 w-14 rounded-lg object-cover"
+									loading="lazy"
+								/>
+							{:else}
+								<div
+									class="flex h-14 w-14 items-center justify-center rounded-lg text-[14px] font-bold text-white"
+									style="background:{color(agent.id)}"
+								>{initials(agent.name)}</div>
+							{/if}
+							<p class="w-full truncate text-[11px] font-medium text-slate-700 leading-tight">{agent.name}</p>
+						</button>
+					{/each}
+				</div>
+			{/if}
 		</div>
-	{/if}
+
+		<!-- Marketplace -->
+		<div>
+			<p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1.5">Marketplace</p>
+			{#if loadingMarket}
+				<p class="text-center text-[12px] text-slate-400 py-3">Loading…</p>
+			{:else if marketAgents.length === 0}
+				<p class="text-[12px] text-slate-400 py-2">No agents found</p>
+			{:else}
+				<div class="grid grid-cols-3 gap-2">
+					{#each marketAgents as agent}
+						<button
+							class="flex flex-col items-center gap-1.5 rounded-xl p-2 text-center transition hover:bg-gray-50
+								{$localAgentId === agent.id ? 'bg-indigo-50 ring-2 ring-indigo-300' : 'ring-1 ring-gray-100'}"
+							on:click={() => pick(agent)}
+							title={agent.description || agent.name}
+						>
+							{#if agent.thumbnail_url}
+								<img
+									src={agent.thumbnail_url}
+									alt={agent.name}
+									class="h-14 w-14 rounded-lg object-cover"
+									loading="lazy"
+								/>
+							{:else}
+								<div
+									class="flex h-14 w-14 items-center justify-center rounded-lg text-[14px] font-bold text-white"
+									style="background:{color(agent.id)}"
+								>{initials(agent.name)}</div>
+							{/if}
+							<p class="w-full truncate text-[11px] font-medium text-slate-700 leading-tight">{agent.name}</p>
+						</button>
+					{/each}
+				</div>
+			{/if}
+		</div>
+	</div>
 </div>
