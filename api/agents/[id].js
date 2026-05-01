@@ -123,5 +123,10 @@ export default wrap(async function handler(req, res) {
 		return mod.handlePayments(req, res, id);
 	}
 
+	if (sub === 'memory-seed') {
+		const mod = await import('./_id/memory-seed.js');
+		return mod.default(req, res, id);
+	}
+
 	return handleGetOne(req, res, id);
 });

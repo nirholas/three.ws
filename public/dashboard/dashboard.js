@@ -96,6 +96,7 @@ const tabs = {
 	keys: renderKeys,
 	mcp: renderMcp,
 	monetization: renderMonetization,
+	payments: renderPayments,
 	subscriptions: renderSubscriptions,
 	billing: renderBilling,
 	revenue: renderRevenue,
@@ -3668,4 +3669,115 @@ async function renderEarnings(root) {
 			</tbody>
 		</table>
 	`;
+}
+
+// ── Agent Payments ───────────────────────────────────────────────────────────
+async function renderPayments(root) {
+	root.innerHTML = `
+		<h1>Payments</h1>
+		<p class="sub">Payments sent automatically when your agent uses paid skills.</p>
+		<div id="pay-body"><div class="muted">Loading…</div></div>
+	`;
+	const body = root.querySelector('#pay-body');
+
+	let agentId;
+	try {
+		const data = await api.getAgentMe();
+		agentId = data.agent?.id;
+	} catch {
+		body.innerHTML = '<div class="err">Could not load agent.</div>';
+		return;
+	}
+
+	if (!agentId) {
+		body.innerHTML = '<div class="card" style="text-align:center;padding:48px 24px"><p class="muted">No agent found. Create an agent first.</p></div>';
+		return;
+	}
+
+	let nextPayCursor = null;
+
+	async function loadPayPage(replace) {
+		const params = new URLSearchParams({ direction: 'sent', limit: '20' });
+		if (nextPayCursor) params.set('cursor', nextPayCursor);
+		let data;
+		try {
+			const res = await fetch(`/api/agents/${agentId}/payments?${params}`, { credentials: 'include' });
+			if (!res.ok) throw new Error(await res.text());
+			data = await res.json();
+		} catch (e) {
+			body.innerHTML = `<div class="err">${esc(String(e.message || e))}</div>`;
+			return;
+		}
+
+		if (replace && data.payments.length === 0) {
+			body.innerHTML = `
+				<div class="card" style="text-align:center;padding:48px 24px">
+					<div style="font-size:40px;margin-bottom:12px">\u{1F4B3}</div>
+					<h3 style="margin:0 0 8px">No payments yet</h3>
+					<p class="muted" style="margin:0">Payments are sent automatically when the agent uses paid skills.</p>
+				</div>`;
+			return;
+		}
+
+		if (replace) {
+			body.innerHTML = `
+				<table style="width:100%;border-collapse:collapse">
+					<thead>
+						<tr style="text-align:left;border-bottom:1px solid var(--border)">
+							<th style="padding:6px 8px 10px;font-size:13px;font-weight:600">Date</th>
+							<th style="padding:6px 8px 10px;font-size:13px;font-weight:600">Skill</th>
+							<th style="padding:6px 8px 10px;font-size:13px;font-weight:600">Amount (ETH)</th>
+							<th style="padding:6px 8px 10px;font-size:13px;font-weight:600">Status</th>
+							<th style="padding:6px 8px 10px;font-size:13px;font-weight:600">Tx</th>
+						</tr>
+					</thead>
+					<tbody id="pay-rows"></tbody>
+				</table>
+				<div id="pay-more"></div>
+			`;
+		}
+
+		const rows = body.querySelector('#pay-rows');
+		const moreEl = body.querySelector('#pay-more');
+
+		for (const p of data.payments) {
+			const amountEth = p.amount_wei
+				? (Number(BigInt(p.amount_wei)) / 1e18).toFixed(8).replace(/0+$/, '').replace(/\.$/, '.0')
+				: '—';
+			const statusColor = p.status === 'confirmed' ? '#00e5a0' : p.status === 'failed' ? '#ff5c5c' : '#888';
+			const explorerBase = p.chain_id === 8453
+				? 'https://basescan.org/tx/'
+				: p.chain_id === 84532
+					? 'https://sepolia.basescan.org/tx/'
+					: 'https://etherscan.io/tx/';
+			const txLink = p.tx_hash
+				? `<a href="${explorerBase}${esc(p.tx_hash)}" target="_blank" rel="noopener" style="font-size:12px">${esc(p.tx_hash.slice(0, 10))}…</a>`
+				: '—';
+			const tr = document.createElement('tr');
+			tr.style.borderBottom = '1px solid var(--border)';
+			tr.innerHTML = `
+				<td style="padding:8px 10px;color:#888;font-size:13px">${new Date(p.created_at).toLocaleDateString()}</td>
+				<td style="padding:8px 10px;font-size:13px">${esc(p.skill_name || p.memo || '—')}</td>
+				<td style="padding:8px 10px;font-variant-numeric:tabular-nums;font-size:13px">${esc(amountEth)}</td>
+				<td style="padding:8px 10px"><span style="color:${statusColor};font-size:12px;font-weight:600;text-transform:uppercase">${esc(p.status)}</span></td>
+				<td style="padding:8px 10px">${txLink}</td>
+			`;
+			rows.appendChild(tr);
+		}
+
+		nextPayCursor = data.next_cursor || null;
+		if (moreEl) {
+			moreEl.innerHTML = '';
+			if (nextPayCursor) {
+				const btn = document.createElement('button');
+				btn.className = 'btn sec';
+				btn.style.marginTop = '12px';
+				btn.textContent = 'Load more';
+				btn.addEventListener('click', () => loadPayPage(false));
+				moreEl.appendChild(btn);
+			}
+		}
+	}
+
+	await loadPayPage(true);
 }

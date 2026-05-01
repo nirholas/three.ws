@@ -252,6 +252,30 @@
 				font-weight: 500;
 			}
 			.link-row a.action:hover { color: #c4b8ff; }
+			.social-card {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 12px;
+				padding: 14px 16px;
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				margin-bottom: 10px;
+			}
+			.social-card .provider-info { display: flex; align-items: center; gap: 10px; }
+			.social-card .provider-icon {
+				width: 32px; height: 32px; border-radius: 8px;
+				background: #20202c; display: flex; align-items: center;
+				justify-content: center; font-size: 16px; flex-shrink: 0;
+			}
+			.social-card .provider-name { font-size: 14px; color: #ddd; font-weight: 500; }
+			.social-card .provider-meta { font-size: 12px; color: #888; margin-top: 2px; }
+			.social-card .actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+			.agent-seed-area {
+				margin-top: 16px; padding: 14px 16px;
+				background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+			}
 			@media (max-width: 768px) {
 				.layout { grid-template-columns: 1fr; }
 				aside {
@@ -306,6 +330,7 @@
 				<div class="aside-section">Account</div>
 				<a href="#profile" data-tab="profile" class="active">Profile</a>
 				<a href="#account" data-tab="account">Account</a>
+				<a href="#connected-accounts" data-tab="connected-accounts">Connected Accounts</a>
 				<a href="#privacy" data-tab="privacy">Privacy</a>
 				<a href="#sessions" data-tab="sessions">Sessions</a>
 				<div class="aside-section">Workspace</div>
@@ -444,6 +469,41 @@
 						<p class="muted" style="font-size:14px;margin-bottom:12px">This revokes all other sessions but keeps your current one active.</p>
 						<button class="btn sec" id="revoke-others-btn">Revoke all other sessions</button>
 						<span class="inline-msg" id="sessions-msg" style="display:none"></span>
+					</div>
+				</div>
+
+				<!-- ── Connected Accounts ────────────────────────────────── -->
+				<div class="page" id="tab-connected-accounts">
+					<h2>Connected Accounts</h2>
+					<p class="sub">Link third-party accounts to seed your agent's memory</p>
+
+					<div class="section">
+						<h3>Social Profiles</h3>
+						<div class="social-card" id="github-card">
+							<div class="provider-info">
+								<div class="provider-icon">⬡</div>
+								<div>
+									<div class="provider-name">GitHub</div>
+									<div class="provider-meta" id="github-status-text">Checking…</div>
+								</div>
+							</div>
+							<div class="actions" id="github-actions">
+								<span class="muted" style="font-size:13px">Loading…</span>
+							</div>
+						</div>
+						<span class="inline-msg" id="github-msg" style="display:none;margin-top:10px"></span>
+					</div>
+
+					<div class="agent-seed-area" id="seed-area" style="display:none">
+						<h3 style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:#666;margin:0 0 10px">Seed Agent Memory</h3>
+						<p class="muted" style="font-size:13px;margin:0 0 12px">Fetch your GitHub activity and distill it into agent memory facts (once per 24 hours per agent).</p>
+						<label for="inp-seed-agent-id" style="display:block;font-size:12px;color:#888;margin-bottom:6px">Agent ID</label>
+						<input id="inp-seed-agent-id" type="text" placeholder="Paste agent UUID…" style="max-width:360px" />
+						<div class="row" style="margin-top:8px">
+							<button class="btn" id="seed-btn">Seed memory</button>
+							<span class="inline-msg" id="seed-msg" style="display:none"></span>
+						</div>
+						<div id="seed-results" style="display:none;margin-top:12px"></div>
 					</div>
 				</div>
 
@@ -674,6 +734,167 @@
 				}
 			});
 
+			// ── Connected Accounts ────────────────────────────────────────
+			const _urlP = new URLSearchParams(location.search);
+			const _xAgentId = _urlP.get('agent_id') || '';
+
+			// GitHub section
+			async function loadGitHubStatus() {
+				const statusEl = document.getElementById('github-status-text');
+				const actionsEl = document.getElementById('github-actions');
+				const seedArea = document.getElementById('seed-area');
+				if (!statusEl) return;
+				try {
+					const data = await apiJson('/api/auth/github/status');
+					if (data.connected) {
+						const when = new Date(data.connected_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+						statusEl.textContent = `@${data.username} · connected ${when}`;
+						actionsEl.innerHTML = '<span class="tag green">Connected</span>';
+						if (seedArea) {
+							seedArea.style.display = 'block';
+							// Pre-fill agent id from URL
+							const agentIdFromQuery = _urlP.get('agent_id');
+							if (agentIdFromQuery) document.getElementById('inp-seed-agent-id').value = agentIdFromQuery;
+						}
+					} else {
+						statusEl.textContent = 'Not connected';
+						const agentId = _urlP.get('agent_id') || '';
+						const connectUrl = `/api/auth/github/connect${agentId ? `?agent_id=${encodeURIComponent(agentId)}` : ''}`;
+						actionsEl.innerHTML = `<a href="${connectUrl}" class="btn" style="font-size:12px;padding:5px 14px;text-decoration:none">Connect GitHub</a>`;
+						if (seedArea) seedArea.style.display = 'none';
+					}
+				} catch {
+					if (statusEl) statusEl.textContent = 'Could not load status';
+				}
+				const ghResult = _urlP.get('github');
+				const ghMsg = document.getElementById('github-msg');
+				if (ghMsg && ghResult) {
+					if (ghResult === 'connected') showMsg(ghMsg, 'ok', 'GitHub connected successfully.');
+					else if (ghResult === 'denied') showMsg(ghMsg, 'err', 'GitHub connection was cancelled.');
+					else if (ghResult === 'error') showMsg(ghMsg, 'err', 'GitHub connection failed — please try again.');
+				}
+			}
+
+			document.getElementById('seed-btn')?.addEventListener('click', async () => {
+				const btn = document.getElementById('seed-btn');
+				const msg = document.getElementById('seed-msg');
+				const resultsEl = document.getElementById('seed-results');
+				const agentId = document.getElementById('inp-seed-agent-id').value.trim();
+				if (!agentId) return showMsg(msg, 'err', 'Enter an agent ID.');
+				btn.disabled = true;
+				btn.textContent = 'Seeding…';
+				if (resultsEl) resultsEl.style.display = 'none';
+				try {
+					const data = await apiJson(`/api/agents/${encodeURIComponent(agentId)}/memory-seed`, {
+						method: 'POST',
+						headers: { 'content-type': 'application/json' },
+						body: '{}',
+					});
+					showMsg(msg, 'ok', `Seeded ${data.seeded} fact${data.seeded === 1 ? '' : 's'}.`);
+					if (resultsEl && data.facts && data.facts.length) {
+						resultsEl.style.display = 'block';
+						resultsEl.innerHTML = `<p class="muted" style="font-size:12px;margin:0 0 8px">Facts stored:</p><ul style="margin:0;padding-left:18px;color:#ccc;font-size:13px">` +
+							data.facts.map(f => `<li style="margin-bottom:4px">${f.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</li>`).join('') +
+							`</ul>`;
+					}
+				} catch (e) {
+					showMsg(msg, 'err', e.data?.error_description || 'Seed failed.');
+				} finally {
+					btn.disabled = false;
+					btn.textContent = 'Seed memory';
+				}
+			});
+
+			async function loadConnectedAccounts() {
+				loadGitHubStatus();
+				const el = document.getElementById('x-connect-status');
+				const msg = document.getElementById('x-msg');
+				try {
+					const connectUrl = _xAgentId
+						? `/api/auth/x/connect?agent_id=${encodeURIComponent(_xAgentId)}`
+						: '/api/auth/x/connect';
+
+					if (!_xAgentId) {
+						el.innerHTML = `
+							<div class="link-row">
+								<div><div class="label">X (Twitter)</div><div class="val" id="x-status-val">Loading…</div></div>
+								<a href="${connectUrl}" class="btn sec" id="x-connect-btn">Connect X</a>
+							</div>`;
+						// Try to get status from a user's first agent
+						try {
+							const agents = await apiJson('/api/agents/me');
+							const agentId = agents?.agents?.[0]?.id;
+							if (agentId) {
+								renderXStatus(el, agentId, connectUrl);
+							} else {
+								document.getElementById('x-status-val').textContent = 'Not connected';
+							}
+						} catch {
+							document.getElementById('x-status-val').textContent = 'Not connected';
+						}
+					} else {
+						renderXStatus(el, _xAgentId, connectUrl);
+					}
+				} catch {
+					el.innerHTML = '<p class="muted" style="font-size:14px">Could not load connection status.</p>';
+				}
+
+				// Show toast from redirect
+				const xResult = _urlP.get('x');
+				if (xResult === 'connected') showMsg(msg, 'ok', 'X account connected successfully.');
+				else if (xResult === 'denied') showMsg(msg, 'err', 'X connection cancelled.');
+				else if (xResult === 'error') showMsg(msg, 'err', 'X connection failed — try again.');
+			}
+
+			async function renderXStatus(el, agentId, connectUrl) {
+				try {
+					const data = await apiJson(`/api/agents/${agentId}/memory/seed/x`);
+					if (!data.connected) {
+						el.innerHTML = `
+							<div class="link-row">
+								<div><div class="label">X (Twitter)</div><div class="val">Not connected</div></div>
+								<a href="${connectUrl}" class="btn sec">Connect X</a>
+							</div>`;
+					} else {
+						const seededAgo = data.seeded_at
+							? Math.round((Date.now() - new Date(data.seeded_at)) / 3600_000)
+							: null;
+						const seededLabel = seededAgo === null
+							? 'Never seeded'
+							: seededAgo < 1 ? 'Seeded just now'
+							: `Last seeded ${seededAgo}h ago`;
+						el.innerHTML = `
+							<div class="link-row">
+								<div>
+									<div class="label">X (Twitter)</div>
+									<div class="val">@${data.username} &mdash; ${seededLabel}${data.fact_count ? ` &mdash; ${data.fact_count} facts` : ''}</div>
+								</div>
+								<div style="display:flex;gap:8px;align-items:center">
+									<button class="btn sec" id="x-seed-btn">Seed memory</button>
+									<a href="${connectUrl}" class="action" style="font-size:13px">Reconnect</a>
+								</div>
+							</div>`;
+						document.getElementById('x-seed-btn')?.addEventListener('click', async () => {
+							const btn = document.getElementById('x-seed-btn');
+							const msg = document.getElementById('x-msg');
+							btn.disabled = true;
+							btn.textContent = 'Seeding…';
+							try {
+								const res = await apiJson(`/api/agents/${agentId}/memory/seed/x`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
+								showMsg(msg, 'ok', `Seeded ${res.seeded} facts from @${res.username}.`);
+								renderXStatus(el, agentId, connectUrl);
+							} catch (e) {
+								showMsg(msg, 'err', e.data?.error_description || 'Seeding failed.');
+								btn.disabled = false;
+								btn.textContent = 'Seed memory';
+							}
+						});
+					}
+				} catch {
+					el.innerHTML = '<p class="muted" style="font-size:14px">Could not load X status.</p>';
+				}
+			}
+
 			// ── Tab routing ───────────────────────────────────────────────
 			function navigate(tab) {
 				document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -684,6 +905,7 @@
 				const link = document.querySelector(`aside a[data-tab="${tab}"]`);
 				if (link) link.classList.add('active');
 				if (tab === 'sessions') loadSessions();
+				if (tab === 'connected-accounts') loadConnectedAccounts();
 			}
 
 			document.querySelectorAll('aside a[data-tab]').forEach(a => {
@@ -704,7 +926,9 @@
 				} catch {
 					return; // redirect already fired
 				}
-				navigate(location.hash.slice(1) || 'profile');
+				// Support ?tab= from OAuth redirects as well as #hash
+				const tabFromQuery = _urlP.get('tab');
+				navigate(tabFromQuery || location.hash.slice(1) || 'profile');
 			})();
 		</script>
 	</body>

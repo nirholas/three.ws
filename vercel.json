@@ -322,6 +322,10 @@
 			"dest": "/api/agents/[id]"
 		},
 		{
+			"src": "/api/agents/([^/]+)/memory/seed/x",
+			"dest": "/api/agents/[id]/memory-seed-x?id=$1"
+		},
+		{
 			"src": "/api/agents/([^/]+)/memory/seed/farcaster",
 			"dest": "/api/agents/[id]"
 		},
@@ -378,6 +382,26 @@
 			"dest": "/api/agents/check-name"
 		},
 		{
+			"src": "/api/auth/github/connect",
+			"dest": "/api/auth/github/[action]?action=connect"
+		},
+		{
+			"src": "/api/auth/github/callback",
+			"dest": "/api/auth/github/[action]?action=callback"
+		},
+		{
+			"src": "/api/auth/github/status",
+			"dest": "/api/auth/github/[action]?action=status"
+		},
+		{
+			"src": "/api/auth/x/connect",
+			"dest": "/api/auth/x/[action]?action=connect"
+		},
+		{
+			"src": "/api/auth/x/callback",
+			"dest": "/api/auth/x/[action]?action=callback"
+		},
+		{
 			"src": "/api/auth/wallet/link",
 			"dest": "/api/auth/wallet/[action]?action=link"
 		},
@@ -428,6 +452,10 @@
 		{
 			"src": "/api/avatars/regenerate",
 			"dest": "/api/avatars/[id]"
+		},
+		{
+			"src": "/api/agents/([^/]+)/memory-seed",
+			"dest": "/api/agents/[id]"
 		},
 		{
 			"src": "/api/agents/([^/]+)",

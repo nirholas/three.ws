@@ -7,7 +7,10 @@
 	"author": "nirholas",
 	"license": "Apache-2.0",
 	"overrides": {
-		"serialize-javascript": ">=7.0.5"
+		"serialize-javascript": ">=7.0.5",
+		"@sveltejs/vite-plugin-svelte": {
+			"vite": "^5.0.0"
+		}
 	},
 	"engines": {
 		"node": "24.x"
