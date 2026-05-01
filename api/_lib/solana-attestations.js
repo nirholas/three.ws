@@ -16,8 +16,10 @@ export const KIND_MAP = {
 	accept:     'threews.accept.v1',
 	revoke:     'threews.revoke.v1',
 	dispute:    'threews.dispute.v1',
+	stake:      'threews.stake.v1',
 };
 export const KINDS_ALL = Object.values(KIND_MAP);
+export const MIN_STAKE_LAMPORTS = 1_000_000n; // 0.001 SOL
 
 // Validate a parsed memo payload against its schema. Returns true iff well-formed.
 export function validatePayload(p) {
@@ -36,9 +38,26 @@ export function validatePayload(p) {
 		case 'threews.revoke.v1':
 		case 'threews.dispute.v1':
 			return typeof p.target_signature === 'string';
+		case 'threews.stake.v1':
+			return Number.isInteger(p.score) && p.score >= 1 && p.score <= 5;
 		default:
 			return false;
 	}
+}
+
+// For stake attestations: the lamports the attester (signer) sent in the same tx.
+// Returns 0n if no positive transfer from attester is detected.
+export function lamportsTransferredFromAttester(tx, attester) {
+	if (!tx?.meta || !attester) return 0n;
+	const keys = (tx.transaction.message.staticAccountKeys || tx.transaction.message.accountKeys || [])
+		.map((k) => (typeof k?.toBase58 === 'function' ? k.toBase58() : String(k)));
+	const idx = keys.indexOf(attester);
+	if (idx < 0) return 0n;
+	const pre = BigInt(tx.meta.preBalances?.[idx] ?? 0);
+	const post = BigInt(tx.meta.postBalances?.[idx] ?? 0);
+	const fee = BigInt(tx.meta.fee ?? 0);
+	const delta = pre - post - fee;
+	return delta > 0n ? delta : 0n;
 }
 
 // Extract the JSON envelope from a confirmed-tx's memo log.
@@ -97,9 +116,20 @@ export async function crawlAgentAttestations({ agentAsset, network, ownerWallet,
 		if (!KINDS_ALL.includes(payload.kind)) { skipped++; continue; }
 
 		const attester = attesterFromTx(tx);
-		const verified = computeVerified({ payload, attester, ownerWallet });
 		const taskId   = payload.task_id || null;
 		const target   = payload.target_signature || null;
+
+		// For stake attestations, fold the lamports actually transferred into the payload
+		// and require it to meet the minimum. Unverified if the transfer is below threshold.
+		let stakedLamports = 0n;
+		if (payload.kind === 'threews.stake.v1') {
+			stakedLamports = lamportsTransferredFromAttester(tx, attester);
+			payload.lamports = stakedLamports.toString();
+		}
+
+		const verified = payload.kind === 'threews.stake.v1'
+			? stakedLamports >= MIN_STAKE_LAMPORTS
+			: computeVerified({ payload, attester, ownerWallet });
 
 		const result = await sql`
 			insert into solana_attestations (
