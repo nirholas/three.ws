@@ -70,6 +70,10 @@ export const pluginLibraryUrl = persisted('pluginLibraryUrl', 'https://ai-agent-
 export const talkingHeadEnabled = persisted('talkingHeadEnabled', false);
 export const talkingHeadAvatarUrl = persisted('talkingHeadAvatarUrl', '');
 
+// True while the assistant is generating a response — drives the chat avatar
+// walk animation so the agent visibly "moves with the chat".
+export const generating = writable(false);
+
 export const route = writable(
 	typeof window !== 'undefined' ? (window.location.hash.slice(1) || 'chat') : 'chat'
 );

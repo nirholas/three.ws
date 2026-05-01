@@ -582,9 +582,15 @@
 					if (!data || !data.user) {
 						sessionStorage.setItem('login_redirect', '/create');
 						location.replace('/login');
+					} else {
+						var el = document.getElementById('page-loading');
+						if (el) el.remove();
 					}
 				})
-				.catch(function () {});
+				.catch(function () {
+					var el = document.getElementById('page-loading');
+					if (el) el.remove();
+				});
 		</script>
 	</head>
 	<body>

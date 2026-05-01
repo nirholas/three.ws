@@ -118,7 +118,7 @@
 									query = '';
 								}}
 							>
-								<CompanyLogo {model} size="w-7 h-7" rounded="rounded" />
+								<CompanyLogo {model} size="w-7 h-7" rounded="rounded" live={false} />
 								<span class="line-clamp-1">{formatModelName(model)}</span>
 								{#if model.modality === 'text->image'}
 									<Icon icon={feImage} class="mt-px h-3 w-3 text-slate-800" />

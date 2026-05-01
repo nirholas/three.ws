@@ -3,8 +3,10 @@
 	import AvatarIcon from './AvatarIcon.svelte';
 
 	export let model;
-	export let size = 'h-3.5 w-3.5';
+	export let size = 'h-7 w-7';
 	export let rounded = null;
+	/** Live-animated walking avatar. Set false for dense lists (dropdown rows) — uses still frame. */
+	export let live = true;
 
 	// Remember to update hasCompanyLogo from convo.js when adding new logos.
 	const base = import.meta.env.BASE_URL;
@@ -12,7 +14,7 @@
 
 {#if $talkingHeadAvatarUrl}
 	<span class="{size} {rounded || 'rounded-sm'} overflow-hidden inline-block shrink-0">
-		<AvatarIcon avatarUrl={$talkingHeadAvatarUrl} />
+		<AvatarIcon avatarUrl={$talkingHeadAvatarUrl} {live} />
 	</span>
 {:else if model && model.provider}
 	{#if model.provider === 'OpenAI' || model.id.startsWith('openai')}
