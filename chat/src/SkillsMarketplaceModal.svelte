@@ -392,6 +392,7 @@
 			console.warn('[plugin-library] failed to load registry index:', err);
 		}
 		loadingLibrary = false;
+		libraryLoaded = true;
 	}
 
 	$: filteredLibraryPlugins = libraryQuery
@@ -446,7 +447,9 @@
 		}
 	}
 
-	$: if (view === 'library' && libraryPlugins.length === 0) loadPluginLibrary();
+	let libraryLoaded = false;
+	$: if (view === 'library' && !libraryLoaded && !loadingLibrary) loadPluginLibrary();
+
 
 	// init and keyboard
 
