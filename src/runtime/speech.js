@@ -2,6 +2,7 @@
 
 export { LiveKitVoice } from './livekit-voice.js';
 import { startLipsync } from './lipsync.js';
+import { ACTION_TYPES } from '../agent-protocol.js';
 
 export class BrowserTTS {
 	constructor({ voiceId = 'default', rate = 1, pitch = 1, lang = 'en-US' } = {}) {
@@ -45,11 +46,15 @@ export class BrowserTTS {
 		});
 	}
 
-	cancel() {
+	cancel(protocol) {
+		const wasSpeak = this._speaking;
 		if ('speechSynthesis' in window) window.speechSynthesis.cancel();
 		this._lipsync?.stop();
 		this._lipsync = null;
 		this._speaking = false;
+		if (wasSpeak && protocol) {
+			protocol.emit({ type: ACTION_TYPES.INTERRUPTED, payload: {} });
+		}
 	}
 
 	get speaking() {
@@ -286,7 +291,8 @@ export class ElevenLabsTTS {
 		});
 	}
 
-	cancel() {
+	cancel(protocol) {
+		const wasSpeak = this._speaking;
 		if (this._abort) {
 			try {
 				this._abort.abort();
@@ -299,6 +305,9 @@ export class ElevenLabsTTS {
 		this._speaking = false;
 		// Resolve any pending speak() promise so callers don't hang
 		if (this._onEnd) this._onEnd();
+		if (wasSpeak && protocol) {
+			protocol.emit({ type: ACTION_TYPES.INTERRUPTED, payload: {} });
+		}
 	}
 
 	get speaking() {

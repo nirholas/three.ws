@@ -23,6 +23,7 @@ export const ACTION_TYPES = {
 	VALIDATE: 'validate', // validation result (errors, warnings, hints)
 	PRESENCE: 'presence', // agent came online / went idle
 	PROTOCOL_ERROR: 'protocol-error', // emitted by the rate limiter on cascade detection
+	INTERRUPTED: 'interrupted', // user spoke while agent was mid-TTS
 	PERMISSIONS_REDEEM_START: 'permissions.redeem.start',
 	PERMISSIONS_REDEEM_SUCCESS: 'permissions.redeem.success',
 	PERMISSIONS_REDEEM_ERROR: 'permissions.redeem.error',

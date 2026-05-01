@@ -136,6 +136,14 @@ export class IdleAnimation {
 		Object.assign(this._channels, partial);
 	}
 
+	/**
+	 * Pause or resume saccade micro-movements externally (e.g. while user is speaking).
+	 * @param {boolean} active — true = pause indefinitely, false = release immediately
+	 */
+	setPauseSaccade(active) {
+		this._saccPauseTimer = active ? 999 : 0;
+	}
+
 	/** Remove protocol listeners. */
 	dispose() {
 		this._protocol.off(ACTION_TYPES.SPEAK, this._onSpeak);

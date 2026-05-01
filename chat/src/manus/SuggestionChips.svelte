@@ -1,16 +1,16 @@
 <script>
   import { mode } from '../stores.js';
   import Icon from '../Icon.svelte';
-  import { feBox, feHexagon, feTrendingUp, feCode, feMoreHorizontal } from '../feather.js';
+  import { feTrendingUp, feBox, feActivity, feHexagon, feMoreHorizontal } from '../feather.js';
   import MoreDropdown from './MoreDropdown.svelte';
 
   let moreOpen = false;
 
   const chips = [
-    { id: '3d-avatar', label: 'Build 3D avatar',     icon: feBox },
-    { id: 'onchain',   label: 'Mint agent on-chain', icon: feHexagon },
-    { id: 'token',     label: 'Launch token',         icon: feTrendingUp },
-    { id: 'widget',    label: 'Deploy as widget',     icon: feCode },
+    { id: 'token',   label: 'Launch a memecoin',   icon: feTrendingUp },
+    { id: 'mascot',  label: 'Build token mascot',  icon: feBox },
+    { id: 'monitor', label: 'Monitor my coin',      icon: feActivity },
+    { id: 'onchain', label: 'Mint mascot as NFT',   icon: feHexagon },
   ];
 
   function pick(id) {

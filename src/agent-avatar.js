@@ -145,6 +145,12 @@ export class AgentAvatar {
 		this._keystrokePitch = 0; // look-down impulse (radians, decays)
 		this._keystrokeYaw = 0; // lateral drift impulse (radians, decays)
 
+		// Gaze bias state
+		this._userSpeaking = false;
+		this._agentThinking = false;
+		this._agentThinkTimer = 0;
+		this._thinkGazeYaw = 0.1; // randomised on each THINK event
+
 		// One-shot gesture tracking
 		this._oneShotAction = null;
 		this._oneShotDuration = 0;
@@ -193,6 +199,7 @@ export class AgentAvatar {
 
 		// Subscribe to protocol events
 		this._sub(ACTION_TYPES.SPEAK, this._onSpeak.bind(this));
+		this._sub(ACTION_TYPES.THINK, this._onThink.bind(this));
 		this._sub(ACTION_TYPES.GESTURE, this._onGesture.bind(this));
 		this._sub(ACTION_TYPES.EMOTE, this._onEmote.bind(this));
 		this._sub(ACTION_TYPES.LOOK_AT, this._onLookAt.bind(this));
@@ -246,6 +253,15 @@ export class AgentAvatar {
 	/** Play a named gesture animation */
 	playGesture(name) {
 		this._triggerOneShot(name);
+	}
+
+	/**
+	 * Signal whether the user is actively speaking (mic input active).
+	 * When true the avatar holds eye contact; when false normal gaze resumes.
+	 * @param {boolean} active
+	 */
+	setUserSpeaking(active) {
+		this._userSpeaking = active;
 	}
 
 	/**
@@ -331,6 +347,7 @@ export class AgentAvatar {
 	// ── Protocol Handlers ─────────────────────────────────────────────────────
 
 	_onSpeak(action) {
+		this._agentThinking = false; // agent started speaking — done thinking
 		const text = action.payload?.text || '';
 		const { valence, arousal } = this._analyzeSentiment(text);
 
@@ -344,6 +361,15 @@ export class AgentAvatar {
 		// Trigger mouth/talk animation hint
 		const duration = Math.max(1.5, text.split(' ').length * 0.3);
 		this._triggerOneShot('talk', duration);
+	}
+
+	_onThink(_action) {
+		if (!this._agentThinking) {
+			// Pick a stable look-away direction for this thinking episode.
+			this._thinkGazeYaw = (Math.random() * 2 - 1) * 0.15;
+		}
+		this._agentThinking = true;
+		this._agentThinkTimer = 0;
 	}
 
 	_onGesture(action) {
@@ -460,6 +486,12 @@ export class AgentAvatar {
 		}
 		this._normaliseNeutral();
 
+		// Decay _agentThinking flag after 3 s
+		if (this._agentThinking) {
+			this._agentThinkTimer += dt;
+			if (this._agentThinkTimer >= 3.0) this._agentThinking = false;
+		}
+
 		// Stage 2: One-shot gesture timer
 		if (this._isPlayingOneShot) {
 			this._oneShotTimer += dt;
@@ -522,6 +554,15 @@ export class AgentAvatar {
 
 		// ── Head tilt (curiosity + empathy both tilt the head) ────────────
 		this._targetTilt = (w.curiosity * 12 + w.empathy * 9 + w.concern * 4) * DEG2RAD;
+
+		// Gaze bias — overrides emotion-derived tilt
+		if (this._userSpeaking) {
+			this._targetTilt = 0.04; // slight upward attentive posture
+			this._idle?.setPauseSaccade(true);
+		} else if (this._agentThinking || w.patience > 0.3) {
+			this._targetTilt = -0.06; // look slightly down when thinking / waiting
+		}
+
 		this._currentTilt = _lerp(this._currentTilt, this._targetTilt, dt * 3.0);
 
 		// ── Forward lean (curiosity leans in, patience leans back) ────────
@@ -619,6 +660,14 @@ export class AgentAvatar {
 		} else if (followMode === 'keystrokes') {
 			targetYaw = this._keystrokeYaw;
 		}
+
+		// Gaze bias — highest priority wins
+		if (this._userSpeaking) {
+			targetYaw = 0; // face camera directly
+		} else if (this._agentThinking || this._emotion.patience > 0.3) {
+			targetYaw = this._thinkGazeYaw; // look away to think
+		}
+
 		this._currentYaw = _lerp(this._currentYaw, targetYaw, 0.08);
 
 		const yaw = MathUtils.clamp(
