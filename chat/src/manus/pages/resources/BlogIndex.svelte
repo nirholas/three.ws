@@ -19,8 +19,7 @@
   <div class="grid md:grid-cols-3 gap-6">
     {#each articles as a}
       <article class="bg-white border border-[#E5E3DC] rounded-2xl p-6 hover:bg-[#FAF9F4] transition-colors cursor-pointer">
-        <div class="aspect-[16/9] rounded-xl bg-[#EFECE3]"></div>
-        <span class="inline-block text-xs uppercase tracking-wide text-[#6B6B6B] mt-4">{a.tag}</span>
+        <span class="inline-block text-xs uppercase tracking-wide text-[#6B6B6B]">{a.tag}</span>
         <h2 class="font-serif text-xl mt-2 text-[#1A1A1A]">{a.title}</h2>
         <p class="text-sm text-[#6B6B6B] mt-2 line-clamp-2">{a.excerpt}</p>
         <div class="text-xs text-[#9C9A93] mt-4">{a.date} · {a.read}</div>
