@@ -198,6 +198,10 @@ export class AgentAvatar {
 		// Listeners stored so we can detach later
 		this._listeners = [];
 
+		// Spatial audio
+		this._tts = null;
+		this._positionalAudio = null;
+
 		this._tickBound = this._tickEmotion.bind(this);
 		this._onMouseMove = this._handleMouseMove.bind(this);
 		this._onKeyFollowDown = this._handleKeyPress.bind(this);
@@ -212,6 +216,9 @@ export class AgentAvatar {
 
 		// Build the morph mesh cache once instead of traversing every frame
 		this._buildMorphCache();
+
+		// Wire spatial audio to the loaded avatar
+		this._initSpatialAudio();
 
 		// Hook into the viewer's per-frame loop
 		if (!this.viewer._afterAnimateHooks) this.viewer._afterAnimateHooks = [];
@@ -271,6 +278,11 @@ export class AgentAvatar {
 		this._idle?.dispose();
 		this._idle = null;
 		// END:IDLE_LOOP_DISPOSE
+		if (this._positionalAudio) {
+			try { this._positionalAudio.disconnect(); } catch {}
+			this._positionalAudio.parent?.remove(this._positionalAudio);
+			this._positionalAudio = null;
+		}
 	}
 
 	// ── Public API ────────────────────────────────────────────────────────────
@@ -359,6 +371,18 @@ export class AgentAvatar {
 		}
 	}
 
+	/**
+	 * Bind a TTS instance so spatial audio can be wired through it.
+	 * Call before or after attach() — both orderings are handled.
+	 * @param {import('./runtime/speech.js').ElevenLabsTTS|null} tts
+	 */
+	setTTS(tts) {
+		this._tts = tts;
+		if (this._positionalAudio && tts instanceof ElevenLabsTTS) {
+			tts.setPositionalAudio(this._positionalAudio);
+		}
+	}
+
 	/** Set a world-space point for the avatar to look toward */
 	setLookTarget(worldPos) {
 		this._lookTarget = worldPos ? worldPos.clone() : null;
@@ -367,6 +391,26 @@ export class AgentAvatar {
 	/** Get current emotion blend (read-only snapshot) */
 	get emotionState() {
 		return { ...this._emotion };
+	}
+
+	// ── Spatial Audio ─────────────────────────────────────────────────────────
+
+	_initSpatialAudio() {
+		if (!this.viewer.audioListener) return;
+		if (this._positionalAudio) {
+			this._positionalAudio.parent?.remove(this._positionalAudio);
+		}
+		this._positionalAudio = new PositionalAudio(this.viewer.audioListener);
+		this._positionalAudio.setRefDistance(1.5);
+		this._positionalAudio.setRolloffFactor(1.0);
+		this._positionalAudio.setDistanceModel('inverse');
+
+		const anchor = this._findHeadBone() ?? this.viewer.content;
+		if (anchor) anchor.add(this._positionalAudio);
+
+		if (this._tts instanceof ElevenLabsTTS) {
+			this._tts.setPositionalAudio(this._positionalAudio);
+		}
 	}
 
 	// ── Protocol Handlers ─────────────────────────────────────────────────────
