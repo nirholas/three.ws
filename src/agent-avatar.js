@@ -165,6 +165,9 @@ export class AgentAvatar {
 		this._targetLean = 0;
 		this._currentYaw = 0; // horizontal gaze (follow mode)
 
+		// Body yaw — rotates root to face camera
+		this._bodyYaw = null; // null = uninitialised (snap on first frame)
+
 		// Follow mode state
 		this._mouseGaze = { x: 0, y: 0 }; // normalised -1..1
 		this._keystrokePitch = 0; // look-down impulse (radians, decays)
@@ -704,6 +707,7 @@ export class AgentAvatar {
 		this._currentLean = _lerp(this._currentLean, this._targetLean, dt * 2.0);
 
 		this._applyHeadTransform();
+		this._trackBodyToCamera(dt);
 	}
 
 	// ── Morph Target Helpers ─────────────────────────────────────────────────
@@ -741,6 +745,30 @@ export class AgentAvatar {
 				this._morphCurrent[name] = next;
 			}
 		}
+	}
+
+	// ── Body Yaw ─────────────────────────────────────────────────────────────
+
+	_trackBodyToCamera(dt) {
+		const content = this.viewer?.content;
+		const cam = this.viewer?.activeCamera?.position;
+		if (!content || !cam) return;
+
+		// Snap to current model rotation on first call so there's no initial jump.
+		if (this._bodyYaw === null) this._bodyYaw = content.rotation.y;
+
+		// atan2(dx, dz) gives the angle where the model's +Z faces toward the camera.
+		const dx = cam.x - content.position.x;
+		const dz = cam.z - content.position.z;
+		const target = Math.atan2(dx, dz);
+
+		// Shortest-path delta to avoid spinning the long way round.
+		let delta = target - this._bodyYaw;
+		while (delta > Math.PI) delta -= 2 * Math.PI;
+		while (delta < -Math.PI) delta += 2 * Math.PI;
+
+		this._bodyYaw += delta * Math.min(1, dt * 2.0);
+		content.rotation.y = this._bodyYaw;
 	}
 
 	// ── Head Transform ────────────────────────────────────────────────────────
