@@ -62,7 +62,7 @@
 				ttsEndpoint,
 				ttsApikey,
 				lipsyncModules,
-				cameraView: 'upper',
+				cameraView: 'idle',
 			});
 
 			await Promise.race([
@@ -107,7 +107,19 @@
 	}
 
 	export function playGesture(name, duration = 3) {
-		head?.playGesture?.(name, duration);
+		if (name === 'walk') {
+			head?.playAnimation?.('walk');
+		} else {
+			head?.playGesture?.(name, duration);
+		}
+	}
+
+	export function think(isThinking) {
+		if (isThinking) {
+			head?.playAnimation?.('thinking');
+		} else {
+			head?.setMood?.('neutral');
+		}
 	}
 </script>
 
