@@ -6,7 +6,10 @@
 
 tests
 specs
-examples
+examples/*
+!examples/skills
+examples/skills/*
+!examples/skills/pump-fun-strategy
 prompts
 contracts
 sdk

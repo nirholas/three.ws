@@ -89,6 +89,7 @@ All on-chain forms resolve through [`src/erc8004/resolver.js`](../src/erc8004/re
 | `scale`      | number                                                                  | `1.0`                               | camera zoom multiplier, independent of pixel size |
 | `responsive`   | boolean                                                                 | on                                  | applies `clamp()`-based mobile shrinking          |
 | `avatar-chat` | `"off"`                                                                 | on (default)                        | Set to `"off"` to disable the integrated avatar-in-chat layout. In default mode, the avatar is part of the chat flow, walking during streaming and scrolling, and displaying a thought bubble for status and text. |
+| `avatar-walk` | `"off"`                                                                 | on (default)                        | Set to `"off"` to disable the walking animation during streaming and scrolling. The avatar will remain idle or perform empathy animations instead. |
 
 ### Integrated Avatar Chat
 
