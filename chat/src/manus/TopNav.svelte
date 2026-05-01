@@ -8,20 +8,17 @@
 	import SolutionsDropdown from './dropdowns/SolutionsDropdown.svelte';
 	import ResourcesDropdown from './dropdowns/ResourcesDropdown.svelte';
 	import EventsDropdown    from './dropdowns/EventsDropdown.svelte';
-	import BusinessDropdown  from './dropdowns/BusinessDropdown.svelte';
 
 	let featuresOpen  = false;
 	let solutionsOpen = false;
 	let resourcesOpen = false;
 	let eventsOpen    = false;
-	let businessOpen  = false;
 	let mobileOpen    = false;
 
 	const featOpen  = { value: null }; const featClose = { value: null };
 	const solOpen   = { value: null }; const solClose  = { value: null };
 	const resOpen   = { value: null }; const resClose  = { value: null };
 	const evtOpen   = { value: null }; const evtClose  = { value: null };
-	const bizOpen   = { value: null }; const bizClose  = { value: null };
 
 	function onFeatEnter() { clearTimeout(featClose.value); featOpen.value  = setTimeout(() => (featuresOpen  = true),  120); }
 	function onFeatLeave() { clearTimeout(featOpen.value);  featClose.value = setTimeout(() => (featuresOpen  = false), 200); }
@@ -31,11 +28,9 @@
 	function onResLeave()  { clearTimeout(resOpen.value);   resClose.value  = setTimeout(() => (resourcesOpen = false), 200); }
 	function onEvtEnter()  { clearTimeout(evtClose.value);  evtOpen.value   = setTimeout(() => (eventsOpen    = true),  120); }
 	function onEvtLeave()  { clearTimeout(evtOpen.value);   evtClose.value  = setTimeout(() => (eventsOpen    = false), 200); }
-	function onBizEnter()  { clearTimeout(bizClose.value);  bizOpen.value   = setTimeout(() => (businessOpen  = true),  120); }
-	function onBizLeave()  { clearTimeout(bizOpen.value);   bizClose.value  = setTimeout(() => (businessOpen  = false), 200); }
 
 	function closeAll() {
-		featuresOpen = solutionsOpen = resourcesOpen = eventsOpen = businessOpen = false;
+		featuresOpen = solutionsOpen = resourcesOpen = eventsOpen = false;
 	}
 
 	let headerEl;
@@ -129,23 +124,6 @@
 				{/if}
 			</div>
 
-			<!-- Business -->
-			<!-- svelte-ignore a11y-no-static-element-interactions -->
-			<div class="relative" on:mouseenter={onBizEnter} on:mouseleave={onBizLeave}>
-				<button
-					class="inline-flex h-14 items-center px-3 text-sm font-medium text-ink transition-colors hover:text-ink-soft"
-					aria-haspopup="true"
-					aria-expanded={businessOpen}
-				>Business</button>
-				{#if businessOpen}
-					<!-- svelte-ignore a11y-no-static-element-interactions -->
-					<div class="absolute left-0 top-full z-50 mt-2"
-						on:mouseenter={onBizEnter} on:mouseleave={onBizLeave}>
-						<BusinessDropdown />
-					</div>
-				{/if}
-			</div>
-
 			<!-- Pricing -->
 			<button
 				class="inline-flex h-14 items-center px-3 text-sm font-medium text-ink transition-colors hover:text-ink-soft"
@@ -172,7 +150,7 @@
 	<!-- Mobile sheet -->
 	{#if mobileOpen}
 		<div class="border-t border-rule bg-paper md:hidden">
-			{#each ['Features','Solutions','Resources','Events','Business','Pricing'] as label}
+			{#each ['Features','Solutions','Resources','Events','Pricing'] as label}
 				<button
 					class="block w-full px-6 py-3 text-left text-sm font-medium text-ink hover:bg-paper-deep"
 					on:click={() => { route.set(label.toLowerCase()); mobileOpen = false; }}

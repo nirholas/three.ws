@@ -9,7 +9,6 @@
 import { getSessionUser, authenticateBearer, extractBearer } from './_lib/auth.js';
 import { cors, json, method, readJson, wrap, error } from './_lib/http.js';
 import { parse } from './_lib/validate.js';
-import { limits } from './_lib/rate-limit.js';
 import { recordEvent } from './_lib/usage.js';
 import { captureException } from './_lib/sentry.js';
 import { sql } from './_lib/db.js';
@@ -160,15 +159,6 @@ export default wrap(async (req, res) => {
 
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in to chat with the agent');
-
-	const rl = await limits.chatUser(auth.userId);
-	if (!rl.success) {
-		const retryAfter = Math.max(1, Math.ceil((rl.reset - Date.now()) / 1000));
-		res.setHeader('retry-after', String(retryAfter));
-		return error(res, 429, 'rate_limited', 'too many messages — slow down', {
-			retry_after: retryAfter,
-		});
-	}
 
 	const body = parse(chatBody, await readJson(req));
 	const model = process.env.CHAT_MODEL || DEFAULT_MODEL;
