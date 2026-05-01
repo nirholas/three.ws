@@ -190,12 +190,14 @@
 	});
 </script>
 
-<canvas
-	bind:this={canvas}
-	width="128"
-	height="128"
-	class="h-full w-full object-cover {state !== 'done' ? 'animate-pulse bg-teal-100' : ''} {$generating && live ? 'avatar-bob' : ''}"
-/>
+<span class="h-full w-full block {state === 'done' ? 'avatar-fall-in' : 'invisible'}">
+	<canvas
+		bind:this={canvas}
+		width="128"
+		height="128"
+		class="h-full w-full object-cover {$generating && live ? 'avatar-bob' : ''}"
+	/>
+</span>
 
 <style>
 	@keyframes avatar-bob {
@@ -205,7 +207,16 @@
 	.avatar-bob {
 		animation: avatar-bob 0.7s ease-in-out infinite;
 	}
+	@keyframes avatar-fall-in {
+		0% { transform: translateY(-120%); opacity: 0; }
+		70% { transform: translateY(8%); opacity: 1; }
+		100% { transform: translateY(0); opacity: 1; }
+	}
+	.avatar-fall-in {
+		animation: avatar-fall-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+	}
 	@media (prefers-reduced-motion: reduce) {
 		.avatar-bob { animation: none; }
+		.avatar-fall-in { animation: none; }
 	}
 </style>

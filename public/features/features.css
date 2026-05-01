@@ -65,6 +65,12 @@
 	perspective: var(--features-perspective);
 	perspective-origin: 50% 0%;
 	scroll-behavior: smooth;
+	display: flex;
+	flex-direction: column;
+}
+
+.features-parallax-page > .parallax > .h-footer-horizon {
+	margin-top: auto;
 }
 
 /* Hide WebKit scrollbar without affecting scroll behavior. */

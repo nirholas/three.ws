@@ -15,7 +15,6 @@
  * Existing wallets are non-destructive: a "Replace" button calls DELETE first.
  */
 
-import { openVanityModal } from './erc8004/vanity-modal.js';
 import { grindVanity } from './solana/vanity/grinder.js';
 
 const ENDPOINT = (id, qs = '') =>
@@ -419,19 +418,15 @@ export function mountAgentSolanaWalletCard({ panel, identity, onProvisioned }) {
 
 		root.innerHTML = `
 			<h3>Solana wallet</h3>
-			<p class="sub">Provision a wallet for this agent. Optionally pick a vanity prefix.</p>
+			<p class="sub">Provision a wallet for this agent.</p>
 			<div class="row">
-				<button class="primary" data-act="vanity" ${state.busy ? 'disabled' : ''}>
-					${state.busy ? 'Working…' : 'Choose vanity prefix'}
+				<button class="primary" data-act="random" ${state.busy ? 'disabled' : ''}>
+					${state.busy ? 'Working…' : 'Generate wallet'}
 				</button>
-				<button data-act="random" ${state.busy ? 'disabled' : ''}>Random</button>
 			</div>
-			${state.progress ? `<div class="progress">grinding… ${_esc(formatRate(state.progress.rate))}/s · eta ${_esc(state.progress.eta)} <button data-act="cancel">cancel</button></div>` : ''}
 			${state.err ? `<div class="err">${_esc(state.err)}</div>` : ''}
 		`;
-		root.querySelector('[data-act="vanity"]')?.addEventListener('click', onVanity);
 		root.querySelector('[data-act="random"]')?.addEventListener('click', onRandom);
-		root.querySelector('[data-act="cancel"]')?.addEventListener('click', () => abort?.abort());
 	}
 
 	async function onRandom() {
@@ -450,43 +445,6 @@ export function mountAgentSolanaWalletCard({ panel, identity, onProvisioned }) {
 			state.err = e.message;
 		} finally {
 			state.busy = false; render();
-		}
-	}
-
-	async function onVanity() {
-		const choice = await openVanityModal({
-			agentName: identity.name || '',
-			initial: state.vanityPrefix || '',
-		});
-		if (choice == null || choice === '') return; // dismissed or "skip"
-
-		const prefix = typeof choice === 'string' ? choice : choice.prefix;
-		const preGround = typeof choice === 'object' ? choice.secretKey : null;
-
-		state.busy = true; state.err = null; state.progress = null; render();
-		abort = new AbortController();
-		try {
-			const data = await provisionAgentSolanaWallet({
-				agentId: identity.id,
-				vanityPrefix: prefix,
-				preGround,
-				signal: abort.signal,
-				onProgress: (p) => { state.progress = p; render(); },
-			});
-			state.address = data.address;
-			state.vanityPrefix = data.vanity_prefix || prefix || null;
-			state.source = data.source || 'imported_vanity';
-			state.lamports = data.lamports ?? 0;
-			state.sol = data.sol ?? 0;
-			state.progress = null;
-			_propagate(identity, data);
-			onProvisioned?.(data);
-			refreshBalance();
-		} catch (e) {
-			state.err = e.name === 'AbortError' ? 'cancelled' : e.message;
-			state.progress = null;
-		} finally {
-			state.busy = false; abort = null; render();
 		}
 	}
 
