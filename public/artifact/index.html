@@ -125,6 +125,7 @@
 					id="agentIdInput"
 					placeholder="Enter agent ID (e.g., from URL ?agentId=123)"
 					value=""
+					onkeydown="if(event.key==='Enter') loadAgent()"
 				/>
 				<button onclick="loadAgent()">Load</button>
 			</div>
@@ -143,35 +144,29 @@
 
 		<script>
 			function getAgentIdFromUrl() {
-				const params = new URLSearchParams(window.location.search);
-				return params.get('agentId') || localStorage.getItem('demo-agentId');
+				return new URLSearchParams(window.location.search).get('agentId');
 			}
 
 			function loadAgent() {
 				const input = document.getElementById('agentIdInput');
 				const agentId = input.value.trim();
-
-				if (!agentId) {
-					alert('Please enter an agent ID');
-					return;
-				}
-
-				localStorage.setItem('demo-agentId', agentId);
-				const container = document.getElementById('agent3d');
-				container.dataset.agentId = agentId;
-
-				location.reload();
+				if (!agentId) return;
+				history.pushState({}, '', '?agentId=' + encodeURIComponent(agentId));
+				document.getElementById('agent3d').setAttribute('data-agent-id', agentId);
 			}
 
 			function reloadAgent() {
-				location.reload();
+				const el = document.getElementById('agent3d');
+				const agentId = el.getAttribute('data-agent-id');
+				if (!agentId) return;
+				el.removeAttribute('data-agent-id');
+				setTimeout(() => el.setAttribute('data-agent-id', agentId), 0);
 			}
 
 			window.addEventListener('DOMContentLoaded', () => {
 				const agentId = getAgentIdFromUrl();
 				if (agentId) {
-					const container = document.getElementById('agent3d');
-					container.dataset.agentId = agentId;
+					document.getElementById('agent3d').setAttribute('data-agent-id', agentId);
 					document.getElementById('agentIdInput').value = agentId;
 				}
 			});
