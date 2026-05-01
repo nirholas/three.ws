@@ -121,7 +121,12 @@
 		return typeof cat === 'string' ? cat : cat.slug;
 	}
 
+	let skillsAbort = /** @type {AbortController | null} */ (null);
+
 	async function loadSkills(reset = false) {
+		skillsAbort?.abort();
+		skillsAbort = new AbortController();
+		const signal = skillsAbort.signal;
 		loading = true;
 		fetchFailed = false;
 		try {
@@ -131,7 +136,7 @@
 			if (catSlug) p.set('category', catSlug);
 			if (sort) p.set('sort', sort);
 			if (!reset && page) p.set('cursor', page);
-			const res = await fetch(`/api/skills?${p}`);
+			const res = await fetch(`/api/skills?${p}`, { signal });
 			if (res.status === 429) throw new Error('Too many requests — please wait a moment and try again');
 			if (!res.ok) throw new Error('Failed to load skills');
 			const data = await res.json();
@@ -139,11 +144,14 @@
 			page = data.next_cursor || null;
 			hasMore = !!data.next_cursor;
 		} catch (e) {
+			if (e.name === 'AbortError') return;
 			fetchFailed = true;
 			notify(e.message, 'error');
 		} finally {
-			loading = false;
-			loaded = true;
+			if (!signal.aborted) {
+				loading = false;
+				loaded = true;
+			}
 		}
 	}
 

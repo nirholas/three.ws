@@ -286,6 +286,7 @@ export class RegisterUI {
 		//   'current' → use `glbUrl` pre-filled from the live SPA viewer
 		//   'saved'   → pick one from the signed-in user's saved avatars
 		//   'upload'  → user drops a new .glb in the wizard
+		//   'url'     → user pastes a hosted GLB URL directly
 		//   'skip'    → deploy as a metadata-only agent (no 3D body)
 		this.wizardStep = 1;
 		this.form = {
@@ -294,6 +295,7 @@ export class RegisterUI {
 			imageUrl: initial.imageUrl || '',
 			glbUrl: initial.glbUrl || '',
 			glbFile: null,
+			pastedGlbUrl: '',
 			savedAvatar: null, // { id, name, url, thumbnailUrl }
 			defaultAvatarId: null, // id of a pre-pinned DEFAULT_AVATARS entry
 			avatarSource: initial.glbUrl ? 'current' : 'upload',
@@ -914,6 +916,7 @@ export class RegisterUI {
 				${radio('saved', 'Use a saved avatar', canPickSaved ? 'Pick one from your account library.' : 'Sign in to pick from your saved avatars.', !canPickSaved)}
 				${DEFAULT_AVATARS.length ? radio('default', 'Use a default avatar', 'Pick a pre-pinned starter avatar — no upload needed.') : ''}
 				${radio('upload', 'Upload a new GLB', 'Drop or browse a .glb / .gltf file from your machine.')}
+				${radio('url', 'Paste a GLB URL', 'Use a GLB already hosted on IPFS, Arweave, or HTTPS.')}
 				${radio('skip', 'Skip — no 3D body', 'Deploy as a metadata-only agent. You can attach an avatar later via setAgentURI.')}
 			</div>
 
@@ -1004,6 +1007,16 @@ export class RegisterUI {
 					drop.classList.remove('erc8004-file-drop--active');
 					setFile(e.dataTransfer.files[0]);
 				});
+			} else if (s === 'url') {
+				panel.innerHTML = `
+					<div class="erc8004-url-paste">
+						<input class="erc8004-input" type="url" placeholder="https://… or ipfs://… or ar://…" value="${esc(this.form.pastedGlbUrl)}" data-role="glb-url-input" />
+						<p class="erc8004-hint">The GLB must include <strong>ARKit / Oculus viseme morph targets</strong> for lip-sync to work.</p>
+					</div>
+				`;
+				panel.querySelector('[data-role="glb-url-input"]').addEventListener('input', (e) => {
+					this.form.pastedGlbUrl = e.target.value.trim();
+				});
 			} else if (s === 'default') {
 				panel.innerHTML = `<div class="erc8004-saved-grid" data-role="grid"></div>`;
 				const grid = panel.querySelector('[data-role="grid"]');
@@ -1064,6 +1077,10 @@ export class RegisterUI {
 			}
 			if (s === 'upload' && !this.form.glbFile) {
 				this._toast('Drop a .glb file, or choose another option.', true);
+				return;
+			}
+			if (s === 'url' && !this.form.pastedGlbUrl) {
+				this._toast('Paste a GLB URL, or choose another option.', true);
 				return;
 			}
 			if (s === 'default' && !this.form.defaultAvatarId) {
@@ -1184,6 +1201,9 @@ export class RegisterUI {
 		if (s === 'upload' && this.form.glbFile) {
 			return `Uploaded: ${esc(this.form.glbFile.name)} (${(this.form.glbFile.size / 1024).toFixed(1)} KB)`;
 		}
+		if (s === 'url' && this.form.pastedGlbUrl) {
+			return `URL: <code>${esc(this.form.pastedGlbUrl)}</code>`;
+		}
 		if (s === 'default' && this.form.defaultAvatarId) {
 			const def = getDefaultAvatar(this.form.defaultAvatarId);
 			return def ? `Default: ${esc(def.name)}` : `Default avatar`;
@@ -1216,6 +1236,8 @@ export class RegisterUI {
 				glbUrl = getDefaultAvatar(this.form.defaultAvatarId)?.url || null;
 			else if (this.form.avatarSource === 'upload' && this.form.glbFile)
 				glbUrl = `<pending-upload:${this.form.glbFile.name}>`;
+			else if (this.form.avatarSource === 'url' && this.form.pastedGlbUrl)
+				glbUrl = this.form.pastedGlbUrl;
 
 			return buildRegistrationJSON({
 				name: this.form.name,
@@ -1380,6 +1402,13 @@ export class RegisterUI {
 				say(`Reusing existing avatar URL (no re-upload): ${glbUrl}`);
 			} else {
 				glbFile = await this._fetchUrlAsFile(this.form.glbUrl, say, 'current avatar');
+			}
+		} else if (avatarSource === 'url' && this.form.pastedGlbUrl) {
+			if (_isStableUrl(this.form.pastedGlbUrl)) {
+				glbUrl = this.form.pastedGlbUrl;
+				say(`Using pasted GLB URL (no re-upload): ${glbUrl}`);
+			} else {
+				glbFile = await this._fetchUrlAsFile(this.form.pastedGlbUrl, say, 'pasted GLB');
 			}
 		} else if (avatarSource === 'saved' && this.form.savedAvatar) {
 			try {

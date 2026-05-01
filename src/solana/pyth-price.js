@@ -64,10 +64,9 @@ export async function getPrices(symbols) {
 	for (let i = 0; i < syms.length; i++) {
 		const feed = feeds?.[i];
 		const p = feed?.getPriceUnchecked();
-		const conf = feed?.getConfUnchecked();
 		result[syms[i].toUpperCase()] = {
 			price: toFloat(p),
-			confidence: toFloat(conf),
+			confidence: p ? toFloat({ price: p.conf, expo: p.expo }) : NaN,
 			publishTime: p?.publishTime ?? 0,
 		};
 	}
@@ -108,8 +107,8 @@ export function subscribePrices(symbols, onUpdate) {
 		const sym = idToSymbol[id];
 		if (!sym) return;
 		const p = feed.getPriceUnchecked();
-		const conf = feed.getConfUnchecked();
-		onUpdate({ [sym]: { price: toFloat(p), confidence: toFloat(conf), publishTime: p?.publishTime ?? 0 } });
+		const confidence = p ? toFloat({ price: p.conf, expo: p.expo }) : NaN;
+		onUpdate({ [sym]: { price: toFloat(p), confidence, publishTime: p?.publishTime ?? 0 } });
 	});
 
 	return () => conn.unsubscribePriceFeedUpdates(ids);
