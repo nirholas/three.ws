@@ -190,6 +190,14 @@ export const env = {
 		return opt('SOLANA_RPC_URL', 'https://api.mainnet-beta.solana.com');
 	},
 
+	// GitHub OAuth — social memory seeding. When unset, /api/auth/github/connect returns 501.
+	get GITHUB_OAUTH_CLIENT_ID() {
+		return opt('GITHUB_OAUTH_CLIENT_ID');
+	},
+	get GITHUB_OAUTH_CLIENT_SECRET() {
+		return opt('GITHUB_OAUTH_CLIENT_SECRET');
+	},
+
 	// Admin key for three.ws chat brand config endpoint. Optional — when unset
 	// the POST /api/chat/config endpoint returns 503.
 	get CHAT_ADMIN_KEY() {

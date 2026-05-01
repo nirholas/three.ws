@@ -9,6 +9,7 @@
  * Cron paths handled (kebab-case → handler):
  *   erc8004-crawl                 → handleErc8004Crawl
  *   index-delegations             → handleIndexDelegations
+ *   process-subscriptions         → handleProcessSubscriptions
  *   pump-agent-stats              → handlePumpAgentStats
  *   pumpfun-monitor               → handlePumpfunMonitor
  *   pumpfun-signals               → handlePumpfunSignals
@@ -42,12 +43,15 @@ import { mintAttestation, deriveEventId, loadAttesterKeypair } from '../_lib/att
 import { pumpfunMcp, pumpfunBotEnabled } from '../_lib/pumpfun-mcp.js';
 import { crawlAgentAttestations } from '../_lib/solana-attestations.js';
 import { SOLANA_USDC_MINT, SOLANA_USDC_MINT_DEVNET } from '../payments/_config.js';
+import { chargeSubscription, failPayment } from '../_lib/subscription-billing.js';
+import { sendEmail } from '../_lib/email.js';
 
 // ─── Dispatcher ──────────────────────────────────────────────────────────────
 
 const HANDLERS = {
 	'erc8004-crawl': handleErc8004Crawl,
 	'index-delegations': handleIndexDelegations,
+	'process-subscriptions': handleProcessSubscriptions,
 	'pump-agent-stats': handlePumpAgentStats,
 	'pumpfun-monitor': handlePumpfunMonitor,
 	'pumpfun-signals': handlePumpfunSignals,
@@ -2148,4 +2152,121 @@ async function handleSolanaAttestationsCrawl(req, res) {
 	}
 
 	return json(res, 200, report);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// process-subscriptions
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function handleProcessSubscriptions(req, res) {
+	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
+
+	const auth = req.headers['authorization'] || '';
+	const cronSecret = env.CRON_SECRET;
+	const fromCron = req.headers['x-vercel-cron'] === '1';
+	if (!fromCron && cronSecret && auth !== `Bearer ${cronSecret}`) {
+		return error(res, 401, 'unauthorized', 'cron secret required');
+	}
+
+	const runId = `psub-${Date.now()}`;
+	const report = { runId, processed: 0, charged: 0, pastDue: 0, errors: [] };
+
+	// Find subscriptions whose period ends within the next hour (charge a bit
+	// early to allow for retry windows before period actually expires).
+	const dues = await sql`
+		SELECT
+			cs.id, cs.subscriber_user_id, cs.plan_id, cs.current_period_end,
+			sp.price_usd,
+			u.email AS subscriber_email,
+			u.display_name AS subscriber_name
+		FROM creator_subscriptions cs
+		JOIN subscription_plans sp ON sp.id = cs.plan_id
+		JOIN users u ON u.id = cs.subscriber_user_id
+		WHERE cs.status = 'active'
+		  AND cs.current_period_end < now() + interval '1 hour'
+		ORDER BY cs.current_period_end ASC
+		LIMIT 200
+	`;
+
+	for (const row of dues) {
+		report.processed++;
+		try {
+			// Count prior failed payments to decide retry vs. past_due.
+			const [{ failCount }] = await sql`
+				SELECT count(*)::int AS "failCount"
+				FROM subscription_payments
+				WHERE subscription_id = ${row.id} AND status = 'failed'
+			`;
+
+			if (failCount >= 3) {
+				// Mark past_due and notify subscriber.
+				await sql`
+					UPDATE creator_subscriptions
+					SET status = 'past_due'
+					WHERE id = ${row.id} AND status = 'active'
+				`;
+				report.pastDue++;
+				console.log(JSON.stringify({
+					event: 'process_subscriptions.past_due',
+					runId,
+					subscriptionId: row.id,
+					failCount,
+				}));
+				// Fire-and-forget email notification.
+				sendEmail({
+					to: row.subscriber_email,
+					subject: 'Action required: subscription payment failed',
+					html: `<p>Hi ${row.subscriber_name || 'there'},</p>
+<p>We were unable to process your subscription payment of $${row.price_usd}. Your subscription has been paused. Please update your payment method to continue.</p>
+<p><a href="${env.APP_ORIGIN}/dashboard#subscriptions">Manage subscriptions</a></p>`,
+					text: `Your subscription payment of $${row.price_usd} could not be processed. Visit ${env.APP_ORIGIN}/dashboard#subscriptions to manage your subscriptions.`,
+				}).catch((e) => console.error(JSON.stringify({
+					event: 'process_subscriptions.email_failed',
+					subscriptionId: row.id,
+					error: e.message,
+				})));
+				continue;
+			}
+
+			const result = await chargeSubscription(row.id);
+			if (result.pending) {
+				report.charged++; // pending = payment request created
+			} else if (!result.success) {
+				await failPayment(result.paymentId, row.id);
+				report.errors.push({ id: row.id, error: result.error || 'charge_failed' });
+			} else {
+				report.charged++;
+			}
+		} catch (e) {
+			report.errors.push({ id: row.id, error: e.message || String(e) });
+			console.error(JSON.stringify({
+				event: 'process_subscriptions.row_error',
+				runId,
+				subscriptionId: row.id,
+				error: e.message,
+			}));
+		}
+	}
+
+	console.log(JSON.stringify({ event: 'process_subscriptions.done', ...report }));
+	return json(res, 200, report);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// settle-royalties
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function handleSettleRoyalties(req, res) {
+	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
+
+	const auth = req.headers['authorization'] || '';
+	const cronSecret = env.CRON_SECRET;
+	const fromCron = req.headers['x-vercel-cron'] === '1';
+	if (!fromCron && cronSecret && auth !== `Bearer ${cronSecret}`) {
+		return error(res, 401, 'unauthorized', 'cron secret required');
+	}
+
+	const { settleAllPendingRoyalties } = await import('../_lib/royalty.js');
+	const report = await settleAllPendingRoyalties();
+	return json(res, 200, { ok: true, ...report });
 }

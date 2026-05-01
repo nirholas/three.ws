@@ -6,12 +6,13 @@ import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title ERC-8004 Identity Registry
 /// @notice Agents are minted as ERC-721 tokens with a `tokenURI` pointing to an
 ///         ERC-8004 registration JSON. Each agent can optionally delegate a
 ///         separate wallet address and store arbitrary key/value metadata.
-contract IdentityRegistry is ERC721Enumerable, EIP712 {
+contract IdentityRegistry is ERC721Enumerable, EIP712, ReentrancyGuard {
     // ---------------------------------------------------------------------
     // Types
     // ---------------------------------------------------------------------
@@ -32,6 +33,9 @@ contract IdentityRegistry is ERC721Enumerable, EIP712 {
     mapping(uint256 => mapping(string => bytes)) private _metadata;
     mapping(address => uint256) public nonces;
 
+    // Max spend per on-chain agent ID per authorized spender (set by agent NFT owner)
+    mapping(uint256 => mapping(address => uint256)) public spendAllowance;
+
     // EIP-712 typehash for delegated wallet binding.
     bytes32 private constant _SET_WALLET_TYPEHASH = keccak256(
         "SetAgentWallet(uint256 agentId,address newWallet,uint256 nonce,uint256 deadline)"
@@ -45,6 +49,14 @@ contract IdentityRegistry is ERC721Enumerable, EIP712 {
     event URIUpdated(uint256 indexed agentId, string newURI, address indexed updatedBy);
     event WalletSet(uint256 indexed agentId, address indexed wallet);
     event WalletUnset(uint256 indexed agentId);
+    event SpendAllowanceSet(uint256 indexed agentId, address indexed spender, uint256 maxWei);
+    event AgentPayment(
+        uint256 indexed agentId,
+        address indexed spender,
+        address indexed recipient,
+        uint256 amountWei,
+        string memo
+    );
     event MetadataSet(
         uint256 indexed agentId,
         string indexed indexedMetadataKey,
@@ -183,6 +195,37 @@ contract IdentityRegistry is ERC721Enumerable, EIP712 {
     {
         _requireOwned(agentId);
         return _metadata[agentId][metadataKey];
+    }
+
+    // ---------------------------------------------------------------------
+    // Agent spend delegation
+    // ---------------------------------------------------------------------
+
+    receive() external payable {}
+
+    /// @notice Agent NFT owner authorizes a spender (e.g. delegated server key) to
+    ///         spend up to maxWei from this contract on behalf of the agent.
+    function setSpendAllowance(uint256 agentId, address spender, uint256 maxWei)
+        external
+    {
+        if (ownerOf(agentId) != msg.sender) revert NotAgentOwner();
+        spendAllowance[agentId][spender] = maxWei;
+        emit SpendAllowanceSet(agentId, spender, maxWei);
+    }
+
+    /// @notice Spend ETH held by this contract on behalf of an agent.
+    ///         Caller must have been granted allowance via setSpendAllowance.
+    function spend(
+        uint256 agentId,
+        address payable recipient,
+        uint256 amountWei,
+        string calldata memo
+    ) external nonReentrant {
+        require(spendAllowance[agentId][msg.sender] >= amountWei, "allowance exceeded");
+        require(address(this).balance >= amountWei, "contract balance insufficient");
+        spendAllowance[agentId][msg.sender] -= amountWei;
+        recipient.transfer(amountWei);
+        emit AgentPayment(agentId, msg.sender, recipient, amountWei, memo);
     }
 
     // ---------------------------------------------------------------------

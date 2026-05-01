@@ -4,6 +4,7 @@
 
 import { z } from 'zod';
 import '../element.js';
+import { PersonaInterview } from './persona-interview.js';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -418,6 +419,8 @@ export function mountManifestBuilder(rootEl, options = {}) {
 
 	// ── Form building ──────────────────────────────────────────────────────────
 
+	const agentId = options.agentId || null;
+
 	function buildForm() {
 		const scroll = $('#form-scroll');
 		scroll.innerHTML = [
@@ -425,6 +428,7 @@ export function mountManifestBuilder(rootEl, options = {}) {
 			bodyHtml(),
 			brainHtml(),
 			voiceHtml(),
+			personaHtml(),
 			skillsHtml(),
 			memoryHtml(),
 			instructionsHtml(),
@@ -592,6 +596,25 @@ export function mountManifestBuilder(rootEl, options = {}) {
 						</label>
 					</div>
 				</div>
+			</div>
+		</details>`;
+	}
+
+	function personaHtml() {
+		if (!agentId) {
+			return `<details>
+				<summary>Persona</summary>
+				<div class="section-body">
+					<p style="color:#6b7280;font-size:13px">Save the agent first to enable persona extraction.</p>
+				</div>
+			</details>`;
+		}
+		return `<details>
+			<summary>Persona</summary>
+			<div class="section-body">
+				<div id="persona-status"></div>
+				<div id="persona-interview-mount"></div>
+				<button class="btn secondary" id="btn-persona-start" style="margin-top:10px">Run interview</button>
 			</div>
 		</details>`;
 	}
@@ -789,6 +812,48 @@ export function mountManifestBuilder(rootEl, options = {}) {
 			state.sttContinuous = e.target.checked;
 			scheduleDraft();
 		});
+
+		if (agentId) {
+			let _interview = null;
+			on('#btn-persona-start', 'click', () => {
+				const mount = $('#persona-interview-mount');
+				const btn = $('#btn-persona-start');
+				if (!mount) return;
+				if (_interview) { _interview.destroy(); _interview = null; }
+				btn.style.display = 'none';
+				_interview = new PersonaInterview(mount, {
+					agentId,
+					onComplete: ({ tone_tags, extracted_at }) => {
+						const status = $('#persona-status');
+						if (status) {
+							const chips = (tone_tags || [])
+								.map((t) => `<span style="display:inline-block;background:#1f2937;border-radius:4px;padding:2px 8px;margin:2px;font-size:12px">${t}</span>`)
+								.join('');
+							status.innerHTML = `<p style="color:#10b981;margin-bottom:6px">Persona extracted ✓</p><div>${chips}</div>`;
+						}
+						btn.textContent = 'Re-run interview';
+						btn.style.display = '';
+					},
+				});
+				_interview.mount();
+			});
+
+			// Load existing persona status on open
+			fetch(`/api/agents/${agentId}/persona`, { credentials: 'include' })
+				.then((r) => r.ok ? r.json() : null)
+				.then((data) => {
+					if (!data?.has_persona) return;
+					const status = $('#persona-status');
+					if (!status) return;
+					const chips = (data.tone_tags || [])
+						.map((t) => `<span style="display:inline-block;background:#1f2937;border-radius:4px;padding:2px 8px;margin:2px;font-size:12px">${t}</span>`)
+						.join('');
+					status.innerHTML = `<p style="color:#10b981;margin-bottom:6px">Persona extracted ✓</p><div>${chips}</div>`;
+					const btn = $('#btn-persona-start');
+					if (btn) btn.textContent = 'Re-run interview';
+				})
+				.catch(() => {});
+		}
 
 		on('#f-mem-mode', 'change', (e) => {
 			state.memoryMode = e.target.value;

@@ -12,6 +12,7 @@ import { parse } from './_lib/validate.js';
 import { limits } from './_lib/rate-limit.js';
 import { recordEvent } from './_lib/usage.js';
 import { captureException } from './_lib/sentry.js';
+import { sql } from './_lib/db.js';
 import { z } from 'zod';
 
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
@@ -42,6 +43,7 @@ const contextSchema = z
 const chatBody = z.object({
 	message: z.string().trim().min(1).max(4000),
 	context: contextSchema,
+	agentId: z.string().uuid().optional(),
 	history: z
 		.array(
 			z.object({
@@ -176,6 +178,15 @@ export default wrap(async (req, res) => {
 		HARD_MAX_TOKENS,
 	);
 
+	let personaPrompt = null;
+	if (body.agentId) {
+		const [agentRow] = await sql`
+			SELECT persona_prompt FROM agent_identities
+			WHERE id = ${body.agentId} AND deleted_at IS NULL LIMIT 1
+		`;
+		if (agentRow?.persona_prompt) personaPrompt = agentRow.persona_prompt;
+	}
+
 	const messages = [
 		...body.history.map((m) => ({ role: m.role, content: m.content })),
 		{ role: 'user', content: body.message },
@@ -194,7 +205,7 @@ export default wrap(async (req, res) => {
 			body: JSON.stringify({
 				model,
 				max_tokens: maxTokens,
-				system: buildSystemPrompt(body.context),
+				system: buildSystemPrompt(body.context, personaPrompt),
 				messages,
 				tools: ACTION_TOOLS,
 			}),
@@ -243,7 +254,7 @@ export default wrap(async (req, res) => {
 	return json(res, 200, { reply, actions, model });
 });
 
-function buildSystemPrompt(ctx = {}) {
+function buildSystemPrompt(ctx = {}, personaPrompt = null) {
 	const loaded = ctx.modelName
 		? `A model named "${ctx.modelName}" is loaded. Stats: ${fmt(ctx.vertices)} vertices, ${fmt(ctx.triangles)} triangles, ${fmt(ctx.materials)} materials, ${ctx.animations ?? 0} animations.`
 		: 'No model is currently loaded in the viewer.';
@@ -253,7 +264,9 @@ function buildSystemPrompt(ctx = {}) {
 			: 'glTF validation has not been run yet for this model.';
 	const settings = `Viewer settings — wireframe:${fmtBool(ctx.wireframe)}, skeleton:${fmtBool(ctx.skeleton)}, grid:${fmtBool(ctx.grid)}, autoRotate:${fmtBool(ctx.autoRotate)}, transparentBg:${fmtBool(ctx.transparentBg)}, bgColor:${ctx.bgColor || '?'}, environment:${ctx.currentEnvironment || '?'}.`;
 
-	return [
+	const lines = [];
+	if (personaPrompt) lines.push(personaPrompt, '');
+	lines.push(
 		'You are the three.ws — an embodied AI assistant embedded inside a browser-native glTF/GLB viewer at three.ws.',
 		'Your job is to help the user inspect, understand, and modify the 3D scene. You have deep glTF 2.0, PBR materials, and three.js expertise.',
 		'When the user asks you to change the viewer (e.g. "enable wireframe", "make the background dark blue", "turn on auto rotate"), USE the provided tools to perform the change — do not just describe it.',
@@ -263,7 +276,8 @@ function buildSystemPrompt(ctx = {}) {
 		loaded,
 		validation,
 		settings,
-	].join('\n');
+	);
+	return lines.join('\n');
 }
 
 function normalize(data) {

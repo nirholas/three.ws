@@ -760,6 +760,32 @@ create table if not exists skill_ratings (
     unique (user_id, skill_id)
 );
 
+-- ── agent_payments — autonomous agent-to-agent / agent-to-skill payment ledger ─
+-- Inserted by skill-runtime after each paid skill call. status transitions:
+--   pending → confirmed (on-chain tx broadcast succeeded)
+--   pending → failed    (insufficient balance or tx error)
+create table if not exists agent_payments (
+    id              uuid        primary key default gen_random_uuid(),
+    payer_agent_id  uuid        not null references agent_identities(id),
+    payee_agent_id  uuid        references agent_identities(id),   -- null when paying a skill author
+    skill_id        uuid        references marketplace_skills(id),
+    amount_wei      numeric(40) not null,
+    chain_id        integer     not null,
+    tx_hash         text,
+    memo            text,
+    status          text        not null default 'pending',
+    created_at      timestamptz not null default now(),
+    constraint agent_payments_status_check
+        check (status in ('pending', 'confirmed', 'failed'))
+);
+
+create index if not exists agent_payments_payer_time
+    on agent_payments(payer_agent_id, created_at desc);
+create index if not exists agent_payments_payee_time
+    on agent_payments(payee_agent_id, created_at desc) where payee_agent_id is not null;
+create index if not exists agent_payments_status
+    on agent_payments(status, created_at desc);
+
 -- Additive migration: royalty pricing on skills.
 alter table marketplace_skills add column if not exists price_per_call_usd numeric(10,6) not null default 0;
 
@@ -835,3 +861,30 @@ create table if not exists subscription_payments (
 
 create index if not exists subscription_payments_subscription_idx
     on subscription_payments(subscription_id);
+
+-- ── social_connections ────────────────────────────────────────────────────────
+create table if not exists social_connections (
+    id           uuid        primary key default gen_random_uuid(),
+    user_id      uuid        not null references users(id) on delete cascade,
+    provider     text        not null,
+    provider_uid text        not null,
+    username     text        not null,
+    access_token text        not null,
+    scopes       text        not null,
+    connected_at timestamptz not null default now(),
+    unique(user_id, provider)
+);
+
+create index if not exists social_connections_user_idx on social_connections(user_id);
+
+-- Additive migrations for social_connections added after initial deployment.
+alter table social_connections add column if not exists refresh_token    text;
+alter table social_connections add column if not exists expires_at       timestamptz;
+alter table social_connections add column if not exists raw_data         jsonb not null default '{}'::jsonb;
+alter table social_connections add column if not exists disconnected_at  timestamptz;
+alter table social_connections add column if not exists updated_at       timestamptz not null default now();
+-- provider_uid holds the provider's user ID (e.g. Twitter numeric ID)
+
+-- Additive migrations for agent_identities — X social seeding
+alter table agent_identities add column if not exists x_username   text;
+alter table agent_identities add column if not exists x_seeded_at  timestamptz;

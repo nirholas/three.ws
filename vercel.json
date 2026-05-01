@@ -322,7 +322,15 @@
 			"dest": "/api/agents/[id]"
 		},
 		{
+			"src": "/api/agents/([^/]+)/memory/seed/farcaster",
+			"dest": "/api/agents/[id]"
+		},
+		{
 			"src": "/api/agents/([^/]+)/memory/([^/]+)",
+			"dest": "/api/agents/[id]"
+		},
+		{
+			"src": "/api/agents/([^/]+)/payments",
 			"dest": "/api/agents/[id]"
 		},
 		{
@@ -456,6 +464,10 @@
 		{
 			"src": "/avatars/([^/]+)",
 			"dest": "/avatar-page.html"
+		},
+		{
+			"src": "/api/users/me/earnings",
+			"dest": "/api/users/earnings.js"
 		},
 		{
 			"src": "/api/users/([^/]+)",
@@ -681,6 +693,14 @@
 		{
 			"src": "/api/erc8004/import",
 			"dest": "/api/erc8004/import.js"
+		},
+		{
+			"src": "/api/subscriptions/plans(/.*)?",
+			"dest": "/api/subscriptions/plans.js"
+		},
+		{
+			"src": "/api/subscriptions(/.*)?",
+			"dest": "/api/subscriptions/index.js"
 		},
 		{
 			"src": "/api/dca-strategies/([^/]+)",
@@ -942,6 +962,14 @@
 		{
 			"path": "/api/cron/solana-attest-event-cleanup",
 			"schedule": "*/10 * * * *"
+		},
+		{
+			"path": "/api/cron/settle-royalties",
+			"schedule": "0 3 * * *"
+		},
+		{
+			"path": "/api/cron/process-subscriptions",
+			"schedule": "0 */6 * * *"
 		}
 	]
 }

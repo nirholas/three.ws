@@ -27,6 +27,13 @@ export const IDENTITY_REGISTRY_ABI = [
 	// --- Wallet ---
 	'function getAgentWallet(uint256 agentId) external view returns (address)',
 
+	// --- Agent spend delegation ---
+	'function setSpendAllowance(uint256 agentId, address spender, uint256 maxWei) external',
+	'function spend(uint256 agentId, address payable recipient, uint256 amountWei, string memo) external',
+	'function spendAllowance(uint256 agentId, address spender) external view returns (uint256)',
+	'event SpendAllowanceSet(uint256 indexed agentId, address indexed spender, uint256 maxWei)',
+	'event AgentPayment(uint256 indexed agentId, address indexed spender, address indexed recipient, uint256 amountWei, string memo)',
+
 	// --- ERC-721 basics ---
 	'function ownerOf(uint256 tokenId) external view returns (address)',
 	'function balanceOf(address owner) external view returns (uint256)',

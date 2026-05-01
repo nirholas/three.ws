@@ -120,7 +120,12 @@ export const limits = {
 	newsletterIp: (ip) => getLimiter('newsletter:ip', { limit: 5, window: '1 h' }).limit(ip),
 	// Voice cloning: expensive ElevenLabs API call — 3 per user per day.
 	voiceClone: (userId) => getLimiter('voice:clone', { limit: 3, window: '1 d' }).limit(userId),
+	// Persona extraction: Claude API call — 5 per user per day.
+	personaExtract: (userId) =>
+		getLimiter('persona:extract', { limit: 5, window: '1 d' }).limit(userId),
 	agentDelegate: (key) => getLimiter('agent:delegate', { limit: 10, window: '1 m' }).limit(key),
+	// GitHub memory seeding: expensive (GitHub API + Claude). 1 seed per agent per 24 hours.
+	memorySeed: (agentId) => getLimiter('memory:seed', { limit: 1, window: '1 d' }).limit(agentId),
 };
 
 // Trust only proxy headers that Vercel itself sets and signs. Naively reading

@@ -96,8 +96,10 @@ const tabs = {
 	keys: renderKeys,
 	mcp: renderMcp,
 	monetization: renderMonetization,
+	subscriptions: renderSubscriptions,
 	billing: renderBilling,
 	revenue: renderRevenue,
+	earnings: renderEarnings,
 	account: renderAccount,
 };
 
@@ -3434,4 +3436,84 @@ function esc(s) {
 }
 function attr(s) {
 	return esc(s);
+}
+
+// ── Earnings ─────────────────────────────────────────────────────────────────
+async function renderEarnings(root) {
+	root.innerHTML = `
+		<h1>Skill Earnings</h1>
+		<p class="sub">Royalties earned when agents invoke your published skills.</p>
+		<div id="earn-body"><div class="muted">Loading…</div></div>
+	`;
+
+	const body = root.querySelector('#earn-body');
+	let data;
+	try {
+		const resp = await fetch('/api/users/me/earnings', { credentials: 'include' });
+		if (!resp.ok) throw new Error(await resp.text());
+		data = await resp.json();
+	} catch (e) {
+		body.innerHTML = `<div class="err">${esc(e.message)}</div>`;
+		return;
+	}
+
+	const { pending_usd, settled_usd, entries } = data;
+
+	if (!entries.length) {
+		body.innerHTML = `
+			<div class="card" style="text-align:center;padding:48px 24px">
+				<div style="font-size:40px;margin-bottom:12px">💎</div>
+				<h3 style="margin:0 0 8px">No earnings yet</h3>
+				<p class="muted" style="margin:0">Royalties appear here when agents call your paid skills.</p>
+			</div>`;
+		return;
+	}
+
+	const fmt = (n) => '$' + Number(n).toFixed(4);
+	const statusBadge = (s) => {
+		const colors = { pending: '#f59e0b', settled: '#22c55e', failed: '#ef4444' };
+		return `<span style="font-size:11px;padding:2px 7px;border-radius:10px;background:${colors[s] ?? '#555'}22;color:${colors[s] ?? '#aaa'}">${esc(s)}</span>`;
+	};
+
+	body.innerHTML = `
+		<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px">
+			<div class="card">
+				<div class="muted" style="font-size:12px;margin-bottom:4px">Pending</div>
+				<div style="font-size:22px;font-weight:600;color:#f59e0b">${fmt(pending_usd)}</div>
+			</div>
+			<div class="card">
+				<div class="muted" style="font-size:12px;margin-bottom:4px">Settled</div>
+				<div style="font-size:22px;font-weight:600;color:#22c55e">${fmt(settled_usd)}</div>
+			</div>
+			<div class="card">
+				<div class="muted" style="font-size:12px;margin-bottom:4px">Total</div>
+				<div style="font-size:22px;font-weight:600">${fmt(pending_usd + settled_usd)}</div>
+			</div>
+		</div>
+		<table style="width:100%;border-collapse:collapse;font-size:13px">
+			<thead>
+				<tr style="color:#888;text-align:left;border-bottom:1px solid var(--border)">
+					<th style="padding:8px 10px">Skill</th>
+					<th style="padding:8px 10px">Agent</th>
+					<th style="padding:8px 10px">Amount</th>
+					<th style="padding:8px 10px">Status</th>
+					<th style="padding:8px 10px">Date</th>
+				</tr>
+			</thead>
+			<tbody>
+				${entries
+					.map(
+						(e) => `
+				<tr style="border-bottom:1px solid var(--border)">
+					<td style="padding:8px 10px">${esc(e.skill_name)}</td>
+					<td style="padding:8px 10px;color:#888">${esc(e.agent_name)}</td>
+					<td style="padding:8px 10px;font-variant-numeric:tabular-nums">${fmt(e.price_usd)}</td>
+					<td style="padding:8px 10px">${statusBadge(e.status)}</td>
+					<td style="padding:8px 10px;color:#888">${new Date(e.created_at).toLocaleDateString()}</td>
+				</tr>`,
+					)
+					.join('')}
+			</tbody>
+		</table>
+	`;
 }

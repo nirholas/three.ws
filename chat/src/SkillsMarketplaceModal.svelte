@@ -48,7 +48,8 @@
 			null,
 			2
 		),
-		isPublic: true
+		isPublic: true,
+		pricePerCallUsd: 0
 	};
 	let publishError = null;
 	let publishLoading = false;
@@ -312,7 +313,8 @@
 					category: publishForm.category,
 					tags,
 					schema_json: JSON.parse(publishForm.schemaText),
-					is_public: publishForm.isPublic
+					is_public: publishForm.isPublic,
+					price_per_call_usd: Math.min(10, Math.max(0, Number(publishForm.pricePerCallUsd) || 0))
 				})
 			});
 			if (!res.ok) {
@@ -907,6 +909,24 @@
 					{:else if schemaValid === false}
 						<span class="text-[11px] text-red-500">{schemaErrorMsg}</span>
 					{/if}
+				</div>
+			</div>
+
+			<div class="flex flex-col gap-y-1">
+				<label for="pf-price" class="text-[12px] font-medium text-slate-600">Price per call (USD)</label>
+				<div class="flex items-center gap-x-2">
+					<span class="text-[12px] text-slate-500">$</span>
+					<input
+						id="pf-price"
+						type="number"
+						min="0"
+						max="10"
+						step="0.0001"
+						bind:value={publishForm.pricePerCallUsd}
+						class="w-28 rounded-md border border-slate-200 px-2 py-1 text-[13px] outline-none focus:border-indigo-400"
+						placeholder="0.0000"
+					/>
+					<span class="text-[11px] text-slate-400">Leave 0 for free</span>
 				</div>
 			</div>
 

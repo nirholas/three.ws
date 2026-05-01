@@ -151,6 +151,19 @@ export function makeRuntime(opts = {}) {
 						.catch((e) => console.error('[skill-runtime] royalty billing failed', e?.message));
 				});
 			}
+
+			// Record autonomous agent payment in agent_payments ledger.
+			queueMicrotask(() => {
+				import('./agent-wallet.js')
+					.then(({ triggerSkillPayment }) =>
+						triggerSkillPayment({
+							agentId,
+							skillSlug: skillName,
+							skillId: skillMeta[skillName]?.skill_id ?? null,
+						}),
+					)
+					.catch((e) => console.error('[skill-runtime] agent payment failed', e?.message));
+			});
 		}
 
 		return result;

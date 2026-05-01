@@ -87,6 +87,10 @@ export default wrap(async function handler(req, res) {
 			const mod = await import('./_id/memory/pin.js');
 			return mod.default(req, res);
 		}
+		if (action === 'seed') {
+			const mod = await import('./_id/memory-seed-farcaster.js');
+			return mod.default(req, res);
+		}
 		if (action && CID_RE.test(action)) {
 			const mod = await import('./_id/memory/[cid].js');
 			return mod.default(req, res);
@@ -107,6 +111,16 @@ export default wrap(async function handler(req, res) {
 	if (sub === 'voice') {
 		const mod = await import('./_id/voice.js');
 		return mod.handleVoice(req, res, id, action);
+	}
+
+	if (sub === 'persona') {
+		const mod = await import('./_id/persona.js');
+		return mod.handlePersona(req, res, id, action);
+	}
+
+	if (sub === 'payments') {
+		const mod = await import('./_id/payments.js');
+		return mod.handlePayments(req, res, id);
 	}
 
 	return handleGetOne(req, res, id);
