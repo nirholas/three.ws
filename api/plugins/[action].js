@@ -21,16 +21,16 @@ const VALID_SORTS = new Set(['popular', 'new', 'az']);
 const MAX_MANIFEST_BYTES = 64 * 1024; // 64 KB
 const FETCH_TIMEOUT_MS = 8000;
 
-// ── Manifest validation (mirrors src/plugins/index.js) ───────────────────────
+// ── Manifest validation — LobeHub/pai-chat ToolManifest format ───────────────
+// Required: identifier, meta.title, api[]
+// Optional: systemRole, type, settings, version, openapi, gateway, ui
 
 function validateManifest(json) {
 	if (!json || typeof json !== 'object') throw new Error('Manifest must be a JSON object');
-	if (!String(json.schema_version || '').startsWith('plugin/'))
-		throw new Error('Invalid schema_version — expected "plugin/1.x"');
 	if (!json.identifier || typeof json.identifier !== 'string')
 		throw new Error('Missing identifier');
-	if (!/^[a-z0-9-_]+$/i.test(json.identifier))
-		throw new Error('identifier must be alphanumeric + hyphens/underscores');
+	if (!/^[a-z0-9._-]+$/i.test(json.identifier))
+		throw new Error('identifier must be alphanumeric with dots, hyphens, or underscores');
 	if (!json.meta?.title) throw new Error('Missing meta.title');
 	if (!Array.isArray(json.api) || !json.api.length)
 		throw new Error('api must be a non-empty array');

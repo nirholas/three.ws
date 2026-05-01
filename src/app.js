@@ -1371,6 +1371,22 @@ class App {
 		if (this.skills) {
 			window.VIEWER.agent_skills = this.skills;
 		}
+
+		// Wire ElevenLabs frequency-based lipsync to the avatar.
+		// onStart fires when audio is actually playing (analyserNode already wired).
+		// BrowserTTS has no analyserNode, so it skips connectLipSync and continues
+		// using the text-based startLipsync path already in speech.js.
+		if (this.runtime?.tts) {
+			const tts    = this.runtime.tts;
+			const avatar = this.avatar;
+			tts.onStart = () => {
+				if (tts.analyserNode) avatar.connectLipSync(tts.analyserNode);
+			};
+			tts.onEnd = () => {
+				avatar._lipSync?.disconnect();
+				avatar._lipSync = null;
+			};
+		}
 	}
 
 	/**

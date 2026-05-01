@@ -9,6 +9,7 @@
 	// Browse state
 	let skills = [];
 	let loading = false;
+	let fetchFailed = false;
 	let searchQuery = '';
 	let debouncedSearch = '';
 	let selectedCategory = null;
@@ -121,6 +122,7 @@
 
 	async function loadSkills(reset = false) {
 		loading = true;
+		fetchFailed = false;
 		try {
 			const p = new URLSearchParams();
 			if (debouncedSearch) p.set('q', debouncedSearch);
@@ -135,6 +137,7 @@
 			page = data.next_cursor || null;
 			hasMore = !!data.next_cursor;
 		} catch (e) {
+			fetchFailed = true;
 			notify(e.message, 'error');
 		} finally {
 			loading = false;
@@ -434,9 +437,11 @@
 
 	// init and keyboard
 
-	$: if (open && skills.length === 0) {
+	$: if (open && skills.length === 0 && !loading && !fetchFailed) {
 		Promise.all([loadSkills(true), loadCategories()]);
 	}
+
+	$: if (!open) fetchFailed = false;
 
 	$: tagPills = publishForm.tags
 		.split(',')
