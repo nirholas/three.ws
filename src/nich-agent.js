@@ -323,7 +323,13 @@ export class NichAgent {
 	// ── Chat API ─────────────────────────────────────────────────────────────
 
 	async _callChatAPI(message) {
-		const typing = this._startTyping();
+		const messagesEl = this.panel.querySelector('#agent-messages');
+		const streamEl = document.createElement('div');
+		streamEl.className = 'nich-message agent';
+		streamEl.textContent = '…';
+		messagesEl.appendChild(streamEl);
+		messagesEl.scrollTop = messagesEl.scrollHeight;
+
 		try {
 			const res = await fetch('/api/chat', {
 				method: 'POST',
@@ -336,34 +342,81 @@ export class NichAgent {
 				}),
 			});
 
-			if (res.status === 401) return { ok: false, disable: true, reason: 'unauthorized' };
-			if (res.status === 503) return { ok: false, disable: true, reason: 'unconfigured' };
+			if (res.status === 401) {
+				streamEl.remove();
+				return { ok: false, disable: true, reason: 'unauthorized' };
+			}
+			if (res.status === 503) {
+				streamEl.remove();
+				return { ok: false, disable: true, reason: 'unconfigured' };
+			}
 			if (res.status === 429) {
+				streamEl.remove();
 				const data = await res.json().catch(() => ({}));
 				return { ok: false, rateLimited: true, retryAfter: data.retry_after };
 			}
-			if (!res.ok) return { ok: false, reason: `http_${res.status}` };
+			if (!res.ok) {
+				streamEl.remove();
+				return { ok: false, reason: `http_${res.status}` };
+			}
 
-			const data = await res.json();
-			return {
-				ok: true,
-				message,
-				reply: (data.reply || '').trim(),
-				actions: data.actions || [],
-			};
+			const contentType = res.headers.get('content-type') || '';
+			if (!contentType.includes('text/event-stream')) {
+				streamEl.remove();
+				const data = await res.json();
+				return { ok: true, message, reply: (data.reply || '').trim(), actions: data.actions || [] };
+			}
+
+			const reader = res.body.getReader();
+			const decoder = new TextDecoder();
+			let buf = '';
+			let streaming = false;
+
+			outer: while (true) {
+				const { value, done } = await reader.read();
+				if (done) break;
+				buf += decoder.decode(value, { stream: true });
+				const lines = buf.split('\n');
+				buf = lines.pop();
+				for (const line of lines) {
+					if (!line.startsWith('data: ')) continue;
+					let evt;
+					try {
+						evt = JSON.parse(line.slice(6));
+					} catch {
+						continue;
+					}
+					if (evt.type === 'chunk') {
+						if (!streaming) {
+							streamEl.textContent = '';
+							streaming = true;
+						}
+						streamEl.textContent += evt.text;
+						messagesEl.scrollTop = messagesEl.scrollHeight;
+					} else if (evt.type === 'done') {
+						if (!streaming) streamEl.remove();
+						return { ok: true, message, reply: evt.reply || '', actions: evt.actions || [], streamEl: streaming ? streamEl : null };
+					} else if (evt.type === 'error') {
+						streamEl.remove();
+						return { ok: false, reason: evt.code || 'upstream_error' };
+					}
+				}
+			}
+
+			streamEl.remove();
+			return { ok: false, reason: 'stream_incomplete' };
 		} catch (err) {
+			streamEl.remove();
 			console.warn('[NichAgent] /api/chat failed:', err.message);
 			return { ok: false, reason: 'network' };
-		} finally {
-			typing();
 		}
 	}
 
-	async _applyApiReply({ message, reply, actions }) {
+	async _applyApiReply({ message, reply, actions, streamEl }) {
 		this._pushHistory('user', message);
 
 		if (reply) {
-			this._addMessage('agent', reply);
+			if (!streamEl) this._addMessage('agent', reply);
 			this._speak(reply);
 			this._pushHistory('assistant', reply);
 			if (this.protocol) {
