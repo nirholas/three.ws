@@ -1,6 +1,6 @@
 {
   "character_id": "403e7206-d314-416a-9ef2-c618e26a8b6e",
-  "generated_at": "2026-05-01T18:31:43.609Z",
+  "generated_at": "2026-05-01T18:32:13.819Z",
   "animations": {
     "c9c72233-b96c-11e4-a802-0aaa78deedf9": {
       "id": "c9c72233-b96c-11e4-a802-0aaa78deedf9",
@@ -8,6 +8,13 @@
       "status": "permanent_fail",
       "http": 400,
       "failed_at": "2026-05-01T18:31:43.605Z"
+    },
+    "c9c69305-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c69305-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Static Double Dagger Stab With Outward Grip",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-01T18:32:13.819Z"
     }
   }
 }
