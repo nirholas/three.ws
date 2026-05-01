@@ -419,6 +419,7 @@ export class ElevenLabsTTS {
 			audio.addEventListener('playing', onStart, { once: true });
 			audio.addEventListener('ended', () => this._onEnd?.(), { once: true });
 			audio.addEventListener('error', () => onError?.(), { once: true });
+			this._connectPositionalAudio(audio);
 			await audio.play();
 		} catch (err) {
 			if (err.name !== 'AbortError') onError?.();
@@ -426,6 +427,10 @@ export class ElevenLabsTTS {
 	}
 
 	_cleanupAudio() {
+		if (this._positionalAudio?.source) {
+			try { this._positionalAudio.source.disconnect(); } catch {}
+			this._positionalAudio.source = null;
+		}
 		if (this._audio) {
 			try {
 				this._audio.pause();
