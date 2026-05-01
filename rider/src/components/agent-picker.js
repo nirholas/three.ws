@@ -10,7 +10,7 @@
 // Always call three.ws directly — explore API allows all origins.
 const EXPLORE_URL = 'https://three.ws/api/explore';
 const FALLBACK_AGENTS = [
-  { id: 'cz', name: 'CZ', url: 'https://raw.githubusercontent.com/overstepping/-/main/cz.glb' }
+  { id: 'cz', name: 'CZ', url: 'assets/avatars/cz.glb' }
 ];
 
 AFRAME.registerSystem('agent-picker', {
