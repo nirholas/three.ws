@@ -898,3 +898,29 @@ alter table social_connections add column if not exists updated_at       timesta
 -- Additive migrations for agent_identities — X social seeding
 alter table agent_identities add column if not exists x_username   text;
 alter table agent_identities add column if not exists x_seeded_at  timestamptz;
+
+-- ── scene_gates ───────────────────────────────────────────────────────────────
+-- Token-gated scene shares. Visitors must prove wallet ownership before loading.
+create table if not exists scene_gates (
+    id           text primary key,
+    user_id      uuid references users(id),
+    scene_ref    text not null,
+    chain        text not null check (chain in ('solana','evm')),
+    kind         text not null check (kind in ('spl','collection','erc20','erc721')),
+    address      text not null,
+    min_balance  numeric not null default 1,
+    created_at   timestamptz not null default now()
+);
+
+-- ── gate_nonces ───────────────────────────────────────────────────────────────
+-- One-time nonces for gate-check wallet signature verification.
+create table if not exists gate_nonces (
+    nonce       text primary key,
+    gate_id     text not null references scene_gates(id) on delete cascade,
+    address     text not null,
+    expires_at  timestamptz not null,
+    consumed_at timestamptz
+);
+
+create index if not exists gate_nonces_expiry  on gate_nonces(expires_at);
+create index if not exists gate_nonces_gate_id on gate_nonces(gate_id);

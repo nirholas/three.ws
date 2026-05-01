@@ -25,6 +25,7 @@
 //   strategy-close-all       -> handleStrategyCloseAll
 //   strategy-run             -> handleStrategyRun (SSE; bypasses wrap())
 //   strategy-validate        -> handleStrategyValidate
+//   live-stream              -> handleLiveStream  (SSE; bypasses wrap())
 
 import { z } from 'zod';
 import { Keypair, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
@@ -45,6 +46,7 @@ import {
 	solanaPubkey,
 } from '../_lib/pump.js';
 import { solanaConnection } from '../_lib/agent-pumpfun.js';
+import { connectPumpFunFeed } from '../_lib/pumpfun-ws-feed.js';
 import { makeRuntime } from '../_lib/skill-runtime.js';
 import { loadWallet } from '../_lib/solana-wallet.js';
 import { checkBuyAllowed } from '../_lib/agent-spend-policy.js';
@@ -99,10 +101,11 @@ const wrapped = wrap(async (req, res) => {
 	}
 });
 
-// strategy-run and vanity-keygen are SSE — bypass wrap()'s JSON-error fallback.
+// SSE actions bypass wrap()'s JSON-error fallback — they manage their own response writes.
 export default async function dispatcher(req, res) {
 	if (req.query?.action === 'strategy-run') return handleStrategyRun(req, res);
 	if (req.query?.action === 'vanity-keygen') return handleVanityKeygen(req, res);
+	if (req.query?.action === 'live-stream') return handleLiveStream(req, res);
 	return wrapped(req, res);
 }
 
@@ -1660,6 +1663,62 @@ async function handleStrategyRun(req, res) {
 		send('error', { message: e.message });
 	}
 	res.end();
+}
+
+// ── live-stream ────────────────────────────────────────────────────────────
+// SSE — fans out the PumpPortal WebSocket feed to browser clients.
+// Routed before wrap() above. No auth; rate-limited by IP.
+
+const liveStreamKindSchema = z.enum(['all', 'mint', 'graduation']).default('all');
+
+async function handleLiveStream(req, res) {
+	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
+	if (!method(req, res, ['GET'])) return;
+
+	const rl = await limits.mcpIp(clientIp(req));
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
+
+	const url = new URL(req.url, `http://${req.headers.host}`);
+	let kind;
+	try {
+		kind = liveStreamKindSchema.parse(url.searchParams.get('kind') ?? undefined);
+	} catch {
+		return error(res, 400, 'validation_error', 'kind must be all, mint, or graduation');
+	}
+
+	res.statusCode = 200;
+	res.setHeader('content-type', 'text/event-stream; charset=utf-8');
+	res.setHeader('cache-control', 'no-cache, no-transform');
+	res.setHeader('connection', 'keep-alive');
+	res.setHeader('x-accel-buffering', 'no');
+
+	const ping = setInterval(() => {
+		if (!res.writableEnded) res.write(': ping\n\n');
+	}, 15_000);
+
+	const maxDuration = setTimeout(() => {
+		clearInterval(ping);
+		if (!res.writableEnded) {
+			res.write(`event: end\ndata: ${JSON.stringify({ reason: 'max-duration' })}\n\n`);
+			res.end();
+		}
+	}, 60 * 60 * 1_000);
+
+	const stop = connectPumpFunFeed({
+		kind,
+		onEvent({ kind: evtKind, data }) {
+			if (!res.writableEnded) {
+				res.write(`event: ${evtKind}\ndata: ${JSON.stringify(data)}\n\n`);
+			}
+		},
+	});
+
+	req.on('close', () => {
+		clearInterval(ping);
+		clearTimeout(maxDuration);
+		stop();
+		if (!res.writableEnded) res.end();
+	});
 }
 
 // ── strategy-validate ──────────────────────────────────────────────────────

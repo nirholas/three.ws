@@ -16,6 +16,38 @@ function toBase58(bytes) {
 }
 
 /**
+ * Connect a Solana wallet and sign an arbitrary message.
+ * @param {string} message
+ * @returns {Promise<{address: string, signature: string}>}
+ */
+export async function signMessageSolana(message) {
+  if (!window.solana) throw new Error('No Solana wallet found. Install Phantom or a compatible wallet.');
+  await window.solana.connect();
+  const address = window.solana.publicKey.toString();
+  const bytes = new TextEncoder().encode(message);
+  const result = await window.solana.signMessage(bytes);
+  // Phantom returns { signature: Uint8Array }; some wallets return Uint8Array directly
+  const sigBytes = result.signature || result;
+  return { address, signature: toBase58(sigBytes) };
+}
+
+/**
+ * Connect an EVM wallet and sign an arbitrary message (personal_sign).
+ * @param {string} message
+ * @returns {Promise<{address: string, signature: string}>}
+ */
+export async function signMessageEVM(message) {
+  if (!window.ethereum) throw new Error('No EVM wallet found. Install MetaMask or a compatible wallet.');
+  const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+  const address = accounts[0];
+  const signature = await window.ethereum.request({
+    method: 'personal_sign',
+    params: [message, address],
+  });
+  return { address, signature };
+}
+
+/**
  * Returns the current user if a valid session exists, otherwise null.
  * @returns {Promise<object|null>}
  */

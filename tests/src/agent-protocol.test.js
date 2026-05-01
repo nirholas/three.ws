@@ -136,6 +136,7 @@ describe('AgentProtocol.history', () => {
 
 	it('caps history at the internal max', () => {
 		const bus = new AgentProtocol();
+		bus.debug = true; // bypass burst limiter so all 250 events reach history
 		for (let i = 0; i < 250; i++) {
 			bus.emit({ type: 'speak', payload: { i } });
 		}
@@ -159,6 +160,7 @@ describe('AgentProtocol.recent', () => {
 
 	it('returns at most N matches (newest)', () => {
 		const bus = new AgentProtocol();
+		bus.debug = true; // bypass burst limiter
 		for (let i = 0; i < 15; i++) bus.emit({ type: 'speak', payload: { i } });
 		const r = bus.recent('speak', 5);
 		expect(r).toHaveLength(5);
@@ -167,6 +169,7 @@ describe('AgentProtocol.recent', () => {
 
 	it('defaults to 10 entries', () => {
 		const bus = new AgentProtocol();
+		bus.debug = true; // bypass burst limiter
 		for (let i = 0; i < 20; i++) bus.emit({ type: 'speak', payload: { i } });
 		expect(bus.recent('speak')).toHaveLength(10);
 	});

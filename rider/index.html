@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>three.ws</title>
+    <meta name="og:title" content="three.ws">
+    <meta name="twitter:title" content="three.ws">
+
+    <meta name="description" content="A free and open source VR music visualization experience. Surf the musical road among the stars, moon, and lights.">
+    <meta name="og:description" content="A free and open source VR music visualization experience. Surf the musical road among the stars, moon, and lights.">
+    <meta name="twitter:description" content="A free and open source VR music visualization experience. Surf the musical road among the stars, moon, and lights.">
+    <meta name="twitter:card" content="summary">
+
+    <meta property="og:image" content="https://three.ws/assets/img/splash.jpg">
+    <meta property="twitter:image" content="https://three.ws/assets/img/splash.jpg">
+
+    <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+    <link rel="shortcut icon" href="assets/img/favicon.svg" type="image/svg+xml">
+    <script src="https://cdn.jsdelivr.net/gh/aframevr/aframe@2c4509aa1a9a3c447c08be9facfea0c7d6a9e156/dist/aframe-master.min.js"></script>
+    <script src="build/build.js?v=3"></script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="vrButton" title="Enter VR / Fullscreen"><p>Click Here to Enter VR</p></div>
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111391431-16"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-111391431-16');
+    </script>
+
+    <div id="subscribeForm">
+      <h2>Get Updates on Our Upcoming VR Projects!</h2>
+      <form>
+        <input name="email" type="email" placeholder="Email address">
+        <button class="submit" type="submit">Subscribe</button>
+      </form>
+      <p>Also chat with us on <a href="https://three.ws/discord">three.ws/discord</a></p>
+      <span id="subscribeClose">&times;</span>
+    </div>
+
+    <div id="brokenNotice" style="position: fixed; top: 0; left: 0; right: 0; background: rgba(30, 30, 30, 0.8); padding: 10px">
+      <p style="font-family: monospace; color: #FAFAFA; text-align: center">Welcome to three.ws — VR music visualization. Chat with us on <a href="https://three.ws/discord" style="color: rgb(221,132,195)">three.ws/discord</a></p>
+    </div>
+  </body>
+</html>

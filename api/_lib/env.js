@@ -190,9 +190,24 @@ export const env = {
 		return opt('ZAUTH_DEBUG');
 	},
 
-	// Solana RPC URL used for SNS reads/writes. Falls back to public mainnet RPC.
+	// Solana RPC URL used for SNS reads/writes and NFT minting. Falls back to public mainnet RPC.
 	get SOLANA_RPC_URL() {
 		return opt('SOLANA_RPC_URL', 'https://api.mainnet-beta.solana.com');
+	},
+
+	// NFT.Storage API token — required for MintScene tool (uploads GLB + thumbnail + metadata to IPFS).
+	// Obtain at https://nft.storage. When unset, /api/nft/mint-scene returns 503 not_configured.
+	get NFT_STORAGE_TOKEN() {
+		return opt('NFT_STORAGE_TOKEN');
+	},
+
+	// Metaplex Bubblegum compressed-NFT tree config — optional. When both are set, MintScene
+	// uses the cNFT path (Bubblegum); otherwise falls back to a regular MPL Core NFT.
+	get BUBBLEGUM_MERKLE_TREE() {
+		return opt('BUBBLEGUM_MERKLE_TREE');
+	},
+	get BUBBLEGUM_TREE_AUTHORITY() {
+		return opt('BUBBLEGUM_TREE_AUTHORITY');
 	},
 
 	// GitHub OAuth — social memory seeding. When unset, /api/auth/github/connect returns 501.

@@ -3,6 +3,10 @@
 
 import { resolveURI } from '../ipfs.js';
 import { getHost } from './sandbox-host.js';
+import { startDataReactive } from '../runtime/data-reactive.js';
+
+/** Injected into every skill handler ctx as ctx.dataReactive */
+const dataReactive = { start: startDataReactive };
 
 const FRONTMATTER_RE = /^---\n([\s\S]*?)\n---\n?([\s\S]*)$/;
 
@@ -41,12 +45,11 @@ export class Skill {
 	}
 
 	async invoke(toolName, args, ctx) {
-		const paymentProof = ctx?.agentId
-			? await checkPaymentGate(toolName, ctx.agentId)
-			: null;
+		const paymentProof = ctx?.agentId ? await checkPaymentGate(toolName, ctx.agentId) : null;
 		const scoped = {
 			...ctx,
 			skillBaseURI: this.uri,
+			dataReactive,
 			...(paymentProof && { paymentProof }),
 		};
 
@@ -224,9 +227,9 @@ export class SkillRegistry {
 // ── Payment gate ──────────────────────────────────────────────────────────────
 
 const KNOWN_MINT_SYMBOLS = {
-	'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v': 'USDC',
+	EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v: 'USDC',
 	'4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU': 'USDC',
-	'So11111111111111111111111111111111111111112': 'SOL',
+	So11111111111111111111111111111111111111112: 'SOL',
 };
 
 function mintSymbol(mint) {
@@ -235,7 +238,9 @@ function mintSymbol(mint) {
 
 async function fetchAgentSnippet(agentId) {
 	try {
-		const r = await fetch(`/api/agents/${encodeURIComponent(agentId)}`, { credentials: 'include' });
+		const r = await fetch(`/api/agents/${encodeURIComponent(agentId)}`, {
+			credentials: 'include',
+		});
 		if (!r.ok) return {};
 		const data = await r.json();
 		const payments = data?.agent?.payments || data?.agent?.meta?.payments || data?.payments;

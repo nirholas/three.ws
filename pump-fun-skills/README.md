@@ -19,6 +19,7 @@ This skill library provides AI agents with the tools to interact with pump.fun's
 | [**Swap**](swap/) | Buy and sell tokens on the bonding curve or AMM pool. Automatically detects coin state (bonding vs graduated) and builds the correct transaction. Supports slippage protection and Jito front-runner protection. |
 | [**Coin Fees**](coin-fees/) | Inspect creator fee destinations and vault balances, collect fees, distribute shared fees to shareholders, and create or update sharing configs with up to 10 shareholders. |
 | [**Tokenized Agent Payments**](tokenized-agents/) | Accept USDC or wrapped SOL payments and verify invoices on-chain for Pump Tokenized Agents using `@pump-fun/agent-payments-sdk`. Includes wallet integration guides for React/Next.js. |
+| [**Reactive Avatar**](reactive/) | Connects to the real PumpPortal WebSocket feed and drives `<agent-3d>` avatar gestures, emotes, and speech from live pump.fun events — no LLM in the loop. |
 
 ## Repo Structure
 

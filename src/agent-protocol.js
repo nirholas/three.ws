@@ -37,13 +37,44 @@ export const ACTION_TYPES = {
  * @property {string} [sourceSkill] — skill name if emitted by a skill
  */
 
+/**
+ * @typedef {{ mode: 'passthrough' }} PassthroughPolicy
+ * @typedef {{ mode: 'throttle', leading: boolean, intervalMs: number }} ThrottlePolicy
+ * @typedef {{ mode: 'debounce', intervalMs: number }} DebouncePolicy
+ * @typedef {{ mode: 'coalesce', windowMs: number, key: (payload: Object) => string, merge: (a: Object, b: Object) => Object }} CoalescePolicy
+ * @typedef {PassthroughPolicy|ThrottlePolicy|DebouncePolicy|CoalescePolicy} ThrottlePolicySpec
+ */
+
+// Default per-type policies for animation-driving events.
+// Everything else passes through unchanged.
+const _DEFAULT_POLICIES = [
+	['gesture', { mode: 'throttle', leading: true, intervalMs: 600 }],
+	[
+		'emote',
+		{
+			mode: 'coalesce',
+			windowMs: 150,
+			key: (p) => p.trigger ?? 'default',
+			merge: (a, b) => ({ ...b, weight: Math.max(a.weight ?? 0, b.weight ?? 0) }),
+		},
+	],
+	['look-at', { mode: 'debounce', intervalMs: 100 }],
+];
+
 export class AgentProtocol extends EventTarget {
 	constructor() {
 		super();
 		this._history = [];
 		this._maxHistory = 200;
 
-		// Rate limiter state
+		// Coalescing / throttle policies
+		this._policies = new Map(_DEFAULT_POLICIES);
+		// Per-type runtime state for throttle/debounce/coalesce
+		this._throttleState = new Map();
+		// Suppressed event counters (post-policy, not emitted)
+		this._droppedCounts = new Map();
+
+		// Burst rate-limiter — absolute runaway protection for passthrough events
 		this._counters = new Map();   // eventType → { count, windowStart }
 		this._throttled = new Set();  // event types currently rate-limited
 		this._limits = {
@@ -55,7 +86,7 @@ export class AgentProtocol extends EventTarget {
 		this._windowMs = 100;
 		this._cooldownMs = 1000;
 
-		/** Set to true at runtime to log all emits instead of rate-limiting. */
+		/** Set to true at runtime to log all emits and bypass all policies. */
 		this.debug = false;
 	}
 
@@ -66,29 +97,169 @@ export class AgentProtocol extends EventTarget {
 	emit(action) {
 		if (this.debug) {
 			console.log(`[agent-protocol] ${Date.now()} ${action.type}`, action.payload);
-		} else if (this._isThrottled(action.type)) {
-			console.warn(`[agent-protocol] rate-limited: ${action.type} — too many events`);
+			this._doEmit(action);
 			return;
 		}
 
+		const policy = this._policies.get(action.type) ?? { mode: 'passthrough' };
+
+		if (policy.mode === 'passthrough') {
+			// Passthrough events go through the burst rate-limiter.
+			if (this._isThrottled(action.type)) {
+				console.warn(`[agent-protocol] rate-limited: ${action.type} — too many events`);
+				return;
+			}
+			this._doEmit(action);
+		} else {
+			this._applyPolicy(policy, action);
+		}
+	}
+
+	/**
+	 * Override the throttle policy for a specific event type on this instance.
+	 * Cancels any pending state (timers, coalesce buckets) for the type.
+	 * @param {string} type
+	 * @param {ThrottlePolicySpec} policy
+	 */
+	setThrottlePolicy(type, policy) {
+		const state = this._throttleState.get(type);
+		if (state?.timerId !== undefined) {
+			clearTimeout(state.timerId);
+		}
+		this._throttleState.delete(type);
+		this._policies.set(type, policy);
+	}
+
+	/**
+	 * Number of events of this type that were suppressed (dropped) by the throttle layer.
+	 * @param {string} type
+	 * @returns {number}
+	 */
+	droppedCount(type) {
+		return this._droppedCounts.get(type) ?? 0;
+	}
+
+	// ─── Policy dispatch ──────────────────────────────────────────────────────
+
+	_applyPolicy(policy, action) {
+		switch (policy.mode) {
+			case 'throttle':
+				this._applyThrottle(policy, action);
+				break;
+			case 'debounce':
+				this._applyDebounce(policy, action);
+				break;
+			case 'coalesce':
+				this._applyCoalesce(policy, action);
+				break;
+		}
+	}
+
+	// Leading-edge throttle: fire on first event in the interval, drop the rest.
+	_applyThrottle(policy, action) {
+		const now = performance.now();
+		let state = this._throttleState.get(action.type);
+		if (!state) {
+			state = { lastFiredAt: -Infinity };
+			this._throttleState.set(action.type, state);
+		}
+
+		if (now - state.lastFiredAt >= policy.intervalMs) {
+			state.lastFiredAt = now;
+			this._doEmit(action);
+		} else {
+			this._incrementDropped(action.type);
+		}
+	}
+
+	// Trailing-edge debounce: only the last event in the quiet window is emitted.
+	_applyDebounce(policy, action) {
+		const type = action.type;
+		let state = this._throttleState.get(type);
+		if (!state) {
+			state = {};
+			this._throttleState.set(type, state);
+		}
+
+		if (state.timerId !== undefined) {
+			clearTimeout(state.timerId);
+			// Previous pending action is superseded and dropped.
+			this._incrementDropped(type);
+		}
+
+		state.pendingAction = action;
+		state.timerId = setTimeout(() => {
+			const s = this._throttleState.get(type);
+			if (s) {
+				const pending = s.pendingAction;
+				delete s.timerId;
+				delete s.pendingAction;
+				this._doEmit(pending);
+			}
+		}, policy.intervalMs);
+	}
+
+	// Coalesce: within the window, merge events by key; emit one per key at window end.
+	// The merge function receives (existing_payload, new_payload) and returns the merged payload.
+	_applyCoalesce(policy, action) {
+		const type = action.type;
+		let state = this._throttleState.get(type);
+		if (!state) {
+			state = { buckets: new Map() };
+			this._throttleState.set(type, state);
+		}
+
+		const key = policy.key(action.payload ?? {});
+		const existing = state.buckets.get(key);
+
+		if (existing) {
+			const merged = policy.merge(existing.payload ?? {}, action.payload ?? {});
+			state.buckets.set(key, { ...action, payload: merged });
+			// Incoming event merged into existing bucket — the raw event is suppressed.
+			this._incrementDropped(type);
+		} else {
+			state.buckets.set(key, { ...action, payload: action.payload ?? {} });
+		}
+
+		if (state.timerId === undefined) {
+			state.timerId = setTimeout(() => {
+				const s = this._throttleState.get(type);
+				if (s) {
+					for (const pending of s.buckets.values()) {
+						this._doEmit(pending);
+					}
+					s.buckets.clear();
+					delete s.timerId;
+				}
+			}, policy.windowMs);
+		}
+	}
+
+	_incrementDropped(type) {
+		this._droppedCounts.set(type, (this._droppedCounts.get(type) ?? 0) + 1);
+	}
+
+	// ─── Core emit (post-policy) ──────────────────────────────────────────────
+
+	_doEmit(action) {
 		const full = {
 			type: action.type,
-			payload: action.payload || {},
+			payload: action.payload ?? {},
 			timestamp: Date.now(),
-			agentId: action.agentId || 'default',
-			sourceSkill: action.sourceSkill || null,
+			agentId: action.agentId ?? 'default',
+			sourceSkill: action.sourceSkill ?? null,
 		};
 
-		// Trim history
 		this._history.push(full);
 		if (this._history.length > this._maxHistory) {
 			this._history.shift();
 		}
 
 		this.dispatchEvent(new CustomEvent(full.type, { detail: full }));
-		// Also dispatch a wildcard so listeners can monitor all traffic
 		this.dispatchEvent(new CustomEvent('*', { detail: full }));
 	}
+
+	// ─── Burst rate-limiter (passthrough events only) ─────────────────────────
 
 	_isThrottled(type) {
 		if (this._throttled.has(type)) return true;
@@ -129,7 +300,7 @@ export class AgentProtocol extends EventTarget {
 		}, this._cooldownMs);
 	}
 
-	// Bypasses the rate limiter — only for internal protocol-error emission.
+	// Bypasses all policies and the rate limiter — only for internal protocol-error emission.
 	_dispatchDirect(type, payload) {
 		const full = {
 			type,
@@ -143,6 +314,8 @@ export class AgentProtocol extends EventTarget {
 		this.dispatchEvent(new CustomEvent(type, { detail: full }));
 		this.dispatchEvent(new CustomEvent('*', { detail: full }));
 	}
+
+	// ─── Subscription API ─────────────────────────────────────────────────────
 
 	/**
 	 * Subscribe to a specific action type (or '*' for all).

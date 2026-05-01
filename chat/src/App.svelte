@@ -65,6 +65,7 @@
 		feX,
 	} from './feather.js';
 	import { defaultToolSchema, agentToolSchema, pumpToolSchema, curatedToolPacks } from './tools.js';
+	import { signMessageSolana, signMessageEVM } from './walletAuth.js';
 	import { debounce, readFileAsDataURL } from './util.js';
 	import { flash, focusOnMount } from './actions';
 	import Message from './Message.svelte';
@@ -1147,8 +1148,10 @@
 		downloadFile(JSON.stringify(data, null, 2), `conversation-${convo.id.slice(0, 8)}.json`, 'application/json');
 	}
 
-	async function restoreConversation() {
+	async function restoreConversation(skipGateCheck = false) {
 		const params = new URLSearchParams(window.location.search);
+		const gate = params.get('gate');
+
 		let share;
 		if (params.has('s')) {
 			share = params.get('s');
@@ -1163,6 +1166,13 @@
 			}
 		}
 		if (!share) {
+			return false;
+		}
+
+		// Token-gate: show wallet verify UI before loading the scene
+		if (gate && !skipGateCheck) {
+			activeGate = { id: gate, s: params.get('s'), sl: params.get('sl') };
+			gateState = 'pending';
 			return false;
 		}
 
@@ -1213,6 +1223,69 @@
 	}
 
 	let installToastMsg = '';
+
+	// Token-gate enforcement state
+	let gateState = null; // null | 'pending' | 'checking' | 'denied'
+	let gateError = '';
+	let activeGate = null; // { id, s, sl }
+
+	async function verifyGate(walletType) {
+		gateState = 'checking';
+		gateError = '';
+		try {
+			// Connect wallet to get address
+			let address, signature;
+			if (walletType === 'solana') {
+				if (!window.solana) throw new Error('No Solana wallet found. Install Phantom or a compatible wallet.');
+				await window.solana.connect();
+				address = window.solana.publicKey.toString();
+			} else {
+				if (!window.ethereum) throw new Error('No EVM wallet found. Install MetaMask or a compatible wallet.');
+				const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+				address = accounts[0];
+			}
+
+			// Phase 1: get nonce message
+			const p1 = await fetch('/api/scene/gate-check', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ gateId: activeGate.id, walletAddress: address }),
+			});
+			if (!p1.ok) throw new Error('Gate check failed: ' + p1.status + ' ' + await p1.text());
+			const { message } = await p1.json();
+
+			// Sign message
+			if (walletType === 'solana') {
+				({ address, signature } = await signMessageSolana(message));
+			} else {
+				({ address, signature } = await signMessageEVM(message));
+			}
+
+			// Phase 2: verify
+			const p2 = await fetch('/api/scene/gate-check', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ gateId: activeGate.id, walletAddress: address, signature, message }),
+			});
+			if (!p2.ok) {
+				const body = await p2.json().catch(() => ({}));
+				throw new Error(body.error_description || 'Verification failed');
+			}
+			const { allowed, reason } = await p2.json();
+
+			if (allowed) {
+				gateState = null;
+				activeGate = null;
+				await restoreConversation(true);
+			} else {
+				gateState = 'denied';
+				gateError = reason || 'Access denied.';
+			}
+		} catch (e) {
+			gateState = 'denied';
+			gateError = e.message || 'Wallet verification failed.';
+		}
+	}
 
 	let choiceHandler;
 	async function makeChoice() {
@@ -2240,6 +2313,49 @@
 {#if installToastMsg}
 	<div transition:fade={{ duration: 200 }} class="fixed bottom-16 left-1/2 z-[200] -translate-x-1/2 rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-800 shadow-md">
 		{installToastMsg}
+	</div>
+{/if}
+
+{#if gateState}
+	<div transition:fade={{ duration: 150 }} class="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+		<div class="mx-4 w-full max-w-sm rounded-2xl bg-white p-8 shadow-2xl">
+			<div class="mb-2 text-2xl font-bold text-slate-900">🔒 Token-Gated Scene</div>
+			<p class="mb-6 text-sm text-slate-600">This 3D scene requires wallet ownership verification to access. Connect your wallet and prove you hold the required token.</p>
+
+			{#if gateState === 'pending'}
+				<div class="flex flex-col gap-3">
+					<button
+						class="flex items-center justify-center gap-2 rounded-xl bg-purple-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-purple-700 active:scale-95"
+						on:click={() => verifyGate('solana')}
+					>
+						<svg class="h-5 w-5" viewBox="0 0 128 128" fill="none"><circle cx="64" cy="64" r="64" fill="#9945FF"/><path d="M86 44H42l14 14h44L86 44zm0 26H42l14 14h44L86 70zM42 84h44l-14 14H28L42 84z" fill="white"/></svg>
+						Verify with Solana Wallet
+					</button>
+					<button
+						class="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 active:scale-95"
+						on:click={() => verifyGate('evm')}
+					>
+						<svg class="h-5 w-5" viewBox="0 0 128 128" fill="none"><circle cx="64" cy="64" r="64" fill="#627EEA"/><path d="M64 20v33l28 12.5L64 20z" fill="white" fill-opacity=".6"/><path d="M64 20L36 65.5l28-12.5V20z" fill="white"/><path d="M64 88v20l28-38.5L64 88z" fill="white" fill-opacity=".6"/><path d="M64 108V88L36 69.5 64 108z" fill="white"/><path d="M64 82.5l28-16.9-28-12.6v29.5z" fill="white" fill-opacity=".2"/><path d="M36 65.5l28 16.9V53l-28 12.5z" fill="white" fill-opacity=".6"/></svg>
+						Verify with EVM Wallet
+					</button>
+				</div>
+			{:else if gateState === 'checking'}
+				<div class="flex flex-col items-center gap-3 py-4">
+					<div class="h-8 w-8 animate-spin rounded-full border-4 border-purple-200 border-t-purple-600"></div>
+					<p class="text-sm text-slate-500">Connecting wallet and verifying…</p>
+				</div>
+			{:else if gateState === 'denied'}
+				<div class="mb-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">
+					<strong>Access denied:</strong> {gateError}
+				</div>
+				<div class="flex flex-col gap-2">
+					<button
+						class="rounded-xl bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-200"
+						on:click={() => { gateState = 'pending'; gateError = ''; }}
+					>Try a different wallet</button>
+				</div>
+			{/if}
+		</div>
 	</div>
 {/if}
 

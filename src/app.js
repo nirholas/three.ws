@@ -1078,6 +1078,46 @@ class App {
 	}
 
 	_initWidgetBridge() {
+		// MintScene bridge: { id, action, input } envelope from any parent frame.
+		// Handles exportGLB and takeScreenshot (returning base64 data to caller).
+		window.addEventListener('message', (event) => {
+			const data = event.data;
+			if (!data || typeof data !== 'object' || typeof data.id !== 'string' || typeof data.action !== 'string') return;
+			// Only handle our specific action verbs to avoid intercepting unrelated messages.
+			if (data.action !== 'exportGLB' && data.action !== 'takeScreenshot') return;
+			const replyOrigin = event.origin && event.origin !== 'null' ? event.origin : '*';
+			const replyTo = event.source || window.parent;
+			const reply = (result, err) => {
+				try { replyTo.postMessage(err ? { id: data.id, error: err } : { id: data.id, result }, replyOrigin); } catch (_) {}
+			};
+			const viewer = this.viewer || window.VIEWER?.app?.viewer;
+			if (!viewer) return reply(null, 'viewer not ready');
+			if (data.action === 'takeScreenshot') {
+				try {
+					viewer.renderer.render(viewer.scene, viewer.activeCamera);
+					const dataUrl = viewer.renderer.domElement.toDataURL('image/png');
+					reply(dataUrl.replace('data:image/png;base64,', ''));
+				} catch (e) { reply(null, e.message); }
+				return;
+			}
+			if (data.action === 'exportGLB') {
+				const scene = viewer.scene;
+				const content = viewer.content;
+				if (!content) return reply(null, 'no model loaded');
+				import('three/addons/exporters/GLTFExporter.js').then(({ GLTFExporter }) => {
+					const exporter = new GLTFExporter();
+					exporter.parse(content, (result) => {
+						const bytes = result instanceof ArrayBuffer ? result : result.buffer;
+						let binary = '';
+						const arr = new Uint8Array(bytes);
+						for (let i = 0; i < arr.length; i++) binary += String.fromCharCode(arr[i]);
+						reply(btoa(binary));
+					}, (err) => { reply(null, String(err?.message || err)); }, { binary: true });
+				}).catch((e) => { reply(null, 'GLTFExporter load failed: ' + e.message); });
+				return;
+			}
+		});
+
 		// Studio sends live config updates without a full reload. Also handles
 		// runtime commands (play_clip, wave) for parent-driven embeds.
 		window.addEventListener('message', (event) => {

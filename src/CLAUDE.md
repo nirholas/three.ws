@@ -32,6 +32,7 @@ The viewer doesn't know about agents. The agent layer wraps the viewer through [
 - [runtime/scene.js](runtime/scene.js) — SceneController wraps Viewer with agent-facing API (`playClipByName`, `lookAt`, `setExpression`, `loadGLB`).
 - [runtime/tools.js](runtime/tools.js) — `BUILTIN_TOOLS` + handlers (wave, lookAt, play_clip, setExpression, speak, remember).
 - [runtime/speech.js](runtime/speech.js) — TTS/STT via browser Web Speech API.
+- [runtime/data-reactive.js](runtime/data-reactive.js) — `startDataReactive({ protocol, source, bindings, signal })`. Wires a live SSE/WS/poll source to the protocol bus via declarative `{ match, emit }` bindings. Available in skill handlers as `ctx.dataReactive.start({...})`.
 
 ### Format loaders
 
@@ -133,7 +134,7 @@ Z-rotation = `(curiosity*12 + empathy*9 + concern*4)` degrees. X-rotation (lean)
 - **Naming:** CamelCase classes, camelCase methods, UPPER_CASE constants, `_underscore` for private methods/fields.
 - **vhtml JSX** in `*.jsx` components — string-based, no virtual DOM. See [components/](components/).
 - **Tool result shape:** `{ ok: true, ... }` or `{ ok: false, error: 'msg' }`.
-- **Skill handler context:** `(args, ctx)` where `ctx = { viewer, memory, llm, speak, listen, fetch, loadGLB, loadClip, loadJSON, call }`.
+- **Skill handler context:** `(args, ctx)` where `ctx = { viewer, memory, llm, speak, listen, fetch, loadGLB, loadClip, loadJSON, call, dataReactive }`.
 
 ---
 
@@ -147,7 +148,7 @@ Z-rotation = `(curiosity*12 + empathy*9 + concern*4)` degrees. X-rotation (lean)
 - **Skill `owned-only` trust** compares `manifest.author` with `ownerAddress` from element attr or backend. Mismatch → skill load throws.
 - **[viewer.js](viewer.js) is the biggest file in `src/` (~1.2k lines).** Further module split is tracked in [prompts/scalability/03-module-split.md](../prompts/scalability/03-module-split.md). Don't start that refactor ad-hoc.
 - **`memory.recall()` is substring search.** No embeddings yet.
-- **No rate limit on `protocol.emit()`.** A runaway skill loop will cascade.
+- **Throttle policies on `protocol.emit()`.** Animation-driving events are shaped by default: `gesture` (leading-edge throttle, 600 ms), `emote` (coalesce by `payload.trigger` with max-weight merge, 150 ms window), `look-at` (trailing debounce, 100 ms). All other types pass through. Override per-instance with `protocol.setThrottlePolicy(type, policy)` where `policy` is `{ mode: 'passthrough' }`, `{ mode: 'throttle', leading: true, intervalMs }`, `{ mode: 'debounce', intervalMs }`, or `{ mode: 'coalesce', windowMs, key, merge }`. Inspect suppressed events via `protocol.droppedCount(type)`. Passthrough events still go through the burst rate-limiter as a last-resort cascade guard.
 
 ---
 

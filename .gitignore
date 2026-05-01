@@ -15,6 +15,9 @@ npm-debug.log*
 # CharacterStudio — vendored fork
 character-studio/node_modules
 character-studio/build
+
+# Rider subproject build output
+rider/build
 character-studio/public/loot-assets
 .mcp.json
 .claude/worktrees/
