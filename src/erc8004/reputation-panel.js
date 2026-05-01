@@ -18,12 +18,29 @@
 import { JsonRpcProvider, BrowserProvider } from 'ethers';
 import { CHAIN_META, switchChain, txExplorerUrl } from './chain-meta.js';
 import { REGISTRY_DEPLOYMENTS } from './abi.js';
-import { submitReputation, getReputation, getRecentReviews } from './reputation.js';
+import { submitReputation, stakeReputation, getTotalStake, getReputation, getRecentReviews } from './reputation.js';
 
-// Look back ~50k blocks (~7 days on most L2s, ~7 days on Ethereum mainnet).
-// Some RPCs reject huge ranges; this is a conservative default that still
-// captures recent activity without a 429.
 const REVIEWS_LOOKBACK_BLOCKS = 50_000;
+const MIN_STAKE_ETH = 0.001;
+
+let _ethPriceUsd = null;
+let _ethPriceFetchedAt = 0;
+
+async function fetchEthPriceUsd() {
+	const now = Date.now();
+	if (_ethPriceUsd && now - _ethPriceFetchedAt < 5 * 60 * 1000) return _ethPriceUsd;
+	try {
+		const res = await fetch(
+			'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd',
+		);
+		const data = await res.json();
+		_ethPriceUsd = data?.ethereum?.usd ?? null;
+		_ethPriceFetchedAt = now;
+	} catch {
+		/* best-effort */
+	}
+	return _ethPriceUsd;
+}
 
 export class ReputationPanel {
 	/**
@@ -39,6 +56,7 @@ export class ReputationPanel {
 		this._viewer = viewer;
 		this._root = null;
 		this._stats = null;
+		this._totalStakeWei = 0n;
 		this._reviews = [];
 	}
 
@@ -72,11 +90,18 @@ export class ReputationPanel {
 		});
 
 		try {
-			this._stats = await getReputation({
-				agentId: this._agent.erc8004AgentId,
-				runner: provider,
-				chainId: this._agent.chainId,
-			});
+			[this._stats, this._totalStakeWei] = await Promise.all([
+				getReputation({
+					agentId: this._agent.erc8004AgentId,
+					runner: provider,
+					chainId: this._agent.chainId,
+				}),
+				getTotalStake({
+					agentId: this._agent.erc8004AgentId,
+					runner: provider,
+					chainId: this._agent.chainId,
+				}).catch(() => 0n),
+			]);
 		} catch (err) {
 			console.warn('[reputation-panel] getReputation failed:', err?.message);
 			this._renderEmpty('Could not read reputation from the chain.');
@@ -152,9 +177,16 @@ export class ReputationPanel {
 				   </p>`
 				: '';
 
+		const stakeEth = Number(this._totalStakeWei) / 1e18;
+		const stakeHtml =
+			this._totalStakeWei > 0n
+				? `<div class="agent-reputation__stake">Total staked: <strong>${stakeEth.toFixed(4)} ETH</strong></div>`
+				: '';
+
 		this._root.innerHTML = `
 			<h2 class="agent-reputation__heading" id="agent-reputation-heading">Reputation</h2>
 			<div class="agent-reputation__summary">${summary}</div>
+			${stakeHtml}
 			<div class="agent-reputation__action">${vouchHtml}</div>
 			${reviewsHtml}
 		`;
@@ -213,6 +245,19 @@ export class ReputationPanel {
 					<span>Comment (optional, public, on-chain)</span>
 					<input type="text" maxlength="280" placeholder="e.g. Great agent for X" />
 				</label>
+				<label class="agent-vouch-modal__stake-toggle" style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer">
+					<input type="checkbox" class="agent-vouch-modal__stake-check" />
+					Stake ETH (optional, makes reputation economically meaningful)
+				</label>
+				<div class="agent-vouch-modal__stake-inputs" style="display:none;margin-top:8px">
+					<label style="display:block;font-size:13px">
+						Amount ETH (min ${MIN_STAKE_ETH})
+						<input type="number" class="agent-vouch-modal__stake-amount"
+							value="0.01" min="${MIN_STAKE_ETH}" max="10" step="0.001"
+							style="display:block;width:120px;margin-top:4px" />
+					</label>
+					<div class="agent-vouch-modal__stake-usd" style="font-size:12px;color:#888;margin-top:4px"></div>
+				</div>
 				<div class="agent-vouch-modal__actions">
 					<button type="button" class="agent-vouch-modal__cancel">Cancel</button>
 					<button type="button" class="agent-vouch-modal__submit">Sign &amp; submit</button>
@@ -231,10 +276,32 @@ export class ReputationPanel {
 
 		const submitBtn = dialog.querySelector('.agent-vouch-modal__submit');
 		const statusEl = dialog.querySelector('.agent-vouch-modal__status');
+		const stakeCheck = dialog.querySelector('.agent-vouch-modal__stake-check');
+		const stakeInputs = dialog.querySelector('.agent-vouch-modal__stake-inputs');
+		const stakeAmountEl = dialog.querySelector('.agent-vouch-modal__stake-amount');
+		const stakeUsdEl = dialog.querySelector('.agent-vouch-modal__stake-usd');
+
+		stakeCheck.addEventListener('change', () => {
+			stakeInputs.style.display = stakeCheck.checked ? 'block' : 'none';
+		});
+
+		const updateUsdEstimate = async () => {
+			const eth = parseFloat(stakeAmountEl.value) || 0;
+			const price = await fetchEthPriceUsd();
+			stakeUsdEl.textContent = price ? `≈ $${(eth * price).toFixed(2)} USD` : '';
+		};
+		stakeAmountEl.addEventListener('input', updateUsdEstimate);
 
 		submitBtn.addEventListener('click', async () => {
 			const score = Number(dialog.querySelector('input[name="score"]:checked')?.value || 0);
 			const comment = dialog.querySelector('.agent-vouch-modal__comment input').value.trim();
+			const useStake = stakeCheck.checked;
+			const stakeEth = useStake ? parseFloat(stakeAmountEl.value) || 0 : 0;
+
+			if (useStake && stakeEth < MIN_STAKE_ETH) {
+				statusEl.textContent = `Minimum stake is ${MIN_STAKE_ETH} ETH.`;
+				return;
+			}
 
 			submitBtn.disabled = true;
 			statusEl.textContent = 'Connecting wallet…';
@@ -254,13 +321,27 @@ export class ReputationPanel {
 
 				const signer = await provider.getSigner();
 				statusEl.textContent = 'Sign transaction in your wallet…';
-				const txHash = await submitReputation({
-					agentId: this._agent.erc8004AgentId,
-					score,
-					comment,
-					signer,
-					chainId: this._agent.chainId,
-				});
+
+				let txHash;
+				if (useStake) {
+					const stakeWei = BigInt(Math.round(stakeEth * 1e18));
+					txHash = await stakeReputation({
+						agentId: this._agent.erc8004AgentId,
+						score,
+						comment,
+						stakeWei,
+						signer,
+						chainId: this._agent.chainId,
+					});
+				} else {
+					txHash = await submitReputation({
+						agentId: this._agent.erc8004AgentId,
+						score,
+						comment,
+						signer,
+						chainId: this._agent.chainId,
+					});
+				}
 
 				statusEl.innerHTML = `Submitted ✓ <a href="${_esc(
 					txExplorerUrl(this._agent.chainId, txHash),

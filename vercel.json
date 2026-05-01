@@ -338,6 +338,10 @@
 			"dest": "/api/agents/[id]"
 		},
 		{
+			"src": "/api/agents/([^/]+)/reputation",
+			"dest": "/api/agents/[id]"
+		},
+		{
 			"src": "/api/agents/([^/]+)/livekit-token",
 			"dest": "/api/agents/[id]"
 		},

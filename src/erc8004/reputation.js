@@ -59,6 +59,37 @@ export async function getReputation({ agentId, runner, chainId }) {
 }
 
 /**
+ * Submit a reputation score backed by ETH stake.
+ * @param {object} opts
+ * @param {number|bigint} opts.agentId
+ * @param {number} opts.score         1-5
+ * @param {string} [opts.comment='']
+ * @param {bigint} opts.stakeWei      Must be >= 0.001 ETH (1e15 wei)
+ * @param {import('ethers').Signer} opts.signer
+ * @param {number} [opts.chainId]
+ * @returns {Promise<string>} tx hash
+ */
+export async function stakeReputation({ agentId, score, comment = '', stakeWei, signer, chainId }) {
+	if (!Number.isInteger(score) || score < 1 || score > 5) {
+		throw new Error('score must be 1-5');
+	}
+	const resolvedChainId = chainId ?? Number((await signer.provider.getNetwork()).chainId);
+	const contract = getContract(resolvedChainId, signer);
+	const tx = await contract.stakeReputation(agentId, score, comment, { value: stakeWei });
+	await tx.wait();
+	return tx.hash;
+}
+
+/**
+ * Read total ETH staked on an agent.
+ * @returns {Promise<bigint>} wei
+ */
+export async function getTotalStake({ agentId, runner, chainId }) {
+	const contract = getContract(chainId, runner);
+	return await contract.getTotalStake(agentId);
+}
+
+/**
  * Enumerate past reviews by querying the ReputationSubmitted event log.
  * Optional — only useful if an indexer/provider supports filtered log queries.
  */

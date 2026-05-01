@@ -7,7 +7,7 @@
  */
 
 import { JsonRpcProvider } from 'ethers';
-import { getReputation, getRecentReviews, submitReputation } from './erc8004/reputation.js';
+import { getReputation, getRecentReviews, submitReputation, getTotalStake } from './erc8004/reputation.js';
 import { ensureWallet } from './erc8004/agent-registry.js';
 import { REGISTRY_DEPLOYMENTS } from './erc8004/abi.js';
 
@@ -73,6 +73,8 @@ export class ReputationDashboard {
 		this.chainId = chainId;
 		this.reviews = [];
 		this.reputation = { total: 0, count: 0, average: 0 };
+		this.totalStakeWei = 0n;
+		this.stakerEvents = [];
 		this.connectedAddress = null;
 		this.reviewListeners = [];
 		this.pollInterval = null;
@@ -104,21 +106,34 @@ export class ReputationDashboard {
 		const rpcUrl = this._getRpcUrl(this.chainId);
 		const provider = new JsonRpcProvider(rpcUrl);
 
-		const reputation = await getReputation({
-			agentId: this.agentId,
-			runner: provider,
-			chainId: this.chainId,
-		});
-
-		const reviews = await getRecentReviews({
-			agentId: this.agentId,
-			runner: provider,
-			chainId: this.chainId,
-			fromBlock: 0,
-		});
+		const [reputation, reviews, totalStakeWei] = await Promise.all([
+			getReputation({ agentId: this.agentId, runner: provider, chainId: this.chainId }),
+			getRecentReviews({ agentId: this.agentId, runner: provider, chainId: this.chainId, fromBlock: 0 }),
+			getTotalStake({ agentId: this.agentId, runner: provider, chainId: this.chainId }).catch(() => 0n),
+		]);
 
 		this.reputation = reputation;
 		this.reviews = reviews.sort((a, b) => b.blockNumber - a.blockNumber);
+		this.totalStakeWei = totalStakeWei;
+
+		// Fetch staker events for leaderboard (last 1000 blocks to avoid timeout).
+		if (totalStakeWei > 0n) {
+			try {
+				const { REGISTRY_DEPLOYMENTS: deps, REPUTATION_REGISTRY_ABI } = await import('./erc8004/abi.js');
+				const { Contract } = await import('ethers');
+				const contract = new Contract(deps[this.chainId].reputationRegistry, REPUTATION_REGISTRY_ABI, provider);
+				const head = await provider.getBlockNumber();
+				const fromBlock = Math.max(0, head - 1000);
+				const events = await contract.queryFilter(contract.filters.ReputationStaked(this.agentId), fromBlock, 'latest');
+				this.stakerEvents = events.map((ev) => ({
+					staker: ev.args.staker,
+					score: Number(ev.args.score),
+					value: ev.args.value,
+				}));
+			} catch {
+				this.stakerEvents = [];
+			}
+		}
 	}
 
 	_getRpcUrl(chainId) {
@@ -237,6 +252,7 @@ export class ReputationDashboard {
 		this.container.appendChild(this._createHeader());
 		this.container.appendChild(this._createStatsRow());
 		this.container.appendChild(this._createReviewList());
+		if (this.totalStakeWei > 0n) this.container.appendChild(this._createTopStakers());
 		this.container.appendChild(this._createSubmitForm());
 	}
 
@@ -274,6 +290,8 @@ export class ReputationDashboard {
 
 		const lastReviewTime = this._getLastReviewTime();
 
+		const stakeEth = (Number(this.totalStakeWei) / 1e18).toFixed(4);
+		const chainName = CHAIN_NAMES[this.chainId] || `Chain ${this.chainId}`;
 		div.innerHTML = `
 			<div class="rep-stat">
 				<span class="rep-stat-label">Reviews</span>
@@ -282,6 +300,11 @@ export class ReputationDashboard {
 			<div class="rep-stat">
 				<span class="rep-stat-label">Rating</span>
 				<span class="rep-stat-value">${this.reputation.average.toFixed(1)}</span>
+			</div>
+			<div class="rep-stat">
+				<span class="rep-stat-label">Total Staked</span>
+				<span class="rep-stat-value">${stakeEth} ETH</span>
+				<span class="rep-stat-chain">${chainName}</span>
 			</div>
 			<div class="rep-stat">
 				<span class="rep-stat-label">Last Review</span>
@@ -377,6 +400,43 @@ export class ReputationDashboard {
 	_truncateAddress(addr) {
 		if (!addr) return 'Anonymous';
 		return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
+	}
+
+	_createTopStakers() {
+		const div = document.createElement('div');
+		div.className = 'rep-top-stakers';
+
+		const title = document.createElement('h3');
+		title.textContent = 'Top Stakers';
+		div.appendChild(title);
+
+		if (!this.stakerEvents.length) {
+			const empty = document.createElement('p');
+			empty.className = 'rep-empty';
+			empty.textContent = 'No stakers found in recent blocks.';
+			div.appendChild(empty);
+			return div;
+		}
+
+		const sorted = [...this.stakerEvents]
+			.sort((a, b) => (b.value > a.value ? 1 : b.value < a.value ? -1 : 0))
+			.slice(0, 5);
+
+		const list = document.createElement('div');
+		list.className = 'rep-staker-list';
+		sorted.forEach((ev) => {
+			const row = document.createElement('div');
+			row.className = 'rep-staker-row';
+			const eth = (Number(ev.value) / 1e18).toFixed(4);
+			row.innerHTML = `
+				<span class="rep-staker-addr">${this._truncateAddress(ev.staker)}</span>
+				<span class="rep-staker-eth">${eth} ETH</span>
+				<span class="rep-staker-score">${this._renderStars(ev.score)}</span>
+			`;
+			list.appendChild(row);
+		});
+		div.appendChild(list);
+		return div;
 	}
 
 	_createSubmitForm() {
