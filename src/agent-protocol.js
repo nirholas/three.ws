@@ -30,6 +30,11 @@ export const ACTION_TYPES = {
 	NOTIFY: 'notify', // avatar walks into frame, delivers a message, retreats
 };
 
+// NOTE: 'brain:stream' and 'skill:tool-start' are Runtime EventTarget events, not protocol bus actions.
+// They flow via runtime.dispatchEvent() and are re-dispatched on the host element as composed CustomEvents.
+// Listen on the host element: element.addEventListener('brain:stream', handler)
+//                             element.addEventListener('skill:tool-start', handler)
+
 /**
  * @typedef {Object} ActionPayload
  * @property {string} type        — one of ACTION_TYPES
@@ -77,12 +82,12 @@ export class AgentProtocol extends EventTarget {
 		this._droppedCounts = new Map();
 
 		// Burst rate-limiter — absolute runaway protection for passthrough events
-		this._counters = new Map();   // eventType → { count, windowStart }
-		this._throttled = new Set();  // event types currently rate-limited
+		this._counters = new Map(); // eventType → { count, windowStart }
+		this._throttled = new Set(); // event types currently rate-limited
 		this._limits = {
 			'perform-skill': 10,
-			'emote': 20,
-			'speak': 5,
+			emote: 20,
+			speak: 5,
 			'*': 100,
 		};
 		this._windowMs = 100;

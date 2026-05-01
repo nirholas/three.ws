@@ -114,9 +114,11 @@ export class Runtime extends EventTarget {
 					this.dispatchEvent(new CustomEvent('brain:stream', { detail: { chunk } }));
 				},
 			});
-			this.dispatchEvent(new CustomEvent('brain:thinking', {
-				detail: { thinking: false, content: response.thinking || '' },
-			}));
+			this.dispatchEvent(
+				new CustomEvent('brain:thinking', {
+					detail: { thinking: false, content: response.thinking || '' },
+				}),
+			);
 
 			if (!response.toolCalls.length) {
 				finalText = response.text;
@@ -144,9 +146,11 @@ export class Runtime extends EventTarget {
 			// Dispatch each tool call
 			const results = [];
 			for (const call of response.toolCalls) {
-				this.dispatchEvent(new CustomEvent('skill:tool-start', {
-					detail: { tool: call.name, args: call.input },
-				}));
+				this.dispatchEvent(
+					new CustomEvent('skill:tool-start', {
+						detail: { tool: call.name, args: call.input },
+					}),
+				);
 				let output,
 					isError = false;
 				try {

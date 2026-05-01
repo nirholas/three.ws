@@ -13,6 +13,11 @@ export { Memory } from './memory/index.js';
 export { loadManifest, normalize, fetchRelative } from './manifest.js';
 export { resolveURI, fetchWithFallback } from './ipfs.js';
 
+/**
+ * @typedef {Object} AvatarChatOptions
+ * @property {'off'|undefined} avatarChat - Set to 'off' to disable inline avatar layout
+ */
+
 // Re-export the side-effectful element import for users who import the whole bundle.
 export const defineElement = (tag = 'agent-3d') => {
 	if (!customElements.get(tag)) customElements.define(tag, Agent3DElement);
