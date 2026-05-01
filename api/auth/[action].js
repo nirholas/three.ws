@@ -7,7 +7,7 @@
 import { sql } from '../_lib/db.js';
 import {
 	verifyPassword, hashPassword, createSession, destroySession, sessionCookie,
-	getSessionUser, revokeRefreshToken,
+	getSessionUser, hasSessionCookie, revokeRefreshToken,
 } from '../_lib/auth.js';
 import { randomToken, sha256 } from '../_lib/crypto.js';
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
@@ -102,11 +102,19 @@ async function handleRegister(req, res) {
 
 // ── me ────────────────────────────────────────────────────────────────────────
 
+// Probe endpoint: anonymous callers (no cookie) get 200 { user: null } so the
+// browser doesn't log a network error on every page load. A 401 here means a
+// cookie was presented but didn't resolve to a live session — the client
+// should clear local state and treat it as a forced logout.
 async function handleMe(req, res) {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET'])) return;
+	if (!hasSessionCookie(req)) return json(res, 200, { user: null });
 	const user = await getSessionUser(req);
-	if (!user) return error(res, 401, 'unauthenticated', 'not signed in');
+	if (!user) {
+		res.setHeader('Set-Cookie', sessionCookie('', { clear: true }));
+		return error(res, 401, 'invalid_session', 'session expired or revoked');
+	}
 	return json(res, 200, { user });
 }
 

@@ -6,6 +6,51 @@ export const syncHostedAddress = 'https://sync.three.ws';
 // Encryption state
 let encryptionKey = null;
 
+// Network failure circuit-breaker: after MAX_FAILURES consecutive errors,
+// stop attempting requests for COOLDOWN_MS so we don't spam an unreachable host.
+const MAX_FAILURES = 3;
+const COOLDOWN_MS = 5 * 60 * 1000;
+let consecutiveFailures = 0;
+let circuitOpenedAt = 0;
+let failureWarned = false;
+
+function circuitOpen() {
+	if (consecutiveFailures < MAX_FAILURES) return false;
+	if (Date.now() - circuitOpenedAt > COOLDOWN_MS) {
+		// Cool-down elapsed — allow one probe to test recovery.
+		consecutiveFailures = 0;
+		failureWarned = false;
+		return false;
+	}
+	return true;
+}
+
+async function safePostJson(url, body, fallback) {
+	if (circuitOpen()) return fallback;
+	try {
+		const response = await fetch(url, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(body),
+		});
+		if (!response.ok) throw new Error(`HTTP ${response.status}`);
+		const json = await response.json();
+		consecutiveFailures = 0;
+		failureWarned = false;
+		return json;
+	} catch (e) {
+		consecutiveFailures++;
+		if (consecutiveFailures >= MAX_FAILURES) circuitOpenedAt = Date.now();
+		if (!failureWarned) {
+			console.warn(
+				`[sync] sync server unreachable (${url}): ${e?.message || e}. Sync paused.`
+			);
+			failureWarned = true;
+		}
+		return fallback;
+	}
+}
+
 // Initialize encryption with password
 export async function initEncryption(password) {
 	if (!password) {
@@ -328,59 +373,35 @@ export async function syncPush({ conversations, messages }) {
 }
 
 async function checkClientMissing(baseUrl, token, localConversationIds, localMessageIds) {
-	const response = await fetch(`${baseUrl}/api/sync/check-client-missing`, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({
-			token,
-			conversationIds: localConversationIds,
-			messageIds: localMessageIds,
-		}),
-	});
-
-	return await response.json();
+	return safePostJson(
+		`${baseUrl}/api/sync/check-client-missing`,
+		{ token, conversationIds: localConversationIds, messageIds: localMessageIds },
+		{ missingConversationIds: [], missingMessageIds: [] }
+	);
 }
 
 async function getMissingItems(baseUrl, token, missingConversationIds, missingMessageIds) {
-	const response = await fetch(`${baseUrl}/api/sync/get-items`, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({
-			token,
-			conversationIds: missingConversationIds,
-			messageIds: missingMessageIds,
-		}),
-	});
-
-	return await response.json(); // Returns { conversations, messages, apiKeys }
+	return safePostJson(
+		`${baseUrl}/api/sync/get-items`,
+		{ token, conversationIds: missingConversationIds, messageIds: missingMessageIds },
+		{ conversations: {}, messages: {}, apiKeys: {} }
+	);
 }
 
 async function checkServerMissing(baseUrl, token, allLocalConversationIds, allLocalMessageIds) {
-	const response = await fetch(`${baseUrl}/api/sync/check-server-missing`, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({
-			token,
-			conversationIds: allLocalConversationIds,
-			messageIds: allLocalMessageIds,
-		}),
-	});
-
-	return await response.json(); // Returns { missingConversationIds, missingMessageIds }
+	return safePostJson(
+		`${baseUrl}/api/sync/check-server-missing`,
+		{ token, conversationIds: allLocalConversationIds, messageIds: allLocalMessageIds },
+		{ missingConversationIds: [], missingMessageIds: [] }
+	);
 }
 
 async function sendMissingItems(baseUrl, token, conversationsToSend, messagesToSend) {
-	const response = await fetch(`${baseUrl}/api/sync/send-items`, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({
-			token,
-			conversations: conversationsToSend,
-			messages: messagesToSend,
-		}),
-	});
-
-	return await response.json(); // Returns { success: true }
+	return safePostJson(
+		`${baseUrl}/api/sync/send-items`,
+		{ token, conversations: conversationsToSend, messages: messagesToSend },
+		{ success: false }
+	);
 }
 
 export async function sendSingleItem(
@@ -403,18 +424,16 @@ export async function sendSingleItem(
 		}
 	}
 
-	const response = await fetch(`${baseUrl}/api/sync/send-single-item`, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({
+	return safePostJson(
+		`${baseUrl}/api/sync/send-single-item`,
+		{
 			token,
 			conversation: encryptedItem.conversation || null,
 			message: encryptedItem.message || null,
 			apiKeys: encryptedItem.apiKeys || null,
-		}),
-	});
-
-	return await response.json(); // Returns { success: true }
+		},
+		{ success: false }
+	);
 }
 
 export async function deleteSingleItem(
@@ -422,15 +441,13 @@ export async function deleteSingleItem(
 	token,
 	item = { conversationId: null, messageId: null }
 ) {
-	const response = await fetch(`${baseUrl}/api/sync/delete-single-item`, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({
+	return safePostJson(
+		`${baseUrl}/api/sync/delete-single-item`,
+		{
 			token,
 			conversationId: item.conversationId || null,
 			messageId: item.messageId || null,
-		}),
-	});
-
-	return await response.json(); // Returns { success: true }
+		},
+		{ success: false }
+	);
 }

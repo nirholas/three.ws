@@ -132,6 +132,10 @@ function readSessionCookie(req) {
 	return m ? decodeURIComponent(m[1]) : null;
 }
 
+export function hasSessionCookie(req) {
+	return readSessionCookie(req) !== null;
+}
+
 /**
  * Issue a new session and revoke the old one. Returns the new plaintext token.
  * @param {{ currentSid: string, userId: string, userAgent: string|null, ip: string|null }} opts

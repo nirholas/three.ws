@@ -6,6 +6,7 @@ import {
 	remoteServer,
 	mistralAPIKey,
 	anthropicAPIKey,
+	localProvidersEnabled,
 } from './stores.js';
 
 export const BUILTIN_MODELS = [

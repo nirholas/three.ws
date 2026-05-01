@@ -33,25 +33,54 @@ function pack({ nonce, ciphertext }) {
 }
 
 export class Memory {
-	constructor({ mode = 'local', namespace, index = {}, files = {}, timeline = [], cryptoKey = null } = {}) {
+	constructor({ mode = 'local', namespace, index = {}, files = {}, timeline = [], cryptoKey = null, remoteIds = {} } = {}) {
 		this.mode = mode;
 		this.namespace = namespace;
 		this.files = new Map(Object.entries(files));
 		this.timeline = timeline;
 		this.indexText = index.text || '';
 		this.cryptoKey = cryptoKey;
+		// remote mode: filename -> backend entry id, for upsert round-trip
+		this._remoteIds = new Map(Object.entries(remoteIds));
 		this._dirty = false;
 	}
 
 	static async load({ mode = 'local', namespace, manifestURI, fetchFn, deriveKey }) {
 		if (mode === 'none') return new Memory({ mode: 'none', namespace });
 		if (mode === 'local') return Memory._loadLocal(namespace);
+		if (mode === 'remote') return Memory._loadRemote({ namespace, fetchFn });
 		if (mode === 'ipfs' || mode === 'encrypted-ipfs') {
 			if (mode === 'encrypted-ipfs' && !deriveKey)
 				throw new Error('encrypted-ipfs mode requires a deriveKey function');
 			return Memory._loadIPFS({ mode, namespace, manifestURI, fetchFn, deriveKey });
 		}
 		throw new Error(`Unknown memory mode: ${mode}`);
+	}
+
+	static async _loadRemote({ namespace, fetchFn }) {
+		const f = fetchFn || fetch.bind(globalThis);
+		if (!namespace) return new Memory({ mode: 'remote', namespace });
+		try {
+			const resp = await f(`/api/agent-memory?agentId=${encodeURIComponent(namespace)}&limit=500`, {
+				credentials: 'include',
+			});
+			if (!resp.ok) return new Memory({ mode: 'remote', namespace });
+			const { entries } = await resp.json();
+			const files = {};
+			const remoteIds = {};
+			for (const entry of entries || []) {
+				const filename = entry.context?.filename
+					|| (entry.id ? `${entry.id}.md` : null);
+				if (!filename) continue;
+				files[filename] = entry.content || '';
+				if (entry.id) remoteIds[filename] = entry.id;
+			}
+			const mem = new Memory({ mode: 'remote', namespace, files, remoteIds });
+			mem._rebuildIndex();
+			return mem;
+		} catch {
+			return new Memory({ mode: 'remote', namespace });
+		}
 	}
 
 	static _loadLocal(namespace) {
@@ -132,10 +161,12 @@ export class Memory {
 		const created = existing ? parseFrontmatter(existing).meta.created || now : now;
 		const meta = { name, description, type, created, updated: now };
 		if (decay) meta.decay = decay;
-		this.files.set(file, stringifyFrontmatter(meta, body || ''));
+		const raw = stringifyFrontmatter(meta, body || '');
+		this.files.set(file, raw);
 		this._rebuildIndex();
 		this._dirty = true;
 		this._persist();
+		if (this.mode === 'remote') this._remoteUpsert(file, type, raw);
 	}
 
 	note(type, data) {
@@ -226,11 +257,47 @@ export class Memory {
 		}
 	}
 
+	// Fire-and-forget upsert of one file to /api/agent-memory.
+	// Backend validates type ∈ {user, feedback, project, reference}; falls back to 'project'.
+	async _remoteUpsert(file, type, raw) {
+		if (!this.namespace) return;
+		const validTypes = ['user', 'feedback', 'project', 'reference'];
+		const memType = validTypes.includes(type) ? type : 'project';
+		const entry = {
+			type: memType,
+			content: raw,
+			context: { filename: file },
+		};
+		const existingId = this._remoteIds.get(file);
+		if (existingId) entry.id = existingId;
+		try {
+			const resp = await fetch('/api/agent-memory', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				credentials: 'include',
+				body: JSON.stringify({ agentId: this.namespace, entry }),
+			});
+			if (!resp.ok) return;
+			const { entry: saved } = await resp.json();
+			if (saved?.id) this._remoteIds.set(file, saved.id);
+		} catch {
+			// network unavailable — in-memory state is the fallback
+		}
+	}
+
 	// Encrypt all files and pin to IPFS. Returns { cids, memoryCid }.
 	// For local mode, falls back to synchronous _persist(). Noop for other modes.
 	async save() {
 		if (this.mode === 'local') {
 			this._persist();
+			return;
+		}
+		if (this.mode === 'remote') {
+			for (const [file, raw] of this.files) {
+				const { meta } = parseFrontmatter(raw);
+				await this._remoteUpsert(file, meta.type, raw);
+			}
+			this._dirty = false;
 			return;
 		}
 		if (this.mode !== 'encrypted-ipfs') return;

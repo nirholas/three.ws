@@ -164,7 +164,7 @@ export async function resolveAgentById(
 			stt: { provider: 'browser' },
 		},
 		skills,
-		memory: { mode: 'remote', namespace: agent.id },
+		memory: { mode: 'local', namespace: agent.id },
 		tools: ['wave', 'lookAt', 'play_clip', 'setExpression', 'speak', 'remember'],
 		version: '0.1.0',
 		_baseURI: `${origin}/agent/${agent.id}/`,

@@ -374,6 +374,7 @@ class Agent3DElement extends HTMLElement {
 	}
 
 	_renderShell() {
+		if (this._loadingEl) return;
 		const style = document.createElement('style');
 		style.textContent = BASE_STYLE;
 		this.shadowRoot.appendChild(style);
@@ -809,6 +810,7 @@ class Agent3DElement extends HTMLElement {
 
 	async _boot() {
 		if (this._booting || this._mounted) return;
+		this._renderShell();
 		this._booting = true;
 		try {
 			this._loadingEl.hidden = false;
