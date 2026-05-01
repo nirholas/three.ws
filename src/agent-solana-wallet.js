@@ -245,14 +245,12 @@ export function mountAgentSolanaWalletCard({ panel, identity, onProvisioned }) {
 		sol: null,
 		lamports: null,
 		busy: false,
-		progress: null,
 		err: null,
 		activity: [],
 		activityLoaded: false,
 		airdropping: false,
 		airdropMsg: null,
 	};
-	let abort = null;
 	let balanceTimer = null;
 
 	async function loadFromServer() {
@@ -477,9 +475,9 @@ export function mountAgentSolanaWalletCard({ panel, identity, onProvisioned }) {
 	return {
 		destroy: () => {
 			stopBalancePoll();
-			abort?.abort();
 			wrapper.remove();
 		},
+		refresh: () => loadFromServer().catch(() => {}),
 	};
 }
 
@@ -494,9 +492,3 @@ function _propagate(identity, data) {
 	};
 }
 
-function formatRate(n) {
-	if (!n) return '0';
-	if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-	if (n >= 1_000)     return `${(n / 1_000).toFixed(1)}k`;
-	return Math.round(n).toString();
-}

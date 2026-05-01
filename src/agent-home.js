@@ -12,6 +12,7 @@ import { ACTION_TYPES } from './agent-protocol.js';
 import { MEMORY_TYPES } from './agent-memory.js';
 import { mountPumpFunCard } from './agent-home-pumpfun.js';
 import { mountAgentSolanaWalletCard } from './agent-solana-wallet.js';
+import { mountAgentVanityGrinderCard } from './agent-vanity-grinder.js';
 import { mountClaimsPanel } from './agent-home-claims.js';
 
 const ACTION_ICONS = {
@@ -203,14 +204,28 @@ export class AgentHome {
 		};
 
 		// Solana wallet card — owner only. Lets the user provision a random
-		// or vanity Solana wallet for the agent. On success, lazy-mount the
-		// pump.fun card if it wasn't already mounted.
+		// Solana wallet for the agent. On success, lazy-mount the pump.fun
+		// card if it wasn't already mounted. The vanity grinder is a sibling
+		// card so the wallet UI stays focused on identity + balance.
 		if (this.identity?.id && this.identity?.isOwner !== false) {
+			let walletCard = null;
 			try {
-				mountAgentSolanaWalletCard({
+				walletCard = mountAgentSolanaWalletCard({
 					panel,
 					identity: this.identity,
 					onProvisioned: () => mountPumpIfReady(),
+				});
+			} catch {
+				/* card is optional */
+			}
+			try {
+				mountAgentVanityGrinderCard({
+					panel,
+					identity: this.identity,
+					onProvisioned: () => {
+						walletCard?.refresh?.();
+						mountPumpIfReady();
+					},
 				});
 			} catch {
 				/* card is optional */
