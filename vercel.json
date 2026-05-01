@@ -10,7 +10,7 @@
 		"api/**/*.js": {
 			"includeFiles": "node_modules/@zauthx402/sdk/dist/**"
 		},
-		"api/pump/[action].js": {
+		"api/pump/*.js": {
 			"includeFiles": "node_modules/@zauthx402/sdk/dist/**,examples/skills/pump-fun-strategy/**"
 		}
 	},
