@@ -63,7 +63,11 @@
 			const res = await fetch('/api/skills/categories');
 			if (!res.ok) return;
 			const data = await res.json();
-			categories = data.categories || [];
+			// API returns either [{slug,label,count}] (current) or [string] (legacy).
+			// Normalize so the rest of the component always sees {slug, label}.
+			categories = (data.categories || []).map((c) =>
+				typeof c === 'string' ? { slug: c, label: c } : { slug: c.slug, label: c.label || c.slug },
+			);
 		} catch {
 			// leave categories empty
 		}
@@ -105,12 +109,23 @@
 
 	// skills API
 
+	/**
+	 * @typedef {{ slug: string, label: string, count?: number }} Category
+	 */
+
+	/** @param {Category | null | undefined} cat */
+	function categorySlug(cat) {
+		if (!cat) return null;
+		return typeof cat === 'string' ? cat : cat.slug;
+	}
+
 	async function loadSkills(reset = false) {
 		loading = true;
 		try {
 			const p = new URLSearchParams();
 			if (debouncedSearch) p.set('search', debouncedSearch);
-			if (selectedCategory) p.set('category', selectedCategory);
+			const catSlug = categorySlug(selectedCategory);
+			if (catSlug) p.set('category', catSlug);
 			if (sort) p.set('sort', sort);
 			if (!reset && page) p.set('cursor', page);
 			const res = await fetch(`/api/skills?${p}`);
@@ -493,14 +508,14 @@
 				>
 					All skills
 				</button>
-				{#each categories as cat}
+				{#each categories as cat (cat.slug)}
 					<button
-						class="rounded-md px-3 py-1.5 text-left text-[12px] transition-colors {selectedCategory === cat
+						class="rounded-md px-3 py-1.5 text-left text-[12px] transition-colors {categorySlug(selectedCategory) === cat.slug
 							? 'bg-indigo-50 font-medium text-indigo-700'
 							: 'text-slate-600 hover:bg-slate-100'}"
 						on:click={() => selectCategory(cat)}
 					>
-						{cat}
+						{cat.label}
 					</button>
 				{/each}
 			</aside>
@@ -534,12 +549,12 @@
 							: 'border-slate-200 text-slate-500'}"
 						on:click={() => selectCategory(null)}>All</button
 					>
-					{#each categories as cat}
+					{#each categories as cat (cat.slug)}
 						<button
-							class="rounded-full border px-2.5 py-0.5 text-[11px] {selectedCategory === cat
+							class="rounded-full border px-2.5 py-0.5 text-[11px] {categorySlug(selectedCategory) === cat.slug
 								? 'border-indigo-400 bg-indigo-50 text-indigo-700'
 								: 'border-slate-200 text-slate-500'}"
-							on:click={() => selectCategory(cat)}>{cat}</button
+							on:click={() => selectCategory(cat)}>{cat.label}</button
 						>
 					{/each}
 				</div>
@@ -881,8 +896,8 @@
 						class="rounded-lg border border-slate-200 px-3 py-1.5 text-[13px] text-slate-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200"
 					/>
 					<datalist id="skill-categories">
-						{#each categories as cat}
-							<option value={cat} />
+						{#each categories as cat (cat.slug)}
+							<option value={cat.slug}>{cat.label}</option>
 						{/each}
 					</datalist>
 				</div>
