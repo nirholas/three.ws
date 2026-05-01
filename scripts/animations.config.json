@@ -90,5 +90,40 @@
 		"label": "Walk",
 		"icon": "🚶",
 		"loop": true
+	},
+	{
+		"name": "dodge",
+		"source": "Dodging Right.fbx",
+		"label": "Dodge",
+		"icon": "🤺",
+		"loop": false
+	},
+	{
+		"name": "stepback",
+		"source": "Stepping Backward.fbx",
+		"label": "Step Back",
+		"icon": "👣",
+		"loop": false
+	},
+	{
+		"name": "shoved",
+		"source": "Shoved Reaction With Spin.fbx",
+		"label": "Shoved",
+		"icon": "💥",
+		"loop": false
+	},
+	{
+		"name": "standup",
+		"source": "Crouch To Stand.fbx",
+		"label": "Stand Up",
+		"icon": "⬆️",
+		"loop": false
+	},
+	{
+		"name": "header",
+		"source": "Header Soccerball.fbx",
+		"label": "Header",
+		"icon": "⚽",
+		"loop": false
 	}
 ]
