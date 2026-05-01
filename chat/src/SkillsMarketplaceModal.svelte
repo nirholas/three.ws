@@ -344,16 +344,34 @@
 			const res = await fetch(`${base}/index.en-US.json`);
 			if (res.ok) {
 				const json = await res.json();
-				libraryPlugins = (json.plugins || []).map((p) => ({
+				const entries = (json.plugins || []).map((p) => ({
 					identifier: p.identifier,
 					name: p.meta?.title || p.identifier,
 					description: p.meta?.description || '',
 					avatar: p.meta?.avatar || '🔧',
 					tags: p.meta?.tags || [],
 					category: p.meta?.category || '',
+					manifestUrl: p.manifest || `${base}/${p.identifier}.json`,
 				}));
+				// Probe each manifest URL in parallel; drop entries whose manifest 404s
+				// so a single broken plugin can't hide the rest of the registry.
+				const probes = await Promise.all(
+					entries.map(async (e) => {
+						try {
+							const r = await fetch(e.manifestUrl, { method: 'HEAD' });
+							if (r.ok) return e;
+							console.warn(`[plugin-library] skipping ${e.identifier}: HTTP ${r.status} for ${e.manifestUrl}`);
+						} catch (err) {
+							console.warn(`[plugin-library] skipping ${e.identifier}: ${err}`);
+						}
+						return null;
+					})
+				);
+				libraryPlugins = probes.filter(Boolean);
 			}
-		} catch {}
+		} catch (err) {
+			console.warn('[plugin-library] failed to load registry index:', err);
+		}
 		loadingLibrary = false;
 	}
 
@@ -376,8 +394,12 @@
 		libraryInstalling = { ...libraryInstalling, [plugin.identifier]: true };
 		try {
 			const base = $pluginLibraryUrl?.replace(/\/+$/, '');
-			const res = await fetch(`${base}/${plugin.identifier}.json`);
-			if (!res.ok) throw new Error('fetch failed');
+			const url = plugin.manifestUrl || `${base}/${plugin.identifier}.json`;
+			const res = await fetch(url);
+			if (!res.ok) {
+				console.warn(`[plugin-library] manifest fetch failed for ${plugin.identifier}: HTTP ${res.status} ${url}`);
+				throw new Error(`fetch failed (${res.status})`);
+			}
 			const data = await res.json();
 			const api = data.manifest?.api || [];
 			if (api.length === 0) {

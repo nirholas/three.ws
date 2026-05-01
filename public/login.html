@@ -789,8 +789,9 @@
 				const navType = performance.getEntriesByType('navigation')[0]?.type;
 				if (navType !== 'back_forward') {
 					fetch('/api/auth/me', { credentials: 'include' })
-						.then((r) => {
-							if (r.ok) location.replace(next);
+						.then((r) => (r.ok ? r.json() : null))
+						.then((data) => {
+							if (data?.user) location.replace(next);
 						})
 						.catch(() => {});
 				}

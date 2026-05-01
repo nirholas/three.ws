@@ -550,12 +550,14 @@
 			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
 		></script>
 		<script>
-			fetch('/api/auth/me', { credentials: 'include' }).then(function (r) {
-				if (!r.ok) {
-					sessionStorage.setItem('login_redirect', '/create');
-					location.replace('/login');
-				}
-			});
+			fetch('/api/auth/me', { credentials: 'include' })
+				.then(function (r) { return r.ok ? r.json() : null; })
+				.then(function (data) {
+					if (!data || !data.user) {
+						sessionStorage.setItem('login_redirect', '/create');
+						location.replace('/login');
+					}
+				});
 		</script>
 	</head>
 	<body>

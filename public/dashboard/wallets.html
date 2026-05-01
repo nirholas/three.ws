@@ -218,12 +218,13 @@
 
 			async function fetchUser() {
 				const res = await fetch(`${apiUrl}/auth/me`, { credentials: 'include' });
-				if (!res.ok) {
+				const data = res.ok ? await res.json() : null;
+				if (!data?.user) {
 					location.href = '/login?next=' + encodeURIComponent(location.pathname);
 					return null;
 				}
 				document.body.removeAttribute('data-auth-pending');
-				return res.json();
+				return data;
 			}
 
 			async function loadWallets() {

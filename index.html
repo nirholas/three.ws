@@ -1400,6 +1400,7 @@
 				fetch('/api/auth/me', { credentials: 'include' })
 					.then(function (r) { return r.ok ? r.json() : Promise.reject(); })
 					.then(function (data) {
+						if (!data.user) { renderGuest(); return; }
 						return Promise.all([
 							fetch('/api/avatars?limit=100', { credentials: 'include' }).then(function (r) { return r.ok ? r.json() : {}; }),
 							fetch('/api/widgets', { credentials: 'include' }).then(function (r) { return r.ok ? r.json() : {}; }),

@@ -23,7 +23,8 @@ async function boot() {
 
 	// Auth check
 	const authRes = await fetch('/api/auth/me', { credentials: 'include' });
-	if (!authRes.ok) {
+	const authUser = authRes.ok ? (await authRes.json()).user : null;
+	if (!authUser) {
 		window.location.href =
 			'/login?next=' + encodeURIComponent(window.location.pathname + window.location.search);
 		return;

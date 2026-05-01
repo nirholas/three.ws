@@ -5,6 +5,7 @@
 	import Checkbox from './Checkbox.svelte';
 	import Icon from './Icon.svelte';
 	import { feChevronDown } from './feather.js';
+	import { focusOnMount } from './actions.js';
 	import ToolPackModal from './ToolPackModal.svelte';
 
 	export let open = false;

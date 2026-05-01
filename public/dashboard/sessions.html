@@ -279,11 +279,12 @@
 			async function loadSessions() {
 				try {
 					const res = await fetch('/api/auth/me', { credentials: 'include' });
-					if (res.status === 401) {
+					if (!res.ok) throw new Error('Failed to verify auth');
+					const { user } = await res.json();
+					if (!user) {
 						location.href = '/login?next=' + encodeURIComponent(location.pathname);
 						return;
 					}
-					if (!res.ok) throw new Error('Failed to verify auth');
 					document.body.removeAttribute('data-auth-pending');
 
 					const sessionsRes = await fetch('/api/auth/sessions', {

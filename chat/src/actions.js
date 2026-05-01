@@ -3,6 +3,14 @@ const flashClasses = {
 	error: '!bg-red-100 !border-red-300',
 };
 
+export function focusOnMount(node) {
+	// Imperative focus avoids the "Autofocus processing was blocked because a
+	// document already has a focused element" warning Chrome emits for the
+	// declarative `autofocus` attribute when another element holds focus
+	// (e.g. the button that just opened this input's container).
+	queueMicrotask(() => node.focus());
+}
+
 export function flash(node) {
 	const successFn = () => {
 		const classes = flashClasses['success'].split(' ');

@@ -1,7 +1,9 @@
 import { getAPIKeysAsObject, setAPIKeysFromObject, syncServer } from './stores.js';
 import { get } from 'svelte/store';
 
-export const syncHostedAddress = 'https://sync.three.ws';
+// Empty by default: there is no hosted sync server right now. Users who
+// self-host can paste their address into Settings → Sync server address.
+export const syncHostedAddress = '';
 
 // Encryption state
 let encryptionKey = null;
@@ -26,6 +28,8 @@ function circuitOpen() {
 }
 
 async function safePostJson(url, body, fallback) {
+	// No address configured (or relative) — skip silently.
+	if (!url || typeof url !== 'string' || !/^https?:\/\//i.test(url)) return fallback;
 	if (circuitOpen()) return fallback;
 	try {
 		const response = await fetch(url, {
@@ -49,6 +53,14 @@ async function safePostJson(url, body, fallback) {
 		}
 		return fallback;
 	}
+}
+
+// Reset the breaker — call after the user changes the sync address so a new host
+// gets a fresh attempt instead of inheriting the prior host's failure count.
+export function resetSyncCircuit() {
+	consecutiveFailures = 0;
+	circuitOpenedAt = 0;
+	failureWarned = false;
 }
 
 // Initialize encryption with password

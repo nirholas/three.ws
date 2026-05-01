@@ -169,7 +169,7 @@
 				conversation: null,
 				message: msg,
 				apiKeys: null,
-			});
+			}).catch(() => {});
 		}
 
 		transaction.onerror = () => {
@@ -349,7 +349,7 @@
 				conversation: convoConvertedOrNot,
 				message: null,
 				apiKeys: null,
-			});
+			}).catch(() => {});
 		}
 
 		transaction.onerror = () => {
@@ -373,7 +373,7 @@
 			deleteSingleItem($syncServer.address, $syncServer.token, {
 				conversationId: convo.id,
 				messageId: null,
-			});
+			}).catch(() => {});
 		}
 
 		transaction.onerror = () => {
@@ -392,7 +392,7 @@
 			deleteSingleItem($syncServer.address, $syncServer.token, {
 				conversationId: null,
 				messageId: message.id,
-			});
+			}).catch(() => {});
 		}
 
 		transaction.onerror = () => {

@@ -1,6 +1,7 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
 	import { localAgentId, activeAgent, agentLibraryUrl } from './stores.js';
+	import { focusOnMount } from './actions.js';
 	import { t } from './i18n.js';
 
 	const dispatch = createEventDispatcher();
@@ -185,7 +186,7 @@
 		on:input={onInput}
 		placeholder={$t('searchAgents')}
 		class="w-full rounded-lg border border-gray-200 px-3 py-2 text-[13px] outline-none focus:border-indigo-400"
-		autofocus
+		use:focusOnMount
 	/>
 
 	<div class="flex items-center justify-between">

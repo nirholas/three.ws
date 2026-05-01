@@ -1041,7 +1041,8 @@
 
 				try {
 					const me = await fetch('/api/auth/me', { credentials: 'include' });
-					if (me.ok) {
+					const meUser = me.ok ? (await me.json()).user : null;
+					if (meUser) {
 						editLink.href = `/app?agent=${identity.id}`;
 						editLink.setAttribute('aria-label', `Open ${friendlyName} in the editor`);
 						editLink.hidden = false;
