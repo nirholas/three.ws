@@ -924,3 +924,37 @@ create table if not exists gate_nonces (
 
 create index if not exists gate_nonces_expiry  on gate_nonces(expires_at);
 create index if not exists gate_nonces_gate_id on gate_nonces(gate_id);
+
+-- ── plugins — LobeHub/pai-chat compatible plugin marketplace ─────────────────
+-- manifest_json matches ToolManifest from pai-chat:
+--   { identifier, meta:{title,...}, api[], systemRole?, type?, settings?, ... }
+create table if not exists plugins (
+    id            uuid         primary key default gen_random_uuid(),
+    author_id     uuid         references users(id) on delete set null,
+    identifier    text         not null,
+    manifest_url  text,
+    manifest_json jsonb        not null,
+    name          text         not null,
+    description   text         not null default '',
+    category      text         not null default 'tools',
+    tags          text[]       not null default '{}',
+    is_public     boolean      not null default true,
+    install_count integer      not null default 0,
+    avg_rating    numeric(3,2) not null default 0,
+    rating_count  integer      not null default 0,
+    deleted_at    timestamptz,
+    created_at    timestamptz  not null default now(),
+    updated_at    timestamptz  not null default now(),
+    unique (identifier, author_id)
+);
+
+create index if not exists plugins_category_idx   on plugins(category);
+create index if not exists plugins_author_idx     on plugins(author_id);
+create index if not exists plugins_popular_idx    on plugins(install_count desc);
+create index if not exists plugins_new_idx        on plugins(created_at desc);
+create index if not exists plugins_identifier_idx on plugins(identifier);
+
+do $$ begin
+    create trigger plugins_set_updated_at before update on plugins
+        for each row execute function set_updated_at();
+exception when duplicate_object then null; end $$;

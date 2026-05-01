@@ -48031,6 +48031,10 @@ const ZL = `
 		text-shadow: none;
 	}
 `;
+function _parsePx(val) {
+	const n = parseFloat(val);
+	return n > 0 && typeof val === "string" && val.trim().endsWith("px") ? n : 0;
+}
 class c_ extends HTMLElement {
   static get observedAttributes() {
     return [
