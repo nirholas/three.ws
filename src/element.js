@@ -1715,6 +1715,7 @@ class Agent3DElement extends HTMLElement {
 	// Buffers chunk and flushes to DOM on the next animation frame (RAF-batched).
 	_streamToBubble(chunk) {
 		if (!this._thoughtBubbleEl || !this._thoughtTextEl) return;
+		this._thoughtBubbleEl.style.willChange = 'opacity, transform';
 		this._thoughtBubbleEl.dataset.active = 'true';
 		this._thoughtBubbleEl.dataset.streaming = 'true';
 		this._thoughtBubbleEl.setAttribute('aria-label', 'Agent is responding');
@@ -1736,6 +1737,9 @@ class Agent3DElement extends HTMLElement {
 			this._thoughtBubbleEl.dataset.streaming = 'false';
 			this._thoughtBubbleEl.dataset.error = 'false';
 			if (this._thoughtTextEl) this._thoughtTextEl.textContent = '';
+			setTimeout(() => {
+				if (this._thoughtBubbleEl) this._thoughtBubbleEl.style.willChange = 'auto';
+			}, 300);
 		}, 200);
 	}
 
@@ -1771,6 +1775,7 @@ class Agent3DElement extends HTMLElement {
 		const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 		if (!this._isWalking && !prefersReduced) {
 			this._isWalking = true;
+			clearTimeout(this._gestureDoneIdle);
 			// fade_ms: 300ms idle→walk, 500ms walk→idle, 600ms debounce after last chunk
 			this._scene.playClipByName('walk', { loop: true, fade_ms: 300 });
 		}
@@ -1782,7 +1787,18 @@ class Agent3DElement extends HTMLElement {
 		if (!this._isWalking) return;
 		this._isWalking = false;
 		clearTimeout(this._walkStopDebounce);
-		this._scene?.playClipByName('idle', { loop: true, fade_ms: 500 });
+		const am = this._viewer?.animationManager;
+		const currentClip = am?.currentName;
+		const isGesture = currentClip && currentClip !== 'walk' && currentClip !== 'idle';
+		if (!isGesture) {
+			this._scene?.playClipByName('idle', { loop: true, fade_ms: 500 });
+		} else {
+			// Let the one-shot gesture finish; idle transition fires after gesture + fade-back (~2.5s)
+			clearTimeout(this._gestureDoneIdle);
+			this._gestureDoneIdle = setTimeout(() => {
+				if (!this._isWalking) this._scene?.playClipByName('idle', { loop: true, fade_ms: 500 });
+			}, 2500);
+		}
 	}
 
 	_toolIndicatorLabel(toolName) {
