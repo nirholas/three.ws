@@ -58,7 +58,10 @@ export const IDENTITY_REGISTRY_ABI = [
 export const REPUTATION_REGISTRY_ABI = [
 	'function submitReputation(uint256 agentId, uint8 score, string comment) external',
 	'function getReputation(uint256 agentId) external view returns (uint256 totalScore, uint256 count)',
+	'function stakeReputation(uint256 agentId, uint8 score, string comment) external payable',
+	'function getTotalStake(uint256 agentId) external view returns (uint256)',
 	'event ReputationSubmitted(uint256 indexed agentId, address indexed submitter, uint8 score, string comment)',
+	'event ReputationStaked(uint256 indexed agentId, address indexed staker, uint8 score, uint256 value)',
 ];
 
 /**

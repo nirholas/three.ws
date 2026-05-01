@@ -632,12 +632,22 @@ function periodStart(period) {
 	return new Date(0);
 }
 
+const PERMISSIONS_PUBLIC_RPCS = {
+	1:        'https://cloudflare-eth.com',
+	8453:     'https://mainnet.base.org',
+	84532:    'https://sepolia.base.org',
+	11155111: 'https://rpc.sepolia.org',
+	421614:   'https://sepolia-rollup.arbitrum.io/rpc',
+	11155420: 'https://sepolia.optimism.io',
+};
+
 function getRpcUrl(chainId) {
 	return (
 		process.env[`RPC_URL_${chainId}`] ||
 		// Shared fallback names that might already exist in the project
 		(chainId === 84532 ? process.env.BASE_SEPOLIA_RPC_URL : null) ||
 		(chainId === 11155111 ? process.env.SEPOLIA_RPC_URL : null) ||
+		PERMISSIONS_PUBLIC_RPCS[chainId] ||
 		null
 	);
 }

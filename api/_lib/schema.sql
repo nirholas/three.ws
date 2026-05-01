@@ -57,6 +57,7 @@ create index if not exists avatars_tags_idx on avatars using gin(tags);
 
 -- Additive migrations for avatars columns added after initial deployment.
 alter table avatars add column if not exists storage_mode jsonb;
+alter table avatars add column if not exists parent_avatar_id uuid references avatars(id) on delete set null;
 
 -- ── OAuth 2.1 clients (for MCP & third-party apps) ──────────────────────────
 -- Supports RFC 7591 dynamic client registration.
@@ -552,6 +553,15 @@ create table if not exists agent_subscriptions (
 create index if not exists idx_subscriptions_due on agent_subscriptions(next_charge_at) where status = 'active';
 create index if not exists idx_subscriptions_user on agent_subscriptions(user_id);
 create index if not exists idx_subscriptions_agent on agent_subscriptions(agent_id);
+
+-- ── indexer_state — block cursor for the index-delegations cron ──────────────
+create table if not exists indexer_state (
+    contract           text    not null,
+    chain_id           int     not null,
+    last_indexed_block bigint  not null default 0,
+    updated_at         timestamptz not null default now(),
+    primary key (contract, chain_id)
+);
 
 -- ── dca_strategies — DCA schedule configs ───────────────────────────────────
 create table if not exists dca_strategies (

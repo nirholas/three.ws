@@ -33,6 +33,7 @@ contract ReputationRegistry {
     mapping(uint256 => Aggregate) private _aggregate;
     // agentId => reviewer => hasSubmitted (one review per address per agent)
     mapping(uint256 => mapping(address => bool)) public hasReviewed;
+    mapping(uint256 => uint256) private _totalStake;
 
     // ---------------------------------------------------------------------
     // Events
@@ -43,6 +44,13 @@ contract ReputationRegistry {
         address indexed from,
         int8 score,
         string uri
+    );
+
+    event ReputationStaked(
+        uint256 indexed agentId,
+        address indexed staker,
+        uint8 score,
+        uint256 value
     );
 
     // ---------------------------------------------------------------------
@@ -125,5 +133,44 @@ contract ReputationRegistry {
         for (uint256 i = offset; i < end; i++) {
             out[i - offset] = all[i];
         }
+    }
+
+    // -------------------------------------------------------------------------
+    // Staking
+    // -------------------------------------------------------------------------
+
+    /// @notice Submit a reputation score backed by ETH stake (1–5 scale).
+    ///         Minimum stake is 0.001 ETH. Stake is held by the contract.
+    function stakeReputation(uint256 agentId, uint8 score, string calldata comment) external payable {
+        require(score >= 1 && score <= 5, "score out of range");
+        require(msg.value >= 0.001 ether, "min stake 0.001 ETH");
+        if (!identityRegistry.isAgent(agentId)) revert UnknownAgent();
+        if (identityRegistry.ownerOf(agentId) == msg.sender) revert SelfReviewForbidden();
+        if (hasReviewed[agentId][msg.sender]) revert AlreadyReviewed();
+
+        hasReviewed[agentId][msg.sender] = true;
+        _feedback[agentId].push(
+            Feedback({
+                from: msg.sender,
+                score: int8(uint8(score)),
+                timestamp: uint64(block.timestamp),
+                uri: comment
+            })
+        );
+
+        Aggregate storage agg = _aggregate[agentId];
+        agg.sum += int256(uint256(score));
+        unchecked {
+            agg.count++;
+        }
+
+        _totalStake[agentId] += msg.value;
+
+        emit FeedbackSubmitted(agentId, msg.sender, int8(uint8(score)), comment);
+        emit ReputationStaked(agentId, msg.sender, score, msg.value);
+    }
+
+    function getTotalStake(uint256 agentId) external view returns (uint256) {
+        return _totalStake[agentId];
     }
 }

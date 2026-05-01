@@ -21,7 +21,7 @@
  *   solana-attestations-crawl     → handleSolanaAttestationsCrawl
  */
 
-import { id as keccakId, AbiCoder, getAddress } from 'ethers';
+import { id as keccakId, AbiCoder, getAddress, Interface } from 'ethers';
 import { createPublicClient, http, encodeFunctionData, parseAbi } from 'viem';
 import { baseSepolia, base } from 'viem/chains';
 
@@ -29,7 +29,7 @@ import { sql } from '../_lib/db.js';
 import { cors, error, json, method, wrap } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import { CHAINS } from '../_lib/erc8004-chains.js';
-import { DELEGATION_MANAGER_DEPLOYMENTS } from '../../src/erc7710/abi.js';
+import { DELEGATION_MANAGER_DEPLOYMENTS, DELEGATION_MANAGER_ABI } from '../../src/erc7710/abi.js';
 import {
 	getPumpAgent,
 	getPumpAgentOffline,
@@ -82,14 +82,18 @@ const ABI_CODER = AbiCoder.defaultAbiCoder();
 // 2000-block ranges; lower this if a chain's RPC rejects with "block range".
 const ERC8004_BLOCK_CHUNK = 2_000;
 
-// On first run (no cursor), scan this many recent blocks. Set
-// ERC8004_CRAWL_LOOKBACK env var to override (e.g. larger for backfill).
-const ERC8004_DEFAULT_LOOKBACK = parseInt(process.env.ERC8004_CRAWL_LOOKBACK || '50000', 10);
+// On first run (no cursor), scan this many recent blocks. Keep small so the
+// initial cron run stays well under Vercel's 300s limit. Set
+// ERC8004_CRAWL_LOOKBACK=50000 in Vercel env only for a one-time manual backfill.
+const ERC8004_DEFAULT_LOOKBACK = parseInt(process.env.ERC8004_CRAWL_LOOKBACK || '2000', 10);
 
 // Metadata enrichment per invocation.
 const ERC8004_METADATA_BATCH = 25;
 
 const ERC8004_FETCH_TIMEOUT_MS = 10_000;
+
+// Hard budget: stop processing and return before Vercel's 300s limit.
+const CRAWL_BUDGET_MS = 240_000;
 
 async function handleErc8004Crawl(req, res) {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
@@ -101,9 +105,11 @@ async function handleErc8004Crawl(req, res) {
 		return error(res, 401, 'unauthorized', 'cron secret required');
 	}
 
+	const crawlStart = Date.now();
 	const report = { chains: [], enriched: 0, errors: [] };
 
 	for (const chain of CHAINS) {
+		if (Date.now() - crawlStart > CRAWL_BUDGET_MS) break;
 		try {
 			const r = await erc8004CrawlChain(chain);
 			report.chains.push({ chainId: chain.id, name: chain.name, ...r });
@@ -112,10 +118,12 @@ async function handleErc8004Crawl(req, res) {
 		}
 	}
 
-	try {
-		report.enriched = await erc8004EnrichMetadata(ERC8004_METADATA_BATCH);
-	} catch (err) {
-		report.errors.push({ stage: 'metadata', error: err.message || String(err) });
+	if (Date.now() - crawlStart <= CRAWL_BUDGET_MS) {
+		try {
+			report.enriched = await erc8004EnrichMetadata(ERC8004_METADATA_BATCH);
+		} catch (err) {
+			report.errors.push({ stage: 'metadata', error: err.message || String(err) });
+		}
 	}
 
 	return json(res, 200, report);
@@ -316,8 +324,9 @@ function erc8004Truncate(s, max) {
 // index-delegations
 // ═══════════════════════════════════════════════════════════════════════════
 
-const DISABLED_TOPIC = keccakId('DelegationDisabled(address,bytes32)');
-const REDEEMED_TOPIC = keccakId('DelegationRedeemed(address,bytes32)');
+const _dmIface = new Interface(DELEGATION_MANAGER_ABI);
+const DISABLED_TOPIC = _dmIface.getEvent('DisabledDelegation').topicHash;
+const REDEEMED_TOPIC = _dmIface.getEvent('RedeemedDelegation').topicHash;
 
 // Max blocks per eth_getLogs call. Public RPCs 429 above ~2000.
 const IDX_BLOCK_CAP = 2000;
@@ -369,7 +378,7 @@ const PUBLIC_RPCS = {
 };
 
 function idxRpcUrls(chainId) {
-	const envUrl = process.env[`RPC_${chainId}`];
+	const envUrl = process.env[`RPC_URL_${chainId}`];
 	const fallbacks = PUBLIC_RPCS[chainId] ?? [];
 	return envUrl ? [envUrl, ...fallbacks] : fallbacks;
 }
@@ -472,8 +481,12 @@ async function idxIndexChain(chainId, contract) {
 			}
 
 			for (const log of logs) {
-				// topics[2] is the bytes32 delegationHash (indexed param, 0x-prefixed, 64 hex chars).
-				const delegationHash = log.topics[2];
+				// DisabledDelegation: topics[1]=delegationHash, topics[2]=delegator, topics[3]=delegate
+				// RedeemedDelegation: topics[1]=rootDelegator, topics[2]=redeemer (no delegationHash indexed)
+				const delegationHash =
+					log.topics[0] === DISABLED_TOPIC
+						? log.topics[1]
+						: log.topics[2];
 				const ts = blockTs[log.blockNumber];
 
 				if (log.topics[0] === DISABLED_TOPIC) {
