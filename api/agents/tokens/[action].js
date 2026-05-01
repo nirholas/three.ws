@@ -11,18 +11,7 @@
  */
 
 import { z } from 'zod';
-import {
-	Connection,
-	Keypair,
-	PublicKey,
-	Transaction,
-	ComputeBudgetProgram,
-	SystemProgram,
-} from '@solana/web3.js';
-import { PumpSdk, getBuyTokenAmountFromSolAmount } from '@pump-fun/pump-sdk';
-import BN from 'bn.js';
 import { createHash } from 'crypto';
-import { PutObjectCommand } from '@aws-sdk/client-s3';
 
 import { sql } from '../../_lib/db.js';
 import { getSessionUser } from '../../_lib/auth.js';
@@ -32,6 +21,25 @@ import { parse } from '../../_lib/validate.js';
 import { randomToken } from '../../_lib/crypto.js';
 import { env } from '../../_lib/env.js';
 import { r2 } from '../../_lib/r2.js';
+
+// Heavy SDKs (Solana web3, Pump.fun, AWS S3 commands) are dynamic-imported
+// inside the handlers that need them. Loading them at module top-level was
+// pushing the function over Vercel's cold-start budget and producing
+// FUNCTION_INVOCATION_FAILED on every invocation, including launch-quote
+// which doesn't even touch them when initial_buy_sol=0.
+async function loadSolanaWeb3() {
+	return import('@solana/web3.js');
+}
+async function loadPumpSdk() {
+	const [pump, BNmod] = await Promise.all([
+		import('@pump-fun/pump-sdk'),
+		import('bn.js').then((m) => m.default || m),
+	]);
+	return { ...pump, BN: BNmod };
+}
+async function loadS3Commands() {
+	return import('@aws-sdk/client-s3');
+}
 
 function rpcUrl(cluster) {
 	return cluster === 'devnet'
@@ -102,6 +110,7 @@ async function pinTokenMetadata({ name, symbol, description, image }) {
 	const hash = createHash('sha256').update(bytes).digest('hex');
 	const stub = `bafkreigenerated${hash.slice(0, 40)}`;
 	const key = `token-metadata/${Date.now()}-${Math.random().toString(36).slice(2)}.json`;
+	const { PutObjectCommand } = await loadS3Commands();
 	await r2.send(
 		new PutObjectCommand({
 			Bucket: env.S3_BUCKET,
@@ -162,6 +171,9 @@ async function handleLaunchPrep(req, res) {
 	});
 
 	// 4. Build the launch tx
+	const { Connection, Keypair, PublicKey, Transaction, ComputeBudgetProgram } =
+		await loadSolanaWeb3();
+	const { PumpSdk, getBuyTokenAmountFromSolAmount, BN } = await loadPumpSdk();
 	const conn = new Connection(rpcUrl(body.cluster), 'confirmed');
 	const sdk = new PumpSdk(conn);
 
@@ -265,11 +277,6 @@ async function handleLaunchPrep(req, res) {
 	});
 }
 
-// Make sure SystemProgram import isn't tree-shaken away (some bundlers complain
-// about unused imports). It's a peer for compute-budget instructions on some
-// Pump.fun program versions.
-void SystemProgram;
-
 // ── launch-confirm ───────────────────────────────────────────────────────────
 
 const launchConfirmSchema = z.object({
@@ -303,6 +310,7 @@ async function handleLaunchConfirm(req, res) {
 	}
 
 	// Verify on-chain
+	const { Connection } = await loadSolanaWeb3();
 	const conn = new Connection(rpcUrl(prep.cluster), 'confirmed');
 
 	const deadline = Date.now() + 30_000;
@@ -415,6 +423,8 @@ async function handleLaunchQuote(req, res) {
 	let buyEstimate = null;
 	if (q.initial_buy_sol > 0) {
 		try {
+			const { Connection } = await loadSolanaWeb3();
+			const { PumpSdk, getBuyTokenAmountFromSolAmount, BN } = await loadPumpSdk();
 			const conn = new Connection(rpcUrl(q.cluster), 'confirmed');
 			const sdk = new PumpSdk(conn);
 			const global = await sdk.fetchGlobal();
