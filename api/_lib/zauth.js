@@ -8,11 +8,12 @@
 //
 // Disabled cleanly when ZAUTH_API_KEY is unset — `instrument()` becomes a
 // no-op so unrelated environments don't pay any cost.
+//
+// Static import (not createRequire) so Vercel's @vercel/nft traces the
+// `./middleware` subpath and bundles it into the deployment.
 
-import { createRequire } from 'node:module';
+import { zauthProvider } from '@zauthx402/sdk/middleware';
 import { env } from './env.js';
-
-const require = createRequire(import.meta.url);
 
 let cached;
 
@@ -20,14 +21,11 @@ function buildMiddleware() {
 	const apiKey = env.ZAUTH_API_KEY;
 	if (!apiKey) return null;
 	try {
-		// Lazy require so deployments without the SDK installed (or without a
-		// key) don't pay the import cost.
-		const mod = require('@zauthx402/sdk/middleware');
-		return mod.zauthProvider(apiKey, {
+		return zauthProvider(apiKey, {
 			shouldMonitor: shouldMonitorReq,
 		});
 	} catch (err) {
-		console.error('[zauth] failed to load @zauthx402/sdk:', err.message);
+		console.error('[zauth] failed to build middleware:', err.message);
 		return null;
 	}
 }
