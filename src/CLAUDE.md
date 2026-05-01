@@ -101,10 +101,11 @@ Continuous weighted blend of `{ neutral, concern, celebration, patience, curiosi
 | patience    | 0.035 | ~20s      |
 | curiosity   | 0.12  | ~6s       |
 | empathy     | 0.055 | ~13s      |
+| uncertain   | 0.10  | ~7s       |
 
 ### Stimulus rules (protocol → emotion)
 
-- `speak`: valence > 0.3 → celebration; < -0.2 → concern; arousal > 0.5 → curiosity
+- `speak`: valence > 0.3 → celebration; < -0.2 → concern; arousal > 0.5 → curiosity; hedge vocab → uncertain (capped 0.8)
 - `skill-done`: `result.sentiment` > 0.3 → celebration; < -0.2 → concern
 - `skill-error`: concern + empathy (scaled by error streak × 0.25)
 - `load-start`: patience + curiosity
@@ -118,6 +119,7 @@ Continuous weighted blend of `{ neutral, concern, celebration, patience, curiosi
 - empathy → eyeSquint 0.4, browInnerUp 0.5
 - curiosity → browOuterUp 0.7/0.5
 - patience → eyesClosed 0.15 (subtle)
+- uncertain → mouthPressLeft/Right 0.35, browInnerUp max(concern×0.6, uncertain×0.45, empathy×0.5); also scales idle hip-drift amplitude (base 0.018 rad + bias×0.025 rad)
 
 ### Head transform
 

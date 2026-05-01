@@ -20,8 +20,9 @@
  */
 
 import { ACTION_TYPES } from './agent-protocol.js';
-import { Vector3, Box3, MathUtils } from 'three';
+import { Vector3, Box3, MathUtils, PositionalAudio } from 'three';
 import { resolveSlot, DEFAULT_ANIMATION_MAP } from './runtime/animation-slots.js';
+import { ElevenLabsTTS } from './runtime/speech.js';
 // BEGIN:IDLE_LOOP_IMPORT
 import { IdleAnimation } from './idle-animation.js';
 // END:IDLE_LOOP_IMPORT
