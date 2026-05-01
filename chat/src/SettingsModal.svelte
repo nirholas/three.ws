@@ -15,6 +15,7 @@
 		toolSchema,
 		talkingHeadAvatarUrl,
 		locale,
+		localProvidersEnabled,
 	} from './stores.js';
 	import Button from './Button.svelte';
 	import Modal from './Modal.svelte';
@@ -273,6 +274,21 @@
 					/></label
 				>
 			{:else if activeTab === 'remote-server'}
+				<label class="mb-4 flex items-start gap-2 text-[13px] text-slate-700">
+					<input
+						type="checkbox"
+						bind:checked={$localProvidersEnabled}
+						class="mt-0.5"
+					/>
+					<span class="flex flex-col">
+						<span>Enable local model providers</span>
+						<span class="text-[11px] text-slate-500">
+							Probe Ollama (localhost:11434) and the local tool server (localhost:8081) on load.
+							Leave off if you don't run these locally — otherwise the browser logs connection errors.
+						</span>
+					</span>
+				</label>
+
 				<label class="flex flex-col text-[10px] uppercase tracking-wide">
 					<span class="mb-2 flex items-center">
 						<span class="ml-[3px]">Tool server address </span>

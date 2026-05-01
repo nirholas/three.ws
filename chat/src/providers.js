@@ -103,6 +103,7 @@ export const providers = [
 		url: 'http://localhost:11434',
 		completionUrl: '/v1/chat/completions',
 		modelsUrl: '/api/tags',
+		isLocal: true,
 		responseMapperFn: (json) => {
 			return json.models.map((m) => ({
 				id: m.name,
@@ -251,6 +252,10 @@ export async function fetchModels({ onFinally }) {
 				return [];
 			}
 
+			if (provider.isLocal && !get(localProvidersEnabled)) {
+				return [];
+			}
+
 			return fetch(`${provider.url}${provider.modelsUrl}`, {
 				method: 'GET',
 				headers: headersForFetch(provider, null),
@@ -266,7 +271,13 @@ export async function fetchModels({ onFinally }) {
 					}));
 				})
 				.catch((err) => {
-					console.log('Error fetching models from provider', provider.name, err);
+					if (provider.isLocal) {
+						console.debug(
+							`[${provider.name}] not detected at ${provider.url} — start the local service if you want it.`
+						);
+					} else {
+						console.debug('Error fetching models from provider', provider.name, err);
+					}
 					return [];
 				});
 		});

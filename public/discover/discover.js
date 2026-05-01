@@ -54,8 +54,9 @@ function updateSearchClearVisibility() {
 
 // Reveal "View my agents" chip + nav link when signed in.
 fetch('/api/auth/me', { credentials: 'include' })
-	.then((r) => {
-		if (!r.ok) return;
+	.then((r) => (r.ok ? r.json() : null))
+	.then((data) => {
+		if (!data?.user) return;
 		if (els.myAgentsChip) els.myAgentsChip.hidden = false;
 		const navLink = document.getElementById('nav-my-agents');
 		if (navLink) navLink.hidden = false;

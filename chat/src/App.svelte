@@ -22,7 +22,7 @@
 	} from './providers.js';
 	import ModelSelector from './ModelSelector.svelte';
 	import CompanyLogo from './CompanyLogo.svelte';
-	import { controller, remoteServer, config, params, toolSchema, syncServer, brandConfig, ttsEnabled, localAgentId, activeAgent, talkingHeadEnabled, talkingHeadAvatarUrl, route, mode, websiteCategory, loadCurrentUser, notify } from './stores.js';
+	import { controller, remoteServer, config, params, toolSchema, syncServer, brandConfig, ttsEnabled, localAgentId, activeAgent, talkingHeadEnabled, talkingHeadAvatarUrl, route, mode, websiteCategory, loadCurrentUser, notify, localProvidersEnabled } from './stores.js';
 	import { t } from './i18n.js';
 	import Notifications from './Notifications.svelte';
 	import AuthPage from './manus/pages/AuthPage.svelte';
@@ -1306,17 +1306,28 @@
 
 		initializePWAStyles();
 
-		try {
-			tree = await (
-				await fetch(`${$remoteServer.address}/list_directory`, {
-					method: 'GET',
-					headers: {
-						Authorization: `Basic ${$remoteServer.password}`,
-					},
-				})
-			).json();
-		} catch (error) {
-			console.error(error);
+		// Only probe the local tool server if the user has opted in or clearly
+		// configured it (non-empty password, or non-default address). Otherwise
+		// the probe to localhost:8081 fails noisily for users who haven't
+		// started the helper.
+		const remoteServerConfigured =
+			$remoteServer.password !== '' ||
+			$remoteServer.address !== 'http://localhost:8081';
+		if ($localProvidersEnabled || remoteServerConfigured) {
+			try {
+				tree = await (
+					await fetch(`${$remoteServer.address}/list_directory`, {
+						method: 'GET',
+						headers: {
+							Authorization: `Basic ${$remoteServer.password}`,
+						},
+					})
+				).json();
+			} catch (error) {
+				console.debug(
+					`[tool server] not detected at ${$remoteServer.address} — start it if you want local tools.`
+				);
+			}
 		}
 
 		loading = true;

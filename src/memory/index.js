@@ -1,5 +1,16 @@
 // Agent memory — file-based, human-readable, Claude-shaped.
 // See specs/MEMORY_SPEC.md
+//
+// Supported modes (set via `<agent-3d memory="…">` or manifest `memory.mode`):
+//
+//   none           — ephemeral, no persistence
+//   local          — persisted to localStorage[agent:<ns>:memory]
+//   remote         — persisted via /api/agent-memory (per-agent, owner-only)
+//   ipfs           — read-only manifest-bundled IPFS files
+//   encrypted-ipfs — same as ipfs but AES-GCM encrypted with a derived key
+//
+// Unknown modes fall back to `local` with a single console.warn so a stale
+// or typo'd config never breaks <agent-3d> boot.
 
 import { encryptBlob, bytesToBase64, base64ToBytes } from './crypto.js';
 
@@ -45,6 +56,18 @@ export class Memory {
 		this._dirty = false;
 	}
 
+	/**
+	 * Load a Memory instance for the given mode. See file header for the
+	 * mode table. Unknown modes warn once and fall back to `local`.
+	 *
+	 * @param {Object} opts
+	 * @param {'none'|'local'|'remote'|'ipfs'|'encrypted-ipfs'} [opts.mode]
+	 * @param {string} opts.namespace            - Stable id (usually agent UUID)
+	 * @param {string} [opts.manifestURI]        - Required for ipfs / encrypted-ipfs
+	 * @param {typeof fetch} [opts.fetchFn]      - Override fetch (tests / SSR)
+	 * @param {() => Promise<CryptoKey>} [opts.deriveKey] - Required for encrypted-ipfs
+	 * @returns {Promise<Memory>}
+	 */
 	static async load({ mode = 'local', namespace, manifestURI, fetchFn, deriveKey }) {
 		if (mode === 'none') return new Memory({ mode: 'none', namespace });
 		if (mode === 'local') return Memory._loadLocal(namespace);
@@ -54,7 +77,8 @@ export class Memory {
 				throw new Error('encrypted-ipfs mode requires a deriveKey function');
 			return Memory._loadIPFS({ mode, namespace, manifestURI, fetchFn, deriveKey });
 		}
-		throw new Error(`Unknown memory mode: ${mode}`);
+		console.warn(`[memory] unknown mode "${mode}"; falling back to "local"`);
+		return Memory._loadLocal(namespace);
 	}
 
 	static async _loadRemote({ namespace, fetchFn }) {
