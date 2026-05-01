@@ -5,31 +5,65 @@
 	<title>Vanity wallet generator · three.ws</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta name="description" content="Grind a custom Solana wallet address for your agent. Runs entirely in your browser — keys never leave your device.">
+	<link rel="icon" href="/favicon.ico">
+	<link rel="stylesheet" href="/footer.css">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+	<script defer src="/footer-newsletter.js"></script>
+	<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
 	<style>
 		* { box-sizing: border-box; }
 		:root {
-			--fg: #111; --muted: #555; --border: #e5e5e5; --bg: #fafafa;
-			--accent: #111; --accent-fg: #fff;
-			--ok-bg: #e7f5e9; --ok-fg: #1b5e20;
-			--warn-bg: #fff3cd; --warn-fg: #855008;
-			--bad-bg: #fce8e8; --bad-fg: #b71c1c;
+			color-scheme: dark;
+			--fg: #f0f0f0; --muted: #888; --border: rgba(255,255,255,0.08); --bg: #111;
+			--accent: #fff; --accent-fg: #000;
+			--ok-bg: rgba(74,222,128,0.12); --ok-fg: #4ade80;
+			--warn-bg: rgba(251,191,36,0.1); --warn-fg: #fbbf24;
+			--bad-bg: rgba(239,68,68,0.1); --bad-fg: #f87171;
+			--card-bg: #0f0f0f;
+			--header-h: 3.5rem;
+			--font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+			--space-xs: 0.382rem;
+			--space-sm: 0.618rem;
+			--space-md: 1rem;
+			--space-lg: 1.618rem;
+			--text-sm: 0.764rem;
+			--text-lg: 1.236rem;
+			--radius-md: 5px;
 		}
-		body { font: 15px/1.5 system-ui, -apple-system, sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem; color: var(--fg); }
-		h1 { font-size: 1.5rem; margin: 0 0 .25rem; }
+		body {
+			font: 15px/1.5 'Inter', system-ui, -apple-system, sans-serif;
+			background: #000;
+			color: var(--fg);
+			margin: 0;
+			min-height: 100vh;
+			display: flex;
+			flex-direction: column;
+		}
+		main {
+			flex: 1;
+			max-width: 660px;
+			width: 100%;
+			margin: 0 auto;
+			padding: 2.5rem 1rem 3rem;
+		}
+		h1 { font-size: 1.5rem; margin: 0 0 .25rem; font-family: var(--font-display); letter-spacing: -0.02em; }
 		p.lede { color: var(--muted); margin: 0 0 1.25rem; }
 		label { display: block; font-size: .8rem; color: var(--muted); margin: 1rem 0 .25rem; }
 
-		.card { border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem 1.25rem; background: #fff; }
+		.card { border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem 1.25rem; background: var(--card-bg); }
 
-		input[type=text] { font: inherit; font-family: ui-monospace, monospace; padding: .55rem .7rem; width: 100%; border: 1px solid #ccc; border-radius: 6px; }
-		input.invalid { border-color: var(--bad-fg); background: #fff8f8; }
+		input[type=text] { font: inherit; font-family: ui-monospace, monospace; padding: .55rem .7rem; width: 100%; border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; background: #1a1a1a; color: var(--fg); }
+		input[type=text]:focus { outline: none; border-color: rgba(255,255,255,0.3); }
+		input.invalid { border-color: var(--bad-fg); background: rgba(239,68,68,0.06); }
 
-		.preview { font-family: ui-monospace, monospace; font-size: .9rem; padding: .65rem .75rem; background: var(--bg); border-radius: 6px; margin-top: .55rem; word-break: break-all; min-height: 2.4em; line-height: 1.4; }
+		.preview { font-family: ui-monospace, monospace; font-size: .9rem; padding: .65rem .75rem; background: #1a1a1a; border-radius: 6px; margin-top: .55rem; word-break: break-all; min-height: 2.4em; line-height: 1.4; border: 1px solid var(--border); }
 		.preview .pfx { background: linear-gradient(90deg,#ffd54f,#ff8a65); color: #1a1a1a; padding: 0 3px; border-radius: 3px; font-weight: 700; }
-		.preview .rest { color: #888; }
+		.preview .rest { color: #555; }
 
 		.meter { display: flex; gap: 4px; margin-top: .65rem; }
-		.meter .seg { flex: 1; height: 7px; border-radius: 4px; background: #eee; transition: background .15s; }
+		.meter .seg { flex: 1; height: 7px; border-radius: 4px; background: #2a2a2a; transition: background .15s; }
 		.lit-1, .lit-2, .lit-3, .lit-4 { background: #4caf50 !important; }
 		.lit-5 { background: #fb8c00 !important; }
 		.lit-6 { background: #d32f2f !important; }
@@ -37,115 +71,320 @@
 		.row { display: flex; justify-content: space-between; align-items: center; margin-top: .55rem; font-size: .85rem; color: var(--muted); }
 
 		.chips { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .9rem; }
-		.chip { background: #f0f0f2; border: 1px solid #ddd; border-radius: 999px; padding: .3rem .75rem; cursor: pointer; font-family: ui-monospace, monospace; font-size: .8rem; color: #333; }
-		.chip:hover { background: #e6e6e8; }
-		.chip-est { color: #888; margin-left: .35rem; font-family: system-ui, sans-serif; }
+		.chip { background: #1a1a1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 999px; padding: .3rem .75rem; cursor: pointer; font-family: ui-monospace, monospace; font-size: .8rem; color: #bbb; }
+		.chip:hover { background: #242424; border-color: rgba(255,255,255,0.2); }
+		.chip-est { color: #555; margin-left: .35rem; font-family: system-ui, sans-serif; }
 
 		.actions { display: flex; gap: .55rem; margin-top: 1.25rem; align-items: center; flex-wrap: wrap; }
-		.btn { font: inherit; padding: .55rem 1.1rem; border-radius: 6px; border: 1px solid #ccc; background: #fff; cursor: pointer; }
-		.btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); font-weight: 600; }
-		.btn:disabled { opacity: .4; cursor: not-allowed; }
+		.btn { font: inherit; padding: .55rem 1.1rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.12); background: #1a1a1a; color: var(--fg); cursor: pointer; }
+		.btn:hover { background: #222; }
+		.btn.primary { background: #fff; color: #000; border-color: #fff; font-weight: 600; }
+		.btn.primary:hover { background: #e8e8e8; }
+		.btn:disabled { opacity: .35; cursor: not-allowed; }
 
-		.progress { margin-top: 1.25rem; padding: .9rem 1.1rem; background: var(--bg); border-radius: 8px; border: 1px solid var(--border); font-family: ui-monospace, monospace; font-size: .85rem; }
+		.progress { margin-top: 1.25rem; padding: .9rem 1.1rem; background: #111; border-radius: 8px; border: 1px solid var(--border); font-family: ui-monospace, monospace; font-size: .85rem; }
 		.progress .live { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
-		.progress .stat { font-size: 1.1rem; font-weight: 600; color: #111; }
-		.progress .scan { font-family: ui-monospace, monospace; font-size: .85rem; color: #888; margin-top: .35rem; word-break: break-all; min-height: 1.4em; }
+		.progress .stat { font-size: 1.1rem; font-weight: 600; color: #fff; }
+		.progress .scan { font-family: ui-monospace, monospace; font-size: .85rem; color: #555; margin-top: .35rem; word-break: break-all; min-height: 1.4em; }
 
-		.result { margin-top: 1.25rem; padding: 1.1rem 1.25rem; background: linear-gradient(135deg, #fffaf0, #fff5e0); border: 1px solid #ffd54f; border-radius: 10px; }
-		.result h3 { margin: 0 0 .4rem; font-size: 1rem; }
-		.result .addr { font-family: ui-monospace, monospace; font-size: .9rem; word-break: break-all; padding: .5rem; background: #fff; border-radius: 6px; border: 1px solid #ffe5a0; }
+		.result { margin-top: 1.25rem; padding: 1.1rem 1.25rem; background: rgba(255,213,79,0.06); border: 1px solid rgba(255,213,79,0.25); border-radius: 10px; }
+		.result h3 { margin: 0 0 .4rem; font-size: 1rem; color: #fff; }
+		.result .addr { font-family: ui-monospace, monospace; font-size: .9rem; word-break: break-all; padding: .5rem; background: #111; border-radius: 6px; border: 1px solid rgba(255,213,79,0.15); }
 		.result .addr .pfx { background: linear-gradient(90deg,#ffd54f,#ff8a65); color: #1a1a1a; padding: 0 3px; border-radius: 3px; font-weight: 700; }
 		.result .meta { font-size: .8rem; color: var(--muted); margin: .55rem 0 1rem; }
 
-		.warn { background: var(--warn-bg); color: var(--warn-fg); padding: .6rem .85rem; border-radius: 6px; margin-top: 1rem; font-size: .8rem; }
-		.warn strong { color: var(--bad-fg); }
+		.warn { background: var(--warn-bg); color: var(--warn-fg); padding: .6rem .85rem; border-radius: 6px; margin-top: 1rem; font-size: .8rem; border: 1px solid rgba(251,191,36,0.15); }
+		.warn strong { color: #fca5a5; }
 
-		.assign { margin-top: 1rem; padding: .9rem 1rem; background: #fff; border: 1px solid var(--border); border-radius: 8px; }
-		.assign h4 { margin: 0 0 .4rem; font-size: .9rem; }
-		.assign select { font: inherit; padding: .4rem .55rem; border: 1px solid #ccc; border-radius: 6px; width: 100%; }
+		.assign { margin-top: 1rem; padding: .9rem 1rem; background: #111; border: 1px solid var(--border); border-radius: 8px; }
+		.assign h4 { margin: 0 0 .4rem; font-size: .9rem; color: #fff; }
+		.assign select { font: inherit; padding: .4rem .55rem; border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; width: 100%; background: #1a1a1a; color: var(--fg); }
 		.assign .custody { font-size: .72rem; color: var(--muted); margin-top: .5rem; }
 		.assign .custody label { display: flex; align-items: flex-start; gap: .4rem; cursor: pointer; }
 		.assign .custody input { margin-top: 3px; }
-		.assigned-ok { background: var(--ok-bg); color: var(--ok-fg); padding: .6rem .85rem; border-radius: 6px; margin-top: 1rem; font-size: .85rem; }
+		.assigned-ok { background: var(--ok-bg); color: var(--ok-fg); padding: .6rem .85rem; border-radius: 6px; margin-top: 1rem; font-size: .85rem; border: 1px solid rgba(74,222,128,0.15); }
 
-		.error { background: #fff5f5; color: var(--bad-fg); padding: .6rem .85rem; border-radius: 6px; margin-top: 1rem; font-size: .85rem; border: 1px solid #f5c6c6; }
+		.error { background: var(--bad-bg); color: var(--bad-fg); padding: .6rem .85rem; border-radius: 6px; margin-top: 1rem; font-size: .85rem; border: 1px solid rgba(239,68,68,0.15); }
 
-		footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: .78rem; color: var(--muted); }
-		footer a { color: #0066cc; }
 		.tier-tag { padding: .15rem .55rem; border-radius: 999px; font-size: .75rem; font-weight: 600; }
-		.tier-free { background: #e7f5e9; color: #1b5e20; }
-		.tier-paid { background: linear-gradient(90deg,#ffd54f,#ff8a65); color: #1a1a1a; }
+		.tier-free { background: rgba(74,222,128,0.12); color: #4ade80; }
+		.tier-paid { background: linear-gradient(90deg,rgba(255,213,79,0.15),rgba(255,138,101,0.15)); color: #fbbf24; border: 1px solid rgba(255,213,79,0.2); }
+
+		/* ── Site nav ── */
+		.skip-link {
+			position: absolute; left: -9999px; top: auto; width: 1px; height: 1px; overflow: hidden;
+		}
+		.skip-link:focus {
+			left: 1rem; top: 1rem; width: auto; height: auto;
+			padding: 0.5rem 1rem; background: #0c0c0c; border: 1px solid rgba(255,255,255,0.1);
+			border-radius: 6px; z-index: 9999; color: #fff; text-decoration: none;
+		}
+		header.site-header {
+			display: flex;
+			background: rgba(0,0,0,0.8);
+			backdrop-filter: blur(20px);
+			-webkit-backdrop-filter: blur(20px);
+			padding: 0 var(--space-lg);
+			height: var(--header-h);
+			align-items: center;
+			overflow-x: auto;
+			overflow-y: hidden;
+			white-space: nowrap;
+			border-bottom: 1px solid rgba(255,255,255,0.06);
+			z-index: 10;
+			position: sticky;
+			top: 0;
+		}
+		header.site-header h1 {
+			color: #fff;
+			font-family: var(--font-display);
+			font-size: var(--text-lg);
+			font-weight: 600;
+			margin: 0;
+			letter-spacing: -0.01em;
+			display: flex;
+			align-items: center;
+			gap: var(--space-xs);
+			line-height: var(--header-h);
+		}
+		header.site-header h1 > a {
+			color: inherit; font-size: inherit; text-decoration: none;
+			display: flex; align-items: center; gap: 0.5rem;
+		}
+		.wordmark-dot {
+			width: 8px; height: 8px; border-radius: 50%;
+			background: linear-gradient(135deg, #a78bfa 0%, #6366f1 100%);
+			box-shadow: 0 0 10px rgba(139,92,246,0.6);
+			display: inline-block;
+		}
+		.features-nav {
+			margin-left: auto; display: flex; gap: var(--space-md); align-items: center;
+		}
+		.features-nav a {
+			color: rgba(255,255,255,0.5); text-decoration: none;
+			font-size: var(--text-sm); font-weight: 500; letter-spacing: -0.005em;
+			padding: 0.35rem 0.7rem; border-radius: var(--radius-md);
+			transition: color 0.18s ease, background 0.18s ease; position: relative;
+		}
+		.features-nav a:hover { color: #fff; background: rgba(255,255,255,0.04); }
+		.features-nav a.active { color: #fff; background: rgba(255,255,255,0.06); }
+		.nav-sign-in { border: 1px solid rgba(255,255,255,0.12); border-radius: var(--radius-md); }
+		.nav-user {
+			display: inline-flex; align-items: center; gap: 6px;
+			padding: 4px 10px; border-radius: 20px;
+			border: 1px solid rgba(255,255,255,0.1);
+			background: rgba(255,255,255,0.04);
+			font-size: var(--text-sm); color: rgba(255,255,255,0.55);
+			max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+		}
+		.nav-user::before {
+			content: ''; width: 6px; height: 6px; border-radius: 50%;
+			background: #4ade80; flex-shrink: 0;
+		}
+		.nav-user:hover {
+			color: rgba(255,255,255,0.85) !important;
+			border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.07);
+		}
+		@media (max-width: 700px) {
+			.features-nav a:not(.nav-sign-in):not(.nav-user):not(#nav-sign-in) { display: none; }
+		}
 	</style>
 </head>
 <body>
-	<h1>✦ Vanity wallet generator</h1>
-	<p class="lede">
-		Grind a Solana wallet address starting with characters of your choice — for your agent, treasury, or anywhere a memorable address matters.
-		<strong>Runs entirely in your browser.</strong> The secret key never leaves your device.
-	</p>
+	<a href="#main-content" class="skip-link">Skip to main content</a>
+	<header class="site-header">
+		<h1>
+			<a href="/" aria-label="three.ws home"><span class="wordmark-dot" aria-hidden="true"></span>three.ws</a>
+		</h1>
+		<nav class="features-nav" aria-label="Primary">
+			<a href="/app">Viewer</a>
+			<a href="/create">Create</a>
+			<a href="/discover">Discover</a>
+			<a href="/features">Features</a>
+			<a href="/widgets">Widgets</a>
+			<a href="/studio">Studio</a>
+			<a href="/chat">Chat</a>
+			<a href="/docs">Docs</a>
+			<a href="/dashboard" class="nav-dashboard">Dashboard</a>
+			<a href="/my-agents" id="nav-my-agents" hidden>My Agents</a>
+			<a href="/dashboard" id="nav-user" hidden class="nav-user"></a>
+		</nav>
+	</header>
 
-	<div class="card">
-		<label for="prefix">Prefix (Base58, max 6)</label>
-		<input id="prefix" type="text" maxlength="6" placeholder="e.g. AGNT" autocomplete="off" spellcheck="false" />
+	<main id="main-content">
+		<h1>✦ Vanity wallet generator</h1>
+		<p class="lede">
+			Grind a Solana wallet address starting with characters of your choice — for your agent, treasury, or anywhere a memorable address matters.
+			<strong>Runs entirely in your browser.</strong> The secret key never leaves your device.
+		</p>
 
-		<div class="preview" id="preview" aria-live="polite"></div>
+		<div class="card">
+			<label for="prefix">Prefix (Base58, max 6)</label>
+			<input id="prefix" type="text" maxlength="6" placeholder="e.g. AGNT" autocomplete="off" spellcheck="false" />
 
-		<div class="meter" aria-hidden="true">
-			<div class="seg" data-seg="1"></div>
-			<div class="seg" data-seg="2"></div>
-			<div class="seg" data-seg="3"></div>
-			<div class="seg" data-seg="4"></div>
-			<div class="seg" data-seg="5"></div>
-			<div class="seg" data-seg="6"></div>
-		</div>
+			<div class="preview" id="preview" aria-live="polite"></div>
 
-		<div class="row">
-			<span id="est">type a prefix to see estimated time</span>
-			<span id="tier"></span>
-		</div>
+			<div class="meter" aria-hidden="true">
+				<div class="seg" data-seg="1"></div>
+				<div class="seg" data-seg="2"></div>
+				<div class="seg" data-seg="3"></div>
+				<div class="seg" data-seg="4"></div>
+				<div class="seg" data-seg="5"></div>
+				<div class="seg" data-seg="6"></div>
+			</div>
 
-		<div class="chips" aria-label="Suggested prefixes">
-			<button class="chip" data-prefix="AGNT" type="button">AGNT<span class="chip-est"></span></button>
-			<button class="chip" data-prefix="BOT"  type="button">BOT<span class="chip-est"></span></button>
-			<button class="chip" data-prefix="AI"   type="button">AI<span class="chip-est"></span></button>
-			<button class="chip" data-prefix="GOOD" type="button">GOOD<span class="chip-est"></span></button>
-			<button class="chip" data-prefix="WISE" type="button">WISE<span class="chip-est"></span></button>
-			<button class="chip" data-prefix="NPC"  type="button">NPC<span class="chip-est"></span></button>
-		</div>
+			<div class="row">
+				<span id="est">type a prefix to see estimated time</span>
+				<span id="tier"></span>
+			</div>
 
-		<div class="actions">
-			<button id="grind" class="btn primary" type="button" disabled>Generate wallet</button>
-			<button id="cancel" class="btn" type="button" hidden>Cancel</button>
-		</div>
+			<div class="chips" aria-label="Suggested prefixes">
+				<button class="chip" data-prefix="AGNT" type="button">AGNT<span class="chip-est"></span></button>
+				<button class="chip" data-prefix="BOT"  type="button">BOT<span class="chip-est"></span></button>
+				<button class="chip" data-prefix="AI"   type="button">AI<span class="chip-est"></span></button>
+				<button class="chip" data-prefix="GOOD" type="button">GOOD<span class="chip-est"></span></button>
+				<button class="chip" data-prefix="WISE" type="button">WISE<span class="chip-est"></span></button>
+				<button class="chip" data-prefix="NPC"  type="button">NPC<span class="chip-est"></span></button>
+			</div>
 
-		<div id="progress" hidden class="progress">
-			<div class="live">
-				<div>
-					<div class="stat" id="rate">0/s</div>
-					<div style="font-size:.75rem;color:#888">tries/sec across <span id="cores">?</span> cores</div>
+			<div class="actions">
+				<button id="grind" class="btn primary" type="button" disabled>Generate wallet</button>
+				<button id="cancel" class="btn" type="button" hidden>Cancel</button>
+			</div>
+
+			<div id="progress" hidden class="progress">
+				<div class="live">
+					<div>
+						<div class="stat" id="rate">0/s</div>
+						<div style="font-size:.75rem;color:#555">tries/sec across <span id="cores">?</span> cores</div>
+					</div>
+					<div style="text-align:right">
+						<div class="stat"><span id="attempts">0</span></div>
+						<div style="font-size:.75rem;color:#555">attempts · eta <span id="eta">—</span></div>
+					</div>
 				</div>
-				<div style="text-align:right">
-					<div class="stat"><span id="attempts">0</span></div>
-					<div style="font-size:.75rem;color:#888">attempts · eta <span id="eta">—</span></div>
+				<div class="scan" id="scan"></div>
+			</div>
+
+			<div id="error" hidden class="error"></div>
+			<div id="result" hidden></div>
+		</div>
+	</main>
+
+	<footer class="h-footer-horizon">
+		<div class="h-footer-glow-line" aria-hidden="true"></div>
+		<div class="h-footer-floor" aria-hidden="true"></div>
+		<div class="h-footer-haze" aria-hidden="true"></div>
+		<div class="h-footer-watermark" aria-hidden="true">three.ws</div>
+		<div class="h-footer-avatar" aria-hidden="true">
+			<model-viewer
+				src="/animations/robotexpressive.glb"
+				auto-rotate
+				auto-rotate-delay="0"
+				rotation-per-second="20deg"
+				interaction-prompt="none"
+				camera-controls="false"
+				disable-zoom
+				shadow-intensity="0"
+				exposure="0.7"
+				environment-image="neutral"
+				camera-orbit="0deg 80deg 9m"
+				field-of-view="35deg"
+				loading="lazy"
+			></model-viewer>
+		</div>
+		<div class="h-footer-cta">
+			<div class="h-footer-newsletter">
+				<h3>Stay in the loop</h3>
+				<p>Get updates on new features, agent tooling, and protocol changes.</p>
+				<form class="h-footer-newsletter-form" data-newsletter-form novalidate>
+					<input
+						type="email"
+						class="h-footer-newsletter-input"
+						name="email"
+						placeholder="Enter your email"
+						aria-label="Email address"
+						autocomplete="email"
+						required
+					/>
+					<button type="submit" class="h-footer-newsletter-btn" aria-label="Subscribe">
+						<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M2 8h11m0 0L9 4m4 4l-4 4"/></svg>
+					</button>
+				</form>
+				<p class="h-footer-newsletter-msg" data-newsletter-msg aria-live="polite"></p>
+			</div>
+			<div class="h-footer-community">
+				<h3>Join the community</h3>
+				<p>Follow along for builds, demos, and conversations with the team.</p>
+				<a class="h-footer-community-btn" href="https://x.com/nichxbt" target="_blank" rel="noopener">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+					Follow on X
+				</a>
+			</div>
+		</div>
+		<div class="h-footer-inner">
+			<div class="h-footer-brand-col">
+				<div class="h-footer-brand">
+					<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />
+					<span class="wordmark-dot" aria-hidden="true"></span>
+					<span>three.ws</span>
+				</div>
+				<p class="h-footer-tagline">Give your AI a body.</p>
+				<div class="h-footer-socials">
+					<a class="h-footer-social" href="https://x.com/nichxbt" target="_blank" rel="noopener" aria-label="three.ws on X">
+						<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+					</a>
+					<a class="h-footer-social" href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener" aria-label="three.ws on GitHub">
+						<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+					</a>
 				</div>
 			</div>
-			<div class="scan" id="scan"></div>
+			<nav class="h-footer-links" aria-label="Footer">
+				<div class="h-footer-link-col">
+					<h4 class="h-footer-link-heading">Product</h4>
+					<a href="/create">Create</a>
+					<a href="/studio">Studio</a>
+					<a href="/widgets">Widgets</a>
+					<a href="/discover">Discover</a>
+				</div>
+				<div class="h-footer-link-col">
+					<h4 class="h-footer-link-heading">Developers</h4>
+					<a href="/docs">Docs</a>
+					<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener">GitHub</a>
+					<a href="https://eips.ethereum.org/EIPS/eip-8004" target="_blank" rel="noopener">ERC-8004</a>
+				</div>
+				<div class="h-footer-link-col">
+					<h4 class="h-footer-link-heading">Resources</h4>
+					<a href="/features">Features</a>
+					<a href="/dashboard">Dashboard</a>
+				</div>
+			</nav>
 		</div>
-
-		<div id="error" hidden class="error"></div>
-		<div id="result" hidden></div>
-	</div>
-
-	<footer>
-		<p>
-			Built on <a href="https://github.com/nirholas/solana-wallet-toolkit" target="_blank" rel="noopener">solana-wallet-toolkit</a>.
-			Use this wallet as your agent's <strong>operator/treasury</strong> account, or as the owner of a Metaplex Core agent NFT (see <a href="/docs/solana.md" target="_blank">Solana docs</a>).
-		</p>
-		<p>
-			<strong>Security:</strong> the downloaded JSON file contains your private key.
-			Treat it like a password. Never share it. Anyone with this file can spend any funds the address holds.
-		</p>
+		<div class="h-footer-bottom">
+			<p class="h-footer-legal">© 2026 three.ws — All rights reserved.</p>
+			<div class="h-footer-legal-links">
+				<a href="/legal/privacy">Privacy Policy</a>
+				<a href="/legal/tos">Terms of Use</a>
+			</div>
+		</div>
 	</footer>
+
+	<script>
+		(function () {
+			try {
+				const raw = localStorage.getItem('3dagent:auth-hint');
+				if (raw) {
+					const { authed, name } = JSON.parse(raw);
+					if (authed) {
+						const myAgents = document.getElementById('nav-my-agents');
+						if (myAgents) myAgents.hidden = false;
+						const userEl = document.getElementById('nav-user');
+						if (userEl && name) { userEl.textContent = name; userEl.hidden = false; }
+					}
+				}
+			} catch (_) {}
+		})();
+	</script>
 
 	<script type="module">
 		import { grindVanity } from '/src/solana/vanity/grinder.js';
@@ -254,7 +493,7 @@
 			$('attempts').textContent = '0';
 			$('rate').textContent = '0/s';
 			$('eta').textContent = fmtTime(estSeconds(prefix.length));
-			$('scan').innerHTML = `<span class="pfx" style="background:linear-gradient(90deg,#ffd54f,#ff8a65);padding:0 3px;border-radius:3px;font-weight:700">${esc(prefix)}</span><span style="color:#888">${esc(sample(prefix).slice(prefix.length))}</span>`;
+			$('scan').innerHTML = `<span class="pfx" style="background:linear-gradient(90deg,#ffd54f,#ff8a65);padding:0 3px;border-radius:3px;font-weight:700;color:#1a1a1a">${esc(prefix)}</span><span style="color:#555">${esc(sample(prefix).slice(prefix.length))}</span>`;
 			stopPreviewLoop();
 
 			// Animate the scan line during grind.
@@ -357,8 +596,8 @@
 					host.innerHTML = `
 						<div class="assign">
 							<h4>Use this wallet with an agent</h4>
-							<p style="font-size:.8rem;color:#555;margin:0">
-								<a href="/login.html?next=${encodeURIComponent(location.pathname)}">Sign in</a>
+							<p style="font-size:.8rem;color:#888;margin:0">
+								<a href="/login.html?next=${encodeURIComponent(location.pathname)}" style="color:#a78bfa">Sign in</a>
 								to assign this wallet to one of your agents — they'll be able to sign transactions with it (e.g. for pump.fun trades).
 							</p>
 						</div>`;
@@ -368,14 +607,14 @@
 				const data = await r.json();
 				agents = data.agents || [];
 			} catch (e) {
-				host.innerHTML = `<div class="assign"><h4>Use this wallet with an agent</h4><p style="font-size:.8rem;color:#b71c1c;margin:0">Could not load your agents: ${esc(e.message)}</p></div>`;
+				host.innerHTML = `<div class="assign"><h4>Use this wallet with an agent</h4><p style="font-size:.8rem;color:#f87171;margin:0">Could not load your agents: ${esc(e.message)}</p></div>`;
 				return;
 			}
 			if (!agents.length) {
 				host.innerHTML = `
 					<div class="assign">
 						<h4>Use this wallet with an agent</h4>
-						<p style="font-size:.8rem;color:#555;margin:0">No agents yet. <a href="/create.html">Create one</a> and come back to assign this wallet.</p>
+						<p style="font-size:.8rem;color:#888;margin:0">No agents yet. <a href="/create.html" style="color:#a78bfa">Create one</a> and come back to assign this wallet.</p>
 					</div>`;
 				return;
 			}
@@ -383,7 +622,7 @@
 			host.innerHTML = `
 				<div class="assign">
 					<h4>Assign this wallet to an agent</h4>
-					<p style="font-size:.78rem;color:#555;margin:0 0 .5rem">
+					<p style="font-size:.78rem;color:#888;margin:0 0 .5rem">
 						The agent will be able to sign Solana transactions with this address — pumpfun trades, attestations, payments. The secret key will be encrypted at rest on our server.
 					</p>
 					<select id="assign-agent">
@@ -415,7 +654,7 @@
 			btn.addEventListener('click', async () => {
 				btn.disabled = true;
 				status.textContent = 'assigning…';
-				status.style.color = '#555';
+				status.style.color = '#888';
 				try {
 					const r = await fetch(`/api/agents/${encodeURIComponent(sel.value)}/solana`, {
 						method: 'POST',
@@ -429,9 +668,9 @@
 					const data = await r.json();
 					if (!r.ok) {
 						if (r.status === 409) {
-							status.innerHTML = `<span style="color:#b71c1c">${esc(data.error_description)} — pick another agent or remove the existing wallet first.</span>`;
+							status.innerHTML = `<span style="color:#f87171">${esc(data.error_description)} — pick another agent or remove the existing wallet first.</span>`;
 						} else {
-							status.innerHTML = `<span style="color:#b71c1c">Failed: ${esc(data.error_description || r.status)}</span>`;
+							status.innerHTML = `<span style="color:#f87171">Failed: ${esc(data.error_description || r.status)}</span>`;
 						}
 						btn.disabled = false;
 						return;
@@ -444,7 +683,7 @@
 							<a href="/agent/${esc(sel.value)}" style="color:inherit;text-decoration:underline">Open agent →</a>
 						</div>`;
 				} catch (e) {
-					status.innerHTML = `<span style="color:#b71c1c">Network error: ${esc(e.message)}</span>`;
+					status.innerHTML = `<span style="color:#f87171">Network error: ${esc(e.message)}</span>`;
 					btn.disabled = false;
 				}
 			});

@@ -622,6 +622,10 @@
 			"dest": "/docs-widgets.html"
 		},
 		{
+			"src": "/docs/([^./]+)",
+			"dest": "/docs/index.html"
+		},
+		{
 			"src": "/docs/(.*)",
 			"dest": "/docs/$1"
 		},

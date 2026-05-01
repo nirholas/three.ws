@@ -153,11 +153,16 @@ function renderShowcase(w) {
 	const widgetUrl = `${ORIGIN}/app#widget=${encodeURIComponent(w.id)}&kiosk=true`;
 	const pageUrl = `${ORIGIN}/w/${encodeURIComponent(w.id)}`;
 
+	const allowAttr =
+		w.type === 'talking-agent'
+			? 'autoplay; xr-spatial-tracking; clipboard-write; microphone'
+			: 'autoplay; xr-spatial-tracking; clipboard-write';
+
 	// Responsive snippet — adapts to container, caps at native size
 	const snippet =
 		`<iframe src="${widgetUrl}" ` +
 		`style="width:100%;aspect-ratio:${w.width}/${w.height};border:0;border-radius:12px;max-width:${w.width}px" ` +
-		`allow="autoplay; xr-spatial-tracking; clipboard-write" loading="lazy"></iframe>`;
+		`allow="${allowAttr}" loading="lazy"></iframe>`;
 
 	// ── Frame ──
 	const frame = document.createElement('div');
@@ -190,7 +195,7 @@ function renderShowcase(w) {
 		iframe.src = widgetUrl;
 		iframe.title = `${w.label} demo`;
 		iframe.loading = 'eager';
-		iframe.allow = 'autoplay; xr-spatial-tracking; clipboard-write';
+		iframe.allow = allowAttr;
 		iframe.onload = () => placeholder.remove();
 		frame.appendChild(iframe);
 	};
