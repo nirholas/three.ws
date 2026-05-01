@@ -110,6 +110,7 @@ async function handleGetOrCreateMe(req, res, auth) {
 			`;
 		}
 
+		await healStaleAvatarId(agent);
 		return json(res, 200, { agent: decorate(agent) });
 	} catch (err) {
 		// Any failure here (missing table, wallet generation error, missing env var)
@@ -181,6 +182,8 @@ export async function handleGetOne(req, res, id) {
 			SELECT * FROM agent_identities WHERE id = ${id} AND deleted_at IS NULL
 		`;
 		if (!row) return error(res, 404, 'not_found', 'agent not found');
+
+		await healStaleAvatarId(row);
 
 		// Public fields if not owner; full record if owner
 		const isOwner = auth?.userId === row.user_id;
@@ -299,6 +302,21 @@ export async function handleWallet(req, res, id) {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
+
+// If the agent row's avatar_id references a deleted/missing avatar, null it out
+// in-place on the row and fire-and-forget a DB update so future reads are clean.
+async function healStaleAvatarId(row) {
+	if (!row?.avatar_id) return;
+	const [av] = await sql`
+		SELECT id FROM avatars WHERE id = ${row.avatar_id} AND deleted_at IS NULL LIMIT 1
+	`;
+	if (!av) {
+		const staleId = row.avatar_id;
+		row.avatar_id = null;
+		sql`UPDATE agent_identities SET avatar_id = NULL WHERE id = ${row.id} AND avatar_id = ${staleId}`
+			.catch((e) => console.error('[agents] healStaleAvatarId failed', e));
+	}
+}
 
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);

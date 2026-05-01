@@ -208,6 +208,9 @@ export const SERVER_CHAIN_META = {
 const IPFS_GATEWAY = 'https://ipfs.io/ipfs/';
 const AR_GATEWAY = 'https://arweave.net/';
 
+const _cache = new Map();
+const CACHE_TTL_MS = 10 * 60 * 1000;
+
 /** @param {string} uri */
 export function resolveURI(uri) {
 	if (!uri) return '';
@@ -249,6 +252,10 @@ export async function resolveOnChainAgent({
 	if (!meta) {
 		return _emptyResult(chainId, agentId, 'unsupported_chain');
 	}
+
+	const cacheKey = `${chainId}:${agentId}`;
+	const cached = _cache.get(cacheKey);
+	if (cached && cached.expiresAt > Date.now()) return cached.result;
 
 	const base = {
 		chainId,
@@ -310,6 +317,9 @@ export async function resolveOnChainAgent({
 		}
 	}
 
+	if (!base.error) {
+		_cache.set(cacheKey, { result: base, expiresAt: Date.now() + CACHE_TTL_MS });
+	}
 	return base;
 }
 

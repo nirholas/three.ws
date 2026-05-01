@@ -155,6 +155,24 @@ export const handleAttestEvent = wrap(async (req, res) => {
 	return json(res, 202, { data: { deduped: true, status: 'in_progress' } });
 });
 
+// ── solana-metadata ──────────────────────────────────────────────────────────
+
+export const handleMetadata = wrap(async (req, res) => {
+	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
+	if (!method(req, res, ['GET'])) return;
+
+	const url  = new URL(req.url, `http://${req.headers.host}`);
+	const name = url.searchParams.get('name') || 'Agent';
+	const desc = url.searchParams.get('desc') || '';
+
+	return json(res, 200, {
+		name,
+		description: desc,
+		image: '',
+		attributes: [],
+	}, { 'cache-control': 'public, max-age=3600', 'access-control-allow-origin': '*' });
+});
+
 // ── solana-card ───────────────────────────────────────────────────────────────
 
 export const handleCard = wrap(async (req, res) => {

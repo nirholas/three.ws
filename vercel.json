@@ -45,6 +45,10 @@
 			"dest": "/api/agents/solana/[action]?action=card&asset=$1"
 		},
 		{
+			"src": "/api/agents/solana-metadata",
+			"dest": "/api/agents/solana/[action]?action=metadata"
+		},
+		{
 			"src": "/api/agents/solana-attestations",
 			"dest": "/api/agents/solana/[action]?action=attestations"
 		},
