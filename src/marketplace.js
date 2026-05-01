@@ -459,6 +459,7 @@ function render() {
 		els.detail.hidden = true;
 		els.discovery.hidden = true;
 		els.tools.hidden = false;
+		if (!pluginState.loaded) loadPlugins(true);
 	} else {
 		els.detail.hidden = true;
 		els.discovery.hidden = false;
@@ -470,6 +471,7 @@ function init() {
 	bindEvents();
 	loadCategories();
 	loadList(true);
+	initPlugins();
 	render();
 }
 

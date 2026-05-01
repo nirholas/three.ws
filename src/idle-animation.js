@@ -67,6 +67,7 @@ export class IdleAnimation {
 		// Per-avatar phase offsets — desync multiple instances on the same page.
 		this._breathPhase = this._rand() * TWO_PI;
 		this._weightPhase = this._rand() * TWO_PI;
+		this._uncertaintyBias = 0; // 0..1, increases hip drift amplitude
 
 		// ── Lazy bone / morph discovery ───────────────────────────────────────────
 		this._scannedRoot = null;
@@ -142,6 +143,15 @@ export class IdleAnimation {
 	 */
 	setPauseSaccade(active) {
 		this._saccPauseTimer = active ? 999 : 0;
+	}
+
+	/**
+	 * Set uncertainty bias that modulates hip drift amplitude.
+	 * Called each frame by AgentAvatar._applyEmotionToAvatar().
+	 * @param {number} value — 0..1
+	 */
+	setUncertainty(value) {
+		this._uncertaintyBias = Math.max(0, Math.min(1, value));
 	}
 
 	/** Remove protocol listeners. */
@@ -349,7 +359,8 @@ export class IdleAnimation {
 	_tickWeightShift(dt) {
 		if (!this._hipBone) return;
 		this._weightPhase = (this._weightPhase + (dt * TWO_PI) / 8.0) % TWO_PI;
-		this._hipBone.rotation.y = this._hipRestY + Math.sin(this._weightPhase) * 0.5 * DEG2RAD;
+		const amplitude = 0.018 + this._uncertaintyBias * 0.025;
+		this._hipBone.rotation.y = this._hipRestY + Math.sin(this._weightPhase) * amplitude;
 	}
 
 	// ── Utility ──────────────────────────────────────────────────────────────────

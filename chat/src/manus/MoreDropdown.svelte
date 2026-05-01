@@ -9,13 +9,13 @@
   const dispatch = createEventDispatcher();
 
   const items = [
-    { id: 'pumpfun',    label: 'Pump.fun live feed',  icon: feZap },
-    { id: 'curve',      label: 'Bonding curve',        icon: feBarChart2 },
-    { id: 'wallet',     label: 'Connect wallet',       icon: feLink },
-    { id: 'animate',    label: 'Animate mascot',       icon: feRotateCw },
-    { id: 'embed',      label: 'Embed on token site',  icon: feCode },
-    { id: 'ar',         label: 'AR showcase',          icon: feCamera },
-    { id: 'emotions',   label: 'Mascot emotions',      icon: feSliders },
+    { id: 'pumpfun',   label: 'Pump.fun live feed',  icon: feZap },
+    { id: 'curve',     label: 'Bonding curve',        icon: feBarChart2 },
+    { id: 'wallet',    label: 'Connect wallet',       icon: feLink },
+    { id: 'whale',     label: 'Wallet tracker',       icon: feCamera },
+    { id: 'mascot',    label: 'Build token mascot',   icon: feRotateCw },
+    { id: 'embed',     label: 'Embed on token site',  icon: feCode },
+    { id: 'emotions',  label: 'Mascot emotions',      icon: feSliders },
   ];
 
   function pick(item) {

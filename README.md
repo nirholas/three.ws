@@ -253,6 +253,7 @@ A map of every user-facing route. Full detail (source files, feature description
 | **Artifacts** | `/artifact`, `/artifact/snippet`, `/artifact-example` | Claude Artifact viewer |
 | **Solana / DeFi** | `/pumpfun`, `/vanity-wallet` | Token launcher, vanity address grinder |
 | **Admin / Rep** | `/admin`, `/reputation` | Staff admin, reputation registry |
+| **Experiments** | `/rider` | A-Frame WebVR music visualization |
 | **Integrations** | `/cz`, `/lobehub/iframe` | CZ demo, LobeHub plugin |
 | **Docs** | `/docs`, `/docs/widgets` | Developer documentation |
 | **Legal** | `/legal/privacy`, `/legal/tos` | Privacy policy and terms |
