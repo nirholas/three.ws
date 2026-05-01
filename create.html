@@ -25,6 +25,32 @@
 		<meta name="twitter:image" content="https://three.ws/assets/og-image.png">
 
 		<style>
+			#page-loading {
+				position: fixed;
+				inset: 0;
+				z-index: 9999;
+				background: #000;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				gap: 20px;
+			}
+			#page-loading img {
+				width: 64px;
+				height: 64px;
+				animation: page-loading-pulse 1.6s ease-in-out infinite;
+			}
+			#page-loading .dots {
+				color: rgba(255, 255, 255, 0.6);
+				font-size: 24px;
+				letter-spacing: 4px;
+				font-family: -apple-system, system-ui, sans-serif;
+			}
+			@keyframes page-loading-pulse {
+				0%, 100% { opacity: 0.55; transform: scale(1); }
+				50% { opacity: 1; transform: scale(1.06); }
+			}
 			:root {
 				color-scheme: dark;
 				--accent: #d6ff3d;
@@ -562,6 +588,10 @@
 		</script>
 	</head>
 	<body>
+		<div id="page-loading" aria-hidden="true">
+			<img src="/three.svg" alt="" />
+			<div class="dots">...</div>
+		</div>
 		<a href="#main-content" class="skip-link">Skip to main content</a>
 		<header class="site-header">
 			<h1>
