@@ -176,7 +176,7 @@ AFRAME.registerSystem('agent-picker', {
     if (!agent || !this.companionEl) return;
 
     this.currentId = agent.id;
-    this.companionEl.setAttribute('gltf-model', `url(${agent.url})`);
+    this.companionEl.setAttribute('gltf-model', agent.url);
     this.renderList();
 
     this.sceneEl.emit('agentchanged', { agentId: agent.id, url: agent.url });
