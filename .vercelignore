@@ -17,7 +17,7 @@ sims-demo
 3d-demo
 avatar
 
-scripts
+scripts/*
 !scripts/publish-lib.mjs
 dist-lib
 dist-artifact
