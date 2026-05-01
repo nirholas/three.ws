@@ -834,6 +834,9 @@
 					const seconds = err.retryAfter ?? 30;
 					rateLimitedUntil = Date.now() + seconds * 1000;
 					convo.messages[i].error = `Slow down — too many requests. Try again in ${seconds}s.`;
+				} else if (err.code === 'tools_unsupported') {
+					const tools = err.toolNames?.length ? err.toolNames.join(', ') : 'the enabled tools';
+					convo.messages[i].error = `**${err.modelId}** doesn't support tool use. Disable ${tools} in the Tools panel, or switch to a tool-capable model like \`anthropic/claude-sonnet-4.5\` or \`openai/gpt-5-mini\`.`;
 				} else {
 					convo.messages[i].error = err.message || String(err);
 				}
@@ -1569,32 +1572,73 @@
 	}
 
 	// Drag state for the floating agent widget
+	/** @type {{ x: number | null, y: number | null }} */
 	let dragPos = { x: null, y: null };
 	let dragging = false;
 	let dragOffset = { x: 0, y: 0 };
+	let dragStart = { x: 0, y: 0 };
+	let dragMoved = false;
+	/** @type {'dying' | 'falling' | null} */
+	let avatarExitAnim = null;
 
+	/** @param {MouseEvent} e */
 	function onAvatarDragStart(e) {
 		if (e.button !== 0) return;
-		if (e.target.closest('button, input, a, select')) return;
+		if (/** @type {HTMLElement} */ (e.target).closest('button, input, a, select')) return;
+		if (avatarExitAnim) return;
 		e.preventDefault();
-		const rect = e.currentTarget.getBoundingClientRect();
+		const rect = /** @type {HTMLElement} */ (e.currentTarget).getBoundingClientRect();
 		dragOffset = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+		dragStart = { x: e.clientX, y: e.clientY };
+		dragMoved = false;
 		dragging = true;
 		window.addEventListener('mousemove', onAvatarDragMove);
 		window.addEventListener('mouseup', onAvatarDragEnd);
 	}
 
+	/** @param {MouseEvent} e */
 	function onAvatarDragMove(e) {
 		if (!dragging) return;
+		if (!dragMoved && Math.hypot(e.clientX - dragStart.x, e.clientY - dragStart.y) > 5) {
+			dragMoved = true;
+		}
+		if (!dragMoved) return;
 		const x = Math.max(0, Math.min(window.innerWidth - 240, e.clientX - dragOffset.x));
 		const y = Math.max(0, Math.min(window.innerHeight - 60, e.clientY - dragOffset.y));
 		dragPos = { x, y };
 	}
 
 	function onAvatarDragEnd() {
+		const wasClick = dragging && !dragMoved;
 		dragging = false;
 		window.removeEventListener('mousemove', onAvatarDragMove);
 		window.removeEventListener('mouseup', onAvatarDragEnd);
+		if (wasClick) killAvatar();
+	}
+
+	function killAvatar() {
+		if (!agentVisible || avatarExitAnim) return;
+		avatarExitAnim = 'dying';
+		try { agentEl?.play?.('dying', { loop: false }); } catch {}
+		setTimeout(() => {
+			agentVisible = false;
+			avatarExitAnim = null;
+		}, 1200);
+	}
+
+	function reviveAvatar() {
+		if (agentVisible) return;
+		avatarExitAnim = 'falling';
+		agentVisible = true;
+		const playFalling = () => { try { agentEl?.play?.('falling', { loop: false }); } catch {} };
+		let attempts = 0;
+		const tryPlay = () => {
+			if (agentEl && agentReady) { playFalling(); return; }
+			if (agentEl) { agentEl.addEventListener('agent:ready', playFalling, { once: true }); return; }
+			if (attempts++ < 40) setTimeout(tryPlay, 50);
+		};
+		tryPlay();
+		setTimeout(() => { avatarExitAnim = null; }, 1200);
 	}
 
 	$: effectiveAgentId = $localAgentId || $brandConfig.agent_id || '';
@@ -1613,7 +1657,9 @@
 	$: if (agentEl && !agentReady) {
 		agentEl.addEventListener('agent:ready', () => {
 			agentReady = true;
-			agentEl.play(generating ? 'walk' : 'idle', { loop: true }).catch(() => {});
+			if (!avatarExitAnim) {
+				agentEl.play(generating ? 'walk' : 'idle', { loop: true }).catch(() => {});
+			}
 			if (agentPendingSpeak) {
 				agentEl.speak(agentPendingSpeak);
 				agentPendingSpeak = null;
@@ -1621,7 +1667,7 @@
 		}, { once: true });
 	}
 
-	$: if (agentEl && agentReady) {
+	$: if (agentEl && agentReady && !avatarExitAnim) {
 		if (generating) {
 			agentEl.play('walk', { loop: true }).catch(() => {});
 		} else {
@@ -2288,8 +2334,10 @@
 								{#if true}
 									<!-- svelte-ignore a11y-no-static-element-interactions -->
 									<div
-										class="z-[100] flex flex-col items-end gap-2 select-none"
+										class="z-[100] flex flex-col items-end gap-2 select-none avatar-floater"
 										class:cursor-grabbing={dragging}
+										class:avatar-dying={avatarExitAnim === 'dying'}
+										class:avatar-falling={avatarExitAnim === 'falling'}
 										style={dragPos.x !== null
 											? `position: fixed; left: ${dragPos.x}px; top: ${dragPos.y}px;`
 											: 'position: absolute; bottom: 0; right: 0;'}
@@ -2353,7 +2401,7 @@
 						</div>
 
 						<div class="pointer-events-none absolute bottom-[72px] inset-x-0 h-8 z-[98] bg-gradient-to-t from-paper to-transparent" />
-						{#if $toolSchema.length > 0}
+						{#if $toolSchema.length > 0 || (!agentVisible && (effectiveAgentId || $talkingHeadEnabled))}
 							<div class="flex flex-wrap gap-1.5 px-4 pt-2 pb-0">
 								{#each $toolSchema as group}
 									<span class="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 text-[11px] font-medium text-indigo-700">
@@ -2373,6 +2421,15 @@
 								>
 									+ Add skill
 								</button>
+								{#if !agentVisible && (effectiveAgentId || $talkingHeadEnabled)}
+									<button
+										class="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-medium text-emerald-700 hover:bg-emerald-100"
+										on:click={reviveAvatar}
+										title="Bring the avatar back"
+									>
+										Bring avatar back
+									</button>
+								{/if}
 							</div>
 						{/if}
 						<Composer
@@ -2552,6 +2609,23 @@
 	:global(.markdown.prose :where(pre):not(:where([class~='not-prose'], [class~='not-prose'] *))) {
 		background-color: #EBE8E0;
 		border-color: #E5E3DC;
+	}
+
+	.avatar-floater {
+		transition: transform 1100ms cubic-bezier(0.55, 0, 0.7, 0.2), opacity 1100ms ease-in;
+	}
+	.avatar-dying {
+		transform: translateY(120vh) rotate(35deg);
+		opacity: 0;
+		pointer-events: none;
+	}
+	.avatar-falling {
+		animation: avatar-fall-in 900ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+	}
+	@keyframes avatar-fall-in {
+		0%   { transform: translateY(-120vh) rotate(-25deg); opacity: 0; }
+		70%  { transform: translateY(8px) rotate(2deg); opacity: 1; }
+		100% { transform: translateY(0) rotate(0); opacity: 1; }
 	}
 
 	.thought-bubble {

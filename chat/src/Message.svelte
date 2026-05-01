@@ -2,7 +2,6 @@
 	import { createEventDispatcher, tick } from 'svelte';
 	import { v4 as uuidv4 } from 'uuid';
 	import Button from './Button.svelte';
-	import CompanyLogo from './CompanyLogo.svelte';
 	import {
 		feCheck,
 		feCheckCircle,
@@ -160,6 +159,15 @@
 				: 'relative flex w-full gap-x-3.5 self-start'}"
 		>
 			{#if message.role !== 'user'}
+			<div class="relative shrink-0">
+			{#if message.role === 'assistant' && hasLogo && message.thinking && message.thoughts}
+				<div
+					class="absolute bottom-full left-1/2 mb-2 -translate-x-1/2 w-56 max-h-32 overflow-hidden rounded-2xl bg-white border border-slate-200 shadow-md px-3 py-2 text-[11px] leading-snug text-slate-700 animate-pulse"
+				>
+					<div class="line-clamp-5 italic">{message.thoughts}</div>
+					<span class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-3 w-3 rotate-45 bg-white border-r border-b border-slate-200"></span>
+				</div>
+			{/if}
 			<button
 				disabled={message.role === 'system'}
 				on:click={() => {
@@ -179,23 +187,19 @@
 						: ''}"
 			>
 				{#if message.role === 'assistant' && hasLogo}
-					{#if effectiveAgentId}
-						<span class="w-full h-full overflow-hidden inline-block shrink-0 rounded-[inherit]">
-							<!-- svelte-ignore custom-element-no-implicit-ns -->
-							<agent-3d
-								agent-id={effectiveAgentId}
-								mode="inline"
-								width="128"
-								height="128"
-								background="transparent"
-								kiosk
-								name-plate="off"
-								style="width:100%;height:100%;display:block;"
-							></agent-3d>
-						</span>
-					{:else}
-						<CompanyLogo model={message.model} size="w-full h-full" rounded="rounded-[inherit]" />
-					{/if}
+					<span class="w-full h-full overflow-hidden inline-block shrink-0 rounded-[inherit]">
+						<!-- svelte-ignore custom-element-no-implicit-ns -->
+						<agent-3d
+							agent-id={effectiveAgentId}
+							mode="inline"
+							width="128"
+							height="128"
+							background="transparent"
+							kiosk
+							name-plate="off"
+							style="width:100%;height:100%;display:block;"
+						></agent-3d>
+					</span>
 				{:else}
 					<span class="m-auto">
 						{#if message.role === 'system'}
@@ -208,6 +212,7 @@
 					</span>
 				{/if}
 			</button>
+			</div>
 			{/if}
 
 			<!-- svelte-ignore a11y-no-static-element-interactions -->
