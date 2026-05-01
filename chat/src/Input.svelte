@@ -668,7 +668,6 @@ ${file.contents}
 								{#if secondaryOpen === $mode}
 									<button
 										class="fixed inset-0 z-20 cursor-default"
-										aria-hidden="true"
 										tabindex="-1"
 										on:click={() => (secondaryOpen = null)}
 									/>
