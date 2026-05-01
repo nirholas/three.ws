@@ -18,6 +18,8 @@
 	export let model_url = null;
 	export let alt = '';
 	export let size = 128;
+	export let class_name = 'h-16 w-full rounded object-cover';
+	export let bg_color = '#e8e8e8';
 
 	let canvas;
 	let state = thumbnail_url ? 'done' : model_url ? 'idle' : 'none';
@@ -54,7 +56,7 @@
 			);
 
 			const scene = new Scene();
-			scene.background = new Color('#e8e8e8');
+			scene.background = new Color(bg_color);
 			scene.add(gltf.scene);
 
 			const box = new Box3().setFromObject(gltf.scene);
@@ -100,9 +102,9 @@
 </script>
 
 {#if thumbnail_url}
-	<img src={thumbnail_url} {alt} class="h-16 w-full rounded object-cover" loading="lazy" />
+	<img src={thumbnail_url} {alt} class={class_name} loading="lazy" />
 {:else if state === 'none'}
-	<div class="flex h-16 w-full items-center justify-center rounded bg-slate-100 text-[10px] text-slate-400">
+	<div class="{class_name} flex items-center justify-center bg-slate-100 text-[10px] text-slate-400">
 		No preview
 	</div>
 {:else}
@@ -110,10 +112,10 @@
 		bind:this={canvas}
 		width={size}
 		height={size}
-		class="h-16 w-full rounded object-cover {state === 'loading' ? 'animate-pulse bg-slate-100' : ''} {state === 'error' ? 'hidden' : ''}"
+		class="{class_name} {state === 'loading' ? 'animate-pulse bg-slate-100' : ''} {state === 'error' ? 'hidden' : ''}"
 	/>
 	{#if state === 'error'}
-		<div class="flex h-16 w-full items-center justify-center rounded bg-slate-100 text-[10px] text-slate-400">
+		<div class="{class_name} flex items-center justify-center bg-slate-100 text-[10px] text-slate-400">
 			No preview
 		</div>
 	{/if}
