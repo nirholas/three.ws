@@ -83,25 +83,32 @@ export async function rotateRefreshToken({ oldSecret, clientId, narrowScope }) {
 	if (!row) {
 		// Diagnose why the claim failed: missing, already revoked, or expired.
 		const [diag] = await sql`
-			select revoked_at, expires_at
+			select user_id, revoked_at, expires_at, replaced_by
 			from oauth_refresh_tokens
 			where token_hash = ${hash} and client_id = ${clientId}
 			limit 1
 		`;
 		if (!diag) throw Object.assign(new Error('invalid_grant'), { status: 400 });
 		if (diag.revoked_at) {
-			// Treat as reuse — revoke whole chain for this user+client. A request
-			// that lost a concurrent-rotation race lands here too; the cost is
-			// re-authentication, never silent token duplication.
-			const [user] = await sql`
-				select user_id from oauth_refresh_tokens
-				where token_hash = ${hash} and client_id = ${clientId}
-				limit 1
-			`;
-			if (user) {
-				await sql`update oauth_refresh_tokens set revoked_at = now()
-				          where user_id = ${user.user_id} and client_id = ${clientId} and revoked_at is null`;
+			// Distinguish a concurrent-rotation race-loser from a true reuse
+			// attack. A race-loser arrives within milliseconds of the winner
+			// and finds the row revoked-via-rotation (replaced_by IS NOT NULL).
+			// True reuse arrives later — typically after the legitimate client
+			// has continued using its new tokens. Use a short grace window.
+			const REUSE_GRACE_MS = 10_000;
+			const ageMs = Date.now() - new Date(diag.revoked_at).getTime();
+			const wasRotated = diag.replaced_by != null;
+			if (wasRotated && ageMs >= 0 && ageMs < REUSE_GRACE_MS) {
+				// Race-loser: fail just this request. Don't punish the chain
+				// the winning request just established.
+				throw Object.assign(new Error('invalid_grant'), {
+					status: 400,
+					code: 'refresh_race_lost',
+				});
 			}
+			// True reuse — revoke the entire chain for this user+client.
+			await sql`update oauth_refresh_tokens set revoked_at = now()
+			          where user_id = ${diag.user_id} and client_id = ${clientId} and revoked_at is null`;
 			throw Object.assign(new Error('invalid_grant'), {
 				status: 400,
 				code: 'refresh_reuse_detected',

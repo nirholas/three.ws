@@ -455,4 +455,17 @@ describe('/api/oauth/token — refresh_token grant', () => {
 		expect(status).toBe(400);
 		expect(body.error).toBe('refresh_reuse_detected');
 	});
+
+	it('propagates refresh_race_lost (no chain revocation) from rotation', async () => {
+		sqlState.queue.push([PUBLIC_CLIENT]);
+		authState.rotate = vi.fn(async () => {
+			throw Object.assign(new Error('race lost'), {
+				status: 400,
+				code: 'refresh_race_lost',
+			});
+		});
+		const { status, body } = await invoke({ formBody: baseForm });
+		expect(status).toBe(400);
+		expect(body.error).toBe('refresh_race_lost');
+	});
 });
