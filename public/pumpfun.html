@@ -297,7 +297,7 @@
 			const mcStr = [mcUsd, mcSol].filter(Boolean).join(' / ');
 			const buyStr = ev.initial_buy_sol ? `${fmtSol(ev.initial_buy_sol)}${ev.initial_buy_usd ? ' (' + fmtUsd(ev.initial_buy_usd) + ')' : ''}` : '';
 			const social = [
-				ev.twitter ? `<a href="https://twitter.com/${encodeURIComponent(ev.twitter.replace('@',''))}" target="_blank" rel="noopener">𝕏 ${escapeHtml(ev.twitter)}</a>` : '',
+				ev.twitter ? `<a href="${attr(twitterUrl(ev.twitter))}" target="_blank" rel="noopener">𝕏 ${escapeHtml(twitterLabel(ev.twitter))}</a>` : '',
 				ev.telegram ? `<a href="${attr(ev.telegram)}" target="_blank" rel="noopener">TG</a>` : '',
 				ev.website ? `<a href="${attr(ev.website)}" target="_blank" rel="noopener">🌐</a>` : '',
 			].filter(Boolean).join(' ');
@@ -316,14 +316,72 @@
 			</div>`;
 		}
 
+		function fmtUtc(ts) {
+			if (ts == null) return '';
+			const d = new Date(typeof ts === 'number' ? (ts < 1e12 ? ts * 1000 : ts) : ts);
+			if (Number.isNaN(d.getTime())) return '';
+			return d.toISOString().replace('T', ' ').replace(/\..+$/, '') + ' UTC';
+		}
+
 		function renderGraduation(ev) {
 			const mint = ev.mint || '';
+			const name = ev.name || ev.symbol || '—';
+			const symbol = ev.symbol || '?';
+			const age = ev.age || (ev.created_at ? timeAgo(ev.created_at) : '');
+			const descRaw = ev.description ? String(ev.description) : '';
+			const desc = descRaw ? escapeHtml(descRaw.slice(0, 100)) + (descRaw.length > 100 ? '…' : '') : '';
+
+			const mcInitial = ev.market_cap_usd_initial ?? ev.initial_market_cap_usd ?? ev.market_cap_at_launch;
+			const mcCurrent = ev.usd_market_cap ?? ev.market_cap_usd ?? ev.market_cap;
+			const mcStr = (mcInitial != null && mcCurrent != null)
+				? `${fmtUsd(mcInitial)} ⇨ ${fmtUsd(mcCurrent)}`
+				: (mcCurrent != null ? fmtUsd(mcCurrent) : '');
+
+			const launches = ev.creator_launches;
+			const bestToken = Array.isArray(ev.creator_tokens) && ev.creator_tokens.length
+				? ev.creator_tokens.slice().sort((a, b) => (b?.mc || 0) - (a?.mc || 0))[0]
+				: null;
+			const bestStr = bestToken
+				? `best $${escapeHtml(bestToken.symbol || '?')}${bestToken.mc ? ' ' + fmtUsd(bestToken.mc) : ''}`
+				: '';
+			const amountStr = ev.amount_sol != null
+				? `${Number(ev.amount_sol).toFixed(2)} SOL${ev.amount_usd != null ? ' [' + fmtUsd(ev.amount_usd) + ']' : ''}`
+				: '';
+			const devParts = [
+				launches != null ? `${launches} launches` : '',
+				bestStr,
+				amountStr,
+			].filter(Boolean).join(' &nbsp;⋅&nbsp; ');
+
+			const m = encodeURIComponent(mint);
+			const chartLinks = mint ? [
+				`<a href="https://dexscreener.com/solana/${m}" target="_blank" rel="noopener">DEX</a>`,
+				`<a href="https://www.defined.fi/sol/${m}" target="_blank" rel="noopener">DEF</a>`,
+			].join('⋅') : '';
+			const toolAbbr = mint ? [
+				['AXI', `https://axiom.trade/meme/${mint}`],
+				['GMG', `https://gmgn.ai/sol/token/${mint}`],
+				['PDR', `https://trade.padre.gg/trade/solana/${mint}`],
+				['PHO', `https://photon-sol.tinyastro.io/en/r/@bonk/${mint}`],
+				['BLX', `https://bullx.io/terminal?chainId=1399811149&address=${mint}`],
+			].map(([l, u]) => `<a href="${attr(u)}" target="_blank" rel="noopener">${l}</a>`).join('⋅') : '';
+
+			const tsStr = fmtUtc(ev.timestamp ?? ev.block_time ?? ev.created_at);
+			const sig = ev.signature || ev.tx_signature;
+
 			return `<div class="evt grad">
-				<div class="evt-row"><span class="evt-kind">🎓 graduation → Raydium</span></div>
-				<div class="evt-title">${escapeHtml(ev.name || ev.symbol || '—')}${ev.symbol ? ' — $' + escapeHtml(ev.symbol) : ''}</div>
-				<div class="evt-links">${toolLinks(mint)}</div>
+				<div class="evt-title">🆕💊 ${escapeHtml(name)} — $${escapeHtml(symbol)}${age ? ' [' + escapeHtml(age) + ']' : ''}</div>
+				${desc ? `<div class="evt-desc">${desc}</div>` : ''}
+				${mcStr ? `<div class="evt-amt">💎 MC: ${mcStr}</div>` : ''}
+				${devParts ? `<div class="evt-row2" style="margin-top:6px">👨‍💻 ${devParts}</div>` : ''}
+				${chartLinks ? `<div class="evt-row2">💹 Chart: ${chartLinks}</div>` : ''}
+				${toolAbbr ? `<div class="evt-row2">🧰 ${toolAbbr}</div>` : ''}
 				<div class="evt-mint">${escapeHtml(mint)}</div>
-				${ev.signature ? `<div class="evt-meta"><a href="https://solscan.io/tx/${encodeURIComponent(ev.signature)}" target="_blank" rel="noopener">TX ↗</a></div>` : ''}
+				<div class="evt-meta">
+					${sig ? `🔗 <a href="https://solscan.io/tx/${encodeURIComponent(sig)}" target="_blank" rel="noopener">TX</a>` : ''}
+					${mint ? ` · <a href="https://pump.fun/coin/${m}" target="_blank" rel="noopener">pump.fun</a>` : ''}
+					${tsStr ? ` · 🕐 ${escapeHtml(tsStr)}` : ''}
+				</div>
 			</div>`;
 		}
 
@@ -358,7 +416,7 @@
 			const ghHtml = ghUser ? `
 				<div class="evt-section">
 					<div class="evt-gh">👨‍💻 <strong>${escapeHtml(ev.github_name || ghUser)}</strong> (<a href="https://github.com/${encodeURIComponent(ghUser)}" target="_blank" rel="noopener">@${escapeHtml(ghUser)}</a>)
-					${ev.github_twitter ? ` &nbsp;·&nbsp; <a href="https://twitter.com/${encodeURIComponent(ev.github_twitter)}" target="_blank" rel="noopener">𝕏 ${escapeHtml(ev.github_twitter)}</a>` : ''}</div>
+					${ev.github_twitter ? ` &nbsp;·&nbsp; <a href="${attr(twitterUrl(ev.github_twitter))}" target="_blank" rel="noopener">𝕏 ${escapeHtml(twitterLabel(ev.github_twitter))}</a>` : ''}</div>
 					<div class="evt-row2">
 						${ev.github_repos != null ? `<span>📦 ${ev.github_repos} repos</span>` : ''}
 						${ev.github_followers != null ? `<span>👁 ${ev.github_followers} followers</span>` : ''}
@@ -452,6 +510,19 @@
 		function shortKey(s) { s = String(s || ''); return s.length > 12 ? `${s.slice(0,4)}…${s.slice(-4)}` : s; }
 		function escapeHtml(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
 		function attr(s) { return escapeHtml(s); }
+		function twitterUrl(v) {
+			const s = String(v ?? '').trim();
+			if (!s) return '';
+			if (/^https?:\/\//i.test(s)) return s;
+			const handle = s.replace(/^@+/, '').split(/[/?#]/)[0];
+			return `https://x.com/${encodeURIComponent(handle)}`;
+		}
+		function twitterLabel(v) {
+			const s = String(v ?? '').trim();
+			const m = s.match(/^https?:\/\/(?:www\.)?(?:x|twitter)\.com\/([^/?#]+)/i);
+			if (m) return '@' + m[1];
+			return s.startsWith('@') ? s : '@' + s.replace(/^@+/, '');
+		}
 
 		// ── Filter changes apply instantly. Mint filter only re-filters; asset/kind/tier remount. ──
 		$('ctl-mint').addEventListener('input', (e) => {
