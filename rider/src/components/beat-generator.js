@@ -422,9 +422,9 @@ AFRAME.registerComponent('beat-generator', {
     this.index.notes = 0;
     this.index.obstacles = 0;
 
-    for (let i = 0; i < this.beatContainer.children.length; i++) {
-      const child = this.beatContainer.children[i];
-      child.object3D.position.set(0, 0, -9999);
+    const beatChildren = Array.from(this.beatContainer.children);
+    for (let i = 0; i < beatChildren.length; i++) {
+      const child = beatChildren[i];
       if (child.components.beat) { child.components.beat.returnToPool(); }
     }
 

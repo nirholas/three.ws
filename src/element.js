@@ -65,6 +65,10 @@ const BASE_STYLE = `
 		--agent-chat-font: system-ui, -apple-system, sans-serif;
 		--agent-mic-glow: #22c55e;
 		--agent-shadow: 0 20px 60px rgba(0,0,0,0.3);
+		--agent-bubble-bg: rgba(255, 255, 255, 0.95);
+		--agent-bubble-color: #1a1a2e;
+		--agent-bubble-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+		--agent-bubble-font-size: 13px;
 		contain: layout style;
 	}
 	:host([mode="floating"]) {
@@ -163,22 +167,25 @@ const BASE_STYLE = `
 	/* Thought bubble — appears above avatar's head while thinking */
 	.thought-bubble {
 		position: absolute;
-		top: 12%;
+		top: 0;
 		left: 50%;
-		transform: translateX(-50%);
-		background: rgba(255, 255, 255, 0.95);
-		color: #1a1a2e;
+		background: var(--agent-bubble-bg);
+		color: var(--agent-bubble-color);
 		border-radius: 20px;
 		padding: 8px 14px;
-		font: 600 13px/1 var(--agent-chat-font);
+		font: 600 var(--agent-bubble-font-size)/1 var(--agent-chat-font);
 		max-width: min(280px, 60%);
 		white-space: normal;
 		min-width: 80px;
 		min-height: 28px;
 		pointer-events: none;
 		opacity: 0;
-		transition: opacity 0.25s ease;
-		box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+		transform: translateX(-50%) scale(0.85);
+		transform-origin: center bottom;
+		transition:
+			opacity 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+			transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+		box-shadow: var(--agent-bubble-shadow);
 		display: flex;
 		align-items: center;
 		gap: 5px;
@@ -192,12 +199,12 @@ const BASE_STYLE = `
 		transform: translateX(-50%);
 		border-left: 8px solid transparent;
 		border-right: 8px solid transparent;
-		border-top: 8px solid rgba(255, 255, 255, 0.95);
+		border-top: 8px solid var(--agent-bubble-bg);
 	}
-	.thought-bubble[data-active="true"] { opacity: 1; }
+	.thought-bubble[data-active="true"] { opacity: 1; transform: translateX(-50%) scale(1); }
 	.thought-bubble .text {
-		font: 13px/1.4 var(--agent-chat-font);
-		color: #1a1a2e;
+		font: var(--agent-bubble-font-size)/1.4 var(--agent-chat-font);
+		color: var(--agent-bubble-color);
 		display: none;
 	}
 	.thought-bubble[data-streaming="true"] .text { display: block; }
@@ -216,12 +223,18 @@ const BASE_STYLE = `
 		0%, 60%, 100% { transform: translateY(0); opacity: 0.35; }
 		30% { transform: translateY(-4px); opacity: 1; }
 	}
+	@media (prefers-reduced-motion: reduce) {
+		.thought-bubble .dot { animation: none; opacity: 0.6; }
+		@keyframes thought-dot { to {} }
+	}
 	.msg { margin: 6px 0; padding: 8px 10px; border-radius: 10px; border-left: 3px solid transparent; transition: border-color .2s; }
 	.msg.celebration { border-left-color: rgba(34,197,94,0.85); background: rgba(34,197,94,0.06); }
 	.msg.concern { border-left-color: rgba(239,68,68,0.85); background: rgba(239,68,68,0.06); }
 	.msg.curiosity { border-left-color: rgba(59,130,246,0.7); background: rgba(59,130,246,0.05); }
 	.msg .role { opacity: 0.55; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
 	.msg .body { white-space: pre-wrap; }
+	.msg.streaming .body::after { content: '▋'; opacity: 1; animation: blink-cursor 0.7s step-end infinite; margin-left: 2px; }
+	@keyframes blink-cursor { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 	/* Suggestion chips when the conversation is empty */
 	.suggest-row { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 0 0; }
 	.suggest-chip { font: 600 11px/1 var(--agent-chat-font); color: var(--agent-on-surface); background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); padding: 6px 10px; border-radius: 999px; cursor: pointer; transition: all .12s; }
@@ -269,6 +282,16 @@ const BASE_STYLE = `
 		color: var(--agent-on-surface);
 		font: 14px var(--agent-chat-font);
 		outline: none;
+	}
+	.input-row input:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+	.input-row input[data-state="thinking"] {
+		opacity: 0.6;
+	}
+	.input-row[data-busy="true"] {
+		opacity: 0.75;
 	}
 	button.icon {
 		width: 36px;
@@ -339,11 +362,28 @@ const BASE_STYLE = `
 		color: rgba(0, 0, 0, 0.55);
 		text-shadow: none;
 	}
+	:host([background="light"]) .thought-bubble {
+		background: rgba(30, 30, 50, 0.92);
+		color: #f9fafb;
+	}
+	:host([background="light"]) .thought-bubble::after {
+		border-top-color: rgba(30, 30, 50, 0.92);
+	}
+	:host([background="light"]) .thought-bubble .text {
+		color: #f9fafb;
+	}
+	:host([background="light"]) .thought-bubble .dot {
+		background: #f9fafb;
+	}
 	/* Transparent floating: remove box chrome so avatar composites over the page */
 	:host([mode="floating"][background="transparent"]) {
 		box-shadow: none;
 		border-radius: 0;
 		overflow: visible;
+	}
+	/* Pill expanded (bottom-sheet): offset chrome below swipe handle */
+	:host([aria-expanded="true"]) .chrome {
+		padding-top: 20px;
 	}
 	/* Drag handle — visible in floating mode, used to reposition the widget */
 	.drag-handle {
@@ -387,6 +427,14 @@ const BASE_STYLE = `
 	:host([avatar-chat="off"]) .chat { flex: 1; max-height: 40%; }
 	:host([avatar-chat="off"]) .input-row { flex: 1; }
 	:host([avatar-chat="off"]) .avatar-anchor { display: none; }
+	/* Floating mode layout fixes */
+	:host([mode="floating"]) .chrome {
+		padding: 14px;
+		padding-top: 28px; /* clear the 24px drag handle */
+	}
+	:host([mode="floating"]) .avatar-anchor {
+		min-height: 60px;
+	}
 `;
 
 class Agent3DElement extends HTMLElement {
@@ -435,9 +483,15 @@ class Agent3DElement extends HTMLElement {
 		this._voiceClient = null;
 		this._notifier = null;
 		this._thoughtBubbleEl = null;
-		this._walkReturnTimer = null;
+		this._bubbleBuffer = '';
+		this._bubbleRafPending = false;
 		this._isWalking = false;
 		this._walkStopDebounce = null;
+		this._streamingMsgEl = null;
+		this._streamingChatBuffer = '';
+		this._streamingChatRafPending = false;
+		this._chatAutoScroll = true;
+		this._pendingSay = null;
 	}
 
 	connectedCallback() {
@@ -578,6 +632,7 @@ class Agent3DElement extends HTMLElement {
 				if (e.key === 'Enter' && input.value.trim()) {
 					const v = input.value.trim();
 					input.value = '';
+					this._onStreamChunk(); // immediate visual feedback before LLM responds
 					this.say(v);
 				}
 			});
@@ -608,6 +663,7 @@ class Agent3DElement extends HTMLElement {
 			this._chatEl = chat;
 			this._inputEl = input;
 			this._micEl = micBtn;
+			this._avatarAnchorEl = avatarAnchor;
 			this._thoughtBubbleEl = thoughtBubble;
 			this._thoughtTextEl = thoughtBubble.querySelector('.text');
 
@@ -1078,6 +1134,8 @@ class Agent3DElement extends HTMLElement {
 			);
 			const viewer = new Viewer(this._stageEl, { kiosk: this.hasAttribute('kiosk') });
 			this._viewer = viewer;
+			viewer._afterAnimateHooks = viewer._afterAnimateHooks || [];
+			viewer._afterAnimateHooks.push(() => this._updateBubblePosition());
 			// Apply the embed surface attributes (`background`, `name-plate`) now
 			// that the viewer exists. They are also re-applied on attribute change.
 			this._applyBackground();
@@ -1159,6 +1217,7 @@ class Agent3DElement extends HTMLElement {
 				'brain:thinking',
 				'brain:stream',
 				'brain:message',
+				'skill:tool-start',
 				'skill:tool-called',
 				'voice:speech-start',
 				'voice:speech-end',
@@ -1188,14 +1247,25 @@ class Agent3DElement extends HTMLElement {
 								payload: { text: detail.content, sentiment: detail.sentiment ?? 0 },
 							});
 						}
+						if (detail.role === 'assistant') {
+							this._streamingMsgEl?.closest('.msg')?.remove();
+							this._streamingMsgEl = null;
+							this._streamingChatBuffer = '';
+							this._streamingChatRafPending = false;
+							this._clearThoughtBubble();
+						}
 						if (this._chatEl) this._renderMessage(detail);
 					}
 					if (ev === 'brain:stream') {
 						if (this._thoughtBubbleEl && this.getAttribute('avatar-chat') !== 'off') {
 							this._streamToBubble(e.detail?.chunk ?? '');
 						}
+						this._appendStreamChunkToChat(e.detail?.chunk ?? '');
+						this._onStreamChunk();
 					}
 					if (ev === 'brain:thinking') {
+						const isThinking = !!e.detail?.thinking;
+						this._setBusy(isThinking);
 						if (this._toolIndicatorEl) {
 							if (e.detail?.thinking) this._setToolIndicator('thinking');
 							else this._clearToolIndicator();
@@ -1211,10 +1281,35 @@ class Agent3DElement extends HTMLElement {
 							}
 						}
 					}
+					if (ev === 'skill:tool-start') {
+						this._onStreamChunk();
+						if (this._thoughtBubbleEl && this.getAttribute('avatar-chat') !== 'off') {
+							const label = this._toolIndicatorLabel(e.detail?.tool ?? '');
+							this._thoughtBubbleEl.dataset.active = 'true';
+							this._thoughtBubbleEl.dataset.streaming = 'true';
+							if (this._thoughtTextEl) this._thoughtTextEl.textContent = label;
+						}
+					}
+					if (ev === 'voice:speech-start') {
+						this._onStreamChunk();
+						if (this._thoughtBubbleEl && this.getAttribute('avatar-chat') !== 'off') {
+							const text = e.detail?.text || '';
+							this._streamToBubble('');
+							this._thoughtBubbleEl.dataset.streaming = 'true';
+							this._thoughtBubbleEl.dataset.active = 'true';
+							if (this._thoughtTextEl) this._thoughtTextEl.textContent = text.slice(0, 80);
+						}
+					}
+					if (ev === 'voice:speech-end') {
+						this._stopWalkAnimation();
+						this._clearThoughtBubble();
+					}
 					if (ev === 'skill:tool-called') {
 						const { tool, result } = e.detail || {};
 						this._setToolIndicator(tool);
 						this._clearToolIndicator();
+						if (this._thoughtTextEl) this._thoughtTextEl.textContent = '';
+						if (this._thoughtBubbleEl) this._thoughtBubbleEl.dataset.streaming = 'false';
 						if (typeof result?.sentiment === 'number') {
 							this._lastToolSentiment = result.sentiment;
 						}
@@ -1412,9 +1507,86 @@ class Agent3DElement extends HTMLElement {
 		}, 350);
 	}
 
+	_updateBubblePosition() {
+		if (!this._thoughtBubbleEl || !this._viewer) return;
+		const pos = this._viewer.getHeadScreenPosition?.();
+		if (!pos) return;
+		const anchorRect = this._avatarAnchorEl?.getBoundingClientRect();
+		const stageRect = this._stageEl?.getBoundingClientRect();
+		if (!anchorRect || !stageRect) return;
+		const relY = pos.y - (anchorRect.top - stageRect.top) - 60;
+		this._thoughtBubbleEl.style.top = `${Math.max(8, relY)}px`;
+		this._thoughtBubbleEl.style.left = `${pos.x}px`;
+		this._thoughtBubbleEl.style.transform = 'translateX(-50%) scale(var(--bubble-scale, 1))';
+	}
+
+	_appendStreamChunkToChat(chunk) {
+		if (!this._chatEl || !chunk) return;
+		if (!this._streamingMsgEl) {
+			this._chatEl.querySelector('.suggest-row')?.remove();
+			const msg = document.createElement('div');
+			msg.className = 'msg streaming';
+			msg.innerHTML = '<div class="role"></div><div class="body"></div>';
+			msg.querySelector('.role').textContent = 'assistant';
+			this._chatEl.appendChild(msg);
+			this._streamingMsgEl = msg.querySelector('.body');
+			this._chatAutoScroll = true;
+		}
+		const el = this._chatEl;
+		this._chatAutoScroll = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
+		this._streamingChatBuffer = (this._streamingChatBuffer || '') + chunk;
+		if (!this._streamingChatRafPending) {
+			this._streamingChatRafPending = true;
+			requestAnimationFrame(() => {
+				this._streamingChatRafPending = false;
+				if (this._streamingMsgEl) {
+					this._streamingMsgEl.textContent = this._streamingChatBuffer;
+					if (this._chatAutoScroll) {
+						this._chatEl.scrollTop = this._chatEl.scrollHeight;
+					}
+				}
+			});
+		}
+	}
+
+	_streamToBubble(chunk) {
+		if (!this._thoughtBubbleEl || !this._thoughtTextEl) return;
+		this._thoughtBubbleEl.dataset.active = 'true';
+		this._thoughtBubbleEl.dataset.streaming = 'true';
+		this._bubbleBuffer += chunk;
+		if (!this._bubbleRafPending) {
+			this._bubbleRafPending = true;
+			requestAnimationFrame(() => {
+				this._bubbleRafPending = false;
+				if (!this._thoughtTextEl) return;
+				const t = this._bubbleBuffer;
+				this._thoughtTextEl.textContent = t.length > 120 ? '…' + t.slice(-110) : t;
+			});
+		}
+	}
+
+	_clearThoughtBubble() {
+		this._bubbleBuffer = '';
+		this._bubbleRafPending = false;
+		if (!this._thoughtBubbleEl) return;
+		this._thoughtBubbleEl.dataset.active = 'false';
+		this._thoughtBubbleEl.dataset.streaming = 'false';
+		if (this._thoughtTextEl) this._thoughtTextEl.textContent = '';
+	}
+
+	_setBusy(busy) {
+		if (!this._inputEl) return;
+		this._inputEl.disabled = busy;
+		this._inputEl.dataset.state = busy ? 'thinking' : '';
+		const row = this._inputEl.closest('.input-row');
+		if (row) row.dataset.busy = busy ? 'true' : 'false';
+		this._inputEl.placeholder = busy ? 'Thinking…' : 'Say something...';
+	}
+
 	_onStreamChunk() {
 		if (!this._scene || this.getAttribute('avatar-chat') === 'off') return;
-		if (!this._isWalking) {
+		const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		if (!this._isWalking && !prefersReduced) {
 			this._isWalking = true;
 			this._scene.playClipByName('walk', { loop: true, fade_ms: 300 });
 		}
@@ -1640,7 +1812,7 @@ class Agent3DElement extends HTMLElement {
 		this._micEl.dataset.listening = 'true';
 		try {
 			const text = await this._runtime.listen();
-			if (text) await this.say(text, { voice: true });
+			if (text) this.say(text, { voice: true });
 		} catch (e) {
 			console.warn('[agent-3d] listen failed', e);
 		} finally {
@@ -1719,12 +1891,17 @@ class Agent3DElement extends HTMLElement {
 		}
 		this._notifier?.detach();
 		this._notifier = null;
-		clearTimeout(this._walkReturnTimer);
-		this._walkReturnTimer = null;
+		this._setBusy(false);
 		clearTimeout(this._walkStopDebounce);
 		this._walkStopDebounce = null;
 		this._isWalking = false;
+		this._streamingMsgEl = null;
+		this._streamingChatBuffer = '';
+		this._streamingChatRafPending = false;
+		this._chatAutoScroll = true;
+		this._pendingSay = null;
 		try {
+			this._runtime?.cancel();
 			this._runtime?.destroy();
 		} catch {}
 		try {
@@ -1737,17 +1914,37 @@ class Agent3DElement extends HTMLElement {
 
 	// --- Public JS API ---
 
-	async say(text, opts = {}) {
-		if (!this._runtime) await this._waitForReady();
-		protocol.emit({ type: ACTION_TYPES.LOOK_AT, payload: { target: 'user' } });
-		protocol.emit({ type: ACTION_TYPES.EMOTE, payload: { trigger: 'curiosity', weight: 0.6 } });
-		protocol.emit({ type: ACTION_TYPES.THINK, payload: { thought: 'processing your message...' } });
-		protocol.emit({ type: ACTION_TYPES.EMOTE, payload: { trigger: 'patience', weight: 0.5 } });
-		try {
-			return await this._runtime.send(text, { voice: opts.voice ?? this.hasAttribute('voice') });
-		} catch (err) {
-			protocol.emit({ type: ACTION_TYPES.EMOTE, payload: { trigger: 'concern', weight: 0.8 } });
-			throw err;
+	say(text, opts = {}) {
+		if (this._pendingSay) {
+			this._pendingSay = { text, opts };
+			return;
+		}
+		this._pendingSay = { text, opts };
+		this._drainSayQueue();
+	}
+
+	async _drainSayQueue() {
+		while (this._pendingSay) {
+			const { text, opts } = this._pendingSay;
+			this._pendingSay = null;
+			try {
+				if (!this._runtime) await this._waitForReady();
+				this._onStreamChunk();
+				protocol.emit({ type: ACTION_TYPES.LOOK_AT, payload: { target: 'user' } });
+				protocol.emit({ type: ACTION_TYPES.EMOTE, payload: { trigger: 'curiosity', weight: 0.6 } });
+				protocol.emit({ type: ACTION_TYPES.THINK, payload: { thought: 'processing your message...' } });
+				protocol.emit({ type: ACTION_TYPES.EMOTE, payload: { trigger: 'patience', weight: 0.5 } });
+				await this._runtime.send(text, { voice: opts.voice ?? this.hasAttribute('voice') });
+			} catch (err) {
+				this._stopWalkAnimation();
+				this._clearThoughtBubble();
+				this._setBusy(false);
+				protocol.emit({ type: ACTION_TYPES.EMOTE, payload: { trigger: 'concern', weight: 0.8 } });
+				this.dispatchEvent(new CustomEvent('agent:error', {
+					detail: { phase: 'send', error: err },
+					bubbles: true, composed: true,
+				}));
+			}
 		}
 	}
 
@@ -1762,8 +1959,22 @@ class Agent3DElement extends HTMLElement {
 	}
 
 	async ask(text, opts = {}) {
-		const reply = await this.say(text, opts);
-		return reply?.text || '';
+		if (!this._runtime) await this._waitForReady();
+		this._onStreamChunk();
+		protocol.emit({ type: ACTION_TYPES.LOOK_AT, payload: { target: 'user' } });
+		protocol.emit({ type: ACTION_TYPES.EMOTE, payload: { trigger: 'curiosity', weight: 0.6 } });
+		protocol.emit({ type: ACTION_TYPES.THINK, payload: { thought: 'processing your message...' } });
+		protocol.emit({ type: ACTION_TYPES.EMOTE, payload: { trigger: 'patience', weight: 0.5 } });
+		try {
+			const reply = await this._runtime.send(text, { voice: opts.voice ?? this.hasAttribute('voice') });
+			return reply?.text || '';
+		} catch (err) {
+			this._stopWalkAnimation();
+			this._clearThoughtBubble();
+			this._setBusy(false);
+			protocol.emit({ type: ACTION_TYPES.EMOTE, payload: { trigger: 'concern', weight: 0.8 } });
+			throw err;
+		}
 	}
 
 	clearConversation() {

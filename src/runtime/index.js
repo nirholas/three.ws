@@ -62,11 +62,16 @@ export class Runtime extends EventTarget {
 		return [...builtins, ...stageTools, ...skillTools];
 	}
 
+	cancel() {
+		this._abortController?.abort();
+	}
+
 	async send(userText, { voice = false } = {}) {
 		if (this._busy) {
 			throw new Error('Runtime busy — wait for current turn to finish');
 		}
 		this._busy = true;
+		this._abortController = new AbortController();
 		try {
 			this.memory?.note('user_said', { text: userText });
 			this.messages.push({ role: 'user', content: userText });
@@ -76,7 +81,7 @@ export class Runtime extends EventTarget {
 				}),
 			);
 
-			const reply = await this._loop();
+			const reply = await this._loop(this._abortController.signal);
 
 			if (voice && reply.text && this.tts) {
 				this.dispatchEvent(
@@ -89,10 +94,11 @@ export class Runtime extends EventTarget {
 			return reply;
 		} finally {
 			this._busy = false;
+			this._abortController = null;
 		}
 	}
 
-	async _loop() {
+	async _loop(signal) {
 		let iter = 0;
 		let finalText = '';
 
@@ -102,17 +108,15 @@ export class Runtime extends EventTarget {
 				system: this.systemPrompt,
 				messages: this.messages,
 				tools: this.tools,
+				signal,
 				onChunk: (chunk) => {
+					if (signal?.aborted) return;
 					this.dispatchEvent(new CustomEvent('brain:stream', { detail: { chunk } }));
 				},
 			});
-			this.dispatchEvent(new CustomEvent('brain:thinking', { detail: { thinking: false } }));
-
-			if (response.thinking) {
-				this.dispatchEvent(
-					new CustomEvent('brain:thinking', { detail: { content: response.thinking } }),
-				);
-			}
+			this.dispatchEvent(new CustomEvent('brain:thinking', {
+				detail: { thinking: false, content: response.thinking || '' },
+			}));
 
 			if (!response.toolCalls.length) {
 				finalText = response.text;
@@ -140,6 +144,9 @@ export class Runtime extends EventTarget {
 			// Dispatch each tool call
 			const results = [];
 			for (const call of response.toolCalls) {
+				this.dispatchEvent(new CustomEvent('skill:tool-start', {
+					detail: { tool: call.name, args: call.input },
+				}));
 				let output,
 					isError = false;
 				try {

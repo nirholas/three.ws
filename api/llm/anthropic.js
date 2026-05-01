@@ -240,6 +240,8 @@ export default wrap(async (req, res) => {
 		return error(res, 400, 'validation_error', `model "${model}" not in allowlist`);
 	}
 
+	const isStreaming = body.stream === true;
+
 	// 7. Forward to Anthropic
 	const t0 = Date.now();
 	const upstream = await fetch('https://api.anthropic.com/v1/messages', {
@@ -251,10 +253,79 @@ export default wrap(async (req, res) => {
 		},
 		body: JSON.stringify({ ...body, model }),
 	});
+
+	// 8a. Sanitize upstream errors before branching — do not forward Anthropic's error JSON.
+	if (upstream.status >= 400) {
+		const errText = await upstream.text();
+		log.error('upstream_error', { agentId, model, status: upstream.status, body: errText.slice(0, 2000) });
+		return json(res, 502, { error: 'upstream_error', status: upstream.status });
+	}
+
+	// 8b. Streaming path — pipe SSE chunks directly; extract token counts in-flight.
+	if (isStreaming) {
+		res.statusCode = upstream.status;
+		res.setHeader('content-type', 'text/event-stream');
+		res.setHeader('cache-control', 'no-cache');
+		res.setHeader('x-accel-buffering', 'no');
+
+		const reader = upstream.body.getReader();
+		const decoder = new TextDecoder();
+		let inputTokens = 0;
+		let outputTokens = 0;
+		let sseBuffer = '';
+
+		try {
+			while (true) {
+				const { done, value } = await reader.read();
+				if (done) break;
+				res.write(value);
+
+				// Parse SSE lines for usage events without buffering the whole body.
+				sseBuffer += decoder.decode(value, { stream: true });
+				const lines = sseBuffer.split('\n');
+				sseBuffer = lines.pop(); // keep the incomplete trailing line
+				for (const line of lines) {
+					if (!line.startsWith('data: ')) continue;
+					try {
+						const ev = JSON.parse(line.slice(6));
+						if (ev.type === 'message_start') inputTokens = ev.message?.usage?.input_tokens ?? 0;
+						if (ev.type === 'message_delta') outputTokens = ev.usage?.output_tokens ?? 0;
+					} catch {
+						// not every data line is JSON (e.g. [DONE]) — skip
+					}
+				}
+			}
+		} finally {
+			res.end();
+		}
+
+		const latencyMs = Date.now() - t0;
+
+		if (inputTokens || outputTokens) {
+			try {
+				await addMonthlyTokens(agentId, inputTokens + outputTokens);
+			} catch (err) {
+				log.warn('token_counter_write_failed', { agentId, msg: err?.message });
+			}
+		}
+
+		recordEvent({
+			kind: 'llm',
+			tool: 'anthropic.messages',
+			agentId,
+			bytes: 0,
+			latencyMs,
+			status: 'ok',
+			meta: { model, input_tokens: inputTokens, output_tokens: outputTokens, upstream_status: upstream.status },
+		});
+
+		return;
+	}
+
+	// 8c. Non-streaming path — buffer and parse as before.
 	const upstreamText = await upstream.text();
 	const latencyMs = Date.now() - t0;
 
-	// 8. Parse upstream JSON once — extract token usage and detect errors.
 	let upstreamJson = null;
 	try {
 		upstreamJson = JSON.parse(upstreamText);
@@ -264,8 +335,7 @@ export default wrap(async (req, res) => {
 	const inputTokens = upstreamJson?.usage?.input_tokens ?? 0;
 	const outputTokens = upstreamJson?.usage?.output_tokens ?? 0;
 
-	// Debit the per-agent token counter when we got a successful response.
-	if (upstream.ok && (inputTokens || outputTokens)) {
+	if (inputTokens || outputTokens) {
 		try {
 			await addMonthlyTokens(agentId, inputTokens + outputTokens);
 		} catch (err) {
@@ -280,7 +350,7 @@ export default wrap(async (req, res) => {
 		agentId,
 		bytes: upstreamText.length,
 		latencyMs,
-		status: upstream.ok ? 'ok' : 'error',
+		status: 'ok',
 		meta: {
 			model,
 			input_tokens: inputTokens,
@@ -289,18 +359,7 @@ export default wrap(async (req, res) => {
 		},
 	});
 
-	// 10a. Sanitize upstream errors — do not forward Anthropic's error JSON.
-	if (upstream.status >= 400) {
-		log.error('upstream_error', {
-			agentId,
-			model,
-			status: upstream.status,
-			body: upstreamText.slice(0, 2000),
-		});
-		return json(res, 502, { error: 'upstream_error', status: upstream.status });
-	}
-
-	// 10b. Proxy Anthropic's successful response faithfully (unchanged shape).
+	// 10. Proxy Anthropic's successful response faithfully (unchanged shape).
 	res.statusCode = upstream.status;
 	res.setHeader('content-type', upstream.headers.get('content-type') || 'application/json');
 	return res.end(upstreamText);
