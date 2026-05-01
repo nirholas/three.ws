@@ -113,7 +113,7 @@ COLORS.options = Object.keys(COLORS.schemes);
 if (typeof localStorage === 'undefined') {
   COLORS.initial = 'default';
 } else {
-  COLORS.initial = COLORS.schemes[localStorage.getItem('colorScheme') || 'default'];
+  COLORS.initial = COLORS.schemes[localStorage.getItem('colorScheme') || 'blue'];
 }
 
 module.exports = COLORS;
