@@ -75,6 +75,25 @@ export async function deleteObject(key) {
 	await r2.send(new DeleteObjectCommand({ Bucket: env.S3_BUCKET, Key: key }));
 }
 
+export async function putObject({ key, body, contentType, metadata = {} }) {
+	await r2.send(
+		new PutObjectCommand({
+			Bucket: env.S3_BUCKET,
+			Key: key,
+			Body: body,
+			ContentType: contentType,
+			Metadata: metadata,
+		}),
+	);
+}
+
+export async function getObjectBuffer(key) {
+	const { Body } = await r2.send(new GetObjectCommand({ Bucket: env.S3_BUCKET, Key: key }));
+	const chunks = [];
+	for await (const chunk of Body) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+	return Buffer.concat(chunks);
+}
+
 // Public CDN URL for objects served via R2 custom domain / r2.dev.
 export function publicUrl(key) {
 	return `${env.S3_PUBLIC_DOMAIN}/${encodeR2Key(key)}`;

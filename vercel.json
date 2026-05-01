@@ -9,6 +9,9 @@
 	"functions": {
 		"api/**/*.js": {
 			"includeFiles": "node_modules/@zauthx402/sdk/dist/**"
+		},
+		"api/pump/[action].js": {
+			"includeFiles": "node_modules/@zauthx402/sdk/dist/**,examples/skills/pump-fun-strategy/**"
 		}
 	},
 	"routes": [

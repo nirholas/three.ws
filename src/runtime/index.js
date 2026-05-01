@@ -97,11 +97,16 @@ export class Runtime extends EventTarget {
 		let finalText = '';
 
 		while (iter++ < MAX_TOOL_ITERATIONS) {
+			this.dispatchEvent(new CustomEvent('brain:thinking', { detail: { thinking: true } }));
 			const response = await this.provider.complete({
 				system: this.systemPrompt,
 				messages: this.messages,
 				tools: this.tools,
+				onChunk: (chunk) => {
+					this.dispatchEvent(new CustomEvent('brain:stream', { detail: { chunk } }));
+				},
 			});
+			this.dispatchEvent(new CustomEvent('brain:thinking', { detail: { thinking: false } }));
 
 			if (response.thinking) {
 				this.dispatchEvent(

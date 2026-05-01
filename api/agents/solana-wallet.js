@@ -6,7 +6,7 @@ import { sql } from '../_lib/db.js';
 import { cors, json, method, error, readJson } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { generateSolanaAgentWallet } from '../_lib/agent-wallet.js';
-import { solanaConnection } from '../_lib/agent-pumpfun.js';
+import { solanaConnection, solanaPublicConnection } from '../_lib/agent-pumpfun.js';
 import { Keypair, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { webcrypto } from 'node:crypto';
 import { env } from '../_lib/env.js';
@@ -186,12 +186,21 @@ async function handleWallet(req, res, id) {
 	if (!meta.solana_address) return error(res, 404, 'not_found', 'agent has no solana wallet — POST to provision');
 
 	const network = (req.query?.network || new URL(req.url, 'http://x').searchParams.get('network') || 'mainnet').toString();
+	const net = network === 'devnet' ? 'devnet' : 'mainnet';
 	let lamports = null;
 	try {
-		const conn = solanaConnection(network === 'devnet' ? 'devnet' : 'mainnet');
+		const conn = solanaConnection(net);
 		lamports = await conn.getBalance(new PublicKey(meta.solana_address));
 	} catch (err) {
-		console.error('[agents/solana/wallet] balance fetch failed', err);
+		if (err?.message?.includes('401') || err?.message?.includes('invalid api key')) {
+			try {
+				lamports = await solanaPublicConnection(net).getBalance(new PublicKey(meta.solana_address));
+			} catch (fallbackErr) {
+				console.error('[agents/solana/wallet] balance fetch failed (fallback)', fallbackErr);
+			}
+		} else {
+			console.error('[agents/solana/wallet] balance fetch failed', err);
+		}
 	}
 
 	return json(res, req.method === 'POST' ? 201 : 200, {

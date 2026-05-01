@@ -76,6 +76,14 @@ export const presignUploadBody = z.object({
 		.optional(),
 });
 
+export function isValidSolanaAddress(address) {
+	return typeof address === 'string' && /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address);
+}
+
+export function isValidEvmAddress(address) {
+	return typeof address === 'string' && /^0x[a-fA-F0-9]{40}$/.test(address);
+}
+
 export function parse(schema, input) {
 	const res = schema.safeParse(input);
 	if (!res.success) {
