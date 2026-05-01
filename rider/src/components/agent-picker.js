@@ -1,24 +1,23 @@
 /* global AFRAME */
-// Renders a small HTML overlay listing available agent avatars and swaps the
-// gltf-model on #agentCompanion when one is picked. Sources: hardcoded list,
-// ?agent=<id> URL param, or a postMessage from a parent host frame.
+// Lists 3D avatars created on three.ws and swaps the gltf-model on
+// #agentCompanion when one is picked. Sources: live /api/explore feed,
+// ?agent=<id> URL param, or postMessage from a parent host frame.
 //
 // postMessage protocol (parent → rider iframe):
 //   { type: 'rider:setAgent', agentId: 'cz' }
 //   { type: 'rider:setAgent', url: 'https://.../foo.glb', name: 'Foo' }
 
-const DEFAULT_AGENTS = [
-  { id: 'cz', name: 'CZ', url: 'https://raw.githubusercontent.com/overstepping/-/main/cz.glb' },
-  { id: 'sbf', name: 'SBF', url: 'https://raw.githubusercontent.com/overstepping/-/main/sbf.glb' },
-  { id: 'vitalik', name: 'Vitalik', url: 'https://raw.githubusercontent.com/overstepping/-/main/vitalik.glb' },
-  { id: 'satoshi', name: 'Satoshi', url: 'https://raw.githubusercontent.com/overstepping/-/main/satoshi.glb' }
+const API_ORIGIN = 'https://three.ws';
+const FALLBACK_AGENTS = [
+  { id: 'cz', name: 'CZ', url: 'https://raw.githubusercontent.com/overstepping/-/main/cz.glb' }
 ];
 
 AFRAME.registerSystem('agent-picker', {
   init: function () {
-    this.agents = DEFAULT_AGENTS.slice();
+    this.agents = FALLBACK_AGENTS.slice();
     this.currentId = null;
     this.companionEl = null;
+    this.searchQuery = '';
 
     const ready = () => {
       this.companionEl = document.querySelector('#agentCompanion');
@@ -27,10 +26,34 @@ AFRAME.registerSystem('agent-picker', {
       this.applyInitialSelection();
       this.wireSceneEvents();
       this.wirePostMessage();
+      this.fetchPublicAvatars();
     };
 
     if (this.sceneEl.hasLoaded) { ready(); }
     else { this.sceneEl.addEventListener('loaded', ready); }
+  },
+
+  fetchPublicAvatars: function (query = '') {
+    const url = new URL(API_ORIGIN + '/api/explore');
+    url.searchParams.set('only3d', '1');
+    url.searchParams.set('limit', '40');
+    if (query) url.searchParams.set('q', query);
+    fetch(url.toString())
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!data || !Array.isArray(data.items)) return;
+        const fetched = data.items
+          .filter(it => it.glbUrl)
+          .map(it => ({
+            id: `${it.kind}-${it.agentId || it.name}-${it.sortDate}`,
+            name: it.name || 'Untitled',
+            url: it.glbUrl,
+            owner: it.ownerShort || ''
+          }));
+        this.agents = FALLBACK_AGENTS.concat(fetched);
+        this.renderList();
+      })
+      .catch(() => {});
   },
 
   buildOverlay: function () {
@@ -52,13 +75,20 @@ AFRAME.registerSystem('agent-picker', {
           cursor: pointer; backdrop-filter: blur(6px);
         }
         #agentPicker .ap-toggle:hover { background: rgba(40, 50, 100, 0.9); }
-        #agentPicker .ap-list {
+        #agentPicker .ap-panel {
           margin-top: 8px; background: rgba(8, 10, 24, 0.92);
           border: 1px solid rgba(120, 140, 255, 0.3); border-radius: 8px;
-          padding: 6px; min-width: 180px; display: none;
+          padding: 8px; width: 260px; display: none;
           backdrop-filter: blur(6px);
         }
-        #agentPicker.open .ap-list { display: block; }
+        #agentPicker.open .ap-panel { display: block; }
+        #agentPicker .ap-search {
+          width: 100%; box-sizing: border-box; background: rgba(0,0,0,0.4);
+          color: #cfd6ff; border: 1px solid rgba(120, 140, 255, 0.3);
+          border-radius: 6px; padding: 6px 8px; font-size: 12px;
+          margin-bottom: 6px; outline: none;
+        }
+        #agentPicker .ap-list { max-height: 320px; overflow-y: auto; }
         #agentPicker .ap-item {
           display: flex; align-items: center; gap: 10px;
           padding: 8px 10px; border-radius: 6px; cursor: pointer;
@@ -67,32 +97,60 @@ AFRAME.registerSystem('agent-picker', {
         #agentPicker .ap-item:hover { background: rgba(80, 100, 200, 0.25); }
         #agentPicker .ap-item.active { background: rgba(80, 100, 200, 0.4); }
         #agentPicker .ap-dot {
-          width: 8px; height: 8px; border-radius: 50%;
+          width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
           background: linear-gradient(135deg, #6699ff, #ff4488);
         }
+        #agentPicker .ap-name {
+          flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        #agentPicker .ap-owner { color: #6677aa; font-size: 10px; }
+        #agentPicker .ap-empty { padding: 10px; color: #6677aa; font-size: 12px; text-align: center; }
       </style>
       <button class="ap-toggle" type="button">AGENT</button>
-      <div class="ap-list"></div>
+      <div class="ap-panel">
+        <input class="ap-search" type="text" placeholder="Search avatars on three.ws..." />
+        <div class="ap-list"></div>
+      </div>
     `;
     document.body.appendChild(wrap);
 
     const toggle = wrap.querySelector('.ap-toggle');
-    const list = wrap.querySelector('.ap-list');
+    const search = wrap.querySelector('.ap-search');
     toggle.addEventListener('click', () => wrap.classList.toggle('open'));
 
-    this.agents.forEach(agent => {
-      const item = document.createElement('div');
-      item.className = 'ap-item';
-      item.dataset.id = agent.id;
-      item.innerHTML = `<span class="ap-dot"></span><span>${agent.name}</span>`;
-      item.addEventListener('click', () => {
-        this.selectAgent(agent.id);
-        wrap.classList.remove('open');
-      });
-      list.appendChild(item);
+    let searchTimer;
+    search.addEventListener('input', () => {
+      clearTimeout(searchTimer);
+      this.searchQuery = search.value.trim();
+      searchTimer = setTimeout(() => this.fetchPublicAvatars(this.searchQuery), 300);
     });
 
     this.overlayEl = wrap;
+    this.listEl = wrap.querySelector('.ap-list');
+  },
+
+  renderList: function () {
+    if (!this.listEl) return;
+    this.listEl.innerHTML = '';
+    if (!this.agents.length) {
+      this.listEl.innerHTML = '<div class="ap-empty">No avatars found.</div>';
+      return;
+    }
+    this.agents.forEach(agent => {
+      const item = document.createElement('div');
+      item.className = 'ap-item' + (agent.id === this.currentId ? ' active' : '');
+      item.dataset.id = agent.id;
+      item.innerHTML = `
+        <span class="ap-dot"></span>
+        <span class="ap-name">${escapeHtml(agent.name)}</span>
+        ${agent.owner ? `<span class="ap-owner">${escapeHtml(agent.owner)}</span>` : ''}
+      `;
+      item.addEventListener('click', () => {
+        this.selectAgent(agent.id);
+        this.overlayEl.classList.remove('open');
+      });
+      this.listEl.appendChild(item);
+    });
   },
 
   applyInitialSelection: function () {
@@ -100,9 +158,10 @@ AFRAME.registerSystem('agent-picker', {
     const fromUrl = params.get('agent');
     if (fromUrl && this.agents.some(a => a.id === fromUrl)) {
       this.selectAgent(fromUrl);
-      return;
+    } else {
+      this.selectAgent(this.agents[0].id);
     }
-    this.selectAgent(this.agents[0].id);
+    this.renderList();
   },
 
   selectAgent: function (idOrSpec) {
@@ -117,12 +176,7 @@ AFRAME.registerSystem('agent-picker', {
 
     this.currentId = agent.id;
     this.companionEl.setAttribute('gltf-model', `url(${agent.url})`);
-
-    if (this.overlayEl) {
-      this.overlayEl.querySelectorAll('.ap-item').forEach(item => {
-        item.classList.toggle('active', item.dataset.id === agent.id);
-      });
-    }
+    this.renderList();
 
     this.sceneEl.emit('agentchanged', { agentId: agent.id, url: agent.url });
   },
@@ -152,3 +206,7 @@ AFRAME.registerSystem('agent-picker', {
     });
   }
 });
+
+function escapeHtml (s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}

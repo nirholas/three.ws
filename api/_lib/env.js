@@ -160,7 +160,9 @@ export const env = {
 	get X402_MAX_AMOUNT_REQUIRED() {
 		return opt('X402_MAX_AMOUNT_REQUIRED', '1000');
 	},
-	// Per-network facilitators. PayAI for Solana, x402.org reference for Base.
+	// Per-network facilitators. PayAI supports both Solana and Base mainnet;
+	// x402.org's reference facilitator only supports base-sepolia, so it cannot
+	// be the default for Base mainnet payments.
 	get X402_FACILITATOR_URL_SOLANA() {
 		return trimSlash(
 			opt(
@@ -170,13 +172,25 @@ export const env = {
 		);
 	},
 	get X402_FACILITATOR_URL_BASE() {
-		return trimSlash(opt('X402_FACILITATOR_URL_BASE', 'https://x402.org/facilitator'));
+		return trimSlash(
+			opt(
+				'X402_FACILITATOR_URL_BASE',
+				opt('X402_FACILITATOR_URL', 'https://facilitator.payai.network'),
+			),
+		);
 	},
 	get X402_FACILITATOR_TOKEN_SOLANA() {
 		return opt('X402_FACILITATOR_TOKEN_SOLANA', opt('X402_FACILITATOR_TOKEN'));
 	},
 	get X402_FACILITATOR_TOKEN_BASE() {
-		return opt('X402_FACILITATOR_TOKEN_BASE');
+		return opt('X402_FACILITATOR_TOKEN_BASE', opt('X402_FACILITATOR_TOKEN'));
+	},
+	// Solana fee payer advertised in the 402 challenge's `extra.feePayer`.
+	// Clients build the SPL transfer with this account paying SOL fees; the
+	// facilitator co-signs on /settle. Must match whatever facilitator.payai.network
+	// returns at /supported for `network:"solana"`.
+	get X402_FEE_PAYER_SOLANA() {
+		return opt('X402_FEE_PAYER_SOLANA', '2wKupLR9q6wXYppw8Gr2NvWxKBUqm4PPJKkQfoxHDBg4');
 	},
 
 	// zauthx402 SDK — optional telemetry for x402 endpoints. When unset,

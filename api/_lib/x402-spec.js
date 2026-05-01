@@ -43,6 +43,10 @@ export function paymentRequirements({ resource, description = '' } = {}) {
 			network: 'solana',
 			payTo: env.X402_PAY_TO_SOLANA,
 			asset: env.X402_ASSET_MINT_SOLANA,
+			// PayAI's Solana facilitator requires clients to build the SPL transfer
+			// with this account as fee payer; without it, /verify rejects with
+			// `missing_fee_payer`.
+			extra: { name: 'USDC', decimals: 6, feePayer: env.X402_FEE_PAYER_SOLANA },
 		});
 	}
 	if (env.X402_PAY_TO_BASE) {
