@@ -432,6 +432,27 @@ export class Viewer {
 		return el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
 	}
 
+	getHeadScreenPosition() {
+		if (!this.content || !this.activeCamera || !this.renderer) return null;
+		let headBone = null, neckBone = null;
+		this.content.traverse((obj) => {
+			if (!obj.isBone) return;
+			const canon = obj.name.replace(/^mixamorig/i, '').replace(/^.*[:_]/, '').toLowerCase();
+			if (!headBone && canon === 'head') headBone = obj;
+			else if (!neckBone && canon === 'neck') neckBone = obj;
+		});
+		const bone = headBone || neckBone;
+		if (!bone) return null;
+		const pos = new Vector3();
+		bone.getWorldPosition(pos);
+		pos.project(this.activeCamera);
+		const canvas = this.renderer.domElement;
+		return {
+			x: (pos.x * 0.5 + 0.5) * canvas.clientWidth,
+			y: (-pos.y * 0.5 + 0.5) * canvas.clientHeight,
+		};
+	}
+
 	render() {
 		this.renderer.render(this.scene, this.activeCamera);
 		if (this.state.grid) {

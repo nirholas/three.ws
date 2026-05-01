@@ -286,6 +286,7 @@ AFRAME.registerComponent('beat', {
     this.brokenPoolName = undefined;
     this.destroyed = false;
     this.hitEventDetail = {};
+    this.inUse = false;
     this.poolName = undefined;
     this.returnToPoolTimer = DESTROY_TIME;
     this.rotationAxis = new THREE.Vector3();
@@ -367,6 +368,7 @@ AFRAME.registerComponent('beat', {
     const el = this.el;
 
     this.beatSystem.registerBeat(this);
+    this.inUse = true;
 
     // Model is 0.29 size. We make it 1.0 so we can easily scale based on 1m size.
     const FACTOR = 1 / 0.29;
@@ -490,6 +492,8 @@ AFRAME.registerComponent('beat', {
    * Check if need to return to pool.
    */
   returnToPool: function () {
+    if (!this.inUse) { return; }
+    this.inUse = false;
     this.beatSystem.unregisterBeat(this);
     this.el.object3D.position.set(0, 0, -9999);
     this.el.object3D.visible = false;

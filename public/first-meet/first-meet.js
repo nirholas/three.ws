@@ -73,12 +73,10 @@ function renderPreview() {
 		return;
 	}
 
-	const viewer = document.createElement('model-viewer');
-	viewer.src = state.avatar.model_url;
-	viewer.alt = state.avatar.name || 'Avatar';
-	viewer.setAttribute('auto-rotate', '');
-	viewer.setAttribute('camera-controls', '');
-	viewer.setAttribute('enable-shadow', '');
+	const viewer = document.createElement('agent-3d');
+	viewer.setAttribute('body', state.avatar.model_url);
+	viewer.setAttribute('eager', '');
+	viewer.style.cssText = 'width:100%;height:100%;display:block';
 
 	container.innerHTML = '';
 	container.appendChild(viewer);
@@ -210,13 +208,11 @@ async function renderGreeting() {
 				}
 			}, 500);
 		} else {
-			// Fallback: model-viewer + text
-			const viewer = document.createElement('model-viewer');
-			viewer.src = state.avatar.model_url;
-			viewer.alt = state.avatar.name || 'Avatar';
-			viewer.setAttribute('auto-rotate', '');
-			viewer.setAttribute('camera-controls', '');
-			viewer.setAttribute('enable-shadow', '');
+			// Fallback: agent-3d (no voice/agent-id) + browser TTS
+			const viewer = document.createElement('agent-3d');
+			viewer.setAttribute('body', state.avatar.model_url);
+			viewer.setAttribute('eager', '');
+			viewer.style.cssText = 'width:100%;height:100%;display:block';
 
 			container.innerHTML = '';
 			container.appendChild(viewer);

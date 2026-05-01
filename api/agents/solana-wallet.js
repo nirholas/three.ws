@@ -65,13 +65,11 @@ async function handleActivity(req, res, id) {
 	const network = url.searchParams.get('network') === 'devnet' ? 'devnet' : 'mainnet';
 	const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10) || 20, 50);
 
-	let signatures = [];
-	try {
-		const conn = solanaConnection(network);
+	const fetchActivity = async (conn) => {
 		const pk = new PublicKey(address);
 		const sigs = await conn.getSignaturesForAddress(pk, { limit });
 		const parsed = await conn.getParsedTransactions(sigs.map((s) => s.signature), { maxSupportedTransactionVersion: 0, commitment: 'confirmed' });
-		signatures = sigs.map((s, i) => {
+		return sigs.map((s, i) => {
 			const tx = parsed[i];
 			let lamportDelta = null, summary = null;
 			if (tx?.meta && tx?.transaction) {
@@ -84,9 +82,26 @@ async function handleActivity(req, res, id) {
 			}
 			return { signature: s.signature, slot: s.slot, block_time: s.blockTime ?? null, success: !s.err && !tx?.meta?.err, error: s.err || tx?.meta?.err || null, lamport_delta: lamportDelta, sol_delta: lamportDelta == null ? null : lamportDelta / 1e9, summary };
 		});
+	};
+
+	let signatures = [];
+	try {
+		signatures = await fetchActivity(solanaConnection(network));
 	} catch (err) {
-		console.error('[agents/solana/activity] RPC fetch failed', err);
-		return error(res, 502, 'rpc_error', 'failed to fetch on-chain activity');
+		const hasCustomRpc = !!(network === 'devnet'
+			? process.env.SOLANA_RPC_URL_DEVNET
+			: process.env.SOLANA_RPC_URL);
+		if (hasCustomRpc) {
+			try {
+				signatures = await fetchActivity(solanaPublicConnection(network));
+			} catch (fallbackErr) {
+				console.error('[agents/solana/activity] RPC fetch failed (fallback)', fallbackErr);
+				return error(res, 502, 'rpc_error', 'failed to fetch on-chain activity');
+			}
+		} else {
+			console.error('[agents/solana/activity] RPC fetch failed', err);
+			return error(res, 502, 'rpc_error', 'failed to fetch on-chain activity');
+		}
 	}
 
 	return json(res, 200, { data: { address, network, signatures } });
