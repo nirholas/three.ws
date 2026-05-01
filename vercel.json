@@ -779,28 +779,16 @@
 			"dest": "/discover/$1"
 		},
 		{
-			"src": "/api/plugins/categories",
-			"dest": "/api/plugins/[action]?action=categories"
-		},
-		{
-			"src": "/api/plugins/list",
-			"dest": "/api/plugins/[action]?action=list"
-		},
-		{
-			"src": "/api/plugins/import",
-			"dest": "/api/plugins/[action]?action=import"
-		},
-		{
-			"src": "/api/plugins/publish",
-			"dest": "/api/plugins/[action]?action=publish"
-		},
-		{
 			"src": "/api/plugins/([^/]+)/install",
-			"dest": "/api/plugins/[action]?action=$1/install"
+			"dest": "/api/plugins/[action]?id=$1&sub=install"
+		},
+		{
+			"src": "/api/plugins/(categories|list|import|publish)",
+			"dest": "/api/plugins/[action]?action=$1"
 		},
 		{
 			"src": "/api/plugins/([^/]+)",
-			"dest": "/api/plugins/[action]?action=$1"
+			"dest": "/api/plugins/[action]?id=$1"
 		},
 		{
 			"src": "/api/skills/categories",
