@@ -25,6 +25,8 @@ Comprehensive list of every user-facing page URL in the three.ws codebase. Exclu
 | `/deploy` | [app.html](../../app.html) (alias) |
 | `/create`, `/create/` | [create.html](../../create.html) — agent creation wizard |
 | `/first-meet` | [public/first-meet/index.html](../../public/first-meet/index.html) — onboarding |
+| `/marketplace`, `/marketplace/` | [marketplace.html](../../marketplace.html) — agent marketplace with categories and listings |
+| `/marketplace/agents/[id]` | [marketplace.html](../../marketplace.html) (dynamic) |
 
 ## Auth
 
@@ -96,6 +98,47 @@ Comprehensive list of every user-facing page URL in the three.ws codebase. Exclu
 | `/artifact/snippet` | [public/artifact/snippet.html](../../public/artifact/snippet.html) |
 | `/artifact-example` | [public/artifact-example.html](../../public/artifact-example.html) |
 | `/wallet-connect-demo` | [public/wallet-connect-demo.html](../../public/wallet-connect-demo.html) |
+
+## Chat SPA
+
+The `/chat` path serves a full Svelte-based AI chat application. Navigation within the SPA is hash-based (`/chat#<route>`).
+
+| URL | Notes |
+| :-- | :-- |
+| `/chat`, `/chat/` | [public/chat/index.html](../../public/chat/index.html) — Svelte AI chat SPA (default route = chat canvas) |
+| `/chat#pricing` | Pricing page |
+| `/chat#signin` | Sign-in page (inside chat SPA) |
+| `/chat#signup` | Sign-up page (inside chat SPA) |
+| `/chat#solutions/sales` | Solutions — Sales |
+| `/chat#solutions/marketing` | Solutions — Marketing |
+| `/chat#solutions/engineering` | Solutions — Engineering |
+| `/chat#solutions/operations` | Solutions — Operations |
+| `/chat#solutions/support` | Solutions — Support |
+| `/chat#solutions/finance` | Solutions — Finance |
+| `/chat#solutions/hr` | Solutions — HR |
+| `/chat#solutions/founders` | Solutions — Founders |
+| `/chat#business/enterprise` | Business — Enterprise |
+| `/chat#business/security` | Business — Security & Compliance |
+| `/chat#business/deployments` | Business — Private Deployments |
+| `/chat#business/customers` | Business — Customer Stories |
+| `/chat#business/contact-sales` | Business — Contact Sales |
+| `/chat#features/web-app` | Feature — AI Web App builder |
+| `/chat#features/mobile-app` | Feature — AI Mobile App builder |
+| `/chat#features/ai-design` | Feature — AI Design |
+| `/chat#features/ai-slides` | Feature — AI Slides |
+| `/chat#features/browser-operator` | Feature — Browser Operator |
+| `/chat#features/wide-research` | Feature — Wide Research |
+| `/chat#features/mail-three.ws` | Feature — Mail three.ws |
+| `/chat#features/agent-skills` | Feature — Agent Skills |
+| `/chat#events/[slug]` | Events pages (dynamic) |
+| `/chat#resources/blog` | Blog index |
+| `/chat#resources/docs` | Docs index |
+| `/chat#resources/trust-center` | Trust center |
+| `/chat#resources/updates` | Product updates timeline |
+| `/chat#resources/use-cases` | Use cases index |
+| `/chat#dashboard/revenue` | Revenue dashboard (authenticated) |
+
+Route definitions are in [chat/src/App.svelte](../../chat/src/App.svelte). Marketing page content is defined in [chat/src/manus/pages/marketingPages.js](../../chat/src/manus/pages/marketingPages.js) and [chat/src/manus/pages/featurePages.js](../../chat/src/manus/pages/featurePages.js).
 
 ## Solana / Pump.fun
 
@@ -187,8 +230,9 @@ A high-level map of what each page does, grouped by capability.
 - **`/a/sol/[asset]`** — Solana (Metaplex Core) agent passport with attestation feed.
 - **`/reputation`** — reputation registry browser (signed feedback + validator attestations).
 
-### Discovery
+### Discovery & Marketplace
 - **`/discover`** — public agent directory (avatar-prioritized index).
+- **`/marketplace`** — agent marketplace with browsable categories and individual agent listings.
 - **`/widgets`** — public widget gallery.
 - **`/profile`, `/u/[username]`** — public user profiles.
 - **`/avatars/[id]`** — public avatar detail page.
@@ -220,6 +264,17 @@ A high-level map of what each page does, grouped by capability.
 - **`/login`, `/register`** — email + password (with SIWE / SIWS / Privy options).
 - **`/forgot-password`, `/reset-password`** — password recovery flow.
 
+### Chat SPA (`/chat`)
+- **`/chat`** — Svelte-based AI chat interface with talking-head avatar, model selector, file uploads, tool-call display, artifact viewer, knowledge base panel, and wallet connect.
+- **`/chat#pricing`** — Pricing tiers.
+- **`/chat#signin`, `/chat#signup`** — Authentication within the chat SPA.
+- **`/chat#solutions/*`** — Per-team marketing pages (sales, marketing, engineering, operations, support, finance, HR, founders).
+- **`/chat#business/*`** — Enterprise pages (enterprise, security, private deployments, customers, contact-sales).
+- **`/chat#features/*`** — Feature landing pages (web-app, mobile-app, ai-design, ai-slides, browser-operator, wide-research, mail-three.ws, agent-skills).
+- **`/chat#events/*`** — Events pages.
+- **`/chat#resources/*`** — Resource hub (blog, docs, trust-center, updates, use-cases).
+- **`/chat#dashboard/revenue`** — Revenue dashboard (authenticated users).
+
 ### Integrations
 - **`/cz`, `/cz/offline`** — CZ demo experience.
 - **`/lobehub/iframe`** — LobeHub plugin iframe surface.
@@ -227,4 +282,4 @@ A high-level map of what each page does, grouped by capability.
 
 ---
 
-**Total:** ~60 unique URLs (excluding trailing-slash duplicates and dynamic param expansions). For the OAuth + API + cron surface see [api-inventory.md](api-inventory.md).
+**Total:** ~100 unique URLs (excluding trailing-slash duplicates and dynamic param expansions; ~35 additional hash-routes inside `/chat`). For the OAuth + API + cron surface see [api-inventory.md](api-inventory.md).
