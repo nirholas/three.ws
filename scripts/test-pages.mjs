@@ -9,38 +9,82 @@ const BASE = `http://localhost:${PORT}`;
 // Routes to visit. Some need params (template pages) — pass a placeholder
 // agent id so they can boot.
 const SAMPLE_AGENT = '0xdeadbeef';
+const SAMPLE_SOL_ASSET = 'So11111111111111111111111111111111111111112';
+const SAMPLE_USER = 'alice';
 const ROUTES = [
+	// Top-level marketing / landing
 	'/',
-	'/app',
 	'/home',
+	'/app',
 	'/create',
-	'/profile',
+	'/features',
 	'/login',
+	'/register',
+	'/forgot-password',
+	'/reset-password',
+	'/profile',
+
+	// Agent / template pages
 	`/agent/${SAMPLE_AGENT}`,
 	`/agent/${SAMPLE_AGENT}/edit`,
 	`/agent/${SAMPLE_AGENT}/embed`,
+	`/a/1/${SAMPLE_AGENT}/edit`,
+	`/a/1/${SAMPLE_AGENT}/embed`,
+	`/a/sol/${SAMPLE_SOL_ASSET}`,
+	`/u/${SAMPLE_USER}`,
+	'/agent-passport.html',
+	'/agent-badge.html',
+
+	// Discover / marketplace
 	'/agents',
+	'/marketplace',
+	'/my-agents',
+	'/discover',
+	'/explore',
+
+	// Dashboard
 	'/dashboard',
+	'/dashboard/actions',
+	'/dashboard/sessions',
+	'/dashboard/usage',
+	'/dashboard/wallets',
+	'/dashboard/storage',
+	'/dashboard/embed-policy',
+	'/dashboard/agent-pumpfun',
+
+	// Studio / widgets / docs
 	'/studio',
 	'/widgets',
 	'/docs',
 	'/docs/widgets',
+
+	// Other product pages
 	'/cz',
 	'/validation',
 	'/hydrate',
-	'/my-agents',
-	'/discover',
-	'/explore',
-	'/features',
-	'/embed.html?src=/avatars/cz.glb',
 	`/reputation/?agent=1:${SAMPLE_AGENT}`,
+	'/settings',
+	'/admin',
+	'/chat',
+	'/pumpfun',
+	'/strategy-lab',
+
+	// Legal
+	'/legal/privacy',
+	'/legal/tos',
+
+	// Standalone HTML viewers / artifacts
+	'/embed.html?src=/avatars/cz.glb',
 	'/embed-test.html',
 	'/avatar-page.html',
+	`/avatars/${SAMPLE_AGENT}`,
 	'/avatar-artifact.html',
 	'/agent-embed.html',
 	'/a-edit.html',
 	'/a-embed.html',
-	'/strategy-lab.html',
+	'/artifact-example.html',
+	'/first-meet/',
+	'/lobehub/iframe/',
 ];
 
 // Dev-only failure patterns to ignore (CDN URLs, third-party CORS, etc).

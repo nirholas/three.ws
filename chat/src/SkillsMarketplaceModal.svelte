@@ -123,7 +123,7 @@
 		loading = true;
 		try {
 			const p = new URLSearchParams();
-			if (debouncedSearch) p.set('search', debouncedSearch);
+			if (debouncedSearch) p.set('q', debouncedSearch);
 			const catSlug = categorySlug(selectedCategory);
 			if (catSlug) p.set('category', catSlug);
 			if (sort) p.set('sort', sort);
@@ -132,8 +132,8 @@
 			if (!res.ok) throw new Error('Failed to load skills');
 			const data = await res.json();
 			skills = reset ? (data.skills || []) : [...skills, ...(data.skills || [])];
-			page = data.nextCursor || null;
-			hasMore = !!data.hasMore;
+			page = data.next_cursor || null;
+			hasMore = !!data.next_cursor;
 		} catch (e) {
 			notify(e.message, 'error');
 		} finally {
@@ -536,7 +536,7 @@
 						class="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[12px] text-slate-600 outline-none focus:border-indigo-400"
 					>
 						<option value="popular">Popular</option>
-						<option value="newest">Newest</option>
+						<option value="new">Newest</option>
 						<option value="az">A-Z</option>
 					</select>
 				</div>
