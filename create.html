@@ -557,7 +557,8 @@
 						sessionStorage.setItem('login_redirect', '/create');
 						location.replace('/login');
 					}
-				});
+				})
+				.catch(function () {});
 		</script>
 	</head>
 	<body>

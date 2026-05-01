@@ -146,6 +146,9 @@ const appConfig = {
 						filePath = resolve(root, 'agent-embed.html');
 					else if (!filePath && /^\/agent\/[^/]+$/.test(path))
 						filePath = resolve(root, 'agent-home.html');
+					// /a/<chainId>/<agentId>/edit  → chain-edit page
+					else if (!filePath && /^\/a\/[^/]+(?:\/[^/]+){1,2}\/edit\/?$/.test(path))
+						filePath = resolve(root, 'a-edit.html');
 					// /a/<chainId>/<agentId>/embed or /a/<chainId>/<registry>/<agentId>/embed  → iframe viewer
 					else if (!filePath && /^\/a\/[^/]+(?:\/[^/]+){1,2}\/embed\/?$/.test(path))
 						filePath = resolve(root, 'a-embed.html');
@@ -155,19 +158,12 @@ const appConfig = {
 					if (!filePath) return next();
 					try {
 						const html = readFileSync(filePath, 'utf8');
-						// Use the file's path-relative URL (not req.url) so Vite can
-						// resolve html-proxy modules (inline <script type="module">)
-						// back to a real file. Otherwise virtual module IDs derived
-						// from req.url (e.g. /agent/0xfoo) 500 because nothing on
-						// disk matches.
-						// Use the file's path-relative URL (not req.url) so Vite can
-						// resolve html-proxy modules (inline <script type="module">)
-						// back to a real file. Otherwise virtual module IDs derived
-						// from req.url (e.g. /agent/0xfoo) 500 because nothing on
-						// disk matches. Files in /public stay on req.url since they
-						// can't be import-analyzed by Vite anyway.
+						// Always use the actual on-disk file path as the URL for
+						// transformIndexHtml so Vite can resolve html-proxy requests
+						// for inline <script type="module"> back to the correct file,
+						// regardless of which dynamic URL the page was served from.
 						const rel = filePath.slice(root.length + 1).replace(/\\/g, '/');
-						const fileUrl = rel.startsWith('public/') ? url : '/' + rel;
+						const fileUrl = '/' + rel;
 						const transformed = await server.transformIndexHtml(fileUrl, html);
 						res.setHeader('Content-Type', 'text/html; charset=utf-8');
 						res.end(transformed);

@@ -65,7 +65,6 @@ const ROUTES = [
 	`/reputation/?agent=1:${SAMPLE_AGENT}`,
 	'/settings',
 	'/admin',
-	'/chat',
 	'/pumpfun',
 	'/strategy-lab',
 
@@ -96,10 +95,14 @@ const IGNORE_PATTERNS = [
 	/marketplace\.olas\.network/, // third-party API, no CORS for localhost
 	/blocked by CORS policy/,
 	/three\.ws\/dist-lib/,
+	/three\.ws\/+api\//, // prod API hardcoded in demo/test pages (embed-test, artifact-example)
 	/localhost:\d+\/api\//, // serverless functions need `vercel dev`, not `vite dev`
+	/localhost:\d+\/chat/, // chat is a separate Svelte app (run `npm run dev` in chat/)
 	/\/wallet\/(connect-button|state).*\.js/, // cascades from esm.sh import in connect-button.js
 	/\/node_modules\/vite\/dist\/client\/env\.mjs/, // Vite dev injection 404s in some flows
 	/rpc\.\d+\.io/, // placeholder RPC URL from sample agent IDs
+	/Unexpected token .+, .<!doctype /, // API endpoint returned HTML instead of JSON (dev-only: no serverless functions)
+	/Expected a JavaScript-or-Wasm module script but the server responded with a MIME type of "text\/html"/, // Vite html-proxy MIME mismatch for public/ files served via dynamic paths
 ];
 
 function shouldIgnore(text) {
