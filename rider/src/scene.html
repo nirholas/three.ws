@@ -180,6 +180,7 @@
           bind__weapon-particles="enabled: isPlaying; gameMode: gameMode"
           bind__trail="colorScheme: colorScheme; enabled: isPlaying && gameMode === 'classic'"
           controller="hand: {{ hand }}"
+          desktop-input="hand: {{ hand }}"
           data-hand="{{ hand }}"
           haptics="events: mouseenter; dur: 35; force: 0.075"
           haptics__beat="events: beathaptic; dur: 90; force: 0.55"

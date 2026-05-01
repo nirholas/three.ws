@@ -28,20 +28,15 @@ AFRAME.registerComponent('menu-mode', {
       const mode = item.dataset.mode;
       const name = item.dataset.name;
       this.el.sceneEl.emit('gamemode', mode, false);
-      if (this.data.hasVR) {
-        localStorage.setItem('gameMode', name);
-      }
+      localStorage.setItem('gameMode', name);
       this.setModeOption(name);
     });
   },
 
   update: function () {
-    if (this.data.hasVR) {
-      this.setModeOption(localStorage.getItem('gameMode') || 'punchvr');
-      this.el.sceneEl.emit('gamemode', modeMap[localStorage.getItem('gameMode') || 'punchvr']);
-    } else {
-      this.setModeOption('ride2d');
-    }
+    const stored = localStorage.getItem('gameMode') || 'punchvr';
+    this.setModeOption(stored);
+    this.el.sceneEl.emit('gamemode', modeMap[stored]);
   },
 
   setModeOption: function (name) {
