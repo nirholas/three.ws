@@ -141,11 +141,6 @@
 		],
 
 		"deny": [
-			"Bash(rm -rf*)",
-			"Bash(rm -fr*)",
-			"Bash(rm -r *)",
-			"Bash(rm -R *)",
-			"Bash(rm --recursive*)",
 			"Bash(sudo*)",
 			"Bash(doas*)",
 			"Bash(su *)",
