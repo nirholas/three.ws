@@ -12,8 +12,18 @@
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { sql } from '../_lib/db.js';
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
+import { limits } from '../_lib/rate-limit.js';
+import { parse } from '../_lib/validate.js';
+import { z } from 'zod';
 
-const MAX_BYTES = 16 * 1024; // hard ceiling on prefs blob size
+const MAX_BYTES = 16 * 1024;
+
+const prefsBody = z.object({
+	prefs: z.record(z.unknown()).refine(
+		(v) => JSON.stringify(v).length <= MAX_BYTES,
+		{ message: `prefs exceed ${MAX_BYTES} bytes` },
+	),
+});
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS', credentials: true })) return;
@@ -30,20 +40,14 @@ export default wrap(async (req, res) => {
 	}
 
 	// POST — replace prefs
-	const body = await readJson(req);
-	const prefs = body?.prefs;
-	if (!prefs || typeof prefs !== 'object' || Array.isArray(prefs)) {
-		return error(res, 400, 'validation_error', 'prefs must be an object');
-	}
+	const rl = await limits.prefsWrite(auth.userId);
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
-	const serialized = JSON.stringify(prefs);
-	if (serialized.length > MAX_BYTES) {
-		return error(res, 413, 'payload_too_large', `prefs exceed ${MAX_BYTES} bytes`);
-	}
+	const { prefs } = parse(prefsBody, await readJson(req));
 
 	await sql`
 		INSERT INTO user_prefs (user_id, prefs, updated_at)
-		VALUES (${auth.userId}, ${serialized}::jsonb, now())
+		VALUES (${auth.userId}, ${JSON.stringify(prefs)}::jsonb, now())
 		ON CONFLICT (user_id) DO UPDATE SET
 			prefs = EXCLUDED.prefs,
 			updated_at = now()

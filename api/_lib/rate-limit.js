@@ -72,6 +72,7 @@ export const limits = {
 		getLimiter('oauth:token', { limit: 120, window: '1 m' }).limit(clientId),
 	upload: (userId) => getLimiter('upload', { limit: 60, window: '1 h' }).limit(userId),
 	avatarPatch: (userId) => getLimiter('avatar:patch', { limit: 20, window: '1 h' }).limit(userId),
+	prefsWrite: (userId) => getLimiter('prefs:write', { limit: 30, window: '1 h' }).limit(userId),
 	avatarRollback: (userId) =>
 		getLimiter('avatar:rollback', { limit: 10, window: '1 h' }).limit(userId),
 	chatUser: (userId) => getLimiter('chat:user', { limit: 40, window: '1 m' }).limit(userId),

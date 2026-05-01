@@ -123,9 +123,12 @@ async function callFacilitator(network, path, body) {
 		}
 	}
 	if (!res.ok) {
+		// PayAI returns 400 with { isValid: false } for invalid payments —
+		// pass through so verifyPayment can emit a clean 402 to the caller.
+		if (path === '/verify' && data.isValid === false) return data;
 		throw new X402Error(
 			'facilitator_error',
-			`facilitator ${path} ${res.status}: ${data.error || data.message || text.slice(0, 200)}`,
+			`facilitator ${path} ${res.status}: ${data.error || data.message || data.invalidReason || text.slice(0, 200)}`,
 			502,
 		);
 	}

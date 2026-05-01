@@ -14,6 +14,8 @@ import { captureException } from './_lib/sentry.js';
 import { sql } from './_lib/db.js';
 import { z } from 'zod';
 
+export const maxDuration = 60;
+
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
 const DEFAULT_MODEL = 'claude-sonnet-4-6';
 const DEFAULT_MAX_TOKENS = 1024;
@@ -198,6 +200,7 @@ export default wrap(async (req, res) => {
 				system: buildSystemPrompt(body.context, personaPrompt),
 				messages,
 				tools: ACTION_TOOLS,
+				stream: true,
 			}),
 		});
 	} catch (err) {
@@ -222,9 +225,81 @@ export default wrap(async (req, res) => {
 		return error(res, status, 'upstream_error', `chat backend returned ${upstream.status}`);
 	}
 
-	const data = await upstream.json();
-	const { reply, actions } = normalize(data);
+	res.writeHead(200, {
+		'Content-Type': 'text/event-stream; charset=utf-8',
+		'Cache-Control': 'no-cache, no-transform',
+		'X-Accel-Buffering': 'no',
+	});
+
+	const reader = upstream.body.getReader();
+	const decoder = new TextDecoder();
+	let buf = '';
+	let reply = '';
+	const actions = [];
+	const blocks = {};
+	let inputTokens = 0;
+	let outputTokens = 0;
+
+	function sendSSE(obj) {
+		res.write(`data: ${JSON.stringify(obj)}\n\n`);
+	}
+
+	try {
+		while (true) {
+			const { value, done } = await reader.read();
+			if (done) break;
+			buf += decoder.decode(value, { stream: true });
+			const lines = buf.split('\n');
+			buf = lines.pop();
+			for (const line of lines) {
+				if (!line.startsWith('data: ')) continue;
+				const raw = line.slice(6).trim();
+				if (!raw) continue;
+				let evt;
+				try {
+					evt = JSON.parse(raw);
+				} catch {
+					continue;
+				}
+				if (evt.type === 'message_start') {
+					inputTokens = evt.message?.usage?.input_tokens ?? 0;
+				} else if (evt.type === 'content_block_start') {
+					const cb = evt.content_block;
+					blocks[evt.index] = { type: cb.type, name: cb.name, partialJson: '' };
+				} else if (evt.type === 'content_block_delta') {
+					const block = blocks[evt.index];
+					if (!block) continue;
+					if (evt.delta.type === 'text_delta') {
+						reply += evt.delta.text;
+						sendSSE({ type: 'chunk', text: evt.delta.text });
+					} else if (evt.delta.type === 'input_json_delta') {
+						block.partialJson += evt.delta.partial_json;
+					}
+				} else if (evt.type === 'content_block_stop') {
+					const block = blocks[evt.index];
+					if (block?.type === 'tool_use' && block.partialJson) {
+						try {
+							const input = JSON.parse(block.partialJson);
+							if (ACTION_NAMES.has(block.name)) {
+								actions.push({ type: block.name, ...input });
+							}
+						} catch {}
+					}
+				} else if (evt.type === 'message_delta') {
+					outputTokens = evt.usage?.output_tokens ?? 0;
+				}
+			}
+		}
+	} catch (err) {
+		captureException(err, { route: 'chat', stage: 'stream' });
+		sendSSE({ type: 'error', code: 'stream_error', message: 'stream interrupted' });
+		res.end();
+		return;
+	}
+
 	const latencyMs = Date.now() - started;
+	sendSSE({ type: 'done', reply: reply.trim(), actions, model });
+	res.end();
 
 	recordEvent({
 		userId: auth.userId,
@@ -234,14 +309,12 @@ export default wrap(async (req, res) => {
 		tool: model,
 		latencyMs,
 		meta: {
-			input_tokens: data.usage?.input_tokens,
-			output_tokens: data.usage?.output_tokens,
+			input_tokens: inputTokens,
+			output_tokens: outputTokens,
 			actions: actions.map((a) => a.type),
 			has_context: Boolean(body.context?.modelName),
 		},
 	});
-
-	return json(res, 200, { reply, actions, model });
 });
 
 function buildSystemPrompt(ctx = {}, personaPrompt = null) {
@@ -270,18 +343,6 @@ function buildSystemPrompt(ctx = {}, personaPrompt = null) {
 	return lines.join('\n');
 }
 
-function normalize(data) {
-	let reply = '';
-	const actions = [];
-	for (const block of data.content || []) {
-		if (block.type === 'text') {
-			reply += block.text;
-		} else if (block.type === 'tool_use' && ACTION_NAMES.has(block.name)) {
-			actions.push({ type: block.name, ...(block.input || {}) });
-		}
-	}
-	return { reply: reply.trim(), actions };
-}
 
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);
