@@ -67,7 +67,7 @@
 				}
 			}}
 		>
-			<CompanyLogo model={convo.models[0]} size="w-5 h-5" rounded="rounded" />
+			<CompanyLogo model={convo.models[0]} size="w-8 h-8" rounded="rounded" />
 			<div class="flex items-center gap-x-1.5">
 				<p class="line-clamp-1 text-xs text-slate-700">
 					{formatMultipleModelNames(convo.models, true)}
@@ -118,7 +118,7 @@
 									query = '';
 								}}
 							>
-								<CompanyLogo {model} />
+								<CompanyLogo {model} size="w-7 h-7" rounded="rounded" />
 								<span class="line-clamp-1">{formatModelName(model)}</span>
 								{#if model.modality === 'text->image'}
 									<Icon icon={feImage} class="mt-px h-3 w-3 text-slate-800" />

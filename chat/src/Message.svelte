@@ -169,8 +169,9 @@
 						message.role = 'user';
 					}
 				}}
-				class="flex h-8 w-8 shrink-0 rounded-md md:h-9 md:w-9 md:rounded-[6px] {message.role ===
-				'system'
+				class="shrink-0 rounded-md md:rounded-[6px] {message.role === 'assistant' && hasLogo
+					? 'flex h-16 w-16 md:h-20 md:w-20'
+					: 'flex h-8 w-8 md:h-9 md:w-9'} {message.role === 'system'
 					? 'border border-teal-200 bg-teal-100'
 					: message.role === 'assistant' && !hasLogo
 						? 'border border-teal-200 bg-teal-100 pb-px'
