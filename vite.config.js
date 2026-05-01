@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
-import { readFileSync, cpSync } from 'fs';
+import { readFileSync, cpSync, createReadStream, existsSync, statSync } from 'fs';
 import { VitePWA } from 'vite-plugin-pwa';
 
 // The build emits two targets controlled by the TARGET env var:
@@ -155,6 +155,22 @@ const appConfig = {
 					// /a/<chainId>/<agentId>  or  /a/<chainId>/<registry>/<agentId>
 					else if (!filePath && /^\/a\/[^/]+(?:\/[^/]+){1,2}\/?$/.test(path))
 						filePath = resolve(root, 'app.html');
+					// Serve the rider webpack app as static files.
+					if (path === '/rider' || path === '/rider/') {
+						const html = readFileSync(resolve(root, 'rider/index.html'), 'utf8');
+						res.setHeader('Content-Type', 'text/html; charset=utf-8');
+						return res.end(html);
+					}
+					if (path.startsWith('/rider/')) {
+						const ext = path.split('.').pop().toLowerCase();
+						const mimes = { js: 'application/javascript', map: 'application/json', css: 'text/css', json: 'application/json', html: 'text/html', ogg: 'audio/ogg', mp3: 'audio/mpeg', wav: 'audio/wav', glb: 'model/gltf-binary', gltf: 'model/gltf+json', obj: 'text/plain', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', svg: 'image/svg+xml', woff2: 'font/woff2', woff: 'font/woff', ttf: 'font/ttf' };
+						const fileDisk = resolve(root, path.slice(1));
+						if (existsSync(fileDisk) && statSync(fileDisk).isFile()) {
+							res.setHeader('Content-Type', mimes[ext] || 'application/octet-stream');
+							return createReadStream(fileDisk).pipe(res);
+						}
+						return next();
+					}
 					if (!filePath) return next();
 					try {
 						const html = readFileSync(filePath, 'utf8');
