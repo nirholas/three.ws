@@ -1,5 +1,6 @@
 import { sql } from '../_lib/db.js';
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
+import { logAudit } from '../_lib/audit.js';
 import { cors, json, error, wrap, method } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 
@@ -28,5 +29,11 @@ export default wrap(async (req, res) => {
 
 	if (!row) return error(res, 404, 'not_found', 'API key not found or already revoked');
 
+	logAudit({
+		userId,
+		action: 'revoke_api_key',
+		resourceId: row.id,
+		meta: { via: session ? 'session' : 'bearer' },
+	});
 	return json(res, 200, { data: { id: row.id, revoked: true } });
 });

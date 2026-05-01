@@ -13,6 +13,7 @@ import { verifyMessage, getAddress } from 'ethers';
 import { z } from 'zod';
 import { sql } from '../../_lib/db.js';
 import { getSessionUser } from '../../_lib/auth.js';
+import { logAudit } from '../../_lib/audit.js';
 import { cors, json, method, readJson, wrap, error } from '../../_lib/http.js';
 import { parse } from '../../_lib/validate.js';
 import { parseSiweMessage } from '../../_lib/siwe.js';
@@ -262,6 +263,7 @@ async function handleUnlinkWallet(req, res, address) {
 
 	// 4. Delete the wallet.
 	await sql`delete from user_wallets where user_id = ${session.id} and address = ${addrLower}`;
+	logAudit({ userId: session.id, action: 'unlink_wallet', resourceId: addrLower });
 
 	return json(res, 200, { removed: true });
 }

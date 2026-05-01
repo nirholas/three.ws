@@ -12,6 +12,7 @@ import {
 	stripOwnerFor,
 } from '../_lib/avatars.js';
 import { sql } from '../_lib/db.js';
+import { logAudit } from '../_lib/audit.js';
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
 import { headObject } from '../_lib/r2.js';
 import { limits } from '../_lib/rate-limit.js';
@@ -82,6 +83,12 @@ export default wrap(async (req, res) => {
 	}
 	const ok = await deleteAvatar({ id, userId: auth.userId });
 	if (!ok) return error(res, 404, 'not_found', 'avatar not found or not yours');
+	logAudit({
+		userId: auth.userId,
+		action: 'delete_avatar',
+		resourceId: id,
+		meta: { via: auth.source },
+	});
 	return json(res, 200, { ok: true });
 });
 

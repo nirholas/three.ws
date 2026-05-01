@@ -2,6 +2,7 @@
 
 import { sql } from '../_lib/db.js';
 import { getSessionUser } from '../_lib/auth.js';
+import { logAudit } from '../_lib/audit.js';
 import { cors, json, method, wrap, error } from '../_lib/http.js';
 import { limits } from '../_lib/rate-limit.js';
 
@@ -22,5 +23,11 @@ export default wrap(async (req, res) => {
 		returning id
 	`;
 	if (!rows[0]) return error(res, 404, 'not_found', 'key not found or already revoked');
+	logAudit({
+		userId: user.id,
+		action: 'revoke_api_key',
+		resourceId: rows[0].id,
+		meta: { via: 'session' },
+	});
 	return json(res, 200, { ok: true });
 });

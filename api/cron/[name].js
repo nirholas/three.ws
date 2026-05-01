@@ -324,9 +324,10 @@ function erc8004Truncate(s, max) {
 // index-delegations
 // ═══════════════════════════════════════════════════════════════════════════
 
-const _dmIface = new Interface(DELEGATION_MANAGER_ABI);
-const DISABLED_TOPIC = _dmIface.getEvent('DisabledDelegation').topicHash;
-const REDEEMED_TOPIC = _dmIface.getEvent('RedeemedDelegation').topicHash;
+// Topic hashes are derived from the ABI so they stay in sync with contract changes.
+const dmIface = new Interface(DELEGATION_MANAGER_ABI);
+const DISABLED_TOPIC = dmIface.getEvent('DisabledDelegation').topicHash;
+const REDEEMED_TOPIC = dmIface.getEvent('RedeemedDelegation').topicHash;
 
 // Max blocks per eth_getLogs call. Public RPCs 429 above ~2000.
 const IDX_BLOCK_CAP = 2000;
@@ -338,7 +339,7 @@ const BLOCKS_PER_DAY = {
 	11155111: 7200, // Sepolia ~12 s/block
 };
 
-// Public RPC fallbacks per chain — tried in order. Override primary via env RPC_<chainId>.
+// Public RPC fallbacks per chain — tried in order. Override primary via env RPC_URL_<chainId>.
 const PUBLIC_RPCS = {
 	1: [
 		'https://cloudflare-eth.com',
@@ -458,6 +459,7 @@ async function idxIndexChain(chainId, contract) {
 	let toBlock = latestBlock; // updated each iteration; reflects final processed range
 	let revokedCount = 0;
 	let redeemedCount = 0;
+	let logErrorCount = 0;
 
 	while (fromBlock <= latestBlock) {
 		toBlock = Math.min(fromBlock + IDX_BLOCK_CAP - 1, latestBlock);
@@ -481,33 +483,81 @@ async function idxIndexChain(chainId, contract) {
 			}
 
 			for (const log of logs) {
-				// DisabledDelegation: topics[1]=delegationHash, topics[2]=delegator, topics[3]=delegate
-				// RedeemedDelegation: topics[1]=rootDelegator, topics[2]=redeemer (no delegationHash indexed)
-				const delegationHash =
-					log.topics[0] === DISABLED_TOPIC
-						? log.topics[1]
-						: log.topics[2];
-				const ts = blockTs[log.blockNumber];
+				try {
+					const ts = blockTs[log.blockNumber];
+					const topic = log.topics[0];
 
-				if (log.topics[0] === DISABLED_TOPIC) {
-					const rows = await sql`
-						UPDATE agent_delegations
-						SET status = 'revoked',
-						    revoked_at = ${ts}::timestamptz,
-						    tx_hash_revoke = ${log.transactionHash}
-						WHERE delegation_hash = ${delegationHash} AND status = 'active'
-						RETURNING id
-					`;
-					revokedCount += rows.length;
-				} else {
-					const rows = await sql`
-						UPDATE agent_delegations
-						SET redemption_count = redemption_count + 1,
-						    last_redeemed_at = ${ts}::timestamptz
-						WHERE delegation_hash = ${delegationHash}
-						RETURNING id
-					`;
-					redeemedCount += rows.length;
+					if (topic === DISABLED_TOPIC) {
+						// DisabledDelegation indexes delegationHash as topics[1].
+						const delegationHash = log.topics[1];
+						const rows = await sql`
+							UPDATE agent_delegations
+							SET status = 'revoked',
+							    revoked_at = ${ts}::timestamptz,
+							    tx_hash_revoke = ${log.transactionHash}
+							WHERE delegation_hash = ${delegationHash} AND status = 'active'
+							RETURNING id
+						`;
+						revokedCount += rows.length;
+					} else if (topic === REDEEMED_TOPIC) {
+						// RedeemedDelegation does not index delegationHash. Decode the
+						// non-indexed `delegation` tuple from log.data and defer to the
+						// contract's getDelegationHash() rather than reimplementing the
+						// EIP-712 struct hash locally — provably matches the on-chain
+						// value and survives any future ABI change to the struct.
+						const parsed = dmIface.parseLog({
+							topics: log.topics,
+							data: log.data,
+						});
+						const callData = dmIface.encodeFunctionData('getDelegationHash', [
+							parsed.args.delegation,
+						]);
+						const raw = await idxRpc(urls, 'eth_call', [
+							{ to: contract, data: callData },
+							'latest',
+						]);
+						const [delegationHash] = dmIface.decodeFunctionResult(
+							'getDelegationHash',
+							raw,
+						);
+						const rows = await sql`
+							UPDATE agent_delegations
+							SET redemption_count = redemption_count + 1,
+							    last_redeemed_at = ${ts}::timestamptz
+							WHERE delegation_hash = ${delegationHash}
+							RETURNING id
+						`;
+						redeemedCount += rows.length;
+					} else {
+						// eth_getLogs filter restricts to the two topics above, so this
+						// branch is unreachable under current configuration. Guard
+						// anyway so future filter widening fails loudly in logs
+						// rather than silently miscategorizing events.
+						logErrorCount++;
+						console.warn(
+							JSON.stringify({
+								stage: 'index-delegations',
+								chainId,
+								warning: 'unknown-topic',
+								topic,
+								tx: log.transactionHash,
+							}),
+						);
+					}
+				} catch (err) {
+					// Isolate per-log failures so one bad event doesn't abort the
+					// batch and force a full re-scan on the next tick.
+					logErrorCount++;
+					console.error(
+						JSON.stringify({
+							stage: 'index-delegations',
+							chainId,
+							error: 'log-process-failed',
+							message: err.message || String(err),
+							tx: log.transactionHash,
+							topic: log.topics?.[0],
+						}),
+					);
 				}
 			}
 		}
@@ -524,7 +574,7 @@ async function idxIndexChain(chainId, contract) {
 		fromBlock = toBlock + 1;
 	}
 
-	return { fromBlock: initialFrom, toBlock, revokedCount, redeemedCount };
+	return { fromBlock: initialFrom, toBlock, revokedCount, redeemedCount, logErrorCount };
 }
 
 async function idxRpc(urls, method, params) {

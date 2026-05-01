@@ -14,7 +14,7 @@ import {
 	safeHttpsUrl,
 } from '../render.js';
 import { readMcpPolicyByAvatar } from '../embed-policy.js';
-import { sql } from '../../_lib/db.js';
+import { logAudit } from '../../_lib/audit.js';
 
 function rpcError(code, message, data) {
 	const e = new Error(message);
@@ -237,13 +237,11 @@ export const toolDefs = [
 			}
 			const result = await deleteAvatar({ id: args.id, userId: auth.userId });
 			if (!result) throw new Error('avatar not found or not yours');
-			queueMicrotask(async () => {
-				try {
-					await sql`
-						INSERT INTO audit_log (user_id, action, resource_id)
-						VALUES (${auth.userId}, 'delete_avatar', ${args.id})
-					`;
-				} catch { /* non-fatal */ }
+			logAudit({
+				userId: auth.userId,
+				action: 'delete_avatar',
+				resourceId: args.id,
+				meta: { via: 'mcp' },
 			});
 			return { content: [{ type: 'text', text: `Deleted avatar ${args.id}.` }] };
 		},
