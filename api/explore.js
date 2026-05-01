@@ -18,7 +18,7 @@ import { publicUrl } from './_lib/r2.js';
 import { DEMO_AVATARS } from './_lib/demo-avatars.js';
 
 export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
+	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
 
 	const rl = await limits.publicIp(clientIp(req));
