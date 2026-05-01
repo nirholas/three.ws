@@ -301,6 +301,9 @@ const BASE_STYLE = `
 		background: rgba(255,255,255,0.3);
 	}
 	:host([mode="floating"]) .drag-handle { display: block; }
+	/* Kiosk mode: hide dat.GUI debug controls entirely */
+	:host([kiosk]) .gui-wrap,
+	:host([kiosk]) .gui-toggle { display: none !important; }
 `;
 
 class Agent3DElement extends HTMLElement {

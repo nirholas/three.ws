@@ -2376,7 +2376,9 @@
 				width="220"
 				height="220"
 				background="transparent"
-				style="width:220px;height:220px;border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.18);"
+				kiosk
+				name-plate="off"
+				style="width:220px;height:220px;"
 			></agent-3d>
 		{:else if $talkingHeadEnabled && agentVisible}
 			<TalkingHead bind:this={talkingHead} on:ready={onTalkingHeadReady} avatarUrl={$talkingHeadAvatarUrl || undefined} />
