@@ -309,6 +309,7 @@
 	}
 
 	async function publishSkill() {
+		if (!$currentUser) { publishError = 'Sign in to publish a skill'; return; }
 		publishError = null;
 		validateSchema();
 		if (!schemaValid) {

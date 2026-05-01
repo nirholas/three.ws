@@ -116,3 +116,57 @@ export const playbookPrompts = [
   'Audit GitHub repos for missing CI on default branch',
   'End-of-quarter portfolio review for a VC firm',
 ];
+
+export const gemsPrompts = [
+  'What are the top 10 trending tokens on pump.fun right now?',
+  'Show me the king of the hill token and analyze its bonding curve',
+  'Find tokens launched in the last hour with growing volume',
+  'Which tokens have KOL wallets buying right now?',
+  'List new tokens with strong momentum but low market cap',
+  'Find early gems: high trade velocity, low holder concentration',
+];
+
+export const trackPrompts = [
+  'Show me a live 3D ticker for SOL with current price and 24h change',
+  'Track BTC and render a 30-day 3D price chart',
+  'Get the last 50 trades for pump.fun token [mint address]',
+  'Show me the bonding curve progress for this token: [mint]',
+  'What is the current price, volume, and market cap of ETH?',
+  'Display a 90-day 3D price history for Solana',
+];
+
+export const portfolioPrompts = [
+  'Show my Solana wallet [address] balances as a 3D coin stack',
+  'Check my EVM wallet [0x…] and break down each token in USD',
+  'Visualize my portfolio allocation as a 3D chart',
+  'What are my top 5 holdings by USD value?',
+  'Show all my wallet balances across SOL and ETH',
+  'Check if any of my tokens have rug risk signals',
+];
+
+export const rugcheckPrompts = [
+  'Rug check this token: [paste mint address]',
+  'Analyze the holder distribution — is this token concentrated?',
+  'How much does the dev wallet hold? Any recent dumps?',
+  'Show me the bonding curve — is it near graduation or stalling?',
+  'Check for suspicious trading patterns on this token',
+  'Flag any honeypot signals or locked liquidity issues',
+];
+
+export const chart3dPrompts = [
+  'Show me a 3D price chart for Bitcoin over the last 30 days',
+  'Render a 3D bar chart for Ethereum price history this year',
+  'Display a 90-day 3D chart for Solana',
+  'Show me a 3D chart for the top trending pump.fun token',
+  'Compare SOL price history with a 3D 7-day chart',
+  'Render a 3D price visualization for PEPE over 14 days',
+];
+
+export const scene3dPrompts = [
+  'Make my avatar wave and say hello to everyone',
+  'Build a 3D mascot for my token launch',
+  'Show a 3D flow diagram for this transaction: [signature]',
+  'Import my NFT [mint] into a 3D orbit viewer',
+  'Create a token-gated 3D scene for my NFT holders',
+  'Mint the current 3D scene as a Solana NFT',
+];

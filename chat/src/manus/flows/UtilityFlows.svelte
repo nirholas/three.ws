@@ -9,6 +9,12 @@
     videoPrompts,
     audioPrompts,
     playbookPrompts,
+    gemsPrompts,
+    trackPrompts,
+    portfolioPrompts,
+    rugcheckPrompts,
+    chart3dPrompts,
+    scene3dPrompts,
   } from './utilityFlowData.js';
 </script>
 
@@ -30,4 +36,16 @@
   </p>
 {:else if $mode === 'playbook'}
   <SamplePromptGrid title="Playbook examples" prompts={playbookPrompts} />
+{:else if $mode === 'gems'}
+  <SamplePromptGrid title="Find new gems" prompts={gemsPrompts} />
+{:else if $mode === 'track'}
+  <SamplePromptGrid title="Track a token" prompts={trackPrompts} />
+{:else if $mode === 'portfolio'}
+  <SamplePromptGrid title="Portfolio examples" prompts={portfolioPrompts} />
+{:else if $mode === 'rugcheck'}
+  <SamplePromptGrid title="Rug check examples" prompts={rugcheckPrompts} />
+{:else if $mode === 'chart3d'}
+  <SamplePromptGrid title="3D chart examples" prompts={chart3dPrompts} />
+{:else if $mode === 'scene3d'}
+  <SamplePromptGrid title="3D scene examples" prompts={scene3dPrompts} />
 {/if}
