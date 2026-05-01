@@ -3,6 +3,7 @@
 
 import { cors, json, method, wrap, error } from './_lib/http.js';
 import { env } from './_lib/env.js';
+import { paymentRequirements, X402_VERSION } from './_lib/x402-spec.js';
 
 // ── agent-attestation-schemas ─────────────────────────────────────────────────
 
@@ -67,10 +68,11 @@ function handleOauthProtectedResource(req, res) {
 // ── x402 ─────────────────────────────────────────────────────────────────────
 
 function handleX402(req, res) {
+	const mcpResource = `${env.APP_ORIGIN}/api/mcp`;
+	const accepts = paymentRequirements({ resource: mcpResource, description: 'MCP tool call' });
 	return json(res, 200, {
-		version: 1,
-		resources: ['POST /api/mcp'],
-		schemes: ['solana-pay', 'evm-erc20', 'pump-agent-payments'],
+		x402Version: X402_VERSION,
+		accepts,
 		pump_agent_payments: { prep: '/api/pump/accept-payment-prep', confirm: '/api/pump/accept-payment-confirm', balances: '/api/pump/balances' },
 	}, { 'cache-control': 'public, max-age=300' });
 }

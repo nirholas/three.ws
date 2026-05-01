@@ -173,9 +173,10 @@ async function handleLaunchPrep(req, res) {
 	// 4. Build the launch tx
 	const { Connection, Keypair, PublicKey, Transaction, ComputeBudgetProgram } =
 		await loadSolanaWeb3();
-	const { PumpSdk, getBuyTokenAmountFromSolAmount, BN } = await loadPumpSdk();
+	const { PumpSdk, OnlinePumpSdk, getBuyTokenAmountFromSolAmount, BN } = await loadPumpSdk();
 	const conn = new Connection(rpcUrl(body.cluster), 'confirmed');
-	const sdk = new PumpSdk(conn);
+	const onlineSdk = new OnlinePumpSdk(conn);
+	const sdk = new PumpSdk();
 
 	const mintKeypair = Keypair.generate();
 	const creator = new PublicKey(body.wallet_address);
@@ -188,7 +189,7 @@ async function handleLaunchPrep(req, res) {
 	];
 
 	if (body.initial_buy_sol > 0) {
-		const global = await sdk.fetchGlobal();
+		const global = await onlineSdk.fetchGlobal();
 		const lamports = new BN(Math.floor(body.initial_buy_sol * 1_000_000_000));
 		const tokenAmount = getBuyTokenAmountFromSolAmount({
 			global,
@@ -424,10 +425,10 @@ async function handleLaunchQuote(req, res) {
 	if (q.initial_buy_sol > 0) {
 		try {
 			const { Connection } = await loadSolanaWeb3();
-			const { PumpSdk, getBuyTokenAmountFromSolAmount, BN } = await loadPumpSdk();
+			const { OnlinePumpSdk, getBuyTokenAmountFromSolAmount, BN } = await loadPumpSdk();
 			const conn = new Connection(rpcUrl(q.cluster), 'confirmed');
-			const sdk = new PumpSdk(conn);
-			const global = await sdk.fetchGlobal();
+			const onlineSdk = new OnlinePumpSdk(conn);
+			const global = await onlineSdk.fetchGlobal();
 			const lamports = new BN(Math.floor(q.initial_buy_sol * 1_000_000_000));
 			const tokensOut = getBuyTokenAmountFromSolAmount({
 				global,
