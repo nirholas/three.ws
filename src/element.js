@@ -523,6 +523,7 @@ class Agent3DElement extends HTMLElement {
 			'name-plate',
 			'tracked-mint',
 			'avatar-chat',
+			'avatar-walk',
 		];
 	}
 
@@ -612,6 +613,9 @@ class Agent3DElement extends HTMLElement {
 			this._detachTradeReactions = newVal
 				? attachTradeReactions(this, { mint: newVal })
 				: null;
+		}
+		if (name === 'avatar-walk' && newVal === 'off') {
+			this._stopWalkAnimation();
 		}
 		if (['src', 'manifest', 'body', 'agent-id'].includes(name)) {
 			// Source change — reboot
@@ -748,7 +752,10 @@ class Agent3DElement extends HTMLElement {
 
 			// Walk when the chat is scrolling — user-initiated or auto
 			chat.addEventListener('scroll', () => {
-				if (this.getAttribute('avatar-chat') !== 'off') {
+				if (
+					this.getAttribute('avatar-chat') !== 'off' &&
+					this.getAttribute('avatar-walk') !== 'off'
+				) {
 					this._onStreamChunk();
 				}
 			}, { passive: true });
@@ -1288,6 +1295,7 @@ class Agent3DElement extends HTMLElement {
 				requestAnimationFrame(_nudge);
 			}
 			this._scene = new SceneController(viewer);
+			if (bodyURI) this._scene.playClipByName('idle', { loop: true });
 
 			// Memory
 			this.dispatchEvent(
@@ -1820,7 +1828,7 @@ class Agent3DElement extends HTMLElement {
 
 	// Walk animation: debounced — keeps walking as long as chunks arrive within 600ms of each other.
 	_onStreamChunk() {
-		if (!this._scene || this.getAttribute('avatar-chat') === 'off') return;
+		if (!this._scene || this.getAttribute('avatar-walk') === 'off') return;
 		if (this.hasAttribute('kiosk')) return;
 		const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 		if (!this._isWalking && !prefersReduced) {
@@ -2346,6 +2354,27 @@ class Agent3DElement extends HTMLElement {
 		this.setAttribute('avatar-chat', 'off');
 		this._stopWalkAnimation();
 		this._clearThoughtBubble();
+	}
+
+	/**
+	 * Enable the walk animation during streaming and scrolling.
+	 * This is the default state. Call to re-enable after {@link disableAvatarWalk}.
+	 * @returns {void}
+	 */
+	enableAvatarWalk() {
+		this.removeAttribute('avatar-walk');
+	}
+
+	/**
+	 * Disable the walk animation globally.
+	 * The avatar will stay in its idle or empathy-layer animations even while
+	 * streaming text or scrolling the chat.
+	 * Equivalent to setting the `avatar-walk="off"` attribute.
+	 * @returns {void}
+	 */
+	disableAvatarWalk() {
+		this.setAttribute('avatar-walk', 'off');
+		this._stopWalkAnimation();
 	}
 
 	async installSkill(uri) {
