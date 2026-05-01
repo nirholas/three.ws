@@ -77,6 +77,7 @@ All events are `CustomEvent` with `detail = { type, payload, timestamp, agentId,
 | `load-end`      | `{ uri, error? }`                                         | viewer                   | avatar (concern or celebration)                         |
 | `validate`      | `{ errors, warnings }`                                    | validator                | avatar, identity                                        |
 | `presence`      | `{ state }`                                               | element                  | home                                                    |
+| `interrupted`   | `{}`                                                      | speech.js (TTS cancel)   | avatar (startle + curiosity)                            |
 
 **Identity records these to the backend:** `speak`, `remember`, `sign`, `skill-done`, `validate`, `load-end`. Fire-and-forget via `POST /api/agent-actions`.
 

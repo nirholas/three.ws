@@ -227,7 +227,7 @@ export class Runtime extends EventTarget {
 	}
 
 	pause() {
-		this.tts?.cancel();
+		this.tts?.cancel(protocol);
 		this.stt?.stop();
 	}
 	destroy() {

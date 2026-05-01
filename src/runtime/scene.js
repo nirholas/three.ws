@@ -35,6 +35,9 @@ export class SceneController {
 	get scene() {
 		return this.viewer.scene;
 	}
+	get renderer() {
+		return this.viewer.renderer;
+	}
 	get mixer() {
 		return this._groupMixer || this.viewer.mixer;
 	}

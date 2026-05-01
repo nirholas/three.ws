@@ -209,6 +209,7 @@ export class AgentAvatar {
 		this._sub(ACTION_TYPES.LOAD_START, this._onLoadStart.bind(this));
 		this._sub(ACTION_TYPES.LOAD_END, this._onLoadEnd.bind(this));
 		this._sub(ACTION_TYPES.VALIDATE, this._onValidate.bind(this));
+		this._sub(ACTION_TYPES.INTERRUPTED, this._onInterrupted.bind(this));
 
 		// First-encounter curiosity burst
 		if (this._firstEncounter) {
@@ -452,6 +453,15 @@ export class AgentAvatar {
 			this._injectStimulus('celebration', 0.85);
 			this._playSlot('celebrate', 1.5);
 		}
+	}
+
+	_onInterrupted() {
+		this._triggerOneShot('startle', 0.6);
+		this._emotion.patience = 0;
+		this._injectStimulus('curiosity', 0.5);
+		// Morph impulse — lerps back to emotion-driven values on next tick
+		this._setMorphTarget('browInnerUp', 0.9);
+		this._setMorphTarget('mouthOpen', 0.3);
 	}
 
 	// ── Empathy Layer — The Novel Part ────────────────────────────────────────

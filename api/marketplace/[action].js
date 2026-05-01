@@ -3,6 +3,8 @@
  * ---------------------
  * GET    /api/marketplace/categories
  * GET    /api/marketplace/agents              ?category=&q=&sort=&cursor=
+ * POST   /api/marketplace/agents              — create a new agent
+ * GET    /api/marketplace/agents/mine         — caller's own agents (auth required)
  * GET    /api/marketplace/agents/:id
  * GET    /api/marketplace/agents/:id/versions
  * GET    /api/marketplace/agents/:id/similar
@@ -20,6 +22,7 @@ import { authenticateBearer, extractBearer, getSessionUser } from '../_lib/auth.
 import { cors, error, json, method, readJson, wrap } from '../_lib/http.js';
 import { publicUrl } from '../_lib/r2.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
+import { z } from 'zod';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -42,6 +45,26 @@ const CATEGORIES = [
 
 const SORTS = new Set(['recommended', 'recent', 'popular']);
 
+const createAgentSchema = z.object({
+	name: z.string().trim().min(1, 'name required').max(100),
+	description: z.string().trim().min(1, 'description required').max(500),
+	system_prompt: z.string().trim().min(1, 'system prompt required').max(16000),
+	greeting: z.string().trim().max(1000).nullable().optional(),
+	category: z.enum(CATEGORIES).default('general'),
+	tags: z
+		.array(z.string().trim().toLowerCase().min(1).max(40))
+		.max(12)
+		.default([]),
+	capabilities: z
+		.object({
+			bullets: z.array(z.string().max(200)).max(20).default([]),
+			skills: z.array(z.any()).max(50).default([]),
+			library: z.array(z.any()).max(50).default([]),
+		})
+		.default({}),
+	publish: z.boolean().default(false),
+});
+
 export default wrap(async (req, res) => {
 	const url = new URL(req.url, 'http://x');
 	const parts = url.pathname.split('/').filter(Boolean); // ['api','marketplace',...]
@@ -52,7 +75,12 @@ export default wrap(async (req, res) => {
 	if (head === 'categories') return handleCategories(req, res);
 
 	if (head === 'agents') {
-		if (!id) return handleList(req, res, url);
+		if (!id) {
+			if (req.method === 'POST' || (req.method === 'OPTIONS' && req.headers['access-control-request-method'] === 'POST'))
+				return handleCreate(req, res);
+			return handleList(req, res, url);
+		}
+		if (id === 'mine') return handleMine(req, res);
 		if (!UUID_RE.test(id)) return error(res, 404, 'not_found', 'agent not found');
 		if (!sub) return handleDetail(req, res, id);
 		if (sub === 'versions') return handleVersions(req, res, id);

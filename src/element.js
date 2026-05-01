@@ -15,6 +15,7 @@ import { attachTradeReactions } from './pump/trade-reactions.js';
 import { EmbedActionBridge } from './embed-action-bridge.js';
 import { protocol, ACTION_TYPES } from './agent-protocol.js';
 // END:EMBED_BRIDGES_IMPORT
+import { AgentNotifier } from './agent-notifier.js';
 
 const MODES = ['inline', 'floating', 'section', 'fullscreen'];
 
@@ -349,6 +350,7 @@ class Agent3DElement extends HTMLElement {
 		this._detachTradeReactions = null;
 		this._livekitVoice = null;
 		this._voiceClient = null;
+		this._notifier = null;
 	}
 
 	connectedCallback() {
@@ -1107,6 +1109,9 @@ class Agent3DElement extends HTMLElement {
 
 			this._mounted = true;
 
+			this._notifier = new AgentNotifier(this, protocol);
+			this._notifier.attach();
+
 			// LiveKit realtime voice — connect when voice="livekit" and agent-id is set
 			if (this.getAttribute('voice') === 'livekit' && _backendId) {
 				this._connectLiveKit(_backendId).catch((err) => {
@@ -1576,6 +1581,8 @@ class Agent3DElement extends HTMLElement {
 			this._voiceClient.stop();
 			this._voiceClient = null;
 		}
+		this._notifier?.detach();
+		this._notifier = null;
 		try {
 			this._runtime?.destroy();
 		} catch {}

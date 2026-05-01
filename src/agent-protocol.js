@@ -27,6 +27,7 @@ export const ACTION_TYPES = {
 	PERMISSIONS_REDEEM_START: 'permissions.redeem.start',
 	PERMISSIONS_REDEEM_SUCCESS: 'permissions.redeem.success',
 	PERMISSIONS_REDEEM_ERROR: 'permissions.redeem.error',
+	NOTIFY: 'notify', // avatar walks into frame, delivers a message, retreats
 };
 
 /**
