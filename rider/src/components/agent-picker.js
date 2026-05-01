@@ -7,7 +7,10 @@
 //   { type: 'rider:setAgent', agentId: 'cz' }
 //   { type: 'rider:setAgent', url: 'https://.../foo.glb', name: 'Foo' }
 
-const API_ORIGIN = 'https://three.ws';
+// Goes through webpack-dev-server proxy → three.ws to dodge CORS on
+// non-whitelisted origins (e.g. Codespaces forwarded URLs).
+const API_ORIGIN = '';
+const EXPLORE_PATH = '/threews-api/explore';
 const FALLBACK_AGENTS = [
   { id: 'cz', name: 'CZ', url: 'https://raw.githubusercontent.com/overstepping/-/main/cz.glb' }
 ];
@@ -34,7 +37,7 @@ AFRAME.registerSystem('agent-picker', {
   },
 
   fetchPublicAvatars: function (query = '') {
-    const url = new URL(API_ORIGIN + '/api/explore');
+    const url = new URL(EXPLORE_PATH, window.location.origin);
     url.searchParams.set('only3d', '1');
     url.searchParams.set('limit', '40');
     if (query) url.searchParams.set('q', query);

@@ -24,7 +24,15 @@ module.exports = {
     sockPort: 'location',
     sockHost: process.env.CODESPACE_NAME
       ? `${process.env.CODESPACE_NAME}-3000.${process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN || 'app.github.dev'}`
-      : undefined
+      : undefined,
+    proxy: {
+      '/threews-api': {
+        target: 'https://three.ws',
+        changeOrigin: true,
+        secure: true,
+        pathRewrite: { '^/threews-api': '/api' }
+      }
+    }
   },
   entry: {
     build: './src/index.js',
