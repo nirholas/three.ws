@@ -12,7 +12,6 @@ import { parse } from './_lib/validate.js';
 import { recordEvent } from './_lib/usage.js';
 import { captureException } from './_lib/sentry.js';
 import { sql } from './_lib/db.js';
-import { limits, clientIp } from './_lib/rate-limit.js';
 import { z } from 'zod';
 
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
@@ -160,18 +159,6 @@ export default wrap(async (req, res) => {
 
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in to chat with the agent');
-
-	const ip = clientIp(req);
-	const [rlUser, rlIp] = await Promise.all([
-		limits.chatUser(auth.userId ?? ip),
-		limits.chatIp(ip),
-	]);
-	if (!rlUser.success || !rlIp.success) {
-		const rl = rlUser.success ? rlIp : rlUser;
-		const retryAfter = Math.max(1, Math.ceil((rl.reset - Date.now()) / 1000));
-		res.setHeader('retry-after', String(retryAfter));
-		return error(res, 429, 'rate_limited', 'Too many requests', { retry_after: retryAfter });
-	}
 
 	const body = parse(chatBody, await readJson(req));
 	const model = process.env.CHAT_MODEL || DEFAULT_MODEL;

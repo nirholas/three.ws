@@ -1540,7 +1540,7 @@ class Agent3DElement extends HTMLElement {
 		} catch (err) {
 			console.error('[agent-3d] boot failed', err);
 			this._loadingEl.hidden = true;
-			if (err instanceof AgentResolveError && err.code === 'not-found') {
+			if (err instanceof AgentResolveError && err.code === 'not_found') {
 				const el = document.createElement('div');
 				el.className = 'agent-3d-error';
 				el.textContent = 'Agent not found';

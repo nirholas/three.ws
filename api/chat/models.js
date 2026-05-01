@@ -1,6 +1,5 @@
 import { env } from '../_lib/env.js';
-import { cors, json, method, wrap, error } from '../_lib/http.js';
-import { limits, clientIp } from '../_lib/rate-limit.js';
+import { cors, json, method, wrap } from '../_lib/http.js';
 
 // Cache the fetched model list for 5 minutes to avoid hammering OpenRouter.
 let cachedModels = null;
@@ -9,9 +8,6 @@ let cacheExpiresAt = 0;
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
 	if (!method(req, res, ['GET'])) return;
-
-	const rl = await limits.publicIp(clientIp(req));
-	if (!rl.success) return error(res, 429, 'rate_limited', 'Too many requests — try again shortly');
 
 	if (!env.OPENROUTER_API_KEY)
 		return json(res, 200, { data: [] });

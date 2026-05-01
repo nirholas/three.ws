@@ -89,11 +89,18 @@ Translate fuzzy asks into verifiable goals, but **don't add work that wasn't ask
 
 For multi-step work, hold a short plan internally and execute it. Don't narrate steps you haven't done. Don't ask the user to confirm steps inside an already-approved task.
 
-**Verify before claiming done:**
+**Mandatory pre-ship checklist (non-negotiable — do not skip any step):**
 
-- Code change → run the relevant tests / typecheck / lint.
-- UI change → exercise the path in a browser if possible; if not, say so explicitly.
-- Build/config change → run the build.
+1. `node --check <file>` on every `.js` file you modified. Fix all errors before continuing.
+2. `npm test` — tests must pass. Fix failures before claiming done; never hand back red tests.
+3. For any file inside a subdirectory that has its own `CLAUDE.md` (e.g. `api/`, `chat/`): **read that CLAUDE.md before writing a single line**. Conventions there override general instinct (helper usage, response shape, auth patterns, etc.).
+
+Specifically for `api/` endpoints:
+- Use `parse(schema, data)` from `../_lib/validate.js` — never call `schema.parse(data)` directly.
+- Every import must be verified to exist in the file before shipping.
+- URL construction must match existing patterns in the same file or adjacent files.
+
+If any check fails, fix it in the same turn. Don't report done until everything is green.
 
 If verification fails, fix it. Don't hand back broken work with "tests are failing, want me to look?"
 
@@ -114,11 +121,12 @@ If verification fails, fix it. Don't hand back broken work with "tests are faili
 
 In order, before pinging the user:
 
-1. **Read more code** — the answer is usually in an adjacent file.
-2. **Run the thing** — tests, the script, the build. Real output beats speculation.
-3. **Search history** — `git log -S`, `git blame`, recent commits.
-4. **Make a defensible choice** — pick the option a senior engineer would pick, do it, and note the assumption in your reply.
-5. **Then, and only then, ask.** Ask with a concrete recommendation, not an open question.
+1. **Read the local CLAUDE.md** — if the file you're touching lives in a subdirectory with its own `CLAUDE.md`, read it first. Conventions are documented there.
+2. **Read more code** — the answer is usually in an adjacent file.
+3. **Run the thing** — tests, the script, the build. Real output beats speculation.
+4. **Search history** — `git log -S`, `git blame`, recent commits.
+5. **Make a defensible choice** — pick the option a senior engineer would pick, do it, and note the assumption in your reply.
+6. **Then, and only then, ask.** Ask with a concrete recommendation, not an open question.
 
 ---
 

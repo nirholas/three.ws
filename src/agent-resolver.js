@@ -50,14 +50,14 @@ const _CACHE_MAX = 100;
 /**
  * Resolve an agent ID to its manifest URL via GET /api/agents/:id.
  * Returns null if the agent record has no manifestUrl (caller may fall back to resolveAgentById).
- * Throws AgentResolveError('not-found') on 404.
+ * Throws AgentResolveError('not_found') on 404.
  *
  * @param {string} agentId
  * @param {AbortSignal} [signal]
  * @returns {Promise<string|null>}
  */
 export async function resolveByAgentId(agentId, signal) {
-	if (!agentId) throw new AgentResolveError('not-found', 'agentId required');
+	if (!agentId) throw new AgentResolveError('not_found', 'agentId required');
 
 	if (_resolveCache.has(agentId)) return _resolveCache.get(agentId);
 
@@ -76,7 +76,7 @@ export async function resolveByAgentId(agentId, signal) {
 	}
 
 	if (res.status === 404)
-		throw new AgentResolveError('not-found', `agent ${agentId} not found`, { status: 404 });
+		throw new AgentResolveError('not_found', `agent ${agentId} not found`, { status: 404 });
 	if (res.status === 401 || res.status === 403)
 		throw new AgentResolveError('unauthorized', `unauthorized (${res.status})`, {
 			status: res.status,

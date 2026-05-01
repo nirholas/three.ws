@@ -1,6 +1,5 @@
 import { env } from '../_lib/env.js';
 import { cors, error, json, method, wrap, readJson } from '../_lib/http.js';
-import { limits, clientIp } from '../_lib/rate-limit.js';
 
 const UPGRADE_URL = `${env.APP_ORIGIN}/pricing`;
 
@@ -10,16 +9,6 @@ export default wrap(async (req, res) => {
 
 	if (!env.OPENROUTER_API_KEY)
 		return error(res, 503, 'not_configured', 'Built-in model not available');
-
-	const rl = await limits.chatIp(clientIp(req));
-	if (!rl.success) {
-		const retryAfter = Math.max(1, Math.ceil((rl.reset - Date.now()) / 1000));
-		res.setHeader('retry-after', String(retryAfter));
-		return error(res, 429, 'rate_limited', 'Too many requests — try again shortly', {
-			retryAfter,
-			scope: 'ip',
-		});
-	}
 
 	let body;
 	try {

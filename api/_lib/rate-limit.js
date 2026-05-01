@@ -74,8 +74,8 @@ export const limits = {
 	avatarPatch: (userId) => getLimiter('avatar:patch', { limit: 20, window: '1 h' }).limit(userId),
 	avatarRollback: (userId) =>
 		getLimiter('avatar:rollback', { limit: 10, window: '1 h' }).limit(userId),
-	chatUser: (userId) => getLimiter('chat:user', { limit: 20, window: '1 m' }).limit(userId),
-	chatIp: (ip) => getLimiter('chat:ip', { limit: 40, window: '1 m' }).limit(ip),
+	chatUser: (userId) => getLimiter('chat:user', { limit: 40, window: '1 m' }).limit(userId),
+	chatIp: (ip) => getLimiter('chat:ip', { limit: 60, window: '1 m' }).limit(ip),
 	checkName: (ip) => getLimiter('check-name:ip', { limit: 60, window: '1 m' }).limit(ip),
 	ensResolve: (ip) => getLimiter('ens:resolve:ip', { limit: 60, window: '1 m' }).limit(ip),
 	// Generic public read endpoints (explore, showcase, public agent fetch). 60/min per IP.

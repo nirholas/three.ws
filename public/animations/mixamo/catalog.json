@@ -1,6 +1,6 @@
 {
   "character_id": "403e7206-d314-416a-9ef2-c618e26a8b6e",
-  "generated_at": "2026-05-01T18:32:13.819Z",
+  "generated_at": "2026-05-01T18:45:09.473Z",
   "animations": {
     "c9c72233-b96c-11e4-a802-0aaa78deedf9": {
       "id": "c9c72233-b96c-11e4-a802-0aaa78deedf9",
@@ -15,6 +15,41 @@
       "status": "permanent_fail",
       "http": 400,
       "failed_at": "2026-05-01T18:32:13.819Z"
+    },
+    "c9c6a14d-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c6a14d-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Kneeling In Prayer To Standing Up",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-01T18:32:41.649Z"
+    },
+    "c9c62952-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c62952-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Male Crouch To Stand",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-01T18:33:11.835Z"
+    },
+    "c9c6fa80-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c6fa80-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Hip Hop Dancing Bboy Variation One",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-01T18:34:07.588Z"
+    },
+    "c9c68950-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c68950-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Reaction To Getting Clipped While Walking Unaware",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-01T18:44:39.292Z"
+    },
+    "c9c70794-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c70794-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Showing Frustration After A Loss",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-01T18:45:09.473Z"
     }
   }
 }
