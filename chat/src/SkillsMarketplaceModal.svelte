@@ -228,7 +228,8 @@
 		try {
 			const res = await fetch(`/api/skills/${skill.id}`);
 			if (!res.ok) throw new Error('Failed to load details');
-			detail = await res.json();
+			const data = await res.json();
+			detail = data.skill ?? data;
 			userRating = detail.user_rating ?? null;
 		} catch (e) {
 			notify(e.message, 'error');
