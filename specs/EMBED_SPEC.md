@@ -88,7 +88,20 @@ All on-chain forms resolve through [`src/erc8004/resolver.js`](../src/erc8004/re
 | `height`     | CSS length                                                              | `100%` (inline), `480px` (floating) |                                                   |
 | `scale`      | number                                                                  | `1.0`                               | camera zoom multiplier, independent of pixel size |
 | `responsive`   | boolean                                                                 | on                                  | applies `clamp()`-based mobile shrinking          |
-| `avatar-chat` | `"off"` or absent                                                       | on                                  | Set to `"off"` to disable the inline avatar layout, thought bubble, and walk animation. Restores the original bottom-bar chat layout. |
+| `avatar-chat` | `"off"`                                                                 | on (default)                        | Set to `"off"` to disable the integrated avatar-in-chat layout. In default mode, the avatar is part of the chat flow, walking during streaming and scrolling, and displaying a thought bubble for status and text. |
+
+### Integrated Avatar Chat
+
+The default `avatar-chat` mode provides a rich, embodied interaction:
+- **Walk Animation**: The avatar walks in place while the LLM is thinking or streaming text, and also when the chat is scrolled.
+- **Thought Bubble**: A status bubble appears above the avatar's head, showing "Thinking..." or the live stream of tokens.
+- **Interactive Scene**: Empty space around the avatar remains interactive (orbit/zoom/pan) even while chat is visible.
+- **Auto-Positioning**: The avatar stays anchored to the bottom of the conversation, moving naturally as messages are added.
+
+To disable this and use the legacy bottom-bar layout:
+```html
+<agent-3d avatar-chat="off" src="..."></agent-3d>
+```
 
 ### Identity / chain
 

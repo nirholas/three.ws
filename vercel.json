@@ -821,6 +821,10 @@
 			"dest": "/api/skills/index"
 		},
 		{
+			"src": "/tool_schema",
+			"dest": "/api/tool_schema"
+		},
+		{
 			"src": "/api/(.*)",
 			"dest": "/api/$1"
 		},

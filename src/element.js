@@ -162,10 +162,12 @@ const BASE_STYLE = `
 	/* Transparent window in the chat — avatar canvas shows through here */
 	.avatar-anchor {
 		flex: 0 0 auto;
-		position: relative;
+		position: sticky;
+		bottom: 0;
 		pointer-events: none !important;
-		min-height: 160px;
-		margin: 12px 0;
+		min-height: 180px;
+		margin-top: auto;
+		z-index: 1;
 	}
 	/* Thought bubble — appears above avatar's head while thinking */
 	.thought-bubble {

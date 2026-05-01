@@ -486,6 +486,7 @@
 			convo.messages[i].thinking = false;
 			stopThinkingTimer(i);
 		}
+		talkingHead?.think(false);
 	}
 
 	let rateLimitedUntil = 0;
@@ -580,1883 +581,2415 @@
 		scrollToBottom();
 
 		const i = convo.messages.length - 1;
-
-		if (convo.models[0].modality === 'text->image') {
-			await generateImage(convo, {
-				oncomplete: (resp) => {
-					convo.messages[i].generatedImageUrl = resp.data[0].url;
-					generating = false;
-					saveMessage(convo.messages[i]);
-				},
-			});
-			return;
-		}
-
-		let unexpandedThinkingOnce = false;
-
-		const onupdate = async (chunk) => {
-			if (chunk.error) {
-				convo.messages[i].error = chunk.error.message || chunk.error;
-				saveMessage(convo.messages[i]);
-				handleAbort();
-				return;
-			}
-
-			if (chunk.choices.length === 0) {
-				handleAbort();
-				return;
-			}
-
-			const choice = chunk.choices[0];
-
-			if (convo.messages[i].model.id === 'o1') {
-				convo.messages[i].content = choice.message.content;
-				// Once content starts coming in, we can stop thinking
-				if (convo.messages[i].reasoning && !unexpandedThinkingOnce) {
-					unexpandedThinkingOnce = true;
-					convo.messages[i].thinking = false;
-					stopThinkingTimer(i);
-				}
-				saveMessage(convo.messages[i]);
-				return;
-			}
-
-			if (choice.delta.content) {
-				convo.messages[i].content += choice.delta.content;
-				// Once content starts coming in, we can stop thinking
-				if (convo.messages[i].reasoning && !unexpandedThinkingOnce) {
-					unexpandedThinkingOnce = true;
-					convo.messages[i].thinking = false;
-					convo.messages[i].thoughtsExpanded = false;
-					stopThinkingTimer(i);
-				}
-				saveMessage(convo.messages[i]);
-			}
-
-			// Begin thinking
-			if (choice.delta.reasoning && !convo.messages[i].reasoning) {
-				convo.messages[i].reasoning = true;
-				convo.messages[i].thoughts = '';
-				convo.messages[i].thoughtsExpanded = true;
-				if (!convo.messages[i].thinking && !unexpandedThinkingOnce) {
-					unexpandedThinkingOnce = true;
-					convo.messages[i].thinking = true;
-					startThinkingTimer(i);
-				}
-				saveMessage(convo.messages[i]);
-			}
-
-			// Stream thoughts
-			if (convo.messages[i].reasoning && choice.delta.reasoning) {
-				convo.messages[i].thoughts += choice.delta.reasoning;
-				saveMessage(convo.messages[i]);
-			}
-
-			if (choice.delta.tool_calls) {
-				if (!convo.messages[i].toolcalls) {
-					convo.messages[i].toolcalls = [];
-					saveMessage(convo.messages[i]);
-				}
-
-				for (const tool_call of choice.delta.tool_calls) {
-					let index = tool_call.index;
-					// Watch out! Anthropic tool call indices are 1-based, not 0-based, when message.content is involved.
-					// NOTE: No longer the case for OpenRouter, they've changed this.
-					if (convo.models[0].provider === 'Anthropic' && convo.messages[i].content) {
-						index--;
-						// With thinking, we need to subtract one more:
-						if (convo.messages[i].reasoning) {
-							index--;
-						}
-					}
-
-					if (!convo.messages[i].toolcalls[index]) {
-						convo.messages[i].toolcalls[index] = {
-							id: tool_call.id,
-							name: tool_call.function.name,
-							arguments: '',
-							expanded: true,
-						};
-						if (innerWidth > 1215) {
-							activeToolcall = convo.messages[i].toolcalls[index];
-						}
-					}
-					if (tool_call.function.arguments) {
-						convo.messages[i].toolcalls[index].arguments += tool_call.function.arguments;
-						if (innerWidth > 1215) {
-							activeToolcall = convo.messages[i].toolcalls[index];
-						}
-					}
-					saveMessage(convo.messages[i]);
-				}
-			}
-
-			// Scroll to bottom if we're at or near the bottom of the conversation:
-			if (!autoscrollCanceled) {
-				scrollToBottom();
-			}
-
-			// Check for stoppage:
-			// External tool calls:
-			if (
-				chunk.choices &&
-				(chunk.choices[0].finish_reason === 'stop' ||
-					chunk.choices[0].finish_reason === 'end_turn' ||
-					chunk.choices[0].finish_reason === 'tool_calls')
-			) {
-				generating = false;
-
-				if (convo.messages[i].reasoning) {
-					convo.messages[i].thinking = false;
-					stopThinkingTimer(i);
-				}
-
-				// Toolcall arguments are now finalized, we can parse them:
-				if (convo.messages[i].toolcalls) {
-					let toolPromises = [];
-
-					for (let ti = 0; ti < convo.messages[i].toolcalls.length; ti++) {
-						const toolcall = convo.messages[i].toolcalls[ti];
-
-						try {
-							toolcall.arguments = JSON.parse(toolcall.arguments);
-						} catch (err) {
-							convo.messages[i].error =
-								'Failed to parse tool call arguments: ' + err + toolcall.arguments;
-							saveMessage(convo.messages[i]);
-							return;
-						}
-
-						// Do we have a client-side tool for this? Search all groups.
-						let clientGroup = null, clientToolIndex = -1;
-						for (const g of $toolSchema) {
-							const idx = g.schema?.findIndex(t => t.clientDefinition && t.clientDefinition.name === toolcall.name) ?? -1;
-							if (idx !== -1) { clientGroup = g; clientToolIndex = idx; break; }
-						}
-						if (clientGroup && clientToolIndex !== -1 && convo.tools.includes(toolcall.name)) {
-							const clientTool = clientGroup.schema[clientToolIndex];
-							const AsyncFunction = async function () {}.constructor;
-							// @ts-ignore
-							const clientFn = new AsyncFunction(
-								'args',
-								'choose',
-								clientTool.clientDefinition.body
-							);
-							const promise = clientFn(toolcall.arguments, choose);
-							toolPromises.push(promise);
-						} else {
-							// Otherwise, call server-side tool
-							const promise = (async () => {
-								try {
-									const resp = await fetch(`${$remoteServer.address}/tool`, {
-										method: 'POST',
-										headers: {
-											Authorization: `Basic ${$remoteServer.password}`,
-										},
-										body: JSON.stringify({
-											id: toolcall.id,
-											chat_id: convo.id,
-											name: toolcall.name,
-											arguments: toolcall.arguments,
-										}),
-									});
-									convo.messages[i].toolcalls[ti].finished = true;
-									saveMessage(convo.messages[i]);
-									if (!resp.ok) {
-										throw new Error(`Tool server returned ${resp.status}`);
-									}
-									return JSON.parse(await resp.text());
-								} catch (err) {
-									convo.messages[i].toolcalls[ti].finished = true;
-									saveMessage(convo.messages[i]);
-									return { error: err.message || 'Tool invocation failed' };
-								}
-							})();
-
-							toolPromises.push(promise);
-						}
-					}
-
-					const toolResponses = await Promise.all(toolPromises);
-
-					for (let ti = 0; ti < toolResponses.length; ti++) {
-						const msg = {
-							id: uuidv4(),
-							role: 'tool',
-							toolcallId: convo.messages[i].toolcalls[ti].id,
-							name: convo.messages[i].toolcalls[ti].name,
-							content: toolResponses[ti],
-						};
-						convo.messages.push(msg);
-						convo.messages = convo.messages;
-						saveMessage(msg);
-						saveConversation(convo);
-					}
-
-					submitCompletion();
-				} else {
-					generateTitle();
-				}
-
-				return;
-			}
-		};
-
-		const onabort = (err) => {
-			if (err && typeof err === 'object') {
-				if (err.code === 'payment_required') {
-					const url = err.upgradeUrl || '/pricing';
-					convo.messages[i].error = `Out of credits. [Upgrade your plan](${url}) to keep chatting.`;
-				} else if (err.code === 'rate_limited') {
-					const seconds = err.retryAfter ?? 30;
-					rateLimitedUntil = Date.now() + seconds * 1000;
-					convo.messages[i].error = `Slow down — too many requests. Try again in ${seconds}s.`;
-				} else {
-					convo.messages[i].error = err.message || String(err);
-				}
-				saveMessage(convo.messages[i]);
-			} else if (typeof err === 'string') {
-				convo.messages[i].error = err;
-				saveMessage(convo.messages[i]);
-			}
-			handleAbort();
-		};
-
-		// RAG retrieval
-		if ($activeAgent?.id && db) {
-			try {
-				const lastUserMsg = [...convo.messages].reverse().find((m) => m.role === 'user');
-				if (lastUserMsg?.content) {
-					const { retrieveTopK } = await import('./knowledge.js');
-					const chunks = await retrieveTopK(db, $activeAgent.id, lastUserMsg.content, 3);
-					if (chunks.length > 0) {
-						convo.retrievalContext = chunks.map((c) => c.text).join('\n\n');
-					}
-				}
-			} catch {}
-		}
-
-		complete(convo, onupdate, onabort);
-		delete convo.retrievalContext;
-	}
-
-	function startThinkingTimer(messageIndex) {
-		thinkingStartTime = Date.now();
-		updateThinkingTime(messageIndex);
-		thinkingInterval = setInterval(() => updateThinkingTime(messageIndex), 500);
-	}
-
-	function stopThinkingTimer(messageIndex) {
-		if (thinkingInterval) {
-			clearInterval(thinkingInterval);
-			thinkingInterval = null;
-		}
-		// updateThinkingTime(messageIndex);
-	}
-
-	function updateThinkingTime(messageIndex) {
-		const thinkingTime = (Date.now() - thinkingStartTime) / 1000; // Convert to seconds
-		convo.messages[messageIndex].thinkingTime = thinkingTime;
-		saveMessage(convo.messages[messageIndex]);
-	}
-
-	async function insertSystemPrompt() {
-		const msg = { id: uuidv4(), role: 'system', content: '', editing: true };
-		convo.messages.unshift(msg);
-		convo.messages = convo.messages;
-		await tick();
-		textareaEls[0].focus();
-
-		saveMessage(msg);
-		saveConversation(convo);
-	}
-
-	function cleanShareLink() {
-		const params = new URLSearchParams(window.location.search);
-		if (params.has('s') || params.has('sl')) {
-			window.history.pushState('', document.title, window.location.pathname);
-		}
-	}
-
-	function newConversation() {
-		cleanShareLink();
-		activeToolcall = null;
-
-		// if (convo.messages.length === 0) {
-		// 	historyOpen = false;
-		// 	inputTextareaEl.focus();
-		// 	return;
-		// }
-
-		const existingNewConvo = Object.values(convos).find((convo) => convo.messages.length === 0);
-		if (existingNewConvo) {
-			const oldModels = convo.models;
-			$convoId = existingNewConvo.id;
-			convo = convos[$convoId];
-			convo.models = oldModels;
-
-			historyOpen = false;
-			inputTextareaEl.focus();
-			return;
-		}
-
-		const convoData = {
-			id: uuidv4(),
-			time: Date.now(),
-			models:
-				convo.models.length > 0
-					? [...convo.models]
-					: [models.find((m) => m.id === 'anthropic/claude-3.5-sonnet')],
-			messages: [],
-			versions: {},
-			tools: [],
-			agentId: null,
-		};
-		if ($activeAgent?.preferred_model) {
-			convoData.models = [$activeAgent.preferred_model];
-		}
-		$convoId = convoData.id;
-		convos[convoData.id] = convoData;
-		convo = convoData;
-
-		saveConversation(convo);
-		if ($activeAgent) applyAgentToConvo($activeAgent);
-
-		historyOpen = false;
-		if (innerWidth > 880) {
-			inputTextareaEl.focus();
-		}
-	}
-
-	function switchToAgentConversation(agentId) {
-		if (!db) return;
-		if (!agentId) {
-			const noAgent = Object.values(convos)
-				.filter(c => !c.agentId)
-				.sort((a, b) => b.time - a.time)[0];
-			if (noAgent) {
-				$convoId = noAgent.id;
-				convo = noAgent;
-			} else {
-				newConversation();
-			}
-			return;
-		}
-		const existing = Object.values(convos)
-			.filter(c => c.agentId === agentId)
-			.sort((a, b) => b.time - a.time)[0];
-		if (existing) {
-			$convoId = existing.id;
-			convo = existing;
-			return;
-		}
-		const convoData = {
-			id: uuidv4(),
-			time: Date.now(),
-			models: convo.models.length > 0 ? [...convo.models] : [BUILTIN_MODELS[0]],
-			messages: [],
-			versions: {},
-			tools: [],
-			agentId,
-		};
-		if ($activeAgent?.preferred_model) {
-			convoData.models = [$activeAgent.preferred_model];
-		}
-		$convoId = convoData.id;
-		convos[convoData.id] = convoData;
-		convo = convoData;
-		saveConversation(convo);
-	}
-
-	function applyAgentToConvo(agent) {
-		if (!db) return;
-		if (agent.system_prompt && convo.messages.length === 0) {
-			const sysMsg = { id: uuidv4(), role: 'system', content: agent.system_prompt };
-			convo.messages = [sysMsg];
-			saveMessage(sysMsg);
-		}
-		const nonSystem = convo.messages.filter(m => m.role !== 'system');
-		if (agent.greeting && nonSystem.length === 0) {
-			const greetMsg = { id: uuidv4(), role: 'assistant', content: agent.greeting, generated: true };
-			convo.messages = [...convo.messages, greetMsg];
-			saveMessage(greetMsg);
-		}
-		saveConversation(convo);
-	}
-
-	function onAgentSettingsSave(updatedAgent) {
-		if (!convo) return;
-		const sysIdx = convo.messages.findIndex((m) => m.role === 'system');
-		if (sysIdx !== -1 && updatedAgent.system_prompt) {
-			convo.messages[sysIdx].content = updatedAgent.system_prompt;
-			saveMessage(convo.messages[sysIdx]);
-			saveConversation(convo);
-		} else if (sysIdx === -1 && updatedAgent.system_prompt) {
-			const sysMsg = { id: uuidv4(), role: 'system', content: updatedAgent.system_prompt };
-			convo.messages = [sysMsg, ...convo.messages];
-			saveMessage(sysMsg);
-			saveConversation(convo);
-		}
-	}
-
-	function clearAgentFromConvo() {
-		convo.messages = convo.messages.filter(m => m.role !== 'system' && !m.generated);
-		saveConversation(convo);
-	}
-
-	$: if ($activeAgent !== undefined) {
-		const agentId = $activeAgent?.id ?? null;
-		switchToAgentConversation(agentId);
-		if ($activeAgent) applyAgentToConvo($activeAgent);
-	}
-
-	// Split history at this point:
-	function saveVersion(message, i) {
-		if (!convo.versions) {
-			convo.versions = {};
-		}
-		if (!convo.versions[message.vid]) {
-			convo.versions[message.vid] = [null];
-		}
-		const nullIdx = convo.versions[message.vid].findIndex((v) => v === null);
-		convo.versions[message.vid][nullIdx] = [
-			structuredClone(message),
-			...structuredClone(convo.messages.slice(i + 1)).map((m) => {
-				return {
-					...m,
-					editing: false,
-					pendingContent: '',
-				};
-			}),
-		];
-		convo.versions[message.vid].push(null);
-		saveConversation(convo);
-	}
-
-	function shiftVersion(dir, message, i) {
-		const activeVersionIndex = convo.versions[message.vid].findIndex((v) => v === null);
-		const newVersionIndex = activeVersionIndex + dir;
-
-		convo.versions[message.vid][activeVersionIndex] = convo.messages.slice(i);
-
-		const newMessages = convo.versions[message.vid][newVersionIndex];
-
-		convo.messages = convo.messages.slice(0, i).concat(newMessages);
-
-		convo.versions[message.vid][newVersionIndex] = null;
-
-		saveConversation(convo);
-	}
-
-	function closeSidebars(event) {
-		if (
-			historyOpen &&
-			!event.target.closest('[data-sidebar="history"]') &&
-			!event.target.closest('[data-trigger="history"]')
-		) {
-			historyOpen = false;
-		}
-		if (
-			knobsOpen &&
-			!event.target.closest('[data-trigger="knobs"]') &&
-			!event.target.closest('[data-sidebar="knobs"]')
-		) {
-			knobsOpen = false;
-		}
-	}
-
-	async function shareConversation(event) {
-		event.currentTarget.dispatchEvent(new CustomEvent('flashSuccess'));
-
-		const sharePromise = (async () => {
-			const encoded = await compressAndEncode({
-				models: convo.models,
-				messages: convo.messages,
-			});
-			const longShare = `${window.location.protocol}//${window.location.host}/?s=${encoded}`;
-			if (longShare.length <= 200) return longShare;
-			try {
-				const data = new FormData();
-				data.append('pwd', 'muie_webshiti');
-				data.append('f:1', new Blob([encoded], { type: 'text/plain' }), 'content.txt');
-				const response = await fetch(`https://sync.three.ws`, {
-					method: 'POST',
-					body: data,
-				});
-				if (!response.ok) throw new Error(`HTTP ${response.status}`);
-				const shortenedLink = await response.text();
-				return `${window.location.protocol}//${window.location.host}/?sl=${shortenedLink.split('/').reverse()[1]}`;
-			} catch (e) {
-				console.warn('[share] link shortener unreachable, falling back to long URL:', e?.message || e);
-				return longShare;
-			}
-		})();
-
-		try {
-			const clipboardItem = new ClipboardItem({
-				'text/plain': sharePromise,
-			});
-			await navigator.clipboard.write([clipboardItem]);
-		} catch (err) {
-			await navigator.clipboard.writeText(await sharePromise);
-		}
-	}
-
-	let exportOpen = false;
-
-	function downloadFile(content, filename, type) {
-		const blob = new Blob([content], { type });
-		const url = URL.createObjectURL(blob);
-		const a = document.createElement('a');
-		a.href = url;
-		a.download = filename;
-		a.click();
-		URL.revokeObjectURL(url);
-	}
-
-	function exportConvoAsMarkdown() {
-		exportOpen = false;
-		const lines = [];
-		for (const msg of convo.messages) {
-			if (msg.role === 'system') continue;
-			if (!msg.content && !msg.toolcalls?.length) continue;
-			const role = msg.role === 'user' ? '**You**' : '**Assistant**';
-			let body = msg.content || '';
-			if (msg.toolcalls?.length) {
-				const names = msg.toolcalls.map((tc) => tc.name || 'tool').join(', ');
-				body += (body ? '\n\n' : '') + `*[used tool: ${names}]*`;
-			}
-			lines.push(`${role}\n\n${body}\n\n---\n`);
-		}
-		downloadFile(lines.join('\n'), `conversation-${convo.id.slice(0, 8)}.md`, 'text/markdown');
-	}
-
-	function exportConvoAsJSON() {
-		exportOpen = false;
-		const data = {
-			id: convo.id,
-			time: convo.time,
-			models: convo.models,
-			messages: convo.messages
-				.filter((m) => m.role !== 'system')
-				.map((m) => ({
-					role: m.role,
-					content: m.content,
-					model: m.model,
-					time: m.time,
-				})),
-		};
-		downloadFile(JSON.stringify(data, null, 2), `conversation-${convo.id.slice(0, 8)}.json`, 'application/json');
-	}
-
-	async function restoreConversation(skipGateCheck = false) {
-		const params = new URLSearchParams(window.location.search);
-		const gate = params.get('gate');
-
-		let share;
-		if (params.has('s')) {
-			share = params.get('s');
-		} else if (params.has('sl')) {
-			try {
-				const response = await fetch(`https://sync.three.ws/p/${params.get('sl')}/`);
-				if (!response.ok) throw new Error(`HTTP ${response.status}`);
-				share = await response.text();
-			} catch (e) {
-				console.warn('[share] could not resolve shortened link:', e?.message || e);
-				return false;
-			}
-		}
-		if (!share) {
-			return false;
-		}
-
-		// Token-gate: show wallet verify UI before loading the scene
-		if (gate && !skipGateCheck) {
-			activeGate = { id: gate, s: params.get('s'), sl: params.get('sl') };
-			gateState = 'pending';
-			return false;
-		}
-
-		try {
-			let decoded = await decodeAndDecompress(share);
-			if (Array.isArray(decoded)) {
-				decoded = { name: 'Shared conversation', messages: decoded };
-			}
-			// Handle legacy format
-			if (decoded.model) {
-				decoded.models = [decoded.model];
-				delete decoded.model;
-			}
-			let id = uuidv4();
-			const existingShared = Object.values(convos).find((convo) => convo.shared);
-			if (existingShared) {
-				id = existingShared.id;
-			}
-			const convoData = {
-				id,
-				time: Date.now(),
-				shared: true,
-				models: decoded.models || [],
-				messages: decoded.messages,
-				versions: {},
-				tools: [],
-			};
-			$convoId = convoData.id;
-			convos[convoData.id] = convoData;
-			convo = convoData;
-			return true;
-		} catch (err) {
-			console.error('Error decoding shared conversation:', err);
-		}
-	}
-
-	let models = [...BUILTIN_MODELS];
-
-	let loading = false;
-
-	function initializePWAStyles() {
-		if (
-			innerWidth < 640 &&
-			(window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone)
-		) {
-			document.body.classList.add('standalone');
-		}
-	}
-
-	let installToastMsg = '';
-
-	// Token-gate enforcement state
-	let gateState = null; // null | 'pending' | 'checking' | 'denied'
-	let gateError = '';
-	let activeGate = null; // { id, s, sl }
-
-	async function verifyGate(walletType) {
-		gateState = 'checking';
-		gateError = '';
-		try {
-			// Connect wallet to get address
-			let address, signature;
-			if (walletType === 'solana') {
-				if (!window.solana) throw new Error('No Solana wallet found. Install Phantom or a compatible wallet.');
-				await window.solana.connect();
-				address = window.solana.publicKey.toString();
-			} else {
-				if (!window.ethereum) throw new Error('No EVM wallet found. Install MetaMask or a compatible wallet.');
-				const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-				address = accounts[0];
-			}
-
-			// Phase 1: get nonce message
-			const p1 = await fetch('/api/scene/gate-check', {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ gateId: activeGate.id, walletAddress: address }),
-			});
-			if (!p1.ok) throw new Error('Gate check failed: ' + p1.status + ' ' + await p1.text());
-			const { message } = await p1.json();
-
-			// Sign message
-			if (walletType === 'solana') {
-				({ address, signature } = await signMessageSolana(message));
-			} else {
-				({ address, signature } = await signMessageEVM(message));
-			}
-
-			// Phase 2: verify
-			const p2 = await fetch('/api/scene/gate-check', {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ gateId: activeGate.id, walletAddress: address, signature, message }),
-			});
-			if (!p2.ok) {
-				const body = await p2.json().catch(() => ({}));
-				throw new Error(body.error_description || 'Verification failed');
-			}
-			const { allowed, reason } = await p2.json();
-
-			if (allowed) {
-				gateState = null;
-				activeGate = null;
-				await restoreConversation(true);
-			} else {
-				gateState = 'denied';
-				gateError = reason || 'Access denied.';
-			}
-		} catch (e) {
-			gateState = 'denied';
-			gateError = e.message || 'Wallet verification failed.';
-		}
-	}
-
-	let choiceHandler;
-	async function makeChoice() {
-		return new Promise((resolve) => {
-			choiceHandler = (choice) => {
-				resolve(choice);
-			};
-		});
-	}
-
-	let isChoosing = false;
-	let question = '';
-	let choices = [];
-	let chose = null; // index
-	export async function choose(newQuestion, newChoices) {
-		chose = null;
-		question = newQuestion;
-		choices = newChoices;
-		isChoosing = true;
-
-		if (innerWidth < 1215) {
-			toolcallModalOpen = true;
-			const lastToolMessage = convo.messages[convo.messages.length - 1];
-			const lastToolcall = lastToolMessage.toolcalls[lastToolMessage.toolcalls.length - 1];
-			activeToolcall = lastToolcall;
-		}
-
-		const choseValue = await makeChoice();
-		chose = choices.findIndex((c) => c === choseValue);
-		isChoosing = false;
-
-		if (innerWidth < 1215) {
-			toolcallModalOpen = false;
-			activeToolcall = null;
-		}
-
-		return choseValue;
-	}
-
-	$: window.convo = convo;
-	$: window.saveConversation = saveConversation;
-
-	$: {
-		document.title = $brandConfig.name;
-		document.documentElement.style.setProperty('--accent', $brandConfig.accent_color);
-	}
-
-	function syncRouteFromHash() {
-		const hash = window.location.hash.slice(1) || 'chat';
-		route.set(hash);
-	}
-
-	onMount(async () => {
-		syncRouteFromHash();
-		window.addEventListener('hashchange', syncRouteFromHash);
-
-		// Populate auth state from session cookie
-		await loadCurrentUser();
-
-		// Fetch global brand config from server
-		try {
-			const res = await fetch('/api/chat/config');
-			if (res.ok) {
-				const { data } = await res.json();
-				if (data) brandConfig.set(data);
-			}
-		} catch {}
-
-		// Clear old deprecated local storage data:
-		localStorage.removeItem('tools');
-		localStorage.removeItem('toolSchema');
-		localStorage.removeItem('history');
-		localStorage.removeItem('remoteServerAddress');
-
-		// Populate params with default values, in case of old data:
-		if ($params.messagesContextLimit == null) {
-			$params.messagesContextLimit = 0;
-		}
-		if ($params.reasoningEffort == null) {
-			$params.reasoningEffort = {
-				'low-medium-high': 'high',
-				range: 64000,
-			};
-		}
-
-		// Init client tools with default values
-		if ($toolSchema.length === 0 && !window.localStorage.getItem('initializedClientTools')) {
-			$toolSchema = [...defaultToolSchema, pumpToolSchema];
-			window.localStorage.setItem('initializedClientTools', 'true');
-		} else {
-			// Add pump tool group for existing users who already initialized
-			if (!$toolSchema.some(g => g.name === 'Pump.fun & Crypto')) {
-				$toolSchema = [...$toolSchema, pumpToolSchema];
-			}
-			// Add any missing client tools to the client-side group
-			const clientGroup = $toolSchema.find((g) => g.name === 'Client-side');
-			const defaultClientGroup = defaultToolSchema.find((g) => g.name === 'Client-side');
-			if (clientGroup && defaultClientGroup) {
-				for (const tool of defaultClientGroup.schema) {
-					const existingTool = clientGroup.schema.find(
-						(t) => t?.clientDefinition?.id === tool.clientDefinition.id
-					);
-					if (!existingTool) {
-						clientGroup.schema.push(tool);
-					}
-					// Or if we already have it, but any field differs
-					else {
-						if (JSON.stringify(existingTool) !== JSON.stringify(tool)) {
-							Object.assign(existingTool, tool);
-						}
-					}
-				}
-			}
-		}
-
-		const urlParams = new URLSearchParams(window.location.search);
-		const installId = urlParams.get('install');
-		if (installId) {
-			const pack = curatedToolPacks.find(p => p.id === installId);
-			if (pack) {
-				const alreadyInstalled = $toolSchema.some(g => g.name === pack.name);
-				if (!alreadyInstalled) {
-					$toolSchema = [...$toolSchema, { name: pack.name, schema: pack.schema }];
-					installToastMsg = `Tool pack '${pack.name}' installed.`;
-					setTimeout(() => { installToastMsg = ''; }, 3000);
-				}
-			}
-			const url = new URL(window.location.href);
-			url.searchParams.delete('install');
-			window.history.replaceState({}, '', url.toString());
-		}
-
-		initializePWAStyles();
-
-		// Only probe the local tool server if the user has opted in or clearly
-		// configured it (non-empty password, or non-default address). Otherwise
-		// the probe to localhost:8081 fails noisily for users who haven't
-		// started the helper.
-		const remoteServerConfigured =
-			$remoteServer.password !== '' ||
-			$remoteServer.address !== '';
-		if ($localProvidersEnabled || remoteServerConfigured) {
-			try {
-				tree = await (
-					await fetch(`${$remoteServer.address}/list_directory`, {
-						method: 'GET',
-						headers: {
-							Authorization: `Basic ${$remoteServer.password}`,
-						},
-					})
-				).json();
-			} catch (error) {
-				console.debug(
-					`[tool server] not detected at ${$remoteServer.address} — start it if you want local tools.`
-				);
-			}
-		}
-
-		loading = true;
-
-		// Fetch all free models from the server (no user API key needed) alongside user's provider models
-		const [serverFreeModels, userModels] = await Promise.all([
-			fetch('/api/chat/models')
-				.then((r) => r.json())
-				.then(({ data }) =>
-					(data ?? []).map((m) => ({
-						id: m.id,
-						name: m.name,
-						provider: 'Built-in',
-						modality: 'text->text',
-					}))
-				)
-				.catch(() => []),
-			fetchModels({
-				onFinally: () => {
-					loading = false;
-				},
-			}),
-		]);
-
-		// Merge: server free models first (deduplicated), then user's API-key models
-		const seenIds = new Set(serverFreeModels.map((m) => m.id));
-		models = [...serverFreeModels, ...userModels.filter((m) => !seenIds.has(m.id))];
-
-		// Auto-select default built-in model if no model chosen yet, or if the saved model no longer exists
-		const savedModelStillValid = convo.models?.[0]?.id && models.some((m) => m.id === convo.models[0].id);
-		if (!savedModelStillValid) {
-			const defaultId = $brandConfig.default_model;
-			const defaultModel = models.find((m) => m.id === defaultId) ?? BUILTIN_MODELS[0];
-			if (defaultModel) convo = { ...convo, models: [defaultModel] };
-		}
-	});
-
-	// For displaying compact tools, we need to collapse sequences of Assistant and Tool messages into a single message
-	// inside which we'll display all the tool calls.
-	// Returns a list of ranges of messages containing the start and end indices of messages that should be collapsed.
-	let collapsedRanges = [];
-	$: if (!$config.explicitToolView) {
-		collapsedRanges = [];
-		let range = { starti: null, endi: null };
-		for (let i = convo.messages.length - 1; i >= 0; i--) {
-			if (
-				convo.messages[i].role === 'tool' ||
-				(convo.messages[i].role === 'assistant' &&
-					convo.messages[i].toolcalls &&
-					i !== convo.messages.length - 1)
-			) {
-				if (range.endi === null) {
-					range.endi = i + 1;
-				}
-			} else {
-				if (range.endi !== null) {
-					range.starti = i + 1;
-					collapsedRanges.push(range);
-					collapsedRanges = collapsedRanges;
-					range = { starti: null, endi: null };
-				}
-			}
-		}
-	}
-
-	let savedTime = 0;
-	let video;
-
-	// Floating 3D agent
-	let agentEl;
-	let talkingHead;
-	let talkingHeadReady = false;
-	let pendingSpeak = null;
-	let agentReady = false;
-	let agentPendingSpeak = null;
-	let agentVisible = true;
-	let agentScriptLoaded = false;
-	let agentPickerOpen = false;
-	let showAgentSettings = false;
-
-	// Drag state for the floating agent widget
-	let dragPos = { x: null, y: null };
-	let dragging = false;
-	let dragOffset = { x: 0, y: 0 };
-
-	function onAvatarDragStart(e) {
-		if (e.button !== 0) return;
-		if (e.target.closest('button, input, a, select')) return;
-		e.preventDefault();
-		const rect = e.currentTarget.getBoundingClientRect();
-		dragOffset = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-		dragging = true;
-		window.addEventListener('mousemove', onAvatarDragMove);
-		window.addEventListener('mouseup', onAvatarDragEnd);
-	}
-
-	function onAvatarDragMove(e) {
-		if (!dragging) return;
-		const x = Math.max(0, Math.min(window.innerWidth - 240, e.clientX - dragOffset.x));
-		const y = Math.max(0, Math.min(window.innerHeight - 60, e.clientY - dragOffset.y));
-		dragPos = { x, y };
-	}
-
-	function onAvatarDragEnd() {
-		dragging = false;
-		window.removeEventListener('mousemove', onAvatarDragMove);
-		window.removeEventListener('mouseup', onAvatarDragEnd);
-	}
-
-	$: effectiveAgentId = $localAgentId || $brandConfig.agent_id || '';
-
-	$: if (effectiveAgentId && !agentScriptLoaded) {
-		agentScriptLoaded = true;
-		const s = document.createElement('script');
-		s.type = 'module';
-		s.src = '/agent-3d/latest/agent-3d.js';
-		document.head.appendChild(s);
-	}
-
-	// Expose to client tools
-	$: if (agentEl) window.__threewsAgent = agentEl;
-
-	$: if (agentEl && !agentReady) {
-		agentEl.addEventListener('agent:ready', () => {
-			agentReady = true;
-			agentEl.play('idle', { loop: true }).catch(() => {});
-			if (agentPendingSpeak) {
-				agentEl.speak(agentPendingSpeak);
-				agentPendingSpeak = null;
-			}
-		}, { once: true });
-	}
-
-	$: if (effectiveAgentId) {
-		agentReady = false;
-		agentPendingSpeak = null;
-	}
-
-	// Inject 3D agent tools into schema when an agent is active
-	$: if (effectiveAgentId) {
-		const hasGroup = $toolSchema.some(g => g.name === '3D Agent');
-		if (!hasGroup) $toolSchema = [...$toolSchema, agentToolSchema];
-	}
-
-	function detectEmotion(text) {
-		const t = text.toLowerCase();
-		const scores = { concern: 0, celebration: 0, curiosity: 0, empathy: 0, patience: 0 };
-
-		if (/\b(error|failed|can't|cannot|unable to|unfortunately|issue|problem|broken|doesn't work)\b/.test(t)) scores.concern += 2;
-		if (/\b(sorry|apologize|my mistake|incorrect)\b/.test(t)) scores.concern += 1;
-
-		if (/\b(great|excellent|perfect|congrats|congratulations|amazing|wonderful|fantastic|awesome|well done)\b/.test(t)) scores.celebration += 2;
-		if (/\b(success|worked|solved|fixed|done|completed)\b/.test(t)) scores.celebration += 1;
-
-		if (/\b(interesting|fascinating|curious|wonder|surprising|actually|notably|worth knowing)\b/.test(t)) scores.curiosity += 2;
-		if (/\?/.test(text)) scores.curiosity += 1;
-
-		if (/\b(understand|i see|that makes sense|must be|difficult|hard|tough|challenging|frustrating)\b/.test(t)) scores.empathy += 2;
-		if (/\b(feel|sounds like|i hear you)\b/.test(t)) scores.empathy += 1;
-
-		if (/\b(let me|one moment|working on|processing|calculating|give me a|just a)\b/.test(t)) scores.patience += 2;
-
-		if (/\bcan't wait\b/.test(t)) scores.concern -= 2;
-		if (/\bno problem\b/.test(t)) scores.concern -= 2;
-
-		const top = Object.entries(scores).sort((a, b) => b[1] - a[1])[0];
-		return top[1] >= 2 ? top[0] : null;
-	}
-
-	$: if ($mode !== 'website') websiteCategory.set(null);
-
-	function speakLastMessage() {
-		const last = [...convo.messages].reverse().find((m) => m.role === 'assistant' && m.content);
-		if (!last?.content) return;
-
-		if (agentEl && effectiveAgentId) {
-			if (agentReady) {
-				agentEl.speak(last.content);
-				const emotion = detectEmotion(last.content);
-				if (emotion) setTimeout(() => agentEl?.expressEmotion(emotion), 600);
-			} else {
-				agentPendingSpeak = last.content;
-			}
-		} else if ($talkingHeadEnabled && agentVisible) {
-			if (talkingHeadReady) {
-				const mood = detectEmotion(last.content);
-				if (mood) talkingHead.setMood(mood);
-				talkingHead.speak({ text: last.content, mood: mood || 'neutral' });
-			} else {
-				pendingSpeak = last.content;
-			}
-		}
-
-		if ($ttsEnabled && window.speechSynthesis && !$talkingHeadEnabled) {
-			window.speechSynthesis.cancel();
-			const utt = new SpeechSynthesisUtterance(last.content);
-			window.speechSynthesis.speak(utt);
-		}
-	}
-
-	$: if ($talkingHeadAvatarUrl) {
-		talkingHeadReady = false;
-		pendingSpeak = null;
-	}
-
-	function onTalkingHeadReady() {
-		talkingHeadReady = true;
-		if (pendingSpeak) {
-			talkingHead.speak({ text: pendingSpeak });
-			pendingSpeak = null;
-		}
-	}
-
-	async function generateTitle() {
-		if (convo.title) return;
-		const msgs = convo.messages.filter((m) => m.role === 'user' || m.role === 'assistant');
-		if (msgs.length < 2) return;
-
-		const model = convo.models[0];
-		if (!model?.id) return;
-		const provider = providers.find((p) => p.name === model.provider);
-		if (!provider) return;
-
-		const context = msgs
-			.slice(0, 4)
-			.map((m) => `${m.role}: ${(typeof m.content === 'string' ? m.content : '').slice(0, 300)}`)
-			.join('\n');
-
-		try {
-			const response = await fetch(`${provider.url}${provider.completionUrl}`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					...(model.provider === 'Anthropic'
-						? { 'x-api-key': provider.apiKeyFn(), 'anthropic-version': '2023-06-01' }
-						: { Authorization: `Bearer ${provider.apiKeyFn()}` }),
-				},
-				body: JSON.stringify({
-					model: model.id,
-					stream: false,
-					max_tokens: 20,
-					messages: [
-						{
-							role: 'user',
-							content: `Summarize this conversation in 4-6 words as a title. No quotes, no punctuation.\n\n${context}`,
-						},
-					],
-				}),
-			});
-			if (!response.ok) return;
-			const data = await response.json();
-			const title =
-				data?.choices?.[0]?.message?.content?.trim() || data?.content?.[0]?.text?.trim();
-			if (title) {
-				convo.title = title;
-				saveConversation(convo);
-				convos = { ...convos, [convo.id]: convo };
-			}
-		} catch {
-			// Non-critical, fail silently
-		}
-	}
-
-	let showSkillsMarketplace = false;
-
-	function removeSkill(name) {
-		toolSchema.update(groups => groups.filter(g => g.name !== name));
-	}
-</script>
-
-<svelte:window
-	bind:innerWidth
-	on:touchstart={closeSidebars}
-	on:click={closeSidebars}
-	on:keydown={(event) => {
-		if (
-			event.key === 'Escape' &&
-			generating &&
-			convo.messages.filter((msg) => msg.generated).length > 0
-		) {
-			handleAbort();
-		}
-		if (event.altKey && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
-			const branchedMessages = convo.messages
-				.map((m, idx) => ({ m, idx }))
-				.filter(({ m }) => m.vid && convo.versions?.[m.vid]?.length > 1);
-			if (branchedMessages.length === 0) return;
-			const { m, idx } = branchedMessages[branchedMessages.length - 1];
-			const dir = event.key === 'ArrowLeft' ? -1 : 1;
-			shiftVersion(dir, m, idx);
-			event.preventDefault();
-		}
-	}}
-/>
-
-{#if generating && new URLSearchParams(window.location.search).get('vibe') === 'true'}
-	<video
-		transition:fade={{ duration: 1000 }}
-		src="{import.meta.env.BASE_URL}peace.mp4"
-		class="fixed left-0 top-0 z-[1000] h-screen w-screen object-cover"
-		autoplay
-		loop
-		bind:this={video}
-		on:timeupdate={() => {
-			savedTime = video.currentTime;
-		}}
-		on:loadeddata={() => {
-			if (savedTime > 0) {
-				video.currentTime = savedTime;
-			}
-		}}
-	/>
-{/if}
-
-{#if $route === 'pricing'}
-  <div class="min-h-dvh bg-paper">
-    <div class="sticky top-0 z-[110]"><TopNav /></div>
-    <Pricing />
-  </div>
-{:else if $route === 'signin' || $route === 'signup'}
-  <div class="min-h-dvh bg-paper">
-    <div class="sticky top-0 z-[110]"><TopNav /></div>
-    <AuthPage kind={$route} />
-  </div>
-{:else if $route.startsWith('solutions/') || $route.startsWith('business/')}
-  <div class="min-h-dvh bg-paper">
-    <div class="sticky top-0 z-[110]"><TopNav /></div>
-    <MarketingPage slug={$route} />
-  </div>
-{:else if $route.startsWith('events/')}
-  <div class="min-h-dvh bg-paper overflow-y-auto">
-    <div class="sticky top-0 z-[110]"><TopNav /></div>
-    <EventsPage slug={$route} />
-  </div>
-{:else if $route.startsWith('resources/')}
-  <div class="min-h-dvh bg-paper">
-    <div class="sticky top-0 z-[110]"><TopNav /></div>
-    <ResourcePage slug={$route.slice('resources/'.length)} />
-  </div>
-{:else if $route === 'dashboard/revenue'}
-  <div class="min-h-dvh bg-[#F5F4EF]">
-    <div class="sticky top-0 z-[110]"><TopNav /></div>
-    <RevenueDashboard />
-  </div>
-{:else if $route.startsWith('features/')}
-  <div class="min-h-dvh bg-paper overflow-y-auto">
-    <div class="sticky top-0 z-[110]"><TopNav /></div>
-    <FeaturePage slug={$route.slice('features/'.length)} />
-  </div>
-{:else}
-<main class="flex h-full w-full flex-1 flex-col" class:splitView>
-	{#if $talkingHeadEnabled}
-		<div class="pointer-events-none fixed bottom-0 left-1/2 z-10 h-1/3 w-auto -translate-x-1/2 transform">
-			<TalkingHead
-				bind:this={talkingHead}
-				avatarUrl={$talkingHeadAvatarUrl}
-				on:ready={() => {
-					console.log('head ready');
-				}}
-			/>
-		</div>
-	{/if}
-	<div class="relative flex h-full min-w-0 flex-1">
-		<div
-			class="flex h-full w-full flex-col items-center justify-center {historyOpen ? 'hidden sm:flex' : ''}"
-		>
-			<div class="mb-1 pr-3">
-				<button
-					on:click={newConversation}
-					class="three.ws-btn-primary flex w-full items-center justify-start gap-2 rounded-full px-4 py-2.5"
-				>
-					<span class="text-base font-medium leading-none">+</span>
-					{$t('newChat')}
-				</button>
-			</div>
-			<input
-				type="search"
-				placeholder="Search conversations..."
-				bind:value={searchQuery}
-				class="mx-2 my-2 w-[calc(100%-16px)] rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm outline-none focus:border-indigo-400"
-			/>
-			<ol
-				class="flex list-none flex-col overflow-y-auto pb-3 pr-3 pt-1 scrollbar-invisible scrollbar-slim hover:scrollbar-white"
-			>
-				{#if filteredConvos}
-					{#if filteredConvos.length === 0}
-						<li class="px-3 py-4 text-center text-sm text-slate-400">No conversations found</li>
-					{:else}
-						{#each filteredConvos.sort((a, b) => b.time - a.time) as historyConvo (historyConvo.id)}
-							{@const matchingMsg = historyConvo.messages.find(
-								(m) =>
-									typeof m.content === 'string' &&
-									m.content.toLowerCase().includes(searchQuery.toLowerCase())
-							)}
-							<li class="group relative">
-								<button
-									on:click={() => {
-										handleAbort();
-										historyOpen = false;
-										activeToolcall = null;
-										searchQuery = '';
-										$convoId = historyConvo.id;
-										convo = convos[$convoId];
-										cleanShareLink();
-										tick().then(() => { scrollToBottom(); });
-									}}
-									class="{$convoId === historyConvo.id
-										? 'bg-paper-deep'
-										: ''} flex w-full flex-col rounded-md px-3 py-1.5 text-left text-sm text-ink hover:bg-paper-deep"
-								>
-									<span class="line-clamp-1">
-										{#if historyConvo.agentId}
-											<span class="text-[10px] text-indigo-400 mr-1">[agent]</span>
-										{/if}
-										{historyConvo.title || (historyConvo.messages.length === 0
-											? 'New conversation'
-											: historyConvo.messages
-													.find((m) => m.role === 'user')
-													?.content?.split(' ')
-													.slice(0, 5)
-													.join(' ') || 'New conversation')}
-									</span>
-									{#if matchingMsg}
-										<p class="truncate text-xs text-slate-400">
-											...{matchingMsg.content.slice(
-												Math.max(0, matchingMsg.content.toLowerCase().indexOf(searchQuery.toLowerCase()) - 20),
-												matchingMsg.content.toLowerCase().indexOf(searchQuery.toLowerCase()) + 60
-											)}...
-										</p>
-									{/if}
-								</button>
-								<button
-									on:click={() => {
-										if ($convoId === historyConvo.id) {
-											const newId = Object.values(convos).find(
-												(e) => e.id !== historyConvo.id && !e.shared
-											)?.id;
-											if (!newId) {
-												newConversation();
-											} else {
-												$convoId = newId;
-											}
-										}
-										delete convos[historyConvo.id];
-										convos = convos;
-										deleteConversation(historyConvo);
-									}}
-									class="z-1 absolute right-0 top-0 flex h-full w-12 rounded-br-md rounded-tr-md bg-gradient-to-l {$convoId ===
-									historyConvo.id
-										? 'from-paper-deep'
-										: 'from-paper group-hover:from-paper-deep'} from-65% to-transparent pr-3 transition-opacity sm:from-paper-deep sm:opacity-0 sm:group-hover:opacity-100"
-								>
-									<Icon icon={feTrash} class="m-auto mr-0 h-3 w-3 shrink-0 text-ink-soft" />
-								</button>
-							</li>
-						{/each}
-					{/if}
-				{:else}
-					{#each historyBuckets as { relativeDate, convos: historyConvos } (relativeDate)}
-						<li class="mb-1 ml-3 text-[11px] font-medium text-ink-soft [&:not(:first-child)]:mt-5">
-							{relativeDate}
-						</li>
-						{#each historyConvos as historyConvo (historyConvo.id)}
-							<li class="group relative">
-								{#if editingTitleId === historyConvo.id}
-									<div class="{$convoId === historyConvo.id ? 'bg-paper-deep' : ''} flex h-9 w-full items-center rounded-md px-3">
-										<input
-											class="w-full bg-transparent text-sm text-ink outline-none"
-											bind:value={historyConvo.title}
-											on:blur={() => { saveConversation(historyConvo); convos = { ...convos }; editingTitleId = null; }}
-											on:keydown={(e) => e.key === 'Enter' && e.target.blur()}
-											use:focusOnMount
-										/>
-									</div>
-								{:else}
-									<button
-										on:click={() => {
-											handleAbort();
-
-											historyOpen = false;
-											activeToolcall = null;
-
-											$convoId = historyConvo.id;
-											convo = convos[$convoId];
-
-											cleanShareLink();
-
-											tick().then(() => {
-												scrollToBottom();
-											});
-										}}
-										class="{$convoId === historyConvo.id
-											? 'bg-paper-deep'
-											: ''} flex h-9 w-full items-center rounded-md px-3 text-left text-sm text-ink hover:bg-paper-deep"
-									>
-										<span
-											class="line-clamp-1"
-											on:dblclick|stopPropagation={() => { editingTitleId = historyConvo.id; }}
-										>
-											{historyConvo.title || (historyConvo.messages.length === 0
-												? 'New conversation'
-												: historyConvo.messages
-														.find((m) => m.role === 'user')
-														?.content?.split(' ')
-														.slice(0, 5)
-														.join(' ') || 'New conversation')}
-										</span>
-									</button>
-								{/if}
-								<button
-									on:click={() => {
-										if ($convoId === historyConvo.id) {
-											const newId = Object.values(convos).find(
-												(e) => e.id !== historyConvo.id && !e.shared
-											)?.id;
-											if (!newId) {
-												newConversation();
-											} else {
-												$convoId = newId;
-											}
-										}
-										delete convos[historyConvo.id];
-										convos = convos;
-										deleteConversation(historyConvo);
-									}}
-									class="z-1 absolute right-0 top-0 flex h-full w-12 rounded-br-md rounded-tr-md bg-gradient-to-l {$convoId ===
-									historyConvo.id
-										? 'from-paper-deep'
-										: 'from-paper group-hover:from-paper-deep'} from-65% to-transparent pr-3 transition-opacity sm:from-paper-deep sm:opacity-0 sm:group-hover:opacity-100"
-								>
-									<Icon icon={feTrash} class="m-auto mr-0 h-3 w-3 shrink-0 text-ink-soft" />
-								</button>
-							</li>
-						{/each}
-					{/each}
-				{/if}
-			</ol>
-
-			<div class="settings-trigger-container -ml-3 mt-auto flex pb-3">
-				<button
-					data-trigger="settings"
-					class="mx-3 flex flex-1 items-center gap-x-4 rounded-lg border border-rule px-4 py-3 text-left text-sm font-medium hover:bg-paper-deep"
-					on:click={() => {
-						historyOpen = false;
-					}}
-				>
-					{$t('settings')}
-					<Icon icon={feSettings} class="ml-auto h-4 w-4 text-ink-soft" />
-				</button>
-			</div>
-		</aside>
-		{/if}
-		<div class="flex flex-1 flex-col">
-			<div class="relative hidden items-center px-2 py-2 md:flex">
-				<ModelSelector
-					{convo}
-					{models}
-					on:change={({ detail }) => {
-						convo.models = [detail];
-						saveConversation(convo);
-					}}
-					on:changeMulti={({ detail }) => {
-						if (convo.models.find((m) => m.id === detail.id)) {
-							convo.models = convo.models.filter((m) => m.id !== detail.id);
-						} else {
-							convo.models = [...(convo.models || []), detail];
-						}
-						saveConversation(convo);
-					}}
-					class="!absolute left-1/2 z-[99] -translate-x-1/2"
-				/>
-
-				<button
-					class="ml-auto flex rounded-full p-3 transition-colors hover:bg-gray-100"
-					use:flash
-					on:click={shareConversation}
-				>
-					<Icon icon={feShare} strokeWidth={3} class="m-auto h-4 w-4 text-slate-700" />
-				</button>
-				<div class="relative">
-					<button
-						class="flex rounded-full p-3 transition-colors hover:bg-gray-100 disabled:opacity-40"
-						on:click={() => (exportOpen = !exportOpen)}
-						disabled={convo.messages.length === 0}
-						title="Export conversation"
-					>
-						<Icon icon={feDownload} strokeWidth={3} class="m-auto h-4 w-4 text-slate-700" />
-					</button>
-					{#if exportOpen}
-						<button
-							class="fixed inset-0 z-20 cursor-default"
-							aria-hidden="true"
-							tabindex="-1"
-							on:click={() => (exportOpen = false)}
-						/>
-						<div class="absolute right-0 top-full mt-1 z-30 w-48 rounded-xl border border-[#E5E3DC] bg-white p-1 shadow-pop">
-							<button
-								class="flex h-9 w-full items-center rounded-lg px-3 text-sm font-medium text-[#1A1A1A] hover:bg-[#F5F4EF]"
-								on:click={exportConvoAsMarkdown}
-							>Export as Markdown</button>
-							<button
-								class="flex h-9 w-full items-center rounded-lg px-3 text-sm font-medium text-[#1A1A1A] hover:bg-[#F5F4EF]"
-								on:click={exportConvoAsJSON}
-							>Export as JSON</button>
-						</div>
-					{/if}
-				</div>
-				<button
-					class="relative flex items-center gap-1 rounded-full p-3 transition-colors hover:bg-gray-100"
-					on:click={() => (showSkillsMarketplace = true)}
-					title="Skills Marketplace"
-				>
-					<Icon icon={feGrid} strokeWidth={3} class="m-auto h-4 w-4 text-slate-700" />
-					<span class="hidden sm:inline text-[12px] text-slate-700">Skills</span>
-					{#if $toolSchema.length > 0}
-						<span class="ml-1 rounded-full bg-indigo-500 px-1.5 py-0.5 text-[10px] text-white">{$toolSchema.length}</span>
-					{/if}
-				</button>
-				<button
-					data-trigger="knobs"
-					class="flex rounded-full p-3 transition-colors hover:bg-gray-100"
-					on:click={() => (knobsOpen = !knobsOpen)}
-				>
-					<Icon icon={feSidebar} strokeWidth={3} class="m-auto h-4 w-4 text-slate-700" />
-				</button>
-			</div>
-
-			{#if convo.messages.length === 0}
-				<div class="flex h-full w-full overflow-y-auto">
-					<EmptyState>
-						<svelte:fragment slot="composer">
-							<Composer
-								bind:generating
-								bind:convo
-								{saveMessage}
-								{saveConversation}
-								{submitCompletion}
-								{scrollToBottom}
-								{handleAbort}
-								{tree}
-								bind:inputTextareaEl
-								bind:handleFileDrop
-								placeholder={$mode === 'website' ? 'Describe the website you want to build' : $t('typeMessage')}
-								mode={$mode}
-								modes={[{ id: 'website', label: 'Website' }]}
-								onModeClear={() => mode.set(null)}
-							/>
-						</svelte:fragment>
-						<svelte:fragment slot="chips">
-							{#if $mode === 'website'}
-								<WebsiteFlow />
-							{:else if $mode === 'desktop'}
-								<DesktopFlow />
-							{:else}
-								<SuggestionChips />
-							{/if}
-						</svelte:fragment>
-					</EmptyState>
-				</div>
-			{:else}
-				<div class="flex h-full w-full">
-					<!-- svelte-ignore a11y-no-static-element-interactions -->
-					<div
-						class="{splitView
-							? 'w-[50%]'
-							: 'w-full'} relative max-h-[calc(100vh-49px)] transition-[width] duration-500 ease-in-out"
-						on:dragover={(event) => {
-							event.preventDefault();
-						}}
-						on:drop={handleFileDrop}
-					>
-						<div
-							bind:this={scrollableEl}
-							class="{splitView
-								? 'scrollbar-none'
-								: 'scrollbar-ultraslim'} scrollable flex h-full w-full flex-col overflow-y-auto pb-[128px]"
-							on:scroll={() => {
-								const { scrollTop, scrollHeight, clientHeight } = scrollableEl;
-								if (scrollTop < previousScrollTop) {
-									autoscrollCanceled = true;
-								} else if (scrollHeight - scrollTop - clientHeight <= 5) {
-									autoscrollCanceled = false;
-								}
-								previousScrollTop = scrollTop;
-							}}
-						>
-							<ul
-							class="max-w-[760px] mx-auto w-full px-6 !list-none flex flex-col {splitView ? 'rounded-br-lg border-r' : ''}"
-						>
-								{#each convo.messages as message, i (message.id)}
-									<Message
-										{message}
-										{i}
-										{convo}
-										{generating}
-										{collapsedRanges}
-										{saveMessage}
-										{deleteMessage}
-										{saveVersion}
-										{saveConversation}
-										{shiftVersion}
-										{insertSystemPrompt}
-										{submitCompletion}
-										{isChoosing}
-										{choiceHandler}
-										{question}
-										{choices}
-										bind:chose
-										bind:activeToolcall
-										bind:textareaEls
-										on:rerender={() => {
-											convo.messages = convo.messages;
-										}}
-									/>
-								{/each}
-							</ul>
-						</div>
-
-						<div class="pointer-events-none absolute bottom-[72px] inset-x-0 h-8 z-[98] bg-gradient-to-t from-paper to-transparent" />
-						{#if $toolSchema.length > 0}
-							<div class="flex flex-wrap gap-1.5 px-4 pt-2 pb-0">
-								{#each $toolSchema as group}
-									<span class="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 text-[11px] font-medium text-indigo-700">
-										{group.name}
-										<button
-											class="ml-0.5 rounded-full p-0.5 text-indigo-400 hover:bg-indigo-100 hover:text-indigo-600"
-											on:click={() => removeSkill(group.name)}
-											aria-label="Remove {group.name}"
-										>
-											<Icon icon={feX} class="h-2.5 w-2.5" />
-										</button>
-									</span>
-								{/each}
-								<button
-									class="text-[11px] text-slate-400 hover:text-slate-600"
-									on:click={() => (showSkillsMarketplace = true)}
-								>
-									+ Add skill
-								</button>
-							</div>
-						{/if}
-						<Composer
-							bind:generating
-							bind:convo
-							{saveMessage}
-							{saveConversation}
-							{submitCompletion}
-							{scrollToBottom}
-							{handleAbort}
-							{tree}
-							bind:inputTextareaEl
-							bind:handleFileDrop
-						/>
-					</div>
-
-					{#if splitView}
-						{@const toolresponse = convo.messages.find((msg) => msg.toolcallId === activeToolcall.id)}
-						<div in:fade={{ duration: 500 }} class="w-[50%] p-3.5">
-							<Toolcall
-								toolcall={activeToolcall}
-								{toolresponse}
-								collapsable={false}
-								closeButton
-								bind:chose
-								{isChoosing}
-								{choiceHandler}
-								{question}
-								{choices}
-								class="!rounded-xl"
-								on:close={() => {
-									activeToolcall = null;
-								}}
-							/>
-						</div>
-					{/if}
-				</div>
-			{/if}
-		</div>
-
-		<KnobsSidebar {knobsOpen} {db} />
-	</div>
-</main>
-
-<SettingsModal
-	open={settingsModalOpen}
-	trigger="settings"
-	on:fetchModels={async () => {
-		const fetched = await fetchModels({ onFinally: () => {} });
-		models = [...BUILTIN_MODELS, ...fetched];
-	}}
-	on:disableTool={({ detail: name }) => {
-		convo.tools = convo.tools.filter((n) => n !== name);
-		saveConversation(convo);
-	}}
-/>
-
-<SkillsMarketplaceModal bind:open={showSkillsMarketplace} />
-
-<AgentSettingsModal bind:open={showAgentSettings} onSave={onAgentSettingsSave} />
-
-{#if innerWidth <= 1215 && !$config.explicitToolView}
-	<Modal
-		bind:open={toolcallModalOpen}
-		trigger="toolcall"
-		class="!p-0"
-		buttonClass="hidden"
-		on:close={() => {
-			activeToolcall = null;
-		}}
-	>
-		<Toolcall
-			toolcall={activeToolcall}
-			toolresponse={convo.messages.find((msg) => msg.toolcallId === activeToolcall.id)}
-			collapsable={false}
-			closeButton
-			bind:chose
-			{isChoosing}
-			{choiceHandler}
-			{question}
-			{choices}
-			class="!rounded-xl"
-			on:close={() => {
-				toolcallModalOpen = false;
-				activeToolcall = null;
-			}}
-		/>
-	</Modal>
-{/if}
-
-<Notifications />
-
-{#if installToastMsg}
-	<div transition:fade={{ duration: 200 }} class="fixed bottom-16 left-1/2 z-[200] -translate-x-1/2 rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-800 shadow-md">
-		{installToastMsg}
-	</div>
-{/if}
-
-{#if gateState}
-	<div transition:fade={{ duration: 150 }} class="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-		<div class="mx-4 w-full max-w-sm rounded-2xl bg-white p-8 shadow-2xl">
-			<div class="mb-2 text-2xl font-bold text-slate-900">🔒 Token-Gated Scene</div>
-			<p class="mb-6 text-sm text-slate-600">This 3D scene requires wallet ownership verification to access. Connect your wallet and prove you hold the required token.</p>
-
-			{#if gateState === 'pending'}
-				<div class="flex flex-col gap-3">
-					<button
-						class="flex items-center justify-center gap-2 rounded-xl bg-purple-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-purple-700 active:scale-95"
-						on:click={() => verifyGate('solana')}
-					>
-						<svg class="h-5 w-5" viewBox="0 0 128 128" fill="none"><circle cx="64" cy="64" r="64" fill="#9945FF"/><path d="M86 44H42l14 14h44L86 44zm0 26H42l14 14h44L86 70zM42 84h44l-14 14H28L42 84z" fill="white"/></svg>
-						Verify with Solana Wallet
-					</button>
-					<button
-						class="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 active:scale-95"
-						on:click={() => verifyGate('evm')}
-					>
-						<svg class="h-5 w-5" viewBox="0 0 128 128" fill="none"><circle cx="64" cy="64" r="64" fill="#627EEA"/><path d="M64 20v33l28 12.5L64 20z" fill="white" fill-opacity=".6"/><path d="M64 20L36 65.5l28-12.5V20z" fill="white"/><path d="M64 88v20l28-38.5L64 88z" fill="white" fill-opacity=".6"/><path d="M64 108V88L36 69.5 64 108z" fill="white"/><path d="M64 82.5l28-16.9-28-12.6v29.5z" fill="white" fill-opacity=".2"/><path d="M36 65.5l28 16.9V53l-28 12.5z" fill="white" fill-opacity=".6"/></svg>
-						Verify with EVM Wallet
-					</button>
-				</div>
-			{:else if gateState === 'checking'}
-				<div class="flex flex-col items-center gap-3 py-4">
-					<div class="h-8 w-8 animate-spin rounded-full border-4 border-purple-200 border-t-purple-600"></div>
-					<p class="text-sm text-slate-500">Connecting wallet and verifying…</p>
-				</div>
-			{:else if gateState === 'denied'}
-				<div class="mb-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">
-					<strong>Access denied:</strong> {gateError}
-				</div>
-				<div class="flex flex-col gap-2">
-					<button
-						class="rounded-xl bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-200"
-						on:click={() => { gateState = 'pending'; gateError = ''; }}
-					>Try a different wallet</button>
-				</div>
-			{/if}
-		</div>
-	</div>
-{/if}
-
-{#if true}
-	<!-- svelte-ignore a11y-no-static-element-interactions -->
-	<div
-		class="z-[100] flex flex-col items-start gap-2 select-none"
-		class:cursor-grabbing={dragging}
-		style={dragPos.x !== null
-			? `position: fixed; left: ${dragPos.x}px; top: ${dragPos.y}px;`
-			: 'position: fixed; bottom: 1rem; left: 1rem;'}
-		on:mousedown={onAvatarDragStart}
-		role="none"
-	>
-		{#if agentPickerOpen}
-			<div class="mb-1 w-72 rounded-xl border border-gray-200 bg-white p-3 shadow-xl">
-				<AgentPicker on:pick={(e) => { agentPickerOpen = false; if (!e.detail) clearAgentFromConvo(); }} />
-			</div>
-		{/if}
-
-		{#if effectiveAgentId && agentVisible}
-			<!-- svelte-ignore custom-element-no-implicit-ns -->
-			<agent-3d
-				bind:this={agentEl}
-				agent-id={effectiveAgentId}
-				mode="inline"
-				width="220"
-				height="220"
-				background="transparent"
-				kiosk
-				name-plate="off"
-				style="width:220px;height:220px; cursor: grab;"
-			></agent-3d>
-		{:else if $talkingHeadEnabled && agentVisible}
-			<div style="cursor: grab;">
-				<TalkingHead bind:this={talkingHead} on:ready={onTalkingHeadReady} avatarUrl={$talkingHeadAvatarUrl || undefined} />
-			</div>
-		{/if}
-
-		<div class="flex items-center gap-1.5">
-			<!-- TTS toggle -->
-			<button
-				class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md ring-1 transition hover:bg-gray-50
-					{$ttsEnabled ? 'ring-indigo-400' : 'ring-gray-200'}"
-				title={$ttsEnabled ? 'TTS on — click to mute' : 'TTS off — click to enable voice'}
-				on:click={() => ttsEnabled.update(v => !v)}
-			>
-				<Icon icon={feSpeaker} class="h-3.5 w-3.5 {$ttsEnabled ? 'text-indigo-500' : 'text-slate-400'}" />
-			</button>
-
-			<!-- TalkingHead toggle (when no agent-3d) -->
-			{#if !effectiveAgentId}
-				<button
-					class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md ring-1 transition hover:bg-gray-50
-						{$talkingHeadEnabled ? 'ring-indigo-400' : 'ring-gray-200'}"
-					title={$talkingHeadEnabled ? 'Hide avatar' : 'Show 3D avatar'}
-					on:click={() => {
-						talkingHeadEnabled.update(v => !v);
-						talkingHeadReady = false;
-						pendingSpeak = null;
-					}}
-				>
-					<Icon icon={feCpu} class="h-3.5 w-3.5 {$talkingHeadEnabled ? 'text-indigo-500' : 'text-slate-400'}" />
-				</button>
-			{/if}
-
-			<!-- Agent picker -->
-			<button
-				class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-gray-200 transition hover:bg-gray-50"
-				title="Choose agent avatar"
-				on:click={() => (agentPickerOpen = !agentPickerOpen)}
-			>
-				<Icon icon={feUsers} class="h-3.5 w-3.5 text-slate-600" />
-			</button>
-
-			<!-- Agent settings (only when an agent is active) -->
-			{#if $activeAgent}
-				<button
-					class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-gray-200 transition hover:bg-gray-50"
-					title="Agent settings"
-					on:click={() => (showAgentSettings = true)}
-				>
-					<Icon icon={feSettings} class="h-3.5 w-3.5 text-slate-600" />
-				</button>
-			{/if}
-
-			<!-- Show/hide toggle (when agent-3d is set) -->
-			{#if effectiveAgentId}
-				<button
-					class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-gray-200 transition hover:bg-gray-50"
-					title={agentVisible ? 'Hide agent' : 'Show agent'}
-					on:click={() => (agentVisible = !agentVisible)}
-				>
-					<Icon icon={agentVisible ? feX : feCpu} class="h-3.5 w-3.5 text-slate-600" />
-				</button>
-			{/if}
-		</div>
-	</div>
-{/if}
-{/if}
-
-<style>
-	:global(.standalone .input-floating) {
-		bottom: 32px;
-	}
-	:global(.standalone .scrollable) {
-		padding-bottom: 100px;
-	}
-	:global(.standalone .settings-trigger-container) {
-		padding-bottom: 2.5rem;
-	}
-
-	:global(.markdown.prose :where(p):not(:where([class~='not-prose'], [class~='not-prose'] *))) {
-		margin-top: 0.75rem;
-		margin-bottom: 0.75rem;
-	}
-
-	:global(
-		.markdown.prose
-			:where(.prose > :first-child):not(:where([class~='not-prose'], [class~='not-prose'] *))
-	) {
-		margin-top: 0;
-	}
-
-	:global(
-		.markdown.prose
-			:where(.prose > :last-child):not(:where([class~='not-prose'], [class~='not-prose'] *))
-	) {
-		margin-bottom: 0;
-	}
-
-	:global(.markdown.prose :where(a):not(:where([class~='not-prose'], [class~='not-prose'] *))) {
-		color: #1A1A1A;
-	}
-
-	:global(.markdown.prose :where(pre):not(:where([class~='not-prose'], [class~='not-prose'] *))) {
-		background-color: #EBE8E0;
-		border-color: #E5E3DC;
-	}
-</style>
+		convo.messages[i].thinking = true;
+		startThinkingTimer(i);
+		generating = true;
+		autoscrollCanceled = false;
+		scrollToBottom();
+		talkingHead?.think(true);
+
+		const result = await complete(convo, {
+			controller: $controller,
+			tool: $toolSchema,
+			toolcall: activeToolcall,
+			toolresponse: convo.messages.find((msg) => msg.toolcallId === activeToolcall.id),
+			toolcallId: activeToolcall.id,
+			toolcallIdIndex: i,
+			toolcallIdIndexOffset: 0,
+			toolcallIdIndexOffsetEnd: 0,
+			toolcallIdIndexOffsetStart: 0,
+			toolcallIdIndexOffsetEndOffset: 0,
+			toolcallIdIndexOffsetStartOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,plate="off"
+			toolcallIdIndexOffsetEndOffsetOffset: 0,px;height:220px; cursor: grab;"
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,lkingHeadEnabled && agentVisible}
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,lkingHead} on:ready={onTalkingHeadReady} avatarUrl={$talkingHeadAvatarUrl || undefined} />
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,		<div class="flex items-center gap-1.5">
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,"flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md ring-1 transition hover:bg-gray-50
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,off — click to enable voice'}
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,<Icon icon={feSpeaker} class="h-3.5 w-3.5 {$ttsEnabled ? 'text-indigo-500' : 'text-slate-400'}" />
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,			<!-- TalkingHead toggle (when no agent-3d) -->
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,"flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md ring-1 transition hover:bg-gray-50
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,}
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,ed.update(v => !v);
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,<Icon icon={feCpu} class="h-3.5 w-3.5 {$talkingHeadEnabled ? 'text-indigo-500' : 'text-slate-400'}" />
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,			<!-- Agent picker -->
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,"flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-gray-200 transition hover:bg-gray-50"
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,rOpen = !agentPickerOpen)}
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,<Icon icon={feUsers} class="h-3.5 w-3.5 text-slate-600" />
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,			<!-- Agent settings (only when an agent is active) -->
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,"flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-gray-200 transition hover:bg-gray-50"
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,gentSettings = true)}
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,<Icon icon={feSettings} class="h-3.5 w-3.5 text-slate-600" />
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,			<!-- Show/hide toggle (when agent-3d is set) -->
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,"flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-gray-200 transition hover:bg-gray-50"
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,<Icon icon={agentVisible ? feX : feCpu} class="h-3.5 w-3.5 text-slate-600" />
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,<style>
+			toolcallIdIndexOffsetStartOffsetOffset: 0,l(.standalone .input-floating) {
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,global(.standalone .scrollable) {
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,global(.standalone .settings-trigger-container) {
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,	:global(.markdown.prose :where(p):not(:where([class~='not-prose'], [class~='not-prose'] *))) {
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,em;
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,	:global(
+			toolcallIdIndexOffsetStartOffsetOffset: 0,wn.prose
+			toolcallIdIndexOffsetEndOffsetOffset: 0,> :first-child):not(:where([class~='not-prose'], [class~='not-prose'] *))
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,rgin-top: 0;
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,	:global(
+			toolcallIdIndexOffsetEndOffsetOffset: 0,wn.prose
+			toolcallIdIndexOffsetStartOffsetOffset: 0,> :last-child):not(:where([class~='not-prose'], [class~='not-prose'] *))
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,rgin-bottom: 0;
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,	:global(.markdown.prose :where(a):not(:where([class~='not-prose'], [class~='not-prose'] *))) {
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,	:global(.markdown.prose :where(pre):not(:where([class~='not-prose'], [class~='not-prose'] *))) {
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,style>
+			toolcallIdIndexOffsetStartOffsetOffset: 0,			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			toolcallIdIndexOffsetStartOffsetOffset: 0,
+			toolcallIdIndexOffsetEndOffsetOffset: 0,
+			tool
