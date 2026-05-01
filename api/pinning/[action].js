@@ -159,6 +159,64 @@ export default wrap(async (req, res) => {
 		});
 	}
 
+	if (action === 'unpin') {
+		if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
+		if (!method(req, res, ['POST'])) return;
+
+		const session = await getSessionUser(req);
+		const bearer = session ? null : await authenticateBearer(extractBearer(req));
+		if (!session && !bearer)
+			return error(res, 401, 'unauthorized', 'sign in or provide a valid bearer token');
+		const userId = session?.id ?? bearer.userId;
+
+		const rl = await limits.pinUser(userId);
+		if (!rl.success) return error(res, 429, 'rate_limited', 'pinning rate exceeded (30/hour)');
+
+		const body = await readJson(req);
+		const cid = String(body?.cid || '').trim();
+		if (!cid || !CID_RE.test(cid)) {
+			return error(res, 400, 'validation_error', 'cid is required and must be alphanumeric');
+		}
+
+		// Only unpin pins owned by this user; resolves provider from the row.
+		await ensurePinsTable();
+		const [row] = await sql`
+			select id, provider from pins
+			where user_id = ${userId} and cid = ${cid}
+			limit 1
+		`;
+		if (!row) return error(res, 404, 'not_found', 'pin not found');
+
+		if (row.provider === 'pinata') {
+			const jwt = process.env.PINATA_JWT;
+			if (!jwt) {
+				return error(
+					res,
+					503,
+					'pinning_unconfigured',
+					'PINATA_JWT not set; cannot unpin from pinata',
+				);
+			}
+			const resp = await fetch(`https://api.pinata.cloud/pinning/unpin/${cid}`, {
+				method: 'DELETE',
+				headers: { Authorization: `Bearer ${jwt}` },
+			});
+			// Pinata returns 200 on success; treat 404 (already gone) as idempotent success.
+			if (!resp.ok && resp.status !== 404) {
+				const detail = await resp.text().catch(() => '');
+				return error(res, 502, 'unpin_failed', `pinata error ${resp.status}`, { detail });
+			}
+		} else if (row.provider === 'web3.storage') {
+			// web3.storage has no first-class unpin endpoint — pins expire via their
+			// own lifecycle. Nothing to call upstream; just drop the local row.
+		} else {
+			return error(res, 400, 'validation_error', `unknown provider: ${row.provider}`);
+		}
+
+		await sql`delete from pins where id = ${row.id}`;
+		return json(res, 200, { ok: true, cid, provider: row.provider });
+	}
+
 	if (action === 'status') {
 		if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
 		if (!method(req, res, ['GET'])) return;
