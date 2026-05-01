@@ -29,9 +29,14 @@ const args = Object.fromEntries(
 	}),
 );
 
-const CONCURRENCY = Number(args.concurrency) || 3;
+const CONCURRENCY = Number(args.concurrency) || 1;
 const MAX_DOWNLOADS = args.limit ? Number(args.limit) : Infinity;
 const CHARACTER_ID = args.character || Y_BOT_ID;
+
+// Global cooldown — when one worker hits 429, all workers wait until this timestamp.
+let globalCooldownUntil = 0;
+const RATE_LIMIT_BASE_MS = 30_000;
+const RATE_LIMIT_MAX_MS = 300_000;
 
 // ── Token loading (env or .env.local) ─────────────────────────────────────
 function loadToken() {
@@ -86,8 +91,37 @@ const slugify = (s) =>
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+async function waitForCooldown() {
+	while (Date.now() < globalCooldownUntil) {
+		await sleep(Math.min(2000, globalCooldownUntil - Date.now()));
+	}
+}
+
+function triggerCooldown(retryAfterSec, attempt) {
+	const explicit = retryAfterSec ? Number(retryAfterSec) * 1000 : 0;
+	const backoff = Math.min(RATE_LIMIT_BASE_MS * 2 ** attempt, RATE_LIMIT_MAX_MS);
+	const wait = Math.max(explicit, backoff);
+	const until = Date.now() + wait;
+	if (until > globalCooldownUntil) {
+		globalCooldownUntil = until;
+		console.log(`⏸  Rate limited — pausing ${(wait / 1000).toFixed(0)}s`);
+	}
+}
+
+// fetch wrapper with 429 backoff and 401/403 hard-fail.
+async function rlFetch(url, init = {}, attempt = 0) {
+	await waitForCooldown();
+	const res = await fetch(url, init);
+	if (res.status === 429) {
+		triggerCooldown(res.headers.get('retry-after'), attempt);
+		if (attempt >= 6) throw new Error('429 (max retries)');
+		return rlFetch(url, init, attempt + 1);
+	}
+	return res;
+}
+
 async function api(path, init = {}) {
-	const res = await fetch(`${API}${path}`, { ...init, headers: { ...headers, ...init.headers } });
+	const res = await rlFetch(`${API}${path}`, { ...init, headers: { ...headers, ...init.headers } });
 	if (!res.ok) {
 		const body = await res.text().catch(() => '');
 		throw new Error(`HTTP ${res.status} ${path} ${body.slice(0, 200)}`);
@@ -119,12 +153,16 @@ async function listAllAnimations() {
 async function downloadOne(product) {
 	const slug = slugify(product.description || product.name || product.id);
 	const fbxPath = join(OUT_DIR, `${slug}.fbx`);
+	const existing = catalog.animations[product.id];
 
-	if (catalog.animations[product.id]?.file && existsSync(join(OUT_DIR, catalog.animations[product.id].file))) {
-		return { skipped: true, slug };
+	if (existing?.file && existsSync(join(OUT_DIR, existing.file))) {
+		return { skipped: true, slug, reason: 'already-downloaded' };
+	}
+	if (existing?.status === 'permanent_fail') {
+		return { skipped: true, slug, reason: 'permanent-fail' };
 	}
 
-	const exportRes = await fetch(`${API}/animations/export`, {
+	const exportRes = await rlFetch(`${API}/animations/export`, {
 		method: 'POST',
 		headers,
 		body: JSON.stringify({
@@ -134,7 +172,20 @@ async function downloadOne(product) {
 			preferences: { format: 'fbx7', skin: 'false', fps: '30', reducekf: '0' },
 		}),
 	});
-	if (!exportRes.ok) throw new Error(`export ${exportRes.status}`);
+	if (!exportRes.ok) {
+		const status = exportRes.status;
+		if (status === 400 || status === 404) {
+			catalog.animations[product.id] = {
+				id: product.id,
+				name: product.description || product.name,
+				status: 'permanent_fail',
+				http: status,
+				failed_at: new Date().toISOString(),
+			};
+			saveCatalog();
+		}
+		throw new Error(`export ${status}`);
+	}
 
 	let downloadUrl = null;
 	for (let i = 0; i < POLL_MAX_ATTEMPTS; i++) {
@@ -150,7 +201,7 @@ async function downloadOne(product) {
 	}
 	if (!downloadUrl) throw new Error('poll timeout');
 
-	const fileRes = await fetch(downloadUrl);
+	const fileRes = await rlFetch(downloadUrl);
 	if (!fileRes.ok) throw new Error(`download ${fileRes.status}`);
 	const buf = Buffer.from(await fileRes.arrayBuffer());
 	writeFileSync(fbxPath, buf);
@@ -161,6 +212,7 @@ async function downloadOne(product) {
 		file: `${slug}.fbx`,
 		bytes: buf.length,
 		downloaded_at: new Date().toISOString(),
+		status: 'completed',
 	};
 	saveCatalog();
 
@@ -183,10 +235,11 @@ async function runPool(products) {
 				const result = await downloadOne(product);
 				if (result.skipped) {
 					skipped++;
-					console.log(`${label} ⏭  ${result.slug} (already downloaded)`);
+					console.log(`${label} ⏭  ${result.slug} (${result.reason})`);
 				} else {
 					ok++;
 					console.log(`${label} ✅ ${result.slug} (${(result.bytes / 1024).toFixed(0)} KB)`);
+					await sleep(500);
 				}
 			} catch (err) {
 				fail++;
