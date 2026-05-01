@@ -13,6 +13,7 @@ export const SLOTS = [
 	'bow',
 	'point',
 	'shrug',
+	'fidget',
 ];
 
 export const DEFAULT_ANIMATION_MAP = {
@@ -26,6 +27,7 @@ export const DEFAULT_ANIMATION_MAP = {
 	bow: 'sitclap',
 	point: 'reaction',
 	shrug: 'defeated',
+	fidget: 'Fidget',
 };
 
 /**

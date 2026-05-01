@@ -1,4 +1,5 @@
 import {
+	AudioListener,
 	AxesHelper,
 	Box3,
 	Cache,
@@ -109,6 +110,9 @@ export class Viewer {
 		this.defaultCamera = new PerspectiveCamera(fov, aspect, 0.01, 1000);
 		this.activeCamera = this.defaultCamera;
 		this.scene.add(this.defaultCamera);
+
+		this.audioListener = new AudioListener();
+		this.defaultCamera.add(this.audioListener);
 
 		this.renderer = window.renderer = new WebGLRenderer({ antialias: true, alpha: true });
 		this.renderer.setClearColor(0x000000, 1);
@@ -1525,6 +1529,11 @@ export class Viewer {
 			this.renderer.domElement?.remove();
 			if (window.renderer === this.renderer) window.renderer = null;
 			this.renderer = null;
+		}
+
+		if (this.audioListener) {
+			this.defaultCamera?.remove(this.audioListener);
+			this.audioListener = null;
 		}
 
 		this.scene = null;

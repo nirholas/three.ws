@@ -197,6 +197,12 @@ export class ElevenLabsTTS {
 		this._mediaSourceURL = null; // for revocation
 		this._onEnd = null; // pending resolve
 		this._lipsync = null;
+		this._positionalAudio = null; // THREE.PositionalAudio, optional
+	}
+
+	/** @param {import('three').PositionalAudio|null} pa */
+	setPositionalAudio(pa) {
+		this._positionalAudio = pa;
 	}
 
 	async speak(text, { onStart, onEnd, scene } = {}) {
@@ -314,6 +320,21 @@ export class ElevenLabsTTS {
 		return this._speaking;
 	}
 
+	// ── Internal: spatial audio wiring ────────────────────────────────────
+
+	_connectPositionalAudio(audioEl) {
+		const pa = this._positionalAudio;
+		if (!pa) return;
+		// Disconnect any previous MediaElementSource from this PositionalAudio
+		try { pa.source?.disconnect(); } catch {}
+		// Wire the new element through the spatial panner already set up by Three.js:
+		// MediaElementSource → panner → audio.gain → listener.gain → context.destination
+		pa.source = pa.context.createMediaElementSource(audioEl);
+		pa.source.connect(pa.panner);
+		// Resume context if suspended — required until first user interaction
+		if (pa.context.state === 'suspended') pa.context.resume().catch(() => {});
+	}
+
 	// ── Internal: streaming via MediaSource ────────────────────────────────
 
 	_playStreamingMSE(stream, onStart, onError) {
@@ -326,6 +347,8 @@ export class ElevenLabsTTS {
 		audio.addEventListener('playing', onStart, { once: true });
 		audio.addEventListener('ended', () => this._onEnd?.(), { once: true });
 		audio.addEventListener('error', () => onError?.(), { once: true });
+
+		this._connectPositionalAudio(audio);
 
 		ms.addEventListener('sourceopen', async () => {
 			let sb;

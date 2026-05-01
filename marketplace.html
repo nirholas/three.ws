@@ -165,54 +165,129 @@
 				</div>
 			</section>
 
-			<!-- Tools tab -->
+			<!-- Plugins tab -->
 			<section class="market-tools" id="market-tools" hidden>
-				<header class="market-topbar">
-					<h2 class="market-tools-title">Tool Packs</h2>
+				<header class="market-topbar plugins-topbar">
+					<div class="plugins-header-row">
+						<h2 class="market-tools-title">Plugins</h2>
+						<button class="plugin-add-url-btn" id="plugin-add-url">+ Add by URL</button>
+					</div>
+					<input
+						id="plugin-search"
+						type="search"
+						placeholder="Search plugins…"
+						autocomplete="off"
+					/>
 				</header>
-				<div class="market-tools-grid">
-					<div class="tool-pack-card">
-						<div class="head">
-							<div class="avatar">◈</div>
-							<div style="min-width:0;flex:1">
-								<div class="title">TradingView Charts</div>
-								<div class="author">1 tool</div>
-							</div>
+				<div class="market-body">
+					<aside class="market-cats" id="plugin-cats" aria-label="Plugin Categories"></aside>
+					<div style="flex:1;min-width:0">
+						<div class="plugin-grid" id="plugin-grid">
+							<div class="market-empty">Loading…</div>
 						</div>
-						<div class="desc">Live candlestick charts for any crypto or stock symbol</div>
-						<!-- TODO: wire up install handler in Svelte chat app -->
-						<a class="tool-install-btn" href="/chat?install=tradingview">Add to chat</a>
-					</div>
-
-					<div class="tool-pack-card">
-						<div class="head">
-							<div class="avatar">⊕</div>
-							<div style="min-width:0;flex:1">
-								<div class="title">Web Search</div>
-								<div class="author">1 tool</div>
-							</div>
+						<div class="market-loadmore">
+							<button id="plugin-loadmore" hidden>Load more</button>
 						</div>
-						<div class="desc">Search the web and return top results inline</div>
-						<!-- TODO: wire up install handler in Svelte chat app -->
-						<a class="tool-install-btn" href="/chat?install=web-search">Add to chat</a>
-					</div>
-
-					<div class="tool-pack-card">
-						<div class="head">
-							<div class="avatar">◷</div>
-							<div style="min-width:0;flex:1">
-								<div class="title">Date &amp; Time</div>
-								<div class="author">2 tools</div>
-							</div>
-						</div>
-						<div class="desc">Get current time and timezone in any conversation</div>
-						<!-- TODO: wire up install handler in Svelte chat app -->
-						<a class="tool-install-btn" href="/chat?install=datetime">Add to chat</a>
 					</div>
 				</div>
 			</section>
+
+			<!-- Add by URL modal -->
+			<div class="plugin-modal-overlay" id="plugin-url-modal" hidden aria-modal="true" role="dialog">
+				<div class="plugin-modal">
+					<h3>Add Plugin by URL</h3>
+					<p class="plugin-modal-hint">
+						Paste the URL of a hosted <code>plugin/1.0</code> JSON manifest to add a custom plugin.
+					</p>
+					<input
+						type="url"
+						id="plugin-url-input"
+						class="plugin-url-input"
+						placeholder="https://example.com/my-plugin.json"
+						autocomplete="off"
+					/>
+					<div id="plugin-url-error" class="plugin-url-error" hidden></div>
+					<div class="plugin-modal-preview" id="plugin-url-preview" hidden></div>
+					<div class="plugin-modal-actions">
+						<button id="plugin-url-cancel" class="plugin-modal-btn">Cancel</button>
+						<button id="plugin-url-fetch" class="plugin-modal-btn plugin-modal-btn-primary">Fetch &amp; Validate</button>
+					</div>
+				</div>
+			</div>
 		</main>
 
-		<script type="module" src="/src/marketplace.js"></script>
+		<!-- Submit Agent Modal -->
+	<div class="market-modal-overlay" id="market-submit-overlay" hidden aria-modal="true" role="dialog" aria-labelledby="market-submit-title">
+		<div class="market-modal">
+			<div class="market-modal-head">
+				<h2 id="market-submit-title">Submit an Agent</h2>
+				<button class="market-modal-close" id="market-submit-close" aria-label="Close">×</button>
+			</div>
+
+			<div class="market-modal-import">
+				<button type="button" id="market-import-toggle" class="market-import-btn">Import from JSON ↓</button>
+				<div id="market-import-area" hidden>
+					<textarea id="market-import-json" class="market-json-input" rows="5"
+						placeholder='Paste LobeHub-compatible agent JSON: { "config": { "systemRole": "…" }, "meta": { "title": "…" } }'></textarea>
+					<button type="button" id="market-import-apply" class="market-btn-sec" style="margin-top:6px">Apply JSON</button>
+				</div>
+			</div>
+
+			<form id="market-submit-form" class="market-submit-form" novalidate>
+				<div class="market-field">
+					<label for="sf-name">Name <span class="req">*</span></label>
+					<input id="sf-name" type="text" maxlength="100" placeholder="My Helpful Agent" autocomplete="off" />
+				</div>
+				<div class="market-field">
+					<label for="sf-description">Description <span class="req">*</span></label>
+					<input id="sf-description" type="text" maxlength="500" placeholder="A short description of what this agent does" />
+				</div>
+				<div class="market-field-row">
+					<div class="market-field">
+						<label for="sf-category">Category <span class="req">*</span></label>
+						<select id="sf-category">
+							<option value="">Select…</option>
+							<option value="academic">Academic</option>
+							<option value="career">Career</option>
+							<option value="copywriting">Copywriting</option>
+							<option value="design">Design</option>
+							<option value="education">Education</option>
+							<option value="emotions">Emotions</option>
+							<option value="entertainment">Entertainment</option>
+							<option value="games">Games</option>
+							<option value="general">General</option>
+							<option value="life">Life</option>
+							<option value="marketing">Marketing</option>
+							<option value="office">Office</option>
+							<option value="programming">Programming</option>
+							<option value="translation">Translation</option>
+						</select>
+					</div>
+					<div class="market-field">
+						<label for="sf-tags">Tags <span class="field-hint">(comma-separated)</span></label>
+						<input id="sf-tags" type="text" maxlength="200" placeholder="helpful, writing, code" />
+					</div>
+				</div>
+				<div class="market-field">
+					<label for="sf-prompt">System Prompt <span class="req">*</span></label>
+					<textarea id="sf-prompt" rows="6" maxlength="16000"
+						placeholder="You are a helpful AI assistant specialized in…"></textarea>
+				</div>
+				<div class="market-field">
+					<label for="sf-greeting">Greeting Message</label>
+					<input id="sf-greeting" type="text" maxlength="1000" placeholder="Hello! I'm here to help you with…" />
+				</div>
+
+				<div id="market-submit-error" class="market-form-error" hidden></div>
+
+				<div class="market-submit-actions">
+					<button type="button" id="sf-save-draft" class="market-btn-sec">Save Draft</button>
+					<button type="button" id="sf-publish" class="market-btn-pri">Publish</button>
+				</div>
+			</form>
+		</div>
+	</div>
+
+	<script type="module" src="/src/marketplace.js"></script>
 	</body>
 </html>

@@ -154,6 +154,12 @@ Route definitions are in [chat/src/App.svelte](../../chat/src/App.svelte). Marke
 | `/admin`, `/admin/` | [public/admin/index.html](../../public/admin/index.html) |
 | `/reputation`, `/reputation/` | [public/reputation/index.html](../../public/reputation/index.html) |
 
+## Experiments / Experiences
+
+| URL | Source |
+| :-- | :-- |
+| `/rider`, `/rider/` | [rider/index.html](../../rider/index.html) — A-Frame WebVR music visualization ("surf the musical road among the stars") |
+
 ## Integrations / Locales
 
 | URL | Source |
@@ -275,6 +281,9 @@ A high-level map of what each page does, grouped by capability.
 - **`/chat#resources/*`** — Resource hub (blog, docs, trust-center, updates, use-cases).
 - **`/chat#dashboard/revenue`** — Revenue dashboard (authenticated users).
 
+### Experiments & Experiences
+- **`/rider`** — A-Frame WebVR music visualization; browser-native VR with Enter VR button.
+
 ### Integrations
 - **`/cz`, `/cz/offline`** — CZ demo experience.
 - **`/lobehub/iframe`** — LobeHub plugin iframe surface.
@@ -282,4 +291,4 @@ A high-level map of what each page does, grouped by capability.
 
 ---
 
-**Total:** ~100 unique URLs (excluding trailing-slash duplicates and dynamic param expansions; ~35 additional hash-routes inside `/chat`). For the OAuth + API + cron surface see [api-inventory.md](api-inventory.md).
+**Total:** ~100 unique URLs (excluding trailing-slash duplicates and dynamic param expansions; ~35 additional hash-routes inside `/chat`). For the OAuth 2.1 server and API surface see [api-inventory.md](api-inventory.md).
