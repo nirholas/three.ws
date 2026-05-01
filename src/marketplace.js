@@ -476,3 +476,311 @@ function init() {
 }
 
 init();
+
+// ── Plugin Marketplace ────────────────────────────────────────────────────────
+
+const PLUGIN_API = '/api/plugins';
+const PLUGIN_STORAGE_KEY = 'installed_plugins_v1';
+
+const pluginState = {
+	category: null,
+	q: '',
+	cursor: null,
+	items: [],
+	loading: false,
+	loaded: false,
+};
+
+function getInstalledIds() {
+	try {
+		const raw = localStorage.getItem(PLUGIN_STORAGE_KEY);
+		if (!raw) return new Set();
+		return new Set(JSON.parse(raw).map((p) => p.identifier));
+	} catch {
+		return new Set();
+	}
+}
+
+function saveInstalled(manifest) {
+	try {
+		const raw = localStorage.getItem(PLUGIN_STORAGE_KEY);
+		const arr = raw ? JSON.parse(raw) : [];
+		const idx = arr.findIndex((p) => p.identifier === manifest.identifier);
+		if (idx >= 0) arr[idx] = manifest;
+		else arr.push(manifest);
+		localStorage.setItem(PLUGIN_STORAGE_KEY, JSON.stringify(arr));
+	} catch {
+		// storage full
+	}
+}
+
+function removeInstalled(identifier) {
+	try {
+		const raw = localStorage.getItem(PLUGIN_STORAGE_KEY);
+		if (!raw) return;
+		const arr = JSON.parse(raw).filter((p) => p.identifier !== identifier);
+		localStorage.setItem(PLUGIN_STORAGE_KEY, JSON.stringify(arr));
+	} catch {}
+}
+
+function togglePluginInstall(manifest) {
+	const installed = getInstalledIds();
+	if (installed.has(manifest.identifier)) {
+		removeInstalled(manifest.identifier);
+	} else {
+		saveInstalled(manifest);
+		// fire-and-forget counter update if plugin has a DB id
+		if (manifest.id) {
+			fetch(`${PLUGIN_API}/${manifest.id}/install`, { method: 'POST' }).catch(() => {});
+		}
+	}
+	renderPluginGrid();
+}
+
+async function loadPluginCategories() {
+	try {
+		const r = await fetch(`${PLUGIN_API}/categories`);
+		const j = await r.json();
+		renderPluginCats(j?.data?.categories || []);
+	} catch {
+		// non-fatal
+	}
+}
+
+function renderPluginCats(cats) {
+	const el = $('plugin-cats');
+	if (!el) return;
+	const all = [{ slug: null, label: 'All', count: null }, ...cats.map((c) => ({
+		slug: c.slug,
+		label: c.slug.charAt(0).toUpperCase() + c.slug.slice(1),
+		count: c.count,
+	}))];
+	el.innerHTML = all.map((c) => {
+		const active = pluginState.category === c.slug;
+		return `<div class="cat-row${active ? ' active' : ''}" data-cat="${c.slug ?? ''}">
+			<span>${escapeHtml(c.label)}</span>
+			${c.count != null ? `<span class="count">${c.count}</span>` : ''}
+		</div>`;
+	}).join('');
+	el.querySelectorAll('.cat-row').forEach((row) => {
+		row.addEventListener('click', () => {
+			pluginState.category = row.dataset.cat || null;
+			el.querySelectorAll('.cat-row').forEach((r) => r.classList.remove('active'));
+			row.classList.add('active');
+			loadPlugins(true);
+		});
+	});
+}
+
+async function loadPlugins(reset = false) {
+	if (pluginState.loading) return;
+	pluginState.loading = true;
+	if (reset) {
+		pluginState.items = [];
+		pluginState.cursor = null;
+		const grid = $('plugin-grid');
+		if (grid) grid.innerHTML = '<div class="market-empty">Loading…</div>';
+	}
+	try {
+		const url = new URL(PLUGIN_API + '/list', location.origin);
+		if (pluginState.category) url.searchParams.set('category', pluginState.category);
+		if (pluginState.q) url.searchParams.set('q', pluginState.q);
+		if (pluginState.cursor) url.searchParams.set('cursor', pluginState.cursor);
+		const r = await fetch(url);
+		const j = await r.json();
+		const items = j?.data?.items || [];
+		pluginState.items = reset ? items : [...pluginState.items, ...items];
+		pluginState.cursor = j?.data?.next_cursor || null;
+		pluginState.loaded = true;
+		renderPluginGrid();
+	} catch {
+		const grid = $('plugin-grid');
+		if (grid) grid.innerHTML = '<div class="market-empty">Failed to load plugins.</div>';
+	} finally {
+		pluginState.loading = false;
+	}
+}
+
+function renderPluginGrid() {
+	const grid = $('plugin-grid');
+	const more = $('plugin-loadmore');
+	if (!grid) return;
+	const installed = getInstalledIds();
+	if (!pluginState.items.length) {
+		grid.innerHTML = '<div class="market-empty">No plugins found.</div>';
+		if (more) more.hidden = true;
+		return;
+	}
+	grid.innerHTML = pluginState.items.map((p) => renderPluginCard(p, installed)).join('');
+	grid.querySelectorAll('[data-plugin-id]').forEach((btn) => {
+		btn.addEventListener('click', () => {
+			const id = btn.dataset.pluginId;
+			const manifest = pluginState.items.find((p) => p.identifier === id);
+			if (manifest) togglePluginInstall(manifest.manifest_json ?? manifest);
+		});
+	});
+	if (more) more.hidden = !pluginState.cursor;
+}
+
+function renderPluginCard(p, installed) {
+	const manifest = p.manifest_json ?? p;
+	const title = escapeHtml(p.name || manifest?.meta?.title || p.identifier || '?');
+	const desc = escapeHtml(p.description || manifest?.meta?.description || '');
+	const tags = (p.tags || manifest?.meta?.tags || []).slice(0, 3);
+	const toolCount = Array.isArray(manifest?.api) ? manifest.api.length : 0;
+	const isInstalled = installed.has(p.identifier);
+	const cat = escapeHtml(p.category || manifest?.meta?.category || 'general');
+	const icon = (p.name || p.identifier || '?')[0].toUpperCase();
+	return `<div class="plugin-card">
+		<div class="head">
+			<div class="avatar">${icon}</div>
+			<div style="min-width:0;flex:1">
+				<div class="title">${title}</div>
+				<div class="author">${toolCount} tool${toolCount !== 1 ? 's' : ''} · ${cat}</div>
+			</div>
+		</div>
+		<div class="desc">${desc}</div>
+		<div class="plugin-tags">
+			${tags.map((t) => `<span class="tag-pill">${escapeHtml(t)}</span>`).join('')}
+		</div>
+		<div class="plugin-card-footer">
+			<span class="stat-pill">↓ ${p.install_count || 0}</span>
+			<button class="plugin-install-btn${isInstalled ? ' installed' : ''}"
+				data-plugin-id="${escapeHtml(p.identifier)}">
+				${isInstalled ? 'Installed ✓' : 'Add to Agent'}
+			</button>
+		</div>
+	</div>`;
+}
+
+// ── Add by URL modal ──────────────────────────────────────────────────────────
+
+function openPluginUrlModal() {
+	const modal = $('plugin-url-modal');
+	const input = $('plugin-url-input');
+	const errEl = $('plugin-url-error');
+	const preview = $('plugin-url-preview');
+	if (!modal) return;
+	input.value = '';
+	errEl.hidden = true;
+	preview.hidden = true;
+	preview.innerHTML = '';
+	modal.hidden = false;
+	input.focus();
+}
+
+function closePluginUrlModal() {
+	const modal = $('plugin-url-modal');
+	if (modal) modal.hidden = true;
+}
+
+async function fetchAndInstallByUrl() {
+	const input = $('plugin-url-input');
+	const errEl = $('plugin-url-error');
+	const preview = $('plugin-url-preview');
+	const fetchBtn = $('plugin-url-fetch');
+	const url = (input?.value || '').trim();
+
+	errEl.hidden = true;
+	preview.hidden = true;
+
+	if (!url) {
+		showPluginUrlError('Please enter a URL.');
+		return;
+	}
+
+	fetchBtn.disabled = true;
+	fetchBtn.textContent = 'Fetching…';
+
+	try {
+		const r = await fetch(`${PLUGIN_API}/import`, {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ manifest_url: url }),
+		});
+		const j = await r.json();
+		if (!r.ok) {
+			showPluginUrlError(j?.error_description || `Error ${r.status}`);
+			return;
+		}
+		const manifest = j?.data?.manifest;
+		if (!manifest) {
+			showPluginUrlError('Server returned no manifest.');
+			return;
+		}
+
+		// Show preview
+		const title = escapeHtml(manifest.meta?.title || manifest.identifier || '?');
+		const desc = escapeHtml(manifest.meta?.description || '');
+		const toolCount = Array.isArray(manifest.api) ? manifest.api.length : 0;
+		preview.innerHTML = `<div class="plugin-preview-head">
+			<strong>${title}</strong>
+			<span class="muted">${toolCount} tool${toolCount !== 1 ? 's' : ''}</span>
+		</div>
+		${desc ? `<div class="plugin-preview-desc">${desc}</div>` : ''}
+		<button class="plugin-modal-btn plugin-modal-btn-primary" id="plugin-url-install">Install Plugin</button>`;
+		preview.hidden = false;
+
+		$('plugin-url-install').addEventListener('click', () => {
+			saveInstalled(manifest);
+			closePluginUrlModal();
+			// Refresh grid to show updated install state
+			renderPluginGrid();
+		});
+	} catch (err) {
+		showPluginUrlError(err.message || 'Failed to fetch manifest.');
+	} finally {
+		fetchBtn.disabled = false;
+		fetchBtn.textContent = 'Fetch & Validate';
+	}
+}
+
+function showPluginUrlError(msg) {
+	const el = $('plugin-url-error');
+	if (!el) return;
+	el.textContent = msg;
+	el.hidden = false;
+}
+
+// ── Plugin init / wiring ──────────────────────────────────────────────────────
+
+function initPlugins() {
+	// Add by URL button
+	const addBtn = $('plugin-add-url');
+	if (addBtn) addBtn.addEventListener('click', openPluginUrlModal);
+
+	// Modal controls
+	const cancelBtn = $('plugin-url-cancel');
+	if (cancelBtn) cancelBtn.addEventListener('click', closePluginUrlModal);
+
+	const fetchBtn = $('plugin-url-fetch');
+	if (fetchBtn) fetchBtn.addEventListener('click', fetchAndInstallByUrl);
+
+	// Close on overlay click
+	const overlay = $('plugin-url-modal');
+	if (overlay) {
+		overlay.addEventListener('click', (e) => {
+			if (e.target === overlay) closePluginUrlModal();
+		});
+	}
+
+	// Plugin search
+	let pluginSearchTimer;
+	const searchInput = $('plugin-search');
+	if (searchInput) {
+		searchInput.addEventListener('input', (e) => {
+			clearTimeout(pluginSearchTimer);
+			pluginSearchTimer = setTimeout(() => {
+				pluginState.q = e.target.value.trim();
+				loadPlugins(true);
+			}, 200);
+		});
+	}
+
+	// Load more
+	const loadMoreBtn = $('plugin-loadmore');
+	if (loadMoreBtn) loadMoreBtn.addEventListener('click', () => loadPlugins(false));
+
+	// Load categories (lazy — don't block initial page render)
+	loadPluginCategories();
+}
