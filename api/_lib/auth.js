@@ -67,24 +67,46 @@ export async function issueRefreshToken({ userId, clientId, scope, resource }) {
 
 export async function rotateRefreshToken({ oldSecret, clientId, narrowScope }) {
 	const hash = await sha256(oldSecret);
-	const rows = await sql`
-		select id, user_id, scope, resource, expires_at, revoked_at
-		from oauth_refresh_tokens
+	// Atomic claim: revoke the row only if it is currently active. With two
+	// concurrent rotations this lets exactly one request take the row; the
+	// other gets an empty result and falls into the diagnostic branch below.
+	// Without this guard, both requests could read revoked_at IS NULL and
+	// then each issue a new refresh token off the same consumed secret.
+	const claimed = await sql`
+		update oauth_refresh_tokens
+		set revoked_at = now(), last_used_at = now()
 		where token_hash = ${hash} and client_id = ${clientId}
-		limit 1
+		  and revoked_at is null and expires_at > now()
+		returning id, user_id, scope, resource
 	`;
-	const row = rows[0];
-	if (!row) throw Object.assign(new Error('invalid_grant'), { status: 400 });
-	if (row.revoked_at) {
-		// Reuse detected — revoke whole chain for this user+client.
-		await sql`update oauth_refresh_tokens set revoked_at = now()
-		          where user_id = ${row.user_id} and client_id = ${clientId} and revoked_at is null`;
-		throw Object.assign(new Error('invalid_grant'), {
-			status: 400,
-			code: 'refresh_reuse_detected',
-		});
-	}
-	if (new Date(row.expires_at) < new Date()) {
+	const row = claimed[0];
+	if (!row) {
+		// Diagnose why the claim failed: missing, already revoked, or expired.
+		const [diag] = await sql`
+			select revoked_at, expires_at
+			from oauth_refresh_tokens
+			where token_hash = ${hash} and client_id = ${clientId}
+			limit 1
+		`;
+		if (!diag) throw Object.assign(new Error('invalid_grant'), { status: 400 });
+		if (diag.revoked_at) {
+			// Treat as reuse — revoke whole chain for this user+client. A request
+			// that lost a concurrent-rotation race lands here too; the cost is
+			// re-authentication, never silent token duplication.
+			const [user] = await sql`
+				select user_id from oauth_refresh_tokens
+				where token_hash = ${hash} and client_id = ${clientId}
+				limit 1
+			`;
+			if (user) {
+				await sql`update oauth_refresh_tokens set revoked_at = now()
+				          where user_id = ${user.user_id} and client_id = ${clientId} and revoked_at is null`;
+			}
+			throw Object.assign(new Error('invalid_grant'), {
+				status: 400,
+				code: 'refresh_reuse_detected',
+			});
+		}
 		throw Object.assign(new Error('invalid_grant'), { status: 400, code: 'refresh_expired' });
 	}
 	// Bind the rotated refresh token to the narrowed scope (RFC 6749 §6 allows a
@@ -97,8 +119,7 @@ export async function rotateRefreshToken({ oldSecret, clientId, narrowScope }) {
 		scope: effectiveScope,
 		resource: row.resource,
 	});
-	await sql`update oauth_refresh_tokens set revoked_at = now(), replaced_by = ${next.id}, last_used_at = now()
-	          where id = ${row.id}`;
+	await sql`update oauth_refresh_tokens set replaced_by = ${next.id} where id = ${row.id}`;
 	return { next, userId: row.user_id, scope: effectiveScope, resource: row.resource };
 }
 
