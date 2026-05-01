@@ -5,7 +5,7 @@ import vhtml from 'vhtml';
 export function Footer() {
 	return (
 		<footer>
-			<a class="item" target="_blank" href="https://x.com/nichxbt" aria-label="Follow on X">
+			<a class="item" target="_blank" href="https://x.com/trythreews" aria-label="Follow on X">
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					width="16"
