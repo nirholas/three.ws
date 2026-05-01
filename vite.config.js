@@ -249,6 +249,7 @@ const appConfig = {
 					'**/3d.png',
 					'**/ddd.png',
 					'**/skills.mp4',
+					'chat/**',
 				],
 				navigateFallback: null,
 				skipWaiting: true,

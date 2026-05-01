@@ -1583,6 +1583,7 @@
 			agentEl.play('walk', { loop: true }).catch(() => {});
 		} else {
 			agentEl.play('idle', { loop: true }).catch(() => {});
+			if (agentEl._clearThoughtBubble) agentEl._clearThoughtBubble();
 		}
 	}
 
