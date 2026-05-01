@@ -147,23 +147,25 @@ const BASE_STYLE = `
 	}
 	.chrome > * { pointer-events: auto; }
 	.chat {
-		flex: 0 0 auto;
-		max-height: 38%;
+		flex: 1;
+		display: flex;
+		flex-direction: column;
 		overflow-y: auto;
-		background: var(--agent-surface);
 		color: var(--agent-on-surface);
 		font: 14px/1.4 var(--agent-chat-font);
-		border-radius: 12px;
 		padding: 10px 12px;
-		backdrop-filter: blur(12px);
-	}
-	.chat:empty { display: none; }
-	/* Transparent window in the centre — avatar canvas shows through here */
-	.avatar-anchor {
-		flex: 1;
-		position: relative;
+		scrollbar-width: thin;
+		scrollbar-color: rgba(255,255,255,0.1) transparent;
 		pointer-events: none;
-		min-height: 80px;
+	}
+	.chat > * { pointer-events: auto; }
+	/* Transparent window in the chat — avatar canvas shows through here */
+	.avatar-anchor {
+		flex: 0 0 auto;
+		position: relative;
+		pointer-events: none !important;
+		min-height: 160px;
+		margin: 12px 0;
 	}
 	/* Thought bubble — appears above avatar's head while thinking */
 	.thought-bubble {
@@ -247,8 +249,26 @@ const BASE_STYLE = `
 		border-bottom-color: rgba(239, 68, 68, 0.92);
 		border-top-color: transparent;
 	}
-	.msg { margin: 6px 0; padding: 8px 10px; border-radius: 10px; border-left: 3px solid transparent; transition: border-color .2s; }
-	.msg.celebration { border-left-color: rgba(34,197,94,0.85); background: rgba(34,197,94,0.06); }
+	.msg {
+		margin: 6px 0;
+		padding: 8px 12px;
+		border-radius: 12px;
+		border-left: 3px solid transparent;
+		transition: border-color .2s;
+		background: var(--agent-surface);
+		backdrop-filter: blur(8px);
+		max-width: 85%;
+	}
+	.msg.user {
+		align-self: flex-end;
+		background: rgba(255, 255, 255, 0.1);
+		border-left: 0;
+		border-right: 3px solid var(--agent-accent);
+	}
+	.msg.assistant {
+		align-self: flex-start;
+	}
+	.msg.celebration { border-left-color: rgba(34,197,94,0.85); background: rgba(34,197,94,0.12); }
 	.msg.concern { border-left-color: rgba(239,68,68,0.85); background: rgba(239,68,68,0.06); }
 	.msg.curiosity { border-left-color: rgba(59,130,246,0.7); background: rgba(59,130,246,0.05); }
 	.msg .role { opacity: 0.55; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
@@ -713,8 +733,8 @@ class Agent3DElement extends HTMLElement {
 				'<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
 			avatarAnchor.appendChild(thoughtBubble);
 
+			chat.appendChild(avatarAnchor);
 			chrome.appendChild(chat);
-			chrome.appendChild(avatarAnchor);
 			chrome.appendChild(row);
 			this.shadowRoot.appendChild(chrome);
 			this._chatEl = chat;
@@ -723,6 +743,13 @@ class Agent3DElement extends HTMLElement {
 			this._avatarAnchorEl = avatarAnchor;
 			this._thoughtBubbleEl = thoughtBubble;
 			this._thoughtTextEl = thoughtBubble.querySelector('.text');
+
+			// Walk when the chat is scrolling — user-initiated or auto
+			chat.addEventListener('scroll', () => {
+				if (this.getAttribute('avatar-chat') !== 'off') {
+					this._onStreamChunk();
+				}
+			}, { passive: true });
 
 			// Voice state ring — wired by VoiceClient when voice-server attr is set
 			this.addEventListener('voiceStateChange', (e) => {
@@ -1221,12 +1248,20 @@ class Agent3DElement extends HTMLElement {
 			this._applyBackground();
 			this._setNamePlateText(manifest.name || '');
 			this._applyNamePlate();
+			// Fetch animation defs before viewer.load so _setupAnimationPanel
+			// can preload idle+walk during the model load.
+			const _animBase = _scriptOrigin || window.location.origin;
+			try {
+				const _animRes = await fetch(`${_animBase}/animations/manifest.json`);
+				if (_animRes.ok) viewer.setAnimationDefs(await _animRes.json());
+			} catch {}
+
 			const bodyURI = resolveURI(manifest.body?.uri);
 			if (bodyURI) {
 				await viewer.load(bodyURI, '', new Map());
-				// Belt-and-suspenders: ensure walk + idle are hot before the first
-				// brain:stream fires. _setupAnimationPanel already kicked these off;
-				// this await guarantees they resolve before boot continues.
+				// Ensure walk + idle are hot before the first brain:stream fires.
+				// setAnimationDefs above registered the defs; ensureLoaded now
+				// actually fetches the clips (or returns immediately if cached).
 				const _am = viewer.animationManager;
 				if (_am) {
 					await Promise.allSettled([_am.ensureLoaded('idle'), _am.ensureLoaded('walk')]);
@@ -1387,6 +1422,9 @@ class Agent3DElement extends HTMLElement {
 						if (this._thoughtBubbleEl && this.getAttribute('avatar-chat') !== 'off') {
 							if (e.detail?.thinking) {
 								this._thoughtBubbleEl.dataset.active = 'true';
+								// Show "Thinking..." text immediately
+								this._thoughtBubbleEl.dataset.streaming = 'true';
+								if (this._thoughtTextEl) this._thoughtTextEl.textContent = 'Thinking...';
 							} else {
 								this._clearThoughtBubble();
 							}
@@ -1612,7 +1650,11 @@ class Agent3DElement extends HTMLElement {
 		msg.innerHTML = `<div class="role"></div><div class="body"></div>`;
 		msg.querySelector('.role').textContent = role;
 		msg.querySelector('.body').textContent = content;
-		this._chatEl.appendChild(msg);
+		if (this._avatarAnchorEl) {
+			this._chatEl.insertBefore(msg, this._avatarAnchorEl);
+		} else {
+			this._chatEl.appendChild(msg);
+		}
 		this._chatEl.scrollTop = this._chatEl.scrollHeight;
 		if (!this._isWalking && this.getAttribute('avatar-chat') !== 'off') {
 			this._onStreamChunk();
@@ -1668,7 +1710,11 @@ class Agent3DElement extends HTMLElement {
 			msg.className = 'msg streaming';
 			msg.innerHTML = '<div class="role"></div><div class="body"></div>';
 			msg.querySelector('.role').textContent = 'assistant';
-			this._chatEl.appendChild(msg);
+			if (this._avatarAnchorEl) {
+				this._chatEl.insertBefore(msg, this._avatarAnchorEl);
+			} else {
+				this._chatEl.appendChild(msg);
+			}
 			this._streamingMsgEl = msg.querySelector('.body');
 			this._chatAutoScroll = true;
 		}
