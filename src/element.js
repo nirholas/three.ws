@@ -1726,6 +1726,7 @@ class Agent3DElement extends HTMLElement {
 		}
 	}
 
+	// Hides bubble, clears buffer, and cancels any pending RAF/timer.
 	_clearThoughtBubble() {
 		this._bubbleBuffer = '';
 		this._bubbleRafPending = false;
@@ -1769,6 +1770,7 @@ class Agent3DElement extends HTMLElement {
 		}
 	}
 
+	// Walk animation: debounced — keeps walking as long as chunks arrive within 600ms of each other.
 	_onStreamChunk() {
 		if (!this._scene || this.getAttribute('avatar-chat') === 'off') return;
 		if (this.hasAttribute('kiosk')) return;
@@ -1783,6 +1785,7 @@ class Agent3DElement extends HTMLElement {
 		this._walkStopDebounce = setTimeout(() => this._stopWalkAnimation(), 600);
 	}
 
+	// Crossfade walk→idle; safe to call even if not currently walking.
 	_stopWalkAnimation() {
 		if (!this._isWalking) return;
 		this._isWalking = false;
@@ -2274,17 +2277,22 @@ class Agent3DElement extends HTMLElement {
 
 	/**
 	 * Enable the inline avatar-in-chat layout.
-	 * Avatar walks during LLM streaming and shows a thought bubble.
-	 * This is the default state — only needed to re-enable after `disableAvatarChat()`.
+	 * The avatar canvas is visible through a transparent window between the chat
+	 * history and the input bar. The avatar walks during LLM streaming and shows
+	 * a thought bubble with streaming text above its head.
+	 * This is the default state. Call to re-enable after {@link disableAvatarChat}.
+	 * @returns {void}
 	 */
 	enableAvatarChat() {
 		this.removeAttribute('avatar-chat');
 	}
 
 	/**
-	 * Disable the inline avatar-in-chat layout.
-	 * Restores the original bottom-bar chat overlay.
-	 * Stops any in-progress walk animation and clears the thought bubble.
+	 * Disable the inline avatar-in-chat layout and restore the original
+	 * bottom-bar chat layout (messages left, input right, avatar in background).
+	 * Walk animation and thought bubble will not fire while disabled.
+	 * Equivalent to setting the `avatar-chat="off"` attribute.
+	 * @returns {void}
 	 */
 	disableAvatarChat() {
 		this.setAttribute('avatar-chat', 'off');
