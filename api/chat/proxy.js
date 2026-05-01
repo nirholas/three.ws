@@ -11,7 +11,7 @@ export default wrap(async (req, res) => {
 	if (!env.OPENROUTER_API_KEY)
 		return error(res, 503, 'not_configured', 'Built-in model not available');
 
-	const rl = await limits.authIp(clientIp(req));
+	const rl = await limits.chatIp(clientIp(req));
 	if (!rl.success) {
 		const retryAfter = Math.max(1, Math.ceil((rl.reset - Date.now()) / 1000));
 		res.setHeader('retry-after', String(retryAfter));

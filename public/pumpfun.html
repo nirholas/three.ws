@@ -29,6 +29,9 @@
 		header button { cursor: pointer; }
 		header button:hover { background: #20202c; }
 		header button.toggle[data-on="0"] { color: var(--muted); }
+		#ctl-avatar-wrap { display: inline-flex; align-items: center; gap: 6px; }
+		#ctl-avatar-url { width: 0; padding: 0; border-width: 0; overflow: hidden; transition: width 0.2s, padding 0.2s, border-width 0.2s; }
+		#ctl-avatar-url.visible { width: 160px; padding: 6px 10px; border-width: 1px; }
 		main { position: relative; height: calc(100% - 48px); display: grid; grid-template-columns: 1fr 360px; }
 		#stage { position: relative; }
 		iframe { width: 100%; height: 100%; border: 0; display: block; background: var(--bg); }
@@ -106,6 +109,14 @@
 				<option value="influencer">Influencer+</option>
 				<option value="mega">Mega only</option>
 			</select>
+			<div id="ctl-avatar-wrap">
+				<select id="ctl-avatar" title="Avatar">
+					<option value="/avatars/cz.glb">CZ avatar</option>
+					<option value="/avatars/default.glb">Default avatar</option>
+					<option value="custom">Custom URL…</option>
+				</select>
+				<input id="ctl-avatar-url" type="text" placeholder="https://…/avatar.glb" />
+			</div>
 			<button id="ctl-narrate" class="toggle" type="button" data-on="1" title="Toggle agent narration">🔊 Narration</button>
 		</div>
 	</header>
@@ -131,6 +142,7 @@
 		const $ = (id) => document.getElementById(id);
 		const iframe = $('agent');
 
+		const PRESET_AVATARS = ['/avatars/cz.glb', '/avatars/default.glb'];
 		const params = {
 			asset: url.searchParams.get('asset') || '',
 			mint: url.searchParams.get('mint') || '',
@@ -138,12 +150,39 @@
 			minTier: url.searchParams.get('minTier') || '',
 			network: url.searchParams.get('network') || 'mainnet',
 			narrate: url.searchParams.get('narrate') !== '0',
+			avatar: url.searchParams.get('avatar') || '/avatars/cz.glb',
 		};
 		$('ctl-asset').value = params.asset;
 		$('ctl-mint').value = params.mint;
 		$('ctl-kind').value = params.kind;
 		$('ctl-tier').value = params.minTier;
 		$('ctl-narrate').dataset.on = params.narrate ? '1' : '0';
+
+		// Init avatar picker
+		const avatarSelect = $('ctl-avatar');
+		const avatarUrlInput = $('ctl-avatar-url');
+		if (PRESET_AVATARS.includes(params.avatar)) {
+			avatarSelect.value = params.avatar;
+		} else {
+			avatarSelect.value = 'custom';
+			avatarUrlInput.value = params.avatar;
+			avatarUrlInput.classList.add('visible');
+		}
+		avatarSelect.addEventListener('change', () => {
+			if (avatarSelect.value === 'custom') {
+				avatarUrlInput.classList.add('visible');
+				avatarUrlInput.focus();
+			} else {
+				avatarUrlInput.classList.remove('visible');
+				params.avatar = avatarSelect.value;
+				syncURL();
+				mountAgent();
+			}
+		});
+		avatarUrlInput.addEventListener('change', () => {
+			const v = avatarUrlInput.value.trim();
+			if (v) { params.avatar = v; syncURL(); mountAgent(); }
+		});
 
 		function setStatus(state, label) {
 			const dot = $('status-dot');
@@ -159,6 +198,7 @@
 			set('kind', params.kind === 'all' ? '' : params.kind);
 			set('minTier', params.minTier);
 			set('narrate', params.narrate ? '' : '0');
+			set('avatar', params.avatar === '/avatars/cz.glb' ? '' : params.avatar);
 			history.replaceState(null, '', u.toString());
 		}
 
@@ -166,7 +206,7 @@
 			const cfgPart = `&type=pumpfun-feed&kind=${encodeURIComponent(params.kind)}` +
 				(params.minTier ? `&minTier=${encodeURIComponent(params.minTier)}` : '') +
 				(params.narrate ? '' : '&narrate=0');
-			let modelHash = '&model=' + encodeURIComponent('/avatars/cz.glb');
+			let modelHash = '&model=' + encodeURIComponent(params.avatar || '/avatars/cz.glb');
 			const widgetId = 'wdgt_demo_pumpfun';
 			if (params.asset) {
 				try {
@@ -181,7 +221,7 @@
 					if (repR.ok) renderSignals(await repR.json());
 				} catch {}
 			} else {
-				$('agent-card').innerHTML = `<div class="empty">CZ narrator. Paste a Solana asset pubkey above to bind a different agent.</div>`;
+				$('agent-card').innerHTML = `<div class="empty">Custom avatar narrator. Paste a Solana asset pubkey above to bind a different agent.</div>`;
 				$('signals-section').hidden = true;
 			}
 			iframe.src = `/app#widget=${widgetId}&kiosk=true${cfgPart}${modelHash}`;

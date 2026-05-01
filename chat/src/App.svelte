@@ -2503,9 +2503,6 @@
 	</div>
 {/if}
 
-{/if}
-{/if}
-
 <style>
 	:global(.standalone .input-floating) {
 		bottom: 32px;
