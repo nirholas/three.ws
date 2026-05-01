@@ -58,6 +58,21 @@ function getMiddleware() {
 	return cached;
 }
 
+/**
+ * Diagnostic snapshot — does not invoke the middleware. Returns whether the
+ * SDK initialized successfully and a key prefix safe to surface in responses.
+ */
+export function status() {
+	const apiKey = env.ZAUTH_API_KEY;
+	const initialized = getMiddleware() != null;
+	return {
+		initialized,
+		hasKey: Boolean(apiKey),
+		keyPrefix: apiKey ? apiKey.slice(0, 14) : null,
+		debug: env.ZAUTH_DEBUG === '1',
+	};
+}
+
 function shimResponse(res) {
 	// The Express middleware does `res.json.bind(res)` / `res.send.bind(res)`
 	// up-front, even if the handler never calls them. Provide Express-shaped
