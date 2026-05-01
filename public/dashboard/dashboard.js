@@ -1886,6 +1886,158 @@ async function renderMonetization(root) {
 	);
 }
 
+// ── Subscriptions ────────────────────────────────────────────────────────────
+async function renderSubscriptions(root) {
+	root.innerHTML = `
+		<h1>Subscriptions</h1>
+		<p class="sub">Manage your creator plans and fan subscriptions.</p>
+		<div id="sub-body"><div class="muted">Loading…</div></div>
+	`;
+	const body = root.querySelector('#sub-body');
+
+	const fmtDate = (d) => d ? new Date(d).toLocaleDateString() : '—';
+	const fmtUsd = (n) => '$' + Number(n).toFixed(2);
+
+	let myId, plans, subs;
+	try {
+		myId = state.user?.id;
+		const [plansRes, subsRes] = await Promise.all([
+			fetch(`/api/subscriptions/plans?creator_id=${encodeURIComponent(myId)}`, { credentials: 'include' }),
+			fetch('/api/subscriptions/mine', { credentials: 'include' }),
+		]);
+		plans = plansRes.ok ? (await plansRes.json()).plans || [] : [];
+		subs = subsRes.ok ? (await subsRes.json()).subscriptions || [] : [];
+	} catch (e) {
+		body.innerHTML = `<div class="err">${esc(e.message || 'Failed to load subscriptions')}</div>`;
+		return;
+	}
+
+	// ── Creator view ─────────────────────────���────────────────────────────────
+	let plansHtml = '';
+	for (const p of plans) {
+		plansHtml += `
+			<div class="card" style="margin-bottom:10px">
+				<div class="row" style="gap:12px;align-items:flex-start">
+					<div style="flex:1">
+						<strong>${esc(p.name)}</strong>
+						<span class="tag" style="margin-left:6px">${esc(p.interval)}</span>
+						<div style="font-size:13px;color:#888;margin-top:4px">${fmtUsd(p.price_usd)}</div>
+						${p.perks?.length ? `<ul style="margin:6px 0 0 16px;padding:0;font-size:13px;color:#aaa">${p.perks.map((k) => `<li>${esc(k)}</li>`).join('')}</ul>` : ''}
+					</div>
+					<button class="btn-sm btn-danger sub-del-plan" data-id="${esc(p.id)}" style="flex-shrink:0">Remove</button>
+				</div>
+			</div>
+		`;
+	}
+
+	const createForm = plans.length < 3 ? `
+		<div style="margin-top:16px;border-top:1px solid var(--border);padding-top:16px">
+			<h4 style="margin:0 0 12px;font-size:14px">New plan</h4>
+			<div style="display:flex;flex-direction:column;gap:8px;max-width:420px">
+				<input id="sub-plan-name" class="input" placeholder="Plan name (e.g. Supporter)" />
+				<div class="row" style="gap:8px">
+					<input id="sub-plan-price" class="input" type="number" min="0.99" step="0.01" placeholder="Price USD (e.g. 4.99)" style="flex:1" />
+					<select id="sub-plan-interval" class="input" style="flex:1">
+						<option value="monthly">Monthly</option>
+						<option value="weekly">Weekly</option>
+					</select>
+				</div>
+				<textarea id="sub-plan-perks" class="input" rows="2" placeholder="Perks, one per line (optional)"></textarea>
+				<div id="sub-plan-msg" class="muted" style="font-size:13px"></div>
+				<button id="sub-plan-create" class="btn">Create plan</button>
+			</div>
+		</div>
+	` : '<p class="muted" style="font-size:13px">Maximum 3 active plans reached.</p>';
+
+	// ── Subscriber view ───────────────────────────────────────────────────────
+	let subsHtml = '';
+	for (const s of subs) {
+		const statusColor = s.status === 'active' ? '#4caf50' : s.status === 'past_due' ? '#e53935' : '#888';
+		subsHtml += `
+			<div class="card" style="margin-bottom:10px">
+				<div class="row" style="gap:12px;align-items:flex-start">
+					<div style="flex:1">
+						<strong>${esc(s.plan_name)}</strong>
+						<span style="color:${statusColor};font-size:12px;margin-left:6px">${esc(s.status)}</span>
+						<div style="font-size:13px;color:#888;margin-top:4px">${fmtUsd(s.price_usd)} / ${esc(s.interval)}</div>
+						<div style="font-size:12px;color:#666;margin-top:4px">Creator: ${esc(s.creator_name || s.creator_id)} &nbsp;·&nbsp; Next billing: ${fmtDate(s.current_period_end)}</div>
+					</div>
+					${s.status === 'active' ? `<button class="btn-sm btn-danger sub-cancel" data-id="${esc(s.id)}" style="flex-shrink:0">Cancel</button>` : ''}
+				</div>
+			</div>
+		`;
+	}
+
+	body.innerHTML = `
+		<div style="display:flex;flex-direction:column;gap:32px">
+			<div>
+				<h3 style="margin:0 0 14px;font-size:15px">My Plans (Creator)</h3>
+				${plans.length === 0 ? '<div class="muted">No plans yet.</div>' : plansHtml}
+				${createForm}
+			</div>
+			<div>
+				<h3 style="margin:0 0 14px;font-size:15px">My Subscriptions</h3>
+				${subs.length === 0 ? '<div class="muted">Not subscribed to any plans.</div>' : subsHtml}
+			</div>
+		</div>
+	`;
+
+	// Wire delete plan buttons.
+	body.querySelectorAll('.sub-del-plan').forEach((btn) => {
+		btn.addEventListener('click', async () => {
+			if (!confirm('Remove this plan?')) return;
+			btn.disabled = true;
+			const r = await fetch(`/api/subscriptions/plans/${btn.dataset.id}`, {
+				method: 'DELETE', credentials: 'include',
+			});
+			if (r.ok) renderSubscriptions(root);
+			else { btn.disabled = false; alert('Failed to remove plan'); }
+		});
+	});
+
+	// Wire cancel subscription buttons.
+	body.querySelectorAll('.sub-cancel').forEach((btn) => {
+		btn.addEventListener('click', async () => {
+			if (!confirm('Cancel this subscription?')) return;
+			btn.disabled = true;
+			const r = await fetch(`/api/subscriptions/${btn.dataset.id}`, {
+				method: 'DELETE', credentials: 'include',
+			});
+			if (r.ok) renderSubscriptions(root);
+			else { btn.disabled = false; alert('Failed to cancel subscription'); }
+		});
+	});
+
+	// Wire create plan form.
+	const createBtn = body.querySelector('#sub-plan-create');
+	if (createBtn) {
+		createBtn.addEventListener('click', async () => {
+			const name = body.querySelector('#sub-plan-name').value.trim();
+			const price = parseFloat(body.querySelector('#sub-plan-price').value);
+			const interval = body.querySelector('#sub-plan-interval').value;
+			const perksRaw = body.querySelector('#sub-plan-perks').value;
+			const perks = perksRaw.split('\n').map((s) => s.trim()).filter(Boolean);
+			const msg = body.querySelector('#sub-plan-msg');
+			if (!name) { msg.textContent = 'Name required.'; return; }
+			if (!price || price < 0.99) { msg.textContent = 'Price must be at least $0.99.'; return; }
+			createBtn.disabled = true;
+			msg.textContent = 'Creating…';
+			const r = await fetch('/api/subscriptions/plans', {
+				method: 'POST',
+				credentials: 'include',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ name, price_usd: price, interval, perks }),
+			});
+			if (r.ok) { renderSubscriptions(root); }
+			else {
+				const d = await r.json().catch(() => ({}));
+				msg.textContent = d.error_description || 'Failed to create plan';
+				createBtn.disabled = false;
+			}
+		});
+	}
+}
+
 // ── Billing & usage ─────────────────────────────────────────────────────────
 async function renderBilling(root) {
 	root.innerHTML = `

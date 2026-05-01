@@ -342,6 +342,10 @@
 			"dest": "/api/agents/[id]"
 		},
 		{
+			"src": "/api/agents/([^/]+)/persona(/.*)?" ,
+			"dest": "/api/agents/[id]"
+		},
+		{
 			"src": "/api/agents/pumpfun-feed",
 			"dest": "/api/agents/pumpfun?_handler=feed"
 		},

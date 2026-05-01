@@ -156,6 +156,8 @@ export class AgentHome {
 
 			<div id="agent-permissions-container"></div>
 
+			<div id="agent-subscribe-area"></div>
+
 			<div class="agent-home-memory-bar" id="agent-memory-bar">
 				${this._renderMemoryBar()}
 			</div>

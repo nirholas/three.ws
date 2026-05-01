@@ -156,13 +156,9 @@ export function makeRuntime(opts = {}) {
 			queueMicrotask(() => {
 				import('./agent-wallet.js')
 					.then(({ triggerSkillPayment }) =>
-						triggerSkillPayment({
-							agentId,
-							skillSlug: skillName,
-							skillId: skillMeta[skillName]?.skill_id ?? null,
-						}),
+						triggerSkillPayment({ agentId, skillSlug: skillName, skillId: skillMeta[skillName]?.skill_id ?? null }),
 					)
-					.catch((e) => console.error('[skill-runtime] agent payment failed', e?.message));
+					.catch(() => {});
 			});
 		}
 

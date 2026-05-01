@@ -227,6 +227,16 @@ export const env = {
 		return req('VOYAGE_API_KEY');
 	},
 
+	// X (Twitter) OAuth 2.0 PKCE — required for /api/auth/x/* and memory seeding.
+	// Create an app at https://developer.twitter.com with Read permissions + OAuth 2.0 enabled.
+	// When unset, /api/auth/x/connect returns 501 not_configured.
+	get X_OAUTH_CLIENT_ID() {
+		return opt('X_OAUTH_CLIENT_ID');
+	},
+	get X_OAUTH_CLIENT_SECRET() {
+		return opt('X_OAUTH_CLIENT_SECRET');
+	},
+
 	getRpcUrl(chainId) {
 		return (
 			opt(`RPC_URL_${chainId}`) ||
