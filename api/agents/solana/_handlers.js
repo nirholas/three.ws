@@ -440,6 +440,28 @@ export const handleReputation = wrap(async (req, res) => {
 
 	const [cursor] = await sql`select last_indexed_at from solana_attestations_cursor where agent_asset = ${asset} limit 1`;
 
+	const [stakeAgg] = await sql`
+		select
+			coalesce(sum((payload->>'lamports')::numeric), 0)::text as total_lamports,
+			count(*)::int as stake_count,
+			count(distinct attester)::int as unique_stakers
+		from solana_attestations
+		where agent_asset = ${asset} and network = ${network}
+		  and kind = 'threews.stake.v1' and verified = true and revoked = false
+	`;
+
+	const topStakers = await sql`
+		select attester,
+			sum((payload->>'lamports')::numeric)::text as lamports,
+			max((payload->>'score')::int) as score
+		from solana_attestations
+		where agent_asset = ${asset} and network = ${network}
+		  and kind = 'threews.stake.v1' and verified = true and revoked = false
+		group by attester
+		order by sum((payload->>'lamports')::numeric) desc
+		limit 5
+	`;
+
 	const pumpfunRows = await sql`select kind, count(*)::int as n, coalesce(sum(weight), 0)::float as w from pumpfun_signals where agent_asset = ${asset} group by kind`;
 	const pumpfunByKind = {};
 	let pumpfunTotal = 0, pumpfunWeight = 0;
@@ -468,6 +490,16 @@ export const handleReputation = wrap(async (req, res) => {
 		validation: { self_passed: val.passed, self_failed: val.failed, event_passed: val.event_passed, event_failed: val.event_failed, audited_passed: auditedVal.passed, audited_failed: auditedVal.failed },
 		tasks: { offered: counts.tasks_offered, accepted: counts.tasks_accepted },
 		disputes_filed: counts.disputes_filed, revoked_count: counts.revoked_count,
+		stake: {
+			total_lamports: stakeAgg?.total_lamports || '0',
+			count: stakeAgg?.stake_count || 0,
+			unique_stakers: stakeAgg?.unique_stakers || 0,
+			top_stakers: topStakers.map((r) => ({
+				attester: r.attester,
+				lamports: r.lamports,
+				score: r.score,
+			})),
+		},
 		last_indexed_at: cursor?.last_indexed_at || null,
 	});
 });

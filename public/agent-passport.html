@@ -943,6 +943,22 @@
 					...(r.revoked_count
 						? [{ cls: 'danger', value: r.revoked_count, label: 'revoked' }]
 						: []),
+					...(r.stake && Number(r.stake.total_lamports) > 0
+						? [
+								{
+									cls: 'tier-credentialed',
+									value: (Number(r.stake.total_lamports) / 1e9).toFixed(4) + ' SOL',
+									label: 'total staked',
+									tooltip:
+										'Sum of SOL transferred alongside threews.stake.v1 attestations. Economically backed reputation.',
+								},
+								{
+									cls: 'tier-credentialed',
+									value: `${r.stake.unique_stakers}<small>/${r.stake.count}</small>`,
+									label: 'unique stakers / stakes',
+								},
+							]
+						: []),
 				];
 
 				$('reputation').innerHTML = `<div class="grid">${cards
