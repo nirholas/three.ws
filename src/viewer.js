@@ -1219,6 +1219,8 @@ export class Viewer {
 			this._animPanelEl = null;
 		}
 
+		if (this.options.kiosk) return;
+
 		const defs = this.animationManager.getAnimationDefs();
 		if (defs.length === 0) return;
 

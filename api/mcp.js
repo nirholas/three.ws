@@ -8,9 +8,9 @@ import { send401, sendJsonRpcError, authenticateRequest, handleSse, handleTermin
 import { sendX402Error } from './_mcp/payments.js';
 
 export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'GET,POST,DELETE,OPTIONS' })) return;
+	if (cors(req, res, { methods: 'GET,HEAD,POST,DELETE,OPTIONS' })) return;
 
-	if (req.method === 'GET') return handleSse(req, res);
+	if (req.method === 'GET' || req.method === 'HEAD') return handleSse(req, res);
 	if (req.method === 'DELETE') return handleTerminate(req, res);
 	if (req.method !== 'POST') return send401(res, 'method not supported');
 
