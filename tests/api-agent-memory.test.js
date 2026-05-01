@@ -97,12 +97,14 @@ beforeEach(() => {
 // ── Auth ──────────────────────────────────────────────────────────────────
 
 describe('agent-memory auth', () => {
-	it('GET without session or bearer returns 401', async () => {
+	it('GET without session or bearer returns empty list (200)', async () => {
+		// Public embeds boot this fetch on every page load. Returning an empty
+		// list (instead of 401) keeps the console clean for anonymous viewers.
 		const req = mkReq({ method: 'GET', url: '/api/agent-memory?agentId=a1' });
 		const res = mkRes();
 		await handler(req, res);
-		expect(res.statusCode).toBe(401);
-		expect(parseBody(res).error).toBe('unauthorized');
+		expect(res.statusCode).toBe(200);
+		expect(parseBody(res)).toEqual({ entries: [] });
 	});
 
 	it('POST without auth returns 401', async () => {
@@ -175,21 +177,22 @@ describe('agent-memory validation', () => {
 		expect(parseBody(res).error_description).toMatch(/entry/);
 	});
 
-	it('GET for nonexistent agent returns 404', async () => {
+	it('GET for nonexistent agent returns empty list (200)', async () => {
 		queueSql([]); // no agent row
 		const req = mkReq({ method: 'GET', url: '/api/agent-memory?agentId=missing' });
 		const res = mkRes();
 		await handler(req, res);
-		expect(res.statusCode).toBe(404);
+		expect(res.statusCode).toBe(200);
+		expect(parseBody(res)).toEqual({ entries: [] });
 	});
 
-	it('GET for agent owned by another user returns 403', async () => {
+	it('GET for agent owned by another user returns empty list (200)', async () => {
 		queueSql([{ user_id: 'someone-else' }]);
 		const req = mkReq({ method: 'GET', url: '/api/agent-memory?agentId=a1' });
 		const res = mkRes();
 		await handler(req, res);
-		expect(res.statusCode).toBe(403);
-		expect(parseBody(res).error).toBe('forbidden');
+		expect(res.statusCode).toBe(200);
+		expect(parseBody(res)).toEqual({ entries: [] });
 	});
 
 	it('disallowed HTTP method returns 405', async () => {

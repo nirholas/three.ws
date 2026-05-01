@@ -100,11 +100,10 @@ export const handleEmbedPolicy = wrap(async (req, res, id) => {
 	if (!method(req, res, ['GET', 'PUT', 'DELETE'])) return;
 
 	if (req.method === 'GET') {
+		// Embed clients fetch this on every page load to gate surface/origin.
+		// Treat a missing agent the same as a missing policy (fail-open) so
+		// public embed contexts don't log a 404 in the console on every boot.
 		const policy = await readEmbedPolicy(id);
-		if (policy === null) {
-			const [row] = await sql`SELECT id FROM agent_identities WHERE id = ${id} AND deleted_at IS NULL`;
-			if (!row) return error(res, 404, 'not_found', 'agent not found');
-		}
 		return json(res, 200, { policy: policy ?? null });
 	}
 
@@ -247,10 +246,18 @@ export const handleMemories = wrap(async (req, res, id, memoryId) => {
 	const session = await getSessionUser(req);
 	const bearer = session ? null : await authenticateBearer(extractBearer(req));
 	const userId = session?.id ?? bearer?.userId;
+
+	// Public embeds hydrate on every page load. For anonymous GETs, return
+	// an empty list rather than 401 to keep the console clean — only the
+	// owner ever sees memory rows.
+	if (req.method === 'GET' && !userId) return json(res, 200, { data: [] });
 	if (!userId) return error(res, 401, 'unauthorized', 'sign in required');
 
 	const [agent] = await sql`SELECT id FROM agent_identities WHERE id = ${id} AND user_id = ${userId} AND deleted_at IS NULL`;
-	if (!agent) return error(res, 404, 'not_found', 'agent not found');
+	if (!agent) {
+		if (req.method === 'GET') return json(res, 200, { data: [] });
+		return error(res, 404, 'not_found', 'agent not found');
+	}
 
 	if (req.method === 'GET') {
 		const rows = await sql`

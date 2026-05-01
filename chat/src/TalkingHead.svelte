@@ -15,8 +15,7 @@
 <script>
 	import { onMount, onDestroy, createEventDispatcher } from 'svelte';
 
-	export let avatarUrl =
-		'https://models.readyplayer.me/64bfa15f0e72c63d7c3934a6.glb?morphTargets=ARKit,Oculus+Visemes,mouthOpen,mouthSmile,eyesClosed,eyesLookUp,eyesLookDown&textureSizeLimit=1024&textureFormat=png';
+	export let avatarUrl = '';
 	export let avatarBody = 'F';
 	export let ttsEndpoint = '/api/tts/google';
 	export let ttsApikey = '';
@@ -40,12 +39,29 @@
 		]);
 	}
 
+	async function resolveDefaultAvatarUrl() {
+		try {
+			const res = await fetch('/api/avatars/public?limit=1');
+			if (!res.ok) return null;
+			const data = await res.json();
+			return data?.avatars?.[0]?.model_url ?? null;
+		} catch {
+			return null;
+		}
+	}
+
 	async function loadAvatar() {
 		loadError = null;
 		if (head?.stop) head.stop();
 		head = null;
 
 		try {
+			const url = avatarUrl || (await resolveDefaultAvatarUrl());
+			if (!url) {
+				loadError = 'No avatar selected — pick one in Settings → Avatar.';
+				return;
+			}
+
 			let mod;
 			try {
 				mod = await importWithTimeout(CDN_URL, 15000);
@@ -64,7 +80,7 @@
 
 			await Promise.race([
 				head.showAvatar({
-					url: avatarUrl,
+					url,
 					body: avatarBody,
 					avatarMood: 'neutral',
 					lipsyncLang: 'en',

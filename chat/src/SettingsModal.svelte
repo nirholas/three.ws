@@ -724,13 +724,13 @@
 						<label class="text-sm font-medium text-slate-700">Custom 3D Avatar URL (.glb)</label>
 						<input
 							type="url"
-							placeholder="https://models.readyplayer.me/your-avatar.glb?morphTargets=ARKit,Oculus+Visemes,..."
+							placeholder="https://three.ws/api/avatars/<id> or any .glb URL"
 							bind:value={$talkingHeadAvatarUrl}
 							class="rounded-md border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-indigo-400"
 						/>
 						<p class="text-xs text-slate-400">
-							Or paste a URL from <a href="https://readyplayer.me" target="_blank" class="underline">readyplayer.me</a>.
-							Must include <code>morphTargets=ARKit,Oculus+Visemes</code> query param for lipsync.
+							Pick from above, or <a href="/create" class="underline">create your own avatar</a>.
+							For lipsync the .glb must include ARKit / Oculus visemes morph targets.
 						</p>
 					</div>
 				</div>
