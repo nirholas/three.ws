@@ -1546,6 +1546,28 @@
 	let agentPickerOpen = false;
 	let showAgentSettings = false;
 
+	// Live thought bubble above the avatar — streams the active reasoning,
+	// then collapses to a "Thought for Xs" summary while the response streams.
+	let thoughtBubbleEl;
+	$: thinkingMessage = (() => {
+		const msgs = convo?.messages;
+		if (!msgs?.length || !generating) return null;
+		const last = msgs[msgs.length - 1];
+		if (!last || last.role !== 'assistant' || !last.reasoning) return null;
+		return last;
+	})();
+	$: thoughtBubbleActive = !!thinkingMessage?.thinking;
+	$: thoughtBubbleText = thinkingMessage?.thoughts || '';
+	$: thoughtBubbleSeconds = thinkingMessage?.thinkingTime
+		? thinkingMessage.thinkingTime < 1 ? '<1' : Math.ceil(thinkingMessage.thinkingTime)
+		: 0;
+	$: if (thoughtBubbleEl && thoughtBubbleActive && thoughtBubbleText) {
+		// Auto-scroll to bottom as tokens stream in
+		queueMicrotask(() => {
+			if (thoughtBubbleEl) thoughtBubbleEl.scrollTop = thoughtBubbleEl.scrollHeight;
+		});
+	}
+
 	// Drag state for the floating agent widget
 	let dragPos = { x: null, y: null };
 	let dragging = false;
@@ -2280,6 +2302,33 @@
 											</div>
 										{/if}
 
+										{#if thinkingMessage && agentVisible}
+											<div
+												class="thought-bubble"
+												class:thought-bubble-collapsed={!thoughtBubbleActive}
+												role="status"
+												aria-live="polite"
+											>
+												<div class="thought-bubble-header">
+													<span class="thought-bubble-dot" class:idle={!thoughtBubbleActive} />
+													<span class="thought-bubble-label">
+														{thoughtBubbleActive ? 'Thinking' : 'Thought'} for {thoughtBubbleSeconds}s
+													</span>
+												</div>
+												{#if thoughtBubbleActive}
+													<div class="thought-bubble-body" bind:this={thoughtBubbleEl}>
+														{#if thoughtBubbleText}
+															{thoughtBubbleText}
+														{:else}
+															<span class="thought-bubble-placeholder">Reasoning…</span>
+														{/if}
+													</div>
+												{/if}
+												<span class="thought-bubble-tail thought-bubble-tail-1" />
+												<span class="thought-bubble-tail thought-bubble-tail-2" />
+											</div>
+										{/if}
+
 										{#if effectiveAgentId && agentVisible}
 											<!-- svelte-ignore custom-element-no-implicit-ns -->
 											<agent-3d
@@ -2503,5 +2552,103 @@
 	:global(.markdown.prose :where(pre):not(:where([class~='not-prose'], [class~='not-prose'] *))) {
 		background-color: #EBE8E0;
 		border-color: #E5E3DC;
+	}
+
+	.thought-bubble {
+		position: relative;
+		width: 280px;
+		max-width: calc(100vw - 48px);
+		margin-bottom: 14px;
+		padding: 10px 14px 12px;
+		border-radius: 18px;
+		background: #ffffff;
+		border: 1px solid #E5E3DC;
+		box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+		font-family: 'Inter', system-ui, sans-serif;
+		animation: thought-bubble-pop 220ms ease-out;
+		pointer-events: auto;
+	}
+
+	@keyframes thought-bubble-pop {
+		from { opacity: 0; transform: translateY(6px) scale(0.96); }
+		to   { opacity: 1; transform: translateY(0)   scale(1); }
+	}
+
+	.thought-bubble-header {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		margin-bottom: 6px;
+		font-size: 11px;
+		font-weight: 600;
+		color: #9C9A93;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+	}
+
+	.thought-bubble-collapsed {
+		padding-bottom: 10px;
+	}
+	.thought-bubble-collapsed .thought-bubble-header {
+		margin-bottom: 0;
+	}
+
+	.thought-bubble-dot {
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background: #6366F1;
+		animation: thought-bubble-pulse 1.2s ease-in-out infinite;
+	}
+	.thought-bubble-dot.idle {
+		background: #C7C4BB;
+		animation: none;
+	}
+
+	@keyframes thought-bubble-pulse {
+		0%, 100% { opacity: 0.4; transform: scale(0.85); }
+		50%      { opacity: 1;   transform: scale(1.1); }
+	}
+
+	.thought-bubble-body {
+		max-height: 140px;
+		overflow-y: auto;
+		font-size: 12px;
+		line-height: 1.5;
+		color: #4B4A45;
+		white-space: pre-wrap;
+		word-break: break-word;
+		scrollbar-width: thin;
+		scrollbar-color: #D4D2CA transparent;
+		mask-image: linear-gradient(to bottom, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);
+		-webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);
+	}
+
+	.thought-bubble-body::-webkit-scrollbar { width: 4px; }
+	.thought-bubble-body::-webkit-scrollbar-thumb { background: #D4D2CA; border-radius: 2px; }
+
+	.thought-bubble-placeholder {
+		color: #9C9A93;
+		font-style: italic;
+	}
+
+	.thought-bubble-tail {
+		position: absolute;
+		right: 28px;
+		border-radius: 50%;
+		background: #ffffff;
+		border: 1px solid #E5E3DC;
+		box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+	}
+	.thought-bubble-tail-1 {
+		bottom: -8px;
+		width: 12px;
+		height: 12px;
+	}
+	.thought-bubble-tail-2 {
+		bottom: -18px;
+		right: 22px;
+		width: 7px;
+		height: 7px;
 	}
 </style>

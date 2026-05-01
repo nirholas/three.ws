@@ -24,6 +24,7 @@ const updateSchema = z.object({
 		)
 		.min(1)
 		.optional(),
+	content: z.string().trim().max(200000).optional(),
 });
 
 export default wrap(async (req, res) => {
@@ -58,6 +59,7 @@ function toSkill(row, { includeInstalled = false } = {}) {
 		avg_rating: Number(row.avg_rating) || 0,
 		rating_count: row.rating_count || 0,
 		schema_json: row.schema_json,
+		content: row.content ?? null,
 		author: row.author_id
 			? { id: row.author_id, display_name: row.author_display_name }
 			: null,
@@ -128,6 +130,8 @@ async function handleUpdate(req, res, id) {
 	if (body.is_public !== undefined) updates.push(sql`is_public = ${body.is_public}`);
 	if (body.schema_json !== undefined)
 		updates.push(sql`schema_json = ${JSON.stringify(body.schema_json)}::jsonb`);
+	if (body.content !== undefined)
+		updates.push(sql`content = ${body.content}`);
 	updates.push(sql`updated_at = now()`);
 
 	const setClauses = updates.reduce((acc, frag) => sql`${acc}, ${frag}`);

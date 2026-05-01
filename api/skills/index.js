@@ -33,7 +33,9 @@ const publishSchema = z.object({
 				})
 				.passthrough(),
 		)
-		.min(1),
+		.min(1)
+		.optional(),
+	content: z.string().trim().min(1).max(200000).optional(),
 	is_public: z.boolean().default(true),
 	price_per_call_usd: z.number().min(0).max(10).default(0),
 });
@@ -55,6 +57,7 @@ async function resolveOptionalAuth(req) {
 }
 
 function toSkill(row, { includeInstalled = false, includeSchema = false } = {}) {
+	const hasContent = typeof row.content === 'string' && row.content.length > 0;
 	const skill = {
 		id: row.id,
 		name: row.name,
@@ -70,6 +73,8 @@ function toSkill(row, { includeInstalled = false, includeSchema = false } = {}) 
 			? { id: row.author_id, display_name: row.author_display_name }
 			: null,
 		created_at: row.created_at,
+		has_content: hasContent,
+		content_preview: hasContent ? row.content.slice(0, 280) : null,
 	};
 	if (includeInstalled) skill.installed = !!row.installed;
 	if (includeSchema) skill.schema_json = row.schema_json;
@@ -190,7 +195,7 @@ function runListQuery(p) {
 		return sql`
 			SELECT
 				ms.id, ms.name, ms.slug, ms.description, ms.category, ms.tags,
-				ms.install_count, ms.created_at, ms.author_id, ms.price_per_call_usd,
+				ms.install_count, ms.created_at, ms.author_id, ms.price_per_call_usd, ms.content,
 				u.display_name AS author_display_name,
 				ROUND(COALESCE(AVG(sr.rating), 0)::numeric, 1)::float AS avg_rating,
 				COUNT(sr.rating)::int AS rating_count,
@@ -234,7 +239,7 @@ function runListQuery(p) {
 		return sql`
 			SELECT
 				ms.id, ms.name, ms.slug, ms.description, ms.category, ms.tags,
-				ms.install_count, ms.created_at, ms.author_id, ms.price_per_call_usd,
+				ms.install_count, ms.created_at, ms.author_id, ms.price_per_call_usd, ms.content,
 				u.display_name AS author_display_name,
 				ROUND(COALESCE(AVG(sr.rating), 0)::numeric, 1)::float AS avg_rating,
 				COUNT(sr.rating)::int AS rating_count,
@@ -326,10 +331,14 @@ async function handlePublish(req, res) {
 
 	const body = parse(publishSchema, await readJson(req));
 
+	if (!body.schema_json && !body.content) {
+		return error(res, 400, 'validation_error', 'skill must have schema_json or content');
+	}
+
 	let row;
 	try {
 		[row] = await sql`
-			INSERT INTO marketplace_skills (author_id, name, slug, description, category, tags, schema_json, is_public, price_per_call_usd)
+			INSERT INTO marketplace_skills (author_id, name, slug, description, category, tags, schema_json, content, is_public, price_per_call_usd)
 			VALUES (
 				${auth.userId},
 				${body.name},
@@ -337,7 +346,8 @@ async function handlePublish(req, res) {
 				${body.description},
 				${body.category},
 				${body.tags},
-				${JSON.stringify(body.schema_json)}::jsonb,
+				${body.schema_json ? JSON.stringify(body.schema_json) : null}::jsonb,
+				${body.content ?? null},
 				${body.is_public},
 				${body.price_per_call_usd}
 			)
