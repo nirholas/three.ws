@@ -19,6 +19,11 @@ import { AgentNotifier } from './agent-notifier.js';
 
 const MODES = ['inline', 'floating', 'section', 'fullscreen'];
 
+function _parsePx(val) {
+	const n = parseFloat(val);
+	return n > 0 && typeof val === 'string' && val.trim().endsWith('px') ? n : 0;
+}
+
 // Derive the origin of the script itself so cross-origin embeds hit the right API.
 const _scriptOrigin = (() => {
 	try {

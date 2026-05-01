@@ -23,6 +23,7 @@ import { ACTION_TYPES } from './agent-protocol.js';
 import { Vector3, Box3, MathUtils, PositionalAudio } from 'three';
 import { resolveSlot, DEFAULT_ANIMATION_MAP } from './runtime/animation-slots.js';
 import { ElevenLabsTTS } from './runtime/speech.js';
+import { LipSyncAnalyser } from './lip-sync-analyser.js';
 // BEGIN:IDLE_LOOP_IMPORT
 import { IdleAnimation } from './idle-animation.js';
 // END:IDLE_LOOP_IMPORT
@@ -198,6 +199,9 @@ export class AgentAvatar {
 		// Listeners stored so we can detach later
 		this._listeners = [];
 
+		// Frequency-based lip sync (null = use mouthOpen fallback)
+		this._lipSync = null;
+
 		// Spatial audio
 		this._tts = null;
 		this._positionalAudio = null;
@@ -278,6 +282,8 @@ export class AgentAvatar {
 		this._idle?.dispose();
 		this._idle = null;
 		// END:IDLE_LOOP_DISPOSE
+		this._lipSync?.disconnect();
+		this._lipSync = null;
 		if (this._positionalAudio) {
 			try { this._positionalAudio.disconnect(); } catch {}
 			this._positionalAudio.parent?.remove(this._positionalAudio);
@@ -299,6 +305,18 @@ export class AgentAvatar {
 	 */
 	setUserSpeaking(active) {
 		this._userSpeaking = active;
+	}
+
+	/**
+	 * Connect a LipSyncAnalyser to this avatar.
+	 * While active, viseme morphs are driven from real audio frequency data and
+	 * the blunt mouthOpen talk-hint is suppressed.
+	 * @param {AnalyserNode|HTMLMediaElement} audioSource
+	 */
+	connectLipSync(audioSource) {
+		this._lipSync?.disconnect();
+		this._lipSync = new LipSyncAnalyser();
+		this._lipSync.connect(audioSource);
 	}
 
 	/**
@@ -597,6 +615,20 @@ export class AgentAvatar {
 
 		// Stage 4: Apply emotion to avatar
 		this._applyEmotionToAvatar(dt);
+
+		// Stage 5: Frequency-based viseme lipsync (ElevenLabs path)
+		// Samples the live audio AnalyserNode and overrides the blunt mouthOpen
+		// with per-viseme morph weights. No-ops when _lipSync is null.
+		if (this._lipSync) {
+			const visemes = this._lipSync.sample();
+			if (visemes) {
+				for (const [name, weight] of Object.entries(visemes)) {
+					this._setMorphTarget(name, weight);
+				}
+				// Suppress the flat mouthOpen talk-hint while real visemes are active
+				this._setMorphTarget('mouthOpen', 0);
+			}
+		}
 
 		// BEGIN:IDLE_LOOP_TICK
 		this._idle?.update(dt);

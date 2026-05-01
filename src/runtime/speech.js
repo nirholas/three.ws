@@ -13,6 +13,9 @@ export class BrowserTTS {
 		this._queue = [];
 		this._speaking = false;
 		this._lipsync = null;
+		// Global hooks — set by callers that manage lipsync externally (e.g. AgentAvatar).
+		this.onStart = null;
+		this.onEnd   = null;
 	}
 
 	async speak(text, { onStart, onEnd, scene } = {}) {
@@ -27,12 +30,14 @@ export class BrowserTTS {
 			utter.onstart = () => {
 				this._speaking = true;
 				if (scene) this._lipsync = startLipsync(text, scene);
+				this.onStart?.();
 				onStart?.();
 			};
 			utter.onend = () => {
 				this._speaking = false;
 				this._lipsync?.stop();
 				this._lipsync = null;
+				this.onEnd?.();
 				onEnd?.();
 				resolve();
 			};
@@ -198,6 +203,18 @@ export class ElevenLabsTTS {
 		this._onEnd = null; // pending resolve
 		this._lipsync = null;
 		this._positionalAudio = null; // THREE.PositionalAudio, optional
+		// Web Audio nodes for LipSyncAnalyser integration
+		this._audioCtx      = null;
+		this._analyserNode  = null;
+		this._mediaSource   = null;
+		// Global hooks — set by callers that manage lipsync externally (e.g. AgentAvatar).
+		this.onStart = null;
+		this.onEnd   = null;
+	}
+
+	/** Expose the shared AnalyserNode so LipSyncAnalyser can read frequency data. */
+	get analyserNode() {
+		return this._analyserNode;
 	}
 
 	/** @param {import('three').PositionalAudio|null} pa */
@@ -275,6 +292,7 @@ export class ElevenLabsTTS {
 				this._lipsync?.stop();
 				this._lipsync = null;
 				this._cleanupAudio();
+				this.onEnd?.();
 				onEnd?.();
 				this._onEnd = null;
 				resolve();
@@ -285,7 +303,7 @@ export class ElevenLabsTTS {
 			};
 
 			const lipsyncOnStart = () => {
-				if (scene) this._lipsync = startLipsync(text, scene);
+				this.onStart?.();
 				onStart?.();
 			};
 
@@ -320,6 +338,28 @@ export class ElevenLabsTTS {
 		return this._speaking;
 	}
 
+	// ── Internal: Web Audio analyser for LipSyncAnalyser ──────────────────
+
+	_setupAnalyser(audio) {
+		const AC = window.AudioContext || window.webkitAudioContext;
+		if (!AC) return;
+		try {
+			if (!this._audioCtx || this._audioCtx.state === 'closed') {
+				this._audioCtx     = new AC();
+				this._analyserNode = this._audioCtx.createAnalyser();
+				this._analyserNode.fftSize               = 256;
+				this._analyserNode.smoothingTimeConstant = 0.7;
+				this._analyserNode.connect(this._audioCtx.destination);
+			}
+			this._mediaSource?.disconnect();
+			this._mediaSource = this._audioCtx.createMediaElementSource(audio);
+			this._mediaSource.connect(this._analyserNode);
+			this._audioCtx.resume().catch(() => {});
+		} catch {
+			// Degrade silently — CORS, autoplay policy, or element already captured
+		}
+	}
+
 	// ── Internal: spatial audio wiring ────────────────────────────────────
 
 	_connectPositionalAudio(audioEl) {
@@ -343,6 +383,9 @@ export class ElevenLabsTTS {
 		const audio = new Audio(this._mediaSourceURL);
 		this._audio = audio;
 		audio.preload = 'auto';
+		// Wire Web Audio analyser before playback starts so analyserNode is ready
+		// when the 'playing' event fires (which triggers onStart → avatar.connectLipSync).
+		this._setupAnalyser(audio);
 
 		audio.addEventListener('playing', onStart, { once: true });
 		audio.addEventListener('ended', () => this._onEnd?.(), { once: true });
@@ -416,6 +459,7 @@ export class ElevenLabsTTS {
 			this._mediaSourceURL = url;
 			const audio = new Audio(url);
 			this._audio = audio;
+			this._setupAnalyser(audio);
 			audio.addEventListener('playing', onStart, { once: true });
 			audio.addEventListener('ended', () => this._onEnd?.(), { once: true });
 			audio.addEventListener('error', () => onError?.(), { once: true });
@@ -427,6 +471,11 @@ export class ElevenLabsTTS {
 	}
 
 	_cleanupAudio() {
+		// Disconnect the per-speak MediaElementSourceNode (analyser + ctx are reused).
+		if (this._mediaSource) {
+			try { this._mediaSource.disconnect(); } catch {}
+			this._mediaSource = null;
+		}
 		if (this._positionalAudio?.source) {
 			try { this._positionalAudio.source.disconnect(); } catch {}
 			this._positionalAudio.source = null;
