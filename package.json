@@ -7,10 +7,7 @@
 	"author": "nirholas",
 	"license": "Apache-2.0",
 	"overrides": {
-		"serialize-javascript": ">=7.0.5",
-		"@sveltejs/vite-plugin-svelte": {
-			"vite": "^5.0.0"
-		}
+		"serialize-javascript": ">=7.0.5"
 	},
 	"engines": {
 		"node": "24.x"
@@ -25,9 +22,7 @@
 		"drag-and-drop",
 		"3d-agent"
 	],
-	"workspaces": [
-		"chat"
-	],
+	"workspaces": [],
 	"main": "src/app.js",
 	"browserslist": [
 		">1%",
@@ -49,7 +44,7 @@
 		"build:lib": "TARGET=lib vite build",
 		"build:artifact": "vite build --config vite.config.artifact.js",
 		"publish:lib": "node scripts/publish-lib.mjs",
-		"build:chat": "cd chat && npm run build",
+		"build:chat": "cd chat && npm ci --prefer-offline --no-audit --no-fund && npm run build",
 		"build:all": "npm run build:chat && npm run build && npm run build:lib && npm run publish:lib",
 		"clean": "rm -rf dist/* dist-lib/* || true",
 		"generate-icons": "node scripts/generate-pwa-icons.mjs",

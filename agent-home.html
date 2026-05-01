@@ -15,6 +15,7 @@
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/src/pump/launch-token-modal.css" />
 		<script defer src="/footer-newsletter.js"></script>
 		<link
 			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap"
@@ -672,6 +673,13 @@
 					>
 					<button
 						class="agent-stage-cta agent-stage-cta--ghost"
+						id="agent-stage-launch"
+						hidden
+					>
+						🚀 Launch Token
+					</button>
+					<button
+						class="agent-stage-cta agent-stage-cta--ghost"
 						id="agent-stage-share"
 						aria-describedby="agent-stage-share-status"
 					>
@@ -1122,5 +1130,7 @@
 			}
 		</script>
 		<!-- END:AGENT_HOME_ORPHANS_SCRIPT -->
+		<!-- Launch Token modal boot — owner-only, wired via agent:ready event -->
+		<script type="module" src="/src/pump/launch-token-boot.js"></script>
 	</body>
 </html>

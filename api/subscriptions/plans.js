@@ -51,15 +51,32 @@ async function handleList(req, res) {
 	const rl = await limits.publicIp(ip);
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
-	const creatorId = new URL(req.url, 'http://x').searchParams.get('creator_id');
-	if (!creatorId) return error(res, 400, 'validation_error', 'creator_id required');
+	const params = new URL(req.url, 'http://x').searchParams;
+	const creatorId = params.get('creator_id');
+	const agentId = params.get('agent_id');
 
-	const rows = await sql`
-		SELECT id, creator_id, agent_id, name, price_usd, interval, perks, active, created_at
-		FROM subscription_plans
-		WHERE creator_id = ${creatorId} AND active = true
-		ORDER BY created_at ASC
-	`;
+	if (!creatorId && !agentId) {
+		return error(res, 400, 'validation_error', 'creator_id or agent_id required');
+	}
+
+	let rows;
+	if (agentId) {
+		// Look up all plans belonging to this agent's creator (agent_id is public).
+		rows = await sql`
+			SELECT sp.id, sp.creator_id, sp.agent_id, sp.name, sp.price_usd, sp.interval, sp.perks, sp.active, sp.created_at
+			FROM subscription_plans sp
+			JOIN agent_identities ai ON ai.user_id = sp.creator_id
+			WHERE ai.id = ${agentId} AND ai.deleted_at IS NULL AND sp.active = true
+			ORDER BY sp.created_at ASC
+		`;
+	} else {
+		rows = await sql`
+			SELECT id, creator_id, agent_id, name, price_usd, interval, perks, active, created_at
+			FROM subscription_plans
+			WHERE creator_id = ${creatorId} AND active = true
+			ORDER BY created_at ASC
+		`;
+	}
 	return json(res, 200, { plans: rows });
 }
 
@@ -121,7 +138,7 @@ async function handlePatch(req, res, planId) {
 
 	const [plan] = await sql`
 		UPDATE subscription_plans
-		SET ${sql.join(sets, sql`, `)}
+		SET ${sql(sets.reduce((a, b) => sql`${a}, ${b}`))}
 		WHERE id = ${planId} AND creator_id = ${user.id}
 		RETURNING id, creator_id, agent_id, name, price_usd, interval, perks, active, created_at
 	`;

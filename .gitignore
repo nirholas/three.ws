@@ -27,6 +27,10 @@ xspace-agent/demo-join.ts
 xspace-agent/join-space.js
 xspace-agent/start-demo.sh
 
+# Chat build artifacts
+public/chat/assets/
+public/chat/index.html.gz
+
 # Animation build cache
 public/animations/clips/.input-hashes.json
 Handshake
