@@ -21,16 +21,6 @@
       </div>
     </div>
 
-    <!-- Hero image -->
-    {#if slug === 'agent-skills'}
-      <div
-        class="aspect-[3/1] rounded-2xl mt-12 bg-cover bg-center"
-        style="background-image: url('/three.ws-redesign/skills-hero.jpg'), linear-gradient(to bottom right, #EFECE3, #E5E3DC)"
-      ></div>
-    {:else}
-      <div class="aspect-[16/9] rounded-2xl bg-gradient-to-br from-[#EFECE3] to-[#E5E3DC] mt-12"></div>
-    {/if}
-
     <!-- What you get -->
     <h2 class="font-serif text-3xl font-semibold mt-24 mb-8 text-center">What you get</h2>
     <div class="grid md:grid-cols-3 gap-4">
