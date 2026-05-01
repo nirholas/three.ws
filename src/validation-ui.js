@@ -268,10 +268,14 @@ export class ValidationDashboard {
 			return;
 		}
 
-		if (!this.currentAgentId || !this.currentChainId) {
-			this.showToast('Please load records first to set agent ID and chain', true);
+		const agentId = this.currentAgentId ?? Number(this.els.agentInput.value.trim());
+		const chainId = this.currentChainId ?? Number(this.els.chainInput.value.trim());
+		if (!agentId || !chainId) {
+			this.showToast('Enter Agent ID and Chain ID before submitting', true);
 			return;
 		}
+		this.currentAgentId = agentId;
+		this.currentChainId = chainId;
 
 		try {
 			this.els.submitReportBtn.disabled = true;

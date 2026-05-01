@@ -671,7 +671,9 @@
 			const ALL_PAGES = NAV.flatMap(s => s.links.filter(l => l.path));
 
 			function currentPath() {
-				return (location.hash.slice(1) || 'introduction').replace(/^\//, '');
+				if (location.hash) return location.hash.slice(1).replace(/^\//, '');
+				const m = location.pathname.match(/^\/docs\/([^/]+)$/);
+				return m ? m[1] : 'introduction';
 			}
 
 			function buildSidebar(filter) {
