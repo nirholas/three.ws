@@ -16,8 +16,7 @@ npm-debug.log*
 character-studio/node_modules
 character-studio/build
 
-# Rider subproject build output
-rider/build
+# rider/build — tracked so Vercel skips the webpack rebuild
 character-studio/public/loot-assets
 .mcp.json
 .claude/worktrees/
