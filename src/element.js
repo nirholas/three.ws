@@ -1741,7 +1741,7 @@ class Agent3DElement extends HTMLElement {
 			setTimeout(() => {
 				if (this._thoughtBubbleEl) this._thoughtBubbleEl.style.willChange = 'auto';
 			}, 300);
-		}, 200);
+		}, 80);
 	}
 
 	_showBubbleError(message = 'Something went wrong') {
