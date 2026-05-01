@@ -1231,7 +1231,7 @@ function dcaIsTransient(err) {
 	return false;
 }
 
-async function dcaWithRetry(fn, { retries, backoffMs = 500, label }) {
+async function dcaWithRetry(fn, { retries = 3, backoffMs = 500, label }) {
 	let attempt = 0;
 	// eslint-disable-next-line no-constant-condition
 	while (true) {
