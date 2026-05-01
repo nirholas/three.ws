@@ -2372,7 +2372,7 @@
 			<agent-3d
 				bind:this={agentEl}
 				agent-id={effectiveAgentId}
-				mode="embed"
+				mode="inline"
 				width="220"
 				height="220"
 				background="transparent"
