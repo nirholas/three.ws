@@ -158,6 +158,7 @@ class App {
 			noAnimations: Boolean(hash.noAnimations),
 			noChat: Boolean(hash.noChat),
 			noControls: Boolean(hash.noControls),
+			avatarChatOff: hash['avatar-chat'] === 'off',
 		};
 
 		// Fire-and-forget silent wallet reconnect. Cheap (single `eth_accounts`
@@ -957,6 +958,7 @@ class App {
 		if (this.options.noAnimations) cfg.showClipPicker = false;
 		if (this.options.noChat) cfg._noChat = true;
 		if (this.options.noControls) cfg.showControls = false;
+		if (this.options.avatarChatOff) cfg.avatarChatOff = true;
 
 		// Apply config to options BEFORE creating the viewer so first frame is right.
 		if (Array.isArray(cfg.cameraPosition) && cfg.cameraPosition.length === 3) {

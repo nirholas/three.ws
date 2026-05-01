@@ -434,6 +434,23 @@ Parent host is determined from `window.location.ancestorOrigins` (Chromium) or `
 
 **We ship permissionless by default.** On-chain identity is public — any embedder can show any agent unless the owner has explicitly set a policy. The policy path exists so owners _can_ restrict later; it doesn't gate the default experience.
 
+### URL hash params (SPA iframe embeds)
+
+When embedding the SPA directly as an iframe (e.g. `src="/app#widget=..."`), the following hash params are supported as per-embed overrides:
+
+| Hash param | Effect |
+|---|---|
+| `#kiosk` | Hides header and footer chrome |
+| `#noAnimations` | Disables animation clip picker |
+| `#noChat` | Suppresses the chat UI entirely |
+| `#noControls` | Hides orbit/pan/zoom controls |
+| `#avatar-chat=off` | Disables the inline avatar layout and walk animation; restores the original bottom-bar chat layout |
+
+Example:
+```html
+<iframe src="https://three.ws/app#widget=wdgt_abc&avatar-chat=off"></iframe>
+```
+
 ## Delegations (optional, v0.2+)
 
 The `<agent-3d>` embed can surface and redeem ERC-7710 delegations granted to an agent. This section specifies how the embed discovers delegations, which host configurations unlock redemption, and how hosts communicate with the embed over the post-message channel.
