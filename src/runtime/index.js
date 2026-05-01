@@ -150,7 +150,33 @@ export class Runtime extends EventTarget {
 				);
 				results.push({ id: call.id, output, isError });
 			}
-			this.messages.push(this.provider.formatToolResults(results));
+			const hasImage = results.some((r) => r.output?.imageData);
+			if (hasImage) {
+				const content = results.map((r) => {
+					const block = {
+						type: 'tool_result',
+						tool_use_id: r.id,
+						is_error: !!r.isError,
+					};
+					if (r.output?.imageData) {
+						const b64 = r.output.imageData.replace(/^data:[^;]+;base64,/, '');
+						block.content = [
+							{ type: 'text', text: r.output.description || 'Screen captured.' },
+							{
+								type: 'image',
+								source: { type: 'base64', media_type: 'image/jpeg', data: b64 },
+							},
+						];
+					} else {
+						block.content =
+							typeof r.output === 'string' ? r.output : JSON.stringify(r.output);
+					}
+					return block;
+				});
+				this.messages.push({ role: 'user', content });
+			} else {
+				this.messages.push(this.provider.formatToolResults(results));
+			}
 		}
 
 		return { text: finalText };

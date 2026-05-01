@@ -81,6 +81,23 @@ export const BUILTIN_TOOLS = [
 			required: ['key', 'name', 'description', 'type', 'body'],
 		},
 	},
+	{
+		name: 'see_screen',
+		description:
+			'Capture what is currently visible on screen and describe it to inform your response.',
+		input_schema: {
+			type: 'object',
+			properties: {
+				mode: {
+					type: 'string',
+					enum: ['canvas', 'text', 'screen'],
+					description:
+						'canvas=3D viewport only (default), text=page text content, screen=full screen capture (requires user permission)',
+				},
+			},
+			required: [],
+		},
+	},
 ];
 
 // Stage-scoped tools — appended to an agent's tool list only when Runtime is
@@ -152,6 +169,20 @@ export const BUILTIN_HANDLERS = {
 		const { key, name, description, type, body } = args;
 		ctx.memory.write(key, { name, description, type, body });
 		return { ok: true, saved: key };
+	},
+
+	async see_screen(args, ctx) {
+		const { captureContext } = await import('./screen-context.js');
+		const mode = args.mode ?? 'canvas';
+		try {
+			const result = await captureContext(ctx.viewer.renderer, { mode });
+			if (result.type === 'image') {
+				return { ok: true, imageData: result.data, description: 'Screen captured.' };
+			}
+			return { ok: true, text: result.data };
+		} catch (err) {
+			return { ok: false, error: err.message || 'Screen capture failed.' };
+		}
 	},
 
 	async observe_agents(args, ctx) {

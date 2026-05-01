@@ -137,6 +137,106 @@ async function handleCategories(req, res) {
 	);
 }
 
+// ── Create ─────────────────────────────────────────────────────────────────
+
+async function handleCreate(req, res) {
+	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['POST'])) return;
+
+	const auth = await resolveAuth(req);
+	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
+
+	const rl = await limits.authIp(clientIp(req));
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
+
+	let body = await readJson(req).catch(() => null);
+	if (!body) return error(res, 400, 'validation_error', 'request body required');
+
+	// Accept LobeHub-compatible JSON import: { json: { config, meta } }
+	if (body.json && typeof body.json === 'object') {
+		const j = body.json;
+		body = {
+			name: j.meta?.title || j.meta?.name || '',
+			description: j.meta?.description || '',
+			system_prompt: j.config?.systemRole || '',
+			greeting: j.config?.greeting || null,
+			category: j.meta?.category || 'general',
+			tags: j.meta?.tags || [],
+			capabilities: j.meta?.capabilities || {},
+			publish: false,
+		};
+	}
+
+	const parsed = createAgentSchema.safeParse(body);
+	if (!parsed.success) {
+		const msg = parsed.error.issues[0]?.message || 'validation error';
+		return error(res, 400, 'validation_error', msg);
+	}
+
+	const { name, description, system_prompt, greeting, category, tags, capabilities, publish } =
+		parsed.data;
+	const publishedAt = publish ? new Date().toISOString() : null;
+
+	const [agent] = await sql`
+		INSERT INTO agent_identities (
+			user_id, name, description, system_prompt, greeting,
+			category, tags, capabilities, is_published, published_at
+		)
+		VALUES (
+			${auth.userId}, ${name}, ${description}, ${system_prompt}, ${greeting ?? null},
+			${category}, ${tags}, ${JSON.stringify(capabilities)}::jsonb,
+			${publish}, ${publishedAt}
+		)
+		RETURNING *
+	`;
+
+	if (publish) {
+		await sql`
+			INSERT INTO agent_versions (
+				agent_id, version, system_prompt, greeting, category, tags, capabilities, changelog, created_by
+			)
+			VALUES (
+				${agent.id}, 1, ${system_prompt}, ${greeting ?? null}, ${category}, ${tags},
+				${JSON.stringify(capabilities)}::jsonb, 'Initial release', ${auth.userId}
+			)
+		`;
+	}
+
+	return json(res, 201, {
+		data: { agent: toDetail({ ...agent, author_name: null, author_avatar: null }) },
+	});
+}
+
+// ── Mine ───────────────────────────────────────────────────────────────────
+
+async function handleMine(req, res) {
+	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['GET'])) return;
+
+	const auth = await resolveAuth(req);
+	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
+
+	const rl = await limits.widgetRead(clientIp(req));
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
+
+	const rows = await sql`
+		SELECT ai.id, ai.name, ai.description, ai.category, ai.tags, ai.avatar_id, ai.user_id,
+		       ai.forks_count, ai.views_count, ai.published_at, ai.created_at, ai.skills,
+		       ai.is_published, av.thumbnail_key
+		FROM agent_identities ai
+		LEFT JOIN avatars av ON av.id = ai.avatar_id AND av.deleted_at IS NULL
+		WHERE ai.user_id = ${auth.userId} AND ai.deleted_at IS NULL
+		ORDER BY ai.created_at DESC
+		LIMIT 100
+	`;
+
+	return json(res, 200, {
+		data: {
+			items: rows.map((r) => ({ ...toCard(r), is_published: r.is_published })),
+		},
+	});
+}
+
 // ── List ───────────────────────────────────────────────────────────────────
 
 async function handleList(req, res, url) {

@@ -35,6 +35,7 @@ const DECAY = {
 	patience: 0.035, // half-life ~20s — sustained waiting state
 	curiosity: 0.12, // half-life ~8s  — alert, engaged
 	empathy: 0.055, // half-life ~13s — slow to fade, like real empathy
+	uncertain: 0.10, // half-life ~7s  — hedged speech signal
 };
 
 // Vocabulary scored for emotional valence
@@ -109,6 +110,27 @@ const VOCAB = {
 		'oops',
 		'unfortunately',
 	],
+	uncertain: [
+		'i think',
+		'not sure',
+		'might be',
+		'probably',
+		'possibly',
+		'i believe',
+		"i'm not certain",
+		'could be',
+		'maybe',
+		'roughly',
+		'approximately',
+		'unclear',
+		'uncertain',
+		'hard to say',
+		'it depends',
+		"i'd guess",
+		'seems like',
+		'appears to',
+		'not entirely sure',
+	],
 };
 
 export class AgentAvatar {
@@ -130,6 +152,7 @@ export class AgentAvatar {
 			patience: 0.0,
 			curiosity: 0.0,
 			empathy: 0.0,
+			uncertain: 0.0,
 		};
 
 		// Head look-at state
@@ -184,7 +207,7 @@ export class AgentAvatar {
 	/** Call after viewer.setContent() loads the avatar model */
 	attach() {
 		// Reset emotion to neutral so re-attaching a previously emotional avatar starts clean
-		this._emotion = { neutral: 1.0, concern: 0, celebration: 0, patience: 0, curiosity: 0, empathy: 0 };
+		this._emotion = { neutral: 1.0, concern: 0, celebration: 0, patience: 0, curiosity: 0, empathy: 0, uncertain: 0 };
 
 		// Build the morph mesh cache once instead of traversing every frame
 		this._buildMorphCache();
@@ -358,6 +381,10 @@ export class AgentAvatar {
 
 		// High-arousal text (questions, exclamations) → curiosity
 		if (arousal > 0.5) this._injectStimulus('curiosity', arousal * 0.5);
+
+		// Hedging language → uncertain
+		const uncertainScore = this._scoreVocab(text, 'uncertain');
+		if (uncertainScore > 0) this._injectStimulus('uncertain', Math.min(uncertainScore * 0.4, 0.8));
 
 		// Trigger mouth/talk animation hint
 		const duration = Math.max(1.5, text.split(' ').length * 0.3);
@@ -548,7 +575,9 @@ export class AgentAvatar {
 				(this._isPlayingOneShot && this._oneShotAction === 'talk' ? 0.4 : 0),
 		);
 		this._setMorphTarget('mouthFrown', w.concern * 0.55);
-		this._setMorphTarget('browInnerUp', (w.concern + w.empathy * 0.5) * 0.6);
+		this._setMorphTarget('mouthPressLeft', w.uncertain * 0.35);
+		this._setMorphTarget('mouthPressRight', w.uncertain * 0.35);
+		this._setMorphTarget('browInnerUp', Math.max(w.concern * 0.6, w.uncertain * 0.45, w.empathy * 0.5));
 		this._setMorphTarget('browOuterUpLeft', w.curiosity * 0.7);
 		this._setMorphTarget('browOuterUpRight', w.curiosity * 0.5);
 		this._setMorphTarget('eyeSquintLeft', w.empathy * 0.4);
@@ -561,6 +590,9 @@ export class AgentAvatar {
 		// ── Lerp morph influences to targets ─────────────────────────────
 		const lerpSpeed = dt * 4.0; // smooth interpolation, not snapping
 		this._lerpMorphTargets(lerpSpeed);
+
+		// Propagate uncertainty to idle animation (modulates hip drift amplitude)
+		this._idle?.setUncertainty(w.uncertain);
 
 		// ── Head tilt (curiosity + empathy both tilt the head) ────────────
 		this._targetTilt = (w.curiosity * 12 + w.empathy * 9 + w.concern * 4) * DEG2RAD;
@@ -820,6 +852,27 @@ export class AgentAvatar {
 			valence: Math.max(-1, Math.min(1, valence)),
 			arousal: Math.max(0, Math.min(1, arousal)),
 		};
+	}
+
+
+	/**
+	 * Score a single emotion bucket against the text.
+	 * Mirrors the per-bucket logic inside _analyzeSentiment.
+	 * @param {string} text
+	 * @param {string} bucket — key in VOCAB
+	 * @returns {number} 0..1
+	 */
+	_scoreVocab(text, bucket) {
+		const keywords = VOCAB[bucket];
+		if (!keywords) return 0;
+		const lower = text.toLowerCase();
+		const wordSet = new Set(lower.split(/\s+/));
+		const total = Math.max(wordSet.size, 1);
+		let hits = 0;
+		for (const kw of keywords) {
+			if (kw.includes(' ') ? lower.includes(kw) : wordSet.has(kw)) hits++;
+		}
+		return Math.min((hits / total) * 3.0, 1.0);
 	}
 
 	// ── Utility ───────────────────────────────────────────────────────────────

@@ -41,7 +41,9 @@
 				<a href="/marketplace?tab=tools" data-nav="tools"><span class="ico">⚙</span> Tools</a>
 				<a href="/features" data-nav="skills"><span class="ico">≡</span> Skills</a>
 				<a href="/dashboard" data-nav="model"><span class="ico">◉</span> Model</a>
+				<a href="/marketplace?tab=mine" data-nav="mine"><span class="ico">◱</span> My Agents</a>
 			</nav>
+			<button class="market-submit-btn market-sidebar-submit" id="market-submit-btn">+ Submit Agent</button>
 		</aside>
 
 		<main class="market-main" id="market-main">
@@ -59,6 +61,7 @@
 						<option value="recent">Recent</option>
 						<option value="popular">Popular</option>
 					</select>
+					<button class="market-submit-btn" id="market-submit-btn-top">+ Submit Agent</button>
 				</header>
 
 				<div class="market-body">
@@ -139,6 +142,7 @@
 
 					<aside class="market-detail-side">
 						<button class="market-fork" id="d-fork">Fork &amp; Chat</button>
+						<button class="market-export-btn" id="d-export-json">↓ Export JSON</button>
 						<div class="market-card market-overview-card">
 							<div class="row">
 								<span>What can you do with this Agent?</span>
@@ -147,6 +151,17 @@
 						</div>
 						<div class="market-related-side" id="d-related-side"></div>
 					</aside>
+				</div>
+			</section>
+
+			<!-- My Agents tab -->
+			<section class="market-mine" id="market-mine" hidden>
+				<header class="market-topbar">
+					<h2 class="market-section-heading">My Agents</h2>
+					<button class="market-submit-btn" id="market-new-agent-btn">+ New Agent</button>
+				</header>
+				<div class="market-mine-body">
+					<div class="market-grid" id="mine-grid"></div>
 				</div>
 			</section>
 

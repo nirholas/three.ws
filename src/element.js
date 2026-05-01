@@ -1717,6 +1717,16 @@ class Agent3DElement extends HTMLElement {
 	}
 
 	/**
+	 * Slide the avatar into frame, speak a message, then retreat.
+	 * Queued — back-to-back calls wait for the previous to finish.
+	 * @param {string} message
+	 * @param {{ priority?: 'low'|'normal'|'high', duration?: number }} [opts]
+	 */
+	notify(message, { priority = 'normal', duration = 6000 } = {}) {
+		protocol.emit({ type: ACTION_TYPES.NOTIFY, payload: { message, priority, duration } });
+	}
+
+	/**
 	 * Trigger an emotion stimulus on the running avatar(s) via the protocol bus.
 	 * Trigger names match the avatar's emotion vocabulary:
 	 *   'celebration' | 'concern' | 'curiosity' | 'empathy' | 'patience'
