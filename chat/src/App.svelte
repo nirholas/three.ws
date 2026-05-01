@@ -2346,6 +2346,7 @@
 		<KnobsSidebar {knobsOpen} {db} />
 	</div>
 </main>
+{/if}
 
 <SettingsModal
 	open={settingsModalOpen}

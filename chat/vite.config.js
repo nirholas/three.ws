@@ -15,6 +15,7 @@ export default defineConfig(function () {
 			// Forward /api requests to the 3D-Agent dev server (vercel dev on port 3000)
 			proxy: {
 				'/api': { target: 'http://localhost:3000', changeOrigin: true },
+				'/avatars': { target: 'http://localhost:3000', changeOrigin: true },
 			},
 		},
 		plugins: [
