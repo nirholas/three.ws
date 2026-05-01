@@ -185,6 +185,11 @@ export const env = {
 		return opt('ZAUTH_API_KEY');
 	},
 
+	// Set to "1" to enable verbose [zauthSDK:*] logs in Vercel.
+	get ZAUTH_DEBUG() {
+		return opt('ZAUTH_DEBUG');
+	},
+
 	// Solana RPC URL used for SNS reads/writes. Falls back to public mainnet RPC.
 	get SOLANA_RPC_URL() {
 		return opt('SOLANA_RPC_URL', 'https://api.mainnet-beta.solana.com');

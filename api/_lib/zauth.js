@@ -27,8 +27,15 @@ function buildMiddleware() {
 		return null;
 	}
 	try {
+		// Vercel serverless freezes the function the moment res.end returns,
+		// killing the SDK's default 5-second batch timer (and any in-flight
+		// POST to back.zauthx402.com). Force flush-per-event so submission
+		// starts immediately; the `drain()` helper below keeps the lambda
+		// alive long enough for that POST to complete.
 		const mw = zauthProvider(apiKey, {
 			shouldMonitor: shouldMonitorReq,
+			debug: env.ZAUTH_DEBUG === '1',
+			batching: { maxBatchSize: 1, maxBatchWaitMs: 0, retry: false },
 		});
 		console.log('[zauth] middleware initialized, key prefix:', apiKey.slice(0, 14));
 		return mw;
@@ -99,19 +106,34 @@ function shimRequest(req) {
 
 /**
  * Run the zauth middleware once for this request. Safe to call on every
- * request — internal `shouldMonitor` filters non-x402 traffic.
+ * request — internal `shouldMonitor` filters non-x402 traffic. Returns
+ * `true` if this request will be reported (caller should `await drain()`
+ * after `res.end` to keep the lambda alive long enough to flush).
  *
  * @param {import('http').IncomingMessage} req
  * @param {import('http').ServerResponse} res
+ * @returns {boolean}
  */
 export function instrument(req, res) {
 	const mw = getMiddleware();
-	if (!mw) return;
+	if (!mw) return false;
 	try {
 		shimRequest(req);
 		shimResponse(res);
+		const monitored = shouldMonitorReq(req);
 		mw(req, res, () => {});
+		return monitored;
 	} catch (err) {
 		console.error('[zauth] middleware error:', err.message);
+		return false;
 	}
+}
+
+/**
+ * Wait briefly for the SDK's fire-and-forget POST to `back.zauthx402.com`
+ * to complete before Vercel freezes the function. Only call this on
+ * requests where `instrument()` returned true.
+ */
+export function drain() {
+	return new Promise((resolve) => setTimeout(resolve, 250));
 }

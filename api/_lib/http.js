@@ -2,7 +2,7 @@
 
 import { env } from './env.js';
 import { captureException } from './sentry.js';
-import { instrument as zauthInstrument } from './zauth.js';
+import { instrument as zauthInstrument, drain as zauthDrain } from './zauth.js';
 
 export function json(res, status, body, headers = {}) {
 	res.statusCode = status;
@@ -116,7 +116,7 @@ function isAllowedOrigin(origin, allowed) {
 // Wrap async handlers so uncaught errors return a consistent JSON envelope.
 export function wrap(handler) {
 	return async (req, res) => {
-		zauthInstrument(req, res);
+		const monitored = zauthInstrument(req, res);
 		try {
 			await handler(req, res);
 		} catch (err) {
@@ -134,6 +134,10 @@ export function wrap(handler) {
 				);
 			}
 		}
+		// Keep the lambda alive briefly so the zauth SDK's in-flight POST to
+		// back.zauthx402.com can finish. Cost: ~250ms of post-response runtime
+		// on monitored requests only. The user has already received the response.
+		if (monitored) await zauthDrain();
 	};
 }
 
