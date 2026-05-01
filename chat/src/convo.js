@@ -1,6 +1,23 @@
 import { get } from 'svelte/store';
-import { controller, params, toolSchema } from './stores.js';
+import { controller, params, toolSchema, knowledgeSkills } from './stores.js';
 import { headersForFetch, providers } from './providers.js';
+
+const KNOWLEDGE_SOFT_CAP = 60_000;
+
+function buildKnowledgeBlock() {
+	const skills = get(knowledgeSkills) || [];
+	if (!skills.length) return '';
+	const blocks = skills
+		.map((s) => `## Skill: ${s.name}\n${(s.content || '').trim()}`)
+		.join('\n\n---\n\n');
+	const total = blocks.length;
+	if (total > KNOWLEDGE_SOFT_CAP) {
+		console.warn(
+			`[knowledgeSkills] content size ${total} chars exceeds soft cap ${KNOWLEDGE_SOFT_CAP} (${skills.length} skills); sending in full`
+		);
+	}
+	return `\n\n# Installed knowledge skills\n\nThe user has activated the following skills. Apply them when relevant.\n\n${blocks}`;
+}
 
 export async function complete(convo, onupdate, onabort) {
 	try {
@@ -31,8 +48,21 @@ export async function complete(convo, onupdate, onabort) {
 		}
 	}
 
+	const knowledgeBlock = buildKnowledgeBlock();
+	if (knowledgeBlock) {
+		const sysIdx = messages.findIndex((m) => m.role === 'system');
+		if (sysIdx !== -1) {
+			messages[sysIdx] = {
+				...messages[sysIdx],
+				content: messages[sysIdx].content + knowledgeBlock,
+			};
+		} else {
+			messages.unshift({ role: 'system', content: knowledgeBlock.trimStart() });
+		}
+	}
+
 	let system = undefined;
-	if (model.provider === 'Anthropic' && messages[0].role === 'system') {
+	if (model.provider === 'Anthropic' && messages[0]?.role === 'system') {
 		system = messages.shift().content;
 	}
 

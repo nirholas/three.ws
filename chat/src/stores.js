@@ -62,6 +62,9 @@ export const syncServer = persisted('syncServer', {
 });
 export const toolSchema = persisted('toolSchemaGroups', []);
 
+// Installed content skills: [{ id, name, slug, content }]
+export const knowledgeSkills = persisted('knowledgeSkills', []);
+
 export const ttsEnabled = persisted('ttsEnabled', false);
 export const localAgentId = persisted('localAgentId', '');
 export const activeAgent = persisted('activeAgentDetail', null);

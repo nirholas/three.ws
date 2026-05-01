@@ -62,7 +62,8 @@
 		"validate:cards": "node scripts/validate-agent-cards.mjs",
 		"db:migrate": "node scripts/apply-migrations.mjs --apply",
 		"db:status": "node scripts/apply-migrations.mjs",
-		"pump:smoke": "node scripts/pumpfun-lifecycle-smoke.js"
+		"pump:smoke": "node scripts/pumpfun-lifecycle-smoke.js",
+		"seed:skills": "node scripts/seed-skills.js"
 	},
 	"dependencies": {
 		"@avaturn/sdk": "^1.1.4",

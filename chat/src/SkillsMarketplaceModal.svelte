@@ -1,6 +1,7 @@
 <script>
 	import Modal from './Modal.svelte';
-	import { toolSchema, currentUser, notify, pluginLibraryUrl } from './stores.js';
+	import Markdown from './svelte-marked/markdown/Markdown.svelte';
+	import { toolSchema, knowledgeSkills, currentUser, notify, pluginLibraryUrl } from './stores.js';
 
 	export let open = false;
 
@@ -88,7 +89,25 @@
 	}
 
 	function isInstalled(skill) {
-		return $toolSchema.some((g) => g.name === skill.name);
+		return (
+			$toolSchema.some((g) => g.name === skill.name) ||
+			$knowledgeSkills.some((k) => k.id === skill.id)
+		);
+	}
+
+	// A skill is a "content" (knowledge) skill if the API exposes a content
+	// payload. The list endpoint returns a boolean `has_content`; the detail
+	// endpoint returns the full `content` string. Tool-pack skills have a
+	// non-null `schema_json` array.
+	function isContentSkill(skill) {
+		if (!skill) return false;
+		if (typeof skill.content === 'string' && skill.content.length > 0) return true;
+		if (skill.has_content) return true;
+		return false;
+	}
+
+	function isToolPackSkill(skill) {
+		return Array.isArray(skill?.schema_json) && skill.schema_json.length > 0;
 	}
 
 	function formatRating(avg, count) {
@@ -184,23 +203,52 @@
 		if (!$currentUser) { notify('Sign in to install skills', 'info'); return; }
 		installPending = { ...installPending, [skill.id]: true };
 		const wasInstalled = isInstalled(skill);
+
+		// Snapshot prior store entries so we can roll back precisely.
+		const priorTool = $toolSchema.find((g) => g.name === skill.name) ?? null;
+		const priorKnowledge = $knowledgeSkills.find((k) => k.id === skill.id) ?? null;
+
+		// Decide kind from the best info we have. Detail (if loaded for this
+		// skill) wins because it carries the full content; otherwise fall back
+		// to list-row hints (`has_content`, `schema_json`).
+		const src = detail?.id === skill.id ? detail : skill;
+		const contentStr = typeof src.content === 'string' && src.content.length > 0 ? src.content : null;
+		const schemaArr = Array.isArray(src.schema_json) && src.schema_json.length > 0 ? src.schema_json : null;
+		const optimisticKind = contentStr || src.has_content ? 'content' : 'tool';
+
 		if (!wasInstalled) {
-			const schema = detail?.id === skill.id ? (detail.schema_json ?? []) : (skill.schema_json ?? []);
-			$toolSchema = [...$toolSchema, { name: skill.name, schema }];
+			if (optimisticKind === 'content') {
+				$knowledgeSkills = [
+					...$knowledgeSkills.filter((k) => k.id !== skill.id),
+					{ id: skill.id, name: skill.name, slug: skill.slug, content: contentStr ?? '' },
+				];
+			} else {
+				$toolSchema = [...$toolSchema, { name: skill.name, schema: schemaArr ?? [] }];
+			}
 		} else {
-			$toolSchema = $toolSchema.filter((g) => g.name !== skill.name);
+			if (priorKnowledge) $knowledgeSkills = $knowledgeSkills.filter((k) => k.id !== skill.id);
+			if (priorTool) $toolSchema = $toolSchema.filter((g) => g.name !== skill.name);
 		}
+
 		try {
 			const method = wasInstalled ? 'DELETE' : 'POST';
 			const res = await fetch(`/api/skills/${skill.id}/install`, { method, credentials: 'include' });
 			if (!res.ok) throw new Error('Request failed');
 			if (!wasInstalled) {
 				const data = await res.json().catch(() => null);
-				if (data?.schema_json) {
+				// Reconcile with authoritative server payload.
+				if (data?.content) {
+					$knowledgeSkills = [
+						...$knowledgeSkills.filter((k) => k.id !== skill.id),
+						{ id: skill.id, name: skill.name, slug: skill.slug, content: data.content },
+					];
+					$toolSchema = $toolSchema.filter((g) => g.name !== skill.name);
+				} else if (data?.schema_json) {
 					$toolSchema = [
 						...$toolSchema.filter((g) => g.name !== skill.name),
-						{ name: skill.name, schema: data.schema_json }
+						{ name: skill.name, schema: data.schema_json },
 					];
+					$knowledgeSkills = $knowledgeSkills.filter((k) => k.id !== skill.id);
 				}
 			}
 			skills = skills.map((s) =>
@@ -210,11 +258,13 @@
 			);
 			if (detail?.id === skill.id) detail = { ...detail, is_installed: !wasInstalled };
 		} catch (e) {
-			if (!wasInstalled) {
-				$toolSchema = $toolSchema.filter((g) => g.name !== skill.name);
-			} else {
-				$toolSchema = [...$toolSchema, { name: skill.name, schema: skill.schema_json ?? [] }];
-			}
+			// Roll back to snapshots.
+			$toolSchema = priorTool
+				? [...$toolSchema.filter((g) => g.name !== skill.name), priorTool]
+				: $toolSchema.filter((g) => g.name !== skill.name);
+			$knowledgeSkills = priorKnowledge
+				? [...$knowledgeSkills.filter((k) => k.id !== skill.id), priorKnowledge]
+				: $knowledgeSkills.filter((k) => k.id !== skill.id);
 			notify(e.message, 'error');
 		} finally {
 			const next = { ...installPending };
@@ -595,6 +645,15 @@
 													>{skill.category}</span
 												>
 											{/if}
+											{#if isContentSkill(skill)}
+												<span class="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700"
+													>Knowledge skill</span
+												>
+											{:else if Array.isArray(skill.schema_json) && skill.schema_json.length}
+												<span class="rounded-full bg-sky-50 px-2 py-0.5 text-[10px] font-medium text-sky-700"
+													>{skill.schema_json.length} tool{skill.schema_json.length > 1 ? 's' : ''}</span
+												>
+											{/if}
 										</div>
 										<p class="mt-0.5 line-clamp-2 text-[11px] leading-relaxed text-slate-500">
 											{skill.description || ''}
@@ -715,8 +774,21 @@
 													{/if}
 												</div>
 
-												<!-- Schema preview -->
-												{#if detail.schema_json}
+												<!-- Type badge -->
+												<div>
+													{#if isContentSkill(detail)}
+														<span class="inline-block rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700"
+															>Knowledge skill</span
+														>
+													{:else if isToolPackSkill(detail)}
+														<span class="inline-block rounded-full bg-sky-50 px-2 py-0.5 text-[11px] font-medium text-sky-700"
+															>{detail.schema_json.length} tool{detail.schema_json.length > 1 ? 's' : ''}</span
+														>
+													{/if}
+												</div>
+
+												<!-- Schema preview (tool-pack only) -->
+												{#if isToolPackSkill(detail)}
 													{@const preview = schemaPreview(detail.schema_json)}
 													{#if preview}
 														<div>
@@ -735,6 +807,15 @@
 
 											</div>
 										</div>
+
+										<!-- Markdown content (knowledge skills) -->
+										{#if isContentSkill(detail) && typeof detail.content === 'string' && detail.content.length > 0}
+											<div class="mt-4 max-h-[420px] overflow-y-auto rounded border border-slate-100 bg-slate-50/50 p-3">
+												<div class="markdown prose prose-sm prose-slate max-w-none break-words prose-pre:whitespace-pre-wrap prose-pre:rounded-md prose-pre:border prose-pre:border-slate-200 prose-pre:bg-white">
+													<Markdown source={detail.content} />
+												</div>
+											</div>
+										{/if}
 
 										<!-- Action row -->
 										<div class="mt-4 flex items-center gap-2 border-t border-slate-100 pt-3">

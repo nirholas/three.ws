@@ -722,8 +722,11 @@ create index if not exists pumpfun_signals_agent  on pumpfun_signals(agent_asset
 create index if not exists pumpfun_signals_kind   on pumpfun_signals(kind, seen_at desc);
 
 -- ── marketplace_skills — community skill registry ────────────────────────────
--- schema_json: jsonb array matching the ToolPack schema used in chat/src/tools.js.
--- Each element: { clientDefinition: {...}, type, function: { name, description, parameters } }
+-- Two flavors:
+--   • tool skills    — schema_json: jsonb array matching the ToolPack schema used in chat/src/tools.js.
+--                      Each element: { clientDefinition: {...}, type, function: { name, description, parameters } }
+--   • content skills — content: markdown knowledge injected into the system prompt (no tool schema).
+-- Every row must have at least one of `schema_json` or `content` (enforced by check constraint).
 create table if not exists marketplace_skills (
     id            uuid primary key default gen_random_uuid(),
     author_id     uuid references users(id) on delete set null,
@@ -731,12 +734,14 @@ create table if not exists marketplace_skills (
     slug          text not null unique,
     description   text not null,
     category      text not null default 'general',
-    schema_json   jsonb not null,
+    schema_json   jsonb,
+    content       text,
     tags          text[] not null default '{}',
     is_public     boolean not null default true,
     install_count integer not null default 0,
     created_at    timestamptz not null default now(),
-    updated_at    timestamptz not null default now()
+    updated_at    timestamptz not null default now(),
+    constraint marketplace_skills_has_payload check (schema_json is not null or content is not null)
 );
 
 create index if not exists marketplace_skills_category_idx on marketplace_skills(category);
