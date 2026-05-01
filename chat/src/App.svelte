@@ -1523,6 +1523,35 @@
 	let agentPickerOpen = false;
 	let showAgentSettings = false;
 
+	// Drag state for the floating agent widget
+	let dragPos = { x: null, y: null };
+	let dragging = false;
+	let dragOffset = { x: 0, y: 0 };
+
+	function onAvatarDragStart(e) {
+		if (e.button !== 0) return;
+		if (e.target.closest('button, input, a, select')) return;
+		e.preventDefault();
+		const rect = e.currentTarget.getBoundingClientRect();
+		dragOffset = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+		dragging = true;
+		window.addEventListener('mousemove', onAvatarDragMove);
+		window.addEventListener('mouseup', onAvatarDragEnd);
+	}
+
+	function onAvatarDragMove(e) {
+		if (!dragging) return;
+		const x = Math.max(0, Math.min(window.innerWidth - 240, e.clientX - dragOffset.x));
+		const y = Math.max(0, Math.min(window.innerHeight - 60, e.clientY - dragOffset.y));
+		dragPos = { x, y };
+	}
+
+	function onAvatarDragEnd() {
+		dragging = false;
+		window.removeEventListener('mousemove', onAvatarDragMove);
+		window.removeEventListener('mouseup', onAvatarDragEnd);
+	}
+
 	$: effectiveAgentId = $localAgentId || $brandConfig.agent_id || '';
 
 	$: if (effectiveAgentId && !agentScriptLoaded) {
@@ -1539,6 +1568,7 @@
 	$: if (agentEl && !agentReady) {
 		agentEl.addEventListener('agent:ready', () => {
 			agentReady = true;
+			agentEl.play('idle', { loop: true }).catch(() => {});
 			if (agentPendingSpeak) {
 				agentEl.speak(agentPendingSpeak);
 				agentPendingSpeak = null;
@@ -2366,7 +2396,16 @@
 {/if}
 
 {#if true}
-	<div class="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2">
+	<!-- svelte-ignore a11y-no-static-element-interactions -->
+	<div
+		class="z-[100] flex flex-col items-end gap-2 select-none"
+		class:cursor-grabbing={dragging}
+		style={dragPos.x !== null
+			? `position: fixed; left: ${dragPos.x}px; top: ${dragPos.y}px;`
+			: 'position: fixed; bottom: 1rem; right: 1rem;'}
+		on:mousedown={onAvatarDragStart}
+		role="none"
+	>
 		{#if agentPickerOpen}
 			<div class="mb-1 w-72 rounded-xl border border-gray-200 bg-white p-3 shadow-xl">
 				<AgentPicker on:pick={(e) => { agentPickerOpen = false; if (!e.detail) clearAgentFromConvo(); }} />
@@ -2384,10 +2423,12 @@
 				background="transparent"
 				kiosk
 				name-plate="off"
-				style="width:220px;height:220px;"
+				style="width:220px;height:220px; cursor: grab;"
 			></agent-3d>
 		{:else if $talkingHeadEnabled && agentVisible}
-			<TalkingHead bind:this={talkingHead} on:ready={onTalkingHeadReady} avatarUrl={$talkingHeadAvatarUrl || undefined} />
+			<div style="cursor: grab;">
+				<TalkingHead bind:this={talkingHead} on:ready={onTalkingHeadReady} avatarUrl={$talkingHeadAvatarUrl || undefined} />
+			</div>
 		{/if}
 
 		<div class="flex items-center gap-1.5">

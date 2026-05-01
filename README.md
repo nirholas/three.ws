@@ -17,6 +17,7 @@ https://github.com/user-attachments/assets/d52515d1-cb04-4dd6-98bd-fef233312dc4
 - [Vision](#vision)
 - [Roadmap](#roadmap)
 - [Key Features](#key-features)
+- [Platform Pages](#platform-pages)
 - [Screenshots](#screenshots)
 - [Architecture](#architecture)
 - [Tech Stack](#tech-stack)
@@ -226,6 +227,35 @@ If you want to support the project — compute credits, grants, partnerships, or
 - Ready Player Me, Avaturn (photo-to-avatar), and Privy (embedded wallet) integrations
 - DCA strategy execution and on-chain subscription scheduling via cron jobs
 - OpenAPI 3.1 spec generated at `/openapi.json`
+
+---
+
+## Platform Pages
+
+A map of every user-facing route. Full detail (source files, feature descriptions, hash-routes) is in [docs/internal/PAGES.md](docs/internal/PAGES.md).
+
+| Section | Key URLs | What it does |
+|---|---|---|
+| **Landing** | `/`, `/features`, `/discover` | Marketing, public agent directory |
+| **App / Core** | `/app`, `/create`, `/first-meet` | 3D viewer, agent creation wizard, onboarding |
+| **Marketplace** | `/marketplace`, `/marketplace/agents/[id]` | Browsable agent marketplace |
+| **Chat SPA** | `/chat` | Full Svelte AI chat with model selector, tools, artifacts, wallet |
+| **Chat — Marketing** | `/chat#solutions/*`, `/chat#business/*` | Per-team and enterprise landing pages |
+| **Chat — Features** | `/chat#features/*` | Feature detail pages (web-app, mobile-app, ai-design, ai-slides, browser-operator, wide-research, mail, skills) |
+| **Chat — Resources** | `/chat#resources/*` | Blog, docs, trust center, updates, use cases |
+| **Auth** | `/login`, `/register`, `/forgot-password`, `/reset-password` | Email + wallet sign-in/up |
+| **Agent (Platform)** | `/agent/[id]`, `/agent/[id]/embed`, `/agent/[id]/edit` | Agent chat, chromeless embed, manifest editor |
+| **Agent (On-Chain)** | `/a/[chain]/[id]`, `/a/sol/[asset]` | ERC-8004 and Metaplex Core passports |
+| **Profile** | `/profile`, `/u/[username]`, `/avatars/[id]` | User and avatar public pages |
+| **Dashboard** | `/dashboard`, `/dashboard/actions`, `/dashboard/wallets`, `/dashboard/usage`, … | Account management and settings |
+| **Studio / Tools** | `/studio`, `/hydrate`, `/validation`, `/strategy-lab` | Widget Studio, on-chain import, glTF validator, DCA |
+| **Widgets** | `/widgets`, `/w/[id]` | Widget gallery and public widget pages (OG + oEmbed) |
+| **Artifacts** | `/artifact`, `/artifact/snippet`, `/artifact-example` | Claude Artifact viewer |
+| **Solana / DeFi** | `/pumpfun`, `/vanity-wallet` | Token launcher, vanity address grinder |
+| **Admin / Rep** | `/admin`, `/reputation` | Staff admin, reputation registry |
+| **Integrations** | `/cz`, `/lobehub/iframe` | CZ demo, LobeHub plugin |
+| **Docs** | `/docs`, `/docs/widgets` | Developer documentation |
+| **Legal** | `/legal/privacy`, `/legal/tos` | Privacy policy and terms |
 
 ---
 

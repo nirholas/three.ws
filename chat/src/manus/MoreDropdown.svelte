@@ -3,19 +3,19 @@
   import Icon from '../Icon.svelte';
   import { mode } from '../stores.js';
   import {
-    feRotateCw, feCamera, feLink, feSliders, feActivity, feLayers, feZap,
+    feZap, feBarChart2, feLink, feRotateCw, feCode, feCamera, feSliders,
   } from '../feather.js';
 
   const dispatch = createEventDispatcher();
 
   const items = [
-    { id: 'animate',    label: 'Animate model',     icon: feRotateCw },
-    { id: 'ar',         label: 'AR experience',      icon: feCamera },
-    { id: 'wallet',     label: 'Connect wallet',     icon: feLink },
-    { id: 'emotions',   label: 'Configure emotions', icon: feSliders },
-    { id: 'reputation', label: 'Track reputation',   icon: feActivity },
-    { id: 'skills',     label: 'Add agent skills',   icon: feLayers },
-    { id: 'solana',     label: 'Mint on Solana',     icon: feZap },
+    { id: 'pumpfun',    label: 'Pump.fun live feed',  icon: feZap },
+    { id: 'curve',      label: 'Bonding curve',        icon: feBarChart2 },
+    { id: 'wallet',     label: 'Connect wallet',       icon: feLink },
+    { id: 'animate',    label: 'Animate mascot',       icon: feRotateCw },
+    { id: 'embed',      label: 'Embed on token site',  icon: feCode },
+    { id: 'ar',         label: 'AR showcase',          icon: feCamera },
+    { id: 'emotions',   label: 'Mascot emotions',      icon: feSliders },
   ];
 
   function pick(item) {

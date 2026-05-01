@@ -4,6 +4,7 @@
 import { createProvider } from './providers.js';
 import { createTTS, createSTT } from './speech.js';
 import { BUILTIN_TOOLS, BUILTIN_HANDLERS, STAGE_TOOLS } from './tools.js';
+import { protocol } from '../agent-protocol.js';
 
 const MAX_TOOL_ITERATIONS = 8;
 
