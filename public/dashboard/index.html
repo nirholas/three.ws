@@ -1150,7 +1150,7 @@
 				<a href="/strategy-lab">Strategy lab</a>
 				<a href="/reputation">Reputation</a>
 				<a href="/settings">Settings</a>
-				<a href="/admin">Admin</a>
+				<a href="/admin" id="admin-link" style="display:none">Admin</a>
 				<a href="/discover" title="Browse on-chain agents across every supported chain"
 					>Discover on-chain ↗</a
 				>
@@ -1259,6 +1259,7 @@
 				}
 				state.user = me.user;
 				document.getElementById('user-email').textContent = me.user.email;
+				if (me.user.is_admin) document.getElementById('admin-link').style.display = '';
 				navigate(location.hash.slice(1) || 'avatars');
 				window.addEventListener('hashchange', () =>
 					navigate(location.hash.slice(1) || 'avatars'),
