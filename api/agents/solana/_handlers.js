@@ -462,7 +462,10 @@ export const handleReputation = wrap(async (req, res) => {
 		limit 5
 	`;
 
-	const pumpfunRows = await sql`select kind, count(*)::int as n, coalesce(sum(weight), 0)::float as w from pumpfun_signals where agent_asset = ${asset} group by kind`;
+	let pumpfunRows = [];
+	try {
+		pumpfunRows = await sql`select kind, count(*)::int as n, coalesce(sum(weight), 0)::float as w from pumpfun_signals where agent_asset = ${asset} group by kind`;
+	} catch {}
 	const pumpfunByKind = {};
 	let pumpfunTotal = 0, pumpfunWeight = 0;
 	for (const r of pumpfunRows) {

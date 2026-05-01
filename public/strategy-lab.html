@@ -241,15 +241,15 @@
 	// ── Agent + wallet bootstrap ───────────────────────────────────────
 	async function loadAgents() {
 		const r = await fetch('/api/agents', { credentials: 'include' }).then((r) => r.json()).catch(() => null);
-		if (!r?.data) {
+		if (!r?.agents) {
 			agentSel.innerHTML = '<option value="">— sign in to load agents —</option>';
 			return;
 		}
 		agentSel.innerHTML = '<option value="">— select agent —</option>' +
-			r.data.map((a) => `<option value="${a.id}">${escapeHtml(a.name || a.id)}</option>`).join('');
+			r.agents.map((a) => `<option value="${a.id}">${escapeHtml(a.name || a.id)}</option>`).join('');
 		// Auto-select last used.
 		const saved = localStorage.getItem('strategy-lab:agentId');
-		if (saved && r.data.some((a) => a.id === saved)) { agentSel.value = saved; await onAgentChange(); }
+		if (saved && r.agents.some((a) => a.id === saved)) { agentSel.value = saved; await onAgentChange(); }
 	}
 	function escapeHtml(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]); }
 

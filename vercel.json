@@ -3,6 +3,9 @@
 	"outputDirectory": "dist",
 	"public": true,
 	"installCommand": "npm ci --prefer-offline --no-audit --no-fund",
+	"env": {
+		"NODE_OPTIONS": "--no-deprecation"
+	},
 	"functions": {
 		"api/**/*.js": {
 			"includeFiles": "node_modules/@zauthx402/sdk/dist/**"

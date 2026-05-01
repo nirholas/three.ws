@@ -269,6 +269,52 @@
 				border-radius: 14px;
 				color: #888;
 			}
+			.empty-title {
+				font-size: 15px;
+				font-weight: 600;
+				color: #aaa;
+				margin-bottom: 8px;
+			}
+			.empty-sub {
+				font-size: 13px;
+				margin-bottom: 18px;
+			}
+			.how-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+				gap: 12px;
+				margin-bottom: 28px;
+			}
+			.how-card {
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				padding: 14px 16px;
+			}
+			.how-card-icon {
+				font-size: 18px;
+				margin-bottom: 8px;
+			}
+			.how-card-title {
+				font-size: 13px;
+				font-weight: 600;
+				color: #ddd;
+				margin-bottom: 4px;
+			}
+			.how-card-desc {
+				font-size: 12px;
+				color: #888;
+				line-height: 1.5;
+			}
+			.record-notes {
+				font-size: 13px;
+				color: #aaa;
+				margin: 8px 0 4px;
+				padding: 8px 10px;
+				background: rgba(106, 92, 255, 0.06);
+				border-left: 2px solid var(--accent);
+				border-radius: 0 6px 6px 0;
+			}
 			.modal-overlay {
 				position: fixed;
 				inset: 0;
@@ -411,21 +457,39 @@
 		<main id="main">
 			<h1>Validation Records</h1>
 			<p class="sub">
-				Browse validation reports for this agent to verify trust and integrity.
+				On-chain proof that an agent's GLB model, metadata, and skills have been audited. Each record is signed by a validator's wallet and stored immutably.
 			</p>
+
+			<div class="how-grid">
+				<div class="how-card">
+					<div class="how-card-icon">◈</div>
+					<div class="how-card-title">GLB Schema</div>
+					<div class="how-card-desc">Validates glTF 2.0 file structure — required chunks, mesh data, extensions.</div>
+				</div>
+				<div class="how-card">
+					<div class="how-card-icon">◆</div>
+					<div class="how-card-title">Manifest Integrity</div>
+					<div class="how-card-desc">Checks on-chain metadata — agent ID, chain ID, registry address consistency.</div>
+				</div>
+				<div class="how-card">
+					<div class="how-card-icon">◇</div>
+					<div class="how-card-title">Skill Handlers</div>
+					<div class="how-card-desc">Verifies declared skills initialize without errors or missing dependencies.</div>
+				</div>
+			</div>
 
 			<div class="toolbar">
 				<input
 					type="text"
 					id="agent-input"
 					placeholder="Agent ID (e.g., 1)"
-					style="width: 200px"
+					style="width: 180px"
 				/>
 				<input
 					type="text"
 					id="chain-input"
 					placeholder="Chain ID (e.g., 84532)"
-					style="width: 200px"
+					style="width: 190px"
 				/>
 				<button class="btn" id="load-btn">Load Records</button>
 				<button class="btn sec" id="submit-btn">Submit Validation</button>
@@ -434,7 +498,11 @@
 			<div id="error" class="err" style="display: none"></div>
 			<div id="info" class="info" style="display: none"></div>
 			<div id="records" class="records"></div>
-			<div id="empty" class="empty" style="display: none">No validation records yet.</div>
+			<div id="empty" class="empty" style="display: none">
+				<div class="empty-title">No validation records found</div>
+				<div class="empty-sub">This agent hasn't been validated yet, or the agent ID / chain ID is incorrect.</div>
+				<button class="btn" id="empty-submit-btn">Submit a Validation</button>
+			</div>
 		</main>
 
 		<!-- Submit Modal -->
@@ -516,8 +584,11 @@
 				submitReportBtn: document.getElementById('submit-report-btn'),
 			});
 
+			window.valDash = dashboard;
 			window.closeSubmitModal = () => dashboard.closeModal();
 			window.submitModal = () => dashboard.submitReport();
+
+			document.getElementById('empty-submit-btn').addEventListener('click', () => dashboard.openModal());
 		</script>
 	</body>
 </html>

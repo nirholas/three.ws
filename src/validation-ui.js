@@ -27,6 +27,32 @@ export class ValidationDashboard {
 		this.signer = null;
 
 		this.setupEventListeners();
+		this._loadFromUrlParams();
+	}
+
+	_loadFromUrlParams() {
+		const p = new URLSearchParams(location.search);
+		const agent = p.get('agent');
+		const chain = p.get('chain');
+		if (agent) this.els.agentInput.value = agent;
+		if (chain) this.els.chainInput.value = chain;
+		if (agent && chain) this.loadRecords();
+	}
+
+	_syncUrl() {
+		if (!this.currentAgentId || !this.currentChainId) return;
+		const url = new URL(location.href);
+		url.searchParams.set('agent', String(this.currentAgentId));
+		url.searchParams.set('chain', String(this.currentChainId));
+		history.replaceState(null, '', url);
+	}
+
+	_copyHash(hash) {
+		navigator.clipboard.writeText(hash).then(() => this.showToast('Hash copied'));
+	}
+
+	_copyAddr(addr) {
+		navigator.clipboard.writeText(addr).then(() => this.showToast('Address copied'));
 	}
 
 	setupEventListeners() {
@@ -106,6 +132,7 @@ export class ValidationDashboard {
 
 			this.hideInfo();
 			this.renderRecords(result);
+			this._syncUrl();
 		} catch (err) {
 			this.showError(`Failed to load records: ${err.message}`);
 			this.els.recordsContainer.innerHTML = '';
@@ -128,6 +155,15 @@ export class ValidationDashboard {
 		this.els.recordsContainer.innerHTML = recordArray.map((r) => this.renderRecord(r)).join('');
 	}
 
+	_kindLabel(kind) {
+		const map = {
+			'glb-schema': 'GLB Schema',
+			'manifest-integrity': 'Manifest Integrity',
+			'skill-handlers-load': 'Skill Handlers',
+		};
+		return map[kind] || kind;
+	}
+
 	renderRecord(record) {
 		const verdict = record.verdict || (record.passed ? 'pass' : 'fail');
 		const timestamp = record.timestamp
@@ -137,34 +173,36 @@ export class ValidationDashboard {
 		const reportUri = record.reportUri || record.proofURI || '';
 		const reportHash = record.reportHash || record.proofHash || '';
 		const validator = record.validator || 'Unknown';
+		const kind = record.kind || 'glb-schema';
+		const notes = record.notes || '';
+
+		const validatorShort = validator !== 'Unknown'
+			? `${validator.substring(0, 6)}…${validator.substring(validator.length - 4)}`
+			: 'Unknown';
 
 		return `
 			<div class="record">
 				<div class="record-header">
 					<div class="record-title">
-						<h3>${this.escapeHtml(record.kind || 'glb-schema')} Validation</h3>
+						<h3>${this.escapeHtml(this._kindLabel(kind))}</h3>
 						<span class="badge ${verdict}">${verdict.toUpperCase()}</span>
 					</div>
+					<div style="font-size:12px;color:#666">${timestamp}</div>
 				</div>
 				<div class="record-meta">
 					<div class="record-meta-item">
 						<div class="record-meta-label">Validator</div>
-						<div class="record-meta-value">${this.escapeHtml(validator.substring(0, 10))}…${this.escapeHtml(validator.substring(validator.length - 8))}</div>
+						<div class="record-meta-value" title="${this.escapeHtml(validator)}" style="cursor:pointer" onclick="valDash._copyAddr('${this.escapeHtml(validator)}')">${this.escapeHtml(validatorShort)}</div>
 					</div>
-					<div class="record-meta-item">
-						<div class="record-meta-label">Timestamp</div>
-						<div class="record-meta-value">${timestamp}</div>
-					</div>
-				</div>
-				<div class="record-meta">
-					<div class="record-meta-item" style="flex: 1">
+					<div class="record-meta-item" style="flex:1">
 						<div class="record-meta-label">Report Hash</div>
-						<div class="record-meta-value">${this.escapeHtml(reportHash.substring(0, 20))}…</div>
+						<div class="record-meta-value">${reportHash ? this.escapeHtml(reportHash.substring(0, 18)) + '…' : '—'}</div>
 					</div>
 				</div>
+				${notes ? `<div class="record-notes">${this.escapeHtml(notes)}</div>` : ''}
 				<div class="record-actions">
-					${reportUri ? `<a href="${this.resolveIPFS(reportUri)}" target="_blank" class="btn">View Report ↗</a>` : ''}
-					<button class="btn sec" onclick="navigator.clipboard.writeText('${this.escapeHtml(reportHash)}').then(() => alert('Copied!'))">Copy Hash</button>
+					${reportUri ? `<a href="${this.resolveIPFS(this.escapeHtml(reportUri))}" target="_blank">View Report ↗</a>` : ''}
+					${reportHash ? `<button onclick="valDash._copyHash('${this.escapeHtml(reportHash)}')">Copy Hash</button>` : ''}
 				</div>
 			</div>
 		`;

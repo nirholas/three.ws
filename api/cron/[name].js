@@ -1268,6 +1268,10 @@ const DCA_RELAYER_TIMEOUT_MS = 30_000;
 const DCA_RELAYER_MAX_RETRIES = 1;
 const DCA_RELAYER_RETRY_BACKOFF_MS = 1_500;
 
+function isTableMissing(err) {
+	return String(err?.message || '').includes('does not exist');
+}
+
 function dcaLog(level, event, fields = {}) {
 	const line = JSON.stringify({
 		level,
@@ -1538,6 +1542,10 @@ async function handleRunDca(req, res) {
 			LIMIT 50
 		`;
 	} catch (err) {
+		if (isTableMissing(err)) {
+			dcaLog('info', 'tick_skip', { run_id: runId, reason: 'dca_strategies table not yet created' });
+			return json(res, 200, { ok: true, skipped: true, reason: 'table_not_ready' });
+		}
 		dcaLog('error', 'fetch_due_failed', { run_id: runId, message: err?.message });
 		throw err;
 	}
@@ -1928,6 +1936,10 @@ async function handleRunSubscriptions(req, res) {
 			  AND s.next_charge_at <= NOW()
 		`;
 	} catch (err) {
+		if (isTableMissing(err)) {
+			subLog('subscription_cron.skip', { runId, reason: 'agent_subscriptions table not yet created' });
+			return json(res, 200, { ok: true, skipped: true, reason: 'table_not_ready' });
+		}
 		subLogError('subscription_cron.select_failed', { runId, message: err.message });
 		return error(res, 500, 'internal_error', 'failed to load subscriptions');
 	}

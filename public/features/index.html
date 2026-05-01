@@ -411,31 +411,100 @@
 				<h3 id="outro-title">Everything an agent needs.</h3>
 				<ul class="outro-grid">
 					<li>
+						<h4>3D Viewer</h4>
+						<p>
+							WebGL 2.0 via three.js r176. Drag-drop any <code>.glb</code> — instant
+							rendering with Draco, KTX2, Meshopt, HDR environments, PBR materials,
+							and Khronos-spec glTF validation.
+						</p>
+					</li>
+					<li>
+						<h4>LLM Agent Runtime</h4>
+						<p>
+							Claude-powered brain with a structured tool-loop — up to 8 iterations
+							per turn. Built-in tools: <code>wave</code>, <code>lookAt</code>,
+							<code>play_clip</code>, <code>setExpression</code>, <code>speak</code>,
+							<code>remember</code>.
+						</p>
+					</li>
+					<li>
+						<h4>Empathy Layer</h4>
+						<p>
+							Six emotions (celebration, concern, curiosity, empathy, patience,
+							neutral) blended continuously via morph-target weights. Reacts to
+							protocol events — not a finite-state machine.
+						</p>
+					</li>
+					<li>
+						<h4>Voice — TTS &amp; STT</h4>
+						<p>
+							Web Speech API out of the box. ElevenLabs integration for
+							production-quality voice cloning. Microphone input with live transcript
+							streamed back to the agent.
+						</p>
+					</li>
+					<li>
+						<h4>Widget Studio</h4>
+						<p>
+							Five widget types: turntable, animation gallery, talking agent,
+							ERC-8004 passport card, hotspot tour. Point-and-click builder at
+							<code>/studio</code> — copy an iframe snippet and embed anywhere.
+						</p>
+					</li>
+					<li>
+						<h4><code>&lt;agent-3d&gt;</code> Web Component</h4>
+						<p>
+							Drop one script tag and one element — no framework needed. Versioned
+							CDN bundles, lazy-boot via IntersectionObserver, postMessage API for
+							host-page communication, Open Graph + oEmbed support.
+						</p>
+					</li>
+					<li>
+						<h4>Composable Skills</h4>
+						<p>
+							Self-contained skill bundles (SKILL.md + tools.json + handlers.js)
+							installed from IPFS, Arweave, or HTTP. Three trust modes: any,
+							owned-only, whitelist. Skills can define new LLM tools.
+						</p>
+					</li>
+					<li>
+						<h4>Persistent Memory</h4>
+						<p>
+							Frontmatter-<code>.md</code> memory files indexed by a <code>MEMORY.md</code>
+							manifest. Four storage modes: local, IPFS, encrypted-IPFS, none.
+							High-salience entries injected into the system prompt each turn.
+						</p>
+					</li>
+					<li>
+						<h4>MCP Server</h4>
+						<p>
+							Model Context Protocol 2025-06-18 over HTTP, JSON-RPC 2.0. Listed on
+							the official MCP Registry as <code>io.github.nirholas/three.ws</code>.
+							External AI systems can drive avatars and call tools programmatically.
+						</p>
+					</li>
+					<li>
+						<h4>OAuth 2.1 + API Keys</h4>
+						<p>
+							Full RFC 6749 + PKCE authorization server with dynamic client
+							registration, token revocation, and introspection. Developer API keys
+							with scope and expiry for server-to-server integrations.
+						</p>
+					</li>
+					<li>
 						<h4>Identity Registry</h4>
 						<p>
-							ERC-721 based. Each agent has an <code>agentId</code> and a URI that
-							resolves to its registration JSON.
+							ERC-721 based. Each agent has an <code>agentId</code>, delegated signer
+							(EIP-712), and an IPFS-pinned manifest. Discoverable by any A2A or MCP
+							client across 20+ EVM chains and Solana.
 						</p>
 					</li>
 					<li>
-						<h4>Reputation Registry</h4>
+						<h4>Reputation &amp; Validation</h4>
 						<p>
-							Signed feedback on quality, uptime, and response time. On-chain
-							composability + off-chain aggregation.
-						</p>
-					</li>
-					<li>
-						<h4>Validation Registry</h4>
-						<p>
-							Stake-secured re-execution, zkML proofs, TEE attestations. Trust
-							proportional to value at risk.
-						</p>
-					</li>
-					<li>
-						<h4>Memory + skills</h4>
-						<p>
-							Frontmatter-`.md` memory, recursive skill bundles, signed action
-							history. Portable across hosts.
+							Signed on-chain feedback scores via <code>ReputationRegistry.sol</code>.
+							Validator attestations (glTF audits, security reviews, zkML proofs) via
+							<code>ValidationRegistry.sol</code>. Trust proportional to value at risk.
 						</p>
 					</li>
 				</ul>

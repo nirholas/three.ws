@@ -101,7 +101,7 @@ export function connectPumpFunFeed({ onEvent, signal, kind = 'all' }) {
 			}
 		});
 
-		ws.on('error', (err) => console.error('[pumpportal-ws] error:', err?.message));
+		ws.on('error', (err) => console.warn('[pumpportal-ws] error:', err?.message));
 
 		ws.on('close', () => {
 			if (!active || reconnects >= MAX_RECONNECTS) return;
