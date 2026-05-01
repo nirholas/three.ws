@@ -7,10 +7,8 @@
 //   { type: 'rider:setAgent', agentId: 'cz' }
 //   { type: 'rider:setAgent', url: 'https://.../foo.glb', name: 'Foo' }
 
-// Goes through webpack-dev-server proxy → three.ws to dodge CORS on
-// non-whitelisted origins (e.g. Codespaces forwarded URLs).
-const API_ORIGIN = '';
-const EXPLORE_PATH = '/threews-api/explore';
+// Always call three.ws directly — explore API allows all origins.
+const EXPLORE_URL = 'https://three.ws/api/explore';
 const FALLBACK_AGENTS = [
   { id: 'cz', name: 'CZ', url: 'https://raw.githubusercontent.com/overstepping/-/main/cz.glb' }
 ];
@@ -37,7 +35,7 @@ AFRAME.registerSystem('agent-picker', {
   },
 
   fetchPublicAvatars: function (query = '') {
-    const url = new URL(EXPLORE_PATH, window.location.origin);
+    const url = new URL(EXPLORE_URL);
     url.searchParams.set('only3d', '1');
     url.searchParams.set('limit', '40');
     if (query) url.searchParams.set('q', query);
@@ -214,8 +212,10 @@ function escapeHtml (s) {
   return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-// R2 public bucket sends no CORS headers, so three.js can't fetch GLBs
-// cross-origin. Route them through the dev-server proxy.
+// In dev (non-production hosts) R2 lacks CORS for the forwarded origin,
+// so route through the webpack-dev-server proxy. On three.ws the R2
+// bucket allows the production origin directly.
 function rewriteGlbUrl (url) {
+  if (window.location.hostname === 'three.ws') return url;
   return url.replace(/^https:\/\/pub-2534e921bf9c4314addcd4d8a6e98b7b\.r2\.dev/, '/r2-proxy');
 }
