@@ -96,12 +96,7 @@ const TIER_RANK = { notable: 1, influencer: 2, mega: 3 };
 async function handleFeed(req, res) {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET'])) return;
-	const session = await getSessionUser(req);
-	const bearer = session ? null : await authenticateBearer(extractBearer(req));
-	if (!session && !bearer) return error(res, 401, 'unauthorized', 'sign in required');
-	if (bearer && !hasScope(bearer.scope, 'mcp') && !hasScope(bearer.scope, 'profile')) return error(res, 403, 'insufficient_scope', 'requires mcp or profile scope');
-	const userId = session?.id ?? bearer.userId;
-	const rl = await limits.mcpUser(String(userId));
+	const rl = await limits.mcpIp(clientIp(req));
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many feed connections');
 	const url = new URL(req.url, 'http://x');
 	const kind = url.searchParams.get('kind') || 'all';
