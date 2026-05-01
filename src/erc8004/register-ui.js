@@ -55,6 +55,22 @@ import {
 	resolveENSAddress,
 	INPUT_TYPES,
 } from './resolve-avatar.js';
+import { runSolanaDeploy, solanaTxExplorerUrl, detectSolanaWallet } from './solana-deploy.js';
+
+// ───────────────────────────────────────────────────────────────────────────
+// Solana sentinels — chain dropdown stores these strings instead of a numeric
+// chainId for non-EVM targets. Most EVM-specific code paths early-return when
+// _isSolana(this.selectedChainId) is true.
+// ───────────────────────────────────────────────────────────────────────────
+
+const SOLANA_MAINNET = 'solana-mainnet';
+const SOLANA_DEVNET = 'solana-devnet';
+const SOLANA_LABELS = {
+	[SOLANA_MAINNET]: 'Solana',
+	[SOLANA_DEVNET]: 'Solana Devnet',
+};
+const _isSolana = (id) => id === SOLANA_MAINNET || id === SOLANA_DEVNET;
+const _solanaNetwork = (id) => (id === SOLANA_DEVNET ? 'devnet' : 'mainnet');
 
 // ───────────────────────────────────────────────────────────────────────────
 // SRI integrity cache
@@ -321,7 +337,12 @@ export class RegisterUI {
 				this.wallet = null;
 			} else {
 				this.wallet = { address, chainId: Number(chainId) };
-				if (REGISTRY_DEPLOYMENTS[this.wallet.chainId]) {
+				// Don't clobber an explicit Solana selection when an EVM wallet
+				// reports its chain.
+				if (
+					!_isSolana(this.selectedChainId) &&
+					REGISTRY_DEPLOYMENTS[this.wallet.chainId]
+				) {
 					this.selectedChainId = this.wallet.chainId;
 					const sel = this.el.querySelector('.erc8004-chain-select');
 					if (sel) sel.value = String(this.selectedChainId);
@@ -380,6 +401,16 @@ export class RegisterUI {
 	_refreshMainnetBanner() {
 		const banner = this.el.querySelector('[data-role="mainnet-banner"]');
 		if (!banner) return;
+		if (_isSolana(this.selectedChainId)) {
+			if (this.selectedChainId === SOLANA_MAINNET) {
+				banner.style.display = '';
+				banner.innerHTML = `⚠️ <strong>Mainnet Mode</strong> — Transactions use real SOL. Test on devnet first.`;
+			} else {
+				banner.style.display = 'none';
+				banner.innerHTML = '';
+			}
+			return;
+		}
 		const meta = CHAIN_META[this.selectedChainId];
 		if (meta && !meta.testnet) {
 			banner.style.display = '';
@@ -400,10 +431,17 @@ export class RegisterUI {
 		if (closeBtn) closeBtn.addEventListener('click', () => this.destroy());
 
 		this.el.querySelector('.erc8004-chain-select').addEventListener('change', async (e) => {
-			const newChain = Number(e.target.value);
+			const raw = e.target.value;
+			const newChain = _isSolana(raw) ? raw : Number(raw);
 			this.selectedChainId = newChain;
-			// If wallet connected and on the wrong chain, try to switch
-			if (this.wallet && this.wallet.chainId !== newChain && window.ethereum) {
+			// If we just selected an EVM chain and the user has an EVM wallet on a
+			// different chain, prompt to switch. Solana chains skip this entirely.
+			if (
+				!_isSolana(newChain) &&
+				this.wallet &&
+				this.wallet.chainId !== newChain &&
+				window.ethereum
+			) {
 				try {
 					await switchChain(newChain);
 					this.wallet.chainId = newChain;
@@ -435,8 +473,12 @@ export class RegisterUI {
 			const { address, chainId } = await connectWallet();
 			this.wallet = { address, chainId: Number(chainId) };
 
-			// Adopt wallet's chain if supported; otherwise keep selected and offer switch
-			if (REGISTRY_DEPLOYMENTS[this.wallet.chainId]) {
+			// Adopt wallet's chain if supported; otherwise keep selected and offer
+			// switch. Don't clobber an explicit Solana selection.
+			if (
+				!_isSolana(this.selectedChainId) &&
+				REGISTRY_DEPLOYMENTS[this.wallet.chainId]
+			) {
 				this.selectedChainId = this.wallet.chainId;
 				const sel = this.el.querySelector('.erc8004-chain-select');
 				if (sel) sel.value = String(this.selectedChainId);
@@ -457,7 +499,10 @@ export class RegisterUI {
 		const result = await eagerConnectWallet();
 		if (!result) return;
 		this.wallet = { address: result.address, chainId: Number(result.chainId) };
-		if (REGISTRY_DEPLOYMENTS[this.wallet.chainId]) {
+		if (
+			!_isSolana(this.selectedChainId) &&
+			REGISTRY_DEPLOYMENTS[this.wallet.chainId]
+		) {
 			this.selectedChainId = this.wallet.chainId;
 			const sel = this.el.querySelector('.erc8004-chain-select');
 			if (sel) sel.value = String(this.selectedChainId);
@@ -484,10 +529,18 @@ export class RegisterUI {
 		// Mainnets first (production-default), then testnets
 		const mainnets = ids.filter((id) => !CHAIN_META[id].testnet);
 		const testnets = ids.filter((id) => CHAIN_META[id].testnet);
+		const groupS = document.createElement('optgroup');
+		groupS.label = 'Solana';
+		for (const id of [SOLANA_MAINNET, SOLANA_DEVNET]) {
+			const opt = document.createElement('option');
+			opt.value = id;
+			opt.textContent = SOLANA_LABELS[id];
+			groupS.appendChild(opt);
+		}
 		const groupM = document.createElement('optgroup');
-		groupM.label = 'Mainnets';
+		groupM.label = 'EVM Mainnets';
 		const groupT = document.createElement('optgroup');
-		groupT.label = 'Testnets';
+		groupT.label = 'EVM Testnets';
 		for (const id of mainnets) {
 			const opt = document.createElement('option');
 			opt.value = String(id);
@@ -500,6 +553,7 @@ export class RegisterUI {
 			opt.textContent = CHAIN_META[id].name;
 			groupT.appendChild(opt);
 		}
+		sel.appendChild(groupS);
 		sel.appendChild(groupM);
 		sel.appendChild(groupT);
 		sel.value = String(this.selectedChainId);
@@ -650,6 +704,13 @@ export class RegisterUI {
 	}
 
 	_renderBatch(body) {
+		if (_isSolana(this.selectedChainId)) {
+			body.innerHTML = `
+				<h3 class="erc8004-h3">Batch Register</h3>
+				<p class="erc8004-p erc8004-muted">Batch registration is EVM-only. Switch to an EVM chain to use this tab.</p>
+			`;
+			return;
+		}
 		renderBatchTab(body, {
 			getWallet: () => this.wallet,
 			getChainId: () => this.selectedChainId,
@@ -1093,6 +1154,9 @@ export class RegisterUI {
 	}
 
 	_renderStepDeploy(body) {
+		if (_isSolana(this.selectedChainId)) {
+			return this._renderStepDeploySolana(body);
+		}
 		const meta = CHAIN_META[this.selectedChainId];
 		const walletOk = !!this.wallet;
 		const chainOk = walletOk && this.wallet.chainId === this.selectedChainId;
@@ -1184,6 +1248,116 @@ export class RegisterUI {
 		);
 
 		this._wireExportOptions(body);
+	}
+
+	_renderStepDeploySolana(body) {
+		const network = _solanaNetwork(this.selectedChainId);
+		const chainLabel = SOLANA_LABELS[this.selectedChainId];
+		const hasSolanaWallet = !!detectSolanaWallet();
+		body.innerHTML = `
+			<h3 class="erc8004-h3">Review &amp; Deploy</h3>
+			<p class="erc8004-p">Your agent will be minted as a Metaplex Core NFT on <b>${esc(chainLabel)}</b>. This is the only step that costs SOL.</p>
+
+			<dl class="erc8004-summary">
+				<dt>Name</dt>        <dd>${esc(this.form.name)}</dd>
+				<dt>Description</dt> <dd>${esc(this.form.description)}</dd>
+				${this.form.imageUrl ? `<dt>Image</dt>      <dd>${esc(this.form.imageUrl)}</dd>` : ''}
+				<dt>Avatar</dt>      <dd>${this._avatarSummary()}</dd>
+				<dt>Chain</dt>       <dd>${esc(chainLabel)} (${esc(network)})</dd>
+				<dt>Standard</dt>    <dd>Metaplex Core (mpl-core)</dd>
+			</dl>
+
+			${
+				!hasSolanaWallet
+					? `<div class="erc8004-alert">No Solana wallet detected. Install <a class="erc8004-link" href="https://phantom.app" target="_blank" rel="noopener">Phantom</a> to deploy.</div>`
+					: ''
+			}
+			<div class="erc8004-alert" style="background:#fff8e1;border-color:#ffd54f;color:#5d4037">
+				<b>Note:</b> your Solana wallet must already be linked to this account
+				(via Sign-In-with-Solana). If you haven't, <a class="erc8004-link" href="/login.html">link it first</a>.
+			</div>
+
+			<div class="erc8004-log" data-role="log"></div>
+
+			<div class="erc8004-result" data-role="result" style="display:none">
+				<h4 class="erc8004-h4">✓ Agent registered</h4>
+				<dl class="erc8004-result-dl">
+					<dt>Asset</dt>      <dd data-role="res-id"></dd>
+					<dt>Network</dt>    <dd data-role="res-uri"></dd>
+					<dt>Tx Signature</dt><dd data-role="res-tx"></dd>
+				</dl>
+				<div class="erc8004-row">
+					<a class="erc8004-btn" data-role="view-explorer" target="_blank" rel="noopener">View on explorer ↗</a>
+				</div>
+			</div>
+
+			<div class="erc8004-wizard-nav">
+				<button class="erc8004-btn" data-role="back">← Back</button>
+				<button class="erc8004-btn erc8004-btn--primary" data-role="deploy" ${hasSolanaWallet ? '' : 'disabled'}>🚀 Mint on ${esc(chainLabel)}</button>
+			</div>
+		`;
+		body.querySelector('[data-role="back"]').addEventListener('click', () => {
+			this.wizardStep = 3;
+			this._renderActiveTab();
+		});
+		body.querySelector('[data-role="deploy"]').addEventListener('click', () =>
+			this._doSolanaDeploy(body),
+		);
+	}
+
+	async _doSolanaDeploy(body) {
+		const log = body.querySelector('[data-role="log"]');
+		const say = (msg, err = false) => {
+			const line = document.createElement('div');
+			line.className = 'erc8004-log-line' + (err ? ' erc8004-log-error' : '');
+			line.textContent = msg;
+			log.appendChild(line);
+			log.scrollTop = log.scrollHeight;
+		};
+		const deployBtn = body.querySelector('[data-role="deploy"]');
+		deployBtn.disabled = true;
+
+		const network = _solanaNetwork(this.selectedChainId);
+		const synthAgent = {
+			id: this._backendAgentId || 'wizard',
+			name: this.form.name,
+			description: this.form.description,
+			avatarId: this.form.savedAvatar?.id || undefined,
+		};
+
+		say(`Connecting Solana wallet…`);
+		try {
+			const result = await runSolanaDeploy({ agent: synthAgent, network });
+			say(`Minted asset ${result.assetPubkey}`);
+			say(`Tx ${result.txSignature}`);
+
+			body.querySelector('[data-role="result"]').style.display = '';
+			body.querySelector('[data-role="res-id"]').textContent = result.assetPubkey;
+			body.querySelector('[data-role="res-uri"]').textContent = network;
+			body.querySelector('[data-role="res-tx"]').textContent = result.txSignature;
+			body.querySelector('[data-role="view-explorer"]').href = solanaTxExplorerUrl(
+				network,
+				result.txSignature,
+			);
+
+			this.onRegistered({
+				agentId: result.agent?.id || result.assetPubkey,
+				txHash: result.txSignature,
+				chainId: this.selectedChainId,
+			});
+		} catch (err) {
+			if (err?.code === 'forbidden') {
+				say(
+					'Your Solana wallet is not linked to this account. Sign in with your Solana wallet first.',
+					true,
+				);
+			} else if (err?.code === 'payment_required') {
+				say(`${err.message || 'Paid plan required'} — upgrade to use 5+ char vanity prefixes.`, true);
+			} else {
+				say('Solana deploy failed: ' + (err.message || String(err)), true);
+			}
+			deployBtn.disabled = false;
+		}
 	}
 
 	/**
@@ -1465,6 +1639,19 @@ export class RegisterUI {
 	// -----------------------------------------------------------------------
 
 	_renderMyAgents(body) {
+		if (_isSolana(this.selectedChainId)) {
+			body.innerHTML = `
+				<h3 class="erc8004-h3">Your Registered Agents</h3>
+				<p class="erc8004-p">Listing on-chain Solana agents from this tab isn't wired up yet —
+				use <a class="erc8004-link" data-role="goto-create" href="#">Create Agent →</a> to mint
+				a new agent on <b>${esc(SOLANA_LABELS[this.selectedChainId])}</b>.</p>
+			`;
+			body.querySelector('[data-role="goto-create"]').addEventListener('click', (e) => {
+				e.preventDefault();
+				this._setTab('create');
+			});
+			return;
+		}
 		body.innerHTML = `
 			<h3 class="erc8004-h3">Your Registered Agents</h3>
 			${
@@ -2182,6 +2369,13 @@ export class RegisterUI {
 	// -----------------------------------------------------------------------
 
 	_renderSearch(body) {
+		if (_isSolana(this.selectedChainId)) {
+			body.innerHTML = `
+				<h3 class="erc8004-h3">Agent Search</h3>
+				<p class="erc8004-p erc8004-muted">On-chain search isn't supported for Solana from this tab yet.</p>
+			`;
+			return;
+		}
 		if (!this._searchFilter) this._searchFilter = 'all';
 		const chainName = esc(CHAIN_META[this.selectedChainId]?.name);
 		body.innerHTML = `
@@ -2370,6 +2564,15 @@ export class RegisterUI {
 	// -----------------------------------------------------------------------
 
 	_renderHistory(body) {
+		if (_isSolana(this.selectedChainId)) {
+			body.innerHTML = `
+				<h3 class="erc8004-h3">Transaction History</h3>
+				<p class="erc8004-p erc8004-muted">Solana history isn't surfaced here yet — check
+				<a class="erc8004-link" href="https://solscan.io" target="_blank" rel="noopener">solscan.io</a>
+				for your wallet's mints.</p>
+			`;
+			return;
+		}
 		body.innerHTML = `
 			<h3 class="erc8004-h3">Transaction History</h3>
 			<p class="erc8004-p">Recent <code>Registered</code> events on <b>${esc(CHAIN_META[this.selectedChainId]?.name)}</b>${this.wallet ? ` for <code>${esc(this.wallet.address)}</code>` : ''}.</p>

@@ -578,12 +578,16 @@ function updatePreview(forceReload) {
 		state.config.envPreset && state.config.envPreset !== 'none'
 			? `&preset=${encodeURIComponent(state.config.envPreset)}`
 			: '';
-	const src = `/app#model=${encodeURIComponent(modelUrl)}&kiosk=true&type=${encodeURIComponent(state.type)}${camStr}${presetStr}`;
-	const key = src;
+	const hashStr = `model=${encodeURIComponent(modelUrl)}&kiosk=true&type=${encodeURIComponent(state.type)}${camStr}${presetStr}`;
+	const key = hashStr;
 	if (forceReload || key !== previewSrcKey) {
 		previewSrcKey = key;
 		previewSt.textContent = 'Loading preview…';
-		previewIfr.src = src;
+		// Cache-buster query forces a full reload. Without it, hash-only
+		// changes (e.g. switching avatars) trigger fragment navigation in
+		// the iframe — and /app reads `model`/`type` from the hash only on
+		// boot, so the preview wouldn't update.
+		previewIfr.src = `/app?_=${Date.now()}#${hashStr}`;
 	}
 	postConfigToPreview();
 }
