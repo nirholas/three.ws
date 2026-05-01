@@ -363,6 +363,20 @@ const BASE_STYLE = `
 	/* Kiosk mode: hide dat.GUI debug controls entirely */
 	:host([kiosk]) .gui-wrap,
 	:host([kiosk]) .gui-toggle { display: none !important; }
+	/* avatar-chat="off" — restore original bottom-row layout, hide avatar anchor */
+	:host([avatar-chat="off"]) .chrome {
+		inset: unset;
+		left: 12px;
+		right: 12px;
+		bottom: 12px;
+		flex-direction: row;
+		align-items: flex-end;
+		padding: 0;
+		gap: 8px;
+	}
+	:host([avatar-chat="off"]) .chat { flex: 1; max-height: 40%; }
+	:host([avatar-chat="off"]) .input-row { flex: 1; }
+	:host([avatar-chat="off"]) .avatar-anchor { display: none; }
 `;
 
 class Agent3DElement extends HTMLElement {
@@ -383,6 +397,7 @@ class Agent3DElement extends HTMLElement {
 			'background',
 			'name-plate',
 			'tracked-mint',
+			'avatar-chat',
 		];
 	}
 
@@ -1168,8 +1183,8 @@ class Agent3DElement extends HTMLElement {
 						}
 						protocol.emit({ type: ACTION_TYPES.THINK, payload: { thought: 'processing your message...' } });
 						protocol.emit({ type: ACTION_TYPES.EMOTE, payload: { trigger: 'patience', weight: 0.5 } });
-						// Show/hide thought bubble above avatar
-						if (this._thoughtBubbleEl) {
+						// Show/hide thought bubble above avatar (skipped when feature is off)
+						if (this._thoughtBubbleEl && this.getAttribute('avatar-chat') !== 'off') {
 							this._thoughtBubbleEl.dataset.active = e.detail?.thinking ? 'true' : 'false';
 						}
 					}
@@ -1377,7 +1392,7 @@ class Agent3DElement extends HTMLElement {
 	 * @param {string} text  The response text being delivered
 	 */
 	_startWalkAnimation(text) {
-		if (!this._scene) return;
+		if (!this._scene || this.getAttribute('avatar-chat') === 'off') return;
 		clearTimeout(this._walkReturnTimer);
 		// Roughly 60 wpm reading pace; min 2s, max 8s
 		const words = text ? text.split(/\s+/).length : 0;
