@@ -2,6 +2,7 @@
 // Keeps bundle small and ensures anything rendering <model-viewer> works without bundler.
 
 import { mountAgentSolanaWalletCard } from '/src/agent-solana-wallet.js';
+import { mountAgentVanityGrinderCard } from '/src/agent-vanity-grinder.js';
 
 export const state = { user: null };
 
@@ -241,9 +242,15 @@ function mountAvatarWalletSection(host, a) {
 			} catch {}
 		});
 	}
-	mountAgentSolanaWalletCard({
-		panel: host.querySelector('[data-sol-wallet]'),
+	const solPanel = host.querySelector('[data-sol-wallet]');
+	const walletCard = mountAgentSolanaWalletCard({
+		panel: solPanel,
 		identity: { id: a.agent_id, name: a.name },
+	});
+	mountAgentVanityGrinderCard({
+		panel: solPanel,
+		identity: { id: a.agent_id, name: a.name },
+		onProvisioned: () => walletCard?.refresh?.(),
 	});
 }
 
