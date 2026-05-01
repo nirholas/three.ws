@@ -51,6 +51,7 @@
 		"clean": "rm -rf dist/* dist-lib/* || true",
 		"generate-icons": "node scripts/generate-pwa-icons.mjs",
 		"fetch-animations": "node scripts/download-animations.mjs",
+		"fetch:mixamo-catalog": "node scripts/fetch-mixamo-catalog.mjs",
 		"test": "vitest run",
 		"test:pages": "node scripts/test-pages.mjs",
 		"test:all": "npm run test && npm run test:pages",
