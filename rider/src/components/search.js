@@ -105,7 +105,7 @@ AFRAME.registerComponent('search', {
         } else {
           delete this.queryObject.filters
         } */
-    let url = `https://beatsaver.com/api/search/text/CURRENT_PAGE_INDEX?sortOrder=Rating&automapper=true&q=${encodeURIComponent(query)}`;
+    let url = `https://api.beatsaver.com/search/text/CURRENT_PAGE_INDEX?sortOrder=Rating&automapper=true&q=${encodeURIComponent(query)}`;
 
     if (this.data.playlist) {
       url = `https://api.beatsaver.com/playlists/id/${this.data.playlist}/CURRENT_PAGE_INDEX`;
@@ -130,7 +130,7 @@ AFRAME.registerComponent('search', {
         'Dance': 'dance'
       };
       const tag = genreMap[this.data.genre];
-      url = `https://beatsaver.com/api/search/text/CURRENT_PAGE_INDEX?sortOrder=Rating&automapper=true&tags=${encodeURIComponent(tag)}`;
+      url = `https://api.beatsaver.com/search/text/CURRENT_PAGE_INDEX?sortOrder=Rating&automapper=true&tags=${encodeURIComponent(tag)}`;
     } else {
       if (query && query.length < 3) { return; }
     }
