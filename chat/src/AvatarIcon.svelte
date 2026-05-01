@@ -15,7 +15,7 @@
 		Clock,
 	} from 'three';
 	import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-	import { SkeletonUtils } from 'three/addons/utils/SkeletonUtils.js';
+	import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 
 	const gltfCache = new Map(); // url -> Promise<gltf>
 	let walkClipPromise = null;
