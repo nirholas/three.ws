@@ -1793,93 +1793,21 @@
     <FeaturePage slug={$route.slice('features/'.length)} />
   </div>
 {:else}
-<main class="flex h-dvh w-screen flex-col">
-	<div class="sticky top-0 z-[110]">
-		<TopNav />
-	</div>
-	<div class="flex h-12 items-center gap-1 px-2 py-1 md:hidden">
-		<button
-			on:click={newConversation}
-			class="flex rounded-full p-2 transition-colors hover:bg-gray-100"
-		>
-			<Icon icon={feStar} strokeWidth={3} class="ml-auto h-4 w-4 text-slate-700" />
-		</button>
-		<button
-			data-trigger="history"
-			class="flex rounded-full p-2 transition-colors hover:bg-gray-100"
-			on:click={() => (historyOpen = !historyOpen)}
-		>
-			<Icon icon={feMenu} strokeWidth={3} class="m-auto h-4 w-4 text-slate-700" />
-		</button>
-
-		<ModelSelector
-			{convo}
-			{models}
-			on:change={({ detail }) => {
-				convo.models = [detail];
-				saveConversation(convo);
-			}}
-			on:changeMulti={({ detail }) => {
-				if (convo.models.find((m) => m.id === detail.id)) {
-					convo.models = convo.models.filter((m) => m.id !== detail.id);
-				} else {
-					convo.models = [...(convo.models || []), detail];
-				}
-				saveConversation(convo);
-			}}
-			class="!absolute left-1/2 z-[99] -translate-x-1/2"
-		/>
-
-		<button
-			class="ml-auto flex rounded-full p-2 transition-colors hover:bg-gray-100"
-			use:flash
-			on:click={shareConversation}
-		>
-			<Icon icon={feShare} strokeWidth={3} class="m-auto h-4 w-4 text-slate-700" />
-		</button>
-		<div class="relative">
-			<button
-				class="flex rounded-full p-2 transition-colors hover:bg-gray-100 disabled:opacity-40"
-				on:click={() => (exportOpen = !exportOpen)}
-				disabled={convo.messages.length === 0}
-				title="Export conversation"
-			>
-				<Icon icon={feDownload} strokeWidth={3} class="m-auto h-4 w-4 text-slate-700" />
-			</button>
-			{#if exportOpen}
-				<button
-					class="fixed inset-0 z-20 cursor-default"
-					aria-hidden="true"
-					tabindex="-1"
-					on:click={() => (exportOpen = false)}
-				/>
-				<div class="absolute right-0 top-full mt-1 z-30 w-48 rounded-xl border border-[#E5E3DC] bg-white p-1 shadow-pop">
-					<button
-						class="flex h-9 w-full items-center rounded-lg px-3 text-sm font-medium text-[#1A1A1A] hover:bg-[#F5F4EF]"
-						on:click={exportConvoAsMarkdown}
-					>Export as Markdown</button>
-					<button
-						class="flex h-9 w-full items-center rounded-lg px-3 text-sm font-medium text-[#1A1A1A] hover:bg-[#F5F4EF]"
-						on:click={exportConvoAsJSON}
-					>Export as JSON</button>
-				</div>
-			{/if}
+<main class="flex h-full w-full flex-1 flex-col" class:splitView>
+	{#if $talkingHeadEnabled}
+		<div class="pointer-events-none fixed bottom-0 left-1/2 z-10 h-1/3 w-auto -translate-x-1/2 transform">
+			<TalkingHead
+				bind:this={talkingHead}
+				avatarUrl={$talkingHeadAvatarUrl}
+				on:ready={() => {
+					console.log('head ready');
+				}}
+			/>
 		</div>
-		<button
-			data-trigger="knobs"
-			class="flex rounded-full p-2 transition-colors hover:bg-gray-100"
-			on:click={() => (knobsOpen = !knobsOpen)}
-		>
-			<Icon icon={feSidebar} strokeWidth={3} class="m-auto h-4 w-4 text-slate-700" />
-		</button>
-	</div>
-	<div class="relative flex h-full flex-1 overflow-hidden">
-		{#if convo.messages.length > 0}
-		<aside
-			data-sidebar="history"
-			class="{historyOpen
-				? ''
-				: '-translate-x-full'} fixed top-0 z-[100] flex h-full w-[260px] flex-col border-r border-rule bg-paper pl-3 pt-4 transition-transform duration-500 ease-in-out md:static md:translate-x-0"
+	{/if}
+	<div class="relative flex h-full min-w-0 flex-1">
+		<div
+			class="flex h-full w-full flex-col items-center justify-center {historyOpen ? 'hidden sm:flex' : ''}"
 		>
 			<div class="mb-1 pr-3">
 				<button
@@ -2398,11 +2326,11 @@
 {#if true}
 	<!-- svelte-ignore a11y-no-static-element-interactions -->
 	<div
-		class="z-[100] flex flex-col items-end gap-2 select-none"
+		class="z-[100] flex flex-col items-start gap-2 select-none"
 		class:cursor-grabbing={dragging}
 		style={dragPos.x !== null
 			? `position: fixed; left: ${dragPos.x}px; top: ${dragPos.y}px;`
-			: 'position: fixed; bottom: 1rem; right: 1rem;'}
+			: 'position: fixed; bottom: 1rem; left: 1rem;'}
 		on:mousedown={onAvatarDragStart}
 		role="none"
 	>
