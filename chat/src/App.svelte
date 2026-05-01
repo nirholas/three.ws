@@ -66,7 +66,7 @@
 	} from './feather.js';
 	import { defaultToolSchema, agentToolSchema, pumpToolSchema, curatedToolPacks } from './tools.js';
 	import { debounce, readFileAsDataURL } from './util.js';
-	import { flash } from './actions';
+	import { flash, focusOnMount } from './actions';
 	import Message from './Message.svelte';
 	import { deleteSingleItem, initEncryption, sendSingleItem, syncPull, syncPush } from './sync.js';
 	import AgentPicker from './AgentPicker.svelte';
@@ -253,7 +253,9 @@
 
 			// Sync:
 			if ($syncServer.token && $syncServer.password) {
-				syncPullPush(conversations, messages, convosMap); // async
+				syncPullPush(conversations, messages, convosMap).catch((e) => {
+					console.warn('[sync] pull/push failed:', e?.message || e);
+				}); // async
 			}
 		} catch (error) {
 			console.error('Error fetching history:', error);
@@ -484,6 +486,8 @@
 		}
 	}
 
+	let rateLimitedUntil = 0;
+
 	async function submitCompletion(insertUnclosed = true) {
 		window.speechSynthesis?.cancel();
 		if (!convo.models?.[0]?.provider) {
@@ -491,6 +495,21 @@
 				id: uuidv4(),
 				role: 'assistant',
 				error: 'No model selected. Please select a model to begin.',
+				content: '',
+			};
+			saveMessage(msg);
+			convo.messages.push(msg);
+			convo.messages = convo.messages;
+			saveConversation(convo);
+			return;
+		}
+
+		const remaining = Math.ceil((rateLimitedUntil - Date.now()) / 1000);
+		if (remaining > 0) {
+			const msg = {
+				id: uuidv4(),
+				role: 'assistant',
+				error: `Slow down — try again in ${remaining}s.`,
 				content: '',
 			};
 			saveMessage(msg);
@@ -781,7 +800,23 @@
 			}
 		};
 
-		const onabort = () => {
+		const onabort = (err) => {
+			if (err && typeof err === 'object') {
+				if (err.code === 'payment_required') {
+					const url = err.upgradeUrl || '/pricing';
+					convo.messages[i].error = `Out of credits. [Upgrade your plan](${url}) to keep chatting.`;
+				} else if (err.code === 'rate_limited') {
+					const seconds = err.retryAfter ?? 30;
+					rateLimitedUntil = Date.now() + seconds * 1000;
+					convo.messages[i].error = `Slow down — too many requests. Try again in ${seconds}s.`;
+				} else {
+					convo.messages[i].error = err.message || String(err);
+				}
+				saveMessage(convo.messages[i]);
+			} else if (typeof err === 'string') {
+				convo.messages[i].error = err;
+				saveMessage(convo.messages[i]);
+			}
 			handleAbort();
 		};
 
@@ -1031,13 +1066,14 @@
 	async function shareConversation(event) {
 		event.currentTarget.dispatchEvent(new CustomEvent('flashSuccess'));
 
-		const sharePromise = new Promise(async (resolve) => {
+		const sharePromise = (async () => {
 			const encoded = await compressAndEncode({
 				models: convo.models,
 				messages: convo.messages,
 			});
-			const share = `${window.location.protocol}//${window.location.host}/?s=${encoded}`;
-			if (share.length > 200) {
+			const longShare = `${window.location.protocol}//${window.location.host}/?s=${encoded}`;
+			if (longShare.length <= 200) return longShare;
+			try {
 				const data = new FormData();
 				data.append('pwd', 'muie_webshiti');
 				data.append('f:1', new Blob([encoded], { type: 'text/plain' }), 'content.txt');
@@ -1045,15 +1081,14 @@
 					method: 'POST',
 					body: data,
 				});
-
+				if (!response.ok) throw new Error(`HTTP ${response.status}`);
 				const shortenedLink = await response.text();
-				resolve(
-					`${window.location.protocol}//${window.location.host}/?sl=${shortenedLink.split('/').reverse()[1]}`
-				);
-			} else {
-				resolve(`${window.location.protocol}//${window.location.host}/?s=${encoded}`);
+				return `${window.location.protocol}//${window.location.host}/?sl=${shortenedLink.split('/').reverse()[1]}`;
+			} catch (e) {
+				console.warn('[share] link shortener unreachable, falling back to long URL:', e?.message || e);
+				return longShare;
 			}
-		});
+		})();
 
 		try {
 			const clipboardItem = new ClipboardItem({
@@ -1118,8 +1153,14 @@
 		if (params.has('s')) {
 			share = params.get('s');
 		} else if (params.has('sl')) {
-			const response = await fetch(`https://sync.three.ws/p/${params.get('sl')}/`);
-			share = await response.text();
+			try {
+				const response = await fetch(`https://sync.three.ws/p/${params.get('sl')}/`);
+				if (!response.ok) throw new Error(`HTTP ${response.status}`);
+				share = await response.text();
+			} catch (e) {
+				console.warn('[share] could not resolve shortened link:', e?.message || e);
+				return false;
+			}
 		}
 		if (!share) {
 			return false;
@@ -1836,7 +1877,7 @@
 											bind:value={historyConvo.title}
 											on:blur={() => { saveConversation(historyConvo); convos = { ...convos }; editingTitleId = null; }}
 											on:keydown={(e) => e.key === 'Enter' && e.target.blur()}
-											autofocus
+											use:focusOnMount
 										/>
 									</div>
 								{:else}

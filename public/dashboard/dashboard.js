@@ -2326,6 +2326,10 @@ async function renderAccount(root) {
 		wrap.innerHTML = `<div class="err">${esc(err.message)}</div>`;
 		return;
 	}
+	if (!user) {
+		location.href = '/login?next=' + encodeURIComponent(location.pathname + location.search);
+		return;
+	}
 
 	const profileUrl = user.username
 		? `${location.origin}/u/${encodeURIComponent(user.username)}`

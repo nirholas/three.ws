@@ -561,6 +561,10 @@
 
 			async function loadUser() {
 				const data = await apiJson('/api/auth/me');
+				if (!data.user) {
+					location.href = '/login?next=' + encodeURIComponent(location.pathname + location.hash);
+					throw new Error('unauthenticated');
+				}
 				user = data.user;
 				document.getElementById('user-email').textContent = user.email || user.display_name || '';
 				document.getElementById('inp-display-name').value = user.display_name || '';

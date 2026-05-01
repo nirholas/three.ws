@@ -1,6 +1,8 @@
 import { env } from '../_lib/env.js';
-import { cors, error, method, wrap, readJson } from '../_lib/http.js';
+import { cors, error, json, method, wrap, readJson } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
+
+const UPGRADE_URL = `${env.APP_ORIGIN}/pricing`;
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
@@ -10,7 +12,14 @@ export default wrap(async (req, res) => {
 		return error(res, 503, 'not_configured', 'Built-in model not available');
 
 	const rl = await limits.authIp(clientIp(req));
-	if (!rl.success) return error(res, 429, 'rate_limited', 'Too many requests — try again shortly');
+	if (!rl.success) {
+		const retryAfter = Math.max(1, Math.ceil((rl.reset - Date.now()) / 1000));
+		res.setHeader('retry-after', String(retryAfter));
+		return error(res, 429, 'rate_limited', 'Too many requests — try again shortly', {
+			retryAfter,
+			scope: 'ip',
+		});
+	}
 
 	let body;
 	try {
@@ -34,6 +43,29 @@ export default wrap(async (req, res) => {
 		},
 		body: JSON.stringify(body),
 	});
+
+	if (upstream.status === 402) {
+		const upstreamBody = await upstream.text();
+		const reason = /no_credits|insufficient/i.test(upstreamBody) ? 'no_credits' : 'plan_required';
+		return json(res, 402, {
+			error: 'payment_required',
+			error_description: 'Built-in model requires a funded plan',
+			reason,
+			upgradeUrl: UPGRADE_URL,
+		});
+	}
+
+	if (upstream.status === 429) {
+		const upstreamRetry = parseInt(upstream.headers.get('retry-after') ?? '', 10);
+		const retryAfter = Number.isFinite(upstreamRetry) && upstreamRetry > 0 ? upstreamRetry : 30;
+		res.setHeader('retry-after', String(retryAfter));
+		return json(res, 429, {
+			error: 'rate_limited',
+			error_description: 'Upstream provider rate limited the request',
+			retryAfter,
+			scope: 'agent',
+		});
+	}
 
 	res.statusCode = upstream.status;
 	const ct = upstream.headers.get('content-type') ?? 'application/json';

@@ -154,9 +154,23 @@ export async function complete(convo, onupdate, onabort) {
 
 	const response = await completions(get(controller).signal);
 	if (!response.ok) {
-		let msg = `API error ${response.status}`;
-		try { const e = await response.json(); msg = e?.error_description || e?.error?.message || e?.message || msg; } catch {}
-		throw new Error(msg);
+		let body = null;
+		try { body = await response.json(); } catch {}
+		const msg = body?.error_description || body?.error?.message || body?.message || `API error ${response.status}`;
+		const err = new Error(msg);
+		err.status = response.status;
+		if (response.status === 402) {
+			err.code = 'payment_required';
+			err.reason = body?.reason;
+			err.upgradeUrl = body?.upgradeUrl;
+		} else if (response.status === 429) {
+			const headerRetry = parseInt(response.headers.get('retry-after') ?? '', 10);
+			err.code = 'rate_limited';
+			err.retryAfter =
+				body?.retryAfter ?? (Number.isFinite(headerRetry) && headerRetry > 0 ? headerRetry : 30);
+			err.scope = body?.scope;
+		}
+		throw err;
 	}
 	if (stream) {
 		streamResponse(model.provider, response.body, onupdate, onabort);
@@ -166,7 +180,7 @@ export async function complete(convo, onupdate, onabort) {
 	}
 	} catch (err) {
 		if (err.name === 'AbortError') return;
-		onabort?.(err.message || String(err));
+		onabort?.(err);
 	}
 }
 

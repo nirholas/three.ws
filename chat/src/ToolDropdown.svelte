@@ -83,7 +83,7 @@
 					type="text"
 					bind:value={query}
 					placeholder="Search for tools"
-					autofocus
+					use:focusOnMount
 					class="w-full rounded-lg border border-slate-300 px-3 py-2 text-[10px] text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-none"
 				/>
 			</div>

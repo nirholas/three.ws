@@ -7,7 +7,9 @@
 </script>
 
 {#if message.error}
-	<span class="text-slate-600">{message.error}</span>
+	<span class="markdown text-slate-600 prose-a:underline">
+		<Markdown source={message.error} />
+	</span>
 {:else if message.content}
 	<div
 		bind:clientHeight={contentHeight}

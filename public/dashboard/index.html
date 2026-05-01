@@ -1246,15 +1246,19 @@
 			window.signOut = signOut;
 
 			(async () => {
+				let me;
 				try {
-					const me = await api.me();
-					state.user = me.user;
-					document.getElementById('user-email').textContent = me.user.email;
+					me = await api.me();
 				} catch {
+					me = null;
+				}
+				if (!me?.user) {
 					location.href =
 						'/login?next=' + encodeURIComponent(location.pathname + location.hash);
 					return;
 				}
+				state.user = me.user;
+				document.getElementById('user-email').textContent = me.user.email;
 				navigate(location.hash.slice(1) || 'avatars');
 				window.addEventListener('hashchange', () =>
 					navigate(location.hash.slice(1) || 'avatars'),

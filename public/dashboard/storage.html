@@ -388,14 +388,18 @@
 			}
 
 			async function loadMe() {
+				let data;
 				try {
-					await api('GET', '/api/auth/me');
-					document.body.removeAttribute('data-auth-pending');
+					data = await api('GET', '/api/auth/me');
 				} catch {
+					data = null;
+				}
+				if (!data?.user) {
 					location.href =
 						'/login?next=' + encodeURIComponent(location.pathname + location.search);
 					throw new Error('redirecting');
 				}
+				document.body.removeAttribute('data-auth-pending');
 			}
 
 			async function loadAvatar() {

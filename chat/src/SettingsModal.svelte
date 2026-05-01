@@ -36,7 +36,7 @@
 	import ClientTool from './ClientTool.svelte';
 	import Tooltip from './Tooltip.svelte';
 	import ModelSelector from './ModelSelector.svelte';
-	import { sendSingleItem } from './sync.js';
+	import { sendSingleItem, resetSyncCircuit } from './sync.js';
 
 	const dispatch = createEventDispatcher();
 
@@ -325,14 +325,15 @@
 					<span class="mb-2 flex items-center">
 						<span class="ml-[3px]">Sync server address </span>
 						<Tooltip
-							content="Run the three.ws chat sync server to sync your chats and API keys between devices. If you want to use our server instead of self-hosting leave this field as is."
+							content="Run a three.ws chat sync server to sync your chats and API keys between devices, then paste its URL here. There is no hosted server."
 							class="ml-2"
 						/>
 					</span>
 					<input
 						type="text"
 						bind:value={$syncServer.address}
-						placeholder="Enter sync server address, or leave as is to use ours"
+						on:change={resetSyncCircuit}
+						placeholder="https://your-sync-server.example.com"
 						class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-none"
 					/></label
 				>

@@ -6,7 +6,9 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { parse } from '../_lib/validate.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const CATEGORY_RE = /^[a-z0-9-]{1,50}$/;
 const VALID_SORTS = new Set(['popular', 'new', 'az']);
+const DEFAULT_SORT = 'popular';
 
 const skillSlug = z
 	.string()
@@ -77,12 +79,36 @@ function toSkill(row, { includeInstalled = false, includeSchema = false } = {}) 
 async function handleList(req, res) {
 	const url = new URL(req.url, 'http://x');
 	const q = (url.searchParams.get('q') || '').trim().slice(0, 80) || null;
-	const category = url.searchParams.get('category') || null;
+	const categoryRaw = url.searchParams.get('category');
 	const sortParam = url.searchParams.get('sort') || '';
-	const sort = VALID_SORTS.has(sortParam) ? sortParam : 'popular';
 	const cursor = url.searchParams.get('cursor') || null;
 	const limit = Math.min(50, Math.max(1, Number(url.searchParams.get('limit')) || 20));
 	const installedOnly = url.searchParams.get('installed') === 'true';
+
+	let category = null;
+	if (categoryRaw != null && categoryRaw !== '') {
+		if (!CATEGORY_RE.test(categoryRaw)) {
+			return error(
+				res,
+				400,
+				'validation_error',
+				'category must be a slug (lowercase letters, digits, hyphens)',
+			);
+		}
+		category = categoryRaw;
+	}
+
+	let sort = DEFAULT_SORT;
+	if (sortParam) {
+		if (VALID_SORTS.has(sortParam)) {
+			sort = sortParam;
+		} else {
+			console.warn('[api/skills] unknown sort, falling back to default', {
+				sort: sortParam,
+				url: req.url,
+			});
+		}
+	}
 
 	const rl = await limits.publicIp(clientIp(req));
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
@@ -117,34 +143,141 @@ async function handleList(req, res) {
 		}
 	}
 
-	// Build sort-specific ORDER BY and cursor condition as sql fragments
-	let orderBy;
-	let cursorCond;
+	// Neon's tagged-template `sql` does not compose nested fragments — each
+	// interpolation becomes a positional `$N` parameter. So we branch the full
+	// query per sort instead of building it from sql`...` fragments.
+	const rows = await runListQuery({
+		sort,
+		userId,
+		category,
+		qLike,
+		installedOnly,
+		cursor,
+		cursorInstallCount,
+		cursorCreatedAt,
+		cursorName,
+		limit,
+	});
+
+	const hasMore = rows.length > limit;
+	const skills = rows.slice(0, limit).map((r) => toSkill(r, { includeInstalled: userId != null }));
+
+	return json(res, 200, {
+		skills,
+		next_cursor: hasMore ? rows[limit - 1].id : null,
+	});
+}
+
+function runListQuery(p) {
+	const {
+		sort,
+		userId,
+		category,
+		qLike,
+		installedOnly,
+		cursor,
+		cursorInstallCount,
+		cursorCreatedAt,
+		cursorName,
+		limit,
+	} = p;
+
+	const limitPlus = limit + 1;
+
 	if (sort === 'new') {
-		orderBy = sql`ms.created_at DESC, ms.id DESC`;
-		cursorCond =
-			cursor && cursorCreatedAt != null
-				? sql`AND (ms.created_at < ${cursorCreatedAt} OR (ms.created_at = ${cursorCreatedAt} AND ms.id::text < ${cursor}))`
-				: sql``;
-	} else if (sort === 'az') {
-		orderBy = sql`ms.name ASC, ms.id ASC`;
-		cursorCond =
-			cursor && cursorName != null
-				? sql`AND (ms.name > ${cursorName} OR (ms.name = ${cursorName} AND ms.id::text > ${cursor}))`
-				: sql``;
-	} else {
-		// popular (default)
-		orderBy = sql`ms.install_count DESC, ms.id DESC`;
-		cursorCond =
-			cursor && cursorInstallCount != null
-				? sql`AND (ms.install_count < ${cursorInstallCount} OR (ms.install_count = ${cursorInstallCount} AND ms.id::text < ${cursor}))`
-				: sql``;
+		const cursorActive = cursor && cursorCreatedAt != null;
+		return sql`
+			SELECT
+				ms.id, ms.name, ms.slug, ms.description, ms.category, ms.tags,
+				ms.install_count, ms.created_at, ms.author_id, ms.price_per_call_usd,
+				u.display_name AS author_display_name,
+				ROUND(COALESCE(AVG(sr.rating), 0)::numeric, 1)::float AS avg_rating,
+				COUNT(sr.rating)::int AS rating_count,
+				CASE WHEN ${userId}::uuid IS NOT NULL
+					THEN EXISTS(
+						SELECT 1 FROM skill_installs si
+						WHERE si.skill_id = ms.id AND si.user_id = ${userId}::uuid
+					)
+					ELSE NULL END AS installed
+			FROM marketplace_skills ms
+			LEFT JOIN users u ON u.id = ms.author_id AND u.deleted_at IS NULL
+			LEFT JOIN skill_ratings sr ON sr.skill_id = ms.id
+			WHERE ms.is_public = true
+				AND (
+					NOT ${cursorActive}
+					OR ms.created_at < ${cursorCreatedAt}::timestamptz
+					OR (ms.created_at = ${cursorCreatedAt}::timestamptz AND ms.id::text < ${cursor}::text)
+				)
+				AND (${category}::text IS NULL OR ms.category = ${category})
+				AND (
+					${qLike}::text IS NULL
+					OR ms.name ILIKE ${qLike}
+					OR ms.description ILIKE ${qLike}
+					OR EXISTS (SELECT 1 FROM unnest(ms.tags) t WHERE t ILIKE ${qLike})
+				)
+				AND (
+					NOT ${installedOnly}
+					OR EXISTS(
+						SELECT 1 FROM skill_installs
+						WHERE skill_id = ms.id AND user_id = ${userId}::uuid
+					)
+				)
+			GROUP BY ms.id, ms.author_id, u.display_name
+			ORDER BY ms.created_at DESC, ms.id DESC
+			LIMIT ${limitPlus}
+		`;
 	}
 
-	const rows = await sql`
+	if (sort === 'az') {
+		const cursorActive = cursor && cursorName != null;
+		return sql`
+			SELECT
+				ms.id, ms.name, ms.slug, ms.description, ms.category, ms.tags,
+				ms.install_count, ms.created_at, ms.author_id, ms.price_per_call_usd,
+				u.display_name AS author_display_name,
+				ROUND(COALESCE(AVG(sr.rating), 0)::numeric, 1)::float AS avg_rating,
+				COUNT(sr.rating)::int AS rating_count,
+				CASE WHEN ${userId}::uuid IS NOT NULL
+					THEN EXISTS(
+						SELECT 1 FROM skill_installs si
+						WHERE si.skill_id = ms.id AND si.user_id = ${userId}::uuid
+					)
+					ELSE NULL END AS installed
+			FROM marketplace_skills ms
+			LEFT JOIN users u ON u.id = ms.author_id AND u.deleted_at IS NULL
+			LEFT JOIN skill_ratings sr ON sr.skill_id = ms.id
+			WHERE ms.is_public = true
+				AND (
+					NOT ${cursorActive}
+					OR ms.name > ${cursorName}::text
+					OR (ms.name = ${cursorName}::text AND ms.id::text > ${cursor}::text)
+				)
+				AND (${category}::text IS NULL OR ms.category = ${category})
+				AND (
+					${qLike}::text IS NULL
+					OR ms.name ILIKE ${qLike}
+					OR ms.description ILIKE ${qLike}
+					OR EXISTS (SELECT 1 FROM unnest(ms.tags) t WHERE t ILIKE ${qLike})
+				)
+				AND (
+					NOT ${installedOnly}
+					OR EXISTS(
+						SELECT 1 FROM skill_installs
+						WHERE skill_id = ms.id AND user_id = ${userId}::uuid
+					)
+				)
+			GROUP BY ms.id, ms.author_id, u.display_name
+			ORDER BY ms.name ASC, ms.id ASC
+			LIMIT ${limitPlus}
+		`;
+	}
+
+	// popular (default)
+	const cursorActive = cursor && cursorInstallCount != null;
+	return sql`
 		SELECT
 			ms.id, ms.name, ms.slug, ms.description, ms.category, ms.tags,
-			ms.install_count, ms.created_at, ms.author_id,
+			ms.install_count, ms.created_at, ms.author_id, ms.price_per_call_usd,
 			u.display_name AS author_display_name,
 			ROUND(COALESCE(AVG(sr.rating), 0)::numeric, 1)::float AS avg_rating,
 			COUNT(sr.rating)::int AS rating_count,
@@ -158,7 +291,11 @@ async function handleList(req, res) {
 		LEFT JOIN users u ON u.id = ms.author_id AND u.deleted_at IS NULL
 		LEFT JOIN skill_ratings sr ON sr.skill_id = ms.id
 		WHERE ms.is_public = true
-			${cursorCond}
+			AND (
+				NOT ${cursorActive}
+				OR ms.install_count < ${cursorInstallCount}::integer
+				OR (ms.install_count = ${cursorInstallCount}::integer AND ms.id::text < ${cursor}::text)
+			)
 			AND (${category}::text IS NULL OR ms.category = ${category})
 			AND (
 				${qLike}::text IS NULL
@@ -174,17 +311,9 @@ async function handleList(req, res) {
 				)
 			)
 		GROUP BY ms.id, ms.author_id, u.display_name
-		ORDER BY ${orderBy}
-		LIMIT ${limit + 1}
+		ORDER BY ms.install_count DESC, ms.id DESC
+		LIMIT ${limitPlus}
 	`;
-
-	const hasMore = rows.length > limit;
-	const skills = rows.slice(0, limit).map((r) => toSkill(r, { includeInstalled: userId != null }));
-
-	return json(res, 200, {
-		skills,
-		next_cursor: hasMore ? rows[limit - 1].id : null,
-	});
 }
 
 async function handlePublish(req, res) {
