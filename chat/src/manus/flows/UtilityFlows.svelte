@@ -15,6 +15,11 @@
     rugcheckPrompts,
     chart3dPrompts,
     scene3dPrompts,
+    ticker3dPrompts,
+    nft3dPrompts,
+    walletviewPrompts,
+    txexplainPrompts,
+    mintnftPrompts,
   } from './utilityFlowData.js';
 </script>
 
@@ -48,4 +53,14 @@
   <SamplePromptGrid title="3D chart examples" prompts={chart3dPrompts} />
 {:else if $mode === 'scene3d'}
   <SamplePromptGrid title="3D scene examples" prompts={scene3dPrompts} />
+{:else if $mode === 'ticker3d'}
+  <SamplePromptGrid title="3D token ticker" prompts={ticker3dPrompts} />
+{:else if $mode === 'nft3d'}
+  <SamplePromptGrid title="NFT 3D viewer" prompts={nft3dPrompts} />
+{:else if $mode === 'walletview'}
+  <SamplePromptGrid title="Wallet 3D viz" prompts={walletviewPrompts} />
+{:else if $mode === 'txexplain'}
+  <SamplePromptGrid title="Explain a transaction" prompts={txexplainPrompts} />
+{:else if $mode === 'mintnft'}
+  <SamplePromptGrid title="Mint scene as NFT" prompts={mintnftPrompts} />
 {/if}

@@ -80,6 +80,9 @@ export const limits = {
 	ensResolve: (ip) => getLimiter('ens:resolve:ip', { limit: 60, window: '1 m' }).limit(ip),
 	// Generic public read endpoints (explore, showcase, public agent fetch). 60/min per IP.
 	publicIp: (ip) => getLimiter('public:ip', { limit: 60, window: '1 m' }).limit(ip),
+	// Skills marketplace browse — isolated bucket so traffic on other public endpoints
+	// can't starve the skills list. 60/min per IP.
+	skillsBrowse: (ip) => getLimiter('skills:browse', { limit: 60, window: '1 m' }).limit(ip),
 	widgetWrite: (userId) => getLimiter('widget:write', { limit: 60, window: '1 m' }).limit(userId),
 	widgetRead: (ip) => getLimiter('widget:read', { limit: 600, window: '1 m' }).limit(ip),
 	// Per-widget visitor chat. Limit is dynamic — one bucket per (widgetId, perMinute).

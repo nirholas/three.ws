@@ -21,7 +21,7 @@
 <Modal bind:open>
 	<div class="flex flex-col gap-y-4">
 		<h2 class="text-base font-semibold text-slate-800">Tool packs</h2>
-		<ul class="flex flex-col gap-y-3">
+		<ul class="flex flex-col gap-y-3 max-h-[60vh] overflow-y-auto pr-1 scrollbar-ultraslim">
 			{#each curatedToolPacks as pack}
 				<li class="flex items-start justify-between gap-x-4 rounded-lg border border-slate-200 px-4 py-3">
 					<div class="min-w-0">

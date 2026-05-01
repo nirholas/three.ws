@@ -17,6 +17,7 @@ import { registerPumpFunWatchSkills } from './agent-skills-pumpfun-watch.js';
 import { registerPumpFunAutonomousSkills } from './agent-skills-pumpfun-autonomous.js';
 import { registerPumpFunComposeSkills } from './agent-skills-pumpfun-compose.js';
 import { attachPumpFunMemoryHooks } from './agent-skills-pumpfun-hooks.js';
+import { registerJupiterSkills } from './agent-skills-jupiter.js';
 
 /**
  * @typedef {Object} SkillContext
@@ -63,6 +64,7 @@ export class AgentSkills {
 		registerPumpFunAutonomousSkills(this);
 		registerPumpFunComposeSkills(this);
 		attachPumpFunMemoryHooks(protocol, memory);
+		registerJupiterSkills(this);
 	}
 
 	// ── Registry ──────────────────────────────────────────────────────────────
