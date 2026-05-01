@@ -1,11 +1,12 @@
 import { sql } from '../_lib/db.js';
-import { json, error, method, wrap } from '../_lib/http.js';
+import { cors, json, method, wrap } from '../_lib/http.js';
 
 function toLabel(slug) {
 	return slug.charAt(0).toUpperCase() + slug.slice(1);
 }
 
 export default wrap(async (req, res) => {
+	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
 	if (!method(req, res, ['GET'])) return;
 
 	const rows = await sql`
