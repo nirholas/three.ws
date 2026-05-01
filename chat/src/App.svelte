@@ -624,6 +624,7 @@
 
 			if (choice.delta.content) {
 				convo.messages[i].content += choice.delta.content;
+				if (agentEl && agentEl._streamToBubble) agentEl._streamToBubble(choice.delta.content);
 				// Once content starts coming in, we can stop thinking
 				if (convo.messages[i].reasoning && !unexpandedThinkingOnce) {
 					unexpandedThinkingOnce = true;
