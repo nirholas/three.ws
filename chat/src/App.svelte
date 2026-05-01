@@ -486,6 +486,7 @@
 			convo.messages[i].thinking = false;
 			stopThinkingTimer(i);
 		}
+		talkingHead?.think(false);
 	}
 
 	let rateLimitedUntil = 0;
