@@ -165,7 +165,8 @@ export function encodeScopedDelegation({ delegator, delegate, caveats, expiry, c
 	}));
 
 	// Cryptographically random 32-byte salt to prevent replay.
-	const salt = BigInt('0x' + Buffer.from(randomBytes(32)).toString('hex'));
+	const saltHex = Array.from(randomBytes(32), (b) => b.toString(16).padStart(2, '0')).join('');
+	const salt = BigInt('0x' + saltHex);
 
 	return {
 		delegate: delegateAddr,
