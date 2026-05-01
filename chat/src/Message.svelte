@@ -179,7 +179,23 @@
 						: ''}"
 			>
 				{#if message.role === 'assistant' && hasLogo}
-					<CompanyLogo model={message.model} size="w-full h-full" rounded="rounded-[inherit]" />
+					{#if effectiveAgentId}
+						<span class="w-full h-full overflow-hidden inline-block shrink-0 rounded-[inherit]">
+							<!-- svelte-ignore custom-element-no-implicit-ns -->
+							<agent-3d
+								agent-id={effectiveAgentId}
+								mode="inline"
+								width="128"
+								height="128"
+								background="transparent"
+								kiosk
+								name-plate="off"
+								style="width:100%;height:100%;display:block;"
+							></agent-3d>
+						</span>
+					{:else}
+						<CompanyLogo model={message.model} size="w-full h-full" rounded="rounded-[inherit]" />
+					{/if}
 				{:else}
 					<span class="m-auto">
 						{#if message.role === 'system'}
