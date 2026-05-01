@@ -23,7 +23,7 @@
 	import Icon from './Icon.svelte';
 	import MessageContent from './MessageContent.svelte';
 	import { formatModelName, hasCompanyLogo } from './providers.js';
-	import { config, talkingHeadAvatarUrl } from './stores.js';
+	import { config, talkingHeadAvatarUrl, localAgentId, brandConfig } from './stores.js';
 	import Toolcall from './Toolcall.svelte';
 	import ToolcallButton from './ToolcallButton.svelte';
 
@@ -120,7 +120,8 @@
 </script>
 
 {#if (['user', 'assistant'].includes(message.role) || (message.role === 'system' && (!message.customInstructions || (message.customInstructions && message.showCustomInstructions)))) && ($config.explicitToolView || !collapsedRanges.some((r) => i >= r.starti && i < r.endi))}
-	{@const hasLogo = message.role === 'assistant' && (!!$talkingHeadAvatarUrl || hasCompanyLogo(message.model))}
+	{@const effectiveAgentId = $localAgentId || $brandConfig?.agent_id || ''}
+	{@const hasLogo = message.role === 'assistant' && (!!effectiveAgentId || !!$talkingHeadAvatarUrl || hasCompanyLogo(message.model))}
 	<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-noninteractive-element-interactions -->
 	<li
 		data-role={message.role}

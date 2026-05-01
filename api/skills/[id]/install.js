@@ -20,7 +20,7 @@ export default wrap(async (req, res) => {
 	const rl = await limits.chatUser(userId);
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
-	const [skill] = await sql`SELECT id, schema_json FROM marketplace_skills WHERE id = ${id} AND is_public = true`;
+	const [skill] = await sql`SELECT id, schema_json, content FROM marketplace_skills WHERE id = ${id} AND is_public = true`;
 	if (!skill) return error(res, 404, 'not_found', 'skill not found');
 
 	if (req.method === 'POST') {
@@ -36,7 +36,7 @@ export default wrap(async (req, res) => {
 			SET install_count = install_count + 1
 			WHERE marketplace_skills.id = ${id} AND EXISTS (SELECT 1 FROM ins)
 		`;
-		return json(res, 200, { installed: true, schema_json: skill.schema_json });
+		return json(res, 200, { installed: true, schema_json: skill.schema_json, content: skill.content });
 	}
 
 	// DELETE — uninstall
