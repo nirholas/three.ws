@@ -62,9 +62,10 @@ async function loadManifest(name) {
  * @param {object} [opts.fetch] - fetch impl (defaults to globalThis.fetch)
  * @param {string} [opts.agentId] - if set, every memory.note is persisted to agent_actions
  * @param {string} [opts.signerAddress] - persisted with each agent_actions row when agentId is set
+ * @param {Record<string, { skill_id: string, author_id: string }>} [opts.skillMeta] - DB-sourced royalty metadata keyed by skill name
  */
 export function makeRuntime(opts = {}) {
-	const { configOverrides = {}, wallet, onEvent, fetch = globalThis.fetch, agentId, signerAddress } = opts;
+	const { configOverrides = {}, wallet, onEvent, fetch = globalThis.fetch, agentId, signerAddress, skillMeta = {} } = opts;
 	let _sql;
 	// Map skill-internal tags to canonical action types so existing
 	// aggregations (spend-policy, portfolio cost-basis) keep working.
@@ -125,11 +126,34 @@ export function makeRuntime(opts = {}) {
 				recall: async () => null,
 			},
 		};
+		let result;
 		try {
-			return await fn(args ?? {}, ctx);
+			result = await fn(args ?? {}, ctx);
 		} catch (e) {
 			return { ok: false, error: e?.message ?? String(e) };
 		}
+
+		// Fire-and-forget royalty billing for paid skills.
+		if (result?.ok !== false && agentId && manifest.price_per_call_usd > 0) {
+			const meta = skillMeta[skillName];
+			if (meta?.skill_id && meta?.author_id) {
+				queueMicrotask(() => {
+					import('./royalty.js')
+						.then(({ billSkillRoyalty }) =>
+							billSkillRoyalty({
+								skillId: meta.skill_id,
+								skillName,
+								agentId,
+								authorId: meta.author_id,
+								priceUsd: manifest.price_per_call_usd,
+							}),
+						)
+						.catch((e) => console.error('[skill-runtime] royalty billing failed', e?.message));
+				});
+			}
+		}
+
+		return result;
 	}
 
 	return { invoke };

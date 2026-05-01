@@ -294,6 +294,14 @@ alter table agent_identities add column if not exists embed_policy     jsonb;
 alter table agent_identities add column if not exists voice_provider   text default 'browser';
 alter table agent_identities add column if not exists voice_id         text;
 alter table agent_identities add column if not exists voice_cloned_at  timestamptz;
+alter table agent_identities add column if not exists farcaster_fid        integer;
+alter table agent_identities add column if not exists farcaster_fname      text;
+alter table agent_identities add column if not exists farcaster_seeded_at  timestamptz;
+alter table agent_identities add column if not exists persona_prompt        text;
+alter table agent_identities add column if not exists persona_prompt_hash   text;
+alter table agent_identities add column if not exists persona_prompt_sig    text;
+alter table agent_identities add column if not exists persona_tone_tags     jsonb not null default '[]'::jsonb;
+alter table agent_identities add column if not exists persona_extracted_at  timestamptz;
 
 -- ── agent_memories — the agent's persistent context ──────────────────────────
 create table if not exists agent_memories (
@@ -751,3 +759,79 @@ create table if not exists skill_ratings (
     created_at timestamptz not null default now(),
     unique (user_id, skill_id)
 );
+
+-- Additive migration: royalty pricing on skills.
+alter table marketplace_skills add column if not exists price_per_call_usd numeric(10,6) not null default 0;
+
+-- ── royalty_ledger — per-call micro-payment records ──────────────────────────
+create table if not exists royalty_ledger (
+    id             uuid        primary key default gen_random_uuid(),
+    skill_id       uuid        not null references marketplace_skills(id) on delete cascade,
+    agent_id       uuid        not null references agent_identities(id) on delete cascade,
+    author_user_id uuid        not null references users(id) on delete cascade,
+    price_usd      numeric(10,6) not null,
+    status         text        not null default 'pending',
+    settled_at     timestamptz,
+    tx_hash        text,
+    created_at     timestamptz not null default now(),
+    constraint royalty_ledger_status_check check (status in ('pending', 'settled', 'failed'))
+);
+
+create index if not exists royalty_ledger_author_idx on royalty_ledger(author_user_id, created_at desc);
+create index if not exists royalty_ledger_agent_idx  on royalty_ledger(agent_id, created_at desc);
+
+-- ── subscription_plans — creator monetization plans ───────────────────────────
+-- Distinct from the `subscriptions` table (platform billing). These are
+-- creator-to-fan recurring payment plans.
+create table if not exists subscription_plans (
+    id           uuid        primary key default gen_random_uuid(),
+    creator_id   uuid        not null references users(id) on delete cascade,
+    agent_id     uuid        references agent_identities(id) on delete set null,
+    name         text        not null,
+    price_usd    numeric(8,2) not null check (price_usd >= 0.99),
+    interval     text        not null default 'monthly' check (interval in ('weekly','monthly')),
+    perks        text[],
+    active       boolean     not null default true,
+    created_at   timestamptz not null default now()
+);
+
+create index if not exists subscription_plans_creator_idx
+    on subscription_plans(creator_id) where active = true;
+create index if not exists subscription_plans_agent_idx
+    on subscription_plans(agent_id) where agent_id is not null and active = true;
+
+-- ── creator_subscriptions — fan subscriptions to creator plans ────────────────
+create table if not exists creator_subscriptions (
+    id                   uuid        primary key default gen_random_uuid(),
+    plan_id              uuid        not null references subscription_plans(id),
+    subscriber_user_id   uuid        not null references users(id) on delete cascade,
+    status               text        not null default 'active' check (status in ('active','paused','cancelled','past_due')),
+    current_period_start timestamptz not null default now(),
+    current_period_end   timestamptz not null,
+    payment_method       text        not null default 'x402',
+    wallet_address       text,
+    created_at           timestamptz not null default now(),
+    cancelled_at         timestamptz,
+    unique(plan_id, subscriber_user_id)
+);
+
+create index if not exists creator_subscriptions_subscriber_idx
+    on creator_subscriptions(subscriber_user_id) where status = 'active';
+create index if not exists creator_subscriptions_plan_idx
+    on creator_subscriptions(plan_id);
+create index if not exists creator_subscriptions_due_idx
+    on creator_subscriptions(current_period_end) where status = 'active';
+
+-- ── subscription_payments — per-period payment records ────────────────────────
+create table if not exists subscription_payments (
+    id              uuid        primary key default gen_random_uuid(),
+    subscription_id uuid        not null references creator_subscriptions(id),
+    amount_usd      numeric(8,2) not null,
+    status          text        not null default 'pending' check (status in ('pending','succeeded','failed')),
+    tx_hash         text,
+    paid_at         timestamptz,
+    created_at      timestamptz not null default now()
+);
+
+create index if not exists subscription_payments_subscription_idx
+    on subscription_payments(subscription_id);

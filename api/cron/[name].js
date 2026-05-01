@@ -55,6 +55,7 @@ const HANDLERS = {
 	'run-dca': handleRunDca,
 	'run-distribute-payments': handleRunDistributePayments,
 	'run-subscriptions': handleRunSubscriptions,
+	'settle-royalties': handleSettleRoyalties,
 	'solana-attest-event-cleanup': handleSolanaAttestEventCleanup,
 	'solana-attestations-crawl': handleSolanaAttestationsCrawl,
 };

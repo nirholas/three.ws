@@ -33,6 +33,7 @@ const publishSchema = z.object({
 		)
 		.min(1),
 	is_public: z.boolean().default(true),
+	price_per_call_usd: z.number().min(0).max(10).default(0),
 });
 
 export default wrap(async (req, res) => {
@@ -62,6 +63,7 @@ function toSkill(row, { includeInstalled = false, includeSchema = false } = {}) 
 		install_count: row.install_count || 0,
 		avg_rating: Number(row.avg_rating) || 0,
 		rating_count: row.rating_count || 0,
+		price_per_call_usd: Number(row.price_per_call_usd) || 0,
 		author: row.author_id
 			? { id: row.author_id, display_name: row.author_display_name }
 			: null,
@@ -197,7 +199,7 @@ async function handlePublish(req, res) {
 	let row;
 	try {
 		[row] = await sql`
-			INSERT INTO marketplace_skills (author_id, name, slug, description, category, tags, schema_json, is_public)
+			INSERT INTO marketplace_skills (author_id, name, slug, description, category, tags, schema_json, is_public, price_per_call_usd)
 			VALUES (
 				${auth.userId},
 				${body.name},
@@ -206,7 +208,8 @@ async function handlePublish(req, res) {
 				${body.category},
 				${body.tags},
 				${JSON.stringify(body.schema_json)}::jsonb,
-				${body.is_public}
+				${body.is_public},
+				${body.price_per_call_usd}
 			)
 			RETURNING *
 		`;

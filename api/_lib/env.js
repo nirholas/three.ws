@@ -202,6 +202,12 @@ export const env = {
 		return opt('OPENROUTER_API_KEY');
 	},
 
+	// Neynar API key — used by POST /api/agents/:id/memory/seed/farcaster.
+	// When unset, the endpoint returns 501 not_configured.
+	get NEYNAR_API_KEY() {
+		return opt('NEYNAR_API_KEY');
+	},
+
 	// ElevenLabs API key — used by TTS proxy and voice cloning endpoints.
 	// Never sent to the browser.
 	get ELEVENLABS_API_KEY() {
