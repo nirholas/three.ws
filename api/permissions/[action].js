@@ -909,7 +909,7 @@ const revokeBodySchema = z.object({
 });
 
 const revokeIface = new Interface(DELEGATION_MANAGER_ABI);
-const DISABLED_TOPIC = revokeIface.getEvent('DelegationDisabled').topicHash;
+const DISABLED_TOPIC = revokeIface.getEvent('DisabledDelegation').topicHash;
 
 const RPC_TIMEOUT_MS = 5000;
 
@@ -1005,14 +1005,14 @@ async function handleRevoke(req, res) {
 		return error(res, 400, 'tx_reverted', 'transaction was reverted on-chain');
 	}
 
-	// Decode DelegationDisabled event: (address indexed delegationManager, bytes32 indexed delegationHash)
-	// topics[0] = event sig, topics[1] = delegationManager, topics[2] = delegationHash
+	// Decode DisabledDelegation event: (bytes32 indexed delegationHash, address indexed delegator, address indexed delegate, ...)
+	// topics[0] = event sig, topics[1] = delegationHash, topics[2] = delegator, topics[3] = delegate
 	const disabledLog = receipt.logs.find((log) => log.topics[0] === DISABLED_TOPIC);
 	if (!disabledLog) {
-		return error(res, 400, 'tx_mismatch', 'transaction contains no DelegationDisabled event');
+		return error(res, 400, 'tx_mismatch', 'transaction contains no DisabledDelegation event');
 	}
 
-	const loggedHash = disabledLog.topics[2]; // bytes32 indexed — raw topic IS the value
+	const loggedHash = disabledLog.topics[1]; // bytes32 indexed — raw topic IS the value
 	if (loggedHash.toLowerCase() !== row.delegation_hash.toLowerCase()) {
 		return error(res, 400, 'tx_mismatch', 'transaction revoked a different delegation hash');
 	}

@@ -14,7 +14,8 @@ export async function complete(convo, onupdate, onabort) {
 		model.provider === 'OpenAI' ||
 		model.provider === 'OpenRouter' ||
 		model.provider === 'Groq' ||
-		model.provider === 'Mistral';
+		model.provider === 'Mistral' ||
+		model.provider === 'Built-in';
 
 	let messages = convo.messages.map(
 		openAICompatibleFormat ? messageToOpenAIFormat : messageToAnthropicFormat

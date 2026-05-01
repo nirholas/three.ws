@@ -482,7 +482,7 @@
 			const msg = {
 				id: uuidv4(),
 				role: 'assistant',
-				error: 'No model selected. Please add at least one API key and select a model to begin.',
+				error: 'No model selected. Please select a model to begin.',
 				content: '',
 			};
 			saveMessage(msg);
@@ -1243,8 +1243,9 @@
 		// Always prepend built-in free models so they're available without any API key
 		models = [...BUILTIN_MODELS, ...models];
 
-		// Auto-select default built-in model if no model chosen yet
-		if (!convo.models?.[0]?.id) {
+		// Auto-select default built-in model if no model chosen yet, or if the saved model no longer exists
+		const savedModelStillValid = convo.models?.[0]?.id && models.some((m) => m.id === convo.models[0].id);
+		if (!savedModelStillValid) {
 			const defaultId = $brandConfig.default_model;
 			const defaultModel = models.find((m) => m.id === defaultId) ?? BUILTIN_MODELS[0];
 			if (defaultModel) convo = { ...convo, models: [defaultModel] };
