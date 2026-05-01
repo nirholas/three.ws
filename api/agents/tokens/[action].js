@@ -415,7 +415,7 @@ async function handleLaunchQuote(req, res) {
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
 	const url = new URL(req.url, 'http://x');
-	const q = launchQuoteSchema.parse({
+	const q = parse(launchQuoteSchema, {
 		initial_buy_sol: url.searchParams.get('initial_buy_sol'),
 		cluster: url.searchParams.get('cluster') || undefined,
 	});

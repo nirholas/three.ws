@@ -287,6 +287,9 @@ const appConfig = {
 // zero-install embed). Size will be ~600-900KB gzipped; split via dynamic
 // imports in a later pass.
 const libConfig = {
+	resolve: {
+		dedupe: ['three'],
+	},
 	build: {
 		outDir: 'dist-lib',
 		emptyOutDir: true,
