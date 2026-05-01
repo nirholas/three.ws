@@ -1234,14 +1234,30 @@
 		}
 
 		loading = true;
-		models = await fetchModels({
-			onFinally: () => {
-				loading = false;
-			},
-		});
 
-		// Always prepend built-in free models so they're available without any API key
-		models = [...BUILTIN_MODELS, ...models];
+		// Fetch all free models from the server (no user API key needed) alongside user's provider models
+		const [serverFreeModels, userModels] = await Promise.all([
+			fetch('/api/chat/models')
+				.then((r) => r.json())
+				.then(({ data }) =>
+					(data ?? []).map((m) => ({
+						id: m.id,
+						name: m.name,
+						provider: 'Built-in',
+						modality: 'text->text',
+					}))
+				)
+				.catch(() => []),
+			fetchModels({
+				onFinally: () => {
+					loading = false;
+				},
+			}),
+		]);
+
+		// Merge: server free models first (deduplicated), then user's API-key models
+		const seenIds = new Set(serverFreeModels.map((m) => m.id));
+		models = [...serverFreeModels, ...userModels.filter((m) => !seenIds.has(m.id))];
 
 		// Auto-select default built-in model if no model chosen yet, or if the saved model no longer exists
 		const savedModelStillValid = convo.models?.[0]?.id && models.some((m) => m.id === convo.models[0].id);

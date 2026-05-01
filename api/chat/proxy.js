@@ -2,19 +2,6 @@ import { env } from '../_lib/env.js';
 import { cors, error, method, wrap, readJson } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 
-// Only allow free-tier OpenRouter models to prevent abuse.
-const FREE_MODELS = new Set([
-	'meta-llama/llama-3.3-70b-instruct:free',
-	'meta-llama/llama-3.2-3b-instruct:free',
-	'google/gemma-3-27b-it:free',
-	'google/gemma-3-12b-it:free',
-	'openai/gpt-oss-120b:free',
-	'openai/gpt-oss-20b:free',
-	'qwen/qwen3-coder:free',
-	'qwen/qwen3-next-80b-a3b-instruct:free',
-	'nousresearch/hermes-3-llama-3.1-405b:free',
-]);
-
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
 	if (!method(req, res, ['POST'])) return;
@@ -33,8 +20,9 @@ export default wrap(async (req, res) => {
 	}
 
 	const model = body?.model;
-	if (!model || !FREE_MODELS.has(model))
-		return error(res, 400, 'invalid_model', `Model not allowed. Use one of: ${[...FREE_MODELS].join(', ')}`);
+	// Only allow free-tier OpenRouter models to prevent abuse.
+	if (!model || !model.endsWith(':free'))
+		return error(res, 400, 'invalid_model', 'Only free-tier models (ending in :free) are allowed via the built-in proxy');
 
 	const upstream = await fetch('https://openrouter.ai/api/v1/chat/completions', {
 		method: 'POST',

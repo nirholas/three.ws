@@ -235,7 +235,15 @@ const capabilities = {
 };
 
 export async function fetchModels({ onFinally }) {
+	const openrouterProvider = providers.find((p) => p.name === 'OpenRouter');
+
 	try {
+		// Always fetch server-proxied free models so they appear without a user API key.
+		const serverModelsPromise = fetch('/api/chat/models')
+			.then((r) => r.json())
+			.then((json) => openrouterProvider.responseMapperFn(json))
+			.catch(() => []);
+
 		const promises = providers.map((provider) => {
 			const apiKey = provider.apiKeyFn();
 			if (apiKey === '' || !provider.modelsUrl) {
@@ -262,8 +270,11 @@ export async function fetchModels({ onFinally }) {
 				});
 		});
 
-		const results = await Promise.all(promises);
-		const externalModels = results.flat();
+		const [serverModels, ...providerResults] = await Promise.all([serverModelsPromise, ...promises]);
+		// User's own provider keys take precedence — deduplicate by id.
+		const userModels = providerResults.flat();
+		const userModelIds = new Set(userModels.map((m) => m.id));
+		const externalModels = [...userModels, ...serverModels.filter((m) => !userModelIds.has(m.id))];
 
 		function getPriorityIndex(model) {
 			for (let i = 0; i < priorityOrder.length; i++) {

@@ -223,6 +223,12 @@
 		{ "src": "/discover/", "dest": "/discover/index.html" },
 		{ "src": "/discover/(.*)", "dest": "/discover/$1" },
 
+		{ "src": "/api/skills/categories", "dest": "/api/skills/categories" },
+		{ "src": "/api/skills/([^/]+)/install", "dest": "/api/skills/[id]/install?id=$1" },
+		{ "src": "/api/skills/([^/]+)/rate", "dest": "/api/skills/[id]/rate?id=$1" },
+		{ "src": "/api/skills/([^/]+)", "dest": "/api/skills/[id]?id=$1" },
+		{ "src": "/api/skills", "dest": "/api/skills/index" },
+
 		{ "src": "/api/(.*)", "dest": "/api/$1" },
 
 		{
