@@ -96,6 +96,44 @@
 		}
 	}
 
+	// Avatar selector — pulls user's avatars (session auth) + featured public avatars
+	let myAvatars = [];
+	let featuredAvatars = [];
+	let avatarsLoading = false;
+	let avatarsError = '';
+	let avatarsLoaded = false;
+
+	async function openAvatarTab() {
+		activeTab = 'avatar';
+		if (avatarsLoaded || avatarsLoading) return;
+		avatarsLoading = true;
+		avatarsError = '';
+		try {
+			const [mineRes, publicRes] = await Promise.all([
+				fetch('/api/avatars?limit=24', { credentials: 'include' }),
+				fetch('/api/avatars/public?limit=12'),
+			]);
+			if (mineRes.ok) {
+				const json = await mineRes.json();
+				myAvatars = (json.avatars ?? json.data?.avatars ?? []).filter((a) => a.model_url);
+			}
+			if (publicRes.ok) {
+				const json = await publicRes.json();
+				featuredAvatars = (json.avatars ?? json.data?.avatars ?? []).filter((a) => a.model_url);
+			}
+			avatarsLoaded = true;
+		} catch {
+			avatarsError = 'Failed to load avatars';
+		} finally {
+			avatarsLoading = false;
+		}
+	}
+
+	function selectAvatar(avatar) {
+		if (!avatar?.model_url) return;
+		talkingHeadAvatarUrl.set(avatar.model_url);
+	}
+
 	let addClientToolOpen = false;
 	let loadClientTool = null;
 
@@ -206,7 +244,7 @@
 							class="{activeTab === 'avatar'
 								? 'bg-gray-100/70'
 								: ' hover:bg-gray-100/70'} flex w-full items-center gap-x-2.5 rounded-lg px-4 py-2.5 text-left text-[13px] font-medium text-slate-700 transition-colors"
-							on:click={() => (activeTab = 'avatar')}
+							on:click={openAvatarTab}
 						>
 							<Icon icon={feStar} class="h-3 w-3 text-slate-700" />
 							Avatar
@@ -620,18 +658,81 @@
 					{/if}
 				</div>
 			{:else if activeTab === 'avatar'}
-				<div class="flex flex-col gap-1">
-					<label class="text-sm font-medium text-slate-700">3D Avatar URL (Ready Player Me .glb)</label>
-					<input
-						type="url"
-						placeholder="https://models.readyplayer.me/your-avatar.glb?morphTargets=ARKit,Oculus+Visemes,..."
-						bind:value={$talkingHeadAvatarUrl}
-						class="rounded-md border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-indigo-400"
-					/>
-					<p class="text-xs text-slate-400">
-						Get your URL from <a href="https://readyplayer.me" target="_blank" class="underline">readyplayer.me</a>.
-						Must include <code>morphTargets=ARKit,Oculus+Visemes</code> query param for lipsync.
-					</p>
+				<div class="flex flex-col gap-4">
+					{#if avatarsLoading}
+						<p class="text-xs text-slate-400">Loading avatars…</p>
+					{/if}
+					{#if avatarsError}
+						<p class="text-xs text-rose-500">{avatarsError}</p>
+					{/if}
+
+					{#if myAvatars.length > 0}
+						<div class="flex flex-col gap-2">
+							<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Your avatars</p>
+							<div class="grid grid-cols-3 gap-2">
+								{#each myAvatars as a (a.id)}
+									<button
+										type="button"
+										on:click={() => selectAvatar(a)}
+										class="flex flex-col items-center gap-1 rounded-md border p-1.5 text-left transition-colors {$talkingHeadAvatarUrl === a.model_url
+											? 'border-indigo-400 bg-indigo-50'
+											: 'border-slate-200 hover:border-indigo-300'}"
+									>
+										{#if a.thumbnail_url}
+											<img src={a.thumbnail_url} alt={a.name} class="h-16 w-full rounded object-cover" loading="lazy" />
+										{:else}
+											<div class="flex h-16 w-full items-center justify-center rounded bg-slate-100 text-[10px] text-slate-400">No preview</div>
+										{/if}
+										<span class="w-full truncate text-[11px] text-slate-700">{a.name || a.slug}</span>
+									</button>
+								{/each}
+							</div>
+						</div>
+					{/if}
+
+					{#if featuredAvatars.length > 0}
+						<div class="flex flex-col gap-2">
+							<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Featured avatars</p>
+							<div class="grid grid-cols-3 gap-2">
+								{#each featuredAvatars as a (a.id)}
+									<button
+										type="button"
+										on:click={() => selectAvatar(a)}
+										class="flex flex-col items-center gap-1 rounded-md border p-1.5 text-left transition-colors {$talkingHeadAvatarUrl === a.model_url
+											? 'border-indigo-400 bg-indigo-50'
+											: 'border-slate-200 hover:border-indigo-300'}"
+									>
+										{#if a.thumbnail_url}
+											<img src={a.thumbnail_url} alt={a.name} class="h-16 w-full rounded object-cover" loading="lazy" />
+										{:else}
+											<div class="flex h-16 w-full items-center justify-center rounded bg-slate-100 text-[10px] text-slate-400">No preview</div>
+										{/if}
+										<span class="w-full truncate text-[11px] text-slate-700">{a.name || a.slug}</span>
+									</button>
+								{/each}
+							</div>
+						</div>
+					{/if}
+
+					{#if avatarsLoaded && myAvatars.length === 0}
+						<p class="text-xs text-slate-500">
+							You don't have any avatars yet. <a href="/create" class="text-indigo-500 underline">Create one</a> or paste a URL below.
+						</p>
+					{/if}
+
+					<div class="flex flex-col gap-1">
+						<label class="text-sm font-medium text-slate-700">Custom 3D Avatar URL (.glb)</label>
+						<input
+							type="url"
+							placeholder="https://models.readyplayer.me/your-avatar.glb?morphTargets=ARKit,Oculus+Visemes,..."
+							bind:value={$talkingHeadAvatarUrl}
+							class="rounded-md border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-indigo-400"
+						/>
+						<p class="text-xs text-slate-400">
+							Or paste a URL from <a href="https://readyplayer.me" target="_blank" class="underline">readyplayer.me</a>.
+							Must include <code>morphTargets=ARKit,Oculus+Visemes</code> query param for lipsync.
+						</p>
+					</div>
 				</div>
 			{/if}
 		</div>
