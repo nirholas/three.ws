@@ -50,7 +50,7 @@ AFRAME.registerSystem('agent-picker', {
           .map(it => ({
             id: `${it.kind}-${it.agentId || it.name}-${it.sortDate}`,
             name: it.name || 'Untitled',
-            url: it.glbUrl,
+            url: rewriteGlbUrl(it.glbUrl),
             owner: it.ownerShort || ''
           }));
         this.agents = FALLBACK_AGENTS.concat(fetched);
@@ -212,4 +212,10 @@ AFRAME.registerSystem('agent-picker', {
 
 function escapeHtml (s) {
   return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// R2 public bucket sends no CORS headers, so three.js can't fetch GLBs
+// cross-origin. Route them through the dev-server proxy.
+function rewriteGlbUrl (url) {
+  return url.replace(/^https:\/\/pub-2534e921bf9c4314addcd4d8a6e98b7b\.r2\.dev/, '/r2-proxy');
 }

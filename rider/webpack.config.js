@@ -31,6 +31,12 @@ module.exports = {
         changeOrigin: true,
         secure: true,
         pathRewrite: { '^/threews-api': '/api' }
+      },
+      '/r2-proxy': {
+        target: 'https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev',
+        changeOrigin: true,
+        secure: true,
+        pathRewrite: { '^/r2-proxy': '' }
       }
     }
   },
