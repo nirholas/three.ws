@@ -1,6 +1,7 @@
 // <agent-3d> — the web component that ships the whole framework in one tag.
 // See specs/EMBED_SPEC.md
 
+import { Box3 } from 'three';
 import { Viewer } from './viewer.js';
 import { Runtime } from './runtime/index.js';
 import { SceneController } from './runtime/scene.js';
@@ -195,11 +196,19 @@ const BASE_STYLE = `
 		content: '';
 		position: absolute;
 		bottom: -8px;
+		top: auto;
 		left: 50%;
 		transform: translateX(-50%);
 		border-left: 8px solid transparent;
 		border-right: 8px solid transparent;
 		border-top: 8px solid var(--agent-bubble-bg);
+		border-bottom: none;
+	}
+	.thought-bubble[data-tail-dir="up"]::after {
+		bottom: auto;
+		top: -8px;
+		border-top: none;
+		border-bottom: 8px solid var(--agent-bubble-bg);
 	}
 	.thought-bubble[data-active="true"] { opacity: 1; transform: translateX(-50%) scale(1); }
 	.thought-bubble .text {
@@ -226,6 +235,17 @@ const BASE_STYLE = `
 	@media (prefers-reduced-motion: reduce) {
 		.thought-bubble .dot { animation: none; opacity: 0.6; }
 		@keyframes thought-dot { to {} }
+	}
+	.thought-bubble[data-error="true"] {
+		background: rgba(239, 68, 68, 0.92);
+		color: #fff;
+	}
+	.thought-bubble[data-error="true"]::after {
+		border-top-color: rgba(239, 68, 68, 0.92);
+	}
+	.thought-bubble[data-error="true"][data-tail-dir="up"]::after {
+		border-bottom-color: rgba(239, 68, 68, 0.92);
+		border-top-color: transparent;
 	}
 	.msg { margin: 6px 0; padding: 8px 10px; border-radius: 10px; border-left: 3px solid transparent; transition: border-color .2s; }
 	.msg.celebration { border-left-color: rgba(34,197,94,0.85); background: rgba(34,197,94,0.06); }
@@ -369,6 +389,9 @@ const BASE_STYLE = `
 	:host([background="light"]) .thought-bubble::after {
 		border-top-color: rgba(30, 30, 50, 0.92);
 	}
+	:host([background="light"]) .thought-bubble[data-tail-dir="up"]::after {
+		border-bottom-color: rgba(30, 30, 50, 0.92);
+	}
 	:host([background="light"]) .thought-bubble .text {
 		color: #f9fafb;
 	}
@@ -482,9 +505,12 @@ class Agent3DElement extends HTMLElement {
 		this._livekitVoice = null;
 		this._voiceClient = null;
 		this._notifier = null;
+		this._notifyWalkCleanup = null;
+		this._speakWalkCleanup = null;
 		this._thoughtBubbleEl = null;
 		this._bubbleBuffer = '';
 		this._bubbleRafPending = false;
+		this._bubbleClearTimer = null;
 		this._isWalking = false;
 		this._walkStopDebounce = null;
 		this._streamingMsgEl = null;
@@ -622,23 +648,30 @@ class Agent3DElement extends HTMLElement {
 			const chat = document.createElement('div');
 			chat.className = 'chat';
 			chat.part = 'chat';
+			chat.setAttribute('tabindex', '0');
+			chat.setAttribute('role', 'log');
+			chat.setAttribute('aria-live', 'polite');
+			chat.setAttribute('aria-label', 'Conversation');
 
 			const row = document.createElement('div');
 			row.className = 'input-row';
 			const input = document.createElement('input');
 			input.type = 'text';
 			input.placeholder = 'Say something...';
+			input.setAttribute('aria-label', 'Message to agent');
 			input.addEventListener('keydown', (e) => {
 				if (e.key === 'Enter' && input.value.trim()) {
 					const v = input.value.trim();
 					input.value = '';
 					this._onStreamChunk(); // immediate visual feedback before LLM responds
 					this.say(v);
+					input.focus();
 				}
 			});
 			const micBtn = document.createElement('button');
 			micBtn.className = 'icon mic';
 			micBtn.title = 'Push to talk';
+			micBtn.setAttribute('aria-label', 'Push to talk');
 			micBtn.innerHTML = '🎙';
 			micBtn.addEventListener('click', () => this._toggleMic());
 			row.appendChild(input);
@@ -650,7 +683,9 @@ class Agent3DElement extends HTMLElement {
 			avatarAnchor.className = 'avatar-anchor';
 			const thoughtBubble = document.createElement('div');
 			thoughtBubble.className = 'thought-bubble';
+			thoughtBubble.setAttribute('role', 'status');
 			thoughtBubble.setAttribute('aria-live', 'polite');
+			thoughtBubble.setAttribute('aria-label', 'Agent is thinking');
 			thoughtBubble.innerHTML =
 				'<span class="text"></span>' +
 				'<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
@@ -672,9 +707,25 @@ class Agent3DElement extends HTMLElement {
 				if (!this._micEl) return;
 				const { state } = e.detail;
 				this._micEl.dataset.voiceState = state;
-				this._micEl.title = state === 'idle' || !state
-					? 'Push to talk'
-					: 'Voice active — click to stop';
+				this._micEl.title =
+					state === 'idle' || !state ? 'Push to talk' : 'Voice active — click to stop';
+
+				if (this.getAttribute('avatar-chat') !== 'off' && !this.hasAttribute('kiosk')) {
+					if (state === 'speaking' || state === 'thinking') {
+						this._onStreamChunk();
+					} else if (state === 'idle') {
+						this._stopWalkAnimation();
+					}
+				}
+
+				if (this._thoughtBubbleEl && this.getAttribute('avatar-chat') !== 'off') {
+					if (state === 'speaking') {
+						this._thoughtBubbleEl.dataset.active = 'true';
+						this._thoughtBubbleEl.dataset.streaming = 'false';
+					} else if (state === 'idle') {
+						this._clearThoughtBubble();
+					}
+				}
 			});
 
 			// Tool-call indicator ("Checking the chain…").
@@ -689,7 +740,8 @@ class Agent3DElement extends HTMLElement {
 			const banner = document.createElement('div');
 			banner.className = 'alert-banner';
 			banner.part = 'alert-banner';
-			banner.innerHTML = '<span class="msg-text"></span><button aria-label="Dismiss">×</button>';
+			banner.innerHTML =
+				'<span class="msg-text"></span><button aria-label="Dismiss">×</button>';
 			banner.querySelector('button').addEventListener('click', () => {
 				banner.dataset.active = 'false';
 			});
@@ -736,13 +788,19 @@ class Agent3DElement extends HTMLElement {
 		const chips = [];
 		if (installed.has('pump-fun')) {
 			chips.push(
-				{ label: '🔥 Trending now', prompt: 'What are the trending tokens on pump.fun right now?' },
+				{
+					label: '🔥 Trending now',
+					prompt: 'What are the trending tokens on pump.fun right now?',
+				},
 				{ label: '👑 King of the hill', prompt: "Who's the king of the hill on pump.fun?" },
 				{ label: '🆕 New launches', prompt: 'Show me the newest pump.fun launches.' },
 			);
 		}
 		if (installed.has('dca')) {
-			chips.push({ label: '💸 Set up DCA', prompt: 'Help me set up a weekly USDC → WETH DCA.' });
+			chips.push({
+				label: '💸 Set up DCA',
+				prompt: 'Help me set up a weekly USDC → WETH DCA.',
+			});
 		}
 		if (chips.length === 0) {
 			chips.push(
@@ -1144,6 +1202,31 @@ class Agent3DElement extends HTMLElement {
 			const bodyURI = resolveURI(manifest.body?.uri);
 			if (bodyURI) {
 				await viewer.load(bodyURI, '', new Map());
+				// Belt-and-suspenders: ensure walk + idle are hot before the first
+				// brain:stream fires. _setupAnimationPanel already kicked these off;
+				// this await guarantees they resolve before boot continues.
+				const _am = viewer.animationManager;
+				if (_am) {
+					await Promise.allSettled([_am.ensureLoaded('idle'), _am.ensureLoaded('walk')]);
+				}
+				// After the reveal tween completes, shift the orbital target upward
+				// so the avatar's upper body fills the avatar-anchor window rather
+				// than the full canvas height.
+				const _v = viewer;
+				const _nudge = () => {
+					if (_v._cameraTweenRaf) {
+						requestAnimationFrame(_nudge);
+						return;
+					}
+					if (!_v.controls || !_v.content || _v._disposed) return;
+					const box = new Box3().setFromObject(_v.content);
+					const h = box.max.y - box.min.y;
+					const mid = (box.max.y + box.min.y) / 2;
+					_v.controls.target.set(0, mid + h * 0.12, 0);
+					_v.controls.update();
+					_v.invalidate();
+				};
+				requestAnimationFrame(_nudge);
 			}
 			this._scene = new SceneController(viewer);
 
@@ -1271,8 +1354,14 @@ class Agent3DElement extends HTMLElement {
 							else this._clearToolIndicator();
 						}
 						if (!e.detail?.thinking) this._stopWalkAnimation();
-						protocol.emit({ type: ACTION_TYPES.THINK, payload: { thought: 'processing your message...' } });
-						protocol.emit({ type: ACTION_TYPES.EMOTE, payload: { trigger: 'patience', weight: 0.5 } });
+						protocol.emit({
+							type: ACTION_TYPES.THINK,
+							payload: { thought: 'processing your message...' },
+						});
+						protocol.emit({
+							type: ACTION_TYPES.EMOTE,
+							payload: { trigger: 'patience', weight: 0.5 },
+						});
 						if (this._thoughtBubbleEl && this.getAttribute('avatar-chat') !== 'off') {
 							if (e.detail?.thinking) {
 								this._thoughtBubbleEl.dataset.active = 'true';
@@ -1297,7 +1386,8 @@ class Agent3DElement extends HTMLElement {
 							this._streamToBubble('');
 							this._thoughtBubbleEl.dataset.streaming = 'true';
 							this._thoughtBubbleEl.dataset.active = 'true';
-							if (this._thoughtTextEl) this._thoughtTextEl.textContent = text.slice(0, 80);
+							if (this._thoughtTextEl)
+								this._thoughtTextEl.textContent = text.slice(0, 80);
 						}
 					}
 					if (ev === 'voice:speech-end') {
@@ -1309,7 +1399,8 @@ class Agent3DElement extends HTMLElement {
 						this._setToolIndicator(tool);
 						this._clearToolIndicator();
 						if (this._thoughtTextEl) this._thoughtTextEl.textContent = '';
-						if (this._thoughtBubbleEl) this._thoughtBubbleEl.dataset.streaming = 'false';
+						if (this._thoughtBubbleEl)
+							this._thoughtBubbleEl.dataset.streaming = 'false';
 						if (typeof result?.sentiment === 'number') {
 							this._lastToolSentiment = result.sentiment;
 						}
@@ -1322,6 +1413,29 @@ class Agent3DElement extends HTMLElement {
 
 			this._notifier = new AgentNotifier(this, protocol);
 			this._notifier.attach();
+
+			// Walk during notification: enter frame (450ms) + message duration + exit frame (380ms)
+			const _notifyWalkHandler = ({ payload }) => {
+				if (this.getAttribute('avatar-chat') === 'off') return;
+				if (this.hasAttribute('kiosk')) return;
+				const duration = payload?.duration ?? 6000;
+				this._onStreamChunk();
+				clearTimeout(this._walkStopDebounce);
+				this._walkStopDebounce = setTimeout(
+					() => this._stopWalkAnimation(),
+					450 + duration + 380,
+				);
+			};
+			protocol.on(ACTION_TYPES.NOTIFY, _notifyWalkHandler);
+			this._notifyWalkCleanup = () => protocol.off(ACTION_TYPES.NOTIFY, _notifyWalkHandler);
+
+			const _speakWalkHandler = () => {
+				if (this.getAttribute('avatar-chat') === 'off') return;
+				if (this.hasAttribute('kiosk')) return;
+				this._onStreamChunk();
+			};
+			protocol.on(ACTION_TYPES.SPEAK, _speakWalkHandler);
+			this._speakWalkCleanup = () => protocol.off(ACTION_TYPES.SPEAK, _speakWalkHandler);
 
 			// LiveKit realtime voice — connect when voice="livekit" and agent-id is set
 			if (this.getAttribute('voice') === 'livekit' && _backendId) {
@@ -1515,9 +1629,13 @@ class Agent3DElement extends HTMLElement {
 		const stageRect = this._stageEl?.getBoundingClientRect();
 		if (!anchorRect || !stageRect) return;
 		const relY = pos.y - (anchorRect.top - stageRect.top) - 60;
-		this._thoughtBubbleEl.style.top = `${Math.max(8, relY)}px`;
+		const clampedY = Math.max(8, relY);
+		this._thoughtBubbleEl.style.top = `${clampedY}px`;
 		this._thoughtBubbleEl.style.left = `${pos.x}px`;
 		this._thoughtBubbleEl.style.transform = 'translateX(-50%) scale(var(--bubble-scale, 1))';
+		const headRelY = pos.y - (anchorRect.top - stageRect.top);
+		const bubbleBottom = clampedY + this._thoughtBubbleEl.offsetHeight;
+		this._thoughtBubbleEl.dataset.tailDir = bubbleBottom < headRelY ? 'up' : 'down';
 	}
 
 	_appendStreamChunkToChat(chunk) {
@@ -1549,29 +1667,52 @@ class Agent3DElement extends HTMLElement {
 		}
 	}
 
+	_flushBubble() {
+		this._bubbleRafPending = false;
+		if (!this._thoughtTextEl) return;
+
+		let t = this._bubbleBuffer;
+
+		// Roll forward past completed sentences so the bubble feels live
+		const sentenceEnd = t.search(/[.!?]\s/);
+		if (sentenceEnd !== -1 && t.length > sentenceEnd + 2) {
+			this._bubbleBuffer = t.slice(sentenceEnd + 2);
+			t = this._bubbleBuffer;
+		}
+
+		// Hard cap at 100 chars, break at last word boundary
+		if (t.length > 100) {
+			const truncated = t.slice(-90);
+			const wordBreak = truncated.indexOf(' ');
+			t = '…' + (wordBreak !== -1 ? truncated.slice(wordBreak) : truncated);
+		}
+
+		this._thoughtTextEl.textContent = t;
+	}
+
 	_streamToBubble(chunk) {
 		if (!this._thoughtBubbleEl || !this._thoughtTextEl) return;
 		this._thoughtBubbleEl.dataset.active = 'true';
 		this._thoughtBubbleEl.dataset.streaming = 'true';
+		this._thoughtBubbleEl.setAttribute('aria-label', 'Agent is responding');
 		this._bubbleBuffer += chunk;
 		if (!this._bubbleRafPending) {
 			this._bubbleRafPending = true;
-			requestAnimationFrame(() => {
-				this._bubbleRafPending = false;
-				if (!this._thoughtTextEl) return;
-				const t = this._bubbleBuffer;
-				this._thoughtTextEl.textContent = t.length > 120 ? '…' + t.slice(-110) : t;
-			});
+			requestAnimationFrame(() => this._flushBubble());
 		}
 	}
 
 	_clearThoughtBubble() {
 		this._bubbleBuffer = '';
 		this._bubbleRafPending = false;
-		if (!this._thoughtBubbleEl) return;
-		this._thoughtBubbleEl.dataset.active = 'false';
-		this._thoughtBubbleEl.dataset.streaming = 'false';
-		if (this._thoughtTextEl) this._thoughtTextEl.textContent = '';
+		clearTimeout(this._bubbleClearTimer);
+		this._bubbleClearTimer = setTimeout(() => {
+			if (!this._thoughtBubbleEl) return;
+			this._thoughtBubbleEl.setAttribute('aria-label', '');
+			this._thoughtBubbleEl.dataset.active = 'false';
+			this._thoughtBubbleEl.dataset.streaming = 'false';
+			if (this._thoughtTextEl) this._thoughtTextEl.textContent = '';
+		}, 200);
 	}
 
 	_setBusy(busy) {
@@ -1581,13 +1722,18 @@ class Agent3DElement extends HTMLElement {
 		const row = this._inputEl.closest('.input-row');
 		if (row) row.dataset.busy = busy ? 'true' : 'false';
 		this._inputEl.placeholder = busy ? 'Thinking…' : 'Say something...';
+		if (!busy && this.shadowRoot?.activeElement == null) {
+			this._inputEl.focus();
+		}
 	}
 
 	_onStreamChunk() {
 		if (!this._scene || this.getAttribute('avatar-chat') === 'off') return;
+		if (this.hasAttribute('kiosk')) return;
 		const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 		if (!this._isWalking && !prefersReduced) {
 			this._isWalking = true;
+			// fade_ms: 300ms idle→walk, 500ms walk→idle, 600ms debounce after last chunk
 			this._scene.playClipByName('walk', { loop: true, fade_ms: 300 });
 		}
 		clearTimeout(this._walkStopDebounce);
@@ -1742,8 +1888,13 @@ class Agent3DElement extends HTMLElement {
 			return card;
 		}
 
-		if (tool === 'getTrendingTokens' || tool === 'getNewTokens' || tool === 'getGraduatedTokens') {
-			const list = data.tokens || data.results || data.items || (Array.isArray(data) ? data : []);
+		if (
+			tool === 'getTrendingTokens' ||
+			tool === 'getNewTokens' ||
+			tool === 'getGraduatedTokens'
+		) {
+			const list =
+				data.tokens || data.results || data.items || (Array.isArray(data) ? data : []);
 			if (!list.length) return null;
 			const top = list.slice(0, 5);
 			card.innerHTML = `
@@ -1767,8 +1918,9 @@ class Agent3DElement extends HTMLElement {
 	}
 
 	_esc(s) {
-		return String(s ?? '').replace(/[&<>"]/g, (c) =>
-			({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c],
+		return String(s ?? '').replace(
+			/[&<>"]/g,
+			(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c],
 		);
 	}
 
@@ -1891,10 +2043,16 @@ class Agent3DElement extends HTMLElement {
 		}
 		this._notifier?.detach();
 		this._notifier = null;
+		this._notifyWalkCleanup?.();
+		this._notifyWalkCleanup = null;
+		this._speakWalkCleanup?.();
+		this._speakWalkCleanup = null;
 		this._setBusy(false);
 		clearTimeout(this._walkStopDebounce);
 		this._walkStopDebounce = null;
 		this._isWalking = false;
+		this._bubbleBuffer = '';
+		this._bubbleRafPending = false;
 		this._streamingMsgEl = null;
 		this._streamingChatBuffer = '';
 		this._streamingChatRafPending = false;
@@ -1931,19 +2089,34 @@ class Agent3DElement extends HTMLElement {
 				if (!this._runtime) await this._waitForReady();
 				this._onStreamChunk();
 				protocol.emit({ type: ACTION_TYPES.LOOK_AT, payload: { target: 'user' } });
-				protocol.emit({ type: ACTION_TYPES.EMOTE, payload: { trigger: 'curiosity', weight: 0.6 } });
-				protocol.emit({ type: ACTION_TYPES.THINK, payload: { thought: 'processing your message...' } });
-				protocol.emit({ type: ACTION_TYPES.EMOTE, payload: { trigger: 'patience', weight: 0.5 } });
+				protocol.emit({
+					type: ACTION_TYPES.EMOTE,
+					payload: { trigger: 'curiosity', weight: 0.6 },
+				});
+				protocol.emit({
+					type: ACTION_TYPES.THINK,
+					payload: { thought: 'processing your message...' },
+				});
+				protocol.emit({
+					type: ACTION_TYPES.EMOTE,
+					payload: { trigger: 'patience', weight: 0.5 },
+				});
 				await this._runtime.send(text, { voice: opts.voice ?? this.hasAttribute('voice') });
 			} catch (err) {
 				this._stopWalkAnimation();
 				this._clearThoughtBubble();
 				this._setBusy(false);
-				protocol.emit({ type: ACTION_TYPES.EMOTE, payload: { trigger: 'concern', weight: 0.8 } });
-				this.dispatchEvent(new CustomEvent('agent:error', {
-					detail: { phase: 'send', error: err },
-					bubbles: true, composed: true,
-				}));
+				protocol.emit({
+					type: ACTION_TYPES.EMOTE,
+					payload: { trigger: 'concern', weight: 0.8 },
+				});
+				this.dispatchEvent(
+					new CustomEvent('agent:error', {
+						detail: { phase: 'send', error: err },
+						bubbles: true,
+						composed: true,
+					}),
+				);
 			}
 		}
 	}
@@ -1963,16 +2136,24 @@ class Agent3DElement extends HTMLElement {
 		this._onStreamChunk();
 		protocol.emit({ type: ACTION_TYPES.LOOK_AT, payload: { target: 'user' } });
 		protocol.emit({ type: ACTION_TYPES.EMOTE, payload: { trigger: 'curiosity', weight: 0.6 } });
-		protocol.emit({ type: ACTION_TYPES.THINK, payload: { thought: 'processing your message...' } });
+		protocol.emit({
+			type: ACTION_TYPES.THINK,
+			payload: { thought: 'processing your message...' },
+		});
 		protocol.emit({ type: ACTION_TYPES.EMOTE, payload: { trigger: 'patience', weight: 0.5 } });
 		try {
-			const reply = await this._runtime.send(text, { voice: opts.voice ?? this.hasAttribute('voice') });
+			const reply = await this._runtime.send(text, {
+				voice: opts.voice ?? this.hasAttribute('voice'),
+			});
 			return reply?.text || '';
 		} catch (err) {
 			this._stopWalkAnimation();
 			this._clearThoughtBubble();
 			this._setBusy(false);
-			protocol.emit({ type: ACTION_TYPES.EMOTE, payload: { trigger: 'concern', weight: 0.8 } });
+			protocol.emit({
+				type: ACTION_TYPES.EMOTE,
+				payload: { trigger: 'concern', weight: 0.8 },
+			});
 			throw err;
 		}
 	}
@@ -1988,8 +2169,12 @@ class Agent3DElement extends HTMLElement {
 	playEmote(name, intensity = 1) {
 		const sc = this._scene;
 		if (!sc) return false;
-		const fallbacks = { cheer: ['cheer', 'celebrate', 'wave'], flinch: ['flinch', 'defeated', 'concern', 'shake'], celebrate: ['celebrate', 'wave'] };
-		for (const h of (fallbacks[name] || [name])) {
+		const fallbacks = {
+			cheer: ['cheer', 'celebrate', 'wave'],
+			flinch: ['flinch', 'defeated', 'concern', 'shake'],
+			celebrate: ['celebrate', 'wave'],
+		};
+		for (const h of fallbacks[name] || [name]) {
 			if (sc.playAnimationByHint(h)) return true;
 		}
 		this._headBob(intensity);
@@ -2024,6 +2209,25 @@ class Agent3DElement extends HTMLElement {
 	}
 	async play(name, opts) {
 		return this._scene?.playClipByName(name, opts);
+	}
+
+	/**
+	 * Enable the inline avatar-in-chat layout.
+	 * Avatar walks during LLM streaming, thought bubble shows response text.
+	 * @returns {void}
+	 */
+	enableAvatarChat() {
+		this.removeAttribute('avatar-chat');
+	}
+
+	/**
+	 * Disable the inline avatar-in-chat layout and restore bottom-bar chat.
+	 * @returns {void}
+	 */
+	disableAvatarChat() {
+		this.setAttribute('avatar-chat', 'off');
+		this._stopWalkAnimation();
+		this._clearThoughtBubble();
 	}
 
 	async installSkill(uri) {

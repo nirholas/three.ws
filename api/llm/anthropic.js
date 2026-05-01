@@ -156,6 +156,7 @@ const bodySchema = z.object({
 	max_tokens: z.number().int().positive().max(16_000).optional(),
 	temperature: z.number().min(0).max(2).optional(),
 	thinking: z.any().optional(),
+	stream: z.boolean().optional(),
 });
 
 // ── Handler ───────────────────────────────────────────────────────────────────

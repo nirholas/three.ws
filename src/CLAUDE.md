@@ -44,6 +44,16 @@ The viewer doesn't know about agents. The agent layer wraps the viewer through [
 ### Web component boundary
 
 - [element.js](element.js) — `<agent-3d>` custom element. IntersectionObserver lazy boot unless `eager`. See attribute list in [specs/EMBED_SPEC.md](../specs/EMBED_SPEC.md).
+#### Avatar-chat methods (element.js)
+
+- `enableAvatarChat()` — re-enable inline avatar layout + walk + bubble (default on)
+- `disableAvatarChat()` — disable to restore bottom-bar layout; removes attribute `avatar-chat="off"`
+- `_onStreamChunk()` — start walking; debounces stop by 600ms; respects prefers-reduced-motion
+- `_stopWalkAnimation()` — crossfade walk→idle immediately
+- `_streamToBubble(chunk)` — append token chunk to bubble, RAF-batched
+- `_clearThoughtBubble()` — hide bubble and reset text+buffer
+- `_setBusy(busy)` — disable/enable input; sets placeholder and data-busy
+
 - [lib.js](lib.js) — CDN library export surface.
 - [app.js](app.js) — main SPA entry. **URL routing lives here.** Hash keys (embed/legacy): `model`, `widget`, `agent`, `kiosk`, `brain`, `proxyURL`, `preset`, `cameraPosition`, `register`. Query-string keys: `agent=<id>` (authenticated edit mode — distinct from `#agent=` which stays in embed mode), `pending=1` (post-login save round-trip).
 
@@ -79,6 +89,13 @@ All events are `CustomEvent` with `detail = { type, payload, timestamp, agentId,
 | `presence`      | `{ state }`                                               | element                  | home                                                    |
 | `interrupted`   | `{}`                                                      | speech.js (TTS cancel)   | avatar (startle + curiosity)                            |
 | `notify`        | `{ message, priority, duration }`                         | element.notify(), data-reactive | AgentNotifier (enter/exit frame + speak)        |
+
+**Runtime EventTarget events** — `brain:stream` and `skill:tool-start` are NOT routed through `protocol.emit()`. They are dispatched on the Runtime EventTarget and re-dispatched by element.js as composed CustomEvents on the host element. Listen on the host element, not via `protocol.on()`.
+
+| Type              | Payload                    | Emitted by                              | Consumed by                                        |
+| ----------------- | -------------------------- | --------------------------------------- | -------------------------------------------------- |
+| `brain:stream`    | `{ chunk: string }`        | runtime `_loop()` via `dispatchEvent`   | element.js (thought bubble streaming, chat buffer) |
+| `skill:tool-start`| `{ tool: string, args: object }` | runtime `_loop()` via `dispatchEvent` | element.js (walk animation, bubble label)     |
 
 **Identity records these to the backend:** `speak`, `remember`, `sign`, `skill-done`, `validate`, `load-end`. Fire-and-forget via `POST /api/agent-actions`.
 
@@ -152,6 +169,8 @@ Z-rotation = `(curiosity*12 + empathy*9 + concern*4)` degrees. X-rotation (lean)
 - **Skill `owned-only` trust** compares `manifest.author` with `ownerAddress` from element attr or backend. Mismatch → skill load throws.
 - **[viewer.js](viewer.js) is the biggest file in `src/` (~1.2k lines).** Further module split is tracked in [prompts/scalability/03-module-split.md](../prompts/scalability/03-module-split.md). Don't start that refactor ad-hoc.
 - **`memory.recall()` is substring search.** No embeddings yet.
+- **`brain:stream` fires per token** — at 50+ tokens/sec this is frequent. All handlers must be O(1) and RAF-batched. Never do synchronous network or heavy DOM work in a `brain:stream` handler.
+- **Walk animation requires walk+idle clips preloaded** — if `animationManager.isLoaded('walk')` returns false, `_onStreamChunk()` silently skips the walk. Ensure the preload strategy (prompt 29) is implemented before relying on walk-on-stream.
 - **Throttle policies on `protocol.emit()`.** Animation-driving events are shaped by default: `gesture` (leading-edge throttle, 600 ms), `emote` (coalesce by `payload.trigger` with max-weight merge, 150 ms window), `look-at` (trailing debounce, 100 ms). All other types pass through. Override per-instance with `protocol.setThrottlePolicy(type, policy)` where `policy` is `{ mode: 'passthrough' }`, `{ mode: 'throttle', leading: true, intervalMs }`, `{ mode: 'debounce', intervalMs }`, or `{ mode: 'coalesce', windowMs, key, merge }`. Inspect suppressed events via `protocol.droppedCount(type)`. Passthrough events still go through the burst rate-limiter as a last-resort cascade guard.
 
 ---
@@ -162,7 +181,7 @@ Z-rotation = `(curiosity*12 + empathy*9 + concern*4)` degrees. X-rotation (lean)
 - [editor/](editor/) — GLB export + material editor exist, agent-system integration minimal
 - ERC-8004 reputation/validation — hooked but no UI
 - Memory `encrypted-ipfs` mode — stub
-- Runtime `thinking: 'auto'` — limited UX wiring
+- Chat streaming — implemented but not tested in all edge cases
 - Privy integration — functions exist, no full auth flow in element.js
 - Avatar Creator save-to-account — may not persist in all flows
 - Avatar Creator now wraps the Ready Player Me iframe. Configure the subdomain via `VITE_RPM_SUBDOMAIN`; falls back to `demo.readyplayer.me`.

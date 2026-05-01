@@ -1244,6 +1244,22 @@ export class Viewer {
 		// Render buttons
 		this._renderAnimButtons();
 
+		// Preload walk and idle first so they're ready before the first brain:stream.
+		// loadAll() below fetches all clips with CONCURRENCY=4 and may not reach
+		// these two before the user sends a message; ensureLoaded kicks them off
+		// immediately and returns early if they're already in-progress or cached.
+		// allSettled so a missing walk clip doesn't block idle from playing.
+		console.time('walk-ready');
+		Promise.allSettled([
+			this.animationManager.ensureLoaded('idle'),
+			this.animationManager.ensureLoaded('walk'),
+		]).then(() => {
+			console.timeEnd('walk-ready');
+			if (!this.animationManager.currentAction) {
+				this.animationManager.play('idle');
+			}
+		});
+
 		// Load all animations in background. We deliberately do NOT auto-play
 		// the first animation: external Mixamo-rigged FBX clips often retarget
 		// imperfectly onto Ready Player Me / Avaturn avatars, which collapses

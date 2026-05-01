@@ -50,7 +50,12 @@ export class AnthropicProvider {
 			headers['anthropic-dangerous-direct-browser-access'] = 'true';
 		}
 
-		const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body), signal });
+		const res = await fetch(url, {
+			method: 'POST',
+			headers,
+			body: JSON.stringify(body),
+			signal,
+		});
 		if (!res.ok) {
 			const text = await res.text();
 			throw new Error(`Anthropic ${res.status}: ${text}`);
@@ -77,7 +82,11 @@ export class AnthropicProvider {
 					const payload = line.slice(6).trim();
 					if (payload === '[DONE]') break;
 					let evt;
-					try { evt = JSON.parse(payload); } catch { continue; }
+					try {
+						evt = JSON.parse(payload);
+					} catch {
+						continue;
+					}
 					if (evt.type === 'message_delta' && evt.delta?.stop_reason) {
 						out.stopReason = evt.delta.stop_reason;
 					} else if (evt.type === 'content_block_start') {
@@ -97,7 +106,11 @@ export class AnthropicProvider {
 						}
 					} else if (evt.type === 'content_block_stop') {
 						if (currentToolCall) {
-							try { currentToolCall.input = JSON.parse(currentToolCall.input); } catch { currentToolCall.input = {}; }
+							try {
+								currentToolCall.input = JSON.parse(currentToolCall.input);
+							} catch {
+								currentToolCall.input = {};
+							}
 							out.toolCalls.push(currentToolCall);
 							currentToolCall = null;
 						}

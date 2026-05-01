@@ -87,7 +87,8 @@ All on-chain forms resolve through [`src/erc8004/resolver.js`](../src/erc8004/re
 | `width`      | CSS length                                                              | `100%` (inline), `320px` (floating) |                                                   |
 | `height`     | CSS length                                                              | `100%` (inline), `480px` (floating) |                                                   |
 | `scale`      | number                                                                  | `1.0`                               | camera zoom multiplier, independent of pixel size |
-| `responsive` | boolean                                                                 | on                                  | applies `clamp()`-based mobile shrinking          |
+| `responsive`   | boolean                                                                 | on                                  | applies `clamp()`-based mobile shrinking          |
+| `avatar-chat` | `"off"` or absent                                                       | on                                  | Set to `"off"` to disable the inline avatar layout, thought bubble, and walk animation. Restores the original bottom-bar chat layout. |
 
 ### Identity / chain
 
@@ -154,6 +155,27 @@ Takes over the viewport with a close button. Useful for mobile.
 ```html
 <button onclick="document.querySelector('agent-3d').openFullscreen()">Meet Coach Leo</button>
 <agent-3d src="..." mode="fullscreen"></agent-3d>
+```
+
+## Avatar-in-Chat Mode
+
+By default, `<agent-3d>` uses a vertical chat layout where the 3D avatar is visible as a conversation participant through a transparent window between the message history and the input bar. While the LLM generates a response, the avatar:
+
+- **Walks** in place (synchronized to token streaming)
+- **Displays a thought bubble** above its head showing the streaming text
+- **Returns to idle** when the response is complete
+
+To disable this behavior and restore the original side-by-side bottom-bar layout:
+
+```html
+<agent-3d avatar-chat="off" src="..."></agent-3d>
+```
+
+The `avatar-chat="off"` attribute is CSS-driven and can be toggled at runtime via JavaScript:
+
+```js
+element.setAttribute('avatar-chat', 'off');   // disable
+element.removeAttribute('avatar-chat');        // re-enable
 ```
 
 ## Slots
