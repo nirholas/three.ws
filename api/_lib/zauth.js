@@ -22,11 +22,16 @@ let cached;
 
 function buildMiddleware() {
 	const apiKey = env.ZAUTH_API_KEY;
-	if (!apiKey) return null;
+	if (!apiKey) {
+		console.log('[zauth] disabled: ZAUTH_API_KEY not set');
+		return null;
+	}
 	try {
-		return zauthProvider(apiKey, {
+		const mw = zauthProvider(apiKey, {
 			shouldMonitor: shouldMonitorReq,
 		});
+		console.log('[zauth] middleware initialized, key prefix:', apiKey.slice(0, 14));
+		return mw;
 	} catch (err) {
 		console.error('[zauth] failed to build middleware:', err.message);
 		return null;
