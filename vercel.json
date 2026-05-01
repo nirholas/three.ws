@@ -1,6 +1,11 @@
 {
 	"public": true,
 	"installCommand": "npm ci --prefer-offline --no-audit --no-fund",
+	"functions": {
+		"api/**/*.js": {
+			"includeFiles": "node_modules/@zauthx402/sdk/dist/middleware/**"
+		}
+	},
 	"routes": [
 		{
 			"src": "/openapi\\.json",

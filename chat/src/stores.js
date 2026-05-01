@@ -64,6 +64,7 @@ export const toolSchema = persisted('toolSchemaGroups', []);
 export const ttsEnabled = persisted('ttsEnabled', false);
 export const localAgentId = persisted('localAgentId', '');
 export const activeAgent = persisted('activeAgentDetail', null);
+export const agentLibraryUrl = persisted('agentLibraryUrl', 'https://agents-ai-library.vercel.app');
 export const talkingHeadEnabled = persisted('talkingHeadEnabled', false);
 export const talkingHeadAvatarUrl = persisted('talkingHeadAvatarUrl', '');
 

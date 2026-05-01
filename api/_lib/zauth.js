@@ -9,8 +9,9 @@
 // Disabled cleanly when ZAUTH_API_KEY is unset — `instrument()` becomes a
 // no-op so unrelated environments don't pay any cost.
 //
-// Static import (not createRequire) so Vercel's @vercel/nft traces the
-// `./middleware` subpath and bundles it into the deployment.
+// Use the documented `/middleware` subpath. The middleware files are
+// force-included in the deploy via vercel.json `functions.includeFiles`
+// because @vercel/nft mis-resolves the conditional exports map otherwise.
 
 import { zauthProvider } from '@zauthx402/sdk/middleware';
 import { env } from './env.js';

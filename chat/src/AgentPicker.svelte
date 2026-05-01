@@ -1,15 +1,65 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
-	import { localAgentId, activeAgent } from './stores.js';
+	import { localAgentId, activeAgent, agentLibraryUrl } from './stores.js';
 
 	const dispatch = createEventDispatcher();
 
 	let query = '';
 	let myAgents = [];
 	let marketAgents = [];
+	let libraryAgents = [];
 	let loadingMine = false;
 	let loadingMarket = false;
+	let loadingLibrary = false;
 	let debounceTimer;
+
+	// Normalizes a pai-chat / lobehub library agent (index entry) into the local agent shape.
+	function normalizeLibraryAgent(item) {
+		const m = item.meta || {};
+		const avatar = m.avatar || '';
+		const isUrl = typeof avatar === 'string' && /^https?:\/\//.test(avatar);
+		return {
+			id: `lib:${item.identifier}`,
+			identifier: item.identifier,
+			name: m.title || item.identifier,
+			description: m.description || '',
+			thumbnail_url: isUrl ? avatar : null,
+			avatar_emoji: isUrl ? null : avatar,
+			tags: m.tags || [],
+			category: m.category || '',
+			source: 'library',
+		};
+	}
+
+	async function loadLibrary() {
+		loadingLibrary = true;
+		try {
+			const base = $agentLibraryUrl?.replace(/\/+$/, '') || '';
+			if (!base) return;
+			const res = await fetch(`${base}/index.en-US.json`);
+			if (res.ok) {
+				const json = await res.json();
+				libraryAgents = (json.agents || []).map(normalizeLibraryAgent);
+			}
+		} catch {}
+		loadingLibrary = false;
+	}
+
+	async function loadLibraryAgentDetail(agent) {
+		const base = $agentLibraryUrl?.replace(/\/+$/, '') || '';
+		const res = await fetch(`${base}/${agent.identifier}.json`);
+		if (!res.ok) return agent;
+		const data = await res.json();
+		const cfg = data.config || {};
+		return {
+			...agent,
+			system_prompt: cfg.systemRole || '',
+			greeting: cfg.openingMessage || '',
+			model: cfg.model || null,
+			provider: cfg.provider || null,
+			params: cfg.params || null,
+		};
+	}
 
 	async function searchMarket(q) {
 		loadingMarket = true;
