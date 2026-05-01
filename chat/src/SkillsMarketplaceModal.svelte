@@ -15,9 +15,14 @@
 	let page = null;
 	let hasMore = false;
 	let sort = 'popular';
-	let expandedSkillId = null;
 	let installPending = {};
-	let ratingPending = {};
+
+	// Detail expansion state
+	let expandedSkillId = null;
+	let detailLoading = false;
+	let detail = null;
+	let userRating = null;
+	let hoverStar = 0;
 
 	// Publish state
 	let publishForm = {
@@ -50,11 +55,54 @@
 	let schemaValid = null;
 	let schemaErrorMsg = '';
 
-	$: categories = [...new Set(skills.map((s) => s.category).filter(Boolean))];
+	let categories = [];
+
+	async function loadCategories() {
+		try {
+			const res = await fetch('/api/skills/categories');
+			if (!res.ok) return;
+			const data = await res.json();
+			categories = data.categories || [];
+		} catch {
+			// leave categories empty
+		}
+	}
+
+	// helpers
+
+	function relativeDate(iso) {
+		const diff = Date.now() - new Date(iso).getTime();
+		const days = Math.floor(diff / 86400000);
+		if (days === 0) return 'today';
+		if (days === 1) return 'yesterday';
+		if (days < 30) return `${days} days ago`;
+		if (days < 365) return `${Math.floor(days / 30)} months ago`;
+		return `${Math.floor(days / 365)} years ago`;
+	}
 
 	function isInstalled(skill) {
 		return $toolSchema.some((g) => g.name === skill.name);
 	}
+
+	function formatRating(avg, count) {
+		if (!count) return 'No ratings yet';
+		return `⭐ ${Number(avg).toFixed(1)} (${count})`;
+	}
+
+	function schemaPreview(schema_json) {
+		if (!Array.isArray(schema_json) || schema_json.length === 0) return null;
+		const first = schema_json[0];
+		const fn = first?.function ?? first;
+		const params = Object.keys(fn?.parameters?.properties ?? {});
+		return {
+			name: fn?.name ?? '?',
+			description: fn?.description ?? '',
+			params,
+			extra: schema_json.length - 1
+		};
+	}
+
+	// skills API
 
 	async function loadSkills(reset = false) {
 		loading = true;
@@ -99,34 +147,43 @@
 		loadSkills(true);
 	}
 
-	async function toggleInstall(skill) {
-		if (!$currentUser) return;
+	// install / uninstall
+
+	async function toggleInstall(skill, e) {
+		e?.stopPropagation();
+		if (!$currentUser) { notify('Sign in to install skills', 'info'); return; }
 		installPending = { ...installPending, [skill.id]: true };
 		const wasInstalled = isInstalled(skill);
-		// Optimistic update
 		if (!wasInstalled) {
-			$toolSchema = [...$toolSchema, { name: skill.name, schema: skill.schema_json }];
+			const schema = detail?.id === skill.id ? (detail.schema_json ?? []) : (skill.schema_json ?? []);
+			$toolSchema = [...$toolSchema, { name: skill.name, schema }];
 		} else {
 			$toolSchema = $toolSchema.filter((g) => g.name !== skill.name);
 		}
 		try {
 			const method = wasInstalled ? 'DELETE' : 'POST';
-			const res = await fetch(`/api/skills/${skill.id}/install`, {
-				method,
-				credentials: 'include'
-			});
+			const res = await fetch(`/api/skills/${skill.id}/install`, { method, credentials: 'include' });
 			if (!res.ok) throw new Error('Request failed');
+			if (!wasInstalled) {
+				const data = await res.json().catch(() => null);
+				if (data?.schema_json) {
+					$toolSchema = [
+						...$toolSchema.filter((g) => g.name !== skill.name),
+						{ name: skill.name, schema: data.schema_json }
+					];
+				}
+			}
 			skills = skills.map((s) =>
 				s.id === skill.id
 					? { ...s, install_count: (s.install_count || 0) + (wasInstalled ? -1 : 1) }
 					: s
 			);
+			if (detail?.id === skill.id) detail = { ...detail, is_installed: !wasInstalled };
 		} catch (e) {
-			// Rollback
 			if (!wasInstalled) {
 				$toolSchema = $toolSchema.filter((g) => g.name !== skill.name);
 			} else {
-				$toolSchema = [...$toolSchema, { name: skill.name, schema: skill.schema_json }];
+				$toolSchema = [...$toolSchema, { name: skill.name, schema: skill.schema_json ?? [] }];
 			}
 			notify(e.message, 'error');
 		} finally {
@@ -136,31 +193,77 @@
 		}
 	}
 
-	async function rateSkill(skill, stars) {
-		if (!$currentUser) return;
-		ratingPending = { ...ratingPending, [skill.id]: true };
+	// detail expansion
+
+	async function toggleExpand(skill) {
+		if (expandedSkillId === skill.id) {
+			expandedSkillId = null;
+			detail = null;
+			return;
+		}
+		expandedSkillId = skill.id;
+		detail = null;
+		userRating = null;
+		hoverStar = 0;
+		detailLoading = true;
 		try {
-			const res = await fetch(`/api/skills/${skill.id}/rate`, {
+			const res = await fetch(`/api/skills/${skill.id}`);
+			if (!res.ok) throw new Error('Failed to load details');
+			detail = await res.json();
+			userRating = detail.user_rating ?? null;
+		} catch (e) {
+			notify(e.message, 'error');
+			expandedSkillId = null;
+		} finally {
+			detailLoading = false;
+		}
+	}
+
+	// rating
+
+	async function submitRating(skillId, rating) {
+		if (!$currentUser) return;
+		try {
+			const res = await fetch(`/api/skills/${skillId}/rate`, {
 				method: 'POST',
 				credentials: 'include',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ rating: stars })
+				body: JSON.stringify({ rating })
 			});
 			if (!res.ok) throw new Error('Rating failed');
 			const data = await res.json();
+			userRating = rating;
+			if (detail?.id === skillId) {
+				detail = { ...detail, avg_rating: data.avg_rating, rating_count: data.rating_count };
+			}
 			skills = skills.map((s) =>
-				s.id === skill.id
+				s.id === skillId
 					? { ...s, avg_rating: data.avg_rating, rating_count: data.rating_count }
 					: s
 			);
 		} catch (e) {
 			notify(e.message, 'error');
-		} finally {
-			const next = { ...ratingPending };
-			delete next[skill.id];
-			ratingPending = next;
 		}
 	}
+
+	// copy slug
+
+	async function copySlug(slug, e) {
+		e?.stopPropagation();
+		try {
+			await navigator.clipboard.writeText(slug);
+		} catch {
+			const ta = document.createElement('textarea');
+			ta.value = slug;
+			document.body.appendChild(ta);
+			ta.select();
+			document.execCommand('copy');
+			document.body.removeChild(ta);
+		}
+		notify('Copied!', 'success');
+	}
+
+	// publish
 
 	function nameToSlug(name) {
 		return name
@@ -226,18 +329,28 @@
 		}
 	}
 
-	$: if (open && skills.length === 0) loadSkills(true);
+	// init and keyboard
 
-	function formatRating(avg, count) {
-		if (!count) return 'No ratings yet';
-		return `⭐ ${Number(avg).toFixed(1)} (${count})`;
+	$: if (open && skills.length === 0) {
+		Promise.all([loadSkills(true), loadCategories()]);
 	}
 
 	$: tagPills = publishForm.tags
 		.split(',')
 		.map((t) => t.trim())
 		.filter(Boolean);
+
+	function handleKeydown(e) {
+		if (!open) return;
+		if (e.key === 'Escape' && expandedSkillId !== null) {
+			e.stopPropagation();
+			expandedSkillId = null;
+			detail = null;
+		}
+	}
 </script>
+
+<svelte:window on:keydown={handleKeydown} />
 
 <Modal bind:open class="md:w-[820px] max-w-[820px]">
 	<!-- Tab bar -->
@@ -290,7 +403,7 @@
 				<div class="mb-4 flex gap-x-2">
 					<input
 						type="text"
-						placeholder="Search skills…"
+						placeholder="Search skills..."
 						bind:value={searchQuery}
 						on:input={handleSearchInput}
 						class="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[13px] text-slate-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200"
@@ -301,7 +414,7 @@
 					>
 						<option value="popular">Popular</option>
 						<option value="newest">Newest</option>
-						<option value="az">A–Z</option>
+						<option value="az">A-Z</option>
 					</select>
 				</div>
 
@@ -324,23 +437,23 @@
 				</div>
 
 				{#if loading && skills.length === 0}
-					<p class="mt-8 text-center text-[13px] text-slate-400">Loading skills…</p>
+					<p class="mt-8 text-center text-[13px] text-slate-400">Loading skills...</p>
 				{:else if skills.length === 0}
 					<p class="mt-8 text-center text-[13px] text-slate-400">No skills found</p>
 				{:else}
 					<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
 						{#each skills as skill (skill.id)}
-							<div class="flex flex-col rounded-lg border border-slate-200 {expandedSkillId === skill.id ? 'border-indigo-300 ring-1 ring-indigo-200' : ''}">
-								<!-- Card main row -->
-								<!-- svelte-ignore a11y-click-events-have-key-events -->
-								<!-- svelte-ignore a11y-no-static-element-interactions -->
-								<div
-									class="flex cursor-pointer items-start justify-between gap-x-3 px-3 py-3"
-									on:click={(e) => {
-										if (e.target.closest('button')) return;
-										expandedSkillId = expandedSkillId === skill.id ? null : skill.id;
-									}}
-								>
+							<!-- Card -->
+							<!-- svelte-ignore a11y-click-events-have-key-events -->
+							<!-- svelte-ignore a11y-no-static-element-interactions -->
+							<div
+								class="cursor-pointer rounded-lg border px-3 py-3 transition-colors {expandedSkillId === skill.id
+									? 'border-indigo-300 bg-indigo-50/30 ring-1 ring-indigo-200'
+									: 'border-slate-200 hover:border-slate-300'}"
+								on:click={() => toggleExpand(skill)}
+								aria-expanded={expandedSkillId === skill.id}
+							>
+								<div class="flex items-start justify-between gap-x-3">
 									<div class="min-w-0 flex-1">
 										<div class="flex flex-wrap items-center gap-x-1.5 gap-y-1">
 											<span class="text-[13px] font-medium text-slate-800">{skill.name}</span>
@@ -356,66 +469,174 @@
 										<div class="mt-1.5 flex items-center gap-x-3 text-[11px] text-slate-400">
 											<span>{skill.install_count || 0} installs</span>
 											<span>{formatRating(skill.avg_rating, skill.rating_count)}</span>
-											<span>by {skill.author_name || 'System'}</span>
+											<span>by {skill.author?.display_name || skill.author_name || 'System'}</span>
 										</div>
 									</div>
 
 									{#if !$currentUser}
 										<span class="shrink-0 text-[11px] text-slate-400">Sign in to install</span>
 									{:else if installPending[skill.id]}
-										<span class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-[11px] text-slate-400"
-											>…</span
+										<span
+											class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-[11px] text-slate-400"
+											>...</span
 										>
 									{:else if isInstalled(skill)}
 										<button
 											class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-[11px] text-slate-500 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
-											on:click|stopPropagation={() => toggleInstall(skill)}
+											on:click={(e) => toggleInstall(skill, e)}
 										>
 											Remove
 										</button>
 									{:else}
 										<button
 											class="shrink-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 transition-colors hover:bg-slate-100"
-											on:click|stopPropagation={() => toggleInstall(skill)}
+											on:click={(e) => toggleInstall(skill, e)}
 										>
 											Install
 										</button>
 									{/if}
 								</div>
+							</div>
 
-								<!-- Expanded view -->
-								{#if expandedSkillId === skill.id}
-									<div class="border-t border-slate-100 px-3 pb-3 pt-2.5">
-										<p class="text-[12px] leading-relaxed text-slate-600">
-											{skill.description || 'No description'}
-										</p>
-										{#if skill.tags && skill.tags.length}
-											<div class="mt-2 flex flex-wrap gap-1">
-												{#each skill.tags as tag}
-													<span class="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] text-indigo-600"
-														>{tag}</span
-													>
-												{/each}
+							<!-- Inline detail expansion (spans both grid columns) -->
+							{#if expandedSkillId === skill.id}
+								<div
+									class="col-span-1 rounded-lg border border-indigo-200 bg-white p-4 sm:col-span-2"
+									role="region"
+									aria-label="{skill.name} details"
+								>
+									{#if detailLoading}
+										<div class="flex animate-pulse flex-col gap-2">
+											<div class="h-3 w-3/4 rounded bg-slate-200"></div>
+											<div class="h-3 w-1/2 rounded bg-slate-200"></div>
+											<div class="h-3 w-2/3 rounded bg-slate-200"></div>
+											<div class="mt-1 h-16 rounded bg-slate-200"></div>
+										</div>
+									{:else if detail}
+										<div class="flex flex-col gap-4 md:flex-row">
+
+											<!-- Left column (60%) -->
+											<div class="flex flex-col gap-2 md:flex-[6]">
+												<p class="text-[13px] leading-relaxed text-slate-700">{detail.description || ''}</p>
+												{#if detail.tags?.length}
+													<div class="flex flex-wrap gap-1">
+														{#each detail.tags as tag}
+															<span class="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600"
+																>{tag}</span
+															>
+														{/each}
+													</div>
+												{/if}
+												<p class="text-[12px] text-slate-500">
+													By {detail.author?.display_name ?? 'the 3D-Agent team'}
+												</p>
+												<p class="text-[11px] text-slate-400">
+													{detail.install_count ?? 0} installs{detail.created_at
+														? ` - Published ${relativeDate(detail.created_at)}`
+														: ''}
+												</p>
 											</div>
-										{/if}
-										<!-- Star rating -->
-										<div class="mt-3">
-											<p class="mb-1 text-[11px] text-slate-400">Rate this skill</p>
-											<div class="flex gap-x-0.5">
-												{#each [1, 2, 3, 4, 5] as star}
-													<button
-														disabled={!$currentUser || ratingPending[skill.id]}
-														class="text-lg leading-none transition-transform hover:scale-110 disabled:opacity-40"
-														on:click={() => rateSkill(skill, star)}
+
+											<!-- Right column (40%) -->
+											<div class="flex flex-col gap-3 md:flex-[4]">
+
+												<!-- Star rating -->
+												<div>
+													<div
+														class="flex items-center gap-0.5"
+														title={$currentUser ? undefined : 'Sign in to rate'}
 													>
-														{(skill.avg_rating || 0) >= star ? '⭐' : '☆'}
-													</button>
-												{/each}
+														{#each [1, 2, 3, 4, 5] as star}
+															<button
+																class="text-xl leading-none transition-transform duration-100 {$currentUser && !userRating
+																	? 'cursor-pointer hover:scale-110'
+																	: 'cursor-default'}"
+																style="color: {userRating && star <= userRating
+																	? '#6366f1'
+																	: hoverStar >= star ||
+																		  (!userRating && star <= Math.round(detail.avg_rating ?? 0))
+																		? '#f59e0b'
+																		: '#d1d5db'}"
+																on:click={() => {
+																	if ($currentUser && !userRating) submitRating(detail.id, star);
+																}}
+																on:mouseenter={() => {
+																	if ($currentUser && !userRating) hoverStar = star;
+																}}
+																on:mouseleave={() => (hoverStar = 0)}
+																tabindex={$currentUser && !userRating ? 0 : -1}
+																aria-label="Rate {star} star{star > 1 ? 's' : ''}"
+															>*</button>
+														{/each}
+														<span class="ml-1.5 text-[11px] text-slate-400">
+															{detail.avg_rating
+																? Number(detail.avg_rating).toFixed(1)
+																: 'No ratings'}
+															({detail.rating_count ?? 0})
+														</span>
+													</div>
+													{#if !$currentUser}
+														<p class="mt-0.5 text-[11px] text-slate-400">Sign in to rate</p>
+													{:else if userRating}
+														<p class="mt-0.5 text-[11px] text-indigo-500">You rated {userRating}/5</p>
+													{/if}
+												</div>
+
+												<!-- Schema preview -->
+												{#if detail.schema_json}
+													{@const preview = schemaPreview(detail.schema_json)}
+													{#if preview}
+														<div>
+															<p class="mb-1 text-[11px] font-medium text-slate-600">Schema preview</p>
+															<pre
+																class="overflow-x-auto whitespace-pre-wrap break-words rounded border border-slate-100 bg-slate-50 p-2 text-[11px] leading-relaxed"
+															><code>{preview.name}
+{preview.description}{preview.params.length
+																	? `\nparams: ${preview.params.join(', ')}`
+																	: ''}{preview.extra > 0
+																	? `\nand ${preview.extra} more tool${preview.extra > 1 ? 's' : ''}`
+																	: ''}</code></pre>
+														</div>
+													{/if}
+												{/if}
+
 											</div>
 										</div>
-									</div>
-								{/if}
-							</div>
+
+										<!-- Action row -->
+										<div class="mt-4 flex items-center gap-2 border-t border-slate-100 pt-3">
+											{#if !$currentUser}
+												<span class="text-[12px] text-slate-400">Sign in to install skills</span>
+											{:else if installPending[skill.id]}
+												<span
+													class="rounded-lg border border-slate-200 px-3 py-1.5 text-[12px] text-slate-400"
+													>...</span
+												>
+											{:else if isInstalled(skill)}
+												<button
+													class="rounded-lg border border-slate-200 px-3 py-1.5 text-[12px] text-slate-500 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+													on:click={(e) => toggleInstall(skill, e)}
+												>
+													Remove skill
+												</button>
+											{:else}
+												<button
+													class="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-[12px] font-medium text-indigo-700 transition-colors hover:bg-indigo-100"
+													on:click={(e) => toggleInstall(skill, e)}
+												>
+													Install skill
+												</button>
+											{/if}
+											<button
+												class="rounded-lg border border-slate-200 px-3 py-1.5 text-[12px] text-slate-600 transition-colors hover:bg-slate-50"
+												on:click={(e) => copySlug(skill.slug, e)}
+											>
+												Copy slug
+											</button>
+										</div>
+									{/if}
+								</div>
+							{/if}
 						{/each}
 					</div>
 
@@ -425,7 +646,7 @@
 							disabled={loading}
 							on:click={() => loadSkills(false)}
 						>
-							{loading ? 'Loading…' : 'Load more'}
+							{loading ? 'Loading...' : 'Load more'}
 						</button>
 					{/if}
 				{/if}
@@ -463,10 +684,11 @@
 			</div>
 
 			<div class="flex flex-col gap-y-1">
-				<label class="text-[12px] font-medium text-slate-600">Description</label>
+				<label for="pf-desc" class="text-[12px] font-medium text-slate-600">Description</label>
 				<textarea
+					id="pf-desc"
 					bind:value={publishForm.description}
-					placeholder="Describe what this skill does…"
+					placeholder="Describe what this skill does..."
 					rows="3"
 					class="resize-none rounded-lg border border-slate-200 px-3 py-1.5 text-[13px] text-slate-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200"
 				/>
@@ -474,8 +696,9 @@
 
 			<div class="flex gap-x-3">
 				<div class="flex flex-1 flex-col gap-y-1">
-					<label class="text-[12px] font-medium text-slate-600">Category</label>
+					<label for="pf-cat" class="text-[12px] font-medium text-slate-600">Category</label>
 					<input
+						id="pf-cat"
 						type="text"
 						list="skill-categories"
 						bind:value={publishForm.category}
@@ -490,8 +713,9 @@
 				</div>
 
 				<div class="flex flex-1 flex-col gap-y-1">
-					<label class="text-[12px] font-medium text-slate-600">Tags (comma-separated)</label>
+					<label for="pf-tags" class="text-[12px] font-medium text-slate-600">Tags (comma-separated)</label>
 					<input
+						id="pf-tags"
 						type="text"
 						bind:value={publishForm.tags}
 						placeholder="search, web, api"
@@ -511,8 +735,9 @@
 			{/if}
 
 			<div class="flex flex-col gap-y-1">
-				<label class="text-[12px] font-medium text-slate-600">Schema (JSON)</label>
+				<label for="pf-schema" class="text-[12px] font-medium text-slate-600">Schema (JSON)</label>
 				<textarea
+					id="pf-schema"
 					bind:value={publishForm.schemaText}
 					rows="10"
 					spellcheck="false"
@@ -527,7 +752,7 @@
 						Validate JSON
 					</button>
 					{#if schemaValid === true}
-						<span class="text-[11px] text-green-600">✓ Valid</span>
+						<span class="text-[11px] text-green-600">Valid</span>
 					{:else if schemaValid === false}
 						<span class="text-[11px] text-red-500">{schemaErrorMsg}</span>
 					{/if}
@@ -554,7 +779,7 @@
 				class="self-start rounded-lg bg-indigo-600 px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
 				on:click={publishSkill}
 			>
-				{publishLoading ? 'Publishing…' : 'Publish skill'}
+				{publishLoading ? 'Publishing...' : 'Publish skill'}
 			</button>
 		</div>
 	{/if}

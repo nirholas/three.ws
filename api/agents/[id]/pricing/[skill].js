@@ -25,9 +25,14 @@ async function resolveUserId(req) {
 
 // PUT /api/agents/:id/pricing/:skill  — create or update a skill price (owner only)
 // DELETE /api/agents/:id/pricing/:skill — soft-delete; ?hard=true for permanent removal
-export default wrap(async (req, res, id, skill) => {
+export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'PUT,DELETE,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['PUT', 'DELETE'])) return;
+
+	const urlParts = new URL(req.url, 'http://x').pathname.split('/').filter(Boolean);
+	// /api/agents/{id}/pricing/{skill}
+	const id = urlParts[2];
+	const skill = urlParts[4];
 
 	if (!skill || !SKILL_RE.test(skill)) {
 		return error(res, 400, 'validation_error', 'skill must be alphanumeric + hyphens, max 64 chars');

@@ -181,6 +181,7 @@ function renderCard(a) {
 			<span class="stat-pill">⊙ ${a.views_count || 0}</span>
 			<span class="stat-pill">⑂ ${a.forks_count || 0}</span>
 			${skills ? `<span class="stat-pill">▤ ${skills}</span>` : ''}
+			${a.has_paid_skills ? `<span class="stat-pill paid-badge">$ Paid</span>` : ''}
 		</div>
 		<div class="footer">
 			<span>${date}</span>
@@ -262,8 +263,16 @@ function renderDetail(a, bookmarked) {
 	$('d-skills-count').textContent = skillsArr.length;
 	$('d-library-count').textContent = libraryArr.length;
 
+	const skillPrices = a.skill_prices || {};
 	$('d-skills').innerHTML = skillsArr.length
-		? skillsArr.map((s) => `<span class="stat-pill">${escapeHtml(typeof s === 'string' ? s : s.name || '')}</span>`).join(' ')
+		? skillsArr.map((s) => {
+			const name = typeof s === 'string' ? s : (s.name || '');
+			const price = skillPrices[name];
+			const badge = price
+				? `<span class="price-badge price-paid">${(price.amount / 1e6).toFixed(2)} USDC</span>`
+				: `<span class="price-badge price-free">Free</span>`;
+			return `<span class="skill-entry">${escapeHtml(name)}${badge}</span>`;
+		}).join(' ')
 		: '<div>This Agent includes the following Skills to help you complete more tasks.</div>';
 	$('d-library').innerHTML = libraryArr.length
 		? libraryArr.map((l) => `<span class="stat-pill">${escapeHtml(typeof l === 'string' ? l : l.name || '')}</span>`).join(' ')

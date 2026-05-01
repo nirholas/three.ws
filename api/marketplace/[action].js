@@ -191,7 +191,11 @@ async function handleDetail(req, res, id) {
 	`;
 	if (!row) return error(res, 404, 'not_found', 'agent not found');
 
-	const auth = await resolveAuth(req).catch(() => null);
+	const [auth, priceRows] = await Promise.all([
+		resolveAuth(req).catch(() => null),
+		sql`SELECT skill, currency_mint, chain, amount FROM agent_skill_prices WHERE agent_id = ${id} AND is_active = true`,
+	]);
+
 	let bookmarked = false;
 	if (auth) {
 		const [b] =
@@ -199,10 +203,14 @@ async function handleDetail(req, res, id) {
 		bookmarked = !!b;
 	}
 
+	const skill_prices = Object.fromEntries(
+		priceRows.map((p) => [p.skill, { amount: p.amount, currency_mint: p.currency_mint, chain: p.chain }]),
+	);
+
 	return json(
 		res,
 		200,
-		{ data: { agent: toDetail(row), bookmarked } },
+		{ data: { agent: { ...toDetail(row), skill_prices }, bookmarked } },
 		{ 'cache-control': 'public, max-age=15' },
 	);
 }

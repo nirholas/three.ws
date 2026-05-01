@@ -76,6 +76,7 @@
 	import WebsiteFlow from './manus/flows/WebsiteFlow.svelte';
 	import DesktopFlow from './manus/flows/DesktopFlow.svelte';
 	import RevenueDashboard from './manus/pages/RevenueDashboard.svelte';
+	import SkillsMarketplaceModal from './SkillsMarketplaceModal.svelte';
 
 	marked.use(
 		markedKatex({
@@ -1844,6 +1845,17 @@
 					{/if}
 				</div>
 				<button
+					class="relative flex items-center gap-1 rounded-full p-3 transition-colors hover:bg-gray-100"
+					on:click={() => (showSkillsMarketplace = true)}
+					title="Skills Marketplace"
+				>
+					<Icon icon={feGrid} strokeWidth={3} class="m-auto h-4 w-4 text-slate-700" />
+					<span class="hidden sm:inline text-[12px] text-slate-700">Skills</span>
+					{#if $toolSchema.length > 0}
+						<span class="ml-1 rounded-full bg-indigo-500 px-1.5 py-0.5 text-[10px] text-white">{$toolSchema.length}</span>
+					{/if}
+				</button>
+				<button
 					data-trigger="knobs"
 					class="flex rounded-full p-3 transition-colors hover:bg-gray-100"
 					on:click={() => (knobsOpen = !knobsOpen)}
@@ -2021,6 +2033,8 @@
 	}}
 />
 
+<SkillsMarketplaceModal bind:open={showSkillsMarketplace} />
+
 {#if innerWidth <= 1215 && !$config.explicitToolView}
 	<Modal
 		bind:open={toolcallModalOpen}
@@ -2132,40 +2146,42 @@
 {/if}
 {/if}
 
-<style lang="postcss">
+<style>
 	:global(.standalone .input-floating) {
-		@apply bottom-[32px];
+		bottom: 32px;
 	}
 	:global(.standalone .scrollable) {
-		@apply pb-[100px];
+		padding-bottom: 100px;
 	}
 	:global(.standalone .settings-trigger-container) {
-		@apply pb-10;
+		padding-bottom: 2.5rem;
 	}
 
 	:global(.markdown.prose :where(p):not(:where([class~='not-prose'], [class~='not-prose'] *))) {
-		@apply my-3;
+		margin-top: 0.75rem;
+		margin-bottom: 0.75rem;
 	}
 
 	:global(
 		.markdown.prose
 			:where(.prose > :first-child):not(:where([class~='not-prose'], [class~='not-prose'] *))
 	) {
-		@apply mt-0;
+		margin-top: 0;
 	}
 
 	:global(
 		.markdown.prose
 			:where(.prose > :last-child):not(:where([class~='not-prose'], [class~='not-prose'] *))
 	) {
-		@apply mb-0;
+		margin-bottom: 0;
 	}
 
 	:global(.markdown.prose :where(a):not(:where([class~='not-prose'], [class~='not-prose'] *))) {
-		@apply text-ink;
+		color: #1A1A1A;
 	}
 
 	:global(.markdown.prose :where(pre):not(:where([class~='not-prose'], [class~='not-prose'] *))) {
-		@apply bg-paper-deep border-rule;
+		background-color: #EBE8E0;
+		border-color: #E5E3DC;
 	}
 </style>

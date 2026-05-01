@@ -3,6 +3,7 @@
 	import Icon from '../Icon.svelte';
 	import { feMenu, feX } from '../feather.js';
 	import WalletConnect from '../WalletConnect.svelte';
+	import NotificationBell from '../NotificationBell.svelte';
 	import FeaturesDropdown  from './dropdowns/FeaturesDropdown.svelte';
 	import SolutionsDropdown from './dropdowns/SolutionsDropdown.svelte';
 	import ResourcesDropdown from './dropdowns/ResourcesDropdown.svelte';
@@ -155,6 +156,7 @@
 		<!-- RIGHT: auth buttons + hamburger -->
 		<div class="flex items-center gap-2">
 			<div class="hidden items-center gap-2 md:flex">
+				<NotificationBell />
 				<WalletConnect />
 			</div>
 			<button

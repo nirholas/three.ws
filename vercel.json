@@ -214,6 +214,7 @@
 		{ "src": "/api/dca-strategies", "dest": "/api/dca-strategies" },
 
 		{ "src": "/api/billing/summary", "dest": "/api/billing/summary" },
+		{ "src": "/api/billing/revenue", "dest": "/api/billing/revenue" },
 
 		{ "src": "/my-agents", "dest": "/public/my-agents/index.html" },
 		{ "src": "/my-agents/", "dest": "/public/my-agents/index.html" },

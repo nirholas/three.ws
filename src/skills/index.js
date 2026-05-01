@@ -41,7 +41,14 @@ export class Skill {
 	}
 
 	async invoke(toolName, args, ctx) {
-		const scoped = { ...ctx, skillBaseURI: this.uri };
+		const paymentProof = ctx?.agentId
+			? await checkPaymentGate(toolName, ctx.agentId)
+			: null;
+		const scoped = {
+			...ctx,
+			skillBaseURI: this.uri,
+			...(paymentProof && { paymentProof }),
+		};
 
 		// Owner-signed skills may opt out of the sandbox via sandboxPolicy: "trusted-main-thread"
 		if (this.manifest.sandboxPolicy === 'trusted-main-thread') {
@@ -212,4 +219,89 @@ export class SkillRegistry {
 			// Whitelist check would consult a configured allowlist; left as hook.
 		}
 	}
+}
+
+// ── Payment gate ──────────────────────────────────────────────────────────────
+
+const KNOWN_MINT_SYMBOLS = {
+	'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v': 'USDC',
+	'4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU': 'USDC',
+	'So11111111111111111111111111111111111111112': 'SOL',
+};
+
+function mintSymbol(mint) {
+	return KNOWN_MINT_SYMBOLS[mint] || `${String(mint).slice(0, 4)}…${String(mint).slice(-4)}`;
+}
+
+async function fetchAgentSnippet(agentId) {
+	try {
+		const r = await fetch(`/api/agents/${encodeURIComponent(agentId)}`, { credentials: 'include' });
+		if (!r.ok) return {};
+		const data = await r.json();
+		const payments = data?.agent?.payments || data?.agent?.meta?.payments || data?.payments;
+		return { payments, meta: { payments } };
+	} catch {
+		return {};
+	}
+}
+
+/**
+ * Returns the intentId string if payment was collected, null if the skill is free.
+ * Throws (with code=PAYMENT_CANCELLED) if the user dismisses the modal.
+ */
+async function checkPaymentGate(toolName, agentId) {
+	if (typeof document === 'undefined') return null;
+
+	let manifest;
+	try {
+		const r = await fetch(
+			`/api/agents/x402/manifest?agent_id=${encodeURIComponent(agentId)}&skill=${encodeURIComponent(toolName)}`,
+			{ credentials: 'include' },
+		);
+		if (r.status !== 200) return null;
+		manifest = await r.json();
+		if (manifest?.version !== 'x402/0.1' || manifest?.kind !== 'agent-skill') return null;
+	} catch {
+		return null;
+	}
+
+	const [{ showPaymentGateModal }, { getPaymentsAdapter }, { getAdapter }] = await Promise.all([
+		import('../components/payment-gate-modal.jsx'),
+		import('../onchain/payments/index.js'),
+		import('../onchain/adapters/index.js'),
+	]);
+
+	const progressLabels = {
+		connect: 'Connecting wallet…',
+		prep: 'Building payment…',
+		sign: 'Sign in your wallet…',
+		submit: 'Submitting…',
+		confirm: 'Verifying…',
+	};
+
+	return showPaymentGateModal({
+		skill: toolName,
+		amount: manifest.amount,
+		currencySymbol: mintSymbol(manifest.currency),
+		chain: 'Solana',
+		onPay: async ({ setStatus }) => {
+			const wallet = getAdapter('solana');
+			if (!wallet.isAvailable()) {
+				throw Object.assign(
+					new Error('No Solana wallet detected. Please install Phantom or Backpack.'),
+					{ code: 'NO_PROVIDER' },
+				);
+			}
+			const agentSnippet = await fetchAgentSnippet(agentId);
+			const adapter = getPaymentsAdapter('pumpfun');
+			const paid = await adapter.payAgent({
+				agent: { id: agentId, ...agentSnippet },
+				currencyMint: manifest.currency,
+				amount: manifest.amount,
+				onProgress: (step) => setStatus(progressLabels[step] || step),
+			});
+			return paid.intentId;
+		},
+		onCancel: () => {},
+	});
 }

@@ -1,8 +1,9 @@
--- Migration: skills marketplace tables.
+-- Migration: skills marketplace tables + seed data.
 -- Apply: psql "$DATABASE_URL" -f api/_lib/migrations/2026-04-30-skills-marketplace.sql
+-- Idempotent.
 
 -- ── marketplace_skills ───────────────────────────────────────────────────────
-create table marketplace_skills (
+create table if not exists marketplace_skills (
     id            uuid primary key default gen_random_uuid(),
     author_id     uuid references users(id) on delete set null,
     name          text not null,
@@ -17,13 +18,13 @@ create table marketplace_skills (
     updated_at    timestamptz not null default now()
 );
 
-create index marketplace_skills_category_idx on marketplace_skills(category);
-create index marketplace_skills_author_idx   on marketplace_skills(author_id);
-create index marketplace_skills_popular_idx  on marketplace_skills(install_count desc);
-create index marketplace_skills_new_idx      on marketplace_skills(created_at desc);
+create index if not exists marketplace_skills_category_idx on marketplace_skills(category);
+create index if not exists marketplace_skills_author_idx   on marketplace_skills(author_id);
+create index if not exists marketplace_skills_popular_idx  on marketplace_skills(install_count desc);
+create index if not exists marketplace_skills_new_idx      on marketplace_skills(created_at desc);
 
 -- ── skill_installs ───────────────────────────────────────────────────────────
-create table skill_installs (
+create table if not exists skill_installs (
     id           uuid primary key default gen_random_uuid(),
     user_id      uuid references users(id) on delete cascade,
     skill_id     uuid references marketplace_skills(id) on delete cascade,
@@ -31,10 +32,10 @@ create table skill_installs (
     unique (user_id, skill_id)
 );
 
-create index skill_installs_user_idx on skill_installs(user_id);
+create index if not exists skill_installs_user_idx on skill_installs(user_id);
 
 -- ── skill_ratings ────────────────────────────────────────────────────────────
-create table skill_ratings (
+create table if not exists skill_ratings (
     id         uuid primary key default gen_random_uuid(),
     user_id    uuid references users(id) on delete cascade,
     skill_id   uuid references marketplace_skills(id) on delete cascade,
@@ -55,7 +56,7 @@ insert into marketplace_skills (author_id, name, slug, description, category, sc
 (
     null,
     'TradingView Charts',
-    'tradingview-charts',
+    'tradingview',
     'Display interactive TradingView price charts for any symbol.',
     'finance',
     $json$[
@@ -187,7 +188,7 @@ insert into marketplace_skills (author_id, name, slug, description, category, sc
             {"name": "memo",      "type": "string", "description": "Optional memo string to attach"},
             {"name": "network",   "type": "string", "description": "mainnet or devnet. Default: mainnet"}
           ],
-          "body": "// see chat/src/tools.js → walletToolSchema solana_transfer"
+          "body": "const _token = args.token || 'SOL';\nconst _network = args.network || 'mainnet';\nconst wallet = window.__wallet;\nif (!wallet || wallet.type !== 'solana') throw new Error('No Solana wallet connected. Please connect a Solana wallet first.');\nconst buildRes = await fetch('/api/tx/solana/build-transfer', {\n  method: 'POST',\n  headers: { 'Content-Type': 'application/json' },\n  credentials: 'include',\n  body: JSON.stringify({ sender: wallet.address, recipient: args.recipient, amount: args.amount, token: _token, memo: args.memo, network: _network }),\n});\nif (!buildRes.ok) {\n  const err = await buildRes.json().catch(() => ({}));\n  throw new Error(err.message || 'Failed to build transaction');\n}\nconst { transaction: txBase64 } = await buildRes.json();\nawait window.requestWalletApproval({\n  network: _network === 'devnet' ? 'Solana Devnet' : 'Solana',\n  from: wallet.address,\n  to: args.recipient,\n  amount: String(args.amount),\n  token: _token,\n  memo: args.memo,\n});\nconst txBytes = Uint8Array.from(atob(txBase64), c => c.charCodeAt(0));\nif (!window.solana.signAndSendTransaction) throw new Error('Wallet does not support signAndSendTransaction');\nconst { Transaction } = await import('https://esm.sh/@solana/web3.js@1');\nconst tx = Transaction.from(txBytes);\nconst result = await window.solana.signAndSendTransaction(tx);\nconst signature = result.signature;\nconst explorerUrl = 'https://solscan.io/tx/' + signature + (_network === 'devnet' ? '?cluster=devnet' : '');\nreturn { contentType: 'application/tx-result', content: { status: 'success', txHash: signature, network: _network === 'devnet' ? 'Solana Devnet' : 'Solana', from: wallet.address, to: args.recipient, amount: String(args.amount), token: _token, explorerUrl } };"
         },
         "type": "function",
         "function": {
@@ -217,7 +218,7 @@ insert into marketplace_skills (author_id, name, slug, description, category, sc
             {"name": "amount",      "type": "number", "description": "Amount of input token in human-readable units"},
             {"name": "slippageBps", "type": "number", "description": "Max slippage in basis points (100 = 1%). Default: 50"}
           ],
-          "body": "// see chat/src/tools.js → walletToolSchema solana_swap"
+          "body": "const _slippageBps = args.slippageBps || 50;\nconst wallet = window.__wallet;\nif (!wallet || wallet.type !== 'solana') throw new Error('No Solana wallet connected.');\nconst buildRes = await fetch('/api/tx/solana/build-swap', {\n  method: 'POST',\n  headers: { 'Content-Type': 'application/json' },\n  credentials: 'include',\n  body: JSON.stringify({ sender: wallet.address, inputMint: args.inputMint, outputMint: args.outputMint, amount: args.amount, slippageBps: _slippageBps }),\n});\nif (!buildRes.ok) {\n  const err = await buildRes.json().catch(() => ({}));\n  throw new Error(err.message || 'Failed to get swap route');\n}\nconst { transaction: txBase64, outputAmount, priceImpactPct } = await buildRes.json();\nawait window.requestWalletApproval({\n  network: 'Solana',\n  from: wallet.address,\n  to: 'Jupiter (DEX aggregator)',\n  amount: String(args.amount),\n  token: args.inputMint.slice(0, 6) + '... -> ' + args.outputMint.slice(0, 6) + '...',\n  memo: '~' + outputAmount + ' out, ' + priceImpactPct + '% price impact',\n});\nconst txBytes = Uint8Array.from(atob(txBase64), c => c.charCodeAt(0));\nconst { Transaction } = await import('https://esm.sh/@solana/web3.js@1');\nconst tx = Transaction.from(txBytes);\nconst result = await window.solana.signAndSendTransaction(tx);\nconst signature = result.signature;\nreturn { contentType: 'application/tx-result', content: { status: 'success', txHash: signature, network: 'Solana', from: wallet.address, to: args.outputMint, amount: String(outputAmount), token: args.outputMint.slice(0, 8) + '...', explorerUrl: 'https://solscan.io/tx/' + signature } };"
         },
         "type": "function",
         "function": {
@@ -246,7 +247,7 @@ insert into marketplace_skills (author_id, name, slug, description, category, sc
             {"name": "token",     "type": "string", "description": "ETH for native token, or an ERC20 contract address. Default: ETH"},
             {"name": "decimals",  "type": "number", "description": "Token decimals (required for ERC20, ignored for ETH). Default: 18"}
           ],
-          "body": "// see chat/src/tools.js → walletToolSchema evm_transfer"
+          "body": "const wallet = window.__wallet;\nif (!wallet || wallet.type !== 'evm') throw new Error('No EVM wallet connected. Please connect MetaMask or a compatible wallet.');\nconst _token = args.token || 'ETH';\nconst _decimals = args.decimals !== undefined ? args.decimals : 18;\nconst chainNames = { 1: 'Ethereum', 8453: 'Base', 10: 'Optimism', 42161: 'Arbitrum', 137: 'Polygon' };\nconst networkName = chainNames[wallet.chainId] || 'Chain ' + wallet.chainId;\nawait window.requestWalletApproval({ network: networkName, from: wallet.address, to: args.recipient, amount: args.amount, token: _token === 'ETH' ? 'ETH' : _token.slice(0, 8) + '...' });\nlet txHash;\nif (_token === 'ETH') {\n  const valueHex = '0x' + BigInt(Math.round(parseFloat(args.amount) * 1e18)).toString(16);\n  txHash = await window.ethereum.request({ method: 'eth_sendTransaction', params: [{ from: wallet.address, to: args.recipient, value: valueHex }] });\n} else {\n  const amountBigInt = BigInt(Math.round(parseFloat(args.amount) * 10 ** _decimals));\n  const paddedTo = args.recipient.slice(2).padStart(64, '0');\n  const paddedAmount = amountBigInt.toString(16).padStart(64, '0');\n  txHash = await window.ethereum.request({ method: 'eth_sendTransaction', params: [{ from: wallet.address, to: _token, data: '0xa9059cbb' + paddedTo + paddedAmount }] });\n}\nconst explorerBases = { 1: 'https://etherscan.io/tx/', 8453: 'https://basescan.org/tx/', 10: 'https://optimistic.etherscan.io/tx/', 42161: 'https://arbiscan.io/tx/', 137: 'https://polygonscan.com/tx/' };\nconst explorerUrl = (explorerBases[wallet.chainId] || 'https://etherscan.io/tx/') + txHash;\nreturn { contentType: 'application/tx-result', content: { status: 'pending', txHash, network: networkName, chainId: wallet.chainId, from: wallet.address, to: args.recipient, amount: args.amount, token: _token === 'ETH' ? 'ETH' : _token.slice(0, 10) + '...', explorerUrl } };"
         },
         "type": "function",
         "function": {
@@ -276,7 +277,7 @@ insert into marketplace_skills (author_id, name, slug, description, category, sc
             {"name": "decimals",  "type": "number", "description": "Decimals of fromToken. Default: 18"},
             {"name": "slippage",  "type": "number", "description": "Max slippage percentage (e.g. 1 for 1%). Default: 1"}
           ],
-          "body": "// see chat/src/tools.js → walletToolSchema evm_swap"
+          "body": "const wallet = window.__wallet;\nif (!wallet || wallet.type !== 'evm') throw new Error('No EVM wallet connected.');\nconst _decimals = args.decimals !== undefined ? args.decimals : 18;\nconst _slippage = args.slippage !== undefined ? args.slippage : 1;\nconst chainNames = { 1: 'Ethereum', 8453: 'Base', 10: 'Optimism', 42161: 'Arbitrum', 137: 'Polygon' };\nconst networkName = chainNames[wallet.chainId] || 'Chain ' + wallet.chainId;\nconst amountWei = BigInt(Math.round(parseFloat(args.amount) * 10 ** _decimals)).toString();\nconst quoteUrl = 'https://api.1inch.dev/swap/v5.2/' + wallet.chainId + '/swap?src=' + args.fromToken + '&dst=' + args.toToken + '&amount=' + amountWei + '&from=' + wallet.address + '&slippage=' + _slippage + '&disableEstimate=true';\nconst quoteRes = await fetch(quoteUrl, { headers: { 'Accept': 'application/json' } });\nif (!quoteRes.ok) {\n  const err = await quoteRes.json().catch(() => ({}));\n  throw new Error(err.description || 'Failed to get swap quote from 1inch');\n}\nconst quote = await quoteRes.json();\nconst toAmountHuman = (Number(quote.toAmount) / 10 ** 18).toFixed(6);\nawait window.requestWalletApproval({ network: networkName, from: wallet.address, to: '1inch Router', amount: args.amount, token: args.fromToken.slice(0,8) + '... -> ' + args.toToken.slice(0,8) + '...', memo: '~' + toAmountHuman + ' out' });\nconst ETH_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';\nif (args.fromToken.toLowerCase() !== ETH_ADDRESS.toLowerCase()) {\n  const paddedOwner = wallet.address.slice(2).padStart(64, '0');\n  const paddedSpender = quote.tx.to.slice(2).padStart(64, '0');\n  const allowanceHex = await window.ethereum.request({ method: 'eth_call', params: [{ to: args.fromToken, data: '0xdd62ed3e' + paddedOwner + paddedSpender }, 'latest'] });\n  if (BigInt(allowanceHex || '0x0') < BigInt(amountWei)) {\n    await window.ethereum.request({ method: 'eth_sendTransaction', params: [{ from: wallet.address, to: args.fromToken, data: '0x095ea7b3' + paddedSpender + 'f'.repeat(64) }] });\n  }\n}\nconst txHash = await window.ethereum.request({ method: 'eth_sendTransaction', params: [{ from: wallet.address, to: quote.tx.to, data: quote.tx.data, value: quote.tx.value || '0x0' }] });\nconst explorerBases = { 1: 'https://etherscan.io/tx/', 8453: 'https://basescan.org/tx/', 10: 'https://optimistic.etherscan.io/tx/', 42161: 'https://arbiscan.io/tx/', 137: 'https://polygonscan.com/tx/' };\nconst explorerUrl = (explorerBases[wallet.chainId] || 'https://etherscan.io/tx/') + txHash;\nreturn { contentType: 'application/tx-result', content: { status: 'pending', txHash, network: networkName, chainId: wallet.chainId, from: wallet.address, to: args.toToken, amount: '~' + toAmountHuman, token: args.toToken.slice(0, 10) + '...', explorerUrl } };"
         },
         "type": "function",
         "function": {
@@ -297,6 +298,41 @@ insert into marketplace_skills (author_id, name, slug, description, category, sc
       }
     ]$json$::jsonb,
     '{crypto,solana,evm,defi,wallet}',
+    true
+),
+
+(
+    null,
+    'QR Code',
+    'qr-code',
+    'Generate a QR code image for any text or URL.',
+    'utilities',
+    $json$[
+      {
+        "clientDefinition": {
+          "id": "qr-code-001",
+          "name": "QRCode",
+          "description": "Generates a QR code image for any text or URL.",
+          "arguments": [
+            {"name": "text", "type": "string", "description": "Text or URL to encode as a QR code"}
+          ],
+          "body": "const encoded = encodeURIComponent(args.text);\nconst url = 'https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=' + encoded;\nreturn { contentType: 'text/html', content: '<div style=\"text-align:center;padding:16px\"><img src=\"' + url + '\" style=\"max-width:256px\" alt=\"QR Code\"><p style=\"font-family:monospace;font-size:12px;word-break:break-all\">' + args.text + '</p></div>' };"
+        },
+        "type": "function",
+        "function": {
+          "name": "QRCode",
+          "description": "Generates and displays a QR code for the given text or URL.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "text": {"type": "string", "description": "Text or URL to encode as QR code"}
+            },
+            "required": ["text"]
+          }
+        }
+      }
+    ]$json$::jsonb,
+    '{qr,encode,url,utilities}',
     true
 )
 
