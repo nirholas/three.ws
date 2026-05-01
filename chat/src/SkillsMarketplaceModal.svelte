@@ -359,7 +359,7 @@
 			const res = await fetch(`${base}/index.en-US.json`);
 			if (res.ok) {
 				const json = await res.json();
-				const entries = (json.plugins || []).map((p) => ({
+				libraryPlugins = (json.plugins || []).map((p) => ({
 					identifier: p.identifier,
 					name: p.meta?.title || p.identifier,
 					description: p.meta?.description || '',
@@ -368,21 +368,9 @@
 					category: p.meta?.category || '',
 					manifestUrl: p.manifest || `${base}/${p.identifier}.json`,
 				}));
-				// Probe each manifest URL in parallel; drop entries whose manifest 404s
-				// so a single broken plugin can't hide the rest of the registry.
-				const probes = await Promise.all(
-					entries.map(async (e) => {
-						try {
-							const r = await fetch(e.manifestUrl, { method: 'HEAD' });
-							if (r.ok) return e;
-							console.warn(`[plugin-library] skipping ${e.identifier}: HTTP ${r.status} for ${e.manifestUrl}`);
-						} catch (err) {
-							console.warn(`[plugin-library] skipping ${e.identifier}: ${err}`);
-						}
-						return null;
-					})
-				);
-				libraryPlugins = probes.filter(Boolean);
+				// No upfront HEAD probe — surfacing 100+ 404s in the console on
+				// every Library open isn't worth filtering broken entries early.
+				// Install-time fetch (installLibraryPlugin) reports the real failure.
 			}
 		} catch (err) {
 			console.warn('[plugin-library] failed to load registry index:', err);

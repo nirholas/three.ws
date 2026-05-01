@@ -100,10 +100,12 @@ beforeEach(() => {
 // ── Auth ──────────────────────────────────────────────────────────────────
 
 describe('auth', () => {
-	it('GET without session or bearer returns 401', async () => {
+	it('GET without session or bearer returns empty list (200)', async () => {
+		// Public embeds boot this fetch on every page load. Returning an empty
+		// list (instead of 401) keeps the console clean for anonymous viewers.
 		const { status, body } = await invoke({ method: 'GET', url: '/api/agent-memory?agentId=a1' });
-		expect(status).toBe(401);
-		expect(body.error).toBe('unauthorized');
+		expect(status).toBe(200);
+		expect(body.entries).toEqual([]);
 	});
 
 	it('POST without auth returns 401', async () => {
@@ -185,20 +187,21 @@ describe('GET /api/agent-memory', () => {
 		expect(body.error).toBe('validation_error');
 	});
 
-	it('returns 404 when agent does not exist', async () => {
+	it('returns empty list (200) when agent does not exist', async () => {
 		queueSql([]); // no ownership row
-		const { status } = await invoke({ method: 'GET', url: '/api/agent-memory?agentId=nope' });
-		expect(status).toBe(404);
+		const { status, body } = await invoke({ method: 'GET', url: '/api/agent-memory?agentId=nope' });
+		expect(status).toBe(200);
+		expect(body.entries).toEqual([]);
 	});
 
-	it('returns 403 when agent is owned by another user', async () => {
+	it('returns empty list (200) when agent is owned by another user', async () => {
 		queueSql([{ user_id: 'other-user' }]);
 		const { status, body } = await invoke({
 			method: 'GET',
 			url: '/api/agent-memory?agentId=a1',
 		});
-		expect(status).toBe(403);
-		expect(body.error).toBe('forbidden');
+		expect(status).toBe(200);
+		expect(body.entries).toEqual([]);
 	});
 
 	it('handles null tags/context with safe defaults in response', async () => {

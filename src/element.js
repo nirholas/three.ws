@@ -1016,6 +1016,9 @@ class Agent3DElement extends HTMLElement {
 			});
 			const skillList = manifest.skills || [];
 			for (const spec of skillList) {
+				// Built-in skills (referenced by name only, no bundle URI) are
+				// registered through AgentSkills, not the remote SkillRegistry.
+				if (!spec || !spec.uri) continue;
 				try {
 					const skill = await this._skills.install(spec, {
 						bundleBase: manifest._baseURI,

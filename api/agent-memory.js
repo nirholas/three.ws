@@ -33,7 +33,10 @@ export default wrap(async (req, res) => {
 
 async function handleList(req, res) {
 	const auth = await resolveAuth(req);
-	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
+	// Public embeds boot this fetch on every page load. Returning an empty
+	// list (instead of 401) for anonymous viewers keeps the console clean
+	// without leaking memories — only owners ever see entries.
+	if (!auth) return json(res, 200, { entries: [] });
 
 	const url = new URL(req.url, 'http://x');
 	const agentId = url.searchParams.get('agentId') || url.searchParams.get('agent_id');
@@ -47,8 +50,8 @@ async function handleList(req, res) {
 	const [agentRow] = await sql`
 		SELECT user_id FROM agent_identities WHERE id = ${agentId} AND deleted_at IS NULL
 	`;
-	if (!agentRow) return error(res, 404, 'not_found', 'agent not found');
-	if (agentRow.user_id !== auth.userId) return error(res, 403, 'forbidden', 'not your agent');
+	if (!agentRow) return json(res, 200, { entries: [] });
+	if (agentRow.user_id !== auth.userId) return json(res, 200, { entries: [] });
 
 	const rows = type
 		? await sql`
