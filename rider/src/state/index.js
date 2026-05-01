@@ -37,7 +37,7 @@ const DEBUG_CHALLENGE = {
 
 const SKIP_INTRO = AFRAME.utils.getUrlParameter('skipintro') === 'true';
 
-const colorScheme = localStorage.getItem('colorScheme') || 'default';
+const colorScheme = localStorage.getItem('colorScheme') || 'blue';
 
 let favorites = localStorage.getItem('favorites-v2');
 if (favorites) {

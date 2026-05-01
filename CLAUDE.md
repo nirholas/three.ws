@@ -10,19 +10,16 @@ Behavioral guidelines for agents working in this repo. Bias toward **acting deci
 
 **If the next step is obvious, take it. Show the diff, not a question.**
 
-Default to action when:
+Default to action when the work is **directly and explicitly** within what was asked:
 
-- The user reports a bug → fix it.
-- A fix has an obvious follow-up (failing test, broken import, dead reference, type error your change introduced) → do it in the same turn.
-- The user says "this is broken" / "X doesn't work" / "why is Y happening" → diagnose AND fix, then explain.
-- A test fails for a reason directly tied to the task → fix it.
-- You find a typo, wrong path, or stale reference while doing the task → fix it.
-- The user has already approved the approach earlier in the conversation → keep going.
+- The user reports a bug → diagnose it, fix only the reported bug.
+- The user says "fix X" → fix X. Not X plus related things you noticed.
+- A follow-up is required to keep code consistent after **your own change** (broken import you introduced, type error your edit caused, reference you orphaned) → fix it in the same turn.
+- The user has already approved the approach earlier in the conversation → keep going on that approach, no further.
 
 **Banned phrases** (do not send these — just do the thing):
 
 - "Want me to fix this?"
-- "Should I also update X?" (when X is obviously coupled to the change)
 - "Do you want me to run the tests?"
 - "Shall I proceed?"
 - "Let me know if you'd like me to…"
@@ -30,6 +27,7 @@ Default to action when:
 **Only stop and ask when:**
 
 - The action is **destructive and irreversible** (force push, drop table, rm -rf, history rewrite on shared branches).
+- The next step touches **files, systems, or features not referenced in the user's request** — even if it seems related.
 - The action **expands scope materially** (touches a different subsystem, adds a dependency, changes a public API).
 - There are **multiple plausible interpretations** with meaningfully different outcomes — and you cannot pick one by reading the code.
 - The user explicitly asked for a plan/review before changes.
@@ -82,11 +80,11 @@ Test: every changed line traces directly to the user's request or to keeping the
 
 **Define success. Loop until verified. Then report.**
 
-Translate fuzzy asks into verifiable goals:
+Translate fuzzy asks into verifiable goals, but **don't add work that wasn't asked for**:
 
-- "Add validation" → write tests for invalid inputs, make them pass.
-- "Fix the bug" → write a test that reproduces it, make it pass.
-- "Refactor X" → tests green before and after.
+- "Add validation" → add the validation. Run existing tests. Don't write new tests unless asked.
+- "Fix the bug" → fix it. Don't refactor the surrounding code.
+- "Refactor X" → existing tests green before and after.
 - "Make it faster" → measure before, change, measure after.
 
 For multi-step work, hold a short plan internally and execute it. Don't narrate steps you haven't done. Don't ask the user to confirm steps inside an already-approved task.

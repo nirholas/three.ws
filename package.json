@@ -45,7 +45,7 @@
 		"build:artifact": "vite build --config vite.config.artifact.js",
 		"publish:lib": "node scripts/publish-lib.mjs",
 		"build:chat": "cd chat && npm ci --prefer-offline --no-audit --no-fund && npm run build",
-		"build:rider": "cd rider && npm ci --prefer-offline --no-audit --no-fund --ignore-engines && cross-env NODE_ENV=production npx webpack && mkdir -p ../dist/rider && cp index.html ../dist/rider/ && cp -r assets ../dist/rider/ && cp -r build ../dist/rider/ && cp -r vendor ../dist/rider/",
+		"build:rider": "cd rider && npm ci --prefer-offline --no-audit --no-fund --ignore-engines && npm run build && mkdir -p ../dist/rider && cp index.html ../dist/rider/ && cp -r assets ../dist/rider/ && cp -r build ../dist/rider/ && cp -r vendor ../dist/rider/",
 		"build:all": "npm run build:chat && npm run build:rider && npm run build && npm run build:lib && npm run publish:lib",
 		"clean": "rm -rf dist/* dist-lib/* || true",
 		"generate-icons": "node scripts/generate-pwa-icons.mjs",

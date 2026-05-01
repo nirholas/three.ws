@@ -270,6 +270,37 @@ const BASE_STYLE = `
 		color: rgba(0, 0, 0, 0.55);
 		text-shadow: none;
 	}
+	/* Transparent floating: remove box chrome so avatar composites over the page */
+	:host([mode="floating"][background="transparent"]) {
+		box-shadow: none;
+		border-radius: 0;
+		overflow: visible;
+	}
+	/* Drag handle — visible in floating mode, used to reposition the widget */
+	.drag-handle {
+		display: none;
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		height: 24px;
+		cursor: grab;
+		z-index: 15;
+		touch-action: none;
+	}
+	.drag-handle:active { cursor: grabbing; }
+	.drag-handle::after {
+		content: '';
+		position: absolute;
+		top: 7px;
+		left: 50%;
+		transform: translateX(-50%);
+		width: 32px;
+		height: 3px;
+		border-radius: 2px;
+		background: rgba(255,255,255,0.3);
+	}
+	:host([mode="floating"]) .drag-handle { display: block; }
 `;
 
 class Agent3DElement extends HTMLElement {
@@ -399,6 +430,13 @@ class Agent3DElement extends HTMLElement {
 		loading.hidden = true;
 		this.shadowRoot.appendChild(loading);
 		this._loadingEl = loading;
+
+		// Drag handle — floating mode only (CSS hides it otherwise)
+		const dragHandle = document.createElement('div');
+		dragHandle.className = 'drag-handle';
+		dragHandle.setAttribute('aria-hidden', 'true');
+		this.shadowRoot.appendChild(dragHandle);
+		this._dragHandleEl = dragHandle;
 
 		// Optional name-plate overlay. Hidden until a name is set on boot, and
 		// toggled off entirely when the host carries `name-plate="off"`. The CSS
@@ -581,12 +619,15 @@ class Agent3DElement extends HTMLElement {
 		if (!v) return;
 		const mode = this.getAttribute('background') || 'transparent';
 		if (mode === 'transparent') {
+			if (v.state) v.state.transparentBg = true;
 			v.renderer?.setClearAlpha?.(0);
 			if (v.scene) v.scene.background = null;
 		} else if (mode === 'dark') {
+			if (v.state) v.state.transparentBg = false;
 			v.renderer?.setClearAlpha?.(1);
 			if (v.scene?.background?.set) v.scene.background.set('#0b0d10');
 		} else if (mode === 'light') {
+			if (v.state) v.state.transparentBg = false;
 			v.renderer?.setClearAlpha?.(1);
 			if (v.scene?.background?.set) v.scene.background.set('#f5f5f5');
 		}
@@ -700,6 +741,9 @@ class Agent3DElement extends HTMLElement {
 			this._updatePillState(this._mqNarrow.matches);
 		}
 
+		// Free drag for floating mode
+		if (mode === 'floating') this._setupDrag();
+
 		// Swipe-down to close the bottom-sheet (CSS transitions handle the animation)
 		let touchStartY = 0;
 		this.shadowRoot.addEventListener(
@@ -719,6 +763,49 @@ class Agent3DElement extends HTMLElement {
 			},
 			{ passive: true },
 		);
+	}
+
+	_setupDrag() {
+		if (!this._dragHandleEl) return;
+		let dragging = false;
+		let startX, startY, startLeft, startTop;
+
+		const onPointerMove = (e) => {
+			if (!dragging) return;
+			const dx = e.clientX - startX;
+			const dy = e.clientY - startY;
+			const w = this.offsetWidth;
+			const h = this.offsetHeight;
+			const newLeft = Math.max(0, Math.min(window.innerWidth - w, startLeft + dx));
+			const newTop = Math.max(0, Math.min(window.innerHeight - h, startTop + dy));
+			this.style.left = newLeft + 'px';
+			this.style.top = newTop + 'px';
+		};
+
+		const onPointerUp = () => {
+			if (!dragging) return;
+			dragging = false;
+			document.removeEventListener('pointermove', onPointerMove);
+			document.removeEventListener('pointerup', onPointerUp);
+		};
+
+		this._dragHandleEl.addEventListener('pointerdown', (e) => {
+			e.preventDefault();
+			dragging = true;
+			const rect = this.getBoundingClientRect();
+			startX = e.clientX;
+			startY = e.clientY;
+			startLeft = rect.left;
+			startTop = rect.top;
+			// Switch to top/left so drag math works correctly
+			this.style.right = '';
+			this.style.bottom = '';
+			this.style.left = startLeft + 'px';
+			this.style.top = startTop + 'px';
+			this.style.transform = '';
+			document.addEventListener('pointermove', onPointerMove);
+			document.addEventListener('pointerup', onPointerUp);
+		});
 	}
 
 	_updatePillState(narrow) {
