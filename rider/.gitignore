@@ -41,7 +41,7 @@ yarn.lock
 
 exports/
 *.sw*
-/build
+# /build — kept tracked so Vercel can skip the webpack rebuild
 
 dump.rdb
 .ghpages
