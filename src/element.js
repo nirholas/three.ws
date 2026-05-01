@@ -171,7 +171,10 @@ const BASE_STYLE = `
 		border-radius: 20px;
 		padding: 8px 14px;
 		font: 600 13px/1 var(--agent-chat-font);
-		white-space: nowrap;
+		max-width: min(280px, 60%);
+		white-space: normal;
+		min-width: 80px;
+		min-height: 28px;
 		pointer-events: none;
 		opacity: 0;
 		transition: opacity 0.25s ease;
@@ -192,6 +195,13 @@ const BASE_STYLE = `
 		border-top: 8px solid rgba(255, 255, 255, 0.95);
 	}
 	.thought-bubble[data-active="true"] { opacity: 1; }
+	.thought-bubble .text {
+		font: 13px/1.4 var(--agent-chat-font);
+		color: #1a1a2e;
+		display: none;
+	}
+	.thought-bubble[data-streaming="true"] .text { display: block; }
+	.thought-bubble[data-streaming="true"] .dot { display: none; }
 	.thought-bubble .dot {
 		width: 6px;
 		height: 6px;
@@ -426,6 +436,8 @@ class Agent3DElement extends HTMLElement {
 		this._notifier = null;
 		this._thoughtBubbleEl = null;
 		this._walkReturnTimer = null;
+		this._isWalking = false;
+		this._walkStopDebounce = null;
 	}
 
 	connectedCallback() {
@@ -584,7 +596,9 @@ class Agent3DElement extends HTMLElement {
 			const thoughtBubble = document.createElement('div');
 			thoughtBubble.className = 'thought-bubble';
 			thoughtBubble.setAttribute('aria-live', 'polite');
-			thoughtBubble.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
+			thoughtBubble.innerHTML =
+				'<span class="text"></span>' +
+				'<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
 			avatarAnchor.appendChild(thoughtBubble);
 
 			chrome.appendChild(chat);
@@ -595,6 +609,7 @@ class Agent3DElement extends HTMLElement {
 			this._inputEl = input;
 			this._micEl = micBtn;
 			this._thoughtBubbleEl = thoughtBubble;
+			this._thoughtTextEl = thoughtBubble.querySelector('.text');
 
 			// Voice state ring — wired by VoiceClient when voice-server attr is set
 			this.addEventListener('voiceStateChange', (e) => {
@@ -1142,6 +1157,7 @@ class Agent3DElement extends HTMLElement {
 			// Re-dispatch runtime events on the host
 			for (const ev of [
 				'brain:thinking',
+				'brain:stream',
 				'brain:message',
 				'skill:tool-called',
 				'voice:speech-start',
@@ -1171,21 +1187,28 @@ class Agent3DElement extends HTMLElement {
 								type: ACTION_TYPES.SPEAK,
 								payload: { text: detail.content, sentiment: detail.sentiment ?? 0 },
 							});
-							// Avatar walks while the response text is being delivered
-							this._startWalkAnimation(detail.content);
 						}
 						if (this._chatEl) this._renderMessage(detail);
+					}
+					if (ev === 'brain:stream') {
+						if (this._thoughtBubbleEl && this.getAttribute('avatar-chat') !== 'off') {
+							this._streamToBubble(e.detail?.chunk ?? '');
+						}
 					}
 					if (ev === 'brain:thinking') {
 						if (this._toolIndicatorEl) {
 							if (e.detail?.thinking) this._setToolIndicator('thinking');
 							else this._clearToolIndicator();
 						}
+						if (!e.detail?.thinking) this._stopWalkAnimation();
 						protocol.emit({ type: ACTION_TYPES.THINK, payload: { thought: 'processing your message...' } });
 						protocol.emit({ type: ACTION_TYPES.EMOTE, payload: { trigger: 'patience', weight: 0.5 } });
-						// Show/hide thought bubble above avatar (skipped when feature is off)
 						if (this._thoughtBubbleEl && this.getAttribute('avatar-chat') !== 'off') {
-							this._thoughtBubbleEl.dataset.active = e.detail?.thinking ? 'true' : 'false';
+							if (e.detail?.thinking) {
+								this._thoughtBubbleEl.dataset.active = 'true';
+							} else {
+								this._clearThoughtBubble();
+							}
 						}
 					}
 					if (ev === 'skill:tool-called') {
@@ -1360,6 +1383,9 @@ class Agent3DElement extends HTMLElement {
 		msg.querySelector('.body').textContent = content;
 		this._chatEl.appendChild(msg);
 		this._chatEl.scrollTop = this._chatEl.scrollHeight;
+		if (!this._isWalking && this.getAttribute('avatar-chat') !== 'off') {
+			this._onStreamChunk();
+		}
 	}
 
 	_sentimentTone(s) {
@@ -1386,22 +1412,21 @@ class Agent3DElement extends HTMLElement {
 		}, 350);
 	}
 
-	/**
-	 * Play the walk animation for a duration proportional to the response length,
-	 * then crossfade back to idle. Safe to call even when the scene isn't ready.
-	 * @param {string} text  The response text being delivered
-	 */
-	_startWalkAnimation(text) {
+	_onStreamChunk() {
 		if (!this._scene || this.getAttribute('avatar-chat') === 'off') return;
-		clearTimeout(this._walkReturnTimer);
-		// Roughly 60 wpm reading pace; min 2s, max 8s
-		const words = text ? text.split(/\s+/).length : 0;
-		// ~100ms per word (approx TTS delivery rate), clamped 2–8s
-		const duration = Math.min(8000, Math.max(2000, words * 100));
-		this._scene.playClipByName('walk', { loop: true, fade_ms: 300 });
-		this._walkReturnTimer = setTimeout(() => {
-			this._scene?.playClipByName('idle', { loop: true, fade_ms: 600 });
-		}, duration);
+		if (!this._isWalking) {
+			this._isWalking = true;
+			this._scene.playClipByName('walk', { loop: true, fade_ms: 300 });
+		}
+		clearTimeout(this._walkStopDebounce);
+		this._walkStopDebounce = setTimeout(() => this._stopWalkAnimation(), 600);
+	}
+
+	_stopWalkAnimation() {
+		if (!this._isWalking) return;
+		this._isWalking = false;
+		clearTimeout(this._walkStopDebounce);
+		this._scene?.playClipByName('idle', { loop: true, fade_ms: 500 });
 	}
 
 	_toolIndicatorLabel(toolName) {
@@ -1696,6 +1721,9 @@ class Agent3DElement extends HTMLElement {
 		this._notifier = null;
 		clearTimeout(this._walkReturnTimer);
 		this._walkReturnTimer = null;
+		clearTimeout(this._walkStopDebounce);
+		this._walkStopDebounce = null;
+		this._isWalking = false;
 		try {
 			this._runtime?.destroy();
 		} catch {}

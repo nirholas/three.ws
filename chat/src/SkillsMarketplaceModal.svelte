@@ -814,7 +814,7 @@
 									on:error={() => { failedAvatars = new Set([...failedAvatars, plugin.identifier]); }}
 								/>
 							{:else}
-								<span class="shrink-0 text-2xl leading-none">{/^https?:\/\//.test(plugin.avatar) ? '🔧' : plugin.avatar}</span>
+								<span class="shrink-0 text-2xl leading-none">{plugin.avatar?.startsWith('http') ? '🔧' : plugin.avatar}</span>
 							{/if}
 							<div class="min-w-0 flex-1">
 								<div class="flex flex-wrap items-center gap-x-1.5 gap-y-1">

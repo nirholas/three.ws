@@ -14,8 +14,17 @@ const RPC = {
 	devnet: process.env.SOLANA_RPC_URL_DEVNET || 'https://api.devnet.solana.com',
 };
 
+const RPC_PUBLIC = {
+	mainnet: 'https://api.mainnet-beta.solana.com',
+	devnet: 'https://api.devnet.solana.com',
+};
+
 export function solanaConnection(network = 'mainnet') {
 	return new Connection(RPC[network] || RPC.mainnet, 'confirmed');
+}
+
+export function solanaPublicConnection(network = 'mainnet') {
+	return new Connection(RPC_PUBLIC[network] || RPC_PUBLIC.mainnet, 'confirmed');
 }
 
 /**

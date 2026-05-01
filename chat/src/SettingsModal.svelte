@@ -39,6 +39,7 @@
 	import Tooltip from './Tooltip.svelte';
 	import ModelSelector from './ModelSelector.svelte';
 	import { sendSingleItem, resetSyncCircuit } from './sync.js';
+	import AvatarPreview from './AvatarPreview.svelte';
 
 	const dispatch = createEventDispatcher();
 
@@ -455,6 +456,10 @@
 							variant="outline"
 							class="self-start"
 							on:click={async () => {
+								if (!$remoteServer.address) {
+									elRefreshToolSchema.dispatchEvent(new CustomEvent('flashError'));
+									return;
+								}
 								try {
 									const schema = await (
 										await fetch(`${$remoteServer.address}/tool_schema`, {
@@ -687,11 +692,7 @@
 											? 'border-indigo-400 bg-indigo-50'
 											: 'border-slate-200 hover:border-indigo-300'}"
 									>
-										{#if a.thumbnail_url}
-											<img src={a.thumbnail_url} alt={a.name} class="h-16 w-full rounded object-cover" loading="lazy" />
-										{:else}
-											<div class="flex h-16 w-full items-center justify-center rounded bg-slate-100 text-[10px] text-slate-400">No preview</div>
-										{/if}
+										<AvatarPreview thumbnail_url={a.thumbnail_url} model_url={a.model_url} alt={a.name} />
 										<span class="w-full truncate text-[11px] text-slate-700">{a.name || a.slug}</span>
 									</button>
 								{/each}
@@ -711,11 +712,7 @@
 											? 'border-indigo-400 bg-indigo-50'
 											: 'border-slate-200 hover:border-indigo-300'}"
 									>
-										{#if a.thumbnail_url}
-											<img src={a.thumbnail_url} alt={a.name} class="h-16 w-full rounded object-cover" loading="lazy" />
-										{:else}
-											<div class="flex h-16 w-full items-center justify-center rounded bg-slate-100 text-[10px] text-slate-400">No preview</div>
-										{/if}
+										<AvatarPreview thumbnail_url={a.thumbnail_url} model_url={a.model_url} alt={a.name} />
 										<span class="w-full truncate text-[11px] text-slate-700">{a.name || a.slug}</span>
 									</button>
 								{/each}

@@ -28,13 +28,14 @@ export class AnthropicProvider {
 		}
 	}
 
-	async complete({ system, messages, tools }) {
+	async complete({ system, messages, tools, onChunk }) {
 		const body = {
 			model: this.model,
 			max_tokens: this.maxTokens,
 			temperature: this.temperature,
 			system,
 			messages,
+			stream: true,
 		};
 		if (tools && tools.length) body.tools = tools;
 		if (this.thinking === 'always') {
@@ -54,8 +55,53 @@ export class AnthropicProvider {
 			const text = await res.text();
 			throw new Error(`Anthropic ${res.status}: ${text}`);
 		}
-		const data = await res.json();
-		return this._normalize(data);
+
+		const out = { text: '', toolCalls: [], thinking: '', stopReason: 'end_turn' };
+		let currentToolCall = null;
+		const reader = res.body.getReader();
+		const decoder = new TextDecoder();
+		let buf = '';
+
+		while (true) {
+			const { done, value } = await reader.read();
+			if (done) break;
+			buf += decoder.decode(value, { stream: true });
+			const lines = buf.split('\n');
+			buf = lines.pop();
+			for (const line of lines) {
+				if (!line.startsWith('data: ')) continue;
+				const payload = line.slice(6).trim();
+				if (payload === '[DONE]') break;
+				let evt;
+				try { evt = JSON.parse(payload); } catch { continue; }
+				if (evt.type === 'message_delta' && evt.delta?.stop_reason) {
+					out.stopReason = evt.delta.stop_reason;
+				} else if (evt.type === 'content_block_start') {
+					const block = evt.content_block;
+					if (block?.type === 'tool_use') {
+						currentToolCall = { id: block.id, name: block.name, input: '' };
+					}
+				} else if (evt.type === 'content_block_delta') {
+					const delta = evt.delta;
+					if (delta?.type === 'text_delta') {
+						out.text += delta.text;
+						onChunk?.(delta.text);
+					} else if (delta?.type === 'thinking_delta') {
+						out.thinking += delta.thinking;
+					} else if (delta?.type === 'input_json_delta' && currentToolCall) {
+						currentToolCall.input += delta.partial_json;
+					}
+				} else if (evt.type === 'content_block_stop') {
+					if (currentToolCall) {
+						try { currentToolCall.input = JSON.parse(currentToolCall.input); } catch { currentToolCall.input = {}; }
+						out.toolCalls.push(currentToolCall);
+						currentToolCall = null;
+					}
+				}
+			}
+		}
+
+		return out;
 	}
 
 	_normalize(data) {
