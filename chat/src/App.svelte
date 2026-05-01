@@ -30,6 +30,7 @@
 	import MarketingPage from './manus/pages/MarketingPage.svelte';
 	import ResourcePage from './manus/pages/ResourcePage.svelte';
 	import FeaturePage from './manus/pages/FeaturePage.svelte';
+	import EventsPage from './manus/pages/EventsPage.svelte';
 	import SettingsModal from './SettingsModal.svelte';
 	import ToolcallButton from './ToolcallButton.svelte';
 	import MessageContent from './MessageContent.svelte';
@@ -1736,10 +1737,15 @@
     <div class="sticky top-0 z-[110]"><TopNav /></div>
     <AuthPage kind={$route} />
   </div>
-{:else if $route.startsWith('solutions/') || $route.startsWith('business/') || $route.startsWith('events/')}
+{:else if $route.startsWith('solutions/') || $route.startsWith('business/')}
   <div class="min-h-dvh bg-paper">
     <div class="sticky top-0 z-[110]"><TopNav /></div>
     <MarketingPage slug={$route} />
+  </div>
+{:else if $route.startsWith('events/')}
+  <div class="min-h-dvh bg-paper overflow-y-auto">
+    <div class="sticky top-0 z-[110]"><TopNav /></div>
+    <EventsPage slug={$route} />
   </div>
 {:else if $route.startsWith('resources/')}
   <div class="min-h-dvh bg-paper">

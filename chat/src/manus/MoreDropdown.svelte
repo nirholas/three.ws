@@ -3,23 +3,19 @@
   import Icon from '../Icon.svelte';
   import { mode } from '../stores.js';
   import {
-    feSmartphone, feCalendar, feGlobe, feGrid, feBarChart2,
-    fePlay, feActivity, feMessageSquare, feBookOpen, feZap,
+    feRotateCw, feCamera, feLink, feSliders, feActivity, feLayers, feZap,
   } from '../feather.js';
 
   const dispatch = createEventDispatcher();
 
   const items = [
-    { id: 'design',        label: 'Design',        icon: feZap },
-    { id: 'desktop',       label: 'Develop apps',  icon: feSmartphone },
-    { id: 'schedule',      label: 'Schedule task', icon: feCalendar },
-    { id: 'research',      label: 'Wide Research', icon: feGlobe },
-    { id: 'spreadsheet',   label: 'Spreadsheet',   icon: feGrid },
-    { id: 'visualization', label: 'Visualization', icon: feBarChart2 },
-    { id: 'video',         label: 'Video',         icon: fePlay },
-    { id: 'audio',         label: 'Audio',         icon: feActivity },
-    { id: 'chat',          label: 'Chat mode',     icon: feMessageSquare },
-    { id: 'playbook',      label: 'Playbook',      icon: feBookOpen },
+    { id: 'animate',    label: 'Animate model',     icon: feRotateCw },
+    { id: 'ar',         label: 'AR experience',      icon: feCamera },
+    { id: 'wallet',     label: 'Connect wallet',     icon: feLink },
+    { id: 'emotions',   label: 'Configure emotions', icon: feSliders },
+    { id: 'reputation', label: 'Track reputation',   icon: feActivity },
+    { id: 'skills',     label: 'Add agent skills',   icon: feLayers },
+    { id: 'solana',     label: 'Mint on Solana',     icon: feZap },
   ];
 
   function pick(item) {

@@ -1,16 +1,16 @@
 <script>
   import { mode } from '../stores.js';
   import Icon from '../Icon.svelte';
-  import { feCode, feMonitor, feZap, feLayout, feMoreHorizontal } from '../feather.js';
+  import { feBox, feHexagon, feTrendingUp, feCode, feMoreHorizontal } from '../feather.js';
   import MoreDropdown from './MoreDropdown.svelte';
 
   let moreOpen = false;
 
   const chips = [
-    { id: 'slides',  label: 'Create slides',        icon: feLayout },
-    { id: 'website', label: 'Build website',         icon: feCode },
-    { id: 'desktop', label: 'Develop desktop apps',  icon: feMonitor },
-    { id: 'design',  label: 'Design',                icon: feZap },
+    { id: '3d-avatar', label: 'Build 3D avatar',     icon: feBox },
+    { id: 'onchain',   label: 'Mint agent on-chain', icon: feHexagon },
+    { id: 'token',     label: 'Launch token',         icon: feTrendingUp },
+    { id: 'widget',    label: 'Deploy as widget',     icon: feCode },
   ];
 
   function pick(id) {
