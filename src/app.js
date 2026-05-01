@@ -265,10 +265,12 @@ class App {
 			this._maybePendingSave();
 		}
 
-		// Boot the agent system once identity is ready. _loadAgentForEdit also
-		// triggers _initAgentSystem at its tail; the AgentHome render is
-		// idempotent so the second pass tears down and re-mounts cleanly.
-		this._initAgentSystem();
+		// Boot the agent system once identity is ready. When agentEdit is set,
+		// _loadAgentForEdit calls _initAgentSystem itself after loading the
+		// correct identity, so skip the early call to avoid a double-mount.
+		if (!options.agentEdit) {
+			this._initAgentSystem();
+		}
 
 		// Studio preview iframes use postMessage to live-update brand config.
 		this._initWidgetBridge();

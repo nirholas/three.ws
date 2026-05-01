@@ -55,7 +55,6 @@ export default wrap(async (req, res) => {
 	const url = await presignUpload({
 		key,
 		contentType: body.content_type,
-		contentLength: body.size_bytes,
 		...(body.checksum_sha256 ? { checksumSha256: body.checksum_sha256 } : {}),
 	});
 

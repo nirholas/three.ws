@@ -356,10 +356,14 @@ function _pickDescription(json) {
 	return null;
 }
 
+function _isAbsoluteURI(uri) {
+	return /^(https?|ipfs|ar|data):/.test(uri);
+}
+
 function _pickImage(json) {
 	const candidates = [json?.image, json?.thumbnail, json?.body?.thumbnail, json?.avatar];
 	for (const c of candidates) {
-		if (typeof c === 'string' && c) return resolveURI(c);
+		if (typeof c === 'string' && c && _isAbsoluteURI(c)) return resolveURI(c);
 	}
 	return null;
 }
@@ -374,7 +378,7 @@ function _pickBody(json) {
 		json?.image,
 	];
 	for (const c of candidates) {
-		if (typeof c === 'string' && c) return resolveURI(c);
+		if (typeof c === 'string' && c && _isAbsoluteURI(c)) return resolveURI(c);
 	}
 	return null;
 }

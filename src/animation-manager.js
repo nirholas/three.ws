@@ -184,7 +184,8 @@ export class AnimationManager {
 	async play(name) {
 		const ready = await this.ensureLoaded(name);
 		if (!ready) {
-			console.warn(`[AnimationManager] "${name}" unavailable`);
+			if (this._failed.has(name) || this._animationDefs.some((d) => d.name === name))
+				console.warn(`[AnimationManager] "${name}" unavailable`);
 			return;
 		}
 		const action = this.actions.get(name);
@@ -210,7 +211,8 @@ export class AnimationManager {
 		if (name === this.currentName) return;
 		const ready = await this.ensureLoaded(name);
 		if (!ready) {
-			console.warn(`[AnimationManager] "${name}" unavailable`);
+			if (this._failed.has(name) || this._animationDefs.some((d) => d.name === name))
+				console.warn(`[AnimationManager] "${name}" unavailable`);
 			return;
 		}
 		const next = this.actions.get(name);

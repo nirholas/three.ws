@@ -367,6 +367,7 @@
 	let loadingLibrary = false;
 	let libraryQuery = '';
 	let libraryInstalling = {};
+	let failedAvatars = new Set();
 
 	async function loadPluginLibrary() {
 		loadingLibrary = true;
@@ -804,16 +805,16 @@
 				<div class="flex flex-col gap-2 overflow-y-auto">
 					{#each filteredLibraryPlugins as plugin (plugin.identifier)}
 						<div class="flex items-center gap-x-3 rounded-lg border border-slate-200 px-3 py-3">
-							{#if typeof plugin.avatar === 'string' && /^https?:\/\//.test(plugin.avatar)}
+							{#if typeof plugin.avatar === 'string' && /^https?:\/\//.test(plugin.avatar) && !failedAvatars.has(plugin.identifier)}
 								<img
 									src={plugin.avatar}
 									alt=""
 									class="h-8 w-8 shrink-0 rounded-md object-cover"
 									loading="lazy"
-									on:error={(e) => { e.currentTarget.style.display = 'none'; }}
+									on:error={() => { failedAvatars = new Set([...failedAvatars, plugin.identifier]); }}
 								/>
 							{:else}
-								<span class="shrink-0 text-2xl leading-none">{plugin.avatar}</span>
+								<span class="shrink-0 text-2xl leading-none">{/^https?:\/\//.test(plugin.avatar) ? '🔧' : plugin.avatar}</span>
 							{/if}
 							<div class="min-w-0 flex-1">
 								<div class="flex flex-wrap items-center gap-x-1.5 gap-y-1">

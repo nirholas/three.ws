@@ -41,12 +41,16 @@ export const r2 = new Proxy(
 );
 
 // Short-lived signed URL for direct browser upload (PUT).
-export async function presignUpload({ key, contentType, contentLength, checksumSha256 }) {
+export async function presignUpload({ key, contentType, checksumSha256 }) {
+	// Do NOT include ContentLength in the command — that adds content-length to
+	// X-Amz-SignedHeaders, which browsers omit from CORS preflights (it is a
+	// "forbidden" request header). R2 would then reject the preflight, causing
+	// a network-level failure before the PUT response is ever checked.
+	// Size is validated server-side via headObject after upload.
 	const cmd = new PutObjectCommand({
 		Bucket: env.S3_BUCKET,
 		Key: key,
 		ContentType: contentType,
-		ContentLength: contentLength,
 		ChecksumSHA256: checksumSha256,
 	});
 	return getSignedUrl(r2, cmd, { expiresIn: 300 });

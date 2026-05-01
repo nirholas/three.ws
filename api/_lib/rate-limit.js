@@ -129,6 +129,8 @@ export const limits = {
 	agentDelegate: (key) => getLimiter('agent:delegate', { limit: 10, window: '1 m' }).limit(key),
 	// GitHub memory seeding: expensive (GitHub API + Claude). 1 seed per agent per 24 hours.
 	memorySeed: (agentId) => getLimiter('memory:seed', { limit: 1, window: '1 d' }).limit(agentId),
+	// Edge TTS: free upstream but cached in R2 — limit unique synthesis requests per user/min.
+	ttsEdge: (userId) => getLimiter('tts:edge', { limit: 20, window: '1 m' }).limit(userId),
 };
 
 // Trust only proxy headers that Vercel itself sets and signs. Naively reading

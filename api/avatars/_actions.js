@@ -38,7 +38,7 @@ const handlePresign = wrap(async (req, res) => {
 	const bodyAny = body;
 	const slug = bodyAny.slug ? slugSchema.parse(bodyAny.slug) : `draft-${Math.random().toString(36).slice(2, 8)}`;
 	const key = storageKeyFor({ userId, slug });
-	const url = await presignUpload({ key, contentType: body.content_type, contentLength: body.size_bytes });
+	const url = await presignUpload({ key, contentType: body.content_type });
 	return json(res, 200, { storage_key: key, upload_url: url, method: 'PUT', headers: { 'content-type': body.content_type }, expires_in: 300 });
 });
 

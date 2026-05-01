@@ -892,7 +892,7 @@
 						}, { passive: true });
 						document.querySelectorAll('#f input').forEach((el) => {
 							el.addEventListener('keydown', (ev) => {
-								if (ev.key.length === 1 || ev.key === 'Backspace') {
+								if (ev.key && (ev.key.length === 1 || ev.key === 'Backspace')) {
 									nod = (nod >= 0 ? -1 : 1) * 4;
 								}
 							});

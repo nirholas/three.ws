@@ -86,6 +86,10 @@ async function fetchManifestJSON(url) {
 	return res.json();
 }
 
+function isAbsoluteURI(uri) {
+	return /^(https?|ipfs|ar|data):/.test(uri);
+}
+
 // Convert either a full AGENT_MANIFEST or a bare ERC-8004 registration JSON
 // into a uniform manifest object the runtime consumes.
 export function normalize(json, { baseURI = '' } = {}) {
@@ -93,7 +97,7 @@ export function normalize(json, { baseURI = '' } = {}) {
 	if (json.spec && json.spec.startsWith('agent-manifest/')) {
 		const m = { ...json, _baseURI: baseURI };
 		m.body = m.body || {};
-		if (!m.body.uri && m.image) m.body.uri = m.image;
+		if (!m.body.uri && m.image && isAbsoluteURI(m.image)) m.body.uri = m.image;
 		return m;
 	}
 
@@ -104,6 +108,7 @@ export function normalize(json, { baseURI = '' } = {}) {
 		// top-level `image` field is a 2D thumbnail (NFT-marketplace compat) —
 		// only fall back to it when no 3D body was declared.
 		const glbUri = findAvatar3D(json);
+		const imageUri = json.image && isAbsoluteURI(json.image) ? json.image : '';
 		return {
 			spec: 'agent-manifest/0.1',
 			_baseURI: baseURI,
@@ -111,8 +116,8 @@ export function normalize(json, { baseURI = '' } = {}) {
 			id: { agentId: registration.agentId?.toString() },
 			name: json.name,
 			description: json.description,
-			image: json.image,
-			body: { uri: resolveURI(glbUri || json.image || ''), format: 'gltf-binary' },
+			image: imageUri || null,
+			body: { uri: resolveURI(glbUri || imageUri), format: 'gltf-binary' },
 			brain: { provider: 'none' },
 			voice: { tts: { provider: 'browser' }, stt: { provider: 'browser' } },
 			skills: [],
@@ -132,7 +137,7 @@ export function normalize(json, { baseURI = '' } = {}) {
 		name: json.name || 'Unnamed agent',
 		description: json.description || '',
 		body: {
-			uri: json.body?.uri || json.image || json.model || '',
+			uri: json.body?.uri || (json.image && isAbsoluteURI(json.image) ? json.image : '') || json.model || '',
 			format: json.body?.format || 'gltf-binary',
 		},
 		brain: json.brain || { provider: 'none' },

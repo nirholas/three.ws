@@ -79,7 +79,7 @@ async function loadCategories() {
 
 function renderCategories(data) {
 	const total = data?.total || 0;
-	const counts = Object.fromEntries((data?.categories || []).map((c) => [c.slug, c.count]));
+	const counts = Object.fromEntries((data?.categories || []).map((cat) => [cat.slug, cat.count]));
 	const rows = [
 		{ slug: null, label: 'Discover', count: null, head: true },
 		{ slug: 'all', label: 'All', count: total },
@@ -311,8 +311,8 @@ function renderSimilar(items) {
 		return;
 	}
 	grid.innerHTML = items.map(renderCard).join('');
-	grid.querySelectorAll('[data-id]').forEach((c) => {
-		c.addEventListener('click', () => navTo(`/marketplace/agents/${c.dataset.id}`));
+	grid.querySelectorAll('[data-id]').forEach((card) => {
+		card.addEventListener('click', () => navTo(`/marketplace/agents/${card.dataset.id}`));
 	});
 
 	side.innerHTML =
@@ -329,8 +329,8 @@ function renderSimilar(items) {
 				</div>`,
 			)
 			.join('');
-	side.querySelectorAll('[data-id]').forEach((c) => {
-		c.addEventListener('click', () => navTo(`/marketplace/agents/${c.dataset.id}`));
+	side.querySelectorAll('[data-id]').forEach((card) => {
+		card.addEventListener('click', () => navTo(`/marketplace/agents/${card.dataset.id}`));
 	});
 }
 
@@ -422,7 +422,7 @@ function bindEvents() {
 function escapeHtml(s) {
 	return String(s || '').replace(
 		/[&<>"']/g,
-		(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+		(ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch],
 	);
 }
 
@@ -474,8 +474,6 @@ function init() {
 	initPlugins();
 	render();
 }
-
-init();
 
 // ── Plugin Marketplace ────────────────────────────────────────────────────────
 
@@ -550,16 +548,16 @@ async function loadPluginCategories() {
 function renderPluginCats(cats) {
 	const el = $('plugin-cats');
 	if (!el) return;
-	const all = [{ slug: null, label: 'All', count: null }, ...cats.map((c) => ({
-		slug: c.slug,
-		label: c.slug.charAt(0).toUpperCase() + c.slug.slice(1),
-		count: c.count,
+	const all = [{ slug: null, label: 'All', count: null }, ...cats.map((cat) => ({
+		slug: cat.slug,
+		label: cat.slug.charAt(0).toUpperCase() + cat.slug.slice(1),
+		count: cat.count,
 	}))];
-	el.innerHTML = all.map((c) => {
-		const active = pluginState.category === c.slug;
-		return `<div class="cat-row${active ? ' active' : ''}" data-cat="${c.slug ?? ''}">
-			<span>${escapeHtml(c.label)}</span>
-			${c.count != null ? `<span class="count">${c.count}</span>` : ''}
+	el.innerHTML = all.map((cat) => {
+		const active = pluginState.category === cat.slug;
+		return `<div class="cat-row${active ? ' active' : ''}" data-cat="${cat.slug ?? ''}">
+			<span>${escapeHtml(cat.label)}</span>
+			${cat.count != null ? `<span class="count">${cat.count}</span>` : ''}
 		</div>`;
 	}).join('');
 	el.querySelectorAll('.cat-row').forEach((row) => {
@@ -784,3 +782,5 @@ function initPlugins() {
 	// Load categories (lazy — don't block initial page render)
 	loadPluginCategories();
 }
+
+init();
