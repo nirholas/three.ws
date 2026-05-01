@@ -93,12 +93,32 @@
 		  )
 		: myAgents;
 
+	$: filteredLibrary = (query
+		? libraryAgents.filter((a) => {
+				const q = query.toLowerCase();
+				return (
+					(a.name || '').toLowerCase().includes(q) ||
+					(a.description || '').toLowerCase().includes(q) ||
+					(a.tags || []).some((t) => String(t).toLowerCase().includes(q)) ||
+					(a.category || '').toLowerCase().includes(q)
+				);
+		  })
+		: libraryAgents
+	).slice(0, 60);
+
 	function onInput() {
 		clearTimeout(debounceTimer);
 		debounceTimer = setTimeout(() => searchMarket(query), 300);
 	}
 
 	async function pick(agent) {
+		if (agent.source === 'library') {
+			const detail = await loadLibraryAgentDetail(agent);
+			localAgentId.set(detail.id);
+			activeAgent.set(detail);
+			dispatch('pick', detail);
+			return;
+		}
 		try {
 			const res = await fetch(`/api/agents/${agent.id}`, { credentials: 'include' });
 			if (res.ok) {
@@ -145,6 +165,7 @@
 
 	loadMine();
 	searchMarket('');
+	loadLibrary();
 </script>
 
 <div class="flex flex-col gap-3 p-1">
@@ -246,6 +267,47 @@
 						</button>
 					{/each}
 				</div>
+			{/if}
+		</div>
+
+		<!-- Public Library (LobeHub-compatible JSON index) -->
+		<div>
+			<p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1.5">Public Library</p>
+			{#if loadingLibrary}
+				<p class="text-center text-[12px] text-slate-400 py-3">Loading…</p>
+			{:else if filteredLibrary.length === 0}
+				<p class="text-[12px] text-slate-400 py-2">{query ? 'No matches in library' : 'Library unavailable'}</p>
+			{:else}
+				<div class="grid grid-cols-3 gap-2">
+					{#each filteredLibrary as agent}
+						<button
+							class="flex flex-col items-center gap-1.5 rounded-xl p-2 text-center transition hover:bg-gray-50
+								{$localAgentId === agent.id ? 'bg-indigo-50 ring-2 ring-indigo-300' : 'ring-1 ring-gray-100'}"
+							on:click={() => pick(agent)}
+							title={agent.description || agent.name}
+						>
+							{#if agent.thumbnail_url}
+								<img
+									src={agent.thumbnail_url}
+									alt={agent.name}
+									class="h-14 w-14 rounded-lg object-cover"
+									loading="lazy"
+								/>
+							{:else if agent.avatar_emoji}
+								<div class="flex h-14 w-14 items-center justify-center rounded-lg bg-slate-50 text-[28px]">{agent.avatar_emoji}</div>
+							{:else}
+								<div
+									class="flex h-14 w-14 items-center justify-center rounded-lg text-[14px] font-bold text-white"
+									style="background:{color(agent.id)}"
+								>{initials(agent.name)}</div>
+							{/if}
+							<p class="w-full truncate text-[11px] font-medium text-slate-700 leading-tight">{agent.name}</p>
+						</button>
+					{/each}
+				</div>
+				{#if !query && libraryAgents.length > filteredLibrary.length}
+					<p class="text-[11px] text-slate-400 py-1.5 text-center">Showing 60 of {libraryAgents.length} — search to filter</p>
+				{/if}
 			{/if}
 		</div>
 	</div>

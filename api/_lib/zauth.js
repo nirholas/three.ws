@@ -9,11 +9,13 @@
 // Disabled cleanly when ZAUTH_API_KEY is unset — `instrument()` becomes a
 // no-op so unrelated environments don't pay any cost.
 //
-// Use the documented `/middleware` subpath. The middleware files are
-// force-included in the deploy via vercel.json `functions.includeFiles`
-// because @vercel/nft mis-resolves the conditional exports map otherwise.
+// Import from the main entry — `zauthProvider` is re-exported there. The
+// docs use `@zauthx402/sdk/middleware`, but Vercel's @vercel/nft fails to
+// bundle that subpath (conditional exports import/require split), so the
+// dist/middleware/index.js is missing in /var/task at runtime. The main
+// entry traces correctly.
 
-import { zauthProvider } from '@zauthx402/sdk/middleware';
+import { zauthProvider } from '@zauthx402/sdk';
 import { env } from './env.js';
 
 let cached;
