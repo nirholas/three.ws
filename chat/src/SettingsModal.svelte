@@ -16,6 +16,8 @@
 		talkingHeadAvatarUrl,
 		locale,
 		localProvidersEnabled,
+		currentUser,
+		loadCurrentUser,
 	} from './stores.js';
 	import Button from './Button.svelte';
 	import Modal from './Modal.svelte';
@@ -109,11 +111,14 @@
 		avatarsLoading = true;
 		avatarsError = '';
 		try {
+			if ($currentUser === null) await loadCurrentUser();
 			const [mineRes, publicRes] = await Promise.all([
-				fetch('/api/avatars?limit=24', { credentials: 'include' }),
+				$currentUser
+					? fetch('/api/avatars?limit=24', { credentials: 'include' })
+					: Promise.resolve(null),
 				fetch('/api/avatars/public?limit=12'),
 			]);
-			if (mineRes.ok) {
+			if (mineRes && mineRes.ok) {
 				const json = await mineRes.json();
 				myAvatars = (json.avatars ?? json.data?.avatars ?? []).filter((a) => a.model_url);
 			}
@@ -132,6 +137,10 @@
 	function selectAvatar(avatar) {
 		if (!avatar?.model_url) return;
 		talkingHeadAvatarUrl.set(avatar.model_url);
+	}
+
+	function clearAvatar() {
+		talkingHeadAvatarUrl.set('');
 	}
 
 	let addClientToolOpen = false;
@@ -714,14 +723,28 @@
 						</div>
 					{/if}
 
-					{#if avatarsLoaded && myAvatars.length === 0}
+					{#if avatarsLoaded && !$currentUser}
+						<p class="text-xs text-slate-500">
+							<a href="/login" class="text-indigo-500 underline">Sign in</a> to use your own avatars,
+							or <a href="/create" class="text-indigo-500 underline">create one</a>.
+						</p>
+					{:else if avatarsLoaded && $currentUser && myAvatars.length === 0}
 						<p class="text-xs text-slate-500">
 							You don't have any avatars yet. <a href="/create" class="text-indigo-500 underline">Create one</a> or paste a URL below.
 						</p>
 					{/if}
 
 					<div class="flex flex-col gap-1">
-						<label class="text-sm font-medium text-slate-700">Custom 3D Avatar URL (.glb)</label>
+						<div class="flex items-center justify-between">
+							<label class="text-sm font-medium text-slate-700">Custom 3D Avatar URL (.glb)</label>
+							{#if $talkingHeadAvatarUrl}
+								<button
+									type="button"
+									on:click={clearAvatar}
+									class="text-[11px] text-slate-500 underline hover:text-slate-700"
+								>Reset to default</button>
+							{/if}
+						</div>
 						<input
 							type="url"
 							placeholder="https://three.ws/api/avatars/<id> or any .glb URL"

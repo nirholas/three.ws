@@ -7,7 +7,8 @@ module.exports = function convertBeatmap (src) {
 
   src['directDownload'] = src['versions'][0]['downloadURL'];
 
-  src['coverURL'] = src['versions'][0]['coverURL'];
+  src['coverURL'] = src['versions'][0]['coverURL']
+    .replace(/^https?:\/\/[^/]+\//, 'https://eu.cdn.beatsaver.com/');
 
   let diffs = src['versions'][0]['diffs'];
 

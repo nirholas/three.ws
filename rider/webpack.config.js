@@ -20,7 +20,11 @@ module.exports = {
   },
   devServer: {
     disableHostCheck: true,
-    hotOnly: true
+    hotOnly: true,
+    sockPort: 'location',
+    sockHost: process.env.CODESPACE_NAME
+      ? `${process.env.CODESPACE_NAME}-3000.${process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN || 'app.github.dev'}`
+      : undefined
   },
   entry: {
     build: './src/index.js',

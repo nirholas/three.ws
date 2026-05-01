@@ -39,16 +39,7 @@
 		]);
 	}
 
-	async function resolveDefaultAvatarUrl() {
-		try {
-			const res = await fetch('/api/avatars/public?limit=1');
-			if (!res.ok) return null;
-			const data = await res.json();
-			return data?.avatars?.[0]?.model_url ?? null;
-		} catch {
-			return null;
-		}
-	}
+	const FALLBACK_AVATAR_URL = '/avatars/default.glb';
 
 	async function loadAvatar() {
 		loadError = null;
@@ -56,11 +47,7 @@
 		head = null;
 
 		try {
-			const url = avatarUrl || (await resolveDefaultAvatarUrl());
-			if (!url) {
-				loadError = 'No avatar selected — pick one in Settings → Avatar.';
-				return;
-			}
+			const url = avatarUrl || FALLBACK_AVATAR_URL;
 
 			let mod;
 			try {

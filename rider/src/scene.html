@@ -17,6 +17,7 @@
   bind__tunnels="isPlaying: isPlaying; songDuration: challenge.metadata.duration"
   bind__zip-loader="difficulties: menuDifficulties; isLoading: isLoading; version: menuSelectedChallenge.version; directDownload: menuSelectedChallenge.directDownload; bpm: menuSelectedChallenge.metadata.bpm"
   animation__gameover="property: object3D.background; type: color; to: #750000; startEvents: gameover"
+  agent-picker
   console-shortcuts
   debug-beat-generator
   debug-beat-positioning
@@ -149,7 +150,7 @@
         gltf-model="#agentGlb"
         agent-dance
         position="0.7 0.45 0.5"
-        rotation="0 -15 0"
+        rotation="0 165 0"
         scale="0.9 0.9 0.9"></a-entity>
       <a-entity
         id="cameraWallCollider"
