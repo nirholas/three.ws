@@ -14,6 +14,7 @@
 		syncServer,
 		toolSchema,
 		talkingHeadAvatarUrl,
+		locale,
 	} from './stores.js';
 	import Button from './Button.svelte';
 	import Modal from './Modal.svelte';
@@ -253,6 +254,15 @@
 						sent to or stored on any remote server.
 					{/if}
 				</p>
+
+				<div class="flex flex-col gap-2">
+					<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Language</p>
+					<select bind:value={$locale}
+						class="rounded-lg border border-slate-200 px-3 py-1.5 text-[13px] text-slate-700 outline-none focus:border-indigo-400">
+						<option value="en">English</option>
+						<option value="zh-CN">中文</option>
+					</select>
+				</div>
 			{:else if activeTab === 'custom-instructions'}
 				<label class="mt-1 flex flex-col text-[10px] uppercase tracking-wide">
 					<span class="mb-2 ml-[3px]">Custom instructions</span>

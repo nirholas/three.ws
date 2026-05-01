@@ -1,7 +1,10 @@
 <script>
-	import { params } from './stores.js';
+	import { params, activeAgent } from './stores.js';
+	import { t } from './i18n.js';
+	import KnowledgeBasePanel from './KnowledgeBasePanel.svelte';
 
 	export let knobsOpen = false;
+	export let db = null;
 </script>
 
 <aside
@@ -12,7 +15,7 @@
 >
 	<label class="mb-4 flex flex-col text-[10px] uppercase tracking-wide">
 		<div class="mb-2 ml-[3px] flex items-baseline">
-			<span>Temperature</span>
+			<span>{$t('temperature')}</span>
 			<span class="ml-auto">{$params.temperature}</span>
 		</div>
 		<input
@@ -30,7 +33,7 @@
 
 	<label class="mb-4 flex flex-col text-[10px] uppercase tracking-wide">
 		<div class="mb-2 ml-[3px] flex items-baseline">
-			<span>Max Tokens Generated</span>
+			<span>{$t('maxTokens')}</span>
 		</div>
 		<input
 			type="number"
@@ -42,7 +45,7 @@
 
 	<label class="mb-4 flex flex-col text-[10px] uppercase tracking-wide">
 		<div class="mb-2 ml-[3px] flex items-baseline">
-			<span>Message history limit (0 = unlimited)</span>
+			<span>{$t('messageHistoryLimit')}</span>
 		</div>
 		<input
 			type="number"
@@ -54,7 +57,7 @@
 
 	<label class="mb-4 flex flex-col text-[10px] uppercase tracking-wide">
 		<div class="mb-2 ml-[3px] flex items-baseline">
-			<span>Reasoning Effort</span>
+			<span>{$t('reasoningEffort')}</span>
 			<span class="ml-auto">{$params.reasoningEffort['low-medium-high']}</span>
 		</div>
 		<select
@@ -84,4 +87,10 @@
 			[&::-webkit-slider-thumb]:bg-slate-700 [&::-webkit-slider-thumb]:shadow-[-407px_0_0_404px_theme('colors.slate.200')]"
 		/>
 	</label>
+
+	{#if $activeAgent && db}
+		<div class="mt-2 border-t border-slate-100 pt-4">
+			<KnowledgeBasePanel {db} />
+		</div>
+	{/if}
 </aside>

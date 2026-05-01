@@ -65,6 +65,7 @@ export const ttsEnabled = persisted('ttsEnabled', false);
 export const localAgentId = persisted('localAgentId', '');
 export const activeAgent = persisted('activeAgentDetail', null);
 export const agentLibraryUrl = persisted('agentLibraryUrl', 'https://agents-ai-library.vercel.app');
+export const pluginLibraryUrl = persisted('pluginLibraryUrl', 'https://ai-agent-plugins.vercel.app');
 export const talkingHeadEnabled = persisted('talkingHeadEnabled', false);
 export const talkingHeadAvatarUrl = persisted('talkingHeadAvatarUrl', '');
 
@@ -95,6 +96,8 @@ export function notify(message, type = 'error') {
 	notifications.update(n => [...n, { id, message, type }]);
 	setTimeout(() => notifications.update(n => n.filter(x => x.id !== id)), 5000);
 }
+
+export const locale = persisted('locale', 'en');
 
 export const currentUser = writable(null);
 

@@ -208,6 +208,11 @@ export const env = {
 		return opt('ELEVENLABS_API_KEY');
 	},
 
+	// VoyageAI API key — used by /api/agents/:id/embed for text embeddings (voyage-3-lite).
+	get VOYAGE_API_KEY() {
+		return req('VOYAGE_API_KEY');
+	},
+
 	getRpcUrl(chainId) {
 		return (
 			opt(`RPC_URL_${chainId}`) ||

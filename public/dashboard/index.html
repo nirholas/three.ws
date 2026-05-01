@@ -1256,6 +1256,23 @@
 				window.addEventListener('hashchange', () =>
 					navigate(location.hash.slice(1) || 'avatars'),
 				);
+
+				fetch('/api/agent-3d/versions')
+					.then((r) => r.ok ? r.json() : null)
+					.then((data) => {
+						if (!data?.latest) return;
+						const badge = document.createElement('a');
+						badge.href = 'https://three.ws/agent-3d/versions.json';
+						badge.target = '_blank';
+						badge.rel = 'noopener';
+						badge.textContent = 'agent-3d v' + data.latest;
+						badge.style.cssText =
+							'display:block;padding:9px 20px;font-size:11px;color:#555;text-decoration:none;';
+						badge.addEventListener('mouseenter', () => (badge.style.color = '#888'));
+						badge.addEventListener('mouseleave', () => (badge.style.color = '#555'));
+						document.querySelector('aside').appendChild(badge);
+					})
+					.catch(() => {});
 			})();
 		</script>
 	</body>

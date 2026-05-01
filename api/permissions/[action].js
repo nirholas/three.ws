@@ -909,7 +909,9 @@ const revokeBodySchema = z.object({
 });
 
 const revokeIface = new Interface(DELEGATION_MANAGER_ABI);
-const DISABLED_TOPIC = revokeIface.getEvent('DisabledDelegation').topicHash;
+const _revokeEvent = revokeIface.getEvent('DisabledDelegation');
+if (!_revokeEvent) throw new Error('DisabledDelegation event not found in DELEGATION_MANAGER_ABI — check src/erc7710/abi.js');
+const DISABLED_TOPIC = _revokeEvent.topicHash;
 
 const RPC_TIMEOUT_MS = 5000;
 

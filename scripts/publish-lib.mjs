@@ -78,6 +78,17 @@ const versions = {
 };
 writeFileSync(resolve(destRoot, 'versions.json'), JSON.stringify(versions, null, '\t') + '\n');
 
+const distLibMirror = resolve(root, 'dist', 'dist-lib');
+mkdirSync(distLibMirror, { recursive: true });
+
+for (const f of files) {
+	if (f.skip) continue;
+	const bytes = readFileSync(resolve(srcDir, f.name));
+	writeFileSync(resolve(distLibMirror, f.name), bytes);
+}
+
+console.log(`[publish-lib] mirrored dist-lib → dist/dist-lib/`);
+
 const sizes = files
 	.filter((f) => !f.skip)
 	.map((f) => {

@@ -23,6 +23,7 @@
 	import ModelSelector from './ModelSelector.svelte';
 	import CompanyLogo from './CompanyLogo.svelte';
 	import { controller, remoteServer, config, params, toolSchema, syncServer, brandConfig, ttsEnabled, localAgentId, activeAgent, talkingHeadEnabled, talkingHeadAvatarUrl, route, mode, websiteCategory, loadCurrentUser, notify } from './stores.js';
+	import { t } from './i18n.js';
 	import Notifications from './Notifications.svelte';
 	import AuthPage from './manus/pages/AuthPage.svelte';
 	import Pricing from './manus/pages/Pricing.svelte';
@@ -69,6 +70,7 @@
 	import Message from './Message.svelte';
 	import { deleteSingleItem, initEncryption, sendSingleItem, syncPull, syncPush } from './sync.js';
 	import AgentPicker from './AgentPicker.svelte';
+	import AgentSettingsModal from './AgentSettingsModal.svelte';
 	import TalkingHead from './TalkingHead.svelte';
 	import EmptyState from './manus/EmptyState.svelte';
 	import SuggestionChips from './manus/SuggestionChips.svelte';
@@ -95,11 +97,12 @@
 		messages: [],
 		versions: {},
 		tools: [],
+		agentId: null,
 	};
 	let convo = defaultConvo;
 
 	let db;
-	const request = indexedDB.open('threews-chat', 2);
+	const request = indexedDB.open('threews-chat', 3);
 	request.onupgradeneeded = (event) => {
 		const db = event.target.result;
 		if (!db.objectStoreNames.contains('messages')) {
@@ -107,6 +110,11 @@
 		}
 		if (!db.objectStoreNames.contains('conversations')) {
 			db.createObjectStore('conversations', { keyPath: 'id' });
+		}
+		if (!db.objectStoreNames.contains('knowledge')) {
+			const ks = db.createObjectStore('knowledge', { keyPath: 'id' });
+			ks.createIndex('agentId', 'agentId', { unique: false });
+			ks.createIndex('filename', 'filename', { unique: false });
 		}
 	};
 	request.onsuccess = async (event) => {
@@ -777,7 +785,22 @@
 			handleAbort();
 		};
 
+		// RAG retrieval
+		if ($activeAgent?.id && db) {
+			try {
+				const lastUserMsg = [...convo.messages].reverse().find((m) => m.role === 'user');
+				if (lastUserMsg?.content) {
+					const { retrieveTopK } = await import('./knowledge.js');
+					const chunks = await retrieveTopK(db, $activeAgent.id, lastUserMsg.content, 3);
+					if (chunks.length > 0) {
+						convo.retrievalContext = chunks.map((c) => c.text).join('\n\n');
+					}
+				}
+			} catch {}
+		}
+
 		complete(convo, onupdate, onabort);
+		delete convo.retrievalContext;
 	}
 
 	function startThinkingTimer(messageIndex) {
@@ -850,7 +873,11 @@
 			messages: [],
 			versions: {},
 			tools: [],
+			agentId: null,
 		};
+		if ($activeAgent?.preferred_model) {
+			convoData.models = [$activeAgent.preferred_model];
+		}
 		$convoId = convoData.id;
 		convos[convoData.id] = convoData;
 		convo = convoData;
@@ -862,6 +889,46 @@
 		if (innerWidth > 880) {
 			inputTextareaEl.focus();
 		}
+	}
+
+	function switchToAgentConversation(agentId) {
+		if (!db) return;
+		if (!agentId) {
+			const noAgent = Object.values(convos)
+				.filter(c => !c.agentId)
+				.sort((a, b) => b.time - a.time)[0];
+			if (noAgent) {
+				$convoId = noAgent.id;
+				convo = noAgent;
+			} else {
+				newConversation();
+			}
+			return;
+		}
+		const existing = Object.values(convos)
+			.filter(c => c.agentId === agentId)
+			.sort((a, b) => b.time - a.time)[0];
+		if (existing) {
+			$convoId = existing.id;
+			convo = existing;
+			return;
+		}
+		const convoData = {
+			id: uuidv4(),
+			time: Date.now(),
+			models: convo.models.length > 0 ? [...convo.models] : [BUILTIN_MODELS[0]],
+			messages: [],
+			versions: {},
+			tools: [],
+			agentId,
+		};
+		if ($activeAgent?.preferred_model) {
+			convoData.models = [$activeAgent.preferred_model];
+		}
+		$convoId = convoData.id;
+		convos[convoData.id] = convoData;
+		convo = convoData;
+		saveConversation(convo);
 	}
 
 	function applyAgentToConvo(agent) {
@@ -880,12 +947,31 @@
 		saveConversation(convo);
 	}
 
+	function onAgentSettingsSave(updatedAgent) {
+		if (!convo) return;
+		const sysIdx = convo.messages.findIndex((m) => m.role === 'system');
+		if (sysIdx !== -1 && updatedAgent.system_prompt) {
+			convo.messages[sysIdx].content = updatedAgent.system_prompt;
+			saveMessage(convo.messages[sysIdx]);
+			saveConversation(convo);
+		} else if (sysIdx === -1 && updatedAgent.system_prompt) {
+			const sysMsg = { id: uuidv4(), role: 'system', content: updatedAgent.system_prompt };
+			convo.messages = [sysMsg, ...convo.messages];
+			saveMessage(sysMsg);
+			saveConversation(convo);
+		}
+	}
+
 	function clearAgentFromConvo() {
 		convo.messages = convo.messages.filter(m => m.role !== 'system' && !m.generated);
 		saveConversation(convo);
 	}
 
-	$: if ($activeAgent) applyAgentToConvo($activeAgent);
+	$: if ($activeAgent !== undefined) {
+		const agentId = $activeAgent?.id ?? null;
+		switchToAgentConversation(agentId);
+		if ($activeAgent) applyAgentToConvo($activeAgent);
+	}
 
 	// Split history at this point:
 	function saveVersion(message, i) {
@@ -1309,6 +1395,7 @@
 	let agentVisible = true;
 	let agentScriptLoaded = false;
 	let agentPickerOpen = false;
+	let showAgentSettings = false;
 
 	$: effectiveAgentId = $localAgentId || $brandConfig.agent_id || '';
 
@@ -1482,6 +1569,16 @@
 		) {
 			handleAbort();
 		}
+		if (event.altKey && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+			const branchedMessages = convo.messages
+				.map((m, idx) => ({ m, idx }))
+				.filter(({ m }) => m.vid && convo.versions?.[m.vid]?.length > 1);
+			if (branchedMessages.length === 0) return;
+			const { m, idx } = branchedMessages[branchedMessages.length - 1];
+			const dir = event.key === 'ArrowLeft' ? -1 : 1;
+			shiftVersion(dir, m, idx);
+			event.preventDefault();
+		}
 	}}
 />
 
@@ -1629,7 +1726,7 @@
 					class="three.ws-btn-primary flex w-full items-center justify-start gap-2 rounded-full px-4 py-2.5"
 				>
 					<span class="text-base font-medium leading-none">+</span>
-					New chat
+					{$t('newChat')}
 				</button>
 			</div>
 			<input
@@ -1668,6 +1765,9 @@
 										: ''} flex w-full flex-col rounded-md px-3 py-1.5 text-left text-sm text-ink hover:bg-paper-deep"
 								>
 									<span class="line-clamp-1">
+										{#if historyConvo.agentId}
+											<span class="text-[10px] text-indigo-400 mr-1">[agent]</span>
+										{/if}
 										{historyConvo.title || (historyConvo.messages.length === 0
 											? 'New conversation'
 											: historyConvo.messages
@@ -1800,7 +1900,7 @@
 						historyOpen = false;
 					}}
 				>
-					Settings
+					{$t('settings')}
 					<Icon icon={feSettings} class="ml-auto h-4 w-4 text-ink-soft" />
 				</button>
 			</div>
@@ -1896,7 +1996,7 @@
 								{tree}
 								bind:inputTextareaEl
 								bind:handleFileDrop
-								placeholder={$mode === 'website' ? 'Describe the website you want to build' : 'Assign a task or ask anything'}
+								placeholder={$mode === 'website' ? 'Describe the website you want to build' : $t('typeMessage')}
 								mode={$mode}
 								modes={[{ id: 'website', label: 'Website' }]}
 								onModeClear={() => mode.set(null)}
@@ -2033,7 +2133,7 @@
 			{/if}
 		</div>
 
-		<KnobsSidebar {knobsOpen} />
+		<KnobsSidebar {knobsOpen} {db} />
 	</div>
 </main>
 
@@ -2051,6 +2151,8 @@
 />
 
 <SkillsMarketplaceModal bind:open={showSkillsMarketplace} />
+
+<AgentSettingsModal bind:open={showAgentSettings} onSave={onAgentSettingsSave} />
 
 {#if innerWidth <= 1215 && !$config.explicitToolView}
 	<Modal
@@ -2147,6 +2249,17 @@
 			>
 				<Icon icon={feUsers} class="h-3.5 w-3.5 text-slate-600" />
 			</button>
+
+			<!-- Agent settings (only when an agent is active) -->
+			{#if $activeAgent}
+				<button
+					class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-gray-200 transition hover:bg-gray-50"
+					title="Agent settings"
+					on:click={() => (showAgentSettings = true)}
+				>
+					<Icon icon={feSettings} class="h-3.5 w-3.5 text-slate-600" />
+				</button>
+			{/if}
 
 			<!-- Show/hide toggle (when agent-3d is set) -->
 			{#if effectiveAgentId}

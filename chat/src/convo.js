@@ -21,6 +21,16 @@ export async function complete(convo, onupdate, onabort) {
 		openAICompatibleFormat ? messageToOpenAIFormat : messageToAnthropicFormat
 	);
 
+	if (convo.retrievalContext) {
+		const contextBlock = `\n\n---\nRelevant context from knowledge base:\n${convo.retrievalContext}\n---\n`;
+		const sysIdx = messages.findIndex((m) => m.role === 'system');
+		if (sysIdx !== -1) {
+			messages[sysIdx] = { ...messages[sysIdx], content: messages[sysIdx].content + contextBlock };
+		} else {
+			messages.unshift({ role: 'system', content: `Relevant context:\n${convo.retrievalContext}` });
+		}
+	}
+
 	let system = undefined;
 	if (model.provider === 'Anthropic' && messages[0].role === 'system') {
 		system = messages.shift().content;

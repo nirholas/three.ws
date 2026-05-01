@@ -1,6 +1,6 @@
 <script>
 	import Modal from './Modal.svelte';
-	import { toolSchema, currentUser, notify } from './stores.js';
+	import { toolSchema, currentUser, notify, pluginLibraryUrl } from './stores.js';
 
 	export let open = false;
 
@@ -329,6 +329,82 @@
 		}
 	}
 
+	// Library tab state
+	let libraryPlugins = [];
+	let loadingLibrary = false;
+	let libraryQuery = '';
+	let libraryInstalling = {};
+
+	async function loadPluginLibrary() {
+		loadingLibrary = true;
+		try {
+			const base = $pluginLibraryUrl?.replace(/\/+$/, '');
+			const res = await fetch(`${base}/index.en-US.json`);
+			if (res.ok) {
+				const json = await res.json();
+				libraryPlugins = (json.plugins || []).map((p) => ({
+					identifier: p.identifier,
+					name: p.meta?.title || p.identifier,
+					description: p.meta?.description || '',
+					avatar: p.meta?.avatar || '🔧',
+					tags: p.meta?.tags || [],
+					category: p.meta?.category || '',
+				}));
+			}
+		} catch {}
+		loadingLibrary = false;
+	}
+
+	$: filteredLibraryPlugins = libraryQuery
+		? libraryPlugins.filter((p) => {
+				const q = libraryQuery.toLowerCase();
+				return (
+					p.name.toLowerCase().includes(q) ||
+					p.description.toLowerCase().includes(q) ||
+					p.tags.some((t) => t.toLowerCase().includes(q))
+				);
+			})
+		: libraryPlugins;
+
+	function isLibraryPluginInstalled(identifier) {
+		return $toolSchema.some((g) => g.id === `lib:${identifier}`);
+	}
+
+	async function installLibraryPlugin(plugin) {
+		libraryInstalling = { ...libraryInstalling, [plugin.identifier]: true };
+		try {
+			const base = $pluginLibraryUrl?.replace(/\/+$/, '');
+			const res = await fetch(`${base}/${plugin.identifier}.json`);
+			if (!res.ok) throw new Error('fetch failed');
+			const data = await res.json();
+			const api = data.manifest?.api || [];
+			if (api.length === 0) {
+				notify('Plugin has no callable functions', 'error');
+				return;
+			}
+			const group = {
+				id: `lib:${plugin.identifier}`,
+				name: plugin.name,
+				schema: api.map((fn) => ({
+					type: 'function',
+					function: {
+						name: fn.name,
+						description: fn.description || '',
+						parameters: fn.parameters || { type: 'object', properties: {} },
+					},
+				})),
+			};
+			toolSchema.update((groups) => [...groups.filter((g) => g.id !== group.id), group]);
+			notify(`${plugin.name} installed`, 'success');
+		} catch {
+			notify(`Failed to install ${plugin.name}`, 'error');
+		} finally {
+			libraryInstalling = { ...libraryInstalling, [plugin.identifier]: false };
+		}
+	}
+
+	$: if (view === 'library' && libraryPlugins.length === 0) loadPluginLibrary();
+
 	// init and keyboard
 
 	$: if (open && skills.length === 0) {
@@ -362,6 +438,14 @@
 			on:click={() => (view = 'browse')}
 		>
 			Browse
+		</button>
+		<button
+			class="mr-4 border-b-2 pb-2 text-[13px] font-medium transition-colors {view === 'library'
+				? 'border-indigo-500 text-indigo-600'
+				: 'border-transparent text-slate-500 hover:text-slate-700'}"
+			on:click={() => (view = 'library')}
+		>
+			Library
 		</button>
 		<button
 			class="border-b-2 pb-2 text-[13px] font-medium transition-colors {view === 'publish'
@@ -651,6 +735,73 @@
 					{/if}
 				{/if}
 			</div>
+		</div>
+	{:else if view === 'library'}
+		<!-- Library panel -->
+		<div class="flex min-h-[420px] flex-col">
+			<div class="mb-4">
+				<input
+					type="text"
+					placeholder="Search plugins..."
+					bind:value={libraryQuery}
+					class="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[13px] text-slate-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200"
+				/>
+			</div>
+
+			{#if loadingLibrary}
+				<p class="mt-8 text-center text-[13px] text-slate-400">Loading plugins...</p>
+			{:else if filteredLibraryPlugins.length === 0}
+				<p class="mt-8 text-center text-[13px] text-slate-400">No plugins found</p>
+			{:else}
+				<div class="flex flex-col gap-2 overflow-y-auto">
+					{#each filteredLibraryPlugins as plugin (plugin.identifier)}
+						<div class="flex items-center gap-x-3 rounded-lg border border-slate-200 px-3 py-3">
+							<span class="shrink-0 text-2xl leading-none">{plugin.avatar}</span>
+							<div class="min-w-0 flex-1">
+								<div class="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+									<span class="text-[13px] font-medium text-slate-800">{plugin.name}</span>
+									{#if plugin.category}
+										<span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-500"
+											>{plugin.category}</span
+										>
+									{/if}
+								</div>
+								<p class="mt-0.5 line-clamp-2 text-[11px] leading-relaxed text-slate-500">
+									{plugin.description}
+								</p>
+								{#if plugin.tags.length}
+									<div class="mt-1 flex flex-wrap gap-1">
+										{#each plugin.tags as tag}
+											<span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-500"
+												>{tag}</span
+											>
+										{/each}
+									</div>
+								{/if}
+							</div>
+							{#if isLibraryPluginInstalled(plugin.identifier)}
+								<span
+									class="shrink-0 rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-[11px] font-medium text-green-700"
+								>
+									Installed
+								</span>
+							{:else if libraryInstalling[plugin.identifier]}
+								<span
+									class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-[11px] text-slate-400"
+									>...</span
+								>
+							{:else}
+								<button
+									class="shrink-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 transition-colors hover:bg-slate-100"
+									on:click={() => installLibraryPlugin(plugin)}
+								>
+									Install
+								</button>
+							{/if}
+						</div>
+					{/each}
+				</div>
+			{/if}
 		</div>
 	{:else}
 		<!-- Publish form -->

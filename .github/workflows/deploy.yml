@@ -1,0 +1,63 @@
+name: Build and Deploy
+
+# Required GitHub secrets:
+#   VERCEL_TOKEN      — Vercel account token (Account Settings → Tokens)
+#   VERCEL_ORG_ID     — from .vercel/project.json → "orgId"   (team_urotm05CzDzCGjFXzAGXqqsA)
+#   VERCEL_PROJECT_ID — from .vercel/project.json → "projectId" (prj_YZhPwRrlNa1PCCuwLgrisQldlxqx)
+#
+# If .vercel/project.json is missing, run `vercel link` locally first to regenerate it.
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build:all
+
+      - name: Validate dist
+        run: |
+          if [ -f scripts/check-dist.mjs ]; then
+            node scripts/check-dist.mjs
+          else
+            test -f dist/agent-3d/latest/agent-3d.js || (echo "dist/agent-3d/latest/agent-3d.js missing" && exit 1)
+          fi
+
+      - name: Deploy to Vercel
+        run: |
+          npx vercel --prod --token ${{ secrets.VERCEL_TOKEN }} \
+            --yes \
+            --local-config vercel.json
+
+      - name: Write job summary
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "## Deployed ✅" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version:** $VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "- **CDN URL:** https://three.ws/agent-3d/latest/agent-3d.js" >> $GITHUB_STEP_SUMMARY
+          echo "- **Vercel env:** production" >> $GITHUB_STEP_SUMMARY

@@ -1,4 +1,6 @@
 {
+	"buildCommand": "npm run build:all",
+	"outputDirectory": "dist",
 	"public": true,
 	"installCommand": "npm ci --prefer-offline --no-audit --no-fund",
 	"functions": {
@@ -11,136 +13,466 @@
 			"src": "/openapi\\.json",
 			"dest": "/api/openapi-json"
 		},
-		{ "src": "/\\.well-known/chat-plugin\\.json", "dest": "/api/wk?name=chat-plugin" },
-		{ "src": "/\\.well-known/x402", "dest": "/api/wk?name=x402" },
-		{ "src": "/\\.well-known/agent-attestation-schemas", "dest": "/api/wk?name=agent-attestation-schemas" },
-		{ "src": "/\\.well-known/oauth-authorization-server", "dest": "/api/wk?name=oauth-authorization-server" },
-		{ "src": "/\\.well-known/oauth-protected-resource", "dest": "/api/wk?name=oauth-protected-resource" },
-		{ "src": "/api/mcp/\\.well-known/oauth-protected-resource", "dest": "/api/wk?name=oauth-protected-resource" },
-
-		{ "src": "/a/sol/([^/]+)/\\.well-known/agent-card\\.json", "dest": "/api/agents/solana/[action]?action=card&asset=$1" },
-
-		{ "src": "/api/agents/solana-attestations", "dest": "/api/agents/solana/[action]?action=attestations" },
-		{ "src": "/api/agents/solana-attest-event", "dest": "/api/agents/solana/[action]?action=attest-event" },
-		{ "src": "/api/agents/solana-card", "dest": "/api/agents/solana/[action]?action=card" },
-		{ "src": "/api/agents/solana-price-history", "dest": "/api/agents/solana/[action]?action=price-history" },
-		{ "src": "/api/agents/solana-register-prep", "dest": "/api/agents/solana/[action]?action=register-prep" },
-		{ "src": "/api/agents/solana-register-confirm", "dest": "/api/agents/solana/[action]?action=register-confirm" },
-		{ "src": "/api/agents/solana-reputation", "dest": "/api/agents/solana/[action]?action=reputation" },
-		{ "src": "/api/agents/solana-reputation-history", "dest": "/api/agents/solana/[action]?action=reputation-history" },
-
-		{ "src": "/api/newsletter/subscribe", "dest": "/api/newsletter-subscribe" },
-
-		{ "src": "/oauth/authorize", "dest": "/api/oauth/[action]?action=authorize" },
-		{ "src": "/oauth/consent", "dest": "/api/oauth/[action]?action=authorize" },
-		{ "src": "/oauth/token", "dest": "/api/oauth/[action]?action=token" },
-		{ "src": "/oauth/register", "dest": "/api/oauth/[action]?action=register" },
-		{ "src": "/oauth/revoke", "dest": "/api/oauth/[action]?action=revoke" },
-		{ "src": "/oauth/introspect", "dest": "/api/oauth/[action]?action=introspect" },
-
-		{ "src": "/login", "dest": "/login.html" },
-		{ "src": "/register", "dest": "/register.html" },
-		{ "src": "/forgot-password", "dest": "/forgot-password.html" },
-		{ "src": "/reset-password", "dest": "/reset-password.html" },
-		{ "src": "/wallet-login.js", "dest": "/wallet-login.js" },
-		{ "src": "/wallet/(.*)", "dest": "/wallet/$1" },
-		{ "src": "/pumpfun", "dest": "/pumpfun.html" },
-		{ "src": "/pumpfun/", "dest": "/pumpfun.html" },
-		{ "src": "/vanity-wallet", "dest": "/vanity-wallet.html" },
-		{ "src": "/vanity-wallet/", "dest": "/vanity-wallet.html" },
-		{ "src": "/deploy", "dest": "/app.html" },
-		{ "src": "/dashboard", "dest": "/dashboard/index.html" },
-		{ "src": "/dashboard/", "dest": "/dashboard/index.html" },
-		{ "src": "/dashboard/agent-pumpfun", "dest": "/dashboard/agent-pumpfun.html" },
-		{ "src": "/dashboard/wallets", "dest": "/dashboard/wallets.html" },
-		{ "src": "/dashboard/sessions", "dest": "/dashboard/sessions.html" },
-		{ "src": "/dashboard/usage", "dest": "/dashboard/usage.html" },
-		{ "src": "/dashboard/actions", "dest": "/dashboard/actions.html" },
-		{ "src": "/dashboard/embed-policy", "dest": "/dashboard/embed-policy.html" },
-		{ "src": "/dashboard/(.*)", "dest": "/dashboard/$1" },
-		{ "src": "/hydrate", "dest": "/hydrate/index.html" },
-		{ "src": "/hydrate/", "dest": "/hydrate/index.html" },
-		{ "src": "/studio", "dest": "/studio/index.html" },
-		{ "src": "/studio/", "dest": "/studio/index.html" },
-		{ "src": "/studio/(.*)", "dest": "/studio/$1" },
-
-		{ "src": "/api/dashboard/prefs", "dest": "/api/dashboard/prefs" },
-
-		{ "src": "/api/marketplace/categories", "dest": "/api/marketplace/[action]?action=categories" },
-		{ "src": "/api/marketplace/agents", "dest": "/api/marketplace/[action]?action=agents" },
-		{ "src": "/api/marketplace/agents/([^/]+)", "dest": "/api/marketplace/[action]?action=agents&id=$1" },
-		{ "src": "/api/marketplace/agents/([^/]+)/([^/]+)", "dest": "/api/marketplace/[action]?action=agents&id=$1&sub=$2" },
-
-		{ "src": "/marketplace", "dest": "/marketplace.html" },
-		{ "src": "/marketplace/", "dest": "/marketplace.html" },
-		{ "src": "/marketplace/agents/([^/]+)", "dest": "/marketplace.html" },
-
-		{ "src": "/api/agents/me", "dest": "/api/agents" },
-		{ "src": "/api/agents/suggest", "dest": "/api/agents/suggest" },
-		{ "src": "/api/agents/by-wallet", "dest": "/api/agents/by-wallet" },
+		{
+			"src": "/\\.well-known/chat-plugin\\.json",
+			"dest": "/api/wk?name=chat-plugin"
+		},
+		{
+			"src": "/\\.well-known/x402",
+			"dest": "/api/wk?name=x402"
+		},
+		{
+			"src": "/\\.well-known/agent-attestation-schemas",
+			"dest": "/api/wk?name=agent-attestation-schemas"
+		},
+		{
+			"src": "/\\.well-known/oauth-authorization-server",
+			"dest": "/api/wk?name=oauth-authorization-server"
+		},
+		{
+			"src": "/\\.well-known/oauth-protected-resource",
+			"dest": "/api/wk?name=oauth-protected-resource"
+		},
+		{
+			"src": "/api/mcp/\\.well-known/oauth-protected-resource",
+			"dest": "/api/wk?name=oauth-protected-resource"
+		},
+		{
+			"src": "/a/sol/([^/]+)/\\.well-known/agent-card\\.json",
+			"dest": "/api/agents/solana/[action]?action=card&asset=$1"
+		},
+		{
+			"src": "/api/agents/solana-attestations",
+			"dest": "/api/agents/solana/[action]?action=attestations"
+		},
+		{
+			"src": "/api/agents/solana-attest-event",
+			"dest": "/api/agents/solana/[action]?action=attest-event"
+		},
+		{
+			"src": "/api/agents/solana-card",
+			"dest": "/api/agents/solana/[action]?action=card"
+		},
+		{
+			"src": "/api/agents/solana-price-history",
+			"dest": "/api/agents/solana/[action]?action=price-history"
+		},
+		{
+			"src": "/api/agents/solana-register-prep",
+			"dest": "/api/agents/solana/[action]?action=register-prep"
+		},
+		{
+			"src": "/api/agents/solana-register-confirm",
+			"dest": "/api/agents/solana/[action]?action=register-confirm"
+		},
+		{
+			"src": "/api/agents/solana-reputation",
+			"dest": "/api/agents/solana/[action]?action=reputation"
+		},
+		{
+			"src": "/api/agents/solana-reputation-history",
+			"dest": "/api/agents/solana/[action]?action=reputation-history"
+		},
+		{
+			"src": "/api/newsletter/subscribe",
+			"dest": "/api/newsletter-subscribe"
+		},
+		{
+			"src": "/oauth/authorize",
+			"dest": "/api/oauth/[action]?action=authorize"
+		},
+		{
+			"src": "/oauth/consent",
+			"dest": "/api/oauth/[action]?action=authorize"
+		},
+		{
+			"src": "/oauth/token",
+			"dest": "/api/oauth/[action]?action=token"
+		},
+		{
+			"src": "/oauth/register",
+			"dest": "/api/oauth/[action]?action=register"
+		},
+		{
+			"src": "/oauth/revoke",
+			"dest": "/api/oauth/[action]?action=revoke"
+		},
+		{
+			"src": "/oauth/introspect",
+			"dest": "/api/oauth/[action]?action=introspect"
+		},
+		{
+			"src": "/login",
+			"dest": "/login.html"
+		},
+		{
+			"src": "/register",
+			"dest": "/register.html"
+		},
+		{
+			"src": "/forgot-password",
+			"dest": "/forgot-password.html"
+		},
+		{
+			"src": "/reset-password",
+			"dest": "/reset-password.html"
+		},
+		{
+			"src": "/wallet-login.js",
+			"dest": "/wallet-login.js"
+		},
+		{
+			"src": "/wallet/(.*)",
+			"dest": "/wallet/$1"
+		},
+		{
+			"src": "/pumpfun",
+			"dest": "/pumpfun.html"
+		},
+		{
+			"src": "/pumpfun/",
+			"dest": "/pumpfun.html"
+		},
+		{
+			"src": "/vanity-wallet",
+			"dest": "/vanity-wallet.html"
+		},
+		{
+			"src": "/vanity-wallet/",
+			"dest": "/vanity-wallet.html"
+		},
+		{
+			"src": "/deploy",
+			"dest": "/app.html"
+		},
+		{
+			"src": "/dashboard",
+			"dest": "/dashboard/index.html"
+		},
+		{
+			"src": "/dashboard/",
+			"dest": "/dashboard/index.html"
+		},
+		{
+			"src": "/dashboard/agent-pumpfun",
+			"dest": "/dashboard/agent-pumpfun.html"
+		},
+		{
+			"src": "/dashboard/wallets",
+			"dest": "/dashboard/wallets.html"
+		},
+		{
+			"src": "/dashboard/sessions",
+			"dest": "/dashboard/sessions.html"
+		},
+		{
+			"src": "/dashboard/usage",
+			"dest": "/dashboard/usage.html"
+		},
+		{
+			"src": "/dashboard/actions",
+			"dest": "/dashboard/actions.html"
+		},
+		{
+			"src": "/dashboard/embed-policy",
+			"dest": "/dashboard/embed-policy.html"
+		},
+		{
+			"src": "/dashboard/(.*)",
+			"dest": "/dashboard/$1"
+		},
+		{
+			"src": "/hydrate",
+			"dest": "/hydrate/index.html"
+		},
+		{
+			"src": "/hydrate/",
+			"dest": "/hydrate/index.html"
+		},
+		{
+			"src": "/studio",
+			"dest": "/studio/index.html"
+		},
+		{
+			"src": "/studio/",
+			"dest": "/studio/index.html"
+		},
+		{
+			"src": "/studio/(.*)",
+			"dest": "/studio/$1"
+		},
+		{
+			"src": "/api/dashboard/prefs",
+			"dest": "/api/dashboard/prefs"
+		},
+		{
+			"src": "/api/marketplace/categories",
+			"dest": "/api/marketplace/[action]?action=categories"
+		},
+		{
+			"src": "/api/marketplace/agents",
+			"dest": "/api/marketplace/[action]?action=agents"
+		},
+		{
+			"src": "/api/marketplace/agents/([^/]+)",
+			"dest": "/api/marketplace/[action]?action=agents&id=$1"
+		},
+		{
+			"src": "/api/marketplace/agents/([^/]+)/([^/]+)",
+			"dest": "/api/marketplace/[action]?action=agents&id=$1&sub=$2"
+		},
+		{
+			"src": "/marketplace",
+			"dest": "/marketplace.html"
+		},
+		{
+			"src": "/marketplace/",
+			"dest": "/marketplace.html"
+		},
+		{
+			"src": "/marketplace/agents/([^/]+)",
+			"dest": "/marketplace.html"
+		},
+		{
+			"src": "/api/agents/me",
+			"dest": "/api/agents"
+		},
+		{
+			"src": "/api/agents/suggest",
+			"dest": "/api/agents/suggest"
+		},
+		{
+			"src": "/api/agents/by-wallet",
+			"dest": "/api/agents/by-wallet"
+		},
 		{
 			"src": "/api/agents/by-address/([^/]+)",
 			"dest": "/api/agents/by-address/[addr]?addr=$1"
 		},
-		{ "src": "/api/agents/([^/]+)/wallet", "dest": "/api/agents/[id]" },
-		{ "src": "/api/agents/([^/]+)/solana", "dest": "/api/agents/[id]" },
-		{ "src": "/api/agents/([^/]+)/solana/([^/]+)", "dest": "/api/agents/[id]" },
-		{ "src": "/api/agents/([^/]+)/pumpfun/([^/]+)", "dest": "/api/agents/[id]" },
+		{
+			"src": "/api/agents/x402/invoke",
+			"dest": "/api/agents/x402/[action]?action=invoke"
+		},
+		{
+			"src": "/api/agents/x402/manifest",
+			"dest": "/api/agents/x402/[action]?action=manifest"
+		},
+		{
+			"src": "/api/agents/([^/]+)/wallet",
+			"dest": "/api/agents/[id]"
+		},
+		{
+			"src": "/api/agents/([^/]+)/solana",
+			"dest": "/api/agents/[id]"
+		},
+		{
+			"src": "/api/agents/([^/]+)/solana/([^/]+)",
+			"dest": "/api/agents/[id]"
+		},
+		{
+			"src": "/api/agents/([^/]+)/pumpfun/([^/]+)",
+			"dest": "/api/agents/[id]"
+		},
 		{
 			"src": "/api/avatars/([^/]+)/storage-mode",
 			"dest": "/api/avatars/[id]/storage-mode?id=$1"
 		},
-		{ "src": "/api/avatars/([^/]+)/pin-ipfs", "dest": "/api/avatars/[id]/pin-ipfs?id=$1" },
-		{ "src": "/dashboard/storage", "dest": "/dashboard/storage.html" },
-		{ "src": "/api/agents/([^/]+)/embed-policy", "dest": "/api/agents/[id]" },
-		{ "src": "/api/agents/([^/]+)/sign", "dest": "/api/agents/[id]" },
-		{ "src": "/api/agents/([^/]+)/animations", "dest": "/api/agents/[id]" },
-		{ "src": "/api/agents/([^/]+)/manifest", "dest": "/api/agents/[id]" },
-		{ "src": "/api/agents/([^/]+)/actions", "dest": "/api/agents/[id]" },
-		{ "src": "/api/agents/([^/]+)/usage", "dest": "/api/agents/[id]" },
-		{ "src": "/api/agents/([^/]+)/memories/([^/]+)", "dest": "/api/agents/[id]" },
-		{ "src": "/api/agents/([^/]+)/memories", "dest": "/api/agents/[id]" },
-		{ "src": "/api/agents/([^/]+)/memory/pin", "dest": "/api/agents/[id]" },
-		{ "src": "/api/agents/([^/]+)/memory/([^/]+)", "dest": "/api/agents/[id]" },
-		{ "src": "/api/agents/([^/]+)/livekit-token", "dest": "/api/agents/[id]" },
-		{ "src": "/api/agents/([^/]+)/embed", "dest": "/api/agents/[id]" },
-		{ "src": "/api/agents/pumpfun-feed", "dest": "/api/agents/pumpfun?_handler=feed" },
-		{ "src": "/api/agents/pumpfun-metadata", "dest": "/api/agents/pumpfun?_handler=metadata" },
-		{ "src": "/api/agents/pumpfun", "dest": "/api/agents/pumpfun" },
-		{ "src": "/api/agents/register-prep", "dest": "/api/agents/register/[action]?action=prep" },
-		{ "src": "/api/agents/register-confirm", "dest": "/api/agents/register/[action]?action=confirm" },
-		{ "src": "/api/agents/sas-credentials", "dest": "/api/agents/sas/[action]?action=credentials" },
-		{ "src": "/api/agents/sas-issue-credential", "dest": "/api/agents/sas/[action]?action=issue-credential" },
-		{ "src": "/api/agents/x402/invoke", "dest": "/api/agents/x402/[action]?action=invoke" },
-		{ "src": "/api/agents/x402/manifest", "dest": "/api/agents/x402/[action]?action=manifest" },
-		{ "src": "/api/agents/check-name", "dest": "/api/agents/check-name" },
-		{ "src": "/api/auth/wallet/link", "dest": "/api/auth/wallet/[action]?action=link" },
-		{ "src": "/api/auth/wallet/unlink", "dest": "/api/auth/wallet/[action]?action=unlink" },
-		{ "src": "/api/onboarding/avaturn-session", "dest": "/api/onboarding/[action]?action=avaturn-session" },
-		{ "src": "/api/onboarding/link-avatar", "dest": "/api/onboarding/[action]?action=link-avatar" },
-		{ "src": "/api/pump/channel-feed", "dest": "/api/pump/[action]?action=channel-feed" },
-		{ "src": "/api/pump/deliver-telegram", "dest": "/api/pump/[action]?action=deliver-telegram" },
-		{ "src": "/api/pump/first-claims", "dest": "/api/pump/[action]?action=first-claims" },
-		{ "src": "/api/pump/vanity-keygen", "dest": "/api/pump/[action]?action=vanity-keygen" },
-		{ "src": "/api/pump/helius-webhook", "dest": "/api/pump/helius-webhook" },
-		{ "src": "/api/avatars/presign", "dest": "/api/avatars/[id]" },
-		{ "src": "/api/avatars/public", "dest": "/api/avatars/[id]" },
-		{ "src": "/api/avatars/regenerate-status", "dest": "/api/avatars/[id]" },
-		{ "src": "/api/avatars/regenerate", "dest": "/api/avatars/[id]" },
-		{ "src": "/api/agents/([^/]+)", "dest": "/api/agents/[id]" },
-		{ "src": "/api/agents", "dest": "/api/agents" },
-		{ "src": "/api/agent-actions", "dest": "/api/agent-actions" },
-		{ "src": "/api/agent-memory/([^/]+)", "dest": "/api/agent-memory" },
-		{ "src": "/api/agent-memory", "dest": "/api/agent-memory" },
-		{ "src": "/api/agent/([^/]+)/og", "dest": "/api/agent-og?id=$1" },
-		{ "src": "/api/a/(\\d+)/(\\d+)/og", "dest": "/api/a-og?chain=$1&id=$2" },
-		{ "src": "/api/oembed", "dest": "/api/agent-oembed" },
-		{ "src": "/u/([^/]+)", "dest": "/profile.html" },
-		{ "src": "/avatars/([^/]+)", "dest": "/avatar-page.html" },
-		{ "src": "/api/users/([^/]+)", "dest": "/api/users/[username]?username=$1" },
-		{ "src": "/api/auth/profile", "dest": "/api/auth/profile" },
-		{ "src": "/a/(\\d+)/(\\d+)/edit", "dest": "/a-edit.html" },
-		{ "src": "/agent/([^/]+)/edit", "dest": "/agent-edit.html" },
+		{
+			"src": "/api/avatars/([^/]+)/pin-ipfs",
+			"dest": "/api/avatars/[id]/pin-ipfs?id=$1"
+		},
+		{
+			"src": "/dashboard/storage",
+			"dest": "/dashboard/storage.html"
+		},
+		{
+			"src": "/api/agents/([^/]+)/embed-policy",
+			"dest": "/api/agents/[id]"
+		},
+		{
+			"src": "/api/agents/([^/]+)/sign",
+			"dest": "/api/agents/[id]"
+		},
+		{
+			"src": "/api/agents/([^/]+)/animations",
+			"dest": "/api/agents/[id]"
+		},
+		{
+			"src": "/api/agents/([^/]+)/manifest",
+			"dest": "/api/agents/[id]"
+		},
+		{
+			"src": "/api/agents/([^/]+)/actions",
+			"dest": "/api/agents/[id]"
+		},
+		{
+			"src": "/api/agents/([^/]+)/usage",
+			"dest": "/api/agents/[id]"
+		},
+		{
+			"src": "/api/agents/([^/]+)/memories/([^/]+)",
+			"dest": "/api/agents/[id]"
+		},
+		{
+			"src": "/api/agents/([^/]+)/memories",
+			"dest": "/api/agents/[id]"
+		},
+		{
+			"src": "/api/agents/([^/]+)/memory/pin",
+			"dest": "/api/agents/[id]"
+		},
+		{
+			"src": "/api/agents/([^/]+)/memory/([^/]+)",
+			"dest": "/api/agents/[id]"
+		},
+		{
+			"src": "/api/agents/([^/]+)/livekit-token",
+			"dest": "/api/agents/[id]"
+		},
+		{
+			"src": "/api/agents/([^/]+)/embed",
+			"dest": "/api/agents/[id]"
+		},
+		{
+			"src": "/api/agents/pumpfun-feed",
+			"dest": "/api/agents/pumpfun?_handler=feed"
+		},
+		{
+			"src": "/api/agents/pumpfun-metadata",
+			"dest": "/api/agents/pumpfun?_handler=metadata"
+		},
+		{
+			"src": "/api/agents/pumpfun",
+			"dest": "/api/agents/pumpfun"
+		},
+		{
+			"src": "/api/agents/register-prep",
+			"dest": "/api/agents/register/[action]?action=prep"
+		},
+		{
+			"src": "/api/agents/register-confirm",
+			"dest": "/api/agents/register/[action]?action=confirm"
+		},
+		{
+			"src": "/api/agents/sas-credentials",
+			"dest": "/api/agents/sas/[action]?action=credentials"
+		},
+		{
+			"src": "/api/agents/sas-issue-credential",
+			"dest": "/api/agents/sas/[action]?action=issue-credential"
+		},
+		{
+			"src": "/api/agents/check-name",
+			"dest": "/api/agents/check-name"
+		},
+		{
+			"src": "/api/auth/wallet/link",
+			"dest": "/api/auth/wallet/[action]?action=link"
+		},
+		{
+			"src": "/api/auth/wallet/unlink",
+			"dest": "/api/auth/wallet/[action]?action=unlink"
+		},
+		{
+			"src": "/api/onboarding/avaturn-session",
+			"dest": "/api/onboarding/[action]?action=avaturn-session"
+		},
+		{
+			"src": "/api/onboarding/link-avatar",
+			"dest": "/api/onboarding/[action]?action=link-avatar"
+		},
+		{
+			"src": "/api/pump/channel-feed",
+			"dest": "/api/pump/[action]?action=channel-feed"
+		},
+		{
+			"src": "/api/pump/deliver-telegram",
+			"dest": "/api/pump/[action]?action=deliver-telegram"
+		},
+		{
+			"src": "/api/pump/first-claims",
+			"dest": "/api/pump/[action]?action=first-claims"
+		},
+		{
+			"src": "/api/pump/vanity-keygen",
+			"dest": "/api/pump/[action]?action=vanity-keygen"
+		},
+		{
+			"src": "/api/pump/helius-webhook",
+			"dest": "/api/pump/helius-webhook"
+		},
+		{
+			"src": "/api/avatars/presign",
+			"dest": "/api/avatars/[id]"
+		},
+		{
+			"src": "/api/avatars/public",
+			"dest": "/api/avatars/[id]"
+		},
+		{
+			"src": "/api/avatars/regenerate-status",
+			"dest": "/api/avatars/[id]"
+		},
+		{
+			"src": "/api/avatars/regenerate",
+			"dest": "/api/avatars/[id]"
+		},
+		{
+			"src": "/api/agents/([^/]+)",
+			"dest": "/api/agents/[id]"
+		},
+		{
+			"src": "/api/agents",
+			"dest": "/api/agents"
+		},
+		{
+			"src": "/api/agent-actions",
+			"dest": "/api/agent-actions"
+		},
+		{
+			"src": "/api/agent-memory/([^/]+)",
+			"dest": "/api/agent-memory"
+		},
+		{
+			"src": "/api/agent-memory",
+			"dest": "/api/agent-memory"
+		},
+		{
+			"src": "/api/agent/([^/]+)/og",
+			"dest": "/api/agent-og?id=$1"
+		},
+		{
+			"src": "/api/a/(\\d+)/(\\d+)/og",
+			"dest": "/api/a-og?chain=$1&id=$2"
+		},
+		{
+			"src": "/api/oembed",
+			"dest": "/api/agent-oembed"
+		},
+		{
+			"src": "/u/([^/]+)",
+			"dest": "/profile.html"
+		},
+		{
+			"src": "/avatars/([^/]+)",
+			"dest": "/avatar-page.html"
+		},
+		{
+			"src": "/api/users/([^/]+)",
+			"dest": "/api/users/[username]?username=$1"
+		},
+		{
+			"src": "/api/auth/profile",
+			"dest": "/api/auth/profile"
+		},
+		{
+			"src": "/a/(\\d+)/(\\d+)/edit",
+			"dest": "/a-edit.html"
+		},
+		{
+			"src": "/agent/([^/]+)/edit",
+			"dest": "/agent-edit.html"
+		},
 		{
 			"src": "/agent/([^/]+)/embed",
 			"headers": {
@@ -151,91 +483,269 @@
 			},
 			"dest": "/agent-embed.html"
 		},
-		{ "src": "/agent/index.html", "dest": "/agent/index.html" },
+		{
+			"src": "/agent/index.html",
+			"dest": "/agent/index.html"
+		},
 		{
 			"src": "/agent/([^/]+)",
-			"has": [{ "type": "query", "key": "_spa", "value": "1" }],
+			"has": [
+				{
+					"type": "query",
+					"key": "_spa",
+					"value": "1"
+				}
+			],
 			"dest": "/agent-home.html"
 		},
-		{ "src": "/agent/([^/]+)", "dest": "/api/agent-page?id=$1" },
-		{ "src": "/agent", "dest": "/agent-home.html" },
-
-		{ "src": "/api/widgets/oembed", "dest": "/api/widgets/oembed" },
-		{ "src": "/api/widgets/page", "dest": "/api/widgets/page" },
-		{ "src": "/api/widgets/([A-Za-z0-9_-]+)/og", "dest": "/api/widgets/og?id=$1" },
-		{ "src": "/api/widgets/([A-Za-z0-9_-]+)/view", "dest": "/api/widgets/view?id=$1" },
+		{
+			"src": "/agent/([^/]+)",
+			"dest": "/api/agent-page?id=$1"
+		},
+		{
+			"src": "/agent",
+			"dest": "/agent-home.html"
+		},
+		{
+			"src": "/api/widgets/oembed",
+			"dest": "/api/widgets/oembed"
+		},
+		{
+			"src": "/api/widgets/page",
+			"dest": "/api/widgets/page"
+		},
+		{
+			"src": "/api/widgets/([A-Za-z0-9_-]+)/og",
+			"dest": "/api/widgets/og?id=$1"
+		},
+		{
+			"src": "/api/widgets/([A-Za-z0-9_-]+)/view",
+			"dest": "/api/widgets/view?id=$1"
+		},
 		{
 			"src": "/api/widgets/([A-Za-z0-9_-]+)/duplicate",
 			"dest": "/api/widgets/[id]/duplicate?id=$1"
 		},
-		{ "src": "/api/widgets/([A-Za-z0-9_-]+)/stats", "dest": "/api/widgets/[id]/stats?id=$1" },
-		{ "src": "/api/widgets/([A-Za-z0-9_-]+)/chat", "dest": "/api/widgets/[id]/chat?id=$1" },
-		{ "src": "/api/widgets", "dest": "/api/widgets" },
-		{ "src": "/api/widgets/([A-Za-z0-9_-]+)", "dest": "/api/widgets/[id]?id=$1" },
-		{ "src": "/w/([A-Za-z0-9_-]+)", "dest": "/api/widgets/page?id=$1" },
-		{ "src": "/widgets", "dest": "/widgets-gallery/index.html" },
-		{ "src": "/widgets/", "dest": "/widgets-gallery/index.html" },
-		{ "src": "/widgets/(.*)", "dest": "/widgets-gallery/$1" },
-		{ "src": "/docs", "dest": "/docs/index.html" },
-		{ "src": "/docs/", "dest": "/docs/index.html" },
-		{ "src": "/docs/widgets", "dest": "/docs-widgets.html" },
-		{ "src": "/docs/(.*)", "dest": "/docs/$1" },
-
-		{ "src": "/artifact", "dest": "/artifact/index.html" },
-		{ "src": "/artifact/", "dest": "/artifact/index.html" },
-		{ "src": "/artifact/(.*)", "dest": "/artifact/$1" },
-
-		{ "src": "/cz", "dest": "/cz/index.html" },
-		{ "src": "/cz/", "dest": "/cz/index.html" },
-		{ "src": "/cz/(.*)", "dest": "/cz/$1" },
-
-		{ "src": "/validation", "dest": "/validation/index.html" },
-		{ "src": "/validation/", "dest": "/validation/index.html" },
-		{ "src": "/validation/(.*)", "dest": "/validation/$1" },
-
-		{ "src": "/lobehub/iframe", "dest": "/lobehub/iframe/index.html" },
-		{ "src": "/lobehub/iframe/", "dest": "/lobehub/iframe/index.html" },
-		{ "src": "/lobehub/iframe/(.*)", "dest": "/lobehub/iframe/$1" },
-
-		{ "src": "/strategy-lab", "dest": "/strategy-lab.html" },
-		{ "src": "/reputation", "dest": "/reputation/index.html" },
-		{ "src": "/reputation/", "dest": "/reputation/index.html" },
-		{ "src": "/reputation/(.*)", "dest": "/reputation/$1" },
-		{ "src": "/settings", "dest": "/settings/index.html" },
-		{ "src": "/settings/", "dest": "/settings/index.html" },
-		{ "src": "/settings/(.*)", "dest": "/settings/$1" },
-		{ "src": "/admin", "dest": "/admin/index.html" },
-		{ "src": "/admin/", "dest": "/admin/index.html" },
-		{ "src": "/admin/(.*)", "dest": "/admin/$1" },
-
-
-		{ "src": "/api/llm/anthropic", "dest": "/api/llm/anthropic.js" },
-		{ "src": "/dashboard/usage", "dest": "/dashboard/usage.html" },
-		{ "src": "/api/erc8004/register-confirm", "dest": "/api/erc8004/register-confirm" },
-		{ "src": "/api/erc8004/hydrate", "dest": "/api/erc8004/hydrate.js" },
-		{ "src": "/api/erc8004/import", "dest": "/api/erc8004/import.js" },
-
-		{ "src": "/api/dca-strategies/([^/]+)", "dest": "/api/dca-strategies?id=$1" },
-		{ "src": "/api/dca-strategies", "dest": "/api/dca-strategies" },
-
-		{ "src": "/api/billing/summary", "dest": "/api/billing/summary" },
-		{ "src": "/api/billing/revenue", "dest": "/api/billing/revenue" },
-
-		{ "src": "/my-agents", "dest": "/public/my-agents/index.html" },
-		{ "src": "/my-agents/", "dest": "/public/my-agents/index.html" },
-		{ "src": "/my-agents/(.*)", "dest": "/my-agents/$1" },
-		{ "src": "/discover", "dest": "/discover/index.html" },
-		{ "src": "/discover/", "dest": "/discover/index.html" },
-		{ "src": "/discover/(.*)", "dest": "/discover/$1" },
-
-		{ "src": "/api/skills/categories", "dest": "/api/skills/categories" },
-		{ "src": "/api/skills/([^/]+)/install", "dest": "/api/skills/[id]/install?id=$1" },
-		{ "src": "/api/skills/([^/]+)/rate", "dest": "/api/skills/[id]/rate?id=$1" },
-		{ "src": "/api/skills/([^/]+)", "dest": "/api/skills/[id]?id=$1" },
-		{ "src": "/api/skills", "dest": "/api/skills/index" },
-
-		{ "src": "/api/(.*)", "dest": "/api/$1" },
-
+		{
+			"src": "/api/widgets/([A-Za-z0-9_-]+)/stats",
+			"dest": "/api/widgets/[id]/stats?id=$1"
+		},
+		{
+			"src": "/api/widgets/([A-Za-z0-9_-]+)/chat",
+			"dest": "/api/widgets/[id]/chat?id=$1"
+		},
+		{
+			"src": "/api/widgets",
+			"dest": "/api/widgets"
+		},
+		{
+			"src": "/api/widgets/([A-Za-z0-9_-]+)",
+			"dest": "/api/widgets/[id]?id=$1"
+		},
+		{
+			"src": "/w/([A-Za-z0-9_-]+)",
+			"dest": "/api/widgets/page?id=$1"
+		},
+		{
+			"src": "/widgets",
+			"dest": "/widgets-gallery/index.html"
+		},
+		{
+			"src": "/widgets/",
+			"dest": "/widgets-gallery/index.html"
+		},
+		{
+			"src": "/widgets/(.*)",
+			"dest": "/widgets-gallery/$1"
+		},
+		{
+			"src": "/docs",
+			"dest": "/docs/index.html"
+		},
+		{
+			"src": "/docs/",
+			"dest": "/docs/index.html"
+		},
+		{
+			"src": "/docs/widgets",
+			"dest": "/docs-widgets.html"
+		},
+		{
+			"src": "/docs/(.*)",
+			"dest": "/docs/$1"
+		},
+		{
+			"src": "/artifact",
+			"dest": "/artifact/index.html"
+		},
+		{
+			"src": "/artifact/",
+			"dest": "/artifact/index.html"
+		},
+		{
+			"src": "/artifact/(.*)",
+			"dest": "/artifact/$1"
+		},
+		{
+			"src": "/cz",
+			"dest": "/cz/index.html"
+		},
+		{
+			"src": "/cz/",
+			"dest": "/cz/index.html"
+		},
+		{
+			"src": "/cz/(.*)",
+			"dest": "/cz/$1"
+		},
+		{
+			"src": "/validation",
+			"dest": "/validation/index.html"
+		},
+		{
+			"src": "/validation/",
+			"dest": "/validation/index.html"
+		},
+		{
+			"src": "/validation/(.*)",
+			"dest": "/validation/$1"
+		},
+		{
+			"src": "/lobehub/iframe",
+			"dest": "/lobehub/iframe/index.html"
+		},
+		{
+			"src": "/lobehub/iframe/",
+			"dest": "/lobehub/iframe/index.html"
+		},
+		{
+			"src": "/lobehub/iframe/(.*)",
+			"dest": "/lobehub/iframe/$1"
+		},
+		{
+			"src": "/strategy-lab",
+			"dest": "/strategy-lab.html"
+		},
+		{
+			"src": "/reputation",
+			"dest": "/reputation/index.html"
+		},
+		{
+			"src": "/reputation/",
+			"dest": "/reputation/index.html"
+		},
+		{
+			"src": "/reputation/(.*)",
+			"dest": "/reputation/$1"
+		},
+		{
+			"src": "/settings",
+			"dest": "/settings/index.html"
+		},
+		{
+			"src": "/settings/",
+			"dest": "/settings/index.html"
+		},
+		{
+			"src": "/settings/(.*)",
+			"dest": "/settings/$1"
+		},
+		{
+			"src": "/admin",
+			"dest": "/admin/index.html"
+		},
+		{
+			"src": "/admin/",
+			"dest": "/admin/index.html"
+		},
+		{
+			"src": "/admin/(.*)",
+			"dest": "/admin/$1"
+		},
+		{
+			"src": "/api/llm/anthropic",
+			"dest": "/api/llm/anthropic.js"
+		},
+		{
+			"src": "/dashboard/usage",
+			"dest": "/dashboard/usage.html"
+		},
+		{
+			"src": "/api/erc8004/register-confirm",
+			"dest": "/api/erc8004/register-confirm"
+		},
+		{
+			"src": "/api/erc8004/hydrate",
+			"dest": "/api/erc8004/hydrate.js"
+		},
+		{
+			"src": "/api/erc8004/import",
+			"dest": "/api/erc8004/import.js"
+		},
+		{
+			"src": "/api/dca-strategies/([^/]+)",
+			"dest": "/api/dca-strategies?id=$1"
+		},
+		{
+			"src": "/api/dca-strategies",
+			"dest": "/api/dca-strategies"
+		},
+		{
+			"src": "/api/billing/summary",
+			"dest": "/api/billing/summary"
+		},
+		{
+			"src": "/api/billing/revenue",
+			"dest": "/api/billing/revenue"
+		},
+		{
+			"src": "/my-agents",
+			"dest": "/public/my-agents/index.html"
+		},
+		{
+			"src": "/my-agents/",
+			"dest": "/public/my-agents/index.html"
+		},
+		{
+			"src": "/my-agents/(.*)",
+			"dest": "/my-agents/$1"
+		},
+		{
+			"src": "/discover",
+			"dest": "/discover/index.html"
+		},
+		{
+			"src": "/discover/",
+			"dest": "/discover/index.html"
+		},
+		{
+			"src": "/discover/(.*)",
+			"dest": "/discover/$1"
+		},
+		{
+			"src": "/api/skills/categories",
+			"dest": "/api/skills/categories"
+		},
+		{
+			"src": "/api/skills/([^/]+)/install",
+			"dest": "/api/skills/[id]/install?id=$1"
+		},
+		{
+			"src": "/api/skills/([^/]+)/rate",
+			"dest": "/api/skills/[id]/rate?id=$1"
+		},
+		{
+			"src": "/api/skills/([^/]+)",
+			"dest": "/api/skills/[id]?id=$1"
+		},
+		{
+			"src": "/api/skills",
+			"dest": "/api/skills/index"
+		},
+		{
+			"src": "/api/(.*)",
+			"dest": "/api/$1"
+		},
 		{
 			"src": "/agent-3d/([0-9]+\\.[0-9]+\\.[0-9]+(?:-[A-Za-z0-9.-]+)?)/(.*)",
 			"headers": {
@@ -259,6 +769,10 @@
 			"dest": "/agent-3d/$1/$2"
 		},
 		{
+			"src": "/api/agent-3d/versions",
+			"dest": "/api/agent-3d/versions"
+		},
+		{
 			"src": "/agent-3d/versions\\.json",
 			"headers": {
 				"cache-control": "public, max-age=60, s-maxage=60",
@@ -266,33 +780,96 @@
 			},
 			"dest": "/agent-3d/versions.json"
 		},
-
 		{
 			"src": "/assets/(.*)",
-			"headers": { "cache-control": "max-age=604800, public" },
+			"headers": {
+				"cache-control": "max-age=604800, public"
+			},
 			"dest": "/assets/$1"
 		},
 		{
 			"src": "/\\.well-known/(.*)",
-			"headers": { "cache-control": "max-age=86400, public" },
+			"headers": {
+				"cache-control": "max-age=86400, public"
+			},
 			"dest": "/.well-known/$1"
 		},
-		{ "src": "/robots.txt", "dest": "/robots.txt" },
-		{ "src": "/sitemap.xml", "dest": "/sitemap.xml" },
-		{ "src": "/app", "dest": "/app.html" },
-		{ "src": "/features.html", "status": 301, "headers": { "Location": "/features" } },
-		{ "src": "/features", "dest": "/features/index.html" },
-		{ "src": "/features/", "dest": "/features/index.html" },
-		{ "src": "/features/(.*)", "dest": "/features/$1" },
-		{ "src": "/chat", "dest": "/chat/index.html" },
-		{ "src": "/chat/", "dest": "/chat/index.html" },
-		{ "src": "/chat/(.*)", "dest": "/chat/$1" },
-		{ "src": "/create", "dest": "/create.html" },
-		{ "src": "/create/", "dest": "/create.html" },
-		{ "src": "/", "dest": "/home.html" },
-		{ "src": "/home", "status": 301, "headers": { "Location": "/" } },
-		{ "src": "/explore", "status": 301, "headers": { "Location": "/discover" } },
-		{ "src": "/explore/", "status": 301, "headers": { "Location": "/discover" } },
+		{
+			"src": "/robots.txt",
+			"dest": "/robots.txt"
+		},
+		{
+			"src": "/sitemap.xml",
+			"dest": "/sitemap.xml"
+		},
+		{
+			"src": "/app",
+			"dest": "/app.html"
+		},
+		{
+			"src": "/features.html",
+			"status": 301,
+			"headers": {
+				"Location": "/features"
+			}
+		},
+		{
+			"src": "/features",
+			"dest": "/features/index.html"
+		},
+		{
+			"src": "/features/",
+			"dest": "/features/index.html"
+		},
+		{
+			"src": "/features/(.*)",
+			"dest": "/features/$1"
+		},
+		{
+			"src": "/chat",
+			"dest": "/chat/index.html"
+		},
+		{
+			"src": "/chat/",
+			"dest": "/chat/index.html"
+		},
+		{
+			"src": "/chat/(.*)",
+			"dest": "/chat/$1"
+		},
+		{
+			"src": "/create",
+			"dest": "/create.html"
+		},
+		{
+			"src": "/create/",
+			"dest": "/create.html"
+		},
+		{
+			"src": "/",
+			"dest": "/home.html"
+		},
+		{
+			"src": "/home",
+			"status": 301,
+			"headers": {
+				"Location": "/"
+			}
+		},
+		{
+			"src": "/explore",
+			"status": 301,
+			"headers": {
+				"Location": "/discover"
+			}
+		},
+		{
+			"src": "/explore/",
+			"status": 301,
+			"headers": {
+				"Location": "/discover"
+			}
+		},
 		{
 			"src": "/a/(\\d+)/(\\d+)/embed",
 			"headers": {
@@ -303,20 +880,68 @@
 			},
 			"dest": "/a-embed.html"
 		},
-		{ "src": "/a/(\\d+)/(\\d+)", "dest": "/api/a-page?chain=$1&id=$2" },
-		{ "src": "/a/sol/([^/]+)", "dest": "/agent-passport.html?asset=$1" },
-		{ "src": "/a/(.*)", "dest": "/app.html" },
-		{ "src": "/(.*)", "dest": "/$1" }
+		{
+			"src": "/a/(\\d+)/(\\d+)",
+			"dest": "/api/a-page?chain=$1&id=$2"
+		},
+		{
+			"src": "/a/sol/([^/]+)",
+			"dest": "/agent-passport.html?asset=$1"
+		},
+		{
+			"src": "/a/(.*)",
+			"dest": "/app.html"
+		},
+		{
+			"src": "/dist-lib/(.*)",
+			"headers": {
+				"cache-control": "public, max-age=300, s-maxage=300, stale-while-revalidate=86400",
+				"access-control-allow-origin": "*",
+				"cross-origin-resource-policy": "cross-origin"
+			},
+			"dest": "/dist-lib/$1"
+		},
+		{
+			"src": "/(.*)",
+			"dest": "/$1"
+		}
 	],
 	"crons": [
-		{ "path": "/api/cron/erc8004-crawl", "schedule": "*/15 * * * *" },
-		{ "path": "/api/cron/solana-attestations-crawl", "schedule": "*/5 * * * *" },
-		{ "path": "/api/cron/index-delegations", "schedule": "*/5 * * * *" },
-		{ "path": "/api/cron/run-dca", "schedule": "0 * * * *" },
-		{ "path": "/api/cron/run-subscriptions", "schedule": "0 * * * *" },
-		{ "path": "/api/cron/pumpfun-signals", "schedule": "*/15 * * * *" },
-		{ "path": "/api/cron/pump-agent-stats", "schedule": "*/10 * * * *" },
-		{ "path": "/api/cron/pumpfun-monitor", "schedule": "*/3 * * * *" },
-		{ "path": "/api/cron/solana-attest-event-cleanup", "schedule": "*/10 * * * *" }
+		{
+			"path": "/api/cron/erc8004-crawl",
+			"schedule": "*/15 * * * *"
+		},
+		{
+			"path": "/api/cron/solana-attestations-crawl",
+			"schedule": "*/5 * * * *"
+		},
+		{
+			"path": "/api/cron/index-delegations",
+			"schedule": "*/5 * * * *"
+		},
+		{
+			"path": "/api/cron/run-dca",
+			"schedule": "0 * * * *"
+		},
+		{
+			"path": "/api/cron/run-subscriptions",
+			"schedule": "0 * * * *"
+		},
+		{
+			"path": "/api/cron/pumpfun-signals",
+			"schedule": "*/15 * * * *"
+		},
+		{
+			"path": "/api/cron/pump-agent-stats",
+			"schedule": "*/10 * * * *"
+		},
+		{
+			"path": "/api/cron/pumpfun-monitor",
+			"schedule": "*/3 * * * *"
+		},
+		{
+			"path": "/api/cron/solana-attest-event-cleanup",
+			"schedule": "*/10 * * * *"
+		}
 	]
 }

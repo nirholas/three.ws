@@ -65,6 +65,17 @@ Tasks are grouped by readiness and dependency. Within a group they are independe
 24. [19-skill-marketplace.md](./19-skill-marketplace.md) — skill discovery index + optional on-chain registry.
 25. [22-privy-auth.md](./22-privy-auth.md) — Privy-backed agent ownership / signing.
 
+### Group H — production deploy fixes (run these first if the site is broken)
+
+> These address the live 404 on `https://three.ws/agent-3d/latest/agent-3d.js`.
+> Each is self-contained and can be run in any order or in a fresh chat.
+
+- [12-fix-cdn-404.md](./12-fix-cdn-404.md) — **START HERE** run publish:lib, add buildCommand to vercel.json, add pre-deploy guard
+- [13-fix-distlib-fallback.md](./13-fix-distlib-fallback.md) — mirror dist-lib into dist/ so the /dist-lib/ fallback URL works in production
+- [14-github-actions-deploy.md](./14-github-actions-deploy.md) — GitHub Actions CI/CD so the build never gets skipped again
+- [15-sri-integrity-embeds.md](./15-sri-integrity-embeds.md) — add SRI integrity hashes to embed snippets in register-ui.js
+- [16-versions-endpoint.md](./16-versions-endpoint.md) — /api/agent-3d/versions serverless endpoint + live version badge in dashboard
+
 ### Group F — ecosystem adapters
 
 26. [17-react-wrapper.md](./17-react-wrapper.md) — `@3d-agent/react` typed wrapper.

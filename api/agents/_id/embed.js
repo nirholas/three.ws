@@ -33,7 +33,7 @@ export async function handleEmbed(req, res) {
 		method: 'POST',
 		headers: {
 			'content-type': 'application/json',
-			authorization: `Bearer ${env.ANTHROPIC_API_KEY}`,
+			authorization: `Bearer ${env.VOYAGE_API_KEY}`,
 		},
 		body: JSON.stringify({
 			model: 'voyage-3-lite',

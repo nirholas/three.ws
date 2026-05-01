@@ -1,6 +1,7 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
 	import { localAgentId, activeAgent, agentLibraryUrl } from './stores.js';
+	import { t } from './i18n.js';
 
 	const dispatch = createEventDispatcher();
 
@@ -45,18 +46,27 @@
 		loadingLibrary = false;
 	}
 
+	function inferProvider(modelId) {
+		if (!modelId) return 'OpenRouter';
+		if (modelId.startsWith('claude')) return 'Anthropic';
+		if (modelId.startsWith('gpt') || modelId.startsWith('o1') || modelId.startsWith('o3')) return 'OpenAI';
+		return 'OpenRouter';
+	}
+
 	async function loadLibraryAgentDetail(agent) {
 		const base = $agentLibraryUrl?.replace(/\/+$/, '') || '';
 		const res = await fetch(`${base}/${agent.identifier}.json`);
 		if (!res.ok) return agent;
 		const data = await res.json();
 		const cfg = data.config || {};
+		const preferred_model = cfg.model
+			? { id: cfg.model, name: cfg.model, provider: inferProvider(cfg.model) }
+			: null;
 		return {
 			...agent,
 			system_prompt: cfg.systemRole || '',
 			greeting: cfg.openingMessage || '',
-			model: cfg.model || null,
-			provider: cfg.provider || null,
+			preferred_model,
 			params: cfg.params || null,
 		};
 	}
@@ -173,7 +183,7 @@
 		type="text"
 		bind:value={query}
 		on:input={onInput}
-		placeholder="Search agents…"
+		placeholder={$t('searchAgents')}
 		class="w-full rounded-lg border border-gray-200 px-3 py-2 text-[13px] outline-none focus:border-indigo-400"
 		autofocus
 	/>
@@ -183,7 +193,7 @@
 			<button
 				class="text-left text-[12px] text-slate-400 underline hover:text-slate-600"
 				on:click={clear}
-			>Remove agent</button>
+			>{$t('removeAgent')}</button>
 		{:else}
 			<span></span>
 		{/if}
@@ -192,15 +202,15 @@
 			class="text-[12px] text-indigo-500 hover:text-indigo-700"
 			target="_blank"
 			rel="noopener"
-		>+ Create agent</a>
+		>{$t('createAgent')}</a>
 	</div>
 
 	<div class="max-h-[28rem] overflow-y-auto pr-0.5 flex flex-col gap-3">
 		<!-- My Agents -->
 		<div>
-			<p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1.5">My Agents</p>
+			<p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1.5">{$t('myAgents')}</p>
 			{#if loadingMine}
-				<p class="text-center text-[12px] text-slate-400 py-3">Loading…</p>
+				<p class="text-center text-[12px] text-slate-400 py-3">{$t('loading')}</p>
 			{:else if filteredMine.length === 0}
 				<p class="text-[12px] text-slate-400 py-2">
 					{query ? 'No matches in your agents' : 'You haven\'t created any agents yet.'}
@@ -236,11 +246,11 @@
 
 		<!-- Marketplace -->
 		<div>
-			<p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1.5">Marketplace</p>
+			<p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1.5">{$t('marketplace')}</p>
 			{#if loadingMarket}
-				<p class="text-center text-[12px] text-slate-400 py-3">Loading…</p>
+				<p class="text-center text-[12px] text-slate-400 py-3">{$t('loading')}</p>
 			{:else if marketAgents.length === 0}
-				<p class="text-[12px] text-slate-400 py-2">No agents found</p>
+				<p class="text-[12px] text-slate-400 py-2">{$t('noAgentsFound')}</p>
 			{:else}
 				<div class="grid grid-cols-3 gap-2">
 					{#each marketAgents as agent}
@@ -272,9 +282,9 @@
 
 		<!-- Public Library (LobeHub-compatible JSON index) -->
 		<div>
-			<p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1.5">Public Library</p>
+			<p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1.5">{$t('publicLibrary')}</p>
 			{#if loadingLibrary}
-				<p class="text-center text-[12px] text-slate-400 py-3">Loading…</p>
+				<p class="text-center text-[12px] text-slate-400 py-3">{$t('loading')}</p>
 			{:else if filteredLibrary.length === 0}
 				<p class="text-[12px] text-slate-400 py-2">{query ? 'No matches in library' : 'Library unavailable'}</p>
 			{:else}
@@ -306,7 +316,7 @@
 					{/each}
 				</div>
 				{#if !query && libraryAgents.length > filteredLibrary.length}
-					<p class="text-[11px] text-slate-400 py-1.5 text-center">Showing 60 of {libraryAgents.length} — search to filter</p>
+					<p class="text-[11px] text-slate-400 py-1.5 text-center">{$t('showingOf', { shown: 60, total: libraryAgents.length })}</p>
 				{/if}
 			{/if}
 		</div>

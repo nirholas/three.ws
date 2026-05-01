@@ -57,6 +57,26 @@ import {
 } from './resolve-avatar.js';
 
 // ───────────────────────────────────────────────────────────────────────────
+// SRI integrity cache
+// ───────────────────────────────────────────────────────────────────────────
+
+let _cachedIntegrity = undefined; // undefined = not yet fetched, null = fetch failed
+
+async function fetchAgentIntegrity() {
+	if (_cachedIntegrity !== undefined) return _cachedIntegrity;
+	try {
+		const res = await fetch('/agent-3d/versions.json');
+		if (!res.ok) { _cachedIntegrity = null; return null; }
+		const data = await res.json();
+		const ver = data.latest;
+		_cachedIntegrity = data?.channels?.[ver]?.integrity?.['agent-3d.js'] ?? null;
+	} catch {
+		_cachedIntegrity = null;
+	}
+	return _cachedIntegrity;
+}
+
+// ───────────────────────────────────────────────────────────────────────────
 // Templates (for the Templates tab → prefills Create)
 // ───────────────────────────────────────────────────────────────────────────
 
@@ -1639,7 +1659,7 @@ export class RegisterUI {
 	 * and the oEmbed discovery URL. Any page that discovers this agent can
 	 * render it the same way — chain is the source of truth.
 	 */
-	_openEmbedModal({ agentId, name, glbUrl }) {
+	async _openEmbedModal({ agentId, name, glbUrl }) {
 		const chainId = this.selectedChainId;
 		const origin = location.origin;
 		const pageUrl = `${origin}/a/${chainId}/${agentId}`;
@@ -1647,8 +1667,13 @@ export class RegisterUI {
 		const oembedUrl = `${origin}/api/oembed?url=${encodeURIComponent(pageUrl)}`;
 		const cdnBase = `${origin}/agent-3d/latest/agent-3d.js`;
 
+		const integrity = await fetchAgentIntegrity();
+		const scriptTag = integrity
+			? `<script type="module"\n  src="${cdnBase}"\n  integrity="${integrity}"\n  crossorigin="anonymous"></script>`
+			: `<script type="module" src="${cdnBase}"></script>`;
+
 		const snippetWC =
-			`<script type="module" src="${cdnBase}"></script>\n` +
+			`${scriptTag}\n` +
 			`<agent-3d chain-id="${chainId}" agent-id="${agentId}" style="width:420px;height:520px"></agent-3d>`;
 		const snippetIframe =
 			`<iframe src="${embedUrl}" width="420" height="520" ` +

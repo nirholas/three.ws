@@ -9,6 +9,7 @@
 		feChevronDown,
 		feChevronLeft,
 		feChevronRight,
+		feCopy,
 		feCpu,
 		feEdit2,
 		feTerminal,
@@ -110,6 +111,12 @@
 	}
 
 	let contentHeight;
+	let copied = false;
+	async function copyContent() {
+		await navigator.clipboard.writeText(message.content || '');
+		copied = true;
+		setTimeout(() => (copied = false), 1500);
+	}
 </script>
 
 {#if (['user', 'assistant'].includes(message.role) || (message.role === 'system' && (!message.customInstructions || (message.customInstructions && message.showCustomInstructions)))) && ($config.explicitToolView || !collapsedRanges.some((r) => i >= r.starti && i < r.endi))}
@@ -433,7 +440,7 @@
 					{#if message.role === 'user' && convo.versions?.[message.vid]}
 						{@const versions = convo.versions[message.vid]}
 						{@const versionIndex = versions.findIndex((v) => v === null)}
-						<div class="flex items-center md:gap-x-1">
+						<div class="flex items-center md:gap-x-1 opacity-50 group-hover:opacity-100 transition-opacity">
 							<button
 								class="group flex h-6 w-6 shrink-0 rounded-full md:h-3 md:w-3"
 								disabled={versionIndex === 0}
@@ -446,7 +453,7 @@
 									class="m-auto h-3.5 w-3.5 text-slate-800 group-disabled:text-slate-500 md:h-3 md:w-3"
 								/>
 							</button>
-							<span class="text-xs tabular-nums">
+							<span class="text-xs tabular-nums font-medium">
 								{versionIndex + 1} / {versions.length}
 							</span>
 							<button
@@ -462,6 +469,31 @@
 								/>
 							</button>
 						</div>
+					{:else if message.role === 'assistant' && i > 0}
+						{@const prevMsg = convo.messages[i - 1]}
+						{#if prevMsg?.vid && convo.versions?.[prevMsg.vid]}
+							{@const versions = convo.versions[prevMsg.vid]}
+							{@const versionIndex = versions.findIndex((v) => v === null)}
+							{#if versions.length > 1}
+								<div class="flex items-center gap-x-1 text-slate-400 opacity-50 group-hover:opacity-100 transition-opacity">
+									<button
+										class="group flex h-6 w-6 shrink-0 rounded-full"
+										disabled={versionIndex === 0}
+										on:click={() => shiftVersion(-1, prevMsg, i - 1)}
+									>
+										<Icon icon={feChevronLeft} class="m-auto h-3 w-3 group-disabled:opacity-30" />
+									</button>
+									<span class="text-[11px] tabular-nums font-medium">{versionIndex + 1}/{versions.length}</span>
+									<button
+										class="group flex h-6 w-6 shrink-0 rounded-full"
+										disabled={versionIndex === versions.length - 1}
+										on:click={() => shiftVersion(1, prevMsg, i - 1)}
+									>
+										<Icon icon={feChevronRight} class="m-auto h-3 w-3 group-disabled:opacity-30" />
+									</button>
+								</div>
+							{/if}
+						{/if}
 					{/if}
 
 					{#if message.role === 'assistant' && (convo.models.length > 1 || (i > 2 && convo.messages[i - 2].role === 'assistant' && message.model && convo.messages[i - 2].model && convo.messages[i - 2].model.id !== message.model.id) || (message.role === 'assistant' && (i === 1 || i === 2) && message.model && convo.models[0]?.id !== message.model.id))}
@@ -474,6 +506,19 @@
 						? 'group-hover:opacity-100'
 						: ''} absolute bottom-[-32px] right-1 flex gap-x-2 opacity-0 transition-opacity md:gap-x-0.5"
 				>
+					{#if message.role !== 'system'}
+						<button
+							class="group/actions flex h-7 w-7 shrink-0 rounded-lg hover:bg-gray-100"
+							on:click={copyContent}
+							title="Copy"
+						>
+							{#if copied}
+								<Icon icon={feCheck} strokeWidth={3} class="m-auto h-[12px] w-[12px] text-green-500" />
+							{:else}
+								<Icon icon={feCopy} strokeWidth={3} class="m-auto h-[12px] w-[12px] text-slate-600 group-hover/actions:text-slate-800" />
+							{/if}
+						</button>
+					{/if}
 					<button
 						class="group/actions flex h-7 w-7 shrink-0 rounded-lg hover:bg-gray-100"
 						on:click={async () => {
