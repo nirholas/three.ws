@@ -1569,12 +1569,20 @@
 	$: if (agentEl && !agentReady) {
 		agentEl.addEventListener('agent:ready', () => {
 			agentReady = true;
-			agentEl.play('idle', { loop: true }).catch(() => {});
+			agentEl.play(generating ? 'walk' : 'idle', { loop: true }).catch(() => {});
 			if (agentPendingSpeak) {
 				agentEl.speak(agentPendingSpeak);
 				agentPendingSpeak = null;
 			}
 		}, { once: true });
+	}
+
+	$: if (agentEl && agentReady) {
+		if (generating) {
+			agentEl.play('walk', { loop: true }).catch(() => {});
+		} else {
+			agentEl.play('idle', { loop: true }).catch(() => {});
+		}
 	}
 
 	$: if (effectiveAgentId) {
