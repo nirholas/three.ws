@@ -38,7 +38,7 @@ export default wrap(async (req, res) => {
 	const origin = env.APP_ORIGIN;
 	const pageUrl = `${origin}/a/${chainId}/${agentId}`;
 	const embedUrl = `${origin}/a/${chainId}/${agentId}/embed`;
-	const viewerUrl = `${origin}/?agent=agent://${chainId}/${agentId}`;
+	const viewerUrl = `${origin}/app#onchain=${chainId}:${agentId}`;
 	const ogUrl = `${origin}/api/a-og?chain=${chainId}&id=${encodeURIComponent(agentId)}`;
 	const oembedJs = `${origin}/api/agent-oembed?url=${encodeURIComponent(pageUrl)}&format=json`;
 
