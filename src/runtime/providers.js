@@ -28,6 +28,12 @@ export class AnthropicProvider {
 		}
 	}
 
+	/**
+	 * Send a completion request to Anthropic.
+	 * Streams the response via SSE and calls `onChunk` for each text delta.
+	 * @param {{ system, messages, tools, onChunk?, signal? }} opts
+	 * @returns {Promise<{ text, toolCalls, thinking, stopReason }>}
+	 */
 	async complete({ system, messages, tools, onChunk, signal }) {
 		const body = {
 			model: this.model,

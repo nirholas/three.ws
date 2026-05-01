@@ -44,6 +44,9 @@ The viewer doesn't know about agents. The agent layer wraps the viewer through [
 ### Web component boundary
 
 - [element.js](element.js) — `<agent-3d>` custom element. IntersectionObserver lazy boot unless `eager`. See attribute list in [specs/EMBED_SPEC.md](../specs/EMBED_SPEC.md).
+
+  **Avatar-chat mode** (default on): vertical chrome layout with `.avatar-anchor` transparent window. Thought bubble appears above the anchor. Walk animation (`walk` clip) plays during `brain:stream` events. Disabled via `avatar-chat="off"` attribute. New public methods: `enableAvatarChat()`, `disableAvatarChat()`.
+
 #### Avatar-chat methods (element.js)
 
 - `enableAvatarChat()` — re-enable inline avatar layout + walk + bubble (default on)
@@ -169,6 +172,8 @@ Z-rotation = `(curiosity*12 + empathy*9 + concern*4)` degrees. X-rotation (lean)
 - **Skill `owned-only` trust** compares `manifest.author` with `ownerAddress` from element attr or backend. Mismatch → skill load throws.
 - **[viewer.js](viewer.js) is the biggest file in `src/` (~1.2k lines).** Further module split is tracked in [prompts/scalability/03-module-split.md](../prompts/scalability/03-module-split.md). Don't start that refactor ad-hoc.
 - **`memory.recall()` is substring search.** No embeddings yet.
+- **`_onStreamChunk()` debounce**: The walk animation uses a 600ms debounce. Calling `_stopWalkAnimation()` directly will interrupt it. Only call `_stopWalkAnimation()` in response to `brain:thinking { thinking: false }` or deliberate teardown.
+- **Thought bubble RAF queue**: `_streamToBubble()` buffers chunks and flushes on the next animation frame. Don't read `_thoughtTextEl.textContent` synchronously after calling `_streamToBubble()` — it won't reflect the latest buffer yet.
 - **`brain:stream` fires per token** — at 50+ tokens/sec this is frequent. All handlers must be O(1) and RAF-batched. Never do synchronous network or heavy DOM work in a `brain:stream` handler.
 - **Walk animation requires walk+idle clips preloaded** — if `animationManager.isLoaded('walk')` returns false, `_onStreamChunk()` silently skips the walk. Ensure the preload strategy (prompt 29) is implemented before relying on walk-on-stream.
 - **Throttle policies on `protocol.emit()`.** Animation-driving events are shaped by default: `gesture` (leading-edge throttle, 600 ms), `emote` (coalesce by `payload.trigger` with max-weight merge, 150 ms window), `look-at` (trailing debounce, 100 ms). All other types pass through. Override per-instance with `protocol.setThrottlePolicy(type, policy)` where `policy` is `{ mode: 'passthrough' }`, `{ mode: 'throttle', leading: true, intervalMs }`, `{ mode: 'debounce', intervalMs }`, or `{ mode: 'coalesce', windowMs, key, merge }`. Inspect suppressed events via `protocol.droppedCount(type)`. Passthrough events still go through the burst rate-limiter as a last-resort cascade guard.
@@ -181,7 +186,7 @@ Z-rotation = `(curiosity*12 + empathy*9 + concern*4)` degrees. X-rotation (lean)
 - [editor/](editor/) — GLB export + material editor exist, agent-system integration minimal
 - ERC-8004 reputation/validation — hooked but no UI
 - Memory `encrypted-ipfs` mode — stub
-- Chat streaming — implemented but not tested in all edge cases
+- `avatar-chat` inline layout — fully wired. Walk clip, thought bubble, stream events all connected. See `prompts/avatar-chat/` for remaining polish items.
 - Privy integration — functions exist, no full auth flow in element.js
 - Avatar Creator save-to-account — may not persist in all flows
 - Avatar Creator now wraps the Ready Player Me iframe. Configure the subdomain via `VITE_RPM_SUBDOMAIN`; falls back to `demo.readyplayer.me`.

@@ -278,6 +278,15 @@ agent-3d {
 }
 ```
 
+**Transparent background theming** — when `background="transparent"`, the canvas composites over the host page. The thought bubble gains a subtle border and tighter shadow to stay visually distinct against both white and dark host pages (no override needed). The chat glass panel (`--agent-surface`) defaults to dark; on a light host page, override it to match your theme:
+
+```css
+agent-3d {
+	--agent-surface: rgba(255, 255, 255, 0.92);
+	--agent-on-surface: #1a1a2e;
+}
+```
+
 ## Shadow DOM
 
 All chrome lives inside the element's shadow root. The host page's CSS cannot leak in (except via the custom properties above). The shadow root is open — DevTools can inspect, power users can `el.shadowRoot.querySelector(...)`.

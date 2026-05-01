@@ -62,6 +62,10 @@ export class Runtime extends EventTarget {
 		return [...builtins, ...stageTools, ...skillTools];
 	}
 
+	/**
+	 * Abort the current in-flight LLM request, if any.
+	 * Resolves the pending `send()` call immediately.
+	 */
 	cancel() {
 		this._abortController?.abort();
 	}

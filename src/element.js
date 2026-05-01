@@ -190,7 +190,7 @@ const BASE_STYLE = `
 		display: flex;
 		align-items: center;
 		gap: 5px;
-		z-index: 4;
+		z-index: 16;
 	}
 	.thought-bubble::after {
 		content: '';
@@ -253,6 +253,9 @@ const BASE_STYLE = `
 	.msg.curiosity { border-left-color: rgba(59,130,246,0.7); background: rgba(59,130,246,0.05); }
 	.msg .role { opacity: 0.55; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
 	.msg .body { white-space: pre-wrap; }
+	.msg .body code { font-family: monospace; background: rgba(255,255,255,0.08); padding: 1px 4px; border-radius: 4px; font-size: 12px; }
+	.msg .body strong { font-weight: 700; }
+	.msg .body em { font-style: italic; opacity: 0.9; }
 	.msg.streaming .body::after { content: '▋'; opacity: 1; animation: blink-cursor 0.7s step-end infinite; margin-left: 2px; }
 	@keyframes blink-cursor { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 	/* Suggestion chips when the conversation is empty */
@@ -376,6 +379,10 @@ const BASE_STYLE = `
 	:host([name-plate="off"]) .name-plate { display: none; }
 	/* Background variants — set on :host so the canvas composites over them. */
 	:host([background="transparent"]) { background: transparent; }
+	:host([background="transparent"]) .thought-bubble {
+		border: 1px solid rgba(0, 0, 0, 0.08);
+		box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18), 0 1px 3px rgba(0, 0, 0, 0.12);
+	}
 	:host([background="dark"]) { background: #0b0d10; }
 	:host([background="light"]) { background: #f5f5f5; }
 	:host([background="light"]) .name-plate {
@@ -457,6 +464,21 @@ const BASE_STYLE = `
 	}
 	:host([mode="floating"]) .avatar-anchor {
 		min-height: 60px;
+	}
+	/* Section mode — constrain chat width on wide containers */
+	:host([mode="section"]) .chat {
+		max-width: 600px;
+	}
+	:host([mode="section"]) .input-row {
+		max-width: 600px;
+	}
+	/* Fullscreen mode — centre the chrome column on large monitors */
+	:host([mode="fullscreen"]) .chrome {
+		max-width: 800px;
+		width: 800px;
+		left: 0;
+		right: 0;
+		margin: 0 auto;
 	}
 `;
 
@@ -1690,6 +1712,7 @@ class Agent3DElement extends HTMLElement {
 		this._thoughtTextEl.textContent = t;
 	}
 
+	// Buffers chunk and flushes to DOM on the next animation frame (RAF-batched).
 	_streamToBubble(chunk) {
 		if (!this._thoughtBubbleEl || !this._thoughtTextEl) return;
 		this._thoughtBubbleEl.dataset.active = 'true';
@@ -1711,10 +1734,25 @@ class Agent3DElement extends HTMLElement {
 			this._thoughtBubbleEl.setAttribute('aria-label', '');
 			this._thoughtBubbleEl.dataset.active = 'false';
 			this._thoughtBubbleEl.dataset.streaming = 'false';
+			this._thoughtBubbleEl.dataset.error = 'false';
 			if (this._thoughtTextEl) this._thoughtTextEl.textContent = '';
 		}, 200);
 	}
 
+	_showBubbleError(message = 'Something went wrong') {
+		if (!this._thoughtBubbleEl || this.getAttribute('avatar-chat') === 'off') return;
+		clearTimeout(this._bubbleClearTimer);
+		this._thoughtBubbleEl.dataset.active = 'true';
+		this._thoughtBubbleEl.dataset.streaming = 'true';
+		this._thoughtBubbleEl.dataset.error = 'true';
+		if (this._thoughtTextEl) this._thoughtTextEl.textContent = message;
+		this._bubbleClearTimer = setTimeout(() => {
+			this._thoughtBubbleEl.dataset.error = 'false';
+			this._clearThoughtBubble();
+		}, 3000);
+	}
+
+	// Disables/re-enables the input and updates placeholder during LLM turns.
 	_setBusy(busy) {
 		if (!this._inputEl) return;
 		this._inputEl.disabled = busy;
@@ -2053,6 +2091,8 @@ class Agent3DElement extends HTMLElement {
 		this._isWalking = false;
 		this._bubbleBuffer = '';
 		this._bubbleRafPending = false;
+		clearTimeout(this._bubbleClearTimer);
+		this._bubbleClearTimer = null;
 		this._streamingMsgEl = null;
 		this._streamingChatBuffer = '';
 		this._streamingChatRafPending = false;
@@ -2104,7 +2144,12 @@ class Agent3DElement extends HTMLElement {
 				await this._runtime.send(text, { voice: opts.voice ?? this.hasAttribute('voice') });
 			} catch (err) {
 				this._stopWalkAnimation();
-				this._clearThoughtBubble();
+				const msg = err?.message?.includes('429')
+					? 'Too many requests — try again'
+					: err?.message?.includes('busy')
+						? 'Still thinking…'
+						: 'Connection error';
+				this._showBubbleError(msg);
 				this._setBusy(false);
 				protocol.emit({
 					type: ACTION_TYPES.EMOTE,
@@ -2213,16 +2258,17 @@ class Agent3DElement extends HTMLElement {
 
 	/**
 	 * Enable the inline avatar-in-chat layout.
-	 * Avatar walks during LLM streaming, thought bubble shows response text.
-	 * @returns {void}
+	 * Avatar walks during LLM streaming and shows a thought bubble.
+	 * This is the default state — only needed to re-enable after `disableAvatarChat()`.
 	 */
 	enableAvatarChat() {
 		this.removeAttribute('avatar-chat');
 	}
 
 	/**
-	 * Disable the inline avatar-in-chat layout and restore bottom-bar chat.
-	 * @returns {void}
+	 * Disable the inline avatar-in-chat layout.
+	 * Restores the original bottom-bar chat overlay.
+	 * Stops any in-progress walk animation and clears the thought bubble.
 	 */
 	disableAvatarChat() {
 		this.setAttribute('avatar-chat', 'off');
