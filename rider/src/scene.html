@@ -140,6 +140,16 @@
         look-controls
         player-height
         wasd-controls="acceleration: 15"></a-entity>
+      <!-- Agent companion seated next to player. The GLB has its origin at
+           the feet, so we drop it ~0.45m below camera height; rider has no
+           visible floor at the player position, so the lower legs fade out
+           and only the seated upper body is visible. -->
+      <a-entity
+        id="agentCompanion"
+        gltf-model="#agentGlb"
+        position="0.7 0.45 0.5"
+        rotation="0 -15 0"
+        scale="0.9 0.9 0.9"></a-entity>
       <a-entity
         id="cameraWallCollider"
         bind__raycaster__wall="enabled: isPlaying && gameMode !== 'ride'"
