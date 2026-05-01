@@ -7,11 +7,8 @@
 		"NODE_OPTIONS": "--no-deprecation"
 	},
 	"functions": {
-		"api/pump/*.js": {
-			"includeFiles": "node_modules/@zauthx402/sdk/dist/**,examples/skills/pump-fun-strategy/**"
-		},
 		"api/**/*.js": {
-			"includeFiles": "node_modules/@zauthx402/sdk/dist/**"
+			"includeFiles": "node_modules/@zauthx402/sdk/dist/**,examples/skills/pump-fun-strategy/**"
 		}
 	},
 	"routes": [
