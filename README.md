@@ -290,26 +290,26 @@ The platform is organized into four layers. All layers communicate through a sin
 ```
 ┌────────────────────────────────────────────────────────────┐
 │  Layer 4: Embed & Distribution                             │
-│  <agent-3d> web component · CDN library · 5 widget types  │
+│  <agent-3d> web component · CDN library · 5 widget types   │
 │  Widget Studio · oEmbed · Open Graph cards                 │
 └────────────────────────────────────────────────────────────┘
                             ↓ protocol events
 ┌────────────────────────────────────────────────────────────┐
 │  Layer 3: Identity & Persistence                           │
-│  Agent passport · ERC-8004 on-chain registry              │
-│  Signed action log · Memory store · Wallet linking        │
+│  Agent passport · ERC-8004 on-chain registry               │
+│  Signed action log · Memory store · Wallet linking         │
 └────────────────────────────────────────────────────────────┘
                             ↓ protocol events
 ┌────────────────────────────────────────────────────────────┐
 │  Layer 2: Agent Runtime                                    │
-│  LLM tool-loop · Built-in tools · Skill registry          │
-│  Empathy Layer (emotion blending) · TTS/STT               │
+│  LLM tool-loop · Built-in tools · Skill registry           │
+│  Empathy Layer (emotion blending) · TTS/STT                │
 └────────────────────────────────────────────────────────────┘
                             ↓ protocol events
 ┌────────────────────────────────────────────────────────────┐
 │  Layer 1: Viewer                                           │
-│  three.js r176 · glTF / GLB · Draco / KTX2 / Meshopt     │
-│  Animations · Morph targets · HDR · Validation            │
+│  three.js r176 · glTF / GLB · Draco / KTX2 / Meshopt       │
+│  Animations · Morph targets · HDR · Validation             │
 └────────────────────────────────────────────────────────────┘
 ```
 
