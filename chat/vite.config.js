@@ -25,6 +25,7 @@ export default defineConfig(function () {
 			}),
 		],
 		resolve: {
+			dedupe: ['three'],
 			alias: {
 				'$src': path.resolve(__dirname, './src'),
 			}

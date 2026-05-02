@@ -11,6 +11,7 @@ export default defineConfig({
     outDir: './build',
   },
   resolve: {
+    dedupe: ['three'],
     alias: {
       buffer: 'buffer/'
     }
