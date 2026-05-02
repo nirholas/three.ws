@@ -15,6 +15,21 @@
 	let loadingLibrary = false;
 	let debounceTimer;
 
+	// Marketplace filter/pagination state
+	let marketSort = 'popular';
+	let marketCategory = '';
+	let marketCursor = null;
+	let marketHasMore = false;
+	let marketError = false;
+
+	// Detail preview state
+	let previewAgent = null;
+	let previewLoading = false;
+
+	// Library pagination + error state
+	let libraryLimit = 60;
+	let libraryError = false;
+
 	// Normalizes a pai-chat / lobehub library agent (index entry) into the local agent shape.
 	function normalizeLibraryAgent(item) {
 		const m = item.meta || {};
@@ -35,15 +50,20 @@
 
 	async function loadLibrary() {
 		loadingLibrary = true;
+		libraryError = false;
 		try {
 			const base = $agentLibraryUrl?.replace(/\/+$/, '') || '';
-			if (!base) return;
+			if (!base) { libraryError = true; return; }
 			const res = await fetch(`${base}/index.en-US.json`);
 			if (res.ok) {
 				const json = await res.json();
 				libraryAgents = (json.agents || []).map(normalizeLibraryAgent);
+			} else {
+				libraryError = true;
 			}
-		} catch {}
+		} catch {
+			libraryError = true;
+		}
 		loadingLibrary = false;
 	}
 
@@ -72,16 +92,26 @@
 		};
 	}
 
-	async function searchMarket(q) {
+	async function searchMarket(q, reset = true) {
 		loadingMarket = true;
+		marketError = false;
+		if (reset) { marketCursor = null; marketAgents = []; }
 		try {
-			const url = `/api/marketplace/agents${q ? `?q=${encodeURIComponent(q)}` : ''}`;
-			const res = await fetch(url);
-			if (res.ok) {
-				const json = await res.json();
-				marketAgents = json.data?.items ?? [];
-			}
-		} catch {}
+			const p = new URLSearchParams();
+			if (q) p.set('q', q);
+			if (marketSort) p.set('sort', marketSort);
+			if (marketCategory) p.set('category', marketCategory);
+			if (!reset && marketCursor) p.set('cursor', marketCursor);
+			const res = await fetch(`/api/marketplace/agents?${p}`);
+			if (!res.ok) throw new Error(`HTTP ${res.status}`);
+			const json = await res.json();
+			const items = json.data?.items ?? [];
+			marketAgents = reset ? items : [...marketAgents, ...items];
+			marketCursor = json.data?.next_cursor ?? null;
+			marketHasMore = !!marketCursor;
+		} catch {
+			marketError = true;
+		}
 		loadingMarket = false;
 	}
 
@@ -115,11 +145,39 @@
 				);
 		  })
 		: libraryAgents
-	).slice(0, 60);
+	).slice(0, libraryLimit);
 
 	function onInput() {
 		clearTimeout(debounceTimer);
-		debounceTimer = setTimeout(() => searchMarket(query), 300);
+		debounceTimer = setTimeout(() => searchMarket(query, true), 300);
+	}
+
+	function setMarketSort(s) { marketSort = s; searchMarket(query, true); }
+	function setMarketCategory(c) { marketCategory = c === marketCategory ? '' : c; searchMarket(query, true); }
+	function loadMoreMarket() { searchMarket(query, false); }
+	function loadMoreLibrary() { libraryLimit += 60; }
+
+	async function openPreview(agent) {
+		previewAgent = agent;
+		previewLoading = true;
+		try {
+			const urls = [
+				`/api/agents/${agent.id}`,
+				`/api/marketplace/agents/${agent.id}`,
+			];
+			for (const url of urls) {
+				try {
+					const res = await fetch(url, { credentials: 'include' });
+					if (res.ok) {
+						const json = await res.json();
+						previewAgent = json.agent ?? json.data?.agent ?? agent;
+						break;
+					}
+				} catch {}
+			}
+		} finally {
+			previewLoading = false;
+		}
 	}
 
 	async function pick(agent) {
@@ -247,37 +305,93 @@
 
 		<!-- Marketplace -->
 		<div>
-			<p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1.5">{$t('marketplace')}</p>
-			{#if loadingMarket}
+			<div class="flex items-center justify-between mb-1.5">
+				<p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{$t('marketplace')}</p>
+				<div class="flex items-center gap-1.5">
+					<select
+						class="rounded border border-gray-200 px-1.5 py-0.5 text-[11px] text-slate-600 outline-none"
+						bind:value={marketSort}
+						on:change={() => searchMarket(query, true)}
+					>
+						<option value="popular">Popular</option>
+						<option value="recent">Recent</option>
+						<option value="name">A–Z</option>
+					</select>
+				</div>
+			</div>
+
+			{#if loadingMarket && marketAgents.length === 0}
 				<p class="text-center text-[12px] text-slate-400 py-3">{$t('loading')}</p>
+			{:else if marketError}
+				<p class="text-[12px] text-slate-400 py-2">
+					Failed to load — <button class="underline" on:click={() => searchMarket(query, true)}>retry</button>
+				</p>
 			{:else if marketAgents.length === 0}
 				<p class="text-[12px] text-slate-400 py-2">{$t('noAgentsFound')}</p>
+			{:else if previewAgent}
+				<!-- Detail preview panel -->
+				<div class="rounded-xl border border-gray-100 bg-gray-50 p-3">
+					<button class="mb-2 text-[11px] text-slate-400 hover:text-slate-600" on:click={() => previewAgent = null}>
+						← Back
+					</button>
+					<div class="flex items-start gap-3">
+						{#if previewAgent.thumbnail_url}
+							<img src={previewAgent.thumbnail_url} alt={previewAgent.name} class="h-16 w-16 rounded-xl object-cover shrink-0" />
+						{:else}
+							<div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl text-[18px] font-bold text-white" style="background:{color(previewAgent.id)}">{initials(previewAgent.name)}</div>
+						{/if}
+						<div class="min-w-0 flex-1">
+							<p class="text-[13px] font-semibold text-slate-800 leading-tight">{previewAgent.name}</p>
+							{#if previewAgent.category}
+								<p class="mt-0.5 text-[10px] uppercase tracking-wide text-slate-400">{previewAgent.category}</p>
+							{/if}
+							<p class="mt-1 text-[12px] text-slate-600 leading-snug line-clamp-3">{previewAgent.description || ''}</p>
+							{#if previewAgent.tags?.length}
+								<div class="mt-1.5 flex flex-wrap gap-1">
+									{#each previewAgent.tags.slice(0, 4) as tag}
+										<span class="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500">{tag}</span>
+									{/each}
+								</div>
+							{/if}
+						</div>
+					</div>
+					{#if previewLoading}
+						<p class="mt-2 text-[11px] text-slate-400 animate-pulse">Loading details…</p>
+					{/if}
+					<button
+						class="mt-3 w-full rounded-lg bg-indigo-600 px-3 py-2 text-[13px] font-medium text-white hover:bg-indigo-700"
+						on:click={() => pick(previewAgent)}
+					>
+						Use this agent
+					</button>
+				</div>
 			{:else}
 				<div class="grid grid-cols-3 gap-2">
 					{#each marketAgents as agent}
 						<button
 							class="flex flex-col items-center gap-1.5 rounded-xl p-2 text-center transition hover:bg-gray-50
 								{$localAgentId === agent.id ? 'bg-indigo-50 ring-2 ring-indigo-300' : 'ring-1 ring-gray-100'}"
-							on:click={() => pick(agent)}
+							on:click={() => openPreview(agent)}
 							title={agent.description || agent.name}
 						>
 							{#if agent.thumbnail_url}
-								<img
-									src={agent.thumbnail_url}
-									alt={agent.name}
-									class="h-14 w-14 rounded-lg object-cover"
-									loading="lazy"
-								/>
+								<img src={agent.thumbnail_url} alt={agent.name} class="h-14 w-14 rounded-lg object-cover" loading="lazy" />
 							{:else}
-								<div
-									class="flex h-14 w-14 items-center justify-center rounded-lg text-[14px] font-bold text-white"
-									style="background:{color(agent.id)}"
-								>{initials(agent.name)}</div>
+								<div class="flex h-14 w-14 items-center justify-center rounded-lg text-[14px] font-bold text-white" style="background:{color(agent.id)}">{initials(agent.name)}</div>
 							{/if}
 							<p class="w-full truncate text-[11px] font-medium text-slate-700 leading-tight">{agent.name}</p>
 						</button>
 					{/each}
 				</div>
+				{#if marketHasMore}
+					<button
+						class="mt-2 w-full rounded-lg border border-slate-200 py-1.5 text-[12px] text-slate-500 hover:bg-gray-50"
+						disabled={loadingMarket}
+						on:click={loadMoreMarket}
+					>
+						{loadingMarket ? 'Loading…' : 'Load more'}
+					</button>
+				{/if}
 			{/if}
 		</div>
 
@@ -287,7 +401,9 @@
 			{#if loadingLibrary}
 				<p class="text-center text-[12px] text-slate-400 py-3">{$t('loading')}</p>
 			{:else if filteredLibrary.length === 0}
-				<p class="text-[12px] text-slate-400 py-2">{query ? 'No matches in library' : 'Library unavailable'}</p>
+				<p class="text-[12px] text-slate-400 py-2">
+					{libraryError ? 'Library unavailable' : query ? 'No matches in library' : 'No agents'}
+				</p>
 			{:else}
 				<div class="grid grid-cols-3 gap-2">
 					{#each filteredLibrary as agent}
@@ -317,7 +433,12 @@
 					{/each}
 				</div>
 				{#if !query && libraryAgents.length > filteredLibrary.length}
-					<p class="text-[11px] text-slate-400 py-1.5 text-center">{$t('showingOf', { shown: 60, total: libraryAgents.length })}</p>
+					<button
+						class="mt-1.5 w-full rounded-lg border border-slate-200 py-1.5 text-[12px] text-slate-500 hover:bg-gray-50"
+						on:click={loadMoreLibrary}
+					>
+						Show more ({libraryAgents.length - filteredLibrary.length} hidden)
+					</button>
 				{/if}
 			{/if}
 		</div>

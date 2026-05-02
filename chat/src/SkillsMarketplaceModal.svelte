@@ -6,6 +6,7 @@
 	export let open = false;
 
 	let view = 'browse';
+	$: if (view !== 'publish') publishError = null;
 
 	// Browse state
 	let skills = [];
@@ -420,6 +421,7 @@
 
 	async function loadPluginLibrary() {
 		loadingLibrary = true;
+		libraryError = false;
 		try {
 			const base = $pluginLibraryUrl?.replace(/\/+$/, '');
 			const res = await fetch(`${base}/index.en-US.json`);
@@ -437,9 +439,12 @@
 				// No upfront HEAD probe — surfacing 100+ 404s in the console on
 				// every Library open isn't worth filtering broken entries early.
 				// Install-time fetch (installLibraryPlugin) reports the real failure.
+			} else {
+				libraryError = true;
 			}
 		} catch (err) {
 			console.warn('[plugin-library] failed to load registry index:', err);
+			libraryError = true;
 		}
 		loadingLibrary = false;
 		libraryLoaded = true;
@@ -457,11 +462,14 @@
 		: libraryPlugins;
 
 	function isLibraryPluginInstalled(identifier) {
-		return $toolSchema.some((g) => g.id === `lib:${identifier}`);
+		return $toolSchema.some(
+			(g) => g.id === `lib:${identifier}` || (!g.id && g.name === identifier)
+		);
 	}
 
 	async function installLibraryPlugin(plugin) {
 		libraryInstalling = { ...libraryInstalling, [plugin.identifier]: true };
+		libraryFailed = { ...libraryFailed, [plugin.identifier]: false };
 		try {
 			const base = $pluginLibraryUrl?.replace(/\/+$/, '');
 			const url = plugin.manifestUrl || `${base}/${plugin.identifier}.json`;
@@ -490,7 +498,8 @@
 			};
 			toolSchema.update((groups) => [...groups.filter((g) => g.id !== group.id), group]);
 			notify(`${plugin.name} installed`, 'success');
-		} catch {
+		} catch (err) {
+			libraryFailed = { ...libraryFailed, [plugin.identifier]: true };
 			notify(`Failed to install ${plugin.name}`, 'error');
 		} finally {
 			libraryInstalling = { ...libraryInstalling, [plugin.identifier]: false };
@@ -498,7 +507,9 @@
 	}
 
 	let libraryLoaded = false;
-	$: if (view === 'library' && !libraryLoaded && !loadingLibrary) loadPluginLibrary();
+	let libraryError = false;
+	let libraryFailed = {};
+	$: if (view === 'library' && !loadingLibrary && (!libraryLoaded || libraryError)) loadPluginLibrary();
 
 
 	// init and keyboard
@@ -879,6 +890,16 @@
 
 			{#if loadingLibrary}
 				<p class="mt-8 text-center text-[13px] text-slate-400">Loading plugins...</p>
+			{:else if libraryError}
+				<div class="flex items-center justify-between rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-[12px] text-red-700">
+					<span>Failed to load plugin registry</span>
+					<button
+						class="ml-3 underline hover:text-red-900"
+						on:click={() => { libraryLoaded = false; loadPluginLibrary(); }}
+					>
+						Retry
+					</button>
+				</div>
 			{:else if filteredLibraryPlugins.length === 0}
 				<p class="mt-8 text-center text-[13px] text-slate-400">No plugins found</p>
 			{:else}
@@ -918,25 +939,31 @@
 									</div>
 								{/if}
 							</div>
-							{#if isLibraryPluginInstalled(plugin.identifier)}
-								<span
-									class="shrink-0 rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-[11px] font-medium text-green-700"
-								>
-									Installed
-								</span>
-							{:else if libraryInstalling[plugin.identifier]}
-								<span
-									class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-[11px] text-slate-400"
-									>...</span
-								>
-							{:else}
+							<div class="flex shrink-0 flex-col items-end gap-0.5">
 								<button
-									class="shrink-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 transition-colors hover:bg-slate-100"
-									on:click={() => installLibraryPlugin(plugin)}
+									class="rounded-full px-2.5 py-1 text-[11px] font-medium transition
+										{isLibraryPluginInstalled(plugin.identifier)
+											? 'bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-600'
+											: 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'}
+										disabled:opacity-50"
+									disabled={!!libraryInstalling[plugin.identifier]}
+									on:click={() =>
+										isLibraryPluginInstalled(plugin.identifier)
+											? toolSchema.update((g) => g.filter((x) => x.id !== `lib:${plugin.identifier}`))
+											: installLibraryPlugin(plugin)}
 								>
-									Install
+									{#if libraryInstalling[plugin.identifier]}
+										Installing…
+									{:else if isLibraryPluginInstalled(plugin.identifier)}
+										Remove
+									{:else}
+										Install
+									{/if}
 								</button>
-							{/if}
+								{#if libraryFailed[plugin.identifier]}
+									<span class="text-[10px] text-red-500">Install failed — retry?</span>
+								{/if}
+							</div>
 						</div>
 					{/each}
 				</div>
@@ -953,7 +980,7 @@
 					id="pf-name"
 					type="text"
 					bind:value={publishForm.name}
-					on:input={handleNameInput}
+					on:input={(e) => { handleNameInput(e); publishError = null; }}
 					placeholder="My Skill"
 					class="rounded-lg border border-slate-200 px-3 py-1.5 text-[13px] text-slate-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200"
 				/>

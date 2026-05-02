@@ -1420,7 +1420,6 @@ class Agent3DElement extends HTMLElement {
 							if (e.detail?.thinking) this._setToolIndicator('thinking');
 							else this._clearToolIndicator();
 						}
-						if (!e.detail?.thinking) this._stopWalkAnimation();
 						protocol.emit({
 							type: ACTION_TYPES.THINK,
 							payload: { thought: 'processing your message...' },

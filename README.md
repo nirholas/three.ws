@@ -263,11 +263,12 @@ A map of every user-facing route. Full detail (source files, feature description
 
 ## Cloud Marketplaces
 
-three.ws is partnered and or available as a managed service listing on major cloud marketplaces:
+three.ws is available on major cloud marketplaces and open to infrastructure partnerships.
 
-| Marketplace | Listing |
+| Cloud | Status |
 |---|---|
-| **Alibaba Cloud Marketplace** | [three.ws — 3D AI Agent Platform](https://marketplace.alibabacloud.com/preview/sgcmfw00036800.html) |
+| **Alibaba Cloud** | [View listing →](https://marketplace.alibabacloud.com/preview/sgcmfw00036800.html) |
+| **Google Cloud** | three.ws runs on WebGL, Vercel edge, and EVM — a natural fit for GCP's AI infrastructure, Vertex AI, and global CDN. Open to co-listing, credits, and joint GTM. |
 
 ---
 
