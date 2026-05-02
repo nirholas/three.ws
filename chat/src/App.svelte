@@ -2696,15 +2696,15 @@
 		transform-origin: bottom center;
 	}
 	.avatar-walking {
-		animation: avatar-walk-bob 720ms ease-in-out infinite;
+		animation: avatar-walk-across 6s ease-in-out infinite;
 		transform-origin: bottom center;
 	}
-	@keyframes avatar-walk-bob {
-		0%   { transform: translateY(0)    rotate(-1.2deg); }
-		25%  { transform: translateY(-6px) rotate(0deg); }
-		50%  { transform: translateY(0)    rotate(1.2deg); }
-		75%  { transform: translateY(-6px) rotate(0deg); }
-		100% { transform: translateY(0)    rotate(-1.2deg); }
+	@keyframes avatar-walk-across {
+		0%   { transform: translateX(-140px) scaleX(1); }
+		49%  { transform: translateX(140px)  scaleX(1); }
+		50%  { transform: translateX(140px)  scaleX(-1); }
+		99%  { transform: translateX(-140px) scaleX(-1); }
+		100% { transform: translateX(-140px) scaleX(1); }
 	}
 	@media (prefers-reduced-motion: reduce) {
 		.avatar-walking { animation: none; }
