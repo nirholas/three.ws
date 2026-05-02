@@ -518,13 +518,22 @@ export class Viewer {
 		const { clientHeight, clientWidth } = this.el;
 		if (clientWidth === 0 || clientHeight === 0) return;
 
-		this.defaultCamera.aspect = clientWidth / clientHeight;
+		const prevAspect = this.defaultCamera.aspect;
+		const nextAspect = clientWidth / clientHeight;
+		this.defaultCamera.aspect = nextAspect;
 		this.defaultCamera.updateProjectionMatrix();
 		this.renderer.setSize(clientWidth, clientHeight);
 
 		this.axesCamera.aspect = this.axesDiv.clientWidth / this.axesDiv.clientHeight;
 		this.axesCamera.updateProjectionMatrix();
 		this.axesRenderer.setSize(this.axesDiv.clientWidth, this.axesDiv.clientHeight);
+
+		// Re-frame so the full avatar stays visible after the canvas changes
+		// shape — the initial framing uses the aspect at load time, which is
+		// often stale (e.g. before ResizeObserver kicks in on first paint).
+		if (this.content && Math.abs(nextAspect - prevAspect) > 0.001) {
+			this.frameContent();
+		}
 
 		this.invalidate();
 	}
