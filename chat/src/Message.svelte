@@ -188,11 +188,11 @@
 						message.role = 'user';
 					}
 				}}
-				class="shrink-0 rounded-md md:rounded-[6px] {message.role === 'assistant' && hasLogo
+				class="shrink-0 rounded-md md:rounded-[6px] {message.role === 'assistant' && hasLogo && isLatestAssistant
 					? 'flex h-[220px] w-[220px]'
 					: 'flex h-8 w-8 md:h-9 md:w-9'} {message.role === 'system'
 					? 'border border-teal-200 bg-teal-100'
-					: message.role === 'assistant' && !hasLogo
+					: message.role === 'assistant' && (!hasLogo || !isLatestAssistant)
 						? 'border border-teal-200 bg-teal-100 pb-px'
 						: ''}"
 			>
