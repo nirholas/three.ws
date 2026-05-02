@@ -36,7 +36,7 @@
 	import MessageContent from './MessageContent.svelte';
 	import Toolcall from './Toolcall.svelte';
 	import Modal from './Modal.svelte';
-	import Composer from './manus/Composer.svelte';
+	import Composer from './three-ui/Composer.svelte';
 	import Icon from './Icon.svelte';
 	import {
 		feArrowUp,
@@ -74,12 +74,12 @@
 	import AgentPicker from './AgentPicker.svelte';
 	import AgentSettingsModal from './AgentSettingsModal.svelte';
 	import TalkingHead from './TalkingHead.svelte';
-	import EmptyState from './manus/EmptyState.svelte';
-	import SuggestionChips from './manus/SuggestionChips.svelte';
-	import TopNav from './manus/TopNav.svelte';
-	import WebsiteFlow from './manus/flows/WebsiteFlow.svelte';
-	import DesktopFlow from './manus/flows/DesktopFlow.svelte';
-	import RevenueDashboard from './manus/pages/RevenueDashboard.svelte';
+	import EmptyState from './three-ui/EmptyState.svelte';
+	import SuggestionChips from './three-ui/SuggestionChips.svelte';
+	import TopNav from './three-ui/TopNav.svelte';
+	import WebsiteFlow from './three-ui/flows/WebsiteFlow.svelte';
+	import DesktopFlow from './three-ui/flows/DesktopFlow.svelte';
+	import RevenueDashboard from './three-ui/pages/RevenueDashboard.svelte';
 	import SkillsMarketplaceModal from './SkillsMarketplaceModal.svelte';
 
 	marked.use(

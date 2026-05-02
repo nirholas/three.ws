@@ -47,7 +47,7 @@
 </header>
 
 <style>
-	:global(.manus-card) {
+	:global(.three-ui-card) {
 		background: #F5F4EF;
 		border: 1px solid #E5E3DC;
 		border-radius: 12px;
