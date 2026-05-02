@@ -173,5 +173,54 @@
 		"label": "Header",
 		"icon": "⚽",
 		"loop": false
+	},
+	{
+		"name": "coverstand",
+		"url": "/animations/clips/coverstand.json",
+		"label": "Cover Stand",
+		"icon": "🛡️",
+		"loop": false
+	},
+	{
+		"name": "goalkeeper",
+		"url": "/animations/clips/goalkeeper.json",
+		"label": "Goalkeeper",
+		"icon": "🧤",
+		"loop": false
+	},
+	{
+		"name": "jumpdown",
+		"url": "/animations/clips/jumpdown.json",
+		"label": "Jump Down",
+		"icon": "⬇️",
+		"loop": false
+	},
+	{
+		"name": "jumpdown2",
+		"url": "/animations/clips/jumpdown2.json",
+		"label": "Jump Down 2",
+		"icon": "⬇️",
+		"loop": false
+	},
+	{
+		"name": "jumpdown3",
+		"url": "/animations/clips/jumpdown3.json",
+		"label": "Jump Down 3",
+		"icon": "⬇️",
+		"loop": false
+	},
+	{
+		"name": "removing",
+		"url": "/animations/clips/removing.json",
+		"label": "Removing",
+		"icon": "🚗",
+		"loop": false
+	},
+	{
+		"name": "falltolanding",
+		"url": "/animations/clips/falltolanding.json",
+		"label": "Fall to Landing",
+		"icon": "🦅",
+		"loop": false
 	}
 ]

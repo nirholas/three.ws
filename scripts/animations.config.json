@@ -86,7 +86,7 @@
 	},
 	{
 		"name": "walk",
-		"source": "Walk Strafe Left.fbx",
+		"source": "Walking.fbx",
 		"label": "Walk",
 		"icon": "🚶",
 		"loop": true
