@@ -1540,14 +1540,10 @@ class Agent3DElement extends HTMLElement {
 		} catch (err) {
 			console.error('[agent-3d] boot failed', err);
 			this._loadingEl.hidden = true;
-			if (err instanceof AgentResolveError && err.code === 'not_found') {
-				const el = document.createElement('div');
-				el.className = 'agent-3d-error';
-				el.textContent = 'Agent not found';
-				this.shadowRoot.appendChild(el);
-			} else {
-				this._showError(err);
-			}
+			// Resolve errors should already have been caught and replaced with the
+			// default-avatar manifest in _resolveManifest. Anything reaching here is
+			// a deeper boot failure — surface it (unless we're a tiny kiosk tile).
+			if (!this.hasAttribute('kiosk')) this._showError(err);
 			this.dispatchEvent(
 				new CustomEvent('agent:error', {
 					detail: { phase: 'boot', error: err },
@@ -1558,6 +1554,18 @@ class Agent3DElement extends HTMLElement {
 		} finally {
 			this._booting = false;
 		}
+	}
+
+	_defaultFallbackManifest() {
+		return {
+			spec: 'agent-manifest/0.1',
+			_baseURI: '',
+			name: this.getAttribute('name') || 'Agent',
+			body: { uri: '/avatars/cz.glb', format: 'gltf-binary' },
+			brain: { provider: 'none' },
+			voice: { tts: { provider: 'browser' }, stt: { provider: 'browser' } },
+			skills: [],
+		};
 	}
 
 	async _resolveManifest() {
@@ -1588,36 +1596,42 @@ class Agent3DElement extends HTMLElement {
 			});
 		}
 		if (agentIdAttr) {
-			// On-chain reference? Supported forms:
-			//   agent-id="eip155:8453:0xabc...:42"   full CAIP-10 + token
-			//   agent-id="onchain:8453:42"           shorthand, canonical registry
-			//   agent-id="42" chain-id="8453"        numeric id + explicit chain
-			//   agent-id="agent://8453/42"           agent URI
-			const caipInput = chainIdAttr
-				? {
-						chainId: Number(chainIdAttr),
-						agentId: agentIdAttr,
-						registry: this.getAttribute('registry') || undefined,
-					}
-				: agentIdAttr;
-			const ref = parseAgentRef(caipInput);
-			if (ref) {
-				const resolved = await resolveOnchainAgent(ref);
-				if (resolved.error && !resolved.glbUrl)
-					throw new Error(`On-chain resolve failed: ${resolved.error}`);
-				return toManifest(resolved);
+			try {
+				// On-chain reference? Supported forms:
+				//   agent-id="eip155:8453:0xabc...:42"   full CAIP-10 + token
+				//   agent-id="onchain:8453:42"           shorthand, canonical registry
+				//   agent-id="42" chain-id="8453"        numeric id + explicit chain
+				//   agent-id="agent://8453/42"           agent URI
+				const caipInput = chainIdAttr
+					? {
+							chainId: Number(chainIdAttr),
+							agentId: agentIdAttr,
+							registry: this.getAttribute('registry') || undefined,
+						}
+					: agentIdAttr;
+				const ref = parseAgentRef(caipInput);
+				if (ref) {
+					const resolved = await resolveOnchainAgent(ref);
+					if (resolved.error && !resolved.glbUrl)
+						throw new Error(`On-chain resolve failed: ${resolved.error}`);
+					return toManifest(resolved);
+				}
+				// Explicit manifest= wins over backend UUID resolution.
+				if (manifestAttr) return loadManifest(manifestAttr);
+				// Resolve agent-id → manifestUrl via backend, then load that manifest.
+				const manifestUrl = await resolveByAgentId(agentIdAttr);
+				if (manifestUrl) {
+					this._autoResolvedManifest = true;
+					this.setAttribute('manifest', manifestUrl);
+					return loadManifest(manifestUrl);
+				}
+				// No manifestUrl on agent record — build inline manifest from avatar data.
+				return await resolveAgentById(agentIdAttr);
+			} catch (err) {
+				// Never let avatar rendering error out — fall back to default avatar.
+				console.warn('[agent-3d] agent resolve failed, using default avatar:', err);
+				return this._defaultFallbackManifest();
 			}
-			// Explicit manifest= wins over backend UUID resolution.
-			if (manifestAttr) return loadManifest(manifestAttr);
-			// Resolve agent-id → manifestUrl via backend, then load that manifest.
-			const manifestUrl = await resolveByAgentId(agentIdAttr);
-			if (manifestUrl) {
-				this._autoResolvedManifest = true;
-				this.setAttribute('manifest', manifestUrl);
-				return loadManifest(manifestUrl);
-			}
-			// No manifestUrl on agent record — build inline manifest from avatar data.
-			return resolveAgentById(agentIdAttr);
 		}
 		if (manifestAttr) return loadManifest(manifestAttr);
 		if (body) {
@@ -1645,7 +1659,8 @@ class Agent3DElement extends HTMLElement {
 				version: '0.1.0',
 			};
 		}
-		throw new Error('<agent-3d> requires src=, manifest=, or body= attribute');
+		// No source provided — render the default avatar so the element never errors out.
+		return this._defaultFallbackManifest();
 	}
 
 	_renderMessage({ role, content, sentiment }) {
@@ -2038,6 +2053,7 @@ class Agent3DElement extends HTMLElement {
 	}
 
 	_showError(err) {
+		if (this.hasAttribute('kiosk')) return;
 		const el = document.createElement('div');
 		el.className = 'error';
 		el.textContent = `Couldn't load agent: ${err.message || err}`;
@@ -2046,6 +2062,16 @@ class Agent3DElement extends HTMLElement {
 
 	_fail(code, message) {
 		this._loadingEl.hidden = true;
+		if (this.hasAttribute('kiosk')) {
+			this.dispatchEvent(
+				new CustomEvent('agent:error', {
+					detail: { phase: 'policy', error: { code, message } },
+					bubbles: true,
+					composed: true,
+				}),
+			);
+			return;
+		}
 		const el = document.createElement('div');
 		el.className = 'error';
 		el.textContent = message;

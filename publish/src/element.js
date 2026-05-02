@@ -997,10 +997,12 @@ class Agent3DElement extends HTMLElement {
 			console.error('[agent-3d] boot failed', err);
 			this._loadingEl.hidden = true;
 			if (err instanceof AgentResolveError && err.code === 'not-found') {
-				const el = document.createElement('div');
-				el.className = 'agent-3d-error';
-				el.textContent = 'Agent not found';
-				this.shadowRoot.appendChild(el);
+				if (!this.hasAttribute('kiosk')) {
+					const el = document.createElement('div');
+					el.className = 'agent-3d-error';
+					el.textContent = 'Agent not found';
+					this.shadowRoot.appendChild(el);
+				}
 			} else {
 				this._showError(err);
 			}
@@ -1316,6 +1318,7 @@ class Agent3DElement extends HTMLElement {
 	}
 
 	_showError(err) {
+		if (this.hasAttribute('kiosk')) return;
 		const el = document.createElement('div');
 		el.className = 'error';
 		el.textContent = `Couldn't load agent: ${err.message || err}`;
@@ -1324,6 +1327,16 @@ class Agent3DElement extends HTMLElement {
 
 	_fail(code, message) {
 		this._loadingEl.hidden = true;
+		if (this.hasAttribute('kiosk')) {
+			this.dispatchEvent(
+				new CustomEvent('agent:error', {
+					detail: { phase: 'policy', error: { code, message } },
+					bubbles: true,
+					composed: true,
+				}),
+			);
+			return;
+		}
 		const el = document.createElement('div');
 		el.className = 'error';
 		el.textContent = message;
