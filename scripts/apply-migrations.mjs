@@ -17,6 +17,7 @@
  */
 
 import { readFile, readdir } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -25,7 +26,20 @@ import ws from 'ws';
 neonConfig.webSocketConstructor = ws;
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const MIG_DIR = path.resolve(HERE, '..', 'api', '_lib', 'migrations');
+const REPO_ROOT = path.resolve(HERE, '..');
+const MIG_DIR = path.resolve(REPO_ROOT, 'api', '_lib', 'migrations');
+
+// Load .env.local if present (same pattern as seed-skills.js)
+for (const envFile of ['.env.local', '.env']) {
+	try {
+		const raw = readFileSync(path.resolve(REPO_ROOT, envFile), 'utf8');
+		for (const line of raw.split('\n')) {
+			const m = line.match(/^([A-Z_][A-Z0-9_]*)=(.*)$/);
+			if (m && !process.env[m[1]]) process.env[m[1]] = m[2].trim();
+		}
+		break;
+	} catch { /* file not present */ }
+}
 
 const args = process.argv.slice(2);
 const APPLY = args.includes('--apply');
@@ -33,7 +47,7 @@ const fileArgIdx = args.indexOf('--file');
 const ONLY = fileArgIdx >= 0 ? args[fileArgIdx + 1] : null;
 
 if (!process.env.DATABASE_URL) {
-	console.error('DATABASE_URL is not set.');
+	console.error('DATABASE_URL is not set. Add it to .env.local or export it in your shell.');
 	process.exit(2);
 }
 
