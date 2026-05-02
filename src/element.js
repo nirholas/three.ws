@@ -1743,7 +1743,8 @@ class Agent3DElement extends HTMLElement {
 			}
 			this._streamingMsgEl = msg.querySelector('.body');
 			this._chatAutoScroll = true;
-			if (!this._walkMovedX && this._scene?.viewer?.content) {
+			if (!this._walkMovedX && this._scene?.viewer?.content &&
+					!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
 				this._walkHomeX = this._scene.viewer.content.position.x;
 				this._walkMovedX = true;
 				this._scene.moveTo({ x: this._walkHomeX + 0.35 }, { duration: 900 });
