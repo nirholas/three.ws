@@ -31,11 +31,21 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
+
+      - name: Cache chat node_modules
+        uses: actions/cache@v4
+        with:
+          path: chat/node_modules
+          key: chat-deps-${{ hashFiles('chat/package-lock.json') }}
+          restore-keys: chat-deps-
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Install chat dependencies
+        run: cd chat && node scripts/ensure-deps.mjs
 
       - name: Build
         run: npm run build:all
