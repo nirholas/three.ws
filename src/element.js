@@ -1792,6 +1792,8 @@ class Agent3DElement extends HTMLElement {
 	// Buffers chunk and flushes to DOM on the next animation frame (RAF-batched).
 	_streamToBubble(chunk) {
 		if (!this._thoughtBubbleEl || !this._thoughtTextEl) return;
+		// Trigger debounced walk animation on every chunk (safe — _onStreamChunk is debounced).
+		this._onStreamChunk();
 		this._thoughtBubbleEl.style.willChange = 'opacity, transform';
 		this._thoughtBubbleEl.dataset.active = 'true';
 		this._thoughtBubbleEl.dataset.streaming = 'true';
