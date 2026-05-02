@@ -96,7 +96,7 @@ const config = {
 				ink: '#1A1A1A',
 				'ink-soft': '#6B6B6B',
 				rule: '#E5E3DC',
-				manus: {
+				'three-ui': {
 					blue: '#3B82F6',
 					'blue-soft': '#EFF6FF',
 					'blue-border': '#BFDBFE',

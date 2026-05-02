@@ -138,7 +138,7 @@ The `/chat` path serves a full Svelte-based AI chat application. Navigation with
 | `/chat#resources/use-cases` | Use cases index |
 | `/chat#dashboard/revenue` | Revenue dashboard (authenticated) |
 
-Route definitions are in [chat/src/App.svelte](../../chat/src/App.svelte). Marketing page content is defined in [chat/src/manus/pages/marketingPages.js](../../chat/src/manus/pages/marketingPages.js) and [chat/src/manus/pages/featurePages.js](../../chat/src/manus/pages/featurePages.js).
+Route definitions are in [chat/src/App.svelte](../../chat/src/App.svelte). Marketing page content is defined in [chat/src/three-ui/pages/marketingPages.js](../../chat/src/three-ui/pages/marketingPages.js) and [chat/src/three-ui/pages/featurePages.js](../../chat/src/three-ui/pages/featurePages.js).
 
 ## Solana / Pump.fun
 

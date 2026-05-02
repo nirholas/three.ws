@@ -73,7 +73,7 @@ Match the existing button styling in whatever dropdown you find.
 
 ## Files to edit
 - `/workspaces/3D-Agent/chat/src/App.svelte`
-- Possibly `/workspaces/3D-Agent/chat/src/manus/MoreDropdown.svelte` if that's where the menu lives
+- Possibly `/workspaces/3D-Agent/chat/src/three-ui/MoreDropdown.svelte` if that's where the menu lives
 
 ## Verification
 - Open a conversation with several messages
