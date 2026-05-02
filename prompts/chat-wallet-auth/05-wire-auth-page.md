@@ -1,7 +1,7 @@
 # Task: Add wallet sign-in buttons to AuthPage.svelte
 
 ## Goal
-Update `/workspaces/3D-Agent/chat/src/manus/pages/AuthPage.svelte` to include
+Update `/workspaces/3D-Agent/chat/src/three-ui/pages/AuthPage.svelte` to include
 real EVM and Solana wallet sign-in options. Currently the page is a stub that
 `console.log`s and routes to `'chat'` without calling any auth backend.
 
@@ -10,7 +10,7 @@ real EVM and Solana wallet sign-in options. Currently the page is a stub that
 ## Context
 
 ### Current AuthPage.svelte
-File: `/workspaces/3D-Agent/chat/src/manus/pages/AuthPage.svelte`
+File: `/workspaces/3D-Agent/chat/src/three-ui/pages/AuthPage.svelte`
 
 The component currently:
 - Accepts `export let kind = 'signin'` prop (`'signin'` | `'signup'`)

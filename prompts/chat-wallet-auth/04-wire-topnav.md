@@ -1,7 +1,7 @@
 # Task: Wire WalletConnect into TopNav and initialize session on app mount
 
 ## Goal
-1. Replace the static "Sign in" / "Sign up" buttons in `chat/src/manus/TopNav.svelte`
+1. Replace the static "Sign in" / "Sign up" buttons in `chat/src/three-ui/TopNav.svelte`
    with the `WalletConnect` component (which handles both states: signed-in and signed-out).
 2. Call `loadCurrentUser()` in `chat/src/App.svelte`'s `onMount` so the auth store is
    populated when the app boots.
@@ -11,7 +11,7 @@
 ## Context
 
 ### TopNav.svelte — current "Sign in / Sign up" buttons
-File: `/workspaces/3D-Agent/chat/src/manus/TopNav.svelte`
+File: `/workspaces/3D-Agent/chat/src/three-ui/TopNav.svelte`
 
 The right side of the desktop nav (around line 154–165) currently renders:
 ```svelte

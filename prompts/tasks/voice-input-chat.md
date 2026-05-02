@@ -4,7 +4,7 @@
 
 `/workspaces/3D-Agent/chat/src` is a Svelte chat app. The chat already has TTS output (speaking responses aloud) but no voice input — users can only type messages.
 
-The composer/input area is in `/workspaces/3D-Agent/chat/src/manus/Composer.svelte` or within `App.svelte` (search for the textarea where user messages are typed).
+The composer/input area is in `/workspaces/3D-Agent/chat/src/three-ui/Composer.svelte` or within `App.svelte` (search for the textarea where user messages are typed).
 
 The browser has a native `SpeechRecognition` API (Chrome/Edge) that requires no API key. This is the simplest path.
 
@@ -90,7 +90,7 @@ onResult = (t) => {
 Only add auto-submit if you find a `submitMessage` or equivalent function that's safe to call directly.
 
 ## Files to edit
-- `/workspaces/3D-Agent/chat/src/manus/Composer.svelte` or `App.svelte` — wherever the composer textarea lives
+- `/workspaces/3D-Agent/chat/src/three-ui/Composer.svelte` or `App.svelte` — wherever the composer textarea lives
 
 ## Verification
 - Open the chat in Chrome or Edge
