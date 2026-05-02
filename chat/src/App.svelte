@@ -1536,6 +1536,8 @@
 	let agentPendingSpeak = null;
 	let agentVisible = false;
 	let agentScriptLoaded = false;
+	let prevThoughtBubbleActive = false;
+	let thinkingTransitioning = false;
 	let agentPickerOpen = false;
 	let showAgentSettings = false;
 
@@ -1657,12 +1659,30 @@
 		}, { once: true });
 	}
 
-	$: if (agentEl && agentReady && !avatarExitAnim) {
-		if (generating) {
+	$: if (agentEl && agentReady && !avatarExitAnim && !thinkingTransitioning) {
+		if (thoughtBubbleActive) {
+			agentEl.play('think', { loop: true }).catch(() => {});
+		} else if (generating) {
 			agentEl.play('walk', { loop: true }).catch(() => {});
 		} else {
 			agentEl.play('idle', { loop: true }).catch(() => {});
 			if (agentEl._clearThoughtBubble) agentEl._clearThoughtBubble();
+		}
+	}
+
+	// When thinking ends, play a one-shot falling animation before resuming the loop.
+	$: {
+		const wasActive = prevThoughtBubbleActive;
+		prevThoughtBubbleActive = thoughtBubbleActive;
+		if (wasActive && !thoughtBubbleActive && agentEl && agentReady && !avatarExitAnim) {
+			thinkingTransitioning = true;
+			try { agentEl.play('falling', { loop: false }); } catch {}
+			setTimeout(() => {
+				thinkingTransitioning = false;
+				if (agentEl && agentReady && !avatarExitAnim) {
+					agentEl.play(generating ? 'walk' : 'idle', { loop: true }).catch(() => {});
+				}
+			}, 1200);
 		}
 	}
 
