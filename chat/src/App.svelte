@@ -1598,8 +1598,10 @@
 			dragMoved = true;
 		}
 		if (!dragMoved) return;
-		const x = Math.max(0, Math.min(window.innerWidth - 240, e.clientX - dragOffset.x));
-		const y = Math.max(0, Math.min(window.innerHeight - 60, e.clientY - dragOffset.y));
+		const aw = agentEl?.offsetWidth || 420;
+		const ah = agentEl?.offsetHeight || 700;
+		const x = Math.max(0, Math.min(window.innerWidth - Math.min(aw, window.innerWidth), e.clientX - dragOffset.x));
+		const y = Math.max(0, Math.min(window.innerHeight - Math.min(ah * 0.15, 80), e.clientY - dragOffset.y));
 		dragPos = { x, y };
 	}
 
@@ -2356,7 +2358,7 @@
 							class:avatar-walking={generating && !thoughtBubbleActive && agentReady && !avatarExitAnim && dragPos.x === null}
 							style={dragPos.x !== null
 								? `position: fixed; left: ${dragPos.x}px; top: ${dragPos.y}px;`
-								: 'position: absolute; bottom: 128px; right: 0; pointer-events: none;'}
+								: `position: absolute; bottom: ${($toolSchema.length > 0 || effectiveAgentId || $talkingHeadEnabled) ? 168 : 128}px; right: 0; max-width: 100%; pointer-events: none;`}
 							on:mousedown={onAvatarDragStart}
 							role="none"
 						>
@@ -2405,7 +2407,7 @@
 									background="transparent"
 									kiosk
 									name-plate="off"
-									style="width:420px;height:700px; cursor: grab; pointer-events: auto;"
+									style="width:min(420px, 60vw); height:min(700px, 70vh); aspect-ratio: 420/700; cursor: grab; pointer-events: auto;"
 								></agent-3d>
 							{:else if $talkingHeadEnabled && agentVisible}
 								<div style="cursor: grab; pointer-events: auto;">
