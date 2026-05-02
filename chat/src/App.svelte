@@ -2457,6 +2457,41 @@
 										class="avatar-inline mx-auto mt-2 flex flex-col items-center gap-2 select-none list-none"
 										class:avatar-walking={generating || tokensFlowing}
 									>
+										<!-- Thought bubble (reasoning models) -->
+										{#if thinkingMessage}
+											<div
+												class="thought-bubble"
+												class:thought-bubble-collapsed={!thoughtBubbleActive}
+												role="status"
+												aria-live="polite"
+											>
+												<div class="thought-bubble-header">
+													<span class="thought-bubble-dot" class:idle={!thoughtBubbleActive} />
+													<span class="thought-bubble-label">
+														{thoughtBubbleActive ? 'Thinking' : 'Thought'} for {thoughtBubbleSeconds}s
+													</span>
+												</div>
+												{#if thoughtBubbleActive}
+													<div class="thought-bubble-body" bind:this={thoughtBubbleEl}>
+														{#if thoughtBubbleText}
+															{thoughtBubbleText}
+														{:else}
+															<span class="thought-bubble-placeholder">Reasoning…</span>
+														{/if}
+													</div>
+												{/if}
+												<span class="thought-bubble-tail thought-bubble-tail-1" />
+												<span class="thought-bubble-tail thought-bubble-tail-2" />
+											</div>
+										{:else if generating && convo.messages[convo.messages.length - 1]?.role === 'assistant' && convo.messages[convo.messages.length - 1]?.content}
+											<!-- Chat bubble showing streaming response text -->
+											<div class="chat-bubble" role="status" aria-live="polite">
+												<p class="chat-bubble-text">{convo.messages[convo.messages.length - 1].content}</p>
+												<span class="thought-bubble-tail thought-bubble-tail-1" />
+												<span class="thought-bubble-tail thought-bubble-tail-2" />
+											</div>
+										{/if}
+
 										{#if effectiveAgentId}
 											<!-- svelte-ignore custom-element-no-implicit-ns -->
 											<agent-3d
@@ -2721,6 +2756,31 @@
 		0%   { transform: translateY(-120vh) rotate(-25deg); opacity: 0; }
 		70%  { transform: translateY(8px) rotate(2deg); opacity: 1; }
 		100% { transform: translateY(0) rotate(0); opacity: 1; }
+	}
+
+	.chat-bubble {
+		position: relative;
+		width: 280px;
+		max-width: calc(100vw - 48px);
+		margin-bottom: 14px;
+		padding: 10px 14px 12px;
+		border-radius: 18px;
+		background: #ffffff;
+		border: 1px solid #E5E3DC;
+		box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+		animation: thought-bubble-pop 220ms ease-out;
+	}
+	.chat-bubble-text {
+		font-family: 'Inter', system-ui, sans-serif;
+		font-size: 13px;
+		line-height: 1.5;
+		color: #1A1A1A;
+		margin: 0;
+		max-height: 120px;
+		overflow: hidden;
+		display: -webkit-box;
+		-webkit-line-clamp: 5;
+		-webkit-box-orient: vertical;
 	}
 
 	.thought-bubble {
