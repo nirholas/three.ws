@@ -196,7 +196,20 @@
 						? 'border border-teal-200 bg-teal-100 pb-px'
 						: ''}"
 			>
-				{#if false}
+				{#if message.role === 'assistant' && hasLogo && isLatestAssistant}
+					<span class="w-full h-full overflow-hidden inline-block shrink-0 rounded-[inherit]">
+						<!-- svelte-ignore custom-element-no-implicit-ns -->
+						<agent-3d
+							src="/avatars/cz.glb"
+							mode="inline"
+							width="220"
+							height="220"
+							background="transparent"
+							kiosk
+							name-plate="off"
+							style="width:100%;height:100%;display:block;"
+						></agent-3d>
+					</span>
 				{:else}
 					<span class="m-auto">
 						{#if message.role === 'system'}
