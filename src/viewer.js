@@ -625,8 +625,8 @@ export class Viewer {
 		const vFovRad = this.defaultCamera.fov * (Math.PI / 180);
 		const aspect = Math.max(this.defaultCamera.aspect, 0.01);
 		const hFovRad = 2 * Math.atan(Math.tan(vFovRad / 2) * aspect);
-		const distV = (bbSize.y / 2 * 1.15) / Math.tan(vFovRad / 2);
-		const distH = (bbSize.x / 2 * 1.15) / Math.tan(hFovRad / 2);
+		const distV = (bbSize.y / 2 * 1.0) / Math.tan(vFovRad / 2);
+		const distH = (bbSize.x / 2 * 1.0) / Math.tan(hFovRad / 2);
 		const dist = Math.max(distV, distH);
 
 		// Orbital focus: 10% above bbox centre — upper-chest framing for humanoids.
@@ -637,12 +637,13 @@ export class Viewer {
 		if (this.options.cameraPosition) {
 			framedPos.fromArray(this.options.cameraPosition);
 		} else {
-			// 3/4 angle: slight x offset for depth; z is the FOV-derived distance.
-			framedPos.set(dist * 0.12, focusY, dist);
+			// 3/4 angle: shift target right so avatar sits left of centre in viewport.
+			const panX = dist * 0.18;
+			framedPos.set(dist * 0.12 + panX, focusY, dist);
 		}
 		const orbitalTarget = this.options.cameraPosition
 			? new Vector3()
-			: new Vector3(0, focusY, 0);
+			: new Vector3(dist * 0.18, focusY, 0);
 
 		// In kiosk / embed modes (and on subsequent loads), snap straight to
 		// the framed position. On the first interactive load we tween in from

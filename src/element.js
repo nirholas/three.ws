@@ -165,7 +165,7 @@ const BASE_STYLE = `
 		position: sticky;
 		bottom: 0;
 		pointer-events: none !important;
-		min-height: 180px;
+		min-height: 260px;
 		margin-top: auto;
 		z-index: 1;
 	}
@@ -1755,6 +1755,7 @@ class Agent3DElement extends HTMLElement {
 					if (this._chatAutoScroll) {
 						this._chatEl.scrollTop = this._chatEl.scrollHeight;
 					}
+					this._onStreamChunk();
 				}
 			});
 		}
@@ -1773,11 +1774,11 @@ class Agent3DElement extends HTMLElement {
 			t = this._bubbleBuffer;
 		}
 
-		// Hard cap at 100 chars, break at last word boundary
-		if (t.length > 100) {
-			const truncated = t.slice(-90);
-			const wordBreak = truncated.indexOf(' ');
-			t = '…' + (wordBreak !== -1 ? truncated.slice(wordBreak) : truncated);
+		// Show the tail of the current text — reads as live speech being typed
+		if (t.length > 80) {
+			const tail = t.slice(-70);
+			const wordBreak = tail.indexOf(' ');
+			t = '…' + (wordBreak !== -1 ? tail.slice(wordBreak + 1) : tail);
 		}
 
 		this._thoughtTextEl.textContent = t;
