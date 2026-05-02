@@ -120,7 +120,7 @@
 
 {#if (['user', 'assistant'].includes(message.role) || (message.role === 'system' && (!message.customInstructions || (message.customInstructions && message.showCustomInstructions)))) && ($config.explicitToolView || !collapsedRanges.some((r) => i >= r.starti && i < r.endi))}
 	{@const effectiveAgentId = $localAgentId || $brandConfig?.agent_id || ''}
-	{@const hasLogo = message.role === 'assistant' && (!!effectiveAgentId || !!$talkingHeadAvatarUrl || hasCompanyLogo(message.model))}
+	{@const hasLogo = message.role === 'assistant'}
 	<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-noninteractive-element-interactions -->
 	<li
 		data-role={message.role}
@@ -190,7 +190,7 @@
 					<span class="w-full h-full overflow-hidden inline-block shrink-0 rounded-[inherit]">
 						<!-- svelte-ignore custom-element-no-implicit-ns -->
 						<agent-3d
-							agent-id={effectiveAgentId}
+							src="/avatars/cz.glb"
 							mode="inline"
 							width="128"
 							height="128"

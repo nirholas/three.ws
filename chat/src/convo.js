@@ -193,18 +193,6 @@ export async function complete(convo, onupdate, onabort) {
 			err.code = 'payment_required';
 			err.reason = body?.reason;
 			err.upgradeUrl = body?.upgradeUrl;
-		} else if (response.status === 429) {
-			const headerRetry = parseInt(response.headers.get('retry-after') ?? '', 10);
-			err.code = 'rate_limited';
-			err.retryAfter =
-				body?.retryAfter ?? (Number.isFinite(headerRetry) && headerRetry > 0 ? headerRetry : 30);
-			err.scope = body?.scope;
-			console.warn('[rate_limited 429]', {
-				retryAfter: err.retryAfter,
-				scope: err.scope,
-				retryAfterHeader: response.headers.get('retry-after'),
-				body,
-			});
 		} else if (activeSchema.length > 0 && /no endpoints?\s+(?:found|available)\s+that support tool/i.test(msg)) {
 			err.code = 'tools_unsupported';
 			err.modelId = model.id;

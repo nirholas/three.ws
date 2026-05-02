@@ -44,18 +44,6 @@ export default wrap(async (req, res) => {
 		});
 	}
 
-	if (upstream.status === 429) {
-		const upstreamRetry = parseInt(upstream.headers.get('retry-after') ?? '', 10);
-		const retryAfter = Number.isFinite(upstreamRetry) && upstreamRetry > 0 ? upstreamRetry : 30;
-		res.setHeader('retry-after', String(retryAfter));
-		return json(res, 429, {
-			error: 'rate_limited',
-			error_description: 'Upstream provider rate limited the request',
-			retryAfter,
-			scope: 'agent',
-		});
-	}
-
 	res.statusCode = upstream.status;
 	const ct = upstream.headers.get('content-type') ?? 'application/json';
 	res.setHeader('content-type', ct);

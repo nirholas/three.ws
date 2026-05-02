@@ -221,8 +221,7 @@ export default wrap(async (req, res) => {
 		if (process.env.DEBUG === 'true') {
 			console.warn('[chat] anthropic', upstream.status, text.slice(0, 400));
 		}
-		const status = upstream.status === 429 ? 429 : 502;
-		return error(res, status, 'upstream_error', `chat backend returned ${upstream.status}`);
+		return error(res, 502, 'upstream_error', `chat backend returned ${upstream.status}`);
 	}
 
 	res.writeHead(200, {
