@@ -1,0 +1,226 @@
+{
+  "_readme": "Central animation registry. Read-only reference for developers — does not affect runtime. Each collection section documents where the assets live, what pipeline uses them, and their current status. When doing a full swap, the 'clips' collection is the primary source of truth for the runtime (manifest.json is generated from scripts/animations.config.json).",
+
+  "collections": {
+
+    "clips": {
+      "description": "Built Mixamo clips retargeted to the Avaturn rig. These are the animations active in the main runtime. Sources are FBX files in public/animations/, built via scripts/build-animations.mjs into JSON clips in public/animations/clips/. The runtime loads these via public/animations/manifest.json.",
+      "pipeline": "scripts/build-animations.mjs",
+      "rig": "avaturn",
+      "status": "active",
+      "items": [
+        { "name": "idle",      "label": "Idle",       "icon": "🧍", "loop": true,  "clip": "public/animations/clips/idle.json",      "source_fbx": "public/animations/Old Man Idle.fbx",              "agent_slots": ["idle"] },
+        { "name": "dance",     "label": "Dance",      "icon": "💃", "loop": true,  "clip": "public/animations/clips/dance.json",     "source_fbx": "public/animations/Hip Hop Dancing.fbx",           "agent_slots": [] },
+        { "name": "celebrate", "label": "Celebrate",  "icon": "🎉", "loop": false, "clip": "public/animations/clips/celebrate.json", "source_fbx": "public/animations/Joyful Jump.fbx",               "agent_slots": ["celebrate"] },
+        { "name": "angry",     "label": "Angry",      "icon": "😡", "loop": false, "clip": "public/animations/clips/angry.json",     "source_fbx": "public/animations/Angry.fbx",                     "agent_slots": ["shake"] },
+        { "name": "defeated",  "label": "Defeated",   "icon": "😞", "loop": false, "clip": "public/animations/clips/defeated.json",  "source_fbx": "public/animations/Defeated.fbx",                  "agent_slots": ["concern", "shrug"] },
+        { "name": "dying",     "label": "Dying",      "icon": "💀", "loop": false, "clip": "public/animations/clips/dying.json",     "source_fbx": "public/animations/Dying.fbx",                     "agent_slots": [] },
+        { "name": "falling",   "label": "Falling",    "icon": "🪂", "loop": false, "clip": "public/animations/clips/falling.json",   "source_fbx": "public/animations/Falling.fbx",                   "agent_slots": [] },
+        { "name": "jump",      "label": "Jump",       "icon": "🦘", "loop": false, "clip": "public/animations/clips/jump.json",      "source_fbx": "public/animations/Joyful Jump.fbx",               "agent_slots": [] },
+        { "name": "kiss",      "label": "Kiss",       "icon": "💋", "loop": false, "clip": "public/animations/clips/kiss.json",      "source_fbx": "public/animations/Kiss.fbx",                      "agent_slots": [] },
+        { "name": "pray",      "label": "Pray",       "icon": "🙏", "loop": false, "clip": "public/animations/clips/pray.json",      "source_fbx": "public/animations/Praying.fbx",                   "agent_slots": ["think"] },
+        { "name": "reaction",  "label": "Reaction",   "icon": "😲", "loop": false, "clip": "public/animations/clips/reaction.json",  "source_fbx": "public/animations/Reaction.fbx",                  "agent_slots": ["wave", "nod", "point"] },
+        { "name": "rumba",     "label": "Rumba",      "icon": "🕺", "loop": true,  "clip": "public/animations/clips/rumba.json",     "source_fbx": "public/animations/Rumba Dancing.fbx",             "agent_slots": [] },
+        { "name": "silly",     "label": "Silly Dance","icon": "🤪", "loop": true,  "clip": "public/animations/clips/silly.json",     "source_fbx": "public/animations/Silly Dancing.fbx",             "agent_slots": [] },
+        { "name": "sitclap",   "label": "Sit Clap",   "icon": "👏", "loop": false, "clip": "public/animations/clips/sitclap.json",   "source_fbx": "public/animations/Sitting Clap.fbx",              "agent_slots": ["bow"] },
+        { "name": "sitlaugh",  "label": "Sit Laugh",  "icon": "😂", "loop": false, "clip": "public/animations/clips/sitlaugh.json",  "source_fbx": "public/animations/Sitting Laughing.fbx",          "agent_slots": [] },
+        { "name": "taunt",     "label": "Taunt",      "icon": "😝", "loop": false, "clip": "public/animations/clips/taunt.json",     "source_fbx": "public/animations/Taunt.fbx",                     "agent_slots": [] },
+        { "name": "thriller",  "label": "Thriller",   "icon": "🧟", "loop": true,  "clip": "public/animations/clips/thriller.json",  "source_fbx": "public/animations/Thriller Part 3.fbx",           "agent_slots": [] },
+        { "name": "capoeira",  "label": "Capoeira",   "icon": "🥋", "loop": true,  "clip": "public/animations/clips/capoeira.json",  "source_fbx": "public/animations/Capoeira.fbx",                  "agent_slots": [] },
+        { "name": "wave",      "label": "Wave",       "icon": "👋", "loop": false, "clip": "public/animations/clips/wave.json",      "source_fbx": "public/animations/Standing Cover Turn.fbx",       "agent_slots": [] },
+        { "name": "walk",      "label": "Walk",       "icon": "🚶", "loop": true,  "clip": "public/animations/clips/walk.json",      "source_fbx": "public/animations/Walk Strafe Left.fbx",          "agent_slots": [] },
+        { "name": "dodge",     "label": "Dodge",      "icon": "🤺", "loop": false, "clip": "public/animations/clips/dodge.json",     "source_fbx": "public/animations/Dodging Right.fbx",             "agent_slots": [] },
+        { "name": "stepback",  "label": "Step Back",  "icon": "👣", "loop": false, "clip": "public/animations/clips/stepback.json",  "source_fbx": "public/animations/Stepping Backward.fbx",         "agent_slots": [] },
+        { "name": "shoved",    "label": "Shoved",     "icon": "💥", "loop": false, "clip": "public/animations/clips/shoved.json",    "source_fbx": "public/animations/Shoved Reaction With Spin.fbx", "agent_slots": [] },
+        { "name": "standup",   "label": "Stand Up",   "icon": "⬆️", "loop": false, "clip": "public/animations/clips/standup.json",   "source_fbx": "public/animations/Crouch To Stand.fbx",           "agent_slots": [] },
+        { "name": "header",    "label": "Header",     "icon": "⚽", "loop": false, "clip": "public/animations/clips/header.json",    "source_fbx": "public/animations/Header Soccerball.fbx",         "agent_slots": [] }
+      ]
+    },
+
+    "orphaned_fbx": {
+      "description": "FBX files that exist in public/animations/ but are NOT listed in scripts/animations.config.json. They have never been built into clips and are unreachable by the runtime. Add them to animations.config.json and run build-animations.mjs to activate them.",
+      "pipeline": null,
+      "status": "orphaned — not built, not in manifest",
+      "items": [
+        { "name": "Cover To Stand",   "source_fbx": "public/animations/Cover To Stand.fbx" },
+        { "name": "Goalkeeper Scoop", "source_fbx": "public/animations/Goalkeeper Scoop.fbx" },
+        { "name": "Jumping Down",     "source_fbx": "public/animations/Jumping Down.fbx" },
+        { "name": "Jumping Down 1",   "source_fbx": "public/animations/Jumping Down (1).fbx" },
+        { "name": "Jumping Down 2",   "source_fbx": "public/animations/Jumping Down (2).fbx" },
+        { "name": "Removing Driver",  "source_fbx": "public/animations/Removing Driver.fbx" }
+      ]
+    },
+
+    "presets_robotexpressive": {
+      "description": "Legacy fallback presets from the Three.js RobotExpressive GLB. Written by scripts/download-animations.mjs. Not fetched by any current src/ code — superseded by the clips collection. Kept for reference and potential fallback use.",
+      "pipeline": "scripts/download-animations.mjs",
+      "rig": "robotexpressive",
+      "glb": "public/animations/robotexpressive.glb",
+      "status": "legacy — not loaded at runtime",
+      "items": [
+        { "name": "idle",     "label": "Idle",     "icon": "🧍", "loop": true,  "clip_name": "Idle" },
+        { "name": "wave",     "label": "Wave",     "icon": "👋", "loop": false, "clip_name": "Wave" },
+        { "name": "nod",      "label": "Nod",      "icon": "✅", "loop": false, "clip_name": "Yes" },
+        { "name": "shrug",    "label": "Shrug",    "icon": "🚫", "loop": false, "clip_name": "No" },
+        { "name": "celebrate","label": "Celebrate","icon": "🎉", "loop": false, "clip_name": "ThumbsUp" },
+        { "name": "jump",     "label": "Jump",     "icon": "⤴️", "loop": false, "clip_name": "Jump" },
+        { "name": "walking",  "label": "Walking",  "icon": "🚶", "loop": true,  "clip_name": "Walking" },
+        { "name": "running",  "label": "Running",  "icon": "🏃", "loop": true,  "clip_name": "Running" },
+        { "name": "dance",    "label": "Dance",    "icon": "💃", "loop": true,  "clip_name": "Dance" },
+        { "name": "sitting",  "label": "Sitting",  "icon": "🪑", "loop": true,  "clip_name": "Sitting" }
+      ]
+    },
+
+    "lora_pipeline": {
+      "description": "FBX files used exclusively by the character-studio LoRA/pose capture pipeline. Not retargeted or available to the main runtime. Used to render pose reference images for LoRA training.",
+      "pipeline": "character-studio LoRA capture",
+      "rig": "mixamo",
+      "status": "pipeline-only — not visible in UI",
+      "items": [
+        { "name": "AirSquat",                    "source_fbx": "character-studio/public/lora-assets/animations/AirSquat.fbx" },
+        { "name": "Angry",                       "source_fbx": "character-studio/public/lora-assets/animations/Angry.fbx" },
+        { "name": "BootyHipHopDance",            "source_fbx": "character-studio/public/lora-assets/animations/BootyHipHopDance.fbx" },
+        { "name": "Boxing",                      "source_fbx": "character-studio/public/lora-assets/animations/Boxing.fbx" },
+        { "name": "Cheering",                    "source_fbx": "character-studio/public/lora-assets/animations/Cheering.fbx" },
+        { "name": "Crawling",                    "source_fbx": "character-studio/public/lora-assets/animations/Crawling.fbx" },
+        { "name": "DodgingRight",                "source_fbx": "character-studio/public/lora-assets/animations/DodgingRight.fbx" },
+        { "name": "DoubleLegTakedown-Attacker",  "source_fbx": "character-studio/public/lora-assets/animations/DoubleLegTakedown-Attacker.fbx" },
+        { "name": "FallArmsOpen",                "source_fbx": "character-studio/public/lora-assets/animations/FallArmsOpen.fbx" },
+        { "name": "FemaleCrouchPose",            "source_fbx": "character-studio/public/lora-assets/animations/FemaleCrouchPose.fbx" },
+        { "name": "FemaleSittingPose",           "source_fbx": "character-studio/public/lora-assets/animations/FemaleSittingPose.fbx" },
+        { "name": "FemaleStandingPose",          "source_fbx": "character-studio/public/lora-assets/animations/FemaleStandingPose.fbx" },
+        { "name": "Female_Locomotion_Pose",      "source_fbx": "character-studio/public/lora-assets/animations/Female_Locomotion_Pose.fbx" },
+        { "name": "Female_Locomotion_Pose_1",    "source_fbx": "character-studio/public/lora-assets/animations/Female_Locomotion_Pose_1.fbx" },
+        { "name": "GolfPre-Putt",                "source_fbx": "character-studio/public/lora-assets/animations/GolfPre-Putt.fbx" },
+        { "name": "HurricaneKick",               "source_fbx": "character-studio/public/lora-assets/animations/HurricaneKick.fbx" },
+        { "name": "JumpPushUp",                  "source_fbx": "character-studio/public/lora-assets/animations/JumpPushUp.fbx" },
+        { "name": "KneelingPointing",            "source_fbx": "character-studio/public/lora-assets/animations/KneelingPointing.fbx" },
+        { "name": "LookOverShoulder",            "source_fbx": "character-studio/public/lora-assets/animations/LookOverShoulder.fbx" },
+        { "name": "MaleActionPose",              "source_fbx": "character-studio/public/lora-assets/animations/MaleActionPose.fbx" },
+        { "name": "Male_Sitting_Pose_1",         "source_fbx": "character-studio/public/lora-assets/animations/Male_Sitting_Pose_1.fbx" },
+        { "name": "MmaKick",                     "source_fbx": "character-studio/public/lora-assets/animations/MmaKick.fbx" },
+        { "name": "Plank",                       "source_fbx": "character-studio/public/lora-assets/animations/Plank.fbx" },
+        { "name": "PullPlant",                   "source_fbx": "character-studio/public/lora-assets/animations/PullPlant.fbx" },
+        { "name": "Punching",                    "source_fbx": "character-studio/public/lora-assets/animations/Punching.fbx" },
+        { "name": "Running",                     "source_fbx": "character-studio/public/lora-assets/animations/Running.fbx" },
+        { "name": "Sadness",                     "source_fbx": "character-studio/public/lora-assets/animations/Sadness.fbx" },
+        { "name": "Salute",                      "source_fbx": "character-studio/public/lora-assets/animations/Salute.fbx" },
+        { "name": "Shoved",                      "source_fbx": "character-studio/public/lora-assets/animations/Shoved.fbx" },
+        { "name": "SittingIdle",                 "source_fbx": "character-studio/public/lora-assets/animations/SittingIdle.fbx" },
+        { "name": "StandingGreeting",            "source_fbx": "character-studio/public/lora-assets/animations/StandingGreeting.fbx" },
+        { "name": "Strafe",                      "source_fbx": "character-studio/public/lora-assets/animations/Strafe.fbx" },
+        { "name": "StrongGesture",               "source_fbx": "character-studio/public/lora-assets/animations/StrongGesture.fbx" },
+        { "name": "StrutWalking",                "source_fbx": "character-studio/public/lora-assets/animations/StrutWalking.fbx" },
+        { "name": "Swinging",                    "source_fbx": "character-studio/public/lora-assets/animations/Swinging.fbx" },
+        { "name": "Taunt",                       "source_fbx": "character-studio/public/lora-assets/animations/Taunt.fbx" },
+        { "name": "Taunt2",                      "source_fbx": "character-studio/public/lora-assets/animations/Taunt2.fbx" },
+        { "name": "Taunt3",                      "source_fbx": "character-studio/public/lora-assets/animations/Taunt3.fbx" },
+        { "name": "Threatening",                 "source_fbx": "character-studio/public/lora-assets/animations/Threatening.fbx" },
+        { "name": "Walking",                     "source_fbx": "character-studio/public/lora-assets/animations/Walking.fbx" }
+      ]
+    },
+
+    "sprite_atlas_pipeline": {
+      "description": "FBX files used exclusively by the character-studio sprite atlas generator. Not available to the main runtime.",
+      "pipeline": "character-studio sprite atlas generator",
+      "rig": "mixamo",
+      "status": "pipeline-only — not visible in UI",
+      "items": [
+        { "name": "Backflip",                "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Backflip.fbx" },
+        { "name": "CapoeiraMixamo",          "source_fbx": "character-studio/public/sprite-atlas-assets/animations/CapoeiraMixamo.fbx" },
+        { "name": "Cheering",                "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Cheering.fbx" },
+        { "name": "Clapping",                "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Clapping.fbx" },
+        { "name": "Dancing",                 "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Dancing.fbx" },
+        { "name": "Drunk_Idle_Variation",    "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Drunk_Idle_Variation.fbx" },
+        { "name": "Female_Crouch_Pose",      "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Female_Crouch_Pose.fbx" },
+        { "name": "Female_Locomotion_Pose",  "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Female_Locomotion_Pose.fbx" },
+        { "name": "Female_Locomotion_Pose_1","source_fbx": "character-studio/public/sprite-atlas-assets/animations/Female_Locomotion_Pose_1.fbx" },
+        { "name": "Female_Sitting_Pose",     "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Female_Sitting_Pose.fbx" },
+        { "name": "Female_Standing_Pose",    "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Female_Standing_Pose.fbx" },
+        { "name": "Female_Standing_Pose_1",  "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Female_Standing_Pose_1.fbx" },
+        { "name": "Female_Standing_Pose_2",  "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Female_Standing_Pose_2.fbx" },
+        { "name": "Female_Standing_Pose_3",  "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Female_Standing_Pose_3.fbx" },
+        { "name": "Floating",                "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Floating.fbx" },
+        { "name": "Great_Sword_Idle",        "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Great_Sword_Idle.fbx" },
+        { "name": "Idle",                    "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Idle.fbx" },
+        { "name": "Jumping Down",            "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Jumping Down.fbx" },
+        { "name": "Male_Crouch_Pose",        "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Male_Crouch_Pose.fbx" },
+        { "name": "Male_Sitting_Pose",       "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Male_Sitting_Pose.fbx" },
+        { "name": "Male_Sitting_Pose_1",     "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Male_Sitting_Pose_1.fbx" },
+        { "name": "Male_Standing_Pose",      "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Male_Standing_Pose.fbx" },
+        { "name": "Male_Standing_Pose_1",    "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Male_Standing_Pose_1.fbx" },
+        { "name": "Medium_Run",              "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Medium_Run.fbx" },
+        { "name": "Pointing",                "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Pointing.fbx" },
+        { "name": "Sadness",                 "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Sadness.fbx" },
+        { "name": "Sitting",                 "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Sitting.fbx" },
+        { "name": "Sitting_Yell",            "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Sitting_Yell.fbx" },
+        { "name": "Skinning_Test",           "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Skinning_Test.fbx" },
+        { "name": "T-Pose",                  "source_fbx": "character-studio/public/sprite-atlas-assets/animations/T-Pose.fbx" },
+        { "name": "Terrified",               "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Terrified.fbx" },
+        { "name": "Twist_Dance",             "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Twist_Dance.fbx" },
+        { "name": "Typing",                  "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Typing.fbx" },
+        { "name": "Walking",                 "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Walking.fbx" },
+        { "name": "Waving",                  "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Waving.fbx" },
+        { "name": "Ymca_Dance",              "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Ymca_Dance.fbx" },
+        { "name": "idle_drophunter",         "source_fbx": "character-studio/public/sprite-atlas-assets/animations/idle_drophunter.fbx" }
+      ]
+    },
+
+    "sims_demo": {
+      "description": "Animation clips embedded in AnimationLibrary.glb for the sims-demo character controller. Mapped to movement states by AnimatedCharacterModel.jsx and AgentCharacterModel.jsx.",
+      "pipeline": "sims-demo character controller",
+      "rig": "custom (AnimationLibrary.glb)",
+      "glb": "sims-demo/public/AnimationLibrary.glb",
+      "status": "active in sims-demo only",
+      "items": [
+        { "name": "Idle_Loop",    "movement_state": "IDLE" },
+        { "name": "Walk_Loop",    "movement_state": "WALK" },
+        { "name": "Jog_Fwd_Loop", "movement_state": "RUN" },
+        { "name": "Jump_Start",   "movement_state": "JUMP_START" },
+        { "name": "Jump_Loop",    "movement_state": "JUMP_IDLE" },
+        { "name": "Jump_Land",    "movement_state": "JUMP_LAND" }
+      ]
+    }
+
+  },
+
+  "agent_slots": {
+    "description": "The fixed slot vocabulary used by the agent avatar system (src/runtime/animation-slots.js). Slots are resolved to clip names from the 'clips' collection at runtime. Agents can override individual slots via meta.edits.animations.",
+    "slots": {
+      "idle":      { "default_clip": "idle",     "status": "active" },
+      "wave":      { "default_clip": "reaction",  "status": "active — note: maps to 'reaction', not 'wave' clip" },
+      "nod":       { "default_clip": "reaction",  "status": "active — note: maps to 'reaction'" },
+      "shake":     { "default_clip": "angry",     "status": "active" },
+      "think":     { "default_clip": "pray",      "status": "active" },
+      "celebrate": { "default_clip": "celebrate", "status": "active" },
+      "concern":   { "default_clip": "defeated",  "status": "active" },
+      "bow":       { "default_clip": "sitclap",   "status": "active" },
+      "point":     { "default_clip": "reaction",  "status": "active — note: maps to 'reaction'" },
+      "shrug":     { "default_clip": "defeated",  "status": "active — note: maps to 'defeated'" },
+      "fidget":    { "default_clip": "Fidget",    "status": "broken — no clip named 'Fidget' exists in manifest" }
+    }
+  },
+
+  "known_issues": [
+    {
+      "id": "broken-fidget-slot",
+      "description": "The 'fidget' agent slot maps to 'Fidget' but no clip by that name exists in manifest.json. The slot silently falls through to a partial-name search on the embedded GLB model. Fix: either add a Fidget FBX to animations.config.json and rebuild, or remap the slot to an existing clip.",
+      "affected_file": "src/runtime/animation-slots.js"
+    },
+    {
+      "id": "orphaned-source-fbx",
+      "description": "6 FBX files in public/animations/ are never built into clips. See the 'orphaned_fbx' collection. Fix: add entries to scripts/animations.config.json and run build-animations.mjs.",
+      "affected_file": "scripts/animations.config.json"
+    },
+    {
+      "id": "unused-agent-hint-targets",
+      "description": "Several animationHint values emitted by skills ('gesture', 'inspect', 'present', 'sign', 'curiosity', 'patience') have no matching clip or slot. They silently no-op on Avaturn models. Fix: either map them to existing clips in DEFAULT_ANIMATION_MAP or build dedicated clips.",
+      "affected_file": "src/runtime/animation-slots.js"
+    },
+    {
+      "id": "wave-slot-mismatch",
+      "description": "The 'wave' slot maps to 'reaction' clip, not the 'wave' clip. The 'wave' clip (from Standing Cover Turn.fbx) is in the manifest but unreachable by any agent slot or hint. Intentional or oversight?",
+      "affected_file": "src/runtime/animation-slots.js"
+    }
+  ]
+}

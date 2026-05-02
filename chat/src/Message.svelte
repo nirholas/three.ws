@@ -179,7 +179,7 @@
 					}
 				}}
 				class="shrink-0 rounded-md md:rounded-[6px] {message.role === 'assistant' && hasLogo
-					? 'flex h-16 w-16 md:h-20 md:w-20'
+					? 'flex h-[220px] w-[220px]'
 					: 'flex h-8 w-8 md:h-9 md:w-9'} {message.role === 'system'
 					? 'border border-teal-200 bg-teal-100'
 					: message.role === 'assistant' && !hasLogo
@@ -192,8 +192,8 @@
 						<agent-3d
 							src="/avatars/cz.glb"
 							mode="inline"
-							width="128"
-							height="128"
+							width="220"
+							height="220"
 							background="transparent"
 							kiosk
 							name-plate="off"

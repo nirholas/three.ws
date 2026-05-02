@@ -25,12 +25,12 @@
 	import { controller, remoteServer, config, params, toolSchema, syncServer, brandConfig, ttsEnabled, localAgentId, activeAgent, talkingHeadEnabled, talkingHeadAvatarUrl, route, mode, websiteCategory, loadCurrentUser, currentUser, notify, localProvidersEnabled, generating as generatingStore } from './stores.js';
 	import { t } from './i18n.js';
 	import Notifications from './Notifications.svelte';
-	import AuthPage from './manus/pages/AuthPage.svelte';
-	import Pricing from './manus/pages/Pricing.svelte';
-	import MarketingPage from './manus/pages/MarketingPage.svelte';
-	import ResourcePage from './manus/pages/ResourcePage.svelte';
-	import FeaturePage from './manus/pages/FeaturePage.svelte';
-	import EventsPage from './manus/pages/EventsPage.svelte';
+	import AuthPage from './three-ui/pages/AuthPage.svelte';
+	import Pricing from './three-ui/pages/Pricing.svelte';
+	import MarketingPage from './three-ui/pages/MarketingPage.svelte';
+	import ResourcePage from './three-ui/pages/ResourcePage.svelte';
+	import FeaturePage from './three-ui/pages/FeaturePage.svelte';
+	import EventsPage from './three-ui/pages/EventsPage.svelte';
 	import SettingsModal from './SettingsModal.svelte';
 	import ToolcallButton from './ToolcallButton.svelte';
 	import MessageContent from './MessageContent.svelte';
@@ -1534,7 +1534,7 @@
 	let pendingSpeak = null;
 	let agentReady = false;
 	let agentPendingSpeak = null;
-	let agentVisible = true;
+	let agentVisible = false;
 	let agentScriptLoaded = false;
 	let agentPickerOpen = false;
 	let showAgentSettings = false;
@@ -2391,7 +2391,7 @@
 						</div>
 
 						<div class="pointer-events-none absolute bottom-[72px] inset-x-0 h-8 z-[98] bg-gradient-to-t from-paper to-transparent" />
-						{#if $toolSchema.length > 0 || (!agentVisible && (effectiveAgentId || $talkingHeadEnabled))}
+						{#if $toolSchema.length > 0 || (effectiveAgentId || $talkingHeadEnabled)}
 							<div class="flex flex-wrap gap-1.5 px-4 pt-2 pb-0">
 								{#each $toolSchema as group}
 									<span class="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 text-[11px] font-medium text-indigo-700">
@@ -2411,13 +2411,13 @@
 								>
 									+ Add skill
 								</button>
-								{#if !agentVisible && (effectiveAgentId || $talkingHeadEnabled)}
+								{#if effectiveAgentId || $talkingHeadEnabled}
 									<button
 										class="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-medium text-emerald-700 hover:bg-emerald-100"
-										on:click={reviveAvatar}
-										title="Bring the avatar back"
+										on:click={agentVisible ? killAvatar : reviveAvatar}
+										title={agentVisible ? 'Hide avatar' : 'Show avatar'}
 									>
-										Bring avatar back
+										{agentVisible ? 'Hide avatar' : 'Show avatar'}
 									</button>
 								{/if}
 							</div>
