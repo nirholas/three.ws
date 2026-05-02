@@ -413,6 +413,14 @@
 			"dest": "/api/auth/x/[action]?action=callback"
 		},
 		{
+			"src": "/api/auth/wallets",
+			"dest": "/api/auth/wallets/[action]"
+		},
+		{
+			"src": "/api/auth/wallets/([^/]+)",
+			"dest": "/api/auth/wallets/[action]?action=$1"
+		},
+		{
 			"src": "/api/auth/wallet/link",
 			"dest": "/api/auth/wallet/[action]?action=link"
 		},

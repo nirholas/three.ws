@@ -341,11 +341,18 @@ export const handleRegisterPrep = wrap(async (req, res) => {
 	let assetSigner, txBytes;
 	try {
 		({ assetSigner, txBytes } = await buildTx(configuredRpc));
-	} catch (err) {
-		const isAuthErr = err?.message?.includes('401') || err?.message?.includes('Unauthorized') || err?.message?.includes('invalid api key');
-		if (!isAuthErr || configuredRpc === publicRpc) throw err;
-		console.warn('[solana/register-prep] configured RPC auth failed, retrying with public RPC');
-		({ assetSigner, txBytes } = await buildTx(publicRpc));
+	} catch (rpcErr) {
+		if (configuredRpc === publicRpc) {
+			console.error('[solana/register-prep] public RPC failed:', rpcErr.message);
+			return error(res, 503, 'rpc_unavailable', 'Solana RPC temporarily unavailable — try again in a moment.');
+		}
+		console.warn('[solana/register-prep] configured RPC failed, retrying with public RPC:', rpcErr.message);
+		try {
+			({ assetSigner, txBytes } = await buildTx(publicRpc));
+		} catch (fallbackErr) {
+			console.error('[solana/register-prep] public RPC fallback also failed:', fallbackErr.message);
+			return error(res, 503, 'rpc_unavailable', 'Solana RPC temporarily unavailable — try again in a moment.');
+		}
 	}
 
 	const txBase64 = Buffer.from(txBytes).toString('base64');
