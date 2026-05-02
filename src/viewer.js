@@ -311,17 +311,20 @@ export class Viewer {
 		const vFovRad = this.defaultCamera.fov * (Math.PI / 180);
 		const aspect = Math.max(this.defaultCamera.aspect, 0.01);
 		const hFovRad = 2 * Math.atan(Math.tan(vFovRad / 2) * aspect);
-		const distV = (bbSize.y / 2 * 1.15) / Math.tan(vFovRad / 2);
-		const distH = (bbSize.x / 2 * 1.15) / Math.tan(hFovRad / 2);
+
+		const panelFrac = this._panelFrac();
+		const usableFrac = Math.max(1 - panelFrac, 0.55);
+
+		// Fit full avatar into usable area with 5% breathing room.
+		const extentV = (bbSize.y / 2) / usableFrac * 1.05;
+		const distV = extentV / Math.tan(vFovRad / 2);
+		const distH = (bbSize.x / 2 * 1.05) / Math.tan(hFovRad / 2);
 		const dist = Math.max(distV, distH);
 
-		const focusY = bbCenter.y + bbSize.y * 0.1;
+		// Center look-at on the usable area so the avatar clears the panel.
+		const focusY = bbCenter.y + (bbSize.y / 2) - extentV;
 		const target = new Vector3(bbCenter.x, focusY, bbCenter.z);
 		const pos = new Vector3(bbCenter.x + dist * 0.12, focusY, bbCenter.z + dist);
-
-		const bias = this._panelBiasY(dist);
-		target.y -= bias;
-		pos.y -= bias;
 
 		if (animate) {
 			this._tweenCamera(pos, target, durationMs);
@@ -333,15 +336,14 @@ export class Viewer {
 		}
 	}
 
-	/** Returns the Y world-space shift needed to keep the model above the animation panel. */
-	_panelBiasY(dist) {
+	/** Fraction of canvas height occupied by the animation panel (0 when no panel). */
+	_panelFrac() {
 		if (!this._animPanelEl) return 0;
-		const panelH = this._animPanelEl.offsetHeight;
-		const bottom = parseFloat(getComputedStyle(this._animPanelEl).bottom) || 0;
-		const canvasH = this.renderer.domElement.clientHeight;
-		if (!canvasH) return 0;
-		const frac = (panelH + bottom) / canvasH;
-		return frac * Math.tan((this.defaultCamera.fov / 2) * (Math.PI / 180)) * dist;
+		const ph = this._animPanelEl.offsetHeight;
+		const pb = parseFloat(getComputedStyle(this._animPanelEl).bottom) || 0;
+		const ch = this.renderer.domElement.clientHeight;
+		if (!ch) return 0;
+		return Math.min((ph + pb) / ch, 0.45);
 	}
 
 	// Smooth ease-out camera tween. Both position and OrbitControls.target
@@ -619,21 +621,42 @@ export class Viewer {
 		this.defaultCamera.far = size * 100;
 		this.defaultCamera.updateProjectionMatrix();
 
-		// Compute exact camera distance to fit the full bounding box using FOV math.
-		// This replaces magic multipliers and correctly accounts for aspect ratio.
+		// Add content and build the animation panel BEFORE computing the camera
+		// so the panel's rendered height is available for panel-aware framing.
+		this.scene.add(object);
+		this.content = object;
+
+		this.state.punctualLights = true;
+		this.content.traverse((node) => {
+			if (node.isLight) {
+				this.state.punctualLights = false;
+			}
+		});
+
+		this.setClips(clips);
+		this.animationManager.attach(this.content);
+		this._setupAnimationPanel();
+
+		// _panelFrac() reads offsetHeight after _setupAnimationPanel has
+		// populated the panel DOM, which forces a synchronous reflow.
+		const panelFrac = this._panelFrac();
+		const usableFrac = Math.max(1 - panelFrac, 0.55);
+
+		// Compute camera distance so the full avatar fits in the usable viewport
+		// area (above the animation panel) with 2% breathing room.
 		const bbSize = box.getSize(new Vector3());
 		const vFovRad = this.defaultCamera.fov * (Math.PI / 180);
 		const aspect = Math.max(this.defaultCamera.aspect, 0.01);
 		const hFovRad = 2 * Math.atan(Math.tan(vFovRad / 2) * aspect);
 
-		// Centre the avatar vertically for a tight full-body frame.
-		const focusY = 0;
-
-		// 2% breathing room ensures the full body (head + feet) stays in frame.
-		const extentV = (bbSize.y / 2) * 1.02;
+		const extentV = (bbSize.y / 2) / usableFrac * 1.02;
 		const distV = extentV / Math.tan(vFovRad / 2);
 		const distH = (bbSize.x / 2) / Math.tan(hFovRad / 2);
 		const dist = Math.max(distV, distH);
+
+		// Shift the look-at point down so the avatar is vertically centered in
+		// the usable area — when panelFrac=0 this is essentially 0 (unchanged).
+		const focusY = (bbSize.y / 2) - extentV;
 
 		// Final framed camera (the position the user should end up at).
 		const framedPos = new Vector3();
@@ -679,37 +702,9 @@ export class Viewer {
 		this.axesCamera.updateProjectionMatrix();
 		this.axesCorner.scale.set(size, size, size);
 
+		this.controls.target.copy(orbitalTarget);
+		this.controls.update();
 		this.controls.saveState();
-
-		this.scene.add(object);
-		this.content = object;
-
-		this.state.punctualLights = true;
-
-		this.content.traverse((node) => {
-			if (node.isLight) {
-				this.state.punctualLights = false;
-			}
-		});
-
-		this.setClips(clips);
-
-		// Attach external animation manager to the new content
-		this.animationManager.attach(this.content);
-		this._setupAnimationPanel();
-
-		// Shift camera down to offset the animation panel overlay so the model
-		// isn't clipped by the panel on first load and after each model swap.
-		const panelBias = this._panelBiasY(dist);
-		if (panelBias > 0) {
-			this.controls.target.y -= panelBias;
-			this.defaultCamera.position.y -= panelBias;
-			if (this._pendingReveal) {
-				this._pendingReveal.framedPos.y -= panelBias;
-				this._pendingReveal.target.y -= panelBias;
-			}
-			this.controls.update();
-		}
 
 		this.updateLights();
 		this.updateGUI();

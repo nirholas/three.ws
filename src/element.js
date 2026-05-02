@@ -558,6 +558,8 @@ class Agent3DElement extends HTMLElement {
 		this._bubbleClearTimer = null;
 		this._isWalking = false;
 		this._walkStopDebounce = null;
+		this._walkMovedX = false;
+		this._walkHomeX = 0;
 		this._streamingMsgEl = null;
 		this._streamingChatBuffer = '';
 		this._streamingChatRafPending = false;
@@ -1741,6 +1743,11 @@ class Agent3DElement extends HTMLElement {
 			}
 			this._streamingMsgEl = msg.querySelector('.body');
 			this._chatAutoScroll = true;
+			if (!this._walkMovedX && this._scene?.viewer?.content) {
+				this._walkHomeX = this._scene.viewer.content.position.x;
+				this._walkMovedX = true;
+				this._scene.moveTo({ x: this._walkHomeX + 0.35 }, { duration: 900 });
+			}
 		}
 		const el = this._chatEl;
 		this._chatAutoScroll = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
@@ -1861,6 +1868,10 @@ class Agent3DElement extends HTMLElement {
 		if (!this._isWalking) return;
 		this._isWalking = false;
 		clearTimeout(this._walkStopDebounce);
+		if (this._walkMovedX) {
+			this._walkMovedX = false;
+			this._scene?.moveTo({ x: this._walkHomeX }, { duration: 700 });
+		}
 		const am = this._viewer?.animationManager;
 		const currentClip = am?.currentName;
 		const isGesture = currentClip && currentClip !== 'walk' && currentClip !== 'idle';
@@ -2190,6 +2201,7 @@ class Agent3DElement extends HTMLElement {
 		clearTimeout(this._walkStopDebounce);
 		this._walkStopDebounce = null;
 		this._isWalking = false;
+		this._walkMovedX = false;
 		this._bubbleBuffer = '';
 		this._bubbleRafPending = false;
 		clearTimeout(this._bubbleClearTimer);
