@@ -992,6 +992,7 @@
 					id="pf-slug"
 					type="text"
 					bind:value={publishForm.slug}
+					on:input={() => (publishError = null)}
 					placeholder="my-skill"
 					class="rounded-lg border border-slate-200 px-3 py-1.5 text-[13px] text-slate-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200"
 				/>
@@ -1005,6 +1006,7 @@
 				<textarea
 					id="pf-desc"
 					bind:value={publishForm.description}
+					on:input={() => (publishError = null)}
 					placeholder="Describe what this skill does..."
 					rows="3"
 					class="resize-none rounded-lg border border-slate-200 px-3 py-1.5 text-[13px] text-slate-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200"
@@ -1056,6 +1058,7 @@
 				<textarea
 					id="pf-schema"
 					bind:value={publishForm.schemaText}
+					on:input={() => (publishError = null)}
 					rows="10"
 					spellcheck="false"
 					class="resize-y rounded-lg border border-slate-200 px-3 py-1.5 font-mono text-[12px] text-slate-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200"
