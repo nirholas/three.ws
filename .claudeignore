@@ -1,0 +1,50 @@
+node_modules
+dist
+dist-lib
+dist-artifact
+build
+.cache
+.vercel
+.next
+.turbo
+.svelte-kit
+coverage
+
+# Lockfiles (huge, low signal)
+package-lock.json
+**/package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Vendored fork — heavy, rarely edited
+character-studio/public
+character-studio/build
+character-studio/node_modules
+
+# Nested duplicate trees inside xspace-agent
+xspace-agent/agent-voice-chat
+xspace-agent/packages
+
+# Generated assets
+**/*.glb
+**/*.gltf
+**/*.fbx
+**/*.ktx2
+**/*.hdr
+**/*.png
+**/*.jpg
+**/*.jpeg
+**/*.webp
+**/*.mp3
+**/*.wav
+**/*.mp4
+
+# Scratch/debug
+debug-screenshots
+.xspace-conversations
+join-debug.mjs
+join-debug2.mjs
+join-space.mjs
+
+# Worktrees
+.claude/worktrees
