@@ -1681,7 +1681,8 @@
 				});
 			} catch {}
 			if (!avatarExitAnim) {
-				agentEl.play((generating || tokensFlowing) ? 'walk' : 'idle', { loop: true }).catch(() => {});
+				// STEP 1: force walk so we can verify the clip plays at all.
+				playClipWithFallback(agentEl, 'walk', ['walking', 'Walk', 'Walking', 'run', 'Run', 'idle']);
 			}
 			if (agentPendingSpeak) {
 				agentEl.speak(agentPendingSpeak);
@@ -1701,15 +1702,10 @@
 		tryNext([primary, ...fallbacks]);
 	}
 
+	// STEP 1: force the walking animation always so we can confirm it plays.
+	// (Idle / think switching deliberately disabled while we verify the walk clip.)
 	$: if (agentEl && agentReady && !avatarExitAnim && !thinkingTransitioning) {
-		if (thoughtBubbleActive) {
-			playClipWithFallback(agentEl, 'think', ['thinking', 'idle']);
-		} else if (generating || tokensFlowing) {
-			playClipWithFallback(agentEl, 'walk', ['walking', 'run', 'idle']);
-		} else {
-			playClipWithFallback(agentEl, 'idle', ['Idle']);
-			if (agentEl._clearThoughtBubble) agentEl._clearThoughtBubble();
-		}
+		playClipWithFallback(agentEl, 'walk', ['walking', 'Walk', 'Walking', 'run', 'Run', 'idle']);
 	}
 
 	// When thinking ends, play a one-shot falling animation before resuming the loop.
@@ -2383,74 +2379,32 @@
 									/>
 								{/each}
 
+								<!-- Inline avatar pinned right under the latest response -->
+								{#if (effectiveAgentId || $talkingHeadEnabled) && agentVisible}
+									<li
+										class="avatar-inline mx-auto mt-2 flex flex-col items-center gap-2 select-none list-none"
+										class:avatar-walking={(generating || tokensFlowing) && agentReady}
+									>
+										{#if effectiveAgentId}
+											<!-- svelte-ignore custom-element-no-implicit-ns -->
+											<agent-3d
+												bind:this={agentEl}
+												agent-id={effectiveAgentId}
+												mode="inline"
+												width="420"
+												height="700"
+												background="transparent"
+												kiosk
+												name-plate="off"
+												style="width:min(420px, 60vw, calc((100vh - 240px) * 420 / 700)); aspect-ratio: 420 / 700;"
+											></agent-3d>
+										{:else if $talkingHeadEnabled}
+											<TalkingHead bind:this={talkingHead} on:ready={onTalkingHeadReady} avatarUrl={$talkingHeadAvatarUrl || undefined} />
+										{/if}
+									</li>
+								{/if}
+
 							</ul>
-						</div>
-
-						<!-- svelte-ignore a11y-no-static-element-interactions -->
-						<div
-							class="z-[100] flex flex-col items-end gap-2 select-none avatar-floater"
-							class:cursor-grabbing={dragging}
-							class:avatar-dying={avatarExitAnim === 'dying'}
-							class:avatar-falling={avatarExitAnim === 'falling'}
-							class:avatar-walking={(generating || tokensFlowing) && !thoughtBubbleActive && agentReady && !avatarExitAnim}
-							style={dragPos.x !== null
-								? `position: fixed; left: ${dragPos.x}px; top: ${dragPos.y}px; pointer-events: auto;`
-								: `position: fixed; bottom: ${($toolSchema.length > 0 || effectiveAgentId || $talkingHeadEnabled) ? 168 : 128}px; right: 24px; max-height: calc(100vh - 200px); pointer-events: auto;`}
-							on:mousedown={onAvatarDragStart}
-							role="none"
-						>
-							{#if agentPickerOpen}
-								<div class="mb-1 w-72 rounded-xl border border-gray-200 bg-white p-3 shadow-xl" style="pointer-events: auto;">
-									<AgentPicker on:pick={(e) => { agentPickerOpen = false; if (!e.detail) clearAgentFromConvo(); }} />
-								</div>
-							{/if}
-
-							{#if thinkingMessage && agentVisible}
-								<div
-									class="thought-bubble"
-									class:thought-bubble-collapsed={!thoughtBubbleActive}
-									role="status"
-									aria-live="polite"
-									style="pointer-events: auto;"
-								>
-									<div class="thought-bubble-header">
-										<span class="thought-bubble-dot" class:idle={!thoughtBubbleActive} />
-										<span class="thought-bubble-label">
-											{thoughtBubbleActive ? 'Thinking' : 'Thought'} for {thoughtBubbleSeconds}s
-										</span>
-									</div>
-									{#if thoughtBubbleActive}
-										<div class="thought-bubble-body" bind:this={thoughtBubbleEl}>
-											{#if thoughtBubbleText}
-												{thoughtBubbleText}
-											{:else}
-												<span class="thought-bubble-placeholder">Reasoning…</span>
-											{/if}
-										</div>
-									{/if}
-									<span class="thought-bubble-tail thought-bubble-tail-1" />
-									<span class="thought-bubble-tail thought-bubble-tail-2" />
-								</div>
-							{/if}
-
-							{#if effectiveAgentId && agentVisible}
-								<!-- svelte-ignore custom-element-no-implicit-ns -->
-								<agent-3d
-									bind:this={agentEl}
-									agent-id={effectiveAgentId}
-									mode="inline"
-									width="420"
-									height="700"
-									background="transparent"
-									kiosk
-									name-plate="off"
-									style="width:min(420px, 60vw, calc((100vh - 240px) * 420 / 700)); aspect-ratio: 420 / 700; cursor: grab; pointer-events: auto;"
-								></agent-3d>
-							{:else if $talkingHeadEnabled && agentVisible}
-								<div style="cursor: grab; pointer-events: auto;">
-									<TalkingHead bind:this={talkingHead} on:ready={onTalkingHeadReady} avatarUrl={$talkingHeadAvatarUrl || undefined} />
-								</div>
-							{/if}
 						</div>
 
 						<div class="pointer-events-none absolute bottom-[72px] inset-x-0 h-8 z-[98] bg-gradient-to-t from-paper to-transparent" />
@@ -2669,28 +2623,7 @@
 		transform-origin: bottom center;
 	}
 	.avatar-walking {
-		animation:
-			avatar-walk-bob 520ms ease-in-out infinite,
-			avatar-walk-descend 7s linear infinite;
-		transition: none;
-		transform-origin: bottom center;
-		will-change: transform, bottom, opacity;
-	}
-	@keyframes avatar-walk-bob {
-		0%   { transform: translate3d(0,    0,    0) rotate(-3deg); }
-		25%  { transform: translate3d(-8px, -12px, 0) rotate(0deg); }
-		50%  { transform: translate3d(0,    0,    0) rotate(3deg); }
-		75%  { transform: translate3d(8px,  -12px, 0) rotate(0deg); }
-		100% { transform: translate3d(0,    0,    0) rotate(-3deg); }
-	}
-	@keyframes avatar-walk-descend {
-		0%   { bottom: max(168px, calc(100vh - 940px)); opacity: 0; }
-		6%   { opacity: 1; }
-		94%  { bottom: 168px; opacity: 1; }
-		100% { bottom: 168px; opacity: 0; }
-	}
-	@media (prefers-reduced-motion: reduce) {
-		.avatar-walking { animation: none; }
+		/* Step 1: rely on the 3D model's own walk animation clip (played via agent-3d API). */
 	}
 	.avatar-dying {
 		transform: translateY(120vh) rotate(35deg);
