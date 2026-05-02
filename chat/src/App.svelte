@@ -2396,12 +2396,12 @@
 												bind:this={agentEl}
 												agent-id={effectiveAgentId}
 												mode="inline"
-												width="220"
-												height="220"
+												width="300"
+												height="460"
 												background="transparent"
 												kiosk
 												name-plate="off"
-												style="width:220px;height:220px; cursor: grab;"
+												style="width:300px;height:460px; cursor: grab;"
 											></agent-3d>
 										{:else if $talkingHeadEnabled && agentVisible}
 											<div style="cursor: grab;">
