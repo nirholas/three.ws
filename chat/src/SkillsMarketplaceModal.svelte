@@ -1037,6 +1037,7 @@
 						id="pf-tags"
 						type="text"
 						bind:value={publishForm.tags}
+						on:input={() => (publishError = null)}
 						placeholder="search, web, api"
 						class="rounded-lg border border-slate-200 px-3 py-1.5 text-[13px] text-slate-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200"
 					/>
