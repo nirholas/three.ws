@@ -2344,73 +2344,74 @@
 									/>
 								{/each}
 
-								{#if true}
-									<!-- svelte-ignore a11y-no-static-element-interactions -->
-									<div
-										class="z-[100] flex flex-col items-end gap-2 select-none avatar-floater"
-										class:cursor-grabbing={dragging}
-										class:avatar-dying={avatarExitAnim === 'dying'}
-										class:avatar-falling={avatarExitAnim === 'falling'}
-										style={dragPos.x !== null
-											? `position: fixed; left: ${dragPos.x}px; top: ${dragPos.y}px;`
-											: 'position: absolute; bottom: 0; right: 0;'}
-										on:mousedown={onAvatarDragStart}
-										role="none"
-									>
-										{#if agentPickerOpen}
-											<div class="mb-1 w-72 rounded-xl border border-gray-200 bg-white p-3 shadow-xl">
-												<AgentPicker on:pick={(e) => { agentPickerOpen = false; if (!e.detail) clearAgentFromConvo(); }} />
-											</div>
-										{/if}
-
-										{#if thinkingMessage && agentVisible}
-											<div
-												class="thought-bubble"
-												class:thought-bubble-collapsed={!thoughtBubbleActive}
-												role="status"
-												aria-live="polite"
-											>
-												<div class="thought-bubble-header">
-													<span class="thought-bubble-dot" class:idle={!thoughtBubbleActive} />
-													<span class="thought-bubble-label">
-														{thoughtBubbleActive ? 'Thinking' : 'Thought'} for {thoughtBubbleSeconds}s
-													</span>
-												</div>
-												{#if thoughtBubbleActive}
-													<div class="thought-bubble-body" bind:this={thoughtBubbleEl}>
-														{#if thoughtBubbleText}
-															{thoughtBubbleText}
-														{:else}
-															<span class="thought-bubble-placeholder">Reasoning…</span>
-														{/if}
-													</div>
-												{/if}
-												<span class="thought-bubble-tail thought-bubble-tail-1" />
-												<span class="thought-bubble-tail thought-bubble-tail-2" />
-											</div>
-										{/if}
-
-										{#if effectiveAgentId && agentVisible}
-											<!-- svelte-ignore custom-element-no-implicit-ns -->
-											<agent-3d
-												bind:this={agentEl}
-												agent-id={effectiveAgentId}
-												mode="inline"
-												width="300"
-												height="460"
-												background="transparent"
-												kiosk
-												name-plate="off"
-												style="width:300px;height:460px; cursor: grab;"
-											></agent-3d>
-										{:else if $talkingHeadEnabled && agentVisible}
-											<div style="cursor: grab;">
-												<TalkingHead bind:this={talkingHead} on:ready={onTalkingHeadReady} avatarUrl={$talkingHeadAvatarUrl || undefined} />
-											</div>
-										{/if}
-									</div>
-								{/if}
 							</ul>
+						</div>
+
+						<!-- svelte-ignore a11y-no-static-element-interactions -->
+						<div
+							class="z-[100] flex flex-col items-end gap-2 select-none avatar-floater"
+							class:cursor-grabbing={dragging}
+							class:avatar-dying={avatarExitAnim === 'dying'}
+							class:avatar-falling={avatarExitAnim === 'falling'}
+							class:avatar-walking={generating && !thoughtBubbleActive && agentReady && !avatarExitAnim && dragPos.x === null}
+							style={dragPos.x !== null
+								? `position: fixed; left: ${dragPos.x}px; top: ${dragPos.y}px;`
+								: 'position: absolute; bottom: 128px; right: 0; pointer-events: none;'}
+							on:mousedown={onAvatarDragStart}
+							role="none"
+						>
+							{#if agentPickerOpen}
+								<div class="mb-1 w-72 rounded-xl border border-gray-200 bg-white p-3 shadow-xl" style="pointer-events: auto;">
+									<AgentPicker on:pick={(e) => { agentPickerOpen = false; if (!e.detail) clearAgentFromConvo(); }} />
+								</div>
+							{/if}
+
+							{#if thinkingMessage && agentVisible}
+								<div
+									class="thought-bubble"
+									class:thought-bubble-collapsed={!thoughtBubbleActive}
+									role="status"
+									aria-live="polite"
+									style="pointer-events: auto;"
+								>
+									<div class="thought-bubble-header">
+										<span class="thought-bubble-dot" class:idle={!thoughtBubbleActive} />
+										<span class="thought-bubble-label">
+											{thoughtBubbleActive ? 'Thinking' : 'Thought'} for {thoughtBubbleSeconds}s
+										</span>
+									</div>
+									{#if thoughtBubbleActive}
+										<div class="thought-bubble-body" bind:this={thoughtBubbleEl}>
+											{#if thoughtBubbleText}
+												{thoughtBubbleText}
+											{:else}
+												<span class="thought-bubble-placeholder">Reasoning…</span>
+											{/if}
+										</div>
+									{/if}
+									<span class="thought-bubble-tail thought-bubble-tail-1" />
+									<span class="thought-bubble-tail thought-bubble-tail-2" />
+								</div>
+							{/if}
+
+							{#if effectiveAgentId && agentVisible}
+								<!-- svelte-ignore custom-element-no-implicit-ns -->
+								<agent-3d
+									bind:this={agentEl}
+									agent-id={effectiveAgentId}
+									mode="inline"
+									width="420"
+									height="700"
+									background="transparent"
+									kiosk
+									name-plate="off"
+									style="width:420px;height:700px; cursor: grab; pointer-events: auto;"
+								></agent-3d>
+							{:else if $talkingHeadEnabled && agentVisible}
+								<div style="cursor: grab; pointer-events: auto;">
+									<TalkingHead bind:this={talkingHead} on:ready={onTalkingHeadReady} avatarUrl={$talkingHeadAvatarUrl || undefined} />
+								</div>
+							{/if}
 						</div>
 
 						<div class="pointer-events-none absolute bottom-[72px] inset-x-0 h-8 z-[98] bg-gradient-to-t from-paper to-transparent" />
@@ -2626,6 +2627,20 @@
 
 	.avatar-floater {
 		transition: transform 1100ms cubic-bezier(0.55, 0, 0.7, 0.2), opacity 1100ms ease-in;
+	}
+	.avatar-walking {
+		animation: avatar-walk-bob 720ms ease-in-out infinite;
+		transition: none;
+	}
+	@keyframes avatar-walk-bob {
+		0%   { transform: translateY(0)     rotate(-1.2deg); }
+		25%  { transform: translateY(-6px)  rotate(0deg); }
+		50%  { transform: translateY(0)     rotate(1.2deg); }
+		75%  { transform: translateY(-6px)  rotate(0deg); }
+		100% { transform: translateY(0)     rotate(-1.2deg); }
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.avatar-walking { animation: none; }
 	}
 	.avatar-dying {
 		transform: translateY(120vh) rotate(35deg);

@@ -315,8 +315,8 @@ export class Viewer {
 		const panelFrac = this._panelFrac();
 		const usableFrac = Math.max(1 - panelFrac, 0.55);
 
-		// Fit full avatar into usable area with 5% breathing room.
-		const extentV = (bbSize.y / 2) / usableFrac * 1.05;
+		// Fit full avatar into usable area with breathing room above/below.
+		const extentV = (bbSize.y / 2) / usableFrac * 1.10;
 		const distV = extentV / Math.tan(vFovRad / 2);
 		const distH = (bbSize.x / 2 * 1.05) / Math.tan(hFovRad / 2);
 		const dist = Math.max(distV, distH);
@@ -643,13 +643,13 @@ export class Viewer {
 		const usableFrac = Math.max(1 - panelFrac, 0.55);
 
 		// Compute camera distance so the full avatar fits in the usable viewport
-		// area (above the animation panel) with 2% breathing room.
+		// area (above the animation panel) with breathing room above/below.
 		const bbSize = box.getSize(new Vector3());
 		const vFovRad = this.defaultCamera.fov * (Math.PI / 180);
 		const aspect = Math.max(this.defaultCamera.aspect, 0.01);
 		const hFovRad = 2 * Math.atan(Math.tan(vFovRad / 2) * aspect);
 
-		const extentV = (bbSize.y / 2) / usableFrac * 1.02;
+		const extentV = (bbSize.y / 2) / usableFrac * 1.10;
 		const distV = extentV / Math.tan(vFovRad / 2);
 		const distH = (bbSize.x / 2) / Math.tan(hFovRad / 2);
 		const dist = Math.max(distV, distH);
