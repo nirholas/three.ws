@@ -27,6 +27,7 @@ export const params = persisted('params', {
 
 export const config = persisted('config', {
 	explicitToolView: false,
+	messageAnimation: 'smooth',
 });
 
 export const openaiAPIKey = persisted('openaiAPIKey', '');

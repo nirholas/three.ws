@@ -1,5 +1,7 @@
 <script>
 	import { createEventDispatcher, tick } from 'svelte';
+	import { fly } from 'svelte/transition';
+	import { cubicOut } from 'svelte/easing';
 	import { v4 as uuidv4 } from 'uuid';
 	import Button from './Button.svelte';
 	import {
@@ -27,6 +29,12 @@
 	import ToolcallButton from './ToolcallButton.svelte';
 
 	const dispatch = createEventDispatcher();
+
+	function msgTransition(node, { style }) {
+		if (style === 'snap') return { duration: 0 };
+		if (style === 'elegant') return fly(node, { y: 6, duration: 180, easing: cubicOut });
+		return fly(node, { y: 14, duration: 380, easing: cubicOut });
+	}
 
 
 	export let message;
@@ -121,9 +129,11 @@
 {#if (['user', 'assistant'].includes(message.role) || (message.role === 'system' && (!message.customInstructions || (message.customInstructions && message.showCustomInstructions)))) && ($config.explicitToolView || !collapsedRanges.some((r) => i >= r.starti && i < r.endi))}
 	{@const effectiveAgentId = $localAgentId || $brandConfig?.agent_id || ''}
 	{@const hasLogo = message.role === 'assistant'}
+	{@const isLatestAssistant = message.role === 'assistant' && i === convo.messages.findLastIndex((m) => m.role === 'assistant')}
 	<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-noninteractive-element-interactions -->
 	<li
 		data-role={message.role}
+		in:msgTransition={{ style: $config.messageAnimation ?? 'smooth' }}
 		class="group relative flex {message.role === 'user' ? 'justify-end' : 'justify-start'} pt-4 pb-10"
 		style="z-index: {convo.messages.length - i};"
 		on:touchstart={(event) => {
@@ -186,7 +196,7 @@
 						? 'border border-teal-200 bg-teal-100 pb-px'
 						: ''}"
 			>
-				{#if message.role === 'assistant' && hasLogo}
+				{#if message.role === 'assistant' && hasLogo && isLatestAssistant}
 					<span class="w-full h-full overflow-hidden inline-block shrink-0 rounded-[inherit]">
 						<!-- svelte-ignore custom-element-no-implicit-ns -->
 						<agent-3d

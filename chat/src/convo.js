@@ -193,6 +193,9 @@ export async function complete(convo, onupdate, onabort) {
 			err.code = 'payment_required';
 			err.reason = body?.reason;
 			err.upgradeUrl = body?.upgradeUrl;
+		} else if (response.status === 429) {
+			err.code = 'rate_limited';
+			err.retryAfter = body?.retry_after;
 		} else if (activeSchema.length > 0 && /no endpoints?\s+(?:found|available)\s+that support tool/i.test(msg)) {
 			err.code = 'tools_unsupported';
 			err.modelId = model.id;
