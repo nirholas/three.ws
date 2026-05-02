@@ -770,7 +770,7 @@ class Agent3DElement extends HTMLElement {
 				this._micEl.title =
 					state === 'idle' || !state ? 'Push to talk' : 'Voice active — click to stop';
 
-				if (this.getAttribute('avatar-chat') !== 'off' && !this.hasAttribute('kiosk')) {
+				if (this.getAttribute('avatar-chat') !== 'off') {
 					if (state === 'speaking' || state === 'thinking') {
 						this._onStreamChunk();
 					} else if (state === 'idle') {
@@ -1488,7 +1488,6 @@ class Agent3DElement extends HTMLElement {
 			// Walk during notification: enter frame (450ms) + message duration + exit frame (380ms)
 			const _notifyWalkHandler = ({ payload }) => {
 				if (this.getAttribute('avatar-chat') === 'off') return;
-				if (this.hasAttribute('kiosk')) return;
 				const duration = payload?.duration ?? 6000;
 				this._onStreamChunk();
 				clearTimeout(this._walkStopDebounce);
@@ -1502,7 +1501,6 @@ class Agent3DElement extends HTMLElement {
 
 			const _speakWalkHandler = () => {
 				if (this.getAttribute('avatar-chat') === 'off') return;
-				if (this.hasAttribute('kiosk')) return;
 				this._onStreamChunk();
 			};
 			protocol.on(ACTION_TYPES.SPEAK, _speakWalkHandler);
@@ -1852,7 +1850,6 @@ class Agent3DElement extends HTMLElement {
 	// Walk animation: debounced — keeps walking as long as chunks arrive within 600ms of each other.
 	_onStreamChunk() {
 		if (!this._scene || this.getAttribute('avatar-walk') === 'off') return;
-		if (this.hasAttribute('kiosk')) return;
 		const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 		if (!this._isWalking && !prefersReduced) {
 			this._isWalking = true;
