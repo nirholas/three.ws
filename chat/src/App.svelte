@@ -22,7 +22,7 @@
 	} from './providers.js';
 	import ModelSelector from './ModelSelector.svelte';
 	import CompanyLogo from './CompanyLogo.svelte';
-	import { controller, remoteServer, config, params, toolSchema, syncServer, brandConfig, ttsEnabled, localAgentId, activeAgent, talkingHeadEnabled, talkingHeadAvatarUrl, route, mode, websiteCategory, loadCurrentUser, notify, localProvidersEnabled, generating as generatingStore } from './stores.js';
+	import { controller, remoteServer, config, params, toolSchema, syncServer, brandConfig, ttsEnabled, localAgentId, activeAgent, talkingHeadEnabled, talkingHeadAvatarUrl, route, mode, websiteCategory, loadCurrentUser, currentUser, notify, localProvidersEnabled, generating as generatingStore } from './stores.js';
 	import { t } from './i18n.js';
 	import Notifications from './Notifications.svelte';
 	import AuthPage from './manus/pages/AuthPage.svelte';
@@ -1371,6 +1371,17 @@
 
 		// Populate auth state from session cookie
 		await loadCurrentUser();
+
+		// Default to the user's own agent when none is selected
+		if ($currentUser && !$localAgentId && !$brandConfig.agent_id) {
+			try {
+				const agentRes = await fetch('/api/agents/me', { credentials: 'include' });
+				if (agentRes.ok) {
+					const { agent: agentData } = await agentRes.json();
+					if (agentData?.id) localAgentId.set(agentData.id);
+				}
+			} catch {}
+		}
 
 		// Fetch global brand config from server
 		try {
