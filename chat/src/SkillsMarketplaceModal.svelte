@@ -156,7 +156,6 @@
 			if (sort) p.set('sort', sort);
 			if (!reset && page) p.set('cursor', page);
 			const res = await fetch(`/api/skills?${p}`, { signal });
-			if (res.status === 429) throw new Error('Too many requests — please wait a moment and try again');
 			if (!res.ok) throw new Error('Failed to load skills');
 			const data = await res.json();
 			skills = reset ? (data.skills || []) : [...skills, ...(data.skills || [])];

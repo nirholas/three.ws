@@ -12,13 +12,11 @@
 // We do NOT execute against a browser viewer from the server: there is none.
 //
 // Auth: Bearer token (OAuth/API key) — same as /api/mcp.
-// Rate limit: limits.mcpUser / limits.mcpIp.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { env } from '../_lib/env.js';
 import { authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { cors, readJson, wrap } from '../_lib/http.js';
-import { limits, clientIp } from '../_lib/rate-limit.js';
 import { recordEvent, logger } from '../_lib/usage.js';
 
 const PROTOCOL_VERSION = '2025-06-18';
@@ -124,16 +122,6 @@ export default wrap(async (req, res) => {
 
 	const auth = await authenticateBearer(extractBearer(req), { audience: env.MCP_RESOURCE });
 	if (!auth) return send401(res, 'missing or invalid access token');
-
-	const rl = auth.userId
-		? await limits.mcpUser(auth.userId)
-		: await limits.mcpIp(clientIp(req));
-	if (!rl.success) {
-		res.statusCode = 429;
-		res.setHeader('content-type', 'application/json');
-		res.end(JSON.stringify({ jsonrpc: '2.0', error: { code: -32000, message: 'rate_limited' } }));
-		return;
-	}
 
 	const body = await readJson(req);
 	const result = await dispatch(body, auth);

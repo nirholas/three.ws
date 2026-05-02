@@ -510,8 +510,6 @@
 		talkingHead?.think(false);
 	}
 
-	let rateLimitedUntil = 0;
-
 	async function submitCompletion(insertUnclosed = true) {
 		window.speechSynthesis?.cancel();
 		if (!convo.models?.[0]?.provider) {
@@ -519,21 +517,6 @@
 				id: uuidv4(),
 				role: 'assistant',
 				error: 'No model selected. Please select a model to begin.',
-				content: '',
-			};
-			saveMessage(msg);
-			convo.messages.push(msg);
-			convo.messages = convo.messages;
-			saveConversation(convo);
-			return;
-		}
-
-		const remaining = Math.ceil((rateLimitedUntil - Date.now()) / 1000);
-		if (remaining > 0) {
-			const msg = {
-				id: uuidv4(),
-				role: 'assistant',
-				error: `Slow down — try again in ${remaining}s.`,
 				content: '',
 			};
 			saveMessage(msg);
@@ -830,10 +813,6 @@
 				if (err.code === 'payment_required') {
 					const url = err.upgradeUrl || '/pricing';
 					convo.messages[i].error = `Out of credits. [Upgrade your plan](${url}) to keep chatting.`;
-				} else if (err.code === 'rate_limited') {
-					const seconds = err.retryAfter ?? 30;
-					rateLimitedUntil = Date.now() + seconds * 1000;
-					convo.messages[i].error = `Slow down — too many requests. Try again in ${seconds}s.`;
 				} else if (err.code === 'tools_unsupported') {
 					const tools = err.toolNames?.length ? err.toolNames.join(', ') : 'the enabled tools';
 					convo.messages[i].error = `**${err.modelId}** doesn't support tool use. Disable ${tools} in the Tools panel, or switch to a tool-capable model like \`anthropic/claude-sonnet-4.5\` or \`openai/gpt-5-mini\`.`;
