@@ -143,24 +143,54 @@ async function prepEvm({ chainId, metadataUri }) {
 	};
 }
 
-async function prepSolana({ cluster, metadataUri, walletAddress, name }) {
-	const rpc =
-		cluster === 'devnet'
-			? process.env.SOLANA_RPC_URL_DEVNET || 'https://api.devnet.solana.com'
-			: process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+const SOLANA_PUBLIC_RPC = {
+	mainnet: 'https://api.mainnet-beta.solana.com',
+	devnet: 'https://api.devnet.solana.com',
+};
 
+async function buildSolanaTx({ rpc, walletAddress, name, metadataUri }) {
 	const umi = createUmi(rpc).use(mplCore());
 	const ownerPk = umiPublicKey(walletAddress);
 	const assetSigner = generateSigner(umi);
 	umi.use(signerIdentity(createNoopSigner(ownerPk)));
-
-	const builder = createV1(umi, {
-		asset: assetSigner,
-		owner: ownerPk,
-		name,
-		uri: metadataUri,
-	});
+	const builder = createV1(umi, { asset: assetSigner, owner: ownerPk, name, uri: metadataUri });
 	const txBytes = await builder.buildAndSign(umi);
+	return { assetSigner, txBytes };
+}
+
+async function prepSolana({ cluster, metadataUri, walletAddress, name }) {
+	const configuredRpc =
+		cluster === 'devnet'
+			? process.env.SOLANA_RPC_URL_DEVNET || SOLANA_PUBLIC_RPC.devnet
+			: process.env.SOLANA_RPC_URL || SOLANA_PUBLIC_RPC.mainnet;
+
+	let assetSigner, txBytes;
+	try {
+		({ assetSigner, txBytes } = await buildSolanaTx({
+			rpc: configuredRpc,
+			walletAddress,
+			name,
+			metadataUri,
+		}));
+	} catch (err) {
+		// If the configured RPC rejects with an auth error, fall back to the public
+		// endpoint so a bad/expired API key doesn't block all deploys.
+		const isAuthErr =
+			err?.message?.includes('401') ||
+			err?.message?.includes('Unauthorized') ||
+			err?.message?.includes('invalid api key');
+		const isUsingPublic = configuredRpc === SOLANA_PUBLIC_RPC[cluster];
+		if (!isAuthErr || isUsingPublic) throw err;
+
+		console.warn('[onchain/prep] configured Solana RPC auth failed, retrying with public RPC');
+		({ assetSigner, txBytes } = await buildSolanaTx({
+			rpc: SOLANA_PUBLIC_RPC[cluster],
+			walletAddress,
+			name,
+			metadataUri,
+		}));
+	}
+
 	return {
 		assetPubkey: assetSigner.publicKey,
 		txBase64: Buffer.from(txBytes).toString('base64'),
