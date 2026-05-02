@@ -10,9 +10,9 @@ import {
 } from './stores.js';
 
 export const BUILTIN_MODELS = [
+	{ id: 'openai/gpt-oss-120b:free', name: 'GPT OSS 120B', provider: 'Built-in', modality: 'text->text' },
 	{ id: 'meta-llama/llama-3.3-70b-instruct:free', name: 'Llama 3.3 70B', provider: 'Built-in', modality: 'text->text' },
 	{ id: 'google/gemma-3-27b-it:free', name: 'Gemma 3 27B', provider: 'Built-in', modality: 'text->text' },
-	{ id: 'openai/gpt-oss-120b:free', name: 'GPT OSS 120B', provider: 'Built-in', modality: 'text->text' },
 	{ id: 'qwen/qwen3-coder:free', name: 'Qwen3 Coder', provider: 'Built-in', modality: 'text->text' },
 	{ id: 'nousresearch/hermes-3-llama-3.1-405b:free', name: 'Hermes 3 405B', provider: 'Built-in', modality: 'text->text' },
 ];
