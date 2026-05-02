@@ -125,5 +125,54 @@
 		"label": "Header",
 		"icon": "⚽",
 		"loop": false
+	},
+	{
+		"name": "coverstand",
+		"source": "Cover To Stand.fbx",
+		"label": "Cover Stand",
+		"icon": "🛡️",
+		"loop": false
+	},
+	{
+		"name": "goalkeeper",
+		"source": "Goalkeeper Scoop.fbx",
+		"label": "Goalkeeper",
+		"icon": "🧤",
+		"loop": false
+	},
+	{
+		"name": "jumpdown",
+		"source": "Jumping Down.fbx",
+		"label": "Jump Down",
+		"icon": "⬇️",
+		"loop": false
+	},
+	{
+		"name": "jumpdown2",
+		"source": "Jumping Down (1).fbx",
+		"label": "Jump Down 2",
+		"icon": "⬇️",
+		"loop": false
+	},
+	{
+		"name": "jumpdown3",
+		"source": "Jumping Down (2).fbx",
+		"label": "Jump Down 3",
+		"icon": "⬇️",
+		"loop": false
+	},
+	{
+		"name": "removing",
+		"source": "Removing Driver.fbx",
+		"label": "Removing",
+		"icon": "🚗",
+		"loop": false
+	},
+	{
+		"name": "falltolanding",
+		"source": "falltolanding.fbx",
+		"label": "Fall to Landing",
+		"icon": "🦅",
+		"loop": false
 	}
 ]

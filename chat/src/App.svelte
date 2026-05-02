@@ -813,6 +813,9 @@
 				if (err.code === 'payment_required') {
 					const url = err.upgradeUrl || '/pricing';
 					convo.messages[i].error = `Out of credits. [Upgrade your plan](${url}) to keep chatting.`;
+				} else if (err.code === 'rate_limited') {
+					const hint = err.retryAfter ? ` Try again in ${err.retryAfter}s.` : ' Please wait a moment and try again.';
+					convo.messages[i].error = `The built-in model is rate-limited.${hint}`;
 				} else if (err.code === 'tools_unsupported') {
 					const tools = err.toolNames?.length ? err.toolNames.join(', ') : 'the enabled tools';
 					convo.messages[i].error = `**${err.modelId}** doesn't support tool use. Disable ${tools} in the Tools panel, or switch to a tool-capable model like \`anthropic/claude-sonnet-4.5\` or \`openai/gpt-5-mini\`.`;

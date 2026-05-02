@@ -574,6 +574,20 @@
 						<span class="ms-3 text-sm text-slate-700">Use explicit view for tool calls</span>
 					</label>
 				</div>
+
+				<div class="mt-4">
+					<p class="mb-2 text-[10px] uppercase tracking-wide text-slate-500">Message animation</p>
+					<div class="flex gap-2">
+						{#each [['snap', 'Snap'], ['elegant', 'Elegant'], ['smooth', 'Smooth']] as [val, label]}
+							<button
+								class="flex-1 rounded-lg border px-3 py-1.5 text-[13px] transition-colors {($config.messageAnimation ?? 'smooth') === val ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 text-slate-700 hover:border-slate-400'}"
+								on:click={() => ($config.messageAnimation = val)}
+							>
+								{label}
+							</button>
+						{/each}
+					</div>
+				</div>
 				{:else if activeTab === 'brand'}
 				<div class="flex flex-col gap-y-4">
 					{#if !adminUnlocked}
