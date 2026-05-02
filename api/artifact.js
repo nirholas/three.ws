@@ -55,7 +55,7 @@ function buildHtml({ title, element, appOrigin }) {
   </head>
   <body>
     ${element}
-    <script src="${appOrigin}/dist-lib/agent-3d.umd.cjs"></script>
+    <script type="module" src="${appOrigin}/dist-lib/agent-3d.js"></script>
   </body>
 </html>`;
 }

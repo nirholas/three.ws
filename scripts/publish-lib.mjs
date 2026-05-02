@@ -27,7 +27,7 @@ const destRoot = resolve(root, 'dist', 'agent-3d');
 
 const files = [
 	{ name: 'agent-3d.js', required: true },
-	{ name: 'agent-3d.umd.cjs', required: true },
+	{ name: 'agent-3d.umd.cjs', required: false },
 ];
 
 for (const f of files) {
