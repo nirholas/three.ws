@@ -280,7 +280,11 @@ export class SceneController {
 			this._moveToHook = null;
 		}
 		const start = this.viewer.content.position.clone();
-		const end = new Vector3(position.x || 0, position.y || start.y, position.z || 0);
+		const end = new Vector3(
+			position.x ?? start.x,
+			position.y ?? start.y,
+			position.z ?? start.z,
+		);
 		const startT = performance.now();
 		const tick = (dt) => {
 			const elapsed = performance.now() - startT;
