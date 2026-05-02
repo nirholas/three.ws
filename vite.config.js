@@ -38,6 +38,12 @@ const appConfig = {
 	build: {
 		chunkSizeWarningLimit: 1000,
 		rollupOptions: {
+			output: {
+				manualChunks(id) {
+					if (id.includes('node_modules/three/')) return 'three';
+					if (id.includes('node_modules/ethers/')) return 'ethers';
+				},
+			},
 			input: {
 				main: resolve(__dirname, 'index.html'),
 				app: resolve(__dirname, 'app.html'),
