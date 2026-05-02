@@ -154,8 +154,8 @@ async function buildSolanaTx({ rpc, walletAddress, name, metadataUri }) {
 	const assetSigner = generateSigner(umi);
 	umi.use(signerIdentity(createNoopSigner(ownerPk)));
 	const builder = createV1(umi, { asset: assetSigner, owner: ownerPk, name, uri: metadataUri });
-	const txBytes = await builder.buildAndSign(umi);
-	return { assetSigner, txBytes };
+	const tx = await builder.buildAndSign(umi);
+	return { assetSigner, txBytes: umi.transactions.serialize(tx) };
 }
 
 function isRpcAuthError(err) {
