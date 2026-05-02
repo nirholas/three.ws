@@ -2454,13 +2454,14 @@
 								<!-- Inline avatar pinned right under the latest response -->
 								{#if (effectiveAgentId || $talkingHeadEnabled) && agentVisible}
 									<li
-										class="avatar-inline mx-auto mt-2 flex flex-col items-center gap-2 select-none list-none"
+										class="avatar-inline mx-auto mt-2 select-none list-none"
 										class:avatar-walking={generating || tokensFlowing}
+										style="position: relative;"
 									>
-										<!-- Thought bubble (reasoning models) -->
+										<!-- Bubble floats above the avatar's head -->
 										{#if thinkingMessage}
 											<div
-												class="thought-bubble"
+												class="thought-bubble avatar-head-bubble"
 												class:thought-bubble-collapsed={!thoughtBubbleActive}
 												role="status"
 												aria-live="polite"
@@ -2484,8 +2485,7 @@
 												<span class="thought-bubble-tail thought-bubble-tail-2" />
 											</div>
 										{:else if generating && convo.messages[convo.messages.length - 1]?.role === 'assistant' && convo.messages[convo.messages.length - 1]?.content}
-											<!-- Chat bubble showing streaming response text -->
-											<div class="chat-bubble" role="status" aria-live="polite">
+											<div class="chat-bubble avatar-head-bubble" role="status" aria-live="polite">
 												<p class="chat-bubble-text">{convo.messages[convo.messages.length - 1].content}</p>
 												<span class="thought-bubble-tail thought-bubble-tail-1" />
 												<span class="thought-bubble-tail thought-bubble-tail-2" />
@@ -2756,6 +2756,15 @@
 		0%   { transform: translateY(-120vh) rotate(-25deg); opacity: 0; }
 		70%  { transform: translateY(8px) rotate(2deg); opacity: 1; }
 		100% { transform: translateY(0) rotate(0); opacity: 1; }
+	}
+
+	.avatar-head-bubble {
+		position: absolute;
+		top: 0;
+		left: 50%;
+		transform: translateX(-50%);
+		z-index: 10;
+		margin-bottom: 0;
 	}
 
 	.chat-bubble {
