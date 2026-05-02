@@ -1,6 +1,6 @@
 # Completion Sprint — Parallel Prompts
 
-11 self-contained prompts designed to push every priority band toward 100%. **All can be run in parallel** — each prompt owns a distinct set of files. If one fails or stalls, the others still merge cleanly.
+13 self-contained prompts designed to push every priority band toward 100%. **All can be run in parallel** — each prompt owns a distinct set of files. If one fails or stalls, the others still merge cleanly.
 
 ## Why these files don't collide
 
@@ -21,6 +21,8 @@ Each prompt only creates new files under a unique path, or edits exactly one fil
 | 09  | [CZ landing + claim flow](09-cz-landing-claim.md)                      | cz-demo | `public/cz/`, `src/cz-flow.js`                                |
 | 10  | [CZ demo runbook](10-cz-runbook.md)                                    | cz-demo | `docs/CZ_DEMO_RUNBOOK.md`                                     |
 | 11  | [Public agents directory](11-agents-directory.md)                      | 4, 6    | `public/agents/`, `src/agents-directory.js`                   |
+| 12  | [Agent marketplace completion](12-agent-marketplace.md)                | chat    | `chat/src/AgentPicker.svelte`                                 |
+| 13  | [Plugin marketplace completion](13-plugin-marketplace.md)              | chat    | `chat/src/SkillsMarketplaceModal.svelte`                      |
 
 ## House rules
 

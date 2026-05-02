@@ -1,4 +1,19 @@
+import { keccak_256 } from '@noble/hashes/sha3';
+
 const BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+
+/** EIP-55: convert a hex EVM address to its checksummed form. */
+function toChecksumAddress(address) {
+  const addr = address.replace(/^0x/i, '').toLowerCase();
+  const hash = keccak_256(new TextEncoder().encode(addr));
+  let result = '0x';
+  for (let i = 0; i < addr.length; i++) {
+    const nibble = hash[Math.floor(i / 2)];
+    const bit = i % 2 === 0 ? (nibble >> 4) & 0xf : nibble & 0xf;
+    result += bit >= 8 ? addr[i].toUpperCase() : addr[i];
+  }
+  return result;
+}
 
 function toBase58(bytes) {
   let n = BigInt('0x' + Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join(''));
@@ -39,7 +54,7 @@ export async function signMessageSolana(message) {
 export async function signMessageEVM(message) {
   if (!window.ethereum) throw new Error('No EVM wallet found. Install MetaMask or a compatible wallet.');
   const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-  const address = accounts[0];
+  const address = toChecksumAddress(accounts[0]);
   const signature = await window.ethereum.request({
     method: 'personal_sign',
     params: [message, address],
@@ -79,7 +94,7 @@ export async function signInWithEVM() {
   if (!window.ethereum) throw new Error('No EVM wallet found. Install MetaMask or a compatible wallet.');
 
   const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-  const address = accounts[0];
+  const address = toChecksumAddress(accounts[0]);
   const chainIdHex = await window.ethereum.request({ method: 'eth_chainId' });
   const chainId = parseInt(chainIdHex, 16);
 
