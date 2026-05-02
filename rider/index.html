@@ -16,6 +16,7 @@
 
     <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
     <link rel="shortcut icon" href="assets/img/favicon.svg" type="image/svg+xml">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="vendor/aframe-master.min.js"></script>
     <script src="build/build.js?v=3"></script>
   </head>
@@ -27,7 +28,8 @@
         <p style="color:#94a3b8;font-size:.875rem;margin:0 0 1.5rem">Send <strong style="color:#a78bfa">8,000 $THREE</strong> to access the VR experience.</p>
 
         <div id="riderVaultAddr" style="display:none;background:#0f172a;border:1px solid #1e293b;border-radius:.5rem;padding:.75rem 1rem;margin-bottom:1.5rem;cursor:pointer">
-          <div style="font-size:.7rem;color:#64748b;margin-bottom:.25rem;text-transform:uppercase;letter-spacing:.05em">Send $THREE here</div>
+          <div style="font-size:.7rem;color:#64748b;margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.05em">Send $THREE here</div>
+          <div id="riderQR" style="display:flex;justify-content:center;margin-bottom:.5rem"></div>
           <span id="riderVaultText" style="color:#7dd3fc;font-size:.8rem;word-break:break-all"></span>
           <span id="riderCopyHint" style="color:#64748b;font-size:.7rem;display:block;margin-top:.25rem">click to copy</span>
         </div>
@@ -57,6 +59,12 @@
           if (d.vault_address) {
             var wrap = document.getElementById('riderVaultAddr');
             document.getElementById('riderVaultText').textContent = d.vault_address;
+            new QRCode(document.getElementById('riderQR'), {
+              text: d.vault_address,
+              width: 140, height: 140,
+              colorDark: '#7dd3fc', colorLight: '#0f172a',
+              correctLevel: QRCode.CorrectLevel.M
+            });
             wrap.style.display = 'block';
             wrap.addEventListener('click', function () {
               navigator.clipboard.writeText(d.vault_address).then(function () {
