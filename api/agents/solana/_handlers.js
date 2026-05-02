@@ -316,20 +316,38 @@ export const handleRegisterPrep = wrap(async (req, res) => {
 		}
 	}
 
-	const SOLANA_RPC = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
-	const rpcEndpoint = network === 'devnet' ? (process.env.SOLANA_RPC_URL_DEVNET || 'https://api.devnet.solana.com') : SOLANA_RPC;
-
-	const umi = createUmi(rpcEndpoint).use(mplCore());
-	const ownerPubkey = umiPublicKey(wallet_address);
-	const assetSigner = asset_pubkey ? createNoopSigner(umiPublicKey(asset_pubkey)) : generateSigner(umi);
-	umi.use(signerIdentity(createNoopSigner(ownerPubkey)));
+	const PUBLIC_RPC = {
+		mainnet: 'https://api.mainnet-beta.solana.com',
+		devnet: 'https://api.devnet.solana.com',
+	};
+	const configuredRpc = network === 'devnet'
+		? (process.env.SOLANA_RPC_URL_DEVNET || PUBLIC_RPC.devnet)
+		: (process.env.SOLANA_RPC_URL || PUBLIC_RPC.mainnet);
+	const publicRpc = PUBLIC_RPC[network] || PUBLIC_RPC.mainnet;
 
 	const appOrigin = env.APP_ORIGIN;
 	const metadataUri = body.metadata_uri || `${appOrigin}/api/agents/solana-metadata?name=${encodeURIComponent(name)}&desc=${encodeURIComponent(description)}`;
 
-	const builder = createV1(umi, { asset: assetSigner, owner: ownerPubkey, name, uri: metadataUri });
-	const tx = await builder.buildAndSign(umi);
-	const txBytes = umi.transactions.serialize(tx);
+	const buildTx = async (rpc) => {
+		const umi = createUmi(rpc).use(mplCore());
+		const ownerPubkey = umiPublicKey(wallet_address);
+		const assetSigner = asset_pubkey ? createNoopSigner(umiPublicKey(asset_pubkey)) : generateSigner(umi);
+		umi.use(signerIdentity(createNoopSigner(ownerPubkey)));
+		const builder = createV1(umi, { asset: assetSigner, owner: ownerPubkey, name, uri: metadataUri });
+		const txBytes = await builder.buildAndSign(umi);
+		return { assetSigner, txBytes };
+	};
+
+	let assetSigner, txBytes;
+	try {
+		({ assetSigner, txBytes } = await buildTx(configuredRpc));
+	} catch (err) {
+		const isAuthErr = err?.message?.includes('401') || err?.message?.includes('Unauthorized') || err?.message?.includes('invalid api key');
+		if (!isAuthErr || configuredRpc === publicRpc) throw err;
+		console.warn('[solana/register-prep] configured RPC auth failed, retrying with public RPC');
+		({ assetSigner, txBytes } = await buildTx(publicRpc));
+	}
+
 	const txBase64 = Buffer.from(txBytes).toString('base64');
 
 	const prepId = await randomToken(24);
