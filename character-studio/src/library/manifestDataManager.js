@@ -6,12 +6,17 @@ export class ManifestDataManager{
       this.mainManifestData = null;
       this.manifestDataCollection = [];
       this.manifestDataByIdentifier = {};
+      this._mainManifestURL = null;
       this.defaultValues = {
         defaultCullingLayer:-1,
         defaultCullingDistance:null,
         maxCullingDistance:Infinity
       };
-      
+
+    }
+
+    getMainManifestURL(){
+      return this._mainManifestURL;
     }
     getLoadedLockedManifests(isLocked){
       return this.manifestDataCollection.filter((manifestData)=>manifestData.locked == isLocked);
@@ -126,6 +131,7 @@ export class ManifestDataManager{
         try {
           // Fetch the manifest data asynchronously
           this._fetchManifest(url).then(manifest=>{
+            if (this._mainManifestURL == null) this._mainManifestURL = url;
             this.setManifest(manifest, identifier).then(()=>{
               resolve();
             })

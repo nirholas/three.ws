@@ -163,6 +163,9 @@ export class CharacterManager {
     getLoadedManifests(){
       return this.manifestDataManager.getLoadedManifests();
     }
+    getManifestURL(){
+      return this.manifestDataManager.getMainManifestURL();
+    }
 
     /**
      * Adds look-at mouse behavior to the character.

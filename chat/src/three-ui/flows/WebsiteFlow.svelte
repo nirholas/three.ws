@@ -73,7 +73,7 @@
   <div class="mt-4 flex gap-2 overflow-x-auto scrollbar-none">
     {#each categories as c}
       <button
-        class="three.ws-chip whitespace-nowrap {$websiteCategory === c.id ? 'three.ws-chip-selected' : ''}"
+        class="three-ui-chip whitespace-nowrap {$websiteCategory === c.id ? 'three-ui-chip-selected' : ''}"
         on:click={() => pick(c.id)}
       >
         <Icon icon={c.icon} size={16} />
@@ -87,7 +87,7 @@
       <h3 class="text-sm font-semibold mb-3">Explore ideas</h3>
       <div class="flex flex-wrap gap-2">
         {#each ideasByCategory[$websiteCategory] as idea}
-          <button class="three.ws-chip" on:click={() => selectIdea(idea)}>
+          <button class="three-ui-chip" on:click={() => selectIdea(idea)}>
             <span>{idea}</span>
             <Icon icon={feArrowUpLeft} size={14} class="text-[#9C9A93]" />
           </button>

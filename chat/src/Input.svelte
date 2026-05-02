@@ -521,7 +521,7 @@ ${file.contents}
 				>
 					{#if $mode === 'website'}
 						<button
-							class="three.ws-chip three.ws-chip-selected h-7 px-3 text-xs"
+							class="three-ui-chip three-ui-chip-selected h-7 px-3 text-xs"
 							on:click={() => mode.set(null)}
 						>
 							Website
@@ -529,7 +529,7 @@ ${file.contents}
 					{/if}
 					{#if $mode === 'desktop'}
 						<button
-							class="three.ws-chip three.ws-chip-selected h-7 px-3 text-xs inline-flex items-center gap-1.5"
+							class="three-ui-chip three-ui-chip-selected h-7 px-3 text-xs inline-flex items-center gap-1.5"
 							on:click={() => mode.set(null)}
 						>
 							<Icon icon={feSmartphone} class="w-3.5 h-3.5" />
@@ -537,7 +537,7 @@ ${file.contents}
 						</button>
 						<div class="relative">
 							<button
-								class="three.ws-chip h-7 px-3 text-xs inline-flex items-center gap-1.5"
+								class="three-ui-chip h-7 px-3 text-xs inline-flex items-center gap-1.5"
 								on:click={() => { platformsOpen = !platformsOpen; }}
 							>
 								{platformsSummary}
@@ -572,7 +572,7 @@ ${file.contents}
 					{/if}
 					{#if $mode === 'slides'}
 						<button
-							class="three.ws-chip three.ws-chip-selected h-7 px-3 text-xs inline-flex items-center gap-1.5"
+							class="three-ui-chip three-ui-chip-selected h-7 px-3 text-xs inline-flex items-center gap-1.5"
 							on:click={() => mode.set(null)}
 						>
 							<Icon icon={feLayout} class="w-3.5 h-3.5" />
@@ -580,7 +580,7 @@ ${file.contents}
 						</button>
 						<div class="relative">
 							<button
-								class="three.ws-chip h-7 px-3 text-xs inline-flex items-center gap-1.5"
+								class="three-ui-chip h-7 px-3 text-xs inline-flex items-center gap-1.5"
 								on:click={() => { toneOpen = !toneOpen; imgModelOpen = false; }}
 							>
 								<Icon icon={feZap} class="w-3.5 h-3.5" />
@@ -625,7 +625,7 @@ ${file.contents}
 					{/if}
 					{#if $mode === 'design'}
 						<button
-							class="three.ws-chip three.ws-chip-selected h-7 px-3 text-xs inline-flex items-center gap-1.5"
+							class="three-ui-chip three-ui-chip-selected h-7 px-3 text-xs inline-flex items-center gap-1.5"
 							on:click={() => mode.set(null)}
 						>
 							<Icon icon={feZap} class="w-3.5 h-3.5" />
@@ -648,7 +648,7 @@ ${file.contents}
 					{#if $mode && modeConfig[$mode]}
 						{@const cfg = modeConfig[$mode]}
 						<button
-							class="three.ws-chip three.ws-chip-selected h-7 px-3 text-xs inline-flex items-center gap-1.5 shrink-0"
+							class="three-ui-chip three-ui-chip-selected h-7 px-3 text-xs inline-flex items-center gap-1.5 shrink-0"
 							on:click={() => mode.set(null)}
 						>
 							<Icon icon={cfg.icon} class="w-3.5 h-3.5" />
@@ -659,7 +659,7 @@ ${file.contents}
 							{@const currentVal = $flowSecondary[$mode] ?? sec.default}
 							<div class="relative">
 								<button
-									class="three.ws-chip h-7 px-3 text-xs inline-flex items-center gap-1.5 shrink-0"
+									class="three-ui-chip h-7 px-3 text-xs inline-flex items-center gap-1.5 shrink-0"
 									on:click={() => { secondaryOpen = secondaryOpen === $mode ? null : $mode; }}
 								>
 									{sec.prefix}: {currentVal}

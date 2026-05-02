@@ -11,6 +11,7 @@ import MessageWindow from "../components/MessageWindow"
 import MergeOptions from "../components/MergeOptions"
 import FileDropComponent from "../components/FileDropComponent"
 import PurchaseMenu from "../components/PurchaseMenu"
+import OnChainPublish from "./OnChainPublish"
 
 
 function Save() {
@@ -25,6 +26,7 @@ function Save() {
 
   const [confirmDialogWindow, setConfirmDialogWindow] = useState(false)
   const [dialogMessage, setDialogMessage] = useState("")
+  const [showOnChainPublish, setShowOnChainPublish] = useState(false)
 
   const [currentPrice, setCurrentPrice] = React.useState(0)
   const [purchaseTraits, setPurchaseTraits] = React.useState([])
@@ -107,12 +109,22 @@ function Save() {
         
         <CustomButton
             theme="light"
+            text="⬡ On-chain"
+            size={14}
+            className={styles.buttonCenter}
+            onClick={() => setShowOnChainPublish(true)}
+        />
+        <CustomButton
+            theme="light"
             text="mint"//{t('callToAction.mint')}
             size={14}
             className={styles.buttonRight}
             onClick={mint}
         />
       </div>
+      {showOnChainPublish && (
+        <OnChainPublish onClose={() => setShowOnChainPublish(false)} />
+      )}
       <MessageWindow
         cancelOption = {false}
         confirmDialogText = {dialogMessage}
