@@ -616,6 +616,7 @@
 
 			if (convo.messages[i].model.id === 'o1') {
 				convo.messages[i].content = choice.message.content;
+				pulseTokens();
 				// Once content starts coming in, we can stop thinking
 				if (convo.messages[i].reasoning && !unexpandedThinkingOnce) {
 					unexpandedThinkingOnce = true;
@@ -1702,10 +1703,81 @@
 		tryNext([primary, ...fallbacks]);
 	}
 
+	// STEP 1 watchdog. playClipByName fires-and-forgets, the agent-3d itself
+	// kicks idle right after scene init, the embedded GLB may have its own
+	// 'idle' on a separate mixer, and any of half a dozen handlers can call
+	// _stopWalkAnimation. Poll and brute-force walk until it sticks.
+	let walkWatchdogTimer = null;
+	let _walkDiagLogged = false;
+	function ensureWalkPlaying() {
+		if (!agentEl) { return; }
+		if (!agentReady) { return; }
+		if (avatarExitAnim) return;
+
+		// Blocker #1: explicit attribute disable
+		if (agentEl.getAttribute('avatar-walk') === 'off') {
+			agentEl.removeAttribute('avatar-walk');
+		}
+		// Blocker #2: prefers-reduced-motion (browsers with this on never start walk)
+		// We can't change the OS pref, but we sidestep agent-3d's _onStreamChunk
+		// path entirely by calling play() directly. So — no early return here.
+
+		// Blocker #3: agent-3d's internal _isWalking flag stuck true ⇒ _onStreamChunk
+		// no-ops. Reset it so any future stream chunks can re-trigger walk too.
+		try { agentEl._isWalking = false; } catch {}
+		clearTimeout(agentEl._walkStopDebounce);
+
+		const viewer = agentEl._scene?.viewer;
+		const am = viewer?.animationManager;
+		// Blocker #4: stale failure marker on the manager
+		if (am?._failed?.has?.('walk')) am._failed.delete('walk');
+
+		// Blocker #5: dual-mixer fight. The viewer has a mixer for embedded GLB
+		// clips; the AnimationManager has its own mixer for external clips. Both
+		// bind to the same model and both run every frame, so an embedded "idle"
+		// keeps stomping bones even when we play external "walk". Stop the
+		// embedded mixer so only the manager animates.
+		try { viewer?.mixer?.stopAllAction?.(); } catch {}
+
+		const candidates = ['walk', 'walking', 'Walk', 'Walking', 'run', 'Run'];
+		const alreadyWalking = am && candidates.includes(am.currentName);
+
+		// Blocker #6: viewer.state.actionStates['idle'] = true keeps _animating on
+		// for the embedded mixer and re-arms idle every render. Clear it.
+		try {
+			const actionStates = viewer?.state?.actionStates;
+			if (actionStates) for (const k of Object.keys(actionStates)) actionStates[k] = false;
+		} catch {}
+
+		if (!_walkDiagLogged) {
+			_walkDiagLogged = true;
+			const embedded = (viewer?.clips || []).map(c => c.name);
+			const externalDefs = (am?._animationDefs || []).map(d => d.name);
+			const externalLoaded = am?.clips ? Array.from(am.clips.keys()) : [];
+			console.log('[avatar walk diag]', {
+				agentReady, isWalking: agentEl._isWalking,
+				avatarWalkAttr: agentEl.getAttribute('avatar-walk'),
+				prefersReducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+				embeddedClips: embedded, externalDefs, externalLoaded,
+				currentClip: am?.currentName, alreadyWalking,
+			});
+		}
+
+		if (alreadyWalking) return;
+
+		(async () => {
+			try { await am?.ensureLoaded?.('walk'); } catch {}
+			if (am && am.currentName === 'walk') am.currentName = null; // bypass crossfade short-circuit
+			playClipWithFallback(agentEl, 'walk', ['walking', 'Walk', 'Walking', 'run', 'Run']);
+		})();
+	}
+
 	// STEP 1: force the walking animation always so we can confirm it plays.
 	// (Idle / think switching deliberately disabled while we verify the walk clip.)
 	$: if (agentEl && agentReady && !avatarExitAnim && !thinkingTransitioning) {
-		playClipWithFallback(agentEl, 'walk', ['walking', 'Walk', 'Walking', 'run', 'Run', 'idle']);
+		ensureWalkPlaying();
+		clearInterval(walkWatchdogTimer);
+		walkWatchdogTimer = setInterval(ensureWalkPlaying, 500);
 	}
 
 	// When thinking ends, play a one-shot falling animation before resuming the loop.
@@ -2383,7 +2455,7 @@
 								{#if (effectiveAgentId || $talkingHeadEnabled) && agentVisible}
 									<li
 										class="avatar-inline mx-auto mt-2 flex flex-col items-center gap-2 select-none list-none"
-										class:avatar-walking={(generating || tokensFlowing) && agentReady}
+										class:avatar-walking={generating || tokensFlowing}
 									>
 										{#if effectiveAgentId}
 											<!-- svelte-ignore custom-element-no-implicit-ns -->
@@ -2395,6 +2467,7 @@
 												height="700"
 												background="transparent"
 												kiosk
+												avatar-chat="off"
 												name-plate="off"
 												style="width:min(420px, 60vw, calc((100vh - 240px) * 420 / 700)); aspect-ratio: 420 / 700;"
 											></agent-3d>
