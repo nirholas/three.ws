@@ -30,6 +30,8 @@
 
 	const dispatch = createEventDispatcher();
 
+	let agentEl;
+
 	function msgTransition(node, { style }) {
 		if (style === 'snap') return { duration: 0 };
 		if (style === 'elegant') return fly(node, { y: 6, duration: 180, easing: cubicOut });
@@ -166,17 +168,24 @@
 		<div
 			class="{message.role === 'user'
 				? 'bg-[#EBE8E0] text-[#1A1A1A] rounded-2xl px-4 py-3 max-w-[78%] relative'
-				: 'relative flex w-full gap-x-3.5 self-start'}"
+				: 'relative flex w-full gap-x-3.5 items-end'}"
 		>
 			{#if message.role !== 'user'}
-			<div class="relative shrink-0">
-			{#if message.role === 'assistant' && hasLogo && message.thinking && message.thoughts}
-				<div
-					class="absolute bottom-full left-1/2 mb-2 -translate-x-1/2 w-56 max-h-32 overflow-hidden rounded-2xl bg-white border border-slate-200 shadow-md px-3 py-2 text-[11px] leading-snug text-slate-700 animate-pulse"
-				>
-					<div class="line-clamp-5 italic">{message.thoughts}</div>
-					<span class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-3 w-3 rotate-45 bg-white border-r border-b border-slate-200"></span>
-				</div>
+			<div class="relative shrink-0 flex flex-col items-center">
+			{#if message.role === 'assistant' && hasLogo && isLatestAssistant && effectiveAgentId}
+				<!-- Thought bubble while thinking -->
+				{#if message.thinking && message.thoughts}
+					<div class="avatar-bubble avatar-bubble--thinking mb-2">
+						<div class="line-clamp-4 italic text-slate-500">{message.thoughts}</div>
+						<span class="avatar-bubble-tail"></span>
+					</div>
+				<!-- Chat bubble while streaming response -->
+				{:else if generating && message.content}
+					<div class="avatar-bubble mb-2">
+						<div class="line-clamp-4">{message.content}</div>
+						<span class="avatar-bubble-tail"></span>
+					</div>
+				{/if}
 			{/if}
 			<button
 				disabled={message.role === 'system'}
@@ -188,22 +197,23 @@
 						message.role = 'user';
 					}
 				}}
-				class="shrink-0 rounded-md md:rounded-[6px] {message.role === 'assistant' && hasLogo && isLatestAssistant
-					? 'flex h-[220px] w-[220px]'
+				class="shrink-0 rounded-md md:rounded-[6px] {message.role === 'assistant' && hasLogo && isLatestAssistant && effectiveAgentId
+					? 'flex w-[140px] h-[280px]'
 					: 'flex h-8 w-8 md:h-9 md:w-9'} {message.role === 'system'
 					? 'border border-teal-200 bg-teal-100'
 					: message.role === 'assistant' && (!hasLogo || !isLatestAssistant)
 						? 'border border-teal-200 bg-teal-100 pb-px'
 						: ''}"
 			>
-				{#if message.role === 'assistant' && hasLogo && isLatestAssistant}
+				{#if message.role === 'assistant' && hasLogo && isLatestAssistant && effectiveAgentId}
 					<span class="w-full h-full overflow-hidden inline-block shrink-0 rounded-[inherit]">
 						<!-- svelte-ignore custom-element-no-implicit-ns -->
 						<agent-3d
-							src="/avatars/cz.glb"
+							bind:this={agentEl}
+							agent-id={effectiveAgentId}
 							mode="inline"
-							width="220"
-							height="220"
+							width="140"
+							height="280"
 							background="transparent"
 							kiosk
 							name-plate="off"
@@ -659,3 +669,41 @@
 		</button>
 	</li>
 {/if}
+
+<style>
+	.avatar-bubble {
+		position: relative;
+		width: 180px;
+		padding: 8px 12px 10px;
+		border-radius: 14px;
+		background: #ffffff;
+		border: 1px solid #E5E3DC;
+		box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+		font-size: 12px;
+		line-height: 1.45;
+		color: #1A1A1A;
+		animation: bubble-pop 200ms ease-out;
+	}
+	.avatar-bubble--thinking {
+		background: #F8F7F4;
+		color: #6B7280;
+	}
+	.avatar-bubble-tail {
+		position: absolute;
+		bottom: -6px;
+		left: 50%;
+		transform: translateX(-50%) rotate(45deg);
+		width: 10px;
+		height: 10px;
+		background: #ffffff;
+		border-right: 1px solid #E5E3DC;
+		border-bottom: 1px solid #E5E3DC;
+	}
+	.avatar-bubble--thinking .avatar-bubble-tail {
+		background: #F8F7F4;
+	}
+	@keyframes bubble-pop {
+		from { opacity: 0; transform: translateY(4px) scale(0.97); }
+		to   { opacity: 1; transform: translateY(0) scale(1); }
+	}
+</style>

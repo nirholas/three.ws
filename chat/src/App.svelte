@@ -2451,31 +2451,6 @@
 									/>
 								{/each}
 
-								<!-- Inline avatar pinned right under the latest response -->
-								{#if (effectiveAgentId || $talkingHeadEnabled) && agentVisible}
-									<li
-										class="avatar-inline mx-auto mt-2 flex flex-col items-center gap-2 select-none list-none"
-										class:avatar-walking={generating || tokensFlowing}
-									>
-										{#if effectiveAgentId}
-											<!-- svelte-ignore custom-element-no-implicit-ns -->
-											<agent-3d
-												bind:this={agentEl}
-												agent-id={effectiveAgentId}
-												mode="inline"
-												width="420"
-												height="700"
-												background="transparent"
-												kiosk
-												avatar-chat="off"
-												name-plate="off"
-												style="width:min(420px, 60vw, calc((100vh - 240px) * 420 / 700)); aspect-ratio: 420 / 700;"
-											></agent-3d>
-										{:else if $talkingHeadEnabled}
-											<TalkingHead bind:this={talkingHead} on:ready={onTalkingHeadReady} avatarUrl={$talkingHeadAvatarUrl || undefined} />
-										{/if}
-									</li>
-								{/if}
 
 							</ul>
 						</div>
