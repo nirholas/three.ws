@@ -40,6 +40,7 @@ https://github.com/user-attachments/assets/d52515d1-cb04-4dd6-98bd-fef233312dc4
 - [Database Schema](#database-schema)
 - [Build & Deployment](#build--deployment)
 - [Environment Variables](#environment-variables)
+- [Cloud Marketplaces](#cloud-marketplaces)
 - [Testing](#testing)
 - [Contributing](#contributing)
 - [License](#license)
@@ -257,6 +258,16 @@ A map of every user-facing route. Full detail (source files, feature description
 | **Integrations** | `/cz`, `/lobehub/iframe` | CZ demo, LobeHub plugin |
 | **Docs** | `/docs`, `/docs/widgets` | Developer documentation |
 | **Legal** | `/legal/privacy`, `/legal/tos` | Privacy policy and terms |
+
+---
+
+## Cloud Marketplaces
+
+three.ws is partnered and or available as a managed service listing on major cloud marketplaces:
+
+| Marketplace | Listing |
+|---|---|
+| **Alibaba Cloud Marketplace** | [three.ws — 3D AI Agent Platform](https://marketplace.alibabacloud.com/preview/sgcmfw00036800.html) |
 
 ---
 
