@@ -1541,7 +1541,7 @@
 	let pendingSpeak = null;
 	let agentReady = false;
 	let agentPendingSpeak = null;
-	let agentVisible = false;
+	let agentVisible = true;
 	let agentScriptLoaded = false;
 	let prevThoughtBubbleActive = false;
 	let thinkingTransitioning = false;
@@ -2623,7 +2623,18 @@
 		transform-origin: bottom center;
 	}
 	.avatar-walking {
-		/* Step 1: rely on the 3D model's own walk animation clip (played via agent-3d API). */
+		animation: avatar-walk-bob 720ms ease-in-out infinite;
+		transform-origin: bottom center;
+	}
+	@keyframes avatar-walk-bob {
+		0%   { transform: translateY(0)    rotate(-1.2deg); }
+		25%  { transform: translateY(-6px) rotate(0deg); }
+		50%  { transform: translateY(0)    rotate(1.2deg); }
+		75%  { transform: translateY(-6px) rotate(0deg); }
+		100% { transform: translateY(0)    rotate(-1.2deg); }
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.avatar-walking { animation: none; }
 	}
 	.avatar-dying {
 		transform: translateY(120vh) rotate(35deg);
