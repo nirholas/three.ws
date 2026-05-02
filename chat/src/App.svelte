@@ -628,7 +628,9 @@
 
 			if (choice.delta.content) {
 				convo.messages[i].content += choice.delta.content;
+				pulseTokens();
 				if (agentEl && agentEl._streamToBubble) agentEl._streamToBubble(choice.delta.content);
+				if (agentEl && agentEl._onStreamChunk) agentEl._onStreamChunk();
 				// Once content starts coming in, we can stop thinking
 				if (convo.messages[i].reasoning && !unexpandedThinkingOnce) {
 					unexpandedThinkingOnce = true;
@@ -655,6 +657,8 @@
 			// Stream thoughts
 			if (convo.messages[i].reasoning && choice.delta.reasoning) {
 				convo.messages[i].thoughts += choice.delta.reasoning;
+				pulseTokens();
+				if (agentEl && agentEl._onStreamChunk) agentEl._onStreamChunk();
 				saveMessage(convo.messages[i]);
 			}
 
@@ -1544,6 +1548,18 @@
 	let agentPickerOpen = false;
 	let showAgentSettings = false;
 
+	// Walk while tokens are actively arriving. `generating` flips false the
+	// instant the network stream ends, but we want the avatar to keep walking
+	// until rendering settles — 600ms tail bridges micro-pauses between tokens
+	// and the gap between last token and DOM paint.
+	let tokensFlowing = false;
+	let _tokensFlowingTimer = null;
+	function pulseTokens() {
+		tokensFlowing = true;
+		if (_tokensFlowingTimer) clearTimeout(_tokensFlowingTimer);
+		_tokensFlowingTimer = setTimeout(() => { tokensFlowing = false; }, 600);
+	}
+
 	// Live thought bubble above the avatar — streams the active reasoning,
 	// then collapses to a "Thought for Xs" summary while the response streams.
 	let thoughtBubbleEl;
@@ -1600,8 +1616,8 @@
 		if (!dragMoved) return;
 		const aw = agentEl?.offsetWidth || 420;
 		const ah = agentEl?.offsetHeight || 700;
-		const x = Math.max(0, Math.min(window.innerWidth - Math.min(aw, window.innerWidth), e.clientX - dragOffset.x));
-		const y = Math.max(0, Math.min(window.innerHeight - Math.min(ah * 0.15, 80), e.clientY - dragOffset.y));
+		const x = Math.max(0, Math.min(window.innerWidth - aw, e.clientX - dragOffset.x));
+		const y = Math.max(0, Math.min(window.innerHeight - ah, e.clientY - dragOffset.y));
 		dragPos = { x, y };
 	}
 
@@ -1654,8 +1670,18 @@
 	$: if (agentEl && !agentReady) {
 		agentEl.addEventListener('agent:ready', () => {
 			agentReady = true;
+			// Re-frame once the canvas has its final on-screen size — the
+			// internal framing happens at load time, before our ResizeObserver
+			// has reacted to the host's actual width/height. Without this, the
+			// avatar's feet can clip on first render at large element sizes.
+			try {
+				requestAnimationFrame(() => {
+					try { agentEl._viewer?.resize?.(); } catch {}
+					try { agentEl._viewer?.frameContent?.(); } catch {}
+				});
+			} catch {}
 			if (!avatarExitAnim) {
-				agentEl.play(generating ? 'walk' : 'idle', { loop: true }).catch(() => {});
+				agentEl.play((generating || tokensFlowing) ? 'walk' : 'idle', { loop: true }).catch(() => {});
 			}
 			if (agentPendingSpeak) {
 				agentEl.speak(agentPendingSpeak);
@@ -1664,13 +1690,24 @@
 		}, { once: true });
 	}
 
+	function playClipWithFallback(el, primary, fallbacks = []) {
+		if (!el) return;
+		const tryNext = (names) => {
+			if (!names.length) return;
+			const [name, ...rest] = names;
+			Promise.resolve(el.play(name, { loop: true }))
+				.catch(() => tryNext(rest));
+		};
+		tryNext([primary, ...fallbacks]);
+	}
+
 	$: if (agentEl && agentReady && !avatarExitAnim && !thinkingTransitioning) {
 		if (thoughtBubbleActive) {
-			agentEl.play('think', { loop: true }).catch(() => {});
-		} else if (generating) {
-			agentEl.play('walk', { loop: true }).catch(() => {});
+			playClipWithFallback(agentEl, 'think', ['thinking', 'idle']);
+		} else if (generating || tokensFlowing) {
+			playClipWithFallback(agentEl, 'walk', ['walking', 'run', 'idle']);
 		} else {
-			agentEl.play('idle', { loop: true }).catch(() => {});
+			playClipWithFallback(agentEl, 'idle', ['Idle']);
 			if (agentEl._clearThoughtBubble) agentEl._clearThoughtBubble();
 		}
 	}
@@ -1685,7 +1722,7 @@
 			setTimeout(() => {
 				thinkingTransitioning = false;
 				if (agentEl && agentReady && !avatarExitAnim) {
-					agentEl.play(generating ? 'walk' : 'idle', { loop: true }).catch(() => {});
+					agentEl.play((generating || tokensFlowing) ? 'walk' : 'idle', { loop: true }).catch(() => {});
 				}
 			}, 1200);
 		}
@@ -2355,10 +2392,10 @@
 							class:cursor-grabbing={dragging}
 							class:avatar-dying={avatarExitAnim === 'dying'}
 							class:avatar-falling={avatarExitAnim === 'falling'}
-							class:avatar-walking={generating && !thoughtBubbleActive && agentReady && !avatarExitAnim && dragPos.x === null}
+							class:avatar-walking={(generating || tokensFlowing) && !thoughtBubbleActive && agentReady && !avatarExitAnim}
 							style={dragPos.x !== null
-								? `position: fixed; left: ${dragPos.x}px; top: ${dragPos.y}px;`
-								: `position: absolute; bottom: ${($toolSchema.length > 0 || effectiveAgentId || $talkingHeadEnabled) ? 168 : 128}px; right: 0; max-width: 100%; pointer-events: none;`}
+								? `position: fixed; left: ${dragPos.x}px; top: ${dragPos.y}px; pointer-events: auto;`
+								: `position: fixed; bottom: ${($toolSchema.length > 0 || effectiveAgentId || $talkingHeadEnabled) ? 168 : 128}px; right: 24px; max-height: calc(100vh - 200px); pointer-events: auto;`}
 							on:mousedown={onAvatarDragStart}
 							role="none"
 						>
@@ -2407,7 +2444,7 @@
 									background="transparent"
 									kiosk
 									name-plate="off"
-									style="width:min(420px, 60vw); height:min(700px, 70vh); aspect-ratio: 420/700; cursor: grab; pointer-events: auto;"
+									style="width:min(420px, 60vw, calc((100vh - 240px) * 420 / 700)); aspect-ratio: 420 / 700; cursor: grab; pointer-events: auto;"
 								></agent-3d>
 							{:else if $talkingHeadEnabled && agentVisible}
 								<div style="cursor: grab; pointer-events: auto;">
@@ -2629,17 +2666,28 @@
 
 	.avatar-floater {
 		transition: transform 1100ms cubic-bezier(0.55, 0, 0.7, 0.2), opacity 1100ms ease-in;
+		transform-origin: bottom center;
 	}
 	.avatar-walking {
-		animation: avatar-walk-bob 720ms ease-in-out infinite;
+		animation:
+			avatar-walk-bob 520ms ease-in-out infinite,
+			avatar-walk-descend 7s linear infinite;
 		transition: none;
+		transform-origin: bottom center;
+		will-change: transform, bottom, opacity;
 	}
 	@keyframes avatar-walk-bob {
-		0%   { transform: translateY(0)     rotate(-1.2deg); }
-		25%  { transform: translateY(-6px)  rotate(0deg); }
-		50%  { transform: translateY(0)     rotate(1.2deg); }
-		75%  { transform: translateY(-6px)  rotate(0deg); }
-		100% { transform: translateY(0)     rotate(-1.2deg); }
+		0%   { transform: translate3d(0,    0,    0) rotate(-3deg); }
+		25%  { transform: translate3d(-8px, -12px, 0) rotate(0deg); }
+		50%  { transform: translate3d(0,    0,    0) rotate(3deg); }
+		75%  { transform: translate3d(8px,  -12px, 0) rotate(0deg); }
+		100% { transform: translate3d(0,    0,    0) rotate(-3deg); }
+	}
+	@keyframes avatar-walk-descend {
+		0%   { bottom: max(168px, calc(100vh - 940px)); opacity: 0; }
+		6%   { opacity: 1; }
+		94%  { bottom: 168px; opacity: 1; }
+		100% { bottom: 168px; opacity: 0; }
 	}
 	@media (prefers-reduced-motion: reduce) {
 		.avatar-walking { animation: none; }
