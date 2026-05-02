@@ -131,3 +131,18 @@ In order, before pinging the user:
 ---
 
 **These guidelines are working if:** the user rarely has to say "yes do it" or "of course fix it"; diffs are tight and on-topic; verification happens before the report; and obvious follow-ups land in the same turn as the original fix.
+
+---
+
+## 8. Git Identity & Remotes
+
+**Always commit and push as `nirholas` with the GitHub noreply email. Never use a personal email.**
+
+- Git author/committer: `nirholas <nirholas@users.noreply.github.com>`
+- Push targets: `nirholas/3D-Agent` and `nirholas/three.ws`
+- Before every commit, verify git config sets the correct identity:
+  ```
+  git config user.name "nirholas"
+  git config user.email "nirholas@users.noreply.github.com"
+  ```
+- Co-Authored-By trailer in commits: `Co-Authored-By: nirholas <nirholas@users.noreply.github.com>`
