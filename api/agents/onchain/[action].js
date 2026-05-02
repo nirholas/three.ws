@@ -158,6 +158,11 @@ async function buildSolanaTx({ rpc, walletAddress, name, metadataUri }) {
 	return { assetSigner, txBytes };
 }
 
+function isRpcAuthError(err) {
+	const msg = err?.message || '';
+	return msg.includes('401') || msg.includes('Unauthorized') || msg.includes('invalid api key');
+}
+
 async function prepSolana({ cluster, metadataUri, walletAddress, name }) {
 	const configuredRpc =
 		cluster === 'devnet'
@@ -173,22 +178,44 @@ async function prepSolana({ cluster, metadataUri, walletAddress, name }) {
 			metadataUri,
 		}));
 	} catch (err) {
-		// If the configured RPC rejects with an auth error, fall back to the public
-		// endpoint so a bad/expired API key doesn't block all deploys.
-		const isAuthErr =
-			err?.message?.includes('401') ||
-			err?.message?.includes('Unauthorized') ||
-			err?.message?.includes('invalid api key');
+		// If the configured RPC rejects with an auth error AND it's not already the
+		// public endpoint, fall back to the public endpoint once.
 		const isUsingPublic = configuredRpc === SOLANA_PUBLIC_RPC[cluster];
-		if (!isAuthErr || isUsingPublic) throw err;
+		if (!isRpcAuthError(err) || isUsingPublic) {
+			if (isRpcAuthError(err)) {
+				// Public RPC also returned auth error — Solana's public endpoints now
+				// require an API key. Surface a clear operator-facing message.
+				const e = new Error(
+					'Solana RPC rejected the request with an auth error. ' +
+						'Set SOLANA_RPC_URL (mainnet) or SOLANA_RPC_URL_DEVNET (devnet) ' +
+						'to a valid RPC endpoint with an API key.',
+				);
+				e.code = 'rpc_auth_failed';
+				throw e;
+			}
+			throw err;
+		}
 
 		console.warn('[onchain/prep] configured Solana RPC auth failed, retrying with public RPC');
-		({ assetSigner, txBytes } = await buildSolanaTx({
-			rpc: SOLANA_PUBLIC_RPC[cluster],
-			walletAddress,
-			name,
-			metadataUri,
-		}));
+		try {
+			({ assetSigner, txBytes } = await buildSolanaTx({
+				rpc: SOLANA_PUBLIC_RPC[cluster],
+				walletAddress,
+				name,
+				metadataUri,
+			}));
+		} catch (fallbackErr) {
+			if (isRpcAuthError(fallbackErr)) {
+				const e = new Error(
+					'Solana RPC rejected the request with an auth error. ' +
+						'Set SOLANA_RPC_URL (mainnet) or SOLANA_RPC_URL_DEVNET (devnet) ' +
+						'to a valid RPC endpoint with an API key.',
+				);
+				e.code = 'rpc_auth_failed';
+				throw e;
+			}
+			throw fallbackErr;
+		}
 	}
 
 	return {
@@ -243,15 +270,22 @@ async function handlePrep(req, res) {
 	const { cid, uri: metadataUri } = await pinManifest(manifest);
 
 	let familyPrep;
-	if (chain.family === 'evm') {
-		familyPrep = await prepEvm({ chainId: chain.chainId, metadataUri });
-	} else {
-		familyPrep = await prepSolana({
-			cluster: chain.cluster,
-			metadataUri,
-			walletAddress: body.wallet_address,
-			name: body.name,
-		});
+	try {
+		if (chain.family === 'evm') {
+			familyPrep = await prepEvm({ chainId: chain.chainId, metadataUri });
+		} else {
+			familyPrep = await prepSolana({
+				cluster: chain.cluster,
+				metadataUri,
+				walletAddress: body.wallet_address,
+				name: body.name,
+			});
+		}
+	} catch (e) {
+		if (e.code === 'rpc_auth_failed') {
+			return error(res, 503, 'rpc_unavailable', e.message);
+		}
+		throw e;
 	}
 
 	const prepId = await randomToken(24);
