@@ -334,8 +334,8 @@ export const handleRegisterPrep = wrap(async (req, res) => {
 		const assetSigner = asset_pubkey ? createNoopSigner(umiPublicKey(asset_pubkey)) : generateSigner(umi);
 		umi.use(signerIdentity(createNoopSigner(ownerPubkey)));
 		const builder = createV1(umi, { asset: assetSigner, owner: ownerPubkey, name, uri: metadataUri });
-		const txBytes = await builder.buildAndSign(umi);
-		return { assetSigner, txBytes };
+		const tx = await builder.buildAndSign(umi);
+		return { assetSigner, txBytes: umi.transactions.serialize(tx) };
 	};
 
 	let assetSigner, txBytes;
