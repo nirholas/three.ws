@@ -42,6 +42,7 @@
 		"build": "vite build",
 		"build:animations": "node scripts/build-animations.mjs",
 		"build:lib": "TARGET=lib vite build",
+		"build:lib:full": "TARGET=lib LIB_FORMATS=es,umd vite build",
 		"build:artifact": "vite build --config vite.config.artifact.js",
 		"publish:lib": "node scripts/publish-lib.mjs",
 		"build:chat": "cd chat && node scripts/ensure-deps.mjs && npm run build",

@@ -126,7 +126,7 @@ function buildEmbedSnippet(state) {
 	}
 
 	return `<agent-3d${agentAttr} src="${state.avatarUrl}" eager></agent-3d>
-<script src="https://three.ws/dist-lib/agent-3d.umd.cjs"><\/script>`;
+<script type="module" src="https://three.ws/dist-lib/agent-3d.js"><\/script>`;
 }
 
 /**

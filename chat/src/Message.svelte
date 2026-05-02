@@ -172,7 +172,7 @@
 		>
 			{#if message.role !== 'user'}
 			<div class="relative shrink-0 flex flex-col items-center">
-			{#if message.role === 'assistant' && hasLogo && isLatestAssistant && effectiveAgentId}
+			{#if message.role === 'assistant' && hasLogo && isLatestAssistant}
 				<!-- Thought bubble while thinking -->
 				{#if message.thinking && message.thoughts}
 					<div class="avatar-bubble avatar-bubble--thinking mb-2">
@@ -190,14 +190,13 @@
 			<button
 				disabled={message.role === 'system'}
 				on:click={() => {
-					// Toggle between user and assistant:
 					if (message.role === 'user') {
 						message.role = 'assistant';
 					} else {
 						message.role = 'user';
 					}
 				}}
-				class="shrink-0 rounded-md md:rounded-[6px] {message.role === 'assistant' && hasLogo && isLatestAssistant && effectiveAgentId
+				class="shrink-0 rounded-md md:rounded-[6px] {message.role === 'assistant' && hasLogo && isLatestAssistant
 					? 'flex w-[140px] h-[280px]'
 					: 'flex h-8 w-8 md:h-9 md:w-9'} {message.role === 'system'
 					? 'border border-teal-200 bg-teal-100'
@@ -205,12 +204,12 @@
 						? 'border border-teal-200 bg-teal-100 pb-px'
 						: ''}"
 			>
-				{#if message.role === 'assistant' && hasLogo && isLatestAssistant && effectiveAgentId}
+				{#if message.role === 'assistant' && hasLogo && isLatestAssistant}
 					<span class="w-full h-full overflow-hidden inline-block shrink-0 rounded-[inherit]">
 						<!-- svelte-ignore custom-element-no-implicit-ns -->
 						<agent-3d
 							bind:this={agentEl}
-							agent-id={effectiveAgentId}
+							{...(effectiveAgentId ? { 'agent-id': effectiveAgentId } : { src: '/avatars/cz.glb' })}
 							mode="inline"
 							width="140"
 							height="280"

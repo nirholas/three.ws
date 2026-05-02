@@ -297,15 +297,13 @@ const libConfig = {
 		lib: {
 			entry: resolve(__dirname, 'src/lib.js'),
 			name: 'Agent3D',
-			formats: ['es', 'umd'],
+			formats: process.env.LIB_FORMATS ? process.env.LIB_FORMATS.split(',') : ['es'],
 			fileName: (format) => (format === 'es' ? 'agent-3d.js' : 'agent-3d.umd.cjs'),
 		},
 		rollupOptions: {
-			// No externals — we want a self-contained drop-in embed.
-			// inlineDynamicImports must be true: UMD output is incompatible
-			// with code-splitting, and the lib is meant to be a single drop-in
-			// bundle anyway. Splitting can come later via a separate ES-only
-			// build target.
+			// No externals — self-contained drop-in embed.
+			// inlineDynamicImports keeps the output as a single file so CDN
+			// consumers get one <script type="module"> with no chunk fetches.
 			output: { inlineDynamicImports: true },
 		},
 	},
