@@ -14,41 +14,84 @@ import {
 import { CHAIN_META } from './erc8004/chain-meta.js';
 import { REGISTRY_DEPLOYMENTS } from './erc8004/abi.js';
 
-const CACHE_TTL_MS = 60000; // 60s SWR cache
-const ITEMS_PER_PAGE = 30;
+const CACHE_TTL_MS = 60000;
+const ITEMS_PER_PAGE = 24;
+
+const PROTOCOL_LABELS = {
+	web: 'WEB',
+	a2a: 'A2A',
+	mcp: 'MCP',
+	token: 'TOKEN',
+	chart: 'CHART',
+	dbc: 'DBC',
+	'agent-card': 'CARD',
+	avatar: 'AVATAR',
+	'avatar-3d': 'AVATAR',
+};
+
+function shortAddr(addr) {
+	if (!addr) return '';
+	const s = String(addr);
+	if (s.length <= 10) return s;
+	return s.slice(0, 6) + '…' + s.slice(-4);
+}
+
+function extractProtocols(metadata) {
+	const out = [];
+	const seen = new Set();
+	const services = Array.isArray(metadata?.services) ? metadata.services : [];
+	for (const svc of services) {
+		if (!svc || typeof svc !== 'object') continue;
+		const raw = String(svc.name || svc.type || '').toLowerCase().trim();
+		if (!raw) continue;
+		const label = PROTOCOL_LABELS[raw] || raw.toUpperCase();
+		if (seen.has(label)) continue;
+		seen.add(label);
+		out.push({ label, version: svc.version ? String(svc.version) : '' });
+	}
+	return out;
+}
+
+function extractTrust(metadata) {
+	const trust = metadata?.trust || metadata?.trustModels || metadata?.supportedTrust;
+	if (!trust) return [];
+	const arr = Array.isArray(trust) ? trust : [trust];
+	return arr
+		.map((t) => (typeof t === 'string' ? t : t?.name || t?.type))
+		.filter(Boolean)
+		.map(String);
+}
+
+function isActiveAgent(agent) {
+	return Boolean(agent.registeredBlock);
+}
 
 export class AgentsDirectory {
 	constructor(containerSelector) {
 		this.container = document.querySelector(containerSelector);
 		if (!this.container) throw new Error(`Container not found: ${containerSelector}`);
-		this.agents = []; // All loaded agents
-		this.displayedAgents = []; // Filtered agents for current page
+		this.agents = [];
+		this.displayedAgents = [];
 		this.currentPage = 1;
-		this.filters = {
-			chain: 'all',
-			search: '',
-			sort: 'newest',
-		};
-		this.cache = new Map(); // Per-page caches: `${chain}:${page}` → { data, time }
+		this.filters = { chain: 'all', search: '', sort: 'newest', activeOnly: false };
+		this.cache = new Map();
 		this.cardClickHandler = null;
 		this.lazyObserver = null;
 	}
 
 	/**
-	 * Load agents for a given chain, page, and filters.
 	 * @param {object} opts
-	 * @param {string} [opts.chain='all'] Chain filter: 'all', 'base', 'base-sepolia', etc.
-	 * @param {string} [opts.search=''] Search term (name/id)
-	 * @param {string} [opts.sort='newest'] Sort key: 'newest', 'name', 'oldest'
-	 * @param {number} [opts.page=1] Page number (1-indexed)
-	 * @returns {Promise<{ agents: Array, totalPages: number, total: number }>}
+	 * @param {string} [opts.chain='all']
+	 * @param {string} [opts.search='']
+	 * @param {string} [opts.sort='newest']
+	 * @param {number} [opts.page=1]
+	 * @param {boolean} [opts.activeOnly=false]
 	 */
-	async load({ chain = 'all', search = '', sort = 'newest', page = 1 } = {}) {
-		this.filters = { chain, search, sort };
+	async load({ chain = 'all', search = '', sort = 'newest', page = 1, activeOnly = false } = {}) {
+		this.filters = { chain, search, sort, activeOnly };
 		this.currentPage = page;
 
-		// Check cache
-		const cacheKey = `${chain}:${page}:${search}:${sort}`;
+		const cacheKey = `${chain}:${page}:${search}:${sort}:${activeOnly ? 1 : 0}`;
 		const cached = this.cache.get(cacheKey);
 		if (cached && Date.now() - cached.time < CACHE_TTL_MS) {
 			this.displayedAgents = cached.data;
@@ -56,37 +99,25 @@ export class AgentsDirectory {
 			return { agents: this.displayedAgents, totalPages, total: this.agents.length };
 		}
 
-		// Fetch all agents if not already loaded
 		if (this.agents.length === 0) {
 			await this._fetchAllAgents();
 		}
 
-		// Apply filters and sorting
 		let filtered = this._applyFilters();
 		filtered = this._applySorting(filtered);
 
-		// Paginate
 		const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
 		const offset = (page - 1) * ITEMS_PER_PAGE;
 		this.displayedAgents = filtered.slice(offset, offset + ITEMS_PER_PAGE);
 
-		// Cache result
 		this.cache.set(cacheKey, { data: this.displayedAgents, time: Date.now() });
-
 		return { agents: this.displayedAgents, totalPages, total: filtered.length };
 	}
 
-	/**
-	 * Register a callback for card clicks.
-	 * @param {Function} fn Called with agent object when card is clicked
-	 */
 	onCardClick(fn) {
 		this.cardClickHandler = fn;
 	}
 
-	/**
-	 * Set up lazy loading for avatar thumbnails.
-	 */
 	setupLazyLoad() {
 		if (!('IntersectionObserver' in window)) return;
 		this.lazyObserver = new IntersectionObserver((entries) => {
@@ -101,7 +132,6 @@ export class AgentsDirectory {
 				}
 			}
 		});
-		// Observe on next render
 		requestAnimationFrame(() => {
 			this.container
 				.querySelectorAll('img[data-src]')
@@ -109,9 +139,6 @@ export class AgentsDirectory {
 		});
 	}
 
-	/**
-	 * Render agent cards as HTML. Call after load().
-	 */
 	render() {
 		const html = this.displayedAgents.map((agent) => this._renderCard(agent)).join('');
 		this.container.innerHTML = html;
@@ -119,9 +146,6 @@ export class AgentsDirectory {
 		this.setupLazyLoad();
 	}
 
-	/**
-	 * Return pagination info for current state.
-	 */
 	getPaginationInfo() {
 		const totalPages = Math.ceil(this._applyFilters().length / ITEMS_PER_PAGE);
 		return {
@@ -136,80 +160,81 @@ export class AgentsDirectory {
 	// ─────────────────────────────────────────────────────────────────────────
 
 	async _fetchAllAgents() {
-		const agents = [];
 		const chainId = this._parseChainFilter(this.filters.chain);
 		const chains = chainId === 'all' ? Object.keys(CHAIN_META).map(Number) : [chainId];
 
-		for (const cid of chains) {
-			try {
-				const events = await listRegisteredEvents({
-					chainId: cid,
-					limit: 500, // Adjust as needed
-				});
-
-				for (const ev of events) {
-					try {
-						const agentId = String(ev.agentId);
-						const onchain = await getAgentOnchain({
-							chainId: cid,
-							agentId,
-						});
-
-						let metadata = {};
-						if (ev.agentURI) {
-							const result = await fetchAgentMetadata(ev.agentURI);
-							if (result.ok && result.data) {
-								metadata = result.data;
+		// Fan out across chains in parallel; within each chain, fan out across
+		// agent enrichment fetches (ownerOf + tokenURI + metadata) in parallel.
+		const chainResults = await Promise.all(
+			chains.map(async (cid) => {
+				try {
+					const events = await listRegisteredEvents({ chainId: cid, limit: 500 });
+					const enriched = await Promise.all(
+						events.map(async (ev) => {
+							try {
+								const agentId = String(ev.agentId);
+								const [onchain, metaResult] = await Promise.all([
+									getAgentOnchain({ chainId: cid, agentId }).catch(() => ({})),
+									ev.agentURI
+										? fetchAgentMetadata(ev.agentURI).catch(() => ({ ok: false }))
+										: Promise.resolve({ ok: false }),
+								]);
+								const metadata = metaResult.ok && metaResult.data ? metaResult.data : {};
+								const avatar = findAvatar3D(metadata);
+								const imageUrl =
+									!avatar && metadata.image && !/\.(glb|gltf)/i.test(metadata.image)
+										? metadata.image
+										: null;
+								return {
+									id: agentId,
+									chainId: cid,
+									name: metadata.name || `Agent #${agentId}`,
+									description: metadata.description || '',
+									avatar,
+									image: imageUrl,
+									owner: onchain.owner || ev.owner,
+									protocols: extractProtocols(metadata),
+									trust: extractTrust(metadata),
+									createdAt: ev.blockNumber ? new Date(ev.blockNumber * 12000) : new Date(),
+									registeredBlock: ev.blockNumber,
+									txHash: ev.txHash,
+									metadata,
+								};
+							} catch (err) {
+								console.warn(`Failed to fetch agent ${ev.agentId} on ${cid}:`, err);
+								return null;
 							}
-						}
-
-						const avatar = findAvatar3D(metadata);
-
-						agents.push({
-							id: agentId,
-							chainId: cid,
-							name: metadata.name || `Agent #${agentId}`,
-							description: metadata.description || '',
-							avatar,
-							owner: onchain.owner || ev.owner,
-							createdAt: ev.blockNumber
-								? new Date(ev.blockNumber * 12000) // Rough estimate
-								: new Date(),
-							registeredBlock: ev.blockNumber,
-							txHash: ev.txHash,
-						});
-					} catch (err) {
-						console.warn(`Failed to fetch agent ${ev.agentId}:`, err);
-					}
+						}),
+					);
+					return enriched.filter(Boolean);
+				} catch (err) {
+					console.warn(`Failed to fetch chain ${cid}:`, err);
+					return [];
 				}
-			} catch (err) {
-				console.warn(`Failed to fetch chain ${cid}:`, err);
-			}
-		}
+			}),
+		);
 
-		this.agents = agents;
+		this.agents = chainResults.flat();
 	}
 
 	_applyFilters() {
 		return this.agents.filter((agent) => {
-			// Chain filter
 			if (this.filters.chain !== 'all') {
 				const targetChain = Number(this.filters.chain);
 				if (agent.chainId !== targetChain) return false;
 			}
-
-			// Search filter
+			if (this.filters.activeOnly && !isActiveAgent(agent)) return false;
 			if (this.filters.search.trim()) {
 				const term = this.filters.search.toLowerCase();
 				if (
 					!agent.name.toLowerCase().includes(term) &&
 					!agent.id.includes(term) &&
-					!agent.description.toLowerCase().includes(term)
+					!agent.description.toLowerCase().includes(term) &&
+					!(agent.owner || '').toLowerCase().includes(term)
 				) {
 					return false;
 				}
 			}
-
 			return true;
 		});
 	}
@@ -231,28 +256,57 @@ export class AgentsDirectory {
 	}
 
 	_renderCard(agent) {
-		const avatarUrl = agent.avatar || '';
 		const cleanName = this._escapeHtml(agent.name);
-		const cleanDesc = this._escapeHtml(agent.description.slice(0, 100));
-		const chainName = CHAIN_META[agent.chainId]?.name || `Chain ${agent.chainId}`;
+		const cleanDesc = this._escapeHtml(agent.description.slice(0, 140));
+		const ownerShort = shortAddr(agent.owner);
+		const ownerFull = this._escapeHtml(agent.owner || '');
+		const active = isActiveAgent(agent);
+		const thumb = agent.image || agent.avatar || '';
+
+		const protoBadges = (agent.protocols || [])
+			.slice(0, 4)
+			.map(
+				(p) =>
+					`<span class="proto-badge proto-${this._escapeHtml(p.label.toLowerCase())}">${this._escapeHtml(p.label)}${p.version ? ` <span class="proto-ver">${this._escapeHtml(p.version)}</span>` : ''}</span>`,
+			)
+			.join('');
+		const overflow = (agent.protocols || []).length > 4
+			? `<span class="proto-badge proto-more">+${agent.protocols.length - 4}</span>`
+			: '';
+
+		const trustPills = (agent.trust || [])
+			.map(
+				(t) =>
+					`<span class="trust-pill">★ ${this._escapeHtml(t.charAt(0).toUpperCase() + t.slice(1))}</span>`,
+			)
+			.join('');
 
 		return `
 			<div class="agent-card" data-agent-id="${agent.id}" data-chain-id="${agent.chainId}">
-				<div class="card-avatar">
-					${
-						avatarUrl
-							? `<img data-src="${this._escapeHtml(avatarUrl)}" alt="${cleanName}" loading="lazy">`
-							: '<div class="avatar-placeholder">👤</div>'
-					}
-				</div>
-				<div class="card-content">
-					<h3 class="card-name">${cleanName}</h3>
-					<p class="card-desc">${cleanDesc}${agent.description.length > 100 ? '…' : ''}</p>
-					<div class="card-meta">
-						<span class="chain-badge">${chainName}</span>
-						<span class="agent-id">#${agent.id}</span>
+				<div class="card-head">
+					<div class="card-avatar-sm">
+						${
+							thumb
+								? `<img data-src="${this._escapeHtml(thumb)}" alt="${cleanName}" loading="lazy">`
+								: '<div class="avatar-placeholder">▣</div>'
+						}
+					</div>
+					<div class="card-title">
+						<div class="card-name-row">
+							<h3 class="card-name">${cleanName}</h3>
+							${active ? '<span class="active-dot" aria-label="Active"></span>' : ''}
+						</div>
+						<div class="card-id" title="${this._escapeHtml(String(agent.id))}">#${this._escapeHtml(String(agent.id))}</div>
 					</div>
 				</div>
+				<p class="card-desc">${cleanDesc}${agent.description.length > 140 ? '…' : ''}</p>
+				${protoBadges || overflow ? `<div class="card-protos">${protoBadges}${overflow}</div>` : ''}
+				${trustPills ? `<div class="card-trust">${trustPills}</div>` : ''}
+				${
+					ownerShort
+						? `<div class="card-owner"><span class="owner-addr" data-copy="${ownerFull}" title="${ownerFull}">${this._escapeHtml(ownerShort)}</span><button class="owner-copy" data-copy="${ownerFull}" aria-label="Copy address">⎘</button></div>`
+						: ''
+				}
 			</div>
 		`;
 	}
@@ -270,7 +324,18 @@ export class AgentsDirectory {
 
 	_attachEventListeners() {
 		this.container.querySelectorAll('.agent-card').forEach((card) => {
-			card.addEventListener('click', () => {
+			card.addEventListener('click', (e) => {
+				const copyTarget = e.target.closest('[data-copy]');
+				if (copyTarget) {
+					e.stopPropagation();
+					const value = copyTarget.dataset.copy;
+					if (value && navigator.clipboard) {
+						navigator.clipboard.writeText(value).catch(() => {});
+						copyTarget.classList.add('copied');
+						setTimeout(() => copyTarget.classList.remove('copied'), 900);
+					}
+					return;
+				}
 				const agentId = card.dataset.agentId;
 				const chainId = card.dataset.chainId;
 				const agent = this.agents.find(
