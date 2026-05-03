@@ -1242,7 +1242,7 @@
 				}
 
 				whenReady(() => {
-					const viewer = new window.Act2Viewer(canvas);
+					const viewer = new window.Act2Viewer(canvas, { fov: 20 });
 
 					function prettyLabel(def) {
 						return (def.label || def.name).replace(/\s*\([^)]*\)/g, '').trim();
@@ -1282,14 +1282,8 @@
 
 					viewer.onClipsReady = buildButtons;
 					viewer
-						.loadModel('/avatars/cz.glb')
-						.then(() => {
-							if (viewer.model) {
-								viewer.model.position.x -= 0.15;
-								viewer.model.position.z -= 0.25;
-							}
-							return viewer.playClip('capoeira').catch(() => {});
-						})
+						.loadModel('/avatars/cz.glb', { autoPlay: false })
+						.then(() => viewer.playClip('capoeira').catch(() => {}))
 						.catch(console.error);
 
 					if (stopBtn) {
