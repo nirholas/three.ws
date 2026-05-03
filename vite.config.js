@@ -54,6 +54,7 @@ const appConfig = {
 				marketplace: resolve(__dirname, 'marketplace.html'),
 				'agent-edit': resolve(__dirname, 'agent-edit.html'),
 				'agent-embed': resolve(__dirname, 'agent-embed.html'),
+				'agent-detail': resolve(__dirname, 'agent-detail.html'),
 				'a-embed': resolve(__dirname, 'a-embed.html'),
 				studio: resolve(__dirname, 'public/studio/index.html'),
 				features: resolve(__dirname, 'public/features/index.html'),
@@ -146,6 +147,9 @@ const appConfig = {
 					let filePath = fileMap[path];
 					if (!filePath && /^\/marketplace\/agents\/[^/]+\/?$/.test(path))
 						filePath = resolve(root, 'marketplace.html');
+					// /agents/:id  → rich detail page (UUID expected, validated client-side)
+					else if (!filePath && /^\/agents\/[^/]+\/?$/.test(path))
+						filePath = resolve(root, 'agent-detail.html');
 					else if (!filePath && /^\/agent\/[^/]+\/edit$/.test(path))
 						filePath = resolve(root, 'agent-edit.html');
 					else if (!filePath && /^\/agent\/[^/]+\/embed$/.test(path))
