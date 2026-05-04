@@ -1170,6 +1170,14 @@ class App {
 					}),
 				);
 			}
+			if (data.type === 'pumpfun-feed:set-mood') {
+				document.body.dispatchEvent(
+					new CustomEvent('pumpfun-feed:set-mood', {
+						detail: { mood: data.mood },
+						bubbles: true,
+					}),
+				);
+			}
 
 			// Host-page reaction bridge: when the parent /pumpfun.html page
 			// observes a feed event, it can ask the avatar to emote/dance
@@ -1179,6 +1187,7 @@ class App {
 					const proto = window.VIEWER?.agent_protocol || protocol;
 					const r = data.reaction;
 					if (proto && r.emote) proto.emit({ type: 'emote', payload: r.emote });
+					if (proto && r.lookAt) proto.emit({ type: 'look-at', payload: { target: r.lookAt } });
 					if (proto && r.gesture) proto.emit({ type: 'gesture', payload: r.gesture });
 					if (proto && r.speak && data.speak !== false) {
 						proto.emit({ type: 'speak', payload: r.speak });

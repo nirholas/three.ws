@@ -152,7 +152,29 @@ async function enrichMint(d) {
 		getSolPrice(),
 		fetchMeta(d.uri),
 	]);
-	return normalizeMint(d, meta, solPrice);
+	const base = normalizeMint(d, meta, solPrice);
+	// Add creator history so mint cards can flag "10 launches, 0 graduated"
+	// rugger profiles at a glance. Best-effort — if the creator endpoint
+	// times out we keep the base card.
+	try {
+		const userCoins = d.traderPublicKey ? await fetchCreatorCoins(d.traderPublicKey) : null;
+		if (Array.isArray(userCoins)) {
+			base.creator_launches = userCoins.length;
+			base.creator_graduated = userCoins.reduce((n, c) => n + (isGraduated(c) ? 1 : 0), 0);
+			base.creator_tokens = userCoins
+				.map((c) => ({
+					mint: c.mint,
+					symbol: c.symbol,
+					name: c.name,
+					mc: pickMc(c, solPrice),
+					graduated: isGraduated(c),
+				}))
+				.filter((c) => c.symbol);
+		}
+	} catch (err) {
+		console.warn('[pumpportal-ws] mint creator-history failed:', err?.message);
+	}
+	return base;
 }
 
 function normalizeMint(d, meta, solPrice) {

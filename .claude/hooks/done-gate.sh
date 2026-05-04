@@ -52,9 +52,12 @@ while IFS= read -r line; do
       [ -z "$cur_file" ] && continue
       # Skip exempt paths/extensions
       case "$cur_file" in
-        */.claude/*|*/memory/*|*/node_modules/*|*/dist/*|*/dist-lib/*|*/public/*) continue ;;
-        */tests/*|*/test/*|*.test.*|*.spec.*) continue ;;
-        */specs/*|*/docs/*) continue ;;
+        .claude/*|*/.claude/*) continue ;;
+        memory/*|*/memory/*) continue ;;
+        node_modules/*|*/node_modules/*) continue ;;
+        dist/*|*/dist/*|dist-lib/*|*/dist-lib/*|public/*|*/public/*) continue ;;
+        tests/*|*/tests/*|test/*|*/test/*|*.test.*|*.spec.*) continue ;;
+        specs/*|*/specs/*|docs/*|*/docs/*) continue ;;
         *.md|*.json|*.lock|*.svg|*.png|*.jpg|*.jpeg|*.gif|*.webp|*.glb|*.gltf|*.wasm|*.ico|*.woff|*.woff2|*.ttf|*.map) continue ;;
       esac
       if printf '%s' "$add" | grep -Eqi "$LAZY_RE"; then
@@ -69,9 +72,12 @@ while IFS= read -r f; do
   [ -n "$f" ] || continue
   [ -f "$f" ] || continue
   case "$f" in
-    */.claude/*|*/memory/*|*/node_modules/*|*/dist/*|*/dist-lib/*|*/public/*) continue ;;
-    */tests/*|*/test/*|*.test.*|*.spec.*) continue ;;
-    */specs/*|*/docs/*) continue ;;
+    .claude/*|*/.claude/*) continue ;;
+    memory/*|*/memory/*) continue ;;
+    node_modules/*|*/node_modules/*) continue ;;
+    dist/*|*/dist/*|dist-lib/*|*/dist-lib/*|public/*|*/public/*) continue ;;
+    tests/*|*/tests/*|test/*|*/test/*|*.test.*|*.spec.*) continue ;;
+    specs/*|*/specs/*|docs/*|*/docs/*) continue ;;
     *.md|*.json|*.lock|*.svg|*.png|*.jpg|*.jpeg|*.gif|*.webp|*.glb|*.gltf|*.wasm|*.ico|*.woff|*.woff2|*.ttf|*.map) continue ;;
   esac
   while IFS= read -r line; do

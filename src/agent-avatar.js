@@ -1049,4 +1049,3 @@ export class AgentAvatar {
 function _lerp(a, b, t) {
 	return a + (b - a) * Math.min(1, Math.max(0, t));
 }
-// TODO injected for test

@@ -28,17 +28,67 @@ AFRAME.registerComponent('multiplayer-button', {
 });
 
 /**
- * Click prompts for a 4-char room code and dispatches mpjoin.
- * Falls back to window.prompt — works in 2D viewer + Quest browser.
+ * Click opens the VR room-code keyboard when in VR; falls back to prompt().
  */
 AFRAME.registerComponent('multiplayer-join-button', {
   init: function () {
     this.el.addEventListener('click', () => {
+      const sceneEl = this.el.sceneEl;
+      const state = sceneEl.systems.state.state;
+      if (state.inVR) {
+        sceneEl.emit('mpkeyboardopen', null, false);
+        return;
+      }
       const code = window.prompt('Enter 4-letter room code:');
-      if (!code) { return; }
+      if (!code) return;
       const normalized = code.toUpperCase().trim().slice(0, 4);
-      this.el.sceneEl.emit('mpcodeinput', normalized, false);
-      this.el.sceneEl.emit('mpjoin', { code: normalized }, false);
+      sceneEl.emit('mpcodeinput', normalized, false);
+      sceneEl.emit('mpjoin', { code: normalized }, false);
+    });
+  }
+});
+
+/**
+ * Submit handler for the VR room-code keyboard: dismiss + fire join.
+ */
+AFRAME.registerComponent('multiplayer-keyboard-bridge', {
+  init: function () {
+    const sceneEl = this.el.sceneEl;
+    sceneEl.addEventListener('mpkeyboardsubmit', () => {
+      const state = sceneEl.systems.state.state;
+      const code = (state.multiplayer.joinCodeInput || '').toUpperCase().slice(0, 4);
+      sceneEl.emit('mpkeyboardclose', null, false);
+      if (code.length === 4) {
+        sceneEl.emit('mpjoin', { code }, false);
+      } else {
+        sceneEl.emit('mperror', { message: 'Enter all 4 letters' }, false);
+      }
+    });
+    sceneEl.addEventListener('mpnamekeyboardsubmit', () => {
+      const state = sceneEl.systems.state.state;
+      const name = (state.multiplayer.nameInput || '').trim().slice(0, 14) || 'Player';
+      sceneEl.emit('mpnamekeyboardclose', null, false);
+      sceneEl.emit('mpsetname', { value: name }, false);
+    });
+  }
+});
+
+/**
+ * Opens the VR name keyboard, or prompt() in 2D.
+ */
+AFRAME.registerComponent('multiplayer-name-button', {
+  init: function () {
+    this.el.addEventListener('click', () => {
+      const sceneEl = this.el.sceneEl;
+      const state = sceneEl.systems.state.state;
+      if (state.inVR) {
+        sceneEl.emit('mpnamekeyboardopen', null, false);
+        return;
+      }
+      const name = window.prompt('Your display name:',
+        localStorage.getItem('threewsusername') || 'Player');
+      if (!name) return;
+      sceneEl.emit('mpsetname', { value: name.trim().slice(0, 14) }, false);
     });
   }
 });
@@ -67,6 +117,7 @@ AFRAME.registerComponent('menu-mode', {
   init: function () {
     this.el.addEventListener('click', evt => {
       const item = evt.target.closest('[data-mode]');
+      if (!item) return; // non-mode click (e.g. multiplayer button)
       const mode = item.dataset.mode;
       const name = item.dataset.name;
       this.el.sceneEl.emit('gamemode', mode, false);
