@@ -181,17 +181,19 @@ export async function handleGetOne(req, res, id) {
 		const rl = await limits.publicIp(clientIp(req));
 		if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
-		const auth = await resolveAuth(req);
 		const [row] = await sql`
-			SELECT * FROM agent_identities WHERE id = ${id} AND deleted_at IS NULL
+			SELECT i.*, u.name as author_name, u.avatar as author_avatar
+			FROM agent_identities i
+			LEFT JOIN users u ON i.user_id = u.id
+			WHERE i.id = ${id} AND i.deleted_at IS NULL
 		`;
 		if (!row) return error(res, 404, 'not_found', 'agent not found');
 
 		const prices = await sql`
-			SELECT skill, amount, currency_mint FROM agent_skill_prices WHERE agent_id = ${id}
+			SELECT skill_name, amount, currency_mint FROM agent_skill_prices WHERE agent_id = ${id}
 		`;
 		const skill_prices = prices.reduce((acc, p) => {
-			acc[p.skill] = { amount: p.amount, currency_mint: p.currency_mint };
+			acc[p.skill_name] = { amount: p.amount, currency_mint: p.currency_mint };
 			return acc;
 		}, {});
 		row.skill_prices = skill_prices;
@@ -369,6 +371,7 @@ function decorate(row, isOwner = true) {
 		avatar_id: row.avatar_id,
 		home_url: row.home_url || `/agent/${row.id}`,
 		skills: row.skills || [],
+		skill_prices: row.skill_prices || {},
 		meta,
 		onchain,
 		token,

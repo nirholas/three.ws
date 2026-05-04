@@ -1,7 +1,7 @@
 # Prompt 2: Add "Connect Wallet" Button
 
 ## Status
-- [ ] Not Started
+- [x] Completed
 
 ## Objective
 Integrate a "Connect Wallet" button into the main application header, which will serve as the entry point for users to connect their Solana wallets.

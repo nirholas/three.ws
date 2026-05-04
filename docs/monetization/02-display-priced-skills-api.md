@@ -1,6 +1,6 @@
 ---
-status: not-started
-completed_at: null
+status: completed
+completed_at: 2026-05-04T12:05:00Z
 ---
 # Prompt 2: Modify Agent Detail API to Include Skill Prices
 

@@ -1012,6 +1012,27 @@ WHERE deleted_at IS NULL;
 
 CREATE INDEX IF NOT EXISTS idx_agent_skill_prices_creator_id ON agent_skill_prices(creator_id);
 
+-- ── user_skill_purchases ─────────────────────────────────────────────────────
+-- Tracks which users have purchased which skills.
+CREATE TYPE purchase_status AS ENUM ('pending', 'confirmed', 'failed');
+
+CREATE TABLE IF NOT EXISTS user_skill_purchases (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id),
+    agent_id UUID NOT NULL REFERENCES agent_identities(id),
+    skill_id TEXT NOT NULL,
+    price_id UUID NOT NULL REFERENCES agent_skill_prices(id),
+    transaction_id TEXT, -- e.g., Solana transaction signature
+    status purchase_status NOT NULL DEFAULT 'pending',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_user_skill_purchases_one_per_user
+ON user_skill_purchases (user_id, agent_id, skill_id);
+
+CREATE INDEX IF NOT EXISTS idx_user_skill_purchases_tx_id ON user_skill_purchases(transaction_id);
+
 -- ── agent_skill_prices — monetization for agent skills ──────────────────────
 CREATE TABLE IF NOT EXISTS agent_skill_prices (
     agent_id UUID NOT NULL REFERENCES agent_identities(id) ON DELETE CASCADE,

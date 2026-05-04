@@ -85,6 +85,10 @@
 			"dest": "/api/agents/[id]/skills-pricing?id=$1"
 		},
 		{
+			"src": "/api/agents/([^/]+)/skills/price",
+			"dest": "/api/agent-skill-price.js?agentId=$1"
+		},
+		{
 			"src": "/api/newsletter/subscribe",
 			"dest": "/api/newsletter-subscribe"
 		},

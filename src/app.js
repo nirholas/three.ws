@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import WebGL from 'three/addons/capabilities/WebGL.js';
+import { initWalletButton } from './wallet.js';
 import { Viewer } from './viewer.js';
 import { Editor } from './editor/index.js';
 import { SimpleDropzone } from 'simple-dropzone';
@@ -1292,6 +1293,8 @@ class App {
 		if (this.viewer) this.viewer.dispose();
 		this.viewerEl = this.viewerContainerEl;
 		this.viewer = new Viewer(this.viewerEl, this.options);
+		initWalletButton();
+
 		if (!this.options.kiosk) {
 			this.editor = new Editor(this.viewer);
 			this.editor.attach();

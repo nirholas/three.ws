@@ -16,11 +16,32 @@
 <link rel="stylesheet" href="style.css" />
 		<link rel="stylesheet" href="footer.css" />
 		<link rel="stylesheet" href="marketplace.css" />
+		<link rel="stylesheet" href="marketplace-skills.css" />
 		<link
 			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
 			rel="stylesheet"
 		/>
+		<style>
+			.price-badge {
+				display: inline-block;
+				margin-left: 8px;
+				padding: 2px 6px;
+				font-size: 10px;
+				font-weight: 600;
+				border-radius: 4px;
+				vertical-align: middle;
+			}
 
+			.price-free {
+				color: #a7f3d0;
+				background-color: rgba(52, 211, 153, 0.1);
+			}
+
+			.price-paid {
+				color: #fde047;
+				background-color: rgba(253, 224, 71, 0.1);
+			}
+		</style>
 		<meta property="og:type" content="website" />
 		<meta property="og:title" content="Agent Marketplace · three.ws" />
 		<meta
@@ -289,6 +310,31 @@
 		</div>
 	</div>
 
-	<script type="module" src="/src/marketplace.js"></script>
+	<!-- Purchase Modal -->
+	<div id="purchase-modal" class="modal-hidden">
+		<div class="modal-content">
+			<span class="close-button">&times;</span>
+			<h2>Unlock Skill</h2>
+			<p>You are about to purchase:</p>
+			<p><strong>Skill:</strong> <span id="modal-skill-name"></span></p>
+			<p><strong>Price:</strong> <span id="modal-skill-price"></span></p>
+			<button id="modal-confirm-purchase">Confirm Purchase</button>
+		</div>
+	</div>
+
+	    <script src="/src/marketplace.js" type="module"></script>
+
+    <div id="purchase-modal" class="modal" hidden>
+        <div class="modal-content">
+            <button class="modal-close" onclick="$('purchase-modal').hidden = true;">&times;</button>
+            <h3>Complete Your Purchase</h3>
+            <p>Scan the QR code with a Solana Pay-compatible wallet to purchase the skill.</p>
+            <canvas id="qr-canvas"></canvas>
+            <p id="purchase-details"></p>
+        </div>
+    </div>
+  </body>
+</html>
+
 	</body>
 </html>

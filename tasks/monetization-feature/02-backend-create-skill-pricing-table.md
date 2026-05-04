@@ -1,8 +1,10 @@
 ---
-status: in-progress
+status: completed
 ---
 
 # Prompt 2: Backend - Create Skill Pricing Table
+
+**Status:** Completed
 
 ## Objective
 Create the necessary database table to store the prices of agent skills. This is a foundational step for the monetization feature.
@@ -11,9 +13,9 @@ Create the necessary database table to store the prices of agent skills. This is
 To make skills purchasable, we need a dedicated table in our database (`agent_skill_prices`) that links a skill to a price, currency, and the creator who sets the price. This structure will allow us to easily query for a skill's price and manage payments.
 
 ## Instructions
-1.  **Define the Schema:**
-    *   Create a new SQL migration file.
-    *   Define the schema for the `agent_skill_prices` table. It should include the following fields:
+- [x] **Define the Schema:**
+    - [x] Create a new SQL migration file.
+    - [x] Define the schema for the `agent_skill_prices` table. It should include the following fields:
         *   `id`: Primary key (e.g., UUID).
         *   `skill_id`: Foreign key referencing the `skills` table.
         *   `creator_id`: Foreign key referencing the `users` table (the user who created the skill and will receive payment).
@@ -21,8 +23,9 @@ To make skills purchasable, we need a dedicated table in our database (`agent_sk
         *   `currency_mint`: The public key of the SPL token used for payment (e.g., USDC's mint address). Stored as a string.
         *   `created_at` / `updated_at`: Timestamps.
 
-2.  **Apply the Migration:**
-    *   Run the migration to create the table in your development database.
+- [x] **Apply the Migration:**
+    - [x] Run the migration to create the table in your development database.
+
 
 ## Code Example (SQL Migration)
 

@@ -1,9 +1,11 @@
 ---
 title: "Prompt 3: Creator UI for Skill Pricing"
-status: "not-started"
+status: "completed"
 ---
 
 # Prompt 3: Creator UI for Skill Pricing
+
+**Status:** Completed
 
 ## Objective
 Create a user interface in the agent editor that allows creators to view their agent's skills and set a price for each one.

@@ -1,9 +1,9 @@
 ---
-status: not-started
+status: completed
 ---
 # Prompt 3: Backend API for Setting Skill Prices
 
-**Status:** Not Started
+**Status:** Completed
 
 ## Objective
 Create a secure backend API endpoint for creators to save or update the prices for their agent's skills.
@@ -12,25 +12,25 @@ Create a secure backend API endpoint for creators to save or update the prices f
 This endpoint will receive the pricing data from the creator UI (created in Prompt 2) and persist it to the `agent_skill_prices` database table. It's crucial to ensure that only the agent's owner can modify its skill prices.
 
 ## Instructions
-1.  **Create a New API Route:**
-    -   In the `api/agents/` directory, create a new file or modify an existing one to handle a `POST` request, for example, `/api/agents/:id/skill-prices`.
+- [x] **Create a New API Route:**
+    - [x] In the `api/agents/` directory, create a new file or modify an existing one to handle a `POST` request, for example, `/api/agents/:id/skill-prices`.
 
-2.  **Implement Authorization:**
-    -   The endpoint must be protected. Verify the user's session or API token.
-    -   Check that the authenticated user is the owner of the agent specified by the `:id` parameter. If not, return a `403 Forbidden` error.
+- [x] **Implement Authorization:**
+    - [x] The endpoint must be protected. Verify the user's session or API token.
+    - [x] Check that the authenticated user is the owner of the agent specified by the `:id` parameter. If not, return a `403 Forbidden` error.
 
-3.  **Handle the Request:**
-    -   The request body will contain an array of skill prices, like `{ prices: [{ skill_name: "...", amount: 500000, currency_mint: "..." }] }`.
-    -   Validate the input data. Ensure `amount` is a non-negative number and `currency_mint` is a valid Solana mint address.
+- [x] **Handle the Request:**
+    - [x] The request body will contain an array of skill prices, like `{ prices: [{ skill_name: "...", amount: 500000, currency_mint: "..." }] }`.
+    - [x] Validate the input data. Ensure `amount` is a non-negative number and `currency_mint` is a valid Solana mint address.
 
-4.  **Database Interaction:**
-    -   For the given `agent_id`, update the `agent_skill_prices` table.
-    -   A good approach is to use an "upsert" operation: if a price for a skill exists, update it; otherwise, insert a new row. You could also delete all existing prices for the agent and insert the new ones.
-    -   The table should store `agent_id`, `skill_name`, `amount`, and `currency_mint`.
+- [x] **Database Interaction:**
+    - [x] For the given `agent_id`, update the `agent_skill_prices` table.
+    - [x] A good approach is to use an "upsert" operation: if a price for a skill exists, update it; otherwise, insert a new row. You could also delete all existing prices for the agent and insert the new ones.
+    - [x] The table should store `agent_id`, `skill_name`, `amount`, and `currency_mint`.
 
-5.  **Return a Response:**
-    -   On success, return a `200 OK` or `204 No Content` response.
-    -   On failure (validation error, database error), return an appropriate error code (e.g., `400 Bad Request`, `500 Internal Server Error`) with a descriptive message.
+- [x] **Return a Response:**
+    - [x] On success, return a `200 OK` or `204 No Content` response.
+    - [x] On failure (validation error, database error), return an appropriate error code (e.g., `400 Bad Request`, `500 Internal Server Error`) with a descriptive message.
 
 ## Code Example (Vercel Serverless Function)
 

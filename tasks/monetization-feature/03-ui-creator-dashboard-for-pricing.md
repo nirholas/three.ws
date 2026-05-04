@@ -1,5 +1,5 @@
 ---
-status: not-started
+status: in-progress
 ---
 
 # Prompt 3: UI - Creator Dashboard for Pricing

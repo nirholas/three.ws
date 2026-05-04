@@ -317,13 +317,19 @@ async function handleDetail(req, res, id) {
 		SELECT a.*, u.display_name AS author_name, u.avatar_url AS author_avatar
 		FROM agent_identities a
 		LEFT JOIN users u ON u.id = a.user_id
-		WHERE a.id = ${id} AND a.deleted_at IS NULL AND a.is_published = true
+		WHERE a.id = ${id} AND a.deleted_at IS NULL
 	`;
 	if (!row) return error(res, 404, 'not_found', 'agent not found');
 
-	const [auth, priceRows] = await Promise.all([
-		resolveAuth(req).catch(() => null),
+	// A user can view their own unpublished agents
+	const auth = await resolveAuth(req).catch(() => null);
+	if (!row.is_published && row.user_id !== auth?.userId) {
+		return error(res, 404, 'not_found', 'agent not found');
+	}
+
+const [priceRows, purchasedRows] = await Promise.all([
 		sql`SELECT skill, currency_mint, chain, amount FROM agent_skill_prices WHERE agent_id = ${id} AND is_active = true`,
+		auth ? sql`SELECT skill FROM user_skill_purchases WHERE user_id = ${auth.userId} AND agent_id = ${id}` : Promise.resolve([]),
 	]);
 
 	let bookmarked = false;
@@ -332,6 +338,18 @@ async function handleDetail(req, res, id) {
 			await sql`SELECT 1 AS x FROM agent_bookmarks WHERE user_id = ${auth.userId} AND agent_id = ${id}`;
 		bookmarked = !!b;
 	}
+
+	const skill_prices = Object.fromEntries(
+		priceRows.map((p) => [p.skill, { amount: p.amount, currency_mint: p.currency_mint, chain: p.chain }]),
+	);
+	const purchased_skills = purchasedRows.map(r => r.skill);
+
+	return json(
+		res,
+		200,
+		{ data: { agent: { ...toDetail(row), skill_prices, bookmarked, purchased_skills } } },
+		{ 'cache-control': 'public, max-age=15' },
+	);
 
 	const skill_prices = Object.fromEntries(
 		priceRows.map((p) => [p.skill, { amount: p.amount, currency_mint: p.currency_mint, chain: p.chain }]),

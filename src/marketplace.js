@@ -1,3 +1,5 @@
+import QRCode from 'qrcode';
+
 /**
  * Agent Marketplace — discovery + detail page controller.
  *
@@ -205,6 +207,17 @@ async function loadDetail(id) {
 	if (agent) {
 		detailState = { agent: agent, bookmarked: false };
 		renderDetail(agent, false);
+
+		// Fetch and render purchased skills
+		try {
+			const res = await fetch(`/api/users/me/agent-skills/${id}`);
+			const { skills: purchasedSkills } = await res.json();
+			renderSkills(agent, purchasedSkills);
+		} catch (error) {
+			console.error('Failed to load purchased skills', error);
+			renderSkills(agent, []);
+		}
+
 	} else {
 		renderDetailError('Agent not found');
 	}
@@ -233,6 +246,35 @@ function renderDetail(a, bookmarked) {
 	$('d-bookmark').classList.toggle('on', bookmarked);
 	$('d-bookmark').textContent = bookmarked ? '★' : '☆';
 
+	const skillPrices = a.skill_prices || {};
+	// For now, assume user owns nothing. We will replace this with a real check later.
+	const ownedSkills = new Set();
+
+	$('d-skills').innerHTML = skillsArr.length
+		? skillsArr.map((s) => {
+			const name = typeof s === 'string' ? s : (s.name || '');
+			const price = skillPrices[name];
+			
+			let actionButton;
+			if (price) {
+				if (ownedSkills.has(name)) {
+					actionButton = `<button class="skill-btn" disabled>Unlocked</button>`;
+				} else {
+					actionButton = `<button class="skill-btn purchase" data-skill-name="${escapeHtml(name)}">Purchase</button>`;
+				}
+			} else {
+				actionButton = `<button class="skill-btn" disabled>Free</button>`;
+			}
+
+			const priceDisplay = price ? `<span class="price-paid">${(price.amount / 1e6).toFixed(2)} USDC</span>` : ``;
+
+			return `<div class="skill-row">
+						<span class="skill-name">${escapeHtml(name)} ${priceDisplay}</span>
+						${actionButton}
+					</div>`;
+		}).join('')
+		: '<div>This Agent has no skills defined.</div>';
+
 	const forksEl = $('d-forks-pill');
 	if (a.forks > 0) {
 		forksEl.textContent = `⑂ ${a.forks} forks`;
@@ -252,20 +294,14 @@ function renderDetail(a, bookmarked) {
 	const skillPrices = a.skill_prices || {};
 	$('d-skills').innerHTML = skillsArr.length
 		? skillsArr.map((s) => {
-			const name = typeof s === 'string' ? s : (s.name || '');
-			const price = skillPrices[name];
-			let badge;
-			let actionButton = '';
-
-			if (price) {
-				badge = `<span class="price-badge price-paid">${(price.amount / 1e6).toFixed(2)} USDC</span>`;
-				actionButton = `<button class="purchase-btn" data-skill-name="${escapeHtml(name)}">Unlock</button>`;
-			} else {
-				badge = `<span class="price-badge price-free">Free</span>`;
-			}
-			return `<span class="skill-entry">${escapeHtml(name)}${badge}${actionButton}</span>`;
-		}).join(' ')
-		: '<div>This Agent includes the following Skills to help you complete more tasks.</div>';
+				const name = typeof s === 'string' ? s : s.name || '';
+				const price = skillPrices[name];
+				const badge = price
+					? `<span class="price-badge price-paid">${(price.amount / 1e6).toFixed(2)} USDC</span>`
+					: `<span class="price-badge price-free">Free</span>`;
+				return `<span class="skill-entry">${escapeHtml(name)}${badge}</span>`;
+			}).join(' ')
+		: '<div>This Agent has no skills defined.</div>';
 	$('d-library').innerHTML = libraryArr.length
 		? libraryArr.map((l) => `<span class="stat-pill">${escapeHtml(typeof l === 'string' ? l : l.name || '')}</span>`).join(' ')
 		: '<div>This Agent includes the following Libraries to help answer more questions.</div>';
@@ -408,11 +444,50 @@ function bindEvents() {
 	$('d-bookmark').addEventListener('click', toggleBookmark);
 		bindTabs();
 	bindSubmit();
+
+    document.body.addEventListener('click', async (e) => {
+        if (e.target.matches('.btn-buy')) {
+            const agentId = e.target.dataset.agentId;
+            const skillId = e.target.dataset.skillId;
+            await onBuySkill(agentId, skillId);
+        }
+    });
+}
 }
 
 // ── Submit Modal ──────────────────────────────────────────────────────────
+bindTabs();
+	bindSubmit();
 
-function openSubmitModal() {
+	// Delegated listener for purchase and close buttons
+	document.body.addEventListener('click', e => {
+		if (e.target.matches('.purchase-btn')) {
+			const skillName = e.target.dataset.skillName;
+			const agent = detailState?.agent;
+			const price = agent?.skill_prices?.[skillName];
+
+			if (agent && price) {
+				$('modal-skill-name').textContent = skillName;
+				$('modal-skill-price').textContent = `${(price.amount / 1e6).toFixed(2)} USDC`;
+				$('purchase-modal').classList.remove('modal-hidden');
+			}
+		}
+
+		if (e.target.matches('.close-button')) {
+			const modal = e.target.closest('#purchase-modal');
+			if (modal) modal.classList.add('modal-hidden');
+		}
+	});
+
+	// Listener for backdrop click
+	const purchaseModal = $('purchase-modal');
+	if (purchaseModal) {
+		purchaseModal.addEventListener('click', e => {
+			if (e.target.id === 'purchase-modal') {
+				purchaseModal.classList.add('modal-hidden');
+			}
+		});
+	}ubmitModal() {
 	$('market-submit-overlay').hidden = false;
 	$('sf-name').focus();
 }
@@ -482,6 +557,55 @@ function formatDate(iso) {
 	const d = new Date(iso);
 	if (isNaN(d)) return '';
 	return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+// ── Purchase Flow ─────────────────────────────────────────────────────────
+
+async function onBuySkill(agentId, skillId) {
+    try {
+        const res = await fetch('/api/marketplace/purchase', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getAuthToken()}` },
+            body: JSON.stringify({ agent_id: agentId, skill_id: skillId }),
+        });
+        const txDetails = await res.json();
+        if (!res.ok) {
+            throw new Error(txDetails.error_description || 'Failed to initiate purchase.');
+        }
+
+        showPurchaseModal(txDetails);
+    } catch (err) {
+        console.error('Purchase initiation failed:', err);
+        alert(err.message);
+    }
+}
+
+function showPurchaseModal(txDetails) {
+    const modal = $('purchase-modal');
+    const canvas = $('qr-canvas');
+    const detailsEl = $('purchase-details');
+    
+    const url = new URL(`solana:${txDetails.recipient}`);
+    url.searchParams.set('amount', txDetails.amount);
+    url.searchParams.set('spl-token', txDetails.splToken);
+    url.searchParams.set('reference', txDetails.reference);
+    url.searchParams.set('label', txDetails.label);
+    url.searchParams.set('message', txDetails.message);
+
+    detailsEl.textContent = `${txDetails.amount} USDC for "${txDetails.label}"`;
+
+    QRCode.toCanvas(canvas, url.toString(), { width: 256 }, (error) => {
+        if (error) console.error(error);
+    });
+
+    modal.hidden = false;
+    // Start polling for transaction confirmation... (covered in prompt 09)
+}
+
+function getAuthToken() {
+    // Implement logic to get the user's auth token (from cookies, localStorage, etc.)
+    // This is a placeholder.
+    return '';
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────────
