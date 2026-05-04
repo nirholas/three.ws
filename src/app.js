@@ -953,7 +953,9 @@ class App {
 		window.VIEWER.widget = widget;
 
 		const cfg = { ...(widget.config || {}) };
-		const modelUrl = widget.avatar?.model_url || '/avatars/cz.glb';
+		// this.options.model (from #model= hash) lets the embedding page override
+		// the widget's default avatar — used by /pumpfun which passes &model=...
+		const modelUrl = this.options.model || widget.avatar?.model_url || '/avatars/cz.glb';
 
 		// Apply per-embed URL overrides (set by Studio embed modal checkboxes).
 		if (this.options.noAnimations) cfg.showClipPicker = false;
