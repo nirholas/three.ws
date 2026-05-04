@@ -40,6 +40,14 @@ If you cannot verify a step, say so explicitly. Do not claim done.
 - Solana/agent SDKs in `sdk/`, `solana-agent-sdk/`, `agent-payments-sdk/`.
 - Real APIs in use: Pump.fun feed, Solana RPC, OpenAI/Anthropic via worker proxies. Never mock these.
 
+## Git identity
+
+When creating commits, use:
+- `user.name` = `nirholas`
+- `user.email` = `22895867+nirholas@users.noreply.github.com`
+
+Pass these inline: `git -c user.name="nirholas" -c user.email="22895867+nirholas@users.noreply.github.com" commit …`
+
 ## Tone
 
 Professional. No filler. No "great question!" No emojis unless the user asks. Short sentences. Ship work.
