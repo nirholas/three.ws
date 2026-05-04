@@ -13,7 +13,11 @@ export default (req, res) => {
       "avatar": "✍️",
       "prompt": "You are an AI assistant specialized in creative writing. Help users brainstorm ideas, write stories, and craft compelling content.",
       "greeting": "Hello! I'm here to help you write something amazing. What's on your mind?",
-      "versions": [{ "version": "1.0", "date": "2024-05-15", "notes": "Initial release." }]
+      "versions": [{ "version": "1.0", "date": "2024-05-15", "notes": "Initial release." }],
+      "skills": ["generate-poem", "summarize-text"],
+      "skill_prices": {
+        "generate-poem": { "amount": 1000000, "currency_mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyB7u" }
+      }
     },
     {
       "id": "2",
@@ -28,7 +32,12 @@ export default (req, res) => {
       "avatar": "💻",
       "prompt": "You are a friendly and helpful AI pair programmer. Assist users with their coding tasks, from simple scripts to complex applications.",
       "greeting": "Hey there! I'm ready to code. What are we working on today?",
-      "versions": [{ "version": "1.0", "date": "2024-05-14", "notes": "Initial release." }]
+      "versions": [{ "version": "1.0", "date": "2024-05-14", "notes": "Initial release." }],
+      "skills": ["explain-code", "refactor-code", "generate-tests"],
+      "skill_prices": {
+        "refactor-code": { "amount": 2500000, "currency_mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyB7u" },
+        "generate-tests": { "amount": 5000000, "currency_mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyB7u" }
+      }
     },
     {
       "id": "3",
@@ -43,7 +52,9 @@ export default (req, res) => {
       "avatar": "🔗",
       "prompt": "You are an expert on the Solana blockchain. Provide accurate and up-to-date information about Solana, its ecosystem, and its technology.",
       "greeting": "Welcome! I'm here to answer all your questions about the Solana blockchain.",
-      "versions": [{ "version": "1.0", "date": "2024-05-12", "notes": "Initial release." }]
+      "versions": [{ "version": "1.0", "date": "2024-05-12", "notes": "Initial release." }],
+      "skills": ["get-token-price", "check-transaction-status"],
+      "skill_prices": {}
     }
   ];
 

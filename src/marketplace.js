@@ -175,7 +175,7 @@ function renderCard(a) {
 			<div class="avatar">${a.avatar}</div>
 			<div style="min-width:0;flex:1">
 				<div class="title">${escapeHtml(a.name || 'Untitled')}</div>
-				<div class="author">${escapeHtml(a.author || 'Anonymous')}</div>
+				<div class="author">${escapeHtml(a.author_name || 'Anonymous')}</div>
 			</div>
 		</div>
 		<div class="desc">${escapeHtml(a.description || '')}</div>
@@ -254,10 +254,16 @@ function renderDetail(a, bookmarked) {
 		? skillsArr.map((s) => {
 			const name = typeof s === 'string' ? s : (s.name || '');
 			const price = skillPrices[name];
-			const badge = price
-				? `<span class="price-badge price-paid">${(price.amount / 1e6).toFixed(2)} USDC</span>`
-				: `<span class="price-badge price-free">Free</span>`;
-			return `<span class="skill-entry">${escapeHtml(name)}${badge}</span>`;
+			let badge;
+			let actionButton = '';
+
+			if (price) {
+				badge = `<span class="price-badge price-paid">${(price.amount / 1e6).toFixed(2)} USDC</span>`;
+				actionButton = `<button class="purchase-btn" data-skill-name="${escapeHtml(name)}">Unlock</button>`;
+			} else {
+				badge = `<span class="price-badge price-free">Free</span>`;
+			}
+			return `<span class="skill-entry">${escapeHtml(name)}${badge}${actionButton}</span>`;
 		}).join(' ')
 		: '<div>This Agent includes the following Skills to help you complete more tasks.</div>';
 	$('d-library').innerHTML = libraryArr.length
