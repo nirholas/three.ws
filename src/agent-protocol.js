@@ -16,6 +16,7 @@ export const ACTION_TYPES = {
 	PERFORM_SKILL: 'perform-skill', // a skill is starting execution
 	SKILL_DONE: 'skill-done', // a skill finished (success + result payload)
 	SKILL_ERROR: 'skill-error', // a skill failed
+	SENTIMENT_ANALYZED: 'sentiment-analyzed', // sentiment analysis was performed
 	REMEMBER: 'remember', // agent stored a memory
 	SIGN: 'sign', // agent signs an action with its wallet
 	LOAD_START: 'load-start', // model/asset loading started

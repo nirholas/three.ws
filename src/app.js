@@ -27,6 +27,7 @@ import { AgentIdentity } from './agent-identity.js';
 import { AgentSkills } from './agent-skills.js';
 import { AgentAvatar } from './agent-avatar.js';
 import { AgentHome } from './agent-home.js';
+import { setSceneViewer } from './agent-skills-scene.js';
 
 // Runtime — LLM brain, scene control, file-based memory, skill bundles
 import { SceneController } from './runtime/scene.js';
@@ -34,11 +35,19 @@ import { Runtime } from './runtime/index.js';
 import { Memory } from './memory/index.js';
 import { SkillRegistry } from './skills/index.js';
 
-// Wallet — kick off a silent reconnect on app boot. Any page that later mounts
-// a wallet UI (deploy, reputation, validation, permissions, etc.) reads from
-// the shared signer + onWalletChange bus, so this single call surfaces an
-// already-authorized wallet site-wide without any popup.
-import { eagerConnectWallet } from './erc8004/agent-registry.js';
+	window.VIEWER.runtime = new Runtime({
+		manifest: {},
+		viewer,
+		memory: new Memory({ agentId: 'user' }),
+		skills: new AgentSkills(protocol, new Memory({ agentId: 'user' })),
+		agentId: 'user',
+	});
+
+	// Wallet — kick off a silent reconnect on app boot. Any page that later mounts
+	// a wallet UI (deploy, reputation, validation, permissions, etc.) reads from
+	// the shared signer + onWalletChange bus, so this single call surfaces an
+	// already-authorized wallet site-wide without any popup.
+	eagerConnectWallet();
 
 window.THREE = THREE;
 window.VIEWER = {};

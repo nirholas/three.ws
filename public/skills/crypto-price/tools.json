@@ -1,0 +1,20 @@
+[
+  {
+    "name": "getPrice",
+    "description": "Get the current price of a specific cryptocurrency in a given currency.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "coin_id": {
+          "type": "string",
+          "description": "The ID of the cryptocurrency (e.g., 'solana', 'bitcoin', 'ethereum')."
+        },
+        "vs_currency": {
+          "type": "string",
+          "description": "The currency to compare against (e.g., 'usd', 'eur', 'jpy')."
+        }
+      },
+      "required": ["coin_id", "vs_currency"]
+    }
+  }
+]

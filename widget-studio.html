@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Widget Studio · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/marketplace.css" />
+		<style>
+			.studio-container {
+				display: flex;
+				height: 100vh;
+			}
+			.studio-sidebar {
+				width: 300px;
+				padding: 20px;
+				background: #111;
+				color: #eee;
+			}
+			.studio-preview {
+				flex-grow: 1;
+				padding: 20px;
+			}
+			.form-group {
+				margin-bottom: 15px;
+			}
+			.form-group label {
+				display: block;
+				margin-bottom: 5px;
+			}
+			.form-group input, .form-group select {
+				width: 100%;
+				padding: 8px;
+				background: #222;
+				border: 1px solid #444;
+				color: #eee;
+				border-radius: 4px;
+			}
+			#embed-code {
+				width: 100%;
+				background: #0a0a0a;
+				color: #00ff41;
+				padding: 10px;
+				border: 1px solid #333;
+				border-radius: 4px;
+				min-height: 100px;
+				white-space: pre-wrap;
+				word-wrap: break-word;
+			}
+		</style>
+	</head>
+	<body class="market-page">
+		<div class="studio-container">
+			<aside class="studio-sidebar">
+				<h2>Widget Studio</h2>
+				<div class="form-group">
+					<label for="agent-select">Select Agent</label>
+					<select id="agent-select">
+						<!-- This would be populated dynamically -->
+						<option value="default">Default Agent</option>
+					</select>
+				</div>
+				<div class="form-group">
+					<label for="avatar-url">Avatar URL</label>
+					<input type="text" id="avatar-url" value="/default-avatar.glb" />
+				</div>
+				<div class="form-group">
+					<label for="brand-color">Brand Color</label>
+					<input type="color" id="brand-color" value="#4a9eff" />
+				</div>
+				<div class="form-group">
+					<label for="theme-select">Theme</label>
+					<select id="theme-select">
+						<option value="dark">Dark</option>
+						<option value="light">Light</option>
+					</select>
+				</div>
+				<h3>Embed Code</h3>
+				<pre id="embed-code"><code></code></pre>
+				<button id="copy-btn">Copy Code</button>
+			</aside>
+			<main class="studio-preview">
+				<iframe id="widget-preview" style="width: 100%; height: 100%; border: 1px solid #333;"></iframe>
+			</main>
+		</div>
+
+		<script>
+			const agentSelect = document.getElementById('agent-select');
+			const avatarUrlInput = document.getElementById('avatar-url');
+			const brandColorInput = document.getElementById('brand-color');
+			const themeSelect = document.getElementById('theme-select');
+			const embedCodeEl = document.getElementById('embed-code').querySelector('code');
+			const previewFrame = document.getElementById('widget-preview');
+			const copyBtn = document.getElementById('copy-btn');
+
+			function updatePreviewAndCode() {
+				const agentId = agentSelect.value;
+				const avatarUrl = avatarUrlInput.value;
+				const brandColor = brandColorInput.value;
+				const theme = themeSelect.value;
+
+				const widgetUrl = new URL('/agent-chat-widget.html', location.origin);
+				widgetUrl.searchParams.set('agentId', agentId);
+				widgetUrl.searchParams.set('avatarUrl', avatarUrl);
+				widgetUrl.searchParams.set('brandColor', brandColor);
+				widgetUrl.searchParams.set('theme', theme);
+
+				previewFrame.src = widgetUrl.href;
+				
+				const embedCode = `<iframe src="${widgetUrl.href}" width="400" height="600" style="border:none;"></iframe>`;
+				embedCodeEl.textContent = embedCode;
+			}
+			
+			agentSelect.addEventListener('change', updatePreviewAndCode);
+			avatarUrlInput.addEventListener('input', updatePreviewAndCode);
+			brandColorInput.addEventListener('input', updatePreviewAndCode);
+			themeSelect.addEventListener('change', updatePreviewAndCode);
+
+			copyBtn.addEventListener('click', () => {
+				navigator.clipboard.writeText(embedCodeEl.textContent);
+				copyBtn.textContent = 'Copied!';
+				setTimeout(() => { copyBtn.textContent = 'Copy Code'; }, 2000);
+			});
+
+			updatePreviewAndCode();
+		</script>
+	</body>
+</html>

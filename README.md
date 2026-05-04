@@ -99,6 +99,7 @@ npm run claude -- [COMMAND]
 | `format` | Formats the codebase using Prettier. |
 | `clean` | Cleans up all build artifacts and `dist/` folders. |
 | `deploy` | Deploys the project to Vercel (requires confirmation). |
+| `deploy-agent <name>` | Packages a specified agent into a distributable zip file. |
 | `help` | Shows this help message, listing all available commands. |
 
 ---

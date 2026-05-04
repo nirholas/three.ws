@@ -18,7 +18,8 @@ export const ViewMode = {
   MINT: "MINT",
   OPTIMIZER: "OPTIMIZER",
   BATCHMANIFEST: "BATCHMANIFEST",
-  WALLET: "WALLET"
+  WALLET: "WALLET",
+  STUDIO: "STUDIO"
 }
 
 export const ViewContext = React.createContext()

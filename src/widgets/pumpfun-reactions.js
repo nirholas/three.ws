@@ -161,7 +161,7 @@ function graduationReaction(s) {
 			icon: '🚀🌕',
 			emote: { trigger: 'celebration', weight: 1.0 },
 			gesture: { name: 'thriller', duration: 9000 },
-			speak: { text: `Moonshot! $${s.symbol || s.name} just went ${fmtMult(s.mcMultiple)} — bonded to PumpAMM.`, sentiment: 0.95 },
+			speak: { text: `Moonshot! $${s.symbol || s.name} just went ${fmtMult(s.mcMultiple)} — bonded to PumpAMM.${s.aiTake ? ' — ' + s.aiTake : ''}`, sentiment: 0.95 },
 			lookAt: 'camera',
 			priority: 100,
 		};
@@ -172,7 +172,7 @@ function graduationReaction(s) {
 			icon: '🎓🔥',
 			emote: { trigger: 'celebration', weight: 0.95 },
 			gesture: { name: 'rumba', duration: 7000 },
-			speak: { text: `Giant pump: $${s.symbol || s.name} ${fmtMult(s.mcMultiple)} into PumpAMM.`, sentiment: 0.85 },
+			speak: { text: `Giant pump: $${s.symbol || s.name} ${fmtMult(s.mcMultiple)} into PumpAMM.${s.aiTake ? ' — ' + s.aiTake : ''}`, sentiment: 0.85 },
 			lookAt: 'camera',
 			priority: 95,
 		};
@@ -183,7 +183,7 @@ function graduationReaction(s) {
 			icon: '🎓👑',
 			emote: { trigger: 'celebration', weight: 0.85 },
 			gesture: { name: 'capoeira', duration: 6500 },
-			speak: { text: `Serial creator strikes again — $${s.symbol || s.name} graduated. ${s.creatorGraduated} grads now.`, sentiment: 0.7 },
+			speak: { text: `Serial creator strikes again — $${s.symbol || s.name} graduated. ${s.creatorGraduated} grads now.${s.aiTake ? ' — ' + s.aiTake : ''}`, sentiment: 0.7 },
 			lookAt: 'camera',
 			priority: 92,
 		};
@@ -193,7 +193,7 @@ function graduationReaction(s) {
 		icon: '🎓',
 		emote: { trigger: 'celebration', weight: 0.9 },
 		gesture: { name: 'rumba', duration: clampDur(4500 + Math.log10(Math.max(s.mcMultiple, 1) + 1) * 1500, 4500, 8000) },
-		speak: { text: `Migration: $${s.symbol || s.name} bonded to PumpAMM.`, sentiment: 0.7 },
+		speak: { text: `Migration: $${s.symbol || s.name} bonded to PumpAMM.${s.aiTake ? ' — ' + s.aiTake : ''}`, sentiment: 0.7 },
 		lookAt: 'camera',
 		priority: 90,
 	};
@@ -263,7 +263,7 @@ function claimReaction(s) {
 			icon: '🚨',
 			emote: { trigger: 'celebration', weight: 0.85 },
 			gesture: { name: 'celebrate', duration: 4500 },
-			speak: { text: `First-time claim on $${s.symbol || 'a new token'}.`, sentiment: 0.7 },
+			speak: { text: `First-time claim on $${s.symbol || 'a new token'}.${s.aiTake ? ' ' + s.aiTake : ''}`, sentiment: 0.7 },
 			lookAt: 'camera',
 			priority: 78,
 		};
@@ -323,7 +323,7 @@ function mintReaction(s) {
 			icon: '🚀💸',
 			emote: { trigger: 'curiosity', weight: 0.85 },
 			gesture: { name: 'jump', duration: 2000 },
-			speak: { text: `Massive launch: $${s.symbol || 'new token'} opens with ${fmtSol(s.initialBuySol)}.`, sentiment: 0.6 },
+			speak: { text: `Massive launch: $${s.symbol || 'new token'} opens with ${fmtSol(s.initialBuySol)}.${s.aiTake ? ' ' + s.aiTake : ''}`, sentiment: 0.6 },
 			lookAt: 'camera',
 			priority: 60,
 		};
@@ -345,7 +345,7 @@ function mintReaction(s) {
 			icon: '👑',
 			emote: { trigger: 'curiosity', weight: 0.7 },
 			gesture: { name: 'wave', duration: 1500 },
-			speak: { text: `Pro dev launching $${s.symbol || 'a new token'} — ${s.creatorGraduated} prior grads.`, sentiment: 0.5 },
+			speak: { text: `Pro dev launching $${s.symbol || 'a new token'} — ${s.creatorGraduated} prior grads.${s.aiTake ? ' ' + s.aiTake : ''}`, sentiment: 0.5 },
 			lookAt: 'camera',
 			priority: 45,
 		};
