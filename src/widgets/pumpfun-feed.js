@@ -416,10 +416,11 @@ function narrateClaim(protocol, ev) {
 
 function narrateGraduation(protocol, ev) {
 	if (!protocol) return;
-	protocol.emit({ type: 'gesture', payload: { name: 'wave', duration: 1500 } });
+	protocol.emit({ type: 'emote', payload: { trigger: 'celebration', weight: 0.9 } });
+	protocol.emit({ type: 'gesture', payload: { name: 'dance', duration: 5000 } });
 	protocol.emit({
 		type: 'speak',
-		payload: { text: `Graduation: ${ev.symbol || ev.name || 'a token'} hit PumpAMM.`, sentiment: 0.6 },
+		payload: { text: `Migration: ${ev.symbol || ev.name || 'a token'} bonded to PumpAMM.`, sentiment: 0.6 },
 	});
 }
 
