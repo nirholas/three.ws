@@ -2933,7 +2933,4 @@
 	:global(.h-footer-inner) {
 		margin-bottom: 2rem;
 	}
-
-	.container {
-// ... existing code ...
 </style>

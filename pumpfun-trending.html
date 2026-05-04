@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Pump.fun Trending</title>
+		<meta name="description" content="Pump.fun trending tokens widget." />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="description" content="Pump.fun live feed widget." />
+		<meta name="robots" content="noindex" />
+		<style>
+			* { margin: 0; padding: 0; box-sizing: border-box; }
+			body {
+				background: #0a0a0a;
+				color: #00ff41;
+				font-family: 'Courier New', monospace;
+				font-size: 13px;
+				line-height: 1.5;
+				padding: 0;
+			}
+			#root {
+				height: 100vh;
+				overflow-y: auto;
+			}
+			.entry {
+				border-bottom: 1px solid #111;
+				padding: 8px;
+				display: flex;
+				align-items: center;
+				gap: 10px;
+			}
+			.entry .rank {
+				font-size: 18px;
+				font-weight: bold;
+				color: #666;
+				width: 30px;
+				text-align: center;
+			}
+			.entry .name { color: #ffcc00; font-weight: bold; font-size: 15px; }
+			.entry .symbol { color: #ff9900; font-weight: bold; }
+			.entry a { color: #4a9eff; text-decoration: none; }
+			.entry a:hover { text-decoration: underline; }
+			.entry .token-img { width: 36px; height: 36px; border-radius: 50%; border: 1px solid #333; object-fit: cover; background: #111; }
+			.entry .token-details { flex: 1; min-width: 0; }
+			.entry .meta-row { display: flex; gap: 12px; flex-wrap: wrap; font-size: 11px; color: #666; margin-top: 3px; }
+			.entry .mcap { color: #b366ff; font-weight: bold; }
+		</style>
+	</head>
+	<body>
+		<div id="root"></div>
+		<script type="module">
+			const TRENDING_API = '/api/pump/trending';
+			const root = document.getElementById('root');
+
+			async function fetchTrending() {
+				try {
+					const response = await fetch(TRENDING_API);
+					const tokens = await response.json();
+					renderTokens(tokens);
+				} catch (error) {
+					root.innerText = 'Failed to load trending tokens.';
+					console.error(error);
+				}
+			}
+
+			function renderTokens(tokens) {
+				root.innerHTML = '';
+				tokens.forEach((token, index) => {
+					const div = document.createElement('div');
+					div.className = 'entry';
+
+					const displayName = token.name || 'Unknown';
+					const displaySymbol = token.symbol ? '$' + token.symbol : '';
+					const mcap = token.market_cap ? fmtMcap(token.market_cap) : null;
+
+					let html = `<div class="rank">#${index + 1}</div>`;
+					html += `<img class="token-img" src="${token.image_uri || ''}" alt="" style="${token.image_uri ? '' : 'display:none'}" onerror="this.style.display='none'" />`;
+					html += `<div class="token-details">`;
+					html += `<div><span class="name">${esc(displayName)}</span> <span class="symbol">${esc(displaySymbol)}</span></div>`;
+					html += `<div class="meta-row">`;
+					if (token.mint) html += `<span><a href="https://pump.fun/coin/${token.mint}" target="_blank">View on Pump.fun</a></span>`;
+					if (mcap) html += `<span>MCap: <span class="mcap">$${mcap}</span></span>`;
+					html += `</div>`;
+					html += `</div>`;
+
+					div.innerHTML = html;
+					root.appendChild(div);
+				});
+			}
+
+			function fmtMcap(mcap) {
+				if (!mcap || mcap <= 0) return null;
+				if (mcap >= 1000000) return (mcap / 1000000).toFixed(1) + 'M';
+				if (mcap >= 1000) return (mcap / 1000).toFixed(1) + 'K';
+				return mcap.toFixed(2);
+			}
+
+			function esc(s) {
+				const d = document.createElement('div');
+				d.textContent = s || '';
+				return d.innerHTML;
+			}
+
+			fetchTrending();
+		</script>
+	</body>
+</html>

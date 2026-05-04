@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Pump.fun Counter</title>
+		<meta name="description" content="Pump.fun new token counter widget." />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="description" content="Pump.fun live feed widget." />
+		<meta name="robots" content="noindex" />
+		<style>
+			* { margin: 0; padding: 0; box-sizing: border-box; }
+			body {
+				background: #0a0a0a;
+				color: #00ff41;
+				font-family: 'Courier New', monospace;
+				font-size: 24px;
+				font-weight: bold;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				height: 100vh;
+				text-align: center;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="counter">0</div>
+		<script type="module">
+			let count = 0;
+			const counterElement = document.getElementById('counter');
+
+			const RPC_ENDPOINTS = [
+				{ url: 'wss://pumpportal.fun/api/data', protocol: 'pumpportal', label: 'PumpPortal' },
+				{ url: 'wss://pump-fun-websocket-production.up.railway.app/ws', protocol: 'relay', label: 'Relay Server' },
+			];
+			let rpcIndex = 0;
+			let ws = null;
+
+			function connect() {
+				const ep = RPC_ENDPOINTS[rpcIndex % RPC_ENDPOINTS.length];
+				rpcIndex++;
+				ws = new WebSocket(ep.url);
+
+				ws.onopen = () => {
+					if (ep.protocol === 'pumpportal') {
+						ws.send(JSON.stringify({ method: 'subscribeNewToken' }));
+					}
+				};
+
+				ws.onmessage = (evt) => {
+					let msg;
+					try { msg = JSON.parse(evt.data); } catch { return; }
+
+					if (ep.protocol === 'relay') {
+						if (msg.type === 'token-launch' || msg.mint) {
+							count++;
+							counterElement.innerText = count;
+						}
+						return;
+					}
+
+					if (ep.protocol === 'pumpportal') {
+						if (msg && msg.mint) {
+							count++;
+							counterElement.innerText = count;
+						}
+						return;
+					}
+				};
+
+				ws.onclose = () => {
+					setTimeout(connect, 1000);
+				};
+			}
+
+			connect();
+		</script>
+	</body>
+</html>

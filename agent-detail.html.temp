@@ -13,6 +13,7 @@
 			rel="stylesheet"
 		/>
 		<link rel="stylesheet" href="/src/agent-detail.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 	</head>
 	<body>
 		<div class="ad-shell">
@@ -21,7 +22,7 @@
 				<nav class="ad-nav">
 					<a href="/">Home</a>
 					<a href="/leaderboard">Leaderboard</a>
-					<a class="active" href="/marketplace.html">Agents <span class="ad-beta">BETA</span></a>
+					<a class="active" href="/agents">Agents <span class="ad-beta">BETA</span></a>
 					<a href="/spotlight">Apply for Spotlight</a>
 					<a href="/developers">Developers</a>
 					<a href="/about">About</a>
@@ -86,6 +87,20 @@
 						<button class="ad-copy" data-copy-target="ad-holdings-addr" aria-label="Copy">⧉</button>
 					</div>
 					<div class="ad-balance"><span id="ad-holdings-sol">0</span> SOL</div>
+                    <div class="flex space-x-2 mt-4 justify-start">
+                        <button id="receive-btn" class="ad-btn">
+                            Receive
+                        </button>
+                        <button id="withdraw-btn" class="ad-btn">
+                            Withdraw
+                        </button>
+                        <button id="swap-btn" class="ad-btn">
+                            Swap
+                        </button>
+                    </div>
+                    <div id="qr-code-container" class="hidden mt-4 p-4 bg-white rounded-lg shadow-md inline-block">
+                        <canvas id="qr-code"></canvas>
+                    </div>
 				</section>
 
 				<section class="ad-card">
