@@ -1,9 +1,3 @@
-<!-- https://freesound.org/people/deleted_user_2731495/sounds/183881/ -->
-<audio id="introSong" src="assets/sounds/menu.ogg" loop></audio>
-
-{% set firestore = true and 'threews-prod' or 'threews-dev' %}
-{% set firekey = true and 'AIzaSyAilakXLvMgwPcBcHs3oys51eLp4yrfz0w' or 'AIzaSyALCaDKg0b7aD3nOyRv_f5RTZ1vedrGyWw' %}
-
 <a-scene
   bind__beat-generator="challengeId: challenge.id; difficulty: challenge.difficulty; beatmapCharacteristic: challenge.beatmapCharacteristic; gameMode: gameMode; has3DOFVR: has3DOFVR; hasSongLoadError: hasSongLoadError; isPlaying: isPlaying; isZipFetching: isZipFetching; menuSelectedChallengeId: menuSelectedChallenge.id; songDuration: challenge.metadata.duration; speed: speed"
   bind__beat-system="gameMode: gameMode; hasVR: hasVR; isLoading: isLoading; isPlaying: isPlaying"
@@ -30,8 +24,8 @@
   {% if DEBUG_INSPECTOR %}
     inspector="url: http://localhost:3333/dist/aframe-inspector.js"
   {% endif %}
-  leaderboard="apiKey: {{ firekey }}; authDomain: {{ firestore }}.firebaseapp.com; databaseURL: https://{{ firestore }}.firebaseio.com; projectId: {{ firestore }}; storageBucket: {{ firestore }}.appspot.com; messagingSenderId: 172125624222"
-  multiplayer="apiKey: {{ firekey }}; authDomain: {{ firestore }}.firebaseapp.com; databaseURL: https://{{ firestore }}.firebaseio.com; projectId: {{ firestore }}; storageBucket: {{ firestore }}.appspot.com; messagingSenderId: 172125624222"
+  leaderboard
+  multiplayer
   loading-screen="backgroundColor: #000"
   pool__beat-arrow-blue="mixin: arrowBlueBeat; size: 30; container: #beatContainer; dynamic: true"
   pool__beat-arrow-red="mixin: arrowRedBeat; size: 30; container: #beatContainer; dynamic: true"

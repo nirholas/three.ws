@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>three.ws — Tutorials</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="author" content="nirholas" />
+		<meta
+			name="description"
+			content="Tutorials for creating and using 3D agents."
+		/>
+		<meta name="theme-color" content="#000000" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="three.ws — Tutorials" />
+		<meta
+			property="og:description"
+			content="Tutorials for creating and using 3D agents."
+		/>
+		<meta property="og:url" content="https://three.ws/tutorials" />
+		<meta property="og:image" content="https://three.ws/og-image.png" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="three.ws — Tutorials" />
+		<meta
+			name="twitter:description"
+			content="Tutorials for creating and using 3D agents."
+		/>
+		<meta name="twitter:image" content="https://three.ws/og-image.png" />
+
+		<link rel="canonical" href="https://three.ws/tutorials" />
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="apple-touch-icon" href="/pwa-192x192.png" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/home.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script defer src="/footer-newsletter.js"></script>
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400&family=Space+Grotesk:wght@500;600;700&display=swap"
+			rel="stylesheet"
+		/>
+	</head>
+	<body>
+		<header>
+			<h1>
+				<a href="/" aria-label="three.ws home"
+					><img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" /><span
+						class="wordmark-dot"
+						aria-hidden="true"
+					></span
+					>three.ws</a
+				>
+			</h1>
+			<nav class="home-nav" aria-label="Primary">
+				<ul class="nav-root" role="menubar">
+					<li class="nav-item nav-has-menu" role="none">
+						<button
+							type="button"
+							class="nav-trigger"
+							aria-haspopup="true"
+							aria-expanded="false"
+							role="menuitem"
+						>
+							Build<span class="nav-caret" aria-hidden="true">▾</span>
+						</button>
+						<ul class="nav-menu" role="menu" aria-label="Build">
+							<li role="none">
+								<a href="/create" role="menuitem"
+									><span class="nav-mi-title">Create agent</span
+									><span class="nav-mi-sub">Avatar + brain wizard</span></a
+								>
+							</li>
+							<li role="none">
+								<a href="/app" role="menuitem"
+									><span class="nav-mi-title">Viewer</span
+									><span class="nav-mi-sub">Drag-and-drop GLB</span></a
+								>
+							</li>
+							<li role="none">
+								<a href="/validation" role="menuitem"
+									><span class="nav-mi-title">glTF Validator</span
+									><span class="nav-mi-sub">Khronos spec check</span></a
+								>
+							</li>
+						</ul>
+					</li>
+					<li class="nav-item nav-has-menu" role="none">
+						<button
+							type="button"
+							class="nav-trigger"
+							aria-haspopup="true"
+							aria-expanded="false"
+							role="menuitem"
+						>
+							Discover<span class="nav-caret" aria-hidden="true">▾</span>
+						</button>
+						<ul class="nav-menu" role="menu" aria-label="Discover">
+							<li role="none">
+								<a href="/discover" role="menuitem"
+									><span class="nav-mi-title">Agents</span
+									><span class="nav-mi-sub">Public directory</span></a
+								>
+							</li>
+							<li role="none">
+								<a href="/widgets" role="menuitem"
+									><span class="nav-mi-title">Widgets gallery</span
+									><span class="nav-mi-sub">Embeddable showcases</span></a
+								>
+							</li>
+							<li role="none">
+								<a href="/reputation" role="menuitem"
+									><span class="nav-mi-title">Reputation</span
+									><span class="nav-mi-sub">ERC-8004 registry</span></a
+								>
+							</li>
+						</ul>
+					</li>
+					<li class="nav-item nav-has-menu" role="none">
+						<button
+							type="button"
+							class="nav-trigger"
+							aria-haspopup="true"
+							aria-expanded="false"
+							role="menuitem"
+						>
+							Solana<span class="nav-caret" aria-hidden="true">▾</span>
+						</button>
+						<ul class="nav-menu" role="menu" aria-label="Solana">
+							<li role="none">
+								<a href="/pumpfun" role="menuitem"
+									><span class="nav-mi-title">Pump.fun stream</span
+									><span class="nav-mi-sub">Mint agent tokens</span></a
+								>
+							</li>
+							<li role="none">
+								<a href="/vanity-wallet" role="menuitem"
+									><span class="nav-mi-title">Vanity wallet</span
+									><span class="nav-mi-sub">Grind a Solana address</span></a
+								>
+							</li>
+							<li role="none">
+								<a href="/strategy-lab" role="menuitem"
+									><span class="nav-mi-title">Strategy Lab</span
+									><span class="nav-mi-sub">DCA + subscriptions</span></a
+								>
+							</li>
+							<li role="none">
+								<a href="/pump-live.html" role="menuitem"
+									><span class="nav-mi-title">Live launches</span
+									><span class="nav-mi-sub">Real-time mint feed</span></a
+								>
+							</li>
+							<li role="none">
+								<a href="/pump-dashboard.html" role="menuitem"
+									><span class="nav-mi-title">Pump Dashboard</span
+									><span class="nav-mi-sub">Watches · scanner · quotes</span></a
+								>
+							</li>
+							<li role="none">
+								<a href="/docs#solana" role="menuitem"
+									><span class="nav-mi-title">Solana SDK</span
+									><span class="nav-mi-sub">Attestations + agent-kit</span></a
+								>
+							</li>
+						</ul>
+					</li>
+					<li class="nav-item nav-has-menu" role="none">
+						<button
+							type="button"
+							class="nav-trigger"
+							aria-haspopup="true"
+							aria-expanded="false"
+							role="menuitem"
+						>
+							Embed<span class="nav-caret" aria-hidden="true">▾</span>
+						</button>
+						<ul class="nav-menu" role="menu" aria-label="Embed">
+							<li role="none">
+								<a href="/studio" role="menuitem"
+									><span class="nav-mi-title">Widget Studio</span
+									><span class="nav-mi-sub">Pick avatar → copy snippet</span></a
+								>
+							</li>
+							<li role="none">
+								<a href="/artifact" role="menuitem"
+									><span class="nav-mi-title">Artifact viewer</span
+									><span class="nav-mi-sub">Claude artifact bundle</span></a
+								>
+							</li>
+							<li role="none">
+								<a href="/docs#embedding" role="menuitem"
+									><span class="nav-mi-title">Embed docs</span
+									><span class="nav-mi-sub">iframe + oEmbed</span></a
+								>
+							</li>
+							<li role="none">
+								<a href="/docs#web-component" role="menuitem"
+									><span class="nav-mi-title">&lt;agent-3d&gt;</span
+									><span class="nav-mi-sub">Web component reference</span></a
+								>
+							</li>
+						</ul>
+					</li>
+					<li class="nav-item" role="none"><a href="/chat" role="menuitem">Chat</a></li>
+					<li class="nav-item" role="none"><a href="/docs" role="menuitem">Docs</a></li>
+					<li class="nav-item" role="none">
+						<a href="/features" role="menuitem">Features</a>
+					</li>
+					<li class="nav-item" id="home-nav-my-agents-li" role="none" hidden>
+						<a href="/my-agents" id="home-nav-my-agents" role="menuitem">My Agents</a>
+					</li>
+					<li class="nav-item" id="home-nav-user-li" role="none" hidden>
+						<a href="/dashboard" id="home-nav-user" class="nav-user" role="menuitem"></a>
+					</li>
+					<li class="nav-item" role="none">
+						<a href="/login" class="nav-cta" id="home-nav-cta" role="menuitem"
+							>Get started</a
+						>
+					</li>
+				</ul>
+			</nav>
+		</header>
+		<main id="main-content">
+			<section>
+				<h1>Tutorials</h1>
+				<p>Here you will find tutorials on how to create and use 3D agents.</p>
+				<!-- Add tutorials here -->
+			</section>
+		</main>
+	</body>
+</html>
