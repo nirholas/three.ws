@@ -38,13 +38,138 @@
 			.entry .token-details { flex: 1; min-width: 0; }
 			.entry .meta-row { display: flex; gap: 12px; flex-wrap: wrap; font-size: 11px; color: #666; margin-top: 3px; }
 			.entry .mcap { color: #b366ff; font-weight: bold; }
+			body.bg-dark {
+				background: #0b0d10;
+			}
+			body.bg-light {
+				background: #f5f5f5;
+			}
+			body.bg-light .entry {
+				border-bottom-color: #eee;
+			}
+			body.bg-light .name {
+				color: #333;
+			}
+			body.bg-light .symbol {
+				color: #666;
+			}
+			body.bg-light .mcap {
+				color: #999;
+			}
 		</style>
 	</head>
 	<body>
 		<div id="root"></div>
 		<script type="module">
-			// Coming soon
-			document.getElementById('root').innerHTML = '<h1>Coming soon</h1>';
+						const params = new URL(location.href).searchParams;
+			const bg = params.get('bg') || 'dark';
+			if (bg === 'dark') document.body.classList.add('bg-dark');
+			if (bg === 'light') document.body.classList.add('bg-light');
+			const maxEntries = parseInt(params.get('max') || '50', 10);
+
+			const RPC_ENDPOINTS = [
+				{ url: 'wss://pumpportal.fun/api/data', protocol: 'pumpportal', label: 'PumpPortal' },
+				{ url: 'wss://pump-fun-websocket-production.up.railway.app/ws', protocol: 'relay', label: 'Relay Server' },
+			];
+			let rpcIndex = 0;
+			let ws = null;
+
+			function connect() {
+				const ep = RPC_ENDPOINTS[rpcIndex % RPC_ENDPOINTS.length];
+				rpcIndex++;
+				ws = new WebSocket(ep.url);
+
+				ws.onopen = () => {
+					if (ep.protocol === 'pumpportal') {
+						ws.send(JSON.stringify({ method: 'subscribeNewToken' }));
+					}
+				};
+
+				ws.onmessage = (evt) => {
+					let msg;
+					try { msg = JSON.parse(evt.data); } catch { return; }
+
+					if (ep.protocol === 'relay') {
+						if (msg.type === 'token-launch' || msg.mint) {
+							const info = {
+								mint: msg.mint || 'unknown',
+								name: msg.name || null,
+								symbol: msg.symbol || null,
+								imageUrl: msg.imageUri || null,
+								marketCapSol: msg.marketCapSol || 0,
+							};
+							renderEntry(info);
+						}
+						return;
+					}
+
+					if (ep.protocol === 'pumpportal') {
+						if (msg && msg.mint) {
+							const vSol = msg.vSolInBondingCurve || 0;
+							const vTok = msg.vTokensInBondingCurve || 0;
+							const supply = msg.tokenTotalSupply || (vTok > 0 ? 1e15 : 0);
+							let mcap = msg.marketCapSol || 0;
+							if (!mcap && vTok > 0 && vSol > 0) {
+								mcap = (vSol / vTok) * supply / 1e9;
+							}
+							const info = {
+								mint: msg.mint,
+								name: msg.name || null,
+								symbol: msg.symbol || null,
+								marketCapSol: mcap,
+								imageUrl: null, // PumpPortal does not provide image directly
+							};
+							renderEntry(info);
+						}
+						return;
+					}
+				};
+
+				ws.onclose = () => {
+					setTimeout(connect, 1000);
+				};
+			}
+
+			function renderEntry(info) {
+				const div = document.createElement('div');
+				div.className = 'entry';
+
+				const displayName = info.name || 'Unknown';
+				const displaySymbol = info.symbol ? '$' + info.symbol : '';
+				const mcap = info.marketCapSol ? fmtMcap(info.marketCapSol) : null;
+
+				let html = `<div class="token-row">`;
+				html += `<img class="token-img" src="${info.imageUrl || ''}" alt="" style="${info.imageUrl ? '' : 'display:none'}" onerror="this.style.display='none'" />`;
+				html += `<div class="token-details">`;
+				html += `<div><span class="name">${esc(displayName)}</span> <span class="symbol">${esc(displaySymbol)}</span></div>`;
+				html += `<div class="meta-row">`;
+				if (info.mint) html += `<span><a href="https://pump.fun/coin/${info.mint}" target="_blank">View on Pump.fun</a></span>`;
+				if (mcap) html += `<span>MCap: <span class="mcap">${mcap}</span></span>`;
+				html += `</div>`;
+				html += `</div></div>`;
+
+				div.innerHTML = html;
+				const root = document.getElementById('root');
+				root.prepend(div);
+				while (root.children.length > maxEntries) {
+					root.removeChild(root.lastChild);
+				}
+			}
+
+			function fmtMcap(sol) {
+				if (!sol || sol <= 0) return null;
+				if (sol >= 1000) return (sol / 1000).toFixed(1) + 'k';
+				if (sol >= 1) return sol.toFixed(2);
+				return sol.toFixed(4);
+			}
+
+			function esc(s) {
+				const d = document.createElement('div');
+				d.textContent = s || '';
+				return d.innerHTML;
+			}
+
+			connect();
 		</script>
 	</body>
 </html>

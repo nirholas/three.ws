@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Widgets · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="description" content="Embeddable widgets for your website." />
+		<meta name="theme-color" content="#000000" />
+		<link rel="canonical" href="https://three.ws/widgets" />
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/marketplace.css" />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+			rel="stylesheet"
+		/>
+	</head>
+	<body class="market-page">
+		<aside class="market-sidebar" id="market-sidebar">
+			<a href="/" class="market-logo">
+				<img src="/three.svg" alt="three.ws" />
+				<span>Widgets</span>
+			</a>
+			<nav class="market-nav">
+				<a href="/" data-nav="home"><span class="ico">⌂</span> Home</a>
+				<a href="/widgets" data-nav="widgets" class="active"><span class="ico">▣</span> Widgets</a>
+			</nav>
+		</aside>
+
+		<main class="market-main" id="market-main">
+			<section class="market-discovery" id="market-discovery">
+				<header class="market-topbar">
+					<h1>Widgets</h1>
+				</header>
+				<div class="market-body">
+					<div class="market-grid" id="widget-grid">
+						<div class="market-item">
+							<div class="market-item-thumb">
+								<iframe src="/pumpfun-widget.html?bg=dark" width="100%" height="200px" style="border:none;"></iframe>
+							</div>
+							<div class="market-item-meta">
+								<h3>Pump.fun Live Feed</h3>
+								<p>A live feed of new tokens on Pump.fun.</p>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+		</main>
+	</body>
+</html>
