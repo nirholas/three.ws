@@ -95,7 +95,11 @@ npm run claude -- [COMMAND]
 | `db-status` | Checks the status of database migrations. |
 | `pump-smoke-test` | Runs a smoke test for the pump.fun integration. |
 | `seed-skills` | Seeds the skills from the `skills-manifest.js` file. |
-| `help` | Shows the help message, listing all available commands. |
+| `test` | Runs the full test suite. |
+| `format` | Formats the codebase using Prettier. |
+| `clean` | Cleans up all build artifacts and `dist/` folders. |
+| `deploy` | Deploys the project to Vercel (requires confirmation). |
+| `help` | Shows this help message, listing all available commands. |
 
 ---
 

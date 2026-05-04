@@ -30,11 +30,13 @@ export const registerBody = z.object({
 	email,
 	password,
 	display_name: displayName.optional(),
+	referralCode: z.string().trim().min(3).max(30).optional(),
 });
 
 export const usernameRegisterBody = z.object({
 	username,
 	password,
+	referralCode: z.string().trim().min(3).max(30).optional(),
 });
 
 export const loginBody = z.object({

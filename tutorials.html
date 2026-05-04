@@ -1,38 +1,29 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="tutorials-page">
 	<head>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 		<title>three.ws — Tutorials</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="author" content="nirholas" />
-		<meta
-			name="description"
-			content="Tutorials for creating and using 3D agents."
-		/>
+		<meta name="description" content="Step-by-step tutorials for embedding, customizing, and deploying 3D agents with three.ws." />
 		<meta name="theme-color" content="#000000" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:title" content="three.ws — Tutorials" />
-		<meta
-			property="og:description"
-			content="Tutorials for creating and using 3D agents."
-		/>
-		<meta property="og:url" content="/tutorials.html" />
+		<meta property="og:description" content="Step-by-step tutorials for embedding, customizing, and deploying 3D agents with three.ws." />
+		<meta property="og:url" content="https://three.ws/tutorials.html" />
 		<meta property="og:image" content="https://three.ws/og-image.png" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:title" content="three.ws — Tutorials" />
-		<meta
-			name="twitter:description"
-			content="Tutorials for creating and using 3D agents."
-		/>
+		<meta name="twitter:description" content="Step-by-step tutorials for embedding, customizing, and deploying 3D agents with three.ws." />
 		<meta name="twitter:image" content="https://three.ws/og-image.png" />
 
-		<link rel="canonical" href="/tutorials.html" />
+		<link rel="canonical" href="https://three.ws/tutorials.html" />
 		<link rel="shortcut icon" href="/favicon.ico" />
 		<link rel="apple-touch-icon" href="/pwa-192x192.png" />
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -46,8 +37,359 @@
 			rel="stylesheet"
 		/>
 		<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+
+		<style>
+			html.tutorials-page,
+			html.tutorials-page body {
+				overflow: auto !important;
+				height: auto !important;
+			}
+
+			.tutorials-page body {
+				display: block;
+			}
+
+			/* ── Page shell ──────────────────────────────────────────────── */
+
+			.tut-page {
+				min-height: 100vh;
+				display: flex;
+				flex-direction: column;
+			}
+
+			.tut-page header {
+				position: sticky;
+				top: 0;
+				z-index: 200;
+				flex-shrink: 0;
+			}
+
+			/* ── Hero ────────────────────────────────────────────────────── */
+
+			.tut-hero {
+				background: linear-gradient(180deg, #0a0608 0%, #07060b 60%, #06070b 100%);
+				border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+				padding: clamp(3rem, 8vh, 5.5rem) clamp(1.25rem, 4vw, 2rem) clamp(2rem, 5vh, 3.5rem);
+				position: relative;
+				overflow: hidden;
+			}
+
+			.tut-hero::before {
+				content: '';
+				position: absolute;
+				inset: 0;
+				background:
+					radial-gradient(ellipse 60% 80% at 15% 50%, rgba(139, 92, 246, 0.12) 0%, transparent 60%),
+					radial-gradient(ellipse 50% 60% at 85% 20%, rgba(255, 215, 106, 0.06) 0%, transparent 55%);
+				pointer-events: none;
+			}
+
+			.tut-hero-inner {
+				position: relative;
+				max-width: 780px;
+			}
+
+			.tut-hero-eyebrow {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.4rem;
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 0.7rem;
+				font-weight: 600;
+				letter-spacing: 0.12em;
+				text-transform: uppercase;
+				color: rgba(139, 92, 246, 0.9);
+				margin-bottom: 1rem;
+			}
+
+			.tut-hero-eyebrow::before {
+				content: '';
+				display: block;
+				width: 18px;
+				height: 1px;
+				background: currentColor;
+			}
+
+			.tut-hero h1 {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: clamp(2rem, 5vw, 3.25rem);
+				font-weight: 700;
+				letter-spacing: -0.025em;
+				color: #fff;
+				margin: 0 0 0.85rem;
+				line-height: 1.12;
+			}
+
+			.tut-hero p {
+				font-size: 1.05rem;
+				color: rgba(255, 255, 255, 0.52);
+				line-height: 1.65;
+				margin: 0;
+				max-width: 56ch;
+			}
+
+			/* ── Content area ────────────────────────────────────────────── */
+
+			.tut-content {
+				flex: 1;
+				background: #06070b;
+				padding: clamp(2.5rem, 6vh, 4rem) clamp(1.25rem, 4vw, 2rem);
+			}
+
+			.tut-content-inner {
+				max-width: 860px;
+				margin: 0 auto;
+			}
+
+			/* ── Tutorial cards ──────────────────────────────────────────── */
+
+			.tut-card {
+				background: rgba(255, 255, 255, 0.018);
+				border: 1px solid rgba(255, 255, 255, 0.07);
+				border-radius: 12px;
+				overflow: hidden;
+				transition: border-color 0.25s ease;
+				margin-bottom: 1.25rem;
+			}
+
+			.tut-card:hover {
+				border-color: rgba(255, 255, 255, 0.12);
+			}
+
+			.tut-card-head {
+				display: flex;
+				align-items: flex-start;
+				gap: 1.1rem;
+				padding: 1.5rem 1.75rem 1.25rem;
+			}
+
+			.tut-step-badge {
+				flex-shrink: 0;
+				width: 28px;
+				height: 28px;
+				border-radius: 8px;
+				background: rgba(139, 92, 246, 0.15);
+				border: 1px solid rgba(139, 92, 246, 0.3);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 0.72rem;
+				font-weight: 700;
+				color: #a78bfa;
+				margin-top: 2px;
+			}
+
+			.tut-card-title {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 1.1rem;
+				font-weight: 700;
+				color: #fff;
+				letter-spacing: -0.01em;
+				margin: 0 0 0.35rem;
+				line-height: 1.3;
+			}
+
+			.tut-card-desc {
+				font-size: 0.9rem;
+				color: rgba(255, 255, 255, 0.5);
+				line-height: 1.6;
+				margin: 0;
+			}
+
+			.tut-card-desc code {
+				font-family: 'JetBrains Mono', ui-monospace, monospace;
+				font-size: 0.82em;
+				color: #c4b5fd;
+			}
+
+			/* ── Two-column body ─────────────────────────────────────────── */
+
+			.tut-card-body {
+				display: grid;
+				grid-template-columns: 1fr 220px;
+				border-top: 1px solid rgba(255, 255, 255, 0.06);
+			}
+
+			.tut-card-body--full {
+				grid-template-columns: 1fr;
+			}
+
+			/* ── Code block ──────────────────────────────────────────────── */
+
+			.tut-code-wrap {
+				position: relative;
+				background: #0b0c12;
+				border-right: 1px solid rgba(255, 255, 255, 0.06);
+			}
+
+			.tut-card-body--full .tut-code-wrap {
+				border-right: none;
+			}
+
+			.tut-code-wrap pre {
+				margin: 0;
+				padding: 1.25rem 1.5rem;
+				overflow-x: auto;
+				scrollbar-width: thin;
+				scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+			}
+
+			.tut-code-wrap pre::-webkit-scrollbar { height: 4px; }
+			.tut-code-wrap pre::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 2px; }
+
+			.tut-code-wrap code {
+				font-family: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
+				font-size: 0.78rem;
+				line-height: 1.7;
+				color: #c4b5fd;
+				white-space: pre;
+			}
+
+			.tut-copy-btn {
+				position: absolute;
+				top: 0.65rem;
+				right: 0.65rem;
+				display: flex;
+				align-items: center;
+				gap: 0.3rem;
+				padding: 0.3rem 0.6rem;
+				border-radius: 6px;
+				border: 1px solid rgba(255, 255, 255, 0.08);
+				background: rgba(255, 255, 255, 0.04);
+				color: rgba(255, 255, 255, 0.4);
+				font-family: 'Inter', sans-serif;
+				font-size: 0.68rem;
+				font-weight: 500;
+				cursor: pointer;
+				opacity: 0;
+				transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+				letter-spacing: 0.02em;
+			}
+
+			.tut-code-wrap:hover .tut-copy-btn { opacity: 1; }
+
+			.tut-copy-btn:hover {
+				color: rgba(255, 255, 255, 0.85);
+				background: rgba(255, 255, 255, 0.08);
+				border-color: rgba(255, 255, 255, 0.15);
+			}
+
+			.tut-copy-btn.copied {
+				opacity: 1;
+				color: #4ade80;
+				border-color: rgba(74, 222, 128, 0.3);
+				background: rgba(74, 222, 128, 0.06);
+			}
+
+			.tut-copy-btn svg { width: 11px; height: 11px; flex-shrink: 0; }
+
+			/* ── model-viewer panel ──────────────────────────────────────── */
+
+			.tut-viewer-panel {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				background: #080910;
+				min-height: 200px;
+			}
+
+			.tut-viewer-panel model-viewer {
+				width: 100%;
+				height: 220px;
+				background: transparent;
+				--poster-color: transparent;
+			}
+
+			/* ── CTA row ─────────────────────────────────────────────────── */
+
+			.tut-card-cta {
+				padding: 0.85rem 1.75rem;
+				border-top: 1px solid rgba(255, 255, 255, 0.05);
+				display: flex;
+				align-items: center;
+				gap: 0.75rem;
+				flex-wrap: wrap;
+			}
+
+			.tut-cta-link {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.35rem;
+				font-family: 'Inter', sans-serif;
+				font-size: 0.82rem;
+				font-weight: 500;
+				color: #a78bfa;
+				text-decoration: none;
+				transition: color 0.15s ease;
+			}
+
+			.tut-cta-link:hover { color: #c4b5fd; }
+			.tut-cta-link svg { width: 12px; height: 12px; transition: transform 0.15s ease; }
+			.tut-cta-link:hover svg { transform: translateX(2px); }
+
+			.tut-cta-sep { color: rgba(255, 255, 255, 0.15); font-size: 0.75rem; }
+
+			/* ── Step list (no-code tutorial) ────────────────────────────── */
+
+			.tut-steps {
+				padding: 1.25rem 1.75rem;
+				display: flex;
+				flex-direction: column;
+				gap: 0.85rem;
+			}
+
+			.tut-step-item {
+				display: flex;
+				gap: 0.9rem;
+				align-items: flex-start;
+			}
+
+			.tut-step-num {
+				flex-shrink: 0;
+				width: 20px;
+				height: 20px;
+				border-radius: 50%;
+				background: rgba(139, 92, 246, 0.12);
+				border: 1px solid rgba(139, 92, 246, 0.25);
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 0.62rem;
+				font-weight: 700;
+				color: #a78bfa;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				margin-top: 2px;
+			}
+
+			.tut-step-text {
+				font-size: 0.88rem;
+				color: rgba(255, 255, 255, 0.62);
+				line-height: 1.55;
+				margin: 0;
+			}
+
+			.tut-step-text strong { color: rgba(255, 255, 255, 0.88); font-weight: 600; }
+			.tut-step-text a { color: #a78bfa; text-decoration: none; }
+			.tut-step-text a:hover { color: #c4b5fd; }
+			.tut-step-text code { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.85em; color: #c4b5fd; }
+
+			/* ── Responsive ──────────────────────────────────────────────── */
+
+			@media (max-width: 640px) {
+				.tut-card-body { grid-template-columns: 1fr; }
+				.tut-viewer-panel {
+					border-top: 1px solid rgba(255, 255, 255, 0.06);
+					border-right: none;
+				}
+				.tut-viewer-panel model-viewer { height: 180px; }
+			}
+		</style>
 	</head>
-	<body>
+	<body class="home-page tutorials-page tut-page">
+		<div class="cursor" id="cursor" aria-hidden="true"></div>
+		<a href="#main-content" class="h-skip-link">Skip to main content</a>
+
 		<header>
 			<h1>
 				<a href="/" aria-label="three.ws home"
@@ -61,135 +403,70 @@
 			<nav class="home-nav" aria-label="Primary">
 				<ul class="nav-root" role="menubar">
 					<li class="nav-item nav-has-menu" role="none">
-						<button
-							type="button"
-							class="nav-trigger"
-							aria-haspopup="true"
-							aria-expanded="false"
-							role="menuitem"
-						>
+						<button type="button" class="nav-trigger" aria-haspopup="true" aria-expanded="false" role="menuitem">
 							Build<span class="nav-caret" aria-hidden="true">▾</span>
 						</button>
 						<ul class="nav-menu" role="menu" aria-label="Build">
 							<li role="none">
-								<a href="/create" role="menuitem"
-									><span class="nav-mi-title">Create agent</span
-									><span class="nav-mi-sub">Avatar + brain wizard</span></a
-								>
+								<a href="/create" role="menuitem"><span class="nav-mi-title">Create agent</span><span class="nav-mi-sub">Avatar + brain wizard</span></a>
 							</li>
 							<li role="none">
-								<a href="/app" role="menuitem"
-									><span class="nav-mi-title">Viewer</span
-									><span class="nav-mi-sub">Drag-and-drop GLB</span></a
-								>
+								<a href="/app" role="menuitem"><span class="nav-mi-title">Viewer</span><span class="nav-mi-sub">Drag-and-drop GLB</span></a>
 							</li>
 							<li role="none">
-								<a href="/validation" role="menuitem"
-									><span class="nav-mi-title">glTF Validator</span
-									><span class="nav-mi-sub">Khronos spec check</span></a
-								>
-							</li>
-							<li role="none">
-								<a href="/playground.html" role="menuitem"
-									><span class="nav-mi-title">Playground</span
-									><span class="nav-mi-sub">Experiment with agents</span></a
-								>
+								<a href="/validation" role="menuitem"><span class="nav-mi-title">glTF Validator</span><span class="nav-mi-sub">Khronos spec check</span></a>
 							</li>
 						</ul>
 					</li>
 					<li role="none"><a href="/discover" role="menuitem">Discover</a></li>
 					<li class="nav-item nav-has-menu" role="none">
-						<button
-							type="button"
-							class="nav-trigger"
-							aria-haspopup="true"
-							aria-expanded="false"
-							role="menuitem"
-						>
+						<button type="button" class="nav-trigger" aria-haspopup="true" aria-expanded="false" role="menuitem">
 							Solana<span class="nav-caret" aria-hidden="true">▾</span>
 						</button>
 						<ul class="nav-menu" role="menu" aria-label="Solana">
 							<li role="none">
-								<a href="/pumpfun" role="menuitem"
-									><span class="nav-mi-title">Pump.fun stream</span
-									><span class="nav-mi-sub">Mint agent tokens</span></a
-								>
+								<a href="/pumpfun" role="menuitem"><span class="nav-mi-title">Pump.fun stream</span><span class="nav-mi-sub">Mint agent tokens</span></a>
 							</li>
 							<li role="none">
-								<a href="/vanity-wallet" role="menuitem"
-									><span class="nav-mi-title">Vanity wallet</span
-									><span class="nav-mi-sub">Grind a Solana address</span></a
-								>
+								<a href="/vanity-wallet" role="menuitem"><span class="nav-mi-title">Vanity wallet</span><span class="nav-mi-sub">Grind a Solana address</span></a>
 							</li>
 							<li role="none">
-								<a href="/strategy-lab" role="menuitem"
-									><span class="nav-mi-title">Strategy Lab</span
-									><span class="nav-mi-sub">DCA + subscriptions</span></a
-								>
+								<a href="/strategy-lab" role="menuitem"><span class="nav-mi-title">Strategy Lab</span><span class="nav-mi-sub">DCA + subscriptions</span></a>
 							</li>
 							<li role="none">
-								<a href="/pump-live.html" role="menuitem"
-									><span class="nav-mi-title">Live launches</span
-									><span class="nav-mi-sub">Real-time mint feed</span></a
-								>
+								<a href="/pump-live.html" role="menuitem"><span class="nav-mi-title">Live launches</span><span class="nav-mi-sub">Real-time mint feed</span></a>
 							</li>
 							<li role="none">
-								<a href="/pump-dashboard.html" role="menuitem"
-									><span class="nav-mi-title">Pump Dashboard</span
-									><span class="nav-mi-sub">Watches · scanner · quotes</span></a
-								>
+								<a href="/pump-dashboard.html" role="menuitem"><span class="nav-mi-title">Pump Dashboard</span><span class="nav-mi-sub">Watches · scanner · quotes</span></a>
 							</li>
 							<li role="none">
-								<a href="/docs#solana" role="menuitem"
-									><span class="nav-mi-title">Solana SDK</span
-									><span class="nav-mi-sub">Attestations + agent-kit</span></a
-								>
+								<a href="/docs#solana" role="menuitem"><span class="nav-mi-title">Solana SDK</span><span class="nav-mi-sub">Attestations + agent-kit</span></a>
 							</li>
 						</ul>
 					</li>
 					<li class="nav-item nav-has-menu" role="none">
-						<button
-							type="button"
-							class="nav-trigger"
-							aria-haspopup="true"
-							aria-expanded="false"
-							role="menuitem"
-						>
+						<button type="button" class="nav-trigger" aria-haspopup="true" aria-expanded="false" role="menuitem">
 							Embed<span class="nav-caret" aria-hidden="true">▾</span>
 						</button>
 						<ul class="nav-menu" role="menu" aria-label="Embed">
 							<li role="none">
-								<a href="/studio" role="menuitem"
-									><span class="nav-mi-title">Widget Studio</span
-									><span class="nav-mi-sub">Pick avatar → copy snippet</span></a
-								>
+								<a href="/studio" role="menuitem"><span class="nav-mi-title">Widget Studio</span><span class="nav-mi-sub">Pick avatar → copy snippet</span></a>
 							</li>
 							<li role="none">
-								<a href="/artifact" role="menuitem"
-									><span class="nav-mi-title">Artifact viewer</span
-									><span class="nav-mi-sub">Claude artifact bundle</span></a
-								>
+								<a href="/artifact" role="menuitem"><span class="nav-mi-title">Artifact viewer</span><span class="nav-mi-sub">Claude artifact bundle</span></a>
 							</li>
 							<li role="none">
-								<a href="/docs#embedding" role="menuitem"
-									><span class="nav-mi-title">Embed docs</span
-									><span class="nav-mi-sub">iframe + oEmbed</span></a
-								>
+								<a href="/docs#embedding" role="menuitem"><span class="nav-mi-title">Embed docs</span><span class="nav-mi-sub">iframe + oEmbed</span></a>
 							</li>
 							<li role="none">
-								<a href="/docs#web-component" role="menuitem"
-									><span class="nav-mi-title">&lt;agent-3d&gt;</span
-									><span class="nav-mi-sub">Web component reference</span></a
-								>
+								<a href="/docs#web-component" role="menuitem"><span class="nav-mi-title">&lt;agent-3d&gt;</span><span class="nav-mi-sub">Web component reference</span></a>
 							</li>
 						</ul>
 					</li>
+					<li class="nav-item" role="none"><a href="/marketplace.html" role="menuitem">Marketplace</a></li>
 					<li class="nav-item" role="none"><a href="/chat" role="menuitem">Chat</a></li>
-					<li class="nav-item" role="none"><a href="/docs" role="menuitem">Docs</a></li>
-					<li class="nav-item" role="none">
-						<a href="/features" role="menuitem">Features</a>
-					</li>
-					<li class="nav-item" role="none"><a href="/tutorials.html" role="menuitem">Tutorials</a></li>
+					<li class="nav-item" role="none"><a href="/features" role="menuitem">Features</a></li>
+					<li class="nav-item" role="none"><a href="/tutorials.html" role="menuitem" aria-current="page">Tutorials</a></li>
 					<li class="nav-item" id="home-nav-my-agents-li" role="none" hidden>
 						<a href="/my-agents" id="home-nav-my-agents" role="menuitem">My Agents</a>
 					</li>
@@ -197,76 +474,475 @@
 						<a href="/dashboard" id="home-nav-user" class="nav-user" role="menuitem"></a>
 					</li>
 					<li class="nav-item" role="none">
-						<a href="/login" class="nav-cta" id="home-nav-cta" role="menuitem"
-							>Get started</a
-						>
+						<a href="/login" class="nav-cta" id="home-nav-cta" role="menuitem">Get started</a>
 					</li>
 				</ul>
 			</nav>
 		</header>
-		<main id="main-content" class="h-container">
-			<section>
-				<h1>Tutorials</h1>
-				<p>Here you will find tutorials on how to create and use 3D agents.</p>
-				
-				<h2>1. Basic Embedding</h2>
-				<p>Embed your 3D agent into any web page with a simple script tag.</p>
-				<div style="display: flex; gap: 1rem;">
-					<div style="flex-grow: 1;">
-						<pre><code>&lt;script src="https://three.ws/cdn/agent-3d.js" data-agent-id="YOUR_AGENT_ID"&gt;&lt;/script&gt;</code></pre>
-					</div>
-					<div style="width: 200px; height: 200px;">
-						<model-viewer src="/animations/robotexpressive.glb" camera-controls auto-rotate></model-viewer>
-					</div>
+
+		<main id="main-content">
+			<div class="tut-hero">
+				<div class="tut-hero-inner">
+					<p class="tut-hero-eyebrow">Tutorials</p>
+					<h1>Build with 3D agents</h1>
+					<p>From a one-liner embed to on-chain identity — everything you need to ship a 3D agent in your app.</p>
 				</div>
+			</div>
 
-				<h2>2. Customization</h2>
-				<p>Customize your agent's appearance and behavior using data attributes.</p>
-				<div style="display: flex; gap: 1rem;">
-					<div style="flex-grow: 1;">
-						<pre><code>&lt;script src="https://three.ws/cdn/agent-3d.js" 
-				data-agent-id="YOUR_AGENT_ID" 
-				data-size="300"
-				data-background-color="#000000"&gt;&lt;/script&gt;</code></pre>
-					</div>
-					<div style="width: 200px; height: 200px;">
-						<model-viewer src="/animations/soldier.glb" camera-controls auto-rotate></model-viewer>
-					</div>
+			<div class="tut-content">
+				<div class="tut-content-inner">
+
+					<!-- 1. Embed in 30 seconds -->
+					<article class="tut-card">
+						<div class="tut-card-head">
+							<div class="tut-step-badge" aria-hidden="true">1</div>
+							<div>
+								<h2 class="tut-card-title">Embed in 30 seconds</h2>
+								<p class="tut-card-desc">Drop one script tag into any HTML page. Your agent loads, auto-sizes, and starts animating immediately.</p>
+							</div>
+						</div>
+						<div class="tut-card-body">
+							<div class="tut-code-wrap">
+								<button class="tut-copy-btn" aria-label="Copy code">
+									<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="4" y="4" width="9" height="11" rx="1.5"/><path d="M3 11V3a1 1 0 0 1 1-1h8"/></svg>
+									Copy
+								</button>
+								<pre><code>&lt;!-- Paste before &lt;/body&gt; on any page --&gt;
+&lt;script
+  src="https://three.ws/cdn/agent-3d.js"
+  data-agent-id="YOUR_AGENT_ID"
+&gt;&lt;/script&gt;</code></pre>
+							</div>
+							<div class="tut-viewer-panel">
+								<model-viewer
+									src="/animations/robotexpressive.glb"
+									camera-controls
+									auto-rotate
+									auto-rotate-delay="1000"
+									rotation-per-second="18deg"
+									interaction-prompt="none"
+									shadow-intensity="0"
+									exposure="0.85"
+									environment-image="neutral"
+									camera-orbit="0deg 75deg 5m"
+									field-of-view="35deg"
+									loading="lazy"
+								></model-viewer>
+							</div>
+						</div>
+						<div class="tut-card-cta">
+							<a href="/create" class="tut-cta-link">
+								Create your agent
+								<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 6h8M6 2l4 4-4 4"/></svg>
+							</a>
+							<span class="tut-cta-sep">·</span>
+							<a href="/docs#embedding" class="tut-cta-link">
+								Full embedding docs
+								<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 6h8M6 2l4 4-4 4"/></svg>
+							</a>
+						</div>
+					</article>
+
+					<!-- 2. Customization -->
+					<article class="tut-card">
+						<div class="tut-card-head">
+							<div class="tut-step-badge" aria-hidden="true">2</div>
+							<div>
+								<h2 class="tut-card-title">Customize appearance</h2>
+								<p class="tut-card-desc">Control size, background, corner placement, and animation speed entirely through <code>data-*</code> attributes — no JavaScript required.</p>
+							</div>
+						</div>
+						<div class="tut-card-body">
+							<div class="tut-code-wrap">
+								<button class="tut-copy-btn" aria-label="Copy code">
+									<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="4" y="4" width="9" height="11" rx="1.5"/><path d="M3 11V3a1 1 0 0 1 1-1h8"/></svg>
+									Copy
+								</button>
+								<pre><code>&lt;script
+  src="https://three.ws/cdn/agent-3d.js"
+  data-agent-id="YOUR_AGENT_ID"
+  data-size="320"
+  data-background-color="transparent"
+  data-position="bottom-right"
+  data-rotation-speed="20"
+&gt;&lt;/script&gt;</code></pre>
+							</div>
+							<div class="tut-viewer-panel">
+								<model-viewer
+									src="/animations/soldier.glb"
+									camera-controls
+									auto-rotate
+									auto-rotate-delay="800"
+									rotation-per-second="22deg"
+									interaction-prompt="none"
+									shadow-intensity="0"
+									exposure="0.9"
+									environment-image="neutral"
+									camera-orbit="0deg 80deg 4.5m"
+									field-of-view="38deg"
+									loading="lazy"
+								></model-viewer>
+							</div>
+						</div>
+						<div class="tut-card-cta">
+							<a href="/studio" class="tut-cta-link">
+								Open Widget Studio
+								<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 6h8M6 2l4 4-4 4"/></svg>
+							</a>
+							<span class="tut-cta-sep">·</span>
+							<a href="/docs#web-component" class="tut-cta-link">
+								All data attributes
+								<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 6h8M6 2l4 4-4 4"/></svg>
+							</a>
+						</div>
+					</article>
+
+					<!-- 3. JavaScript API -->
+					<article class="tut-card">
+						<div class="tut-card-head">
+							<div class="tut-step-badge" aria-hidden="true">3</div>
+							<div>
+								<h2 class="tut-card-title">JavaScript API</h2>
+								<p class="tut-card-desc">Listen for the <code>ready</code> event, trigger animations, and send speech — drive your agent from any app logic.</p>
+							</div>
+						</div>
+						<div class="tut-card-body">
+							<div class="tut-code-wrap">
+								<button class="tut-copy-btn" aria-label="Copy code">
+									<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="4" y="4" width="9" height="11" rx="1.5"/><path d="M3 11V3a1 1 0 0 1 1-1h8"/></svg>
+									Copy
+								</button>
+								<pre><code>&lt;script
+  src="https://three.ws/cdn/agent-3d.js"
+  data-agent-id="YOUR_AGENT_ID"
+  id="my-agent"
+&gt;&lt;/script&gt;
+
+&lt;script&gt;
+  const agent = document.getElementById('my-agent');
+
+  agent.addEventListener('ready', () => {
+    agent.playAnimation('wave');
+  });
+
+  // Trigger from anywhere in your app
+  document.querySelector('#checkout-btn')
+    .addEventListener('click', () => {
+      agent.speak('Order placed! Check your inbox.');
+      agent.playAnimation('celebrate');
+    });
+&lt;/script&gt;</code></pre>
+							</div>
+							<div class="tut-viewer-panel">
+								<model-viewer
+									src="/avatars/cz.glb"
+									camera-controls
+									auto-rotate
+									auto-rotate-delay="2000"
+									rotation-per-second="12deg"
+									interaction-prompt="auto"
+									shadow-intensity="0"
+									exposure="0.85"
+									environment-image="neutral"
+									camera-orbit="0deg 78deg 5m"
+									field-of-view="36deg"
+									loading="lazy"
+								></model-viewer>
+							</div>
+						</div>
+						<div class="tut-card-cta">
+							<a href="/docs#js-api" class="tut-cta-link">
+								Full JS API reference
+								<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 6h8M6 2l4 4-4 4"/></svg>
+							</a>
+						</div>
+					</article>
+
+					<!-- 4. Widget Studio -->
+					<article class="tut-card">
+						<div class="tut-card-head">
+							<div class="tut-step-badge" aria-hidden="true">4</div>
+							<div>
+								<h2 class="tut-card-title">Widget Studio — no code</h2>
+								<p class="tut-card-desc">Pick an avatar visually, configure behavior with toggles, then copy a ready-to-paste snippet. Zero typing required.</p>
+							</div>
+						</div>
+						<div class="tut-card-body tut-card-body--full">
+							<div class="tut-steps">
+								<div class="tut-step-item">
+									<div class="tut-step-num">1</div>
+									<p class="tut-step-text">Go to <strong><a href="/studio">Widget Studio</a></strong> — browse the avatar gallery and click the one you want.</p>
+								</div>
+								<div class="tut-step-item">
+									<div class="tut-step-num">2</div>
+									<p class="tut-step-text">Use the panel on the right to set <strong>size, position, background,</strong> and the greeting message your agent will say on load.</p>
+								</div>
+								<div class="tut-step-item">
+									<div class="tut-step-num">3</div>
+									<p class="tut-step-text">Click <strong>Copy snippet</strong>. Paste the script tag before the closing <code>&lt;/body&gt;</code> of your page. Done.</p>
+								</div>
+								<div class="tut-step-item">
+									<div class="tut-step-num">4</div>
+									<p class="tut-step-text">Changes to your agent's name, avatar, or behavior sync live — no need to update the snippet on your site.</p>
+								</div>
+							</div>
+						</div>
+						<div class="tut-card-cta">
+							<a href="/studio" class="tut-cta-link">
+								Open Widget Studio
+								<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 6h8M6 2l4 4-4 4"/></svg>
+							</a>
+						</div>
+					</article>
+
+					<!-- 5. On-chain identity -->
+					<article class="tut-card">
+						<div class="tut-card-head">
+							<div class="tut-step-badge" aria-hidden="true">5</div>
+							<div>
+								<h2 class="tut-card-title">On-chain agent identity</h2>
+								<p class="tut-card-desc">Give your agent a verifiable Solana identity. Mint a token on Pump.fun, link your wallet, and publish an ERC-8004 attestation — all from three.ws.</p>
+							</div>
+						</div>
+						<div class="tut-card-body">
+							<div class="tut-code-wrap">
+								<button class="tut-copy-btn" aria-label="Copy code">
+									<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="4" y="4" width="9" height="11" rx="1.5"/><path d="M3 11V3a1 1 0 0 1 1-1h8"/></svg>
+									Copy
+								</button>
+								<pre><code>// Resolve on-chain identity from the SDK
+import { resolveAgent } from 'https://three.ws/sdk/agent-resolver.js';
+
+const agent = await resolveAgent('YOUR_AGENT_ID');
+
+console.log(agent.wallet);      // Solana pubkey
+console.log(agent.tokenMint);   // Pump.fun mint address
+console.log(agent.attestation); // ERC-8004 attestation URI</code></pre>
+							</div>
+							<div class="tut-viewer-panel">
+								<model-viewer
+									src="/animations/robotexpressive.glb"
+									camera-controls
+									auto-rotate
+									auto-rotate-delay="1500"
+									rotation-per-second="15deg"
+									interaction-prompt="none"
+									shadow-intensity="0"
+									exposure="0.75"
+									environment-image="neutral"
+									camera-orbit="20deg 70deg 6m"
+									field-of-view="40deg"
+									loading="lazy"
+								></model-viewer>
+							</div>
+						</div>
+						<div class="tut-card-cta">
+							<a href="/pumpfun" class="tut-cta-link">
+								Pump.fun stream
+								<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 6h8M6 2l4 4-4 4"/></svg>
+							</a>
+							<span class="tut-cta-sep">·</span>
+							<a href="/vanity-wallet" class="tut-cta-link">
+								Vanity wallet
+								<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 6h8M6 2l4 4-4 4"/></svg>
+							</a>
+							<span class="tut-cta-sep">·</span>
+							<a href="/docs#solana" class="tut-cta-link">
+								Solana SDK docs
+								<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 6h8M6 2l4 4-4 4"/></svg>
+							</a>
+						</div>
+					</article>
+
 				</div>
-
-				<h2>3. Interactive Examples</h2>
-				<p>Use JavaScript to interact with your agent.</p>
-				<div style="display: flex; gap: 1rem;">
-					<div style="flex-grow: 1;">
-						<pre><code>
-		&lt;script src="https://three.ws/cdn/agent-3d.js" data-agent-id="YOUR_AGENT_ID"&gt;&lt;/script&gt;
-		&lt;script&gt;
-		  const agent = document.querySelector('agent-3d');
-		  agent.addEventListener('ready', () => {
-			agent.playAnimation('wave');
-		  });
-		&lt;/script&gt;
-						</code></pre>
-					</div>
-					<div style="width: 200px; height: 200px;">
-						<model-viewer id="interactive-agent" src="/avatars/cz.glb" camera-controls></model-viewer>
-						<button onclick="document.getElementById('interactive-agent').animationName = 'wave';">Wave</button>
-					</div>
-				</div>
-
-				<h2>4. "Claude, integrate this"</h2>
-				<p>To simplify integration, you can use the following command to have Claude help you embed an agent. Just say "Claude, integrate agent with ID YOUR_AGENT_ID".</p>
-				<button id="claude-integrate-button" class="button-primary">Try it</button>
-
-			</section>
+			</div>
 		</main>
-		<footer class="h-footer">
+
+		<footer class="h-footer h-footer-horizon">
+			<div class="h-footer-glow-line" aria-hidden="true"></div>
+			<div class="h-footer-floor" aria-hidden="true"></div>
+			<div class="h-footer-haze" aria-hidden="true"></div>
+			<div class="h-footer-watermark" aria-hidden="true">three.ws</div>
+			<div class="h-footer-avatar" aria-hidden="true">
+				<model-viewer
+					src="/animations/robotexpressive.glb"
+					auto-rotate
+					auto-rotate-delay="0"
+					rotation-per-second="20deg"
+					interaction-prompt="none"
+					camera-controls="false"
+					disable-zoom
+					shadow-intensity="0"
+					exposure="0.7"
+					environment-image="neutral"
+					camera-orbit="0deg 80deg 9m"
+					field-of-view="45deg"
+					loading="lazy"
+				></model-viewer>
+			</div>
+			<div class="h-footer-cta">
+				<div class="h-footer-newsletter">
+					<h3>Stay in the loop</h3>
+					<p>Get updates on new features, agent tooling, and protocol changes.</p>
+					<form class="h-footer-newsletter-form" data-newsletter-form novalidate>
+						<input
+							type="email"
+							class="h-footer-newsletter-input"
+							name="email"
+							placeholder="Enter your email"
+							aria-label="Email address"
+							autocomplete="email"
+							required
+						/>
+						<button type="submit" class="h-footer-newsletter-btn" aria-label="Subscribe">
+							<svg viewBox="0 0 16 16" aria-hidden="true">
+								<path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M2 8h11m0 0L9 4m4 4l-4 4" />
+							</svg>
+						</button>
+					</form>
+					<p class="h-footer-newsletter-msg" data-newsletter-msg aria-live="polite"></p>
+				</div>
+				<div class="h-footer-community">
+					<h3>Join the community</h3>
+					<p>Follow along for builds, demos, and conversations with the team.</p>
+					<a class="h-footer-community-btn" href="https://x.com/trythreews" target="_blank" rel="noopener">
+						<svg viewBox="0 0 24 24" aria-hidden="true">
+							<path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+						</svg>
+						Follow on X
+					</a>
+				</div>
+			</div>
+			<div class="h-footer-inner">
+				<div class="h-footer-brand-col">
+					<div class="h-footer-brand">
+						<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />
+						<span class="wordmark-dot" aria-hidden="true"></span>
+						<span>three.ws</span>
+					</div>
+					<p class="h-footer-tagline">Give your AI a body.</p>
+					<div class="h-footer-socials">
+						<a class="h-footer-social" href="https://x.com/trythreews" target="_blank" rel="noopener" aria-label="three.ws on X">
+							<svg viewBox="0 0 24 24" aria-hidden="true">
+								<path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+							</svg>
+						</a>
+						<a class="h-footer-social" href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener" aria-label="three.ws on GitHub">
+							<svg viewBox="0 0 16 16" aria-hidden="true">
+								<path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z" />
+							</svg>
+						</a>
+					</div>
+				</div>
+				<nav class="h-footer-links" aria-label="Footer">
+					<div class="h-footer-link-col">
+						<h4 class="h-footer-link-heading">Product</h4>
+						<a href="/create">Create</a>
+						<a href="/studio">Studio</a>
+						<a href="/widgets.html">Widgets</a>
+						<a href="/discover">Discover</a>
+					</div>
+					<div class="h-footer-link-col">
+						<h4 class="h-footer-link-heading">Developers</h4>
+						<a href="/docs">Docs</a>
+						<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener">GitHub</a>
+						<a href="https://eips.ethereum.org/EIPS/eip-8004" target="_blank" rel="noopener">ERC-8004</a>
+					</div>
+					<div class="h-footer-link-col">
+						<h4 class="h-footer-link-heading">Resources</h4>
+						<a href="/features">Features</a>
+						<a href="/tutorials.html" aria-current="page">Tutorials</a>
+						<a href="/dashboard">Dashboard</a>
+					</div>
+				</nav>
+			</div>
+			<div class="h-footer-bottom">
+				<p class="h-footer-legal">© 2026 three.ws — All rights reserved.</p>
+				<div class="h-footer-legal-links">
+					<a href="/legal/privacy">Privacy Policy</a>
+					<a href="/legal/tos">Terms of Use</a>
+				</div>
+			</div>
 		</footer>
+
 		<script>
-			document.getElementById('claude-integrate-button').addEventListener('click', () => {
-				// We can't actually trigger Claude, so we'll just log to the console.
-				console.log("Imagine Claude is helping you integrate your agent now.");
-				alert("Imagine Claude is helping you integrate your agent now.");
+			// Custom cursor
+			(function () {
+				const cursor = document.getElementById('cursor');
+				if (!cursor || !window.matchMedia('(hover: hover)').matches) return;
+				let x = 0, y = 0, tx = 0, ty = 0;
+				document.addEventListener('mousemove', (e) => { tx = e.clientX; ty = e.clientY; });
+				(function loop() {
+					x += (tx - x) * 0.18;
+					y += (ty - y) * 0.18;
+					cursor.style.transform = `translate(${x - 5}px,${y - 5}px)`;
+					requestAnimationFrame(loop);
+				})();
+				document.querySelectorAll('a,button').forEach((el) => {
+					el.addEventListener('mouseenter', () => cursor.classList.add('cursor--hover'));
+					el.addEventListener('mouseleave', () => cursor.classList.remove('cursor--hover'));
+				});
+			})();
+
+			// Auth-aware nav CTA
+			(function () {
+				try {
+					const raw = localStorage.getItem('3dagent:auth-hint');
+					if (!raw) return;
+					const { authed, name } = JSON.parse(raw);
+					if (!authed) return;
+					const cta = document.getElementById('home-nav-cta');
+					if (cta) { cta.textContent = 'Dashboard'; cta.href = '/dashboard'; }
+					const myAgentsLi = document.getElementById('home-nav-my-agents-li');
+					if (myAgentsLi) myAgentsLi.hidden = false;
+					const userLi = document.getElementById('home-nav-user-li');
+					const userEl = document.getElementById('home-nav-user');
+					if (userEl && userLi && name) { userEl.textContent = name; userLi.hidden = false; }
+				} catch (_) {}
+			})();
+
+			// Dropdown nav
+			(function () {
+				const triggers = document.querySelectorAll('.home-nav .nav-trigger');
+				if (!triggers.length) return;
+				function closeAll(except) {
+					triggers.forEach((t) => { if (t !== except) t.setAttribute('aria-expanded', 'false'); });
+				}
+				triggers.forEach((trigger) => {
+					trigger.addEventListener('click', (e) => {
+						e.stopPropagation();
+						const open = trigger.getAttribute('aria-expanded') === 'true';
+						closeAll(open ? null : trigger);
+						trigger.setAttribute('aria-expanded', open ? 'false' : 'true');
+						if (!open) trigger.nextElementSibling?.querySelector('a')?.focus();
+					});
+					const menu = trigger.nextElementSibling;
+					if (!menu) return;
+					menu.addEventListener('keydown', (e) => {
+						const items = Array.from(menu.querySelectorAll('a'));
+						const idx = items.indexOf(document.activeElement);
+						if (e.key === 'ArrowDown') { e.preventDefault(); items[(idx + 1) % items.length]?.focus(); }
+						else if (e.key === 'ArrowUp') { e.preventDefault(); items[(idx - 1 + items.length) % items.length]?.focus(); }
+						else if (e.key === 'Escape') { trigger.setAttribute('aria-expanded', 'false'); trigger.focus(); }
+					});
+				});
+				document.addEventListener('click', (e) => { if (!e.target.closest('.home-nav')) closeAll(null); });
+				document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAll(null); });
+			})();
+
+			// Copy-to-clipboard
+			document.querySelectorAll('.tut-copy-btn').forEach((btn) => {
+				btn.addEventListener('click', () => {
+					const code = btn.closest('.tut-code-wrap').querySelector('code');
+					navigator.clipboard.writeText(code.textContent.trim()).then(() => {
+						btn.classList.add('copied');
+						btn.innerHTML = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 9l4 4 8-8"/></svg> Copied`;
+						setTimeout(() => {
+							btn.classList.remove('copied');
+							btn.innerHTML = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="4" y="4" width="9" height="11" rx="1.5"/><path d="M3 11V3a1 1 0 0 1 1-1h8"/></svg> Copy`;
+						}, 2000);
+					});
+				});
 			});
 		</script>
 	</body>

@@ -21,6 +21,7 @@ import Mint from "./pages/Mint"
 import Optimizer from "./pages/Optimizer"
 import Save from "./pages/Save"
 import Wallet from "./pages/Wallet"
+import Studio from "./pages/Studio"
 
 // dynamically import the manifest
 const assetImportPath = import.meta.env.VITE_ASSET_PATH + "/manifest.json"
@@ -159,6 +160,7 @@ export default function App() {
     [ViewMode.LOAD]: <Load />,
     [ViewMode.MINT]: <Mint />,
     [ViewMode.SAVE]: <Save />,
+    [ViewMode.STUDIO]: <Studio />,
   }
 
   let lastTap = 0

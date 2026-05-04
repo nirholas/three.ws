@@ -14,6 +14,7 @@ import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { parse, loginBody, registerBody, usernameRegisterBody, username as usernameValidator, displayName, email, password } from '../_lib/validate.js';
 import { sendPasswordResetEmail, sendVerificationEmail } from '../_lib/email.js';
+import { generateReferralCode } from '../_lib/referrals.js';
 import { z } from 'zod';
 
 const APP_ORIGIN = process.env.APP_ORIGIN || 'https://three.ws';
@@ -29,8 +30,8 @@ async function handleLogin(req, res) {
 	const body = parse(loginBody, await readJson(req));
 	const isEmail = body.email.includes('@');
 	const rows = isEmail
-		? await sql`select id, email, password_hash, display_name, plan, avatar_url from users where email = ${body.email} and deleted_at is null limit 1`
-		: await sql`select id, email, password_hash, display_name, plan, avatar_url from users where display_name ilike ${body.email} and deleted_at is null limit 1`;
+		? await sql`select id, email, password_hash, display_name, plan, avatar_url, referral_code from users where email = ${body.email} and deleted_at is null limit 1`
+		: await sql`select id, email, password_hash, display_name, plan, avatar_url, referral_code from users where display_name ilike ${body.email} and deleted_at is null limit 1`;
 	const user = rows[0];
 	const ok = user && (await verifyPassword(body.password, user.password_hash));
 	if (!ok) return error(res, 401, 'invalid_credentials', 'invalid username/email or password');
@@ -77,23 +78,36 @@ async function handleRegister(req, res) {
 	const rl = await limits.registerIp(ip);
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many signups from this IP');
 	const raw = await readJson(req);
-	let email_val, displayName_val, passwordVal;
+	let email_val, displayName_val, passwordVal, referralCode;
 	if (raw.username && !raw.email) {
 		const body = parse(usernameRegisterBody, raw);
 		const safe = body.username.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
 		email_val = `${safe}@users.three.ws.local`;
 		displayName_val = body.username;
 		passwordVal = body.password;
+		referralCode = body.referralCode;
 		const existing = await sql`select id from users where display_name ilike ${body.username} and deleted_at is null limit 1`;
 		if (existing[0]) return error(res, 409, 'conflict', 'email or username already in use');
 	} else {
 		const body = parse(registerBody, raw);
 		email_val = body.email; displayName_val = body.display_name ?? null; passwordVal = body.password;
+		referralCode = body.referralCode;
 		const existing = await sql`select id from users where email = ${email_val} and deleted_at is null limit 1`;
 		if (existing[0]) return error(res, 409, 'conflict', 'email or username already in use');
 	}
+
+	let referred_by_id = null;
+	if (referralCode) {
+		const [referrer] = await sql`select id from users where referral_code = ${referralCode}`;
+		if (referrer) {
+			referred_by_id = referrer.id;
+		}
+	}
+
 	const hash = await hashPassword(passwordVal);
-	const [user] = await sql`insert into users (email, password_hash, display_name) values (${email_val}, ${hash}, ${displayName_val}) returning id, display_name, plan, created_at`;
+	// TODO: loop until referral code is unique
+	const newReferralCode = generateReferralCode();
+	const [user] = await sql`insert into users (email, password_hash, display_name, referred_by_id, referral_code) values (${email_val}, ${hash}, ${displayName_val}, ${referred_by_id}, ${newReferralCode}) returning id, display_name, plan, created_at, referral_code`;
 	await destroySession(req);
 	const token = await createSession({ userId: user.id, userAgent: req.headers['user-agent'], ip });
 	res.setHeader('set-cookie', sessionCookie(token));

@@ -375,7 +375,7 @@ body.gallery-body {
 	overflow: hidden;
 	background: #050505;
 	aspect-ratio: 1 / 1;
-	min-height: 420px;
+	min-height: 300px;
 	width: 100%;
 	margin: 0 auto;
 }
@@ -533,12 +533,14 @@ body.gallery-body {
 	border-radius: var(--radius-md);
 	padding: var(--space-sm);
 	font-family: var(--font-mono);
-	font-size: var(--text-sm);
-	color: rgba(229, 229, 229, 0.85);
+	font-size: 11px;
+	color: rgba(229, 229, 229, 0.75);
 	white-space: pre-wrap;
 	word-break: break-all;
 	overflow-x: auto;
-	line-height: 1.6;
+	line-height: 1.55;
+	max-height: 5.5rem;
+	overflow-y: hidden;
 }
 
 .snippet code {
@@ -556,7 +558,7 @@ body.gallery-body {
 .snippet-row button,
 .snippet-row a {
 	flex: 1 1 auto;
-	min-width: 110px;
+	min-width: 100px;
 	padding: var(--space-xs) var(--space-sm);
 	font-size: var(--text-sm);
 	background: rgba(255, 255, 255, 0.05);
@@ -569,7 +571,33 @@ body.gallery-body {
 	font-family: var(--font-body);
 	transition:
 		background 0.15s,
-		border-color 0.15s;
+		border-color 0.15s,
+		color 0.15s;
+}
+
+/* "Copy iframe" is the primary action */
+.snippet-row button:first-child {
+	background: var(--blue);
+	border-color: var(--blue);
+	color: #fff;
+}
+
+.snippet-row button:first-child:hover {
+	background: #2563eb;
+	border-color: #2563eb;
+}
+
+/* "Open in Studio" sits quieter as a text link */
+.snippet-row a {
+	background: transparent;
+	color: rgba(229, 229, 229, 0.55);
+	border-color: transparent;
+}
+
+.snippet-row a:hover {
+	color: #fff;
+	background: rgba(255, 255, 255, 0.06);
+	border-color: rgba(255, 255, 255, 0.12);
 }
 
 .snippet-row button:hover,

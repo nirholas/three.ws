@@ -824,7 +824,8 @@
 			}
 			picker.customUrl.value = '';
 			const filename = parsed.pathname.split('/').pop();
-			const name = filename ? filename.replace(/\.(glb|gltf|vrm)$/i, '') : 'Custom';
+			let name = filename ? filename.replace(/\.(glb|gltf|vrm)$/i, '') : 'Custom';
+			if (name.length > 24) name = name.slice(0, 24) + '…';
 			selectAvatar({ url: parsed.href, name, sub: shortenUrl(parsed.href) });
 		}
 

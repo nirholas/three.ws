@@ -5,7 +5,7 @@
  * (5 tabs). Routing is path-based: /marketplace and /marketplace/agents/:id.
  */
 
-const API = '/api/marketplace';
+const API = '/api';
 
 const CATEGORY_LABELS = {
 	academic: 'Academic',
@@ -22,6 +22,7 @@ const CATEGORY_LABELS = {
 	office: 'Office',
 	programming: 'Programming',
 	translation: 'Translation',
+	blockchain: 'Blockchain',
 };
 
 const state = {
@@ -135,16 +136,15 @@ async function loadList(reset = false) {
 		els.grid.innerHTML = '<div class="market-empty">Loading…</div>';
 	}
 	try {
-		const url = new URL(`${API}/agents`, location.origin);
+		const url = new URL(`${API}/marketplace`, location.origin);
 		if (state.category) url.searchParams.set('category', state.category);
 		if (state.q) url.searchParams.set('q', state.q);
 		if (state.sort) url.searchParams.set('sort', state.sort);
 		if (state.cursor) url.searchParams.set('cursor', state.cursor);
 		const r = await fetch(url);
 		const j = await r.json();
-		const items = j?.data?.items || [];
+		const items = j || [];
 		state.items = reset ? items : [...state.items, ...items];
-		state.cursor = j?.data?.next_cursor || null;
 		renderGrid();
 	} catch (err) {
 		console.error('[marketplace] list', err);
@@ -168,20 +168,20 @@ function renderGrid() {
 }
 
 function renderCard(a) {
-	const date = a.published_at ? formatDate(a.published_at) : '';
+	const date = a.published ? formatDate(a.published) : '';
 	const skills = (a.skills || []).length;
 	return `<div class="market-card-agent" data-id="${a.id}">
 		<div class="head">
-			<div class="avatar">${initial(a.name)}</div>
+			<div class="avatar">${a.avatar}</div>
 			<div style="min-width:0;flex:1">
 				<div class="title">${escapeHtml(a.name || 'Untitled')}</div>
-				<div class="author">${escapeHtml(a.author_name || 'Anonymous')}</div>
+				<div class="author">${escapeHtml(a.author || 'Anonymous')}</div>
 			</div>
 		</div>
 		<div class="desc">${escapeHtml(a.description || '')}</div>
 		<div class="stats">
-			<span class="stat-pill">⊙ ${a.views_count || 0}</span>
-			<span class="stat-pill">⑂ ${a.forks_count || 0}</span>
+			<span class="stat-pill">⊙ ${a.views || 0}</span>
+			<span class="stat-pill">⑂ ${a.forks || 0}</span>
 			${skills ? `<span class="stat-pill">▤ ${skills}</span>` : ''}
 			${a.has_paid_skills ? `<span class="stat-pill paid-badge">$ Paid</span>` : ''}
 		</div>

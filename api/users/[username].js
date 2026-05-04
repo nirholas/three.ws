@@ -16,7 +16,7 @@ export default wrap(async (req, res) => {
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
 	const [user] = await sql`
-		select id, display_name, username, created_at
+		select id, display_name, username, created_at, referral_code
 		from users
 		where lower(username) = ${username} and deleted_at is null
 		limit 1
@@ -45,6 +45,7 @@ export default wrap(async (req, res) => {
 		user: {
 			username: user.username,
 			display_name: user.display_name || user.username,
+			referral_code: user.referral_code,
 		},
 		avatars,
 	});

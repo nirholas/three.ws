@@ -8,30 +8,62 @@ set -e
 # management. It's a single entry point for various SDK and agent-related
 # tasks.
 #
-# Usage: ./claude.sh [COMMAND]
+# Usage: ./claude.sh [COMMAND] [OPTIONS]
 #
 # Commands:
 #   install-sdk       Install and build the local agent SDKs.
 #   validate-cards    Validate the agent cards.
-#   db-migrate        Apply database migrations.
+#   db-migrate        Apply database migrations (with confirmation).
 #   db-status         Check the status of database migrations.
 #   pump-smoke-test   Run the pump.fun smoke test.
 #   seed-skills       Seed the skills from the manifest.
+#   test              Run the test suite.
+#   format            Format the codebase with Prettier.
+#   clean             Clean up build artifacts.
+#   deploy            Deploy the project to Vercel (with confirmation).
 #   help              Show this help message.
 # ---
 
-# --- Configuration ---
+# --- Configuration & Colors ---
 # Root directory of the project
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Color codes
+COLOR_RESET='\033[0m'
+COLOR_RED='\033[0;31m'
+COLOR_GREEN='\033[0;32m'
+COLOR_YELLOW='\033[0;33m'
+COLOR_BLUE='\033[0;34m'
+COLOR_CYAN='\033[0;36m'
+
 # --- Helper Functions ---
 function print_header() {
-  echo "--- $1 ---"
+  echo -e "${COLOR_BLUE}--- $1 ---${COLOR_RESET}"
 }
 
 function print_success() {
-  echo "✅ Success: $1"
+  echo -e "${COLOR_GREEN}✅ Success: $1${COLOR_RESET}"
 }
+
+function print_warning() {
+  echo -e "${COLOR_YELLOW}⚠️ Warning: $1${COLOR_RESET}"
+}
+
+function print_error() {
+  echo -e "${COLOR_RED}❌ Error: $1${COLOR_RESET}"
+  exit 1
+}
+
+function confirm_action() {
+  print_warning "$1"
+  read -p "Are you sure you want to continue? (y/N) " -n 1 -r
+  echo
+  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo "Operation cancelled."
+    exit 0
+  fi
+}
+
 
 # --- Commands ---
 
@@ -59,6 +91,7 @@ function validate_cards() {
 # Apply database migrations
 function db_migrate() {
   print_header "Applying Database Migrations"
+  confirm_action "This will apply all pending migrations to the database."
   cd "$ROOT_DIR"
   npm run db:migrate
   print_success "Database migrations applied."
@@ -87,10 +120,47 @@ function seed_skills() {
   print_success "Skills seeded."
 }
 
+# Run the test suite
+function test() {
+  print_header "Running Tests"
+  cd "$ROOT_DIR"
+  npm run test
+  print_success "Tests completed."
+}
+
+# Format the codebase
+function format() {
+  print_header "Formatting Code"
+  cd "$ROOT_DIR"
+  npm run format
+  print_success "Codebase formatted."
+}
+
+# Clean up build artifacts
+function clean() {
+  print_header "Cleaning Project"
+  cd "$ROOT_DIR"
+  npm run clean
+  print_success "Project cleaned."
+}
+
+# Deploy the project
+function deploy() {
+  print_header "Deploying Project"
+  confirm_action "This will deploy the project to Vercel."
+  cd "$ROOT_DIR"
+  npm run deploy
+  print_success "Project deployed."
+}
+
 # Show the help message
 function help() {
   # Extract the help text from the script's header comments
-  sed -n '/^# ---$/,/^# ---$/p' "$0" | sed 's/^# //g' | sed '1d;$d'
+  sed -n '/^# ---$/,/^# ---$/p' "$0" | sed 's/^# //g' | sed '1d;$d' | while read -r line; do
+    command=$(echo "$line" | awk '{print $1}')
+    description=$(echo "$line" | cut -d' ' -f2-)
+    printf "  ${COLOR_CYAN}%-18s${COLOR_RESET} %s\n" "$command" "$description"
+  done
 }
 
 # --- Main Command Router ---
@@ -121,13 +191,24 @@ function main() {
     seed-skills)
       seed_skills
       ;;
+    test)
+      test
+      ;;
+    format)
+      format
+      ;;
+    clean)
+      clean
+      ;;
+    deploy)
+      deploy
+      ;;
     help)
       help
       ;;
     *)
-      echo "Error: Unknown command '$1'"
+      print_error "Unknown command '$1'"
       help
-      exit 1
       ;;
   esac
 }

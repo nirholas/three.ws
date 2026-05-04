@@ -1,0 +1,25 @@
+.container {
+  display: grid;
+  grid-template-columns: 280px 1fr 280px;
+  height: 100vh;
+  width: 100vw;
+  color: white;
+}
+
+.leftPanel,
+.rightPanel {
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 1rem;
+  backdrop-filter: blur(10px);
+}
+
+.centerPanel {
+  /* The 3D scene will be rendered here */
+}
+
+h2 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}

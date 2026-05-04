@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pump.fun Coin</title>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background-color: #121212;
+    color: #ffffff;
+    margin: 0;
+    padding: 20px;
+  }
+  .container {
+    max-width: 800px;
+    margin: auto;
+    background: #1e1e1e;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 20px;
+  }
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+  }
+  .coin-img {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+  }
+  .coin-info h1 {
+    margin: 0;
+    font-size: 24px;
+  }
+  .coin-info .ticker {
+    color: #888;
+    font-size: 16px;
+  }
+  .description-box {
+    border: 1px solid #333;
+    background: #252525;
+    border-radius: 8px;
+    padding: 15px;
+    min-height: 200px;
+  }
+  h2 {
+    font-size: 18px;
+    color: #00ff41;
+    border-bottom: 1px solid #333;
+    padding-bottom: 10px;
+  }
+  .agent-embed {
+    width: 100%;
+    height: 400px;
+    border-radius: 8px;
+    border: 1px solid #333;
+    overflow: hidden;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="https://pump.fun/_next/image?url=%2Fandroid-chrome-512x512.png&w=128&q=75" alt="Coin" class="coin-img">
+      <div class="coin-info">
+        <h1>My 3D Agent Coin</h1>
+        <div class="ticker">$AGENT3D</div>
+      </div>
+    </div>
+    <h2>Description</h2>
+    <div class="description-box">
+      <p>This is a demonstration of embedding a 3D Agent on a pump.fun-style coin page. The agent below is rendered inside an iframe.</p>
+      <iframe class="agent-embed" src="/agent-embed.html?id=agent-test-ad415d18&bg=dark"></iframe>
+      <p>In a real-world scenario, websites like pump.fun would sanitize this description to prevent HTML and script injection for security reasons. This demo illustrates what would be possible if they allowed certain HTML elements like iframes.</p>
+    </div>
+  </div>
+</body>
+</html>

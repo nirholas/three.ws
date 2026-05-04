@@ -20,6 +20,7 @@ import { attachPumpFunMemoryHooks } from './agent-skills-pumpfun-hooks.js';
 import { registerJupiterSkills } from './agent-skills-jupiter.js';
 import { registerBlinksSkills } from './agent-skills-blinks.js';
 import { registerNftSkills } from './agent-skills-nfts.js';
+import { registerSceneSkills } from './agent-skills-scene.js';
 
 /**
  * @typedef {Object} SkillContext
@@ -69,6 +70,7 @@ export class AgentSkills {
 		registerJupiterSkills(this);
 		registerBlinksSkills(this);
 		registerNftSkills(this);
+		registerSceneSkills(this);
 	}
 
 	// ── Registry ──────────────────────────────────────────────────────────────
