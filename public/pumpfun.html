@@ -8,7 +8,6 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 	<link rel="stylesheet" href="/style.css" />
-	<link rel="stylesheet" href="/home.css" />
 	<link rel="stylesheet" href="/footer.css" />
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
 	<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
@@ -675,7 +674,38 @@
 				</div>
 			`;
 			card.addEventListener('click', () => selectAvatar(a, card));
+			card.addEventListener('mouseenter', () => previewAvatar(a));
+			card.addEventListener('focus', () => previewAvatar(a));
 			return card;
+		}
+
+		let previewMv = null;
+		function previewAvatar(a) {
+			const stage = $('picker-preview-stage');
+			const empty = $('picker-preview-empty');
+			const nameEl = $('picker-preview-name');
+			const subEl = $('picker-preview-sub');
+			const url = a.url;
+			if (!url) return;
+			empty.style.display = 'none';
+			if (!previewMv) {
+				previewMv = document.createElement('model-viewer');
+				previewMv.setAttribute('auto-rotate', '');
+				previewMv.setAttribute('auto-rotate-delay', '0');
+				previewMv.setAttribute('rotation-per-second', '20deg');
+				previewMv.setAttribute('interaction-prompt', 'none');
+				previewMv.setAttribute('camera-controls', '');
+				previewMv.setAttribute('shadow-intensity', '0.5');
+				previewMv.setAttribute('exposure', '0.9');
+				previewMv.setAttribute('environment-image', 'neutral');
+				previewMv.setAttribute('loading', 'eager');
+				stage.appendChild(previewMv);
+			}
+			if (previewMv.getAttribute('src') !== url) {
+				previewMv.setAttribute('src', url);
+			}
+			nameEl.textContent = a.name || 'Avatar';
+			subEl.textContent = a.sub || '';
 		}
 
 		async function selectAvatar(a, cardEl) {

@@ -160,24 +160,16 @@ export const env = {
 	get X402_MAX_AMOUNT_REQUIRED() {
 		return opt('X402_MAX_AMOUNT_REQUIRED', '1000');
 	},
-	// Per-network facilitators. PayAI supports both Solana and Base mainnet;
-	// x402.org's reference facilitator only supports base-sepolia, so it cannot
-	// be the default for Base mainnet payments.
+	// Per-network facilitators. PayAI supports both Solana and Base mainnet.
+	// NOTE: Do NOT fall back to a generic X402_FACILITATOR_URL here — Coinbase's
+	// reference facilitator (x402.org/facilitator) only supports base-sepolia and
+	// returns "No facilitator registered for scheme: exact and network: base" for
+	// mainnet. Each network must default independently to payai.network.
 	get X402_FACILITATOR_URL_SOLANA() {
-		return trimSlash(
-			opt(
-				'X402_FACILITATOR_URL_SOLANA',
-				opt('X402_FACILITATOR_URL', 'https://facilitator.payai.network'),
-			),
-		);
+		return trimSlash(opt('X402_FACILITATOR_URL_SOLANA', 'https://facilitator.payai.network'));
 	},
 	get X402_FACILITATOR_URL_BASE() {
-		return trimSlash(
-			opt(
-				'X402_FACILITATOR_URL_BASE',
-				opt('X402_FACILITATOR_URL', 'https://facilitator.payai.network'),
-			),
-		);
+		return trimSlash(opt('X402_FACILITATOR_URL_BASE', 'https://facilitator.payai.network'));
 	},
 	get X402_FACILITATOR_TOKEN_SOLANA() {
 		return opt('X402_FACILITATOR_TOKEN_SOLANA', opt('X402_FACILITATOR_TOKEN'));
