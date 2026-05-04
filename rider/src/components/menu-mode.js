@@ -16,6 +16,17 @@ const modeMap = {
   viewer2d: 'viewer'
 };
 
+/**
+ * Click target that opens the multiplayer lobby panel.
+ */
+AFRAME.registerComponent('multiplayer-button', {
+  init: function () {
+    this.el.addEventListener('click', () => {
+      this.el.sceneEl.emit('mpopen', null, false);
+    });
+  }
+});
+
 AFRAME.registerComponent('menu-mode', {
   schema: {
     colorScheme: {default: 'default'},

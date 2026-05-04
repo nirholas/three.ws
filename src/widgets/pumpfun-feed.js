@@ -392,13 +392,102 @@ function cap(s) {
 
 function renderGraduation(ev) {
 	const el = document.createElement('div');
-	el.style.cssText = cardStyle('#1a1632');
+	el.style.cssText = cardStyle('#1a1632') + ';position:relative' + (ev.replay ? ';opacity:0.62' : '');
+	const mint = ev.mint || '';
+	const m = encodeURIComponent(mint);
+	const name = ev.name || ev.symbol || mint || '—';
+	const symbol = ev.symbol || '?';
+	const age = ev.age || (ev.created_at ? relTime(ev.created_at) : '');
+	const desc = ev.description ? String(ev.description) : '';
+	const descClip = desc ? escapeHtml(desc.slice(0, 100)) + (desc.length > 100 ? '…' : '') : '';
+
+	const mcInitial = ev.market_cap_usd_initial ?? ev.initial_market_cap_usd ?? ev.market_cap_at_launch;
+	const mcCurrent = ev.usd_market_cap ?? ev.market_cap_usd ?? ev.market_cap;
+	const mcStr = (mcInitial != null && mcCurrent != null)
+		? `$${num(mcInitial)} ⇨ $${num(mcCurrent)}`
+		: (mcCurrent != null ? `$${num(mcCurrent)}` : '');
+	const ath = ev.ath_market_cap ?? ev.ath_usd ?? null;
+	const athStr = ath != null && ath !== mcCurrent ? `$${num(ath)}` : '';
+
+	const launches = ev.creator_launches;
+	const graduated = ev.creator_graduated;
+	const bestToken = Array.isArray(ev.creator_tokens) && ev.creator_tokens.length
+		? ev.creator_tokens.slice().sort((a, b) => (b?.mc || 0) - (a?.mc || 0))[0]
+		: null;
+	const bestStr = bestToken
+		? (bestToken.symbol === symbol
+			? `best $${escapeHtml(bestToken.symbol)}${bestToken.mc ? ' $' + num(bestToken.mc) : ''} (this)`
+			: `best $${escapeHtml(bestToken.symbol || '?')}${bestToken.mc ? ' $' + num(bestToken.mc) : ''}`)
+		: '';
+	const amountStr = ev.amount_sol != null
+		? `${Number(ev.amount_sol).toFixed(2)} SOL${ev.amount_usd != null ? ' [$' + num(ev.amount_usd) + ']' : ''}`
+		: '';
+	const launchesPart = launches != null
+		? (graduated != null ? `${launches} launches · 🎓 ${graduated}` : `${launches} launches`)
+		: '';
+	const devLine = [launchesPart, bestStr, amountStr].filter(Boolean).join(' · ');
+
+	const socials = [
+		ev.twitter ? `<a href="${attrEsc(twitterHref(ev.twitter))}" target="_blank" rel="noopener" style="color:#cbd5e1">𝕏</a>` : '',
+		ev.telegram ? `<a href="${attrEsc(ev.telegram)}" target="_blank" rel="noopener" style="color:#cbd5e1">TG</a>` : '',
+		ev.website ? `<a href="${attrEsc(ev.website)}" target="_blank" rel="noopener" style="color:#cbd5e1">🌐</a>` : '',
+	].filter(Boolean).join(' ');
+
+	const chartLinks = mint
+		? `<a href="https://dexscreener.com/solana/${m}" target="_blank" rel="noopener" style="color:#9a8cff">DEX</a>⋅<a href="https://www.defined.fi/sol/${m}" target="_blank" rel="noopener" style="color:#9a8cff">DEF</a>`
+		: '';
+	const toolAbbr = mint
+		? [
+			['AXI', `https://axiom.trade/meme/${mint}`],
+			['GMG', `https://gmgn.ai/sol/token/${mint}`],
+			['PDR', `https://trade.padre.gg/trade/solana/${mint}`],
+			['PHO', `https://photon-sol.tinyastro.io/en/r/@bonk/${mint}`],
+			['BLX', `https://bullx.io/terminal?chainId=1399811149&address=${mint}`],
+		].map(([l, u]) => `<a href="${attrEsc(u)}" target="_blank" rel="noopener" style="color:#9a8cff">${l}</a>`).join('⋅')
+		: '';
+
+	const sig = ev.signature || ev.tx_signature;
+	const ts = ev.timestamp ?? ev.block_time ?? ev.created_at;
+	const tsStr = ts ? new Date(ts < 1e12 ? ts * 1000 : ts).toISOString().replace('T', ' ').replace(/\..+$/, '') + ' UTC' : '';
+
+	const replayBadge = ev.replay
+		? `<span style="position:absolute;top:8px;right:10px;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#6a6a82;padding:1px 6px;border:1px solid #2a2a3c;border-radius:999px;background:#0e0e16">replay</span>`
+		: '';
+	const thumb = ev.image_uri
+		? `<img src="${attrEsc(ev.image_uri)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none'" style="width:40px;height:40px;border-radius:6px;object-fit:cover;border:1px solid #2a2a3c;background:#0e0e16;flex:0 0 40px" />`
+		: '';
+
 	el.innerHTML = `
-		<div style="font-size:11px;opacity:0.7">🎓 Graduation</div>
-		<div style="font-weight:600;margin-top:4px">${escapeHtml(ev.name || ev.symbol || ev.mint)}</div>
-		${ev.symbol ? `<div style="font-size:12px;opacity:0.85">$${escapeHtml(ev.symbol)}</div>` : ''}
+		${replayBadge}
+		<div style="display:flex;gap:10px;align-items:flex-start">
+			${thumb}
+			<div style="flex:1;min-width:0">
+				<div style="font-weight:700">🆕💊 ${escapeHtml(name)} — $${escapeHtml(symbol)}${age ? ' [' + escapeHtml(age) + ']' : ''}</div>
+				${descClip ? `<div style="opacity:0.78;font-size:11px;margin-top:2px">${descClip}</div>` : ''}
+				${socials ? `<div style="margin-top:4px;display:flex;gap:6px">${socials}</div>` : ''}
+			</div>
+		</div>
+		${mcStr ? `<div style="margin-top:6px">💎 MC: ${mcStr}${athStr ? ' · 🏆 ATH: ' + athStr : ''}</div>` : ''}
+		${devLine ? `<div style="margin-top:4px;font-size:11px;opacity:0.9">👨‍💻 ${devLine}</div>` : ''}
+		${chartLinks ? `<div style="margin-top:4px;font-size:11px">💹 Chart: ${chartLinks}</div>` : ''}
+		${toolAbbr ? `<div style="font-size:11px">🧰 ${toolAbbr}</div>` : ''}
+		<div style="font-family:ui-monospace,monospace;font-size:10px;opacity:0.55;margin-top:4px;word-break:break-all">${escapeHtml(mint)}</div>
+		<div style="font-size:10px;opacity:0.55;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap">
+			${sig ? `🔗 <a href="https://solscan.io/tx/${encodeURIComponent(sig)}" target="_blank" rel="noopener" style="color:#9a8cff">TX</a>` : ''}
+			${mint ? `· <a href="https://pump.fun/coin/${m}" target="_blank" rel="noopener" style="color:#9a8cff">pump.fun</a>` : ''}
+			${tsStr ? `· 🕐 ${escapeHtml(tsStr)}` : ''}
+		</div>
 	`;
 	return el;
+}
+
+function attrEsc(s) { return escapeHtml(s); }
+function twitterHref(v) {
+	const s = String(v ?? '').trim();
+	if (!s) return '';
+	if (/^https?:\/\//i.test(s)) return s;
+	const handle = s.replace(/^@+/, '').split(/[/?#]/)[0];
+	return `https://x.com/${encodeURIComponent(handle)}`;
 }
 
 function cardStyle(bg) {

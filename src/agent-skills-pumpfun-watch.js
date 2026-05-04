@@ -32,6 +32,9 @@ const _state = {
 	count: 0,
 };
 
+/** Active whale-trade watchers keyed by mint. Value is the AbortController. */
+const _whaleWatchers = new Map();
+
 async function fetchJson(url) {
 	const r = await fetch(url, { credentials: 'include' });
 	if (!r.ok) throw new Error(`request failed: ${r.status}`);
