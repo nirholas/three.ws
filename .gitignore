@@ -1,6 +1,5 @@
 node_modules
 dist
-dist-lib
 dist-artifact
 .cache
 .vercel
@@ -29,9 +28,7 @@ xspace-agent/demo-join.ts
 xspace-agent/join-space.js
 xspace-agent/start-demo.sh
 
-# Chat build artifacts
-public/chat/assets/
-public/chat/index.html.gz
+# Chat build artifacts — agent-3d.js, agent-3d.umd.cjs, and public/chat/assets committed as pre-built artifacts (rider pattern)
 
 # Animation build cache
 public/animations/clips/.input-hashes.json

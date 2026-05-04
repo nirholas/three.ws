@@ -1,5 +1,5 @@
 {
-	"buildCommand": "npm run build:all",
+	"buildCommand": "npm run build:vercel",
 	"outputDirectory": "dist",
 	"public": true,
 	"installCommand": "npm ci --prefer-offline --no-audit --no-fund",

@@ -36,12 +36,22 @@ const appConfig = {
 		dedupe: ['three'],
 	},
 	build: {
+		target: 'esnext',
+		reportCompressedSize: false,
 		chunkSizeWarningLimit: 1000,
 		rollupOptions: {
 			output: {
 				manualChunks(id) {
 					if (id.includes('node_modules/three/')) return 'three';
 					if (id.includes('node_modules/ethers/')) return 'ethers';
+					if (id.includes('node_modules/@solana/web3.js/') || id.includes('node_modules/@solana/spl-token/') || id.includes('node_modules/@solana/actions/') || id.includes('node_modules/@solana/kit/')) return 'solana';
+					if (id.includes('node_modules/livekit-client/') || id.includes('node_modules/@livekit/')) return 'livekit';
+					if (id.includes('node_modules/@pump-fun/pump-sdk/') || id.includes('node_modules/@pump-fun/pump-swap-sdk/')) return 'pump';
+					if (id.includes('node_modules/@jup-ag/')) return 'jup';
+					if (id.includes('node_modules/@bonfida/')) return 'bonfida';
+					if (id.includes('node_modules/@pythnetwork/')) return 'pyth';
+					if (id.includes('node_modules/@metaplex-foundation/') || id.includes('node_modules/@noble/curves/')) return 'crypto';
+					if (id.includes('node_modules/@coral-xyz/anchor/')) return 'anchor';
 				},
 			},
 			input: {
@@ -303,6 +313,8 @@ const libConfig = {
 		dedupe: ['three'],
 	},
 	build: {
+		target: 'esnext',
+		reportCompressedSize: false,
 		outDir: 'dist-lib',
 		emptyOutDir: true,
 		chunkSizeWarningLimit: 2000,

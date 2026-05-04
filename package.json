@@ -50,6 +50,7 @@
 		"build:rider:full": "cd rider && npm ci --prefer-offline --no-audit --no-fund --ignore-engines && npm run build && cd .. && npm run build:rider",
 		"build:fast": "npm run build",
 		"build:all": "npm run build:chat && (npm run build & npm run build:lib & npm run build:rider & wait) && npm run publish:lib",
+		"build:vercel": "npm run build && npm run build:rider && npm run publish:lib",
 		"clean": "rm -rf dist/* dist-lib/* || true",
 		"generate-icons": "node scripts/generate-pwa-icons.mjs",
 		"fetch-animations": "node scripts/download-animations.mjs",
