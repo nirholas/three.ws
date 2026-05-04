@@ -184,6 +184,17 @@ export class Viewer {
 		}
 
 		this._onResize = this.resize.bind(this);
+
+		// ResizeObserver catches the "iframe first paint" race where the element
+		// has 0×0 size when the Viewer is created (layout not yet settled) but
+		// grows to its correct dimensions a few frames later. window:'resize'
+		// only fires on explicit user-initiated window resizes, so it would
+		// never self-correct in embed/kiosk mode without this observer.
+		if (typeof ResizeObserver !== 'undefined') {
+			this._resizeObserver = new ResizeObserver(() => this.resize());
+			this._resizeObserver.observe(this.el);
+		}
+
 		this._onKeyDown = (e) => {
 			if (this.isInputFocused()) return;
 			if (e.key === 'p' || e.key === 'P') {
@@ -519,6 +530,7 @@ export class Viewer {
 	}
 
 	resize() {
+		if (this._disposed) return;
 		const { clientHeight, clientWidth } = this.el;
 		if (clientWidth === 0 || clientHeight === 0) return;
 
@@ -528,9 +540,11 @@ export class Viewer {
 		this.defaultCamera.updateProjectionMatrix();
 		this.renderer.setSize(clientWidth, clientHeight);
 
-		this.axesCamera.aspect = this.axesDiv.clientWidth / this.axesDiv.clientHeight;
-		this.axesCamera.updateProjectionMatrix();
-		this.axesRenderer.setSize(this.axesDiv.clientWidth, this.axesDiv.clientHeight);
+		if (this.axesCamera && this.axesDiv?.clientHeight) {
+			this.axesCamera.aspect = this.axesDiv.clientWidth / this.axesDiv.clientHeight;
+			this.axesCamera.updateProjectionMatrix();
+			this.axesRenderer.setSize(this.axesDiv.clientWidth, this.axesDiv.clientHeight);
+		}
 
 		// Re-frame so the full avatar stays visible after the canvas changes
 		// shape — the initial framing uses the aspect at load time, which is
@@ -1458,6 +1472,10 @@ export class Viewer {
 			this._onAnimHotkey = null;
 		}
 
+		if (this._resizeObserver) {
+			this._resizeObserver.disconnect();
+			this._resizeObserver = null;
+		}
 		if (this._intersectionObserver) {
 			this._intersectionObserver.disconnect();
 			this._intersectionObserver = null;
