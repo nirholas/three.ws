@@ -244,14 +244,16 @@ export class AgentIdentity {
 					this._record = _normalise(agent);
 					this._agentId = this._record.id;
 					this._loaded = true;
-					this._backendConfirmed = true;
+					// user_id only present when caller owns the agent — use that as the
+					// ownership signal so recordAction doesn't fire 401s on public embeds.
+					this._backendConfirmed = this._record.backendConfirmed;
 					this._persist();
 					if (!this.memory) {
-						this.memory = new AgentMemory(this._record.id, { backendSync: true, embedFn: _makeEmbedFn(this._record.id) });
+						this.memory = new AgentMemory(this._record.id, { backendSync: this._backendConfirmed, embedFn: _makeEmbedFn(this._record.id) });
 					} else {
 						// Agent confirmed in backend — enable sync and pull latest
-						this.memory.backendSync = true;
-						this.memory._syncFromBackend();
+						this.memory.backendSync = this._backendConfirmed;
+						if (this._backendConfirmed) this.memory._syncFromBackend();
 					}
 					return;
 				}
@@ -358,6 +360,8 @@ function _normalise(apiRecord) {
 			? new Date(apiRecord.created_at).getTime()
 			: apiRecord.createdAt || Date.now(),
 		isRegistered: Boolean(apiRecord.erc8004_agent_id || apiRecord.isRegistered),
-		backendConfirmed: true,
+		// user_id is only returned when the caller owns the agent (isOwner=true in decorate()).
+		// Only mark as confirmed-owner so recordAction doesn't fire 401s for public embeds.
+		backendConfirmed: Boolean(apiRecord.user_id),
 	};
 }

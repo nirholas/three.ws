@@ -308,6 +308,16 @@
 
 <div class="input-floating absolute bottom-4 left-1/2 z-[99] w-full -translate-x-1/2 px-6">
 	<div class="mx-auto flex w-full max-w-[760px] flex-col">
+		<!-- Disclaimer -->
+		{#if convo.models.every((m) => m.provider === 'Built-in')}
+			<p class="mb-1.5 text-center text-[11px] text-[#9C9A93]">
+				Using free models. Connect your own API key in
+				<button
+					data-trigger="settings"
+					class="underline hover:text-[#1A1A1A] transition-colors"
+				>Settings</button>.
+			</p>
+		{/if}
 		<!-- Composer card -->
 		<div
 			class="bg-white border border-[#E5E3DC] rounded-[20px] shadow-composer pt-5 px-5 pb-3"
