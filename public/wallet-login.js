@@ -3,7 +3,6 @@
 
 import { createConnectWalletButton } from '/wallet/connect-button.js';
 import { createSolanaWalletButton } from '/wallet/connect-button-solana.js';
-import { ethers } from 'https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.min.js';
 
 const params = new URLSearchParams(location.search);
 const next   = window.__loginNext || params.get('next') || sessionStorage.getItem('login_redirect') || '/create';
@@ -95,67 +94,3 @@ document.querySelectorAll('.chain-tab').forEach((tab) => {
 		clearErr();
 	});
 });
-
-// ─── Demo User button ────────────────────────────────────────────────────────
-
-const demoLoginBtn = document.getElementById('demo-login-btn');
-if (demoLoginBtn) {
-	demoLoginBtn.addEventListener('click', async () => {
-		// IMPORTANT: This is the default, public, well-known private key from
-		// the Hardhat development environment.
-		// It is NOT a secret. It is used for demonstration purposes only.
-		// DO NOT send any real assets to the corresponding address:
-		// 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
-		***REMOVED***
-		const wallet = new ethers.Wallet(demoPrivateKey);
-		const address = await wallet.getAddress();
-
-		demoLoginBtn.disabled = true;
-		demoLoginBtn.textContent = 'Signing in as Demo User...';
-		clearErr();
-
-		try {
-			// 1. Get nonce from server
-			const nonceRes = await fetch('/api/auth/siwe/nonce', { credentials: 'include' });
-			if (!nonceRes.ok) throw new Error('Failed to fetch nonce.');
-			const { nonce, csrf } = await nonceRes.json();
-
-			// 2. Create SIWE message
-			const message = [
-				`${location.host} wants you to sign in with your Ethereum account:`,
-				address,
-				'',
-				'Sign in to three.ws.',
-				'',
-				`URI: ${location.origin}`,
-				'Version: 1',
-				`Chain ID: 1`, // Mainnet
-				`Nonce: ${nonce}`,
-				`Issued At: ${new Date().toISOString()}`,
-			].join('\n');
-
-			// 3. Sign the message
-			const signature = await wallet.signMessage(message);
-
-			// 4. Verify the signature with the server
-			const verifyRes = await fetch('/api/auth/siwe/verify', {
-				method: 'POST',
-				credentials: 'include',
-				headers: { 'content-type': 'application/json', 'x-csrf-token': csrf },
-				body: JSON.stringify({ message, signature }),
-			});
-
-			if (!verifyRes.ok) {
-				const body = await verifyRes.json().catch(() => ({}));
-				throw new Error(body.error_description || 'Demo login failed at verification.');
-			}
-			const data = await verifyRes.json();
-			onSuccess(data);
-
-		} catch (err) {
-			setErr(err.message || 'An unknown error occurred during demo login.');
-			demoLoginBtn.disabled = false;
-			demoLoginBtn.textContent = 'Login as Demo User';
-		}
-	});
-}
