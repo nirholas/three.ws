@@ -21,6 +21,7 @@
 
 import { ACTION_TYPES } from './agent-protocol.js';
 import { watchClaims } from './pump/pumpkit-claims.js';
+import { applyReaction, createReactionDispatcher } from './widgets/pumpfun-reactions.js';
 
 const FEED_PATH = '/api/agents/pumpfun-feed';
 const TIER_BADGE = { mega: '🔥🔥', influencer: '🔥', notable: '⭐' };
@@ -147,43 +148,33 @@ export function registerPumpFunWatchSkills(skills) {
 			_state.count = 0;
 
 			const protocol = ctx.protocol;
-			const speak = (text, sentiment = 0) =>
-				protocol?.emit({ type: ACTION_TYPES.SPEAK, payload: { text, sentiment } });
-			const emote = (trigger, weight) =>
-				protocol?.emit({ type: ACTION_TYPES.EMOTE, payload: { trigger, weight } });
-			const gesture = (name, duration = 1500) =>
-				protocol?.emit({ type: ACTION_TYPES.GESTURE, payload: { name, duration } });
+			const dispatcher = createReactionDispatcher();
+			const react = (kind, ev) =>
+				dispatcher.dispatch(kind, ev, (reaction) => applyReaction(protocol, reaction));
 
 			_state.es.addEventListener('claim', (msg) => {
 				_state.count++;
 				const ev = safeJson(msg.data);
 				if (!ev) return;
-				if (ev.first_time_claim) {
-					emote('celebration', 0.9);
-					speak(
-						`First-time claim! ${summarizeClaim(ev)}${ev.ai_take ? ` — ${ev.ai_take}` : ''}`,
-						0.7,
-					);
-				} else if (ev.fake_claim) {
-					emote('concern', 0.7);
-					speak(`Fake claim detected: ${summarizeClaim(ev)}`, -0.5);
-				} else if (ev.tier) {
-					emote('curiosity', 0.5);
-					speak(summarizeClaim(ev), 0.2);
-				}
+				react('claim', ev);
 			});
 
 			_state.es.addEventListener('graduation', (msg) => {
 				const ev = safeJson(msg.data);
 				if (!ev) return;
-				gesture('wave', 1500);
-				speak(`Graduation: ${ev.symbol || ev.mint || 'a token'} hit PumpAMM.`, 0.6);
+				react('graduation', ev);
+			});
+
+			_state.es.addEventListener('mint', (msg) => {
+				const ev = safeJson(msg.data);
+				if (!ev) return;
+				react('mint', ev);
 			});
 
 			_state.es.addEventListener('error', () => {
 				// EventSource auto-reconnects; surface only if it permanently closes.
 				if (_state.es && _state.es.readyState === EventSource.CLOSED) {
-					emote('concern', 0.4);
+					protocol?.emit({ type: ACTION_TYPES.EMOTE, payload: { trigger: 'concern', weight: 0.4 } });
 					_state.es = null;
 				}
 			});

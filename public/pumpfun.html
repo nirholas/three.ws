@@ -38,8 +38,55 @@
 		.pf-filterbar button:hover { background: #20202c; }
 		.pf-filterbar button.toggle[data-on="0"] { color: var(--muted); }
 		#ctl-avatar-wrap { display: inline-flex; align-items: center; gap: 6px; }
-		#ctl-avatar-url { width: 0; padding: 0; border-width: 0; overflow: hidden; transition: width 0.2s, padding 0.2s, border-width 0.2s; }
-		#ctl-avatar-url.visible { width: 160px; padding: 6px 10px; border-width: 1px; }
+		#ctl-avatar-btn { display: inline-flex; align-items: center; gap: 8px; max-width: 240px; }
+		#ctl-avatar-btn .avatar-thumb { width: 22px; height: 22px; border-radius: 4px; background: #1a1a24 center/cover no-repeat; border: 1px solid #2a2a36; flex: 0 0 auto; }
+		#ctl-avatar-btn .avatar-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
+		#ctl-avatar-btn .avatar-caret { color: var(--muted); font-size: 10px; }
+
+		/* Picker modal */
+		.pf-modal-backdrop { position: fixed; inset: 0; background: rgba(4,4,8,0.72); backdrop-filter: blur(4px); z-index: 100; display: none; align-items: center; justify-content: center; padding: 24px; animation: fade-in 0.15s ease; }
+		.pf-modal-backdrop[data-open="true"] { display: flex; }
+		.pf-modal { width: min(960px, 100%); max-height: min(720px, calc(100vh - 48px)); background: var(--panel); border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 24px 64px rgba(0,0,0,0.5); animation: pop-in 0.18s ease; }
+		.pf-modal-head { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--border); }
+		.pf-modal-head h2 { margin: 0; font-size: 14px; font-weight: 600; }
+		.pf-modal-head .spacer { flex: 1; }
+		.pf-modal-close { background: transparent; border: 0; color: var(--muted); cursor: pointer; font-size: 18px; line-height: 1; padding: 4px 8px; border-radius: 4px; }
+		.pf-modal-close:hover { background: #1f1f29; color: #eee; }
+		.pf-tabs { display: flex; gap: 2px; padding: 0 14px; border-bottom: 1px solid var(--border); background: #10101a; }
+		.pf-tab { background: transparent; border: 0; color: var(--muted); cursor: pointer; padding: 10px 14px; font-size: 13px; font-weight: 500; border-bottom: 2px solid transparent; }
+		.pf-tab:hover { color: #eee; }
+		.pf-tab[aria-selected="true"] { color: #eee; border-bottom-color: var(--accent); }
+		.pf-tab .badge { display: inline-block; margin-left: 6px; font-size: 10px; color: var(--muted); }
+		.pf-toolbar { display: flex; gap: 8px; align-items: center; padding: 12px 18px; border-bottom: 1px solid var(--border); }
+		.pf-toolbar input[type="search"] { flex: 1; background: #161620; color: #eee; border: 1px solid #2a2a36; border-radius: 6px; padding: 7px 10px; font-size: 13px; }
+		.pf-toolbar input[type="search"]:focus { outline: none; border-color: var(--accent); }
+		.pf-toolbar .custom-row { display: flex; gap: 6px; align-items: center; }
+		.pf-toolbar .custom-row input { background: #161620; color: #eee; border: 1px solid #2a2a36; border-radius: 6px; padding: 7px 10px; font-size: 13px; width: 220px; }
+		.pf-toolbar .custom-row button { background: var(--accent); border: 0; color: #fff; border-radius: 6px; padding: 7px 12px; font-size: 13px; cursor: pointer; }
+		.pf-toolbar .custom-row button:hover { filter: brightness(1.1); }
+		.pf-body { flex: 1; min-height: 0; overflow-y: auto; padding: 16px 18px; }
+		.pf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+		.pf-card { position: relative; background: #161620; border: 1px solid #232330; border-radius: 8px; overflow: hidden; cursor: pointer; transition: border-color 0.15s, transform 0.1s; display: flex; flex-direction: column; text-align: left; padding: 0; color: #eee; font: inherit; }
+		.pf-card:hover { border-color: #3a3a4a; }
+		.pf-card:active { transform: scale(0.98); }
+		.pf-card[data-selected="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+		.pf-card .thumb { aspect-ratio: 1/1; background: #0e0e16 center/cover no-repeat; border-bottom: 1px solid #232330; position: relative; display: flex; align-items: center; justify-content: center; color: #2a2a3a; font-size: 32px; }
+		.pf-card .meta { padding: 8px 10px; }
+		.pf-card .name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+		.pf-card .sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+		.pf-card .vis-tag { position: absolute; top: 6px; right: 6px; font-size: 9px; padding: 2px 6px; border-radius: 999px; background: rgba(0,0,0,0.6); color: #cbd5e1; text-transform: uppercase; letter-spacing: 0.05em; }
+		.pf-card .vis-tag.private { background: rgba(74,31,35,0.85); color: #fbbf24; }
+		.pf-card .selected-mark { position: absolute; top: 6px; left: 6px; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); display: none; align-items: center; justify-content: center; color: #fff; font-size: 11px; font-weight: 700; }
+		.pf-card[data-selected="true"] .selected-mark { display: flex; }
+		.pf-status { padding: 32px 16px; text-align: center; color: var(--muted); font-size: 13px; }
+		.pf-status .cta { display: inline-block; margin-top: 10px; padding: 8px 14px; background: var(--accent); color: #fff; border-radius: 6px; font-size: 13px; }
+		.pf-status .cta:hover { filter: brightness(1.1); text-decoration: none; }
+		.pf-loadmore { display: block; margin: 16px auto 0; background: #161620; color: #eee; border: 1px solid #2a2a36; border-radius: 6px; padding: 8px 16px; font-size: 13px; cursor: pointer; }
+		.pf-loadmore:hover { background: #20202c; }
+		.pf-loadmore[disabled] { opacity: 0.5; cursor: wait; }
+		@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+		@keyframes pop-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
+		@media (max-width: 600px) { .pf-toolbar { flex-direction: column; align-items: stretch; } .pf-toolbar .custom-row input { width: 100%; } }
 		main.pf-main { position: relative; height: calc(100vh - 140px); display: grid; grid-template-columns: 1fr 360px; }
 		#stage { position: relative; display: flex; flex-direction: column; }
 		iframe { width: 100%; flex: 1; border: 0; display: block; background: var(--bg); }
@@ -76,10 +123,22 @@
 
 		/* Event cards */
 		.evt { border: 1px solid #232330; background: #15151d; border-radius: 8px; padding: 10px 12px; margin: 6px 0;
-			animation: evt-in 0.35s ease; font-size: 12px; }
+			animation: evt-in 0.35s ease; font-size: 12px; position: relative; }
 		.evt.first { border-color: #1f4232; background: #0e1f17; }
 		.evt.fake { border-color: #4a1f23; background: #1f1418; }
 		.evt.grad { border-color: #2c1f4a; background: #18142a; }
+		.evt.replay { opacity: 0.62; animation: none; }
+		.evt.replay::after { content: 'replay'; position: absolute; top: 8px; right: 10px; font-size: 9px; letter-spacing: 0.08em;
+			text-transform: uppercase; color: #6a6a82; padding: 1px 6px; border: 1px solid #2a2a3c; border-radius: 999px; background: #0e0e16; }
+		.evt-head { display: flex; gap: 10px; align-items: flex-start; }
+		.evt-thumb { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; border: 1px solid #2a2a3c;
+			background: #0e0e16; flex: 0 0 44px; }
+		.evt-head-text { flex: 1; min-width: 0; }
+		.evt-socials { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+		.evt-socials a { font-size: 10px; padding: 2px 7px; border-radius: 4px; background: #1e1e2c;
+			border: 1px solid #2a2a3c; color: #cbd5e1; }
+		.evt-socials a:hover { background: #26263a; color: #fff; }
+		.evt-pool { font-size: 10px; color: #9a8cff; margin-top: 4px; }
 		.evt-row { display: flex; justify-content: space-between; gap: 6px; align-items: baseline; }
 		.evt-kind { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
 		.evt-tier { font-size: 10px; color: #fbbf24; }
@@ -178,16 +237,11 @@
 				<option value="mega">Mega only</option>
 			</select>
 			<div id="ctl-avatar-wrap">
-				<select id="ctl-avatar" title="Avatar">
-					<optgroup label="Defaults">
-						<option value="/avatars/cz.glb">CZ avatar</option>
-						<option value="/avatars/default.glb">Default avatar</option>
-					</optgroup>
-					<optgroup label="Community" id="ctl-avatar-community" hidden></optgroup>
-					<optgroup label="My Agents" id="ctl-avatar-mine" hidden></optgroup>
-					<option value="custom">Custom URL…</option>
-				</select>
-				<input id="ctl-avatar-url" type="text" placeholder="https://…/avatar.glb" />
+				<button id="ctl-avatar-btn" type="button" aria-haspopup="dialog" aria-expanded="false" title="Choose avatar">
+					<span class="avatar-thumb" id="ctl-avatar-thumb" aria-hidden="true"></span>
+					<span class="avatar-name" id="ctl-avatar-label">Avatar</span>
+					<span class="avatar-caret" aria-hidden="true">▾</span>
+				</button>
 			</div>
 			<button id="ctl-narrate" class="toggle" type="button" data-on="1" title="Toggle agent narration">🔊 Narration</button>
 		</div>
@@ -210,13 +264,33 @@
 			</div>
 		</aside>
 	</main>
+	<div class="pf-modal-backdrop" id="avatar-picker" data-open="false" role="dialog" aria-modal="true" aria-labelledby="avatar-picker-title">
+		<div class="pf-modal" role="document">
+			<div class="pf-modal-head">
+				<h2 id="avatar-picker-title">Choose an avatar</h2>
+				<span class="spacer"></span>
+				<button class="pf-modal-close" type="button" aria-label="Close" data-picker-close>×</button>
+			</div>
+			<div class="pf-tabs" role="tablist">
+				<button class="pf-tab" role="tab" type="button" data-tab="defaults" aria-selected="true">Defaults</button>
+				<button class="pf-tab" role="tab" type="button" data-tab="community" aria-selected="false">Community<span class="badge" id="tab-count-community"></span></button>
+				<button class="pf-tab" role="tab" type="button" data-tab="mine" aria-selected="false">My Agents<span class="badge" id="tab-count-mine"></span></button>
+			</div>
+			<div class="pf-toolbar">
+				<input type="search" id="picker-search" placeholder="Search by name…" autocomplete="off" />
+				<div class="custom-row">
+					<input type="url" id="picker-custom-url" placeholder="https://…/avatar.glb" />
+					<button type="button" id="picker-custom-go">Use URL</button>
+				</div>
+			</div>
+			<div class="pf-body" id="picker-body" role="tabpanel"></div>
+		</div>
+	</div>
 	<script>
 		const url = new URL(location.href);
 		const $ = (id) => document.getElementById(id);
 		const iframe = $('agent');
 
-		const PRESET_AVATARS = ['/avatars/cz.glb', '/avatars/default.glb'];
-		const PRESIGN_PREFIX = 'mine:'; // option value sentinel — resolves to a presigned URL on selection
 		const params = {
 			asset: url.searchParams.get('asset') || '',
 			mint: url.searchParams.get('mint') || '',
@@ -232,53 +306,285 @@
 		$('ctl-tier').value = params.minTier;
 		$('ctl-narrate').dataset.on = params.narrate ? '1' : '0';
 
-		// Init avatar picker
-		const avatarSelect = $('ctl-avatar');
-		const avatarUrlInput = $('ctl-avatar-url');
-		if (PRESET_AVATARS.includes(params.avatar)) {
-			avatarSelect.value = params.avatar;
-		} else {
-			avatarSelect.value = 'custom';
-			avatarUrlInput.value = params.avatar;
-			avatarUrlInput.classList.add('visible');
+		// ── Avatar picker ────────────────────────────────────────────────────
+		const DEFAULT_AVATARS = [
+			{ url: '/avatars/cz.glb', name: 'CZ', sub: 'Default narrator', emoji: '🟡' },
+			{ url: '/avatars/default.glb', name: 'Default', sub: 'Generic agent', emoji: '🤖' },
+		];
+
+		const picker = {
+			modal: $('avatar-picker'),
+			body: $('picker-body'),
+			search: $('picker-search'),
+			customUrl: $('picker-custom-url'),
+			customGo: $('picker-custom-go'),
+			tabs: Array.from(document.querySelectorAll('.pf-tab')),
+			trigger: $('ctl-avatar-btn'),
+			label: $('ctl-avatar-label'),
+			thumb: $('ctl-avatar-thumb'),
+			activeTab: 'defaults',
+			query: '',
+			loaded: { defaults: true, community: false, mine: false },
+			loading: { community: false, mine: false },
+			data: { defaults: DEFAULT_AVATARS.map((a) => ({ ...a, _kind: 'default' })), community: [], mine: [] },
+			cursor: { community: null, mine: null },
+			hasMore: { community: false, mine: false },
+			authed: null, // null = unknown, true/false after first /api/avatars probe
+			lastFocus: null,
+		};
+
+		function openPicker() {
+			picker.lastFocus = document.activeElement;
+			picker.modal.dataset.open = 'true';
+			picker.trigger.setAttribute('aria-expanded', 'true');
+			document.body.style.overflow = 'hidden';
+			renderPickerBody();
+			// Pre-fetch lists for every tab so badges and switching feel instant.
+			ensureLoaded('community');
+			ensureLoaded('mine');
+			setTimeout(() => picker.search.focus(), 30);
 		}
-		avatarSelect.addEventListener('change', async () => {
-			const v = avatarSelect.value;
-			if (v === 'custom') {
-				avatarUrlInput.classList.add('visible');
-				avatarUrlInput.focus();
+		function closePicker() {
+			picker.modal.dataset.open = 'false';
+			picker.trigger.setAttribute('aria-expanded', 'false');
+			document.body.style.overflow = '';
+			picker.lastFocus?.focus?.();
+		}
+		picker.trigger.addEventListener('click', openPicker);
+		picker.modal.addEventListener('click', (e) => {
+			if (e.target === picker.modal || e.target.closest('[data-picker-close]')) closePicker();
+		});
+		document.addEventListener('keydown', (e) => {
+			if (e.key === 'Escape' && picker.modal.dataset.open === 'true') closePicker();
+		});
+
+		picker.tabs.forEach((tab) => {
+			tab.addEventListener('click', () => {
+				picker.tabs.forEach((t) => t.setAttribute('aria-selected', String(t === tab)));
+				picker.activeTab = tab.dataset.tab;
+				renderPickerBody();
+				ensureLoaded(picker.activeTab);
+			});
+		});
+
+		picker.search.addEventListener('input', (e) => {
+			picker.query = e.target.value.trim().toLowerCase();
+			renderPickerBody();
+		});
+
+		picker.customGo.addEventListener('click', () => useCustomUrl());
+		picker.customUrl.addEventListener('keydown', (e) => { if (e.key === 'Enter') useCustomUrl(); });
+
+		function useCustomUrl() {
+			const v = picker.customUrl.value.trim();
+			if (!v) return;
+			try { new URL(v, location.href); } catch { alert('That does not look like a valid URL.'); return; }
+			picker.customUrl.value = '';
+			selectAvatar({ url: v, name: 'Custom URL', sub: shortenUrl(v) });
+		}
+
+		function shortenUrl(u) {
+			try { const x = new URL(u, location.href); return x.host + x.pathname.split('/').slice(-1)[0]; }
+			catch { return u.slice(0, 40); }
+		}
+
+		async function ensureLoaded(tab) {
+			if (tab === 'defaults' || picker.loaded[tab] || picker.loading[tab]) return;
+			picker.loading[tab] = true;
+			renderPickerBody();
+			try {
+				if (tab === 'community') {
+					const r = await fetch('/api/avatars/public?limit=48');
+					if (!r.ok) throw new Error('http ' + r.status);
+					const data = await r.json();
+					picker.data.community = (data.avatars || []).filter((a) => a.model_url).map((a) => ({
+						id: a.id,
+						url: a.model_url,
+						name: a.name || a.slug || 'untitled',
+						sub: a.description ? a.description.slice(0, 60) : 'community',
+						thumbnail_url: a.thumbnail_url,
+						visibility: a.visibility,
+						_kind: 'community',
+					}));
+					picker.cursor.community = data.next_cursor;
+					picker.hasMore.community = !!data.next_cursor;
+					updateTabBadge('community', picker.data.community.length + (picker.hasMore.community ? '+' : ''));
+				} else if (tab === 'mine') {
+					const r = await fetch('/api/avatars?limit=100', { credentials: 'include' });
+					if (r.status === 401) { picker.authed = false; picker.loaded.mine = true; return; }
+					picker.authed = true;
+					if (!r.ok) throw new Error('http ' + r.status);
+					const data = await r.json();
+					picker.data.mine = (data.avatars || []).map((a) => ({
+						id: a.id,
+						url: a.model_url, // null for private — we'll presign on click
+						name: a.name || a.slug || 'untitled',
+						sub: (a.visibility || 'private') + (a.description ? ' · ' + a.description.slice(0, 40) : ''),
+						thumbnail_url: a.thumbnail_url,
+						visibility: a.visibility,
+						needsPresign: !a.model_url,
+						_kind: 'mine',
+					}));
+					picker.cursor.mine = data.next_cursor;
+					picker.hasMore.mine = !!data.next_cursor;
+					updateTabBadge('mine', picker.data.mine.length + (picker.hasMore.mine ? '+' : ''));
+				}
+				picker.loaded[tab] = true;
+			} catch (err) {
+				console.warn('[picker] load failed', tab, err);
+			} finally {
+				picker.loading[tab] = false;
+				renderPickerBody();
+			}
+		}
+
+		async function loadMore(tab) {
+			if (!picker.cursor[tab]) return;
+			picker.loading[tab] = true;
+			renderPickerBody();
+			try {
+				const cursor = encodeURIComponent(picker.cursor[tab]);
+				const endpoint = tab === 'community'
+					? `/api/avatars/public?limit=48&cursor=${cursor}`
+					: `/api/avatars?limit=100&cursor=${cursor}`;
+				const opts = tab === 'mine' ? { credentials: 'include' } : {};
+				const r = await fetch(endpoint, opts);
+				if (!r.ok) throw new Error('http ' + r.status);
+				const data = await r.json();
+				const mapper = tab === 'community'
+					? (a) => ({ id: a.id, url: a.model_url, name: a.name || a.slug || 'untitled', sub: a.description ? a.description.slice(0, 60) : 'community', thumbnail_url: a.thumbnail_url, visibility: a.visibility, _kind: 'community' })
+					: (a) => ({ id: a.id, url: a.model_url, name: a.name || a.slug || 'untitled', sub: (a.visibility || 'private') + (a.description ? ' · ' + a.description.slice(0, 40) : ''), thumbnail_url: a.thumbnail_url, visibility: a.visibility, needsPresign: !a.model_url, _kind: 'mine' });
+				const incoming = (data.avatars || []).filter((a) => tab === 'mine' || a.model_url).map(mapper);
+				picker.data[tab] = picker.data[tab].concat(incoming);
+				picker.cursor[tab] = data.next_cursor;
+				picker.hasMore[tab] = !!data.next_cursor;
+				updateTabBadge(tab, picker.data[tab].length + (picker.hasMore[tab] ? '+' : ''));
+			} catch (err) {
+				console.warn('[picker] loadMore failed', tab, err);
+			} finally {
+				picker.loading[tab] = false;
+				renderPickerBody();
+			}
+		}
+
+		function updateTabBadge(tab, text) {
+			const el = document.getElementById('tab-count-' + tab);
+			if (el) el.textContent = text ? ' (' + text + ')' : '';
+		}
+
+		function renderPickerBody() {
+			const body = picker.body;
+			const tab = picker.activeTab;
+			body.innerHTML = '';
+
+			if (tab === 'mine' && picker.authed === false) {
+				body.innerHTML = `<div class="pf-status">
+					Sign in to use avatars you've created.
+					<br><a class="cta" href="/login?next=${encodeURIComponent(location.pathname + location.search)}">Sign in</a>
+				</div>`;
 				return;
 			}
-			avatarUrlInput.classList.remove('visible');
-			if (v.startsWith(PRESIGN_PREFIX)) {
-				const id = v.slice(PRESIGN_PREFIX.length);
-				const opt = avatarSelect.selectedOptions[0];
-				const prevLabel = opt?.textContent;
-				if (opt) opt.textContent = (prevLabel || '') + ' (loading…)';
-				try {
-					const r = await fetch(`/api/avatars/${encodeURIComponent(id)}`, { credentials: 'include' });
-					if (!r.ok) throw new Error('fetch failed');
-					const { avatar } = await r.json();
-					const url = avatar?.url || avatar?.model_url;
-					if (!url) throw new Error('no url');
-					params.avatar = url;
-				} catch {
-					if (opt) opt.textContent = prevLabel;
-					alert('Could not load that avatar.');
-					return;
-				} finally {
-					if (opt && prevLabel) opt.textContent = prevLabel;
-				}
-			} else {
-				params.avatar = v;
+			if (picker.loading[tab] && !picker.data[tab].length) {
+				body.innerHTML = `<div class="pf-status">Loading…</div>`;
+				return;
 			}
+
+			let items = picker.data[tab];
+			if (picker.query) items = items.filter((a) => a.name.toLowerCase().includes(picker.query));
+
+			if (!items.length) {
+				const msg = tab === 'mine'
+					? `No avatars yet. <br><a class="cta" href="/create">Create your first agent</a>`
+					: picker.query ? `No matches for "${escapeHtml(picker.query)}".` : 'Nothing here yet.';
+				body.innerHTML = `<div class="pf-status">${msg}</div>`;
+				return;
+			}
+
+			const grid = document.createElement('div');
+			grid.className = 'pf-grid';
+			items.forEach((a) => grid.appendChild(renderCard(a)));
+			body.appendChild(grid);
+
+			if (picker.hasMore[tab]) {
+				const btn = document.createElement('button');
+				btn.className = 'pf-loadmore';
+				btn.textContent = picker.loading[tab] ? 'Loading…' : 'Load more';
+				btn.disabled = picker.loading[tab];
+				btn.addEventListener('click', () => loadMore(tab));
+				body.appendChild(btn);
+			}
+		}
+
+		function renderCard(a) {
+			const card = document.createElement('button');
+			card.type = 'button';
+			card.className = 'pf-card';
+			const isSelected = a.url && a.url === params.avatar;
+			if (isSelected) card.dataset.selected = 'true';
+			const thumbStyle = a.thumbnail_url ? `style="background-image:url('${attr(a.thumbnail_url)}')"` : '';
+			const fallback = a.thumbnail_url ? '' : (a.emoji || '◇');
+			const visTag = a._kind === 'mine' && a.visibility
+				? `<span class="vis-tag ${a.visibility === 'private' ? 'private' : ''}">${escapeHtml(a.visibility)}</span>`
+				: '';
+			card.innerHTML = `
+				<div class="thumb" ${thumbStyle}>${fallback}${visTag}<span class="selected-mark">✓</span></div>
+				<div class="meta">
+					<div class="name">${escapeHtml(a.name)}</div>
+					<div class="sub">${escapeHtml(a.sub || '')}</div>
+				</div>
+			`;
+			card.addEventListener('click', () => selectAvatar(a, card));
+			return card;
+		}
+
+		async function selectAvatar(a, cardEl) {
+			let resolvedUrl = a.url;
+			if (a.needsPresign) {
+				if (cardEl) { cardEl.style.opacity = '0.5'; cardEl.style.pointerEvents = 'none'; }
+				try {
+					const r = await fetch(`/api/avatars/${encodeURIComponent(a.id)}`, { credentials: 'include' });
+					if (!r.ok) throw new Error('http ' + r.status);
+					const { avatar } = await r.json();
+					resolvedUrl = avatar?.url || avatar?.model_url;
+					if (!resolvedUrl) throw new Error('no url');
+				} catch (err) {
+					alert('Could not load that avatar (' + (err.message || 'error') + ').');
+					if (cardEl) { cardEl.style.opacity = ''; cardEl.style.pointerEvents = ''; }
+					return;
+				}
+			}
+			params.avatar = resolvedUrl;
+			updateTriggerLabel(a);
 			syncURL();
 			mountAgent();
-		});
-		avatarUrlInput.addEventListener('change', () => {
-			const v = avatarUrlInput.value.trim();
-			if (v) { params.avatar = v; syncURL(); mountAgent(); }
-		});
+			closePicker();
+		}
+
+		function updateTriggerLabel(a) {
+			picker.label.textContent = a.name || 'Avatar';
+			if (a.thumbnail_url) {
+				picker.thumb.style.backgroundImage = `url('${a.thumbnail_url}')`;
+				picker.thumb.textContent = '';
+			} else {
+				picker.thumb.style.backgroundImage = '';
+				picker.thumb.textContent = '';
+			}
+		}
+
+		// Initial label from URL param
+		(function initTriggerLabel() {
+			const preset = DEFAULT_AVATARS.find((a) => a.url === params.avatar);
+			if (preset) { updateTriggerLabel(preset); return; }
+			updateTriggerLabel({ name: 'Custom', sub: shortenUrl(params.avatar) });
+			// Try to upgrade label once lists load
+			const tryMatch = () => {
+				const all = picker.data.defaults.concat(picker.data.community, picker.data.mine);
+				const m = all.find((a) => a.url === params.avatar);
+				if (m) updateTriggerLabel(m);
+			};
+			ensureLoaded('community').then(tryMatch);
+			ensureLoaded('mine').then(tryMatch);
+		})();
 
 		function setStatus(state, label) {
 			const dot = $('status-dot');
@@ -743,61 +1049,6 @@
 
 		mountAgent();
 		buildAnimChips();
-		loadAvatarPickerOptions();
-
-		async function loadAvatarPickerOptions() {
-			const customOpt = avatarSelect.querySelector('option[value="custom"]');
-			const community = $('ctl-avatar-community');
-			const mine = $('ctl-avatar-mine');
-
-			// Community pool — public avatars, no auth needed
-			fetch('/api/avatars/public?limit=50')
-				.then((r) => (r.ok ? r.json() : null))
-				.then((data) => {
-					const list = data?.avatars || [];
-					if (!list.length) return;
-					for (const a of list) {
-						if (!a.model_url) continue;
-						const opt = document.createElement('option');
-						opt.value = a.model_url;
-						opt.textContent = a.name || a.slug || 'untitled';
-						community.appendChild(opt);
-					}
-					if (community.children.length) community.hidden = false;
-					ensureSelectedReflected();
-				})
-				.catch(() => {});
-
-			// My Agents — requires session; silently skip if not signed in
-			fetch('/api/avatars?limit=100', { credentials: 'include' })
-				.then((r) => (r.ok ? r.json() : null))
-				.then((data) => {
-					const list = data?.avatars || [];
-					if (!list.length) return;
-					for (const a of list) {
-						const opt = document.createElement('option');
-						// Public/unlisted have a direct CDN URL; private need a presign on selection.
-						opt.value = a.model_url ? a.model_url : PRESIGN_PREFIX + a.id;
-						const tag = a.visibility === 'private' ? ' · private' : '';
-						opt.textContent = (a.name || a.slug || 'untitled') + tag;
-						mine.appendChild(opt);
-					}
-					if (mine.children.length) mine.hidden = false;
-					ensureSelectedReflected();
-				})
-				.catch(() => {});
-
-			function ensureSelectedReflected() {
-				// If the URL-supplied avatar matches one of the now-loaded options, select it.
-				if (avatarSelect.value === 'custom' && PRESET_AVATARS.includes(params.avatar) === false) {
-					const match = Array.from(avatarSelect.options).find((o) => o.value === params.avatar);
-					if (match) {
-						avatarSelect.value = params.avatar;
-						avatarUrlInput.classList.remove('visible');
-					}
-				}
-			}
-		}
 
 		// Auth-aware nav CTA
 		(function () {
