@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playground</title>
+    <link rel="stylesheet" href="/style.css">
+    <script
+        type="module"
+        src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
+    ></script>
+    <style>
+		.agent-page-header {
+			position: sticky;
+			top: 0;
+			z-index: 100;
+			display: flex;
+			align-items: center;
+			gap: 1rem;
+			padding: 0.75rem 1.618rem;
+			border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+			background: rgba(0, 0, 0, 0.85);
+			backdrop-filter: blur(12px);
+			-webkit-backdrop-filter: blur(12px);
+		}
+		.agent-page-header a {
+			color: rgba(255, 255, 255, 0.5);
+			text-decoration: none;
+			font-size: 0.764rem;
+			display: inline-flex;
+			align-items: center;
+			transition: color 0.15s;
+		}
+		.agent-page-header a:hover {
+			color: #fff;
+		}
+		.agent-header-logo {
+			height: 28px;
+			width: auto;
+			display: block;
+		}
+		.agent-header-nav {
+			display: flex;
+			align-items: center;
+			gap: 1.25rem;
+			margin-left: 1.5rem;
+		}
+		.agent-header-nav a {
+			font-size: 0.8rem;
+			color: rgba(255, 255, 255, 0.45);
+		}
+		.agent-header-nav a:hover {
+			color: rgba(255, 255, 255, 0.9);
+		}
+        .av-viewer {
+            background: radial-gradient(ellipse at center, rgba(154, 140, 255, 0.04) 0%, transparent 70%),
+                rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 16px;
+            overflow: hidden;
+            aspect-ratio: 1 / 1;
+            max-width: 500px;
+            margin: 2rem auto;
+        }
+    </style>
+</head>
+<body>
+		<header class="agent-page-header" style="justify-content: space-between">
+			<div style="display:inline-flex;align-items:center">
+				<a href="/marketplace.html?tab=mine" aria-label="Back to three.ws home">
+					<img src="/three.svg" alt="three.ws" class="agent-header-logo" />
+				</a>
+				<nav class="agent-header-nav" aria-label="Primary">
+					<a href="/discover">Discover</a>
+					<a href="/create">Create</a>
+					<a href="/features">Features</a>
+					<a href="/studio">Studio</a>
+					<a href="/playground.html">Playground</a>
+				</nav>
+			</div>
+		</header>
+    <div class="av-viewer">
+        <model-viewer
+            id="viewer"
+            src="/assets/default-avatar.glb"
+            alt="A 3D model of an avatar"
+            ar
+            ar-modes="webxr scene-viewer quick-look"
+            camera-controls
+            poster="/assets/default-avatar-poster.webp"
+            shadow-intensity="1"
+            environment-image="neutral"
+            auto-rotate
+            autoplay
+        ></model-viewer>
+    </div>
+    <div class="upload-container">
+        <input type="file" id="avatar-upload" accept=".glb">
+        <label for="avatar-upload">Upload your own avatar</label>
+    </div>
+    <div class="input-container">
+        <input type="text" id="avatar-name" placeholder="Enter a name for your avatar">
+        <button id="save-avatar">Save</button>
+        <button id="embed-avatar">Embed</button>
+    </div>
+	<style>
+		.upload-container {
+			display: flex;
+			justify-content: center;
+			margin-top: 2rem;
+		}
+		#avatar-upload {
+			display: none;
+		}
+		label[for="avatar-upload"] {
+			background: #ffd700;
+			color: #000;
+			padding: 0.5rem 1rem;
+			border-radius: 0.5rem;
+			cursor: pointer;
+		}
+		.input-container {
+			display: flex;
+			justify-content: center;
+			margin-top: 2rem;
+			gap: 1rem;
+		}
+		#avatar-name {
+			padding: 0.5rem;
+			border-radius: 0.5rem;
+			border: 1px solid #ccc;
+		}
+		#save-avatar, #embed-avatar {
+			background: #ffd700;
+			color: #000;
+			padding: 0.5rem 1rem;
+			border-radius: 0.5rem;
+			cursor: pointer;
+			border: none;
+		}
+	</style>
+    <script>
+        const viewer = document.getElementById('viewer');
+        const upload = document.getElementById('avatar-upload');
+        const saveButton = document.getElementById('save-avatar');
+        const embedButton = document.getElementById('embed-avatar');
+        const avatarName = document.getElementById('avatar-name');
+        upload.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                viewer.src = url;
+            }
+        });
+        saveButton.addEventListener('click', () => {
+            const name = avatarName.value;
+            const file = upload.files[0];
+            if (name && file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const avatar = {
+                        name,
+                        file: event.target.result
+                    };
+                    localStorage.setItem('avatar', JSON.stringify(avatar));
+                    alert('Avatar saved!');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                alert('Please enter a name and upload an avatar.');
+            }
+        });
+        embedButton.addEventListener('click', () => {
+            // TODO: Implement embed functionality
+            alert('Embed code copied to clipboard!');
+        });
+        const savedAvatar = JSON.parse(localStorage.getItem('avatar'));
+        if (savedAvatar) {
+            avatarName.value = savedAvatar.name;
+            viewer.src = savedAvatar.file;
+        }
+    </script>
+</body>
+</html>
