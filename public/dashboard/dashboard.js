@@ -1167,11 +1167,22 @@ function bindEmbedTryIt(body, agent) {
 		emote: { type: 'emote', payload: { name: 'smile' } },
 		gesture: { type: 'gesture', payload: { name: 'wave' } },
 	};
+	let frameOrigin = '';
+	try {
+		frameOrigin = new URL(frame.src, location.href).origin;
+	} catch {}
 	for (const btn of body.querySelectorAll('[data-tryit]')) {
 		btn.addEventListener('click', () => {
 			const action = samples[btn.dataset.tryit];
 			if (!action) return;
-			frame.contentWindow?.postMessage({ __agent: agent.id, type: 'action', action }, '*');
+			if (!frameOrigin) {
+				console.warn('[dashboard] embed preview frame has no resolvable origin');
+				return;
+			}
+			frame.contentWindow?.postMessage(
+				{ __agent: agent.id, type: 'action', action },
+				frameOrigin,
+			);
 		});
 	}
 }

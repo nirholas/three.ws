@@ -237,23 +237,41 @@
 			let identityName = null;
 			const pendingHellos = [];
 
+			// Parent origin is locked to the first valid host message we receive
+			// (ev.origin), or seeded from document.referrer as a best-effort
+			// fallback so an unsolicited postReady() doesn't have to use '*'.
+			let parentOrigin = (() => {
+				try {
+					if (window.parent === window) return location.origin;
+					if (document.referrer) return new URL(document.referrer).origin;
+				} catch {}
+				return null;
+			})();
+			let parentOriginLocked = false;
+
+			function postToParent(msg) {
+				if (!parent || parent === window) return;
+				if (!parentOrigin) {
+					console.warn('[agent-embed] parent origin unknown; dropping', msg.type);
+					return;
+				}
+				parent.postMessage(msg, parentOrigin);
+			}
+
 			function postReady() {
-				parent?.postMessage(
-					{
-						type: 'agent:ready',
-						agentId,
-						version: BRIDGE_VERSION,
-						capabilities: CAPABILITIES,
-						name: identityName,
-					},
-					'*',
-				);
+				postToParent({
+					type: 'agent:ready',
+					agentId,
+					version: BRIDGE_VERSION,
+					capabilities: CAPABILITIES,
+					name: identityName,
+				});
 				// Legacy envelope for pre-v1 hosts.
-				parent?.postMessage({ __agent: agentId, type: 'ready', name: identityName }, '*');
+				postToParent({ __agent: agentId, type: 'ready', name: identityName });
 			}
 
 			function postResize(height) {
-				parent?.postMessage({ type: 'agent:resize', agentId, height }, '*');
+				postToParent({ type: 'agent:resize', agentId, height });
 			}
 
 			function handleAction(action) {
@@ -262,11 +280,27 @@
 			}
 
 			window.addEventListener('message', (ev) => {
+				if (ev.source !== window.parent) return;
 				const msg = ev.data;
 				if (!msg || typeof msg !== 'object') return;
 
-				// v1 envelope
-				if (msg.agentId && msg.agentId === agentId && typeof msg.type === 'string') {
+				const isV1 =
+					msg.agentId === agentId &&
+					typeof msg.type === 'string' &&
+					msg.type.startsWith('agent:');
+				const isLegacy = msg.__agent === agentId;
+				if (!isV1 && !isLegacy) return;
+
+				// Lock the parent origin to the first authenticated message we see
+				// and reject anything from a different origin thereafter.
+				if (!parentOriginLocked) {
+					parentOrigin = ev.origin;
+					parentOriginLocked = true;
+				} else if (ev.origin !== parentOrigin) {
+					return;
+				}
+
+				if (isV1) {
 					switch (msg.type) {
 						case 'agent:hello':
 							if (bridgeReady) postReady();
@@ -277,18 +311,13 @@
 							return;
 						case 'agent:ping':
 							if (bridgeReady)
-								parent?.postMessage(
-									{ type: 'agent:pong', agentId, id: msg.id },
-									'*',
-								);
+								postToParent({ type: 'agent:pong', agentId, id: msg.id });
 							return;
 					}
 				}
 
 				// Legacy envelope. Kept until all known hosts migrate.
-				if (msg.__agent === agentId) {
-					if (msg.type === 'action' && msg.action) handleAction(msg.action);
-				}
+				if (isLegacy && msg.type === 'action' && msg.action) handleAction(msg.action);
 			});
 
 			async function main() {
@@ -304,8 +333,8 @@
 							? "This agent's iframe embed is disabled."
 							: 'This agent can only be embedded on approved sites.';
 					showError(msg);
-					parent?.postMessage({ type: 'agent:blocked', agentId }, '*');
-					parent?.postMessage({ __agent: agentId, type: 'blocked' }, '*');
+					postToParent({ type: 'agent:blocked', agentId });
+					postToParent({ __agent: agentId, type: 'blocked' });
 					return;
 				}
 
@@ -422,7 +451,7 @@
 				// Echo every protocol action onto the bridge so hosts can mirror state
 				// (chat UIs, telemetry, host-side animation triggers).
 				protocol.on('*', (action) => {
-					parent?.postMessage({ type: 'agent:action', agentId, action }, '*');
+					postToParent({ type: 'agent:action', agentId, action });
 				});
 
 				// Report content height to host so embed-sdk can auto-fit the iframe.

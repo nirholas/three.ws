@@ -33,6 +33,14 @@ export class EmbedHostBridge {
 	 * @param {{ iframe: HTMLIFrameElement, agentId: string, allowedOrigin: string }} opts
 	 */
 	constructor({ iframe, agentId, allowedOrigin }) {
+		if (!iframe) throw new Error('EmbedHostBridge: iframe required');
+		if (!agentId) throw new Error('EmbedHostBridge: agentId required');
+		if (!allowedOrigin || allowedOrigin === '*') {
+			throw new Error(
+				'EmbedHostBridge: allowedOrigin must be an explicit origin (wildcard "*" is not allowed). ' +
+					'Pass the iframe origin, e.g. new URL(iframe.src).origin.',
+			);
+		}
 		this._iframe = iframe;
 		this._agentId = agentId;
 		this._allowedOrigin = allowedOrigin;

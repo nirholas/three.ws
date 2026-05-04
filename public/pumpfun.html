@@ -28,6 +28,15 @@
 		@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
 		.status-pill { font-size: 11px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px;
 			padding: 3px 8px; border: 1px solid var(--border); border-radius: 999px; }
+		.helius-pill { font-size: 10px; color: var(--muted); display: inline-flex; align-items: center; gap: 5px;
+			padding: 2px 7px; border: 1px solid var(--border); border-radius: 999px; text-decoration: none;
+			background: linear-gradient(135deg, rgba(245,158,11,0.06), rgba(168,85,247,0.06));
+			transition: color 0.15s ease, border-color 0.15s ease; vertical-align: middle; margin-left: 8px;
+			letter-spacing: 0.02em; text-transform: uppercase; font-weight: 500; }
+		.helius-pill:hover { color: #eee; border-color: #4a4a58; }
+		.helius-pill .helius-dot { width: 6px; height: 6px; border-radius: 50%;
+			background: linear-gradient(135deg, #f59e0b, #a855f7); box-shadow: 0 0 6px rgba(168,85,247,0.55); }
+		#feed-wrap h2 { display: inline-flex; align-items: center; flex-wrap: wrap; }
 		.pf-filterbar .desc { color: var(--muted); font-size: 12px; }
 		.pf-filterbar .ctl { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 		.pf-filterbar label { font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
@@ -259,7 +268,7 @@
 				<div class="signal-grid" id="signals"></div>
 			</div>
 			<div id="feed-wrap">
-				<h2><span id="feed-title">Live feed</span></h2>
+				<h2><span id="feed-title">Live feed</span><a class="helius-pill" href="https://helius.dev" target="_blank" rel="noopener" title="Real-time Solana data via Helius webhooks"><span class="helius-dot" aria-hidden="true"></span>Powered by Helius</a></h2>
 				<div id="feed"><div class="empty">Waiting for events…</div></div>
 			</div>
 		</aside>
@@ -272,7 +281,7 @@
 				<button class="pf-modal-close" type="button" aria-label="Close" data-picker-close>×</button>
 			</div>
 			<div class="pf-tabs" role="tablist">
-				<button class="pf-tab" role="tab" type="button" data-tab="defaults" aria-selected="true">Defaults</button>
+				<button class="pf-tab" role="tab" type="button" data-tab="defaults" aria-selected="true">Defaults<span class="badge" id="tab-count-defaults"></span></button>
 				<button class="pf-tab" role="tab" type="button" data-tab="community" aria-selected="false">Community<span class="badge" id="tab-count-community"></span></button>
 				<button class="pf-tab" role="tab" type="button" data-tab="mine" aria-selected="false">My Agents<span class="badge" id="tab-count-mine"></span></button>
 			</div>
@@ -571,6 +580,8 @@
 			}
 		}
 
+		updateTabBadge('defaults', String(picker.data.defaults.length));
+
 		// Initial label from URL param
 		(function initTriggerLabel() {
 			const preset = DEFAULT_AVATARS.find((a) => a.url === params.avatar);
@@ -650,6 +661,7 @@
 			bridgeReady = false;
 			bridgeQueue = [];
 			activeChipName = null;
+			lastClipsKey = '';
 			document.querySelectorAll('.anim-chip').forEach((c) => delete c.dataset.active);
 		}
 
@@ -675,9 +687,34 @@
 				return;
 			}
 			if (msg.kind === 'response' && msg.op === 'pong') {
+				const wasReady = bridgeReady;
 				bridgeReady = true;
 				for (const m of bridgeQueue) iframe.contentWindow.postMessage(m, location.origin);
 				bridgeQueue = [];
+				const caps = msg.payload?.capabilities || [];
+				// Subscribe so the embed pushes us `op:'clips'` change events when
+				// the loaded model swaps inside the same iframe (otherwise those
+				// events stay queued in the embed and we'd only see them on reload).
+				if (!wasReady && caps.includes('subscribe')) {
+					sendToAgent('subscribe', {});
+				}
+				// Pull authoritative clip list from the iframe — replaces the
+				// manifest-only fallback whenever the loaded model has its own
+				// non-Mixamo skeleton (e.g. RobotExpressive bakes 7 emotes).
+				if (caps.includes('listClips')) {
+					sendToAgent('listClips', {});
+				}
+				return;
+			}
+			if (msg.kind === 'response' && msg.op === 'listClips') {
+				const clips = msg.payload?.clips || [];
+				if (clips.length) renderAnimChips(clips);
+				return;
+			}
+			if (msg.kind === 'event' && msg.op === 'clips') {
+				const clips = msg.payload?.clips || [];
+				if (clips.length) renderAnimChips(clips);
+				return;
 			}
 		});
 
@@ -696,17 +733,26 @@
 			return icon + ' ' + label;
 		}
 
-		async function buildAnimChips() {
+		// Tracks the rendered clip list so we don't redundantly rebuild on every
+		// duplicate `op:'clips'` event from the iframe.
+		let lastClipsKey = '';
+
+		function renderAnimChips(defs) {
 			const wrap = $('anim-chips');
-			const defs = await loadManifest();
+			if (!wrap) return;
+			const safe = Array.isArray(defs) ? defs.filter((d) => d && d.name) : [];
+			const key = safe.map((d) => d.name).join('|');
+			if (key === lastClipsKey && wrap.childElementCount === safe.length) return;
+			lastClipsKey = key;
 			wrap.innerHTML = '';
-			defs.forEach((def) => {
+			safe.forEach((def) => {
 				const btn = document.createElement('button');
 				btn.type = 'button';
 				btn.className = 'anim-chip';
 				btn.dataset.anim = def.name;
 				btn.title = def.name;
 				btn.textContent = chipLabel(def);
+				if (def.name === activeChipName) btn.dataset.active = 'true';
 				btn.addEventListener('click', () => {
 					document.querySelectorAll('.anim-chip').forEach((c) => delete c.dataset.active);
 					btn.dataset.active = 'true';
@@ -715,6 +761,14 @@
 				});
 				wrap.appendChild(btn);
 			});
+		}
+
+		async function buildAnimChips() {
+			// Initial paint from the manifest. The iframe replaces this with its
+			// authoritative clip list (`op:'clips'`) once the model is loaded —
+			// e.g. baked-only for RobotExpressive (skeletal mismatch with Mixamo).
+			const defs = await loadManifest();
+			renderAnimChips(defs);
 		}
 
 		function renderAgentCard(card) {
@@ -747,6 +801,85 @@
 		let es = null;
 		const TIER_BADGE = { mega: '🔥🔥', influencer: '🔥', notable: '⭐' };
 		const MAX_EVENTS = 30;
+
+		// Host-side reaction map. Mirrors src/widgets/pumpfun-reactions.js so
+		// the avatar reacts even when the in-iframe widget overlay is hidden.
+		const REACT_COOLDOWN_MS = 2200;
+		const REACT_DEDUPE_MS = 30000;
+		const _reactSeen = new Map();
+		let _reactActiveUntil = 0;
+		let _reactActivePri = 0;
+
+		function reactionFor(kind, ev) {
+			if (!ev) return null;
+			if (kind === 'graduation') {
+				const sym = ev.symbol || ev.name || 'a token';
+				const initial = Number(ev.market_cap_usd_initial ?? ev.initial_market_cap_usd ?? ev.market_cap_at_launch) || 0;
+				const current = Number(ev.usd_market_cap ?? ev.market_cap_usd ?? ev.market_cap) || 0;
+				const mult = initial && current ? current / initial : 1;
+				const dur = Math.min(9000, Math.max(4500, 4500 + Math.log10(Math.max(mult, 1)) * 1500));
+				return {
+					emote: { trigger: 'celebration', weight: 0.95 },
+					gesture: { name: 'rumba', duration: dur },
+					speak: { text: `Migration: ${sym} bonded to PumpAMM.`, sentiment: 0.7 },
+					priority: 90,
+				};
+			}
+			if (kind === 'claim') {
+				if (ev.fake_claim) return {
+					emote: { trigger: 'concern', weight: 0.75 },
+					gesture: { name: 'shake', duration: 1500 },
+					priority: 70,
+				};
+				if (ev.first_time_claim) {
+					const linked = !!(ev.github_user || ev.github_repo);
+					const verified = ev.verified ?? ev.signal_verified;
+					const name = linked ? (verified ? 'thriller' : 'silly') : 'celebrate';
+					return {
+						emote: { trigger: 'celebration', weight: 0.95 },
+						gesture: { name, duration: 5000 },
+						priority: 85,
+					};
+				}
+				if (ev.tier === 'mega') return { emote: { trigger: 'celebration', weight: 0.7 }, gesture: { name: 'taunt', duration: 2500 }, priority: 50 };
+				if (ev.tier === 'influencer') return { emote: { trigger: 'curiosity', weight: 0.55 }, gesture: { name: 'reaction', duration: 1800 }, priority: 35 };
+				if (ev.tier === 'notable') return { emote: { trigger: 'curiosity', weight: 0.4 }, priority: 20 };
+				return null;
+			}
+			if (kind === 'mint') {
+				const initSol = Number(ev.initial_buy_sol) || 0;
+				if (ev.tier === 'mega' || initSol >= 5) return { emote: { trigger: 'curiosity', weight: 0.55 }, gesture: { name: 'wave', duration: 1500 }, priority: 25 };
+				if (ev.tier === 'influencer' || initSol >= 1) return { emote: { trigger: 'curiosity', weight: 0.35 }, priority: 10 };
+				return null;
+			}
+			return null;
+		}
+
+		function dispatchReaction(kind, ev) {
+			const reaction = reactionFor(kind, ev);
+			if (!reaction) return;
+			const t = Date.now();
+			const mint = ev?.mint || ev?.token_mint;
+			const key = mint ? (kind === 'claim' ? `claim:${mint}:${ev?.tx_signature || ev?.signature || ev?.claim_number || ''}` : `${kind}:${mint}`) : null;
+			if (key) {
+				const last = _reactSeen.get(key);
+				if (last != null && t - last < REACT_DEDUPE_MS) return;
+				_reactSeen.set(key, t);
+				if (_reactSeen.size > 200) {
+					for (const [k, v] of _reactSeen) if (t - v > REACT_DEDUPE_MS) _reactSeen.delete(k);
+				}
+			}
+			const pri = reaction.priority || 0;
+			if (t < _reactActiveUntil && pri <= _reactActivePri) return;
+			const dur = reaction.gesture?.duration || REACT_COOLDOWN_MS;
+			_reactActiveUntil = t + Math.max(REACT_COOLDOWN_MS, dur);
+			_reactActivePri = pri;
+			iframe.contentWindow?.postMessage({
+				type: 'pumpfun-feed:react',
+				reaction,
+				speak: params.narrate,
+			}, '*');
+		}
 
 		function eventMatchesMint(ev) {
 			if (!params.mint) return true;
@@ -791,7 +924,8 @@
 				ev.telegram ? `<a href="${attr(ev.telegram)}" target="_blank" rel="noopener">TG</a>` : '',
 				ev.website ? `<a href="${attr(ev.website)}" target="_blank" rel="noopener">🌐</a>` : '',
 			].filter(Boolean).join(' ');
-			return `<div class="evt">
+			const replay = ev.replay ? ' replay' : '';
+			return `<div class="evt${replay}">
 				<div class="evt-row">
 					<span class="evt-kind">🌱 new token</span>
 					<span class="evt-time">${escapeHtml(timeAgo(ev.created_at))}</span>
@@ -827,21 +961,26 @@
 				? `${fmtUsd(mcInitial)} ⇨ ${fmtUsd(mcCurrent)}`
 				: (mcCurrent != null ? fmtUsd(mcCurrent) : '');
 
+			const ath = ev.ath_market_cap ?? ev.ath_usd ?? null;
+			const athStr = ath != null && ath !== mcCurrent ? fmtUsd(ath) : '';
+
 			const launches = ev.creator_launches;
+			const graduated = ev.creator_graduated;
 			const bestToken = Array.isArray(ev.creator_tokens) && ev.creator_tokens.length
 				? ev.creator_tokens.slice().sort((a, b) => (b?.mc || 0) - (a?.mc || 0))[0]
 				: null;
 			const bestStr = bestToken
-				? `best $${escapeHtml(bestToken.symbol || '?')}${bestToken.mc ? ' ' + fmtUsd(bestToken.mc) : ''}`
+				? (bestToken.symbol === symbol
+					? `best $${escapeHtml(bestToken.symbol)}${bestToken.mc ? ' ' + fmtUsd(bestToken.mc) : ''} (this)`
+					: `best $${escapeHtml(bestToken.symbol || '?')}${bestToken.mc ? ' ' + fmtUsd(bestToken.mc) : ''}`)
 				: '';
 			const amountStr = ev.amount_sol != null
 				? `${Number(ev.amount_sol).toFixed(2)} SOL${ev.amount_usd != null ? ' [' + fmtUsd(ev.amount_usd) + ']' : ''}`
 				: '';
-			const devParts = [
-				launches != null ? `${launches} launches` : '',
-				bestStr,
-				amountStr,
-			].filter(Boolean).join(' &nbsp;⋅&nbsp; ');
+			const launchesPart = launches != null
+				? (graduated != null ? `${launches} launches · 🎓 ${graduated}` : `${launches} launches`)
+				: '';
+			const devParts = [launchesPart, bestStr, amountStr].filter(Boolean).join(' &nbsp;⋅&nbsp; ');
 
 			const m = encodeURIComponent(mint);
 			const chartLinks = mint ? [
@@ -856,16 +995,39 @@
 				['BLX', `https://bullx.io/terminal?chainId=1399811149&address=${mint}`],
 			].map(([l, u]) => `<a href="${attr(u)}" target="_blank" rel="noopener">${l}</a>`).join('⋅') : '';
 
+			const socials = [
+				ev.twitter ? `<a href="${attr(twitterUrl(ev.twitter))}" target="_blank" rel="noopener">𝕏 ${escapeHtml(twitterLabel(ev.twitter))}</a>` : '',
+				ev.telegram ? `<a href="${attr(ev.telegram)}" target="_blank" rel="noopener">TG</a>` : '',
+				ev.website ? `<a href="${attr(ev.website)}" target="_blank" rel="noopener">🌐 site</a>` : '',
+			].filter(Boolean).join('');
+
+			const poolStr = ev.pump_swap_pool
+				? `Pool: <code>${shortKey(ev.pump_swap_pool)}</code> (PumpAMM)`
+				: ev.raydium_pool
+					? `Pool: <code>${shortKey(ev.raydium_pool)}</code> (Raydium)`
+					: ev.pool ? `Pool: ${escapeHtml(String(ev.pool))}` : '';
+
 			const tsStr = fmtUtc(ev.timestamp ?? ev.block_time ?? ev.created_at);
 			const sig = ev.signature || ev.tx_signature;
+			const replay = ev.replay ? ' replay' : '';
+			const thumb = ev.image_uri
+				? `<img class="evt-thumb" src="${attr(ev.image_uri)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none'" />`
+				: '';
 
-			return `<div class="evt grad">
-				<div class="evt-title">🆕💊 ${escapeHtml(name)} — $${escapeHtml(symbol)}${age ? ' [' + escapeHtml(age) + ']' : ''}</div>
-				${desc ? `<div class="evt-desc">${desc}</div>` : ''}
-				${mcStr ? `<div class="evt-amt">💎 MC: ${mcStr}</div>` : ''}
+			return `<div class="evt grad${replay}">
+				<div class="evt-head">
+					${thumb}
+					<div class="evt-head-text">
+						<div class="evt-title">🆕💊 ${escapeHtml(name)} — $${escapeHtml(symbol)}${age ? ' [' + escapeHtml(age) + ']' : ''}</div>
+						${desc ? `<div class="evt-desc">${desc}</div>` : ''}
+						${socials ? `<div class="evt-socials">${socials}</div>` : ''}
+					</div>
+				</div>
+				${mcStr ? `<div class="evt-amt" style="margin-top:6px">💎 MC: ${mcStr}${athStr ? ' &nbsp;·&nbsp; 🏆 ATH: ' + athStr : ''}</div>` : ''}
 				${devParts ? `<div class="evt-row2" style="margin-top:6px">👨‍💻 ${devParts}</div>` : ''}
 				${chartLinks ? `<div class="evt-row2">💹 Chart: ${chartLinks}</div>` : ''}
 				${toolAbbr ? `<div class="evt-row2">🧰 ${toolAbbr}</div>` : ''}
+				${poolStr ? `<div class="evt-pool">${poolStr}</div>` : ''}
 				<div class="evt-mint">${escapeHtml(mint)}</div>
 				<div class="evt-meta">
 					${sig ? `🔗 <a href="https://solscan.io/tx/${encodeURIComponent(sig)}" target="_blank" rel="noopener">TX</a>` : ''}
@@ -985,14 +1147,17 @@
 			es.addEventListener('claim', (msg) => {
 				const ev = safeJson(msg.data); if (!ev || !eventMatchesMint(ev)) return;
 				pushEvent(renderClaim(ev));
+				dispatchReaction('claim', ev);
 			});
 			es.addEventListener('graduation', (msg) => {
 				const ev = safeJson(msg.data); if (!ev || !eventMatchesMint(ev)) return;
 				pushEvent(renderGraduation(ev));
+				dispatchReaction('graduation', ev);
 			});
 			es.addEventListener('mint', (msg) => {
 				const ev = safeJson(msg.data); if (!ev || !eventMatchesMint(ev)) return;
 				pushEvent(renderMint(ev));
+				dispatchReaction('mint', ev);
 			});
 		}
 
