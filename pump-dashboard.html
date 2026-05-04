@@ -781,7 +781,7 @@
           <table>
             <thead><tr><th>Method</th><th>Path</th><th>Description</th><th>Auth</th></tr></thead>
             <tbody>
-              <tr><td><span class="tag tag-buy">GET</span></td><td>/api/v1/health</td><td>Health check</td><td>No</td></tr>
+              <tr><td><span class="tag tag-buy">GET</span></td><td>/api/healthz</td><td>Health check</td><td>No</td></tr>
               <tr><td><span class="tag tag-buy">GET</span></td><td>/api/v1/status</td><td>Detailed status</td><td>Yes</td></tr>
               <tr><td><span class="tag tag-buy">GET</span></td><td>/api/v1/claims</td><td>Query claims (paginated, filterable)</td><td>Yes</td></tr>
               <tr><td><span class="tag tag-buy">GET</span></td><td>/api/v1/claims/stream</td><td>Real-time SSE claim stream</td><td>Yes</td></tr>
@@ -941,7 +941,7 @@ async function connectApi() {
   updateApiStatus('connecting');
 
   try {
-    const resp = await apiFetch('/api/v1/health');
+    const resp = await apiFetch('/api/healthz');
     if (resp.ok) {
       const data = await resp.json();
       updateApiStatus('connected');
@@ -960,7 +960,7 @@ async function connectApi() {
 
 async function pollHealth() {
   try {
-    const resp = await apiFetch('/api/v1/health');
+    const resp = await apiFetch('/api/healthz');
     if (resp.ok) {
       const data = await resp.json();
       updateApiStatus('connected');
@@ -1032,6 +1032,14 @@ function connectWebSocket() {
       wsDot.className = 'dot connected';
       wsLabel.textContent = 'WS: Connected';
       toast('WebSocket connected', 'success');
+      // Auto-subscribe to PumpPortal's new-token stream when connected to
+      // their public endpoint so the Live Feed populates without manual setup.
+      if (/pumpportal\.fun/.test(state.wsUrl)) {
+        try {
+          state.ws.send(JSON.stringify({ method: 'subscribeNewToken' }));
+          state.ws.send(JSON.stringify({ method: 'subscribeMigration' }));
+        } catch { /* socket closing race; reconnect will retry */ }
+      }
     };
 
     state.ws.onmessage = (event) => {

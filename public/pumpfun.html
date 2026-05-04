@@ -30,6 +30,7 @@
 		.dot.live { background: #4ade80; animation: pulse 1.6s ease-in-out infinite; }
 		.dot.connecting { background: #fbbf24; }
 		.dot.down { background: #f87171; }
+		.dot.quiet { background: #94a3b8; animation: pulse 4s ease-in-out infinite; }
 		@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
 		.status-pill { font-size: 11px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px;
 			padding: 3px 8px; border: 1px solid var(--border); border-radius: 999px; }
@@ -329,6 +330,11 @@
 				</button>
 			</div>
 			<button id="ctl-narrate" class="toggle" type="button" data-on="1" title="Toggle agent narration">🔊 Narration</button>
+			<select id="ctl-mood" title="Avatar mood — biases reaction intensity">
+				<option value="chill">😎 Chill</option>
+				<option value="normal" selected>🙂 Normal</option>
+				<option value="hype">🤩 Hype</option>
+			</select>
 			<button id="ctl-share" class="pf-icon-btn" type="button" title="Copy a shareable link with current filters">🔗 <span id="ctl-share-label">Share</span></button>
 			<button id="side-toggle" class="pf-icon-btn" type="button" aria-pressed="false" aria-controls="side" title="Toggle live feed">📡 Feed</button>
 		</div>
@@ -344,6 +350,18 @@
 			<div id="signals-section" hidden>
 				<h2>Reputation signals</h2>
 				<div class="signal-grid" id="signals"></div>
+			</div>
+			<div id="first-claims-section">
+				<h2>
+					<span>First-time fee claims</span>
+					<select id="fc-window" title="Lookback window" style="margin-left:8px;background:#0f0f17;color:#e6e6f0;border:1px solid #20202c;border-radius:6px;padding:2px 6px;font-size:12px">
+						<option value="60">1h</option>
+						<option value="360">6h</option>
+						<option value="1440" selected>24h</option>
+					</select>
+					<button type="button" id="fc-refresh" class="pf-icon-btn" title="Refresh first-time claims" style="margin-left:6px">↻</button>
+				</h2>
+				<div id="first-claims"><div class="empty">Loading first-time claims…</div></div>
 			</div>
 			<div id="feed-wrap">
 				<h2><span id="feed-title">Live feed</span><a id="helius-pill" class="helius-pill" href="https://helius.dev" target="_blank" rel="noopener" title="Real-time Solana data via Helius webhooks"><span class="helius-dot" aria-hidden="true"></span><span id="helius-count" class="helius-count">0</span>Powered by Helius</a></h2>
@@ -402,13 +420,16 @@
 			minTier: url.searchParams.get('minTier') || '',
 			network: url.searchParams.get('network') || 'mainnet',
 			narrate: url.searchParams.get('narrate') !== '0',
+			mood: url.searchParams.get('mood') || 'normal',
 			avatar: url.searchParams.get('avatar') || '/avatars/cz.glb',
 		};
+		if (!['chill', 'normal', 'hype'].includes(params.mood)) params.mood = 'normal';
 		$('ctl-asset').value = params.asset;
 		$('ctl-mint').value = params.mint;
 		$('ctl-kind').value = params.kind;
 		$('ctl-tier').value = params.minTier;
 		$('ctl-narrate').dataset.on = params.narrate ? '1' : '0';
+		$('ctl-mood').value = params.mood;
 
 		// ── Avatar picker ────────────────────────────────────────────────────
 		const DEFAULT_AVATARS = [
@@ -1343,6 +1364,55 @@
 			if (feedIsAtTop() && feedQueue.length) flushQueued();
 		}, { passive: true });
 
+		// Cross-source dedupe (HTTP backfill + SSE replay + live) by tx signature.
+		// Without this the same graduation can render twice when the page calls
+		// the backfill endpoint AND the WS layer replays its in-memory buffer.
+		const SEEN_SIG_LIMIT = 500;
+		const _seenSigs = new Map();
+		function sigOf(ev) { return ev?.signature || ev?.tx_signature || null; }
+		function seenSig(sig) {
+			if (!sig) return false;
+			if (_seenSigs.has(sig)) return true;
+			_seenSigs.set(sig, Date.now());
+			if (_seenSigs.size > SEEN_SIG_LIMIT) {
+				const drop = Math.floor(SEEN_SIG_LIMIT / 4);
+				const it = _seenSigs.keys();
+				for (let i = 0; i < drop; i++) _seenSigs.delete(it.next().value);
+			}
+			return false;
+		}
+
+		// Stale-upstream watchdog. The SSE socket can read `live` while
+		// PumpPortal's upstream WS is silent (their maintenance windows). Surface
+		// a "quiet" state so users see the silence isn't their connection.
+		const STALE_AFTER_MS = 5 * 60_000;
+		let staleTimer = null;
+		function bumpAlive() {
+			if (staleTimer) { clearTimeout(staleTimer); staleTimer = null; }
+			const dot = $('status-dot');
+			if (dot && dot.classList.contains('quiet')) setStatus('live', 'live');
+			staleTimer = setTimeout(() => {
+				const d = $('status-dot');
+				if (d && d.classList.contains('live')) setStatus('quiet', 'upstream quiet');
+			}, STALE_AFTER_MS);
+		}
+
+		// HTTP backfill before the SSE opens — gives the user a non-empty feed
+		// instantly even on a cold container that has no WS buffer yet.
+		async function backfillFromHttp() {
+			try {
+				const r = await fetch('/api/pump/recent-graduations?limit=15', { credentials: 'include' });
+				if (!r.ok) return;
+				const { items } = await r.json();
+				if (!Array.isArray(items)) return;
+				for (const ev of items.slice().reverse()) {
+					if (!eventMatchesMint(ev)) continue;
+					if (seenSig(sigOf(ev))) continue;
+					pushEvent(renderGraduation({ ...ev, replay: true }));
+				}
+			} catch {}
+		}
+
 		function connectFeed() {
 			if (es) { try { es.close(); } catch {} }
 			const qs = new URLSearchParams();
@@ -1350,25 +1420,31 @@
 			if (params.minTier) qs.set('minTier', params.minTier);
 			setStatus('connecting', 'connecting…');
 			es = new EventSource(`/api/agents/pumpfun-feed?${qs.toString()}`, { withCredentials: true });
-			es.addEventListener('open', () => setStatus('live', 'live'));
+			es.addEventListener('open', () => { setStatus('live', 'live'); bumpAlive(); });
 			es.addEventListener('error', () => {
 				if (es.readyState === EventSource.CLOSED) setStatus('down', 'disconnected');
 				else setStatus('connecting', 'reconnecting…');
 			});
 			es.addEventListener('claim', (msg) => {
 				const ev = safeJson(msg.data); if (!ev || !eventMatchesMint(ev)) return;
+				if (seenSig(sigOf(ev))) return;
 				pushEvent(renderClaim(ev));
-				dispatchReaction('claim', ev);
+				if (!ev.replay) dispatchReaction('claim', ev);
+				bumpAlive();
 			});
 			es.addEventListener('graduation', (msg) => {
 				const ev = safeJson(msg.data); if (!ev || !eventMatchesMint(ev)) return;
+				if (seenSig(sigOf(ev))) return;
 				pushEvent(renderGraduation(ev));
-				dispatchReaction('graduation', ev);
+				if (!ev.replay) dispatchReaction('graduation', ev);
+				bumpAlive();
 			});
 			es.addEventListener('mint', (msg) => {
 				const ev = safeJson(msg.data); if (!ev || !eventMatchesMint(ev)) return;
+				if (seenSig(sigOf(ev))) return;
 				pushEvent(renderMint(ev));
-				dispatchReaction('mint', ev);
+				if (!ev.replay) dispatchReaction('mint', ev);
+				bumpAlive();
 			});
 		}
 
@@ -1461,8 +1537,77 @@
 			$('side-toggle').setAttribute('aria-pressed', String(open));
 		});
 
-		// Initial load
-		connectFeed();
+		// First-time fee claims panel — pulls historical first-claims from
+		// /api/pump/first-claims (a backend scan over the pump.fun program's
+		// recent signatures). Refreshes via button or window selector, plus
+		// every 90s while the page is visible.
+		const fcState = { loading: false, timer: 0 };
+		async function loadFirstClaims() {
+			if (fcState.loading) return;
+			fcState.loading = true;
+			const host = $('first-claims');
+			const win = Number($('fc-window').value) || 1440;
+			const btn = $('fc-refresh');
+			btn.dataset.flash = 'true';
+			try {
+				const r = await fetch(
+					`/api/pump/first-claims?sinceMinutes=${win}&limit=20`,
+					{ credentials: 'include' },
+				);
+				if (!r.ok) throw new Error('status ' + r.status);
+				const data = await r.json();
+				const items = data?.items || [];
+				if (!items.length) {
+					host.innerHTML = `<div class="empty">No first-time claims in the last ${win >= 60 ? Math.round(win / 60) + 'h' : win + 'm'}.</div>`;
+				} else {
+					host.innerHTML = items.map(renderFirstClaim).join('');
+				}
+			} catch (err) {
+				host.innerHTML = `<div class="empty">Could not load first claims: ${escapeHtml(err.message || 'error')}</div>`;
+			} finally {
+				fcState.loading = false;
+				setTimeout(() => delete btn.dataset.flash, 350);
+			}
+		}
+		function renderFirstClaim(c) {
+			const sol = (Number(c.lamports) / 1e9).toFixed(4);
+			const tsSec = Number(c.ts || 0);
+			const when = tsSec ? timeAgo(tsSec) : '';
+			const creator = c.creator || '';
+			const mint = c.mint || '';
+			const sig = c.signature || '';
+			const cShort = creator ? `${creator.slice(0, 4)}…${creator.slice(-4)}` : '';
+			const mShort = mint ? `${mint.slice(0, 4)}…${mint.slice(-4)}` : '';
+			return `
+				<div style="background:#0d2d1a;border:1px solid rgba(108,224,200,0.25);border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:12px;line-height:1.5">
+					<div style="display:flex;justify-content:space-between;font-size:11px;opacity:0.8">
+						<span style="color:#6ce0c8;font-weight:600">🚨 First claim</span>
+						<span>${escapeHtml(when)}</span>
+					</div>
+					<div style="font-weight:600;margin-top:2px">${sol} SOL</div>
+					${creator ? `<div style="font-family:ui-monospace,monospace;font-size:11px;opacity:0.8"><a href="https://solscan.io/account/${encodeURIComponent(creator)}" target="_blank" rel="noopener" style="color:#6ce0c8">${escapeHtml(cShort)}</a></div>` : ''}
+					${mint ? `<div style="font-family:ui-monospace,monospace;font-size:11px;opacity:0.8"><a href="https://pump.fun/coin/${encodeURIComponent(mint)}" target="_blank" rel="noopener" style="color:#6ce0c8">${escapeHtml(mShort)}</a></div>` : ''}
+					${sig ? `<div style="margin-top:2px"><a href="https://solscan.io/tx/${encodeURIComponent(sig)}" target="_blank" rel="noopener" style="color:#6ce0c8;font-size:11px">view tx ↗</a></div>` : ''}
+				</div>
+			`;
+		}
+		$('fc-refresh').addEventListener('click', loadFirstClaims);
+		$('fc-window').addEventListener('change', loadFirstClaims);
+		function scheduleFcRefresh() {
+			if (fcState.timer) clearInterval(fcState.timer);
+			fcState.timer = setInterval(() => {
+				if (document.visibilityState === 'visible') loadFirstClaims();
+			}, 90_000);
+		}
+		document.addEventListener('visibilitychange', () => {
+			if (document.visibilityState === 'visible') loadFirstClaims();
+		});
+		loadFirstClaims();
+		scheduleFcRefresh();
+
+		// Initial load — paint historical graduations from Postgres before the
+		// SSE opens so the feed is never blank. Then start the live stream.
+		backfillFromHttp().finally(connectFeed);
 
 		mountAgent();
 		buildAnimChips();
