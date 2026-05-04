@@ -64,7 +64,8 @@ async function handleList(req, res) {
 
 	if (isMe) return handleGetOrCreateMe(req, res, auth);
 
-	const onchainFilter = onchainOnly ? sql`AND erc8004_agent_id IS NOT NULL` : sql``;
+	const onchainFilter = onchainOnly ? sql`AND (erc8004_agent_id IS NOT NULL OR meta->>'onchain' IS NOT NULL)` : sql``;
+
 	const rows = await sql`
 		SELECT * FROM agent_identities
 		WHERE user_id = ${auth.userId}
