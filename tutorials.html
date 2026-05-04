@@ -45,11 +45,12 @@
 			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400&family=Space+Grotesk:wght@500;600;700&display=swap"
 			rel="stylesheet"
 		/>
+		<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
 	</head>
 	<body>
 		<header>
 			<h1>
-				<a href="/marketplace.html?tab=mine" aria-label="three.ws home"
+				<a href="/" aria-label="three.ws home"
 					><img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" /><span
 						class="wordmark-dot"
 						aria-hidden="true"
@@ -204,26 +205,48 @@
 				
 				<h2>1. Basic Embedding</h2>
 				<p>Embed your 3D agent into any web page with a simple script tag.</p>
-				<pre><code>&lt;script src="https://three.ws/cdn/agent-3d.js" data-agent-id="YOUR_AGENT_ID"&gt;&lt;/script&gt;</code></pre>
+				<div style="display: flex; gap: 1rem;">
+					<div style="flex-grow: 1;">
+						<pre><code>&lt;script src="https://three.ws/cdn/agent-3d.js" data-agent-id="YOUR_AGENT_ID"&gt;&lt;/script&gt;</code></pre>
+					</div>
+					<div style="width: 200px; height: 200px;">
+						<model-viewer src="/animations/robotexpressive.glb" camera-controls auto-rotate></model-viewer>
+					</div>
+				</div>
 
 				<h2>2. Customization</h2>
 				<p>Customize your agent's appearance and behavior using data attributes.</p>
-				<pre><code>&lt;script src="https://three.ws/cdn/agent-3d.js" 
-        data-agent-id="YOUR_AGENT_ID" 
-        data-size="300"
-        data-background-color="#000000"&gt;&lt;/script&gt;</code></pre>
+				<div style="display: flex; gap: 1rem;">
+					<div style="flex-grow: 1;">
+						<pre><code>&lt;script src="https://three.ws/cdn/agent-3d.js" 
+				data-agent-id="YOUR_AGENT_ID" 
+				data-size="300"
+				data-background-color="#000000"&gt;&lt;/script&gt;</code></pre>
+					</div>
+					<div style="width: 200px; height: 200px;">
+						<model-viewer src="/animations/soldier.glb" camera-controls auto-rotate></model-viewer>
+					</div>
+				</div>
 
 				<h2>3. Interactive Examples</h2>
 				<p>Use JavaScript to interact with your agent.</p>
-				<pre><code>
-&lt;script src="https://three.ws/cdn/agent-3d.js" data-agent-id="YOUR_AGENT_ID"&gt;&lt;/script&gt;
-&lt;script&gt;
-  const agent = document.querySelector('agent-3d');
-  agent.addEventListener('ready', () => {
-    agent.playAnimation('wave');
-  });
-&lt;/script&gt;
-				</code></pre>
+				<div style="display: flex; gap: 1rem;">
+					<div style="flex-grow: 1;">
+						<pre><code>
+		&lt;script src="https://three.ws/cdn/agent-3d.js" data-agent-id="YOUR_AGENT_ID"&gt;&lt;/script&gt;
+		&lt;script&gt;
+		  const agent = document.querySelector('agent-3d');
+		  agent.addEventListener('ready', () => {
+			agent.playAnimation('wave');
+		  });
+		&lt;/script&gt;
+						</code></pre>
+					</div>
+					<div style="width: 200px; height: 200px;">
+						<model-viewer id="interactive-agent" src="/avatars/cz.glb" camera-controls></model-viewer>
+						<button onclick="document.getElementById('interactive-agent').animationName = 'wave';">Wave</button>
+					</div>
+				</div>
 
 				<h2>4. "Claude, integrate this"</h2>
 				<p>To simplify integration, you can use the following command to have Claude help you embed an agent. Just say "Claude, integrate agent with ID YOUR_AGENT_ID".</p>

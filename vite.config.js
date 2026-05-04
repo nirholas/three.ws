@@ -49,6 +49,7 @@ const appConfig = {
 				app: resolve(__dirname, 'app.html'),
 				home: resolve(__dirname, 'home.html'),
 				tutorials: resolve(__dirname, 'tutorials.html'),
+				playground: resolve(__dirname, 'playground.html'),
 				embed: resolve(__dirname, 'embed.html'),
 				create: resolve(__dirname, 'create.html'),
 				'agent-home': resolve(__dirname, 'agent-home.html'),
