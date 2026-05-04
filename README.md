@@ -11,6 +11,46 @@ https://github.com/user-attachments/assets/d52515d1-cb04-4dd6-98bd-fef233312dc4
 
 ---
 
+## Quick Links
+
+| Resource | URL |
+|---|---|
+| **Live platform** | [three.ws](https://three.ws) |
+| **npm package** | [npmjs.com/package/three.ws](https://www.npmjs.com/package/three.ws) |
+| **GitHub** | [github.com/nirholas/3D-Agent](https://github.com/nirholas/3D-Agent) |
+| **OpenAPI spec** | [three.ws/openapi.json](https://three.ws/openapi.json) |
+| **MCP Registry** | [registry.modelcontextprotocol.io](https://registry.modelcontextprotocol.io/?q=three.ws) |
+| **Alibaba Cloud** | [marketplace listing](https://marketplace.alibabacloud.com/preview/sgcmfw00036800.html) |
+| **x402scan** | [paid MCP tool calls](https://www.x402scan.com/server/17cbd874-52ac-4920-a020-b22ff2489a07) |
+| **Widget Studio** | [three.ws/studio](https://three.ws/studio) |
+| **Agent Discovery** | [three.ws/discover](https://three.ws/discover) |
+| **Docs** | [three.ws/docs](https://three.ws/docs) |
+
+---
+
+## Embed in 30 Seconds
+
+No account, no API key, no build step. Copy-paste this and swap in any `.glb` URL:
+
+```html
+<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
+<agent-3d body="https://cdn.three.ws/models/sample-avatar.glb"></agent-3d>
+```
+
+To add a talking AI brain, add two attributes:
+
+```html
+<agent-3d
+  body="https://cdn.three.ws/models/sample-avatar.glb"
+  brain="claude-sonnet-4-6"
+  instructions="You are a friendly assistant. Wave when greeted."
+></agent-3d>
+```
+
+That's it. The chat input, mic button, and animations are all included automatically.
+
+---
+
 ## Table of Contents
 
 - [What is three.ws?](#what-is-threews)
@@ -31,8 +71,18 @@ https://github.com/user-attachments/assets/d52515d1-cb04-4dd6-98bd-fef233312dc4
   - [Empathy Layer](#empathy-layer)
   - [Skills](#skills)
   - [Memory](#memory)
+- [Voice — LiveKit Realtime](#voice--livekit-realtime)
 - [Web Component & Embedding](#web-component--embedding)
 - [Widget System](#widget-system)
+- [SDK Packages](#sdk-packages)
+  - [@three-ws/sdk — Agent Kit](#three-wssdk--agent-kit)
+  - [@three-ws/solana-agent — Solana Wallet SDK](#three-wssolana-agent--solana-wallet-sdk)
+  - [@pump-fun/agent-payments-sdk — Payments SDK](#pump-funagent-payments-sdk--payments-sdk)
+- [x402 Payments & Agent Economy](#x402-payments--agent-economy)
+- [Solana Blinks](#solana-blinks)
+- [Agent-to-Agent (A2A) Protocol](#agent-to-agent-a2a-protocol)
+- [Chat SPA](#chat-spa)
+- [Strategy Lab & DCA](#strategy-lab--dca)
 - [API Reference](#api-reference)
 - [Authentication & OAuth 2.1](#authentication--oauth-21)
 - [MCP Server](#mcp-server)
@@ -205,7 +255,8 @@ If you want to support the project — compute credits, grants, partnerships, or
 - Built-in tools: `wave`, `lookAt`, `play_clip`, `setExpression`, `speak`, `remember`
 - Composable skill system — install skills from IPFS, Arweave, or HTTP; each skill is a self-contained bundle with a description, tool definitions, and async handlers
 - Weighted emotion blending (celebration, concern, curiosity, empathy, patience) driven by protocol events, not a finite-state machine
-- Web Speech API for STT/TTS out of the box; ElevenLabs integration for production-quality voice
+- Web Speech API for STT/TTS out of the box; ElevenLabs for production-quality voice; LiveKit for bidirectional realtime audio rooms
+- Solana Blinks support — agents can generate and execute blockchain actions from shareable URLs
 
 **Identity & On-Chain**
 - ERC-8004 smart contracts (IdentityRegistry, ReputationRegistry, ValidationRegistry) deployable on any EVM chain
@@ -252,12 +303,14 @@ A map of every user-facing route. Full detail (source files, feature description
 | **Studio / Tools** | `/studio`, `/hydrate`, `/validation`, `/strategy-lab` | Widget Studio, on-chain import, glTF validator, DCA |
 | **Widgets** | `/widgets`, `/w/[id]` | Widget gallery and public widget pages (OG + oEmbed) |
 | **Artifacts** | `/artifact`, `/artifact/snippet`, `/artifact-example` | Claude Artifact viewer |
-| **Solana / DeFi** | `/pumpfun`, `/vanity-wallet` | Token launcher, vanity address grinder |
+| **Solana / DeFi** | `/pumpfun`, `/vanity-wallet`, `/strategy-lab` | Token launcher, vanity address grinder, DCA strategy designer |
 | **Admin / Rep** | `/admin`, `/reputation` | Staff admin, reputation registry |
 | **Experiments** | `/rider` | A-Frame WebVR music visualization |
 | **Integrations** | `/cz`, `/lobehub/iframe` | CZ demo, LobeHub plugin |
 | **Docs** | `/docs`, `/docs/widgets` | Developer documentation |
 | **Legal** | `/legal/privacy`, `/legal/tos` | Privacy policy and terms |
+| **Agent-to-Agent** | `/.well-known/agent-card.json` | A2A protocol discovery endpoint |
+| **Payments** | `/.well-known/x402`, `/api/x402-status` | x402 payment discovery |
 
 ---
 
@@ -695,10 +748,10 @@ For sandboxed iframes use the widget embed path instead — it runs in its own b
 ├── a-embed.html                # On-chain agent embed
 │
 ├── src/                        # Frontend JavaScript (~80 modules, ~15k lines)
-│   ├── viewer.js               # three.js renderer core (1,534 lines)
-│   ├── app.js                  # SPA entry + URL routing (460 lines)
+│   ├── viewer.js               # three.js renderer core (1,596 lines)
+│   ├── app.js                  # SPA entry + URL routing (1,772 lines)
 │   ├── agent-protocol.js       # Event bus (200-action ring buffer)
-│   ├── agent-avatar.js         # Empathy Layer (morph targets, emotion) (694 lines)
+│   ├── agent-avatar.js         # Empathy Layer (morph targets, emotion) (1,051 lines)
 │   ├── agent-identity.js       # Passport, diary, signed action history
 │   ├── element.js              # <agent-3d> custom element
 │   ├── runtime/
@@ -721,7 +774,7 @@ For sandboxed iframes use the widget embed path instead — it runs in its own b
 ├── api/                        # Vercel serverless functions (~153 endpoints, ~3.6k lines)
 │   ├── agents.js               # Agent CRUD (321 lines)
 │   ├── chat.js                 # LLM chat endpoint (298 lines)
-│   ├── mcp.js                  # MCP server over HTTP (759 lines)
+│   ├── mcp.js                  # MCP server entry (64 lines; implementation in api/_mcp/)
 │   ├── agent-actions.js        # Record signed actions (122 lines)
 │   ├── agent-memory.js         # Memory CRUD + recall (188 lines)
 │   ├── auth/                   # Login, register, SIWE, Privy, sessions
@@ -943,6 +996,22 @@ Memory types (`user`, `feedback`, `project`, `reference`) follow the same taxono
 
 ---
 
+## Voice — LiveKit Realtime
+
+`src/runtime/livekit-voice.js` provides a production-grade bidirectional voice channel on top of [LiveKit](https://livekit.io). This is separate from the browser's built-in Web Speech API and is recommended for any deployment where voice quality matters.
+
+**How it works:**
+1. The host page (or platform dashboard) requests a LiveKit room token from the backend
+2. `LiveKitVoice` joins the room — it streams the user's microphone audio to the agent server
+3. The server handles VAD (voice activity detection), STT, LLM response, and TTS — then streams audio back into the room
+4. Transcript payloads arrive over a data channel and are re-emitted as `voice:transcript` events on the agent protocol bus, so the rest of the system (animations, identity log, UI) reacts normally
+
+**To enable LiveKit:** set the `livekit-url` and `livekit-token` attributes on the `<agent-3d>` element, or pass `{ serverUrl, token }` to `LiveKitVoice` directly if you're using the JS API.
+
+This is the preferred voice backend for kiosk deployments, support-agent widgets, and any scenario where the Web Speech API's reliability is insufficient.
+
+---
+
 ## Web Component & Embedding
 
 The `<agent-3d>` custom element (`src/element.js`) is the primary distribution mechanism. It lazy-boots on intersection (IntersectionObserver), so off-screen agents don't load until visible.
@@ -1052,6 +1121,242 @@ Widgets are stored as JSON config in Postgres, pointing at an avatar in R2.
 
 ---
 
+## SDK Packages
+
+three.ws ships three standalone npm packages that you can use independently of the full platform.
+
+### @three-ws/sdk — Agent Kit
+
+The main JavaScript library for embedding agents into any web app. It wraps the `<agent-3d>` web component with a higher-level API and handles on-chain registration, `.well-known` manifest generation, and EIP-7710 delegated permissions.
+
+```bash
+npm install @three-ws/sdk
+```
+
+```js
+import { AgentPanel, PermissionsClient } from '@three-ws/sdk';
+
+// Drop a floating chat panel into your page
+const panel = new AgentPanel({ agentId: 'a_abc123', position: 'bottom-right' });
+panel.mount(document.body);
+
+// Or use EIP-7710 delegated permissions
+const client = new PermissionsClient({ chainId: 8453 });
+await client.request({ permissions: ['speak', 'remember'] });
+```
+
+**Includes:**
+- `AgentPanel` web component with voice + chat UI
+- ERC-8004 on-chain registration helpers
+- `.well-known` manifest generator (agent-registration, agent-card, ai-plugin)
+- `PermissionsClient` for EIP-7710 agent-to-agent auth
+- UMD + ES module builds
+
+Source: `sdk/`
+
+---
+
+### @three-ws/solana-agent — Solana Wallet SDK
+
+TypeScript SDK for giving agents a Solana wallet. Handles keypair management, transfers, token swaps via Jupiter, and the x402 exact payment scheme (HTTP 402).
+
+```bash
+npm install @three-ws/solana-agent
+```
+
+```ts
+import { SolanaAgent } from '@three-ws/solana-agent';
+
+const agent = new SolanaAgent({ network: 'mainnet-beta' });
+await agent.connect(); // browser wallet or keypair
+
+// Swap tokens via Jupiter
+await agent.swap({ inputMint: 'SOL', outputMint: 'USDC', amountLamports: 1_000_000 });
+
+// Pay an x402-protected endpoint
+const response = await agent.fetchWithPayment('https://api.example.com/data');
+```
+
+**Includes:**
+- Keypair + browser wallet support (Phantom, Backpack, etc.)
+- Token transfers and multi-hop swaps via Jupiter aggregator
+- x402 exact scheme (HTTP 402 Payment Required)
+- Metaplex Core NFT minting
+- Agent identity on Solana (linked to ERC-8004)
+
+Source: `solana-agent-sdk/`
+
+---
+
+### @pump-fun/agent-payments-sdk — Payments SDK
+
+TypeScript SDK for the on-chain Pump Agent Payments program. Lets agents accept SPL token payments, distribute revenue, and trigger token buybacks — all via signed Solana transactions.
+
+```bash
+npm install @pump-fun/agent-payments-sdk
+```
+
+```ts
+import { PumpAgentPayments } from '@pump-fun/agent-payments-sdk';
+
+const sdk = new PumpAgentPayments({ connection, wallet });
+
+// Initialize an agent payment channel
+await sdk.agentInitialize({ agentMint, feeRecipient });
+
+// Accept an incoming payment
+await sdk.agentAcceptPayment({ paymentId, amount });
+
+// Listen for on-chain payment events
+sdk.onPayment(paymentId, (event) => console.log('paid:', event));
+```
+
+**Includes:**
+- Anchor IDL for `AgenTMiC2hvxGebTsgmsD4HHBa8WEcqGFf87iwRRxLo7`
+- PDA derivation (GlobalConfig, TokenAgentPayments, PaymentInCurrency)
+- Instruction builders: `agentInitialize`, `agentAcceptPayment`, `agentDistributePayments`, `agentBuybackTrigger`
+- Event parsing + WebSocket subscriptions
+- x402 facilitator (server side) + client fetch wrapper
+- Invoice validation
+
+Source: `agent-payments-sdk/`
+
+---
+
+## x402 Payments & Agent Economy
+
+three.ws implements the [x402 payment protocol](https://x402.org) — a standard that lets any HTTP endpoint require a micropayment before responding. This makes it possible to monetize agent skills, model inspection tools, and API calls without subscriptions or API keys.
+
+**How it works:**
+
+1. A client hits a protected endpoint
+2. The server responds with `HTTP 402 Payment Required` and a payment descriptor
+3. The client's agent wallet (Solana or EVM) signs and submits the payment on-chain
+4. The client retries the request with a payment proof header
+5. The server verifies the proof and responds
+
+**Endpoints in this repo:**
+- `GET /api/x402-status` — x402 server discovery (lists available payment methods and pricing)
+- `GET /.well-known/x402` — x402 discovery document
+- MCP paid tools (validate, optimize, render) — each charges a fixed SOL/USDC amount per call
+
+**x402scan:** track live paid MCP tool calls and revenue at [x402scan.com/server/17cbd874-52ac-4920-a020-b22ff2489a07](https://www.x402scan.com/server/17cbd874-52ac-4920-a020-b22ff2489a07).
+
+For client integration, use `@three-ws/solana-agent`'s `fetchWithPayment()` wrapper — it handles the 402 → pay → retry flow automatically.
+
+---
+
+## Solana Blinks
+
+[Solana Blinks](https://solana.com/docs/advanced/actions) (Blockchain Links) let agents trigger on-chain actions from a URL — no wallet UI needed on the user's side. three.ws agents can generate and respond to Blinks for common flows.
+
+Source: `src/agent-skills-blinks.js`
+
+**Built-in Blink skills:**
+
+| Action | Description |
+|---|---|
+| `generate-blink` | Create a shareable Blink URL for a token swap, payment, or NFT claim |
+| `resolve-blink` | Fetch and display a Blink's action metadata (title, icon, labels) |
+| `execute-blink` | Sign and submit a Blink transaction from the agent's wallet |
+
+**Example — agent generates a payment Blink:**
+```
+User: "Create a Blink to tip me 0.01 SOL"
+Agent: [calls generate-blink] → https://dial.to/?action=solana-action:...
+```
+
+The Blink URL works anywhere — Twitter/X cards, Telegram messages, Discord — as long as the viewer supports Blinks. No extra integration required on the sender's side.
+
+---
+
+## Agent-to-Agent (A2A) Protocol
+
+three.ws implements Google's open [Agent-to-Agent (A2A) protocol](https://google.github.io/A2A/) for discovery and interoperability between AI agents. Any agent registered on the platform exposes a standardized agent card that other agents can discover and invoke.
+
+**Discovery endpoint:**
+```
+GET /.well-known/agent-card.json
+```
+
+**Agent card format:**
+```json
+{
+  "name": "three.ws Agent",
+  "description": "A 3D AI agent platform",
+  "url": "https://three.ws/api/a2a",
+  "version": "1.0",
+  "capabilities": {
+    "streaming": true,
+    "pushNotifications": false
+  },
+  "skills": [...]
+}
+```
+
+External agents can send tasks to a three.ws agent via `POST /api/a2a` using the standard A2A task format. The agent processes the task through its normal LLM runtime and returns a typed response. This is how multi-agent workflows are composed — one agent delegates to a specialized three.ws avatar agent for 3D tasks.
+
+**Other `.well-known` endpoints:**
+- `/.well-known/agent-card.json` — A2A agent card
+- `/.well-known/chat-plugin.json` — ChatGPT plugin manifest
+- `/.well-known/oauth-authorization-server` — OAuth 2.1 discovery
+- `/.well-known/oauth-protected-resource` — RFC 9728 resource discovery
+- `/.well-known/x402` — x402 payment server discovery
+
+---
+
+## Chat SPA
+
+`/chat` is a full-featured AI chat application built with Svelte (separate from the main Vite app). It runs as its own build target and is served at `/chat` via Vercel rewrites.
+
+**What it includes:**
+- Model selector (Claude Sonnet, Opus, Haiku — live model switching mid-conversation)
+- Tool use with artifacts — Claude can output runnable code, charts, and rich UI blocks displayed inline
+- Wallet integration — connect a Solana or EVM wallet directly in the chat sidebar
+- Conversation history with local persistence
+- File attachment support (images, PDFs, documents)
+- Mobile-responsive layout
+
+**Hash-routed sub-pages within `/chat`:**
+
+| Route | What it is |
+|---|---|
+| `/chat#solutions/teams` | Teams & enterprise landing |
+| `/chat#solutions/developers` | Developer-focused landing |
+| `/chat#features/web-app` | Web app feature detail |
+| `/chat#features/mobile-app` | Mobile feature detail |
+| `/chat#features/ai-design` | AI design tools |
+| `/chat#features/ai-slides` | AI presentation builder |
+| `/chat#features/browser-operator` | Browser automation |
+| `/chat#features/wide-research` | Multi-source research |
+| `/chat#features/mail` | Email integration |
+| `/chat#features/skills` | Skills marketplace |
+| `/chat#resources/blog` | Blog |
+| `/chat#resources/docs` | Documentation |
+| `/chat#resources/trust` | Trust center |
+| `/chat#resources/updates` | Changelog |
+
+The chat SPA is developed in the `chat/` directory and has its own `package.json` and dev server (port 5174). The main Vite dev server proxies `/chat` to it automatically.
+
+---
+
+## Strategy Lab & DCA
+
+`/strategy-lab` is a no-code designer for dollar-cost averaging (DCA) strategies and recurring on-chain payments. It's aimed at users who want agents to autonomously execute token purchases or distributions on a schedule.
+
+**What you can configure:**
+- Token pair (e.g. SOL → USDC)
+- Frequency (hourly, daily, weekly)
+- Amount per execution
+- Start / end date
+- Slippage tolerance
+
+Strategies are saved to Postgres and executed by the `/api/cron/run-dca` cron job (runs hourly). Execution happens through the agent's Solana wallet via Jupiter swap aggregator — no manual signing required once the strategy is activated.
+
+**Related:** `/dashboard/agent-pumpfun` gives agents a dedicated panel for Pump.fun monitoring, token launches, and payout tracking, all linked to the agent's on-chain wallet.
+
+---
+
 ## API Reference
 
 The full OpenAPI 3.1 spec is available at `/openapi.json`. The key API surface is organized below.
@@ -1124,10 +1429,20 @@ Scheduled via `vercel.json`, these run automatically in production:
 
 | Schedule | Endpoint | Purpose |
 |---|---|---|
-| Every 15 min | `/api/cron/erc8004-crawl` | Index new agents from blockchain |
+| Every 3 min | `/api/cron/pumpfun-monitor` | Monitor Pump.fun pool activity |
 | Every 5 min | `/api/cron/index-delegations` | Index EIP-7710 delegations |
+| Every 5 min | `/api/cron/solana-attestations-crawl` | Crawl Solana attestation memos |
+| Every 10 min | `/api/cron/pump-agent-stats` | Aggregate per-agent Pump.fun stats |
+| Every 10 min | `/api/cron/solana-attest-event-cleanup` | Prune old attestation events |
+| Every 15 min | `/api/cron/erc8004-crawl` | Index new ERC-8004 agents from blockchain |
+| Every 15 min | `/api/cron/pumpfun-signals` | Sweep Pump.fun signals → `pumpfun_signals` table |
 | Hourly | `/api/cron/run-dca` | Execute DCA strategy orders |
-| Hourly | `/api/cron/run-subscriptions` | Execute recurring subscriptions |
+| Every 6 hr | `/api/cron/process-subscriptions` | Process recurring on-chain subscriptions |
+| Hourly | `/api/cron/run-subscriptions` | Execute recurring subscription payments |
+| 3am daily | `/api/cron/settle-royalties` | Settle pending skill royalty payments |
+| 4am daily | `/api/cron/audit-log-cleanup` | Prune expired audit log rows |
+
+All cron routes are dispatched through `api/cron/[name].js` — a single catch-all Vercel function that routes by `name` param.
 
 ---
 
@@ -1180,7 +1495,7 @@ Access tokens are short-lived JWTs (1 hour). Refresh tokens are opaque strings s
 
 ## MCP Server
 
-`api/mcp.js` (759 lines) implements the [Model Context Protocol](https://modelcontextprotocol.io) 2025-06-18 specification over HTTP with JSON-RPC 2.0. It enables external AI systems (including Claude Desktop, other agents, or custom integrations) to drive avatars programmatically.
+`api/mcp.js` is the MCP entry point (64 lines) that delegates to the `api/_mcp/` module (dispatch, auth, catalog, render, payments, embed-policy — ~450 lines combined). Together they implement the [Model Context Protocol](https://modelcontextprotocol.io) 2025-06-18 specification over HTTP with JSON-RPC 2.0. It enables external AI systems (including Claude Desktop, other agents, or custom integrations) to drive avatars programmatically.
 
 **Endpoint:** `POST /api/mcp`
 **Auth:** OAuth 2.1 Bearer token with `mcp` scope
@@ -1274,12 +1589,12 @@ Solana agents can ingest live pump.fun activity (GitHub social-fee claims, token
 |---|---|---|
 | MCP client | [api/_lib/pumpfun-mcp.js](api/_lib/pumpfun-mcp.js) | Cached JSON-RPC client to upstream `pumpfun-claims-bot` |
 | Read API | [api/agents/pumpfun.js](api/agents/pumpfun.js) | `?op=claims\|graduations\|token\|creator` |
-| SSE feed | [api/agents/pumpfun-feed.js](api/agents/pumpfun-feed.js) | Live event stream, 90s window, auto-reconnects |
-| Cron crawler | [api/cron/pumpfun-signals.js](api/cron/pumpfun-signals.js) | 15-min sweep → `pumpfun_signals` table |
+| SSE feed | [api/agents/pumpfun.js](api/agents/pumpfun.js) | Live event stream, 90s window, auto-reconnects (SSE block within this file) |
+| Cron crawler | [api/cron/[name].js](api/cron/[name].js) | 15-min sweep → `pumpfun_signals` table (routed by `name=pumpfun-signals`) |
 | Skills | [src/agent-skills-pumpfun-watch.js](src/agent-skills-pumpfun-watch.js) | `recent-claims`, `token-intel`, `watch-start`, `watch-stop` |
 | Widget | [src/widgets/pumpfun-feed.js](src/widgets/pumpfun-feed.js) | Live cards overlay |
-| Reputation | [api/agents/solana-reputation.js](api/agents/solana-reputation.js) | `pumpfun_signals` block in response |
-| Passport | [api/agents/solana-card.js](api/agents/solana-card.js) | `pumpfun` block on the agent card |
+| Reputation | [api/agents/solana/[action].js](api/agents/solana/[action].js) | `pumpfun_signals` block in response (action=`reputation`) |
+| Passport | [api/agents/solana/[action].js](api/agents/solana/[action].js) | `pumpfun` block on the agent card (action=`card`) |
 
 The crawler runs on a `*/15 * * * *` schedule (see [vercel.json](vercel.json)) and writes into the `pumpfun_signals` table. Agents subscribed via `watch-start` react to incoming events through the existing protocol bus — no new event types required.
 

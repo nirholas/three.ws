@@ -1,0 +1,947 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>three.ws — Built for Builders. Owned On-Chain.</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="description" content="three.ws lets you create a 3D AI agent that looks like you, thinks for you, and lives on-chain. The infrastructure for embodied AI." />
+		<meta name="theme-color" content="#000000" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="three.ws — Give Your AI a Body" />
+		<meta property="og:description" content="Create a 3D AI agent that looks like you, talks like you, and lives on-chain. Your audience can talk to it 24/7." />
+		<meta property="og:url" content="https://three.ws/explained" />
+		<meta property="og:image" content="https://three.ws/og-image.png" />
+
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="three.ws — Give Your AI a Body" />
+		<meta name="twitter:description" content="Create a 3D AI agent that looks like you, talks like you, and lives on-chain." />
+		<meta name="twitter:image" content="https://three.ws/og-image.png" />
+
+		<link rel="canonical" href="https://three.ws/explained" />
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="apple-touch-icon" href="/pwa-192x192.png" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/footer.css" />
+
+		<style>
+			*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+			body {
+				background: #000;
+				color: #e0e0e0;
+				font-family: 'Inter', sans-serif;
+				-webkit-font-smoothing: antialiased;
+			}
+
+			a { color: inherit; text-decoration: none; }
+
+			/* ── Nav ── */
+			.kol-nav {
+				position: sticky;
+				top: 0;
+				z-index: 100;
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: 0 clamp(1.5rem, 5vw, 4rem);
+				height: 64px;
+				background: rgba(0,0,0,0.85);
+				backdrop-filter: blur(16px);
+				border-bottom: 1px solid rgba(255,255,255,0.06);
+			}
+
+			.kol-nav-brand {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 1.25rem;
+				font-weight: 700;
+				color: #fff;
+				letter-spacing: -0.02em;
+			}
+
+			.kol-nav-brand span { color: #a78bfa; }
+
+			.kol-nav-links {
+				display: flex;
+				align-items: center;
+				gap: 2rem;
+				list-style: none;
+			}
+
+			.kol-nav-links a {
+				font-size: 0.875rem;
+				color: rgba(255,255,255,0.6);
+				transition: color 0.15s;
+			}
+
+			.kol-nav-links a:hover { color: #fff; }
+
+			.kol-nav-cta {
+				padding: 0.5rem 1.25rem;
+				background: linear-gradient(135deg, #a78bfa 0%, #6366f1 100%);
+				color: #fff !important;
+				border-radius: 8px;
+				font-weight: 600;
+				font-size: 0.875rem;
+				transition: opacity 0.15s;
+			}
+
+			.kol-nav-cta:hover { opacity: 0.85; }
+
+			/* ── Hero ── */
+			.kol-hero {
+				position: relative;
+				overflow: hidden;
+				padding: clamp(5rem, 12vw, 9rem) clamp(1.5rem, 5vw, 4rem) clamp(4rem, 8vw, 7rem);
+				text-align: center;
+			}
+
+			.kol-hero::before {
+				content: '';
+				position: absolute;
+				inset: 0;
+				background:
+					radial-gradient(ellipse 80% 60% at 50% -10%, rgba(139,92,246,0.22) 0%, transparent 65%),
+					radial-gradient(ellipse 40% 40% at 80% 80%, rgba(99,102,241,0.1) 0%, transparent 60%);
+				pointer-events: none;
+			}
+
+			.kol-hero-eyebrow {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.5rem;
+				padding: 0.35rem 1rem;
+				border: 1px solid rgba(167,139,250,0.35);
+				border-radius: 100px;
+				font-size: 0.78rem;
+				font-weight: 600;
+				color: #a78bfa;
+				text-transform: uppercase;
+				letter-spacing: 0.08em;
+				margin-bottom: 2rem;
+				background: rgba(139,92,246,0.08);
+			}
+
+			.kol-hero-eyebrow-dot {
+				width: 6px;
+				height: 6px;
+				border-radius: 50%;
+				background: #a78bfa;
+				animation: pulse-dot 2s ease-in-out infinite;
+			}
+
+			@keyframes pulse-dot {
+				0%, 100% { opacity: 1; }
+				50% { opacity: 0.3; }
+			}
+
+			.kol-hero h1 {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: clamp(2.5rem, 6vw, 5rem);
+				font-weight: 700;
+				line-height: 1.1;
+				letter-spacing: -0.03em;
+				color: #fff;
+				max-width: 900px;
+				margin: 0 auto 1.5rem;
+			}
+
+			.kol-hero h1 em {
+				font-style: normal;
+				background: linear-gradient(90deg, #a78bfa, #6366f1);
+				-webkit-background-clip: text;
+				-webkit-text-fill-color: transparent;
+				background-clip: text;
+			}
+
+			.kol-hero-sub {
+				font-size: clamp(1rem, 2vw, 1.25rem);
+				color: rgba(255,255,255,0.55);
+				max-width: 600px;
+				margin: 0 auto 2.5rem;
+				line-height: 1.7;
+			}
+
+			.kol-hero-actions {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				gap: 1rem;
+				flex-wrap: wrap;
+			}
+
+			.btn-primary {
+				padding: 0.875rem 2rem;
+				background: linear-gradient(135deg, #a78bfa 0%, #6366f1 100%);
+				color: #fff;
+				border-radius: 10px;
+				font-weight: 600;
+				font-size: 1rem;
+				display: inline-flex;
+				align-items: center;
+				gap: 0.5rem;
+				transition: opacity 0.15s, transform 0.15s;
+			}
+
+			.btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+
+			.btn-ghost {
+				padding: 0.875rem 2rem;
+				border: 1px solid rgba(255,255,255,0.18);
+				color: rgba(255,255,255,0.8);
+				border-radius: 10px;
+				font-weight: 500;
+				font-size: 1rem;
+				transition: border-color 0.15s, color 0.15s;
+			}
+
+			.btn-ghost:hover { border-color: rgba(255,255,255,0.4); color: #fff; }
+
+			/* ── Section layout ── */
+			.kol-section {
+				padding: clamp(4rem, 8vw, 7rem) clamp(1.5rem, 5vw, 4rem);
+				max-width: 1200px;
+				margin: 0 auto;
+			}
+
+			.kol-section-label {
+				font-size: 0.75rem;
+				font-weight: 600;
+				text-transform: uppercase;
+				letter-spacing: 0.1em;
+				color: #a78bfa;
+				margin-bottom: 1rem;
+			}
+
+			.kol-section-heading {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: clamp(1.75rem, 3.5vw, 2.75rem);
+				font-weight: 700;
+				letter-spacing: -0.025em;
+				color: #fff;
+				line-height: 1.2;
+				max-width: 700px;
+				margin-bottom: 1rem;
+			}
+
+			.kol-section-sub {
+				font-size: 1.0625rem;
+				color: rgba(255,255,255,0.5);
+				max-width: 540px;
+				line-height: 1.7;
+				margin-bottom: 3.5rem;
+			}
+
+			/* ── Three-card grid (what it does) ── */
+			.kol-cards {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+				gap: 1.5rem;
+			}
+
+			.kol-card {
+				background: rgba(255,255,255,0.03);
+				border: 1px solid rgba(255,255,255,0.07);
+				border-radius: 16px;
+				padding: 2rem;
+				transition: border-color 0.2s, background 0.2s;
+			}
+
+			.kol-card:hover {
+				border-color: rgba(167,139,250,0.3);
+				background: rgba(139,92,246,0.05);
+			}
+
+			.kol-card-icon {
+				width: 48px;
+				height: 48px;
+				border-radius: 12px;
+				background: rgba(139,92,246,0.15);
+				border: 1px solid rgba(139,92,246,0.25);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 1.35rem;
+				margin-bottom: 1.25rem;
+			}
+
+			.kol-card h3 {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 1.125rem;
+				font-weight: 600;
+				color: #fff;
+				margin-bottom: 0.625rem;
+				letter-spacing: -0.01em;
+			}
+
+			.kol-card p {
+				font-size: 0.9375rem;
+				color: rgba(255,255,255,0.5);
+				line-height: 1.65;
+			}
+
+			.kol-card-tag {
+				display: inline-block;
+				margin-top: 1rem;
+				padding: 0.25rem 0.625rem;
+				background: rgba(139,92,246,0.12);
+				border: 1px solid rgba(139,92,246,0.22);
+				border-radius: 6px;
+				font-size: 0.75rem;
+				font-weight: 600;
+				color: #a78bfa;
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+			}
+
+			/* ── Divider ── */
+			.kol-divider {
+				height: 1px;
+				background: rgba(255,255,255,0.06);
+				max-width: 1200px;
+				margin: 0 auto;
+			}
+
+			/* ── Steps ── */
+			.kol-steps {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+				gap: 2rem;
+				counter-reset: step-counter;
+			}
+
+			.kol-step {
+				counter-increment: step-counter;
+				position: relative;
+			}
+
+			.kol-step-num {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 0.8rem;
+				font-weight: 700;
+				color: rgba(167,139,250,0.5);
+				letter-spacing: 0.05em;
+				margin-bottom: 0.75rem;
+			}
+
+			.kol-step-num::before {
+				content: "0" counter(step-counter);
+			}
+
+			.kol-step h3 {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 1.0625rem;
+				font-weight: 600;
+				color: #fff;
+				margin-bottom: 0.5rem;
+			}
+
+			.kol-step p {
+				font-size: 0.9rem;
+				color: rgba(255,255,255,0.48);
+				line-height: 1.65;
+			}
+
+			.kol-step-connector {
+				display: none;
+			}
+
+			@media (min-width: 900px) {
+				.kol-steps {
+					grid-template-columns: repeat(4, 1fr);
+				}
+			}
+
+			/* ── Onchain explainer ── */
+			.kol-onchain {
+				background: rgba(255,255,255,0.02);
+				border: 1px solid rgba(255,255,255,0.07);
+				border-radius: 20px;
+				padding: clamp(2rem, 4vw, 3.5rem);
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 3rem;
+				align-items: center;
+			}
+
+			@media (max-width: 768px) {
+				.kol-onchain { grid-template-columns: 1fr; gap: 2rem; }
+			}
+
+			.kol-onchain-heading {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: clamp(1.5rem, 3vw, 2.25rem);
+				font-weight: 700;
+				letter-spacing: -0.025em;
+				color: #fff;
+				line-height: 1.2;
+				margin-bottom: 1.25rem;
+			}
+
+			.kol-onchain-heading em {
+				font-style: normal;
+				background: linear-gradient(90deg, #a78bfa, #6366f1);
+				-webkit-background-clip: text;
+				-webkit-text-fill-color: transparent;
+				background-clip: text;
+			}
+
+			.kol-onchain-body {
+				font-size: 0.9375rem;
+				color: rgba(255,255,255,0.5);
+				line-height: 1.7;
+				margin-bottom: 1.5rem;
+			}
+
+			.kol-trait-list {
+				list-style: none;
+				display: flex;
+				flex-direction: column;
+				gap: 0.75rem;
+			}
+
+			.kol-trait-list li {
+				display: flex;
+				align-items: flex-start;
+				gap: 0.75rem;
+				font-size: 0.9375rem;
+				color: rgba(255,255,255,0.7);
+				line-height: 1.5;
+			}
+
+			.kol-trait-list li::before {
+				content: '';
+				width: 18px;
+				height: 18px;
+				min-width: 18px;
+				border-radius: 50%;
+				background: rgba(139,92,246,0.15);
+				border: 1px solid rgba(139,92,246,0.35);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				position: relative;
+				top: 2px;
+			}
+
+			.kol-trait-check {
+				width: 18px;
+				height: 18px;
+				min-width: 18px;
+				border-radius: 50%;
+				background: rgba(139,92,246,0.15);
+				border: 1px solid rgba(139,92,246,0.35);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				position: relative;
+				top: 2px;
+				flex-shrink: 0;
+			}
+
+			.kol-trait-check svg {
+				width: 10px;
+				height: 10px;
+			}
+
+			.kol-onchain-visual {
+				display: flex;
+				flex-direction: column;
+				gap: 0.75rem;
+			}
+
+			.kol-token-card {
+				background: rgba(255,255,255,0.03);
+				border: 1px solid rgba(255,255,255,0.08);
+				border-radius: 12px;
+				padding: 1.125rem 1.25rem;
+				display: flex;
+				align-items: center;
+				gap: 1rem;
+			}
+
+			.kol-token-card-icon {
+				width: 40px;
+				height: 40px;
+				min-width: 40px;
+				border-radius: 10px;
+				background: rgba(139,92,246,0.15);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 1.1rem;
+			}
+
+			.kol-token-card-body {
+				flex: 1;
+			}
+
+			.kol-token-card-title {
+				font-size: 0.875rem;
+				font-weight: 600;
+				color: #fff;
+				margin-bottom: 0.2rem;
+			}
+
+			.kol-token-card-sub {
+				font-size: 0.78rem;
+				color: rgba(255,255,255,0.38);
+			}
+
+			.kol-token-card-badge {
+				padding: 0.2rem 0.55rem;
+				border-radius: 6px;
+				font-size: 0.7rem;
+				font-weight: 600;
+				text-transform: uppercase;
+				letter-spacing: 0.04em;
+			}
+
+			.badge-green {
+				background: rgba(74,222,128,0.1);
+				border: 1px solid rgba(74,222,128,0.25);
+				color: #4ade80;
+			}
+
+			.badge-purple {
+				background: rgba(139,92,246,0.12);
+				border: 1px solid rgba(139,92,246,0.25);
+				color: #a78bfa;
+			}
+
+			.badge-blue {
+				background: rgba(99,102,241,0.12);
+				border: 1px solid rgba(99,102,241,0.25);
+				color: #818cf8;
+			}
+
+			/* ── Roadmap ── */
+			.kol-roadmap {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+				gap: 1rem;
+			}
+
+			.kol-phase {
+				background: rgba(255,255,255,0.02);
+				border: 1px solid rgba(255,255,255,0.07);
+				border-radius: 14px;
+				padding: 1.5rem;
+				position: relative;
+				overflow: hidden;
+			}
+
+			.kol-phase.is-shipped {
+				border-color: rgba(74,222,128,0.2);
+				background: rgba(74,222,128,0.03);
+			}
+
+			.kol-phase.is-active {
+				border-color: rgba(167,139,250,0.3);
+				background: rgba(139,92,246,0.05);
+			}
+
+			.kol-phase-status {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.4rem;
+				font-size: 0.72rem;
+				font-weight: 600;
+				text-transform: uppercase;
+				letter-spacing: 0.07em;
+				margin-bottom: 0.875rem;
+			}
+
+			.status-shipped { color: #4ade80; }
+			.status-active { color: #a78bfa; }
+			.status-next { color: rgba(255,255,255,0.35); }
+
+			.kol-phase-dot {
+				width: 7px;
+				height: 7px;
+				border-radius: 50%;
+				background: currentColor;
+			}
+
+			.status-active .kol-phase-dot {
+				animation: pulse-dot 2s ease-in-out infinite;
+			}
+
+			.kol-phase h3 {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 1rem;
+				font-weight: 600;
+				color: #fff;
+				margin-bottom: 0.5rem;
+			}
+
+			.kol-phase p {
+				font-size: 0.875rem;
+				color: rgba(255,255,255,0.45);
+				line-height: 1.6;
+			}
+
+			/* ── CTA section ── */
+			.kol-cta-section {
+				padding: clamp(4rem, 8vw, 7rem) clamp(1.5rem, 5vw, 4rem);
+				text-align: center;
+				position: relative;
+				overflow: hidden;
+			}
+
+			.kol-cta-section::before {
+				content: '';
+				position: absolute;
+				inset: 0;
+				background: radial-gradient(ellipse 70% 70% at 50% 100%, rgba(139,92,246,0.15) 0%, transparent 65%);
+				pointer-events: none;
+			}
+
+			.kol-cta-section h2 {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: clamp(2rem, 4vw, 3.25rem);
+				font-weight: 700;
+				letter-spacing: -0.03em;
+				color: #fff;
+				max-width: 700px;
+				margin: 0 auto 1.25rem;
+				line-height: 1.15;
+			}
+
+			.kol-cta-section p {
+				font-size: 1.0625rem;
+				color: rgba(255,255,255,0.5);
+				max-width: 500px;
+				margin: 0 auto 2.5rem;
+				line-height: 1.7;
+			}
+
+			/* ── Footer (minimal) ── */
+			.kol-footer {
+				border-top: 1px solid rgba(255,255,255,0.06);
+				padding: 2rem clamp(1.5rem, 5vw, 4rem);
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				flex-wrap: wrap;
+				gap: 1rem;
+			}
+
+			.kol-footer-brand {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 1rem;
+				font-weight: 700;
+				color: rgba(255,255,255,0.4);
+			}
+
+			.kol-footer-brand span { color: #a78bfa; }
+
+			.kol-footer-links {
+				display: flex;
+				gap: 1.5rem;
+				list-style: none;
+			}
+
+			.kol-footer-links a {
+				font-size: 0.84rem;
+				color: rgba(255,255,255,0.35);
+				transition: color 0.15s;
+			}
+
+			.kol-footer-links a:hover { color: rgba(255,255,255,0.7); }
+
+			/* ── Responsive nav ── */
+			@media (max-width: 640px) {
+				.kol-nav-links { display: none; }
+			}
+
+			/* ── Trait list (fixed) ── */
+			.kol-trait-item {
+				display: flex;
+				align-items: flex-start;
+				gap: 0.75rem;
+				font-size: 0.9375rem;
+				color: rgba(255,255,255,0.7);
+				line-height: 1.5;
+				margin-bottom: 0.75rem;
+			}
+		</style>
+	</head>
+	<body>
+
+		<!-- Nav -->
+		<nav class="kol-nav">
+			<a href="/" class="kol-nav-brand">three<span>.ws</span></a>
+			<ul class="kol-nav-links">
+				<li><a href="/discover">Discover</a></li>
+				<li><a href="/marketplace">Marketplace</a></li>
+				<li><a href="/docs">Docs</a></li>
+				<li><a href="/create" class="kol-nav-cta">Create your agent</a></li>
+			</ul>
+		</nav>
+
+		<!-- Hero -->
+		<section class="kol-hero">
+			<div class="kol-hero-eyebrow">
+				<span class="kol-hero-eyebrow-dot"></span>
+				Built for builders in crypto
+			</div>
+			<h1>Your AI should have a <em>face</em>,<br>a voice, and a wallet.</h1>
+			<p class="kol-hero-sub">
+				three.ws is the platform to create, own, and distribute 3D AI agents.
+				Backed by real 3D rendering, on-chain identity, and an open embedding layer
+				that puts your agent anywhere on the internet.
+			</p>
+			<div class="kol-hero-actions">
+				<a href="/create" class="btn-primary">
+					Create your agent
+					<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+				</a>
+				<a href="/discover" class="btn-ghost">See live agents</a>
+			</div>
+		</section>
+
+		<div class="kol-divider"></div>
+
+		<!-- What it is -->
+		<section class="kol-section">
+			<p class="kol-section-label">What three.ws does</p>
+			<h2 class="kol-section-heading">Four things, done properly.</h2>
+			<p class="kol-section-sub">Every piece was built to work together — the viewer, the agent brain, the on-chain registry, and the embed layer are one stack, not four separate tools.</p>
+
+			<div class="kol-cards">
+				<div class="kol-card">
+					<div class="kol-card-icon">&#x1F5BC;</div>
+					<h3>Render</h3>
+					<p>Drop any GLB file in a browser and it renders instantly — no uploads, no server, no plugins. Full 3D with lighting, animations, and morph targets, all in WebGL.</p>
+					<span class="kol-card-tag">Runs in the browser</span>
+				</div>
+
+				<div class="kol-card">
+					<div class="kol-card-icon">&#x1F9E0;</div>
+					<h3>Embody</h3>
+					<p>Connect a real LLM brain — powered by Claude — to any avatar. The agent listens, thinks, talks back, gestures, remembers conversations, and runs on-chain skills.</p>
+					<span class="kol-card-tag">Real AI, real actions</span>
+				</div>
+
+				<div class="kol-card">
+					<div class="kol-card-icon">&#x26D3;&#xFE0F;</div>
+					<h3>Register</h3>
+					<p>Mint your agent as an ERC-8004 token on any EVM chain. It gets a wallet address, signed action history, and a reputation score — permanently on-chain and verifiable by anyone.</p>
+					<span class="kol-card-tag">ERC-8004 identity</span>
+				</div>
+
+				<div class="kol-card">
+					<div class="kol-card-icon">&#x1F4E6;</div>
+					<h3>Embed</h3>
+					<p>One line of HTML puts your agent on any website. Or use five ready-made widget types: talking agent, animation gallery, passport card, turntable, and hotspot tour.</p>
+					<span class="kol-card-tag">&lt;agent-3d&gt; component</span>
+				</div>
+			</div>
+		</section>
+
+		<div class="kol-divider"></div>
+
+		<!-- How it works -->
+		<section class="kol-section">
+			<p class="kol-section-label">How it works</p>
+			<h2 class="kol-section-heading">From avatar to on-chain agent in four steps.</h2>
+			<p class="kol-section-sub">No 3D experience required. The platform handles the hard parts.</p>
+
+			<div class="kol-steps">
+				<div class="kol-step">
+					<p class="kol-step-num"></p>
+					<h3>Upload or generate a 3D model</h3>
+					<p>Drag in a GLB file from a 3D artist, import from Ready Player Me, or use Avaturn to generate one from a photo. The viewer validates and renders it in your browser instantly.</p>
+				</div>
+
+				<div class="kol-step">
+					<p class="kol-step-num"></p>
+					<h3>Give it a brain and a voice</h3>
+					<p>Write a persona (or let the wizard do it), pick an LLM model, and optionally connect ElevenLabs for a custom voice. Your agent now speaks, gestures, and remembers who it has talked to.</p>
+				</div>
+
+				<div class="kol-step">
+					<p class="kol-step-num"></p>
+					<h3>Register on-chain</h3>
+					<p>Mint the agent as an ERC-8004 token. This gives it a permanent ID, a delegated signer wallet, and an immutable record of every action it takes — provable and auditable forever.</p>
+				</div>
+
+				<div class="kol-step">
+					<p class="kol-step-num"></p>
+					<h3>Embed it anywhere</h3>
+					<p>Drop <code style="font-size:0.82em; color:#a78bfa; background:rgba(167,139,250,0.1); padding:1px 5px; border-radius:4px;">&lt;agent-3d src="..."&gt;</code> into any webpage. No framework. No build step. It just works.</p>
+				</div>
+			</div>
+		</section>
+
+		<div class="kol-divider"></div>
+
+		<!-- On-chain explainer -->
+		<section class="kol-section">
+			<p class="kol-section-label">On-chain identity</p>
+
+			<div class="kol-onchain">
+				<div>
+					<h2 class="kol-onchain-heading">Your agent isn't a PFP.<br>It's an <em>economic actor</em>.</h2>
+					<p class="kol-onchain-body">
+						A PFP is a static image. A three.ws agent is an ERC-8004 token with a live runtime behind it —
+						it can hold funds, earn from skill calls, build a reputation score, and sign transactions on your behalf.
+						The on-chain record is permanent. No company can turn it off.
+					</p>
+
+					<div style="display:flex;flex-direction:column;gap:0.75rem;">
+						<div class="kol-trait-item">
+							<div class="kol-trait-check">
+								<svg viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+							</div>
+							<span>Stable on-chain identity — an agent ID that never changes, even if you update the avatar</span>
+						</div>
+						<div class="kol-trait-item">
+							<div class="kol-trait-check">
+								<svg viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+							</div>
+							<span>Delegated signer wallet — the agent can transact autonomously within permissions you define</span>
+						</div>
+						<div class="kol-trait-item">
+							<div class="kol-trait-check">
+								<svg viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+							</div>
+							<span>Signed action log — every speak, skill, and memory event is cryptographically recorded</span>
+						</div>
+						<div class="kol-trait-item">
+							<div class="kol-trait-check">
+								<svg viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+							</div>
+							<span>Reputation score — built from real actions, not self-reported. Stakes and royalties follow it</span>
+						</div>
+						<div class="kol-trait-item">
+							<div class="kol-trait-check">
+								<svg viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+							</div>
+							<span>Cross-chain — Base, Ethereum, and Solana. The manifest is pinned to IPFS</span>
+						</div>
+					</div>
+				</div>
+
+				<div class="kol-onchain-visual">
+					<div class="kol-token-card">
+						<div class="kol-token-card-icon">&#x1F9BE;</div>
+						<div class="kol-token-card-body">
+							<p class="kol-token-card-title">Agent #1042 — Coach Leo</p>
+							<p class="kol-token-card-sub">ERC-8004 · Base · Registered</p>
+						</div>
+						<span class="kol-token-card-badge badge-green">Verified</span>
+					</div>
+
+					<div class="kol-token-card">
+						<div class="kol-token-card-icon">&#x1F4CA;</div>
+						<div class="kol-token-card-body">
+							<p class="kol-token-card-title">Reputation score</p>
+							<p class="kol-token-card-sub">847 actions · 99.2% trust rate</p>
+						</div>
+						<span class="kol-token-card-badge badge-purple">On-chain</span>
+					</div>
+
+					<div class="kol-token-card">
+						<div class="kol-token-card-icon">&#x1F4B3;</div>
+						<div class="kol-token-card-body">
+							<p class="kol-token-card-title">Delegated signer</p>
+							<p class="kol-token-card-sub">0x4a3b…f91c · EIP-712 scoped</p>
+						</div>
+						<span class="kol-token-card-badge badge-blue">Active</span>
+					</div>
+
+					<div class="kol-token-card">
+						<div class="kol-token-card-icon">&#x1F4DC;</div>
+						<div class="kol-token-card-body">
+							<p class="kol-token-card-title">Manifest</p>
+							<p class="kol-token-card-sub">ipfs://bafy…3kd2 · body + skills + memory</p>
+						</div>
+						<span class="kol-token-card-badge badge-purple">Pinned</span>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<div class="kol-divider"></div>
+
+		<!-- Roadmap -->
+		<section class="kol-section">
+			<p class="kol-section-label">Roadmap</p>
+			<h2 class="kol-section-heading">Where we are, and where we're going.</h2>
+			<p class="kol-section-sub">The platform is live. Every phase below builds on what's already running in production.</p>
+
+			<div class="kol-roadmap">
+				<div class="kol-phase is-shipped">
+					<p class="kol-phase-status status-shipped">
+						<span class="kol-phase-dot"></span> Shipped
+					</p>
+					<h3>Phase 0 — Foundations</h3>
+					<p>Full platform is live: 3D viewer, LLM runtime, ERC-8004 contracts, OAuth server, MCP endpoint, embeddable web component. Register an agent today.</p>
+				</div>
+
+				<div class="kol-phase is-active">
+					<p class="kol-phase-status status-active">
+						<span class="kol-phase-dot"></span> In progress
+					</p>
+					<h3>Phase 1 — Selfie to Avatar</h3>
+					<p>Take 3 photos, get a rigged 3D avatar minted as an on-chain agent in under 60 seconds. GPU inference workers running, mobile capture UX in build.</p>
+				</div>
+
+				<div class="kol-phase">
+					<p class="kol-phase-status status-next">
+						<span class="kol-phase-dot"></span> Next
+					</p>
+					<h3>Phase 2 — Agent Personalization</h3>
+					<p>Voice cloning from 10 seconds of speech. Persona extraction from X, Farcaster, and GitHub. Your agent talks like you, thinks like you.</p>
+				</div>
+
+				<div class="kol-phase">
+					<p class="kol-phase-status status-next">
+						<span class="kol-phase-dot"></span> Next
+					</p>
+					<h3>Phase 3 — On-Chain Economy</h3>
+					<p>Agent tokens with bonding curves. Reputation markets you can stake on. Skill royalties paid per-call. Agents that earn autonomously.</p>
+				</div>
+			</div>
+		</section>
+
+		<div class="kol-divider"></div>
+
+		<!-- CTA -->
+		<section class="kol-cta-section">
+			<h2>Your audience is waiting to talk to you.</h2>
+			<p>
+				Create your agent now — it takes minutes.
+				Upload a model, write a persona, mint it on-chain,
+				and drop it anywhere with a single line of HTML.
+			</p>
+			<div class="kol-hero-actions">
+				<a href="/create" class="btn-primary">
+					Build your agent
+					<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+				</a>
+				<a href="/docs" class="btn-ghost">Read the docs</a>
+			</div>
+		</section>
+
+		<!-- Footer -->
+		<footer class="kol-footer">
+			<span class="kol-footer-brand">three<span>.ws</span></span>
+			<ul class="kol-footer-links">
+				<li><a href="https://github.com/nirholas/3D-Agent" target="_blank" rel="noopener">GitHub</a></li>
+				<li><a href="/docs">Docs</a></li>
+				<li><a href="/discover">Discover</a></li>
+				<li><a href="https://three.ws">three.ws</a></li>
+			</ul>
+			<p style="font-size:0.8rem;color:rgba(255,255,255,0.2);">© 2026 three.ws — Apache 2.0</p>
+		</footer>
+
+	</body>
+</html>
