@@ -249,18 +249,53 @@ function renderNotFound(id, reason) {
 		modal.classList.add('hidden');
 	});
 
-	confirmWithdrawBtn.addEventListener('click', () => {
-		const amount = withdrawAmountInput.value;
-		const recipient = recipientAddressInput.value;
+	confirmWithdrawBtn.addEventListener('click', async () => {
+		if (!wallet) {
+			alert('Please connect your wallet first.');
+			return;
+		}
 
-		if (amount && recipient) {
-			alert(`Withdrawal of ${amount} SOL to ${recipient} initiated. (This is a placeholder)`);
-			console.log('Withdraw:', { amount, recipient });
+		const amount = parseFloat(withdrawAmountInput.value);
+		const recipientAddress = recipientAddressInput.value;
+
+		if (isNaN(amount) || amount <= 0) {
+			alert('Please enter a valid amount.');
+			return;
+		}
+
+		if (!recipientAddress) {
+			alert('Please enter a recipient address.');
+			return;
+		}
+
+		try {
+			const recipientPubKey = new solanaWeb3.PublicKey(recipientAddress);
+			const transaction = new solanaWeb3.Transaction().add(
+				solanaWeb3.SystemProgram.transfer({
+					fromPubkey: wallet,
+					toPubkey: recipientPubKey,
+					lamports: amount * solanaWeb3.LAMPORTS_PER_SOL,
+				})
+			);
+
+			transaction.feePayer = wallet;
+			const { blockhash } = await connection.getRecentBlockhash();
+			transaction.recentBlockhash = blockhash;
+
+			const provider = getProvider();
+			const signedTransaction = await provider.signTransaction(transaction);
+			const signature = await connection.sendRawTransaction(signedTransaction.serialize());
+			await connection.confirmTransaction(signature);
+
+			alert(`Withdrawal of ${amount} SOL to ${recipientAddress} successful!`);
+			console.log('Transaction signature:', signature);
 			modal.classList.add('hidden');
 			withdrawAmountInput.value = '';
 			recipientAddressInput.value = '';
-		} else {
-			alert('Please fill out both fields.');
+
+		} catch (error) {
+			console.error('Withdrawal failed:', error);
+			alert(`Withdrawal failed: ${error.message}`);
 		}
 	});
 
@@ -412,6 +447,38 @@ async function loadAgent(id) {
 
 	return { agent: normalize(rec, avatar), error: null };
 }
+
+// --- Wallet Integration ---
+
+const getProvider = () => {
+	if ('phantom' in window) {
+		const provider = window.phantom?.solana;
+		if (provider?.isPhantom) {
+			return provider;
+		}
+	}
+	window.open('https://phantom.app/', '_blank');
+	return null;
+};
+
+let wallet = null;
+const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('devnet'), 'confirmed');
+const connectWalletBtn = document.getElementById('connect-wallet-btn');
+
+connectWalletBtn.addEventListener('click', async () => {
+	const provider = getProvider();
+	if (provider) {
+		try {
+			const resp = await provider.connect();
+			wallet = resp.publicKey;
+			console.log('Wallet connected:', wallet.toString());
+			connectWalletBtn.textContent = `${wallet.toString().slice(0, 4)}...${wallet.toString().slice(-4)}`;
+		} catch (err) {
+			console.error('Failed to connect to wallet:', err);
+		}
+	}
+});
+
 
 const id = new URLSearchParams(location.search).get('id') || location.pathname.match(/\/agents\/([^/]+)/)?.[1];
 loadAgent(id)

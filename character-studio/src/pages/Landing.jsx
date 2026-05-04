@@ -68,6 +68,9 @@ function Landing() {
                 loadCharacter
             }><img src='/assets/media/btn_load_character.png' /></button>
             */}
+        <button className={styles.button} onClick={() => setViewMode(ViewMode.STUDIO)}>
+          Studio
+        </button>
       </div>
     </div>
   )

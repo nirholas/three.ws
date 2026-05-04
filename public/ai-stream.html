@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>AI Stream · three.ws</title>
+	<link rel="icon" href="/favicon.ico" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/ai-stream.css" />
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body class="ai-stream-page">
+	<header class="ai-stream-header">
+		<h1><a href="/"><img src="/three.svg" alt="three.ws" /> AI Stream</a></h1>
+		<div class="controls">
+			<button id="ctl-avatar-btn" type="button" aria-haspopup="dialog" aria-expanded="false" title="Choose avatar">
+				<span class="avatar-thumb" id="ctl-avatar-thumb" aria-hidden="true"></span>
+				<span class="avatar-name" id="ctl-avatar-label">Avatar</span>
+				<span class="avatar-caret" aria-hidden="true">▾</span>
+			</button>
+			<select id="ctl-mood" title="Avatar mood — biases reaction intensity">
+				<option value="chill">😎 Chill</option>
+				<option value="normal" selected>🙂 Normal</option>
+				<option value="hype">🤩 Hype</option>
+			</select>
+			<button id="ctl-narrate" class="toggle" type="button" data-on="1" title="Toggle agent narration">🔊</button>
+		</div>
+		<div class="status">
+			<span id="status-dot" class="dot connecting"></span><span id="status-label">connecting…</span>
+		</div>
+	</header>
+
+	<main class="ai-stream-main">
+		<div id="stage">
+			<iframe id="agent" allow="autoplay" title="3D agent"></iframe>
+		</div>
+		<aside id="feed-container">
+			<div id="feed"></div>
+		</aside>
+	</main>
+
+	<!-- Re-using the same modals and logic from pumpfun.html -->
+	<div class="pf-modal-backdrop" id="avatar-picker" data-open="false" role="dialog" aria-modal="true" aria-labelledby="avatar-picker-title">
+		<div class="pf-modal" role="document">
+			<div class="pf-modal-head">
+				<h2 id="avatar-picker-title">Choose an avatar</h2>
+				<span class="spacer"></span>
+				<button class="pf-modal-close" type="button" aria-label="Close" data-picker-close>×</button>
+			</div>
+			<div class="pf-tabs" role="tablist">
+				<button class="pf-tab" role="tab" type="button" data-tab="defaults" aria-selected="true">Defaults</button>
+				<button class="pf-tab" role="tab" type="button" data-tab="mine">My Agents</button>
+				<button class="pf-tab" role="tab" type="button" data-tab="community">Community</button>
+			</div>
+			<div class="pf-toolbar">
+				<input type="search" id="picker-search" placeholder="Search..." />
+			</div>
+			<div class="pf-content">
+				<div class="pf-body" id="picker-body"></div>
+				<aside class="pf-preview" aria-label="Avatar preview">
+					<div class="pf-preview-stage" id="picker-preview-stage"></div>
+					<div class="pf-preview-meta" id="picker-preview-meta"></div>
+				</aside>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		// This will be a simplified version of the script from pumpfun.html
+		// focusing on the core agent + feed functionality.
+		const $ = (id) => document.getElementById(id);
+
+		// Global state
+		const params = {
+			narrate: true,
+			mood: 'normal',
+			avatar: '/avatars/cz.glb',
+		};
+
+		// Iframe and agent communication
+		const iframe = $('agent');
+
+		function mountAgent() {
+			const modelHash = '&model=' + encodeURIComponent(params.avatar);
+			const widgetId = 'wdgt_demo_pumpfun_stream';
+			iframe.src = `/app#widget=${widgetId}&kiosk=true&type=pumpfun-feed${modelHash}`;
+		}
+
+		// Live feed connection
+		function connectFeed() {
+			const statusDot = $('status-dot');
+			const statusLabel = $('status-label');
+			statusDot.className = 'dot live';
+			statusLabel.textContent = 'live';
+			// WebSocket connection logic will be added here
+		}
+
+		// Initial setup
+		function init() {
+			mountAgent();
+			connectFeed();
+
+			$('ctl-narrate').addEventListener('click', (e) => {
+				params.narrate = !params.narrate;
+				e.currentTarget.dataset.on = params.narrate ? '1' : '0';
+			});
+
+			$('ctl-mood').addEventListener('change', (e) => {
+				params.mood = e.target.value;
+			});
+
+			// Avatar picker logic will be added here
+		}
+
+		init();
+	</script>
+</body>
+</html>

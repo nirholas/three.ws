@@ -400,6 +400,17 @@
 				left: 0.5rem;
 				top: 0.5rem;
 			}
+			.skill-price-row {
+				display: flex;
+				align-items: center;
+				gap: 1rem;
+				margin-bottom: 0.5rem;
+			}
+			.skill-name {
+				flex: 1;
+				font-size: 0.875rem;
+				color: rgba(255, 255, 255, 0.7);
+			}
 		</style>
 	</head>
 	<body>
@@ -559,6 +570,31 @@
 					<span class="form-status" id="publish-status" role="status" aria-live="polite"></span>
 				</div>
 			</section>
+
+			<!-- Monetization tab -->
+			<section
+				class="edit-panel persona-panel"
+				id="panel-monetization"
+				role="tabpanel"
+				aria-labelledby="tab-monetization"
+				hidden
+			>
+				<div class="form-group">
+					<label class="form-label">Skill Prices</label>
+					<div id="skill-prices-list">
+						<div class="muted">Loading skills…</div>
+					</div>
+				</div>
+				<div class="form-actions">
+					<button class="btn-primary" id="monetization-save">Save Prices</button>
+					<span
+						class="form-status"
+						id="monetization-status"
+						role="status"
+						aria-live="polite"
+					></span>
+				</div>
+			</section>
 		</main>
 
 		<div class="outfit-status" id="outfit-status" role="status" aria-live="polite"></div>
@@ -621,6 +657,7 @@
 				});
 				if (name === 'outfit') initOutfitTab();
 				if (name === 'publish') initPublishTab();
+				if (name === 'monetization') initMonetizationTab();
 			}
 
 			const editTabs = document.querySelectorAll('.edit-tab');
@@ -739,6 +776,85 @@
 					link.href = `/marketplace/agents/${agentId}`;
 					btn.textContent = 'Publish New Version';
 					document.getElementById('f-changelog').value = '';
+				} catch (err) {
+					status.textContent = err.message;
+					status.className = 'form-status err';
+				} finally {
+					btn.disabled = false;
+				}
+			});
+
+			// ── Monetization tab ───────────────────────────────────────────────────
+			let monetizationInitialized = false;
+
+			function initMonetizationTab() {
+				if (monetizationInitialized) return;
+				monetizationInitialized = true;
+				loadSkillPrices();
+			}
+
+			async function loadSkillPrices() {
+				const list = document.getElementById('skill-prices-list');
+				list.innerHTML = '<div class="muted">Loading skills…</div>';
+				try {
+					const res = await fetch(`/api/agents/${agentId}/skills-pricing`, { credentials: 'include' });
+					if (!res.ok) {
+						const err = await res.json().catch(() => ({}));
+						throw new Error(err.error_description || `HTTP ${res.status}`);
+					}
+					const { prices } = await res.json();
+					const skills = agent.skills || [];
+					if (!skills.length) {
+						list.innerHTML = '<div class="muted">This agent has no skills yet.</div>';
+						return;
+					}
+					list.innerHTML = skills.map(skill => {
+						const price = prices.find(p => p.skill === skill);
+						const amountInUSDC = price ? (price.amount / 1_000_000).toFixed(2) : '';
+						return `
+							<div class="skill-price-row">
+								<span class="skill-name">${esc(skill)}</span>
+								<input class="form-input" type="number" step="0.01" min="0" data-skill="${esc(skill)}" value="${amountInUSDC}" placeholder="USDC amount">
+							</div>
+						`;
+					}).join('');
+				} catch (err) {
+					list.innerHTML = `<div class="err">${esc(err.message)}</div>`;
+				}
+			}
+
+			document.getElementById('monetization-save').addEventListener('click', async () => {
+				const btn = document.getElementById('monetization-save');
+				const status = document.getElementById('monetization-status');
+				btn.disabled = true;
+				status.textContent = 'Saving…';
+				status.className = 'form-status';
+				try {
+					const prices = Array.from(document.querySelectorAll('#skill-prices-list input[type="number"]'))
+						.map(input => {
+							const value = parseFloat(input.value);
+							return {
+								skill: input.dataset.skill,
+								// Convert USDC to smallest unit (micros)
+								amount: value && !isNaN(value) ? Math.round(value * 1_000_000) : 0,
+								currency_mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyB7u6a', // USDC mainnet
+								chain: 'solana',
+							};
+						})
+						.filter(p => p.amount > 0);
+
+					const res = await fetch(`/api/agents/${agentId}/skills-pricing`, {
+						method: 'PUT',
+						credentials: 'include',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ prices }),
+					});
+					if (!res.ok) {
+						const err = await res.json().catch(() => ({}));
+						throw new Error(err.error_description || `HTTP ${res.status}`);
+					}
+					status.textContent = 'Saved.';
+					status.className = 'form-status ok';
 				} catch (err) {
 					status.textContent = err.message;
 					status.className = 'form-status err';

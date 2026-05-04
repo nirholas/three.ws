@@ -22,19 +22,28 @@ function _mount() {
 		.then((data) => {
 			const rawAgent = data?.agent || null;
 			if (!rawAgent?.user_id) return; // not the owner
-			if (rawAgent?.meta?.token?.mint) return; // already launched
 
 			const btn = document.getElementById('agent-stage-launch');
 			if (!btn) return;
-			btn.hidden = false;
-			btn.addEventListener('click', () => {
-				openLaunchTokenModal({
-					agentId,
-					agentName: identity.name,
-					imageUrl:
-						rawAgent.avatar_thumbnail_url || rawAgent.meta?.thumbnail_url || '',
+
+			if (rawAgent?.meta?.token?.mint) {
+				// Token launched, show dashboard button
+				btn.textContent = 'View Token Dashboard';
+				btn.addEventListener('click', () => {
+					window.open(`/pump-dashboard.html?agent=${agentId}`, '_blank');
 				});
-			});
+			} else {
+				// Not launched yet, show launch button
+				btn.addEventListener('click', () => {
+					openLaunchTokenModal({
+						agentId,
+						agentName: identity.name,
+						imageUrl:
+							rawAgent.avatar_thumbnail_url || rawAgent.meta?.thumbnail_url || '',
+					});
+				});
+			}
+			btn.hidden = false;
 		})
 		.catch(() => {});
 }

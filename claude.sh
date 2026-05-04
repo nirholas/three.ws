@@ -21,6 +21,7 @@ set -e
 #   format            Format the codebase with Prettier.
 #   clean             Clean up build artifacts.
 #   deploy            Deploy the project to Vercel (with confirmation).
+#   deploy-agent      Package an agent for deployment.
 #   help              Show this help message.
 # ---
 
@@ -153,6 +154,19 @@ function deploy() {
   print_success "Project deployed."
 }
 
+# Deploy a single agent
+function deploy_agent() {
+  print_header "Deploying Agent: $1"
+  if [ -z "$1" ]; then
+    print_error "Agent name not provided."
+    echo "Usage: ./claude.sh deploy-agent <agent_name>"
+    exit 1
+  fi
+  cd "$ROOT_DIR"
+  node scripts/deploy-agent.mjs "$1"
+  print_success "Agent packaged successfully."
+}
+
 # Show the help message
 function help() {
   # Extract the help text from the script's header comments
@@ -202,6 +216,9 @@ function main() {
       ;;
     deploy)
       deploy
+      ;;
+    deploy-agent)
+      deploy_agent "$2"
       ;;
     help)
       help

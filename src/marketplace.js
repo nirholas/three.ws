@@ -201,28 +201,12 @@ async function loadDetail(id) {
 	els.detail.hidden = false;
 	els.detail.scrollIntoView({ behavior: 'instant', block: 'start' });
 
-	try {
-		const [aR, vR, sR] = await Promise.all([
-			fetch(`${API}/agents/${id}`),
-			fetch(`${API}/agents/${id}/versions`),
-			fetch(`${API}/agents/${id}/similar`),
-		]);
-		const aJ = await aR.json();
-		if (!aR.ok) {
-			renderDetailError(aJ?.error_description || 'Agent not found');
-			return;
-		}
-		const a = aJ.data.agent;
-		detailState = { agent: a, bookmarked: !!aJ.data.bookmarked };
-		renderDetail(a, aJ.data.bookmarked);
-		renderVersions((await vR.json())?.data?.versions || []);
-		renderSimilar((await sR.json())?.data?.items || []);
-
-		// Fire-and-forget view counter.
-		fetch(`${API}/agents/${id}/view`, { method: 'POST' }).catch(() => {});
-	} catch (err) {
-		console.error('[marketplace] detail', err);
-		renderDetailError('Failed to load agent.');
+	const agent = state.items.find(item => item.id === id);
+	if (agent) {
+		detailState = { agent: agent, bookmarked: false };
+		renderDetail(agent, false);
+	} else {
+		renderDetailError('Agent not found');
 	}
 }
 
@@ -237,21 +221,21 @@ function renderDetailError(msg) {
 
 function renderDetail(a, bookmarked) {
 	$('d-name').textContent = a.name || 'Untitled';
-	$('d-avatar').textContent = initial(a.name);
-	$('d-author').textContent = a.author_name || 'Anonymous';
-	$('d-published').textContent = a.published_at ? formatDate(a.published_at) : formatDate(a.created_at);
+	$('d-avatar').textContent = a.avatar;
+	$('d-author').textContent = a.author || 'Anonymous';
+	$('d-published').textContent = a.published ? formatDate(a.published) : '';
 	$('d-category').textContent = CATEGORY_LABELS[a.category] || a.category || 'General';
-	$('d-views').textContent = `⊙ ${a.views_count || 0}`;
+	$('d-views').textContent = `⊙ ${a.views || 0}`;
 	$('d-overview').textContent = a.description || '';
 	$('d-overview-side').textContent = a.description || '';
 	$('d-greeting').textContent = a.greeting || `Hello! I am ${a.name}. How can I help you today?`;
-	$('d-profile').textContent = a.system_prompt || '(No profile yet.)';
+	$('d-profile').textContent = a.prompt || '(No profile yet.)';
 	$('d-bookmark').classList.toggle('on', bookmarked);
 	$('d-bookmark').textContent = bookmarked ? '★' : '☆';
 
 	const forksEl = $('d-forks-pill');
-	if (a.forks_count > 0) {
-		forksEl.textContent = `⑂ ${a.forks_count} forks`;
+	if (a.forks > 0) {
+		forksEl.textContent = `⑂ ${a.forks} forks`;
 		forksEl.hidden = false;
 	} else {
 		forksEl.hidden = true;
@@ -369,7 +353,7 @@ async function fork() {
 		if (!r.ok) throw new Error(j?.error_description || 'Fork failed');
 		// Send the user to chat with their new fork.
 		const newId = j?.data?.agent?.id;
-		if (newId) location.href = `/agent/${newId}`;
+		if (newId) location.href = `/agent-detail.html?id=${newId}`;
 	} catch (err) {
 		alert(err.message || 'Fork failed');
 	}

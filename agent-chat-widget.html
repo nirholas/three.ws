@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>3D Agent Chat</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="description" content="Embeddable 3D Agent Chat Widget." />
+		<meta name="robots" content="noindex" />
+		<style>
+			:root {
+				--brand-color: #4a9eff;
+				--dark-bg: #1a1a1a;
+				--light-bg: #ffffff;
+				--dark-text: #ffffff;
+				--light-text: #000000;
+			}
+			html, body {
+				margin: 0;
+				padding: 0;
+				height: 100%;
+				width: 100%;
+				overflow: hidden;
+				font-family: system-ui, sans-serif;
+			}
+			body {
+				display: flex;
+				flex-direction: column;
+			}
+			#viewer-container {
+				flex-grow: 1;
+				position: relative;
+			}
+			#stage {
+				position: absolute;
+				inset: 0;
+			}
+			#chat-container {
+				height: 40%;
+				display: flex;
+				flex-direction: column;
+				background: var(--dark-bg);
+				color: var(--dark-text);
+			}
+			#messages {
+				flex-grow: 1;
+				padding: 10px;
+				overflow-y: auto;
+			}
+			#input-container {
+				display: flex;
+				padding: 10px;
+				border-top: 1px solid #333;
+			}
+			#chat-input {
+				flex-grow: 1;
+				background: #222;
+				border: 1px solid #444;
+				color: #eee;
+				padding: 8px;
+				border-radius: 4px;
+			}
+			#send-btn {
+				background: var(--brand-color);
+				color: white;
+				border: none;
+				padding: 8px 12px;
+				margin-left: 8px;
+				border-radius: 4px;
+				cursor: pointer;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="viewer-container">
+			<div id="stage"></div>
+		</div>
+		<div id="chat-container">
+			<div id="messages"></div>
+			<div id="input-container">
+				<input type="text" id="chat-input" placeholder="Ask something..." />
+				<button id="send-btn">Send</button>
+			</div>
+		</div>
+
+		<script type="module">
+			import { Viewer } from './src/viewer.js';
+
+			const params = new URL(location.href).searchParams;
+			const agentId = params.get('agentId') || 'default';
+			const avatarUrl = params.get('avatarUrl') || '/default-avatar.glb';
+			const brandColor = params.get('brandColor') || '#4a9eff';
+			const theme = params.get('theme') || 'dark';
+
+			document.documentElement.style.setProperty('--brand-color', brandColor);
+			if (theme === 'light') {
+				const chatContainer = document.getElementById('chat-container');
+				chatContainer.style.background = 'var(--light-bg)';
+				chatContainer.style.color = 'var(--light-text)';
+			}
+
+			const viewer = new Viewer(document.getElementById('stage'), {});
+			viewer.load(avatarUrl, '', new Map());
+			
+			const sendBtn = document.getElementById('send-btn');
+			const chatInput = document.getElementById('chat-input');
+			const messagesContainer = document.getElementById('messages');
+
+			sendBtn.addEventListener('click', sendMessage);
+			chatInput.addEventListener('keypress', (e) => {
+				if (e.key === 'Enter') {
+					sendMessage();
+				}
+			});
+
+			function addMessage(text, sender) {
+				const messageEl = document.createElement('div');
+				messageEl.innerText = text;
+				messageEl.style.fontWeight = sender === 'user' ? 'bold' : 'normal';
+				messagesContainer.appendChild(messageEl);
+				messagesContainer.scrollTop = messagesContainer.scrollHeight;
+			}
+
+			async function sendMessage() {
+				const message = chatInput.value;
+				if (!message) return;
+				
+				addMessage(message, 'user');
+				chatInput.value = '';
+
+				try {
+					const response = await fetch('/api/chat', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ agentId, message }),
+					});
+					const data = await response.json();
+					addMessage(data.reply, 'agent');
+				} catch (error) {
+					addMessage('Sorry, I am having trouble connecting.', 'agent');
+					console.error('Chat error:', error);
+				}
+			}
+		</script>
+	</body>
+</html>
