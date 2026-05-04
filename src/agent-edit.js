@@ -1,47 +1,154 @@
-function renderAgentForEditing(agent) {
-  // ... existing code to render agent name, description, etc.
+const API_BASE = '/api';
+const agentId = new URLSearchParams(location.search).get('id');
 
-  const skillsContainer = document.getElementById('skills-editor');
-  const skillPrices = agent.skill_prices || {};
+const $ = (id) => document.getElementById(id);
 
-  skillsContainer.innerHTML = agent.skills.map(skill => {
-    const price = skillPrices[skill.name] || {};
-    const amountInUnits = price.amount ? price.amount / 1e6 : ''; // Example for USDC (6 decimals)
-    const currency = price.currency_mint || 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyB7u6T'; // Default to USDC
+let agentData = null;
+
+async function loadAgent() {
+  if (!agentId) {
+    showError('No agent ID provided.');
+    return;
+  }
+  try {
+    const r = await fetch(`${API_BASE}/marketplace/agents/${agentId}`);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const j = await r.json();
+    agentData = j.data.agent;
+    render();
+  } catch (err) {
+    showError(err.message);
+  }
+}
+
+function render() {
+  $('loading').hidden = true;
+  $('panel-persona').classList.add('active');
+  $('agent-title').textContent = `Edit Agent: ${agentData.name}`;
+  $('back-link').href = `/agent-detail.html?id=${agentId}`;
+
+  // Persona
+  $('f-name').value = agentData.name;
+  $('f-desc').value = agentData.description;
+
+  // Publish
+  $('f-category').value = agentData.category;
+  $('f-tags').value = (agentData.tags || []).join(', ');
+  $('f-prompt').value = agentData.system_prompt;
+  $('f-greeting').value = agentData.greeting;
+
+  // Monetization
+  renderMonetization();
+}
+
+function renderMonetization() {
+  const container = $('skill-prices-list');
+  const skills = agentData.skills || [];
+  if (!skills.length) {
+    container.innerHTML = '<div class="muted">This agent has no skills.</div>';
+    return;
+  }
+
+  const skillPrices = agentData.skill_prices || {};
+
+  container.innerHTML = skills.map(skill => {
+    const skillName = typeof skill === 'string' ? skill : skill.name;
+    const price = skillPrices[skillName];
+    const isPaid = !!price;
+    const amount = isPaid ? (price.amount / 1e6).toFixed(2) : '';
 
     return `
-      <div class="skill-price-editor" data-skill-name="${skill.name}">
-        <span class="skill-name">${skill.name}</span>
-        <input type="number" class="price-amount" placeholder="e.g., 2.50" value="${amountInUnits}">
-        <select class="price-currency">
-          <option value="EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyB7u6T" ${currency === 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyB7u6T' ? 'selected' : ''}>USDC</option>
-          <option value="So11111111111111111111111111111111111111112" ${currency === 'So11111111111111111111111111111111111111112' ? 'selected' : ''}>SOL</option>
-        </select>
+      <div class="skill-item" data-skill-name="${escapeHtml(skillName)}">
+        <span class="skill-name">${escapeHtml(skillName)}</span>
+        <div class="skill-pricing-controls">
+          <label class="toggle-switch">
+            <input type="checkbox" class="price-toggle" ${isPaid ? 'checked' : ''}>
+            <span class="slider"></span>
+          </label>
+          <div class="price-input-wrapper" style="display: ${isPaid ? 'flex' : 'none'};">
+            <input type="number" class="price-input" min="0" step="0.01" placeholder="0.50" value="${amount}">
+            <span>USDC</span>
+          </div>
+        </div>
       </div>
     `;
   }).join('');
+
+  container.querySelectorAll('.price-toggle').forEach(toggle => {
+    toggle.addEventListener('change', (e) => {
+      const wrapper = e.target.closest('.skill-pricing-controls').querySelector('.price-input-wrapper');
+      wrapper.style.display = e.target.checked ? 'flex' : 'none';
+    });
+  });
 }
 
-// Add event listener for the "Save Prices" button
-document.getElementById('save-prices-btn').addEventListener('click', async () => {
-  const agentId = /* get agent id from somewhere */;
-  const editors = document.querySelectorAll('.skill-price-editor');
-  
-  for (const editor of editors) {
-    const skill_name = editor.dataset.skillName;
-    const amountInUnits = parseFloat(editor.querySelector('.price-amount').value);
-    const currency_mint = editor.querySelector('.price-currency').value;
+function showError(msg) {
+  $('loading').hidden = true;
+  const errEl = $('error');
+  errEl.textContent = `Error: ${msg}`;
+  errEl.hidden = false;
+}
 
-    if (!isNaN(amountInUnits) && amountInUnits > 0) {
-      const amount = Math.round(amountInUnits * 1e6); // Convert back to smallest unit
-      
-      await fetch(`/api/agents/${agentId}/skills/pricing`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', /* + auth headers */ },
-        body: JSON.stringify({ skill_name, amount, currency_mint }),
+function escapeHtml(s) {
+	return String(s || '').replace(
+		/[&<>"']/g,
+		(ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch],
+	);
+}
+
+
+// --- Event Listeners ---
+
+$('persona-save').addEventListener('click', async () => {
+  // This would save persona changes, not implemented in this task
+});
+
+$('publish-save').addEventListener('click', async () => {
+  // This would save publish changes, not implemented in this task
+});
+
+$('monetization-save').addEventListener('click', async () => {
+  const prices = [];
+  document.querySelectorAll('#skill-prices-list .skill-item').forEach(item => {
+    const name = item.dataset.skillName;
+    const toggle = item.querySelector('.price-toggle');
+    const input = item.querySelector('.price-input');
+    
+    if (toggle.checked && input.value) {
+      const amountInLamports = parseFloat(input.value) * 1e6;
+      prices.push({
+        skill_name: name,
+        amount: amountInLamports,
+        currency_mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyB7u6a'
       });
     }
+  });
+
+  try {
+    const r = await fetch(`${API_BASE}/agents/${agentId}/skill-prices`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prices })
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    $('monetization-status').textContent = 'Prices saved!';
+    $('monetization-status').className = 'form-status ok';
+  } catch (err) {
+    $('monetization-status').textContent = `Error: ${err.message}`;
+    $('monetization-status').className = 'form-status err';
   }
-  // Show feedback to user
-  alert('Prices saved!');
 });
+
+
+document.querySelectorAll('.edit-tab').forEach(tab => {
+  tab.addEventListener('click', (e) => {
+    document.querySelectorAll('.edit-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.edit-panel').forEach(p => p.classList.remove('active'));
+    
+    const tabId = e.target.dataset.tab;
+    e.target.classList.add('active');
+    $(`panel-${tabId}`).classList.add('active');
+  });
+});
+
+loadAgent();

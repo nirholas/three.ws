@@ -411,6 +411,71 @@
 				font-size: 0.875rem;
 				color: rgba(255, 255, 255, 0.7);
 			}
+
+			.skill-pricing-controls {
+				display: flex;
+				align-items: center;
+				gap: 1rem;
+			}
+			.toggle-switch {
+				position: relative;
+				display: inline-block;
+				width: 34px;
+				height: 20px;
+			}
+			.toggle-switch input {
+				opacity: 0;
+				width: 0;
+				height: 0;
+			}
+			.slider {
+				position: absolute;
+				cursor: pointer;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				background-color: #374151;
+				transition: 0.4s;
+				border-radius: 20px;
+			}
+			.slider:before {
+				position: absolute;
+				content: "";
+				height: 12px;
+				width: 12px;
+				left: 4px;
+				bottom: 4px;
+				background-color: white;
+				transition: 0.4s;
+				border-radius: 50%;
+			}
+			input:checked + .slider {
+				background-color: #3b82f6;
+			}
+			input:checked + .slider:before {
+				transform: translateX(14px);
+			}
+			.price-input-wrapper {
+				display: flex;
+				align-items: center;
+				gap: 0.5rem;
+			}
+			.price-input {
+				background: rgba(255, 255, 255, 0.04);
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				border-radius: 6px;
+				color: rgba(255, 255, 255, 0.9);
+				font: 0.875rem/1.5 inherit;
+				padding: 0.382rem 0.618rem;
+				width: 80px;
+				box-sizing: border-box;
+				outline: none;
+			}
+			.price-input-wrapper span {
+				font-size: 0.764rem;
+				color: rgba(255, 255, 255, 0.4);
+			}
 		</style>
 	</head>
 	<body>

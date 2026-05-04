@@ -1,5 +1,5 @@
 ---
-status: not-started
+status: completed
 ---
 
 # Prompt 6: Frontend - "Purchase Skill" Button & Modal

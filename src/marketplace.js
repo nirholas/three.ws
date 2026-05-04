@@ -1,4 +1,6 @@
 import QRCode from 'qrcode';
+import { createQR } from '@solana/pay';
+import { escapeHtml } from './utils'; // Assuming you have this
 
 /**
  * Agent Marketplace — discovery + detail page controller.
@@ -6,6 +8,7 @@ import QRCode from 'qrcode';
  * Two views in one SPA: list (with category sidebar + search) and detail
  * (5 tabs). Routing is path-based: /marketplace and /marketplace/agents/:id.
  */
+
 
 const API = '/api';
 
@@ -177,7 +180,7 @@ function renderCard(a) {
 			<div class="avatar">${a.avatar}</div>
 			<div style="min-width:0;flex:1">
 				<div class="title">${escapeHtml(a.name || 'Untitled')}</div>
-				<div class="author">${escapeHtml(a.author_name || 'Anonymous')}</div>
+				<div class="author">${escapeHtml(a.author || 'Anonymous')}</div>
 			</div>
 		</div>
 		<div class="desc">${escapeHtml(a.description || '')}</div>
@@ -185,7 +188,7 @@ function renderCard(a) {
 			<span class="stat-pill">⊙ ${a.views || 0}</span>
 			<span class="stat-pill">⑂ ${a.forks || 0}</span>
 			${skills ? `<span class="stat-pill">▤ ${skills}</span>` : ''}
-			${a.has_paid_skills ? `<span class="stat-pill paid-badge">$ Paid</span>` : ''}
+			${Object.keys(a.skill_prices || {}).length > 0 ? `<span class="stat-pill paid-badge">$ Paid</span>` : ''}
 		</div>
 		<div class="footer">
 			<span>${date}</span>
@@ -246,35 +249,6 @@ function renderDetail(a, bookmarked) {
 	$('d-bookmark').classList.toggle('on', bookmarked);
 	$('d-bookmark').textContent = bookmarked ? '★' : '☆';
 
-	const skillPrices = a.skill_prices || {};
-	// For now, assume user owns nothing. We will replace this with a real check later.
-	const ownedSkills = new Set();
-
-	$('d-skills').innerHTML = skillsArr.length
-		? skillsArr.map((s) => {
-			const name = typeof s === 'string' ? s : (s.name || '');
-			const price = skillPrices[name];
-			
-			let actionButton;
-			if (price) {
-				if (ownedSkills.has(name)) {
-					actionButton = `<button class="skill-btn" disabled>Unlocked</button>`;
-				} else {
-					actionButton = `<button class="skill-btn purchase" data-skill-name="${escapeHtml(name)}">Purchase</button>`;
-				}
-			} else {
-				actionButton = `<button class="skill-btn" disabled>Free</button>`;
-			}
-
-			const priceDisplay = price ? `<span class="price-paid">${(price.amount / 1e6).toFixed(2)} USDC</span>` : ``;
-
-			return `<div class="skill-row">
-						<span class="skill-name">${escapeHtml(name)} ${priceDisplay}</span>
-						${actionButton}
-					</div>`;
-		}).join('')
-		: '<div>This Agent has no skills defined.</div>';
-
 	const forksEl = $('d-forks-pill');
 	if (a.forks > 0) {
 		forksEl.textContent = `⑂ ${a.forks} forks`;
@@ -293,17 +267,24 @@ function renderDetail(a, bookmarked) {
 
 	const skillPrices = a.skill_prices || {};
 	$('d-skills').innerHTML = skillsArr.length
-		? skillsArr.map((s) => {
-				const name = typeof s === 'string' ? s : s.name || '';
-				const price = skillPrices[name];
-				const badge = price
-					? `<span class="price-badge price-paid">${(price.amount / 1e6).toFixed(2)} USDC</span>`
-					: `<span class="price-badge price-free">Free</span>`;
-				return `<span class="skill-entry">${escapeHtml(name)}${badge}</span>`;
-			}).join(' ')
+		? skillsArr
+				.map((s) => {
+					const name = typeof s === 'string' ? s : s.name || '';
+					const price = skillPrices[name];
+					const badge = price
+						? `<span class="price-badge price-paid">${(price.amount / 1e6).toFixed(
+								2,
+							)} USDC</span>`
+						: `<span class="price-badge price-free">Free</span>`;
+					return `<span class="skill-entry">${escapeHtml(name)}${badge}</span>`;
+				})
+				.join(' ')
 		: '<div>This Agent has no skills defined.</div>';
+
 	$('d-library').innerHTML = libraryArr.length
-		? libraryArr.map((l) => `<span class="stat-pill">${escapeHtml(typeof l === 'string' ? l : l.name || '')}</span>`).join(' ')
+		? libraryArr
+				.map((l) => `<span class="stat-pill">${escapeHtml(typeof l === 'string' ? l : l.name || '')}</span>`)
+				.join(' ')
 		: '<div>This Agent includes the following Libraries to help answer more questions.</div>';
 
 	// Profile capabilities list

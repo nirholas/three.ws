@@ -22,15 +22,6 @@
 	background-color: rgba(253, 224, 71, 0.1);
 }
 
-body.market-page {
-	display: flex;
-	background-color: #000;
-	color: #fff;
-	font-family: 'Inter', sans-serif;
-	height: 100vh;
-	overflow: hidden;
-}
-
 .skill-entry {
   display: flex;
   justify-content: space-between;
@@ -43,6 +34,31 @@ body.market-page {
   background-color: var(--accent);
   color: white;
   border: none;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.purchase-btn:hover {
+  background-color: #5a4ccc; /* A slightly darker shade of accent */
+}
+
+.skill-status-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 4px;
+  vertical-align: middle;
+}
+
+.skill-owned {
+  color: #a7f3d0;
+  background-color: rgba(52, 211, 153, 0.1);
+}
   padding: 6px 12px;
   font-size: 12px;
   font-weight: 600;
