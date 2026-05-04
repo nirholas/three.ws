@@ -2,9 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { SLOTS, DEFAULT_ANIMATION_MAP, resolveSlot } from '../../src/runtime/animation-slots.js';
 
 describe('SLOTS', () => {
-	it('is an array of 10 slot names', () => {
+	it('is an array of slot names', () => {
 		expect(Array.isArray(SLOTS)).toBe(true);
-		expect(SLOTS.length).toBe(10);
+		expect(SLOTS.length).toBeGreaterThanOrEqual(10);
 	});
 
 	it('contains expected slot names', () => {
@@ -19,6 +19,8 @@ describe('SLOTS', () => {
 			'bow',
 			'point',
 			'shrug',
+			'fidget',
+			'dance',
 		];
 		expect(SLOTS).toEqual(expected);
 	});
