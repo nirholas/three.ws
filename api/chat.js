@@ -146,6 +146,20 @@ const ACTION_TOOLS = [
 		description: 'Open the material editor panel in the viewer UI.',
 		input_schema: { type: 'object', properties: {} },
 	},
+	{
+		name: 'setCameraTarget',
+		description: 'Set the camera target to a specific named bone on the currently loaded model.',
+		input_schema: {
+			type: 'object',
+			properties: {
+				boneName: {
+					type: 'string',
+					description: 'The name of the bone to target, e.g. "head", "leftHand"',
+				},
+			},
+			required: ['boneName'],
+		},
+	},
 ];
 
 const ACTION_NAMES = new Set(ACTION_TOOLS.map((t) => t.name));

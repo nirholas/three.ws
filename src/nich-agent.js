@@ -548,6 +548,11 @@ export class NichAgent {
 			case 'showMaterialEditor':
 				app?.editor?.sceneExplorer?.toggle?.();
 				break;
+			case 'setCameraTarget':
+				if (viewer && typeof action.boneName === 'string') {
+					viewer.setCameraTarget(action.boneName);
+				}
+				break;
 			default:
 				console.warn('[NichAgent] unknown action:', action.type);
 		}

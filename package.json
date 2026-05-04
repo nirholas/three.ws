@@ -85,6 +85,7 @@
 		"@metaplex-foundation/umi": "^1.5.1",
 		"@metaplex-foundation/umi-bundle-defaults": "^1.5.1",
 		"@neondatabase/serverless": "^0.10.1",
+		"node-fetch": "^3.3.2",
 		"@nirholas/pump-sdk": "^1.0.0",
 		"@noble/curves": "^2.2.0",
 		"@pump-fun/agent-payments-sdk": "^3.0.3",

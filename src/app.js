@@ -415,6 +415,12 @@ class App {
 				}
 			});
 
+			this.runtime.addEventListener('brain:action', (e) => {
+				if (this.viewer && e.detail.tool_name === 'setCameraTarget') {
+					this.viewer.setCameraTarget(e.detail.tool_input.boneName);
+				}
+			});
+
 			// Expose agent on window for debugging
 			window.VIEWER.agent_protocol = protocol;
 			window.VIEWER.agent_identity = this.identity;

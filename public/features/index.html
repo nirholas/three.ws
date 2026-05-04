@@ -39,7 +39,7 @@
 
 		<header>
 			<h1>
-				<a href="/"><img src="/three.svg" alt="three.ws" class="wordmark-logo" /></a>
+				<a href="/"><img src="/three.svg" alt="three.ws logo" class="wordmark-logo" /></a>
 			</h1>
 			<nav class="features-nav" aria-label="Primary">
 				<ul class="nav-root" role="menubar">
@@ -102,12 +102,13 @@
 					</li>
 					<li class="nav-item" role="none"><a href="/docs" role="menuitem">Docs</a></li>
 					<li class="nav-item" role="none">
-						<a href="/features" role="menuitem">Features</a>
+						<a href="/features" role="menuitem" class="active">Features</a>
 					</li>
 					<li class="nav-item" role="none"><a href="/tutorials.html" role="menuitem">Tutorials</a></li>
 					<li class="nav-item" id="home-nav-my-agents-li" role="none" hidden>
 						<a href="/my-agents" id="home-nav-my-agents" role="menuitem">My Agents</a>
 					</li>
+					<li class="nav-item" role="none"><a href="/login.html" role="menuitem">Sign in</a></li>
 				</ul>
 			</nav>
 		</header>
@@ -644,28 +645,6 @@
 			<a href="#act-onchain" class="act-dot" data-act="3" aria-label="Act 3: On-chain identity"></a>
 		</nav>
 
-		<script>
-			(function () {
-				const hint = document.querySelector('[data-role="scroll-hint"]');
-				if (!hint) return;
-				const container = document.querySelector('.parallax') || window;
-				function hide() {
-					hint.classList.add('scroll-hint--hidden');
-					hint.addEventListener('transitionend', () => { hint.hidden = true; }, { once: true });
-					container.removeEventListener('scroll', hide);
-				}
-				container.addEventListener('scroll', hide, { passive: true });
-			})();
-		</script>
 		<script type="module" src="/features/features.js"></script>
-		<script>
-			try {
-				const raw = localStorage.getItem('3dagent:auth-hint');
-				if (raw && JSON.parse(raw).authed) {
-					const el = document.getElementById('nav-my-agents');
-					if (el) el.hidden = false;
-				}
-			} catch (_) {}
-		</script>
 	</body>
 </html>

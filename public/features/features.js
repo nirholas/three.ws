@@ -200,12 +200,38 @@ function setupProgressDots() {
 
 // ── Boot ─────────────────────────────────────────────────────────────────
 
+function setupScrollHint() {
+	const hint = document.querySelector('[data-role="scroll-hint"]');
+	if (!hint) return;
+	const container = document.querySelector('.parallax') || window;
+	function hide() {
+		hint.classList.add('scroll-hint--hidden');
+		hint.addEventListener('transitionend', () => {
+			hint.hidden = true;
+		}, { once: true });
+		container.removeEventListener('scroll', hide);
+	}
+	container.addEventListener('scroll', hide, { passive: true });
+}
+
+function setupAuthNav() {
+	try {
+		const raw = localStorage.getItem('3dagent:auth-hint');
+		if (raw && JSON.parse(raw).authed) {
+			const el = document.getElementById('home-nav-my-agents-li');
+			if (el) el.hidden = false;
+		}
+	} catch (_) {}
+}
+
 function init() {
 	initStarFields();
 	setupEmotionChips();
 	setupCopyEmbed();
 	setupProgressDots();
 	loadOnChainAgent();
+	setupScrollHint();
+	setupAuthNav();
 }
 
 if (document.readyState === 'loading') {

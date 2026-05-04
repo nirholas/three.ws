@@ -89,29 +89,29 @@ function parseAgentId() {
 
 function showLookupForm(appEl) {
 	appEl.innerHTML = `
-		<div class="rep-header">
+		<div class="rep-lookup-wrap">
 			<h1>Agent Reputation</h1>
-			<div class="rep-header-meta">Look up on-chain reviews and ratings for any registered agent.</div>
-		</div>
-		<div class="rep-lookup-form">
-			<div class="rep-form-group">
-				<label for="lookup-chain">Chain ID</label>
-				<select id="lookup-chain">
-					<option value="1">Ethereum (1)</option>
-					<option value="137">Polygon (137)</option>
-					<option value="8453" selected>Base (8453)</option>
-					<option value="42161">Arbitrum One (42161)</option>
-					<option value="10">Optimism (10)</option>
-					<option value="11155111">Ethereum Sepolia (11155111)</option>
-					<option value="84532">Base Sepolia (84532)</option>
-					<option value="421614">Arbitrum Sepolia (421614)</option>
-				</select>
+			<p class="rep-lookup-sub">View and submit on-chain reviews for any registered agent.</p>
+			<div class="rep-lookup-form">
+				<div class="rep-form-group">
+					<label for="lookup-chain">Network</label>
+					<select id="lookup-chain">
+						<option value="1">Ethereum (1)</option>
+						<option value="137">Polygon (137)</option>
+						<option value="8453" selected>Base (8453)</option>
+						<option value="42161">Arbitrum One (42161)</option>
+						<option value="10">Optimism (10)</option>
+						<option value="11155111">Ethereum Sepolia (11155111)</option>
+						<option value="84532">Base Sepolia (84532)</option>
+						<option value="421614">Arbitrum Sepolia (421614)</option>
+					</select>
+				</div>
+				<div class="rep-form-group">
+					<label for="lookup-agent">Agent ID</label>
+					<input type="number" id="lookup-agent" placeholder="e.g. 42" min="1" />
+				</div>
+				<button id="lookup-btn" class="rep-submit-btn">View Reputation</button>
 			</div>
-			<div class="rep-form-group">
-				<label for="lookup-agent">Agent ID</label>
-				<input type="number" id="lookup-agent" placeholder="e.g. 42" min="1" />
-			</div>
-			<button id="lookup-btn" class="rep-submit-btn">View Reputation</button>
 		</div>
 	`;
 
@@ -165,16 +165,20 @@ function formatScore(score) {
 	return '—';
 }
 
-function getRatingClass(score) {
-	if (score > 0) return 'rating-positive';
-	if (score < 0) return 'rating-negative';
-	return 'rating-neutral';
+function scoreBadge(score) {
+	if (score > 0) return `<span class="rep-score-badge pos">+${score}</span>`;
+	if (score < 0) return `<span class="rep-score-badge neg">${score}</span>`;
+	return `<span class="rep-score-badge neu">0</span>`;
 }
 
-function formatDate(blockNumber) {
-	// Rough estimate: blockNumber doesn't give us date directly
-	// In production, you'd want to store the actual timestamp on-chain
-	// For now, just show "Recent"
+function scoreBarHtml(average) {
+	if (typeof average !== 'number' || isNaN(average)) return '';
+	const pct = Math.max(0, Math.min(100, ((average + 100) / 200) * 100));
+	const color = average > 0 ? '#86efac' : average < 0 ? '#fca5a5' : 'rgba(255,255,255,0.3)';
+	return `<div class="rep-score-bar"><div class="rep-score-fill" style="width:${pct}%;background:${color}"></div></div>`;
+}
+
+function formatDate() {
 	return 'Recent';
 }
 

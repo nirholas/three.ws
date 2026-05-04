@@ -614,6 +614,20 @@
 			<div class="min-w-0 flex-1">
 				<!-- Search + sort -->
 				<div class="mb-4 flex gap-x-2">
+					<div class="flex items-center gap-2 p-1 rounded-full bg-slate-100">
+						<button
+							class="px-3 py-1 rounded-full text-sm"
+							class:bg-white={!showLocalSkills}
+							class:text-slate-500={showLocalSkills}
+							on:click={() => (showLocalSkills = false)}>Marketplace</button
+						>
+						<button
+							class="px-3 py-1 rounded-full text-sm"
+							class:bg-white={showLocalSkills}
+							class:text-slate-500={!showLocalSkills}
+							on:click={() => (showLocalSkills = true)}>Local</button
+						>
+					</div>
 					<input
 						type="text"
 						placeholder="Search skills..."
@@ -651,6 +665,15 @@
 
 				{#if loading && skills.length === 0}
 					<p class="mt-8 text-center text-[13px] text-slate-400">Loading skills...</p>
+				{:else if showLocalSkills}
+					<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+						{#each localSkills as skill (skill.name)}
+							<div class="rounded-lg border border-slate-200 px-3 py-3">
+								<h3 class="font-semibold text-slate-800 text-[13px]">{skill.name}</h3>
+								<p class="mt-0.5 line-clamp-2 text-[11px] leading-relaxed text-slate-500">{skill.description}</p>
+							</div>
+						{/each}
+					</div>
 				{:else if skills.length === 0}
 					<p class="mt-8 text-center text-[13px] text-slate-400">No skills found</p>
 				{:else}
