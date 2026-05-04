@@ -2,9 +2,9 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<title>three.ws</title>
+		<title>Pump.fun Live</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<meta name="description" content="Embedded three.ws avatar — on-chain." />
+		<meta name="description" content="Pump.fun live feed widget." />
 		<meta name="robots" content="noindex" />
 		<style>
 			html,
@@ -138,155 +138,10 @@
 		</style>
 	</head>
 	<body>
-		<div id="stage"></div>
-		<div id="name-plate"></div>
-		<div id="chain-plate"></div>
-		<a id="open-link" target="_blank" rel="noopener" style="display: none">Open ↗</a>
-		<div id="loading">Loading agent</div>
-		<div id="error"></div>
-		<div id="blocked"></div>
-
+		<div id="root"></div>
 		<script type="module">
-			import { Viewer } from './src/viewer.js';
-			import {
-				parseAgentRef,
-				resolveOnchainAgent,
-				toManifest,
-				resolveUrlCandidates,
-				isEmbedAllowed,
-				toPublicUrl,
-			} from './src/erc8004/resolver.js';
-
-			const params = new URL(location.href).searchParams;
-			const bg = params.get('bg') || 'transparent';
-			if (bg === 'dark') document.body.classList.add('bg-dark');
-			if (bg === 'light') document.body.classList.add('bg-light');
-
-			const plateOn = params.get('name') !== '0';
-			const chainOn = params.get('chain-plate') !== '0';
-			const openLinkOn = params.get('open-link') !== '0';
-
-			// URL: /a/:chainId/:agentId/embed
-			const ref = parseAgentRef(location.pathname);
-
-			// Best-effort parent origin from referrer; never use '*'.
-			const parentOrigin = (() => {
-				try {
-					if (window.parent === window) return location.origin;
-					if (document.referrer) return new URL(document.referrer).origin;
-				} catch {}
-				return null;
-			})();
-
-			function postToParent(msg) {
-				if (!parent || parent === window) return;
-				if (!parentOrigin) return;
-				try { parent.postMessage(msg, parentOrigin); } catch {}
-			}
-
-			function showError(msg) {
-				document.getElementById('loading').style.display = 'none';
-				const el = document.getElementById('error');
-				el.textContent = msg || 'Could not load agent';
-				el.style.display = 'flex';
-				postToParent({ __agent: true, type: 'error', message: msg });
-			}
-
-			function showBlocked(host) {
-				document.getElementById('loading').style.display = 'none';
-				const el = document.getElementById('blocked');
-				const link = ref ? toPublicUrl(ref) : '/';
-				el.innerHTML = `
-				<div>This agent does not allow embedding on <b>${host || 'this site'}</b>.</div>
-				<a href="${link}" target="_blank" rel="noopener">Open on three.ws ↗</a>
-			`;
-				el.style.display = 'flex';
-				postToParent({ __agent: true, type: 'blocked', host });
-			}
-
-			// Best-effort parent hostname — referrer is the only cross-origin signal.
-			function getParentHost() {
-				try {
-					if (window.parent === window) return location.hostname;
-					if (document.referrer) return new URL(document.referrer).hostname;
-				} catch {}
-				return '';
-			}
-
-			// Try a list of candidate URLs; resolve with the first that succeeds.
-			async function loadWithFallback(viewer, uris) {
-				let lastErr;
-				for (const u of uris) {
-					try {
-						await viewer.load(u, '', new Map());
-						return u;
-					} catch (err) {
-						lastErr = err;
-						console.warn('[a-embed] load failed, trying next:', u, err?.message);
-					}
-				}
-				throw lastErr || new Error('All candidate URLs failed');
-			}
-
-			async function main() {
-				if (!ref) return showError('Invalid agent URL');
-
-				const resolved = await resolveOnchainAgent(ref);
-				if (resolved.error && !resolved.glbUrl && !resolved.image) {
-					return showError(`On-chain resolve failed: ${resolved.error}`);
-				}
-
-				// Embed-policy gate
-				const parentHost = getParentHost();
-				const policy = resolved.metadata?.embedPolicy;
-				if (policy && !isEmbedAllowed(policy, parentHost)) {
-					return showBlocked(parentHost);
-				}
-
-				if (plateOn) {
-					document.getElementById('name-plate').textContent = resolved.name;
-				}
-				if (chainOn) {
-					const chainName = resolved.chain?.name || `chain ${ref.chainId}`;
-					document.getElementById('chain-plate').textContent =
-						`${chainName} · #${ref.agentId}`;
-				}
-				if (openLinkOn) {
-					const ol = document.getElementById('open-link');
-					ol.href = toPublicUrl(ref);
-					ol.style.display = 'inline-block';
-				}
-
-				const bodyURI = resolved.glbUrl || resolved.image;
-				if (!bodyURI) return showError('Agent has no 3D body');
-
-				const stage = document.getElementById('stage');
-				const viewer = new Viewer(stage, { kiosk: true });
-				if (bg === 'transparent') {
-					viewer.renderer?.setClearAlpha(0);
-					if (viewer.scene) viewer.scene.background = null;
-				}
-
-				const candidates = resolveUrlCandidates(bodyURI);
-				await loadWithFallback(viewer, candidates);
-
-				document.getElementById('loading').style.display = 'none';
-
-				postToParent({
-					__agent: true,
-					type: 'ready',
-					caip: resolved.caip,
-					chainId: ref.chainId,
-					agentId: ref.agentId,
-					name: resolved.name,
-					owner: resolved.onchain.owner,
-				});
-			}
-
-			main().catch((err) => {
-				console.error('[a-embed]', err);
-				showError(err.message || 'Could not load agent');
-			});
+			// Coming soon
+			document.getElementById('root').innerHTML = '<h1>Coming soon</h1>';
 		</script>
 	</body>
 </html>

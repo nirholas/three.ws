@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Agent Widget Demo</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+      background-color: #f0f0f0;
+    }
+    .widget-container {
+      width: 400px;
+      height: 500px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      overflow: hidden; /* Ensures the iframe stays within the rounded corners */
+    }
+    textarea {
+      width: 500px;
+      height: 150px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 14px;
+      resize: vertical;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>3D Agent Widget Demo</h1>
+
+  <p>Here is a demo of an embedded 3D agent:</p>
+
+  <div class="widget-container">
+    <div class="threews-widget" data-agent-id="041cb44a-3c58-4d56-b083-d5234563456a"></div>
+  </div>
+
+  <h2>How to use it</h2>
+  <p>Copy and paste this code into your website:</p>
+  <textarea readonly>
+<div class="threews-widget" data-agent-id="YOUR_AGENT_ID" style="width: 400px; height: 500px;"></div>
+<script src="https://3d-agent.vercel.app/dist/widget.js" defer></script>
+  </textarea>
+
+  <script src="/dist/widget.js" defer></script>
+
+</body>
+</html>
