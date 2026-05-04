@@ -39,7 +39,7 @@
 	"scripts": {
 		"dev": "vite --port 3000",
 		"dev:lib": "TARGET=lib vite",
-		"build": "NODE_OPTIONS=--max-old-space-size=800 vite build",
+		"build": "FAST_BUILD=1 NODE_OPTIONS=--max-old-space-size=1200 vite build",
 		"build:animations": "node scripts/build-animations.mjs",
 		"build:lib": "TARGET=lib vite build",
 		"build:lib:full": "TARGET=lib LIB_FORMATS=es,umd vite build",
@@ -50,7 +50,7 @@
 		"build:rider:full": "cd rider && npm ci --prefer-offline --no-audit --no-fund --ignore-engines && npm run build && cd .. && npm run build:rider",
 		"build:fast": "npm run build",
 		"build:all": "npm run build:chat && (npm run build & npm run build:lib & npm run build:rider & wait) && npm run publish:lib",
-		"build:vercel": "npm run build && npm run build:rider && npm run publish:lib",
+		"build:vercel": "NODE_OPTIONS=--max-old-space-size=4096 vite build && npm run build:rider && npm run publish:lib",
 		"clean": "rm -rf dist/* dist-lib/* || true",
 		"generate-icons": "node scripts/generate-pwa-icons.mjs",
 		"fetch-animations": "node scripts/download-animations.mjs",

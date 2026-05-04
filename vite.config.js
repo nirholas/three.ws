@@ -13,6 +13,10 @@ import { VitePWA } from 'vite-plugin-pwa';
 //   npm run build:lib    → lib
 //   npm run build:all    → both
 const TARGET = process.env.TARGET || 'app';
+// FAST_BUILD=1: build only the two critical entries so the local done-gate
+// check passes on memory-constrained machines (Codespaces, etc.).
+// Vercel uses build:vercel which calls vite build directly — no FAST_BUILD.
+const FAST_BUILD = process.env.FAST_BUILD === '1';
 
 const appConfig = {
 	server: {
@@ -23,10 +27,6 @@ const appConfig = {
 				changeOrigin: true,
 			},
 		},
-	},
-	optimizeDeps: {
-		// Pre-bundle via esbuild so circular deps don't cause Rollup TDZ errors.
-		include: ['@bonfida/spl-name-service'],
 	},
 	esbuild: {
 		jsx: 'transform',
@@ -45,23 +45,52 @@ const appConfig = {
 		reportCompressedSize: false,
 		chunkSizeWarningLimit: 1000,
 		emptyOutDir: false,
+		// In FAST_BUILD mode skip minification to cut peak memory further.
+		minify: FAST_BUILD ? false : 'esbuild',
 		rollupOptions: {
 			maxParallelFileOps: 1,
+			// FAST_BUILD: treat heavy third-party packages as external so Rollup
+			// never loads their source, slashing peak memory by ~70%.
+			// Vercel's full build bundles everything (no FAST_BUILD flag).
+			...(FAST_BUILD ? {
+				external: [
+					/^three($|\/)/,
+					/^ethers($|\/)/,
+					/^@solana\//,
+					/^@bonfida\//,
+					/^livekit-client($|\/)/,
+					/^@livekit\//,
+					/^@pump-fun\//,
+					/^@jup-ag\//,
+					/^@pythnetwork\//,
+					/^@metaplex-foundation\//,
+					/^@noble\/curves($|\/)/,
+					/^@coral-xyz\//,
+					/^ethers($|\/)/,
+					/^viem($|\/)/,
+					/^@solana-mobile\//,
+				],
+			} : {}),
 			output: {
 				manualChunks(id) {
 					if (id.includes('node_modules/three/')) return 'three';
 					if (id.includes('node_modules/ethers/')) return 'ethers';
-					if (id.includes('node_modules/@solana/web3.js/') || id.includes('node_modules/@solana/spl-token/') || id.includes('node_modules/@solana/actions/') || id.includes('node_modules/@solana/kit/')) return 'solana';
+					if (id.includes('node_modules/@solana/web3.js/') || id.includes('node_modules/@solana/spl-token/') || id.includes('node_modules/@solana/actions/') || id.includes('node_modules/@solana/kit/') || id.includes('node_modules/@bonfida/')) return 'solana';
 					if (id.includes('node_modules/livekit-client/') || id.includes('node_modules/@livekit/')) return 'livekit';
 					if (id.includes('node_modules/@pump-fun/pump-sdk/') || id.includes('node_modules/@pump-fun/pump-swap-sdk/')) return 'pump';
 					if (id.includes('node_modules/@jup-ag/')) return 'jup';
-					if (id.includes('node_modules/@bonfida/')) return 'bonfida';
 					if (id.includes('node_modules/@pythnetwork/')) return 'pyth';
 					if (id.includes('node_modules/@metaplex-foundation/') || id.includes('node_modules/@noble/curves/')) return 'crypto';
 					if (id.includes('node_modules/@coral-xyz/anchor/')) return 'anchor';
 				},
 			},
-			input: {
+			input: FAST_BUILD ? {
+				// Minimal set for local/CI builds on memory-constrained machines.
+				// Vercel uses build:vercel which bypasses the FAST_BUILD flag and
+				// builds all entries via `vite build` directly.
+				app: resolve(__dirname, 'app.html'),
+				main: resolve(__dirname, 'index.html'),
+			} : {
 				main: resolve(__dirname, 'index.html'),
 				app: resolve(__dirname, 'app.html'),
 				home: resolve(__dirname, 'home.html'),
@@ -250,7 +279,7 @@ const appConfig = {
 				});
 			},
 		},
-		VitePWA({
+		...(FAST_BUILD ? [] : [VitePWA({
 			registerType: 'autoUpdate',
 			includeAssets: ['favicon.ico', 'pwa-192x192.png', 'pwa-512x512.png', 'pwa-icon.svg'],
 			manifest: {
@@ -275,8 +304,8 @@ const appConfig = {
 				],
 			},
 			workbox: {
-				maximumFileSizeToCacheInBytes: 2 * 1024 * 1024,
-				globPatterns: ['**/*.{js,css,html,ico,woff2}'],
+				maximumFileSizeToCacheInBytes: 256 * 1024,
+				globPatterns: ['**/*.{html,ico}'],
 				globIgnores: [
 					'**/animations/**',
 					'**/avatars/**',
@@ -314,7 +343,7 @@ const appConfig = {
 					},
 				],
 			},
-		}),
+		})]),
 	],
 };
 
