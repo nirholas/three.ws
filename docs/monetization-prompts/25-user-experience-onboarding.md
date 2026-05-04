@@ -1,3 +1,7 @@
+---
+status: not-started
+---
+
 # Prompt 25: User Experience & Onboarding
 
 ## Objective
@@ -7,29 +11,29 @@ Refine the overall user experience for the monetization features and create clea
 A powerful system is only effective if people understand how to use it. This final step focuses on documentation, in-app guidance, and polishing the user interface to make the monetization features intuitive for both buyers and sellers.
 
 ## Instructions
-1.  **Create a Creator Onboarding Guide:**
-    *   Write a clear, concise guide in your `docs` folder that explains how a creator can start monetizing their skills.
-    *   **Topics to cover:**
-        *   How to set up their payout wallet.
-        *   How to set prices for their skills.
-        *   How subscriptions work.
-        *   An explanation of the platform fee.
-        *   A link to their creator dashboard and an explanation of the metrics.
+- [ ] **Create a Creator Onboarding Guide:**
+    - [ ] Write a clear, concise guide in your `docs` folder that explains how a creator can start monetizing their skills.
+    - [ ] **Topics to cover:**
+        - [ ] How to set up their payout wallet.
+        - [ ] How to set prices for their skills.
+        - [ ] How subscriptions work.
+        - [ ] An explanation of the platform fee.
+        - [ ] A link to their creator dashboard and an explanation of the metrics.
 
-2.  **Add In-App Guidance (Tooltips & Helpers):**
-    *   Go through the creator-facing UIs (payout settings, skill pricing) and add tooltips or helper text to explain complex concepts.
-    *   For example, next to the payout wallet input, add a tooltip explaining what a Solana wallet is and where to get one.
-    *   On the skill pricing page, explain the units (e.g., "Enter price in USDC").
+- [ ] **Add In-App Guidance (Tooltips & Helpers):**
+    - [ ] Go through the creator-facing UIs (payout settings, skill pricing) and add tooltips or helper text to explain complex concepts.
+    - [ ] For example, next to the payout wallet input, add a tooltip explaining what a Solana wallet is and where to get one.
+    - [ ] On the skill pricing page, explain the units (e.g., "Enter price in USDC").
 
-3.  **Refine the Buyer Experience:**
-    *   Review the entire purchase flow from the buyer's perspective. Is it clear and smooth?
-    *   Ensure error messages are helpful. Instead of a generic "Transaction Failed", provide more context if possible (e.g., "Transaction failed. You may not have enough USDC in your wallet.").
-    *   Add a section to the user's profile where they can see a history of all the skills they've purchased.
+- [ ] **Refine the Buyer Experience:**
+    - [ ] Review the entire purchase flow from the buyer's perspective. Is it clear and smooth?
+    - [ ] Ensure error messages are helpful. Instead of a generic "Transaction Failed", provide more context if possible (e.g., "Transaction failed. You may not have enough USDC in your wallet.").
+    - [ ] Add a section to the user's profile where they can see a history of all the skills they've purchased.
 
-4.  **Create a Marketing/Landing Page:**
-    *   Design a section on your main landing page that advertises the new creator monetization features.
-    *   Highlight the benefits for creators (earn revenue) and for users (access powerful new capabilities).
-    *   This will help attract new creators to your platform.
+- [ ] **Create a Marketing/Landing Page:**
+    - [ ] Design a section on your main landing page that advertises the new creator monetization features.
+    - [ ] Highlight the benefits for creators (earn revenue) and for users (access powerful new capabilities).
+    - [ ] This will help attract new creators to your platform.
 
 ## Example: Onboarding Doc Snippet (`/docs/monetizing-your-agent.md`)
 

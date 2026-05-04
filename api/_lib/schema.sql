@@ -991,3 +991,41 @@ create table if not exists pumpfun_graduations (
 create index if not exists pumpfun_graduations_seen_at on pumpfun_graduations(seen_at desc);
 create index if not exists pumpfun_graduations_mint on pumpfun_graduations(mint);
 create index if not exists pumpfun_graduations_creator on pumpfun_graduations(creator) where creator is not null;
+
+-- ── agent_skill_prices ───────────────────────────────────────────────────────
+-- Stores pricing information for premium agent skills.
+CREATE TABLE IF NOT EXISTS agent_skill_prices (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    agent_id UUID NOT NULL REFERENCES agent_identities(id) ON DELETE CASCADE,
+    skill_id TEXT NOT NULL,
+    creator_id UUID NOT NULL REFERENCES users(id),
+    amount BIGINT NOT NULL CHECK (amount > 0),
+    currency_mint TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_agent_skill_prices_one_price_per_skill
+ON agent_skill_prices (agent_id, skill_id)
+WHERE deleted_at IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_agent_skill_prices_creator_id ON agent_skill_prices(creator_id);
+
+-- ── agent_skill_prices — monetization for agent skills ──────────────────────
+CREATE TABLE IF NOT EXISTS agent_skill_prices (
+    agent_id UUID NOT NULL REFERENCES agent_identities(id) ON DELETE CASCADE,
+    skill_id TEXT NOT NULL,
+    amount BIGINT NOT NULL CHECK (amount > 0),
+    currency_mint TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (agent_id, skill_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_agent_skill_prices_agent_id ON agent_skill_prices(agent_id);
+
+CREATE TRIGGER set_timestamp
+BEFORE UPDATE ON agent_skill_prices
+FOR EACH ROW
+EXECUTE PROCEDURE set_updated_at();

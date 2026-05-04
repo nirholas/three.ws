@@ -1,3 +1,7 @@
+---
+status: not-started
+---
+
 # Prompt 04: Frontend Wallet Integration Setup
 
 ## Objective
@@ -7,17 +11,17 @@ Integrate a Solana wallet adapter to allow users to connect their wallets (e.g.,
 To perform any on-chain transactions, the user must first connect their cryptocurrency wallet. This step involves adding the necessary libraries and UI elements for wallet connection. We will use the official Solana wallet-adapter libraries.
 
 ## Instructions
-1.  **Add Wallet-Adapter Libraries:**
-    *   Include the Solana wallet-adapter scripts in `marketplace.html`. You can use a CDN like unpkg for this proof-of-concept. You'll need `@solana/wallet-adapter-base` and `@solana/wallet-adapter-wallets`, plus the DOM integration package.
+- [ ] **Add Wallet-Adapter Libraries:**
+    - [ ] Include the Solana wallet-adapter scripts in `marketplace.html`. You can use a CDN like unpkg for this proof-of-concept. You'll need `@solana/wallet-adapter-base` and `@solana/wallet-adapter-wallets`, plus the DOM integration package.
 
-2.  **Add "Connect Wallet" Button:**
-    *   Add a "Connect Wallet" button to the header of the application. The button text should dynamically update to show the user's wallet address when connected.
+- [ ] **Add "Connect Wallet" Button:**
+    - [ ] Add a "Connect Wallet" button to the header of the application. The button text should dynamically update to show the user's wallet address when connected.
 
-3.  **Initialize the Wallet Adapter:**
-    *   In your main JavaScript file (`src/marketplace.js`), initialize the wallet adapter.
-    *   Configure the wallets you want to support (e.g., Phantom, Solflare).
-    *   Add logic to the "Connect Wallet" button to trigger the connection prompt.
-    *   Listen for connection status changes to update the UI accordingly.
+- [ ] **Initialize the Wallet Adapter:**
+    - [ ] In your main JavaScript file (`src/marketplace.js`), initialize the wallet adapter.
+    - [ ] Configure the wallets you want to support (e.g., Phantom, Solflare).
+    - [ ] Add logic to the "Connect Wallet" button to trigger the connection prompt.
+    - [ ] Listen for connection status changes to update the UI accordingly.
 
 ## HTML Example (in `marketplace.html` header)
 

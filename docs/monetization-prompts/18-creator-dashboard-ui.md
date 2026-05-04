@@ -1,3 +1,7 @@
+---
+status: not-started
+---
+
 # Prompt 18: Creator Dashboard - UI
 
 ## Objective
@@ -7,23 +11,23 @@ Build the frontend for the creator dashboard, visualizing the sales and earnings
 A visual dashboard is essential for creators to understand their performance at a glance. We will create a new page that consumes the creator dashboard APIs and presents the data using charts and tables.
 
 ## Instructions
-1.  **Create the Dashboard Page:**
-    *   Create a new HTML file, e.g., `creator-dashboard.html`.
-    *   Create a corresponding JavaScript file, e.g., `src/creator-dashboard.js`.
+- [ ] **Create the Dashboard Page:**
+    - [ ] Create a new HTML file, e.g., `creator-dashboard.html`.
+    - [ ] Create a corresponding JavaScript file, e.g., `src/creator-dashboard.js`.
 
-2.  **Fetch and Display Key Stats:**
-    *   On page load, make a request to the `GET /api/creator/dashboard/stats` endpoint.
-    *   Display the returned stats (total revenue, total sales) in prominent "stat cards" at the top of the page.
-    *   Remember to format the revenue from the smallest unit to a human-readable number.
+- [ ] **Fetch and Display Key Stats:**
+    - [ ] On page load, make a request to the `GET /api/creator/dashboard/stats` endpoint.
+    - [ ] Display the returned stats (total revenue, total sales) in prominent "stat cards" at the top of the page.
+    - [ ] Remember to format the revenue from the smallest unit to a human-readable number.
 
-3.  **Display Sales History:**
-    *   Make a request to the `GET /api/creator/dashboard/sales-history` endpoint.
-    *   Render the returned list of sales in a table. The table should include columns like "Date", "Skill Name", "Agent", "Price", and "Earnings".
+- [ ] **Display Sales History:**
+    - [ ] Make a request to the `GET /api/creator/dashboard/sales-history` endpoint.
+    - [ ] Render the returned list of sales in a table. The table should include columns like "Date", "Skill Name", "Agent", "Price", and "Earnings".
 
-4.  **Add a Chart (Optional but recommended):**
-    *   Include a charting library like Chart.js or D3.
-    *   Make a request to an endpoint that provides time-series data (e.g., `GET /api/creator/dashboard/revenue-over-time`). You may need to create this endpoint.
-    *   Render a line or bar chart showing daily or weekly earnings.
+- [ ] **Add a Chart (Optional but recommended):**
+    - [ ] Include a charting library like Chart.js or D3.
+    - [ ] Make a request to an endpoint that provides time-series data (e.g., `GET /api/creator/dashboard/revenue-over-time`). You may need to create this endpoint.
+    - [ ] Render a line or bar chart showing daily or weekly earnings.
 
 ## HTML Structure Example (`creator-dashboard.html`)
 

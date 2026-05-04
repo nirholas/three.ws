@@ -1,3 +1,7 @@
+---
+status: not-started
+---
+
 # Prompt 08: Backend Purchase API Endpoint
 
 ## Objective
@@ -7,26 +11,26 @@ Create the initial backend API endpoint that constructs and returns a Solana tra
 The frontend needs a secure way to get a valid transaction object. The backend is responsible for creating this transaction because it has secure access to critical information like the creator's payout wallet and the correct skill price, preventing tampering.
 
 ## Instructions
-1.  **Create the API File and Route:**
-    *   Create a new API file, e.g., `api/transactions/create-skill-purchase.js`.
-    *   This file will handle `POST` requests. It should expect `agentId`, `skillName`, and `buyerPublicKey` in the request body.
+- [ ] **Create the API File and Route:**
+    - [ ] Create a new API file, e.g., `api/transactions/create-skill-purchase.js`.
+    - [ ] This file will handle `POST` requests. It should expect `agentId`, `skillName`, and `buyerPublicKey` in the request body.
 
-2.  **Fetch Necessary Data:**
-    *   Inside the endpoint logic, perform database lookups to get:
-        *   The skill's price from the `agent_skill_prices` table.
-        *   The agent creator's payout wallet address from the `users` or `agents` table.
-        *   The platform's fee wallet address (can be a constant or from a config file).
+- [ ] **Fetch Necessary Data:**
+    - [ ] Inside the endpoint logic, perform database lookups to get:
+        - [ ] The skill's price from the `agent_skill_prices` table.
+        - [ ] The agent creator's payout wallet address from the `users` or `agents` table.
+        - [ ] The platform's fee wallet address (can be a constant or from a config file).
 
-3.  **Construct the Solana Transaction:**
-    *   Use the `@solana/web3.js` SDK.
-    *   You will be creating a SPL Token Transfer instruction. The currency is likely USDC, so you'll need its mint address.
-    *   The transaction will transfer `X` amount of USDC from the `buyerPublicKey` to the creator's wallet. (Platform fees will be added in a later prompt).
-    *   Set the `feePayer` to be the `buyerPublicKey`.
-    *   Fetch a recent blockhash.
+- [ ] **Construct the Solana Transaction:**
+    - [ ] Use the `@solana/web3.js` SDK.
+    - [ ] You will be creating a SPL Token Transfer instruction. The currency is likely USDC, so you'll need its mint address.
+    - [ ] The transaction will transfer `X` amount of USDC from the `buyerPublicKey` to the creator's wallet. (Platform fees will be added in a later prompt).
+    - [ ] Set the `feePayer` to be the `buyerPublicKey`.
+    - [ ] Fetch a recent blockhash.
 
-4.  **Serialize and Return the Transaction:**
-    *   Serialize the transaction but **do not sign it**. The user's wallet must sign it.
-    *   Return the serialized transaction as a base64-encoded string in the JSON response.
+- [ ] **Serialize and Return the Transaction:**
+    - [ ] Serialize the transaction but **do not sign it**. The user's wallet must sign it.
+    - [ ] Return the serialized transaction as a base64-encoded string in the JSON response.
 
 ## Code Example (Node.js with Express-like framework)
 

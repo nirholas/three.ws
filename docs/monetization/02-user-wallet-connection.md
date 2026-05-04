@@ -1,3 +1,6 @@
+---
+status: not-started
+---
 # Prompt 2: User Wallet Connection
 
 ## Objective
@@ -7,19 +10,19 @@ Integrate a "Connect Wallet" feature into the marketplace header, allowing users
 To allow users to purchase premium skills, they first need a way to connect their cryptocurrency wallet. We will use a vanilla JavaScript implementation compatible with the Solana wallet-adapter standards to present a "Connect Wallet" button. This will handle the core logic of connecting to browser-based wallets like Phantom.
 
 ## Instructions
-1.  **Add a Wallet Library:**
-    *   We will use a CDN version of a suitable library to simplify dependencies. Add this to `marketplace.html` in the `<head>` section:
+- [ ] **Add a Wallet Library:**
+    - [ ] We will use a CDN version of a suitable library to simplify dependencies. Add this to `marketplace.html` in the `<head>` section:
         ```html
         <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.js"></script>
         ```
 
-2.  **Update the Marketplace Header:**
-    *   In `marketplace.html`, add a "Connect Wallet" button to the header section. We will give it a unique ID to attach our script to it.
-    *   `<button id="connectWalletBtn" class="connect-wallet-btn">Connect Wallet</button>`
+- [ ] **Update the Marketplace Header:**
+    - [ ] In `marketplace.html`, add a "Connect Wallet" button to the header section. We will give it a unique ID to attach our script to it.
+    - [ ] `<button id="connectWalletBtn" class="connect-wallet-btn">Connect Wallet</button>`
 
-3.  **Implement Wallet Connection Logic:**
-    *   Create a new file `public/wallet-connector.js` to encapsulate the wallet connection logic.
-    *   This script will check for the presence of a Solana wallet in the browser (like Phantom), handle the connection request, and update the UI to reflect the connection status.
+- [ ] **Implement Wallet Connection Logic:**
+    - [ ] Create a new file `public/wallet-connector.js` to encapsulate the wallet connection logic.
+    - [ ] This script will check for the presence of a Solana wallet in the browser (like Phantom), handle the connection request, and update the UI to reflect the connection status.
 
 ## Code Example (`public/wallet-connector.js`)
 

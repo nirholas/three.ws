@@ -1,9 +1,11 @@
 ---
 title: "Prompt 2: Create `agent_skill_prices` Table Schema"
-status: "not-started"
+status: "completed"
 ---
 
 # Prompt 2: Create `agent_skill_prices` Table Schema
+
+**Status:** Completed
 
 ## Objective
 Define and create the necessary database table to store skill prices set by agent creators.
