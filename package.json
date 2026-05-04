@@ -58,6 +58,7 @@
 		"test": "vitest run",
 		"test:pages": "node scripts/test-pages.mjs",
 		"test:all": "npm run test && npm run test:pages",
+		"test:e2e": "npx playwright test tests/e2e",
 		"verify": "prettier --check . && vite build",
 		"format": "prettier --write .",
 		"check:dist": "node scripts/check-dist.mjs",
@@ -101,6 +102,7 @@
 		"bcryptjs": "^2.4.3",
 		"bn.js": "^5.2.3",
 		"bs58": "^6.0.0",
+		"buffer": "^6.0.3",
 		"dat.gui": "^0.7.9",
 		"ethers": "^6.16.0",
 		"gltf-validator": "^2.0.0-dev.3.10",
@@ -118,6 +120,7 @@
 		"zod": "^3.23.8"
 	},
 	"devDependencies": {
+		"@playwright/test": "^1.59.1",
 		"ajv": "^8.17.1",
 		"ajv-formats": "^3.0.1",
 		"jsdom": "^29.1.0",

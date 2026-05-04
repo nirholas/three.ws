@@ -33,6 +33,11 @@ const appConfig = {
 		jsxFactory: 'vhtml',
 		jsxFragment: '"div"',
 		jsxDev: false,
+		define: {
+			'global': 'window',
+			'process.env': '{}',
+			'Buffer': 'buffer.Buffer'
+		}
 	},
 	resolve: {
 		// Force a single Three.js instance — addons (GLTFLoader, OrbitControls,
