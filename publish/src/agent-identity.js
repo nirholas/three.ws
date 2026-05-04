@@ -36,6 +36,7 @@ export class AgentIdentity {
 		this.userId = userId;
 		this._record = null;
 		this._loaded = false;
+		this._backendConfirmed = false;
 		this.memory = null;
 
 		// Pre-seed agentId from arg or storage so callers can use it synchronously
@@ -154,6 +155,7 @@ export class AgentIdentity {
 	 * @param {import('./agent-protocol.js').ActionPayload} action
 	 */
 	recordAction(action) {
+		if (!this._backendConfirmed) return; // no session or not owner — skip to avoid 401 noise
 		fetch('/api/agent-actions', {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
@@ -207,6 +209,8 @@ export class AgentIdentity {
 	// ── Internal ──────────────────────────────────────────────────────────────
 
 	async _loadAsync() {
+		this._backendConfirmed = false;
+
 		// 1. Try localStorage first (instant) — backendSync disabled until confirmed
 		const local = this._readLocal();
 		if (local) {
@@ -217,9 +221,12 @@ export class AgentIdentity {
 		}
 
 		// 2. Try backend (authoritative if user is signed in)
+		// Only probe a specific agent ID if it was previously backend-confirmed;
+		// locally-synthesised IDs never exist in the DB, so avoid noisy 404s.
 		try {
 			const agentId = this._agentId;
-			const url = agentId ? `/api/agents/${agentId}` : '/api/agents/me';
+			const storedConfirmed = this._record?.backendConfirmed;
+			const url = (agentId && storedConfirmed) ? `/api/agents/${agentId}` : '/api/agents/me';
 			const resp = await fetch(url, { credentials: 'include' });
 
 			if (resp.ok) {
@@ -230,13 +237,15 @@ export class AgentIdentity {
 					this._record = _normalise(agent);
 					this._agentId = this._record.id;
 					this._loaded = true;
+					// user_id only present when caller owns the agent — use as ownership signal
+					this._backendConfirmed = Boolean(agent.user_id);
 					this._persist();
 					if (!this.memory) {
-						this.memory = new AgentMemory(this._record.id, { backendSync: true });
+						this.memory = new AgentMemory(this._record.id, { backendSync: this._backendConfirmed });
 					} else {
 						// Agent confirmed in backend — enable sync and pull latest
-						this.memory.backendSync = true;
-						this.memory._syncFromBackend();
+						this.memory.backendSync = this._backendConfirmed;
+						if (this._backendConfirmed) this.memory._syncFromBackend();
 					}
 					return;
 				}
@@ -329,5 +338,6 @@ function _normalise(apiRecord) {
 			? new Date(apiRecord.created_at).getTime()
 			: apiRecord.createdAt || Date.now(),
 		isRegistered: Boolean(apiRecord.erc8004_agent_id || apiRecord.isRegistered),
+		backendConfirmed: Boolean(apiRecord.user_id),
 	};
 }

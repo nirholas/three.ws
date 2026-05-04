@@ -244,8 +244,9 @@ export class AgentIdentity {
 					this._record = _normalise(agent);
 					this._agentId = this._record.id;
 					this._loaded = true;
-					// user_id only present when caller owns the agent — use that as the
-					// ownership signal so recordAction doesn't fire 401s on public embeds.
+					// _normalise() derives backendConfirmed from Boolean(agent.user_id).
+					// user_id is only returned when the caller owns the agent, so this
+					// is the ownership signal that prevents 401s on public embeds.
 					this._backendConfirmed = this._record.backendConfirmed;
 					this._persist();
 					if (!this.memory) {
