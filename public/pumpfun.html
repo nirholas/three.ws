@@ -279,6 +279,7 @@
 		.evt-kind { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
 		.evt-tier { font-size: 10px; color: #fbbf24; }
 		.evt-title { font-weight: 700; font-size: 13px; margin: 3px 0 2px; }
+		.evt-sentiment { margin-left: 6px; font-size: 11px; }
 		.evt-who { font-weight: 600; font-size: 13px; margin-top: 3px; word-break: break-all; }
 		.evt-amt { font-size: 12px; color: #cbd5e1; }
 		.evt-take { font-size: 11px; color: var(--muted); margin-top: 4px; font-style: italic; }
@@ -1144,6 +1145,22 @@
 					}
 					return;
 				}
+
+				// Call sentiment analysis for new tokens
+				if (data.type === 'mint' && data.name) {
+					agent.skills.perform('analyze-sentiment', { text: data.name }).then(result => {
+						if (result.success) {
+							const card = feed.el.querySelector(`[data-mint="${data.mint}"]`);
+							if (card) {
+								const sentimentEl = card.querySelector('.evt-sentiment');
+								if (sentimentEl) {
+									sentimentEl.textContent = result.data.sentiment === 'Positive' ? '😊' : '😞';
+								}
+							}
+						}
+					});
+				}
+
 				handleEvent(data);
 			};
 			ws.onerror = (err) => console.error('[ws] error', err);

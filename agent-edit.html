@@ -461,6 +461,16 @@
 			>
 				Monetization
 			</button>
+			<button
+				class="edit-tab"
+				data-tab="autopilot"
+				role="tab"
+				aria-selected="false"
+				aria-controls="panel-autopilot"
+				id="tab-autopilot"
+			>
+				Autopilot
+			</button>
 		</div>
 
 		<main id="main">
@@ -590,6 +600,29 @@
 					<span
 						class="form-status"
 						id="monetization-status"
+						role="status"
+						aria-live="polite"
+					></span>
+				</div>
+			</section>
+
+			<!-- Autopilot tab -->
+			<section
+				class="edit-panel persona-panel"
+				id="panel-autopilot"
+				role="tabpanel"
+				aria-labelledby="tab-autopilot"
+				hidden
+			>
+				<div class="form-group">
+					<label class="form-label" for="f-strategy">Trading Strategy</label>
+					<textarea class="form-textarea" id="f-strategy" rows="8" placeholder="Define your agent's trading strategy here..."></textarea>
+				</div>
+				<div class="form-actions">
+					<button class="btn-primary" id="autopilot-save">Save Strategy</button>
+					<span
+						class="form-status"
+						id="autopilot-status"
 						role="status"
 						aria-live="polite"
 					></span>

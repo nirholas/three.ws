@@ -1,0 +1,38 @@
+.container {
+  padding: 1rem;
+}
+
+h2 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.controlGroup {
+  margin-bottom: 1.5rem;
+}
+
+.controlGroup label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: #aaa;
+}
+
+.textarea {
+  width: 100%;
+  height: 150px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  color: white;
+  padding: 0.5rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: #ffd700;
+}
