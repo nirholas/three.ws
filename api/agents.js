@@ -198,6 +198,15 @@ export async function handleGetOne(req, res, id) {
 		}, {});
 		row.skill_prices = skill_prices;
 
+		const prices = await sql`
+			SELECT skill_name, amount, currency_mint FROM agent_skill_prices WHERE agent_id = ${id}
+		`;
+		const skill_prices = prices.reduce((acc, p) => {
+			acc[p.skill_name] = { amount: p.amount, currency_mint: p.currency_mint };
+			return acc;
+		}, {});
+		row.skill_prices = skill_prices;
+
 		await healStaleAvatarId(row);
 
 		// Public fields if not owner; full record if owner

@@ -229,6 +229,10 @@
 			"dest": "/api/marketplace/[action]?action=agents"
 		},
 		{
+			"src": "/api/agents/([^/]+)/skills/set-price",
+			"dest": "/api/agent-skills?agentId=$1&action=set-price"
+		},
+		{
 			"src": "/api/marketplace/agents/([^/]+)",
 			"dest": "/api/marketplace/[action]?action=agents&id=$1"
 		},

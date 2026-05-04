@@ -1,14 +1,32 @@
-// src/wallet.js
+import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom';
+import { Connection, PublicKey } from '@solana/web3.js';
 
-// Placeholder for wallet adapter logic
-let wallet; 
+let connectedWalletAddress = null;
 
-function onConnectWallet() {
-  console.log('Attempting to connect wallet...');
-  // The actual connection logic will be implemented in the next prompt.
-  // For now, we can simulate a successful connection.
-  const mockAddress = 'YourWalletAddress...';
-  updateWalletState(mockAddress);
+// Initialize the wallet adapter
+const wallet = new PhantomWalletAdapter();
+
+// Listen for connection events
+wallet.on('connect', (publicKey) => {
+  connectedWalletAddress = publicKey.toBase58();
+  console.log(`Wallet connected: ${connectedWalletAddress}`);
+  updateWalletState(connectedWalletAddress);
+});
+
+wallet.on('disconnect', () => {
+  console.log('Wallet disconnected');
+  connectedWalletAddress = null;
+  updateWalletState(null);
+});
+
+async function onConnectWallet() {
+  if (!wallet.connected) {
+    try {
+      await wallet.connect();
+    } catch (error) {
+      console.error('Wallet connection failed:', error);
+    }
+  }
 }
 
 export function updateWalletState(address) {
@@ -28,4 +46,16 @@ export function initWalletButton() {
   if (btn) {
     btn.addEventListener('click', onConnectWallet);
   }
+  // Auto-connect if wallet is already connected
+  if (wallet.autoConnect) {
+     wallet.autoConnect();
+  }
+}
+
+export function getConnectedWallet() {
+    return wallet.connected ? wallet : null;
+}
+
+export function getConnectedWalletAddress() {
+    return connectedWalletAddress;
 }
