@@ -340,28 +340,7 @@ async function handleDetail(req, res, id) {
 	return json(
 		res,
 		200,
-		{ data: { agent: { ...toDetail(row, skill_prices), bookmarked } } },
-		{ 'cache-control': 'public, max-age=15' },
-	);
-	const [auth] = await Promise.all([
-		resolveAuth(req).catch(() => null),
-	]);
-
-	let bookmarked = false;
-	if (auth) {
-		const [b] =
-			await sql`SELECT 1 AS x FROM agent_bookmarks WHERE user_id = ${auth.userId} AND agent_id = ${id}`;
-		bookmarked = !!b;
-	}
-
-	const skill_prices = Object.fromEntries(
-		priceRows.map((p) => [p.skill, { amount: p.amount, currency_mint: p.currency_mint, chain: p.chain }]),
-	);
-
-	return json(
-		res,
-		200,
-		{ data: { agent: { ...toDetail(row), skill_prices }, bookmarked } },
+		{ data: { agent: { ...toDetail(row), skill_prices, bookmarked } } },
 		{ 'cache-control': 'public, max-age=15' },
 	);
 }
