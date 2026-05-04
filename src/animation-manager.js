@@ -53,9 +53,11 @@ export class AnimationManager {
 		this.actions.clear();
 		this.currentAction = null;
 		this.currentName = null;
+		this._boneNames = _collectBoneNames(model);
 
 		for (const [name, clip] of this.clips) {
-			const action = this.mixer.clipAction(clip);
+			const filtered = _filterClip(clip, this._boneNames);
+			const action = this.mixer.clipAction(filtered);
 			action.enabled = true;
 			this.actions.set(name, action);
 		}
@@ -124,7 +126,8 @@ export class AnimationManager {
 		this.clips.set(name, clip);
 
 		if (this.model && this.mixer) {
-			const action = this.mixer.clipAction(clip);
+			const filtered = _filterClip(clip, this._boneNames);
+			const action = this.mixer.clipAction(filtered);
 			action.enabled = true;
 			action.setLoop(opts.loop === false ? LoopOnce : LoopRepeat);
 			if (opts.loop === false) action.clampWhenFinished = true;
@@ -261,4 +264,23 @@ export class AnimationManager {
 		this._animationDefs = [];
 		this._failed.clear();
 	}
+}
+
+function _collectBoneNames(model) {
+	const names = new Set();
+	model.traverse((n) => { if (n.name) names.add(n.name); });
+	return names;
+}
+
+function _filterClip(clip, boneNames) {
+	if (!boneNames || boneNames.size === 0) return clip;
+	const valid = clip.tracks.filter((t) => {
+		const dot = t.name.indexOf('.');
+		const bone = dot !== -1 ? t.name.slice(0, dot) : t.name;
+		return boneNames.has(bone);
+	});
+	if (valid.length === clip.tracks.length) return clip;
+	const copy = clip.clone();
+	copy.tracks = valid;
+	return copy;
 }

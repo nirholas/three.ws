@@ -36,6 +36,7 @@ export class AgentIdentity {
 		this.userId = userId;
 		this._record = null;
 		this._loaded = false;
+		this._backendConfirmed = false; // true only when backend returned a valid agent
 		this.memory = null;
 
 		// Pre-seed agentId from arg or storage so callers can use it synchronously
@@ -154,6 +155,7 @@ export class AgentIdentity {
 	 * @param {import('./agent-protocol.js').ActionPayload} action
 	 */
 	recordAction(action) {
+		if (!this._backendConfirmed) return; // no session — skip to avoid 401 noise
 		fetch('/api/agent-actions', {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
@@ -217,9 +219,12 @@ export class AgentIdentity {
 		}
 
 		// 2. Try backend (authoritative if user is signed in)
+		// Only probe a specific agent ID if it was previously confirmed by the backend.
+		// Locally-synthesised IDs will never exist in the DB, so use /me to avoid 404 noise.
 		try {
 			const agentId = this._agentId;
-			const url = agentId ? `/api/agents/${agentId}` : '/api/agents/me';
+			const storedConfirmed = this._record?.backendConfirmed;
+			const url = (agentId && storedConfirmed) ? `/api/agents/${agentId}` : '/api/agents/me';
 			const resp = await fetch(url, { credentials: 'include' });
 
 			if (resp.ok) {
@@ -230,6 +235,7 @@ export class AgentIdentity {
 					this._record = _normalise(agent);
 					this._agentId = this._record.id;
 					this._loaded = true;
+					this._backendConfirmed = true;
 					this._persist();
 					if (!this.memory) {
 						this.memory = new AgentMemory(this._record.id, { backendSync: true, embedFn: _makeEmbedFn(this._record.id) });
@@ -343,5 +349,6 @@ function _normalise(apiRecord) {
 			? new Date(apiRecord.created_at).getTime()
 			: apiRecord.createdAt || Date.now(),
 		isRegistered: Boolean(apiRecord.erc8004_agent_id || apiRecord.isRegistered),
+		backendConfirmed: true,
 	};
 }
