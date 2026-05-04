@@ -179,8 +179,12 @@
 			</select>
 			<div id="ctl-avatar-wrap">
 				<select id="ctl-avatar" title="Avatar">
-					<option value="/avatars/cz.glb">CZ avatar</option>
-					<option value="/avatars/default.glb">Default avatar</option>
+					<optgroup label="Defaults">
+						<option value="/avatars/cz.glb">CZ avatar</option>
+						<option value="/avatars/default.glb">Default avatar</option>
+					</optgroup>
+					<optgroup label="Community" id="ctl-avatar-community" hidden></optgroup>
+					<optgroup label="My Agents" id="ctl-avatar-mine" hidden></optgroup>
 					<option value="custom">Custom URL…</option>
 				</select>
 				<input id="ctl-avatar-url" type="text" placeholder="https://…/avatar.glb" />
@@ -212,6 +216,7 @@
 		const iframe = $('agent');
 
 		const PRESET_AVATARS = ['/avatars/cz.glb', '/avatars/default.glb'];
+		const PRESIGN_PREFIX = 'mine:'; // option value sentinel — resolves to a presigned URL on selection
 		const params = {
 			asset: url.searchParams.get('asset') || '',
 			mint: url.searchParams.get('mint') || '',
@@ -237,16 +242,38 @@
 			avatarUrlInput.value = params.avatar;
 			avatarUrlInput.classList.add('visible');
 		}
-		avatarSelect.addEventListener('change', () => {
-			if (avatarSelect.value === 'custom') {
+		avatarSelect.addEventListener('change', async () => {
+			const v = avatarSelect.value;
+			if (v === 'custom') {
 				avatarUrlInput.classList.add('visible');
 				avatarUrlInput.focus();
-			} else {
-				avatarUrlInput.classList.remove('visible');
-				params.avatar = avatarSelect.value;
-				syncURL();
-				mountAgent();
+				return;
 			}
+			avatarUrlInput.classList.remove('visible');
+			if (v.startsWith(PRESIGN_PREFIX)) {
+				const id = v.slice(PRESIGN_PREFIX.length);
+				const opt = avatarSelect.selectedOptions[0];
+				const prevLabel = opt?.textContent;
+				if (opt) opt.textContent = (prevLabel || '') + ' (loading…)';
+				try {
+					const r = await fetch(`/api/avatars/${encodeURIComponent(id)}`, { credentials: 'include' });
+					if (!r.ok) throw new Error('fetch failed');
+					const { avatar } = await r.json();
+					const url = avatar?.url || avatar?.model_url;
+					if (!url) throw new Error('no url');
+					params.avatar = url;
+				} catch {
+					if (opt) opt.textContent = prevLabel;
+					alert('Could not load that avatar.');
+					return;
+				} finally {
+					if (opt && prevLabel) opt.textContent = prevLabel;
+				}
+			} else {
+				params.avatar = v;
+			}
+			syncURL();
+			mountAgent();
 		});
 		avatarUrlInput.addEventListener('change', () => {
 			const v = avatarUrlInput.value.trim();
@@ -716,6 +743,61 @@
 
 		mountAgent();
 		buildAnimChips();
+		loadAvatarPickerOptions();
+
+		async function loadAvatarPickerOptions() {
+			const customOpt = avatarSelect.querySelector('option[value="custom"]');
+			const community = $('ctl-avatar-community');
+			const mine = $('ctl-avatar-mine');
+
+			// Community pool — public avatars, no auth needed
+			fetch('/api/avatars/public?limit=50')
+				.then((r) => (r.ok ? r.json() : null))
+				.then((data) => {
+					const list = data?.avatars || [];
+					if (!list.length) return;
+					for (const a of list) {
+						if (!a.model_url) continue;
+						const opt = document.createElement('option');
+						opt.value = a.model_url;
+						opt.textContent = a.name || a.slug || 'untitled';
+						community.appendChild(opt);
+					}
+					if (community.children.length) community.hidden = false;
+					ensureSelectedReflected();
+				})
+				.catch(() => {});
+
+			// My Agents — requires session; silently skip if not signed in
+			fetch('/api/avatars?limit=100', { credentials: 'include' })
+				.then((r) => (r.ok ? r.json() : null))
+				.then((data) => {
+					const list = data?.avatars || [];
+					if (!list.length) return;
+					for (const a of list) {
+						const opt = document.createElement('option');
+						// Public/unlisted have a direct CDN URL; private need a presign on selection.
+						opt.value = a.model_url ? a.model_url : PRESIGN_PREFIX + a.id;
+						const tag = a.visibility === 'private' ? ' · private' : '';
+						opt.textContent = (a.name || a.slug || 'untitled') + tag;
+						mine.appendChild(opt);
+					}
+					if (mine.children.length) mine.hidden = false;
+					ensureSelectedReflected();
+				})
+				.catch(() => {});
+
+			function ensureSelectedReflected() {
+				// If the URL-supplied avatar matches one of the now-loaded options, select it.
+				if (avatarSelect.value === 'custom' && PRESET_AVATARS.includes(params.avatar) === false) {
+					const match = Array.from(avatarSelect.options).find((o) => o.value === params.avatar);
+					if (match) {
+						avatarSelect.value = params.avatar;
+						avatarUrlInput.classList.remove('visible');
+					}
+				}
+			}
+		}
 
 		// Auth-aware nav CTA
 		(function () {
