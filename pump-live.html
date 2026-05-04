@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🟢</text></svg>">
+<title>PumpFun Live — New Token Launches</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a0a;
+    color: #00ff41;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    padding: 0;
+  }
+
+  /* ── Header ────────────────────────────────────────── */
+  #header {
+    background: #111;
+    border-bottom: 1px solid #222;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  #header h1 {
+    font-size: 16px;
+    color: #00ff41;
+    white-space: nowrap;
+  }
+  #header .status {
+    font-size: 12px;
+    color: #666;
+  }
+  #header .status.connected { color: #00ff41; }
+  #header .status.error { color: #ff4141; }
+  #header .controls {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  input[type="text"] {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    color: #ccc;
+    padding: 6px 10px;
+    font-family: inherit;
+    font-size: 12px;
+    width: 340px;
+    border-radius: 3px;
+  }
+  input[type="text"]:focus { outline: none; border-color: #00ff41; }
+  button {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    color: #00ff41;
+    padding: 6px 14px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    border-radius: 3px;
+  }
+  button:hover { background: #252525; border-color: #00ff41; }
+  button.active { background: #002200; border-color: #00ff41; }
+
+  /* ── Stats bar ─────────────────────────────────────── */
+  #stats {
+    background: #0d0d0d;
+    border-bottom: 1px solid #1a1a1a;
+    padding: 6px 20px;
+    font-size: 11px;
+    color: #555;
+    display: flex;
+    gap: 24px;
+  }
+  #stats span { color: #888; }
+  #stats .val { color: #00ff41; }
+
+  /* ── Log area ──────────────────────────────────────── */
+  #log {
+    padding: 12px 20px;
+    max-height: calc(100vh - 110px);
+    overflow-y: auto;
+  }
+  .entry {
+    border-bottom: 1px solid #111;
+    padding: 8px 0;
+    animation: fadeIn 0.3s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .entry .time { color: #444; }
+  .entry .label { color: #888; }
+  .entry .name { color: #ffcc00; font-weight: bold; font-size: 15px; }
+  .entry .symbol { color: #ff9900; font-weight: bold; }
+  .entry .addr { color: #4a9eff; }
+  .entry .github { color: #00ff41; font-weight: bold; }
+  .entry .raw { color: #333; font-size: 11px; word-break: break-all; display: none; }
+  .entry a { color: #4a9eff; text-decoration: none; }
+  .entry a:hover { text-decoration: underline; }
+
+  .entry .token-row { display: flex; align-items: center; gap: 10px; margin: 4px 0; }
+  .entry .token-img { width: 36px; height: 36px; border-radius: 50%; border: 1px solid #333; object-fit: cover; background: #111; }
+  .entry .token-details { flex: 1; min-width: 0; }
+  .entry .meta-row { display: flex; gap: 12px; flex-wrap: wrap; font-size: 11px; color: #666; margin-top: 3px; }
+  .entry .meta-row .key { color: #555; }
+  .entry .meta-row .val { color: #aaa; }
+  .entry .meta-row .val.green { color: #00ff41; }
+  .entry .meta-row .val.blue { color: #4a9eff; }
+  .entry .meta-row a { font-size: 11px; }
+  .entry .sol-val { color: #00e5ff; font-weight: bold; }
+  .entry .mcap { color: #b366ff; font-weight: bold; }
+
+  .sys { color: #555; padding: 4px 0; }
+  .sys.error { color: #ff4141; }
+  .sys.warn { color: #ffcc00; }
+
+  /* ── Scrollbar ─────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #0a0a0a; }
+  ::-webkit-scrollbar-thumb { background: #222; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #333; }
+
+  /* ── Responsive ────────────────────────────────────── */
+  @media (max-width: 700px) {
+    input[type="text"] { width: 100%; }
+    #header { flex-direction: column; align-items: flex-start; }
+    #header .controls { margin-left: 0; width: 100%; flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <h1>⚡ PumpFun Live</h1>
+  <a href="/trades" style="color:#4a9eff; text-decoration:none; font-size:12px; border:1px solid #333; padding:4px 10px; border-radius:3px;">📊 Trades Dashboard</a>
+  <a href="/vanity" style="color:#ffcc00; text-decoration:none; font-size:12px; border:1px solid #333; padding:4px 10px; border-radius:3px;">🔑 Vanity Generator</a>
+  <div class="status" id="status">● Disconnected</div>
+  <div class="controls">
+    <input type="text" id="rpc" value="" placeholder="wss:// custom RPC" style="display:none" />
+    <button id="btn-connect">Disconnect</button>
+    <button id="btn-pause">Pause</button>
+    <button id="btn-clear">Clear</button>
+  </div>
+</div>
+
+<div id="stats">
+  <div>Tokens: <span class="val" id="s-total">0</span></div>
+  <div>With GitHub: <span class="val" id="s-github">0</span></div>
+  <div>Viewers: <span class="val" id="s-viewers">—</span></div>
+  <div>Logs/sec: <span class="val" id="s-rate">0</span></div>
+  <div>Uptime: <span class="val" id="s-uptime">0s</span></div>
+</div>
+
+<div id="log"></div>
+
+<script>
+// ════════════════════════════════════════════════════════════════════
+// PumpFun Live Token Launch WebSocket Monitor
+// Connects to a Solana RPC WebSocket and subscribes to Pump program
+// logs. Detects createV2 token launches in real-time.
+// ════════════════════════════════════════════════════════════════════
+
+const PUMP_PROGRAM = '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P';
+const MAX_LOG_ENTRIES = 500;
+
+// ── Endpoints (PumpPortal primary, relay fallback) ──────────────
+// PumpPortal is a free, purpose-built WebSocket API for Pump.fun.
+// The Railway relay server proxies Solana RPC logsSubscribe server-side
+// and re-broadcasts parsed events, avoiding public RPC rate limits.
+const RPC_ENDPOINTS = [
+  { url: 'wss://pumpportal.fun/api/data',                          protocol: 'pumpportal', label: 'PumpPortal' },
+  { url: 'wss://pump-fun-websocket-production.up.railway.app/ws',  protocol: 'relay',      label: 'Relay Server' },
+];
+let rpcIndex = 0;
+let connectAttempts = 0;
+let currentProtocol = null;
+
+// ── State ───────────────────────────────────────────────────────────
+let ws = null;
+let subId = null;
+let paused = false;
+let startTime = 0;
+let stats = { total: 0, github: 0, logsReceived: 0, lastSecondLogs: 0 };
+let rateInterval = null;
+let reconnectDelay = 1000;  // starts at 1s, doubles up to 30s
+let reconnectTimer = null;
+let manualDisconnect = false;
+
+// ── DOM refs ────────────────────────────────────────────────────────
+const $log = document.getElementById('log');
+const $status = document.getElementById('status');
+const $rpc = document.getElementById('rpc');
+const $btnConnect = document.getElementById('btn-connect');
+const $btnPause = document.getElementById('btn-pause');
+const $btnClear = document.getElementById('btn-clear');
+
+// ── Buttons ─────────────────────────────────────────────────────────
+$btnPause.onclick = () => {
+  paused = !paused;
+  $btnPause.textContent = paused ? 'Resume' : 'Pause';
+  $btnPause.classList.toggle('active', paused);
+  sysLog(paused ? 'Paused — events still tracked, display frozen' : 'Resumed');
+};
+$btnConnect.onclick = () => {
+  if (ws) {
+    disconnect();
+    $btnConnect.textContent = 'Connect';
+  } else {
+    manualDisconnect = false;
+    reconnectDelay = 1000;
+    connectAttempts = 0;
+    connect();
+  }
+};
+$btnClear.onclick = () => { $log.innerHTML = ''; };
+
+// ── Connect to WebSocket (PumpPortal or Solana RPC) ───────────────
+function getNextEndpoint() {
+  const custom = $rpc.value.trim();
+  if (custom && custom.startsWith('wss://')) {
+    const proto = custom.includes('pumpportal') ? 'pumpportal' : 'solana-rpc';
+    return { url: custom, protocol: proto, label: 'Custom' };
+  }
+  const ep = RPC_ENDPOINTS[rpcIndex % RPC_ENDPOINTS.length];
+  rpcIndex++;
+  return ep;
+}
+
+function connect() {
+  if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+  const ep = getNextEndpoint();
+  const url = ep.url;
+  currentProtocol = ep.protocol;
+  const shortUrl = url.replace(/api-key=\w+/, 'api-key=***').slice(0, 60);
+  setStatus('Connecting...', '');
+  $btnConnect.textContent = 'Disconnect';
+  connectAttempts++;
+  sysLog(`Connecting to ${ep.label} (${shortUrl})...`);
+
+  try {
+    ws = new WebSocket(url);
+  } catch (e) {
+    sysLog(`Invalid URL: ${e.message}`, 'error');
+    scheduleReconnect();
+    return;
+  }
+
+  const connectTimeout = setTimeout(() => {
+    if (ws && ws.readyState !== WebSocket.OPEN) {
+      sysLog(`Timeout on ${ep.label}, trying next...`, 'warn');
+      try { ws.close(); } catch {}
+    }
+  }, 10000);
+
+  ws.onopen = () => {
+    clearTimeout(connectTimeout);
+    reconnectDelay = 1000;
+    connectAttempts = 0;
+    if (!startTime) startTime = Date.now();
+    startRateCounter();
+
+    if (currentProtocol === 'pumpportal') {
+      // PumpPortal: subscribe to new token creates
+      ws.send(JSON.stringify({ method: 'subscribeNewToken' }));
+      setStatus(`● Live — PumpPortal`, 'connected');
+      sysLog('Subscribed via PumpPortal — streaming new token launches');
+    } else if (currentProtocol === 'relay') {
+      // Railway relay: already subscribed server-side, just listen
+      setStatus('● Live — Relay', 'connected');
+      sysLog('Connected to relay server — receiving proxied token launches');
+    } else {
+      // Solana RPC: subscribe to program logs
+      setStatus('● Connected — subscribing to Pump program...', 'connected');
+      ws.send(JSON.stringify({
+        jsonrpc: '2.0', id: 1,
+        method: 'logsSubscribe',
+        params: [{ mentions: [PUMP_PROGRAM] }, { commitment: 'confirmed' }],
+      }));
+    }
+  };
+
+  ws.onmessage = (evt) => {
+    let msg;
+    try { msg = JSON.parse(evt.data); } catch { return; }
+
+    if (currentProtocol === 'relay') {
+      // Relay server sends { type:'token-launch', mint, name, symbol, ... }
+      if (msg.type === 'heartbeat') return;
+      if (msg.type === 'status') {
+        if (typeof msg.clients === 'number') {
+          document.getElementById('s-viewers').textContent = msg.clients;
+        }
+        return;
+      }
+      if (msg.type === 'token-launch' || msg.mint) {
+        stats.logsReceived++;
+        const info = {
+          signature: msg.signature || '',
+          time: new Date().toLocaleTimeString(),
+          name: msg.name || null,
+          symbol: msg.symbol || null,
+          metadataUri: msg.metadataUri || null,
+          mint: msg.mint || 'unknown',
+          creator: msg.creator || null,
+          user: msg.creator || null,
+          hasGithub: msg.hasGithub || false,
+          githubUrls: msg.githubUrls || [],
+          rawLogs: [],
+          isV2: msg.isV2 !== false,
+          imageUrl: msg.imageUri || null,
+        };
+        stats.total++;
+        if (info.hasGithub) stats.github++;
+        if (!paused) renderEntry(info);
+        updateStats();
+      }
+      return;
+    }
+
+    if (currentProtocol === 'pumpportal') {
+      // PumpPortal sends flat objects: { txType:'create', mint, name, symbol, uri, signature, ... }
+      if (msg && msg.mint) {
+        stats.logsReceived++;
+        const vSol = msg.vSolInBondingCurve || 0;
+        const vTok = msg.vTokensInBondingCurve || 0;
+        const supply = msg.tokenTotalSupply || (vTok > 0 ? 1e15 : 0);
+        let mcap = msg.marketCapSol || 0;
+        if (!mcap && vTok > 0 && vSol > 0) {
+          mcap = (vSol / vTok) * supply / 1e9;
+        }
+        const info = {
+          signature: msg.signature || '',
+          time: new Date().toLocaleTimeString(),
+          name: msg.name || null,
+          symbol: msg.symbol || null,
+          metadataUri: msg.uri || null,
+          mint: msg.mint,
+          bondingCurve: msg.bondingCurveKey || null,
+          creator: msg.traderPublicKey || null,
+          user: msg.traderPublicKey || null,
+          hasGithub: false,
+          githubUrls: [],
+          rawLogs: [],
+          isV2: true,
+          virtualTokenReserves: vTok,
+          virtualSolReserves: vSol,
+          realTokenReserves: 0,
+          tokenTotalSupply: supply,
+          marketCapSol: mcap,
+          imageUrl: null,
+        };
+        stats.total++;
+        if (info.metadataUri && info.metadataUri.includes('github.com')) {
+          info.hasGithub = true;
+          stats.github++;
+        }
+        if (info.metadataUri) fetchMetadata(info.metadataUri, info.signature);
+        if (!paused) renderEntry(info);
+        updateStats();
+      }
+      return;
+    }
+
+    // ── Solana RPC protocol ──
+    // Subscription confirmation
+    if (msg.id === 1 && msg.result !== undefined) {
+      subId = msg.result;
+      setStatus(`● Live — subscriptionId: ${subId}`, 'connected');
+      sysLog(`Subscribed to ${PUMP_PROGRAM} (sub=${subId}). Waiting for token launches...`);
+      return;
+    }
+
+    // RPC error (rejected subscription)
+    if (msg.id === 1 && msg.error) {
+      sysLog(`RPC rejected logsSubscribe: ${msg.error.message || JSON.stringify(msg.error)}`, 'error');
+      sysLog('Tip: public RPCs rate-limit this. PumpPortal is recommended.', 'warn');
+      try { ws.close(); } catch {}
+      return;
+    }
+
+    // Log notification
+    if (msg.method === 'logsNotify' && msg.params?.result) {
+      stats.logsReceived++;
+      handleLogNotification(msg.params.result);
+    }
+  };
+
+  ws.onerror = (err) => {
+    clearTimeout(connectTimeout);
+    setStatus('● Error', 'error');
+    sysLog(`WebSocket error on ${ep.label}`, 'error');
+    console.error('WS Error:', err);
+  };
+
+  ws.onclose = (evt) => {
+    clearTimeout(connectTimeout);
+    ws = null;
+    subId = null;
+    currentProtocol = null;
+    if (!manualDisconnect) {
+      scheduleReconnect();
+    } else {
+      setStatus('● Disconnected', '');
+      sysLog(`Disconnected (code=${evt.code}).`);
+      $btnConnect.textContent = 'Connect';
+      stopRateCounter();
+    }
+  };
+}
+
+function scheduleReconnect() {
+  const delay = Math.min(reconnectDelay, 15000);
+  const nextEp = RPC_ENDPOINTS[rpcIndex % RPC_ENDPOINTS.length];
+  setStatus(`● Retrying ${(delay / 1000).toFixed(0)}s → ${nextEp.label}`, 'error');
+  sysLog(`Trying ${nextEp.label} in ${(delay / 1000).toFixed(0)}s...`, 'warn');
+  reconnectTimer = setTimeout(connect, delay);
+  if (connectAttempts >= RPC_ENDPOINTS.length) {
+    reconnectDelay = Math.min(reconnectDelay * 1.5, 15000);
+  }
+}
+
+function disconnect() {
+  manualDisconnect = true;
+  if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+  if (ws) {
+    if (subId !== null) {
+      try { ws.send(JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'logsUnsubscribe', params: [subId] })); } catch {}
+    }
+    ws.close();
+  }
+}
+
+// ── Handle incoming log notifications ───────────────────────────────
+function handleLogNotification(result) {
+  const { value } = result;
+  if (!value || value.err) return;
+
+  const { signature, logs } = value;
+  if (!logs || !Array.isArray(logs)) return;
+
+  const logsText = logs.join('\n');
+
+  // Detect token creation: look for Create or CreateV2 instruction
+  const isCreate = logsText.includes('Instruction: Create');
+  if (!isCreate) return;
+
+  // ── Parse what we can from the raw logs ─────────────────────────
+  const info = parseCreateLogs(logs, signature);
+  stats.total++;
+
+  // Check if we can find a GitHub reference in the logs (unlikely from
+  // raw logs, but metadata URI might be visible in Program data)
+  if (info.metadataUri && info.metadataUri.includes('github.com')) {
+    info.hasGithub = true;
+    stats.github++;
+  }
+
+  // Try fetching metadata in background (best-effort)
+  if (info.metadataUri) {
+    fetchMetadata(info.metadataUri, signature);
+  }
+
+  if (!paused) renderEntry(info);
+  updateStats();
+}
+
+// ── Base58 encoder ──────────────────────────────────────────────────
+const B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+function bytesToBase58(bytes) {
+  let num = BigInt(0);
+  for (const b of bytes) num = num * 256n + BigInt(b);
+  if (num === 0n) return '1';
+  let str = '';
+  while (num > 0n) { str = B58[Number(num % 58n)] + str; num /= 58n; }
+  for (const b of bytes) { if (b === 0) str = '1' + str; else break; }
+  return str;
+}
+
+// ── Borsh reader for Anchor CreateEvent ─────────────────────────────
+function readBorshString(buf, offset) {
+  if (offset + 4 > buf.length) return { val: '', end: offset };
+  const len = buf[offset] | (buf[offset+1] << 8) | (buf[offset+2] << 16) | (buf[offset+3] << 24);
+  offset += 4;
+  if (len <= 0 || len > 1000 || offset + len > buf.length) return { val: '', end: offset };
+  const val = new TextDecoder().decode(buf.slice(offset, offset + len));
+  return { val, end: offset + len };
+}
+
+function readPubkey(buf, offset) {
+  if (offset + 32 > buf.length) return { val: '', end: offset };
+  return { val: bytesToBase58(buf.slice(offset, offset + 32)), end: offset + 32 };
+}
+
+function readU64(buf, offset) {
+  if (offset + 8 > buf.length) return { val: 0, end: offset };
+  const view = new DataView(buf.buffer, buf.byteOffset + offset, 8);
+  return { val: Number(view.getBigUint64(0, true)), end: offset + 8 };
+}
+
+function readI64(buf, offset) {
+  if (offset + 8 > buf.length) return { val: 0, end: offset };
+  const view = new DataView(buf.buffer, buf.byteOffset + offset, 8);
+  return { val: Number(view.getBigInt64(0, true)), end: offset + 8 };
+}
+
+// ── Parse create instruction data from logs ─────────────────────────
+function parseCreateLogs(logs, signature) {
+  const info = {
+    signature,
+    time: new Date().toLocaleTimeString(),
+    name: null,
+    symbol: null,
+    metadataUri: null,
+    mint: null,
+    bondingCurve: null,
+    creator: null,
+    user: null,
+    hasGithub: false,
+    githubUrls: [],
+    rawLogs: logs,
+    isV2: false,
+    virtualTokenReserves: 0,
+    virtualSolReserves: 0,
+    realTokenReserves: 0,
+    tokenTotalSupply: 0,
+    marketCapSol: 0,
+    imageUrl: null,
+  };
+
+  for (const line of logs) {
+    if (line.includes('Instruction: CreateV2')) info.isV2 = true;
+    else if (line.includes('Instruction: Create') && !info.isV2) info.isV2 = false;
+
+    // Decode Anchor CreateEvent from Program data
+    if (line.startsWith('Program data: ')) {
+      try {
+        const b64 = line.slice('Program data: '.length).trim();
+        const raw = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+
+        // Skip 8-byte Anchor event discriminator
+        let off = 8;
+        if (raw.length < 50) continue; // too short for CreateEvent
+
+        // Read strings: name, symbol, uri
+        const name = readBorshString(raw, off); off = name.end;
+        const symbol = readBorshString(raw, off); off = symbol.end;
+        const uri = readBorshString(raw, off); off = uri.end;
+
+        // Read pubkeys: mint, bondingCurve, user
+        const mint = readPubkey(raw, off); off = mint.end;
+        const bc = readPubkey(raw, off); off = bc.end;
+        const user = readPubkey(raw, off); off = user.end;
+
+        // Creator pubkey (only in newer events)
+        let creator = { val: '', end: off };
+        if (off + 32 <= raw.length) {
+          creator = readPubkey(raw, off); off = creator.end;
+        }
+
+        // Timestamp (i64)
+        let timestamp = { val: 0, end: off };
+        if (off + 8 <= raw.length) {
+          timestamp = readI64(raw, off); off = timestamp.end;
+        }
+
+        // virtualTokenReserves, virtualSolReserves, realTokenReserves, tokenTotalSupply
+        let vTok = { val: 0, end: off };
+        let vSol = { val: 0, end: off };
+        let rTok = { val: 0, end: off };
+        let supply = { val: 0, end: off };
+        if (off + 32 <= raw.length) {
+          vTok = readU64(raw, off); off = vTok.end;
+          vSol = readU64(raw, off); off = vSol.end;
+          rTok = readU64(raw, off); off = rTok.end;
+          supply = readU64(raw, off); off = supply.end;
+        }
+
+        // Populate info with decoded data
+        if (name.val) info.name = name.val;
+        if (symbol.val) info.symbol = symbol.val;
+        if (uri.val) info.metadataUri = uri.val;
+        if (mint.val && mint.val.length >= 32) info.mint = mint.val;
+        if (bc.val && bc.val.length >= 32) info.bondingCurve = bc.val;
+        if (user.val && user.val.length >= 32) info.user = user.val;
+        if (creator.val && creator.val.length >= 32) info.creator = creator.val;
+        info.virtualTokenReserves = vTok.val;
+        info.virtualSolReserves = vSol.val;
+        info.realTokenReserves = rTok.val;
+        info.tokenTotalSupply = supply.val;
+
+        // Calculate market cap in SOL: vSol * totalSupply / vToken / 1e9
+        if (vTok.val > 0 && vSol.val > 0 && supply.val > 0) {
+          const price = vSol.val / vTok.val;
+          info.marketCapSol = (price * supply.val) / 1e9;
+        }
+      } catch { /* ignore decode errors */ }
+    }
+
+    // Fallback: mint from log line
+    if (line.includes('Program log: mint:') && !info.mint) {
+      const m = line.match(/mint:\s*(\w{32,})/);
+      if (m) info.mint = m[1];
+    }
+  }
+
+  return info;
+}
+
+// ── Fetch token metadata (best-effort, non-blocking) ────────────────
+async function fetchMetadata(uri, signature) {
+  try {
+    // Normalize IPFS URIs
+    let url = uri;
+    if (url.startsWith('ipfs://')) {
+      url = 'https://cf-ipfs.com/ipfs/' + url.slice(7);
+    }
+
+    const resp = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    if (!resp.ok) return;
+
+    const meta = await resp.json();
+    const githubUrls = extractGithubUrls(meta);
+
+    if (githubUrls.length > 0) {
+      stats.github++;
+      updateStats();
+
+      // Update the existing entry if visible
+      const el = document.getElementById('tx-' + signature.slice(0, 16));
+      if (el) {
+        const githubDiv = document.createElement('div');
+        githubDiv.innerHTML = '🌐 <span class="github">GitHub: ' +
+          githubUrls.map(u => `<a href="${esc(u)}" target="_blank">${esc(u)}</a>`).join(', ') +
+          '</span>';
+        el.appendChild(githubDiv);
+      }
+    }
+
+    // Update name/symbol/image if found
+    const el = document.getElementById('tx-' + signature.slice(0, 16));
+    if (el) {
+      if (meta.name) {
+        const nameEl = el.querySelector('.name');
+        if (nameEl) nameEl.textContent = meta.name;
+      }
+      if (meta.symbol) {
+        const symEl = el.querySelector('.symbol');
+        if (symEl) symEl.textContent = '$' + meta.symbol;
+      }
+      if (meta.image) {
+        let imgSrc = meta.image;
+        if (imgSrc.startsWith('ipfs://')) imgSrc = 'https://cf-ipfs.com/ipfs/' + imgSrc.slice(7);
+        const imgEl = el.querySelector('.token-img');
+        if (imgEl) { imgEl.src = imgSrc; imgEl.style.display = 'block'; }
+      }
+      if (meta.description) {
+        const descEl = el.querySelector('.token-desc');
+        if (descEl) {
+          const short = meta.description.length > 80 ? meta.description.slice(0, 80) + '…' : meta.description;
+          descEl.textContent = short;
+          descEl.style.display = 'block';
+        }
+      }
+    }
+  } catch { /* metadata fetch is best-effort */ }
+}
+
+// ── Extract GitHub URLs from metadata ───────────────────────────────
+function extractGithubUrls(meta) {
+  const urls = new Set();
+  const ghPattern = /https?:\/\/(www\.)?github\.com\/[^\s"'<>]+/gi;
+
+  function scan(val) {
+    if (typeof val === 'string') {
+      const matches = val.match(ghPattern);
+      if (matches) matches.forEach(u => urls.add(u));
+    } else if (val && typeof val === 'object') {
+      Object.values(val).forEach(scan);
+    }
+  }
+  scan(meta);
+  return [...urls];
+}
+
+// ── Format helpers ──────────────────────────────────────────────────
+function fmtSol(lamports) {
+  if (!lamports || lamports <= 0) return null;
+  const sol = lamports / 1e9;
+  if (sol >= 1000) return sol.toFixed(0) + ' SOL';
+  if (sol >= 1) return sol.toFixed(2) + ' SOL';
+  return sol.toFixed(4) + ' SOL';
+}
+function fmtMcap(sol) {
+  if (!sol || sol <= 0) return null;
+  if (sol >= 1000) return sol.toFixed(0) + ' SOL';
+  if (sol >= 1) return sol.toFixed(2) + ' SOL';
+  return sol.toFixed(4) + ' SOL';
+}
+function shortAddr(addr) {
+  if (!addr || addr.length < 10) return addr || '';
+  return addr.slice(0, 4) + '…' + addr.slice(-4);
+}
+
+// ── Render a token launch entry ─────────────────────────────────────
+function renderEntry(info) {
+  const div = document.createElement('div');
+  div.className = 'entry';
+  div.id = 'tx-' + info.signature.slice(0, 16);
+
+  const shortSig = info.signature.slice(0, 6) + '…' + info.signature.slice(-4);
+  const version = info.isV2 ? 'CreateV2' : 'Create';
+  const displayName = info.name || 'Unknown';
+  const displaySymbol = info.symbol ? '$' + info.symbol : '';
+  const mcap = info.marketCapSol ? fmtMcap(info.marketCapSol) : null;
+  const mintFull = info.mint || '';
+  const mintShort = mintFull ? shortAddr(mintFull) : '—';
+  const creatorAddr = info.creator || info.user || '';
+  const creatorShort = creatorAddr ? shortAddr(creatorAddr) : '';
+
+  let html = `<div class="token-row">`;
+  html += `<img class="token-img" src="" alt="" style="display:none" onerror="this.style.display='none'" />`;
+  html += `<div class="token-details">`;
+  html += `<div><span class="time">${info.time}</span> `;
+  html += `🚀 <span class="name">${esc(displayName)}</span> `;
+  html += `<span class="symbol">${esc(displaySymbol)}</span> `;
+  html += `<span class="label">[${version}]</span>`;
+  if (info.hasGithub) html += ` <span class="github">★ GitHub</span>`;
+  html += `</div>`;
+
+  // Description placeholder
+  html += `<div class="token-desc" style="display:none; font-size:11px; color:#666; margin:2px 0;"></div>`;
+
+  // Metadata row
+  html += `<div class="meta-row">`;
+  if (mintFull) html += `<span><span class="key">Mint:</span> <a href="https://pump.fun/coin/${mintFull}" target="_blank">${mintShort}</a></span>`;
+  if (creatorAddr) html += `<span><span class="key">Creator:</span> <a href="https://solscan.io/account/${creatorAddr}" target="_blank">${creatorShort}</a></span>`;
+  if (mcap) html += `<span><span class="key">MCap:</span> <span class="mcap">${mcap}</span></span>`;
+  if (info.virtualSolReserves > 0) html += `<span><span class="key">Pool:</span> <span class="sol-val">${fmtSol(info.virtualSolReserves)}</span></span>`;
+  html += `<span><a href="https://solscan.io/tx/${info.signature}" target="_blank">tx:${shortSig}</a></span>`;
+  if (info.metadataUri) {
+    const shortUri = info.metadataUri.length > 40 ? info.metadataUri.slice(0, 37) + '…' : info.metadataUri;
+    html += `<span><a href="${esc(info.metadataUri)}" target="_blank" title="${esc(info.metadataUri)}">${esc(shortUri)}</a></span>`;
+  }
+  html += `</div>`;
+
+  html += `</div></div>`; // close token-details, token-row
+
+  div.innerHTML = html;
+
+  $log.prepend(div);
+  while ($log.children.length > MAX_LOG_ENTRIES) $log.removeChild($log.lastChild);
+}
+
+// ── System log ──────────────────────────────────────────────────────
+function sysLog(msg, level = '') {
+  const div = document.createElement('div');
+  div.className = 'sys' + (level ? ' ' + level : '');
+  div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  $log.prepend(div);
+}
+
+// ── Stats ───────────────────────────────────────────────────────────
+function updateStats() {
+  document.getElementById('s-total').textContent = stats.total;
+  document.getElementById('s-github').textContent = stats.github;
+}
+
+function startRateCounter() {
+  let prev = 0;
+  rateInterval = setInterval(() => {
+    const rate = stats.logsReceived - prev;
+    prev = stats.logsReceived;
+    document.getElementById('s-rate').textContent = rate;
+
+    if (startTime) {
+      const sec = Math.floor((Date.now() - startTime) / 1000);
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      document.getElementById('s-uptime').textContent = m > 0 ? `${m}m ${s}s` : `${s}s`;
+    }
+  }, 1000);
+}
+
+function stopRateCounter() {
+  if (rateInterval) { clearInterval(rateInterval); rateInterval = null; }
+}
+
+// ── Helpers ─────────────────────────────────────────────────────────
+function setStatus(text, cls) {
+  $status.textContent = text;
+  $status.className = 'status' + (cls ? ' ' + cls : '');
+}
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}
+
+// ── Init ────────────────────────────────────────────────────────────
+sysLog('PumpFun Live Monitor — always-on, auto-reconnecting');
+sysLog(`Monitoring program: ${PUMP_PROGRAM}`);
+sysLog('Primary: PumpPortal API (pre-parsed, no RPC limits)');
+sysLog(`Fallback: ${RPC_ENDPOINTS.filter(e => e.protocol === 'solana-rpc').length} Solana RPC endpoints`);
+
+// Connect immediately on page load
+connect();
+</script>
+</body>
+</html>
+

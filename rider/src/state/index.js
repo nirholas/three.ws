@@ -118,6 +118,23 @@ AFRAME.registerState({
     leaderboardScores: '',
     mainMenuActive: false,
     menuActive: SKIP_INTRO, // Main menu active.
+    multiplayer: {
+      active: false,           // In MP flow at all.
+      lobbyOpen: false,        // Lobby panel visible.
+      roomCode: '',
+      isHost: false,
+      uid: '',
+      status: 'idle',          // idle | connecting | lobby | playing | finished
+      players: [],             // [{uid, name, score, combo, accuracy, ready, finished, finalScore, rank}]
+      playerCount: 0,
+      readyCount: 0,
+      everyoneReady: false,
+      opponentText: '',        // Pre-rendered HUD text for non-self players.
+      opponentScores: '',
+      hostName: '',
+      lastError: '',
+      joinCodeInput: ''
+    },
     menuDifficulties: [],
     menuDifficultiesIds: [],
     menuSelectedChallenge: {  // Currently selected challenge in the main menu.

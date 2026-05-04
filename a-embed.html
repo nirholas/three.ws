@@ -169,14 +169,27 @@
 			// URL: /a/:chainId/:agentId/embed
 			const ref = parseAgentRef(location.pathname);
 
+			// Best-effort parent origin from referrer; never use '*'.
+			const parentOrigin = (() => {
+				try {
+					if (window.parent === window) return location.origin;
+					if (document.referrer) return new URL(document.referrer).origin;
+				} catch {}
+				return null;
+			})();
+
+			function postToParent(msg) {
+				if (!parent || parent === window) return;
+				if (!parentOrigin) return;
+				try { parent.postMessage(msg, parentOrigin); } catch {}
+			}
+
 			function showError(msg) {
 				document.getElementById('loading').style.display = 'none';
 				const el = document.getElementById('error');
 				el.textContent = msg || 'Could not load agent';
 				el.style.display = 'flex';
-				try {
-					parent?.postMessage({ __agent: true, type: 'error', message: msg }, '*');
-				} catch {}
+				postToParent({ __agent: true, type: 'error', message: msg });
 			}
 
 			function showBlocked(host) {
@@ -188,9 +201,7 @@
 				<a href="${link}" target="_blank" rel="noopener">Open on three.ws ↗</a>
 			`;
 				el.style.display = 'flex';
-				try {
-					parent?.postMessage({ __agent: true, type: 'blocked', host }, '*');
-				} catch {}
+				postToParent({ __agent: true, type: 'blocked', host });
 			}
 
 			// Best-effort parent hostname — referrer is the only cross-origin signal.
@@ -261,18 +272,15 @@
 
 				document.getElementById('loading').style.display = 'none';
 
-				parent?.postMessage(
-					{
-						__agent: true,
-						type: 'ready',
-						caip: resolved.caip,
-						chainId: ref.chainId,
-						agentId: ref.agentId,
-						name: resolved.name,
-						owner: resolved.onchain.owner,
-					},
-					'*',
-				);
+				postToParent({
+					__agent: true,
+					type: 'ready',
+					caip: resolved.caip,
+					chainId: ref.chainId,
+					agentId: ref.agentId,
+					name: resolved.name,
+					owner: resolved.onchain.owner,
+				});
 			}
 
 			main().catch((err) => {

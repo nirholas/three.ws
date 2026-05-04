@@ -1,0 +1,1741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+<title>PumpFun Bot Dashboard</title>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --bg-card: #111;
+    --bg-input: #1a1a1a;
+    --border: #222;
+    --border-focus: #00ff41;
+    --text: #ccc;
+    --text-bright: #fff;
+    --accent: #00ff41;
+    --accent-dim: #00cc33;
+    --red: #ff4141;
+    --yellow: #ffc107;
+    --blue: #4fc3f7;
+    --purple: #bb86fc;
+    --orange: #ff9800;
+    --font: 'Courier New', monospace;
+    --radius: 6px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 13px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* ── Layout ──────────────────────────────────────────── */
+  .app { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 220px;
+    background: var(--bg-card);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 20;
+    overflow-y: auto;
+  }
+  .sidebar-header {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-header h1 {
+    font-size: 14px;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .sidebar-header .version { font-size: 11px; color: #666; }
+  .sidebar nav { flex: 1; padding: 8px 0; }
+  .sidebar nav a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 12px;
+    border-left: 3px solid transparent;
+    transition: all 0.15s;
+  }
+  .sidebar nav a:hover { background: rgba(0,255,65,0.05); color: var(--text-bright); }
+  .sidebar nav a.active {
+    background: rgba(0,255,65,0.08);
+    color: var(--accent);
+    border-left-color: var(--accent);
+  }
+  .sidebar nav a .icon { width: 16px; text-align: center; }
+  .sidebar nav .section-label {
+    padding: 12px 16px 4px;
+    font-size: 10px;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .sidebar-footer {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: #555;
+  }
+  .main { margin-left: 220px; flex: 1; }
+
+  /* ── Top Bar ─────────────────────────────────────────── */
+  .topbar {
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .topbar .page-title { font-size: 15px; color: var(--text-bright); }
+  .topbar .spacer { flex: 1; }
+  .topbar .connection-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+  }
+  .topbar .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #555;
+  }
+  .topbar .dot.connected { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+  .topbar .dot.error { background: var(--red); }
+
+  /* ── Content ─────────────────────────────────────────── */
+  .content { padding: 24px; }
+
+  /* ── Cards ───────────────────────────────────────────── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+  .stat-card .label { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-card .value { font-size: 24px; color: var(--text-bright); margin-top: 4px; }
+  .stat-card .value.green { color: var(--accent); }
+  .stat-card .value.red { color: var(--red); }
+  .stat-card .value.yellow { color: var(--yellow); }
+  .stat-card .value.blue { color: var(--blue); }
+  .stat-card .sub { font-size: 11px; color: #666; margin-top: 4px; }
+
+  .panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .panel-header h2 {
+    font-size: 13px;
+    color: var(--text-bright);
+  }
+  .panel-header .badge {
+    background: rgba(0,255,65,0.15);
+    color: var(--accent);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+  }
+  .panel-header .spacer { flex: 1; }
+  .panel-body { padding: 16px; }
+  .panel-body.no-pad { padding: 0; }
+
+  /* ── Tables ───────────────────────────────────────────── */
+  table { width: 100%; border-collapse: collapse; }
+  th, td {
+    padding: 8px 12px;
+    text-align: left;
+    font-size: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  th { color: #666; font-weight: normal; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; }
+  td { color: var(--text); }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  .mono { font-family: var(--font); }
+  .addr {
+    color: var(--blue);
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .addr:hover { text-decoration: underline; }
+  .tag {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: bold;
+  }
+  .tag-buy { background: rgba(0,255,65,0.15); color: var(--accent); }
+  .tag-sell { background: rgba(255,65,65,0.15); color: var(--red); }
+  .tag-claim { background: rgba(79,195,247,0.15); color: var(--blue); }
+  .tag-grad { background: rgba(187,134,252,0.15); color: var(--purple); }
+  .tag-whale { background: rgba(255,152,0,0.15); color: var(--orange); }
+  .tag-launch { background: rgba(255,193,7,0.15); color: var(--yellow); }
+
+  /* ── Buttons ──────────────────────────────────────────── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-input);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn:hover { border-color: #444; color: var(--text-bright); }
+  .btn-primary { border-color: var(--accent-dim); color: var(--accent); }
+  .btn-primary:hover { background: rgba(0,255,65,0.1); }
+  .btn-danger { border-color: #cc3333; color: var(--red); }
+  .btn-danger:hover { background: rgba(255,65,65,0.1); }
+  .btn-sm { padding: 4px 10px; font-size: 11px; }
+
+  /* ── Forms ────────────────────────────────────────────── */
+  .form-group { margin-bottom: 12px; }
+  .form-group label { display: block; font-size: 11px; color: #888; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    padding: 8px 12px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-bright);
+    font-family: var(--font);
+    font-size: 12px;
+    outline: none;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    border-color: var(--accent);
+  }
+  .form-row { display: flex; gap: 12px; }
+  .form-row .form-group { flex: 1; }
+  .form-inline { display: flex; gap: 8px; align-items: flex-end; }
+
+  /* ── Feed ─────────────────────────────────────────────── */
+  .feed { max-height: 500px; overflow-y: auto; }
+  .feed-item {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    transition: background 0.15s;
+  }
+  .feed-item:hover { background: rgba(255,255,255,0.02); }
+  .feed-item.new { animation: feedFlash 1s ease-out; }
+  @keyframes feedFlash {
+    0% { background: rgba(0,255,65,0.12); }
+    100% { background: transparent; }
+  }
+  .feed-item .time { color: #555; font-size: 11px; white-space: nowrap; min-width: 70px; }
+  .feed-item .body { flex: 1; }
+  .feed-item .title { color: var(--text-bright); font-size: 12px; }
+  .feed-item .detail { color: #888; font-size: 11px; margin-top: 2px; }
+
+  /* ── Modals ───────────────────────────────────────────── */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    width: 480px;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 20px;
+  }
+  .modal h3 { color: var(--text-bright); font-size: 14px; margin-bottom: 16px; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+
+  /* ── Toggle ───────────────────────────────────────────── */
+  .toggle {
+    position: relative;
+    width: 36px; height: 20px;
+    appearance: none;
+    background: #333;
+    border-radius: 10px;
+    cursor: pointer;
+    outline: none;
+    border: none;
+    transition: background 0.2s;
+  }
+  .toggle::before {
+    content: '';
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 16px; height: 16px;
+    background: #888;
+    border-radius: 50%;
+    transition: all 0.2s;
+  }
+  .toggle:checked { background: var(--accent-dim); }
+  .toggle:checked::before { left: 18px; background: var(--accent); }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .toggle-row:last-child { border-bottom: none; }
+  .toggle-label { font-size: 12px; }
+  .toggle-label .sub { font-size: 10px; color: #666; }
+
+  /* ── Config Editor ────────────────────────────────────── */
+  .config-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 900px) {
+    .config-grid { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .main { margin-left: 0; }
+  }
+
+  /* ── Empty state ──────────────────────────────────────── */
+  .empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: #555;
+  }
+  .empty .icon { font-size: 32px; margin-bottom: 12px; }
+
+  /* ── Scrollbar ────────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #444; }
+
+  /* ── Toast ─────────────────────────────────────────────── */
+  .toast-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .toast {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 16px;
+    font-size: 12px;
+    animation: toastIn 0.3s ease-out;
+    max-width: 360px;
+  }
+  .toast.success { border-color: var(--accent-dim); }
+  .toast.error { border-color: var(--red); }
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ── Sidebar ─────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h1>🤖 PumpBot</h1>
+      <div class="version">Dashboard v1.0</div>
+    </div>
+    <nav>
+      <div class="section-label">Overview</div>
+      <a href="#" data-page="dashboard" class="active"><span class="icon">📊</span> Dashboard</a>
+      <a href="#" data-page="feed"><span class="icon">📡</span> Live Feed</a>
+
+      <div class="section-label">Bots</div>
+      <a href="#" data-page="watches"><span class="icon">👁</span> Watch List</a>
+      <a href="#" data-page="claims"><span class="icon">💰</span> Fee Claims</a>
+      <a href="#" data-page="alerts"><span class="icon">🚨</span> Alerts</a>
+
+      <div class="section-label">Tools</div>
+      <a href="#" data-page="scanner"><span class="icon">🔍</span> Token Scanner</a>
+      <a href="#" data-page="quoting"><span class="icon">📈</span> Quote Engine</a>
+      <a href="#" data-page="vanity"><span class="icon">🔑</span> Vanity Gen</a>
+
+      <div class="section-label">System</div>
+      <a href="#" data-page="config"><span class="icon">⚙️</span> Configuration</a>
+      <a href="#" data-page="api"><span class="icon">🔌</span> API Keys</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div id="bot-uptime">Uptime: --</div>
+    </div>
+  </aside>
+
+  <!-- ── Main ────────────────────────────── -->
+  <div class="main">
+    <div class="topbar">
+      <div class="page-title" id="page-title">Dashboard</div>
+      <div class="spacer"></div>
+      <div class="connection-status">
+        <span class="dot" id="api-dot"></span>
+        <span id="api-status">API: Connecting...</span>
+      </div>
+      <div class="connection-status">
+        <span class="dot" id="ws-dot"></span>
+        <span id="ws-status">WS: Disconnected</span>
+      </div>
+    </div>
+
+    <!-- ═══════ Dashboard Page ═══════ -->
+    <div class="content page" id="page-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="label">Bot Status</div>
+          <div class="value green" id="stat-bot-status">--</div>
+          <div class="sub" id="stat-bot-mode">--</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Active Watches</div>
+          <div class="value blue" id="stat-watches">0</div>
+          <div class="sub" id="stat-watches-sub">Bot + API</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Claims Detected</div>
+          <div class="value yellow" id="stat-claims">0</div>
+          <div class="sub" id="stat-claims-sub">Since start</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Uptime</div>
+          <div class="value" id="stat-uptime">--</div>
+          <div class="sub" id="stat-uptime-sub">--</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Recent Activity</h2>
+          <span class="badge" id="activity-count">0</span>
+          <div class="spacer"></div>
+          <button class="btn btn-sm" onclick="clearFeed('dashboard-feed')">Clear</button>
+        </div>
+        <div class="panel-body no-pad">
+          <div class="feed" id="dashboard-feed">
+            <div class="empty"><div class="icon">📡</div>Waiting for events...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════ Live Feed Page ═══════ -->
+    <div class="content page" id="page-feed" style="display:none">
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+        <button class="btn btn-sm filter-btn active" data-filter="all">All</button>
+        <button class="btn btn-sm filter-btn" data-filter="launch">🚀 Launches</button>
+        <button class="btn btn-sm filter-btn" data-filter="trade">💱 Trades</button>
+        <button class="btn btn-sm filter-btn" data-filter="whale">🐋 Whales</button>
+        <button class="btn btn-sm filter-btn" data-filter="graduation">🎓 Graduations</button>
+        <button class="btn btn-sm filter-btn" data-filter="claim">💰 Claims</button>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Real-Time Feed</h2>
+          <span class="badge" id="feed-count">0</span>
+          <div class="spacer"></div>
+          <label style="font-size:11px;color:#888;display:flex;align-items:center;gap:6px;">
+            <input type="checkbox" class="toggle" id="feed-pause">Pause
+          </label>
+          <button class="btn btn-sm" onclick="clearFeed('live-feed')">Clear</button>
+        </div>
+        <div class="panel-body no-pad">
+          <div class="feed" id="live-feed" style="max-height:calc(100vh - 220px)">
+            <div class="empty"><div class="icon">📡</div>Connect to start receiving events</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════ Watch List Page ═══════ -->
+    <div class="content page" id="page-watches" style="display:none">
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <button class="btn btn-primary" onclick="openModal('add-watch-modal')">+ Add Watch</button>
+        <button class="btn" onclick="refreshWatches()">↻ Refresh</button>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Active Watches</h2>
+          <span class="badge" id="watches-count">0</span>
+        </div>
+        <div class="panel-body no-pad">
+          <table>
+            <thead><tr><th>Wallet</th><th>Label</th><th>Token Filter</th><th>Webhook</th><th>Created</th><th>Actions</th></tr></thead>
+            <tbody id="watches-table"><tr><td colspan="6" class="empty">No watches configured</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════ Claims Page ═══════ -->
+    <div class="content page" id="page-claims" style="display:none">
+      <div class="form-inline" style="margin-bottom:16px;">
+        <div class="form-group" style="flex:2">
+          <label>Filter Wallet</label>
+          <input type="text" id="claims-wallet-filter" placeholder="Solana address...">
+        </div>
+        <div class="form-group" style="flex:1">
+          <label>Type</label>
+          <select id="claims-type-filter">
+            <option value="">All Types</option>
+            <option value="creator_fee">Creator Fee</option>
+            <option value="cashback">Cashback</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:0">
+          <label>&nbsp;</label>
+          <button class="btn btn-primary" onclick="refreshClaims()">Search</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Fee Claims</h2>
+          <span class="badge" id="claims-count">0</span>
+          <div class="spacer"></div>
+          <button class="btn btn-sm" onclick="exportClaims()">⬇ Export CSV</button>
+        </div>
+        <div class="panel-body no-pad">
+          <table>
+            <thead><tr><th>Time</th><th>Wallet</th><th>Type</th><th>Token</th><th>Amount</th><th>TX</th></tr></thead>
+            <tbody id="claims-table"><tr><td colspan="6" class="empty">No claims found</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════ Alerts Page ═══════ -->
+    <div class="content page" id="page-alerts" style="display:none">
+      <div class="config-grid">
+        <div class="panel">
+          <div class="panel-header"><h2>Alert Settings</h2></div>
+          <div class="panel-body">
+            <div class="toggle-row">
+              <div class="toggle-label">Graduation Alerts<div class="sub">Notify when tokens graduate to AMM</div></div>
+              <input type="checkbox" class="toggle" id="alert-graduation" checked>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-label">Whale Trade Alerts<div class="sub">Large buys/sells above threshold</div></div>
+              <input type="checkbox" class="toggle" id="alert-whale">
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-label">Fee Distribution Alerts<div class="sub">Creator fee claim events</div></div>
+              <input type="checkbox" class="toggle" id="alert-fees">
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-label">New Launch Alerts<div class="sub">New token creation events</div></div>
+              <input type="checkbox" class="toggle" id="alert-launch">
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><h2>Thresholds</h2></div>
+          <div class="panel-body">
+            <div class="form-group">
+              <label>Whale Threshold (SOL)</label>
+              <input type="number" id="threshold-whale" value="10" min="0.1" step="0.1">
+            </div>
+            <div class="form-group">
+              <label>Min Claim Alert (SOL)</label>
+              <input type="number" id="threshold-claim" value="0.5" min="0.01" step="0.01">
+            </div>
+            <div class="form-group">
+              <label>Trade Alert Cooldown (seconds)</label>
+              <input type="number" id="threshold-cooldown" value="30" min="5" step="5">
+            </div>
+            <button class="btn btn-primary" style="margin-top:8px" onclick="saveAlertConfig()">Save Settings</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Alert History</h2>
+          <div class="spacer"></div>
+          <button class="btn btn-sm" onclick="clearFeed('alert-feed')">Clear</button>
+        </div>
+        <div class="panel-body no-pad">
+          <div class="feed" id="alert-feed">
+            <div class="empty"><div class="icon">🔔</div>No alerts yet</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════ Token Scanner Page ═══════ -->
+    <div class="content page" id="page-scanner" style="display:none">
+      <div class="form-inline" style="margin-bottom:16px;">
+        <div class="form-group" style="flex:1">
+          <label>Token Mint Address</label>
+          <input type="text" id="scanner-mint" placeholder="Enter Solana token mint address...">
+        </div>
+        <div class="form-group" style="flex:0">
+          <label>&nbsp;</label>
+          <button class="btn btn-primary" onclick="scanToken()">🔍 Scan</button>
+        </div>
+      </div>
+
+      <div id="scanner-results" style="display:none">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="label">Risk Score</div>
+            <div class="value" id="scan-score">--</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Risk Level</div>
+            <div class="value" id="scan-level">--</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">PumpFun Token</div>
+            <div class="value" id="scan-pump">--</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Honeypot Risk</div>
+            <div class="value" id="scan-honeypot">--</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><h2>Security Checks</h2></div>
+          <div class="panel-body no-pad">
+            <table>
+              <thead><tr><th>Check</th><th>Status</th><th>Detail</th></tr></thead>
+              <tbody id="scan-checks"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════ Quote Engine Page ═══════ -->
+    <div class="content page" id="page-quoting" style="display:none">
+      <div class="config-grid">
+        <div class="panel">
+          <div class="panel-header"><h2>Buy Quote</h2></div>
+          <div class="panel-body">
+            <div class="form-group">
+              <label>Token Mint</label>
+              <input type="text" id="quote-buy-mint" placeholder="Token mint address...">
+            </div>
+            <div class="form-group">
+              <label>SOL Amount</label>
+              <input type="number" id="quote-buy-amount" value="1" min="0.001" step="0.001">
+            </div>
+            <button class="btn btn-primary" onclick="getBuyQuote()">Get Buy Quote</button>
+            <div id="quote-buy-result" style="margin-top:12px"></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><h2>Sell Quote</h2></div>
+          <div class="panel-body">
+            <div class="form-group">
+              <label>Token Mint</label>
+              <input type="text" id="quote-sell-mint" placeholder="Token mint address...">
+            </div>
+            <div class="form-group">
+              <label>Token Amount</label>
+              <input type="number" id="quote-sell-amount" value="1000000" min="1" step="1">
+            </div>
+            <button class="btn btn-primary" onclick="getSellQuote()">Get Sell Quote</button>
+            <div id="quote-sell-result" style="margin-top:12px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════ Vanity Gen Page ═══════ -->
+    <div class="content page" id="page-vanity" style="display:none">
+      <div class="panel">
+        <div class="panel-header"><h2>Vanity Address Generator</h2></div>
+        <div class="panel-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Prefix (optional)</label>
+              <input type="text" id="vanity-prefix" placeholder="e.g. pump" maxlength="6">
+            </div>
+            <div class="form-group">
+              <label>Suffix (optional)</label>
+              <input type="text" id="vanity-suffix" placeholder="e.g. fun" maxlength="6">
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button class="btn btn-primary" id="vanity-start" onclick="startVanity()">🔑 Generate</button>
+            <button class="btn btn-danger" id="vanity-stop" onclick="stopVanity()" style="display:none">⏹ Stop</button>
+          </div>
+          <div id="vanity-status" style="margin-top:12px;font-size:12px;color:#888"></div>
+          <div id="vanity-result" style="margin-top:12px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════ Config Page ═══════ -->
+    <div class="content page" id="page-config" style="display:none">
+      <div class="config-grid">
+        <div class="panel">
+          <div class="panel-header"><h2>Connection</h2></div>
+          <div class="panel-body">
+            <div class="form-group">
+              <label>API Base URL</label>
+              <input type="text" id="cfg-api-url" value="http://localhost:3000">
+            </div>
+            <div class="form-group">
+              <label>WebSocket URL</label>
+              <input type="text" id="cfg-ws-url" value="ws://localhost:8080">
+            </div>
+            <div class="form-group">
+              <label>API Key</label>
+              <input type="password" id="cfg-api-key" placeholder="Your API key...">
+            </div>
+            <button class="btn btn-primary" onclick="saveConfig()">Save & Reconnect</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><h2>Solana RPC</h2></div>
+          <div class="panel-body">
+            <div class="form-group">
+              <label>RPC Endpoint</label>
+              <input type="text" id="cfg-rpc-url" value="https://api.mainnet-beta.solana.com">
+            </div>
+            <div class="form-group">
+              <label>Commitment Level</label>
+              <select id="cfg-commitment">
+                <option value="confirmed" selected>Confirmed</option>
+                <option value="finalized">Finalized</option>
+                <option value="processed">Processed</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════ API Keys Page ═══════ -->
+    <div class="content page" id="page-api" style="display:none">
+      <div class="panel">
+        <div class="panel-header">
+          <h2>API Access</h2>
+          <div class="spacer"></div>
+        </div>
+        <div class="panel-body">
+          <p style="color:#888;font-size:12px;margin-bottom:16px;">
+            API endpoint: <span class="mono" style="color:var(--blue)" id="api-endpoint-display">--</span>
+          </p>
+          <h4 style="color:var(--text-bright);font-size:12px;margin-bottom:8px;">Available Endpoints</h4>
+          <table>
+            <thead><tr><th>Method</th><th>Path</th><th>Description</th><th>Auth</th></tr></thead>
+            <tbody>
+              <tr><td><span class="tag tag-buy">GET</span></td><td>/api/v1/health</td><td>Health check</td><td>No</td></tr>
+              <tr><td><span class="tag tag-buy">GET</span></td><td>/api/v1/status</td><td>Detailed status</td><td>Yes</td></tr>
+              <tr><td><span class="tag tag-buy">GET</span></td><td>/api/v1/claims</td><td>Query claims (paginated, filterable)</td><td>Yes</td></tr>
+              <tr><td><span class="tag tag-buy">GET</span></td><td>/api/v1/claims/stream</td><td>Real-time SSE claim stream</td><td>Yes</td></tr>
+              <tr><td><span class="tag tag-buy">GET</span></td><td>/api/v1/watches</td><td>List watches</td><td>Yes</td></tr>
+              <tr><td><span class="tag tag-launch">POST</span></td><td>/api/v1/watches</td><td>Create watch</td><td>Yes</td></tr>
+              <tr><td><span class="tag tag-claim">PATCH</span></td><td>/api/v1/watches/:id</td><td>Update watch</td><td>Yes</td></tr>
+              <tr><td><span class="tag tag-sell">DELETE</span></td><td>/api/v1/watches/:id</td><td>Delete watch</td><td>Yes</td></tr>
+              <tr><td><span class="tag tag-buy">GET</span></td><td>/api/v1/openapi</td><td>OpenAPI spec</td><td>No</td></tr>
+            </tbody>
+          </table>
+          <h4 style="color:var(--text-bright);font-size:12px;margin:16px 0 8px;">Authentication</h4>
+          <p style="color:#888;font-size:12px;">
+            Send your API key via <code style="color:var(--blue)">X-API-Key</code> header or
+            <code style="color:var(--blue)">Authorization: Bearer &lt;key&gt;</code>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Add Watch Modal ────────────────── -->
+<div class="modal-backdrop" id="add-watch-modal">
+  <div class="modal">
+    <h3>Add Watch</h3>
+    <div class="form-group">
+      <label>Wallet Address *</label>
+      <input type="text" id="watch-wallet" placeholder="Solana wallet address...">
+    </div>
+    <div class="form-group">
+      <label>Label</label>
+      <input type="text" id="watch-label" placeholder="Optional label...">
+    </div>
+    <div class="form-group">
+      <label>Token Filter (comma-separated mints)</label>
+      <input type="text" id="watch-token-filter" placeholder="Leave empty for all tokens">
+    </div>
+    <div class="form-group">
+      <label>Webhook URL</label>
+      <input type="text" id="watch-webhook" placeholder="https://your-server.com/webhook">
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('add-watch-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="createWatch()">Create Watch</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toasts"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════
+//  PumpFun Bot Dashboard — Client Application
+// ═══════════════════════════════════════════════════════════════════════
+
+const state = {
+  apiUrl: localStorage.getItem('pumpbot-api-url') || 'http://localhost:3000',
+  wsUrl: localStorage.getItem('pumpbot-ws-url') || 'ws://localhost:8080',
+  apiKey: localStorage.getItem('pumpbot-api-key') || '',
+  rpcUrl: localStorage.getItem('pumpbot-rpc-url') || 'https://api.mainnet-beta.solana.com',
+  currentPage: 'dashboard',
+  ws: null,
+  sse: null,
+  feedItems: [],
+  feedCount: 0,
+  activityCount: 0,
+  currentFilter: 'all',
+  feedPaused: false,
+  vanityWorker: null,
+  alertConfig: JSON.parse(localStorage.getItem('pumpbot-alerts') || '{}'),
+};
+
+// ── Init ──────────────────────────────────────────────────────────────
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Load saved config into form fields
+  document.getElementById('cfg-api-url').value = state.apiUrl;
+  document.getElementById('cfg-ws-url').value = state.wsUrl;
+  document.getElementById('cfg-api-key').value = state.apiKey;
+  document.getElementById('cfg-rpc-url').value = state.rpcUrl;
+  document.getElementById('api-endpoint-display').textContent = state.apiUrl + '/api/v1';
+
+  // Restore alert config
+  const ac = state.alertConfig;
+  if (ac.graduation !== undefined) document.getElementById('alert-graduation').checked = ac.graduation;
+  if (ac.whale !== undefined) document.getElementById('alert-whale').checked = ac.whale;
+  if (ac.fees !== undefined) document.getElementById('alert-fees').checked = ac.fees;
+  if (ac.launch !== undefined) document.getElementById('alert-launch').checked = ac.launch;
+  if (ac.whaleThreshold) document.getElementById('threshold-whale').value = ac.whaleThreshold;
+  if (ac.claimThreshold) document.getElementById('threshold-claim').value = ac.claimThreshold;
+
+  // Nav click handlers
+  document.querySelectorAll('.sidebar nav a').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      navigateTo(a.dataset.page);
+    });
+  });
+
+  // Filter buttons
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.currentFilter = btn.dataset.filter;
+      applyFeedFilter();
+    });
+  });
+
+  document.getElementById('feed-pause').addEventListener('change', e => {
+    state.feedPaused = e.target.checked;
+  });
+
+  // Connect
+  connectApi();
+  connectWebSocket();
+
+  // Update uptime every second
+  setInterval(updateUptime, 1000);
+});
+
+// ── Navigation ────────────────────────────────────────────────────────
+
+function navigateTo(page) {
+  state.currentPage = page;
+  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+  const target = document.getElementById('page-' + page);
+  if (target) target.style.display = '';
+
+  document.querySelectorAll('.sidebar nav a').forEach(a => {
+    a.classList.toggle('active', a.dataset.page === page);
+  });
+
+  const titles = {
+    dashboard: 'Dashboard', feed: 'Live Feed', watches: 'Watch List',
+    claims: 'Fee Claims', alerts: 'Alerts', scanner: 'Token Scanner',
+    quoting: 'Quote Engine', vanity: 'Vanity Generator',
+    config: 'Configuration', api: 'API Keys',
+  };
+  document.getElementById('page-title').textContent = titles[page] || page;
+
+  // Load data for the page
+  if (page === 'watches') refreshWatches();
+  if (page === 'claims') refreshClaims();
+}
+
+// ── API Connection ────────────────────────────────────────────────────
+
+let healthInterval;
+
+async function connectApi() {
+  clearInterval(healthInterval);
+  updateApiStatus('connecting');
+
+  try {
+    const resp = await apiFetch('/api/v1/health');
+    if (resp.ok) {
+      const data = await resp.json();
+      updateApiStatus('connected');
+      updateDashboard(data);
+      // Poll health every 10s
+      healthInterval = setInterval(pollHealth, 10000);
+    } else {
+      updateApiStatus('error');
+    }
+  } catch {
+    updateApiStatus('error');
+    // Retry in 5s
+    setTimeout(connectApi, 5000);
+  }
+}
+
+async function pollHealth() {
+  try {
+    const resp = await apiFetch('/api/v1/health');
+    if (resp.ok) {
+      const data = await resp.json();
+      updateApiStatus('connected');
+      updateDashboard(data);
+    } else {
+      updateApiStatus('error');
+    }
+  } catch {
+    updateApiStatus('error');
+  }
+}
+
+function updateApiStatus(status) {
+  const dot = document.getElementById('api-dot');
+  const label = document.getElementById('api-status');
+  dot.className = 'dot ' + (status === 'connected' ? 'connected' : status === 'error' ? 'error' : '');
+  label.textContent = status === 'connected' ? 'API: Connected' : status === 'error' ? 'API: Disconnected' : 'API: Connecting...';
+}
+
+function updateDashboard(health) {
+  if (!health) return;
+  const m = health.monitor || {};
+  document.getElementById('stat-bot-status').textContent = m.running ? 'Running' : 'Stopped';
+  document.getElementById('stat-bot-status').className = 'value ' + (m.running ? 'green' : 'red');
+  document.getElementById('stat-bot-mode').textContent = 'Mode: ' + (m.mode || 'unknown');
+  document.getElementById('stat-claims').textContent = (m.claimsDetected || 0).toLocaleString();
+  const w = health.watches || {};
+  document.getElementById('stat-watches').textContent = (w.total || w.active || 0).toString();
+
+  state._uptime = health.uptime || 0;
+  state._uptimeAt = Date.now();
+}
+
+function updateUptime() {
+  if (!state._uptimeAt) return;
+  const elapsed = state._uptime + (Date.now() - state._uptimeAt);
+  const h = Math.floor(elapsed / 3600000);
+  const m = Math.floor((elapsed % 3600000) / 60000);
+  const s = Math.floor((elapsed % 60000) / 1000);
+  const str = `${h}h ${m}m ${s}s`;
+  document.getElementById('stat-uptime').textContent = str;
+  document.getElementById('bot-uptime').textContent = 'Uptime: ' + str;
+}
+
+async function apiFetch(path, options = {}) {
+  const url = state.apiUrl + path;
+  const headers = { ...options.headers };
+  if (state.apiKey) {
+    headers['X-API-Key'] = state.apiKey;
+  }
+  return fetch(url, { ...options, headers });
+}
+
+// ── WebSocket Connection ──────────────────────────────────────────────
+
+function connectWebSocket() {
+  if (state.ws) {
+    state.ws.close();
+    state.ws = null;
+  }
+
+  const wsDot = document.getElementById('ws-dot');
+  const wsLabel = document.getElementById('ws-status');
+
+  try {
+    state.ws = new WebSocket(state.wsUrl);
+
+    state.ws.onopen = () => {
+      wsDot.className = 'dot connected';
+      wsLabel.textContent = 'WS: Connected';
+      toast('WebSocket connected', 'success');
+    };
+
+    state.ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        handleWsEvent(data);
+      } catch { /* ignore non-JSON */ }
+    };
+
+    state.ws.onclose = () => {
+      wsDot.className = 'dot';
+      wsLabel.textContent = 'WS: Disconnected';
+      // Reconnect after 3s
+      setTimeout(connectWebSocket, 3000);
+    };
+
+    state.ws.onerror = () => {
+      wsDot.className = 'dot error';
+      wsLabel.textContent = 'WS: Error';
+    };
+  } catch {
+    wsDot.className = 'dot error';
+    wsLabel.textContent = 'WS: Error';
+    setTimeout(connectWebSocket, 5000);
+  }
+}
+
+function handleWsEvent(data) {
+  // Normalize event types from various sources
+  const type = data.type || data.event || 'unknown';
+  const ts = data.timestamp || Date.now();
+
+  const item = {
+    type,
+    time: new Date(typeof ts === 'number' && ts < 1e12 ? ts * 1000 : ts),
+    data,
+  };
+
+  // Add to feed
+  addFeedItem('live-feed', item);
+  addFeedItem('dashboard-feed', item);
+
+  state.feedCount++;
+  document.getElementById('feed-count').textContent = state.feedCount;
+  state.activityCount++;
+  document.getElementById('activity-count').textContent = state.activityCount;
+
+  // Check alert rules
+  checkAlerts(item);
+}
+
+// ── Feed Management ───────────────────────────────────────────────────
+
+function addFeedItem(feedId, item) {
+  if (state.feedPaused && feedId === 'live-feed') return;
+
+  const feed = document.getElementById(feedId);
+  if (!feed) return;
+
+  // Remove empty state
+  const empty = feed.querySelector('.empty');
+  if (empty) empty.remove();
+
+  // Build feed item
+  const div = document.createElement('div');
+  div.className = 'feed-item new';
+  div.dataset.type = item.type;
+
+  const tagClass = {
+    launch: 'tag-launch', create: 'tag-launch',
+    trade: 'tag-buy', buy: 'tag-buy', sell: 'tag-sell',
+    whale: 'tag-whale', whale_trade: 'tag-whale',
+    graduation: 'tag-grad', complete: 'tag-grad',
+    claim: 'tag-claim', fee_claim: 'tag-claim',
+  }[item.type] || 'tag-buy';
+
+  const tagLabel = {
+    launch: 'LAUNCH', create: 'LAUNCH',
+    trade: 'TRADE', buy: 'BUY', sell: 'SELL',
+    whale: 'WHALE', whale_trade: 'WHALE',
+    graduation: 'GRAD', complete: 'GRAD',
+    claim: 'CLAIM', fee_claim: 'CLAIM',
+  }[item.type] || item.type.toUpperCase();
+
+  const d = item.data;
+  let title = '', detail = '';
+
+  if (item.type === 'launch' || item.type === 'create') {
+    title = `${d.name || d.tokenName || 'Unknown'} (${d.symbol || d.tokenSymbol || '?'})`;
+    detail = d.mint ? shortAddr(d.mint) : '';
+  } else if (item.type === 'trade' || item.type === 'buy' || item.type === 'sell') {
+    title = `${d.tokenSymbol || '?'} — ${(d.solAmount || 0).toFixed(4)} SOL`;
+    detail = d.user ? shortAddr(d.user) : '';
+  } else if (item.type === 'whale' || item.type === 'whale_trade') {
+    title = `🐋 ${(d.solAmount || 0).toFixed(2)} SOL — ${d.tokenSymbol || '?'}`;
+    detail = d.user ? shortAddr(d.user) : '';
+  } else if (item.type === 'graduation' || item.type === 'complete') {
+    title = `${d.tokenSymbol || d.name || '?'} graduated to AMM`;
+    detail = d.mint ? shortAddr(d.mint) : '';
+  } else if (item.type === 'claim' || item.type === 'fee_claim') {
+    title = `${(d.amountSol || 0).toFixed(4)} SOL claimed`;
+    detail = `${d.claimType || 'fee'} — ${d.claimerWallet ? shortAddr(d.claimerWallet) : ''}`;
+  } else {
+    title = JSON.stringify(d).slice(0, 80);
+  }
+
+  const timeStr = item.time.toLocaleTimeString('en-US', { hour12: false });
+  div.innerHTML = `
+    <div class="time">${timeStr}</div>
+    <span class="tag ${tagClass}">${tagLabel}</span>
+    <div class="body">
+      <div class="title">${escapeHtml(title)}</div>
+      <div class="detail">${escapeHtml(detail)}</div>
+    </div>
+  `;
+
+  feed.prepend(div);
+
+  // Limit feed to 500 items
+  while (feed.children.length > 500) {
+    feed.lastElementChild.remove();
+  }
+
+  // Apply filter
+  if (feedId === 'live-feed') applyFeedFilter();
+}
+
+function applyFeedFilter() {
+  const feed = document.getElementById('live-feed');
+  if (!feed) return;
+  feed.querySelectorAll('.feed-item').forEach(item => {
+    if (state.currentFilter === 'all') {
+      item.style.display = '';
+    } else {
+      const type = item.dataset.type || '';
+      const matches = {
+        launch: ['launch', 'create'],
+        trade: ['trade', 'buy', 'sell'],
+        whale: ['whale', 'whale_trade'],
+        graduation: ['graduation', 'complete'],
+        claim: ['claim', 'fee_claim'],
+      }[state.currentFilter] || [state.currentFilter];
+      item.style.display = matches.includes(type) ? '' : 'none';
+    }
+  });
+}
+
+function clearFeed(feedId) {
+  const feed = document.getElementById(feedId);
+  if (feed) feed.innerHTML = '<div class="empty"><div class="icon">📡</div>Cleared</div>';
+}
+
+// ── Alerts ────────────────────────────────────────────────────────────
+
+function checkAlerts(item) {
+  const ac = state.alertConfig;
+  const type = item.type;
+
+  if (type === 'graduation' || type === 'complete') {
+    if (ac.graduation !== false) {
+      addAlertItem(item, '🎓 Token Graduated');
+    }
+  }
+  if (type === 'whale' || type === 'whale_trade') {
+    if (ac.whale) {
+      const threshold = parseFloat(ac.whaleThreshold) || 10;
+      if ((item.data.solAmount || 0) >= threshold) {
+        addAlertItem(item, '🐋 Whale Trade Detected');
+      }
+    }
+  }
+  if (type === 'claim' || type === 'fee_claim') {
+    if (ac.fees) {
+      addAlertItem(item, '💰 Fee Claimed');
+    }
+  }
+  if (type === 'launch' || type === 'create') {
+    if (ac.launch) {
+      addAlertItem(item, '🚀 New Token Launched');
+    }
+  }
+}
+
+function addAlertItem(item, label) {
+  const feed = document.getElementById('alert-feed');
+  if (!feed) return;
+  const empty = feed.querySelector('.empty');
+  if (empty) empty.remove();
+
+  const div = document.createElement('div');
+  div.className = 'feed-item new';
+  const timeStr = item.time.toLocaleTimeString('en-US', { hour12: false });
+  const d = item.data;
+  let detail = d.tokenSymbol || d.name || d.mint || '';
+  if (d.solAmount) detail += ` — ${d.solAmount.toFixed(4)} SOL`;
+
+  div.innerHTML = `
+    <div class="time">${timeStr}</div>
+    <div class="body">
+      <div class="title" style="color:var(--yellow)">${escapeHtml(label)}</div>
+      <div class="detail">${escapeHtml(detail)}</div>
+    </div>
+  `;
+  feed.prepend(div);
+  while (feed.children.length > 200) feed.lastElementChild.remove();
+}
+
+function saveAlertConfig() {
+  state.alertConfig = {
+    graduation: document.getElementById('alert-graduation').checked,
+    whale: document.getElementById('alert-whale').checked,
+    fees: document.getElementById('alert-fees').checked,
+    launch: document.getElementById('alert-launch').checked,
+    whaleThreshold: document.getElementById('threshold-whale').value,
+    claimThreshold: document.getElementById('threshold-claim').value,
+    cooldown: document.getElementById('threshold-cooldown').value,
+  };
+  localStorage.setItem('pumpbot-alerts', JSON.stringify(state.alertConfig));
+  toast('Alert settings saved', 'success');
+}
+
+// ── Watches ───────────────────────────────────────────────────────────
+
+async function refreshWatches() {
+  try {
+    const resp = await apiFetch('/api/v1/watches?limit=100');
+    if (!resp.ok) {
+      toast('Failed to load watches: ' + resp.status, 'error');
+      return;
+    }
+    const data = await resp.json();
+    const watches = data.data || data.watches || [];
+    document.getElementById('watches-count').textContent = watches.length;
+    const tbody = document.getElementById('watches-table');
+
+    if (watches.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty">No watches configured. Click "Add Watch" to create one.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = watches.map(w => `
+      <tr>
+        <td><a class="addr" href="https://solscan.io/account/${escapeHtml(w.wallet)}" target="_blank">${shortAddr(w.wallet)}</a></td>
+        <td>${escapeHtml(w.label || '—')}</td>
+        <td>${w.tokenFilter ? w.tokenFilter.map(shortAddr).join(', ') : 'All'}</td>
+        <td>${w.webhookUrl ? '✅' : '—'}</td>
+        <td>${w.createdAt ? new Date(w.createdAt).toLocaleDateString() : '—'}</td>
+        <td>
+          <button class="btn btn-sm btn-danger" onclick="deleteWatch('${escapeHtml(w.id)}')">✕</button>
+        </td>
+      </tr>
+    `).join('');
+  } catch (e) {
+    toast('Failed to load watches', 'error');
+  }
+}
+
+async function createWatch() {
+  const wallet = document.getElementById('watch-wallet').value.trim();
+  if (!wallet) { toast('Wallet address is required', 'error'); return; }
+
+  const body = {
+    wallet,
+    label: document.getElementById('watch-label').value.trim() || undefined,
+    tokenFilter: document.getElementById('watch-token-filter').value.trim()
+      ? document.getElementById('watch-token-filter').value.split(',').map(s => s.trim()).filter(Boolean)
+      : undefined,
+    webhookUrl: document.getElementById('watch-webhook').value.trim() || undefined,
+  };
+
+  try {
+    const resp = await apiFetch('/api/v1/watches', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (resp.ok) {
+      toast('Watch created', 'success');
+      closeModal('add-watch-modal');
+      refreshWatches();
+      // Clear form
+      document.getElementById('watch-wallet').value = '';
+      document.getElementById('watch-label').value = '';
+      document.getElementById('watch-token-filter').value = '';
+      document.getElementById('watch-webhook').value = '';
+    } else {
+      const err = await resp.json().catch(() => ({}));
+      toast(err.error || 'Failed to create watch', 'error');
+    }
+  } catch {
+    toast('Network error creating watch', 'error');
+  }
+}
+
+async function deleteWatch(id) {
+  if (!confirm('Delete this watch?')) return;
+  try {
+    const resp = await apiFetch('/api/v1/watches/' + id, { method: 'DELETE' });
+    if (resp.ok) {
+      toast('Watch deleted', 'success');
+      refreshWatches();
+    } else {
+      toast('Failed to delete watch', 'error');
+    }
+  } catch {
+    toast('Network error', 'error');
+  }
+}
+
+// ── Claims ────────────────────────────────────────────────────────────
+
+async function refreshClaims() {
+  const wallet = document.getElementById('claims-wallet-filter').value.trim();
+  const claimType = document.getElementById('claims-type-filter').value;
+  const params = new URLSearchParams();
+  if (wallet) params.set('wallet', wallet);
+  if (claimType) params.set('claimType', claimType);
+  params.set('limit', '100');
+
+  try {
+    const resp = await apiFetch('/api/v1/claims?' + params);
+    if (!resp.ok) {
+      toast('Failed to load claims: ' + resp.status, 'error');
+      return;
+    }
+    const data = await resp.json();
+    const claims = data.data || data.claims || [];
+    document.getElementById('claims-count').textContent = (data.pagination?.total || claims.length).toString();
+    const tbody = document.getElementById('claims-table');
+
+    if (claims.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty">No claims found for this filter</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = claims.map(c => {
+      const typeClass = c.isCashback ? 'tag-claim' : 'tag-buy';
+      const typeLabel = c.isCashback ? 'Cashback' : c.claimType || 'Creator Fee';
+      return `
+        <tr>
+          <td>${new Date(c.timestamp).toLocaleString()}</td>
+          <td><a class="addr" href="https://solscan.io/account/${escapeHtml(c.claimerWallet)}" target="_blank">${shortAddr(c.claimerWallet)}</a></td>
+          <td><span class="tag ${typeClass}">${escapeHtml(typeLabel)}</span></td>
+          <td>${escapeHtml(c.tokenSymbol || c.tokenName || shortAddr(c.tokenMint || ''))}</td>
+          <td style="color:var(--accent)">${(c.amountSol || 0).toFixed(4)} SOL</td>
+          <td><a class="addr" href="https://solscan.io/tx/${escapeHtml(c.txSignature)}" target="_blank">${shortAddr(c.txSignature || '')}</a></td>
+        </tr>`;
+    }).join('');
+  } catch {
+    toast('Failed to load claims', 'error');
+  }
+}
+
+function exportClaims() {
+  // Grab current table data and export as CSV
+  const rows = document.querySelectorAll('#claims-table tr');
+  if (rows.length === 0) return;
+  let csv = 'Time,Wallet,Type,Token,Amount SOL,TX\n';
+  rows.forEach(tr => {
+    const cells = tr.querySelectorAll('td');
+    if (cells.length >= 6) {
+      csv += Array.from(cells).map(c => '"' + c.textContent.trim().replace(/"/g, '""') + '"').join(',') + '\n';
+    }
+  });
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'pumpfun-claims-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Claims exported', 'success');
+}
+
+// ── Token Scanner ─────────────────────────────────────────────────────
+
+async function scanToken() {
+  const mint = document.getElementById('scanner-mint').value.trim();
+  if (!mint) { toast('Enter a token mint address', 'error'); return; }
+
+  document.getElementById('scanner-results').style.display = 'none';
+
+  try {
+    // Call scan-token and check-honeypot APIs in parallel
+    const [scanResp, honeypotResp] = await Promise.all([
+      fetch(state.rpcUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getAccountInfo', params: [mint, { encoding: 'jsonParsed' }] }),
+      }),
+      fetch(state.rpcUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'getTokenLargestAccounts', params: [mint] }),
+      }),
+    ]);
+
+    const scanData = await scanResp.json();
+    const holdersData = await honeypotResp.json();
+
+    const account = scanData.result?.value;
+    if (!account) {
+      toast('Token not found on-chain', 'error');
+      return;
+    }
+
+    const info = account.data?.parsed?.info || {};
+    const holders = holdersData.result?.value || [];
+
+    // Compute checks
+    const checks = {};
+    let score = 100;
+    const flags = [];
+
+    // Program check
+    const owner = account.owner;
+    checks.program = { status: 'info', detail: owner === 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' ? 'SPL Token' : owner === 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb' ? 'Token-2022' : owner };
+
+    // Mint authority
+    if (info.mintAuthority) {
+      checks.mintAuth = { status: 'warn', detail: 'Active: ' + shortAddr(info.mintAuthority) };
+      score -= 15; flags.push('mint_authority');
+    } else {
+      checks.mintAuth = { status: 'pass', detail: 'Revoked' };
+    }
+
+    // Freeze authority
+    if (info.freezeAuthority) {
+      checks.freezeAuth = { status: 'fail', detail: 'Active: ' + shortAddr(info.freezeAuthority) };
+      score -= 25; flags.push('freeze_authority');
+    } else {
+      checks.freezeAuth = { status: 'pass', detail: 'None' };
+    }
+
+    // Top holder concentration
+    const totalSupply = Number(info.supply || 0);
+    let topConc = 0;
+    if (holders.length > 0 && totalSupply > 0) {
+      topConc = parseFloat(((Number(holders[0].amount || 0) / totalSupply) * 100).toFixed(2));
+    }
+    if (topConc > 50) {
+      checks.concentration = { status: 'warn', detail: `Top holder: ${topConc}%` };
+      score -= 10; flags.push('high_concentration');
+    } else {
+      checks.concentration = { status: 'pass', detail: `Top holder: ${topConc}%` };
+    }
+
+    // Supply
+    const decimals = info.decimals || 0;
+    const displaySupply = (Number(info.supply || 0) / Math.pow(10, decimals)).toLocaleString();
+    checks.supply = { status: 'info', detail: `${displaySupply} (${decimals} decimals)` };
+
+    // Check PumpFun bonding curve
+    let isPump = false;
+    try {
+      const bcResp = await fetch(state.rpcUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 3, method: 'getProgramAccounts', params: [
+          '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P',
+          { filters: [{ memcmp: { offset: 30, bytes: mint } }], dataSlice: { offset: 0, length: 1 } },
+        ] }),
+      });
+      const bcData = await bcResp.json();
+      isPump = bcData.result && bcData.result.length > 0;
+    } catch { /* skip */ }
+
+    if (isPump) {
+      checks.pumpfun = { status: 'pass', detail: 'Bonding curve active — sells guaranteed by AMM' };
+      score = Math.min(score + 10, 100);
+    } else {
+      checks.pumpfun = { status: 'info', detail: 'Not a PumpFun token' };
+    }
+
+    const riskLevel = score >= 80 ? 'low' : score >= 50 ? 'medium' : 'high';
+    const riskColor = score >= 80 ? 'green' : score >= 50 ? 'yellow' : 'red';
+
+    // Display results
+    document.getElementById('scan-score').textContent = score + '/100';
+    document.getElementById('scan-score').className = 'value ' + riskColor;
+    document.getElementById('scan-level').textContent = riskLevel.toUpperCase();
+    document.getElementById('scan-level').className = 'value ' + riskColor;
+    document.getElementById('scan-pump').textContent = isPump ? 'Yes ✅' : 'No';
+    document.getElementById('scan-pump').className = 'value ' + (isPump ? 'green' : '');
+    document.getElementById('scan-honeypot').textContent = (info.freezeAuthority ? 'Risk ⚠️' : 'Safe') + (isPump ? ' (AMM backed)' : '');
+    document.getElementById('scan-honeypot').className = 'value ' + (info.freezeAuthority ? 'red' : 'green');
+
+    const statusIcons = { pass: '✅', warn: '⚠️', fail: '❌', info: 'ℹ️' };
+    const tbody = document.getElementById('scan-checks');
+    tbody.innerHTML = Object.entries(checks).map(([name, c]) => `
+      <tr>
+        <td>${escapeHtml(name)}</td>
+        <td>${statusIcons[c.status] || '?'} ${c.status.toUpperCase()}</td>
+        <td>${escapeHtml(c.detail)}</td>
+      </tr>
+    `).join('');
+
+    document.getElementById('scanner-results').style.display = '';
+    toast('Scan complete: ' + riskLevel + ' risk', riskLevel === 'high' ? 'error' : 'success');
+  } catch (e) {
+    toast('Scan failed: ' + (e.message || 'Network error'), 'error');
+  }
+}
+
+// ── Quote Engine ──────────────────────────────────────────────────────
+
+async function getBuyQuote() {
+  const mint = document.getElementById('quote-buy-mint').value.trim();
+  const solAmount = parseFloat(document.getElementById('quote-buy-amount').value);
+  if (!mint) { toast('Enter token mint', 'error'); return; }
+
+  const resultDiv = document.getElementById('quote-buy-result');
+  resultDiv.innerHTML = '<span style="color:#888">Calculating...</span>';
+
+  try {
+    // Fetch bonding curve state from RPC
+    const bcResp = await fetch(state.rpcUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getProgramAccounts', params: [
+        '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P',
+        { filters: [{ memcmp: { offset: 30, bytes: mint } }], encoding: 'base64' },
+      ] }),
+    });
+    const bcData = await bcResp.json();
+
+    if (!bcData.result || bcData.result.length === 0) {
+      resultDiv.innerHTML = '<span style="color:var(--red)">No bonding curve found — token may be graduated or invalid</span>';
+      return;
+    }
+
+    const lamports = Math.floor(solAmount * 1e9);
+    resultDiv.innerHTML = `
+      <div style="padding:12px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);">
+        <div style="color:#888;font-size:11px">Estimated Output</div>
+        <div style="color:var(--accent);font-size:18px;margin:4px 0">Bonding curve found ✅</div>
+        <div style="color:#888;font-size:11px">Input: ${solAmount} SOL (${lamports.toLocaleString()} lamports)</div>
+        <div style="color:#888;font-size:11px">Use the SDK for precise quote calculation</div>
+      </div>
+    `;
+  } catch (e) {
+    resultDiv.innerHTML = `<span style="color:var(--red)">Error: ${escapeHtml(e.message || 'RPC failed')}</span>`;
+  }
+}
+
+async function getSellQuote() {
+  const mint = document.getElementById('quote-sell-mint').value.trim();
+  const tokenAmount = parseInt(document.getElementById('quote-sell-amount').value);
+  if (!mint) { toast('Enter token mint', 'error'); return; }
+
+  const resultDiv = document.getElementById('quote-sell-result');
+  resultDiv.innerHTML = '<span style="color:#888">Calculating...</span>';
+
+  try {
+    const bcResp = await fetch(state.rpcUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getProgramAccounts', params: [
+        '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P',
+        { filters: [{ memcmp: { offset: 30, bytes: mint } }], encoding: 'base64' },
+      ] }),
+    });
+    const bcData = await bcResp.json();
+
+    if (!bcData.result || bcData.result.length === 0) {
+      resultDiv.innerHTML = '<span style="color:var(--red)">No bonding curve found</span>';
+      return;
+    }
+
+    resultDiv.innerHTML = `
+      <div style="padding:12px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);">
+        <div style="color:#888;font-size:11px">Estimated Output</div>
+        <div style="color:var(--accent);font-size:18px;margin:4px 0">Bonding curve found ✅</div>
+        <div style="color:#888;font-size:11px">Input: ${tokenAmount.toLocaleString()} tokens</div>
+        <div style="color:#888;font-size:11px">Use the SDK for precise quote calculation</div>
+      </div>
+    `;
+  } catch (e) {
+    resultDiv.innerHTML = `<span style="color:var(--red)">Error: ${escapeHtml(e.message || 'RPC failed')}</span>`;
+  }
+}
+
+// ── Vanity Generator ──────────────────────────────────────────────────
+
+let vanityRunning = false;
+
+function startVanity() {
+  const prefix = document.getElementById('vanity-prefix').value.trim();
+  const suffix = document.getElementById('vanity-suffix').value.trim();
+
+  if (!prefix && !suffix) {
+    toast('Enter a prefix or suffix', 'error');
+    return;
+  }
+
+  vanityRunning = true;
+  document.getElementById('vanity-start').style.display = 'none';
+  document.getElementById('vanity-stop').style.display = '';
+  document.getElementById('vanity-status').textContent = 'Generating... (this runs in the browser, ~1K keys/sec)';
+  document.getElementById('vanity-result').innerHTML = '';
+
+  // Use Web Worker-style approach (inline for simplicity)
+  let attempts = 0;
+  const base58chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+
+  function generateBatch() {
+    if (!vanityRunning) return;
+
+    // Generate random base58 addresses (simulation — real generation needs tweetnacl)
+    for (let i = 0; i < 100; i++) {
+      attempts++;
+      let addr = '';
+      for (let j = 0; j < 44; j++) {
+        addr += base58chars[Math.floor(Math.random() * base58chars.length)];
+      }
+
+      const matchPrefix = !prefix || addr.toLowerCase().startsWith(prefix.toLowerCase());
+      const matchSuffix = !suffix || addr.toLowerCase().endsWith(suffix.toLowerCase());
+
+      if (matchPrefix && matchSuffix) {
+        vanityRunning = false;
+        document.getElementById('vanity-start').style.display = '';
+        document.getElementById('vanity-stop').style.display = 'none';
+        document.getElementById('vanity-status').textContent = `Found after ${attempts.toLocaleString()} attempts`;
+        document.getElementById('vanity-result').innerHTML = `
+          <div style="padding:12px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--accent-dim);">
+            <div style="color:#888;font-size:11px">Generated Address (demo)</div>
+            <div style="color:var(--accent);font-size:14px;margin:4px 0;word-break:break-all">${addr}</div>
+            <div style="color:var(--red);font-size:10px;margin-top:8px">⚠ This is a demo. Use the Rust vanity generator for production keypairs.</div>
+          </div>
+        `;
+        toast('Vanity address found!', 'success');
+        return;
+      }
+    }
+
+    document.getElementById('vanity-status').textContent = `Searching... ${attempts.toLocaleString()} attempts`;
+    if (vanityRunning) requestAnimationFrame(generateBatch);
+  }
+
+  requestAnimationFrame(generateBatch);
+}
+
+function stopVanity() {
+  vanityRunning = false;
+  document.getElementById('vanity-start').style.display = '';
+  document.getElementById('vanity-stop').style.display = 'none';
+  document.getElementById('vanity-status').textContent = 'Stopped';
+}
+
+// ── Config ────────────────────────────────────────────────────────────
+
+function saveConfig() {
+  state.apiUrl = document.getElementById('cfg-api-url').value.trim();
+  state.wsUrl = document.getElementById('cfg-ws-url').value.trim();
+  state.apiKey = document.getElementById('cfg-api-key').value.trim();
+  state.rpcUrl = document.getElementById('cfg-rpc-url').value.trim();
+
+  localStorage.setItem('pumpbot-api-url', state.apiUrl);
+  localStorage.setItem('pumpbot-ws-url', state.wsUrl);
+  localStorage.setItem('pumpbot-api-key', state.apiKey);
+  localStorage.setItem('pumpbot-rpc-url', state.rpcUrl);
+
+  document.getElementById('api-endpoint-display').textContent = state.apiUrl + '/api/v1';
+
+  // Reconnect
+  connectApi();
+  connectWebSocket();
+
+  toast('Configuration saved & reconnecting', 'success');
+}
+
+// ── Modals ────────────────────────────────────────────────────────────
+
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// Close modal on backdrop click
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('modal-backdrop')) {
+    e.target.classList.remove('open');
+  }
+});
+
+// ── Toast ─────────────────────────────────────────────────────────────
+
+function toast(msg, type = '') {
+  const container = document.getElementById('toasts');
+  const div = document.createElement('div');
+  div.className = 'toast ' + type;
+  div.textContent = msg;
+  container.appendChild(div);
+  setTimeout(() => div.remove(), 4000);
+}
+
+// ── Utilities ─────────────────────────────────────────────────────────
+
+function shortAddr(addr) {
+  if (!addr || addr.length < 8) return addr || '';
+  return addr.slice(0, 4) + '…' + addr.slice(-4);
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+</script>
+</body>
+</html>

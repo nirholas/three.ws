@@ -52,6 +52,20 @@ export class EmbedActionBridge {
 		this._running = false;
 		this._onMessage = this._handleMessage.bind(this);
 		this._onAction = this._handleAction.bind(this);
+		// Parent origin is locked to ev.origin of the first valid host message.
+		// Best-effort seed from document.referrer so we can announce 'ready' to a
+		// known origin instead of '*'.
+		this._parentOrigin = this._seedParentOrigin();
+		this._parentOriginLocked = false;
+	}
+
+	_seedParentOrigin() {
+		try {
+			if (this._win.parent === this._win) return this._win.location.origin;
+			const ref = this._win.document?.referrer;
+			if (ref) return new URL(ref).origin;
+		} catch {}
+		return null;
 	}
 
 	start() {
@@ -131,11 +145,16 @@ export class EmbedActionBridge {
 	}
 
 	_toParent(msg) {
-		// Use '*' as targetOrigin — we don't know the parent's origin at construction time.
-		// Incoming messages are validated via _originAllowed before acting on them.
+		// Origin lockdown: we never post with '*'. Until we observe a valid host
+		// message we use the referrer-derived origin (best effort); after we lock,
+		// we use the host's actual origin.
+		if (!this._parentOrigin) {
+			console.warn('[embed-action-bridge] parent origin unknown; dropping', msg.op);
+			return;
+		}
 		this._win.parent.postMessage(
 			{ ...msg, v: PROTOCOL_VERSION, source: 'agent-3d', id: msg.id || genId() },
-			'*',
+			this._parentOrigin,
 		);
 	}
 
@@ -167,6 +186,16 @@ export class EmbedActionBridge {
 		const msg = event.data;
 		if (!msg || msg.v !== PROTOCOL_VERSION || msg.source !== 'agent-host') return;
 		if (msg.kind !== 'request') return;
+
+		// Lock the parent origin to the first authenticated message we observe.
+		// Subsequent messages from a different origin are rejected, even if they
+		// were nominally allowed by the manifest policy.
+		if (!this._parentOriginLocked) {
+			this._parentOrigin = event.origin;
+			this._parentOriginLocked = true;
+		} else if (event.origin !== this._parentOrigin) {
+			return;
+		}
 
 		const { op, payload = {} } = msg;
 

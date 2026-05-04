@@ -10,12 +10,15 @@
  *     onError,    // (err)    => void   — handshake timeout, blocked embed, etc.
  *     helloTimeoutMs:  2000,
  *     autoResize:      true,
+ *     origin:          'https://three.ws',  // override iframe-origin detection
  *   });
  *   bridge.send({ type: 'speak', payload: { text: 'hello' } });
  *   bridge.ping().then(rttMs => …);
  *   bridge.destroy();
  *
- * Tiny on purpose. See public/agent/embed.html for the full bridge contract.
+ * Origin lockdown: connect() requires a resolvable iframe origin. Wildcard
+ * targets ('*') are rejected, and inbound messages from any other origin or
+ * window are dropped.
  */
 (function (root) {
 	'use strict';
@@ -29,6 +32,12 @@
 		var helloTimeoutMs = opts.helloTimeoutMs == null ? 2000 : opts.helloTimeoutMs;
 		var autoResize     = opts.autoResize !== false;
 		var iframeOrigin   = opts.origin || originOf(iframeEl.src);
+		if (!iframeOrigin || iframeOrigin === 'null') {
+			throw new Error('Agent3D.connect: iframe src must have a resolvable origin (set opts.origin explicitly for sandboxed iframes).');
+		}
+		if (iframeOrigin === '*') {
+			throw new Error('Agent3D.connect: opts.origin cannot be "*"');
+		}
 		var pings          = Object.create(null);
 		var nextPingId     = 1;
 		var ready          = false;
@@ -38,13 +47,14 @@
 
 		function post(msg) {
 			if (destroyed || !iframeEl.contentWindow) return;
-			iframeEl.contentWindow.postMessage(msg, iframeOrigin || '*');
+			iframeEl.contentWindow.postMessage(msg, iframeOrigin);
 		}
 
 		function onMessage(ev) {
 			if (destroyed) return;
-			// Origin lock — when we know the iframe origin, ignore everything else.
-			if (iframeOrigin && ev.origin !== iframeOrigin) return;
+			// Origin + window lock — drop messages from other windows or origins.
+			if (ev.source !== iframeEl.contentWindow) return;
+			if (ev.origin !== iframeOrigin) return;
 			var msg = ev.data;
 			if (!msg || typeof msg !== 'object' || msg.agentId !== agentId) return;
 			switch (msg.type) {
@@ -108,6 +118,7 @@
 
 		return {
 			ready: readyPromise,
+			origin: iframeOrigin,
 			send: function (action) { post({ type: 'agent:action', agentId: agentId, action: action }); },
 			ping: function (timeoutMs) {
 				var id = String(nextPingId++);
@@ -130,8 +141,8 @@
 
 	function originOf(url) {
 		if (!url) return '';
-		try { return new URL(url, location.href).origin; } catch (_) { return ''; }
+		try { return new URL(url, typeof location !== 'undefined' ? location.href : undefined).origin; } catch (_) { return ''; }
 	}
 
-	root.Agent3D = { connect: connect, version: '1' };
+	root.Agent3D = { connect: connect, version: '1', originOf: originOf };
 })(typeof window !== 'undefined' ? window : globalThis);

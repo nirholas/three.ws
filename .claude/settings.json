@@ -234,5 +234,29 @@
 	},
 
 	"includeCoAuthoredBy": true,
-	"respectGitignore": true
+	"respectGitignore": true,
+
+	"hooks": {
+		"PreToolUse": [
+			{
+				"matcher": "Write|Edit|MultiEdit",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "/workspaces/3D-Agent/.claude/hooks/no-shortcuts.sh"
+					}
+				]
+			}
+		],
+		"Stop": [
+			{
+				"hooks": [
+					{
+						"type": "command",
+						"command": "/workspaces/3D-Agent/.claude/hooks/done-gate.sh"
+					}
+				]
+			}
+		]
+	}
 }
