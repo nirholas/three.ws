@@ -56,6 +56,8 @@ const appConfig = {
 				'agent-embed': resolve(__dirname, 'agent-embed.html'),
 				'agent-detail': resolve(__dirname, 'agent-detail.html'),
 				'a-embed': resolve(__dirname, 'a-embed.html'),
+				'pump-live': resolve(__dirname, 'pump-live.html'),
+				'pump-dashboard': resolve(__dirname, 'pump-dashboard.html'),
 				studio: resolve(__dirname, 'public/studio/index.html'),
 				features: resolve(__dirname, 'public/features/index.html'),
 				reputation: resolve(__dirname, 'public/reputation/index.html'),

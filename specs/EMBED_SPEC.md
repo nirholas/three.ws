@@ -329,6 +329,31 @@ The loader script and the element respect `Content-Security-Policy`:
 - IPFS gateways are configurable via `<meta name="agent-3d-gateways">`.
 - WASM decoders (DRACO, KTX2) hosted at known-stable CDN paths; a self-hosted mode is supported.
 
+## Bridge origin model (MUST)
+
+The host ↔ iframe bridge enforces strict origin checks on **every** outbound and inbound `postMessage`. Wildcards (`'*'`) are not allowed.
+
+**Host (parent) side**
+
+- `Agent3D.connect(iframe, opts)` derives the iframe origin from `iframe.src`. If the URL has no resolvable origin, `connect()` throws — pass `opts.origin` to override.
+- `EmbedHostBridge` requires an explicit `allowedOrigin`; passing `'*'` (or omitting it) throws.
+- All host → iframe messages target the resolved origin verbatim.
+- Inbound messages are dropped unless `event.source === iframe.contentWindow` **and** `event.origin === allowedOrigin`.
+
+**Iframe (child) side**
+
+- The iframe seeds `parentOrigin` from `document.referrer` for the initial `agent:ready` announcement.
+- The first authenticated host message (matching `agentId` + envelope shape) **locks** `parentOrigin` to `event.origin`. Any later message from a different origin is dropped.
+- All child → parent messages target `parentOrigin`. If the origin cannot be derived, the message is dropped (with a `console.warn`) rather than broadcast with `'*'`.
+
+**Embed-policy interaction**
+
+- `agent_identities.embed_policy.origins` (allowlist/denylist) gates *whether* the iframe loads at all. Once it does, the bridge enforces origin equality on top — the policy and the bridge work together: a denied origin never reaches the bridge, and an allowed origin is still locked to a single value per iframe lifetime.
+
+**Migrating from pre-v1 hosts**
+
+- Pre-v1 hosts that posted with `'*'` continue to work, because the iframe locks to whatever origin those messages arrive on (assuming they reach the iframe at all under modern browser policies). They do **not** benefit from the strict outbound checks until they migrate to `Agent3D.connect()` or `EmbedHostBridge`.
+
 ## Progressive enhancement
 
 If the script fails to load, the element falls back to:

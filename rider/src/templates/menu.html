@@ -1,6 +1,5 @@
 <!-- Macro is a templating function. It is rendered into the HTML below with searchResults(). -->
 {% macro searchResults () %}
-<!-- TODO: Sort the layout based on the IDs. -->
 <a-entity id="searchResultList"
   bind-for="for: item; in: searchResultsPage; key: id; template: #searchResultTemplate; updateInPlace: true; pool: 6; delay: 25"
   layout="type: box; columns: 1; marginRow: -0.2; orderAttribute: data-index" search-result-list position="0 0.644 0">
@@ -150,7 +149,7 @@
       </a-entity>
 
       <a-entity id="playButton"
-        bind__visible-raycastable="menuActive && !!menuSelectedChallenge.id && !genreMenuOpen && !difficultyFilterMenuOpen && !isIOS && !hasSongLoadError"
+        bind__visible-raycastable="menuActive && !!menuSelectedChallenge.id && !genreMenuOpen && !difficultyFilterMenuOpen && !isIOS && !hasSongLoadError && mpHostControl"
         geometry="primitive: plane; width: 0.7; height: 0.25"
         play-sound="event: mouseenter; sound: #hoverSound; volume: 0.03"
         play-sound__click="event: click; sound: #confirmSound; volume: 0.25" position="0 -0.561 0"
