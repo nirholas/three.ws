@@ -2795,6 +2795,60 @@
 		width: 7px;
 		height: 7px;
 	}
+	:global(body.user-is-touching) .group:focus-within .group-focus-within\:visible {
+		visibility: visible;
+		opacity: 1;
+	}
+	:global(.h-footer-horizon) {
+		background: #F5F4EF !important;
+		color: #1A1A1A !important;
+		border-top: 1px solid #E5E3DC !important;
+	}
+	:global(.h-footer-horizon .h-footer-glow-line, .h-footer-horizon .h-footer-floor, .h-footer-horizon .h-footer-haze, .h-footer-horizon .h-footer-watermark) {
+		display: none;
+	}
+	:global(.h-footer-links a) {
+		color: rgba(0,0,0,0.65) !important;
+	}
+	:global(.h-footer-links a:hover) {
+		color: #000 !important;
+		text-shadow: none !important;
+	}
+	:global(.h-footer-link-heading) {
+		color: rgba(0,0,0,0.45) !important;
+	}
+	:global(.h-footer-brand) {
+		color: #000 !important;
+	}
+	:global(.h-footer-brand .wordmark-dot) {
+		background: #000 !important;
+		box-shadow: none !important;
+	}
+	:global(.h-footer-tagline) {
+		color: rgba(0,0,0,0.55) !important;
+	}
+	:global(.h-footer-legal) {
+		color: rgba(0,0,0,0.52) !important;
+	}
+	:global(.h-footer-legal-links a) {
+		color: rgba(0,0,0,0.65) !important;
+	}
+	:global(.h-footer-social) {
+		color: rgba(0,0,0,0.65) !important;
+		background: rgba(0,0,0,0.03) !important;
+		border-color: rgba(0,0,0,0.06) !important;
+	}
+	:global(.h-footer-social:hover) {
+		color: #000 !important;
+		background: rgba(0,0,0,0.08) !important;
+		border-color: rgba(0,0,0,0.18) !important;
+	}
+	:global(.h-footer-bottom) {
+		border-top: 1px solid rgba(0,0,0,0.06) !important;
+	}
+	:global(.h-footer-inner) {
+		margin-bottom: 2rem;
+	}
 </style>
 
 <footer class="h-footer-horizon" style="margin-top: auto;">
@@ -2876,60 +2930,3 @@
         </div>
     </div>
 </footer>
-
-<style>
-	:global(body.user-is-touching) .group:focus-within .group-focus-within\:visible {
-		visibility: visible;
-		opacity: 1;
-	}
-	:global(.h-footer-horizon) {
-		background: #F5F4EF !important;
-		color: #1A1A1A !important;
-		border-top: 1px solid #E5E3DC !important;
-	}
-	:global(.h-footer-horizon .h-footer-glow-line, .h-footer-horizon .h-footer-floor, .h-footer-horizon .h-footer-haze, .h-footer-horizon .h-footer-watermark) {
-		display: none;
-	}
-	:global(.h-footer-links a) {
-		color: rgba(0,0,0,0.65) !important;
-	}
-	:global(.h-footer-links a:hover) {
-		color: #000 !important;
-		text-shadow: none !important;
-	}
-	:global(.h-footer-link-heading) {
-		color: rgba(0,0,0,0.45) !important;
-	}
-	:global(.h-footer-brand) {
-		color: #000 !important;
-	}
-	:global(.h-footer-brand .wordmark-dot) {
-		background: #000 !important;
-		box-shadow: none !important;
-	}
-	:global(.h-footer-tagline) {
-		color: rgba(0,0,0,0.55) !important;
-	}
-	:global(.h-footer-legal) {
-		color: rgba(0,0,0,0.52) !important;
-	}
-	:global(.h-footer-legal-links a) {
-		color: rgba(0,0,0,0.65) !important;
-	}
-	:global(.h-footer-social) {
-		color: rgba(0,0,0,0.65) !important;
-		background: rgba(0,0,0,0.03) !important;
-		border-color: rgba(0,0,0,0.06) !important;
-	}
-	:global(.h-footer-social:hover) {
-		color: #000 !important;
-		background: rgba(0,0,0,0.08) !important;
-		border-color: rgba(0,0,0,0.18) !important;
-	}
-	:global(.h-footer-bottom) {
-		border-top: 1px solid rgba(0,0,0,0.06) !important;
-	}
-	:global(.h-footer-inner) {
-		margin-bottom: 2rem;
-	}
-</style>
