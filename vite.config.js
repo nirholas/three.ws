@@ -75,7 +75,8 @@ const appConfig = {
 				manualChunks(id) {
 					if (id.includes('node_modules/three/')) return 'three';
 					if (id.includes('node_modules/ethers/')) return 'ethers';
-					if (id.includes('node_modules/@solana/web3.js/') || id.includes('node_modules/@solana/spl-token/') || id.includes('node_modules/@solana/actions/') || id.includes('node_modules/@solana/kit/') || id.includes('node_modules/@bonfida/')) return 'solana';
+					if (id.includes('node_modules/@solana/web3.js/') || id.includes('node_modules/@solana/spl-token/') || id.includes('node_modules/@solana/actions/') || id.includes('node_modules/@solana/kit/')) return 'solana';
+					if (id.includes('node_modules/@bonfida/')) return 'bonfida';
 					if (id.includes('node_modules/livekit-client/') || id.includes('node_modules/@livekit/')) return 'livekit';
 					if (id.includes('node_modules/@pump-fun/pump-sdk/') || id.includes('node_modules/@pump-fun/pump-swap-sdk/')) return 'pump';
 					if (id.includes('node_modules/@jup-ag/')) return 'jup';

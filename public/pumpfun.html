@@ -1322,8 +1322,9 @@
 				: '';
 
 			const replay = ev.replay ? ' replay' : '';
-			const thumb = ev.image_uri
-				? `<img class="evt-thumb" src="${attr(ev.image_uri)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.style.display='none'" />`
+			const _imgUri = safeHttpsUri(ev.image_uri);
+			const thumb = _imgUri
+				? `<img class="evt-thumb" src="${attr(_imgUri)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.style.display='none'" />`
 				: '';
 
 			return `<div class="evt${replay}" data-mint="${attr(mint)}">
@@ -1421,8 +1422,9 @@
 			const tsStr = fmtUtc(ev.timestamp ?? ev.block_time ?? ev.created_at);
 			const sig = ev.signature || ev.tx_signature;
 			const replay = ev.replay ? ' replay' : '';
-			const thumb = ev.image_uri
-				? `<img class="evt-thumb" src="${attr(ev.image_uri)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none'" />`
+			const _imgUri2 = safeHttpsUri(ev.image_uri);
+			const thumb = _imgUri2
+				? `<img class="evt-thumb" src="${attr(_imgUri2)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none'" />`
 				: '';
 
 			return `<div class="evt grad${replay}">
@@ -1703,6 +1705,7 @@
 		function shortKey(s) { s = String(s || ''); return s.length > 12 ? `${s.slice(0,4)}…${s.slice(-4)}` : s; }
 		function escapeHtml(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
 		function attr(s) { return escapeHtml(s); }
+		function safeHttpsUri(uri) { return uri && uri.startsWith('https://') ? uri : null; }
 		function twitterUrl(v) {
 			const s = String(v ?? '').trim();
 			if (!s) return '';
