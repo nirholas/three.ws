@@ -37,6 +37,7 @@ export class AgentIdentity {
 		this._record = null;
 		this._loaded = false;
 		this._backendConfirmed = false; // true only when backend returned a valid agent
+		this._loadPromise = null; // re-entrancy guard
 		this.memory = null;
 
 		// Pre-seed agentId from arg or storage so callers can use it synchronously
@@ -209,6 +210,14 @@ export class AgentIdentity {
 	// ── Internal ──────────────────────────────────────────────────────────────
 
 	async _loadAsync() {
+		if (this._loadPromise) return this._loadPromise;
+		this._loadPromise = this.__doLoad();
+		try { await this._loadPromise; } finally { this._loadPromise = null; }
+	}
+
+	async __doLoad() {
+		this._backendConfirmed = false;
+
 		// 1. Try localStorage first (instant) — backendSync disabled until confirmed
 		const local = this._readLocal();
 		if (local) {
