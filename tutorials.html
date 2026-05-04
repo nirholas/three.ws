@@ -19,7 +19,7 @@
 			property="og:description"
 			content="Tutorials for creating and using 3D agents."
 		/>
-		<meta property="og:url" content="https://threejs.org/docs/" />
+		<meta property="og:url" content="/tutorials.html" />
 		<meta property="og:image" content="https://three.ws/og-image.png" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
@@ -32,7 +32,7 @@
 		/>
 		<meta name="twitter:image" content="https://three.ws/og-image.png" />
 
-		<link rel="canonical" href="https://threejs.org/docs/" />
+		<link rel="canonical" href="/tutorials.html" />
 		<link rel="shortcut icon" href="/favicon.ico" />
 		<link rel="apple-touch-icon" href="/pwa-192x192.png" />
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -201,7 +201,33 @@
 			<section>
 				<h1>Tutorials</h1>
 				<p>Here you will find tutorials on how to create and use 3D agents.</p>
-				<!-- Add tutorials here -->
+				
+				<h2>1. Basic Embedding</h2>
+				<p>Embed your 3D agent into any web page with a simple script tag.</p>
+				<pre><code>&lt;script src="https://three.ws/cdn/agent-3d.js" data-agent-id="YOUR_AGENT_ID"&gt;&lt;/script&gt;</code></pre>
+
+				<h2>2. Customization</h2>
+				<p>Customize your agent's appearance and behavior using data attributes.</p>
+				<pre><code>&lt;script src="https://three.ws/cdn/agent-3d.js" 
+        data-agent-id="YOUR_AGENT_ID" 
+        data-size="300"
+        data-background-color="#000000"&gt;&lt;/script&gt;</code></pre>
+
+				<h2>3. Interactive Examples</h2>
+				<p>Use JavaScript to interact with your agent.</p>
+				<pre><code>
+&lt;script src="https://three.ws/cdn/agent-3d.js" data-agent-id="YOUR_AGENT_ID"&gt;&lt;/script&gt;
+&lt;script&gt;
+  const agent = document.querySelector('agent-3d');
+  agent.addEventListener('ready', () => {
+    agent.playAnimation('wave');
+  });
+&lt;/script&gt;
+				</code></pre>
+
+				<h2>4. "Claude, integrate this"</h2>
+				<p>To simplify integration, you can use the following command to have Claude help you embed an agent. Just say "Claude, integrate agent with ID YOUR_AGENT_ID".</p>
+
 			</section>
 		</main>
 	</body>

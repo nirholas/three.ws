@@ -2,7 +2,7 @@
 
 ## What is three.ws?
 
-three.ws is an open-source, browser-native platform for creating, hosting, and embedding interactive AI agents that live inside 3D avatars. It combines a WebGL 3D viewer — built on [three.js](https://threejs.org) with full glTF 2.0 / GLB support — with an AI agent runtime that gives each avatar personality, memory, skills, and optionally an on-chain identity.
+three.ws is an open-source, browser-native platform for creating, hosting, and embedding interactive AI agents that live inside 3D avatars. It combines a WebGL 3D viewer — built on [three.js](https://three.ws) with full glTF 2.0 / GLB support — with an AI agent runtime that gives each avatar personality, memory, skills, and optionally an on-chain identity.
 
 The result is an agent that doesn't just respond in a chat box. It occupies a three-dimensional body, plays animations, responds to voice, and can be embedded into any web page with a single script tag and a custom HTML element.
 

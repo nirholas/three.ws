@@ -1568,4 +1568,4 @@ The three.js library (`node_modules/three`) is MIT licensed. The gltf-validator 
 
 ---
 
-*Built with [three.js](https://threejs.org), [Claude](https://claude.ai), and a belief that AI deserves a body.*
+*Built with [three.js](https://three.ws), [Claude](https://claude.ai), and a belief that AI deserves a body.*

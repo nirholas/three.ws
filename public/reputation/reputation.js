@@ -230,18 +230,30 @@ async function main() {
 		const recentReviews = reviews.reverse().slice(0, 20);
 
 		// Render page
+		const avgClass = repData.average > 0 ? 'positive' : repData.average < 0 ? 'negative' : '';
 		let html = `
+			<div class="rep-breadcrumb">
+				<a href="/marketplace.html">Marketplace</a>
+				<span class="rep-breadcrumb-sep">/</span>
+				<span>Reputation</span>
+			</div>
+
 			<div class="rep-header">
-				<h1>${agentInfo?.name || `Agent #${agentId}`}</h1>
-				<div class="rep-header-meta">
-					${getChainName(chainId)} • ID: ${agentId}
+				<div class="rep-header-left">
+					<h1>${agentInfo?.name || `Agent #${agentId}`}</h1>
+					<div class="rep-header-meta">${getChainName(chainId)} · ID ${agentId}</div>
 				</div>
+				<button class="rep-share-btn" id="share-btn" title="Copy link">
+					<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="3" r="1.5"/><circle cx="12" cy="13" r="1.5"/><circle cx="3" cy="8" r="1.5"/><line x1="10.6" y1="3.9" x2="4.4" y2="7.1"/><line x1="10.6" y1="12.1" x2="4.4" y2="8.9"/></svg>
+					Share
+				</button>
 			</div>
 
 			<div class="rep-stats">
 				<div class="rep-stat">
 					<div class="rep-stat-label">Average Rating</div>
-					<div class="rep-stat-value">${formatScore(repData.average)}</div>
+					<div class="rep-stat-value ${avgClass}">${formatScore(repData.average)}</div>
+					${scoreBarHtml(repData.average)}
 				</div>
 				<div class="rep-stat">
 					<div class="rep-stat-label">Reviews</div>
@@ -249,7 +261,7 @@ async function main() {
 				</div>
 				<div class="rep-stat">
 					<div class="rep-stat-label">Total Score</div>
-					<div class="rep-stat-value">${repData.total}</div>
+					<div class="rep-stat-value ${avgClass}">${repData.total}</div>
 				</div>
 			</div>
 		`;
@@ -263,7 +275,7 @@ async function main() {
 		} else {
 			html += `
 				<div class="rep-reviews">
-					<h3>Recent Reviews</h3>
+					<h3>Recent Reviews <span class="rep-review-count">${recentReviews.length} shown</span></h3>
 					<div class="rep-review-list">
 			`;
 
@@ -278,13 +290,12 @@ async function main() {
 			reviewsWithENS.forEach(({ review, name }) => {
 				const displayName = name || truncateAddress(review.from);
 				const explorerUrl = getExplorerUrl(chainId, review.txHash);
-				const scoreClass = getRatingClass(review.score);
 
 				html += `
 					<div class="rep-review-item">
 						<div class="rep-review-header">
 							<span class="rep-reviewer">${displayName}</span>
-							<span class="rep-stars">${review.score > 0 ? '+' : ''}${review.score}</span>
+							${scoreBadge(review.score)}
 						</div>
 				`;
 
@@ -294,11 +305,11 @@ async function main() {
 
 				html += `
 						<div class="rep-review-footer">
-							<span>${formatDate(review.blockNumber)}</span>
+							<span>${formatDate()}</span>
 				`;
 
 				if (explorerUrl) {
-					html += `<a href="${explorerUrl}" target="_blank" rel="noopener" class="rep-tx-hash">tx</a>`;
+					html += `<a href="${explorerUrl}" target="_blank" rel="noopener">view tx</a>`;
 				}
 
 				html += `
@@ -323,9 +334,8 @@ async function main() {
 				<div id="form-container" style="display:none">
 					<div class="rep-form-group">
 						<label>Your Rating</label>
-						<div class="rep-stars-input" id="rating-input">
-							<!-- Stars filled by JS -->
-						</div>
+						<p class="rep-rating-hint">−100 (very bad) → 0 (neutral) → +100 (excellent)</p>
+						<div class="rep-stars-input" id="rating-input"></div>
 						<input type="hidden" id="rep-rating" value="0" />
 					</div>
 					<div class="rep-form-group">
@@ -340,6 +350,32 @@ async function main() {
 		`;
 
 		appEl.innerHTML = html;
+
+		// Share button
+		const shareBtn = document.getElementById('share-btn');
+		if (shareBtn) {
+			shareBtn.addEventListener('click', async () => {
+				const url = window.location.href;
+				try {
+					await navigator.clipboard.writeText(url);
+				} catch {
+					const ta = document.createElement('textarea');
+					ta.value = url;
+					ta.style.position = 'fixed';
+					ta.style.opacity = '0';
+					document.body.appendChild(ta);
+					ta.select();
+					document.execCommand('copy');
+					document.body.removeChild(ta);
+				}
+				shareBtn.classList.add('copied');
+				shareBtn.textContent = 'Copied!';
+				setTimeout(() => {
+					shareBtn.classList.remove('copied');
+					shareBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="3" r="1.5"/><circle cx="12" cy="13" r="1.5"/><circle cx="3" cy="8" r="1.5"/><line x1="10.6" y1="3.9" x2="4.4" y2="7.1"/><line x1="10.6" y1="12.1" x2="4.4" y2="8.9"/></svg> Share`;
+				}, 2000);
+			});
+		}
 
 		// Wire up wallet connection
 		const connectBtn = document.getElementById('connect-wallet');

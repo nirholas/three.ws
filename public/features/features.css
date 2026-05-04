@@ -511,30 +511,64 @@
 	opacity: 0.4;
 }
 
-/* ── Act content (sticky-positioned text overlay) ───────────────────────── */
+/* ── Act content panels ─────────────────────────────────────────────────── */
+
+/*
+ * On desktop, JS moves all .act-content panels into a .act-content-overlay
+ * div appended to <body>. This sidesteps the transform-style:preserve-3d
+ * ancestor that breaks position:sticky inside each .parallax-act.
+ *
+ * On mobile (≤768px) or when JS is unavailable, panels stay inside their
+ * .parallax-act and the mobile media query below keeps them in normal flow.
+ */
 
 .act-content {
-	position: sticky;
-	top: 0;
-	height: 100vh;
-	margin-bottom: -100vh;
-	z-index: 20;
 	display: flex;
 	flex-direction: column;
 	justify-content: flex-end;
 	padding: 0 var(--features-content-pad) clamp(2rem, 5vh, 4rem);
 	pointer-events: none;
 	max-width: 720px;
-}
-
-/* Last act has no following parallax-act to overlap into — zero the negative
- * margin so it doesn't collapse out to the parent and pull the flat outro
- * section up over the on-chain content. */
-.parallax-act--onchain .act-content {
-	margin-bottom: 0;
+	/* Fallback (no-JS / mobile): in-flow block */
+	position: relative;
+	z-index: 20;
 }
 
 .act-content > * {
+	pointer-events: auto;
+}
+
+/* ── Fixed overlay (created and populated by JS on desktop) ─────────────── */
+
+.act-content-overlay {
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	width: 100%;
+	pointer-events: none;
+	z-index: 20;
+}
+
+.act-content-overlay[hidden] {
+	display: none;
+}
+
+.act-content-overlay .act-content {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	/* Visibility managed by data-active; start hidden */
+	opacity: 0;
+	visibility: hidden;
+	transform: translateY(14px);
+	transition: opacity 0.4s ease, visibility 0.4s ease, transform 0.4s ease;
+	pointer-events: none;
+}
+
+.act-content-overlay .act-content[data-active='true'] {
+	opacity: 1;
+	visibility: visible;
+	transform: translateY(0);
 	pointer-events: auto;
 }
 
@@ -955,9 +989,6 @@
 	}
 
 	.act-content {
-		position: relative;
-		height: auto;
-		margin-bottom: 0;
 		padding: 1.5rem var(--features-content-pad) 2rem;
 	}
 
@@ -995,7 +1026,6 @@
 	.act-content {
 		position: relative;
 		height: auto;
-		margin-bottom: 0;
 	}
 
 	.act-eyebrow-dot {

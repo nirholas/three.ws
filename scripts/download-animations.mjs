@@ -15,12 +15,12 @@ mkdirSync(ANIM_DIR, { recursive: true });
 const MODELS_WITH_ANIMATIONS = [
 	{
 		name: 'Soldier',
-		url: 'https://threejs.org/examples/models/gltf/Soldier.glb',
+		url: 'https://three.ws/examples/models/gltf/Soldier.glb',
 		desc: 'Soldier with Idle/Walk/Run (Mixamo skeleton)',
 	},
 	{
 		name: 'RobotExpressive',
-		url: 'https://threejs.org/examples/models/gltf/RobotExpressive/RobotExpressive.glb',
+		url: 'https://three.ws/examples/models/gltf/RobotExpressive/RobotExpressive.glb',
 		desc: 'Robot with Dance/Death/Idle/Jump/No/Punch/Running/Sitting/Standing/ThumbsUp/Walking/Wave/Yes',
 	},
 ];

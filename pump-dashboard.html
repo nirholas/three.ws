@@ -815,10 +815,22 @@
         </div>
         <div class="panel-body">
           <div class="config-grid">
-            <div style="background:#000; border:1px solid var(--border); min-height: 300px; display:flex; align-items:center; justify-content:center; border-radius:var(--radius)">
-              3D Agent View
+            <div id="agent-view-container" style="background:#000; border:1px solid var(--border); min-height: 300px; display:flex; align-items:center; justify-content:center; border-radius:var(--radius); overflow: hidden;">
+              <iframe id="agent-iframe" style="width: 100%; height: 100%; border: none;"></iframe>
             </div>
             <div>
+              <div class="form-group">
+                <label>Speech</label>
+                <input type="text" id="speech-input" placeholder="Enter text to speak...">
+                <button class="btn btn-primary" onclick="agentAction('speak')">Speak</button>
+              </div>
+              <div class="form-group">
+                <label>Actions</label>
+                <button class="btn" onclick="agentAction('emote')">Emote</button>
+                <button class="btn" onclick="agentAction('wave')">Wave</button>
+                <button class="btn" onclick="agentAction('verify')">Verify</button>
+              </div>
+
               <div class="form-group">
                 <label>Animation</label>
                 <select id="anim-select">
@@ -973,6 +985,75 @@ function navigateTo(page) {
   document.querySelectorAll('.sidebar nav a').forEach(a => {
     a.classList.toggle('active', a.dataset.page === page);
   });
+  if (page === 'animations') loadAgent();
+}
+
+// ── Agent Control ─────────────────────────────────────────────────────
+let agentId = null;
+
+async function loadAgent() {
+  try {
+    const resp = await apiFetch('/api/agents/me');
+    if (resp.ok) {
+      const { agent } = await resp.json();
+      if (agent && agent.id) {
+        agentId = agent.id;
+        const iframe = document.getElementById('agent-iframe');
+        iframe.src = `/agent-embed.html?id=${agentId}`;
+      } else {
+        document.getElementById('agent-view-container').innerHTML = '<div class="empty">Could not load agent.</div>';
+      }
+    }
+  } catch (e) {
+    document.getElementById('agent-view-container').innerHTML = '<div class="empty">Error loading agent.</div>';
+  }
+}
+
+function agentAction(type) {
+  const iframe = document.getElementById('agent-iframe');
+  if (!iframe || !iframe.contentWindow || !agentId) return;
+
+  let action;
+  switch (type) {
+    case 'speak':
+      const text = document.getElementById('speech-input').value;
+      if (!text) return;
+      action = { type: 'speak', text: text };
+      break;
+    case 'emote':
+      action = { type: 'emote', name: 'dance' };
+      break;
+    case 'wave':
+      action = { type: 'gesture', name: 'wave' };
+      break;
+    case 'verify':
+      action = { type: 'validate-model' };
+      break;
+    default:
+      return;
+  }
+
+  iframe.contentWindow.postMessage({
+    agentId: agentId,
+    type: 'agent:action',
+    action: action
+  }, '*');
+}
+
+function playAnimation() {
+    const animSelect = document.getElementById('anim-select');
+    const animationName = animSelect.value.toLowerCase();
+    const iframe = document.getElementById('agent-iframe');
+    if (!iframe || !iframe.contentWindow || !agentId) return;
+
+    const action = { type: 'gesture', name: animationName };
+
+    iframe.contentWindow.postMessage({
+        agentId: agentId,
+        type: 'agent:action',
+        action: action
+    }, '*');
+}
 
   const titles = {
     dashboard: 'Dashboard', feed: 'Live Feed', watches: 'Watch List',

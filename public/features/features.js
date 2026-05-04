@@ -174,28 +174,79 @@ function initStarFields() {
 	}
 }
 
-// ── Progress dots ────────────────────────────────────────────────────────
+// ── Act navigation: progress dots + content overlay ──────────────────────
+//
+// On desktop, act-content panels are moved out of their transform-style:
+// preserve-3d ancestors (which break position:sticky) into a fixed overlay
+// on <body>. IntersectionObserver swaps which panel is visible.
+// On mobile the panels stay in-flow; only the dots are wired up.
 
-function setupProgressDots() {
-	const dots = ROOT.querySelectorAll('.act-dot[data-act]');
-	const acts = ROOT.querySelectorAll('.parallax-act[data-act]');
+function setupActNavigation() {
 	const scroll = ROOT.querySelector('.parallax');
-	if (!dots.length || !acts.length || !scroll) return;
+	const acts = [...ROOT.querySelectorAll('.parallax-act[data-act]')];
+	const dots = [...ROOT.querySelectorAll('.act-dot[data-act]')];
+	if (!acts.length || !scroll) return;
+
+	const isDesktop = !window.matchMedia('(max-width: 768px)').matches;
+
+	let overlay = null;
+	let panels = [];
+
+	if (isDesktop) {
+		panels = [...ROOT.querySelectorAll('.act-content')];
+
+		overlay = document.createElement('div');
+		overlay.className = 'act-content-overlay';
+		document.body.appendChild(overlay);
+
+		panels.forEach((panel, i) => {
+			const act = acts[i];
+			if (act) panel.dataset.actPanel = act.dataset.act;
+			overlay.appendChild(panel);
+		});
+
+		// Show Act 1 immediately so there's no blank flash on load
+		if (panels[0]) panels[0].dataset.active = 'true';
+	}
 
 	const io = new IntersectionObserver(
 		(entries) => {
 			for (const entry of entries) {
 				if (!entry.isIntersecting) continue;
 				const actNum = entry.target.dataset.act;
+
 				dots.forEach((d) => {
 					d.dataset.active = d.dataset.act === actNum ? 'true' : 'false';
 				});
+
+				if (isDesktop) {
+					panels.forEach((p) => {
+						p.dataset.active = p.dataset.actPanel === actNum ? 'true' : 'false';
+					});
+				}
 			}
 		},
 		{ root: scroll, threshold: 0.5 },
 	);
 
 	acts.forEach((act) => io.observe(act));
+
+	// Hide the overlay entirely once the flat outro slides into view
+	if (overlay) {
+		const outro = ROOT.querySelector('.features-outro');
+		if (outro) {
+			const outroObs = new IntersectionObserver(
+				([entry]) => {
+					overlay.hidden = entry.isIntersecting;
+					if (entry.isIntersecting) {
+						dots.forEach((d) => delete d.dataset.active);
+					}
+				},
+				{ root: scroll, threshold: 0.08 },
+			);
+			outroObs.observe(outro);
+		}
+	}
 }
 
 // ── Boot ─────────────────────────────────────────────────────────────────
@@ -228,7 +279,7 @@ function init() {
 	initStarFields();
 	setupEmotionChips();
 	setupCopyEmbed();
-	setupProgressDots();
+	setupActNavigation();
 	loadOnChainAgent();
 	setupScrollHint();
 	setupAuthNav();

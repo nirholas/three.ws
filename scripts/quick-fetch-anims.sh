@@ -52,7 +52,7 @@ echo "🌐 Trying direct downloads..."
 
 # Mixamo default character with animations from three.js examples
 DIRECT_URLS=(
-    "https://threejs.org/examples/models/gltf/Xbot.glb xbot"
+    "https://three.ws/examples/models/gltf/Xbot.glb xbot"
 )
 
 for entry in "${DIRECT_URLS[@]}"; do

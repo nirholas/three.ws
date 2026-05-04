@@ -139,6 +139,37 @@
     #header { flex-direction: column; align-items: flex-start; }
     #header .controls { margin-left: 0; width: 100%; flex-wrap: wrap; }
   }
+
+  /* ── Embed section ───────────────────────────────────── */
+  #embed-section {
+    background: #111;
+    border-top: 1px solid #222;
+    padding: 20px;
+    margin-top: 20px;
+  }
+  #embed-section h2 {
+    font-size: 14px;
+    color: #00ff41;
+    margin-bottom: 12px;
+  }
+  #embed-section .embed-preview {
+    border: 1px solid #333;
+    border-radius: 4px;
+    width: 100%;
+    max-width: 400px;
+    height: 300px;
+    margin-bottom: 12px;
+  }
+  #embed-section .code-snippet {
+    background: #0a0a0a;
+    border: 1px solid #333;
+    padding: 12px;
+    font-size: 12px;
+    white-space: pre-wrap;
+    word-break: break-all;
+    border-radius: 4px;
+    cursor: text;
+  }
 </style>
 </head>
 <body>
@@ -166,6 +197,14 @@
 </div>
 
 <div id="log"></div>
+
+<div id="embed-section">
+  <h2>Embed Widget</h2>
+  <p style="font-size:12px; color:#888; margin-bottom:12px;">Embed the live feed on your own site with this code snippet.</p>
+  <iframe src="/pumpfun-widget.html" class="embed-preview" title="Pump.fun Live Feed Preview"></iframe>
+  <pre class="code-snippet" id="embed-code"></pre>
+</div>
+
 
 <script>
 // ════════════════════════════════════════════════════════════════════
@@ -227,6 +266,21 @@ $btnConnect.onclick = () => {
   }
 };
 $btnClear.onclick = () => { $log.innerHTML = ''; };
+
+// ── Embed code snippet ──────────────────────────────────────────
+function setEmbedCode() {
+  const code = `<iframe
+  src="${window.location.origin}/pumpfun-widget.html"
+  width="400"
+  height="300"
+  frameborder="0"
+  style="border:1px solid #333; border-radius:4px;"
+  title="Pump.fun Live Feed">
+</iframe>`;
+  document.getElementById('embed-code').textContent = code.trim();
+}
+setEmbedCode();
+
 
 // ── Connect to WebSocket (PumpPortal or Solana RPC) ───────────────
 function getNextEndpoint() {
