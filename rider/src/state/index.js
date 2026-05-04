@@ -147,6 +147,9 @@ AFRAME.registerState({
       joinCodeInput: '',
       countdownText: '',
       countdownActive: false,
+      keyboardOpen: false,
+      nameKeyboardOpen: false,
+      nameInput: '',
       // Pre-rendered fixed-slot row strings for the lobby (4 slots).
       row0Name: '', row0Score: '', row0Visible: false, row0IsMe: false, row0IsHost: false, row0Ready: false,
       row1Name: '', row1Score: '', row1Visible: false, row1IsMe: false, row1IsHost: false, row1Ready: false,
@@ -661,7 +664,30 @@ AFRAME.registerState({
     },
 
     mpcodeinput: (state, payload) => {
-      state.multiplayer.joinCodeInput = (payload || '').toUpperCase().slice(0, 4);
+      const value = typeof payload === 'string' ? payload : (payload && payload.value) || '';
+      state.multiplayer.joinCodeInput = value.toUpperCase().slice(0, 4);
+    },
+
+    mpnameinput: (state, payload) => {
+      const value = typeof payload === 'string' ? payload : (payload && payload.value) || '';
+      state.multiplayer.nameInput = value.slice(0, 14);
+    },
+
+    mpkeyboardopen: state => {
+      state.multiplayer.keyboardOpen = true;
+    },
+
+    mpkeyboardclose: state => {
+      state.multiplayer.keyboardOpen = false;
+    },
+
+    mpnamekeyboardopen: state => {
+      state.multiplayer.nameKeyboardOpen = true;
+      state.multiplayer.nameInput = localStorage.getItem('threewsusername') || '';
+    },
+
+    mpnamekeyboardclose: state => {
+      state.multiplayer.nameKeyboardOpen = false;
     },
 
     mpconnecting: state => {
@@ -1152,6 +1178,8 @@ AFRAME.registerState({
     state.mpInLobbyPhase =
       state.mpInRoom && state.multiplayer.status === 'lobby';
     state.mpCountdownVisible = state.multiplayer.countdownActive;
+    state.mpKeyboardOpen = state.multiplayer.keyboardOpen;
+    state.mpNameKeyboardOpen = state.multiplayer.nameKeyboardOpen;
     state.mpRoomCodeText = state.multiplayer.roomCode
       ? 'ROOM ' + state.multiplayer.roomCode
       : '';

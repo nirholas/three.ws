@@ -183,6 +183,16 @@ export default wrap(async (req, res) => {
 						},
 					},
 				},
+				'/api/healthz': {
+					get: {
+						operationId: 'healthz',
+						summary: 'Service liveness',
+						description: 'Lightweight liveness probe with uptime + service version. No auth.',
+						responses: {
+							200: { description: 'Health summary JSON' },
+						},
+					},
+				},
 				'/api/pump/curve': {
 					get: {
 						operationId: 'pump_curve',

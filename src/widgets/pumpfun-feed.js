@@ -60,7 +60,10 @@ export async function mountPumpfunFeed(viewer, config, container, ctx = {}) {
 	const maxCards = Math.max(1, Math.min(50, config.maxCards || 8));
 	const protocol = ctx.protocol || (typeof window !== 'undefined' ? window.VIEWER?.agent_protocol : null);
 	let narrateOn = config.autoNarrate !== false;
-	const dispatcher = createReactionDispatcher();
+	const dispatcher = createReactionDispatcher({
+		mood: config.mood || 'normal',
+	});
+	const detachToast = mountReactionToast(container || document.body, dispatcher);
 	const react = (kind, ev) => {
 		dispatcher.dispatch(kind, ev, (reaction) => {
 			// Even with narration off, still drive emote+gesture so the avatar
@@ -134,15 +137,22 @@ export async function mountPumpfunFeed(viewer, config, container, ctx = {}) {
 		status.textContent = 'Reconnecting…';
 	});
 
+	const onMood = (e) => {
+		const m = e.detail?.mood;
+		if (m) dispatcher.setMood(m);
+	};
+	(container || document.body).addEventListener('pumpfun-feed:set-mood', onMood);
+
 	return {
 		destroy() {
-			try {
-				es.close();
-			} catch {}
+			try { es.close(); } catch {}
 			(container || document.body).removeEventListener('pumpfun-feed:focus-mint', onFocus);
 			(container || document.body).removeEventListener('pumpfun-feed:set-narrate', onNarrateToggle);
+			(container || document.body).removeEventListener('pumpfun-feed:set-mood', onMood);
+			detachToast?.();
 			root.remove();
 		},
+		dispatcher,
 	};
 }
 
