@@ -94,7 +94,7 @@ export class EmbedHostBridge {
 
 	_handleMessage(event) {
 		if (event.source !== this._iframe.contentWindow) return;
-		if (this._allowedOrigin !== '*' && event.origin !== this._allowedOrigin) return;
+		if (event.origin !== this._allowedOrigin) return;
 		const msg = event.data;
 		if (!msg || msg.v !== PROTOCOL_VERSION || msg.source !== 'agent-3d') return;
 

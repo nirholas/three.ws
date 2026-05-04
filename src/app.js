@@ -1089,7 +1089,9 @@ class App {
 			if (!data || typeof data !== 'object' || typeof data.id !== 'string' || typeof data.action !== 'string') return;
 			// Only handle our specific action verbs to avoid intercepting unrelated messages.
 			if (data.action !== 'exportGLB' && data.action !== 'takeScreenshot') return;
-			const replyOrigin = event.origin && event.origin !== 'null' ? event.origin : '*';
+			if (!event.origin || event.origin === 'null') return;
+			if (!this._parentOrigin) this._parentOrigin = event.origin;
+			const replyOrigin = event.origin;
 			const replyTo = event.source || window.parent;
 			const reply = (result, err) => {
 				try { replyTo.postMessage(err ? { id: data.id, error: err } : { id: data.id, result }, replyOrigin); } catch (_) {}
@@ -1203,9 +1205,17 @@ class App {
 	}
 
 	_postToParent(msg) {
-		if (window.parent && window.parent !== window) {
-			window.parent.postMessage(msg, '*');
+		if (!window.parent || window.parent === window) return;
+		if (!this._parentOrigin) {
+			try {
+				if (document.referrer) this._parentOrigin = new URL(document.referrer).origin;
+			} catch {}
 		}
+		if (!this._parentOrigin) {
+			console.warn('[widget] parent origin unknown; dropping', msg?.type);
+			return;
+		}
+		window.parent.postMessage(msg, this._parentOrigin);
 	}
 
 	_initNichAgent() {

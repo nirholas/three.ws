@@ -412,6 +412,9 @@ AFRAME.registerState({
       state.menuSelectedChallenge.difficultyId = state.challenge.difficultyId;
       state.challenge.id = '';
       state.leaderboardQualified = false;
+      if (state.multiplayer.active) {
+        state.multiplayer.lobbyOpen = true;
+      }
     },
 
     gamemode: (state, mode) => {
@@ -617,6 +620,138 @@ AFRAME.registerState({
       state.optionsMenuOpen = true;
     },
 
+    /**
+     * Multiplayer: open the MP panel from the modes column.
+     */
+    mpopen: state => {
+      state.multiplayer.lobbyOpen = true;
+      state.multiplayer.active = true;
+      state.multiplayer.status = 'idle';
+      state.multiplayer.lastError = '';
+      // MP only makes sense in scored modes; default to classic if currently ride.
+      if (state.gameMode === 'ride') { state.gameMode = 'classic'; }
+    },
+
+    mpclose: state => {
+      state.multiplayer.lobbyOpen = false;
+      state.multiplayer.active = false;
+      state.multiplayer.status = 'idle';
+    },
+
+    mpcodeinput: (state, payload) => {
+      state.multiplayer.joinCodeInput = (payload || '').toUpperCase().slice(0, 4);
+    },
+
+    mpconnecting: state => {
+      state.multiplayer.status = 'connecting';
+      state.multiplayer.lastError = '';
+    },
+
+    mproomjoined: (state, payload) => {
+      state.multiplayer.roomCode = payload.code;
+      state.multiplayer.isHost = !!payload.isHost;
+      state.multiplayer.status = 'lobby';
+      state.multiplayer.lobbyOpen = true;
+      state.multiplayer.active = true;
+    },
+
+    mproomleft: state => {
+      state.multiplayer.roomCode = '';
+      state.multiplayer.isHost = false;
+      state.multiplayer.status = 'idle';
+      state.multiplayer.players.length = 0;
+      state.multiplayer.players.__dirty = true;
+      state.multiplayer.playerCount = 0;
+      state.multiplayer.readyCount = 0;
+      state.multiplayer.everyoneReady = false;
+      state.multiplayer.opponentText = '';
+      state.multiplayer.opponentScores = '';
+    },
+
+    mperror: (state, payload) => {
+      state.multiplayer.lastError = (payload && payload.message) || 'Error';
+      if (state.multiplayer.status === 'connecting') {
+        state.multiplayer.status = 'idle';
+      }
+    },
+
+    /**
+     * Snapshot of room state from network.
+     */
+    mproomupdate: (state, payload) => {
+      state.multiplayer.uid = payload.uid;
+      state.multiplayer.isHost = !!payload.isHost;
+      state.multiplayer.status = payload.status || state.multiplayer.status;
+      state.multiplayer.players.length = 0;
+      state.multiplayer.players.__dirty = true;
+
+      let readyCount = 0;
+      let opponentText = '';
+      let opponentScores = '';
+      let hostName = '';
+
+      for (let i = 0; i < payload.players.length; i++) {
+        const p = payload.players[i];
+        state.multiplayer.players.push(p);
+        if (p.ready) readyCount++;
+        if (p.uid !== payload.uid) {
+          const tag = p.finished ? ' DONE' : '';
+          opponentText += `${truncate(p.name, 14)} (${Math.round(p.accuracy || 0)}%)${tag}\n`;
+          opponentScores += `${p.score | 0}\n`;
+        }
+        if (payload.song && p.uid === (payload.hostUid || '')) hostName = p.name;
+      }
+
+      state.multiplayer.playerCount = payload.players.length;
+      state.multiplayer.readyCount = readyCount;
+      state.multiplayer.everyoneReady =
+        payload.players.length >= 2 && readyCount === payload.players.length;
+      state.multiplayer.opponentText = opponentText;
+      state.multiplayer.opponentScores = opponentScores;
+      state.multiplayer.hostName = hostName;
+    },
+
+    /**
+     * Non-host: host has selected a song. Mirror it into menuSelectedChallenge
+     * so zip-loader will fetch it on play.
+     */
+    mpremotesongselect: (state, song) => {
+      Object.assign(state.menuSelectedChallenge, {
+        id: song.id,
+        difficulty: song.difficulty,
+        beatmapCharacteristic: song.beatmapCharacteristic,
+        difficultyId: song.difficultyId,
+        songName: song.songName,
+        songSubName: song.songSubName,
+        image: song.image,
+        version: song.version,
+        directDownload: song.directDownload,
+        downloads: song.downloads,
+        downloadsText: song.downloadsText,
+        songDuration: song.songDuration,
+        metadata: song.metadata || {}
+      });
+      challengeDataStore[song.id] = state.menuSelectedChallenge;
+    },
+
+    /**
+     * Non-host: host has triggered start; run the equivalent of playbuttonclick
+     * but skip the host-only broadcast that the multiplayer component handles.
+     */
+    mpremoteplaystart: state => {
+      if (!state.menuSelectedChallenge.id) { return; }
+      resetScore(state);
+      Object.assign(state.challenge, state.menuSelectedChallenge);
+      state.menuActive = false;
+      state.multiplayer.lobbyOpen = false;
+      state.menuSelectedChallenge.id = '';
+      state.menuSelectedChallenge.difficulty = '';
+      state.menuSelectedChallenge.beatmapCharacteristic = '';
+      state.isSearching = false;
+      state.isLoading = true;
+      state.loadingText = 'Loading...';
+    },
+
     pausegame: state => {
       if (!state.isPlaying) { return; }
       state.isPaused = true;
@@ -645,6 +780,7 @@ AFRAME.registerState({
 
       // Reset menu.
       state.menuActive = false;
+      state.multiplayer.lobbyOpen = false;
       state.menuSelectedChallenge.id = '';
       state.menuSelectedChallenge.difficulty = '';
       state.menuSelectedChallenge.beatmapCharacteristic = '';
@@ -886,6 +1022,31 @@ AFRAME.registerState({
       state.gameMode !== 'ride' &&
       state.inVR &&
       (state.isPlaying || state.isPaused);
+
+    // MP gating — non-host cannot drive song selection or playback.
+    state.mpActive = !!state.multiplayer.active;
+    state.mpHostControl = !state.multiplayer.active || state.multiplayer.isHost;
+    state.mpLobbyVisible =
+      state.multiplayer.lobbyOpen && state.menuActive && !state.isMenuOpening;
+    state.mpHudVisible =
+      state.multiplayer.active &&
+      state.multiplayer.players.length > 1 &&
+      (state.isPlaying || state.isPaused);
+    state.mpResultsVisible =
+      state.multiplayer.active &&
+      state.isVictory &&
+      state.multiplayer.players.length > 1;
+    state.mpRoomCodeText = state.multiplayer.roomCode
+      ? 'ROOM ' + state.multiplayer.roomCode
+      : '';
+    state.mpStatusText = (() => {
+      if (state.multiplayer.lastError) return state.multiplayer.lastError;
+      if (state.multiplayer.status === 'connecting') return 'Connecting...';
+      if (state.multiplayer.status === 'idle') return 'Create or join a room.';
+      if (state.multiplayer.players.length < 2) return 'Waiting for another player...';
+      if (state.multiplayer.isHost) return 'Pick a song and press PLAY.';
+      return 'Waiting for host to pick a song...';
+    })();
   }
 });
 

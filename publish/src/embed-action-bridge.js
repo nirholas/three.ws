@@ -45,6 +45,17 @@ export class EmbedActionBridge {
 		this._running = false;
 		this._onMessage = this._handleMessage.bind(this);
 		this._onAction = this._handleAction.bind(this);
+		this._parentOrigin = this._seedParentOrigin();
+		this._parentOriginLocked = false;
+	}
+
+	_seedParentOrigin() {
+		try {
+			if (this._win.parent === this._win) return this._win.location.origin;
+			const ref = this._win.document?.referrer;
+			if (ref) return new URL(ref).origin;
+		} catch {}
+		return null;
 	}
 
 	start() {
@@ -91,11 +102,13 @@ export class EmbedActionBridge {
 	}
 
 	_toParent(msg) {
-		// Use '*' as targetOrigin — we don't know the parent's origin at construction time.
-		// Incoming messages are validated via _originAllowed before acting on them.
+		if (!this._parentOrigin) {
+			console.warn('[embed-action-bridge] parent origin unknown; dropping', msg.op);
+			return;
+		}
 		this._win.parent.postMessage(
 			{ ...msg, v: PROTOCOL_VERSION, source: 'agent-3d', id: msg.id || genId() },
-			'*',
+			this._parentOrigin,
 		);
 	}
 
@@ -127,6 +140,13 @@ export class EmbedActionBridge {
 		const msg = event.data;
 		if (!msg || msg.v !== PROTOCOL_VERSION || msg.source !== 'agent-host') return;
 		if (msg.kind !== 'request') return;
+
+		if (!this._parentOriginLocked) {
+			this._parentOrigin = event.origin;
+			this._parentOriginLocked = true;
+		} else if (event.origin !== this._parentOrigin) {
+			return;
+		}
 
 		const { op, payload = {} } = msg;
 
