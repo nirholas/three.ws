@@ -5,7 +5,7 @@
  * (5 tabs). Routing is path-based: /marketplace and /marketplace/agents/:id.
  */
 
-const API = '/api/marketplace';
+const API = 'https://nirholas.github.io/AI-Agents-Library/index.json';
 
 const CATEGORY_LABELS = {
 	academic: 'Academic',
@@ -67,15 +67,7 @@ window.addEventListener('popstate', render);
 
 // ── List view ─────────────────────────────────────────────────────────────
 
-async function loadCategories() {
-	try {
-		const r = await fetch(`${API}/categories`);
-		const j = await r.json();
-		renderCategories(j.data);
-	} catch (err) {
-		console.error('[marketplace] categories', err);
-	}
-}
+
 
 function renderCategories(data) {
 	const total = data?.total || 0;
@@ -133,16 +125,24 @@ async function loadList(reset = false) {
 		els.grid.innerHTML = '<div class="market-empty">Loading…</div>';
 	}
 	try {
-		const url = new URL(`${API}/agents`, location.origin);
-		if (state.category) url.searchParams.set('category', state.category);
-		if (state.q) url.searchParams.set('q', state.q);
-		if (state.sort) url.searchParams.set('sort', state.sort);
-		if (state.cursor) url.searchParams.set('cursor', state.cursor);
-		const r = await fetch(url);
+		const r = await fetch(API);
 		const j = await r.json();
-		const items = j?.data?.items || [];
+		const items = j?.agents || [];
 		state.items = reset ? items : [...state.items, ...items];
-		state.cursor = j?.data?.next_cursor || null;
+		state.items = state.items.map(agent => ({
+			id: agent.homepage || agent.github,
+			name: agent.name,
+			category: agent.tags ? agent.tags[0] : 'general',
+			description: agent.description,
+			views_count: 0,
+			forks_count: 0,
+			skills: agent.tools || [],
+			has_paid_skills: false,
+			published_at: new Date().toISOString(),
+			author_name: agent.author,
+		}));
+		// No cursor from a single file
+		state.cursor = null;
 		renderGrid();
 	} catch (err) {
 		console.error('[marketplace] list', err);
@@ -173,7 +173,7 @@ function renderCard(a) {
 			<div class="avatar">${initial(a.name)}</div>
 			<div style="min-width:0;flex:1">
 				<div class="title">${escapeHtml(a.name || 'Untitled')}</div>
-				<div class="author">${escapeHtml(a.category || 'general')}</div>
+				<div class="author">${escapeHtml(a.author_name || 'Anonymous')}</div>
 			</div>
 		</div>
 		<div class="desc">${escapeHtml(a.description || '')}</div>
@@ -200,24 +200,15 @@ async function loadDetail(id) {
 	els.detail.scrollIntoView({ behavior: 'instant', block: 'start' });
 
 	try {
-		const [aR, vR, sR] = await Promise.all([
-			fetch(`${API}/agents/${id}`),
-			fetch(`${API}/agents/${id}/versions`),
-			fetch(`${API}/agents/${id}/similar`),
-		]);
-		const aJ = await aR.json();
-		if (!aR.ok) {
-			renderDetailError(aJ?.error_description || 'Agent not found');
+		const agent = state.items.find(a => a.id === id);
+		if (!agent) {
+			renderDetailError('Agent not found');
 			return;
 		}
-		const a = aJ.data.agent;
-		detailState = { agent: a, bookmarked: !!aJ.data.bookmarked };
-		renderDetail(a, aJ.data.bookmarked);
-		renderVersions((await vR.json())?.data?.versions || []);
-		renderSimilar((await sR.json())?.data?.items || []);
-
-		// Fire-and-forget view counter.
-		fetch(`${API}/agents/${id}/view`, { method: 'POST' }).catch(() => {});
+		detailState = { agent: agent, bookmarked: false };
+		renderDetail(agent, false);
+		renderVersions([]); // No version history from single file
+		renderSimilar([]); // No similar agents from single file
 	} catch (err) {
 		console.error('[marketplace] detail', err);
 		renderDetailError('Failed to load agent.');
@@ -398,18 +389,7 @@ async function toggleBookmark() {
 // ── Wiring ────────────────────────────────────────────────────────────────
 
 function bindEvents() {
-	let searchTimer;
-	els.search.addEventListener('input', (e) => {
-		clearTimeout(searchTimer);
-		searchTimer = setTimeout(() => {
-			state.q = e.target.value.trim();
-			loadList(true);
-		}, 200);
-	});
-	els.sortSel.addEventListener('change', (e) => {
-		state.sort = e.target.value;
-		loadList(true);
-	});
+
 	els.loadMore.addEventListener('click', () => loadList(false));
 	els.back.addEventListener('click', () => navTo('/marketplace'));
 	$('d-fork').addEventListener('click', fork);
@@ -469,7 +449,6 @@ function render() {
 
 function init() {
 	bindEvents();
-	loadCategories();
 	loadList(true);
 	initPlugins();
 	render();
