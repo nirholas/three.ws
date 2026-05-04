@@ -1,20 +1,130 @@
-/******************************************************************************
- * /features — pure-CSS 3D parallax across three acts.
- *
- * Technique: <main class="parallax"> establishes a perspective scroll
- * container. Each <section class="parallax-act"> is a stacking context with
- * absolutely-positioned .parallax-layer children. Each layer is pushed back
- * in Z by `--depth * --perspective` and scaled up by `--depth + 1` to
- * compensate, so it still fills the viewport but drifts slower than the
- * front layer during scroll. Zero JS drives the parallax — the browser's
- * native 3D projection during scroll does the work.
- *
- * Live <agent-3d> elements live on the front-most layer of each act and
- * lazy-boot via IntersectionObserver in features.js.
- *
- * Honors prefers-reduced-motion (collapses to flat) and narrow viewports
- * (single-column flat layout, parallax disabled).
- ******************************************************************************/
+.features-page {
+	background-color: #000;
+	color: #fff;
+}
+
+.features-main {
+	padding: 2rem 1rem;
+}
+
+.features-hero {
+	text-align: center;
+	margin-bottom: 4rem;
+}
+
+.features-hero-title {
+	font-size: 3rem;
+	font-weight: 700;
+	margin-bottom: 1rem;
+}
+
+.features-hero-subtitle {
+	font-size: 1.25rem;
+	color: #aaa;
+}
+
+.features-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+	gap: 2rem;
+	margin-bottom: 4rem;
+}
+
+.feature-card {
+	background-color: #111;
+	border: 1px solid #333;
+	border-radius: 0.5rem;
+	padding: 2rem;
+	text-align: center;
+	transition: transform 0.2s;
+}
+
+.feature-card:hover {
+	transform: translateY(-0.5rem);
+}
+
+.feature-card-icon {
+	font-size: 2rem;
+	margin-bottom: 1rem;
+}
+
+.feature-card-title {
+	font-size: 1.5rem;
+	font-weight: 600;
+	margin-bottom: 0.5rem;
+}
+
+.feature-card-desc {
+	color: #aaa;
+}
+
+.features-community {
+	text-align: center;
+	margin-bottom: 4rem;
+}
+
+.features-community-title {
+	font-size: 2rem;
+	font-weight: 600;
+	margin-bottom: 1rem;
+}
+
+.features-community-subtitle {
+	font-size: 1.25rem;
+	color: #aaa;
+	margin-bottom: 2rem;
+}
+
+.features-community-links {
+	display: flex;
+	justify-content: center;
+	gap: 2rem;
+}
+
+.community-link {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	color: #fff;
+	text-decoration: none;
+	font-size: 1.25rem;
+	transition: color 0.2s;
+}
+
+.community-link:hover {
+	color: #aaa;
+}
+
+.features-cta {
+	text-align: center;
+}
+
+.features-cta-title {
+	font-size: 2rem;
+	font-weight: 600;
+	margin-bottom: 1rem;
+}
+
+.features-cta-subtitle {
+	font-size: 1.25rem;
+	color: #aaa;
+	margin-bottom: 2rem;
+}
+
+.features-cta-button {
+	background-color: #fff;
+	color: #000;
+	padding: 1rem 2rem;
+	border-radius: 0.5rem;
+	text-decoration: none;
+	font-weight: 600;
+	transition: background-color 0.2s;
+}
+
+.features-cta-button:hover {
+	background-color: #aaa;
+}
+
 
 :root {
 	--features-perspective: 2.4rem;
@@ -906,6 +1016,32 @@
 	border: 1px solid rgba(255, 255, 255, 0.06);
 	border-radius: 12px;
 	padding: 1.4rem 1.5rem;
+}
+
+/* Category divider — spans full grid width, no card chrome */
+.outro-grid .outro-cat {
+	grid-column: 1 / -1;
+	background: none;
+	border: none;
+	border-top: 1px solid rgba(255, 255, 255, 0.06);
+	border-radius: 0;
+	padding: 2.5rem 0 0.5rem;
+	margin-top: 0.5rem;
+}
+
+.outro-grid .outro-cat:first-child {
+	border-top: none;
+	padding-top: 0;
+	margin-top: 0;
+}
+
+.outro-cat span {
+	font-family: 'Space Grotesk', sans-serif;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: rgba(255, 255, 255, 0.38);
 }
 
 .outro-grid h4 {

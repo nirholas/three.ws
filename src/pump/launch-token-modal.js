@@ -73,10 +73,63 @@ export class LaunchTokenModal {
 		this._overlay = null;
 		this._chart = null;
 		this._keyHandler = null;
+		this._solPriceUsd = null;
+	}
+
+	async _fetchSolPrice() {
+		try {
+			const r = await fetch(
+				'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd',
+			);
+			if (r.ok) {
+				const data = await r.json();
+				this._solPriceUsd = data?.solana?.usd || null;
+				// If modal is open on step 1, re-render to show price hints
+				if (this._overlay && this._step === 1) {
+					this._renderStep1();
+				}
+			}
+		} catch (e) {
+			console.warn('Could not fetch SOL price', e);
+		}
+	}
+
+	_injectCss() {
+		if (document.getElementById('ltm-styles')) return;
+		const style = document.createElement('style');
+		style.id = 'ltm-styles';
+		style.textContent = `
+			.ltm-input-wrap { position: relative; display: flex; }
+			.ltm-input-wrap .ltm-input { flex-grow: 1; }
+			.ltm-input-adornment {
+				position: absolute;
+				right: 12px;
+				top: 50%;
+				transform: translateY(-50%);
+				color: var(--muted, #888);
+				font-size: 13px;
+				pointer-events: none;
+			}
+		`;
+		document.head.appendChild(style);
+	}
+
+	_solFmtWithUsd(solAmount) {
+		if (solAmount == null) return '—';
+		const n = Number(solAmount);
+		let text = `${n >= 10 ? n.toFixed(3) : n.toFixed(4)} SOL`;
+		if (this._solPriceUsd) {
+			const usd = (n * this._solPriceUsd).toFixed(2);
+			text += ` (~$${usd})`;
+		}
+		return text;
 	}
 
 	open() {
 		if (this._overlay) return;
+		this._injectCss();
+		this._fetchSolPrice();
+
 		const el = document.createElement('div');
 		el.className = 'ltm-overlay';
 		document.body.appendChild(el);
@@ -193,8 +246,11 @@ export class LaunchTokenModal {
 					<label class="ltm-label" for="ltm-buy">
 						Dev buy <span class="ltm-hint">optional, 0–50 SOL</span>
 					</label>
-					<input class="ltm-input" type="number" id="ltm-buy"
-						min="0" max="50" step="0.1" value="${d.initialBuySol}">
+					<div class="ltm-input-wrap">
+						<input class="ltm-input" type="number" id="ltm-buy"
+							min="0" max="50" step="0.1" value="${d.initialBuySol}">
+						<span class="ltm-input-adornment" id="ltm-buy-usd"></span>
+					</div>
 				</div>
 				${netToggle}`,
 				`<div></div>
@@ -205,7 +261,21 @@ export class LaunchTokenModal {
 		const nameInput = this._overlay.querySelector('#ltm-name');
 		const symInput = this._overlay.querySelector('#ltm-sym');
 		const symErr = this._overlay.querySelector('#ltm-sym-err');
+		const buyInput = this._overlay.querySelector('#ltm-buy');
+		const buyUsd = this._overlay.querySelector('#ltm-buy-usd');
 		let symTouched = d.symbol !== _nameToSymbol(d.name);
+
+		const updateBuyUsd = () => {
+			if (!this._solPriceUsd || !buyUsd) return;
+			const sol = parseFloat(buyInput.value) || 0;
+			const usd = (sol * this._solPriceUsd).toFixed(2);
+			buyUsd.textContent = `~ $${usd}`;
+		};
+
+		if (buyInput) {
+			buyInput.addEventListener('input', updateBuyUsd);
+			updateBuyUsd();
+		}
 
 		nameInput.addEventListener('input', () => {
 			if (!symTouched) symInput.value = _nameToSymbol(nameInput.value);
@@ -302,17 +372,17 @@ export class LaunchTokenModal {
 				return;
 			}
 
-			const rows = [['Fixed costs (rent + fees)', _solFmt(data.fixed_total_sol)]];
+			const rows = [['Fixed costs (rent + fees)', this._solFmtWithUsd(data.fixed_total_sol)]];
 			if (data.initial_buy && data.initial_buy.sol > 0) {
-				rows.push(['Dev buy', _solFmt(data.initial_buy.sol)]);
+				rows.push(['Dev buy', this._solFmtWithUsd(data.initial_buy.sol)]);
 				if (data.initial_buy.protocol_fee_sol > 0)
-					rows.push(['Protocol fee (~1%)', _solFmt(data.initial_buy.protocol_fee_sol)]);
+					rows.push(['Protocol fee (~1%)', this._solFmtWithUsd(data.initial_buy.protocol_fee_sol)]);
 				if (data.initial_buy.tokens_out) {
 					const n = Number(data.initial_buy.tokens_out).toLocaleString();
 					rows.push([`Tokens you receive`, `${n} ${this._d.symbol}`]);
 				}
 			}
-			rows.push(['Total SOL needed', _solFmt(data.total_sol)]);
+			rows.push(['Total SOL needed', this._solFmtWithUsd(data.total_sol)]);
 
 			this._overlay.querySelector('#ltm-quote').innerHTML = rows
 				.map(

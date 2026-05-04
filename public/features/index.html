@@ -396,102 +396,201 @@
 			<section class="features-outro" aria-labelledby="outro-title">
 				<h3 id="outro-title">Everything an agent needs.</h3>
 				<ul class="outro-grid">
+
+					<!-- ── 3D & Avatar ───────────────────────────────────────── -->
+					<li class="outro-cat" aria-hidden="true"><span>3D &amp; Avatar</span></li>
 					<li>
 						<h4>3D Viewer</h4>
-						<p>
-							WebGL 2.0 via three.js r176. Drag-drop any <code>.glb</code> — instant
-							rendering with Draco, KTX2, Meshopt, HDR environments, PBR materials,
-							and Khronos-spec glTF validation.
-						</p>
-					</li>
-					<li>
-						<h4>LLM Agent Runtime</h4>
-						<p>
-							Claude-powered brain with a structured tool-loop — up to 8 iterations
-							per turn. Built-in tools: <code>wave</code>, <code>lookAt</code>,
-							<code>play_clip</code>, <code>setExpression</code>, <code>speak</code>,
-							<code>remember</code>.
-						</p>
+						<p>WebGL 2.0 via three.js r176. Drag-drop any <code>.glb</code> — instant rendering with Draco, KTX2, Meshopt, HDR environments, PBR materials, and Khronos-spec glTF validation.</p>
 					</li>
 					<li>
 						<h4>Empathy Layer</h4>
-						<p>
-							Six emotions (celebration, concern, curiosity, empathy, patience,
-							neutral) blended continuously via morph-target weights. Reacts to
-							protocol events — not a finite-state machine.
-						</p>
+						<p>Six emotions (celebration, concern, curiosity, empathy, patience, neutral) blended continuously via morph-target weights. Reacts to protocol events — not a finite-state machine.</p>
 					</li>
 					<li>
-						<h4>Voice — TTS &amp; STT</h4>
-						<p>
-							Web Speech API out of the box. ElevenLabs integration for
-							production-quality voice cloning. Microphone input with live transcript
-							streamed back to the agent.
-						</p>
+						<h4>Lip Sync</h4>
+						<p>Real-time viseme animation driven by live audio frequency analysis. Maps frequency bands to morph targets for natural mouth movement during speech — zero external service required.</p>
 					</li>
 					<li>
-						<h4>Widget Studio</h4>
-						<p>
-							Five widget types: turntable, animation gallery, talking agent,
-							ERC-8004 passport card, hotspot tour. Point-and-click builder at
-							<code>/studio</code> — copy an iframe snippet and embed anywhere.
-						</p>
+						<h4>Avatar Generation</h4>
+						<p>Photo-to-3D via Avaturn: three-view capture, hosted inference, direct GLB download. Ready Player Me integration also available for instant avatar creation in a familiar browser flow.</p>
 					</li>
 					<li>
-						<h4><code>&lt;agent-3d&gt;</code> Web Component</h4>
-						<p>
-							Drop one script tag and one element — no framework needed. Versioned
-							CDN bundles, lazy-boot via IntersectionObserver, postMessage API for
-							host-page communication, Open Graph + oEmbed support.
-						</p>
+						<h4>Model Optimization</h4>
+						<p>Draco mesh compression, KTX2 texture transcoding, Meshopt simplification, and JPEG/WebP downscaling — all in-browser. Export optimized GLBs ready for production delivery.</p>
+					</li>
+					<li>
+						<h4>glTF Validator</h4>
+						<p>Full Khronos spec compliance check with line-level error and warning reporting. Integrated into the drag-drop viewer and the standalone <code>/validation</code> page.</p>
+					</li>
+					<li>
+						<h4>Screenshot &amp; GLB Export</h4>
+						<p>Export the current 3D scene as PNG or download the modified model (with applied accessories and morphs) as a new GLB file — directly from the browser, no server round-trip.</p>
+					</li>
+					<li>
+						<h4>Animation Library</h4>
+						<p>Curated preset clip collection: Mixamo, custom motion-captured sets, and idle variants. Browse, preview, apply, and download animations from the viewer or agent settings.</p>
+					</li>
+
+					<!-- ── Agent Intelligence ────────────────────────────────── -->
+					<li class="outro-cat" aria-hidden="true"><span>Agent Intelligence</span></li>
+					<li>
+						<h4>LLM Agent Runtime</h4>
+						<p>Claude-powered brain with a structured tool-loop — up to 8 iterations per turn. Built-in tools: <code>wave</code>, <code>lookAt</code>, <code>play_clip</code>, <code>setExpression</code>, <code>speak</code>, <code>remember</code>.</p>
 					</li>
 					<li>
 						<h4>Composable Skills</h4>
-						<p>
-							Self-contained skill bundles (SKILL.md + tools.json + handlers.js)
-							installed from IPFS, Arweave, or HTTP. Three trust modes: any,
-							owned-only, whitelist. Skills can define new LLM tools.
-						</p>
+						<p>Self-contained skill bundles (SKILL.md + tools.json + handlers.js) installed from IPFS, Arweave, or HTTP. Three trust modes: any, owned-only, whitelist. Skills can define new LLM tools.</p>
 					</li>
 					<li>
 						<h4>Persistent Memory</h4>
-						<p>
-							Frontmatter-<code>.md</code> memory files indexed by a <code>MEMORY.md</code>
-							manifest. Four storage modes: local, IPFS, encrypted-IPFS, none.
-							High-salience entries injected into the system prompt each turn.
-						</p>
+						<p>Frontmatter-<code>.md</code> memory files indexed by a <code>MEMORY.md</code> manifest. Four storage modes: local, IPFS, encrypted-IPFS, none. High-salience entries injected into the system prompt each turn.</p>
 					</li>
 					<li>
-						<h4>MCP Server</h4>
-						<p>
-							Model Context Protocol 2025-06-18 over HTTP, JSON-RPC 2.0. Listed on
-							the official MCP Registry as <code>io.github.nirholas/three.ws</code>.
-							External AI systems can drive avatars and call tools programmatically.
-						</p>
+						<h4>Persona Extraction</h4>
+						<p>Five-question interview flow powered by Claude. Extracts tone tags, vocabulary patterns, and behavioral signals, then writes a custom system prompt that makes the agent sound like you.</p>
 					</li>
 					<li>
-						<h4>OAuth 2.1 + API Keys</h4>
-						<p>
-							Full RFC 6749 + PKCE authorization server with dynamic client
-							registration, token revocation, and introspection. Developer API keys
-							with scope and expiry for server-to-server integrations.
-						</p>
+						<h4>Agent-to-Agent Delegation</h4>
+						<p>One agent can invoke another agent's brain as a skill — passing structured context and receiving a typed response. Enables multi-hop reasoning and specialist sub-agent networks.</p>
 					</li>
+					<li>
+						<h4>Streaming Chat</h4>
+						<p>Server-Sent Events deliver LLM tokens to the UI as they arrive. Tool calls, intermediate thoughts, and final responses all stream through a single connection — no polling.</p>
+					</li>
+
+					<!-- ── Voice & Communication ─────────────────────────────── -->
+					<li class="outro-cat" aria-hidden="true"><span>Voice &amp; Communication</span></li>
+					<li>
+						<h4>Voice — TTS &amp; STT</h4>
+						<p>Web Speech API out of the box. ElevenLabs integration for production-quality voice. Microphone input with live transcript streamed back to the agent brain each turn.</p>
+					</li>
+					<li>
+						<h4>Voice Cloning</h4>
+						<p>Upload 30+ seconds of audio and clone a voice via ElevenLabs. The resulting voice ID is stored with the agent and used for all subsequent speech synthesis — distinct voice, zero extra calls.</p>
+					</li>
+					<li>
+						<h4>LiveKit Video</h4>
+						<p>Real-time video streaming tokens generated server-side for face-to-face agent sessions. Enables multi-participant video rooms with agent avatars rendered as named participants.</p>
+					</li>
+
+					<!-- ── Distribution & Embedding ─────────────────────────── -->
+					<li class="outro-cat" aria-hidden="true"><span>Distribution &amp; Embedding</span></li>
+					<li>
+						<h4>Widget Studio</h4>
+						<p>Five widget types: turntable, animation gallery, talking agent, ERC-8004 passport card, hotspot tour. Point-and-click builder at <code>/studio</code> — copy an iframe snippet and embed anywhere.</p>
+					</li>
+					<li>
+						<h4><code>&lt;agent-3d&gt;</code> Web Component</h4>
+						<p>Drop one script tag and one element — no framework needed. Versioned CDN bundles, lazy-boot via IntersectionObserver, postMessage API for host-page communication, Open Graph + oEmbed support.</p>
+					</li>
+					<li>
+						<h4>Plugin Marketplace</h4>
+						<p>Browse, import, publish, and install tool plugins in LobeHub ToolManifest format. IPFS and HTTP hosting. Per-plugin trust level and scope enforcement at install time.</p>
+					</li>
+					<li>
+						<h4>Widget Analytics</h4>
+						<p>Per-widget view counter, session stats, and embed-origin tracking. Dashboard shows impression counts and top referrers for every published widget — no third-party script required.</p>
+					</li>
+					<li>
+						<h4>oEmbed &amp; Open Graph</h4>
+						<p>oEmbed endpoint for rich previews in WordPress, Ghost, and Notion. Server-rendered Open Graph meta tags with avatar screenshots ensure agents look great when linked anywhere.</p>
+					</li>
+
+					<!-- ── Identity & Standards ──────────────────────────────── -->
+					<li class="outro-cat" aria-hidden="true"><span>Identity &amp; Standards</span></li>
 					<li>
 						<h4>Identity Registry</h4>
-						<p>
-							ERC-721 based. Each agent has an <code>agentId</code>, delegated signer
-							(EIP-712), and an IPFS-pinned manifest. Discoverable by any A2A or MCP
-							client across 20+ EVM chains and Solana.
-						</p>
+						<p>ERC-721 based. Each agent has an <code>agentId</code>, delegated signer (EIP-712), and an IPFS-pinned manifest. Discoverable by any A2A or MCP client across 20+ EVM chains and Solana.</p>
 					</li>
 					<li>
 						<h4>Reputation &amp; Validation</h4>
-						<p>
-							Signed on-chain feedback scores via <code>ReputationRegistry.sol</code>.
-							Validator attestations (glTF audits, security reviews, zkML proofs) via
-							<code>ValidationRegistry.sol</code>. Trust proportional to value at risk.
-						</p>
+						<p>Signed on-chain feedback scores via <code>ReputationRegistry.sol</code>. Validator attestations (glTF audits, security reviews, zkML proofs) via <code>ValidationRegistry.sol</code>. Trust proportional to value at risk.</p>
+					</li>
+					<li>
+						<h4>MCP Server</h4>
+						<p>Model Context Protocol 2025-06-18 over HTTP, JSON-RPC 2.0. Listed on the official MCP Registry as <code>io.github.nirholas/three.ws</code>. External AI systems can drive avatars and call tools programmatically.</p>
+					</li>
+					<li>
+						<h4>OAuth 2.1 + API Keys</h4>
+						<p>Full RFC 6749 + PKCE authorization server with dynamic client registration, token revocation, and introspection. Developer API keys with scope and expiry for server-to-server integrations.</p>
+					</li>
+					<li>
+						<h4>SIWE &amp; SIWS Auth</h4>
+						<p>Sign-In with Ethereum (EIP-4361) and Sign-In with Solana — cryptographic wallet authentication with nonce-based challenge-response. No passwords; your keys prove your identity.</p>
+					</li>
+					<li>
+						<h4>EIP-7710 Delegated Permissions</h4>
+						<p>Grant transferable on-chain permissions with caveats and enforcers. Agents act on your behalf within scoped limits — without ever holding your private key.</p>
+					</li>
+					<li>
+						<h4>ENS &amp; SNS Resolution</h4>
+						<p>Ethereum Name Service and Solana Name Service lookup built into the agent skill layer. Resolve human-readable names to addresses and back across both ecosystems.</p>
+					</li>
+
+					<!-- ── Solana & DeFi ──────────────────────────────────────── -->
+					<li class="outro-cat" aria-hidden="true"><span>Solana &amp; DeFi</span></li>
+					<li>
+						<h4>Pump.fun Integration</h4>
+						<p>Full bonding curve token creation, buy/sell/AMM trading, social fee claiming, and live Helius webhook signals — all callable by your agent as native skills.</p>
+					</li>
+					<li>
+						<h4>Jupiter Swap</h4>
+						<p>DEX aggregator quote and full swap execution for any SPL token pair. Token symbol-to-mint resolution built in — say "swap 1 SOL for BONK" and the agent handles the rest.</p>
+					</li>
+					<li>
+						<h4>Pyth Price Oracle</h4>
+						<p>Live USD prices for SOL, BTC, ETH, USDC, BONK, WIF, JUP, and PYTH streamed from Pyth Network. Agents check prices before executing trades or generating threshold alerts.</p>
+					</li>
+					<li>
+						<h4>Solana Blinks</h4>
+						<p>Parse and execute shareable Solana blockchain action URLs. Agents can follow any Blink — staking, minting, voting — as a single composable tool call.</p>
+					</li>
+					<li>
+						<h4>DCA Strategies</h4>
+						<p>Dollar-cost averaging skills: recurring token purchases at fixed intervals (daily, weekly, custom). Runs autonomously via on-chain delegation — no manual trigger needed.</p>
+					</li>
+					<li>
+						<h4>Solana NFT Portfolio</h4>
+						<p>Helius DAS API integration to list and analyze a wallet's NFT holdings. Agents can describe, value, and take action on NFTs owned by the connected wallet.</p>
+					</li>
+
+					<!-- ── Payments & Monetization ───────────────────────────── -->
+					<li class="outro-cat" aria-hidden="true"><span>Payments &amp; Monetization</span></li>
+					<li>
+						<h4>x402 Payment Protocol</h4>
+						<p>HTTP 402 Payment Required skill invocation. Agents gate tool calls behind micro-payments, with intent-based billing that settles automatically on-chain — no checkout flow.</p>
+					</li>
+					<li>
+						<h4>Subscriptions &amp; Billing</h4>
+						<p>Recurring billing with on-chain or fiat payment methods. Creators set a monthly price; subscribers are charged automatically. Revenue tracked and paid out to creator wallets.</p>
+					</li>
+					<li>
+						<h4>Agent-to-Agent Payments</h4>
+						<p>Agents send SOL or SPL tokens to other agents or wallets via delegated keypair — enabling autonomous fee settlement, tipping, and multi-agent economic coordination.</p>
+					</li>
+					<li>
+						<h4>Royalty Tracking</h4>
+						<p>Per-skill earning history for creators. Every time a published skill is invoked, the creator's royalty accrues on-chain and appears in their earnings dashboard.</p>
+					</li>
+
+					<!-- ── Developer Tools ───────────────────────────────────── -->
+					<li class="outro-cat" aria-hidden="true"><span>Developer Tools</span></li>
+					<li>
+						<h4>OpenAPI 3.1 Spec</h4>
+						<p>Auto-generated API documentation at <code>/openapi.json</code>. Full OAuth 2.1 security schemes, typed request/response schemas, and example payloads for every endpoint.</p>
+					</li>
+					<li>
+						<h4>LLM Proxy</h4>
+						<p>Authenticated <code>/api/llm/anthropic</code> endpoint with rate limiting and usage tracking. Third-party tools access Claude through your agent's OAuth token — no direct Anthropic key needed.</p>
+					</li>
+					<li>
+						<h4>RFC 8414 OAuth Discovery</h4>
+						<p><code>/.well-known/oauth-authorization-server</code> and <code>/.well-known/ai-plugin.json</code> endpoints. Any OAuth 2.1 client or AI assistant can auto-configure itself against the server.</p>
+					</li>
+					<li>
+						<h4>Scene Gates</h4>
+						<p>Wallet-gated 3D scene access using SIWE/SIWS two-phase challenge-response. Lock any scene behind token ownership, NFT holdings, or custom on-chain conditions.</p>
 					</li>
 				</ul>
 			</section>

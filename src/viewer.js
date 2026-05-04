@@ -216,22 +216,7 @@ export class Viewer {
 		window.addEventListener('message', this._onMessage, false);
 	}
 
-	setCameraTarget(boneName) {
-		if (!this.content) return;
 
-		let bone = null;
-		this.content.traverse((object) => {
-			if (object.isBone && object.name === boneName) {
-				bone = object;
-			}
-		});
-
-		if (bone) {
-			const target = new THREE.Vector3();
-			bone.getWorldPosition(target);
-			this._tweenCamera(this.defaultCamera.position, target, 600);
-		}
-	}
 
 	setCameraTarget(boneName) {
 		if (!this.content) return;
