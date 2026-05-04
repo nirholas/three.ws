@@ -944,65 +944,97 @@
 		// the avatar reacts even when the in-iframe widget overlay is hidden.
 		const REACT_COOLDOWN_MS = 2200;
 		const REACT_DEDUPE_MS = 30000;
+		const REACT_MAX_QUEUE = 6;
+		const REACT_MAX_HISTORY = 50;
+		const MOOD_PROFILE = {
+			chill:  { gestureScale: 0.7,  threshold: 30,  speakRate: 0.4 },
+			normal: { gestureScale: 1.0,  threshold: 0,   speakRate: 1.0 },
+			hype:   { gestureScale: 1.25, threshold: -20, speakRate: 1.5 },
+		};
 		const _reactSeen = new Map();
 		let _reactActiveUntil = 0;
 		let _reactActivePri = 0;
+		const _reactQueue = [];
+		const _reactHistory = [];
+		let _reactQueueTimer = null;
 
 		function reactionFor(kind, ev) {
 			if (!ev) return null;
+			let r = _baseReaction(kind, ev);
+			if (!r) return null;
+			const profile = MOOD_PROFILE[params.mood] || MOOD_PROFILE.normal;
+			const priority = (r.priority || 0) + profile.threshold;
+			if (priority < 0) return null;
+			if (r.gesture) r.gesture = { ...r.gesture, duration: Math.round(r.gesture.duration * profile.gestureScale) };
+			r.priority = priority;
+			return r;
+		}
+
+		function _baseReaction(kind, ev) {
+			const symbol = ev.symbol || ev.token_symbol || '';
+			const name = ev.name || ev.token_name || symbol || 'a token';
+			const num = (x) => { const n = Number(x); return Number.isFinite(n) ? n : 0; };
+			const mcInitial = num(ev.market_cap_usd_initial ?? ev.initial_market_cap_usd ?? ev.market_cap_at_launch);
+			const mcCurrent = num(ev.usd_market_cap ?? ev.market_cap_usd ?? ev.market_cap);
+			const mcMultiple = mcInitial && mcCurrent ? mcCurrent / mcInitial : 0;
+			const lifetimeSol = num(ev.lifetime_claim_sol ?? ev.lifetime_sol);
+			const creatorLaunches = num(ev.creator_launches);
+			const creatorGraduated = num(ev.creator_graduated);
+			const ghLinked = !!(ev.github_user || ev.github_repo || ev.github_account_age_days != null);
+			const ghVerified = !!(ev.verified ?? ev.signal_verified);
+			const ghCredible = ghLinked && (num(ev.github_account_age_days) >= 365 || num(ev.github_followers) >= 50 || num(ev.github_repo_stars ?? ev.repo_stars) >= 10);
+			const isWhaleClaim = lifetimeSol >= 50;
+			const isSerialCreator = creatorGraduated >= 3;
+			const isDevRelaunch = creatorLaunches >= 2 && creatorGraduated === 0;
+			const fmtMult = (m) => !Number.isFinite(m) || m <= 0 ? '—' : m >= 100 ? Math.round(m)+'×' : m >= 10 ? m.toFixed(0)+'×' : m.toFixed(1)+'×';
+			const fmtSol = (n) => !Number.isFinite(n) || n <= 0 ? '0 SOL' : n >= 1000 ? Math.round(n)+' SOL' : n.toFixed(2)+' SOL';
+
 			if (kind === 'graduation') {
-				const sym = ev.symbol || ev.name || 'a token';
-				const initial = Number(ev.market_cap_usd_initial ?? ev.initial_market_cap_usd ?? ev.market_cap_at_launch) || 0;
-				const current = Number(ev.usd_market_cap ?? ev.market_cap_usd ?? ev.market_cap) || 0;
-				const mult = initial && current ? current / initial : 1;
-				const dur = Math.min(9000, Math.max(4500, 4500 + Math.log10(Math.max(mult, 1)) * 1500));
-				const mcPart = current > 0 ? ` at ${formatMcSpoken(current)} market cap` : '';
+				const ageSec = ev.created_at ? Math.max(0, Math.floor(Date.now() / 1000) - Number(ev.created_at)) : 0;
+				const fresh = ageSec === 0 || ageSec < 1800;
+				const stale = ageSec > 86400;
+				if (mcMultiple >= 100) return { variant:'graduation_moonshot', icon:'🚀🌕', emote:{ trigger:'celebration', weight:1 }, gesture:{ name:'thriller', duration:9000 }, speak:{ text:`Moonshot! $${symbol||name} just went ${fmtMult(mcMultiple)} — bonded to PumpAMM.`, sentiment:0.95 }, lookAt:'camera', priority:100 };
+				if (mcMultiple >= 10) return { variant:'graduation_giant', icon:'🎓🔥', emote:{ trigger:'celebration', weight:0.95 }, gesture:{ name:'rumba', duration:7000 }, speak:{ text:`Giant pump: $${symbol||name} ${fmtMult(mcMultiple)} into PumpAMM.`, sentiment:0.85 }, lookAt:'camera', priority:95 };
+				if (isSerialCreator) return { variant:'graduation_serial_dev', icon:'🎓👑', emote:{ trigger:'celebration', weight:0.85 }, gesture:{ name:'capoeira', duration:6500 }, speak:{ text:`Serial creator strikes again — $${symbol||name} graduated. ${creatorGraduated} grads now.`, sentiment:0.7 }, lookAt:'camera', priority:92 };
+				const dur = stale ? 2500 : Math.min(9000, Math.max(4500, 4500 + Math.log10(Math.max(mcMultiple,1)+1)*1500));
+				const mcPart = mcCurrent > 0 ? ` at ${formatMcSpoken(mcCurrent)} market cap` : '';
 				const ageWord = ev.age ? ` after ${ageWordSpoken(ev.age)}` : '';
-				const launchesPart = ev.creator_launches && ev.creator_launches > 1
-					? ` Dev's ${ordinalSpoken(ev.creator_launches)} launch.`
-					: '';
+				const launchesPart = creatorLaunches > 1 ? ` Dev's ${ordinalSpoken(creatorLaunches)} launch.` : '';
 				return {
-					emote: { trigger: 'celebration', weight: 0.95 },
-					gesture: { name: 'rumba', duration: dur },
-					speak: { text: `${sym} bonded to PumpAMM${mcPart}${ageWord}.${launchesPart}`, sentiment: 0.7 },
-					priority: 90,
+					variant: stale ? 'graduation_stale' : 'graduation_standard',
+					icon: stale ? '🎓⏳' : '🎓',
+					emote: { trigger: 'celebration', weight: stale ? 0.4 : fresh ? 0.95 : 0.7 },
+					gesture: { name: stale ? 'wave' : 'rumba', duration: dur },
+					speak: { text: `${symbol||name} bonded to PumpAMM${mcPart}${ageWord}.${launchesPart}`, sentiment: stale ? 0.3 : 0.7 },
+					lookAt: 'camera',
+					priority: stale ? 40 : 90,
 				};
 			}
 			if (kind === 'claim') {
 				if (ev.fake_claim) {
 					const who = ev.github_user ? '@' + ev.github_user : shortAddrLocal(ev.claimer);
-					return {
-						emote: { trigger: 'concern', weight: 0.75 },
-						gesture: { name: 'shake', duration: 1500 },
-						speak: { text: `Fake claim from ${who}.`, sentiment: -0.6 },
-						priority: 70,
-					};
+					return { variant:'claim_fake', icon:'⚠️', emote:{ trigger:'concern', weight:0.85 }, gesture:{ name:'shake', duration:1800 }, speak:{ text:`Fake claim spotted from ${who}. Ignore it.`, sentiment:-0.6 }, lookAt:'down', priority:75 };
 				}
 				if (ev.first_time_claim) {
-					const linked = !!(ev.github_user || ev.github_repo || ev.github_account_age_days != null);
-					const verified = ev.verified ?? ev.signal_verified;
-					const name = linked ? (verified ? 'thriller' : 'silly') : 'celebrate';
-					const sym = ev.token_symbol || ev.symbol;
-					const who = linked ? '@' + ev.github_user : shortAddrLocal(ev.claimer || ev.creator);
-					return {
-						emote: { trigger: 'celebration', weight: 0.95 },
-						gesture: { name, duration: 5000 },
-						speak: {
-							text: `First-time claim by ${who}${sym ? ' on $' + sym : ''}${ev.ai_take ? ' — ' + ev.ai_take : ''}.`,
-							sentiment: 0.75,
-						},
-						priority: 85,
-					};
+					if (ghCredible && ghVerified) return { variant:'claim_first_verified_credible', icon:'🚨✅', emote:{ trigger:'celebration', weight:1 }, gesture:{ name:'thriller', duration:6000 }, speak:{ text:`Verified first claim by @${ev.github_user}${ev.ai_take?' — '+ev.ai_take:''}.`, sentiment:0.85 }, lookAt:'camera', priority:88 };
+					if (ghLinked && ghVerified) return { variant:'claim_first_verified', icon:'🚨', emote:{ trigger:'celebration', weight:0.95 }, gesture:{ name:'silly', duration:5500 }, speak:{ text:`First claim by @${ev.github_user||'dev'}${ev.ai_take?' — '+ev.ai_take:''}.`, sentiment:0.8 }, lookAt:'camera', priority:86 };
+					if (ghLinked) return { variant:'claim_first_unverified_gh', icon:'🚨❓', emote:{ trigger:'curiosity', weight:0.7 }, gesture:{ name:'capoeira', duration:4500 }, speak:{ text:`First claim — @${ev.github_user||'dev'} unverified. Watch closely.`, sentiment:0.4 }, lookAt:'token', priority:82 };
+					if (isWhaleClaim) return { variant:'claim_first_whale', icon:'🐋', emote:{ trigger:'celebration', weight:0.85 }, gesture:{ name:'taunt', duration:3000 }, speak:{ text:`Whale claimer — ${fmtSol(lifetimeSol)} lifetime on $${symbol||'this'}.`, sentiment:0.6 }, lookAt:'token', priority:80 };
+					return { variant:'claim_first_raw', icon:'🚨', emote:{ trigger:'celebration', weight:0.85 }, gesture:{ name:'celebrate', duration:4500 }, speak:{ text:`First-time claim on $${symbol||'a new token'}.`, sentiment:0.7 }, lookAt:'camera', priority:78 };
 				}
-				if (ev.tier === 'mega') return { emote: { trigger: 'celebration', weight: 0.7 }, gesture: { name: 'taunt', duration: 2500 }, priority: 50 };
-				if (ev.tier === 'influencer') return { emote: { trigger: 'curiosity', weight: 0.55 }, gesture: { name: 'reaction', duration: 1800 }, priority: 35 };
-				if (ev.tier === 'notable') return { emote: { trigger: 'curiosity', weight: 0.4 }, priority: 20 };
+				if (isWhaleClaim) return { variant:'claim_whale_repeat', icon:'🐋', emote:{ trigger:'curiosity', weight:0.6 }, gesture:{ name:'taunt', duration:2200 }, speak:{ text:`Whale claim — ${fmtSol(num(ev.amount_sol))} on $${symbol||'token'}.`, sentiment:0.4 }, lookAt:'token', priority:55 };
+				if (ev.tier === 'mega') return { variant:'claim_tier_mega', icon:'🔥🔥', emote:{ trigger:'celebration', weight:0.7 }, gesture:{ name:'taunt', duration:2500 }, speak:{ text:`Mega claim — ${fmtSol(num(ev.amount_sol))}.`, sentiment:0.5 }, lookAt:'token', priority:50 };
+				if (ev.tier === 'influencer') return { variant:'claim_tier_influencer', icon:'🔥', emote:{ trigger:'curiosity', weight:0.55 }, gesture:{ name:'reaction', duration:1800 }, speak:{ text:`Influencer claim on $${symbol||'token'}.`, sentiment:0.3 }, lookAt:'token', priority:35 };
+				if (ev.tier === 'notable') return { variant:'claim_tier_notable', icon:'⭐', emote:{ trigger:'curiosity', weight:0.4 }, speak:{ text:`Notable claim seen.`, sentiment:0.2 }, lookAt:'token', priority:20 };
 				return null;
 			}
 			if (kind === 'mint') {
-				const initSol = Number(ev.initial_buy_sol) || 0;
-				if (ev.tier === 'mega' || initSol >= 5) return { emote: { trigger: 'curiosity', weight: 0.55 }, gesture: { name: 'wave', duration: 1500 }, priority: 25 };
-				if (ev.tier === 'influencer' || initSol >= 1) return { emote: { trigger: 'curiosity', weight: 0.35 }, priority: 10 };
+				const initSol = num(ev.initial_buy_sol);
+				if (initSol >= 20) return { variant:'mint_giant_buy', icon:'🚀💸', emote:{ trigger:'curiosity', weight:0.85 }, gesture:{ name:'jump', duration:2000 }, speak:{ text:`Massive launch: $${symbol||'new token'} opens with ${fmtSol(initSol)}.`, sentiment:0.6 }, lookAt:'camera', priority:60 };
+				if (isDevRelaunch) return { variant:'mint_dev_relaunch', icon:'🔁', emote:{ trigger:'concern', weight:0.5 }, gesture:{ name:'reaction', duration:1600 }, speak:{ text:`Dev's back — ${creatorLaunches} launches, 0 grads. $${symbol}.`, sentiment:-0.2 }, lookAt:'down', priority:40 };
+				if (isSerialCreator) return { variant:'mint_serial_creator', icon:'👑', emote:{ trigger:'curiosity', weight:0.7 }, gesture:{ name:'wave', duration:1500 }, speak:{ text:`Pro dev launching $${symbol||'a new token'} — ${creatorGraduated} prior grads.`, sentiment:0.5 }, lookAt:'camera', priority:45 };
+				if (ev.tier === 'mega' || initSol >= 5) return { variant:'mint_notable', icon:'🌱🔥', emote:{ trigger:'curiosity', weight:0.55 }, gesture:{ name:'wave', duration:1500 }, speak:{ text:`New token $${symbol||'?'} — ${fmtSol(initSol)} initial.`, sentiment:0.3 }, lookAt:'token', priority:25 };
+				if (ev.tier === 'influencer' || initSol >= 1) return { variant:'mint_warm', icon:'🌱', emote:{ trigger:'curiosity', weight:0.35 }, lookAt:'token', priority:10 };
 				return null;
 			}
 			return null;
@@ -1392,6 +1424,28 @@
 		feedEl().addEventListener('scroll', () => {
 			if (feedIsAtTop() && feedQueue.length) flushQueued();
 		}, { passive: true });
+
+		// Per-card actions: copy mint, focus filter to mint. Delegated so newly
+		// rendered cards work without re-binding.
+		feedEl().addEventListener('click', (e) => {
+			const target = e.target.closest('button');
+			if (!target) return;
+			const copy = target.dataset.copy;
+			if (copy) {
+				navigator.clipboard?.writeText(copy).then(() => {
+					target.dataset.copied = '1';
+					setTimeout(() => delete target.dataset.copied, 1200);
+				}).catch(() => {});
+				return;
+			}
+			const focus = target.dataset.focus;
+			if (focus) {
+				$('ctl-mint').value = focus;
+				params.mint = focus;
+				syncURL();
+				iframe.contentWindow?.postMessage({ type: 'pumpfun-feed:focus-mint', mint: focus }, '*');
+			}
+		});
 
 		// Cross-source dedupe (HTTP backfill + SSE replay + live) by tx signature.
 		// Without this the same graduation can render twice when the page calls
