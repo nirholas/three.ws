@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Disallow: /my-agents
+Sitemap: https://three.ws/sitemap.xml

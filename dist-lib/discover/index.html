@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>Discover · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+		<meta
+			name="description"
+			content="Discover every ERC-8004 agent registered on-chain across 20+ EVM networks. Filter by 3D avatar, chain, and keywords."
+		/>
+		<meta name="theme-color" content="#000000" />
+		<link rel="canonical" href="https://three.ws/discover" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content="Discover · three.ws" />
+		<meta
+			property="og:description"
+			content="Browse every ERC-8004 agent registered on-chain across 20+ EVM networks. Filter by 3D avatar, chain, and keywords."
+		/>
+		<meta property="og:url" content="https://three.ws/discover" />
+		<meta property="og:image" content="https://three.ws/og-image.png" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="Discover · three.ws" />
+		<meta
+			name="twitter:description"
+			content="The on-chain index of ERC-8004 agents. Every agent, every chain."
+		/>
+		<meta name="twitter:image" content="https://three.ws/og-image.png" />
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link rel="stylesheet" href="/style.css" />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+			rel="stylesheet"
+		/>
+	</head>
+	<body class="features-page explore-page">
+		<header>
+			<h1>
+				<a href="/"><img src="/three.svg" alt="three.ws" class="header-logo" /></a>
+			</h1>
+			<nav class="features-nav">
+				<a href="/app">Viewer</a>
+				<a href="/create">Create</a>
+				<a href="/discover" class="active">Discover</a>
+				<a href="/features">Features</a>
+				<a href="/widgets">Widgets</a>
+				<a href="/studio">Studio</a>
+				<a href="/chat">Chat</a>
+				<a href="/docs">Docs</a>
+				<a href="/my-agents" id="nav-my-agents" hidden>My Agents</a>
+				<a href="/dashboard" class="nav-dashboard">Dashboard</a>
+				<a href="/login" class="nav-sign-in" id="nav-sign-in">Sign in</a>
+			</nav>
+		</header>
+
+		<main class="features-main explore-main">
+			<section class="explore-hero">
+				<div class="explore-hero-chips">
+					<div class="explore-hero-chip">
+						<span class="explore-hero-dot"></span>
+						<span>ERC-8004 Agent Directory</span>
+					</div>
+					<a
+						href="/my-agents"
+						class="explore-hero-chip explore-hero-chip--link"
+						data-role="my-agents-chip"
+						hidden
+					>
+						<span>View my agents →</span>
+					</a>
+				</div>
+				<h2>Every agent, every chain.</h2>
+				<p class="explore-sub">
+					The complete on-chain index of ERC-8004 agents. Click a 3D avatar to load it in
+					the viewer. Click any card for its on-chain passport.
+				</p>
+
+				<div class="explore-stats" data-role="stats">
+					<div class="explore-stat">
+						<div class="explore-stat-value" data-role="stat-all">—</div>
+						<div class="explore-stat-label">Agents indexed</div>
+					</div>
+					<div class="explore-stat">
+						<div class="explore-stat-value" data-role="stat-3d">—</div>
+						<div class="explore-stat-label">With 3D avatars</div>
+					</div>
+					<div class="explore-stat">
+						<div class="explore-stat-value" data-role="stat-chains">22</div>
+						<div class="explore-stat-label">Chains crawled</div>
+					</div>
+				</div>
+			</section>
+
+			<section class="explore-controls">
+				<div class="explore-search">
+					<input
+						type="search"
+						placeholder="Search by name or description…"
+						data-role="search"
+						aria-label="Search agents"
+					/>
+					<button
+						type="button"
+						class="explore-search-clear"
+						data-role="search-clear"
+						aria-label="Clear search"
+						hidden
+					>
+						×
+					</button>
+				</div>
+				<div class="explore-chips" data-role="filters">
+					<button class="explore-chip active" data-filter="all">All agents</button>
+					<button class="explore-chip" data-filter="3d">3D only</button>
+				</div>
+				<div class="explore-chips" data-role="sources">
+					<button class="explore-chip active" data-source="all">All sources</button>
+					<button class="explore-chip" data-source="onchain">Onchain</button>
+					<button class="explore-chip" data-source="avatar">Avatars</button>
+				</div>
+				<div class="explore-chain-select">
+					<label for="explore-chain">Chain:</label>
+					<select id="explore-chain" data-role="chain">
+						<option value="">All chains</option>
+					</select>
+				</div>
+			</section>
+
+			<section class="explore-grid-wrap">
+				<div class="explore-grid" data-role="grid"></div>
+				<div class="explore-status" data-role="status"></div>
+				<div class="explore-load-more-wrap">
+					<button class="explore-load-more" data-role="load-more" hidden>
+						Load more
+					</button>
+				</div>
+			</section>
+		</main>
+
+		<script type="module" src="/discover/discover.js"></script>
+	</body>
+</html>

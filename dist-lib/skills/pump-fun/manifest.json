@@ -1,0 +1,27 @@
+{
+	"spec": "skill/0.1",
+	"name": "pump-fun",
+	"version": "0.1.0",
+	"description": "Read-only pump.fun (Solana) market intel: search tokens, inspect bonding curves, surface trending/new/graduated tokens, and flag rug-pull risk.",
+	"license": "MIT",
+	"tags": ["solana", "pump.fun", "market-data", "mcp"],
+	"requires": {
+		"runtime": ">=0.1.0",
+		"tools": []
+	},
+	"provides": {
+		"tools": [
+			"searchTokens",
+			"getTokenDetails",
+			"getBondingCurve",
+			"getTokenTrades",
+			"getTrendingTokens",
+			"getNewTokens",
+			"getGraduatedTokens",
+			"getKingOfTheHill",
+			"getCreatorProfile",
+			"getTokenHolders"
+		],
+		"triggers": ["token_lookup", "market_check", "rug_check"]
+	}
+}

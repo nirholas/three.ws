@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Strategy lab · three.ws</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<style>
+		* { box-sizing: border-box; }
+		:root {
+			--fg: #111; --muted: #555; --border: #e5e5e5; --bg: #fafafa;
+			--ok-bg: #e7f5e9; --ok-fg: #1b5e20;
+			--warn-bg: #fff3cd; --warn-fg: #855008;
+			--bad-bg: #fce8e8; --bad-fg: #b71c1c;
+			--info-bg: #e3f2fd; --info-fg: #0d47a1;
+			--mono: ui-monospace, SFMono-Regular, "JetBrains Mono", monospace;
+		}
+		body { font: 14px/1.5 system-ui, -apple-system, sans-serif; max-width: 1280px; margin: 1.25rem auto; padding: 0 1rem; color: var(--fg); }
+		h1 { font-size: 1.4rem; margin: 0 0 .25rem; }
+		h2 { font-size: .95rem; margin: 1.25rem 0 .5rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+		.muted { color: var(--muted); }
+		.lead { color: var(--muted); margin-bottom: 1rem; max-width: 760px; }
+		code { font-family: var(--mono); }
+
+		.layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+		@media (max-width: 980px) { .layout { grid-template-columns: 1fr; } }
+
+		.panel { border: 1px solid var(--border); border-radius: 10px; padding: .9rem 1rem; background: #fff; }
+		.panel + .panel { margin-top: 1rem; }
+
+		textarea, input, select { font: inherit; padding: .45rem .6rem; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+		textarea { width: 100%; min-height: 320px; font: 12px/1.45 var(--mono); resize: vertical; }
+		textarea.invalid { border-color: var(--bad-fg); background: #fff8f8; }
+		select, input { font-size: 13px; }
+
+		.actions { display: flex; gap: .5rem; flex-wrap: wrap; margin: .75rem 0 .25rem; align-items: center; }
+		button { font: inherit; padding: .45rem .8rem; border: 1px solid #ccc; background: #fff; border-radius: 6px; cursor: pointer; }
+		button.primary { background: #111; color: #fff; border-color: #111; }
+		button.danger  { background: #b71c1c; color: #fff; border-color: #b71c1c; }
+		button:disabled { opacity: .5; cursor: wait; }
+
+		.preset { font-size: .75rem; padding: .2rem .65rem; border-radius: 999px; }
+		.preset:hover { background: #f3f3f3; }
+
+		.status { font-size: .8rem; padding: .4rem .6rem; border-radius: 6px; margin-top: .5rem; }
+		.status.ok { background: var(--ok-bg); color: var(--ok-fg); }
+		.status.bad { background: var(--bad-bg); color: var(--bad-fg); }
+		.status.warn { background: var(--warn-bg); color: var(--warn-fg); }
+		.status.info { background: var(--info-bg); color: var(--info-fg); }
+
+		.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: .5rem; margin: .5rem 0; }
+		.metric { border: 1px solid var(--border); border-radius: 8px; padding: .5rem .7rem; background: var(--bg); }
+		.metric .v { font-size: 1.3rem; font-weight: 600; line-height: 1.1; }
+		.metric .v.pos { color: var(--ok-fg); }
+		.metric .v.neg { color: var(--bad-fg); }
+		.metric .l { font-size: .7rem; color: var(--muted); margin-top: .15rem; }
+
+		table { width: 100%; border-collapse: collapse; font-size: .8rem; }
+		th, td { text-align: left; padding: .35rem .5rem; border-bottom: 1px solid #eee; vertical-align: top; }
+		th { font-weight: 600; color: var(--muted); font-size: .7rem; text-transform: uppercase; }
+		td.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--mono); }
+		td .pos { color: var(--ok-fg); } td .neg { color: var(--bad-fg); }
+
+		.log { max-height: 360px; overflow-y: auto; font: 11px/1.55 var(--mono); background: #0e0f12; color: #d6e1ff; border-radius: 8px; padding: .65rem .8rem; }
+		.log .row { padding: .1rem 0; }
+		.log .skip { color: #8c8c8c; } .log .enter { color: #58e891; } .log .exit { color: #ffd54f; }
+		.log .error { color: #ff7777; } .log .start { color: #80b8ff; } .log .done { color: #80b8ff; font-weight: 600; }
+		.log .tick { color: #4a5269; }
+
+		.live-dot { display: inline-flex; align-items: center; gap: .3rem; font-size: .72rem; color: var(--muted); }
+		.live-dot::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #c8c8c8; }
+		.live-dot.on::before { background: #43a047; box-shadow: 0 0 0 0 rgba(67,160,71,.5); animation: pulse 1.6s infinite; }
+		@keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(67,160,71,.5); } 50% { box-shadow: 0 0 0 5px rgba(67,160,71,0); } }
+
+		.row { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin: .25rem 0; }
+		.kv { font-size: .8rem; }
+		.kv span { color: var(--muted); margin-right: .35rem; }
+		.copy { padding: .1rem .35rem; font-size: .7rem; cursor: pointer; border: 1px solid var(--border); background: #fff; border-radius: 4px; }
+		.copy:hover { background: #f3f3f3; }
+		.balance { font-size: 1.2rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+		.fund-warn { font-size: .75rem; color: var(--warn-fg); margin-top: .35rem; }
+
+		.mode-switch { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+		.mode-switch button { border: none; background: #fff; border-radius: 0; padding: .4rem .7rem; }
+		.mode-switch button.active { background: #111; color: #fff; }
+	</style>
+</head>
+<body>
+	<h1>Strategy lab</h1>
+	<p class="lead">
+		Declarative pump.fun strategies, executed end-to-end. Backtests query the
+		live read-only MCP for real holder, curve, and creator data. Live runs
+		sign and submit on-chain via your agent's hot wallet.
+	</p>
+
+	<!-- ── Top bar: agent + wallet ──────────────────────────────────────── -->
+	<div class="panel" id="walletPanel">
+		<div class="row" style="justify-content:space-between">
+			<div class="row" style="margin:0">
+				<label class="kv"><span>Agent</span>
+					<select id="agentSel"><option value="">— sign in —</option></select>
+				</label>
+				<label class="kv"><span>Network</span>
+					<select id="netSel"><option value="mainnet">mainnet</option><option value="devnet">devnet</option></select>
+				</label>
+				<button id="provisionBtn" disabled>Provision wallet</button>
+			</div>
+			<div class="row" style="margin:0">
+				<div id="walletInfo" class="kv muted">No wallet loaded.</div>
+			</div>
+		</div>
+		<div id="walletStatus" class="status info" style="margin-top:.5rem; display:none"></div>
+	</div>
+
+	<div class="layout" style="margin-top:1rem">
+		<!-- ── Spec editor ───────────────────────────────────────────────── -->
+		<section class="panel">
+			<h2>Strategy spec</h2>
+			<div style="display:flex; gap:.35rem; flex-wrap:wrap; margin-bottom:.5rem;">
+				<button class="preset" data-preset="momentum">Momentum</button>
+				<button class="preset" data-preset="snipe">New-token snipe</button>
+				<button class="preset" data-preset="mean-revert">Mean revert</button>
+			</div>
+			<textarea id="spec" spellcheck="false"></textarea>
+			<div class="actions">
+				<button id="validate">Validate</button>
+				<button id="backtest" class="primary">Backtest</button>
+				<span style="flex:1"></span>
+				<div class="mode-switch">
+					<button class="mode active" data-mode="simulate">Simulate</button>
+					<button class="mode" data-mode="live">Live (real)</button>
+				</div>
+				<button id="run" class="primary">Run</button>
+				<button id="stop" disabled>Stop</button>
+			</div>
+			<div id="status" class="status info">Edit the spec and hit Validate.</div>
+			<div style="margin-top:.5rem; font-size:.75rem;" class="muted">
+				Predicate paths: <code>holders.total</code>, <code>holders.topHolderPct</code>,
+				<code>creator.rugCount</code>, <code>curve.priceSol</code>,
+				<code>position.pnlPct</code>, <code>position.ageSec</code>.
+				Ops: <code>&gt; &gt;= &lt; &lt;= == !=</code>.
+			</div>
+		</section>
+
+		<!-- ── Results ───────────────────────────────────────────────────── -->
+		<section class="panel">
+			<h2>Results <span id="liveDot" class="live-dot" style="margin-left:.5rem"></span></h2>
+			<div id="metrics" class="metrics" style="display:none;"></div>
+			<div id="resultPanel"><p class="muted">Run a backtest or live session to see results.</p></div>
+
+			<h2 style="margin-top:1rem">Activity</h2>
+			<div id="log" class="log"><div class="row muted">— no events yet —</div></div>
+		</section>
+	</div>
+
+	<!-- ── Portfolio ────────────────────────────────────────────────────── -->
+	<section class="panel" style="margin-top:1rem">
+		<div class="row" style="justify-content:space-between; margin:0">
+			<h2 style="margin:0">Portfolio</h2>
+			<div class="row" style="margin:0">
+				<button id="refreshPortfolio">Refresh</button>
+				<button id="closeAll" class="danger">Stop & sell all</button>
+			</div>
+		</div>
+		<div id="portfolio"><p class="muted">Pick an agent above to load on-chain holdings.</p></div>
+	</section>
+
+<script type="module">
+	const PRESETS = {
+		momentum: {
+			scan: { kind: 'newTokens', limit: 10 },
+			filters: ['holders.total > 50', 'holders.topHolderPct < 25', 'creator.rugCount == 0'],
+			entry: { side: 'buy', amountSol: 0.05 },
+			exit: [
+				{ if: 'position.pnlPct > 75',      do: { side: 'sell', percent: 100 } },
+				{ if: 'position.pnlPct < -30',     do: { side: 'sell', percent: 100 } },
+				{ if: 'holders.topHolderPct > 40', do: { side: 'sell', percent: 100 } },
+			],
+			caps: { sessionSpendCapSol: 0.5, perTradeSol: 0.05, maxOpenPositions: 5 },
+		},
+		snipe: {
+			scan: { kind: 'newTokens', limit: 20 },
+			filters: ['holders.total > 30', 'creator.rugCount == 0'],
+			entry: { side: 'buy', amountSol: 0.025 },
+			exit: [
+				{ if: 'position.pnlPct > 100',  do: { side: 'sell', percent: 100 } },
+				{ if: 'position.ageSec > 600',  do: { side: 'sell', percent: 100 } },
+			],
+			caps: { sessionSpendCapSol: 0.25, perTradeSol: 0.025, maxOpenPositions: 8 },
+		},
+		'mean-revert': {
+			scan: { kind: 'trending', limit: 15 },
+			filters: ['holders.total > 100', 'holders.topHolderPct < 20'],
+			entry: { side: 'buy', amountSol: 0.05 },
+			exit: [
+				{ if: 'position.pnlPct > 20',   do: { side: 'sell', percent: 50 } },
+				{ if: 'position.pnlPct > 40',   do: { side: 'sell', percent: 100 } },
+				{ if: 'position.pnlPct < -15',  do: { side: 'sell', percent: 100 } },
+			],
+			caps: { sessionSpendCapSol: 1.0, perTradeSol: 0.05, maxOpenPositions: 4 },
+		},
+	};
+
+	const $ = (id) => document.getElementById(id);
+	const spec = $('spec'), status = $('status'), log = $('log');
+	const metrics = $('metrics'), resultPanel = $('resultPanel'), liveDot = $('liveDot');
+	const agentSel = $('agentSel'), netSel = $('netSel'), provisionBtn = $('provisionBtn');
+	const walletInfo = $('walletInfo'), walletStatus = $('walletStatus');
+
+	let mode = 'simulate';
+	let activeRun = null;
+	let currentWallet = null;   // { address, sol }
+
+	function setStatus(msg, kind = 'info') { status.className = 'status ' + kind; status.textContent = msg; }
+	function setWalletStatus(msg, kind) {
+		if (!msg) { walletStatus.style.display = 'none'; return; }
+		walletStatus.style.display = ''; walletStatus.className = 'status ' + (kind || 'info'); walletStatus.textContent = msg;
+	}
+	function clearLog() { log.innerHTML = ''; }
+	function pushLog(kind, text) {
+		const row = document.createElement('div'); row.className = 'row ' + kind;
+		row.textContent = `${new Date().toLocaleTimeString()}  ${text}`;
+		log.appendChild(row); log.scrollTop = log.scrollHeight;
+	}
+	function loadPreset(name) { spec.value = JSON.stringify(PRESETS[name], null, 2); setStatus(`Loaded preset: ${name}`); }
+	function getSpec() {
+		try { return JSON.parse(spec.value); }
+		catch (e) { setStatus('JSON parse error: ' + e.message, 'bad'); spec.classList.add('invalid'); throw e; }
+	}
+	function fmt(n, dp = 4) { return Number.isFinite(n) ? n.toFixed(dp) : '—'; }
+	function pct(n) { return Number.isFinite(n) ? n.toFixed(1) + '%' : '—'; }
+	function pn(n) { return n > 0 ? 'pos' : n < 0 ? 'neg' : ''; }
+	function explorerLink(addr, net) { return `https://explorer.solana.com/address/${addr}${net === 'devnet' ? '?cluster=devnet' : ''}`; }
+
+	document.querySelectorAll('.preset').forEach((b) => b.onclick = () => loadPreset(b.dataset.preset));
+	document.querySelectorAll('.mode').forEach((b) => b.onclick = () => {
+		mode = b.dataset.mode;
+		document.querySelectorAll('.mode').forEach((x) => x.classList.toggle('active', x === b));
+	});
+	loadPreset('momentum');
+
+	// ── Agent + wallet bootstrap ───────────────────────────────────────
+	async function loadAgents() {
+		const r = await fetch('/api/agents', { credentials: 'include' }).then((r) => r.json()).catch(() => null);
+		if (!r?.agents) {
+			agentSel.innerHTML = '<option value="">— sign in to load agents —</option>';
+			return;
+		}
+		agentSel.innerHTML = '<option value="">— select agent —</option>' +
+			r.agents.map((a) => `<option value="${a.id}">${escapeHtml(a.name || a.id)}</option>`).join('');
+		// Auto-select last used.
+		const saved = localStorage.getItem('strategy-lab:agentId');
+		if (saved && r.agents.some((a) => a.id === saved)) { agentSel.value = saved; await onAgentChange(); }
+	}
+	function escapeHtml(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]); }
+
+	async function onAgentChange() {
+		const id = agentSel.value;
+		localStorage.setItem('strategy-lab:agentId', id);
+		currentWallet = null;
+		walletInfo.innerHTML = '<span class="muted">Loading wallet…</span>';
+		setWalletStatus('');
+		provisionBtn.disabled = !id;
+		if (!id) { walletInfo.textContent = 'No agent selected.'; renderPortfolio(null); return; }
+		const net = netSel.value;
+		const r = await fetch(`/api/agents/${id}/solana?network=${net}`, { credentials: 'include' }).then((r) => r.json()).catch(() => null);
+		if (r?.data?.address) {
+			currentWallet = { address: r.data.address, sol: r.data.sol ?? 0 };
+			renderWalletInfo();
+			refreshPortfolio();
+		} else {
+			walletInfo.innerHTML = '<span class="muted">No Solana wallet on this agent.</span>';
+			provisionBtn.textContent = 'Provision wallet';
+		}
+	}
+	function renderWalletInfo() {
+		if (!currentWallet) { walletInfo.textContent = 'No wallet.'; return; }
+		const { address, sol } = currentWallet;
+		const net = netSel.value;
+		const fundWarn = (sol < 0.02) ? `<div class="fund-warn">⚠ Balance is below 0.02 SOL — top up before running live trades.</div>` : '';
+		walletInfo.innerHTML = `
+			<span class="balance">${(sol ?? 0).toFixed(4)} SOL</span>
+			<a href="${explorerLink(address, net)}" target="_blank" rel="noopener" style="margin-left:.5rem"><code>${address.slice(0, 6)}…${address.slice(-4)}</code></a>
+			<button class="copy" data-copy="${address}">copy</button>
+			${fundWarn}
+		`;
+		walletInfo.querySelectorAll('.copy').forEach((b) => b.onclick = () => navigator.clipboard.writeText(b.dataset.copy));
+		provisionBtn.style.display = 'none';
+	}
+	provisionBtn.onclick = async () => {
+		if (!agentSel.value) return;
+		provisionBtn.disabled = true; provisionBtn.textContent = 'Provisioning…';
+		const r = await fetch(`/api/agents/${agentSel.value}/solana?network=${netSel.value}`, {
+			method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: '{}',
+		}).then((r) => r.json()).catch((e) => ({ error: e.message }));
+		if (r?.data?.address) {
+			currentWallet = { address: r.data.address, sol: r.data.sol ?? 0 };
+			renderWalletInfo();
+			setWalletStatus('Wallet provisioned. Send SOL to it before running live.', 'ok');
+			refreshPortfolio();
+		} else {
+			setWalletStatus('Provision failed: ' + (r?.error_description || r?.error || 'unknown'), 'bad');
+			provisionBtn.disabled = false; provisionBtn.textContent = 'Provision wallet';
+		}
+	};
+	agentSel.onchange = onAgentChange;
+	netSel.onchange = () => { if (agentSel.value) onAgentChange(); };
+
+	// ── Validate / Backtest / Run ──────────────────────────────────────
+	$('validate').onclick = async () => {
+		spec.classList.remove('invalid');
+		let s; try { s = getSpec(); } catch { return; }
+		setStatus('Validating…');
+		const r = await fetch('/api/pump/strategy-validate', {
+			method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ strategy: s }),
+		}).then((r) => r.json()).catch((e) => ({ error: e.message }));
+		if (r.error) { setStatus('Invalid: ' + (r.error_description || r.error), 'bad'); spec.classList.add('invalid'); return; }
+		setStatus(`OK — ${r.data.filterCount} filter(s), ${r.data.exitCount} exit rule(s)`, 'ok');
+	};
+
+	$('backtest').onclick = async () => {
+		spec.classList.remove('invalid');
+		let s; try { s = getSpec(); } catch { return; }
+		setStatus('Sourcing mints from live MCP…');
+		clearLog(); pushLog('start', '▶ backtest started (real on-chain data)');
+		const r = await fetch('/api/pump/strategy-backtest', {
+			method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ strategy: s }),
+		}).then((r) => r.json()).catch((e) => ({ error: e.message }));
+		if (r.error) { setStatus('Backtest failed: ' + (r.error_description || r.error), 'bad'); pushLog('error', '! ' + (r.error_description || r.error)); return; }
+		renderBacktest(r.data);
+		pushLog('done', `✓ ${r.data.tradeCount} trade(s), ROI ${r.data.roiPct.toFixed(1)}%, ${r.data.mintsUsed?.length} mints scanned`);
+		setStatus('Backtest complete', 'ok');
+	};
+
+	function renderBacktest(d) {
+		metrics.style.display = '';
+		metrics.innerHTML = `
+			<div class="metric"><div class="v ${pn(d.realizedPnlSol)}">${fmt(d.realizedPnlSol)}</div><div class="l">PnL (SOL)</div></div>
+			<div class="metric"><div class="v ${pn(d.roiPct)}">${pct(d.roiPct)}</div><div class="l">ROI</div></div>
+			<div class="metric"><div class="v">${pct((d.winRate || 0) * 100)}</div><div class="l">win rate</div></div>
+			<div class="metric"><div class="v">${d.tradeCount}</div><div class="l">trades</div></div>
+			<div class="metric"><div class="v neg">${fmt(d.maxDrawdownSol)}</div><div class="l">max drawdown</div></div>
+			<div class="metric"><div class="v">${fmt(d.spent, 3)}</div><div class="l">SOL deployed</div></div>
+		`;
+		const trades = (d.trades || []).filter((t) => t.action === 'trade');
+		const skips = (d.trades || []).filter((t) => t.action !== 'trade');
+		resultPanel.innerHTML = `
+			<table>
+				<thead><tr><th>Mint</th><th class="num">Entry</th><th class="num">Exit</th><th class="num">PnL</th><th class="num">PnL %</th><th>Reason</th></tr></thead>
+				<tbody>
+					${trades.map((t) => `
+						<tr>
+							<td><code>${escapeHtml(t.mint).slice(0, 10)}…</code></td>
+							<td class="num">${fmt(t.entryPrice, 8)}</td>
+							<td class="num">${fmt(t.exitPrice, 8)}</td>
+							<td class="num"><span class="${pn(t.pnlSol)}">${fmt(t.pnlSol)}</span></td>
+							<td class="num"><span class="${pn(t.pnlPct)}">${pct(t.pnlPct)}</span></td>
+							<td>${typeof t.exitReason === 'string' ? t.exitReason : (t.exitReason?.side || 'eod')}</td>
+						</tr>`).join('') || '<tr><td colspan="6" class="muted">— no trades taken —</td></tr>'}
+				</tbody>
+			</table>
+			${skips.length ? `<p class="muted" style="margin-top:.5rem;font-size:.75rem">${skips.length} mint(s) filtered out before entry.</p>` : ''}
+		`;
+	}
+
+	$('run').onclick = async () => {
+		spec.classList.remove('invalid');
+		let s; try { s = getSpec(); } catch { return; }
+		const network = netSel.value;
+		const agentId = agentSel.value;
+
+		if (mode === 'live') {
+			if (!agentId) { setStatus('Select an agent first.', 'bad'); return; }
+			if (!currentWallet) { setStatus('Provision a Solana wallet first.', 'bad'); return; }
+			if (currentWallet.sol < 0.02) {
+				setStatus('Wallet balance below 0.02 SOL — fund it before going live.', 'bad'); return;
+			}
+			if (!confirm(`Run LIVE strategy on ${network}?\n\nWallet ${currentWallet.address} will sign real transactions.`)) return;
+		}
+
+		clearLog();
+		pushLog('start', `▶ ${mode === 'live' ? 'LIVE' : 'simulated'} run on ${network}`);
+		setStatus(`Streaming ${mode}…`);
+		liveDot.classList.add('on');
+		$('run').disabled = true; $('stop').disabled = false;
+
+		const ctrl = new AbortController(); activeRun = ctrl;
+		try {
+			const resp = await fetch('/api/pump/strategy-run', {
+				method: 'POST', credentials: 'include',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({
+					strategy: s,
+					durationSec: 60,
+					mode,
+					network,
+					agentId: mode === 'live' ? agentId : undefined,
+				}),
+				signal: ctrl.signal,
+			});
+			if (!resp.ok) { setStatus('Run failed: HTTP ' + resp.status + ' — ' + await resp.text(), 'bad'); return; }
+			const reader = resp.body.getReader(), dec = new TextDecoder();
+			let buf = '';
+			while (true) {
+				const { done, value } = await reader.read();
+				if (done) break;
+				buf += dec.decode(value, { stream: true });
+				let idx;
+				while ((idx = buf.indexOf('\n\n')) >= 0) {
+					const chunk = buf.slice(0, idx); buf = buf.slice(idx + 2);
+					handleSse(chunk);
+				}
+			}
+			setStatus('Run complete', 'ok');
+			if (mode === 'live') refreshPortfolio();
+		} catch (e) {
+			if (e.name !== 'AbortError') setStatus('Stream error: ' + e.message, 'bad');
+		} finally {
+			liveDot.classList.remove('on');
+			$('run').disabled = false; $('stop').disabled = true; activeRun = null;
+		}
+	};
+	$('stop').onclick = () => { activeRun?.abort(); pushLog('error', '■ stopped'); };
+
+	function handleSse(chunk) {
+		const lines = chunk.split('\n');
+		let event = 'message', data = '';
+		for (const l of lines) {
+			if (l.startsWith('event: ')) event = l.slice(7);
+			else if (l.startsWith('data: ')) data += l.slice(6);
+		}
+		let p; try { p = JSON.parse(data); } catch { return; }
+		if (event === 'start') pushLog('start', `▶ ${p.mode} · ${p.network} · ${p.durationSec}s${p.walletAddress ? ' · ' + p.walletAddress.slice(0, 6) + '…' : ''}`);
+		else if (event === 'log') {
+			const a = p.action;
+			if (a === 'enter') pushLog('enter', `+ enter  ${p.mint}  spent ${p.spent.toFixed(3)} SOL · entry ${fmt(p.entryPriceSol, 8)}`);
+			else if (a === 'exit') pushLog('exit', `× exit   ${p.mint}  pnl ${pct(p.pnlPct)}  → ${p.sig?.slice(0, 12) ?? ''}…`);
+			else if (a === 'skip') pushLog('skip', `· skip   ${p.mint}`);
+			else if (a === 'tick') pushLog('tick', `… tick  open=${p.open} spent=${p.spent.toFixed(3)}`);
+			else if (a?.endsWith?.('error')) pushLog('error', `! ${a}  ${p.mint || ''}: ${p.error}`);
+			else pushLog('skip', `${a}  ${p.mint || ''}`);
+		}
+		else if (event === 'memory') {/* quiet — already shown via log */}
+		else if (event === 'done') { pushLog('done', `✓ done · spent ${p.spent.toFixed(3)} SOL · open ${p.openPositions?.length ?? 0}`); renderRunSummary(p); }
+		else if (event === 'error') pushLog('error', `! ${p.message}`);
+	}
+	function renderRunSummary(d) {
+		metrics.style.display = '';
+		const enters = (d.log || []).filter((l) => l.action === 'enter').length;
+		const exits = (d.log || []).filter((l) => l.action === 'exit').length;
+		metrics.innerHTML = `
+			<div class="metric"><div class="v">${fmt(d.spent, 3)}</div><div class="l">SOL deployed</div></div>
+			<div class="metric"><div class="v">${d.openPositions?.length ?? 0}</div><div class="l">open positions</div></div>
+			<div class="metric"><div class="v">${enters}</div><div class="l">entries</div></div>
+			<div class="metric"><div class="v">${exits}</div><div class="l">exits</div></div>
+		`;
+		resultPanel.innerHTML = `<p class="muted">Run complete. Open positions persist across runs and appear in the Portfolio panel.</p>`;
+	}
+
+	// ── Portfolio ──────────────────────────────────────────────────────
+	async function refreshPortfolio() {
+		const id = agentSel.value, net = netSel.value;
+		if (!id) { renderPortfolio(null); return; }
+		const r = await fetch(`/api/pump/portfolio?agentId=${id}&network=${net}`, { credentials: 'include' }).then((r) => r.json()).catch(() => null);
+		renderPortfolio(r?.data);
+	}
+	$('refreshPortfolio').onclick = refreshPortfolio;
+	$('closeAll').onclick = async () => {
+		const id = agentSel.value;
+		if (!id) { setStatus('Select an agent first.', 'bad'); return; }
+		const net = netSel.value;
+		if (!confirm(`STOP all activity and SELL every position on ${net}?\n\nThis aborts any running strategy and sells 100% of every SPL holding the wallet owns.`)) return;
+		// Abort any running stream first.
+		activeRun?.abort();
+		pushLog('error', '■ STOP — closing all positions');
+		setStatus('Selling all positions…', 'warn');
+		const r = await fetch('/api/pump/strategy-close-all', {
+			method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ agentId: id, network: net }),
+		}).then((r) => r.json()).catch((e) => ({ error: e.message }));
+		if (r.error) { setStatus('Close-all failed: ' + (r.error_description || r.error), 'bad'); return; }
+		(r.data?.log || []).forEach((e) => {
+			if (e.action === 'sold')        pushLog('exit', `× sold   ${e.mint}  → ${e.sig?.slice(0, 12) ?? ''}…`);
+			else if (e.action === 'sell-error') pushLog('error', `! sell-error  ${e.mint}: ${e.error}`);
+			else pushLog('skip', `${e.action}  ${e.mint}`);
+		});
+		pushLog('done', `✓ closed ${r.data.sold}/${r.data.total} (${r.data.errors} errors)`);
+		setStatus(`Closed ${r.data.sold}/${r.data.total}` + (r.data.errors ? ` — ${r.data.errors} errors` : ''), r.data.errors ? 'warn' : 'ok');
+		refreshPortfolio();
+	};
+
+	function renderPortfolio(d) {
+		const el = $('portfolio');
+		if (!d) { el.innerHTML = '<p class="muted">Pick an agent above to load on-chain holdings.</p>'; return; }
+		const totalPnlClass = pn(d.unrealizedPnlSol);
+		el.innerHTML = `
+			<div class="metrics" style="margin-top:.5rem">
+				<div class="metric"><div class="v">${(d.sol ?? 0).toFixed(4)}</div><div class="l">SOL balance</div></div>
+				<div class="metric"><div class="v">${fmt(d.totalValueSol, 4)}</div><div class="l">tokens value (SOL)</div></div>
+				<div class="metric"><div class="v">${fmt(d.totalCostBasisSol, 4)}</div><div class="l">cost basis</div></div>
+				<div class="metric"><div class="v ${totalPnlClass}">${fmt(d.unrealizedPnlSol, 4)}</div><div class="l">unrealized PnL</div></div>
+				<div class="metric"><div class="v ${totalPnlClass}">${pct(d.unrealizedPnlPct)}</div><div class="l">unrealized %</div></div>
+				<div class="metric"><div class="v">${d.holdings.length}</div><div class="l">positions</div></div>
+			</div>
+			<table style="margin-top:.5rem">
+				<thead><tr><th>Mint</th><th class="num">Amount</th><th class="num">Price</th><th class="num">Value</th><th class="num">Cost</th><th class="num">PnL</th></tr></thead>
+				<tbody>
+					${d.holdings.map((h) => `
+						<tr>
+							<td><a href="https://pump.fun/${h.mint}" target="_blank"><code>${h.mint.slice(0, 8)}…</code></a></td>
+							<td class="num">${fmt(h.amount, 2)}</td>
+							<td class="num">${fmt(h.priceSol, 8)}</td>
+							<td class="num">${fmt(h.valueSol, 4)}</td>
+							<td class="num">${h.costBasisSol == null ? '—' : fmt(h.costBasisSol, 4)}</td>
+							<td class="num"><span class="${pn(h.unrealizedPnlSol)}">${fmt(h.unrealizedPnlSol, 4)} (${pct(h.unrealizedPnlPct)})</span></td>
+						</tr>`).join('') || '<tr><td colspan="6" class="muted">— no token holdings —</td></tr>'}
+				</tbody>
+			</table>
+		`;
+	}
+
+	loadAgents();
+</script>
+</body>
+</html>

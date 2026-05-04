@@ -1,0 +1,644 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Create account · three.ws</title>
+		<link rel="icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/wallet-connect.css" />
+		<link rel="stylesheet" href="/auth.css" />
+		<script
+			type="module"
+			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
+		></script>
+		<style>
+			:root {
+				color-scheme: dark;
+				--accent: #ffffff;
+				--accent2: #cccccc;
+			}
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				font:
+					15px/1.5 -apple-system,
+					system-ui,
+					Segoe UI,
+					Roboto,
+					sans-serif;
+				background: #000;
+				color: #eee;
+				margin: 0;
+				min-height: 100vh;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				padding: 24px;
+			}
+			.shell {
+				display: flex;
+				width: 100%;
+				max-width: 1080px;
+				min-height: 640px;
+				border-radius: 24px;
+				overflow: hidden;
+				background: #0a0a0a;
+				border: 1px solid #222;
+				box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8);
+			}
+			.panel {
+				flex: 1;
+				position: relative;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				background:
+					radial-gradient(120% 90% at 30% 20%, rgba(255, 255, 255, 0.06), transparent 60%),
+					radial-gradient(120% 90% at 80% 90%, rgba(255, 255, 255, 0.04), transparent 55%),
+					linear-gradient(135deg, #111 0%, #000 100%);
+				overflow: hidden;
+			}
+			.agent-avatar {
+				position: relative;
+				width: 320px;
+				height: 320px;
+				pointer-events: none;
+			}
+			@media (max-width: 860px) {
+				.shell {
+					flex-direction: column;
+					min-height: 0;
+				}
+				.panel {
+					min-height: 220px;
+					order: -1;
+				}
+				.agent-avatar {
+					width: 180px;
+					height: 180px;
+				}
+			}
+			.agent-avatar model-viewer {
+				width: 100%;
+				height: 100%;
+				--poster-color: transparent;
+				background: transparent;
+			}
+			.agent-avatar::after {
+				content: '';
+				position: absolute;
+				left: 50%;
+				bottom: -2px;
+				width: 90px;
+				height: 10px;
+				background: radial-gradient(ellipse, rgba(255, 255, 255, 0.2), transparent 70%);
+				transform: translateX(-50%);
+				filter: blur(4px);
+			}
+			a {
+				color: #fff;
+			}
+			.card {
+				background: #0a0a0a;
+				border: 0;
+				border-radius: 0;
+				padding: 56px 56px;
+				flex: 1;
+				width: 100%;
+				max-width: 520px;
+				box-shadow: none;
+				display: flex;
+				flex-direction: column;
+				justify-content: center;
+				overflow-y: auto;
+			}
+			@media (max-width: 860px) {
+				.card {
+					padding: 32px 28px;
+					max-width: none;
+				}
+			}
+			h1 {
+				font-size: 22px;
+				margin: 0 0 4px;
+				letter-spacing: -0.01em;
+			}
+			.sub {
+				color: #888;
+				margin: 0 0 24px;
+				font-size: 14px;
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				flex-wrap: wrap;
+			}
+			.badge {
+				display: inline-flex;
+				align-items: center;
+				gap: 4px;
+				font-size: 11px;
+				font-weight: 600;
+				padding: 2px 8px;
+				border-radius: 20px;
+				background: rgba(255, 255, 255, 0.08);
+				border: 1px solid rgba(255, 255, 255, 0.2);
+				color: #ccc;
+				letter-spacing: 0.02em;
+				white-space: nowrap;
+			}
+			label {
+				display: block;
+				font-size: 13px;
+				color: #aaa;
+				margin: 14px 0 6px;
+			}
+			input {
+				width: 100%;
+				padding: 11px 13px;
+				background: #000;
+				border: 1px solid #333;
+				border-radius: 9px;
+				color: #eee;
+				font-size: 15px;
+				transition: border-color 0.15s, box-shadow 0.15s;
+			}
+			input:focus {
+				outline: none;
+				border-color: #fff;
+				box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+			}
+			.hint {
+				font-size: 12px;
+				color: #666;
+				margin-top: 4px;
+				transition: color 0.15s;
+			}
+			.hint.invalid { color: #ff7a7a; }
+			.hint.valid { color: #7ddf7d; }
+			.strength-bar {
+				height: 3px;
+				border-radius: 2px;
+				background: #222;
+				margin-top: 6px;
+				overflow: hidden;
+			}
+			.strength-fill {
+				height: 100%;
+				width: 0%;
+				border-radius: 2px;
+				transition: width 0.2s, background 0.2s;
+			}
+			.strength-label {
+				font-size: 11px;
+				margin-top: 3px;
+				color: #555;
+				transition: color 0.2s;
+			}
+			button[type="submit"] {
+				width: 100%;
+				margin-top: 20px;
+				padding: 12px 16px;
+				border: 0;
+				border-radius: 10px;
+				background: #fff;
+				color: #000;
+				font-weight: 600;
+				font-size: 15px;
+				cursor: pointer;
+				transition: filter 0.15s, transform 0.1s;
+			}
+			button[type="submit"]:hover:not(:disabled) {
+				filter: brightness(1.12);
+				transform: translateY(-1px);
+			}
+			button[type="submit"]:active:not(:disabled) {
+				transform: translateY(0);
+				filter: brightness(0.95);
+			}
+			button[type="submit"]:disabled {
+				opacity: 0.6;
+				cursor: default;
+			}
+			.err {
+				margin-top: 14px;
+				padding: 10px 12px;
+				background: rgba(255, 92, 92, 0.1);
+				border: 1px solid rgba(255, 92, 92, 0.3);
+				border-radius: 8px;
+				color: #ffb3b3;
+				font-size: 13px;
+				display: none;
+			}
+			.foot {
+				margin-top: 20px;
+				text-align: center;
+				font-size: 13px;
+				color: #888;
+			}
+			.legal {
+				margin-top: 10px;
+				text-align: center;
+				font-size: 11px;
+				color: #555;
+			}
+			.brand {
+				font-size: 12px;
+				letter-spacing: 0.1em;
+				text-transform: uppercase;
+				color: #fff;
+				margin: 0 0 8px;
+				text-decoration: none;
+				display: inline-block;
+			}
+			.brand:hover {
+				color: #ccc;
+			}
+			.divider {
+				display: flex;
+				align-items: center;
+				gap: 12px;
+				margin: 22px 0 4px;
+				color: #444;
+				font-size: 12px;
+				text-transform: uppercase;
+				letter-spacing: 0.08em;
+			}
+			.divider::before,
+			.divider::after {
+				content: '';
+				flex: 1;
+				height: 1px;
+				background: #222;
+			}
+			.field-err {
+				margin: 6px 0 0;
+				font-size: 12px;
+				color: #ff7a7a;
+				display: none;
+			}
+			.field-err.show { display: block; }
+			.chain-tab[disabled] { opacity: 0.4; cursor: not-allowed; }
+			#wallet-mount:empty::before,
+			#solana-wallet-mount:empty::before {
+				content: '';
+				display: block;
+				height: 44px;
+				border-radius: 10px;
+				background: linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 100%);
+				background-size: 200% 100%;
+				animation: wallet-skel 1.4s linear infinite;
+			}
+			@keyframes wallet-skel {
+				0%   { background-position: 200% 0; }
+				100% { background-position: -200% 0; }
+			}
+			@media (prefers-reduced-motion: reduce) {
+				#wallet-mount:empty::before,
+				#solana-wallet-mount:empty::before { animation: none; }
+			}
+			.chain-tabs {
+				display: flex;
+				gap: 4px;
+				background: #000;
+				border: 1px solid #222;
+				border-radius: 10px;
+				padding: 3px;
+				margin-bottom: 12px;
+			}
+			.chain-tab {
+				flex: 1;
+				padding: 7px 10px;
+				border: none;
+				border-radius: 7px;
+				background: transparent;
+				color: #666;
+				font-size: 13px;
+				font-weight: 500;
+				cursor: pointer;
+				transition: background 0.15s, color 0.15s;
+				margin-top: 0;
+				width: auto;
+			}
+			.chain-tab.active {
+				background: #1a1a1a;
+				color: #eee;
+				border: 1px solid #333;
+			}
+			.chain-tab:hover:not(.active) {
+				color: #bbb;
+			}
+			.chain-panel { display: none; }
+			.chain-panel.active { display: block; }
+			.wallet-hint-btn {
+				width: auto;
+				margin-top: 0;
+				padding: 4px 10px;
+				background: transparent;
+				border: 1px solid #222;
+				border-radius: 6px;
+				color: #555;
+				font-size: 11px;
+				font-weight: 400;
+				cursor: pointer;
+			}
+			.wallet-hint-btn:hover { border-color: #fff; color: #eee; }
+			.wallet-hint-btn.active { border-color: #fff; color: #eee; background: rgba(255,255,255,0.06); }
+		</style>
+	</head>
+	<body>
+		<div class="shell">
+			<form class="card" id="f" autocomplete="on">
+			<a href="/" class="brand"><img src="/three.svg" alt="" class="header-logo" aria-hidden="true" />three.ws</a>
+			<h1>Create account</h1>
+			<p class="sub">Get started free. <span class="badge">✓ No email needed</span></p>
+
+			<div class="chain-tabs" role="tablist" aria-label="Wallet chain">
+				<button type="button" class="chain-tab active" data-chain="evm" role="tab" aria-selected="true" aria-controls="evm-panel">EVM</button>
+				<button type="button" class="chain-tab" data-chain="solana" role="tab" aria-selected="false" aria-controls="solana-panel">Solana</button>
+			</div>
+			<div id="evm-panel" class="chain-panel active" role="tabpanel">
+				<div id="wallet-mount"></div>
+			</div>
+			<div id="solana-panel" class="chain-panel" role="tabpanel">
+				<div id="solana-wallet-mount"></div>
+			</div>
+			<p class="hint" style="margin-top:10px;text-align:center;font-size:11px;color:#555;cursor:help" title="Your wallet will prompt twice — once to connect, once to sign.">Wallet prompts to connect, then to sign.</p>
+
+			<div class="divider">or</div>
+
+			<label for="username">Username</label>
+			<input
+				id="username"
+				name="username"
+				type="text"
+				inputmode="text"
+				autocapitalize="none"
+				autocomplete="username"
+				autofocus
+				required
+				minlength="3"
+				maxlength="30"
+				pattern="[a-zA-Z0-9_-]+"
+				placeholder="e.g. cool_agent"
+				aria-describedby="username-hint err"
+			/>
+			<p class="hint" id="username-hint">3–30 characters, letters, numbers, _ or -</p>
+			<label for="password">Password</label>
+			<div class="password-wrap">
+				<input
+					id="password"
+					name="password"
+					type="password"
+					autocomplete="new-password"
+					required
+					minlength="10"
+					maxlength="200"
+					aria-describedby="strength-label caps-warn err"
+				/>
+				<button type="button" class="password-toggle" id="password-toggle" aria-label="Show password" aria-pressed="false">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
+						<circle cx="12" cy="12" r="3" />
+					</svg>
+				</button>
+			</div>
+			<p class="caps-warn" id="caps-warn">Caps Lock is on</p>
+			<div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
+			<p class="strength-label" id="strength-label">Minimum 10 characters</p>
+			<button id="submit" type="submit">Create account</button>
+
+			<div class="err" id="err" role="alert" aria-live="polite"></div>
+			<p class="foot">Already have an account? <a href="/login">Sign in</a></p>
+			<p class="legal">By creating an account you agree to our <a href="/legal/tos">Terms of Service</a> and <a href="/legal/privacy">Privacy Policy</a>.</p>
+		</form>
+			<div class="panel">
+				<a href="/" class="panel-brand" aria-label="three.ws home"><img src="/three.svg" alt="" class="header-logo" aria-hidden="true" />three.ws</a>
+				<div class="agent-avatar loading" id="register-avatar-wrap" aria-hidden="true">
+					<model-viewer
+						id="register-avatar"
+						src="/avatars/cz.glb"
+						alt=""
+						autoplay
+						animation-name="IdleV4.2(maya_head)"
+						disable-zoom
+						interaction-prompt="none"
+						shadow-intensity="0.6"
+						shadow-softness="1"
+						exposure="1.05"
+						tone-mapping="aces"
+						environment-image="neutral"
+						camera-orbit="0deg 88deg 4.8m"
+						field-of-view="32deg"
+						loading="eager"
+					></model-viewer>
+				</div>
+			</div>
+		</div>
+
+		<script type="module" src="/wallet-login.js"></script>
+
+		<script>
+			// Avatar mouse tracking + parallax + skeleton
+			(function () {
+				const viewer = document.getElementById('register-avatar');
+				const wrap = document.getElementById('register-avatar-wrap');
+				if (!viewer) return;
+				viewer.addEventListener('load', () => wrap?.classList.remove('loading'));
+				const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+				const BASE_AZ = 0, BASE_POL = 88, AZ_RANGE = 30, POL_RANGE = 14;
+				let targetAz = BASE_AZ, targetPol = BASE_POL;
+				let curAz = BASE_AZ, curPol = BASE_POL;
+				let targetTx = 0, targetTy = 0, curTx = 0, curTy = 0;
+				let nod = 0;
+				const lerp = (a, b, t) => a + (b - a) * t;
+				function tick() {
+					curAz = lerp(curAz, targetAz, 0.1);
+					curPol = lerp(curPol, targetPol + nod, 0.18);
+					curTx = lerp(curTx, targetTx, 0.08);
+					curTy = lerp(curTy, targetTy, 0.08);
+					nod *= 0.85;
+					viewer.setAttribute('camera-orbit', `${curAz}deg ${curPol}deg 4.8m`);
+					if (wrap) wrap.style.transform = `translate(${curTx.toFixed(2)}px, ${curTy.toFixed(2)}px)`;
+					requestAnimationFrame(tick);
+				}
+				if (reducedMotion) return;
+				requestAnimationFrame(tick);
+				window.addEventListener('mousemove', (e) => {
+					const nx = e.clientX / window.innerWidth - 0.5;
+					const ny = e.clientY / window.innerHeight - 0.5;
+					targetAz = BASE_AZ - nx * AZ_RANGE * 2;
+					targetPol = BASE_POL + ny * POL_RANGE * 2;
+					targetTx = -nx * 10;
+					targetTy = -ny * 8;
+				}, { passive: true });
+				document.querySelectorAll('#f input').forEach((el) => {
+					el.addEventListener('keydown', (e) => {
+						if (typeof e.key === 'string' && (e.key.length === 1 || e.key === 'Backspace')) {
+							nod = (nod >= 0 ? -1 : 1) * 4;
+						}
+					});
+				});
+			})();
+
+			// Password show/hide toggle
+			(function () {
+				const pw = document.getElementById('password');
+				const tog = document.getElementById('password-toggle');
+				if (!pw || !tog) return;
+				tog.addEventListener('click', () => {
+					const show = pw.type === 'password';
+					pw.type = show ? 'text' : 'password';
+					tog.setAttribute('aria-pressed', show ? 'true' : 'false');
+					tog.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+				});
+			})();
+
+			// Caps Lock warning on password
+			(function () {
+				const pw = document.getElementById('password');
+				const warn = document.getElementById('caps-warn');
+				if (!pw || !warn) return;
+				function check(e) {
+					const on = e.getModifierState && e.getModifierState('CapsLock');
+					warn.classList.toggle('show', !!on);
+				}
+				pw.addEventListener('keydown', check);
+				pw.addEventListener('keyup', check);
+				pw.addEventListener('blur', () => warn.classList.remove('show'));
+			})();
+
+			// Inline username validation
+			(function () {
+				const u = document.getElementById('username');
+				const hint = document.getElementById('username-hint');
+				if (!u || !hint) return;
+				const re = /^[a-zA-Z0-9_-]{3,30}$/;
+				u.addEventListener('input', () => {
+					const v = u.value;
+					if (!v) { hint.classList.remove('valid', 'invalid'); hint.textContent = '3–30 characters, letters, numbers, _ or -'; return; }
+					if (re.test(v)) {
+						hint.classList.add('valid'); hint.classList.remove('invalid');
+						hint.textContent = '✓ Looks good';
+					} else {
+						hint.classList.add('invalid'); hint.classList.remove('valid');
+						if (v.length < 3) hint.textContent = 'Too short — 3 characters minimum.';
+						else if (v.length > 30) hint.textContent = 'Too long — 30 characters maximum.';
+						else hint.textContent = 'Only letters, numbers, _ and - allowed.';
+					}
+				});
+			})();
+
+			// Password strength indicator
+			(function () {
+				const pw = document.getElementById('password');
+				const fill = document.getElementById('strength-fill');
+				const label = document.getElementById('strength-label');
+				const levels = [
+					{ color: '#555', text: 'Too short' },
+					{ color: '#777', text: 'Weak' },
+					{ color: '#999', text: 'Fair' },
+					{ color: '#ccc', text: 'Strong' },
+					{ color: '#fff', text: 'Very strong' },
+				];
+				function score(v) {
+					if (v.length < 10) return 0;
+					let s = 1;
+					if (v.length >= 14) s++;
+					if (/[A-Z]/.test(v) && /[a-z]/.test(v)) s++;
+					if (/[0-9]/.test(v)) s++;
+					if (/[^A-Za-z0-9]/.test(v)) s++;
+					return Math.min(s, 4);
+				}
+				pw.addEventListener('input', () => {
+					const v = pw.value;
+					if (!v) { fill.style.width = '0%'; label.textContent = 'Minimum 10 characters'; label.style.color = '#555'; return; }
+					const s = score(v);
+					const pct = [15, 35, 55, 75, 100][s];
+					const lvl = levels[s];
+					fill.style.width = pct + '%';
+					fill.style.background = lvl.color;
+					label.textContent = lvl.text;
+					label.style.color = lvl.color;
+				});
+			})();
+
+			// Wallet chain tabs + Solana detection
+			(function () {
+				const solanaTab = document.querySelector('.chain-tab[data-chain="solana"]');
+				const hasSolana = !!(window.solana || window.phantom?.solana || window.backpack || window.solflare);
+				if (solanaTab && !hasSolana) {
+					solanaTab.disabled = true;
+					solanaTab.title = 'Install Phantom, Backpack, or Solflare to use Solana';
+				}
+				document.querySelectorAll('.chain-tab').forEach((t) => {
+					t.addEventListener('click', () => {
+						if (t.disabled) return;
+						const chain = t.dataset.chain;
+						document.querySelectorAll('.chain-tab').forEach((x) => {
+							const on = x.dataset.chain === chain;
+							x.classList.toggle('active', on);
+							x.setAttribute('aria-selected', on ? 'true' : 'false');
+						});
+						document.getElementById('evm-panel').classList.toggle('active', chain === 'evm');
+						document.getElementById('solana-panel').classList.toggle('active', chain === 'solana');
+					});
+				});
+
+				// Mobile scroll-into-view on focus
+				const isTouch = matchMedia('(hover: none)').matches;
+				if (isTouch) {
+					document.querySelectorAll('#f input').forEach((input) => {
+						input.addEventListener('focus', () => {
+							setTimeout(() => input.scrollIntoView({ block: 'center', behavior: 'smooth' }), 250);
+						});
+					});
+				}
+			})();
+
+			// Registration form submit
+			const params = new URLSearchParams(location.search);
+			const next = params.get('next') || sessionStorage.getItem('login_redirect') || '/create';
+			sessionStorage.removeItem('login_redirect');
+			window.__loginNext = next;
+			const form = document.getElementById('f');
+			const err = document.getElementById('err');
+			const btn = document.getElementById('submit');
+			form.addEventListener('submit', async (e) => {
+				e.preventDefault();
+				err.style.display = 'none';
+				btn.disabled = true;
+				btn.textContent = 'Creating account…';
+				try {
+					const res = await fetch('/api/auth/register', {
+						method: 'POST',
+						credentials: 'include',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({
+							username: document.getElementById('username').value,
+							password: document.getElementById('password').value,
+						}),
+					});
+					const data = await res.json().catch(() => ({}));
+					if (!res.ok) {
+						const msg = res.status === 429
+							? 'Too many attempts. Try again in a moment.'
+							: res.status === 409
+								? 'That username is taken.'
+								: (data.error_description || 'Registration failed');
+						throw new Error(msg);
+					}
+					try {
+						localStorage.setItem('3dagent:auth-hint', JSON.stringify({ authed: true, ts: Date.now() }));
+					} catch { /* ignore */ }
+					location.href = next;
+				} catch (e) {
+					err.textContent = e.message;
+					err.style.display = 'block';
+					btn.disabled = false;
+					btn.textContent = 'Create account';
+				}
+			});
+		</script>
+	</body>
+</html>

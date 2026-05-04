@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="robots" content="noindex" />
+		<title>My Agents · three.ws</title>
+		<meta name="description" content="Your ERC-8004 agents across every supported chain." />
+		<link rel="canonical" href="https://three.ws/my-agents" />
+		<link rel="icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/my-agents/my-agents.css" />
+	</head>
+	<body>
+		<header class="my-agents-header">
+			<div class="my-agents-header__brand"><a href="/"><img src="/three.svg" alt="" class="header-logo" aria-hidden="true" />three.ws</a></div>
+			<nav class="my-agents-header__nav" aria-label="Page navigation">
+				<a href="/app">Viewer</a>
+				<a href="/create">Create</a>
+				<a href="/discover">Discover</a>
+				<a href="/features">Features</a>
+				<a href="/widgets">Widgets</a>
+				<a href="/studio">Studio</a>
+				<a href="/docs">Docs</a>
+				<a href="/my-agents" aria-current="page">My Agents</a>
+				<a href="/dashboard">Dashboard</a>
+			</nav>
+		</header>
+
+		<main class="my-agents-main" id="my-agents-main">
+			<h1 class="my-agents-title">On-chain Agents</h1>
+			<p class="my-agents-subtitle">Agents owned by your linked wallets</p>
+
+			<div
+				id="my-agents-error"
+				class="my-agents-error-banner"
+				hidden
+				role="alert"
+				aria-live="polite"
+			></div>
+
+			<div
+				id="my-agents-grid"
+				class="my-agents-grid"
+				role="list"
+				aria-label="Your on-chain agents"
+				aria-live="polite"
+				aria-busy="true"
+			></div>
+		</main>
+
+		<script type="module" src="./my-agents.js"></script>
+	</body>
+</html>

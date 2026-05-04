@@ -1,0 +1,226 @@
+[
+	{
+		"name": "idle",
+		"url": "/animations/clips/idle.json",
+		"label": "Idle",
+		"icon": "🧍",
+		"loop": true
+	},
+	{
+		"name": "dance",
+		"url": "/animations/clips/dance.json",
+		"label": "Dance",
+		"icon": "💃",
+		"loop": true
+	},
+	{
+		"name": "celebrate",
+		"url": "/animations/clips/celebrate.json",
+		"label": "Celebrate",
+		"icon": "🎉",
+		"loop": false
+	},
+	{
+		"name": "angry",
+		"url": "/animations/clips/angry.json",
+		"label": "Angry",
+		"icon": "😡",
+		"loop": false
+	},
+	{
+		"name": "defeated",
+		"url": "/animations/clips/defeated.json",
+		"label": "Defeated",
+		"icon": "😞",
+		"loop": false
+	},
+	{
+		"name": "dying",
+		"url": "/animations/clips/dying.json",
+		"label": "Dying",
+		"icon": "💀",
+		"loop": false
+	},
+	{
+		"name": "falling",
+		"url": "/animations/clips/falling.json",
+		"label": "Falling",
+		"icon": "🪂",
+		"loop": false
+	},
+	{
+		"name": "jump",
+		"url": "/animations/clips/jump.json",
+		"label": "Jump",
+		"icon": "🦘",
+		"loop": false
+	},
+	{
+		"name": "kiss",
+		"url": "/animations/clips/kiss.json",
+		"label": "Kiss",
+		"icon": "💋",
+		"loop": false
+	},
+	{
+		"name": "pray",
+		"url": "/animations/clips/pray.json",
+		"label": "Pray",
+		"icon": "🙏",
+		"loop": false
+	},
+	{
+		"name": "reaction",
+		"url": "/animations/clips/reaction.json",
+		"label": "Reaction",
+		"icon": "😲",
+		"loop": false
+	},
+	{
+		"name": "rumba",
+		"url": "/animations/clips/rumba.json",
+		"label": "Rumba",
+		"icon": "🕺",
+		"loop": true
+	},
+	{
+		"name": "silly",
+		"url": "/animations/clips/silly.json",
+		"label": "Silly Dance",
+		"icon": "🤪",
+		"loop": true
+	},
+	{
+		"name": "sitclap",
+		"url": "/animations/clips/sitclap.json",
+		"label": "Sit Clap",
+		"icon": "👏",
+		"loop": false
+	},
+	{
+		"name": "sitlaugh",
+		"url": "/animations/clips/sitlaugh.json",
+		"label": "Sit Laugh",
+		"icon": "😂",
+		"loop": false
+	},
+	{
+		"name": "taunt",
+		"url": "/animations/clips/taunt.json",
+		"label": "Taunt",
+		"icon": "😝",
+		"loop": false
+	},
+	{
+		"name": "thriller",
+		"url": "/animations/clips/thriller.json",
+		"label": "Thriller",
+		"icon": "🧟",
+		"loop": true
+	},
+	{
+		"name": "capoeira",
+		"url": "/animations/clips/capoeira.json",
+		"label": "Capoeira",
+		"icon": "🥋",
+		"loop": true
+	},
+	{
+		"name": "wave",
+		"url": "/animations/clips/wave.json",
+		"label": "Wave",
+		"icon": "👋",
+		"loop": false
+	},
+	{
+		"name": "walk",
+		"url": "/animations/clips/walk.json",
+		"label": "Walk",
+		"icon": "🚶",
+		"loop": true
+	},
+	{
+		"name": "dodge",
+		"url": "/animations/clips/dodge.json",
+		"label": "Dodge",
+		"icon": "🤺",
+		"loop": false
+	},
+	{
+		"name": "stepback",
+		"url": "/animations/clips/stepback.json",
+		"label": "Step Back",
+		"icon": "👣",
+		"loop": false
+	},
+	{
+		"name": "shoved",
+		"url": "/animations/clips/shoved.json",
+		"label": "Shoved",
+		"icon": "💥",
+		"loop": false
+	},
+	{
+		"name": "standup",
+		"url": "/animations/clips/standup.json",
+		"label": "Stand Up",
+		"icon": "⬆️",
+		"loop": false
+	},
+	{
+		"name": "header",
+		"url": "/animations/clips/header.json",
+		"label": "Header",
+		"icon": "⚽",
+		"loop": false
+	},
+	{
+		"name": "coverstand",
+		"url": "/animations/clips/coverstand.json",
+		"label": "Cover Stand",
+		"icon": "🛡️",
+		"loop": false
+	},
+	{
+		"name": "goalkeeper",
+		"url": "/animations/clips/goalkeeper.json",
+		"label": "Goalkeeper",
+		"icon": "🧤",
+		"loop": false
+	},
+	{
+		"name": "jumpdown",
+		"url": "/animations/clips/jumpdown.json",
+		"label": "Jump Down",
+		"icon": "⬇️",
+		"loop": false
+	},
+	{
+		"name": "jumpdown2",
+		"url": "/animations/clips/jumpdown2.json",
+		"label": "Jump Down 2",
+		"icon": "⬇️",
+		"loop": false
+	},
+	{
+		"name": "jumpdown3",
+		"url": "/animations/clips/jumpdown3.json",
+		"label": "Jump Down 3",
+		"icon": "⬇️",
+		"loop": false
+	},
+	{
+		"name": "removing",
+		"url": "/animations/clips/removing.json",
+		"label": "Removing",
+		"icon": "🚗",
+		"loop": false
+	},
+	{
+		"name": "falltolanding",
+		"url": "/animations/clips/falltolanding.json",
+		"label": "Fall to Landing",
+		"icon": "🦅",
+		"loop": false
+	}
+]
