@@ -1,300 +1,358 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>Widget Studio · three.ws</title>
-		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-		<meta
-			name="description"
-			content="Turn any avatar into an embeddable 3D widget. Five types, brand controls, one-line embed."
-		/>
-		<meta name="theme-color" content="#0a0a0a" />
-		<meta name="robots" content="noindex" />
-		<link rel="shortcut icon" href="/favicon.ico" />
-		<link rel="preconnect" href="https://fonts.googleapis.com" />
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-		<link
-			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
-			rel="stylesheet"
-		/>
-		<link rel="stylesheet" href="/studio/studio.css" />
-	</head>
-	<body class="studio-body">
-		<header class="studio-header">
-			<h1>
-				<a href="/"><img src="/three.svg" alt="three.ws" class="wordmark-logo" /></a
-				><span class="studio-tag">Studio</span>
-			</h1>
-			<nav>
-				<a href="/app">Viewer</a>
-				<a href="/create">Create</a>
-				<a href="/discover">Discover</a>
-				<a href="/features">Features</a>
-				<a href="/widgets">Widgets</a>
-				<a href="/studio" aria-current="page">Studio</a>
-				<a href="/docs">Docs</a>
-				<a href="/my-agents">My Agents</a>
-				<a href="/dashboard">Dashboard</a>
-				<a class="btn-ghost" id="signin-link" href="/login?next=/studio" hidden>Sign in</a>
-				<button class="btn-ghost" id="signout-btn" type="button" hidden>Sign out</button>
-			</nav>
-		</header>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Widget Studio - three.ws</title>
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/home.css" />
+  <link rel="icon" href="/favicon.ico" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --accent: #6a5cff;
+      --border: #2a2a36;
+      --bg: #0a0a0f;
+      --panel: #14141c;
+      --muted: #888;
+      --header-h: 64px;
+    }
+    body {
+      background-color: var(--bg);
+      color: #eee;
+      font-family: 'Inter', sans-serif;
+      padding-top: var(--header-h);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      margin: 0;
+      overflow-x: hidden;
+    }
+    .main-content {
+      flex: 1;
+      display: flex;
+      padding: 2rem;
+      gap: 2rem;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .config-panel {
+      width: 380px;
+      flex-shrink: 0;
+      background-color: var(--panel);
+      padding: 1.5rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      height: fit-content;
+    }
+    .preview-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    .preview-box {
+      flex: 1;
+      min-height: 400px;
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-image: 
+        linear-gradient(45deg, #1a1a24 25%, transparent 25%), 
+        linear-gradient(-45deg, #1a1a24 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #1a1a24 75%),
+        linear-gradient(-45deg, transparent 75%, #1a1a24 75%);
+      background-size: 20px 20px;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+      padding: 2rem;
+      transition: background-color 0.3s ease;
+    }
+    .preview-box.light {
+        background-color: #f0f0f0;
+    }
+    .preview-box.dark {
+        background-color: #111;
+    }
+    .code-box {
+      background-color: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+    }
+    h1, h2, h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      margin-top: 0;
+    }
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: #ccc;
+    }
+    input[type="text"],
+    select {
+      width: 100%;
+      box-sizing: border-box;
+      background-color: #0a0a0f;
+      border: 1px solid var(--border);
+      color: #eee;
+      padding: 0.6rem 0.8rem;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+    input[type="text"]:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(106, 92, 255, 0.3);
+    }
+    .toggle-group {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .toggle-group button {
+      flex: 1;
+      padding: 0.6rem;
+      background-color: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      cursor: pointer;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+    }
+    .toggle-group button:hover {
+        border-color: #4a4a58;
+        color: #fff;
+    }
+    .toggle-group button.active {
+      background-color: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+    textarea {
+      width: 100%;
+      box-sizing: border-box;
+      height: 150px;
+      background-color: #0a0a0f;
+      border: 1px solid var(--border);
+      color: #eee;
+      padding: 0.8rem;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 0.9rem;
+      resize: none;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      background-color: #2a2a36;
+      color: #ccc;
+      border: none;
+      padding: 0.3rem 0.6rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+    .copy-btn:hover {
+      background-color: #3a3a4a;
+    }
+    .code-wrapper {
+      position: relative;
+    }
+    #widget-preview-container {
+      transition: all 0.2s ease-in-out;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+  </style>
+</head>
+<body class="home-page">
+  <header>
+		<h1>
+			<a href="/" aria-label="three.ws home"><img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" /><span class="wordmark-dot" aria-hidden="true"></span>three.ws</a>
+		</h1>
+		<nav class="home-nav" aria-label="Primary">
+			<ul class="nav-root" role="menubar">
+				<li class="nav-item" role="none"><a href="/discover" role="menuitem">Discover</a></li>
+        <li class="nav-item" role="none"><a href="/studio" role="menuitem">Widget Studio</a></li>
+				<li class="nav-item" role="none"><a href="/chat" role="menuitem">Chat</a></li>
+				<li class="nav-item" role="none"><a href="/docs" role="menuitem">Docs</a></li>
+				<li class="nav-item" role="none"><a href="/login" class="nav-cta" id="home-nav-cta" role="menuitem">Get started</a></li>
+			</ul>
+		</nav>
+	</header>
 
-		<main class="studio-layout" id="studio-layout" hidden>
-			<section class="studio-col-left" aria-label="Pick avatar and widget type">
-				<div class="panel">
-					<h2 data-tooltip="The 3D model your widget will display. We've pre-loaded a demo agent so you can try the studio right away — sign in to use your own.">
-						1. Pick avatar
-					</h2>
-					<p class="note">To see your avatar here, make it public or unlisted in your <a href="/dashboard/avatars">avatar dashboard</a>.</p>
-					<div class="avatar-list" id="avatar-list" aria-busy="true"></div>
-				</div>
-				<div class="panel">
-					<h2 data-tooltip="Each widget type is a different layout — Turntable for hero banners, Talking Agent for chat, Passport for on-chain identity, etc. Click to switch and watch the preview update.">
-						2. Pick widget type
-					</h2>
-					<div class="type-grid" id="type-grid"></div>
-				</div>
-			</section>
+  <main class="main-content">
+    <aside class="config-panel">
+      <h2>Widget Studio</h2>
+      
+      <div class="form-group">
+        <label for="agent-id">Agent ID</label>
+        <input type="text" id="agent-id" value="041cb44a-3c58-4d56-b083-d5234563456a">
+      </div>
 
-			<section class="studio-col-mid" aria-label="Preview">
-				<div class="preview-shell">
-					<div class="preview-frame" id="preview-frame">
-						<iframe
-							id="preview-iframe"
-							title="Live widget preview"
-							allow="autoplay"
-							loading="eager"
-						></iframe>
-					</div>
-					<div class="preview-meta">
-						<span id="preview-status" class="muted">Pick an avatar to preview</span>
-						<button
-							class="btn-ghost btn-sm"
-							id="capture-camera-btn"
-							type="button"
-							data-tooltip="Drag to frame the avatar exactly how you want, then click to lock in that camera angle as the widget's default."
-							disabled
-						>
-							Use current view
-						</button>
-					</div>
-				</div>
-			</section>
+      <div class="form-group">
+        <label>Preview Background</label>
+        <div class="toggle-group" id="bg-selector">
+          <button class="active" data-value="transparent">Transparent</button>
+          <button data-value="dark">Dark</button>
+          <button data-value="light">Light</button>
+        </div>
+      </div>
 
-			<section class="studio-col-right" aria-label="Brand and config">
-				<div class="panel">
-					<div class="studio-right-tabs" role="tablist">
-						<button class="studio-right-tab" id="tab-brand" role="tab" aria-selected="true" aria-controls="panel-brand">Brand</button>
-						<button class="studio-right-tab" id="tab-launch" role="tab" aria-selected="false" aria-controls="panel-launch">⚡ Launch</button>
-					</div>
+      <div class="form-group">
+        <label>Nameplate</label>
+        <div class="toggle-group" id="nameplate-selector">
+          <button class="active" data-value="true">Visible</button>
+          <button data-value="false">Hidden</button>
+        </div>
+      </div>
 
-					<div id="panel-brand" role="tabpanel">
-					<h2 data-tooltip="Style the widget to match your site — colors, environment, captions, and behavior. Changes update the preview live.">
-						3. Brand
-					</h2>
-					<form
-						id="config-form"
-						class="config-form"
-						autocomplete="off"
-						onsubmit="return false"
-					>
-						<label
-							class="field"
-							data-tooltip="Internal name for this widget. Shows up in your dashboard — visitors never see it."
-						>
-							<span>Name</span>
-							<input
-								type="text"
-								name="name"
-								maxlength="120"
-								required
-								placeholder="My turntable widget"
-							/>
-						</label>
-						<label
-							class="field"
-							data-tooltip="Backdrop color behind the avatar. Pick something close to your site's background for a seamless embed."
-						>
-							<span>Background</span>
-							<input type="color" name="background" value="#0a0a0a" />
-						</label>
-						<label
-							class="field"
-							data-tooltip="Highlight color used for buttons, focus rings, and the chat bubble. Match your brand."
-						>
-							<span>Accent</span>
-							<input type="color" name="accent" value="#8b5cf6" />
-						</label>
-						<label
-							class="field"
-							data-tooltip="Optional text overlay shown below the avatar — great for a tagline or call-to-action."
-						>
-							<span>Caption (optional)</span>
-							<input
-								type="text"
-								name="caption"
-								maxlength="280"
-								placeholder="Hello, world."
-							/>
-						</label>
-						<label
-							class="field row"
-							data-tooltip="Show the orbit/zoom controls so visitors can rotate the avatar themselves. Turn off for a hands-off hero shot."
-						>
-							<input type="checkbox" name="showControls" checked />
-							<span>Show controls</span>
-						</label>
-						<label
-							class="field row"
-							data-tooltip="Slowly spin the avatar on its own. Pauses when the visitor interacts."
-						>
-							<input type="checkbox" name="autoRotate" checked />
-							<span>Auto-rotate</span>
-						</label>
-						<label
-							class="field"
-							data-tooltip="HDR lighting environment that affects how the avatar is lit and reflects. Try a few — they change the mood instantly."
-						>
-							<span>Environment</span>
-							<select name="envPreset">
-								<option value="none">None</option>
-								<option value="neutral" selected>Neutral</option>
-								<option value="venice-sunset">Venice sunset</option>
-								<option value="footprint-court">Footprint court</option>
-							</select>
-						</label>
-						<label
-							class="field row"
-							data-tooltip="Public widgets load for anyone with the URL or embed snippet. Uncheck to keep it private to your account."
-						>
-							<input type="checkbox" name="is_public" checked />
-							<span>Public widget (anyone with the URL can load it)</span>
-						</label>
+      <div class="form-group">
+        <label for="widget-width">Width</label>
+        <input type="text" id="widget-width" value="100%">
+      </div>
+      
+      <div class="form-group">
+        <label for="widget-height">Height</label>
+        <input type="text" id="widget-height" value="480px">
+      </div>
 
-						<div id="type-fields" class="type-fields"></div>
-					</form>
-					</div><!-- #panel-brand -->
+    </aside>
 
-					<div id="panel-launch" role="tabpanel" hidden>
-						<!-- Mounted by studio.js via mountLaunchPanel -->
-					</div>
-				</div>
+    <section class="preview-area">
+      <div class="preview-box" id="preview-box">
+        <div id="widget-preview-container" style="width: 100%; height: 480px;">
+          <!-- The widget will be dynamically inserted here -->
+        </div>
+      </div>
+      <div class="code-box">
+        <h3>Embed Code</h3>
+        <div class="code-wrapper">
+          <textarea id="code-snippet" readonly></textarea>
+          <button class="copy-btn" id="copy-button">Copy</button>
+        </div>
+      </div>
+    </section>
+  </main>
+  
+  <script src="/dist/widget.js" defer></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const agentIdInput = document.getElementById('agent-id');
+      const bgSelector = document.getElementById('bg-selector');
+      const nameplateSelector = document.getElementById('nameplate-selector');
+      const widthInput = document.getElementById('widget-width');
+      const heightInput = document.getElementById('widget-height');
+      const previewContainer = document.getElementById('widget-preview-container');
+      const previewBox = document.getElementById('preview-box');
+      const codeSnippet = document.getElementById('code-snippet');
+      const copyButton = document.getElementById('copy-button');
 
-				<div class="action-row">
-					<button
-						type="button"
-						class="btn-ghost"
-						id="save-draft-btn"
-						data-tooltip="Save your config to your dashboard without generating embed code. You can come back and tweak it later."
-					>
-						Save draft
-					</button>
-					<button
-						type="button"
-						class="btn-primary"
-						id="generate-btn"
-						data-tooltip="Save and produce a shareable URL plus the iframe/script snippets you can paste into your site."
-					>
-						Generate embed
-					</button>
-				</div>
-				<p id="form-error" class="form-error" hidden></p>
-			</section>
-		</main>
+      function updateWidget() {
+        const agentId = agentIdInput.value.trim();
+        const background = bgSelector.querySelector('.active').dataset.value;
+        const nameplate = nameplateSelector.querySelector('.active').dataset.value;
+        const width = widthInput.value.trim();
+        const height = heightInput.value.trim();
 
-		<div class="modal-overlay" id="embed-modal" hidden>
-			<div class="modal" role="dialog" aria-labelledby="embed-modal-title" aria-modal="true">
-				<button type="button" class="modal-close" id="embed-modal-close" aria-label="Close">
-					×
-				</button>
-				<h2 id="embed-modal-title">Your widget is live</h2>
-				<p class="muted">Share the URL or paste the snippet anywhere.</p>
-				<p id="embed-demo-note" class="muted" hidden>
-					This embeds the built-in demo agent with its preset config — your studio
-					tweaks aren't saved.
-					<a href="/dashboard#upload">Upload your own avatar</a> to embed a customized
-					widget.
-				</p>
+        if (!agentId) {
+          previewContainer.innerHTML = '<p style="color: var(--muted); text-align: center;">Please enter an Agent ID</p>';
+          codeSnippet.value = '';
+          return;
+        }
 
-				<div class="embed-preview">
-					<iframe
-						id="embed-preview-iframe"
-						title="Embed preview"
-						allow="autoplay"
-					></iframe>
-				</div>
+        // Update preview container style
+        previewContainer.style.width = width;
+        previewContainer.style.height = height;
 
-				<label class="field">
-					<span>Shareable URL</span>
-					<div class="copy-row">
-						<input type="text" id="embed-share-url" readonly />
-						<button type="button" class="btn-ghost btn-sm" data-copy="#embed-share-url">
-							Copy
-						</button>
-					</div>
-				</label>
+        // Update preview box background
+        previewBox.classList.remove('light', 'dark');
+        if (background === 'light' || background === 'dark') {
+            previewBox.classList.add(background);
+        }
 
-				<div style="display:flex;gap:12px">
-					<label class="field">
-						<span>Width (px)</span>
-						<input type="number" id="embed-width" value="600" min="100" max="3000" step="10" />
-					</label>
-					<label class="field">
-						<span>Height (px)</span>
-						<input type="number" id="embed-height" value="600" min="100" max="3000" step="10" />
-					</label>
-				</div>
+        // Determine widget background for the actual widget
+        const widgetBackground = (background === 'transparent') ? 'transparent' : 'transparent'; // Let the host page background show through
 
-				<div id="embed-options" hidden>
-					<p style="margin:12px 0 6px;font-size:0.82em;text-transform:uppercase;letter-spacing:0.05em;opacity:0.5">Include in embed</p>
-					<label class="field row" id="embed-opt-animations" hidden>
-						<input type="checkbox" id="embed-include-animations" checked />
-						<span>Animations panel</span>
-					</label>
-					<label class="field row" id="embed-opt-chat" hidden>
-						<input type="checkbox" id="embed-include-chat" checked />
-						<span>Chat UI</span>
-					</label>
-					<label class="field row" id="embed-opt-controls" hidden>
-						<input type="checkbox" id="embed-include-controls" checked />
-						<span>3D orbit controls</span>
-					</label>
-				</div>
+        // Create and update widget element
+        const widgetElement = document.createElement('div');
+        widgetElement.className = 'threews-widget';
+        widgetElement.dataset.agentId = agentId;
+        
+        // Use the selected background for the iframe for accurate preview
+        const widgetBgParam = bgSelector.querySelector('.active').dataset.value;
+        if(widgetBgParam !== 'transparent') {
+            widgetElement.dataset.background = widgetBgParam;
+        }
 
-				<label class="field">
-					<span>iframe snippet</span>
-					<div class="copy-row">
-						<textarea id="embed-iframe-snippet" rows="3" readonly></textarea>
-						<button
-							type="button"
-							class="btn-ghost btn-sm"
-							data-copy="#embed-iframe-snippet"
-						>
-							Copy
-						</button>
-					</div>
-				</label>
+        if (nameplate === 'false') {
+          widgetElement.dataset.nameplate = nameplate;
+        }
+        
+        previewContainer.innerHTML = '';
+        previewContainer.appendChild(widgetElement);
 
-				<details>
-					<summary>Script-tag embed</summary>
-					<div class="copy-row">
-						<textarea id="embed-script-snippet" rows="2" readonly></textarea>
-						<button
-							type="button"
-							class="btn-ghost btn-sm"
-							data-copy="#embed-script-snippet"
-						>
-							Copy
-						</button>
-					</div>
-				</details>
-			</div>
-		</div>
+        // Manually trigger initialization if widget.js is already loaded
+        if (window.initializeWidget) {
+            window.initializeWidget(widgetElement);
+        }
 
-		<div class="toast" id="toast" hidden></div>
+        // Update code snippet
+        let snippet = `<div class="threews-widget" data-agent-id="${agentId}"`;
+        if (widgetBgParam !== 'transparent') {
+          snippet += ` data-background="${widgetBgParam}"`;
+        }
+        if (nameplate === 'false') {
+          snippet += ` data-nameplate="false"`;
+        }
+        snippet += ` style="width: ${width}; height: ${height};"></div>\n`;
+        snippet += `<script src="https://3d-agent.vercel.app/dist/widget.js" defer><\/script>`;
+        codeSnippet.value = snippet;
+      }
 
-		<script type="module" src="/studio/studio.js"></script>
-	</body>
+      function setupToggle(container) {
+        container.addEventListener('click', (e) => {
+          if (e.target.tagName === 'BUTTON') {
+            container.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+            e.target.classList.add('active');
+            updateWidget();
+          }
+        });
+      }
+
+      agentIdInput.addEventListener('input', updateWidget);
+      widthInput.addEventListener('input', updateWidget);
+      heightInput.addEventListener('input', updateWidget);
+
+      setupToggle(bgSelector);
+      setupToggle(nameplateSelector);
+
+      copyButton.addEventListener('click', () => {
+        codeSnippet.select();
+        document.execCommand('copy');
+        copyButton.textContent = 'Copied!';
+        setTimeout(() => {
+          copyButton.textContent = 'Copy';
+        }, 2000);
+      });
+
+      // Initial call
+      updateWidget();
+    });
+  </script>
+</body>
 </html>

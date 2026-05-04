@@ -457,9 +457,6 @@ function bindSubmit() {
 	});
 }
 
-	bindSubmit();
-}
-
 // ── Util ──────────────────────────────────────────────────────────────────
 
 function escapeHtml(s) {

@@ -126,34 +126,36 @@
   /* ── Content ─────────────────────────────────────────── */
   .content { padding: 24px; }
 
-  /* ── Cards ───────────────────────────────────────────── */
-  .stats-grid {
+  /* ── Dashboard Grid ────────────────────────────────── */
+  .dashboard-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-    margin-bottom: 24px;
+    grid-template-columns: repeat(12, 1fr);
+    grid-auto-rows: minmax(200px, auto);
+    gap: 24px;
   }
-  .stat-card {
+  .dash-module {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 16px;
-  }
-  .stat-card .label { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
-  .stat-card .value { font-size: 24px; color: var(--text-bright); margin-top: 4px; }
-  .stat-card .value.green { color: var(--accent); }
-  .stat-card .value.red { color: var(--red); }
-  .stat-card .value.yellow { color: var(--yellow); }
-  .stat-card .value.blue { color: var(--blue); }
-  .stat-card .sub { font-size: 11px; color: #666; margin-top: 4px; }
-
-  .panel {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    margin-bottom: 24px;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
+  .module-12 { grid-column: span 12; }
+  .module-8 { grid-column: span 8; }
+  .module-6 { grid-column: span 6; }
+  .module-4 { grid-column: span 4; }
+  .module-3 { grid-column: span 3; }
+  @media (max-width: 1200px) {
+    .module-8, .module-4 { grid-column: span 12; }
+  }
+  @media (max-width: 900px) {
+    .module-6 { grid-column: span 12; }
+  }
+  @media (max-width: 600px) {
+    .module-3 { grid-column: span 6; }
+  }
+
   .panel-header {
     padding: 12px 16px;
     border-bottom: 1px solid var(--border);
@@ -173,8 +175,44 @@
     font-size: 10px;
   }
   .panel-header .spacer { flex: 1; }
-  .panel-body { padding: 16px; }
+  .panel-body { padding: 16px; flex: 1; min-height: 0; }
   .panel-body.no-pad { padding: 0; }
+  .panel-body .empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+  }
+
+  /* ── Featured Agent Card ───────────────────────────── */
+  .featured-agent-card {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    height: 100%;
+  }
+  .featured-agent-card .avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #000;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    background-size: cover;
+    background-position: center;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><rect width="80" height="80" fill="%230a0a0a"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="monospace" font-size="40" fill="%23222">🤖</text></svg>');
+  }
+  .featured-agent-card .info .name {
+    font-size: 16px;
+    color: var(--text-bright);
+    font-weight: bold;
+  }
+  .featured-agent-card .info .desc {
+    font-size: 12px;
+    color: #888;
+    margin: 4px 0 8px;
+  }
 
   /* ── Tables ───────────────────────────────────────────── */
   table { width: 100%; border-collapse: collapse; }
@@ -440,40 +478,64 @@
 
     <!-- ═══════ Dashboard Page ═══════ -->
     <div class="content page" id="page-dashboard">
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="label">Bot Status</div>
-          <div class="value green" id="stat-bot-status">--</div>
-          <div class="sub" id="stat-bot-mode">--</div>
+      <div class="dashboard-grid">
+        <!-- Featured Agent -->
+        <div class="dash-module module-8">
+            <div class="panel-header"><h2>Featured Agent</h2></div>
+            <div class="panel-body">
+                <div class="featured-agent-card">
+                    <div class="avatar" id="featured-agent-avatar"></div>
+                    <div class="info">
+                        <div class="name" id="featured-agent-name">Agent CZ</div>
+                        <div class="desc" id="featured-agent-desc">The default agent, ready for action. Keeping an eye on the market.</div>
+                        <a href="/agent-detail.html?id=cz" class="btn btn-sm" id="featured-agent-link">View Profile</a>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="stat-card">
-          <div class="label">Active Watches</div>
-          <div class="value blue" id="stat-watches">0</div>
-          <div class="sub" id="stat-watches-sub">Bot + API</div>
-        </div>
-        <div class="stat-card">
-          <div class="label">Claims Detected</div>
-          <div class="value yellow" id="stat-claims">0</div>
-          <div class="sub" id="stat-claims-sub">Since start</div>
-        </div>
-        <div class="stat-card">
-          <div class="label">Uptime</div>
-          <div class="value" id="stat-uptime">--</div>
-          <div class="sub" id="stat-uptime-sub">--</div>
-        </div>
-      </div>
 
-      <div class="panel">
-        <div class="panel-header">
-          <h2>Recent Activity</h2>
-          <span class="badge" id="activity-count">0</span>
-          <div class="spacer"></div>
-          <button class="btn btn-sm" onclick="clearFeed('dashboard-feed')">Clear</button>
+        <!-- Wallet Snapshot -->
+        <div class="dash-module module-4">
+            <div class="panel-header"><h2>Wallet Snapshot</h2></div>
+            <div class="panel-body">
+                <div class="empty">
+                    <div class="icon">🔑</div>
+                    Connect wallet to see your holdings.
+                    <div style="margin-top: 12px;">
+                        <button class="btn btn-primary">Connect Wallet</button>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="panel-body no-pad">
-          <div class="feed" id="dashboard-feed">
-            <div class="empty"><div class="icon">📡</div>Waiting for events...</div>
-          </div>
+
+        <!-- Market Chart -->
+        <div class="dash-module module-6">
+            <div class="panel-header">
+                <h2>Market Chart</h2>
+                <div class="spacer"></div>
+                <select class="btn btn-sm" style="background: var(--bg-input); border-color: var(--border);">
+                    <option>Top Token</option>
+                </select>
+            </div>
+            <div class="panel-body">
+                <div class="empty"><div class="icon">📈</div>Chart data loading...</div>
+                <!-- Chart will be rendered here by a library -->
+            </div>
+        </div>
+
+        <!-- Live Feed -->
+        <div class="dash-module module-6">
+            <div class="panel-header">
+                <h2>Live Feed</h2>
+                <span class="badge" id="activity-count">0</span>
+                <div class="spacer"></div>
+                <button class="btn btn-sm" onclick="clearFeed('dashboard-feed')">Clear</button>
+            </div>
+            <div class="panel-body no-pad">
+                <div class="feed" id="dashboard-feed" style="height: 300px;">
+                    <div class="empty"><div class="icon">📡</div>Waiting for events...</div>
+                </div>
+            </div>
         </div>
       </div>
     </div>
