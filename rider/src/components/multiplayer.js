@@ -61,7 +61,8 @@ AFRAME.registerComponent('multiplayer', {
     sceneEl.addEventListener('beatmiss', this.onBeatMiss);
     sceneEl.addEventListener('beatwrong', this.onBeatMiss);
     sceneEl.addEventListener('songcomplete', this.onSongComplete);
-    sceneEl.addEventListener('playbuttonclick', this.onPlayButtonClick);
+    // Capture phase so we read menuSelectedChallenge before the state handler clears it.
+    sceneEl.addEventListener('playbuttonclick', this.onPlayButtonClick, true);
   },
 
   _ensureClient: function () {

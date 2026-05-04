@@ -874,11 +874,14 @@
 			const dur = reaction.gesture?.duration || REACT_COOLDOWN_MS;
 			_reactActiveUntil = t + Math.max(REACT_COOLDOWN_MS, dur);
 			_reactActivePri = pri;
-			iframe.contentWindow?.postMessage({
-				type: 'pumpfun-feed:react',
-				reaction,
-				speak: params.narrate,
-			}, '*');
+			iframe.contentWindow?.postMessage(
+				{
+					type: 'pumpfun-feed:react',
+					reaction,
+					speak: params.narrate,
+				},
+				location.origin,
+			);
 		}
 
 		function eventMatchesMint(ev) {
@@ -1183,14 +1186,20 @@
 		$('ctl-mint').addEventListener('input', (e) => {
 			params.mint = e.target.value.trim();
 			syncURL();
-			iframe.contentWindow?.postMessage({ type: 'pumpfun-feed:focus-mint', mint: params.mint || null }, '*');
+			iframe.contentWindow?.postMessage(
+				{ type: 'pumpfun-feed:focus-mint', mint: params.mint || null },
+				location.origin,
+			);
 		});
 
 		$('ctl-narrate').addEventListener('click', (e) => {
 			params.narrate = e.currentTarget.dataset.on !== '1';
 			e.currentTarget.dataset.on = params.narrate ? '1' : '0';
 			syncURL();
-			iframe.contentWindow?.postMessage({ type: 'pumpfun-feed:set-narrate', on: params.narrate }, '*');
+			iframe.contentWindow?.postMessage(
+				{ type: 'pumpfun-feed:set-narrate', on: params.narrate },
+				location.origin,
+			);
 		});
 
 		let kindTimer;
