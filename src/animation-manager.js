@@ -37,6 +37,8 @@ export class AnimationManager {
 		this._animationDefs = [];
 		/** @type {Set<string>} Clip names that failed to load — buttons grayed out in UI. */
 		this._failed = new Set();
+		/** @type {Set<string>|null} Bone/node names of the currently attached model. */
+		this._boneNames = null;
 	}
 
 	// ── Model binding ──────────────────────────────────────────────────────────
@@ -71,6 +73,7 @@ export class AnimationManager {
 			this.mixer = null;
 		}
 		this.model = null;
+		this._boneNames = null;
 		this.actions.clear();
 		this.currentAction = null;
 		this.currentName = null;
