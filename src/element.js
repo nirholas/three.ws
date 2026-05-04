@@ -1523,8 +1523,13 @@ class Agent3DElement extends HTMLElement {
 					protocol,
 					manifest: this._manifest,
 					window,
+					getClips: () => this._listAvailableClips(),
 				});
 				this._embedBridge.start();
+				// Push the initial clip list once the model + manifest are settled.
+				// The bridge queues this until the host subscribes; the chip strip on
+				// the parent page reads it from `op:'clips'` events without polling.
+				queueMicrotask(() => this._embedBridge?.emitClipsChanged());
 			}
 			// END:EMBED_BRIDGES
 			this._loadingEl.hidden = true;
@@ -2367,6 +2372,64 @@ class Agent3DElement extends HTMLElement {
 	}
 	async play(name, opts) {
 		return this._scene?.playClipByName(name, opts);
+	}
+
+	/**
+	 * Combined animation list available to the loaded model.
+	 *
+	 * Mirrors the heuristic in `home-act2-viewer.listAvailableClips`:
+	 *   • If the GLB ships with 3+ non-idle baked clips (e.g. RobotExpressive),
+	 *     show only those — manifest clips are Mixamo-retargeted to the canonical
+	 *     Avaturn skeleton and won't bind to a foreign rig.
+	 *   • Otherwise (humanoid / Avaturn-compatible — CZ, Default, most user
+	 *     avatars), prefer manifest defs (rich label/icon/loop) and append any
+	 *     extra baked clips not already covered.
+	 *
+	 * Returned shape is host-friendly: `{ name, label, icon, loop, source }`.
+	 * Empty array if no model loaded yet (host should re-request on `op:'clips'`).
+	 *
+	 * @returns {Array<{name:string, label:string, icon:string, loop:boolean, source:'glb'|'manifest'}>}
+	 */
+	_listAvailableClips() {
+		const sc = this._scene;
+		const am = this._viewer?.animationManager;
+		const baked = (sc?.clips || []).map((c) => c?.name).filter(Boolean);
+		const defs = am?.getAnimationDefs?.() || [];
+
+		const IDLE_RE = /idle/i;
+		const bakedNonIdle = baked.filter((n) => !IDLE_RE.test(n));
+
+		// Skeletal mismatch guard: if the GLB has its own rig+clips, manifest
+		// retargets won't apply — return baked-only.
+		if (bakedNonIdle.length >= 3) {
+			return baked.map((name) => ({
+				name,
+				label: name,
+				icon: '✨',
+				loop: true,
+				source: 'glb',
+			}));
+		}
+
+		const out = [];
+		const seen = new Set();
+		for (const def of defs) {
+			if (!def?.name || seen.has(def.name)) continue;
+			seen.add(def.name);
+			out.push({
+				name: def.name,
+				label: def.label || def.name,
+				icon: def.icon || '✨',
+				loop: def.loop !== false,
+				source: 'manifest',
+			});
+		}
+		for (const name of baked) {
+			if (seen.has(name)) continue;
+			seen.add(name);
+			out.push({ name, label: name, icon: '✨', loop: true, source: 'glb' });
+		}
+		return out;
 	}
 
 	/**

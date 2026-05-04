@@ -92,15 +92,21 @@ export function connectPumpFunFeed({ onEvent, signal, kind = 'all' }) {
 
 			if (msg.txType === 'create' && (kind === 'all' || kind === 'mint')) {
 				enrichMint(msg).then((data) => {
+					pushBuffer('mint', data);
 					if (active) onEvent({ kind: 'mint', data });
 				}).catch(() => {
-					if (active) onEvent({ kind: 'mint', data: normalizeMint(msg, null, 0) });
+					const data = normalizeMint(msg, null, 0);
+					pushBuffer('mint', data);
+					if (active) onEvent({ kind: 'mint', data });
 				});
 			} else if ((msg.txType === 'migrate' || msg.txType === 'migration') && (kind === 'all' || kind === 'graduation')) {
 				enrichGrad(msg).then((data) => {
+					pushBuffer('graduation', data);
 					if (active) onEvent({ kind: 'graduation', data });
 				}).catch(() => {
-					if (active) onEvent({ kind: 'graduation', data: normalizeGrad(msg) });
+					const data = normalizeGrad(msg);
+					pushBuffer('graduation', data);
+					if (active) onEvent({ kind: 'graduation', data });
 				});
 			}
 		});
@@ -225,6 +231,16 @@ function formatAge(createdAtMs) {
 	return Math.floor(h / 24) + 'd';
 }
 
+function pickMc(c, solPrice) {
+	if (typeof c?.usd_market_cap === 'number') return c.usd_market_cap;
+	if (typeof c?.market_cap === 'number' && solPrice > 0) return c.market_cap * solPrice;
+	return null;
+}
+
+function isGraduated(c) {
+	return c?.complete === true || !!c?.raydium_pool || !!c?.pump_swap_pool;
+}
+
 async function enrichGrad(d) {
 	const base = normalizeGrad(d);
 	const mint = d.mint;
@@ -240,34 +256,48 @@ async function enrichGrad(d) {
 	const creator = coin.creator || d.traderPublicKey || null;
 	const userCoins = creator ? await fetchCreatorCoins(creator) : null;
 
-	const usdMc = typeof coin.usd_market_cap === 'number' ? coin.usd_market_cap : null;
+	const usdMc = pickMc(coin, solPrice);
 	const launchSol = typeof coin.market_cap_at_launch === 'number' ? coin.market_cap_at_launch : null;
 	const launchUsd = launchSol != null && solPrice > 0 ? launchSol * solPrice : null;
+
+	// ATH: pump.fun frontend exposes ath_market_cap (USD) on some mints; fall
+	// back to current MC as a floor so the renderer always has a value.
+	const athUsd = typeof coin.ath_market_cap === 'number' ? coin.ath_market_cap
+		: typeof coin.ath_market_cap_usd === 'number' ? coin.ath_market_cap_usd
+		: usdMc;
 
 	const createdMs = coin.created_timestamp ? Number(coin.created_timestamp) : null;
 	const age = formatAge(createdMs);
 
 	let creatorTokens = [];
 	let launches = null;
+	let creatorGraduated = null;
 	if (Array.isArray(userCoins)) {
 		launches = userCoins.length;
+		creatorGraduated = userCoins.reduce((n, c) => n + (isGraduated(c) ? 1 : 0), 0);
 		creatorTokens = userCoins
 			.map((c) => ({
 				mint: c.mint,
 				symbol: c.symbol,
 				name: c.name,
-				mc: typeof c.usd_market_cap === 'number'
-					? c.usd_market_cap
-					: (typeof c.market_cap === 'number' && solPrice > 0 ? c.market_cap * solPrice : null),
+				mc: pickMc(c, solPrice),
+				graduated: isGraduated(c),
 			}))
 			.filter((c) => c.symbol);
 	}
 
+	// Migration `solAmount` is the most accurate "graduation deposit" number.
+	// If absent (PumpPortal sometimes omits), fall back to the real_sol_reserves
+	// at graduation (≈ 85 SOL bonding-curve floor).
 	const amountSol = typeof d.solAmount === 'number' ? d.solAmount
-		: typeof coin.virtual_sol_reserves === 'number' && coin.virtual_sol_reserves > 0
-			? coin.virtual_sol_reserves / 1e9
+		: typeof coin.real_sol_reserves === 'number' && coin.real_sol_reserves > 0
+			? coin.real_sol_reserves / 1e9
 			: null;
 	const amountUsd = amountSol != null && solPrice > 0 ? amountSol * solPrice : null;
+
+	const graduated = isGraduated(coin);
+	const raydiumPool = coin.raydium_pool || null;
+	const pumpSwapPool = coin.pump_swap_pool || null;
 
 	return {
 		...base,
@@ -275,7 +305,10 @@ async function enrichGrad(d) {
 		symbol: coin.symbol || base.symbol,
 		description: coin.description || null,
 		creator,
+		creator_username: coin.username || null,
+		creator_profile_image: coin.profile_image || null,
 		image_uri: coin.image_uri || null,
+		video_uri: coin.video_uri || null,
 		twitter: coin.twitter || null,
 		telegram: coin.telegram || null,
 		website: coin.website || null,
@@ -283,12 +316,60 @@ async function enrichGrad(d) {
 		market_cap: usdMc,
 		market_cap_usd_initial: launchUsd,
 		market_cap_at_launch: launchSol,
+		ath_market_cap: athUsd,
 		sol_price: solPrice || null,
 		created_at: createdMs ? Math.floor(createdMs / 1000) : null,
 		age,
 		amount_sol: amountSol,
 		amount_usd: amountUsd,
+		bonding_curve_pct: 100,
+		complete: graduated,
+		raydium_pool: raydiumPool,
+		pump_swap_pool: pumpSwapPool,
+		reply_count: typeof coin.reply_count === 'number' ? coin.reply_count : null,
 		creator_launches: launches,
+		creator_graduated: creatorGraduated,
 		creator_tokens: creatorTokens,
 	};
+}
+
+// ── Process-local replay buffer ──────────────────────────────────────────────
+//
+// The PumpPortal WS connection is shared per Vercel instance. We keep a small
+// rolling buffer of the most-recent enriched mint and graduation events so each
+// new SSE client (which would otherwise see a blank feed until the next event)
+// can immediately render a contextual backlog. Buffered events are emitted with
+// a `replay: true` marker so the UI can dim them.
+
+const BUFFER_LIMIT = { mint: 25, graduation: 25 };
+const _buffer = { mint: [], graduation: [] };
+
+function pushBuffer(kind, data) {
+	const arr = _buffer[kind];
+	if (!arr) return;
+	const sig = data?.signature || data?.tx_signature;
+	if (sig && arr.some((e) => (e.signature || e.tx_signature) === sig)) return;
+	arr.unshift(data);
+	while (arr.length > BUFFER_LIMIT[kind]) arr.pop();
+}
+
+/**
+ * Snapshot of recently buffered events, newest-first. Caller filters by kind.
+ * @param {{ kind?: 'all'|'mint'|'graduation'|'claims', limit?: number }} opts
+ */
+export function recentBuffered({ kind = 'all', limit = 10 } = {}) {
+	const out = [];
+	if (kind === 'all' || kind === 'mint') {
+		for (const data of _buffer.mint.slice(0, limit)) out.push({ kind: 'mint', data });
+	}
+	if (kind === 'all' || kind === 'graduation' || kind === 'claims') {
+		for (const data of _buffer.graduation.slice(0, limit)) out.push({ kind: 'graduation', data });
+	}
+	// Sort by timestamp/created_at descending so a multi-kind replay is interleaved.
+	out.sort((a, b) => {
+		const ta = a.data.timestamp || a.data.created_at || 0;
+		const tb = b.data.timestamp || b.data.created_at || 0;
+		return tb - ta;
+	});
+	return out.slice(0, limit);
 }

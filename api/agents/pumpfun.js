@@ -90,7 +90,7 @@ function clamp(n, lo, hi) {
 
 // ── pumpfun-feed (SSE) ────────────────────────────────────────────────────────
 
-import { connectPumpFunFeed } from '../_lib/pumpfun-ws-feed.js';
+import { connectPumpFunFeed, recentBuffered } from '../_lib/pumpfun-ws-feed.js';
 const TIER_RANK = { notable: 1, influencer: 2, mega: 3 };
 
 async function handleFeed(req, res) {
@@ -117,6 +117,18 @@ async function handleFeed(req, res) {
 	const wsKind = kind === 'claims' ? 'graduation' : kind;
 	const stopWs = connectPumpFunFeed({ kind: wsKind, signal: wsAbort.signal, onEvent: ({ kind: evKind, data }) => { if (active) queue.push({ evKind, data }); } });
 	_writeSse(res, 'open', { kind, minTier: minTierParam || null, source: 'websocket' });
+	// Replay the most recent buffered events so a freshly-opened feed is never
+	// blank. Newest first so the UI's `prepend` results in chronological order.
+	try {
+		const replay = recentBuffered({ kind: wsKind, limit: 10 });
+		// Emit oldest-first so each `prepend` puts the newest at the top.
+		for (const ev of replay.slice().reverse()) {
+			if (minTier && TIER_RANK[(ev.data?.tier || '').toLowerCase()] < minTier) continue;
+			_writeSse(res, ev.kind, { ...ev.data, replay: true });
+		}
+	} catch (err) {
+		console.warn('[pumpfun-feed] replay failed:', err?.message);
+	}
 	const seen = new Set();
 	let lastSig = null;
 	const tickClaims = pumpfunBotEnabled() ? async () => {
