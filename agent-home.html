@@ -980,7 +980,26 @@
 			import { protocol } from '/src/agent-protocol.js';
 
 			const agentId = location.pathname.split('/').filter(Boolean).pop();
-			if (agentId === 'my-agents') {
+
+			function renderAgents(agents) {
+				const grid = document.querySelector('.my-agents-grid');
+				for (const agent of agents) {
+					const card = document.createElement('a');
+					card.className = 'my-agents-card';
+					card.href = `/agent/${agent.id}`;
+					const avatarUrl = agent.avatar?.startsWith('http') ? agent.avatar : `/api/avatars/${agent.avatar}/thumbnail`;
+					card.innerHTML = `
+						<img src="${avatarUrl || '/three.svg'}" class="my-agents-card-icon" alt="${agent.name} avatar">
+						<div class="my-agents-card-title">${agent.name}</div>
+						<div class="my-agents-card-desc">${agent.description || 'No description'}</div>
+						${agent.onchain ? '<div class="my-agents-card-badge">On-chain</div>' : ''}
+					`;
+					grid.appendChild(card);
+				}
+			}
+
+			async function main() {
+				if (agentId === 'my-agents' || agentId === 'agents') {
 					document.getElementById('page-agent-name').textContent = 'My Agents';
 					document.getElementById('page-agent-desc').textContent = 'Create, manage, and deploy your agents.';
 					document.querySelector('.agent-stage').innerHTML = `
@@ -1002,12 +1021,18 @@
 								renderAgents(agents);
 							}
 						}
+						const resp2 = await fetch('/api/agents', { credentials: 'include' });
+						if (resp2.ok) {
+							const { agents } = await resp2.json();
+							if (agents) {
+								renderAgents(agents.filter(a => !a.onchain));
+							}
+						}
 					} catch (err) {
-						console.error('Could not load on-chain agents:', err);
+						console.error('Could not load agents:', err);
 					}
 					return;
 				}
-			async function main() {
 				const identity = new AgentIdentity({
 					agentId: agentId || undefined,
 					autoLoad: false,

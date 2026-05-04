@@ -50,6 +50,7 @@ export default wrap(async (req, res) => {
 async function handleList(req, res) {
 	const url = new URL(req.url, 'http://x');
 	const isMe = url.pathname.endsWith('/me');
+	const onchainOnly = url.searchParams.get('onchain') === 'true';
 	const auth = await resolveAuth(req);
 
 	// /api/agents/me is the identity bootstrap endpoint — the client calls it
@@ -63,10 +64,12 @@ async function handleList(req, res) {
 
 	if (isMe) return handleGetOrCreateMe(req, res, auth);
 
+	const onchainFilter = onchainOnly ? sql`AND erc8004_agent_id IS NOT NULL` : sql``;
 	const rows = await sql`
 		SELECT * FROM agent_identities
 		WHERE user_id = ${auth.userId}
 		  AND deleted_at IS NULL
+		  ${onchainFilter}
 		ORDER BY created_at ASC
 	`;
 	return json(res, 200, { agents: rows.map((row) => decorate(row)) });
@@ -361,6 +364,7 @@ function decorate(row, isOwner = true) {
 		token,
 		payments,
 		is_registered: Boolean(row.erc8004_agent_id) || !!onchain,
+		onchain: Boolean(row.erc8004_agent_id) || !!onchain,
 		created_at: row.created_at,
 	};
 	// Voice clone fields are public (voice_id is needed by the runtime to select TTS).
