@@ -776,11 +776,11 @@
 		},
 		{
 			"src": "/my-agents",
-			"dest": "/public/my-agents/index.html"
+			"dest": "/my-agents/index.html"
 		},
 		{
 			"src": "/my-agents/",
-			"dest": "/public/my-agents/index.html"
+			"dest": "/my-agents/index.html"
 		},
 		{
 			"src": "/my-agents/(.*)",

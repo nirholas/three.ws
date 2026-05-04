@@ -1,98 +1,109 @@
-// Pumpfun feed source.
+// Client for the upstream pumpfun-claims-bot MCP server.
 //
-// Reads graduation events from an Upstash Redis list populated by the
-// `services/pump-graduations` worker. Claim/intel ops are stubbed out — the
-// three.ws/pumpfun page only needs graduations to announce migrations.
+// Provides a small, typed surface over JSON-RPC tools/call:
+//   recentClaims, claimsSince, graduations, tokenIntel, creatorIntel
+//
+// Falls back to ok:false envelopes (never throws) so callers can use the
+// data when present and degrade gracefully when the indexer is offline or
+// the env URL is not configured.
 //
 // Env:
-//   UPSTASH_REDIS_REST_URL    required to enable the feed
-//   UPSTASH_REDIS_REST_TOKEN  required
-//   GRADUATIONS_LIST_KEY      default: pf:graduations
+//   PUMPFUN_BOT_URL    HTTP(S) endpoint of the MCP server (e.g. https://bot/mcp)
+//   PUMPFUN_BOT_TOKEN  optional bearer token, attached as `Authorization: Bearer …`
 
-import { Redis } from '@upstash/redis';
-import { env } from './env.js';
-
-const LIST_KEY = process.env.GRADUATIONS_LIST_KEY || 'pf:graduations';
-
-let _redis = null;
-function redis() {
-	if (_redis !== null) return _redis;
-	if (!env.UPSTASH_REDIS_REST_URL || !env.UPSTASH_REDIS_REST_TOKEN) {
-		_redis = false;
-		return null;
-	}
-	_redis = new Redis({
-		url: env.UPSTASH_REDIS_REST_URL,
-		token: env.UPSTASH_REDIS_REST_TOKEN,
-	});
-	return _redis;
-}
+let _id = 0;
+function nextId() { return ++_id; }
 
 export function pumpfunBotEnabled() {
-	return !!(env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN);
+	return !!process.env.PUMPFUN_BOT_URL;
 }
 
-async function readGraduations(limit = 20) {
-	const r = redis();
-	if (!r) return [];
-	try {
-		const items = await r.lrange(LIST_KEY, 0, Math.max(0, limit - 1));
-		return items
-			.map((x) => (typeof x === 'string' ? safeJson(x) : x))
-			.filter(Boolean)
-			.map(toFeedShape);
-	} catch (err) {
-		console.error('[pumpfun-mcp] redis read failed:', err?.message || err);
-		return [];
+async function rpcCall(toolName, args = {}) {
+	const url = process.env.PUMPFUN_BOT_URL;
+	if (!url) return { ok: false, error: 'PUMPFUN_BOT_URL not configured' };
+
+	const headers = { 'content-type': 'application/json' };
+	if (process.env.PUMPFUN_BOT_TOKEN) {
+		headers.authorization = `Bearer ${process.env.PUMPFUN_BOT_TOKEN}`;
 	}
-}
 
-function toFeedShape(g) {
-	// Worker pushes { signature, mint, tokenName, tokenSymbol, poolAddress, timestamp }
-	// Feed/widget consume { tx_signature, mint, name, symbol, ... }.
-	return {
-		tx_signature: g.signature,
-		signature: g.signature,
-		mint: g.mint,
-		name: g.tokenName || null,
-		symbol: g.tokenSymbol || null,
-		pool_address: g.poolAddress || null,
-		final_mcap: g.finalMcap ?? null,
-		timestamp: g.timestamp,
-	};
-}
+	const body = JSON.stringify({
+		jsonrpc: '2.0',
+		id: nextId(),
+		method: 'tools/call',
+		params: { name: toolName, arguments: args },
+	});
 
-function safeJson(s) {
-	try { return JSON.parse(s); } catch { return null; }
+	let res;
+	try {
+		res = await fetch(url, { method: 'POST', headers, body });
+	} catch (err) {
+		return { ok: false, error: `pumpfun-mcp fetch failed: ${err?.message || err}` };
+	}
+	if (!res.ok) {
+		return { ok: false, error: `pumpfun-mcp upstream ${res.status}` };
+	}
+	let envelope;
+	try { envelope = await res.json(); }
+	catch (err) { return { ok: false, error: `pumpfun-mcp invalid JSON: ${err?.message || err}` }; }
+
+	if (envelope?.error) {
+		return { ok: false, error: envelope.error.message || 'rpc error' };
+	}
+	const result = envelope?.result;
+	const data = result?.structuredContent ?? result?.content ?? result ?? null;
+	return { ok: true, data };
 }
 
 export const pumpfunMcp = {
 	enabled: pumpfunBotEnabled,
 
 	async listTools() {
-		return { ok: true, data: { tools: ['getGraduations'] } };
+		const url = process.env.PUMPFUN_BOT_URL;
+		if (!url) return { ok: false, error: 'PUMPFUN_BOT_URL not configured' };
+		const headers = { 'content-type': 'application/json' };
+		if (process.env.PUMPFUN_BOT_TOKEN) headers.authorization = `Bearer ${process.env.PUMPFUN_BOT_TOKEN}`;
+		try {
+			const res = await fetch(url, {
+				method: 'POST',
+				headers,
+				body: JSON.stringify({ jsonrpc: '2.0', id: nextId(), method: 'tools/list' }),
+			});
+			if (!res.ok) return { ok: false, error: `pumpfun-mcp upstream ${res.status}` };
+			const env = await res.json();
+			if (env?.error) return { ok: false, error: env.error.message || 'rpc error' };
+			return { ok: true, data: env.result };
+		} catch (err) {
+			return { ok: false, error: `pumpfun-mcp fetch failed: ${err?.message || err}` };
+		}
 	},
 
-	async recentClaims() {
-		// Not implemented in the migrations-only feed.
-		return { ok: true, data: [] };
+	async recentClaims({ limit } = {}) {
+		const args = {};
+		if (limit != null) args.limit = limit;
+		return rpcCall('getRecentClaims', args);
 	},
 
-	async graduations({ limit = 20 } = {}) {
-		const items = await readGraduations(limit);
-		return { ok: true, data: items };
+	async claimsSince({ sinceTs, limit } = {}) {
+		const args = {};
+		if (sinceTs != null) args.sinceTs = sinceTs;
+		if (limit != null) args.limit = limit;
+		return rpcCall('getClaimsSince', args);
 	},
 
-	async tokenIntel() {
-		return { ok: false, error: 'token intel not available' };
+	async graduations({ limit } = {}) {
+		const args = {};
+		if (limit != null) args.limit = limit;
+		return rpcCall('getGraduations', args);
 	},
 
-	async creatorIntel() {
-		return { ok: false, error: 'creator intel not available' };
+	async tokenIntel({ mint } = {}) {
+		if (!mint) return { ok: false, error: 'mint is required' };
+		return rpcCall('getTokenIntel', { mint });
 	},
 
-	async claimsSince() {
-		// No claim source — return empty list so the SSE loop just keeps polling.
-		return { ok: true, data: [] };
+	async creatorIntel({ creator } = {}) {
+		if (!creator) return { ok: false, error: 'creator is required' };
+		return rpcCall('getCreatorIntel', { creator });
 	},
 };

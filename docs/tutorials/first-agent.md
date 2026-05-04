@@ -21,7 +21,7 @@ You need a GLB file — the standard format for 3D models on the web. Here are t
 There's a hosted sample avatar ready to use. Just copy the URL below and you're done for this step:
 
 ```
-https://cdn.three.wsmodels/sample-avatar.glb
+https://cdn.three.ws/models/sample-avatar.glb
 ```
 
 Come back and swap this for your own character later. That's what Step 9 is for.
@@ -81,10 +81,10 @@ Create a new folder somewhere on your computer. Inside it, create a file called 
   </style>
 </head>
 <body>
-  <script type="module" src="https://cdn.three.wsagent-3d.js"></script>
+  <script type="module" src="https://cdn.three.ws/agent-3d.js"></script>
 
   <agent-3d
-    body="https://cdn.three.wsmodels/sample-avatar.glb"
+    body="https://cdn.three.ws/models/sample-avatar.glb"
     width="400px"
     height="600px"
   ></agent-3d>
@@ -129,7 +129,7 @@ Update the `<agent-3d>` tag to add the `brain` and `instructions` attributes:
 
 ```html
 <agent-3d
-  body="https://cdn.three.wsmodels/sample-avatar.glb"
+  body="https://cdn.three.ws/models/sample-avatar.glb"
   brain="claude-sonnet-4-6"
   name="Aria"
   instructions="You are Aria, a friendly and enthusiastic AI guide. You love helping people explore the 3D world. Be concise, warm, and occasionally playful. When someone greets you, wave at them. Keep replies to 2–3 sentences unless asked for more."
@@ -182,7 +182,7 @@ Create `agent.json` in the same folder as `index.html`:
     "mode": "local"
   },
   "skills": [
-    { "uri": "https://cdn.three.wsskills/wave/" }
+    { "uri": "https://cdn.three.ws/skills/wave/" }
   ],
   "version": "0.1.0"
 }
@@ -200,7 +200,7 @@ Then update `index.html` to load from the manifest instead of using inline attri
 
 The manifest approach is cleaner for anything beyond a one-liner: you can version it in git, keep the instructions in one place, and load it by URL from anywhere.
 
-> **Note:** If you used the sample avatar URL, replace `./your-character.glb` in the manifest with `https://cdn.three.wsmodels/sample-avatar.glb`.
+> **Note:** If you used the sample avatar URL, replace `./your-character.glb` in the manifest with `https://cdn.three.ws/models/sample-avatar.glb`.
 
 ---
 
@@ -429,7 +429,7 @@ Here's the complete `index.html` all in one place:
   </style>
 </head>
 <body>
-  <script type="module" src="https://cdn.three.wsagent-3d.js"></script>
+  <script type="module" src="https://cdn.three.ws/agent-3d.js"></script>
 
   <agent-3d
     manifest="./agent.json"

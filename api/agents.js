@@ -86,7 +86,13 @@ async function handleGetOrCreateMe(req, res, auth) {
 
 		if (!agent) {
 			const wallet = await generateAgentWallet();
-			const sol = await generateSolanaAgentWallet();
+			let sol = null;
+			try { sol = await generateSolanaAgentWallet(); } catch { sol = null; }
+			const baseMeta = { encrypted_wallet_key: wallet.encrypted_key };
+			if (sol) {
+				baseMeta.solana_address = sol.address;
+				baseMeta.encrypted_solana_secret = sol.encrypted_secret;
+			}
 			await sql`
 				INSERT INTO agent_identities (user_id, name, skills, wallet_address, meta)
 				VALUES (
@@ -94,11 +100,7 @@ async function handleGetOrCreateMe(req, res, auth) {
 					${'Agent'},
 					${['greet', 'present-model', 'validate-model', 'remember', 'think']},
 					${wallet.address},
-					${JSON.stringify({
-						encrypted_wallet_key: wallet.encrypted_key,
-						solana_address: sol.address,
-						encrypted_solana_secret: sol.encrypted_secret,
-					})}::jsonb
+					${JSON.stringify(baseMeta)}::jsonb
 				)
 				ON CONFLICT (user_id) WHERE deleted_at IS NULL DO NOTHING
 			`;
@@ -139,13 +141,16 @@ async function handleCreate(req, res) {
 	if (!name) return error(res, 400, 'validation_error', 'name is required');
 
 	const wallet = await generateAgentWallet();
-	const sol = await generateSolanaAgentWallet();
+	let sol = null;
+	try { sol = await generateSolanaAgentWallet(); } catch { sol = null; }
 	const meta = {
 		...(body.meta || {}),
 		encrypted_wallet_key: wallet.encrypted_key,
-		solana_address: sol.address,
-		encrypted_solana_secret: sol.encrypted_secret,
 	};
+	if (sol) {
+		meta.solana_address = sol.address;
+		meta.encrypted_solana_secret = sol.encrypted_secret;
+	}
 
 	const [agent] = await sql`
 		INSERT INTO agent_identities (user_id, name, description, skills, wallet_address, meta)

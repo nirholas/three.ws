@@ -107,7 +107,6 @@ export class Runtime extends EventTarget {
 		let finalText = '';
 
 		while (iter++ < MAX_TOOL_ITERATIONS) {
-			this.dispatchEvent(new CustomEvent('brain:thinking', { detail: { thinking: true } }));
 			const response = await this.provider.complete({
 				system: this.systemPrompt,
 				messages: this.messages,
@@ -118,11 +117,13 @@ export class Runtime extends EventTarget {
 					this.dispatchEvent(new CustomEvent('brain:stream', { detail: { chunk } }));
 				},
 			});
-			this.dispatchEvent(
-				new CustomEvent('brain:thinking', {
-					detail: { thinking: false, content: response.thinking || '' },
-				}),
-			);
+			if (response.thinking) {
+				this.dispatchEvent(
+					new CustomEvent('brain:thinking', {
+						detail: { thinking: true, content: response.thinking },
+					}),
+				);
+			}
 
 			if (!response.toolCalls.length) {
 				finalText = response.text;

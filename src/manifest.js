@@ -97,7 +97,7 @@ export function normalize(json, { baseURI = '' } = {}) {
 	if (json.spec && json.spec.startsWith('agent-manifest/')) {
 		const m = { ...json, _baseURI: baseURI };
 		m.body = m.body || {};
-		if (!m.body.uri && m.image && isAbsoluteURI(m.image)) m.body.uri = m.image;
+		if (!m.body.uri && m.image) m.body.uri = m.image;
 		return m;
 	}
 
@@ -137,7 +137,7 @@ export function normalize(json, { baseURI = '' } = {}) {
 		name: json.name || 'Unnamed agent',
 		description: json.description || '',
 		body: {
-			uri: json.body?.uri || (json.image && isAbsoluteURI(json.image) ? json.image : '') || json.model || '',
+			uri: json.body?.uri || json.image || json.model || '',
 			format: json.body?.format || 'gltf-binary',
 		},
 		brain: json.brain || { provider: 'none' },

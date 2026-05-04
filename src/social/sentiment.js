@@ -57,15 +57,17 @@ export function scoreSentiment(posts) {
 
 	const total = posts.length;
 	const score = total > 0 ? (posCount - negCount) / total : 0;
-	const posPct = (posCount / total) * 100;
-	const negPct = (negCount / total) * 100;
-	const neuPct = (neuCount / total) * 100;
+	// Round pos/neg first then derive neu so the three percentages always sum to
+	// exactly 100 (avoids floating-point drift from independent rounding).
+	const posPct = Math.round(((posCount / total) * 100) * 10) / 10;
+	const negPct = Math.round(((negCount / total) * 100) * 10) / 10;
+	const neuPct = Math.round((100 - posPct - negPct) * 10) / 10;
 
 	return {
 		score: Math.round(score * 1000) / 1000,
-		posPct: Math.round(posPct * 10) / 10,
-		negPct: Math.round(negPct * 10) / 10,
-		neuPct: Math.round(neuPct * 10) / 10,
+		posPct,
+		negPct,
+		neuPct,
 		count: total,
 		examples: { pos: posExamples, neg: negExamples },
 	};

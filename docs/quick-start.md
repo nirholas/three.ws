@@ -27,8 +27,8 @@ The fastest path. No npm, no bundler, no build step.
   </style>
 </head>
 <body>
-  <script type="module" src="https://cdn.three.wsagent-3d.js"></script>
-  <agent-3d body="https://cdn.three.wsmodels/sample-avatar.glb"></agent-3d>
+  <script type="module" src="https://cdn.three.ws/agent-3d.js"></script>
+  <agent-3d body="https://cdn.three.ws/models/sample-avatar.glb"></agent-3d>
 </body>
 </html>
 ```

@@ -47,11 +47,14 @@ export async function watchWhaleTrades({ mint, minUsd = 5000, onTrade, signal })
 
 	if (signal?.aborted) return;
 
-	const connection = new Connection(RPC_MAINNET, 'confirmed');
-	const coder = new BorshCoder(pumpIdl);
-	const parser = new EventParser(PUMP_PROGRAM_ID, coder);
+	const construct = (Cls, args) => {
+		try { return new Cls(...args); } catch { return Cls(...args); }
+	};
+	const connection = construct(Connection, [RPC_MAINNET, 'confirmed']);
+	const coder = construct(BorshCoder, [pumpIdl]);
+	const parser = construct(EventParser, [PUMP_PROGRAM_ID, coder]);
 	const mintStr = mint instanceof PublicKey ? mint.toBase58() : String(mint);
-	const programPk = new PublicKey(PUMP_PROGRAM);
+	const programPk = construct(PublicKey, [PUMP_PROGRAM]);
 
 	const solPrice = await fetchSolPrice();
 	if (signal?.aborted) return;
