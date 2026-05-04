@@ -2796,7 +2796,6 @@
 		height: 7px;
 	}
 </style>
-</script>
 
 <footer class="h-footer-horizon" style="margin-top: auto;">
     <div class="h-footer-inner">
