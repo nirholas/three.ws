@@ -38,18 +38,97 @@
 			<h1>
 				<a href="/"><img src="/three.svg" alt="three.ws" class="wordmark-logo" /></a>
 			</h1>
-			<nav class="features-nav">
-				<a href="/app">Viewer</a>
-				<a href="/create">Create</a>
-				<a href="/discover">Discover</a>
-				<a href="/features">Features</a>
-				<a href="/widgets" class="active" aria-current="page">Widgets</a>
-				<a href="/studio">Studio</a>
-				<a href="/chat">Chat</a>
-				<a href="/docs">Docs</a>
-				<a href="/my-agents">My Agents</a>
-				<a href="/dashboard" class="nav-dashboard">Dashboard</a>
-				<a href="/login" class="nav-sign-in">Sign in</a>
+			<nav class="features-nav" aria-label="Primary">
+				<ul class="nav-root" role="menubar">
+					<li class="nav-item nav-has-menu" role="none">
+						<button
+							type="button"
+							class="nav-trigger"
+							aria-haspopup="true"
+							aria-expanded="false"
+							role="menuitem"
+						>
+							Build<span class="nav-caret" aria-hidden="true">▾</span>
+						</button>
+						<ul class="nav-menu" role="menu" aria-label="Build">
+							<li role="none">
+								<a href="/create" role="menuitem"
+									><span class="nav-mi-title">Create agent</span
+									><span class="nav-mi-sub">Avatar + brain wizard</span></a
+								>
+							</li>
+							<li role="none">
+								<a href="/app" role="menuitem"
+									><span class="nav-mi-title">Viewer</span
+									><span class="nav-mi-sub">Drag-and-drop GLB</span></a
+								>
+							</li>
+							<li role="none">
+								<a href="/validation" role="menuitem"
+									><span class="nav-mi-title">glTF Validator</span
+									><span class="nav-mi-sub">Khronos spec check</span></a
+								>
+							</li>
+						</ul>
+					</li>
+					<li class="nav-item nav-has-menu" role="none">
+						<button
+							type="button"
+							class="nav-trigger"
+							aria-haspopup="true"
+							aria-expanded="false"
+							role="menuitem"
+						>
+							Discover<span class="nav-caret" aria-hidden="true">▾</span>
+						</button>
+						<ul class="nav-menu" role="menu" aria-label="Discover">
+							<li role="none">
+								<a href="/discover" role="menuitem"
+									><span class="nav-mi-title">Agents</span
+									><span class="nav-mi-sub">Public directory</span></a
+								>
+							</li>
+							<li role="none">
+								<a href="/widgets" role="menuitem"
+									><span class="nav-mi-title">Widgets gallery</span
+									><span class="nav-mi-sub">Embeddable showcases</span></a
+								>
+							</li>
+							<li role="none">
+								<a href="/reputation" role="menuitem"
+									><span class="nav-mi-title">Reputation</span
+									><span class="nav-mi-sub">ERC-8004 registry</span></a
+								>
+							</li>
+						</ul>
+					</li>
+					<li class="nav-item nav-has-menu" role="none">
+						<button
+							type="button"
+							class="nav-trigger"
+							aria-haspopup="true"
+							aria-expanded="false"
+							role="menuitem"
+						>
+							Solana<span class="nav-caret" aria-hidden="true">▾</span>
+						</button>
+						<ul class="nav-menu" role="menu" aria-label="Solana">
+							<li role="none">
+								<a href="/pumpfun" role="menuitem"
+									><span class="nav-mi-title">Pump.fun stream</span
+									><span class="nav-mi-sub">Mint agent tokens</span></a
+								>
+							</li>
+							<li role="none">
+								<a href="/vanity-wallet" role="menuitem"
+									><span class="nav-mi-title">Vanity wallet</span
+									><span class="nav-mi-sub">Generate address</span></a
+								>
+							</li>
+						</ul>
+					</li>
+					<li class="nav-item" role="none"><a href="/docs" role="menuitem">Docs</a></li>
+				</ul>
 			</nav>
 		</header>
 
