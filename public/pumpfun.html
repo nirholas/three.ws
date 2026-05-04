@@ -32,8 +32,9 @@
 		.dot.down { background: #f87171; }
 		.dot.quiet { background: #94a3b8; animation: pulse 4s ease-in-out infinite; }
 		@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
-		.status-pill { font-size: 11px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px;
-			padding: 3px 8px; border: 1px solid var(--border); border-radius: 999px; }
+		.pf-filterbar .status-pill { font-size: 11px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px;
+			padding: 3px 8px; border: 1px solid var(--border); border-radius: 999px; background: transparent; }
+		.pf-filterbar .status-pill:hover { background: transparent; }
 		.helius-pill { font-size: 10px; color: var(--muted); display: inline-flex; align-items: center; gap: 5px;
 			padding: 2px 7px; border: 1px solid var(--border); border-radius: 999px; text-decoration: none;
 			background: linear-gradient(135deg, rgba(245,158,11,0.06), rgba(168,85,247,0.06));
@@ -233,7 +234,7 @@
 		.helius-pill[data-count="active"] .helius-count { display: inline-block; }
 
 		/* Jump-to-top button shown when feed is scrolled and new events queue up */
-		.feed-jump { position: absolute; left: 50%; transform: translateX(-50%); top: 8px; z-index: 4;
+		.feed-jump { position: absolute; left: 50%; transform: translateX(-50%); top: 38px; z-index: 4;
 			background: var(--accent); color: #fff; border: 0; border-radius: 999px; padding: 6px 12px;
 			font-size: 11px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(106,92,255,0.4);
 			display: none; animation: fade-in 0.18s ease; }
@@ -871,35 +872,96 @@
 			return icon + ' ' + label;
 		}
 
+		// Clips that are part of the agent's idle/locomotion state machine and
+		// shouldn't appear as user-triggerable chips (firing them via gesture
+		// would interrupt the embed's automatic state loop).
+		const SYSTEM_CLIPS = new Set(['idle', 'walk', 'walking', 'running', 'run']);
+
 		// Tracks the rendered clip list so we don't redundantly rebuild on every
 		// duplicate `op:'clips'` event from the iframe.
 		let lastClipsKey = '';
+		let oneShotResetTimer = null;
+		let chipDefs = []; // currently-rendered defs, indexed for keyboard shortcuts.
+
+		function clearActiveChip() {
+			activeChipName = null;
+			document.querySelectorAll('.anim-chip').forEach((c) => delete c.dataset.active);
+		}
+
+		function triggerChip(def) {
+			document.querySelectorAll('.anim-chip').forEach((c) => delete c.dataset.active);
+			const target = document.querySelector(`.anim-chip[data-anim="${CSS.escape(def.name)}"]`);
+			if (target) target.dataset.active = 'true';
+			activeChipName = def.name;
+			// Loop-aware: looping clips (dance/thriller/capoeira) keep running until
+			// the user picks another chip; the embed's avatar layer auto-reverts
+			// one-shots to idle (~1.5s) — we mirror that timing on the chip.
+			sendToAgent('gesture', { name: def.name, loop: !!def.loop });
+			clearTimeout(oneShotResetTimer);
+			if (!def.loop) {
+				oneShotResetTimer = setTimeout(() => {
+					if (activeChipName === def.name) clearActiveChip();
+				}, 1800);
+			}
+		}
 
 		function renderAnimChips(defs) {
 			const wrap = $('anim-chips');
 			if (!wrap) return;
-			const safe = Array.isArray(defs) ? defs.filter((d) => d && d.name) : [];
-			const key = safe.map((d) => d.name).join('|');
+			const safe = Array.isArray(defs)
+				? defs.filter((d) => d && d.name && !SYSTEM_CLIPS.has(d.name.toLowerCase()))
+				: [];
+			const key = safe.map((d) => d.name + '|' + (d.loop ? 'L' : 'O')).join(',');
 			if (key === lastClipsKey && wrap.childElementCount === safe.length) return;
 			lastClipsKey = key;
+			chipDefs = safe;
 			wrap.innerHTML = '';
-			safe.forEach((def) => {
+			if (!safe.length) {
+				wrap.dataset.state = 'empty';
+				wrap.innerHTML = '<span class="anim-empty">no animations available for this avatar</span>';
+				return;
+			}
+			wrap.dataset.state = 'ready';
+			safe.forEach((def, idx) => {
 				const btn = document.createElement('button');
 				btn.type = 'button';
 				btn.className = 'anim-chip';
 				btn.dataset.anim = def.name;
-				btn.title = def.name;
+				btn.dataset.source = def.source || 'manifest';
+				btn.dataset.loop = def.loop ? 'true' : 'false';
+				const shortcut = idx < 9 ? ` [${idx + 1}]` : '';
+				btn.title =
+					(def.source === 'glb' ? `${def.name} (baked clip)` : def.name) +
+					(def.loop ? ' · loops' : ' · one-shot') +
+					shortcut;
 				btn.textContent = chipLabel(def);
 				if (def.name === activeChipName) btn.dataset.active = 'true';
-				btn.addEventListener('click', () => {
-					document.querySelectorAll('.anim-chip').forEach((c) => delete c.dataset.active);
-					btn.dataset.active = 'true';
-					activeChipName = def.name;
-					sendToAgent('gesture', { name: def.name });
-				});
+				btn.addEventListener('click', () => triggerChip(def));
 				wrap.appendChild(btn);
 			});
 		}
+
+		// Keyboard shortcuts: digits 1-9 trigger the first 9 chips, "Esc" returns
+		// to idle. Disabled while typing into form fields so the asset-pubkey and
+		// mint-filter inputs continue to behave normally.
+		window.addEventListener('keydown', (e) => {
+			if (e.metaKey || e.ctrlKey || e.altKey) return;
+			const tag = (e.target?.tagName || '').toLowerCase();
+			if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+			if (e.target?.isContentEditable) return;
+			if (e.key >= '1' && e.key <= '9') {
+				const idx = Number(e.key) - 1;
+				const def = chipDefs[idx];
+				if (def) {
+					e.preventDefault();
+					triggerChip(def);
+				}
+			} else if (e.key === 'Escape' && activeChipName) {
+				clearActiveChip();
+				// Return to idle to stop the looping clip currently playing.
+				sendToAgent('gesture', { name: 'idle', loop: true });
+			}
+		});
 
 		async function buildAnimChips() {
 			// Initial paint from the manifest. The iframe replaces this with its
@@ -1040,6 +1102,39 @@
 			return null;
 		}
 
+		function _recordReaction(reaction, kind, ev) {
+			_reactHistory.push({ at: Date.now(), kind, variant: reaction.variant || kind, icon: reaction.icon || '✨', symbol: ev?.symbol || ev?.token_symbol || '', mint: ev?.mint || ev?.token_mint || '' });
+			while (_reactHistory.length > REACT_MAX_HISTORY) _reactHistory.shift();
+			renderReactionPanel();
+			showReactionToast(reaction, ev);
+		}
+
+		function _fireReaction(reaction, kind, ev) {
+			const dur = reaction.gesture?.duration || REACT_COOLDOWN_MS;
+			_reactActiveUntil = Date.now() + Math.max(REACT_COOLDOWN_MS, dur);
+			_reactActivePri = reaction.priority || 0;
+			_recordReaction(reaction, kind, ev);
+			iframe.contentWindow?.postMessage(
+				{ type: 'pumpfun-feed:react', reaction, speak: params.narrate },
+				location.origin,
+			);
+		}
+
+		function _drainReactionQueue() {
+			_reactQueueTimer = null;
+			if (!_reactQueue.length) return;
+			const t = Date.now();
+			if (t < _reactActiveUntil) {
+				_reactQueueTimer = setTimeout(_drainReactionQueue, _reactActiveUntil - t + 5);
+				return;
+			}
+			_reactQueue.sort((a, b) => b.priority - a.priority);
+			const next = _reactQueue.shift();
+			const reaction = reactionFor(next.kind, next.ev);
+			if (reaction) _fireReaction(reaction, next.kind, next.ev);
+			if (_reactQueue.length) _reactQueueTimer = setTimeout(_drainReactionQueue, REACT_COOLDOWN_MS + 5);
+		}
+
 		function dispatchReaction(kind, ev) {
 			const reaction = reactionFor(kind, ev);
 			if (!reaction) return;
@@ -1055,18 +1150,61 @@
 				}
 			}
 			const pri = reaction.priority || 0;
-			if (t < _reactActiveUntil && pri <= _reactActivePri) return;
-			const dur = reaction.gesture?.duration || REACT_COOLDOWN_MS;
-			_reactActiveUntil = t + Math.max(REACT_COOLDOWN_MS, dur);
-			_reactActivePri = pri;
-			iframe.contentWindow?.postMessage(
-				{
-					type: 'pumpfun-feed:react',
-					reaction,
-					speak: params.narrate,
-				},
-				location.origin,
-			);
+			if (t < _reactActiveUntil) {
+				if (pri > _reactActivePri) {
+					_fireReaction(reaction, kind, ev);
+				} else if (pri >= 30 && _reactQueue.length < REACT_MAX_QUEUE) {
+					_reactQueue.push({ kind, ev, priority: pri });
+					if (!_reactQueueTimer) _reactQueueTimer = setTimeout(_drainReactionQueue, _reactActiveUntil - t + 5);
+				}
+				return;
+			}
+			_fireReaction(reaction, kind, ev);
+		}
+
+		// ── Visual reaction toast over the stage ───────────────────────────
+		function showReactionToast(reaction, ev) {
+			const stage = $('stage');
+			if (!stage) return;
+			let host = $('reaction-toast-host');
+			if (!host) {
+				host = document.createElement('div');
+				host.id = 'reaction-toast-host';
+				host.style.cssText = 'position:absolute;left:16px;top:16px;display:flex;flex-direction:column;gap:6px;pointer-events:none;z-index:7';
+				stage.appendChild(host);
+			}
+			const el = document.createElement('div');
+			el.style.cssText = 'background:rgba(20,20,28,0.85);border:1px solid rgba(255,255,255,0.12);border-radius:999px;padding:6px 12px;color:#fff;font-size:12px;display:flex;gap:8px;align-items:center;box-shadow:0 4px 14px rgba(0,0,0,0.45);opacity:0;transform:translateY(-4px);transition:opacity .22s ease,transform .22s ease;max-width:280px';
+			const sym = ev?.symbol || ev?.token_symbol || '';
+			const variant = (reaction.variant || '').replace(/_/g, ' ');
+			el.innerHTML = `<span style="font-size:16px">${reaction.icon || '✨'}</span><span style="font-weight:600">${escapeHtml(variant)}</span>${sym ? `<span style="opacity:0.7">$${escapeHtml(sym)}</span>` : ''}`;
+			host.appendChild(el);
+			requestAnimationFrame(() => { el.style.opacity = '1'; el.style.transform = 'translateY(0)'; });
+			const lifeMs = Math.max(2200, (reaction.gesture?.duration || 1500) - 500);
+			setTimeout(() => {
+				el.style.opacity = '0';
+				el.style.transform = 'translateY(-4px)';
+				setTimeout(() => el.remove(), 250);
+			}, lifeMs);
+			while (host.children.length > 4) host.firstChild?.remove();
+		}
+
+		// ── Side-rail reaction history ──────────────────────────────────────
+		function renderReactionPanel() {
+			const el = $('reaction-history');
+			if (!el) return;
+			if (!_reactHistory.length) { el.innerHTML = '<div class="empty">No reactions yet…</div>'; return; }
+			const recent = _reactHistory.slice().reverse().slice(0, 12);
+			el.innerHTML = recent.map((h) => {
+				const ago = Math.max(0, Math.floor((Date.now() - h.at) / 1000));
+				const agoStr = ago < 60 ? ago + 's' : Math.floor(ago / 60) + 'm';
+				return `<div class="rh-row" title="${escapeHtml(h.variant)}">
+					<span class="rh-ic">${h.icon}</span>
+					<span class="rh-var">${escapeHtml(h.variant.replace(/_/g, ' '))}</span>
+					${h.symbol ? `<span class="rh-sym">$${escapeHtml(h.symbol)}</span>` : ''}
+					<span class="rh-ago">${agoStr}</span>
+				</div>`;
+			}).join('');
 		}
 
 		function eventMatchesMint(ev) {

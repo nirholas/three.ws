@@ -779,7 +779,8 @@ AFRAME.registerState({
       }
 
       // Per-row strings (lobby uses joinedAt order so rows are stable as
-      // players join/leave).
+      // players join/leave). Precompute color / opacity strings so the
+      // template can bind directly without ternary expressions.
       for (let i = 0; i < 4; i++) {
         const p = players[i];
         const rowKey = 'row' + i;
@@ -790,6 +791,9 @@ AFRAME.registerState({
           state.multiplayer[rowKey + 'IsMe'] = false;
           state.multiplayer[rowKey + 'IsHost'] = false;
           state.multiplayer[rowKey + 'Ready'] = false;
+          state.multiplayer[rowKey + 'NameColor'] = '#ffffff';
+          state.multiplayer[rowKey + 'ScoreColor'] = '#ffffff';
+          state.multiplayer[rowKey + 'BgOpacity'] = 0.0;
           continue;
         }
         const isMe = p.uid === payload.uid;
@@ -804,6 +808,11 @@ AFRAME.registerState({
         state.multiplayer[rowKey + 'IsMe'] = isMe;
         state.multiplayer[rowKey + 'IsHost'] = isHost;
         state.multiplayer[rowKey + 'Ready'] = !!p.ready;
+        state.multiplayer[rowKey + 'NameColor'] =
+          isMe ? COLORS.schemes[state.colorScheme].secondarybright : '#ffffff';
+        state.multiplayer[rowKey + 'ScoreColor'] =
+          p.ready ? '#5dff80' : '#ffffff';
+        state.multiplayer[rowKey + 'BgOpacity'] = isMe ? 0.18 : 0.06;
       }
 
       state.multiplayer.playerCount = players.length;
@@ -1186,6 +1195,17 @@ AFRAME.registerState({
     state.mpShareButtonText = state.multiplayer.shareCopied
       ? 'LINK COPIED'
       : 'COPY SHARE LINK';
+    state.mpShareButtonColor = state.multiplayer.shareCopied ? '#5dff80' : '#FFFFFF';
+    state.mpReadyButtonText = state.multiplayer.myReady ? 'UNREADY' : 'READY';
+    state.mpReadyButtonColor = state.multiplayer.myReady ? '#5dff80' : '#FFFFFF';
+    state.mpReadyButtonBrightness = state.multiplayer.myReady ? 0.5 : 0.2;
+    state.mpJoinButtonText = state.multiplayer.joinCodeInput
+      ? ('JOIN ' + state.multiplayer.joinCodeInput)
+      : 'JOIN ROOM';
+    state.mpRankHudText = state.multiplayer.myRankText
+      ? 'RANK ' + state.multiplayer.myRankText
+      : '';
+    state.mpDeltaColor = state.multiplayer.scoreDelta >= 0 ? '#5dff80' : '#ff8080';
     state.mpStatusText = (() => {
       if (state.multiplayer.lastError) return state.multiplayer.lastError;
       if (state.multiplayer.status === 'connecting') return 'Connecting...';

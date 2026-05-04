@@ -1,23 +1,26 @@
 <!--
   Multiplayer lobby panel + in-game HUD + victory results overlay.
+  All conditional colors / opacities / labels are precomputed in state to
+  avoid ternary expressions in bind__ attributes (aframe-state-component
+  evaluates simple property paths reliably; complex JS is fragile).
 -->
 
 {% macro mpRow (i) %}
 <a-entity position="0 {{ -i * 0.13 }} 0" bind__visible="multiplayer.row{{i}}Visible">
   <a-entity
     geometry="primitive: plane; width: 1.45; height: 0.115"
-    bind__material="opacity: multiplayer.row{{i}}IsMe ? 0.18 : 0.06"
+    bind__material="opacity: multiplayer.row{{i}}BgOpacity"
     material="shader: flat; color: #ffffff; transparent: true"
     position="0 0 -0.005"></a-entity>
   <a-entity
     mixin="font"
-    bind__text="value: multiplayer.row{{i}}Name; color: multiplayer.row{{i}}IsMe ? colorSecondaryBright : '#ffffff'"
+    bind__text="value: multiplayer.row{{i}}Name; color: multiplayer.row{{i}}NameColor"
     text="align: left; width: 1.4; lineHeight: 55"
     render-order="menutext"
     position="-0.62 0 0"></a-entity>
   <a-entity
     mixin="font"
-    bind__text="value: multiplayer.row{{i}}Score; color: multiplayer.row{{i}}Ready ? '#5dff80' : '#ffffff'"
+    bind__text="value: multiplayer.row{{i}}Score; color: multiplayer.row{{i}}ScoreColor"
     text="align: right; width: 1.4; lineHeight: 55"
     render-order="menutext"
     position="0.62 0 0"></a-entity>
@@ -97,7 +100,7 @@
       play-sound__click="event: click; sound: #confirmSound; volume: 0.1">
       <a-entity
         mixin="font"
-        bind__text="value: multiplayer.joinCodeInput ? ('JOIN ' + multiplayer.joinCodeInput) : 'JOIN ROOM'"
+        bind__text="value: mpJoinButtonText"
         text="align: center; width: 0.6; lineHeight: 60; color: #FFF"
         position="0 0 0.001"></a-entity>
     </a-entity>
@@ -109,13 +112,13 @@
       position="-0.55 0 0"
       mixin="modeBackgroundHover"
       geometry="primitive: plane; width: 0.50; height: 0.16"
-      bind__material="brightness: multiplayer.myReady ? 0.50 : 0.20"
+      bind__material="brightness: mpReadyButtonBrightness"
       material="shader: panelShader; ratio: 3.1; borderWidth: 0.004"
       multiplayer-ready-button
       play-sound__click="event: click; sound: #confirmSound; volume: 0.1">
       <a-entity
         mixin="font"
-        bind__text="value: multiplayer.myReady ? 'UNREADY' : 'READY'; color: multiplayer.myReady ? '#5dff80' : '#FFF'"
+        bind__text="value: mpReadyButtonText; color: mpReadyButtonColor"
         text="align: center; width: 0.5; lineHeight: 60"
         position="0 0 0.001"></a-entity>
     </a-entity>
@@ -132,7 +135,7 @@
       play-sound__click="event: click; sound: #confirmSound; volume: 0.1">
       <a-entity
         mixin="font"
-        bind__text="value: mpShareButtonText; color: multiplayer.shareCopied ? '#5dff80' : '#FFF'"
+        bind__text="value: mpShareButtonText; color: mpShareButtonColor"
         text="align: center; width: 0.55; lineHeight: 65"
         position="0 0 0.001"></a-entity>
     </a-entity>
@@ -213,12 +216,12 @@
     position="0 0 -0.01"></a-entity>
   <a-entity
     mixin="font"
-    bind__text="value: 'RANK ' + multiplayer.myRankText; color: colorSecondaryBright"
+    bind__text="value: mpRankHudText; color: colorSecondaryBright"
     text="align: left; width: 0.75; lineHeight: 60"
     position="-0.34 0.22 0"></a-entity>
   <a-entity
     mixin="font"
-    bind__text="value: multiplayer.scoreDeltaText; color: multiplayer.scoreDelta >= 0 ? '#5dff80' : '#ff8080'"
+    bind__text="value: multiplayer.scoreDeltaText; color: mpDeltaColor"
     text="align: right; width: 0.75; lineHeight: 65"
     position="0.34 0.22 0"></a-entity>
   <a-entity
