@@ -183,9 +183,7 @@ export function mountLaunchPanel(container, { onSubmit } = {}) {
 			return;
 		}
 
-		// TODO: load pump-modals.js in the studio HTML to enable the full on-chain flow.
-		// For now dispatch the event (consumed by mountPumpModals when present) and
-		// log so the form submission is visible in the console for smoke testing.
+		// The studio page listens for this event and opens the launch modal.
 		console.log('[launch-panel] submit', fields);
 		if (typeof window !== 'undefined') {
 			window.dispatchEvent(

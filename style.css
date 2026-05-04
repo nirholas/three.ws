@@ -5005,6 +5005,16 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 	}
 }
 
+.note {
+	font-size: var(--text-sm);
+	color: #999;
+	margin: 0 var(--space-md) var(--space-md);
+}
+.note a {
+	color: #9a8cff;
+}
+
+
 /* ── Result state (snippets) ─────────────────────────────────────────────── */
 
 .publish-result {

@@ -411,6 +411,7 @@
       <div class="section-label">Community</div>
       <a href="/chat" data-page="chat"><span class="icon">💬</span> Chat</a>
       <a href="/pumpdotfun" data-page="pumpfun"><span class="icon">🚀</span> Pump.fun</a>
+      <a href="#" data-page="animations"><span class="icon">🎬</span> Animations</a>
 
       <div class="section-label">System</div>
       <a href="#" data-page="config"><span class="icon">⚙️</span> Configuration</a>
@@ -805,6 +806,55 @@
         </div>
       </div>
     </div>
+
+    <!-- ═══════ Animations Page ═══════ -->
+    <div class="content page" id="page-animations" style="display:none">
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Default Agent</h2>
+        </div>
+        <div class="panel-body">
+          <div class="config-grid">
+            <div style="background:#000; border:1px solid var(--border); min-height: 300px; display:flex; align-items:center; justify-content:center; border-radius:var(--radius)">
+              3D Agent View
+            </div>
+            <div>
+              <div class="form-group">
+                <label>Animation</label>
+                <select id="anim-select">
+                  <option>Idle</option>
+                  <option>Walk</option>
+                  <option>Run</option>
+                  <option>Dance</option>
+                </select>
+              </div>
+              <button class="btn btn-primary" onclick="playAnimation()">Play</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Custom Agents</h2>
+          <div class="spacer"></div>
+          <button class="btn btn-primary btn-sm" onclick="addCustomAgent()">+ Add Agent</button>
+        </div>
+        <div class="panel-body no-pad">
+          <table>
+            <thead><tr><th>Name</th><th>Model</th><th>Created</th><th>Actions</th></tr></thead>
+            <tbody id="custom-agents-table">
+              <tr>
+                <td>My Cool Agent</td>
+                <td>agent-xyz.vrm</td>
+                <td>2024-07-29</td>
+                <td><button class="btn btn-sm">Edit</button> <button class="btn btn-danger btn-sm">Delete</button></td>
+              </tr>
+              <tr><td colspan="4" class="empty">No custom agents yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -928,7 +978,7 @@ function navigateTo(page) {
     dashboard: 'Dashboard', feed: 'Live Feed', watches: 'Watch List',
     claims: 'Fee Claims', alerts: 'Alerts', scanner: 'Token Scanner',
     quoting: 'Quote Engine', vanity: 'Vanity Generator',
-    config: 'Configuration', api: 'API Keys',
+    config: 'Configuration', api: 'API Keys', animations: 'Animations',
   };
   document.getElementById('page-title').textContent = titles[page] || page;
 

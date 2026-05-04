@@ -102,6 +102,21 @@ async function handleFeed(req, res) {
 	const kind = url.searchParams.get('kind') || 'all';
 	const minTierParam = url.searchParams.get('minTier');
 	const minTier = TIER_RANK[minTierParam] || 0;
+	const mcMin = Number(url.searchParams.get('mcMin')) || 0;
+	const mcMax = Number(url.searchParams.get('mcMax')) || 0;
+	const minBuy = Number(url.searchParams.get('minBuy')) || 0;
+	const whale = Number(url.searchParams.get('whale')) || 0;
+	function passesFilters(ev) {
+		if (minTier && TIER_RANK[(ev?.tier || '').toLowerCase()] < minTier) return false;
+		const mc = ev?.usd_market_cap ?? ev?.market_cap_usd ?? ev?.market_cap ?? null;
+		if (mcMin && mc != null && mc < mcMin) return false;
+		if (mcMax && mc != null && mc > mcMax) return false;
+		const initBuy = ev?.initial_buy_sol ?? null;
+		if (minBuy && initBuy != null && initBuy < minBuy) return false;
+		const tradeSol = ev?.initial_buy_sol ?? ev?.amount_sol ?? null;
+		if (whale && tradeSol != null && tradeSol < whale) return false;
+		return true;
+	}
 	res.statusCode = 200;
 	res.setHeader('content-type', 'text/event-stream; charset=utf-8');
 	res.setHeader('cache-control', 'no-store');
@@ -123,7 +138,7 @@ async function handleFeed(req, res) {
 		const replay = recentBuffered({ kind: wsKind, limit: 10 });
 		// Emit oldest-first so each `prepend` puts the newest at the top.
 		for (const ev of replay.slice().reverse()) {
-			if (minTier && TIER_RANK[(ev.data?.tier || '').toLowerCase()] < minTier) continue;
+			if (!passesFilters(ev.data)) continue;
 			_writeSse(res, ev.kind, { ...ev.data, replay: true });
 		}
 	} catch (err) {
@@ -140,13 +155,13 @@ async function handleFeed(req, res) {
 			const id = ev.tx_signature || ev.signature || ev.id;
 			if (!id || seen.has(id)) continue;
 			seen.add(id);
-			if (minTier && TIER_RANK[(ev.tier || '').toLowerCase()] < minTier) continue;
+			if (!passesFilters(ev)) continue;
 			lastSig = id;
 			_writeSse(res, 'claim', ev);
 		}
 	} : null;
 	while (active && Date.now() - started < 90_000) {
-		while (queue.length > 0 && active) { const { evKind, data } = queue.shift(); _writeSse(res, evKind, data); }
+		while (queue.length > 0 && active) { const { evKind, data } = queue.shift(); if (passesFilters(data)) _writeSse(res, evKind, data); }
 		if (tickClaims) { try { await tickClaims(); } catch {} }
 		_writeSse(res, 'ping', { t: Date.now() });
 		await new Promise((r) => setTimeout(r, 4000));

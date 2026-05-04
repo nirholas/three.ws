@@ -47,9 +47,13 @@
 		.pf-filterbar .desc { color: var(--muted); font-size: 12px; }
 		.pf-filterbar .ctl { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 		.pf-filterbar label { font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
-		.pf-filterbar input[type="text"], .pf-filterbar select, .pf-filterbar button {
+		.pf-filterbar input[type="text"], .pf-filterbar input[type="number"], .pf-filterbar select, .pf-filterbar button {
 			background: #161620; color: #eee; border: 1px solid #2a2a36;
 			border-radius: 6px; padding: 6px 10px; font-size: 13px; }
+		.pf-filterbar input[type="number"].ctl-num { width: 108px; -moz-appearance: textfield; appearance: textfield; }
+		.pf-filterbar input[type="number"].ctl-num::-webkit-outer-spin-button,
+		.pf-filterbar input[type="number"].ctl-num::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+		.pf-filterbar .ctl-sep { width: 1px; height: 20px; background: #2a2a36; margin: 0 2px; }
 		.pf-filterbar button { cursor: pointer; }
 		.pf-filterbar button:hover { background: #20202c; }
 		.pf-filterbar button.toggle[data-on="0"] { color: var(--muted); }
@@ -530,6 +534,11 @@
 				<option value="influencer">Influencer+</option>
 				<option value="mega">Mega only</option>
 			</select>
+			<span class="ctl-sep" aria-hidden="true"></span>
+			<input id="ctl-mc-min" type="number" placeholder="Min MC $" class="ctl-num" min="0" step="1000" title="Min market cap in USD (graduations &amp; claims)" />
+			<input id="ctl-mc-max" type="number" placeholder="Max MC $" class="ctl-num" min="0" step="1000" title="Max market cap in USD" />
+			<input id="ctl-min-buy" type="number" placeholder="Min buy SOL" class="ctl-num" min="0" step="1" title="Min initial buy in SOL — new tokens only" />
+			<input id="ctl-whale" type="number" placeholder="Whale ≥ SOL" class="ctl-num" min="0" step="5" title="Whale filter — only show trades/claims ≥ N SOL" />
 			<div id="ctl-avatar-wrap">
 				<button id="ctl-avatar-btn" type="button" aria-haspopup="dialog" aria-expanded="false" title="Choose avatar">
 					<span class="avatar-thumb" id="ctl-avatar-thumb" aria-hidden="true"></span>
@@ -709,13 +718,17 @@
 		const params = {
 			asset: url.searchParams.get('asset') || '',
 			mint: url.searchParams.get('mint') || '',
-			kind: url.search_params.get('kind') || 'all',
+			kind: url.searchParams.get('kind') || 'all',
 			minTier: url.searchParams.get('minTier') || '',
 			network: url.searchParams.get('network') || 'mainnet',
 			narrate: url.searchParams.get('narrate') !== '0',
 			announceMints: url.searchParams.get('announceMints') === '1',
 			mood: url.searchParams.get('mood') || 'normal',
 			avatar: url.searchParams.get('avatar') || '/avatars/cz.glb',
+			mcMin: Number(url.searchParams.get('mcMin')) || 0,
+			mcMax: Number(url.searchParams.get('mcMax')) || 0,
+			minBuy: Number(url.searchParams.get('minBuy')) || 0,
+			whale: Number(url.searchParams.get('whale')) || 0,
 		};
 		if (!['chill', 'normal', 'hype'].includes(params.mood)) params.mood = 'normal';
 		$('ctl-asset').value = params.asset;
@@ -725,6 +738,10 @@
 		$('ctl-narrate').dataset.on = params.narrate ? '1' : '0';
 		$('ctl-announce-mints').dataset.on = params.announceMints ? '1' : '0';
 		$('ctl-mood').value = params.mood;
+		$('ctl-mc-min').value = params.mcMin || '';
+		$('ctl-mc-max').value = params.mcMax || '';
+		$('ctl-min-buy').value = params.minBuy || '';
+		$('ctl-whale').value = params.whale || '';
 
 		// ── Avatar picker ────────────────────────────────────────────────────
 		const DEFAULT_AVATARS = [
@@ -1041,6 +1058,10 @@
 			set('narrate', params.narrate ? '' : '0');
 			set('announceMints', params.announceMints ? '1' : '');
 			set('avatar', params.avatar === '/avatars/cz.glb' ? '' : params.avatar);
+			set('mcMin', params.mcMin || '');
+			set('mcMax', params.mcMax || '');
+			set('minBuy', params.minBuy || '');
+			set('whale', params.whale || '');
 			history.replaceState(null, '', u.toString());
 		}
 
@@ -1564,9 +1585,16 @@
 			}).join('');
 		}
 
-		function eventMatchesMint(ev) {
-			if (!params.mint) return true;
-			return ev?.mint === params.mint || ev?.token_mint === params.mint;
+		function eventMatchesFilters(ev) {
+			if (params.mint && ev?.mint !== params.mint && ev?.token_mint !== params.mint) return false;
+			const mc = ev?.usd_market_cap ?? ev?.market_cap_usd ?? ev?.market_cap ?? null;
+			if (params.mcMin && mc != null && mc < params.mcMin) return false;
+			if (params.mcMax && mc != null && mc > params.mcMax) return false;
+			const initBuy = ev?.initial_buy_sol ?? null;
+			if (params.minBuy && initBuy != null && initBuy < params.minBuy) return false;
+			const tradeSol = ev?.initial_buy_sol ?? ev?.amount_sol ?? null;
+			if (params.whale && tradeSol != null && tradeSol < params.whale) return false;
+			return true;
 		}
 
 		function shortAddrLocal(s) {
@@ -1986,7 +2014,7 @@
 				const { items } = await r.json();
 				if (!Array.isArray(items)) return;
 				for (const ev of items.slice().reverse()) {
-					if (!eventMatchesMint(ev)) continue;
+					if (!eventMatchesFilters(ev)) continue;
 					if (seenSig(sigOf(ev))) continue;
 					pushEvent(renderGraduation({ ...ev, replay: true }));
 				}
@@ -1998,6 +2026,10 @@
 			const qs = new URLSearchParams();
 			qs.set('kind', params.kind);
 			if (params.minTier) qs.set('minTier', params.minTier);
+			if (params.mcMin) qs.set('mcMin', String(params.mcMin));
+			if (params.mcMax) qs.set('mcMax', String(params.mcMax));
+			if (params.minBuy) qs.set('minBuy', String(params.minBuy));
+			if (params.whale) qs.set('whale', String(params.whale));
 			setStatus('connecting', 'connecting…');
 			es = new EventSource(`/api/agents/pumpfun-feed?${qs.toString()}`, { withCredentials: true });
 			es.addEventListener('open', () => { setStatus('live', 'live'); bumpAlive(); });
@@ -2006,21 +2038,21 @@
 				else setStatus('connecting', 'reconnecting…');
 			});
 			es.addEventListener('claim', (msg) => {
-				const ev = safeJson(msg.data); if (!ev || !eventMatchesMint(ev)) return;
+				const ev = safeJson(msg.data); if (!ev || !eventMatchesFilters(ev)) return;
 				if (seenSig(sigOf(ev))) return;
 				pushEvent(renderClaim(ev));
 				if (!ev.replay) dispatchReaction('claim', ev);
 				bumpAlive();
 			});
 			es.addEventListener('graduation', (msg) => {
-				const ev = safeJson(msg.data); if (!ev || !eventMatchesMint(ev)) return;
+				const ev = safeJson(msg.data); if (!ev || !eventMatchesFilters(ev)) return;
 				if (seenSig(sigOf(ev))) return;
 				pushEvent(renderGraduation(ev));
 				if (!ev.replay) dispatchReaction('graduation', ev);
 				bumpAlive();
 			});
 			es.addEventListener('mint', (msg) => {
-				const ev = safeJson(msg.data); if (!ev || !eventMatchesMint(ev)) return;
+				const ev = safeJson(msg.data); if (!ev || !eventMatchesFilters(ev)) return;
 				if (seenSig(sigOf(ev))) return;
 				pushEvent(renderMint(ev));
 				if (!ev.replay) dispatchReaction('mint', ev);
@@ -2092,6 +2124,23 @@
 		$('ctl-kind').addEventListener('change', () => onFilterChange(0));
 		$('ctl-tier').addEventListener('change', () => onFilterChange(0));
 		$('ctl-asset').addEventListener('input', () => onFilterChange(450));
+
+		let numTimer;
+		const onNumFilterChange = (delay = 600) => {
+			clearTimeout(numTimer);
+			numTimer = setTimeout(() => {
+				params.mcMin = Number($('ctl-mc-min').value) || 0;
+				params.mcMax = Number($('ctl-mc-max').value) || 0;
+				params.minBuy = Number($('ctl-min-buy').value) || 0;
+				params.whale = Number($('ctl-whale').value) || 0;
+				syncURL();
+				connectFeed();
+			}, delay);
+		};
+		$('ctl-mc-min').addEventListener('input', () => onNumFilterChange());
+		$('ctl-mc-max').addEventListener('input', () => onNumFilterChange());
+		$('ctl-min-buy').addEventListener('input', () => onNumFilterChange());
+		$('ctl-whale').addEventListener('input', () => onNumFilterChange());
 
 		// Share button — copies a URL with all current filters/avatar to clipboard.
 		$('ctl-share').addEventListener('click', async () => {

@@ -6,6 +6,7 @@
 // Keep this list in sync with src/widget-types.js as new types light up.
 
 import { mountLaunchPanel } from './launch-panel.js';
+import { openPumpLaunchWizard } from '/src/pump/pump-modals.js';
 
 const WIDGET_TYPES = {
 	turntable: {
@@ -156,6 +157,20 @@ if (preModel) state.preselectedModel = preModel;
 	renderTypeFields();
 	wireForm();
 	wireButtons();
+
+	window.addEventListener('pump-launch-open', (e) => {
+		const detail = e.detail || {};
+		if (!state.avatarId || state.avatarId === DEMO_AVATAR.id) {
+			toast('Please select your own avatar before launching a token.');
+			return;
+		}
+		const avatar = state.avatars.find(a => a.id === state.avatarId);
+		// The form data from launch-panel is in detail.formData.
+		// openPumpLaunchWizard uses identity for defaults, but here we can pass
+		// the fresh data from the form.
+		const identity = { name: detail.formData?.name || avatar?.name, ...avatar };
+		openPumpLaunchWizard(identity, state.avatarId);
+	});
 
 	await loadAvatars();
 
