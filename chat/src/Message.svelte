@@ -60,6 +60,18 @@
 	export let chose;
 	export let activeToolcall;
 	export let textareaEls;
+
+	function initials(name) {
+		return name?.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
+	}
+
+	const COLORS = ['#6366f1','#ec4899','#f59e0b','#10b981','#3b82f6','#8b5cf6','#ef4444'];
+	function color(id) {
+		let h = 0;
+		for (let i = 0; i < (id?.length ?? 0); i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+		return COLORS[h % COLORS.length];
+	}
+
 	function submitEdit(i) {
 		// Update the ID of the edited message:
 		if (convo.messages[i].submitted || convo.messages[i].generated) {
@@ -200,7 +212,7 @@
 					? 'flex w-[140px] h-[280px]'
 					: 'flex h-8 w-8 md:h-9 md:w-9'} {message.role === 'system'
 					? 'border border-teal-200 bg-teal-100'
-					: message.role === 'assistant' && (!hasLogo || !isLatestAssistant)
+					: message.role === 'assistant' && !message.agent
 						? 'border border-teal-200 bg-teal-100 pb-px'
 						: ''}"
 			>
@@ -209,7 +221,7 @@
 						<!-- svelte-ignore custom-element-no-implicit-ns -->
 						<agent-3d
 							bind:this={agentEl}
-							{...(effectiveAgentId ? { 'agent-id': effectiveAgentId } : { src: '/avatars/cz.glb' })}
+							{...(message.agent?.id ? { 'agent-id': message.agent.id } : { src: '/avatars/cz.glb' })}
 							mode="inline"
 							width="140"
 							height="280"
@@ -220,15 +232,27 @@
 						></agent-3d>
 					</span>
 				{:else}
-					<span class="m-auto">
-						{#if message.role === 'system'}
-							<Icon icon={feTerminal} class="h-4 w-4 text-slate-800" />
-						{:else if message.role === 'assistant'}
-							<Icon icon={feCpu} class="h-4 w-4 text-slate-800" />
+					{#if message.role === 'assistant'}
+						{#if message.agent?.thumbnail_url}
+							<img src={message.agent.thumbnail_url} alt={message.agent.name} class="w-full h-full object-cover rounded-md md:rounded-[6px]" />
+						{:else if message.agent}
+							<div class="flex h-full w-full items-center justify-center rounded-md md:rounded-[6px] text-xs font-bold text-white" style="background:{color(message.agent.id)}">
+								{initials(message.agent.name)}
+							</div>
 						{:else}
-							<Icon icon={feUser} class="h-4 w-4 text-slate-800" />
+							<span class="m-auto">
+								<Icon icon={feCpu} class="h-4 w-4 text-slate-800" />
+							</span>
 						{/if}
-					</span>
+					{:else if message.role === 'system'}
+						<span class="m-auto">
+							<Icon icon={feTerminal} class="h-4 w-4 text-slate-800" />
+						</span>
+					{:else}
+						<span class="m-auto">
+							<Icon icon={feUser} class="h-4 w-4 text-slate-800" />
+						</span>
+					{/if}
 				{/if}
 			</button>
 			</div>

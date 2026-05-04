@@ -565,11 +565,6 @@
 				<option value="hype">🤩 Hype</option>
 			</select>
 			<button id="ctl-config" class="pf-icon-btn" type="button" title="Configure agent reactions">⚙️ Config</button>
-			<select id="ctl-mood" title="Avatar mood — biases reaction intensity">
-				<option value="chill">😎 Chill</option>
-				<option value="normal" selected>🙂 Normal</option>
-				<option value="hype">🤩 Hype</option>
-			</select>
 			<button id="ctl-share" class="pf-icon-btn" type="button" title="Copy a shareable link with current filters">🔗 <span id="ctl-share-label">Share</span></button>
 			<button id="side-toggle" class="pf-icon-btn" type="button" aria-pressed="false" aria-controls="side" title="Toggle live feed">📡 Feed</button>
 		</div>
@@ -579,6 +574,40 @@
 			<iframe id="agent" allow="autoplay" title="3D agent"></iframe>
 			<div id="anim-chips" role="group" aria-label="Trigger animation"></div>
 		</div>
+		<aside id="side">
+			<div class="side-header" id="side-header">
+				<span class="side-title">Live Feed</span>
+				<div class="side-controls">
+					<button id="side-minimize" class="side-control-btn" title="Minimize">_</button>
+					<button id="side-close" class="side-control-btn" title="Close">×</button>
+				</div>
+			</div>
+			<div id="side-content">
+				<h2>Agent</h2>
+				<div id="agent-card"><div class="empty">Default narrator avatar. Paste a Solana asset pubkey above to bind a specific agent.</div></div>
+				<div id="signals-section" hidden>
+					<h2>Reputation signals</h2>
+					<div class="signal-grid" id="signals"></div>
+				</div>
+				<div id="first-claims-section">
+					<h2>
+						<span>First-time fee claims</span>
+						<select id="fc-window" title="Lookback window" style="margin-left:8px;background:#0f0f17;color:#e6e6f0;border:1px solid #20202c;border-radius:6px;padding:2px 6px;font-size:12px">
+							<option value="60">1h</option>
+							<option value="360">6h</option>
+							<option value="1440" selected>24h</option>
+						</select>
+						<button type="button" id="fc-refresh" class="pf-icon-btn" title="Refresh first-time claims" style="margin-left:6px">↻</button>
+					</h2>
+					<div id="first-claims"><div class="empty">Loading first-time claims…</div></div>
+				</div>
+				<div id="feed-wrap">
+					<h2><span id="feed-title">Live feed</span><a id="helius-pill" class="helius-pill" href="https://helius.dev" target="_blank" rel="noopener" title="Real-time Solana data via Helius webhooks"><span class="helius-dot" aria-hidden="true"></span><span id="helius-count" class="helius-count">0</span>Powered by Helius</a></h2>
+					<button type="button" class="feed-jump" id="feed-jump" data-visible="false" aria-live="polite">↑ <span id="feed-jump-count">0</span> new</button>
+					<div id="feed"><div class="empty">Waiting for events…</div></div>
+				</div>
+			</div>
+		</aside>
 	</main>
 	<footer class="h-footer h-footer-horizon">
 		<div class="h-footer-glow-line" aria-hidden="true"></div>
@@ -1141,1377 +1170,588 @@
 				} catch (err) {
 					alert('Could not load that avatar (' + (err.message || 'error') + ').');
 					if (cardEl) { cardEl.style.opacity = ''; cardEl.style.pointerEvents = ''; }
+				}
+			}
+			if (resolvedUrl) {
+				params.avatar = resolvedUrl;
+				selectedAvatarId = a.id || null;
+				updateUrl();
+				loadAgent();
+				picker.label.textContent = a.name;
+				picker.thumb.style.backgroundImage = a.thumbnail_url ? `url('${attr(a.thumbnail_url)}')` : 'none';
+				closePicker();
+				toast('Avatar changed to ' + a.name, 'success');
+			}
+		}
+
+		// ── Agent communication ──────────────────────────────────────────────
+
+		let animations = [];
+		let ws = null, wsTries = 0, wsBackoff = 1000, wsClosed = false;
+		let queue = [], queueTimer = null, queuePaused = false;
+		let replayQueue = [];
+		const solPrice = { val: 0, el: null };
+		let firstClaims = { data: [], el: $('first-claims'), refreshing: false, ts: 0 };
+		const feed = {
+			el: $('feed'),
+			pending: [], // events that arrived while scrolled down
+			jumpBtn: $('feed-jump'),
+			jumpCount: $('feed-jump-count'),
+			isAtBottom: true,
+			observer: null,
+			lastTs: 0,
+		};
+		const status = {
+			dot: $('status-dot'),
+			label: $('status-label'),
+			pill: $('status-pill'),
+		};
+		const heliusPill = {
+			el: $('helius-pill'),
+			countEl: $('helius-count'),
+			count: 0,
+			timer: null,
+		};
+		const seen = new Set(); // seen mints in this session
+
+		const iframeUrl = new URL('/agent-embed.html', location.href);
+		function loadAgent() {
+			iframeUrl.searchParams.set('src', params.avatar);
+			// Pass some params to the agent iframe for its own analytics
+			iframeUrl.searchParams.set('page', 'pumpfun');
+			if (params.asset) iframeUrl.searchParams.set('asset', params.asset);
+			if (params.mint) iframeUrl.searchParams.set('mint', params.mint);
+			iframe.src = iframeUrl.href;
+		}
+		loadAgent();
+
+		window.addEventListener('message', (e) => {
+			if (e.source !== iframe.contentWindow) return;
+			const { type, payload } = e.data;
+			if (type === 'ready') {
+				iframe.contentWindow.postMessage({ type: 'getAnimations' }, '*');
+			} else if (type === 'animations') {
+				animations = payload;
+				const chips = $('anim-chips');
+				chips.innerHTML = '';
+				payload.forEach((anim) => {
+					const btn = document.createElement('button');
+					btn.type = 'button';
+					btn.className = 'anim-chip';
+					btn.textContent = anim;
+					btn.addEventListener('click', () => {
+						iframe.contentWindow.postMessage({ type: 'playAnimation', payload: anim }, '*');
+					});
+					chips.appendChild(btn);
+				});
+			}
+		});
+
+		function enqueue(item, toFront = false) {
+			if (toFront) queue.unshift(item); else queue.push(item);
+			if (!queueTimer) processQueue();
+		}
+
+		function processQueue() {
+			if (queuePaused || !queue.length) {
+				queueTimer = null;
+				// When main queue is done, start on the replay queue
+				if (!queue.length && replayQueue.length) {
+					queue = replayQueue;
+					replayQueue = [];
+					processQueue();
+				}
+				return;
+			}
+			const item = queue.shift();
+			let duration = 3000;
+
+			if (item.type === 'say') {
+				iframe.contentWindow.postMessage({ type: 'say', payload: { text: item.text, mood: params.mood } }, '*');
+				duration = 3000 + (item.text.length * 55);
+			} else if (item.type === 'anim') {
+				iframe.contentWindow.postMessage({ type: 'playAnimation', payload: item.name }, '*');
+				duration = item.duration || 2500;
+			} else if (item.type === 'title') {
+				iframe.contentWindow.postMessage({ type: 'showTitle', payload: { title: item.title, subtitle: item.subtitle } }, '*');
+				duration = item.duration || 3000;
+			}
+			queueTimer = setTimeout(processQueue, duration);
+		}
+
+		// ── Event handlers ───────────────────────────────────────────────────
+
+		function connect() {
+			wsTries++;
+			setStatus('connecting', `connecting (try ${wsTries})…`);
+			if (ws) { try { ws.close(); } catch {} ws = null; }
+
+			const endpoint = new URL('/api/pump/feed', location.href);
+			endpoint.protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+			if (params.asset) endpoint.searchParams.set('asset', params.asset);
+			if (params.network) endpoint.searchParams.set('network', params.network);
+
+			ws = new WebSocket(endpoint.href);
+			ws.onopen = () => {
+				console.log('[ws] connected');
+				wsTries = 0;
+				wsBackoff = 1000;
+				setStatus('live', 'live');
+				ws.send(JSON.stringify({ type: 'sol-price' }));
+			};
+			ws.onmessage = (e) => {
+				const data = JSON.parse(e.data);
+				if (data.type === 'sol-price') {
+					solPrice.val = data.price;
 					return;
 				}
-			}
-			params.avatar = resolvedUrl;
-			selectedAvatarId = a.id || null;
-			updateTriggerLabel(a);
-			syncURL();
-			mountAgent();
-			closePicker();
-		}
-
-		function updateTriggerLabel(a) {
-			picker.label.textContent = a.name || 'Avatar';
-			if (a.thumbnail_url) {
-				picker.thumb.style.backgroundImage = `url('${a.thumbnail_url}')`;
-				picker.thumb.textContent = '';
-			} else {
-				picker.thumb.style.backgroundImage = '';
-				picker.thumb.textContent = '';
-			}
-		}
-
-		updateTabBadge('defaults', String(picker.data.defaults.length));
-
-		// Initial label from URL param
-		(function initTriggerLabel() {
-			const preset = DEFAULT_AVATARS.find((a) => a.url === params.avatar);
-			if (preset) { updateTriggerLabel(preset); return; }
-			updateTriggerLabel({ name: 'Custom', sub: shortenUrl(params.avatar) });
-			// Try to upgrade label once lists load
-			const tryMatch = () => {
-				const all = picker.data.defaults.concat(picker.data.community, picker.data.mine);
-				const m = all.find((a) => a.url === params.avatar);
-				if (m) updateTriggerLabel(m);
+				if (data.type === 'events-batch') {
+					data.events.forEach(handleEvent);
+					if (data.replay) {
+						// add small visual gap between historical and live events
+						setTimeout(() => {
+							const div = document.createElement('div');
+							div.style = 'margin: 6px 0; text-align: center; font-size: 10px; color: #444; text-transform: uppercase; letter-spacing: 0.08em;';
+							div.textContent = `live events started ${new Date().toLocaleTimeString()}`;
+							feed.el.appendChild(div);
+						}, 1000);
+					}
+					return;
+				}
+				handleEvent(data);
 			};
-			ensureLoaded('community').then(tryMatch);
-			ensureLoaded('mine').then(tryMatch);
-		})();
+			ws.onerror = (err) => console.error('[ws] error', err);
+			ws.onclose = () => {
+				if (wsClosed) return;
+				console.log(`[ws] disconnected, reconnect in ${wsBackoff/1000}s`);
+				setStatus('down', 'offline');
+				setTimeout(connect, wsBackoff);
+				wsBackoff = Math.min(wsBackoff * 1.5, 15000);
+			};
+		}
+
+		function handleEvent(evt) {
+			if (evt.type === 'meta') {
+				updateHeliusPill(evt);
+				return;
+			}
+			if (seen.has(evt.mint)) return;
+			if (evt.type === 'mint') seen.add(evt.mint);
+
+			const card = renderEvtCard(evt);
+			if (!card) return;
+
+			if (feed.isAtBottom) {
+				feed.el.appendChild(card);
+				feed.el.scrollTop = feed.el.scrollHeight;
+			} else {
+				feed.pending.push(card);
+				updateFeedJump();
+			}
+			narrateEvent(evt);
+		}
+
+		function narrateEvent(evt) {
+			if (!params.narrate) return;
+			let text, anim;
+			const sol = evt.sol || 0;
+			const mc = evt.market_cap_usd || 0;
+			const name = evt.name || 'a token';
+
+			if (evt.type === 'mint') {
+				if (!params.announceMints) return;
+				text = `New token minted: ${name}!`;
+				anim = 'victory';
+			} else if (evt.type === 'trade') {
+				if (evt.is_buy) {
+					if (sol > 50) { text = `Whale alert! Someone just bought ${sol.toFixed(1)} SOL of ${name}!`; anim = 'surprised'; }
+					else if (sol > 10) { text = `Big buy! ${sol.toFixed(1)} SOL of ${name}.`; anim = 'run'; }
+					else if (mc < 15000 && sol > 0.5) { text = `Here's a dip buy on ${name}.`; anim = 'yes'; }
+					else return; // don't narrate small buys
+				} else { // sell
+					if (sol > 50) { text = `Ouch, a whale just dumped ${sol.toFixed(1)} SOL of ${name}.`; anim = 'no'; }
+					else if (sol > 10) { text = `Big sell on ${name}.`; anim = 'headshake'; }
+					else return; // don't narrate small sells
+				}
+			} else if (evt.type === 'graduation') {
+				if (mc > 1_000_000) text = `Oh my god! ${name} just graduated and it's already over a million market cap!`;
+				else if (mc > 250_000) text = `Let's go! ${name} graduated to Raydium!`;
+				else text = `${name} made it to Raydium.`;
+				anim = 'victory';
+				if (evt.audit?.rug_score?.risk_level === 'high') {
+					text = `Warning, ${name} looks like a rug pull. High risk score.`;
+					anim = 'no';
+				}
+			} else {
+				return; // unhandled event type
+			}
+
+			if (anim) {
+				const animName = {
+					'victory': 'Victory', 'yes': 'Yes', 'no': 'No', 'run': 'Running',
+					'surprised': 'Surprised', 'headshake': 'Headshake'
+				}[anim] || anim;
+				const hasAnim = animations.includes(animName);
+				enqueue({ type: 'anim', name: hasAnim ? animName : 'Idle', duration: hasAnim ? 2500 : 500 });
+			}
+			if (text) {
+				enqueue({ type: 'say', text });
+			}
+		}
 
 		function setStatus(state, label) {
-			const dot = $('status-dot');
-			dot.className = 'dot ' + state;
-			$('status-label').textContent = label;
-			$('status-pill').dataset.state = state;
+			status.dot.className = `dot ${state}`;
+			status.label.textContent = label;
+			status.pill.dataset.state = state;
 		}
-		$('status-pill').addEventListener('click', () => {
-			if ($('status-pill').dataset.state === 'down' || $('status-pill').dataset.state === 'connecting') {
-				connectFeed();
+		status.pill.addEventListener('click', () => {
+			if (status.pill.dataset.state === 'down') {
+				wsClosed = false;
+				wsTries = 0;
+				wsBackoff = 1000;
+				connect();
 			}
 		});
 
-		function syncURL() {
+		// ── DOM init ─────────────────────────────────────────────────────────
+
+		function initControls() {
+			$('ctl-asset').addEventListener('change', (e) => {
+				params.asset = e.target.value;
+				updateUrl();
+				location.reload(); // simplest way to re-init with new agent, etc.
+			});
+			$('ctl-mint').addEventListener('input', (e) => {
+				params.mint = e.target.value;
+				updateUrl();
+				applyFilters();
+			});
+			$('ctl-kind').addEventListener('change', (e) => {
+				params.kind = e.target.value;
+				updateUrl();
+				applyFilters();
+			});
+			$('ctl-tier').addEventListener('change', (e) => {
+				params.minTier = e.target.value;
+				updateUrl();
+				applyFilters();
+			});
+			$('ctl-narrate').addEventListener('click', (e) => {
+				params.narrate = !params.narrate;
+				e.target.dataset.on = params.narrate ? '1' : '0';
+				updateUrl();
+			});
+			$('ctl-announce-mints').addEventListener('click', (e) => {
+				params.announceMints = !params.announceMints;
+				e.target.dataset.on = params.announceMints ? '1' : '0';
+				updateUrl();
+			});
+			$('ctl-mood').addEventListener('change', (e) => {
+				params.mood = e.target.value;
+				updateUrl();
+			});
+			$('ctl-mc-min').addEventListener('change', (e) => {
+				params.mcMin = Number(e.target.value) || 0;
+				updateUrl();
+				applyFilters();
+			});
+			$('ctl-mc-max').addEventListener('change', (e) => {
+				params.mcMax = Number(e.target.value) || 0;
+				updateUrl();
+				applyFilters();
+			});
+			$('ctl-min-buy').addEventListener('change', (e) => {
+				params.minBuy = Number(e.target.value) || 0;
+				updateUrl();
+				applyFilters();
+			});
+			$('ctl-whale').addEventListener('change', (e) => {
+				params.whale = Number(e.target.value) || 0;
+				updateUrl();
+				applyFilters();
+			});
+			$('fc-window').addEventListener('change', () => fetchFirstClaims(true));
+			$('fc-refresh').addEventListener('click', () => fetchFirstClaims(true));
+			$('ctl-share').addEventListener('click', copyShareLink);
+		}
+
+		function applyFilters() {
+			const events = Array.from(feed.el.querySelectorAll('.evt'));
+			events.forEach((el) => {
+				const { type, mint, tier, mc, sol } = el.dataset;
+				const tierVal = { notable: 1, influencer: 2, mega: 3 }[tier] || 0;
+				const minTierVal = { notable: 1, influencer: 2, mega: 3 }[params.minTier] || 0;
+
+				const show =
+					(params.kind === 'all' || (params.kind === 'claims' && type === 'claim') || type === params.kind) &&
+					(!params.mint || mint.toLowerCase().includes(params.mint.toLowerCase())) &&
+					tierVal >= minTierVal &&
+					(!params.mcMin || (mc && Number(mc) >= params.mcMin)) &&
+					(!params.mcMax || (mc && Number(mc) <= params.mcMax)) &&
+					(!params.minBuy || (type === 'mint' && sol && Number(sol) >= params.minBuy)) &&
+					(!params.whale || (sol && Number(sol) >= params.whale));
+				el.style.display = show ? '' : 'none';
+			});
+		}
+
+		function updateUrl() {
 			const u = new URL(location.href);
-			const set = (k, v) => v ? u.searchParams.set(k, v) : u.searchParams.delete(k);
-			set('asset', params.asset);
-			set('mint', params.mint);
-			set('kind', params.kind === 'all' ? '' : params.kind);
-			set('minTier', params.minTier);
-			set('narrate', params.narrate ? '' : '0');
-			set('announceMints', params.announceMints ? '1' : '');
-			set('avatar', params.avatar === '/avatars/cz.glb' ? '' : params.avatar);
-			set('mcMin', params.mcMin || '');
-			set('mcMax', params.mcMax || '');
-			set('minBuy', params.minBuy || '');
-			set('whale', params.whale || '');
-			history.replaceState(null, '', u.toString());
-		}
-
-		async function mountAgent() {
-			const cfgPart = `&type=pumpfun-feed&kind=${encodeURIComponent(params.kind)}` +
-				(params.minTier ? `&minTier=${encodeURIComponent(params.minTier)}` : '') +
-				(params.narrate ? '' : '&narrate=0');
-			let modelHash = '&model=' + encodeURIComponent(params.avatar || '/avatars/cz.glb');
-			const widgetId = 'wdgt_demo_pumpfun';
-			if (params.asset) {
-				try {
-					const r = await fetch(`/api/agents/solana-card?asset=${encodeURIComponent(params.asset)}`);
-					if (r.ok) {
-						const card = await r.json();
-						renderAgentCard(card);
-						const avatarUrl = card?.identity?.avatar_url || card?.avatar_url;
-						if (avatarUrl) modelHash = `&model=${encodeURIComponent(avatarUrl)}`;
-					}
-					const repR = await fetch(`/api/agents/solana-reputation?asset=${encodeURIComponent(params.asset)}&network=${params.network}`);
-					if (repR.ok) renderSignals(await repR.json());
-				} catch {}
-			} else {
-				$('agent-card').innerHTML = `<div class="empty">Custom avatar narrator. Paste a Solana asset pubkey above to bind a different agent.</div>`;
-				$('signals-section').hidden = true;
+			for (const k in params) {
+				if (k === 'avatar' && params[k] === DEFAULT_AVATARS[0].url) u.searchParams.delete(k);
+				else if (params[k]) u.searchParams.set(k, String(params[k]));
+				else u.searchParams.delete(k);
 			}
-			iframe.src = `/app#widget=${widgetId}&kiosk=true${cfgPart}${modelHash}`;
-			resetBridge();
+			// clean up a bit
+			if (u.searchParams.get('kind') === 'all') u.searchParams.delete('kind');
+			if (u.searchParams.get('narrate') === 'true') u.searchParams.delete('narrate');
+			history.replaceState({}, '', u.href);
 		}
 
-		// ── Animation chips → iframe gesture bridge ─────────────────────────
-		const BRIDGE_VERSION = 1;
-		let bridgeReady = false;
-		let bridgeQueue = [];
-		let activeChipName = null;
-		let manifestPromise = null;
-
-		function genId() {
-			if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
-				return crypto.randomUUID();
-			return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-				const r = (Math.random() * 16) | 0;
-				return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
-			});
-		}
-
-		function resetBridge() {
-			bridgeReady = false;
-			bridgeQueue = [];
-			activeChipName = null;
-			lastClipsKey = '';
-			document.querySelectorAll('.anim-chip').forEach((c) => delete c.dataset.active);
-		}
-
-		function sendToAgent(op, payload) {
-			const msg = { v: BRIDGE_VERSION, source: 'agent-host', id: genId(), kind: 'request', op, payload };
-			if (bridgeReady) {
-				iframe.contentWindow?.postMessage(msg, location.origin);
-			} else {
-				bridgeQueue.push(msg);
+		function renderEvtCard(evt) {
+			if (evt.type !== 'claim') {
+				const tierVal = { notable: 1, influencer: 2, mega: 3 }[evt.tier] || 0;
+				const minTierVal = { notable: 1, influencer: 2, mega: 3 }[params.minTier] || 0;
+				if (tierVal < minTierVal) return null;
 			}
-		}
 
-		window.addEventListener('message', (event) => {
-			if (event.source !== iframe.contentWindow) return;
-			if (event.origin !== location.origin) return;
-			const msg = event.data;
-			if (!msg || msg.v !== BRIDGE_VERSION || msg.source !== 'agent-3d') return;
-			if (msg.kind === 'event' && msg.op === 'ready') {
-				iframe.contentWindow.postMessage(
-					{ v: BRIDGE_VERSION, source: 'agent-host', id: genId(), kind: 'request', op: 'ping', payload: {} },
-					location.origin,
-				);
-				return;
+			if (params.mint && !evt.mint.toLowerCase().includes(params.mint.toLowerCase())) return null;
+			if (params.kind !== 'all' && params.kind !== evt.type) {
+				if (params.kind === 'claims' && evt.type !== 'claim') return null;
+				if (params.kind !== 'claims' && params.kind === evt.type) return null;
 			}
-			if (msg.kind === 'response' && msg.op === 'pong') {
-				const wasReady = bridgeReady;
-				bridgeReady = true;
-				for (const m of bridgeQueue) iframe.contentWindow.postMessage(m, location.origin);
-				bridgeQueue = [];
-				const caps = msg.payload?.capabilities || [];
-				// Subscribe so the embed pushes us `op:'clips'` change events when
-				// the loaded model swaps inside the same iframe (otherwise those
-				// events stay queued in the embed and we'd only see them on reload).
-				if (!wasReady && caps.includes('subscribe')) {
-					sendToAgent('subscribe', {});
-				}
-				// Pull authoritative clip list from the iframe — replaces the
-				// manifest-only fallback whenever the loaded model has its own
-				// non-Mixamo skeleton (e.g. RobotExpressive bakes 7 emotes).
-				if (caps.includes('listClips')) {
-					sendToAgent('listClips', {});
-				}
-				return;
+			if (params.mcMin && evt.market_cap_usd && evt.market_cap_usd < params.mcMin) return null;
+			if (params.mcMax && evt.market_cap_usd && evt.market_cap_usd > params.mcMax) return null;
+			if (params.minBuy && evt.type === 'mint' && evt.sol && evt.sol < params.minBuy) return null;
+			if (params.whale && evt.sol && evt.sol < params.whale) return null;
+
+			const card = document.createElement('div');
+			card.className = 'evt';
+			if (evt.is_first) card.classList.add('first');
+			if (evt.is_fake) card.classList.add('fake');
+			if (evt.type === 'graduation') card.classList.add('grad');
+			if (evt.replay) card.classList.add('replay');
+			card.dataset.type = evt.type;
+			card.dataset.mint = evt.mint;
+			if (evt.tier) card.dataset.tier = evt.tier;
+			if (evt.market_cap_usd) card.dataset.mc = evt.market_cap_usd;
+			if (evt.sol) card.dataset.sol = evt.sol;
+			const time = new Date(evt.timestamp).toLocaleTimeString();
+			const who = shortenAddress(evt.user);
+			const solVal = evt.sol ? `${evt.sol.toFixed(2)} SOL` : '';
+			const usdVal = evt.usd ? `($${evt.usd.toLocaleString(undefined, { maximumFractionDigits: 0 })})` : '';
+
+			let title = '', body = '', tier = evt.tier ? `<span class="evt-tier">${escapeHtml(evt.tier)}</span>` : '';
+			if (evt.type === 'mint') {
+				title = `<div class="evt-row"><div class="evt-title">${escapeHtml(evt.name)} (${escapeHtml(evt.ticker)})</div><div class="evt-amt">${solVal}</div></div>`;
+				body = `<div class="evt-row"><div class="evt-kind">New token</div><div class="evt-time">${time}</div></div>
+					${evt.description ? `<div class="evt-desc">${escapeHtml(evt.description)}</div>` : ''}
+					${evt.socials ? `<div class="evt-socials">${renderSocials(evt.socials)}</div>` : ''}`;
+			} else if (evt.type === 'trade') {
+				const kind = evt.is_buy ? 'Buy' : 'Sell';
+				title = `<div class="evt-row"><div class="evt-title">${escapeHtml(evt.name)}</div><div class="evt-amt">${solVal} ${usdVal}</div></div>`;
+				body = `<div class="evt-row"><div class="evt-kind">${kind} by ${who}</div><div class="evt-time">${time}</div></div>`;
+			} else if (evt.type === 'graduation') {
+				const mc = evt.market_cap_usd ? `MC $${(evt.market_cap_usd / 1000).toFixed(0)}k` : 'graduation';
+				title = `<div class="evt-row"><div class="evt-title">${escapeHtml(evt.name)}</div><div class="evt-amt">${mc}</div></div>`;
+				body = `<div class="evt-row"><div class="evt-kind">Graduated to Raydium</div><div class="evt-time">${time}</div></div>`;
+			} else if (evt.type === 'claim') {
+				title = `<div class="evt-row"><div class="evt-who" title="${escapeHtml(evt.user)}">${who}</div><div class="evt-amt">${solVal} ${usdVal}</div></div>`;
+				body = `<div class="evt-row"><div class="evt-kind">bonded fee claim</div><div class="evt-time">${time}</div></div>`;
 			}
-			if (msg.kind === 'response' && msg.op === 'listClips') {
-				const clips = msg.payload?.clips || [];
-				if (clips.length) renderAnimChips(clips);
-				return;
-			}
-			if (msg.kind === 'event' && msg.op === 'clips') {
-				const clips = msg.payload?.clips || [];
-				if (clips.length) renderAnimChips(clips);
-				return;
-			}
-		});
 
-		function loadManifest() {
-			if (!manifestPromise) {
-				manifestPromise = fetch('/animations/manifest.json')
-					.then((r) => r.json())
-					.catch(() => []);
-			}
-			return manifestPromise;
-		}
-
-		function chipLabel(def) {
-			const icon = def.icon || '✨';
-			const label = (def.label || def.name).replace(/\s*\([^)]*\)/g, '').trim();
-			return icon + ' ' + label;
-		}
-
-		// Clips that are part of the agent's idle/locomotion state machine and
-		// shouldn't appear as user-triggerable chips (firing them via gesture
-		// would interrupt the embed's automatic state loop).
-		const SYSTEM_CLIPS = new Set(['idle', 'walk', 'walking', 'running', 'run']);
-
-		// Tracks the rendered clip list so we don't redundantly rebuild on every
-		// duplicate `op:'clips'` event from the iframe.
-		let lastClipsKey = '';
-		let oneShotResetTimer = null;
-		let chipDefs = []; // currently-rendered defs, indexed for keyboard shortcuts.
-
-		function clearActiveChip() {
-			activeChipName = null;
-			document.querySelectorAll('.anim-chip').forEach((c) => delete c.dataset.active);
-		}
-
-		function triggerChip(def) {
-			document.querySelectorAll('.anim-chip').forEach((c) => delete c.dataset.active);
-			const target = document.querySelector(`.anim-chip[data-anim="${CSS.escape(def.name)}"]`);
-			if (target) target.dataset.active = 'true';
-			activeChipName = def.name;
-			// Loop-aware: looping clips (dance/thriller/capoeira) keep running until
-			// the user picks another chip; the embed's avatar layer auto-reverts
-			// one-shots to idle (~1.5s) — we mirror that timing on the chip.
-			sendToAgent('gesture', { name: def.name, loop: !!def.loop });
-			clearTimeout(oneShotResetTimer);
-			if (!def.loop) {
-				oneShotResetTimer = setTimeout(() => {
-					if (activeChipName === def.name) clearActiveChip();
-				}, 1800);
-			}
-		}
-
-		function renderAnimChips(defs) {
-			const wrap = $('anim-chips');
-			if (!wrap) return;
-			const safe = Array.isArray(defs)
-				? defs.filter((d) => d && d.name && !SYSTEM_CLIPS.has(d.name.toLowerCase()))
-				: [];
-			const key = safe.map((d) => d.name + '|' + (d.loop ? 'L' : 'O')).join(',');
-			if (key === lastClipsKey && wrap.childElementCount === safe.length) return;
-			lastClipsKey = key;
-			chipDefs = safe;
-			wrap.innerHTML = '';
-			if (!safe.length) {
-				wrap.dataset.state = 'empty';
-				wrap.innerHTML = '<span class="anim-empty">no animations available for this avatar</span>';
-				return;
-			}
-			wrap.dataset.state = 'ready';
-			safe.forEach((def, idx) => {
-				const btn = document.createElement('button');
-				btn.type = 'button';
-				btn.className = 'anim-chip';
-				btn.dataset.anim = def.name;
-				btn.dataset.source = def.source || 'manifest';
-				btn.dataset.loop = def.loop ? 'true' : 'false';
-				const shortcut = idx < 9 ? ` [${idx + 1}]` : '';
-				btn.title =
-					(def.source === 'glb' ? `${def.name} (baked clip)` : def.name) +
-					(def.loop ? ' · loops' : ' · one-shot') +
-					shortcut;
-				btn.textContent = chipLabel(def);
-				if (def.name === activeChipName) btn.dataset.active = 'true';
-				btn.addEventListener('click', () => triggerChip(def));
-				wrap.appendChild(btn);
-			});
-		}
-
-		// Keyboard shortcuts: digits 1-9 trigger the first 9 chips, "Esc" returns
-		// to idle. Disabled while typing into form fields so the asset-pubkey and
-		// mint-filter inputs continue to behave normally.
-		window.addEventListener('keydown', (e) => {
-			if (e.metaKey || e.ctrlKey || e.altKey) return;
-			const tag = (e.target?.tagName || '').toLowerCase();
-			if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
-			if (e.target?.isContentEditable) return;
-			if (e.key >= '1' && e.key <= '9') {
-				const idx = Number(e.key) - 1;
-				const def = chipDefs[idx];
-				if (def) {
-					e.preventDefault();
-					triggerChip(def);
-				}
-			} else if (e.key === 'Escape' && activeChipName) {
-				clearActiveChip();
-				// Return to idle to stop the looping clip currently playing.
-				sendToAgent('gesture', { name: 'idle', loop: true });
-			}
-		});
-
-		async function buildAnimChips() {
-			// Initial paint from the manifest. The iframe replaces this with its
-			// authoritative clip list (`op:'clips'`) once the model is loaded —
-			// e.g. baked-only for RobotExpressive (skeletal mismatch with Mixamo).
-			const defs = await loadManifest();
-			renderAnimChips(defs);
-		}
-
-		function renderAgentCard(card) {
-			const id = card?.identity || {};
-			$('agent-card').innerHTML = `
-				<div class="kv"><span>Name</span><strong>${escapeHtml(card?.name || '—')}</strong></div>
-				<div class="kv"><span>Network</span><code>${escapeHtml(id.network || '—')}</code></div>
-				<div class="kv"><span>Asset</span><code>${shortKey(id.asset_pubkey || '')}</code></div>
-				${id.owner ? `<div class="kv"><span>Owner</span><code>${shortKey(id.owner)}</code></div>` : ''}
-				${id.passport_url ? `<div class="kv"><span>Passport</span><a href="${attr(id.passport_url)}" target="_blank">open ↗</a></div>` : ''}
-			`;
-		}
-
-		function renderSignals(rep) {
-			const pf = rep?.pumpfun_signals || { count: 0, weight: 0, by_kind: {} };
-			const section = $('signals-section');
-			const el = $('signals');
-			if (!pf.count) { section.hidden = true; return; }
-			section.hidden = false;
-			const cards = [
-				`<div class="signal"><div class="v">${pf.count}</div><div class="l">total signals</div></div>`,
-				`<div class="signal ${pf.weight < 0 ? 'neg' : ''}"><div class="v">${pf.weight >= 0 ? '+' : ''}${pf.weight.toFixed(2)}</div><div class="l">aggregate weight</div></div>`,
-				...Object.entries(pf.by_kind).map(([k, info]) =>
-					`<div class="signal ${info.weight < 0 ? 'neg' : ''}"><div class="v">${info.count}</div><div class="l">${escapeHtml(k.replace('_', ' '))}</div></div>`),
-			];
-			el.innerHTML = cards.join('');
-		}
-
-		// ── Draggable panel ──────────────────────────────────────────────────
-		const side = $('side');
-		const sideHeader = $('side-header');
-		if (side && sideHeader) {
-			let isDragging = false;
-			let offsetX, offsetY;
-			sideHeader.addEventListener('mousedown', (e) => {
-				if (e.target.closest('.side-control-btn')) return;
-				isDragging = true;
-				offsetX = e.clientX - side.offsetLeft;
-				offsetY = e.clientY - side.offsetTop;
-				document.body.style.cursor = 'move';
-				document.body.style.userSelect = 'none';
-			});
-			document.addEventListener('mousemove', (e) => {
-				if (!isDragging) return;
-				e.preventDefault();
-				
-				const main = document.querySelector('main.pf-main');
-				const parentRect = main.getBoundingClientRect();
-				const sideRect = side.getBoundingClientRect();
-
-				let newLeft = e.clientX - offsetX;
-				let newTop = e.clientY - offsetY;
-				
-				// Constrain to parent (main element)
-				newLeft = Math.max(0, Math.min(newLeft, main.offsetWidth - side.offsetWidth));
-				newTop = Math.max(0, Math.min(newTop, main.offsetHeight - side.offsetHeight));
-
-				side.style.left = `${newLeft}px`;
-				side.style.top = `${newTop}px`;
-				side.style.right = 'auto';
-				side.style.bottom = 'auto';
-			});
-			document.addEventListener('mouseup', () => {
-				isDragging = false;
-				document.body.style.cursor = '';
-				document.body.style.userSelect = '';
-			});
-			const minimizeBtn = $('side-minimize');
-			if (minimizeBtn) {
-				minimizeBtn.addEventListener('click', () => {
-					side.classList.toggle('minimized');
-				});
-			}
-			const closeBtn = $('side-close');
-			if (closeBtn) {
-				closeBtn.addEventListener('click', () => {
-					side.style.display = 'none';
-					if ($('side-toggle')) {
-						$('side-toggle').setAttribute('aria-pressed', 'false');
-						document.body.classList.remove('side-open');
-					}
-				});
-			}
-			// When side-toggle is used (mobile), ensure panel is visible
-			if ($('side-toggle')) {
-				$('side-toggle').addEventListener('click', () => {
-					if (side.style.display === 'none') {
-						side.style.display = 'flex';
-					}
-				});
-			}
-		}
-
-
-		// ── Live event feed (host-side, mirrors what the iframe receives) ────
-		let es = null;
-		const TIER_BADGE = { mega: '🔥🔥', influencer: '🔥', notable: '⭐' };
-		const MAX_EVENTS = 30;
-
-		// Host-side reaction map. Mirrors src/widgets/pumpfun-reactions.js so
-		// the avatar reacts even when the in-iframe widget overlay is hidden.
-		const REACT_COOLDOWN_MS = 2200;
-		const REACT_DEDUPE_MS = 30000;
-		const REACT_MAX_QUEUE = 6;
-		const REACT_MAX_HISTORY = 50;
-		const MOOD_PROFILE = {
-			chill:  { gestureScale: 0.7,  threshold: 30,  speakRate: 0.4 },
-			normal: { gestureScale: 1.0,  threshold: 0,   speakRate: 1.0 },
-			hype:   { gestureScale: 1.25, threshold: -20, speakRate: 1.5 },
-		};
-		const _reactSeen = new Map();
-		let _reactActiveUntil = 0;
-		let _reactActivePri = 0;
-		const _reactQueue = [];
-		const _reactHistory = [];
-		let _reactQueueTimer = null;
-
-		function reactionFor(kind, ev) {
-			if (!ev) return null;
-			let r = _baseReaction(kind, ev);
-			if (!r) return null;
-			const profile = MOOD_PROFILE[params.mood] || MOOD_PROFILE.normal;
-			const priority = (r.priority || 0) + profile.threshold;
-			if (priority < 0) return null;
-			if (r.gesture) r.gesture = { ...r.gesture, duration: Math.round(r.gesture.duration * profile.gestureScale) };
-			r.priority = priority;
-			return r;
-		}
-
-		function _baseReaction(kind, ev) {
-			const symbol = ev.symbol || ev.token_symbol || '';
-			const name = ev.name || ev.token_name || symbol || 'a token';
-			const num = (x) => { const n = Number(x); return Number.isFinite(n) ? n : 0; };
-			const mcInitial = num(ev.market_cap_usd_initial ?? ev.initial_market_cap_usd ?? ev.market_cap_at_launch);
-			const mcCurrent = num(ev.usd_market_cap ?? ev.market_cap_usd ?? ev.market_cap);
-			const mcMultiple = mcInitial && mcCurrent ? mcCurrent / mcInitial : 0;
-			const lifetimeSol = num(ev.lifetime_claim_sol ?? ev.lifetime_sol);
-			const creatorLaunches = num(ev.creator_launches);
-			const creatorGraduated = num(ev.creator_graduated);
-			const ghLinked = !!(ev.github_user || ev.github_repo || ev.github_account_age_days != null);
-			const ghVerified = !!(ev.verified ?? ev.signal_verified);
-			const ghCredible = ghLinked && (num(ev.github_account_age_days) >= 365 || num(ev.github_followers) >= 50 || num(ev.github_repo_stars ?? ev.repo_stars) >= 10);
-			const isWhaleClaim = lifetimeSol >= 50;
-			const isSerialCreator = creatorGraduated >= 3;
-			const isDevRelaunch = creatorLaunches >= 2 && creatorGraduated === 0;
-			const fmtMult = (m) => !Number.isFinite(m) || m <= 0 ? '—' : m >= 100 ? Math.round(m)+'×' : m >= 10 ? m.toFixed(0)+'×' : m.toFixed(1)+'×';
-			const fmtSol = (n) => !Number.isFinite(n) || n <= 0 ? '0 SOL' : n >= 1000 ? Math.round(n)+' SOL' : n.toFixed(2)+' SOL';
-
-			if (kind === 'graduation') {
-				const ageSec = ev.created_at ? Math.max(0, Math.floor(Date.now() / 1000) - Number(ev.created_at)) : 0;
-				const fresh = ageSec === 0 || ageSec < 1800;
-				const stale = ageSec > 86400;
-				if (mcMultiple >= 100) return { variant:'graduation_moonshot', icon:'🚀🌕', emote:{ trigger:'celebration', weight:1 }, gesture:{ name:'thriller', duration:9000 }, speak:{ text:`Moonshot! $${symbol||name} just went ${fmtMult(mcMultiple)} — bonded to PumpAMM.`, sentiment:0.95 }, lookAt:'camera', priority:100 };
-				if (mcMultiple >= 10) return { variant:'graduation_giant', icon:'🎓🔥', emote:{ trigger:'celebration', weight:0.95 }, gesture:{ name:'rumba', duration:7000 }, speak:{ text:`Giant pump: $${symbol||name} ${fmtMult(mcMultiple)} into PumpAMM.`, sentiment:0.85 }, lookAt:'camera', priority:95 };
-				if (isSerialCreator) return { variant:'graduation_serial_dev', icon:'🎓👑', emote:{ trigger:'celebration', weight:0.85 }, gesture:{ name:'capoeira', duration:6500 }, speak:{ text:`Serial creator strikes again — $${symbol||name} graduated. ${creatorGraduated} grads now.`, sentiment:0.7 }, lookAt:'camera', priority:92 };
-				const dur = stale ? 2500 : Math.min(9000, Math.max(4500, 4500 + Math.log10(Math.max(mcMultiple,1)+1)*1500));
-				const mcPart = mcCurrent > 0 ? ` at ${formatMcSpoken(mcCurrent)} market cap` : '';
-				const ageWord = ev.age ? ` after ${ageWordSpoken(ev.age)}` : '';
-				const launchesPart = creatorLaunches > 1 ? ` Dev's ${ordinalSpoken(creatorLaunches)} launch.` : '';
-				return {
-					variant: stale ? 'graduation_stale' : 'graduation_standard',
-					icon: stale ? '🎓⏳' : '🎓',
-					emote: { trigger: 'celebration', weight: stale ? 0.4 : fresh ? 0.95 : 0.7 },
-					gesture: { name: stale ? 'wave' : 'rumba', duration: dur },
-					speak: { text: `${symbol||name} bonded to PumpAMM${mcPart}${ageWord}.${launchesPart}`, sentiment: stale ? 0.3 : 0.7 },
-					lookAt: 'camera',
-					priority: stale ? 40 : 90,
-				};
-			}
-			if (kind === 'claim') {
-				if (ev.fake_claim) {
-					const who = ev.github_user ? '@' + ev.github_user : shortAddrLocal(ev.claimer);
-					return { variant:'claim_fake', icon:'⚠️', emote:{ trigger:'concern', weight:0.85 }, gesture:{ name:'shake', duration:1800 }, speak:{ text:`Fake claim spotted from ${who}. Ignore it.`, sentiment:-0.6 }, lookAt:'down', priority:75 };
-				}
-				if (ev.first_time_claim) {
-					if (ghCredible && ghVerified) return { variant:'claim_first_verified_credible', icon:'🚨✅', emote:{ trigger:'celebration', weight:1 }, gesture:{ name:'thriller', duration:6000 }, speak:{ text:`Verified first claim by @${ev.github_user}${ev.ai_take?' — '+ev.ai_take:''}.`, sentiment:0.85 }, lookAt:'camera', priority:88 };
-					if (ghLinked && ghVerified) return { variant:'claim_first_verified', icon:'🚨', emote:{ trigger:'celebration', weight:0.95 }, gesture:{ name:'silly', duration:5500 }, speak:{ text:`First claim by @${ev.github_user||'dev'}${ev.ai_take?' — '+ev.ai_take:''}.`, sentiment:0.8 }, lookAt:'camera', priority:86 };
-					if (ghLinked) return { variant:'claim_first_unverified_gh', icon:'🚨❓', emote:{ trigger:'curiosity', weight:0.7 }, gesture:{ name:'capoeira', duration:4500 }, speak:{ text:`First claim — @${ev.github_user||'dev'} unverified. Watch closely.`, sentiment:0.4 }, lookAt:'token', priority:82 };
-					if (isWhaleClaim) return { variant:'claim_first_whale', icon:'🐋', emote:{ trigger:'celebration', weight:0.85 }, gesture:{ name:'taunt', duration:3000 }, speak:{ text:`Whale claimer — ${fmtSol(lifetimeSol)} lifetime on $${symbol||'this'}.`, sentiment:0.6 }, lookAt:'token', priority:80 };
-					return { variant:'claim_first_raw', icon:'🚨', emote:{ trigger:'celebration', weight:0.85 }, gesture:{ name:'celebrate', duration:4500 }, speak:{ text:`First-time claim on $${symbol||'a new token'}.`, sentiment:0.7 }, lookAt:'camera', priority:78 };
-				}
-				if (isWhaleClaim) return { variant:'claim_whale_repeat', icon:'🐋', emote:{ trigger:'curiosity', weight:0.6 }, gesture:{ name:'taunt', duration:2200 }, speak:{ text:`Whale claim — ${fmtSol(num(ev.amount_sol))} on $${symbol||'token'}.`, sentiment:0.4 }, lookAt:'token', priority:55 };
-				if (ev.tier === 'mega') return { variant:'claim_tier_mega', icon:'🔥🔥', emote:{ trigger:'celebration', weight:0.7 }, gesture:{ name:'taunt', duration:2500 }, speak:{ text:`Mega claim — ${fmtSol(num(ev.amount_sol))}.`, sentiment:0.5 }, lookAt:'token', priority:50 };
-				if (ev.tier === 'influencer') return { variant:'claim_tier_influencer', icon:'🔥', emote:{ trigger:'curiosity', weight:0.55 }, gesture:{ name:'reaction', duration:1800 }, speak:{ text:`Influencer claim on $${symbol||'token'}.`, sentiment:0.3 }, lookAt:'token', priority:35 };
-				if (ev.tier === 'notable') return { variant:'claim_tier_notable', icon:'⭐', emote:{ trigger:'curiosity', weight:0.4 }, speak:{ text:`Notable claim seen.`, sentiment:0.2 }, lookAt:'token', priority:20 };
-				return null;
-			}
-			if (kind === 'mint') {
-				const initSol = num(ev.initial_buy_sol);
-				if (initSol >= 20) return { variant:'mint_giant_buy', icon:'🚀💸', emote:{ trigger:'curiosity', weight:0.85 }, gesture:{ name:'jump', duration:2000 }, speak:{ text:`Massive launch: $${symbol||'new token'} opens with ${fmtSol(initSol)}.`, sentiment:0.6 }, lookAt:'camera', priority:60 };
-				if (isDevRelaunch) return { variant:'mint_dev_relaunch', icon:'🔁', emote:{ trigger:'concern', weight:0.5 }, gesture:{ name:'reaction', duration:1600 }, speak:{ text:`Dev's back — ${creatorLaunches} launches, 0 grads. $${symbol}.`, sentiment:-0.2 }, lookAt:'down', priority:40 };
-				if (isSerialCreator) return { variant:'mint_serial_creator', icon:'👑', emote:{ trigger:'curiosity', weight:0.7 }, gesture:{ name:'wave', duration:1500 }, speak:{ text:`Pro dev launching $${symbol||'a new token'} — ${creatorGraduated} prior grads.`, sentiment:0.5 }, lookAt:'camera', priority:45 };
-				if (ev.tier === 'mega' || initSol >= 5) return { variant:'mint_notable', icon:'🌱🔥', emote:{ trigger:'curiosity', weight:0.55 }, gesture:{ name:'wave', duration:1500 }, speak:{ text:`New token $${symbol||'?'} — ${fmtSol(initSol)} initial.`, sentiment:0.3 }, lookAt:'token', priority:25 };
-				if (ev.tier === 'influencer' || initSol >= 1) return { variant:'mint_warm', icon:'🌱', emote:{ trigger:'curiosity', weight:0.35 }, lookAt:'token', priority:10 };
-				return null;
-			}
-			return null;
-		}
-
-		function _recordReaction(reaction, kind, ev) {
-			_reactHistory.push({ at: Date.now(), kind, variant: reaction.variant || kind, icon: reaction.icon || '✨', symbol: ev?.symbol || ev?.token_symbol || '', mint: ev?.mint || ev?.token_mint || '' });
-			while (_reactHistory.length > REACT_MAX_HISTORY) _reactHistory.shift();
-			renderReactionPanel();
-			showReactionToast(reaction, ev);
-		}
-
-		function _fireReaction(reaction, kind, ev) {
-			const dur = reaction.gesture?.duration || REACT_COOLDOWN_MS;
-			_reactActiveUntil = Date.now() + Math.max(REACT_COOLDOWN_MS, dur);
-			_reactActivePri = reaction.priority || 0;
-			_recordReaction(reaction, kind, ev);
-			iframe.contentWindow?.postMessage(
-				{ type: 'pumpfun-feed:react', reaction, speak: params.narrate },
-				location.origin,
-			);
-		}
-
-		function _drainReactionQueue() {
-			_reactQueueTimer = null;
-			if (!_reactQueue.length) return;
-			const t = Date.now();
-			if (t < _reactActiveUntil) {
-				_reactQueueTimer = setTimeout(_drainReactionQueue, _reactActiveUntil - t + 5);
-				return;
-			}
-			_reactQueue.sort((a, b) => b.priority - a.priority);
-			const next = _reactQueue.shift();
-			const reaction = reactionFor(next.kind, next.ev);
-			if (reaction) _fireReaction(reaction, next.kind, next.ev);
-			if (_reactQueue.length) _reactQueueTimer = setTimeout(_drainReactionQueue, REACT_COOLDOWN_MS + 5);
-		}
-
-		function dispatchReaction(kind, ev) {
-			if (kind === 'mint' && !params.announceMints) return;
-			const reaction = reactionFor(kind, ev);
-			if (!reaction) return;
-			const t = Date.now();
-			const mint = ev?.mint || ev?.token_mint;
-			const key = mint ? (kind === 'claim' ? `claim:${mint}:${ev?.tx_signature || ev?.signature || ev?.claim_number || ''}` : `${kind}:${mint}`) : null;
-			if (key) {
-				const last = _reactSeen.get(key);
-				if (last != null && t - last < REACT_DEDUPE_MS) return;
-				_reactSeen.set(key, t);
-				if (_reactSeen.size > 200) {
-					for (const [k, v] of _reactSeen) if (t - v > REACT_DEDUPE_MS) _reactSeen.delete(k);
-				}
-			}
-			const pri = reaction.priority || 0;
-			if (t < _reactActiveUntil) {
-				if (pri > _reactActivePri) {
-					_fireReaction(reaction, kind, ev);
-				} else if (pri >= 30 && _reactQueue.length < REACT_MAX_QUEUE) {
-					_reactQueue.push({ kind, ev, priority: pri });
-					if (!_reactQueueTimer) _reactQueueTimer = setTimeout(_drainReactionQueue, _reactActiveUntil - t + 5);
-				}
-				return;
-			}
-			_fireReaction(reaction, kind, ev);
-		}
-
-		// ── Visual reaction toast over the stage ───────────────────────────
-		function showReactionToast(reaction, ev) {
-			const stage = $('stage');
-			if (!stage) return;
-			let host = $('reaction-toast-host');
-			if (!host) {
-				host = document.createElement('div');
-				host.id = 'reaction-toast-host';
-				host.style.cssText = 'position:absolute;left:16px;top:16px;display:flex;flex-direction:column;gap:6px;pointer-events:none;z-index:7';
-				stage.appendChild(host);
-			}
-			const el = document.createElement('div');
-			el.style.cssText = 'background:rgba(20,20,28,0.85);border:1px solid rgba(255,255,255,0.12);border-radius:999px;padding:6px 12px;color:#fff;font-size:12px;display:flex;gap:8px;align-items:center;box-shadow:0 4px 14px rgba(0,0,0,0.45);opacity:0;transform:translateY(-4px);transition:opacity .22s ease,transform .22s ease;max-width:280px';
-			const sym = ev?.symbol || ev?.token_symbol || '';
-			const variant = (reaction.variant || '').replace(/_/g, ' ');
-			el.innerHTML = `<span style="font-size:16px">${reaction.icon || '✨'}</span><span style="font-weight:600">${escapeHtml(variant)}</span>${sym ? `<span style="opacity:0.7">$${escapeHtml(sym)}</span>` : ''}`;
-			host.appendChild(el);
-			requestAnimationFrame(() => { el.style.opacity = '1'; el.style.transform = 'translateY(0)'; });
-			const lifeMs = Math.max(2200, (reaction.gesture?.duration || 1500) - 500);
-			setTimeout(() => {
-				el.style.opacity = '0';
-				el.style.transform = 'translateY(-4px)';
-				setTimeout(() => el.remove(), 250);
-			}, lifeMs);
-			while (host.children.length > 4) host.firstChild?.remove();
-		}
-
-		// ── Side-rail reaction history ──────────────────────────────────────
-		function renderReactionPanel() {
-			const el = $('reaction-history');
-			if (!el) return;
-			if (!_reactHistory.length) { el.innerHTML = '<div class="empty">No reactions yet…</div>'; return; }
-			const recent = _reactHistory.slice().reverse().slice(0, 12);
-			el.innerHTML = recent.map((h) => {
-				const ago = Math.max(0, Math.floor((Date.now() - h.at) / 1000));
-				const agoStr = ago < 60 ? ago + 's' : Math.floor(ago / 60) + 'm';
-				return `<div class="rh-row" title="${escapeHtml(h.variant)}">
-					<span class="rh-ic">${h.icon}</span>
-					<span class="rh-var">${escapeHtml(h.variant.replace(/_/g, ' '))}</span>
-					${h.symbol ? `<span class="rh-sym">$${escapeHtml(h.symbol)}</span>` : ''}
-					<span class="rh-ago">${agoStr}</span>
-				</div>`;
-			}).join('');
-		}
-
-		function eventMatchesFilters(ev) {
-			if (params.mint && ev?.mint !== params.mint && ev?.token_mint !== params.mint) return false;
-			const mc = ev?.usd_market_cap ?? ev?.market_cap_usd ?? ev?.market_cap ?? null;
-			if (params.mcMin && mc != null && mc < params.mcMin) return false;
-			if (params.mcMax && mc != null && mc > params.mcMax) return false;
-			const initBuy = ev?.initial_buy_sol ?? null;
-			if (params.minBuy && initBuy != null && initBuy < params.minBuy) return false;
-			const tradeSol = ev?.initial_buy_sol ?? ev?.amount_sol ?? null;
-			if (params.whale && tradeSol != null && tradeSol < params.whale) return false;
-			return true;
-		}
-
-		function shortAddrLocal(s) {
-			const str = String(s || '');
-			if (!str) return 'unknown';
-			if (str.length <= 12) return str;
-			return `${str.slice(0, 4)}…${str.slice(-4)}`;
-		}
-
-		function fmtUsd(n) {
-			if (n == null) return '';
-			return '$' + Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-		}
-		function fmtSol(n) {
-			if (n == null) return '';
-			return Number(n).toFixed(3) + ' SOL';
-		}
-		// Speech-friendly market-cap formatter — "$245k", "$1.2 million", "$24 thousand".
-		function formatMcSpoken(n) {
-			n = Number(n);
-			if (!isFinite(n) || n <= 0) return '';
-			if (n >= 1_000_000_000) return `$${(n / 1_000_000_000).toFixed(1)} billion`;
-			if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)} million`;
-			if (n >= 1_000) return `$${Math.round(n / 1_000)} thousand`;
-			return `$${Math.round(n)}`;
-		}
-		// Convert a compact age tag like "3m" / "2h" / "1d" into spoken words
-		// the TTS layer reads naturally ("3 minutes", "2 hours").
-		function ageWordSpoken(age) {
-			const m = String(age || '').match(/^(\d+)([smhd])$/);
-			if (!m) return age || '';
-			const n = Number(m[1]);
-			const unit = { s: 'second', m: 'minute', h: 'hour', d: 'day' }[m[2]];
-			return `${n} ${unit}${n === 1 ? '' : 's'}`;
-		}
-		function ordinalSpoken(n) {
-			const i = Math.abs(Math.floor(Number(n) || 0));
-			if (i === 1) return 'first';
-			if (i === 2) return 'second';
-			if (i === 3) return 'third';
-			const s = ['th', 'st', 'nd', 'rd'];
-			const v = i % 100;
-			return i + (s[(v - 20) % 10] || s[v] || s[0]);
-		}
-		function timeAgo(ts) {
-			if (!ts) return '';
-			const s = Math.floor(Date.now() / 1000) - ts;
-			if (s < 60) return s + 's ago';
-			if (s < 3600) return Math.floor(s / 60) + 'm ago';
-			return Math.floor(s / 3600) + 'h ago';
-		}
-		function toolLinks(mint) {
-			const m = encodeURIComponent(mint);
-			return [
-				['pump.fun', `https://pump.fun/coin/${mint}`],
-				['DEX', `https://dexscreener.com/solana/${mint}`],
-				['Axiom', `https://axiom.trade/meme/${mint}`],
-				['GMGN', `https://gmgn.ai/sol/token/${mint}`],
-				['BullX', `https://bullx.io/terminal?chainId=1399811149&address=${mint}`],
-				['Photon', `https://photon-sol.tinyastro.io/en/r/@bonk/${mint}`],
-			].map(([label, url]) => `<a href="${attr(url)}" target="_blank" rel="noopener">${label}</a>`).join('');
-		}
-
-		function renderMint(ev) {
-			const mint = ev.mint || '';
-			const mcSol = Number.isFinite(Number(ev.market_cap_sol)) ? Number(ev.market_cap_sol).toFixed(2) + ' SOL' : '';
-			const mcUsd = Number.isFinite(Number(ev.market_cap_usd)) ? fmtUsd(ev.market_cap_usd) : '';
-			const mcStr = [mcUsd, mcSol].filter(Boolean).join(' / ');
-			const buyStr = ev.initial_buy_sol ? `${fmtSol(ev.initial_buy_sol)}${ev.initial_buy_usd ? ' (' + fmtUsd(ev.initial_buy_usd) + ')' : ''}` : '';
-			const social = [
-				ev.twitter ? `<a href="${attr(twitterUrl(ev.twitter))}" target="_blank" rel="noopener">𝕏 ${escapeHtml(twitterLabel(ev.twitter))}</a>` : '',
-				ev.telegram ? `<a href="${attr(ev.telegram)}" target="_blank" rel="noopener">TG</a>` : '',
-				ev.website ? `<a href="${attr(ev.website)}" target="_blank" rel="noopener">🌐</a>` : '',
-			].filter(Boolean).join(' ');
-
-			const launches = ev.creator_launches;
-			const graduated = ev.creator_graduated;
-			const devStats = launches != null
-				? (graduated != null ? `${launches} launches · 🎓 ${graduated}` : `${launches} launches`)
-				: '';
-
-			const replay = ev.replay ? ' replay' : '';
-			const thumb = ev.image_uri
-				? `<img class="evt-thumb" src="${attr(ev.image_uri)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.style.display='none'" />`
-				: '';
-
-			return `<div class="evt${replay}" data-mint="${attr(mint)}">
-				<div class="evt-row">
-					<span class="evt-kind">🌱 new token</span>
-					<span class="evt-time">${escapeHtml(timeAgo(ev.created_at))}</span>
-				</div>
-				<div class="evt-head" style="margin-top:4px">
-					${thumb}
-					<div class="evt-head-text">
-						<div class="evt-title">${escapeHtml(ev.name || '—')} — $${escapeHtml(ev.symbol || '?')}</div>
-						${ev.description ? `<div class="evt-desc">${escapeHtml(ev.description.slice(0, 100))}</div>` : ''}
-						${social ? `<div class="evt-socials">${social}</div>` : ''}
-					</div>
-				</div>
-				${mcStr ? `<div class="evt-amt" style="margin-top:6px">💎 MC: ${escapeHtml(mcStr)}${buyStr ? ' &nbsp;·&nbsp; initial: ' + escapeHtml(buyStr) : ''}</div>` : ''}
-				${devStats ? `<div class="evt-row2" style="margin-top:4px">👨‍💻 ${devStats}${ev.creator ? ' &nbsp;·&nbsp; <code>' + shortKey(ev.creator) + '</code>' : ''}</div>` : (ev.creator ? `<div class="evt-meta"><span>dev: <code>${shortKey(ev.creator)}</code></span></div>` : '')}
-				<div class="evt-links">${toolLinks(mint)}</div>
-				<div class="evt-mint">${escapeHtml(mint)}</div>
-				<div class="evt-meta">
-					${ev.signature ? `<a href="https://solscan.io/tx/${encodeURIComponent(ev.signature)}" target="_blank" rel="noopener">TX ↗</a>` : ''}
-					${mint ? ` · <a href="https://pump.fun/coin/${encodeURIComponent(mint)}" target="_blank" rel="noopener">pump.fun</a>` : ''}
-					${tsStr ? ` · 🕐 ${escapeHtml(tsStr)}` : ''}
-					${mint ? ` · <button class="evt-copy" type="button" data-copy="${attr(mint)}" title="Copy mint">📋</button>` : ''}
-					${mint ? ` · <button class="evt-focus" type="button" data-focus="${attr(mint)}" title="Filter to this mint">🎯</button>` : ''}
-				</div>
+			const links = `<div class="evt-links">
+				<a href="https://pump.fun/${evt.mint}" target="_blank" rel="noopener">pump</a>
+				<a href="https://rugcheck.xyz/tokens/${evt.mint}" target="_blank" rel="noopener">rugcheck</a>
+				<a href="https://birdeye.so/token/${evt.mint}?chain=solana" target="_blank" rel="noopener">birdeye</a>
 			</div>`;
+
+			card.innerHTML = title + body + links;
+			return card;
 		}
 
-		function fmtUtc(ts) {
-			if (ts == null) return '';
-			const d = new Date(typeof ts === 'number' ? (ts < 1e12 ? ts * 1000 : ts) : ts);
-			if (Number.isNaN(d.getTime())) return '';
-			return d.toISOString().replace('T', ' ').replace(/\..+$/, '') + ' UTC';
+		function renderSocials(s) {
+			let h = '';
+			if (s.website) h += `<a href="${attr(s.website)}" target="_blank" rel="noopener">Website</a>`;
+			if (s.twitter) h += `<a href="${attr(s.twitter)}" target="_blank" rel="noopener">X/Twitter</a>`;
+			if (s.telegram) h += `<a href="${attr(s.telegram)}" target="_blank" rel="noopener">Telegram</a>`;
+			return h;
 		}
 
-		function renderGraduation(ev) {
-			const mint = ev.mint || '';
-			const name = ev.name || ev.symbol || '—';
-			const symbol = ev.symbol || '?';
-			const age = ev.age || (ev.created_at ? timeAgo(ev.created_at) : '');
-			const descRaw = ev.description ? String(ev.description) : '';
-			const desc = descRaw ? escapeHtml(descRaw.slice(0, 100)) + (descRaw.length > 100 ? '…' : '') : '';
-
-			const mcInitial = ev.market_cap_usd_initial ?? ev.initial_market_cap_usd ?? ev.market_cap_at_launch;
-			const mcCurrent = ev.usd_market_cap ?? ev.market_cap_usd ?? ev.market_cap;
-			const mcStr = (mcInitial != null && mcCurrent != null)
-				? `${fmtUsd(mcInitial)} ⇨ ${fmtUsd(mcCurrent)}`
-				: (mcCurrent != null ? fmtUsd(mcCurrent) : '');
-
-			const ath = ev.ath_market_cap ?? ev.ath_usd ?? null;
-			const athStr = ath != null && ath !== mcCurrent ? fmtUsd(ath) : '';
-
-			const launches = ev.creator_launches;
-			const graduated = ev.creator_graduated;
-			const bestToken = Array.isArray(ev.creator_tokens) && ev.creator_tokens.length
-				? ev.creator_tokens.slice().sort((a, b) => (b?.mc || 0) - (a?.mc || 0))[0]
-				: null;
-			const bestStr = bestToken
-				? (bestToken.symbol === symbol
-					? `best $${escapeHtml(bestToken.symbol)}${bestToken.mc ? ' ' + fmtUsd(bestToken.mc) : ''} (this)`
-					: `best $${escapeHtml(bestToken.symbol || '?')}${bestToken.mc ? ' ' + fmtUsd(bestToken.mc) : ''}`)
-				: '';
-			const amountStr = ev.amount_sol != null
-				? `${Number(ev.amount_sol).toFixed(2)} SOL${ev.amount_usd != null ? ' [' + fmtUsd(ev.amount_usd) + ']' : ''}`
-				: '';
-			const launchesPart = launches != null
-				? (graduated != null ? `${launches} launches · 🎓 ${graduated}` : `${launches} launches`)
-				: '';
-			const devParts = [launchesPart, bestStr, amountStr].filter(Boolean).join(' &nbsp;⋅&nbsp; ');
-
-			const m = encodeURIComponent(mint);
-			const chartLinks = mint ? [
-				`<a href="https://dexscreener.com/solana/${m}" target="_blank" rel="noopener">DEX</a>`,
-				`<a href="https://www.defined.fi/sol/${m}" target="_blank" rel="noopener">DEF</a>`,
-			].join('⋅') : '';
-			const toolAbbr = mint ? [
-				['AXI', `https://axiom.trade/meme/${mint}`],
-				['GMG', `https://gmgn.ai/sol/token/${mint}`],
-				['PDR', `https://trade.padre.gg/trade/solana/${mint}`],
-				['PHO', `https://photon-sol.tinyastro.io/en/r/@bonk/${mint}`],
-				['BLX', `https://bullx.io/terminal?chainId=1399811149&address=${mint}`],
-			].map(([l, u]) => `<a href="${attr(u)}" target="_blank" rel="noopener">${l}</a>`).join('⋅') : '';
-
-			const socials = [
-				ev.twitter ? `<a href="${attr(twitterUrl(ev.twitter))}" target="_blank" rel="noopener">𝕏 ${escapeHtml(twitterLabel(ev.twitter))}</a>` : '',
-				ev.telegram ? `<a href="${attr(ev.telegram)}" target="_blank" rel="noopener">TG</a>` : '',
-				ev.website ? `<a href="${attr(ev.website)}" target="_blank" rel="noopener">🌐 site</a>` : '',
-			].filter(Boolean).join('');
-
-			const poolStr = ev.pump_swap_pool
-				? `Pool: <code>${shortKey(ev.pump_swap_pool)}</code> (PumpAMM)`
-				: ev.raydium_pool
-					? `Pool: <code>${shortKey(ev.raydium_pool)}</code> (Raydium)`
-					: ev.pool ? `Pool: ${escapeHtml(String(ev.pool))}` : '';
-
-			const tsStr = fmtUtc(ev.timestamp ?? ev.block_time ?? ev.created_at);
-			const sig = ev.signature || ev.tx_signature;
-			const replay = ev.replay ? ' replay' : '';
-			const thumb = ev.image_uri
-				? `<img class="evt-thumb" src="${attr(ev.image_uri)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none'" />`
-				: '';
-
-			return `<div class="evt grad${replay}">
-				<div class="evt-head">
-					${thumb}
-					<div class="evt-head-text">
-						<div class="evt-title">🆕💊 ${escapeHtml(name)} — $${escapeHtml(symbol)}${age ? ' [' + escapeHtml(age) + ']' : ''}</div>
-						${desc ? `<div class="evt-desc">${desc}</div>` : ''}
-						${socials ? `<div class="evt-socials">${socials}</div>` : ''}
-					</div>
-				</div>
-				${mcStr ? `<div class="evt-amt" style="margin-top:6px">💎 MC: ${mcStr}${athStr ? ' &nbsp;·&nbsp; 🏆 ATH: ' + athStr : ''}</div>` : ''}
-				${devParts ? `<div class="evt-row2" style="margin-top:6px">👨‍💻 ${devParts}</div>` : ''}
-				${chartLinks ? `<div class="evt-row2">💹 Chart: ${chartLinks}</div>` : ''}
-				${toolAbbr ? `<div class="evt-row2">🧰 ${toolAbbr}</div>` : ''}
-				${poolStr ? `<div class="evt-pool">${poolStr}</div>` : ''}
-				<div class="evt-mint">${escapeHtml(mint)}</div>
-				<div class="evt-meta">
-					${sig ? `🔗 <a href="https://solscan.io/tx/${encodeURIComponent(sig)}" target="_blank" rel="noopener">TX</a>` : ''}
-					${mint ? ` · <a href="https://pump.fun/coin/${encodeURIComponent(mint)}" target="_blank" rel="noopener">pump.fun</a>` : ''}
-					${tsStr ? ` · 🕐 ${escapeHtml(tsStr)}` : ''}
-					${mint ? ` · <button class="evt-copy" type="button" data-copy="${attr(mint)}" title="Copy mint">📋</button>` : ''}
-					${mint ? ` · <button class="evt-focus" type="button" data-focus="${attr(mint)}" title="Filter to this mint">🎯</button>` : ''}
-				</div>
-			</div>`;
-		}
-
-		function renderClaim(ev) {
-			const mint = ev.mint || ev.token_mint || '';
-			const isFirst = ev.first_time_claim;
-			const isFake = ev.fake_claim;
-			const cls = isFake ? 'fake' : isFirst ? 'first' : '';
-			const tier = ev.tier ? `${TIER_BADGE[ev.tier] || ''} ${ev.tier}` : '';
-			const mcUsd = ev.usd_market_cap ?? ev.market_cap;
-			const athUsd = ev.ath_market_cap ?? ev.ath;
-
-			// Claim header
-			let kindLabel = isFirst ? '🚨🚨🚨 FIRST CREATOR FEE CLAIM' : '💸 creator fee claim';
-
-			// GitHub repo section
-			const repoHtml = ev.repo_name ? `
-				<div class="evt-repo">
-					<div class="evt-repo-name">🐙 ${escapeHtml(ev.repo_name)}</div>
-					${ev.repo_description ? `<div style="color:#8a8a9a;font-size:11px;margin-top:2px">${escapeHtml(ev.repo_description.slice(0,120))}</div>` : ''}
-					<div class="evt-row2" style="margin-top:4px">
-						${ev.repo_language ? `<span>🔤 ${escapeHtml(ev.repo_language)}</span>` : ''}
-						${ev.repo_stars != null ? `<span>⭐ ${ev.repo_stars}</span>` : ''}
-						${ev.repo_forks != null ? `<span>🍴 ${ev.repo_forks}</span>` : ''}
-						${ev.repo_last_push ? `<span class="evt-stat">push ${escapeHtml(ev.repo_last_push)}</span>` : ''}
-					</div>
-					${ev.repo_topics?.length ? `<div class="evt-topics">${ev.repo_topics.map(t => `<span class="evt-topic">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
-				</div>` : '';
-
-			// GitHub dev section
-			const ghUser = ev.github_user;
-			const ghHtml = ghUser ? `
-				<div class="evt-section">
-					<div class="evt-gh">👨‍💻 <strong>${escapeHtml(ev.github_name || ghUser)}</strong> (<a href="https://github.com/${encodeURIComponent(ghUser)}" target="_blank" rel="noopener">@${escapeHtml(ghUser)}</a>)
-					${ev.github_twitter ? ` &nbsp;·&nbsp; <a href="${attr(twitterUrl(ev.github_twitter))}" target="_blank" rel="noopener">𝕏 ${escapeHtml(twitterLabel(ev.github_twitter))}</a>` : ''}</div>
-					<div class="evt-row2">
-						${ev.github_repos != null ? `<span>📦 ${ev.github_repos} repos</span>` : ''}
-						${ev.github_followers != null ? `<span>👁 ${ev.github_followers} followers</span>` : ''}
-						${ev.github_account_age ? `<span class="evt-stat">${escapeHtml(ev.github_account_age)}</span>` : ''}
-						${ev.github_location ? `<span class="evt-stat">📍 ${escapeHtml(ev.github_location)}</span>` : ''}
-					</div>
-					${ev.github_bio ? `<div class="evt-desc" style="margin-top:2px">${escapeHtml(ev.github_bio.slice(0,100))}</div>` : ''}
-					${repoHtml}
-				</div>` : '';
-
-			// Creator token history
-			const creatorTokens = ev.creator_tokens?.length
-				? ev.creator_tokens.map(t => `${t.symbol ? '$' + escapeHtml(t.symbol) : '?'}${t.mc ? ' [' + fmtUsd(t.mc) + ']' : ''}`).join(' · ')
-				: '';
-			const creatorHtml = ev.creator_launches != null ? `
-				<div class="evt-section">
-					<div class="evt-gh">🧑‍💻 dev: <code>${shortKey(ev.claimer || ev.creator || '')}</code> &nbsp;·&nbsp; 🚀 ${ev.creator_launches} launches${ev.creator_graduated ? ' &nbsp;·&nbsp; 🎓 ' + ev.creator_graduated + ' graduated' : ''}</div>
-					${creatorTokens ? `<div class="evt-desc" style="margin-top:2px">${creatorTokens}</div>` : ''}
-				</div>` : '';
-
-			// Trade links
-			const tradeLinks = mint ? `<div class="evt-links">${toolLinks(mint)}</div>` : '';
-
-			return `<div class="evt ${cls}">
-				<div class="evt-row">
-					<span class="evt-kind">${kindLabel}</span>
-					${tier ? `<span class="evt-tier">${escapeHtml(tier)}</span>` : ''}
-				</div>
-				<div class="evt-title">${escapeHtml(ev.token_name || ev.name || '—')} — $${escapeHtml(ev.token_symbol || ev.symbol || '?')}</div>
-				<div class="evt-row2">
-					${mcUsd != null ? `<span>💎 MC: ${fmtUsd(mcUsd)}</span>` : ''}
-					${ev.bonding_curve_pct != null ? `<span class="evt-stat">curve ${ev.bonding_curve_pct}%</span>` : ''}
-					${athUsd != null ? `<span>🏆 ATH: ${fmtUsd(athUsd)}</span>` : ''}
-					${ev.age ? `<span class="evt-stat">created ${escapeHtml(ev.age)}</span>` : ''}
-				</div>
-				<div class="evt-section">
-					<div class="evt-row2">
-						${ev.amount_sol != null ? `<span>💸 ${fmtSol(ev.amount_sol)}${ev.amount_usd != null ? ' (' + fmtUsd(ev.amount_usd) + ')' : ''}</span>` : ''}
-						${ev.claim_number != null ? `<span class="evt-stat">claim #${ev.claim_number}</span>` : ''}
-					</div>
-					${ev.claim_type ? `<div class="evt-desc">${escapeHtml(ev.claim_type)}</div>` : ''}
-					${ev.lifetime_sol != null ? `<div class="evt-desc">lifetime: ${fmtSol(ev.lifetime_sol)}${ev.lifetime_usd != null ? ' (' + fmtUsd(ev.lifetime_usd) + ')' : ''}</div>` : ''}
-				</div>
-				${ghHtml}
-				${creatorHtml}
-				${ev.signals ? `<div class="evt-section"><div class="evt-desc">⚡ ${escapeHtml(ev.signals)}</div></div>` : ''}
-				${ev.ai_take ? `<div class="evt-desc evt-take" style="margin-top:6px">${escapeHtml(ev.ai_take)}</div>` : ''}
-				${tradeLinks}
-				<div class="evt-mint">${escapeHtml(mint)}</div>
-				<div class="evt-meta">
-					${ev.tx_signature || ev.signature ? `<a href="https://solscan.io/tx/${encodeURIComponent(ev.tx_signature || ev.signature)}" target="_blank" rel="noopener">TX ↗</a>` : ''}
-					${mint ? `<a href="https://pump.fun/coin/${encodeURIComponent(mint)}" target="_blank" rel="noopener">pump.fun</a>` : ''}
-				</div>
-			</div>`;
-		}
-
-		// Total live events received, surfaced on the Helius pill.
-		let liveEventCount = 0;
-		function bumpEventCount() {
-			liveEventCount++;
-			const pill = $('helius-pill');
-			pill.dataset.count = 'active';
-			$('helius-count').textContent = liveEventCount > 999 ? '999+' : String(liveEventCount);
-		}
-
-		// Pause-on-scroll: queue HTML strings when user has scrolled the feed
-		// down. They drain into the DOM when the user clicks the jump button or
-		// scrolls back to top.
-		const feedQueue = [];
-		const feedEl = () => $('feed');
-		const FEED_SCROLL_THRESHOLD = 24;
-		function feedIsAtTop() {
-			const f = feedEl();
-			return !f || f.scrollTop <= FEED_SCROLL_THRESHOLD;
-		}
-		function updateJumpButton() {
-			const btn = $('feed-jump');
-			if (!btn) return;
-			if (feedQueue.length > 0) {
-				$('feed-jump-count').textContent = feedQueue.length > 99 ? '99+' : String(feedQueue.length);
-				btn.dataset.visible = 'true';
-			} else {
-				btn.dataset.visible = 'false';
-			}
-		}
-		function appendNow(html) {
-			const feed = feedEl();
-			if (feed.querySelector('.empty')) feed.innerHTML = '';
-			feed.insertAdjacentHTML('afterbegin', html);
-			while (feed.children.length > MAX_EVENTS) feed.lastChild?.remove();
-		}
-		function pushEvent(html) {
-			bumpEventCount();
-			if (feedIsAtTop()) {
-				appendNow(html);
-				return;
-			}
-			feedQueue.unshift(html); // newest first
-			if (feedQueue.length > MAX_EVENTS) feedQueue.length = MAX_EVENTS;
-			updateJumpButton();
-		}
-		function flushQueued() {
-			while (feedQueue.length) appendNow(feedQueue.pop()); // pop oldest first so newest ends on top
-			updateJumpButton();
-			feedEl().scrollTo({ top: 0, behavior: 'smooth' });
-		}
-		$('feed-jump').addEventListener('click', flushQueued);
-		feedEl().addEventListener('scroll', () => {
-			if (feedIsAtTop() && feedQueue.length) flushQueued();
-		}, { passive: true });
-
-		// Per-card actions: copy mint, focus filter to mint. Delegated so newly
-		// rendered cards work without re-binding.
-		feedEl().addEventListener('click', (e) => {
-			const target = e.target.closest('button');
-			if (!target) return;
-			const copy = target.dataset.copy;
-			if (copy) {
-				navigator.clipboard?.writeText(copy).then(() => {
-					target.dataset.copied = '1';
-					setTimeout(() => delete target.dataset.copied, 1200);
-				}).catch(() => {});
-				return;
-			}
-			const focus = target.dataset.focus;
-			if (focus) {
-				$('ctl-mint').value = focus;
-				params.mint = focus;
-				syncURL();
-				iframe.contentWindow?.postMessage({ type: 'pumpfun-feed:focus-mint', mint: focus || null }, '*');
-			}
-		});
-
-		// Cross-source dedupe (HTTP backfill + SSE replay + live) by tx signature.
-		// Without this the same graduation can render twice when the page calls
-		// the backfill endpoint AND the WS layer replays its in-memory buffer.
-		const SEEN_SIG_LIMIT = 500;
-		const _seenSigs = new Map();
-		function sigOf(ev) { return ev?.signature || ev?.tx_signature || null; }
-		function seenSig(sig) {
-			if (!sig) return false;
-			if (_seenSigs.has(sig)) return true;
-			_seenSigs.set(sig, Date.now());
-			if (_seenSigs.size > SEEN_SIG_LIMIT) {
-				const drop = Math.floor(SEEN_SIG_LIMIT / 4);
-				const it = _seenSigs.keys();
-				for (let i = 0; i < drop; i++) _seenSigs.delete(it.next().value);
-			}
-			return false;
-		}
-
-		// Stale-upstream watchdog. The SSE socket can read `live` while
-		// PumpPortal's upstream WS is silent (their maintenance windows). Surface
-		// a "quiet" state so users see the silence isn't their connection.
-		const STALE_AFTER_MS = 5 * 60_000;
-		let staleTimer = null;
-		function bumpAlive() {
-			if (staleTimer) { clearTimeout(staleTimer); staleTimer = null; }
-			const dot = $('status-dot');
-			if (dot && dot.classList.contains('quiet')) setStatus('live', 'live');
-			staleTimer = setTimeout(() => {
-				const d = $('status-dot');
-				if (d && d.classList.contains('live')) setStatus('quiet', 'upstream quiet');
-			}, STALE_AFTER_MS);
-		}
-
-		// HTTP backfill before the SSE opens — gives the user a non-empty feed
-		// instantly even on a cold container that has no WS buffer yet.
-		async function backfillFromHttp() {
+		async function fetchFirstClaims(force = false) {
+			const now = Date.now();
+			if (firstClaims.refreshing || (!force && now - firstClaims.ts < 60_000)) return;
+			firstClaims.refreshing = true;
+			firstClaims.el.innerHTML = '<div class="empty">Refreshing…</div>';
 			try {
-				const r = await fetch('/api/pump/recent-graduations?limit=15', { credentials: 'include' });
-				if (!r.ok) return;
-				const { items } = await r.json();
-				if (!Array.isArray(items)) return;
-				for (const ev of items.slice().reverse()) {
-					if (!eventMatchesFilters(ev)) continue;
-					if (seenSig(sigOf(ev))) continue;
-					pushEvent(renderGraduation({ ...ev, replay: true }));
-				}
-			} catch {}
+				const windowMins = $('fc-window').value || 1440;
+				const r = await fetch(`/api/pump/first_claims?limit=100&window=${windowMins}`);
+				if (!r.ok) throw new Error('http ' + r.status);
+				const data = await r.json();
+				firstClaims.data = data.claims;
+				firstClaims.ts = now;
+				renderFirstClaims();
+			} catch (err) {
+				console.error('[fc] fetch failed', err);
+				firstClaims.el.innerHTML = '<div class="empty" style="color:#f87171">Fetch failed.</div>';
+			} finally {
+				firstClaims.refreshing = false;
+			}
 		}
 
-		function connectFeed() {
-			if (es) { try { es.close(); } catch {} }
-			const qs = new URLSearchParams();
-			qs.set('kind', params.kind);
-			if (params.minTier) qs.set('minTier', params.minTier);
-			if (params.mcMin) qs.set('mcMin', String(params.mcMin));
-			if (params.mcMax) qs.set('mcMax', String(params.mcMax));
-			if (params.minBuy) qs.set('minBuy', String(params.minBuy));
-			if (params.whale) qs.set('whale', String(params.whale));
-			setStatus('connecting', 'connecting…');
-			es = new EventSource(`/api/agents/pumpfun-feed?${qs.toString()}`, { withCredentials: true });
-			es.addEventListener('open', () => { setStatus('live', 'live'); bumpAlive(); });
-			es.addEventListener('error', () => {
-				if (es.readyState === EventSource.CLOSED) setStatus('down', 'disconnected');
-				else setStatus('connecting', 'reconnecting…');
-			});
-			es.addEventListener('claim', (msg) => {
-				const ev = safeJson(msg.data); if (!ev || !eventMatchesFilters(ev)) return;
-				if (seenSig(sigOf(ev))) return;
-				pushEvent(renderClaim(ev));
-				if (!ev.replay) dispatchReaction('claim', ev);
-				bumpAlive();
-			});
-			es.addEventListener('graduation', (msg) => {
-				const ev = safeJson(msg.data); if (!ev || !eventMatchesFilters(ev)) return;
-				if (seenSig(sigOf(ev))) return;
-				pushEvent(renderGraduation(ev));
-				if (!ev.replay) dispatchReaction('graduation', ev);
-				bumpAlive();
-			});
-			es.addEventListener('mint', (msg) => {
-				const ev = safeJson(msg.data); if (!ev || !eventMatchesFilters(ev)) return;
-				if (seenSig(sigOf(ev))) return;
-				pushEvent(renderMint(ev));
-				if (!ev.replay) dispatchReaction('mint', ev);
-				bumpAlive();
+		function renderFirstClaims() {
+			const el = firstClaims.el;
+			if (!firstClaims.data.length) {
+				el.innerHTML = '<div class="empty">None in this window.</div>';
+				return;
+			}
+			el.innerHTML = '';
+			firstClaims.data.forEach((c) => {
+				const card = document.createElement('div');
+				card.className = 'evt';
+				card.innerHTML = `
+					<div class="evt-row">
+						<div class="evt-who" title="${escapeHtml(c.user)}">${shortenAddress(c.user)}</div>
+						<div class="evt-amt">${c.sol.toFixed(2)} SOL</div>
+					</div>
+					<div class="evt-row">
+						<div class="evt-kind" style="font-size:11px">First claim on ${escapeHtml(c.token_name)}</div>
+						<div class="evt-time">${new Date(c.timestamp).toLocaleTimeString()}</div>
+					</div>
+					<div class="evt-links" style="margin-top:8px">
+						<a href="https://pump.fun/${c.token_mint}" target="_blank" rel="noopener">pump</a>
+						<a href="https://rugcheck.xyz/tokens/${c.token_mint}" target="_blank" rel="noopener">rugcheck</a>
+						<a href="https://solscan.io/tx/${c.tx_sig}" target="_blank" rel="noopener">solscan</a>
+					</div>
+				`;
+				el.appendChild(card);
 			});
 		}
 
-		function safeJson(s) { try { return JSON.parse(s); } catch { return null; } }
-		function shortKey(s) { s = String(s || ''); return s.length > 12 ? `${s.slice(0,4)}…${s.slice(-4)}` : s; }
-		function escapeHtml(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
-		function attr(s) { return escapeHtml(s); }
-		function twitterUrl(v) {
-			const s = String(v ?? '').trim();
-			if (!s) return '';
-			if (/^https?:\/\//i.test(s)) return s;
-			const handle = s.replace(/^@+/, '').split(/[/?#]/)[0];
-			return `https://x.com/${encodeURIComponent(handle)}`;
+		// ── Utils ────────────────────────────────────────────────────────────
+
+		function toast(msg, type = '') {
+			const host = $('pf-toast-host');
+			const el = document.createElement('div');
+			el.className = `pf-toast ${type}`;
+			el.textContent = msg;
+			host.appendChild(el);
+			setTimeout(() => el.remove(), 4000);
 		}
-		function twitterLabel(v) {
-			const s = String(v ?? '').trim();
-			const m = s.match(/^https?:\/\/(?:www\.)?(?:x|twitter)\.com\/([^/?#]+)/i);
-			if (m) return '@' + m[1];
-			return s.startsWith('@') ? s : '@' + s.replace(/^@+/, '');
+		function attr(s) { return (s || '').replace(/"/g, '&quot;'); }
+		function escapeHtml(s) {
+			return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 		}
-
-		// ── Filter changes apply instantly. Mint filter only re-filters; asset/kind/tier remount. ──
-		$('ctl-mint').addEventListener('input', (e) => {
-			params.mint = e.target.value.trim();
-			syncURL();
-			iframe.contentWindow?.postMessage(
-				{ type: 'pumpfun-feed:focus-mint', mint: params.mint || null },
-				location.origin,
-			);
-		});
-
-		$('ctl-narrate').addEventListener('click', (e) => {
-			params.narrate = e.currentTarget.dataset.on !== '1';
-			e.currentTarget.dataset.on = params.narrate ? '1' : '0';
-			syncURL();
-			iframe.contentWindow?.postMessage(
-				{ type: 'pumpfun-feed:set-narrate', on: params.narrate },
-				location.origin,
-			);
-		});
-
-		$('ctl-announce-mints').addEventListener('click', (e) => {
-			params.announceMints = e.currentTarget.dataset.on !== '1';
-			e.currentTarget.dataset.on = params.announceMints ? '1' : '0';
-			syncURL();
-		});
-
-		let kindTimer;
-		const onFilterChange = (delay = 200) => {
-			clearTimeout(kindTimer);
-			kindTimer = setTimeout(() => {
-				const newKind = $('ctl-kind').value;
-				const newTier = $('ctl-tier').value;
-				const newAsset = $('ctl-asset').value.trim();
-				const feedChanged = newKind !== params.kind || newTier !== params.minTier;
-				const agentChanged = newAsset !== params.asset;
-				params.kind = newKind;
-				params.minTier = newTier;
-				params.asset = newAsset;
-				syncURL();
-				if (feedChanged) connectFeed();
-				if (agentChanged) mountAgent();
-			}, delay);
-		};
-		$('ctl-kind').addEventListener('change', () => onFilterChange(0));
-		$('ctl-tier').addEventListener('change', () => onFilterChange(0));
-		$('ctl-asset').addEventListener('input', () => onFilterChange(450));
-
-		let numTimer;
-		const onNumFilterChange = (delay = 600) => {
-			clearTimeout(numTimer);
-			numTimer = setTimeout(() => {
-				params.mcMin = Number($('ctl-mc-min').value) || 0;
-				params.mcMax = Number($('ctl-mc-max').value) || 0;
-				params.minBuy = Number($('ctl-min-buy').value) || 0;
-				params.whale = Number($('ctl-whale').value) || 0;
-				syncURL();
-				connectFeed();
-			}, delay);
-		};
-		$('ctl-mc-min').addEventListener('input', () => onNumFilterChange());
-		$('ctl-mc-max').addEventListener('input', () => onNumFilterChange());
-		$('ctl-min-buy').addEventListener('input', () => onNumFilterChange());
-		$('ctl-whale').addEventListener('input', () => onNumFilterChange());
-
-		// Share button — copies a URL with all current filters/avatar to clipboard.
-		$('ctl-share').addEventListener('click', async () => {
+		function shortenAddress(a) { return a ? a.slice(0, 4) + '…' + a.slice(-4) : ''; }
+		function updateHeliusPill(data) {
+			if (data.active_ws < 2) {
+				heliusPill.el.title = `Real-time Solana data via Helius webhooks. ${data.active_ws} listener.`;
+				heliusPill.el.href = 'https://helius.dev';
+				heliusPill.el.target = '_blank';
+			} else {
+				heliusPill.el.title = `Real-time Solana data via Helius webhooks. ${data.active_ws} listeners. You rock!`;
+				heliusPill.el.href = 'https://youtu.be/dQw4w9WgXcQ';
+				heliusPill.el.target = '_blank';
+			}
+			heliusPill.count++;
+			heliusPill.countEl.textContent = heliusPill.count;
+			heliusPill.el.dataset.count = 'active';
+			clearTimeout(heliusPill.timer);
+			heliusPill.timer = setTimeout(() => {
+				heliusPill.el.dataset.count = '';
+			}, 1200);
+		}
+		function copyShareLink() {
 			const btn = $('ctl-share');
 			const label = $('ctl-share-label');
-			const link = location.href;
-			try {
-				if (navigator.clipboard?.writeText) {
-					await navigator.clipboard.writeText(link);
-				} else {
-					const ta = document.createElement('textarea');
-					ta.value = link; ta.style.position = 'fixed'; ta.style.opacity = '0';
-					document.body.appendChild(ta); ta.select();
-					document.execCommand('copy'); ta.remove();
-				}
-				const prev = label.textContent;
+			const orig = label.textContent;
+			navigator.clipboard.writeText(location.href).then(() => {
 				label.textContent = 'Copied!';
 				btn.dataset.flash = 'true';
-				setTimeout(() => { label.textContent = prev; delete btn.dataset.flash; }, 1400);
-			} catch {
-				label.textContent = 'Press ⌘C';
-				setTimeout(() => { label.textContent = 'Share'; }, 1400);
-			}
-		});
-
-		// Mobile side-panel toggle
-		$('side-toggle').addEventListener('click', () => {
-			const open = document.body.classList.toggle('side-open');
-			$('side-toggle').setAttribute('aria-pressed', String(open));
-		});
-
-		// First-time fee claims panel — pulls historical first-claims from
-		// /api/pump/first-claims (a backend scan over the pump.fun program's
-		// recent signatures). Refreshes via button or window selector, plus
-		// every 90s while the page is visible.
-		const fcState = { loading: false, timer: 0 };
-		async function loadFirstClaims() {
-			if (fcState.loading) return;
-			fcState.loading = true;
-			const host = $('first-claims');
-			const win = Number($('fc-window').value) || 1440;
-			const btn = $('fc-refresh');
-			btn.dataset.flash = 'true';
-			try {
-				const r = await fetch(
-					`/api/pump/first-claims?sinceMinutes=${win}&limit=20`,
-					{ credentials: 'include' },
-				);
-				if (!r.ok) throw new Error('status ' + r.status);
-				const data = await r.json();
-				const items = data?.items || [];
-				if (!items.length) {
-					host.innerHTML = `<div class="empty">No first-time claims in the last ${win >= 60 ? Math.round(win / 60) + 'h' : win + 'm'}.</div>`;
-				} else {
-					host.innerHTML = items.map(renderFirstClaim).join('');
+				setTimeout(() => {
+					label.textContent = orig;
+					btn.dataset.flash = '';
+				}, 1500);
+			}).catch(err => toast('Could not copy link.', 'error'));
+		}
+		function initFeedScroll() {
+			const sentinel = document.createElement('div');
+			sentinel.style = 'height:1px;width:100%';
+			feed.el.appendChild(sentinel);
+			feed.observer = new IntersectionObserver(([e]) => {
+				feed.isAtBottom = e.isIntersecting;
+				if (e.isIntersecting && feed.pending.length) {
+					feed.pending.forEach((card) => feed.el.appendChild(card));
+					feed.pending = [];
+					updateFeedJump();
+					feed.el.scrollTop = feed.el.scrollHeight;
 				}
-			} catch (err) {
-				host.innerHTML = `<div class="empty">Could not load first claims: ${escapeHtml(err.message || 'error')}</div>`;
-			} finally {
-				fcState.loading = false;
-				setTimeout(() => delete btn.dataset.flash, 350);
-			}
-		}
-		function renderFirstClaim(c) {
-			const sol = (Number(c.lamports) / 1e9).toFixed(4);
-			const tsSec = Number(c.ts || 0);
-			const when = tsSec ? timeAgo(tsSec) : '';
-			const creator = c.creator || '';
-			const mint = c.mint || '';
-			const sig = c.signature || '';
-			const cShort = creator ? `${creator.slice(0, 4)}…${creator.slice(-4)}` : '';
-			const mShort = mint ? `${mint.slice(0, 4)}…${mint.slice(-4)}` : '';
-			return `
-				<div style="background:#0d2d1a;border:1px solid rgba(108,224,200,0.25);border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:12px;line-height:1.5">
-					<div style="display:flex;justify-content:space-between;font-size:11px;opacity:0.8">
-						<span style="color:#6ce0c8;font-weight:600">🚨 First claim</span>
-						<span>${escapeHtml(when)}</span>
-					</div>
-					<div style="font-weight:600;margin-top:2px">${sol} SOL</div>
-					${creator ? `<div style="font-family:ui-monospace,monospace;font-size:11px;opacity:0.8"><a href="https://solscan.io/account/${encodeURIComponent(creator)}" target="_blank" rel="noopener" style="color:#6ce0c8">${escapeHtml(cShort)}</a></div>` : ''}
-					${mint ? `<div style="font-family:ui-monospace,monospace;font-size:11px;opacity:0.8"><a href="https://pump.fun/coin/${encodeURIComponent(mint)}" target="_blank" rel="noopener" style="color:#6ce0c8">${escapeHtml(mShort)}</a></div>` : ''}
-					${sig ? `<div style="margin-top:2px"><a href="https://solscan.io/tx/${encodeURIComponent(sig)}" target="_blank" rel="noopener" style="color:#6ce0c8;font-size:11px">view tx ↗</a></div>` : ''}
-				</div>
-			`;
-		}
-		$('fc-refresh').addEventListener('click', loadFirstClaims);
-		$('fc-window').addEventListener('change', loadFirstClaims);
-		function scheduleFcRefresh() {
-			if (fcState.timer) clearInterval(fcState.timer);
-			fcState.timer = setInterval(() => {
-				if (document.visibilityState === 'visible') loadFirstClaims();
-			}, 90_000);
-		}
-		document.addEventListener('visibilitychange', () => {
-			if (document.visibilityState === 'visible') loadFirstClaims();
-		});
-		loadFirstClaims();
-		scheduleFcRefresh();
-
-		// Initial load — paint historical graduations from Postgres before the
-		// SSE opens so the feed is never blank. Then start the live stream.
-		backfillFromHttp().finally(connectFeed);
-
-		mountAgent();
-		buildAnimChips();
-
-		// Auth-aware nav CTA
-		(function () {
-			try {
-				const raw = localStorage.getItem('3dagent:auth-hint');
-				if (!raw) return;
-				const { authed, name } = JSON.parse(raw);
-				if (!authed) return;
-				const cta = document.getElementById('home-nav-cta');
-				if (cta) { cta.textContent = 'Dashboard'; cta.href = '/dashboard'; }
-				const myAgentsLi = document.getElementById('home-nav-my-agents-li');
-				if (myAgentsLi) myAgentsLi.hidden = false;
-				const userLi = document.getElementById('home-nav-user-li');
-				const userEl = document.getElementById('home-nav-user');
-				if (userEl && userLi && name) { userEl.textContent = name; userLi.hidden = false; }
-			} catch (_) {}
-		})();
-
-		// Dropdown nav
-		(function () {
-			const triggers = document.querySelectorAll('.home-nav .nav-trigger');
-			if (!triggers.length) return;
-			function closeAll(except) {
-				triggers.forEach((t) => { if (t !== except) t.setAttribute('aria-expanded', 'false'); });
-			}
-			triggers.forEach((trigger) => {
-				trigger.addEventListener('click', (e) => {
-					e.stopPropagation();
-					const open = trigger.getAttribute('aria-expanded') === 'true';
-					closeAll(open ? null : trigger);
-					trigger.setAttribute('aria-expanded', open ? 'false' : 'true');
-					if (!open) trigger.nextElementSibling?.querySelector('a')?.focus();
-				});
-				const menu = trigger.nextElementSibling;
-				if (!menu) return;
-				menu.addEventListener('keydown', (e) => {
-					const items = Array.from(menu.querySelectorAll('a'));
-					const idx = items.indexOf(document.activeElement);
-					if (e.key === 'ArrowDown') { e.preventDefault(); items[(idx + 1) % items.length]?.focus(); }
-					else if (e.key === 'ArrowUp') { e.preventDefault(); items[(idx - 1 + items.length) % items.length]?.focus(); }
-					else if (e.key === 'Escape') { trigger.setAttribute('aria-expanded', 'false'); trigger.focus(); }
-				});
 			});
-			document.addEventListener('click', (e) => { if (!e.target.closest('.home-nav')) closeAll(null); });
-			document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAll(null); });
-		})();
-	</script>
+			feed.observer.observe(sentinel);
+			feed.jumpBtn.addEventListener('click', () => {
+				feed.el.scrollTop = feed.el.scrollHeight;
+			});
+		}
+		function updateFeedJump() {
+			const count = feed.pending.length;
+			feed.jumpBtn.dataset.visible = String(count > 0 && !feed.isAtBottom);
+			feed.jumpCount.textContent = count;
+		}
+		function initSidePanel() {
+			const side = $('side');
+			const toggle = $('side-toggle');
+			const close = $('side-close');
+			const minimize = $('side-minimize');
+			const header = $('side-header');
 
-	<footer class="h-footer h-footer-horizon">
-		<div class="h-footer-glow-line" aria-hidden="true"></div>
-		<div class="h-footer-floor" aria-hidden="true"></div>
-		<div class="h-footer-haze" aria-hidden="true"></div>
-		<div class="h-footer-watermark" aria-hidden="true">three.ws</div>
-		<div class="h-footer-avatar" aria-hidden="true">
-			<model-viewer src="/animations/robotexpressive.glb" auto-rotate auto-rotate-delay="0" rotation-per-second="20deg" interaction-prompt="none" camera-controls="false" disable-zoom shadow-intensity="0" exposure="0.7" environment-image="neutral" camera-orbit="0deg 80deg 9m" field-of-view="45deg" loading="lazy"></model-viewer>
-		</div>
-		<div class="h-footer-cta">
-			<div class="h-footer-newsletter">
-				<h3>Stay in the loop</h3>
-				<p>Get updates on new features, agent tooling, and protocol changes.</p>
-				<form class="h-footer-newsletter-form" data-newsletter-form novalidate>
-					<input type="email" class="h-footer-newsletter-input" name="email" placeholder="Enter your email" aria-label="Email address" autocomplete="email" required />
-					<button type="submit" class="h-footer-newsletter-btn" aria-label="Subscribe">
-						<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M2 8h11m0 0L9 4m4 4l-4 4"/></svg>
-					</button>
-				</form>
-				<p class="h-footer-newsletter-msg" data-newsletter-msg aria-live="polite"></p>
-			</div>
-			<div class="h-footer-community">
-				<h3>Join the community</h3>
-				<p>Follow along for builds, demos, and conversations with the team.</p>
-				<a class="h-footer-community-btn" href="https://x.com/trythreews" target="_blank" rel="noopener">
-					<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-					Follow on X
-				</a>
-			</div>
-		</div>
-		<div class="h-footer-inner">
-			<div class="h-footer-brand-col">
-				<div class="h-footer-brand">
-					<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />
-					<span class="wordmark-dot" aria-hidden="true"></span>
-					<span>three.ws</span>
-				</div>
-				<p class="h-footer-tagline">Give your AI a body.</p>
-				<div class="h-footer-socials">
-					<a class="h-footer-social" href="https://x.com/trythreews" target="_blank" rel="noopener" aria-label="three.ws on X">
-						<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-					</a>
-					<a class="h-footer-social" href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener" aria-label="three.ws on GitHub">
-						<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
-					</a>
-				</div>
-			</div>
-			<nav class="h-footer-links" aria-label="Footer">
-				<div class="h-footer-link-col">
-					<h4 class="h-footer-link-heading">Product</h4>
-					<a href="/create">Create</a>
-					<a href="/studio">Studio</a>
-					<a href="/widgets">Widgets</a>
-					<a href="/discover">Discover</a>
-				</div>
-				<div class="h-footer-link-col">
-					<h4 class="h-footer-link-heading">Developers</h4>
-					<a href="/docs">Docs</a>
-					<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener">GitHub</a>
-					<a href="https://eips.ethereum.org/EIPS/eip-8004" target="_blank" rel="noopener">ERC-8004</a>
-				</div>
-				<div class="h-footer-link-col">
-					<h4 class="h-footer-link-heading">Resources</h4>
-					<a href="/features">Features</a>
-					<a href="/dashboard">Dashboard</a>
-				</div>
-			</nav>
-		</div>
-		<div class="h-footer-bottom">
-			<p class="h-footer-legal">© 2026 three.ws — All rights reserved.</p>
-			<div class="h-footer-legal-links">
-				<a href="/legal/privacy">Privacy Policy</a>
-				<a href="/legal/tos">Terms of Use</a>
-			</div>
-		</div>
-	</footer>
+			toggle.addEventListener('click', () => {
+				const open = document.body.classList.toggle('side-open');
+				toggle.setAttribute('aria-pressed', String(open));
+			});
+			close.addEventListener('click', () => {
+				document.body.classList.remove('side-open');
+				toggle.setAttribute('aria-pressed', 'false');
+			});
+			minimize.addEventListener('click', () => {
+				side.classList.toggle('minimized');
+				minimize.textContent = side.classList.contains('minimized') ? '▭' : '_';
+			});
+
+			let isDragging = false, startX, startY, startW, startH;
+			header.addEventListener('mousedown', (e) => {
+				if (e.target.closest('button')) return;
+				isDragging = true;
+				startX = e.clientX;
+				startY = e.clientY;
+				const rect = side.getBoundingClientRect();
+				startW = rect.width;
+				startH = rect.height;
+				side.style.userSelect = 'none';
+				side.style.transition = 'none';
+			});
+			window.addEventListener('mousemove', (e) => {
+				if (!isDragging) return;
+				const dx = e.clientX - startX;
+				const dy = e.clientY - startY;
+				side.style.width = `${startW - dx}px`;
+				side.style.height = `${startH + dy}px`;
+			});
+			window.addEventListener('mouseup', () => {
+				if (!isDragging) return;
+				isDragging = false;
+				side.style.userSelect = '';
+				side.style.transition = '';
+			});
+		}
+
+
+		// ── Go ───────────────────────────────────────────────────────────────
+
+		initControls();
+		initFeedScroll();
+		initSidePanel();
+		connect();
+		fetchFirstClaims();
+		setInterval(() => ws.send(JSON.stringify({ type: 'sol-price' })), 15_000);
+	</script>
 </body>
 </html>

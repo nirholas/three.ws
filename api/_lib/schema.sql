@@ -258,23 +258,20 @@ do $$ begin
 exception when duplicate_object then null; end $$;
 
 -- ── agent_identities — every agent gets a body, a place, an identity ─────────
-create table if not exists agent_identities (
-    id               uuid primary key default gen_random_uuid(),
-    user_id          uuid not null references users(id) on delete cascade,
-    name             text not null,
-    description      text,
-    avatar_id        uuid references avatars(id) on delete set null,
-    home_url         text,                           -- /agent/:id
-    wallet_address   text,
-    chain_id         int,
-    erc8004_agent_id bigint,
-    erc8004_registry text,
-    registration_cid text,
-    skills           text[] not null default '{}',
-    meta             jsonb not null default '{}'::jsonb,
-    created_at       timestamptz not null default now(),
-    updated_at       timestamptz not null default now(),
-    deleted_at       timestamptz
+CREATE TABLE IF NOT EXISTS agent_identities (
+	id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+	user_id uuid NOT NULL REFERENCES users(id),
+	created_at timestamptz NOT NULL DEFAULT now(),
+	updated_at timestamptz,
+	deleted_at timestamptz,
+	name text NOT NULL CHECK (length(name) > 0),
+	description text,
+	persona_prompt text,
+	home_url text,
+	avatar_url text,
+	profile_image_url text,
+	is_public boolean NOT NULL DEFAULT false,
+	is_template boolean NOT NULL DEFAULT false
 );
 
 create index if not exists agent_identities_user

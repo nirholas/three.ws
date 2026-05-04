@@ -541,6 +541,7 @@
 				generated: true,
 				websearch: convo.websearch && convo.models[0]?.provider === 'OpenRouter',
 				model: convo.models[0],
+				agent: $activeAgent,
 			};
 			convo.messages.push(msg);
 			convo.messages = convo.messages;

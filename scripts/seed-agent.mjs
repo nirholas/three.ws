@@ -12,8 +12,8 @@ const [user] = await sql`
 `;
 
 const [agent] = await sql`
-	INSERT INTO agent_identities (user_id, name, description, home_url)
-	VALUES (${user.id}, 'Demo Agent', 'Seed agent for dev harness testing', 'https://three.ws')
+	INSERT INTO agent_identities (user_id, name, description, home_url, persona_prompt)
+	VALUES (${user.id}, 'Demo Agent', 'Seed agent for dev harness testing', 'https://three.ws', 'You are a helpful and friendly 3D agent.')
 	RETURNING id
 `;
 

@@ -443,8 +443,12 @@ class App {
 				await this.agentHome.render();
 			}
 
-			// Boot the voice/chat agent with skills and runtime wired in
-			this._initNichAgent();
+			// Boot the voice/chat agent with skills and runtime wired in.
+			// Skip in widget-embed mode — each widget type mounts its own UI
+			// (talking-agent uses its own embedded NichAgent; others need no chat).
+			if (!this.options.widget) {
+				this._initNichAgent();
+			}
 
 			// Log all significant actions to identity history (fire-and-forget)
 			protocol.on('*', (action) => {

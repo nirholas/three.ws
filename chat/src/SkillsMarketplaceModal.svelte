@@ -10,6 +10,8 @@
 
 	// Browse state
 	let skills = [];
+	let localSkills = [];
+	let showLocalSkills = false;
 	let loading = false;
 	let loaded = false;
 	let fetchFailed = false;
@@ -20,6 +22,24 @@
 	let hasMore = false;
 	let sort = 'popular';
 	let installPending = {};
+
+	$: if (open && !loaded) {
+		loadCategories();
+		loadSkills(true);
+		loadLocalSkills();
+	}
+
+	async function loadLocalSkills() {
+		try {
+			const res = await fetch('/api/skills-manifest');
+			if (res.ok) {
+				const manifest = await res.json();
+				localSkills = manifest.skills || [];
+			}
+		} catch (e) {
+			// ignore, can't load local skills
+		}
+	}
 
 	// Detail expansion state
 	let expandedSkillId = null;
