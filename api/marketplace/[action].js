@@ -341,9 +341,10 @@ async function handleDetail(req, res, id) {
 	}
 
 	const skill_prices = Object.fromEntries(
-		priceRows.map((p) => [p.skill, { amount: p.amount, currency_mint: p.currency_mint }]),
+		priceRows.map((p) => [p.skill, { amount: p.amount, currency_mint: p.currency_mint, chain: p.chain }]),
 	);
 
+	const purchased_skills = []; // Placeholder for now
 	return json(
 		res,
 		200,
