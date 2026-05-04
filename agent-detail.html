@@ -1,28 +1,92 @@
-<!doctype html>
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<title>Agent — three.ws</title>
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<meta name="theme-color" content="#0b0d10" />
-		<link rel="shortcut icon" href="/favicon.ico" />
-		<link rel="preconnect" href="https://fonts.googleapis.com" />
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link
 			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap"
 			rel="stylesheet"
 		/>
 		<link rel="stylesheet" href="/src/agent-detail.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+		<style>
+			.ad-main.loading .ad-hero-avatar,
+			.ad-main.loading .ad-hero-body > *,
+			.ad-main.loading .ad-card .ad-row,
+			.ad-main.loading .ad-card .ad-balance,
+			.ad-main.loading .ad-card .ad-services,
+			.ad-main.loading .ad-card .ad-token-body,
+			.ad-main.loading .ad-card .ad-trust-pills,
+			.ad-main.loading .ad-card .ad-protocols,
+			.ad-main.loading .ad-card .ad-sub,
+			.ad-main.loading .ad-card .ad-cta-row {
+				visibility: hidden;
+			}
+
+			.skeleton {
+				background-color: #2a2a3a;
+				border-radius: 4px;
+				animation: skeleton-pulse 1.5s infinite ease-in-out;
+			}
+
+			@keyframes skeleton-pulse {
+				0% { background-color: #2a2a3a; }
+				50% { background-color: #3a3a4a; }
+				100% { background-color: #2a2a3a; }
+			}
+
+			.ad-main.loading .ad-hero-avatar {
+				visibility: visible; /* Keep the container visible */
+				background-color: #2a2a3a;
+				border-radius: 50%;
+				width: 120px;
+				height: 120px;
+			}
+			.ad-main.loading #ad-name-skeleton { display: block; }
+			.ad-main.loading #ad-meta-skeleton { display: block; }
+			.ad-main.loading #ad-desc-skeleton { display: block; }
+
+			.ad-main.loading .ad-card .skeleton-row {
+				display: flex;
+				justify-content: space-between;
+				margin-bottom: 0.5rem;
+			}
+
+			.ad-main.loading .ad-card .skeleton-text {
+				height: 1em;
+				width: 70%;
+			}
+			.ad-main.loading .ad-card .skeleton-text-short {
+				width: 30%;
+			}
+
+		</style>
 	</head>
 	<body>
 		<div class="ad-shell">
+			<div id="withdraw-modal" class="ad-modal-overlay hidden">
+				<div class="ad-modal">
+					<div class="ad-modal-header">
+						<h3>Withdraw SOL</h3>
+						<button id="close-modal-btn" class="ad-modal-close">&times;</button>
+					</div>
+					<div class="ad-modal-body">
+						<div class="ad-form-group">
+							<label for="withdraw-amount">Amount (SOL)</label>
+							<input type="number" id="withdraw-amount" class="ad-input" placeholder="0.0">
+						</div>
+						<div class="ad-form-group">
+							<label for="recipient-address">Recipient Address</label>
+							<input type="text" id="recipient-address" class="ad-input" placeholder="Enter wallet address">
+						</div>
+					</div>
+					<div class="ad-modal-footer">
+						<button id="cancel-withdraw-btn" class="ad-btn">Cancel</button>
+						<button id="confirm-withdraw-btn" class="ad-btn ad-btn-primary">Confirm Withdraw</button>
+					</div>
+				</div>
+			</div>
 			<aside class="ad-sidebar">
 				<div class="ad-brand">three.ws</div>
 				<nav class="ad-nav">
 					<a href="/">Home</a>
 					<a href="/leaderboard">Leaderboard</a>
-					<a class="active" href="/agents">Agents <span class="ad-beta">BETA</span></a>
+					<a class="active" href="/marketplace.html">Agents <span class="ad-beta">BETA</span></a>
 					<a href="/spotlight">Apply for Spotlight</a>
 					<a href="/developers">Developers</a>
 					<a href="/about">About</a>
@@ -34,7 +98,7 @@
 				</div>
 			</aside>
 
-			<main class="ad-main">
+			<main class="ad-main loading">
 				<header class="ad-banner">
 					<span>S1 Powered by Torque · $250K rewards</span>
 				</header>
@@ -54,7 +118,8 @@
 					<img class="ad-hero-avatar" id="ad-avatar" alt="" />
 					<div class="ad-hero-body">
 						<div class="ad-hero-title">
-							<h1 id="ad-name">Loading…</h1>
+							<h1 id="ad-name"></h1>
+							<div id="ad-name-skeleton" class="skeleton" style="width: 200px; height: 36px; display: none;"></div>
 							<span class="ad-status" id="ad-status">Active</span>
 						</div>
 						<div class="ad-hero-meta">
@@ -63,7 +128,9 @@
 							<span class="ad-dot">·</span>
 							<span id="ad-asset-kind">Core Asset</span>
 						</div>
+						<div id="ad-meta-skeleton" class="skeleton" style="width: 150px; height: 16px; margin-top: 8px; display: none;"></div>
 						<p class="ad-hero-desc" id="ad-desc"></p>
+						<div id="ad-desc-skeleton" class="skeleton" style="width: 80%; height: 48px; margin-top: 8px; display: none;"></div>
 						<div class="ad-hero-trust" id="ad-trust-pills"></div>
 					</div>
 				</section>

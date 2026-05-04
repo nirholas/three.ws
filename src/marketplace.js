@@ -175,7 +175,7 @@ function renderCard(a) {
 			<div class="avatar">${initial(a.name)}</div>
 			<div style="min-width:0;flex:1">
 				<div class="title">${escapeHtml(a.name || 'Untitled')}</div>
-				<div class="author">${escapeHtml(a.category || 'general')}</div>
+				<div class="author">${escapeHtml(a.author_name || 'Anonymous')}</div>
 			</div>
 		</div>
 		<div class="desc">${escapeHtml(a.description || '')}</div>

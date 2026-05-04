@@ -1,0 +1,81 @@
+.playground-container {
+	display: flex;
+	gap: 2rem;
+	padding: 2rem;
+}
+
+.playground-controls {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+}
+
+.playground-controls .control-group {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.playground-controls label {
+	font-weight: 500;
+}
+
+.playground-controls input,
+.playground-controls select {
+	padding: 0.5rem;
+	border-radius: 4px;
+	border: 1px solid #333;
+	background-color: #111;
+	color: #eee;
+}
+
+.playground-viewer-container {
+	flex: 2;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	min-height: 400px;
+}
+
+#playground-viewer {
+	width: 100%;
+	height: 100%;
+	min-width: 300px;
+	min-height: 300px;
+}
+
+#playground-viewer model-viewer {
+	width: 100%;
+	height: 100%;
+	border-radius: 8px;
+	border: 1px solid #333;
+}
+
+pre {
+	background: #1a1a1a;
+	padding: 1rem;
+	border-radius: 8px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+
+code {
+	font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace;
+}
+
+button {
+	padding: 0.75rem 1.5rem;
+	border-radius: 4px;
+	border: 1px solid var(--accent);
+	background-color: var(--accent);
+	color: white;
+	cursor: pointer;
+	font-weight: 600;
+	transition: background-color 0.2s;
+}
+
+button:hover {
+	background-color: #7a4be0;
+}

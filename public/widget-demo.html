@@ -105,6 +105,30 @@
     </ul>
   </div>
 
+  <div class="instructions">
+    <h2>Dynamic Loading</h2>
+    <p>The widget script automatically detects new widgets added to the page. Click the button to add another agent.</p>
+    <button id="addWidgetBtn">Add Another Widget</button>
+    <div id="dynamic-container" style="margin-top: 1rem;"></div>
+  </div>
+
+  <script>
+    document.getElementById('addWidgetBtn').addEventListener('click', () => {
+      const container = document.getElementById('dynamic-container');
+      const newWidget = document.createElement('div');
+      newWidget.className = 'widget-card';
+      newWidget.innerHTML = `
+        <h2>Dynamically Added</h2>
+        <div class="widget-container">
+          <div class="threews-widget" data-agent-id="041cb44a-3c58-4d56-b083-d5234563456a" data-background="light"></div>
+        </div>
+      `;
+      // To prevent adding too many, let's just replace the content
+      container.innerHTML = ''; 
+      container.appendChild(newWidget);
+    });
+  </script>
+
   <script src="/dist/widget.js" defer></script>
 
 </body>

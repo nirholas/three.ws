@@ -89,6 +89,12 @@
 									><span class="nav-mi-sub">Khronos spec check</span></a
 								>
 							</li>
+							<li role="none">
+								<a href="/playground.html" role="menuitem"
+									><span class="nav-mi-title">Playground</span
+									><span class="nav-mi-sub">Experiment with agents</span></a
+								>
+							</li>
 						</ul>
 					</li>
 					<li role="none"><a href="/discover" role="menuitem">Discover</a></li>
@@ -198,7 +204,7 @@
 				</ul>
 			</nav>
 		</header>
-		<main id="main-content">
+		<main id="main-content" class="h-container">
 			<section>
 				<h1>Tutorials</h1>
 				<p>Here you will find tutorials on how to create and use 3D agents.</p>
@@ -250,8 +256,18 @@
 
 				<h2>4. "Claude, integrate this"</h2>
 				<p>To simplify integration, you can use the following command to have Claude help you embed an agent. Just say "Claude, integrate agent with ID YOUR_AGENT_ID".</p>
+				<button id="claude-integrate-button" class="button-primary">Try it</button>
 
 			</section>
 		</main>
+		<footer class="h-footer">
+		</footer>
+		<script>
+			document.getElementById('claude-integrate-button').addEventListener('click', () => {
+				// We can't actually trigger Claude, so we'll just log to the console.
+				console.log("Imagine Claude is helping you integrate your agent now.");
+				alert("Imagine Claude is helping you integrate your agent now.");
+			});
+		</script>
 	</body>
 </html>

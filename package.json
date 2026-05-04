@@ -22,7 +22,11 @@
 		"drag-and-drop",
 		"3d-agent"
 	],
-	"workspaces": [],
+	"workspaces": [
+    "agent-payments-sdk",
+    "character-studio",
+    "chat"
+  ],
 	"main": "src/app.js",
 	"browserslist": [
 		">1%",
@@ -69,7 +73,8 @@
 		"pump:smoke": "node scripts/pumpfun-lifecycle-smoke.js",
 		"pump:refresh-idls": "node scripts/refresh-pump-idls.mjs",
 		"seed:skills": "node scripts/seed-skills.js",
-		"install:sdk": "npm install --prefix agent-payments-sdk && npm run build --prefix agent-payments-sdk && npm install ./agent-payments-sdk"
+		"install:sdk": "npm install --prefix agent-payments-sdk && npm run build --prefix agent-payments-sdk && npm install ./agent-payments-sdk",
+		"claude": "./claude.sh"
 	},
 	"dependencies": {
 		"@avaturn/sdk": "^1.1.4",
@@ -117,7 +122,9 @@
 		"vhtml": "^2.2.0",
 		"viem": "^2.18.0",
 		"ws": "^8.20.0",
-		"zod": "^3.23.8"
+		    "zod": "^3.23.8",
+    "vite": "^5.3.6"
+  },
 	},
 	"devDependencies": {
 		"ajv": "^8.17.1",
@@ -126,7 +133,6 @@
 		"playwright": "^1.45.1",
 		"prettier": "^3.2.5",
 		"sharp": "^0.34.5",
-		"vite": "^5.3.6",
 		"vite-plugin-pwa": "^1.2.0",
 		"vitest": "^1.6.0",
 		"workbox-build": "^7.4.0",

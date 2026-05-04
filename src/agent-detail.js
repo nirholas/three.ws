@@ -205,12 +205,23 @@ function render(agent) {
 	if (agent.tradeUrl && agent.tradeUrl !== '#') $('ad-trade').href = agent.tradeUrl;
 	else $('ad-trade').style.display = 'none';
 
+	document.querySelector('.ad-main').classList.remove('loading');
+}
+
+function renderNotFound(id, reason) {
+	document.title = 'Agent not found — three.ws';
 	const receiveBtn = document.getElementById('receive-btn');
 	const withdrawBtn = document.getElementById('withdraw-btn');
 	const swapBtn = document.getElementById('swap-btn');
 	const qrCodeContainer = document.getElementById('qr-code-container');
 	const qrCodeCanvas = document.getElementById('qr-code');
 	const walletAddressSpan = document.getElementById('ad-holdings-addr');
+	const modal = document.getElementById('withdraw-modal');
+	const closeModalBtn = document.getElementById('close-modal-btn');
+	const cancelWithdrawBtn = document.getElementById('cancel-withdraw-btn');
+	const confirmWithdrawBtn = document.getElementById('confirm-withdraw-btn');
+	const withdrawAmountInput = document.getElementById('withdraw-amount');
+	const recipientAddressInput = document.getElementById('recipient-address');
 
 	receiveBtn.addEventListener('click', () => {
 			const walletAddress = walletAddressSpan.dataset.full;
@@ -227,16 +238,30 @@ function render(agent) {
 	});
 
 	withdrawBtn.addEventListener('click', () => {
-			const amount = prompt("Enter amount to withdraw (in SOL):");
-			if (amount === null) return; 
+		modal.classList.remove('hidden');
+	});
 
-			const recipient = prompt("Enter recipient address:");
-			if (recipient === null) return;
+	closeModalBtn.addEventListener('click', () => {
+		modal.classList.add('hidden');
+	});
 
-			if (amount && recipient) {
-					alert(`Withdrawal of ${amount} SOL to ${recipient} initiated. (This is a placeholder)`);
-					console.log('Withdraw:', { amount, recipient });
-			}
+	cancelWithdrawBtn.addEventListener('click', () => {
+		modal.classList.add('hidden');
+	});
+
+	confirmWithdrawBtn.addEventListener('click', () => {
+		const amount = withdrawAmountInput.value;
+		const recipient = recipientAddressInput.value;
+
+		if (amount && recipient) {
+			alert(`Withdrawal of ${amount} SOL to ${recipient} initiated. (This is a placeholder)`);
+			console.log('Withdraw:', { amount, recipient });
+			modal.classList.add('hidden');
+			withdrawAmountInput.value = '';
+			recipientAddressInput.value = '';
+		} else {
+			alert('Please fill out both fields.');
+		}
 	});
 
 	swapBtn.addEventListener('click', () => {

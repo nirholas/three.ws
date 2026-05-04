@@ -26,54 +26,15 @@
 	<body>
 		<div id="counter">0</div>
 		<script type="module">
+			import pumpFunClient from '../src/pumpfun-client.js';
+
 			let count = 0;
 			const counterElement = document.getElementById('counter');
 
-			const RPC_ENDPOINTS = [
-				{ url: 'wss://pumpportal.fun/api/data', protocol: 'pumpportal', label: 'PumpPortal' },
-				{ url: 'wss://pump-fun-websocket-production.up.railway.app/ws', protocol: 'relay', label: 'Relay Server' },
-			];
-			let rpcIndex = 0;
-			let ws = null;
-
-			function connect() {
-				const ep = RPC_ENDPOINTS[rpcIndex % RPC_ENDPOINTS.length];
-				rpcIndex++;
-				ws = new WebSocket(ep.url);
-
-				ws.onopen = () => {
-					if (ep.protocol === 'pumpportal') {
-						ws.send(JSON.stringify({ method: 'subscribeNewToken' }));
-					}
-				};
-
-				ws.onmessage = (evt) => {
-					let msg;
-					try { msg = JSON.parse(evt.data); } catch { return; }
-
-					if (ep.protocol === 'relay') {
-						if (msg.type === 'token-launch' || msg.mint) {
-							count++;
-							counterElement.innerText = count;
-						}
-						return;
-					}
-
-					if (ep.protocol === 'pumpportal') {
-						if (msg && msg.mint) {
-							count++;
-							counterElement.innerText = count;
-						}
-						return;
-					}
-				};
-
-				ws.onclose = () => {
-					setTimeout(connect, 1000);
-				};
-			}
-
-			connect();
+			pumpFunClient.addEventListener('token', () => {
+				count++;
+				counterElement.innerText = count;
+			});
 		</script>
 	</body>
 </html>

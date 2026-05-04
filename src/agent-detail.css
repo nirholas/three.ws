@@ -280,3 +280,99 @@ a { color: inherit; text-decoration: none; }
 	height: 100%;
 	border: 0;
 }
+
+/* Modal Styles */
+.ad-modal-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.7);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 1000;
+}
+
+.hidden {
+	display: none;
+}
+
+.ad-modal {
+	background: var(--ad-card);
+	border: 1px solid var(--ad-line);
+	border-radius: 14px;
+	width: 90%;
+	max-width: 420px;
+	box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.ad-modal-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 16px 20px;
+	border-bottom: 1px solid var(--ad-line);
+}
+
+.ad-modal-header h3 {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 500;
+}
+
+.ad-modal-close {
+	background: none;
+	border: none;
+	font-size: 24px;
+	color: var(--ad-muted);
+	cursor: pointer;
+	line-height: 1;
+}
+
+.ad-modal-close:hover {
+	color: var(--ad-text);
+}
+
+.ad-modal-body {
+	padding: 20px;
+}
+
+.ad-form-group {
+	margin-bottom: 16px;
+}
+
+.ad-form-group label {
+	display: block;
+	font-size: 12px;
+	color: var(--ad-muted);
+	margin-bottom: 6px;
+}
+
+.ad-input {
+	width: 100%;
+	background: var(--ad-bg-2);
+	border: 1px solid var(--ad-line);
+	color: var(--ad-text);
+	border-radius: 8px;
+	padding: 10px 12px;
+	font-family: inherit;
+	font-size: 14px;
+}
+
+.ad-input:focus {
+	outline: none;
+	border-color: var(--ad-line-2);
+}
+
+.ad-modal-footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+	padding: 16px 20px;
+	border-top: 1px solid var(--ad-line);
+	background: var(--ad-bg-2);
+	border-bottom-left-radius: 14px;
+	border-bottom-right-radius: 14px;
+}

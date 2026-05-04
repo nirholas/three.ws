@@ -22,6 +22,7 @@ https://github.com/user-attachments/assets/d52515d1-cb04-4dd6-98bd-fef233312dc4
 - [Architecture](#architecture)
 - [Tech Stack](#tech-stack)
 - [Getting Started](#getting-started)
+- [Contributing](#contributing)
 - [Examples](#examples)
 - [Tutorials](#tutorials)
 - [Project Structure](#project-structure)
@@ -33,13 +34,91 @@ https://github.com/user-attachments/assets/d52515d1-cb04-4dd6-98bd-fef233312dc4
   - [Memory](#memory)
 - [Web Component & Embedding](#web-component--embedding)
 - [Widget System](#widget-system)
-- [API Reference](#api-reference)
-- [Authentication & OAuth 2.1](#authentication--oauth-21)
-- [MCP Server](#mcp-server)
-- [On-Chain Identity (ERC-8004)](#on-chain-identity-erc-8004)
-- [Database Schema](#database-schema)
-- [Build & Deployment](#build--deployment)
-- [Environment Variables](#environment-variables)
+## API Reference
+
+The backend API is composed of Vercel serverless functions located in the `api/` directory. Key endpoints include:
+-   `api/agents.js`: CRUD operations for agents.
+-   `api/chat.js`: Handles LLM chat interactions.
+-   `api/mcp.js`: The Model Context Protocol (MCP) endpoint.
+-   `api/auth/`: User authentication and session management.
+-   `api/payments/`: Payment processing.
+-   `api/agent-actions.js`: Records agent actions.
+-   `api/agent-memory.js`: Manages agent memory.
+
+An OpenAPI 3.1 specification is available at `/openapi.json`.
+
+---
+
+## Authentication & OAuth 2.1
+
+The platform includes a full OAuth 2.1 server for secure authentication and authorization. Key features include:
+-   **Email & Wallet Sign-in**: Users can register and sign in with email or a crypto wallet (SIWE).
+-   **OAuth 2.1 Flow**: Standard authorization code flow with PKCE.
+-   **API Keys**: Developers can generate API keys with specific scopes and expiry dates.
+
+---
+
+## Build & Deployment
+
+The project is deployed on Vercel. The `package.json` file contains several scripts for building and deploying the application:
+-   `npm run dev`: Starts the local development server.
+-   `npm run build`: Builds the main application.
+-   `npm run build:lib`: Builds the distributable library.
+-   `npm run build:chat`: Builds the Svelte-based chat component.
+-   `npm run build:rider`: Builds the `rider` sub-project.
+-   `npm run build:all`: Runs all build scripts in parallel.
+-   `npm run install:sdk`: Installs and builds the `agent-payments-sdk`.
+-   `npm run deploy`: Deploys the project to Vercel.
+
+---
+
+## Claude CLI
+
+The `claude.sh` script is a command-line interface (CLI) to help manage the agent and SDKs. You can run it directly or via `npm run claude`.
+
+**Usage:**
+```bash
+# Using npm
+npm run claude -- [COMMAND]
+
+# Direct execution
+./claude.sh [COMMAND]
+```
+
+**Commands:**
+
+| Command | Description |
+| --- | --- |
+| `install-sdk` | Installs and builds the `@pump-fun/agent-payments-sdk`. This is a quick way to get your local environment set up with the necessary SDKs. |
+| `help` | Shows the help message, listing all available commands. |
+
+---
+
+## Environment Variables
+
+The following environment variables are required. Copy `.env.example` to `.env.local` and provide the values.
+
+| Variable | Description |
+| --- | --- |
+| `PUBLIC_APP_ORIGIN` | Public URL of the application. |
+| `DATABASE_URL` | Connection string for the Neon Postgres database. |
+| `S3_ENDPOINT` | Endpoint for the S3-compatible storage bucket. |
+| `S3_ACCESS_KEY_ID` | Access key ID for the S3 bucket. |
+| `S3_SECRET_ACCESS_KEY` | Secret access key for the S3 bucket. |
+| `S3_BUCKET` | Name of the S3 bucket. |
+| `S3_PUBLIC_DOMAIN` | Public CDN base URL for the S3 bucket. |
+| `UPSTASH_REDIS_REST_URL` | URL for the Upstash Redis instance. |
+| `UPSTASH_REDIS_REST_TOKEN` | Token for the Upstash Redis instance. |
+| `JWT_SECRET` | Secret key for signing JWTs. |
+| `ANTHROPIC_API_KEY` | API key for the Anthropic (Claude) LLM. |
+| `OPENROUTER_API_KEY` | API key for the OpenRouter free model proxy. |
+| `VITE_RPM_SUBDOMAIN` | Ready Player Me subdomain for the avatar creator. |
+| `VITE_PRIVY_APP_ID` | Privy app ID for client-side wallet authentication. |
+| `PRIVY_APP_ID` | Privy app ID for server-side token verification. |
+| `AVATURN_API_KEY` | API key for the Avaturn photo-to-avatar pipeline. |
+| `AGENT_RELAYER_KEY` | Private key for the ERC-7710 delegation relayer. |
+| `AGENT_RELAYER_ADDRESS` | Public address of the relayer. |
+| `RPC_URL_<CHAINID>` | RPC URLs for different blockchain networks. |
 - [Cloud Marketplaces](#cloud-marketplaces)
 - [Testing](#testing)
 - [Contributing](#contributing)
@@ -323,125 +402,64 @@ The backend is stateless serverless functions. All persistent state lives in Pos
 ## Tech Stack
 
 **Frontend**
-| Technology | Version | Purpose |
-|---|---|---|
-| three.js | r176 | WebGL 2.0 rendering |
-| Vite | 7.3.2 | Build tooling + HMR |
-| Vitest | 4.1.4 | Unit testing |
-| viem | 2.18.0 | Ethereum wallet + SIWE |
-| ethers | 6.16.0 | Contract interaction |
-| @solana/web3.js | 1.98.4 | Solana RPC + signing |
-| jose | 5.9.6 | JWT handling |
-| zod | 3.23.8 | Schema validation |
-| gltf-validator | 2.0.0-dev.3.10 | Khronos spec compliance |
-| dat.gui | 0.7.9 | Real-time parameter UI |
-| simple-dropzone | 0.8.3 | Drag-and-drop file handling |
-| vhtml | 2.2.0 | JSX → HTML string rendering |
+-   **Main UI**: The core application, including the 3D viewer, agent creation, and marketplace, is built with vanilla JavaScript modules and Vite.
+-   **Chat**: The chat interface is a standalone Svelte application located in the `chat/` directory.
+-   **3D Rendering**: three.js (r176) is used for WebGL 2.0 rendering.
 
-**Backend (Vercel serverless)**
-| Technology | Purpose |
-|---|---|
-| Neon Postgres | Primary database |
-| Cloudflare R2 | Avatar / model object storage |
-| Upstash Redis | Rate limiting |
-| Anthropic SDK | Claude LLM (claude-sonnet-4-6 / claude-opus-4-7) |
-| Resend | Transactional email |
-| Sentry | Error monitoring |
-| @aws-sdk/client-s3 | R2 presigned upload URLs |
+**Backend (Vercel Serverless)**
+-   **Runtime**: Node.js
+-   **Database**: Neon Postgres (serverless)
+-   **Storage**: Cloudflare R2 for model and avatar storage.
+-   **Rate Limiting**: Upstash Redis.
+-   **LLM**: The agent's brain is powered by the Anthropic (Claude) SDK.
 
 **Smart Contracts**
-| Technology | Purpose |
-|---|---|
-| Solidity 0.8+ | ERC-8004 contracts |
-| Foundry | Compile, test, deploy |
-| ERC-721 | Agent token standard |
-| EIP-712 | Typed structured signing |
-| EIP-7710 | Delegated permissions |
+-   **Language**: Solidity 0.8+
+-   **Framework**: Foundry for compiling, testing, and deploying the ERC-8004 contracts.
+-   **Standards**: ERC-721, EIP-712, EIP-7710.
 
 ---
 
 ## Getting Started
 
-### Use the embeddable web component (no setup)
-
-Install from npm:
-
-```bash
-npm install three.ws
-```
-
-```js
-import 'three.ws';
-// <agent-3d src="/path/to/avatar.glb"></agent-3d>
-```
-
-Or load via CDN:
-
-```html
-<script type="module" src="https://unpkg.com/three.ws"></script>
-<agent-3d src="/path/to/avatar.glb"></agent-3d>
-```
-
-Package: https://www.npmjs.com/package/three.ws
-
-### Run the full platform locally
-
-#### Prerequisites
-
+### Prerequisites
 - Node.js 20+
 - npm 10+
-- A Neon Postgres database (or any Postgres 15+)
-- A Cloudflare R2 bucket (or any S3-compatible store)
-- An Anthropic API key (for the LLM backend)
+- A Neon Postgres database
+- A Cloudflare R2 bucket
+- An Anthropic API key
 
-#### Installation
+### Installation and Setup
+1.  **Clone the repository**:
+    ```bash
+    git clone https://github.com/nirholas/3D-Agent.git
+    cd 3D-Agent
+    ```
+2.  **Install dependencies**:
+    ```bash
+    npm install
+    ```
+3.  **Set up environment variables**:
+    Copy the `.env.example` file to `.env.local` and fill in the required values. See the [Environment Variables](#environment-variables) section for more details.
+    ```bash
+    cp .env.example .env.local
+    ```
+4.  **Initialize the database**:
+    The schema is idempotent. Run it against your Postgres instance to create all tables:
+    ```bash
+    psql $DATABASE_URL < api/_lib/schema.sql
+    ```
+5.  **Run the development server**:
+    ```bash
+    npm run dev
+    ```
+The application will be available at `http://localhost:3000`.
 
-```bash
-git clone https://github.com/nirholas/3D-Agent.git
-cd 3D-Agent
-npm install
-```
+---
 
-### Environment Setup
+## Contributing
 
-Copy the example env file and fill in required values:
-
-```bash
-cp .env.example .env.local
-```
-
-At minimum, set:
-
-```env
-PUBLIC_APP_ORIGIN=http://localhost:3000
-DATABASE_URL=postgres://user:pass@host/db
-JWT_SECRET=<run: openssl rand -base64 64>
-ANTHROPIC_API_KEY=sk-ant-...
-```
-
-See [Environment Variables](#environment-variables) for the full reference.
-
-### Initialize the Database
-
-The schema is idempotent — run it against your Postgres instance to create all tables:
-
-```bash
-psql $DATABASE_URL < api/_lib/schema.sql
-```
-
-### Start the Dev Server
-
-```bash
-npm run dev
-```
-
-Opens at `http://localhost:3000`. The landing page is at `/`, the viewer at `/app`, the user dashboard at `/dashboard`, and the agent creation flow at `/create`. For the full list of routes, see [docs/internal/PAGES.md](docs/internal/PAGES.md).
-
-### Quick Viewer Test
-
-Navigate to `http://localhost:3000/app` and drag any GLB file onto the canvas. The model loads instantly with PBR materials, animations, and full glTF validation.
-
-To try the agent, navigate to `/create`, upload a GLB, and configure a brain (requires `ANTHROPIC_API_KEY` in your env).
+We welcome contributions from the community! Please read our [contributing guidelines](CONTRIBUTING.md) to get started.
 
 ---
 
@@ -638,7 +656,7 @@ For anything beyond a quick one-liner, define the agent in a manifest file and r
   "skills": [
     { "uri": "https://cdn.three.ws/skills/wave/" }
   ]
-}
+} The script automatically initializes widgets, even those added dynamically after the page loads.
 ```
 
 ```html
@@ -698,100 +716,53 @@ For sandboxed iframes use the widget embed path instead — it runs in its own b
 
 ## Project Structure
 
-```
-3D-Agent/
-├── home.html                   # Landing page (served at /)
-├── index.html                  # Legacy marketing page
-├── app.html                    # Main viewer (drag-and-drop + /deploy alias)
-├── create.html                 # Avatar + agent creation wizard
-├── profile.html                # User profile (/profile, /u/[username])
-├── avatar-page.html            # Public avatar detail (/avatars/[id])
-├── agent-home.html             # Agent detail & action timeline
-├── agent-edit.html             # Agent editing UI
-├── agent-embed.html            # Chromeless embed variant
-├── a-edit.html                 # On-chain agent edit
-├── a-embed.html                # On-chain agent embed
-│
-├── src/                        # Frontend JavaScript (~80 modules, ~15k lines)
-│   ├── viewer.js               # three.js renderer core (1,534 lines)
-│   ├── app.js                  # SPA entry + URL routing (460 lines)
-│   ├── agent-protocol.js       # Event bus (200-action ring buffer)
-│   ├── agent-avatar.js         # Empathy Layer (morph targets, emotion) (694 lines)
-│   ├── agent-identity.js       # Passport, diary, signed action history
-│   ├── element.js              # <agent-3d> custom element
-│   ├── runtime/
-│   │   ├── index.js            # LLM tool-loop engine
-│   │   ├── providers.js        # AnthropicProvider, NullProvider
-│   │   ├── scene.js            # SceneController bridge to three.js
-│   │   ├── tools.js            # Built-in tools (wave, speak, remember...)
-│   │   └── speech.js          # TTS + STT
-│   ├── memory/
-│   │   └── index.js            # File-based memory (local/ipfs/encrypted-ipfs/none)
-│   ├── skills/
-│   │   ├── index.js            # SkillRegistry
-│   │   └── <name>/             # Bundled skills (SKILL.md, tools.json, handlers.js)
-│   ├── erc8004/
-│   │   ├── abi.js              # Contract ABIs + deployment addresses
-│   │   ├── agent-registry.js   # connectWallet, registerAgent, pinToIPFS
-│   │   └── reputation.js       # submitFeedback, getReputation
-│   └── widgets/                # Five widget type implementations
-│
-├── api/                        # Vercel serverless functions (~153 endpoints, ~3.6k lines)
-│   ├── agents.js               # Agent CRUD (321 lines)
-│   ├── chat.js                 # LLM chat endpoint (298 lines)
-│   ├── mcp.js                  # MCP server over HTTP (759 lines)
-│   ├── agent-actions.js        # Record signed actions (122 lines)
-│   ├── agent-memory.js         # Memory CRUD + recall (188 lines)
-│   ├── auth/                   # Login, register, SIWE, Privy, sessions
-│   ├── oauth/                  # OAuth 2.1 server (authorize, token, register...)
-│   ├── avatars/                # Avatar CRUD + presigned upload
-│   ├── widgets/                # Widget CRUD + OG + oEmbed
-│   ├── erc8004/                # Blockchain hydrate, import, pin
-│   ├── cron/                   # Scheduled jobs (crawl, DCA, subscriptions)
-│   └── _lib/                   # Shared helpers (db, auth, r2, validate, email...)
-│       └── schema.sql          # Idempotent Postgres migrations
-│
-├── public/                     # Static subapps + assets
-│   ├── studio/                 # Widget Studio SPA
-│   ├── dashboard/              # User dashboard SPA (actions, sessions, storage, usage, wallets, embed-policy, agent-pumpfun)
-│   ├── settings/               # Account settings
-│   ├── admin/                  # Staff admin surface
-│   ├── validation/             # glTF validator tool
-│   ├── discover/               # Agent discovery SPA
-│   ├── my-agents/              # Owner agent list
-│   ├── reputation/             # Reputation registry browser
-│   ├── widgets-gallery/        # Public widget gallery
-│   ├── hydrate/                # Import on-chain agent
-│   ├── features/               # Features marketing page
-│   ├── first-meet/             # First-time-user onboarding
-│   ├── artifact/               # Claude Artifact viewer bundle
-│   ├── cz/                     # CZ demo experience
-│   ├── lobehub/iframe/         # LobeHub plugin surface
-│   ├── pumpfun.html            # pump.fun token launcher
-│   ├── vanity-wallet.html      # Solana vanity-address grinder
-│   ├── strategy-lab.html       # DCA strategy designer
-│   ├── agent-passport.html     # Solana agent passport
-│   ├── login.html, register.html, forgot-password.html, reset-password.html
-│   └── animations/             # Animation clip library
-│
-├── contracts/                  # Foundry + Solidity (ERC-8004)
-│   ├── src/
-│   │   ├── IdentityRegistry.sol    # ERC-721 agent tokens (EIP-712)
-│   │   ├── ReputationRegistry.sol  # Signed reviewer feedback
-│   │   └── ValidationRegistry.sol  # Validator attestations
-│   ├── script/Deploy.s.sol
-│   ├── test/IdentityRegistry.test.sol
-│   └── DEPLOYMENTS.md          # Chain deployment addresses
-│
-├── docs/                       # Architecture, API, deployment guides (see internal/PAGES.md for full route audit)
-├── specs/                      # Formal specs (manifest, embed, skill, memory...)
-├── tests/                      # Vitest test suite (~30 files)
-├── scripts/                    # Build tools (publish, icon gen, animations)
-│
-├── vite.config.js              # App build config
-├── vite.config.artifact.js     # Standalone artifact bundle
-├── vercel.json                 # Routes, rewrites, crons, headers
-└── package.json                # Scripts + dependencies
+-   `src/`: The core frontend JavaScript for the main application, including the 3D viewer, agent protocol, and custom element.
+-   `api/`: Vercel serverless functions that form the backend API.
+-   `public/`: Static assets and various sub-applications.
+-   `chat/`: A standalone Svelte application for the chat interface.
+-   `character-studio/`: A sub-project for character creation.
+-   `rider/`: A-Frame WebVR music visualization experiment.
+-   `contracts/`: Solidity smart contracts for on-chain identity (ERC-8004).
+-   `agent-payments-sdk/`: SDK for agent-related payments.
+-   `solana-agent-sdk/`: SDK for Solana blockchain interactions.
+-   `pump-fun-skills/`: Skills related to the pump.fun integration.
+-   `scripts/`: Node.js scripts for development, build, and deployment tasks.
+-   `workers/`: Code for background workers.
+
+---
+
+## Pump.fun Integration
+
+This project includes a significant integration with [pump.fun](https://pump.fun), a platform for launching tokens on Solana. Key features include:
+-   **Token Launcher**: A UI for creating and launching new tokens on pump.fun, available at `public/pumpfun.html`.
+-   **Live Dashboard**: Real-time tracking of pump.fun tokens can be found in `pump-live.html`.
+-   **Skills**: The `pump-fun-skills/` directory contains agent skills for interacting with pump.fun.
+
+---
+
+## SDKs
+
+The project contains several SDKs to interact with various services:
+-   **`agent-payments-sdk/`**: Manages payments for agent-related services.
+-   **`solana-agent-sdk/`**: Provides tools for interacting with the Solana blockchain.
+-   **`sdk/`**: A general-purpose SDK with shared utilities.
+
+---
+
+## Workers
+
+The `workers/` directory contains code for background workers that handle tasks such as scheduled jobs and data processing.
+
+---
+
+## Scripts and Tooling
+
+The `scripts/` directory includes various utility scripts:
+-   `seed-skills.js`: Seeds the database with an initial set of agent skills.
+-   `apply-migrations.mjs`: Manages and applies database migrations.
+-   `publish-lib.mjs`: Publishes the library to npm.
+-   `download-animations.mjs`: Fetches and updates animation files.
+-   `build-animations.mjs`: Builds animation assets.
 ```
 
 ---

@@ -47,6 +47,12 @@ import { AnimationManager } from './animation-manager.js';
 
 Cache.enabled = true;
 
+/**
+ * @class Viewer
+ *
+ * @param {Element} el
+ * @param {object} options
+ */
 export class Viewer {
 	constructor(el, options) {
 		this.el = el;

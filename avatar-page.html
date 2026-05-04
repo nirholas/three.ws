@@ -194,11 +194,313 @@
 				color: rgba(255, 255, 255, 0.6);
 			}
 
+			.av-social-btn {
+				background: transparent;
+				border: 1px solid rgba(255, 255, 255, 0.12);
+				color: rgba(255, 255, 255, 0.6);
+				padding: 0.5rem;
+			}
+
+			.av-embed {
+				margin-top: 2rem;
+			}
+
+			.av-embed-label {
+				font-size: 0.764rem;
+				color: rgba(255, 255, 255, 0.5);
+				font-weight: 500;
+				margin-bottom: 0.5rem;
+				display: block;
+			}
+
+			.av-embed-code {
+				background: rgba(255, 255, 255, 0.04);
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				border-radius: 8px;
+				padding: 0.75rem 1rem;
+				font-family: monospace;
+				font-size: 0.764rem;
+				color: rgba(255, 255, 255, 0.7);
+				word-break: break-all;
+				position: relative;
+				padding-right: 4rem;
+			}
+
+			.av-embed-copy-btn {
+				position: absolute;
+				top: 0.5rem;
+				right: 0.5rem;
+				background: rgba(255, 255, 255, 0.1);
+				border: 1px solid rgba(255, 255, 255, 0.2);
+				color: rgba(255, 255, 255, 0.7);
+				font-size: 0.618rem;
+				padding: 0.25rem 0.618rem;
+				border-radius: 6px;
+				cursor: pointer;
+			}
+
+			.av-embed-copy-btn.copied {
+				color: #4ade80;
+				border-color: rgba(74, 222, 128, 0.3);
+			}
+
 			.av-meta {
 				font-size: 0.618rem;
 				color: rgba(255, 255, 255, 0.2);
 				margin-top: 1rem;
 			}
+		</style>
+	</head>
+	<body>
+		<header class="av-header">
+			<a href="/" aria-label="Back to three.ws">← three.ws</a>
+			<button class="av-copy-btn" id="copy-btn">copy link</button>
+		</header>
+
+		<main>
+			<div class="av-root" id="av-root">
+				<div class="av-error">Loading…</div>
+			</div>
+		</main>
+
+		<footer class="h-footer-horizon">
+			<div class="h-footer-glow-line" aria-hidden="true"></div>
+			<div class="h-footer-floor" aria-hidden="true"></div>
+			<div class="h-footer-haze" aria-hidden="true"></div>
+			<div class="h-footer-watermark" aria-hidden="true">three.ws</div>
+			<div class="h-footer-cta">
+				<div class="h-footer-newsletter">
+					<h3>Stay in the loop</h3>
+					<p>Get updates on new features, agent tooling, and protocol changes.</p>
+					<form class="h-footer-newsletter-form" data-newsletter-form novalidate>
+						<input
+							type="email"
+							class="h-footer-newsletter-input"
+							name="email"
+							placeholder="Enter your email"
+							aria-label="Email address"
+							autocomplete="email"
+							required
+						/>
+						<button type="submit" class="h-footer-newsletter-btn" aria-label="Subscribe">
+							<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M2 8h11m0 0L9 4m4 4l-4 4"/></svg>
+						</button>
+					</form>
+					<p class="h-footer-newsletter-msg" data-newsletter-msg aria-live="polite"></p>
+				</div>
+				<div class="h-footer-community">
+					<h3>Join the community</h3>
+					<p>Follow along for builds, demos, and conversations with the team.</p>
+					<a class="h-footer-community-btn" href="https://x.com/trythreews" target="_blank" rel="noopener">
+						<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+						Follow on X
+					</a>
+				</div>
+			</div>
+			<div class="h-footer-inner">
+				<div class="h-footer-brand-col">
+					<div class="h-footer-brand">
+						<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />
+						<span class="wordmark-dot" aria-hidden="true"></span>
+						<span>three.ws</span>
+					</div>
+					<p class="h-footer-tagline">Give your AI a body.</p>
+					<div class="h-footer-socials">
+						<a class="h-footer-social" href="https://x.com/trythreews" target="_blank" rel="noopener" aria-label="three.ws on X">
+							<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+						</a>
+						<a class="h-footer-social" href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener" aria-label="three.ws on GitHub">
+							<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+						</a>
+					</div>
+				</div>
+				<nav class="h-footer-links" aria-label="Footer">
+					<div class="h-footer-link-col">
+						<h4 class="h-footer-link-heading">Product</h4>
+						<a href="/create">Create</a>
+						<a href="/studio">Studio</a>
+						<a href="/widgets">Widgets</a>
+						<a href="/discover">Discover</a>
+					</div>
+					<div class="h-footer-link-col">
+						<h4 class="h-footer-link-heading">Developers</h4>
+						<a href="/docs">Docs</a>
+						<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener">GitHub</a>
+						<a href="https://eips.ethereum.org/EIPS/eip-8004" target="_blank" rel="noopener">ERC-8004</a>
+					</div>
+					<div class="h-footer-link-col">
+						<h4 class="h-footer-link-heading">Resources</h4>
+						<a href="/features">Features</a>
+						<a href="/dashboard">Dashboard</a>
+					</div>
+				</nav>
+			</div>
+			<div class="h-footer-bottom">
+				<p class="h-footer-legal">© 2026 three.ws — All rights reserved.</p>
+				<div class="h-footer-legal-links">
+					<a href="/legal/privacy">Privacy Policy</a>
+					<a href="/legal/tos">Terms of Use</a>
+				</div>
+			</div>
+		</footer>
+
+		<script type="module">
+			const esc = (s) =>
+				String(s ?? '').replace(
+					/[&<>"']/g,
+					(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+				);
+
+			const root = document.getElementById('av-root');
+			const segments = location.pathname.split('/').filter(Boolean);
+			const id = segments[1]; // /avatars/<id>
+
+			if (!id) {
+				root.innerHTML = `<div class="av-error">No avatar specified.</div>`;
+			} else {
+				load(id);
+			}
+
+			async function load(avatarId) {
+				let avatar;
+				try {
+					const res = await fetch(`/api/avatars/${encodeURIComponent(avatarId)}`);
+					if (!res.ok) {
+						const data = await res.json().catch(() => ({}));
+						throw new Error(data.error_description || res.statusText);
+					}
+					avatar = (await res.json()).avatar;
+				} catch (err) {
+					root.innerHTML = `<div class="av-error">${esc(err.message)}</div>`;
+					return;
+				}
+
+				if (!avatar.model_url) {
+					root.innerHTML = `<div class="av-error">This avatar is private.</div>`;
+					return;
+				}
+
+				// OG / title
+				document.title = `${avatar.name} — three.ws`;
+				document.querySelector('#og-title')?.setAttribute('content', avatar.name);
+				document.querySelector('#og-description')?.setAttribute(
+					'content',
+					avatar.description || `A 3D avatar on three.ws`,
+				);
+				document.querySelector('#og-url')?.setAttribute('content', location.href);
+				document.querySelector('#tw-title')?.setAttribute('content', avatar.name);
+				document.querySelector('#tw-description')?.setAttribute(
+					'content',
+					avatar.description || `A 3D avatar on three.ws`,
+				);
+				if (avatar.thumbnail_url) {
+					document.querySelector('#og-image')?.setAttribute('content', avatar.thumbnail_url);
+				}
+
+				const tagsHtml = (avatar.tags || [])
+					.map((t) => `<span class="av-tag">${esc(t)}</span>`)
+					.join('');
+
+				const byLine = avatar.owner_username
+					? `<p class="av-by">by <a href="/u/${esc(avatar.owner_username)}">@${esc(avatar.owner_username)}</a></p>`
+					: '';
+
+				const sizeStr = avatar.size_bytes
+					? `${(avatar.size_bytes / 1_048_576).toFixed(1)} MB`
+					: '';
+				const dateStr = avatar.created_at
+					? new Date(avatar.created_at).toLocaleDateString()
+					: '';
+
+				const embedCode = `<script type="module" src="https://three.ws/dist-lib/agent-3d.js"></script>
+<agent-3d src="${esc(avatar.model_url)}"></agent-3d>`;
+
+				root.innerHTML = `
+					<div class="av-layout">
+						<div class="av-viewer">
+							<model-viewer
+								src="${esc(avatar.model_url)}"
+								camera-controls
+								auto-rotate
+								rotation-per-second="12deg"
+								shadow-intensity="1"
+								exposure="1"
+								tone-mapping="aces"
+							></model-viewer>
+						</div>
+						<div class="av-info">
+							<h1 class="av-name">${esc(avatar.name)}</h1>
+							${byLine}
+							${avatar.description ? `<p class="av-desc">${esc(avatar.description)}</p>` : ''}
+							${tagsHtml ? `<div class="av-tags">${tagsHtml}</div>` : ''}
+							<div class="av-actions">
+								<a class="av-btn av-btn-primary" href="/dashboard">Use this avatar</a>
+								<a class="av-btn av-btn-sec" href="${esc(avatar.model_url)}" download>Download GLB</a>
+								<a class="av-btn av-social-btn" id="twitter-share" href="#" target="_blank" rel="noopener">
+									<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+								</a>
+								<a class="av-btn av-social-btn" id="discord-share" href="#" target="_blank" rel="noopener">
+									<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.369a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.369-.42.738-.609 1.114a18.332 18.332 0 00-5.484 0 18.275 18.275 0 00-.61-1.114.074.074 0 00-.078-.037A19.79 19.79 0 003.683 4.37a.074.074 0 00-.036.079C3.336 5.623 2.92 9.444 3.483 12.164a.074.074 0 00.045.065c1.766.993 3.535 1.488 5.303 1.545a.073.073 0 00.063-.036c.143-.236.286-.492.409-.758a.074.074 0 00-.028-.086 15.655 15.655 0 01-1.788-.594.074.074 0 01-.018-.114c.06-.086.118-.171.178-.257a.074.074 0 01.092-.019c.357.143.714.267 1.07.391a.074.074 0 00.079-.018c.952-.515 1.838-1.133 2.659-1.84a.074.074 0 00.018-.1c-.347-.276-.694-.572-1.022-.888a.074.074 0 00-.102.009c-.046.046-.092.093-.138.139a.074.074 0 00-.009.102 14.122 14.122 0 01-1.921.605.074.074 0 00-.018.114c.06.086.118.171.178.257a.074.074 0 00.093-.018c1.328-.535 2.529-1.258 3.599-2.158a.074.074 0 00.018-.093c-.086-.143-.171-.286-.257-.429a.074.074 0 00-.092-.028c-1.133.391-2.285.714-3.456.952a.074.074 0 00-.054.065c-.009.046-.018.093-.018.139a13.315 13.315 0 00.018 1.458.074.074 0 00.054.065c2.4.456 4.829.357 6.942-.456a.074.074 0 00.045-.065c.562-2.719.147-6.54-.162-8.08a.074.074 0 00-.036-.079zm-4.733 8.322a2.448 2.448 0 01-2.448-2.448 2.448 2.448 0 012.448-2.448 2.448 2.448 0 012.448 2.448 2.448 2.448 0 01-2.448 2.448zm-6.289 0a2.448 2.448 0 01-2.448-2.448 2.448 2.448 0 012.448-2.448 2.448 2.448 0 012.448 2.448 2.448 2.448 0 01-2.448 2.448z" /></svg>
+								</a>
+							</div>
+							<p class="av-meta">${[sizeStr, avatar.source, dateStr].filter(Boolean).join(' · ')}</p>
+
+							<div class="av-embed">
+								<label class="av-embed-label">Embed Code</label>
+								<div class="av-embed-code" id="embed-code">
+									${esc(embedCode)}
+									<button class="av-embed-copy-btn" id="embed-copy-btn">Copy</button>
+								</div>
+							</div>
+						</div>
+					</div>
+				`;
+
+				// Add event listeners for the new buttons
+				document.getElementById('twitter-share').addEventListener('click', (e) => {
+					e.preventDefault();
+					const text = `Check out this 3D avatar: ${avatar.name}`;
+					const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(location.href)}`;
+					window.open(url, '_blank');
+				});
+
+				document.getElementById('discord-share').addEventListener('click', (e) => {
+					e.preventDefault();
+					// Note: Discord doesn't have a direct share link, so we'll just copy the link
+					navigator.clipboard.writeText(location.href);
+					alert('Link copied to clipboard for sharing on Discord!');
+				});
+
+				document.getElementById('embed-copy-btn').addEventListener('click', async () => {
+					const btn = document.getElementById('embed-copy-btn');
+					try {
+						await navigator.clipboard.writeText(embedCode);
+						btn.textContent = 'Copied ✓';
+						btn.classList.add('copied');
+						setTimeout(() => {
+							btn.textContent = 'Copy';
+							btn.classList.remove('copied');
+						}, 1800);
+					} catch {}
+				});
+			}
+
+			// Copy link button
+			document.getElementById('copy-btn').addEventListener('click', async () => {
+				const btn = document.getElementById('copy-btn');
+				try {
+					await navigator.clipboard.writeText(location.href);
+					btn.textContent = 'copied ✓';
+					btn.classList.add('copied');
+					setTimeout(() => {
+						btn.textContent = 'copy link';
+						btn.classList.remove('copied');
+					}, 1800);
+				} catch {}
+			});
+		</script>
+	</body>
+</html>
 
 			.av-error {
 				text-align: center;

@@ -267,12 +267,14 @@ async function handleList(req, res, url) {
 		SELECT ai.id, ai.name, ai.description, ai.category, ai.tags, ai.avatar_id, ai.user_id,
 		       ai.forks_count, ai.views_count, ai.published_at, ai.created_at, ai.skills,
 		       av.thumbnail_key,
+			   u.display_name AS author_name,
 		       EXISTS (
 		         SELECT 1 FROM agent_skill_prices asp
 		         WHERE asp.agent_id = ai.id AND asp.is_active = true
 		       ) AS has_paid_skills
 		FROM agent_identities ai
 		LEFT JOIN avatars av ON av.id = ai.avatar_id AND av.deleted_at IS NULL
+		LEFT JOIN users u ON u.id = ai.user_id
 		WHERE ai.is_published = true
 		  AND ai.deleted_at IS NULL
 		  AND (${cat}::text IS NULL OR ai.category = ${cat})

@@ -64,7 +64,6 @@
         }
     </style>
 </head>
-<body>
 		<header class="agent-page-header" style="justify-content: space-between">
 			<div style="display:inline-flex;align-items:center">
 				<a href="/marketplace.html?tab=mine" aria-label="Back to three.ws home">
@@ -102,6 +101,19 @@
         <input type="text" id="avatar-name" placeholder="Enter a name for your avatar">
         <button id="save-avatar">Save</button>
         <button id="embed-avatar">Embed</button>
+        <button id="reset-avatar">Reset to Default</button>
+    </div>
+    <div id="embed-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Embed your avatar</h2>
+            <p>Copy the code below to embed your avatar on your website.</p>
+            <textarea id="embed-code" readonly></textarea>
+            <button id="copy-embed-code">Copy</button>
+        </div>
+    </div>
+    <div id="loading-indicator" class="loading-indicator">
+        <div class="spinner"></div>
     </div>
 	<style>
 		.upload-container {
@@ -130,7 +142,7 @@
 			border-radius: 0.5rem;
 			border: 1px solid #ccc;
 		}
-		#save-avatar, #embed-avatar {
+		#save-avatar, #embed-avatar, #reset-avatar, #copy-embed-code {
 			background: #ffd700;
 			color: #000;
 			padding: 0.5rem 1rem;
@@ -138,47 +150,179 @@
 			cursor: pointer;
 			border: none;
 		}
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 0.5rem;
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        #embed-code {
+            width: 100%;
+            height: 100px;
+            margin-top: 1rem;
+            border-radius: 0.5rem;
+        }
+        #copy-embed-code {
+            margin-top: 1rem;
+        }
+        .loading-indicator {
+            display: none;
+            position: fixed;
+            z-index: 2;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .spinner {
+            border: 16px solid #f3f3f3;
+            border-top: 16px solid #3498db;
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            animation: spin 2s linear infinite;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin-top: -60px;
+            margin-left: -60px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
 	</style>
     <script>
-        const viewer = document.getElementById('viewer');
-        const upload = document.getElementById('avatar-upload');
-        const saveButton = document.getElementById('save-avatar');
-        const embedButton = document.getElementById('embed-avatar');
-        const avatarName = document.getElementById('avatar-name');
-        upload.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                const url = URL.createObjectURL(file);
-                viewer.src = url;
-            }
-        });
-        saveButton.addEventListener('click', () => {
-            const name = avatarName.value;
-            const file = upload.files[0];
-            if (name && file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    const avatar = {
-                        name,
-                        file: event.target.result
+        document.addEventListener('DOMContentLoaded', () => {
+            const viewer = document.getElementById('viewer');
+            const upload = document.getElementById('avatar-upload');
+            const saveButton = document.getElementById('save-avatar');
+            const embedButton = document.getElementById('embed-avatar');
+            const resetButton = document.getElementById('reset-avatar');
+            const avatarName = document.getElementById('avatar-name');
+            const modal = document.getElementById('embed-modal');
+            const closeButton = document.querySelector('.close-button');
+            const copyEmbedCodeButton = document.getElementById('copy-embed-code');
+            const loadingIndicator = document.getElementById('loading-indicator');
+
+            const defaultAvatar = {
+                name: 'Default Avatar',
+                file: '/assets/default-avatar.glb'
+            };
+
+            const showLoading = () => loadingIndicator.style.display = 'block';
+            const hideLoading = () => loadingIndicator.style.display = 'none';
+
+            const loadAvatar = (avatar) => {
+                showLoading();
+                avatarName.value = avatar.name;
+                viewer.src = avatar.file;
+                viewer.addEventListener('load', () => {
+                    hideLoading();
+                }, { once: true });
+            };
+
+            const handleFileUpload = (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    if (file.name.endsWith('.glb')) {
+                        const url = URL.createObjectURL(file);
+                        loadAvatar({ name: file.name, file: url });
+                    } else {
+                        alert('Please upload a .glb file.');
+                    }
+                }
+            };
+
+            const saveAvatar = () => {
+                const name = avatarName.value;
+                const file = upload.files[0];
+                if (name && file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const avatar = {
+                            name,
+                            file: event.target.result
+                        };
+                        localStorage.setItem('avatar', JSON.stringify(avatar));
+                        alert('Avatar saved!');
                     };
-                    localStorage.setItem('avatar', JSON.stringify(avatar));
-                    alert('Avatar saved!');
-                };
-                reader.readAsDataURL(file);
-            } else {
-                alert('Please enter a name and upload an avatar.');
-            }
+                    reader.readAsDataURL(file);
+                } else {
+                    alert('Please enter a name and upload an avatar.');
+                }
+            };
+
+            const openEmbedModal = () => {
+                const savedAvatar = JSON.parse(localStorage.getItem('avatar'));
+                if (savedAvatar) {
+                    const embedCode = `<iframe src="${window.location.origin}/a-embed.html?avatar=${encodeURIComponent(savedAvatar.file)}" width="500" height="500" frameborder="0"></iframe>`;
+                    const embedCodeTextarea = document.getElementById('embed-code');
+                    embedCodeTextarea.value = embedCode;
+                    modal.style.display = 'block';
+                } else {
+                    alert('Please save an avatar first.');
+                }
+            };
+
+            const closeModal = () => {
+                modal.style.display = 'none';
+            };
+
+            const copyEmbedCode = () => {
+                const embedCodeTextarea = document.getElementById('embed-code');
+                embedCodeTextarea.select();
+                document.execCommand('copy');
+                alert('Embed code copied to clipboard!');
+            };
+
+            const resetToDefault = () => {
+                localStorage.removeItem('avatar');
+                loadAvatar(defaultAvatar);
+            };
+
+            upload.addEventListener('change', handleFileUpload);
+            saveButton.addEventListener('click', saveAvatar);
+            embedButton.addEventListener('click', openEmbedModal);
+            resetButton.addEventListener('click', resetToDefault);
+            closeButton.addEventListener('click', closeModal);
+            copyEmbedCodeButton.addEventListener('click', copyEmbedCode);
+            window.addEventListener('click', (event) => {
+                if (event.target == modal) {
+                    closeModal();
+                }
+            });
+
+            const savedAvatar = JSON.parse(localStorage.getItem('avatar'));
+            loadAvatar(savedAvatar || defaultAvatar);
         });
-        embedButton.addEventListener('click', () => {
-            // TODO: Implement embed functionality
-            alert('Embed code copied to clipboard!');
-        });
-        const savedAvatar = JSON.parse(localStorage.getItem('avatar'));
-        if (savedAvatar) {
-            avatarName.value = savedAvatar.name;
-            viewer.src = savedAvatar.file;
-        }
     </script>
 </body>
 </html>

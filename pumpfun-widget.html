@@ -56,9 +56,21 @@
 			body.bg-light .mcap {
 				color: #999;
 			}
+			#status {
+				position: absolute;
+				top: 8px;
+				right: 8px;
+				width: 8px;
+				height: 8px;
+				border-radius: 50%;
+				background: #444;
+			}
+			#status.connected { background: #00ff41; }
+			#status.error { background: #ff4141; }
 		</style>
 	</head>
 	<body>
+		<div id="status"></div>
 		<div id="root"></div>
 		<script type="module">
 						const params = new URL(location.href).searchParams;
@@ -73,17 +85,22 @@
 			];
 			let rpcIndex = 0;
 			let ws = null;
+			let reconnectTimer = null;
 
 			function connect() {
+				if (reconnectTimer) clearTimeout(reconnectTimer);
 				const ep = RPC_ENDPOINTS[rpcIndex % RPC_ENDPOINTS.length];
 				rpcIndex++;
 				ws = new WebSocket(ep.url);
+				const statusEl = document.getElementById('status');
 
 				ws.onopen = () => {
 					if (ep.protocol === 'pumpportal') {
 						ws.send(JSON.stringify({ method: 'subscribeNewToken' }));
 					}
+					statusEl.className = 'connected';
 				};
+
 
 				ws.onmessage = (evt) => {
 					let msg;
@@ -118,21 +135,54 @@
 								symbol: msg.symbol || null,
 								marketCapSol: mcap,
 								imageUrl: null, // PumpPortal does not provide image directly
+								metadataUri: msg.uri || null,
 							};
 							renderEntry(info);
+							if (info.metadataUri) fetchMetadata(info);
 						}
 						return;
 					}
 				};
 
+				ws.onerror = () => {
+					document.getElementById('status').className = 'error';
+				}
+
 				ws.onclose = () => {
-					setTimeout(connect, 1000);
+					document.getElementById('status').className = '';
+					reconnectTimer = setTimeout(connect, 3000);
 				};
 			}
+
+			async function fetchMetadata(info) {
+				try {
+					let url = info.metadataUri;
+					if (!url) return;
+					if (url.startsWith('ipfs://')) {
+						url = 'https://cloudflare-ipfs.com/ipfs/' + url.slice(7);
+					}
+					const resp = await fetch(url, { signal: AbortSignal.timeout(5000) });
+					if (!resp.ok) return;
+					const meta = await resp.json();
+					if (meta.image) {
+						let imgSrc = meta.image;
+						if (imgSrc.startsWith('ipfs://')) {
+							imgSrc = 'https://cloudflare-ipfs.com/ipfs/' + imgSrc.slice(7);
+						}
+						const imgEl = document.querySelector(`#entry-${info.mint} .token-img`);
+						if (imgEl) {
+							imgEl.src = imgSrc;
+							imgEl.style.display = 'block';
+						}
+					}
+				} catch {}
+			}
+
 
 			function renderEntry(info) {
 				const div = document.createElement('div');
 				div.className = 'entry';
+				div.id = `entry-${info.mint}`;
 
 				const displayName = info.name || 'Unknown';
 				const displaySymbol = info.symbol ? '$' + info.symbol : '';

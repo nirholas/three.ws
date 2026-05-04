@@ -38,67 +38,9 @@
 			<h1>
 				<a href="/"><img src="/three.svg" alt="three.ws" class="wordmark-logo" /></a>
 			</h1>
-			<nav class="features-nav" aria-label="Primary">
-				<ul class="nav-root" role="menubar">
-					<li class="nav-item nav-has-menu" role="none">
-						<button
-							type="button"
-							class="nav-trigger"
-							aria-haspopup="true"
-							aria-expanded="false"
-							role="menuitem"
-						>
-							Build<span class="nav-caret" aria-hidden="true">▾</span>
-						</button>
-						<ul class="nav-menu" role="menu" aria-label="Build">
-							<li role="none">
-								<a href="/create" role="menuitem"
-									><span class="nav-mi-title">Create agent</span
-									><span class="nav-mi-sub">Avatar + brain wizard</span></a
-								>
-							</li>
-							<li role="none">
-								<a href="/app" role="menuitem"
-									><span class="nav-mi-title">Viewer</span
-									><span class="nav-mi-sub">Drag-and-drop GLB</span></a
-								>
-							</li>
-							<li role="none">
-								<a href="/validation" role="menuitem"
-									><span class="nav-mi-title">glTF Validator</span
-									><span class="nav-mi-sub">Khronos spec check</span></a
-								>
-							</li>
-						</ul>
-					</li>
-					<li role="none"><a href="/discover" role="menuitem">Discover</a></li>
-					<li class="nav-item nav-has-menu" role="none">
-						<button
-							type="button"
-							class="nav-trigger"
-							aria-haspopup="true"
-							aria-expanded="false"
-							role="menuitem"
-						>
-							Solana<span class="nav-caret" aria-hidden="true">▾</span>
-						</button>
-						<ul class="nav-menu" role="menu" aria-label="Solana">
-							<li role="none">
-								<a href="/pumpfun" role="menuitem"
-									><span class="nav-mi-title">Pump.fun stream</span
-									><span class="nav-mi-sub">Mint agent tokens</span></a
-								>
-							</li>
-							<li role="none">
-								<a href="/vanity-wallet" role="menuitem"
-									><span class="nav-mi-title">Vanity wallet</span
-									><span class="nav-mi-sub">Generate address</span></a
-								>
-							</li>
-						</ul>
-					</li>
-				</ul>
-			</nav>
+			<div id="nav-container"></div>
+		</header>
+		<script src="/nav.js"></script>
 		</header>
 
 		<main class="gallery-main" id="gallery-main">
