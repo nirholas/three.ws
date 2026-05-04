@@ -1,0 +1,799 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>three.ws — Features</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="description" content="Every feature of three.ws — the 3D viewer, agent runtime, on-chain identity, embedding layer, and backend integrations that power embodied AI on the open web." />
+		<meta name="theme-color" content="#000000" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="three.ws — Features" />
+		<meta property="og:description" content="The full feature set: WebGL 3D viewer, Claude-powered agent runtime, ERC-8004 on-chain identity, embeddable widgets, OAuth 2.1 + MCP backend." />
+		<meta property="og:url" content="https://three.ws/features" />
+		<meta property="og:image" content="https://three.ws/og-image.png" />
+
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="three.ws — Features" />
+		<meta name="twitter:description" content="The full feature set behind three.ws — render, embody, register, embed." />
+		<meta name="twitter:image" content="https://three.ws/og-image.png" />
+
+		<link rel="canonical" href="https://three.ws/features" />
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="apple-touch-icon" href="/pwa-192x192.png" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/footer.css" />
+
+		<style>
+			*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+			body {
+				background: #000;
+				color: #e0e0e0;
+				font-family: 'Inter', sans-serif;
+				-webkit-font-smoothing: antialiased;
+			}
+
+			a { color: inherit; text-decoration: none; }
+
+			/* ── Nav ── */
+			.exp-nav {
+				position: sticky;
+				top: 0;
+				z-index: 100;
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: 0 clamp(1.5rem, 5vw, 4rem);
+				height: 64px;
+				background: rgba(0,0,0,0.85);
+				backdrop-filter: blur(16px);
+				border-bottom: 1px solid rgba(255,255,255,0.06);
+			}
+
+			.exp-nav-brand {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 1.25rem;
+				font-weight: 700;
+				color: #fff;
+				letter-spacing: -0.02em;
+			}
+
+			.exp-nav-brand span { color: #a78bfa; }
+
+			.exp-nav-links {
+				display: flex;
+				align-items: center;
+				gap: 2rem;
+				list-style: none;
+			}
+
+			.exp-nav-links a {
+				font-size: 0.875rem;
+				color: rgba(255,255,255,0.6);
+				transition: color 0.15s;
+			}
+
+			.exp-nav-links a:hover { color: #fff; }
+
+			.exp-nav-cta {
+				padding: 0.5rem 1.25rem;
+				background: linear-gradient(135deg, #a78bfa 0%, #6366f1 100%);
+				color: #fff !important;
+				border-radius: 8px;
+				font-weight: 600;
+				font-size: 0.875rem;
+				transition: opacity 0.15s;
+			}
+
+			.exp-nav-cta:hover { opacity: 0.85; }
+
+			/* ── Hero ── */
+			.exp-hero {
+				position: relative;
+				overflow: hidden;
+				padding: clamp(5rem, 12vw, 9rem) clamp(1.5rem, 5vw, 4rem) clamp(4rem, 8vw, 7rem);
+				text-align: center;
+			}
+
+			.exp-hero::before {
+				content: '';
+				position: absolute;
+				inset: 0;
+				background:
+					radial-gradient(ellipse 80% 60% at 50% -10%, rgba(139,92,246,0.22) 0%, transparent 65%),
+					radial-gradient(ellipse 40% 40% at 80% 80%, rgba(99,102,241,0.1) 0%, transparent 60%);
+				pointer-events: none;
+			}
+
+			.exp-hero-eyebrow {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.5rem;
+				padding: 0.35rem 1rem;
+				border: 1px solid rgba(167,139,250,0.35);
+				border-radius: 100px;
+				font-size: 0.78rem;
+				font-weight: 600;
+				color: #a78bfa;
+				text-transform: uppercase;
+				letter-spacing: 0.08em;
+				margin-bottom: 2rem;
+				background: rgba(139,92,246,0.08);
+			}
+
+			.exp-hero-eyebrow-dot {
+				width: 6px;
+				height: 6px;
+				border-radius: 50%;
+				background: #a78bfa;
+				animation: pulse-dot 2s ease-in-out infinite;
+			}
+
+			@keyframes pulse-dot {
+				0%, 100% { opacity: 1; }
+				50% { opacity: 0.3; }
+			}
+
+			.exp-hero h1 {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: clamp(2.5rem, 6vw, 5rem);
+				font-weight: 700;
+				line-height: 1.1;
+				letter-spacing: -0.03em;
+				color: #fff;
+				max-width: 900px;
+				margin: 0 auto 1.5rem;
+			}
+
+			.exp-hero h1 em {
+				font-style: normal;
+				background: linear-gradient(90deg, #a78bfa, #6366f1);
+				-webkit-background-clip: text;
+				-webkit-text-fill-color: transparent;
+				background-clip: text;
+			}
+
+			.exp-hero-sub {
+				font-size: clamp(1rem, 2vw, 1.25rem);
+				color: rgba(255,255,255,0.55);
+				max-width: 640px;
+				margin: 0 auto 2.5rem;
+				line-height: 1.7;
+			}
+
+			.exp-hero-actions {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				gap: 1rem;
+				flex-wrap: wrap;
+			}
+
+			.btn-primary {
+				padding: 0.875rem 2rem;
+				background: linear-gradient(135deg, #a78bfa 0%, #6366f1 100%);
+				color: #fff;
+				border-radius: 10px;
+				font-weight: 600;
+				font-size: 1rem;
+				display: inline-flex;
+				align-items: center;
+				gap: 0.5rem;
+				transition: opacity 0.15s, transform 0.15s;
+			}
+
+			.btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+
+			.btn-ghost {
+				padding: 0.875rem 2rem;
+				border: 1px solid rgba(255,255,255,0.18);
+				color: rgba(255,255,255,0.8);
+				border-radius: 10px;
+				font-weight: 500;
+				font-size: 1rem;
+				transition: border-color 0.15s, color 0.15s;
+			}
+
+			.btn-ghost:hover { border-color: rgba(255,255,255,0.4); color: #fff; }
+
+			/* ── Quick-jump pill row ── */
+			.feat-jump {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.5rem;
+				justify-content: center;
+				max-width: 760px;
+				margin: 2.5rem auto 0;
+			}
+
+			.feat-jump a {
+				font-size: 0.82rem;
+				font-weight: 500;
+				color: rgba(255,255,255,0.6);
+				border: 1px solid rgba(255,255,255,0.1);
+				background: rgba(255,255,255,0.02);
+				padding: 0.4rem 0.9rem;
+				border-radius: 100px;
+				transition: border-color 0.15s, color 0.15s, background 0.15s;
+			}
+
+			.feat-jump a:hover {
+				color: #fff;
+				border-color: rgba(167,139,250,0.4);
+				background: rgba(139,92,246,0.08);
+			}
+
+			/* ── Section layout ── */
+			.exp-section {
+				padding: clamp(4rem, 8vw, 7rem) clamp(1.5rem, 5vw, 4rem);
+				max-width: 1200px;
+				margin: 0 auto;
+			}
+
+			.exp-section-label {
+				font-size: 0.75rem;
+				font-weight: 600;
+				text-transform: uppercase;
+				letter-spacing: 0.1em;
+				color: #a78bfa;
+				margin-bottom: 1rem;
+			}
+
+			.exp-section-heading {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: clamp(1.75rem, 3.5vw, 2.75rem);
+				font-weight: 700;
+				letter-spacing: -0.025em;
+				color: #fff;
+				line-height: 1.2;
+				max-width: 760px;
+				margin-bottom: 1rem;
+			}
+
+			.exp-section-sub {
+				font-size: 1.0625rem;
+				color: rgba(255,255,255,0.5);
+				max-width: 640px;
+				line-height: 1.7;
+				margin-bottom: 3rem;
+			}
+
+			/* ── Card grid ── */
+			.exp-cards {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+				gap: 1.25rem;
+			}
+
+			.exp-card {
+				background: rgba(255,255,255,0.03);
+				border: 1px solid rgba(255,255,255,0.07);
+				border-radius: 16px;
+				padding: 1.75rem;
+				transition: border-color 0.2s, background 0.2s, transform 0.2s;
+			}
+
+			.exp-card:hover {
+				border-color: rgba(167,139,250,0.3);
+				background: rgba(139,92,246,0.05);
+				transform: translateY(-2px);
+			}
+
+			.exp-card-icon {
+				width: 44px;
+				height: 44px;
+				border-radius: 11px;
+				background: rgba(139,92,246,0.15);
+				border: 1px solid rgba(139,92,246,0.25);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 1.25rem;
+				margin-bottom: 1.1rem;
+			}
+
+			.exp-card h3 {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 1.0625rem;
+				font-weight: 600;
+				color: #fff;
+				margin-bottom: 0.55rem;
+				letter-spacing: -0.01em;
+			}
+
+			.exp-card p {
+				font-size: 0.9375rem;
+				color: rgba(255,255,255,0.5);
+				line-height: 1.65;
+			}
+
+			.exp-card code {
+				font-family: 'JetBrains Mono', ui-monospace, monospace;
+				font-size: 0.82em;
+				color: #c4b5fd;
+				background: rgba(167,139,250,0.08);
+				border: 1px solid rgba(167,139,250,0.18);
+				padding: 1px 5px;
+				border-radius: 4px;
+			}
+
+			/* Section anchor offset for sticky nav */
+			.exp-section[id] { scroll-margin-top: 80px; }
+
+			/* ── Divider ── */
+			.exp-divider {
+				height: 1px;
+				background: rgba(255,255,255,0.06);
+				max-width: 1200px;
+				margin: 0 auto;
+			}
+
+			/* ── Code block (embed example) ── */
+			.feat-code {
+				margin-top: 2rem;
+				background: rgba(255,255,255,0.02);
+				border: 1px solid rgba(255,255,255,0.08);
+				border-radius: 12px;
+				padding: 1.25rem 1.5rem;
+				font-family: 'JetBrains Mono', ui-monospace, monospace;
+				font-size: 0.875rem;
+				line-height: 1.7;
+				color: rgba(255,255,255,0.8);
+				overflow-x: auto;
+			}
+
+			.feat-code .tok-tag { color: #f472b6; }
+			.feat-code .tok-attr { color: #a78bfa; }
+			.feat-code .tok-str { color: #4ade80; }
+			.feat-code .tok-com { color: rgba(255,255,255,0.35); }
+
+			/* ── CTA section ── */
+			.exp-cta-section {
+				padding: clamp(4rem, 8vw, 7rem) clamp(1.5rem, 5vw, 4rem);
+				text-align: center;
+				position: relative;
+				overflow: hidden;
+			}
+
+			.exp-cta-section::before {
+				content: '';
+				position: absolute;
+				inset: 0;
+				background: radial-gradient(ellipse 70% 70% at 50% 100%, rgba(139,92,246,0.15) 0%, transparent 65%);
+				pointer-events: none;
+			}
+
+			.exp-cta-section h2 {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: clamp(2rem, 4vw, 3.25rem);
+				font-weight: 700;
+				letter-spacing: -0.03em;
+				color: #fff;
+				max-width: 700px;
+				margin: 0 auto 1.25rem;
+				line-height: 1.15;
+			}
+
+			.exp-cta-section p {
+				font-size: 1.0625rem;
+				color: rgba(255,255,255,0.5);
+				max-width: 540px;
+				margin: 0 auto 2.5rem;
+				line-height: 1.7;
+			}
+
+			/* ── Footer ── */
+			.exp-footer {
+				border-top: 1px solid rgba(255,255,255,0.06);
+				padding: 2rem clamp(1.5rem, 5vw, 4rem);
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				flex-wrap: wrap;
+				gap: 1rem;
+			}
+
+			.exp-footer-brand {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 1rem;
+				font-weight: 700;
+				color: rgba(255,255,255,0.4);
+			}
+
+			.exp-footer-brand span { color: #a78bfa; }
+
+			.exp-footer-links {
+				display: flex;
+				gap: 1.5rem;
+				list-style: none;
+			}
+
+			.exp-footer-links a {
+				font-size: 0.84rem;
+				color: rgba(255,255,255,0.35);
+				transition: color 0.15s;
+			}
+
+			.exp-footer-links a:hover { color: rgba(255,255,255,0.7); }
+
+			@media (max-width: 640px) {
+				.exp-nav-links { display: none; }
+			}
+		</style>
+	</head>
+	<body>
+
+		<!-- Nav -->
+		<nav class="exp-nav">
+			<a href="/" class="exp-nav-brand">three<span>.ws</span></a>
+			<ul class="exp-nav-links">
+				<li><a href="/discover">Discover</a></li>
+				<li><a href="/marketplace">Marketplace</a></li>
+				<li><a href="/docs">Docs</a></li>
+				<li><a href="/create" class="exp-nav-cta">Create your agent</a></li>
+			</ul>
+		</nav>
+
+		<!-- Hero -->
+		<section class="exp-hero">
+			<div class="exp-hero-eyebrow">
+				<span class="exp-hero-eyebrow-dot"></span>
+				The full stack
+			</div>
+			<h1>Every feature, <em>explained.</em></h1>
+			<p class="exp-hero-sub">
+				three.ws is one stack — a WebGL viewer, an LLM-powered agent runtime,
+				on-chain identity, and an embed layer — built to make a 3D AI agent of
+				yourself that lives anywhere on the internet and is owned by you.
+			</p>
+			<div class="exp-hero-actions">
+				<a href="/create" class="btn-primary">
+					Create your agent
+					<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+				</a>
+				<a href="/docs" class="btn-ghost">Read the docs</a>
+			</div>
+
+			<nav class="feat-jump" aria-label="Feature sections">
+				<a href="#viewer">3D Viewer</a>
+				<a href="#runtime">Agent Runtime</a>
+				<a href="#identity">On-Chain Identity</a>
+				<a href="#embed">Embedding</a>
+				<a href="#backend">Backend &amp; Integrations</a>
+			</nav>
+		</section>
+
+		<div class="exp-divider"></div>
+
+		<!-- 3D Viewer -->
+		<section class="exp-section" id="viewer">
+			<p class="exp-section-label">01 — 3D Viewer</p>
+			<h2 class="exp-section-heading">A real 3D engine, in the browser.</h2>
+			<p class="exp-section-sub">
+				Built on three.js r176 and WebGL 2.0. Drop a GLB or glTF file in and it renders
+				instantly — no plugin, no upload, no server round-trip. The same viewer powers
+				the platform, the embed widgets, and the validator.
+			</p>
+
+			<div class="exp-cards">
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x1F5BC;&#xFE0F;</div>
+					<h3>WebGL 2.0 rendering</h3>
+					<p>Hardware-accelerated rendering via three.js r176. PBR materials, HDR environment maps, real-time lighting and shadows — running on the GPU in any modern browser.</p>
+				</div>
+
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x1F4E6;</div>
+					<h3>glTF 2.0 + GLB</h3>
+					<p>Full glTF 2.0 / GLB pipeline with Draco geometry compression, KTX2 (Basis Universal) texture compression, and Meshopt mesh optimization for fast loads at scale.</p>
+				</div>
+
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x2714;&#xFE0F;</div>
+					<h3>Khronos validation</h3>
+					<p>Every uploaded file is validated against the Khronos glTF spec with line-level error reporting, surfaced in the on-platform validator at <code>/validation</code>.</p>
+				</div>
+
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x1F3AC;</div>
+					<h3>Animations &amp; morph targets</h3>
+					<p>Skinned mesh animations with bone retargeting, morph targets for facial expressions, and embedded camera tracks — all driven from the agent runtime by name.</p>
+				</div>
+
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x1F39B;&#xFE0F;</div>
+					<h3>OrbitControls + auto-rotate</h3>
+					<p>Pan, zoom, and rotate out of the box. Configurable auto-rotation for showcase modes. Touch-friendly on mobile, with sensible defaults for embedded contexts.</p>
+				</div>
+
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x1F39A;&#xFE0F;</div>
+					<h3>Live parameter tweaking</h3>
+					<p>Real-time controls for lights, exposure, and morph weights via a dat.GUI panel — useful for tuning an avatar before publish or debugging an embedded agent.</p>
+				</div>
+			</div>
+		</section>
+
+		<div class="exp-divider"></div>
+
+		<!-- Agent Runtime -->
+		<section class="exp-section" id="runtime">
+			<p class="exp-section-label">02 — Agent Runtime</p>
+			<h2 class="exp-section-heading">An LLM brain wired into a body.</h2>
+			<p class="exp-section-sub">
+				Claude is the default model, with a structured tool-loop that lets the agent
+				decide on actions, call tools, observe results, and respond. Every output is
+				routed through the avatar — speech, gestures, expression, and gaze.
+			</p>
+
+			<div class="exp-cards">
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x1F9E0;</div>
+					<h3>Claude tool-loop</h3>
+					<p>Anthropic Claude as the default brain, with a structured tool-loop. Up to 8 tool iterations per turn before returning final output to the user.</p>
+				</div>
+
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x1F6E0;&#xFE0F;</div>
+					<h3>Built-in tools</h3>
+					<p><code>wave</code>, <code>lookAt</code>, <code>play_clip</code>, <code>setExpression</code>, <code>speak</code>, and <code>remember</code> — the primitives every embodied agent gets for free.</p>
+				</div>
+
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x1F9E9;</div>
+					<h3>Composable skills</h3>
+					<p>Install skills from IPFS, Arweave, or HTTP. Each skill is a self-contained bundle: description, tool definitions, and async handlers. No redeploy required.</p>
+				</div>
+
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x1F3AD;</div>
+					<h3>Weighted emotion blending</h3>
+					<p>Celebration, concern, curiosity, empathy, and patience are blended continuously based on protocol events — not flipped through a finite-state machine.</p>
+				</div>
+
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x1F399;&#xFE0F;</div>
+					<h3>Voice (STT + TTS)</h3>
+					<p>Web Speech API for STT/TTS out of the box. ElevenLabs for production-quality voice. LiveKit for bidirectional realtime audio rooms with low-latency duplex.</p>
+				</div>
+
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x26A1;</div>
+					<h3>Solana Blinks</h3>
+					<p>Agents can generate and execute Solana Blink actions from shareable URLs — turning a chat reply into a signed on-chain transaction the user can confirm in one click.</p>
+				</div>
+			</div>
+		</section>
+
+		<div class="exp-divider"></div>
+
+		<!-- On-Chain Identity -->
+		<section class="exp-section" id="identity">
+			<p class="exp-section-label">03 — On-Chain Identity</p>
+			<h2 class="exp-section-heading">Your agent is an economic actor, not a PFP.</h2>
+			<p class="exp-section-sub">
+				Every agent gets a stable on-chain ID, a delegated signer wallet, a signed
+				action history, and a reputation score. Built on ERC-8004 for EVM, with
+				first-class Solana support via SIWS and Metaplex Core.
+			</p>
+
+			<div class="exp-cards">
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x26D3;&#xFE0F;</div>
+					<h3>ERC-8004 contracts</h3>
+					<p>IdentityRegistry, ReputationRegistry, and ValidationRegistry — deployable on any EVM chain. Open-source, auditable, and already running on Base.</p>
+				</div>
+
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x1F3F7;&#xFE0F;</div>
+					<h3>ERC-721 token per agent</h3>
+					<p>Each agent is an ERC-721 with a stable <code>agentId</code>, an owner wallet, a delegated signer, and an IPFS-pinned manifest containing body, persona, and skills.</p>
+				</div>
+
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x1F510;</div>
+					<h3>EIP-712 delegated signer</h3>
+					<p>The agent transacts autonomously within a permission scope you define. Revocable, scoped, and EIP-712 signed — composable with EIP-7710 delegation chains.</p>
+				</div>
+
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x1F4DC;</div>
+					<h3>Signed action log</h3>
+					<p>Every <code>speak</code>, <code>remember</code>, <code>skill-done</code>, and <code>validate</code> event is cryptographically signed and recorded — on-chain optionally, in the database always.</p>
+				</div>
+
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x1F4CA;</div>
+					<h3>Reputation score</h3>
+					<p>Built from real signed actions, not self-reported. Publicly readable through ReputationRegistry. Stakes, royalties, and discovery weight all follow the score.</p>
+				</div>
+
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x1F30D;</div>
+					<h3>Solana support</h3>
+					<p>Sign-In With Solana (SIWS), Solana wallet linking, and an optional Metaplex Core NFT path for agents that want to live on Solana instead of EVM.</p>
+				</div>
+			</div>
+		</section>
+
+		<div class="exp-divider"></div>
+
+		<!-- Embedding -->
+		<section class="exp-section" id="embed">
+			<p class="exp-section-label">04 — Embedding &amp; Distribution</p>
+			<h2 class="exp-section-heading">One line of HTML. Anywhere on the web.</h2>
+			<p class="exp-section-sub">
+				The <code>&lt;agent-3d&gt;</code> custom element is a zero-framework drop-in.
+				Five ready-made widget variants cover the common cases. Versioned CDN bundles
+				and rich social previews are wired in by default.
+			</p>
+
+			<pre class="feat-code"><span class="tok-com">&lt;!-- Drop into any page --&gt;</span>
+<span class="tok-tag">&lt;script</span> <span class="tok-attr">src</span>=<span class="tok-str">"https://three.ws/agent-3d/latest/agent-3d.js"</span><span class="tok-tag">&gt;&lt;/script&gt;</span>
+<span class="tok-tag">&lt;agent-3d</span> <span class="tok-attr">src</span>=<span class="tok-str">"https://three.ws/agent/your-agent"</span><span class="tok-tag">&gt;&lt;/agent-3d&gt;</span></pre>
+
+			<div class="exp-cards" style="margin-top:2.5rem;">
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x1F9F1;</div>
+					<h3>&lt;agent-3d&gt; web component</h3>
+					<p>A native custom element. No React, no Vue, no build step. Works in any page that loads a script tag — including static sites, Notion embeds, and CMS templates.</p>
+				</div>
+
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x1F503;</div>
+					<h3>Turntable widget</h3>
+					<p>Auto-rotating showcase view. Best for marketplaces, profile pages, and product hero sections where you want the model itself to do the work.</p>
+				</div>
+
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x1F3AC;</div>
+					<h3>Animation gallery</h3>
+					<p>Browsable list of every animation clip in the GLB, with one-click playback. Useful for character portfolios and rigging review.</p>
+				</div>
+
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x1F4AC;</div>
+					<h3>Talking agent</h3>
+					<p>Full chat surface with voice input/output and lip sync wired to the LLM brain. The default if you want visitors to actually converse with the agent.</p>
+				</div>
+
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x1F194;</div>
+					<h3>ERC-8004 passport card</h3>
+					<p>A compact card showing the agent ID, owner, reputation score, and signer status — sourced live from the on-chain registry. Drop-in proof of identity.</p>
+				</div>
+
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x1F4CD;</div>
+					<h3>Hotspot tour</h3>
+					<p>Annotate points on the model with text, links, or skill calls. Click a hotspot to fly the camera and trigger an action. Built for product walkthroughs.</p>
+				</div>
+
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x1F39B;&#xFE0F;</div>
+					<h3>Widget Studio</h3>
+					<p>Point-and-click embed code generator at <code>/studio</code>. Pick a widget, configure it, and copy the snippet — published widgets get their own public URL at <code>/w/[id]</code>.</p>
+				</div>
+
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x1F517;</div>
+					<h3>oEmbed + Open Graph</h3>
+					<p>Rich social previews on X, Discord, Slack, and Telegram. oEmbed endpoint and per-agent OG images render on demand so every shared link looks right.</p>
+				</div>
+
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x1F4E1;</div>
+					<h3>Versioned CDN</h3>
+					<p>Pinned bundles at <code>/agent-3d/x.y.z/agent-3d.js</code> with year-long immutable cache. Use <code>latest</code> for evergreen embeds, an exact semver for production.</p>
+				</div>
+			</div>
+		</section>
+
+		<div class="exp-divider"></div>
+
+		<!-- Backend -->
+		<section class="exp-section" id="backend">
+			<p class="exp-section-label">05 — Backend &amp; Integrations</p>
+			<h2 class="exp-section-heading">Standards-first. Real protocols, not custom ones.</h2>
+			<p class="exp-section-sub">
+				A full OAuth 2.1 server, an MCP endpoint that lets external AI systems call
+				agent tools over JSON-RPC, and turnkey integrations with the avatar and wallet
+				vendors developers already use.
+			</p>
+
+			<div class="exp-cards">
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x1F511;</div>
+					<h3>OAuth 2.1 server</h3>
+					<p>RFC 6749 + PKCE, RFC 7591 dynamic client registration, RFC 7009 revocation, RFC 7662 introspection, RFC 8414 discovery. Full spec, no shortcuts.</p>
+				</div>
+
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x1F9EA;</div>
+					<h3>Developer API keys</h3>
+					<p>Scoped API keys with expiry, issued through the dashboard. Use them for server-side calls when an OAuth flow would be overkill.</p>
+				</div>
+
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x1F50C;</div>
+					<h3>MCP endpoint</h3>
+					<p>Model Context Protocol over HTTP with JSON-RPC 2.0. External AI systems — Claude Desktop, Cursor, custom agents — can call your agent's tools as remote skills.</p>
+				</div>
+
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x1F464;</div>
+					<h3>Ready Player Me</h3>
+					<p>Import a Ready Player Me avatar URL directly into the wizard. The model is validated, optimized, and pinned to your account in one step.</p>
+				</div>
+
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x1F4F8;</div>
+					<h3>Avaturn (photo to avatar)</h3>
+					<p>Snap a photo, get a rigged 3D avatar back. Avaturn sessions are brokered server-side so credentials never touch the browser.</p>
+				</div>
+
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x1F4B3;</div>
+					<h3>Privy embedded wallets</h3>
+					<p>Email login that ships with a non-custodial wallet — for users who want to mint an agent without already owning crypto. Linked to ERC-8004 identity.</p>
+				</div>
+
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x1F4DA;</div>
+					<h3>OpenAPI 3.1 spec</h3>
+					<p>Generated live at <code>/openapi.json</code>. Wire any code-gen tool, Postman, or LLM-assisted client to the full surface area without hand-rolling types.</p>
+				</div>
+
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x1F4C5;</div>
+					<h3>DCA &amp; subscriptions</h3>
+					<p>On-chain DCA strategies and recurring subscription payments, scheduled by cron. Designed at <code>/strategy-lab</code>, executed without your wallet being online.</p>
+				</div>
+
+				<div class="exp-card">
+					<div class="exp-card-icon">&#x1F4E8;</div>
+					<h3>Well-known discovery</h3>
+					<p>Standard discovery endpoints under <code>/.well-known</code> — agent-card, x402 payments, OAuth metadata, attestation schemas — for protocol-level interop.</p>
+				</div>
+			</div>
+		</section>
+
+		<div class="exp-divider"></div>
+
+		<!-- CTA -->
+		<section class="exp-cta-section">
+			<h2>That's the stack. Now make one of you.</h2>
+			<p>
+				Upload a model, pick a voice, write a persona, and mint it on-chain.
+				Drop a single tag on your site and your agent is live, talking to your audience 24/7.
+			</p>
+			<div class="exp-hero-actions">
+				<a href="/create" class="btn-primary">
+					Create your agent
+					<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+				</a>
+				<a href="/explained" class="btn-ghost">See the explainer</a>
+			</div>
+		</section>
+
+		<!-- Footer -->
+		<footer class="exp-footer">
+			<span class="exp-footer-brand">three<span>.ws</span></span>
+			<ul class="exp-footer-links">
+				<li><a href="https://github.com/nirholas/3D-Agent" target="_blank" rel="noopener">GitHub</a></li>
+				<li><a href="/docs">Docs</a></li>
+				<li><a href="/discover">Discover</a></li>
+				<li><a href="/explained">Explained</a></li>
+				<li><a href="https://three.ws">three.ws</a></li>
+			</ul>
+			<p style="font-size:0.8rem;color:rgba(255,255,255,0.2);">© 2026 three.ws — Apache 2.0</p>
+		</footer>
+
+	</body>
+</html>
