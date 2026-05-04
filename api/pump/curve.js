@@ -51,16 +51,14 @@ export default wrap(async (req, res) => {
 		return error(res, 404, 'no_curve', 'no bonding curve found for that mint');
 	}
 
-	res.setHeader('Cache-Control', 'public, max-age=5, s-maxage=10, stale-while-revalidate=30');
 	return json(res, 200, {
 		mint,
 		network,
-		rpc: undefined,
 		...result,
 		// price/graduation values from the SDK contain BNs — stringify them for JSON wire safety
 		price: result.price ? serializeBNs(result.price) : null,
 		graduation: result.graduation ? serializeBNs(result.graduation) : null,
-	});
+	}, { 'cache-control': 'public, max-age=5, s-maxage=10, stale-while-revalidate=30' });
 });
 
 function serializeBNs(obj) {

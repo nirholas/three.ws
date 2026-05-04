@@ -30,6 +30,16 @@ export function error(res, status, code, message, extra = {}) {
 	return json(res, status, { error: code, error_description: message, ...extra });
 }
 
+// Response shape used for zod validation errors so clients can render
+// field-level feedback. Mirrors RFC 9457-style problem details (lite).
+export function validationError(res, err) {
+	return json(res, err.status || 400, {
+		error: err.code || 'validation_error',
+		error_description: err.message || 'invalid input',
+		issues: err.issues || [],
+	});
+}
+
 export async function readJson(req, limit = 1_000_000) {
 	const ct = req.headers['content-type'] || '';
 	if (!ct.includes('application/json')) {
@@ -126,12 +136,16 @@ export function wrap(handler) {
 				captureException(err, { url: req.url, method: req.method });
 			}
 			if (!res.writableEnded) {
-				error(
-					res,
-					status,
-					err.code || (status >= 500 ? 'internal_error' : 'bad_request'),
-					err.message || 'error',
-				);
+				if (err.code === 'validation_error' && Array.isArray(err.issues)) {
+					validationError(res, err);
+				} else {
+					error(
+						res,
+						status,
+						err.code || (status >= 500 ? 'internal_error' : 'bad_request'),
+						err.message || 'error',
+					);
+				}
 			}
 		}
 		// Keep the lambda alive briefly so the zauth SDK's in-flight POST to

@@ -236,7 +236,35 @@
 	"includeCoAuthoredBy": true,
 	"respectGitignore": true,
 
+	"outputStyle": "Ship Mode",
+
+	"statusLine": {
+		"type": "command",
+		"command": "/workspaces/3D-Agent/.claude/statusline.sh",
+		"padding": 0
+	},
+
 	"hooks": {
+		"SessionStart": [
+			{
+				"hooks": [
+					{
+						"type": "command",
+						"command": "/workspaces/3D-Agent/.claude/hooks/session-start.sh"
+					}
+				]
+			}
+		],
+		"UserPromptSubmit": [
+			{
+				"hooks": [
+					{
+						"type": "command",
+						"command": "/workspaces/3D-Agent/.claude/hooks/user-prompt-submit.sh"
+					}
+				]
+			}
+		],
 		"PreToolUse": [
 			{
 				"matcher": "Write|Edit|MultiEdit",

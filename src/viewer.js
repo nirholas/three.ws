@@ -116,7 +116,11 @@ export class Viewer {
 
 		this.renderer = window.renderer = new WebGLRenderer({ antialias: true, alpha: true });
 		this.renderer.setClearColor(0x000000, 1);
-		this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+		// DPR cap: kiosk/embed modes default to 1.5 (saves ~40% fragment work on
+		// retina). Override with options.maxPixelRatio. Standalone tabs default
+		// to 2.0 to preserve sharpness on high-DPI displays.
+		const dprCap = options.maxPixelRatio ?? (options.kiosk ? 1.5 : 2);
+		this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, dprCap));
 		this.renderer.setSize(el.clientWidth, el.clientHeight);
 
 		this.pmremGenerator = new PMREMGenerator(this.renderer);

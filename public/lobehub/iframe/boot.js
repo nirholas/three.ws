@@ -37,8 +37,14 @@ if (hostParam) {
 	}
 }
 
+// Locked-on origin: once a valid host message arrives, we lock to that origin
+// for the rest of the session. Subsequent messages from any other origin are
+// ignored, even if they would have been allowed by the policy below.
+let lockedOrigin = null;
+
 function isAllowedOrigin(origin) {
-	if (!origin) return false;
+	if (!origin || origin === 'null') return false;
+	if (lockedOrigin) return origin === lockedOrigin;
 	if (allowedOrigin) return origin === allowedOrigin;
 	if (KNOWN_ORIGINS.has(origin)) return true;
 	if (isDev(origin)) return true;
@@ -66,7 +72,20 @@ function post(op, payload, inReplyTo) {
 		payload: payload ?? {},
 	};
 	if (inReplyTo) msg.inReplyTo = inReplyTo;
-	const target = allowedOrigin ?? '*';
+	// Resolve target origin in priority order:
+	//   1. lockedOrigin (set after the first authenticated host message)
+	//   2. allowedOrigin (?host= URL param)
+	//   3. document.referrer (best-effort initial announcement)
+	let target = lockedOrigin || allowedOrigin;
+	if (!target) {
+		try {
+			if (document.referrer) target = new URL(document.referrer).origin;
+		} catch {}
+	}
+	if (!target) {
+		console.warn('[3d-agent] parent origin unknown; dropping', op);
+		return;
+	}
 	try {
 		window.parent.postMessage(msg, target);
 	} catch (_) {}
@@ -179,16 +198,21 @@ async function dispatchAction(op, payload, replyId) {
 function onMessage(ev) {
 	const { origin, data } = ev;
 	if (!data || typeof data !== 'object') return;
+	if (ev.source !== window.parent) return;
 
-	// Dev-harness handshake shortcut.
+	// Dev-harness handshake shortcut. Reply only to allowed, non-null origins.
 	if (data.type === 'handshake') {
+		if (!origin || origin === 'null') return;
+		if (!isAllowedOrigin(origin)) return;
+		if (!lockedOrigin) lockedOrigin = origin;
 		try {
-			window.parent.postMessage({ type: 'ready', agentId }, ev.origin || '*');
+			window.parent.postMessage({ type: 'ready', agentId }, origin);
 		} catch (_) {}
 		return;
 	}
 
 	if (!isAllowedOrigin(origin)) return;
+	if (!lockedOrigin) lockedOrigin = origin;
 
 	// ── v1 spec envelope ──────────────────────────────────────────────────────
 	if (data.v === 1 && data.source === 'agent-host' && data.kind && data.op) {

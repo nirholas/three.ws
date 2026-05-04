@@ -212,9 +212,9 @@ class MultiplayerClient {
   /**
    * Host: schedule synchronized start. All clients begin the song at startAt.
    */
-  async startSong () {
+  async startSong (delayMs) {
     if (!this.isHost || !this.roomRef) return;
-    const startAt = this.serverNow() + START_DELAY_MS;
+    const startAt = this.serverNow() + (typeof delayMs === 'number' ? delayMs : START_DELAY_MS);
     await this.roomRef.update({ status: 'playing', startAt });
     return startAt;
   }

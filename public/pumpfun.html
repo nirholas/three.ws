@@ -14,12 +14,17 @@
 	<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
 	<script defer src="/footer-newsletter.js"></script>
 	<style>
-		:root { color-scheme: dark; --accent: #6a5cff; --border: #1f1f29; --bg: #0a0a0f; --panel: #14141c; --muted: #888; }
+		:root { color-scheme: dark; --accent: #6a5cff; --border: #1f1f29; --bg: #0a0a0f; --panel: #14141c; --muted: #888;
+			--header-h: 64px; }
 		* { box-sizing: border-box; }
 		html, body { margin: 0; background: var(--bg); color: #eee;
 			font: 14px/1.55 -apple-system, system-ui, Segoe UI, Roboto, sans-serif; }
+		body.home-page { padding-top: var(--header-h); display: flex; flex-direction: column; min-height: 100vh; }
 		.pf-filterbar { padding: 10px 18px; border-bottom: 1px solid var(--border);
-			display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: var(--panel); }
+			display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: var(--panel);
+			position: sticky; top: var(--header-h); z-index: 50; }
+		.status-pill[data-state="down"] { cursor: pointer; color: #f87171; border-color: #4a1f23; }
+		.status-pill[data-state="down"]:hover { background: #1f1418; }
 		.pf-filterbar h1 { margin: 0; font-size: 15px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; }
 		.dot { width: 8px; height: 8px; border-radius: 50%; background: #555; box-shadow: 0 0 0 0 currentColor; }
 		.dot.live { background: #4ade80; animation: pulse 1.6s ease-in-out infinite; }
@@ -55,14 +60,14 @@
 		/* Picker modal */
 		.pf-modal-backdrop { position: fixed; inset: 0; background: rgba(4,4,8,0.72); backdrop-filter: blur(4px); z-index: 100; display: none; align-items: center; justify-content: center; padding: 24px; animation: fade-in 0.15s ease; }
 		.pf-modal-backdrop[data-open="true"] { display: flex; }
-		.pf-modal { width: min(960px, 100%); max-height: min(720px, calc(100vh - 48px)); background: var(--panel); border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 24px 64px rgba(0,0,0,0.5); animation: pop-in 0.18s ease; }
+		.pf-modal { width: min(1080px, 100%); max-height: min(760px, calc(100vh - 48px)); background: var(--panel); border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 24px 64px rgba(0,0,0,0.5); animation: pop-in 0.18s ease; }
 		.pf-modal-head { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--border); }
 		.pf-modal-head h2 { margin: 0; font-size: 14px; font-weight: 600; }
 		.pf-modal-head .spacer { flex: 1; }
 		.pf-modal-close { background: transparent; border: 0; color: var(--muted); cursor: pointer; font-size: 18px; line-height: 1; padding: 4px 8px; border-radius: 4px; }
 		.pf-modal-close:hover { background: #1f1f29; color: #eee; }
-		.pf-tabs { display: flex; gap: 2px; padding: 0 14px; border-bottom: 1px solid var(--border); background: #10101a; }
-		.pf-tab { background: transparent; border: 0; color: var(--muted); cursor: pointer; padding: 10px 14px; font-size: 13px; font-weight: 500; border-bottom: 2px solid transparent; }
+		.pf-tabs { display: flex; gap: 2px; padding: 0 14px; border-bottom: 1px solid var(--border); background: #10101a; overflow-x: auto; }
+		.pf-tab { background: transparent; border: 0; color: var(--muted); cursor: pointer; padding: 10px 14px; font-size: 13px; font-weight: 500; border-bottom: 2px solid transparent; white-space: nowrap; }
 		.pf-tab:hover { color: #eee; }
 		.pf-tab[aria-selected="true"] { color: #eee; border-bottom-color: var(--accent); }
 		.pf-tab .badge { display: inline-block; margin-left: 6px; font-size: 10px; color: var(--muted); }
@@ -73,30 +78,70 @@
 		.pf-toolbar .custom-row input { background: #161620; color: #eee; border: 1px solid #2a2a36; border-radius: 6px; padding: 7px 10px; font-size: 13px; width: 220px; }
 		.pf-toolbar .custom-row button { background: var(--accent); border: 0; color: #fff; border-radius: 6px; padding: 7px 12px; font-size: 13px; cursor: pointer; }
 		.pf-toolbar .custom-row button:hover { filter: brightness(1.1); }
-		.pf-body { flex: 1; min-height: 0; overflow-y: auto; padding: 16px 18px; }
-		.pf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+		.pf-tags { display: flex; gap: 6px; flex-wrap: wrap; padding: 0 18px 10px; border-bottom: 1px solid var(--border); }
+		.pf-tags:empty { display: none; }
+		.pf-tag { background: #161620; border: 1px solid #2a2a36; color: #cbd5e1; border-radius: 999px; padding: 3px 10px; font-size: 11px; cursor: pointer; }
+		.pf-tag:hover { background: #20202c; }
+		.pf-tag[data-active="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+		.pf-content { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 280px; }
+		.pf-body { min-height: 0; overflow-y: auto; padding: 16px 18px; }
+		.pf-preview { border-left: 1px solid var(--border); background: #0d0d15; display: flex; flex-direction: column; min-height: 0; }
+		.pf-preview-stage { flex: 1; min-height: 0; position: relative; background: radial-gradient(ellipse at center, #1a1a26 0%, #0a0a12 70%); }
+		.pf-preview-stage model-viewer { width: 100%; height: 100%; --poster-color: transparent; background: transparent; }
+		.pf-preview-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #2a2a3a; font-size: 48px; pointer-events: none; }
+		.pf-preview-meta { padding: 12px 14px; border-top: 1px solid var(--border); }
+		.pf-preview-meta .name { font-size: 13px; font-weight: 600; }
+		.pf-preview-meta .sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+		.pf-preview-meta .actions { margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; }
+		.pf-preview-meta .actions a, .pf-preview-meta .actions button { font-size: 11px; padding: 5px 10px; border-radius: 5px; background: #161620; border: 1px solid #2a2a36; color: #cbd5e1; text-decoration: none; cursor: pointer; }
+		.pf-preview-meta .actions a:hover, .pf-preview-meta .actions button:hover { background: #20202c; text-decoration: none; }
+		.pf-preview-meta .actions .primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+		.pf-preview-meta .actions .primary:hover { filter: brightness(1.1); background: var(--accent); }
+		.pf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
 		.pf-card { position: relative; background: #161620; border: 1px solid #232330; border-radius: 8px; overflow: hidden; cursor: pointer; transition: border-color 0.15s, transform 0.1s; display: flex; flex-direction: column; text-align: left; padding: 0; color: #eee; font: inherit; }
-		.pf-card:hover { border-color: #3a3a4a; }
+		.pf-card:hover, .pf-card:focus-visible { border-color: #3a3a4a; outline: none; }
+		.pf-card:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
 		.pf-card:active { transform: scale(0.98); }
 		.pf-card[data-selected="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
 		.pf-card .thumb { aspect-ratio: 1/1; background: #0e0e16 center/cover no-repeat; border-bottom: 1px solid #232330; position: relative; display: flex; align-items: center; justify-content: center; color: #2a2a3a; font-size: 32px; }
 		.pf-card .meta { padding: 8px 10px; }
 		.pf-card .name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-		.pf-card .sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+		.pf-card .sub { font-size: 10px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 		.pf-card .vis-tag { position: absolute; top: 6px; right: 6px; font-size: 9px; padding: 2px 6px; border-radius: 999px; background: rgba(0,0,0,0.6); color: #cbd5e1; text-transform: uppercase; letter-spacing: 0.05em; }
 		.pf-card .vis-tag.private { background: rgba(74,31,35,0.85); color: #fbbf24; }
 		.pf-card .selected-mark { position: absolute; top: 6px; left: 6px; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); display: none; align-items: center; justify-content: center; color: #fff; font-size: 11px; font-weight: 700; }
 		.pf-card[data-selected="true"] .selected-mark { display: flex; }
+		.pf-card .fav { position: absolute; bottom: 6px; right: 6px; background: rgba(0,0,0,0.55); border: 0; color: #cbd5e1; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; font-size: 12px; line-height: 1; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.15s; padding: 0; }
+		.pf-card:hover .fav, .pf-card:focus-within .fav, .pf-card .fav[data-on="true"] { opacity: 1; }
+		.pf-card .fav[data-on="true"] { color: #fbbf24; }
+		.pf-skeleton { background: linear-gradient(90deg, #161620 0%, #1f1f2a 50%, #161620 100%); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; border-radius: 8px; aspect-ratio: 1/1.25; }
+		@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 		.pf-status { padding: 32px 16px; text-align: center; color: var(--muted); font-size: 13px; }
 		.pf-status .cta { display: inline-block; margin-top: 10px; padding: 8px 14px; background: var(--accent); color: #fff; border-radius: 6px; font-size: 13px; }
 		.pf-status .cta:hover { filter: brightness(1.1); text-decoration: none; }
 		.pf-loadmore { display: block; margin: 16px auto 0; background: #161620; color: #eee; border: 1px solid #2a2a36; border-radius: 6px; padding: 8px 16px; font-size: 13px; cursor: pointer; }
 		.pf-loadmore:hover { background: #20202c; }
 		.pf-loadmore[disabled] { opacity: 0.5; cursor: wait; }
+		.pf-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 200; background: #161620; border: 1px solid #2a2a36; color: #eee; padding: 10px 16px; border-radius: 8px; font-size: 13px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); animation: toast-in 0.2s ease; max-width: 90vw; }
+		.pf-toast.error { border-color: #4a1f23; background: #1f1418; color: #fbbf24; }
+		.pf-toast.success { border-color: #1f4232; background: #0e1f17; color: #4ade80; }
+		@keyframes toast-in { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
 		@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 		@keyframes pop-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
-		@media (max-width: 600px) { .pf-toolbar { flex-direction: column; align-items: stretch; } .pf-toolbar .custom-row input { width: 100%; } }
-		main.pf-main { position: relative; height: calc(100vh - 140px); display: grid; grid-template-columns: 1fr 360px; }
+		@media (max-width: 760px) {
+			.pf-modal-backdrop { padding: 0; }
+			.pf-modal { width: 100%; max-height: 100vh; height: 100vh; border-radius: 0; border: 0; }
+			.pf-content { grid-template-columns: 1fr; grid-template-rows: 220px 1fr; }
+			.pf-preview { border-left: 0; border-bottom: 1px solid var(--border); order: -1; flex-direction: row; }
+			.pf-preview-stage { flex: 1; }
+			.pf-preview-meta { width: 50%; border-top: 0; border-left: 1px solid var(--border); }
+			.pf-toolbar { flex-direction: column; align-items: stretch; }
+			.pf-toolbar .custom-row input { width: 100%; }
+		}
+		@media (prefers-reduced-motion: reduce) {
+			.pf-modal-backdrop, .pf-modal, .pf-skeleton, .pf-toast { animation: none; }
+		}
+		main.pf-main { position: relative; flex: 1; min-height: calc(100vh - var(--header-h) - 56px); display: grid; grid-template-columns: 1fr 360px; }
 		#stage { position: relative; display: flex; flex-direction: column; }
 		iframe { width: 100%; flex: 1; border: 0; display: block; background: var(--bg); }
 		#anim-chips { display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 12px;
@@ -174,7 +219,38 @@
 		.evt-topic { font-size: 9px; padding: 1px 5px; background: #1f1f30; border: 1px solid #2a2a3c; border-radius: 10px; color: #7a7aaa; }
 		@keyframes evt-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 
-		@media (max-width: 720px) { main.pf-main { grid-template-columns: 1fr; } #side { display: none; } }
+		/* Helius pill live event counter */
+		.helius-pill .helius-count { font-variant-numeric: tabular-nums; color: #cbd5e1; font-weight: 600;
+			padding: 1px 5px; border-radius: 4px; background: rgba(168,85,247,0.12); margin-right: 4px;
+			min-width: 16px; text-align: center; display: none; letter-spacing: 0; text-transform: none; }
+		.helius-pill[data-count="active"] .helius-count { display: inline-block; }
+
+		/* Jump-to-top button shown when feed is scrolled and new events queue up */
+		.feed-jump { position: absolute; left: 50%; transform: translateX(-50%); top: 8px; z-index: 4;
+			background: var(--accent); color: #fff; border: 0; border-radius: 999px; padding: 6px 12px;
+			font-size: 11px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(106,92,255,0.4);
+			display: none; animation: fade-in 0.18s ease; }
+		.feed-jump[data-visible="true"] { display: inline-flex; align-items: center; gap: 6px; }
+		.feed-jump:hover { filter: brightness(1.1); }
+		#feed-wrap { position: relative; }
+
+		/* Share/copy-link button */
+		.pf-icon-btn { background: #161620; color: #ddd; border: 1px solid #2a2a36; border-radius: 6px;
+			padding: 6px 10px; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+		.pf-icon-btn:hover { background: #20202c; }
+		.pf-icon-btn[data-flash="true"] { border-color: #4ade80; color: #4ade80; }
+
+		/* Mobile side-panel toggle */
+		#side-toggle { display: none; }
+		@media (max-width: 720px) {
+			main.pf-main { grid-template-columns: 1fr; }
+			#side { position: fixed; top: calc(var(--header-h) + 56px); right: 0; bottom: 0;
+				width: min(360px, 92vw); transform: translateX(100%); transition: transform 0.22s ease;
+				z-index: 60; box-shadow: -8px 0 24px rgba(0,0,0,0.5); }
+			body.side-open #side { transform: translateX(0); }
+			#side-toggle { display: inline-flex; align-items: center; gap: 5px; }
+			body.side-open #side-toggle { background: var(--accent); color: #fff; border-color: var(--accent); }
+		}
 	</style>
 </head>
 <body class="home-page">
@@ -229,7 +305,7 @@
 	</header>
 	<div class="pf-filterbar">
 		<h1>✦ PumpFun migrations</h1>
-		<span class="status-pill" id="status-pill"><span class="dot connecting" id="status-dot"></span><span id="status-label">connecting…</span></span>
+		<button type="button" class="status-pill" id="status-pill" data-state="connecting" title="Click to reconnect when offline"><span class="dot connecting" id="status-dot"></span><span id="status-label">connecting…</span></button>
 		<div class="ctl">
 			<input id="ctl-asset" type="text" placeholder="Solana asset pubkey (optional)" size="22" />
 			<input id="ctl-mint" type="text" placeholder="Filter mint…" size="18" />
@@ -253,6 +329,8 @@
 				</button>
 			</div>
 			<button id="ctl-narrate" class="toggle" type="button" data-on="1" title="Toggle agent narration">🔊 Narration</button>
+			<button id="ctl-share" class="pf-icon-btn" type="button" title="Copy a shareable link with current filters">🔗 <span id="ctl-share-label">Share</span></button>
+			<button id="side-toggle" class="pf-icon-btn" type="button" aria-pressed="false" aria-controls="side" title="Toggle live feed">📡 Feed</button>
 		</div>
 	</div>
 	<main class="pf-main">
@@ -268,7 +346,8 @@
 				<div class="signal-grid" id="signals"></div>
 			</div>
 			<div id="feed-wrap">
-				<h2><span id="feed-title">Live feed</span><a class="helius-pill" href="https://helius.dev" target="_blank" rel="noopener" title="Real-time Solana data via Helius webhooks"><span class="helius-dot" aria-hidden="true"></span>Powered by Helius</a></h2>
+				<h2><span id="feed-title">Live feed</span><a id="helius-pill" class="helius-pill" href="https://helius.dev" target="_blank" rel="noopener" title="Real-time Solana data via Helius webhooks"><span class="helius-dot" aria-hidden="true"></span><span id="helius-count" class="helius-count">0</span>Powered by Helius</a></h2>
+				<button type="button" class="feed-jump" id="feed-jump" data-visible="false" aria-live="polite">↑ <span id="feed-jump-count">0</span> new</button>
 				<div id="feed"><div class="empty">Waiting for events…</div></div>
 			</div>
 		</aside>
@@ -282,19 +361,35 @@
 			</div>
 			<div class="pf-tabs" role="tablist">
 				<button class="pf-tab" role="tab" type="button" data-tab="defaults" aria-selected="true">Defaults<span class="badge" id="tab-count-defaults"></span></button>
+				<button class="pf-tab" role="tab" type="button" data-tab="recent" aria-selected="false">Recent<span class="badge" id="tab-count-recent"></span></button>
+				<button class="pf-tab" role="tab" type="button" data-tab="favorites" aria-selected="false">Favorites<span class="badge" id="tab-count-favorites"></span></button>
 				<button class="pf-tab" role="tab" type="button" data-tab="community" aria-selected="false">Community<span class="badge" id="tab-count-community"></span></button>
 				<button class="pf-tab" role="tab" type="button" data-tab="mine" aria-selected="false">My Agents<span class="badge" id="tab-count-mine"></span></button>
 			</div>
 			<div class="pf-toolbar">
-				<input type="search" id="picker-search" placeholder="Search by name…" autocomplete="off" />
+				<input type="search" id="picker-search" placeholder="Search by name…" autocomplete="off" aria-label="Search avatars" />
 				<div class="custom-row">
-					<input type="url" id="picker-custom-url" placeholder="https://…/avatar.glb" />
+					<input type="url" id="picker-custom-url" placeholder="https://…/avatar.glb" aria-label="Custom avatar URL" />
 					<button type="button" id="picker-custom-go">Use URL</button>
 				</div>
 			</div>
-			<div class="pf-body" id="picker-body" role="tabpanel"></div>
+			<div class="pf-tags" id="picker-tags" role="group" aria-label="Filter by tag"></div>
+			<div class="pf-content">
+				<div class="pf-body" id="picker-body" role="tabpanel" aria-live="polite"></div>
+				<aside class="pf-preview" aria-label="Avatar preview">
+					<div class="pf-preview-stage" id="picker-preview-stage">
+						<div class="pf-preview-empty" id="picker-preview-empty" aria-hidden="true">◇</div>
+					</div>
+					<div class="pf-preview-meta" id="picker-preview-meta">
+						<div class="name" id="picker-preview-name">Hover or focus an avatar</div>
+						<div class="sub" id="picker-preview-sub">3D preview shown here</div>
+						<div class="actions" id="picker-preview-actions"></div>
+					</div>
+				</aside>
+			</div>
 		</div>
 	</div>
+	<div id="pf-toast-host" aria-live="polite" aria-atomic="true"></div>
 	<script>
 		const url = new URL(location.href);
 		const $ = (id) => document.getElementById(id);
@@ -321,6 +416,10 @@
 			{ url: '/avatars/default.glb', name: 'Default', sub: 'Generic agent', emoji: '🤖' },
 		];
 
+		// Tracks the picker selection independently of params.avatar so private
+		// 'mine' avatars (which resolve to a presigned URL on click) still
+		// highlight as selected when the picker reopens.
+		let selectedAvatarId = null;
 		const picker = {
 			modal: $('avatar-picker'),
 			body: $('picker-body'),
@@ -387,9 +486,14 @@
 		function useCustomUrl() {
 			const v = picker.customUrl.value.trim();
 			if (!v) return;
-			try { new URL(v, location.href); } catch { alert('That does not look like a valid URL.'); return; }
+			let parsed;
+			try { parsed = new URL(v, location.href); } catch { alert('That does not look like a valid URL.'); return; }
+			const path = parsed.pathname.toLowerCase();
+			if (!/\.(glb|gltf|vrm)(\?|$)/.test(path + parsed.search)) {
+				if (!confirm('URL does not end in .glb / .gltf / .vrm. Try anyway?')) return;
+			}
 			picker.customUrl.value = '';
-			selectAvatar({ url: v, name: 'Custom URL', sub: shortenUrl(v) });
+			selectAvatar({ url: parsed.href, name: 'Custom URL', sub: shortenUrl(parsed.href) });
 		}
 
 		function shortenUrl(u) {
@@ -528,7 +632,7 @@
 			const card = document.createElement('button');
 			card.type = 'button';
 			card.className = 'pf-card';
-			const isSelected = a.url && a.url === params.avatar;
+			const isSelected = (a.id && a.id === selectedAvatarId) || (a.url && a.url === params.avatar);
 			if (isSelected) card.dataset.selected = 'true';
 			const thumbStyle = a.thumbnail_url ? `style="background-image:url('${attr(a.thumbnail_url)}')"` : '';
 			const fallback = a.thumbnail_url ? '' : (a.emoji || '◇');
@@ -563,6 +667,7 @@
 				}
 			}
 			params.avatar = resolvedUrl;
+			selectedAvatarId = a.id || null;
 			updateTriggerLabel(a);
 			syncURL();
 			mountAgent();
@@ -601,7 +706,13 @@
 			const dot = $('status-dot');
 			dot.className = 'dot ' + state;
 			$('status-label').textContent = label;
+			$('status-pill').dataset.state = state;
 		}
+		$('status-pill').addEventListener('click', () => {
+			if ($('status-pill').dataset.state === 'down' || $('status-pill').dataset.state === 'connecting') {
+				connectFeed();
+			}
+		});
 
 		function syncURL() {
 			const u = new URL(location.href);
@@ -1177,12 +1288,60 @@
 			</div>`;
 		}
 
-		function pushEvent(html) {
-			const feed = $('feed');
+		// Total live events received, surfaced on the Helius pill.
+		let liveEventCount = 0;
+		function bumpEventCount() {
+			liveEventCount++;
+			const pill = $('helius-pill');
+			pill.dataset.count = 'active';
+			$('helius-count').textContent = liveEventCount > 999 ? '999+' : String(liveEventCount);
+		}
+
+		// Pause-on-scroll: queue HTML strings when user has scrolled the feed
+		// down. They drain into the DOM when the user clicks the jump button or
+		// scrolls back to top.
+		const feedQueue = [];
+		const feedEl = () => $('feed');
+		const FEED_SCROLL_THRESHOLD = 24;
+		function feedIsAtTop() {
+			const f = feedEl();
+			return !f || f.scrollTop <= FEED_SCROLL_THRESHOLD;
+		}
+		function updateJumpButton() {
+			const btn = $('feed-jump');
+			if (!btn) return;
+			if (feedQueue.length > 0) {
+				$('feed-jump-count').textContent = feedQueue.length > 99 ? '99+' : String(feedQueue.length);
+				btn.dataset.visible = 'true';
+			} else {
+				btn.dataset.visible = 'false';
+			}
+		}
+		function appendNow(html) {
+			const feed = feedEl();
 			if (feed.querySelector('.empty')) feed.innerHTML = '';
 			feed.insertAdjacentHTML('afterbegin', html);
 			while (feed.children.length > MAX_EVENTS) feed.lastChild?.remove();
 		}
+		function pushEvent(html) {
+			bumpEventCount();
+			if (feedIsAtTop()) {
+				appendNow(html);
+				return;
+			}
+			feedQueue.unshift(html); // newest first
+			if (feedQueue.length > MAX_EVENTS) feedQueue.length = MAX_EVENTS;
+			updateJumpButton();
+		}
+		function flushQueued() {
+			while (feedQueue.length) appendNow(feedQueue.pop()); // pop oldest first so newest ends on top
+			updateJumpButton();
+			feedEl().scrollTo({ top: 0, behavior: 'smooth' });
+		}
+		$('feed-jump').addEventListener('click', flushQueued);
+		feedEl().addEventListener('scroll', () => {
+			if (feedIsAtTop() && feedQueue.length) flushQueued();
+		}, { passive: true });
 
 		function connectFeed() {
 			if (es) { try { es.close(); } catch {} }
@@ -1252,20 +1411,55 @@
 		});
 
 		let kindTimer;
-		const onFilterChange = () => {
+		const onFilterChange = (delay = 200) => {
 			clearTimeout(kindTimer);
 			kindTimer = setTimeout(() => {
-				params.kind = $('ctl-kind').value;
-				params.minTier = $('ctl-tier').value;
-				params.asset = $('ctl-asset').value.trim();
+				const newKind = $('ctl-kind').value;
+				const newTier = $('ctl-tier').value;
+				const newAsset = $('ctl-asset').value.trim();
+				const feedChanged = newKind !== params.kind || newTier !== params.minTier;
+				const agentChanged = newAsset !== params.asset;
+				params.kind = newKind;
+				params.minTier = newTier;
+				params.asset = newAsset;
 				syncURL();
-				connectFeed();
-				mountAgent();
-			}, 200);
+				if (feedChanged) connectFeed();
+				if (agentChanged) mountAgent();
+			}, delay);
 		};
-		$('ctl-kind').addEventListener('change', onFilterChange);
-		$('ctl-tier').addEventListener('change', onFilterChange);
-		$('ctl-asset').addEventListener('change', onFilterChange);
+		$('ctl-kind').addEventListener('change', () => onFilterChange(0));
+		$('ctl-tier').addEventListener('change', () => onFilterChange(0));
+		$('ctl-asset').addEventListener('input', () => onFilterChange(450));
+
+		// Share button — copies a URL with all current filters/avatar to clipboard.
+		$('ctl-share').addEventListener('click', async () => {
+			const btn = $('ctl-share');
+			const label = $('ctl-share-label');
+			const link = location.href;
+			try {
+				if (navigator.clipboard?.writeText) {
+					await navigator.clipboard.writeText(link);
+				} else {
+					const ta = document.createElement('textarea');
+					ta.value = link; ta.style.position = 'fixed'; ta.style.opacity = '0';
+					document.body.appendChild(ta); ta.select();
+					document.execCommand('copy'); ta.remove();
+				}
+				const prev = label.textContent;
+				label.textContent = 'Copied!';
+				btn.dataset.flash = 'true';
+				setTimeout(() => { label.textContent = prev; delete btn.dataset.flash; }, 1400);
+			} catch {
+				label.textContent = 'Press ⌘C';
+				setTimeout(() => { label.textContent = 'Share'; }, 1400);
+			}
+		});
+
+		// Mobile side-panel toggle
+		$('side-toggle').addEventListener('click', () => {
+			const open = document.body.classList.toggle('side-open');
+			$('side-toggle').setAttribute('aria-pressed', String(open));
+		});
 
 		// Initial load
 		connectFeed();

@@ -539,10 +539,12 @@
 		{
 			"src": "/agent/([^/]+)/embed",
 			"headers": {
-				"content-security-policy": "frame-ancestors *",
+				"content-security-policy": "frame-ancestors *; default-src 'self' https: data: blob:; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; connect-src 'self' https: wss: data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; font-src 'self' https: data:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'",
 				"x-content-type-options": "nosniff",
+				"x-frame-options": "ALLOWALL",
 				"referrer-policy": "strict-origin-when-cross-origin",
-				"permissions-policy": "microphone=(self), camera=(self), xr-spatial-tracking=*"
+				"permissions-policy": "microphone=(self), camera=(self), xr-spatial-tracking=*",
+				"cross-origin-resource-policy": "cross-origin"
 			},
 			"dest": "/agent-embed.html"
 		},

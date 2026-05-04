@@ -117,11 +117,31 @@ async function step3_zauthStatus() {
 	else ok('zauth middleware initialized');
 }
 
+async function step4_x402Status() {
+	console.log('\n[4] /api/x402-status (facilitator /supported probe)');
+	const r = await fetch(`${BASE}/api/x402-status`);
+	let body;
+	try {
+		body = await r.json();
+	} catch {
+		return bad(`/api/x402-status returned non-JSON (status ${r.status})`);
+	}
+	if (!body || typeof body !== 'object')
+		return bad('/api/x402-status returned unexpected body');
+	if (!Array.isArray(body.facilitators) || body.facilitators.length === 0)
+		return bad('/api/x402-status reported no facilitators');
+	for (const f of body.facilitators) {
+		if (f.ok) ok(`${f.network}: ${f.url || '(default)'} → ${f.reason}`);
+		else bad(`${f.network}: ${f.url || '(unset)'} — ${f.reason}`);
+	}
+}
+
 (async () => {
 	console.log(`Probing ${URL}`);
 	const accepts = await step1_challenge();
 	if (Array.isArray(accepts)) await step2_verifyReachable(accepts);
 	await step3_zauthStatus();
+	await step4_x402Status();
 	console.log(`\n${fail.length === 0 ? 'PASS' : `FAIL (${fail.length})`}`);
 	process.exit(fail.length === 0 ? 0 : 1);
 })();
