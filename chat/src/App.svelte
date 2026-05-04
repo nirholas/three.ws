@@ -2796,3 +2796,144 @@
 		height: 7px;
 	}
 </style>
+</script>
+
+<footer class="h-footer-horizon" style="margin-top: auto;">
+    <div class="h-footer-inner">
+        <div class="h-footer-brand-col">
+            <div class="h-footer-brand">
+                <img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />
+                <span class="wordmark-dot" aria-hidden="true"></span>
+                <span>three.ws</span>
+            </div>
+            <p class="h-footer-tagline">Give your AI a body.</p>
+            <div class="h-footer-socials">
+                <a
+                    class="h-footer-social"
+                    href="https://x.com/trythreews"
+                    target="_blank"
+                    rel="noopener"
+                    aria-label="three.ws on X"
+                >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path
+                            fill="currentColor"
+                            d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"
+                        />
+                    </svg>
+                </a>
+                <a
+                    class="h-footer-social"
+                    href="https://github.com/nirholas/three.ws"
+                    target="_blank"
+                    rel="noopener"
+                    aria-label="three.ws on GitHub"
+                >
+                    <svg viewBox="0 0 16 16" aria-hidden="true">
+                        <path
+                            fill="currentColor"
+                            d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"
+                        />
+                    </svg>
+                </a>
+            </div>
+        </div>
+        <nav class="h-footer-links" aria-label="Footer">
+            <div class="h-footer-link-col">
+                <h4 class="h-footer-link-heading">Product</h4>
+                <a href="/create">Create</a>
+                <a href="/studio">Studio</a>
+                <a href="/widgets">Widgets</a>
+                <a href="/discover">Discover</a>
+            </div>
+            <div class="h-footer-link-col">
+                <h4 class="h-footer-link-heading">Developers</h4>
+                <a href="/docs">Docs</a>
+                <a
+                    href="https://github.com/nirholas/three.ws"
+                    target="_blank"
+                    rel="noopener"
+                    >GitHub</a
+                >
+                <a
+                    href="https://eips.ethereum.org/EIPS/eip-8004"
+                    target="_blank"
+                    rel="noopener"
+                    >ERC-8004</a
+                >
+            </div>
+            <div class="h-footer-link-col">
+                <h4 class="h-footer-link-heading">Resources</h4>
+                <a href="/features">Features</a>
+                <a href="/dashboard">Dashboard</a>
+            </div>
+        </nav>
+    </div>
+    <div class="h-footer-bottom">
+        <p class="h-footer-legal">© 2026 three.ws — All rights reserved.</p>
+        <div class="h-footer-legal-links">
+            <a href="/legal/privacy">Privacy Policy</a>
+            <a href="/legal/tos">Terms of Use</a>
+        </div>
+    </div>
+</footer>
+
+<style>
+	:global(body.user-is-touching) .group:focus-within .group-focus-within\:visible {
+		visibility: visible;
+		opacity: 1;
+	}
+	:global(.h-footer-horizon) {
+		background: #F5F4EF !important;
+		color: #1A1A1A !important;
+		border-top: 1px solid #E5E3DC !important;
+	}
+	:global(.h-footer-horizon .h-footer-glow-line, .h-footer-horizon .h-footer-floor, .h-footer-horizon .h-footer-haze, .h-footer-horizon .h-footer-watermark) {
+		display: none;
+	}
+	:global(.h-footer-links a) {
+		color: rgba(0,0,0,0.65) !important;
+	}
+	:global(.h-footer-links a:hover) {
+		color: #000 !important;
+		text-shadow: none !important;
+	}
+	:global(.h-footer-link-heading) {
+		color: rgba(0,0,0,0.45) !important;
+	}
+	:global(.h-footer-brand) {
+		color: #000 !important;
+	}
+	:global(.h-footer-brand .wordmark-dot) {
+		background: #000 !important;
+		box-shadow: none !important;
+	}
+	:global(.h-footer-tagline) {
+		color: rgba(0,0,0,0.55) !important;
+	}
+	:global(.h-footer-legal) {
+		color: rgba(0,0,0,0.52) !important;
+	}
+	:global(.h-footer-legal-links a) {
+		color: rgba(0,0,0,0.65) !important;
+	}
+	:global(.h-footer-social) {
+		color: rgba(0,0,0,0.65) !important;
+		background: rgba(0,0,0,0.03) !important;
+		border-color: rgba(0,0,0,0.06) !important;
+	}
+	:global(.h-footer-social:hover) {
+		color: #000 !important;
+		background: rgba(0,0,0,0.08) !important;
+		border-color: rgba(0,0,0,0.18) !important;
+	}
+	:global(.h-footer-bottom) {
+		border-top: 1px solid rgba(0,0,0,0.06) !important;
+	}
+	:global(.h-footer-inner) {
+		margin-bottom: 2rem;
+	}
+
+	.container {
+// ... existing code ...
+</style>

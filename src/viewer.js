@@ -25,6 +25,7 @@ import { GUI } from 'dat.gui';
 
 import { environments } from './environments.js';
 import { createModelInfo } from './model-info.js';
+import { isDecentralizedURI, resolveURI } from './ipfs.js';
 import { canUseQuickLook, openQuickLook } from './ar/quick-look.js';
 import { canUseSceneViewer, openSceneViewer } from './ar/scene-viewer.js';
 import { WebXRSession } from './ar/webxr.js';
@@ -549,12 +550,23 @@ export class Viewer {
 		return new Promise((resolve, reject) => {
 			// Intercept and override relative URLs.
 			MANAGER.setURLModifier((url, path) => {
+				let finalUrl = url;
+
+				// Fix for broken IPFS gateway domain.
+				if (finalUrl.includes('//cf-ipfs.com')) {
+					finalUrl = finalUrl.replace('//cf-ipfs.com', '//cloudflare-ipfs.com');
+				}
+
+				if (isDecentralizedURI(finalUrl)) {
+					return resolveURI(finalUrl);
+				}
+
 				// URIs in a glTF file may be escaped, or not. Assume that assetMap is
 				// from an un-escaped source, and decode all URIs before lookups.
 				// See: https://github.com/nirholas/three.ws/issues/146
 				const normalizedURL =
 					rootPath +
-					decodeURI(url)
+					decodeURI(finalUrl)
 						.replace(baseURL, '')
 						.replace(/^(\.?\/)/, '');
 
@@ -565,7 +577,7 @@ export class Viewer {
 					return blobURL;
 				}
 
-				return (path || '') + url;
+				return (path || '') + finalUrl;
 			});
 
 			const blobURLs = [];
@@ -637,6 +649,7 @@ export class Viewer {
 		// Add content and build the animation panel BEFORE computing the camera
 		// so the panel's rendered height is available for panel-aware framing.
 		this.scene.add(object);
+		object.rotation.y = Math.PI;
 		this.content = object;
 
 		this.state.punctualLights = true;
@@ -728,6 +741,7 @@ export class Viewer {
 
 		if (window.VIEWER) window.VIEWER.scene = this.content;
 
+		this.controls.enabled = true;
 		this.invalidate();
 
 		// Smooth first-load camera reveal — runs after the scene is fully wired

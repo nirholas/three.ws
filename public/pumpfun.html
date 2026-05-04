@@ -143,7 +143,7 @@
 		@media (prefers-reduced-motion: reduce) {
 			.pf-modal-backdrop, .pf-modal, .pf-skeleton, .pf-toast { animation: none; }
 		}
-		main.pf-main { position: relative; flex: 1; min-height: calc(100vh - var(--header-h) - 56px); display: grid; grid-template-columns: 1fr 360px; }
+		main.pf-main { position: relative; flex: 1; min-height: calc(100vh - var(--header-h) - 56px); display: grid; grid-template-columns: 1fr; }
 		#stage { position: relative; display: flex; flex-direction: column; }
 		iframe { width: 100%; flex: 1; border: 0; display: block; background: var(--bg); }
 		#anim-chips { display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 12px;
@@ -157,7 +157,77 @@
 		.anim-chip:active { transform: scale(0.96); }
 		.anim-chip[data-active="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
 		.anim-chip[disabled] { opacity: 0.5; cursor: wait; }
-		#side { border-left: 1px solid var(--border); background: var(--panel); display: flex; flex-direction: column; overflow: hidden; }
+				@media (min-width: 721px) {
+			#side {
+				position: absolute;
+				right: 16px;
+				top: 16px;
+				width: 360px;
+				max-height: 80vh;
+				z-index: 100;
+				border-radius: 8px;
+				box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+				border: 1px solid var(--border);
+				background: var(--panel);
+				display: flex;
+				flex-direction: column;
+				overflow: hidden;
+			}
+		}
+
+		#side-content {
+			flex: 1;
+			min-height: 0;
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+		}
+		#side-header {
+			display: none; /* hidden on mobile by default */
+		}
+		@media (min-width: 721px) {
+			#side-header {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				padding: 6px 12px;
+				background: #1a1a24;
+				cursor: move;
+				border-bottom: 1px solid var(--border);
+				user-select: none;
+			}
+		}
+		#side-header .side-title {
+			font-weight: 600;
+			font-size: 13px;
+		}
+		.side-controls {
+			display: flex;
+			gap: 4px;
+		}
+		.side-control-btn {
+			background: transparent;
+			border: 0;
+			color: var(--muted);
+			cursor: pointer;
+			font-size: 16px;
+			line-height: 1;
+			padding: 4px;
+			width: 24px;
+			height: 24px;
+			border-radius: 4px;
+		}
+		.side-control-btn:hover {
+			background: #2a2a36;
+			color: #eee;
+		}
+		#side.minimized #side-content {
+			display: none;
+		}
+		#side.minimized {
+			max-height: none;
+			height: auto;
+		}
 		#side h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
 			color: var(--muted); margin: 12px 16px 6px; font-weight: 600; display: flex; align-items: center; justify-content: space-between; }
 		#agent-card { padding: 4px 16px 12px; border-bottom: 1px solid var(--border); }
@@ -337,6 +407,7 @@
 				</button>
 			</div>
 			<button id="ctl-narrate" class="toggle" type="button" data-on="1" title="Toggle agent narration">🔊 Narration</button>
+			<button id="ctl-announce-mints" class="toggle" type="button" data-on="0" title="Toggle new coin announcements">🚀 New coins</button>
 			<select id="ctl-mood" title="Avatar mood — biases reaction intensity">
 				<option value="chill">😎 Chill</option>
 				<option value="normal" selected>🙂 Normal</option>
@@ -352,28 +423,37 @@
 			<div id="anim-chips" role="group" aria-label="Trigger animation"></div>
 		</div>
 		<aside id="side">
-			<h2>Agent</h2>
-			<div id="agent-card"><div class="empty">Default narrator avatar. Paste a Solana asset pubkey above to bind a specific agent.</div></div>
-			<div id="signals-section" hidden>
-				<h2>Reputation signals</h2>
-				<div class="signal-grid" id="signals"></div>
+			<div class="side-header" id="side-header">
+				<span class="side-title">Live Feed</span>
+				<div class="side-controls">
+					<button id="side-minimize" class="side-control-btn" title="Minimize">_</button>
+					<button id="side-close" class="side-control-btn" title="Close">×</button>
+				</div>
 			</div>
-			<div id="first-claims-section">
-				<h2>
-					<span>First-time fee claims</span>
-					<select id="fc-window" title="Lookback window" style="margin-left:8px;background:#0f0f17;color:#e6e6f0;border:1px solid #20202c;border-radius:6px;padding:2px 6px;font-size:12px">
-						<option value="60">1h</option>
-						<option value="360">6h</option>
-						<option value="1440" selected>24h</option>
-					</select>
-					<button type="button" id="fc-refresh" class="pf-icon-btn" title="Refresh first-time claims" style="margin-left:6px">↻</button>
-				</h2>
-				<div id="first-claims"><div class="empty">Loading first-time claims…</div></div>
-			</div>
-			<div id="feed-wrap">
-				<h2><span id="feed-title">Live feed</span><a id="helius-pill" class="helius-pill" href="https://helius.dev" target="_blank" rel="noopener" title="Real-time Solana data via Helius webhooks"><span class="helius-dot" aria-hidden="true"></span><span id="helius-count" class="helius-count">0</span>Powered by Helius</a></h2>
-				<button type="button" class="feed-jump" id="feed-jump" data-visible="false" aria-live="polite">↑ <span id="feed-jump-count">0</span> new</button>
-				<div id="feed"><div class="empty">Waiting for events…</div></div>
+			<div id="side-content">
+				<h2>Agent</h2>
+				<div id="agent-card"><div class="empty">Default narrator avatar. Paste a Solana asset pubkey above to bind a specific agent.</div></div>
+				<div id="signals-section" hidden>
+					<h2>Reputation signals</h2>
+					<div class="signal-grid" id="signals"></div>
+				</div>
+				<div id="first-claims-section">
+					<h2>
+						<span>First-time fee claims</span>
+						<select id="fc-window" title="Lookback window" style="margin-left:8px;background:#0f0f17;color:#e6e6f0;border:1px solid #20202c;border-radius:6px;padding:2px 6px;font-size:12px">
+							<option value="60">1h</option>
+							<option value="360">6h</option>
+							<option value="1440" selected>24h</option>
+						</select>
+						<button type="button" id="fc-refresh" class="pf-icon-btn" title="Refresh first-time claims" style="margin-left:6px">↻</button>
+					</h2>
+					<div id="first-claims"><div class="empty">Loading first-time claims…</div></div>
+				</div>
+				<div id="feed-wrap">
+					<h2><span id="feed-title">Live feed</span><a id="helius-pill" class="helius-pill" href="https://helius.dev" target="_blank" rel="noopener" title="Real-time Solana data via Helius webhooks"><span class="helius-dot" aria-hidden="true"></span><span id="helius-count" class="helius-count">0</span>Powered by Helius</a></h2>
+					<button type="button" class="feed-jump" id="feed-jump" data-visible="false" aria-live="polite">↑ <span id="feed-jump-count">0</span> new</button>
+					<div id="feed"><div class="empty">Waiting for events…</div></div>
+				</div>
 			</div>
 		</aside>
 	</main>
@@ -423,10 +503,11 @@
 		const params = {
 			asset: url.searchParams.get('asset') || '',
 			mint: url.searchParams.get('mint') || '',
-			kind: url.searchParams.get('kind') || 'all',
+			kind: url.search_params.get('kind') || 'all',
 			minTier: url.searchParams.get('minTier') || '',
 			network: url.searchParams.get('network') || 'mainnet',
 			narrate: url.searchParams.get('narrate') !== '0',
+			announceMints: url.searchParams.get('announceMints') === '1',
 			mood: url.searchParams.get('mood') || 'normal',
 			avatar: url.searchParams.get('avatar') || '/avatars/cz.glb',
 		};
@@ -436,6 +517,7 @@
 		$('ctl-kind').value = params.kind;
 		$('ctl-tier').value = params.minTier;
 		$('ctl-narrate').dataset.on = params.narrate ? '1' : '0';
+		$('ctl-announce-mints').dataset.on = params.announceMints ? '1' : '0';
 		$('ctl-mood').value = params.mood;
 
 		// ── Avatar picker ────────────────────────────────────────────────────
@@ -750,6 +832,7 @@
 			set('kind', params.kind === 'all' ? '' : params.kind);
 			set('minTier', params.minTier);
 			set('narrate', params.narrate ? '' : '0');
+			set('announceMints', params.announceMints ? '1' : '');
 			set('avatar', params.avatar === '/avatars/cz.glb' ? '' : params.avatar);
 			history.replaceState(null, '', u.toString());
 		}
@@ -996,6 +1079,72 @@
 			];
 			el.innerHTML = cards.join('');
 		}
+
+		// ── Draggable panel ──────────────────────────────────────────────────
+		const side = $('side');
+		const sideHeader = $('side-header');
+		if (side && sideHeader) {
+			let isDragging = false;
+			let offsetX, offsetY;
+			sideHeader.addEventListener('mousedown', (e) => {
+				if (e.target.closest('.side-control-btn')) return;
+				isDragging = true;
+				offsetX = e.clientX - side.offsetLeft;
+				offsetY = e.clientY - side.offsetTop;
+				document.body.style.cursor = 'move';
+				document.body.style.userSelect = 'none';
+			});
+			document.addEventListener('mousemove', (e) => {
+				if (!isDragging) return;
+				e.preventDefault();
+				
+				const main = document.querySelector('main.pf-main');
+				const parentRect = main.getBoundingClientRect();
+				const sideRect = side.getBoundingClientRect();
+
+				let newLeft = e.clientX - offsetX;
+				let newTop = e.clientY - offsetY;
+				
+				// Constrain to parent (main element)
+				newLeft = Math.max(0, Math.min(newLeft, main.offsetWidth - side.offsetWidth));
+				newTop = Math.max(0, Math.min(newTop, main.offsetHeight - side.offsetHeight));
+
+				side.style.left = `${newLeft}px`;
+				side.style.top = `${newTop}px`;
+				side.style.right = 'auto';
+				side.style.bottom = 'auto';
+			});
+			document.addEventListener('mouseup', () => {
+				isDragging = false;
+				document.body.style.cursor = '';
+				document.body.style.userSelect = '';
+			});
+			const minimizeBtn = $('side-minimize');
+			if (minimizeBtn) {
+				minimizeBtn.addEventListener('click', () => {
+					side.classList.toggle('minimized');
+				});
+			}
+			const closeBtn = $('side-close');
+			if (closeBtn) {
+				closeBtn.addEventListener('click', () => {
+					side.style.display = 'none';
+					if ($('side-toggle')) {
+						$('side-toggle').setAttribute('aria-pressed', 'false');
+						document.body.classList.remove('side-open');
+					}
+				});
+			}
+			// When side-toggle is used (mobile), ensure panel is visible
+			if ($('side-toggle')) {
+				$('side-toggle').addEventListener('click', () => {
+					if (side.style.display === 'none') {
+						side.style.display = 'flex';
+					}
+				});
+			}
+		}
+
 
 		// ── Live event feed (host-side, mirrors what the iframe receives) ────
 		let es = null;
@@ -1315,6 +1464,8 @@
 				<div class="evt-mint">${escapeHtml(mint)}</div>
 				<div class="evt-meta">
 					${ev.signature ? `<a href="https://solscan.io/tx/${encodeURIComponent(ev.signature)}" target="_blank" rel="noopener">TX ↗</a>` : ''}
+					${mint ? ` · <a href="https://pump.fun/coin/${encodeURIComponent(mint)}" target="_blank" rel="noopener">pump.fun</a>` : ''}
+					${tsStr ? ` · 🕐 ${escapeHtml(tsStr)}` : ''}
 					${mint ? ` · <button class="evt-copy" type="button" data-copy="${attr(mint)}" title="Copy mint">📋</button>` : ''}
 					${mint ? ` · <button class="evt-focus" type="button" data-focus="${attr(mint)}" title="Filter to this mint">🎯</button>` : ''}
 				</div>
@@ -1412,7 +1563,7 @@
 				<div class="evt-mint">${escapeHtml(mint)}</div>
 				<div class="evt-meta">
 					${sig ? `🔗 <a href="https://solscan.io/tx/${encodeURIComponent(sig)}" target="_blank" rel="noopener">TX</a>` : ''}
-					${mint ? ` · <a href="https://pump.fun/coin/${m}" target="_blank" rel="noopener">pump.fun</a>` : ''}
+					${mint ? ` · <a href="https://pump.fun/coin/${encodeURIComponent(mint)}" target="_blank" rel="noopener">pump.fun</a>` : ''}
 					${tsStr ? ` · 🕐 ${escapeHtml(tsStr)}` : ''}
 					${mint ? ` · <button class="evt-copy" type="button" data-copy="${attr(mint)}" title="Copy mint">📋</button>` : ''}
 					${mint ? ` · <button class="evt-focus" type="button" data-focus="${attr(mint)}" title="Filter to this mint">🎯</button>` : ''}
@@ -1581,7 +1732,7 @@
 				$('ctl-mint').value = focus;
 				params.mint = focus;
 				syncURL();
-				iframe.contentWindow?.postMessage({ type: 'pumpfun-feed:focus-mint', mint: focus }, '*');
+				iframe.contentWindow?.postMessage({ type: 'pumpfun-feed:focus-mint', mint: focus || null }, '*');
 			}
 		});
 

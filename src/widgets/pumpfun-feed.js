@@ -14,9 +14,19 @@
  */
 
 import { applyReaction, createReactionDispatcher, mountReactionToast } from './pumpfun-reactions.js';
+import { WORD_BLACKLIST } from '../profanity.js';
 
 const FEED_PATH = '/api/agents/pumpfun-feed';
 const TIER_BADGE = { mega: '🔥🔥', influencer: '🔥', notable: '⭐' };
+
+function isBlocked(ev) {
+	if (!ev) return false;
+	const name = (ev.name || ev.token_name || '').toLowerCase();
+	const symbol = (ev.symbol || ev.token_symbol || '').toLowerCase();
+	const desc = (ev.description || '').toLowerCase();
+	const text = name + ' ' + symbol + ' ' + desc;
+	return WORD_BLACKLIST.some((word) => text.includes(word));
+}
 
 /**
  * @param {import('../viewer.js').Viewer} viewer
@@ -29,15 +39,18 @@ export async function mountPumpfunFeed(viewer, config, container, ctx = {}) {
 	root.className = 'pumpfun-feed';
 	root.style.cssText = [
 		'position:absolute',
-		'right:16px',
-		'top:16px',
+		'right:0',
+		'top:0',
+		'bottom:0',
 		'width:320px',
-		'max-height:80%',
+		'max-height:100%',
 		'overflow-y:auto',
 		'pointer-events:auto',
 		'z-index:5',
 		'font-family:ui-sans-serif,system-ui,-apple-system,sans-serif',
 		'color:#fff',
+		'padding: 16px',
+		'box-sizing: border-box'
 	].join(';');
 	(container || document.body).appendChild(root);
 
