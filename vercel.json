@@ -938,6 +938,10 @@
 			"dest": "/explained.html"
 		},
 		{
+			"src": "/explained/(.*)",
+			"dest": "/explained.html"
+		},
+		{
 			"src": "/create",
 			"dest": "/create.html"
 		},
