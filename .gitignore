@@ -1,6 +1,9 @@
 node_modules
 dist
 dist-artifact
+dist-lib/**
+!dist-lib/agent-3d.js
+!dist-lib/agent-3d.umd.cjs
 .cache
 .vercel
 .DS_Store
