@@ -14,6 +14,16 @@ async function fetchDiscoveredAgents() {
 	return data.agents || [];
 }
 
+async function fetchNormalAgents() {
+	const res = await fetch('/api/agents', { method: 'GET', credentials: 'include' });
+	if (!res.ok) {
+		const error = await res.json().catch(() => ({}));
+		throw new Error(error.error_description || `HTTP ${res.status}`);
+	}
+	const data = await res.json();
+	return data.agents || [];
+}
+
 async function importAgent({ chainId, agentId }) {
 	const res = await fetch('/api/erc8004/import', {
 		method: 'POST',
@@ -143,7 +153,7 @@ function showErrorBanner(msg, retry = true) {
 
 /**
  * Render one agent card.
- * @param {{ chainId: number, agentId: string, name: string, description: string, image: string|null, glbUrl: string|null, alreadyImported: boolean }} agent
+ * @param {{ chainId: number, agentId: string, name: string, description: string, image: string|null, glbUrl: string|null, alreadyImported?: boolean, isNormal?: boolean, onChain?: boolean }} agent
  * @returns {HTMLElement}
  */
 function buildCard(agent) {
@@ -154,14 +164,14 @@ function buildCard(agent) {
 	const thumbSrc = agent.glbUrl || agent.image;
 	const thumbHtml = thumbSrc
 		? `<img src="${escapeHtml(thumbSrc)}" alt="${escapeHtml(agent.name)} preview" loading="lazy" />`
-		: `<span aria-hidden="true">🤖</span>`;
+		: `<span aria-hidden="true">${agent.isNormal ? '◎' : '🤖'}</span>`;
 
 	card.innerHTML = `
 		<div class="my-agents-card__thumb">${thumbHtml}</div>
 		<div class="my-agents-card__body">
 			<h2 class="my-agents-card__name" title="${escapeHtml(agent.name)}">${escapeHtml(agent.name)}</h2>
 			<div class="my-agents-card__row">
-				<span class="my-agents-card__chain-pill" title="Chain ID ${escapeHtml(String(agent.chainId))}">${escapeHtml(chainName(agent.chainId))}</span>
+				${agent.chainId ? `<span class="my-agents-card__chain-pill" title="Chain ID ${escapeHtml(String(agent.chainId))}">${escapeHtml(chainName(agent.chainId))}</span>` : ''}
 			</div>
 			${agent.description ? `<p class="my-agents-card__desc">${escapeHtml(agent.description)}</p>` : ''}
 		</div>
@@ -176,10 +186,15 @@ function buildCard(agent) {
 
 /**
  * @param {HTMLElement} wrap
- * @param {{ chainId: number, agentId: string, name: string, alreadyImported: boolean }} agent
+ * @param {{ chainId: number, agentId: string, name: string, alreadyImported?: boolean, isNormal?: boolean }} agent
  * @param {string|null} [importedId]
  */
 function _renderCardAction(wrap, agent, importedId = null) {
+	if (agent.isNormal) {
+		wrap.innerHTML = `<a class="my-agents-btn" href="/agent/${escapeHtml(agent.agentId)}">Open</a>`;
+		return;
+	}
+
 	if (agent.alreadyImported || importedId) {
 		const id = importedId || '';
 		wrap.innerHTML = `
@@ -229,23 +244,73 @@ async function loadAgents() {
 	showSkeletons();
 
 	try {
-		const agents = await fetchDiscoveredAgents();
+		const [onChainAgents, normalAgents] = await Promise.all([
+			fetchDiscoveredAgents().catch(e => { console.error("Error fetching on-chain agents:", e); return []; }),
+			fetchNormalAgents().catch(e => { console.error("Error fetching normal agents:", e); return []; })
+		]);
+
+		const onChainAgentsMap = new Map();
+		for (const agent of onChainAgents) {
+			onChainAgentsMap.set(`${agent.chainId}:${agent.agentId}`, agent);
+		}
+
+		const allAgents = [];
+		const processedOnChain = new Set();
+
+		// Add normal agents, and if they are on-chain, merge info
+		for (const agent of normalAgents) {
+			const onChainKey = `${agent.chain_id}:${agent.erc8004_agent_id}`;
+			const onChainData = onChainAgentsMap.get(onChainKey);
+
+			const cardData = {
+				chainId: agent.chain_id,
+				agentId: agent.id, // Internal UUID
+				name: agent.name,
+				description: agent.description,
+				image: agent.avatar_id ? `/api/avatars/${agent.avatar_id}/thumbnail` : (onChainData ? onChainData.image : null),
+				glbUrl: onChainData ? onChainData.glbUrl : null,
+				isNormal: true,
+				onChain: !!onChainData
+			};
+			allAgents.push(cardData);
+
+			if (onChainData) {
+				processedOnChain.add(onChainKey);
+			}
+		}
+
+		// Add on-chain agents that haven't been imported yet
+		for (const agent of onChainAgents) {
+			const onChainKey = `${agent.chainId}:${agent.agentId}`;
+			if (!processedOnChain.has(onChainKey)) {
+				allAgents.push({
+					...agent, // has name, description, image, glbUrl
+					isNormal: false,
+					onChain: true
+				});
+			}
+		}
 
 		grid.innerHTML = '';
 
-		if (agents.length === 0) {
+		if (allAgents.length === 0) {
 			showState(
 				'🔭',
-				'No on-chain agents yet',
-				'No agents found in your linked wallets yet.',
-				{ label: 'Browse the community directory →', href: '/discover' },
+				'No agents yet',
+				'No agents found. Link a wallet or create a new agent.',
+				{ label: 'Create an agent', href: '/create' },
+				{ label: 'Browse community agents →', href: '/discover' },
 			);
 			return;
 		}
 
-		for (const agent of agents) {
+		document.querySelector('.my-agents-title').textContent = 'My Agents';
+		document.querySelector('.my-agents-subtitle').textContent = 'Agents from your account and linked wallets';
+
+		for (const agent of allAgents) {
 			grid.appendChild(buildCard(agent));
 		}
+
 	} catch (err) {
 		grid.innerHTML = '';
 		const msg = err.message || '';
