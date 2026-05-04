@@ -21,7 +21,7 @@
 
 import { ACTION_TYPES } from './agent-protocol.js';
 import { Vector3, Box3, MathUtils, PositionalAudio } from 'three';
-import { resolveSlot, DEFAULT_ANIMATION_MAP, SLOTS } from './runtime/animation-slots.js';
+import { resolveSlot, DEFAULT_ANIMATION_MAP } from './runtime/animation-slots.js';
 import { ElevenLabsTTS } from './runtime/speech.js';
 import { LipSyncAnalyser } from './lip-sync-analyser.js';
 // BEGIN:IDLE_LOOP_IMPORT
@@ -469,11 +469,7 @@ export class AgentAvatar {
 	_onGesture(action) {
 		const name = action.payload?.name || 'nod';
 		const duration = (action.payload?.duration || 1500) / 1000;
-		if (SLOTS.includes(name)) {
-			this._playSlot(name, duration);
-		} else {
-			this._triggerOneShot(name, duration);
-		}
+		this._playSlot(name, duration);
 	}
 
 	_onEmote(action) {
