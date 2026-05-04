@@ -1,9 +1,5 @@
 ---
-status: not-started
----
-
----
-status: not-started
+status: completed
 ---
 
 # Prompt 1: Display Priced Skills in Marketplace
