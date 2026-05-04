@@ -27,6 +27,37 @@ AFRAME.registerComponent('multiplayer-button', {
   }
 });
 
+/**
+ * Click prompts for a 4-char room code and dispatches mpjoin.
+ * Falls back to window.prompt — works in 2D viewer + Quest browser.
+ */
+AFRAME.registerComponent('multiplayer-join-button', {
+  init: function () {
+    this.el.addEventListener('click', () => {
+      const code = window.prompt('Enter 4-letter room code:');
+      if (!code) { return; }
+      const normalized = code.toUpperCase().trim().slice(0, 4);
+      this.el.sceneEl.emit('mpcodeinput', normalized, false);
+      this.el.sceneEl.emit('mpjoin', { code: normalized }, false);
+    });
+  }
+});
+
+/**
+ * Click toggles the local player's ready flag.
+ */
+AFRAME.registerComponent('multiplayer-ready-button', {
+  init: function () {
+    this.el.addEventListener('click', () => {
+      const sceneEl = this.el.sceneEl;
+      const state = sceneEl.systems.state.state;
+      const me = state.multiplayer.players.find(p => p.uid === state.multiplayer.uid);
+      const next = me ? !me.ready : true;
+      sceneEl.emit('mpready', { value: next }, false);
+    });
+  }
+});
+
 AFRAME.registerComponent('menu-mode', {
   schema: {
     colorScheme: {default: 'default'},

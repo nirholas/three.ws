@@ -63,6 +63,14 @@ AFRAME.registerComponent('multiplayer', {
     sceneEl.addEventListener('songcomplete', this.onSongComplete);
     // Capture phase so we read menuSelectedChallenge before the state handler clears it.
     sceneEl.addEventListener('playbuttonclick', this.onPlayButtonClick, true);
+
+    const autoJoin = AFRAME.utils.getUrlParameter('mpjoin');
+    if (autoJoin) {
+      setTimeout(() => {
+        sceneEl.emit('mpopen', null, false);
+        sceneEl.emit('mpjoin', { code: autoJoin }, false);
+      }, 250);
+    }
   },
 
   _ensureClient: function () {
