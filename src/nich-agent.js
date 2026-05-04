@@ -168,7 +168,7 @@ export class NichAgent {
 			`
 					: ''
 			}
-			${this.options.showPoweredBy ? '<a class="nich-powered-by" href="https://three.ws/" target="_blank" rel="noopener noreferrer">powered by 3dagent</a>' : ''}
+			${this.options.showPoweredBy ? '<a class="nich-powered-by" href="https://three.ws/" target="_blank" rel="noopener noreferrer">powered by three.ws</a>' : ''}
 		`;
 
 		// Apply theme overrides via CSS custom properties scoped to the panel.

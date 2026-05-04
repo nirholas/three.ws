@@ -19,6 +19,7 @@ import { mountKolTradesWidget } from './widgets/kol-trades.js';
 import { mountLiveTradesCanvas } from './widgets/live-trades-canvas.js';
 import { mountPassport } from './widgets/passport.js';
 import queryString from 'query-string';
+import { ScreenshotModal } from './components/screenshot-modal.js';
 
 // Agent system — the new primitive layer
 import { protocol, ACTION_TYPES } from './agent-protocol.js';
@@ -204,6 +205,7 @@ class App {
 		this._setupSaveToAccount();
 		this._setupMakeWidgetButton();
 		this._setupScreenshotButton();
+		this.screenshotModal = new ScreenshotModal(this.el);
 
 		const options = this.options;
 
@@ -656,10 +658,13 @@ class App {
 	_setupScreenshotButton() {
 		const btn = document.getElementById('screenshot-btn');
 		if (!btn) return;
-		btn.addEventListener('click', (e) => {
+		btn.addEventListener('click', async (e) => {
 			e.preventDefault();
 			if (this.viewer) {
-				this.viewer.takeScreenshot();
+				const blob = await this.viewer.captureScreenshot();
+				if (blob) {
+					this.screenshotModal.show(blob);
+				}
 			}
 		});
 	}

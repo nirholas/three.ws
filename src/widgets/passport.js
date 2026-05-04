@@ -441,7 +441,7 @@ function _render(panel, state, opts = {}) {
 function _poweredByHTML(_config) {
 	return `
 		<a class="passport-powered-by" href="https://three.ws/" target="_blank" rel="noopener noreferrer">
-			3dagent
+			three.ws
 		</a>
 	`;
 }

@@ -1121,6 +1121,46 @@ footer .separator {
 	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
+/* Embedded layout (talking-agent widget): full-width panel anchored to the
+ * bottom, leaving the top portion clear for the 3D avatar. */
+.nich-panel--embedded {
+	left: 0;
+	right: 0;
+	bottom: 0;
+	top: auto;
+	width: 100%;
+	max-width: none;
+	max-height: 46%;
+	border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+	border-left: 0;
+	border-right: 0;
+	border-bottom: 0;
+}
+
+/* On viewports wide enough, slide chat to the right so the avatar is fully
+ * visible on the left — only kicks in when the widget itself is wide. */
+@media (min-width: 540px) {
+	.nich-panel--embedded.nich-position--right {
+		left: auto;
+		right: 0;
+		top: 0;
+		bottom: 0;
+		width: 260px;
+		max-height: 100%;
+		max-width: 55%;
+		border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+		border-top: 0;
+		border-right: 0;
+		border-bottom: 0;
+	}
+}
+
+/* Compact message area inside embedded panel */
+.nich-panel--embedded .nich-messages {
+	min-height: 60px;
+	max-height: 120px;
+}
+
 .nich-header {
 	display: flex;
 	align-items: center;

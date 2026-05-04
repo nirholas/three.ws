@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🟢</text></svg>">
+<title>3D-Agent · PumpFun Live</title>
+<meta name="description" content="Real-time stream of new PumpFun token launches on Solana — embedded in 3D-Agent.">
+<link rel="canonical" href="/pump-live.html">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a0a;
+    color: #00ff41;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    padding: 0;
+  }
+
+  #stage {
+    position: fixed;
+    top: 60px;
+    right: 20px;
+    width: 300px;
+    height: 300px;
+    border: 1px solid #222;
+    z-index: 20;
+  }
+
+  /* ── Header ────────────────────────────────────────── */
+  #header {
+    background: #111;
+    border-bottom: 1px solid #222;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  #header h1 {
+    font-size: 16px;
+    color: #00ff41;
+    white-space: nowrap;
+  }
+  #header .status {
+    font-size: 12px;
+    color: #666;
+  }
+  #header .status.connected { color: #00ff41; }
+  #header .status.error { color: #ff4141; }
+
+  /* ── Log area ──────────────────────────────────────── */
+  #log {
+    padding: 12px 20px;
+    max-height: calc(100vh - 60px);
+    overflow-y: auto;
+  }
+  .entry {
+    border-bottom: 1px solid #111;
+    padding: 8px 0;
+    animation: fadeIn 0.3s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <h1>PumpFun Live</h1>
+  <div class="status">Connecting...</div>
+</div>
+
+<div id="log"></div>
+
+<div id="stage"></div>
+
+<script type="module">
+    import { Viewer } from '/src/viewer.js';
+    import { AgentIdentity } from '/src/agent-identity.js';
+    import { AgentAvatar } from '/src/agent-avatar.js';
+    import { protocol } from '/src/agent-protocol.js';
+
+    const agentId = 'agent-test-ad415d18';
+
+    try {
+        const identity = new AgentIdentity({ agentId, autoLoad: true });
+        await identity.load();
+
+        if (!identity.avatarId) {
+            console.error('Agent has no avatar body');
+            return;
+        }
+
+        const resp = await fetch(`/api/avatars/${identity.avatarId}`);
+        if (!resp.ok) {
+            console.error(`Failed to fetch avatar: ${resp.status}`);
+            return;
+        }
+
+        const { avatar } = await resp.json();
+        const glbUrl = avatar?.url;
+
+        if (!glbUrl) {
+            console.error('No avatar URL found');
+            return;
+        }
+
+        const stage = document.getElementById('stage');
+        const viewer = new Viewer(stage, { kiosk: true });
+        viewer.renderer?.setClearAlpha(0);
+		if (viewer.scene) viewer.scene.background = null;
+        await viewer.load(glbUrl, '', new Map());
+
+        const avatarCtl = new AgentAvatar(viewer, protocol, identity);
+        avatarCtl.attach();
+    } catch (err) {
+        console.error('Failed to load 3D agent:', err);
+        const stage = document.getElementById('stage');
+        stage.innerHTML = `<div style="color: #ff4141; padding: 10px;">Failed to load agent. See console for details.</div>`;
+    }
+</script>
+
+<script type="module" src="/src/pump-live-client.js"></script>
+
+</body>
+</html>

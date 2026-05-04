@@ -89,7 +89,12 @@ npm run claude -- [COMMAND]
 
 | Command | Description |
 | --- | --- |
-| `install-sdk` | Installs and builds the `@pump-fun/agent-payments-sdk`. This is a quick way to get your local environment set up with the necessary SDKs. |
+| `install-sdk` | Installs and builds the `@pump-fun/agent-payments-sdk`. |
+| `validate-cards` | Validates the agent definition cards in `src/agents/`. |
+| `db-migrate` | Applies database migrations from `scripts/migrations/`. |
+| `db-status` | Checks the status of database migrations. |
+| `pump-smoke-test` | Runs a smoke test for the pump.fun integration. |
+| `seed-skills` | Seeds the skills from the `skills-manifest.js` file. |
 | `help` | Shows the help message, listing all available commands. |
 
 ---

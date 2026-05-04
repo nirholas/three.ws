@@ -41,7 +41,7 @@ import {
 } from './viewer/internal.js';
 import { addLights, removeLights } from './viewer/lights.js';
 import { getCubeMapTexture } from './viewer/environment.js';
-import { takeScreenshot } from './viewer/screenshot.js';
+import { takeScreenshot, captureScreenshot } from './viewer/screenshot.js';
 import { setClips, playAllClips } from './viewer/animation.js';
 import { AnimationManager } from './animation-manager.js';
 
@@ -537,6 +537,10 @@ export class Viewer {
 
 	takeScreenshot() {
 		takeScreenshot(this);
+	}
+
+	captureScreenshot() {
+		return captureScreenshot(this);
 	}
 
 	/**

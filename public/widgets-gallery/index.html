@@ -19,6 +19,7 @@
 			content="Embeddable 3D, no code. Drop a widget into any site, blog, or Notion doc."
 		/>
 		<meta property="og:url" content="https://three.ws/widgets" />
+		<meta property="og:image" content="https://three.ws/og-image.png" />
 
 		<link rel="canonical" href="https://three.ws/widgets" />
 		<link rel="shortcut icon" href="/favicon.ico" />
@@ -38,9 +39,14 @@
 			<h1>
 				<a href="/"><img src="/three.svg" alt="three.ws" class="wordmark-logo" /></a>
 			</h1>
-			<div id="nav-container"></div>
-		</header>
-		<script src="/nav.js"></script>
+			<nav class="features-nav" aria-label="Primary">
+				<a href="/create">Create</a>
+				<a href="/discover">Discover</a>
+				<a href="/studio">Studio</a>
+				<a href="/widgets" aria-current="page" class="active">Widgets</a>
+				<a href="/docs">Docs</a>
+				<a href="/features">Features</a>
+			</nav>
 		</header>
 
 		<main class="gallery-main" id="gallery-main">
@@ -110,9 +116,8 @@
 				<nav class="h-footer-links" aria-label="Footer">
 					<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener">GitHub</a>
 					<a href="/create">Create</a>
-					<a href="/docs">Docs</a>
 					<a href="/studio">Studio</a>
-					<a href="/widgets">Widgets</a>
+					<a href="/widgets" aria-current="page">Widgets</a>
 					<a href="/features">Features</a>
 					<a href="/discover">Discover</a>
 					<a href="/showcase">Showcase</a>

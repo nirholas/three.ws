@@ -823,7 +823,8 @@
 				if (!confirm('URL does not end in .glb / .gltf / .vrm. Try anyway?')) return;
 			}
 			picker.customUrl.value = '';
-			const name = parsed.pathname.split('/').pop() || 'Custom';
+			const filename = parsed.pathname.split('/').pop();
+			const name = filename ? filename.replace(/\.(glb|gltf|vrm)$/i, '') : 'Custom';
 			selectAvatar({ url: parsed.href, name, sub: shortenUrl(parsed.href) });
 		}
 
