@@ -86,6 +86,30 @@
     {{ mode(0, 'punch', 'punch', '#modePunchImg', 'Punch the beats, mind\ncolor.\n\nAvoid all things yellow.\n\nPunch harder\n for better score.', true) }}
     {{ mode(1, 'ride', 'ride', '#modeRideImg', 'Relax and enjoy the ride.\n\nTake a quick breather.\n\nNo score!', true) }}
     {{ mode(2, 'classic', 'classic', '#modeClassicImg', 'Cut the beats, mind\ncolor and direction.\n\nAvoid all things yellow.\n\nSwing fast and accurate\nfor better score.', true) }}
+
+    <a-entity
+      id="modeMultiplayer"
+      class="modeItem"
+      multiplayer-button
+      position="0 -1.50 0">
+      <a-entity
+        bind-toggle__raycastable="menuActive && hasVR"
+        position="0 0 -0.01"
+        geometry="primitive: plane; width: 3; height: 0.55"
+        material="shader: panelShader; brightness: 0.1; ratio: 5.5; borderWidth: 0.002"
+        mixin="modeBackgroundHover modeBackgroundSelect"></a-entity>
+      <a-entity
+        mixin="font"
+        text="align: left; value: MULTIPLAYER; lineHeight: 45; width: 2.6; color: #FFF"
+        render-order="menutext"
+        position="-1.0 0.00 0"></a-entity>
+      <a-entity
+        mixin="font"
+        bind__text="color: colorPrimary"
+        text="value: Race a friend in real time.\nCreate a room or join with a code.; width: 1.6; lineHeight: 47"
+        render-order="menutext"
+        position="0.50 0.00 0"></a-entity>
+    </a-entity>
   </a-entity>
 
   <a-entity

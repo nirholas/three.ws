@@ -66,6 +66,8 @@ const ROUTES = [
 	'/settings',
 	'/admin',
 	'/pumpfun',
+	'/pump-live.html',
+	'/pump-dashboard.html',
 	'/strategy-lab',
 
 	// Legal

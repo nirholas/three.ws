@@ -101,7 +101,9 @@ export async function mountPumpfunFeed(viewer, config, container, ctx = {}) {
 		if (!ev) return;
 		if (!matchesFocus(ev)) return;
 		addCard(stack, renderClaim(ev), maxCards);
-		react('claim', ev);
+		// Replayed (buffered backfill) events render but skip reactions — the
+		// agent shouldn't dance to news that's already minutes old.
+		if (!ev.replay) react('claim', ev);
 	});
 
 	es.addEventListener('graduation', (msg) => {
@@ -109,7 +111,7 @@ export async function mountPumpfunFeed(viewer, config, container, ctx = {}) {
 		if (!ev) return;
 		if (!matchesFocus(ev)) return;
 		addCard(stack, renderGraduation(ev), maxCards);
-		react('graduation', ev);
+		if (!ev.replay) react('graduation', ev);
 	});
 
 	es.addEventListener('mint', (msg) => {
@@ -119,7 +121,7 @@ export async function mountPumpfunFeed(viewer, config, container, ctx = {}) {
 		// Mints don't render their own card in this widget (the card stack is
 		// claim/graduation focused), but they should still tickle the avatar
 		// when something notable lands.
-		react('mint', ev);
+		if (!ev.replay) react('mint', ev);
 	});
 
 	es.addEventListener('error', () => {

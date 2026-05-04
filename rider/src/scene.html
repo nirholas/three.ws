@@ -31,6 +31,7 @@
     inspector="url: http://localhost:3333/dist/aframe-inspector.js"
   {% endif %}
   leaderboard="apiKey: {{ firekey }}; authDomain: {{ firestore }}.firebaseapp.com; databaseURL: https://{{ firestore }}.firebaseio.com; projectId: {{ firestore }}; storageBucket: {{ firestore }}.appspot.com; messagingSenderId: 172125624222"
+  multiplayer="apiKey: {{ firekey }}; authDomain: {{ firestore }}.firebaseapp.com; databaseURL: https://{{ firestore }}.firebaseio.com; projectId: {{ firestore }}; storageBucket: {{ firestore }}.appspot.com; messagingSenderId: 172125624222"
   loading-screen="backgroundColor: #000"
   pool__beat-arrow-blue="mixin: arrowBlueBeat; size: 30; container: #beatContainer; dynamic: true"
   pool__beat-arrow-red="mixin: arrowRedBeat; size: 30; container: #beatContainer; dynamic: true"
@@ -86,6 +87,7 @@
   <require path="templates/modes.html"></require>
   <require path="templates/victory.html"></require>
   <require path="templates/leaderboard.html"></require>
+  <require path="templates/multiplayerLobby.html"></require>
   <require path="templates/news.html"></require>
 
   <a-mixin

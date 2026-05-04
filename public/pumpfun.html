@@ -818,26 +818,41 @@
 				const current = Number(ev.usd_market_cap ?? ev.market_cap_usd ?? ev.market_cap) || 0;
 				const mult = initial && current ? current / initial : 1;
 				const dur = Math.min(9000, Math.max(4500, 4500 + Math.log10(Math.max(mult, 1)) * 1500));
+				const mcPart = current > 0 ? ` at ${formatMcSpoken(current)} market cap` : '';
+				const ageWord = ev.age ? ` after ${ageWordSpoken(ev.age)}` : '';
+				const launchesPart = ev.creator_launches && ev.creator_launches > 1
+					? ` Dev's ${ordinalSpoken(ev.creator_launches)} launch.`
+					: '';
 				return {
 					emote: { trigger: 'celebration', weight: 0.95 },
 					gesture: { name: 'rumba', duration: dur },
-					speak: { text: `Migration: ${sym} bonded to PumpAMM.`, sentiment: 0.7 },
+					speak: { text: `${sym} bonded to PumpAMM${mcPart}${ageWord}.${launchesPart}`, sentiment: 0.7 },
 					priority: 90,
 				};
 			}
 			if (kind === 'claim') {
-				if (ev.fake_claim) return {
-					emote: { trigger: 'concern', weight: 0.75 },
-					gesture: { name: 'shake', duration: 1500 },
-					priority: 70,
-				};
+				if (ev.fake_claim) {
+					const who = ev.github_user ? '@' + ev.github_user : shortAddrLocal(ev.claimer);
+					return {
+						emote: { trigger: 'concern', weight: 0.75 },
+						gesture: { name: 'shake', duration: 1500 },
+						speak: { text: `Fake claim from ${who}.`, sentiment: -0.6 },
+						priority: 70,
+					};
+				}
 				if (ev.first_time_claim) {
-					const linked = !!(ev.github_user || ev.github_repo);
+					const linked = !!(ev.github_user || ev.github_repo || ev.github_account_age_days != null);
 					const verified = ev.verified ?? ev.signal_verified;
 					const name = linked ? (verified ? 'thriller' : 'silly') : 'celebrate';
+					const sym = ev.token_symbol || ev.symbol;
+					const who = linked ? '@' + ev.github_user : shortAddrLocal(ev.claimer || ev.creator);
 					return {
 						emote: { trigger: 'celebration', weight: 0.95 },
 						gesture: { name, duration: 5000 },
+						speak: {
+							text: `First-time claim by ${who}${sym ? ' on $' + sym : ''}${ev.ai_take ? ' — ' + ev.ai_take : ''}.`,
+							sentiment: 0.75,
+						},
 						priority: 85,
 					};
 				}
@@ -889,6 +904,13 @@
 			return ev?.mint === params.mint || ev?.token_mint === params.mint;
 		}
 
+		function shortAddrLocal(s) {
+			const str = String(s || '');
+			if (!str) return 'unknown';
+			if (str.length <= 12) return str;
+			return `${str.slice(0, 4)}…${str.slice(-4)}`;
+		}
+
 		function fmtUsd(n) {
 			if (n == null) return '';
 			return '$' + Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -896,6 +918,33 @@
 		function fmtSol(n) {
 			if (n == null) return '';
 			return Number(n).toFixed(3) + ' SOL';
+		}
+		// Speech-friendly market-cap formatter — "$245k", "$1.2 million", "$24 thousand".
+		function formatMcSpoken(n) {
+			n = Number(n);
+			if (!isFinite(n) || n <= 0) return '';
+			if (n >= 1_000_000_000) return `$${(n / 1_000_000_000).toFixed(1)} billion`;
+			if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)} million`;
+			if (n >= 1_000) return `$${Math.round(n / 1_000)} thousand`;
+			return `$${Math.round(n)}`;
+		}
+		// Convert a compact age tag like "3m" / "2h" / "1d" into spoken words
+		// the TTS layer reads naturally ("3 minutes", "2 hours").
+		function ageWordSpoken(age) {
+			const m = String(age || '').match(/^(\d+)([smhd])$/);
+			if (!m) return age || '';
+			const n = Number(m[1]);
+			const unit = { s: 'second', m: 'minute', h: 'hour', d: 'day' }[m[2]];
+			return `${n} ${unit}${n === 1 ? '' : 's'}`;
+		}
+		function ordinalSpoken(n) {
+			const i = Math.abs(Math.floor(Number(n) || 0));
+			if (i === 1) return 'first';
+			if (i === 2) return 'second';
+			if (i === 3) return 'third';
+			const s = ['th', 'st', 'nd', 'rd'];
+			const v = i % 100;
+			return i + (s[(v - 20) % 10] || s[v] || s[0]);
 		}
 		function timeAgo(ts) {
 			if (!ts) return '';

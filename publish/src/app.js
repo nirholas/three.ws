@@ -1127,9 +1127,14 @@ class App {
 	}
 
 	_postToParent(msg) {
-		if (window.parent && window.parent !== window) {
-			window.parent.postMessage(msg, '*');
+		if (!window.parent || window.parent === window) return;
+		if (!this._parentOrigin) {
+			try {
+				if (document.referrer) this._parentOrigin = new URL(document.referrer).origin;
+			} catch {}
 		}
+		if (!this._parentOrigin) return;
+		window.parent.postMessage(msg, this._parentOrigin);
 	}
 
 	_initNichAgent() {

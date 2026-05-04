@@ -196,6 +196,6 @@ export class EmbedHostBridge {
 		this._pending.clear();
 		this._outQueue = [];
 		this._evtBuffer = [];
-		this._rejectReady?.(new Error('EmbedHostBridge: destroyed'));
+		if (!this._ready) this._rejectReady?.(new Error('EmbedHostBridge: destroyed'));
 	}
 }
