@@ -998,6 +998,26 @@ body.market-page {
 	background: var(--mk-panel);
 	border: 1px solid var(--mk-border-2);
 	border-radius: 16px;
+.price-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 4px;
+  vertical-align: middle;
+}
+
+.price-free {
+  color: #a7f3d0;
+  background-color: rgba(52, 211, 153, 0.1);
+}
+
+.price-paid {
+  color: #fde047;
+  background-color: rgba(253, 224, 71, 0.1);
+}
+
 	padding: 28px;
 	width: 100%;
 	max-width: 460px;

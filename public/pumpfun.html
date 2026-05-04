@@ -665,7 +665,7 @@
 										<option value="">(no emotion)</option>
 										${config.emotions.map(emotion => `<option value="${emotion}" ${config.settings.actions[actionKey]?.emotion === emotion ? 'selected' : ''}>${emotion}</option>`).join('')}
 									</select>
-									<input type="text" id="config-tts-${actionKey}" data-action="${actionKey}" data-field="tts" placeholder="TTS message (e.g. Wow, a whale!)" value="${config.settings.actions[actionKey]?.tts || ''}">
+									<input type="text" id="config-tts-${actionKey}" data-action="${actionKey}" data-field="tts" placeholder="TTS text — use {name}, {sol}, {mc}" value="${(config.settings.actions[actionKey]?.tts || '').replace(/"/g, '&quot;')}">
 								</div>
 							`).join('')}
 						</div>
@@ -1072,6 +1072,8 @@
 					});
 					chips.appendChild(btn);
 				});
+				// Repopulate animation dropdowns if the config modal is already open
+				if (config.modal.dataset.open === 'true') renderConfigBody();
 			}
 		});
 
@@ -1136,7 +1138,6 @@
 				if (data.type === 'events-batch') {
 					data.events.forEach(handleEvent);
 					if (data.replay) {
-						// add small visual gap between historical and live events
 						setTimeout(() => {
 							const div = document.createElement('div');
 							div.style = 'margin: 6px 0; text-align: center; font-size: 10px; color: #444; text-transform: uppercase; letter-spacing: 0.08em;';
@@ -1146,22 +1147,6 @@
 					}
 					return;
 				}
-
-				// Call sentiment analysis for new tokens
-				if (data.type === 'mint' && data.name) {
-					agent.skills.perform('analyze-sentiment', { text: data.name }).then(result => {
-						if (result.success) {
-							const card = feed.el.querySelector(`[data-mint="${data.mint}"]`);
-							if (card) {
-								const sentimentEl = card.querySelector('.evt-sentiment');
-								if (sentimentEl) {
-									sentimentEl.textContent = result.data.sentiment === 'Positive' ? '😊' : '😞';
-								}
-							}
-						}
-					});
-				}
-
 				handleEvent(data);
 			};
 			ws.onerror = (err) => console.error('[ws] error', err);
@@ -1197,46 +1182,77 @@
 
 		function narrateEvent(evt) {
 			if (!params.narrate) return;
-			let text, anim;
+
 			const sol = evt.sol || 0;
 			const mc = evt.market_cap_usd || 0;
 			const name = evt.name || 'a token';
 
+			// Map event to an action key + built-in defaults
+			let actionKey = null;
+			let defaultText = null;
+			let defaultAnim = null;
+
 			if (evt.type === 'mint') {
 				if (!params.announceMints) return;
-				text = `New token minted: ${name}!`;
-				anim = 'victory';
+				actionKey = 'mint';
+				defaultText = `New token minted: ${name}!`;
+				defaultAnim = 'Victory';
 			} else if (evt.type === 'trade') {
 				if (evt.is_buy) {
-					if (sol > 50) { text = `Whale alert! Someone just bought ${sol.toFixed(1)} SOL of ${name}!`; anim = 'surprised'; }
-					else if (sol > 10) { text = `Big buy! ${sol.toFixed(1)} SOL of ${name}.`; anim = 'run'; }
-					else if (mc < 15000 && sol > 0.5) { text = `Here's a dip buy on ${name}.`; anim = 'yes'; }
-					else return; // don't narrate small buys
-				} else { // sell
-					if (sol > 50) { text = `Ouch, a whale just dumped ${sol.toFixed(1)} SOL of ${name}.`; anim = 'no'; }
-					else if (sol > 10) { text = `Big sell on ${name}.`; anim = 'headshake'; }
-					else return; // don't narrate small sells
+					if (sol > 50)                          { actionKey = 'whale_buy'; defaultText = `Whale alert! ${sol.toFixed(1)} SOL into ${name}!`; defaultAnim = 'Surprised'; }
+					else if (sol > 10)                     { actionKey = 'big_buy';   defaultText = `Big buy — ${sol.toFixed(1)} SOL of ${name}.`;      defaultAnim = 'Running'; }
+					else if (mc < 15000 && sol > 0.5)      { actionKey = 'dip_buy';   defaultText = `Dip buy on ${name}.`;                              defaultAnim = 'Yes'; }
+					else if (sol > 1)                      { actionKey = 'med_buy'; }
+					else                                   { actionKey = 'small_buy'; }
+				} else {
+					if (sol > 50)                          { actionKey = 'whale_sell'; defaultText = `Whale dump — ${sol.toFixed(1)} SOL out of ${name}.`; defaultAnim = 'No'; }
+					else if (sol > 10)                     { actionKey = 'big_sell';   defaultText = `Big sell on ${name}.`;                               defaultAnim = 'Headshake'; }
+					else if (sol > 1)                      { actionKey = 'med_sell'; }
+					else                                   { actionKey = 'small_sell'; }
 				}
 			} else if (evt.type === 'graduation') {
-				if (mc > 1_000_000) text = `Oh my god! ${name} just graduated and it's already over a million market cap!`;
-				else if (mc > 250_000) text = `Let's go! ${name} graduated to Raydium!`;
-				else text = `${name} made it to Raydium.`;
-				anim = 'victory';
 				if (evt.audit?.rug_score?.risk_level === 'high') {
-					text = `Warning, ${name} looks like a rug pull. High risk score.`;
-					anim = 'no';
+					actionKey = 'rug';
+					defaultText = `Warning — ${name} looks like a rug. High risk score.`;
+					defaultAnim = 'No';
+				} else {
+					actionKey = 'graduation';
+					if (mc > 1_000_000)      defaultText = `Oh my god! ${name} just graduated at over a million market cap!`;
+					else if (mc > 250_000)   defaultText = `Let's go! ${name} graduated to Raydium!`;
+					else                     defaultText = `${name} made it to Raydium.`;
+					defaultAnim = 'Victory';
 				}
+			} else if (evt.type === 'claim') {
+				actionKey = 'claim';
 			} else {
-				return; // unhandled event type
+				return;
 			}
 
-			if (anim) {
-				const animName = {
-					'victory': 'Victory', 'yes': 'Yes', 'no': 'No', 'run': 'Running',
-					'surprised': 'Surprised', 'headshake': 'Headshake'
-				}[anim] || anim;
-				const hasAnim = animations.includes(animName);
-				enqueue({ type: 'anim', name: hasAnim ? animName : 'Idle', duration: hasAnim ? 2500 : 500 });
+			if (!actionKey) return;
+
+			const actionCfg = config.settings.actions[actionKey];
+
+			// Resolve animation: user-configured emotion → mapped animation → default → nothing
+			let animName = defaultAnim;
+			if (actionCfg?.emotion) {
+				const mapped = config.settings.emotions[actionCfg.emotion];
+				animName = mapped || actionCfg.emotion; // fall back to the emotion label itself
+			}
+
+			// Resolve TTS: user-configured template → default → nothing
+			let text = defaultText;
+			if (actionCfg?.tts) {
+				text = actionCfg.tts
+					.replace(/{name}/g, name)
+					.replace(/{sol}/g, sol.toFixed(2))
+					.replace(/{mc}/g, mc > 0 ? '$' + mc.toLocaleString(undefined, { maximumFractionDigits: 0 }) : '');
+			}
+
+			if (!animName && !text) return;
+
+			if (animName) {
+				const has = animations.includes(animName);
+				enqueue({ type: 'anim', name: has ? animName : 'Idle', duration: has ? 2500 : 500 });
 			}
 			if (text) {
 				enqueue({ type: 'say', text });
@@ -1595,7 +1611,7 @@
 		initSidePanel();
 		connect();
 		fetchFirstClaims();
-		setInterval(() => ws.send(JSON.stringify({ type: 'sol-price' })), 15_000);
+		setInterval(() => { if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'sol-price' })); }, 15_000);
 	</script>
 </body>
 </html>

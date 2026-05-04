@@ -1,0 +1,17 @@
+{
+  "name": "@3d-agent/agent-protocol-sdk",
+  "version": "0.1.0",
+  "description": "SDK for the on-chain agent-to-agent invocation protocol.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.31.1",
+    "@solana/web3.js": "^1.98.4"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
