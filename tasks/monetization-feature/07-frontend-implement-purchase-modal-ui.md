@@ -1,3 +1,7 @@
+---
+status: not-started
+---
+
 # Prompt 7: Frontend - Implement Skill Purchase Modal UI
 
 ## Objective

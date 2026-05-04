@@ -1,3 +1,7 @@
+---
+status: not-started
+---
+
 # Prompt 4: Frontend - Create Reusable PriceBadge Component
 
 ## Objective

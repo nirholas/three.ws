@@ -1,3 +1,7 @@
+---
+status: not-started
+---
+
 # Prompt 5: Frontend - Handle Price Loading States
 
 ## Objective

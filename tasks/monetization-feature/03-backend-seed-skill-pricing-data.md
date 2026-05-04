@@ -1,3 +1,7 @@
+---
+status: not-started
+---
+
 # Prompt 3: Backend - Seed Skill Pricing Data
 
 ## Objective

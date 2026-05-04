@@ -1,3 +1,7 @@
+---
+status: not-started
+---
+
 # Prompt 6: UI/UX - Design the Skill Purchase Modal
 
 ## Objective

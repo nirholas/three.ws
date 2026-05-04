@@ -1,3 +1,7 @@
+---
+status: not-started
+---
+
 # Prompt 2: Backend - Create Skill Pricing Table
 
 ## Objective

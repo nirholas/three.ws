@@ -1,14 +1,6 @@
----
-status: not-started
----
-
----
-status: not-started
----
-
 # Prompt 1: Display Priced Skills in Marketplace
 
-**Status:** Completed
+**Status:** - [ ] Not Started
 
 ## Objective
 Modify the agent detail page in the marketplace to visually distinguish between free and paid skills, and display the price for paid skills.
@@ -17,17 +9,17 @@ Modify the agent detail page in the marketplace to visually distinguish between 
 Currently, the agent detail page lists all skills uniformly. To begin building our monetization feature, users need to be able to see which skills are premium and how much they cost. This involves fetching pricing data along with agent details and updating the UI to render prices and a premium indicator.
 
 ## Instructions
-- [x] **Modify the Backend API:**
-    - [x] Locate the API endpoint that serves the agent detail data (`/api/marketplace/agents/:id`). You can find this in `api/marketplace/[action].js`.
-    - [x] When fetching agent details, also query the `agent_skill_prices` table to get the prices for the agent's skills.
-    - [x] Join this pricing data with the agent details response. The agent object should now have a `skill_prices` map or object, like `{ "skill_name": { "amount": 1000000, "currency_mint": "EPjFWdd..." } }`.
+1.  **Modify the Backend API:**
+    *   Locate the API endpoint that serves the agent detail data (`/api/marketplace/agents/:id`). You can find this in `api/marketplace/[action].js`.
+    *   When fetching agent details, also query the `agent_skill_prices` table to get the prices for the agent's skills.
+    *   Join this pricing data with the agent details response. The agent object should now have a `skill_prices` map or object, like `{ "skill_name": { "amount": 1000000, "currency_mint": "EPjFWdd..." } }`.
 
-- [x] **Update the Frontend UI:**
-    - [x] In `src/marketplace.js`, find the `renderDetail` function.
-    - [x] This function receives the agent object, which now includes `skill_prices`.
-    - [x] Inside the loop that renders the skills (`d-skills` element), check if a price exists for the current skill.
-    - [x] If a price exists, render a price badge next to the skill name. Convert the amount from lamports (or the smallest unit) to a human-readable format (e.g., 1,000,000 lamports = 1 USDC).
-    - [x] Style the price badge to be visually distinct.
+2.  **Update the Frontend UI:**
+    *   In `src/marketplace.js`, find the `renderDetail` function.
+    *   This function receives the agent object, which now includes `skill_prices`.
+    *   Inside the loop that renders the skills (`d-skills` element), check if a price exists for the current skill.
+    *   If a price exists, render a price badge next to the skill name. Convert the amount from lamports (or the smallest unit) to a human-readable format (e.g., 1,000,000 lamports = 1 USDC).
+    *   Style the price badge to be visually distinct.
 
 ## Code Example (Frontend - `src/marketplace.js`)
 
