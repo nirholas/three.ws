@@ -1,5 +1,4 @@
 import { Connection, PublicKey } from '@solana/web3.js';
-import { resolve, getFavoriteDomain } from '@bonfida/spl-name-service';
 
 const DEFAULT_RPC_URL =
 	(typeof process !== 'undefined' && process.env?.SOLANA_RPC_URL) ||
@@ -13,13 +12,15 @@ function stripSol(name) {
 	return name.endsWith('.sol') ? name.slice(0, -4) : name;
 }
 
-/**
- * Forward lookup: .sol domain name → owner wallet address (base58) or null.
- * @param {string} name - e.g. 'bonfida.sol' or 'bonfida'
- * @returns {Promise<string|null>}
- */
+// Dynamic import avoids the Rollup TDZ (temporal dead zone) error caused by
+// circular dependencies inside @bonfida/spl-name-service when statically bundled.
+async function getBonfida() {
+	return import('@bonfida/spl-name-service');
+}
+
 export async function resolveSnsName(name) {
 	try {
+		const { resolve } = await getBonfida();
 		const pk = await resolve(makeConnection(), stripSol(name));
 		return pk.toBase58();
 	} catch {
@@ -27,13 +28,9 @@ export async function resolveSnsName(name) {
 	}
 }
 
-/**
- * Reverse lookup: wallet address (base58) → primary .sol domain name or null.
- * @param {string} addr - base58-encoded wallet public key
- * @returns {Promise<string|null>}
- */
 export async function reverseLookupAddress(addr) {
 	try {
+		const { getFavoriteDomain } = await getBonfida();
 		const owner = new PublicKey(addr);
 		const { reverse } = await getFavoriteDomain(makeConnection(), owner);
 		return reverse.endsWith('.sol') ? reverse : `${reverse}.sol`;

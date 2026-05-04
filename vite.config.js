@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
 import { readFileSync, cpSync, createReadStream, existsSync, statSync } from 'fs';
+import { execSync } from 'child_process';
 import { VitePWA } from 'vite-plugin-pwa';
 
 // The build emits two targets controlled by the TARGET env var:
@@ -23,6 +24,10 @@ const appConfig = {
 			},
 		},
 	},
+	optimizeDeps: {
+		// Pre-bundle via esbuild so circular deps don't cause Rollup TDZ errors.
+		include: ['@bonfida/spl-name-service'],
+	},
 	esbuild: {
 		jsx: 'transform',
 		jsxFactory: 'vhtml',
@@ -39,6 +44,7 @@ const appConfig = {
 		target: 'esnext',
 		reportCompressedSize: false,
 		chunkSizeWarningLimit: 1000,
+		emptyOutDir: false,
 		rollupOptions: {
 			output: {
 				manualChunks(id) {
@@ -80,6 +86,15 @@ const appConfig = {
 		},
 	},
 	plugins: [
+		{
+			name: 'clean-dist',
+			apply: 'build',
+			buildStart() {
+				try {
+					execSync('rm -rf dist', { cwd: resolve(__dirname), stdio: 'ignore' });
+				} catch {}
+			},
+		},
 		{
 			name: 'vercel-rewrites',
 			configureServer(server) {

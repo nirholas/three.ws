@@ -39,7 +39,7 @@
 	"scripts": {
 		"dev": "vite --port 3000",
 		"dev:lib": "TARGET=lib vite",
-		"build": "vite build",
+		"build": "NODE_OPTIONS=--max-old-space-size=4096 vite build",
 		"build:animations": "node scripts/build-animations.mjs",
 		"build:lib": "TARGET=lib vite build",
 		"build:lib:full": "TARGET=lib LIB_FORMATS=es,umd vite build",
