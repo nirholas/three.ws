@@ -97,7 +97,11 @@ export function connectPumpFunFeed({ onEvent, signal, kind = 'all' }) {
 					if (active) onEvent({ kind: 'mint', data: normalizeMint(msg, null, 0) });
 				});
 			} else if ((msg.txType === 'migrate' || msg.txType === 'migration') && (kind === 'all' || kind === 'graduation')) {
-				onEvent({ kind: 'graduation', data: normalizeGrad(msg) });
+				enrichGrad(msg).then((data) => {
+					if (active) onEvent({ kind: 'graduation', data });
+				}).catch(() => {
+					if (active) onEvent({ kind: 'graduation', data: normalizeGrad(msg) });
+				});
 			}
 		});
 
@@ -153,5 +157,138 @@ function normalizeGrad(d) {
 		name: d.name,
 		symbol: d.symbol,
 		pool: d.pool,
+		timestamp: Math.floor(Date.now() / 1000),
+	};
+}
+
+// ── graduation enrichment ────────────────────────────────────────────────────
+//
+// PumpPortal's migration message only carries {signature, mint, name, symbol,
+// pool}. To render a rich card matching the desired feed format we resolve:
+//   - coin metadata: usd_market_cap, market_cap_at_launch, created_timestamp,
+//     description, creator from pump.fun's frontend coin endpoint
+//   - creator history: total launches + best-token by market cap by listing
+//     the creator's coins
+// A short pump.fun coin TTL cache prevents hammering the endpoint when a
+// migration shows up multiple times across reconnects, and per-fetch timeouts
+// keep stalls bounded so a slow upstream can't pin the SSE worker.
+
+const PUMPFUN_COIN_API = 'https://frontend-api-v3.pump.fun/coins';
+const PUMPFUN_USER_COINS_API = 'https://frontend-api-v3.pump.fun/coins/user-created-coins';
+const ENRICH_TIMEOUT_MS = 2_500;
+const COIN_CACHE_TTL_MS = 30_000;
+const _coinCache = new Map();
+const _creatorCache = new Map();
+
+async function fetchJsonWithTimeout(url, ms = ENRICH_TIMEOUT_MS) {
+	const ctrl = new AbortController();
+	const tid = setTimeout(() => ctrl.abort(), ms);
+	try {
+		const r = await fetch(url, {
+			signal: ctrl.signal,
+			headers: { 'accept': 'application/json', 'user-agent': 'three.ws-pumpfun-feed/1' },
+		});
+		if (!r.ok) return null;
+		return await r.json();
+	} catch { return null; } finally { clearTimeout(tid); }
+}
+
+async function fetchCoin(mint) {
+	const hit = _coinCache.get(mint);
+	if (hit && Date.now() - hit.t < COIN_CACHE_TTL_MS) return hit.v;
+	const v = await fetchJsonWithTimeout(`${PUMPFUN_COIN_API}/${encodeURIComponent(mint)}`);
+	if (_coinCache.size > 500) _coinCache.clear();
+	_coinCache.set(mint, { t: Date.now(), v });
+	return v;
+}
+
+async function fetchCreatorCoins(creator) {
+	if (!creator) return null;
+	const hit = _creatorCache.get(creator);
+	if (hit && Date.now() - hit.t < COIN_CACHE_TTL_MS) return hit.v;
+	const v = await fetchJsonWithTimeout(
+		`${PUMPFUN_USER_COINS_API}/${encodeURIComponent(creator)}?offset=0&limit=50&includeNsfw=true`,
+	);
+	if (_creatorCache.size > 500) _creatorCache.clear();
+	_creatorCache.set(creator, { t: Date.now(), v });
+	return v;
+}
+
+function formatAge(createdAtMs) {
+	if (!createdAtMs) return '';
+	const s = Math.max(0, Math.floor((Date.now() - createdAtMs) / 1000));
+	if (s < 60) return s + 's';
+	const m = Math.floor(s / 60);
+	if (m < 60) return m + 'm';
+	const h = Math.floor(m / 60);
+	if (h < 24) return h + 'h';
+	return Math.floor(h / 24) + 'd';
+}
+
+async function enrichGrad(d) {
+	const base = normalizeGrad(d);
+	const mint = d.mint;
+	if (!mint) return base;
+
+	const [solPrice, coin] = await Promise.all([
+		getSolPrice(),
+		fetchCoin(mint),
+	]);
+
+	if (!coin) return base;
+
+	const creator = coin.creator || d.traderPublicKey || null;
+	const userCoins = creator ? await fetchCreatorCoins(creator) : null;
+
+	const usdMc = typeof coin.usd_market_cap === 'number' ? coin.usd_market_cap : null;
+	const launchSol = typeof coin.market_cap_at_launch === 'number' ? coin.market_cap_at_launch : null;
+	const launchUsd = launchSol != null && solPrice > 0 ? launchSol * solPrice : null;
+
+	const createdMs = coin.created_timestamp ? Number(coin.created_timestamp) : null;
+	const age = formatAge(createdMs);
+
+	let creatorTokens = [];
+	let launches = null;
+	if (Array.isArray(userCoins)) {
+		launches = userCoins.length;
+		creatorTokens = userCoins
+			.map((c) => ({
+				mint: c.mint,
+				symbol: c.symbol,
+				name: c.name,
+				mc: typeof c.usd_market_cap === 'number'
+					? c.usd_market_cap
+					: (typeof c.market_cap === 'number' && solPrice > 0 ? c.market_cap * solPrice : null),
+			}))
+			.filter((c) => c.symbol);
+	}
+
+	const amountSol = typeof d.solAmount === 'number' ? d.solAmount
+		: typeof coin.virtual_sol_reserves === 'number' && coin.virtual_sol_reserves > 0
+			? coin.virtual_sol_reserves / 1e9
+			: null;
+	const amountUsd = amountSol != null && solPrice > 0 ? amountSol * solPrice : null;
+
+	return {
+		...base,
+		name: coin.name || base.name,
+		symbol: coin.symbol || base.symbol,
+		description: coin.description || null,
+		creator,
+		image_uri: coin.image_uri || null,
+		twitter: coin.twitter || null,
+		telegram: coin.telegram || null,
+		website: coin.website || null,
+		usd_market_cap: usdMc,
+		market_cap: usdMc,
+		market_cap_usd_initial: launchUsd,
+		market_cap_at_launch: launchSol,
+		sol_price: solPrice || null,
+		created_at: createdMs ? Math.floor(createdMs / 1000) : null,
+		age,
+		amount_sol: amountSol,
+		amount_usd: amountUsd,
+		creator_launches: launches,
+		creator_tokens: creatorTokens,
 	};
 }

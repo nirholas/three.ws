@@ -396,6 +396,9 @@ function narrateClaim(protocol, ev) {
 	if (!protocol) return;
 	if (ev.first_time_claim) {
 		protocol.emit({ type: 'emote', payload: { trigger: 'celebration', weight: 0.9 } });
+		// First GitHub-linked claim → silly hip-hop dance
+		const danceClip = ev.github_user ? 'silly' : 'celebrate';
+		protocol.emit({ type: 'gesture', payload: { name: danceClip, duration: 4000 } });
 		protocol.emit({
 			type: 'speak',
 			payload: {
@@ -405,19 +408,25 @@ function narrateClaim(protocol, ev) {
 		});
 	} else if (ev.fake_claim) {
 		protocol.emit({ type: 'emote', payload: { trigger: 'concern', weight: 0.7 } });
+		protocol.emit({ type: 'gesture', payload: { name: 'shake', duration: 1500 } });
 		protocol.emit({
 			type: 'speak',
 			payload: { text: `Fake claim from ${ev.github_user || ev.claimer}.`, sentiment: -0.5 },
 		});
-	} else if (ev.tier === 'mega' || ev.tier === 'influencer') {
+	} else if (ev.tier === 'mega') {
+		protocol.emit({ type: 'emote', payload: { trigger: 'celebration', weight: 0.7 } });
+		protocol.emit({ type: 'gesture', payload: { name: 'thriller', duration: 5000 } });
+	} else if (ev.tier === 'influencer') {
 		protocol.emit({ type: 'emote', payload: { trigger: 'curiosity', weight: 0.5 } });
+		protocol.emit({ type: 'gesture', payload: { name: 'taunt', duration: 2500 } });
 	}
 }
 
 function narrateGraduation(protocol, ev) {
 	if (!protocol) return;
 	protocol.emit({ type: 'emote', payload: { trigger: 'celebration', weight: 0.9 } });
-	protocol.emit({ type: 'gesture', payload: { name: 'dance', duration: 5000 } });
+	// Graduation = the big one → rumba
+	protocol.emit({ type: 'gesture', payload: { name: 'rumba', duration: 6000 } });
 	protocol.emit({
 		type: 'speak',
 		payload: { text: `Migration: ${ev.symbol || ev.name || 'a token'} bonded to PumpAMM.`, sentiment: 0.6 },
