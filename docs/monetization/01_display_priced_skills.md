@@ -1,8 +1,8 @@
 ---
 status: not-started
+last_updated: 2026-05-04
 ---
-
-# Prompt 1: Display Priced Skills in Marketplace
+# Prompt 01: Display Priced Skills in Marketplace
 
 ## Objective
 Modify the agent detail page in the marketplace to visually distinguish between free and paid skills, and display the price for paid skills.
