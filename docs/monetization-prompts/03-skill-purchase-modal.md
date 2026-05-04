@@ -1,3 +1,7 @@
+---
+status: not-started
+---
+
 # Prompt 03: Create Skill Purchase Modal
 
 ## Objective
@@ -7,14 +11,14 @@ Create a modal that appears when a user clicks the "Purchase" button, confirming
 A confirmation modal prevents accidental purchases and provides a clear, focused step in the user journey. This modal will be the central point for initiating the wallet transaction.
 
 ## Instructions
-1.  **Create the Modal HTML:**
-    *   Add the HTML structure for a hidden modal to `marketplace.html`. It should include placeholders for the skill name, price, and agent name, along with "Confirm Purchase" and "Cancel" buttons.
+- [ ] **Create the Modal HTML:**
+    - [ ] Add the HTML structure for a hidden modal to `marketplace.html`. It should include placeholders for the skill name, price, and agent name, along with "Confirm Purchase" and "Cancel" buttons.
 
-2.  **Add JavaScript Logic (`src/marketplace.js`):**
-    *   Create a new function, `openPurchaseModal(skillName, price, agentName)`. This function will populate the modal with the correct data and make it visible.
-    *   Attach an event listener to the `d-skills` container that listens for clicks on `.purchase-btn`.
-    *   When a purchase button is clicked, get the skill name from the `data-skill-name` attribute, find its price from the agent data, and call `openPurchaseModal`.
-    *   Add event listeners for the "Confirm" and "Cancel" buttons within the modal. For now, they can just log to the console.
+- [ ] **Add JavaScript Logic (`src/marketplace.js`):**
+    - [ ] Create a new function, `openPurchaseModal(skillName, price, agentName)`. This function will populate the modal with the correct data and make it visible.
+    - [ ] Attach an event listener to the `d-skills` container that listens for clicks on `.purchase-btn`.
+    - [ ] When a purchase button is clicked, get the skill name from the `data-skill-name` attribute, find its price from the agent data, and call `openPurchaseModal`.
+    - [ ] Add event listeners for the "Confirm" and "Cancel" buttons within the modal. For now, they can just log to the console.
 
 ## HTML Example (in `marketplace.html`)
 

@@ -1,3 +1,7 @@
+---
+status: not-started
+---
+
 # Prompt 02: Add Purchase Button for Priced Skills
 
 ## Objective
@@ -7,11 +11,11 @@ Add a "Purchase" button next to paid skills on the agent detail page, creating a
 With prices now visible, the next step is to provide a way for users to initiate a purchase. This prompt focuses on adding the button to the UI. The button's functionality will be implemented in subsequent steps.
 
 ## Instructions
-1.  **Update the Frontend UI (`src/marketplace.js`):**
-    *   Modify the `renderDetail` function.
-    *   In the skill rendering loop, if a skill is paid, render a "Purchase" button next to the price badge.
-    *   For now, we will assume the user does not own any skills. In a later prompt, we will fetch user ownership data and update the button state (e.g., to a disabled "Unlocked" button).
-    *   Add a `data-skill-name` attribute to the button to easily identify which skill is being purchased when the button is clicked.
+- [ ] **Update the Frontend UI (`src/marketplace.js`):**
+    - [ ] Modify the `renderDetail` function.
+    - [ ] In the skill rendering loop, if a skill is paid, render a "Purchase" button next to the price badge.
+    - [ ] For now, we will assume the user does not own any skills. In a later prompt, we will fetch user ownership data and update the button state (e.g., to a disabled "Unlocked" button).
+    - [ ] Add a `data-skill-name` attribute to the button to easily identify which skill is being purchased when the button is clicked.
 
 ## Code Example (Frontend - `src/marketplace.js`)
 

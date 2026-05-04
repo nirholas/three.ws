@@ -1,5 +1,5 @@
 ---
-status: completed
+status: in-progress
 ---
 
 # Prompt 1: Display Priced Skills in Marketplace

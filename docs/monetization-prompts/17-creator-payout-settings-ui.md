@@ -1,3 +1,7 @@
+---
+status: not-started
+---
+
 # Prompt 17: Creator Payout Settings - UI
 
 ## Objective
@@ -7,21 +11,21 @@ Create a user interface in the user's settings or profile page for them to manag
 To receive payments, creators need a secure and simple way to input and update their Solana wallet address. This UI should provide clear instructions and validation.
 
 ## Instructions
-1.  **Design the UI:**
-    *   Choose a suitable location for this setting, such as a "Payouts" or "Monetization" tab in the user's main profile/settings page.
-    *   Add a new section titled "Payout Wallet".
-    *   Include an input field for the Solana wallet address.
-    *   Add a "Save" button.
-    *   Display the currently saved address (if any) and provide clear helper text, e.g., "This is the Solana wallet where you will receive payments for skill purchases."
-    *   Add a warning about the importance of using the correct address.
+- [ ] **Design the UI:**
+    - [ ] Choose a suitable location for this setting, such as a "Payouts" or "Monetization" tab in the user's main profile/settings page.
+    - [ ] Add a new section titled "Payout Wallet".
+    - [ ] Include an input field for the Solana wallet address.
+    - [ ] Add a "Save" button.
+    - [ ] Display the currently saved address (if any) and provide clear helper text, e.g., "This is the Solana wallet where you will receive payments for skill purchases."
+    - [ ] Add a warning about the importance of using the correct address.
 
-2.  **Implement Frontend Logic:**
-    *   When the page loads, fetch the user's current settings, including their `payout_wallet_address`, and populate the input field.
-    *   When the user clicks "Save":
-        *   Get the value from the input field.
-        *   Perform client-side validation to check if it looks like a valid Solana address (e.g., check length and characters). A full validation on the backend is still required.
-        *   Make a `PUT` request to the backend endpoint (`/api/users/payout-settings`) with the new address.
-        *   Display a success or error message to the user based on the API response.
+- [ ] **Implement Frontend Logic:**
+    - [ ] When the page loads, fetch the user's current settings, including their `payout_wallet_address`, and populate the input field.
+    - [ ] When the user clicks "Save":
+        - [ ] Get the value from the input field.
+        - [ ] Perform client-side validation to check if it looks like a valid Solana address (e.g., check length and characters). A full validation on the backend is still required.
+        - [ ] Make a `PUT` request to the backend endpoint (`/api/users/payout-settings`) with the new address.
+        - [ ] Display a success or error message to the user based on the API response.
 
 ## HTML Example (in a user settings page)
 

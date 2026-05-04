@@ -1,3 +1,7 @@
+---
+status: not-started
+---
+
 # Prompt 15: Skill Pricing Management - UI
 
 ## Objective
@@ -7,18 +11,18 @@ Create a user interface on the agent creation/editing page that allows creators 
 Creators need a simple and intuitive way to manage the prices of their skills. This involves adding new form elements to the page where they configure their agents.
 
 ## Instructions
-1.  **Design the UI:**
-    *   On the page where a creator edits their agent (e.g., `agent-edit.html`), locate the section where skills are listed or added.
-    *   For each skill listed, add a price input field and a currency selector (for now, this can be a disabled dropdown showing "USDC").
-    *   If a skill is meant to be free, the creator should be able to leave the price field blank or set it to 0.
-    *   Add a "Save Prices" or "Update Agent" button to submit the changes.
+- [ ] **Design the UI:**
+    - [ ] On the page where a creator edits their agent (e.g., `agent-edit.html`), locate the section where skills are listed or added.
+    - [ ] For each skill listed, add a price input field and a currency selector (for now, this can be a disabled dropdown showing "USDC").
+    - [ ] If a skill is meant to be free, the creator should be able to leave the price field blank or set it to 0.
+    - [ ] Add a "Save Prices" or "Update Agent" button to submit the changes.
 
-2.  **Implement Frontend Logic:**
-    *   When the agent edit page loads, it should fetch the agent's details, including the existing `skill_prices` map.
-    *   Use this data to populate the price input fields for each skill.
-    *   When the "Save" button is clicked, gather all the skill names and their new prices from the input fields.
-    *   Structure this data into a map, e.g., `{ "skill_one": 10.50, "skill_two": 0 }`.
-    *   Make a `PUT` request to a new backend API endpoint to save these prices.
+- [ ] **Implement Frontend Logic:**
+    - [ ] When the agent edit page loads, it should fetch the agent's details, including the existing `skill_prices` map.
+    - [ ] Use this data to populate the price input fields for each skill.
+    - [ ] When the "Save" button is clicked, gather all the skill names and their new prices from the input fields.
+    - [ ] Structure this data into a map, e.g., `{ "skill_one": 10.50, "skill_two": 0 }`.
+    - [ ] Make a `PUT` request to a new backend API endpoint to save these prices.
 
 ## HTML Example (Inside an agent edit form)
 

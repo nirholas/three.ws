@@ -1,3 +1,7 @@
+---
+status: not-started
+---
+
 # Prompt 05: Solana Pay Transaction Integration
 
 ## Objective
@@ -7,22 +11,22 @@ Integrate Solana Pay into the purchase modal to generate a transaction for the u
 When the user clicks "Confirm Purchase", we need to construct and present a Solana transaction. We'll use the Solana Pay standard, which allows for reliable transaction requests. The backend will create the transaction, and the frontend will use it.
 
 ## Instructions
-1.  **Create a Backend Endpoint for Transaction Creation:**
-    *   Create a new API endpoint, e.g., `POST /api/transactions/create-skill-purchase`.
-    *   This endpoint will take `agentId`, `skillName`, and the `buyerPublicKey` as input.
-    *   It should look up the skill price, the creator's destination wallet, and the platform fee wallet.
-    *   Using the Solana SDK (`@solana/web3.js`), it will construct a transaction that transfers the correct amount of USDC from the buyer to the creator (and platform).
-    *   The endpoint should return the serialized transaction.
+- [ ] **Create a Backend Endpoint for Transaction Creation:**
+    - [ ] Create a new API endpoint, e.g., `POST /api/transactions/create-skill-purchase`.
+    - [ ] This endpoint will take `agentId`, `skillName`, and the `buyerPublicKey` as input.
+    - [ ] It should look up the skill price, the creator's destination wallet, and the platform fee wallet.
+    - [ ] Using the Solana SDK (`@solana/web3.js`), it will construct a transaction that transfers the correct amount of USDC from the buyer to the creator (and platform).
+    - [ ] The endpoint should return the serialized transaction.
 
-2.  **Update Frontend Modal Logic:**
-    *   In `src/marketplace.js`, modify the event listener for the "Confirm Purchase" button (`#modal-confirm-btn`).
-    *   When clicked, it should first check if the user's wallet is connected.
-    *   Then, it should make a `POST` request to your new backend endpoint.
-    *   The frontend receives the serialized transaction from the backend.
+- [ ] **Update Frontend Modal Logic:**
+    - [ ] In `src/marketplace.js`, modify the event listener for the "Confirm Purchase" button (`#modal-confirm-btn`).
+    - [ ] When clicked, it should first check if the user's wallet is connected.
+    - [ ] Then, it should make a `POST` request to your new backend endpoint.
+    - [ ] The frontend receives the serialized transaction from the backend.
 
-3.  **Sign and Send the Transaction:**
-    *   Use the wallet-adapter's `sendTransaction` method to ask the user to sign and send the transaction received from the backend.
-    *   Handle potential errors during this process (e.g., user rejection).
+- [ ] **Sign and Send the Transaction:**
+    - [ ] Use the wallet-adapter's `sendTransaction` method to ask the user to sign and send the transaction received from the backend.
+    - [ ] Handle potential errors during this process (e.g., user rejection).
 
 ## JavaScript Example (`src/marketplace.js` - Confirm Button Listener)
 

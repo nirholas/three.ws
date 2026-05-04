@@ -8,8 +8,8 @@ The status of each task is tracked in its frontmatter (`status: not-started | in
 
 | ID | Task                                       | Status      |
 |----|--------------------------------------------|-------------|
-| 01 | Display Priced Skills in Marketplace       | `not-started` |
-| 02 | Create `agent_skill_prices` Table Schema    | `not-started` |
+| 01 | Display Priced Skills in Marketplace       | `completed` |
+| 02 | Create `agent_skill_prices` Table Schema    | `completed` |
 | 03 | Creator UI for Skill Pricing               | `not-started` |
 | 04 | Backend for Saving Skill Prices            | `not-started` |
 | 05 | Add "Purchase" Button to Marketplace UI    | `not-started` |

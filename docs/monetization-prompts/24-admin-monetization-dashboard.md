@@ -1,3 +1,7 @@
+---
+status: not-started
+---
+
 # Prompt 24: Admin Monetization Dashboard
 
 ## Objective
@@ -7,29 +11,29 @@ Create a secure, internal dashboard for platform administrators to monitor the h
 While creators have their own dashboards, platform admins need a high-level view to understand overall trends, spot potential issues, and manage the ecosystem. This is an internal tool, not for public users.
 
 ## Instructions
-1.  **Create a Secure Admin Area:**
-    *   Build a new section of the application that is only accessible to users with an 'admin' role. This requires role-based access control (RBAC) in your user authentication system.
+- [ ] **Create a Secure Admin Area:**
+    - [ ] Build a new section of the application that is only accessible to users with an 'admin' role. This requires role-based access control (RBAC) in your user authentication system.
 
-2.  **Backend API for Admin Stats:**
-    *   Create a new set of protected API endpoints, e.g., under `/api/admin/stats/`.
-    *   These endpoints will perform platform-wide aggregations.
-    *   **Key metrics to expose:**
-        *   **Gross Transaction Volume (GTV):** Total value of all transactions processed.
-        *   **Platform Revenue:** Total fees collected by the platform.
-        *   **Top Earning Creators:** A list of creators ranked by their total earnings.
-        *   **Top Selling Skills/Agents:** A list of the most purchased skills and agents.
-        *   **New Subscriptions/Cancellations:** A time-series chart showing subscription growth.
+- [ ] **Backend API for Admin Stats:**
+    - [ ] Create a new set of protected API endpoints, e.g., under `/api/admin/stats/`.
+    - [ ] These endpoints will perform platform-wide aggregations.
+    - [ ] **Key metrics to expose:**
+        - [ ] **Gross Transaction Volume (GTV):** Total value of all transactions processed.
+        - [ ] **Platform Revenue:** Total fees collected by the platform.
+        - [ ] **Top Earning Creators:** A list of creators ranked by their total earnings.
+        - [ ] **Top Selling Skills/Agents:** A list of the most purchased skills and agents.
+        - [ ] **New Subscriptions/Cancellations:** A time-series chart showing subscription growth.
 
-3.  **Frontend UI for Admin Dashboard:**
-    *   Create a new UI for the admin area.
-    *   Use data visualization components (charts, tables, stat cards) to present the data fetched from the admin APIs.
-    *   The UI should allow filtering by date ranges to analyze performance over time.
+- [ ] **Frontend UI for Admin Dashboard:**
+    - [ ] Create a new UI for the admin area.
+    - [ ] Use data visualization components (charts, tables, stat cards) to present the data fetched from the admin APIs.
+    - [ ] The UI should allow filtering by date ranges to analyze performance over time.
 
-4.  **Add Management Tools (Advanced):**
-    *   Beyond just viewing data, an admin dashboard can include tools for:
-        *   **Refunding a purchase:** A button to trigger a refund process (this is complex and involves on-chain transactions and database updates).
-        *   **Disabling a skill from sale:** A toggle to remove a problematic skill from the marketplace.
-        *   **Managing user roles.**
+- [ ] **Add Management Tools (Advanced):**
+    - [ ] Beyond just viewing data, an admin dashboard can include tools for:
+        - [ ] **Refunding a purchase:** A button to trigger a refund process (this is complex and involves on-chain transactions and database updates).
+        - [ ] **Disabling a skill from sale:** A toggle to remove a problematic skill from the marketplace.
+        - [ ] **Managing user roles.**
 
 ## Admin API Response Example (`/api/admin/stats/overview`)
 

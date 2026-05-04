@@ -1,3 +1,7 @@
+---
+status: not-started
+---
+
 # Prompt 16: Skill Pricing Management - API
 
 ## Objective
@@ -7,27 +11,27 @@ Create the backend API endpoint to allow creators to save the prices they set fo
 This endpoint will receive the pricing information from the UI and persist it in the `agent_skill_prices` database table. It needs to be secure and handle updates efficiently.
 
 ## Instructions
-1.  **Create the Database Table (if not exists):**
-    *   You should have a table `agent_skill_prices`. If not, create it.
-    *   Columns: `id`, `agent_id`, `skill_name`, `amount` (use a numeric type that can handle large integers, like `BIGINT`), `currency_mint`.
-    *   Create a unique constraint on `(agent_id, skill_name)`.
+- [ ] **Create the Database Table (if not exists):**
+    - [ ] You should have a table `agent_skill_prices`. If not, create it.
+    - [ ] Columns: `id`, `agent_id`, `skill_name`, `amount` (use a numeric type that can handle large integers, like `BIGINT`), `currency_mint`.
+    - [ ] Create a unique constraint on `(agent_id, skill_name)`.
 
-2.  **Create the API Endpoint:**
-    *   Create a new endpoint, e.g., `PUT /api/agents/:id/prices`.
-    *   The `:id` parameter will be the agent's ID.
-    *   Protect this endpoint with authentication middleware.
+- [ ] **Create the API Endpoint:**
+    - [ ] Create a new endpoint, e.g., `PUT /api/agents/:id/prices`.
+    - [ ] The `:id` parameter will be the agent's ID.
+    - [ ] Protect this endpoint with authentication middleware.
 
-3.  **Implement Authorization and Validation:**
-    *   Verify that the authenticated user (`req.user.id`) is the actual creator of the agent with the given `:id`. If not, return `403 Forbidden`.
-    *   The request body will contain a `prices` object (a map of skill names to amounts).
-    *   Validate this object: ensure it's a map, keys are strings, and values are non-negative integers.
+- [ ] **Implement Authorization and Validation:**
+    - [ ] Verify that the authenticated user (`req.user.id`) is the actual creator of the agent with the given `:id`. If not, return `403 Forbidden`.
+    - [ ] The request body will contain a `prices` object (a map of skill names to amounts).
+    - [ ] Validate this object: ensure it's a map, keys are strings, and values are non-negative integers.
 
-4.  **Implement Database Logic (Upsert):**
-    *   Iterate through the `prices` map from the request body.
-    *   For each skill, perform an "upsert" operation in the `agent_skill_prices` table:
-        *   If a row already exists for that `agent_id` and `skill_name`, `UPDATE` its `amount`.
-        *   If it doesn't exist, `INSERT` a new row.
-    *   If a skill's price is set to 0, you can either store it as 0 or `DELETE` the corresponding row, effectively making it a free skill. Deleting is often cleaner.
+- [ ] **Implement Database Logic (Upsert):**
+    - [ ] Iterate through the `prices` map from the request body.
+    - [ ] For each skill, perform an "upsert" operation in the `agent_skill_prices` table:
+        - [ ] If a row already exists for that `agent_id` and `skill_name`, `UPDATE` its `amount`.
+        - [ ] If it doesn't exist, `INSERT` a new row.
+    - [ ] If a skill's price is set to 0, you can either store it as 0 or `DELETE` the corresponding row, effectively making it a free skill. Deleting is often cleaner.
 
 ## SQL Upsert Example (PostgreSQL)
 

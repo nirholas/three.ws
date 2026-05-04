@@ -1,3 +1,7 @@
+---
+status: not-started
+---
+
 # Prompt 10: Record Skill Ownership in Database
 
 ## Objective
@@ -7,29 +11,29 @@ Create the database schema and logic to record that a user has successfully purc
 After a transaction is successfully verified, the final step on the backend is to persist the user's ownership of the skill. This record will be the source of truth for all future checks, such as gating skill usage and updating the marketplace UI.
 
 ## Instructions
-1.  **Design and Create a New Database Table:**
-    *   Create a new table named `unlocked_skills` (or similar).
-    *   It should contain, at a minimum, the following columns:
-        *   `id` (Primary Key)
-        *   `user_id` (Foreign Key to your `users` table)
-        *   `agent_id` (Foreign Key to your `agents` table)
-        *   `skill_name` (String)
-        *   `purchase_transaction_signature` (String, for auditing)
-        *   `created_at` (Timestamp)
-    *   Consider adding a unique constraint on `(user_id, agent_id, skill_name)` to prevent duplicate entries.
+- [ ] **Design and Create a New Database Table:**
+    - [ ] Create a new table named `unlocked_skills` (or similar).
+    - [ ] It should contain, at a minimum, the following columns:
+        - [ ] `id` (Primary Key)
+        - [ ] `user_id` (Foreign Key to your `users` table)
+        - [ ] `agent_id` (Foreign Key to your `agents` table)
+        - [ ] `skill_name` (String)
+        - [ ] `purchase_transaction_signature` (String, for auditing)
+        - [ ] `created_at` (Timestamp)
+    - [ ] Consider adding a unique constraint on `(user_id, agent_id, skill_name)` to prevent duplicate entries.
 
-2.  **Implement the Database Insertion Logic:**
-    *   In your backend verification endpoint (`/api/skills/purchase/verify`), after all the checks have passed, add the code to insert a new row into the `unlocked_skills` table.
-    *   Pass the authenticated user's ID, the agent ID, the skill name, and the transaction signature to the database query.
+- [ ] **Implement the Database Insertion Logic:**
+    - [ ] In your backend verification endpoint (`/api/skills/purchase/verify`), after all the checks have passed, add the code to insert a new row into the `unlocked_skills` table.
+    - [ ] Pass the authenticated user's ID, the agent ID, the skill name, and the transaction signature to the database query.
 
-3.  **Update Agent Details API to Include Ownership:**
-    *   Modify the main API that fetches agent details for the marketplace (`/api/marketplace/agents/:id`).
-    *   When a user requests this endpoint, it should now also query the `unlocked_skills` table to see which skills that specific user owns for that agent.
-    *   Include this ownership information in the API response, perhaps as an array of skill names: `unlocked_skills: ["skill1", "skill2"]`.
+- [ ] **Update Agent Details API to Include Ownership:**
+    - [ ] Modify the main API that fetches agent details for the marketplace (`/api/marketplace/agents/:id`).
+    - [ ] When a user requests this endpoint, it should now also query the `unlocked_skills` table to see which skills that specific user owns for that agent.
+    - [ ] Include this ownership information in the API response, perhaps as an array of skill names: `unlocked_skills: ["skill1", "skill2"]`.
 
-4.  **Update Frontend to Use Ownership Data:**
-    *   In `src/marketplace.js`, when you receive the agent details, use the new `unlocked_skills` array.
-    *   In your skill rendering loop, set the `isOwned` variable based on whether the current skill's name is in this array. This will now correctly show the "Purchase" or "Unlocked" button.
+- [ ] **Update Frontend to Use Ownership Data:**
+    - [ ] In `src/marketplace.js`, when you receive the agent details, use the new `unlocked_skills` array.
+    - [ ] In your skill rendering loop, set the `isOwned` variable based on whether the current skill's name is in this array. This will now correctly show the "Purchase" or "Unlocked" button.
 
 ## SQL Schema Example
 

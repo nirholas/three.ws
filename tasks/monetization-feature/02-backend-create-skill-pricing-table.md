@@ -1,5 +1,5 @@
 ---
-status: not-started
+status: in-progress
 ---
 
 # Prompt 2: Backend - Create Skill Pricing Table
