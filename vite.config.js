@@ -46,6 +46,7 @@ const appConfig = {
 		chunkSizeWarningLimit: 1000,
 		emptyOutDir: false,
 		rollupOptions: {
+			maxParallelFileOps: 1,
 			output: {
 				manualChunks(id) {
 					if (id.includes('node_modules/three/')) return 'three';
