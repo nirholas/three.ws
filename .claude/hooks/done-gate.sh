@@ -121,6 +121,16 @@ if printf '%s\n' "$changed" | grep -Eq '\.(js|mjs|cjs|ts|tsx|jsx|css|html|json)$
 fi
 
 if [ "$needs_build" -eq 1 ]; then
+  # Clear stale dist so Vite's emptyOutDir doesn't hit ENOTEMPTY on sub-dirs
+  # that were populated by other scripts (e.g. build:animations, build:rider).
+  node -e "
+    const fs = require('fs');
+    const path = require('path');
+    const dist = path.join(process.cwd(), 'dist');
+    try { fs.rmSync(dist, { recursive: true, force: true }); } catch (_) {}
+    fs.mkdirSync(dist, { recursive: true });
+  " 2>/dev/null || true
+
   if ! out=$(timeout 240s npm run build --silent 2>&1); then
     {
       printf 'Build failed (npm run build):\n'
