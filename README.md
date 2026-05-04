@@ -647,6 +647,19 @@ For anything beyond a quick one-liner, define the agent in a manifest file and r
 
 ---
 
+### 8. Dead-simple copy-paste widget
+
+For the absolute simplest way to embed an agent, use this snippet. It requires no build tools or imports. Just copy and paste it into your HTML.
+
+```html
+<div class="threews-widget" data-agent-id="YOUR_AGENT_ID" style="width: 400px; height: 500px;"></div>
+<script src="https://3d-agent.vercel.app/dist/widget.js" defer></script>
+```
+You can find your agent ID in the agent's settings page. This method is great for quick integrations on platforms like WordPress, Ghost, or any static HTML site.
+
+
+---
+
 ## Tutorials
 
 Step-by-step guides in [`docs/tutorials/`](docs/tutorials/):
