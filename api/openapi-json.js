@@ -183,6 +183,42 @@ export default wrap(async (req, res) => {
 						},
 					},
 				},
+				'/api/pump/curve': {
+					get: {
+						operationId: 'pump_curve',
+						summary: 'Pump.fun bonding-curve snapshot',
+						description:
+							'Returns raw bonding-curve state, current spot price + market cap, and graduation progress for a Pump.fun token. Public, edge-cached for 10s.',
+						parameters: [
+							{ name: 'mint', in: 'query', required: true, schema: { type: 'string' }, description: 'Base58 SPL mint address' },
+							{ name: 'network', in: 'query', schema: { type: 'string', enum: ['mainnet', 'devnet'] } },
+						],
+						responses: {
+							200: { description: 'Bonding curve snapshot' },
+							400: { description: 'Bad mint' },
+							404: { description: 'No bonding curve for that mint' },
+						},
+					},
+				},
+				'/api/pump/quote-sdk': {
+					get: {
+						operationId: 'pump_quote_sdk',
+						summary: 'Pump.fun buy/sell quote (SDK-precise)',
+						description:
+							'Deterministic buy or sell quote computed via @nirholas/pump-sdk on the live bonding curve. Returns output amount, price impact %, and a market context block.',
+						parameters: [
+							{ name: 'mint', in: 'query', required: true, schema: { type: 'string' } },
+							{ name: 'side', in: 'query', required: true, schema: { type: 'string', enum: ['buy', 'sell'] } },
+							{ name: 'amount', in: 'query', required: true, schema: { type: 'number', minimum: 0 }, description: 'For buy: SOL. For sell: tokens (UI units, 6 decimals).' },
+							{ name: 'network', in: 'query', schema: { type: 'string', enum: ['mainnet', 'devnet'] } },
+						],
+						responses: {
+							200: { description: 'Quote payload with input/output and priceImpactPct' },
+							400: { description: 'Validation error' },
+							404: { description: 'No bonding curve for that mint' },
+						},
+					},
+				},
 			},
 		},
 		{ 'cache-control': 'public, max-age=300' },

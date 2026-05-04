@@ -92,7 +92,29 @@ export function parse(schema, input) {
 		);
 		err.status = 400;
 		err.code = 'validation_error';
+		err.issues = res.error.issues.map((i) => ({
+			path: i.path,
+			code: i.code,
+			message: i.message,
+		}));
 		throw err;
 	}
 	return res.data;
+}
+
+// Read JSON body and zod-parse in one call. Returns the parsed payload, or
+// throws a structured 400 with `issues` for the API error envelope to surface.
+//
+// Pair with the `wrap()` helper in http.js to get consistent error responses.
+export async function validateBody(req, schema, opts = {}) {
+	const { readJson } = await import('./http.js');
+	const raw = await readJson(req, opts.limit);
+	return parse(schema, raw);
+}
+
+// Same idea for query strings — useful for GET endpoints that take typed filters.
+export function validateQuery(req, schema) {
+	const url = new URL(req.url, 'http://x');
+	const obj = Object.fromEntries(url.searchParams.entries());
+	return parse(schema, obj);
 }

@@ -119,21 +119,43 @@ AFRAME.registerState({
     mainMenuActive: false,
     menuActive: SKIP_INTRO, // Main menu active.
     multiplayer: {
-      active: false,           // In MP flow at all.
-      lobbyOpen: false,        // Lobby panel visible.
+      active: false,
+      lobbyOpen: false,
       roomCode: '',
+      shareUrl: '',
+      shareCopied: false,
       isHost: false,
       uid: '',
       status: 'idle',          // idle | connecting | lobby | playing | finished
-      players: [],             // [{uid, name, score, combo, accuracy, ready, finished, finalScore, rank}]
+      players: [],
       playerCount: 0,
       readyCount: 0,
       everyoneReady: false,
-      opponentText: '',        // Pre-rendered HUD text for non-self players.
+      myReady: false,
+      myRank: 0,
+      myRankText: '',
+      leaderName: '',
+      leaderScore: 0,
+      scoreDelta: 0,
+      scoreDeltaText: '',
+      opponentText: '',
       opponentScores: '',
       hostName: '',
+      hostUid: '',
+      songName: '',
       lastError: '',
-      joinCodeInput: ''
+      joinCodeInput: '',
+      countdownText: '',
+      countdownActive: false,
+      // Pre-rendered fixed-slot row strings for the lobby (4 slots).
+      row0Name: '', row0Score: '', row0Visible: false, row0IsMe: false, row0IsHost: false, row0Ready: false,
+      row1Name: '', row1Score: '', row1Visible: false, row1IsMe: false, row1IsHost: false, row1Ready: false,
+      row2Name: '', row2Score: '', row2Visible: false, row2IsMe: false, row2IsHost: false, row2Ready: false,
+      row3Name: '', row3Score: '', row3Visible: false, row3IsMe: false, row3IsHost: false, row3Ready: false,
+      // Sorted results (winner first) for victory screen.
+      resultsText: '',
+      resultsScores: '',
+      winnerName: ''
     },
     menuDifficulties: [],
     menuDifficultiesIds: [],
@@ -676,39 +698,127 @@ AFRAME.registerState({
     },
 
     /**
-     * Snapshot of room state from network.
+     * Snapshot of room state from network. Computes ranking, per-row strings,
+     * sorted results, leader delta — anything bound to UI.
      */
     mproomupdate: (state, payload) => {
       state.multiplayer.uid = payload.uid;
       state.multiplayer.isHost = !!payload.isHost;
+      state.multiplayer.hostUid = payload.hostUid || '';
       state.multiplayer.status = payload.status || state.multiplayer.status;
+      state.multiplayer.songName = (payload.song && payload.song.songName) || '';
       state.multiplayer.players.length = 0;
       state.multiplayer.players.__dirty = true;
 
+      const players = payload.players.slice();
+      // Sort by score desc for ranking.
+      const ranked = players.slice().sort((a, b) => (b.score | 0) - (a.score | 0));
+      const rankByUid = {};
+      ranked.forEach((p, i) => { rankByUid[p.uid] = i + 1; });
+
       let readyCount = 0;
-      let opponentText = '';
-      let opponentScores = '';
+      let myReady = false;
+      let myRank = 0;
+      let leader = ranked[0] || null;
       let hostName = '';
 
-      for (let i = 0; i < payload.players.length; i++) {
-        const p = payload.players[i];
+      let opponentText = '';
+      let opponentScores = '';
+      let resultsText = '';
+      let resultsScores = '';
+
+      // Lobby ordering = joinedAt asc (preserves original sort).
+      // Results ordering = score desc (use ranked list).
+      // For HUD we want self at top + others by rank desc.
+      for (let i = 0; i < players.length; i++) {
+        const p = players[i];
         state.multiplayer.players.push(p);
         if (p.ready) readyCount++;
+        if (p.uid === payload.uid) myReady = !!p.ready;
+        if (p.uid === payload.hostUid) hostName = p.name;
+      }
+      myRank = rankByUid[payload.uid] || 0;
+
+      for (let i = 0; i < ranked.length; i++) {
+        const p = ranked[i];
+        const accStr = Math.round(p.accuracy || 0) + '%';
+        const youTag = p.uid === payload.uid ? ' (YOU)' : '';
+        const finTag = p.finished ? ' ✓' : '';
         if (p.uid !== payload.uid) {
-          const tag = p.finished ? ' DONE' : '';
-          opponentText += `${truncate(p.name, 14)} (${Math.round(p.accuracy || 0)}%)${tag}\n`;
+          opponentText += `#${i + 1} ${truncate(p.name, 12)} ${accStr}${finTag}\n`;
           opponentScores += `${p.score | 0}\n`;
         }
-        if (payload.song && p.uid === (payload.hostUid || '')) hostName = p.name;
+        resultsText += `#${i + 1} ${truncate(p.name, 14)}${youTag} ${accStr}\n`;
+        resultsScores += `${p.score | 0}\n`;
       }
 
-      state.multiplayer.playerCount = payload.players.length;
+      // Per-row strings (lobby uses joinedAt order so rows are stable as
+      // players join/leave).
+      for (let i = 0; i < 4; i++) {
+        const p = players[i];
+        const rowKey = 'row' + i;
+        if (!p) {
+          state.multiplayer[rowKey + 'Name'] = '';
+          state.multiplayer[rowKey + 'Score'] = '';
+          state.multiplayer[rowKey + 'Visible'] = false;
+          state.multiplayer[rowKey + 'IsMe'] = false;
+          state.multiplayer[rowKey + 'IsHost'] = false;
+          state.multiplayer[rowKey + 'Ready'] = false;
+          continue;
+        }
+        const isMe = p.uid === payload.uid;
+        const isHost = p.uid === payload.hostUid;
+        const tag = (isHost ? '★ ' : '') + truncate(p.name, 14) + (isMe ? ' (YOU)' : '');
+        const right = state.multiplayer.status === 'lobby'
+          ? (p.ready ? 'READY' : '...')
+          : ((p.score | 0) + '   ' + Math.round(p.accuracy || 0) + '%' + (p.finished ? ' ✓' : ''));
+        state.multiplayer[rowKey + 'Name'] = tag;
+        state.multiplayer[rowKey + 'Score'] = right;
+        state.multiplayer[rowKey + 'Visible'] = true;
+        state.multiplayer[rowKey + 'IsMe'] = isMe;
+        state.multiplayer[rowKey + 'IsHost'] = isHost;
+        state.multiplayer[rowKey + 'Ready'] = !!p.ready;
+      }
+
+      state.multiplayer.playerCount = players.length;
       state.multiplayer.readyCount = readyCount;
       state.multiplayer.everyoneReady =
-        payload.players.length >= 2 && readyCount === payload.players.length;
+        players.length >= 2 && readyCount === players.length;
+      state.multiplayer.myReady = myReady;
+      state.multiplayer.myRank = myRank;
+      state.multiplayer.myRankText =
+        myRank ? ('#' + myRank + ' / ' + players.length) : '';
+      state.multiplayer.leaderName = leader ? leader.name : '';
+      state.multiplayer.leaderScore = leader ? (leader.score | 0) : 0;
+      const myEntry = players.find(p => p.uid === payload.uid);
+      const myScore = myEntry ? (myEntry.score | 0) : 0;
+      const delta = myScore - (leader ? (leader.score | 0) : 0);
+      state.multiplayer.scoreDelta = delta;
+      state.multiplayer.scoreDeltaText =
+        leader && leader.uid !== payload.uid
+          ? (delta >= 0 ? ('+' + delta) : String(delta)) + ' vs leader'
+          : (leader && leader.uid === payload.uid && players.length > 1
+              ? 'LEADING' : '');
       state.multiplayer.opponentText = opponentText;
       state.multiplayer.opponentScores = opponentScores;
+      state.multiplayer.resultsText = resultsText;
+      state.multiplayer.resultsScores = resultsScores;
+      state.multiplayer.winnerName =
+        ranked.length && ranked[0].score > 0 ? ranked[0].name : '';
       state.multiplayer.hostName = hostName;
+    },
+
+    mpcountdown: (state, payload) => {
+      state.multiplayer.countdownText = (payload && payload.value) || '';
+      state.multiplayer.countdownActive = !!(payload && payload.active);
+    },
+
+    mpsharelinkcopied: state => {
+      state.multiplayer.shareCopied = true;
+    },
+
+    mpsharelinkcleared: state => {
+      state.multiplayer.shareCopied = false;
     },
 
     /**
@@ -1023,30 +1133,56 @@ AFRAME.registerState({
       state.inVR &&
       (state.isPlaying || state.isPaused);
 
-    // MP gating — non-host cannot drive song selection or playback.
     state.mpActive = !!state.multiplayer.active;
+    state.mpCanStart =
+      !state.multiplayer.active ||
+      (state.multiplayer.isHost && state.multiplayer.players.length >= 2);
     state.mpHostControl = !state.multiplayer.active || state.multiplayer.isHost;
     state.mpLobbyVisible =
       state.multiplayer.lobbyOpen && state.menuActive && !state.isMenuOpening;
     state.mpHudVisible =
       state.multiplayer.active &&
       state.multiplayer.players.length > 1 &&
-      (state.isPlaying || state.isPaused);
+      (state.isPlaying || state.isPaused || state.isLoading);
     state.mpResultsVisible =
       state.multiplayer.active &&
       state.isVictory &&
       state.multiplayer.players.length > 1;
+    state.mpInRoom = !!state.multiplayer.roomCode;
+    state.mpInLobbyPhase =
+      state.mpInRoom && state.multiplayer.status === 'lobby';
+    state.mpCountdownVisible = state.multiplayer.countdownActive;
     state.mpRoomCodeText = state.multiplayer.roomCode
       ? 'ROOM ' + state.multiplayer.roomCode
       : '';
+    state.mpShareButtonText = state.multiplayer.shareCopied
+      ? 'LINK COPIED'
+      : 'COPY SHARE LINK';
     state.mpStatusText = (() => {
       if (state.multiplayer.lastError) return state.multiplayer.lastError;
       if (state.multiplayer.status === 'connecting') return 'Connecting...';
-      if (state.multiplayer.status === 'idle') return 'Create or join a room.';
-      if (state.multiplayer.players.length < 2) return 'Waiting for another player...';
-      if (state.multiplayer.isHost) return 'Pick a song and press PLAY.';
-      return 'Waiting for host to pick a song...';
+      if (state.multiplayer.status === 'idle') return 'Create a room or paste a code.';
+      if (state.multiplayer.status === 'finished') return 'Round over.';
+      if (state.multiplayer.players.length < 2) {
+        return state.multiplayer.isHost
+          ? 'Share the room code below — waiting for a friend.'
+          : 'Waiting for another player...';
+      }
+      if (state.multiplayer.isHost) {
+        return state.multiplayer.songName
+          ? 'Press PLAY to start "' + state.multiplayer.songName + '".'
+          : 'Pick a song from the menu, then press PLAY.';
+      }
+      return state.multiplayer.songName
+        ? 'Host queued "' + state.multiplayer.songName + '". Get ready.'
+        : 'Waiting for host to pick a song...';
     })();
+    state.mpWinnerBanner = state.multiplayer.winnerName
+      ? (state.multiplayer.winnerName === (
+          (state.multiplayer.players.find(p => p.uid === state.multiplayer.uid) || {}).name)
+          ? 'YOU WON!'
+          : state.multiplayer.winnerName.toUpperCase() + ' WINS')
+      : '';
   }
 });
 

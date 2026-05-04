@@ -11,9 +11,12 @@
 //   solanaPubkey(s)                        → PublicKey or null
 //
 // Network selection: 'mainnet' | 'devnet'. Endpoint URLs come from env so
-// production can pin Helius / Triton / etc. RPC providers.
+// production can pin Helius / Triton / etc. RPC providers. Setting
+// SOLANA_RPC_FALLBACK_URLS (comma-separated) enables the multi-endpoint
+// RpcFallback wrapper for read-side handlers that opt in via getRpcFallback().
 
 import { Connection, PublicKey } from '@solana/web3.js';
+import { rpcFallbackFromEnv } from './solana/rpc-fallback.js';
 
 const RPC_MAINNET = () => process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
 const RPC_DEVNET = () => process.env.SOLANA_RPC_URL_DEVNET || 'https://api.devnet.solana.com';
@@ -21,6 +24,13 @@ const RPC_DEVNET = () => process.env.SOLANA_RPC_URL_DEVNET || 'https://api.devne
 export function getConnection({ network = 'mainnet', commitment = 'confirmed' } = {}) {
 	const url = network === 'devnet' ? RPC_DEVNET() : RPC_MAINNET();
 	return new Connection(url, commitment);
+}
+
+// Returns an RpcFallback wrapper for read-only flows that benefit from
+// multi-endpoint rotation. Always returns an instance — when no fallbacks are
+// configured it just wraps the single primary URL with no behavior change.
+export function getRpcFallback({ network = 'mainnet', commitment = 'confirmed' } = {}) {
+	return rpcFallbackFromEnv({ network, commitment });
 }
 
 export function solanaPubkey(s) {

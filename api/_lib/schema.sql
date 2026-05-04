@@ -963,3 +963,34 @@ do $$ begin
     create trigger plugins_set_updated_at before update on plugins
         for each row execute function set_updated_at();
 exception when duplicate_object then null; end $$;
+
+-- ── pumpfun_graduations — persisted pump.fun → AMM migration events ──────────
+-- See migrations/2026-05-04-pumpfun-graduations.sql for the full schema.
+create table if not exists pumpfun_graduations (
+    tx_signature        text        primary key,
+    mint                text        not null,
+    name                text,
+    symbol              text,
+    creator             text,
+    pool                text,
+    raydium_pool        text,
+    pump_swap_pool      text,
+    market_cap_usd      double precision,
+    market_cap_usd_initial double precision,
+    ath_market_cap      double precision,
+    amount_sol          double precision,
+    amount_usd          double precision,
+    sol_price           double precision,
+    image_uri           text,
+    description         text,
+    twitter             text,
+    telegram            text,
+    website             text,
+    creator_launches    integer,
+    creator_graduated   integer,
+    payload             jsonb       not null default '{}'::jsonb,
+    seen_at             timestamptz not null default now()
+);
+create index if not exists pumpfun_graduations_seen_at on pumpfun_graduations(seen_at desc);
+create index if not exists pumpfun_graduations_mint on pumpfun_graduations(mint);
+create index if not exists pumpfun_graduations_creator on pumpfun_graduations(creator) where creator is not null;

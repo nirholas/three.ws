@@ -89,9 +89,18 @@ function decodePaymentHeader(header) {
 	return payload;
 }
 
+function hostOf(url) {
+	try {
+		return new URL(url).host;
+	} catch {
+		return url;
+	}
+}
+
 async function callFacilitator(network, path, body) {
 	const { url: base, token } = facilitatorFor(network);
 	const url = `${base}${path}`;
+	const host = hostOf(base);
 	const headers = { 'content-type': 'application/json', accept: 'application/json' };
 	if (token) headers.authorization = `Bearer ${token}`;
 	let res;
@@ -105,7 +114,7 @@ async function callFacilitator(network, path, body) {
 	} catch (err) {
 		throw new X402Error(
 			'facilitator_unreachable',
-			`facilitator ${path} fetch failed: ${err.message}`,
+			`facilitator ${path} (${host}, network=${network}) fetch failed: ${err.message}`,
 			502,
 		);
 	}
@@ -117,7 +126,7 @@ async function callFacilitator(network, path, body) {
 		} catch {
 			throw new X402Error(
 				'facilitator_bad_response',
-				`facilitator ${path} returned non-JSON (status ${res.status})`,
+				`facilitator ${path} (${host}, network=${network}) returned non-JSON (status ${res.status})`,
 				502,
 			);
 		}
@@ -128,11 +137,68 @@ async function callFacilitator(network, path, body) {
 		if (path === '/verify' && data.isValid === false) return data;
 		throw new X402Error(
 			'facilitator_error',
-			`facilitator ${path} ${res.status}: ${data.error || data.message || data.invalidReason || text.slice(0, 200)}`,
+			`facilitator ${path} (${host}, network=${network}) ${res.status}: ${data.error || data.message || data.invalidReason || text.slice(0, 200)}`,
 			502,
 		);
 	}
 	return data;
+}
+
+// Probe `/supported` on each configured facilitator and report whether the
+// scheme/network pairs we advertise are actually supported. Used by
+// /api/x402-status to surface misconfigurations before a paying client hits them.
+export async function probeFacilitators() {
+	const targets = [
+		{ network: 'solana', ...facilitatorFor('solana') },
+		{ network: 'base', ...facilitatorFor('base') },
+	];
+	const seen = new Map();
+	const results = [];
+	for (const t of targets) {
+		if (!t.url) {
+			results.push({ network: t.network, ok: false, reason: 'no facilitator URL configured' });
+			continue;
+		}
+		let entry = seen.get(t.url);
+		if (!entry) {
+			entry = (async () => {
+				try {
+					const res = await fetch(`${t.url}/supported`, {
+						headers: { accept: 'application/json' },
+						signal: AbortSignal.timeout(10_000),
+					});
+					if (!res.ok) return { error: `status ${res.status}` };
+					const json = await res.json();
+					return { kinds: Array.isArray(json?.kinds) ? json.kinds : [] };
+				} catch (err) {
+					return { error: err.message };
+				}
+			})();
+			seen.set(t.url, entry);
+		}
+		const data = await entry;
+		if (data.error) {
+			results.push({
+				network: t.network,
+				url: t.url,
+				ok: false,
+				reason: `/supported probe failed: ${data.error}`,
+			});
+			continue;
+		}
+		const supports = data.kinds.some(
+			(k) => k.scheme === 'exact' && k.network === t.network && (k.x402Version ?? 1) === X402_VERSION,
+		);
+		results.push({
+			network: t.network,
+			url: t.url,
+			ok: supports,
+			reason: supports
+				? `facilitator advertises exact/${t.network}`
+				: `facilitator does NOT advertise scheme=exact network=${t.network} (configure X402_FACILITATOR_URL_${t.network.toUpperCase()} to a facilitator that does)`,
+		});
+	}
+	return results;
 }
 
 // Match the decoded payload to one of the offered requirements (by network).

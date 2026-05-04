@@ -468,8 +468,52 @@ export class AgentAvatar {
 
 	_onGesture(action) {
 		const name = action.payload?.name || 'nod';
+		const loop = action.payload?.loop === true;
 		const duration = (action.payload?.duration || 1500) / 1000;
+		// `loop:true` lets host pages keep a chip-triggered animation running
+		// indefinitely (e.g. "dance", "idle", "thriller" on the pumpfun chip
+		// strip). Without it, every gesture defaults to a 1.5s one-shot that
+		// auto-reverts to idle — correct for nod/wave, wrong for dance/idle.
+		if (loop) {
+			this._playLoopedClip(name);
+			return;
+		}
 		this._playSlot(name, duration);
+	}
+
+	/**
+	 * Play a clip in loop mode and stay there until another gesture/clip is
+	 * triggered. Cancels any pending one-shot revert from a prior `_playSlot`.
+	 * @param {string} name
+	 */
+	_playLoopedClip(name) {
+		// Cancel any one-shot revert state so we don't trip back to idle.
+		this._isPlayingOneShot = false;
+		this._oneShotAction = null;
+		this._oneShotTimer = 0;
+
+		const am = this.viewer?.animationManager;
+		if (am?.isLoaded?.(name)) {
+			am.crossfadeTo(name, 0.35);
+			return;
+		}
+		const def = am?.getAnimationDefs?.().find((d) => d.name === name);
+		if (am && def) {
+			am.loadAnimation(name, def.url, { loop: true, clipName: def.clipName })
+				.then(() => am.crossfadeTo(name, 0.35))
+				.catch(() => {});
+			return;
+		}
+		// Baked GLB clip (non-Avaturn rig): play directly through the mixer.
+		const baked = this.viewer?.clips?.find?.((c) => c?.name === name);
+		const mixer = am?.mixer || this.viewer?.mixer;
+		if (baked && mixer) {
+			const action = mixer.clipAction(baked);
+			action.reset();
+			action.setLoop(2201 /* THREE.LoopRepeat */);
+			action.fadeIn(0.35);
+			action.play();
+		}
 	}
 
 	_onEmote(action) {
@@ -488,8 +532,20 @@ export class AgentAvatar {
 			const center = new Vector3();
 			box.setFromObject(this.viewer.content).getCenter(center);
 			this._lookTarget = center;
-		} else if (target === 'user') {
+		} else if (target === 'user' || target === 'camera') {
 			this._lookTarget = null; // look at camera
+		} else if (target === 'down') {
+			// Bias gaze downward — paired with concern emote for somber moments.
+			this._keystrokePitch = -0.35;
+			this._lookTarget = null;
+		} else if (target === 'up') {
+			this._keystrokePitch = 0.3;
+			this._lookTarget = null;
+		} else if (target === 'token' && typeof window !== 'undefined') {
+			// Token-card reaction direction: glance off-camera to the right
+			// where the live-feed UI typically renders (right rail).
+			this._keystrokeYaw = 0.4;
+			this._lookTarget = null;
 		}
 		this._injectStimulus('curiosity', 0.3);
 	}
@@ -993,3 +1049,4 @@ export class AgentAvatar {
 function _lerp(a, b, t) {
 	return a + (b - a) * Math.min(1, Math.max(0, t));
 }
+// TODO injected for test

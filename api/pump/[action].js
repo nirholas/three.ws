@@ -96,6 +96,7 @@ const wrapped = wrap(async (req, res) => {
 		case 'channel-feed':            return handleChannelFeed(req, res);
 		case 'deliver-telegram':        return handleDeliverTelegram(req, res);
 		case 'first-claims':            return handleFirstClaims(req, res);
+		case 'recent-graduations':      return handleRecentGraduations(req, res);
 		default:
 			return error(res, 404, 'not_found', 'unknown pump action');
 	}
@@ -1791,6 +1792,31 @@ export async function scanFirstClaims({ sinceTs, limit }) {
 	const lookbackTs = sinceTs - Math.max(3600, (Math.floor(Date.now() / 1000) - sinceTs) * LOOKBACK_MULT);
 	const allClaims = process.env.PUMPFUN_BOT_URL ? await _fetchFromBot(lookbackTs, lim * LOOKBACK_MULT) : await _fetchFromRpc(lookbackTs, lim * LOOKBACK_MULT);
 	return filterFirstClaims(allClaims, sinceTs, lim);
+}
+
+// ── recent-graduations ───────────────────────────────────────────────────────
+//
+// Returns the most-recent enriched graduation events as a single JSON payload.
+// The page calls this once on load to backfill the feed before it opens an
+// SSE connection. Reads from Postgres if available, falls back to the WS
+// feed's in-process ring buffer (covers cold starts before the first migration
+// arrives, plus dev environments without a DB).
+
+async function handleRecentGraduations(req, res) {
+	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
+	if (!method(req, res, ['GET'])) return;
+	const rl = await limits.mcpIp(clientIp(req));
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
+	const url = new URL(req.url, 'http://x');
+	const limit = Math.max(1, Math.min(100, Number(url.searchParams.get('limit')) || 20));
+	try {
+		const { recentGraduations } = await import('../_lib/pumpfun-ws-feed.js');
+		const items = await recentGraduations({ limit });
+		return json(res, 200, { items }, { 'cache-control': 'public, max-age=5' });
+	} catch (err) {
+		console.warn('[recent-graduations] failed:', err?.message);
+		return json(res, 200, { items: [] });
+	}
 }
 
 async function handleFirstClaims(req, res) {

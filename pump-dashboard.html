@@ -838,8 +838,12 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 const state = {
-  apiUrl: localStorage.getItem('pumpbot-api-url') || 'http://localhost:3000',
-  wsUrl: localStorage.getItem('pumpbot-ws-url') || 'ws://localhost:8080',
+  // Defaults wire to the 3D-Agent host that's serving this page so the
+  // dashboard works out of the box with /api/pump/* and the public PumpPortal
+  // launch feed. Users can still point at a remote PumpKit-style API via the
+  // Configuration tab.
+  apiUrl: localStorage.getItem('pumpbot-api-url') || (typeof location !== 'undefined' ? location.origin : ''),
+  wsUrl: localStorage.getItem('pumpbot-ws-url') || 'wss://pumpportal.fun/api/data',
   apiKey: localStorage.getItem('pumpbot-api-key') || '',
   rpcUrl: localStorage.getItem('pumpbot-rpc-url') || 'https://api.mainnet-beta.solana.com',
   currentPage: 'dashboard',
@@ -1502,6 +1506,26 @@ async function scanToken() {
       checks.pumpfun = { status: 'info', detail: 'Not a PumpFun token' };
     }
 
+    // Enrich with /api/pump/curve (price + graduation progress) when it's a Pump token.
+    if (isPump) {
+      try {
+        const curveResp = await fetch(`/api/pump/curve?mint=${encodeURIComponent(mint)}`);
+        if (curveResp.ok) {
+          const curve = await curveResp.json();
+          if (curve.price?.priceSol) {
+            checks.spot_price = { status: 'info', detail: `${Number(curve.price.priceSol).toFixed(8)} SOL/token` };
+          }
+          if (curve.price?.marketCapSol) {
+            checks.market_cap = { status: 'info', detail: `${Number(curve.price.marketCapSol).toFixed(2)} SOL` };
+          }
+          if (curve.graduation?.progressBps != null) {
+            const pct = Number(curve.graduation.progressBps) / 100;
+            checks.graduation = { status: pct >= 80 ? 'warn' : 'pass', detail: `${pct.toFixed(1)}% to graduation` };
+          }
+        }
+      } catch { /* enrichment is optional */ }
+    }
+
     const riskLevel = score >= 80 ? 'low' : score >= 50 ? 'medium' : 'high';
     const riskColor = score >= 80 ? 'green' : score >= 50 ? 'yellow' : 'red';
 
@@ -1538,75 +1562,72 @@ async function getBuyQuote() {
   const mint = document.getElementById('quote-buy-mint').value.trim();
   const solAmount = parseFloat(document.getElementById('quote-buy-amount').value);
   if (!mint) { toast('Enter token mint', 'error'); return; }
+  if (!Number.isFinite(solAmount) || solAmount <= 0) { toast('Enter a positive SOL amount', 'error'); return; }
 
   const resultDiv = document.getElementById('quote-buy-result');
   resultDiv.innerHTML = '<span style="color:#888">Calculating...</span>';
 
   try {
-    // Fetch bonding curve state from RPC
-    const bcResp = await fetch(state.rpcUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getProgramAccounts', params: [
-        '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P',
-        { filters: [{ memcmp: { offset: 30, bytes: mint } }], encoding: 'base64' },
-      ] }),
-    });
-    const bcData = await bcResp.json();
-
-    if (!bcData.result || bcData.result.length === 0) {
-      resultDiv.innerHTML = '<span style="color:var(--red)">No bonding curve found — token may be graduated or invalid</span>';
+    const url = `/api/pump/quote-sdk?mint=${encodeURIComponent(mint)}&side=buy&amount=${solAmount}`;
+    const r = await fetch(url);
+    const data = await r.json();
+    if (!r.ok) {
+      resultDiv.innerHTML = `<span style="color:var(--red)">${escapeHtml(data.message || data.error || 'Quote failed')}</span>`;
       return;
     }
-
-    const lamports = Math.floor(solAmount * 1e9);
+    const tokensOut = Number(data.output?.tokensUi || 0);
+    const impact = Number(data.priceImpactPct || 0);
+    const mc = data.marketContext;
     resultDiv.innerHTML = `
       <div style="padding:12px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);">
-        <div style="color:#888;font-size:11px">Estimated Output</div>
-        <div style="color:var(--accent);font-size:18px;margin:4px 0">Bonding curve found ✅</div>
-        <div style="color:#888;font-size:11px">Input: ${solAmount} SOL (${lamports.toLocaleString()} lamports)</div>
-        <div style="color:#888;font-size:11px">Use the SDK for precise quote calculation</div>
+        <div style="color:#888;font-size:11px">You receive</div>
+        <div style="color:var(--accent);font-size:18px;margin:4px 0">${tokensOut.toLocaleString(undefined, { maximumFractionDigits: 2 })} tokens</div>
+        <div style="color:#888;font-size:11px">For ${solAmount} SOL · price impact <span style="color:${impact > 5 ? 'var(--yellow)' : 'var(--accent)'}">${impact.toFixed(2)}%</span></div>
+        ${mc ? `<div style="color:#666;font-size:11px;margin-top:6px">Spot: ${formatPriceContext(mc)}</div>` : ''}
       </div>
     `;
   } catch (e) {
-    resultDiv.innerHTML = `<span style="color:var(--red)">Error: ${escapeHtml(e.message || 'RPC failed')}</span>`;
+    resultDiv.innerHTML = `<span style="color:var(--red)">Error: ${escapeHtml(e.message || 'Quote failed')}</span>`;
   }
+}
+
+function formatPriceContext(p) {
+	const parts = [];
+	if (p.priceSol) parts.push(`${(Number(p.priceSol) || 0).toFixed(8)} SOL/token`);
+	if (p.marketCapSol) parts.push(`MC ${(Number(p.marketCapSol) || 0).toFixed(2)} SOL`);
+	return parts.join(' · ');
 }
 
 async function getSellQuote() {
   const mint = document.getElementById('quote-sell-mint').value.trim();
-  const tokenAmount = parseInt(document.getElementById('quote-sell-amount').value);
+  const tokenAmount = parseFloat(document.getElementById('quote-sell-amount').value);
   if (!mint) { toast('Enter token mint', 'error'); return; }
+  if (!Number.isFinite(tokenAmount) || tokenAmount <= 0) { toast('Enter a positive token amount', 'error'); return; }
 
   const resultDiv = document.getElementById('quote-sell-result');
   resultDiv.innerHTML = '<span style="color:#888">Calculating...</span>';
 
   try {
-    const bcResp = await fetch(state.rpcUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getProgramAccounts', params: [
-        '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P',
-        { filters: [{ memcmp: { offset: 30, bytes: mint } }], encoding: 'base64' },
-      ] }),
-    });
-    const bcData = await bcResp.json();
-
-    if (!bcData.result || bcData.result.length === 0) {
-      resultDiv.innerHTML = '<span style="color:var(--red)">No bonding curve found</span>';
+    const url = `/api/pump/quote-sdk?mint=${encodeURIComponent(mint)}&side=sell&amount=${tokenAmount}`;
+    const r = await fetch(url);
+    const data = await r.json();
+    if (!r.ok) {
+      resultDiv.innerHTML = `<span style="color:var(--red)">${escapeHtml(data.message || data.error || 'Quote failed')}</span>`;
       return;
     }
-
+    const sol = Number(data.output?.sol || 0);
+    const impact = Number(data.priceImpactPct || 0);
+    const mc = data.marketContext;
     resultDiv.innerHTML = `
       <div style="padding:12px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);">
-        <div style="color:#888;font-size:11px">Estimated Output</div>
-        <div style="color:var(--accent);font-size:18px;margin:4px 0">Bonding curve found ✅</div>
-        <div style="color:#888;font-size:11px">Input: ${tokenAmount.toLocaleString()} tokens</div>
-        <div style="color:#888;font-size:11px">Use the SDK for precise quote calculation</div>
+        <div style="color:#888;font-size:11px">You receive</div>
+        <div style="color:var(--accent);font-size:18px;margin:4px 0">${sol.toFixed(6)} SOL</div>
+        <div style="color:#888;font-size:11px">For ${tokenAmount.toLocaleString()} tokens · price impact <span style="color:${impact > 5 ? 'var(--yellow)' : 'var(--accent)'}">${impact.toFixed(2)}%</span></div>
+        ${mc ? `<div style="color:#666;font-size:11px;margin-top:6px">Spot: ${formatPriceContext(mc)}</div>` : ''}
       </div>
     `;
   } catch (e) {
-    resultDiv.innerHTML = `<span style="color:var(--red)">Error: ${escapeHtml(e.message || 'RPC failed')}</span>`;
+    resultDiv.innerHTML = `<span style="color:var(--red)">Error: ${escapeHtml(e.message || 'Quote failed')}</span>`;
   }
 }
 

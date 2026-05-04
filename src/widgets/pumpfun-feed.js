@@ -13,7 +13,7 @@
  *   - maxCards    1..50
  */
 
-import { applyReaction, createReactionDispatcher } from './pumpfun-reactions.js';
+import { applyReaction, createReactionDispatcher, mountReactionToast } from './pumpfun-reactions.js';
 
 const FEED_PATH = '/api/agents/pumpfun-feed';
 const TIER_BADGE = { mega: '🔥🔥', influencer: '🔥', notable: '⭐' };

@@ -977,6 +977,54 @@ The element fires a `postMessage` API for host-page communication (documented in
 <script src="https://three.ws/agent-3d/1.5.1/agent-3d.js"></script>
 ```
 
+### Iframe quickstart with the embed SDK
+
+For when you want a chromeless iframe that you control from the parent page (rather than the `<agent-3d>` web component), drop in the embed SDK:
+
+```html
+<iframe id="agent" src="https://three.ws/agent/abc123/embed" style="width:480px;height:600px;border:0"></iframe>
+<script src="https://three.ws/embed-sdk.js"></script>
+<script>
+  const bridge = Agent3D.connect(document.getElementById('agent'), {
+    agentId: 'abc123',
+    onReady:  ({ name }) => console.log('agent ready:', name),
+    onAction: (action)   => console.log('agent action:', action),
+    onError:  (err)      => console.error('embed error:', err),
+  });
+
+  // Drive the agent
+  bridge.send({ type: 'speak', payload: { text: 'Hello!' } });
+  bridge.ping().then(rttMs => console.log('rtt', rttMs, 'ms'));
+</script>
+```
+
+**Origin contract.** The SDK derives the iframe's origin from `iframe.src` and refuses to start if it can't (no wildcard targets, ever). The iframe locks onto the parent's origin from the first authenticated message it sees and ignores any later messages from a different origin. See [specs/EMBED_SPEC.md](specs/EMBED_SPEC.md) §"Bridge origin model" for the full rules.
+
+### Typed host bridge (npm-friendly)
+
+For TypeScript/bundler workflows, import `EmbedHostBridge` directly:
+
+```js
+import { EmbedHostBridge } from 'three-ws/embed-host-bridge';
+
+const iframe = document.getElementById('agent');
+const bridge = new EmbedHostBridge({
+  iframe,
+  agentId: 'abc123',
+  allowedOrigin: new URL(iframe.src).origin, // required, never '*'
+});
+
+await bridge.ready;
+await bridge.speak('Hello world');
+const off = bridge.on('action', a => console.log(a));
+
+// Clean up when done.
+off();
+bridge.destroy();
+```
+
+Both surfaces speak the same v1 wire protocol — pick the one that fits your stack.
+
 ---
 
 ## Widget System

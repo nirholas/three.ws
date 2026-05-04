@@ -8,6 +8,23 @@ import WebSocket from 'ws';
 const PUMPPORTAL_WS = 'wss://pumpportal.fun/api/data';
 const RECONNECT_DELAY_MS = 2_000;
 const MAX_RECONNECTS = 5;
+
+// Cross-emit dedupe by tx signature. PumpPortal can occasionally redeliver an
+// event after a transient WS hiccup; this prevents duplicate cards.
+const SEEN_SIG_LIMIT = 2_000;
+const _seenSigs = new Map(); // sig → ts
+function markSeen(sig) {
+	if (!sig) return false;
+	if (_seenSigs.has(sig)) return false;
+	_seenSigs.set(sig, Date.now());
+	if (_seenSigs.size > SEEN_SIG_LIMIT) {
+		// Drop the oldest 25% — Map preserves insertion order.
+		const drop = Math.floor(SEEN_SIG_LIMIT / 4);
+		const it = _seenSigs.keys();
+		for (let i = 0; i < drop; i++) _seenSigs.delete(it.next().value);
+	}
+	return true;
+}
 const META_TIMEOUT_MS = 2_500;
 const SOL_PRICE_TTL_MS = 60_000;
 
@@ -91,21 +108,27 @@ export function connectPumpFunFeed({ onEvent, signal, kind = 'all' }) {
 			if (msg.message) return; // ack
 
 			if (msg.txType === 'create' && (kind === 'all' || kind === 'mint')) {
+				if (!markSeen(msg.signature)) return;
 				enrichMint(msg).then((data) => {
 					pushBuffer('mint', data);
 					if (active) onEvent({ kind: 'mint', data });
-				}).catch(() => {
+				}).catch((err) => {
+					console.warn('[pumpportal-ws] mint enrich failed:', err?.message);
 					const data = normalizeMint(msg, null, 0);
 					pushBuffer('mint', data);
 					if (active) onEvent({ kind: 'mint', data });
 				});
 			} else if ((msg.txType === 'migrate' || msg.txType === 'migration') && (kind === 'all' || kind === 'graduation')) {
+				if (!markSeen(msg.signature)) return;
 				enrichGrad(msg).then((data) => {
 					pushBuffer('graduation', data);
+					persistGraduation(data);
 					if (active) onEvent({ kind: 'graduation', data });
-				}).catch(() => {
+				}).catch((err) => {
+					console.warn('[pumpportal-ws] grad enrich failed:', err?.message);
 					const data = normalizeGrad(msg);
 					pushBuffer('graduation', data);
+					persistGraduation(data);
 					if (active) onEvent({ kind: 'graduation', data });
 				});
 			}
@@ -372,4 +395,89 @@ export function recentBuffered({ kind = 'all', limit = 10 } = {}) {
 		return tb - ta;
 	});
 	return out.slice(0, limit);
+}
+
+// ── Persistence ──────────────────────────────────────────────────────────────
+//
+// Writing graduations to Postgres lets a fresh container backfill from real
+// history rather than the in-memory buffer (which dies on every cold start).
+// The DB write is fire-and-forget — we never block the SSE stream on it. If
+// DATABASE_URL isn't configured (dev), the import is lazy so we don't fail.
+
+let _sqlPromise = null;
+async function getSql() {
+	if (_sqlPromise) return _sqlPromise;
+	_sqlPromise = import('./db.js').then((m) => m.sql).catch((err) => {
+		console.warn('[pumpportal-ws] db import failed:', err?.message);
+		return null;
+	});
+	return _sqlPromise;
+}
+
+async function persistGraduation(data) {
+	if (!data?.tx_signature && !data?.signature) return;
+	const sql = await getSql();
+	if (!sql) return;
+	try {
+		const sig = data.tx_signature || data.signature;
+		const finite = (n) => (typeof n === 'number' && Number.isFinite(n) ? n : null);
+		await sql`
+			insert into pumpfun_graduations (
+				tx_signature, mint, name, symbol, creator, pool, raydium_pool, pump_swap_pool,
+				market_cap_usd, market_cap_usd_initial, ath_market_cap,
+				amount_sol, amount_usd, sol_price, image_uri, description,
+				twitter, telegram, website, creator_launches, creator_graduated, payload
+			) values (
+				${sig}, ${data.mint || null}, ${data.name || null}, ${data.symbol || null},
+				${data.creator || null}, ${data.pool || null}, ${data.raydium_pool || null},
+				${data.pump_swap_pool || null},
+				${finite(data.usd_market_cap ?? data.market_cap)},
+				${finite(data.market_cap_usd_initial)},
+				${finite(data.ath_market_cap)},
+				${finite(data.amount_sol)},
+				${finite(data.amount_usd)},
+				${finite(data.sol_price)},
+				${data.image_uri || null}, ${data.description || null},
+				${data.twitter || null}, ${data.telegram || null}, ${data.website || null},
+				${Number.isFinite(data.creator_launches) ? data.creator_launches : null},
+				${Number.isFinite(data.creator_graduated) ? data.creator_graduated : null},
+				${JSON.stringify(data)}::jsonb
+			)
+			on conflict (tx_signature) do nothing
+		`;
+	} catch (err) {
+		// Don't take down the feed if a single write fails (e.g. transient
+		// Neon timeout). Log once and move on.
+		console.warn('[pumpportal-ws] persist failed:', err?.message);
+	}
+}
+
+/**
+ * Read recent graduations from Postgres. Falls back to the in-memory ring
+ * buffer when the DB is unreachable so dev/test environments still work.
+ * Used by the HTTP backfill endpoint and as a warmup source on cold start.
+ *
+ * @param {{ limit?: number }} opts
+ * @returns {Promise<Array<object>>} newest-first array of graduation payloads.
+ */
+export async function recentGraduations({ limit = 20 } = {}) {
+	const cap = Math.max(1, Math.min(100, limit | 0 || 20));
+	try {
+		const sql = await getSql();
+		if (sql) {
+			const rows = await sql`
+				select payload, seen_at
+				from pumpfun_graduations
+				order by seen_at desc
+				limit ${cap}
+			`;
+			if (Array.isArray(rows) && rows.length) {
+				return rows.map((r) => ({ ...r.payload, _seen_at: r.seen_at }));
+			}
+		}
+	} catch (err) {
+		console.warn('[pumpportal-ws] recentGraduations db read failed:', err?.message);
+	}
+	// Buffer fallback (dev / DB outage).
+	return _buffer.graduation.slice(0, cap);
 }

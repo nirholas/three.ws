@@ -17,6 +17,7 @@ import { mountHotspotTour } from './widgets/hotspot-tour.js';
 import { mountPumpfunFeed } from './widgets/pumpfun-feed.js';
 import { mountKolTradesWidget } from './widgets/kol-trades.js';
 import { mountLiveTradesCanvas } from './widgets/live-trades-canvas.js';
+import { mountPassport } from './widgets/passport.js';
 import queryString from 'query-string';
 
 // Agent system — the new primitive layer
@@ -1026,6 +1027,9 @@ class App {
 					bg: cfg.bg || cfg.background,
 					minUsd: cfg.minUsd,
 				});
+				this._widgetController = ctl;
+			} else if (type === 'passport') {
+				const ctl = await mountPassport(this.viewer, cfg, document.body, widgetId);
 				this._widgetController = ctl;
 			}
 		} catch (e) {

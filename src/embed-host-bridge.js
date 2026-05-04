@@ -45,7 +45,7 @@ export class EmbedHostBridge {
 		this._agentId = agentId;
 		this._allowedOrigin = allowedOrigin;
 		this._pending = new Map(); // id → { resolve, reject, timer }
-		this._listeners = { action: new Set(), state: new Set(), error: new Set() };
+		this._listeners = { action: new Set(), state: new Set(), error: new Set(), clips: new Set() };
 		this._outQueue = []; // requests queued before handshake completes
 		this._evtBuffer = []; // incoming events buffered before a listener is attached
 		this._ready = false;
@@ -128,7 +128,14 @@ export class EmbedHostBridge {
 		}
 
 		if (msg.kind === 'event') {
-			const bucket = msg.op === 'error' ? 'error' : msg.op === 'state' ? 'state' : 'action';
+			const bucket =
+				msg.op === 'error'
+					? 'error'
+					: msg.op === 'state'
+						? 'state'
+						: msg.op === 'clips'
+							? 'clips'
+							: 'action';
 			const set = this._listeners[bucket];
 			if (set?.size) {
 				for (const h of set) h(msg.payload);
@@ -145,9 +152,27 @@ export class EmbedHostBridge {
 		return this._request('speak', { text, ...opts });
 	}
 
-	/** @param {string} name @returns {Promise<void>} */
-	gesture(name) {
-		return this._request('gesture', { name });
+	/**
+	 * Trigger a named animation gesture inside the embedded agent.
+	 * @param {string} name
+	 * @param {{ loop?: boolean, duration?: number }} [opts]
+	 *   - `loop:true` keeps the clip running until another gesture is triggered
+	 *     (use for dance/idle/thriller). Default: 1.5s one-shot that auto-reverts.
+	 *   - `duration` overrides the one-shot length in milliseconds.
+	 * @returns {Promise<void>}
+	 */
+	gesture(name, opts = {}) {
+		return this._request('gesture', { name, ...opts });
+	}
+
+	/**
+	 * Fetch the list of animation clips available on the currently-loaded model.
+	 * Combined: manifest defs (humanoid rigs) + GLB-baked clips, with skeleton
+	 * compatibility heuristics applied — see element.js#_listAvailableClips.
+	 * @returns {Promise<{ clips: Array<{name:string,label:string,icon:string,loop:boolean,source:'manifest'|'glb'}> }>}
+	 */
+	listClips() {
+		return this._request('listClips', {});
 	}
 
 	/** @param {{ trigger: string, weight: number }} emote @returns {Promise<void>} */
@@ -167,7 +192,9 @@ export class EmbedHostBridge {
 
 	/**
 	 * Subscribe to events from the embedded agent.
-	 * @param {'action'|'state'|'error'} event
+	 * @param {'action'|'state'|'error'|'clips'} event
+	 *   - `clips`: fired when the embed's available clip list changes (e.g.
+	 *     after a model swap). Payload: `{ clips: [...] }`.
 	 * @param {Function} handler
 	 * @returns {Function} unsubscribe
 	 */
