@@ -1164,6 +1164,21 @@ class App {
 					}),
 				);
 			}
+
+			// Host-page reaction bridge: when the parent /pumpfun.html page
+			// observes a feed event, it can ask the avatar to emote/dance
+			// without having to mount the full widget overlay.
+			if (data.type === 'pumpfun-feed:react' && data.reaction) {
+				try {
+					const proto = window.VIEWER?.agent_protocol || protocol;
+					const r = data.reaction;
+					if (proto && r.emote) proto.emit({ type: 'emote', payload: r.emote });
+					if (proto && r.gesture) proto.emit({ type: 'gesture', payload: r.gesture });
+					if (proto && r.speak && data.speak !== false) {
+						proto.emit({ type: 'speak', payload: r.speak });
+					}
+				} catch {}
+			}
 		});
 	}
 

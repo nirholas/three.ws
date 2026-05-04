@@ -33,13 +33,20 @@ const OP_TO_ACTION = {
  */
 export class EmbedActionBridge {
 	/**
-	 * @param {{ protocol: object, avatar?: object, manifest: object, window: Window }} opts
+	 * @param {{
+	 *   protocol: object,
+	 *   avatar?: object,
+	 *   manifest: object,
+	 *   window: Window,
+	 *   getClips?: () => Array<{name:string, label?:string, icon?:string, loop?:boolean, source?:string}>,
+	 * }} opts
 	 */
-	constructor({ protocol, avatar = null, manifest, window: win }) {
+	constructor({ protocol, avatar = null, manifest, window: win, getClips = null }) {
 		this._protocol = protocol;
 		this._avatar = avatar; // reserved for future direct avatar control
 		this._manifest = manifest;
 		this._win = win;
+		this._getClips = getClips;
 		this._subscribed = false; // host must explicitly subscribe to receive events
 		this._evtQueue = []; // events queued before host subscribes
 		this._running = false;
@@ -55,8 +62,41 @@ export class EmbedActionBridge {
 
 		// Announce ready to the parent — triggers the ping/pong handshake
 		const agentId = this._manifest?.id?.agentId || this._manifest?.agentId || '';
-		const capabilities = [...Object.keys(OP_TO_ACTION), 'setAgent', 'ping', 'subscribe'];
+		const capabilities = [...Object.keys(OP_TO_ACTION), 'setAgent', 'ping', 'subscribe', 'listClips'];
 		this._toParent({ kind: 'event', op: 'ready', payload: { agentId, capabilities } });
+	}
+
+	/**
+	 * Notify the host that the available clip list has changed (e.g. after a
+	 * model swap). Host receives `{ kind:'event', op:'clips', payload:{ clips: [...] } }`.
+	 * No-op if the host hasn't subscribed yet — event is queued like other events.
+	 */
+	emitClipsChanged() {
+		if (!this._running) return;
+		const clips = this._safeGetClips();
+		const evt = {
+			id: genId(),
+			kind: 'event',
+			op: 'clips',
+			payload: { clips },
+		};
+		if (this._subscribed) {
+			this._toParent(evt);
+		} else {
+			if (this._evtQueue.length >= MAX_QUEUED_EVENTS) this._evtQueue.shift();
+			this._evtQueue.push(evt);
+		}
+	}
+
+	_safeGetClips() {
+		if (typeof this._getClips !== 'function') return [];
+		try {
+			const list = this._getClips();
+			return Array.isArray(list) ? list : [];
+		} catch (err) {
+			console.warn('[embed-action-bridge] getClips failed', err);
+			return [];
+		}
 	}
 
 	stop() {
@@ -131,7 +171,12 @@ export class EmbedActionBridge {
 		const { op, payload = {} } = msg;
 
 		if (op === 'ping') {
-			this._reply(msg, { capabilities: [...Object.keys(OP_TO_ACTION), 'subscribe'] });
+			this._reply(msg, { capabilities: [...Object.keys(OP_TO_ACTION), 'subscribe', 'listClips'] });
+			return;
+		}
+
+		if (op === 'listClips') {
+			this._reply(msg, { clips: this._safeGetClips() });
 			return;
 		}
 

@@ -13,6 +13,8 @@
  *   - maxCards    1..50
  */
 
+import { applyReaction, createReactionDispatcher } from './pumpfun-reactions.js';
+
 const FEED_PATH = '/api/agents/pumpfun-feed';
 const TIER_BADGE = { mega: '🔥🔥', influencer: '🔥', notable: '⭐' };
 
@@ -58,6 +60,14 @@ export async function mountPumpfunFeed(viewer, config, container, ctx = {}) {
 	const maxCards = Math.max(1, Math.min(50, config.maxCards || 8));
 	const protocol = ctx.protocol || (typeof window !== 'undefined' ? window.VIEWER?.agent_protocol : null);
 	let narrateOn = config.autoNarrate !== false;
+	const dispatcher = createReactionDispatcher();
+	const react = (kind, ev) => {
+		dispatcher.dispatch(kind, ev, (reaction) => {
+			// Even with narration off, still drive emote+gesture so the avatar
+			// reacts visually. `speak` is the only channel gated by narrateOn.
+			applyReaction(protocol, reaction, { speak: narrateOn });
+		});
+	};
 
 	const onNarrateToggle = (e) => {
 		narrateOn = !!e.detail?.on;
@@ -91,7 +101,7 @@ export async function mountPumpfunFeed(viewer, config, container, ctx = {}) {
 		if (!ev) return;
 		if (!matchesFocus(ev)) return;
 		addCard(stack, renderClaim(ev), maxCards);
-		if (narrateOn) narrateClaim(protocol, ev);
+		react('claim', ev);
 	});
 
 	es.addEventListener('graduation', (msg) => {
@@ -99,7 +109,17 @@ export async function mountPumpfunFeed(viewer, config, container, ctx = {}) {
 		if (!ev) return;
 		if (!matchesFocus(ev)) return;
 		addCard(stack, renderGraduation(ev), maxCards);
-		if (narrateOn) narrateGraduation(protocol, ev);
+		react('graduation', ev);
+	});
+
+	es.addEventListener('mint', (msg) => {
+		const ev = safeJson(msg.data);
+		if (!ev) return;
+		if (!matchesFocus(ev)) return;
+		// Mints don't render their own card in this widget (the card stack is
+		// claim/graduation focused), but they should still tickle the avatar
+		// when something notable lands.
+		react('mint', ev);
 	});
 
 	es.addEventListener('error', () => {
@@ -390,47 +410,6 @@ function cardStyle(bg) {
 		'margin-bottom:6px',
 		'box-shadow:0 2px 6px rgba(0,0,0,0.3)',
 	].join(';');
-}
-
-function narrateClaim(protocol, ev) {
-	if (!protocol) return;
-	if (ev.first_time_claim) {
-		protocol.emit({ type: 'emote', payload: { trigger: 'celebration', weight: 0.9 } });
-		// First GitHub-linked claim → silly hip-hop dance
-		const danceClip = ev.github_user ? 'silly' : 'celebrate';
-		protocol.emit({ type: 'gesture', payload: { name: danceClip, duration: 4000 } });
-		protocol.emit({
-			type: 'speak',
-			payload: {
-				text: `First-time claim: ${ev.github_user ? '@' + ev.github_user : 'unknown'}${ev.ai_take ? ' — ' + ev.ai_take : ''}`,
-				sentiment: 0.7,
-			},
-		});
-	} else if (ev.fake_claim) {
-		protocol.emit({ type: 'emote', payload: { trigger: 'concern', weight: 0.7 } });
-		protocol.emit({ type: 'gesture', payload: { name: 'shake', duration: 1500 } });
-		protocol.emit({
-			type: 'speak',
-			payload: { text: `Fake claim from ${ev.github_user || ev.claimer}.`, sentiment: -0.5 },
-		});
-	} else if (ev.tier === 'mega') {
-		protocol.emit({ type: 'emote', payload: { trigger: 'celebration', weight: 0.7 } });
-		protocol.emit({ type: 'gesture', payload: { name: 'thriller', duration: 5000 } });
-	} else if (ev.tier === 'influencer') {
-		protocol.emit({ type: 'emote', payload: { trigger: 'curiosity', weight: 0.5 } });
-		protocol.emit({ type: 'gesture', payload: { name: 'taunt', duration: 2500 } });
-	}
-}
-
-function narrateGraduation(protocol, ev) {
-	if (!protocol) return;
-	protocol.emit({ type: 'emote', payload: { trigger: 'celebration', weight: 0.9 } });
-	// Graduation = the big one → rumba
-	protocol.emit({ type: 'gesture', payload: { name: 'rumba', duration: 6000 } });
-	protocol.emit({
-		type: 'speak',
-		payload: { text: `Migration: ${ev.symbol || ev.name || 'a token'} bonded to PumpAMM.`, sentiment: 0.6 },
-	});
 }
 
 function escapeHtml(s) {
