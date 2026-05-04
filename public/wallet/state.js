@@ -52,6 +52,17 @@ export function reduce(state, action) {
 			return initialState();
 		case 'ACCOUNTS_CHANGED':
 			if (!action.accounts || action.accounts.length === 0) return initialState();
+			// During an active connect flow (DETECTING/REQUESTING_ACCOUNTS) the wallet
+			// fires accountsChanged as a side-effect of eth_requestAccounts. Don't
+			// transition to CONNECTED here — ACCOUNTS_RESOLVED (with confirmed chainId)
+			// will handle it. Transitioning early causes a duplicate signAndVerify that
+			// races and overwrites the CSRF cookie, making the first attempt 403.
+			if (
+				state.status === STATES.DETECTING ||
+				state.status === STATES.REQUESTING_ACCOUNTS
+			) {
+				return { ...state, address: action.accounts[0] };
+			}
 			return {
 				...state,
 				address: action.accounts[0],
