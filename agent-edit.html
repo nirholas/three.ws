@@ -691,6 +691,7 @@
 				if (name === 'outfit') initOutfitTab();
 				if (name === 'publish') initPublishTab();
 				if (name === 'monetization') initMonetizationTab();
+				if (name === 'autopilot') initAutopilotTab();
 			}
 
 			const editTabs = document.querySelectorAll('.edit-tab');
@@ -885,6 +886,64 @@
 					if (!res.ok) {
 						const err = await res.json().catch(() => ({}));
 						throw new Error(err.error_description || `HTTP ${res.status}`);
+					}
+					status.textContent = 'Saved.';
+					status.className = 'form-status ok';
+				} catch (err) {
+					status.textContent = err.message;
+					status.className = 'form-status err';
+				} finally {
+					btn.disabled = false;
+				}
+			});
+
+			// ── Autopilot tab ──────────────────────────────────────────────────────────
+			let autopilotInitialized = false;
+
+			function initAutopilotTab() {
+				if (autopilotInitialized) return;
+				autopilotInitialized = true;
+				loadStrategy();
+			}
+
+			async function loadStrategy() {
+				const status = document.getElementById('autopilot-status');
+				try {
+					const res = await fetch(`/api/agent-strategy?id=${agentId}`, { credentials: 'include' });
+					if (res.status === 404) {
+						document.getElementById('f-strategy').value = '';
+						return;
+					}
+					if (!res.ok) {
+						const err = await res.json().catch(() => ({}));
+						throw new Error(err.error || `HTTP ${res.status}`);
+					}
+					const { strategy } = await res.json();
+					document.getElementById('f-strategy').value = strategy.strategy || '';
+				} catch (err) {
+					status.textContent = err.message;
+					status.className = 'form-status err';
+				}
+			}
+
+			document.getElementById('autopilot-save').addEventListener('click', async () => {
+				const btn = document.getElementById('autopilot-save');
+				const status = document.getElementById('autopilot-status');
+				btn.disabled = true;
+				status.textContent = 'Saving…';
+				status.className = 'form-status';
+				try {
+					const res = await fetch(`/api/agent-strategy?id=${agentId}`, {
+						method: 'POST',
+						credentials: 'include',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({
+							strategy: document.getElementById('f-strategy').value.trim(),
+						}),
+					});
+					if (!res.ok) {
+						const err = await res.json().catch(() => ({}));
+						throw new Error(err.error || `HTTP ${res.status}`);
 					}
 					status.textContent = 'Saved.';
 					status.className = 'form-status ok';

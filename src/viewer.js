@@ -535,6 +535,57 @@ export class Viewer {
 		this.projectAnnotations();
 	}
 
+	showPumpFunTrades() {
+		const particleCount = 1000;
+		const particles = new THREE.BufferGeometry();
+		const positions = new Float32Array(particleCount * 3);
+		const textureLoader = new THREE.TextureLoader();
+		const coinTexture = textureLoader.load('assets/coin.png');
+
+		for (let i = 0; i < particleCount; i++) {
+			positions[i * 3] = (Math.random() * 2 - 1) * 10;
+			positions[i * 3 + 1] = Math.random() * 20;
+			positions[i * 3 + 2] = (Math.random() * 2 - 1) * 10;
+		}
+
+		particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+		const particleMaterial = new THREE.PointsMaterial({
+			map: coinTexture,
+			size: 0.5,
+			transparent: true,
+			alphaTest: 0.5,
+		});
+
+		const particleSystem = new THREE.Points(particles, particleMaterial);
+		this.scene.add(particleSystem);
+
+		const animateParticles = () => {
+			const positions = particleSystem.geometry.attributes.position.array;
+			for (let i = 0; i < particleCount; i++) {
+				positions[i * 3 + 1] -= 0.1;
+				if (positions[i * 3 + 1] < -10) {
+					positions[i * 3 + 1] = 20;
+				}
+			}
+			particleSystem.geometry.attributes.position.needsUpdate = true;
+			this.invalidate();
+		};
+
+		if (!this._afterAnimateHooks) {
+			this._afterAnimateHooks = [];
+		}
+		this._afterAnimateHooks.push(animateParticles);
+
+		setTimeout(() => {
+			this.scene.remove(particleSystem);
+			const index = this._afterAnimateHooks.indexOf(animateParticles);
+			if (index > -1) {
+				this._afterAnimateHooks.splice(index, 1);
+			}
+		}, 10000);
+	}
+
 	takeScreenshot() {
 		takeScreenshot(this);
 	}

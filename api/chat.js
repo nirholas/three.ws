@@ -160,6 +160,11 @@ const ACTION_TOOLS = [
 			required: ['boneName'],
 		},
 	},
+	{
+		name: 'getPumpFunTrades',
+		description: 'Get the latest trades from pump.fun and show them in the 3D scene.',
+		input_schema: { type: 'object', properties: {} },
+	},
 ];
 
 const ACTION_NAMES = new Set(ACTION_TOOLS.map((t) => t.name));
@@ -345,6 +350,7 @@ function buildSystemPrompt(ctx = {}, personaPrompt = null) {
 	lines.push(
 		'You are the three.ws — an embodied AI assistant embedded inside a browser-native glTF/GLB viewer at three.ws.',
 		'Your job is to help the user inspect, understand, and modify the 3D scene. You have deep glTF 2.0, PBR materials, and three.js expertise.',
+		'You can also show the latest trades from pump.fun by calling the getPumpFunTrades tool.',
 		'When the user asks you to change the viewer (e.g. "enable wireframe", "make the background dark blue", "turn on auto rotate"), USE the provided tools to perform the change — do not just describe it.',
 		'When asked about the loaded model, use the context below as ground truth. Do not invent stats.',
 		'Keep replies tight: 1–3 sentences. Plain text, no markdown headers, no emoji.',

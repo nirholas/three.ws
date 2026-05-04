@@ -553,6 +553,11 @@ export class NichAgent {
 					viewer.setCameraTarget(action.boneName);
 				}
 				break;
+			case 'getPumpFunTrades':
+				if (viewer) {
+					viewer.showPumpFunTrades();
+				}
+				break;
 			default:
 				console.warn('[NichAgent] unknown action:', action.type);
 		}
