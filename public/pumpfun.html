@@ -603,7 +603,8 @@
 				if (!confirm('URL does not end in .glb / .gltf / .vrm. Try anyway?')) return;
 			}
 			picker.customUrl.value = '';
-			selectAvatar({ url: parsed.href, name: 'Custom URL', sub: shortenUrl(parsed.href) });
+			const name = parsed.pathname.split('/').pop() || 'Custom';
+			selectAvatar({ url: parsed.href, name, sub: shortenUrl(parsed.href) });
 		}
 
 		function shortenUrl(u) {
@@ -1285,6 +1286,7 @@
 		}
 
 		function dispatchReaction(kind, ev) {
+			if (kind === 'mint' && !params.announceMints) return;
 			const reaction = reactionFor(kind, ev);
 			if (!reaction) return;
 			const t = Date.now();
@@ -1856,6 +1858,12 @@
 				{ type: 'pumpfun-feed:set-narrate', on: params.narrate },
 				location.origin,
 			);
+		});
+
+		$('ctl-announce-mints').addEventListener('click', (e) => {
+			params.announceMints = e.currentTarget.dataset.on !== '1';
+			e.currentTarget.dataset.on = params.announceMints ? '1' : '0';
+			syncURL();
 		});
 
 		let kindTimer;
