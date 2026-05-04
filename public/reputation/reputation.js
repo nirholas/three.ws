@@ -64,12 +64,12 @@ function getExplorerUrl(chainId, txHash) {
 	return base ? `${base}/tx/${txHash}` : null;
 }
 
-async function parseAgentId() {
+function parseAgentId() {
 	const params = new URLSearchParams(window.location.search);
 	const agentParam = params.get('agent');
 
 	if (!agentParam) {
-		throw new Error('Missing ?agent=<chainId>:<agentId> parameter');
+		return null;
 	}
 
 	const parts = agentParam.split(':');
@@ -85,6 +85,54 @@ async function parseAgentId() {
 	}
 
 	return { chainId, agentId };
+}
+
+function showLookupForm(appEl) {
+	appEl.innerHTML = `
+		<div class="rep-header">
+			<h1>Agent Reputation</h1>
+			<div class="rep-header-meta">Look up on-chain reviews and ratings for any registered agent.</div>
+		</div>
+		<div class="rep-lookup-form">
+			<div class="rep-form-group">
+				<label for="lookup-chain">Chain ID</label>
+				<select id="lookup-chain">
+					<option value="1">Ethereum (1)</option>
+					<option value="137">Polygon (137)</option>
+					<option value="8453" selected>Base (8453)</option>
+					<option value="42161">Arbitrum One (42161)</option>
+					<option value="10">Optimism (10)</option>
+					<option value="11155111">Ethereum Sepolia (11155111)</option>
+					<option value="84532">Base Sepolia (84532)</option>
+					<option value="421614">Arbitrum Sepolia (421614)</option>
+				</select>
+			</div>
+			<div class="rep-form-group">
+				<label for="lookup-agent">Agent ID</label>
+				<input type="number" id="lookup-agent" placeholder="e.g. 42" min="1" />
+			</div>
+			<button id="lookup-btn" class="rep-submit-btn">View Reputation</button>
+		</div>
+	`;
+
+	const btn = document.getElementById('lookup-btn');
+	const agentInput = document.getElementById('lookup-agent');
+	const chainSelect = document.getElementById('lookup-chain');
+
+	function go() {
+		const agentId = agentInput.value.trim();
+		const chainId = chainSelect.value;
+		if (!agentId || Number(agentId) < 1) {
+			agentInput.focus();
+			return;
+		}
+		window.location.search = `?agent=${chainId}:${agentId}`;
+	}
+
+	btn.addEventListener('click', go);
+	agentInput.addEventListener('keydown', (e) => {
+		if (e.key === 'Enter') go();
+	});
 }
 
 async function fetchAgentInfo(agentId) {
@@ -134,7 +182,12 @@ async function main() {
 	const appEl = document.querySelector('#app');
 
 	try {
-		const { chainId, agentId } = await parseAgentId();
+		const parsed = parseAgentId();
+		if (!parsed) {
+			showLookupForm(appEl);
+			return;
+		}
+		const { chainId, agentId } = parsed;
 
 		// Show loading state
 		appEl.innerHTML = `

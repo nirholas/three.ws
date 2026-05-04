@@ -12,18 +12,40 @@
       align-items: center;
       gap: 2rem;
       background-color: #f0f0f0;
+      padding: 2rem;
     }
-    .widget-container {
-      width: 400px;
-      height: 500px;
-      border: 1px solid #ccc;
+    .demo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 2rem;
+      width: 100%;
+      max-width: 1200px;
+    }
+    .widget-card {
+      background: white;
       border-radius: 8px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      padding: 1rem;
+    }
+    h2 {
+      margin-top: 0;
+    }
+    .widget-container {
+      width: 100%;
+      height: 420px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
       overflow: hidden; /* Ensures the iframe stays within the rounded corners */
     }
+    .instructions {
+      width: 100%;
+      max-width: 800px;
+      margin-top: 2rem;
+    }
     textarea {
-      width: 500px;
-      height: 150px;
+      width: 100%;
+      box-sizing: border-box;
+      height: 200px;
       padding: 10px;
       border: 1px solid #ccc;
       border-radius: 4px;
@@ -31,24 +53,57 @@
       font-size: 14px;
       resize: vertical;
     }
+    code {
+      background: #e0e0e0;
+      padding: 2px 4px;
+      border-radius: 3px;
+    }
   </style>
 </head>
 <body>
 
   <h1>3D Agent Widget Demo</h1>
 
-  <p>Here is a demo of an embedded 3D agent:</p>
-
-  <div class="widget-container">
-    <div class="threews-widget" data-agent-id="041cb44a-3c58-4d56-b083-d5234563456a"></div>
+  <div class="demo-grid">
+    <div class="widget-card">
+      <h2>Default</h2>
+      <div class="widget-container">
+        <div class="threews-widget" data-agent-id="041cb44a-3c58-4d56-b083-d5234563456a"></div>
+      </div>
+    </div>
+    <div class="widget-card">
+      <h2>Dark background</h2>
+      <div class="widget-container">
+        <div class="threews-widget" data-agent-id="041cb44a-3c58-4d56-b083-d5234563456a" data-background="dark"></div>
+      </div>
+    </div>
+    <div class="widget-card">
+      <h2>Nameplate hidden</h2>
+      <div class="widget-container">
+        <div class="threews-widget" data-agent-id="041cb44a-3c58-4d56-b083-d5234563456a" data-nameplate="false"></div>
+      </div>
+    </div>
   </div>
 
-  <h2>How to use it</h2>
-  <p>Copy and paste this code into your website:</p>
-  <textarea readonly>
-<div class="threews-widget" data-agent-id="YOUR_AGENT_ID" style="width: 400px; height: 500px;"></div>
+  <div class="instructions">
+    <h2>How to use it</h2>
+    <p>Copy and paste this code into your website. Customize it with <code>data-*</code> attributes.</p>
+    <textarea readonly>
+<div class="threews-widget" 
+     data-agent-id="YOUR_AGENT_ID" 
+     data-background="transparent"
+     data-nameplate="true"
+     style="width: 400px; height: 500px;">
+</div>
 <script src="https://3d-agent.vercel.app/dist/widget.js" defer></script>
-  </textarea>
+    </textarea>
+    <p>Available options:</p>
+    <ul>
+      <li><code>data-agent-id</code>: (Required) The ID of the agent to display.</li>
+      <li><code>data-background</code>: Set the background. Can be <code>transparent</code> (default), <code>dark</code>, or <code>light</code>.</li>
+      <li><code>data-nameplate</code>: Set to <code>false</code> to hide the agent's name.</li>
+    </ul>
+  </div>
 
   <script src="/dist/widget.js" defer></script>
 

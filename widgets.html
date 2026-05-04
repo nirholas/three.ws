@@ -6,6 +6,51 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="description" content="Embeddable widgets for your website." />
 		<meta name="theme-color" content="#000000" />
+		<style>
+			.customize-btn {
+				background: #222;
+				border: 1px solid #333;
+				color: #eee;
+				padding: 4px 10px;
+				font-size: 12px;
+				cursor: pointer;
+				margin-top: 8px;
+			}
+			.modal {
+				display: none;
+				position: fixed;
+				z-index: 1000;
+				left: 0;
+				top: 0;
+				width: 100%;
+				height: 100%;
+				overflow: auto;
+				background-color: rgba(0,0,0,0.8);
+			}
+			.modal-content {
+				background-color: #1a1a1a;
+				margin: 10% auto;
+				padding: 20px;
+				border: 1px solid #333;
+				width: 80%;
+				max-width: 600px;
+			}
+			.modal-header {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				margin-bottom: 20px;
+			}
+			.modal-header h2 {
+				margin: 0;
+			}
+			.close-btn {
+				color: #aaa;
+				font-size: 28px;
+				font-weight: bold;
+				cursor: pointer;
+			}
+		</style>
 		<link rel="canonical" href="https://three.ws/widgets" />
 		<link rel="shortcut icon" href="/favicon.ico" />
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -29,6 +74,16 @@
 			</nav>
 		</aside>
 
+		<div id="customization-modal" class="modal">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h2 id="modal-title"></h2>
+					<span class="close-btn">&times;</span>
+				</div>
+				<div id="modal-body"></div>
+			</div>
+		</div>
+
 		<main class="market-main" id="market-main">
 			<section class="market-discovery" id="market-discovery">
 				<header class="market-topbar">
@@ -43,6 +98,7 @@
 							<div class="market-item-meta">
 								<h3>Pump.fun Search</h3>
 								<p>Search for tokens on Pump.fun.</p>
+								<button class="customize-btn" data-widget="search">Customize</button>
 							</div>
 						</div>
 						<div class="market-item">
@@ -52,6 +108,7 @@
 							<div class="market-item-meta">
 								<h3>Pump.fun Trending</h3>
 								<p>Trending tokens on Pump.fun.</p>
+								<button class="customize-btn" data-widget="trending">Customize</button>
 							</div>
 						</div>
 						<div class="market-item">
@@ -61,6 +118,7 @@
 							<div class="market-item-meta">
 								<h3>Pump.fun Token Counter</h3>
 								<p>A live counter of new tokens on Pump.fun.</p>
+								<button class="customize-btn" data-widget="counter">Customize</button>
 							</div>
 						</div>
 						<div class="market-item">
@@ -70,6 +128,7 @@
 							<div class="market-item-meta">
 								<h3>Pump.fun Buy Button</h3>
 								<p>A button to buy a specific token on Pump.fun.</p>
+								<button class="customize-btn" data-widget="buy">Customize</button>
 							</div>
 						</div>
 						<div class="market-item">
@@ -79,11 +138,145 @@
 							<div class="market-item-meta">
 								<h3>Pump.fun Live Feed</h3>
 								<p>A live feed of new tokens on Pump.fun.</p>
+								<button class="customize-btn" data-widget="feed">Customize</button>
 							</div>
 						</div>
 					</div>
 				</div>
 			</section>
 		</main>
+		<script>
+			const modal = document.getElementById('customization-modal');
+			const modalTitle = document.getElementById('modal-title');
+			const modalBody = document.getElementById('modal-body');
+			const closeBtn = document.querySelector('.close-btn');
+
+			const widgetConfig = {
+				search: {
+					title: 'Pump.fun Search',
+					options: [
+						{ id: 'bg', label: 'Background', type: 'select', options: ['dark', 'light'] },
+					],
+					getUrl: (opts) => `/pumpfun-search.html?bg=${opts.bg}`
+				},
+				trending: {
+					title: 'Pump.fun Trending',
+					options: [
+						{ id: 'bg', label: 'Background', type: 'select', options: ['dark', 'light'] },
+					],
+					getUrl: (opts) => `/pumpfun-trending.html?bg=${opts.bg}`
+				},
+				counter: {
+					title: 'Pump.fun Token Counter',
+					options: [
+						{ id: 'bg', label: 'Background', type: 'select', options: ['dark', 'light'] },
+					],
+					getUrl: (opts) => `/pumpfun-counter.html?bg=${opts.bg}`
+				},
+				buy: {
+					title: 'Pump.fun Buy Button',
+					options: [
+						{ id: 'mint', label: 'Mint Address', type: 'text', value: 'CAKE' },
+						{ id: 'bg', label: 'Background', type: 'select', options: ['dark', 'light'] },
+					],
+					getUrl: (opts) => `/pumpfun-buy.html?mint=${opts.mint}&bg=${opts.bg}`
+				},
+				feed: {
+					title: 'Pump.fun Live Feed',
+					options: [
+						{ id: 'bg', label: 'Background', type: 'select', options: ['dark', 'light'] },
+						{ id: 'max', label: 'Max Entries', type: 'number', value: 50 },
+					],
+					getUrl: (opts) => `/pumpfun-widget.html?bg=${opts.bg}&max=${opts.max}`
+				}
+			};
+
+			document.querySelectorAll('.customize-btn').forEach(btn => {
+				btn.addEventListener('click', () => {
+					const widgetId = btn.dataset.widget;
+					const config = widgetConfig[widgetId];
+					modalTitle.innerText = `Customize ${config.title}`;
+					modalBody.innerHTML = '';
+
+					const options = {};
+					config.options.forEach(opt => {
+						const el = document.createElement('div');
+						el.innerHTML = `<label>${opt.label}</label>`;
+						if (opt.type === 'select') {
+							const select = document.createElement('select');
+							select.id = `opt-${opt.id}`;
+							opt.options.forEach(o => {
+								const option = document.createElement('option');
+								option.value = o;
+								option.innerText = o;
+								select.appendChild(option);
+							});
+							el.appendChild(select);
+							options[opt.id] = select;
+						} else if (opt.type === 'text' || opt.type === 'number') {
+							const input = document.createElement('input');
+							input.type = opt.type;
+							input.id = `opt-${opt.id}`;
+							input.value = opt.value || '';
+							el.appendChild(input);
+							options[opt.id] = input;
+						}
+						modalBody.appendChild(el);
+					});
+
+					const preview = document.createElement('iframe');
+					preview.style.width = '100%';
+					preview.style.height = '200px';
+					preview.style.border = '1px solid #333';
+					modalBody.appendChild(preview);
+
+					const code = document.createElement('pre');
+					const codeBlock = document.createElement('code');
+					code.appendChild(codeBlock);
+					modalBody.appendChild(code);
+
+					const copyBtn = document.createElement('button');
+					copyBtn.innerText = 'Copy';
+					copyBtn.style.marginTop = '10px';
+					modalBody.appendChild(copyBtn);
+
+					copyBtn.addEventListener('click', () => {
+						navigator.clipboard.writeText(codeBlock.innerText);
+						copyBtn.innerText = 'Copied!';
+						setTimeout(() => {
+							copyBtn.innerText = 'Copy';
+						}, 2000);
+					});
+
+					function update() {
+						const opts = {};
+						for (const id in options) {
+							opts[id] = options[id].value;
+						}
+						const url = config.getUrl(opts);
+						preview.src = url;
+						codeBlock.innerText = `<iframe src="${location.origin}${url}" width="100%" height="200px" style="border:none;"></iframe>`;
+					}
+
+					for (const id in options) {
+						options[id].addEventListener('change', update);
+						options[id].addEventListener('input', update);
+					}
+
+					update();
+					modal.style.display = 'block';
+				});
+			});
+
+			closeBtn.addEventListener('click', () => {
+				modal.style.display = 'none';
+			});
+
+			window.addEventListener('click', (event) => {
+				if (event.target == modal) {
+					modal.style.display = 'none';
+				}
+			});
+		</script>
 	</body>
 </html>

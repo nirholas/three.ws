@@ -6,6 +6,8 @@ import {
 	Color,
 	GridHelper,
 	LoaderUtils,
+	LoopOnce,
+	LoopRepeat,
 	PMREMGenerator,
 	PerspectiveCamera,
 	PointsMaterial,
@@ -49,6 +51,7 @@ export class Viewer {
 	constructor(el, options) {
 		this.el = el;
 		this.options = options;
+		this.postToParent = options.postToParent || null;
 
 		this.lights = [];
 		this.content = null;
@@ -198,17 +201,61 @@ export class Viewer {
 		};
 
 		this._onDblClick = () => this.frameContent({ animate: true });
+		this._onMessage = this.onMessage.bind(this);
 
 		this._updateRenderLoop();
 		window.addEventListener('resize', this._onResize, false);
 		window.addEventListener('keydown', this._onKeyDown);
 		this.renderer.domElement.addEventListener('dblclick', this._onDblClick);
+		window.addEventListener('message', this._onMessage, false);
 	}
 
 	invalidate() {
 		if (this._disposed) return;
 		this._needsRender = true;
 		this._updateRenderLoop();
+	}
+
+	onMessage(e) {
+		if (!e.data || typeof e.data !== 'object' || !e.data.op) return;
+		// SECURITY: Check origin if we ever handle sensitive ops. For gesture/emote,
+		// it's fine to be promiscuous so any parent window can control the avatar.
+
+		switch (e.data.op) {
+			case 'gesture':
+				this.onGesture(e.data.payload);
+				break;
+			case 'get_clips': {
+				if (!this.postToParent) return;
+				const clips = this.clips.map((c) => ({
+					name: c.name,
+					loop: true, // Assume baked-in clips loop by default
+					source: 'glb',
+				}));
+				this.postToParent({ __agent: true, type: 'clips', clips });
+				break;
+			}
+			case 'clips':
+				// This is one-way for now; the embed doesn't need to receive clips.
+				break;
+			default:
+				console.warn(`[a-embed] unhandled op: ${e.data.op}`);
+		}
+	}
+
+	async onGesture(payload) {
+		if (!payload || !payload.name) return;
+		const { name, loop } = payload;
+		const ready = await this.animationManager.ensureLoaded(name);
+		if (!ready) return;
+
+		const action = this.animationManager.actions.get(name);
+		if (action) {
+			action.setLoop(loop ? LoopRepeat : LoopOnce);
+			if (!loop) action.clampWhenFinished = true;
+		}
+
+		this.animationManager.play(name);
 	}
 
 	// Per-agent scene preferences (background, environment, exposure, etc.)
@@ -1465,6 +1512,9 @@ export class Viewer {
 		window.removeEventListener('keydown', this._onKeyDown);
 		if (this._onDblClick && this.renderer?.domElement) {
 			this.renderer.domElement.removeEventListener('dblclick', this._onDblClick);
+		}
+		if (this._onMessage) {
+			window.removeEventListener('message', this._onMessage, false);
 		}
 		if (this._cameraTweenRaf) cancelAnimationFrame(this._cameraTweenRaf);
 		if (this._onAnimHotkey) {

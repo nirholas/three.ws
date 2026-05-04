@@ -261,7 +261,7 @@
 				if (!bodyURI) return showError('Agent has no 3D body');
 
 				const stage = document.getElementById('stage');
-				const viewer = new Viewer(stage, { kiosk: true });
+				const viewer = new Viewer(stage, { kiosk: true, postToParent });
 				if (bg === 'transparent') {
 					viewer.renderer?.setClearAlpha(0);
 					if (viewer.scene) viewer.scene.background = null;

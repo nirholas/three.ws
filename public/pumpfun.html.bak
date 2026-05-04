@@ -565,11 +565,6 @@
 				<option value="hype">🤩 Hype</option>
 			</select>
 			<button id="ctl-config" class="pf-icon-btn" type="button" title="Configure agent reactions">⚙️ Config</button>
-			<select id="ctl-mood" title="Avatar mood — biases reaction intensity">
-				<option value="chill">😎 Chill</option>
-				<option value="normal" selected>🙂 Normal</option>
-				<option value="hype">🤩 Hype</option>
-			</select>
 			<button id="ctl-share" class="pf-icon-btn" type="button" title="Copy a shareable link with current filters">🔗 <span id="ctl-share-label">Share</span></button>
 			<button id="side-toggle" class="pf-icon-btn" type="button" aria-pressed="false" aria-controls="side" title="Toggle live feed">📡 Feed</button>
 		</div>
@@ -579,6 +574,40 @@
 			<iframe id="agent" allow="autoplay" title="3D agent"></iframe>
 			<div id="anim-chips" role="group" aria-label="Trigger animation"></div>
 		</div>
+		<aside id="side">
+			<div class="side-header" id="side-header">
+				<span class="side-title">Live Feed</span>
+				<div class="side-controls">
+					<button id="side-minimize" class="side-control-btn" title="Minimize">_</button>
+					<button id="side-close" class="side-control-btn" title="Close">×</button>
+				</div>
+			</div>
+			<div id="side-content">
+				<h2>Agent</h2>
+				<div id="agent-card"><div class="empty">Default narrator avatar. Paste a Solana asset pubkey above to bind a specific agent.</div></div>
+				<div id="signals-section" hidden>
+					<h2>Reputation signals</h2>
+					<div class="signal-grid" id="signals"></div>
+				</div>
+				<div id="first-claims-section">
+					<h2>
+						<span>First-time fee claims</span>
+						<select id="fc-window" title="Lookback window" style="margin-left:8px;background:#0f0f17;color:#e6e6f0;border:1px solid #20202c;border-radius:6px;padding:2px 6px;font-size:12px">
+							<option value="60">1h</option>
+							<option value="360">6h</option>
+							<option value="1440" selected>24h</option>
+						</select>
+						<button type="button" id="fc-refresh" class="pf-icon-btn" title="Refresh first-time claims" style="margin-left:6px">↻</button>
+					</h2>
+					<div id="first-claims"><div class="empty">Loading first-time claims…</div></div>
+				</div>
+				<div id="feed-wrap">
+					<h2><span id="feed-title">Live feed</span><a id="helius-pill" class="helius-pill" href="https://helius.dev" target="_blank" rel="noopener" title="Real-time Solana data via Helius webhooks"><span class="helius-dot" aria-hidden="true"></span><span id="helius-count" class="helius-count">0</span>Powered by Helius</a></h2>
+					<button type="button" class="feed-jump" id="feed-jump" data-visible="false" aria-live="polite">↑ <span id="feed-jump-count">0</span> new</button>
+					<div id="feed"><div class="empty">Waiting for events…</div></div>
+				</div>
+			</div>
+		</aside>
 	</main>
 	<footer class="h-footer h-footer-horizon">
 		<div class="h-footer-glow-line" aria-hidden="true"></div>

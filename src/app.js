@@ -203,6 +203,7 @@ class App {
 		this._updateSignInLink();
 		this._setupSaveToAccount();
 		this._setupMakeWidgetButton();
+		this._setupScreenshotButton();
 
 		const options = this.options;
 
@@ -640,6 +641,17 @@ class App {
 
 	_setupMakeWidgetButton() {
 		// No auth gate — /studio handles anonymous users gracefully.
+	}
+
+	_setupScreenshotButton() {
+		const btn = document.getElementById('screenshot-btn');
+		if (!btn) return;
+		btn.addEventListener('click', (e) => {
+			e.preventDefault();
+			if (this.viewer) {
+				this.viewer.takeScreenshot();
+			}
+		});
 	}
 
 	async _triggerSaveToAccount() {

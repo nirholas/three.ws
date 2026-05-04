@@ -204,6 +204,45 @@ function render(agent) {
 	else $('ad-explorer').style.display = 'none';
 	if (agent.tradeUrl && agent.tradeUrl !== '#') $('ad-trade').href = agent.tradeUrl;
 	else $('ad-trade').style.display = 'none';
+
+	const receiveBtn = document.getElementById('receive-btn');
+	const withdrawBtn = document.getElementById('withdraw-btn');
+	const swapBtn = document.getElementById('swap-btn');
+	const qrCodeContainer = document.getElementById('qr-code-container');
+	const qrCodeCanvas = document.getElementById('qr-code');
+	const walletAddressSpan = document.getElementById('ad-holdings-addr');
+
+	receiveBtn.addEventListener('click', () => {
+			const walletAddress = walletAddressSpan.dataset.full;
+			if (walletAddress) {
+					qrCodeContainer.classList.toggle('hidden');
+					if (!qrCodeContainer.classList.contains('hidden')) {
+							new QRious({
+									element: qrCodeCanvas,
+									value: walletAddress,
+									size: 160,
+							});
+					}
+			}
+	});
+
+	withdrawBtn.addEventListener('click', () => {
+			const amount = prompt("Enter amount to withdraw (in SOL):");
+			if (amount === null) return; 
+
+			const recipient = prompt("Enter recipient address:");
+			if (recipient === null) return;
+
+			if (amount && recipient) {
+					alert(`Withdrawal of ${amount} SOL to ${recipient} initiated. (This is a placeholder)`);
+					console.log('Withdraw:', { amount, recipient });
+			}
+	});
+
+	swapBtn.addEventListener('click', () => {
+			alert("Swap functionality coming soon!");
+			console.log('Swap button clicked');
+	});
 }
 
 function renderNotFound(id, reason) {

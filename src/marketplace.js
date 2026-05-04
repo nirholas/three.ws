@@ -416,7 +416,64 @@ function bindEvents() {
 	els.back.addEventListener('click', () => navTo('/marketplace'));
 	$('d-fork').addEventListener('click', fork);
 	$('d-bookmark').addEventListener('click', toggleBookmark);
-	bindTabs();
+		bindTabs();
+	bindSubmit();
+}
+
+// ── Submit Modal ──────────────────────────────────────────────────────────
+
+function openSubmitModal() {
+	$('market-submit-overlay').hidden = false;
+	$('sf-name').focus();
+}
+
+function closeSubmitModal() {
+	$('market-submit-overlay').hidden = true;
+}
+
+function bindSubmit() {
+	document.querySelectorAll('.market-submit-btn').forEach(b => b.addEventListener('click', openSubmitModal));
+	$('market-submit-close').addEventListener('click', closeSubmitModal);
+	$('market-submit-overlay').addEventListener('click', (e) => {
+		if (e.target === $('market-submit-overlay')) closeSubmitModal();
+	});
+
+	const form = $('market-submit-form');
+	const errorEl = $('market-submit-error');
+	form.addEventListener('submit', (e) => e.preventDefault());
+
+	$('sf-publish').addEventListener('click', async () => {
+		const body = {
+			name: $('sf-name').value,
+			description: $('sf-description').value,
+			system_prompt: $('sf-prompt').value,
+			greeting: $('sf-greeting').value,
+			category: $('sf-category').value,
+			tags: $('sf-tags').value.split(',').map(t => t.trim()).filter(Boolean),
+			publish: true,
+		};
+
+		try {
+			errorEl.hidden = true;
+			const r = await fetch(`${API}/agents`, {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				credentials: 'include',
+				body: JSON.stringify(body),
+			});
+			const j = await r.json();
+			if (!r.ok) throw new Error(j.error_description || 'Submission failed');
+
+			closeSubmitModal();
+			loadList(true); // Refresh the list
+		} catch (err) {
+			errorEl.textContent = err.message;
+			errorEl.hidden = false;
+		}
+	});
+}
+
+	bindSubmit();
 }
 
 // ── Util ──────────────────────────────────────────────────────────────────
