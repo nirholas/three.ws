@@ -14,14 +14,7 @@ const SCORE_TICK_MS = 250;
  * Live state streams via per-player nodes; opponent HUD shows rank + delta.
  */
 AFRAME.registerComponent('multiplayer', {
-  schema: {
-    apiKey: { type: 'string' },
-    authDomain: { type: 'string' },
-    databaseURL: { type: 'string' },
-    projectId: { type: 'string' },
-    storageBucket: { type: 'string' },
-    messagingSenderId: { type: 'string' }
-  },
+  schema: {},
 
   init: function () {
     this.client = null;
@@ -67,22 +60,25 @@ AFRAME.registerComponent('multiplayer', {
     }
   },
 
-  _ensureClient: function () {
+  _ensureClient: async function () {
     if (this.client) return this.client;
-    if (!this.data.apiKey) {
-      console.error('[multiplayer] Missing Firebase config');
+
+    try {
+      const response = await fetch('/api/rider/firebase');
+      const firebaseConfig = await response.json();
+
+      if (firebaseConfig.apiKey) {
+        this.client = new MultiplayerClient(firebaseConfig);
+        this.client.onRoomUpdate(this.onRoomUpdate);
+        return this.client;
+      } else {
+        console.error('[multiplayer] Missing Firebase config');
+        return null;
+      }
+    } catch (e) {
+      console.error('[multiplayer] Error fetching Firebase config', e);
       return null;
     }
-    this.client = new MultiplayerClient({
-      apiKey: this.data.apiKey,
-      authDomain: this.data.authDomain,
-      databaseURL: this.data.databaseURL,
-      projectId: this.data.projectId,
-      storageBucket: this.data.storageBucket,
-      messagingSenderId: this.data.messagingSenderId
-    });
-    this.client.onRoomUpdate(this.onRoomUpdate);
-    return this.client;
   },
 
   _name: function () {
@@ -90,7 +86,7 @@ AFRAME.registerComponent('multiplayer', {
   },
 
   onCreate: async function () {
-    const c = this._ensureClient();
+    const c = await this._ensureClient();
     if (!c) return;
     this.el.sceneEl.emit('mpconnecting', null, false);
     try {
@@ -103,7 +99,7 @@ AFRAME.registerComponent('multiplayer', {
   },
 
   onJoin: async function (evt) {
-    const c = this._ensureClient();
+    const c = await this._ensureClient();
     if (!c) return;
     const code = (evt.detail && evt.detail.code) || '';
     if (!code || code.length < 4) {

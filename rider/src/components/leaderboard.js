@@ -13,13 +13,6 @@ const ba = /(fuc)|(ass)|(nig)|(shit)|(retard)/gi;
  */
 AFRAME.registerComponent('leaderboard', {
   schema: {
-    apiKey: {type: 'string'},
-    authDomain: {type: 'string'},
-    databaseURL: {type: 'string'},
-    projectId: {type: 'string'},
-    storageBucket: {type: 'string'},
-    messagingSenderId: {type: 'string'},
-
     challengeId: {default: ''},
     difficulty: {default: ''},
     beatmapCharacteristic: { default: '' },
@@ -41,6 +34,24 @@ AFRAME.registerComponent('leaderboard', {
       localStorage.setItem('threewsusername', this.username);
     });
     this.el.addEventListener('leaderboardsubmit', this.addScore.bind(this));
+
+    this.initFirebase();
+  },
+
+  initFirebase: async function () {
+    try {
+      const response = await fetch('/api/rider/firebase');
+      const firebaseConfig = await response.json();
+
+      if (firebaseConfig.apiKey && !firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+        this.firestore = firebase.firestore();
+        this.firestore.settings({});
+        this.db = this.firestore.collection('scores');
+      }
+    } catch (e) {
+      console.error('Error fetching Firebase config', e);
+    }
   },
 
   update: function (oldData) {
