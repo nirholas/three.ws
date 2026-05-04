@@ -67,7 +67,8 @@
 		"db:status": "node scripts/apply-migrations.mjs",
 		"pump:smoke": "node scripts/pumpfun-lifecycle-smoke.js",
 		"pump:refresh-idls": "node scripts/refresh-pump-idls.mjs",
-		"seed:skills": "node scripts/seed-skills.js"
+		"seed:skills": "node scripts/seed-skills.js",
+		"install:sdk": "npm install --prefix agent-payments-sdk && npm run build --prefix agent-payments-sdk && npm install ./agent-payments-sdk"
 	},
 	"dependencies": {
 		"@avaturn/sdk": "^1.1.4",
