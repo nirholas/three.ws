@@ -591,6 +591,74 @@ function getAuthToken() {
 
 // ── Boot ──────────────────────────────────────────────────────────────────
 
+const { Connection, clusterApiUrl } = solanaWeb3;
+const { PhantomWalletAdapter } = solanaWalletAdapterWallets;
+
+let solanaConnection;
+let wallet; // Our single wallet adapter instance
+
+function initWalletAdapter() {
+    solanaConnection = new Connection(clusterApiUrl('mainnet-beta'));
+    wallet = new PhantomWalletAdapter(); // We'll specifically use Phantom for simplicity
+
+    // Listen for connection changes
+    wallet.on('connect', () => {
+        console.log('Wallet connected!');
+        updateWalletUI();
+    });
+    wallet.on('disconnect', () => {
+        console.log('Wallet disconnected!');
+        updateWalletUI();
+    });
+}
+
+// --- UI Update Logic ---
+function updateWalletUI() {
+    const walletArea = $('payment-wallet-area');
+    const confirmBtn = $('payment-confirm-btn');
+
+    if (wallet.connected) {
+        const pubKey = wallet.publicKey.toBase58();
+        walletArea.innerHTML = `
+            <p>Connected: <strong>${pubKey.slice(0, 4)}...${pubKey.slice(-4)}</strong></p>
+            <button class="btn-secondary" id="payment-disconnect-btn">Disconnect</button>
+        `;
+        $('payment-disconnect-btn').addEventListener('click', () => wallet.disconnect());
+        confirmBtn.disabled = false;
+    } else {
+        walletArea.innerHTML = `
+            <button class="btn-primary" id="payment-connect-wallet-btn">Connect Phantom Wallet</button>
+        `;
+        $('payment-connect-wallet-btn').addEventListener('click', async () => {
+            const btn = $('payment-connect-wallet-btn');
+            btn.textContent = 'Connecting...';
+            btn.disabled = true;
+            try {
+                await wallet.connect();
+            } catch (error) {
+                console.error("Failed to connect wallet", error);
+                btn.textContent = 'Connect Phantom Wallet'; // Reset on failure
+                btn.disabled = false;
+            }
+        });
+        confirmBtn.disabled = true;
+    }
+}
+
+function openPaymentModal(intent, skillName) {
+    // Store intent for later use
+    document.getElementById('payment-modal-overlay').dataset.intentId = intent.intent_id;
+
+    // Populate modal
+    $('payment-skill-name').textContent = skillName;
+    $('payment-agent-name').textContent = detailState.agent.name;
+    const priceInUSDC = (Number(intent.amount) / 1e6).toFixed(2);
+    $('payment-price-display').textContent = `${priceInUSDC} USDC`;
+
+		updateWalletUI(); // Set the initial state of the wallet UI
+    $('payment-modal-overlay').hidden = false;
+}
+
 function render() {
 	const r = readRoute();
 
@@ -623,6 +691,7 @@ function init() {
 	loadCategories();
 	loadList(true);
 	initPlugins();
+	initWalletAdapter();
 	render();
 }
 
