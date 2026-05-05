@@ -62,7 +62,6 @@ const appConfig = {
 				'pump-dashboard': resolve(__dirname, 'pump-dashboard.html'),
 				community: resolve(__dirname, 'community.html'),
 				studio: resolve(__dirname, 'public/studio/index.html'),
-				features: resolve(__dirname, 'public/features/index.html'),
 				reputation: resolve(__dirname, 'public/reputation/index.html'),
 				hydrate: resolve(__dirname, 'public/hydrate/index.html'),
 				// BEGIN:DISCOVER_ROUTE
@@ -106,8 +105,6 @@ const appConfig = {
 					'/explore': resolve(root, 'public/discover/index.html'),
 					'/explore/': resolve(root, 'public/discover/index.html'),
 					// END:DISCOVER_ROUTE
-					'/features': resolve(root, 'public/features/index.html'),
-					'/features/': resolve(root, 'public/features/index.html'),
 					'/': resolve(root, 'home.html'),
 					'/home': resolve(root, 'home.html'),
 					'/agent': resolve(root, 'agent-home.html'),
@@ -128,7 +125,6 @@ const appConfig = {
 					'/hydrate',
 					'/my-agents',
 					'/discover',
-					'/features',
 					'/docs',
 				]);
 				server.middlewares.use(async (req, res, next) => {
