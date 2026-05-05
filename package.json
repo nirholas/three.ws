@@ -97,7 +97,7 @@
 		"@pump-fun/agent-payments-sdk": "^3.0.3",
 		"@pump-fun/pump-sdk": "^1.33.0",
 		"@pump-fun/pump-swap-sdk": "^1.15.0",
-		"@pythnetwork/hermes-client": "^1.11.0",
+		"@pythnetwork/hermes-client": "^3.1.0",
 		"@solana/wallet-adapter-base": "^0.9.23",
 		"@solana/wallet-adapter-phantom": "^0.9.24",
 		"@solana/wallet-adapter-wallets": "^0.19.32",
