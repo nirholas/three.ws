@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>three.ws — The 3D layer for your AI agent</title>
+		<title>three.ws — Give Your AI a Body</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="author" content="nirholas" />
 		<meta
@@ -13,7 +13,6 @@
 		<meta name="theme-color" content="#000000" />
 
 		<meta property="og:type" content="website" />
-		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:title" content="three.ws — Give Your AI a Body" />
 		<meta
 			property="og:description"
@@ -26,10 +25,7 @@
 
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:title" content="three.ws — Give Your AI a Body" />
-		<meta
-			name="twitter:description"
-			content="Drop any GLB model into three.ws — view it, animate it, embed it anywhere, and give it a verifiable on-chain identity."
-		/>
+		<meta name="twitter:description" content="Drop any GLB model into three.ws — view it, animate it, embed it anywhere, and give it a verifiable on-chain identity." />
 		<meta name="twitter:image" content="https://three.ws/og-image.png" />
 
 		<link rel="canonical" href="https://three.ws/" />
@@ -38,119 +34,792 @@
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link rel="stylesheet" href="/style.css" />
-		<link rel="stylesheet" href="/home.css" />
+		<link rel="stylesheet" href="/features.css" />
 		<link rel="stylesheet" href="/footer.css" />
 		<script defer src="/footer-newsletter.js"></script>
 		<link
-			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400&family=Space+Grotesk:wght@500;600;700&display=swap"
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400&display=swap"
 			rel="stylesheet"
 		/>
 		<script
 			type="module"
 			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
 		></script>
-		<script src="/fluid-particles.js" defer></script>
-		<script type="module" src="/src/home-act2-viewer.js"></script>
+
+		<style>
+			/* ── Journey Steps ── */
+
+			.journey {
+				padding: var(--space-2xl) 0 0;
+			}
+
+			.journey-header {
+				text-align: center;
+				padding: 0 var(--space-lg) var(--space-2xl);
+				max-width: 720px;
+				margin: 0 auto;
+			}
+
+			.journey-overline {
+				font-family: 'JetBrains Mono', monospace;
+				font-size: var(--text-xs);
+				color: rgba(255, 215, 0, 0.6);
+				letter-spacing: 0.15em;
+				text-transform: uppercase;
+				margin: 0 0 var(--space-md);
+			}
+
+			.journey-title {
+				font-size: clamp(2rem, 4vw, 3rem);
+				font-weight: 600;
+				color: #fff;
+				line-height: 1.08;
+				letter-spacing: -0.03em;
+				margin: 0 0 var(--space-md);
+			}
+
+			.journey-sub {
+				font-size: var(--text-base);
+				color: rgba(255, 255, 255, 0.38);
+				font-weight: 300;
+				margin: 0;
+			}
+
+			/* Individual step row */
+
+			.journey-step {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				align-items: center;
+				gap: var(--space-2xl);
+				max-width: 1080px;
+				margin: 0 auto;
+				padding: var(--space-2xl) var(--space-lg);
+				border-top: 1px solid rgba(255, 255, 255, 0.05);
+			}
+
+			.journey-step:last-child {
+				border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+			}
+
+			.journey-step--flip .journey-step-content {
+				order: 2;
+			}
+			.journey-step--flip .journey-step-visual {
+				order: 1;
+			}
+
+			.journey-step-num {
+				font-family: 'JetBrains Mono', monospace;
+				font-size: 0.68rem;
+				color: rgba(255, 215, 0, 0.55);
+				letter-spacing: 0.18em;
+				text-transform: uppercase;
+				margin-bottom: var(--space-md);
+			}
+
+			.journey-step-title {
+				font-size: clamp(1.5rem, 2.5vw, 2.2rem);
+				font-weight: 600;
+				color: #fff;
+				line-height: 1.1;
+				letter-spacing: -0.025em;
+				margin: 0 0 var(--space-md);
+			}
+
+			.journey-step-desc {
+				font-size: var(--text-base);
+				color: rgba(255, 255, 255, 0.42);
+				line-height: var(--leading-normal);
+				font-weight: 300;
+				margin: 0 0 var(--space-lg);
+				max-width: 30em;
+			}
+
+			.journey-step-cta {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.4em;
+				font-size: var(--text-sm);
+				color: rgba(255, 215, 0, 0.75);
+				text-decoration: none;
+				letter-spacing: 0.02em;
+				transition:
+					color 0.2s ease,
+					gap 0.2s ease;
+			}
+
+			.journey-step-cta:hover {
+				color: #ffd76a;
+				gap: 0.7em;
+			}
+
+			/* Visual area */
+
+			.journey-step-visual {
+				background: rgba(255, 255, 255, 0.02);
+				border: 1px solid rgba(255, 255, 255, 0.07);
+				border-radius: 12px;
+				overflow: hidden;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				min-height: 300px;
+				position: relative;
+			}
+
+			.journey-step-visual model-viewer {
+				width: 100%;
+				height: 340px;
+				background: transparent;
+				--poster-color: transparent;
+			}
+
+			/* Upload drop visual */
+
+			.vis-upload {
+				width: 100%;
+				padding: var(--space-xl) var(--space-lg);
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: var(--space-md);
+			}
+
+			.vis-upload-zone {
+				width: 100%;
+				border: 1.5px dashed rgba(255, 255, 255, 0.12);
+				border-radius: 10px;
+				padding: var(--space-xl) var(--space-lg);
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: var(--space-sm);
+				text-align: center;
+				transition: border-color 0.2s ease;
+			}
+
+			.vis-upload-icon {
+				width: 40px;
+				height: 40px;
+				border-radius: 8px;
+				background: rgba(255, 255, 255, 0.05);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 1.2rem;
+			}
+
+			.vis-upload-label {
+				font-size: var(--text-sm);
+				color: rgba(255, 255, 255, 0.55);
+			}
+
+			.vis-upload-sub {
+				font-size: var(--text-xs);
+				color: rgba(255, 255, 255, 0.22);
+				font-family: 'JetBrains Mono', monospace;
+				letter-spacing: 0.06em;
+			}
+
+			.vis-file-chip {
+				display: inline-flex;
+				align-items: center;
+				gap: var(--space-sm);
+				padding: 0.4rem 0.9rem;
+				background: rgba(255, 255, 255, 0.04);
+				border: 1px solid rgba(255, 255, 255, 0.08);
+				border-radius: 999px;
+				font-family: 'JetBrains Mono', monospace;
+				font-size: 0.68rem;
+				color: rgba(255, 255, 255, 0.5);
+			}
+
+			.vis-file-dot {
+				width: 6px;
+				height: 6px;
+				border-radius: 50%;
+				background: #4ade80;
+			}
+
+			/* Animation picker visual */
+
+			.vis-anim {
+				width: 100%;
+				padding: var(--space-md);
+			}
+
+			.vis-anim-header {
+				font-family: 'JetBrains Mono', monospace;
+				font-size: 0.65rem;
+				color: rgba(255, 215, 0, 0.5);
+				letter-spacing: 0.12em;
+				text-transform: uppercase;
+				padding: var(--space-xs) var(--space-sm);
+				margin-bottom: var(--space-xs);
+			}
+
+			.vis-anim-row {
+				display: flex;
+				align-items: center;
+				gap: var(--space-sm);
+				padding: 0.6rem var(--space-sm);
+				border-radius: 6px;
+				font-size: var(--text-sm);
+				color: rgba(255, 255, 255, 0.45);
+				cursor: pointer;
+				transition:
+					background 0.15s ease,
+					color 0.15s ease;
+			}
+
+			.vis-anim-row.active {
+				background: rgba(255, 255, 255, 0.05);
+				color: #fff;
+			}
+
+			.vis-anim-play {
+				width: 20px;
+				height: 20px;
+				border-radius: 50%;
+				background: rgba(255, 255, 255, 0.06);
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				flex-shrink: 0;
+				font-size: 0.5rem;
+			}
+
+			.vis-anim-row.active .vis-anim-play {
+				background: rgba(255, 215, 0, 0.15);
+				border-color: rgba(255, 215, 0, 0.3);
+				color: #ffd76a;
+			}
+
+			.vis-anim-dur {
+				margin-left: auto;
+				font-family: 'JetBrains Mono', monospace;
+				font-size: 0.62rem;
+				color: rgba(255, 255, 255, 0.2);
+			}
+
+			/* Identity card visual */
+
+			.vis-identity {
+				padding: var(--space-lg);
+				width: 100%;
+			}
+
+			.vis-id-header {
+				display: flex;
+				align-items: center;
+				gap: var(--space-sm);
+				margin-bottom: var(--space-md);
+				padding-bottom: var(--space-sm);
+				border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+			}
+
+			.vis-id-dot {
+				width: 8px;
+				height: 8px;
+				border-radius: 50%;
+				background: #4ade80;
+				box-shadow: 0 0 6px rgba(74, 222, 128, 0.5);
+			}
+
+			.vis-id-filename {
+				font-family: 'JetBrains Mono', monospace;
+				font-size: 0.7rem;
+				color: rgba(255, 255, 255, 0.45);
+			}
+
+			.vis-id-row {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				padding: var(--space-xs) 0;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+				font-size: 0.75rem;
+			}
+
+			.vis-id-row:last-child {
+				border-bottom: none;
+			}
+
+			.vis-id-key {
+				font-family: 'JetBrains Mono', monospace;
+				color: rgba(255, 255, 255, 0.28);
+			}
+
+			.vis-id-val {
+				font-family: 'JetBrains Mono', monospace;
+				color: rgba(255, 255, 255, 0.6);
+			}
+
+			.vis-id-val.gold {
+				color: rgba(255, 215, 0, 0.75);
+			}
+			.vis-id-val.green {
+				color: rgba(74, 222, 128, 0.8);
+			}
+
+			/* Embed code visual */
+
+			.vis-embed {
+				padding: var(--space-md);
+				width: 100%;
+			}
+
+			.vis-embed-tabs {
+				display: flex;
+				gap: var(--space-xs);
+				margin-bottom: var(--space-md);
+			}
+
+			.vis-embed-tab {
+				padding: 0.3rem 0.8rem;
+				border-radius: 999px;
+				font-size: 0.68rem;
+				font-family: 'JetBrains Mono', monospace;
+				color: rgba(255, 255, 255, 0.3);
+				border: 1px solid rgba(255, 255, 255, 0.07);
+				letter-spacing: 0.04em;
+			}
+
+			.vis-embed-tab.active {
+				color: #fff;
+				background: rgba(255, 255, 255, 0.06);
+				border-color: rgba(255, 255, 255, 0.12);
+			}
+
+			.vis-embed-code {
+				background: #080810;
+				border: 1px solid rgba(255, 255, 255, 0.05);
+				border-radius: 8px;
+				padding: var(--space-md);
+				font-family: 'JetBrains Mono', monospace;
+				font-size: 0.72rem;
+				line-height: 1.7;
+				color: rgba(255, 255, 255, 0.5);
+			}
+
+			.vis-embed-code .tag {
+				color: rgba(125, 200, 255, 0.85);
+			}
+			.vis-embed-code .attr {
+				color: rgba(168, 204, 140, 0.85);
+			}
+			.vis-embed-code .val {
+				color: rgba(230, 175, 100, 0.85);
+			}
+
+			/* vis-onchain */
+
+			.vis-onchain {
+				padding: var(--space-md);
+				display: flex;
+				flex-direction: column;
+				gap: var(--space-sm);
+			}
+
+			.vis-onchain-header {
+				display: flex;
+				align-items: center;
+				gap: 0.5rem;
+				font-family: 'JetBrains Mono', monospace;
+				font-size: 0.72rem;
+				color: rgba(255, 255, 255, 0.45);
+				margin-bottom: var(--space-xs);
+			}
+
+			.vis-onchain-dot {
+				width: 8px;
+				height: 8px;
+				border-radius: 50%;
+				background: #4ade80;
+				box-shadow: 0 0 6px #4ade80;
+				flex-shrink: 0;
+			}
+
+			.vis-onchain-row {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				padding: 0.5rem 0.75rem;
+				background: rgba(255, 255, 255, 0.03);
+				border: 1px solid rgba(255, 255, 255, 0.06);
+				border-radius: 8px;
+			}
+
+			.vis-onchain-label {
+				font-size: 0.8rem;
+				color: rgba(255, 255, 255, 0.45);
+				font-family: 'JetBrains Mono', monospace;
+			}
+
+			.vis-onchain-val {
+				font-size: 0.8rem;
+				color: rgba(255, 215, 0, 0.75);
+				font-family: 'JetBrains Mono', monospace;
+			}
+
+			.vis-onchain-badge {
+				align-self: flex-start;
+				margin-top: var(--space-xs);
+				padding: 0.25rem 0.65rem;
+				border-radius: 99px;
+				background: rgba(74, 222, 128, 0.1);
+				border: 1px solid rgba(74, 222, 128, 0.25);
+				font-size: 0.7rem;
+				color: #4ade80;
+				font-family: 'JetBrains Mono', monospace;
+			}
+
+			/* Responsive */
+
+			@media screen and (max-width: 768px) {
+				.journey-step {
+					grid-template-columns: 1fr;
+					gap: var(--space-xl);
+					padding: var(--space-xl) var(--space-md);
+				}
+
+				.journey-step--flip .journey-step-content {
+					order: unset;
+				}
+				.journey-step--flip .journey-step-visual {
+					order: unset;
+				}
+
+				.journey-step-visual {
+					min-height: 240px;
+				}
+			}
+
+			/* ── Live dot on avatar tag ── */
+			.hero-avatar-tag-dot {
+				display: inline-block;
+				width: 5px;
+				height: 5px;
+				border-radius: 50%;
+				background: #4ade80;
+				box-shadow: 0 0 6px rgba(74, 222, 128, 0.6);
+				flex-shrink: 0;
+				animation: tag-dot-blink 2.4s ease-in-out infinite;
+			}
+			@keyframes tag-dot-blink {
+				0%, 100% { opacity: 1; }
+				50%       { opacity: 0.2; }
+			}
+
+			/* ── Scroll hint fades on scroll ── */
+			.hero-scroll-hint.scroll-hint-hidden {
+				opacity: 0 !important;
+				pointer-events: none;
+			}
+
+			/* ── Journey step row stagger ── */
+			.journey-step-visual .vis-id-row,
+			.journey-step-visual .vis-onchain-row {
+				opacity: 0;
+				transform: translateX(-6px);
+			}
+			.journey-step-visual.revealed .vis-id-row,
+			.journey-step-visual.revealed .vis-onchain-row {
+				animation: step-row-in 0.35s ease forwards;
+			}
+			.journey-step-visual.revealed .vis-id-row:nth-child(2)      { animation-delay: 0.35s; }
+			.journey-step-visual.revealed .vis-id-row:nth-child(3)      { animation-delay: 0.50s; }
+			.journey-step-visual.revealed .vis-id-row:nth-child(4)      { animation-delay: 0.65s; }
+			.journey-step-visual.revealed .vis-id-row:nth-child(5)      { animation-delay: 0.80s; }
+			.journey-step-visual.revealed .vis-onchain-row:nth-child(2) { animation-delay: 0.35s; }
+			.journey-step-visual.revealed .vis-onchain-row:nth-child(3) { animation-delay: 0.50s; }
+			.journey-step-visual.revealed .vis-onchain-row:nth-child(4) { animation-delay: 0.65s; }
+			@keyframes step-row-in {
+				to { opacity: 1; transform: translateX(0); }
+			}
+
+			/* ── Embed code top-to-bottom reveal ── */
+			.journey-step-visual .vis-embed-code {
+				clip-path: inset(0 0 100% 0);
+			}
+			.journey-step-visual.revealed .vis-embed-code {
+				animation: embed-reveal 1.1s ease forwards;
+				animation-delay: 0.4s;
+			}
+			@keyframes embed-reveal {
+				to { clip-path: inset(0 0 0% 0); }
+			}
+
+			/* ── Enhanced Step Visuals ── */
+
+			/* Step 01 - Terminal chrome */
+			.vis-terminal { width: 100%; font-family: 'JetBrains Mono', monospace; }
+			.vis-terminal-chrome {
+				display: flex; align-items: center; gap: 6px;
+				padding: 10px 14px;
+				background: rgba(255,255,255,0.03);
+				border-bottom: 1px solid rgba(255,255,255,0.06);
+			}
+			.vis-chrome-dot { width: 10px; height: 10px; border-radius: 50%; opacity: 0.75; }
+			.vis-chrome-dot.r { background: #ff5f57; }
+			.vis-chrome-dot.y { background: #febc2e; }
+			.vis-chrome-dot.g { background: #28c840; }
+			.vis-chrome-title { margin-left: auto; font-size: 0.62rem; color: rgba(255,255,255,0.25); }
+			.vis-terminal-body { padding: 14px 18px; font-size: 0.72rem; line-height: 2.05; }
+			.vis-json-brace { color: rgba(255,255,255,0.28); }
+			.vis-json-key { color: rgba(168,204,140,0.9); }
+			.vis-json-str { color: rgba(230,175,100,0.85); }
+			.vis-json-bool { color: rgba(125,200,255,0.9); }
+			.vis-json-addr { color: rgba(255,215,0,0.85); }
+			.vis-blink-cursor {
+				display: inline-block; width: 6px; height: 0.85em;
+				background: rgba(255,215,0,0.65); vertical-align: middle; margin-left: 2px;
+				animation: cursor-blink 1.1s step-end infinite;
+			}
+			@keyframes cursor-blink { 50% { opacity: 0; } }
+			.vis-method-toggle {
+				display: inline-flex; align-items: center; gap: 2px;
+				background: rgba(255,255,255,0.05); border-radius: 5px;
+				padding: 2px; vertical-align: middle;
+			}
+			.vis-method-opt {
+				padding: 1px 8px; border-radius: 3px; cursor: pointer;
+				font-size: 0.65rem; color: rgba(255,255,255,0.32);
+				transition: all 0.18s ease; user-select: none;
+			}
+			.vis-method-opt.on { background: rgba(255,215,0,0.15); color: rgba(255,215,0,0.9); }
+			.vis-inline-copy {
+				display: inline-flex; align-items: center;
+				padding: 1px 7px; border-radius: 4px; cursor: pointer;
+				background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.09);
+				font-size: 0.58rem; color: rgba(255,255,255,0.28); font-family: 'JetBrains Mono', monospace;
+				transition: all 0.15s; margin-left: 6px; vertical-align: middle;
+				line-height: 1.6;
+			}
+			.vis-inline-copy:hover { color: rgba(255,255,255,0.65); background: rgba(255,255,255,0.09); }
+			.vis-inline-copy.ok { color: #4ade80; border-color: rgba(74,222,128,0.3); }
+
+			/* Step 02 - format chips + progress */
+			.vis-format-chips {
+				display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; margin-top: 6px;
+			}
+			.vis-fmt {
+				padding: 2px 8px; border-radius: 4px;
+				font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.04em;
+			}
+			.vis-fmt-blue   { background: rgba(125,200,255,0.08); color: rgba(125,200,255,0.8); border: 1px solid rgba(125,200,255,0.18); }
+			.vis-fmt-green  { background: rgba(168,204,140,0.08); color: rgba(168,204,140,0.8); border: 1px solid rgba(168,204,140,0.18); }
+			.vis-fmt-purple { background: rgba(200,150,255,0.08); color: rgba(200,150,255,0.8); border: 1px solid rgba(200,150,255,0.18); }
+			.vis-fmt-orange { background: rgba(255,175,100,0.08); color: rgba(255,175,100,0.8); border: 1px solid rgba(255,175,100,0.18); }
+			.vis-upload-zone { transition: border-color 0.2s ease, background 0.2s ease; }
+			.vis-upload-zone.drag-hover {
+				border-color: rgba(255,215,0,0.38); background: rgba(255,215,0,0.025);
+			}
+			.vis-upload-progress {
+				width: 100%; height: 3px; background: rgba(255,255,255,0.06);
+				border-radius: 99px; overflow: hidden; margin-top: 6px;
+			}
+			.vis-upload-pbar {
+				height: 100%; width: 0; border-radius: 99px;
+				background: linear-gradient(90deg, rgba(255,215,0,0.45), #ffd700);
+				transition: width 1.8s cubic-bezier(0.22, 1, 0.36, 1);
+			}
+			.vis-upload-pbar.fill { width: 100%; }
+
+			/* Step 03 - equalizer bars */
+			.vis-anim-eq {
+				display: flex; gap: 2px; align-items: flex-end; height: 14px; flex-shrink: 0;
+			}
+			.vis-anim-eq-bar {
+				width: 3px; border-radius: 1px; background: rgba(255,215,0,0.7); height: 4px;
+				animation: eq-bounce 0.65s ease-in-out infinite alternate;
+			}
+			.vis-anim-eq-bar:nth-child(2) { animation-delay: 0.13s; }
+			.vis-anim-eq-bar:nth-child(3) { animation-delay: 0.26s; }
+			@keyframes eq-bounce { to { height: 13px; } }
+			.vis-anim-row:not(.active) .vis-anim-eq { display: none; }
+
+			/* Step 04 - tab bar + copy btn */
+			.vis-embed-topbar { display: flex; align-items: center; gap: var(--space-xs); margin-bottom: var(--space-md); }
+			.vis-embed-copy-btn {
+				margin-left: auto; padding: 3px 10px; border-radius: 5px;
+				background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+				font-family: 'JetBrains Mono', monospace; font-size: 0.62rem;
+				color: rgba(255,255,255,0.3); cursor: pointer; transition: all 0.15s ease;
+			}
+			.vis-embed-copy-btn:hover { color: rgba(255,255,255,0.65); background: rgba(255,255,255,0.09); }
+			.vis-embed-copy-btn.ok { color: #4ade80; border-color: rgba(74,222,128,0.3); }
+			.vis-embed-code .comment { color: rgba(255,255,255,0.2); font-style: italic; }
+			.vis-embed-code .kw { color: rgba(125,200,255,0.85); }
+
+			/* Step 05 - deploy timeline */
+			.vis-deploy { padding: var(--space-md); width: 100%; }
+			.vis-deploy-title {
+				font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+				color: rgba(255,215,0,0.5); letter-spacing: 0.12em; text-transform: uppercase;
+				margin-bottom: var(--space-md); display: flex; align-items: center; gap: 8px;
+			}
+			.vis-deploy-live-dot {
+				width: 7px; height: 7px; border-radius: 50%; background: #4ade80;
+				box-shadow: 0 0 5px #4ade80; animation: tag-dot-blink 2.4s ease-in-out infinite;
+				flex-shrink: 0;
+			}
+			.vis-timeline { display: flex; flex-direction: column; }
+			.vis-tl-step {
+				display: flex; align-items: flex-start; gap: 12px;
+				padding: 6px 0; position: relative;
+			}
+			.vis-tl-step:not(:last-child)::after {
+				content: ''; position: absolute; left: 10px; top: 26px;
+				width: 2px; height: 16px; background: rgba(255,255,255,0.06);
+				transition: background 0.4s ease;
+			}
+			.vis-tl-step.done::after { background: rgba(74,222,128,0.22); }
+			.vis-tl-icon {
+				width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+				border: 1.5px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03);
+				display: flex; align-items: center; justify-content: center; font-size: 0.65rem;
+				transition: all 0.35s ease;
+			}
+			.vis-tl-step.active .vis-tl-icon {
+				border-color: rgba(255,215,0,0.4); background: rgba(255,215,0,0.08);
+				animation: deploy-pulse 1.3s ease infinite;
+			}
+			.vis-tl-step.done .vis-tl-icon {
+				border-color: rgba(74,222,128,0.4); background: rgba(74,222,128,0.12); color: #4ade80;
+			}
+			@keyframes deploy-pulse {
+				0%, 100% { box-shadow: 0 0 0 0 rgba(255,215,0,0.18); }
+				50%       { box-shadow: 0 0 0 5px transparent; }
+			}
+			.vis-tl-label {
+				font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
+				color: rgba(255,255,255,0.28); transition: color 0.35s ease; line-height: 1.4;
+			}
+			.vis-tl-step.active .vis-tl-label { color: rgba(255,215,0,0.82); }
+			.vis-tl-step.done  .vis-tl-label { color: rgba(255,255,255,0.62); }
+			.vis-tl-sub {
+				font-family: 'JetBrains Mono', monospace; font-size: 0.6rem;
+				color: rgba(255,255,255,0.16); margin-top: 2px; transition: color 0.35s ease;
+			}
+			.vis-tl-step.done .vis-tl-sub { color: rgba(74,222,128,0.52); }
+			.vis-tl-token {
+				margin-top: 10px; padding: 8px 12px;
+				background: rgba(74,222,128,0.05); border: 1px solid rgba(74,222,128,0.15);
+				border-radius: 8px; display: flex; justify-content: space-between; align-items: center;
+				opacity: 0; transform: translateY(5px); transition: opacity 0.5s ease, transform 0.5s ease;
+			}
+			.vis-tl-token.show { opacity: 1; transform: none; }
+			.vis-tl-token-key { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: rgba(255,255,255,0.28); }
+			.vis-tl-token-val { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: rgba(74,222,128,0.8); }
+
+			/* Step 01 - sign-in state */
+			.s1-signin-btn {
+				display: inline-flex; align-items: center; gap: 6px;
+				padding: 7px 16px; border-radius: 7px; cursor: pointer;
+				background: rgba(255,215,0,0.12); border: 1px solid rgba(255,215,0,0.28);
+				font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
+				color: rgba(255,215,0,0.9); transition: all 0.15s ease;
+			}
+			.s1-signin-btn:hover { background: rgba(255,215,0,0.2); }
+			.s1-signin-btn:disabled { opacity: 0.5; cursor: default; }
+
+			/* Step 02 - loaded model overlay */
+			#vis-step02 model-viewer {
+				width: 100%; height: 340px; background: transparent;
+				--poster-color: transparent;
+			}
+			.s2-model-chip {
+				position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+				display: inline-flex; align-items: center; gap: 6px;
+				padding: 4px 12px; border-radius: 99px;
+				background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1);
+				font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+				color: rgba(255,255,255,0.55); white-space: nowrap;
+			}
+		</style>
+		<script>
+			// Legacy embed redirect: pre-`/app` widget iframes used `/#widget=<id>`
+			// (and `?kiosk=true&...`) directly against the marketing landing.
+			// Keep those working by forwarding to the SPA viewer at /app.
+			(function () {
+				try {
+					var h = window.location.hash || '';
+					var s = window.location.search || '';
+					if (
+						/(?:^|[#&?])widget=[A-Za-z0-9_-]+/.test(h) ||
+						/(?:^|[#&?])kiosk=true\b/.test(h) ||
+						/(?:^|[?&])kiosk=true\b/.test(s)
+					) {
+						window.location.replace('/app' + s + h);
+					}
+				} catch (e) {}
+			})();
+		</script>
 	</head>
-	<body class="home-page">
-		<div class="cursor" id="cursor" aria-hidden="true"></div>
-		<a href="#main-content" class="h-skip-link">Skip to main content</a>
+	<body class="features-page">
+		<a href="#main-content" class="skip-link">Skip to main content</a>
 		<header>
 			<h1>
 				<a href="/marketplace.html?tab=mine" aria-label="three.ws home"
-					><img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" /><span
-						class="wordmark-dot"
-						aria-hidden="true"
-					></span
-					>three.ws</a
+					><img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" /><span class="wordmark-dot" aria-hidden="true"></span>three.ws</a
 				>
 			</h1>
 			<div id="nav-container"></div>
 		</header>
 		<script src="/nav.js"></script>
-			</nav>
 		</header>
 
-		<main id="main-content" class="home-parallax">
-			<!-- ── Hero (parallax act) ── -->
-			<section class="h-hero-act">
-				<!-- Depth 8: fluid particles + nebula -->
-				<div class="h-layer" style="--depth: 8" aria-hidden="true">
-					<div class="h-layer-nebula"></div>
-					<canvas id="home-fluid-canvas" class="h-fluid-canvas"></canvas>
+		<main id="main-content" class="features-main">
+			<!-- ── Hero ── -->
+			<section class="hero" id="hero">
+				<div class="hero-bg" aria-hidden="true">
+					<div class="hero-mesh"></div>
+					<div class="hero-grid"></div>
+					<div class="hero-glow hero-glow-gold"></div>
+					<div class="hero-glow hero-glow-cyan"></div>
 				</div>
-				<!-- Depth 4: perspective grid -->
-				<div class="h-layer" style="--depth: 4" aria-hidden="true">
-					<div class="h-hero-grid"></div>
-				</div>
-				<!-- Depth 3: ghost model drifting in background -->
-				<div class="h-layer" style="--depth: 3" aria-hidden="true">
-					<model-viewer
-						class="h-ghost-model"
-						src="/animations/robotexpressive.glb"
-						auto-rotate
-						auto-rotate-delay="0"
-						rotation-per-second="5deg"
-						interaction-prompt="none"
-						camera-controls="false"
-						disable-zoom
-						shadow-intensity="0"
-						exposure="0.5"
-						environment-image="neutral"
-						camera-orbit="15deg 80deg 4m"
-						field-of-view="45deg"
-						loading="lazy"
-					></model-viewer>
-				</div>
-				<!-- Depth 2: atmosphere -->
-				<div class="h-layer" style="--depth: 2" aria-hidden="true">
-					<div class="h-hero-mesh"></div>
-					<div class="h-hero-glow-a"></div>
-					<div class="h-hero-glow-b"></div>
-				</div>
-				<!-- Depth 1: main avatar that waves on load and tracks the cursor -->
-				<div class="h-layer" style="--depth: 1">
-					<div class="h-avatar-stage">
-						<div class="h-avatar-wrap">
-							<div class="h-avatar-ring"></div>
-							<div class="h-avatar-glow"></div>
-							<canvas
-								id="hero-avatar"
-								class="h-avatar-viewer"
-								aria-label="three.ws — interactive 3D agent. Click for surprises."
-							></canvas>
-							<div class="h-avatar-badge">
-								<span class="h-avatar-badge-label">live agent</span>
-								<span>0x3d…a9f</span>
-							</div>
-						</div>
+				<div class="hero-content">
+					<div class="hero-chip scroll-reveal">
+						<span class="hero-chip-dot"></span>
+						<span>Browser-native · No install</span>
+						<span class="hero-chip-divider"></span>
+						<span class="hero-chip-spec">Free to start</span>
 					</div>
-				</div>
-				<!-- Depth 0.5: vignette closest to camera -->
-				<div class="h-layer" style="--depth: 0.5" aria-hidden="true">
-					<div class="h-vignette"></div>
-				</div>
-
-				<!-- Sticky text pinned to bottom-left — same pattern as features page -->
-				<div class="h-hero-text">
-					<div class="h-eyebrow h-reveal">
-						<span class="h-eyebrow-dot"></span>
-						<span>The 3D layer for onchain AI agents</span>
-					</div>
-					<h2 class="h-title h-reveal">Give your AI<br />a <em>body</em>.</h2>
-					<p class="h-subtitle h-reveal">
-						Born in 3D. Raised on-chain. Yours forever. Your AI has been a chatbox long
-						enough — give it a body, a personality, and a permanent home open to every
-						human, app, and agent that comes looking.
+					<h2 class="hero-title scroll-reveal">
+						Give your AI<br />
+						agent a <em>body</em>.
+					</h2>
+					<p class="hero-subtitle scroll-reveal">
+						Drop any GLB model — view it, animate it, embed it anywhere, and give it a
+						verifiable on-chain identity. No plugins. No server uploads.
 					</p>
-					<div class="h-cta-row h-reveal">
-						<a href="/create" class="h-btn-primary">
-							<span>Build your agent — free</span>
-							<span class="arrow">→</span>
+					<div class="hero-cta scroll-reveal">
+						<a href="/create" class="btn-primary">
+							<span>Create your agent</span>
+							<span class="btn-arrow">→</span>
 						</a>
-						<a href="#pick-animate" class="h-btn-ghost">Try one live ↓</a>
+						<a
+							href="/app"
+							class="btn-ghost"
+							title="No sign-in needed — drop a GLB and play"
+							>Try the viewer →</a>
+						<a
+							href="/pump-3d-agent.html"
+							class="btn-ghost"
+							title="3D Agent on Pump.fun"
+							>Pump.fun 3D Agent →</a>
 					</div>
-					<ul class="h-standards h-reveal" aria-label="Supported formats and standards">
+					<p class="hero-signin-hint scroll-reveal" id="hero-signin-hint">
+						Already have an account?
+						<a href="/login" class="hero-signin-link">Sign in →</a>
+					</p>
+					<ul
+						class="hero-proof scroll-reveal"
+						aria-label="Supported formats and standards"
+					>
 						<li>glTF 2.0</li>
 						<li>GLB</li>
 						<li>ERC-8004</li>
@@ -158,441 +827,344 @@
 						<li>MCP</li>
 					</ul>
 				</div>
-
-				<div class="h-scroll-hint" aria-hidden="true">
+				<div class="hero-avatar scroll-reveal">
+					<div class="hero-avatar-ring" aria-hidden="true"></div>
+					<div class="hero-avatar-pulse" aria-hidden="true"></div>
+					<a href="/app" class="hero-avatar-link" aria-label="Open the three.ws viewer">
+						<model-viewer
+							class="hero-avatar-viewer"
+							src="/avatars/cz.glb"
+							alt="three.ws avatar"
+							autoplay
+							animation-name="IdleV4.2(maya_head)"
+							disable-zoom
+							auto-rotate
+							auto-rotate-delay="0"
+							rotation-per-second="18deg"
+							interaction-prompt="none"
+							shadow-intensity="0.8"
+							shadow-softness="1"
+							exposure="1.05"
+							tone-mapping="aces"
+							environment-image="neutral"
+							camera-orbit="20deg 88deg 4.8m"
+							field-of-view="32deg"
+							loading="eager"
+						></model-viewer>
+					</a>
+				</div>
+				<div class="hero-scroll-hint scroll-reveal" aria-hidden="true">
 					<span>scroll</span>
-					<span class="h-scroll-line"></span>
+					<span class="hero-scroll-line"></span>
 				</div>
 			</section>
 
-			<!-- ── Pillars transition band (between hero and Act 2) ── -->
-			<section class="h-pillars" aria-label="What you get">
-				<div class="h-pillars-inner">
-					<article class="h-pillar h-reveal">
-						<h3>A 3D body for any agent</h3>
+			<!-- ── Journey Steps ── -->
+			<section class="journey" id="get-started">
+				<div class="journey-header scroll-reveal">
+					<p class="journey-overline">Get Started</p>
+					<h2 class="journey-title">From sign-in to<br />embedded agent.</h2>
+					<p class="journey-sub">Five steps. Embed for free. On-chain is optional.</p>
+				</div>
+
+				<!-- Step 01 -->
+				<div class="journey-step">
+					<div class="journey-step-content scroll-reveal">
+						<p class="journey-step-num">Step 01</p>
+						<h3 class="journey-step-title">Sign in.</h3>
+						<p class="journey-step-desc">
+							Connect your wallet or sign in with email. Your avatars, animations, and
+							on-chain identities are saved to your account.
+						</p>
+						<a href="/login" class="journey-step-cta">Sign in →</a>
+					</div>
+					<div class="journey-step-visual scroll-reveal">
+						<div class="vis-terminal">
+							<div class="vis-terminal-chrome">
+								<span class="vis-chrome-dot r"></span>
+								<span class="vis-chrome-dot y"></span>
+								<span class="vis-chrome-dot g"></span>
+								<span class="vis-chrome-title">session.json</span>
+							</div>
+							<div class="vis-terminal-body" id="s1-body">
+								<span style="color:rgba(255,255,255,0.2);font-size:0.7rem;">checking session…</span>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Step 02 -->
+				<div class="journey-step journey-step--flip">
+					<div class="journey-step-content scroll-reveal">
+						<p class="journey-step-num">Step 02</p>
+						<h3 class="journey-step-title">Create your<br />avatar.</h3>
+						<p class="journey-step-desc">
+							Edit a default avatar in our web editor, or drop in your own GLB. Need a
+							model? Try
+							<a href="https://avaturn.me" target="_blank" rel="noopener">Avaturn</a>
+							or
+							<a href="https://mixamo.com" target="_blank" rel="noopener">Mixamo</a>.
+							(Selfie-to-avatar — coming soon.)
+						</p>
+						<a href="/create" class="journey-step-cta">Create your avatar →</a>
+					</div>
+					<div class="journey-step-visual scroll-reveal" id="vis-step02">
+						<div class="vis-upload" id="s2-upload-wrap">
+							<div class="vis-upload-zone" id="s2-zone" style="cursor:pointer;" title="Click or drop a GLB/glTF file here">
+								<div class="vis-upload-icon">⬆</div>
+								<span class="vis-upload-label">Drop a GLB or click to browse</span>
+								<div class="vis-format-chips">
+									<span class="vis-fmt vis-fmt-blue">glTF 2.0</span>
+									<span class="vis-fmt vis-fmt-green">GLB</span>
+									<span class="vis-fmt vis-fmt-purple">Draco</span>
+									<span class="vis-fmt vis-fmt-orange">KTX2</span>
+								</div>
+								<input type="file" id="s2-file-input" accept=".glb,.gltf" style="display:none">
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Step 03 -->
+				<div class="journey-step">
+					<div class="journey-step-content scroll-reveal">
+						<p class="journey-step-num">Step 03</p>
+						<h3 class="journey-step-title">Customize.</h3>
+						<p class="journey-step-desc">
+							Name your agent, pick animations, add voice, and connect a brain. Save
+							once, use everywhere.
+						</p>
+						<a href="/app" class="journey-step-cta">Open the viewer →</a>
+					</div>
+					<div class="journey-step-visual scroll-reveal">
+						<div class="vis-anim">
+							<div class="vis-anim-header">Animations</div>
+							<div class="vis-anim-row active">
+								<div class="vis-anim-play">▶</div>
+								<div class="vis-anim-eq"><div class="vis-anim-eq-bar"></div><div class="vis-anim-eq-bar"></div><div class="vis-anim-eq-bar"></div></div>
+								<span>Idle — Breathing</span>
+								<span class="vis-anim-dur">∞</span>
+							</div>
+							<div class="vis-anim-row">
+								<div class="vis-anim-play">▶</div>
+								<div class="vis-anim-eq"><div class="vis-anim-eq-bar"></div><div class="vis-anim-eq-bar"></div><div class="vis-anim-eq-bar"></div></div>
+								<span>Wave</span>
+								<span class="vis-anim-dur">2.4s</span>
+							</div>
+							<div class="vis-anim-row">
+								<div class="vis-anim-play">▶</div>
+								<div class="vis-anim-eq"><div class="vis-anim-eq-bar"></div><div class="vis-anim-eq-bar"></div><div class="vis-anim-eq-bar"></div></div>
+								<span>Talking</span>
+								<span class="vis-anim-dur">∞</span>
+							</div>
+							<div class="vis-anim-row">
+								<div class="vis-anim-play">▶</div>
+								<div class="vis-anim-eq"><div class="vis-anim-eq-bar"></div><div class="vis-anim-eq-bar"></div><div class="vis-anim-eq-bar"></div></div>
+								<span>Dance — Hip Hop</span>
+								<span class="vis-anim-dur">4.1s</span>
+							</div>
+							<div class="vis-anim-row">
+								<div class="vis-anim-play">▶</div>
+								<div class="vis-anim-eq"><div class="vis-anim-eq-bar"></div><div class="vis-anim-eq-bar"></div><div class="vis-anim-eq-bar"></div></div>
+								<span>Walk Cycle</span>
+								<span class="vis-anim-dur">∞</span>
+							</div>
+							<div class="vis-anim-row">
+								<div class="vis-anim-play">▶</div>
+								<div class="vis-anim-eq"><div class="vis-anim-eq-bar"></div><div class="vis-anim-eq-bar"></div><div class="vis-anim-eq-bar"></div></div>
+								<span>Thinking</span>
+								<span class="vis-anim-dur">3.2s</span>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Step 04 -->
+				<div class="journey-step journey-step--flip">
+					<div class="journey-step-content scroll-reveal">
+						<p class="journey-step-num">Step 04</p>
+						<h3 class="journey-step-title">Embed<br />anywhere.</h3>
+						<p class="journey-step-desc">
+							Generate a widget — one iframe, any site. Works in Notion, Ghost,
+							WordPress, and more.
+						</p>
+						<a href="/studio" class="journey-step-cta">Open Widget Studio →</a>
+					</div>
+					<div class="journey-step-visual scroll-reveal">
+						<div class="vis-embed">
+							<div id="s4-widget-picker-row" style="display:none;margin-bottom:10px;">
+								<label style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:rgba(255,255,255,0.3);display:block;margin-bottom:4px;">your widgets</label>
+								<select id="s4-widget-select" style="width:100%;background:#0a0a12;border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:rgba(255,255,255,0.65);outline:none;cursor:pointer;"></select>
+							</div>
+							<div class="vis-embed-topbar">
+								<span class="vis-embed-tab active" data-tab="iframe">iframe</span>
+								<span class="vis-embed-tab" data-tab="webcomponent">web component</span>
+								<span class="vis-embed-tab" data-tab="onchain">on-chain</span>
+								<button class="vis-embed-copy-btn" id="embed-copy-btn">copy</button>
+							</div>
+							<div class="vis-embed-code" id="embed-code-block">
+								<span class="tag">&lt;iframe</span><br>
+								&nbsp;&nbsp;<span class="attr">src</span>=<span class="val">"https://three.ws/w/wdgt_abc123"</span><br>
+								&nbsp;&nbsp;<span class="attr">width</span>=<span class="val">"400"</span><br>
+								&nbsp;&nbsp;<span class="attr">height</span>=<span class="val">"600"</span><br>
+								&nbsp;&nbsp;<span class="attr">allow</span>=<span class="val">"microphone"</span><br>
+								<span class="tag">/&gt;</span>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Step 05 -->
+				<div class="journey-step">
+					<div class="journey-step-content scroll-reveal">
+						<p class="journey-step-num">Step 05</p>
+						<h3 class="journey-step-title">Deploy<br />on-chain.</h3>
+						<p class="journey-step-desc">
+							Register your agent on Ethereum via ERC-8004 — the trustless agents
+							standard. Get a verifiable on-chain identity, portable reputation, and
+							proof of execution discoverable by any A2A or MCP client.
+						</p>
+						<a href="/deploy" class="journey-step-cta">Deploy on-chain →</a>
+					</div>
+					<div class="journey-step-visual scroll-reveal" id="vis-step05">
+						<div class="vis-deploy">
+							<div class="vis-deploy-title">
+								<span class="vis-deploy-live-dot"></span>
+								ERC-8004 Registry
+							</div>
+							<div class="vis-timeline" id="s5-timeline">
+								<div class="vis-tl-step" data-step="0">
+									<div class="vis-tl-icon">✍</div>
+									<div>
+										<div class="vis-tl-label">Sign transaction</div>
+										<div class="vis-tl-sub">wallet signature required</div>
+									</div>
+								</div>
+								<div class="vis-tl-step" data-step="1">
+									<div class="vis-tl-icon">📡</div>
+									<div>
+										<div class="vis-tl-label">Broadcast to network</div>
+										<div class="vis-tl-sub">0x7f3a…c291</div>
+									</div>
+								</div>
+								<div class="vis-tl-step" data-step="2">
+									<div class="vis-tl-icon">⛓</div>
+									<div>
+										<div class="vis-tl-label">Awaiting confirmation</div>
+										<div class="vis-tl-sub">12 / 12 blocks</div>
+									</div>
+								</div>
+								<div class="vis-tl-step" data-step="3">
+									<div class="vis-tl-icon">✓</div>
+									<div>
+										<div class="vis-tl-label">Agent verified on-chain</div>
+										<div class="vis-tl-sub">Mainnet · ERC-721 minted</div>
+									</div>
+								</div>
+							</div>
+							<div class="vis-tl-token" id="s5-token">
+								<span class="vis-tl-token-key">token ID</span>
+								<span class="vis-tl-token-val">#3D-0042</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- ── Three product pillars ── -->
+			<section class="section" id="features">
+				<h3 class="section-label scroll-reveal">What You Get</h3>
+				<div class="registry-grid">
+					<div class="registry-card scroll-reveal">
+						<div class="registry-icon">🎭</div>
+						<h4>3D Avatar Viewer</h4>
 						<p>
-							Drop any GLB into the browser and your AI agent appears as a fully
-							rendered 3D avatar — animated, reactive, and ready to embed anywhere you
-							can drop a script tag.
+							Render any GLB in WebGL with full animations, materials, and lighting —
+							directly in the browser. No install required.
 						</p>
-					</article>
-					<article class="h-pillar h-reveal">
-						<h3>Your stack, your brain</h3>
+						<ul class="registry-details">
+							<li><code>glTF 2.0 + GLB</code></li>
+							<li><code>Draco + KTX2 + Meshopt</code></li>
+							<li><code>three.js r176</code></li>
+						</ul>
+					</div>
+					<div class="registry-card scroll-reveal">
+						<div class="registry-icon">💬</div>
+						<h4>Talking Agent</h4>
 						<p>
-							Connect any LLM via MCP or A2A — Claude, GPT, Gemini, or your own.
-							Built-in empathy layer for real-time emotion. No SDK on the consumer
-							side. No vendor lock-in.
+							Give your avatar an AI brain. It speaks, remembers, and responds —
+							powered by your LLM of choice via a simple skill interface.
 						</p>
-					</article>
-					<article class="h-pillar h-reveal">
-						<h3>Owned, on-chain, portable</h3>
+						<ul class="registry-details">
+							<li><code>Voice + text input</code></li>
+							<li><code>Persistent memory</code></li>
+							<li><code>Custom skills</code></li>
+						</ul>
+					</div>
+					<div class="registry-card scroll-reveal">
+						<div class="registry-icon">🪪</div>
+						<h4>On-Chain Identity</h4>
 						<p>
-							Register your agent on 20+ EVM chains via ERC-8004 — a verifiable,
-							CREATE2-deterministic identity discoverable by any A2A or MCP client.
-							Your agent. Your keys.
+							Register onchain via ERC-8004. A verifiable, portable identity
+							discoverable by any A2A or MCP client.
 						</p>
-					</article>
-				</div>
-			</section>
-
-			<!-- ── Act 2: Pick & Animate ── -->
-			<section class="h-act h-act--animate" data-act="2" id="pick-animate">
-				<div class="h-act-warp h-act-warp--amber" aria-hidden="true"></div>
-				<div class="h-layer" style="--depth: 8" aria-hidden="true">
-					<div class="h-layer-bg h-layer-bg--amber"></div>
-					<canvas
-						class="h-star-canvas"
-						data-role="star-canvas"
-						data-tint="255,190,80"
-						data-count="200"
-					></canvas>
-				</div>
-				<div class="h-layer" style="--depth: 4" aria-hidden="true">
-					<svg
-						class="h-layer-words"
-						viewBox="0 0 1600 900"
-						preserveAspectRatio="xMidYMid slice"
-						role="presentation"
-					>
-						<g
-							fill="rgba(255,200,80,0.13)"
-							font-family="'Space Grotesk','Inter',sans-serif"
-							font-weight="600"
-						>
-							<text x="80" y="200" font-size="52">Dance</text>
-							<text x="1100" y="160" font-size="44">Wave</text>
-							<text x="200" y="710" font-size="44">Jump</text>
-							<text x="980" y="760" font-size="40">ThumbsUp</text>
-							<text x="560" y="440" font-size="96" fill="rgba(255,255,255,0.05)">
-								Idle
-							</text>
-							<text x="55" y="860" font-size="40">Punch</text>
-							<text x="1260" y="520" font-size="48">Run</text>
-						</g>
-					</svg>
-				</div>
-				<div class="h-layer" style="--depth: 2" aria-hidden="true">
-					<div class="h-layer-orb h-layer-orb--amber"></div>
-				</div>
-				<div class="h-layer" style="--depth: 1">
-					<div class="h-avatar-stage">
-						<div class="h-avatar-wrap">
-							<canvas id="home-act2-canvas" class="h-avatar-viewer"></canvas>
-						</div>
-					</div>
-				</div>
-				<div class="h-layer" style="--depth: 0.5" aria-hidden="true">
-					<div class="h-vignette"></div>
-				</div>
-
-				<div class="h-act-text">
-					<div class="h-act-eyebrow">
-						<span class="h-act-dot"></span>
-						<span>Pick &amp; animate</span>
-					</div>
-					<h2 class="h-act-title">Your agent.<br /><em>Any move.</em></h2>
-					<p class="h-act-lede">
-						Choose an avatar, trigger an animation. This is exactly what lives on your
-						site.
-					</p>
-
-					<div class="h-avatar-picker" role="group" aria-label="Choose avatar">
-						<button
-							class="h-av-opt"
-							data-src="/animations/robotexpressive.glb"
-							aria-pressed="true"
-						>
-							Robot
-						</button>
-						<button
-							class="h-av-opt"
-							data-src="/animations/soldier.glb"
-							aria-pressed="false"
-						>
-							Soldier
-						</button>
-						<button class="h-av-opt" data-src="/avatars/cz.glb" aria-pressed="false">
-							CZ
-						</button>
-					</div>
-
-					<div
-						class="h-anim-chips"
-						role="group"
-						aria-label="Trigger animation"
-						data-role="anim-chips"
-					></div>
-
-					<div class="h-act-cta">
-						<a href="/app" class="h-btn-primary"
-							><span>Open full viewer</span><span class="arrow">→</span></a
-						>
-						<a href="/create" class="h-btn-ghost">Create your agent</a>
+						<ul class="registry-details">
+							<li><code>ERC-721 ownership</code></li>
+							<li><code>A2A + MCP endpoints</code></li>
+							<li><code>ENS compatible</code></li>
+						</ul>
 					</div>
 				</div>
 			</section>
 
-			<!-- ── Act 3: Deploy on-chain ── -->
-			<section class="h-act h-act--deploy" data-act="3" id="deploy-act">
-				<div class="h-act-warp h-act-warp--mint" aria-hidden="true"></div>
-				<div class="h-layer" style="--depth: 8" aria-hidden="true">
-					<div class="h-layer-bg h-layer-bg--mint"></div>
-					<canvas
-						class="h-star-canvas"
-						data-role="star-canvas"
-						data-tint="110,231,183"
-						data-count="200"
-					></canvas>
-				</div>
-
-				<div class="h-layer" style="--depth: 2" aria-hidden="true">
-					<div class="h-layer-orb h-layer-orb--mint"></div>
-				</div>
-				<div class="h-layer" style="--depth: 1" aria-hidden="true">
-					<div class="h-avatar-stage h-avatar-stage--trio">
-						<div class="h-avatar-wrap h-avatar-wrap--ghost h-avatar-wrap--trio">
-							<canvas
-								id="act3-avatar-a"
-								class="h-avatar-viewer h-avatar-viewer--tall"
-							></canvas>
-						</div>
-						<div class="h-avatar-wrap h-avatar-wrap--ghost h-avatar-wrap--trio">
-							<canvas
-								id="act3-avatar-b"
-								class="h-avatar-viewer h-avatar-viewer--tall"
-							></canvas>
-						</div>
-						<div class="h-avatar-wrap h-avatar-wrap--ghost h-avatar-wrap--trio">
-							<canvas
-								id="act3-avatar-c"
-								class="h-avatar-viewer h-avatar-viewer--tall"
-							></canvas>
-						</div>
-					</div>
-				</div>
-				<div class="h-layer" style="--depth: 0.5" aria-hidden="true">
-					<div class="h-vignette"></div>
-				</div>
-
-				<div class="h-act-text">
-					<div class="h-act-eyebrow">
-						<span class="h-act-dot h-act-dot--mint"></span>
-						<span>ERC-8004 native</span>
-					</div>
-					<h2 class="h-act-title h-act-title--mint">
-						One transaction.<br /><em>One identity.</em>
-					</h2>
-					<p class="h-act-lede">
-						Register onchain. Get a portable, verifiable agentId discoverable by any A2A
-						or MCP client.
-					</p>
-
-					<form class="h-deploy-form" id="home-deploy-form" action="/deploy" method="get">
-						<div class="h-form-row">
-							<label class="h-form-label" for="agent-name-home">Agent name</label>
-							<input
-								id="agent-name-home"
-								name="name"
-								class="h-form-input"
-								type="text"
-								placeholder="my-agent"
-								autocomplete="off"
-								spellcheck="false"
-							/>
-						</div>
-						<div class="h-form-row">
-							<label class="h-form-label" for="chain-home">Chain</label>
-							<select id="chain-home" name="chain" class="h-form-select">
-								<option value="8453" selected>Base</option>
-								<option value="1">Ethereum</option>
-								<option value="10">Optimism</option>
-								<option value="137">Polygon</option>
-								<option value="42161">Arbitrum</option>
-								<option value="43114">Avalanche</option>
-								<option value="59144">Linea</option>
-								<option value="534352">Scroll</option>
-							</select>
-						</div>
-						<div class="h-deploy-stats">
-							<div>
-								<span class="h-stat-label">Chains</span
-								><span class="h-stat-val">20+</span>
-							</div>
-							<div>
-								<span class="h-stat-label">Standard</span
-								><span class="h-stat-val">ERC-721</span>
-							</div>
-							<div>
-								<span class="h-stat-label">Protocol</span
-								><span class="h-stat-val">ERC-8004</span>
-							</div>
-						</div>
-						<button type="submit" class="h-btn-primary h-btn-deploy">
-							<span>Deploy your agent</span>
-							<span class="arrow">→</span>
-						</button>
-					</form>
-				</div>
-			</section>
-
-			<!-- ── Trust strip ── -->
-			<div class="h-trust-strip">
-				<div class="h-trust-inner">
-					<div class="h-trust-item">
-						<span class="h-trust-num">20+</span>
-						<span class="h-trust-label">EVM chains</span>
-					</div>
-					<span class="h-trust-sep" aria-hidden="true">·</span>
-					<div class="h-trust-item">
-						<span class="h-trust-num">ERC-8004</span>
-						<span class="h-trust-label">on-chain standard</span>
-					</div>
-					<span class="h-trust-sep" aria-hidden="true">·</span>
-					<div class="h-trust-item">
-						<span class="h-trust-num">5</span>
-						<span class="h-trust-label">widget types</span>
-					</div>
-					<span class="h-trust-sep" aria-hidden="true">·</span>
-					<div class="h-trust-item">
-						<span class="h-trust-num">A2A + MCP</span>
-						<span class="h-trust-label">interoperability</span>
-					</div>
-					<span class="h-trust-sep" aria-hidden="true">·</span>
-					<div class="h-trust-item">
-						<span class="h-trust-num">MIT</span>
-						<span class="h-trust-label">open source</span>
-					</div>
-				</div>
-			</div>
-
-			<!-- ── Bento feature grid ── -->
-			<section class="h-bento-section">
-				<div class="h-bento-header h-reveal">
-					<p class="h-section-label">What you get</p>
-					<h2 class="h-section-title">
-						Everything an agent needs<br />to exist in the world.
-					</h2>
-				</div>
-				<div class="h-bento-grid">
-					<!-- Large card: 3D viewer + inline animation panel -->
-					<div class="h-bento-card h-bento-card--lg h-reveal">
-						<div class="h-bento-visual">
-							<canvas id="bento-cz-canvas" class="h-bento-cz-canvas"></canvas>
-						</div>
-						<div class="h-bento-anim-panel" data-role="bento-anim-panel">
-							<div class="h-bento-anim-header">
-								<span class="h-bento-anim-title">Animations</span>
-								<button
-									type="button"
-									class="h-bento-anim-stop"
-									data-role="bento-anim-stop"
-									title="Stop all"
-								>
-									⏹
-								</button>
-							</div>
-							<div class="h-bento-anim-grid" data-role="bento-anim-grid"></div>
-						</div>
-						<div class="h-bento-body">
-							<span class="h-bento-tag">Viewer</span>
-							<h3>WebGL rendering, zero install.</h3>
-							<p>
-								Drag any GLB into the browser. Full animations, lighting, and
-								materials — instantly, on any device.
-							</p>
-							<a href="/app" class="h-feature-link">Open viewer →</a>
-						</div>
-					</div>
-					<!-- Small cards -->
-					<div class="h-bento-card h-reveal">
-						<div class="h-bento-body">
-							<span class="h-bento-tag">Embed</span>
-							<h3>One iframe. Any site.</h3>
-							<p>Notion, Ghost, WordPress, Framer. No SDK on the consumer side.</p>
-							<div class="h-bento-code">
-								<span class="tag">&lt;agent-3d</span>
-								<br />&nbsp;&nbsp;<span class="attr">agent-id</span>=<span
-									class="val"
-									>"0x3d…"</span
-								>
-								<br /><span class="tag">&gt;&lt;/agent-3d&gt;</span>
-							</div>
-						</div>
-					</div>
-					<div class="h-bento-card h-reveal">
-						<div class="h-bento-body">
-							<span class="h-bento-tag h-bento-tag--mint">On-chain</span>
-							<h3>Verifiable identity.</h3>
-							<p>
-								ERC-8004 registration. One transaction. Discoverable by any A2A or
-								MCP client on 20+ chains.
-							</p>
-							<div class="h-bento-id">
-								<span
-									class="h-id-dot"
-									style="background: #6ee7b7; box-shadow: 0 0 8px #6ee7b7"
-								></span>
-								<span
-									style="
-										font-family: monospace;
-										font-size: 12px;
-										color: rgba(255, 255, 255, 0.6);
-									"
-									>0x3d…a9f · Base</span
-								>
-							</div>
-						</div>
-					</div>
-					<div class="h-bento-card h-reveal">
-						<div class="h-bento-body">
-							<span class="h-bento-tag h-bento-tag--violet">AI</span>
-							<h3>Six emotions. Real time.</h3>
-							<p>
-								Built-in empathy layer. Your agent reacts — speaking, thinking,
-								succeeding, failing.
-							</p>
-							<div class="h-bento-emotions">
-								<span>✦ celebration</span>
-								<span>? curiosity</span>
-								<span>♥ empathy</span>
-								<span>! concern</span>
-							</div>
-						</div>
-					</div>
-					<div class="h-bento-card h-reveal">
-						<div class="h-bento-body">
-							<span class="h-bento-tag">Widgets</span>
-							<h3>5 widget types.</h3>
-							<p>
-								Turntable · Talking Agent · Animation Gallery · ERC-8004 Passport ·
-								Hotspot Tour
-							</p>
-							<a href="/studio" class="h-feature-link">Widget Studio →</a>
-						</div>
-					</div>
-				</div>
-			</section>
-
-			<!-- ── Developer section ── -->
-			<div class="h-dev-section h-reveal">
-				<div class="h-dev-inner">
-					<div class="h-dev-text">
-						<p class="h-section-label">For developers</p>
-						<h2>Drop one tag.<br />Ship a 3D agent.</h2>
-						<p class="h-dev-sub">
-							The <code>&lt;agent-3d&gt;</code> web component lazy-loads, renders
-							anywhere, and connects to your existing AI stack via MCP or A2A. No
-							framework. No build step.
+			<!-- ── Integration grid ── -->
+			<section class="section section-dark" id="integration">
+				<h3 class="section-label scroll-reveal">Built to Integrate</h3>
+				<div class="integration-grid">
+					<div class="integration-item scroll-reveal">
+						<h4>Any 3D Model</h4>
+						<p>
+							Drag in a <code>.glb</code> or <code>.gltf</code> — Draco-compressed,
+							KTX2-textured, or Meshopt-quantized. No conversion step.
 						</p>
-						<div class="h-dev-links">
-							<a href="/docs" class="h-feature-link">Read the docs →</a>
-							<a
-								href="https://github.com/nirholas/three.ws"
-								target="_blank"
-								rel="noopener"
-								class="h-feature-link"
-								>GitHub →</a
-							>
-						</div>
 					</div>
-					<div class="h-dev-code">
-						<div class="h-dev-code-bar">
-							<span class="h-dev-code-dot"></span>
-							<span class="h-dev-code-dot"></span>
-							<span class="h-dev-code-dot"></span>
-							<span class="h-dev-code-filename">index.html</span>
-						</div>
-						<pre
-							class="h-dev-pre"
-						><code><span class="c">&lt;!-- 1. Load the component --&gt;</span>
-<span class="tag">&lt;script</span> <span class="attr">type</span>=<span class="val">"module"</span>
-  <span class="attr">src</span>=<span class="val">"https://three.ws/agent-3d/latest/agent-3d.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
-
-<span class="c">&lt;!-- 2. Drop the tag --&gt;</span>
-<span class="tag">&lt;agent-3d</span>
-  <span class="attr">agent-id</span>=<span class="val">"0x3d…a9f"</span>
-  <span class="attr">kiosk</span>
-<span class="tag">&gt;&lt;/agent-3d&gt;</span></code></pre>
+					<div class="integration-item scroll-reveal">
+						<h4>Any Website</h4>
+						<p>
+							One iframe works in Notion, Ghost, WordPress, Webflow, and Framer. No
+							SDK required on the consumer side.
+						</p>
 					</div>
-				</div>
-			</div>
-
-			<!-- ── Final CTA ── -->
-			<section class="h-cta-section">
-				<div class="h-cta-inner h-reveal">
-					<h2>Your agent deserves<br />a face.</h2>
-					<p>Free to start. No credit card. No install.</p>
-					<div class="h-cta-row-center">
-						<a href="/create" class="h-btn-primary">
-							<span>Create your agent</span>
-							<span class="arrow">→</span>
-						</a>
-						<a href="/app" class="h-btn-ghost">Try the viewer</a>
+					<div class="integration-item scroll-reveal">
+						<h4>Any AI Stack</h4>
+						<p>
+							Connect via <code>MCP</code> or <code>A2A</code>. Works with Claude,
+							GPT, Gemini, and any OpenAI-compatible model.
+						</p>
+					</div>
+					<div class="integration-item scroll-reveal">
+						<h4>Any EVM Chain</h4>
+						<p>
+							ERC-8004 identities are CREATE2-deterministic — same address on every
+							chain. Deploy once, discoverable everywhere.
+						</p>
 					</div>
 				</div>
 			</section>
 
-			<footer class="h-footer h-footer-horizon">
+			<!-- ── CTA ── -->
+			<section class="section cta-section" id="cta">
+				<div class="cta-content scroll-reveal">
+					<h3>Ready to give your AI agent a body?</h3>
+					<p>Drop a 3D model. Add AI. Ship in minutes.</p>
+					<div class="hero-cta">
+						<a href="/create" class="btn-primary">Create your agent</a>
+						<a href="/app" class="btn-ghost">Open viewer →</a>
+					</div>
+				</div>
+			</section>
+
+			<footer class="h-footer-horizon">
 				<div class="h-footer-glow-line" aria-hidden="true"></div>
 				<div class="h-footer-floor" aria-hidden="true"></div>
 				<div class="h-footer-haze" aria-hidden="true"></div>
@@ -610,224 +1182,125 @@
 						exposure="0.7"
 						environment-image="neutral"
 						camera-orbit="0deg 80deg 9m"
-						field-of-view="45deg"
+						field-of-view="35deg"
 						loading="lazy"
 					></model-viewer>
 				</div>
-
 				<div class="h-footer-cta">
-					<div class="h-footer-newsletter">
-						<h3>Stay in the loop</h3>
-						<p>Get updates on new features, agent tooling, and protocol changes.</p>
-						<form class="h-footer-newsletter-form" data-newsletter-form novalidate>
-							<input
-								type="email"
-								class="h-footer-newsletter-input"
-								name="email"
-								placeholder="Enter your email"
-								aria-label="Email address"
-								autocomplete="email"
-								required
-							/>
-							<button
-								type="submit"
-								class="h-footer-newsletter-btn"
-								aria-label="Subscribe"
-							>
-								<svg viewBox="0 0 16 16" aria-hidden="true">
-									<path
-										fill="none"
-										stroke="currentColor"
-										stroke-width="1.6"
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										d="M2 8h11m0 0L9 4m4 4l-4 4"
-									/>
-								</svg>
-							</button>
-						</form>
-						<p
-							class="h-footer-newsletter-msg"
-							data-newsletter-msg
-							aria-live="polite"
-						></p>
+				<div class="h-footer-newsletter">
+					<h3>Stay in the loop</h3>
+					<p>Get updates on new features, agent tooling, and protocol changes.</p>
+					<form class="h-footer-newsletter-form" data-newsletter-form novalidate>
+						<input
+							type="email"
+							class="h-footer-newsletter-input"
+							name="email"
+							placeholder="Enter your email"
+							aria-label="Email address"
+							autocomplete="email"
+							required
+						/>
+						<button type="submit" class="h-footer-newsletter-btn" aria-label="Subscribe">
+							<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M2 8h11m0 0L9 4m4 4l-4 4"/></svg>
+						</button>
+					</form>
+					<p class="h-footer-newsletter-msg" data-newsletter-msg aria-live="polite"></p>
+				</div>
+				<div class="h-footer-community">
+					<h3>Join the community</h3>
+					<p>Follow along for builds, demos, and conversations with the team.</p>
+					<a class="h-footer-community-btn" href="https://x.com/trythreews" target="_blank" rel="noopener">
+						<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+						Follow on X
+					</a>
+				</div>
+				<div class="h-footer-resources">
+					<h3>Resources</h3>
+					<p>Read the docs, join the community, and get help.</p>
+					<a class="h-footer-community-btn" href="/docs" target="_blank" rel="noopener">
+						<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+						Docs
+					</a>
+				</div>
+			</div>
+			<div class="h-footer-inner">
+				<div class="h-footer-brand-col">
+					<div class="h-footer-brand">
+						<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />
+						<span class="wordmark-dot" aria-hidden="true"></span>
+						<span>three.ws</span>
 					</div>
-					<div class="h-footer-community">
-						<h3>Join the community</h3>
-						<p>Follow along for builds, demos, and conversations with the team.</p>
-						<a
-							class="h-footer-community-btn"
-							href="https://x.com/trythreews"
-							target="_blank"
-							rel="noopener"
-						>
-							<svg viewBox="0 0 24 24" aria-hidden="true">
-								<path
-									fill="currentColor"
-									d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"
-								/>
-							</svg>
-							Follow on X
+					<p class="h-footer-tagline">Give your AI a body.</p>
+					<div class="h-footer-socials">
+						<a class="h-footer-social" href="https://x.com/trythreews" target="_blank" rel="noopener" aria-label="three.ws on X">
+							<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+						</a>
+						<a class="h-footer-social" href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener" aria-label="three.ws on GitHub">
+							<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
 						</a>
 					</div>
 				</div>
-				<div class="h-footer-inner">
-					<div class="h-footer-brand-col">
-						<div class="h-footer-brand">
-							<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />
-							<span class="wordmark-dot" aria-hidden="true"></span>
-							<span>three.ws</span>
-						</div>
-						<p class="h-footer-tagline">Give your AI a body.</p>
-						<div class="h-footer-socials">
-							<a
-								class="h-footer-social"
-								href="https://x.com/trythreews"
-								target="_blank"
-								rel="noopener"
-								aria-label="three.ws on X"
-							>
-								<svg viewBox="0 0 24 24" aria-hidden="true">
-									<path
-										fill="currentColor"
-										d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"
-									/>
-								</svg>
-							</a>
-							<a
-								class="h-footer-social"
-								href="https://github.com/nirholas/three.ws"
-								target="_blank"
-								rel="noopener"
-								aria-label="three.ws on GitHub"
-							>
-								<svg viewBox="0 0 16 16" aria-hidden="true">
-									<path
-										fill="currentColor"
-										d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"
-									/>
-								</svg>
-							</a>
-						</div>
+				<nav class="h-footer-links" aria-label="Footer">
+					<div class="h-footer-link-col">
+						<h4 class="h-footer-link-heading">Product</h4>
+						<a href="/create">Create</a>
+						<a href="/studio">Studio</a>
+						<a href="/widgets.html">Widgets</a>
+						<a href="/playground.html">Playground</a>
+						<a href="/discover">Discover</a>
 					</div>
-					<nav class="h-footer-links" aria-label="Footer">
-						<div class="h-footer-link-col">
-							<h4 class="h-footer-link-heading">Product</h4>
-							<a href="/create">Create</a>
-							<a href="/studio">Studio</a>
-							<a href="/widgets.html">Widgets</a>
-							<a href="/discover">Discover</a>
-						</div>
-						<div class="h-footer-link-col">
-							<h4 class="h-footer-link-heading">Developers</h4>
-							<a href="/docs">Docs</a>
-							<a
-								href="https://github.com/nirholas/three.ws"
-								target="_blank"
-								rel="noopener"
-								>GitHub</a
-							>
-							<a
-								href="https://eips.ethereum.org/EIPS/eip-8004"
-								target="_blank"
-								rel="noopener"
-								>ERC-8004</a
-							>
-						</div>
-						<div class="h-footer-link-col">
-							<h4 class="h-footer-link-heading">Resources</h4>
-							<a href="/dashboard">Dashboard</a>
-						</div>
-					</nav>
-				</div>
-				<div class="h-footer-bottom">
-					<p class="h-footer-legal">© 2026 three.ws — All rights reserved.</p>
-					<div class="h-footer-legal-links">
-						<a href="/legal/privacy">Privacy Policy</a>
-						<a href="/legal/tos">Terms of Use</a>
+					<div class="h-footer-link-col">
+						<h4 class="h-footer-link-heading">Developers</h4>
+						<a href="/docs">Docs</a>
+						<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener">GitHub</a>
+						<a href="https://eips.ethereum.org/EIPS/eip-8004" target="_blank" rel="noopener">ERC-8004</a>
 					</div>
+					<div class="h-footer-link-col">
+						<h4 class="h-footer-link-heading">Resources</h4>
+						<a href="/dashboard">Dashboard</a>
+					</div>
+				</nav>
+			</div>
+			<div class="h-footer-bottom">
+				<p class="h-footer-legal">© 2026 three.ws — All rights reserved.</p>
+				<div class="h-footer-legal-links">
+					<a href="/legal/privacy">Privacy Policy</a>
+					<a href="/legal/tos">Terms of Use</a>
 				</div>
-			</footer>
+			</div>
+		</footer>
 		</main>
 
 		<script>
-			// Auth-aware nav CTA
+			// Auth-aware nav
 			(function () {
 				try {
 					const raw = localStorage.getItem('3dagent:auth-hint');
-					if (!raw) return;
-					const { authed, name } = JSON.parse(raw);
-					if (!authed) return;
-					const cta = document.getElementById('home-nav-cta');
-					if (cta) {
-						cta.textContent = 'Dashboard';
-						cta.href = '/dashboard';
-					}
-					const myAgentsLi = document.getElementById('home-nav-my-agents-li');
-					if (myAgentsLi) myAgentsLi.hidden = false;
-					const userLi = document.getElementById('home-nav-user-li');
-					const userEl = document.getElementById('home-nav-user');
-					if (userEl && userLi && name) {
-						userEl.textContent = name;
-						userLi.hidden = false;
+					if (raw) {
+						const { authed, name } = JSON.parse(raw);
+						if (authed) {
+							const el = document.getElementById('nav-sign-in');
+							if (el) {
+								el.textContent = 'Dashboard';
+								el.href = '/dashboard';
+							}
+							const myAgents = document.getElementById('nav-my-agents');
+							if (myAgents) myAgents.hidden = false;
+							const heroSignin = document.getElementById('hero-signin-hint');
+							if (heroSignin) heroSignin.hidden = true;
+							const userEl = document.getElementById('nav-user');
+							if (userEl && name) {
+								userEl.textContent = name;
+								userEl.hidden = false;
+							}
+						}
 					}
 				} catch (_) {}
 			})();
 
-			// Dropdown nav — click to open, Esc / outside-click to close, arrow keys within menu.
+			// Scroll reveal
 			(function () {
-				const triggers = document.querySelectorAll('.home-nav .nav-trigger');
-				if (!triggers.length) return;
-
-				function closeAll(except) {
-					triggers.forEach((t) => {
-						if (t !== except) t.setAttribute('aria-expanded', 'false');
-					});
-				}
-
-				triggers.forEach((trigger) => {
-					trigger.addEventListener('click', (e) => {
-						e.stopPropagation();
-						const open = trigger.getAttribute('aria-expanded') === 'true';
-						closeAll(open ? null : trigger);
-						trigger.setAttribute('aria-expanded', open ? 'false' : 'true');
-						if (!open) {
-							const first = trigger.nextElementSibling?.querySelector('a');
-							first?.focus();
-						}
-					});
-
-					const menu = trigger.nextElementSibling;
-					if (!menu) return;
-					menu.addEventListener('keydown', (e) => {
-						const items = Array.from(menu.querySelectorAll('a'));
-						const idx = items.indexOf(document.activeElement);
-						if (e.key === 'ArrowDown') {
-							e.preventDefault();
-							items[(idx + 1) % items.length]?.focus();
-						} else if (e.key === 'ArrowUp') {
-							e.preventDefault();
-							items[(idx - 1 + items.length) % items.length]?.focus();
-						} else if (e.key === 'Escape') {
-							trigger.setAttribute('aria-expanded', 'false');
-							trigger.focus();
-						}
-					});
-				});
-
-				document.addEventListener('click', (e) => {
-					if (!e.target.closest('.home-nav')) closeAll(null);
-				});
-				document.addEventListener('keydown', (e) => {
-					if (e.key === 'Escape') closeAll(null);
-				});
-			})();
-
-			// Scroll reveal — use .home-parallax as root so IntersectionObserver
-			// fires against the perspective scroll container, not the window.
-			(function () {
-				const root = document.querySelector('.home-parallax');
-				const els = document.querySelectorAll('.h-reveal');
+				const reveals = document.querySelectorAll('.scroll-reveal');
 				const observer = new IntersectionObserver(
 					(entries) => {
 						entries.forEach((entry) => {
@@ -837,434 +1310,353 @@
 							}
 						});
 					},
-					{ root, threshold: 0.12, rootMargin: '0px 0px -50px 0px' },
+					{ threshold: 0.12, rootMargin: '0px 0px -60px 0px' },
 				);
-				els.forEach((el) => {
-					const siblings = Array.from(el.parentElement.querySelectorAll('.h-reveal'));
+				reveals.forEach((el) => {
+					const siblings = Array.from(
+						el.parentElement.querySelectorAll('.scroll-reveal'),
+					);
 					const idx = siblings.indexOf(el);
-					el.style.transitionDelay = idx * 0.09 + 's';
+					el.style.transitionDelay = idx * 0.1 + 's';
 					observer.observe(el);
 				});
 			})();
 
-			// Hero avatar — Act2Viewer with cursor/scroll orbit + click → real animations
+			// Scroll hint fade
 			(function () {
-				const scrollEl = document.querySelector('.home-parallax');
-				const canvas = document.getElementById('hero-avatar');
-				const heroAct = document.querySelector('.h-hero-act');
-				if (!scrollEl || !canvas || !heroAct) return;
+				const hint = document.querySelector('.hero-scroll-hint');
+				if (!hint) return;
+				window.addEventListener('scroll', function handler() {
+					if (window.scrollY > 60) {
+						hint.classList.add('scroll-hint-hidden');
+						window.removeEventListener('scroll', handler);
+					}
+				}, { passive: true });
+			})();
 
-				let mouseX = 0,
-					mouseY = 0,
-					scrollProgress = 0;
-				const BASE_THETA = -45,
-					BASE_PHI = 80,
-					BASE_R = 14;
-				let curTheta = BASE_THETA,
-					curPhi = BASE_PHI,
-					curR = BASE_R;
+			// Step 01 - real session fetch
+			(function () {
+				var body = document.getElementById('s1-body');
+				if (!body) return;
 
-				window.addEventListener(
-					'mousemove',
-					(e) => {
-						mouseX = (e.clientX / innerWidth) * 2 - 1;
-						mouseY = (e.clientY / innerHeight) * 2 - 1;
-					},
-					{ passive: true },
-				);
+				function shortAddr(a) { return a.slice(0, 6) + '…' + a.slice(-4); }
 
-				scrollEl.addEventListener(
-					'scroll',
-					() => {
-						scrollProgress = Math.min(scrollEl.scrollTop / heroAct.offsetHeight, 1);
-					},
-					{ passive: true },
-				);
-
-				function whenReady(cb) {
-					if (window.Act2Viewer) return cb();
-					setTimeout(() => whenReady(cb), 60);
+				function renderAuthed(user, avatarCount, widgetCount) {
+					var addr = user.wallet_address || '';
+					var method = addr ? 'wallet' : 'email';
+					var display = addr ? shortAddr(addr) : (user.email || user.display_name || '—');
+					body.innerHTML =
+						'<span class="vis-json-brace">{</span><br>' +
+						'&nbsp;&nbsp;<span class="vis-json-key">"method"</span>:&nbsp;<span class="vis-json-str">"' + method + '"</span>,<br>' +
+						'&nbsp;&nbsp;<span class="vis-json-key">"' + (addr ? 'address' : 'email') + '"</span>:&nbsp;' +
+						'<span class="vis-json-addr">"' + display + '"</span>' +
+						'<button class="vis-inline-copy" id="s1-copy">copy</button>,<br>' +
+						'&nbsp;&nbsp;<span class="vis-json-key">"avatars"</span>:&nbsp;<span class="vis-json-bool">' + avatarCount + '</span>,<br>' +
+						'&nbsp;&nbsp;<span class="vis-json-key">"widgets"</span>:&nbsp;<span class="vis-json-bool">' + widgetCount + '</span>,<br>' +
+						'&nbsp;&nbsp;<span class="vis-json-key">"active"</span>:&nbsp;<span class="vis-json-bool">true</span><span class="vis-blink-cursor"></span><br>' +
+						'<span class="vis-json-brace">}</span>';
+					var copyBtn = document.getElementById('s1-copy');
+					if (copyBtn) {
+						copyBtn.addEventListener('click', function () {
+							navigator.clipboard && navigator.clipboard.writeText(addr || display).catch(function () {});
+							copyBtn.textContent = 'copied!'; copyBtn.classList.add('ok');
+							setTimeout(function () { copyBtn.textContent = 'copy'; copyBtn.classList.remove('ok'); }, 1500);
+						});
+					}
 				}
 
-				whenReady(() => {
-					const viewer = new window.Act2Viewer(canvas, { fov: 18 });
-					let orbitActive = false;
+				function renderGuest() {
+					body.innerHTML =
+						'<div style="text-align:center;padding:0.75rem 0;">' +
+						'<div style="color:rgba(255,255,255,0.3);font-size:0.72rem;margin-bottom:1rem;line-height:1.7;">' +
+						'<span class="vis-json-key">"active"</span>:&nbsp;<span style="color:#f87171;">false</span><br>' +
+						'<span style="font-size:0.65rem;color:rgba(255,255,255,0.2);">no session — connect your wallet</span>' +
+						'</div>' +
+						'<button class="s1-signin-btn" id="s1-connect-btn">⬡&nbsp;Connect Wallet</button>' +
+						'<div id="s1-status" style="margin-top:0.6rem;font-size:0.62rem;color:rgba(255,255,255,0.3);min-height:1rem;"></div>' +
+						'</div>';
+					var btn = document.getElementById('s1-connect-btn');
+					var status = document.getElementById('s1-status');
+					if (!btn) return;
+					if (!window.ethereum) {
+						btn.textContent = 'No wallet detected';
+						btn.disabled = true;
+						status.textContent = 'Install MetaMask to connect';
+						return;
+					}
+					btn.addEventListener('click', function () {
+						btn.disabled = true; btn.textContent = 'Connecting…';
+						import('/src/wallet-auth.js').then(function (m) {
+							return m.signInWithWallet();
+						}).then(function () {
+							status.textContent = 'Signed in — reloading…';
+							setTimeout(function () { location.reload(); }, 800);
+						}).catch(function (err) {
+							status.textContent = err.message || 'Sign-in failed.';
+							btn.disabled = false; btn.textContent = '⬡ Connect Wallet';
+						});
+					});
+				}
 
-					/* cursor + scroll orbit loop — starts after model loads to avoid camera snap */
-					(function tick() {
-						if (orbitActive) {
-							const scrollTheta = scrollProgress * 90;
-							const scrollPhi = -scrollProgress * 8;
-							const scrollR = scrollProgress * 0.8;
-							curTheta += (BASE_THETA + scrollTheta + mouseX * 16 - curTheta) * 0.07;
-							curPhi += (BASE_PHI + scrollPhi + mouseY * 6 - curPhi) * 0.07;
-							curR += (BASE_R + scrollR - curR) * 0.12;
-							viewer.setOrbit(curTheta, curPhi, curR);
-						}
-						requestAnimationFrame(tick);
-					})();
+				fetch('/api/auth/me', { credentials: 'include' })
+					.then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+					.then(function (data) {
+						if (!data.user) { renderGuest(); return; }
+						return Promise.all([
+							fetch('/api/avatars?limit=100', { credentials: 'include' }).then(function (r) { return r.ok ? r.json() : {}; }),
+							fetch('/api/widgets', { credentials: 'include' }).then(function (r) { return r.ok ? r.json() : {}; }),
+						]).then(function (results) {
+							var aCount = results[0].items ? results[0].items.length : (results[0].total ?? 0);
+							var wCount = results[1].items ? results[1].items.length : (results[1].total ?? 0);
+							renderAuthed(data.user, aCount, wCount);
+						});
+					})
+					.catch(function () { renderGuest(); });
+			})();
 
-					const wrap = canvas.closest('.h-avatar-wrap');
+			// Step 02 - real GLB drag-and-drop → model-viewer
+			(function () {
+				var zone = document.getElementById('s2-zone');
+				var fileInput = document.getElementById('s2-file-input');
+				var visual = document.getElementById('vis-step02');
+				if (!zone || !visual) return;
 
-					/* falling: wait for clip to play out, then expand and slide across.
-					   alreadyPlaying=true skips the playClip call (used on first load). */
-					async function doFalling(alreadyPlaying = false) {
-						if (!alreadyPlaying) {
-							try {
-								await viewer.playClip('falling');
-							} catch (_) {}
-						}
+				function loadGLB(file) {
+					if (!file || !file.name.match(/\.(glb|gltf)$/i)) return;
+					var url = URL.createObjectURL(file);
+					var mv = document.createElement('model-viewer');
+					mv.src = url;
+					mv.setAttribute('auto-rotate', '');
+					mv.setAttribute('camera-controls', '');
+					mv.setAttribute('shadow-intensity', '1');
+					mv.style.cssText = 'width:100%;height:340px;background:transparent;';
+					mv.setAttribute('--poster-color', 'transparent');
 
-						/* wait for the actual clip to finish on the ground */
-						const clipDur = viewer.currentAction
-							? viewer.currentAction.getClip().duration * 1000
-							: 2200;
-						await new Promise((r) => setTimeout(r, clipDur));
+					var chip = document.createElement('div');
+					chip.className = 's2-model-chip';
+					var dot = document.createElement('span');
+					dot.className = 'vis-file-dot';
+					chip.appendChild(dot);
+					chip.appendChild(document.createTextNode(file.name + ' · ' + (file.size / 1048576).toFixed(1) + ' MB'));
 
-						/* expand to full-width and slide the model slowly across the ground */
-						wrap.classList.add('h-avatar-wrap--traversing');
-						const SLIDE_DUR = 3200;
-						const SLIDE_DIST = 8;
-						const t0 = performance.now();
-						await new Promise((r) => {
-							(function step(now) {
-								const t = Math.min((now - t0) / SLIDE_DUR, 1);
-								const x = SLIDE_DIST * t;
-								if (viewer.model) viewer.model.position.x = x;
-								viewer._focusX = x;
-								if (t < 1) {
-									requestAnimationFrame(step);
-								} else {
-									r();
+					visual.style.position = 'relative';
+					visual.innerHTML = '';
+					visual.appendChild(mv);
+					visual.appendChild(chip);
+				}
+
+				zone.addEventListener('dragover', function (e) { e.preventDefault(); zone.classList.add('drag-hover'); });
+				zone.addEventListener('dragleave', function () { zone.classList.remove('drag-hover'); });
+				zone.addEventListener('drop', function (e) {
+					e.preventDefault(); zone.classList.remove('drag-hover');
+					loadGLB(e.dataTransfer.files[0]);
+				});
+				zone.addEventListener('click', function () { fileInput && fileInput.click(); });
+				if (fileInput) fileInput.addEventListener('change', function (e) { loadGLB(e.target.files[0]); });
+			})();
+
+			// Step 03 - anim picker cycling + click to switch
+			(function () {
+				const container = document.querySelector('.vis-anim');
+				if (!container) return;
+				const rows = container.querySelectorAll('.vis-anim-row');
+				let current = 0;
+				let timer = null;
+
+				function setActive(idx) {
+					rows[current].classList.remove('active');
+					current = idx;
+					rows[current].classList.add('active');
+				}
+
+				rows.forEach(function (row, idx) {
+					row.addEventListener('click', function () {
+						clearInterval(timer);
+						setActive(idx);
+						timer = setInterval(function () {
+							setActive((current + 1) % rows.length);
+						}, 1800);
+					});
+				});
+
+				new IntersectionObserver(function (entries, obs) {
+					if (entries[0].isIntersecting) {
+						timer = setInterval(function () { setActive((current + 1) % rows.length); }, 1800);
+						obs.disconnect();
+					}
+				}, { threshold: 0.4 }).observe(container);
+			})();
+
+			// Step 04 - embed tabs + copy + real widget picker
+			(function () {
+				var origin = location.origin;
+				var currentWidgetId = 'wdgt_abc123';
+
+				function buildSnippets(wid) {
+					return {
+						iframe:
+							'<span class="tag">&lt;iframe</span><br>' +
+							'&nbsp;&nbsp;<span class="attr">src</span>=<span class="val">"' + origin + '/w/' + wid + '"</span><br>' +
+							'&nbsp;&nbsp;<span class="attr">width</span>=<span class="val">"400"</span><br>' +
+							'&nbsp;&nbsp;<span class="attr">height</span>=<span class="val">"600"</span><br>' +
+							'&nbsp;&nbsp;<span class="attr">allow</span>=<span class="val">"microphone"</span><br>' +
+							'<span class="tag">/&gt;</span>',
+						webcomponent:
+							'<span class="comment">// zero-dependency web component</span><br>' +
+							'<span class="tag">&lt;script</span> <span class="attr">type</span>=<span class="val">"module"</span><br>' +
+							'&nbsp;&nbsp;<span class="attr">src</span>=<span class="val">"' + origin + '/sdk.js"</span>' +
+							'<span class="tag">&gt;&lt;/script&gt;</span><br><br>' +
+							'<span class="tag">&lt;agent-widget</span><br>' +
+							'&nbsp;&nbsp;<span class="attr">widget-id</span>=<span class="val">"' + wid + '"</span><br>' +
+							'&nbsp;&nbsp;<span class="attr">theme</span>=<span class="val">"dark"</span><br>' +
+							'<span class="tag">&gt;&lt;/agent-widget&gt;</span>',
+						onchain:
+							'<span class="comment">// resolved via ERC-8004 registry</span><br>' +
+							'<span class="kw">import</span> { resolve } <span class="kw">from</span> <span class="val">"@3dagent/sdk"</span><br><br>' +
+							'<span class="kw">const</span> agent = <span class="kw">await</span> resolve(<br>' +
+							'&nbsp;&nbsp;<span class="val">"' + wid + '"</span><br>' +
+							')<br>' +
+							'<span class="kw">await</span> agent.embed(<span class="val">"#container"</span>)'
+					};
+				}
+
+				var activeTab = 'iframe';
+				var tabs = document.querySelectorAll('.vis-embed-tab[data-tab]');
+				var codeBlock = document.getElementById('embed-code-block');
+
+				function renderCode() {
+					if (codeBlock) codeBlock.innerHTML = buildSnippets(currentWidgetId)[activeTab];
+				}
+
+				tabs.forEach(function (tab) {
+					tab.addEventListener('click', function () {
+						tabs.forEach(function (t) { t.classList.remove('active'); });
+						tab.classList.add('active');
+						activeTab = tab.dataset.tab;
+						renderCode();
+					});
+				});
+
+				var copyBtn = document.getElementById('embed-copy-btn');
+				if (copyBtn && codeBlock) {
+					copyBtn.addEventListener('click', function () {
+						var text = codeBlock.innerText || codeBlock.textContent || '';
+						navigator.clipboard && navigator.clipboard.writeText(text).catch(function () {});
+						copyBtn.textContent = 'copied!'; copyBtn.classList.add('ok');
+						setTimeout(function () { copyBtn.textContent = 'copy'; copyBtn.classList.remove('ok'); }, 1500);
+					});
+				}
+
+				// Fetch real widgets if logged in
+				fetch('/api/widgets', { credentials: 'include' })
+					.then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+					.then(function (data) {
+						var items = data.items || [];
+						if (!items.length) return;
+						var pickerRow = document.getElementById('s4-widget-picker-row');
+						var select = document.getElementById('s4-widget-select');
+						if (!pickerRow || !select) return;
+						items.forEach(function (w) {
+							var opt = document.createElement('option');
+							opt.value = w.id;
+							opt.textContent = (w.name || w.id) + ' — ' + (w.type || '');
+							select.appendChild(opt);
+						});
+						currentWidgetId = items[0].id;
+						renderCode();
+						pickerRow.style.display = 'block';
+						select.addEventListener('change', function () {
+							currentWidgetId = select.value;
+							renderCode();
+						});
+					})
+					.catch(function () {});
+			})();
+
+			// Step 05 - sequential deploy timeline animation
+			(function () {
+				var visual = document.getElementById('vis-step05');
+				if (!visual) return;
+				var steps = visual.querySelectorAll('.vis-tl-step');
+				var token = document.getElementById('s5-token');
+				var delays = [0, 900, 1900, 3000];
+				var doneDurations = [600, 700, 800, 700];
+
+				function runTimeline() {
+					steps.forEach(function (step, i) {
+						setTimeout(function () {
+							steps.forEach(function (s) { s.classList.remove('active'); });
+							step.classList.add('active');
+							setTimeout(function () {
+								step.classList.remove('active');
+								step.classList.add('done');
+								if (i === steps.length - 1 && token) {
+									setTimeout(function () { token.classList.add('show'); }, 200);
 								}
-							})(performance.now());
-						});
-
-						/* reset + back to dance */
-						if (viewer.model) viewer.model.position.x = 0;
-						viewer._focusX = 0;
-						wrap.classList.remove('h-avatar-wrap--traversing');
-						viewer.playClip('dance').catch(() => {});
-					}
-
-					canvas.style.opacity = '0';
-					viewer
-						.loadModel('/avatars/cz.glb', { autoPlay: false })
-						.then(async () => {
-							viewer.setOrbit(curTheta, curPhi, curR);
-							orbitActive = true;
-							/* fetch + start the falling clip before revealing — no T-pose flash */
-							try {
-								await viewer.playClip('falling');
-							} catch (_) {}
-							canvas.style.transition = 'opacity 0.15s';
-							canvas.style.opacity = '1';
-							/* clip is already playing — pass flag so doFalling skips the restart */
-							doFalling(true);
-						})
-						.catch(console.error);
-
-					/* click → random manifest animation; falling gets full traverse treatment */
-					const FUN = [
-						'falling',
-						'wave',
-						'dance',
-						'celebrate',
-						'jump',
-						'rumba',
-						'capoeira',
-						'thriller',
-						'kiss',
-						'taunt',
-						'pray',
-					];
-					let lastAnim = null;
-					canvas.style.cursor = 'pointer';
-					canvas.addEventListener('click', async () => {
-						const pool = FUN.filter((a) => a !== lastAnim);
-						const name = pool[Math.floor(Math.random() * pool.length)];
-						lastAnim = name;
-						if (name === 'falling') {
-							doFalling();
-							return;
-						}
-						try {
-							await viewer.playClip(name);
-							const def = viewer._manifest.find((d) => d.name === name);
-							if (def && !def.loop) {
-								setTimeout(() => viewer.playClip('dance').catch(() => {}), 2600);
-							}
-						} catch (_) {}
+							}, doneDurations[i]);
+						}, delays[i]);
 					});
-				});
-			})();
-
-			// Act 2 viewer — Three.js + animation manifest, same trick as /app.
-			// Every model gets every clip from /animations/manifest.json (retargeted
-			// onto its skeleton via AnimationMixer), regardless of what's baked in.
-			(function () {
-				const canvas = document.getElementById('home-act2-canvas');
-				const opts = document.querySelectorAll('.h-av-opt');
-				const chipsWrap = document.querySelector('[data-role="anim-chips"]');
-				if (!canvas || !chipsWrap) return;
-
-				/* Wait for the Act2Viewer ESM to load (it sets window.Act2Viewer) */
-				function whenReady(cb) {
-					if (window.Act2Viewer) return cb();
-					setTimeout(() => whenReady(cb), 60);
 				}
 
-				whenReady(() => {
-					const viewer = new window.Act2Viewer(canvas);
-
-					function prettyLabel(def) {
-						const icon = def.icon || '✨';
-						const label = (def.label || def.name).replace(/\s*\([^)]*\)/g, '').trim();
-						return icon + ' ' + label;
-					}
-
-					function rebuildChips(defs) {
-						chipsWrap.innerHTML = '';
-						defs.forEach((def, i) => {
-							const btn = document.createElement('button');
-							btn.type = 'button';
-							btn.className = 'h-anim-chip';
-							btn.dataset.anim = def.name;
-							btn.textContent = prettyLabel(def);
-							if (i === 0) btn.dataset.active = 'true';
-							btn.addEventListener('click', async () => {
-								chipsWrap
-									.querySelectorAll('.h-anim-chip')
-									.forEach((c) => delete c.dataset.active);
-								btn.dataset.active = 'true';
-								try {
-									await viewer.playClip(def.name);
-								} catch (e) {
-									/* ignore */
-								}
-							});
-							chipsWrap.appendChild(btn);
-						});
-					}
-
-					viewer.onClipsReady = rebuildChips;
-
-					/* default avatar — Robot (matches aria-pressed="true" in HTML) */
-					viewer.loadModel('/animations/robotexpressive.glb').catch(console.error);
-
-					/* avatar picker */
-					opts.forEach((btn) => {
-						btn.addEventListener('click', async () => {
-							opts.forEach((b) => b.setAttribute('aria-pressed', 'false'));
-							btn.setAttribute('aria-pressed', 'true');
-							try {
-								await viewer.loadModel(btn.dataset.src);
-							} catch (e) {
-								console.error(e);
-							}
-						});
-					});
-
-					/* click on canvas to toggle zoom (default → extra-wide) */
-					let wider = false;
-					const NEAR = 22,
-						FAR = 36;
-					canvas.addEventListener('click', () => {
-						wider = !wider;
-						viewer.zoom(wider ? FAR : NEAR);
-					});
-				});
+				new IntersectionObserver(function (entries, obs) {
+					if (entries[0].isIntersecting) { runTimeline(); obs.disconnect(); }
+				}, { threshold: 0.35 }).observe(visual);
 			})();
 
-			// Bento Viewer card — same Act2Viewer + animation panel as Act 2
+			// Avatar mouse-follow
 			(function () {
-				const canvas = document.getElementById('bento-cz-canvas');
-				const grid = document.querySelector('[data-role="bento-anim-grid"]');
-				const stopBtn = document.querySelector('[data-role="bento-anim-stop"]');
-				if (!canvas || !grid) return;
+				const viewer = document.querySelector('.hero-avatar-viewer');
+				if (!viewer) return;
 
-				function whenReady(cb) {
-					if (window.Act2Viewer) return cb();
-					setTimeout(() => whenReady(cb), 60);
+				const BASE_AZIMUTH = 20;
+				const BASE_POLAR = 88;
+				const AZIMUTH_RANGE = 35;
+				const POLAR_RANGE = 12;
+
+				let animFrame = null;
+				let targetAz = BASE_AZIMUTH;
+				let targetPol = BASE_POLAR;
+				let currentAz = BASE_AZIMUTH;
+				let currentPol = BASE_POLAR;
+				let hovering = false;
+				let resumeTimeout = null;
+
+				function lerp(a, b, t) { return a + (b - a) * t; }
+
+				function animate() {
+					currentAz = lerp(currentAz, targetAz, 0.08);
+					currentPol = lerp(currentPol, targetPol, 0.08);
+					viewer.setAttribute('camera-orbit', `${currentAz}deg ${currentPol}deg 4.8m`);
+					animFrame = requestAnimationFrame(animate);
 				}
 
-				whenReady(() => {
-					const viewer = new window.Act2Viewer(canvas, { fov: 20 });
-
-					function prettyLabel(def) {
-						return (def.label || def.name).replace(/\s*\([^)]*\)/g, '').trim();
-					}
-
-					function buildButtons(defs) {
-						grid.innerHTML = '';
-						defs.forEach((def, i) => {
-							const btn = document.createElement('button');
-							btn.type = 'button';
-							btn.className = 'h-bento-anim-btn';
-							btn.dataset.anim = def.name;
-							btn.title = def.label || def.name;
-							const icon = document.createElement('span');
-							icon.className = 'h-bento-anim-btn__icon';
-							icon.textContent = def.icon || '✨';
-							const label = document.createElement('span');
-							label.className = 'h-bento-anim-btn__label';
-							label.textContent = prettyLabel(def);
-							btn.appendChild(icon);
-							btn.appendChild(label);
-							if (i === 0) btn.classList.add('h-bento-anim-btn--active');
-							btn.addEventListener('click', async () => {
-								grid.querySelectorAll('.h-bento-anim-btn').forEach((b) =>
-									b.classList.remove('h-bento-anim-btn--active'),
-								);
-								btn.classList.add('h-bento-anim-btn--active');
-								btn.classList.add('h-bento-anim-btn--loading');
-								try {
-									await viewer.playClip(def.name);
-								} catch (_) {}
-								btn.classList.remove('h-bento-anim-btn--loading');
-							});
-							grid.appendChild(btn);
-						});
-					}
-
-					viewer.onClipsReady = buildButtons;
-					viewer
-						.loadModel('/avatars/cz.glb', { autoPlay: false })
-						.then(() => viewer.playClip('capoeira').catch(() => {}))
-						.catch(console.error);
-
-					if (stopBtn) {
-						stopBtn.addEventListener('click', () => {
-							if (viewer.mixer) viewer.mixer.stopAllAction();
-							viewer.currentAction = null;
-							grid.querySelectorAll('.h-bento-anim-btn').forEach((b) =>
-								b.classList.remove('h-bento-anim-btn--active'),
-							);
-						});
-					}
+				viewer.closest('.hero-avatar').addEventListener('mouseenter', function () {
+					hovering = true;
+					clearTimeout(resumeTimeout);
+					viewer.removeAttribute('auto-rotate');
+					if (!animFrame) animFrame = requestAnimationFrame(animate);
 				});
-			})();
 
-			// Chain ribbon (Act 3)
-			(function () {
-				const ribbon = document.querySelector('[data-role="home-chain-ribbon"]');
-				if (!ribbon) return;
-				const labels = [
-					'Solana',
-					'Base',
-					'Ethereum',
-					'BSC',
-					'Arbitrum',
-					'Avalanche',
-					'Celo',
-					'Linea',
-					'zkSync',
-					'Scroll',
-					'Optimism',
-					'Mode',
-				];
-				ribbon.replaceChildren(
-					...labels.map((l) => {
-						const s = document.createElement('span');
-						s.className = 'chain-pill';
-						s.textContent = l;
-						return s;
-					}),
-				);
-			})();
-
-			// Custom cursor
-			(function () {
-				const cursor = document.getElementById('cursor');
-				if (!cursor || window.matchMedia('(hover: none)').matches) return;
-				let cx = -100,
-					cy = -100,
-					tx = -100,
-					ty = -100;
-				document.addEventListener('mousemove', (e) => {
-					tx = e.clientX;
-					ty = e.clientY;
+				viewer.closest('.hero-avatar').addEventListener('mousemove', function (e) {
+					const rect = this.getBoundingClientRect();
+					const nx = (e.clientX - rect.left) / rect.width - 0.5;   // -0.5 → 0.5
+					const ny = (e.clientY - rect.top)  / rect.height - 0.5;
+					targetAz  = BASE_AZIMUTH - nx * AZIMUTH_RANGE * 2;
+					targetPol = BASE_POLAR   + ny * POLAR_RANGE * 2;
 				});
-				document.addEventListener('mouseleave', () => {
-					tx = cy = -100;
+
+				viewer.closest('.hero-avatar').addEventListener('mouseleave', function () {
+					hovering = false;
+					targetAz = BASE_AZIMUTH;
+					targetPol = BASE_POLAR;
+					// wait until lerp is close enough, then restore auto-rotate
+					resumeTimeout = setTimeout(function () {
+						cancelAnimationFrame(animFrame);
+						animFrame = null;
+						viewer.setAttribute('camera-orbit', `${BASE_AZIMUTH}deg ${BASE_POLAR}deg 4.8m`);
+						viewer.setAttribute('auto-rotate', '');
+					}, 800);
 				});
-				const hover = 'a,button,[role="button"],.h-av-opt,.h-anim-chip';
-				document.querySelectorAll(hover).forEach((el) => {
-					el.addEventListener('mouseenter', () => cursor.classList.add('cursor--hover'));
-					el.addEventListener('mouseleave', () =>
-						cursor.classList.remove('cursor--hover'),
-					);
-				});
-				(function loop() {
-					cx += (tx - cx) * 0.18;
-					cy += (ty - cy) * 0.18;
-					cursor.style.transform = `translate(${cx}px,${cy}px) translate(-50%,-50%)`;
-					requestAnimationFrame(loop);
-				})();
-			})();
-
-			// Act 3 — animated trio of ghost avatars (robot, CZ, soldier)
-			(function () {
-				const configs = [
-					{
-						id: 'act3-avatar-a',
-						src: '/animations/robotexpressive.glb',
-						anim: 'capoeira',
-					},
-					{ id: 'act3-avatar-b', src: '/avatars/cz.glb', anim: 'rumba' },
-					{ id: 'act3-avatar-c', src: '/animations/soldier.glb', anim: 'wave' },
-				];
-
-				function whenReady(cb) {
-					if (window.Act2Viewer) return cb();
-					setTimeout(() => whenReady(cb), 60);
-				}
-
-				whenReady(() => {
-					configs.forEach(({ id, src, anim }) => {
-						const canvas = document.getElementById(id);
-						if (!canvas) return;
-						const viewer = new window.Act2Viewer(canvas, { fov: 22 });
-						viewer
-							.loadModel(src)
-							.then(() => viewer.playClip(anim).catch(() => {}))
-							.catch(() => {});
-					});
-				});
-			})();
-
-			// Star field canvas
-			(function () {
-				for (const canvas of document.querySelectorAll('[data-role="star-canvas"]')) {
-					const dpr = Math.min(window.devicePixelRatio || 1, 2);
-					const w = window.innerWidth * dpr;
-					const h = window.innerHeight * 8 * dpr;
-					canvas.width = w;
-					canvas.height = h;
-					const ctx = canvas.getContext('2d');
-					const tint = canvas.dataset.tint || '255,255,255';
-					const count = parseInt(canvas.dataset.count || '250', 10);
-					for (let i = 0; i < count; i++) {
-						const x = Math.random() * w;
-						const y = Math.random() * h;
-						const r = (Math.random() * 1.4 + 0.3) * dpr;
-						ctx.beginPath();
-						ctx.arc(x, y, r, 0, Math.PI * 2);
-						ctx.fillStyle = `rgba(${tint},${Math.random() * 0.65 + 0.2})`;
-						ctx.fill();
-					}
-					for (let i = 0; i < 10; i++) {
-						const x = Math.random() * w,
-							y = Math.random() * h;
-						const g = ctx.createRadialGradient(x, y, 0, x, y, 6 * dpr);
-						g.addColorStop(0, `rgba(${tint},0.9)`);
-						g.addColorStop(1, `rgba(${tint},0)`);
-						ctx.beginPath();
-						ctx.arc(x, y, 6 * dpr, 0, Math.PI * 2);
-						ctx.fillStyle = g;
-						ctx.fill();
-					}
-				}
 			})();
 		</script>
 	</body>
