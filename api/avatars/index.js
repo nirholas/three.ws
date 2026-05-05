@@ -115,13 +115,18 @@ async function handleCreate(req, res) {
 		queueMicrotask(async () => {
 			try {
 				await sql`
-					update agent_identities
-					set avatar_id = ${avatar.id}
-					where user_id = ${auth.userId}
-					  and avatar_id is null
-					  and deleted_at is null
-					order by created_at asc
-					limit 1
+					WITH agent_to_update AS (
+						SELECT id FROM agent_identities
+						WHERE user_id = ${auth.userId}
+							AND avatar_id IS NULL
+							AND deleted_at IS NULL
+						ORDER BY created_at ASC
+						LIMIT 1
+					)
+					UPDATE agent_identities
+					SET avatar_id = ${avatar.id}
+					FROM agent_to_update
+					WHERE agent_identities.id = agent_to_update.id
 				`;
 			} catch (err) {
 				console.error('[avatars] auto-link to agent_identities failed', {

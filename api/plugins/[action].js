@@ -144,7 +144,13 @@ async function handleList(req, res, url) {
 		  AND p.deleted_at IS NULL
 		  ${category ? sql`AND p.category = ${category}` : sql``}
 		  ${q ? sql`AND (p.name ILIKE ${'%' + q + '%'} OR p.description ILIKE ${'%' + q + '%'})` : sql``}
-		ORDER BY ${sort === 'popular' ? sql`p.install_count DESC, p.created_at DESC` : sort === 'new' ? sql`p.created_at DESC` : sql`p.name ASC`}
+		ORDER BY ${sql.unsafe(
+			sort === 'popular'
+				? 'p.install_count DESC, p.created_at DESC'
+				: sort === 'new'
+				? 'p.created_at DESC'
+				: 'p.name ASC',
+		)}
 		LIMIT ${limit + 1} OFFSET ${offset}
 	`;
 
