@@ -105,21 +105,23 @@ function openModal() {
 	return { back, inner, close };
 }
 
-// Bundled, not loaded from a CDN: same @solana/web3.js + spl-token versions
-// the rest of the app uses.
-import {
+// Loaded from esm.sh because this module is served raw to the browser
+// (Vercel does not bundle /src/*). Versions match package.json so signing
+// produces byte-identical transactions to the bundled Node code paths.
+const {
 	VersionedTransaction,
 	Connection,
 	PublicKey,
 	Keypair,
-} from '@solana/web3.js';
-import {
+	TransactionMessage,
+} = await import('https://esm.sh/@solana/web3.js@1.98.4');
+const {
 	getAssociatedTokenAddress,
 	createAssociatedTokenAccountInstruction,
 	getAccount,
 	TOKEN_PROGRAM_ID,
 	ASSOCIATED_TOKEN_PROGRAM_ID,
-} from '@solana/spl-token';
+} = await import('https://esm.sh/@solana/spl-token@0.4.14?deps=@solana/web3.js@1.98.4');
 
 const RPC = (network) =>
 	network === 'devnet'
@@ -193,7 +195,6 @@ export async function signAndSendVTx(
 	let toSign = original;
 	if (prependIxs && prependIxs.length) {
 		// Decompile original message → splice in prepend ixs → recompile.
-		const { TransactionMessage } = await import('@solana/web3.js');
 		const decompiled = TransactionMessage.decompile(original.message);
 		const merged = new TransactionMessage({
 			payerKey: decompiled.payerKey,
