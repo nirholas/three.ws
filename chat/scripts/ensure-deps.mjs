@@ -14,7 +14,7 @@ const needsInstall =
 	readFileSync(stamp, 'utf8').trim() !== hash;
 
 if (needsInstall) {
-	execSync('npm ci --prefer-offline --no-audit --no-fund', { stdio: 'inherit' });
+	execSync('npm ci --prefer-offline --no-audit --no-fund', { stdio: 'inherit', env: { ...process.env, NODE_ENV: 'development' } });
 	writeFileSync(stamp, hash);
 } else {
 	console.log('chat deps up-to-date, skipping npm ci');
