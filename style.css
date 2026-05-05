@@ -997,6 +997,9 @@ footer .separator {
 .phi-grid-h::after {
 	content: '';
 	position: absolute;
+	left: 0;
+	right: 0;
+	height: 1px;
 }
 
 .price-badge {
@@ -1038,10 +1041,6 @@ footer .separator {
 .price-paid {
   color: #fde047;
   background-color: rgba(253, 224, 71, 0.1);
-}
-	left: 0;
-	right: 0;
-	height: 1px;
 }
 
 .phi-grid-h::before {

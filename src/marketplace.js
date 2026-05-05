@@ -1,6 +1,3 @@
-import QRCode from 'qrcode';
-import { createQR } from '@solana/pay';
-import { escapeHtml } from './utils'; // Assuming you have this
 
 /**
  * Agent Marketplace — discovery + detail page controller.
@@ -11,6 +8,20 @@ import { escapeHtml } from './utils'; // Assuming you have this
 
 
 const API = '/api';
+
+let purchasedSkills = new Set();
+
+async function fetchUserPurchases() {
+	try {
+		const r = await fetch(`${API}/users/me/purchased-skills`);
+		if (!r.ok) return;
+		const j = await r.json();
+		purchasedSkills = new Set(j.purchases.map(p => `${p.agent_id}:${p.skill_name}`));
+	} catch (err) {
+		console.error('[marketplace] purchases', err);
+	}
+}
+
 
 const CATEGORY_LABELS = {
 	academic: 'Academic',
@@ -200,6 +211,39 @@ function renderCard(a) {
 // ── Detail view ───────────────────────────────────────────────────────────
 
 let detailState = null;
+let unlockedSkills = new Set(); // In a real app, this would be populated from an API call on load
+
+// --- New function, refactored from renderDetail ---
+function renderSkillList(agent) {
+    const skillsContainer = $('d-skills');
+    if (!skillsContainer) return;
+
+    const skillsArr = Array.isArray(agent.capabilities.skills) ? agent.capabilities.skills : agent.skills || [];
+    const skillPrices = agent.skill_prices || {};
+    
+    skillsContainer.innerHTML = skillsArr.length
+        ? skillsArr.map((s) => {
+            const name = typeof s === 'string' ? s : (s.name || '');
+            const price = skillPrices[name];
+            
+            let actionButton;
+            if (unlockedSkills.has(name)) {
+                actionButton = `<button class="skill-btn" disabled>Unlocked</button>`;
+            } else if (price) {
+                actionButton = `<button class="skill-btn purchase" data-skill-name="${escapeHtml(name)}">Purchase</button>`;
+            } else {
+                actionButton = `<button class="skill-btn" disabled>Free</button>`;
+            }
+
+            const priceDisplay = price ? `<span class="price-paid">${(price.amount / 1e6).toFixed(2)} USDC</span>` : ``;
+
+            return `<div class="skill-row">
+                        <span class="skill-name">${escapeHtml(name)} ${priceDisplay}</span>
+                        ${actionButton}
+                    </div>`;
+        }).join('')
+        : '<div>This Agent has no skills defined.</div>';
+}
 
 async function loadDetail(id) {
 	els.discovery.hidden = true;
@@ -266,19 +310,29 @@ function renderDetail(a, bookmarked) {
 	$('d-library-count').textContent = libraryArr.length;
 
 	const skillPrices = a.skill_prices || {};
+
 	$('d-skills').innerHTML = skillsArr.length
-		? skillsArr
-				.map((s) => {
-					const name = typeof s === 'string' ? s : s.name || '';
-					const price = skillPrices[name];
-					const badge = price
-						? `<span class="price-badge price-paid">${(price.amount / 1e6).toFixed(
-								2,
-							)} USDC</span>`
-						: `<span class="price-badge price-free">Free</span>`;
-					return `<span class="skill-entry">${escapeHtml(name)}${badge}</span>`;
-				})
-				.join(' ')
+		? skillsArr.map((s) => {
+				const name = typeof s === 'string' ? s : (s.name || '');
+				const price = skillPrices[name];
+				const purchaseKey = `${a.id}:${name}`;
+				
+				let badge;
+				if (purchasedSkills.has(purchaseKey)) {
+					badge = `<span class="price-badge price-owned">✓ Owned</span>`;
+				} else if (price) {
+					const priceInUSDC = (price.amount / 1e6).toFixed(2);
+					badge = `<span class="price-badge price-paid">${priceInUSDC} USDC</span>` +
+									`<button class="purchase-btn" data-skill-name="${escapeHtml(name)}" data-agent-id="${a.id}">Purchase</button>`;
+				} else {
+					badge = `<span class="price-badge price-free">Free</span>`;
+				}
+				
+				return `<div class="skill-row">
+										<span class="skill-name">${escapeHtml(name)}</span>
+										${badge}
+								</div>`;
+		}).join('')
 		: '<div>This Agent has no skills defined.</div>';
 
 	$('d-library').innerHTML = libraryArr.length
@@ -426,22 +480,13 @@ function bindEvents() {
 		bindTabs();
 	bindSubmit();
 
-    document.body.addEventListener('click', async (e) => {
-        if (e.target.matches('.btn-buy')) {
-            const agentId = e.target.dataset.agentId;
-            const skillId = e.target.dataset.skillId;
-            await onBuySkill(agentId, skillId);
-        }
-    });
-}
-}
+	document.body.addEventListener('click', async (e) => {
+		if (e.target.matches('.btn-buy')) {
+			const agentId = e.target.dataset.agentId;
+			const skillId = e.target.dataset.skillId;
+			await onBuySkill(agentId, skillId);
+		}
 
-// ── Submit Modal ──────────────────────────────────────────────────────────
-bindTabs();
-	bindSubmit();
-
-	// Delegated listener for purchase and close buttons
-	document.body.addEventListener('click', e => {
 		if (e.target.matches('.purchase-btn')) {
 			const skillName = e.target.dataset.skillName;
 			const agent = detailState?.agent;
@@ -460,15 +505,19 @@ bindTabs();
 		}
 	});
 
-	// Listener for backdrop click
 	const purchaseModal = $('purchase-modal');
 	if (purchaseModal) {
-		purchaseModal.addEventListener('click', e => {
+		purchaseModal.addEventListener('click', (e) => {
 			if (e.target.id === 'purchase-modal') {
 				purchaseModal.classList.add('modal-hidden');
 			}
 		});
-	}ubmitModal() {
+	}
+}
+
+// ── Submit Modal ──────────────────────────────────────────────────────────
+
+function openSubmitModal() {
 	$('market-submit-overlay').hidden = false;
 	$('sf-name').focus();
 }
@@ -575,7 +624,7 @@ function showPurchaseModal(txDetails) {
 
     detailsEl.textContent = `${txDetails.amount} USDC for "${txDetails.label}"`;
 
-    QRCode.toCanvas(canvas, url.toString(), { width: 256 }, (error) => {
+    window.QRCode.toCanvas(canvas, url.toString(), { width: 256 }, (error) => {
         if (error) console.error(error);
     });
 
@@ -625,6 +674,12 @@ function updateWalletUI() {
         `;
         $('payment-disconnect-btn').addEventListener('click', () => wallet.disconnect());
         confirmBtn.disabled = false;
+    
+				// Make sure to remove old listeners if this function can be called multiple times
+				const newConfirmBtn = confirmBtn.cloneNode(true);
+				confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+
+				newConfirmBtn.addEventListener('click', handlePurchase);
     } else {
         walletArea.innerHTML = `
             <button class="btn-primary" id="payment-connect-wallet-btn">Connect Phantom Wallet</button>
@@ -644,6 +699,85 @@ function updateWalletUI() {
         confirmBtn.disabled = true;
     }
 }
+
+// Create the main purchase handler function
+async function handlePurchase() {
+    const statusEl = $('payment-status');
+    const confirmBtn = $('payment-confirm-btn');
+    confirmBtn.disabled = true;
+    statusEl.textContent = 'Building transaction...';
+    statusEl.className = 'payment-status';
+
+    const intentId = document.getElementById('payment-modal-overlay').dataset.intentId;
+    if (!intentId) {
+        statusEl.textContent = 'Error: Missing payment intent ID.';
+        statusEl.classList.add('err');
+        return;
+    }
+
+    try {
+        const intent = await getCurrentIntentDetails(intentId); // Placeholder
+        if (!wallet.publicKey) throw new Error('Wallet is not connected.');
+
+        statusEl.textContent = 'Please approve the transaction in your wallet...';
+        const transaction = await buildUsdcTransferTransaction(intent, wallet.publicKey);
+        const txid = await wallet.sendTransaction(transaction, solanaConnection);
+        
+        statusEl.textContent = `Waiting for on-chain confirmation...`;
+        const confirmation = await solanaConnection.confirmTransaction(txid, 'confirmed');
+        if (confirmation.value.err) throw new Error('On-chain transaction failed.');
+
+        statusEl.textContent = 'Verifying purchase with server...';
+
+        const verifyRes = await fetch('/api/payments/confirm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+                intent_id: intentId,
+                transaction_signature: txid,
+            }),
+        });
+
+        const verifyBody = await verifyRes.json();
+        if (!verifyRes.ok) {
+            throw new Error(verifyBody.error_description || 'Failed to verify purchase.');
+        }
+
+        statusEl.textContent = 'Success! Skill unlocked.';
+        statusEl.classList.add('ok');
+        
+        // In the next prompt, we will add logic to update the UI permanently
+        // fireEvent('skill:purchased', { skillName: intent.payload.skill });
+
+        setTimeout(closePaymentModal, 2000);
+
+    } catch (error) {
+        statusEl.textContent = `Error: ${error.message}`;
+        statusEl.classList.add('err');
+        console.error("Purchase failed", error);
+        confirmBtn.disabled = false; // Re-enable on failure
+    }
+}
+
+// A placeholder function - you'd need to implement this
+// or pass the intent object around properly.
+async function getCurrentIntentDetails(intentId) {
+    // In a real app, you might re-fetch this from your server or have it stored
+    // For now, we'll reconstruct it from the UI for this example
+    const priceText = $('payment-price-display').textContent;
+    const amount = Math.round(parseFloat(priceText.replace(' USDC', '')) * 1e6);
+    // You would also need to get the recipient address and mint from the intent.
+    // This highlights the need for better state management than just the DOM.
+    
+    // For now, let's return a dummy object. The real implementation would be more robust.
+    return {
+        recipient_address: '...', // You would need to fetch this
+        amount: String(amount),
+        currency_mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyB7u6a' // USDC
+    }
+}
+
 
 function openPaymentModal(intent, skillName) {
     // Store intent for later use

@@ -997,6 +997,43 @@ create index if not exists pumpfun_graduations_creator on pumpfun_graduations(cr
 CREATE TABLE IF NOT EXISTS agent_skill_prices (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     agent_id UUID NOT NULL REFERENCES agent_identities(id) ON DELETE CASCADE,
+    skill_name TEXT NOT NULL,
+    amount BIGINT NOT NULL,
+    currency_mint VARCHAR(44) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (agent_id, skill_name)
+);
+
+CREATE INDEX IF NOT EXISTS idx_agent_skill_prices_on_agent_id ON agent_skill_prices(agent_id);
+
+CREATE TABLE IF NOT EXISTS skill_purchases (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES users (id),
+  agent_id uuid NOT NULL REFERENCES agent_identities (id),
+  skill_name varchar(255) NOT NULL,
+  transaction_signature varchar(255) UNIQUE NOT NULL,
+  amount bigint NOT NULL,
+  currency_mint varchar(255) NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_skill_purchases_user_id ON skill_purchases (user_id);
+CREATE INDEX IF NOT EXISTS idx_skill_purchases_agent_id ON skill_purchases (agent_id);
+
+CREATE TABLE IF NOT EXISTS agent_payment_intents (
+    id TEXT PRIMARY KEY,
+    payer_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    agent_id UUID NOT NULL REFERENCES agent_identities(id) ON DELETE CASCADE,
+    currency_mint TEXT NOT NULL,
+    amount BIGINT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    expires_at TIMESTAMPTZ NOT NULL,
+    payload JSONB NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
     skill_id TEXT NOT NULL,
     creator_id UUID NOT NULL REFERENCES users(id),
     amount BIGINT NOT NULL CHECK (amount > 0),

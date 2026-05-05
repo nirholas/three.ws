@@ -1,5 +1,5 @@
 ---
-status: not-started
+status: completed
 ---
 # Prompt 3: Create Skill Purchases Database Table
 

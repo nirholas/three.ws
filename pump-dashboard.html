@@ -420,6 +420,7 @@
     to { opacity: 1; transform: translateY(0); }
   }
 </style>
+<div id="toast-container"></div>
 </head>
 <body>
 <div class="app">
@@ -455,6 +456,7 @@
       <div class="section-label">System</div>
       <a href="#" data-page="config"><span class="icon">⚙️</span> Configuration</a>
       <a href="#" data-page="api"><span class="icon">🔌</span> API Keys</a>
+			<a href="#" data-page="revenue"><span class="icon">💰</span> Revenue</a>
     </nav>
     <div class="sidebar-footer">
       <div id="bot-uptime">Uptime: --</div>
@@ -539,6 +541,10 @@
         </div>
       </div>
     </div>
+
+		<div class="content page" id="page-revenue" style="display:none">
+				<!-- Content will be rendered here by dashboard.js -->
+		</div>
 
     <!-- ═══════ Live Feed Page ═══════ -->
     <div class="content page" id="page-feed" style="display:none">

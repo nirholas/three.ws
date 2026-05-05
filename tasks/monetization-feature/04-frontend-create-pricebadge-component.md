@@ -1,5 +1,5 @@
 ---
-status: not-started
+status: completed
 ---
 
 # Prompt 4: Frontend - Create Reusable PriceBadge Component

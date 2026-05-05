@@ -1,5 +1,5 @@
 ---
-status: not-started
+status: completed
 ---
 # Prompt 4: UI to Show Purchased Skills
 

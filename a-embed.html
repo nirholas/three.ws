@@ -164,15 +164,6 @@
 
 			const avatar = params.get('avatar');
 
-			if (avatar) {
-				const viewer = new Viewer({
-					el: document.getElementById('stage'),
-					model: avatar,
-				});
-				document.getElementById('loading').style.display = 'none';
-				return;
-			}
-
 			const plateOn = params.get('name') !== '0';
 			const chainOn = params.get('chain-plate') !== '0';
 			const openLinkOn = params.get('open-link') !== '0';
@@ -240,6 +231,15 @@
 			}
 
 			async function main() {
+				if (avatar) {
+					const viewer = new Viewer({
+						el: document.getElementById('stage'),
+						model: avatar,
+					});
+					document.getElementById('loading').style.display = 'none';
+					return;
+				}
+
 				if (!ref) return showError('Invalid agent URL');
 
 				const resolved = await resolveOnchainAgent(ref);

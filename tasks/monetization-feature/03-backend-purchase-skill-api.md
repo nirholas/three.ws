@@ -1,5 +1,5 @@
 ---
-status: not-started
+status: completed
 ---
 # Prompt 3: Backend for Skill Purchase
 

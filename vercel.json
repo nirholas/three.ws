@@ -89,6 +89,18 @@
 			"dest": "/api/agent-skill-price.js?agentId=$1"
 		},
 		{
+			"src": "/api/agents/([^/]+)/unlocked-skills",
+			"dest": "/api/agents/[id]/unlocked-skills?id=$1"
+		},
+		{
+			"src": "/api/billing/payout-wallet",
+			"dest": "/api/billing/payout-wallet"
+		},
+		{
+			"src": "/api/billing/withdraw",
+			"dest": "/api/billing/withdraw"
+		},
+		{
 			"src": "/api/newsletter/subscribe",
 			"dest": "/api/newsletter-subscribe"
 		},
@@ -98,6 +110,10 @@
 		},
 		{
 			"src": "/oauth/consent",
+		{
+			"src": "/api/payments/intent",
+			"dest": "/api/payments/intent"
+		},
 			"dest": "/api/oauth/[action]?action=authorize"
 		},
 		{

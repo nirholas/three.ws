@@ -1,5 +1,5 @@
 ---
-status: not-started
+status: completed
 ---
 # Prompt 2: Add "Purchase Skill" Button to UI
 

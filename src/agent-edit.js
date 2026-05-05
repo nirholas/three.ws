@@ -125,7 +125,7 @@ $('monetization-save').addEventListener('click', async () => {
   });
 
   try {
-    const r = await fetch(`${API_BASE}/agents/${agentId}/skill-prices`, {
+    const r = await fetch(`${API_BASE}/agents/${agentId}/skills-pricing`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prices })

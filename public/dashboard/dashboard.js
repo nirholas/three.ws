@@ -105,6 +105,47 @@ const tabs = {
 	account: renderAccount,
 };
 
+async function renderRevenue(root) {
+    root.innerHTML = `
+        <div class="page-header">
+            <h1>Revenue</h1>
+            <p class="sub">Track your earnings from paid agent skills.</p>
+        </div>
+        <div class="stats-grid" id="revenue-stats-grid">
+            <div class="stat-card">Loading...</div>
+        </div>
+        <div id="revenue-events-table-container"></div>
+    `;
+
+    try {
+        const stats = await api.getRevenueStats(); // Assumes an api helper exists
+        renderRevenueStats(stats);
+    } catch (e) {
+        document.getElementById('revenue-stats-grid').innerHTML = `<div class="err">Failed to load stats: ${e.message}</div>`;
+    }
+}
+
+function renderRevenueStats(stats) {
+    const grid = document.getElementById('revenue-stats-grid');
+    
+    const formatUSDC = (amount) => `$${(Number(amount) / 1e6).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+    grid.innerHTML = `
+        <div class="stat-card">
+          <div class="label">Current Balance</div>
+          <div class="value green">${formatUSDC(stats.current_balance)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Net Earnings (30 Days)</div>
+          <div class="value">${formatUSDC(stats.earnings_last_30_days)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Lifetime Net Revenue</div>
+          <div class="value">${formatUSDC(stats.total_revenue_net)}</div>
+        </div>
+    `;
+}
+
 // ── Avatars ─────────────────────────────────────────────────────────────────
 async function renderAvatars(root) {
 	root.innerHTML = `<h1>Your avatars</h1><p class="sub">Each avatar gets a stable URL and can be rendered in Claude or any app via MCP.</p><div id="list" class="cards"></div>`;

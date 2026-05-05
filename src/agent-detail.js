@@ -206,10 +206,10 @@ function render(agent) {
 	else $('ad-trade').style.display = 'none';
 
 	document.querySelector('.ad-main').classList.remove('loading');
+	bindWalletActions();
 }
 
-function renderNotFound(id, reason) {
-	document.title = 'Agent not found — three.ws';
+function bindWalletActions() {
 	const receiveBtn = document.getElementById('receive-btn');
 	const withdrawBtn = document.getElementById('withdraw-btn');
 	const swapBtn = document.getElementById('swap-btn');
