@@ -45,7 +45,6 @@ const appConfig = {
 				},
 			},
 			input: {
-				main: resolve(__dirname, 'index.html'),
 				app: resolve(__dirname, 'app.html'),
 				home: resolve(__dirname, 'home.html'),
 				tutorials: resolve(__dirname, 'tutorials.html'),
