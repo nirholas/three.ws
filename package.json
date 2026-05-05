@@ -24,8 +24,7 @@
 	],
 	"workspaces": [
     "agent-payments-sdk",
-    "character-studio",
-    "chat"
+    "character-studio"
   ],
 	"main": "src/app.js",
 	"browserslist": [
