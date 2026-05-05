@@ -31,7 +31,7 @@ export async function fetchAgentSolanaWallet(agentId, network = 'mainnet') {
 	const resp = await fetch(ENDPOINT(agentId, `network=${encodeURIComponent(network)}`), {
 		credentials: 'include',
 	});
-	if (resp.status === 403) return { status: 'forbidden' };
+	if (resp.status === 401 || resp.status === 403) return { status: 'forbidden' };
 	const json = await resp.json().catch(() => ({}));
 	if (resp.status === 404) return { status: 'none' };
 	if (!resp.ok) return { status: 'error', error: json?.error?.message || `HTTP ${resp.status}` };

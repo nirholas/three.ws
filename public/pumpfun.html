@@ -1046,6 +1046,8 @@
 			iframeUrl.searchParams.set('src', params.avatar);
 			// Pass some params to the agent iframe for its own analytics
 			iframeUrl.searchParams.set('page', 'pumpfun');
+			// Cursor stays a normal cursor — no avatar gaze tracking on this page
+			iframeUrl.searchParams.set('gaze', 'off');
 			if (params.asset) iframeUrl.searchParams.set('asset', params.asset);
 			if (params.mint) iframeUrl.searchParams.set('mint', params.mint);
 			iframe.src = iframeUrl.href;

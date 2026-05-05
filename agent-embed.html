@@ -362,6 +362,7 @@
 					viewer.renderer?.setClearAlpha(0);
 					if (viewer.scene) viewer.scene.background = null;
 				}
+				if (params.get('gaze') === 'off') viewer.state.followMode = 'off';
 				await viewer.load(glbUrl, '', new Map());
 
 				if (bg === 'dark') {
