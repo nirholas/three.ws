@@ -136,6 +136,13 @@ async function handleList(req, res, url) {
 	const limit = Math.min(40, Math.max(1, Number(url.searchParams.get('limit')) || 20));
 	const offset = cursor ? Math.max(0, Number(cursor)) : 0;
 
+	const sortClause =
+		sort === 'popular'
+			? 'p.install_count DESC, p.created_at DESC'
+			: sort === 'new'
+			? 'p.created_at DESC'
+			: 'p.name ASC';
+
 	const rows = await sql`
 		SELECT p.*, u.display_name AS author_display_name
 		FROM plugins p
@@ -144,13 +151,7 @@ async function handleList(req, res, url) {
 		  AND p.deleted_at IS NULL
 		  ${category ? sql`AND p.category = ${category}` : sql``}
 		  ${q ? sql`AND (p.name ILIKE ${'%' + q + '%'} OR p.description ILIKE ${'%' + q + '%'})` : sql``}
-		ORDER BY ${sql.unsafe(
-			sort === 'popular'
-				? 'p.install_count DESC, p.created_at DESC'
-				: sort === 'new'
-				? 'p.created_at DESC'
-				: 'p.name ASC',
-		)}
+		ORDER BY ${sql.unsafe(sortClause)}
 		LIMIT ${limit + 1} OFFSET ${offset}
 	`;
 
