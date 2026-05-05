@@ -41,6 +41,75 @@
 				color: #fde047;
 				background-color: rgba(253, 224, 71, 0.1);
 			}
+
+			.payment-modal-body {
+				padding: 16px;
+				font-size: 14px;
+				color: rgba(255, 255, 255, 0.7);
+			}
+
+			.payment-item {
+				background-color: rgba(255, 255, 255, 0.05);
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				border-radius: 8px;
+				padding: 12px;
+				margin: 16px 0;
+				text-align: center;
+			}
+
+			#payment-skill-name {
+				display: block;
+				font-size: 16px;
+				font-weight: 600;
+				color: #fff;
+			}
+
+			.payment-item > span {
+				font-size: 12px;
+				color: rgba(255, 255, 255, 0.5);
+			}
+
+			#payment-agent-name {
+				display: block;
+				font-size: 12px;
+				font-style: normal;
+			}
+
+			.payment-price {
+				display: flex;
+				justify-content: space-between;
+				align-items: baseline;
+				padding: 12px 0;
+				border-top: 1px solid rgba(255, 255, 255, 0.1);
+				border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+			}
+
+			#payment-price-display {
+				font-size: 20px;
+				font-weight: 700;
+				color: #fde047;
+			}
+
+			.payment-wallet-area {
+				margin: 20px 0;
+				padding: 16px;
+				background-color: rgba(0, 0, 0, 0.2);
+				border-radius: 8px;
+				text-align: center;
+			}
+
+			.payment-confirm-btn {
+				width: 100%;
+				padding: 12px;
+				font-size: 16px;
+			}
+
+			.payment-status {
+				margin-top: 16px;
+				font-size: 12px;
+				text-align: center;
+				min-height: 1.2em;
+			}
 		</style>
 		<meta property="og:type" content="website" />
 		<meta property="og:title" content="Agent Marketplace · three.ws" />
@@ -60,6 +129,38 @@
 		<script src="https://unpkg.com/@solana/wallet-adapter-react-ui@latest/lib/index.iife.js"></script>
 		<script src="https://unpkg.com/@solana/spl-token@0.3.7/lib/index.iife.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
+
+		<script>
+			const { WalletAdapterNetwork } = solanaWalletAdapter;
+			const { ConnectionProvider, WalletProvider } = solanaWalletAdapterReact;
+			const { WalletModalProvider, WalletMultiButton } = solanaWalletAdapterReactUi;
+			const {
+					GlowWalletAdapter,
+					PhantomWalletAdapter,
+					SlopeWalletAdapter,
+					SolflareWalletAdapter,
+					TorusWalletAdapter,
+			} = solanaWalletAdapterWallets;
+			const { clusterApiUrl } = solanaWeb3;
+
+			const network = WalletAdapterNetwork.Devnet;
+			const endpoint = clusterApiUrl(network);
+
+			const wallets = [
+					new PhantomWalletAdapter(),
+					new SolflareWalletAdapter(),
+			];
+
+			// You can now use the wallet adapter components in your vanilla JS app
+			// For example, you can render the WalletMultiButton into a container
+			const container = document.querySelector('.wallet-adapter-button-container');
+			const button = WalletMultiButton();
+			// This is a simplified example. In a real app, you would need to
+			// use a library like React or Svelte to render the button.
+			// For now, we will just add the button to the DOM.
+			// container.appendChild(button);
+
+		</script>
 	</head>
 	<body class="market-page">
 		<aside class="market-sidebar" id="market-sidebar">
@@ -94,6 +195,7 @@
 						<option value="popular">Popular</option>
 					</select>
 					<button class="market-submit-btn" id="market-submit-btn-top">+ Submit Agent</button>
+					<div class="wallet-adapter-button-container"></div>
 				</header>
 
 				<div class="market-body">
@@ -320,18 +422,6 @@
 		</div>
 	</div>
 
-	<!-- Purchase Modal -->
-	<div id="purchase-modal" class="modal-hidden">
-		<div class="modal-content">
-			<span class="close-button">&times;</span>
-			<h2>Unlock Skill</h2>
-			<p>You are about to purchase:</p>
-			<p><strong>Skill:</strong> <span id="modal-skill-name"></span></p>
-			<p><strong>Price:</strong> <span id="modal-skill-price"></span></p>
-			<button id="modal-confirm-purchase">Confirm Purchase</button>
-		</div>
-	</div>
-
 	    <script src="/src/marketplace.js" type="module"></script>
 
     <div id="purchase-modal" class="modal" hidden>
@@ -343,8 +433,38 @@
             <p id="purchase-details"></p>
         </div>
     </div>
+
+	<!-- Payment Modal -->
+	<div class="market-modal-overlay" id="payment-modal-overlay" hidden aria-modal="true" role="dialog" aria-labelledby="payment-modal-title">
+			<div class="market-modal">
+					<div class="market-modal-head">
+							<h2 id="payment-modal-title">Unlock Skill</h2>
+							<button class="market-modal-close" id="payment-modal-close" aria-label="Close">×</button>
+					</div>
+					<div class="payment-modal-body">
+							<p>You are purchasing access to the following skill:</p>
+							<div class="payment-item">
+									<strong id="payment-skill-name"></strong>
+									<span>from agent</span>
+									<em id="payment-agent-name"></em>
+							</div>
+
+							<div class="payment-price">
+									<span>Total</span>
+									<strong id="payment-price-display"></strong>
+							</div>
+
+							<div class="payment-wallet-area" id="payment-wallet-area">
+									<!-- Wallet connection status and button will be rendered here by JS -->
+									<button class="btn-primary" id="payment-connect-wallet-btn">Connect Wallet</button>
+							</div>
+							
+							<button class="btn-primary payment-confirm-btn" id="payment-confirm-btn" disabled>Confirm Purchase</button>
+
+							<div class="payment-status" id="payment-status" role="status" aria-live="polite"></div>
+					</div>
+			</div>
+	</div>
   </body>
 </html>
 
-	</body>
-</html>

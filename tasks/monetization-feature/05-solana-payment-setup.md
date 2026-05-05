@@ -1,5 +1,5 @@
 ---
-status: not-started
+status: completed
 ---
 
 # Prompt 5: Frontend - Solana Wallet Connection for Payments

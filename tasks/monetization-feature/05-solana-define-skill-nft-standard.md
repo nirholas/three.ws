@@ -1,5 +1,5 @@
 ---
-status: not-started
+status: completed
 ---
 
 # Prompt 5: Solana - Define Skill NFT Standard

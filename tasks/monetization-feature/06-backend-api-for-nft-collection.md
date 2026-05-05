@@ -1,5 +1,5 @@
 ---
-status: not-started
+status: completed
 ---
 
 # Prompt 6: Backend - API for NFT Collection Creation

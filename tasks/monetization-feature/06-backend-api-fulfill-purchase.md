@@ -1,5 +1,5 @@
 ---
-status: not-started
+status: completed
 ---
 # Prompt 6: API to Fulfill Skill Purchase
 
