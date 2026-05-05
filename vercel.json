@@ -110,11 +110,11 @@
 		},
 		{
 			"src": "/oauth/consent",
+			"dest": "/api/oauth/[action]?action=consent"
+		},
 		{
 			"src": "/api/payments/intent",
 			"dest": "/api/payments/intent"
-		},
-			"dest": "/api/oauth/[action]?action=authorize"
 		},
 		{
 			"src": "/oauth/token",
@@ -925,25 +925,6 @@
 		{
 			"src": "/app",
 			"dest": "/app.html"
-		},
-		{
-			"src": "/features.html",
-			"status": 301,
-			"headers": {
-				"Location": "/features"
-			}
-		},
-		{
-			"src": "/features",
-			"dest": "/features/index.html"
-		},
-		{
-			"src": "/features/",
-			"dest": "/features/index.html"
-		},
-		{
-			"src": "/features/(.*)",
-			"dest": "/features/$1"
 		},
 		{
 			"src": "/chat",

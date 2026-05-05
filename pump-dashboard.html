@@ -4,25 +4,25 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
-<title>3D-Agent · Pump Dashboard</title>
+<title>three.ws · Pump Dashboard</title>
 <meta name="description" content="Multi-pane Pump.fun dashboard for 3D-Agent — live feed, watch list, claims, scanner, quoting.">
 <link rel="canonical" href="/pump-dashboard.html">
 <style>
   :root {
-    --bg: #0a0a0a;
-    --bg-card: #111;
-    --bg-input: #1a1a1a;
+    --bg: #000;
+    --bg-card: #0d0d0d;
+    --bg-input: #161616;
     --border: #222;
-    --border-focus: #00ff41;
+    --border-focus: #fff;
     --text: #ccc;
     --text-bright: #fff;
-    --accent: #00ff41;
-    --accent-dim: #00cc33;
-    --red: #ff4141;
-    --yellow: #ffc107;
-    --blue: #4fc3f7;
-    --purple: #bb86fc;
-    --orange: #ff9800;
+    --accent: #fff;
+    --accent-dim: #aaa;
+    --red: #d9d9d9;
+    --yellow: #e6e6e6;
+    --blue: #c4c4c4;
+    --purple: #b8b8b8;
+    --orange: #cfcfcf;
     --font: 'Courier New', monospace;
     --radius: 6px;
   }
@@ -60,6 +60,27 @@
     align-items: center;
     gap: 8px;
   }
+  .sidebar-header h1 a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: inherit;
+    text-decoration: none;
+  }
+  .sidebar-header .wordmark-logo {
+    width: 22px;
+    height: 22px;
+    display: inline-block;
+    vertical-align: middle;
+  }
+  .sidebar-header .wordmark-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #a78bfa 0%, #6366f1 100%);
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.6);
+    display: inline-block;
+  }
   .sidebar-header .version { font-size: 11px; color: #666; }
   .sidebar nav { flex: 1; padding: 8px 0; }
   .sidebar nav a {
@@ -73,9 +94,9 @@
     border-left: 3px solid transparent;
     transition: all 0.15s;
   }
-  .sidebar nav a:hover { background: rgba(0,255,65,0.05); color: var(--text-bright); }
+  .sidebar nav a:hover { background: rgba(255,255,255,0.04); color: var(--text-bright); }
   .sidebar nav a.active {
-    background: rgba(0,255,65,0.08);
+    background: rgba(255,255,255,0.08);
     color: var(--accent);
     border-left-color: var(--accent);
   }
@@ -168,7 +189,7 @@
     color: var(--text-bright);
   }
   .panel-header .badge {
-    background: rgba(0,255,65,0.15);
+    background: rgba(255,255,255,0.12);
     color: var(--accent);
     padding: 2px 8px;
     border-radius: 10px;
@@ -239,12 +260,12 @@
     font-size: 10px;
     font-weight: bold;
   }
-  .tag-buy { background: rgba(0,255,65,0.15); color: var(--accent); }
-  .tag-sell { background: rgba(255,65,65,0.15); color: var(--red); }
-  .tag-claim { background: rgba(79,195,247,0.15); color: var(--blue); }
-  .tag-grad { background: rgba(187,134,252,0.15); color: var(--purple); }
-  .tag-whale { background: rgba(255,152,0,0.15); color: var(--orange); }
-  .tag-launch { background: rgba(255,193,7,0.15); color: var(--yellow); }
+  .tag-buy { background: rgba(255,255,255,0.12); color: var(--accent); }
+  .tag-sell { background: rgba(255,255,255,0.08); color: var(--red); }
+  .tag-claim { background: rgba(255,255,255,0.1); color: var(--blue); }
+  .tag-grad { background: rgba(255,255,255,0.09); color: var(--purple); }
+  .tag-whale { background: rgba(255,255,255,0.11); color: var(--orange); }
+  .tag-launch { background: rgba(255,255,255,0.13); color: var(--yellow); }
 
   /* ── Buttons ──────────────────────────────────────────── */
   .btn {
@@ -263,9 +284,9 @@
   }
   .btn:hover { border-color: #444; color: var(--text-bright); }
   .btn-primary { border-color: var(--accent-dim); color: var(--accent); }
-  .btn-primary:hover { background: rgba(0,255,65,0.1); }
-  .btn-danger { border-color: #cc3333; color: var(--red); }
-  .btn-danger:hover { background: rgba(255,65,65,0.1); }
+  .btn-primary:hover { background: rgba(255,255,255,0.1); }
+  .btn-danger { border-color: #555; color: var(--red); }
+  .btn-danger:hover { background: rgba(255,255,255,0.06); }
   .btn-sm { padding: 4px 10px; font-size: 11px; }
 
   /* ── Forms ────────────────────────────────────────────── */
@@ -302,7 +323,7 @@
   .feed-item:hover { background: rgba(255,255,255,0.02); }
   .feed-item.new { animation: feedFlash 1s ease-out; }
   @keyframes feedFlash {
-    0% { background: rgba(0,255,65,0.12); }
+    0% { background: rgba(255,255,255,0.14); }
     100% { background: transparent; }
   }
   .feed-item .time { color: #555; font-size: 11px; white-space: nowrap; min-width: 70px; }
@@ -427,9 +448,12 @@
   <!-- ── Sidebar ─────────────────────────── -->
   <aside class="sidebar">
     <div class="sidebar-header">
-      <h1>🤖 3D-Agent · Pump</h1>
-      <div class="version">Dashboard v1.0</div>
-      <div style="margin-top:8px;"><a href="/" style="color:var(--accent); text-decoration:none; font-size:11px;">← back to 3D-Agent</a></div>
+      <h1>
+        <a href="/" aria-label="three.ws home">
+          <img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" /><span class="wordmark-dot" aria-hidden="true"></span>three.ws
+        </a>
+      </h1>
+      <div class="version">Pump Dashboard v1.0</div>
     </div>
     <nav>
       <div class="section-label">Overview</div>

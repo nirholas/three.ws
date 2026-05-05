@@ -1,5 +1,5 @@
 ---
-status: completed
+status: not-started
 ---
 
 # Prompt 6: API to List Purchased Skills

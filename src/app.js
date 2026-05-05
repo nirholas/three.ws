@@ -1772,7 +1772,6 @@ class App {
 					<a href="/create">Create</a>
 					<a href="/studio">Studio</a>
 					<a href="/widgets">Widgets</a>
-					<a href="/features">Features</a>
 					<a href="/discover">Discover</a>
 					<a href="/docs">Docs</a>
 					<a href="https://eips.ethereum.org/EIPS/eip-8004" target="_blank" rel="noopener">ERC-8004</a>
