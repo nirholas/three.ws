@@ -33,6 +33,9 @@ export {
   getBuybackAuthorityPDA,
   getWithdrawAuthorityPDA,
   getBondingCurvePDA,
+  PUMP_FEES_PROGRAM_ID,
+  SHARING_CONFIG_SEED,
+  getSharingConfigPDA,
 } from "./pdas";
 
 // Classes
