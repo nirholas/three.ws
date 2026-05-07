@@ -3,3 +3,4 @@ dist/
 *.tsbuildinfo
 .env
 .env.local
+pump-fun-agent-payments-sdk-3.0.3.tgz
