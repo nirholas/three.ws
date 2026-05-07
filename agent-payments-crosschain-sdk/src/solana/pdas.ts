@@ -11,6 +11,11 @@ export const PUMP_PROGRAM_ID = new PublicKey(
   "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P",
 );
 
+/** Pump fees program ID */
+export const PUMP_FEES_PROGRAM_ID = new PublicKey(
+  "pfeeUxB6jkeY1Hxd7CsFCAjcbHA9rWtchMGdZ6VojVZ",
+);
+
 // PDA seeds
 export const GLOBAL_CONFIG_SEED = Buffer.from("global-config");
 export const TOKEN_AGENT_PAYMENTS_SEED = Buffer.from("token-agent-payments");
@@ -19,6 +24,7 @@ export const INVOICE_ID_SEED = Buffer.from("invoice-id");
 export const BUYBACK_AUTHORITY_SEED = Buffer.from("buyback-authority");
 export const WITHDRAW_AUTHORITY_SEED = Buffer.from("withdraw-authority");
 export const BONDING_CURVE_SEED = Buffer.from("bonding-curve");
+export const SHARING_CONFIG_SEED = Buffer.from("sharing-config");
 
 /**
  * Minimum rent-exempt lamports for TokenAgentPayments account.
@@ -123,5 +129,18 @@ export function getBondingCurvePDA(
   return PublicKey.findProgramAddressSync(
     [BONDING_CURVE_SEED, mint.toBuffer()],
     PUMP_PROGRAM_ID,
+  );
+}
+
+/**
+ * Derives the SharingConfig PDA for a given mint.
+ * Seeds: ["sharing-config", mint]
+ */
+export function getSharingConfigPDA(
+  mint: PublicKey,
+): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync(
+    [SHARING_CONFIG_SEED, mint.toBuffer()],
+    PROGRAM_ID,
   );
 }
