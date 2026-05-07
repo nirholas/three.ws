@@ -12,26 +12,24 @@
       height: 100vh;
       overflow: hidden;
     }
-    body {
-      font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, serif;
-    }
+    body { font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, serif; }
 
     #stage {
       position: relative;
       width: 100vw;
       height: 100vh;
       overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     .line {
       position: absolute;
       white-space: pre;
       z-index: 1;
-      color: #d8d3ec;
-      user-select: text;
-      -webkit-user-select: text;
+      color: #cdc8e8;
+      pointer-events: none;
     }
-
     .headline-line {
       position: absolute;
       white-space: pre;
@@ -39,43 +37,36 @@
       color: #fff;
       letter-spacing: -0.5px;
       z-index: 2;
-      user-select: text;
-      -webkit-user-select: text;
+      pointer-events: none;
     }
-
     .drop-cap {
       position: absolute;
-      pointer-events: none;
-      z-index: 2;
       font-weight: 700;
       color: #7c6fcf;
+      pointer-events: none;
+      z-index: 2;
     }
-
     .orb {
       position: absolute;
       border-radius: 50%;
-      pointer-events: none;
       z-index: 10;
       will-change: transform;
     }
-
     .pullquote-line {
       position: absolute;
       white-space: pre;
       font-style: italic;
       color: #9d8fd6;
-      user-select: text;
-      -webkit-user-select: text;
-    }
-
-    .pullquote-box {
-      position: absolute;
-      pointer-events: none;
       z-index: 3;
-      border-left: 3px solid #4a3e8a;
-      padding-left: 14px;
+      pointer-events: none;
     }
-
+    .pullquote-bar {
+      position: absolute;
+      background: #4a3e8a;
+      width: 3px;
+      z-index: 3;
+      pointer-events: none;
+    }
     .hint {
       position: fixed;
       top: 16px;
@@ -90,622 +81,412 @@
       pointer-events: none;
       white-space: nowrap;
     }
-
-    .credit {
+    #err {
       position: fixed;
-      right: 16px;
-      bottom: 12px;
-      z-index: 100;
-      font: 400 11px/1 "Helvetica Neue", Helvetica, Arial, sans-serif;
-      color: rgba(255,255,255,0.28);
-      text-decoration: none;
+      top: 0; left: 0; right: 0;
+      background: #c0392b;
+      color: #fff;
+      font: 13px monospace;
+      padding: 12px;
+      z-index: 9999;
+      white-space: pre-wrap;
+      display: none;
     }
-
-    @media (max-width: 760px) {
-      .hint, .credit { display: none; }
-    }
+    @media (max-width: 760px) { .hint { display: none; } }
   </style>
 </head>
 <body>
+  <div id="err"></div>
   <div id="stage"></div>
   <div class="hint">Drag the orbs &middot; Click to pause &middot; Zero DOM reads</div>
-  <a class="credit" href="https://3dagent.xyz" target="_blank" rel="noreferrer">3D-Agent · pretext demo</a>
 
   <script type="module">
-    import {
+    function showErr(e) {
+      const el = document.getElementById('err');
+      el.style.display = 'block';
+      el.textContent = String(e?.stack || e);
+    }
+    window.addEventListener('error', e => showErr(e.error || e.message));
+    window.addEventListener('unhandledrejection', e => showErr(e.reason));
+
+    try {
+
+    import('@chenglou/pretext').then(({
       layoutNextLine,
       layoutWithLines,
       prepareWithSegments,
       walkLineRanges,
-    } from '@chenglou/pretext';
+    }) => {
+      run({ layoutNextLine, layoutWithLines, prepareWithSegments, walkLineRanges });
+    }).catch(showErr);
 
-    const BODY_FONT = '17px "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, serif';
-    const BODY_LINE_HEIGHT = 28;
-    const HEADLINE_FONT_FAMILY = '"Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, serif';
-    const HEADLINE_TEXT = 'AUTONOMOUS AGENTS ARE THE NEW INTERFACE';
-    const GUTTER = 48;
-    const COL_GAP = 40;
-    const BOTTOM_GAP = 20;
-    const DROP_CAP_LINES = 3;
-    const MIN_SLOT_WIDTH = 50;
-    const NARROW_BREAKPOINT = 760;
-    const NARROW_GUTTER = 20;
-    const NARROW_COL_GAP = 20;
-    const NARROW_BOTTOM_GAP = 16;
-    const NARROW_ORB_SCALE = 0.58;
-    const NARROW_ACTIVE_ORBS = 3;
+    } catch(e) { showErr(e); }
 
-    const BODY_TEXT = `The history of software interfaces is a history of shrinking distance between human intent and machine action. The command line required you to memorize incantations. The graphical interface gave you objects to click. The touchscreen made those objects physical. Each transition collapsed a layer of indirection, bringing the interface closer to thought itself.
+    function run({ layoutNextLine, layoutWithLines, prepareWithSegments, walkLineRanges }) {
+      const BODY_FONT = '17px "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, serif';
+      const BODY_LINE_HEIGHT = 28;
+      const HL_FAMILY = '"Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, serif';
+      const HL_TEXT = 'AUTONOMOUS AGENTS ARE THE NEW INTERFACE';
+      const GUTTER = 48;
+      const COL_GAP = 40;
+      const DROP_LINES = 3;
+      const MIN_SLOT = 50;
+
+      const BODY = `The history of software interfaces is a history of shrinking distance between human intent and machine action. The command line required you to memorize incantations. The graphical interface gave you objects to click. The touchscreen made those objects physical. Each transition collapsed a layer of indirection, bringing the interface closer to thought itself.
 
 Autonomous agents collapse the remaining distance. You do not click, type, or drag. You describe what you want, and the agent determines how to achieve it. The interface disappears entirely, replaced by a collaborator that understands context, maintains memory, and executes multi-step plans across heterogeneous systems.
 
-On the Solana blockchain, this transformation is happening in real time. Agents are being deployed that can trade tokens, manage liquidity positions, respond to on-chain events, and coordinate with other agents — all without human intervention between steps. The latency of human decision-making is removed from the loop. The agent acts at the speed of the network, which is to say, at the speed of thought.
+On the Solana blockchain, this transformation is happening in real time. Agents are being deployed that can trade tokens, manage liquidity positions, respond to on-chain events, and coordinate with other agents — all without human intervention between steps. The latency of human decision-making is removed from the loop. The agent acts at the speed of the network.
 
-What makes Solana uniquely suited to autonomous agents is not any single technical feature but the combination of finality speed, fee structure, and programmability that emerges from its architecture. A transaction confirms in four hundred milliseconds. Fees are denominated in fractions of a cent. Programs can invoke other programs atomically, allowing agents to compose complex multi-step operations into single transactions. An agent that needs to swap tokens, deposit into a lending protocol, and register an action on-chain can do all three in one atomic instruction set. Either everything succeeds, or nothing does.
+What makes Solana uniquely suited to autonomous agents is the combination of finality speed, fee structure, and programmability. A transaction confirms in four hundred milliseconds. Fees are fractions of a cent. Programs can invoke other programs atomically, allowing agents to compose complex multi-step operations into a single transaction. Either everything succeeds, or nothing does.
 
-The 3D-Agent platform extends this capability into the visual domain. Agents are not faceless processes running in a cloud datacenter — they are embodied in three-dimensional characters that represent their identity, personality, and current state. An agent managing a DeFi position might pace anxiously when its collateral ratio approaches a threshold. An agent completing a successful arbitrage might celebrate. The visual representation is not decorative — it is a real-time signal that humans can parse at a glance, the same way a colleague's body language communicates information before they say a word.
+The 3D-Agent platform extends this into the visual domain. Agents are not faceless processes running in a datacenter — they are embodied in three-dimensional characters that represent identity, personality, and current state. An agent managing a DeFi position might pace anxiously when its collateral ratio nears a threshold. An agent completing a successful arbitrage might celebrate. The visual representation is not decorative — it is a real-time signal that humans can parse at a glance, the same way a colleague's body language communicates before they say a word.
 
-This matters because the transition to autonomous agents does not eliminate the human. It changes the human's role from operator to supervisor. Instead of executing actions, you observe agents, assess their behavior, and intervene when something deviates from your intent. The 3D representation is an interface optimized for this supervisory role — rich in signal, low in cognitive load, comprehensible at a glance.
+This matters because the transition to autonomous agents does not eliminate the human. It changes the human's role from operator to supervisor. Instead of executing actions, you observe agents, assess their behavior, and intervene when something deviates from your intent. The 3D representation is an interface optimized for this supervisory role — rich in signal, low in cognitive load, comprehensible in a glance.
 
-The technical substrate for this embodied agency is a combination of real-time 3D rendering, Solana's WebSocket RPC, and a model context protocol that allows language models to issue structured commands against on-chain programs. When an agent decides to act, it produces a typed action description. The action is validated against a schema, translated into one or more Solana instructions, and submitted as a transaction. The result — success, failure, partial execution — flows back into the agent's context, updating its world model and informing its next decision.
+The technical substrate is a combination of real-time 3D rendering, Solana's WebSocket RPC, and a model context protocol that allows language models to issue structured commands against on-chain programs. When an agent decides to act, it produces a typed action description. The action is validated against a schema, translated into Solana instructions, and submitted. The result flows back into the agent's context, updating its world model and informing the next decision.
 
-Memory is the missing ingredient in most agent systems. An agent that forgets its previous actions cannot maintain a coherent strategy over time. The 3D-Agent memory system stores compressed episode summaries on Arweave, indexed by agent public key, with recency-weighted retrieval that surfaces relevant past experience when the agent faces analogous situations. The agent that traded a particular token six months ago and lost can retrieve that episode and adjust its strategy accordingly. Memory makes agents learnable — not from gradient descent, but from experience.
+Memory is the missing ingredient in most agent systems. An agent that forgets its previous actions cannot maintain a coherent strategy over time. The 3D-Agent memory system stores compressed episode summaries on Arweave, indexed by agent public key, with recency-weighted retrieval that surfaces relevant past experience when the agent faces analogous situations. The agent that traded a particular token six months ago and lost can retrieve that episode and adjust its strategy accordingly.
 
-Coordination between agents is the frontier. A single agent acting alone is powerful but limited by its context window and the scope of actions it can execute serially. Multiple agents acting in parallel, with shared goals and divided responsibilities, can achieve outcomes that no single agent could. On Solana, this coordination can be made explicit and verifiable through on-chain programs that record inter-agent commitments, track task completion, and arbitrate disputes. The blockchain becomes the coordination layer for a society of agents — a shared ledger of commitments and outcomes that every agent can read and every agent's actions can be held against.
-
-The implications for economic organization are profound. If agents can own assets, execute contracts, and coordinate with other agents without human intermediaries, then the organizational forms enabled by blockchains extend far beyond token issuance and governance voting. Agents can form temporary coalitions to pursue shared goals, dissolve them when the goal is achieved, and distribute proceeds according to pre-agreed rules. The corporation, with its fixed membership and hierarchical authority, is one point in a vast space of organizational possibilities. Autonomous agents on programmable blockchains make that entire space navigable.
-
-What stands between the current state and this future is not a missing technology but a missing interface layer. Agents exist. Blockchains exist. The programs that allow agents to act on-chain exist. What does not yet exist, at scale, is the supervisory interface that makes a world of autonomous agents comprehensible and controllable by human supervisors. That is the problem the 3D-Agent platform is designed to solve — not by eliminating agents or eliminating humans, but by giving each the interface they need to work together effectively.
-
-The agent runs. The human watches. When something needs a decision that exceeds the agent's authority or confidence, the agent surfaces it. The human decides. The agent continues. This is not science fiction — it is a workflow that will be commonplace within the decade, as the cost of deploying capable agents approaches zero and the economic pressure to remove human latency from high-frequency decisions becomes overwhelming.
+Coordination between agents is the frontier. Multiple agents acting in parallel, with shared goals and divided responsibilities, can achieve outcomes no single agent could. On Solana, this coordination can be made explicit and verifiable through on-chain programs that record inter-agent commitments, track task completion, and arbitrate disputes. The blockchain becomes the coordination layer for a society of agents.
 
 The interface is not the command line, the GUI, the touchscreen, or the chat window. The interface is the agent itself, rendered in three dimensions, moving through a persistent space, leaving a trail of actions that a supervisor can audit and a memory system that allows it to learn. The distance between human intent and machine action has never been smaller. We are building the final layer.`;
 
-    const PULLQUOTE_TEXTS = [
-      '"An agent that forgets its previous actions cannot maintain a coherent strategy. Memory makes agents learnable — not from gradients, but from experience."',
-      '"The interface is not the command line, the GUI, or the chat window. The interface is the agent itself, rendered in three dimensions."',
-    ];
+      const PQ_FONT = `italic 17px ${HL_FAMILY}`;
+      const PQ_LH = 26;
+      const PULLQUOTES = [
+        { text: '"An agent that forgets its previous actions cannot maintain a coherent strategy. Memory makes agents learnable — not from gradients, but from experience."', col: 0, yFrac: 0.44, wFrac: 0.52, side: 'right' },
+        { text: '"The interface is not the chat window. The interface is the agent itself, rendered in three dimensions."', col: 1, yFrac: 0.28, wFrac: 0.50, side: 'left' },
+      ];
 
-    const ORB_DEFS = [
-      { fx: 0.52, fy: 0.22, r: 110, vx: 24, vy: 16, color: [124, 111, 207] },
-      { fx: 0.18, fy: 0.48, r: 85, vx: -19, vy: 26, color: [80, 140, 255] },
-      { fx: 0.74, fy: 0.58, r: 95, vx: 16, vy: -21, color: [180, 80, 220] },
-      { fx: 0.38, fy: 0.72, r: 75, vx: -26, vy: -14, color: [60, 180, 200] },
-      { fx: 0.86, fy: 0.18, r: 65, vx: -13, vy: 19, color: [220, 100, 160] },
-    ];
+      const ORB_DEFS = [
+        { fx: 0.52, fy: 0.22, r: 105, vx: 22, vy: 15, rgb: [124,111,207] },
+        { fx: 0.18, fy: 0.50, r: 80,  vx: -18, vy: 25, rgb: [70,130,240] },
+        { fx: 0.75, fy: 0.60, r: 90,  vx: 15, vy: -20, rgb: [170,70,210] },
+        { fx: 0.38, fy: 0.74, r: 70,  vx: -24, vy: -13, rgb: [50,175,195] },
+        { fx: 0.88, fy: 0.18, r: 60,  vx: -12, vy: 18, rgb: [210,90,150] },
+      ];
 
-    function carveTextLineSlots(base, blocked) {
-      let slots = [base];
-      for (const interval of blocked) {
-        const next = [];
-        for (const slot of slots) {
-          if (interval.right <= slot.left || interval.left >= slot.right) {
-            next.push(slot);
-            continue;
+      // ── helpers ─────────────────────────────────────────────────────────
+      function carveSlots(base, blocked) {
+        let slots = [base];
+        for (const b of blocked) {
+          const next = [];
+          for (const s of slots) {
+            if (b.right <= s.left || b.left >= s.right) { next.push(s); continue; }
+            if (b.left > s.left) next.push({ left: s.left, right: b.left });
+            if (b.right < s.right) next.push({ left: b.right, right: s.right });
           }
-          if (interval.left > slot.left) next.push({ left: slot.left, right: interval.left });
-          if (interval.right < slot.right) next.push({ left: interval.right, right: slot.right });
+          slots = next;
         }
-        slots = next;
-      }
-      return slots.filter(s => s.right - s.left >= MIN_SLOT_WIDTH);
-    }
-
-    function circleIntervalForBand(cx, cy, r, bandTop, bandBottom, hPad, vPad) {
-      const top = bandTop - vPad;
-      const bottom = bandBottom + vPad;
-      if (top >= cy + r || bottom <= cy - r) return null;
-      const minDy = cy >= top && cy <= bottom ? 0 : cy < top ? top - cy : cy - bottom;
-      if (minDy >= r) return null;
-      const maxDx = Math.sqrt(r * r - minDy * minDy);
-      return { left: cx - maxDx - hPad, right: cx + maxDx + hPad };
-    }
-
-    const stage = document.getElementById('stage');
-    const W0 = window.innerWidth;
-    const H0 = window.innerHeight;
-
-    function createOrbEl(color) {
-      const el = document.createElement('div');
-      el.className = 'orb';
-      el.style.background = `radial-gradient(circle at 35% 35%, rgba(${color[0]},${color[1]},${color[2]},0.35), rgba(${color[0]},${color[1]},${color[2]},0.12) 55%, transparent 72%)`;
-      el.style.boxShadow = `0 0 60px 15px rgba(${color[0]},${color[1]},${color[2]},0.18), 0 0 120px 40px rgba(${color[0]},${color[1]},${color[2]},0.07)`;
-      stage.appendChild(el);
-      return el;
-    }
-
-    await document.fonts.ready;
-
-    const preparedBody = prepareWithSegments(BODY_TEXT, BODY_FONT);
-    const PQ_FONT = `italic 18px ${HEADLINE_FONT_FAMILY}`;
-    const PQ_LINE_HEIGHT = 26;
-    const preparedPullquotes = PULLQUOTE_TEXTS.map(t => prepareWithSegments(t, PQ_FONT));
-    const pullquoteSpecs = [
-      { prepared: preparedPullquotes[0], placement: { colIdx: 0, yFrac: 0.45, wFrac: 0.52, side: 'right' } },
-      { prepared: preparedPullquotes[1], placement: { colIdx: 1, yFrac: 0.30, wFrac: 0.50, side: 'left' } },
-    ];
-
-    const DROP_CAP_SIZE = BODY_LINE_HEIGHT * DROP_CAP_LINES - 4;
-    const DROP_CAP_FONT = `700 ${DROP_CAP_SIZE}px ${HEADLINE_FONT_FAMILY}`;
-    const DROP_CAP_TEXT = BODY_TEXT[0];
-    const preparedDropCap = prepareWithSegments(DROP_CAP_TEXT, DROP_CAP_FONT);
-
-    let dropCapWidth = 0;
-    walkLineRanges(preparedDropCap, 9999, line => { dropCapWidth = line.width; });
-    const DROP_CAP_TOTAL_W = Math.ceil(dropCapWidth) + 10;
-
-    const dropCapEl = document.createElement('div');
-    dropCapEl.className = 'drop-cap';
-    dropCapEl.textContent = DROP_CAP_TEXT;
-    dropCapEl.style.font = DROP_CAP_FONT;
-    dropCapEl.style.lineHeight = `${DROP_CAP_SIZE}px`;
-    stage.appendChild(dropCapEl);
-
-    const linePool = [];
-    const headlinePool = [];
-    const pullquoteLinePool = [];
-    const pullquoteBoxPool = [];
-    const orbEls = ORB_DEFS.map(d => createOrbEl(d.color));
-
-    // Caches for headline fitting
-    let cachedHW = -1, cachedHH = -1, cachedHMaxSize = -1;
-    let cachedHFontSize = 24, cachedHLines = [];
-
-    function fitHeadline(maxWidth, maxHeight, maxSize = 90) {
-      if (maxWidth === cachedHW && maxHeight === cachedHH && maxSize === cachedHMaxSize) {
-        return { fontSize: cachedHFontSize, lines: cachedHLines };
-      }
-      cachedHW = maxWidth; cachedHH = maxHeight; cachedHMaxSize = maxSize;
-      let lo = 18, hi = maxSize, best = lo, bestLines = [];
-      while (lo <= hi) {
-        const size = Math.floor((lo + hi) / 2);
-        const font = `700 ${size}px ${HEADLINE_FONT_FAMILY}`;
-        const lineHeight = Math.round(size * 0.93);
-        const prepared = prepareWithSegments(HEADLINE_TEXT, font);
-        let breaksWord = false, lineCount = 0;
-        walkLineRanges(prepared, maxWidth, line => {
-          lineCount++;
-          if (line.end.graphemeIndex !== 0) breaksWord = true;
-        });
-        const totalHeight = lineCount * lineHeight;
-        if (!breaksWord && totalHeight <= maxHeight) {
-          best = size;
-          const result = layoutWithLines(prepared, maxWidth, lineHeight);
-          bestLines = result.lines.map((line, i) => ({
-            x: 0, y: i * lineHeight, text: line.text, width: line.width,
-          }));
-          lo = size + 1;
-        } else {
-          hi = size - 1;
-        }
-      }
-      cachedHFontSize = best;
-      cachedHLines = bestLines;
-      return { fontSize: best, lines: bestLines };
-    }
-
-    function layoutColumn(prepared, startCursor, regionX, regionY, regionW, regionH, lineHeight, circleObstacles, rectObstacles, singleSlotOnly = false) {
-      let cursor = startCursor;
-      let lineTop = regionY;
-      const lines = [];
-      let textExhausted = false;
-
-      while (lineTop + lineHeight <= regionY + regionH && !textExhausted) {
-        const bandTop = lineTop;
-        const bandBottom = lineTop + lineHeight;
-        const blocked = [];
-
-        for (const obs of circleObstacles) {
-          const interval = circleIntervalForBand(obs.cx, obs.cy, obs.r, bandTop, bandBottom, obs.hPad, obs.vPad);
-          if (interval !== null) blocked.push(interval);
-        }
-
-        for (const rect of rectObstacles) {
-          if (bandBottom <= rect.y || bandTop >= rect.y + rect.h) continue;
-          blocked.push({ left: rect.x, right: rect.x + rect.w });
-        }
-
-        const slots = carveTextLineSlots({ left: regionX, right: regionX + regionW }, blocked);
-        if (slots.length === 0) { lineTop += lineHeight; continue; }
-
-        const orderedSlots = singleSlotOnly
-          ? [slots.reduce((best, slot) => {
-              const bw = best.right - best.left, sw = slot.right - slot.left;
-              if (sw > bw) return slot;
-              if (sw < bw) return best;
-              return slot.left < best.left ? slot : best;
-            })]
-          : [...slots].sort((a, b) => a.left - b.left);
-
-        for (const slot of orderedSlots) {
-          const slotWidth = slot.right - slot.left;
-          const line = layoutNextLine(prepared, cursor, slotWidth);
-          if (line === null) { textExhausted = true; break; }
-          lines.push({ x: Math.round(slot.left), y: Math.round(lineTop), text: line.text, width: line.width });
-          cursor = line.end;
-        }
-
-        lineTop += lineHeight;
+        return slots.filter(s => s.right - s.left >= MIN_SLOT);
       }
 
-      return { lines, cursor };
-    }
-
-    function syncPool(pool, count, createFn) {
-      while (pool.length < count) {
-        const el = createFn();
-        stage.appendChild(el);
-        pool.push(el);
-      }
-      for (let i = 0; i < pool.length; i++) {
-        pool[i].style.display = i < count ? '' : 'none';
-      }
-    }
-
-    // App state
-    const orbs = ORB_DEFS.map(d => ({
-      x: d.fx * W0, y: d.fy * H0,
-      r: d.r, vx: d.vx, vy: d.vy,
-      paused: false,
-    }));
-
-    let pointer = { x: -9999, y: -9999 };
-    let drag = null;
-    let interactionMode = 'idle';
-    let lastFrameTime = null;
-
-    let pendingDown = null, pendingMove = null, pendingUp = null;
-
-    function isOrbHit(orbs, px, py, count, rScale) {
-      for (let i = count - 1; i >= 0; i--) {
-        const o = orbs[i];
-        const dx = px - o.x, dy = py - o.y;
-        const r = o.r * rScale;
-        if (dx * dx + dy * dy <= r * r) return i;
-      }
-      return -1;
-    }
-
-    function isSelectableTarget(target) {
-      return target instanceof Element && target.closest('.line, .headline-line, .pullquote-line') !== null;
-    }
-
-    function hasTextSelection() {
-      const sel = window.getSelection();
-      return sel !== null && !sel.isCollapsed && sel.rangeCount > 0;
-    }
-
-    stage.addEventListener('pointerdown', e => { pendingDown = { x: e.clientX, y: e.clientY, target: e.target }; });
-    window.addEventListener('pointermove', e => { pendingMove = { x: e.clientX, y: e.clientY }; });
-    window.addEventListener('pointerup', e => { pendingUp = { x: e.clientX, y: e.clientY }; });
-
-    let committedProjection = null;
-
-    function positionedLinesEqual(a, b) {
-      if (a.length !== b.length) return false;
-      for (let i = 0; i < a.length; i++) {
-        if (a[i].x !== b[i].x || a[i].y !== b[i].y || a[i].text !== b[i].text) return false;
-      }
-      return true;
-    }
-
-    function projectionsEqual(a, b) {
-      return a !== null &&
-        a.headlineLeft === b.headlineLeft &&
-        a.headlineTop === b.headlineTop &&
-        a.headlineFont === b.headlineFont &&
-        positionedLinesEqual(a.headlineLines, b.headlineLines) &&
-        positionedLinesEqual(a.bodyLines, b.bodyLines) &&
-        positionedLinesEqual(a.pullquoteLines, b.pullquoteLines);
-    }
-
-    function commitProjection(proj) {
-      syncPool(headlinePool, proj.headlineLines.length, () => {
-        const el = document.createElement('span');
-        el.className = 'headline-line';
-        return el;
-      });
-      for (let i = 0; i < proj.headlineLines.length; i++) {
-        const el = headlinePool[i];
-        const line = proj.headlineLines[i];
-        el.textContent = line.text;
-        el.style.left = `${proj.headlineLeft + line.x}px`;
-        el.style.top = `${proj.headlineTop + line.y}px`;
-        el.style.font = proj.headlineFont;
-        el.style.lineHeight = `${proj.headlineLineHeight}px`;
+      function circleInterval(cx, cy, r, top, bot, hPad, vPad) {
+        const t = top - vPad, b = bot + vPad;
+        if (t >= cy + r || b <= cy - r) return null;
+        const minDy = cy >= t && cy <= b ? 0 : cy < t ? t - cy : cy - b;
+        if (minDy >= r) return null;
+        const dx = Math.sqrt(r * r - minDy * minDy);
+        return { left: cx - dx - hPad, right: cx + dx + hPad };
       }
 
-      syncPool(linePool, proj.bodyLines.length, () => {
-        const el = document.createElement('span');
-        el.className = 'line';
-        return el;
-      });
-      for (let i = 0; i < proj.bodyLines.length; i++) {
-        const el = linePool[i];
-        const line = proj.bodyLines[i];
-        el.textContent = line.text;
-        el.style.left = `${line.x}px`;
-        el.style.top = `${line.y}px`;
-        el.style.font = proj.bodyFont;
-        el.style.lineHeight = `${proj.bodyLineHeight}px`;
-      }
+      // ── DOM setup ────────────────────────────────────────────────────────
+      const stage = document.getElementById('stage');
+      const W0 = window.innerWidth, H0 = window.innerHeight;
 
-      syncPool(pullquoteLinePool, proj.pullquoteLines.length, () => {
-        const el = document.createElement('span');
-        el.className = 'pullquote-line';
-        return el;
-      });
-      for (let i = 0; i < proj.pullquoteLines.length; i++) {
-        const el = pullquoteLinePool[i];
-        const line = proj.pullquoteLines[i];
-        el.textContent = line.text;
-        el.style.left = `${line.x}px`;
-        el.style.top = `${line.y}px`;
-        el.style.font = proj.pullquoteFont;
-        el.style.lineHeight = `${proj.pullquoteLineHeight}px`;
-      }
-
-      syncPool(pullquoteBoxPool, proj.pullquoteBoxes.length, () => {
+      function mkOrb([r,g,b]) {
         const el = document.createElement('div');
-        el.className = 'pullquote-box';
+        el.className = 'orb';
+        el.style.background = `radial-gradient(circle at 35% 35%, rgba(${r},${g},${b},0.35), rgba(${r},${g},${b},0.12) 55%, transparent 72%)`;
+        el.style.boxShadow = `0 0 60px 15px rgba(${r},${g},${b},0.18), 0 0 120px 40px rgba(${r},${g},${b},0.07)`;
+        el.style.cursor = 'grab';
         stage.appendChild(el);
         return el;
-      });
-      for (let i = 0; i < proj.pullquoteBoxes.length; i++) {
-        const el = pullquoteBoxPool[i];
-        const box = proj.pullquoteBoxes[i];
-        el.style.left = `${box.x}px`;
-        el.style.top = `${box.y}px`;
-        el.style.width = `${box.w}px`;
-        el.style.height = `${box.h}px`;
       }
-    }
 
-    function frame(now) {
-      requestAnimationFrame(frame);
+      // ── prepare text ─────────────────────────────────────────────────────
+      document.fonts.ready.then(() => {
+        try { main(); } catch(e) { showErr(e); }
+      });
 
-      const W = window.innerWidth;
-      const H = window.innerHeight;
-      const narrow = W < NARROW_BREAKPOINT;
-      const gutter = narrow ? NARROW_GUTTER : GUTTER;
-      const colGap = narrow ? NARROW_COL_GAP : COL_GAP;
-      const bottomGap = narrow ? NARROW_BOTTOM_GAP : BOTTOM_GAP;
-      const orbScale = narrow ? NARROW_ORB_SCALE : 1;
-      const activeOrbCount = narrow ? NARROW_ACTIVE_ORBS : orbs.length;
+      function main() {
+        const prepBody = prepareWithSegments(BODY, BODY_FONT);
+        const prepPQs = PULLQUOTES.map(q => prepareWithSegments(q.text, PQ_FONT));
+        const DROP_SIZE = BODY_LINE_HEIGHT * DROP_LINES - 4;
+        const DROP_FONT = `700 ${DROP_SIZE}px ${HL_FAMILY}`;
+        const prepDrop = prepareWithSegments(BODY[0], DROP_FONT);
 
-      // Process pointer events
-      if (pendingDown !== null) {
-        const { x, y, target } = pendingDown;
-        pendingDown = null;
-        if (interactionMode === 'idle') {
-          const hitIdx = isOrbHit(orbs, x, y, activeOrbCount, orbScale);
-          if (hitIdx >= 0) {
-            drag = { orbIndex: hitIdx, startPX: x, startPY: y, startOX: orbs[hitIdx].x, startOY: orbs[hitIdx].y };
-            orbs[hitIdx].paused = true;
-          } else if (isSelectableTarget(target)) {
-            interactionMode = 'text-select';
-            lastFrameTime = null;
-            stage.style.userSelect = '';
-            stage.style.webkitUserSelect = '';
-            document.body.style.cursor = '';
-          } else {
-            // pause/unpause
-            const clickHit = isOrbHit(orbs, x, y, activeOrbCount, orbScale * 1.3);
-            if (clickHit >= 0) orbs[clickHit].paused = !orbs[clickHit].paused;
+        let dropW = 0;
+        walkLineRanges(prepDrop, 99999, ln => { dropW = ln.width; });
+        const DROP_W = Math.ceil(dropW) + 10;
+
+        const dropEl = document.createElement('div');
+        dropEl.className = 'drop-cap';
+        dropEl.textContent = BODY[0];
+        dropEl.style.font = DROP_FONT;
+        dropEl.style.lineHeight = `${DROP_SIZE}px`;
+        stage.appendChild(dropEl);
+
+        const orbEls = ORB_DEFS.map(d => mkOrb(d.rgb));
+        const orbs = ORB_DEFS.map(d => ({
+          x: d.fx * W0, y: d.fy * H0,
+          r: d.r, vx: d.vx, vy: d.vy,
+          paused: false,
+        }));
+
+        // ── headline fit cache ─────────────────────────────────────────────
+        let hlCache = null;
+        function fitHL(maxW, maxH) {
+          if (hlCache && hlCache.maxW === maxW && hlCache.maxH === maxH) return hlCache;
+          let lo = 16, hi = 88, best = lo, bestLines = [];
+          while (lo <= hi) {
+            const sz = (lo + hi) >> 1;
+            const font = `700 ${sz}px ${HL_FAMILY}`;
+            const lh = Math.round(sz * 0.93);
+            const p = prepareWithSegments(HL_TEXT, font);
+            let breaks = false, count = 0;
+            walkLineRanges(p, maxW, ln => { count++; if (ln.end.graphemeIndex !== 0) breaks = true; });
+            if (!breaks && count * lh <= maxH) {
+              best = sz;
+              const r = layoutWithLines(p, maxW, lh);
+              bestLines = r.lines.map((l, i) => ({ x: 0, y: i * lh, text: l.text }));
+              lo = sz + 1;
+            } else {
+              hi = sz - 1;
+            }
+          }
+          hlCache = { maxW, maxH, sz: best, lh: Math.round(best * 0.93), lines: bestLines };
+          return hlCache;
+        }
+
+        // ── layout column ─────────────────────────────────────────────────
+        function layoutCol(prepared, startCursor, rX, rY, rW, rH, lh, circObs, rectObs) {
+          let cursor = startCursor;
+          let y = rY;
+          const lines = [];
+          let done = false;
+          while (y + lh <= rY + rH && !done) {
+            const blocked = [];
+            for (const o of circObs) {
+              const iv = circleInterval(o.cx, o.cy, o.r, y, y + lh, o.hPad, o.vPad);
+              if (iv) blocked.push(iv);
+            }
+            for (const rect of rectObs) {
+              if (y + lh <= rect.y || y >= rect.y + rect.h) continue;
+              blocked.push({ left: rect.x, right: rect.x + rect.w });
+            }
+            const slots = carveSlots({ left: rX, right: rX + rW }, blocked);
+            if (!slots.length) { y += lh; continue; }
+            const ordered = slots.slice().sort((a, b) => a.left - b.left);
+            for (const slot of ordered) {
+              const ln = layoutNextLine(prepared, cursor, slot.right - slot.left);
+              if (!ln) { done = true; break; }
+              lines.push({ x: Math.round(slot.left), y: Math.round(y), text: ln.text });
+              cursor = ln.end;
+            }
+            y += lh;
+          }
+          return { lines, cursor };
+        }
+
+        // ── element pools ──────────────────────────────────────────────────
+        const pools = { hl: [], body: [], pq: [], pqBar: [] };
+
+        function sync(pool, n, tag, cls) {
+          while (pool.length < n) {
+            const el = document.createElement(tag);
+            el.className = cls;
+            stage.appendChild(el);
+            pool.push(el);
+          }
+          for (let i = 0; i < pool.length; i++) pool[i].style.display = i < n ? '' : 'none';
+        }
+
+        function applyLines(pool, lines, font, lh) {
+          for (let i = 0; i < lines.length; i++) {
+            const el = pool[i], ln = lines[i];
+            el.textContent = ln.text;
+            el.style.left = ln.x + 'px';
+            el.style.top = ln.y + 'px';
+            el.style.font = font;
+            el.style.lineHeight = lh + 'px';
           }
         }
-      }
 
-      if (pendingMove !== null) {
-        const { x, y } = pendingMove;
-        pendingMove = null;
-        pointer = { x, y };
-        if (drag !== null) {
-          const o = orbs[drag.orbIndex];
-          o.x = drag.startOX + (x - drag.startPX);
-          o.y = drag.startOY + (y - drag.startPY);
-          o.vx = 0; o.vy = 0;
+        // ── drag / pointer ─────────────────────────────────────────────────
+        let drag = null, lastT = null;
+        let pDown = null, pMove = null, pUp = null;
+
+        stage.addEventListener('pointerdown', e => {
+          pDown = { x: e.clientX, y: e.clientY };
+          const hit = hitOrb(e.clientX, e.clientY);
+          if (hit >= 0) {
+            drag = { i: hit, ox: orbs[hit].x, oy: orbs[hit].y, px: e.clientX, py: e.clientY };
+            orbs[hit].paused = true;
+            e.preventDefault();
+          }
+        });
+        window.addEventListener('pointermove', e => { pMove = { x: e.clientX, y: e.clientY }; });
+        window.addEventListener('pointerup', e => {
+          pUp = { x: e.clientX, y: e.clientY };
+          if (drag) {
+            orbs[drag.i].paused = false;
+            const elapsed = lastT ? 0.016 : 0;
+            orbs[drag.i].vx = (e.clientX - drag.px) * 5;
+            orbs[drag.i].vy = (e.clientY - drag.py) * 5;
+            drag = null;
+          }
+        });
+
+        function hitOrb(px, py) {
+          for (let i = orbs.length - 1; i >= 0; i--) {
+            const o = orbs[i];
+            const dx = px - o.x, dy = py - o.y;
+            if (dx * dx + dy * dy <= o.r * o.r * 1.1) return i;
+          }
+          return -1;
         }
-        if (interactionMode === 'idle') {
-          const hit = isOrbHit(orbs, x, y, activeOrbCount, orbScale);
-          document.body.style.cursor = hit >= 0 ? 'grab' : '';
-        }
-      }
 
-      if (pendingUp !== null) {
-        pendingUp = null;
-        if (drag !== null) {
-          const o = orbs[drag.orbIndex];
-          o.paused = false;
-          o.vx = (pointer.x - drag.startPX) * 0.5;
-          o.vy = (pointer.y - drag.startPY) * 0.5;
-          drag = null;
-        }
-        if (interactionMode === 'text-select' && !hasTextSelection()) {
-          interactionMode = 'idle';
-          stage.style.userSelect = 'none';
-          stage.style.webkitUserSelect = 'none';
-        }
-      }
+        // ── render loop ────────────────────────────────────────────────────
+        function frame(now) {
+          requestAnimationFrame(frame);
 
-      if (interactionMode === 'text-select') return;
+          // pointer
+          if (pMove) {
+            if (drag) {
+              orbs[drag.i].x = drag.ox + (pMove.x - drag.px);
+              orbs[drag.i].y = drag.oy + (pMove.y - drag.py);
+            }
+            pMove = null;
+          }
+          if (pDown) {
+            const hit = hitOrb(pDown.x, pDown.y);
+            if (hit >= 0 && !drag) orbs[hit].paused = !orbs[hit].paused;
+            pDown = null;
+          }
+          if (pUp) pUp = null;
 
-      const dt = lastFrameTime === null ? 0 : Math.min((now - lastFrameTime) / 1000, 0.05);
-      lastFrameTime = now;
+          // physics
+          const dt = lastT === null ? 0 : Math.min((now - lastT) / 1000, 0.05);
+          lastT = now;
+          const W = window.innerWidth, H = window.innerHeight;
 
-      // Physics
-      for (let i = 0; i < activeOrbCount; i++) {
-        const o = orbs[i];
-        if (o.paused || drag?.orbIndex === i) continue;
-        o.x += o.vx * dt;
-        o.y += o.vy * dt;
-        const r = o.r * orbScale;
-        if (o.x - r < 0) { o.x = r; o.vx = Math.abs(o.vx); }
-        if (o.x + r > W) { o.x = W - r; o.vx = -Math.abs(o.vx); }
-        if (o.y - r < 0) { o.y = r; o.vy = Math.abs(o.vy); }
-        if (o.y + r > H) { o.y = H - r; o.vy = -Math.abs(o.vy); }
-      }
-
-      // Orb-orb collision separation
-      for (let i = 0; i < activeOrbCount; i++) {
-        for (let j = i + 1; j < activeOrbCount; j++) {
-          const a = orbs[i], b = orbs[j];
-          const ra = a.r * orbScale, rb = b.r * orbScale;
-          const dx = b.x - a.x, dy = b.y - a.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          const minDist = ra + rb;
-          if (dist < minDist && dist > 0.01) {
-            const overlap = (minDist - dist) / 2;
-            const nx = dx / dist, ny = dy / dist;
-            if (!a.paused) { a.x -= nx * overlap; a.y -= ny * overlap; }
-            if (!b.paused) { b.x += nx * overlap; b.y += ny * overlap; }
-            if (!a.paused && !b.paused) {
-              const relVx = a.vx - b.vx, relVy = a.vy - b.vy;
-              const dot = relVx * nx + relVy * ny;
-              if (dot > 0) {
-                a.vx -= dot * nx; a.vy -= dot * ny;
-                b.vx += dot * nx; b.vy += dot * ny;
+          for (let i = 0; i < orbs.length; i++) {
+            const o = orbs[i];
+            if (o.paused || (drag && drag.i === i)) continue;
+            o.x += o.vx * dt; o.y += o.vy * dt;
+            if (o.x - o.r < 0)   { o.x = o.r;     o.vx =  Math.abs(o.vx); }
+            if (o.x + o.r > W)   { o.x = W - o.r; o.vx = -Math.abs(o.vx); }
+            if (o.y - o.r < 0)   { o.y = o.r;     o.vy =  Math.abs(o.vy); }
+            if (o.y + o.r > H)   { o.y = H - o.r; o.vy = -Math.abs(o.vy); }
+          }
+          // orb-orb separation
+          for (let i = 0; i < orbs.length; i++) {
+            for (let j = i + 1; j < orbs.length; j++) {
+              const a = orbs[i], b = orbs[j];
+              const dx = b.x - a.x, dy = b.y - a.y;
+              const d = Math.sqrt(dx*dx + dy*dy);
+              const min = a.r + b.r;
+              if (d < min && d > 0.01) {
+                const ov = (min - d) / 2, nx = dx/d, ny = dy/d;
+                if (!a.paused) { a.x -= nx*ov; a.y -= ny*ov; }
+                if (!b.paused) { b.x += nx*ov; b.y += ny*ov; }
+                if (!a.paused && !b.paused) {
+                  const dot = (a.vx-b.vx)*nx + (a.vy-b.vy)*ny;
+                  if (dot > 0) { a.vx -= dot*nx; a.vy -= dot*ny; b.vx += dot*nx; b.vy += dot*ny; }
+                }
               }
             }
           }
+
+          // update orb DOM
+          for (let i = 0; i < orbs.length; i++) {
+            const o = orbs[i];
+            const el = orbEls[i];
+            const d = o.r * 2;
+            el.style.width = d + 'px';
+            el.style.height = d + 'px';
+            el.style.transform = `translate(${Math.round(o.x - o.r)}px,${Math.round(o.y - o.r)}px)`;
+          }
+
+          // layout
+          const gutter = W < 760 ? 20 : GUTTER;
+          const gap = W < 760 ? 20 : COL_GAP;
+          const totalW = W - gutter * 2;
+          const colW = (totalW - gap) / 2;
+
+          // headline
+          const hlFit = fitHL(totalW, H * 0.12);
+          const hlTop = gutter;
+          const hlFont = `700 ${hlFit.sz}px ${HL_FAMILY}`;
+          const hlH = hlFit.lines.length * hlFit.lh;
+
+          // body region
+          const bTop = hlTop + hlH + 20;
+          const bH = H - bTop - 20;
+
+          // circle obstacles
+          const circObs = orbs.map(o => ({ cx: o.x, cy: o.y, r: o.r, hPad: 12, vPad: 4 }));
+
+          // pullquote rects
+          const pqRects = [];
+          const pqLineData = [];
+          for (let qi = 0; qi < PULLQUOTES.length; qi++) {
+            const q = PULLQUOTES[qi];
+            const colX = q.col === 0 ? gutter : gutter + colW + gap;
+            const pqW = Math.round(colW * q.wFrac);
+            const pqX = q.side === 'left' ? colX : colX + colW - pqW;
+            const pqY = Math.round(bTop + bH * q.yFrac);
+            const r = layoutWithLines(prepPQs[qi], pqW - 16, PQ_LH);
+            const pqH = r.lines.length * PQ_LH + 8;
+            pqRects.push({ x: pqX - 3, y: pqY, w: pqW + 3, h: pqH, col: q.col, pqX, pqY, pqW, pqH });
+            for (let li = 0; li < r.lines.length; li++) {
+              pqLineData.push({ x: pqX + 16, y: pqY + li * PQ_LH, text: r.lines[li].text });
+            }
+          }
+
+          // drop cap position
+          const dcX = gutter, dcY = bTop;
+          dropEl.style.left = dcX + 'px';
+          dropEl.style.top = dcY + 'px';
+
+          // col 0 obstacles: drop cap + col-0 pullquotes
+          const obs0 = pqRects.filter(r => r.col === 0).map(r => ({ x: r.x, y: r.y, w: r.w, h: r.h }));
+          obs0.push({ x: dcX, y: dcY, w: DROP_W, h: BODY_LINE_HEIGHT * DROP_LINES });
+
+          const obs1 = pqRects.filter(r => r.col === 1).map(r => ({ x: r.x, y: r.y, w: r.w, h: r.h }));
+
+          const zero = { segmentIndex: 0, graphemeIndex: 0 };
+          const { lines: c0, cursor: c1start } = layoutCol(prepBody, zero, gutter, bTop, colW, bH, BODY_LINE_HEIGHT, circObs, obs0);
+          const { lines: c1 } = layoutCol(prepBody, c1start, gutter + colW + gap, bTop, colW, bH, BODY_LINE_HEIGHT, circObs, obs1);
+          const bodyLines = [...c0, ...c1];
+
+          // render headline
+          sync(pools.hl, hlFit.lines.length, 'span', 'headline-line');
+          applyLines(pools.hl, hlFit.lines.map(l => ({ ...l, x: l.x + gutter, y: l.y + hlTop })), hlFont, hlFit.lh);
+
+          // render body
+          sync(pools.body, bodyLines.length, 'span', 'line');
+          applyLines(pools.body, bodyLines, BODY_FONT, BODY_LINE_HEIGHT);
+
+          // render pullquotes
+          sync(pools.pq, pqLineData.length, 'span', 'pullquote-line');
+          applyLines(pools.pq, pqLineData, PQ_FONT, PQ_LH);
+
+          // pullquote bars (left-border visual)
+          sync(pools.pqBar, pqRects.length, 'div', 'pullquote-bar');
+          for (let i = 0; i < pqRects.length; i++) {
+            const el = pools.pqBar[i], r = pqRects[i];
+            el.style.left = r.pqX + 'px';
+            el.style.top = r.pqY + 'px';
+            el.style.height = r.pqH + 'px';
+          }
         }
-      }
 
-      // Update orb DOM
-      for (let i = 0; i < ORB_DEFS.length; i++) {
-        const o = orbs[i];
-        const el = orbEls[i];
-        const r = o.r * orbScale;
-        if (i >= activeOrbCount) { el.style.display = 'none'; continue; }
-        el.style.display = '';
-        el.style.width = `${r * 2}px`;
-        el.style.height = `${r * 2}px`;
-        el.style.transform = `translate(${Math.round(o.x - r)}px, ${Math.round(o.y - r)}px)`;
-      }
-
-      // Layout computation
-      const totalW = W - gutter * 2;
-      const colW = (totalW - colGap) / 2;
-
-      // Headline area
-      const headlineMaxW = totalW;
-      const headlineMaxH = H * 0.12;
-      const { fontSize: hFontSize, lines: hLines } = fitHeadline(headlineMaxW, headlineMaxH);
-      const hLineHeight = Math.round(hFontSize * 0.93);
-      const hTotalH = hLines.length * hLineHeight;
-      const headlineTop = gutter;
-      const headlineLeft = gutter;
-      const headlineFont = `700 ${hFontSize}px ${HEADLINE_FONT_FAMILY}`;
-
-      // Body region starts below headline
-      const bodyTop = headlineTop + hTotalH + 20;
-      const bodyH = H - bodyTop - bottomGap;
-
-      // Build circle obstacles from orb positions
-      const circleObstacles = orbs.slice(0, activeOrbCount).map(o => ({
-        cx: o.x, cy: o.y,
-        r: o.r * orbScale,
-        hPad: 12, vPad: 4,
-      }));
-
-      // Build pullquote rects per column
-      const pullquoteBoxes = [];
-      const pullquoteLines = [];
-      const pullquoteRects = [];
-
-      for (const spec of pullquoteSpecs) {
-        const { colIdx, yFrac, wFrac, side } = spec.placement;
-        const colX = colIdx === 0 ? gutter : gutter + colW + colGap;
-        const pqW = Math.round(colW * wFrac);
-        const pqX = side === 'left' ? colX : colX + colW - pqW;
-        const pqY = Math.round(bodyTop + bodyH * yFrac);
-
-        const pqResult = layoutWithLines(spec.prepared, pqW - 14, PQ_LINE_HEIGHT);
-        const pqH = pqResult.lines.length * PQ_LINE_HEIGHT + 8;
-
-        pullquoteBoxes.push({ x: pqX, y: pqY, w: pqW, h: pqH });
-        pullquoteRects.push({ x: pqX - 3, y: pqY, w: pqW + 3, h: pqH, colIdx });
-
-        for (let i = 0; i < pqResult.lines.length; i++) {
-          pullquoteLines.push({
-            x: pqX + 14,
-            y: pqY + i * PQ_LINE_HEIGHT,
-            text: pqResult.lines[i].text,
-            width: pqResult.lines[i].width,
-          });
-        }
-      }
-
-      // Drop cap in column 0
-      const dropCapX = gutter;
-      const dropCapY = bodyTop;
-      dropCapEl.style.left = `${dropCapX}px`;
-      dropCapEl.style.top = `${dropCapY}px`;
-
-      // Column 0 rect obstacles
-      const col0RectObs = pullquoteRects
-        .filter(r => r.colIdx === 0)
-        .map(r => ({ x: r.x, y: r.y, w: r.w, h: r.h }));
-
-      // Drop cap blocks first DROP_CAP_LINES lines
-      col0RectObs.push({
-        x: dropCapX,
-        y: dropCapY,
-        w: DROP_CAP_TOTAL_W,
-        h: BODY_LINE_HEIGHT * DROP_CAP_LINES,
-      });
-
-      const col1RectObs = pullquoteRects
-        .filter(r => r.colIdx === 1)
-        .map(r => ({ x: r.x, y: r.y, w: r.w, h: r.h }));
-
-      // Layout columns
-      const startCursor = { segmentIndex: 0, graphemeIndex: 0 };
-
-      const { lines: col0Lines, cursor: cursorAfterCol0 } = layoutColumn(
-        preparedBody, startCursor,
-        gutter, bodyTop, colW, bodyH,
-        BODY_LINE_HEIGHT,
-        circleObstacles, col0RectObs,
-        false,
-      );
-
-      const { lines: col1Lines } = layoutColumn(
-        preparedBody, cursorAfterCol0,
-        gutter + colW + colGap, bodyTop, colW, bodyH,
-        BODY_LINE_HEIGHT,
-        circleObstacles, col1RectObs,
-        false,
-      );
-
-      const bodyLines = [...col0Lines, ...col1Lines];
-
-      const proj = {
-        headlineLeft,
-        headlineTop,
-        headlineFont,
-        headlineLineHeight: hLineHeight,
-        headlineLines: hLines,
-        bodyFont: BODY_FONT,
-        bodyLineHeight: BODY_LINE_HEIGHT,
-        bodyLines,
-        pullquoteFont: PQ_FONT,
-        pullquoteLineHeight: PQ_LINE_HEIGHT,
-        pullquoteLines,
-        pullquoteBoxes,
-      };
-
-      if (!projectionsEqual(committedProjection, proj)) {
-        commitProjection(proj);
-        committedProjection = proj;
-      }
-    }
-
-    // Disable default user-select on stage so drag doesn't select text
-    stage.style.userSelect = 'none';
-    stage.style.webkitUserSelect = 'none';
-
-    requestAnimationFrame(frame);
+        requestAnimationFrame(frame);
+      } // end main()
+    } // end run()
   </script>
 </body>
 </html>
