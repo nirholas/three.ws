@@ -1,6 +1,3 @@
-# @pump-fun/agent-payments-crosschain-sdk
-
-Cross-chain payments SDK for Pump Agents. Accept payments from any EVM chain — agent receives on Solana.
 
 ## What's included
 
