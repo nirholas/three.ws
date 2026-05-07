@@ -130,37 +130,6 @@
 		<script src="https://unpkg.com/@solana/spl-token@0.3.7/lib/index.iife.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
 
-		<script>
-			const { WalletAdapterNetwork } = solanaWalletAdapter;
-			const { ConnectionProvider, WalletProvider } = solanaWalletAdapterReact;
-			const { WalletModalProvider, WalletMultiButton } = solanaWalletAdapterReactUi;
-			const {
-					GlowWalletAdapter,
-					PhantomWalletAdapter,
-					SlopeWalletAdapter,
-					SolflareWalletAdapter,
-					TorusWalletAdapter,
-			} = solanaWalletAdapterWallets;
-			const { clusterApiUrl } = solanaWeb3;
-
-			const network = WalletAdapterNetwork.Devnet;
-			const endpoint = clusterApiUrl(network);
-
-			const wallets = [
-					new PhantomWalletAdapter(),
-					new SolflareWalletAdapter(),
-			];
-
-			// You can now use the wallet adapter components in your vanilla JS app
-			// For example, you can render the WalletMultiButton into a container
-			const container = document.querySelector('.wallet-adapter-button-container');
-			const button = WalletMultiButton();
-			// This is a simplified example. In a real app, you would need to
-			// use a library like React or Svelte to render the button.
-			// For now, we will just add the button to the DOM.
-			// container.appendChild(button);
-
-		</script>
 	</head>
 	<body class="market-page">
 		<aside class="market-sidebar" id="market-sidebar">

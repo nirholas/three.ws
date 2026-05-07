@@ -255,15 +255,14 @@ async function loadDetail(id) {
 		detailState = { agent: agent, bookmarked: false };
 		renderDetail(agent, false);
 
-		// Fetch and render purchased skills
 		try {
 			const res = await fetch(`/api/users/me/agent-skills/${id}`);
-			const { skills: purchasedSkills } = await res.json();
-			renderSkills(agent, purchasedSkills);
-		} catch (error) {
-			console.error('Failed to load purchased skills', error);
-			renderSkills(agent, []);
+			const { skills: agentSkills } = await res.json();
+			unlockedSkills = new Set(agentSkills || []);
+		} catch {
+			unlockedSkills = new Set();
 		}
+		renderSkillList(agent);
 
 	} else {
 		renderDetailError('Agent not found');
