@@ -132,6 +132,7 @@ The following environment variables are required. Copy `.env.example` to `.env.l
 - [Cloud Marketplaces](#cloud-marketplaces)
 - [Testing](#testing)
 - [Contributing](#contributing)
+- [Contributors](#contributors)
 - [License](#license)
 
 ---
@@ -1538,6 +1539,14 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contributor guide.
 - Use `mode=view` in the `<agent-3d>` element to test rendering without a brain
 - Set `CHAT_MODEL=claude-haiku-4-5-20251001` locally to keep API costs low during development
 - The MCP server can be tested with `curl` — it's plain JSON-RPC over HTTP
+
+---
+
+## Contributors
+
+Thanks to everyone who has contributed to this project.
+
+- [@humanoidrobot-glitch](https://github.com/humanoidrobot-glitch) — thank you for your contributions!
 
 ---
 
