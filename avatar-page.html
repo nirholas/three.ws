@@ -411,7 +411,7 @@
 					? new Date(avatar.created_at).toLocaleDateString()
 					: '';
 
-				const embedCode = `<script type="module" src="https://three.ws/dist-lib/agent-3d.js"></script>
+				const embedCode = `<script type="module" src="https://three.ws/dist-lib/agent-3d.js"><\/script>
 <agent-3d src="${esc(avatar.model_url)}"></agent-3d>`;
 
 				root.innerHTML = `
