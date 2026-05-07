@@ -1,7 +1,7 @@
 {
   "name": "@pump-fun/agent-payments-crosschain-sdk",
   "version": "0.1.0",
-  "description": "Cross-chain payments SDK for Pump Agent — accept ETH/USDC on EVM chains, agent receives on Solana",
+  "description": "Cross-chain payments SDK for Pump Agent — Solana-native + EVM cross-chain support",
   "publishConfig": {
     "access": "public"
   },
@@ -31,6 +31,11 @@
       "types": "./dist/x402/index.d.ts",
       "import": "./dist/x402/index.js",
       "require": "./dist/x402/index.cjs"
+    },
+    "./solana-agent-kit": {
+      "types": "./dist/solana/solana-agent-kit/index.d.ts",
+      "import": "./dist/solana/solana-agent-kit/index.js",
+      "require": "./dist/solana/solana-agent-kit/index.cjs"
     }
   },
   "files": [
@@ -44,11 +49,12 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@pump-fun/agent-payments-sdk": "^3.0.3",
+    "@coral-xyz/anchor": "^0.31.1",
+    "@solana/spl-token": "^0.4.9",
+    "@solana/web3.js": "^1.98.0",
     "viem": "^2.21.0"
   },
   "peerDependencies": {
-    "@solana/web3.js": "^1.98.0",
     "zod": "^3.0.0"
   },
   "peerDependenciesMeta": {
