@@ -49,7 +49,7 @@
 		"build:artifact": "vite build --config vite.config.artifact.js",
 		"publish:lib": "node scripts/publish-lib.mjs",
 		"build:chat": "cd chat && node scripts/ensure-deps.mjs && npm run build",
-		"build:rider": "mkdir -p dist/rider && cp rider/index.html dist/rider/ && cp -r rider/assets dist/rider/ && cp -r rider/build dist/rider/ && cp -r rider/vendor dist/rider/",
+		"build:rider": "mkdir -p dist/rider && cp rider/index.html dist/rider/ && cp -rf rider/assets dist/rider/ && cp -rf rider/build dist/rider/ && cp -rf rider/vendor dist/rider/",
 		"build:rider:full": "cd rider && npm ci --prefer-offline --no-audit --no-fund --ignore-engines && npm run build && cd .. && npm run build:rider",
 		"build:fast": "npm run build",
 		"build:vercel": "npm run build --prefix agent-payments-sdk && NODE_OPTIONS=--max-old-space-size=4096 npm run build && npm run build:lib && npm run build:rider && npm run publish:lib",
