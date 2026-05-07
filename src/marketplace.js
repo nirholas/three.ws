@@ -640,15 +640,19 @@ function getAuthToken() {
 
 // ── Boot ──────────────────────────────────────────────────────────────────
 
-const { Connection, clusterApiUrl } = solanaWeb3;
-const { PhantomWalletAdapter } = solanaWalletAdapterWallets;
-
 let solanaConnection;
-let wallet; // Our single wallet adapter instance
+let wallet;
 
 function initWalletAdapter() {
-    solanaConnection = new Connection(clusterApiUrl('mainnet-beta'));
-    wallet = new PhantomWalletAdapter(); // We'll specifically use Phantom for simplicity
+    try {
+        const { Connection, clusterApiUrl } = solanaWeb3;
+        const { PhantomWalletAdapter } = solanaWalletAdapterWallets;
+        solanaConnection = new Connection(clusterApiUrl('mainnet-beta'));
+        wallet = new PhantomWalletAdapter();
+    } catch (err) {
+        console.warn('[marketplace] Wallet adapter unavailable:', err.message);
+        return;
+    }
 
     // Listen for connection changes
     wallet.on('connect', () => {
@@ -665,6 +669,11 @@ function initWalletAdapter() {
 function updateWalletUI() {
     const walletArea = $('payment-wallet-area');
     const confirmBtn = $('payment-confirm-btn');
+
+    if (!wallet) {
+        walletArea.innerHTML = '<p>Wallet adapter not available.</p>';
+        return;
+    }
 
     if (wallet.connected) {
         const pubKey = wallet.publicKey.toBase58();
