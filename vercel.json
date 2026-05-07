@@ -537,6 +537,10 @@
 			"dest": "/profile.html"
 		},
 		{
+			"src": "/avatars/([^/]+\\.glb)",
+			"dest": "/avatars/$1"
+		},
+		{
 			"src": "/avatars/([^/]+)",
 			"dest": "/avatar-page.html"
 		},
