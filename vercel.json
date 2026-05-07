@@ -197,10 +197,6 @@
 			"dest": "/dashboard/sessions.html"
 		},
 		{
-			"src": "/dashboard/usage",
-			"dest": "/dashboard/usage.html"
-		},
-		{
 			"src": "/dashboard/actions",
 			"dest": "/dashboard/actions.html"
 		},
@@ -719,10 +715,6 @@
 			"dest": "/lobehub/iframe/$1"
 		},
 		{
-			"src": "/strategy-lab",
-			"dest": "/strategy-lab.html"
-		},
-		{
 			"src": "/reputation",
 			"dest": "/reputation/index.html"
 		},
@@ -803,12 +795,24 @@
 			"dest": "/api/billing/revenue"
 		},
 		{
+			"src": "/agents",
+			"dest": "/agents/index.html"
+		},
+		{
+			"src": "/agents/",
+			"dest": "/agents/index.html"
+		},
+		{
+			"src": "/agents/([^/]+)",
+			"dest": "/agent-detail.html"
+		},
+		{
 			"src": "/my-agents",
-			"dest": "/public/my-agents/index.html"
+			"dest": "/my-agents/index.html"
 		},
 		{
 			"src": "/my-agents/",
-			"dest": "/public/my-agents/index.html"
+			"dest": "/my-agents/index.html"
 		},
 		{
 			"src": "/my-agents/(.*)",
@@ -984,10 +988,6 @@
 		{
 			"src": "/a/(\\d+)/(\\d+)",
 			"dest": "/api/a-page?chain=$1&id=$2"
-		},
-		{
-			"src": "/a/sol/([^/]+)",
-			"dest": "/agent-passport.html?asset=$1"
 		},
 		{
 			"src": "/a/(.*)",
