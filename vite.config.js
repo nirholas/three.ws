@@ -18,7 +18,6 @@ const appConfig = {
 		proxy: {
 			'/chat': {
 				target: 'http://localhost:5174',
-				rewrite: (path) => path.replace(/^\/chat/, ''),
 				changeOrigin: true,
 			},
 		},
@@ -157,6 +156,14 @@ const appConfig = {
 					if (path === '/explore' || path === '/explore/') {
 						res.statusCode = 301;
 						res.setHeader('Location', '/discover/');
+						return res.end();
+					}
+					// Chat sub-app is proxied to its own Vite dev server at :5174
+					// which serves under /chat/. Redirect /chat → /chat/ so the
+					// proxy can forward the trailing-slash form upstream.
+					if (path === '/chat') {
+						res.statusCode = 301;
+						res.setHeader('Location', '/chat/');
 						return res.end();
 					}
 					let filePath = fileMap[path];
