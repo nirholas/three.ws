@@ -1427,3 +1427,219 @@ export const agentPaymentsToolSchema = {
 		},
 	],
 };
+
+// ── Pump.fun Trading Tool Pack ────────────────────────────────────────────────
+// Real on-chain buy/sell/quote/portfolio tools using the existing pump API.
+// All write tools follow the prep → wallet-sign → confirm pattern.
+
+const _pumpTx = (prepAction, confirmAction, bodyFn) => `
+const wallet = window.phantom?.solana || window.solana || window.backpack?.solana || window.solflare;
+if (!wallet) throw new Error('No Solana wallet found. Install Phantom to continue.');
+if (!wallet.isConnected) await wallet.connect();
+const payer = wallet.publicKey.toBase58();
+const prepBody = ${bodyFn};
+prepBody.wallet_address = payer;
+const prep = await fetch('/api/pump/${prepAction}', {
+  method: 'POST', headers: { 'content-type': 'application/json' },
+  body: JSON.stringify(prepBody),
+}).then(async r => { if (!r.ok) throw new Error(await r.text()); return r.json(); });
+const web3 = await import('https://esm.sh/@solana/web3.js@1');
+const txBytes = Uint8Array.from(atob(prep.tx_base64), c => c.charCodeAt(0));
+let signed;
+try {
+  const tx = web3.VersionedTransaction.deserialize(txBytes);
+  signed = await wallet.signTransaction(tx);
+} catch {
+  const tx = web3.Transaction.from(txBytes);
+  signed = await wallet.signTransaction(tx);
+}
+const conn = new web3.Connection('https://api.mainnet-beta.solana.com', 'confirmed');
+const sig = await conn.sendRawTransaction(signed.serialize(), { skipPreflight: false });
+await conn.confirmTransaction(sig, 'confirmed');
+const result = await fetch('/api/pump/${confirmAction}', {
+  method: 'POST', headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ ...prepBody, tx_signature: sig, route: prep.route }),
+}).then(async r => { if (!r.ok) throw new Error(await r.text()); return r.json(); });
+return { ...result, route: prep.route, tx_signature: sig, explorer: 'https://solscan.io/tx/' + sig };`;
+
+export const pumpTradingToolSchema = {
+	name: 'Pump.fun Trading',
+	schema: [
+		// ── Buy ──────────────────────────────────────────────────────────────
+		{
+			clientDefinition: {
+				id: 'pump-buy-001',
+				name: 'pumpfunBuy',
+				description: 'Buy a pump.fun token with SOL. Auto-routes bonding curve or AMM.',
+				arguments: [
+					{ name: 'mint', type: 'string', description: 'Token mint address (base58)' },
+					{ name: 'sol', type: 'number', description: 'SOL to spend (e.g. 0.01)' },
+					{ name: 'slippage_bps', type: 'number', description: 'Slippage in basis points (default 500 = 5%)' },
+				],
+				body: _pumpTx('buy-prep', 'buy-confirm', `{ mint: args.mint, sol: Number(args.sol), slippage_bps: Number(args.slippage_bps || 500), network: 'mainnet' }`),
+			},
+			type: 'function',
+			function: {
+				name: 'pumpfunBuy',
+				description: 'Buy a pump.fun token with SOL. Works on both bonding curve coins and graduated AMM coins. Requires a connected Solana wallet.',
+				parameters: {
+					type: 'object',
+					properties: {
+						mint: { type: 'string', description: 'Token mint address (base58)' },
+						sol: { type: 'number', description: 'Amount of SOL to spend (e.g. 0.01, 0.1, 1)' },
+						slippage_bps: { type: 'integer', description: 'Slippage tolerance in basis points (default 500 = 5%)' },
+					},
+					required: ['mint', 'sol'],
+				},
+			},
+		},
+		// ── Sell ─────────────────────────────────────────────────────────────
+		{
+			clientDefinition: {
+				id: 'pump-sell-002',
+				name: 'pumpfunSell',
+				description: 'Sell pump.fun tokens for SOL. Auto-routes bonding curve or AMM.',
+				arguments: [
+					{ name: 'mint', type: 'string', description: 'Token mint address' },
+					{ name: 'tokens', type: 'string', description: 'Token amount in base units (integer string)' },
+					{ name: 'slippage_bps', type: 'number', description: 'Slippage bps (default 500)' },
+				],
+				body: _pumpTx('sell-prep', 'sell-confirm', `{ mint: args.mint, tokens: String(args.tokens), slippage_bps: Number(args.slippage_bps || 500), network: 'mainnet' }`),
+			},
+			type: 'function',
+			function: {
+				name: 'pumpfunSell',
+				description: 'Sell pump.fun tokens for SOL. Works on both bonding curve and graduated AMM. Pass token amount in base units (multiply UI amount by 10^decimals). Requires connected Solana wallet.',
+				parameters: {
+					type: 'object',
+					properties: {
+						mint: { type: 'string', description: 'Token mint address (base58)' },
+						tokens: { type: 'string', description: 'Token amount in base units as integer string (e.g. "1000000" for 1 token with 6 decimals)' },
+						slippage_bps: { type: 'integer', description: 'Slippage tolerance in basis points (default 500 = 5%)' },
+					},
+					required: ['mint', 'tokens'],
+				},
+			},
+		},
+		// ── Quote ─────────────────────────────────────────────────────────────
+		{
+			clientDefinition: {
+				id: 'pump-quote-003',
+				name: 'pumpfunQuote',
+				description: 'Get a real-time price quote before buying or selling.',
+				arguments: [
+					{ name: 'mint', type: 'string', description: 'Token mint' },
+					{ name: 'side', type: 'string', description: 'buy or sell' },
+					{ name: 'amount', type: 'number', description: 'SOL amount (buy) or token amount (sell)' },
+				],
+				body: `const params = new URLSearchParams({ mint: args.mint, side: args.side || 'buy', amount: String(args.amount), network: 'mainnet' });
+const r = await fetch('/api/pump/quote?' + params);
+if (!r.ok) throw new Error(await r.text());
+const d = await r.json();
+return d;`,
+			},
+			type: 'function',
+			function: {
+				name: 'pumpfunQuote',
+				description: 'Get a real-time price quote for a pump.fun buy or sell. Returns expected token output, price impact, and route (bonding_curve or amm). Always call this before executing a trade.',
+				parameters: {
+					type: 'object',
+					properties: {
+						mint: { type: 'string', description: 'Token mint address (base58)' },
+						side: { type: 'string', enum: ['buy', 'sell'], description: 'Trade direction' },
+						amount: { type: 'number', description: 'SOL to spend (buy) or tokens to sell (sell, in UI units)' },
+					},
+					required: ['mint', 'side', 'amount'],
+				},
+			},
+		},
+		// ── Portfolio ─────────────────────────────────────────────────────────
+		{
+			clientDefinition: {
+				id: 'pump-portfolio-004',
+				name: 'pumpfunPortfolio',
+				description: 'View token holdings, values, and PnL for a wallet.',
+				arguments: [
+					{ name: 'wallet', type: 'string', description: 'Solana wallet address (base58). Defaults to connected wallet.' },
+				],
+				body: `const wallet = args.wallet || window.phantom?.solana?.publicKey?.toBase58() || window.solana?.publicKey?.toBase58();
+if (!wallet) throw new Error('Pass a wallet address or connect your Solana wallet.');
+const r = await fetch('/api/pump/balances?wallet=' + wallet + '&network=mainnet');
+if (!r.ok) throw new Error(await r.text());
+return await r.json();`,
+			},
+			type: 'function',
+			function: {
+				name: 'pumpfunPortfolio',
+				description: 'View pump.fun token holdings, current values in SOL, and unrealized PnL for any wallet. Defaults to the connected wallet.',
+				parameters: {
+					type: 'object',
+					properties: {
+						wallet: { type: 'string', description: 'Solana wallet address. Leave empty to use connected wallet.' },
+					},
+				},
+			},
+		},
+		// ── Sell All ──────────────────────────────────────────────────────────
+		{
+			clientDefinition: {
+				id: 'pump-sell-all-005',
+				name: 'pumpfunSellAll',
+				description: 'Sell entire balance of a pump.fun token.',
+				arguments: [
+					{ name: 'mint', type: 'string', description: 'Token mint address' },
+					{ name: 'slippage_bps', type: 'number', description: 'Slippage bps (default 500)' },
+				],
+				body: `const wallet = window.phantom?.solana || window.solana || window.backpack?.solana || window.solflare;
+if (!wallet) throw new Error('No Solana wallet found.');
+if (!wallet.isConnected) await wallet.connect();
+const payer = wallet.publicKey.toBase58();
+const web3 = await import('https://esm.sh/@solana/web3.js@1');
+const spl = await import('https://esm.sh/@solana/spl-token@0.4');
+const conn = new web3.Connection('https://api.mainnet-beta.solana.com', 'confirmed');
+const mintPk = new web3.PublicKey(args.mint);
+const TOKEN22 = new web3.PublicKey('TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb');
+let balance = 0;
+try {
+  const [spl22] = await conn.getParsedTokenAccountsByOwner(wallet.publicKey, { programId: TOKEN22 });
+  if (spl22) {
+    const accs22 = (await conn.getParsedTokenAccountsByOwner(wallet.publicKey, { programId: TOKEN22 })).value;
+    const acc = accs22.find(a => a.account.data.parsed.info.mint === args.mint);
+    if (acc) balance = acc.account.data.parsed.info.tokenAmount.amount;
+  }
+} catch {}
+if (!balance) {
+  const SPL = new web3.PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+  const accs = (await conn.getParsedTokenAccountsByOwner(wallet.publicKey, { programId: SPL })).value;
+  const acc = accs.find(a => a.account.data.parsed.info.mint === args.mint);
+  if (acc) balance = acc.account.data.parsed.info.tokenAmount.amount;
+}
+if (!balance || balance === '0') throw new Error('No token balance found for ' + args.mint);
+const prep = await fetch('/api/pump/sell-prep', {
+  method: 'POST', headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ mint: args.mint, tokens: String(balance), slippage_bps: Number(args.slippage_bps || 500), network: 'mainnet', wallet_address: payer }),
+}).then(async r => { if (!r.ok) throw new Error(await r.text()); return r.json(); });
+const txBytes = Uint8Array.from(atob(prep.tx_base64), c => c.charCodeAt(0));
+let signed;
+try { signed = await wallet.signTransaction(web3.VersionedTransaction.deserialize(txBytes)); }
+catch { signed = await wallet.signTransaction(web3.Transaction.from(txBytes)); }
+const sig = await conn.sendRawTransaction(signed.serialize(), { skipPreflight: false });
+await conn.confirmTransaction(sig, 'confirmed');
+return { success: true, tokens_sold: balance, route: prep.route, tx_signature: sig, explorer: 'https://solscan.io/tx/' + sig };`,
+			},
+			type: 'function',
+			function: {
+				name: 'pumpfunSellAll',
+				description: 'Sell your entire balance of a pump.fun token in one click. Automatically detects token balance and routes through bonding curve or AMM.',
+				parameters: {
+					type: 'object',
+					properties: {
+						mint: { type: 'string', description: 'Token mint address (base58)' },
+						slippage_bps: { type: 'integer', description: 'Slippage tolerance in bps (default 500 = 5%)' },
+					},
+					required: ['mint'],
+				},
+			},
+		},
+	],
+};
