@@ -202,24 +202,16 @@ export async function handleGetOne(req, res, id) {
 		const prices = await sql`
 			SELECT skill_name, amount, currency_mint FROM agent_skill_prices WHERE agent_id = ${id}
 		`;
-		const skill_prices = prices.reduce((acc, p) => {
+		row.skill_prices = prices.reduce((acc, p) => {
 			acc[p.skill_name] = { amount: p.amount, currency_mint: p.currency_mint };
 			return acc;
 		}, {});
-		row.skill_prices = skill_prices;
-
-		const prices = await sql`
-			SELECT skill_name, amount, currency_mint FROM agent_skill_prices WHERE agent_id = ${id}
-		`;
-		const skill_prices = prices.reduce((acc, p) => {
-			acc[p.skill_name] = { amount: p.amount, currency_mint: p.currency_mint };
-			return acc;
-		}, {});
-		row.skill_prices = skill_prices;
 
 		await healStaleAvatarId(row);
 
-		// Public fields if not owner; full record if owner
+		// Public fields if not owner; full record if owner. Auth on a public GET
+		// is best-effort — anonymous viewers still get the public projection.
+		const auth = await resolveAuth(req).catch(() => null);
 		const isOwner = auth?.userId === row.user_id;
 		return json(res, 200, { agent: decorate(row, isOwner) });
 	}
