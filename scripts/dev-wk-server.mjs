@@ -7,6 +7,7 @@ import { createServer } from 'node:http';
 import { config as dotenv } from 'dotenv';
 dotenv({ path: new URL('../.env', import.meta.url) });
 const { default: wkHandler } = await import('../api/wk.js');
+const { send402, paymentRequirements } = await import('../api/_lib/x402-spec.js');
 
 const PORT = Number(process.env.PORT || 3030);
 
@@ -21,11 +22,31 @@ const ROUTES = {
 
 const server = createServer(async (req, res) => {
 	const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+
+	// Preview the live /api/mcp 402 challenge (skips auth/db so we just see the
+	// challenge body the agentic.market validator will hit on production).
+	if (url.pathname === '/api/mcp') {
+		res.setHeader('access-control-allow-origin', '*');
+		res.setHeader('access-control-allow-methods', 'GET,POST,OPTIONS');
+		res.setHeader('access-control-allow-headers', 'authorization, content-type, x-payment');
+		if (req.method === 'OPTIONS') {
+			res.statusCode = 204;
+			res.end();
+			return;
+		}
+		const proto = (req.headers['x-forwarded-proto'] || 'https').toString().split(',')[0].trim();
+		const host = (req.headers['x-forwarded-host'] || req.headers.host || 'three.ws').toString();
+		// Always quote the production URL — the validator pins on a stable resource string.
+		const resourceUrl = `${proto}://three.ws/api/mcp`;
+		send402(res, { resourceUrl, accepts: paymentRequirements() });
+		return;
+	}
+
 	const name = ROUTES[url.pathname];
 	if (!name) {
 		res.statusCode = 404;
 		res.setHeader('content-type', 'application/json');
-		res.end(JSON.stringify({ error: 'not_found', path: url.pathname, known: Object.keys(ROUTES) }));
+		res.end(JSON.stringify({ error: 'not_found', path: url.pathname, known: [...Object.keys(ROUTES), '/api/mcp'] }));
 		return;
 	}
 	req.query = { name };
@@ -35,4 +56,5 @@ const server = createServer(async (req, res) => {
 server.listen(PORT, () => {
 	console.log(`[dev-wk-server] listening on http://localhost:${PORT}`);
 	for (const path of Object.keys(ROUTES)) console.log(`  → http://localhost:${PORT}${path}`);
+	console.log(`  → http://localhost:${PORT}/api/mcp  (v2 402 challenge preview)`);
 });
