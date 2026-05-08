@@ -2,13 +2,15 @@
 // Lazy-loaded — Vercel cold starts pay only for what an endpoint touches.
 //
 // Public surface:
-//   getConnection({ network })            → @solana/web3.js Connection
-//   getPumpSdk({ network })                → { sdk: PumpSdk|OnlinePumpSdk, BN, web3 }
-//   getPumpSwapSdk({ network })            → { sdk: PumpAmmSdk, BN, web3 }
-//   getPumpAgent({ network, mint })        → { agent: PumpAgent, BN, web3, agentPda }
-//   getPumpAgentOffline({ network, mint }) → instruction-only PumpAgentOffline
-//   verifySignature(network, sig)          → confirmed parsed tx, throws on missing/failed
-//   solanaPubkey(s)                        → PublicKey or null
+//   getConnection({ network })                   → @solana/web3.js Connection
+//   getPumpSdk({ network })                      → { sdk, PUMP_SDK, BN, web3 }
+//   getPumpSdkV2({ network })                    → { PUMP_SDK, onlineSdk, bondingCurvePda, isLegacyQuoteMint, BN, web3 }
+//   getPumpSwapSdk({ network })                  → { sdk: PumpAmmSdk, BN, web3 }
+//   getPumpAgent({ network, mint })              → { agent: PumpAgent, BN, web3, agentPda }
+//   getPumpAgentOffline({ network, mint })       → instruction-only PumpAgentOffline
+//   getPumpTradeClient({ network })              → { client: PumpTradeClient, BN, web3 }
+//   verifySignature(network, sig)                → confirmed parsed tx, throws on missing/failed
+//   solanaPubkey(s)                              → PublicKey or null
 //
 // Network selection: 'mainnet' | 'devnet'. Endpoint URLs come from env so
 // production can pin Helius / Triton / etc. RPC providers. Setting
@@ -51,6 +53,51 @@ export async function getPumpSdk({ network = 'mainnet' } = {}) {
 	const connection = getConnection({ network });
 	const sdk = new OnlinePumpSdk() ? new OnlinePumpSdk(connection) : new PumpSdk(connection);
 	return { sdk, connection, BN, web3, PumpSdk, OnlinePumpSdk };
+}
+
+// v2 bonding curve helpers — buy_v2, sell_v2, create_v2, USDC quote support
+export async function getPumpSdkV2({ network = 'mainnet' } = {}) {
+	const [pumpPkg, web3, BN] = await Promise.all([
+		import('@pump-fun/pump-sdk'),
+		import('@solana/web3.js'),
+		import('bn.js').then((m) => m.default || m),
+	]);
+	const {
+		PUMP_SDK,
+		OnlinePumpSdk,
+		bondingCurvePda,
+		isLegacyQuoteMint,
+		getBuyTokenAmountFromSolAmount,
+		getBuySolAmountFromTokenAmount,
+		getSellSolAmountFromTokenAmount,
+		newBondingCurve,
+	} = pumpPkg;
+	const connection = getConnection({ network });
+	const onlineSdk = new OnlinePumpSdk(connection);
+	return {
+		PUMP_SDK,
+		onlineSdk,
+		connection,
+		bondingCurvePda,
+		isLegacyQuoteMint,
+		getBuyTokenAmountFromSolAmount,
+		getBuySolAmountFromTokenAmount,
+		getSellSolAmountFromTokenAmount,
+		newBondingCurve,
+		BN,
+		web3,
+	};
+}
+
+export async function getPumpTradeClient({ network = 'mainnet' } = {}) {
+	const [{ PumpTradeClient }, web3, BN] = await Promise.all([
+		import('@pump-fun/agent-payments-sdk'),
+		import('@solana/web3.js'),
+		import('bn.js').then((m) => m.default || m),
+	]);
+	const connection = getConnection({ network });
+	const client = new PumpTradeClient(connection);
+	return { client, connection, BN, web3 };
 }
 
 export async function getPumpSwapSdk({ network = 'mainnet' } = {}) {

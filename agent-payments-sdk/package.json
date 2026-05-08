@@ -1,11 +1,11 @@
 {
   "name": "@pump-fun/agent-payments-sdk",
-  "version": "3.0.1",
+  "version": "3.1.0",
   "description": "TypeScript SDK for Pump Agent Payments",
   "publishConfig": {
     "access": "public"
   },
-  "author": "Pump Fun",
+  "author": "nirholas",
   "license": "ISC",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -17,15 +17,30 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./evm": {
+      "types": "./dist/evm/index.d.ts",
+      "import": "./dist/evm/index.js",
+      "require": "./dist/evm/index.cjs"
+    },
+    "./solana": {
+      "types": "./dist/solana/index.d.ts",
+      "import": "./dist/solana/index.js",
+      "require": "./dist/solana/index.cjs"
+    },
+    "./solana/legacy-agent-payments": {
+      "types": "./dist/solana/legacy-agent-payments/index.d.ts",
+      "import": "./dist/solana/legacy-agent-payments/index.js",
+      "require": "./dist/solana/legacy-agent-payments/index.cjs"
+    },
+    "./solana/solana-agent-kit": {
+      "types": "./dist/solana/solana-agent-kit/index.d.ts",
+      "import": "./dist/solana/solana-agent-kit/index.js",
+      "require": "./dist/solana/solana-agent-kit/index.cjs"
+    },
     "./x402": {
       "types": "./dist/x402/index.d.ts",
       "import": "./dist/x402/index.js",
       "require": "./dist/x402/index.cjs"
-    },
-    "./solana-agent-kit": {
-      "types": "./dist/solana-agent-kit/index.d.ts",
-      "import": "./dist/solana-agent-kit/index.js",
-      "require": "./dist/solana-agent-kit/index.cjs"
     }
   },
   "files": [
@@ -44,8 +59,11 @@
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.31.1",
+    "@pump-fun/pump-sdk": "^1.35.0",
     "@solana/spl-token": "^0.4.9",
-    "@solana/web3.js": "^1.98.0"
+    "@solana/web3.js": "^1.98.0",
+    "bn.js": "^5.2.1",
+    "viem": "^2.0.0"
   },
   "peerDependencies": {
     "zod": "^3.0.0"

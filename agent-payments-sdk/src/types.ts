@@ -1,173 +1,102 @@
-import type { AccountMeta, PublicKey } from "@solana/web3.js";
-import type { BN } from "@coral-xyz/anchor";
+// agent-payments-sdk
+// Copyright (c) 2026 nirholas | x.com/nichxbt | github.com/nirholas
+// All rights reserved.
 
-// ─── Environment ────────────────────────────────────────────────────────────
+import type { Address, Hash, Hex } from "viem";
 
-export type PumpEnvironment = "devnet" | "mainnet";
+export type SupportedEvmChainId =
+  | 1      // Ethereum
+  | 8453   // Base
+  | 42161  // Arbitrum One
+  | 137    // Polygon
+  | 56     // BNB Smart Chain
+  | 43114; // Avalanche
 
-// ─── Vault / Balance types ──────────────────────────────────────────────────
-
-export interface VaultBalance {
-  address: PublicKey;
-  balance: bigint;
+export interface EvmChainConfig {
+  id: SupportedEvmChainId;
+  name: string;
+  rpcUrl: string;
+  blockExplorer: string;
+  nativeCurrency: { name: string; symbol: string; decimals: number };
+  usdc: Address;
+  /** MoonPay network identifier for deposit routing */
+  moonpayNetwork: string;
 }
 
-export interface AgentBalances {
-  /** ATA of the TokenAgentPayments PDA (incoming payments land here) */
-  paymentVault: VaultBalance;
-  /** ATA of the Buyback Authority PDA */
-  buybackVault: VaultBalance;
-  /** ATA of the Withdraw Authority PDA */
-  withdrawVault: VaultBalance;
+/** A cross-chain payment quote returned before the user signs anything. */
+export interface CrossChainQuote {
+  /** Chain the user is paying from */
+  fromChainId: SupportedEvmChainId;
+  /** Token the user is paying with (address or "native") */
+  fromToken: Address | "native";
+  /** Amount the user sends, in the fromToken's smallest unit */
+  fromAmount: bigint;
+  /** Amount the agent vault receives in USDC on Solana (6 decimals) */
+  toAmountUsdc: bigint;
+  /** Estimated USD value of the payment */
+  estimatedUsd: number;
+  /** Bridge/routing fee in USD */
+  bridgeFeeUsd: number;
+  /** Estimated seconds for funds to arrive on Solana */
+  estimatedTimeSeconds: number;
+  /** Opaque ID used to track this quote through to settlement */
+  quoteId: string;
+  /** Unix timestamp after which this quote expires */
+  expiresAt: number;
 }
 
-// ─── Instruction parameter interfaces ───────────────────────────────────────
-
-export interface CreateParams {
-  /** Signer – must be the bonding-curve creator for this mint */
-  authority: PublicKey;
-  /** The token mint this agent manages */
-  mint: PublicKey;
-  /** The pubkey that will act as the agent authority (for withdraw / update) */
-  agentAuthority: PublicKey;
-  /** Basis points allocated to buyback (0–10 000) */
-  buybackBps: number;
+/** Parameters for building the EVM-side payment transaction. */
+export interface EvmPaymentParams {
+  quote: CrossChainQuote;
+  /** Solana agent token mint address (base58) */
+  agentMint: string;
+  /** Solana wallet address that will be credited (base58) */
+  destinationSolanaWallet: string;
+  /** Arbitrary memo / invoice identifier (u64 as string) */
+  memo: string;
+  /** EVM payer address */
+  sender: Address;
 }
 
-export interface WithdrawParams {
-  /** Agent authority signer */
-  authority: PublicKey;
-  /** Currency mint to withdraw */
-  currencyMint: PublicKey;
-  /** Receiver's token account for the currency */
-  receiverAta: PublicKey;
-  /** Token program for the currency mint (defaults to TOKEN_PROGRAM_ID) */
-  tokenProgram?: PublicKey;
+/** The built EVM transaction(s) ready for the user to sign. */
+export interface EvmPaymentTransaction {
+  /** ERC-20 approval tx — undefined when paying with native ETH */
+  approval?: {
+    to: Address;
+    data: Hex;
+    value: bigint;
+  };
+  /** The bridge / swap transaction */
+  bridge: {
+    to: Address;
+    data: Hex;
+    value: bigint;
+    chainId: SupportedEvmChainId;
+  };
 }
 
-export interface UpdateBuybackBpsParams {
-  /** Agent authority signer */
-  authority: PublicKey;
-  /** New buyback basis points (0–10 000) */
-  buybackBps: number;
+/** Result returned after the EVM transaction is confirmed. */
+export interface EvmPaymentReceipt {
+  txHash: Hash;
+  chainId: SupportedEvmChainId;
+  fromAmount: bigint;
+  fromToken: Address | "native";
+  /** MoonPay deposit/order ID for status polling */
+  depositId: string;
+  /** Estimated Solana arrival time as unix timestamp */
+  estimatedArrivalAt: number;
 }
 
-export interface UpdateBuybackBpsOptions {
-  /** Supported currencies and their token programs */
-  supportedCurrencies: {
-    mint: PublicKey;
-    tokenProgram: PublicKey;
-  }[];
+/** Status of an in-flight cross-chain payment. */
+export type CrossChainPaymentStatus =
+  | "pending_evm_confirmation"
+  | "bridging"
+  | "arrived_on_solana"
+  | "failed";
+
+export interface CrossChainPaymentStatusResult {
+  status: CrossChainPaymentStatus;
+  depositId: string;
+  solanaSignature?: string;
+  error?: string;
 }
-
-export interface AcceptPaymentParams {
-  /** Payer / user signer */
-  user: PublicKey;
-  /** User's token account holding the currency */
-  userTokenAccount: PublicKey;
-  /** The currency mint being paid */
-  currencyMint: PublicKey;
-  amount: BN;
-  memo: BN;
-  startTime: BN;
-  endTime: BN;
-  /** Token program for the currency mint (defaults to TOKEN_PROGRAM_ID) */
-  tokenProgram?: PublicKey;
-}
-
-export interface AcceptPaymentSimpleParams {
-  user: PublicKey;
-  userTokenAccount: PublicKey;
-  currencyMint: PublicKey;
-  amount: bigint | number | string;
-  memo: bigint | number | string;
-  startTime: bigint | number | string;
-  endTime: bigint | number | string;
-  tokenProgram?: PublicKey;
-  /** Compute unit limit (defaults to 130_000) */
-  computeUnitLimit?: number;
-  /** Priority fee in micro lamports per compute unit (defaults to 1_000) */
-  computeUnitPrice?: number;
-}
-
-export interface BuildAcceptPaymentParams {
-  user: PublicKey;
-  currencyMint: PublicKey;
-  amount: bigint | number | string;
-  memo: bigint | number | string;
-  startTime: bigint | number | string;
-  endTime: bigint | number | string;
-  tokenProgram?: PublicKey;
-  /** Compute unit limit for the transaction (defaults to 100_000) */
-  computeUnitLimit?: number;
-  /** Priority fee in microlamports per compute unit. If provided, a SetComputeUnitPrice instruction is prepended. */
-  computeUnitPrice?: number;
-}
-
-export interface DistributePaymentsParams {
-  /** Any signer (permissionless) */
-  user: PublicKey;
-  /** Currency mint to distribute */
-  currencyMint: PublicKey;
-  /** Token program for the currency mint (defaults to TOKEN_PROGRAM_ID) */
-  tokenProgram?: PublicKey;
-  /**
-   * For native SOL only: prepend `agentTransferExtraLamports` before distribute.
-   * Default is false.
-   */
-  includeTransferExtraLamportsForNative?: boolean;
-}
-
-export interface BuybackTriggerParams {
-  /** Must match globalConfig.buybackAuthority */
-  globalBuybackAuthority: PublicKey;
-  /** The currency mint used for the swap (tracks per-currency buyback accounting) */
-  currencyMint: PublicKey;
-  /** Swap program to CPI into (must be in the allowed list) */
-  swapProgramToInvoke: PublicKey;
-  /** Serialised swap instruction data (pass empty Buffer to skip swap & just burn) */
-  swapInstructionData: Buffer;
-  /** All accounts the swap instruction requires */
-  remainingAccounts: AccountMeta[];
-  /** Token program for the currency mint (defaults to TOKEN_PROGRAM_ID) */
-  tokenProgramCurrency?: PublicKey;
-  /** Token program for the agent token mint (defaults to TOKEN_PROGRAM_ID) */
-  tokenProgram?: PublicKey;
-}
-
-export interface ExtendAccountParams {
-  /** Account to extend (must be a supported account type on-chain) */
-  account: PublicKey;
-  /** Signer paying rent for extension */
-  user: PublicKey;
-}
-
-export interface UpdateAuthorityParams {
-  /** Current agent authority signer (or protocol authority for recovery) */
-  authority: PublicKey;
-  /** The new authority pubkey to set */
-  newAuthority: PublicKey;
-}
-
-export interface CloseAccountParams {
-  /** The account to close (TokenAgentPayments, PaymentInCurrency, etc.) */
-  account: PublicKey;
-  /** Signer who receives the reclaimed rent lamports */
-  user: PublicKey;
-}
-
-// ─── Decoded account types (derived from the Anchor program) ────────────────
-
-import { OFFLINE_PUMP_PROGRAM } from "./program";
-
-export type GlobalConfig = Awaited<
-  ReturnType<typeof OFFLINE_PUMP_PROGRAM.account.GlobalConfig.fetch>
->;
-
-export type TokenAgentPaymentInCurrency = Awaited<
-  ReturnType<typeof OFFLINE_PUMP_PROGRAM.account.TokenAgentPaymentInCurrency.fetch>
->;
-
-export type TokenAgentPayments = Awaited<
-  ReturnType<typeof OFFLINE_PUMP_PROGRAM.account.TokenAgentPayments.fetch>
->;
