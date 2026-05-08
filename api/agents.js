@@ -51,12 +51,22 @@ async function handleList(req, res) {
 	const url = new URL(req.url, 'http://x');
 	const isMe = url.pathname.endsWith('/me');
 	const onchainOnly = url.searchParams.get('onchain') === 'true';
-	const auth = await resolveAuth(req);
 
-	// /api/agents/me is the identity bootstrap endpoint — the client calls it
-	// on every page load, including for anonymous visitors. Return null instead
-	// of 401 so the client can cleanly fall back to a local-only identity
-	// without a noisy console error on every unauthenticated page view.
+	// /me is the identity bootstrap endpoint hit on every page load, including
+	// by anonymous visitors. Treat any auth-resolution failure (DB hiccup,
+	// missing sessions table, JWT secret unset) the same as "no auth" so the
+	// client falls back to local-only identity instead of seeing a 500.
+	let auth;
+	try {
+		auth = await resolveAuth(req);
+	} catch (err) {
+		if (isMe) {
+			console.error('[agents/me] auth_resolve_failed', err);
+			return json(res, 200, { agent: null, warning: 'auth_resolve_failed' });
+		}
+		throw err;
+	}
+
 	if (!auth) {
 		if (isMe) return json(res, 200, { agent: null });
 		return error(res, 401, 'unauthorized', 'sign in or provide a bearer token');

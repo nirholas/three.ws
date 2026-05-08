@@ -148,9 +148,29 @@
 		@media (prefers-reduced-motion: reduce) {
 			.pf-modal-backdrop, .pf-modal, .pf-skeleton, .pf-toast { animation: none; }
 		}
-		main.pf-main { position: relative; flex: 1; min-height: calc(100vh - var(--header-h) - 56px); display: grid; grid-template-columns: 1fr; }
+		main.pf-main { position: relative; flex: 1; min-height: calc(100vh - var(--header-h) - 56px);
+			display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 0; }
+		@media (max-width: 1100px) { main.pf-main { grid-template-columns: minmax(0, 1fr) 340px; } }
 		#stage { position: relative; display: flex; flex-direction: column; }
-		iframe { width: 100%; flex: 1; border: 0; display: block; background: var(--bg); }
+		#stage > model-viewer#agent { width: 100%; flex: 1; min-height: 0;
+			background: radial-gradient(ellipse at 50% 60%, #1a1a26 0%, #0a0a12 70%);
+			--poster-color: transparent; display: block; }
+		#stage-overlay { position: absolute; inset: 0; display: flex; flex-direction: column;
+			justify-content: flex-end; align-items: center; padding: 0 24px 24px;
+			pointer-events: none; gap: 12px; z-index: 2; }
+		#stage-title { font-size: 22px; font-weight: 700; letter-spacing: 0.01em;
+			color: #fff; text-shadow: 0 2px 14px rgba(0,0,0,0.7), 0 0 24px rgba(106,92,255,0.35);
+			text-align: center; max-width: 720px; opacity: 0; transform: translateY(8px);
+			transition: opacity 0.25s ease, transform 0.25s ease; }
+		#stage-title[data-visible="true"] { opacity: 1; transform: none; }
+		#stage-title .sub { display: block; font-size: 13px; font-weight: 500; color: #cbd5e1;
+			text-shadow: 0 1px 8px rgba(0,0,0,0.7); margin-top: 4px; letter-spacing: 0.02em; }
+		#stage-caption { font-size: 14px; font-weight: 500; color: #eee; max-width: 640px;
+			background: rgba(10,10,16,0.78); border: 1px solid rgba(106,92,255,0.35);
+			border-radius: 10px; padding: 8px 14px; backdrop-filter: blur(8px);
+			text-align: center; opacity: 0; transform: translateY(6px);
+			transition: opacity 0.2s ease, transform 0.2s ease; }
+		#stage-caption[data-visible="true"] { opacity: 1; transform: none; }
 		#anim-chips { display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 12px;
 			border-top: 1px solid var(--border); background: rgba(20,20,28,0.85);
 			backdrop-filter: blur(6px); max-height: 96px; overflow-y: auto; }
@@ -162,17 +182,15 @@
 		.anim-chip:active { transform: scale(0.96); }
 		.anim-chip[data-active="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
 		.anim-chip[disabled] { opacity: 0.5; cursor: wait; }
-				@media (min-width: 721px) {
+		@media (min-width: 721px) {
 			#side {
-				position: absolute;
-				right: 16px;
-				top: 16px;
-				width: 360px;
-				max-height: 80vh;
-				z-index: 100;
-				border-radius: 8px;
-				box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-				border: 1px solid var(--border);
+				position: relative;
+				width: auto;
+				max-height: none;
+				z-index: 1;
+				border-radius: 0;
+				box-shadow: none;
+				border-left: 1px solid var(--border);
 				background: var(--panel);
 				display: flex;
 				flex-direction: column;
@@ -188,19 +206,7 @@
 			overflow: hidden;
 		}
 		#side-header {
-			display: none; /* hidden on mobile by default */
-		}
-		@media (min-width: 721px) {
-			#side-header {
-				display: flex;
-				justify-content: space-between;
-				align-items: center;
-				padding: 6px 12px;
-				background: #1a1a24;
-				cursor: move;
-				border-bottom: 1px solid var(--border);
-				user-select: none;
-			}
+			display: none; /* docked panel doesn't need drag/min/close affordances */
 		}
 		#side-header .side-title {
 			font-weight: 600;
@@ -398,7 +404,11 @@
 	</div>
 	<main class="pf-main">
 		<div id="stage">
-			<iframe id="agent" allow="autoplay" title="3D agent"></iframe>
+			<model-viewer id="agent" camera-controls disable-zoom interaction-prompt="none" autoplay auto-rotate auto-rotate-delay="2000" rotation-per-second="15deg" shadow-intensity="0.6" shadow-softness="0.8" exposure="1.0" environment-image="neutral" camera-orbit="0deg 80deg 4m" field-of-view="32deg" loading="eager" aria-label="3D agent"></model-viewer>
+			<div id="stage-overlay">
+				<div id="stage-title" aria-live="polite"></div>
+				<div id="stage-caption" aria-live="polite"></div>
+			</div>
 			<div id="anim-chips" role="group" aria-label="Trigger animation"></div>
 		</div>
 		<aside id="side">
@@ -1015,10 +1025,9 @@
 		// ── Agent communication ──────────────────────────────────────────────
 
 		let animations = [];
-		let ws = null, wsTries = 0, wsBackoff = 1000, wsClosed = false;
+		let es = null, esTries = 0, esBackoff = 1000, esClosed = false;
 		let queue = [], queueTimer = null, queuePaused = false;
 		let replayQueue = [];
-		const solPrice = { val: 0, el: null };
 		let firstClaims = { data: [], el: $('first-claims'), refreshing: false, ts: 0 };
 		const feed = {
 			el: $('feed'),
@@ -1042,42 +1051,91 @@
 		};
 		const seen = new Set(); // seen mints in this session
 
-		const iframeUrl = new URL('/agent-embed.html', location.href);
-		function loadAgent() {
-			iframeUrl.searchParams.set('src', params.avatar);
-			// Pass some params to the agent iframe for its own analytics
-			iframeUrl.searchParams.set('page', 'pumpfun');
-			// Cursor stays a normal cursor — no avatar gaze tracking on this page
-			iframeUrl.searchParams.set('gaze', 'off');
-			if (params.asset) iframeUrl.searchParams.set('asset', params.asset);
-			if (params.mint) iframeUrl.searchParams.set('mint', params.mint);
-			iframe.src = iframeUrl.href;
-		}
+		// ── Avatar viewer ────────────────────────────────────────────────────
+		// Direct <model-viewer> (loaded from CDN at the top of the page). Replaces
+		// the previous iframe-based agent embed which expected ?id=<agentId> and
+		// silently rendered nothing when only ?src=<glb> was supplied.
+		const viewer = iframe; // alias kept so existing variable name still reads
+		function loadAgent() { viewer.src = params.avatar; }
 		loadAgent();
 
-		window.addEventListener('message', (e) => {
-			if (e.source !== iframe.contentWindow) return;
-			const { type, payload } = e.data;
-			if (type === 'ready') {
-				iframe.contentWindow.postMessage({ type: 'getAnimations' }, '*');
-			} else if (type === 'animations') {
-				animations = payload;
-				const chips = $('anim-chips');
-				chips.innerHTML = '';
-				payload.forEach((anim) => {
-					const btn = document.createElement('button');
-					btn.type = 'button';
-					btn.className = 'anim-chip';
-					btn.textContent = anim;
-					btn.addEventListener('click', () => {
-						iframe.contentWindow.postMessage({ type: 'playAnimation', payload: anim }, '*');
-					});
-					chips.appendChild(btn);
-				});
-				// Repopulate animation dropdowns if the config modal is already open
-				if (config.modal.dataset.open === 'true') renderConfigBody();
-			}
+		viewer.addEventListener('load', () => {
+			animations = viewer.availableAnimations || [];
+			const chips = $('anim-chips');
+			chips.innerHTML = '';
+			animations.forEach((anim) => {
+				const btn = document.createElement('button');
+				btn.type = 'button';
+				btn.className = 'anim-chip';
+				btn.textContent = anim;
+				btn.addEventListener('click', () => playAnim(anim));
+				chips.appendChild(btn);
+			});
+			if (!animations.length) chips.innerHTML = '<span class="empty" style="padding:0">no animations on this avatar</span>';
+			// Auto-play the first available animation so the avatar isn't a T-pose
+			if (animations.length) { viewer.animationName = animations[0]; viewer.play({ repetitions: Infinity }); }
+			if (config.modal.dataset.open === 'true') renderConfigBody();
 		});
+		viewer.addEventListener('error', (e) => {
+			console.warn('[agent] model load error', e?.detail || e);
+			$('anim-chips').innerHTML = '<span class="empty" style="padding:0;color:#f87171">avatar failed to load</span>';
+		});
+
+		function playAnim(name) {
+			if (!viewer.availableAnimations?.includes(name)) return false;
+			try {
+				viewer.animationName = name;
+				viewer.currentTime = 0;
+				viewer.play({ repetitions: 1 });
+				return true;
+			} catch { return false; }
+		}
+
+		// ── Web Speech narration (replaces iframe-side TTS) ──────────────────
+		const synth = window.speechSynthesis || null;
+		let _voice = null;
+		function pickVoice() {
+			if (!synth) return null;
+			if (_voice) return _voice;
+			const voices = synth.getVoices();
+			if (!voices.length) return null;
+			_voice = voices.find(v => /en[-_]US/i.test(v.lang) && /female|samantha|zira|jenny|aria/i.test(v.name))
+				|| voices.find(v => /en[-_]US/i.test(v.lang))
+				|| voices.find(v => v.lang?.startsWith('en'))
+				|| voices[0];
+			return _voice;
+		}
+		if (synth?.addEventListener) synth.addEventListener('voiceschanged', pickVoice);
+		function speak(text) {
+			if (!synth || !text) return 0;
+			try {
+				synth.cancel();
+				const u = new SpeechSynthesisUtterance(text);
+				const v = pickVoice();
+				if (v) u.voice = v;
+				u.rate = params.mood === 'hype' ? 1.15 : params.mood === 'chill' ? 0.92 : 1.0;
+				u.pitch = params.mood === 'hype' ? 1.1 : 1.0;
+				synth.speak(u);
+				return Math.max(2000, Math.min(10000, 2200 + text.length * 55));
+			} catch { return 0; }
+		}
+
+		// ── Stage overlay (caption + title) ──────────────────────────────────
+		const _captionEl = $('stage-caption');
+		const _titleEl = $('stage-title');
+		let _captionTimer = null, _titleTimer = null;
+		function showCaption(text, holdMs = 3000) {
+			clearTimeout(_captionTimer);
+			_captionEl.textContent = text;
+			_captionEl.dataset.visible = 'true';
+			_captionTimer = setTimeout(() => { _captionEl.dataset.visible = 'false'; }, holdMs);
+		}
+		function showTitle(title, subtitle, holdMs = 3000) {
+			clearTimeout(_titleTimer);
+			_titleEl.innerHTML = `${escapeHtml(title || '')}${subtitle ? `<span class="sub">${escapeHtml(subtitle)}</span>` : ''}`;
+			_titleEl.dataset.visible = 'true';
+			_titleTimer = setTimeout(() => { _titleEl.dataset.visible = 'false'; }, holdMs);
+		}
 
 		function enqueue(item, toFront = false) {
 			if (toFront) queue.unshift(item); else queue.push(item);
@@ -1099,13 +1157,14 @@
 			let duration = 3000;
 
 			if (item.type === 'say') {
-				iframe.contentWindow.postMessage({ type: 'say', payload: { text: item.text, mood: params.mood } }, '*');
-				duration = 3000 + (item.text.length * 55);
+				const spokenMs = speak(item.text);
+				duration = spokenMs || (3000 + (item.text.length * 55));
+				showCaption(item.text, duration);
 			} else if (item.type === 'anim') {
-				iframe.contentWindow.postMessage({ type: 'playAnimation', payload: item.name }, '*');
+				playAnim(item.name);
 				duration = item.duration || 2500;
 			} else if (item.type === 'title') {
-				iframe.contentWindow.postMessage({ type: 'showTitle', payload: { title: item.title, subtitle: item.subtitle } }, '*');
+				showTitle(item.title, item.subtitle, item.duration || 3000);
 				duration = item.duration || 3000;
 			}
 			queueTimer = setTimeout(processQueue, duration);
@@ -1113,51 +1172,105 @@
 
 		// ── Event handlers ───────────────────────────────────────────────────
 
+		function normalizeEvent(type, ev) {
+			const tsRaw = ev.created_at ?? ev.timestamp ?? ev.ts;
+			let timestamp = Date.now();
+			if (typeof tsRaw === 'number') timestamp = tsRaw < 1e12 ? tsRaw * 1000 : tsRaw;
+			else if (tsRaw) {
+				const parsed = new Date(tsRaw).getTime();
+				if (Number.isFinite(parsed)) timestamp = parsed;
+			}
+			const mc = Number(ev.market_cap_usd ?? ev.usd_market_cap) || 0;
+			if (type === 'mint') {
+				const socials = (ev.twitter || ev.telegram || ev.website)
+					? { twitter: ev.twitter, telegram: ev.telegram, website: ev.website }
+					: null;
+				return {
+					type: 'mint',
+					mint: ev.mint,
+					name: ev.name || ev.symbol || 'unknown',
+					ticker: ev.symbol || ev.ticker || '',
+					description: ev.description || '',
+					sol: Number(ev.initial_buy_sol) || 0,
+					usd: Number(ev.initial_buy_usd) || 0,
+					user: ev.creator || ev.user || '',
+					tier: ev.tier,
+					market_cap_usd: mc,
+					replay: !!ev.replay,
+					socials,
+					timestamp,
+				};
+			}
+			if (type === 'graduation') {
+				return {
+					type: 'graduation',
+					mint: ev.mint,
+					name: ev.name || ev.symbol || 'unknown',
+					market_cap_usd: mc,
+					tier: ev.tier,
+					audit: ev.audit,
+					replay: !!ev.replay,
+					timestamp,
+				};
+			}
+			if (type === 'claim') {
+				const lamports = Number(ev.lamports ?? ev.amountLamports) || 0;
+				return {
+					type: 'claim',
+					mint: ev.mint || ev.token_mint || '',
+					user: ev.creator || ev.user || ev.claimerWallet || '',
+					sol: Number(ev.sol) || (lamports ? lamports / 1e9 : 0),
+					usd: Number(ev.usd) || 0,
+					tier: ev.tier,
+					replay: !!ev.replay,
+					timestamp,
+				};
+			}
+			return { ...ev, type, timestamp };
+		}
+
 		function connect() {
-			wsTries++;
-			setStatus('connecting', `connecting (try ${wsTries})…`);
-			if (ws) { try { ws.close(); } catch {} ws = null; }
+			esTries++;
+			setStatus('connecting', `connecting (try ${esTries})…`);
+			if (es) { try { es.close(); } catch {} es = null; }
 
-			const endpoint = new URL('/api/pump/feed', location.href);
-			endpoint.protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-			if (params.asset) endpoint.searchParams.set('asset', params.asset);
-			if (params.network) endpoint.searchParams.set('network', params.network);
+			const endpoint = new URL('/api/agents/pumpfun-feed', location.href);
+			endpoint.searchParams.set('kind', params.kind || 'all');
+			if (params.minTier) endpoint.searchParams.set('minTier', params.minTier);
+			if (params.mcMin) endpoint.searchParams.set('mcMin', String(params.mcMin));
+			if (params.mcMax) endpoint.searchParams.set('mcMax', String(params.mcMax));
+			if (params.minBuy) endpoint.searchParams.set('minBuy', String(params.minBuy));
+			if (params.whale) endpoint.searchParams.set('whale', String(params.whale));
 
-			ws = new WebSocket(endpoint.href);
-			ws.onopen = () => {
-				console.log('[ws] connected');
-				wsTries = 0;
-				wsBackoff = 1000;
+			es = new EventSource(endpoint.href, { withCredentials: true });
+			es.addEventListener('open', () => {
+				esTries = 0;
+				esBackoff = 1000;
 				setStatus('live', 'live');
-				ws.send(JSON.stringify({ type: 'sol-price' }));
+			});
+			const ingest = (sseType) => (msg) => {
+				let ev; try { ev = JSON.parse(msg.data); } catch { return; }
+				handleEvent(normalizeEvent(sseType, ev));
 			};
-			ws.onmessage = (e) => {
-				const data = JSON.parse(e.data);
-				if (data.type === 'sol-price') {
-					solPrice.val = data.price;
-					return;
+			es.addEventListener('mint', ingest('mint'));
+			es.addEventListener('claim', ingest('claim'));
+			es.addEventListener('graduation', ingest('graduation'));
+			es.addEventListener('ping', () => {});
+			es.addEventListener('close', () => {
+				if (esClosed) return;
+				try { es.close(); } catch {}
+				setTimeout(connect, 250);
+			});
+			es.onerror = () => {
+				if (esClosed || !es) return;
+				if (es.readyState === EventSource.CLOSED) {
+					console.log(`[sse] disconnected, reconnect in ${esBackoff/1000}s`);
+					setStatus('down', 'offline');
+					setTimeout(connect, esBackoff);
+					esBackoff = Math.min(esBackoff * 1.5, 15000);
+				} else {
+					setStatus('connecting', 'reconnecting…');
 				}
-				if (data.type === 'events-batch') {
-					data.events.forEach(handleEvent);
-					if (data.replay) {
-						setTimeout(() => {
-							const div = document.createElement('div');
-							div.style = 'margin: 6px 0; text-align: center; font-size: 10px; color: #444; text-transform: uppercase; letter-spacing: 0.08em;';
-							div.textContent = `live events started ${new Date().toLocaleTimeString()}`;
-							feed.el.appendChild(div);
-						}, 1000);
-					}
-					return;
-				}
-				handleEvent(data);
-			};
-			ws.onerror = (err) => console.error('[ws] error', err);
-			ws.onclose = () => {
-				if (wsClosed) return;
-				console.log(`[ws] disconnected, reconnect in ${wsBackoff/1000}s`);
-				setStatus('down', 'offline');
-				setTimeout(connect, wsBackoff);
-				wsBackoff = Math.min(wsBackoff * 1.5, 15000);
 			};
 		}
 
@@ -1268,9 +1381,9 @@
 		}
 		status.pill.addEventListener('click', () => {
 			if (status.pill.dataset.state === 'down') {
-				wsClosed = false;
-				wsTries = 0;
-				wsBackoff = 1000;
+				esClosed = false;
+				esTries = 0;
+				esBackoff = 1000;
 				connect();
 			}
 		});
@@ -1446,10 +1559,17 @@
 			firstClaims.el.innerHTML = '<div class="empty">Refreshing…</div>';
 			try {
 				const windowMins = $('fc-window').value || 1440;
-				const r = await fetch(`/api/pump/first_claims?limit=100&window=${windowMins}`);
+				const r = await fetch(`/api/pump/first-claims?limit=50&sinceMinutes=${windowMins}`);
 				if (!r.ok) throw new Error('http ' + r.status);
 				const data = await r.json();
-				firstClaims.data = data.claims;
+				firstClaims.data = (data.items || []).map((it) => ({
+					user: it.creator,
+					sol: (Number(it.lamports) || 0) / 1e9,
+					token_mint: it.mint || '',
+					token_name: it.name || (it.mint ? it.mint.slice(0, 4) + '…' + it.mint.slice(-4) : 'unknown'),
+					tx_sig: it.signature,
+					timestamp: (Number(it.ts) || 0) * 1000,
+				}));
 				firstClaims.ts = now;
 				renderFirstClaims();
 			} catch (err) {
@@ -1613,7 +1733,6 @@
 		initSidePanel();
 		connect();
 		fetchFirstClaims();
-		setInterval(() => { if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'sol-price' })); }, 15_000);
 	</script>
 </body>
 </html>

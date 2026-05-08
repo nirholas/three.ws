@@ -21,6 +21,10 @@
 			"dest": "/api/wk?name=chat-plugin"
 		},
 		{
+			"src": "/\\.well-known/x402\\.json",
+			"dest": "/api/wk?name=x402-discovery"
+		},
+		{
 			"src": "/\\.well-known/x402",
 			"dest": "/api/wk?name=x402"
 		},

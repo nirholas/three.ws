@@ -1,10 +1,18 @@
-// POST /api/chat — AI-powered chat for the three.ws.
+// POST /api/chat — AI-powered chat for the three.ws viewer agent.
 //
-// Takes a user message + viewer context, forwards to Anthropic with a set of
-// viewer-control tools exposed as function-calls, and returns:
-//   { reply: string, actions: [{ type, ...input }] }
-// The client executes each action against the live viewer. The model is
-// stateless here — callers pass the recent history each turn (sessionStorage).
+// Body: { message, context, history, agentId?, provider?, model? }
+// Response: SSE stream { type: 'chunk' | 'done' | 'error' }.
+//
+// Provider routing (in order):
+//   1. Body.provider when present and the matching key is configured.
+//   2. ANTHROPIC_API_KEY → Anthropic (default).
+//   3. OPENROUTER_API_KEY → OpenRouter free tier.
+//   4. GROQ_API_KEY → Groq.
+//   5. OPENAI_API_KEY → OpenAI.
+// Anthropic and the OpenAI-compatible providers (OpenRouter / Groq / OpenAI)
+// use different request shapes, tool-call wire formats, and SSE event names —
+// this file translates both directions so the client only sees the same
+// { chunk → done } event stream regardless of upstream.
 
 import { getSessionUser, authenticateBearer, extractBearer } from './_lib/auth.js';
 import { cors, json, method, readJson, wrap, error } from './_lib/http.js';
@@ -17,9 +25,40 @@ import { z } from 'zod';
 export const maxDuration = 60;
 
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
-const DEFAULT_MODEL = 'claude-sonnet-4-6';
+const DEFAULT_ANTHROPIC_MODEL = 'claude-sonnet-4-6';
+const DEFAULT_OPENROUTER_MODEL = 'meta-llama/llama-3.3-70b-instruct:free';
+const DEFAULT_GROQ_MODEL = 'llama-3.3-70b-versatile';
+const DEFAULT_OPENAI_MODEL = 'gpt-4o-mini';
 const DEFAULT_MAX_TOKENS = 1024;
 const HARD_MAX_TOKENS = 4096;
+
+const PROVIDERS = {
+	anthropic: {
+		envKey: 'ANTHROPIC_API_KEY',
+		defaultModel: DEFAULT_ANTHROPIC_MODEL,
+		url: ANTHROPIC_URL,
+		style: 'anthropic',
+	},
+	openrouter: {
+		envKey: 'OPENROUTER_API_KEY',
+		defaultModel: DEFAULT_OPENROUTER_MODEL,
+		url: 'https://openrouter.ai/api/v1/chat/completions',
+		style: 'openai',
+		extraHeaders: { 'HTTP-Referer': 'https://three.ws', 'X-Title': 'three.ws agent' },
+	},
+	groq: {
+		envKey: 'GROQ_API_KEY',
+		defaultModel: DEFAULT_GROQ_MODEL,
+		url: 'https://api.groq.com/openai/v1/chat/completions',
+		style: 'openai',
+	},
+	openai: {
+		envKey: 'OPENAI_API_KEY',
+		defaultModel: DEFAULT_OPENAI_MODEL,
+		url: 'https://api.openai.com/v1/chat/completions',
+		style: 'openai',
+	},
+};
 
 const contextSchema = z
 	.object({
@@ -45,6 +84,8 @@ const chatBody = z.object({
 	message: z.string().trim().min(1).max(4000),
 	context: contextSchema,
 	agentId: z.string().uuid().optional(),
+	provider: z.enum(['anthropic', 'openrouter', 'groq', 'openai']).optional(),
+	model: z.string().min(1).max(120).optional(),
 	history: z
 		.array(
 			z.object({
@@ -56,6 +97,7 @@ const chatBody = z.object({
 		.default([]),
 });
 
+// Tool definitions in Anthropic shape; converted to OpenAI shape on demand.
 const ACTION_TOOLS = [
 	{
 		name: 'setWireframe',
@@ -169,20 +211,28 @@ const ACTION_TOOLS = [
 
 const ACTION_NAMES = new Set(ACTION_TOOLS.map((t) => t.name));
 
+const OPENAI_TOOLS = ACTION_TOOLS.map((t) => ({
+	type: 'function',
+	function: {
+		name: t.name,
+		description: t.description,
+		parameters: t.input_schema,
+	},
+}));
+
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
-
-	const apiKey = process.env.ANTHROPIC_API_KEY;
-	if (!apiKey) {
-		return error(res, 503, 'chat_unavailable', 'chat backend is not configured');
-	}
 
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in to chat with the agent');
 
 	const body = parse(chatBody, await readJson(req));
-	const model = process.env.CHAT_MODEL || DEFAULT_MODEL;
+	const route = pickProvider(body.provider, body.model);
+	if (!route) {
+		return error(res, 503, 'chat_unavailable', 'no chat provider is configured');
+	}
+
 	const maxTokens = clampInt(
 		parseInt(process.env.CHAT_MAX_TOKENS || '', 10) || DEFAULT_MAX_TOKENS,
 		128,
@@ -198,47 +248,36 @@ export default wrap(async (req, res) => {
 		if (agentRow?.persona_prompt) personaPrompt = agentRow.persona_prompt;
 	}
 
-	const messages = [
-		...body.history.map((m) => ({ role: m.role, content: m.content })),
-		{ role: 'user', content: body.message },
-	];
+	const systemPrompt = buildSystemPrompt(body.context, personaPrompt);
+	const history = body.history.map((m) => ({ role: m.role, content: m.content }));
+	history.push({ role: 'user', content: body.message });
 
 	const started = Date.now();
 	let upstream;
 	try {
-		upstream = await fetch(ANTHROPIC_URL, {
+		upstream = await fetch(route.url, {
 			method: 'POST',
-			headers: {
-				'x-api-key': apiKey,
-				'anthropic-version': '2023-06-01',
-				'content-type': 'application/json',
-			},
-			body: JSON.stringify({
-				model,
-				max_tokens: maxTokens,
-				system: buildSystemPrompt(body.context, personaPrompt),
-				messages,
-				tools: ACTION_TOOLS,
-				stream: true,
-			}),
+			headers: route.headers,
+			body: JSON.stringify(route.buildPayload({ systemPrompt, history, maxTokens })),
 		});
 	} catch (err) {
-		captureException(err, { route: 'chat', stage: 'fetch' });
+		captureException(err, { route: 'chat', stage: 'fetch', provider: route.name });
 		if (process.env.DEBUG === 'true') {
-			console.warn('[chat] upstream fetch failed:', err.message);
+			console.warn(`[chat:${route.name}] upstream fetch failed:`, err.message);
 		}
 		return error(res, 502, 'upstream_unavailable', 'chat backend unreachable');
 	}
 
 	if (!upstream.ok) {
 		const text = await upstream.text().catch(() => '');
-		captureException(new Error(`anthropic upstream ${upstream.status}`), {
+		captureException(new Error(`${route.name} upstream ${upstream.status}`), {
 			route: 'chat',
+			provider: route.name,
 			status: upstream.status,
 			body: text.slice(0, 400),
 		});
 		if (process.env.DEBUG === 'true') {
-			console.warn('[chat] anthropic', upstream.status, text.slice(0, 400));
+			console.warn(`[chat:${route.name}]`, upstream.status, text.slice(0, 400));
 		}
 		return error(res, 502, 'upstream_error', `chat backend returned ${upstream.status}`);
 	}
@@ -249,6 +288,112 @@ export default wrap(async (req, res) => {
 		'X-Accel-Buffering': 'no',
 	});
 
+	function sendSSE(obj) {
+		res.write(`data: ${JSON.stringify(obj)}\n\n`);
+	}
+
+	const result =
+		route.style === 'anthropic'
+			? await streamAnthropic(upstream, sendSSE)
+			: await streamOpenAI(upstream, sendSSE);
+
+	if (result.error) {
+		captureException(result.error, { route: 'chat', stage: 'stream', provider: route.name });
+		sendSSE({ type: 'error', code: 'stream_error', message: 'stream interrupted' });
+		res.end();
+		return;
+	}
+
+	sendSSE({
+		type: 'done',
+		reply: result.reply.trim(),
+		actions: result.actions,
+		model: route.model,
+		provider: route.name,
+	});
+	res.end();
+
+	const latencyMs = Date.now() - started;
+	recordEvent({
+		userId: auth.userId,
+		apiKeyId: auth.apiKeyId,
+		clientId: auth.clientId,
+		kind: 'chat',
+		tool: route.model,
+		latencyMs,
+		meta: {
+			provider: route.name,
+			input_tokens: result.inputTokens,
+			output_tokens: result.outputTokens,
+			actions: result.actions.map((a) => a.type),
+			has_context: Boolean(body.context?.modelName),
+		},
+	});
+});
+
+// ── Provider selection ───────────────────────────────────────────────────────
+
+function pickProvider(requested, model) {
+	const order = requested
+		? [requested, ...Object.keys(PROVIDERS).filter((p) => p !== requested)]
+		: ['anthropic', 'openrouter', 'groq', 'openai'];
+
+	for (const name of order) {
+		const cfg = PROVIDERS[name];
+		const apiKey = process.env[cfg.envKey];
+		if (!apiKey) continue;
+		const chosenModel = (requested === name && model) || process.env.CHAT_MODEL || cfg.defaultModel;
+		return makeRoute(name, cfg, apiKey, chosenModel);
+	}
+	return null;
+}
+
+function makeRoute(name, cfg, apiKey, model) {
+	if (cfg.style === 'anthropic') {
+		return {
+			name,
+			model,
+			url: cfg.url,
+			style: 'anthropic',
+			headers: {
+				'x-api-key': apiKey,
+				'anthropic-version': '2023-06-01',
+				'content-type': 'application/json',
+			},
+			buildPayload: ({ systemPrompt, history, maxTokens }) => ({
+				model,
+				max_tokens: maxTokens,
+				system: systemPrompt,
+				messages: history,
+				tools: ACTION_TOOLS,
+				stream: true,
+			}),
+		};
+	}
+	return {
+		name,
+		model,
+		url: cfg.url,
+		style: 'openai',
+		headers: {
+			Authorization: `Bearer ${apiKey}`,
+			'Content-Type': 'application/json',
+			...(cfg.extraHeaders || {}),
+		},
+		buildPayload: ({ systemPrompt, history, maxTokens }) => ({
+			model,
+			max_tokens: maxTokens,
+			messages: [{ role: 'system', content: systemPrompt }, ...history],
+			tools: OPENAI_TOOLS,
+			tool_choice: 'auto',
+			stream: true,
+		}),
+	};
+}
+
+// ── Stream readers ───────────────────────────────────────────────────────────
+
+async function streamAnthropic(upstream, sendSSE) {
 	const reader = upstream.body.getReader();
 	const decoder = new TextDecoder();
 	let buf = '';
@@ -257,10 +402,6 @@ export default wrap(async (req, res) => {
 	const blocks = {};
 	let inputTokens = 0;
 	let outputTokens = 0;
-
-	function sendSSE(obj) {
-		res.write(`data: ${JSON.stringify(obj)}\n\n`);
-	}
 
 	try {
 		while (true) {
@@ -295,45 +436,94 @@ export default wrap(async (req, res) => {
 					}
 				} else if (evt.type === 'content_block_stop') {
 					const block = blocks[evt.index];
-					if (block?.type === 'tool_use' && block.partialJson) {
-						try {
-							const input = JSON.parse(block.partialJson);
-							if (ACTION_NAMES.has(block.name)) {
-								actions.push({ type: block.name, ...input });
-							}
-						} catch {}
+					if (block?.type === 'tool_use') {
+						const action = parseToolJson(block.name, block.partialJson);
+						if (action) actions.push(action);
 					}
 				} else if (evt.type === 'message_delta') {
-					outputTokens = evt.usage?.output_tokens ?? 0;
+					outputTokens = evt.usage?.output_tokens ?? outputTokens;
 				}
 			}
 		}
 	} catch (err) {
-		captureException(err, { route: 'chat', stage: 'stream' });
-		sendSSE({ type: 'error', code: 'stream_error', message: 'stream interrupted' });
-		res.end();
-		return;
+		return { error: err, reply, actions, inputTokens, outputTokens };
 	}
 
-	const latencyMs = Date.now() - started;
-	sendSSE({ type: 'done', reply: reply.trim(), actions, model });
-	res.end();
+	return { reply, actions, inputTokens, outputTokens };
+}
 
-	recordEvent({
-		userId: auth.userId,
-		apiKeyId: auth.apiKeyId,
-		clientId: auth.clientId,
-		kind: 'chat',
-		tool: model,
-		latencyMs,
-		meta: {
-			input_tokens: inputTokens,
-			output_tokens: outputTokens,
-			actions: actions.map((a) => a.type),
-			has_context: Boolean(body.context?.modelName),
-		},
-	});
-});
+async function streamOpenAI(upstream, sendSSE) {
+	const reader = upstream.body.getReader();
+	const decoder = new TextDecoder();
+	let buf = '';
+	let reply = '';
+	const actions = [];
+	// OpenAI streams tool calls as deltas keyed by index. Accumulate name + arguments per index.
+	const toolBuf = {};
+	let inputTokens = 0;
+	let outputTokens = 0;
+
+	try {
+		while (true) {
+			const { value, done } = await reader.read();
+			if (done) break;
+			buf += decoder.decode(value, { stream: true });
+			const lines = buf.split('\n');
+			buf = lines.pop();
+			for (const line of lines) {
+				if (!line.startsWith('data: ')) continue;
+				const raw = line.slice(6).trim();
+				if (!raw || raw === '[DONE]') continue;
+				let evt;
+				try {
+					evt = JSON.parse(raw);
+				} catch {
+					continue;
+				}
+				const choice = evt.choices?.[0];
+				const delta = choice?.delta;
+				if (delta?.content) {
+					reply += delta.content;
+					sendSSE({ type: 'chunk', text: delta.content });
+				}
+				if (Array.isArray(delta?.tool_calls)) {
+					for (const tc of delta.tool_calls) {
+						const idx = tc.index ?? 0;
+						const slot = (toolBuf[idx] ||= { name: '', args: '' });
+						if (tc.function?.name) slot.name += tc.function.name;
+						if (tc.function?.arguments) slot.args += tc.function.arguments;
+					}
+				}
+				if (evt.usage) {
+					inputTokens = evt.usage.prompt_tokens ?? inputTokens;
+					outputTokens = evt.usage.completion_tokens ?? outputTokens;
+				}
+			}
+		}
+	} catch (err) {
+		return { error: err, reply, actions, inputTokens, outputTokens };
+	}
+
+	for (const slot of Object.values(toolBuf)) {
+		const action = parseToolJson(slot.name, slot.args);
+		if (action) actions.push(action);
+	}
+
+	return { reply, actions, inputTokens, outputTokens };
+}
+
+function parseToolJson(name, jsonText) {
+	if (!name || !ACTION_NAMES.has(name)) return null;
+	const text = jsonText && jsonText.trim() ? jsonText : '{}';
+	try {
+		const input = JSON.parse(text);
+		return { type: name, ...input };
+	} catch {
+		return null;
+	}
+}
+
+// ── System prompt + auth + helpers ───────────────────────────────────────────
 
 function buildSystemPrompt(ctx = {}, personaPrompt = null) {
 	const loaded = ctx.modelName
@@ -351,7 +541,7 @@ function buildSystemPrompt(ctx = {}, personaPrompt = null) {
 		'You are the three.ws — an embodied AI assistant embedded inside a browser-native glTF/GLB viewer at three.ws.',
 		'Your job is to help the user inspect, understand, and modify the 3D scene. You have deep glTF 2.0, PBR materials, and three.js expertise.',
 		'You can also show the latest trades from pump.fun by calling the getPumpFunTrades tool.',
-		'When the user asks you to change the viewer (e.g. "enable wireframe", "make the background dark blue", "turn on auto rotate"), USE the provided tools to perform the change — do not just describe it.',
+		'When the user asks you to change the viewer ("enable wireframe", "make the background dark blue", "turn on auto rotate", "load this model"), CALL the matching tool — do not just describe what would happen. Examples: user "wireframe on" → call setWireframe({value:true}). user "rotate it" → call setAutoRotate({value:true}). user "dark blue bg" → call setBgColor({value:"#0a1f44"}).',
 		'When asked about the loaded model, use the context below as ground truth. Do not invent stats.',
 		'Keep replies tight: 1–3 sentences. Plain text, no markdown headers, no emoji.',
 		'',
@@ -361,7 +551,6 @@ function buildSystemPrompt(ctx = {}, personaPrompt = null) {
 	);
 	return lines.join('\n');
 }
-
 
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);

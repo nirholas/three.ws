@@ -77,6 +77,85 @@ function handleX402(req, res) {
 	}, { 'cache-control': 'public, max-age=300' });
 }
 
+// ── x402 Bazaar discovery (/.well-known/x402.json) ───────────────────────────
+// Crawled by agentic.market / Bazaar to index our paid endpoints.
+// Schema: https://x402.org/schemas/discovery.json
+
+const RAW_AMOUNT_TO_USDC = (raw) => {
+	const n = Number(raw || 0) / 1_000_000;
+	const decimals = n < 0.01 ? 4 : 2;
+	const s = n.toFixed(decimals);
+	const trimmed = s.includes('.') ? s.replace(/0+$/, '').replace(/\.$/, '') : s;
+	return `$${trimmed}`;
+};
+
+function handleX402Discovery(req, res) {
+	const origin = env.APP_ORIGIN;
+	const mcpUrl = `${origin}/api/mcp`;
+	const price = RAW_AMOUNT_TO_USDC(env.X402_MAX_AMOUNT_REQUIRED);
+
+	const accepts = [];
+	if (env.X402_PAY_TO_SOLANA) {
+		accepts.push({
+			scheme: 'exact',
+			network: 'solana',
+			network_label: 'solana-mainnet',
+			price,
+			payTo: env.X402_PAY_TO_SOLANA,
+			asset: env.X402_ASSET_MINT_SOLANA,
+			asset_symbol: 'USDC',
+			extra: { name: 'USDC', decimals: 6, feePayer: env.X402_FEE_PAYER_SOLANA },
+		});
+	}
+	if (env.X402_PAY_TO_BASE) {
+		accepts.push({
+			scheme: 'exact',
+			network: 'base',
+			network_label: 'base-mainnet',
+			price,
+			payTo: env.X402_PAY_TO_BASE,
+			asset: env.X402_ASSET_ADDRESS_BASE,
+			asset_symbol: 'USDC',
+			extra: { name: 'USDC', version: '2', decimals: 6 },
+		});
+	}
+
+	return json(res, 200, {
+		$schema: 'https://x402.org/schemas/discovery.json',
+		service: {
+			name: 'three.ws',
+			legal_name: 'three.ws',
+			tagline: 'AI-powered 3D model viewer and validation agent.',
+			description: 'three.ws is an agent-first 3D model platform. Drag-and-drop glTF/GLB preview, model validation/inspection/optimization, plus Solana agent data — all reachable as MCP tool calls behind a single x402 v1 endpoint. USDC on Solana mainnet and Base mainnet.',
+			operator: 'three.ws',
+			mission: 'Make 3D model tooling and Solana agent data machine-native so any AI agent can transact with the HTTP 402 protocol.',
+			website: origin,
+			docs: `${origin}/docs/mcp`,
+			repository: 'https://github.com/overstepping/3D-Agent',
+			contact: `${origin}/`,
+			tags: ['x402', 'x402-v1', 'mcp', 'agent-first', '3d', 'gltf', 'glb', 'three-js', 'solana', 'base', 'usdc'],
+			environment: 'apex',
+			origin,
+		},
+		resources: [
+			{
+				path: '/api/mcp',
+				url: mcpUrl,
+				method: 'POST',
+				description: 'MCP 2025-06-18 Streamable HTTP transport — 3D avatar viewer, glTF model validation/inspection/optimization, and Solana agent data exposed as MCP tools. JSON-RPC 2.0 batch-aware. Currency: USDC.',
+				mimeType: 'application/json',
+				accepts,
+				links: {
+					openapi: `${origin}/openapi.json`,
+					docs: `${origin}/docs/mcp`,
+					agent_card: `${origin}/.well-known/agent-card.json`,
+					payment_config: `${origin}/.well-known/x402`,
+				},
+			},
+		],
+	}, { 'cache-control': 'public, max-age=300' });
+}
+
 // ── dispatcher ────────────────────────────────────────────────────────────────
 
 function handleChatPlugin(req, res) {
@@ -103,12 +182,26 @@ const DISPATCH = {
 	'oauth-authorization-server': handleOauthAuthServer,
 	'oauth-protected-resource':   handleOauthProtectedResource,
 	'x402':                       handleX402,
+	'x402-discovery':             handleX402Discovery,
 };
 
+// Public discovery docs (x402, x402-discovery, chat-plugin, agent-attestation-schemas)
+// must be readable cross-origin so browser-based validators (agentic.market,
+// x402scan, bazaar) can fetch them. OAuth metadata stays restricted.
+const PUBLIC_DISCOVERY = new Set([
+	'x402',
+	'x402-discovery',
+	'chat-plugin',
+	'agent-attestation-schemas',
+]);
+
 export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
-	if (!method(req, res, ['GET'])) return;
 	const name = req.query?.name ?? new URL(req.url, 'http://x').searchParams.get('name');
+	const corsOpts = PUBLIC_DISCOVERY.has(name)
+		? { methods: 'GET,OPTIONS', origins: '*' }
+		: { methods: 'GET,OPTIONS' };
+	if (cors(req, res, corsOpts)) return;
+	if (!method(req, res, ['GET'])) return;
 	const fn = DISPATCH[name];
 	if (!fn) return error(res, 404, 'not_found', `unknown well-known resource: ${name}`);
 	return fn(req, res);
