@@ -65,7 +65,7 @@
 		feUsers,
 		feX,
 	} from './feather.js';
-	import { defaultToolSchema, agentToolSchema, pumpToolSchema, curatedToolPacks } from './tools.js';
+	import { defaultToolSchema, agentToolSchema, pumpToolSchema, agentPaymentsToolSchema, curatedToolPacks } from './tools.js';
 	import { signMessageSolana, signMessageEVM } from './walletAuth.js';
 	import { debounce, readFileAsDataURL } from './util.js';
 	import { flash, focusOnMount } from './actions';
@@ -1399,12 +1399,15 @@
 
 		// Init client tools with default values
 		if ($toolSchema.length === 0 && !window.localStorage.getItem('initializedClientTools')) {
-			$toolSchema = [...defaultToolSchema, pumpToolSchema];
+			$toolSchema = [...defaultToolSchema, pumpToolSchema, agentPaymentsToolSchema];
 			window.localStorage.setItem('initializedClientTools', 'true');
 		} else {
 			// Add pump tool group for existing users who already initialized
 			if (!$toolSchema.some(g => g.name === 'Pump.fun & Crypto')) {
 				$toolSchema = [...$toolSchema, pumpToolSchema];
+			}
+			if (!$toolSchema.some(g => g.name === 'Agent Payments')) {
+				$toolSchema = [...$toolSchema, agentPaymentsToolSchema];
 			}
 			// Add any missing client tools to the client-side group
 			const clientGroup = $toolSchema.find((g) => g.name === 'Client-side');

@@ -1295,3 +1295,135 @@ export const pumpToolSchema = {
 		},
 	],
 };
+
+// ── Agent Payments Tool Pack ──────────────────────────────────────────────────
+
+const _paymentsApi = (action, params) =>
+	`const _r = await fetch('/api/agents/payments/' + ${JSON.stringify(action)} + '?' + new URLSearchParams(${JSON.stringify(params || {})}).toString()); if (!_r.ok) throw new Error(await _r.text()); return await _r.json();`;
+
+const _paymentsTx = (action) => `
+const wallet = window.phantom?.solana || window.solana || window.backpack?.solana || window.solflare;
+if (!wallet) throw new Error('No Solana wallet found. Install Phantom.');
+if (!wallet.isConnected) await wallet.connect();
+const payer = wallet.publicKey.toBase58();
+const prep = await fetch('/api/agents/payments/${action}-prep', {
+  method: 'POST', headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ ...args, wallet_address: payer }),
+}).then(r => r.json());
+if (prep.error) throw new Error(prep.error);
+const { Transaction, VersionedTransaction } = await import('https://esm.sh/@solana/web3.js@1');
+const txBytes = Uint8Array.from(atob(prep.tx_base64), c => c.charCodeAt(0));
+let signed;
+try {
+  const tx = VersionedTransaction.deserialize(txBytes);
+  signed = await wallet.signTransaction(tx);
+} catch {
+  const tx = Transaction.from(txBytes);
+  signed = await wallet.signTransaction(tx);
+}
+const conn = new (await import('https://esm.sh/@solana/web3.js@1')).Connection(
+  'https://api.mainnet-beta.solana.com', 'confirmed'
+);
+const sig = await conn.sendRawTransaction(signed.serialize(), { skipPreflight: false });
+await conn.confirmTransaction(sig, 'confirmed');
+const confirm = await fetch('/api/agents/payments/${action}-confirm', {
+  method: 'POST', headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ prep_id: prep.prep_id, tx_signature: sig }),
+}).then(r => r.json());
+return { ...confirm, tx_signature: sig, explorer: 'https://solscan.io/tx/' + sig };`;
+
+export const agentPaymentsToolSchema = {
+	name: 'Agent Payments',
+	schema: [
+		{
+			clientDefinition: {
+				id: 'agent-payments-balances-001',
+				name: 'agentPaymentsBalances',
+				description: 'Read vault balances (payment, buyback, withdraw) for an agent.',
+				arguments: [
+					{ name: 'mint', type: 'string', description: 'Agent token mint (base58)' },
+					{ name: 'currency_mint', type: 'string', description: 'Currency mint (USDC or wSOL)' },
+				],
+				body: `const _r = await fetch('/api/agents/payments/balances?' + new URLSearchParams({ mint: args.mint, currency_mint: args.currency_mint || 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v' })); if (!_r.ok) throw new Error(await _r.text()); return await _r.json();`,
+			},
+			type: 'function',
+			function: {
+				name: 'agentPaymentsBalances',
+				description: 'Check the payment, buyback, and withdraw vault balances for a pump.fun agent token.',
+				parameters: {
+					type: 'object',
+					properties: {
+						mint: { type: 'string', description: 'Agent token mint address (base58)' },
+						currency_mint: { type: 'string', description: 'Currency mint — USDC or wSOL (default USDC)' },
+					},
+					required: ['mint'],
+				},
+			},
+		},
+		{
+			clientDefinition: {
+				id: 'agent-payments-distribute-002',
+				name: 'agentPaymentsDistribute',
+				description: 'Distribute accumulated payments to buyback and withdraw vaults.',
+				arguments: [
+					{ name: 'mint', type: 'string', description: 'Agent token mint' },
+					{ name: 'currency_mint', type: 'string', description: 'Currency mint' },
+				],
+				body: _paymentsTx('distribute'),
+			},
+			type: 'function',
+			function: {
+				name: 'agentPaymentsDistribute',
+				description: 'Distribute the payment vault — splits funds into buyback vault and withdraw vault per on-chain BPS config. Permissionless.',
+				parameters: {
+					type: 'object',
+					properties: {
+						mint: { type: 'string', description: 'Agent token mint (base58)' },
+						currency_mint: { type: 'string', description: 'Currency mint (USDC or wSOL)' },
+					},
+					required: ['mint', 'currency_mint'],
+				},
+			},
+		},
+		{
+			clientDefinition: {
+				id: 'agent-payments-withdraw-003',
+				name: 'agentPaymentsWithdraw',
+				description: 'Withdraw from the withdraw vault to your wallet. Authority only.',
+				arguments: [
+					{ name: 'mint', type: 'string', description: 'Agent token mint' },
+					{ name: 'currency_mint', type: 'string', description: 'Currency mint' },
+				],
+				body: _paymentsTx('withdraw'),
+			},
+			type: 'function',
+			function: {
+				name: 'agentPaymentsWithdraw',
+				description: 'Withdraw accumulated funds from the withdraw vault to your connected wallet. Must be the agent authority.',
+				parameters: {
+					type: 'object',
+					properties: {
+						mint: { type: 'string', description: 'Agent token mint (base58)' },
+						currency_mint: { type: 'string', description: 'Currency mint (USDC or wSOL)' },
+					},
+					required: ['mint', 'currency_mint'],
+				},
+			},
+		},
+		{
+			clientDefinition: {
+				id: 'agent-payments-check-whitelist-004',
+				name: 'agentPaymentsCheckUsdcWhitelist',
+				description: 'Check if USDC is live on pump.fun v2 bonding curves.',
+				arguments: [],
+				body: `const _r = await fetch('/api/agents/payments/check-whitelist'); if (!_r.ok) throw new Error(await _r.text()); const d = await _r.json(); return { ...d, message: d.isUsdcLive ? '🟢 USDC is LIVE on pump.fun v2!' : '🔴 USDC not yet whitelisted. Whitelist: ' + d.whitelistedQuoteMints.join(', ') };`,
+			},
+			type: 'function',
+			function: {
+				name: 'agentPaymentsCheckUsdcWhitelist',
+				description: 'Check if USDC has been whitelisted on pump.fun v2 bonding curves. Returns isUsdcLive boolean and full whitelist.',
+				parameters: { type: 'object', properties: {} },
+			},
+		},
+	],
+};

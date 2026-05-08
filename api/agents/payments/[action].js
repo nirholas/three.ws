@@ -24,6 +24,7 @@ import {
 	PUMP_AGENT_PAYMENTS_PROGRAM_ID,
 	getTokenAgentPaymentsPDA,
 } from '@pump-fun/agent-payments-sdk';
+import { OnlinePumpSdk } from '@pump-fun/pump-sdk';
 import BN from 'bn.js';
 import { sql } from '../../_lib/db.js';
 import { getSessionUser } from '../../_lib/auth.js';
@@ -49,6 +50,18 @@ export default wrap(async (req, res) => {
 			return handlePayPrep(req, res);
 		case 'pay-confirm':
 			return handlePayConfirm(req, res);
+		case 'balances':
+			return handleBalances(req, res);
+		case 'distribute-prep':
+			return handleDistributePrep(req, res);
+		case 'distribute-confirm':
+			return handleDistributeConfirm(req, res);
+		case 'withdraw-prep':
+			return handleWithdrawPrep(req, res);
+		case 'withdraw-confirm':
+			return handleWithdrawConfirm(req, res);
+		case 'check-whitelist':
+			return handleCheckWhitelist(req, res);
 		default:
 			return error(res, 404, 'not_found', 'unknown payments action');
 	}
@@ -410,4 +423,155 @@ async function handlePayConfirm(req, res) {
 	`;
 
 	return json(res, 200, { ok: true, intent: updated });
+}
+
+// ── balances ──────────────────────────────────────────────────────────────────
+
+const balancesSchema = z.object({
+	mint: z.string().min(32).max(44),
+	currency_mint: z.string().min(32).max(44),
+	cluster: z.enum(['mainnet', 'devnet']).default('mainnet'),
+});
+
+async function handleBalances(req, res) {
+	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
+	const body = parse(balancesSchema, { ...req.query });
+	const conn = new Connection(rpcUrl(body.cluster), 'confirmed');
+	const agent = new PumpAgent(new PublicKey(body.mint), conn);
+	const balances = await agent.getBalances(new PublicKey(body.currency_mint));
+	return json(res, 200, {
+		paymentVault: { address: balances.paymentVault.address.toBase58(), balance: balances.paymentVault.balance.toString() },
+		buybackVault: { address: balances.buybackVault.address.toBase58(), balance: balances.buybackVault.balance.toString() },
+		withdrawVault: { address: balances.withdrawVault.address.toBase58(), balance: balances.withdrawVault.balance.toString() },
+	});
+}
+
+// ── distribute-prep / confirm ─────────────────────────────────────────────────
+
+const distributePrepSchema = z.object({
+	mint: z.string().min(32).max(44),
+	currency_mint: z.string().min(32).max(44),
+	wallet_address: z.string().min(32).max(44),
+	cluster: z.enum(['mainnet', 'devnet']).default('mainnet'),
+});
+
+async function handleDistributePrep(req, res) {
+	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['POST'])) return;
+	const body = parse(distributePrepSchema, await readJson(req));
+	const conn = new Connection(rpcUrl(body.cluster), 'confirmed');
+	const user = new PublicKey(body.wallet_address);
+	const offline = PumpAgentOffline.load(new PublicKey(body.mint), conn);
+	const ix = await offline.distributePayments({ user, currencyMint: new PublicKey(body.currency_mint) });
+	const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash('confirmed');
+	const tx = new Transaction({ feePayer: user, blockhash, lastValidBlockHeight }).add(
+		ComputeBudgetProgram.setComputeUnitLimit({ units: 120_000 }),
+		ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 100_000 }),
+		ix,
+	);
+	const txBase64 = tx.serialize({ requireAllSignatures: false, verifySignatures: false }).toString('base64');
+	const prepId = await randomToken(24);
+	await sql`insert into payment_configs_pending (id, user_id, agent_id, cluster, mint, payload, expires_at)
+		values (${prepId}, ${(await getSessionUser(req))?.id ?? 'anon'}, ${body.mint}, ${body.cluster}, ${body.mint},
+		${JSON.stringify({ wallet_address: body.wallet_address, action: 'distribute', currency_mint: body.currency_mint })}::jsonb,
+		${new Date(Date.now() + 10 * 60 * 1000)})
+		on conflict (id) do nothing`;
+	return json(res, 201, { prep_id: prepId, tx_base64: txBase64, cluster: body.cluster });
+}
+
+async function handleDistributeConfirm(req, res) {
+	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['POST'])) return;
+	const body = parse(z.object({ prep_id: z.string(), tx_signature: z.string() }), await readJson(req));
+	const [prep] = await sql`select * from payment_configs_pending where id = ${body.prep_id} and expires_at > now() limit 1`;
+	if (!prep) return error(res, 404, 'not_found', 'prep expired');
+	const conn = new Connection(rpcUrl(prep.cluster), 'confirmed');
+	let tx;
+	const deadline = Date.now() + 20_000;
+	while (Date.now() < deadline) {
+		tx = await conn.getParsedTransaction(body.tx_signature, { maxSupportedTransactionVersion: 0, commitment: 'confirmed' });
+		if (tx) break;
+		await new Promise((r) => setTimeout(r, 1500));
+	}
+	if (!tx) return error(res, 422, 'tx_not_found', 'tx not found');
+	if (tx.meta?.err) return error(res, 422, 'tx_failed', 'tx failed on-chain');
+	await sql`delete from payment_configs_pending where id = ${body.prep_id}`;
+	return json(res, 200, { ok: true, tx_signature: body.tx_signature });
+}
+
+// ── withdraw-prep / confirm ───────────────────────────────────────────────────
+
+const withdrawPrepSchema = z.object({
+	mint: z.string().min(32).max(44),
+	currency_mint: z.string().min(32).max(44),
+	wallet_address: z.string().min(32).max(44),
+	receiver_ata: z.string().min(32).max(44).optional(),
+	cluster: z.enum(['mainnet', 'devnet']).default('mainnet'),
+});
+
+async function handleWithdrawPrep(req, res) {
+	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['POST'])) return;
+	const user = await getSessionUser(req);
+	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
+	const body = parse(withdrawPrepSchema, await readJson(req));
+	const conn = new Connection(rpcUrl(body.cluster), 'confirmed');
+	const spl = await import('@solana/spl-token');
+	const authority = new PublicKey(body.wallet_address);
+	const currency = new PublicKey(body.currency_mint);
+	const receiverAta = body.receiver_ata
+		? new PublicKey(body.receiver_ata)
+		: spl.getAssociatedTokenAddressSync(currency, authority);
+	const offline = PumpAgentOffline.load(new PublicKey(body.mint), conn);
+	const ix = await offline.withdraw({ authority, currencyMint: currency, receiverAta });
+	const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash('confirmed');
+	const tx = new Transaction({ feePayer: authority, blockhash, lastValidBlockHeight }).add(
+		ComputeBudgetProgram.setComputeUnitLimit({ units: 100_000 }),
+		ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 100_000 }),
+		ix,
+	);
+	const txBase64 = tx.serialize({ requireAllSignatures: false, verifySignatures: false }).toString('base64');
+	const prepId = await randomToken(24);
+	await sql`insert into payment_configs_pending (id, user_id, agent_id, cluster, mint, payload, expires_at)
+		values (${prepId}, ${user.id}, ${body.mint}, ${body.cluster}, ${body.mint},
+		${JSON.stringify({ wallet_address: body.wallet_address, action: 'withdraw', currency_mint: body.currency_mint })}::jsonb,
+		${new Date(Date.now() + 10 * 60 * 1000)})
+		on conflict (id) do nothing`;
+	return json(res, 201, { prep_id: prepId, tx_base64: txBase64, cluster: body.cluster });
+}
+
+async function handleWithdrawConfirm(req, res) {
+	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['POST'])) return;
+	const body = parse(z.object({ prep_id: z.string(), tx_signature: z.string() }), await readJson(req));
+	const [prep] = await sql`select * from payment_configs_pending where id = ${body.prep_id} and expires_at > now() limit 1`;
+	if (!prep) return error(res, 404, 'not_found', 'prep expired');
+	const conn = new Connection(rpcUrl(prep.cluster), 'confirmed');
+	let tx;
+	const deadline = Date.now() + 20_000;
+	while (Date.now() < deadline) {
+		tx = await conn.getParsedTransaction(body.tx_signature, { maxSupportedTransactionVersion: 0, commitment: 'confirmed' });
+		if (tx) break;
+		await new Promise((r) => setTimeout(r, 1500));
+	}
+	if (!tx) return error(res, 422, 'tx_not_found', 'tx not found');
+	if (tx.meta?.err) return error(res, 422, 'tx_failed', 'tx failed on-chain');
+	await sql`delete from payment_configs_pending where id = ${body.prep_id}`;
+	return json(res, 200, { ok: true, tx_signature: body.tx_signature });
+}
+
+// ── check-whitelist ───────────────────────────────────────────────────────────
+
+async function handleCheckWhitelist(req, res) {
+	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
+	const cluster = req.query?.cluster || 'mainnet';
+	const conn = new Connection(rpcUrl(cluster), 'confirmed');
+	const global = await new OnlinePumpSdk(conn).fetchGlobal();
+	const USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+	const mints = (global.whitelistedQuoteMints || []).map((k) => k.toBase58?.() ?? k.toString());
+	return json(res, 200, {
+		isUsdcLive: mints.includes(USDC),
+		whitelistedQuoteMints: mints,
+		createV2Enabled: global.createV2Enabled ?? false,
+	});
 }
