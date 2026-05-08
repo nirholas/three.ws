@@ -45,10 +45,7 @@ import type {
   UpdateBuybackBpsParams,
   WithdrawParams,
 } from "./types";
-import {
-  CurrencyNotSupportedError,
-  JupiterUnavailableError,
-} from "./errors";
+import { JupiterUnavailableError } from "./errors";
 
 /**
  * USDC mainnet mint — recognised quote currency for pump-fun USDC coins.
@@ -592,7 +589,7 @@ export class PumpAgentOffline {
       tokenProgram: TOKEN_PROGRAM_ID,
     });
 
-    return [distributeIx, buybackIx];
+    return [distributeIx!, buybackIx];
   }
 
   static async buildJupiterSwapData(params: {
