@@ -40,6 +40,7 @@
 		]
 	},
 	"scripts": {
+		"postinstall": "npm run build --prefix agent-payments-sdk",
 		"dev": "vite --port 3000",
 		"dev:lib": "TARGET=lib vite",
 		"build": "vite build",

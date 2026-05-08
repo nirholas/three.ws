@@ -48,7 +48,6 @@
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link rel="stylesheet" href="style.css" />
-		<link rel="stylesheet" href="/nav.css" />
 		<link rel="stylesheet" href="/footer.css" />
 		<link
 			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
@@ -59,16 +58,46 @@
 	<body>
 		<header>
 			<h1>
-				<a href="/marketplace.html?tab=mine" aria-label="three.ws home"
+				<a href="/" aria-label="three.ws home"
 					><img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" /><span class="wordmark-dot" aria-hidden="true"></span>three.ws</a
 				>
 			</h1>
-			<div id="nav-container"></div>
-			<div class="header-actions">
-				<button id="connect-wallet-btn">Connect Wallet</button>
-			</div>
-		</header>
-		<script src="/nav.js"></script>
+			<nav class="features-nav" aria-label="Primary">
+				<a href="/app" id="nav-viewer-link">Viewer</a>
+				<a href="/create">Create</a>
+				<a href="/features">Features</a>
+				<a href="/discover">Discover</a>
+				<a href="/widgets">Widgets</a>
+				<a href="/studio">Studio</a>
+				<a href="/chat">Chat</a>
+				<a href="/docs">Docs</a>
+				<a href="/my-agents">My Agents</a>
+				<a
+					class="save-to-account-btn"
+					id="save-to-account-btn"
+					hidden
+					title="Save this model to your account"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="14"
+						height="14"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
+					>
+						<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+						<polyline points="17 21 17 13 7 13 7 21" />
+						<polyline points="7 3 7 8 15 8" />
+					</svg>
+					<span>Save to account</span>
+				</a>
+				<a
+					class="make-widget-btn"
 					id="make-widget-btn"
 					href="/studio"
 					hidden
@@ -278,31 +307,6 @@
 						/>
 					</svg>
 					<span>Create Avatar</span>
-				</a>
-				<a
-					class="screenshot-btn"
-					id="screenshot-btn"
-					href="#"
-					title="Take a screenshot of the current view"
-				>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="16"
-						height="16"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-					>
-						<path
-							d="M21 12.79V9a2 2 0 0 0-2-2h-1.21l-1.8-3.6A2 2 0 0 0 14.28 2H9.72a2 2 0 0 0-1.72 1.4L6.21 7H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7.81"
-						></path>
-						<circle cx="12" cy="13" r="4"></circle>
-						<line x1="18" y1="22" x2="22" y2="18"></line>
-					</svg>
-					<span>Screenshot</span>
 				</a>
 			</div>
 			<div class="spinner"></div>
