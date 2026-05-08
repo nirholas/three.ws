@@ -13,12 +13,34 @@ import { VitePWA } from 'vite-plugin-pwa';
 //   npm run build:all    → both
 const TARGET = process.env.TARGET || 'app';
 
+// Vercel serverless functions live under /api/* in production but Vite dev
+// does not run them. Forward /api/* to a real upstream (default: production)
+// so pages like /pumpfun see real SSE feeds and JSON responses in dev.
+// Override with DEV_API_PROXY=http://localhost:3001 to point at vercel-dev.
+const DEV_API_PROXY = process.env.DEV_API_PROXY || 'https://three.ws';
+
 const appConfig = {
 	server: {
 		proxy: {
 			'/chat': {
 				target: 'http://localhost:5174',
 				changeOrigin: true,
+			},
+			'/api': {
+				target: DEV_API_PROXY,
+				changeOrigin: true,
+				secure: true,
+				ws: true,
+				// SSE responses (text/event-stream) must not be buffered.
+				// http-proxy + Node's stream pipe handle this when we don't
+				// touch the response, so leave selfHandleResponse off.
+				configure: (proxy) => {
+					proxy.on('proxyReq', (proxyReq) => {
+						// Disable any compression that would force buffering
+						// of streaming responses on the upstream side.
+						proxyReq.setHeader('accept-encoding', 'identity');
+					});
+				},
 			},
 		},
 	},
@@ -138,15 +160,8 @@ const appConfig = {
 					if (url.includes('html-proxy') || url.includes('@id/') || url.includes('@vite/'))
 						return next();
 					const path = url.split('?')[0];
-					// Vercel serverless functions live under /api/* in production but
-					// Vite dev does not run them. Return JSON 404 so client fetch()
-					// callers see a normal "not found" instead of leaking the JS
-					// source of api/*.js (which crashes JSON.parse with a comment).
-					if (path.startsWith('/api/')) {
-						res.statusCode = 404;
-						res.setHeader('Content-Type', 'application/json');
-						return res.end('{"error":"api not available in vite dev","path":"' + path + '"}');
-					}
+					// /api/* is handled by the http proxy in server.proxy above —
+					// the middleware must not intercept those requests.
 					if (dirRoutes.has(path)) {
 						res.statusCode = 301;
 						res.setHeader('Location', path + '/' + (req.url.slice(path.length) || ''));

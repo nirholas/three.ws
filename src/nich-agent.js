@@ -68,7 +68,9 @@ export class NichAgent {
 		this._hasOpened = false;
 		this._apiDisabled = false;
 		this._storageKey = `nich-agent:history:${this.identity?.id || 'default'}`;
+		this._modelKey = `nich-agent:model:${this.identity?.id || 'default'}`;
 		this._loadHistory();
+		this._loadModelChoice();
 
 		this._buildUI();
 		if (this.voiceInput) this._initSpeechRecognition();
@@ -143,6 +145,12 @@ export class NichAgent {
 			<div class="nich-header">
 				<span class="nich-title">${_escapeHTML(titleText)}</span>
 				<div class="nich-header-right">
+					<select class="nich-model-select" aria-label="Choose model" title="Choose model">
+						${MODEL_OPTIONS.map(
+							(opt) =>
+								`<option value="${opt.id}"${opt.id === this._modelChoice ? ' selected' : ''}>${_escapeHTML(opt.label)}</option>`,
+						).join('')}
+					</select>
 					<span class="nich-emotion-dot" id="nich-emotion-dot" title="Agent emotional state"></span>
 					${this.layout === 'embedded' ? '' : '<button class="nich-close" aria-label="Close">&times;</button>'}
 				</div>
@@ -209,6 +217,13 @@ export class NichAgent {
 			if (e.key === 'Enter') this._send();
 		});
 		this.panel.querySelector('.nich-mic')?.addEventListener('click', () => this._toggleMic());
+		this.panel.querySelector('.nich-model-select')?.addEventListener('change', (e) => {
+			this._modelChoice = e.target.value;
+			try {
+				localStorage.setItem(this._modelKey, this._modelChoice);
+			} catch {}
+			this._apiDisabled = false;
+		});
 	}
 
 	// ── Panel Toggle ──────────────────────────────────────────────────────────
@@ -330,6 +345,7 @@ export class NichAgent {
 		messagesEl.appendChild(streamEl);
 		messagesEl.scrollTop = messagesEl.scrollHeight;
 
+		const choice = MODEL_OPTIONS.find((o) => o.id === this._modelChoice);
 		try {
 			const res = await fetch('/api/chat', {
 				method: 'POST',
@@ -339,6 +355,7 @@ export class NichAgent {
 					message,
 					context: this._buildContext(),
 					history: this._history.slice(-10),
+					...(choice?.provider ? { provider: choice.provider, model: choice.model } : {}),
 				}),
 			});
 
@@ -587,6 +604,16 @@ export class NichAgent {
 		}
 	}
 
+	_loadModelChoice() {
+		this._modelChoice = 'auto';
+		try {
+			const stored = localStorage.getItem(this._modelKey);
+			if (stored && MODEL_OPTIONS.some((o) => o.id === stored)) {
+				this._modelChoice = stored;
+			}
+		} catch {}
+	}
+
 	_pushHistory(role, content) {
 		this._history.push({ role, content });
 		if (this._history.length > 20) this._history = this._history.slice(-20);
@@ -755,3 +782,37 @@ function _escapeHTML(s) {
 		.replace(/"/g, '&quot;')
 		.replace(/'/g, '&#39;');
 }
+
+// Model choices surfaced in the header dropdown. `auto` lets the server pick
+// based on which keys are configured (Anthropic → OpenRouter → Groq → OpenAI).
+// Free OpenRouter entries are tool-call capable; Gemma/Qwen omitted because
+// their tool-calling is unreliable.
+const MODEL_OPTIONS = [
+	{ id: 'auto', label: 'Auto', provider: null, model: null },
+	{ id: 'anthropic:sonnet', label: 'Claude Sonnet 4.6', provider: 'anthropic', model: 'claude-sonnet-4-6' },
+	{
+		id: 'openrouter:llama-70b',
+		label: 'Llama 3.3 70B (free)',
+		provider: 'openrouter',
+		model: 'meta-llama/llama-3.3-70b-instruct:free',
+	},
+	{
+		id: 'openrouter:gpt-oss',
+		label: 'GPT-OSS 120B (free)',
+		provider: 'openrouter',
+		model: 'openai/gpt-oss-120b:free',
+	},
+	{
+		id: 'openrouter:hermes',
+		label: 'Hermes 3 405B (free)',
+		provider: 'openrouter',
+		model: 'nousresearch/hermes-3-llama-3.1-405b:free',
+	},
+	{
+		id: 'groq:llama-70b',
+		label: 'Groq Llama 3.3 70B',
+		provider: 'groq',
+		model: 'llama-3.3-70b-versatile',
+	},
+	{ id: 'openai:gpt-4o-mini', label: 'GPT-4o mini', provider: 'openai', model: 'gpt-4o-mini' },
+];

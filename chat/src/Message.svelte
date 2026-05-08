@@ -212,7 +212,7 @@
 					? 'flex w-[140px] h-[280px]'
 					: 'flex h-8 w-8 md:h-9 md:w-9'} {message.role === 'system'
 					? 'border border-teal-200 bg-teal-100'
-					: message.role === 'assistant' && !message.agent
+					: message.role === 'assistant' && !message.agent && !(hasLogo && isLatestAssistant)
 						? 'border border-teal-200 bg-teal-100 pb-px'
 						: ''}"
 			>
@@ -221,7 +221,11 @@
 						<!-- svelte-ignore custom-element-no-implicit-ns -->
 						<agent-3d
 							bind:this={agentEl}
-							{...(message.agent?.id ? { 'agent-id': message.agent.id } : { src: '/avatars/cz.glb' })}
+							{...($talkingHeadAvatarUrl
+								? { src: $talkingHeadAvatarUrl }
+								: message.agent?.id
+									? { 'agent-id': message.agent.id }
+									: { src: '/avatars/cz.glb' })}
 							mode="inline"
 							width="140"
 							height="280"

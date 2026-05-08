@@ -151,11 +151,12 @@
     <div id="feed-header">
       <h2>New Tokens on Pump.fun</h2>
     </div>
-    <div id="feed" id="log"></div>
+    <div id="feed"></div>
   </div>
 </div>
 
 <script type="module">
+  import { LoopOnce, LoopRepeat } from 'three';
   import { Viewer } from '/src/viewer.js';
 
   // ════════════════════════════════════════════════════════════════════
@@ -163,34 +164,26 @@
   // ════════════════════════════════════════════════════════════════════
 
   const viewerEl = document.getElementById('viewer-container');
-  const viewer = new Viewer(viewerEl, {
-    kiosk: true,
-    model: '/assets/models/RobotExpressive.glb',
-  });
+  const viewer = new Viewer(viewerEl, { kiosk: true });
+  window.viewer = viewer;
 
-  viewer.addEventListener('load', () => {
-    // Play a default animation on loop
-    const clips = viewer.getClips();
-    if (clips[5]) { // Assuming 'Idle' is a suitable default
-      const action = viewer.mixer.clipAction(clips[5]);
-      action.play();
-    }
-  });
+  await viewer.load('/animations/robotexpressive.glb', '', new Map());
+
+  const idleClip =
+    viewer.clips.find((c) => /^idle$/i.test(c.name)) || viewer.clips[0];
+  if (idleClip && viewer.mixer) {
+    viewer.mixer.clipAction(idleClip).play();
+  }
 
   function playAnimation(animationName, { loop = false } = {}) {
-    const clip = viewer.getClip(animationName);
-    if (!clip) return;
+    const clip = viewer.clips.find((c) => c.name === animationName);
+    if (!clip || !viewer.mixer) return;
     const action = viewer.mixer.clipAction(clip);
     action.reset();
-    if (!loop) {
-      action.loop = THREE.LoopOnce;
-      action.clampWhenFinished = true;
-    }
+    action.setLoop(loop ? LoopRepeat : LoopOnce, loop ? Infinity : 1);
+    action.clampWhenFinished = !loop;
     action.play();
   }
-  
-  // Expose viewer for debugging
-  window.viewer = viewer;
 
   // ════════════════════════════════════════════════════════════════════
   // PumpFun Live Token Feed Logic (adapted from original script)
@@ -199,7 +192,7 @@
   const RPC_ENDPOINT = 'wss://pumpportal.fun/api/data';
   const MAX_FEED_ITEMS = 100;
 
-  const $log = document.getElementById('log');
+  const $log = document.getElementById('feed');
   const $status = document.getElementById('status');
 
   let ws;

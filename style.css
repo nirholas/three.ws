@@ -3883,6 +3883,34 @@ body.explore-page {
 		box-shadow 0.4s ease;
 }
 
+.nich-model-select {
+	background: rgba(255, 255, 255, 0.06);
+	color: rgba(255, 255, 255, 0.78);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: 6px;
+	padding: 2px 6px;
+	font-size: 11px;
+	font-family: inherit;
+	max-width: 150px;
+	cursor: pointer;
+	outline: none;
+	transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.nich-model-select:hover {
+	border-color: rgba(255, 255, 255, 0.25);
+	background: rgba(255, 255, 255, 0.1);
+}
+
+.nich-model-select:focus {
+	border-color: var(--nich-accent, rgba(120, 180, 255, 0.6));
+}
+
+.nich-model-select option {
+	background: #1a1a1a;
+	color: #e0e0e0;
+}
+
 .nich-toggle-label {
 	font-size: 10px;
 	margin-top: 3px;
