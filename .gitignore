@@ -31,6 +31,7 @@ xspace-agent/start-demo.sh
 
 # Chat build artifacts
 public/chat/assets/
+public/chat/index.html
 public/chat/index.html.gz
 
 # Animation build cache

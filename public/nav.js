@@ -1,6 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
 	const navContainer = document.getElementById('nav-container');
 	if (!navContainer) return;
+	if (!document.querySelector('link[href="/nav.css"]')) {
+		const link = document.createElement('link');
+		link.rel = 'stylesheet';
+		link.href = '/nav.css';
+		document.head.appendChild(link);
+	}
 	fetch('/nav.html')
 		.then(response => response.text())
 		.then(data => {
