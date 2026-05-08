@@ -70,7 +70,7 @@ export class EvmAgentOffline {
    */
   buildAcceptPaymentTx(
     params: EvmAcceptPaymentParams,
-    payer: Address
+    _payer: Address
   ): EvmTxBundle {
     const isNative = params.currencyToken === "native";
 

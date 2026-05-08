@@ -55,7 +55,7 @@ export interface EvmPaymentVerificationResult {
 export async function verifyEvmPayment(
   params: VerifyEvmPaymentParams
 ): Promise<EvmPaymentVerificationResult> {
-  const { proof, expectedMemo, minAmountUsdc, agentMint } = params;
+  const { proof, expectedMemo, minAmountUsdc, agentMint: _agentMint } = params;
 
   if (proof.scheme !== "pump-agent-evm") {
     return { valid: false, error: "Unknown payment scheme" };

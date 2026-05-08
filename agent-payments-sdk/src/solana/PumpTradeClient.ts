@@ -392,7 +392,7 @@ export class PumpTradeClient {
 
     // Single batch RPC: Global + FeeConfig + bondingCurve
     const bcAddr = bondingCurvePda(mint);
-    const [globalInfo, feeConfigInfo, bcInfo] =
+    const [globalInfo, _feeConfigInfo, bcInfo] =
       await this.connection.getMultipleAccountsInfo([
         GLOBAL_PDA, PUMP_FEE_CONFIG_PDA, bcAddr,
       ]);
