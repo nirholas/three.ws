@@ -43,15 +43,14 @@ export async function authenticateRequest(req, res) {
 		return { auth, x402Ctx: null };
 	}
 
-	const requirements = paymentRequirements({
-		resource: resolveResourceUrl(req, '/api/mcp'),
-		description: 'MCP tool call',
-	});
+	const resourceUrl = resolveResourceUrl(req, '/api/mcp');
+	const requirements = paymentRequirements();
 
 	if (paymentHeader) {
 		try {
 			const verified = await verifyPayment({ paymentHeader, requirements });
 			const x402Ctx = {
+				resourceUrl,
 				requirements,
 				requirement: verified.requirement,
 				paymentPayload: verified.paymentPayload,
@@ -74,12 +73,12 @@ export async function authenticateRequest(req, res) {
 				x402Ctx,
 			};
 		} catch (err) {
-			sendX402Error(res, requirements, err);
+			sendX402Error(res, { resourceUrl, accepts: requirements }, err);
 			return null;
 		}
 	}
 
-	send402(res, requirements);
+	send402(res, { resourceUrl, accepts: requirements });
 	return null;
 }
 
@@ -90,13 +89,10 @@ export async function handleSse(req, res) {
 	// so x402scan / x402 clients can discover the price. Invalid bearers still
 	// get 401 with WWW-Authenticate so OAuth clients can re-auth correctly.
 	if (!bearer && !req.headers['x-payment']) {
-		return send402(
-			res,
-			paymentRequirements({
-				resource: resolveResourceUrl(req, '/api/mcp'),
-				description: 'MCP tool call',
-			}),
-		);
+		return send402(res, {
+			resourceUrl: resolveResourceUrl(req, '/api/mcp'),
+			accepts: paymentRequirements(),
+		});
 	}
 	const auth = await authenticateBearer(bearer, { audience: env.MCP_RESOURCE });
 	if (!auth) return send401(res, 'missing or invalid access token');

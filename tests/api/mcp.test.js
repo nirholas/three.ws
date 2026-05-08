@@ -64,9 +64,11 @@ const x402State = { verifyOk: false, verifyResult: null };
 
 vi.mock('../../api/_lib/x402-spec.js', () => ({
 	X402Error: MockX402Error,
+	X402_VERSION: 2,
 	paymentRequirements: vi.fn(() => [
-		{ network: 'base', payTo: '0xrecipient', resource: 'https://app.test/api/mcp' },
+		{ scheme: 'exact', network: 'eip155:8453', payTo: '0xrecipient', amount: '1000', asset: '0xusdc', maxTimeoutSeconds: 60 },
 	]),
+	bazaarExtension: vi.fn(() => ({ method: 'POST', bodyType: 'json', input: {}, inputSchema: {}, output: { example: {} } })),
 	verifyPayment: vi.fn(async () => {
 		if (!x402State.verifyOk)
 			throw new MockX402Error('invalid_payment', 'payment rejected', 402);
@@ -75,15 +77,23 @@ vi.mock('../../api/_lib/x402-spec.js', () => ({
 	settlePayment: vi.fn(async () => ({
 		success: true,
 		transaction: 'tx123',
-		network: 'base',
+		network: 'eip155:8453',
 		payer: '0xpayer',
 	})),
 	encodePaymentResponseHeader: vi.fn(() => 'settlement-b64'),
-	send402: vi.fn((res, requirements) => {
+	send402: vi.fn((res, { resourceUrl, accepts, error } = {}) => {
 		res.statusCode = 402;
 		res.setHeader('content-type', 'application/json; charset=utf-8');
-		const accepts = Array.isArray(requirements) ? requirements : [requirements];
-		res.end(JSON.stringify({ x402Version: 1, accepts }));
+		const list = Array.isArray(accepts) ? accepts : [accepts];
+		res.end(
+			JSON.stringify({
+				x402Version: 2,
+				error: error || 'X-PAYMENT header is required',
+				resource: { url: resourceUrl, description: 'MCP', mimeType: 'application/json' },
+				accepts: list,
+				extensions: { bazaar: { method: 'POST', bodyType: 'json' } },
+			}),
+		);
 	}),
 	resolveResourceUrl: vi.fn((req, path) => `https://app.test${path}`),
 }));
@@ -347,7 +357,7 @@ describe('Protocol layer', () => {
 		const { status, body } = await invoke({ method: 'GET' });
 
 		expect(status).toBe(402);
-		expect(body.x402Version).toBe(1);
+		expect(body.x402Version).toBe(2);
 		expect(Array.isArray(body.accepts)).toBe(true);
 	});
 
@@ -375,7 +385,7 @@ describe('Authentication', () => {
 		});
 
 		expect(status).toBe(402);
-		expect(body.x402Version).toBe(1);
+		expect(body.x402Version).toBe(2);
 	});
 
 	it('POST with a bearer that fails authentication returns 401', async () => {
@@ -522,8 +532,12 @@ describe('x402 payment flow', () => {
 		});
 
 		expect(status).toBe(402);
-		expect(body.x402Version).toBe(1);
-		expect(body.accepts[0].network).toBe('base');
+		expect(body.x402Version).toBe(2);
+		expect(body.resource.url).toMatch(/\/api\/mcp$/);
+		expect(body.resource.mimeType).toBe('application/json');
+		expect(body.accepts[0].network).toBe('eip155:8453');
+		expect(body.accepts[0].amount).toBe('1000');
+		expect(body.extensions.bazaar).toBeDefined();
 	});
 
 	it('valid X-PAYMENT header passes payment verification and executes the tool', async () => {

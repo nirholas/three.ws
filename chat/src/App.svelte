@@ -990,8 +990,9 @@
 			saveMessage(sysMsg);
 		}
 		const nonSystem = convo.messages.filter(m => m.role !== 'system');
-		if (agent.greeting && nonSystem.length === 0) {
-			const greetMsg = { id: uuidv4(), role: 'assistant', content: agent.greeting, generated: true };
+		if (nonSystem.length === 0) {
+			const greeting = agent.greeting || `Hi, I'm ${agent.name || 'here'}. How can I help you today?`;
+			const greetMsg = { id: uuidv4(), role: 'assistant', content: greeting, generated: true, agent };
 			convo.messages = [...convo.messages, greetMsg];
 			saveMessage(greetMsg);
 		}

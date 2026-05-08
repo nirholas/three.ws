@@ -53,7 +53,11 @@ export default wrap(async (req, res) => {
 			});
 			res.setHeader('x-payment-response', encodePaymentResponseHeader(settled));
 		} catch (err) {
-			return sendX402Error(res, x402Ctx.requirements, err);
+			return sendX402Error(
+				res,
+				{ resourceUrl: x402Ctx.resourceUrl, accepts: x402Ctx.requirements },
+				err,
+			);
 		}
 	}
 

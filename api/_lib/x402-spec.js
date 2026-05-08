@@ -1,11 +1,25 @@
 // x402 protocol — facilitator-mediated micropayments.
 // Spec: https://x402.org / https://github.com/coinbase/x402
 //
-// This module implements the *standard* x402 wire flow used by x402scan and
-// agentcash. (api/_lib/x402.js is the unrelated Pump.fun agent-skill flow.)
+// This module implements the *standard* x402 wire flow used by agentic.market,
+// x402scan, and Coinbase's Bazaar. v2 wire format (April 2026 spec):
+//
+//   {
+//     "x402Version": 2,
+//     "error": "X-PAYMENT header is required",
+//     "resource": { "url": "...", "description": "...", "mimeType": "application/json" },
+//     "accepts": [
+//       { "scheme": "exact", "network": "eip155:8453", "amount": "1000",
+//         "asset": "0x...", "payTo": "0x...", "maxTimeoutSeconds": 60, "extra": {...} }
+//     ],
+//     "extensions": { "bazaar": { input, inputSchema, output:{example,schema}, bodyType, method } }
+//   }
+//
+// Networks use CAIP-2 IDs in v2: `eip155:<chainId>` for EVM, `solana:<genesis-prefix>`
+// for Solana. The legacy `api/_lib/x402.js` is the unrelated Pump.fun agent-skill flow.
 //
 // Server flow on a paid resource:
-//   1. No X-PAYMENT header → 402 with { x402Version, accepts:[paymentRequirements] }
+//   1. No X-PAYMENT header → 402 with the body shape above.
 //   2. Client retries with X-PAYMENT (base64-encoded PaymentPayload).
 //   3. Server POSTs facilitator /verify with { x402Version, paymentPayload, paymentRequirements }
 //      → { isValid, invalidReason?, payer? }
@@ -15,7 +29,14 @@
 
 import { env } from './env.js';
 
-export const X402_VERSION = 1;
+export const X402_VERSION = 2;
+
+// CAIP-2 network IDs as advertised by Coinbase x402 facilitators (PayAI, CDP).
+// Solana mainnet's CAIP-2 namespace uses the truncated genesis-block hash.
+export const NETWORK_BASE_MAINNET = 'eip155:8453';
+export const NETWORK_BASE_SEPOLIA = 'eip155:84532';
+export const NETWORK_SOLANA_MAINNET = 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp';
+export const NETWORK_SOLANA_DEVNET = 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1';
 
 export class X402Error extends Error {
 	constructor(code, message, status = 402) {
@@ -25,22 +46,32 @@ export class X402Error extends Error {
 	}
 }
 
-// One PaymentRequirements entry per supported network.
-export function paymentRequirements({ resource, description = '' } = {}) {
+// One v2 PaymentRequirements entry per supported network. Base mainnet first
+// — agentic.market's validator inspects the first entry for its supported-network
+// check, and Base is the most broadly recognized option in the Bazaar.
+//
+// In v2, `resource` / `description` / `mimeType` are top-level on the 402 body
+// (not per-accepts), and the price field is `amount` (not `maxAmountRequired`).
+export function paymentRequirements() {
 	const common = {
 		scheme: 'exact',
-		maxAmountRequired: env.X402_MAX_AMOUNT_REQUIRED,
-		resource,
-		description,
-		mimeType: 'application/json',
+		amount: env.X402_MAX_AMOUNT_REQUIRED,
 		maxTimeoutSeconds: 60,
-		extra: { name: 'USDC', decimals: 6 },
 	};
 	const out = [];
+	if (env.X402_PAY_TO_BASE) {
+		out.push({
+			...common,
+			network: NETWORK_BASE_MAINNET,
+			payTo: env.X402_PAY_TO_BASE,
+			asset: env.X402_ASSET_ADDRESS_BASE,
+			extra: { name: 'USDC', version: '2', decimals: 6 },
+		});
+	}
 	if (env.X402_PAY_TO_SOLANA) {
 		out.push({
 			...common,
-			network: 'solana',
+			network: NETWORK_SOLANA_MAINNET,
 			payTo: env.X402_PAY_TO_SOLANA,
 			asset: env.X402_ASSET_MINT_SOLANA,
 			// PayAI's Solana facilitator requires clients to build the SPL transfer
@@ -49,22 +80,13 @@ export function paymentRequirements({ resource, description = '' } = {}) {
 			extra: { name: 'USDC', decimals: 6, feePayer: env.X402_FEE_PAYER_SOLANA },
 		});
 	}
-	if (env.X402_PAY_TO_BASE) {
-		out.push({
-			...common,
-			network: 'base',
-			payTo: env.X402_PAY_TO_BASE,
-			asset: env.X402_ASSET_ADDRESS_BASE,
-			extra: { name: 'USDC', version: '2', decimals: 6 },
-		});
-	}
 	return out;
 }
 
 function facilitatorFor(network) {
-	if (network === 'solana')
+	if (network === NETWORK_SOLANA_MAINNET || network === NETWORK_SOLANA_DEVNET || network === 'solana')
 		return { url: env.X402_FACILITATOR_URL_SOLANA, token: env.X402_FACILITATOR_TOKEN_SOLANA };
-	if (network === 'base')
+	if (network === NETWORK_BASE_MAINNET || network === NETWORK_BASE_SEPOLIA || network === 'base')
 		return { url: env.X402_FACILITATOR_URL_BASE, token: env.X402_FACILITATOR_TOKEN_BASE };
 	throw new X402Error('unsupported_network', `unsupported network: ${network}`, 400);
 }
@@ -149,8 +171,8 @@ async function callFacilitator(network, path, body) {
 // /api/x402-status to surface misconfigurations before a paying client hits them.
 export async function probeFacilitators() {
 	const targets = [
-		{ network: 'solana', ...facilitatorFor('solana') },
-		{ network: 'base', ...facilitatorFor('base') },
+		{ network: NETWORK_BASE_MAINNET, ...facilitatorFor(NETWORK_BASE_MAINNET) },
+		{ network: NETWORK_SOLANA_MAINNET, ...facilitatorFor(NETWORK_SOLANA_MAINNET) },
 	];
 	const seen = new Map();
 	const results = [];
@@ -266,18 +288,113 @@ export function encodePaymentResponseHeader(settleResult) {
 	return Buffer.from(JSON.stringify(body), 'utf8').toString('base64');
 }
 
-export function send402(res, requirements, error = 'X-PAYMENT header is required') {
-	const accepts = Array.isArray(requirements) ? requirements : [requirements];
+// Long-form description used for the top-level `resource.description` and
+// (lightly trimmed) for the bazaar extension. Stays in one place so the 402
+// challenge, the /.well-known/x402.json discovery file, and any operator
+// dashboards stay in sync.
+export const RESOURCE_DESCRIPTION =
+	'three.ws MCP — Streamable HTTP transport (MCP 2025-06-18) exposing 3D avatar viewer, glTF/GLB model validation/inspection/optimization, and Solana agent data as JSON-RPC 2.0 tool calls. Pay-per-call in USDC on Base mainnet (eip155:8453) or Solana mainnet. ≤256 tools/call output, ≤32-message JSON-RPC batches. Operated by three.ws.';
+
+// Bazaar discovery extension — agentic.market reads this to render input/output
+// hints in its catalog and to power its endpoint validator. Shape matches
+// declareDiscoveryExtension({ input, inputSchema, output:{example,schema}, bodyType }).
+export function bazaarExtension() {
+	return {
+		method: 'POST',
+		bodyType: 'json',
+		discoverable: true,
+		input: {
+			jsonrpc: '2.0',
+			id: 1,
+			method: 'tools/call',
+			params: {
+				name: 'validate_model',
+				arguments: { url: 'https://example.com/model.glb' },
+			},
+		},
+		inputSchema: {
+			type: 'object',
+			required: ['jsonrpc', 'method'],
+			properties: {
+				jsonrpc: { type: 'string', const: '2.0' },
+				id: { type: ['string', 'number'] },
+				method: {
+					type: 'string',
+					enum: ['initialize', 'tools/list', 'tools/call', 'ping'],
+					description: 'MCP JSON-RPC method.',
+				},
+				params: {
+					type: 'object',
+					description:
+						'For tools/call: { name, arguments }. Tool names include validate_model, inspect_model, optimize_model, search_public_avatars, solana_register, solana_reputation, and others — see tools/list.',
+				},
+			},
+		},
+		output: {
+			example: {
+				jsonrpc: '2.0',
+				id: 1,
+				result: {
+					content: [{ type: 'text', text: '{"ok":true,"warnings":[],"meta":{"vertices":12345}}' }],
+				},
+			},
+			schema: {
+				type: 'object',
+				properties: {
+					jsonrpc: { type: 'string', const: '2.0' },
+					id: { type: ['string', 'number'] },
+					result: {
+						type: 'object',
+						properties: {
+							content: {
+								type: 'array',
+								items: {
+									type: 'object',
+									required: ['type', 'text'],
+									properties: {
+										type: { type: 'string', enum: ['text'] },
+										text: { type: 'string' },
+									},
+								},
+							},
+						},
+					},
+					error: {
+						type: 'object',
+						properties: {
+							code: { type: 'number' },
+							message: { type: 'string' },
+						},
+					},
+				},
+			},
+		},
+	};
+}
+
+// Build the v2 PaymentRequired body. Top-level `resource` carries url/description/
+// mimeType (per v2 spec); per-accept entries no longer repeat them.
+export function build402Body({ resourceUrl, accepts, error = 'X-PAYMENT header is required' }) {
+	return {
+		x402Version: X402_VERSION,
+		error,
+		resource: {
+			url: resourceUrl,
+			description: RESOURCE_DESCRIPTION,
+			mimeType: 'application/json',
+		},
+		accepts: Array.isArray(accepts) ? accepts : [accepts],
+		extensions: {
+			bazaar: bazaarExtension(),
+		},
+	};
+}
+
+export function send402(res, { resourceUrl, accepts, error } = {}) {
 	res.statusCode = 402;
 	res.setHeader('content-type', 'application/json; charset=utf-8');
 	res.setHeader('cache-control', 'no-store');
-	res.end(
-		JSON.stringify({
-			x402Version: X402_VERSION,
-			error,
-			accepts,
-		}),
-	);
+	res.end(JSON.stringify(build402Body({ resourceUrl, accepts, error })));
 }
 
 // Resolve the canonical resource URL the client hit, so the facilitator can
