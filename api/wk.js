@@ -185,10 +185,23 @@ const DISPATCH = {
 	'x402-discovery':             handleX402Discovery,
 };
 
+// Public discovery docs (x402, x402-discovery, chat-plugin, agent-attestation-schemas)
+// must be readable cross-origin so browser-based validators (agentic.market,
+// x402scan, bazaar) can fetch them. OAuth metadata stays restricted.
+const PUBLIC_DISCOVERY = new Set([
+	'x402',
+	'x402-discovery',
+	'chat-plugin',
+	'agent-attestation-schemas',
+]);
+
 export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
-	if (!method(req, res, ['GET'])) return;
 	const name = req.query?.name ?? new URL(req.url, 'http://x').searchParams.get('name');
+	const corsOpts = PUBLIC_DISCOVERY.has(name)
+		? { methods: 'GET,OPTIONS', origins: '*' }
+		: { methods: 'GET,OPTIONS' };
+	if (cors(req, res, corsOpts)) return;
+	if (!method(req, res, ['GET'])) return;
 	const fn = DISPATCH[name];
 	if (!fn) return error(res, 404, 'not_found', `unknown well-known resource: ${name}`);
 	return fn(req, res);
