@@ -25,12 +25,53 @@
 	import MessageContent from './MessageContent.svelte';
 	import { formatModelName, hasCompanyLogo } from './providers.js';
 	import { config, talkingHeadAvatarUrl, localAgentId, brandConfig } from './stores.js';
+	import { detectEmotion } from './sentiment.js';
 	import Toolcall from './Toolcall.svelte';
 	import ToolcallButton from './ToolcallButton.svelte';
 
 	const dispatch = createEventDispatcher();
 
 	let agentEl;
+	let lastReactedToUserId = null;
+
+	function faceCamera(el) {
+		const apply = () => {
+			const content = el?._viewer?.content;
+			if (!content) return;
+			content.rotation.y = Math.PI;
+			el._viewer.invalidate?.();
+		};
+		if (el?._viewer?.content) apply();
+		else el?.addEventListener('agent:ready', apply, { once: true });
+	}
+
+	function reactToUserSentiment(el, userMessage) {
+		if (!el || !userMessage?.id || !userMessage.content) return;
+		if (lastReactedToUserId === userMessage.id) return;
+		const sentiment = detectEmotion(userMessage.content);
+		if (!sentiment) {
+			lastReactedToUserId = userMessage.id;
+			return;
+		}
+		const fire = () => {
+			try { el.expressEmotion?.(sentiment.emotion, sentiment.weight); } catch {}
+			try { el._scene?.playAnimationByHint?.(sentiment.emotion); } catch {}
+		};
+		if (el._mounted) fire();
+		else el.addEventListener('agent:ready', fire, { once: true });
+		lastReactedToUserId = userMessage.id;
+	}
+
+	$: if (agentEl) faceCamera(agentEl);
+	$: if (agentEl && convo?.messages?.length) {
+		const last = convo.messages[i];
+		const isLatest = last?.role === 'assistant'
+			&& i === convo.messages.findLastIndex((m) => m.role === 'assistant');
+		if (isLatest) {
+			const prior = [...convo.messages.slice(0, i)].reverse().find((m) => m.role === 'user');
+			if (prior) reactToUserSentiment(agentEl, prior);
+		}
+	}
 
 	function msgTransition(node, { style }) {
 		if (style === 'snap') return { duration: 0 };
@@ -200,8 +241,9 @@
 				{/if}
 			{/if}
 			<button
-				disabled={message.role === 'system'}
+				disabled={message.role === 'system' || (message.role === 'assistant' && hasLogo && isLatestAssistant)}
 				on:click={() => {
+					if (message.role === 'assistant' && hasLogo && isLatestAssistant) return;
 					if (message.role === 'user') {
 						message.role = 'assistant';
 					} else {
