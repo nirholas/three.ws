@@ -22,6 +22,7 @@ import { registerBlinksSkills } from './agent-skills-blinks.js';
 import { registerNftSkills } from './agent-skills-nfts.js';
 import { registerSceneSkills } from './agent-skills-scene.js';
 import { registerSentimentSkills } from './agent-skills-sentiment.js';
+import { registerAgentPaymentSkills } from './agent-skills-agent-payments.js';
 
 /**
  * @typedef {Object} SkillContext
@@ -73,6 +74,7 @@ export class AgentSkills {
 		registerNftSkills(this);
 		registerSceneSkills(this);
 		registerSentimentSkills(this);
+		registerAgentPaymentSkills(this);
 	}
 
 	// ── Registry ──────────────────────────────────────────────────────────────
