@@ -3,7 +3,13 @@
 
 import { cors, json, method, wrap, error } from './_lib/http.js';
 import { env } from './_lib/env.js';
-import { paymentRequirements, X402_VERSION } from './_lib/x402-spec.js';
+import {
+	paymentRequirements,
+	bazaarExtension,
+	build402Body,
+	NETWORK_BASE_MAINNET,
+	NETWORK_SOLANA_MAINNET,
+} from './_lib/x402-spec.js';
 
 // ── agent-attestation-schemas ─────────────────────────────────────────────────
 
@@ -69,12 +75,20 @@ function handleOauthProtectedResource(req, res) {
 
 function handleX402(req, res) {
 	const mcpResource = `${env.APP_ORIGIN}/api/mcp`;
-	const accepts = paymentRequirements({ resource: mcpResource, description: 'MCP tool call' });
-	return json(res, 200, {
-		x402Version: X402_VERSION,
-		accepts,
-		pump_agent_payments: { prep: '/api/pump/accept-payment-prep', confirm: '/api/pump/accept-payment-confirm', balances: '/api/pump/balances' },
-	}, { 'cache-control': 'public, max-age=300' });
+	const body = build402Body({ resourceUrl: mcpResource, accepts: paymentRequirements() });
+	return json(
+		res,
+		200,
+		{
+			...body,
+			pump_agent_payments: {
+				prep: '/api/pump/accept-payment-prep',
+				confirm: '/api/pump/accept-payment-confirm',
+				balances: '/api/pump/balances',
+			},
+		},
+		{ 'cache-control': 'public, max-age=300' },
+	);
 }
 
 // ── x402 Bazaar discovery (/.well-known/x402.json) ───────────────────────────
@@ -95,28 +109,32 @@ function handleX402Discovery(req, res) {
 	const price = RAW_AMOUNT_TO_USDC(env.X402_MAX_AMOUNT_REQUIRED);
 
 	const accepts = [];
-	if (env.X402_PAY_TO_SOLANA) {
-		accepts.push({
-			scheme: 'exact',
-			network: 'solana',
-			network_label: 'solana-mainnet',
-			price,
-			payTo: env.X402_PAY_TO_SOLANA,
-			asset: env.X402_ASSET_MINT_SOLANA,
-			asset_symbol: 'USDC',
-			extra: { name: 'USDC', decimals: 6, feePayer: env.X402_FEE_PAYER_SOLANA },
-		});
-	}
 	if (env.X402_PAY_TO_BASE) {
 		accepts.push({
 			scheme: 'exact',
-			network: 'base',
+			network: NETWORK_BASE_MAINNET,
 			network_label: 'base-mainnet',
+			amount: env.X402_MAX_AMOUNT_REQUIRED,
 			price,
 			payTo: env.X402_PAY_TO_BASE,
 			asset: env.X402_ASSET_ADDRESS_BASE,
 			asset_symbol: 'USDC',
+			maxTimeoutSeconds: 60,
 			extra: { name: 'USDC', version: '2', decimals: 6 },
+		});
+	}
+	if (env.X402_PAY_TO_SOLANA) {
+		accepts.push({
+			scheme: 'exact',
+			network: NETWORK_SOLANA_MAINNET,
+			network_label: 'solana-mainnet',
+			amount: env.X402_MAX_AMOUNT_REQUIRED,
+			price,
+			payTo: env.X402_PAY_TO_SOLANA,
+			asset: env.X402_ASSET_MINT_SOLANA,
+			asset_symbol: 'USDC',
+			maxTimeoutSeconds: 60,
+			extra: { name: 'USDC', decimals: 6, feePayer: env.X402_FEE_PAYER_SOLANA },
 		});
 	}
 
@@ -142,9 +160,11 @@ function handleX402Discovery(req, res) {
 				path: '/api/mcp',
 				url: mcpUrl,
 				method: 'POST',
-				description: 'MCP 2025-06-18 Streamable HTTP transport — 3D avatar viewer, glTF model validation/inspection/optimization, and Solana agent data exposed as MCP tools. JSON-RPC 2.0 batch-aware. Currency: USDC.',
+				description:
+					'MCP 2025-06-18 Streamable HTTP transport — 3D avatar viewer, glTF model validation/inspection/optimization, and Solana agent data exposed as MCP tools. JSON-RPC 2.0 batch-aware. Currency: USDC.',
 				mimeType: 'application/json',
 				accepts,
+				extensions: { bazaar: bazaarExtension() },
 				links: {
 					openapi: `${origin}/openapi.json`,
 					docs: `${origin}/docs/mcp`,

@@ -14,10 +14,7 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
 	if (!method(req, res, ['GET'])) return;
 
-	const accepts = paymentRequirements({
-		resource: `${env.APP_ORIGIN}/api/mcp`,
-		description: 'MCP tool call',
-	});
+	const accepts = paymentRequirements();
 	const facilitators = await probeFacilitators();
 	const ok = facilitators.every((f) => f.ok);
 
