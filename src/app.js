@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import WebGL from 'three/addons/capabilities/WebGL.js';
 import { initWalletButton } from './wallet.js';
+import { eagerConnectWallet } from './erc8004/agent-registry.js';
 import { Viewer } from './viewer.js';
 import { Editor } from './editor/index.js';
 import { SimpleDropzone } from 'simple-dropzone';
@@ -35,20 +36,6 @@ import { SceneController } from './runtime/scene.js';
 import { Runtime } from './runtime/index.js';
 import { Memory } from './memory/index.js';
 import { SkillRegistry } from './skills/index.js';
-
-	window.VIEWER.runtime = new Runtime({
-		manifest: {},
-		viewer,
-		memory: new Memory({ agentId: 'user' }),
-		skills: new AgentSkills(protocol, new Memory({ agentId: 'user' })),
-		agentId: 'user',
-	});
-
-	// Wallet — kick off a silent reconnect on app boot. Any page that later mounts
-	// a wallet UI (deploy, reputation, validation, permissions, etc.) reads from
-	// the shared signer + onWalletChange bus, so this single call surfaces an
-	// already-authorized wallet site-wide without any popup.
-	eagerConnectWallet();
 
 window.THREE = THREE;
 window.VIEWER = {};
