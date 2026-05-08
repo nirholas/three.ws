@@ -131,7 +131,7 @@ function handleX402Discovery(req, res) {
 			mission: 'Make 3D model tooling and Solana agent data machine-native so any AI agent can transact with the HTTP 402 protocol.',
 			website: origin,
 			docs: `${origin}/docs/mcp`,
-			repository: 'https://github.com/overstepping/3D-Agent',
+			repository: 'https://github.com/nirholas/three.ws',
 			contact: `${origin}/`,
 			tags: ['x402', 'x402-v1', 'mcp', 'agent-first', '3d', 'gltf', 'glb', 'three-js', 'solana', 'base', 'usdc'],
 			environment: 'apex',
