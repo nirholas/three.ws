@@ -1,6 +1,10 @@
-import { sql } from '../_lib/db.js';
+import { Connection, PublicKey } from '@solana/web3.js';
 import { cors, json, method, wrap, error } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
+
+const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
+const TOKEN_PROGRAM = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+const RPC = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
@@ -12,11 +16,28 @@ export default wrap(async (req, res) => {
 	const address = req.query?.address?.trim();
 	if (!address) return error(res, 400, 'validation_error', 'address required');
 
-	const [row] = await sql`
-		select wallet_address from rider_passes
-		where wallet_address = ${address}
-		limit 1
-	`;
+	let owner;
+	try {
+		owner = new PublicKey(address);
+	} catch {
+		return error(res, 400, 'validation_error', 'invalid Solana address');
+	}
 
-	return json(res, 200, { has_pass: !!row });
+	const connection = new Connection(RPC, 'confirmed');
+	const accounts = await connection.getParsedTokenAccountsByOwner(owner, {
+		programId: TOKEN_PROGRAM,
+	});
+
+	const threeAccount = accounts.value.find(
+		(a) => a.account.data.parsed.info.mint === THREE_MINT,
+	);
+	const balance = threeAccount
+		? Number(threeAccount.account.data.parsed.info.tokenAmount.uiAmount ?? 0)
+		: 0;
+
+	return json(res, 200, {
+		has_pass: balance > 0,
+		balance,
+		mint: THREE_MINT,
+	});
 });
