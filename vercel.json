@@ -222,11 +222,11 @@
 		},
 		{
 			"src": "/studio",
-			"dest": "/widget-studio.html"
+			"dest": "/studio/index.html"
 		},
 		{
 			"src": "/studio/",
-			"dest": "/widget-studio.html"
+			"dest": "/studio/index.html"
 		},
 		{
 			"src": "/studio/(.*)",
