@@ -88,7 +88,9 @@ const appConfig = {
 					'/create': resolve(root, 'create.html'),
 					'/dashboard': resolve(root, 'public/dashboard/index.html'),
 					'/studio': resolve(root, 'widget-studio.html'),
+					'/studio/': resolve(root, 'widget-studio.html'),
 					'/widgets': resolve(root, 'public/widgets-gallery/index.html'),
+					'/widgets/': resolve(root, 'public/widgets-gallery/index.html'),
 					'/docs/widgets': resolve(root, 'public/docs-widgets.html'),
 					'/cz': resolve(root, 'public/cz/index.html'),
 					'/cz/': resolve(root, 'public/cz/index.html'),
@@ -137,6 +139,15 @@ const appConfig = {
 					if (url.includes('html-proxy') || url.includes('@id/') || url.includes('@vite/'))
 						return next();
 					const path = url.split('?')[0];
+					// Vercel serverless functions live under /api/* in production but
+					// Vite dev does not run them. Return JSON 404 so client fetch()
+					// callers see a normal "not found" instead of leaking the JS
+					// source of api/*.js (which crashes JSON.parse with a comment).
+					if (path.startsWith('/api/')) {
+						res.statusCode = 404;
+						res.setHeader('Content-Type', 'application/json');
+						return res.end('{"error":"api not available in vite dev","path":"' + path + '"}');
+					}
 					if (dirRoutes.has(path)) {
 						res.statusCode = 301;
 						res.setHeader('Location', path + '/' + (req.url.slice(path.length) || ''));
