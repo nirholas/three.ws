@@ -199,13 +199,21 @@ export async function handleGetOne(req, res, id) {
 		`;
 		if (!row) return error(res, 404, 'not_found', 'agent not found');
 
-		const prices = await sql`
-			SELECT skill_name, amount, currency_mint FROM agent_skill_prices WHERE agent_id = ${id}
-		`;
-		row.skill_prices = prices.reduce((acc, p) => {
-			acc[p.skill_name] = { amount: p.amount, currency_mint: p.currency_mint };
-			return acc;
-		}, {});
+		// Pricing is non-critical for the detail view; the agent_skill_prices
+		// schema has churned across migrations (skill / skill_name / skill_id),
+		// so a column mismatch must never 500 the agent page.
+		row.skill_prices = {};
+		try {
+			const prices = await sql`
+				SELECT skill_name, amount, currency_mint FROM agent_skill_prices WHERE agent_id = ${id}
+			`;
+			row.skill_prices = prices.reduce((acc, p) => {
+				acc[p.skill_name] = { amount: p.amount, currency_mint: p.currency_mint };
+				return acc;
+			}, {});
+		} catch (e) {
+			console.error('[agents] skill_prices lookup failed', e?.message || e);
+		}
 
 		await healStaleAvatarId(row);
 
