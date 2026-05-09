@@ -123,6 +123,15 @@ export default wrap(async function handler(req, res) {
 		return mod.handlePayments(req, res, id);
 	}
 
+	if (sub === 'pricing') {
+		if (action) {
+			const mod = await import('./_id/pricing/[skill].js');
+			return mod.default(req, res);
+		}
+		const mod = await import('./_id/pricing/index.js');
+		return mod.default(req, res);
+	}
+
 	if (sub === 'reputation') {
 		const mod = await import('./_id/reputation.js');
 		return mod.handleReputation(req, res, id);

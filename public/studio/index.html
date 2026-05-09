@@ -18,7 +18,57 @@
 			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
 			rel="stylesheet"
 		/>
-		<link rel="stylesheet" href="/studio/studio.css" />
+		<link rel="stylesheet" href="/studio/studio.css?v=2" />
+		<style>
+			/* Critical layout — guarantees the 3-column grid renders even if
+			   studio.css is held by a stale SW cache. */
+			html, body { margin: 0; padding: 0; }
+			body.studio-body {
+				background: #0a0a0f;
+				color: #eee;
+				font-family: 'Inter', system-ui, -apple-system, sans-serif;
+				font-size: 14px;
+				line-height: 1.45;
+				min-height: 100vh;
+				overflow-x: hidden;
+			}
+			.studio-header {
+				position: sticky; top: 0; z-index: 50;
+				display: flex; align-items: center; justify-content: space-between;
+				gap: 1rem; height: 60px; padding: 0 1.25rem;
+				background: rgba(10,10,15,0.85);
+				backdrop-filter: blur(12px);
+				border-bottom: 1px solid rgba(255,255,255,0.08);
+			}
+			.studio-header h1 { display: flex; align-items: center; gap: 0.55rem; margin: 0; font-size: 1rem; font-weight: 600; }
+			.studio-header nav { display: flex; align-items: center; gap: 0.25rem; flex-wrap: wrap; }
+			.studio-layout {
+				display: grid;
+				grid-template-columns: 320px minmax(0, 1fr) 380px;
+				gap: 1rem; padding: 1rem;
+				max-width: 1600px; margin: 0 auto;
+				align-items: start;
+			}
+			.studio-col-left, .studio-col-mid, .studio-col-right {
+				display: flex; flex-direction: column; gap: 1rem; min-width: 0;
+			}
+			.studio-col-mid { position: sticky; top: 76px; }
+			@media (max-width: 1280px) {
+				.studio-layout { grid-template-columns: 280px minmax(0, 1fr) 340px; }
+			}
+			@media (max-width: 1100px) {
+				.studio-layout { grid-template-columns: 1fr; }
+				.studio-col-mid { position: static; order: -1; }
+			}
+			.panel {
+				background: #14141c;
+				border: 1px solid #2a2a36;
+				border-radius: 14px;
+				padding: 1.1rem 1.1rem 1.2rem;
+			}
+			.avatar-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.55rem; }
+			.type-grid { display: grid; grid-template-columns: 1fr; gap: 0.5rem; }
+		</style>
 		<script type="importmap">
 		{
 			"imports": {
@@ -303,6 +353,6 @@
 
 		<div class="toast" id="toast" hidden></div>
 
-		<script type="module" src="/studio/studio.js"></script>
+		<script type="module" src="/studio/studio.js?v=2"></script>
 	</body>
 </html>
