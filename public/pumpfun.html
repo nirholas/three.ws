@@ -16,17 +16,19 @@
 	<script defer src="/footer-newsletter.js"></script>
 	<style>
 		:root { color-scheme: dark; --accent: #6a5cff; --border: #1f1f29; --bg: #0a0a0f; --panel: #14141c; --muted: #888;
-			--header-h: 64px; }
+			--header-h: 48px; }
 		* { box-sizing: border-box; }
 		html, body { margin: 0; background: var(--bg); color: #eee;
 			font: 14px/1.55 -apple-system, system-ui, Segoe UI, Roboto, sans-serif; }
-		body.home-page { padding-top: var(--header-h); display: flex; flex-direction: column; min-height: 100vh; }
-		.pf-filterbar { padding: 10px 18px; border-bottom: 1px solid var(--border);
-			display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: var(--panel);
-			position: sticky; top: var(--header-h); z-index: 50; }
+		body.home-page { padding-top: var(--header-h); min-height: 100vh; display: flex; flex-direction: column; }
+		.pf-filterbar { padding: 8px 14px; border-bottom: 1px solid var(--border);
+			display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: var(--panel);
+			position: sticky; top: 0; z-index: 50; row-gap: 6px; }
+		#ctl-asset { width: 200px; }
+		#ctl-mint { width: 150px; }
 		.status-pill[data-state="down"] { cursor: pointer; color: #f87171; border-color: #4a1f23; }
 		.status-pill[data-state="down"]:hover { background: #1f1418; }
-		.pf-filterbar h1 { margin: 0; font-size: 15px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; }
+		.pf-filterbar h1 { margin: 0; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
 		.dot { width: 8px; height: 8px; border-radius: 50%; background: #555; box-shadow: 0 0 0 0 currentColor; }
 		.dot.live { background: #4ade80; animation: pulse 1.6s ease-in-out infinite; }
 		.dot.connecting { background: #fbbf24; }
@@ -46,12 +48,12 @@
 			background: linear-gradient(135deg, #f59e0b, #a855f7); box-shadow: 0 0 6px rgba(168,85,247,0.55); }
 		#feed-wrap h2 { display: inline-flex; align-items: center; flex-wrap: wrap; }
 		.pf-filterbar .desc { color: var(--muted); font-size: 12px; }
-		.pf-filterbar .ctl { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+		.pf-filterbar .ctl { margin-left: auto; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; row-gap: 6px; }
 		.pf-filterbar label { font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
 		.pf-filterbar input[type="text"], .pf-filterbar input[type="number"], .pf-filterbar select, .pf-filterbar button {
 			background: #161620; color: #eee; border: 1px solid #2a2a36;
-			border-radius: 6px; padding: 6px 10px; font-size: 13px; }
-		.pf-filterbar input[type="number"].ctl-num { width: 108px; -moz-appearance: textfield; appearance: textfield; }
+			border-radius: 6px; padding: 5px 9px; font-size: 12px; }
+		.pf-filterbar input[type="number"].ctl-num { width: 86px; -moz-appearance: textfield; appearance: textfield; }
 		.pf-filterbar input[type="number"].ctl-num::-webkit-outer-spin-button,
 		.pf-filterbar input[type="number"].ctl-num::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 		.pf-filterbar .ctl-sep { width: 1px; height: 20px; background: #2a2a36; margin: 0 2px; }
@@ -148,10 +150,10 @@
 		@media (prefers-reduced-motion: reduce) {
 			.pf-modal-backdrop, .pf-modal, .pf-skeleton, .pf-toast { animation: none; }
 		}
-		main.pf-main { position: relative; flex: 1; min-height: calc(100vh - var(--header-h) - 56px);
-			display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 0; }
-		@media (max-width: 1100px) { main.pf-main { grid-template-columns: minmax(0, 1fr) 340px; } }
-		#stage { position: relative; display: flex; flex-direction: column; }
+		main.pf-main { position: relative; flex: 1 1 0; min-height: 0;
+			display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 0; overflow: hidden; }
+		@media (max-width: 1100px) { main.pf-main { grid-template-columns: minmax(0, 1fr) 320px; } }
+		#stage { position: relative; display: flex; flex-direction: column; min-height: 0; }
 		#stage > model-viewer#agent { width: 100%; flex: 1; min-height: 0;
 			background: radial-gradient(ellipse at 50% 60%, #1a1a26 0%, #0a0a12 70%);
 			--poster-color: transparent; display: block; }
@@ -327,7 +329,7 @@
 
 		/* Share/copy-link button */
 		.pf-icon-btn { background: #161620; color: #ddd; border: 1px solid #2a2a36; border-radius: 6px;
-			padding: 6px 10px; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+			padding: 5px 9px; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
 		.pf-icon-btn:hover { background: #20202c; }
 		.pf-icon-btn[data-flash="true"] { border-color: #4ade80; color: #4ade80; }
 
@@ -404,7 +406,7 @@
 	</div>
 	<main class="pf-main">
 		<div id="stage">
-			<model-viewer id="agent" camera-controls disable-zoom interaction-prompt="none" autoplay auto-rotate auto-rotate-delay="2000" rotation-per-second="15deg" shadow-intensity="0.6" shadow-softness="0.8" exposure="1.0" environment-image="neutral" camera-orbit="0deg 80deg 4m" field-of-view="32deg" loading="eager" aria-label="3D agent"></model-viewer>
+			<model-viewer id="agent" camera-controls disable-zoom interaction-prompt="none" autoplay auto-rotate auto-rotate-delay="2000" rotation-per-second="15deg" shadow-intensity="0.6" shadow-softness="0.8" exposure="1.0" environment-image="neutral" camera-orbit="0deg 75deg 105%" min-camera-orbit="auto auto 50%" max-camera-orbit="auto auto 200%" field-of-view="auto" bounds="tight" loading="eager" aria-label="3D agent"></model-viewer>
 			<div id="stage-overlay">
 				<div id="stage-title" aria-live="polite"></div>
 				<div id="stage-caption" aria-live="polite"></div>
