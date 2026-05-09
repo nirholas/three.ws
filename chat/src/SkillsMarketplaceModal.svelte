@@ -529,7 +529,7 @@
 	let libraryLoaded = false;
 	let libraryError = false;
 	let libraryFailed = {};
-	$: if (view === 'library' && !loadingLibrary && (!libraryLoaded || libraryError)) loadPluginLibrary();
+	$: if (view === 'library' && !loadingLibrary && !libraryLoaded) loadPluginLibrary();
 
 
 	// init and keyboard
