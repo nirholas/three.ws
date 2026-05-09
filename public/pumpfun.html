@@ -23,7 +23,7 @@
 		body.home-page { padding-top: var(--header-h); min-height: 100vh; display: flex; flex-direction: column; }
 		.pf-filterbar { padding: 8px 14px; border-bottom: 1px solid var(--border);
 			display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: var(--panel);
-			position: sticky; top: 0; z-index: 50; row-gap: 6px; }
+			position: sticky; top: var(--header-h); z-index: 50; row-gap: 6px; }
 		#ctl-asset { width: 200px; }
 		#ctl-mint { width: 150px; }
 		.status-pill[data-state="down"] { cursor: pointer; color: #f87171; border-color: #4a1f23; }
@@ -150,7 +150,8 @@
 		@media (prefers-reduced-motion: reduce) {
 			.pf-modal-backdrop, .pf-modal, .pf-skeleton, .pf-toast { animation: none; }
 		}
-		main.pf-main { position: relative; flex: 1 1 0; min-height: 0;
+		main.pf-main { position: relative; flex: 1 1 auto;
+			min-height: calc(100vh - var(--header-h) - 90px);
 			display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 0; overflow: hidden; }
 		@media (max-width: 1100px) { main.pf-main { grid-template-columns: minmax(0, 1fr) 320px; } }
 		#stage { position: relative; display: flex; flex-direction: column; min-height: 0; }
