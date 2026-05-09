@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Ethereum CREATE2 vanity grinder · three.ws</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="Grind a vanity Ethereum smart-contract address by searching CREATE2 salts. Runs entirely in your browser — no keys involved, just a salt you feed to your factory.">
+	<link rel="icon" href="/favicon.ico">
+	<link rel="stylesheet" href="/nav.css">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+	<style>
+		* { box-sizing: border-box; }
+		:root {
+			color-scheme: dark;
+			--fg: #f0f0f0; --muted: #888; --border: rgba(255,255,255,0.08); --bg: #111;
+			--card-bg: #0f0f0f;
+			--ok-bg: rgba(74,222,128,0.12); --ok-fg: #4ade80;
+			--warn-bg: rgba(251,191,36,0.1); --warn-fg: #fbbf24;
+			--bad-bg: rgba(239,68,68,0.1); --bad-fg: #f87171;
+			--header-h: 3.5rem;
+			--font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+		}
+		body {
+			font: 15px/1.5 'Inter', system-ui, -apple-system, sans-serif;
+			background: #000; color: var(--fg); margin: 0;
+			min-height: 100vh; display: flex; flex-direction: column;
+		}
+		main { flex: 1; max-width: 720px; width: 100%; margin: 0 auto; padding: 2.5rem 1rem 4rem; }
+		h1 { font-size: 1.5rem; margin: 0 0 .25rem; font-family: var(--font-display); letter-spacing: -0.02em; }
+		p.lede { color: var(--muted); margin: 0 0 1.5rem; }
+		label { display: block; font-size: .8rem; color: var(--muted); margin: 1rem 0 .25rem; }
+		.card { border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem 1.25rem; background: var(--card-bg); margin-bottom: 1rem; }
+		.card h2 { font-size: .95rem; margin: 0 0 .35rem; font-family: var(--font-display); letter-spacing: -0.01em; }
+		.card .desc { color: var(--muted); font-size: .8rem; margin: 0 0 .35rem; }
+		input[type=text], textarea, select {
+			font: inherit; font-family: ui-monospace, monospace; padding: .55rem .7rem;
+			width: 100%; border: 1px solid rgba(255,255,255,0.12); border-radius: 6px;
+			background: #1a1a1a; color: var(--fg); resize: vertical;
+		}
+		input[type=text]:focus, textarea:focus, select:focus { outline: none; border-color: rgba(255,255,255,0.3); }
+		input.invalid, textarea.invalid { border-color: var(--bad-fg); background: rgba(239,68,68,0.06); }
+
+		.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+		@media (max-width: 600px) { .row2 { grid-template-columns: 1fr; } }
+
+		.preview { font-family: ui-monospace, monospace; font-size: .9rem; padding: .65rem .75rem; background: #1a1a1a; border-radius: 6px; margin-top: .55rem; word-break: break-all; min-height: 2.4em; line-height: 1.4; border: 1px solid var(--border); }
+		.preview .pfx, .preview .sfx { background: linear-gradient(90deg,#a78bfa,#6366f1); color: #fff; padding: 0 3px; border-radius: 3px; font-weight: 700; }
+		.preview .rest { color: #555; }
+
+		.row { display: flex; justify-content: space-between; align-items: center; margin-top: .55rem; font-size: .85rem; color: var(--muted); }
+		.actions { display: flex; gap: .55rem; margin-top: 1.25rem; align-items: center; flex-wrap: wrap; }
+		.btn { font: inherit; padding: .55rem 1.1rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.12); background: #1a1a1a; color: var(--fg); cursor: pointer; }
+		.btn:hover { background: #222; }
+		.btn.primary { background: #fff; color: #000; border-color: #fff; font-weight: 600; }
+		.btn.primary:hover { background: #e8e8e8; }
+		.btn:disabled { opacity: .35; cursor: not-allowed; }
+
+		.progress { margin-top: 1.25rem; padding: .9rem 1.1rem; background: #111; border-radius: 8px; border: 1px solid var(--border); font-family: ui-monospace, monospace; font-size: .85rem; }
+		.progress .live { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+		.progress .stat { font-size: 1.1rem; font-weight: 600; color: #fff; }
+		.progress .scan { font-family: ui-monospace, monospace; font-size: .85rem; color: #555; margin-top: .35rem; word-break: break-all; min-height: 1.4em; }
+
+		.result { margin-top: 1.25rem; padding: 1.1rem 1.25rem; background: rgba(167,139,250,0.06); border: 1px solid rgba(167,139,250,0.25); border-radius: 10px; }
+		.result h3 { margin: 0 0 .4rem; font-size: 1rem; color: #fff; }
+		.result .out-row { font-family: ui-monospace, monospace; font-size: .82rem; word-break: break-all; padding: .55rem .65rem; background: #111; border-radius: 6px; border: 1px solid rgba(167,139,250,0.15); margin-top: .5rem; }
+		.result .out-row .k { color: #a78bfa; display: inline-block; min-width: 5.5rem; }
+		.result .pfx, .result .sfx { background: linear-gradient(90deg,#a78bfa,#6366f1); color: #fff; padding: 0 3px; border-radius: 3px; font-weight: 700; }
+		.result .meta { font-size: .8rem; color: var(--muted); margin: .65rem 0 0; }
+
+		.warn { background: var(--warn-bg); color: var(--warn-fg); padding: .65rem .85rem; border-radius: 6px; margin-top: 1rem; font-size: .8rem; border: 1px solid rgba(251,191,36,0.15); }
+		.error { background: var(--bad-bg); color: var(--bad-fg); padding: .6rem .85rem; border-radius: 6px; margin-top: 1rem; font-size: .85rem; border: 1px solid rgba(239,68,68,0.15); }
+
+		.preset-row { display: flex; gap: .35rem; flex-wrap: wrap; margin-top: .4rem; }
+		.preset {
+			background: #1a1a1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 999px;
+			padding: .25rem .65rem; cursor: pointer; font-size: .75rem; color: #bbb;
+		}
+		.preset:hover { background: #242424; border-color: rgba(255,255,255,0.2); }
+
+		.formula {
+			font-family: ui-monospace, monospace; font-size: .75rem;
+			color: #888; background: #0a0a0a; padding: .5rem .65rem;
+			border-radius: 6px; border: 1px solid var(--border); margin-top: .35rem;
+		}
+		.skip-link { position: absolute; left: -9999px; }
+		.skip-link:focus { left: 1rem; top: 1rem; padding: .5rem 1rem; background: #0c0c0c; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; z-index: 9999; color: #fff; text-decoration: none; }
+	</style>
+</head>
+<body>
+	<a href="#main-content" class="skip-link">Skip to main content</a>
+	<header>
+		<div id="nav-container"></div>
+	</header>
+	<script src="/nav.js"></script>
+
+	<main id="main-content">
+		<h1>✦ Ethereum CREATE2 vanity grinder</h1>
+		<p class="lede">
+			Grind a vanity smart-contract address by searching <strong>CREATE2 salts</strong> — no private keys involved.
+			The result is a deterministic address you can deploy to from your factory of choice (Safe, ERC-4337 SimpleAccount, CreateX, Coinbase Smart Wallet…).
+			Runs entirely in your browser.
+		</p>
+
+		<div class="card">
+			<h2>1. Factory + init code</h2>
+			<p class="desc">CREATE2 fixes the deployer address and the init code; only the salt is yours to choose.</p>
+
+			<div class="formula">address = keccak256(0xff ‖ deployer ‖ salt ‖ keccak256(initCode))[12:]</div>
+
+			<label for="deployer">Deployer / factory address (20 bytes)</label>
+			<input id="deployer" type="text" placeholder="0x…" autocomplete="off" spellcheck="false" />
+			<div class="preset-row" aria-label="Common deployers">
+				<button class="preset" type="button" data-deployer="0x4e59b44847b379578588920cA78FbF26c0B4956C" data-name="Arachnid CREATE2 (deterministic-deployment-proxy)">Arachnid proxy</button>
+				<button class="preset" type="button" data-deployer="0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed" data-name="CreateX">CreateX</button>
+				<button class="preset" type="button" data-deployer="0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67" data-name="Safe SafeProxyFactory v1.4.1">Safe v1.4.1</button>
+				<button class="preset" type="button" data-deployer="0x0BA5ED0c6AA8c49038F819E587E2633c4A9F428a" data-name="Coinbase Smart Wallet factory">Coinbase Smart Wallet</button>
+			</div>
+
+			<label for="initcode-hash">keccak256(initCode) — 32 bytes</label>
+			<input id="initcode-hash" type="text" placeholder="0x… (64 hex chars)" autocomplete="off" spellcheck="false" />
+			<p class="desc" style="margin-top:.4rem">
+				If you have the raw <code>initCode</code> (deploy bytecode + constructor args), paste it below and we'll hash it for you.
+			</p>
+			<label for="initcode-raw" style="margin-top:.5rem">Raw init code (optional — auto-hashes)</label>
+			<textarea id="initcode-raw" rows="3" placeholder="0x… (paste bytecode + ABI-encoded args)"></textarea>
+		</div>
+
+		<div class="card">
+			<h2>2. Pattern</h2>
+			<p class="desc">Hex characters only (0–9, a–f). Each extra character is 16× harder.</p>
+
+			<div class="row2">
+				<div>
+					<label for="prefix">Prefix (after 0x)</label>
+					<input id="prefix" type="text" maxlength="10" placeholder="e.g. beef" autocomplete="off" spellcheck="false" />
+				</div>
+				<div>
+					<label for="suffix">Suffix</label>
+					<input id="suffix" type="text" maxlength="10" placeholder="e.g. dead" autocomplete="off" spellcheck="false" />
+				</div>
+			</div>
+
+			<div class="preview" id="preview" aria-live="polite"></div>
+
+			<div class="row">
+				<span id="est">type a pattern to see estimated time</span>
+				<span id="cores-row">cores: <span id="cores">?</span></span>
+			</div>
+
+			<div class="actions">
+				<button id="grind" class="btn primary" type="button" disabled>Grind salt</button>
+				<button id="cancel" class="btn" type="button" hidden>Cancel</button>
+			</div>
+
+			<div id="progress" hidden class="progress">
+				<div class="live">
+					<div>
+						<div class="stat" id="rate">0/s</div>
+						<div style="font-size:.75rem;color:#555">tries/sec across <span id="cores2">?</span> cores</div>
+					</div>
+					<div style="text-align:right">
+						<div class="stat"><span id="attempts">0</span></div>
+						<div style="font-size:.75rem;color:#555">attempts · eta <span id="eta">—</span></div>
+					</div>
+				</div>
+				<div class="scan" id="scan"></div>
+			</div>
+
+			<div id="error" hidden class="error"></div>
+			<div id="result" hidden></div>
+		</div>
+	</main>
+
+	<script type="module">
+		import { keccak_256 } from '@noble/hashes/sha3';
+		import { grindCreate2Vanity } from '/src/eth/vanity/grinder.js';
+		import {
+			validatePattern, validateAddress, validateInitCodeHash,
+			estimateAttempts, formatTimeEstimate, MAX_PATTERN_LENGTH,
+		} from '/src/eth/vanity/validation.js';
+
+		const $ = (id) => document.getElementById(id);
+		const HEX_ALPHA = '0123456789abcdef';
+		const RATE_PER_CORE = 60_000; // measured order-of-magnitude for keccak_256 on 85 bytes in a worker
+		const cores = Math.max(1, Math.min(navigator.hardwareConcurrency || 4, 8));
+		$('cores').textContent = cores;
+		$('cores2').textContent = cores;
+
+		function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]); }
+		function sample(prefix = '', suffix = '') {
+			const total = 40;
+			const fillLen = Math.max(0, total - prefix.length - suffix.length);
+			let mid = '';
+			for (let i = 0; i < fillLen; i++) mid += HEX_ALPHA[Math.floor(Math.random() * 16)];
+			return prefix + mid + suffix;
+		}
+		function fmtTime(seconds) {
+			if (!isFinite(seconds)) return '—';
+			if (seconds < 1) return '<1s';
+			if (seconds < 60) return `~${Math.round(seconds)}s`;
+			if (seconds < 3600) return `~${Math.round(seconds/60)}m`;
+			if (seconds < 86400) return `~${Math.round(seconds/3600)}h`;
+			if (seconds < 31536000) return `~${Math.round(seconds/86400)}d`;
+			return '>1y';
+		}
+		function estSeconds(prefixLen, suffixLen) {
+			const total = prefixLen + suffixLen;
+			return total <= 0 ? 0 : Math.pow(16, total) / (RATE_PER_CORE * cores);
+		}
+		function bytesToHex(bytes) {
+			let s = '';
+			for (let i = 0; i < bytes.length; i++) s += bytes[i].toString(16).padStart(2, '0');
+			return s;
+		}
+		function hexToBytes(hex) {
+			let h = (hex || '').trim();
+			if (h.startsWith('0x') || h.startsWith('0X')) h = h.slice(2);
+			if (h.length % 2) return null;
+			if (!/^[0-9a-f]*$/i.test(h)) return null;
+			const out = new Uint8Array(h.length / 2);
+			for (let i = 0; i < out.length; i++) out[i] = parseInt(h.substring(i*2, i*2+2), 16);
+			return out;
+		}
+
+		// ── Preset deployer chips ──────────────────────────────────────────
+		document.querySelectorAll('.preset[data-deployer]').forEach((b) => {
+			b.title = b.dataset.name || '';
+			b.addEventListener('click', () => {
+				$('deployer').value = b.dataset.deployer;
+				$('deployer').dispatchEvent(new Event('input'));
+			});
+		});
+
+		// ── Auto-hash raw initCode → fill initcode-hash ────────────────────
+		$('initcode-raw').addEventListener('input', () => {
+			const raw = $('initcode-raw').value.trim();
+			if (!raw) return;
+			const bytes = hexToBytes(raw);
+			$('initcode-raw').classList.toggle('invalid', !bytes);
+			if (!bytes) return;
+			const h = '0x' + bytesToHex(keccak_256(bytes));
+			$('initcode-hash').value = h;
+			$('initcode-hash').dispatchEvent(new Event('input'));
+		});
+
+		// ── Live preview / validation ──────────────────────────────────────
+		function readPattern() {
+			const p = $('prefix').value.trim().replace(/^0x/i, '').toLowerCase();
+			const s = $('suffix').value.trim().toLowerCase();
+			return { p, s };
+		}
+		let previewLoop = null;
+		function startPreviewLoop() {
+			stopPreviewLoop();
+			previewLoop = setInterval(() => {
+				const { p, s } = readPattern();
+				if ($('prefix').classList.contains('invalid') || $('suffix').classList.contains('invalid')) return;
+				const middle = $('preview').querySelector('.rest');
+				if (middle) middle.textContent = sample('', '').slice(0, 40 - p.length - s.length);
+			}, 700);
+		}
+		function stopPreviewLoop() { if (previewLoop) clearInterval(previewLoop); previewLoop = null; }
+
+		function update() {
+			const { p, s } = readPattern();
+			const pv = p ? validatePattern(p) : { valid: true, errors: [] };
+			const sv = s ? validatePattern(s) : { valid: true, errors: [] };
+			$('prefix').classList.toggle('invalid', !!p && !pv.valid);
+			$('suffix').classList.toggle('invalid', !!s && !sv.valid);
+
+			const dv = validateAddress($('deployer').value || '');
+			const ich = validateInitCodeHash($('initcode-hash').value || '');
+			$('deployer').classList.toggle('invalid', !!$('deployer').value && !dv.valid);
+			$('initcode-hash').classList.toggle('invalid', !!$('initcode-hash').value && !ich.valid);
+
+			const total = (pv.valid ? p.length : 0) + (sv.valid ? s.length : 0);
+			if (total === 0) {
+				$('preview').innerHTML = `<span class="rest">0x${esc(sample())}</span>`;
+				$('est').textContent = 'type a pattern to see estimated time';
+			} else {
+				const mid = sample('', '').slice(0, 40 - p.length - s.length);
+				$('preview').innerHTML =
+					`0x` +
+					(p ? `<span class="pfx">${esc(p)}</span>` : '') +
+					`<span class="rest">${esc(mid)}</span>` +
+					(s ? `<span class="sfx">${esc(s)}</span>` : '');
+				$('est').textContent = `est. ${fmtTime(estSeconds(p.length, s.length))} on ${cores} cores`;
+			}
+
+			$('grind').disabled =
+				!dv.valid || !ich.valid || total === 0 ||
+				(!!p && !pv.valid) || (!!s && !sv.valid);
+		}
+
+		['prefix','suffix','deployer','initcode-hash'].forEach((id) => {
+			$(id).addEventListener('input', update);
+			$(id).addEventListener('keydown', (e) => {
+				if (e.key === 'Enter' && !$('grind').disabled) $('grind').click();
+			});
+		});
+		update();
+		startPreviewLoop();
+
+		// ── Grind ──────────────────────────────────────────────────────────
+		let abort = null;
+
+		$('grind').addEventListener('click', async () => {
+			const { p, s } = readPattern();
+			const dv = validateAddress($('deployer').value);
+			const ich = validateInitCodeHash($('initcode-hash').value);
+			if (!dv.valid)  { showError(dv.error);  return; }
+			if (!ich.valid) { showError(ich.error); return; }
+
+			$('grind').hidden = true;
+			$('cancel').hidden = false;
+			$('progress').hidden = false;
+			$('result').hidden = true;
+			$('error').hidden = true;
+			$('attempts').textContent = '0';
+			$('rate').textContent = '0/s';
+			$('eta').textContent = fmtTime(estSeconds(p.length, s.length));
+			$('scan').textContent = `0x${sample(p, s)}`;
+			stopPreviewLoop();
+
+			const scanLoop = setInterval(() => {
+				$('scan').textContent = `0x${sample(p, s)}`;
+			}, 100);
+
+			abort = new AbortController();
+			try {
+				const result = await grindCreate2Vanity({
+					deployer:     dv.normalized,
+					initCodeHash: ich.normalized,
+					prefix:       p || undefined,
+					suffix:       s || undefined,
+					signal:       abort.signal,
+					onProgress: ({ attempts, rate, eta, sample: sm }) => {
+						$('attempts').textContent = attempts.toLocaleString();
+						$('rate').textContent = `${Math.round(rate).toLocaleString()}/s`;
+						$('eta').textContent = eta;
+						if (sm) $('scan').textContent = sm;
+					},
+				});
+				clearInterval(scanLoop);
+				renderResult(result, p, s);
+			} catch (err) {
+				clearInterval(scanLoop);
+				if (err?.name !== 'AbortError') showError(`Grind failed: ${err.message || err}`);
+				resetIdle();
+			}
+		});
+
+		$('cancel').addEventListener('click', () => abort?.abort());
+
+		function showError(msg) {
+			$('error').textContent = msg;
+			$('error').hidden = false;
+		}
+		function resetIdle() {
+			$('grind').hidden = false;
+			$('cancel').hidden = true;
+			$('progress').hidden = true;
+			startPreviewLoop();
+		}
+
+		function renderResult(result, p, s) {
+			$('cancel').hidden = true;
+			$('grind').hidden = false;
+			$('grind').textContent = 'Grind another';
+			$('progress').hidden = true;
+
+			const addrNoPrefix = result.address.slice(2); // 40 hex chars
+			const mid = addrNoPrefix.slice(p.length, addrNoPrefix.length - s.length);
+			const html = `
+				<div class="result">
+					<h3>✦ Salt found</h3>
+					<div class="out-row">
+						<span class="k">address</span> 0x${
+							(p ? `<span class="pfx">${esc(p)}</span>` : '') +
+							esc(mid) +
+							(s ? `<span class="sfx">${esc(s)}</span>` : '')
+						}
+					</div>
+					<div class="out-row"><span class="k">salt</span> ${esc(result.salt)}</div>
+					<div class="out-row"><span class="k">deployer</span> ${esc(result.deployer)}</div>
+					<div class="out-row"><span class="k">initCodeHash</span> ${esc(result.initCodeHash)}</div>
+					<div class="meta">
+						${result.attempts.toLocaleString()} attempts in ${(result.durationMs/1000).toFixed(1)}s
+						across ${result.workers} cores
+						(${Math.round(result.attempts / (result.durationMs/1000)).toLocaleString()}/s)
+					</div>
+					<div class="actions">
+						<button id="copy-salt" class="btn primary" type="button">Copy salt</button>
+						<button id="copy-addr" class="btn" type="button">Copy address</button>
+						<button id="download" class="btn" type="button">⬇ Download JSON</button>
+					</div>
+					<div class="warn">
+						The address above will only match if you deploy with the <em>exact</em> initCode whose hash you entered.
+						Same factory + same initCode + this salt → same address, on every EVM chain that has this factory deployed.
+					</div>
+				</div>
+			`;
+			$('result').hidden = false;
+			$('result').innerHTML = html;
+
+			$('copy-salt').addEventListener('click', () => copy(result.salt, 'copy-salt', 'Copy salt'));
+			$('copy-addr').addEventListener('click', () => copy(result.address, 'copy-addr', 'Copy address'));
+			$('download').addEventListener('click', () => {
+				const payload = {
+					address:      result.address,
+					salt:         result.salt,
+					deployer:     result.deployer,
+					initCodeHash: result.initCodeHash,
+					pattern:      { prefix: p || null, suffix: s || null },
+					attempts:     result.attempts,
+					durationMs:   result.durationMs,
+					generatedAt:  new Date().toISOString(),
+				};
+				const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+				const url = URL.createObjectURL(blob);
+				const a = document.createElement('a');
+				a.href = url;
+				a.download = `create2-vanity-${result.address.slice(2, 10)}.json`;
+				document.body.appendChild(a);
+				a.click();
+				a.remove();
+				URL.revokeObjectURL(url);
+			});
+		}
+
+		async function copy(text, btnId, restoreLabel) {
+			try {
+				await navigator.clipboard.writeText(text);
+				$(btnId).textContent = 'Copied!';
+				setTimeout(() => { $(btnId).textContent = restoreLabel; }, 1400);
+			} catch {}
+		}
+	</script>
+</body>
+</html>

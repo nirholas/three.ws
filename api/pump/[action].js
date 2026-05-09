@@ -474,21 +474,89 @@ async function handleSellConfirm(req, res) {
 
 // ── launch-prep ────────────────────────────────────────────────────────────
 
-const launchPrepSchema = z.object({
-	agent_id: z.string().uuid(),
-	wallet_address: z.string().min(32).max(44),
-	name: z.string().trim().min(1).max(32),
-	symbol: z.string().trim().min(1).max(10),
-	uri: z.string().url(),
-	network: z.enum(['mainnet', 'devnet']).default('mainnet'),
-	buyback_bps: z.number().int().min(0).max(10_000).default(0),
-	sol_buy_in: z.number().nonnegative().max(50).default(0), // optional creator initial buy, capped 50 SOL
-	// Optional client-ground vanity mint address. When provided, the client
-	// already holds the secret key locally and will co-sign in the wallet —
-	// the server never sees the secret. When omitted, the server falls back
-	// to a fresh Keypair.generate() and returns the secret key for co-sign.
-	mint_address: z.string().min(32).max(44).optional(),
-});
+const launchPrepSchema = z
+	.object({
+		agent_id: z.string().uuid().optional(),
+		avatar_id: z.string().uuid().optional(),
+		wallet_address: z.string().min(32).max(44),
+		name: z.string().trim().min(1).max(32),
+		symbol: z.string().trim().min(1).max(10),
+		uri: z.string().url(),
+		network: z.enum(['mainnet', 'devnet']).default('mainnet'),
+		buyback_bps: z.number().int().min(0).max(10_000).default(0),
+		sol_buy_in: z.number().nonnegative().max(50).default(0), // optional creator initial buy, capped 50 SOL
+		// Optional client-ground vanity mint address. When provided, the client
+		// already holds the secret key locally and will co-sign in the wallet —
+		// the server never sees the secret. When omitted, the server falls back
+		// to a fresh Keypair.generate() and returns the secret key for co-sign.
+		mint_address: z.string().min(32).max(44).optional(),
+	})
+	.refine((v) => v.agent_id || v.avatar_id, {
+		message: 'agent_id or avatar_id required',
+		path: ['agent_id'],
+	});
+
+// Resolve a usable agent_identities.id for the launch. If the caller passed
+// avatar_id (e.g. from /studio, where users pick an avatar and not a separate
+// agent), find the agent_identity already linked to that avatar — or create
+// one inline so the launch can proceed without a detour through the agent
+// registration wizard.
+async function resolveLaunchAgentId({ userId, agentId, avatarId }) {
+	if (agentId) {
+		const [row] = await sql`
+			select id, name from agent_identities
+			where id=${agentId} and user_id=${userId} and deleted_at is null
+			limit 1
+		`;
+		return row || null;
+	}
+	const [linked] = await sql`
+		select id, name from agent_identities
+		where user_id=${userId} and avatar_id=${avatarId} and deleted_at is null
+		order by created_at asc limit 1
+	`;
+	if (linked) return linked;
+
+	const [avatar] = await sql`
+		select id, name, description from avatars
+		where id=${avatarId} and owner_id=${userId} and deleted_at is null
+		limit 1
+	`;
+	if (!avatar) return null;
+
+	const agentName = (avatar.name || 'Agent').slice(0, 100);
+	const agentDesc = avatar.description ? String(avatar.description).slice(0, 1000) : null;
+	try {
+		const [created] = await sql`
+			insert into agent_identities (user_id, name, description, avatar_id)
+			values (${userId}, ${agentName}, ${agentDesc}, ${avatar.id})
+			returning id, name
+		`;
+		return created;
+	} catch (err) {
+		if (err?.code !== '23505') throw err;
+		// Unique-per-user constraint: reuse the user's existing identity and
+		// link it to this avatar if it has none yet.
+		const [unlinked] = await sql`
+			select id, name from agent_identities
+			where user_id=${userId} and avatar_id is null and deleted_at is null
+			order by created_at asc limit 1
+		`;
+		if (unlinked) {
+			await sql`
+				update agent_identities set avatar_id=${avatar.id}, updated_at=now()
+				where id=${unlinked.id}
+			`;
+			return unlinked;
+		}
+		const [any] = await sql`
+			select id, name from agent_identities
+			where user_id=${userId} and deleted_at is null
+			order by created_at asc limit 1
+		`;
+		return any || null;
+	}
+}
 
 async function handleLaunchPrep(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
@@ -512,12 +580,15 @@ async function handleLaunchPrep(req, res) {
 	`;
 	if (!walletRow) return error(res, 403, 'forbidden', 'wallet not linked to your account');
 
-	// Verify the agent belongs to this user.
-	const [agent] = await sql`
-		select id, name from agent_identities
-		where id=${body.agent_id} and user_id=${user.id} and deleted_at is null limit 1
-	`;
+	// Resolve agent_identities.id from either agent_id or avatar_id.
+	// /studio sends avatar_id; the dashboard/vanity flows send agent_id.
+	const agent = await resolveLaunchAgentId({
+		userId: user.id,
+		agentId: body.agent_id,
+		avatarId: body.avatar_id,
+	});
 	if (!agent) return error(res, 404, 'not_found', 'agent not found');
+	const resolvedAgentId = agent.id;
 
 	// Mint pubkey: client-supplied (vanity-ground) or freshly generated.
 	let mintKeypair = null;
@@ -593,7 +664,7 @@ async function handleLaunchPrep(req, res) {
 			${body.uri},
 			${JSON.stringify({
 				kind: 'pump_launch',
-				agent_id: body.agent_id,
+				agent_id: resolvedAgentId,
 				wallet_address: body.wallet_address,
 				mint: mint.toBase58(),
 				name: body.name,

@@ -108,6 +108,8 @@ export const limits = {
 		getLimiter('agents:by-address', { limit: 120, window: '1 m' }).limit(ip),
 	pricingPerIp: (ip) => getLimiter('pricing:ip', { limit: 120, window: '1 m' }).limit(ip),
 	walletLink: (userId) => getLimiter('wallet:link', { limit: 10, window: '10 m' }).limit(userId),
+	// Agent wallet read endpoints (GET balance, activity). Per authenticated user.
+	walletRead: (userId) => getLimiter('wallet:read', { limit: 60, window: '1 m' }).limit(userId),
 	agentSuggest: (ip) => getLimiter('agents:suggest', { limit: 120, window: '1 m' }).limit(ip),
 	read: (ip) => getLimiter('permissions:read', { limit: 300, window: '1 m' }).limit(ip),
 	permissionsGrant: (userId) =>

@@ -164,12 +164,16 @@ if (preModel) state.preselectedModel = preModel;
 			toast('Please select your own avatar before launching a token.');
 			return;
 		}
-		const avatar = state.avatars.find(a => a.id === state.avatarId);
-		// The form data from launch-panel is in detail.formData.
-		// openPumpLaunchWizard uses identity for defaults, but here we can pass
-		// the fresh data from the form.
-		const identity = { name: detail.formData?.name || avatar?.name, ...avatar };
-		openPumpLaunchWizard(identity, state.avatarId);
+		const avatar = state.avatars.find((a) => a.id === state.avatarId);
+		if (!avatar) {
+			toast('Avatar not loaded yet — try again in a moment.');
+			return;
+		}
+		// state.avatarId is an avatars.id, not an agent_identities.id.
+		// Pass the linked agent_id when known (from /api/avatars lateral join);
+		// otherwise pass avatar_id and the backend will resolve-or-create.
+		const identity = { name: detail.formData?.name || avatar.name, ...avatar };
+		openPumpLaunchWizard(identity, avatar.agent_id || null, avatar.id);
 	});
 
 	await loadAvatars();
