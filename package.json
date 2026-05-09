@@ -40,7 +40,7 @@
 		]
 	},
 	"scripts": {
-		"postinstall": "npm run build --prefix agent-payments-sdk",
+		"postinstall": "npm run build --prefix agent-payments-sdk && node scripts/fix-pump-sdk-esm.mjs",
 		"dev": "vite --port 3000",
 		"dev:lib": "TARGET=lib vite",
 		"build": "vite build",
