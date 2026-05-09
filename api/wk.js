@@ -106,11 +106,12 @@ const RAW_AMOUNT_TO_USDC = (raw) => {
 function handleX402Discovery(req, res) {
 	const origin = env.APP_ORIGIN;
 	const mcpUrl = `${origin}/api/mcp`;
+	const modelCheckUrl = `${origin}/api/x402/model-check`;
 	const price = RAW_AMOUNT_TO_USDC(env.X402_MAX_AMOUNT_REQUIRED);
 
-	const accepts = [];
+	const mcpAccepts = [];
 	if (env.X402_PAY_TO_BASE) {
-		accepts.push({
+		mcpAccepts.push({
 			scheme: 'exact',
 			network: NETWORK_BASE_MAINNET,
 			network_label: 'base-mainnet',
@@ -124,7 +125,7 @@ function handleX402Discovery(req, res) {
 		});
 	}
 	if (env.X402_PAY_TO_SOLANA) {
-		accepts.push({
+		mcpAccepts.push({
 			scheme: 'exact',
 			network: NETWORK_SOLANA_MAINNET,
 			network_label: 'solana-mainnet',
@@ -138,24 +139,78 @@ function handleX402Discovery(req, res) {
 		});
 	}
 
+	// /api/x402/model-check is the CDP-Bazaar-cataloged endpoint. CDP supports
+	// Base mainnet + Arbitrum One; advertise both here so agentic.market shows
+	// the same network options buyers will see in the live 402 challenge.
+	const ARB_USDC = env.X402_ASSET_ADDRESS_ARBITRUM;
+	const modelCheckAccepts = [
+		{
+			scheme: 'exact',
+			network: NETWORK_BASE_MAINNET,
+			network_label: 'base-mainnet',
+			amount: env.X402_MAX_AMOUNT_REQUIRED,
+			price,
+			payTo: env.X402_PAY_TO_BASE,
+			asset: env.X402_ASSET_ADDRESS_BASE,
+			asset_symbol: 'USDC',
+			maxTimeoutSeconds: 60,
+			extra: { name: 'USDC', version: '2', decimals: 6 },
+		},
+		{
+			scheme: 'exact',
+			network: 'eip155:42161',
+			network_label: 'arbitrum-one',
+			amount: env.X402_MAX_AMOUNT_REQUIRED,
+			price,
+			payTo: env.X402_PAY_TO_BASE,
+			asset: ARB_USDC,
+			asset_symbol: 'USDC',
+			maxTimeoutSeconds: 60,
+			extra: { name: 'USDC', version: '2', decimals: 6 },
+		},
+	];
+
 	return json(res, 200, {
 		$schema: 'https://x402.org/schemas/discovery.json',
 		service: {
 			name: 'three.ws',
 			legal_name: 'three.ws',
 			tagline: 'AI-powered 3D model viewer and validation agent.',
-			description: 'three.ws is an agent-first 3D model platform. Drag-and-drop glTF/GLB preview, model validation/inspection/optimization, plus Solana agent data — all reachable as MCP tool calls behind a single x402 v1 endpoint. USDC on Solana mainnet and Base mainnet.',
+			description: 'three.ws is an agent-first 3D model platform. Drag-and-drop glTF/GLB preview, model validation/inspection/optimization, plus Solana agent data — reachable both as MCP tool calls and as paid REST endpoints (x402 v2). USDC on Base, Arbitrum, and Solana mainnet.',
 			operator: 'three.ws',
 			mission: 'Make 3D model tooling and Solana agent data machine-native so any AI agent can transact with the HTTP 402 protocol.',
 			website: origin,
 			docs: `${origin}/docs/mcp`,
 			repository: 'https://github.com/nirholas/three.ws',
 			contact: `${origin}/`,
-			tags: ['x402', 'x402-v1', 'mcp', 'agent-first', '3d', 'gltf', 'glb', 'three-js', 'solana', 'base', 'usdc'],
+			tags: ['x402', 'x402-v2', 'mcp', 'agent-first', '3d', 'gltf', 'glb', 'three-js', 'solana', 'base', 'arbitrum', 'usdc'],
 			environment: 'apex',
 			origin,
 		},
 		resources: [
+			{
+				path: '/api/x402/model-check',
+				url: modelCheckUrl,
+				method: 'GET',
+				description:
+					'Fetches a glTF/GLB model from a URL and returns structural stats (vertex/triangle counts, materials, textures, animations, extensions) plus a prioritized list of optimization recommendations. Single GET, ?url=…. CDP-Bazaar-cataloged.',
+				mimeType: 'application/json',
+				accepts: modelCheckAccepts,
+				extensions: {
+					bazaar: {
+						method: 'GET',
+						discoverable: true,
+						input: { url: 'https://three.ws/avatar/character-studio/sample.glb' },
+						inputSchema: {
+							type: 'object',
+							required: ['url'],
+							properties: {
+								url: { type: 'string', format: 'uri', description: 'Public HTTPS URL of a glTF/GLB model.' },
+							},
+						},
+					},
+				},
+			},
 			{
 				path: '/api/mcp',
 				url: mcpUrl,
@@ -163,7 +218,7 @@ function handleX402Discovery(req, res) {
 				description:
 					'MCP 2025-06-18 Streamable HTTP transport — 3D avatar viewer, glTF model validation/inspection/optimization, and Solana agent data exposed as MCP tools. JSON-RPC 2.0 batch-aware. Currency: USDC.',
 				mimeType: 'application/json',
-				accepts,
+				accepts: mcpAccepts,
 				extensions: { bazaar: bazaarExtension() },
 				links: {
 					openapi: `${origin}/openapi.json`,

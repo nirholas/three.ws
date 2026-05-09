@@ -388,7 +388,6 @@ function decorate(row, isOwner = true) {
 		token,
 		payments,
 		is_registered: Boolean(row.erc8004_agent_id) || !!onchain,
-		onchain: Boolean(row.erc8004_agent_id) || !!onchain,
 		created_at: row.created_at,
 	};
 	// Voice clone fields are public (voice_id is needed by the runtime to select TTS).

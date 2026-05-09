@@ -67,6 +67,7 @@ const appConfig = {
 			},
 			input: {
 				app: resolve(__dirname, 'app.html'),
+				'app-demo': resolve(__dirname, 'app-demo.html'),
 				home: resolve(__dirname, 'home.html'),
 				tutorials: resolve(__dirname, 'tutorials.html'),
 				playground: resolve(__dirname, 'playground.html'),
@@ -102,6 +103,7 @@ const appConfig = {
 				const root = resolve(__dirname);
 				const fileMap = {
 					'/app': resolve(root, 'app.html'),
+					'/app-demo': resolve(root, 'app-demo.html'),
 					'/login': resolve(root, 'public/login.html'),
 					'/deploy': resolve(root, 'app.html'),
 					'/agents': resolve(root, 'public/agents/index.html'),

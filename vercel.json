@@ -1035,6 +1035,10 @@
 			"dest": "/app.html"
 		},
 		{
+			"src": "/app-demo",
+			"dest": "/app-demo.html"
+		},
+		{
 			"src": "/chat",
 			"dest": "/chat/index.html"
 		},

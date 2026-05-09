@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "skills": {
+    "authenticate-wallet": {
+      "source": "coinbase/agentic-wallet-skills",
+      "sourceType": "github",
+      "skillPath": "skills/authenticate-wallet/SKILL.md",
+      "computedHash": "ec56468a4d92a86450299cdf64ad4b1ad4b40fd988f3038244a95a35bd4e22de"
+    },
+    "fund": {
+      "source": "coinbase/agentic-wallet-skills",
+      "sourceType": "github",
+      "skillPath": "skills/fund/SKILL.md",
+      "computedHash": "768de63f7dea195c12afbeed7190c08c67d53487732628f0ca1d761a0eab04e1"
+    },
+    "monetize-service": {
+      "source": "coinbase/agentic-wallet-skills",
+      "sourceType": "github",
+      "skillPath": "skills/monetize-service/SKILL.md",
+      "computedHash": "66fbe03f3a451d2926d8a784f550c4e8370f981e3a3053e9fa8fbb0c59f8d720"
+    },
+    "pay-for-service": {
+      "source": "coinbase/agentic-wallet-skills",
+      "sourceType": "github",
+      "skillPath": "skills/pay-for-service/SKILL.md",
+      "computedHash": "bf605a91e70ea9f90dbcb777ee5a1df02e245fb14fc854abb51b8455906cbb9a"
+    },
+    "query-onchain-data": {
+      "source": "coinbase/agentic-wallet-skills",
+      "sourceType": "github",
+      "skillPath": "skills/query-onchain-data/SKILL.md",
+      "computedHash": "af873a6ecd7c2ae5a147907b026496d088b01f53577518c4e2ad4335dbb0c5d3"
+    },
+    "search-for-service": {
+      "source": "coinbase/agentic-wallet-skills",
+      "sourceType": "github",
+      "skillPath": "skills/search-for-service/SKILL.md",
+      "computedHash": "ace3e40ae1e1c25e1312102995d5917dbabe2ff9edb547a41803eea5d80b3f17"
+    },
+    "send-usdc": {
+      "source": "coinbase/agentic-wallet-skills",
+      "sourceType": "github",
+      "skillPath": "skills/send-usdc/SKILL.md",
+      "computedHash": "c1e7e20b0f1eadcadbead12656c5591833c390fc9aca0c9efb10aa6749ba987d"
+    },
+    "trade": {
+      "source": "coinbase/agentic-wallet-skills",
+      "sourceType": "github",
+      "skillPath": "skills/trade/SKILL.md",
+      "computedHash": "a10a9f3af04483803751aec9b749fef48ad95dee36d27da10279c99952ae1b8e"
+    },
+    "x402": {
+      "source": "coinbase/agentic-wallet-skills",
+      "sourceType": "github",
+      "skillPath": "skills/x402/SKILL.md",
+      "computedHash": "6626677cfacd5af377e22281e0ab98c1011b432f72cd77d825b077e5e6b87e3c"
+    }
+  }
+}

@@ -116,7 +116,12 @@ export const env = {
 	// Bootstrap: set to your own wallet address. Can also be promoted via DB is_admin flag.
 	get ADMIN_ADDRESSES() {
 		const raw = opt('ADMIN_ADDRESSES', '');
-		return new Set(raw.split(',').map((a) => a.trim().toLowerCase()).filter(Boolean));
+		return new Set(
+			raw
+				.split(',')
+				.map((a) => a.trim().toLowerCase())
+				.filter(Boolean),
+		);
 	},
 
 	// Feature flag. Set to "true" to enable POST /api/permissions/redeem.
@@ -191,6 +196,39 @@ export const env = {
 	// returns at /supported for `network:"solana"`.
 	get X402_FEE_PAYER_SOLANA() {
 		return opt('X402_FEE_PAYER_SOLANA', '2wKupLR9q6wXYppw8Gr2NvWxKBUqm4PPJKkQfoxHDBg4');
+	},
+
+	// Coinbase Developer Platform (CDP) facilitator. Required to be indexed by
+	// agentic.market / the CDP Bazaar — only endpoints whose first verify+settle
+	// is processed by CDP get cataloged. PayAI is not Bazaar-cataloged.
+	// Auth uses ES256 JWT signed with the CDP API key (per Coinbase Cloud auth).
+	get X402_CDP_FACILITATOR_URL() {
+		return trimSlash(
+			opt(
+				'X402_CDP_FACILITATOR_URL',
+				'https://api.cdp.coinbase.com/platform/v2/x402/facilitator',
+			),
+		);
+	},
+	get CDP_API_KEY_ID() {
+		return opt('CDP_API_KEY_ID');
+	},
+	// PEM-encoded ECDSA P-256 private key (BEGIN EC PRIVATE KEY ... END EC PRIVATE KEY).
+	// In Vercel, paste the full multi-line PEM as the value (newlines preserved).
+	get CDP_API_KEY_SECRET() {
+		return opt('CDP_API_KEY_SECRET');
+	},
+
+	// EVM mainnet chains accepted by /api/x402/* paid endpoints — defaults to
+	// Base + Arbitrum because those are the two CDP-Bazaar-supported networks
+	// the seller wizard currently exposes. Comma-separated CAIP-2 IDs.
+	get X402_EVM_NETWORKS() {
+		return opt('X402_EVM_NETWORKS', 'eip155:8453,eip155:42161')
+			.split(',').map((s) => s.trim()).filter(Boolean);
+	},
+	// Native (non-bridged) USDC on Arbitrum One mainnet.
+	get X402_ASSET_ADDRESS_ARBITRUM() {
+		return opt('X402_ASSET_ADDRESS_ARBITRUM', '0xaf88d065e77c8cC2239327C5EDb3A432268e5831');
 	},
 
 	// zauthx402 SDK — optional telemetry for x402 endpoints. When unset,
