@@ -47,3 +47,10 @@ experiments/*/build
 # Reference repo clones (read-only)
 forks/*/
 .env.production
+
+# Solana keypair files — NEVER commit
+*-vanity.json
+*-mint.json
+test-mint.json
+www-vanity.json
+test-coin-metadata.json
