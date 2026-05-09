@@ -93,6 +93,8 @@ const appConfig = {
 				'my-agents': resolve(__dirname, 'public/my-agents/index.html'),
 				discover: resolve(__dirname, 'public/discover/index.html'),
 				// END:DISCOVER_ROUTE
+				'vanity-wallet': resolve(__dirname, 'public/vanity-wallet.html'),
+				'eth-vanity': resolve(__dirname, 'public/eth-vanity.html'),
 			},
 		},
 	},

@@ -54,3 +54,12 @@ forks/*/
 test-mint.json
 www-vanity.json
 test-coin-metadata.json
+scripts/x402-genwallets.mjs
+
+# Wallet / private-key material — NEVER commit
+*.privkey.txt
+*.b58.txt
+wallets/
+.wallets/
+x402-test-wallets/
+3dagent-log-export-2026-05-09T23-08-55.csv

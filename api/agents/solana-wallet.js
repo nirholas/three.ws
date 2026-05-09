@@ -51,7 +51,7 @@ async function handleActivity(req, res, id) {
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
 
-	const rl = await limits.authIp(clientIp(req));
+	const rl = await limits.walletRead(auth.userId);
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
 	const [row] = await sql`SELECT id, user_id, meta FROM agent_identities WHERE id = ${id} AND deleted_at IS NULL`;
@@ -152,7 +152,9 @@ async function handleWallet(req, res, id) {
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
 
-	const rl = await limits.authIp(clientIp(req));
+	const rl = req.method === 'GET'
+		? await limits.walletRead(auth.userId)
+		: await limits.authIp(clientIp(req));
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
 	const [row] = await sql`SELECT id, user_id, meta FROM agent_identities WHERE id = ${id} AND deleted_at IS NULL`;
