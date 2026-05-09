@@ -371,7 +371,7 @@ function openGovernance({ mint, currentBps }) {
 }
 
 // ── Launch wizard ──────────────────────────────────────────────────────────
-function openLaunch({ identity, agentId }) {
+function openLaunch({ identity, agentId, avatarId }) {
 	const { inner, close } = openModal();
 	let step = 1;
 
@@ -492,7 +492,8 @@ function openLaunch({ identity, agentId }) {
 						headers: { 'content-type': 'application/json' },
 						credentials: 'include',
 						body: JSON.stringify({
-							agent_id: agentId,
+							...(agentId ? { agent_id: agentId } : {}),
+							...(avatarId ? { avatar_id: avatarId } : {}),
 							wallet_address: payer,
 							name: f.name,
 							symbol: f.symbol,
@@ -556,6 +557,6 @@ export function mountPumpModals({ identity, agentId } = {}) {
 	);
 }
 
-export function openPumpLaunchWizard(identity, agentId) {
-	openLaunch({ identity, agentId });
+export function openPumpLaunchWizard(identity, agentId, avatarId) {
+	openLaunch({ identity, agentId, avatarId });
 }
