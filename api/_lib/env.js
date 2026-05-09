@@ -198,33 +198,14 @@ export const env = {
 		return opt('X402_FEE_PAYER_SOLANA', '2wKupLR9q6wXYppw8Gr2NvWxKBUqm4PPJKkQfoxHDBg4');
 	},
 
-	// Coinbase Developer Platform (CDP) facilitator. Required to be indexed by
-	// agentic.market / the CDP Bazaar — only endpoints whose first verify+settle
-	// is processed by CDP get cataloged. PayAI is not Bazaar-cataloged.
-	// Auth uses ES256 JWT signed with the CDP API key (per Coinbase Cloud auth).
-	get X402_CDP_FACILITATOR_URL() {
-		return trimSlash(
-			opt(
-				'X402_CDP_FACILITATOR_URL',
-				'https://api.cdp.coinbase.com/platform/v2/x402/facilitator',
-			),
-		);
-	},
-	get CDP_API_KEY_ID() {
-		return opt('CDP_API_KEY_ID');
-	},
-	// PEM-encoded ECDSA P-256 private key (BEGIN EC PRIVATE KEY ... END EC PRIVATE KEY).
-	// In Vercel, paste the full multi-line PEM as the value (newlines preserved).
-	get CDP_API_KEY_SECRET() {
-		return opt('CDP_API_KEY_SECRET');
-	},
-
 	// EVM mainnet chains accepted by /api/x402/* paid endpoints — defaults to
 	// Base + Arbitrum because those are the two CDP-Bazaar-supported networks
 	// the seller wizard currently exposes. Comma-separated CAIP-2 IDs.
 	get X402_EVM_NETWORKS() {
 		return opt('X402_EVM_NETWORKS', 'eip155:8453,eip155:42161')
-			.split(',').map((s) => s.trim()).filter(Boolean);
+			.split(',')
+			.map((s) => s.trim())
+			.filter(Boolean);
 	},
 	// Native (non-bridged) USDC on Arbitrum One mainnet.
 	get X402_ASSET_ADDRESS_ARBITRUM() {
