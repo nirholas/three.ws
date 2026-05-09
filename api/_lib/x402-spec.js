@@ -31,7 +31,6 @@
 //   5. Server POSTs facilitator /settle (same body) → { success, transaction, network, payer }
 //      Server attaches a base64 settlement object as `X-PAYMENT-RESPONSE` on the success reply.
 
-import { createPrivateKey, createSign, randomBytes, sign } from 'crypto';
 import { env } from './env.js';
 
 export const X402_VERSION = 2;
@@ -94,152 +93,10 @@ function facilitatorFor(network) {
 		network === NETWORK_SOLANA_DEVNET ||
 		network === 'solana'
 	)
-		return {
-			url: env.X402_FACILITATOR_URL_SOLANA,
-			token: env.X402_FACILITATOR_TOKEN_SOLANA,
-			kind: 'bearer',
-		};
-	if (
-		network === NETWORK_BASE_MAINNET ||
-		network === NETWORK_BASE_SEPOLIA ||
-		network === 'base'
-	) {
-		// Prefer CDP when keys are configured — required for agentic.market /
-		// CDP Bazaar indexing. PayAI is a fine fallback for anyone running outside
-		// the Bazaar ecosystem.
-		if (env.CDP_API_KEY_ID && env.CDP_API_KEY_SECRET) {
-			return { url: env.X402_CDP_FACILITATOR_URL, kind: 'cdp' };
-		}
-		return {
-			url: env.X402_FACILITATOR_URL_BASE,
-			token: env.X402_FACILITATOR_TOKEN_BASE,
-			kind: 'bearer',
-		};
-	}
+		return { url: env.X402_FACILITATOR_URL_SOLANA, token: env.X402_FACILITATOR_TOKEN_SOLANA };
+	if (network === NETWORK_BASE_MAINNET || network === NETWORK_BASE_SEPOLIA || network === 'base')
+		return { url: env.X402_FACILITATOR_URL_BASE, token: env.X402_FACILITATOR_TOKEN_BASE };
 	throw new X402Error('unsupported_network', `unsupported network: ${network}`, 400);
-}
-
-// Coinbase Cloud / CDP API auth: per-request JWT signed with the account's
-// API secret. CDP issues two key formats today:
-//   * Ed25519 — secret is base64-encoded 32-byte seed or 64-byte (seed||pub).
-//     Newer CDP keys default to this. Signed with EdDSA.
-//   * ECDSA P-256 — secret is a PEM-encoded EC private key. Signed with ES256.
-// The `uri` claim binds the JWT to the exact request, so we mint per-request.
-//
-// Spec: https://docs.cdp.coinbase.com/api-reference/v2/authentication
-function loadCdpKey() {
-	const secret = env.CDP_API_KEY_SECRET;
-	if (!secret) throw new X402Error('cdp_not_configured', 'CDP_API_KEY_SECRET not set', 500);
-	if (secret.includes('-----BEGIN')) {
-		let key;
-		try {
-			key = createPrivateKey({ key: secret, format: 'pem' });
-		} catch (err) {
-			throw new X402Error(
-				'cdp_bad_key',
-				`CDP_API_KEY_SECRET PEM parse failed: ${err.message}`,
-				500,
-			);
-		}
-		if (key.asymmetricKeyType !== 'ec') {
-			throw new X402Error('cdp_bad_key', 'CDP PEM secret must be an ECDSA P-256 key', 500);
-		}
-		return { alg: 'ES256', key };
-	}
-	// Base64-encoded raw Ed25519: 32-byte seed or 64-byte seed||pub.
-	let raw;
-	try {
-		raw = Buffer.from(secret, 'base64');
-	} catch (err) {
-		throw new X402Error(
-			'cdp_bad_key',
-			`CDP_API_KEY_SECRET base64 decode failed: ${err.message}`,
-			500,
-		);
-	}
-	const seed = raw.length === 64 ? raw.subarray(0, 32) : raw.length === 32 ? raw : null;
-	if (!seed) {
-		throw new X402Error(
-			'cdp_bad_key',
-			`CDP_API_KEY_SECRET: expected PEM EC key or 32/64-byte base64 Ed25519 (got ${raw.length} bytes)`,
-			500,
-		);
-	}
-	// Wrap raw seed in PKCS#8 DER so node:crypto accepts it.
-	const pkcs8 = Buffer.concat([Buffer.from('302e020100300506032b657004220420', 'hex'), seed]);
-	let key;
-	try {
-		key = createPrivateKey({ key: pkcs8, format: 'der', type: 'pkcs8' });
-	} catch (err) {
-		throw new X402Error('cdp_bad_key', `CDP Ed25519 key import failed: ${err.message}`, 500);
-	}
-	return { alg: 'EdDSA', key };
-}
-
-let cdpKeyCache = null;
-function cdpKey() {
-	if (!cdpKeyCache) cdpKeyCache = loadCdpKey();
-	return cdpKeyCache;
-}
-
-function b64url(input) {
-	return Buffer.from(input)
-		.toString('base64')
-		.replace(/=+$/, '')
-		.replace(/\+/g, '-')
-		.replace(/\//g, '_');
-}
-
-function cdpAuthHeader(method, urlString) {
-	if (!env.CDP_API_KEY_ID) {
-		throw new X402Error('cdp_not_configured', 'CDP_API_KEY_ID not set', 500);
-	}
-	const { alg, key } = cdpKey();
-	const u = new URL(urlString);
-	const uri = `${method.toUpperCase()} ${u.host}${u.pathname}`;
-	const now = Math.floor(Date.now() / 1000);
-	const header = {
-		alg,
-		kid: env.CDP_API_KEY_ID,
-		typ: 'JWT',
-		nonce: randomBytes(16).toString('hex'),
-	};
-	const payload = { iss: 'cdp', nbf: now, exp: now + 120, sub: env.CDP_API_KEY_ID, uri };
-	const signingInput = `${b64url(JSON.stringify(header))}.${b64url(JSON.stringify(payload))}`;
-
-	let sigBuf;
-	if (alg === 'ES256') {
-		// Node returns DER-encoded ECDSA; JOSE wants raw r||s.
-		const der = createSign('SHA256').update(signingInput).sign({ key, dsaEncoding: 'der' });
-		sigBuf = derToJoseEcdsa(der, 32);
-	} else {
-		// EdDSA: crypto.sign(null, msg, key) returns the raw 64-byte signature.
-		sigBuf = sign(null, Buffer.from(signingInput, 'utf8'), key);
-	}
-	return `Bearer ${signingInput}.${b64url(sigBuf)}`;
-}
-
-// Convert DER-encoded ECDSA signature (SEQUENCE { INTEGER r, INTEGER s })
-// into the JOSE r||s form. Each integer is padded/truncated to `keyBytes`.
-function derToJoseEcdsa(der, keyBytes) {
-	let offset = 2; // skip SEQUENCE tag + length (length always 1 byte for P-256: r,s ≤ 33 each)
-	if (der[1] & 0x80) offset = 2 + (der[1] & 0x7f); // long-form length, rare for P-256 but handle it
-	if (der[offset] !== 0x02)
-		throw new X402Error('cdp_bad_signature', 'malformed ECDSA r tag', 500);
-	const rLen = der[offset + 1];
-	let r = der.slice(offset + 2, offset + 2 + rLen);
-	offset = offset + 2 + rLen;
-	if (der[offset] !== 0x02)
-		throw new X402Error('cdp_bad_signature', 'malformed ECDSA s tag', 500);
-	const sLen = der[offset + 1];
-	let s = der.slice(offset + 2, offset + 2 + sLen);
-	// Strip leading zero padding inserted by DER to keep INTEGERs positive.
-	while (r.length > keyBytes && r[0] === 0x00) r = r.slice(1);
-	while (s.length > keyBytes && s[0] === 0x00) s = s.slice(1);
-	const out = Buffer.alloc(keyBytes * 2);
-	r.copy(out, keyBytes - r.length);
-	s.copy(out, keyBytes * 2 - s.length);
-	return out;
 }
 
 function decodePaymentHeader(header) {
@@ -275,15 +132,11 @@ function hostOf(url) {
 }
 
 async function callFacilitator(network, path, body) {
-	const { url: base, token, kind } = facilitatorFor(network);
+	const { url: base, token } = facilitatorFor(network);
 	const url = `${base}${path}`;
 	const host = hostOf(base);
 	const headers = { 'content-type': 'application/json', accept: 'application/json' };
-	if (kind === 'cdp') {
-		headers.authorization = cdpAuthHeader('POST', url);
-	} else if (token) {
-		headers.authorization = `Bearer ${token}`;
-	}
+	if (token) headers.authorization = `Bearer ${token}`;
 	let res;
 	try {
 		res = await fetch(url, {
