@@ -3,9 +3,13 @@ import { cors, json, method, wrap, error } from '../../../_lib/http.js';
 import { limits, clientIp } from '../../../_lib/rate-limit.js';
 
 // GET /api/agents/:id/pricing — public for all agents (x402 manifest reads this)
-export default wrap(async (req, res, id) => {
+export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET'])) return;
+
+	const parts = new URL(req.url, 'http://x').pathname.split('/').filter(Boolean);
+	const id = parts[2];
+	if (!id) return error(res, 400, 'bad_request', 'missing agent id');
 
 	const rl = await limits.pricingPerIp(clientIp(req));
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');

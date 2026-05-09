@@ -192,7 +192,7 @@ export async function handleGetOne(req, res, id) {
 		if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
 		const [row] = await sql`
-			SELECT i.*, u.name as author_name, u.avatar as author_avatar
+			SELECT i.*, u.display_name as author_name, u.avatar_url as author_avatar
 			FROM agent_identities i
 			LEFT JOIN users u ON i.user_id = u.id
 			WHERE i.id = ${id} AND i.deleted_at IS NULL

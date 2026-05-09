@@ -373,6 +373,14 @@
 			"dest": "/api/agents/[id]"
 		},
 		{
+			"src": "/api/agents/([^/]+)/pricing",
+			"dest": "/api/agents/[id]"
+		},
+		{
+			"src": "/api/agents/([^/]+)/pricing/([^/]+)",
+			"dest": "/api/agents/[id]"
+		},
+		{
 			"src": "/api/agents/([^/]+)/reputation",
 			"dest": "/api/agents/[id]"
 		},
@@ -483,6 +491,94 @@
 		{
 			"src": "/api/pump/helius-webhook",
 			"dest": "/api/pump/helius-webhook"
+		},
+		{
+			"src": "/api/pump/balances",
+			"dest": "/api/pump/[action]?action=balances"
+		},
+		{
+			"src": "/api/pump/buy-prep",
+			"dest": "/api/pump/[action]?action=buy-prep"
+		},
+		{
+			"src": "/api/pump/buy-confirm",
+			"dest": "/api/pump/[action]?action=buy-confirm"
+		},
+		{
+			"src": "/api/pump/sell-prep",
+			"dest": "/api/pump/[action]?action=sell-prep"
+		},
+		{
+			"src": "/api/pump/sell-confirm",
+			"dest": "/api/pump/[action]?action=sell-confirm"
+		},
+		{
+			"src": "/api/pump/launch-prep",
+			"dest": "/api/pump/[action]?action=launch-prep"
+		},
+		{
+			"src": "/api/pump/launch-confirm",
+			"dest": "/api/pump/[action]?action=launch-confirm"
+		},
+		{
+			"src": "/api/pump/accept-payment-prep",
+			"dest": "/api/pump/[action]?action=accept-payment-prep"
+		},
+		{
+			"src": "/api/pump/accept-payment-confirm",
+			"dest": "/api/pump/[action]?action=accept-payment-confirm"
+		},
+		{
+			"src": "/api/pump/payments-list",
+			"dest": "/api/pump/[action]?action=payments-list"
+		},
+		{
+			"src": "/api/pump/portfolio",
+			"dest": "/api/pump/[action]?action=portfolio"
+		},
+		{
+			"src": "/api/pump/by-agent",
+			"dest": "/api/pump/[action]?action=by-agent"
+		},
+		{
+			"src": "/api/pump/quote",
+			"dest": "/api/pump/[action]?action=quote"
+		},
+		{
+			"src": "/api/pump/governance-prep",
+			"dest": "/api/pump/[action]?action=governance-prep"
+		},
+		{
+			"src": "/api/pump/withdraw-prep",
+			"dest": "/api/pump/[action]?action=withdraw-prep"
+		},
+		{
+			"src": "/api/pump/withdraw-confirm",
+			"dest": "/api/pump/[action]?action=withdraw-confirm"
+		},
+		{
+			"src": "/api/pump/strategy-backtest",
+			"dest": "/api/pump/[action]?action=strategy-backtest"
+		},
+		{
+			"src": "/api/pump/strategy-close-all",
+			"dest": "/api/pump/[action]?action=strategy-close-all"
+		},
+		{
+			"src": "/api/pump/strategy-run",
+			"dest": "/api/pump/[action]?action=strategy-run"
+		},
+		{
+			"src": "/api/pump/strategy-validate",
+			"dest": "/api/pump/[action]?action=strategy-validate"
+		},
+		{
+			"src": "/api/pump/live-stream",
+			"dest": "/api/pump/[action]?action=live-stream"
+		},
+		{
+			"src": "/api/pump/recent-graduations",
+			"dest": "/api/pump/[action]?action=recent-graduations"
 		},
 		{
 			"src": "/api/avatars/presign",
