@@ -403,7 +403,7 @@ function openLaunch({ identity, agentId, avatarId }) {
 				<label>Symbol</label>
 				<input type="text" id="pmodal-launch-symbol" maxlength="10" value="${symbolDefault}" />
 				<label>Metadata URI <span style="color:rgba(255,255,255,0.4)">(IPFS or HTTPS to a JSON manifest with avatar + bio)</span></label>
-				<input type="text" id="pmodal-launch-uri" placeholder="https://three.ws/agent/${agentId}/pump-metadata.json" />
+				<input type="text" id="pmodal-launch-uri" placeholder="https://three.ws/agent/${agentId || avatarId || 'me'}/pump-metadata.json" />
 			`;
 		} else if (step === 2) {
 			body.innerHTML = `
