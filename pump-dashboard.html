@@ -1079,6 +1079,17 @@ function navigateTo(page) {
     a.classList.toggle('active', a.dataset.page === page);
   });
   if (page === 'animations') loadAgent();
+
+  const titles = {
+    dashboard: 'Dashboard', feed: 'Live Feed', watches: 'Watch List',
+    claims: 'Fee Claims', alerts: 'Alerts', scanner: 'Token Scanner',
+    quoting: 'Quote Engine', vanity: 'Vanity Generator',
+    config: 'Configuration', api: 'API Keys', animations: 'Animations',
+  };
+  document.getElementById('page-title').textContent = titles[page] || page;
+
+  if (page === 'watches') refreshWatches();
+  if (page === 'claims') refreshClaims();
 }
 
 // ── Agent Control ─────────────────────────────────────────────────────
@@ -1146,19 +1157,6 @@ function playAnimation() {
         type: 'agent:action',
         action: action
     }, '*');
-}
-
-  const titles = {
-    dashboard: 'Dashboard', feed: 'Live Feed', watches: 'Watch List',
-    claims: 'Fee Claims', alerts: 'Alerts', scanner: 'Token Scanner',
-    quoting: 'Quote Engine', vanity: 'Vanity Generator',
-    config: 'Configuration', api: 'API Keys', animations: 'Animations',
-  };
-  document.getElementById('page-title').textContent = titles[page] || page;
-
-  // Load data for the page
-  if (page === 'watches') refreshWatches();
-  if (page === 'claims') refreshClaims();
 }
 
 // ── API Connection ────────────────────────────────────────────────────

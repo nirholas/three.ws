@@ -50,6 +50,30 @@ function decodeBase64Tx(b64) {
 	}
 }
 
+// Poll signature status over HTTP. Avoids Connection.confirmTransaction, which
+// opens a WebSocket subscription — public mainnet-beta refuses WS, so the
+// confirm step hangs until the wallet times out.
+async function waitForSolanaConfirmation(conn, signature, timeoutMs) {
+	const deadline = Date.now() + timeoutMs;
+	while (Date.now() < deadline) {
+		const { value } = await conn.getSignatureStatuses([signature]);
+		const status = value?.[0];
+		if (status) {
+			if (status.err) {
+				throw new Error(`Tx failed: ${JSON.stringify(status.err)}`);
+			}
+			if (
+				status.confirmationStatus === 'confirmed' ||
+				status.confirmationStatus === 'finalized'
+			) {
+				return;
+			}
+		}
+		await new Promise((r) => setTimeout(r, 1500));
+	}
+	throw new Error('Timed out waiting for Solana transaction confirmation.');
+}
+
 /**
  * Run the Solana deploy flow end-to-end.
  *
@@ -148,7 +172,7 @@ export async function runSolanaDeploy({ agent, network, vanity }) {
 
 	// Wait for confirmation before calling the server.
 	const conn3 = new Connection(endpoint, 'confirmed');
-	await conn3.confirmTransaction(signature, 'confirmed');
+	await waitForSolanaConfirmation(conn3, signature, 60_000);
 
 	const confirmResp = await fetch('/api/agents/solana-register-confirm', {
 		method: 'POST',
