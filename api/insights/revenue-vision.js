@@ -169,6 +169,9 @@ export default wrap(async (req, res) => {
 			bazaar: bazaarRevenueVision(),
 		});
 
+	// Always return 402 for unauthenticated requests BEFORE any query validation —
+	// agentic.market's Bazaar crawler explicitly de-indexes endpoints that 400 on
+	// its discovery probes, so payment-gating must come first.
 	const paymentHeader = req.headers['x-payment'] || req.headers['X-PAYMENT'];
 	if (!paymentHeader) return send402Here();
 
