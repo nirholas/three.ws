@@ -36,6 +36,10 @@ public/chat/index.html.gz
 
 # Animation build cache
 public/animations/clips/.input-hashes.json
+
+# Large binaries — use CDN/LFS instead
+*.mp4
+*.csv
 Handshake
 
 # Sandbox clones — see experiments/README.md
