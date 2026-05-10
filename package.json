@@ -23,8 +23,7 @@
 		"3d-agent"
 	],
 	"workspaces": [
-		"agent-payments-sdk",
-		"character-studio"
+		"agent-payments-sdk"
 	],
 	"main": "src/app.js",
 	"browserslist": [
@@ -54,7 +53,7 @@
 		"build:rider": "mkdir -p dist/rider && cp rider/index.html dist/rider/ && cp -rf rider/assets dist/rider/ && cp -rf rider/build dist/rider/ && cp -rf rider/vendor dist/rider/",
 		"build:rider:full": "cd rider && npm ci --prefer-offline --no-audit --no-fund --ignore-engines && npm run build && cd .. && npm run build:rider",
 		"build:fast": "npm run build",
-		"build:vercel": "NODE_OPTIONS=--max-old-space-size=4096 npm run build && (npm run build:lib & npm run build:rider & npm run build:chat & wait) && npm run publish:lib",
+		"build:vercel": "NODE_OPTIONS=--max-old-space-size=4096 npm run build && (node scripts/build-lib-cached.mjs & npm run build:rider & npm run build:chat & wait) && npm run publish:lib",
 		"build:all": "npm run build:chat && (npm run build & npm run build:lib & npm run build:rider & wait)",
 		"release:lib": "npm run build:lib && npm run publish:lib",
 		"clean": "rm -rf dist/* dist-lib/* || true",
@@ -106,9 +105,6 @@
 		"@solana/kit": "^6.8.0",
 		"@solana/pay": "^0.2.0",
 		"@solana/spl-token": "^0.4.14",
-		"@solana/wallet-adapter-base": "^0.9.23",
-		"@solana/wallet-adapter-phantom": "^0.9.24",
-		"@solana/wallet-adapter-wallets": "^0.19.32",
 		"@solana/web3.js": "latest",
 		"@upstash/ratelimit": "^2.0.5",
 		"@upstash/redis": "^1.34.3",
@@ -117,6 +113,7 @@
 		"@x402/express": "^2.11.0",
 		"@x402/extensions": "^2.11.0",
 		"@zauthx402/sdk": "^0.1.14",
+		"axios": "^1.16.0",
 		"bcryptjs": "^2.4.3",
 		"bn.js": "^5.2.3",
 		"bs58": "^6.0.0",
@@ -150,6 +147,7 @@
 		"meshoptimizer": "^1.1.1",
 		"prettier": "^3.2.5",
 		"sharp": "latest",
+		"solc": "^0.8.35",
 		"vite": "latest",
 		"vite-plugin-pwa": "latest",
 		"vitest": "latest",

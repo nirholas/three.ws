@@ -325,6 +325,7 @@ const appConfig = {
 				});
 				cpSync(resolve(__dirname, 'pump-fun-skills'), resolve(__dirname, 'dist/pump-fun-skills'), {
 					recursive: true,
+					filter: (src) => !src.includes('/node_modules/'),
 				});
 			},
 		},
@@ -366,6 +367,8 @@ const appConfig = {
 					'**/ddd.png',
 					'**/skills.mp4',
 					'chat/**',
+					'src/**',
+					'pump-fun-skills/**',
 				],
 				navigateFallback: null,
 				skipWaiting: true,

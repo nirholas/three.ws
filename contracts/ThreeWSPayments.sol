@@ -19,8 +19,7 @@ interface IERC20 {
 }
 
 contract ThreeWSPayments {
-    // BEP-20 USDC on BNB Smart Chain
-    IERC20 public constant USDC = IERC20(0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d);
+    IERC20 public immutable USDC;
 
     // $0.001 USDC per tool call (6 decimals)
     uint256 public pricePerCall = 1_000;
@@ -42,9 +41,11 @@ contract ThreeWSPayments {
         _;
     }
 
-    constructor(address _owner) {
+    constructor(address _owner, address _usdc) {
         if (_owner == address(0)) revert ZeroAddress();
+        if (_usdc == address(0)) revert ZeroAddress();
         owner = _owner;
+        USDC = IERC20(_usdc);
     }
 
     /// @notice Pay for one tool call. Caller must have approved `pricePerCall` USDC.

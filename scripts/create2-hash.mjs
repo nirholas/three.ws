@@ -43,9 +43,11 @@ console.log('ok');
 const contract = output.contracts['ThreeWSPayments.sol']['ThreeWSPayments'];
 const bytecode = contract.evm.bytecode.object;
 
-// ABI-encode the constructor argument (address owner)
+// ABI-encode constructor args: (address owner, address usdc)
+// Default USDC = BSC USDC for grinding; multichain deploy passes chain-specific USDC
+const usdcArg = process.argv[3] || '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d';
 const abiCoder = new AbiCoder();
-const encodedArgs = abiCoder.encode(['address'], [ownerArg]).slice(2); // strip 0x
+const encodedArgs = abiCoder.encode(['address', 'address'], [ownerArg, usdcArg]).slice(2); // strip 0x
 
 const initcode = '0x' + bytecode + encodedArgs;
 const initcodeHash = keccak256(getBytes(initcode));
