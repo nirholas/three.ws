@@ -1,10 +1,13 @@
 // Wires up the footer newsletter form on any page that includes it.
 // POSTs to /api/newsletter/subscribe and shows inline success/error.
+// Idempotent — safe to call multiple times. Forms are tagged once they're
+// wired so dynamic footer injection (see /footer.js) re-triggers without
+// double-binding.
 (function () {
-	const forms = document.querySelectorAll('[data-newsletter-form]');
-	if (!forms.length) return;
+	function wireForm(form) {
+		if (form.__newsletterWired) return;
+		form.__newsletterWired = true;
 
-	forms.forEach((form) => {
 		const input = form.querySelector('input[name="email"]');
 		const btn = form.querySelector('button[type="submit"]');
 		const msg = form.parentElement?.querySelector('[data-newsletter-msg]');
@@ -44,5 +47,12 @@
 				btn.disabled = false;
 			}
 		});
-	});
+	}
+
+	function scan() {
+		document.querySelectorAll('[data-newsletter-form]').forEach(wireForm);
+	}
+
+	window.__threewsFooterNewsletterReady = scan;
+	scan();
 })();
