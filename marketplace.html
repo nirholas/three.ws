@@ -850,8 +850,19 @@
 		<script src="https://unpkg.com/@solana/wallet-adapter-react-ui@latest/lib/index.iife.js"></script>
 
 		<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+			<link rel="stylesheet" href="/nav.css" />
+			<link rel="stylesheet" href="/footer.css" />
+			<script defer src="/footer-newsletter.js"></script>
 	</head>
 	<body class="market-page">
+		<header class="site-header">
+			<h1 class="site-header-brand">
+				<a href="/" aria-label="three.ws home"><img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" /><span class="wordmark-dot" aria-hidden="true"></span>three.ws</a>
+			</h1>
+			<div id="nav-container"></div>
+		</header>
+		<script src="/nav.js"></script>
+
 		<aside class="market-sidebar" id="market-sidebar">
 			<a href="/" class="market-logo">
 				<img src="/three.svg" alt="three.ws" />
@@ -919,10 +930,7 @@
 					<div class="wallet-adapter-button-container"></div>
 				</header>
 
-				<div class="market-body">
-					<aside class="market-cats" id="market-cats" aria-label="Categories"></aside>
-					<div class="market-grid" id="market-grid"></div>
-				</div>
+				<div class="market-grid" id="market-grid"></div>
 				<div class="market-loadmore">
 					<button id="market-loadmore" hidden>Load more</button>
 				</div>
@@ -1226,6 +1234,9 @@
 					</div>
 			</div>
 	</div>
-  </body>
+  
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+</body>
 </html>
 
