@@ -67,6 +67,7 @@ const HANDLERS = {
 	'expire-pending-purchases': handleExpirePendingPurchases,
 	'cleanup-csrf-tokens': handleCleanupCsrfTokens,
 	'process-withdrawals': handleProcessWithdrawals,
+	'social-scheduler': handleSocialScheduler,
 };
 
 export default wrap(async (req, res) => {
@@ -2539,6 +2540,77 @@ async function handleProcessWithdrawals(req, res) {
 			});
 			report.failed++;
 			report.errors.push({ id: w.id, error: msg });
+		}
+	}
+
+	return json(res, 200, { ok: true, ...report });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// social-scheduler — process scheduled social posts
+// ═══════════════════════════════════════════════════════════════════════════
+
+const SOCIAL_BATCH = 20;
+
+async function handleSocialScheduler(req, res) {
+	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
+
+	const auth = req.headers['authorization'] || '';
+	const cronSecret = env.CRON_SECRET;
+	const fromCron = req.headers['x-vercel-cron'] === '1';
+	if (!fromCron && cronSecret && auth !== `Bearer ${cronSecret}`) {
+		return error(res, 401, 'unauthorized', 'cron secret required');
+	}
+
+	const { dispatchPost, decryptCredentials } = await import('../_lib/social-post.js');
+
+	const posts = await sql`
+		select id, platform, content, media_urls, reply_to, settings, credentials_enc
+		from social_posts
+		where status = 'scheduled' and schedule_at <= now()
+		order by schedule_at asc
+		limit ${SOCIAL_BATCH}
+		for update skip locked
+	`;
+
+	const report = { processed: 0, published: 0, failed: 0, errors: [] };
+
+	for (const post of posts) {
+		report.processed++;
+		try {
+			let credentials;
+			try {
+				credentials = decryptCredentials(post.credentials_enc);
+			} catch {
+				throw new Error('credential decryption failed');
+			}
+
+			const result = await dispatchPost(
+				post.platform,
+				post.content,
+				credentials,
+				{ media_urls: post.media_urls || [], reply_to: post.reply_to, settings: post.settings || {} },
+			);
+
+			await sql`
+				update social_posts
+				set status = 'published',
+				    platform_post_id = ${result.id ?? null},
+				    platform_url = ${result.url ?? null},
+				    platform_response = ${JSON.stringify(result.raw ?? {})},
+				    published_at = now(),
+				    credentials_enc = null
+				where id = ${post.id}
+			`;
+			report.published++;
+		} catch (err) {
+			const msg = err.message || String(err);
+			await sql`
+				update social_posts set status = 'failed', error_message = ${msg}
+				where id = ${post.id}
+			`;
+			report.failed++;
+			report.errors.push({ id: post.id, error: msg });
 		}
 	}
 

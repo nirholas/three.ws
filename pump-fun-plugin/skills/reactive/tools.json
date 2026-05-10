@@ -1,0 +1,20 @@
+{
+	"tools": [
+		{
+			"name": "enable_live_reactions",
+			"description": "Connect to the real pump.fun PumpPortal WebSocket feed and start driving avatar reactions from live market events. Call once; reconnects automatically. Requires ctx.protocol to be an AgentProtocol instance.",
+			"input_schema": {
+				"type": "object",
+				"properties": {}
+			}
+		},
+		{
+			"name": "disable_live_reactions",
+			"description": "Disconnect from the pump.fun PumpPortal feed and stop avatar reactions.",
+			"input_schema": {
+				"type": "object",
+				"properties": {}
+			}
+		}
+	]
+}

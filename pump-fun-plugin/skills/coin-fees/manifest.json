@@ -1,0 +1,11 @@
+{
+  "spec": "skill/0.1",
+  "name": "pumpfun-coin-fees",
+  "version": "1.0.0",
+  "description": "Collect and distribute creator fees for pump.fun coins via the fun-block API",
+  "sandboxPolicy": "trusted-main-thread",
+  "tags": ["solana", "pump.fun", "fees"],
+  "provides": {
+    "tools": ["pumpfun_collect_fees", "pumpfun_sharing_config"]
+  }
+}

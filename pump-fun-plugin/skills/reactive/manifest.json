@@ -1,0 +1,12 @@
+{
+	"spec": "skill/0.1",
+	"name": "pump-fun-reactive",
+	"version": "0.1.0",
+	"author": "nirholas",
+	"description": "Drives live avatar movement from the real pump.fun PumpPortal feed.",
+	"sandboxPolicy": "trusted-main-thread",
+	"tags": ["pump.fun", "avatar", "reactive", "live", "websocket"],
+	"provides": {
+		"tools": ["enable_live_reactions", "disable_live_reactions"]
+	}
+}
