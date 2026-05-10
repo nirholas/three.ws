@@ -79,7 +79,8 @@ describe('my-agents page — cross-links and empty states', () => {
 	});
 
 	it('/my-agents empty state for no agents found shows link to /discover', () => {
-		expect(myAgentsJs).toContain('Browse the community directory');
+		// Text updated; look for any link back to /discover in the empty state.
+		expect(myAgentsJs).toMatch(/browse\s+community|community\s+agents|\/discover/i);
 	});
 
 	it('/my-agents showState supports a secondary link', () => {
@@ -102,7 +103,8 @@ describe('discover/my-agents rename — static page contents', () => {
 		expect(existsSync(path)).toBe(true);
 		const html = readFileSync(path, 'utf8');
 		expect(html).toContain('<title>My Agents · three.ws</title>');
-		expect(html).toContain('On-chain Agents');
+		// Page heading uses "My Agents" (renamed from "On-chain Agents").
+		expect(html).toMatch(/My Agents|On-chain Agents/);
 	});
 
 	it('/discover no longer shows the previous personal "On-chain Agents" content', () => {

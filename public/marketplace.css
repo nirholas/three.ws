@@ -2065,3 +2065,189 @@ body.market-page {
 	background: rgba(125, 211, 252, 0.18);
 	border-color: rgba(125, 211, 252, 0.4);
 }
+
+/* ── Heart bookmark button on avatar cards ───────────────────────── */
+
+.market-card-avatar .title-row {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	min-width: 0;
+}
+.market-card-avatar .title-row .title {
+	flex: 1;
+	min-width: 0;
+}
+.card-heart {
+	flex: 0 0 auto;
+	background: transparent;
+	border: 0;
+	color: rgba(255, 255, 255, 0.25);
+	font-size: 16px;
+	line-height: 1;
+	cursor: pointer;
+	padding: 2px 4px;
+	border-radius: 6px;
+	transition: color 0.15s, transform 0.1s;
+	margin-top: 1px;
+}
+.card-heart:hover { color: #f87171; transform: scale(1.15); }
+.card-heart.active { color: #f87171; }
+
+/* ── Featured badge on cards ────────────────────────────────────── */
+
+.card-featured-badge {
+	position: absolute;
+	top: 8px;
+	left: 8px;
+	font-size: 14px;
+	z-index: 2;
+	pointer-events: none;
+}
+.featured-badge {
+	background: rgba(253, 224, 71, 0.15);
+	color: #fde047;
+	font-size: 11px;
+	font-weight: 600;
+	padding: 2px 8px;
+	border-radius: 999px;
+}
+.market-card-avatar.featured {
+	border-color: rgba(253, 224, 71, 0.25);
+}
+.market-card-avatar.featured:hover {
+	border-color: rgba(253, 224, 71, 0.5);
+}
+
+/* ── Modal load-progress bar ────────────────────────────────────── */
+
+.modal-load-progress {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+	background: var(--mk-panel, #0b0b12);
+	z-index: 1;
+	pointer-events: none;
+}
+.modal-load-bar-wrap {
+	width: 160px;
+	height: 3px;
+	background: rgba(255, 255, 255, 0.08);
+	border-radius: 2px;
+	overflow: hidden;
+}
+.modal-load-bar {
+	height: 100%;
+	width: 0%;
+	background: #7dd3fc;
+	border-radius: 2px;
+	transition: width 0.2s linear;
+}
+.modal-load-label {
+	font-size: 11px;
+	color: rgba(255, 255, 255, 0.4);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+/* ── Modal author line ───────────────────────────────────────────── */
+
+.avatar-modal-author {
+	font-size: 12px;
+	color: var(--mk-text-3);
+	margin: 0;
+}
+.avatar-modal-author a {
+	color: #7dd3fc;
+	text-decoration: none;
+}
+.avatar-modal-author a:hover { text-decoration: underline; }
+
+/* ── Bookmark button in modal ────────────────────────────────────── */
+
+#avatar-modal-bookmark {
+	background: transparent;
+	border: 1px solid var(--mk-border-2, #2a2a2a);
+	color: rgba(255, 255, 255, 0.5);
+	border-radius: 8px;
+	padding: 7px 12px;
+	font-size: 13px;
+	cursor: pointer;
+	width: 100%;
+	text-align: center;
+	transition: border-color 0.15s, color 0.15s, background 0.15s;
+	margin-bottom: -4px;
+}
+#avatar-modal-bookmark::before { content: '♥  '; }
+#avatar-modal-bookmark:hover {
+	border-color: #f87171;
+	color: #f87171;
+}
+#avatar-modal-bookmark.active {
+	color: #f87171;
+	border-color: #f87171;
+	background: rgba(248, 113, 113, 0.08);
+}
+
+/* ── Mobile layout fixes ─────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+	.market-topbar {
+		flex-wrap: wrap;
+		gap: 8px;
+		padding: 10px 12px;
+	}
+	#market-search {
+		width: 100%;
+		order: -1;
+	}
+	.market-filter-chips {
+		width: 100%;
+		justify-content: center;
+	}
+	.market-submit-btn,
+	.market-submit-avatar-btn {
+		display: none; /* collapsed into sidebar on mobile */
+	}
+	.market-grid {
+		grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+		padding: 12px 12px 60px;
+		gap: 10px;
+	}
+	.market-card-avatar .thumb {
+		aspect-ratio: 1 / 1;
+	}
+	.avatar-modal {
+		grid-template-columns: 1fr;
+		grid-template-rows: 55vw auto;
+		max-height: 95vh;
+	}
+	.avatar-modal-stage {
+		min-height: unset;
+	}
+	.avatar-modal-side {
+		max-height: 45vh;
+		padding: 16px;
+	}
+	.market-hero {
+		display: none; /* hero takes too much space on small screens */
+	}
+	.market-stats {
+		padding: 12px 12px 0;
+		gap: 8px;
+	}
+	.market-stat {
+		min-width: 80px;
+		padding: 6px 10px;
+	}
+	.market-stat .num { font-size: 15px; }
+}
+@media (max-width: 480px) {
+	.market-grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}

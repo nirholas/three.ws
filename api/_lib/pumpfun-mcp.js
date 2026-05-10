@@ -1,12 +1,13 @@
-// Pumpfun feed source.
+// Pumpfun MCP client — HTTP jsonrpc transport.
 //
-// Reads graduation events from an Upstash Redis list populated by the
-// `services/pump-graduations` worker. Claim/intel ops are stubbed out — the
-// three.ws/pumpfun page only needs graduations to announce migrations.
+// Makes JSON-RPC calls to a MCP bot server (PUMPFUN_BOT_URL) for real-time
+// pump.fun intelligence. Falls back to Redis for graduations when bot not configured.
 //
 // Env:
-//   UPSTASH_REDIS_REST_URL    required to enable the feed
-//   UPSTASH_REDIS_REST_TOKEN  required
+//   PUMPFUN_BOT_URL    HTTP endpoint for the MCP bot (enables bot-backed calls)
+//   PUMPFUN_BOT_TOKEN  Optional Bearer token for MCP bot auth
+//   UPSTASH_REDIS_REST_URL    required for Redis graduation feed fallback
+//   UPSTASH_REDIS_REST_TOKEN  required for Redis graduation feed fallback
 //   GRADUATIONS_LIST_KEY      default: pf:graduations
 
 import { Redis } from '@upstash/redis';
@@ -29,7 +30,7 @@ function redis() {
 }
 
 export function pumpfunBotEnabled() {
-	return !!(env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN);
+	return !!(process.env.PUMPFUN_BOT_URL);
 }
 
 async function readGraduations(limit = 20) {
@@ -48,8 +49,6 @@ async function readGraduations(limit = 20) {
 }
 
 function toFeedShape(g) {
-	// Worker pushes { signature, mint, tokenName, tokenSymbol, poolAddress, timestamp }
-	// Feed/widget consume { tx_signature, mint, name, symbol, ... }.
 	return {
 		tx_signature: g.signature,
 		signature: g.signature,
@@ -66,33 +65,42 @@ function safeJson(s) {
 	try { return JSON.parse(s); } catch { return null; }
 }
 
+async function jsonrpc(toolName, args) {
+	const url = process.env.PUMPFUN_BOT_URL;
+	if (!url) return { ok: false, error: 'bot not configured' };
+	const token = process.env.PUMPFUN_BOT_TOKEN;
+	const headers = { 'content-type': 'application/json' };
+	if (token) headers.authorization = `Bearer ${token}`;
+	const res = await fetch(url, {
+		method: 'POST',
+		headers,
+		body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: toolName, arguments: args } }),
+	});
+	if (!res.ok) return { ok: false, error: `HTTP ${res.status}` };
+	const j = await res.json();
+	if (j.error) return { ok: false, error: j.error.message || JSON.stringify(j.error) };
+	return { ok: true, data: j.result?.structuredContent ?? j.result?.content ?? [] };
+}
+
 export const pumpfunMcp = {
 	enabled: pumpfunBotEnabled,
-
-	async listTools() {
-		return { ok: true, data: { tools: ['getGraduations'] } };
+	async recentClaims({ limit = 20 } = {}) {
+		return jsonrpc('getRecentClaims', { limit });
 	},
-
-	async recentClaims() {
-		// Not implemented in the migrations-only feed.
-		return { ok: true, data: [] };
+	async tokenIntel({ mint } = {}) {
+		if (!mint) return { ok: false, error: 'mint is required' };
+		return jsonrpc('getTokenIntel', { mint });
 	},
-
 	async graduations({ limit = 20 } = {}) {
+		if (pumpfunBotEnabled()) return jsonrpc('getGraduations', { limit });
 		const items = await readGraduations(limit);
 		return { ok: true, data: items };
 	},
-
-	async tokenIntel() {
-		return { ok: false, error: 'token intel not available' };
+	async creatorIntel({ wallet } = {}) {
+		if (!wallet) return { ok: false, error: 'wallet is required' };
+		return jsonrpc('getCreatorIntel', { wallet });
 	},
-
-	async creatorIntel() {
-		return { ok: false, error: 'creator intel not available' };
-	},
-
-	async claimsSince() {
-		// No claim source — return empty list so the SSE loop just keeps polling.
-		return { ok: true, data: [] };
+	async claimsSince({ since } = {}) {
+		return jsonrpc('getClaimsSince', { since });
 	},
 };

@@ -143,26 +143,41 @@ async function handleCreate(req, res) {
 		ORDER BY created_at DESC
 		LIMIT 1
 	`;
+	// Determine if this is a time-pass purchase. Prefer explicitly passed duration_hours,
+	// then fall back to the skill's time_pass_hours if set.
+	const effectiveDurationHours = durationHours ?? (price.time_pass_hours || null);
+	const isTimePass = effectiveDurationHours != null;
+	const purchaseAmount = isTimePass && price.time_pass_amount ? price.time_pass_amount : price.amount;
+	const purchaseKind = isTimePass ? 'time_pass' : 'purchase';
+
 	const reference = pending?.reference ?? Keypair.generate().publicKey.toBase58();
-	const label = `Skill: ${skill.slice(0, 40)}`;
-	const message = `Unlock '${skill}' for this agent`;
+	const label = isTimePass
+		? `${effectiveDurationHours}h Access: ${skill.slice(0, 30)}`
+		: `Skill: ${skill.slice(0, 40)}`;
+	const message = isTimePass
+		? `Get ${effectiveDurationHours}-hour access to '${skill}'`
+		: `Unlock '${skill}' for this agent`;
 
 	let row = pending;
 	if (!pending) {
-		const inserted = await sql`
+		const validUntil = isTimePass
+			? sql`now() + (${effectiveDurationHours} || ' hours')::interval`
+			: sql`null`;
+
+		const [inserted] = await sql`
 			INSERT INTO skill_purchases (
 				user_id, agent_id, skill, status, reference,
-				amount, currency_mint, chain, expires_at, kind, referrer_user_id
+				amount, currency_mint, chain, expires_at, kind, referrer_user_id, valid_until
 			)
 			VALUES (
 				${auth.userId}, ${agentId}, ${skill}, 'pending', ${reference},
-				${price.amount}, ${price.currency_mint}, ${price.chain},
-				now() + interval '30 minutes', 'purchase', ${referrerUserId}
+				${purchaseAmount}, ${price.currency_mint}, ${price.chain},
+				now() + interval '30 minutes', ${purchaseKind}, ${referrerUserId}, ${validUntil}
 			)
-			RETURNING reference, amount, currency_mint, chain, expires_at
+			RETURNING reference, amount, currency_mint, chain, expires_at, valid_until
 		`;
-		row = inserted[0];
-		await logEvent(row.reference, 'created', { agent_id: agentId, skill });
+		row = inserted;
+		await logEvent(row.reference, 'created', { agent_id: agentId, skill, kind: purchaseKind });
 	} else {
 		await logEvent(pending.reference, 'create_idempotent_hit', { agent_id: agentId, skill });
 	}
@@ -176,8 +191,12 @@ async function handleCreate(req, res) {
 			chain: row.chain,
 			mint_decimals: price.mint_decimals,
 			expires_at: row.expires_at,
+			valid_until: row.valid_until,
+			kind: purchaseKind,
 			label,
 			message,
+			...(isTimePass ? { duration_hours: effectiveDurationHours } : {}),
+			...(price.time_pass_hours ? { time_pass_hours: price.time_pass_hours, time_pass_amount: price.time_pass_amount } : {}),
 		},
 	});
 }

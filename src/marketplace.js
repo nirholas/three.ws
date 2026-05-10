@@ -7,6 +7,16 @@
  */
 
 
+import {
+	renderDetailAvatar,
+	startPreviewSession,
+	submitPreviewMessage,
+	openCreatorModal,
+	closeCreatorModal,
+	bindMobileSidebar,
+	bindDetailExtras,
+} from './marketplace-detail.js';
+
 const API = '/api';
 
 let purchasedSkills = new Set();
@@ -412,6 +422,40 @@ function updateOnchainChipCount() {
 	el.textContent = fmtNumber(total);
 }
 
+// ── 3D Lobby (Three.js multi-avatar scene, opt-in) ──────────────────────
+
+let lobbyHandle = null;
+
+async function openLobby() {
+	const overlay = $('market-lobby-overlay');
+	const canvas = $('market-lobby-canvas');
+	if (!overlay || !canvas) return;
+	const slots = (state.featured.length ? state.featured : state.publicAvatars).slice(0, 5);
+	if (!slots.length) return;
+	overlay.hidden = false;
+	stopHeroAutoplay();
+	try {
+		const mod = await import('./marketplace-lobby.js');
+		lobbyHandle = await mod.mountLobby(canvas, slots, {
+			onSelect: (avatar) => {
+				closeLobby();
+				if (avatar) openAvatarModal(avatar);
+			},
+		});
+	} catch (err) {
+		console.error('[marketplace] lobby load', err);
+		closeLobby();
+	}
+}
+
+function closeLobby() {
+	const overlay = $('market-lobby-overlay');
+	if (overlay) overlay.hidden = true;
+	if (lobbyHandle?.dispose) lobbyHandle.dispose();
+	lobbyHandle = null;
+	if (state.featured.length) startHeroAutoplay();
+}
+
 // ── Weekly theme strip ───────────────────────────────────────────────────
 
 async function loadTheme() {
@@ -775,8 +819,14 @@ function renderGrid() {
 	});
 	els.grid.querySelectorAll('[data-avatar-id]').forEach((card) => {
 		card.addEventListener('click', (e) => {
-			// Don't trigger card nav when clicking the embedded author link.
+			// Don't trigger card nav when clicking the embedded author link or heart.
 			if (e.target.closest('a')) return;
+			const bmBtn = e.target.closest('.card-heart');
+			if (bmBtn) {
+				e.stopPropagation();
+				toggleAvatarBookmark(bmBtn.dataset.bmId || '');
+				return;
+			}
 			const id = card.dataset.avatarId;
 			const avatar = state.publicAvatars.find((a) => a.avatarId === id);
 			if (avatar) openAvatarModal(avatar);
@@ -1329,13 +1379,17 @@ function renderAvatarCard(a, spotlight = false) {
 				></model-viewer>`
 			: `<div class="thumb-fallback">◉</div>`;
 	const isSpotlight = spotlight || a.featured;
-	const spotlightBadge = isSpotlight ? '<span class="card-featured-badge" title="Spotlight">★</span>' : '';
+	const spotlightBadge = isSpotlight ? '<span class="card-featured-badge" title="Featured">⭐</span>' : '';
+	const bmActive = getAvatarBookmarks().has(a.avatarId || '');
 	const views = Number(a.viewCount) > 0 ? `<span class="stat-pill views" title="${a.viewCount} views">⊙ ${fmtNumber(a.viewCount)}</span>` : '';
 	const cardClasses = ['market-card-avatar', isSpotlight && 'market-card-avatar--featured'].filter(Boolean).join(' ');
 	return `<div class="${cardClasses}" data-avatar-id="${escapeHtml(a.avatarId || '')}">
 		<div class="thumb">${spotlightBadge}${preview}</div>
 		<div class="body">
-			<div class="title">${name}</div>
+			<div class="title-row">
+				<div class="title">${name}</div>
+				<button type="button" class="card-heart${bmActive ? ' active' : ''}" data-bm-id="${escapeHtml(a.avatarId||'')}" aria-label="Bookmark" aria-pressed="${bmActive}">♥</button>
+			</div>
 			<div class="byline">${authorLine}${when ? `<span class="dot">·</span><span class="when">${escapeHtml(when)}</span>` : ''}${views ? `<span class="dot">·</span>${views}` : ''}</div>
 			${desc ? `<div class="desc">${desc}</div>` : ''}
 			${tagPills}
@@ -1598,9 +1652,16 @@ function renderDetail(a, bookmarked) {
 					const trialBtn = trialUses > 0
 						? `<button class="trial-btn" data-skill-name="${escapeHtml(name)}" data-agent-id="${a.id}" data-trial-uses="${trialUses}">Try free (${trialUses} left)</button>`
 						: '';
+					const hasTimePass = price.time_pass_hours && price.time_pass_amount;
+					const timePassBtn = hasTimePass
+						? (() => {
+								const tpHuman = (Number(price.time_pass_amount) / 1e6).toFixed(2);
+								return `<button class="time-pass-btn" data-skill-name="${escapeHtml(name)}" data-agent-id="${a.id}" data-duration="${price.time_pass_hours}" data-amount="${price.time_pass_amount}">Get ${price.time_pass_hours}h access (${tpHuman} USDC)</button>`;
+							})()
+						: '';
 					badge = `<span class="price-badge price-paid">${priceInUSDC} USDC</span>` +
 						`<button class="purchase-btn" data-skill-name="${escapeHtml(name)}" data-agent-id="${a.id}">Purchase</button>` +
-						trialBtn;
+						trialBtn + timePassBtn;
 				} else {
 					badge = `<span class="price-badge price-free">Free</span>`;
 				}
@@ -1767,6 +1828,13 @@ function bindEvents() {
 	bindSubmit();
 	bindFilterChips();
 	initWipBanner();
+
+	// 3D Lobby: open from the hero button, close on overlay button or Escape.
+	$('market-hero-lobby')?.addEventListener('click', openLobby);
+	$('market-lobby-close')?.addEventListener('click', closeLobby);
+	document.addEventListener('keydown', (e) => {
+		if (e.key === 'Escape' && lobbyHandle) closeLobby();
+	});
 	// Pause the hero rotation when the page is hidden, resume when it returns —
 	// avoids burning GPU on a tab the user isn't even looking at.
 	document.addEventListener('visibilitychange', () => {
@@ -1784,6 +1852,12 @@ function bindEvents() {
 			const skillName = e.target.dataset.skillName;
 			const agentId = e.target.dataset.agentId;
 			if (agentId && skillName) await openTrialFlow(agentId, skillName, e.target);
+		}
+		if (e.target.matches('.time-pass-btn')) {
+			const skillName = e.target.dataset.skillName;
+			const agentId = e.target.dataset.agentId;
+			const duration = Number(e.target.dataset.duration);
+			if (agentId && skillName && duration) await openTimePassFlow(agentId, skillName, duration, e.target);
 		}
 	});
 
@@ -2071,6 +2145,8 @@ function setStatus(text, kind) {
 function closePaymentModal() {
 	$('payment-modal-overlay').hidden = true;
 	const qr = $('payment-qr'); if (qr) qr.innerHTML = '';
+	const confirmBtn = $('payment-confirm-btn');
+	if (confirmBtn) delete confirmBtn.dataset.durationHours;
 }
 
 function shortMintLabel(mint) {
@@ -2079,6 +2155,42 @@ function shortMintLabel(mint) {
 	return mint.slice(0, 4) + '…';
 }
 
+
+
+async function openTimePassFlow(agentId, skill, durationHours, btn) {
+	if (!detailState?.agent || detailState.agent.id !== agentId) {
+		alert('Agent not loaded; refresh and try again.');
+		return;
+	}
+	const price = detailState.agent.skill_prices?.[skill];
+	if (!price) { alert('No price set for this skill.'); return; }
+
+	if (btn) {
+		btn.disabled = true;
+		btn.textContent = 'Preparing…';
+	}
+
+	// Open the normal purchase modal but with duration set, so the purchase
+	// will create a time-pass row. We pass duration_hours in the body.
+	$('payment-skill-name').textContent = skill;
+	$('payment-agent-name').textContent = detailState.agent.name;
+	const tpAmount = price.time_pass_amount || price.amount;
+	const decimals = Number(price.mint_decimals ?? 6);
+	const human = (Number(tpAmount) / Math.pow(10, decimals)).toFixed(decimals === 6 ? 2 : 4);
+	$('payment-price-display').textContent = `${human} ${shortMintLabel(price.currency_mint)} · ${durationHours}h access`;
+	const qr = $('payment-qr'); if (qr) qr.innerHTML = '';
+	setStatus('');
+	$('payment-modal-overlay').hidden = false;
+	updateWalletUI();
+
+	// Store duration in a data attribute so handlePurchase can pick it up.
+	$('payment-confirm-btn').dataset.durationHours = String(durationHours);
+
+	if (btn) {
+		btn.disabled = false;
+		btn.textContent = `Get ${durationHours}h access`;
+	}
+}
 
 async function openTrialFlow(agentId, skill, btn) {
 	if (!detailState?.agent || detailState.agent.id !== agentId) {
@@ -2155,8 +2267,10 @@ async function apiPostWithCsrf(url, body) {
 	});
 }
 
-async function createPendingPurchase(agentId, skill) {
-	const r = await apiPostWithCsrf('/api/marketplace/purchase', { agent_id: agentId, skill });
+async function createPendingPurchase(agentId, skill, durationHours = null) {
+	const body = { agent_id: agentId, skill };
+	if (durationHours) body.duration_hours = durationHours;
+	const r = await apiPostWithCsrf('/api/marketplace/purchase', body);
 	const j = await r.json();
 	if (!r.ok) throw new Error(j.error_description || j.error || 'Failed to create purchase');
 	return j.data;
@@ -2172,10 +2286,11 @@ async function handlePurchase() {
 
 	const agentId = detailState.agent.id;
 	const skill = $('payment-skill-name').textContent;
+	const durationHours = confirmBtn.dataset.durationHours ? Number(confirmBtn.dataset.durationHours) : null;
 
 	let purchase;
 	try {
-		purchase = await createPendingPurchase(agentId, skill);
+		purchase = await createPendingPurchase(agentId, skill, durationHours);
 		if (purchase.already_owned) {
 			setStatus('Already purchased. Refreshing…', 'ok');
 			await fetchUserPurchases();
@@ -2412,6 +2527,7 @@ function init() {
 	initPlugins();
 	initWalletAdapter();
 	fetchUserPurchases();
+	bindDetailExtras({ navTo, openAvatarModal });
 	render();
 }
 

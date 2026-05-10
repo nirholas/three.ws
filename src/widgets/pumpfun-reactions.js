@@ -214,26 +214,15 @@ function claimReaction(s) {
 
 	if (s.isFirstClaim) {
 		// Tiered first-claim variants — credibility ladders the dance.
-		if (s.ghCredible && s.ghVerified) {
+		if (s.ghVerified) {
 			return {
-				variant: 'claim_first_verified_credible',
+				variant: 'claim_first_verified',
 				icon: '🚨✅',
 				emote: { trigger: 'celebration', weight: 1.0 },
 				gesture: { name: 'thriller', duration: 6000 },
-				speak: { text: `Verified first claim by @${s.ghUser}${s.aiTake ? ' — ' + s.aiTake : ''}.`, sentiment: 0.85 },
+				speak: { text: `Verified first claim by @${s.ghUser || 'dev'}${s.aiTake ? ' — ' + s.aiTake : ''}.`, sentiment: 0.85 },
 				lookAt: 'camera',
-				priority: 88,
-			};
-		}
-		if (s.ghLinked && s.ghVerified) {
-			return {
-				variant: 'claim_first_verified',
-				icon: '🚨',
-				emote: { trigger: 'celebration', weight: 0.95 },
-				gesture: { name: 'silly', duration: 5500 },
-				speak: { text: `First claim by @${s.ghUser || 'dev'}${s.aiTake ? ' — ' + s.aiTake : ''}.`, sentiment: 0.8 },
-				lookAt: 'camera',
-				priority: 86,
+				priority: 85,
 			};
 		}
 		if (s.ghLinked) {
@@ -241,7 +230,7 @@ function claimReaction(s) {
 				variant: 'claim_first_unverified_gh',
 				icon: '🚨❓',
 				emote: { trigger: 'curiosity', weight: 0.7 },
-				gesture: { name: 'capoeira', duration: 4500 },
+				gesture: { name: 'silly', duration: 4500 },
 				speak: { text: `First claim — @${s.ghUser || 'dev'} unverified. Watch closely.`, sentiment: 0.4 },
 				lookAt: 'token',
 				priority: 82,
@@ -514,17 +503,17 @@ export function createReactionDispatcher(opts = {}) {
 		 * @param {string} kind
 		 * @param {object} ev
 		 * @param {(reaction: Reaction) => void} run
-		 * @returns {'fired'|'queued'|'deduped'|'dropped'|'silent'}
+		 * @returns {boolean}
 		 */
 		dispatch(kind, ev, run) {
 			const reaction = reactionFor(kind, ev, { mood });
-			if (!reaction) return 'silent';
+			if (!reaction) return false;
 
 			const t = now();
 			const key = dedupeKey(kind, ev);
 			if (key) {
 				const last = seen.get(key);
-				if (last != null && t - last < dedupeWindowMs) return 'deduped';
+				if (last != null && t - last < dedupeWindowMs) return false;
 				seen.set(key, t);
 				if (seen.size > 200) {
 					for (const [k, v] of seen) if (t - v > dedupeWindowMs) seen.delete(k);
@@ -535,18 +524,18 @@ export function createReactionDispatcher(opts = {}) {
 			if (t < activeUntil) {
 				if (priority > activePriority) {
 					fire(reaction, kind, ev, run);
-					return 'fired';
+					return true;
 				}
 				if (priority >= 30 && queue.length < maxQueue) {
 					queue.push({ kind, ev, priority, enqueuedAt: t, runner: run });
 					scheduleDrain();
-					return 'queued';
+					return false;
 				}
-				return 'dropped';
+				return false;
 			}
 
 			fire(reaction, kind, ev, run);
-			return 'fired';
+			return true;
 		},
 		setMood(next) { if (MOOD_PROFILE[next]) mood = next; },
 		mood: () => mood,

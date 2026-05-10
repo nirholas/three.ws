@@ -11,9 +11,15 @@ document.addEventListener('DOMContentLoaded', () => {
 		.then(response => response.text())
 		.then(data => {
 			navContainer.innerHTML = data;
-			initDropdowns(navContainer);
+			initNav(navContainer);
 		});
 });
+
+function initNav(root) {
+	initDropdowns(root);
+	initBurger(root);
+	initAuthHint(root);
+}
 
 function initDropdowns(root) {
 	const triggers = root.querySelectorAll('.home-nav .nav-trigger');
@@ -61,21 +67,45 @@ function initDropdowns(root) {
 	document.addEventListener('keydown', (e) => {
 		if (e.key === 'Escape') closeAll(null);
 	});
+}
 
-	// Auth-aware CTA
+function initBurger(root) {
+	const burger = root.querySelector('#home-nav-burger');
+	const navRoot = root.querySelector('#home-nav-root');
+	if (!burger || !navRoot) return;
+
+	function close() {
+		burger.setAttribute('aria-expanded', 'false');
+		navRoot.classList.remove('is-open');
+	}
+
+	burger.addEventListener('click', (e) => {
+		e.stopPropagation();
+		const open = burger.getAttribute('aria-expanded') === 'true';
+		burger.setAttribute('aria-expanded', open ? 'false' : 'true');
+		navRoot.classList.toggle('is-open', !open);
+	});
+
+	document.addEventListener('click', (e) => {
+		if (!e.target.closest('.home-nav')) close();
+	});
+	document.addEventListener('keydown', (e) => {
+		if (e.key === 'Escape') close();
+	});
+}
+
+function initAuthHint(root) {
 	try {
 		const raw = localStorage.getItem('3dagent:auth-hint');
-		if (raw) {
-			const { authed, name } = JSON.parse(raw);
-			if (authed) {
-				const cta = root.querySelector('#home-nav-cta');
-				if (cta) { cta.textContent = 'Dashboard'; cta.href = '/dashboard'; }
-				const myAgentsLi = root.querySelector('#home-nav-my-agents-li');
-				if (myAgentsLi) myAgentsLi.hidden = false;
-				const userLi = root.querySelector('#home-nav-user-li');
-				const userEl = root.querySelector('#home-nav-user');
-				if (userEl && userLi && name) { userEl.textContent = name; userLi.hidden = false; }
-			}
-		}
+		if (!raw) return;
+		const { authed, name } = JSON.parse(raw);
+		if (!authed) return;
+		const cta = root.querySelector('#home-nav-cta');
+		if (cta) { cta.textContent = 'Dashboard'; cta.href = '/dashboard'; }
+		const myAgentsLi = root.querySelector('#home-nav-my-agents-li');
+		if (myAgentsLi) myAgentsLi.hidden = false;
+		const userLi = root.querySelector('#home-nav-user-li');
+		const userEl = root.querySelector('#home-nav-user');
+		if (userEl && userLi && name) { userEl.textContent = name; userLi.hidden = false; }
 	} catch (_) {}
 }

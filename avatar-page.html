@@ -395,6 +395,31 @@
 				font-family: inherit;
 			}
 			.av-chat-send:disabled { opacity: 0.4; cursor: default; }
+			.av-chat-mic {
+				background: var(--panel);
+				border: 1px solid var(--border-2);
+				color: var(--text-2);
+				border-radius: 10px;
+				width: 40px;
+				height: 40px;
+				cursor: pointer;
+				font-size: 16px;
+				font-family: inherit;
+				transition: border-color 0.15s, background 0.15s, color 0.15s;
+			}
+			.av-chat-mic:hover { border-color: var(--text-3); color: var(--text); }
+			.av-chat-mic.listening {
+				background: rgba(244, 63, 94, 0.16);
+				border-color: rgba(244, 63, 94, 0.6);
+				color: #f43f5e;
+				animation: av-mic-pulse 1.2s ease-in-out infinite;
+			}
+			@keyframes av-mic-pulse {
+				0%, 100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.4); }
+				50% { box-shadow: 0 0 0 6px rgba(244, 63, 94, 0); }
+			}
+			.av-row-disabled { opacity: 0.5; }
+			.av-row-disabled .av-row-action { cursor: not-allowed; }
 
 			/* ── Skills / Plugins panel ──────────────────────── */
 			.av-list {

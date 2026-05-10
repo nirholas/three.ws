@@ -32,10 +32,15 @@ vi.mock('../api/_lib/rate-limit.js', () => ({
 	clientIp: vi.fn(() => '127.0.0.1'),
 }));
 
+vi.mock('../api/_lib/csrf.js', () => ({
+	requireCsrf: vi.fn(async () => true),
+	generateToken: vi.fn(async () => 'test-csrf-token'),
+}));
+
 // ── Handler imports (after mocks) ─────────────────────────────────────────────
 
-const { default: pricingSkillHandler } = await import('../api/agents/[id]/pricing/[skill].js');
-const { default: pricingIndexHandler } = await import('../api/agents/[id]/pricing/index.js');
+const { default: pricingSkillHandler } = await import('../api/agents/_id/pricing/[skill].js');
+const { default: pricingIndexHandler } = await import('../api/agents/_id/pricing/index.js');
 const { default: x402Handler } = await import('../api/agents/x402/[action].js');
 const { default: revenueHandler } = await import('../api/billing/revenue.js');
 const { default: withdrawalsHandler } = await import('../api/billing/withdrawals/index.js');
@@ -253,6 +258,8 @@ describe('Revenue Attribution', () => {
 
 		// agent lookup (needs user_id for insertNotification)
 		sqlState.queue.push([agent]);
+		// priceFor: agent_skill_prices lookup → no explicit price, falls back to meta
+		sqlState.queue.push([]);
 		// verifyPaid: intent is paid, amount matches default_price
 		sqlState.queue.push([
 			{
@@ -293,6 +300,7 @@ describe('Revenue Attribution', () => {
 		authState.session = session;
 
 		sqlState.queue.push([agent]); // agent lookup
+		sqlState.queue.push([]); // priceFor: agent_skill_prices → no row, use meta
 
 		const { status } = await invoke(x402Handler, {
 			method: 'POST',
@@ -311,6 +319,7 @@ describe('Revenue Attribution', () => {
 
 		// First invoke: intent is paid → succeeds
 		sqlState.queue.push([agent]);
+		sqlState.queue.push([]); // priceFor: agent_skill_prices → no row, use meta
 		sqlState.queue.push([{
 			id: intentId,
 			agent_id: agent.id,
@@ -332,6 +341,7 @@ describe('Revenue Attribution', () => {
 
 		// Second invoke: intent is consumed → verifyPaid finds no 'paid' row → 402
 		sqlState.queue.push([agent]);
+		sqlState.queue.push([]); // priceFor: agent_skill_prices → no row, use meta
 		sqlState.queue.push([]); // empty result: no 'paid' intent → verifyPaid returns null
 
 		const { status: second } = await invoke(x402Handler, {

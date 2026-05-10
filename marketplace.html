@@ -392,6 +392,61 @@
 				margin-bottom: 14px;
 			}
 
+			/* ── 3D Lobby overlay (Three.js scene, opt-in via "Open 3D Lobby") ── */
+			.market-lobby-overlay {
+				position: fixed;
+				inset: 0;
+				z-index: 1500;
+				background:
+					radial-gradient(ellipse at top, rgba(125, 211, 252, 0.06), transparent 60%),
+					radial-gradient(ellipse at bottom, rgba(168, 85, 247, 0.05), transparent 60%),
+					#050608;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+			.market-lobby-overlay[hidden] { display: none; }
+			.market-lobby-canvas {
+				width: 100%;
+				height: 100%;
+				display: block;
+			}
+			.market-lobby-close {
+				position: absolute;
+				top: 18px;
+				right: 22px;
+				z-index: 2;
+				width: 38px;
+				height: 38px;
+				border-radius: 50%;
+				background: rgba(255, 255, 255, 0.08);
+				color: #fafafa;
+				border: 1px solid rgba(255, 255, 255, 0.14);
+				font-size: 22px;
+				cursor: pointer;
+				transition: background 0.15s ease;
+				font-family: inherit;
+			}
+			.market-lobby-close:hover {
+				background: rgba(255, 255, 255, 0.16);
+			}
+			.market-lobby-hint {
+				position: absolute;
+				bottom: 24px;
+				left: 50%;
+				transform: translateX(-50%);
+				font-size: 12px;
+				color: rgba(255, 255, 255, 0.6);
+				font-family: 'Space Grotesk', sans-serif;
+				letter-spacing: 0.06em;
+				background: rgba(0, 0, 0, 0.4);
+				padding: 8px 16px;
+				border-radius: 999px;
+				border: 1px solid rgba(255, 255, 255, 0.08);
+				backdrop-filter: blur(10px);
+				pointer-events: none;
+			}
+
 			/* ── Weekly theme strip ───────────────────────────────────────── */
 			.market-theme-strip {
 				display: flex;
@@ -1044,11 +1099,19 @@
 						<div class="market-hero-stats" id="market-hero-stats"></div>
 						<div class="market-hero-actions">
 							<button class="market-hero-cta" id="market-hero-view">View in 3D →</button>
+							<button class="market-hero-secondary" id="market-hero-lobby">Open 3D Lobby</button>
 							<button class="market-hero-secondary" id="market-hero-fork" hidden>Fork agent</button>
 						</div>
 						<div class="market-hero-dots" id="market-hero-dots"></div>
 					</div>
 				</section>
+
+				<!-- Three.js multi-avatar lobby (opt-in fullscreen overlay). -->
+				<div class="market-lobby-overlay" id="market-lobby-overlay" hidden aria-modal="true" role="dialog" aria-label="3D Lobby">
+					<button class="market-lobby-close" id="market-lobby-close" aria-label="Close lobby">×</button>
+					<canvas class="market-lobby-canvas" id="market-lobby-canvas"></canvas>
+					<div class="market-lobby-hint">Move your mouse · Click an avatar to inspect</div>
+				</div>
 
 				<header class="market-topbar">
 					<input
@@ -1373,6 +1436,7 @@
 						<button class="btn-primary" id="avatar-modal-use">Start an agent with this avatar</button>
 						<a class="btn-secondary" id="avatar-modal-view" href="#" target="_blank" rel="noopener">Open in 3D viewer</a>
 						<a class="btn-secondary" id="avatar-modal-download" href="#" download>Download GLB</a>
+						<button id="avatar-modal-bookmark" aria-pressed="false">Bookmark</button>
 					</div>
 				</div>
 			</div>

@@ -4,6 +4,7 @@
 import { Box3 } from 'three';
 import { Viewer } from './viewer.js';
 import { Runtime, skillAccessFromAgentDetail } from './runtime/index.js';
+import { SkillPaymentModal } from './payment-modal.js';
 import { SceneController } from './runtime/scene.js';
 import { SkillRegistry } from './skills/index.js';
 import { Memory } from './memory/index.js';
@@ -1507,6 +1508,45 @@ class Agent3DElement extends HTMLElement {
 			}
 
 			this._mounted = true;
+
+			// ── Skill payment modal ────────────────────────────────────────────
+			// Shows a self-contained purchase UI inside the shadow DOM when the
+			// runtime blocks a paid skill. On success, refreshes skillAccess so
+			// the next invocation goes through without re-prompting.
+			if (_backendId && this.shadowRoot) {
+				this._paymentModal = new SkillPaymentModal(this.shadowRoot, _backendId);
+				let _modalOpen = false;
+				this._runtime.addEventListener('skill:payment-required', async (e) => {
+					if (_modalOpen) return;
+					_modalOpen = true;
+					let purchased = false;
+					try {
+						purchased = await this._paymentModal.show(e.detail);
+					} finally {
+						_modalOpen = false;
+					}
+					if (purchased) {
+						// Refresh skillAccess from the updated agent detail so the
+						// next tool call succeeds without re-prompting.
+						try {
+							const base = _scriptOrigin || window.location.origin;
+							const r = await fetch(
+								`${base}/api/marketplace/agents/${_backendId}`,
+								{ credentials: 'include' },
+							);
+							if (r.ok) {
+								const j = await r.json();
+								if (j?.data?.agent) {
+									this._runtime.skillAccess = skillAccessFromAgentDetail(j.data.agent);
+								}
+							}
+						} catch {}
+						this.dispatchEvent(new CustomEvent('skill:purchased', {
+							detail: e.detail, bubbles: true, composed: true,
+						}));
+					}
+				});
+			}
 
 			this._notifier = new AgentNotifier(this, protocol);
 			this._notifier.attach();

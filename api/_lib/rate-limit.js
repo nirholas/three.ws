@@ -110,6 +110,8 @@ export const limits = {
 			limit: Math.max(1, Math.min(1000, perMin || 10)),
 			window: '1 m',
 		}).limit(agentId),
+	// Autonomous agent skill purchases: 10 per hour per buyer agent to prevent runaway spending.
+	agentBuy: (agentId) => getLimiter('agent:buy', { limit: 10, window: '1 h' }).limit(agentId),
 	// Gas-spending endpoints: 10 redeems per 5 minutes per IP
 	strict: (key) =>
 		getLimiter('permissions:redeem:strict', { limit: 10, window: '5 m' }).limit(key),

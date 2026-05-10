@@ -12,6 +12,7 @@ import { randomToken, hmacSha256, constantTimeEquals } from '../../_lib/crypto.j
 import { env } from '../../_lib/env.js';
 import { parse } from '../../_lib/validate.js';
 import { sendWelcomeEmail } from '../../_lib/email.js';
+import { seedDefaultAgent } from '../../_lib/seed-default-agent.js';
 
 const NONCE_TTL_SEC = 5 * 60;
 const CSRF_COOKIE = '__Host-csrf-siwe';
@@ -247,6 +248,7 @@ async function handleVerify(req, res) {
 				queueMicrotask(() =>
 					sendWelcomeEmail({ to: placeholderEmail, displayName: shortAddr(claimed) }),
 				);
+				queueMicrotask(() => seedDefaultAgent(userId));
 			}
 		}
 	}

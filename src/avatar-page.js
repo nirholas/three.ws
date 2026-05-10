@@ -209,6 +209,7 @@ function renderShell(glbUrl) {
 						</div>
 						<form class="av-chat-form" id="av-chat-form">
 							<textarea class="av-chat-input" id="av-chat-input" placeholder="Say something…" rows="1" autocomplete="off"></textarea>
+							<button type="button" class="av-chat-mic" id="av-chat-mic" aria-label="Dictate (voice input)" title="Dictate via microphone">🎤</button>
 							<button type="submit" class="av-chat-send" id="av-chat-send">Send</button>
 						</form>
 					</div>
@@ -910,7 +911,17 @@ function updateOg() {
 	$('og-url')?.setAttribute('content', location.href);
 	$('tw-title')?.setAttribute('content', `${avatar.name} — Avatar Studio`);
 	$('tw-description')?.setAttribute('content', avatar.description || `A 3D avatar on three.ws`);
-	if (avatar.thumbnail_url) {
-		$('og-image')?.setAttribute('content', avatar.thumbnail_url);
+	// Always point at /api/avatar/:id/og — that endpoint redirects to the real
+	// thumbnail when one exists, falls back to a styled SVG card when it doesn't.
+	// This way social cards never come up empty for demo avatars.
+	const ogUrl = `${location.origin}/api/avatar/${encodeURIComponent(avatar.id || avatarId)}/og`;
+	$('og-image')?.setAttribute('content', ogUrl);
+	const twImage = document.querySelector('meta[name="twitter:image"]');
+	if (twImage) twImage.setAttribute('content', ogUrl);
+	else {
+		const m = document.createElement('meta');
+		m.name = 'twitter:image';
+		m.content = ogUrl;
+		document.head.appendChild(m);
 	}
 }

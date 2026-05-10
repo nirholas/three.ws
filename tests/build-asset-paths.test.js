@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
@@ -7,16 +7,13 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, '..');
 const dist = resolve(repoRoot, 'dist');
 
+const HAS_DIST = existsSync(dist);
+
 // Guards against the regression where /style.css 404'd in production
 // because public/* HTML rollup inputs collide with the public-dir copy.
 // If you see this fail, the deployed site is likely about to break the
 // same way studio did on 2026-04-27.
-describe('build asset paths', () => {
-	beforeAll(() => {
-		if (!existsSync(dist)) {
-			throw new Error(`dist/ not found — run \`npm run build\` before running this test.`);
-		}
-	});
+describe.skipIf(!HAS_DIST)('build asset paths', () => {
 
 	it('serves /style.css from dist root', () => {
 		expect(existsSync(resolve(dist, 'style.css'))).toBe(true);

@@ -38,6 +38,14 @@ vi.mock('../../api/_lib/agent-wallet.js', () => ({
 		address: '0xabc0000000000000000000000000000000000001',
 		encrypted_key: 'enc-key-stub',
 	})),
+	generateSolanaAgentWallet: vi.fn(async () => ({
+		address: 'SolAddr111111111111111111111111111111111111',
+		encrypted_secret: 'enc-sol-secret-stub',
+	})),
+	recoverSolanaAgentKeypair: vi.fn(async () => ({
+		publicKey: { toBase58: () => 'SolAddr111111111111111111111111111111111111' },
+		secretKey: new Uint8Array(64),
+	})),
 }));
 
 // Import the handler AFTER mocks are declared.

@@ -15,6 +15,7 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { parse, loginBody, registerBody, usernameRegisterBody, username as usernameValidator, displayName, email, password } from '../_lib/validate.js';
 import { sendPasswordResetEmail, sendVerificationEmail } from '../_lib/email.js';
 import { generateReferralCode } from '../_lib/referrals.js';
+import { seedDefaultAgent } from '../_lib/seed-default-agent.js';
 import { z } from 'zod';
 
 const APP_ORIGIN = process.env.APP_ORIGIN || 'https://three.ws';
@@ -108,6 +109,9 @@ async function handleRegister(req, res) {
 	// TODO: loop until referral code is unique
 	const newReferralCode = generateReferralCode();
 	const [user] = await sql`insert into users (email, password_hash, display_name, referred_by_id, referral_code) values (${email_val}, ${hash}, ${displayName_val}, ${referred_by_id}, ${newReferralCode}) returning id, display_name, plan, created_at, referral_code`;
+	// Fire-and-forget: every new account gets a starter draft agent so the
+	// marketplace's "My Agents" tab and onboarding flow have something to show.
+	queueMicrotask(() => seedDefaultAgent(user.id));
 	await destroySession(req);
 	const token = await createSession({ userId: user.id, userAgent: req.headers['user-agent'], ip });
 	res.setHeader('set-cookie', sessionCookie(token));

@@ -78,6 +78,70 @@
 	border-radius: 4px;
 }
 
+/* ── Badge ── */
+
+.home-nav .nav-badge {
+	display: inline-block;
+	padding: 1px 6px;
+	margin-left: 6px;
+	background: linear-gradient(135deg, #8b5cf6, #22d3ee);
+	color: #0a0b10;
+	border-radius: 4px;
+	font-size: 9px;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	vertical-align: 1px;
+}
+
+.home-nav .nav-link-with-badge {
+	display: inline-flex;
+	align-items: center;
+}
+
+/* ── Hamburger button (desktop: hidden) ── */
+
+.home-nav .nav-burger {
+	display: none;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: 5px;
+	width: 36px;
+	height: 36px;
+	padding: 0;
+	background: none;
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	border-radius: 7px;
+	cursor: pointer;
+	-webkit-app-region: no-drag;
+	transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.home-nav .nav-burger:hover {
+	border-color: rgba(255, 255, 255, 0.28);
+	background: rgba(255, 255, 255, 0.05);
+}
+
+.home-nav .nav-burger-bar {
+	display: block;
+	width: 18px;
+	height: 2px;
+	background: rgba(255, 255, 255, 0.7);
+	border-radius: 2px;
+	transition: transform 0.22s ease, opacity 0.22s ease, width 0.22s ease;
+}
+
+.home-nav .nav-burger[aria-expanded='true'] .nav-burger-bar:nth-child(1) {
+	transform: translateY(7px) rotate(45deg);
+}
+.home-nav .nav-burger[aria-expanded='true'] .nav-burger-bar:nth-child(2) {
+	opacity: 0;
+	width: 0;
+}
+.home-nav .nav-burger[aria-expanded='true'] .nav-burger-bar:nth-child(3) {
+	transform: translateY(-7px) rotate(-45deg);
+}
+
 /* ── Dropdown nav ── */
 
 .home-nav .nav-root,
@@ -148,13 +212,13 @@
 	margin: 0;
 	padding: 8px;
 	list-style: none;
-	background: rgba(14, 12, 22, 0.92);
-	backdrop-filter: blur(18px) saturate(140%);
-	-webkit-backdrop-filter: blur(18px) saturate(140%);
+	background: rgba(14, 12, 22, 0.94);
+	backdrop-filter: blur(20px) saturate(150%);
+	-webkit-backdrop-filter: blur(20px) saturate(150%);
 	border: 1px solid rgba(255, 255, 255, 0.08);
 	border-radius: 12px;
 	box-shadow:
-		0 20px 40px -12px rgba(0, 0, 0, 0.6),
+		0 20px 40px -12px rgba(0, 0, 0, 0.65),
 		0 4px 12px -4px rgba(0, 0, 0, 0.5);
 	opacity: 0;
 	transform: translateY(-6px);
@@ -207,11 +271,11 @@
 	color: rgba(255, 255, 255, 0.65);
 }
 
-@media (max-width: 900px) {
+/* ── Tablet: tighten gap, flip dropdowns right-aligned ── */
+
+@media (min-width: 769px) and (max-width: 1024px) {
 	.home-nav .nav-root {
 		gap: var(--space-md, 1rem);
-		flex-wrap: wrap;
-		justify-content: flex-end;
 	}
 	.home-nav .nav-menu {
 		left: auto;
@@ -219,73 +283,116 @@
 	}
 }
 
-/* ── Standalone site header (used by pages that don't ship their own).
-   Pages with their own custom header keep using it; this class is only
-   applied to the canonical block injected into otherwise-bare pages.
-   Kept in normal flow (not sticky) so pages with their own sticky
-   toolbars don't overlap. ── */
-.site-header {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 1.5rem;
-	padding: 0.9rem 1.5rem;
-	background: rgba(8, 8, 10, 0.78);
-	backdrop-filter: blur(14px);
-	-webkit-backdrop-filter: blur(14px);
-	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-	position: relative;
-	z-index: 50;
-	color: #fff;
-	font-family: 'Space Grotesk', 'Inter', sans-serif;
-	/* If the parent is a CSS grid (e.g., marketplace's two-column layout),
-	   span every column so the header sits across the full width. Harmless
-	   on pages where the parent isn't a grid. */
-	grid-column: 1 / -1;
-}
+/* ── Mobile: hamburger + slide-down panel ── */
 
-.site-header-brand {
-	margin: 0;
-	font-size: 1.05rem;
-	font-weight: 600;
-	letter-spacing: -0.01em;
-}
+@media (max-width: 768px) {
+	.home-nav {
+		position: relative;
+		align-items: center;
+		gap: 0;
+	}
 
-.site-header-brand a {
-	display: inline-flex;
-	align-items: center;
-	gap: 0.4rem;
-	color: #fff;
-	text-decoration: none;
-}
+	.home-nav .nav-burger {
+		display: flex;
+		margin-left: auto;
+	}
 
-.site-header-brand .wordmark-logo {
-	width: 22px;
-	height: 22px;
-	display: inline-block;
-	vertical-align: middle;
-	flex-shrink: 0;
-}
+	/* Hidden by default; toggled via .is-open */
+	.home-nav .nav-root {
+		display: none !important;
+		position: absolute;
+		top: calc(100% + 12px);
+		right: 0;
+		width: min(320px, 92vw);
+		flex-direction: column !important;
+		align-items: stretch !important;
+		gap: 2px !important;
+		padding: 10px;
+		background: rgba(14, 12, 22, 0.97);
+		backdrop-filter: blur(24px) saturate(150%);
+		-webkit-backdrop-filter: blur(24px) saturate(150%);
+		border: 1px solid rgba(255, 255, 255, 0.08);
+		border-radius: 14px;
+		box-shadow:
+			0 24px 48px -12px rgba(0, 0, 0, 0.7),
+			0 8px 16px -8px rgba(0, 0, 0, 0.5);
+		z-index: 999;
+	}
 
-.site-header-brand .wordmark-dot {
-	display: inline-block;
-	width: 7px;
-	height: 7px;
-	border-radius: 50%;
-	background: #fff;
-	box-shadow: 0 0 8px rgba(255, 255, 255, 0.55);
-}
+	.home-nav .nav-root.is-open {
+		display: flex !important;
+		animation: nav-mobile-in 0.18s ease forwards;
+	}
 
-@media (max-width: 720px) {
-	.site-header {
-		padding: 0.75rem 1rem;
-		gap: 0.75rem;
+	@keyframes nav-mobile-in {
+		from { opacity: 0; transform: translateY(-8px); }
+		to   { opacity: 1; transform: translateY(0); }
+	}
+
+	.home-nav .nav-item {
+		width: 100%;
+	}
+
+	.home-nav .nav-item > a,
+	.home-nav .nav-trigger {
+		display: flex;
+		align-items: center;
+		width: 100%;
+		padding: 10px 12px;
+		border-radius: 8px;
+		font-size: 0.95rem;
+		color: rgba(255, 255, 255, 0.75);
+		transition: background 0.15s ease, color 0.15s ease;
+		box-sizing: border-box;
+	}
+
+	.home-nav .nav-item > a:hover,
+	.home-nav .nav-trigger:hover,
+	.home-nav .nav-trigger[aria-expanded='true'] {
+		background: rgba(255, 255, 255, 0.05);
+		color: #fff;
+	}
+
+	.home-nav .nav-caret {
+		margin-left: auto;
+	}
+
+	/* Dropdowns become inline accordions on mobile */
+	.home-nav .nav-menu {
+		position: static;
+		opacity: 1 !important;
+		transform: none !important;
+		pointer-events: auto !important;
+		display: none;
+		min-width: 0;
+		padding: 2px 0 2px 12px;
+		background: none;
+		backdrop-filter: none;
+		-webkit-backdrop-filter: none;
+		border: none;
+		box-shadow: none;
+		border-radius: 0;
+	}
+
+	.home-nav .nav-trigger[aria-expanded='true'] + .nav-menu {
+		display: block;
+	}
+
+	.home-nav .nav-menu a {
+		padding: 8px 12px;
+		border-radius: 7px;
+	}
+
+	.home-nav .nav-cta {
+		display: block;
+		text-align: center;
+		margin-top: 6px;
+		padding: 10px 16px;
+	}
+
+	.home-nav .nav-user {
+		max-width: 100%;
+		width: 100%;
+		box-sizing: border-box;
 	}
 }
-
-/* Footer-container is the sibling slot used by /footer.js. Also span all
-   columns so it works inside grid layouts like body.market-page. */
-#footer-container {
-	grid-column: 1 / -1;
-}
-

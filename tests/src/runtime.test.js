@@ -126,8 +126,9 @@ describe('Runtime — thinking events', () => {
 		const rt = makeRuntime(provider);
 		const events = collect(rt, 'brain:thinking');
 		await rt.send('question');
-		expect(events).toHaveLength(1);
-		expect(events[0].content).toBe('Reasoning here');
+		expect(events).toHaveLength(2);
+		const done = events.find(e => !e.thinking && e.content === 'Reasoning here');
+		expect(done).toBeDefined();
 	});
 
 	it('does not emit brain:thinking when thinking is empty', async () => {
@@ -135,7 +136,9 @@ describe('Runtime — thinking events', () => {
 		const rt = makeRuntime(provider);
 		const events = collect(rt, 'brain:thinking');
 		await rt.send('question');
-		expect(events).toHaveLength(0);
+		// Two events are still fired (start + end), but no content event
+		const contentEvents = events.filter(e => !e.thinking && e.content);
+		expect(contentEvents).toHaveLength(0);
 	});
 });
 

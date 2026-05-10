@@ -1,0 +1,51 @@
+// Seeds a default draft agent for a brand-new user so they have something
+// to publish, fork from, or attach an avatar to as soon as they sign in.
+//
+// Idempotent: if the user already has any agent (published or draft), the
+// function is a no-op. Safe to call from any signup path (email, SIWE, SIWS).
+
+import { sql } from './db.js';
+
+const DEFAULT_NAME = 'My First Agent';
+const DEFAULT_DESCRIPTION =
+	"A friendly starter agent. Edit the personality, attach a 3D avatar, and publish when you're ready.";
+const DEFAULT_PROMPT =
+	'You are a helpful, concise assistant. Greet the user warmly, ask what they need help with, ' +
+	'and respond clearly. Avoid filler. When you do not know something, say so.';
+const DEFAULT_GREETING = "Hi! I'm your first agent. What should we work on today?";
+
+export async function seedDefaultAgent(userId) {
+	if (!userId) return null;
+
+	const existing = await sql`
+		SELECT 1 AS x FROM agent_identities
+		WHERE user_id = ${userId} AND deleted_at IS NULL
+		LIMIT 1
+	`;
+	if (existing.length) return null;
+
+	try {
+		const [agent] = await sql`
+			INSERT INTO agent_identities (
+				user_id, name, description, system_prompt, greeting,
+				category, tags, capabilities, is_published
+			) VALUES (
+				${userId},
+				${DEFAULT_NAME},
+				${DEFAULT_DESCRIPTION},
+				${DEFAULT_PROMPT},
+				${DEFAULT_GREETING},
+				'general',
+				ARRAY['starter']::text[],
+				'{"bullets": ["Answers questions","Helps with writing","Suggests next steps"], "skills": [], "library": []}'::jsonb,
+				false
+			)
+			RETURNING id
+		`;
+		return agent?.id || null;
+	} catch (err) {
+		// Don't ever block signup if seeding fails — just log and move on.
+		console.error('[seed-default-agent] failed', { userId, error: err?.message });
+		return null;
+	}
+}
