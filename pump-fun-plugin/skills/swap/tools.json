@@ -1,0 +1,34 @@
+{
+  "tools": [
+    {
+      "name": "pumpfun_swap",
+      "description": "Build a buy or sell transaction on pump.fun. Auto-detects bonding curve vs AMM. For buys set inputMint to NATIVE_MINT (So11111111111111111111111111111111111111112); for sells set outputMint to NATIVE_MINT.",
+      "input_schema": {
+        "type": "object",
+        "required": ["inputMint", "outputMint", "amount", "user"],
+        "properties": {
+          "inputMint": {
+            "type": "string",
+            "description": "Mint to spend. Use So11111111111111111111111111111111111111112 for SOL buys."
+          },
+          "outputMint": {
+            "type": "string",
+            "description": "Mint to receive. Use So11111111111111111111111111111111111111112 for SOL sells."
+          },
+          "amount": {
+            "type": "string",
+            "description": "Amount in lamports for SOL, or token smallest units (6 decimals) for token input."
+          },
+          "user": { "type": "string", "description": "User wallet public key (signer)" },
+          "slippagePct": { "type": "number", "description": "Slippage tolerance in percent (default 2)" },
+          "feePayer": { "type": "string", "description": "Fee payer public key (defaults to user)" },
+          "frontRunningProtection": {
+            "type": "boolean",
+            "description": "Route via Jito for MEV protection (requires tipAmount)"
+          },
+          "tipAmount": { "type": "number", "description": "Jito tip in SOL, e.g. 0.0001" }
+        }
+      }
+    }
+  ]
+}

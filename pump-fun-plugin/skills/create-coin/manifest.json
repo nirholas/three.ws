@@ -1,0 +1,11 @@
+{
+  "spec": "skill/0.1",
+  "name": "pumpfun-create-coin",
+  "version": "1.0.0",
+  "description": "Create coins on pump.fun with initial buy via the fun-block API",
+  "sandboxPolicy": "trusted-main-thread",
+  "tags": ["solana", "pump.fun", "token", "create"],
+  "provides": {
+    "tools": ["pumpfun_create_coin"]
+  }
+}

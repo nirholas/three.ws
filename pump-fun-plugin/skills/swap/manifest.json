@@ -1,0 +1,11 @@
+{
+  "spec": "skill/0.1",
+  "name": "pumpfun-swap",
+  "version": "1.0.0",
+  "description": "Buy and sell tokens on pump.fun bonding curve and AMM via the fun-block API",
+  "sandboxPolicy": "trusted-main-thread",
+  "tags": ["solana", "pump.fun", "swap", "defi"],
+  "provides": {
+    "tools": ["pumpfun_swap"]
+  }
+}

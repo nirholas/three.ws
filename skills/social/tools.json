@@ -1,0 +1,136 @@
+{
+	"tools": [
+		{
+			"name": "social_platforms",
+			"description": "List all supported social media platforms and their required credentials and settings. Call this first before posting.",
+			"input_schema": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "Optional: get details for a specific platform (x, farcaster, reddit)"
+					}
+				},
+				"required": []
+			}
+		},
+		{
+			"name": "social_post",
+			"description": "Post to a social media platform immediately or schedule for future delivery. Returns the post ID and URL on success.",
+			"input_schema": {
+				"type": "object",
+				"properties": {
+					"platform": {
+						"type": "string",
+						"enum": ["x", "farcaster", "reddit"],
+						"description": "Target platform"
+					},
+					"content": {
+						"type": "string",
+						"description": "Post text content"
+					},
+					"credentials": {
+						"type": "object",
+						"description": "Platform credentials. X: {consumer_key, consumer_secret, access_token, access_secret}. Farcaster: {neynar_key, signer_uuid}. Reddit: {access_token}."
+					},
+					"media_urls": {
+						"type": "array",
+						"items": { "type": "string" },
+						"description": "Optional URLs of images/videos to attach (upload first with social_upload)"
+					},
+					"reply_to": {
+						"type": "string",
+						"description": "Optional: reply to this post ID / tweet ID / cast hash"
+					},
+					"schedule_at": {
+						"type": "string",
+						"description": "Optional ISO 8601 timestamp to schedule future delivery (e.g. 2026-05-11T09:00:00Z)"
+					},
+					"settings": {
+						"type": "object",
+						"description": "Platform-specific settings. Reddit: {subreddit, title, kind}. Farcaster: {channel_id, parent_url}."
+					},
+					"agent_id": {
+						"type": "string",
+						"description": "Optional: agent ID for attribution"
+					}
+				},
+				"required": ["platform", "content", "credentials"]
+			}
+		},
+		{
+			"name": "social_list",
+			"description": "List scheduled, published, and failed social posts.",
+			"input_schema": {
+				"type": "object",
+				"properties": {
+					"status": {
+						"type": "string",
+						"enum": ["scheduled", "published", "failed", "pending"],
+						"description": "Filter by post status"
+					},
+					"platform": {
+						"type": "string",
+						"enum": ["x", "farcaster", "reddit"],
+						"description": "Filter by platform"
+					},
+					"agent_id": { "type": "string" },
+					"limit": { "type": "integer", "default": 20 },
+					"offset": { "type": "integer", "default": 0 }
+				},
+				"required": []
+			}
+		},
+		{
+			"name": "social_get",
+			"description": "Get details of a single social post by ID.",
+			"input_schema": {
+				"type": "object",
+				"properties": {
+					"id": { "type": "string", "description": "Post ID from social_post or social_list" }
+				},
+				"required": ["id"]
+			}
+		},
+		{
+			"name": "social_cancel",
+			"description": "Cancel a scheduled post before it is published.",
+			"input_schema": {
+				"type": "object",
+				"properties": {
+					"id": { "type": "string", "description": "Scheduled post ID to cancel" }
+				},
+				"required": ["id"]
+			}
+		},
+		{
+			"name": "social_analytics",
+			"description": "Get analytics for posts. Pass post_url + mint to correlate a tweet with a Pump.fun token price movement.",
+			"input_schema": {
+				"type": "object",
+				"properties": {
+					"post_id": { "type": "string", "description": "Post DB ID to get engagement analytics" },
+					"post_url": { "type": "string", "description": "X (Twitter) post URL for price correlation" },
+					"mint": { "type": "string", "description": "Pump.fun token mint address for price correlation" },
+					"window_min": { "type": "integer", "default": 30, "description": "Price window in minutes" },
+					"platform": { "type": "string", "description": "Filter aggregate analytics by platform" },
+					"agent_id": { "type": "string" },
+					"days": { "type": "integer", "default": 7, "description": "Aggregate analytics window in days" }
+				},
+				"required": []
+			}
+		},
+		{
+			"name": "social_upload",
+			"description": "Get a presigned upload URL for media files. Returns a public URL to use in media_urls when posting.",
+			"input_schema": {
+				"type": "object",
+				"properties": {
+					"filename": { "type": "string", "description": "Original filename (for content-type detection)" },
+					"content_type": { "type": "string", "description": "MIME type: image/jpeg, image/png, image/gif, image/webp, video/mp4" }
+				},
+				"required": ["content_type"]
+			}
+		}
+	]
+}

@@ -1,0 +1,49 @@
+{
+  "tools": [
+    {
+      "name": "pumpfun_collect_fees",
+      "description": "Build a transaction to collect or distribute creator fees for a pump.fun coin. Auto-detects whether to collect directly or distribute via sharing config.",
+      "input_schema": {
+        "type": "object",
+        "required": ["mint", "user"],
+        "properties": {
+          "mint": { "type": "string", "description": "Token mint address" },
+          "user": { "type": "string", "description": "Creator wallet public key" },
+          "frontRunningProtection": { "type": "boolean" },
+          "tipAmount": { "type": "number", "description": "Jito tip in SOL" }
+        }
+      }
+    },
+    {
+      "name": "pumpfun_sharing_config",
+      "description": "Create or update a fee sharing config for a pump.fun coin. bps values across all shareholders must total exactly 10000.",
+      "input_schema": {
+        "type": "object",
+        "required": ["mint", "user", "shareholders"],
+        "properties": {
+          "mint": { "type": "string", "description": "Token mint address" },
+          "user": { "type": "string", "description": "Creator wallet public key" },
+          "shareholders": {
+            "type": "array",
+            "description": "Up to 10 shareholders, bps must sum to 10000",
+            "items": {
+              "type": "object",
+              "required": ["address", "bps"],
+              "properties": {
+                "address": { "type": "string" },
+                "bps": { "type": "number", "description": "Basis points share, e.g. 5000 = 50%" }
+              }
+            }
+          },
+          "mode": {
+            "type": "string",
+            "enum": ["create", "update"],
+            "description": "Auto-detected if omitted"
+          },
+          "frontRunningProtection": { "type": "boolean" },
+          "tipAmount": { "type": "number" }
+        }
+      }
+    }
+  ]
+}

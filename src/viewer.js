@@ -799,7 +799,7 @@ export class Viewer {
 		// Add content and build the animation panel BEFORE computing the camera
 		// so the panel's rendered height is available for panel-aware framing.
 		this.scene.add(object);
-		object.rotation.y = Math.PI;
+		object.rotation.y = 0;
 		this.content = object;
 
 		object.traverse((node) => {

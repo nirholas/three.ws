@@ -1,0 +1,8 @@
+{
+  "name": "pump-fun-skills",
+  "description": "AI agent skills for pump.fun — create coins, swap tokens, manage creator fees, accept tokenized payments, and drive reactive 3D avatars from live pump.fun events on Solana.",
+  "version": "1.0.0",
+  "author": "three.ws",
+  "tags": ["solana", "pump.fun", "defi", "web3", "avatar"],
+  "homepage": "https://three.ws"
+}

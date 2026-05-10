@@ -1,0 +1,33 @@
+{
+  "tools": [
+    {
+      "name": "pumpfun_create_coin",
+      "description": "Create a new coin on pump.fun with an optional initial buy. Returns a partially-signed transaction (mint keypair already signed) — the user wallet must co-sign before submitting.",
+      "input_schema": {
+        "type": "object",
+        "required": ["user", "name", "symbol", "uri", "solLamports"],
+        "properties": {
+          "user": { "type": "string", "description": "Creator wallet public key" },
+          "name": { "type": "string", "description": "Token name" },
+          "symbol": { "type": "string", "description": "Token symbol" },
+          "uri": { "type": "string", "description": "Metadata URI (IPFS or HTTPS JSON)" },
+          "solLamports": { "type": "string", "description": "Initial buy amount in lamports" },
+          "mayhemMode": { "type": "boolean", "description": "Enable mayhem mode (default false)" },
+          "cashback": { "type": "boolean", "description": "Enable cashback (default false)" },
+          "tokenizedAgent": {
+            "type": "boolean",
+            "description": "Create as a tokenized agent (default false)"
+          },
+          "buybackBps": {
+            "type": "number",
+            "description": "Buyback basis points when tokenizedAgent is true, e.g. 5000 = 50%"
+          },
+          "frontRunningProtection": { "type": "boolean" },
+          "tipAmount": { "type": "number", "description": "Jito tip in SOL" },
+          "feePayer": { "type": "string", "description": "Fee payer public key (defaults to user)" },
+          "creator": { "type": "string", "description": "Creator public key (defaults to user)" }
+        }
+      }
+    }
+  ]
+}
