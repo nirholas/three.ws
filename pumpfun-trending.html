@@ -44,8 +44,19 @@
 			.entry .meta-row { display: flex; gap: 12px; flex-wrap: wrap; font-size: 11px; color: #666; margin-top: 3px; }
 			.entry .mcap { color: #b366ff; font-weight: bold; }
 		</style>
+			<link rel="stylesheet" href="/nav.css" />
+			<link rel="stylesheet" href="/footer.css" />
+			<script defer src="/footer-newsletter.js"></script>
 	</head>
 	<body>
+		<header class="site-header">
+			<h1 class="site-header-brand">
+				<a href="/" aria-label="three.ws home"><img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" /><span class="wordmark-dot" aria-hidden="true"></span>three.ws</a>
+			</h1>
+			<div id="nav-container"></div>
+		</header>
+		<script src="/nav.js"></script>
+
 		<div id="root"></div>
 		<script type="module">
 			const TRENDING_API = '/api/pump/trending';
@@ -102,5 +113,8 @@
 
 			fetchTrending();
 		</script>
-	</body>
+	
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+</body>
 </html>

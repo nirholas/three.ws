@@ -63,8 +63,19 @@
     overflow: hidden;
   }
 </style>
-</head>
+		<link rel="stylesheet" href="/nav.css" />
+			<link rel="stylesheet" href="/footer.css" />
+			<script defer src="/footer-newsletter.js"></script>
+	</head>
 <body>
+		<header class="site-header">
+			<h1 class="site-header-brand">
+				<a href="/" aria-label="three.ws home"><img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" /><span class="wordmark-dot" aria-hidden="true"></span>three.ws</a>
+			</h1>
+			<div id="nav-container"></div>
+		</header>
+		<script src="/nav.js"></script>
+
   <div class="container">
     <div class="header">
       <img src="https://pump.fun/_next/image?url=%2Fandroid-chrome-512x512.png&w=128&q=75" alt="Coin" class="coin-img">
@@ -80,5 +91,8 @@
       <p>In a real-world scenario, websites like pump.fun would sanitize this description to prevent HTML and script injection for security reasons. This demo illustrates what would be possible if they allowed certain HTML elements like iframes.</p>
     </div>
   </div>
+
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
 </body>
 </html>

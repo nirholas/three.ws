@@ -100,6 +100,7 @@ window.addEventListener('popstate', render);
 
 
 async function loadCategories() {
+	if (!els.cats) return;
 	try {
 		const r = await fetch(`${API}/marketplace/categories`);
 		const j = await r.json();
@@ -110,6 +111,7 @@ async function loadCategories() {
 }
 
 function renderCategories(data) {
+	if (!els.cats) return;
 	const total = data?.total || 0;
 	const counts = Object.fromEntries((data?.categories || []).map((cat) => [cat.slug, cat.count]));
 	const rows = [
@@ -146,6 +148,7 @@ function renderCategories(data) {
 }
 
 function highlightActiveCat() {
+	if (!els.cats) return;
 	els.cats.querySelectorAll('.cat-row').forEach((el) => {
 		const slug = el.dataset.cat || null;
 		const active =
