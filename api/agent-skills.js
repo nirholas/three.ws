@@ -1,7 +1,7 @@
-import { sql } from '../_lib/db.js';
-import { authenticateBearer, getSessionUser } from '../_lib/auth.js';
-import { cors, error, json, method, readJson, wrap } from '../_lib/http.js';
-import { clientIp, limits } from '../_lib/rate-limit.js';
+import { sql } from './_lib/db.js';
+import { authenticateBearer, getSessionUser } from './_lib/auth.js';
+import { cors, error, json, method, readJson, wrap } from './_lib/http.js';
+import { clientIp, limits } from './_lib/rate-limit.js';
 import { z } from 'zod';
 
 const setPriceSchema = z.object({
