@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>three.ws · pay-per-call demo (x402)</title>
+<meta name="description" content="Live demo of x402 paid API calls on Solana. The on-page agent pays $0.001 USDC per request to the three.ws MCP server and renders the response in real time." />
+<link rel="preconnect" href="https://api.mainnet-beta.solana.com" />
+<style>
+  :root {
+    --bg: #0a0b10;
+    --panel: #14161f;
+    --panel-2: #1a1d29;
+    --border: #232636;
+    --text: #e6e8f0;
+    --muted: #8a90a8;
+    --accent: #8b5cf6;
+    --accent-2: #22d3ee;
+    --green: #22c55e;
+    --orange: #f59e0b;
+    --red: #ef4444;
+    --mono: ui-monospace, "JetBrains Mono", "Fira Code", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    padding: 22px 32px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand .logo {
+    width: 32px; height: 32px;
+    background: conic-gradient(from 230deg, var(--accent), var(--accent-2), var(--accent));
+    border-radius: 9px;
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+  }
+  .brand .title { font-weight: 700; font-size: 16px; letter-spacing: -0.01em; }
+  .brand .sub { font-size: 12px; color: var(--muted); }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--panel); border: 1px solid var(--border);
+    padding: 6px 12px; border-radius: 99px;
+    font-family: var(--mono); font-size: 12px;
+    color: var(--muted);
+  }
+  .pill .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--green); box-shadow: 0 0 8px var(--green);
+  }
+  main {
+    flex: 1; display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 0; min-height: 0;
+  }
+  @media (max-width: 900px) {
+    main { grid-template-columns: 1fr; }
+    aside { border-left: none !important; border-top: 1px solid var(--border); }
+  }
+  section.chat {
+    display: flex; flex-direction: column; min-height: 0;
+  }
+  .conv {
+    flex: 1; overflow-y: auto;
+    padding: 24px 32px;
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .msg {
+    display: flex; gap: 12px; align-items: flex-start;
+    animation: fade 0.18s ease-out;
+  }
+  @keyframes fade {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .msg .av {
+    width: 28px; height: 28px; border-radius: 8px;
+    flex: 0 0 auto;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700;
+  }
+  .msg.user .av { background: #2a2f44; color: #fff; }
+  .msg.agent .av {
+    background: conic-gradient(from 200deg, var(--accent), var(--accent-2));
+    color: #0a0b10;
+  }
+  .msg .body {
+    flex: 1;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 14px; line-height: 1.5;
+  }
+  .msg.user .body { background: var(--panel-2); }
+  .msg .body code {
+    font-family: var(--mono); font-size: 12px;
+    background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px;
+  }
+  .msg .body pre {
+    margin: 8px 0 0; padding: 10px 12px;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; overflow-x: auto;
+    font-family: var(--mono); font-size: 12px; line-height: 1.5;
+  }
+  .composer {
+    border-top: 1px solid var(--border);
+    padding: 16px 32px;
+    background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.2));
+  }
+  .quick {
+    display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;
+  }
+  .quick button {
+    background: var(--panel); border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 12px; border-radius: 99px;
+    font-size: 12px; cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .quick button:hover {
+    border-color: var(--accent);
+    background: rgba(139, 92, 246, 0.08);
+  }
+  .quick button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .input-row {
+    display: flex; gap: 10px; align-items: stretch;
+  }
+  .input-row input {
+    flex: 1;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 14px; border-radius: 10px;
+    font-size: 14px; font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .input-row input:focus { border-color: var(--accent); }
+  .input-row button {
+    background: var(--accent); color: #fff;
+    border: none; padding: 0 20px; border-radius: 10px;
+    font-weight: 600; font-size: 14px; cursor: pointer;
+    transition: background 0.15s, transform 0.05s;
+  }
+  .input-row button:hover { background: #7c3aed; }
+  .input-row button:active { transform: translateY(1px); }
+  .input-row button:disabled { opacity: 0.5; cursor: not-allowed; }
+  aside {
+    border-left: 1px solid var(--border);
+    padding: 24px;
+    background: var(--panel);
+    overflow-y: auto;
+  }
+  aside h2 {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted); margin: 0 0 14px;
+  }
+  .step {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    background: var(--panel-2);
+    font-size: 13px;
+  }
+  .step .icon {
+    width: 22px; height: 22px; flex: 0 0 auto;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; background: var(--bg);
+    border: 1px solid var(--border);
+  }
+  .step.active { border-color: var(--accent); }
+  .step.active .icon { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .step.done .icon { background: var(--green); color: #0a0b10; border-color: var(--green); }
+  .step.error { border-color: var(--red); }
+  .step.error .icon { background: var(--red); color: #fff; border-color: var(--red); }
+  .step .label { font-weight: 500; }
+  .step .meta { color: var(--muted); font-family: var(--mono); font-size: 11px; }
+  .receipt {
+    margin-top: 18px;
+    padding: 14px;
+    border-radius: 10px;
+    background: linear-gradient(180deg, rgba(34, 211, 238, 0.06), transparent);
+    border: 1px solid rgba(34, 211, 238, 0.3);
+  }
+  .receipt .row {
+    display: flex; justify-content: space-between; gap: 12px;
+    font-size: 12px; margin-bottom: 6px;
+    font-family: var(--mono);
+  }
+  .receipt .row .k { color: var(--muted); }
+  .receipt .row .v { color: var(--text); word-break: break-all; text-align: right; }
+  .receipt a { color: var(--accent-2); text-decoration: none; }
+  .receipt a:hover { text-decoration: underline; }
+  .err {
+    color: var(--red); font-family: var(--mono); font-size: 12px;
+    padding: 10px 12px;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+  }
+  .avatars-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 8px; margin-top: 8px;
+  }
+  .avatars-grid .card {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px;
+    font-size: 12px; line-height: 1.3;
+  }
+  .avatars-grid .card .name { font-weight: 600; word-break: break-word; }
+  .avatars-grid .card .slug { color: var(--muted); font-family: var(--mono); font-size: 11px; }
+  .meta-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 8px; margin-top: 8px;
+  }
+  .meta-grid .chip {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 10px;
+  }
+  .meta-grid .chip .k { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .meta-grid .chip .v { font-size: 14px; font-family: var(--mono); margin-top: 2px; }
+  .footer-note {
+    padding: 10px 32px 18px;
+    font-size: 11px; color: var(--muted);
+    text-align: center;
+    border-top: 1px solid var(--border);
+  }
+  .footer-note code { font-family: var(--mono); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="logo"></div>
+    <div>
+      <div class="title">three.ws · pay-per-call</div>
+      <div class="sub">Live x402 demo — agent pays USDC on Solana per request</div>
+    </div>
+  </div>
+  <div class="pill"><span class="dot"></span> agent wallet online</div>
+</header>
+
+<main>
+  <section class="chat">
+    <div class="conv" id="conv">
+      <div class="msg agent">
+        <div class="av">3</div>
+        <div class="body">
+          Hi. I'm the three.ws agent. Every request you send below triggers a real <strong>x402</strong> paid API call to <code>https://three.ws/api/mcp</code>: I pay <strong>$0.001 USDC on Solana mainnet</strong>, the facilitator settles on-chain, then the MCP tool runs and I render the response.
+          <br/><br/>
+          Try one of the chips below, or type your own model URL.
+        </div>
+      </div>
+    </div>
+    <div class="composer">
+      <div class="quick" id="quick">
+        <button data-cmd="tools/list">/list_tools</button>
+        <button data-cmd="validate_model:demo">/validate DamagedHelmet.glb</button>
+        <button data-cmd="inspect_model:demo">/inspect DamagedHelmet.glb</button>
+        <button data-cmd="search_public_avatars:">/search_avatars</button>
+      </div>
+      <div class="input-row">
+        <input id="prompt" placeholder='Try: validate https://example.com/model.glb' autocomplete="off" />
+        <button id="send">Pay & Run</button>
+      </div>
+    </div>
+  </section>
+
+  <aside id="status">
+    <h2>x402 settlement timeline</h2>
+    <div id="steps"></div>
+    <div id="receipt"></div>
+  </aside>
+</main>
+
+<div class="footer-note">
+  Source: <code>POST /api/x402-pay</code> → <code>POST /api/mcp</code> with <code>X-PAYMENT</code>. Settlement via <code>facilitator.payai.network</code>.
+</div>
+
+<script type="module">
+const conv = document.getElementById('conv');
+const stepsEl = document.getElementById('steps');
+const receiptEl = document.getElementById('receipt');
+const promptEl = document.getElementById('prompt');
+const sendBtn = document.getElementById('send');
+const quickEl = document.getElementById('quick');
+
+const DEMO_MODEL = 'https://threejs.org/examples/models/gltf/DamagedHelmet/glTF-Binary/DamagedHelmet.glb';
+
+function addMsg(role, html) {
+  const el = document.createElement('div');
+  el.className = `msg ${role}`;
+  const av = role === 'user' ? 'You' : '3';
+  el.innerHTML = `<div class="av">${av}</div><div class="body">${html}</div>`;
+  conv.appendChild(el);
+  conv.scrollTop = conv.scrollHeight;
+  return el;
+}
+
+const STEP_DEFS = [
+  { id: 'challenge', label: 'Receive 402 challenge' },
+  { id: 'build', label: 'Build & sign Solana payment' },
+  { id: 'settle', label: 'Facilitator verify + settle' },
+  { id: 'result', label: 'Render MCP result' },
+];
+
+function resetSteps() {
+  stepsEl.innerHTML = '';
+  receiptEl.innerHTML = '';
+  for (const s of STEP_DEFS) {
+    const el = document.createElement('div');
+    el.className = 'step';
+    el.id = `step-${s.id}`;
+    el.innerHTML = `<div class="icon">·</div><div style="flex:1"><div class="label">${s.label}</div><div class="meta" data-meta></div></div>`;
+    stepsEl.appendChild(el);
+  }
+}
+
+function setStep(id, state, meta) {
+  const el = document.getElementById(`step-${id}`);
+  if (!el) return;
+  el.className = `step ${state}`;
+  const ic = el.querySelector('.icon');
+  if (state === 'active') ic.textContent = '…';
+  else if (state === 'done') ic.textContent = '✓';
+  else if (state === 'error') ic.textContent = '!';
+  if (meta) el.querySelector('[data-meta]').textContent = meta;
+}
+
+function renderReceipt(payment, durations) {
+  const explorer = payment.tx ? `https://solscan.io/tx/${payment.tx}` : null;
+  receiptEl.innerHTML = `
+    <div class="receipt">
+      <div class="row"><span class="k">amount</span><span class="v">${(Number(payment.amount) / 1e6).toFixed(6)} USDC</span></div>
+      <div class="row"><span class="k">network</span><span class="v">Solana mainnet</span></div>
+      <div class="row"><span class="k">payer</span><span class="v">${payment.payer.slice(0,8)}…${payment.payer.slice(-4)}</span></div>
+      <div class="row"><span class="k">payTo</span><span class="v">${payment.payTo.slice(0,8)}…${payment.payTo.slice(-4)}</span></div>
+      <div class="row"><span class="k">total</span><span class="v">${durations.total_ms} ms</span></div>
+      ${explorer ? `<div class="row"><span class="k">tx</span><span class="v"><a href="${explorer}" target="_blank" rel="noopener">${payment.tx.slice(0,10)}…${payment.tx.slice(-6)} ↗</a></span></div>` : ''}
+    </div>`;
+}
+
+function renderResultBubble(tool, result) {
+  if (tool === 'tools/list') {
+    const tools = result?.tools || [];
+    return `<div><strong>${tools.length} tools available</strong> on the MCP server:</div>
+      <pre>${tools.map(t => `${t.name.padEnd(28)} ${t.title || ''}`).join('\n')}</pre>`;
+  }
+  if (tool === 'search_public_avatars') {
+    const text = parseTextResult(result);
+    if (text?.items) {
+      return `<div><strong>${text.items.length} public avatars</strong></div>
+        <div class="avatars-grid">${
+          text.items.map(a => `<div class="card"><div class="name">${escape(a.name || a.slug || '—')}</div><div class="slug">${escape(a.slug || '')}</div></div>`).join('')
+        }</div>`;
+    }
+    return defaultRender(result);
+  }
+  if (tool === 'validate_model') {
+    const text = parseTextResult(result);
+    if (text) {
+      const ok = text.ok ? '✅ valid' : '⚠️ warnings';
+      const meta = text.meta || {};
+      return `<div><strong>${ok}</strong> — ${(text.warnings || []).length} warnings</div>
+        <div class="meta-grid">
+          ${meta.vertices != null ? chip('vertices', meta.vertices.toLocaleString()) : ''}
+          ${meta.triangles != null ? chip('triangles', meta.triangles.toLocaleString()) : ''}
+          ${meta.materials != null ? chip('materials', meta.materials) : ''}
+          ${meta.meshes != null ? chip('meshes', meta.meshes) : ''}
+          ${meta.textures != null ? chip('textures', meta.textures) : ''}
+          ${meta.bytes != null ? chip('size', formatBytes(meta.bytes)) : ''}
+        </div>
+        ${(text.warnings || []).length ? `<pre>${text.warnings.join('\n')}</pre>` : ''}`;
+    }
+  }
+  if (tool === 'inspect_model') {
+    const text = parseTextResult(result);
+    if (text) return `<pre>${escape(JSON.stringify(text, null, 2)).slice(0, 1500)}</pre>`;
+  }
+  return defaultRender(result);
+}
+function chip(k, v) { return `<div class="chip"><div class="k">${k}</div><div class="v">${v}</div></div>`; }
+function defaultRender(result) { return `<pre>${escape(JSON.stringify(result, null, 2)).slice(0, 1500)}</pre>`; }
+function parseTextResult(result) {
+  const c = result?.content?.[0];
+  if (c?.type === 'text' && typeof c.text === 'string') {
+    try { return JSON.parse(c.text); } catch { return c.text; }
+  }
+  return null;
+}
+function escape(s) { return String(s).replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c])); }
+function formatBytes(n) {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024*1024) return `${(n/1024).toFixed(1)} KB`;
+  return `${(n/1024/1024).toFixed(1)} MB`;
+}
+
+function parsePrompt(text) {
+  const t = text.trim();
+  if (!t) return null;
+  if (t === '/list_tools' || t === 'list tools' || t === 'tools/list') return { tool: 'tools/list', args: {} };
+  let m;
+  if ((m = t.match(/^\/?validate(?:_model)?\s+(\S+)/i))) return { tool: 'validate_model', args: { url: m[1] } };
+  if ((m = t.match(/^\/?inspect(?:_model)?\s+(\S+)/i))) return { tool: 'inspect_model', args: { url: m[1] } };
+  if ((m = t.match(/^\/?optimize(?:_model)?\s+(\S+)/i))) return { tool: 'optimize_model', args: { url: m[1] } };
+  if ((m = t.match(/^\/?search(?:_avatars|_public_avatars)?(?:\s+(.+))?/i))) {
+    return { tool: 'search_public_avatars', args: m[1] ? { q: m[1].trim(), limit: 12 } : { limit: 12 } };
+  }
+  if (t.startsWith('http')) return { tool: 'validate_model', args: { url: t } };
+  return { tool: 'validate_model', args: { url: t } };
+}
+
+async function run(call, displayLabel) {
+  if (!call) return;
+  sendBtn.disabled = true;
+  for (const b of quickEl.querySelectorAll('button')) b.disabled = true;
+  promptEl.disabled = true;
+
+  addMsg('user', escape(displayLabel));
+  resetSteps();
+  setStep('challenge', 'active', 'sending unpaid request…');
+  const t0 = performance.now();
+  try {
+    const res = await fetch('/api/x402-pay', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(call),
+    });
+    const data = await res.json();
+    const elapsed = Math.round(performance.now() - t0);
+
+    if (!res.ok || !data.ok) {
+      setStep('challenge', 'done');
+      setStep('build', 'error');
+      addMsg('agent', `<div class="err">x402 call failed: ${escape(data.error || res.statusText)}</div>`);
+      return;
+    }
+    const d = data.durations;
+    setStep('challenge', 'done', `${d.challenge_ms} ms`);
+    setStep('build',     'done', `${d.build_ms} ms`);
+    setStep('settle',    'done', `${d.settle_ms} ms`);
+    setStep('result',    'done', `${elapsed} ms total`);
+
+    renderReceipt(data.payment, d);
+    addMsg('agent', renderResultBubble(call.tool, data.result));
+  } catch (err) {
+    setStep('challenge', 'error', String(err.message || err));
+    addMsg('agent', `<div class="err">Network error: ${escape(String(err.message || err))}</div>`);
+  } finally {
+    sendBtn.disabled = false;
+    for (const b of quickEl.querySelectorAll('button')) b.disabled = false;
+    promptEl.disabled = false;
+    promptEl.focus();
+  }
+}
+
+quickEl.addEventListener('click', (e) => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  const cmd = btn.dataset.cmd;
+  if (cmd === 'tools/list') return run({ tool: 'tools/list', args: {} }, '/list_tools');
+  if (cmd === 'validate_model:demo') return run({ tool: 'validate_model', args: { url: DEMO_MODEL } }, `validate ${DEMO_MODEL.split('/').pop()}`);
+  if (cmd === 'inspect_model:demo') return run({ tool: 'inspect_model', args: { url: DEMO_MODEL } }, `inspect ${DEMO_MODEL.split('/').pop()}`);
+  if (cmd === 'search_public_avatars:') return run({ tool: 'search_public_avatars', args: { limit: 12 } }, '/search_avatars');
+});
+
+sendBtn.addEventListener('click', () => {
+  const text = promptEl.value.trim();
+  if (!text) return;
+  const call = parsePrompt(text);
+  if (!call) return;
+  promptEl.value = '';
+  run(call, text);
+});
+promptEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendBtn.click(); }
+});
+
+resetSteps();
+promptEl.focus();
+</script>
+
+</body>
+</html>
