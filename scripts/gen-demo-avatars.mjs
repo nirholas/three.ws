@@ -96,6 +96,54 @@ const KHRONOS_META = {
 	VirtualCity: { tags: ['scene', 'environment', 'urban'], desc: 'Stylized low-poly city block — buildings, streets, props.' },
 	WaterBottle: { tags: ['object', 'pbr', 'transmission'], desc: 'Water bottle with translucent plastic body and embossed label.' },
 	XmpMetadataRoundedCube: { tags: ['test', 'metadata'], desc: 'Rounded cube embedding XMP metadata for attribution.' },
+	AlphaBlendModeTest: { tags: ['test', 'material'], desc: 'Plate of swatches showing alpha-blend, alpha-mask, and opaque modes side by side.' },
+	AnimatedColorsCube: { tags: ['animated', 'primitive'], desc: 'Cube with animated per-vertex color values for animation channel testing.' },
+	AnimatedMorphCube: { tags: ['animated', 'morph', 'primitive'], desc: 'Cube morphing through blend-shape targets — a baseline morph-target test.' },
+	AnimationPointerUVs: { tags: ['animated', 'test'], desc: 'KHR_animation_pointer demo: animated UV transforms driven by pointer paths.' },
+	AnisotropyBarnLamp: { tags: ['object', 'lighting', 'pbr'], desc: 'Barn-style lamp with brushed-metal anisotropic shading on the housing.' },
+	AnisotropyDiscTest: { tags: ['test', 'material', 'pbr'], desc: 'Disc demonstrating brushed-metal anisotropic highlights at varying angles.' },
+	AnisotropyRotationTest: { tags: ['test', 'material', 'pbr'], desc: 'Anisotropy rotation test — checks correct tangent rotation across UVs.' },
+	AnisotropyStrengthTest: { tags: ['test', 'material', 'pbr'], desc: 'Anisotropy strength sweep from 0 to 1 across a row of spheres.' },
+	AntiqueCamera: { tags: ['object', 'photography', 'pbr'], desc: 'Vintage twin-lens reflex camera with leather wrap and chrome detailing.' },
+	AttenuationTest: { tags: ['test', 'material', 'transmission'], desc: 'Volume attenuation test — colored glass blocks of varying thickness.' },
+	CompareAlphaCoverage: { tags: ['test', 'material'], desc: 'Side-by-side comparison of alpha-coverage approaches for foliage and fabric.' },
+	CompareAmbientOcclusion: { tags: ['test', 'material'], desc: 'Ambient occlusion on/off comparison on a reference object.' },
+	CompareAnisotropy: { tags: ['test', 'material', 'pbr'], desc: 'Comparison spheres demonstrating anisotropic vs isotropic specular.' },
+	CompareBaseColor: { tags: ['test', 'material', 'pbr'], desc: 'Base color sweep across the sRGB cube for material correctness checks.' },
+	CompareClearcoat: { tags: ['test', 'material', 'pbr'], desc: 'Clearcoat extension comparison — with vs without the clear-coat layer.' },
+	CompareDispersion: { tags: ['test', 'material', 'glass'], desc: 'Comparison of glass with and without chromatic dispersion.' },
+	CompareEmissiveStrength: { tags: ['test', 'lighting'], desc: 'KHR_materials_emissive_strength comparison — HDR-bright vs LDR emission.' },
+	CompareIor: { tags: ['test', 'material', 'glass'], desc: 'Index-of-refraction comparison sweeping IOR from 1.0 to 2.4.' },
+	CompareIridescence: { tags: ['test', 'material', 'pbr'], desc: 'Iridescence on/off comparison highlighting thin-film color shifts.' },
+	CompareMetallic: { tags: ['test', 'material', 'pbr'], desc: 'Metallic factor sweep from 0 (dielectric) to 1 (metal).' },
+	CompareNormal: { tags: ['test', 'material'], desc: 'Normal map intensity comparison across multiple bump strengths.' },
+	CompareRoughness: { tags: ['test', 'material', 'pbr'], desc: 'Roughness sweep from mirror to fully rough across spheres.' },
+	CompareSheen: { tags: ['test', 'material', 'fabric'], desc: 'KHR_materials_sheen comparison — fabric-like grazing-angle highlights.' },
+	CompareSpecular: { tags: ['test', 'material', 'pbr'], desc: 'KHR_materials_specular comparison sweeping specular factor.' },
+	CompareTransmission: { tags: ['test', 'material', 'glass'], desc: 'Transmission on/off comparison — solid vs see-through materials.' },
+	CompareVolume: { tags: ['test', 'material', 'glass'], desc: 'Volume thickness comparison demonstrating refraction depth.' },
+	CubeVisibility: { tags: ['test'], desc: 'Visibility flag test — cubes hidden via the visibility extension.' },
+	DiffuseTransmissionTest: { tags: ['test', 'material', 'transmission'], desc: 'KHR_materials_diffuse_transmission test on thin foliage panels.' },
+	DirectionalLight: { tags: ['test', 'lighting'], desc: 'Directional (sun) light reference scene with shadow-casting plane.' },
+	DispersionTest: { tags: ['test', 'glass', 'material'], desc: 'Chromatic dispersion test — light splitting across a glass prism.' },
+	EmissiveStrengthTest: { tags: ['test', 'lighting'], desc: 'Emissive intensity sweep showing HDR brightness in scene-referred lighting.' },
+	IORTestGrid: { tags: ['test', 'material', 'glass'], desc: 'IOR test grid — glass spheres at every common index of refraction.' },
+	InterpolationTest: { tags: ['test', 'animated'], desc: 'Animation interpolation modes: STEP, LINEAR, CUBICSPLINE side by side.' },
+	LightVisibility: { tags: ['test', 'lighting'], desc: 'Light-source visibility flag test for KHR_lights_punctual.' },
+	LightsPunctualLamp: { tags: ['object', 'lighting'], desc: 'Lamp model wired up via KHR_lights_punctual — real point light source.' },
+	MultiUVTest: { tags: ['test', 'textures'], desc: 'Multi-UV-channel test for textures using TEXCOORD_1.' },
+	PlaysetLightTest: { tags: ['test', 'lighting'], desc: 'Toy playset lighting test — multiple punctual lights interacting.' },
+	PotOfCoalsAnimationPointer: { tags: ['object', 'fire', 'animated'], desc: 'Pot of coals with KHR_animation_pointer driving emissive flicker.' },
+	ScatteringSkull: { tags: ['object', 'sss', 'pbr'], desc: 'Skull with subsurface scattering for translucent bone material.' },
+	SheenChair: { tags: ['furniture', 'fabric', 'pbr'], desc: 'Armchair upholstered in sheen-fabric demonstrating grazing-angle highlights.' },
+	SheenTestGrid: { tags: ['test', 'material', 'fabric'], desc: 'Sheen test grid sweeping roughness and color.' },
+	SheenWoodLeatherSofa: { tags: ['furniture', 'fabric', 'pbr'], desc: 'Sofa combining sheen fabric, leather, and wood — a multi-material reference.' },
+	SunglassesKhronos: { tags: ['fashion', 'object', 'pbr'], desc: 'Aviator-style sunglasses with tinted transmission lenses and metal frame.' },
+	TextureEncodingTest: { tags: ['test', 'textures'], desc: 'Texture color-space encoding test (sRGB vs linear).' },
+	TextureTransformMultiTest: { tags: ['test', 'textures'], desc: 'KHR_texture_transform test with multiple offsets/scales/rotations.' },
+	TransmissionOrderTest: { tags: ['test', 'material', 'transmission'], desc: 'Render-order test for stacked transmissive materials.' },
+	USDShaderBallForGltf: { tags: ['material', 'test'], desc: 'Pixar USD-compatible shader ball ported to glTF for cross-format material checks.' },
+	'Unicode❤♻Test': { tags: ['test'], desc: 'Unicode glTF asset name test (the file name itself is the test).' },
 };
 
 // Curated metadata for three.js example models
@@ -108,7 +156,15 @@ const THREEJS_META = {
 	Michelle: { tags: ['humanoid', 'rigged', 'character'], desc: 'Michelle character with Mixamo-compatible rig.' },
 	Xbot: { tags: ['robot', 'rigged', 'animated', 'character'], desc: 'X-Bot rigged humanoid robot, ready for retargeting.' },
 	LittlestTokyo: { tags: ['scene', 'environment', 'urban', 'animated'], desc: 'Animated Tokyo street scene by Glen Fox — cars driving, neon, atmosphere.' },
-	Ferrari: { tags: ['vehicle', 'car', 'pbr'], desc: 'Detailed Ferrari with full PBR materials and accurate proportions.' },
+	ferrari: { tags: ['vehicle', 'car', 'pbr'], desc: 'Detailed Ferrari with full PBR materials and accurate proportions.' },
+	Soldier: { tags: ['humanoid', 'rigged', 'animated', 'character'], desc: 'Soldier character with walk, run, and idle animations — three.js classic.' },
+	Horse: { tags: ['animal', 'animated', 'rigged'], desc: 'Galloping horse with skeletal animation.' },
+	Parrot: { tags: ['animal', 'bird', 'animated'], desc: 'Flying parrot with wing-flap animation.' },
+	Flamingo: { tags: ['animal', 'bird', 'animated'], desc: 'Pink flamingo in flight.' },
+	Stork: { tags: ['animal', 'bird', 'animated'], desc: 'Stork mid-flight with wing animation.' },
+	Michelle: { tags: ['humanoid', 'rigged', 'character'], desc: 'Michelle character with Mixamo-compatible rig.' },
+	Xbot: { tags: ['robot', 'rigged', 'animated', 'character'], desc: 'X-Bot rigged humanoid robot, ready for retargeting.' },
+	LittlestTokyo: { tags: ['scene', 'environment', 'urban', 'animated'], desc: 'Animated Tokyo street scene by Glen Fox — cars driving, neon, atmosphere.' },
 	'duck': { tags: ['animal', 'iconic'], desc: 'Three.js duck — slightly different vibe than the Khronos one.' },
 	'facecap': { tags: ['humanoid', 'face', 'animated', 'morph'], desc: 'Face capture sample with blendshape animation.' },
 	'kira': { tags: ['humanoid', 'character', 'rigged'], desc: 'Kira character model.' },
@@ -222,7 +278,9 @@ for (const name of KHRONOS) {
 const KHRONOS_LOWER = new Set(KHRONOS.map((s) => s.toLowerCase()));
 for (const baseName of THREEJS) {
 	if (KHRONOS_LOWER.has(baseName.toLowerCase())) continue; // skip dupes
-	const meta = THREEJS_META[baseName] || classifyByName(baseName);
+	// Case-insensitive THREEJS_META lookup so 'ferrari' (filename) matches 'Ferrari' (META key).
+	const metaKey = Object.keys(THREEJS_META).find((k) => k.toLowerCase() === baseName.toLowerCase());
+	const meta = (metaKey && THREEJS_META[metaKey]) || classifyByName(baseName);
 	const niceName = baseName
 		.replace(/[-_]+/g, ' ')
 		.replace(/\.glb$/, '')
