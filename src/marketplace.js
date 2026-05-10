@@ -210,7 +210,7 @@ async function loadPublicAvatars() {
 	try {
 		const url = new URL(`${API}/explore`, location.origin);
 		url.searchParams.set('source', 'avatar');
-		url.searchParams.set('limit', '60');
+		url.searchParams.set('limit', '200');
 		url.searchParams.set('quality', 'high');
 		if (state.q) url.searchParams.set('q', state.q);
 		const r = await fetch(url);
