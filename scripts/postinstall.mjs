@@ -26,13 +26,21 @@ function hashDir(dir) {
 	return h.digest('hex');
 }
 
-const srcHash = hashDir(srcDir);
-const needsBuild =
-	!existsSync(distIndex) ||
-	!existsSync(stamp) ||
-	readFileSync(stamp, 'utf8').trim() !== srcHash;
+// If src was excluded by .vercelignore the directory will be absent or empty;
+// treat that as "dist is current" — Vercel runs --omit=dev so tsup isn't available.
+const srcPresent = existsSync(srcDir) && readdirSync(srcDir).length > 0;
 
-if (needsBuild) {
+const srcHash = srcPresent ? hashDir(srcDir) : null;
+const needsBuild =
+	srcPresent && (
+		!existsSync(distIndex) ||
+		!existsSync(stamp) ||
+		readFileSync(stamp, 'utf8').trim() !== srcHash
+	);
+
+if (!srcPresent) {
+	console.log('[postinstall] agent-payments-sdk src not present — trusting committed dist');
+} else if (needsBuild) {
 	console.log('[postinstall] agent-payments-sdk src changed — rebuilding...');
 	execSync('npm run build --prefix agent-payments-sdk', { stdio: 'inherit', cwd: root });
 	writeFileSync(stamp, srcHash);
