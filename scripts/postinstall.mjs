@@ -26,11 +26,11 @@ function hashDir(dir) {
 	return h.digest('hex');
 }
 
-// On Vercel, always trust the committed dist — tsup is a dev dep and unavailable
-// when npm ci runs with --omit=dev. Build cache can also resurrect src/ even
-// when .vercelignore lists it, so we gate on the VERCEL env var instead.
-const onVercel = !!process.env.VERCEL;
-const srcPresent = !onVercel && existsSync(srcDir) && readdirSync(srcDir).length > 0;
+// tsup is a dev dep — absent when installed with --omit=dev (Vercel CI).
+// Gate on whether the binary actually exists rather than any env var,
+// since VERCEL/CI are not reliably set during the npm install phase.
+const tsupBin = resolve(root, 'node_modules/.bin/tsup');
+const srcPresent = existsSync(tsupBin) && existsSync(srcDir) && readdirSync(srcDir).length > 0;
 
 const srcHash = srcPresent ? hashDir(srcDir) : null;
 const needsBuild =
