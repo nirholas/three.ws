@@ -373,6 +373,33 @@ const appConfig = {
 				cleanupOutdatedCaches: true,
 				runtimeCaching: [
 					{
+						urlPattern: /\/animations\/clips\/[^?]+\.json(\?.*)?$/i,
+						handler: 'StaleWhileRevalidate',
+						options: {
+							cacheName: 'animation-clips',
+							expiration: { maxEntries: 64, maxAgeSeconds: 60 * 60 * 24 * 30 },
+							cacheableResponse: { statuses: [200] },
+						},
+					},
+					{
+						urlPattern: /\/animations\/[^/]+\.(json|glb)(\?.*)?$/i,
+						handler: 'StaleWhileRevalidate',
+						options: {
+							cacheName: 'animation-meta',
+							expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 7 },
+							cacheableResponse: { statuses: [200] },
+						},
+					},
+					{
+						urlPattern: /\/avatars\/[^?]+\.glb(\?.*)?$/i,
+						handler: 'StaleWhileRevalidate',
+						options: {
+							cacheName: 'avatar-glbs',
+							expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 7 },
+							cacheableResponse: { statuses: [200] },
+						},
+					},
+					{
 						urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
 						handler: 'CacheFirst',
 						options: {
