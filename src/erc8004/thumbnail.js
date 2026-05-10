@@ -19,7 +19,7 @@ import {
 	SRGBColorSpace,
 	ACESFilmicToneMapping,
 } from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { getGLTFLoader } from '../lib/gltf-loader.js';
 
 /**
  * Render a GLB/GLTF file to a PNG blob.
@@ -32,7 +32,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
  */
 export async function glbFileToThumbnail(file, { size = 512, background = '#1a1a1a' } = {}) {
 	const buffer = await file.arrayBuffer();
-	const loader = new GLTFLoader();
+	const loader = await getGLTFLoader();
 	const gltf = await new Promise((resolve, reject) => {
 		loader.parse(buffer, '', resolve, reject);
 	});

@@ -32,8 +32,18 @@ import {
 	ACESFilmicToneMapping,
 	SRGBColorSpace,
 } from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { getGLTFLoader } from './lib/gltf-loader.js';
+import {
+	EffectComposer,
+	RenderPass,
+	SelectiveBloomEffect,
+	EffectPass,
+} from 'postprocessing';
+import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from 'three-mesh-bvh';
+
+// Patch Three.js Mesh prototype once so all geometries use BVH-accelerated raycasting.
+Mesh.prototype.raycast = acceleratedRaycast;
 
 const SLOT_SPACING = 1.6; // metres between avatar centres
 const PODIUM_RADIUS = 0.55;
@@ -66,6 +76,21 @@ export async function mountLobby(canvas, avatars, options = {}) {
 	camera.position.copy(baseCamPos);
 	camera.lookAt(0, 1.0, 0);
 
+	const composer = new EffectComposer(renderer);
+	const renderPass = new RenderPass(scene, camera);
+	composer.addPass(renderPass);
+
+	const bloomEffect = new SelectiveBloomEffect(scene, camera, {
+		intensity: 1.8,
+		luminanceThreshold: 0.05,
+		luminanceSmoothing: 0.3,
+		mipmapBlur: true,
+	});
+
+	const effectPass = new EffectPass(camera, bloomEffect);
+	effectPass.renderToScreen = true;
+	composer.addPass(effectPass);
+
 	// Lighting: hemisphere + warm key + cool rim, plus environment for PBR.
 	scene.add(new AmbientLight(0xffffff, 0.18));
 	scene.add(new HemisphereLight(0xfde68a, 0x0a0a0a, 0.45));
@@ -84,6 +109,7 @@ export async function mountLobby(canvas, avatars, options = {}) {
 
 	const pmrem = new PMREMGenerator(renderer);
 	scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+	pmrem.dispose(); // GPU memory freed — not needed after env texture is generated
 
 	// Podiums under each avatar slot.
 	const podiumGroup = new Group();
@@ -91,19 +117,22 @@ export async function mountLobby(canvas, avatars, options = {}) {
 	const slotsRoot = new Group();
 	scene.add(slotsRoot);
 	const startX = -((slots.length - 1) * SLOT_SPACING) / 2;
+	const bloomSelection = [];
 	const slotMeta = slots.map((_, i) => {
 		const x = startX + i * SLOT_SPACING;
-		const podium = makePodium();
+		const { group: podium, ring } = makePodium();
 		podium.position.set(x, 0, 0);
 		podiumGroup.add(podium);
+		bloomSelection.push(ring);
 		const slotGroup = new Group();
 		slotGroup.position.set(x, PODIUM_HEIGHT, 0);
 		slotsRoot.add(slotGroup);
 		return { x, group: slotGroup, model: null };
 	});
+	bloomEffect.selection.set(bloomSelection);
 
 	// Lazy-load GLBs in parallel; if one fails, the other slots still render.
-	const loader = new GLTFLoader();
+	const loader = await getGLTFLoader(renderer);
 	slots.forEach((avatar, i) => {
 		const url = avatar?.glbUrl;
 		if (!url) return;
@@ -113,6 +142,11 @@ export async function mountLobby(canvas, avatars, options = {}) {
 				const root = gltf.scene || gltf.scenes?.[0];
 				if (!root) return;
 				fitToHeight(root, TARGET_HEIGHT);
+				root.traverse((node) => {
+					if (node.isMesh && node.geometry) {
+						node.geometry.computeBoundsTree();
+					}
+				});
 				slotMeta[i].group.add(root);
 				slotMeta[i].model = root;
 				slotMeta[i].avatar = avatar;
@@ -163,16 +197,27 @@ export async function mountLobby(canvas, avatars, options = {}) {
 		width = Math.max(1, Math.floor(rect.width));
 		height = Math.max(1, Math.floor(rect.height));
 		renderer.setSize(width, height, false);
+		composer.setSize(width, height);
 		camera.aspect = width / height;
 		camera.updateProjectionMatrix();
 	}
 	resize();
+
+	// Pause rendering when canvas is scrolled off-screen.
+	let visible = true;
+	const io = new IntersectionObserver(
+		([entry]) => { visible = entry.isIntersecting; },
+		{ threshold: 0.01 },
+	);
+	io.observe(canvas);
 
 	// Render loop with subtle scene rotation + camera parallax + per-slot spin.
 	let alive = true;
 	let lastT = performance.now();
 	function tick() {
 		if (!alive) return;
+		rafId = requestAnimationFrame(tick);
+		if (!visible) return;
 		const now = performance.now();
 		const dt = (now - lastT) / 1000;
 		lastT = now;
@@ -189,8 +234,7 @@ export async function mountLobby(canvas, avatars, options = {}) {
 		camera.position.lerp(baseCamPos.clone().add(targetCamOffset), 0.06);
 		camera.lookAt(0, 1.05, 0);
 
-		renderer.render(scene, camera);
-		rafId = requestAnimationFrame(tick);
+		composer.render();
 	}
 	let rafId = requestAnimationFrame(tick);
 
@@ -198,11 +242,15 @@ export async function mountLobby(canvas, avatars, options = {}) {
 		alive = false;
 		cancelAnimationFrame(rafId);
 		ro.disconnect();
+		io.disconnect();
 		canvas.removeEventListener('pointermove', onPointerMove);
 		canvas.removeEventListener('click', onClick);
 		// Free GPU resources.
 		scene.traverse((obj) => {
-			if (obj.geometry) obj.geometry.dispose?.();
+			if (obj.geometry) {
+				obj.geometry.disposeBoundsTree?.();
+				obj.geometry.dispose?.();
+			}
 			if (obj.material) {
 				const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
 				for (const m of mats) {
@@ -214,7 +262,7 @@ export async function mountLobby(canvas, avatars, options = {}) {
 				}
 			}
 		});
-		pmrem.dispose();
+		composer.dispose();
 		renderer.dispose();
 	}
 
@@ -254,7 +302,7 @@ function makePodium() {
 	ring.position.y = 0.001;
 	g.add(ring);
 
-	return g;
+	return { group: g, ring };
 }
 
 function fitToHeight(object, targetHeight) {

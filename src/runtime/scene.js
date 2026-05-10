@@ -4,7 +4,7 @@
 // Keeps viewer.js untouched while giving agents a coherent control surface.
 
 import { Vector3 } from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { getGLTFLoader } from '../lib/gltf-loader.js';
 import { resolveURI } from '../ipfs.js';
 import { resolveSlot } from './animation-slots.js';
 
@@ -22,7 +22,7 @@ const EXPRESSION_MAP = {
 export class SceneController {
 	constructor(viewer) {
 		this.viewer = viewer;
-		this._loader = new GLTFLoader();
+		this._loaderPromise = getGLTFLoader(viewer?.renderer);
 		this._userTarget = new Vector3(0, 1.6, 2); // approx user head position
 		this._animationMap = {};
 		this._group = null;
@@ -180,8 +180,9 @@ export class SceneController {
 
 	async loadClip(uri) {
 		const resolved = resolveURI(uri);
+		const loader = await this._loaderPromise;
 		return new Promise((resolve, reject) => {
-			this._loader.load(
+			loader.load(
 				resolved,
 				(gltf) => resolve(gltf.animations?.[0] || null),
 				undefined,
@@ -192,8 +193,9 @@ export class SceneController {
 
 	async loadGLB(uri) {
 		const resolved = resolveURI(uri);
+		const loader = await this._loaderPromise;
 		return new Promise((resolve, reject) => {
-			this._loader.load(resolved, resolve, undefined, reject);
+			loader.load(resolved, resolve, undefined, reject);
 		});
 	}
 

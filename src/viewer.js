@@ -44,6 +44,18 @@ import { getCubeMapTexture } from './viewer/environment.js';
 import { takeScreenshot, captureScreenshot } from './viewer/screenshot.js';
 import { setClips, playAllClips } from './viewer/animation.js';
 import { AnimationManager } from './animation-manager.js';
+import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from 'three-mesh-bvh';
+import {
+	EffectComposer,
+	RenderPass,
+	BloomEffect,
+	VignetteEffect,
+	EffectPass,
+} from 'postprocessing';
+import { Mesh } from 'three';
+
+// Accelerate all Three.js raycasting site-wide — must run before any Mesh is created.
+Mesh.prototype.raycast = acceleratedRaycast;
 
 Cache.enabled = true;
 
@@ -144,6 +156,21 @@ export class Viewer {
 		this.controls.addEventListener('change', this._onControlsChange);
 
 		this.el.appendChild(this.renderer.domElement);
+
+		this._composer = new EffectComposer(this.renderer);
+		this._renderPass = new RenderPass(this.scene, this.defaultCamera);
+		this._composer.addPass(this._renderPass);
+
+		const vignetteEffect = new VignetteEffect({ eskil: false, offset: 0.35, darkness: 0.4 });
+		const bloomEffect = new BloomEffect({
+			intensity: 0.6,
+			luminanceThreshold: 0.8,
+			luminanceSmoothing: 0.05,
+			mipmapBlur: true,
+		});
+		this._effectPass = new EffectPass(this.defaultCamera, bloomEffect, vignetteEffect);
+		this._effectPass.renderToScreen = true;
+		this._composer.addPass(this._effectPass);
 
 		this.cameraCtrl = null;
 		this.cameraFolder = null;
@@ -526,7 +553,7 @@ export class Viewer {
 	}
 
 	render() {
-		this.renderer.render(this.scene, this.activeCamera);
+		this._composer.render();
 		if (this.state.grid) {
 			this.axesCamera.position.copy(this.defaultCamera.position);
 			this.axesCamera.lookAt(this.axesScene.position);
@@ -648,6 +675,7 @@ export class Viewer {
 		this.defaultCamera.aspect = nextAspect;
 		this.defaultCamera.updateProjectionMatrix();
 		this.renderer.setSize(clientWidth, clientHeight);
+		this._composer.setSize(clientWidth, clientHeight);
 
 		this.axesCamera.aspect = this.axesDiv.clientWidth / this.axesDiv.clientHeight;
 		this.axesCamera.updateProjectionMatrix();
@@ -771,6 +799,12 @@ export class Viewer {
 		this.scene.add(object);
 		object.rotation.y = Math.PI;
 		this.content = object;
+
+		object.traverse((node) => {
+			if (node.isMesh && node.geometry && node.geometry.attributes.position?.count > 0) {
+				node.geometry.computeBoundsTree();
+			}
+		});
 
 		this.state.punctualLights = true;
 		this.content.traverse((node) => {
@@ -896,6 +930,8 @@ export class Viewer {
 				}
 			});
 		}
+		this._renderPass.mainCamera = this.activeCamera;
+		this._effectPass.mainCamera = this.activeCamera;
 		this.invalidate();
 	}
 
@@ -1555,6 +1591,7 @@ export class Viewer {
 		this.content.traverse((node) => {
 			if (!node.geometry) return;
 
+			node.geometry.disposeBoundsTree?.();
 			node.geometry.dispose();
 		});
 
@@ -1710,6 +1747,9 @@ export class Viewer {
 		}
 		this.axesScene = null;
 		this.axesCamera = null;
+
+		this._composer?.dispose();
+		this._composer = null;
 
 		if (this.renderer) {
 			this.renderer.dispose();

@@ -5,7 +5,7 @@
 // The Empathy Layer's morph loop only iterates its own _morphTarget dict, so
 // outfit morphs set here are never clobbered by emotion blending.
 
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { getGLTFLoader } from './lib/gltf-loader.js';
 import { resolveURI } from './ipfs.js';
 
 const SINGLE_SLOT_KINDS = new Set(['outfit', 'hat', 'glasses']);
@@ -14,7 +14,7 @@ export class AccessoryManager {
 	/** @param {import('./viewer.js').Viewer} viewer — raw Viewer, not SceneController */
 	constructor(viewer) {
 		this.viewer = viewer;
-		this._loader = new GLTFLoader();
+		this._loaderPromise = getGLTFLoader(viewer?.renderer);
 		// id → { preset, object?: THREE.Group, morphs?: Array<{node,name,idx}> }
 		this._applied = new Map();
 	}
@@ -116,7 +116,7 @@ export class AccessoryManager {
 	async _applyGLB(preset) {
 		let gltf;
 		try {
-			gltf = await _loadGLB(this._loader, preset.glbUrl);
+			gltf = await _loadGLB(await this._loaderPromise, preset.glbUrl);
 		} catch (err) {
 			console.warn(`[accessories] failed to load ${preset.glbUrl}:`, err);
 			return;
