@@ -8,6 +8,9 @@ const priceSchema = z.object({
 	amount: z.number().int().min(1),
 	currency_mint: z.string().trim().min(1).max(100),
 	chain: z.string().trim().min(1).max(20),
+	trial_uses: z.number().int().min(0).max(10).default(0),
+	time_pass_hours: z.number().int().min(1).max(720).nullable().optional(),
+	time_pass_amount: z.number().int().min(1).nullable().optional(),
 });
 
 const pricingUpdateSchema = z.object({
@@ -63,13 +66,19 @@ async function handlePut(req, res, agentId) {
 		// Insert or update new prices
 		for (const p of prices) {
 			await tx`
-				INSERT INTO agent_skill_prices (agent_id, skill, amount, currency_mint, chain, is_active)
-				VALUES (${agentId}, ${p.skill}, ${p.amount}, ${p.currency_mint}, ${p.chain}, true)
+				INSERT INTO agent_skill_prices
+					(agent_id, skill, amount, currency_mint, chain, is_active, trial_uses, time_pass_hours, time_pass_amount)
+				VALUES
+					(${agentId}, ${p.skill}, ${p.amount}, ${p.currency_mint}, ${p.chain}, true,
+					 ${p.trial_uses ?? 0}, ${p.time_pass_hours ?? null}, ${p.time_pass_amount ?? null})
 				ON CONFLICT (agent_id, skill) DO UPDATE SET
 					amount = EXCLUDED.amount,
 					currency_mint = EXCLUDED.currency_mint,
 					chain = EXCLUDED.chain,
 					is_active = true,
+					trial_uses = EXCLUDED.trial_uses,
+					time_pass_hours = EXCLUDED.time_pass_hours,
+					time_pass_amount = EXCLUDED.time_pass_amount,
 					updated_at = now()
 			`;
 		}

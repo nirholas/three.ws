@@ -45,17 +45,22 @@ const CATEGORY_LABELS = {
 const state = {
 	category: null, // null = Discover (all)
 	q: '',
+	tag: null,      // ?tag=humanoid → filter all cards to entries containing this tag
 	sort: 'recommended',
-	filter: 'all', // all | agents | avatars
+	filter: 'all', // all | agents | avatars | onchain
 	cursor: null,
 	items: [],
 	loading: false,
 	publicAvatars: [],
 	publicAvatarsLoaded: false,
+	onchainItems: [],
+	onchainCursor: null,
+	onchainLoaded: false,
 	featured: [],
 	heroIndex: 0,
 	heroTimer: null,
 	stats: null,
+	theme: null,
 };
 
 const WIP_DISMISS_KEY = 'marketplace_wip_dismissed_v1';
@@ -66,6 +71,7 @@ const els = {
 	detail: $('market-detail'),
 	tools: $('market-tools'),
 	cats: $('market-cats'),
+	catChips: $('market-cat-chips'),
 	grid: $('market-grid'),
 	search: $('market-search'),
 	sortSel: $('market-sort'),
@@ -78,12 +84,15 @@ const els = {
 function readRoute() {
 	const m = location.pathname.match(/^\/marketplace\/agents\/([^/]+)/);
 	if (m) return { view: 'detail', id: m[1] };
-	const tab = new URLSearchParams(location.search).get('tab');
-	if (tab === 'tools') return { view: 'tools' };
-	if (tab === 'skills') return { view: 'skills' };
-	if (tab === 'mine') return { view: 'mine' };
-	if (tab === 'avatars') return { view: 'list', filter: 'avatars' };
-	return { view: 'list' };
+	const params = new URLSearchParams(location.search);
+	const tab = params.get('tab');
+	const tag = (params.get('tag') || '').trim().toLowerCase().slice(0, 40) || null;
+	if (tab === 'tools') return { view: 'tools', tag };
+	if (tab === 'skills') return { view: 'skills', tag };
+	if (tab === 'mine') return { view: 'mine', tag };
+	if (tab === 'purchases') return { view: 'purchases', tag };
+	if (tab === 'avatars') return { view: 'list', filter: 'avatars', tag };
+	return { view: 'list', tag };
 }
 
 function navTo(path, replace = false) {
@@ -97,10 +106,104 @@ window.addEventListener('popstate', render);
 
 // ── List view ─────────────────────────────────────────────────────────────
 
+// ── Poster cache (IndexedDB) ──────────────────────────────────────────────
+// Caches captured model-viewer poster images client-side so subsequent page
+// loads show instant thumbnails instead of the shimmer.
 
+const _POSTER_DB = 'mv-poster-cache-v1';
+const _POSTER_STORE = 'posters';
+let _dbPromise = null;
+
+function _openDb() {
+	if (_dbPromise) return _dbPromise;
+	_dbPromise = new Promise((resolve, reject) => {
+		const req = indexedDB.open(_POSTER_DB, 1);
+		req.onupgradeneeded = (e) => e.target.result.createObjectStore(_POSTER_STORE);
+		req.onsuccess = (e) => resolve(e.target.result);
+		req.onerror = () => { _dbPromise = null; reject(req.error); };
+	});
+	return _dbPromise;
+}
+
+async function _posterGet(key) {
+	try {
+		const db = await _openDb();
+		return await new Promise((resolve) => {
+			const tx = db.transaction(_POSTER_STORE, 'readonly');
+			const req = tx.objectStore(_POSTER_STORE).get(key);
+			req.onsuccess = () => resolve(req.result || null);
+			req.onerror = () => resolve(null);
+		});
+	} catch { return null; }
+}
+
+async function _posterSet(key, blob) {
+	try {
+		const db = await _openDb();
+		await new Promise((resolve) => {
+			const tx = db.transaction(_POSTER_STORE, 'readwrite');
+			tx.objectStore(_POSTER_STORE).put(blob, key);
+			tx.oncomplete = resolve;
+			tx.onerror = resolve;
+		});
+	} catch {}
+}
+
+/**
+ * After renderGrid() sets innerHTML, run this to:
+ *  1. Apply cached poster blobs (instant thumbnails on repeat visits).
+ *  2. Attach load-listener to capture + cache poster on first visit.
+ *  3. Add .mv-loaded class when model loads (triggers CSS shimmer-off + fade-in).
+ */
+async function attachModelViewerBehavior() {
+	const cards = els.grid.querySelectorAll('.market-card-avatar');
+	for (const card of cards) {
+		const mv = card.querySelector('model-viewer');
+		if (!mv) continue;
+		const src = mv.getAttribute('src');
+		if (!src) continue;
+
+		// Apply cached poster immediately (sync path via already-resolved db).
+		const cached = await _posterGet(src);
+		if (cached) {
+			mv.setAttribute('poster', URL.createObjectURL(cached));
+		}
+
+		const onLoad = async () => {
+			card.classList.add('mv-loaded');
+			if (!cached) {
+				try {
+					const blob = await mv.generatePosterBlob({ idealAspect: true });
+					if (blob) await _posterSet(src, blob);
+				} catch {}
+			}
+		};
+		mv.addEventListener('load', onLoad, { once: true });
+		// model-viewer fires 'poster-dismissed' when it transitions from poster → 3D.
+		mv.addEventListener('poster-dismissed', () => card.classList.add('mv-loaded'), { once: true });
+	}
+}
+
+// ── Infinite scroll ───────────────────────────────────────────────────────
+
+let _infiniteObserver = null;
+
+function _setupInfiniteScroll() {
+	if (_infiniteObserver) { _infiniteObserver.disconnect(); _infiniteObserver = null; }
+	const sentinel = els.grid.querySelector('.market-scroll-sentinel');
+	if (!sentinel) return;
+	_infiniteObserver = new IntersectionObserver((entries) => {
+		if (entries[0]?.isIntersecting && !state.loading && state.cursor) {
+			loadList(false);
+		}
+	}, { rootMargin: '200px' });
+	_infiniteObserver.observe(sentinel);
+}
+
+// ── Category chips row ────────────────────────────────────────────────────
 
 async function loadCategories() {
-	if (!els.cats) return;
+	if (!els.cats && !els.catChips) return;
 	try {
 		const r = await fetch(`${API}/marketplace/categories`);
 		const j = await r.json();
@@ -110,18 +213,56 @@ async function loadCategories() {
 	}
 }
 
+function renderCategoryChips(data) {
+	if (!els.catChips) return;
+	const total = data?.total || 0;
+	const counts = Object.fromEntries((data?.categories || []).map((cat) => [cat.slug, cat.count]));
+	const chips = [
+		{ slug: null, label: 'All', count: total },
+		...Object.keys(CATEGORY_LABELS)
+			.map((slug) => ({ slug, label: CATEGORY_LABELS[slug], count: counts[slug] || 0 }))
+			.filter((c) => c.count > 0),
+	];
+	els.catChips.innerHTML = chips.map((c) => {
+		const active = (c.slug === null && !state.category) || state.category === c.slug;
+		return `<button class="market-cat-chip${active ? ' active' : ''}" data-cat="${c.slug ?? ''}" type="button">
+			${escapeHtml(c.label)}
+			<span class="cat-chip-count">${c.count}</span>
+		</button>`;
+	}).join('');
+	els.catChips.querySelectorAll('.market-cat-chip').forEach((btn) => {
+		btn.addEventListener('click', () => {
+			const slug = btn.dataset.cat || null;
+			state.category = slug;
+			state.cursor = null;
+			loadList(true);
+			highlightCategoryChips();
+		});
+	});
+}
+
+function highlightCategoryChips() {
+	if (!els.catChips) return;
+	els.catChips.querySelectorAll('.market-cat-chip').forEach((btn) => {
+		const slug = btn.dataset.cat || null;
+		btn.classList.toggle('active', slug === state.category || (slug === null && !state.category));
+	});
+}
+
 function renderCategories(data) {
+	renderCategoryChips(data);
 	if (!els.cats) return;
 	const total = data?.total || 0;
 	const counts = Object.fromEntries((data?.categories || []).map((cat) => [cat.slug, cat.count]));
+	// Hide categories with 0 published agents — they're noise. Keep "Discover" and
+	// "All" pinned, and keep the currently-selected category visible even at 0.
+	const populated = Object.keys(CATEGORY_LABELS)
+		.map((slug) => ({ slug, label: CATEGORY_LABELS[slug], count: counts[slug] || 0 }))
+		.filter((row) => row.count > 0 || state.category === row.slug);
 	const rows = [
 		{ slug: null, label: 'Discover', count: null, head: true },
 		{ slug: 'all', label: 'All', count: total },
-		...Object.keys(CATEGORY_LABELS).map((slug) => ({
-			slug,
-			label: CATEGORY_LABELS[slug],
-			count: counts[slug] || 0,
-		})),
+		...populated,
 	];
 	els.cats.innerHTML = rows
 		.map((r) => {
@@ -191,6 +332,7 @@ async function loadList(reset = false) {
 	if (reset) {
 		loadPublicAvatars();
 		loadFeatured();
+		loadOnchainAgents(true);
 	}
 }
 
@@ -224,9 +366,87 @@ async function loadPublicAvatars() {
 		state.stats = j?.totals || state.stats;
 		renderGrid();
 		renderHeroStats();
+		updateOnchainChipCount();
 	} catch (err) {
 		console.error('[marketplace] public avatars', err);
 	}
+}
+
+// ── Onchain ERC-8004 agents (102k+ in DB) ────────────────────────────────
+
+async function loadOnchainAgents(reset = false) {
+	if (reset) {
+		state.onchainItems = [];
+		state.onchainCursor = null;
+		state.onchainLoaded = false;
+	}
+	try {
+		const url = new URL(`${API}/explore`, location.origin);
+		url.searchParams.set('source', 'onchain');
+		url.searchParams.set('only3d', '1');
+		url.searchParams.set('limit', '60');
+		if (state.q) url.searchParams.set('q', state.q);
+		if (state.onchainCursor) url.searchParams.set('cursor', state.onchainCursor);
+		const r = await fetch(url);
+		if (!r.ok) return;
+		const j = await r.json();
+		const items = (j?.items || []).filter((it) => it.kind === 'onchain' && it.glbUrl);
+		state.onchainItems = reset ? items : [...state.onchainItems, ...items];
+		state.onchainCursor = j?.nextCursor || null;
+		state.onchainLoaded = true;
+		if (state.filter === 'onchain' || state.filter === 'all') renderGrid();
+		updateOnchainChipCount();
+	} catch (err) {
+		console.error('[marketplace] onchain', err);
+	}
+}
+
+function updateOnchainChipCount() {
+	const el = $('chip-count-onchain');
+	if (!el) return;
+	const total = state.stats?.onchain;
+	if (!total) {
+		el.textContent = '';
+		return;
+	}
+	el.textContent = fmtNumber(total);
+}
+
+// ── Weekly theme strip ───────────────────────────────────────────────────
+
+async function loadTheme() {
+	try {
+		const r = await fetch(`${API}/marketplace/theme`);
+		if (!r.ok) return;
+		const j = await r.json();
+		const theme = j?.data?.theme;
+		if (!theme) return;
+		state.theme = theme;
+		renderTheme();
+	} catch (err) {
+		console.error('[marketplace] theme', err);
+	}
+}
+
+function renderTheme() {
+	const strip = $('market-theme-strip');
+	if (!strip || !state.theme) return;
+	$('market-theme-title').textContent = state.theme.title;
+	$('market-theme-blurb').textContent = state.theme.blurb || '';
+	const cta = $('market-theme-cta');
+	if (state.theme.tag) {
+		cta.hidden = false;
+		cta.textContent = `Browse #${state.theme.tag} →`;
+		cta.onclick = () => {
+			els.search.value = state.theme.tag;
+			state.q = state.theme.tag;
+			loadList(true);
+			window.scrollTo({ top: 0, behavior: 'smooth' });
+		};
+	} else {
+		cta.hidden = true;
+	}
+	strip.hidden = false;
 }
 
 // ── Featured hero (rotating 3D showcase) ─────────────────────────────────
@@ -418,7 +638,7 @@ function initWipBanner() {
 	}
 }
 
-// ── Filter chips (All / Agents / Avatars) ────────────────────────────────
+// ── Filter chips (All / Agents / Avatars / Onchain) ──────────────────────
 
 function bindFilterChips() {
 	const chips = document.querySelectorAll('#market-filter-chips .market-chip');
@@ -427,10 +647,10 @@ function bindFilterChips() {
 			chips.forEach((c) => c.classList.remove('active'));
 			chip.classList.add('active');
 			state.filter = chip.dataset.filter || 'all';
-			// Hero showcases community avatars; hide it when filter is agents-only.
+			// Hero showcases community avatars; hide it for non-avatar filters.
 			const hero = $('market-hero');
 			if (hero) {
-				if (state.filter === 'agents') {
+				if (state.filter === 'agents' || state.filter === 'onchain') {
 					hero.hidden = true;
 					stopHeroAutoplay();
 				} else if (state.featured.length) {
@@ -438,25 +658,69 @@ function bindFilterChips() {
 					startHeroAutoplay();
 				}
 			}
+			if (state.filter === 'onchain' && !state.onchainLoaded) {
+				loadOnchainAgents(true);
+			}
 			renderGrid();
 		});
 	});
 }
 
-function renderGrid() {
-	const showAgents = state.filter !== 'avatars';
-	const showAvatars = state.filter !== 'agents' && !state.category;
-	const agentItems = showAgents ? state.items : [];
-	const avatars = showAvatars ? state.publicAvatars : [];
+function renderTagBanner() {
+	const banner = $('market-tag-banner');
+	if (!banner) return;
+	if (!state.tag) {
+		banner.hidden = true;
+		banner.innerHTML = '';
+		return;
+	}
+	banner.hidden = false;
+	banner.innerHTML = `
+		<span class="market-tag-banner-label">Filtering by tag</span>
+		<span class="market-tag-banner-chip">
+			${escapeHtml(state.tag)}
+			<button class="market-tag-banner-clear" aria-label="Clear tag filter" type="button">✕</button>
+		</span>`;
+	banner.querySelector('.market-tag-banner-clear')?.addEventListener('click', () => {
+		navTo('/marketplace');
+	});
+}
 
-	if (!agentItems.length && !avatars.length) {
+function renderGrid() {
+	const showAgents = state.filter === 'all' || state.filter === 'agents';
+	const showAvatars = (state.filter === 'all' || state.filter === 'avatars') && !state.category;
+	const showOnchain = state.filter === 'all' || state.filter === 'onchain';
+	let agentItems = showAgents ? state.items : [];
+	let avatars = showAvatars ? state.publicAvatars : [];
+	let onchain = showOnchain ? state.onchainItems : [];
+
+	// Tag filter (?tag=humanoid) — case-insensitive exact-match on the .tags array
+	if (state.tag) {
+		const t = state.tag;
+		const matches = (arr) =>
+			Array.isArray(arr) && arr.some((x) => String(x).toLowerCase() === t);
+		agentItems = agentItems.filter((a) => matches(a.tags));
+		avatars = avatars.filter((a) => matches(a.tags));
+		onchain = onchain.filter((a) => matches(a.tags));
+	}
+
+	renderTagBanner();
+
+	const totalCards = agentItems.length + avatars.length + onchain.length;
+
+	if (!totalCards) {
 		let msg;
-		if (!state.publicAvatarsLoaded && !state.items.length) {
+		const stillLoading =
+			(!state.publicAvatarsLoaded && state.filter !== 'agents' && state.filter !== 'onchain') ||
+			(!state.onchainLoaded && state.filter === 'onchain');
+		if (stillLoading) {
 			msg = renderSkeletons(8);
 		} else if (state.filter === 'agents') {
 			msg = '<div class="market-empty">No agents published yet. Be the first.</div>';
 		} else if (state.filter === 'avatars') {
 			msg = '<div class="market-empty">No public avatars match your search.</div>';
+		} else if (state.filter === 'onchain') {
+			msg = '<div class="market-empty">No onchain agents match your search.</div>';
 		} else {
 			msg = '<div class="market-empty">Nothing here yet — try a different search.</div>';
 		}
@@ -467,18 +731,44 @@ function renderGrid() {
 
 	let html = '';
 	if (agentItems.length) {
-		if (state.filter === 'all' && avatars.length) {
+		if (state.filter === 'all' && (avatars.length || onchain.length)) {
 			html += `<div class="market-grid-section-title">Agents <span class="count">${agentItems.length}</span></div>`;
 		}
 		html += agentItems.map(renderCard).join('');
 	}
 	if (avatars.length) {
-		if (state.filter === 'all' && agentItems.length) {
+		if (state.filter === 'all' && (agentItems.length || onchain.length)) {
 			html += `<div class="market-grid-section-title">Community Avatars <span class="count">${avatars.length} public</span></div>`;
 		}
-		html += avatars.map(renderAvatarCard).join('');
+		// First avatar gets the featured spotlight (2×2) when avatars lead the grid.
+		const isLeading = !agentItems.length && !onchain.length;
+		html += avatars.map((a, i) => renderAvatarCard(a, isLeading && i === 0)).join('');
 	}
+	if (onchain.length) {
+		if (state.filter === 'all' && (agentItems.length || avatars.length)) {
+			const more = state.stats?.onchain ? `<span class="count">${fmtNumber(state.stats.onchain)} total</span>` : '';
+			html += `<div class="market-grid-section-title">Onchain Agents ${more}</div>`;
+		}
+		html += onchain.map(renderOnchainCard).join('');
+	}
+
+	// Infinite scroll sentinel — observed below to auto-fetch next page.
+	const hasMore =
+		(state.filter === 'all' && (state.cursor || state.onchainCursor)) ||
+		(state.filter === 'agents' && state.cursor) ||
+		(state.filter === 'onchain' && state.onchainCursor);
+	if (hasMore) {
+		html += '<div class="market-scroll-sentinel" aria-hidden="true"></div>';
+		html += '<div class="market-loadmore-spinner" aria-label="Loading more…"></div>';
+	}
+
 	els.grid.innerHTML = html;
+
+	// Poster cache + shimmer-off for model-viewers.
+	attachModelViewerBehavior();
+
+	// Kick off infinite scroll observation.
+	if (hasMore) _setupInfiniteScroll();
 
 	els.grid.querySelectorAll('[data-id]').forEach((card) => {
 		card.addEventListener('click', () => navTo(`/marketplace/agents/${card.dataset.id}`));
@@ -492,7 +782,80 @@ function renderGrid() {
 			if (avatar) openAvatarModal(avatar);
 		});
 	});
-	els.loadMore.hidden = !state.cursor;
+	els.grid.querySelectorAll('[data-onchain-href]').forEach((card) => {
+		card.addEventListener('click', (e) => {
+			if (e.target.closest('a')) return;
+			const href = card.dataset.onchainHref;
+			if (href) location.href = href;
+		});
+	});
+
+	// Tag pills inside cards navigate to ?tag=X so the URL is shareable and
+	// browser back/forward works. render() picks up state.tag from the route.
+	els.grid.querySelectorAll('[data-tag]').forEach((pill) => {
+		pill.addEventListener('click', (e) => {
+			e.stopPropagation();
+			const tag = pill.dataset.tag;
+			if (!tag) return;
+			navTo(`/marketplace?tag=${encodeURIComponent(tag)}`);
+		});
+	});
+
+	// Hide the legacy load-more button — infinite scroll handles it.
+	els.loadMore.hidden = true;
+
+	observeCardModelViewers();
+}
+
+// ── 3D card performance: pause off-screen model-viewers ──────────────────
+//
+// Each <model-viewer> runs a continuous requestAnimationFrame loop while
+// auto-rotate is set, regardless of whether the card is on screen. With
+// 60+ cards in the grid that adds up to dropped frames on mid-tier devices.
+// Solution: an IntersectionObserver toggles the `auto-rotate` attribute as
+// each card enters/leaves the viewport. When detached, the model-viewer
+// stops rendering entirely (model-viewer halts its raf when no rotate/no
+// camera motion). We don't tear down the WebGL context — it's expensive
+// to re-init — but pausing rotation drops GPU usage to ~0 for off-screen
+// cards.
+
+let cardObserver = null;
+function observeCardModelViewers() {
+	if (typeof IntersectionObserver === 'undefined') {
+		// Browser without IntersectionObserver: eagerly promote data-src so
+		// the cards still render. Acceptable fallback for ancient browsers.
+		document.querySelectorAll('model-viewer[data-src]').forEach((mv) => {
+			mv.setAttribute('src', mv.dataset.src);
+			mv.setAttribute('auto-rotate', '');
+		});
+		return;
+	}
+	if (!cardObserver) {
+		cardObserver = new IntersectionObserver(
+			(entries) => {
+				for (const entry of entries) {
+					const mv = entry.target;
+					if (entry.isIntersecting) {
+						// Lazy promote data-src → src on first intersect (fires the GLB download).
+						if (mv.dataset.src && !mv.getAttribute('src')) {
+							mv.setAttribute('src', mv.dataset.src);
+							delete mv.dataset.src;
+						}
+						if (mv.dataset.shouldRotate !== '0') mv.setAttribute('auto-rotate', '');
+					} else {
+						// Suspend rotation off-screen so model-viewer halts its raf loop.
+						mv.removeAttribute('auto-rotate');
+					}
+				}
+			},
+			{ rootMargin: '200px 0px', threshold: 0.01 },
+		);
+	}
+	document.querySelectorAll('.market-card-avatar model-viewer, .market-grid model-viewer').forEach((mv) => {
+		if (mv.dataset.observed) return;
+		mv.dataset.observed = '1';
+		cardObserver.observe(mv);
+	});
 }
 
 // ── Avatar detail modal ──────────────────────────────────────────────────
@@ -518,34 +881,77 @@ function openAvatarModal(avatar) {
 	mv.setAttribute('exposure', '1.05');
 	mv.setAttribute('shadow-intensity', '0.7');
 	mv.setAttribute('tone-mapping', 'aces');
+	if (avatar.image) mv.setAttribute('poster', avatar.image);
+	mv.style.cssText = 'opacity:0;transition:opacity .3s ease;';
 	stage.appendChild(mv);
+
+	const progressEl = Object.assign(document.createElement('div'), { className: 'modal-load-progress' });
+	progressEl.innerHTML = '<div class="modal-load-bar-wrap"><div class="modal-load-bar" id="modal-load-bar"></div></div><span class="modal-load-label">Loading 3D…</span>';
+	stage.insertBefore(progressEl, mv);
+	mv.addEventListener('progress', (e) => {
+		const bar = document.getElementById('modal-load-bar');
+		if (bar) bar.style.width = Math.round((e.detail?.totalProgress || 0) * 100) + '%';
+	});
+	mv.addEventListener('load', () => { progressEl.remove(); mv.style.opacity = '1'; }, { once: true });
 
 	$('avatar-modal-title').textContent = avatar.name || 'Untitled avatar';
 	$('avatar-modal-desc').textContent =
-		avatar.description ||
-		'A 3D avatar published to the community. You can use it as the visual identity for a new agent.';
+		avatar.description || 'A 3D avatar published to the community. Use it as the face of a new AI agent.';
+
+	let authorEl = document.getElementById('avatar-modal-author');
+	if (avatar.author?.handle) {
+		if (!authorEl) {
+			authorEl = Object.assign(document.createElement('p'), { id: 'avatar-modal-author', className: 'avatar-modal-author' });
+			$('avatar-modal-desc')?.insertAdjacentElement('afterend', authorEl);
+		}
+		authorEl.innerHTML = avatar.author.profileUrl
+			? `by <a href="${escapeHtml(avatar.author.profileUrl)}" rel="author">${escapeHtml(avatar.author.displayName || avatar.author.handle)}</a>`
+			: `by ${escapeHtml(avatar.author.displayName || avatar.author.handle)}`;
+	} else if (authorEl) { authorEl.textContent = ''; }
 
 	const meta = $('avatar-modal-meta');
 	const pills = [];
+	if (avatar.featured) pills.push('<span class="stat-pill featured-badge">⭐ Featured</span>');
+	if (Number(avatar.viewCount) > 0) pills.push(`<span class="stat-pill">⊙ ${fmtNumber(avatar.viewCount)} views</span>`);
 	if (avatar.createdAt) pills.push(`<span class="stat-pill">${escapeHtml(liveTime(avatar.createdAt))}</span>`);
-	if (avatar.has3d !== false) pills.push('<span class="stat-pill">3D · GLB</span>');
-	(avatar.tags || []).slice(0, 4).forEach((t) => {
-		pills.push(`<span class="stat-pill">#${escapeHtml(t)}</span>`);
+	pills.push('<span class="stat-pill">3D · GLB</span>');
+	(avatar.tags || []).slice(0, 5).forEach((t) => {
+		pills.push(`<button type="button" class="stat-pill tag-pill" data-tag="${escapeHtml(t)}" style="cursor:pointer">#${escapeHtml(t)}</button>`);
 	});
 	meta.innerHTML = pills.join('');
+	meta.querySelectorAll('[data-tag]').forEach((btn) => {
+		btn.addEventListener('click', () => { closeAvatarModal(); navTo(`/marketplace?tag=${encodeURIComponent(btn.dataset.tag)}`); });
+	});
+
+	const bm = getAvatarBookmarks().has(avatar.avatarId || '');
+	const bmBtn = $('avatar-modal-bookmark');
+	if (bmBtn) {
+		bmBtn.classList.toggle('active', bm);
+		bmBtn.setAttribute('aria-pressed', String(bm));
+		bmBtn.onclick = () => {
+			const now = toggleAvatarBookmark(avatar.avatarId || '');
+			bmBtn.classList.toggle('active', now);
+			bmBtn.setAttribute('aria-pressed', String(now));
+		};
+	}
 
 	const view = $('avatar-modal-view');
-	if (view) {
-		view.href = avatar.viewerUrl || (avatar.glbUrl ? `/#model=${encodeURIComponent(avatar.glbUrl)}` : '#');
-	}
+	if (view) view.href = avatar.viewerUrl || (avatar.glbUrl ? `/#model=${encodeURIComponent(avatar.glbUrl)}` : '#');
 	const dl = $('avatar-modal-download');
-	if (dl) {
-		dl.href = avatar.glbUrl || '#';
-		dl.download = (avatar.slug || avatar.avatarId || 'avatar') + '.glb';
-	}
+	if (dl) { dl.href = avatar.glbUrl || '#'; dl.download = (avatar.slug || avatar.avatarId || 'avatar') + '.glb'; }
 
 	overlay.hidden = false;
 	requestAnimationFrame(() => overlay.classList.add('show'));
+
+	// Fire-and-forget view tracking — server rate-limits per IP/avatar so safe to call on every open.
+	if (avatar.avatarId && !String(avatar.avatarId).startsWith('avatar_demo_')) {
+		fetch(`${API}/avatars/view`, {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ avatar_id: avatar.avatarId }),
+			keepalive: true,
+		}).catch(() => {});
+	}
 }
 
 function closeAvatarModal() {
@@ -562,6 +968,24 @@ function closeAvatarModal() {
 		}
 		activeAvatar = null;
 	}, 200);
+}
+
+// ── Avatar bookmarks (localStorage) ─────────────────────────────────────
+
+const AVATAR_BOOKMARKS_KEY = 'mk_avatar_bm_v1';
+function getAvatarBookmarks() {
+	try { return new Set(JSON.parse(localStorage.getItem(AVATAR_BOOKMARKS_KEY) || '[]')); }
+	catch { return new Set(); }
+}
+function toggleAvatarBookmark(avatarId) {
+	const set = getAvatarBookmarks();
+	if (set.has(avatarId)) set.delete(avatarId); else set.add(avatarId);
+	try { localStorage.setItem(AVATAR_BOOKMARKS_KEY, JSON.stringify([...set])); } catch {}
+	document.querySelectorAll(`[data-avatar-id="${avatarId}"] .card-heart`).forEach((btn) => {
+		btn.classList.toggle('active', set.has(avatarId));
+		btn.setAttribute('aria-pressed', String(set.has(avatarId)));
+	});
+	return set.has(avatarId);
 }
 
 async function startAgentFromAvatar() {
@@ -676,6 +1100,129 @@ function renderSkillCard(s) {
 	</div>`;
 }
 
+
+// ── My Purchases tab ─────────────────────────────────────────────────────
+
+const purchasesState = { loaded: false, loading: false, items: [] };
+
+async function loadPurchases(force = false) {
+	if (purchasesState.loading) return;
+	if (purchasesState.loaded && !force) return renderPurchasesGrid();
+	purchasesState.loading = true;
+	const grid = $('purchases-grid');
+	if (grid) grid.innerHTML = renderSkeletons(4);
+	try {
+		const r = await fetch(`${API}/users/me/purchased-skills`, { credentials: 'include' });
+		if (r.status === 401) {
+			if (grid) grid.innerHTML = `<div class="market-empty-cta">
+				<h3>Sign in to see your purchases</h3>
+				<p>Your unlocked skills and trial access will appear here.</p>
+				<button id="purchases-signin">Sign in</button>
+			</div>`;
+			$('purchases-signin')?.addEventListener('click', () => {
+				location.href = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
+			});
+			purchasesState.loading = false;
+			return;
+		}
+		const j = await r.json().catch(() => ({}));
+		purchasesState.items = j?.data?.purchases || [];
+		purchasesState.loaded = true;
+	} catch (err) {
+		console.error('[marketplace] purchases load', err);
+	} finally {
+		purchasesState.loading = false;
+	}
+	renderPurchasesGrid();
+}
+
+function renderPurchasesGrid() {
+	const grid = $('purchases-grid');
+	const sub = $('purchases-subtitle');
+	if (!grid) return;
+	if (sub) {
+		sub.textContent = purchasesState.items.length
+			? `${purchasesState.items.length} ${purchasesState.items.length === 1 ? 'purchase' : 'purchases'}`
+			: '';
+	}
+	if (!purchasesState.items.length) {
+		grid.innerHTML = `<div class="market-empty-cta">
+			<h3>No purchases yet</h3>
+			<p>Skills you purchase or trial access you unlock will appear here.</p>
+			<button id="purchases-browse">Browse Skills</button>
+		</div>`;
+		$('purchases-browse')?.addEventListener('click', () => navTo('/marketplace?tab=skills'));
+		return;
+	}
+	grid.innerHTML = purchasesState.items.map(renderPurchaseCard).join('');
+	grid.querySelectorAll('[data-purchase-agent]').forEach((card) => {
+		card.addEventListener('click', (e) => {
+			if (e.target.closest('.receipt-btn')) return;
+			navTo(`/marketplace/agents/${card.dataset.purchaseAgent}`);
+		});
+	});
+	grid.querySelectorAll('.receipt-btn').forEach((btn) => {
+		btn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			downloadReceipt(btn.dataset.purchaseId);
+		});
+	});
+}
+
+function renderPurchaseCard(p) {
+	const agentName = escapeHtml(p.agent_name || 'Unknown Agent');
+	const skill = escapeHtml(p.skill);
+	const date = p.confirmed_at ? formatDate(p.confirmed_at) : formatDate(p.created_at);
+	const chainBadge = `<span class="stat-pill">${escapeHtml(p.chain || 'solana')}</span>`;
+	const isTrial = p.kind === 'trial' || p.status === 'trial';
+	const kindBadge = isTrial
+		? `<span class="stat-pill" style="color:#86efac">Trial${p.trial_remaining != null ? ` (${p.trial_remaining} left)` : ''}</span>`
+		: `<span class="stat-pill" style="color:#7dd3fc">Owned</span>`;
+	const hasReceipt = !isTrial;
+	const thumb = p.agent_thumbnail
+		? `<div class="avatar avatar-img" style="background-image:url('${escapeHtml(p.agent_thumbnail)}');width:36px;height:36px;border-radius:8px;flex-shrink:0"></div>`
+		: `<div class="avatar" style="width:36px;height:36px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#1a1a1a;font-size:16px">${escapeHtml(initial(p.agent_name || '?'))}</div>`;
+	return `<div class="market-card-agent" data-purchase-agent="${escapeHtml(p.agent_id)}" style="cursor:pointer">
+		<div class="head">
+			${thumb}
+			<div style="min-width:0;flex:1">
+				<div class="title">${agentName}</div>
+				<div class="author">${skill}</div>
+			</div>
+		</div>
+		<div class="stats">
+			${kindBadge}
+			${chainBadge}
+			<span class="stat-pill">${escapeHtml(date)}</span>
+		</div>
+		<div class="footer" style="justify-content:flex-end">
+			${hasReceipt ? `<button class="btn-secondary receipt-btn" data-purchase-id="${escapeHtml(p.id)}" style="font-size:11px;padding:4px 10px">Receipt</button>` : ''}
+			<span class="open-cta">View agent →</span>
+		</div>
+	</div>`;
+}
+
+async function downloadReceipt(purchaseId) {
+	try {
+		const r = await fetch(`${API}/billing/receipts?purchase_id=${encodeURIComponent(purchaseId)}`, { credentials: 'include' });
+		if (!r.ok) {
+			const j = await r.json().catch(() => ({}));
+			alert(j.error_description || 'Receipt not available');
+			return;
+		}
+		const j = await r.json();
+		const blob = new Blob([JSON.stringify(j.data, null, 2)], { type: 'application/json' });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = `receipt-${purchaseId.slice(0, 8)}.json`;
+		a.click();
+		URL.revokeObjectURL(url);
+	} catch (err) {
+		alert('Download failed: ' + err.message);
+	}
+}
+
 // ── My Agents tab ────────────────────────────────────────────────────────
 
 const mineState = { loaded: false, loading: false, items: [] };
@@ -744,7 +1291,7 @@ function renderSkeletons(n) {
 	return cards;
 }
 
-function renderAvatarCard(a) {
+function renderAvatarCard(a, spotlight = false) {
 	const name = escapeHtml(a.name || 'Untitled avatar');
 	const desc = escapeHtml(a.description || '');
 	const when = a.createdAt ? liveTime(a.createdAt) : '';
@@ -756,15 +1303,19 @@ function renderAvatarCard(a) {
 			: `<span class="card-author muted">Anonymous</span>`;
 	const tags = (a.tags || []).slice(0, 3);
 	const tagPills = tags.length
-		? `<div class="card-tags">${tags.map((t) => `<span class="tag-pill">${escapeHtml(t)}</span>`).join('')}</div>`
+		? `<div class="card-tags">${tags.map((t) => `<button type="button" class="tag-pill" data-tag="${escapeHtml(t)}" title="Filter by ${escapeHtml(t)}">${escapeHtml(t)}</button>`).join('')}</div>`
 		: '';
+	// Lazy GLB load: don't set `src` until the card scrolls into view (handled
+	// by observeCardModelViewers below). Each <model-viewer> instance still
+	// allocates a WebGL context, so we also stash the URL in `data-src` and
+	// the observer promotes it to `src` on intersect — no GLB download, no
+	// scene parse, no animation loop until the card is actually on screen.
 	const preview = a.image
 		? `<img src="${escapeHtml(a.image)}" alt="${name}" loading="lazy" decoding="async" />`
 		: a.glbUrl
 			? `<model-viewer
-					src="${escapeHtml(a.glbUrl)}"
+					data-src="${escapeHtml(a.glbUrl)}"
 					alt="${name}"
-					auto-rotate
 					rotation-per-second="14deg"
 					interaction-prompt="none"
 					disable-zoom
@@ -774,14 +1325,18 @@ function renderAvatarCard(a) {
 					shadow-intensity="0.4"
 					tone-mapping="aces"
 					loading="lazy"
-					reveal="auto"
+					reveal="manual"
 				></model-viewer>`
 			: `<div class="thumb-fallback">◉</div>`;
-	return `<div class="market-card-avatar" data-avatar-id="${escapeHtml(a.avatarId || '')}">
-		<div class="thumb">${preview}</div>
+	const isSpotlight = spotlight || a.featured;
+	const spotlightBadge = isSpotlight ? '<span class="card-featured-badge" title="Spotlight">★</span>' : '';
+	const views = Number(a.viewCount) > 0 ? `<span class="stat-pill views" title="${a.viewCount} views">⊙ ${fmtNumber(a.viewCount)}</span>` : '';
+	const cardClasses = ['market-card-avatar', isSpotlight && 'market-card-avatar--featured'].filter(Boolean).join(' ');
+	return `<div class="${cardClasses}" data-avatar-id="${escapeHtml(a.avatarId || '')}">
+		<div class="thumb">${spotlightBadge}${preview}</div>
 		<div class="body">
 			<div class="title">${name}</div>
-			<div class="byline">${authorLine}${when ? `<span class="dot">·</span><span class="when">${escapeHtml(when)}</span>` : ''}</div>
+			<div class="byline">${authorLine}${when ? `<span class="dot">·</span><span class="when">${escapeHtml(when)}</span>` : ''}${views ? `<span class="dot">·</span>${views}` : ''}</div>
 			${desc ? `<div class="desc">${desc}</div>` : ''}
 			${tagPills}
 			<div class="footer">
@@ -824,6 +1379,52 @@ function renderCard(a) {
 		<div class="footer">
 			<span>${date}</span>
 			<span class="cat-pill">${CATEGORY_LABELS[a.category] || a.category || ''}</span>
+		</div>
+	</div>`;
+}
+
+// ERC-8004 onchain agents — rendered as cards with chain badges, link to viewer.
+function renderOnchainCard(a) {
+	const name = escapeHtml(a.name || `Agent #${a.agentId}`);
+	const desc = escapeHtml(a.description || '');
+	const when = a.registeredAt ? liveTime(a.registeredAt) : '';
+	const chain = escapeHtml(a.chainShortName || a.chainName || `Chain ${a.chainId}`);
+	const ownerShort = a.ownerShort || '';
+	const x402 = a.x402Support ? `<span class="onchain-x402" title="Accepts x402 micropayments">x402</span>` : '';
+	const href = a.viewerUrl || a.tokenExplorerUrl || '#';
+	const preview = a.image
+		? `<img src="${escapeHtml(a.image)}" alt="${name}" loading="lazy" decoding="async" />`
+		: a.glbUrl
+			? `<model-viewer
+					src="${escapeHtml(a.glbUrl)}"
+					alt="${name}"
+					auto-rotate
+					rotation-per-second="14deg"
+					interaction-prompt="none"
+					disable-zoom
+					disable-pan
+					disable-tap
+					exposure="1"
+					shadow-intensity="0.4"
+					tone-mapping="aces"
+					loading="lazy"
+					reveal="auto"
+				></model-viewer>`
+			: `<div class="thumb-fallback">⬡</div>`;
+	return `<div class="market-card-avatar onchain" data-onchain-href="${escapeHtml(href)}">
+		<div class="thumb">${preview}</div>
+		<div class="body">
+			<div class="title">${name}</div>
+			<div class="byline">
+				<span class="card-chain">${chain}</span>
+				${ownerShort ? `<span class="dot">·</span><span class="card-author muted">${escapeHtml(ownerShort)}</span>` : ''}
+				${when ? `<span class="dot">·</span><span class="when">${escapeHtml(when)}</span>` : ''}
+			</div>
+			${desc ? `<div class="desc">${desc}</div>` : ''}
+			<div class="footer">
+				<span class="avatar-pill onchain">ERC-8004</span>
+				<span class="open-cta">${x402 || 'View →'}</span>
+			</div>
 		</div>
 	</div>`;
 }
@@ -929,7 +1530,8 @@ function renderDetailError(msg) {
 	$('d-published').textContent = '';
 	$('d-overview').textContent = '';
 	$('d-overview-side').textContent = '';
-	$('d-greeting').textContent = '';
+	const thread = $('d-preview-thread');
+	if (thread) thread.innerHTML = '';
 }
 
 function renderDetail(a, bookmarked) {
@@ -938,24 +1540,28 @@ function renderDetail(a, bookmarked) {
 	const views = a.views_count ?? a.views ?? 0;
 	const forks = a.forks_count ?? a.forks ?? 0;
 	$('d-name').textContent = a.name || 'Untitled';
-	const avEl = $('d-avatar');
-	if (a.thumbnail_url) {
-		avEl.style.backgroundImage = `url('${a.thumbnail_url}')`;
-		avEl.style.backgroundSize = 'cover';
-		avEl.style.backgroundPosition = 'center';
-		avEl.textContent = '';
+	renderDetailAvatar(a);
+
+	const authorBtn = $('d-author');
+	authorBtn.textContent = author;
+	if (a.author_id) {
+		authorBtn.dataset.creatorId = a.author_id;
+		authorBtn.disabled = false;
+		authorBtn.style.cursor = 'pointer';
+		authorBtn.style.textDecoration = '';
 	} else {
-		avEl.style.backgroundImage = '';
-		avEl.textContent = initial(a.name);
+		delete authorBtn.dataset.creatorId;
+		authorBtn.disabled = true;
+		authorBtn.style.cursor = 'default';
+		authorBtn.style.textDecoration = 'none';
 	}
-	$('d-author').textContent = author;
 	$('d-published').textContent = published ? formatDate(published) : '';
 	$('d-category').textContent = CATEGORY_LABELS[a.category] || a.category || 'General';
 	$('d-views').textContent = `⊙ ${fmtNumber(views)}`;
 	$('d-overview').textContent = a.description || '';
 	$('d-overview-side').textContent = a.description || '';
-	$('d-greeting').textContent = a.greeting || `Hello! I am ${a.name}. How can I help you today?`;
 	$('d-profile').textContent = a.system_prompt || a.prompt || '(No profile yet.)';
+	startPreviewSession(a);
 	$('d-bookmark').classList.toggle('on', bookmarked);
 	$('d-bookmark').textContent = bookmarked ? '★' : '☆';
 
@@ -982,22 +1588,27 @@ function renderDetail(a, bookmarked) {
 				const name = typeof s === 'string' ? s : (s.name || '');
 				const price = skillPrices[name];
 				const purchaseKey = `${a.id}:${name}`;
-				
+
 				let badge;
 				if (purchasedSkills.has(purchaseKey)) {
 					badge = `<span class="price-badge price-owned">✓ Owned</span>`;
 				} else if (price) {
 					const priceInUSDC = (price.amount / 1e6).toFixed(2);
+					const trialUses = price.trial_uses || 0;
+					const trialBtn = trialUses > 0
+						? `<button class="trial-btn" data-skill-name="${escapeHtml(name)}" data-agent-id="${a.id}" data-trial-uses="${trialUses}">Try free (${trialUses} left)</button>`
+						: '';
 					badge = `<span class="price-badge price-paid">${priceInUSDC} USDC</span>` +
-									`<button class="purchase-btn" data-skill-name="${escapeHtml(name)}" data-agent-id="${a.id}">Purchase</button>`;
+						`<button class="purchase-btn" data-skill-name="${escapeHtml(name)}" data-agent-id="${a.id}">Purchase</button>` +
+						trialBtn;
 				} else {
 					badge = `<span class="price-badge price-free">Free</span>`;
 				}
-				
+
 				return `<div class="skill-row">
-										<span class="skill-name">${escapeHtml(name)}</span>
-										${badge}
-								</div>`;
+									<span class="skill-name">${escapeHtml(name)}</span>
+									${badge}
+							</div>`;
 		}).join('')
 		: '<div>This Agent has no skills defined.</div>';
 
@@ -1139,7 +1750,16 @@ function bindEvents() {
 		state.sort = e.target.value;
 		loadList(true);
 	});
-	els.loadMore.addEventListener('click', () => loadList(false));
+	els.loadMore.addEventListener('click', () => {
+		// Load whichever list has a cursor; onchain owns its own pagination cursor.
+		if (state.filter === 'onchain' && state.onchainCursor) {
+			loadOnchainAgents(false);
+		} else if (state.cursor) {
+			loadList(false);
+		} else if (state.onchainCursor) {
+			loadOnchainAgents(false);
+		}
+	});
 	els.back.addEventListener('click', () => navTo('/marketplace'));
 	$('d-fork').addEventListener('click', fork);
 	$('d-bookmark').addEventListener('click', toggleBookmark);
@@ -1159,6 +1779,11 @@ function bindEvents() {
 			const skillName = e.target.dataset.skillName;
 			const agentId = e.target.dataset.agentId;
 			if (agentId && skillName) await openPurchaseFlow(agentId, skillName);
+		}
+		if (e.target.matches('.trial-btn')) {
+			const skillName = e.target.dataset.skillName;
+			const agentId = e.target.dataset.agentId;
+			if (agentId && skillName) await openTrialFlow(agentId, skillName, e.target);
 		}
 	});
 
@@ -1454,6 +2079,41 @@ function shortMintLabel(mint) {
 	return mint.slice(0, 4) + '…';
 }
 
+
+async function openTrialFlow(agentId, skill, btn) {
+	if (!detailState?.agent || detailState.agent.id !== agentId) {
+		alert('Agent not loaded; refresh and try again.');
+		return;
+	}
+	if (btn) {
+		btn.disabled = true;
+		btn.textContent = 'Starting trial…';
+	}
+	try {
+		const r = await apiPostWithCsrf('/api/marketplace/start-trial', { agent_id: agentId, skill });
+		const j = await r.json().catch(() => ({}));
+		if (!r.ok) {
+			if (j.error === 'already_owned') {
+				alert('You already own this skill.');
+			} else if (j.error === 'trial_used') {
+				alert('You have already used the trial for this skill.');
+			} else {
+				alert(j.error_description || j.error || 'Failed to start trial');
+			}
+			return;
+		}
+		await fetchUserPurchases();
+		loadDetail(agentId);
+	} catch (err) {
+		alert(err.message || 'Failed to start trial');
+	} finally {
+		if (btn) {
+			btn.disabled = false;
+			btn.textContent = `Try free`;
+		}
+	}
+}
+
 async function openPurchaseFlow(agentId, skill) {
 	if (!detailState?.agent || detailState.agent.id !== agentId) {
 		alert('Agent not loaded; refresh and try again.');
@@ -1663,7 +2323,8 @@ function render() {
 			(nav === 'avatars' && r.view === 'list' && r.filter === 'avatars') ||
 			(nav === 'tools' && r.view === 'tools') ||
 			(nav === 'skills' && r.view === 'skills') ||
-			(nav === 'mine' && r.view === 'mine');
+			(nav === 'mine' && r.view === 'mine') ||
+			(nav === 'purchases' && r.view === 'purchases');
 		a.classList.toggle('active', active);
 	});
 
@@ -1677,8 +2338,16 @@ function render() {
 		if (state.publicAvatarsLoaded) renderGrid();
 	}
 
+	// Route-driven tag filter — re-render whenever ?tag= changes.
+	const newTag = r.tag ?? null;
+	if (newTag !== state.tag) {
+		state.tag = newTag;
+		renderGrid();
+	}
+
 	const skillsSec = $('market-skills-section');
 	const mineSec = $('market-mine');
+	const purchasesSec = $('market-purchases');
 	const discovery = els.discovery;
 	const tools = els.tools;
 	const detail = els.detail;
@@ -1691,12 +2360,14 @@ function render() {
 		setHidden(tools, true);
 		setHidden(skillsSec, true);
 		setHidden(mineSec, true);
+		setHidden(purchasesSec, true);
 		setHidden(detail, false);
 	} else if (r.view === 'tools') {
 		setHidden(detail, true);
 		setHidden(discovery, true);
 		setHidden(skillsSec, true);
 		setHidden(mineSec, true);
+		setHidden(purchasesSec, true);
 		setHidden(tools, false);
 		if (!pluginState.loaded) loadPlugins(true);
 	} else if (r.view === 'skills') {
@@ -1704,6 +2375,7 @@ function render() {
 		setHidden(discovery, true);
 		setHidden(tools, true);
 		setHidden(mineSec, true);
+		setHidden(purchasesSec, true);
 		setHidden(skillsSec, false);
 		loadSkillsTab();
 	} else if (r.view === 'mine') {
@@ -1711,13 +2383,23 @@ function render() {
 		setHidden(discovery, true);
 		setHidden(tools, true);
 		setHidden(skillsSec, true);
+		setHidden(purchasesSec, true);
 		setHidden(mineSec, false);
 		loadMine();
+	} else if (r.view === 'purchases') {
+		setHidden(detail, true);
+		setHidden(discovery, true);
+		setHidden(tools, true);
+		setHidden(skillsSec, true);
+		setHidden(mineSec, true);
+		setHidden(purchasesSec, false);
+		loadPurchases();
 	} else {
 		setHidden(detail, true);
 		setHidden(tools, true);
 		setHidden(skillsSec, true);
 		setHidden(mineSec, true);
+		setHidden(purchasesSec, true);
 		setHidden(discovery, false);
 	}
 }
@@ -1726,6 +2408,7 @@ function init() {
 	bindEvents();
 	loadCategories();
 	loadList(true);
+	loadTheme();
 	initPlugins();
 	initWalletAdapter();
 	fetchUserPurchases();

@@ -105,6 +105,10 @@
 			"dest": "/api/billing/withdraw"
 		},
 		{
+			"src": "/api/billing/receipts",
+			"dest": "/api/billing/receipts"
+		},
+		{
 			"src": "/api/newsletter/subscribe",
 			"dest": "/api/newsletter-subscribe"
 		},
@@ -255,6 +259,10 @@
 		{
 			"src": "/api/marketplace/agents/([^/]+)/([^/]+)",
 			"dest": "/api/marketplace/[action]?action=agents&id=$1&sub=$2"
+		},
+		{
+			"src": "/api/marketplace/start-trial",
+			"dest": "/api/marketplace/start-trial"
 		},
 		{
 			"src": "/api/marketplace/purchase/([^/]+)/confirm",
@@ -592,6 +600,20 @@
 			"src": "/api/avatars/presign",
 			"dest": "/api/avatars/[id]"
 		},
+      {
+        "src": "/api/avatars/view",
+        "dest": "/api/avatars/view"
+      },
+
+      {
+        "src": "/api/avatars/presign-thumbnail",
+        "dest": "/api/avatars/[id]"
+      },
+      {
+        "src": "/api/avatars/auto-tag",
+        "dest": "/api/avatars/[id]"
+      },
+
 		{
 			"src": "/api/avatars/public",
 			"dest": "/api/avatars/[id]"
@@ -1163,6 +1185,10 @@
 		{
 			"path": "/api/cron/cleanup-csrf-tokens",
 			"schedule": "17 * * * *"
+		},
+		{
+			"path": "/api/cron/process-withdrawals",
+			"schedule": "0 * * * *"
 		},
 		{
 			"path": "/api/cron/erc8004-crawl",

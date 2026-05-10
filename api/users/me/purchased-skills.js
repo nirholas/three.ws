@@ -21,10 +21,26 @@ export default wrap(async (req, res) => {
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
 	const purchases = await sql`
-		SELECT agent_id, skill, amount, currency_mint, chain, tx_signature, confirmed_at
-		FROM skill_purchases
-		WHERE user_id = ${userId} AND status = 'confirmed'
-		ORDER BY confirmed_at DESC
+		SELECT
+			sp.id,
+			sp.agent_id,
+			sp.skill,
+			sp.status,
+			sp.kind,
+			sp.amount,
+			sp.currency_mint,
+			sp.chain,
+			sp.tx_signature,
+			sp.confirmed_at,
+			sp.valid_until,
+			sp.trial_remaining,
+			sp.created_at,
+			ai.name AS agent_name,
+			ai.thumbnail_url AS agent_thumbnail
+		FROM skill_purchases sp
+		LEFT JOIN agent_identities ai ON ai.id = sp.agent_id
+		WHERE sp.user_id = ${userId} AND sp.status IN ('confirmed', 'trial')
+		ORDER BY sp.confirmed_at DESC NULLS LAST, sp.created_at DESC
 	`;
 
 	return json(res, 200, { data: { purchases } });

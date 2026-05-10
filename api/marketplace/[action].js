@@ -90,6 +90,7 @@ export default wrap(async (req, res) => {
 		if (sub === 'bookmark') return handleBookmark(req, res, id);
 		if (sub === 'publish') return handlePublish(req, res, id);
 		if (sub === 'view') return handleView(req, res, id);
+		if (sub === 'preview') return handlePreview(req, res, id);
 		return error(res, 404, 'not_found', 'unknown marketplace action');
 	}
 
@@ -336,6 +337,9 @@ async function handleDetail(req, res, id) {
 
 	const [row] = await sql`
 		SELECT a.*, u.display_name AS author_name, u.avatar_url AS author_avatar,
+		       av.storage_key AS avatar_storage_key,
+		       av.thumbnail_key AS avatar_thumbnail_key,
+		       av.visibility AS avatar_visibility,
 		       (SELECT count(*)::int FROM skill_purchases sp
 		        WHERE sp.agent_id = a.id AND sp.status = 'confirmed') AS buyers_total,
 		       (SELECT count(*)::int FROM skill_purchases sp
@@ -343,6 +347,7 @@ async function handleDetail(req, res, id) {
 		          AND sp.confirmed_at > now() - interval '24 hours') AS buyers_24h
 		FROM agent_identities a
 		LEFT JOIN users u ON u.id = a.user_id
+		LEFT JOIN avatars av ON av.id = a.avatar_id AND av.deleted_at IS NULL
 		WHERE a.id = ${id} AND a.deleted_at IS NULL
 	`;
 	if (!row) return error(res, 404, 'not_found', 'agent not found');
@@ -384,6 +389,261 @@ async function handleDetail(req, res, id) {
 		{ data: { agent: { ...toDetail(row), skill_prices, bookmarked, purchased_skills } } },
 		{ 'cache-control': 'public, max-age=15' },
 	);
+}
+
+// ── Preview chat ───────────────────────────────────────────────────────────
+//
+// Anonymous-friendly "try before you fork" — POST a single user message, get
+// back an SSE stream of token chunks that come straight from the LLM provider.
+// Two rate-limit buckets in series:
+//   1. Per-IP: prevents one visitor from draining credits.
+//   2. Per-agent: prevents one popular agent from starving the global pool.
+//
+// History is capped at 8 turns; only the agent's published system_prompt is
+// used (no viewer tools, no admin context). Provider is whichever is
+// configured via env, in fallback order: anthropic → openrouter → groq → openai.
+
+const PREVIEW_PROVIDERS = {
+	anthropic: {
+		envKey: 'ANTHROPIC_API_KEY',
+		url: 'https://api.anthropic.com/v1/messages',
+		defaultModel: 'claude-haiku-4-5-20251001',
+		style: 'anthropic',
+		extraHeaders: { 'anthropic-version': '2023-06-01' },
+	},
+	openrouter: {
+		envKey: 'OPENROUTER_API_KEY',
+		url: 'https://openrouter.ai/api/v1/chat/completions',
+		defaultModel: 'meta-llama/llama-3.3-70b-instruct:free',
+		style: 'openai',
+		extraHeaders: {
+			'HTTP-Referer': 'https://three.ws',
+			'X-Title': 'three.ws marketplace',
+		},
+	},
+	groq: {
+		envKey: 'GROQ_API_KEY',
+		url: 'https://api.groq.com/openai/v1/chat/completions',
+		defaultModel: 'llama-3.3-70b-versatile',
+		style: 'openai',
+	},
+	openai: {
+		envKey: 'OPENAI_API_KEY',
+		url: 'https://api.openai.com/v1/chat/completions',
+		defaultModel: 'gpt-4o-mini',
+		style: 'openai',
+	},
+};
+
+const previewBody = z.object({
+	message: z.string().trim().min(1).max(2000),
+	history: z
+		.array(
+			z.object({
+				role: z.enum(['user', 'assistant']),
+				content: z.string().min(1).max(2000),
+			}),
+		)
+		.max(8)
+		.default([]),
+});
+
+async function handlePreview(req, res, id) {
+	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
+	if (!method(req, res, ['POST'])) return;
+
+	const ip = clientIp(req);
+	const ipRl = await limits.previewIp(ip);
+	if (!ipRl.success) return error(res, 429, 'rate_limited', 'too many preview messages — try again later');
+	const agentRl = await limits.previewAgent(id);
+	if (!agentRl.success) return error(res, 429, 'rate_limited', 'this agent is at capacity right now');
+
+	const raw = await readJson(req).catch(() => null);
+	if (!raw) return error(res, 400, 'validation_error', 'request body required');
+	let body;
+	try {
+		body = previewBody.parse(raw);
+	} catch (err) {
+		return error(res, 400, 'validation_error', err.errors?.[0]?.message || 'invalid body');
+	}
+
+	const [agent] = await sql`
+		SELECT id, name, greeting, system_prompt, persona_prompt, is_published, deleted_at
+		FROM agent_identities
+		WHERE id = ${id}
+		LIMIT 1
+	`;
+	if (!agent || agent.deleted_at || !agent.is_published) {
+		return error(res, 404, 'not_found', 'agent not found or not published');
+	}
+
+	const route = pickPreviewProvider();
+	if (!route) return error(res, 503, 'preview_unavailable', 'no preview provider configured');
+
+	const baseSystem = (agent.system_prompt || agent.persona_prompt || '').trim();
+	const systemPrompt = baseSystem
+		? `${baseSystem}\n\nReply concisely. Keep responses to 1–4 sentences. No markdown formatting, no headers, no lists. Stay in character as ${agent.name || 'this agent'}.`
+		: `You are ${agent.name || 'a community agent'}. Reply concisely in 1–4 sentences in plain text. No markdown.`;
+
+	const history = body.history.map((m) => ({ role: m.role, content: m.content }));
+	history.push({ role: 'user', content: body.message });
+
+	let upstream;
+	try {
+		upstream = await fetch(route.url, {
+			method: 'POST',
+			headers: route.headers,
+			body: JSON.stringify(route.buildPayload({ systemPrompt, history })),
+		});
+	} catch {
+		return error(res, 502, 'upstream_unavailable', 'preview backend unreachable');
+	}
+
+	if (!upstream.ok) {
+		const text = await upstream.text().catch(() => '');
+		if (process.env.DEBUG === 'true') {
+			console.warn(`[preview:${route.name}]`, upstream.status, text.slice(0, 400));
+		}
+		return error(res, 502, 'upstream_error', `preview backend returned ${upstream.status}`);
+	}
+
+	res.writeHead(200, {
+		'Content-Type': 'text/event-stream; charset=utf-8',
+		'Cache-Control': 'no-cache, no-transform',
+		'X-Accel-Buffering': 'no',
+		'Connection': 'keep-alive',
+	});
+	const sendSSE = (obj) => res.write(`data: ${JSON.stringify(obj)}\n\n`);
+	sendSSE({ type: 'open', model: route.model, provider: route.name });
+
+	const started = Date.now();
+	const out = route.style === 'anthropic'
+		? await streamAnthropicPreview(upstream, sendSSE)
+		: await streamOpenAIPreview(upstream, sendSSE);
+
+	if (out.error) {
+		sendSSE({ type: 'error', code: 'stream_error', message: 'stream interrupted' });
+		res.end();
+		return;
+	}
+
+	sendSSE({
+		type: 'done',
+		reply: out.reply.trim(),
+		model: route.model,
+		provider: route.name,
+		latencyMs: Date.now() - started,
+	});
+	res.end();
+}
+
+function pickPreviewProvider() {
+	const order = ['anthropic', 'openrouter', 'groq', 'openai'];
+	for (const name of order) {
+		const cfg = PREVIEW_PROVIDERS[name];
+		const key = process.env[cfg.envKey];
+		if (!key) continue;
+		const model = process.env.PREVIEW_MODEL || cfg.defaultModel;
+		if (cfg.style === 'anthropic') {
+			return {
+				name,
+				model,
+				url: cfg.url,
+				style: 'anthropic',
+				headers: {
+					'x-api-key': key,
+					'content-type': 'application/json',
+					...(cfg.extraHeaders || {}),
+				},
+				buildPayload: ({ systemPrompt, history }) => ({
+					model,
+					max_tokens: 512,
+					system: systemPrompt,
+					messages: history,
+					stream: true,
+				}),
+			};
+		}
+		return {
+			name,
+			model,
+			url: cfg.url,
+			style: 'openai',
+			headers: {
+				Authorization: `Bearer ${key}`,
+				'Content-Type': 'application/json',
+				...(cfg.extraHeaders || {}),
+			},
+			buildPayload: ({ systemPrompt, history }) => ({
+				model,
+				max_tokens: 512,
+				messages: [{ role: 'system', content: systemPrompt }, ...history],
+				stream: true,
+			}),
+		};
+	}
+	return null;
+}
+
+async function streamAnthropicPreview(upstream, sendSSE) {
+	const reader = upstream.body.getReader();
+	const decoder = new TextDecoder();
+	let buf = '';
+	let reply = '';
+	try {
+		while (true) {
+			const { value, done } = await reader.read();
+			if (done) break;
+			buf += decoder.decode(value, { stream: true });
+			const lines = buf.split('\n');
+			buf = lines.pop();
+			for (const line of lines) {
+				if (!line.startsWith('data: ')) continue;
+				const raw = line.slice(6).trim();
+				if (!raw) continue;
+				let evt;
+				try { evt = JSON.parse(raw); } catch { continue; }
+				if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
+					reply += evt.delta.text;
+					sendSSE({ type: 'chunk', text: evt.delta.text });
+				}
+			}
+		}
+	} catch (err) {
+		return { error: err, reply };
+	}
+	return { reply };
+}
+
+async function streamOpenAIPreview(upstream, sendSSE) {
+	const reader = upstream.body.getReader();
+	const decoder = new TextDecoder();
+	let buf = '';
+	let reply = '';
+	try {
+		while (true) {
+			const { value, done } = await reader.read();
+			if (done) break;
+			buf += decoder.decode(value, { stream: true });
+			const lines = buf.split('\n');
+			buf = lines.pop();
+			for (const line of lines) {
+				if (!line.startsWith('data: ')) continue;
+				const raw = line.slice(6).trim();
+				if (!raw || raw === '[DONE]') continue;
+				let evt;
+				try { evt = JSON.parse(raw); } catch { continue; }
+				const text = evt.choices?.[0]?.delta?.content;
+				if (text) {
+					reply += text;
+					sendSSE({ type: 'chunk', text });
+				}
+			}
+		}
+	} catch (err) {
+		return { error: err, reply };
+	}
+	return { reply };
 }
 
 // ── Versions ───────────────────────────────────────────────────────────────
@@ -604,6 +864,7 @@ async function handleView(req, res, id) {
 // ── Shaping ────────────────────────────────────────────────────────────────
 
 function toCard(row) {
+	const avatarPublic = !row.avatar_visibility || row.avatar_visibility === 'public' || row.avatar_visibility === 'unlisted';
 	return {
 		id: row.id,
 		name: row.name,
@@ -612,6 +873,7 @@ function toCard(row) {
 		tags: row.tags || [],
 		avatar_id: row.avatar_id,
 		thumbnail_url: row.thumbnail_key ? publicUrl(row.thumbnail_key) : null,
+		avatar_glb_url: row.avatar_storage_key && avatarPublic ? publicUrl(row.avatar_storage_key) : null,
 		author_id: row.user_id,
 		skills: row.skills || [],
 		forks_count: row.forks_count || 0,

@@ -17,6 +17,7 @@
 		<link rel="stylesheet" href="footer.css" />
 		<link rel="stylesheet" href="marketplace.css" />
 		<link rel="stylesheet" href="marketplace-skills.css" />
+		<link rel="stylesheet" href="marketplace-v2.css" />
 		<link
 			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
 			rel="stylesheet"
@@ -389,6 +390,139 @@
 			.market-card-skeleton .sk-line.short {
 				width: 50%;
 				margin-bottom: 14px;
+			}
+
+			/* ── Weekly theme strip ───────────────────────────────────────── */
+			.market-theme-strip {
+				display: flex;
+				align-items: center;
+				gap: 12px;
+				margin: 14px 24px 0;
+				padding: 10px 16px;
+				background: linear-gradient(90deg, rgba(168, 85, 247, 0.1), rgba(125, 211, 252, 0.06) 60%, transparent);
+				border: 1px solid rgba(168, 85, 247, 0.18);
+				border-radius: 12px;
+				font-size: 13px;
+				color: #d4d4d8;
+				flex-wrap: wrap;
+			}
+			.market-theme-strip .market-theme-eyebrow {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 10px;
+				letter-spacing: 0.2em;
+				text-transform: uppercase;
+				color: #c4b5fd;
+				font-weight: 700;
+			}
+			.market-theme-strip .market-theme-title {
+				color: #fafafa;
+				font-weight: 700;
+				font-size: 14px;
+			}
+			.market-theme-strip .market-theme-blurb {
+				color: #a1a1aa;
+				flex: 1;
+				min-width: 200px;
+			}
+			.market-theme-strip .market-theme-cta {
+				background: rgba(168, 85, 247, 0.18);
+				color: #f5f3ff;
+				border: 1px solid rgba(168, 85, 247, 0.3);
+				border-radius: 8px;
+				padding: 6px 12px;
+				font-size: 12px;
+				font-weight: 600;
+				cursor: pointer;
+				transition: background 0.15s ease;
+			}
+			.market-theme-strip .market-theme-cta:hover {
+				background: rgba(168, 85, 247, 0.3);
+			}
+
+			/* ── Onchain card variants ────────────────────────────────────── */
+			.market-card-avatar.onchain {
+				background: linear-gradient(180deg, #0c0d10, #0a0a0a);
+			}
+			.market-card-avatar.onchain .avatar-pill.onchain {
+				background: rgba(168, 85, 247, 0.12);
+				color: #c4b5fd;
+			}
+			.market-card-avatar.onchain .card-chain {
+				font-family: 'Space Grotesk', sans-serif;
+				letter-spacing: 0.04em;
+				color: #c4b5fd;
+				font-weight: 600;
+				font-size: 11px;
+				text-transform: uppercase;
+			}
+			.onchain-x402 {
+				background: rgba(125, 211, 252, 0.12);
+				color: #7dd3fc;
+				padding: 2px 8px;
+				border-radius: 999px;
+				font-size: 10px;
+				font-weight: 700;
+				letter-spacing: 0.04em;
+			}
+
+			/* Onchain count chip (shown next to "Onchain" filter button) */
+			.market-chip .chip-count {
+				background: rgba(255, 255, 255, 0.08);
+				color: inherit;
+				padding: 1px 6px;
+				margin-left: 4px;
+				border-radius: 999px;
+				font-size: 10px;
+				font-weight: 600;
+			}
+			.market-chip.active .chip-count {
+				background: rgba(0, 0, 0, 0.15);
+			}
+
+			/* Tag pills become hover-clickable buttons (filter search by tag). */
+			.market-card-avatar .card-tags .tag-pill {
+				cursor: pointer;
+				font-family: inherit;
+				transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+			}
+			.market-card-avatar .card-tags .tag-pill:hover {
+				background: rgba(125, 211, 252, 0.18);
+				border-color: rgba(125, 211, 252, 0.4);
+				color: #fafafa;
+			}
+
+			/* Featured-curated badge over the avatar thumbnail (gold star, top-left) */
+			.market-card-avatar.featured {
+				border-color: rgba(253, 224, 71, 0.25);
+				box-shadow: 0 0 0 1px rgba(253, 224, 71, 0.05);
+			}
+			.market-card-avatar .card-featured-badge {
+				position: absolute;
+				top: 8px;
+				left: 8px;
+				z-index: 2;
+				width: 22px;
+				height: 22px;
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				background: rgba(253, 224, 71, 0.18);
+				color: #fde047;
+				border: 1px solid rgba(253, 224, 71, 0.3);
+				border-radius: 50%;
+				font-size: 12px;
+				backdrop-filter: blur(4px);
+				pointer-events: none;
+			}
+			/* View-count pill in the byline (subtle, low-contrast). */
+			.market-card-avatar .byline .stat-pill.views {
+				background: rgba(255, 255, 255, 0.04);
+				border: 1px solid rgba(255, 255, 255, 0.06);
+				border-radius: 999px;
+				padding: 1px 7px;
+				font-size: 10px;
+				color: #a1a1aa;
+				font-weight: 500;
 			}
 
 			/* ── Avatar card details: byline, tags, footer cta ──────────── */
@@ -876,6 +1010,7 @@
 				<a href="/marketplace?tab=skills" data-nav="skills"><span class="ico">≡</span> <span>Skills</span></a>
 				<a href="/dashboard" data-nav="model"><span class="ico">◉</span> <span>Model</span></a>
 				<a href="/marketplace?tab=mine" data-nav="mine"><span class="ico">◱</span> <span>My Agents</span></a>
+				<a href="/marketplace?tab=purchases" data-nav="purchases"><span class="ico">✓</span> <span>My Purchases</span></a>
 			</nav>
 			<button class="market-submit-btn market-sidebar-submit" id="market-submit-btn">+ Submit Agent</button>
 		</aside>
@@ -892,6 +1027,13 @@
 
 			<!-- Discovery view -->
 			<section class="market-discovery" id="market-discovery">
+				<!-- Weekly curated theme strip (loads from /api/marketplace/theme) -->
+				<aside class="market-theme-strip" id="market-theme-strip" hidden>
+					<span class="market-theme-eyebrow">This week</span>
+					<strong class="market-theme-title" id="market-theme-title">—</strong>
+					<span class="market-theme-blurb" id="market-theme-blurb">—</span>
+					<button class="market-theme-cta" id="market-theme-cta" hidden>Browse →</button>
+				</aside>
 				<!-- Live 3D hero carousel -->
 				<section class="market-hero" id="market-hero" hidden aria-label="Featured 3D avatars">
 					<div class="market-hero-stage" id="market-hero-stage"></div>
@@ -919,6 +1061,7 @@
 						<button class="market-chip active" data-filter="all" role="tab">All</button>
 						<button class="market-chip" data-filter="agents" role="tab">Agents</button>
 						<button class="market-chip" data-filter="avatars" role="tab">Avatars</button>
+						<button class="market-chip" data-filter="onchain" role="tab">Onchain <span class="chip-count" id="chip-count-onchain"></span></button>
 					</div>
 					<select id="market-sort" class="market-sort">
 						<option value="recommended">Recommended</option>
@@ -930,8 +1073,12 @@
 					<div class="wallet-adapter-button-container"></div>
 				</header>
 
+				<div class="market-cat-chips" id="market-cat-chips" role="navigation" aria-label="Categories"></div>
+
+				<div class="market-tag-banner" id="market-tag-banner" role="status" hidden></div>
+
 				<div class="market-grid" id="market-grid"></div>
-				<div class="market-loadmore">
+				<div class="market-loadmore" id="market-loadmore-row" hidden>
 					<button id="market-loadmore" hidden>Load more</button>
 				</div>
 			</section>
@@ -940,11 +1087,11 @@
 			<section class="market-detail" id="market-detail" hidden>
 				<button class="market-back" id="market-back" aria-label="Back">←</button>
 				<div class="market-detail-head">
-					<div class="market-detail-avatar" id="d-avatar">▣</div>
+					<div class="market-detail-avatar" id="d-avatar"><span class="d-avatar-fallback">▣</span></div>
 					<div class="market-detail-meta">
 						<h1 id="d-name">—</h1>
 						<div class="market-detail-author">
-							<span id="d-author">—</span>
+							<button type="button" id="d-author" class="market-author-btn">—</button>
 							<span class="dot">·</span>
 							<span id="d-published">—</span>
 							<span id="d-forks-pill" class="forks-pill" hidden></span>
@@ -972,9 +1119,24 @@
 								<h3>What can you do with this Agent?</h3>
 								<p id="d-overview">—</p>
 							</div>
-							<h2 class="market-section-title">Agent Demo</h2>
-							<div class="market-demo">
-								<div class="market-demo-bubble" id="d-greeting">—</div>
+							<div class="market-preview-card" id="d-preview-card">
+								<div class="market-preview-head">
+									<h2 class="market-section-title" style="margin:0">Try it now</h2>
+									<span class="market-preview-hint">Send a message — no fork required</span>
+								</div>
+								<div class="market-preview-thread" id="d-preview-thread" aria-live="polite"></div>
+								<form class="market-preview-form" id="d-preview-form" autocomplete="off">
+									<input
+										type="text"
+										id="d-preview-input"
+										class="market-preview-input"
+										placeholder="Ask this agent anything…"
+										maxlength="2000"
+										required
+									/>
+									<button type="submit" class="market-preview-send" id="d-preview-send">Send</button>
+								</form>
+								<div class="market-preview-footer" id="d-preview-footer"></div>
 							</div>
 						</div>
 
@@ -1028,6 +1190,19 @@
 				</header>
 				<div class="market-mine-body">
 					<div class="market-grid" id="mine-grid"></div>
+				</div>
+			</section>
+
+			<!-- My Purchases tab -->
+			<section class="market-purchases" id="market-purchases" hidden>
+				<header class="market-topbar">
+					<div class="market-mine-head">
+						<h2 class="market-section-heading">My Purchases</h2>
+						<span class="market-mine-sub" id="purchases-subtitle"></span>
+					</div>
+				</header>
+				<div class="market-mine-body">
+					<div class="market-grid" id="purchases-grid"></div>
 				</div>
 			</section>
 
@@ -1202,6 +1377,40 @@
 				</div>
 			</div>
 		</div>
+
+		<!-- Creator Profile Modal -->
+		<div class="creator-modal-overlay" id="creator-modal-overlay" hidden aria-modal="true" role="dialog" aria-labelledby="creator-modal-title">
+			<div class="creator-modal" role="document">
+				<button class="creator-modal-close" id="creator-modal-close" aria-label="Close">×</button>
+				<header class="creator-modal-head">
+					<div class="creator-modal-avatar" id="creator-modal-avatar"></div>
+					<div class="creator-modal-meta">
+						<div class="creator-modal-eyebrow">Creator profile</div>
+						<h2 class="creator-modal-title" id="creator-modal-title">—</h2>
+						<div class="creator-modal-handle" id="creator-modal-handle"></div>
+						<div class="creator-modal-stats" id="creator-modal-stats"></div>
+					</div>
+				</header>
+				<div class="creator-modal-body">
+					<section>
+						<h3 class="creator-modal-sectiontitle">Published agents <span id="creator-agents-count" class="muted"></span></h3>
+						<div class="creator-modal-grid" id="creator-agents-grid">
+							<div class="market-empty">Loading…</div>
+						</div>
+					</section>
+					<section>
+						<h3 class="creator-modal-sectiontitle">Public avatars <span id="creator-avatars-count" class="muted"></span></h3>
+						<div class="creator-modal-grid" id="creator-avatars-grid">
+							<div class="market-empty">Loading…</div>
+						</div>
+					</section>
+				</div>
+			</div>
+		</div>
+
+		<!-- Mobile sidebar backdrop + toggle -->
+		<button class="market-sidebar-toggle" id="market-sidebar-toggle" aria-label="Open menu" hidden>☰</button>
+		<div class="market-sidebar-backdrop" id="market-sidebar-backdrop" hidden></div>
 
 	<!-- Payment Modal -->
 	<div class="market-modal-overlay" id="payment-modal-overlay" hidden aria-modal="true" role="dialog" aria-labelledby="payment-modal-title">

@@ -74,13 +74,16 @@ async function handleCreate(req, res) {
 	const body = await readJson(req).catch(() => null);
 	const agentId = body?.agent_id;
 	const skill = typeof body?.skill === 'string' ? body.skill.trim() : null;
+	const durationHours = Number.isInteger(body?.duration_hours) && body.duration_hours > 0
+		? Math.min(body.duration_hours, 720)
+		: null;
 	if (!agentId || !skill) {
 		return error(res, 400, 'validation_error', 'agent_id and skill required');
 	}
 
 	// Look up the active price for this skill on this agent.
 	const [price] = await sql`
-		SELECT amount, currency_mint, chain, mint_decimals, trial_uses
+		SELECT amount, currency_mint, chain, mint_decimals, trial_uses, time_pass_hours, time_pass_amount
 		FROM agent_skill_prices
 		WHERE agent_id = ${agentId} AND skill = ${skill} AND is_active = true
 	`;

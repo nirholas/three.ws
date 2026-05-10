@@ -258,9 +258,34 @@ for (const m of ON_DISK) {
 	});
 }
 
+// Filters out pure technical fixtures from the marketplace catalogue. The
+// Khronos asset repo includes many "compare X / X test / animation pointer"
+// assets meant for renderer conformance — they'd dilute a marketplace meant
+// for showcasing characters and curated objects. We keep them in the source
+// list so the generator stays close to upstream, but skip them here.
+function isReferenceFixture(name, meta) {
+	if (/^Compare/i.test(name)) return true;
+	if (/Test$|TestGrid$/i.test(name)) return true;
+	if (/^Animated(Cube|Triangle|ColorsCube|MorphCube)$/i.test(name)) return true;
+	if (/^(Box|Cube|Triangle|Simple|Primitive|Recursive|MultiUV|Cameras|Negative|Mirror|Orientation|Texture(Coord|Encoding|LinearInterp|Settings|Transform)|Vertex|Interpolation|XmpMetadata|CubeVisibility|LightVisibility|MeshPrimitive|UnicodeFile|Unicode)/i.test(name)) return true;
+	if (/AnimationPointer/i.test(name) && !/Lamp|PotOfCoals/i.test(name)) return true;
+	// Drop entries whose tags consist entirely of {test, primitive, material} with
+	// no aesthetic descriptor — pure reference grids.
+	const tagSet = new Set(meta.tags);
+	const filler = ['test', 'material', 'primitive', 'normals', 'metadata', 'colors'];
+	const hasShowcase = meta.tags.some((t) => !filler.includes(t));
+	if (!hasShowcase) return true;
+	return false;
+}
+
 // Khronos
+let dropped = 0;
 for (const name of KHRONOS) {
 	const meta = KHRONOS_META[name] || classifyByName(name);
+	if (isReferenceFixture(name, meta)) {
+		dropped += 1;
+		continue;
+	}
 	const slug = 'demo-' + name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 	addItem({
 		id: `avatar_demo_k_${name.toLowerCase()}`,
@@ -347,3 +372,4 @@ ${lines.join('\n')}
 const target = path.join(HERE, '..', 'api', '_lib', 'demo-avatars.js');
 fs.writeFileSync(target, file);
 console.log('wrote', lines.length, 'demo entries to', target);
+console.log('dropped', dropped, 'reference/test fixtures');

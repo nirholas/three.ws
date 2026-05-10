@@ -7,6 +7,7 @@ import { getSessionUser } from '../../_lib/auth.js';
 import { cors, json, method, wrap, error, readJson } from '../../_lib/http.js';
 import { parse } from '../../_lib/validate.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
+import { requireCsrf } from '../../_lib/csrf.js';
 
 const postBody = z.object({
 	amount: z.number().int().positive(),
@@ -53,6 +54,9 @@ export default wrap(async (req, res) => {
 	}
 
 	// POST
+	const csrfOk = await requireCsrf(req, res, user.id);
+	if (!csrfOk) return;
+
 	const rlUser = await limits.withdrawalPerUser(user.id);
 	if (!rlUser.success) return error(res, 429, 'rate_limited', 'too many withdrawal requests');
 

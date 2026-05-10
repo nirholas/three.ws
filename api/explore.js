@@ -82,6 +82,8 @@ export default wrap(async (req, res) => {
 		? await sql`
 		SELECT a.id, a.slug, a.name, a.description, a.storage_key, a.thumbnail_key,
 		       a.tags, a.created_at, a.source,
+		       coalesce(a.featured, false)   AS featured,
+		       coalesce(a.view_count, 0)     AS view_count,
 		       u.username AS owner_username,
 		       u.display_name AS owner_display_name,
 		       u.wallet_address AS owner_wallet
@@ -94,7 +96,7 @@ export default wrap(async (req, res) => {
 		    OR coalesce(a.description,'') ILIKE ${'%' + q + '%'}
 		  ))
 		  AND (${cursorDate ? cursorDate.toISOString() : null}::timestamptz IS NULL OR a.created_at < ${cursorDate ? cursorDate.toISOString() : null}::timestamptz)
-		ORDER BY a.created_at DESC
+		ORDER BY coalesce(a.featured, false) DESC, a.created_at DESC
 		LIMIT ${(limit + 1) * 3}
 	`
 		: [];
@@ -147,6 +149,8 @@ export default wrap(async (req, res) => {
 			has3d: true,
 			tags: r.tags || [],
 			source: r.source || null,
+			featured: r.featured === true || r.featured === 't',
+			viewCount: Number(r.view_count) || 0,
 			createdAt: r.created_at,
 			viewerUrl: `/#model=${encodeURIComponent(glb)}`,
 			author: handle

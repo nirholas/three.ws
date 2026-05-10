@@ -133,7 +133,89 @@ export async function saveRemoteGlbToAccount(source, meta = {}) {
 		source: meta.source || 'upload',
 		source_meta: sourceMeta,
 	});
-	return created.avatar;
+	const avatar = created.avatar;
+
+	// Fire-and-forget thumbnail + auto-tag pipeline. Doesn't block the caller.
+	// Uses a hidden off-screen model-viewer to render the GLB, captures a JPEG
+	// poster, uploads to R2, and calls Claude Haiku for tags + description.
+	captureAndTagAvatar(avatar.id, presign.storage_key).catch((err) => {
+		console.warn('[account] thumbnail/auto-tag pipeline failed silently', err?.message);
+	});
+
+	return avatar;
+}
+
+async function captureAndTagAvatar(avatarId, storageKey) {
+	// Resolve the public GLB URL from the storage key.
+	const glbUrl = storageKey.startsWith('http')
+		? storageKey
+		: `${location.origin}/api/avatars/${avatarId}?url=1`;
+
+	// We need the actual R2 public URL. Get it from the avatar record.
+	let publicGlb;
+	try {
+		const r = await apiFetch(`/api/avatars/${avatarId}`);
+		if (!r.ok) return;
+		const j = await r.json();
+		publicGlb = j.avatar?.url || j.avatar?.model_url;
+		if (!publicGlb) return;
+	} catch { return; }
+
+	// Render in a tiny off-screen model-viewer element.
+	const mv = document.createElement('model-viewer');
+	mv.setAttribute('src', publicGlb);
+	mv.setAttribute('camera-orbit', '0deg 75deg 105%');
+	mv.setAttribute('exposure', '1');
+	mv.setAttribute('shadow-intensity', '0.6');
+	mv.setAttribute('tone-mapping', 'aces');
+	mv.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:512px;height:512px;opacity:0;pointer-events:none;';
+	document.body.appendChild(mv);
+
+	await new Promise((resolve, reject) => {
+		const timeout = setTimeout(() => reject(new Error('model-viewer load timeout')), 25_000);
+		mv.addEventListener('load', () => { clearTimeout(timeout); resolve(); }, { once: true });
+		mv.addEventListener('error', () => { clearTimeout(timeout); reject(new Error('model-viewer load error')); }, { once: true });
+	});
+
+	// Give the renderer one frame to paint.
+	await new Promise((r) => requestAnimationFrame(r));
+	await new Promise((r) => requestAnimationFrame(r));
+
+	// Capture poster as JPEG blob.
+	let thumbBlob;
+	try {
+		thumbBlob = await mv.toBlob({ mimeType: 'image/jpeg', qualityArgument: 0.82 });
+	} finally {
+		document.body.removeChild(mv);
+	}
+	if (!thumbBlob || thumbBlob.size < 500) return;
+
+	// Get a presigned upload URL for the thumbnail.
+	const presignRes = await postJson('/api/avatars/presign-thumbnail', {
+		avatar_id: avatarId,
+		size_bytes: thumbBlob.size,
+	});
+
+	// Upload the JPEG to R2.
+	const putRes = await fetch(presignRes.upload_url, {
+		method: 'PUT',
+		headers: { 'content-type': 'image/jpeg' },
+		body: thumbBlob,
+	});
+	if (!putRes.ok) throw new Error(`thumbnail R2 upload failed: ${putRes.status}`);
+
+	// Patch the avatar to store the thumbnail_key, then auto-tag via Claude vision.
+	await apiFetch(`/api/avatars/${avatarId}`, {
+		method: 'PATCH',
+		headers: { 'content-type': 'application/json' },
+		body: JSON.stringify({ thumbnail_key: presignRes.thumb_key }),
+	});
+
+	// Auto-tag (non-fatal — Claude vision call).
+	await postJson('/api/avatars/auto-tag', {
+		avatar_id: avatarId,
+		thumb_key: presignRes.thumb_key,
+	});
 }
 
 async function postJson(path, body) {

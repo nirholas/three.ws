@@ -100,32 +100,42 @@ async function fetchPlugins() {
 	return j?.data?.items || [];
 }
 
-// Skills are derived from a curated catalogue + any agent-defined skills
-// surfaced through marketplace. For the avatar studio we expose a stable
-// catalog of capabilities the user can attach to give the avatar behavior.
+// Skill catalogue. Every entry here is wired to something real:
+//   - tts       → POST /api/tts/edge (Microsoft Edge TTS, free, no API key)
+//   - stt       → window.SpeechRecognition (Web Speech API, browser-native)
+//   - memory    → localStorage chat history per avatar
+//   - animate-* → triggers a clip in the loaded GLB (only enabled if the GLB
+//                 actually contains a clip with that name)
+//   - wallet    → opens /pay (USDC tip flow already shipped)
+//   - identity  → opens the ERC-8004 register flow
+// Everything else (image gen, web search, lip sync) was speculative and has
+// been removed until there's a real backend behind it.
 const SKILL_CATALOG = [
-	{ id: 'wave', name: 'Wave hello', desc: 'Greet the visitor with a wave gesture' },
-	{ id: 'idle-anim', name: 'Idle animation', desc: 'Subtle breathing/sway loop when not chatting' },
-	{ id: 'lip-sync', name: 'Lip sync', desc: 'Mouth animation synced to TTS responses' },
-	{ id: 'face-track', name: 'Face camera', desc: 'Avatar head tracks the cursor / camera' },
-	{ id: 'memory', name: 'Conversation memory', desc: 'Remember chat history across page loads' },
-	{ id: 'voice-tts', name: 'Voice (TTS)', desc: 'Speak responses out loud with synthesized voice' },
-	{ id: 'voice-stt', name: 'Voice input', desc: 'Listen to the user via microphone (speech-to-text)' },
-	{ id: 'web-search', name: 'Web search', desc: 'Look up information online during chat' },
-	{ id: 'image-gen', name: 'Image generation', desc: 'Generate images on request' },
-	{ id: 'pump-feed', name: 'Pump.fun feed', desc: 'Real-time data on new Solana token launches' },
-	{ id: 'wallet-pay', name: 'Wallet payments', desc: 'Accept USDC tips via Solana Pay' },
-	{ id: 'erc8004', name: 'ERC-8004 identity', desc: 'On-chain agent identity for cross-app reputation' },
+	{ id: 'tts',          name: 'Voice replies (TTS)',  desc: 'Speak each chat reply out loud using Microsoft Edge Neural TTS.' },
+	{ id: 'stt',          name: 'Voice input (STT)',    desc: 'Press the mic in the chat box to dictate via the browser Web Speech API.' },
+	{ id: 'memory',       name: 'Conversation memory',  desc: 'Persist chat history across reloads (per-avatar, in this browser).' },
+	{ id: 'animate-wave', name: 'Wave animation',       desc: 'Play a wave-style clip when the conversation starts. Requires a matching clip in the GLB.', requiresClip: ['wave', 'wavehello', 'hi'] },
+	{ id: 'animate-idle', name: 'Auto-play idle',       desc: 'Loop the idle animation between replies. Requires an idle clip in the GLB.', requiresClip: ['idle', 'breathing', 'breath'] },
+	{ id: 'wallet',       name: 'Accept USDC tips',     desc: 'Open the Solana Pay flow so visitors can tip this avatar.' },
+	{ id: 'identity',     name: 'ERC-8004 identity',    desc: 'Register an on-chain agent identity for cross-app reputation.' },
 ];
 
 async function fetchSkills() {
-	return SKILL_CATALOG;
+	return SKILL_CATALOG.map((s) => {
+		if (!s.requiresClip) return { ...s, available: true };
+		const has = s.requiresClip.some((c) =>
+			[...availableAnimations].some((name) => name.includes(c)),
+		);
+		return { ...s, available: has };
+	});
 }
 
 // ── Render ────────────────────────────────────────────────────────────
 
 function renderShell(glbUrl) {
-	const tagsHtml = (avatar.tags || []).map((t) => `<span class="av-tag">${esc(t)}</span>`).join('');
+	const tagsHtml = (avatar.tags || [])
+		.map((t) => `<a class="av-tag" href="/marketplace?tag=${encodeURIComponent(t)}">${esc(t)}</a>`)
+		.join('');
 	const author = avatar.author || avatar.attribution;
 	const byLine = author?.handle
 		? author.profileUrl || author.url
@@ -432,30 +442,77 @@ async function loadSkills() {
 
 function renderSkillRow(s) {
 	const on = attachedSkills.has(s.id);
-	return `<div class="av-row">
+	const disabled = s.available === false;
+	const action = disabled
+		? `<button class="av-row-action" disabled title="No matching animation clip in this GLB">Unavailable</button>`
+		: `<button class="av-row-action${on ? ' active' : ''}" data-skill="${esc(s.id)}">${on ? 'Attached' : 'Attach'}</button>`;
+	return `<div class="av-row${disabled ? ' av-row-disabled' : ''}">
 		<div class="av-row-main">
 			<p class="av-row-title">${esc(s.name)}</p>
 			<p class="av-row-sub">${esc(s.desc)}</p>
 		</div>
-		<button class="av-row-action${on ? ' active' : ''}" data-skill="${esc(s.id)}">
-			${on ? 'Attached' : 'Attach'}
-		</button>
+		${action}
 	</div>`;
 }
 
-function toggleSkill(id) {
-	if (attachedSkills.has(id)) attachedSkills.delete(id);
+async function toggleSkill(id) {
+	const wasOn = attachedSkills.has(id);
+	if (wasOn) attachedSkills.delete(id);
 	else attachedSkills.add(id);
 	saveAttached();
-	loadSkills();
+	await loadSkills();
 	const overview = $('av-overview');
 	if (overview) {
-		// re-render attached pills in the overview panel
 		const existing = overview.querySelector('.av-attached');
 		if (existing) existing.remove();
 		const html = renderAttached();
 		if (html) overview.insertAdjacentHTML('beforeend', html);
 	}
+
+	// Side effects on attach/detach for skills that act immediately:
+	if (!wasOn) {
+		switch (id) {
+			case 'memory':
+				// Re-hydrate stored chat history into the panel.
+				hydrateChatHistory();
+				break;
+			case 'animate-wave':
+				playClipByHint(['wave', 'wavehello', 'hi']);
+				break;
+			case 'animate-idle':
+				playClipByHint(['idle', 'breathing', 'breath'], { loop: true });
+				break;
+			case 'wallet':
+				window.open('/pay', '_blank', 'noopener');
+				break;
+			case 'identity':
+				window.open('/dashboard', '_blank', 'noopener');
+				break;
+		}
+	}
+}
+
+// ── Animation triggers ───────────────────────────────────────────────
+//
+// model-viewer surfaces playback through `availableAnimations` (array of
+// clip names) + `animationName` setter + `play()/pause()` methods. We use
+// only those public APIs — no scene-graph reach-in.
+
+function playClipByHint(hints, { loop = false } = {}) {
+	const viewer = $('av-viewer');
+	if (!viewer) return;
+	const clips = viewer.availableAnimations || [];
+	if (!clips.length) return;
+	const lower = clips.map((n) => n.toLowerCase());
+	let idx = -1;
+	for (const hint of hints) {
+		idx = lower.findIndex((n) => n.includes(hint));
+		if (idx !== -1) break;
+	}
+	if (idx === -1) return;
+	viewer.animationName = clips[idx];
+	viewer.autoplay = true;
+	if (typeof viewer.play === 'function') viewer.play({ repetitions: loop ? Infinity : 1 });
 }
 
 // ── Plugins panel ─────────────────────────────────────────────────────
@@ -538,7 +595,11 @@ function bindChat() {
 	const form = $('av-chat-form');
 	const input = $('av-chat-input');
 	const send = $('av-chat-send');
+	const mic = $('av-chat-mic');
 	if (!form || !input || !send) return;
+
+	// Persistent memory (memory skill): replay stored history on first paint.
+	if (attachedSkills.has('memory')) hydrateChatHistory();
 
 	input.addEventListener('input', () => {
 		input.style.height = 'auto';
@@ -558,6 +619,102 @@ function bindChat() {
 		input.style.height = 'auto';
 		await sendChatMessage(text);
 	});
+
+	// Mic button → Web Speech API STT. Hidden if the browser doesn't support it.
+	const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+	if (mic && SR) {
+		const rec = new SR();
+		rec.continuous = false;
+		rec.interimResults = false;
+		rec.lang = 'en-US';
+		let listening = false;
+		mic.addEventListener('click', () => {
+			if (!attachedSkills.has('stt')) {
+				alert('Attach the "Voice input" skill first (Skills tab).');
+				return;
+			}
+			if (listening) { rec.stop(); return; }
+			try { rec.start(); listening = true; mic.classList.add('listening'); }
+			catch (err) { console.warn('[avatar] STT start', err.message); }
+		});
+		rec.onresult = (e) => {
+			const text = e.results[0]?.[0]?.transcript;
+			if (text) input.value = (input.value ? input.value + ' ' : '') + text;
+			input.dispatchEvent(new Event('input'));
+			input.focus();
+		};
+		rec.onend = () => { listening = false; mic.classList.remove('listening'); };
+		rec.onerror = () => { listening = false; mic.classList.remove('listening'); };
+	} else if (mic) {
+		mic.hidden = true; // unsupported browser — hide rather than show a dead button
+	}
+}
+
+// ── Persistent chat memory ───────────────────────────────────────────
+
+const MEMORY_KEY_PREFIX = 'avatar_chat_v1:';
+function memoryKey() { return MEMORY_KEY_PREFIX + (avatar?.id || avatarId); }
+
+function hydrateChatHistory() {
+	if (!attachedSkills.has('memory')) return;
+	try {
+		const raw = localStorage.getItem(memoryKey());
+		if (!raw) return;
+		const stored = JSON.parse(raw);
+		if (!Array.isArray(stored) || stored.length === 0) return;
+		chatHistory = stored.slice(-40); // cap so we don't blow context
+		const log = $('av-chat-log');
+		if (!log) return;
+		log.querySelector('.av-chat-empty')?.remove();
+		// Re-render the conversation from the persisted history.
+		const existing = log.querySelectorAll('.av-chat-msg');
+		existing.forEach((n) => n.remove());
+		for (const m of chatHistory) appendChatMessage(m.role, m.content);
+	} catch (err) {
+		console.warn('[avatar] memory hydrate failed', err.message);
+	}
+}
+
+function persistChatHistory() {
+	if (!attachedSkills.has('memory')) return;
+	try {
+		localStorage.setItem(memoryKey(), JSON.stringify(chatHistory.slice(-40)));
+	} catch {
+		// quota exceeded — drop oldest half and retry
+		try {
+			localStorage.setItem(memoryKey(), JSON.stringify(chatHistory.slice(-10)));
+		} catch {/* give up */}
+	}
+}
+
+// ── TTS playback ─────────────────────────────────────────────────────
+//
+// Hits the existing /api/tts/edge endpoint (Microsoft Edge Neural voices,
+// no API key required, R2-cached server-side). Returns audio/mpeg which we
+// play through a single shared Audio element.
+
+let ttsAudio = null;
+async function speakReply(text) {
+	if (!attachedSkills.has('tts')) return;
+	if (!text || !text.trim()) return;
+	try {
+		// Stop any prior playback so consecutive replies don't overlap.
+		if (ttsAudio) { ttsAudio.pause(); ttsAudio = null; }
+		const r = await fetch('/api/tts/edge', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			credentials: 'include',
+			body: JSON.stringify({ voice: 'en-US-AriaNeural', text: text.slice(0, 1500) }),
+		});
+		if (!r.ok) throw new Error(`TTS failed (${r.status})`);
+		const blob = await r.blob();
+		const url = URL.createObjectURL(blob);
+		ttsAudio = new Audio(url);
+		ttsAudio.onended = () => { URL.revokeObjectURL(url); ttsAudio = null; };
+		await ttsAudio.play();
+	} catch (err) {
+		console.warn('[avatar] TTS playback failed', err.message);
+	}
 }
 
 async function sendChatMessage(text) {
@@ -568,6 +725,12 @@ async function sendChatMessage(text) {
 	// Drop empty-state once we have any message
 	const empty = log.querySelector('.av-chat-empty');
 	if (empty) empty.remove();
+
+	// Wave on the very first user message of the session, if the avatar has
+	// a wave clip and the wave skill is attached.
+	if (chatHistory.length === 0 && attachedSkills.has('animate-wave')) {
+		playClipByHint(['wave', 'wavehello', 'hi']);
+	}
 
 	chatHistory.push({ role: 'user', content: text });
 	appendChatMessage('user', text);
@@ -622,6 +785,9 @@ async function sendChatMessage(text) {
 			}
 		}
 		chatHistory.push({ role: 'assistant', content: acc });
+		persistChatHistory();
+		// Speak the assistant's full reply (TTS skill).
+		if (acc) speakReply(acc);
 	} catch (err) {
 		assistantNode.textContent = acc || `⚠ ${err.message}`;
 		console.error('[avatar] chat', err);
@@ -692,67 +858,48 @@ async function loadRelated() {
 // ── Model measurement ─────────────────────────────────────────────────
 
 async function measureModel(glbUrl) {
-	// Real file size via HEAD. Polygon counts come from the loaded model-viewer
-	// scene graph (when 3DOM is available — gracefully skipped otherwise).
+	// Stable approach: parse the GLB binary header ourselves (range-fetched,
+	// JSON chunk only — usually under 100 KB). No model-viewer internals,
+	// no THREE.js, no scene-graph walking. Survives library upgrades.
+	let stats;
 	try {
-		const r = await fetch(glbUrl, { method: 'HEAD' });
-		const len = r.headers.get('content-length');
-		if (len) {
-			const bytes = Number(len);
-			const mb = (bytes / 1_048_576).toFixed(1);
-			$('av-size').textContent = `${mb} MB`;
-			$('av-size-item').hidden = false;
-		}
-	} catch {
-		// non-fatal
+		const { fetchGlbStats } = await import('./lib/glb-stats.js');
+		stats = await fetchGlbStats(glbUrl);
+	} catch (err) {
+		console.warn('[avatar] glb stats parse failed', err.message);
+		return;
 	}
 
-	const viewer = $('av-viewer');
-	if (!viewer) return;
-	const onLoad = async () => {
-		try {
-			// model-viewer 3DOM gives us the loaded scene graph.
-			const stats = await viewer.requestUpdate?.();
-			void stats;
-			const model = viewer.model || viewer.scene;
-			if (!model) return;
-			let verts = 0;
-			let tris = 0;
-			let mats = new Set();
-			for (const mesh of model.materials || []) mats.add(mesh.name || mesh.id);
-			// Fall back to walking the THREE scene if exposed
-			const scene = viewer[Symbol.for('scene')] || viewer.scene;
-			const root = scene?.modelContainer || scene;
-			if (root && typeof root.traverse === 'function') {
-				root.traverse((node) => {
-					if (node.isMesh && node.geometry) {
-						const pos = node.geometry.attributes?.position?.count;
-						if (pos) verts += pos;
-						const idx = node.geometry.index?.count;
-						if (idx) tris += idx / 3;
-						else if (pos) tris += pos / 3;
-						if (node.material?.name) mats.add(node.material.name);
-					}
-				});
-			}
-			if (verts > 0) {
-				$('av-vert').textContent = verts.toLocaleString();
-				$('av-vert-item').hidden = false;
-			}
-			if (tris > 0) {
-				$('av-tri').textContent = Math.round(tris).toLocaleString();
-				$('av-tri-item').hidden = false;
-			}
-			if (mats.size > 0) {
-				$('av-mat').textContent = mats.size;
-				$('av-mat-item').hidden = false;
-			}
-		} catch {
-			// non-fatal
-		}
-	};
-	viewer.addEventListener('load', onLoad, { once: true });
+	if (stats.sizeBytes) {
+		const mb = (stats.sizeBytes / 1_048_576).toFixed(1);
+		$('av-size').textContent = `${mb} MB`;
+		$('av-size-item').hidden = false;
+	}
+	if (stats.vertices > 0) {
+		$('av-vert').textContent = stats.vertices.toLocaleString();
+		$('av-vert-item').hidden = false;
+	}
+	if (stats.triangles > 0) {
+		$('av-tri').textContent = stats.triangles.toLocaleString();
+		$('av-tri-item').hidden = false;
+	}
+	if (stats.materials > 0) {
+		$('av-mat').textContent = stats.materials;
+		$('av-mat-item').hidden = false;
+	}
+
+	// Animation clip names → expose to the skills panel so we can wire animation
+	// triggers (e.g. wave skill) to clips that actually exist in this GLB.
+	if (stats.animationNames?.length) {
+		availableAnimations = new Set(stats.animationNames.map((n) => n.toLowerCase()));
+		// Re-render the skills list so disabled/enabled state reflects what
+		// the GLB can actually do.
+		const skillsList = $('av-skills-list');
+		if (skillsList && !skillsList.querySelector('.av-list-loading')) loadSkills();
+	}
 }
+
+let availableAnimations = new Set();
 
 // ── OG meta ───────────────────────────────────────────────────────────
 

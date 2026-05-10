@@ -1,13 +1,24 @@
 const API_BASE = '/api';
-const agentId = new URLSearchParams(location.search).get('id');
+const params = new URLSearchParams(location.search);
+const agentId = params.get('id');
+
+// Avatar handoff from marketplace modal ("Start an agent with this avatar")
+const initAvatarId  = params.get('avatar_id')  || null;
+const initAvatarGlb = params.get('avatar_glb') || null;
+const initAvatarName = params.get('avatar_name') || null;
 
 const $ = (id) => document.getElementById(id);
 
 let agentData = null;
 
 async function loadAgent() {
+  // No existing agent ID — create a fresh one pre-loaded with the avatar.
   if (!agentId) {
-    showError('No agent ID provided.');
+    if (initAvatarId || initAvatarGlb) {
+      await createAgentFromAvatar();
+    } else {
+      showError('No agent ID provided.');
+    }
     return;
   }
   try {
@@ -19,6 +30,77 @@ async function loadAgent() {
   } catch (err) {
     showError(err.message);
   }
+}
+
+async function createAgentFromAvatar() {
+  showLoading('Creating agent…');
+  try {
+    // 1. Create a new agent.
+    const name = initAvatarName ? `${initAvatarName} Agent` : 'My Agent';
+    const createRes = await fetch(`${API_BASE}/agents`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ name }),
+    });
+    if (!createRes.ok) {
+      const j = await createRes.json().catch(() => ({}));
+      if (createRes.status === 401) {
+        sessionStorage.setItem('login_redirect', location.href);
+        location.replace('/login');
+        return;
+      }
+      throw new Error(j.error_description || `HTTP ${createRes.status}`);
+    }
+    const { agent } = await createRes.json();
+
+    // 2. Attach the avatar if we have an ID (already in the user's account).
+    if (initAvatarId) {
+      const patchRes = await fetch(`${API_BASE}/agents/${agent.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ avatar_id: initAvatarId }),
+      });
+      if (!patchRes.ok) {
+        // Non-fatal — agent was created, avatar link just didn't stick.
+        console.warn('[agent-edit] avatar attach failed', patchRes.status);
+      }
+    }
+
+    // 3. Replace URL so the page now "owns" this agent ID without re-creating
+    //    on back-nav, then load normally.
+    history.replaceState({}, '', `/agent-edit.html?id=${agent.id}`);
+    agentData = agent;
+    // Seed a helpful prompt based on the avatar name.
+    if (initAvatarName) {
+      agentData.name = name;
+      agentData.system_prompt = agentData.system_prompt ||
+        `You are ${initAvatarName}, a 3D avatar agent. Be helpful and engaging.`;
+    }
+    render();
+    showBanner(`Agent created from "${initAvatarName || 'avatar'}" — fill in the details below.`);
+  } catch (err) {
+    showError(err.message);
+  }
+}
+
+function showLoading(msg) {
+  const el = $('loading');
+  if (el) { el.hidden = false; el.textContent = msg; }
+}
+
+function showBanner(msg) {
+  let el = $('avatar-origin-banner');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'avatar-origin-banner';
+    el.style.cssText =
+      'padding:10px 20px;background:rgba(125,211,252,.1);border-bottom:1px solid rgba(125,211,252,.25);' +
+      'color:#7dd3fc;font-size:13px;font-weight:500;';
+    document.body.prepend(el);
+  }
+  el.textContent = msg;
 }
 
 function render() {
@@ -56,6 +138,7 @@ function renderMonetization() {
     const price = skillPrices[skillName];
     const isPaid = !!price;
     const amount = isPaid ? (price.amount / 1e6).toFixed(2) : '';
+    const trialUses = isPaid ? (price.trial_uses ?? 0) : 0;
 
     return `
       <div class="skill-item" data-skill-name="${escapeHtml(skillName)}">
@@ -65,9 +148,13 @@ function renderMonetization() {
             <input type="checkbox" class="price-toggle" ${isPaid ? 'checked' : ''}>
             <span class="slider"></span>
           </label>
-          <div class="price-input-wrapper" style="display: ${isPaid ? 'flex' : 'none'};">
+          <div class="price-input-wrapper" style="display: ${isPaid ? 'flex' : 'none'}; align-items:center; gap:8px;">
             <input type="number" class="price-input" min="0" step="0.01" placeholder="0.50" value="${amount}">
             <span>USDC</span>
+            <label style="font-size:12px;color:#a1a1aa;margin-left:8px;white-space:nowrap">
+              Free trials:
+              <input type="number" class="trial-uses-input" min="0" max="10" step="1" placeholder="0" value="${trialUses}" style="width:52px;margin-left:4px">
+            </label>
           </div>
         </div>
       </div>
@@ -192,11 +279,14 @@ $('monetization-save').addEventListener('click', async () => {
     const input = item.querySelector('.price-input');
 
     if (toggle.checked && input.value) {
+      const trialInput = item.querySelector('.trial-uses-input');
+      const trialUses = trialInput ? Math.max(0, Math.min(10, parseInt(trialInput.value || '0', 10) || 0)) : 0;
       prices.push({
         skill,
         amount: Math.round(parseFloat(input.value) * 1e6),
         currency_mint: USDC_MINT,
         chain: 'solana',
+        trial_uses: trialUses,
       });
     }
   });

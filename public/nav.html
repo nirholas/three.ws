@@ -1,5 +1,17 @@
 <nav class="home-nav" aria-label="Primary">
-	<ul class="nav-root" role="menubar">
+	<button
+		type="button"
+		class="nav-burger"
+		id="home-nav-burger"
+		aria-label="Toggle menu"
+		aria-expanded="false"
+		aria-controls="home-nav-root"
+	>
+		<span class="nav-burger-bar"></span>
+		<span class="nav-burger-bar"></span>
+		<span class="nav-burger-bar"></span>
+	</button>
+	<ul class="nav-root" id="home-nav-root" role="menubar">
 		<li class="nav-item nav-has-menu" role="none">
 			<button
 				type="button"
@@ -31,7 +43,17 @@
 				</li>
 			</ul>
 		</li>
-		<li role="none"><a href="/discover" role="menuitem">Discover</a></li>
+		<li class="nav-item" role="none">
+			<a href="/pay" class="nav-link-with-badge" role="menuitem"
+				>Pay<span class="nav-badge">NEW</span></a
+			>
+		</li>
+		<li class="nav-item" role="none">
+			<a href="/marketplace" role="menuitem">Marketplace</a>
+		</li>
+		<li class="nav-item" role="none">
+			<a href="/discover" role="menuitem">Discover</a>
+		</li>
 		<li class="nav-item nav-has-menu" role="none">
 			<button
 				type="button"
@@ -40,19 +62,25 @@
 				aria-expanded="false"
 				role="menuitem"
 			>
-				Solana<span class="nav-caret" aria-hidden="true">▾</span>
+				Crypto<span class="nav-caret" aria-hidden="true">▾</span>
 			</button>
-			<ul class="nav-menu" role="menu" aria-label="Solana">
-				<li role="none">
-					<a href="/pay" role="menuitem"
-						><span class="nav-mi-title">Pay-per-call (x402) <span style="display:inline-block;padding:1px 6px;margin-left:6px;background:linear-gradient(135deg,#8b5cf6,#22d3ee);color:#0a0b10;border-radius:4px;font-size:9px;font-weight:700;letter-spacing:0.06em;vertical-align:1px">NEW</span></span
-						><span class="nav-mi-sub">$0.001 per MCP tool call · live demo</span></a
-					>
-				</li>
+			<ul class="nav-menu" role="menu" aria-label="Crypto">
 				<li role="none">
 					<a href="/pumpfun" role="menuitem"
 						><span class="nav-mi-title">Pump.fun stream</span
 						><span class="nav-mi-sub">Mint agent tokens</span></a
+					>
+				</li>
+				<li role="none">
+					<a href="/pump-live" role="menuitem"
+						><span class="nav-mi-title">Live launches</span
+						><span class="nav-mi-sub">Real-time mint feed</span></a
+					>
+				</li>
+				<li role="none">
+					<a href="/pump-dashboard" role="menuitem"
+						><span class="nav-mi-title">Pump Dashboard</span
+						><span class="nav-mi-sub">Watches · scanner · quotes</span></a
 					>
 				</li>
 				<li role="none">
@@ -71,18 +99,6 @@
 					<a href="/strategy-lab" role="menuitem"
 						><span class="nav-mi-title">Strategy Lab</span
 						><span class="nav-mi-sub">DCA + subscriptions</span></a
-					>
-				</li>
-				<li role="none">
-					<a href="/pump-live.html" role="menuitem"
-						><span class="nav-mi-title">Live launches</span
-						><span class="nav-mi-sub">Real-time mint feed</span></a
-					>
-				</li>
-				<li role="none">
-					<a href="/pump-dashboard.html" role="menuitem"
-						><span class="nav-mi-title">Pump Dashboard</span
-						><span class="nav-mi-sub">Watches · scanner · quotes</span></a
 					>
 				</li>
 				<li role="none">
@@ -130,11 +146,37 @@
 				</li>
 			</ul>
 		</li>
-		<li class="nav-item" role="none"><a href="/marketplace.html" role="menuitem">Marketplace</a></li>
-		<li class="nav-item" role="none"><a href="/chat" role="menuitem">Chat</a></li>
-		<li class="nav-item" role="none">
+		<li class="nav-item nav-has-menu" role="none">
+			<button
+				type="button"
+				class="nav-trigger"
+				aria-haspopup="true"
+				aria-expanded="false"
+				role="menuitem"
+			>
+				Learn<span class="nav-caret" aria-hidden="true">▾</span>
+			</button>
+			<ul class="nav-menu" role="menu" aria-label="Learn">
+				<li role="none">
+					<a href="/chat" role="menuitem"
+						><span class="nav-mi-title">Chat</span
+						><span class="nav-mi-sub">Talk to your agent</span></a
+					>
+				</li>
+				<li role="none">
+					<a href="/tutorials" role="menuitem"
+						><span class="nav-mi-title">Tutorials</span
+						><span class="nav-mi-sub">Step-by-step guides</span></a
+					>
+				</li>
+				<li role="none">
+					<a href="/docs" role="menuitem"
+						><span class="nav-mi-title">Docs</span
+						><span class="nav-mi-sub">SDKs + API reference</span></a
+					>
+				</li>
+			</ul>
 		</li>
-		<li class="nav-item" role="none"><a href="/tutorials.html" role="menuitem">Tutorials</a></li>
 		<li class="nav-item" id="home-nav-my-agents-li" role="none" hidden>
 			<a href="/my-agents" id="home-nav-my-agents" role="menuitem">My Agents</a>
 		</li>

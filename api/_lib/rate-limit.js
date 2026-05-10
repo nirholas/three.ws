@@ -89,6 +89,12 @@ export const limits = {
 	// Skills marketplace browse — isolated bucket so traffic on other public endpoints
 	// can't starve the skills list. 60/min per IP.
 	skillsBrowse: (ip) => getLimiter('skills:browse', { limit: 60, window: '1 m' }).limit(ip),
+	// Marketplace agent preview chat — anonymous "try before fork" flow on the
+	// agent detail page. Strict per-IP and per-agent caps so one client can't
+	// drain LLM credits and one agent can't starve the global pool.
+	previewIp: (ip) => getLimiter('preview:ip', { limit: 30, window: '1 h' }).limit(ip),
+	previewAgent: (agentId) =>
+		getLimiter('preview:agent', { limit: 200, window: '1 h' }).limit(agentId),
 	widgetWrite: (userId) => getLimiter('widget:write', { limit: 60, window: '1 m' }).limit(userId),
 	widgetRead: (ip) => getLimiter('widget:read', { limit: 600, window: '1 m' }).limit(ip),
 	// Per-widget visitor chat. Limit is dynamic — one bucket per (widgetId, perMinute).

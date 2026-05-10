@@ -66,6 +66,7 @@ const HANDLERS = {
 	'solana-attestations-crawl': handleSolanaAttestationsCrawl,
 	'expire-pending-purchases': handleExpirePendingPurchases,
 	'cleanup-csrf-tokens': handleCleanupCsrfTokens,
+	'process-withdrawals': handleProcessWithdrawals,
 };
 
 export default wrap(async (req, res) => {
@@ -2399,4 +2400,147 @@ async function handleCleanupCsrfTokens(req, res) {
 	if (!method(req, res, ['GET'])) return;
 	const result = await sql`DELETE FROM csrf_tokens WHERE expires_at < now() RETURNING token`;
 	return json(res, 200, { deleted: result.length });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// process-withdrawals — pick up pending Solana USDC withdrawals and execute
+// them from the treasury keypair. Runs hourly.
+// State machine: pending → processing → completed (with tx_signature) | failed (with error_message)
+// ═══════════════════════════════════════════════════════════════════════════
+
+const WITHDRAWALS_BATCH = 20;
+
+async function handleProcessWithdrawals(req, res) {
+	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
+
+	const auth = req.headers['authorization'] || '';
+	const cronSecret = env.CRON_SECRET;
+	const fromCron = req.headers['x-vercel-cron'] === '1';
+	if (!fromCron && cronSecret && auth !== `Bearer ${cronSecret}`) {
+		return error(res, 401, 'unauthorized', 'cron secret required');
+	}
+
+	const treasuryKeypair = process.env.TREASURY_KEYPAIR;
+	if (!treasuryKeypair) {
+		return json(res, 200, { skipped: true, reason: 'TREASURY_KEYPAIR not configured' });
+	}
+
+	const { transferSolanaUSDC } = await import('../_lib/solana-transfer.js');
+	const { insertNotification } = await import('../_lib/notify.js');
+
+	// Fetch pending Solana withdrawals, join user earnings to verify available balance
+	const pending = await sql`
+		SELECT
+			w.id,
+			w.user_id,
+			w.amount,
+			w.currency_mint,
+			w.to_address,
+			w.chain,
+			(
+				SELECT coalesce(sum(re.net_amount), 0)::bigint
+				FROM agent_revenue_events re
+				JOIN agent_identities ai ON ai.id = re.agent_id
+				WHERE ai.user_id = w.user_id AND re.currency_mint = w.currency_mint
+			) -
+			(
+				SELECT coalesce(sum(w2.amount), 0)::bigint
+				FROM agent_withdrawals w2
+				WHERE w2.user_id = w.user_id
+				  AND w2.id != w.id
+				  AND w2.status IN ('pending', 'processing', 'completed')
+				  AND w2.currency_mint = w.currency_mint
+			) AS available
+		FROM agent_withdrawals w
+		WHERE w.status = 'pending' AND w.chain = 'solana'
+		ORDER BY w.created_at ASC
+		LIMIT ${WITHDRAWALS_BATCH}
+	`;
+
+	const report = { processed: 0, completed: 0, failed: 0, skipped: 0, errors: [] };
+
+	for (const w of pending) {
+		report.processed++;
+		const available = Number(w.available ?? 0);
+
+		// Skip if user doesn't have enough available balance
+		if (w.amount > available) {
+			await sql`
+				UPDATE agent_withdrawals
+				SET status = 'failed',
+				    error_message = 'Insufficient referral balance at processing time',
+				    updated_at = now()
+				WHERE id = ${w.id}
+			`;
+			insertNotification(w.user_id, 'withdrawal_failed', {
+				withdrawal_id: w.id,
+				amount: w.amount,
+				currency_mint: w.currency_mint,
+				reason: 'insufficient_balance',
+			});
+			report.failed++;
+			report.errors.push({ id: w.id, error: 'insufficient_balance' });
+			continue;
+		}
+
+		// Mark as processing atomically — only if still pending
+		const [claimed] = await sql`
+			UPDATE agent_withdrawals
+			SET status = 'processing', updated_at = now()
+			WHERE id = ${w.id} AND status = 'pending'
+			RETURNING id
+		`;
+		if (!claimed) {
+			report.skipped++;
+			continue;
+		}
+
+		try {
+			const sig = await transferSolanaUSDC({
+				fromWallet: treasuryKeypair,
+				toAddress: w.to_address,
+				amount: BigInt(w.amount),
+				mint: w.currency_mint,
+			});
+
+			await sql`
+				UPDATE agent_withdrawals
+				SET status = 'completed', tx_signature = ${sig}, updated_at = now()
+				WHERE id = ${w.id}
+			`;
+
+			// Deduct from referral_earnings_total (best-effort; earnings are tracked via revenue_events)
+			await sql`
+				UPDATE users
+				SET referral_earnings_total = greatest(0, coalesce(referral_earnings_total, 0) - ${w.amount})
+				WHERE id = ${w.user_id}
+			`.catch((e) => console.error('[process-withdrawals] referral deduct failed:', e.message));
+
+			insertNotification(w.user_id, 'withdrawal_completed', {
+				withdrawal_id: w.id,
+				amount: w.amount,
+				currency_mint: w.currency_mint,
+				tx_signature: sig,
+			});
+
+			report.completed++;
+		} catch (err) {
+			const msg = err.message || String(err);
+			await sql`
+				UPDATE agent_withdrawals
+				SET status = 'failed', error_message = ${msg}, updated_at = now()
+				WHERE id = ${w.id}
+			`;
+			insertNotification(w.user_id, 'withdrawal_failed', {
+				withdrawal_id: w.id,
+				amount: w.amount,
+				currency_mint: w.currency_mint,
+				reason: msg,
+			});
+			report.failed++;
+			report.errors.push({ id: w.id, error: msg });
+		}
+	}
+
+	return json(res, 200, { ok: true, ...report });
 }

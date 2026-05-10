@@ -1211,16 +1211,33 @@ async function handleByAgent(req, res) {
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
 	const url = new URL(req.url, `http://${req.headers.host}`);
-	const agentId = url.searchParams.get('agent_id');
-	if (!agentId) return error(res, 400, 'validation_error', 'agent_id required');
+	const agentId  = url.searchParams.get('agent_id');
+	const avatarId = url.searchParams.get('avatar_id');
+	if (!agentId && !avatarId)
+		return error(res, 400, 'validation_error', 'agent_id or avatar_id required');
 
-	const [row] = await sql`
-		select id, mint, network, name, symbol, buyback_bps, agent_authority,
-		       metadata_uri, sharing_config, created_at
-		from pump_agent_mints
-		where agent_id=${agentId}
-		order by created_at desc limit 1
-	`;
+	let row;
+	if (agentId) {
+		[row] = await sql`
+			select pam.id, pam.mint, pam.network, pam.name, pam.symbol,
+			       pam.buyback_bps, pam.agent_authority, pam.metadata_uri,
+			       pam.sharing_config, pam.created_at
+			from pump_agent_mints pam
+			where pam.agent_id=${agentId}
+			order by pam.created_at desc limit 1
+		`;
+	} else {
+		[row] = await sql`
+			select pam.id, pam.mint, pam.network, pam.name, pam.symbol,
+			       pam.buyback_bps, pam.agent_authority, pam.metadata_uri,
+			       pam.sharing_config, pam.created_at
+			from pump_agent_mints pam
+			join agent_identities ai
+			  on ai.id = pam.agent_id and ai.deleted_at is null
+			where ai.avatar_id=${avatarId}
+			order by pam.created_at desc limit 1
+		`;
+	}
 	if (!row) return json(res, 200, { data: null });
 
 	const [stats] = await sql`
