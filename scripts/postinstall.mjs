@@ -44,8 +44,19 @@ if (!srcPresent) {
 	console.log('[postinstall] agent-payments-sdk src not present — trusting committed dist');
 } else if (needsBuild) {
 	console.log('[postinstall] agent-payments-sdk src changed — rebuilding...');
-	execSync('npm run build --prefix agent-payments-sdk', { stdio: 'inherit', cwd: root });
-	writeFileSync(stamp, srcHash);
+	// Use the root tsup binary directly; `npm run build --prefix` resolves binaries
+	// from the sub-package's own node_modules/.bin, which may be absent (e.g. Vercel CI).
+	const sdkRoot = resolve(root, 'agent-payments-sdk');
+	try {
+		execSync(`"${tsupBin}"`, { stdio: 'inherit', cwd: sdkRoot });
+		writeFileSync(stamp, srcHash);
+	} catch (e) {
+		if (existsSync(distIndex)) {
+			console.warn('[postinstall] tsup build failed — committed dist present, continuing');
+		} else {
+			throw e;
+		}
+	}
 } else {
 	console.log('[postinstall] agent-payments-sdk dist up to date — skipping tsup');
 }
