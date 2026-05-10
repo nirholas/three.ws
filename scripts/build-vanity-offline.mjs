@@ -121,7 +121,7 @@ window.__grindCreate2Vanity = function(opts) {
     const stop = () => { done = true; workers.forEach(w => { try { w.terminate(); } catch {} }); };
     opts.signal?.addEventListener('abort', () => { stop(); reject(Object.assign(new Error('Aborted'), { name: 'AbortError' })); });
     for (let i = 0; i < n; i++) {
-      const wkr = new Worker(window.__create2WorkerUrl, { type: 'module' });
+      const wkr = new Worker(window.__create2WorkerUrl);
       workers.push(wkr);
       wkr.postMessage({ type: 'start', deployer: opts.deployer, initCodeHash: opts.initCodeHash, prefix: opts.prefix, suffix: opts.suffix, caseSensitive: !!opts.caseSensitive });
       wkr.onmessage = (e) => {

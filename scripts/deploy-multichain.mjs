@@ -39,7 +39,7 @@ const CHAINS = [
   {
     chain: mainnet,
     name: 'Ethereum',
-    rpc: process.env.ETH_RPC_URL || 'https://eth.llamarpc.com',
+    rpc: process.env.ETH_RPC_URL || 'https://rpc.ankr.com/eth',
     usdc: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
     gasPrice: parseGwei('5'),
     explorer: 'https://etherscan.io',
@@ -47,7 +47,7 @@ const CHAINS = [
   {
     chain: base,
     name: 'Base',
-    rpc: process.env.BASE_RPC_URL || 'https://mainnet.base.org',
+    rpc: process.env.BASE_RPC_URL || 'https://rpc.ankr.com/base',
     usdc: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
     gasPrice: parseGwei('0.01'),
     explorer: 'https://basescan.org',
@@ -55,7 +55,7 @@ const CHAINS = [
   {
     chain: arbitrum,
     name: 'Arbitrum',
-    rpc: process.env.ARB_RPC_URL || 'https://arb1.arbitrum.io/rpc',
+    rpc: process.env.ARB_RPC_URL || 'https://rpc.ankr.com/arbitrum',
     usdc: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
     gasPrice: parseGwei('0.1'),
     explorer: 'https://arbiscan.io',

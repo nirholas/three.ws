@@ -1,0 +1,43 @@
+#!/usr/bin/env node
+// Skips tsup rebuild when agent-payments-sdk/dist is already up to date.
+// dist/ is committed to the repo; Vercel never needs to rebuild it unless
+// src/ changes. A SHA-256 stamp in dist/.src-hash tracks whether src changed.
+import { createHash } from 'node:crypto';
+import { existsSync, readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs';
+import { execSync } from 'node:child_process';
+import { resolve, join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const srcDir = resolve(root, 'agent-payments-sdk/src');
+const distIndex = resolve(root, 'agent-payments-sdk/dist/index.js');
+const stamp = resolve(root, 'agent-payments-sdk/dist/.src-hash');
+
+function hashDir(dir) {
+	const h = createHash('sha256');
+	function walk(d) {
+		for (const f of readdirSync(d).sort()) {
+			const full = join(d, f);
+			if (statSync(full).isDirectory()) { walk(full); continue; }
+			h.update(f).update(readFileSync(full));
+		}
+	}
+	walk(dir);
+	return h.digest('hex');
+}
+
+const srcHash = hashDir(srcDir);
+const needsBuild =
+	!existsSync(distIndex) ||
+	!existsSync(stamp) ||
+	readFileSync(stamp, 'utf8').trim() !== srcHash;
+
+if (needsBuild) {
+	console.log('[postinstall] agent-payments-sdk src changed — rebuilding...');
+	execSync('npm run build --prefix agent-payments-sdk', { stdio: 'inherit', cwd: root });
+	writeFileSync(stamp, srcHash);
+} else {
+	console.log('[postinstall] agent-payments-sdk dist up to date — skipping tsup');
+}
+
+execSync('node scripts/fix-pump-sdk-esm.mjs', { stdio: 'inherit', cwd: root });

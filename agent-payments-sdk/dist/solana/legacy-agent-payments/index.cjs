@@ -1,0 +1,3129 @@
+'use strict';
+
+var web3_js = require('@solana/web3.js');
+var anchor = require('@coral-xyz/anchor');
+var splToken = require('@solana/spl-token');
+
+// src/solana/legacy-agent-payments/pdas.ts
+var LEGACY_AGENT_PAYMENTS_PROGRAM_ID = new web3_js.PublicKey(
+  "pUmPFn9WvfaN2WTVGnCEtJTd2ATTpvpsKRz6jVzu6u4"
+);
+var PUMP_PROGRAM_ID = new web3_js.PublicKey(
+  "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"
+);
+var GLOBAL_CONFIG_SEED = Buffer.from("global-config");
+var TOKEN_AGENT_PAYMENTS_SEED = Buffer.from("token-agent-payments");
+var PAYMENT_IN_CURRENCY_SEED = Buffer.from("payment-in-currency");
+var INVOICE_ID_SEED = Buffer.from("invoice-id");
+var BUYBACK_AUTHORITY_SEED = Buffer.from("buyback-authority");
+var WITHDRAW_AUTHORITY_SEED = Buffer.from("withdraw-authority");
+var BONDING_CURVE_SEED = Buffer.from("bonding-curve");
+function getGlobalConfigPDA() {
+  return web3_js.PublicKey.findProgramAddressSync(
+    [GLOBAL_CONFIG_SEED],
+    LEGACY_AGENT_PAYMENTS_PROGRAM_ID
+  );
+}
+function getTokenAgentPaymentsPDA(mint) {
+  return web3_js.PublicKey.findProgramAddressSync(
+    [TOKEN_AGENT_PAYMENTS_SEED, mint.toBuffer()],
+    LEGACY_AGENT_PAYMENTS_PROGRAM_ID
+  );
+}
+function getPaymentInCurrencyPDA(tokenMint, currencyMint) {
+  return web3_js.PublicKey.findProgramAddressSync(
+    [PAYMENT_IN_CURRENCY_SEED, tokenMint.toBuffer(), currencyMint.toBuffer()],
+    LEGACY_AGENT_PAYMENTS_PROGRAM_ID
+  );
+}
+function getInvoiceIdPDA(tokenMint, currencyMint, amount, memo, startTime, endTime) {
+  return web3_js.PublicKey.findProgramAddressSync(
+    [
+      INVOICE_ID_SEED,
+      tokenMint.toBuffer(),
+      currencyMint.toBuffer(),
+      amount.toArrayLike(Buffer, "le", 8),
+      memo.toArrayLike(Buffer, "le", 8),
+      startTime.toArrayLike(Buffer, "le", 8),
+      endTime.toArrayLike(Buffer, "le", 8)
+    ],
+    LEGACY_AGENT_PAYMENTS_PROGRAM_ID
+  );
+}
+function getBuybackAuthorityPDA(tokenMint) {
+  return web3_js.PublicKey.findProgramAddressSync(
+    [BUYBACK_AUTHORITY_SEED, tokenMint.toBuffer()],
+    LEGACY_AGENT_PAYMENTS_PROGRAM_ID
+  );
+}
+function getWithdrawAuthorityPDA(tokenMint) {
+  return web3_js.PublicKey.findProgramAddressSync(
+    [WITHDRAW_AUTHORITY_SEED, tokenMint.toBuffer()],
+    LEGACY_AGENT_PAYMENTS_PROGRAM_ID
+  );
+}
+function getBondingCurvePDA(mint) {
+  return web3_js.PublicKey.findProgramAddressSync(
+    [BONDING_CURVE_SEED, mint.toBuffer()],
+    PUMP_PROGRAM_ID
+  );
+}
+
+// src/solana/legacy-agent-payments/idl.json
+var idl_default = {
+  address: "pUmPFn9WvfaN2WTVGnCEtJTd2ATTpvpsKRz6jVzu6u4",
+  metadata: {
+    name: "pumpAgentPayments",
+    version: "0.1.0",
+    spec: "0.1.0",
+    description: "Created with Anchor"
+  },
+  instructions: [
+    {
+      name: "agentAcceptPayment",
+      discriminator: [
+        34,
+        157,
+        64,
+        220,
+        74,
+        32,
+        48,
+        225
+      ],
+      accounts: [
+        {
+          name: "user",
+          writable: true,
+          signer: true
+        },
+        {
+          name: "userTokenAccount",
+          writable: true
+        },
+        {
+          name: "tokenAgentPayments"
+        },
+        {
+          name: "tokenAgentAssociatedAccount",
+          writable: true,
+          pda: {
+            seeds: [
+              {
+                kind: "account",
+                path: "tokenAgentPayments"
+              },
+              {
+                kind: "const",
+                value: [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                kind: "account",
+                path: "currencyMint"
+              }
+            ],
+            program: {
+              kind: "const",
+              value: [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          name: "tokenAgentPaymentInCurrency",
+          writable: true,
+          pda: {
+            seeds: [
+              {
+                kind: "const",
+                value: [
+                  112,
+                  97,
+                  121,
+                  109,
+                  101,
+                  110,
+                  116,
+                  45,
+                  105,
+                  110,
+                  45,
+                  99,
+                  117,
+                  114,
+                  114,
+                  101,
+                  110,
+                  99,
+                  121
+                ]
+              },
+              {
+                kind: "account",
+                path: "tokenAgentPayments.mint",
+                account: "tokenAgentPayments"
+              },
+              {
+                kind: "account",
+                path: "currencyMint"
+              }
+            ]
+          }
+        },
+        {
+          name: "globalConfig",
+          pda: {
+            seeds: [
+              {
+                kind: "const",
+                value: [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  45,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: "invoiceId"
+        },
+        {
+          name: "currencyMint"
+        },
+        {
+          name: "tokenProgram"
+        },
+        {
+          name: "associatedTokenProgram",
+          address: "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          name: "systemProgram",
+          address: "11111111111111111111111111111111"
+        },
+        {
+          name: "eventAuthority",
+          pda: {
+            seeds: [
+              {
+                kind: "const",
+                value: [
+                  95,
+                  95,
+                  101,
+                  118,
+                  101,
+                  110,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: "program"
+        }
+      ],
+      args: [
+        {
+          name: "amount",
+          type: "u64"
+        },
+        {
+          name: "memo",
+          type: "u64"
+        },
+        {
+          name: "startTime",
+          type: "i64"
+        },
+        {
+          name: "endTime",
+          type: "i64"
+        }
+      ]
+    },
+    {
+      name: "agentBuybackTrigger",
+      discriminator: [
+        95,
+        231,
+        193,
+        2,
+        245,
+        75,
+        125,
+        155
+      ],
+      accounts: [
+        {
+          name: "globalBuybackAuthority",
+          writable: true,
+          signer: true
+        },
+        {
+          name: "mint",
+          writable: true
+        },
+        {
+          name: "tokenAgentPayments",
+          pda: {
+            seeds: [
+              {
+                kind: "const",
+                value: [
+                  116,
+                  111,
+                  107,
+                  101,
+                  110,
+                  45,
+                  97,
+                  103,
+                  101,
+                  110,
+                  116,
+                  45,
+                  112,
+                  97,
+                  121,
+                  109,
+                  101,
+                  110,
+                  116,
+                  115
+                ]
+              },
+              {
+                kind: "account",
+                path: "mint"
+              }
+            ]
+          }
+        },
+        {
+          name: "tokenAgentPaymentInCurrency",
+          writable: true,
+          pda: {
+            seeds: [
+              {
+                kind: "const",
+                value: [
+                  112,
+                  97,
+                  121,
+                  109,
+                  101,
+                  110,
+                  116,
+                  45,
+                  105,
+                  110,
+                  45,
+                  99,
+                  117,
+                  114,
+                  114,
+                  101,
+                  110,
+                  99,
+                  121
+                ]
+              },
+              {
+                kind: "account",
+                path: "tokenAgentPayments.mint",
+                account: "tokenAgentPayments"
+              },
+              {
+                kind: "account",
+                path: "currencyMint"
+              }
+            ]
+          }
+        },
+        {
+          name: "currencyMint"
+        },
+        {
+          name: "globalConfig",
+          pda: {
+            seeds: [
+              {
+                kind: "const",
+                value: [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  45,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: "swapProgramToInvoke"
+        },
+        {
+          name: "burnAuthority",
+          docs: [
+            "Intentionally called burn_authority",
+            "TO avoid any confusion with the global buyback authority."
+          ],
+          pda: {
+            seeds: [
+              {
+                kind: "const",
+                value: [
+                  98,
+                  117,
+                  121,
+                  98,
+                  97,
+                  99,
+                  107,
+                  45,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              },
+              {
+                kind: "account",
+                path: "tokenAgentPayments.mint",
+                account: "tokenAgentPayments"
+              }
+            ]
+          }
+        },
+        {
+          name: "burnMintVault",
+          writable: true,
+          pda: {
+            seeds: [
+              {
+                kind: "account",
+                path: "burnAuthority"
+              },
+              {
+                kind: "const",
+                value: [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                kind: "account",
+                path: "mint"
+              }
+            ],
+            program: {
+              kind: "const",
+              value: [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          name: "tokenProgram"
+        },
+        {
+          name: "associatedTokenProgram",
+          address: "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          name: "systemProgram",
+          address: "11111111111111111111111111111111"
+        },
+        {
+          name: "eventAuthority",
+          pda: {
+            seeds: [
+              {
+                kind: "const",
+                value: [
+                  95,
+                  95,
+                  101,
+                  118,
+                  101,
+                  110,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: "program"
+        }
+      ],
+      args: [
+        {
+          name: "swapInstructionData",
+          type: "bytes"
+        }
+      ]
+    },
+    {
+      name: "agentDistributePayments",
+      discriminator: [
+        145,
+        44,
+        246,
+        47,
+        192,
+        204,
+        95,
+        32
+      ],
+      accounts: [
+        {
+          name: "user",
+          writable: true,
+          signer: true
+        },
+        {
+          name: "globalConfig",
+          pda: {
+            seeds: [
+              {
+                kind: "const",
+                value: [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  45,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: "currencyMint"
+        },
+        {
+          name: "tokenAgentPayments"
+        },
+        {
+          name: "tokenAgentPaymentInCurrency",
+          writable: true,
+          pda: {
+            seeds: [
+              {
+                kind: "const",
+                value: [
+                  112,
+                  97,
+                  121,
+                  109,
+                  101,
+                  110,
+                  116,
+                  45,
+                  105,
+                  110,
+                  45,
+                  99,
+                  117,
+                  114,
+                  114,
+                  101,
+                  110,
+                  99,
+                  121
+                ]
+              },
+              {
+                kind: "account",
+                path: "tokenAgentPayments.mint",
+                account: "tokenAgentPayments"
+              },
+              {
+                kind: "account",
+                path: "currencyMint"
+              }
+            ]
+          }
+        },
+        {
+          name: "tokenAgentAssociatedAccount",
+          writable: true,
+          pda: {
+            seeds: [
+              {
+                kind: "account",
+                path: "tokenAgentPayments"
+              },
+              {
+                kind: "const",
+                value: [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                kind: "account",
+                path: "currencyMint"
+              }
+            ],
+            program: {
+              kind: "const",
+              value: [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          name: "buybackAuthority",
+          pda: {
+            seeds: [
+              {
+                kind: "const",
+                value: [
+                  98,
+                  117,
+                  121,
+                  98,
+                  97,
+                  99,
+                  107,
+                  45,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              },
+              {
+                kind: "account",
+                path: "tokenAgentPayments.mint",
+                account: "tokenAgentPayments"
+              }
+            ]
+          }
+        },
+        {
+          name: "withdrawAuthority",
+          pda: {
+            seeds: [
+              {
+                kind: "const",
+                value: [
+                  119,
+                  105,
+                  116,
+                  104,
+                  100,
+                  114,
+                  97,
+                  119,
+                  45,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              },
+              {
+                kind: "account",
+                path: "tokenAgentPayments.mint",
+                account: "tokenAgentPayments"
+              }
+            ]
+          }
+        },
+        {
+          name: "buybackVault",
+          writable: true,
+          pda: {
+            seeds: [
+              {
+                kind: "account",
+                path: "buybackAuthority"
+              },
+              {
+                kind: "const",
+                value: [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                kind: "account",
+                path: "currencyMint"
+              }
+            ],
+            program: {
+              kind: "const",
+              value: [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          name: "withdrawVault",
+          writable: true,
+          pda: {
+            seeds: [
+              {
+                kind: "account",
+                path: "withdrawAuthority"
+              },
+              {
+                kind: "const",
+                value: [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                kind: "account",
+                path: "currencyMint"
+              }
+            ],
+            program: {
+              kind: "const",
+              value: [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          name: "tokenProgram"
+        },
+        {
+          name: "associatedTokenProgram",
+          address: "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          name: "systemProgram",
+          address: "11111111111111111111111111111111"
+        },
+        {
+          name: "eventAuthority",
+          pda: {
+            seeds: [
+              {
+                kind: "const",
+                value: [
+                  95,
+                  95,
+                  101,
+                  118,
+                  101,
+                  110,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: "program"
+        }
+      ],
+      args: []
+    },
+    {
+      name: "agentInitialize",
+      discriminator: [
+        180,
+        248,
+        163,
+        8,
+        49,
+        94,
+        126,
+        96
+      ],
+      accounts: [
+        {
+          name: "authority",
+          writable: true,
+          signer: true
+        },
+        {
+          name: "bondingCurve",
+          pda: {
+            seeds: [
+              {
+                kind: "const",
+                value: [
+                  98,
+                  111,
+                  110,
+                  100,
+                  105,
+                  110,
+                  103,
+                  45,
+                  99,
+                  117,
+                  114,
+                  118,
+                  101
+                ]
+              },
+              {
+                kind: "account",
+                path: "mint"
+              }
+            ],
+            program: {
+              kind: "const",
+              value: [
+                1,
+                86,
+                224,
+                246,
+                147,
+                102,
+                90,
+                207,
+                68,
+                219,
+                21,
+                104,
+                191,
+                23,
+                91,
+                170,
+                81,
+                137,
+                203,
+                151,
+                245,
+                210,
+                255,
+                59,
+                101,
+                93,
+                43,
+                182,
+                253,
+                109,
+                24,
+                176
+              ]
+            }
+          }
+        },
+        {
+          name: "globalConfig",
+          writable: true,
+          pda: {
+            seeds: [
+              {
+                kind: "const",
+                value: [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  45,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: "mint"
+        },
+        {
+          name: "tokenAgentPayments",
+          writable: true,
+          pda: {
+            seeds: [
+              {
+                kind: "const",
+                value: [
+                  116,
+                  111,
+                  107,
+                  101,
+                  110,
+                  45,
+                  97,
+                  103,
+                  101,
+                  110,
+                  116,
+                  45,
+                  112,
+                  97,
+                  121,
+                  109,
+                  101,
+                  110,
+                  116,
+                  115
+                ]
+              },
+              {
+                kind: "account",
+                path: "mint"
+              }
+            ]
+          }
+        },
+        {
+          name: "systemProgram",
+          address: "11111111111111111111111111111111"
+        },
+        {
+          name: "eventAuthority",
+          pda: {
+            seeds: [
+              {
+                kind: "const",
+                value: [
+                  95,
+                  95,
+                  101,
+                  118,
+                  101,
+                  110,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: "program"
+        }
+      ],
+      args: [
+        {
+          name: "authority",
+          type: "pubkey"
+        },
+        {
+          name: "buybackBps",
+          type: "u16"
+        }
+      ]
+    },
+    {
+      name: "agentUpdateAuthority",
+      discriminator: [
+        237,
+        228,
+        227,
+        224,
+        226,
+        198,
+        167,
+        83
+      ],
+      accounts: [
+        {
+          name: "authority",
+          writable: true,
+          signer: true
+        },
+        {
+          name: "globalConfig",
+          pda: {
+            seeds: [
+              {
+                kind: "const",
+                value: [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  45,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: "tokenAgentPayments",
+          writable: true
+        },
+        {
+          name: "systemProgram",
+          address: "11111111111111111111111111111111"
+        },
+        {
+          name: "eventAuthority",
+          pda: {
+            seeds: [
+              {
+                kind: "const",
+                value: [
+                  95,
+                  95,
+                  101,
+                  118,
+                  101,
+                  110,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: "program"
+        }
+      ],
+      args: [
+        {
+          name: "newAuthority",
+          type: "pubkey"
+        }
+      ]
+    },
+    {
+      name: "agentUpdateBuybackBps",
+      discriminator: [
+        41,
+        28,
+        118,
+        90,
+        53,
+        24,
+        63,
+        160
+      ],
+      accounts: [
+        {
+          name: "authority",
+          writable: true,
+          signer: true
+        },
+        {
+          name: "tokenAgentPayments",
+          writable: true
+        },
+        {
+          name: "globalConfig",
+          pda: {
+            seeds: [
+              {
+                kind: "const",
+                value: [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  45,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: "eventAuthority",
+          pda: {
+            seeds: [
+              {
+                kind: "const",
+                value: [
+                  95,
+                  95,
+                  101,
+                  118,
+                  101,
+                  110,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: "program"
+        }
+      ],
+      args: [
+        {
+          name: "buybackBps",
+          type: "u16"
+        }
+      ]
+    },
+    {
+      name: "agentWithdraw",
+      discriminator: [
+        13,
+        149,
+        99,
+        245,
+        171,
+        171,
+        185,
+        53
+      ],
+      accounts: [
+        {
+          name: "authority",
+          writable: true,
+          signer: true
+        },
+        {
+          name: "tokenAgentPayments"
+        },
+        {
+          name: "currencyMint"
+        },
+        {
+          name: "withdrawAuthority",
+          pda: {
+            seeds: [
+              {
+                kind: "const",
+                value: [
+                  119,
+                  105,
+                  116,
+                  104,
+                  100,
+                  114,
+                  97,
+                  119,
+                  45,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              },
+              {
+                kind: "account",
+                path: "tokenAgentPayments.mint",
+                account: "tokenAgentPayments"
+              }
+            ]
+          }
+        },
+        {
+          name: "withdrawVault",
+          writable: true,
+          pda: {
+            seeds: [
+              {
+                kind: "account",
+                path: "withdrawAuthority"
+              },
+              {
+                kind: "const",
+                value: [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                kind: "account",
+                path: "currencyMint"
+              }
+            ],
+            program: {
+              kind: "const",
+              value: [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          name: "receiverAta",
+          writable: true
+        },
+        {
+          name: "tokenProgram"
+        },
+        {
+          name: "associatedTokenProgram",
+          address: "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          name: "systemProgram",
+          address: "11111111111111111111111111111111"
+        },
+        {
+          name: "eventAuthority",
+          pda: {
+            seeds: [
+              {
+                kind: "const",
+                value: [
+                  95,
+                  95,
+                  101,
+                  118,
+                  101,
+                  110,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: "program"
+        }
+      ],
+      args: []
+    },
+    {
+      name: "closeAccount",
+      discriminator: [
+        125,
+        255,
+        149,
+        14,
+        110,
+        34,
+        72,
+        24
+      ],
+      accounts: [
+        {
+          name: "account",
+          writable: true
+        },
+        {
+          name: "user",
+          writable: true,
+          signer: true
+        },
+        {
+          name: "globalConfig",
+          pda: {
+            seeds: [
+              {
+                kind: "const",
+                value: [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  45,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: "systemProgram",
+          address: "11111111111111111111111111111111"
+        }
+      ],
+      args: []
+    },
+    {
+      name: "extendAccount",
+      discriminator: [
+        234,
+        102,
+        194,
+        203,
+        150,
+        72,
+        62,
+        229
+      ],
+      accounts: [
+        {
+          name: "account",
+          writable: true
+        },
+        {
+          name: "user",
+          writable: true,
+          signer: true
+        },
+        {
+          name: "systemProgram",
+          address: "11111111111111111111111111111111"
+        },
+        {
+          name: "eventAuthority",
+          pda: {
+            seeds: [
+              {
+                kind: "const",
+                value: [
+                  95,
+                  95,
+                  101,
+                  118,
+                  101,
+                  110,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: "program"
+        }
+      ],
+      args: []
+    },
+    {
+      name: "globalAddNewCurrency",
+      discriminator: [
+        46,
+        135,
+        47,
+        120,
+        118,
+        204,
+        177,
+        224
+      ],
+      accounts: [
+        {
+          name: "authority",
+          writable: true,
+          signer: true
+        },
+        {
+          name: "globalConfig",
+          writable: true,
+          pda: {
+            seeds: [
+              {
+                kind: "const",
+                value: [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  45,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: "mint"
+        },
+        {
+          name: "eventAuthority",
+          pda: {
+            seeds: [
+              {
+                kind: "const",
+                value: [
+                  95,
+                  95,
+                  101,
+                  118,
+                  101,
+                  110,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: "program"
+        }
+      ],
+      args: []
+    },
+    {
+      name: "globalConfigInitialize",
+      discriminator: [
+        61,
+        23,
+        208,
+        192,
+        232,
+        52,
+        8,
+        66
+      ],
+      accounts: [
+        {
+          name: "authority",
+          writable: true,
+          signer: true
+        },
+        {
+          name: "globalConfig",
+          writable: true,
+          pda: {
+            seeds: [
+              {
+                kind: "const",
+                value: [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  45,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: "systemProgram",
+          address: "11111111111111111111111111111111"
+        },
+        {
+          name: "eventAuthority",
+          pda: {
+            seeds: [
+              {
+                kind: "const",
+                value: [
+                  95,
+                  95,
+                  101,
+                  118,
+                  101,
+                  110,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: "program"
+        }
+      ],
+      args: [
+        {
+          name: "protocolAuthority",
+          type: "pubkey"
+        },
+        {
+          name: "buybackAuthority",
+          type: "pubkey"
+        }
+      ]
+    },
+    {
+      name: "globalUpdateAuthorities",
+      discriminator: [
+        91,
+        137,
+        72,
+        77,
+        183,
+        184,
+        168,
+        125
+      ],
+      accounts: [
+        {
+          name: "authority",
+          writable: true,
+          signer: true
+        },
+        {
+          name: "globalConfig",
+          writable: true,
+          pda: {
+            seeds: [
+              {
+                kind: "const",
+                value: [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  45,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: "eventAuthority",
+          pda: {
+            seeds: [
+              {
+                kind: "const",
+                value: [
+                  95,
+                  95,
+                  101,
+                  118,
+                  101,
+                  110,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: "program"
+        }
+      ],
+      args: [
+        {
+          name: "protocolAuthority",
+          type: {
+            option: "pubkey"
+          }
+        },
+        {
+          name: "buybackAuthority",
+          type: {
+            option: "pubkey"
+          }
+        }
+      ]
+    }
+  ],
+  accounts: [
+    {
+      name: "bondingCurve",
+      discriminator: [
+        23,
+        183,
+        248,
+        55,
+        96,
+        216,
+        172,
+        96
+      ]
+    },
+    {
+      name: "globalConfig",
+      discriminator: [
+        149,
+        8,
+        156,
+        202,
+        160,
+        252,
+        176,
+        217
+      ]
+    },
+    {
+      name: "tokenAgentPaymentInCurrency",
+      discriminator: [
+        225,
+        195,
+        81,
+        227,
+        115,
+        43,
+        25,
+        177
+      ]
+    },
+    {
+      name: "tokenAgentPayments",
+      discriminator: [
+        136,
+        241,
+        242,
+        217,
+        173,
+        77,
+        112,
+        186
+      ]
+    }
+  ],
+  events: [
+    {
+      name: "agentAcceptPaymentEvent",
+      discriminator: [
+        114,
+        190,
+        188,
+        192,
+        105,
+        79,
+        41,
+        147
+      ]
+    },
+    {
+      name: "agentBuybackTriggerEvent",
+      discriminator: [
+        139,
+        240,
+        9,
+        225,
+        214,
+        63,
+        232,
+        165
+      ]
+    },
+    {
+      name: "agentDistributePaymentsEvent",
+      discriminator: [
+        137,
+        116,
+        114,
+        140,
+        54,
+        111,
+        230,
+        26
+      ]
+    },
+    {
+      name: "agentInitializeEvent",
+      discriminator: [
+        192,
+        5,
+        183,
+        151,
+        0,
+        64,
+        100,
+        207
+      ]
+    },
+    {
+      name: "agentUpdateAuthorityEvent",
+      discriminator: [
+        36,
+        212,
+        117,
+        235,
+        74,
+        166,
+        60,
+        16
+      ]
+    },
+    {
+      name: "agentUpdateBuybackBpsEvent",
+      discriminator: [
+        165,
+        251,
+        40,
+        19,
+        114,
+        26,
+        128,
+        232
+      ]
+    },
+    {
+      name: "agentWithdrawEvent",
+      discriminator: [
+        174,
+        231,
+        201,
+        69,
+        254,
+        183,
+        49,
+        85
+      ]
+    },
+    {
+      name: "extendAccountEvent",
+      discriminator: [
+        97,
+        97,
+        215,
+        144,
+        93,
+        146,
+        22,
+        124
+      ]
+    },
+    {
+      name: "globalAddNewCurrencyEvent",
+      discriminator: [
+        130,
+        202,
+        37,
+        248,
+        241,
+        182,
+        233,
+        35
+      ]
+    },
+    {
+      name: "globalConfigInitializeEvent",
+      discriminator: [
+        241,
+        51,
+        222,
+        190,
+        142,
+        245,
+        176,
+        53
+      ]
+    },
+    {
+      name: "globalUpdateAuthoritiesEvent",
+      discriminator: [
+        82,
+        27,
+        22,
+        232,
+        53,
+        66,
+        35,
+        207
+      ]
+    }
+  ],
+  errors: [
+    {
+      code: 6e3,
+      name: "unauthorizedSigner",
+      msg: "The given account is not authorized to execute this instruction."
+    },
+    {
+      code: 6001,
+      name: "currencyAlreadySupported",
+      msg: "The given currency is already supported."
+    },
+    {
+      code: 6002,
+      name: "maxCurrenciesReached",
+      msg: "The maximum number of currencies has been reached."
+    },
+    {
+      code: 6003,
+      name: "invalidBuybackBps",
+      msg: "The buyback basis points is greater than 10000."
+    },
+    {
+      code: 6004,
+      name: "currencyNotSupported",
+      msg: "The given currency is not supported."
+    },
+    {
+      code: 6005,
+      name: "mathOverflow",
+      msg: "Math overflow."
+    },
+    {
+      code: 6006,
+      name: "invalidRemainingAccountAddress",
+      msg: "The given remaining account address is invalid."
+    },
+    {
+      code: 6007,
+      name: "paymentVaultNotEmpty",
+      msg: "The payment vault is not empty. Distribute the payments first."
+    },
+    {
+      code: 6008,
+      name: "invalidInvoiceAccount",
+      msg: "The invoice account does not match the expected PDA seeds"
+    },
+    {
+      code: 6009,
+      name: "invalidProgramToInvoke",
+      msg: "The program to invoke is not allowed."
+    },
+    {
+      code: 6010,
+      name: "invalidCallbackProgram",
+      msg: "The callback program is invalid."
+    },
+    {
+      code: 6011,
+      name: "swapFailedAmountDidNotIncrease",
+      msg: "The swap failed and the amount did not increase."
+    },
+    {
+      code: 6012,
+      name: "accountTypeNotSupported",
+      msg: "The account type is not supported for extension."
+    }
+  ],
+  types: [
+    {
+      name: "agentAcceptPaymentEvent",
+      type: {
+        kind: "struct",
+        fields: [
+          {
+            name: "user",
+            type: "pubkey"
+          },
+          {
+            name: "tokenizedAgentMint",
+            type: "pubkey"
+          },
+          {
+            name: "tokenAgentPayments",
+            type: "pubkey"
+          },
+          {
+            name: "currencyMint",
+            type: "pubkey"
+          },
+          {
+            name: "amount",
+            type: "u64"
+          },
+          {
+            name: "memo",
+            type: "u64"
+          },
+          {
+            name: "startTime",
+            type: "i64"
+          },
+          {
+            name: "endTime",
+            type: "i64"
+          },
+          {
+            name: "invoiceId",
+            type: "pubkey"
+          },
+          {
+            name: "agentPostBalance",
+            type: "u64"
+          },
+          {
+            name: "timestamp",
+            type: "i64"
+          }
+        ]
+      }
+    },
+    {
+      name: "agentBuybackTriggerEvent",
+      type: {
+        kind: "struct",
+        fields: [
+          {
+            name: "tokenAgentPayments",
+            type: "pubkey"
+          },
+          {
+            name: "mint",
+            type: "pubkey"
+          },
+          {
+            name: "amountBurned",
+            type: "u64"
+          },
+          {
+            name: "swapProgram",
+            type: "pubkey"
+          },
+          {
+            name: "newTokensBoughtAndBurnedForCurrency",
+            type: "u64"
+          },
+          {
+            name: "timestamp",
+            type: "i64"
+          }
+        ]
+      }
+    },
+    {
+      name: "agentDistributePaymentsEvent",
+      type: {
+        kind: "struct",
+        fields: [
+          {
+            name: "tokenAgentPayments",
+            type: "pubkey"
+          },
+          {
+            name: "currencyMint",
+            type: "pubkey"
+          },
+          {
+            name: "buybackBps",
+            type: "u16"
+          },
+          {
+            name: "buybackAmount",
+            type: "u64"
+          },
+          {
+            name: "withdrawAmount",
+            type: "u64"
+          },
+          {
+            name: "timestamp",
+            type: "i64"
+          }
+        ]
+      }
+    },
+    {
+      name: "agentInitializeEvent",
+      type: {
+        kind: "struct",
+        fields: [
+          {
+            name: "tokenAgentPayments",
+            type: "pubkey"
+          },
+          {
+            name: "mint",
+            type: "pubkey"
+          },
+          {
+            name: "authority",
+            type: "pubkey"
+          },
+          {
+            name: "buybackBps",
+            type: "u16"
+          },
+          {
+            name: "timestamp",
+            type: "i64"
+          },
+          {
+            name: "tokenizedAgentSequence",
+            type: "u64"
+          }
+        ]
+      }
+    },
+    {
+      name: "agentUpdateAuthorityEvent",
+      type: {
+        kind: "struct",
+        fields: [
+          {
+            name: "tokenAgentPayments",
+            type: "pubkey"
+          },
+          {
+            name: "oldAuthority",
+            type: "pubkey"
+          },
+          {
+            name: "newAuthority",
+            type: "pubkey"
+          },
+          {
+            name: "timestamp",
+            type: "i64"
+          }
+        ]
+      }
+    },
+    {
+      name: "agentUpdateBuybackBpsEvent",
+      type: {
+        kind: "struct",
+        fields: [
+          {
+            name: "tokenAgentPayments",
+            type: "pubkey"
+          },
+          {
+            name: "mint",
+            type: "pubkey"
+          },
+          {
+            name: "oldBuybackBps",
+            type: "u16"
+          },
+          {
+            name: "newBuybackBps",
+            type: "u16"
+          },
+          {
+            name: "timestamp",
+            type: "i64"
+          }
+        ]
+      }
+    },
+    {
+      name: "agentWithdrawEvent",
+      type: {
+        kind: "struct",
+        fields: [
+          {
+            name: "tokenAgentPayments",
+            type: "pubkey"
+          },
+          {
+            name: "currencyMint",
+            type: "pubkey"
+          },
+          {
+            name: "amount",
+            type: "u64"
+          },
+          {
+            name: "receiver",
+            type: "pubkey"
+          },
+          {
+            name: "timestamp",
+            type: "i64"
+          }
+        ]
+      }
+    },
+    {
+      name: "bondingCurve",
+      type: {
+        kind: "struct",
+        fields: [
+          {
+            name: "virtualTokenReserves",
+            type: "u64"
+          },
+          {
+            name: "virtualSolReserves",
+            type: "u64"
+          },
+          {
+            name: "realTokenReserves",
+            type: "u64"
+          },
+          {
+            name: "realSolReserves",
+            type: "u64"
+          },
+          {
+            name: "tokenTotalSupply",
+            type: "u64"
+          },
+          {
+            name: "complete",
+            type: "bool"
+          },
+          {
+            name: "creator",
+            type: "pubkey"
+          },
+          {
+            name: "isMayhemMode",
+            type: "bool"
+          }
+        ]
+      }
+    },
+    {
+      name: "extendAccountEvent",
+      type: {
+        kind: "struct",
+        fields: [
+          {
+            name: "account",
+            type: "pubkey"
+          },
+          {
+            name: "user",
+            type: "pubkey"
+          },
+          {
+            name: "currentSize",
+            type: "u64"
+          },
+          {
+            name: "newSize",
+            type: "u64"
+          },
+          {
+            name: "timestamp",
+            type: "i64"
+          }
+        ]
+      }
+    },
+    {
+      name: "globalAddNewCurrencyEvent",
+      type: {
+        kind: "struct",
+        fields: [
+          {
+            name: "globalConfig",
+            type: "pubkey"
+          },
+          {
+            name: "currencyMint",
+            type: "pubkey"
+          },
+          {
+            name: "timestamp",
+            type: "i64"
+          }
+        ]
+      }
+    },
+    {
+      name: "globalConfig",
+      type: {
+        kind: "struct",
+        fields: [
+          {
+            name: "bump",
+            type: "u8"
+          },
+          {
+            name: "protocolAuthority",
+            type: "pubkey"
+          },
+          {
+            name: "buybackAuthority",
+            type: "pubkey"
+          },
+          {
+            name: "supportedCurrenciesMint",
+            type: {
+              array: [
+                "pubkey",
+                10
+              ]
+            }
+          },
+          {
+            name: "tokenizedAgentSequence",
+            type: "u64"
+          }
+        ]
+      }
+    },
+    {
+      name: "globalConfigInitializeEvent",
+      type: {
+        kind: "struct",
+        fields: [
+          {
+            name: "globalConfig",
+            type: "pubkey"
+          },
+          {
+            name: "protocolAuthority",
+            type: "pubkey"
+          },
+          {
+            name: "buybackAuthority",
+            type: "pubkey"
+          },
+          {
+            name: "timestamp",
+            type: "i64"
+          }
+        ]
+      }
+    },
+    {
+      name: "globalUpdateAuthoritiesEvent",
+      type: {
+        kind: "struct",
+        fields: [
+          {
+            name: "globalConfig",
+            type: "pubkey"
+          },
+          {
+            name: "protocolAuthority",
+            type: {
+              option: "pubkey"
+            }
+          },
+          {
+            name: "buybackAuthority",
+            type: {
+              option: "pubkey"
+            }
+          },
+          {
+            name: "timestamp",
+            type: "i64"
+          }
+        ]
+      }
+    },
+    {
+      name: "tokenAgentPaymentInCurrency",
+      type: {
+        kind: "struct",
+        fields: [
+          {
+            name: "mint",
+            type: "pubkey"
+          },
+          {
+            name: "currencyMint",
+            type: "pubkey"
+          },
+          {
+            name: "totalInvoicePaymentsMade",
+            type: "u64"
+          },
+          {
+            name: "totalBuyback",
+            type: "u64"
+          },
+          {
+            name: "totalWithdrawals",
+            type: "u64"
+          },
+          {
+            name: "tokensBoughtBackAndBurned",
+            type: "u64"
+          }
+        ]
+      }
+    },
+    {
+      name: "tokenAgentPayments",
+      type: {
+        kind: "struct",
+        fields: [
+          {
+            name: "bump",
+            type: "u8"
+          },
+          {
+            name: "mint",
+            type: "pubkey"
+          },
+          {
+            name: "authority",
+            type: "pubkey"
+          },
+          {
+            name: "buybackBps",
+            type: "u16"
+          }
+        ]
+      }
+    }
+  ]
+};
+
+// src/solana/legacy-agent-payments/program.ts
+var IDL = idl_default;
+var NOOP_WALLET = {
+  publicKey: web3_js.PublicKey.default,
+  signTransaction: () => Promise.reject(new Error("read-only wallet")),
+  signAllTransactions: () => Promise.reject(new Error("read-only wallet"))
+};
+function getLegacyPumpProgram(connection) {
+  return new anchor.Program(
+    IDL,
+    new anchor.AnchorProvider(connection, NOOP_WALLET, {})
+  );
+}
+function getLegacyOfflineProgram() {
+  return new anchor.Program(
+    IDL,
+    new anchor.AnchorProvider(
+      { commitment: "processed" },
+      NOOP_WALLET,
+      {}
+    )
+  );
+}
+var OFFLINE_PUMP_PROGRAM = getLegacyOfflineProgram();
+function getLegacyPumpProgramWithFallback(connection) {
+  return connection ? getLegacyPumpProgram(connection) : OFFLINE_PUMP_PROGRAM;
+}
+function decodeLegacyGlobalConfig(data) {
+  return OFFLINE_PUMP_PROGRAM.coder.accounts.decode("globalConfig", data);
+}
+function decodeLegacyTokenAgentPaymentInCurrency(data) {
+  return OFFLINE_PUMP_PROGRAM.coder.accounts.decode(
+    "tokenAgentPaymentInCurrency",
+    data
+  );
+}
+function decodeLegacyTokenAgentPayments(data) {
+  return OFFLINE_PUMP_PROGRAM.coder.accounts.decode("tokenAgentPayments", data);
+}
+var toBn = (v) => anchor.BN.isBN(v) ? v : new anchor.BN(v.toString());
+var LegacyPumpAgentOffline = class _LegacyPumpAgentOffline {
+  constructor(mint, program) {
+    this.mint = mint;
+    this.program = program ?? getLegacyPumpProgramWithFallback();
+  }
+  static load(mint, connection) {
+    return new _LegacyPumpAgentOffline(
+      mint,
+      getLegacyPumpProgramWithFallback(connection)
+    );
+  }
+  async create(params) {
+    const { authority, mint, agentAuthority, buybackBps } = params;
+    const [bondingCurve] = getBondingCurvePDA(mint);
+    const [tokenAgentPayments] = getTokenAgentPaymentsPDA(mint);
+    return this.program.methods.agentInitialize(agentAuthority, buybackBps).accountsPartial({
+      authority,
+      bondingCurve,
+      mint,
+      tokenAgentPayments
+    }).instruction();
+  }
+  async withdraw(params) {
+    const { authority, currencyMint, receiverAta, tokenProgram } = params;
+    const [tokenAgentPayments] = getTokenAgentPaymentsPDA(this.mint);
+    const [withdrawAuthority] = getWithdrawAuthorityPDA(this.mint);
+    const withdrawVault = splToken.getAssociatedTokenAddressSync(
+      currencyMint,
+      withdrawAuthority,
+      true
+    );
+    return this.program.methods.agentWithdraw().accountsPartial({
+      authority,
+      tokenAgentPayments,
+      currencyMint,
+      withdrawAuthority,
+      withdrawVault,
+      receiverAta,
+      tokenProgram: tokenProgram ?? splToken.TOKEN_PROGRAM_ID
+    }).instruction();
+  }
+  /**
+   * `agent_update_buyback_bps` — when the global config has supported
+   * currencies, each currency's payment-vault ATA must be passed as a
+   * remaining account. The 1.0.7 SDK fetched `globalConfig` from chain when
+   * called via the connection-bound `LegacyPumpAgent`; for the offline
+   * flow you must supply `supportedCurrenciesMint` yourself.
+   */
+  async updateBuybackBps(params, options) {
+    const { authority, buybackBps } = params;
+    const supportedCurrenciesMint = options?.supportedCurrenciesMint;
+    if (!supportedCurrenciesMint) {
+      throw new Error(
+        "LegacyPumpAgentOffline.updateBuybackBps requires options.supportedCurrenciesMint."
+      );
+    }
+    const [tokenAgentPayments] = getTokenAgentPaymentsPDA(this.mint);
+    const [globalConfig] = getGlobalConfigPDA();
+    const remainingAccounts = supportedCurrenciesMint.filter((m) => !m.equals(web3_js.PublicKey.default)).map((mint) => ({
+      pubkey: splToken.getAssociatedTokenAddressSync(mint, tokenAgentPayments, true),
+      isWritable: false,
+      isSigner: false
+    }));
+    return this.program.methods.agentUpdateBuybackBps(buybackBps).accountsPartial({
+      authority,
+      tokenAgentPayments,
+      globalConfig
+    }).remainingAccounts(remainingAccounts).instruction();
+  }
+  async acceptPayment(params) {
+    const {
+      user,
+      userTokenAccount,
+      currencyMint,
+      amount,
+      memo,
+      startTime,
+      endTime,
+      tokenProgram
+    } = params;
+    const [tokenAgentPayments] = getTokenAgentPaymentsPDA(this.mint);
+    const [globalConfig] = getGlobalConfigPDA();
+    const [tokenAgentPaymentInCurrency] = getPaymentInCurrencyPDA(
+      this.mint,
+      currencyMint
+    );
+    const [invoiceId] = getInvoiceIdPDA(
+      this.mint,
+      currencyMint,
+      amount,
+      memo,
+      startTime,
+      endTime
+    );
+    const tokenAgentAssociatedAccount = splToken.getAssociatedTokenAddressSync(
+      currencyMint,
+      tokenAgentPayments,
+      true
+    );
+    return this.program.methods.agentAcceptPayment(amount, memo, startTime, endTime).accountsPartial({
+      user,
+      userTokenAccount,
+      tokenAgentPayments,
+      tokenAgentAssociatedAccount,
+      tokenAgentPaymentInCurrency,
+      globalConfig,
+      invoiceId,
+      currencyMint,
+      tokenProgram: tokenProgram ?? splToken.TOKEN_PROGRAM_ID
+    }).instruction();
+  }
+  async acceptPaymentSimple(params) {
+    const { amount, memo, startTime, endTime, ...rest } = params;
+    return this.acceptPayment({
+      ...rest,
+      amount: toBn(amount),
+      memo: toBn(memo),
+      startTime: toBn(startTime),
+      endTime: toBn(endTime)
+    });
+  }
+  async distributePayments(params) {
+    const { user, currencyMint, tokenProgram } = params;
+    const [tokenAgentPayments] = getTokenAgentPaymentsPDA(this.mint);
+    const [globalConfig] = getGlobalConfigPDA();
+    const [tokenAgentPaymentInCurrency] = getPaymentInCurrencyPDA(
+      this.mint,
+      currencyMint
+    );
+    const [buybackAuthority] = getBuybackAuthorityPDA(this.mint);
+    const [withdrawAuthority] = getWithdrawAuthorityPDA(this.mint);
+    const tokenAgentAssociatedAccount = splToken.getAssociatedTokenAddressSync(
+      currencyMint,
+      tokenAgentPayments,
+      true
+    );
+    const buybackVault = splToken.getAssociatedTokenAddressSync(
+      currencyMint,
+      buybackAuthority,
+      true
+    );
+    const withdrawVault = splToken.getAssociatedTokenAddressSync(
+      currencyMint,
+      withdrawAuthority,
+      true
+    );
+    return this.program.methods.agentDistributePayments().accountsPartial({
+      user,
+      globalConfig,
+      currencyMint,
+      tokenAgentPayments,
+      tokenAgentPaymentInCurrency,
+      tokenAgentAssociatedAccount,
+      buybackAuthority,
+      withdrawAuthority,
+      buybackVault,
+      withdrawVault,
+      tokenProgram: tokenProgram ?? splToken.TOKEN_PROGRAM_ID
+    }).instruction();
+  }
+  async buybackTrigger(params) {
+    const {
+      globalBuybackAuthority,
+      currencyMint,
+      swapProgramToInvoke,
+      swapInstructionData,
+      remainingAccounts,
+      tokenProgram
+    } = params;
+    const [tokenAgentPayments] = getTokenAgentPaymentsPDA(this.mint);
+    const [globalConfig] = getGlobalConfigPDA();
+    const [burnAuthority] = getBuybackAuthorityPDA(this.mint);
+    const [tokenAgentPaymentInCurrency] = getPaymentInCurrencyPDA(
+      this.mint,
+      currencyMint
+    );
+    const burnMintVault = splToken.getAssociatedTokenAddressSync(
+      this.mint,
+      burnAuthority,
+      true
+    );
+    return this.program.methods.agentBuybackTrigger(swapInstructionData).accountsPartial({
+      globalBuybackAuthority,
+      mint: this.mint,
+      tokenAgentPayments,
+      tokenAgentPaymentInCurrency,
+      currencyMint,
+      globalConfig,
+      swapProgramToInvoke,
+      burnAuthority,
+      burnMintVault,
+      tokenProgram: tokenProgram ?? splToken.TOKEN_PROGRAM_ID
+    }).remainingAccounts(remainingAccounts).instruction();
+  }
+  async extendAccount(params) {
+    const { account, user } = params;
+    return this.program.methods.extendAccount().accountsPartial({ account, user }).instruction();
+  }
+  async updateAuthority(params) {
+    const { authority, newAuthority } = params;
+    const [tokenAgentPayments] = getTokenAgentPaymentsPDA(this.mint);
+    return this.program.methods.agentUpdateAuthority(newAuthority).accountsPartial({ authority, tokenAgentPayments }).instruction();
+  }
+};
+var LegacyPumpAgent = class extends LegacyPumpAgentOffline {
+  constructor(mint, connection) {
+    super(mint, getLegacyPumpProgramWithFallback(connection));
+    this.connection = connection;
+  }
+  async getBalances(currencyMint) {
+    const [tokenAgentPayments] = getTokenAgentPaymentsPDA(this.mint);
+    const [buybackAuthority] = getBuybackAuthorityPDA(this.mint);
+    const [withdrawAuthority] = getWithdrawAuthorityPDA(this.mint);
+    const paymentAta = splToken.getAssociatedTokenAddressSync(
+      currencyMint,
+      tokenAgentPayments,
+      true
+    );
+    const buybackAta = splToken.getAssociatedTokenAddressSync(
+      currencyMint,
+      buybackAuthority,
+      true
+    );
+    const withdrawAta = splToken.getAssociatedTokenAddressSync(
+      currencyMint,
+      withdrawAuthority,
+      true
+    );
+    const fetchBalance = async (ata) => {
+      try {
+        const res = await this.connection.getTokenAccountBalance(ata);
+        return BigInt(res.value.amount);
+      } catch {
+        return 0n;
+      }
+    };
+    const [paymentBal, buybackBal, withdrawBal] = await Promise.all([
+      fetchBalance(paymentAta),
+      fetchBalance(buybackAta),
+      fetchBalance(withdrawAta)
+    ]);
+    return {
+      paymentVault: { address: paymentAta, balance: paymentBal },
+      buybackVault: { address: buybackAta, balance: buybackBal },
+      withdrawVault: { address: withdrawAta, balance: withdrawBal }
+    };
+  }
+  /**
+   * Override of `LegacyPumpAgentOffline.updateBuybackBps` that auto-fetches
+   * the supported currencies list from the on-chain `globalConfig` when not
+   * provided. Mirrors the 1.0.7 SDK's connection-bound behavior.
+   */
+  async updateBuybackBps(params, options) {
+    let supportedCurrenciesMint = options?.supportedCurrenciesMint;
+    if (!supportedCurrenciesMint) {
+      const [globalConfigPda] = getGlobalConfigPDA();
+      const account = await this.program.account.globalConfig.fetch(globalConfigPda);
+      supportedCurrenciesMint = account.supportedCurrenciesMint;
+    }
+    return super.updateBuybackBps(params, { supportedCurrenciesMint });
+  }
+};
+
+exports.BONDING_CURVE_SEED = BONDING_CURVE_SEED;
+exports.BUYBACK_AUTHORITY_SEED = BUYBACK_AUTHORITY_SEED;
+exports.GLOBAL_CONFIG_SEED = GLOBAL_CONFIG_SEED;
+exports.INVOICE_ID_SEED = INVOICE_ID_SEED;
+exports.LEGACY_AGENT_PAYMENTS_PROGRAM_ID = LEGACY_AGENT_PAYMENTS_PROGRAM_ID;
+exports.LegacyPumpAgent = LegacyPumpAgent;
+exports.LegacyPumpAgentOffline = LegacyPumpAgentOffline;
+exports.OFFLINE_PUMP_PROGRAM = OFFLINE_PUMP_PROGRAM;
+exports.PAYMENT_IN_CURRENCY_SEED = PAYMENT_IN_CURRENCY_SEED;
+exports.PUMP_PROGRAM_ID = PUMP_PROGRAM_ID;
+exports.TOKEN_AGENT_PAYMENTS_SEED = TOKEN_AGENT_PAYMENTS_SEED;
+exports.WITHDRAW_AUTHORITY_SEED = WITHDRAW_AUTHORITY_SEED;
+exports.decodeLegacyGlobalConfig = decodeLegacyGlobalConfig;
+exports.decodeLegacyTokenAgentPaymentInCurrency = decodeLegacyTokenAgentPaymentInCurrency;
+exports.decodeLegacyTokenAgentPayments = decodeLegacyTokenAgentPayments;
+exports.getBondingCurvePDA = getBondingCurvePDA;
+exports.getBuybackAuthorityPDA = getBuybackAuthorityPDA;
+exports.getGlobalConfigPDA = getGlobalConfigPDA;
+exports.getInvoiceIdPDA = getInvoiceIdPDA;
+exports.getLegacyOfflineProgram = getLegacyOfflineProgram;
+exports.getLegacyPumpProgram = getLegacyPumpProgram;
+exports.getLegacyPumpProgramWithFallback = getLegacyPumpProgramWithFallback;
+exports.getPaymentInCurrencyPDA = getPaymentInCurrencyPDA;
+exports.getTokenAgentPaymentsPDA = getTokenAgentPaymentsPDA;
+exports.getWithdrawAuthorityPDA = getWithdrawAuthorityPDA;
+//# sourceMappingURL=index.cjs.map
+//# sourceMappingURL=index.cjs.map

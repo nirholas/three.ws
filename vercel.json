@@ -2,13 +2,13 @@
 	"buildCommand": "npm run build:vercel",
 	"outputDirectory": "dist",
 	"public": true,
-	"installCommand": "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 PUPPETEER_SKIP_DOWNLOAD=1 npm ci --prefer-offline --no-audit --no-fund",
+	"installCommand": "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 PUPPETEER_SKIP_DOWNLOAD=1 npm ci --prefer-offline --no-audit --no-fund --omit=dev",
 	"env": {
 		"NODE_OPTIONS": "--no-deprecation"
 	},
 	"functions": {
-		"api/**/*.js": {
-			"includeFiles": "node_modules/@zauthx402/sdk/dist/**,examples/skills/pump-fun-strategy/**"
+		"api/pump/[action].js": {
+			"includeFiles": "examples/skills/**"
 		}
 	},
 	"routes": [

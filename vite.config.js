@@ -70,6 +70,9 @@ const appConfig = {
 		// etc.) must share the same `three` module as the app, otherwise
 		// Three's module-scoped registry warns "Multiple instances of Three.js".
 		dedupe: ['three'],
+		alias: {
+			'@noble/hashes/sha3.js': resolve(__dirname, 'node_modules/@noble/hashes/sha3.js'),
+		},
 	},
 	build: {
 		chunkSizeWarningLimit: 1000,
