@@ -165,9 +165,9 @@ export const env = {
 	get X402_MAX_AMOUNT_REQUIRED() {
 		return opt('X402_MAX_AMOUNT_REQUIRED', '1000');
 	},
-	// Per-network facilitators. PayAI supports both Solana and Base mainnet;
-	// x402.org's reference facilitator only supports base-sepolia, so it cannot
-	// be the default for Base mainnet payments.
+	// Per-network facilitators. Sperax handles EVM chains (Base, Arbitrum, Ethereum);
+	// PayAI handles Solana. X402_FACILITATOR_URL_EVM / X402_FACILITATOR_URL_BASE are
+	// equivalent — either key works (EVM checked first).
 	get X402_FACILITATOR_URL_SOLANA() {
 		return trimSlash(
 			opt(
@@ -179,8 +179,8 @@ export const env = {
 	get X402_FACILITATOR_URL_BASE() {
 		return trimSlash(
 			opt(
-				'X402_FACILITATOR_URL_BASE',
-				opt('X402_FACILITATOR_URL', 'https://facilitator.payai.network'),
+				'X402_FACILITATOR_URL_EVM',
+				opt('X402_FACILITATOR_URL_BASE', 'https://x402.sperax.io'),
 			),
 		);
 	},
@@ -192,7 +192,7 @@ export const env = {
 	},
 	// Solana fee payer advertised in the 402 challenge's `extra.feePayer`.
 	// Clients build the SPL transfer with this account paying SOL fees; the
-	// facilitator co-signs on /settle. Must match whatever facilitator.payai.network
+	// Solana facilitator co-signs on /settle. Must match what the PayAI facilitator
 	// returns at /supported for `network:"solana"`.
 	get X402_FEE_PAYER_SOLANA() {
 		return opt('X402_FEE_PAYER_SOLANA', '2wKupLR9q6wXYppw8Gr2NvWxKBUqm4PPJKkQfoxHDBg4');

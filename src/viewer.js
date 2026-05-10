@@ -52,9 +52,11 @@ import {
 	VignetteEffect,
 	EffectPass,
 } from 'postprocessing';
-import { Mesh } from 'three';
+import { Mesh, BufferGeometry } from 'three';
 
 // Accelerate all Three.js raycasting site-wide — must run before any Mesh is created.
+BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
+BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
 Mesh.prototype.raycast = acceleratedRaycast;
 
 Cache.enabled = true;
@@ -802,7 +804,7 @@ export class Viewer {
 
 		object.traverse((node) => {
 			if (node.isMesh && node.geometry && node.geometry.attributes.position?.count > 0) {
-				node.geometry.computeBoundsTree();
+				node.geometry.computeBoundsTree?.();
 			}
 		});
 

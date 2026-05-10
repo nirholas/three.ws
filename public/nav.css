@@ -1,11 +1,64 @@
 /* ── Shared nav styles for .home-nav (used wherever nav.js is loaded) ── */
 
+/* Make the nav-container fill available header space so the wordmark can anchor left */
+#nav-container {
+	flex: 1;
+	display: flex;
+	align-items: center;
+}
+
 .home-nav {
-	margin-left: auto;
 	display: flex;
 	align-items: center;
 	gap: var(--space-lg, 1.5rem);
+	width: 100%;
 	-webkit-app-region: no-drag;
+}
+
+/* ── Wordmark (logo shown on sub-pages; hidden on home where h1 has it) ── */
+
+.home-nav .nav-wordmark {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	text-decoration: none;
+	color: #fff;
+	font-family: 'Space Grotesk', 'Inter', sans-serif;
+	font-size: 1rem;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+	white-space: nowrap;
+	flex-shrink: 0;
+}
+
+.home-nav .nav-wordmark-img {
+	width: 22px;
+	height: 22px;
+	flex-shrink: 0;
+}
+
+.home-nav .nav-wordmark-dot {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: linear-gradient(135deg, #a78bfa 0%, #6366f1 100%);
+	box-shadow: 0 0 8px rgba(139, 92, 246, 0.65);
+	display: inline-block;
+	flex-shrink: 0;
+}
+
+.home-nav .nav-wordmark:hover {
+	opacity: 0.85;
+}
+
+/* Push the nav-root to the right when a wordmark is present */
+.home-nav .nav-root {
+	margin-left: auto;
+}
+
+/* On home page the h1 already has the logo, hide the nav wordmark */
+.home-page .home-nav .nav-wordmark {
+	display: none;
 }
 
 .home-nav a {
@@ -20,6 +73,23 @@
 
 .home-nav a:hover {
 	color: #fff;
+}
+
+.home-nav .nav-root > li > a.is-active {
+	color: #fff;
+	position: relative;
+}
+
+.home-nav .nav-root > li > a.is-active::after {
+	content: '';
+	position: absolute;
+	bottom: -4px;
+	left: 0;
+	right: 0;
+	height: 2px;
+	border-radius: 2px;
+	background: linear-gradient(90deg, #ffd76a, #ff8f4d);
+	opacity: 0.85;
 }
 
 .home-nav .nav-cta {
@@ -190,8 +260,25 @@
 }
 
 .home-nav .nav-trigger:hover,
-.home-nav .nav-trigger[aria-expanded='true'] {
+.home-nav .nav-trigger[aria-expanded='true'],
+.home-nav .nav-trigger.is-active {
 	color: #fff;
+}
+
+.home-nav .nav-trigger.is-active {
+	position: relative;
+}
+
+.home-nav .nav-trigger.is-active::after {
+	content: '';
+	position: absolute;
+	bottom: -4px;
+	left: 0;
+	right: 0;
+	height: 2px;
+	border-radius: 2px;
+	background: linear-gradient(90deg, #ffd76a, #ff8f4d);
+	opacity: 0.85;
 }
 
 .home-nav .nav-caret {
@@ -212,14 +299,16 @@
 	margin: 0;
 	padding: 8px;
 	list-style: none;
-	background: rgba(14, 12, 22, 0.94);
-	backdrop-filter: blur(20px) saturate(150%);
-	-webkit-backdrop-filter: blur(20px) saturate(150%);
-	border: 1px solid rgba(255, 255, 255, 0.08);
+	background: rgba(10, 9, 18, 0.96);
+	backdrop-filter: blur(24px) saturate(160%);
+	-webkit-backdrop-filter: blur(24px) saturate(160%);
+	border: 1px solid rgba(255, 255, 255, 0.09);
+	border-top: 2px solid rgba(255, 215, 106, 0.35);
 	border-radius: 12px;
 	box-shadow:
-		0 20px 40px -12px rgba(0, 0, 0, 0.65),
-		0 4px 12px -4px rgba(0, 0, 0, 0.5);
+		0 20px 40px -12px rgba(0, 0, 0, 0.7),
+		0 4px 12px -4px rgba(0, 0, 0, 0.5),
+		0 0 0 0.5px rgba(255, 255, 255, 0.04) inset;
 	opacity: 0;
 	transform: translateY(-6px);
 	pointer-events: none;
@@ -290,6 +379,16 @@
 		position: relative;
 		align-items: center;
 		gap: 0;
+	}
+
+	.home-nav .nav-wordmark {
+		margin-right: auto;
+		font-size: 0.95rem;
+	}
+
+	/* When the page has its own logo (home page), hide the nav wordmark */
+	.home-page .home-nav .nav-wordmark {
+		display: none;
 	}
 
 	.home-nav .nav-burger {

@@ -17,6 +17,7 @@
 <meta name="theme-color" content="#0a0b10" />
 <link rel="preconnect" href="https://api.mainnet-beta.solana.com" />
 <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.8/lib/index.iife.min.js"></script>
 <style>
   :root {
     --bg: #0a0b10;
@@ -482,6 +483,36 @@
   }
   .walkthrough button:hover { background: #7c3aed; }
 
+  /* Wallet mode selector */
+  .wallet-bar {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 12px; flex-wrap: wrap;
+  }
+  .mode-pills { display: flex; gap: 4px; }
+  .mode-pill {
+    background: var(--panel); border: 1px solid var(--border);
+    color: var(--muted); padding: 5px 14px; border-radius: 99px;
+    font-size: 12px; cursor: pointer; font-family: inherit;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .mode-pill:hover { border-color: var(--accent); color: var(--text); }
+  .mode-pill.active { border-color: var(--accent-2); color: var(--accent-2); background: rgba(34,211,238,0.07); }
+  .ext-status {
+    flex: 1; min-width: 0; font-size: 12px; font-family: var(--mono);
+    display: flex; align-items: center; gap: 8px; overflow: hidden;
+  }
+  .ext-status .connect-btn {
+    background: var(--panel-2); border: 1px solid var(--border);
+    color: var(--text); padding: 4px 10px; border-radius: 6px;
+    font-size: 12px; cursor: pointer; font-family: inherit;
+    transition: border-color 0.15s;
+  }
+  .ext-status .connect-btn:hover { border-color: var(--accent); }
+  .ext-status .addr { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 120px; }
+  .ext-status .bal { color: var(--green); flex: 0 0 auto; }
+  .ext-status .net-tag { color: var(--muted); font-size: 10px; flex: 0 0 auto; }
+  .ext-status .err-msg { color: var(--red); font-size: 11px; }
+
   /* Mobile polish */
   @media (max-width: 640px) {
     header { padding: 12px 16px; flex-wrap: wrap; gap: 8px; }
@@ -623,6 +654,14 @@
       </div>
     </div>
     <div class="composer">
+      <div class="wallet-bar" id="walletBar">
+        <div class="mode-pills">
+          <button class="mode-pill active" data-mode="agent" id="modeAgent">Agent</button>
+          <button class="mode-pill" data-mode="metamask" id="modeMM">MetaMask</button>
+          <button class="mode-pill" data-mode="phantom" id="modePH">Phantom</button>
+        </div>
+        <div class="ext-status" id="extStatus"></div>
+      </div>
       <div class="quick" id="quick">
         <button data-cmd="tools/list">/list_tools</button>
         <button data-cmd="validate_model:demo">/validate DamagedHelmet.glb</button>
@@ -1114,6 +1153,7 @@ async function* sseEvents(response) {
 
 async function run(call, displayLabel) {
   if (!call) return;
+  if (walletMode !== 'agent') return runExternal(call, displayLabel);
   sendBtn.disabled = true;
   for (const b of quickEl.querySelectorAll('button')) b.disabled = true;
   promptEl.disabled = true;
@@ -1240,7 +1280,438 @@ async function refreshFeed() {
   } catch {}
 }
 
+// ---- External wallet state ----------------------------------------------
+const MCP_URL = 'https://three.ws/api/mcp';
+let walletMode = 'agent';
+let mmAddress = null;
+let mmUsdcBalance = null;
+let phantomAddress = null;
+let phantomUsdcBalance = null;
+
+const USDC_BASE_ADDR = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
+const USDC_SOLANA_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+
+function setWalletMode(mode) {
+  walletMode = mode;
+  for (const btn of document.querySelectorAll('.mode-pill')) {
+    btn.classList.toggle('active', btn.dataset.mode === mode);
+  }
+  $('agentBar').style.display = mode === 'agent' ? '' : 'none';
+  updateExtStatus();
+}
+
+function updateExtStatus() {
+  const el = $('extStatus');
+  if (walletMode === 'agent') { el.innerHTML = ''; return; }
+  if (walletMode === 'metamask') {
+    if (!mmAddress) {
+      el.innerHTML = `<button class="connect-btn" id="connectMM">Connect MetaMask</button>`;
+      $('connectMM').addEventListener('click', mmConnectFlow);
+    } else {
+      const short = `${mmAddress.slice(0,6)}…${mmAddress.slice(-4)}`;
+      const bal = mmUsdcBalance != null ? mmUsdcBalance.toFixed(4) + ' USDC' : '…';
+      el.innerHTML = `<span class="addr" title="${mmAddress}">${short}</span><span class="bal">${bal}</span><span class="net-tag">Base</span>`;
+    }
+  } else {
+    if (!phantomAddress) {
+      el.innerHTML = `<button class="connect-btn" id="connectPH">Connect Phantom</button>`;
+      $('connectPH').addEventListener('click', phantomConnectFlow);
+    } else {
+      const short = `${phantomAddress.slice(0,4)}…${phantomAddress.slice(-4)}`;
+      const bal = phantomUsdcBalance != null ? phantomUsdcBalance.toFixed(4) + ' USDC' : '…';
+      el.innerHTML = `<span class="addr" title="${phantomAddress}">${short}</span><span class="bal">${bal}</span><span class="net-tag">Solana</span>`;
+    }
+  }
+}
+
+async function mmConnectFlow() {
+  const btn = $('connectMM');
+  if (btn) { btn.disabled = true; btn.textContent = 'Connecting…'; }
+  try {
+    if (!window.ethereum) {
+      $('extStatus').innerHTML = `<span class="err-msg">MetaMask not installed. <a href="https://metamask.io" target="_blank" rel="noopener">Install →</a></span>`;
+      return;
+    }
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    mmAddress = accounts[0];
+    try {
+      await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x2105' }] });
+    } catch (switchErr) {
+      if (switchErr.code === 4902) {
+        await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [{
+          chainId: '0x2105', chainName: 'Base',
+          nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+          rpcUrls: ['https://mainnet.base.org'],
+          blockExplorerUrls: ['https://basescan.org'],
+        }]});
+      } else throw switchErr;
+    }
+    await mmRefreshBalance();
+    updateExtStatus();
+    window.ethereum.on('accountsChanged', (accs) => {
+      mmAddress = accs[0] || null;
+      mmRefreshBalance().then(() => updateExtStatus());
+    });
+    window.ethereum.on('chainChanged', () => {
+      mmRefreshBalance().then(() => updateExtStatus());
+    });
+  } catch (err) {
+    if (err.code === 4001) {
+      $('extStatus').innerHTML = `<span class="err-msg">Rejected by user.</span>`;
+    } else {
+      $('extStatus').innerHTML = `<span class="err-msg">${escape(err.message || String(err))}</span>`;
+    }
+  }
+}
+
+async function mmRefreshBalance() {
+  if (!mmAddress || !window.ethereum) return;
+  try {
+    const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+    if (chainId !== '0x2105') { mmUsdcBalance = null; return; }
+    const callData = '0x70a08231' + mmAddress.slice(2).padStart(64, '0');
+    const result = await window.ethereum.request({ method: 'eth_call', params: [{ to: USDC_BASE_ADDR, data: callData }, 'latest'] });
+    mmUsdcBalance = Number(BigInt(result || '0x0')) / 1e6;
+  } catch { mmUsdcBalance = 0; }
+}
+
+async function phantomConnectFlow() {
+  const btn = $('connectPH');
+  if (btn) { btn.disabled = true; btn.textContent = 'Connecting…'; }
+  try {
+    if (!window.solana?.isPhantom) {
+      $('extStatus').innerHTML = `<span class="err-msg">Phantom not installed. <a href="https://phantom.app" target="_blank" rel="noopener">Install →</a></span>`;
+      return;
+    }
+    const resp = await window.solana.connect();
+    phantomAddress = resp.publicKey.toString();
+    await phantomRefreshBalance();
+    updateExtStatus();
+    window.solana.on('disconnect', () => { phantomAddress = null; phantomUsdcBalance = null; updateExtStatus(); });
+  } catch (err) {
+    const msg = err.message || String(err);
+    if (err.code === 4001 || msg.includes('User rejected')) {
+      $('extStatus').innerHTML = `<span class="err-msg">Rejected by user.</span>`;
+    } else {
+      $('extStatus').innerHTML = `<span class="err-msg">${escape(msg)}</span>`;
+    }
+  }
+}
+
+async function phantomRefreshBalance() {
+  if (!phantomAddress) return;
+  try {
+    const solWeb3 = window.solanaWeb3;
+    if (!solWeb3) return;
+    const ownerPk = new solWeb3.PublicKey(phantomAddress);
+    const mintPk = new solWeb3.PublicKey(USDC_SOLANA_MINT);
+    const TOKEN_PROGRAM_ID = new solWeb3.PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+    const ASSOC_PROGRAM_ID = new solWeb3.PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJe1bV2');
+    const [ata] = solWeb3.PublicKey.findProgramAddressSync(
+      [ownerPk.toBytes(), TOKEN_PROGRAM_ID.toBytes(), mintPk.toBytes()],
+      ASSOC_PROGRAM_ID
+    );
+    const conn = new solWeb3.Connection('https://api.mainnet-beta.solana.com', 'confirmed');
+    const acct = await conn.getTokenAccountBalance(ata);
+    phantomUsdcBalance = Number(acct.value.uiAmount || 0);
+  } catch { phantomUsdcBalance = 0; }
+}
+
+// ---- External wallet x402 flow ------------------------------------------
+
+function buildJsonRpcBody(tool, args) {
+  if (tool === 'tools/list') return { jsonrpc: '2.0', id: 1, method: 'tools/list' };
+  return { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: tool, arguments: args || {} } };
+}
+
+function resetStepsExt() {
+  stepsEl.innerHTML = '';
+  receiptEl.innerHTML = '';
+  for (const s of [
+    { id: 'ext-sign',   label: 'Sign payment' },
+    { id: 'ext-submit', label: 'Submit to three.ws/api/mcp' },
+    { id: 'ext-done',   label: 'Tool execution complete' },
+  ]) {
+    const el = document.createElement('div');
+    el.className = 'step';
+    el.id = `step-${s.id}`;
+    el.innerHTML = `<div class="icon">·</div><div style="flex:1"><div class="label">${s.label}</div><div class="meta" data-meta></div></div>`;
+    stepsEl.appendChild(el);
+  }
+}
+
+function renderExtReceipt(call, info) {
+  const { network, payer, payTo, amount, tx } = info;
+  const isEvm = network?.startsWith('eip155');
+  const explorerBase = isEvm ? 'https://basescan.org/tx/' : 'https://solscan.io/tx/';
+  const explorerLink = tx ? `<div class="row"><span class="k">tx</span><span class="v"><a href="${explorerBase}${escape(tx)}" target="_blank" rel="noopener">${tx.slice(0,10)}…${tx.slice(-6)} ↗</a></span></div>` : '';
+  receiptEl.innerHTML = `
+    <div class="receipt">
+      <h3>settlement receipt</h3>
+      <div class="row"><span class="k">amount</span><span class="v">${(Number(amount || 1000) / 1e6).toFixed(6)} USDC</span></div>
+      <div class="row"><span class="k">network</span><span class="v">${isEvm ? 'Base mainnet' : 'Solana mainnet'}</span></div>
+      ${payer ? `<div class="row"><span class="k">payer</span><span class="v">${payer.length > 20 ? payer.slice(0,8)+'…'+payer.slice(-6) : payer}</span></div>` : ''}
+      ${payTo ? `<div class="row"><span class="k">payTo</span><span class="v">${payTo.length > 20 ? payTo.slice(0,8)+'…'+payTo.slice(-6) : payTo}</span></div>` : ''}
+      ${explorerLink}
+      <div class="actions">
+        ${tx ? `<a href="${explorerBase}${escape(tx)}" target="_blank" rel="noopener">view on ${isEvm ? 'Basescan' : 'Solscan'}</a>` : ''}
+        <button data-replay>↻ replay</button>
+      </div>
+    </div>`;
+  receiptEl.querySelector('[data-replay]')?.addEventListener('click', () => runExternal(call, displayLabelFor(call)));
+}
+
+async function mmBuildPayment(accept) {
+  const nonce = '0x' + Array.from(crypto.getRandomValues(new Uint8Array(32)))
+    .map(b => b.toString(16).padStart(2, '0')).join('');
+  const validBefore = String(Math.floor(Date.now() / 1000) + 60);
+  const authorization = {
+    from: mmAddress,
+    to: accept.payTo,
+    value: String(accept.amount),
+    validAfter: '0',
+    validBefore,
+    nonce,
+  };
+  const typedData = {
+    types: {
+      EIP712Domain: [
+        { name: 'name', type: 'string' },
+        { name: 'version', type: 'string' },
+        { name: 'chainId', type: 'uint256' },
+        { name: 'verifyingContract', type: 'address' },
+      ],
+      TransferWithAuthorization: [
+        { name: 'from', type: 'address' },
+        { name: 'to', type: 'address' },
+        { name: 'value', type: 'uint256' },
+        { name: 'validAfter', type: 'uint256' },
+        { name: 'validBefore', type: 'uint256' },
+        { name: 'nonce', type: 'bytes32' },
+      ],
+    },
+    primaryType: 'TransferWithAuthorization',
+    domain: {
+      name: accept.extra?.name || 'USD Coin',
+      version: accept.extra?.version || '2',
+      chainId: 8453,
+      verifyingContract: accept.asset,
+    },
+    message: authorization,
+  };
+  const signature = await window.ethereum.request({
+    method: 'eth_signTypedData_v4',
+    params: [mmAddress, JSON.stringify(typedData)],
+  });
+  return { x402Version: 2, scheme: 'exact', network: accept.network, payload: { signature, authorization } };
+}
+
+async function phantomBuildPayment(accept) {
+  const solWeb3 = window.solanaWeb3;
+  if (!solWeb3) throw new Error('@solana/web3.js not loaded');
+  const TOKEN_PROGRAM_ID = new solWeb3.PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+  const ASSOC_PROGRAM_ID = new solWeb3.PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJe1bV2');
+  const SYSTEM_PROGRAM_ID = new solWeb3.PublicKey('11111111111111111111111111111111');
+  const ownerPk = new solWeb3.PublicKey(phantomAddress);
+  const mintPk = new solWeb3.PublicKey(accept.asset);
+  const payToPk = new solWeb3.PublicKey(accept.payTo);
+  const feePayerPk = new solWeb3.PublicKey(accept.extra.feePayer);
+  const [senderAta] = solWeb3.PublicKey.findProgramAddressSync(
+    [ownerPk.toBytes(), TOKEN_PROGRAM_ID.toBytes(), mintPk.toBytes()], ASSOC_PROGRAM_ID
+  );
+  const [receiverAta] = solWeb3.PublicKey.findProgramAddressSync(
+    [payToPk.toBytes(), TOKEN_PROGRAM_ID.toBytes(), mintPk.toBytes()], ASSOC_PROGRAM_ID
+  );
+  const conn = new solWeb3.Connection('https://api.mainnet-beta.solana.com', 'confirmed');
+  const amount = BigInt(accept.amount);
+  const decimals = accept.extra?.decimals ?? 6;
+  const ixs = [
+    solWeb3.ComputeBudgetProgram.setComputeUnitLimit({ units: 60_000 }),
+    solWeb3.ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1 }),
+  ];
+  const receiverInfo = await conn.getAccountInfo(receiverAta);
+  if (!receiverInfo) {
+    ixs.push(new solWeb3.TransactionInstruction({
+      programId: ASSOC_PROGRAM_ID,
+      keys: [
+        { pubkey: feePayerPk, isSigner: true, isWritable: true },
+        { pubkey: receiverAta, isSigner: false, isWritable: true },
+        { pubkey: payToPk, isSigner: false, isWritable: false },
+        { pubkey: mintPk, isSigner: false, isWritable: false },
+        { pubkey: SYSTEM_PROGRAM_ID, isSigner: false, isWritable: false },
+        { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+      ],
+      data: new Uint8Array([1]),
+    }));
+  }
+  // SPL transferChecked: instruction index 12
+  const transferData = new Uint8Array(10);
+  const dv = new DataView(transferData.buffer);
+  dv.setUint8(0, 12);
+  dv.setUint32(1, Number(amount & 0xFFFFFFFFn), true);
+  dv.setUint32(5, Number(amount >> 32n), true);
+  dv.setUint8(9, decimals);
+  ixs.push(new solWeb3.TransactionInstruction({
+    programId: TOKEN_PROGRAM_ID,
+    keys: [
+      { pubkey: senderAta, isSigner: false, isWritable: true },
+      { pubkey: mintPk, isSigner: false, isWritable: false },
+      { pubkey: receiverAta, isSigner: false, isWritable: true },
+      { pubkey: ownerPk, isSigner: true, isWritable: false },
+    ],
+    data: transferData,
+  }));
+  const { blockhash } = await conn.getLatestBlockhash('confirmed');
+  const message = new solWeb3.TransactionMessage({
+    payerKey: feePayerPk,
+    recentBlockhash: blockhash,
+    instructions: ixs,
+  }).compileToV0Message();
+  const vtx = new solWeb3.VersionedTransaction(message);
+  const signedTx = await window.solana.signTransaction(vtx);
+  const bytes = signedTx.serialize();
+  const txBase64 = btoa(Array.from(bytes).map(b => String.fromCharCode(b)).join(''));
+  return { x402Version: 2, scheme: 'exact', network: accept.network, payload: { transaction: txBase64 } };
+}
+
+async function runExternal(call, displayLabel) {
+  if (!call) return;
+  sendBtn.disabled = true;
+  for (const b of quickEl.querySelectorAll('button')) b.disabled = true;
+  promptEl.disabled = true;
+  const mode = walletMode;
+
+  // Ensure connected before trying to pay
+  if (mode === 'metamask' && !mmAddress) {
+    await mmConnectFlow();
+    if (!mmAddress) {
+      sendBtn.disabled = false;
+      for (const b of quickEl.querySelectorAll('button')) b.disabled = false;
+      promptEl.disabled = false;
+      promptEl.focus();
+      return;
+    }
+  }
+  if (mode === 'phantom' && !phantomAddress) {
+    await phantomConnectFlow();
+    if (!phantomAddress) {
+      sendBtn.disabled = false;
+      for (const b of quickEl.querySelectorAll('button')) b.disabled = false;
+      promptEl.disabled = false;
+      promptEl.focus();
+      return;
+    }
+  }
+
+  addMsg('user', escape(displayLabel || displayLabelFor(call)));
+  resetStepsExt();
+  const t0 = performance.now();
+  const rpcBody = buildJsonRpcBody(call.tool, call.args);
+
+  try {
+    setStep('ext-sign', 'active', 'fetching payment requirements…');
+    // Initial request to get 402 payment requirements
+    const r402 = await fetch(MCP_URL, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(rpcBody),
+    });
+    if (r402.status !== 402) {
+      if (r402.ok) {
+        const data = await r402.json();
+        if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+        setStep('ext-sign', 'done', 'no payment required');
+        setStep('ext-submit', 'done');
+        setStep('ext-done', 'done', `${Math.round(performance.now() - t0)} ms`);
+        addMsg('agent', renderResult(call, data?.result ?? data));
+        bumpTicker();
+        return;
+      }
+      const errData = await r402.json().catch(() => ({}));
+      throw new Error(errData.error || `Expected 402, got ${r402.status}`);
+    }
+    // Parse payment requirements from response body (body = same data as payment-required header)
+    const payReq = await r402.json();
+    const accepts = payReq.accepts || [];
+    const networkId = mode === 'metamask'
+      ? 'eip155:8453'
+      : 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp';
+    const accept = accepts.find(a => a.network === networkId);
+    if (!accept) throw new Error(`No ${mode === 'metamask' ? 'Base mainnet' : 'Solana mainnet'} payment option in 402 response`);
+
+    // Check balance
+    if (mode === 'metamask' && mmUsdcBalance != null && mmUsdcBalance < Number(accept.amount) / 1e6) {
+      throw new Error(`Insufficient USDC on Base. Need ${Number(accept.amount)/1e6} USDC, have ${mmUsdcBalance.toFixed(4)}.`);
+    }
+    if (mode === 'phantom' && phantomUsdcBalance != null && phantomUsdcBalance < Number(accept.amount) / 1e6) {
+      throw new Error(`Insufficient USDC on Solana. Need ${Number(accept.amount)/1e6} USDC, have ${phantomUsdcBalance.toFixed(4)}.`);
+    }
+
+    // Build and sign payment
+    setStep('ext-sign', 'active', `signing with ${mode === 'metamask' ? 'MetaMask' : 'Phantom'}…`);
+    const paymentPayload = mode === 'metamask'
+      ? await mmBuildPayment(accept)
+      : await phantomBuildPayment(accept);
+    const paymentHeader = btoa(JSON.stringify(paymentPayload));
+    setStep('ext-sign', 'done', `${Number(accept.amount) / 1e6} USDC authorized`);
+
+    // Submit with X-PAYMENT
+    setStep('ext-submit', 'active', 'submitting…');
+    const res = await fetch(MCP_URL, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'X-PAYMENT': paymentHeader },
+      body: JSON.stringify(rpcBody),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || errData.message || `server error ${res.status}`);
+    }
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+    setStep('ext-submit', 'done', `${Math.round(performance.now() - t0)} ms total`);
+    setStep('ext-done', 'done');
+
+    // Get settlement info from X-PAYMENT-RESPONSE header if exposed
+    let settlementInfo = { network: accept.network, amount: accept.amount, payTo: accept.payTo,
+      payer: mode === 'metamask' ? mmAddress : phantomAddress };
+    const payResp = res.headers.get('x-payment-response');
+    if (payResp) {
+      try {
+        const settled = JSON.parse(atob(payResp));
+        if (settled.transaction) settlementInfo.tx = settled.transaction;
+        if (settled.payer) settlementInfo.payer = settled.payer;
+      } catch {}
+    }
+    renderExtReceipt(call, settlementInfo);
+    addMsg('agent', renderResult(call, data?.result ?? data));
+    bumpTicker();
+    if (mode === 'metamask') { await mmRefreshBalance(); updateExtStatus(); }
+    else { await phantomRefreshBalance(); updateExtStatus(); }
+    refreshFeed();
+  } catch (err) {
+    const msg = err.message || String(err);
+    const activeStep = stepsEl.querySelector('.step.active');
+    const stepId = activeStep?.id?.replace('step-', '') || 'ext-sign';
+    setStep(stepId, 'error', msg.slice(0, 80));
+    if (msg.includes('User rejected') || msg.includes('user rejected') || err.code === 4001) {
+      addMsg('agent', `<div class="err">Cancelled by user.</div>`);
+    } else {
+      addMsg('agent', `<div class="err">Payment failed: ${escape(msg)}</div>`);
+    }
+  } finally {
+    document.title = `${Math.round(performance.now() - t0)}ms · three.ws · pay-per-call`;
+    sendBtn.disabled = false;
+    for (const b of quickEl.querySelectorAll('button')) b.disabled = false;
+    promptEl.disabled = false;
+    promptEl.focus();
+  }
+}
+
 // ---- Wire up ------------------------------------------------------------
+
+for (const pill of document.querySelectorAll('.mode-pill')) {
+  pill.addEventListener('click', () => setWalletMode(pill.dataset.mode));
+}
 
 quickEl.addEventListener('click', (e) => {
   const btn = e.target.closest('button');
