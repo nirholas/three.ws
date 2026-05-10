@@ -309,17 +309,16 @@ function renderOnchainCard(item) {
 		.map((s) => `<span class="explore-svc">${escapeHtml(s.name)}</span>`)
 		.join('');
 
-	const primaryHref = item.viewerUrl || item.tokenExplorerUrl || '#';
-	const primaryTarget = item.viewerUrl ? '_self' : '_blank';
+	const detailUrl = `/discover/a/${item.chainId}/${item.agentId}`;
 
 	card.innerHTML = `
-		<a class="explore-card-thumb" href="${escapeAttr(primaryHref)}" target="${primaryTarget}" rel="noopener">
+		<a class="explore-card-thumb" href="${escapeAttr(detailUrl)}">
 			${thumb}
 			${item.has3d ? '<span class="explore-card-play">▶</span>' : ''}
 		</a>
 		<div class="explore-card-body">
 			<div class="explore-card-head">
-				<h3 class="explore-card-name">${escapeHtml(item.name)}</h3>
+				<a class="explore-card-name" href="${escapeAttr(detailUrl)}" style="text-decoration:none;color:inherit">${escapeHtml(item.name)}</a>
 				<span class="explore-card-id">#${escapeHtml(item.agentId)}</span>
 			</div>
 			<div class="explore-card-badges">${badges.join('')}</div>
@@ -330,8 +329,8 @@ function renderOnchainCard(item) {
 					${escapeHtml(item.ownerShort)}
 				</a>
 				<div class="explore-card-actions">
+					<a class="explore-card-link" href="${escapeAttr(detailUrl)}">Details</a>
 					${item.viewerUrl ? `<a class="explore-card-link" href="${escapeAttr(item.viewerUrl)}">View 3D</a>` : ''}
-					<a class="explore-card-link" href="${escapeAttr(item.tokenExplorerUrl || '#')}" target="_blank" rel="noopener">On-chain ↗</a>
 					<button type="button" class="explore-card-link explore-card-link--ghost" data-role="card-embed"
 						data-kind="onchain"
 						data-chain-id="${escapeAttr(String(item.chainId))}"
@@ -363,15 +362,16 @@ function renderAvatarCard(item) {
 		.join('');
 
 	const viewerUrl = item.viewerUrl || '#';
+	const detailUrl = `/discover/avatar/${item.avatarId}`;
 
 	card.innerHTML = `
-		<a class="explore-card-thumb" href="${escapeAttr(viewerUrl)}">
+		<a class="explore-card-thumb" href="${escapeAttr(detailUrl)}">
 			${thumb}
 			<span class="explore-card-play">▶</span>
 		</a>
 		<div class="explore-card-body">
 			<div class="explore-card-head">
-				<h3 class="explore-card-name">${escapeHtml(item.name)}</h3>
+				<a class="explore-card-name" href="${escapeAttr(detailUrl)}" style="text-decoration:none;color:inherit">${escapeHtml(item.name)}</a>
 			</div>
 			<div class="explore-card-badges">${badges.join('')}</div>
 			${item.description ? `<p class="explore-card-desc">${escapeHtml(item.description)}</p>` : ''}
@@ -379,6 +379,7 @@ function renderAvatarCard(item) {
 			<div class="explore-card-foot">
 				<span class="explore-card-owner" title="Avatar made public by its creator">@${escapeHtml(item.slug || 'avatar')}</span>
 				<div class="explore-card-actions">
+					<a class="explore-card-link" href="${escapeAttr(detailUrl)}">Details</a>
 					<a class="explore-card-link" href="${escapeAttr(viewerUrl)}">View 3D</a>
 					<button type="button" class="explore-card-link explore-card-link--ghost" data-role="card-embed"
 						data-kind="avatar"

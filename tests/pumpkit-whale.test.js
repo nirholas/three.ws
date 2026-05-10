@@ -2,30 +2,33 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // vi.hoisted creates variables before the mock factories run (needed because
 // vi.mock is hoisted above import statements).
+// Shared mutable state accessible from mock factories and tests.
+// The `conn` singleton ensures that `new Connection()` always returns the
+// same object — so `const mockInstance = new Connection()` in a test and
+// the instance created inside `watchWhaleTrades` are identical objects.
 const state = vi.hoisted(() => ({
 	logCallback: null,
 	fakeEvents: [],
+	conn: {
+		onLogs: vi.fn(function(_, cb) { state.logCallback = cb; return 1; }),
+		removeOnLogsListener: vi.fn().mockResolvedValue(undefined),
+	},
 }));
 
 vi.mock('@solana/web3.js', () => ({
-	Connection: vi.fn(() => ({
-		onLogs: vi.fn((_, cb) => {
-			state.logCallback = cb;
-			return 1; // subscription id
-		}),
-		removeOnLogsListener: vi.fn().mockResolvedValue(undefined),
-	})),
-	PublicKey: vi.fn((s) => ({
-		toString: () => s,
-		toBase58: () => s,
-	})),
+	// Regular function (not arrow) for `new` compatibility; returns shared singleton.
+	Connection: vi.fn(function() { return state.conn; }),
+	PublicKey: vi.fn(function(s) {
+		this.toString = () => s;
+		this.toBase58 = () => s;
+	}),
 }));
 
 vi.mock('@coral-xyz/anchor', () => ({
-	BorshCoder: vi.fn(() => ({})),
-	EventParser: vi.fn(() => ({
-		parseLogs: vi.fn(() => state.fakeEvents),
-	})),
+	BorshCoder: vi.fn(function() { return {}; }),
+	EventParser: vi.fn(function() {
+		return { parseLogs: vi.fn(() => state.fakeEvents) };
+	}),
 }));
 
 vi.mock('@pump-fun/pump-sdk', () => ({
