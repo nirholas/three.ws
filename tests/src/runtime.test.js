@@ -189,6 +189,91 @@ describe('Runtime — tool dispatch', () => {
 	});
 });
 
+// ── Skill access gate ────────────────────────────────────────────────────────
+
+describe('Runtime — skill access gate', () => {
+	it('blocks paid skill, dispatches skill:payment-required, returns 402 result to the LLM', async () => {
+		const provider = mockProvider([toolResp('premium_search', {}), textResp('blocked')]);
+		const skillInvoke = vi.fn().mockResolvedValue({ ok: true });
+		const skills = {
+			findSkillForTool: vi.fn().mockReturnValue({ invoke: skillInvoke }),
+			allTools: () => [],
+			systemPrompt: () => '',
+		};
+		const skillAccess = vi.fn().mockResolvedValue({
+			allowed: false,
+			price: { amount: '1000000', currency_mint: 'EPjF...', chain: 'solana' },
+		});
+		const rt = makeRuntime(provider, { skills });
+		rt.skillAccess = skillAccess;
+
+		const events = collect(rt, 'skill:payment-required');
+		await rt.send('use premium_search');
+
+		expect(skillInvoke).not.toHaveBeenCalled();
+		expect(skillAccess).toHaveBeenCalledWith('premium_search');
+		expect(events).toHaveLength(1);
+		expect(events[0].skill).toBe('premium_search');
+		expect(events[0].price).toEqual({ amount: '1000000', currency_mint: 'EPjF...', chain: 'solana' });
+
+		// The 402 result is fed back to the LLM as a tool_result with is_error=true
+		const secondCall = provider.complete.mock.calls[1][0];
+		const toolResultMsg = secondCall.messages.find(
+			(m) => m.role === 'user' && Array.isArray(m.content),
+		);
+		expect(toolResultMsg).toBeDefined();
+		expect(toolResultMsg.content[0].is_error).toBe(true);
+		const parsed = JSON.parse(toolResultMsg.content[0].content);
+		expect(parsed.error).toBe('payment_required');
+		expect(parsed.skill).toBe('premium_search');
+	});
+
+	it('allows paid skill once skillAccess returns allowed:true (purchased state)', async () => {
+		const provider = mockProvider([toolResp('premium_search', {}), textResp('done')]);
+		const skillInvoke = vi.fn().mockResolvedValue({ ok: true, data: 'results' });
+		const skills = {
+			findSkillForTool: vi.fn().mockReturnValue({ invoke: skillInvoke }),
+			allTools: () => [],
+			systemPrompt: () => '',
+		};
+		const rt = makeRuntime(provider, { skills });
+		rt.skillAccess = vi.fn().mockResolvedValue({ allowed: true });
+
+		const events = collect(rt, 'skill:payment-required');
+		await rt.send('use premium_search');
+
+		expect(skillInvoke).toHaveBeenCalled();
+		expect(events).toHaveLength(0);
+	});
+
+	it('default skillAccess (alwaysAllow) does not gate any tool', async () => {
+		const provider = mockProvider([toolResp('any_skill', {}), textResp('ok')]);
+		const skillInvoke = vi.fn().mockResolvedValue({ result: 'free' });
+		const skills = {
+			findSkillForTool: vi.fn().mockReturnValue({ invoke: skillInvoke }),
+			allTools: () => [],
+			systemPrompt: () => '',
+		};
+		const rt = makeRuntime(provider, { skills });
+
+		await rt.send('use any_skill');
+		expect(skillInvoke).toHaveBeenCalled();
+	});
+
+	it('built-in tools bypass the gate even when skillAccess would deny them', async () => {
+		const provider = mockProvider([toolResp('lookAt', { target: 'user' }), textResp('ok')]);
+		const rt = makeRuntime(provider);
+		// A pathological gate that denies everything — should not affect built-ins
+		rt.skillAccess = vi.fn().mockResolvedValue({ allowed: false });
+
+		const events = collect(rt, 'skill:payment-required');
+		await rt.send('hi');
+
+		expect(rt.skillAccess).not.toHaveBeenCalled();
+		expect(events).toHaveLength(0);
+	});
+});
+
 // ── MAX_TOOL_ITERATIONS guard ─────────────────────────────────────────────────
 
 describe('Runtime — MAX_TOOL_ITERATIONS', () => {

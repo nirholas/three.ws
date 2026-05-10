@@ -485,8 +485,8 @@ const buildMetadataSchema = z.object({
 	description: z.string().trim().max(500).default(''),
 	avatar_id: z.string().uuid().optional(),
 	agent_id: z.string().uuid().optional(),
-	// Base64 data URL: "data:image/png;base64,..." — max ~4 MB image.
-	image_data_url: z.string().max(6_000_000).optional(),
+	// Base64 data URL: "data:image/png;base64,..." — max 4 MB raw (≈5.5 MB base64).
+	image_data_url: z.string().max(5_500_000).optional(),
 });
 
 async function handleBuildMetadata(req, res) {

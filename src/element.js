@@ -3,7 +3,7 @@
 
 import { Box3 } from 'three';
 import { Viewer } from './viewer.js';
-import { Runtime } from './runtime/index.js';
+import { Runtime, skillAccessFromAgentDetail } from './runtime/index.js';
 import { SceneController } from './runtime/scene.js';
 import { SkillRegistry } from './skills/index.js';
 import { Memory } from './memory/index.js';
@@ -1357,12 +1357,37 @@ class Agent3DElement extends HTMLElement {
 				agentId: _backendId || undefined,
 				apiOrigin: _scriptOrigin || window.location.origin,
 			};
+
+			// Fetch skill prices + purchased state so the runtime can gate paid skills.
+			// Failures here fall back to "all-allowed" — monetization is opt-in.
+			let _skillAccess;
+			if (_backendId) {
+				try {
+					const detailBase = _scriptOrigin || window.location.origin;
+					const r = await fetch(
+						`${detailBase}/api/marketplace/agents/${_backendId}`,
+						{ credentials: 'include' },
+					);
+					if (r.ok) {
+						const j = await r.json();
+						const a = j?.data?.agent;
+						if (a && (a.skill_prices || a.purchased_skills)) {
+							_skillAccess = skillAccessFromAgentDetail(a);
+						}
+					}
+				} catch (e) {
+					console.warn('[agent-3d] skill-access fetch failed; defaulting to allow-all', e);
+				}
+			}
+
 			this._runtime = new Runtime({
 				manifest,
 				viewer: this._scene,
 				memory: this._memory,
 				skills: this._skills,
 				providerConfig,
+				agentId: _backendId || undefined,
+				skillAccess: _skillAccess,
 			});
 			// Re-dispatch runtime events on the host
 			for (const ev of [
@@ -1371,6 +1396,7 @@ class Agent3DElement extends HTMLElement {
 				'brain:message',
 				'skill:tool-start',
 				'skill:tool-called',
+				'skill:payment-required',
 				'voice:speech-start',
 				'voice:speech-end',
 				'voice:transcript',
