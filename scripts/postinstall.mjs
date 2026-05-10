@@ -26,9 +26,11 @@ function hashDir(dir) {
 	return h.digest('hex');
 }
 
-// If src was excluded by .vercelignore the directory will be absent or empty;
-// treat that as "dist is current" — Vercel runs --omit=dev so tsup isn't available.
-const srcPresent = existsSync(srcDir) && readdirSync(srcDir).length > 0;
+// On Vercel, always trust the committed dist — tsup is a dev dep and unavailable
+// when npm ci runs with --omit=dev. Build cache can also resurrect src/ even
+// when .vercelignore lists it, so we gate on the VERCEL env var instead.
+const onVercel = !!process.env.VERCEL;
+const srcPresent = !onVercel && existsSync(srcDir) && readdirSync(srcDir).length > 0;
 
 const srcHash = srcPresent ? hashDir(srcDir) : null;
 const needsBuild =
