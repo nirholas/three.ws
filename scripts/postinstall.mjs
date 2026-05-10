@@ -30,7 +30,10 @@ function hashDir(dir) {
 // Gate on whether the binary actually exists rather than any env var,
 // since VERCEL/CI are not reliably set during the npm install phase.
 const tsupBin = resolve(root, 'node_modules/.bin/tsup');
-const srcPresent = existsSync(tsupBin) && existsSync(srcDir) && readdirSync(srcDir).length > 0;
+const srcIndex = resolve(root, 'agent-payments-sdk/src/index.ts');
+// Check for the actual entry point: .vercelignore removes files but can leave empty subdirs,
+// so readdirSync length > 0 is not a reliable "src is present" signal.
+const srcPresent = existsSync(tsupBin) && existsSync(srcIndex);
 
 const srcHash = srcPresent ? hashDir(srcDir) : null;
 const needsBuild =
