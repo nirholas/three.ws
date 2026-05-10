@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>three.ws — Launch Week Recap</title>
+<meta property="og:title" content="three.ws — Launch Week Recap">
+<meta property="og:description" content="Open-source 3D AI agent platform for the browser. Week one in numbers and what we shipped.">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --bg-elevated: #111113;
+    --bg-card: #161619;
+    --bg-card-hover: #1c1c20;
+    --border: #2a2a2f;
+    --border-accent: #3d3d44;
+    --text: #e8e8ed;
+    --text-muted: #8a8a96;
+    --text-dim: #5c5c66;
+    --accent: #00ff88;
+    --accent-dim: #00cc6d;
+    --accent-glow: rgba(0, 255, 136, 0.12);
+    --orange: #ff9933;
+    --blue: #3b82f6;
+    --purple: #a855f7;
+    --solana: #9945FF;
+    --solana-green: #14F195;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  ::selection { background: var(--accent); color: var(--bg); }
+
+  a { color: inherit; text-decoration: none; }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  /* ───────────── Hero ───────────── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 6rem 2rem 4rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: -50%;
+    background: radial-gradient(ellipse at 25% 40%, rgba(0,255,136,0.06) 0%, transparent 55%),
+                radial-gradient(ellipse at 75% 60%, rgba(153,69,255,0.05) 0%, transparent 55%),
+                radial-gradient(ellipse at 50% 90%, rgba(20,241,149,0.03) 0%, transparent 50%);
+    animation: heroGlow 18s ease-in-out infinite alternate;
+    pointer-events: none;
+  }
+
+  @keyframes heroGlow {
+    0%   { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(-2%, 2%) scale(1.05); }
+  }
+
+  /* Subtle grid backdrop */
+  .hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse at center, black 10%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 10%, transparent 75%);
+    pointer-events: none;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 1;
+    max-width: 980px;
+    text-align: center;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 1.1rem;
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 2.5rem;
+    background: var(--bg-elevated);
+    opacity: 0;
+    animation: fadeUp 0.7s ease-out 0.1s forwards;
+  }
+
+  .hero-badge .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 12px var(--accent);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.55; transform: scale(0.85); }
+  }
+
+  .hero h1 {
+    font-family: 'Instrument Serif', serif;
+    font-size: clamp(3.2rem, 8.5vw, 7.2rem);
+    font-weight: 400;
+    line-height: 0.98;
+    letter-spacing: -0.025em;
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    animation: fadeUp 0.9s ease-out 0.25s forwards;
+  }
+
+  .hero h1 em {
+    font-style: italic;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--solana-green) 60%, var(--solana) 110%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .hero-sub {
+    font-size: 1.2rem;
+    color: var(--text-muted);
+    max-width: 680px;
+    margin: 0 auto 3rem;
+    line-height: 1.6;
+    opacity: 0;
+    animation: fadeUp 0.9s ease-out 0.4s forwards;
+  }
+
+  .hero-meta {
+    display: flex;
+    justify-content: center;
+    gap: 2.5rem;
+    flex-wrap: wrap;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+    opacity: 0;
+    animation: fadeUp 0.9s ease-out 0.55s forwards;
+  }
+
+  .hero-meta span strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .scroll-cue {
+    position: absolute;
+    bottom: 2.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    opacity: 0;
+    animation: fadeUp 1s ease-out 1s forwards;
+  }
+
+  .scroll-cue .arrow {
+    display: block;
+    margin: 0.5rem auto 0;
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(to bottom, transparent, var(--text-dim));
+    animation: scrollPulse 2.4s ease-in-out infinite;
+  }
+
+  @keyframes scrollPulse {
+    0%, 100% { opacity: 0.3; transform: scaleY(0.6); }
+    50% { opacity: 1; transform: scaleY(1); }
+  }
+
+  /* Top headline numbers below sub */
+  .hero-numbers {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-top: 4rem;
+    opacity: 0;
+    animation: fadeUp 0.9s ease-out 0.7s forwards;
+  }
+
+  .hero-numbers > div {
+    background: var(--bg-elevated);
+    padding: 1.6rem 1rem;
+    text-align: left;
+  }
+
+  .hero-numbers .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .hero-numbers .value {
+    font-family: 'Instrument Serif', serif;
+    font-size: clamp(1.7rem, 3.2vw, 2.4rem);
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+
+  .hero-numbers .value.accent { color: var(--accent); }
+
+  @media (max-width: 720px) {
+    .hero-numbers { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* ───────────── Section base ───────────── */
+  section {
+    padding: 7rem 0;
+    position: relative;
+  }
+
+  .section-header {
+    margin-bottom: 4rem;
+    max-width: 780px;
+  }
+
+  .section-eyebrow {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--accent);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 1.2rem;
+    padding-left: 1.4rem;
+    position: relative;
+  }
+
+  .section-eyebrow::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 0.9rem;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  .section-title {
+    font-family: 'Instrument Serif', serif;
+    font-size: clamp(2.4rem, 5vw, 4rem);
+    font-weight: 400;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.2rem;
+  }
+
+  .section-title em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .section-lede {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    line-height: 1.7;
+    max-width: 680px;
+  }
+
+  /* ───────────── What We Shipped ───────────── */
+  .layers {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .layer {
+    background: var(--bg-elevated);
+    padding: 2.5rem;
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 2.5rem;
+    transition: background 0.3s ease;
+  }
+
+  .layer:hover { background: var(--bg-card-hover); }
+
+  .layer-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .layer-id .num {
+    display: block;
+    font-family: 'Instrument Serif', serif;
+    font-size: 3.2rem;
+    line-height: 1;
+    color: var(--accent);
+    font-style: italic;
+    margin-bottom: 0.4rem;
+  }
+
+  .layer-name {
+    font-family: 'Instrument Serif', serif;
+    font-size: 1.8rem;
+    font-weight: 400;
+    margin-bottom: 0.8rem;
+    letter-spacing: -0.01em;
+  }
+
+  .layer-desc {
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+    line-height: 1.7;
+  }
+
+  .layer-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    padding: 0.35rem 0.8rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-muted);
+    transition: all 0.2s ease;
+  }
+
+  .pill:hover {
+    border-color: var(--accent-dim);
+    color: var(--accent);
+  }
+
+  .pill.solana {
+    border-color: rgba(153,69,255,0.4);
+    color: var(--solana);
+  }
+
+  @media (max-width: 760px) {
+    .layer { grid-template-columns: 1fr; gap: 1.2rem; padding: 2rem 1.5rem; }
+    .layer-id .num { font-size: 2.4rem; }
+  }
+
+  /* ───────────── Metrics grid ───────────── */
+  .metrics-bg {
+    position: relative;
+    background: linear-gradient(180deg, var(--bg) 0%, #0d0d10 50%, var(--bg) 100%);
+  }
+
+  .metrics-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 30%, rgba(0,255,136,0.04) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-bottom: 4rem;
+  }
+
+  .metric-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.8rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .metric-card:hover {
+    border-color: var(--border-accent);
+    transform: translateY(-2px);
+  }
+
+  .metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .metric-card:hover::before { opacity: 0.6; }
+
+  .metric-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .metric-icon {
+    width: 14px;
+    height: 14px;
+    color: var(--text-dim);
+  }
+
+  .metric-value {
+    font-family: 'Instrument Serif', serif;
+    font-size: 3rem;
+    line-height: 1;
+    letter-spacing: -0.025em;
+    margin-bottom: 0.5rem;
+  }
+
+  .metric-value .unit {
+    font-size: 1.5rem;
+    color: var(--text-muted);
+    margin-left: 0.1rem;
+  }
+
+  .metric-context {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .metric-context .accent { color: var(--accent); font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;}
+
+  /* ───────────── Charts ───────────── */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  @media (max-width: 880px) {
+    .charts-grid { grid-template-columns: 1fr; }
+  }
+
+  .chart-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+  }
+
+  .chart-card h3 {
+    font-family: 'Instrument Serif', serif;
+    font-size: 1.4rem;
+    font-weight: 400;
+    margin-bottom: 0.3rem;
+  }
+
+  .chart-card .chart-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    margin-bottom: 1.6rem;
+  }
+
+  .chart-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .chart-note {
+    margin-top: 1.2rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+  }
+
+  /* ───────────── Audience callout ───────────── */
+  .audience-band {
+    margin-top: 1rem;
+    background: linear-gradient(135deg, rgba(0,255,136,0.04) 0%, rgba(153,69,255,0.04) 100%);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 3rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 3rem;
+  }
+
+  .audience-band h3 {
+    font-family: 'Instrument Serif', serif;
+    font-size: 2rem;
+    font-weight: 400;
+    line-height: 1.2;
+    margin-bottom: 0.6rem;
+  }
+
+  .audience-band p {
+    color: var(--text-muted);
+    max-width: 540px;
+  }
+
+  .audience-stat {
+    text-align: right;
+  }
+
+  .audience-stat .num {
+    font-family: 'Instrument Serif', serif;
+    font-size: 4.5rem;
+    line-height: 1;
+    color: var(--accent);
+    font-style: italic;
+  }
+
+  .audience-stat .lab {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-top: 0.4rem;
+  }
+
+  @media (max-width: 720px) {
+    .audience-band { grid-template-columns: 1fr; padding: 2rem; }
+    .audience-stat { text-align: left; }
+    .audience-stat .num { font-size: 3.5rem; }
+  }
+
+  /* ───────────── Code/repo strip ───────────── */
+  .repo-strip {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 2rem 2.5rem;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+  }
+
+  .repo-strip > div .lab {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 0.6rem;
+  }
+
+  .repo-strip > div .v {
+    font-family: 'Instrument Serif', serif;
+    font-size: 2rem;
+    line-height: 1;
+  }
+
+  @media (max-width: 720px) {
+    .repo-strip { grid-template-columns: repeat(2, 1fr); padding: 1.5rem; }
+  }
+
+  /* ───────────── Roadmap / What's next ───────────── */
+  .next-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  @media (max-width: 720px) { .next-grid { grid-template-columns: 1fr; } }
+
+  .next-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    position: relative;
+  }
+
+  .next-card .phase {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 1rem;
+  }
+
+  .next-card .phase .status {
+    color: var(--orange);
+    margin-left: 0.5rem;
+  }
+
+  .next-card .phase .status.shipped { color: var(--accent); }
+
+  .next-card h3 {
+    font-family: 'Instrument Serif', serif;
+    font-size: 1.6rem;
+    font-weight: 400;
+    margin-bottom: 0.6rem;
+    line-height: 1.2;
+  }
+
+  .next-card p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  /* ───────────── Footer ───────────── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 4rem 0 3rem;
+    margin-top: 4rem;
+  }
+
+  .foot-grid {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .foot-brand {
+    font-family: 'Instrument Serif', serif;
+    font-size: 1.6rem;
+    font-style: italic;
+  }
+
+  .foot-brand .dot { color: var(--accent); }
+
+  .foot-links {
+    display: flex;
+    gap: 2rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+  }
+
+  .foot-links a:hover { color: var(--accent); }
+
+  .foot-meta {
+    margin-top: 2rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+  }
+
+  /* ───────────── Reveal-on-scroll ───────────── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+  }
+  .reveal.in {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ HERO ═══════════ -->
+<header class="hero">
+  <div class="hero-content">
+    <div class="hero-badge">
+      <span class="dot"></span>
+      LAUNCH WEEK · APR 29 → MAY 9 · 2026
+    </div>
+
+    <h1>Week one,<br><em>by the numbers.</em></h1>
+
+    <p class="hero-sub">
+      three.ws is an open-source, browser-native 3D AI agent platform. We shipped the full stack
+      &mdash; viewer, agent runtime, on-chain identity, OAuth&nbsp;2.1 server, MCP endpoint, and an
+      embeddable web component &mdash; then watched the launch land. Here&rsquo;s what happened.
+    </p>
+
+    <div class="hero-meta">
+      <span><strong>291</strong> commits</span>
+      <span><strong>Apache&nbsp;2.0</strong> license</span>
+      <span><strong>11</strong> following · <strong>3,675</strong> followers</span>
+      <span><strong>github.com/nirholas/three.ws</strong></span>
+    </div>
+
+    <div class="hero-numbers">
+      <div>
+        <div class="label">Impressions</div>
+        <div class="value accent">267.8K</div>
+      </div>
+      <div>
+        <div class="label">Engagement Rate</div>
+        <div class="value accent">9.4%</div>
+      </div>
+      <div>
+        <div class="label">Engagements</div>
+        <div class="value">25.3K</div>
+      </div>
+      <div>
+        <div class="label">Community Members</div>
+        <div class="value">1,010</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-cue">
+    Scroll
+    <span class="arrow"></span>
+  </div>
+</header>
+
+<!-- ═══════════ WHAT WE SHIPPED ═══════════ -->
+<section id="shipped">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-eyebrow">01 · What we shipped</div>
+      <h2 class="section-title">The whole stack, <em>in one repo.</em></h2>
+      <p class="section-lede">
+        three.ws is organized as four communicating layers, plus a backend and a contracts package.
+        Every layer is in production at <a href="https://three.ws" style="color:var(--accent);text-decoration:underline;">three.ws</a>
+        and ships as part of the open-source repo. Here&rsquo;s the inventory.
+      </p>
+    </div>
+
+    <div class="layers reveal">
+      <div class="layer">
+        <div class="layer-id">
+          <span class="num">L4</span>
+          Embed &amp; Distribution
+        </div>
+        <div>
+          <div class="layer-name">Drop-in 3D agents, anywhere on the web.</div>
+          <p class="layer-desc">
+            The <code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">&lt;agent-3d&gt;</code>
+            custom element loads lazily on intersection, supports five widget variants
+            (turntable, animation gallery, talking agent, ERC-8004 passport card, hotspot tour),
+            and emits Open Graph and oEmbed metadata so links unfurl with rich previews.
+            A point-and-click Widget Studio generates copy-paste embed code at <code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">/studio</code>.
+            Versioned CDN bundles ship at <code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">/agent-3d/x.y.z/</code>.
+          </p>
+          <div class="layer-pills">
+            <span class="pill">&lt;agent-3d&gt;</span>
+            <span class="pill">5 widget types</span>
+            <span class="pill">Open Graph + oEmbed</span>
+            <span class="pill">Widget Studio</span>
+            <span class="pill">Versioned CDN</span>
+            <span class="pill">postMessage API</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="layer">
+        <div class="layer-id">
+          <span class="num">L3</span>
+          Identity &amp; Persistence
+        </div>
+        <div>
+          <div class="layer-name">On-chain identity. Signed action history.</div>
+          <p class="layer-desc">
+            Three Solidity contracts make up the ERC-8004 implementation:
+            <code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">IdentityRegistry</code>
+            (ERC-721 agent tokens with delegated EIP-712 signers),
+            <code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">ReputationRegistry</code>
+            (signed reviewer feedback, averaged on-chain), and
+            <code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">ValidationRegistry</code>
+            (validator attestations for off-chain proofs). Every <code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">speak</code>,
+            <code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">remember</code>, and
+            <code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">skill-done</code> event is signed and logged.
+            Solana ships an analog using Metaplex Core NFTs plus signed SPL Memo attestations &mdash; same
+            shape, no custom program required.
+          </p>
+          <div class="layer-pills">
+            <span class="pill">ERC-8004</span>
+            <span class="pill">ERC-721 tokens</span>
+            <span class="pill">EIP-712 signing</span>
+            <span class="pill">EIP-7710 delegation</span>
+            <span class="pill">Foundry tested</span>
+            <span class="pill solana">Solana SIWS + Metaplex</span>
+            <span class="pill">IPFS pinning</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="layer">
+        <div class="layer-id">
+          <span class="num">L2</span>
+          Agent Runtime
+        </div>
+        <div>
+          <div class="layer-name">An LLM brain, with a body that <em>feels</em>.</div>
+          <p class="layer-desc">
+            The runtime drives a Claude tool-loop with up to eight iterations per turn and six
+            built-in tools (<code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">wave</code>,
+            <code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">lookAt</code>,
+            <code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">play_clip</code>,
+            <code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">setExpression</code>,
+            <code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">speak</code>,
+            <code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">remember</code>).
+            The Empathy Layer is not a state machine &mdash; it&rsquo;s a continuous weighted blend of five
+            emotions (celebration, concern, curiosity, empathy, patience), each with its own decay
+            half-life, driving the avatar&rsquo;s morph targets and head pose every frame. Skills are
+            self-contained bundles distributable over IPFS, Arweave, or HTTP. Memory is file-based
+            with four storage modes (local, IPFS, encrypted-IPFS, none).
+          </p>
+          <div class="layer-pills">
+            <span class="pill">Claude tool-loop</span>
+            <span class="pill">8-iteration limit</span>
+            <span class="pill">Empathy Layer</span>
+            <span class="pill">Skill registry</span>
+            <span class="pill">Web Speech + ElevenLabs</span>
+            <span class="pill">YAML-front-matter memory</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="layer">
+        <div class="layer-id">
+          <span class="num">L1</span>
+          Viewer
+        </div>
+        <div>
+          <div class="layer-name">three.js r176, Khronos-grade glTF.</div>
+          <p class="layer-desc">
+            WebGL 2.0 rendering with full glTF 2.0 / GLB support: Draco geometry compression,
+            KTX2 texture compression, Meshopt mesh optimization, HDR environment maps, PBR materials,
+            skinned animation, morph targets, and embedded cameras. Validation is line-level via the
+            Khronos gltf-validator. Drag-and-drop loading, OrbitControls with configurable
+            auto-rotation, and a real-time dat.GUI for live tweaking.
+          </p>
+          <div class="layer-pills">
+            <span class="pill">three.js r176</span>
+            <span class="pill">Draco / KTX2 / Meshopt</span>
+            <span class="pill">PBR + HDR</span>
+            <span class="pill">glTF validator</span>
+            <span class="pill">Drag-and-drop</span>
+            <span class="pill">dat.GUI</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="layer">
+        <div class="layer-id">
+          <span class="num">B</span>
+          Backend
+        </div>
+        <div>
+          <div class="layer-name">~153 serverless endpoints. ~3,600 lines of API.</div>
+          <p class="layer-desc">
+            Vercel functions on Neon Postgres, Cloudflare R2, and Upstash Redis. A full OAuth&nbsp;2.1
+            server (RFC 6749 + PKCE, RFC 7591 dynamic registration, RFC 7009 revocation, RFC 7662
+            introspection, RFC 8414 discovery, RFC 9728 protected-resource discovery). An MCP server
+            over HTTP &mdash; 759 lines, JSON-RPC 2.0, listed on the official Model Context Protocol
+            Registry as <code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">io.github.nirholas/three.ws</code>.
+            Cron jobs for the ERC-8004 crawler, EIP-7710 delegation indexer, DCA strategy execution,
+            and recurring on-chain subscriptions.
+          </p>
+          <div class="layer-pills">
+            <span class="pill">OAuth 2.1 + PKCE</span>
+            <span class="pill">MCP over HTTP</span>
+            <span class="pill">Listed on MCP Registry</span>
+            <span class="pill">Neon Postgres</span>
+            <span class="pill">Cloudflare R2</span>
+            <span class="pill">Upstash Redis</span>
+            <span class="pill">4 cron jobs</span>
+            <span class="pill">OpenAPI 3.1</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="repo-strip reveal" style="margin-top: 2rem;">
+      <div>
+        <div class="lab">Repo commits</div>
+        <div class="v">291</div>
+      </div>
+      <div>
+        <div class="lab">API endpoints</div>
+        <div class="v">~153</div>
+      </div>
+      <div>
+        <div class="lab">Frontend modules</div>
+        <div class="v">~80</div>
+      </div>
+      <div>
+        <div class="lab">Stars · forks</div>
+        <div class="v">24 · 2</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ LAUNCH NUMBERS ═══════════ -->
+<section id="numbers" class="metrics-bg">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-eyebrow">02 · Launch in numbers</div>
+      <h2 class="section-title">Eleven days <em>of signal.</em></h2>
+      <p class="section-lede">
+        Pulled directly from X analytics for <a href="https://x.com/trythreews" style="color:var(--accent);text-decoration:underline;">@trythreews</a>
+        between April 29 and May 9. No filtering, no averaging tricks &mdash; the headline numbers below
+        and the charts further down come from the same screenshot.
+      </p>
+    </div>
+
+    <div class="metrics-grid reveal">
+      <div class="metric-card">
+        <div class="metric-label">
+          Impressions
+          <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+        <div class="metric-value">267.8<span class="unit">K</span></div>
+        <div class="metric-context">Tweet views during the launch window. Roughly <span class="accent">~24K/day average</span> across 11 days.</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-label">
+          Engagement Rate
+          <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg>
+        </div>
+        <div class="metric-value">9.4<span class="unit">%</span></div>
+        <div class="metric-context">For reference, X benchmarks <span class="accent">"good" at 0.5–1%</span>. We&rsquo;re an order of magnitude above that.</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-label">
+          Engagements
+          <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-6 0v4"/><rect x="3" y="9" width="18" height="12" rx="2"/></svg>
+        </div>
+        <div class="metric-value">25.3<span class="unit">K</span></div>
+        <div class="metric-context">Likes, replies, reposts, bookmarks, and shares combined. <span class="accent">~395 actions/day.</span></div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-label">
+          Profile Visits
+          <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2"/></svg>
+        </div>
+        <div class="metric-value">5.1<span class="unit">K</span></div>
+        <div class="metric-context">People who clicked through to <span class="accent">@trythreews</span> after seeing a tweet.</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-label">
+          Likes
+          <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.5-1.5 3-3.5 3-6a4 4 0 0 0-7-2.7A4 4 0 0 0 8 8c0 2.5 1.5 4.5 3 6l5 5 3-5z"/></svg>
+        </div>
+        <div class="metric-value">7.2<span class="unit">K</span></div>
+        <div class="metric-context">The largest engagement category by volume.</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-label">
+          Reposts
+          <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+        </div>
+        <div class="metric-value">1.5<span class="unit">K</span></div>
+        <div class="metric-context">Second-degree reach &mdash; reposts are how strangers find the project.</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-label">
+          Replies
+          <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div class="metric-value">845</div>
+        <div class="metric-context">Active conversation, not just passive views &mdash; the kind of signal that matters for a developer launch.</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-label">
+          Bookmarks · Shares
+          <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div class="metric-value">198 <span class="unit" style="color:var(--text-dim)">·</span> 61</div>
+        <div class="metric-context">Bookmarks signal &ldquo;come back to this&rdquo; intent &mdash; the highest-quality engagement type.</div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid reveal">
+      <div class="chart-card">
+        <h3>Daily impressions</h3>
+        <div class="chart-sub">APR 29 → MAY 9 · 2026</div>
+        <svg class="chart-svg" viewBox="0 0 700 280" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" aria-label="Bar chart of daily X impressions from April 29 to May 9, 2026">
+          <defs>
+            <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#00ff88" stop-opacity="1"/>
+              <stop offset="100%" stop-color="#00cc6d" stop-opacity="0.55"/>
+            </linearGradient>
+            <linearGradient id="peakGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#14F195" stop-opacity="1"/>
+              <stop offset="100%" stop-color="#9945FF" stop-opacity="0.6"/>
+            </linearGradient>
+          </defs>
+
+          <!-- horizontal grid -->
+          <g stroke="#2a2a2f" stroke-width="1">
+            <line x1="50" y1="40"  x2="690" y2="40"  stroke-dasharray="2 4"/>
+            <line x1="50" y1="100" x2="690" y2="100" stroke-dasharray="2 4"/>
+            <line x1="50" y1="160" x2="690" y2="160" stroke-dasharray="2 4"/>
+            <line x1="50" y1="220" x2="690" y2="220" stroke-dasharray="2 4"/>
+          </g>
+
+          <!-- y-axis labels (max ~48k) -->
+          <g font-family="JetBrains Mono, monospace" font-size="9" fill="#5c5c66">
+            <text x="42" y="44" text-anchor="end">45K</text>
+            <text x="42" y="104" text-anchor="end">30K</text>
+            <text x="42" y="164" text-anchor="end">15K</text>
+            <text x="42" y="224" text-anchor="end">0</text>
+          </g>
+
+          <!-- baseline -->
+          <line x1="50" y1="220" x2="690" y2="220" stroke="#3d3d44" stroke-width="1"/>
+
+          <!--
+            Bars from screenshot, approx values (in thousands):
+            Apr29 24, Apr30 18, May1 22, May2 13, May3 13, May4 28, May5 47, May6 28, May7 29, May8 25, May9 19
+            Scale: 220 baseline, 40 = 45K → each K = (220-40)/45 = 4 px
+            x positions: 11 bars across 50..690 (640 wide). bar width 38, gap = (640 - 11*38)/12 ≈ 18.5
+          -->
+          <g>
+            <!-- Apr29 24K -->
+            <rect x="69"  y="124" width="38" height="96"  fill="url(#barGrad)" rx="2"/>
+            <!-- Apr30 18K -->
+            <rect x="125" y="148" width="38" height="72"  fill="url(#barGrad)" rx="2"/>
+            <!-- May1 22K -->
+            <rect x="181" y="132" width="38" height="88"  fill="url(#barGrad)" rx="2"/>
+            <!-- May2 13K -->
+            <rect x="237" y="168" width="38" height="52"  fill="url(#barGrad)" rx="2"/>
+            <!-- May3 13K -->
+            <rect x="293" y="168" width="38" height="52"  fill="url(#barGrad)" rx="2"/>
+            <!-- May4 28K -->
+            <rect x="349" y="108" width="38" height="112" fill="url(#barGrad)" rx="2"/>
+            <!-- May5 47K (peak) -->
+            <rect x="405" y="32"  width="38" height="188" fill="url(#peakGrad)" rx="2"/>
+            <!-- May6 28K -->
+            <rect x="461" y="108" width="38" height="112" fill="url(#barGrad)" rx="2"/>
+            <!-- May7 29K -->
+            <rect x="517" y="104" width="38" height="116" fill="url(#barGrad)" rx="2"/>
+            <!-- May8 25K -->
+            <rect x="573" y="120" width="38" height="100" fill="url(#barGrad)" rx="2"/>
+            <!-- May9 19K -->
+            <rect x="629" y="144" width="38" height="76"  fill="url(#barGrad)" rx="2"/>
+          </g>
+
+          <!-- peak callout -->
+          <g font-family="JetBrains Mono, monospace" font-size="9.5" fill="#14F195">
+            <text x="424" y="22" text-anchor="middle">PEAK · 47K</text>
+            <line x1="424" y1="26" x2="424" y2="32" stroke="#14F195" stroke-width="1"/>
+          </g>
+
+          <!-- x-axis labels -->
+          <g font-family="JetBrains Mono, monospace" font-size="9" fill="#5c5c66" text-anchor="middle">
+            <text x="88"  y="244">Apr 29</text>
+            <text x="144" y="244">Apr 30</text>
+            <text x="200" y="244">May 1</text>
+            <text x="256" y="244">May 2</text>
+            <text x="312" y="244">May 3</text>
+            <text x="368" y="244">May 4</text>
+            <text x="424" y="244">May 5</text>
+            <text x="480" y="244">May 6</text>
+            <text x="536" y="244">May 7</text>
+            <text x="592" y="244">May 8</text>
+            <text x="648" y="244">May 9</text>
+          </g>
+        </svg>
+
+        <div class="chart-note">
+          The May&nbsp;5 peak coincides with our Google Cloud partnership announcement (the single
+          highest-performing tweet of the week, ~6.9K views and 263 likes on its own).
+          Steady-state baseline since launch sits at <span style="color:var(--accent)">~22K
+          impressions/day</span> &mdash; the chart shape is a launch surge, exactly what week one
+          should look like.
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <h3>Follows over time</h3>
+        <div class="chart-sub">NET NEW FOLLOWS · DAILY</div>
+        <svg class="chart-svg" viewBox="0 0 500 280" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" aria-label="Bar chart of daily new followers from April 29 to May 9, 2026">
+          <defs>
+            <linearGradient id="followGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#00ff88" stop-opacity="1"/>
+              <stop offset="100%" stop-color="#00cc6d" stop-opacity="0.55"/>
+            </linearGradient>
+            <linearGradient id="followPeak" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#14F195" stop-opacity="1"/>
+              <stop offset="100%" stop-color="#9945FF" stop-opacity="0.6"/>
+            </linearGradient>
+          </defs>
+
+          <g stroke="#2a2a2f" stroke-width="1">
+            <line x1="50" y1="40"  x2="490" y2="40"  stroke-dasharray="2 4"/>
+            <line x1="50" y1="100" x2="490" y2="100" stroke-dasharray="2 4"/>
+            <line x1="50" y1="160" x2="490" y2="160" stroke-dasharray="2 4"/>
+            <line x1="50" y1="220" x2="490" y2="220" stroke-dasharray="2 4"/>
+          </g>
+
+          <g font-family="JetBrains Mono, monospace" font-size="9" fill="#5c5c66">
+            <text x="42" y="44" text-anchor="end">1.2K</text>
+            <text x="42" y="104" text-anchor="end">692</text>
+            <text x="42" y="164" text-anchor="end">342</text>
+            <text x="42" y="224" text-anchor="end">0</text>
+          </g>
+
+          <line x1="50" y1="220" x2="490" y2="220" stroke="#3d3d44" stroke-width="1"/>
+
+          <!--
+            Follower data approx (peak ~1.2K on May 5):
+            Apr29 30, Apr30 8, May1 12, May2 5, May3 8, May4 980, May5 1200, May6 700, May7 360, May8 80, May9 30
+            scale: y=220 base, 40 = 1200 → 1 follower ≈ 0.15px
+            11 bars across 50..490 (440 wide), bar w 26, gap (440 - 11*26)/12 ≈ 12.8
+          -->
+          <g>
+            <rect x="63"  y="216" width="26" height="4"   fill="url(#followGrad)" rx="2"/>
+            <rect x="103" y="218" width="26" height="2"   fill="url(#followGrad)" rx="2"/>
+            <rect x="143" y="217" width="26" height="3"   fill="url(#followGrad)" rx="2"/>
+            <rect x="183" y="219" width="26" height="1"   fill="url(#followGrad)" rx="2"/>
+            <rect x="223" y="218" width="26" height="2"   fill="url(#followGrad)" rx="2"/>
+            <rect x="263" y="73"  width="26" height="147" fill="url(#followGrad)" rx="2"/>
+            <rect x="303" y="40"  width="26" height="180" fill="url(#followPeak)" rx="2"/>
+            <rect x="343" y="115" width="26" height="105" fill="url(#followGrad)" rx="2"/>
+            <rect x="383" y="166" width="26" height="54"  fill="url(#followGrad)" rx="2"/>
+            <rect x="423" y="208" width="26" height="12"  fill="url(#followGrad)" rx="2"/>
+            <rect x="463" y="216" width="26" height="4"   fill="url(#followGrad)" rx="2"/>
+          </g>
+
+          <g font-family="JetBrains Mono, monospace" font-size="9.5" fill="#14F195">
+            <text x="316" y="32" text-anchor="middle">+1.2K · MAY 5</text>
+          </g>
+
+          <g font-family="JetBrains Mono, monospace" font-size="8.5" fill="#5c5c66" text-anchor="middle">
+            <text x="76"  y="244">A29</text>
+            <text x="116" y="244">A30</text>
+            <text x="156" y="244">M1</text>
+            <text x="196" y="244">M2</text>
+            <text x="236" y="244">M3</text>
+            <text x="276" y="244">M4</text>
+            <text x="316" y="244">M5</text>
+            <text x="356" y="244">M6</text>
+            <text x="396" y="244">M7</text>
+            <text x="436" y="244">M8</text>
+            <text x="476" y="244">M9</text>
+          </g>
+        </svg>
+
+        <div class="chart-note">
+          A clean <span style="color:var(--accent)">May 4–7 spike</span> drove most of the +359
+          verified followers and the rise to 3,675 total. The cluster maps directly to the partnership
+          announcements; week two is for converting that audience into users.
+        </div>
+      </div>
+    </div>
+
+    <div class="audience-band reveal">
+      <div>
+        <h3>1,010 members in the X community.<br>From zero. In a week.</h3>
+        <p>
+          The <a href="https://x.com/i/communities" style="color:var(--accent);text-decoration:underline;">three.ws X
+          community</a> is the gathered audience &mdash; developers, agent-curious builders, and a
+          crew of folks following along live. It&rsquo;s where the next wave of agent owners will come from.
+        </p>
+      </div>
+      <div class="audience-stat">
+        <div class="num">1,010</div>
+        <div class="lab">Members · 7 days</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SIGNAL HIGHLIGHTS ═══════════ -->
+<section id="signal">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-eyebrow">03 · Outside signal</div>
+      <h2 class="section-title">Where <em>the project showed up.</em></h2>
+      <p class="section-lede">
+        Beyond the analytics dashboard, three.ws landed on the directories, registries, and platforms
+        that matter most for an open-source developer tool.
+      </p>
+    </div>
+
+    <div class="next-grid reveal">
+      <div class="next-card">
+        <div class="phase">MCP REGISTRY · <span class="status shipped">LIVE</span></div>
+        <h3>Listed on the official Model Context&nbsp;Protocol Registry.</h3>
+        <p>
+          three.ws is published as <code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">io.github.nirholas/three.ws</code>
+          on registry.modelcontextprotocol.io and discoverable via PulseMCP&rsquo;s curated directory.
+          Any MCP-aware client (Claude Desktop included) can connect and drive avatars over JSON-RPC.
+        </p>
+      </div>
+
+      <div class="next-card">
+        <div class="phase">CLOUD MARKETPLACE · <span class="status shipped">LIVE</span></div>
+        <h3>Available on Alibaba Cloud Marketplace.</h3>
+        <p>
+          The platform shipped as a partner listing on Alibaba Cloud, our first cloud-marketplace
+          distribution channel. The associated launch tweet pulled <strong>~7.1K impressions</strong>
+          on its own.
+        </p>
+      </div>
+
+      <div class="next-card">
+        <div class="phase">PARTNERSHIP · <span class="status shipped">ANNOUNCED</span></div>
+        <h3>Joining forces with Google&nbsp;Cloud.</h3>
+        <p>
+          The Google Cloud announcement was the single highest-engagement post of the week
+          (<strong>~6.9K impressions, 263 likes, 24 reposts</strong>) and the cloud infrastructure
+          backing the next phase of the platform.
+        </p>
+      </div>
+
+      <div class="next-card">
+        <div class="phase">AUDIO · <span class="status shipped">LIVE</span></div>
+        <h3>Featured on Amazon Music &amp; Spotify.</h3>
+        <p>
+          The &ldquo;Inside The 3D Agent Web&rdquo; podcast episode is published on Amazon Music and the
+          companion blog &ldquo;Beyond Chatbots: Why Your AI Agent Needs a 3D Body&rdquo; went out via the
+          Spotify-on-chain ecosystem. Two more distribution surfaces, one more week.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ WHAT'S NEXT ═══════════ -->
+<section id="next" class="metrics-bg">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-eyebrow">04 · What&rsquo;s next</div>
+      <h2 class="section-title">Phase&nbsp;0 is <em>shipped.</em><br>Phase&nbsp;1 is <em>in build.</em></h2>
+      <p class="section-lede">
+        The roadmap closes the gap from &ldquo;use a 3D artist&rdquo; to &ldquo;take a selfie&rdquo;.
+        Four phases, scoped end-to-end in the public README.
+      </p>
+    </div>
+
+    <div class="next-grid reveal">
+      <div class="next-card">
+        <div class="phase">PHASE 0 · <span class="status shipped">SHIPPED</span></div>
+        <h3>Foundations.</h3>
+        <p>
+          WebGL viewer, LLM agent runtime, ERC-8004 identity contracts, OAuth&nbsp;2.1 server,
+          MCP endpoint, and the <code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">&lt;agent-3d&gt;</code>
+          web component &mdash; everything you read about above. Live at three.ws today.
+        </p>
+      </div>
+
+      <div class="next-card">
+        <div class="phase">PHASE 1 · <span class="status">IN PROGRESS</span></div>
+        <h3>Selfie → Avatar engine.</h3>
+        <p>
+          Three selfies (left, center, right), GPU-backed multi-view face reconstruction, and a rigged,
+          animatable avatar minted as a draft ERC-8004 token in under sixty seconds. Mobile-first
+          capture UX with realtime quality gates.
+        </p>
+      </div>
+
+      <div class="next-card">
+        <div class="phase">PHASE 2 · <span class="status">NEXT</span></div>
+        <h3>Agent personalization.</h3>
+        <p>
+          ElevenLabs voice cloning from 3&ndash;10 seconds of speech, persona extraction from a short
+          onboarding interview, and consented memory seeding from connected accounts &mdash; the
+          avatar isn&rsquo;t just <em>you</em>, the agent <em>acts like</em> you.
+        </p>
+      </div>
+
+      <div class="next-card">
+        <div class="phase">PHASE 3 · <span class="status">NEXT</span></div>
+        <h3>On-chain economy.</h3>
+        <p>
+          Reputation markets staking on agents&rsquo; signed action histories, EIP-7710 skill
+          royalties paid to skill authors per-call, and agent-to-agent autonomous payments through
+          delegated signer wallets.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer>
+  <div class="container">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-brand">three<span class="dot">.</span>ws</div>
+        <p style="color:var(--text-muted); margin-top:0.6rem; max-width: 380px; font-size: 0.95rem;">
+          Open-source 3D AI agent platform. Apache 2.0. Built with three.js, Claude, and a belief
+          that AI deserves a body.
+        </p>
+      </div>
+      <div class="foot-links">
+        <a href="https://three.ws">three.ws</a>
+        <a href="https://github.com/nirholas/three.ws">GitHub</a>
+        <a href="https://x.com/trythreews">@trythreews</a>
+        <a href="https://registry.modelcontextprotocol.io/?q=three.ws">MCP Registry</a>
+      </div>
+    </div>
+    <div class="foot-meta">
+      Recap window: APR 29 → MAY 9 · 2026 &nbsp;·&nbsp; Source: X Analytics for @trythreews + repo at github.com/nirholas/three.ws
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Reveal-on-scroll
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('in');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>

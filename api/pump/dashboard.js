@@ -5,15 +5,31 @@ import { env } from '../_lib/env.js';
 
 const BIRDEYE_API_KEY = env.BIRDEYE_API_KEY;
 
-async function fetchWithCache(url, options, ttl = 60) {
-	// A real implementation would use Redis or a similar external cache
-	// For now, this is a placeholder
+// Process-local Birdeye response cache. Keeps the function instance from
+// hammering Birdeye when many tabs poll the same mint within a few seconds.
+// Vercel functions warm-start across requests, so this is meaningful even
+// without Redis. Cross-instance dedup would still need an external cache.
+const _birdeyeCache = new Map();
+
+async function fetchWithCache(url, options, ttlMs = 60_000) {
+	const key = url;
+	const now = Date.now();
+	const hit = _birdeyeCache.get(key);
+	if (hit && hit.expires > now) return hit.value;
+
 	const resp = await fetch(url, options);
 	if (!resp.ok) {
 		const text = await resp.text();
 		throw new Error(`API error (${resp.status}): ${text}`);
 	}
-	return resp.json();
+	const value = await resp.json();
+	_birdeyeCache.set(key, { value, expires: now + ttlMs });
+	// Bound the map so it can't grow without bound under pathological keying.
+	if (_birdeyeCache.size > 256) {
+		const oldest = _birdeyeCache.keys().next().value;
+		_birdeyeCache.delete(oldest);
+	}
+	return value;
 }
 
 export default wrap(async (req, res) => {
