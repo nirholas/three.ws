@@ -993,97 +993,71 @@ create index if not exists pumpfun_graduations_mint on pumpfun_graduations(mint)
 create index if not exists pumpfun_graduations_creator on pumpfun_graduations(creator) where creator is not null;
 
 -- ── agent_skill_prices ───────────────────────────────────────────────────────
--- Stores pricing information for premium agent skills.
+-- Per-skill price set by the agent owner. Authoritative source of truth for
+-- "is this skill paid, and how much?". See migration 2026-04-30-agent-monetization.sql.
 CREATE TABLE IF NOT EXISTS agent_skill_prices (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    agent_id UUID NOT NULL REFERENCES agent_identities(id) ON DELETE CASCADE,
-    skill_name TEXT NOT NULL,
-    amount BIGINT NOT NULL,
-    currency_mint VARCHAR(44) NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE (agent_id, skill_name)
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    agent_id      UUID NOT NULL REFERENCES agent_identities(id) ON DELETE CASCADE,
+    skill         TEXT NOT NULL,
+    currency_mint TEXT NOT NULL,
+    chain         TEXT NOT NULL DEFAULT 'solana',
+    amount        BIGINT NOT NULL,
+    is_active     BOOLEAN NOT NULL DEFAULT true,
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (agent_id, skill)
 );
 
-CREATE INDEX IF NOT EXISTS idx_agent_skill_prices_on_agent_id ON agent_skill_prices(agent_id);
+CREATE INDEX IF NOT EXISTS agent_skill_prices_agent_id ON agent_skill_prices(agent_id);
 
+-- ── skill_purchases ─────────────────────────────────────────────────────────
+-- Per-buyer skill ownership ledger. Pending row is created when buyer initiates
+-- the Solana Pay flow; status flips to 'confirmed' once on-chain transfer is
+-- verified by /api/marketplace/purchase/:reference/confirm or by the
+-- /api/webhooks/solana-pay endpoint. See migration 2026-05-10-skill-purchases.sql.
 CREATE TABLE IF NOT EXISTS skill_purchases (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL REFERENCES users (id),
-  agent_id uuid NOT NULL REFERENCES agent_identities (id),
-  skill_name varchar(255) NOT NULL,
-  transaction_signature varchar(255) UNIQUE NOT NULL,
-  amount bigint NOT NULL,
-  currency_mint varchar(255) NOT NULL,
-  created_at timestamptz NOT NULL DEFAULT now()
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    agent_id      UUID NOT NULL REFERENCES agent_identities(id) ON DELETE CASCADE,
+    skill         TEXT NOT NULL,
+    status        TEXT NOT NULL DEFAULT 'pending'
+                    CHECK (status IN ('pending', 'confirmed', 'failed')),
+    reference     TEXT NOT NULL UNIQUE,
+    tx_signature  TEXT UNIQUE,
+    amount        BIGINT NOT NULL,
+    currency_mint TEXT NOT NULL,
+    chain         TEXT NOT NULL DEFAULT 'solana',
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    confirmed_at  TIMESTAMPTZ
 );
 
-CREATE INDEX IF NOT EXISTS idx_skill_purchases_user_id ON skill_purchases (user_id);
-CREATE INDEX IF NOT EXISTS idx_skill_purchases_agent_id ON skill_purchases (agent_id);
+CREATE UNIQUE INDEX IF NOT EXISTS skill_purchases_one_confirmed_per_user
+    ON skill_purchases (user_id, agent_id, skill)
+    WHERE status = 'confirmed';
 
+CREATE INDEX IF NOT EXISTS skill_purchases_user_agent       ON skill_purchases (user_id, agent_id);
+CREATE INDEX IF NOT EXISTS skill_purchases_agent            ON skill_purchases (agent_id);
+CREATE INDEX IF NOT EXISTS skill_purchases_status_created   ON skill_purchases (status, created_at DESC);
+
+-- ── agent_payment_intents ────────────────────────────────────────────────────
+-- Generic payment intent (subscriptions, one-shot, x402 invocations). Skill
+-- purchases get a synthetic intent with id 'sp_<skill_purchase_id>' on confirm
+-- so agent_revenue_events.intent_id FK can point at it.
 CREATE TABLE IF NOT EXISTS agent_payment_intents (
-    id TEXT PRIMARY KEY,
-    payer_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    agent_id UUID NOT NULL REFERENCES agent_identities(id) ON DELETE CASCADE,
-    currency_mint TEXT NOT NULL,
-    amount BIGINT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'pending',
-    expires_at TIMESTAMPTZ NOT NULL,
-    payload JSONB NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    id             TEXT PRIMARY KEY,
+    payer_user_id  UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    agent_id       UUID NOT NULL REFERENCES agent_identities(id) ON DELETE CASCADE,
+    currency_mint  TEXT NOT NULL,
+    amount         TEXT NOT NULL,
+    memo           TEXT,
+    start_time     TIMESTAMPTZ,
+    end_time       TIMESTAMPTZ,
+    status         TEXT NOT NULL DEFAULT 'pending',
+    cluster        TEXT,
+    tx_signature   TEXT,
+    paid_at        TIMESTAMPTZ,
+    payload        JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    expires_at     TIMESTAMPTZ NOT NULL
 );
-
-    skill_id TEXT NOT NULL,
-    creator_id UUID NOT NULL REFERENCES users(id),
-    amount BIGINT NOT NULL CHECK (amount > 0),
-    currency_mint TEXT NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    deleted_at TIMESTAMPTZ
-);
-
-CREATE UNIQUE INDEX IF NOT EXISTS idx_agent_skill_prices_one_price_per_skill
-ON agent_skill_prices (agent_id, skill_id)
-WHERE deleted_at IS NULL;
-
-CREATE INDEX IF NOT EXISTS idx_agent_skill_prices_creator_id ON agent_skill_prices(creator_id);
-
--- ── user_skill_purchases ─────────────────────────────────────────────────────
--- Tracks which users have purchased which skills.
-CREATE TYPE purchase_status AS ENUM ('pending', 'confirmed', 'failed');
-
-CREATE TABLE IF NOT EXISTS user_skill_purchases (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id),
-    agent_id UUID NOT NULL REFERENCES agent_identities(id),
-    skill_id TEXT NOT NULL,
-    price_id UUID NOT NULL REFERENCES agent_skill_prices(id),
-    transaction_id TEXT, -- e.g., Solana transaction signature
-    status purchase_status NOT NULL DEFAULT 'pending',
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE UNIQUE INDEX IF NOT EXISTS idx_user_skill_purchases_one_per_user
-ON user_skill_purchases (user_id, agent_id, skill_id);
-
-CREATE INDEX IF NOT EXISTS idx_user_skill_purchases_tx_id ON user_skill_purchases(transaction_id);
-
--- ── agent_skill_prices — monetization for agent skills ──────────────────────
-CREATE TABLE IF NOT EXISTS agent_skill_prices (
-    agent_id UUID NOT NULL REFERENCES agent_identities(id) ON DELETE CASCADE,
-    skill_id TEXT NOT NULL,
-    amount BIGINT NOT NULL CHECK (amount > 0),
-    currency_mint TEXT NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    PRIMARY KEY (agent_id, skill_id)
-);
-
-CREATE INDEX IF NOT EXISTS idx_agent_skill_prices_agent_id ON agent_skill_prices(agent_id);
-
-CREATE TRIGGER set_timestamp
-BEFORE UPDATE ON agent_skill_prices
-FOR EACH ROW
-EXECUTE PROCEDURE set_updated_at();

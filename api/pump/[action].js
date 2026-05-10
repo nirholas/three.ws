@@ -32,6 +32,8 @@ import { Keypair, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { sql } from '../_lib/db.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
+import { putObject, publicUrl as r2PublicUrl } from '../_lib/r2.js';
+import { env } from '../_lib/env.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { parse } from '../_lib/validate.js';
 import { randomToken } from '../_lib/crypto.js';
@@ -79,6 +81,7 @@ const wrapped = wrap(async (req, res) => {
 		case 'buy-confirm':             return handleBuyConfirm(req, res);
 		case 'sell-prep':               return handleSellPrep(req, res);
 		case 'sell-confirm':            return handleSellConfirm(req, res);
+		case 'build-metadata':          return handleBuildMetadata(req, res);
 		case 'launch-prep':             return handleLaunchPrep(req, res);
 		case 'launch-confirm':          return handleLaunchConfirm(req, res);
 		case 'accept-payment-prep':     return handleAcceptPaymentPrep(req, res);
@@ -472,6 +475,84 @@ async function handleSellConfirm(req, res) {
 	});
 }
 
+// ── build-metadata ─────────────────────────────────────────────────────────
+// Builds a pump.fun-compatible metadata JSON and uploads it (+ optional token
+// image) to R2. Returns a stable public URL the wizard can use as the URI.
+
+const buildMetadataSchema = z.object({
+	name: z.string().trim().min(1).max(32),
+	symbol: z.string().trim().min(1).max(10),
+	description: z.string().trim().max(500).default(''),
+	avatar_id: z.string().uuid().optional(),
+	agent_id: z.string().uuid().optional(),
+	// Base64 data URL: "data:image/png;base64,..." — max ~4 MB image.
+	image_data_url: z.string().max(6_000_000).optional(),
+});
+
+async function handleBuildMetadata(req, res) {
+	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['POST'])) return;
+
+	const user = await getSessionUser(req);
+	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
+
+	const rl = await limits.authIp(clientIp(req));
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
+
+	const body = parse(buildMetadataSchema, await readJson(req));
+	const uid = user.id;
+	const ts = Date.now().toString(36);
+	const prefix = `pump/meta/${uid}/${ts}`;
+
+	// ── Resolve image URL ───────────────────────────────────────────────────
+	let imageUrl = null;
+
+	if (body.image_data_url) {
+		const commaIdx = body.image_data_url.indexOf(',');
+		if (commaIdx === -1) return error(res, 400, 'validation_error', 'invalid image_data_url');
+		const meta = body.image_data_url.slice(0, commaIdx);
+		const payload = body.image_data_url.slice(commaIdx + 1);
+		const buf = meta.includes('base64')
+			? Buffer.from(payload, 'base64')
+			: Buffer.from(decodeURIComponent(payload));
+		if (buf.byteLength > 4 * 1024 * 1024) {
+			return error(res, 413, 'payload_too_large', 'image must be under 4 MB');
+		}
+		const contentType = meta.match(/data:([^;,]+)/)?.[1] || 'image/png';
+		const ext = contentType.includes('jpeg') || contentType.includes('jpg') ? 'jpg' : 'png';
+		const imgKey = `${prefix}/image.${ext}`;
+		await putObject({ key: imgKey, body: buf, contentType });
+		imageUrl = r2PublicUrl(imgKey);
+	} else if (body.avatar_id) {
+		const [av] = await sql`
+			select thumbnail_key from avatars
+			where id=${body.avatar_id} and owner_id=${uid} and deleted_at is null limit 1
+		`;
+		if (av?.thumbnail_key) imageUrl = r2PublicUrl(av.thumbnail_key);
+	}
+
+	// ── Build metadata JSON ─────────────────────────────────────────────────
+	const agentHomeUrl = body.agent_id
+		? `${env.APP_ORIGIN}/agent/${body.agent_id}`
+		: env.APP_ORIGIN;
+
+	const metadata = {
+		name: body.name,
+		symbol: body.symbol,
+		description: body.description,
+		...(imageUrl ? { image: imageUrl } : {}),
+		showName: true,
+		createdOn: 'https://pump.fun',
+		website: agentHomeUrl,
+	};
+
+	const jsonBuf = Buffer.from(JSON.stringify(metadata, null, 2));
+	const jsonKey = `${prefix}/metadata.json`;
+	await putObject({ key: jsonKey, body: jsonBuf, contentType: 'application/json' });
+
+	return json(res, 200, { metadata_url: r2PublicUrl(jsonKey), image_url: imageUrl });
+}
+
 // ── launch-prep ────────────────────────────────────────────────────────────
 
 const launchPrepSchema = z
@@ -679,6 +760,7 @@ async function handleLaunchPrep(req, res) {
 
 	return json(res, 201, {
 		prep_id: prepId,
+		agent_id: resolvedAgentId,
 		mint: mint.toBase58(),
 		// Mint keypair must co-sign the tx. When server-generated, we hand
 		// the secret to the frontend; when client-supplied (vanity), the

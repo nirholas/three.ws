@@ -183,8 +183,6 @@ export function mountLaunchPanel(container, { onSubmit } = {}) {
 			return;
 		}
 
-		// The studio page listens for this event and opens the launch modal.
-		console.log('[launch-panel] submit', fields);
 		if (typeof window !== 'undefined') {
 			window.dispatchEvent(
 				new CustomEvent('pump-launch-open', {

@@ -1,98 +1,158 @@
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { sql } from '../../_lib/db.js';
-import { error, json, readJson, wrap } from '../../_lib/http.js';
+/**
+ * POST /api/webhooks/solana-pay
+ * Server-side webhook / polling endpoint to confirm a pending skill purchase.
+ * Called by a cron job or monitoring service after it observes the on-chain tx.
+ *
+ * Body: { reference }
+ *   reference — the base58 Solana Pay reference key for the skill_purchases row
+ *
+ * Authorization: bearer token matching WEBHOOK_SECRET env var.
+ *
+ * Flow:
+ *   1. Look up the pending skill_purchases row by reference.
+ *   2. Use findReference + validateTransfer to locate and verify the on-chain tx.
+ *   3. Mark the purchase confirmed and return.
+ */
+import { PublicKey } from '@solana/web3.js';
+import { findReference, validateTransfer } from '@solana/pay';
+import BigNumber from 'bignumber.js';
 
-const SOLANA_RPC_URL = process.env.RPC_URL_1399901; // Using the placeholder from the prompt
-const connection = new Connection(SOLANA_RPC_URL, 'confirmed');
+import { sql } from '../_lib/db.js';
+import { error, json, method, readJson, wrap } from '../_lib/http.js';
+import { rpcFallbackFromEnv } from '../_lib/solana/rpc-fallback.js';
+
+let _rpc;
+function rpc() {
+	if (!_rpc) _rpc = rpcFallbackFromEnv({ network: 'mainnet' });
+	return _rpc;
+}
+
+function authOk(req) {
+	const secret = process.env.WEBHOOK_SECRET;
+	if (!secret) return false; // require explicit secret; no secret = endpoint disabled
+	const header = req.headers?.authorization || '';
+	return header === `Bearer ${secret}`;
+}
 
 export default wrap(async (req, res) => {
-  if (req.method === 'GET') {
-    // Solana Pay endpoint validation GET request
-    return json(res, {
-      label: '3D-Agent Skill Marketplace',
-      icon: 'https://three.ws/assets/logo.png', // Using a placeholder logo
-    });
-  }
+	if (!method(req, res, ['GET', 'POST'])) return;
 
-  if (req.method === 'POST') {
-    const { transaction, reference } = await readJson(req);
+	if (req.method === 'GET') {
+		// Solana Pay merchant discovery probe.
+		return json(res, 200, {
+			label: '3D-Agent Skill Marketplace',
+			icon: 'https://three.ws/assets/logo.png',
+		});
+	}
 
-    if (!reference) {
-      return error(res, 400, 'bad_request', 'Missing reference parameter');
-    }
+	if (!authOk(req)) return error(res, 401, 'unauthorized', 'invalid or missing webhook secret');
 
-    // 1. Find the purchase record using the reference (purchaseId)
-    const [purchase] = await sql`
-        SELECT
-            p.id, p.status, p.agent_id, p.skill_id,
-            pr.amount, pr.currency_mint,
-            u.wallet_address AS creator_wallet
-        FROM user_skill_purchases p
-        JOIN agent_skill_prices pr ON p.price_id = pr.id
-        JOIN users u ON pr.creator_id = u.id
-        WHERE p.id = ${reference}
-    `;
-    
-    if (!purchase) {
-        return error(res, 404, 'not_found', 'Purchase record not found.');
-    }
-    if (purchase.status !== 'pending') {
-      return json(res, { message: 'Purchase already processed.' });
-    }
+	const body = await readJson(req).catch(() => null);
+	const reference = typeof body?.reference === 'string' ? body.reference.trim() : null;
+	if (!reference) return error(res, 400, 'validation_error', 'reference required');
 
-    // 2. Verify the transaction on-chain
-    try {
-        const tx = await connection.getParsedTransaction(transaction, {
-            maxSupportedTransactionVersion: 0,
-            commitment: 'confirmed'
-        });
+	// Load the pending purchase
+	const [pur] = await sql`
+		SELECT id, user_id, agent_id, skill, status, amount, currency_mint, chain
+		FROM skill_purchases
+		WHERE reference = ${reference}
+		LIMIT 1
+	`;
+	if (!pur) return error(res, 404, 'not_found', 'purchase not found');
+	if (pur.status === 'confirmed') {
+		return json(res, 200, { data: { status: 'confirmed' } });
+	}
+	if (pur.status === 'failed') {
+		return error(res, 409, 'purchase_failed', 'purchase was already marked failed');
+	}
+	if (pur.chain !== 'solana') {
+		return error(res, 501, 'not_implemented', `chain '${pur.chain}' not supported`);
+	}
 
-        if (!tx) {
-            throw new Error('Transaction not found or not confirmed.');
-        }
+	// Resolve payout wallet (re-verify to prevent recipient drift)
+	const [payout] = await sql`
+		SELECT pw.address
+		FROM agent_identities a
+		JOIN agent_payout_wallets pw
+		  ON pw.user_id = a.user_id
+		 AND pw.chain = 'solana'
+		 AND (pw.agent_id = a.id OR pw.is_default = true)
+		WHERE a.id = ${pur.agent_id}
+		ORDER BY (pw.agent_id IS NOT NULL) DESC, pw.is_default DESC, pw.created_at ASC
+		LIMIT 1
+	`;
+	let recipientAddress = payout?.address;
+	if (!recipientAddress) {
+		const [row] = await sql`SELECT meta FROM agent_identities WHERE id = ${pur.agent_id}`;
+		recipientAddress = row?.meta?.solana_address ?? null;
+	}
+	if (!recipientAddress) return error(res, 412, 'creator_wallet_missing', 'payout wallet not configured');
 
-        // Basic validation
-        if (tx.meta?.err) {
-            throw new Error('Transaction failed on-chain.');
-        }
+	const refKey    = new PublicKey(reference);
+	const recipient = new PublicKey(recipientAddress);
+	const splToken  = new PublicKey(pur.currency_mint);
+	const expectedAmount = new BigNumber(pur.amount).dividedBy(1e6); // 6-decimal USDC
 
-        // Deeper validation: find the correct SPL transfer instruction
-        const transferInstruction = tx.transaction.message.instructions.find(ix => {
-            if ('parsed' in ix && ix.parsed.type === 'transferChecked') {
-                const p = ix.parsed.info;
-                const recipientMatch = p.destination === purchase.creator_wallet;
-                const mintMatch = p.mint === purchase.currency_mint;
-                const amountMatch = BigInt(p.tokenAmount.uiAmount * (10 ** p.tokenAmount.decimals)) === BigInt(purchase.amount);
-                return recipientMatch && mintMatch && amountMatch;
-            }
-            return false;
-        });
+	let signatureInfo;
+	try {
+		signatureInfo = await rpc().withFallback((conn) =>
+			findReference(conn, refKey, { finality: 'confirmed' }),
+		);
+	} catch (e) {
+		if (/FindReferenceError|not found/i.test(e?.message || '')) {
+			return json(res, 200, { data: { status: 'pending' } });
+		}
+		throw e;
+	}
 
-        if (!transferInstruction) {
-            throw new Error('Valid SPL transfer not found in transaction.');
-        }
+	const txSig = signatureInfo.signature;
 
-        // 3. If validation passes, update the purchase status
-        await sql`
-            UPDATE user_skill_purchases
-            SET status = 'confirmed', transaction_id = ${transaction}, updated_at = NOW()
-            WHERE id = ${reference}
-        `;
+	try {
+		await rpc().withFallback((conn) =>
+			validateTransfer(
+				conn,
+				txSig,
+				{ recipient, amount: expectedAmount, splToken, reference: refKey },
+				{ commitment: 'confirmed' },
+			),
+		);
+	} catch (e) {
+		await sql`
+			UPDATE skill_purchases SET status = 'failed', tx_signature = ${txSig}
+			WHERE id = ${pur.id} AND status = 'pending'
+		`;
+		return error(res, 409, 'transfer_mismatch', `on-chain transfer did not match: ${e.message}`);
+	}
 
-        // TODO from Prompt 20: Send email notification to creator here
+	const intentId = `sp_${pur.id}`;
+	const updated = await sql`
+		UPDATE skill_purchases
+		SET status = 'confirmed', tx_signature = ${txSig}, confirmed_at = now()
+		WHERE id = ${pur.id} AND status = 'pending'
+		RETURNING id
+	`;
+	if (updated.length > 0) {
+		await sql`
+			INSERT INTO agent_payment_intents
+				(id, payer_user_id, agent_id, currency_mint, amount, status, expires_at,
+				 cluster, tx_signature, paid_at, payload)
+			VALUES
+				(${intentId}, ${pur.user_id}, ${pur.agent_id}, ${pur.currency_mint},
+				 ${String(pur.amount)}, 'confirmed', now() + interval '30 days',
+				 'mainnet', ${txSig}, now(),
+				 ${JSON.stringify({ kind: 'skill_purchase', skill: pur.skill, reference })}::jsonb)
+			ON CONFLICT (id) DO NOTHING
+		`;
+		await sql`
+			INSERT INTO agent_revenue_events
+				(agent_id, intent_id, skill, gross_amount, fee_amount, net_amount,
+				 currency_mint, chain, payer_address)
+			VALUES
+				(${pur.agent_id}, ${intentId}, ${pur.skill},
+				 ${pur.amount}, 0, ${pur.amount},
+				 ${pur.currency_mint}, ${pur.chain}, ${recipientAddress})
+		`;
+	}
 
-        return json(res, { message: 'Transaction confirmed successfully.' });
-
-    } catch (e) {
-        console.error('Transaction verification failed:', e);
-        await sql`
-            UPDATE user_skill_purchases
-            SET status = 'failed', updated_at = NOW()
-            WHERE id = ${reference}
-        `;
-        return error(res, 400, 'transaction_invalid', e.message);
-    }
-  }
-
-  return error(res, 405, 'method_not_allowed');
+	return json(res, 200, { data: { status: 'confirmed', tx_signature: txSig } });
 });

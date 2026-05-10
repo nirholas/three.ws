@@ -260,15 +260,39 @@ async function handleConfirm(req, res, reference) {
 		return error(res, 409, 'transfer_mismatch', `on-chain transfer did not match expected: ${e.message}`);
 	}
 
-	// Atomic confirm. The status='pending' guard keeps concurrent confirms idempotent.
-	// Revenue aggregation is derived from skill_purchases at query time; we don't
-	// write to agent_revenue_events here because its intent_id FK constrains it
-	// to the agent_payment_intents flow (subscriptions / x402), not skill purchases.
-	await sql`
+	// Atomic confirm + revenue ledger. The status='pending' guard keeps concurrent
+	// confirms idempotent: the second one updates 0 rows and skips the ledger writes.
+	// agent_revenue_events.intent_id has a FK to agent_payment_intents, so we
+	// synthesize a payment-intent row keyed off the skill_purchase id.
+	const intentId = `sp_${pur.id}`;
+	const updated = await sql`
 		UPDATE skill_purchases
 		SET status = 'confirmed', tx_signature = ${txSignature}, confirmed_at = now()
 		WHERE id = ${pur.id} AND status = 'pending'
+		RETURNING id
 	`;
+	if (updated.length > 0) {
+		await sql`
+			INSERT INTO agent_payment_intents
+				(id, payer_user_id, agent_id, currency_mint, amount, status, expires_at,
+				 cluster, tx_signature, paid_at, payload)
+			VALUES
+				(${intentId}, ${pur.user_id}, ${pur.agent_id}, ${pur.currency_mint},
+				 ${String(pur.amount)}, 'confirmed', now() + interval '30 days',
+				 'mainnet', ${txSignature}, now(),
+				 ${JSON.stringify({ kind: 'skill_purchase', skill: pur.skill, reference })}::jsonb)
+			ON CONFLICT (id) DO NOTHING
+		`;
+		await sql`
+			INSERT INTO agent_revenue_events
+				(agent_id, intent_id, skill, gross_amount, fee_amount, net_amount,
+				 currency_mint, chain, payer_address)
+			VALUES
+				(${pur.agent_id}, ${intentId}, ${pur.skill},
+				 ${pur.amount}, 0, ${pur.amount},
+				 ${pur.currency_mint}, ${pur.chain}, ${payout.address})
+		`;
+	}
 
 	return json(res, 200, { data: { status: 'confirmed', tx_signature: txSignature } });
 }

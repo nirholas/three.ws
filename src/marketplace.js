@@ -49,6 +49,8 @@ const state = {
 	cursor: null,
 	items: [],
 	loading: false,
+	publicAvatars: [],
+	publicAvatarsLoaded: false,
 };
 
 const $ = (id) => document.getElementById(id);
@@ -169,19 +171,82 @@ async function loadList(reset = false) {
 	} finally {
 		state.loading = false;
 	}
+
+	if (reset) loadPublicAvatars();
+}
+
+async function loadPublicAvatars() {
+	try {
+		const url = new URL(`${API}/explore`, location.origin);
+		url.searchParams.set('source', 'avatar');
+		url.searchParams.set('limit', '60');
+		if (state.q) url.searchParams.set('q', state.q);
+		const r = await fetch(url);
+		if (!r.ok) return;
+		const j = await r.json();
+		const avatars = (j?.items || []).filter((it) => it.kind === 'avatar' && it.glbUrl);
+		state.publicAvatars = avatars;
+		state.publicAvatarsLoaded = true;
+		renderGrid();
+	} catch (err) {
+		console.error('[marketplace] public avatars', err);
+	}
 }
 
 function renderGrid() {
-	if (!state.items.length) {
-		els.grid.innerHTML = '<div class="market-empty">No agents yet. Be the first to publish!</div>';
+	const showAvatars = !state.category;
+	const avatars = showAvatars ? state.publicAvatars : [];
+
+	if (!state.items.length && !avatars.length) {
+		const msg = state.publicAvatarsLoaded
+			? 'No agents yet. Be the first to publish!'
+			: 'Loading…';
+		els.grid.innerHTML = `<div class="market-empty">${msg}</div>`;
 		els.loadMore.hidden = true;
 		return;
 	}
-	els.grid.innerHTML = state.items.map(renderCard).join('');
+
+	let html = '';
+	if (state.items.length) {
+		html += state.items.map(renderCard).join('');
+	}
+	if (avatars.length) {
+		html += `<div class="market-grid-section-title">Community Avatars <span class="count">${avatars.length} public</span></div>`;
+		html += avatars.map(renderAvatarCard).join('');
+	}
+	els.grid.innerHTML = html;
+
 	els.grid.querySelectorAll('[data-id]').forEach((card) => {
 		card.addEventListener('click', () => navTo(`/marketplace/agents/${card.dataset.id}`));
 	});
+	els.grid.querySelectorAll('[data-avatar-glb]').forEach((card) => {
+		card.addEventListener('click', () => {
+			const glb = card.dataset.avatarGlb;
+			if (glb) location.href = `/#model=${encodeURIComponent(glb)}`;
+		});
+	});
 	els.loadMore.hidden = !state.cursor;
+}
+
+function renderAvatarCard(a) {
+	const name = escapeHtml(a.name || 'Untitled Avatar');
+	const desc = escapeHtml(a.description || '');
+	const date = a.createdAt ? formatDate(a.createdAt) : '';
+	const thumbStyle = a.image
+		? `style="background-image:url('${escapeHtml(a.image)}')"`
+		: '';
+	const fallback = a.image ? '' : '◉';
+	return `<div class="market-card-avatar" data-avatar-glb="${escapeHtml(a.glbUrl || '')}">
+		<div class="thumb" ${thumbStyle}>${fallback}</div>
+		<div class="body">
+			<div class="title">${name}</div>
+			<div class="desc">${desc}</div>
+			<div class="footer">
+				<span>${date}</span>
+				<span class="avatar-pill">3D Avatar</span>
+			</div>
+		</div>
+	</div>`;
 }
 
 function renderCard(a) {

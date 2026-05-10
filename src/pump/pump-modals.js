@@ -66,6 +66,13 @@ const M_STYLES = `
 	background: rgba(120,200,140,0.06); border: 1px solid rgba(120,200,140,0.18);
 }
 .pmodal-receipt-title { font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(180,230,200,0.85); margin-bottom: 0.4rem; }
+.pmodal textarea { width: 100%; padding: 0.5rem 0.7rem; border-radius: 8px; resize: vertical;
+	background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+	color: #fff; font-size: 0.85rem; font-family: inherit; }
+.pmodal-meta-building { font-size: 0.78rem; color: rgba(255,255,255,0.45); margin-top: 0.6rem;
+	animation: pmodal-pulse 1.4s ease-in-out infinite; }
+.pmodal-meta-ok { font-size: 0.78rem; color: #a4f0bc; margin-top: 0.6rem; }
+@keyframes pmodal-pulse { 0%,100% { opacity: 0.45 } 50% { opacity: 0.9 } }
 `;
 
 let stylesInjected = false;
@@ -371,18 +378,57 @@ function openGovernance({ mint, currentBps }) {
 }
 
 // ── Launch wizard ──────────────────────────────────────────────────────────
-function openLaunch({ identity, agentId, avatarId }) {
+// formData: { name, symbol, description, initialBuy, feeTier, image (File|null) }
+// Steps: 1 = token details (pre-filled) + metadata generation
+//        2 = buyback share + initial buy
+//        3 = review + sign
+function openLaunch({ identity, agentId, avatarId, formData }) {
 	const { inner, close } = openModal();
 	let step = 1;
 
+	async function buildMetadata(name, symbol) {
+		let imageDataUrl = null;
+		if (formData?.image instanceof File) {
+			imageDataUrl = await new Promise((resolve) => {
+				const reader = new FileReader();
+				reader.onload = (e) => resolve(e.target.result);
+				reader.onerror = () => resolve(null);
+				reader.readAsDataURL(formData.image);
+			});
+		}
+		const resp = await fetch('/api/pump/build-metadata', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			credentials: 'include',
+			body: JSON.stringify({
+				name,
+				symbol,
+				description: formData?.description || identity?.description || '',
+				...(avatarId ? { avatar_id: avatarId } : {}),
+				...(agentId ? { agent_id: agentId } : {}),
+				...(imageDataUrl ? { image_data_url: imageDataUrl } : {}),
+			}),
+		});
+		if (!resp.ok) throw new Error(`Metadata build failed: ${resp.status}`);
+		return resp.json(); // { metadata_url, image_url }
+	}
+
+	function esc(s) {
+		return String(s ?? '').replace(/[&<>"']/g, (c) =>
+			({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+		);
+	}
+
 	function render() {
-		const symbolDefault = (identity?.name || 'AGENT')
+		const nameDefault = formData?.name || identity?.name || 'Agent';
+		const symbolDefault = (formData?.symbol || nameDefault)
 			.toUpperCase()
 			.replace(/[^A-Z0-9]/g, '')
 			.slice(0, 8) || 'AGENT';
+
 		inner.innerHTML = `
-			<h3>Launch $${symbolDefault}</h3>
-			<div class="pmodal-sub">Pump.fun bonding curve + agent-payments PDA. Three steps.</div>
+			<h3>Launch $${esc(symbolDefault)}</h3>
+			<div class="pmodal-sub">Pump.fun bonding curve · Three steps.</div>
 			<div class="pmodal-steps">
 				<div class="pmodal-step ${step >= 1 ? (step === 1 ? 'active' : 'done') : ''}"></div>
 				<div class="pmodal-step ${step >= 2 ? (step === 2 ? 'active' : 'done') : ''}"></div>
@@ -396,16 +442,21 @@ function openLaunch({ identity, agentId, avatarId }) {
 			</div>
 		`;
 		const body = inner.querySelector('#pmodal-launch-body');
+
 		if (step === 1) {
+			const cachedName = inner._formCache?.name || nameDefault;
+			const cachedSymbol = inner._formCache?.symbol || symbolDefault;
 			body.innerHTML = `
-				<label>Name</label>
-				<input type="text" id="pmodal-launch-name" value="${identity?.name || 'Agent'}" />
+				<label>Token name</label>
+				<input type="text" id="pmodal-launch-name" maxlength="32" value="${esc(cachedName)}" />
 				<label>Symbol</label>
-				<input type="text" id="pmodal-launch-symbol" maxlength="10" value="${symbolDefault}" />
-				<label>Metadata URI <span style="color:rgba(255,255,255,0.4)">(IPFS or HTTPS to a JSON manifest with avatar + bio)</span></label>
-				<input type="text" id="pmodal-launch-uri" placeholder="https://three.ws/agent/${agentId || avatarId || 'me'}/pump-metadata.json" />
+				<input type="text" id="pmodal-launch-symbol" maxlength="10" value="${esc(cachedSymbol)}" />
+				<label>Description</label>
+				<textarea id="pmodal-launch-desc" rows="2" maxlength="500">${esc(formData?.description || identity?.description || '')}</textarea>
+				<div class="pmodal-sub" style="margin-top:0.5rem">Token image and metadata are generated automatically from your avatar.</div>
 			`;
 		} else if (step === 2) {
+			const initialBuyVal = formData?.initialBuy || inner._formCache?.buyin || 0;
 			body.innerHTML = `
 				<label>Buyback share</label>
 				<input type="range" min="0" max="5000" step="50" value="500" id="pmodal-launch-bps" />
@@ -418,11 +469,10 @@ function openLaunch({ identity, agentId, avatarId }) {
 					<span>If this agent earns $10/mo:</span>
 					<b id="pmodal-launch-projection">$0.50/mo burned</b>
 				</div>
-				<label>Creator initial buy <span style="color:rgba(255,255,255,0.4)">(SOL, optional)</span></label>
-				<input type="number" id="pmodal-launch-buyin" value="0" min="0" max="50" step="0.1" />
+				<label>Creator initial buy (SOL, optional)</label>
+				<input type="number" id="pmodal-launch-buyin" value="${Number(initialBuyVal) || 0}" min="0" max="50" step="0.1" />
 				<div class="pmodal-sub" style="margin-top:0.7rem">
-					Buyback share is locked once configured (per the SDK fee-share policy).
-					Choose carefully — it can't be changed later via this wizard.
+					Buyback share is locked at launch — choose carefully.
 				</div>
 			`;
 			const bps = body.querySelector('#pmodal-launch-bps');
@@ -435,19 +485,17 @@ function openLaunch({ identity, agentId, avatarId }) {
 			};
 			bps.addEventListener('input', update);
 		} else if (step === 3) {
-			const name = inner._formCache?.name || identity?.name;
-			const symbol = inner._formCache?.symbol || symbolDefault;
-			const bps = inner._formCache?.bps || 500;
-			const buyin = inner._formCache?.buyin || 0;
+			const f = inner._formCache || {};
+			const name = f.name || nameDefault;
+			const symbol = f.symbol || symbolDefault;
 			body.innerHTML = `
-				<div class="pmodal-row"><span>Name</span><b>${name}</b></div>
-				<div class="pmodal-row"><span>Symbol</span><b>$${symbol}</b></div>
-				<div class="pmodal-row"><span>Buyback</span><b>${(bps / 100).toFixed(1)}%</b></div>
-				<div class="pmodal-row"><span>Initial buy</span><b>${buyin} SOL</b></div>
-				<div class="pmodal-row"><span>Tx contains</span><b>createInstruction + PumpAgent.create</b></div>
+				<div class="pmodal-row"><span>Name</span><b>${esc(name)}</b></div>
+				<div class="pmodal-row"><span>Symbol</span><b>$${esc(symbol)}</b></div>
+				<div class="pmodal-row"><span>Buyback</span><b>${((f.bps || 500) / 100).toFixed(1)}%</b></div>
+				<div class="pmodal-row"><span>Initial buy</span><b>${f.buyin || 0} SOL</b></div>
+				<div class="pmodal-row"><span>Tx</span><b>createInstruction + PumpAgent.create</b></div>
 				<div class="pmodal-sub" style="margin-top:0.7rem">
-					You'll be asked to sign once with your Solana wallet. Both the new
-					mint keypair and your wallet co-sign.
+					You'll sign once with your Solana wallet. The new mint keypair and your wallet co-sign.
 				</div>
 			`;
 		}
@@ -456,18 +504,39 @@ function openLaunch({ identity, agentId, avatarId }) {
 			step = Math.max(1, step - 1);
 			render();
 		});
+
 		inner.querySelector('#pmodal-launch-next').addEventListener('click', async () => {
 			const errEl = inner.querySelector('#pmodal-launch-err');
 			errEl.textContent = '';
+
 			if (step === 1) {
 				const name = inner.querySelector('#pmodal-launch-name').value.trim();
 				const symbol = inner.querySelector('#pmodal-launch-symbol').value.trim().toUpperCase();
-				const uri = inner.querySelector('#pmodal-launch-uri').value.trim();
-				if (!name || !symbol || !uri) {
-					errEl.textContent = 'All three fields are required.';
+				const desc = inner.querySelector('#pmodal-launch-desc').value.trim();
+				if (!name || !symbol) {
+					errEl.textContent = 'Name and symbol are required.';
 					return;
 				}
-				inner._formCache = { ...(inner._formCache || {}), name, symbol, uri };
+				const nextBtn = inner.querySelector('#pmodal-launch-next');
+				// Rebuild metadata if name/symbol changed or we have no URI yet
+				const nameChanged = inner._formCache?.name !== name || inner._formCache?.symbol !== symbol;
+				inner._formCache = { ...(inner._formCache || {}), name, symbol, desc };
+				if (nameChanged) inner._formCache.uri = null;
+				if (!inner._formCache.uri) {
+					nextBtn.disabled = true;
+					nextBtn.textContent = 'Building metadata…';
+					try {
+						const data = await buildMetadata(name, symbol);
+						inner._formCache.uri = data.metadata_url;
+					} catch (e) {
+						errEl.textContent = `Metadata failed: ${e.message}`;
+						nextBtn.disabled = false;
+						nextBtn.textContent = 'Next';
+						return;
+					}
+					nextBtn.disabled = false;
+					nextBtn.textContent = 'Next';
+				}
 				step = 2;
 				render();
 			} else if (step === 2) {
@@ -482,10 +551,10 @@ function openLaunch({ identity, agentId, avatarId }) {
 				btn.textContent = 'Preparing…';
 				try {
 					const wallet = detectSolanaWallet();
-					if (!wallet) throw new Error('No Solana wallet detected.');
+					if (!wallet) throw new Error('No Solana wallet detected. Install Phantom or Backpack.');
 					if (!wallet.isConnected) await wallet.connect?.();
-					const payer =
-						wallet.publicKey?.toBase58?.() || wallet.publicKey?.toString();
+					const payer = wallet.publicKey?.toBase58?.() || wallet.publicKey?.toString();
+					if (!payer) throw new Error('Could not read wallet public key.');
 					const f = inner._formCache || {};
 					const prep = await fetch('/api/pump/launch-prep', {
 						method: 'POST',
@@ -523,11 +592,17 @@ function openLaunch({ identity, agentId, avatarId }) {
 						body: JSON.stringify({ prep_id: prep.prep_id, tx_signature: sig }),
 					}).then((r) => r.json());
 					if (confirm.error) throw new Error(confirm.error_description || confirm.error);
-					btn.textContent = 'Launched 🎉';
+					btn.textContent = 'Launched!';
+					// Redirect to the agent's page to see the new token
+					const resolvedAgentId = prep.agent_id || agentId;
 					setTimeout(() => {
 						close();
-						window.location.reload();
-					}, 1200);
+						if (resolvedAgentId) {
+							window.location.href = `/agent/${resolvedAgentId}`;
+						} else {
+							window.location.reload();
+						}
+					}, 900);
 				} catch (e) {
 					errEl.textContent = e.message || String(e);
 					const btn = inner.querySelector('#pmodal-launch-next');
@@ -557,6 +632,6 @@ export function mountPumpModals({ identity, agentId } = {}) {
 	);
 }
 
-export function openPumpLaunchWizard(identity, agentId, avatarId) {
-	openLaunch({ identity, agentId, avatarId });
+export function openPumpLaunchWizard(identity, agentId, avatarId, formData) {
+	openLaunch({ identity, agentId, avatarId, formData });
 }

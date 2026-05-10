@@ -1,58 +1,80 @@
-import { sql } from '@vercel/postgres';
-import { getAuth } from '@clerk/nextjs/server';
+/**
+ * POST /api/agent-skill-price?agentId=:id
+ * Single-skill price upsert (legacy entry point).
+ * Accepts { skill, amount, currency_mint, chain } — amount=0 deactivates.
+ * Canonical bulk endpoint: PUT /api/agents/:id/skills-pricing
+ */
+import { sql } from './_lib/db.js';
+import { authenticateBearer, extractBearer, getSessionUser } from './_lib/auth.js';
+import { cors, error, json, method, readJson, wrap } from './_lib/http.js';
+import { clientIp, limits } from './_lib/rate-limit.js';
+import { z } from 'zod';
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
-  }
+const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
-  const { userId } = getAuth(req);
-  if (!userId) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
+const bodySchema = z.object({
+	skill:         z.string().trim().min(1).max(100),
+	amount:        z.number().int().min(0),
+	currency_mint: z.string().trim().regex(BASE58_RE, 'invalid mint address'),
+	chain:         z.string().trim().min(1).max(20).default('solana'),
+});
 
-  const { agentId } = req.query;
-  const { skill_name, amount, currency_mint } = req.body;
-
-  try {
-    // Verify ownership of the agent
-    const { rows: agents } = await sql`
-      SELECT id, creator_id FROM agents WHERE id = ${agentId};
-    `;
-
-    if (agents.length === 0 || agents[0].creator_id !== userId) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
-
-    // Input validation from Prompt 4
-    if (!skill_name || amount == null || !currency_mint) {
-        return res.status(400).json({ error: 'Missing required fields: skill_name, amount, currency_mint' });
-    }
-    if (!Number.isInteger(amount) || amount < 0) {
-        return res.status(400).json({ error: 'Amount must be a non-negative integer.' });
-    }
-    // A simple validation for mint address format.
-    if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(currency_mint)) {
-        return res.status(400).json({ error: 'Invalid currency mint address.' });
-    }
-
-    if (amount > 0) {
-      await sql`
-        INSERT INTO agent_skill_prices (agent_id, skill_name, amount, currency_mint)
-        VALUES (${agentId}, ${skill_name}, ${amount}, ${currency_mint})
-        ON CONFLICT (agent_id, skill_name)
-        DO UPDATE SET amount = EXCLUDED.amount, currency_mint = EXCLUDED.currency_mint, updated_at = NOW();
-      `;
-    } else {
-      await sql`
-        DELETE FROM agent_skill_prices
-        WHERE agent_id = ${agentId} AND skill_name = ${skill_name};
-      `;
-    }
-    
-    res.status(200).json({ message: 'Skill price updated successfully.' });
-  } catch (error) {
-    console.error('Error updating skill price:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
+async function resolveAuth(req) {
+	const session = await getSessionUser(req);
+	if (session) return { userId: session.id };
+	const bearer = await authenticateBearer(extractBearer(req));
+	if (bearer) return { userId: bearer.userId };
+	return null;
 }
+
+export default wrap(async (req, res) => {
+	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['POST'])) return;
+
+	const auth = await resolveAuth(req);
+	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
+
+	const rl = await limits.authIp(clientIp(req));
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
+
+	const url = new URL(req.url, 'http://x');
+	const agentId = url.searchParams.get('agentId');
+	if (!agentId) return error(res, 400, 'validation_error', 'agentId query param required');
+
+	const [agent] = await sql`
+		SELECT id, user_id FROM agent_identities
+		WHERE id = ${agentId} AND deleted_at IS NULL
+	`;
+	if (!agent) return error(res, 404, 'not_found', 'agent not found');
+	if (agent.user_id !== auth.userId) return error(res, 403, 'forbidden', 'not your agent');
+
+	const body = await readJson(req).catch(() => null);
+	if (!body) return error(res, 400, 'validation_error', 'request body required');
+
+	const parsed = bodySchema.safeParse(body);
+	if (!parsed.success) {
+		return error(res, 400, 'validation_error', parsed.error.issues[0]?.message || 'validation error');
+	}
+
+	const { skill, amount, currency_mint, chain } = parsed.data;
+
+	if (amount === 0) {
+		await sql`
+			UPDATE agent_skill_prices SET is_active = false, updated_at = now()
+			WHERE agent_id = ${agentId} AND skill = ${skill}
+		`;
+	} else {
+		await sql`
+			INSERT INTO agent_skill_prices (agent_id, skill, amount, currency_mint, chain, is_active)
+			VALUES (${agentId}, ${skill}, ${amount}, ${currency_mint}, ${chain}, true)
+			ON CONFLICT (agent_id, skill) DO UPDATE SET
+				amount        = EXCLUDED.amount,
+				currency_mint = EXCLUDED.currency_mint,
+				chain         = EXCLUDED.chain,
+				is_active     = true,
+				updated_at    = now()
+		`;
+	}
+
+	return json(res, 200, { data: { ok: true } });
+});

@@ -100,42 +100,124 @@ function escapeHtml(s) {
 // --- Event Listeners ---
 
 $('persona-save').addEventListener('click', async () => {
-  // This would save persona changes, not implemented in this task
+  const status = $('persona-status');
+  const name = $('f-name').value.trim();
+  const description = $('f-desc').value.trim();
+  if (!name) {
+    status.textContent = 'Name is required.';
+    status.className = 'form-status err';
+    return;
+  }
+  status.textContent = 'Saving…';
+  status.className = 'form-status';
+  try {
+    const r = await fetch(`${API_BASE}/agents/${agentId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ name, description }),
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
+    }
+    const j = await r.json();
+    if (j.agent) {
+      agentData.name = j.agent.name;
+      agentData.description = j.agent.description;
+      $('agent-title').textContent = `Edit Agent: ${agentData.name}`;
+    }
+    status.textContent = 'Saved.';
+    status.className = 'form-status ok';
+  } catch (err) {
+    status.textContent = `Error: ${err.message}`;
+    status.className = 'form-status err';
+  }
 });
 
 $('publish-save').addEventListener('click', async () => {
-  // This would save publish changes, not implemented in this task
+  const status = $('publish-status');
+  const category = $('f-category').value.trim();
+  const tags = $('f-tags').value.split(',').map((t) => t.trim()).filter(Boolean).slice(0, 12);
+  const system_prompt = $('f-prompt').value.trim();
+  const greeting = $('f-greeting').value.trim();
+  const changelog = $('f-changelog').value.trim() || null;
+
+  if (!category) {
+    status.textContent = 'Pick a category.';
+    status.className = 'form-status err';
+    return;
+  }
+  if (!system_prompt) {
+    status.textContent = 'Agent profile (system prompt) is required.';
+    status.className = 'form-status err';
+    return;
+  }
+
+  status.textContent = 'Publishing…';
+  status.className = 'form-status';
+  try {
+    const r = await fetch(`${API_BASE}/marketplace/agents/${agentId}/publish`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ category, tags, system_prompt, greeting, changelog }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
+    }
+    const ver = j.data?.version;
+    status.textContent = ver ? `Published v${ver}.` : 'Published.';
+    status.className = 'form-status ok';
+    const view = $('publish-view');
+    if (view) {
+      view.href = `/marketplace.html#${agentId}`;
+      view.hidden = false;
+    }
+  } catch (err) {
+    status.textContent = `Error: ${err.message}`;
+    status.className = 'form-status err';
+  }
 });
+
+// Solana mainnet USDC.
+const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 
 $('monetization-save').addEventListener('click', async () => {
   const prices = [];
-  document.querySelectorAll('#skill-prices-list .skill-item').forEach(item => {
-    const name = item.dataset.skillName;
+  document.querySelectorAll('#skill-prices-list .skill-item').forEach((item) => {
+    const skill = item.dataset.skillName;
     const toggle = item.querySelector('.price-toggle');
     const input = item.querySelector('.price-input');
-    
+
     if (toggle.checked && input.value) {
-      const amountInLamports = parseFloat(input.value) * 1e6;
       prices.push({
-        skill_name: name,
-        amount: amountInLamports,
-        currency_mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyB7u6a'
+        skill,
+        amount: Math.round(parseFloat(input.value) * 1e6),
+        currency_mint: USDC_MINT,
+        chain: 'solana',
       });
     }
   });
 
+  const status = $('monetization-status');
   try {
     const r = await fetch(`${API_BASE}/agents/${agentId}/skills-pricing`, {
-      method: 'POST',
+      method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prices })
+      credentials: 'include',
+      body: JSON.stringify({ prices }),
     });
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    $('monetization-status').textContent = 'Prices saved!';
-    $('monetization-status').className = 'form-status ok';
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
+    }
+    status.textContent = 'Prices saved.';
+    status.className = 'form-status ok';
   } catch (err) {
-    $('monetization-status').textContent = `Error: ${err.message}`;
-    $('monetization-status').className = 'form-status err';
+    status.textContent = `Error: ${err.message}`;
+    status.className = 'form-status err';
   }
 });
 

@@ -42,6 +42,11 @@ export default wrap(async function handler(req, res) {
 		return mod.default(req, res, id, action);
 	}
 
+	if (sub === 'eth-vanity') {
+		const mod = await import('./eth-vanity.js');
+		return mod.default(req, res, id, action);
+	}
+
 	if (sub === 'sns') {
 		const mod = await import('./sns.js');
 		return mod.default(req, res, id, action);
