@@ -1,141 +1,102 @@
 ---
-name: agent-social
-description: Web3-native social media posting for AI agents. Post to X (Twitter), Farcaster/Warpcast, and Reddit. Schedule posts, upload media, and correlate posts with on-chain token price movements. No subscription — pay per post with USDC via x402.
+name: three-ws
+description: Build, deploy, and control AI agents with 3D bodies on three.ws. Create agents, upload GLB/glTF models, wire a talking avatar into any web page, manage persistent agent memory, and prepare onchain identity registration — all via REST API.
 metadata:
   openclaw:
     requirements:
       env:
-        - SOCIAL_X_CONSUMER_KEY
-        - SOCIAL_X_CONSUMER_SECRET
-        - SOCIAL_X_ACCESS_TOKEN
-        - SOCIAL_X_ACCESS_SECRET
+        - THREEWS_API_KEY
       optional_env:
-        - SOCIAL_FC_NEYNAR_KEY
-        - SOCIAL_FC_SIGNER_UUID
-        - SOCIAL_REDDIT_ACCESS_TOKEN
+        - THREEWS_AGENT_ID
 ---
 
-# Agent Social
+# three.ws — Give Your AI a Body
 
-Social media posting API for AI agents. Works with Claude Code, OpenClaw, or any agent that can make HTTP requests.
+three.ws turns AI agents into embodied 3D characters. Drop one script tag to embed a talking, gesturing avatar on any page. Create agents via API, upload custom GLB models, and optionally anchor your agent to an onchain identity (EVM or Solana).
 
-**Better than Postiz:**
-- Pay per post with USDC (x402) — no subscription required
-- Farcaster / Warpcast support (web3-native)
-- On-chain price correlation — see how your posts affect token prices
-- Post-to-price analytics via Pump.fun integration
-- Works natively with your agent's ERC-8004 identity
+**Base URL:** `https://three.ws`  
+**Auth:** `Authorization: Bearer $THREEWS_API_KEY`  
+**Responses:** JSON throughout.
 
 ## Quick Start
 
 ```bash
-# Discover platforms and credential requirements
-curl https://three.ws/api/social/platforms
-
-# Post immediately to X (Twitter)
-curl -X POST https://three.ws/api/social/post \
-  -H 'Content-Type: application/json' \
+# 1. Create an agent
+curl -X POST https://three.ws/api/agents \
+  -H "Authorization: Bearer $THREEWS_API_KEY" \
+  -H "Content-Type: application/json" \
   -d '{
-    "platform": "x",
-    "content": "Hello from my AI agent!",
-    "credentials": {
-      "consumer_key": "$SOCIAL_X_CONSUMER_KEY",
-      "consumer_secret": "$SOCIAL_X_CONSUMER_SECRET",
-      "access_token": "$SOCIAL_X_ACCESS_TOKEN",
-      "access_secret": "$SOCIAL_X_ACCESS_SECRET"
-    }
+    "name": "Aria",
+    "instructions": "You are Aria, a helpful product assistant. Be concise and friendly.",
+    "brain": "claude-sonnet-4-6"
   }'
+# → { "id": "a_abc123", ... }
 
-# Post to Farcaster
-curl -X POST https://three.ws/api/social/post \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "platform": "farcaster",
-    "content": "gm from my onchain agent",
-    "credentials": {
-      "neynar_key": "$SOCIAL_FC_NEYNAR_KEY",
-      "signer_uuid": "$SOCIAL_FC_SIGNER_UUID"
-    },
-    "settings": { "channel_id": "dev" }
-  }'
-
-# Schedule a post for tomorrow 9am UTC
-curl -X POST https://three.ws/api/social/post \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "platform": "x",
-    "content": "Scheduled announcement!",
-    "schedule_at": "2026-05-11T09:00:00Z",
-    "credentials": { ... }
-  }'
-
-# List scheduled posts
-curl https://three.ws/api/social/list?status=scheduled
-
-# Cancel a scheduled post
-curl -X DELETE https://three.ws/api/social/abc-123
-
-# Correlate a tweet with a token price
-curl "https://three.ws/api/social/analytics?post_url=https://x.com/user/status/123&mint=TOKEN_MINT"
+# 2. Embed on any page
+echo '<script type="module" src="https://cdn.three.ws/agent-3d.js"></script>
+<agent-3d agent-id="a_abc123" mode="floating" position="bottom-right"></agent-3d>'
 ```
+
+## Skills in this package
+
+| Skill | What it does |
+|---|---|
+| [create-agent](skills/create-agent/SKILL.md) | Create, list, and update 3D AI agents |
+| [upload-model](skills/upload-model/SKILL.md) | Upload a GLB/glTF file and get a hosted URL |
+| [agent-memory](skills/agent-memory/SKILL.md) | Read and write persistent agent memory entries |
+| [onchain-identity](skills/onchain-identity/SKILL.md) | Prepare onchain identity registration (EVM + Solana) |
+
+## Embedding the avatar
+
+```html
+<script type="module" src="https://cdn.three.ws/agent-3d.js"></script>
+
+<!-- From an API agent id -->
+<agent-3d agent-id="a_abc123" mode="floating" position="bottom-right"
+          width="320px" height="480px" camera-controls></agent-3d>
+
+<!-- Ad-hoc GLB (no agent required) -->
+<agent-3d body="./my-character.glb" auto-rotate environment="city"></agent-3d>
+```
+
+Full attribute reference: [clawhub-skills/agent-3d/SKILL.md](clawhub-skills/agent-3d/SKILL.md)
+
+## Drive the avatar from JavaScript
+
+```js
+const iframe = document.querySelector('iframe');
+
+// Make the avatar speak
+iframe.contentWindow.postMessage(
+  { v: 1, source: 'agent-host', kind: 'request', op: 'speak',
+    payload: { text: 'Hello!', sentiment: 0.8 }, id: crypto.randomUUID() },
+  '*'
+);
+
+// Trigger a gesture
+iframe.contentWindow.postMessage(
+  { v: 1, source: 'agent-host', kind: 'request', op: 'gesture',
+    payload: { name: 'wave' }, id: crypto.randomUUID() },
+  '*'
+);
+```
+
+Gestures: `wave`, `celebrate`, `shrug`, `nod`, `point`, `bow`  
+Emotes: `curiosity`, `celebration`, `patience`, `concern`, `joy`, `neutral`
 
 ## API Reference
 
 | Endpoint | Method | Description |
 |---|---|---|
-| `/api/social/platforms` | GET | List platforms, credentials, limits |
-| `/api/social/post` | POST | Create/schedule a post |
-| `/api/social/list` | GET | List posts (filter by status, platform) |
-| `/api/social/:id` | GET | Get a single post |
-| `/api/social/:id` | DELETE | Cancel a scheduled post |
-| `/api/social/analytics` | GET | Post analytics + price correlation |
-| `/api/social/upload` | POST | Upload media, get public URL |
-
-## Platform Credentials
-
-### X (Twitter)
-```json
-{
-  "consumer_key": "from developer.twitter.com",
-  "consumer_secret": "from developer.twitter.com",
-  "access_token": "user-level OAuth 1.0a token",
-  "access_secret": "user-level OAuth 1.0a secret"
-}
-```
-
-### Farcaster
-```json
-{
-  "neynar_key": "from neynar.com (free tier available)",
-  "signer_uuid": "registered signer for your FID"
-}
-```
-
-### Reddit
-```json
-{
-  "access_token": "OAuth 2.0 user token with submit scope"
-}
-```
-Settings also require: `{ "subreddit": "programming", "title": "Post Title" }`
-
-## On-Chain Price Correlation
-
-After posting about a token, call `/api/social/analytics` with the tweet URL and the Pump.fun mint address. The API returns how much the token price changed in a configurable time window around the post.
-
-```json
-{
-  "type": "price_correlation",
-  "deltaPct": 4.7,
-  "deltaVolPct": 12.3,
-  "summary": "Price up 4.70% in the 30-minute window after @user's post. Volume +12.30%."
-}
-```
-
-## Scheduling
-
-Posts scheduled via `schedule_at` are processed every minute by the platform cron. Credentials are encrypted with AES-256-GCM and cleared after publishing.
-
-## Agent Identity
-
-Pass `agent_id` in the post body to attribute posts to your ERC-8004 agent. Analytics can be filtered by agent.
+| `/api/agents` | GET | List your agents |
+| `/api/agents` | POST | Create an agent |
+| `/api/agents/:id` | GET | Get one agent (public) |
+| `/api/agents/:id` | PUT | Update agent (owner) |
+| `/api/avatars/presign` | POST | Get a signed upload URL for a GLB/glTF |
+| `/api/avatars` | POST | Register an uploaded model |
+| `/api/avatars` | GET | List your models |
+| `/api/agent-memory` | GET | Fetch agent memories |
+| `/api/agent-memory` | POST | Store a memory entry |
+| `/api/agent-memory/:id` | DELETE | Forget a memory |
+| `/api/agents/onchain/prep` | POST | Prepare an onchain registration transaction |
+| `/api/agents/onchain/confirm` | POST | Confirm after the user's wallet signs |

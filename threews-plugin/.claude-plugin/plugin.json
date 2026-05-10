@@ -1,0 +1,8 @@
+{
+  "name": "threews",
+  "description": "Build, embed, and register embodied 3D AI agents with three.ws — create agents via API, embed the <agent-3d> web component, author agent manifests, and register agents onchain via ERC-8004.",
+  "version": "1.0.0",
+  "author": "three.ws",
+  "tags": ["3d", "agent", "avatar", "web3", "erc8004", "gltf"],
+  "homepage": "https://three.ws"
+}
