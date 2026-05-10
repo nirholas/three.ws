@@ -268,11 +268,16 @@ function render(record) {
   const url = record.args?.url;
 
   document.title = `${record.tool} · paid call · three.ws`;
-  // Update OG meta
+  // Update OG meta dynamically so social-card scrapers (when they re-render)
+  // pick up the right title/image. The OG image is rendered server-side by
+  // /api/x402-pay/og — that's the version social platforms see on first share.
   document.querySelector('meta[property="og:title"]').content =
     `three.ws · ${record.tool} (${amount} USDC) · x402 paid call`;
   document.querySelector('meta[name="description"]').content =
     `${record.tool}${record.argsSummary ? ' · ' + record.argsSummary : ''} — paid ${amount} USDC on Solana, settled on-chain. View the receipt + result.`;
+  const ogUrl = `${location.origin}/api/x402-pay/og?tx=${encodeURIComponent(tx)}`;
+  document.getElementById('ogImage').content = ogUrl;
+  document.getElementById('twImage').content = ogUrl;
 
   main.innerHTML = `
     <div class="hero">

@@ -13,6 +13,7 @@ import { createServer } from 'node:http';
 import { config as dotenv } from 'dotenv';
 dotenv({ path: new URL('../.env', import.meta.url) });
 const { default: handler } = await import('../api/x402-pay.js');
+const { default: ogHandler } = await import('../api/x402-pay/og.js');
 
 const PORT = Number(process.env.PORT || 3032);
 const UPSTREAM = process.env.UPSTREAM || 'https://three.ws';
@@ -38,6 +39,15 @@ async function passthrough(req, res) {
 
 const server = createServer(async (req, res) => {
 	const path = req.url.split('?')[0];
+	if (path === '/api/x402-pay/og') {
+		try { return await ogHandler(req, res); }
+		catch (err) {
+			console.error('[x402-pay/og] handler error:', err);
+			res.statusCode = 500;
+			res.end('og handler error');
+		}
+		return;
+	}
 	if (path === '/api/x402-pay' || path === '/api/x402-pay/') {
 		try { return await handler(req, res); }
 		catch (err) {

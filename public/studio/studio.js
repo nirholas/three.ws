@@ -159,24 +159,6 @@ if (preModel) state.preselectedModel = preModel;
 	wireForm();
 	wireButtons();
 
-	window.addEventListener('pump-launch-open', (e) => {
-		const detail = e.detail || {};
-		if (!state.avatarId || state.avatarId === DEMO_AVATAR.id) {
-			toast('Please select your own avatar before launching a token.');
-			return;
-		}
-		const avatar = state.avatars.find((a) => a.id === state.avatarId);
-		if (!avatar) {
-			toast('Avatar not loaded yet — try again in a moment.');
-			return;
-		}
-		// state.avatarId is an avatars.id, not an agent_identities.id.
-		// Pass the linked agent_id when known (from /api/avatars lateral join);
-		// otherwise pass avatar_id and the backend will resolve-or-create.
-		const identity = { name: detail.formData?.name || avatar.name, ...avatar };
-		openPumpLaunchWizard(identity, avatar.agent_id || null, avatar.id, detail.formData);
-	});
-
 	await loadAvatars();
 
 	if (editId) await loadForEdit(editId);
@@ -421,6 +403,7 @@ function selectAvatar(id) {
 	renderAvatarList();
 	updatePreview(true);
 	captureBtn.disabled = false;
+	launchPanel?.avatarChanged();
 }
 
 function selectByModelUrl(url) {
@@ -532,7 +515,10 @@ function wireButtons() {
 	const actionRow = $('.action-row');
 	const formError = $('#form-error');
 
-	mountLaunchPanel(panelLaunch);
+	launchPanel = mountLaunchPanel(panelLaunch, {
+		getAvatar: () => state.avatars.find((a) => a.id === state.avatarId) || null,
+		getUser:   () => state.user,
+	});
 
 	function switchTab(active) {
 		const toBrand = active === 'brand';
