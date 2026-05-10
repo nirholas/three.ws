@@ -190,12 +190,16 @@ describe('GET /api/auth/siwe/nonce', () => {
 describe('POST /api/auth/siwe/verify', () => {
 	it('creates a session on valid message + signature (new wallet, new user)', async () => {
 		// Nonce lookup, burn nonce, wallet lookup, user lookup, insert user, insert wallet, fetch user
+		// + seedDefaultAgent (queueMicrotask): SELECT existing agents, INSERT default agent
 		sqlState.queue.push([{ nonce: TEST_NONCE, expires_at: FUTURE, consumed_at: null }]);
 		sqlState.queue.push([{ nonce: TEST_NONCE }]); // burn RETURNING
 		sqlState.queue.push([]); // no wallet
 		sqlState.queue.push([]); // no existing user
 		sqlState.queue.push([{ id: 'user-new', inserted: true }]); // insert user
 		sqlState.queue.push([]); // insert wallet
+		// seedDefaultAgent runs via queueMicrotask — may interleave with the final fetch
+		sqlState.queue.push([]); // seedDefaultAgent: SELECT existing agents → none
+		sqlState.queue.push([]); // seedDefaultAgent: INSERT default agent
 		sqlState.queue.push([{ id: 'user-new', email: `wallet-0xd8da@wallet.local`, display_name: '0xd8dA…6045', plan: 'free', avatar_url: null, created_at: '2024-01-01' }]);
 
 		const { status, body, res } = await invoke({
