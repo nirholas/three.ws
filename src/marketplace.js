@@ -13,10 +13,11 @@ let purchasedSkills = new Set();
 
 async function fetchUserPurchases() {
 	try {
-		const r = await fetch(`${API}/users/me/purchased-skills`);
+		const r = await fetch(`${API}/users/me/purchased-skills`, { credentials: 'include' });
 		if (!r.ok) return;
 		const j = await r.json();
-		purchasedSkills = new Set(j.purchases.map(p => `${p.agent_id}:${p.skill_name}`));
+		const list = j.data?.purchases || [];
+		purchasedSkills = new Set(list.map((p) => `${p.agent_id}:${p.skill}`));
 	} catch (err) {
 		console.error('[marketplace] purchases', err);
 	}
@@ -480,38 +481,18 @@ function bindEvents() {
 	bindSubmit();
 
 	document.body.addEventListener('click', async (e) => {
-		if (e.target.matches('.btn-buy')) {
-			const agentId = e.target.dataset.agentId;
-			const skillId = e.target.dataset.skillId;
-			await onBuySkill(agentId, skillId);
-		}
-
 		if (e.target.matches('.purchase-btn')) {
 			const skillName = e.target.dataset.skillName;
-			const agent = detailState?.agent;
-			const price = agent?.skill_prices?.[skillName];
-
-			if (agent && price) {
-				$('modal-skill-name').textContent = skillName;
-				$('modal-skill-price').textContent = `${(price.amount / 1e6).toFixed(2)} USDC`;
-				$('purchase-modal').classList.remove('modal-hidden');
-			}
-		}
-
-		if (e.target.matches('.close-button')) {
-			const modal = e.target.closest('#purchase-modal');
-			if (modal) modal.classList.add('modal-hidden');
+			const agentId = e.target.dataset.agentId;
+			if (agentId && skillName) await openPurchaseFlow(agentId, skillName);
 		}
 	});
 
-	const purchaseModal = $('purchase-modal');
-	if (purchaseModal) {
-		purchaseModal.addEventListener('click', (e) => {
-			if (e.target.id === 'purchase-modal') {
-				purchaseModal.classList.add('modal-hidden');
-			}
-		});
-	}
+	$('payment-modal-close')?.addEventListener('click', closePaymentModal);
+	$('payment-confirm-btn')?.addEventListener('click', handlePurchase);
+	$('payment-modal-overlay')?.addEventListener('click', (e) => {
+		if (e.target.id === 'payment-modal-overlay') closePaymentModal();
+	});
 }
 
 // ── Submit Modal ──────────────────────────────────────────────────────────
@@ -589,216 +570,218 @@ function formatDate(iso) {
 }
 
 // ── Purchase Flow ─────────────────────────────────────────────────────────
-
-async function onBuySkill(agentId, skillId) {
-    try {
-        const res = await fetch('/api/marketplace/purchase', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getAuthToken()}` },
-            body: JSON.stringify({ agent_id: agentId, skill_id: skillId }),
-        });
-        const txDetails = await res.json();
-        if (!res.ok) {
-            throw new Error(txDetails.error_description || 'Failed to initiate purchase.');
-        }
-
-        showPurchaseModal(txDetails);
-    } catch (err) {
-        console.error('Purchase initiation failed:', err);
-        alert(err.message);
-    }
-}
-
-function showPurchaseModal(txDetails) {
-    const modal = $('purchase-modal');
-    const canvas = $('qr-canvas');
-    const detailsEl = $('purchase-details');
-    
-    const url = new URL(`solana:${txDetails.recipient}`);
-    url.searchParams.set('amount', txDetails.amount);
-    url.searchParams.set('spl-token', txDetails.splToken);
-    url.searchParams.set('reference', txDetails.reference);
-    url.searchParams.set('label', txDetails.label);
-    url.searchParams.set('message', txDetails.message);
-
-    detailsEl.textContent = `${txDetails.amount} USDC for "${txDetails.label}"`;
-
-    window.QRCode.toCanvas(canvas, url.toString(), { width: 256 }, (error) => {
-        if (error) console.error(error);
-    });
-
-    modal.hidden = false;
-    // Start polling for transaction confirmation... (covered in prompt 09)
-}
-
-function getAuthToken() {
-    // Implement logic to get the user's auth token (from cookies, localStorage, etc.)
-    // This is a placeholder.
-    return '';
-}
-
-// ── Boot ──────────────────────────────────────────────────────────────────
+//
+// One-shot Solana Pay purchase: server mints a unique reference Pubkey, the
+// buyer's connected Phantom wallet sends USDC + the reference in a single tx,
+// the server verifies on-chain via findReference / validateTransfer, and the
+// (user, agent, skill) tuple lands in skill_purchases as 'confirmed'.
 
 let solanaConnection;
 let wallet;
+let solanaWeb3Mod; // lazy-loaded ESM
+let splTokenMod;
+
+let activePurchase = null; // { reference, recipient, amount, currency_mint, chain, agent_id, skill }
+
+async function loadSolanaModules() {
+	if (!solanaWeb3Mod) solanaWeb3Mod = await import('https://esm.sh/@solana/web3.js@1.95.4');
+	if (!splTokenMod) splTokenMod = await import('https://esm.sh/@solana/spl-token@0.4.8');
+	return { web3: solanaWeb3Mod, spl: splTokenMod };
+}
 
 function initWalletAdapter() {
-    try {
-        const { Connection, clusterApiUrl } = solanaWeb3;
-        const { PhantomWalletAdapter } = solanaWalletAdapterWallets;
-        solanaConnection = new Connection(clusterApiUrl('mainnet-beta'));
-        wallet = new PhantomWalletAdapter();
-    } catch (err) {
-        console.warn('[marketplace] Wallet adapter unavailable:', err.message);
-        return;
-    }
-
-    // Listen for connection changes
-    wallet.on('connect', () => {
-        console.log('Wallet connected!');
-        updateWalletUI();
-    });
-    wallet.on('disconnect', () => {
-        console.log('Wallet disconnected!');
-        updateWalletUI();
-    });
+	try {
+		const { Connection, clusterApiUrl } = solanaWeb3;
+		const { PhantomWalletAdapter } = solanaWalletAdapterWallets;
+		solanaConnection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
+		wallet = new PhantomWalletAdapter();
+	} catch (err) {
+		console.warn('[marketplace] Wallet adapter unavailable:', err.message);
+		return;
+	}
+	wallet.on('connect', updateWalletUI);
+	wallet.on('disconnect', updateWalletUI);
 }
 
-// --- UI Update Logic ---
 function updateWalletUI() {
-    const walletArea = $('payment-wallet-area');
-    const confirmBtn = $('payment-confirm-btn');
+	const walletArea = $('payment-wallet-area');
+	const confirmBtn = $('payment-confirm-btn');
+	if (!walletArea) return;
 
-    if (!wallet) {
-        walletArea.innerHTML = '<p>Wallet adapter not available.</p>';
-        return;
-    }
+	if (!wallet) {
+		walletArea.innerHTML = '<p>Wallet adapter not available.</p>';
+		if (confirmBtn) confirmBtn.disabled = true;
+		return;
+	}
 
-    if (wallet.connected) {
-        const pubKey = wallet.publicKey.toBase58();
-        walletArea.innerHTML = `
-            <p>Connected: <strong>${pubKey.slice(0, 4)}...${pubKey.slice(-4)}</strong></p>
-            <button class="btn-secondary" id="payment-disconnect-btn">Disconnect</button>
-        `;
-        $('payment-disconnect-btn').addEventListener('click', () => wallet.disconnect());
-        confirmBtn.disabled = false;
-    
-				// Make sure to remove old listeners if this function can be called multiple times
-				const newConfirmBtn = confirmBtn.cloneNode(true);
-				confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-
-				newConfirmBtn.addEventListener('click', handlePurchase);
-    } else {
-        walletArea.innerHTML = `
-            <button class="btn-primary" id="payment-connect-wallet-btn">Connect Phantom Wallet</button>
-        `;
-        $('payment-connect-wallet-btn').addEventListener('click', async () => {
-            const btn = $('payment-connect-wallet-btn');
-            btn.textContent = 'Connecting...';
-            btn.disabled = true;
-            try {
-                await wallet.connect();
-            } catch (error) {
-                console.error("Failed to connect wallet", error);
-                btn.textContent = 'Connect Phantom Wallet'; // Reset on failure
-                btn.disabled = false;
-            }
-        });
-        confirmBtn.disabled = true;
-    }
+	if (wallet.connected) {
+		const pubKey = wallet.publicKey.toBase58();
+		walletArea.innerHTML = `
+			<p>Connected: <strong>${pubKey.slice(0, 4)}…${pubKey.slice(-4)}</strong></p>
+			<button class="btn-secondary" id="payment-disconnect-btn">Disconnect</button>
+		`;
+		$('payment-disconnect-btn').addEventListener('click', () => wallet.disconnect());
+		if (confirmBtn) confirmBtn.disabled = false;
+	} else {
+		walletArea.innerHTML = `
+			<button class="btn-primary" id="payment-connect-wallet-btn">Connect Phantom Wallet</button>
+		`;
+		$('payment-connect-wallet-btn').addEventListener('click', async () => {
+			const btn = $('payment-connect-wallet-btn');
+			btn.textContent = 'Connecting…';
+			btn.disabled = true;
+			try {
+				await wallet.connect();
+			} catch (e) {
+				console.error('[marketplace] wallet connect failed', e);
+				btn.textContent = 'Connect Phantom Wallet';
+				btn.disabled = false;
+			}
+		});
+		if (confirmBtn) confirmBtn.disabled = true;
+	}
 }
 
-// Create the main purchase handler function
+function setStatus(text, kind) {
+	const el = $('payment-status');
+	if (!el) return;
+	el.textContent = text;
+	el.className = 'payment-status' + (kind ? ' ' + kind : '');
+}
+
+function closePaymentModal() {
+	$('payment-modal-overlay').hidden = true;
+	activePurchase = null;
+}
+
+async function openPurchaseFlow(agentId, skill) {
+	if (!detailState?.agent || detailState.agent.id !== agentId) {
+		alert('Agent not loaded; refresh and try again.');
+		return;
+	}
+	const price = detailState.agent.skill_prices?.[skill];
+	if (!price) {
+		alert('No price set for this skill.');
+		return;
+	}
+
+	$('payment-skill-name').textContent = skill;
+	$('payment-agent-name').textContent = detailState.agent.name;
+	$('payment-price-display').textContent = `${(Number(price.amount) / 1e6).toFixed(2)} USDC`;
+	setStatus('');
+	$('payment-modal-overlay').hidden = false;
+	updateWalletUI();
+}
+
 async function handlePurchase() {
-    const statusEl = $('payment-status');
-    const confirmBtn = $('payment-confirm-btn');
-    confirmBtn.disabled = true;
-    statusEl.textContent = 'Building transaction...';
-    statusEl.className = 'payment-status';
+	const confirmBtn = $('payment-confirm-btn');
+	if (!wallet?.connected || !wallet.publicKey) {
+		setStatus('Connect a wallet first.', 'err');
+		return;
+	}
+	if (!detailState?.agent) return;
 
-    const intentId = document.getElementById('payment-modal-overlay').dataset.intentId;
-    if (!intentId) {
-        statusEl.textContent = 'Error: Missing payment intent ID.';
-        statusEl.classList.add('err');
-        return;
-    }
+	confirmBtn.disabled = true;
+	setStatus('Creating purchase…');
 
-    try {
-        const intent = await getCurrentIntentDetails(intentId); // Placeholder
-        if (!wallet.publicKey) throw new Error('Wallet is not connected.');
+	const agentId = detailState.agent.id;
+	const skill = $('payment-skill-name').textContent;
 
-        statusEl.textContent = 'Please approve the transaction in your wallet...';
-        const transaction = await buildUsdcTransferTransaction(intent, wallet.publicKey);
-        const txid = await wallet.sendTransaction(transaction, solanaConnection);
-        
-        statusEl.textContent = `Waiting for on-chain confirmation...`;
-        const confirmation = await solanaConnection.confirmTransaction(txid, 'confirmed');
-        if (confirmation.value.err) throw new Error('On-chain transaction failed.');
+	let purchase;
+	try {
+		const r = await fetch('/api/marketplace/purchase', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			credentials: 'include',
+			body: JSON.stringify({ agent_id: agentId, skill }),
+		});
+		const j = await r.json();
+		if (!r.ok) throw new Error(j.error_description || j.error || 'Failed to create purchase');
+		purchase = j.data;
 
-        statusEl.textContent = 'Verifying purchase with server...';
+		if (purchase.already_owned) {
+			setStatus('Already purchased. Refreshing…', 'ok');
+			await fetchUserPurchases();
+			loadDetail(agentId);
+			setTimeout(closePaymentModal, 1200);
+			return;
+		}
+	} catch (e) {
+		console.error('[marketplace] purchase create failed', e);
+		setStatus(e.message, 'err');
+		confirmBtn.disabled = false;
+		return;
+	}
 
-        const verifyRes = await fetch('/api/payments/confirm', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({
-                intent_id: intentId,
-                transaction_signature: txid,
-            }),
-        });
+	activePurchase = { ...purchase, agent_id: agentId, skill };
 
-        const verifyBody = await verifyRes.json();
-        if (!verifyRes.ok) {
-            throw new Error(verifyBody.error_description || 'Failed to verify purchase.');
-        }
+	try {
+		setStatus('Building transfer…');
+		const tx = await buildSplTransferWithReference({
+			payer: wallet.publicKey,
+			recipient: purchase.recipient,
+			mint: purchase.currency_mint,
+			amount: BigInt(purchase.amount),
+			reference: purchase.reference,
+		});
 
-        statusEl.textContent = 'Success! Skill unlocked.';
-        statusEl.classList.add('ok');
-        
-        // In the next prompt, we will add logic to update the UI permanently
-        // fireEvent('skill:purchased', { skillName: intent.payload.skill });
+		setStatus('Approve in wallet…');
+		const txid = await wallet.sendTransaction(tx, solanaConnection);
 
-        setTimeout(closePaymentModal, 2000);
+		setStatus('Waiting for on-chain confirmation…');
+		await solanaConnection.confirmTransaction(txid, 'confirmed');
 
-    } catch (error) {
-        statusEl.textContent = `Error: ${error.message}`;
-        statusEl.classList.add('err');
-        console.error("Purchase failed", error);
-        confirmBtn.disabled = false; // Re-enable on failure
-    }
+		setStatus('Verifying with server…');
+		const ok = await pollConfirm(purchase.reference);
+		if (!ok) throw new Error('Server failed to verify the transaction.');
+
+		setStatus('✓ Skill unlocked.', 'ok');
+		await fetchUserPurchases();
+		loadDetail(agentId);
+		setTimeout(closePaymentModal, 1500);
+	} catch (e) {
+		console.error('[marketplace] purchase failed', e);
+		setStatus(e.message || 'Purchase failed', 'err');
+		confirmBtn.disabled = false;
+	}
 }
 
-// A placeholder function - you'd need to implement this
-// or pass the intent object around properly.
-async function getCurrentIntentDetails(intentId) {
-    // In a real app, you might re-fetch this from your server or have it stored
-    // For now, we'll reconstruct it from the UI for this example
-    const priceText = $('payment-price-display').textContent;
-    const amount = Math.round(parseFloat(priceText.replace(' USDC', '')) * 1e6);
-    // You would also need to get the recipient address and mint from the intent.
-    // This highlights the need for better state management than just the DOM.
-    
-    // For now, let's return a dummy object. The real implementation would be more robust.
-    return {
-        recipient_address: '...', // You would need to fetch this
-        amount: String(amount),
-        currency_mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyB7u6a' // USDC
-    }
+async function buildSplTransferWithReference({ payer, recipient, mint, amount, reference }) {
+	const { web3, spl } = await loadSolanaModules();
+	const { PublicKey, Transaction } = web3;
+	const { getAssociatedTokenAddress, createTransferInstruction } = spl;
+
+	const recipientKey = new PublicKey(recipient);
+	const mintKey = new PublicKey(mint);
+	const referenceKey = new PublicKey(reference);
+
+	const fromAta = await getAssociatedTokenAddress(mintKey, payer);
+	const toAta = await getAssociatedTokenAddress(mintKey, recipientKey);
+
+	const ix = createTransferInstruction(fromAta, toAta, payer, amount);
+	// Solana Pay: append the reference as a readonly, non-signer key so the
+	// server can later locate this tx via getSignaturesForAddress(reference).
+	ix.keys.push({ pubkey: referenceKey, isSigner: false, isWritable: false });
+
+	const { blockhash } = await solanaConnection.getLatestBlockhash('confirmed');
+	const tx = new Transaction({ feePayer: payer, recentBlockhash: blockhash }).add(ix);
+	return tx;
 }
 
-
-function openPaymentModal(intent, skillName) {
-    // Store intent for later use
-    document.getElementById('payment-modal-overlay').dataset.intentId = intent.intent_id;
-
-    // Populate modal
-    $('payment-skill-name').textContent = skillName;
-    $('payment-agent-name').textContent = detailState.agent.name;
-    const priceInUSDC = (Number(intent.amount) / 1e6).toFixed(2);
-    $('payment-price-display').textContent = `${priceInUSDC} USDC`;
-
-		updateWalletUI(); // Set the initial state of the wallet UI
-    $('payment-modal-overlay').hidden = false;
+// Poll confirm endpoint until status='confirmed' or timeout (~60s).
+async function pollConfirm(reference) {
+	const deadline = Date.now() + 60_000;
+	while (Date.now() < deadline) {
+		const r = await fetch(`/api/marketplace/purchase/${reference}/confirm`, {
+			method: 'POST',
+			credentials: 'include',
+		});
+		const j = await r.json().catch(() => ({}));
+		if (r.ok && j.data?.status === 'confirmed') return true;
+		if (r.status === 409) throw new Error(j.error_description || 'Transaction did not match expected payment');
+		await new Promise((res) => setTimeout(res, 2500));
+	}
+	return false;
 }
 
 function render() {
@@ -834,6 +817,7 @@ function init() {
 	loadList(true);
 	initPlugins();
 	initWalletAdapter();
+	fetchUserPurchases();
 	render();
 }
 
