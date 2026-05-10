@@ -13,6 +13,7 @@ import { MEMORY_TYPES } from './agent-memory.js';
 import { mountPumpFunCard } from './agent-home-pumpfun.js';
 import { mountAgentSolanaWalletCard } from './agent-solana-wallet.js';
 import { mountAgentVanityGrinderCard } from './agent-vanity-grinder.js';
+import { mountAgentEthVanityCard } from './agent-eth-vanity-card.js';
 import { mountClaimsPanel } from './agent-home-claims.js';
 
 const ACTION_ICONS = {
@@ -226,6 +227,14 @@ export class AgentHome {
 						walletCard?.refresh?.();
 						mountPumpIfReady();
 					},
+				});
+			} catch {
+				/* card is optional */
+			}
+			try {
+				mountAgentEthVanityCard({
+					panel,
+					identity: this.identity,
 				});
 			} catch {
 				/* card is optional */
