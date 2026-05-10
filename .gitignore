@@ -12,6 +12,9 @@ npm-debug.log*
 
 .env*.local
 
+# agent-payments-sdk — commit dist so Vercel skips tsup on every install
+!agent-payments-sdk/dist
+
 # CharacterStudio — vendored fork
 character-studio/node_modules
 character-studio/build

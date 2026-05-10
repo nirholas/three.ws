@@ -23,10 +23,18 @@ avatar
 dist-lib
 dist-artifact
 
-public/screenshots
-public/skills.mp4
+# Build-time only — not needed by API functions at runtime
+tasks
+data
+solana-agent-sdk
+workers
+agent-payments-sdk/src
 
+# Test/dev tooling
 vitest.config.js
 vite.config.artifact.js
 playwright.config.*
 gitpretty.sh
+
+public/screenshots
+public/skills.mp4
