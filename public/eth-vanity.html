@@ -401,9 +401,11 @@
 						Same factory + same initCode + this salt → same address, on every EVM chain that has this factory deployed.
 					</div>
 				</div>
+				<div id="assign-host"></div>
 			`;
 			$('result').hidden = false;
 			$('result').innerHTML = html;
+			renderAssignBlock(result, p, s);
 
 			$('copy-salt').addEventListener('click', () => copy(result.salt, 'copy-salt', 'Copy salt'));
 			$('copy-addr').addEventListener('click', () => copy(result.address, 'copy-addr', 'Copy address'));
@@ -436,6 +438,135 @@
 				$(btnId).textContent = 'Copied!';
 				setTimeout(() => { $(btnId).textContent = restoreLabel; }, 1400);
 			} catch {}
+		}
+
+		// ── Assign to agent ───────────────────────────────────────────────
+		async function renderAssignBlock(result, p, s) {
+			const host = document.getElementById('assign-host');
+			if (!host) return;
+
+			let agents = [];
+			try {
+				const r = await fetch('/api/agents', { credentials: 'include' });
+				if (r.status === 401) {
+					host.innerHTML = `
+						<div class="card" style="margin-top:1rem">
+							<h2>Assign to an agent</h2>
+							<p class="desc" style="margin:0">
+								<a href="/login.html?next=${encodeURIComponent(location.pathname)}" style="color:#a78bfa">Sign in</a>
+								to assign this CREATE2 vanity to one of your agents — they'll display it on their profile and you can deploy it from the agent home page.
+							</p>
+						</div>`;
+					return;
+				}
+				if (!r.ok) throw new Error(`agents fetch ${r.status}`);
+				const data = await r.json();
+				agents = data.agents || [];
+			} catch (e) {
+				host.innerHTML = `<div class="card" style="margin-top:1rem"><h2>Assign to an agent</h2><p class="desc" style="color:#f87171;margin:0">Could not load your agents: ${esc(e.message)}</p></div>`;
+				return;
+			}
+			if (!agents.length) {
+				host.innerHTML = `
+					<div class="card" style="margin-top:1rem">
+						<h2>Assign to an agent</h2>
+						<p class="desc" style="margin:0">No agents yet. <a href="/create.html" style="color:#a78bfa">Create one</a> and come back to assign this address.</p>
+					</div>`;
+				return;
+			}
+
+			const initCode = ($('initcode-raw').value || '').trim();
+			const hasInitCode = /^0x[0-9a-f]+$/i.test(initCode) && initCode.length % 2 === 0;
+			const deployerLabel = (document.querySelector('.preset[data-deployer]')?.dataset?.name && $('deployer').value.toLowerCase() ===
+				document.querySelector('.preset.active')?.dataset?.deployer?.toLowerCase()) ? null : null;
+			// Find the matching preset label by deployer address
+			let presetLabel = null;
+			document.querySelectorAll('.preset[data-deployer]').forEach((b) => {
+				if (b.dataset.deployer.toLowerCase() === $('deployer').value.toLowerCase()) presetLabel = b.dataset.name;
+			});
+
+			host.innerHTML = `
+				<div class="card" style="margin-top:1rem">
+					<h2>Assign to an agent</h2>
+					<p class="desc" style="margin:0 0 .5rem">
+						Save this CREATE2 record (deployer + salt + init code hash + predicted address) to one of your agents.
+						No private keys are stored — the predicted address is just a deterministic function of the inputs.
+						${hasInitCode ? 'Raw init code will be saved alongside, enabling one-click deploy from the agent home page (Arachnid only).' : 'No raw init code provided — you\'ll be able to deploy from your own tooling.'}
+					</p>
+					<select id="assign-agent" style="margin-top:.4rem">
+						<option value="">— select an agent —</option>
+						${agents.map((a) => `<option value="${esc(a.id)}">${esc(a.name)}${a.meta?.eth_vanity ? ' (already has CREATE2 vanity)' : ''}</option>`).join('')}
+					</select>
+					<div class="actions">
+						<button id="assign-btn" class="btn primary" type="button" disabled>Assign to agent</button>
+					</div>
+					<div id="assign-status" style="margin-top:.5rem;font-size:.8rem"></div>
+				</div>
+			`;
+
+			const sel = document.getElementById('assign-agent');
+			const btn = document.getElementById('assign-btn');
+			const status = document.getElementById('assign-status');
+			sel.addEventListener('change', () => { btn.disabled = !sel.value; });
+
+			btn.addEventListener('click', async () => {
+				btn.disabled = true;
+				status.textContent = 'assigning…';
+				status.style.color = '#888';
+				const payload = {
+					deployer:          result.deployer,
+					salt:              result.salt,
+					init_code_hash:    result.initCodeHash,
+					init_code:         hasInitCode ? initCode.toLowerCase() : null,
+					predicted_address: result.address,
+					prefix:            p || null,
+					suffix:            s || null,
+					deployer_label:    presetLabel,
+				};
+				try {
+					let r = await fetch(`/api/agents/${encodeURIComponent(sel.value)}/eth-vanity`, {
+						method: 'POST',
+						credentials: 'include',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify(payload),
+					});
+					// On 409, ask before replacing.
+					if (r.status === 409) {
+						if (!confirm('This agent already has a CREATE2 vanity record. Replace it?')) {
+							btn.disabled = false; status.textContent = ''; return;
+						}
+						const del = await fetch(`/api/agents/${encodeURIComponent(sel.value)}/eth-vanity`, { method: 'DELETE', credentials: 'include' });
+						if (!del.ok) {
+							const dd = await del.json().catch(() => ({}));
+							status.innerHTML = `<span style="color:#f87171">Could not remove existing record: ${esc(dd.error_description || del.status)}</span>`;
+							btn.disabled = false; return;
+						}
+						r = await fetch(`/api/agents/${encodeURIComponent(sel.value)}/eth-vanity`, {
+							method: 'POST', credentials: 'include',
+							headers: { 'content-type': 'application/json' },
+							body: JSON.stringify(payload),
+						});
+					}
+					const data = await r.json().catch(() => ({}));
+					if (!r.ok) {
+						status.innerHTML = `<span style="color:#f87171">Failed: ${esc(data.error_description || r.status)}</span>`;
+						btn.disabled = false;
+						return;
+					}
+					const agentName = sel.options[sel.selectedIndex].text.replace(/\s*\(already.*\)$/, '');
+					host.innerHTML = `
+						<div class="card" style="margin-top:1rem;background:rgba(74,222,128,0.06);border-color:rgba(74,222,128,0.2)">
+							<h2 style="color:#4ade80">✓ Assigned to ${esc(agentName)}</h2>
+							<p class="desc" style="margin:0">
+								<a href="/agent/${esc(sel.value)}" style="color:#a78bfa">Open agent →</a> &nbsp;
+								The CREATE2 record is saved. Deploy it from the agent home page when you're ready.
+							</p>
+						</div>`;
+				} catch (e) {
+					status.innerHTML = `<span style="color:#f87171">Network error: ${esc(e.message)}</span>`;
+					btn.disabled = false;
+				}
+			});
 		}
 	</script>
 </body>

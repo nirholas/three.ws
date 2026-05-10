@@ -22,6 +22,119 @@
 			rel="stylesheet"
 		/>
 		<style>
+			.market-wip-banner {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				padding: 10px 24px;
+				background: linear-gradient(90deg, rgba(253, 224, 71, 0.08), rgba(253, 224, 71, 0.02));
+				border-bottom: 1px solid rgba(253, 224, 71, 0.2);
+				color: #fde68a;
+				font-size: 13px;
+				line-height: 1.4;
+			}
+			.market-wip-banner .market-wip-icon {
+				flex: 0 0 auto;
+				width: 22px;
+				height: 22px;
+				border-radius: 50%;
+				background: rgba(253, 224, 71, 0.12);
+				color: #fde047;
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				font-weight: 700;
+				font-size: 13px;
+			}
+			.market-wip-banner strong {
+				color: #fef3c7;
+			}
+			.market-wip-banner .market-wip-text {
+				flex: 1;
+				min-width: 0;
+			}
+
+			.market-card-avatar {
+				display: flex;
+				flex-direction: column;
+				background: var(--mk-panel, #111);
+				border: 1px solid var(--mk-border, #1f1f1f);
+				border-radius: var(--mk-radius, 14px);
+				overflow: hidden;
+				cursor: pointer;
+				transition: border-color 0.15s ease, transform 0.15s ease;
+			}
+			.market-card-avatar:hover {
+				border-color: var(--mk-border-2, #2a2a2a);
+				transform: translateY(-1px);
+			}
+			.market-card-avatar .thumb {
+				aspect-ratio: 1 / 1;
+				background: #0d0d0d center/cover no-repeat;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 40px;
+				color: rgba(255, 255, 255, 0.25);
+				border-bottom: 1px solid var(--mk-border, #1f1f1f);
+			}
+			.market-card-avatar .body {
+				padding: 12px 14px;
+				display: flex;
+				flex-direction: column;
+				gap: 6px;
+				min-width: 0;
+			}
+			.market-card-avatar .title {
+				font-size: 14px;
+				font-weight: 600;
+				color: var(--mk-text, #f4f4f5);
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+			.market-card-avatar .desc {
+				font-size: 12px;
+				color: var(--mk-text-2, #a1a1aa);
+				display: -webkit-box;
+				-webkit-line-clamp: 2;
+				-webkit-box-orient: vertical;
+				overflow: hidden;
+				min-height: 30px;
+			}
+			.market-card-avatar .footer {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				font-size: 11px;
+				color: var(--mk-text-3, #71717a);
+				margin-top: 2px;
+			}
+			.market-card-avatar .avatar-pill {
+				background: rgba(125, 211, 252, 0.1);
+				color: #7dd3fc;
+				padding: 2px 8px;
+				border-radius: 999px;
+				font-size: 10px;
+				font-weight: 600;
+				letter-spacing: 0.02em;
+			}
+			.market-grid-section-title {
+				grid-column: 1 / -1;
+				font-size: 13px;
+				font-weight: 600;
+				color: var(--mk-text-2, #a1a1aa);
+				margin: 18px 0 4px;
+				display: flex;
+				align-items: baseline;
+				gap: 8px;
+			}
+			.market-grid-section-title .count {
+				font-size: 11px;
+				color: var(--mk-text-3, #71717a);
+				font-weight: 500;
+			}
+
 			.price-badge {
 				display: inline-block;
 				margin-left: 8px;
@@ -147,6 +260,14 @@
 		</aside>
 
 		<main class="market-main" id="market-main">
+			<div class="market-wip-banner" role="status">
+				<span class="market-wip-icon" aria-hidden="true">!</span>
+				<div class="market-wip-text">
+					<strong>Work in progress.</strong>
+					This marketplace is still being built — features, paid skills, and listings may be incomplete or change.
+				</div>
+			</div>
+
 			<!-- Discovery view -->
 			<section class="market-discovery" id="market-discovery">
 				<header class="market-topbar">

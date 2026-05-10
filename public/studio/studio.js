@@ -173,7 +173,7 @@ if (preModel) state.preselectedModel = preModel;
 		// Pass the linked agent_id when known (from /api/avatars lateral join);
 		// otherwise pass avatar_id and the backend will resolve-or-create.
 		const identity = { name: detail.formData?.name || avatar.name, ...avatar };
-		openPumpLaunchWizard(identity, avatar.agent_id || null, avatar.id);
+		openPumpLaunchWizard(identity, avatar.agent_id || null, avatar.id, detail.formData);
 	});
 
 	await loadAvatars();

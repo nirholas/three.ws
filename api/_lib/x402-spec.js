@@ -69,7 +69,10 @@ export function paymentRequirements() {
 			network: NETWORK_BASE_MAINNET,
 			payTo: env.X402_PAY_TO_BASE,
 			asset: env.X402_ASSET_ADDRESS_BASE,
-			extra: { name: 'USDC', version: '2', decimals: 6 },
+			// `name` MUST match the on-chain EIP-712 domain. Base USDC's domain
+			// name is "USD Coin" (not "USDC"); using "USDC" here makes the
+			// facilitator recompute the wrong domain hash → invalid signature.
+			extra: { name: 'USD Coin', version: '2', decimals: 6 },
 		});
 	}
 	if (env.X402_PAY_TO_SOLANA) {
