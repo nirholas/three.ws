@@ -1,6 +1,10 @@
 node_modules
 dist
-dist-lib
+# Ignore all of dist-lib except the lib artifact + stamp so Vercel can skip
+# the lib build when src/ is unchanged (build-lib-cached.mjs checks these).
+dist-lib/*
+!dist-lib/agent-3d.js
+!dist-lib/.lib-src-hash
 dist-artifact
 .cache
 .vercel
