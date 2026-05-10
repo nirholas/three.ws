@@ -12,11 +12,21 @@ import { insertNotification } from '../../_lib/notify.js';
 
 const HANDLERS = { echo: async (args) => ({ ok: true, echoed: args }) };
 
-function priceFor(agent, skill) {
+// C1 — x402 bridge: prices come from the canonical agent_skill_prices table
+// first (the marketplace's source of truth), with the legacy meta.skill_prices
+// jsonb as a fallback for agents priced before the marketplace migration.
+async function priceFor(agent, skill) {
+	const [row] = await sql`
+		SELECT amount, currency_mint, chain
+		FROM agent_skill_prices
+		WHERE agent_id = ${agent.id} AND skill = ${skill} AND is_active = true
+	`;
+	if (row) return { amount: String(row.amount), currency: row.currency_mint, chain: row.chain };
+
 	const prices = agent.meta?.skill_prices || {};
-	const defaultPrice = agent.meta?.payments?.default_price;
 	const fromMap = prices[skill];
 	if (fromMap?.amount && fromMap?.currency) return fromMap;
+	const defaultPrice = agent.meta?.payments?.default_price;
 	if (defaultPrice?.amount && defaultPrice?.currency) return defaultPrice;
 	const cluster = agent.meta?.payments?.cluster || 'mainnet';
 	return { amount: '10000', currency: cluster === 'devnet' ? '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU' : 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v' };
@@ -45,12 +55,19 @@ async function handleInvoke(req, res) {
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
 	const body = parse(invokeSchema, await readJson(req));
-	const [agent] = await sql`select id, user_id, name, meta from agent_identities where id = ${body.agent_id} and deleted_at is null limit 1`;
+	const [agent] = await sql`select id, user_id, name, meta, skills from agent_identities where id = ${body.agent_id} and deleted_at is null limit 1`;
 	if (!agent) return error(res, 404, 'not_found', 'agent not found');
-	if (!agent.meta?.payments?.configured) return error(res, 409, 'precondition_failed', 'agent has not enabled payments');
-	if (!HANDLERS[body.skill]) return error(res, 404, 'unknown_skill', `skill "${body.skill}" is not registered`);
 
-	const price = priceFor(agent, body.skill);
+	// Determine if the skill is callable: registered server handler OR a skill
+	// declared on the agent's skills[] (delegated to skill-runtime). Hard-fail
+	// only when the agent has no record of this skill at all.
+	const handlerExists = !!HANDLERS[body.skill];
+	const skillDeclared = Array.isArray(agent.skills) && agent.skills.includes(body.skill);
+	if (!handlerExists && !skillDeclared) {
+		return error(res, 404, 'unknown_skill', `skill "${body.skill}" is not registered on this agent`);
+	}
+
+	const price = await priceFor(agent, body.skill);
 	const paid = await verifyPaid(req, { agentId: agent.id, skill: body.skill, expectedAmount: price.amount, expectedCurrency: price.currency });
 	if (!paid) return emit402(res, { agent, skill: body.skill, amount: price.amount, currency: price.currency });
 
@@ -70,7 +87,19 @@ async function handleInvoke(req, res) {
 		net_amount: net,
 		currency_mint: paid.currency,
 	});
-	const result = await HANDLERS[body.skill](body.args, { agent, caller: auth });
+	let result;
+	if (handlerExists) {
+		result = await HANDLERS[body.skill](body.args, { agent, caller: auth });
+	} else {
+		// Delegate to the in-process skill-runtime. The skill name on the agent
+		// is treated as a "<skill>.<tool>" qualifier; if the caller passed bare
+		// args (no tool), default to the skill name as the tool too — runtime
+		// will surface a descriptive error if there's no matching export.
+		const { makeRuntime } = await import('../../_lib/skill-runtime.js');
+		const runtime = makeRuntime({ agentId: agent.id, signerAddress: paid.payerAddress || null });
+		const tool = typeof body.args?._tool === 'string' ? body.args._tool : body.skill;
+		result = await runtime.invoke(`${body.skill}.${tool}`, body.args);
+	}
 	return json(res, 200, { ok: true, intent_id: paid.intentId, amount: paid.amount, currency: paid.currency, result });
 }
 
@@ -90,14 +119,18 @@ async function handleManifest(req, res) {
 
 	const [agent] = await sql`select id, name, meta from agent_identities where id = ${agent_id} and deleted_at is null limit 1`;
 	if (!agent) return error(res, 404, 'not_found', 'agent not found');
-	if (!agent.meta?.payments?.configured) return error(res, 409, 'no_payments', 'agent has not enabled payments');
 
-	const cluster = agent.meta.payments.cluster || 'mainnet';
-	const fallbackCurrency = cluster === 'devnet' ? '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU' : 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
-	const prices = agent.meta.skill_prices || {};
-	const def = agent.meta.payments.default_price;
-	const price = prices[skill] || def || { amount: '10000', currency: fallbackCurrency };
+	// Manifest is callable as long as the skill is priced — either in the
+	// canonical agent_skill_prices table or the legacy meta.skill_prices map.
+	const [hasMarketplacePrice] = await sql`
+		SELECT 1 FROM agent_skill_prices WHERE agent_id = ${agent.id} AND skill = ${skill} AND is_active = true
+	`;
+	const hasMetaPrice = !!(agent.meta?.skill_prices?.[skill] || agent.meta?.payments?.default_price);
+	if (!hasMarketplacePrice && !hasMetaPrice) {
+		return error(res, 409, 'no_payments', 'this skill is not priced');
+	}
 
+	const price = await priceFor(agent, skill);
 	return manifestOnly(res, { agent, skill, amount: price.amount, currency: price.currency });
 }
 

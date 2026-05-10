@@ -8,7 +8,11 @@ import { protocol } from '../agent-protocol.js';
 import { PaymentRequiredError, alwaysAllow } from './skill-access.js';
 
 export { PaymentRequiredError, alwaysAllow } from './skill-access.js';
-export { fromAgentDetail as skillAccessFromAgentDetail, remoteCheck as skillAccessRemote } from './skill-access.js';
+export {
+	fromAgentDetail as skillAccessFromAgentDetail,
+	remoteCheck as skillAccessRemote,
+	autoBuying as skillAccessAutoBuying,
+} from './skill-access.js';
 
 const MAX_TOOL_ITERATIONS = 8;
 

@@ -1636,16 +1636,35 @@ body.market-page {
 	opacity: 1;
 }
 
-/* ── My Agents states ───────────────────────────────────────── */
+/* ── My Agents / Skills tab heads ───────────────────────────── */
 
+.market-topbar {
+	align-items: center;
+}
+.market-topbar .market-section-heading {
+	margin: 0;
+	white-space: nowrap;
+}
 .market-mine-head {
 	display: flex;
 	flex-direction: column;
 	gap: 2px;
+	min-width: 0;
+}
+.market-mine-head .market-section-heading {
+	margin: 0;
+	font-size: 18px;
+	font-weight: 600;
+	line-height: 1.2;
+	white-space: nowrap;
 }
 .market-mine-sub {
 	font-size: 12px;
 	color: var(--mk-text-3);
+	line-height: 1.2;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .market-mine-empty,
