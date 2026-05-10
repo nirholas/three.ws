@@ -142,6 +142,8 @@ const appConfig = {
 					'/reputation/': resolve(root, 'public/reputation/index.html'),
 					'/hydrate': resolve(root, 'public/hydrate/index.html'),
 					'/hydrate/': resolve(root, 'public/hydrate/index.html'),
+					'/artifact': resolve(root, 'public/artifact/index.html'),
+					'/artifact/': resolve(root, 'public/artifact/index.html'),
 					// BEGIN:DISCOVER_ROUTE
 					'/my-agents': resolve(root, 'public/my-agents/index.html'),
 					'/my-agents/': resolve(root, 'public/my-agents/index.html'),

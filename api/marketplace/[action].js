@@ -271,7 +271,12 @@ async function handleList(req, res, url) {
 		       EXISTS (
 		         SELECT 1 FROM agent_skill_prices asp
 		         WHERE asp.agent_id = ai.id AND asp.is_active = true
-		       ) AS has_paid_skills
+		       ) AS has_paid_skills,
+		       (SELECT count(*)::int FROM skill_purchases sp
+		        WHERE sp.agent_id = ai.id AND sp.status = 'confirmed') AS buyers_total,
+		       (SELECT count(*)::int FROM skill_purchases sp
+		        WHERE sp.agent_id = ai.id AND sp.status = 'confirmed'
+		          AND sp.confirmed_at > now() - interval '24 hours') AS buyers_24h
 		FROM agent_identities ai
 		LEFT JOIN avatars av ON av.id = ai.avatar_id AND av.deleted_at IS NULL
 		LEFT JOIN users u ON u.id = ai.user_id
@@ -314,7 +319,12 @@ async function handleDetail(req, res, id) {
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
 	const [row] = await sql`
-		SELECT a.*, u.display_name AS author_name, u.avatar_url AS author_avatar
+		SELECT a.*, u.display_name AS author_name, u.avatar_url AS author_avatar,
+		       (SELECT count(*)::int FROM skill_purchases sp
+		        WHERE sp.agent_id = a.id AND sp.status = 'confirmed') AS buyers_total,
+		       (SELECT count(*)::int FROM skill_purchases sp
+		        WHERE sp.agent_id = a.id AND sp.status = 'confirmed'
+		          AND sp.confirmed_at > now() - interval '24 hours') AS buyers_24h
 		FROM agent_identities a
 		LEFT JOIN users u ON u.id = a.user_id
 		WHERE a.id = ${id} AND a.deleted_at IS NULL
@@ -590,6 +600,8 @@ function toCard(row) {
 		skills: row.skills || [],
 		forks_count: row.forks_count || 0,
 		views_count: row.views_count || 0,
+		buyers_total: row.buyers_total || 0,
+		buyers_24h: row.buyers_24h || 0,
 		published_at: row.published_at,
 		created_at: row.created_at,
 		has_paid_skills: row.has_paid_skills || false,

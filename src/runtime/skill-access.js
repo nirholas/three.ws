@@ -90,3 +90,82 @@ export function remoteCheck({ agentId, fetchImpl = fetch }) {
 		}
 	};
 }
+
+/**
+ * Build a `skillAccess` checker that auto-purchases unowned skills using a
+ * buyer-agent's server-stored Solana wallet via /api/marketplace/purchase-as-agent.
+ *
+ * Useful for autonomous agents (cron jobs, headless agent-to-agent flows) where
+ * a human-in-the-loop purchase modal isn't possible.
+ *
+ * Order of operations on each call:
+ *   1. Check if the buyer already owns the skill — if so, allow.
+ *   2. Try to auto-purchase via the server endpoint.
+ *   3. If purchase confirms, allow.
+ *   4. Otherwise deny with the original 402-style payload so the runtime can
+ *      surface a `skill:payment-required` event.
+ *
+ * @param {{
+ *   buyerAgentId: string,    // the agent whose wallet pays
+ *   sellerAgentId: string,   // the agent whose skill is being purchased
+ *   fetchImpl?: typeof fetch,
+ * }} opts
+ */
+export function autoBuying({ buyerAgentId, sellerAgentId, fetchImpl = fetch }) {
+	return async (toolName) => {
+		// 1. Already-owned check
+		try {
+			const url =
+				`/api/marketplace/check-skill-access?agent_id=${encodeURIComponent(sellerAgentId)}` +
+				`&skill=${encodeURIComponent(toolName)}`;
+			const r = await fetchImpl(url, { credentials: 'include' });
+			if (r.ok) {
+				const j = await r.json();
+				if (j?.has_access) return { allowed: true };
+			} else if (r.status === 400) {
+				return { allowed: true };
+			}
+		} catch {
+			return { allowed: true };
+		}
+
+		// 2. Attempt auto-purchase
+		try {
+			const r = await fetchImpl('/api/marketplace/purchase-as-agent', {
+				method: 'POST',
+				credentials: 'include',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({
+					buyer_agent_id:  buyerAgentId,
+					seller_agent_id: sellerAgentId,
+					skill:           toolName,
+				}),
+			});
+			if (r.ok) {
+				const j = await r.json();
+				const status = j?.data?.status;
+				if (status === 'confirmed' || j?.data?.already_owned) {
+					return { allowed: true, autoPurchased: !j?.data?.already_owned };
+				}
+			}
+			let reason;
+			try {
+				const j = await r.json();
+				reason = j?.error_description || j?.error;
+			} catch {
+				reason = `purchase failed (HTTP ${r.status})`;
+			}
+			return {
+				allowed: false,
+				skill: toolName,
+				message: `Auto-purchase failed: ${reason}`,
+			};
+		} catch (e) {
+			return {
+				allowed: false,
+				skill: toolName,
+				message: `Auto-purchase error: ${e.message}`,
+			};
+		}
+	};
+}
