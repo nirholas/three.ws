@@ -95,6 +95,7 @@ const appConfig = {
 				// END:DISCOVER_ROUTE
 				'vanity-wallet': resolve(__dirname, 'public/vanity-wallet.html'),
 				'eth-vanity': resolve(__dirname, 'public/eth-vanity.html'),
+				pay: resolve(__dirname, 'public/pay/index.html'),
 			},
 		},
 	},
@@ -132,6 +133,8 @@ const appConfig = {
 					'/discover/': resolve(root, 'public/discover/index.html'),
 					'/marketplace': resolve(root, 'marketplace.html'),
 					'/marketplace/': resolve(root, 'marketplace.html'),
+					'/pay': resolve(root, 'public/pay/index.html'),
+					'/pay/': resolve(root, 'public/pay/index.html'),
 					'/explore': resolve(root, 'public/discover/index.html'),
 					'/explore/': resolve(root, 'public/discover/index.html'),
 					// END:DISCOVER_ROUTE
