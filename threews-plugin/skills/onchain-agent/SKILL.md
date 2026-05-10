@@ -38,6 +38,18 @@ The ERC-8004 Identity Registry is deployed at the same address on every chain (C
 
 **Recommended for new registrations:** Base (low fees, fast finality).
 
+## Registry contract addresses
+
+The ERC-8004 Identity Registry is deployed via CREATE2 at deterministic addresses:
+
+| Network | Address |
+|---------|---------|
+| **Mainnet** (all EVM chains above) | `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432` |
+| **Testnet** (Sepolia, Base Sepolia, etc.) | `0x8004A818BFB912233c491871b3d84c89A494BD9e` |
+
+Use the mainnet address on Base (chainId 8453), Ethereum (1), Arbitrum (42161), Polygon (137), etc.
+Use the testnet address on Base Sepolia (84532), Ethereum Sepolia (11155111), etc.
+
 ## Contract interface
 
 The registration function is:
@@ -101,7 +113,10 @@ const REGISTRY_ABI = [
 ];
 
 // Use the same address on every supported chain
-const REGISTRY_ADDRESS = '0x...'; // canonical ERC-8004 registry — verify at https://three.ws/docs/erc8004
+// Mainnet (Base, Ethereum, Arbitrum, Polygon, BNB, etc.)
+const REGISTRY_ADDRESS = '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432';
+// Testnet (Base Sepolia, Ethereum Sepolia, etc.)
+// const REGISTRY_ADDRESS = '0x8004A818BFB912233c491871b3d84c89A494BD9e';
 
 async function registerAgent(agentURI) {
   const provider = new BrowserProvider(window.ethereum);

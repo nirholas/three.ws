@@ -3,10 +3,10 @@ name: embed-agent
 description: >
   Embed a three.ws embodied 3D AI agent anywhere on the web using the
   <agent-3d> web component. Covers all attributes, embed modes, brain/voice
-  configuration, event API, and JavaScript control. No install required.
+  configuration, the real JavaScript DOM API, and all custom events. No install required.
 metadata:
   author: three.ws
-  version: "1.0"
+  version: "1.1"
 ---
 
 # Embed an Agent with `<agent-3d>`
@@ -27,13 +27,13 @@ That's the full install for most use cases. Everything else below is optional.
 
 | Attribute | Form | Example |
 |-----------|------|---------|
-| `src` | on-chain URI | `agent://base/42` |
+| `src` | on-chain URI | `src="agent://base/42"` |
 | `agent-id` | numeric id | `agent-id="42" chain-id="8453"` |
-| `agent-id` | CAIP-10 + tokenId | `agent-id="eip155:8453:0xReg…:42"` |
+| `agent-id` | CAIP-10 | `agent-id="eip155:8453:0xReg…:42"` |
 | `agent-id` | shorthand | `agent-id="onchain:8453:42"` |
 | `agent-id` | backend account id | `agent-id="a_abc123"` |
 | `manifest` | IPFS or HTTPS URL | `manifest="ipfs://Qm.../manifest.json"` |
-| `body` | bare GLB (ad-hoc) | `body="./my-model.glb"` |
+| `body` | bare GLB | `body="./my-model.glb"` |
 
 Priority when multiple are set: `src` > `agent-id` > `manifest` > `body`.
 
@@ -41,56 +41,65 @@ Priority when multiple are set: `src` > `agent-id` > `manifest` > `body`.
 
 | Attribute | Type | Default | Notes |
 |-----------|------|---------|-------|
-| `environment` | preset or HDRI URL | `neutral` | tone-mapped IBL; presets: `neutral`, `warehouse`, `forest`, `apartment`, `studio`, `city`, `dawn`, `night` |
-| `camera-controls` | boolean | off | orbit, pan, zoom |
-| `auto-rotate` | boolean | off | slow Y-axis spin |
+| `environment` | preset or HDRI URL | `neutral` | Presets: `neutral`, `warehouse`, `forest`, `apartment`, `studio`, `city`, `dawn`, `night` |
+| `camera-controls` | boolean | off | Orbit, pan, zoom |
+| `auto-rotate` | boolean | off | Slow Y-axis spin |
 | `ar` | boolean | off | WebXR / Scene Viewer / Quick Look |
-| `shadows` | boolean | on | contact shadows |
-| `exposure` | number | `1.0` | tone-map exposure |
-| `background` | CSS color or `transparent` | transparent | canvas clear color |
+| `shadows` | boolean | on | Contact shadows |
+| `exposure` | number | `1.0` | Tone-map exposure |
+| `background` | CSS color or `transparent` | transparent | Canvas clear color |
 | `skybox` | URL | none | HDRI as visible sky |
-| `poster` | URL | none | image shown during load |
+| `poster` | URL | none | Image shown while loading |
 
 ## Brain attributes
 
 | Attribute | Type | Default | Notes |
 |-----------|------|---------|-------|
-| `brain` | model id | from manifest | `claude-opus-4-6`, `gpt-4o`, `none` |
-| `key-proxy` | URL | none | your backend that injects the API key — preferred for production |
-| `instructions` | URL or inline text | from manifest | overrides the manifest's instructions.md |
-| `thinking` | `auto`\|`always`\|`never` | `auto` | extended thinking hint |
+| `brain` | model id | from manifest | `claude-opus-4-6`, `claude-sonnet-4-6`, `gpt-4o`, `none` |
+| `key-proxy` | URL | `/api/llm/anthropic?agent=<id>` | Your backend that injects the API key — required in production |
+| `instructions` | URL or inline text | from manifest | Overrides manifest's `instructions.md` |
+| `thinking` | `auto`\|`always`\|`never` | `auto` | Extended thinking hint |
 
-Never put `api-key` in production HTML — use `key-proxy` instead.
+The three.ws platform provides a built-in proxy at `/api/llm/anthropic?agent=<agentId>` — use this when serving via three.ws. For self-hosted, point `key-proxy` at your own endpoint that injects the key server-side.
+
+Do not put an API key directly in HTML. Use `key-proxy` instead.
 
 ## Voice attributes
 
 | Attribute | Type | Default | Notes |
 |-----------|------|---------|-------|
-| `voice` | boolean | on (if manifest has voice) | master on/off |
+| `voice` | boolean | on (if manifest has voice) | Master on/off |
 | `tts` | provider id | `browser` | `browser`, `elevenlabs`, `openai`, `none` |
 | `stt` | provider id | `browser` | `browser`, `whisper`, `none` |
-| `mic` | `push-to-talk`\|`continuous`\|`off` | `push-to-talk` | mic policy |
+| `mic` | `push-to-talk`\|`continuous`\|`off` | `push-to-talk` | Mic policy |
 
 ## Skills attributes
 
 | Attribute | Type | Notes |
 |-----------|------|-------|
-| `skills` | comma-separated URIs | adds to (or replaces) manifest skills |
-| `skills-only` | boolean | ignore manifest skills; use only `skills` attribute |
-| `skill-trust` | `any`\|`whitelist`\|`owned-only` | overrides manifest default |
+| `skills` | comma-separated URIs | Adds to (or replaces) manifest skills |
+| `skills-only` | boolean | Ignore manifest skills; use only `skills` attribute |
+| `skill-trust` | `any`\|`whitelist`\|`owned-only` | Overrides manifest default |
 
 ## Layout / embed mode
 
 | Attribute | Type | Default | Notes |
 |-----------|------|---------|-------|
-| `mode` | `inline`\|`floating`\|`section`\|`fullscreen` | `inline` | layout mode |
-| `position` | `bottom-right`\|`bottom-left`\|`top-right`\|`top-left`\|`bottom-center` | `bottom-right` | for `floating` mode |
-| `offset` | CSS length pair | `24px 24px` | distance from edge in `floating` mode |
-| `width` | CSS length | `100%` / `320px` | — |
-| `height` | CSS length | `100%` / `480px` | — |
-| `scale` | number | `1.0` | camera zoom multiplier |
-| `avatar-chat` | `"off"` | on | set `"off"` to disable the integrated avatar-in-chat layout |
-| `avatar-walk` | `"off"` | on | set `"off"` to stop walk animation during streaming |
+| `mode` | `inline`\|`floating`\|`section`\|`fullscreen` | `inline` | Layout mode |
+| `position` | `bottom-right`\|`bottom-left`\|`top-right`\|`top-left`\|`bottom-center` | `bottom-right` | Only for `floating` mode |
+| `offset` | CSS length pair | `24px 24px` | Distance from edge in `floating` mode |
+| `width` | CSS length | `100%` inline / `320px` floating | — |
+| `height` | CSS length | `100%` inline / `480px` floating | — |
+| `scale` | number | `1.0` | Camera zoom multiplier |
+| `avatar-chat` | `"off"` | on | Set to `"off"` to disable the integrated avatar-in-chat layout |
+| `avatar-walk` | `"off"` | on | Set to `"off"` to stop walk animation during streaming |
+
+## Memory attributes
+
+| Attribute | Type | Default | Notes |
+|-----------|------|---------|-------|
+| `memory` | `local`\|`ipfs`\|`encrypted-ipfs`\|`none` | from manifest | Override storage mode |
+| `memory-key` | string | agentId | Namespace for memory storage |
 
 ## Common patterns
 
@@ -108,7 +117,7 @@ Never put `api-key` in production HTML — use `key-proxy` instead.
 ></agent-3d>
 ```
 
-### Inline 3D viewer (no chat)
+### Inline 3D viewer (no chat, no brain)
 
 ```html
 <agent-3d
@@ -122,7 +131,7 @@ Never put `api-key` in production HTML — use `key-proxy` instead.
 ></agent-3d>
 ```
 
-### Fullscreen experience
+### Fullscreen embodied experience
 
 ```html
 <agent-3d
@@ -135,7 +144,7 @@ Never put `api-key` in production HTML — use `key-proxy` instead.
 ></agent-3d>
 ```
 
-### Ad-hoc GLB preview with orbit controls
+### Ad-hoc GLB drop with orbit controls
 
 ```html
 <agent-3d
@@ -147,46 +156,82 @@ Never put `api-key` in production HTML — use `key-proxy` instead.
 ></agent-3d>
 ```
 
-## JavaScript control
+## JavaScript DOM API
 
-The element exposes a DOM API for programmatic control:
+After `agent:ready` fires, you can drive the agent programmatically.
 
 ```js
 const el = document.querySelector('agent-3d');
 
-// Wait for the runtime to be ready
-el.addEventListener('agent-ready', () => {
-  // Trigger a gesture
-  el.gesture('wave');
+el.addEventListener('agent:ready', async () => {
+  // Send a user message to the LLM — agent thinks and replies
+  el.say('What can you tell me about this model?');
 
-  // Make the agent speak
-  el.speak('Hello, welcome!', { sentiment: 0.8 });
+  // Or await the reply text
+  const reply = await el.ask('Describe yourself in one sentence.');
+  console.log('Agent replied:', reply);
 
-  // Fire an emote
-  el.emote({ trigger: 'excited', weight: 1 });
+  // Play a wave animation
+  el.wave();
 
-  // Switch to a different agent
-  el.setAgent('a_xyz123');
-});
+  // Play any animation clip by name (from the GLB or manifest)
+  el.play('dance');
+  el.play('idle');
 
-// Listen for user messages
-el.addEventListener('agent-message', (e) => {
-  console.log('user said:', e.detail.text);
-});
+  // Play a named emote: 'cheer', 'flinch', 'celebrate'
+  el.playEmote('celebrate');
+  el.playEmote('flinch', 0.5); // second arg is intensity (default 1)
 
-// Listen for agent replies
-el.addEventListener('agent-reply', (e) => {
-  console.log('agent replied:', e.detail.text);
+  // Look at a target
+  el.lookAt('user');
+  el.lookAt('model');
+
+  // Clear conversation history (fresh context for the LLM)
+  el.clearConversation();
 });
 ```
 
-## Memory attributes
+**Method summary:**
 
-| Attribute | Type | Default | Notes |
-|-----------|------|---------|-------|
-| `memory` | `local`\|`ipfs`\|`encrypted-ipfs`\|`none` | from manifest | override storage mode |
-| `memory-key` | string | agentId | namespace for memory storage |
+| Method | Signature | Notes |
+|--------|-----------|-------|
+| `say(text, opts?)` | `void` | Sends text to the LLM; agent thinks → replies → speaks |
+| `ask(text, opts?)` | `Promise<string>` | Same as `say` but awaits and returns the reply text |
+| `wave(opts?)` | `Promise` | Plays the wave animation |
+| `play(name, opts?)` | `Promise` | Plays a named clip from the GLB or manifest |
+| `playEmote(name, intensity?)` | `boolean` | Named emote: `'cheer'`, `'flinch'`, `'celebrate'` |
+| `lookAt(target)` | `Promise` | `'user'` or `'model'` or a THREE.Vector3 |
+| `clearConversation()` | `void` | Resets LLM message history |
+
+## Events
+
+Listen on the element:
+
+```js
+// Loading
+el.addEventListener('agent:ready',         (e) => { /* e.detail.agentId */ });
+el.addEventListener('agent:error',         (e) => { /* e.detail.phase, e.detail.error */ });
+el.addEventListener('agent:load-progress', (e) => { /* e.detail.phase, e.detail.pct (0–1) */ });
+
+// Brain
+el.addEventListener('brain:stream',   (e) => { /* e.detail.chunk — live text delta */ });
+el.addEventListener('brain:message',  (e) => { /* e.detail.message.role, e.detail.message.content */ });
+el.addEventListener('brain:thinking', (e) => { /* e.detail.thinking: true/false */ });
+
+// Skills
+el.addEventListener('skill:tool-start',       (e) => { /* e.detail.name */ });
+el.addEventListener('skill:tool-called',      (e) => { /* e.detail.name, e.detail.result */ });
+el.addEventListener('skill:loaded',           (e) => { /* e.detail.name */ });
+el.addEventListener('skill:payment-required', (e) => { /* e.detail — payment info */ });
+el.addEventListener('skill:purchased',        (e) => { /* e.detail */ });
+
+// Voice
+el.addEventListener('voice:speech-start', (e) => { /* e.detail.text */ });
+el.addEventListener('voice:speech-end',   () => {});
+```
+
+**Load progress phases:** `manifest` (0.1 → 0.3) → `body` (0.45) → `memory` (0.6) → `skills` (0.75) → `brain` (0.9) → `agent:ready`
 
 ## Browser support
 
-Any browser with ES modules + WebGL 2. Chrome, Firefox, Safari 16+, Edge. WebXR requires a compatible device and HTTPS.
+Any browser with ES modules + WebGL 2. Chrome, Firefox, Safari 16+, Edge. WebXR requires HTTPS and a compatible device.
