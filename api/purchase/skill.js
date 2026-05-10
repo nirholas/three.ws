@@ -1,62 +1,104 @@
-import { Keypair, Connection, PublicKey, clusterApiUrl } from '@solana/web3.js';
-import { findReference, FindReferenceError } from '@solana/pay';
-import { db } from '../_lib/db'; // Your database utility
+/**
+ * GET  /api/purchase/skill?agent_id=&skill=   — Solana Pay transaction request GET (label/icon)
+ * POST /api/purchase/skill?agent_id=&skill=   — Solana Pay transaction request POST (build tx)
+ *
+ * Implements the Solana Pay Transaction Request spec so wallets that scan a
+ * QR code can fetch and sign the USDC transfer directly.
+ */
+import { Connection, Keypair, PublicKey, Transaction } from '@solana/web3.js';
+import { getAssociatedTokenAddressSync, createTransferCheckedInstruction, getMint } from '@solana/spl-token';
+import { findReference } from '@solana/pay';
 
-// The GET handler is called by wallets to get transaction details
-async function get(req, res) {
-  const { agent_id, skill_name } = req.query;
+import { sql } from '../_lib/db.js';
+import { cors, error, json, method, readJson, wrap } from '../_lib/http.js';
 
-  // 1. Fetch price and creator wallet from DB
-  const priceInfo = await db.one(
-    `SELECT p.amount, p.currency_mint, a.owner_id
-     FROM agent_skill_prices p
-     JOIN agents a ON p.agent_id = a.id
-     WHERE p.agent_id = $1 AND p.skill_name = $2`,
-    [agent_id, skill_name]
-  );
-  
-  const creatorWallet = await db.one('SELECT wallet_address FROM users WHERE id = $1', [priceInfo.owner_id]);
+const SOLANA_RPC = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
 
-  // 2. Respond with Solana Pay GET spec
-  res.status(200).json({
-    label: "3D-Agent Marketplace",
-    icon: "https://your-app.com/icon.png",
-  });
-}
+export default wrap(async (req, res) => {
+	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
+	if (!method(req, res, ['GET', 'POST'])) return;
 
-// The POST handler is called by wallets after the user approves the transaction
-async function post(req, res) {
-    const { account } = req.body;
-    if (!account) throw new Error('Missing account');
+	const url = new URL(req.url, 'http://x');
+	const agentId   = url.searchParams.get('agent_id');
+	const skillName = url.searchParams.get('skill');
 
-    const { reference } = req.query;
-    if (!reference) throw new Error('Missing reference');
+	if (!agentId || !skillName) {
+		return error(res, 400, 'validation_error', 'agent_id and skill query params required');
+	}
 
-    const signature = await verifyTransaction(account, reference);
-    // Here you would grant the user access to the skill in your DB
-    // grantSkillAccess(account, reference.skill_name);
+	if (req.method === 'GET') {
+		// Solana Pay spec: return label + icon for the wallet QR display
+		return json(res, 200, {
+			label:   'three.ws Agent Marketplace',
+			icon:    'https://three.ws/favicon.ico',
+		});
+	}
 
-    res.status(200).json({ status: 'ok', signature });
-}
+	// POST — wallet sends its account (public key), we return a prepared transaction
+	const body = await readJson(req).catch(() => null);
+	const account = body?.account;
+	if (!account) return error(res, 400, 'validation_error', 'account required');
 
+	const [price] = await sql`
+		SELECT amount, currency_mint, chain
+		FROM agent_skill_prices
+		WHERE agent_id = ${agentId} AND skill = ${skillName} AND is_active = true
+		LIMIT 1
+	`;
+	if (!price) return error(res, 404, 'not_found', 'skill is not for sale');
+	if (price.chain !== 'solana') {
+		return error(res, 400, 'unsupported_chain', 'only solana transactions are supported via this endpoint');
+	}
 
-async function verifyTransaction(account, reference) {
-    const connection = new Connection(clusterApiUrl('mainnet-beta'));
-    
-    // Find the transaction signature from the reference
-    const signatureInfo = await findReference(connection, new PublicKey(reference));
-    
-    // Here you would add more validation, e.g., checking the transaction amount and destination match the skill price.
+	// Resolve payout wallet
+	const [payout] = await sql`
+		SELECT pw.address
+		FROM agent_identities a
+		JOIN agent_payout_wallets pw
+		  ON pw.user_id = a.user_id
+		 AND pw.chain = 'solana'
+		 AND (pw.agent_id = a.id OR pw.is_default = true)
+		WHERE a.id = ${agentId} AND a.deleted_at IS NULL
+		ORDER BY (pw.agent_id IS NOT NULL) DESC, pw.is_default DESC, pw.created_at ASC
+		LIMIT 1
+	`;
+	let recipient = payout?.address;
+	if (!recipient) {
+		const [row] = await sql`SELECT meta FROM agent_identities WHERE id = ${agentId}`;
+		recipient = row?.meta?.solana_address ?? null;
+	}
+	if (!recipient) return error(res, 412, 'creator_wallet_missing', 'agent owner has not configured a payout wallet');
 
-    return signatureInfo.signature;
-}
+	// Reference keypair for Solana Pay tracking
+	const referenceKeypair = Keypair.generate();
+	const referenceKey = referenceKeypair.publicKey;
 
-export default async function handler(req, res) {
-    if (req.method === 'GET') {
-        return await get(req, res);
-    } else if (req.method === 'POST') {
-        return await post(req, res);
-    } else {
-        return res.status(405).json({ error: 'Method Not Allowed' });
-    }
-}
+	// Record pending purchase
+	await sql`
+		INSERT INTO skill_purchases (agent_id, skill, status, reference, amount, currency_mint, chain)
+		VALUES (${agentId}, ${skillName}, 'pending', ${referenceKey.toBase58()},
+		        ${price.amount}, ${price.currency_mint}, 'solana')
+		ON CONFLICT DO NOTHING
+	`;
+
+	// Build transaction
+	const connection = new Connection(SOLANA_RPC, 'confirmed');
+	const { blockhash } = await connection.getLatestBlockhash('confirmed');
+
+	const mintInfo = await getMint(connection, new PublicKey(price.currency_mint));
+	const buyer    = new PublicKey(account);
+	const mintKey  = new PublicKey(price.currency_mint);
+
+	const fromAta = getAssociatedTokenAddressSync(mintKey, buyer);
+	const toAta   = getAssociatedTokenAddressSync(mintKey, new PublicKey(recipient));
+
+	const ix = createTransferCheckedInstruction(
+		fromAta, mintKey, toAta, buyer, BigInt(price.amount), mintInfo.decimals,
+	);
+	ix.keys.push({ pubkey: referenceKey, isSigner: false, isWritable: false });
+
+	const tx = new Transaction({ feePayer: buyer, recentBlockhash: blockhash }).add(ix);
+	const serialized = tx.serialize({ requireAllSignatures: false, verifySignatures: false });
+
+	return json(res, 200, { transaction: serialized.toString('base64') });
+});
