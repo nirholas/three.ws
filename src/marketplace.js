@@ -191,6 +191,18 @@ async function loadList(reset = false) {
 	}
 }
 
+// Mirrors server-side NAME_AUTONAMED_RE in api/explore.js. Client-side filter
+// is defense-in-depth: until the server filter ships, the marketplace still
+// looks curated by hiding obvious junk locally.
+const AVATAR_AUTONAMED_RE =
+	/^(Avatar #[0-9a-f]{6}|Avatar \d+\/\d+\/\d{4}.*|mo[a-z0-9]{4,}|draft-[a-z0-9]+|[a-f0-9-]{30,}|new_project_\d+|TEST|test|Untitled.*)$/i;
+
+function isAutoNamedAvatar(name) {
+	const n = String(name || '').trim();
+	if (!n) return true;
+	return AVATAR_AUTONAMED_RE.test(n);
+}
+
 async function loadPublicAvatars() {
 	try {
 		const url = new URL(`${API}/explore`, location.origin);
@@ -201,7 +213,9 @@ async function loadPublicAvatars() {
 		const r = await fetch(url);
 		if (!r.ok) return;
 		const j = await r.json();
-		const avatars = (j?.items || []).filter((it) => it.kind === 'avatar' && it.glbUrl);
+		const avatars = (j?.items || []).filter(
+			(it) => it.kind === 'avatar' && it.glbUrl && !isAutoNamedAvatar(it.name),
+		);
 		state.publicAvatars = avatars;
 		state.publicAvatarsLoaded = true;
 		state.stats = j?.totals || state.stats;
@@ -228,13 +242,12 @@ async function loadFeatured() {
 			(it) =>
 				it.kind === 'avatar' &&
 				it.glbUrl &&
-				it.name &&
-				!/^Avatar #|^TEST$|^test$/i.test(it.name.trim()) &&
-				it.name.trim().length > 1,
+				!isAutoNamedAvatar(it.name) &&
+				String(it.name).trim().length > 1,
 		);
 		state.featured = named.slice(0, 3);
 		if (!state.featured.length) {
-			// Fall back to any 3 named avatars to keep hero populated.
+			// Fall back to any 3 avatars with a GLB so the hero never shows blank.
 			state.featured = (j?.items || [])
 				.filter((it) => it.kind === 'avatar' && it.glbUrl)
 				.slice(0, 3);

@@ -5,6 +5,10 @@ import { createProvider } from './providers.js';
 import { createTTS, createSTT } from './speech.js';
 import { BUILTIN_TOOLS, BUILTIN_HANDLERS, STAGE_TOOLS } from './tools.js';
 import { protocol } from '../agent-protocol.js';
+import { PaymentRequiredError, alwaysAllow } from './skill-access.js';
+
+export { PaymentRequiredError, alwaysAllow } from './skill-access.js';
+export { fromAgentDetail as skillAccessFromAgentDetail, remoteCheck as skillAccessRemote } from './skill-access.js';
 
 const MAX_TOOL_ITERATIONS = 8;
 
@@ -18,6 +22,7 @@ export class Runtime extends EventTarget {
 		voiceConfig = {},
 		stage = null,
 		agentId = null,
+		skillAccess = null,
 	} = {}) {
 		super();
 		this.manifest = manifest || {};
@@ -26,6 +31,7 @@ export class Runtime extends EventTarget {
 		this.skills = skills;
 		this.stage = stage;
 		this.agentId = agentId;
+		this.skillAccess = skillAccess || alwaysAllow();
 
 		this.provider = createProvider({
 			...this.manifest.brain,
@@ -160,7 +166,25 @@ export class Runtime extends EventTarget {
 				try {
 					output = await this._dispatchTool(call);
 				} catch (err) {
-					output = { error: err.message || String(err) };
+					if (err instanceof PaymentRequiredError) {
+						// Surface payment requirements as a structured event so the host
+						// page can pop the purchase modal. Feed a 402-style result back
+						// to the LLM so it can react gracefully (or, for autonomous
+						// agents, trigger its own purchase via skillAccess.autoPay).
+						this.dispatchEvent(
+							new CustomEvent('skill:payment-required', { detail: err.payload }),
+						);
+						output = {
+							error: 'payment_required',
+							skill: err.payload.skill,
+							price: err.payload.price,
+							message:
+								err.payload.message ||
+								`Skill '${err.payload.skill}' requires a purchase before it can be used.`,
+						};
+					} else {
+						output = { error: err.message || String(err) };
+					}
 					isError = true;
 				}
 				this.dispatchEvent(
@@ -207,7 +231,15 @@ export class Runtime extends EventTarget {
 
 		// Skill-provided tools first (they can shadow built-ins intentionally)
 		const skill = this.skills?.findSkillForTool(call.name);
-		if (skill) return skill.invoke(call.name, call.input, ctx);
+		if (skill) {
+			// Paid-skill gate: ask the access checker before invoking. Built-in
+			// and stage tools never go through the gate — only skill-provided ones.
+			const access = await this.skillAccess(call.name);
+			if (!access?.allowed) {
+				throw new PaymentRequiredError({ skill: call.name, ...access });
+			}
+			return skill.invoke(call.name, call.input, ctx);
+		}
 
 		// Built-in
 		const handler = BUILTIN_HANDLERS[call.name];

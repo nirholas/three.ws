@@ -386,7 +386,7 @@ function openLaunch({ identity, agentId, avatarId, formData }) {
 	const { inner, close } = openModal();
 	let step = 1;
 
-	async function buildMetadata(name, symbol) {
+	async function buildMetadata(name, symbol, description) {
 		let imageDataUrl = null;
 		if (formData?.image instanceof File) {
 			imageDataUrl = await new Promise((resolve) => {
@@ -403,14 +403,14 @@ function openLaunch({ identity, agentId, avatarId, formData }) {
 			body: JSON.stringify({
 				name,
 				symbol,
-				description: formData?.description || identity?.description || '',
+				description: description || formData?.description || identity?.description || '',
 				...(avatarId ? { avatar_id: avatarId } : {}),
 				...(agentId ? { agent_id: agentId } : {}),
 				...(imageDataUrl ? { image_data_url: imageDataUrl } : {}),
 			}),
 		});
 		if (!resp.ok) throw new Error(`Metadata build failed: ${resp.status}`);
-		return resp.json(); // { metadata_url, image_url }
+		return resp.json();
 	}
 
 	function esc(s) {
@@ -519,14 +519,17 @@ function openLaunch({ identity, agentId, avatarId, formData }) {
 				}
 				const nextBtn = inner.querySelector('#pmodal-launch-next');
 				// Rebuild metadata if name/symbol changed or we have no URI yet
-				const nameChanged = inner._formCache?.name !== name || inner._formCache?.symbol !== symbol;
+				const fieldsChanged =
+					inner._formCache?.name !== name ||
+					inner._formCache?.symbol !== symbol ||
+					inner._formCache?.desc !== desc;
 				inner._formCache = { ...(inner._formCache || {}), name, symbol, desc };
-				if (nameChanged) inner._formCache.uri = null;
+				if (fieldsChanged) inner._formCache.uri = null;
 				if (!inner._formCache.uri) {
 					nextBtn.disabled = true;
 					nextBtn.textContent = 'Building metadata…';
 					try {
-						const data = await buildMetadata(name, symbol);
+						const data = await buildMetadata(name, symbol, desc);
 						inner._formCache.uri = data.metadata_url;
 					} catch (e) {
 						errEl.textContent = `Metadata failed: ${e.message}`;
