@@ -985,6 +985,14 @@
 			"dest": "/discover/index.html"
 		},
 		{
+			"src": "/discover/a/(\\d+)/(\\d+)",
+			"dest": "/discover/detail.html"
+		},
+		{
+			"src": "/discover/avatar/([^/]+)",
+			"dest": "/discover/detail.html"
+		},
+		{
 			"src": "/discover/(.*)",
 			"dest": "/discover/$1"
 		},
