@@ -64,6 +64,8 @@ const HANDLERS = {
 	'settle-royalties': handleSettleRoyalties,
 	'solana-attest-event-cleanup': handleSolanaAttestEventCleanup,
 	'solana-attestations-crawl': handleSolanaAttestationsCrawl,
+	'expire-pending-purchases': handleExpirePendingPurchases,
+	'cleanup-csrf-tokens': handleCleanupCsrfTokens,
 };
 
 export default wrap(async (req, res) => {
@@ -2370,4 +2372,31 @@ async function handleAuditLogCleanup(req, res) {
 		returning id
 	`;
 	return json(res, 200, { deleted: result.length, retention_days: AUDIT_LOG_RETENTION_DAYS });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// expire-pending-purchases — fail-close stale pending skill purchases.
+// Schedule: every 5 minutes. Marks rows past expires_at as 'expired' so the
+// idempotent-create path issues a fresh reference on the buyer's next attempt.
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function handleExpirePendingPurchases(req, res) {
+	if (!method(req, res, ['GET'])) return;
+	const result = await sql`
+		UPDATE skill_purchases
+		SET status = 'expired', updated_at = now()
+		WHERE status = 'pending' AND expires_at IS NOT NULL AND expires_at < now()
+		RETURNING id
+	`;
+	return json(res, 200, { expired: result.length });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// cleanup-csrf-tokens — drop expired tokens. Run hourly.
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function handleCleanupCsrfTokens(req, res) {
+	if (!method(req, res, ['GET'])) return;
+	const result = await sql`DELETE FROM csrf_tokens WHERE expires_at < now() RETURNING token`;
+	return json(res, 200, { deleted: result.length });
 }
