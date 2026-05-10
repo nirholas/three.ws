@@ -327,9 +327,16 @@ async function handleDetail(req, res, id) {
 	}
 
 	const [priceRows, purchasedRows] = await Promise.all([
-		sql`SELECT skill, currency_mint, chain, amount FROM agent_skill_prices WHERE agent_id = ${id} AND is_active = true`,
+		sql`
+			SELECT skill, currency_mint, chain, amount
+			FROM agent_skill_prices
+			WHERE agent_id = ${id} AND is_active = true
+		`,
 		auth
-			? sql`SELECT skill_name FROM skill_purchases WHERE user_id = ${auth.userId} AND agent_id = ${id}`
+			? sql`
+				SELECT skill FROM skill_purchases
+				WHERE user_id = ${auth.userId} AND agent_id = ${id} AND status = 'confirmed'
+			`
 			: Promise.resolve([]),
 	]);
 
@@ -343,7 +350,7 @@ async function handleDetail(req, res, id) {
 	const skill_prices = Object.fromEntries(
 		priceRows.map((p) => [p.skill, { amount: p.amount, currency_mint: p.currency_mint, chain: p.chain }]),
 	);
-	const purchased_skills = purchasedRows.map((r) => r.skill_name);
+	const purchased_skills = purchasedRows.map((r) => r.skill);
 
 	return json(
 		res,

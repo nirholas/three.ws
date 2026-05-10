@@ -257,6 +257,14 @@
 			"dest": "/api/marketplace/[action]?action=agents&id=$1&sub=$2"
 		},
 		{
+			"src": "/api/marketplace/purchase/([^/]+)/confirm",
+			"dest": "/api/marketplace/purchase?reference=$1&op=confirm"
+		},
+		{
+			"src": "/api/marketplace/purchase/([^/]+)",
+			"dest": "/api/marketplace/purchase?reference=$1"
+		},
+		{
 			"src": "/marketplace",
 			"dest": "/marketplace.html"
 		},
