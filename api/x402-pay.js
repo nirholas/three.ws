@@ -1,16 +1,22 @@
 // POST /api/x402-pay
 //
-// Server-side x402 payer: takes { tool, args } from the chat UI, fires a
-// real paid x402 call to /api/mcp using a server-held Solana keypair, and
-// returns the MCP result + on-chain settlement proof.
+// Server-side x402 payer for the /pay demo. Streams the payment lifecycle
+// (challenge → build → verify → settle → result) as Server-Sent Events when
+// the client requests `accept: text/event-stream`; otherwise returns a single
+// JSON envelope on completion.
 //
-// This powers the demo at /pay (and the in-chat x402 button) — the agent
-// pays USDC on behalf of the viewer so the UX is one-click.
+// In-process: this handler skips the HTTP round-trip to /api/mcp by
+// replicating the same flow internally — paymentRequirements() + verifyPayment +
+// dispatch() + settlePayment(). Saves ~50–200ms vs an external fetch and
+// removes a self-egress hop.
 //
 // Env (required for prod):
-//   X402_AGENT_SOLANA_SECRET_BASE58  base58-encoded 64-byte ed25519 secret key
-// Local dev fallback (when env unset): reads the keypair JSON at
+//   X402_AGENT_SOLANA_SECRET_BASE58  base58-encoded 64-byte ed25519 secret
+// Local dev fallback (when env unset): reads keypair JSON at
 //   /home/codespace/.config/x402-test-wallets/solana.json
+//
+// Also: GET /api/x402-pay?balance=1 → returns the agent wallet's USDC + SOL
+// balance so the UI can show it ticking down during the demo.
 
 import { readFileSync } from 'node:fs';
 import {
@@ -26,6 +32,13 @@ import bs58 from 'bs58';
 
 import { cors, json, readJson, wrap } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
+import {
+	paymentRequirements,
+	verifyPayment,
+	settlePayment,
+	NETWORK_SOLANA_MAINNET,
+} from './_lib/x402-spec.js';
+import { dispatch } from './_mcp/dispatch.js';
 
 const ALLOWED_TOOLS = new Set([
 	'tools/list',
@@ -35,8 +48,8 @@ const ALLOWED_TOOLS = new Set([
 	'search_public_avatars',
 ]);
 
-const MCP_URL = process.env.X402_PAY_TARGET_URL || 'https://three.ws/api/mcp';
 const SOLANA_RPC = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+const USDC_MAINNET_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 
 let _agent = null;
 function loadAgentKeypair() {
@@ -51,7 +64,7 @@ function loadAgentKeypair() {
 		const arr = JSON.parse(readFileSync(path, 'utf8'));
 		_agent = Keypair.fromSecretKey(Uint8Array.from(arr));
 		return _agent;
-	} catch (err) {
+	} catch {
 		const e = new Error('agent wallet not configured (set X402_AGENT_SOLANA_SECRET_BASE58)');
 		e.status = 500;
 		throw e;
@@ -59,9 +72,7 @@ function loadAgentKeypair() {
 }
 
 function buildJsonRpc(tool, args) {
-	if (tool === 'tools/list') {
-		return { jsonrpc: '2.0', id: 1, method: 'tools/list' };
-	}
+	if (tool === 'tools/list') return { jsonrpc: '2.0', id: 1, method: 'tools/list' };
 	return {
 		jsonrpc: '2.0',
 		id: 1,
@@ -70,7 +81,7 @@ function buildJsonRpc(tool, args) {
 	};
 }
 
-async function buildSolanaPaymentPayload({ accept, buyer, conn }) {
+async function buildSolanaPaymentPayload({ accept, buyer, conn, resourceUrl }) {
 	const mint = new PublicKey(accept.asset);
 	const payTo = new PublicKey(accept.payTo);
 	const feePayer = new PublicKey(accept.extra.feePayer);
@@ -82,7 +93,6 @@ async function buildSolanaPaymentPayload({ accept, buyer, conn }) {
 	const receiverAta = getAssociatedTokenAddressSync(
 		mint, payTo, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
 	);
-
 	const mintInfo = await getMint(conn, mint);
 
 	const ixs = [
@@ -115,14 +125,138 @@ async function buildSolanaPaymentPayload({ accept, buyer, conn }) {
 		x402Version: 2,
 		scheme: 'exact',
 		network: accept.network,
-		resource: { url: MCP_URL, mimeType: 'application/json' },
+		resource: { url: resourceUrl, mimeType: 'application/json' },
 		accepted: accept,
 		payload: { transaction: txBase64 },
 	};
 }
 
+async function getAgentBalance() {
+	const buyer = loadAgentKeypair();
+	const conn = new Connection(SOLANA_RPC, 'confirmed');
+	const sol = await conn.getBalance(buyer.publicKey);
+	let usdc = 0;
+	try {
+		const ata = getAssociatedTokenAddressSync(
+			new PublicKey(USDC_MAINNET_MINT),
+			buyer.publicKey, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
+		);
+		const acct = await conn.getTokenAccountBalance(ata);
+		usdc = Number(acct.value.uiAmount || 0);
+	} catch {}
+	return {
+		address: buyer.publicKey.toBase58(),
+		sol: sol / 1e9,
+		usdc,
+	};
+}
+
+function sseInit(res) {
+	res.statusCode = 200;
+	res.setHeader('content-type', 'text/event-stream; charset=utf-8');
+	res.setHeader('cache-control', 'no-cache, no-transform');
+	res.setHeader('connection', 'keep-alive');
+	res.setHeader('x-accel-buffering', 'no');
+	if (typeof res.flushHeaders === 'function') res.flushHeaders();
+}
+
+function sseSend(res, event, data) {
+	res.write(`event: ${event}\n`);
+	res.write(`data: ${JSON.stringify(data)}\n\n`);
+}
+
+async function runFlow({ tool, args, emit }) {
+	const buyer = loadAgentKeypair();
+	const conn = new Connection(SOLANA_RPC, 'confirmed');
+
+	const requirements = paymentRequirements();
+	const accept = requirements.find((r) => r.network === NETWORK_SOLANA_MAINNET);
+	if (!accept) throw Object.assign(new Error('no_solana_accept_configured'), { status: 500 });
+
+	const t0 = Date.now();
+	emit('challenge', { network: accept.network, amount: accept.amount, payTo: accept.payTo });
+
+	const paymentPayload = await buildSolanaPaymentPayload({
+		accept, buyer, conn, resourceUrl: 'https://three.ws/api/mcp',
+	});
+	const tBuilt = Date.now();
+	emit('built', { build_ms: tBuilt - t0, network: accept.network });
+
+	const paymentHeader = Buffer.from(JSON.stringify(paymentPayload)).toString('base64');
+	const verified = await verifyPayment({ paymentHeader, requirements });
+	const tVerified = Date.now();
+	emit('verified', { verify_ms: tVerified - tBuilt, payer: verified.payer });
+
+	const auth = {
+		userId: null,
+		rateKey: `x402:${verified.payer || 'anon'}`,
+		scope: '',
+		source: 'x402',
+		payer: verified.payer,
+	};
+	const rpcResp = await dispatch(buildJsonRpc(tool, args), auth, null);
+	const tDispatched = Date.now();
+	emit('dispatched', { dispatch_ms: tDispatched - tVerified });
+
+	if (rpcResp?.error) {
+		throw Object.assign(
+			new Error(rpcResp.error.message || 'mcp_dispatch_error'),
+			{ status: 502, mcpError: rpcResp.error },
+		);
+	}
+
+	const settled = await settlePayment({
+		paymentPayload: verified.paymentPayload,
+		requirement: verified.requirement,
+	});
+	const tSettled = Date.now();
+	emit('settled', {
+		settle_ms: tSettled - tDispatched,
+		tx: settled.transaction,
+		network: settled.network,
+		payer: settled.payer,
+		explorer: settled.transaction ? `https://solscan.io/tx/${settled.transaction}` : null,
+	});
+
+	const total_ms = tSettled - t0;
+	emit('result', {
+		ok: true,
+		tool, args,
+		result: rpcResp?.result ?? rpcResp,
+		payment: {
+			network: accept.network,
+			payer: verified.payer || buyer.publicKey.toBase58(),
+			payTo: accept.payTo,
+			asset: accept.asset,
+			amount: accept.amount,
+			tx: settled.transaction || null,
+			explorer: settled.transaction ? `https://solscan.io/tx/${settled.transaction}` : null,
+		},
+		durations: {
+			build_ms: tBuilt - t0,
+			verify_ms: tVerified - tBuilt,
+			dispatch_ms: tDispatched - tVerified,
+			settle_ms: tSettled - tDispatched,
+			total_ms,
+		},
+	});
+}
+
 export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'POST,OPTIONS', origins: '*' })) return;
+	if (cors(req, res, { methods: 'GET,POST,OPTIONS', origins: '*' })) return;
+
+	if (req.method === 'GET') {
+		const u = new URL(req.url, 'http://x');
+		if (u.searchParams.get('balance') === '1') {
+			try {
+				const b = await getAgentBalance();
+				return json(res, 200, b);
+			} catch (err) {
+				return json(res, err.status || 500, { error: err.message });
+			}
+		}
+		return json(res, 404, { error: 'not_found' });
+	}
 	if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
 
 	const ip = clientIp(req);
@@ -148,85 +282,39 @@ export default wrap(async (req, res) => {
 		return json(res, 400, { error: 'invalid_tool', allowed: [...ALLOWED_TOOLS] });
 	}
 
-	const buyer = loadAgentKeypair();
-	const conn = new Connection(SOLANA_RPC, 'confirmed');
+	const wantsStream =
+		(req.headers.accept || '').includes('text/event-stream') ||
+		input.stream === true;
 
-	const t0 = Date.now();
-	const initRes = await fetch(MCP_URL, {
-		method: 'POST',
-		headers: { 'content-type': 'application/json', accept: 'application/json' },
-		body: JSON.stringify(buildJsonRpc(tool, args)),
-	});
-	const tInit = Date.now();
-	if (initRes.status !== 402) {
-		const body = await initRes.text();
-		return json(res, 502, {
-			error: 'unexpected_initial_response',
-			status: initRes.status,
-			body: body.slice(0, 1000),
-		});
-	}
-	const initBody = await initRes.json();
-	const accept = (initBody.accepts || []).find((a) => a.network && a.network.startsWith('solana:'));
-	if (!accept) {
-		return json(res, 502, { error: 'no_solana_accept_in_402' });
-	}
-
-	const paymentPayload = await buildSolanaPaymentPayload({ accept, buyer, conn });
-	const tBuilt = Date.now();
-	const xPayment = Buffer.from(JSON.stringify(paymentPayload)).toString('base64');
-
-	const paidRes = await fetch(MCP_URL, {
-		method: 'POST',
-		headers: {
-			'content-type': 'application/json',
-			accept: 'application/json',
-			'x-payment': xPayment,
-		},
-		body: JSON.stringify(buildJsonRpc(tool, args)),
-	});
-	const tPaid = Date.now();
-	const settleHeader = paidRes.headers.get('x-payment-response');
-	let settle = null;
-	if (settleHeader) {
+	if (wantsStream) {
+		sseInit(res);
+		const emit = (ev, data) => sseSend(res, ev, data);
 		try {
-			settle = JSON.parse(Buffer.from(settleHeader, 'base64').toString('utf8'));
-		} catch {}
-	}
-	const text = await paidRes.text();
-	let parsed;
-	try { parsed = JSON.parse(text); } catch { parsed = { raw: text }; }
-
-	if (!paidRes.ok) {
-		return json(res, paidRes.status, {
-			ok: false,
-			error: parsed.error || 'paid_call_failed',
-			body: parsed,
-			payment: { network: accept.network, payer: buyer.publicKey.toBase58(), amount: accept.amount, asset: accept.asset },
-		});
+			await runFlow({ tool, args, emit });
+		} catch (err) {
+			emit('error', {
+				ok: false,
+				error: err.message || 'flow_failed',
+				mcpError: err.mcpError || null,
+			});
+		} finally {
+			res.end();
+		}
+		return;
 	}
 
-	return json(res, 200, {
-		ok: true,
-		tool,
-		args,
-		result: parsed.result ?? parsed,
-		payment: {
-			network: accept.network,
-			payer: buyer.publicKey.toBase58(),
-			payTo: accept.payTo,
-			asset: accept.asset,
-			amount: accept.amount,
-			tx: settle?.transaction || null,
-			explorer: settle?.transaction
-				? `https://solscan.io/tx/${settle.transaction}`
-				: null,
-		},
-		durations: {
-			challenge_ms: tInit - t0,
-			build_ms: tBuilt - tInit,
-			settle_ms: tPaid - tBuilt,
-			total_ms: tPaid - t0,
-		},
-	});
+	// Non-streaming JSON path: collect events into a final envelope.
+	let final = null;
+	let errEnv = null;
+	const emit = (ev, data) => {
+		if (ev === 'result') final = data;
+		else if (ev === 'error') errEnv = data;
+	};
+	try {
+		await runFlow({ tool, args, emit });
+	} catch (err) {
+		errEnv = { ok: false, error: err.message || 'flow_failed', mcpError: err.mcpError || null };
+	}
+	if (errEnv) return json(res, errEnv.mcpError ? 502 : 500, errEnv);
+	return json(res, 200, final);
 });

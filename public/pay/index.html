@@ -251,7 +251,10 @@
       <div class="sub">Live x402 demo — agent pays USDC on Solana per request</div>
     </div>
   </div>
-  <div class="pill"><span class="dot"></span> agent wallet online</div>
+  <div class="pill" id="walletPill" title="Agent wallet on Solana mainnet">
+    <span class="dot"></span>
+    <span id="walletText">loading…</span>
+  </div>
 </header>
 
 <main>
@@ -271,6 +274,7 @@
         <button data-cmd="tools/list">/list_tools</button>
         <button data-cmd="validate_model:demo">/validate DamagedHelmet.glb</button>
         <button data-cmd="inspect_model:demo">/inspect DamagedHelmet.glb</button>
+        <button data-cmd="optimize_model:demo">/optimize DamagedHelmet.glb</button>
         <button data-cmd="search_public_avatars:">/search_avatars</button>
       </div>
       <div class="input-row">
@@ -312,10 +316,11 @@ function addMsg(role, html) {
 }
 
 const STEP_DEFS = [
-  { id: 'challenge', label: 'Receive 402 challenge' },
-  { id: 'build', label: 'Build & sign Solana payment' },
-  { id: 'settle', label: 'Facilitator verify + settle' },
-  { id: 'result', label: 'Render MCP result' },
+  { id: 'challenge',  label: 'Pull payment requirements (402)' },
+  { id: 'built',      label: 'Build & sign Solana payment' },
+  { id: 'verified',   label: 'Facilitator verify (off-chain)' },
+  { id: 'dispatched', label: 'Run MCP tool in-process' },
+  { id: 'settled',    label: 'Facilitator settle (on-chain)' },
 ];
 
 function resetSteps() {
@@ -424,6 +429,33 @@ function parsePrompt(text) {
   return { tool: 'validate_model', args: { url: t } };
 }
 
+// Parse a Server-Sent Events stream from a fetch ReadableStream.
+async function* sseEvents(response) {
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = '';
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    let idx;
+    while ((idx = buf.indexOf('\n\n')) >= 0) {
+      const block = buf.slice(0, idx);
+      buf = buf.slice(idx + 2);
+      let event = 'message';
+      const dataLines = [];
+      for (const line of block.split('\n')) {
+        if (line.startsWith('event:')) event = line.slice(6).trim();
+        else if (line.startsWith('data:')) dataLines.push(line.slice(5).trim());
+      }
+      if (!dataLines.length) continue;
+      let data = null;
+      try { data = JSON.parse(dataLines.join('\n')); } catch {}
+      yield { event, data };
+    }
+  }
+}
+
 async function run(call, displayLabel) {
   if (!call) return;
   sendBtn.disabled = true;
@@ -432,39 +464,92 @@ async function run(call, displayLabel) {
 
   addMsg('user', escape(displayLabel));
   resetSteps();
-  setStep('challenge', 'active', 'sending unpaid request…');
+  setStep('challenge', 'active', 'requesting paymentRequirements…');
   const t0 = performance.now();
+  let final = null;
+  let errored = false;
+  let activeId = 'challenge';
+
   try {
     const res = await fetch('/api/x402-pay', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', accept: 'text/event-stream' },
       body: JSON.stringify(call),
     });
-    const data = await res.json();
-    const elapsed = Math.round(performance.now() - t0);
-
-    if (!res.ok || !data.ok) {
-      setStep('challenge', 'done');
-      setStep('build', 'error');
-      addMsg('agent', `<div class="err">x402 call failed: ${escape(data.error || res.statusText)}</div>`);
+    if (!res.ok || !res.body) {
+      const text = await res.text();
+      let parsed; try { parsed = JSON.parse(text); } catch { parsed = { error: text }; }
+      setStep(activeId, 'error', parsed.error || res.statusText);
+      addMsg('agent', `<div class="err">x402 call failed: ${escape(parsed.error || res.statusText)}</div>`);
       return;
     }
-    const d = data.durations;
-    setStep('challenge', 'done', `${d.challenge_ms} ms`);
-    setStep('build',     'done', `${d.build_ms} ms`);
-    setStep('settle',    'done', `${d.settle_ms} ms`);
-    setStep('result',    'done', `${elapsed} ms total`);
 
-    renderReceipt(data.payment, d);
-    addMsg('agent', renderResultBubble(call.tool, data.result));
+    for await (const { event, data } of sseEvents(res)) {
+      if (event === 'challenge') {
+        setStep('challenge', 'done', `${(Number(data.amount)/1e6).toFixed(6)} USDC`);
+        activeId = 'built';
+        setStep('built', 'active', 'signing partial Solana tx…');
+      } else if (event === 'built') {
+        setStep('built', 'done', `${data.build_ms} ms`);
+        activeId = 'verified';
+        setStep('verified', 'active', 'facilitator /verify…');
+      } else if (event === 'verified') {
+        setStep('verified', 'done', `${data.verify_ms} ms`);
+        activeId = 'dispatched';
+        setStep('dispatched', 'active', 'running MCP tool…');
+      } else if (event === 'dispatched') {
+        setStep('dispatched', 'done', `${data.dispatch_ms} ms`);
+        activeId = 'settled';
+        setStep('settled', 'active', 'facilitator /settle (on-chain)…');
+      } else if (event === 'settled') {
+        setStep('settled', 'done', `${data.settle_ms} ms · ${data.tx ? data.tx.slice(0,8)+'…' : ''}`);
+      } else if (event === 'result') {
+        final = data;
+      } else if (event === 'error') {
+        setStep(activeId, 'error', data.error || 'failed');
+        addMsg('agent', `<div class="err">x402 call failed: ${escape(data.error || 'unknown')}${
+          data.mcpError ? ` · MCP: ${escape(data.mcpError.message || '')}` : ''
+        }</div>`);
+        errored = true;
+      }
+    }
+
+    if (errored) return;
+    if (!final) {
+      setStep(activeId, 'error', 'stream ended without result');
+      addMsg('agent', `<div class="err">Stream ended without a result event.</div>`);
+      return;
+    }
+
+    renderReceipt(final.payment, final.durations);
+    addMsg('agent', renderResultBubble(call.tool, final.result));
+    refreshBalance();
   } catch (err) {
-    setStep('challenge', 'error', String(err.message || err));
+    setStep(activeId, 'error', String(err.message || err));
     addMsg('agent', `<div class="err">Network error: ${escape(String(err.message || err))}</div>`);
   } finally {
+    const elapsed = Math.round(performance.now() - t0);
+    document.title = `${elapsed}ms · three.ws · pay-per-call`;
     sendBtn.disabled = false;
     for (const b of quickEl.querySelectorAll('button')) b.disabled = false;
     promptEl.disabled = false;
     promptEl.focus();
+  }
+}
+
+const walletText = document.getElementById('walletText');
+async function refreshBalance() {
+  try {
+    const r = await fetch('/api/x402-pay?balance=1');
+    if (!r.ok) throw new Error('bal_fetch_failed');
+    const b = await r.json();
+    if (b.address) {
+      walletText.textContent = `${b.usdc.toFixed(3)} USDC · ${b.sol.toFixed(3)} SOL · ${b.address.slice(0,4)}…${b.address.slice(-4)}`;
+    } else {
+      walletText.textContent = 'agent wallet (no env)';
+    }
+  } catch {
+    walletText.textContent = 'agent wallet';
   }
 }
 
@@ -475,6 +560,7 @@ quickEl.addEventListener('click', (e) => {
   if (cmd === 'tools/list') return run({ tool: 'tools/list', args: {} }, '/list_tools');
   if (cmd === 'validate_model:demo') return run({ tool: 'validate_model', args: { url: DEMO_MODEL } }, `validate ${DEMO_MODEL.split('/').pop()}`);
   if (cmd === 'inspect_model:demo') return run({ tool: 'inspect_model', args: { url: DEMO_MODEL } }, `inspect ${DEMO_MODEL.split('/').pop()}`);
+  if (cmd === 'optimize_model:demo') return run({ tool: 'optimize_model', args: { url: DEMO_MODEL } }, `optimize ${DEMO_MODEL.split('/').pop()}`);
   if (cmd === 'search_public_avatars:') return run({ tool: 'search_public_avatars', args: { limit: 12 } }, '/search_avatars');
 });
 
@@ -491,6 +577,26 @@ promptEl.addEventListener('keydown', (e) => {
 });
 
 resetSteps();
+refreshBalance();
+setInterval(refreshBalance, 30_000);
+
+// Deep-link prefill: /pay?validate=https://...glb auto-fires the call.
+const params = new URLSearchParams(location.search);
+for (const [tool, alias] of [
+  ['validate_model', 'validate'],
+  ['inspect_model',  'inspect'],
+  ['optimize_model', 'optimize'],
+]) {
+  const url = params.get(alias);
+  if (url) {
+    setTimeout(() => run({ tool, args: { url } }, `${alias} ${url.split('/').pop()}`), 200);
+    break;
+  }
+}
+if (params.get('list') === '1') {
+  setTimeout(() => run({ tool: 'tools/list', args: {} }, '/list_tools'), 200);
+}
+
 promptEl.focus();
 </script>
 
