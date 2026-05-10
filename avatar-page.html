@@ -109,8 +109,7 @@
 				display: grid;
 				grid-template-columns: minmax(0, 1.5fr) minmax(380px, 1fr);
 				gap: 0;
-				flex: 1;
-				min-height: 0;
+				min-height: calc(100vh - 56px);
 			}
 
 			.av-stage-col {
@@ -121,7 +120,7 @@
 			}
 			.av-stage {
 				flex: 1;
-				min-height: 480px;
+				min-height: 560px;
 				background:
 					radial-gradient(ellipse at 50% 35%, rgba(125, 211, 252, 0.06), transparent 60%),
 					radial-gradient(ellipse at 70% 80%, rgba(167, 139, 250, 0.04), transparent 50%),

@@ -62,6 +62,7 @@ const createAgentSchema = z.object({
 			library: z.array(z.any()).max(50).default([]),
 		})
 		.default({}),
+	avatar_id: z.string().uuid().optional().nullable(),
 	publish: z.boolean().default(false),
 });
 
@@ -173,19 +174,34 @@ async function handleCreate(req, res) {
 		return error(res, 400, 'validation_error', msg);
 	}
 
-	const { name, description, system_prompt, greeting, category, tags, capabilities, publish } =
+	const { name, description, system_prompt, greeting, category, tags, capabilities, avatar_id, publish } =
 		parsed.data;
 	const publishedAt = publish ? new Date().toISOString() : null;
+
+	// avatar_id: only attach if the avatar exists, is owned by the caller OR is
+	// a public/unlisted community avatar. Demo IDs (avatar_demo_*) are not real
+	// DB rows — silently drop them; the caller can still upload their own.
+	let resolvedAvatarId = null;
+	if (avatar_id && !avatar_id.startsWith('avatar_demo_')) {
+		const rows = await sql`
+			SELECT id FROM avatars
+			WHERE id = ${avatar_id}
+			  AND deleted_at IS NULL
+			  AND (owner_id = ${auth.userId} OR visibility IN ('public', 'unlisted'))
+			LIMIT 1
+		`;
+		if (rows[0]) resolvedAvatarId = rows[0].id;
+	}
 
 	const [agent] = await sql`
 		INSERT INTO agent_identities (
 			user_id, name, description, system_prompt, greeting,
-			category, tags, capabilities, is_published, published_at
+			category, tags, capabilities, avatar_id, is_published, published_at
 		)
 		VALUES (
 			${auth.userId}, ${name}, ${description}, ${system_prompt}, ${greeting ?? null},
 			${category}, ${tags}, ${JSON.stringify(capabilities)}::jsonb,
-			${publish}, ${publishedAt}
+			${resolvedAvatarId}, ${publish}, ${publishedAt}
 		)
 		RETURNING *
 	`;
