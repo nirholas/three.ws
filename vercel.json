@@ -839,6 +839,18 @@
 			"dest": "/reputation/$1"
 		},
 		{
+			"src": "/pay",
+			"dest": "/pay/index.html"
+		},
+		{
+			"src": "/pay/",
+			"dest": "/pay/index.html"
+		},
+		{
+			"src": "/pay/(.*)",
+			"dest": "/pay/$1"
+		},
+		{
 			"src": "/settings",
 			"dest": "/settings/index.html"
 		},
