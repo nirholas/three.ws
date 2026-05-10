@@ -940,21 +940,15 @@
       </div>
       <div class="panel">
         <div class="panel-header">
-          <h2>Custom Agents</h2>
+          <h2>Your Agents</h2>
           <div class="spacer"></div>
-          <button class="btn btn-primary btn-sm" onclick="addCustomAgent()">+ Add Agent</button>
+          <a class="btn btn-primary btn-sm" href="/agent-home.html">+ New Agent</a>
         </div>
         <div class="panel-body no-pad">
           <table>
-            <thead><tr><th>Name</th><th>Model</th><th>Created</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Name</th><th>Description</th><th>Created</th><th>Actions</th></tr></thead>
             <tbody id="custom-agents-table">
-              <tr>
-                <td>My Cool Agent</td>
-                <td>agent-xyz.vrm</td>
-                <td>2024-07-29</td>
-                <td><button class="btn btn-sm">Edit</button> <button class="btn btn-danger btn-sm">Delete</button></td>
-              </tr>
-              <tr><td colspan="4" class="empty">No custom agents yet.</td></tr>
+              <tr><td colspan="4" class="empty">Loading…</td></tr>
             </tbody>
           </table>
         </div>
@@ -992,10 +986,13 @@
 
 <div class="toast-container" id="toasts"></div>
 
-<script>
+<script type="module">
 // ═══════════════════════════════════════════════════════════════════════
 //  PumpFun Bot Dashboard — Client Application
 // ═══════════════════════════════════════════════════════════════════════
+
+import { grindVanity } from '/src/solana/vanity/grinder.js';
+import { validatePattern } from '/src/solana/vanity/validation.js';
 
 const state = {
   // Defaults wire to the 3D-Agent host that's serving this page so the
@@ -1110,6 +1107,39 @@ async function loadAgent() {
     }
   } catch (e) {
     document.getElementById('agent-view-container').innerHTML = '<div class="empty">Error loading agent.</div>';
+  }
+  loadCustomAgents();
+}
+
+async function loadCustomAgents() {
+  const tbody = document.getElementById('custom-agents-table');
+  if (!tbody) return;
+  try {
+    const resp = await apiFetch('/api/agents');
+    if (!resp.ok) {
+      tbody.innerHTML = '<tr><td colspan="4" class="empty">Sign in to see your agents.</td></tr>';
+      return;
+    }
+    const j = await resp.json();
+    const agents = j.agents || j.data || [];
+    if (!agents.length) {
+      tbody.innerHTML = '<tr><td colspan="4" class="empty">No agents yet — click <strong>+ New Agent</strong>.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = agents.map((a) => {
+      const created = a.created_at ? new Date(a.created_at).toLocaleDateString() : '—';
+      return `<tr>
+        <td>${escapeHtml(a.name || a.id)}</td>
+        <td>${escapeHtml((a.description || '').slice(0, 80))}</td>
+        <td>${created}</td>
+        <td>
+          <a class="btn btn-sm" href="/agent-edit.html?id=${escapeHtml(a.id)}">Edit</a>
+          <a class="btn btn-sm" href="/agent/${escapeHtml(a.id)}">Open</a>
+        </td>
+      </tr>`;
+    }).join('');
+  } catch {
+    tbody.innerHTML = '<tr><td colspan="4" class="empty">Failed to load agents.</td></tr>';
   }
 }
 
@@ -1491,16 +1521,25 @@ function saveAlertConfig() {
 // ── Watches ───────────────────────────────────────────────────────────
 
 async function refreshWatches() {
+  // /api/v1/watches is part of the PumpKit external API surface. When the
+  // dashboard is pointed at the bundled 3D-Agent backend (default), there's
+  // no watch CRUD — surface that clearly instead of toasting an error.
+  const tbody = document.getElementById('watches-table');
+  tbody.innerHTML = '<tr><td colspan="6" class="empty">Loading…</td></tr>';
   try {
     const resp = await apiFetch('/api/v1/watches?limit=100');
+    if (resp.status === 404) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty">Watches require a PumpKit-style API. Point the API URL in <a href="#" onclick="navigateTo(\'config\');return false;" style="color:var(--blue)">Config</a> at your PumpKit deployment.</td></tr>';
+      document.getElementById('watches-count').textContent = '0';
+      return;
+    }
     if (!resp.ok) {
-      toast('Failed to load watches: ' + resp.status, 'error');
+      tbody.innerHTML = `<tr><td colspan="6" class="empty">Upstream unavailable (${resp.status}).</td></tr>`;
       return;
     }
     const data = await resp.json();
     const watches = data.data || data.watches || [];
     document.getElementById('watches-count').textContent = watches.length;
-    const tbody = document.getElementById('watches-table');
 
     if (watches.length === 0) {
       tbody.innerHTML = '<tr><td colspan="6" class="empty">No watches configured. Click "Add Watch" to create one.</td></tr>';
@@ -1520,7 +1559,7 @@ async function refreshWatches() {
       </tr>
     `).join('');
   } catch (e) {
-    toast('Failed to load watches', 'error');
+    tbody.innerHTML = `<tr><td colspan="6" class="empty">Error: ${escapeHtml(e.message || 'load failed')}</td></tr>`;
   }
 }
 
@@ -1577,46 +1616,67 @@ async function deleteWatch(id) {
 }
 
 // ── Claims ────────────────────────────────────────────────────────────
+// Backed by /api/agents/pumpfun?op=claims (proxy to the upstream
+// pumpfun-claims-bot MCP). Wallet/type filtering happens client-side
+// because the MCP feed is a global stream, not a per-wallet query.
 
 async function refreshClaims() {
-  const wallet = document.getElementById('claims-wallet-filter').value.trim();
+  const wallet = document.getElementById('claims-wallet-filter').value.trim().toLowerCase();
   const claimType = document.getElementById('claims-type-filter').value;
-  const params = new URLSearchParams();
-  if (wallet) params.set('wallet', wallet);
-  if (claimType) params.set('claimType', claimType);
-  params.set('limit', '100');
+  const tbody = document.getElementById('claims-table');
+  tbody.innerHTML = '<tr><td colspan="6" class="empty">Loading…</td></tr>';
 
   try {
-    const resp = await apiFetch('/api/v1/claims?' + params);
+    const resp = await apiFetch('/api/agents/pumpfun?op=claims&limit=50');
+    if (resp.status === 401) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty">Sign in to view fee claims.</td></tr>';
+      return;
+    }
     if (!resp.ok) {
-      toast('Failed to load claims: ' + resp.status, 'error');
+      tbody.innerHTML = `<tr><td colspan="6" class="empty">Upstream unavailable (${resp.status}).</td></tr>`;
       return;
     }
     const data = await resp.json();
-    const claims = data.data || data.claims || [];
-    document.getElementById('claims-count').textContent = (data.pagination?.total || claims.length).toString();
-    const tbody = document.getElementById('claims-table');
+    let claims = (data.items || data.claims || data.data || []).slice();
+
+    if (wallet) {
+      claims = claims.filter((c) => String(c.claimerWallet || c.wallet || '').toLowerCase().includes(wallet));
+    }
+    if (claimType) {
+      claims = claims.filter((c) => {
+        const t = (c.claimType || (c.isCashback ? 'cashback' : 'creator_fee') || '').toLowerCase();
+        return t === claimType.toLowerCase();
+      });
+    }
+
+    document.getElementById('claims-count').textContent = String(claims.length);
 
     if (claims.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" class="empty">No claims found for this filter</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="empty">No claims match this filter</td></tr>';
       return;
     }
 
-    tbody.innerHTML = claims.map(c => {
-      const typeClass = c.isCashback ? 'tag-claim' : 'tag-buy';
-      const typeLabel = c.isCashback ? 'Cashback' : c.claimType || 'Creator Fee';
+    tbody.innerHTML = claims.map((c) => {
+      const ts = c.timestamp || c.time || c.at;
+      const isCashback = c.isCashback || (c.claimType || '').toLowerCase() === 'cashback';
+      const typeClass = isCashback ? 'tag-claim' : 'tag-buy';
+      const typeLabel = isCashback ? 'Cashback' : (c.claimType || 'Creator Fee');
+      const wal = c.claimerWallet || c.wallet || '';
+      const tx  = c.txSignature || c.signature || '';
+      const sym = c.tokenSymbol || c.tokenName || shortAddr(c.tokenMint || '');
+      const amt = Number(c.amountSol ?? c.amount ?? 0);
       return `
         <tr>
-          <td>${new Date(c.timestamp).toLocaleString()}</td>
-          <td><a class="addr" href="https://solscan.io/account/${escapeHtml(c.claimerWallet)}" target="_blank">${shortAddr(c.claimerWallet)}</a></td>
+          <td>${ts ? new Date(ts).toLocaleString() : '—'}</td>
+          <td><a class="addr" href="https://solscan.io/account/${escapeHtml(wal)}" target="_blank">${shortAddr(wal)}</a></td>
           <td><span class="tag ${typeClass}">${escapeHtml(typeLabel)}</span></td>
-          <td>${escapeHtml(c.tokenSymbol || c.tokenName || shortAddr(c.tokenMint || ''))}</td>
-          <td style="color:var(--accent)">${(c.amountSol || 0).toFixed(4)} SOL</td>
-          <td><a class="addr" href="https://solscan.io/tx/${escapeHtml(c.txSignature)}" target="_blank">${shortAddr(c.txSignature || '')}</a></td>
+          <td>${escapeHtml(sym)}</td>
+          <td style="color:var(--accent)">${amt.toFixed(4)} SOL</td>
+          <td>${tx ? `<a class="addr" href="https://solscan.io/tx/${escapeHtml(tx)}" target="_blank">${shortAddr(tx)}</a>` : '—'}</td>
         </tr>`;
     }).join('');
-  } catch {
-    toast('Failed to load claims', 'error');
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty">Error: ${escapeHtml(e.message || 'load failed')}</td></tr>`;
   }
 }
 
@@ -1867,10 +1927,12 @@ async function getSellQuote() {
 }
 
 // ── Vanity Generator ──────────────────────────────────────────────────
+// Real Ed25519 keypair grinder. Spawns Web Workers from the shared
+// /src/solana/vanity/grinder.js so the wall-clock matches /vanity-wallet.
 
-let vanityRunning = false;
+let vanityAbort = null;
 
-function startVanity() {
+async function startVanity() {
   const prefix = document.getElementById('vanity-prefix').value.trim();
   const suffix = document.getElementById('vanity-suffix').value.trim();
 
@@ -1878,60 +1940,77 @@ function startVanity() {
     toast('Enter a prefix or suffix', 'error');
     return;
   }
-
-  vanityRunning = true;
-  document.getElementById('vanity-start').style.display = 'none';
-  document.getElementById('vanity-stop').style.display = '';
-  document.getElementById('vanity-status').textContent = 'Generating... (this runs in the browser, ~1K keys/sec)';
-  document.getElementById('vanity-result').innerHTML = '';
-
-  // Use Web Worker-style approach (inline for simplicity)
-  let attempts = 0;
-  const base58chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-
-  function generateBatch() {
-    if (!vanityRunning) return;
-
-    // Generate random base58 addresses (simulation — real generation needs tweetnacl)
-    for (let i = 0; i < 100; i++) {
-      attempts++;
-      let addr = '';
-      for (let j = 0; j < 44; j++) {
-        addr += base58chars[Math.floor(Math.random() * base58chars.length)];
-      }
-
-      const matchPrefix = !prefix || addr.toLowerCase().startsWith(prefix.toLowerCase());
-      const matchSuffix = !suffix || addr.toLowerCase().endsWith(suffix.toLowerCase());
-
-      if (matchPrefix && matchSuffix) {
-        vanityRunning = false;
-        document.getElementById('vanity-start').style.display = '';
-        document.getElementById('vanity-stop').style.display = 'none';
-        document.getElementById('vanity-status').textContent = `Found after ${attempts.toLocaleString()} attempts`;
-        document.getElementById('vanity-result').innerHTML = `
-          <div style="padding:12px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--accent-dim);">
-            <div style="color:#888;font-size:11px">Generated Address (demo)</div>
-            <div style="color:var(--accent);font-size:14px;margin:4px 0;word-break:break-all">${addr}</div>
-            <div style="color:var(--red);font-size:10px;margin-top:8px">⚠ This is a demo. Use the Rust vanity generator for production keypairs.</div>
-          </div>
-        `;
-        toast('Vanity address found!', 'success');
-        return;
-      }
-    }
-
-    document.getElementById('vanity-status').textContent = `Searching... ${attempts.toLocaleString()} attempts`;
-    if (vanityRunning) requestAnimationFrame(generateBatch);
+  if (prefix) {
+    const v = validatePattern(prefix);
+    if (!v.valid) { toast(`Prefix: ${v.errors.join('; ')}`, 'error'); return; }
+  }
+  if (suffix) {
+    const v = validatePattern(suffix);
+    if (!v.valid) { toast(`Suffix: ${v.errors.join('; ')}`, 'error'); return; }
   }
 
-  requestAnimationFrame(generateBatch);
+  vanityAbort = new AbortController();
+  document.getElementById('vanity-start').style.display = 'none';
+  document.getElementById('vanity-stop').style.display = '';
+  document.getElementById('vanity-status').textContent = 'Spinning up workers…';
+  document.getElementById('vanity-result').innerHTML = '';
+
+  try {
+    const result = await grindVanity({
+      prefix: prefix || undefined,
+      suffix: suffix || undefined,
+      signal: vanityAbort.signal,
+      onProgress: ({ attempts, rate, eta }) => {
+        document.getElementById('vanity-status').textContent =
+          `${attempts.toLocaleString()} tries · ${Math.round(rate).toLocaleString()}/s · eta ${eta}`;
+      },
+    });
+
+    const secretJson = JSON.stringify(Array.from(result.secretKey));
+    const seconds = (result.durationMs / 1000).toFixed(1);
+    document.getElementById('vanity-status').textContent =
+      `Found in ${seconds}s · ${result.attempts.toLocaleString()} attempts · ${result.workers} worker${result.workers > 1 ? 's' : ''}`;
+    document.getElementById('vanity-result').innerHTML = `
+      <div style="padding:12px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--accent-dim);">
+        <div style="color:#888;font-size:11px">Public key</div>
+        <div style="color:var(--accent);font-size:14px;margin:4px 0;word-break:break-all">${escapeHtml(result.publicKey)}</div>
+        <button class="btn btn-sm" id="vanity-copy-pub" style="margin-right:6px">Copy address</button>
+        <button class="btn btn-sm" id="vanity-download-key">Download keypair JSON</button>
+        <div style="color:var(--yellow);font-size:10px;margin-top:8px">⚠ Secret key never leaves your browser. Save it securely or import into a wallet.</div>
+      </div>
+    `;
+    document.getElementById('vanity-copy-pub').addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(result.publicKey); toast('Address copied', 'success'); } catch {}
+    });
+    document.getElementById('vanity-download-key').addEventListener('click', () => {
+      const blob = new Blob([secretJson], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `vanity-${result.publicKey.slice(0, 8)}.json`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    });
+    toast('Vanity address found', 'success');
+  } catch (e) {
+    if (e?.name === 'AbortError') {
+      document.getElementById('vanity-status').textContent = 'Stopped';
+    } else {
+      document.getElementById('vanity-status').textContent = `Error: ${e.message || 'grind failed'}`;
+      toast('Grind failed', 'error');
+    }
+  } finally {
+    vanityAbort = null;
+    document.getElementById('vanity-start').style.display = '';
+    document.getElementById('vanity-stop').style.display = 'none';
+  }
 }
 
 function stopVanity() {
-  vanityRunning = false;
+  vanityAbort?.abort();
+  vanityAbort = null;
   document.getElementById('vanity-start').style.display = '';
   document.getElementById('vanity-stop').style.display = 'none';
-  document.getElementById('vanity-status').textContent = 'Stopped';
 }
 
 // ── Config ────────────────────────────────────────────────────────────
@@ -1995,6 +2074,20 @@ function escapeHtml(str) {
   if (!str) return '';
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
+
+// Expose handlers used by inline `onclick=` attributes. Required because the
+// surrounding <script> is a module — module scope is not the global scope.
+Object.assign(window, {
+  navigateTo,
+  openModal, closeModal,
+  refreshWatches, createWatch, deleteWatch,
+  refreshClaims, exportClaims,
+  saveAlertConfig, clearFeed,
+  scanToken, getBuyQuote, getSellQuote,
+  startVanity, stopVanity,
+  saveConfig,
+  agentAction, playAnimation,
+});
 </script>
 </body>
 </html>
