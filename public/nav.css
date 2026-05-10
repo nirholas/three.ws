@@ -221,7 +221,9 @@
 
 /* ── Standalone site header (used by pages that don't ship their own).
    Pages with their own custom header keep using it; this class is only
-   applied to the canonical block injected into otherwise-bare pages. ── */
+   applied to the canonical block injected into otherwise-bare pages.
+   Kept in normal flow (not sticky) so pages with their own sticky
+   toolbars don't overlap. ── */
 .site-header {
 	display: flex;
 	align-items: center;
@@ -232,11 +234,14 @@
 	backdrop-filter: blur(14px);
 	-webkit-backdrop-filter: blur(14px);
 	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-	position: sticky;
-	top: 0;
+	position: relative;
 	z-index: 50;
 	color: #fff;
 	font-family: 'Space Grotesk', 'Inter', sans-serif;
+	/* If the parent is a CSS grid (e.g., marketplace's two-column layout),
+	   span every column so the header sits across the full width. Harmless
+	   on pages where the parent isn't a grid. */
+	grid-column: 1 / -1;
 }
 
 .site-header-brand {
@@ -276,5 +281,11 @@
 		padding: 0.75rem 1rem;
 		gap: 0.75rem;
 	}
+}
+
+/* Footer-container is the sibling slot used by /footer.js. Also span all
+   columns so it works inside grid layouts like body.market-page. */
+#footer-container {
+	grid-column: 1 / -1;
 }
 
