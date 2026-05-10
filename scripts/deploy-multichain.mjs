@@ -37,14 +37,6 @@ if (!PAYMENTS_SALT) { console.error('Required: PAYMENTS_SALT=0x... (grind it fir
 
 const CHAINS = [
   {
-    chain: mainnet,
-    name: 'Ethereum',
-    rpc: process.env.ETH_RPC_URL || 'https://rpc.ankr.com/eth',
-    usdc: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-    gasPrice: parseGwei('5'),
-    explorer: 'https://etherscan.io',
-  },
-  {
     chain: base,
     name: 'Base',
     rpc: process.env.BASE_RPC_URL || 'https://rpc.ankr.com/base',
@@ -122,7 +114,7 @@ async function deployToChain({ chain, name, rpc, usdc, gasPrice, explorer }) {
     const txData = FACTORY_SALT + factoryBytecode.slice(2);
     const hash = await wallet.sendTransaction({ to: ARACHNID, data: txData, gas: 800_000n, gasPrice });
     console.log(`factory: tx ${explorer}/tx/${hash}`);
-    await pub.waitForTransactionReceipt({ hash });
+    await pub.waitForTransactionReceipt({ hash, timeout: 300_000 });
     console.log(`factory: ✅ ${FACTORY_ADDR}`);
   }
 
@@ -154,7 +146,7 @@ async function deployToChain({ chain, name, rpc, usdc, gasPrice, explorer }) {
   console.log(`payments: deploying via ThreeWSFactory…`);
   const hash = await wallet.sendTransaction({ to: FACTORY_ADDR, data: calldata, gas: 2_000_000n, gasPrice });
   console.log(`payments: tx ${explorer}/tx/${hash}`);
-  const rcpt = await pub.waitForTransactionReceipt({ hash });
+  const rcpt = await pub.waitForTransactionReceipt({ hash, timeout: 300_000 });
   console.log(`payments: status ${rcpt.status}`);
 
   const code = await pub.getCode({ address: paymentsAddr }).catch(() => undefined);
