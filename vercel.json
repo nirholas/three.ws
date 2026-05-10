@@ -8,10 +8,7 @@
 	},
 	"functions": {
 		"api/pump/[action].js": {
-			"includeFiles": "node_modules/@zauthx402/sdk/dist/index.mjs,node_modules/@zauthx402/sdk/dist/index.js,examples/skills/pump-fun-strategy/**"
-		},
-		"api/**/*.js": {
-			"includeFiles": "node_modules/@zauthx402/sdk/dist/index.mjs,node_modules/@zauthx402/sdk/dist/index.js"
+			"includeFiles": "examples/skills/**"
 		}
 	},
 	"routes": [
