@@ -96,7 +96,7 @@
 		"@neondatabase/serverless": "^0.10.1",
 		"@nirholas/pump-sdk": "^1.0.0",
 		"@noble/curves": "^2.2.0",
-		"@noble/hashes": "^2.2.0",
+		"@noble/hashes": "1.5.0",
 		"@pump-fun/agent-payments-sdk": "^3.1.0",
 		"@pump-fun/pump-sdk": "^1.35.0",
 		"@pump-fun/pump-swap-sdk": "^1.15.0",
@@ -136,6 +136,10 @@
 		"three-mesh-bvh": "^0.9.9",
 		"vhtml": "^2.2.0",
 		"viem": "^2.18.0",
+		"vite": "latest",
+		"vite-plugin-pwa": "latest",
+		"workbox-build": "^7.4.0",
+		"workbox-window": "^7.4.0",
 		"ws": "^8.20.0",
 		"zod": "^3.23.8"
 	},
@@ -151,10 +155,6 @@
 		"prettier": "^3.2.5",
 		"sharp": "latest",
 		"solc": "^0.8.35",
-		"vite": "latest",
-		"vite-plugin-pwa": "latest",
-		"vitest": "latest",
-		"workbox-build": "^7.4.0",
-		"workbox-window": "^7.4.0"
+		"vitest": "latest"
 	}
 }
